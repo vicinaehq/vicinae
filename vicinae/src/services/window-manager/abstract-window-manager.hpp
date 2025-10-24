@@ -4,8 +4,7 @@
 #include <qobject.h>
 #include <qpromise.h>
 #include <qstringview.h>
-#include "lib/keyboard/keyboard.hpp"
-#include <ranges>
+#include "services/app-service/abstract-app-db.hpp"
 #include <qtmetamacros.h>
 #include <vector>
 
@@ -16,6 +15,16 @@
  * implementations.
  */
 class AbstractWindowManager : public QObject {
+  Q_OBJECT
+
+signals:
+  /**
+   * An event invalidating the current list of windows has occured and views
+   * dealing with them should request an update. This typically occurs when a new window is created, closed,
+   * or killed.
+   */
+  void windowsChanged() const;
+
 public:
   struct WindowBounds {
     uint32_t x = 0;
@@ -118,33 +127,24 @@ public:
   virtual bool closeWindow(const AbstractWindow &window) const { return false; }
 
   /**
-   * Whether the window manager supports sending arbitrary key events to any given window.
-   * If this returns true, you should expect `sendShortcutSync` to be called at some point.
-   * This is used to provide "paste to focused window" functionnality by copying data into the clipboard
-   * and then send a CTRL-V to the focused window.
-   * If this is false, Vicinae will automatically fallback to regular clipboard copy and not provide
-   * "paste to focused window" actions.
+   * Whether pasting the content of the clipboard to a window is supported.
+   * If it is the window manager should implement `pasteToWindow`.
    */
-  virtual bool supportsInputForwarding() const { return false; }
+  virtual bool supportsPaste() const { return false; }
 
   /**
-   * If the window manager supports input forwarding, this should send the provided shortcut to the provided
-   * window. It's up to you to properly transform the shortcut to whatever representation the window manager
-   * expects.
-   * Note that for now, we only send CTRL-V shortcuts using this method, so hardcoding the logic for only that
-   * specific one is OK (for now).
+   * Paste the current content of the clipboard to the specified window.
+   *
+   * The `window` object is the currently focused window, if this information is available. Some environments
+   * may be paste-capable but not have a way to get the currently focused window.
+   *
+   * `app` refers to the application `window` refers to, if such an information is known. It is null
+   * otherwise. This is typically used to figure out whether the window is a terminal emulator so that a
+   * different shortcut can be sent (ctrl+shift+V for most UNIX terminals).
+   *
+   *
    */
-  virtual bool sendShortcutSync(const AbstractWindow &window, const Keyboard::Shortcut &shortcut) {
-    return false;
-  }
-
-  bool pasteToFocusedWindow() {
-    auto window = getFocusedWindowSync();
-
-    if (!window) return false;
-
-    return sendShortcutSync(*window.get(), Keyboard::Shortcut::osPaste());
-  }
+  virtual bool pasteToWindow(const AbstractWindow *window, const AbstractApplication *app) { return false; }
 
   /**
    * To make sure the window manager IPC link is healthy.
@@ -167,13 +167,4 @@ public:
   virtual void start() = 0;
 
 private:
-  Q_OBJECT
-
-signals:
-  /**
-   * An event invalidating the current list of windows has occured and views
-   * dealing with them should request an update. This typically occurs when a new window is created, close, or
-   * killed.
-   */
-  void windowsChanged() const;
 };

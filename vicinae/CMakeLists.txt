@@ -649,13 +649,16 @@ if (UNIX AND NOT APPLE)
 		src/services/window-manager/gnome/gnome-listener.cpp
 		src/services/window-manager/wayland/wayland.cpp
 
-		# Hyprland
-		# End Hyprland
+		src/lib/wayland/virtual-keyboard.hpp
+		src/lib/wayland/virtual-keyboard.cpp
 	)
 
     include("Wayland")
 
     wayland_generate_protocol("${CMAKE_CURRENT_SOURCE_DIR}/protocols/wlr-foreign-toplevel-management-unstable-v1.xml")
+	wayland_generate_protocol("${CMAKE_CURRENT_SOURCE_DIR}/protocols/virtual-keyboard-unstable-v1.xml")
+
+	list(APPEND LIBS xkbcommon)
 
 	if (WLR_DATA_CONTROL)
 		add_compile_definitions(WLR_DATA_CONTROL=1)
@@ -669,6 +672,8 @@ if (UNIX AND NOT APPLE)
 			src/wlr-clip/data-offer.cpp
 			src/services/clipboard/wlr/wlr-clipboard-server.hpp
 			src/services/clipboard/wlr/wlr-clipboard-server.cpp
+			src/lib/wayland/virtual-keyboard.hpp
+			src/lib/wayland/virtual-keyboard.cpp
 		)
 		wayland_generate_protocol("${CMAKE_CURRENT_SOURCE_DIR}/protocols/wlr-data-control-unstable-v1.xml")
 	endif()

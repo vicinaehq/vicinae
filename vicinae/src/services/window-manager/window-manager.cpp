@@ -12,6 +12,8 @@ std::vector<std::unique_ptr<AbstractWindowManager>> WindowManager::createCandida
 
   candidates.emplace_back(std::make_unique<HyprlandWindowManager>());
   candidates.emplace_back(std::make_unique<GnomeWindowManager>());
+
+  // this implementation is good enough for most standalone wayland compositors
   candidates.emplace_back(std::make_unique<WaylandWindowManager>());
 
   return candidates;
@@ -74,7 +76,7 @@ AbstractWindowManager::WindowList WindowManager::findAppWindows(const AbstractAp
 
 void WindowManager::updateWindowCache() { m_windows = m_provider->listWindowsSync(); }
 
-bool WindowManager::canPaste() const { return m_provider->supportsInputForwarding(); }
+bool WindowManager::canPaste() const { return m_provider->supportsPaste(); }
 
 WindowManager::WindowManager() {
   m_provider = createProvider();

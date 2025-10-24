@@ -2,26 +2,16 @@
 #include "services/window-manager/abstract-window-manager.hpp"
 #include "services/window-manager/hyprland/hypr-workspace.hpp"
 #include "services/window-manager/hyprland/hyprctl.hpp"
+#include "lib/wayland/virtual-keyboard.hpp"
+#include <xkbcommon/xkbcommon-keysyms.h>
 
 using Hyprctl = Hyprland::Controller;
-
-QString HyprlandWindowManager::stringifyModifiers(QFlags<Qt::KeyboardModifier> mods) {
-  QList<QString> smods;
-
-  if (mods.testFlag(Qt::KeyboardModifier::ControlModifier)) smods.emplace_back("CONTROL");
-  if (mods.testFlag(Qt::KeyboardModifier::ShiftModifier)) smods.emplace_back("SHIFT");
-  if (mods.testFlag(Qt::KeyboardModifier::MetaModifier)) smods.emplace_back("SUPER");
-  if (mods.testFlag(Qt::KeyboardModifier::AltModifier)) smods.emplace_back("ALT");
-
-  return smods.join('&');
-}
 
 HyprlandWindowManager::HyprlandWindowManager() {
   connect(&m_ev, &Hyprland::EventListener::openwindow, this, [this]() { emit windowsChanged(); });
   connect(&m_ev, &Hyprland::EventListener::closewindow, this, [this]() { emit windowsChanged(); });
 }
 
-QString HyprlandWindowManager::stringifyKey(Qt::Key key) const { return QKeySequence(key).toString(); }
 QString HyprlandWindowManager::id() const { return "hyprland"; }
 QString HyprlandWindowManager::displayName() const { return "Hyprland"; }
 
@@ -37,6 +27,13 @@ AbstractWindowManager::WindowList HyprlandWindowManager::listWindowsSync() const
   return windows;
 }
 
+bool HyprlandWindowManager::pasteToWindow(const AbstractWindow *window, const AbstractApplication *app) {
+  using VK = Wayland::VirtualKeyboard;
+  if (!m_kb.isAvailable()) return false;
+  if (app->isTerminalEmulator()) { return m_kb.sendKeySequence(XKB_KEY_V, VK::MOD_CTRL | VK::MOD_SHIFT); }
+  return m_kb.sendKeySequence(XKB_KEY_V, VK::MOD_CTRL);
+}
+
 AbstractWindowManager::WindowPtr HyprlandWindowManager::getFocusedWindowSync() const {
   auto response = Hyprctl::oneshot("-j/activewindow");
   auto json = QJsonDocument::fromJson(response);
@@ -46,20 +43,7 @@ AbstractWindowManager::WindowPtr HyprlandWindowManager::getFocusedWindowSync() c
   return std::make_shared<HyprlandWindow>(json.object());
 }
 
-bool HyprlandWindowManager::supportsInputForwarding() const { return true; }
-
-bool HyprlandWindowManager::sendShortcutSync(const AbstractWindow &window,
-                                             const Keyboard::Shortcut &shortcut) {
-  auto cmd = QString("dispatch sendshortcut %1,%2,address:%3")
-                 .arg(stringifyModifiers(shortcut.mods()))
-                 .arg(stringifyKey(shortcut.key()))
-                 .arg(window.id());
-
-  // qWarning() << "send dispatcher" << cmd;
-  Hyprctl::oneshot(cmd.toStdString());
-
-  return true;
-}
+bool HyprlandWindowManager::supportsPaste() const { return m_kb.isAvailable(); }
 
 void HyprlandWindowManager::focusWindowSync(const AbstractWindow &window) const {
   Hyprctl::oneshot(std::format("dispatch focuswindow address:{}", window.id().toStdString()));
