@@ -47,6 +47,8 @@ bool ListView::inputFilter(QKeyEvent *event) {
 
 void ListView::itemSelected(const OmniList::AbstractVirtualItem *item) {}
 
+void ListView::forceReselection() { selectionChanged(m_list->selected(), nullptr); }
+
 void ListView::selectionChanged(const OmniList::AbstractVirtualItem *next,
                                 const OmniList::AbstractVirtualItem *previous) {
   auto &nav = context()->navigation;

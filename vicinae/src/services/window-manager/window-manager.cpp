@@ -82,5 +82,8 @@ WindowManager::WindowManager() {
   m_provider = createProvider();
   updateWindowCache();
 
-  connect(m_provider.get(), &AbstractWindowManager::windowsChanged, this, &WindowManager::updateWindowCache);
+  connect(m_provider.get(), &AbstractWindowManager::windowsChanged, this, [this]() {
+    updateWindowCache();
+    emit windowsChanged();
+  });
 }

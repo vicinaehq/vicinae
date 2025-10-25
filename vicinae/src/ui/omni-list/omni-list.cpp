@@ -804,10 +804,7 @@ const OmniList::AbstractVirtualItem *OmniList::selected() const {
 }
 
 void OmniList::refresh() const {
-  for (int i = 0; i != visibleIndexRange.size; ++i) {
-    int index = visibleIndexRange.start + i;
-    auto item = m_items.at(index).item;
-
+  for (const auto &item : visibleItems()) {
     if (auto it = _widgetCache.find(item->id()); it != _widgetCache.end()) {
       item->refresh(it->second.widget->widget());
     }
