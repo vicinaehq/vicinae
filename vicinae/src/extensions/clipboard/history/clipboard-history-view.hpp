@@ -137,4 +137,5 @@ private:
   using Watcher = QFutureWatcher<PaginatedResponse<ClipboardHistoryEntry>>;
   Watcher m_watcher;
   std::optional<ClipboardOfferKind> m_kindFilter;
+  QString m_defaultAction = "paste";
 };

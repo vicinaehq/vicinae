@@ -3,6 +3,7 @@
 #include "clipboard-actions.hpp"
 #include "keyboard/keybind-manager.hpp"
 #include "manage-quicklinks-command.hpp"
+#include "navigation-controller.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/keybinding/keybinding-service.hpp"
@@ -390,8 +391,9 @@ class ClipboardHistoryItem : public OmniList::AbstractVirtualItem, public ListVi
 public:
   ClipboardHistoryEntry info;
 
-  std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
-    auto panel = std::make_unique<ActionPanelState>();
+  std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx,
+                                                   const QString &defaultAction) const {
+    auto panel = std::make_unique<ListActionPanelState>();
     auto clipman = ctx->services->clipman();
     auto mainSection = panel->createSection();
     bool isCopyable = info.encryption == ClipboardEncryptionType::None || clipman->isEncryptionReady();
@@ -411,15 +413,22 @@ public:
     pin->setShortcut(Keybind::PinAction);
 
     if (isCopyable) {
-      auto copyToClipboard = new CopyClipboardSelection(info.id);
+      auto copy = new CopyClipboardSelection(info.id);
+      copy->addShortcut(Keybind::CopyAction);
+
       if (wm->canPaste()) {
         auto paste = new PasteClipboardSelection(info.id);
-        mainSection->addAction(paste);
+        paste->addShortcut(Keybind::PasteAction);
+        if (defaultAction == "copy") {
+          mainSection->addAction(copy);
+          mainSection->addAction(paste);
+        } else {
+          mainSection->addAction(paste);
+          mainSection->addAction(copy);
+        }
       } else {
-        copyToClipboard->setPrimary(true);
+        mainSection->addAction(copy);
       }
-
-      mainSection->addAction(copyToClipboard);
     }
 
     auto toolsSection = panel->createSection();
@@ -557,6 +566,9 @@ void ClipboardHistoryView::generateList(const PaginatedResponse<ClipboardHistory
 }
 
 void ClipboardHistoryView::initialize() {
+  auto preferences = command()->preferenceValues();
+
+  m_defaultAction = preferences.value("defaultAction").toString();
   setSearchPlaceholderText("Browse clipboard history...");
   textChanged("");
   m_filterInput->setValue(getSavedDropdownFilter().value_or("all"));
@@ -583,7 +595,7 @@ void ClipboardHistoryView::selectionChanged(const OmniList::AbstractVirtualItem 
 
   auto entry = static_cast<const ClipboardHistoryItem *>(next);
 
-  context()->navigation->setActions(entry->newActionPanel(context()));
+  context()->navigation->setActions(entry->newActionPanel(context(), m_defaultAction));
 
   if (auto detail = entry->generateDetail()) {
     if (auto current = m_split->detailWidget()) { current->deleteLater(); }

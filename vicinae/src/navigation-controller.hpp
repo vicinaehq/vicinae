@@ -122,8 +122,12 @@ private:
     for (int i = 0; i != actions.size() && i != m_defaultShortcuts.size(); ++i) {
       auto &action = actions[i];
       auto &shortcut = m_defaultShortcuts[i];
+      auto existing = action->shortcut();
 
-      action->addShortcut(shortcut);
+      // always prioritize default shortcut, but still keeps the one
+      // that was set before as a secondary shortcut (usually not shown in UI).
+      action->setShortcut(shortcut);
+      if (existing) { action->addShortcut(*existing); }
     }
   }
 
