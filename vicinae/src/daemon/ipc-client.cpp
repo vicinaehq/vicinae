@@ -33,22 +33,18 @@ void DaemonIpcClient::toggle() {
   }
 }
 
-void DaemonIpcClient::open() {
+bool DaemonIpcClient::open() {
   QUrl url;
   url.setScheme(Omnicast::APP_SCHEME);
   url.setHost("open");
-  if (auto res = deeplink(url); !res) {
-    throw std::runtime_error("Failed to open: " + res.error().toStdString());
-  }
+  return deeplink(url).has_value();
 }
 
-void DaemonIpcClient::close() {
+bool DaemonIpcClient::close() {
   QUrl url;
   url.setScheme(Omnicast::APP_SCHEME);
   url.setHost("close");
-  if (auto res = deeplink(url); !res) {
-    throw std::runtime_error("Failed to close: " + res.error().toStdString());
-  }
+  return deeplink(url).has_value();
 }
 
 proto::ext::daemon::Response DaemonIpcClient::request(const proto::ext::daemon::Request &req) {

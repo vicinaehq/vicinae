@@ -117,6 +117,8 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
   }
 
   if (url.host() == "close") {
+    if (!m_ctx.navigation->isWindowOpened()) return tl::unexpected("Already closed");
+
     CloseWindowOptions opts;
 
     if (auto text = query.queryItemValue("popToRootType"); !text.isEmpty()) {
@@ -133,6 +135,7 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
   }
 
   if (url.host() == "open") {
+    if (m_ctx.navigation->isWindowOpened()) return tl::unexpected("Already opened");
     if (auto text = query.queryItemValue("popToRoot"); text == "true" || text == "1") {
       m_ctx.navigation->popToRoot();
     }

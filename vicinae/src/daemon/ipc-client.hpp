@@ -23,8 +23,8 @@ public:
    */
   std::string dmenu(DMenuListView::DmenuPayload payload);
   void toggle();
-  void open();
-  void close();
+  bool open();
+  bool close();
   tl::expected<void, QString> deeplink(const QUrl &url);
   bool connect();
   void connectOrThrow();
