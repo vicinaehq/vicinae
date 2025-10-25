@@ -1,8 +1,6 @@
 #pragma once
 #include "abstract-window-manager.hpp"
 #include "services/app-service/abstract-app-db.hpp"
-#include <qobject.h>
-#include <qtmetamacros.h>
 
 class WindowManager : public QObject {
   Q_OBJECT
