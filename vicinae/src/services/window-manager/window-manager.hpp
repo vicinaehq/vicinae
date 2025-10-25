@@ -1,9 +1,13 @@
 #pragma once
 #include "abstract-window-manager.hpp"
 #include "services/app-service/abstract-app-db.hpp"
-#include <qobject.h>
 
 class WindowManager : public QObject {
+  Q_OBJECT
+
+signals:
+  void windowsChanged() const;
+
 public:
   AbstractWindowManager *provider() const;
   AbstractWindowManager::WindowList listWindowsSync();

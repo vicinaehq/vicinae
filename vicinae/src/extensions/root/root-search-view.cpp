@@ -1,5 +1,6 @@
 #include "root-search-view.hpp"
 #include "misc/file-list-item.hpp"
+#include "services/window-manager/abstract-window-manager.hpp"
 #include "ui/views/base-view.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "service-registry.hpp"
@@ -262,6 +263,7 @@ void RootSearchView::handleItemChange() {
 
 void RootSearchView::initialize() {
   auto manager = context()->services->rootItemManager();
+  auto wm = context()->services->windowManager();
 
   m_calcDebounce->setInterval(100);
   m_calcDebounce->setSingleShot(true);
@@ -271,6 +273,10 @@ void RootSearchView::initialize() {
   setSearchPlaceholderText("Search for anything...");
   textChanged(searchText());
 
+  connect(wm, &WindowManager::windowsChanged, this, [this]() {
+    m_list->refresh();
+    forceReselection();
+  });
   connect(manager, &RootItemManager::itemsChanged, this, &RootSearchView::handleItemChange);
   connect(manager, &RootItemManager::itemFavoriteChanged, this, &RootSearchView::handleFavoriteChanged);
   connect(m_calcDebounce, &QTimer::timeout, this, &RootSearchView::handleCalculatorTimeout);
