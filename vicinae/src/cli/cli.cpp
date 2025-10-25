@@ -44,7 +44,7 @@ class OpenCommand : public AbstractCommandLineCommand {
 
   void run(CLI::App *app) override {
     DaemonIpcClient client;
-    client.open();
+    if (!client.open()) { exit(1); }
   }
 };
 
@@ -54,7 +54,7 @@ class CloseCommand : public AbstractCommandLineCommand {
 
   void run(CLI::App *app) override {
     DaemonIpcClient client;
-    client.close();
+    if (!client.close()) { exit(1); }
   }
 };
 
