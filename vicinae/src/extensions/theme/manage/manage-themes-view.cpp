@@ -148,14 +148,10 @@ public:
 
 ManageThemesView::ManageThemesView() {
   auto config = ServiceRegistry::instance()->config();
-
-  connect(
-      config, &ConfigService::configChanged, this,
-      [this](const ConfigService::Value &next, const ConfigService::Value &prev) {
-        if (next.theme.name != prev.theme.name) { generateList(searchText()); }
-      },
-      Qt::QueuedConnection); // queued matters here, we want the list to regenerate after control is returned
-                             // to the event loop
+  connect(config, &ConfigService::configChanged, this,
+          [this](const ConfigService::Value &next, const ConfigService::Value &prev) {
+            if (next.theme.name != prev.theme.name) { generateList(searchText()); }
+          });
 }
 
 void ManageThemesView::initialize() {

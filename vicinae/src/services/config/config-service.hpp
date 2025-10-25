@@ -141,18 +141,18 @@ public:
     saveConfig(newValue);
   }
 
-  void saveConfig(const Value &value) {
+  void saveConfig(const Value &next) {
     QJsonDocument doc;
     QJsonObject obj;
 
-    obj["faviconService"] = value.faviconService;
-    obj["popToRootOnClose"] = value.popToRootOnClose;
-    obj["closeOnFocusLoss"] = value.closeOnFocusLoss;
-    obj["keybinding"] = value.keybinding;
+    obj["faviconService"] = next.faviconService;
+    obj["popToRootOnClose"] = next.popToRootOnClose;
+    obj["closeOnFocusLoss"] = next.closeOnFocusLoss;
+    obj["keybinding"] = next.keybinding;
 
     {
       QJsonObject binds;
-      for (const auto &[k, v] : value.keybinds) {
+      for (const auto &[k, v] : next.keybinds) {
         binds[k] = v;
       }
       obj["keybinds"] = binds;
@@ -161,17 +161,17 @@ public:
     {
       QJsonObject font;
 
-      if (value.font.normal) { font["normal"] = *value.font.normal; }
+      if (next.font.normal) { font["normal"] = *next.font.normal; }
 
-      font["size"] = value.font.baseSize;
+      font["size"] = next.font.baseSize;
       obj["font"] = font;
     }
 
     {
       QJsonObject theme;
 
-      if (value.theme.name) { theme["name"] = *value.theme.name; }
-      if (value.theme.iconTheme) { theme["iconTheme"] = *value.theme.iconTheme; }
+      if (next.theme.name) { theme["name"] = *next.theme.name; }
+      if (next.theme.iconTheme) { theme["iconTheme"] = *next.theme.iconTheme; }
 
       obj["theme"] = theme;
     }
@@ -179,16 +179,16 @@ public:
     {
       QJsonObject rootSearch;
 
-      rootSearch["searchFiles"] = value.rootSearch.searchFiles;
+      rootSearch["searchFiles"] = next.rootSearch.searchFiles;
       obj["rootSearch"] = rootSearch;
     }
 
     {
       QJsonObject window;
 
-      window["rounding"] = value.window.rounding;
-      window["opacity"] = value.window.opacity;
-      window["csd"] = value.window.csd;
+      window["rounding"] = next.window.rounding;
+      window["opacity"] = next.window.opacity;
+      window["csd"] = next.window.csd;
       obj["window"] = window;
     }
 
@@ -199,8 +199,9 @@ public:
     doc.setObject(obj);
     m_watcher.blockSignals(true);
     file.write(doc.toJson());
-    emit configChanged(value, m_config);
-    m_config = value;
+    auto prev = m_config;
+    m_config = next;
+    emit configChanged(next, prev);
     m_watcher.blockSignals(false);
   }
 
