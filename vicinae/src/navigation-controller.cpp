@@ -80,12 +80,6 @@ void NavigationController::applyPopToRoot(const PendingPopToRoot &settings) {
 
   PopToRootType popToRootType = resolveApplicablePopToRoot();
 
-  if (m_instantDismiss) {
-    qDebug() << "Consumed instantDismiss flag";
-    popToRootType = PopToRootType::Immediate;
-    m_instantDismiss = false;
-  }
-
   switch (popToRootType) {
   case PopToRootType::Immediate:
     popToRoot({.clearSearch = true});
@@ -289,8 +283,16 @@ void NavigationController::closeWindow(const CloseWindowOptions &settings, std::
 
 void NavigationController::closeWindow(const CloseWindowOptions &settings) {
   if (!m_windowOpened) return;
-  m_pendingPopToRoot =
-      PendingPopToRoot{.type = settings.popToRootType, .clearSearch = settings.clearRootSearch};
+
+  PopToRootType type = settings.popToRootType;
+
+  if (m_instantDismiss) {
+    qDebug() << "Consumed instantDismiss flag";
+    type = PopToRootType::Immediate;
+    m_instantDismiss = false;
+  }
+
+  m_pendingPopToRoot = PendingPopToRoot{.type = type, .clearSearch = settings.clearRootSearch};
   m_windowOpened = false;
   emit windowVisiblityChanged(false);
 }
