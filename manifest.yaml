@@ -6,5 +6,5 @@
 
 release:
   tag: "v0.15.5"
-  rev: "a9e6f87e3a840fd0417e66291dcea16480dfca58"
-  short_rev: "a9e6f87e3"
+  rev: "089291164c3ac625ad481c9918be51050c7d66f3"
+  short_rev: "089291164"
