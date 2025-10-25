@@ -100,12 +100,16 @@ signals:
 
 class ClipboardHistoryView : public SimpleView {
 public:
+  enum class DefaultAction { Paste, Copy };
+
   ClipboardHistoryView();
 
   void initialize() override;
   void textChanged(const QString &value) override;
 
 private:
+  static DefaultAction parseDefaultAction(const QString &str);
+
   void reloadCurrentSearch();
 
   void handleListFinished();
@@ -137,4 +141,5 @@ private:
   using Watcher = QFutureWatcher<PaginatedResponse<ClipboardHistoryEntry>>;
   Watcher m_watcher;
   std::optional<ClipboardOfferKind> m_kindFilter;
+  DefaultAction m_defaultAction = DefaultAction::Copy;
 };
