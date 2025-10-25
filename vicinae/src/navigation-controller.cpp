@@ -234,6 +234,7 @@ void NavigationController::popCurrentView() {
 }
 
 void NavigationController::popToRoot(const PopToRootOptions &opts) {
+  m_pendingPopToRoot.reset();
   if (!m_frames.empty() && m_frames.back()->viewCount == 0) { m_frames.pop_back(); }
 
   while (m_views.size() > 1) {
@@ -478,7 +479,10 @@ void NavigationController::setActions(std::unique_ptr<ActionPanelState> panel, c
 size_t NavigationController::viewStackSize() const { return m_views.size(); }
 
 void NavigationController::showWindow() {
-  if (auto popToRoot = m_pendingPopToRoot) { applyPopToRoot(*popToRoot); }
+  if (auto popToRoot = m_pendingPopToRoot) {
+    applyPopToRoot(*popToRoot);
+    m_pendingPopToRoot.reset();
+  }
   m_windowOpened = true;
   emit windowVisiblityChanged(true);
 }
