@@ -392,7 +392,7 @@ public:
   ClipboardHistoryEntry info;
 
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx,
-                                                   const QString &defaultAction) const {
+                                                   ClipboardHistoryView::DefaultAction defaultAction) const {
     auto panel = std::make_unique<ListActionPanelState>();
     auto clipman = ctx->services->clipman();
     auto mainSection = panel->createSection();
@@ -419,7 +419,7 @@ public:
       if (wm->canPaste()) {
         auto paste = new PasteClipboardSelection(info.id);
         paste->addShortcut(Keybind::PasteAction);
-        if (defaultAction == "copy") {
+        if (defaultAction == ClipboardHistoryView::DefaultAction::Copy) {
           mainSection->addAction(copy);
           mainSection->addAction(paste);
         } else {
@@ -568,7 +568,7 @@ void ClipboardHistoryView::generateList(const PaginatedResponse<ClipboardHistory
 void ClipboardHistoryView::initialize() {
   auto preferences = command()->preferenceValues();
 
-  m_defaultAction = preferences.value("defaultAction").toString();
+  m_defaultAction = parseDefaultAction(preferences.value("defaultAction").toString());
   setSearchPlaceholderText("Browse clipboard history...");
   textChanged("");
   m_filterInput->setValue(getSavedDropdownFilter().value_or("all"));
@@ -699,6 +699,11 @@ void ClipboardHistoryView::handleFilterChange(const SelectorInput::AbstractItem 
   } else {
     reloadCurrentSearch();
   }
+}
+
+ClipboardHistoryView::DefaultAction ClipboardHistoryView::parseDefaultAction(const QString &str) {
+  if (str == "paste") return DefaultAction::Paste;
+  return DefaultAction::Copy;
 }
 
 void ClipboardHistoryView::saveDropdownFilter(const QString &value) {
