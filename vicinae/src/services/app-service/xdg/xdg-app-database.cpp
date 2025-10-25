@@ -97,11 +97,43 @@ AppPtr XdgAppDatabase::terminalEmulator() const {
   return nullptr;
 }
 
-AppPtr XdgAppDatabase::fileBrowser() const { return defaultForMime("inode/directory"); }
+AppPtr XdgAppDatabase::fileBrowser() const {
+  if (auto browser = defaultForMime("inode/directory")) { return browser; }
+  if (auto browser = findByCategory("FileManager")) { return browser; }
 
-AppPtr XdgAppDatabase::genericTextEditor() const { return defaultForMime("text/plain"); }
+  for (const auto &app : m_apps) {
+    if (app->data().supportsMime("inode/directory")) { return app; }
+  }
 
-AppPtr XdgAppDatabase::webBrowser() const { return defaultForMime("x-scheme-handler/https"); }
+  return nullptr;
+}
+
+AppPtr XdgAppDatabase::genericTextEditor() const {
+  if (auto editor = defaultForMime("text/plain")) { return editor; }
+  if (auto editor = findByCategory("TextEditor")) { return editor; }
+
+  for (const auto &app : m_apps) {
+    if (app->data().supportsMime("text/plain")) { return app; }
+  }
+
+  return nullptr;
+}
+
+AppPtr XdgAppDatabase::webBrowser() const {
+  if (auto browser = defaultForMime("x-scheme-handler/https")) { return browser; }
+  if (auto browser = defaultForMime("x-scheme-handler/http")) { return browser; }
+  if (auto browser = defaultForMime("text/html")) { return browser; }
+  if (auto browser = findByCategory("WebBrowser")) { return browser; }
+
+  for (const auto &app : m_apps) {
+    if (app->data().supportsMime("x-scheme-handler/https") ||
+        app->data().supportsMime("x-scheme-handler/http")) {
+      return app;
+    }
+  }
+
+  return nullptr;
+}
 
 std::vector<fs::path> XdgAppDatabase::defaultSearchPaths() const { return xdgpp::appDirs(); }
 
@@ -243,6 +275,14 @@ QString XdgAppDatabase::mimeNameForTarget(const QString &target) const {
   auto mime = m_mimeDb.mimeTypeForFile(source);
 
   return mime.isValid() ? mime.name() : source;
+}
+
+AppPtr XdgAppDatabase::findByCategory(const QString &category) const {
+  auto pred = [&](const std::shared_ptr<XdgApplication> &app) {
+    return app->data().hasCategory(category.toStdString());
+  };
+  if (auto it = std::ranges::find_if(m_apps, pred); it != m_apps.end()) { return *it; }
+  return nullptr;
 }
 
 AppPtr XdgAppDatabase::findByClass(const QString &name) const {
