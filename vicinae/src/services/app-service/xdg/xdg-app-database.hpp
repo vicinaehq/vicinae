@@ -33,6 +33,7 @@ private:
   AppPtr defaultForMime(const QString &mime) const;
   std::vector<AppPtr> findAssociations(const QString &mime) const;
   QString mimeNameForTarget(const QString &target) const;
+  AppPtr findByCategory(const QString &category) const;
 
   std::unordered_map<QString, std::shared_ptr<AbstractApplication>> appMap;
   std::vector<xdgpp::MimeAppsListFile> m_mimeAppsLists;
