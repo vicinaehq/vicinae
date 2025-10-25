@@ -20,6 +20,11 @@ private:
 
 DMenuListView::DMenuListView(DmenuPayload data) : m_data(data) {}
 
+void DMenuListView::hideEvent(QHideEvent *event) {
+  popSelf();
+  QWidget::hideEvent(event);
+}
+
 QString DMenuListView::initialNavigationTitle() const { return m_data.navigationTitle.c_str(); }
 
 QString DMenuListView::initialSearchPlaceholderText() const {

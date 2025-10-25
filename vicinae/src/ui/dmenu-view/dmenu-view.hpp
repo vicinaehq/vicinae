@@ -19,6 +19,9 @@ public:
 
   DMenuListView(DmenuPayload data);
 
+protected:
+  void hideEvent(QHideEvent *event) override;
+
 private:
   void itemSelected(const OmniList::AbstractVirtualItem *item) override;
   bool showBackButton() const override { return false; }
