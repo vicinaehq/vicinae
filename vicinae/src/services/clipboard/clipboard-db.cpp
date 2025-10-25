@@ -239,8 +239,8 @@ bool ClipboardDatabase::insertSelection(const InsertSelectionPayload &payload) {
   QSqlQuery query(m_db);
 
   query.prepare(R"(
-  	INSERT INTO selection (id, kind, offer_count, hash_md5, preferred_mime_type, source)
-	VALUES (:id, :kind, :offer_count, :hash_md5, :preferred_mime_type, :source)
+  	INSERT INTO selection (id, kind, offer_count, hash_md5, preferred_mime_type, source, created_at)
+	VALUES (:id, :kind, :offer_count, :hash_md5, :preferred_mime_type, :source, unixepoch())
 	RETURNING id, created_at;
   )");
   query.bindValue(":id", payload.id);
