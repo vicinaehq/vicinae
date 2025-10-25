@@ -17,6 +17,29 @@
 #include "services/clipboard/wlr/wlr-clipboard-server.hpp"
 #include "version.h"
 
+class LaunchAppCommand : public AbstractCommandLineCommand {
+public:
+  std::string id() const override { return "launch"; }
+  std::string description() const override { return "Launch an app from vicinae"; }
+  void setup(CLI::App *app) override { app->add_option("app_id", m_appId, "The ID of the application"); }
+  void run(CLI::App *app) override {
+    DaemonIpcClient client;
+    client.launchApp(m_appId.c_str());
+  }
+
+private:
+  std::string m_appId;
+};
+
+class AppCommand : public AbstractCommandLineCommand {
+  std::string id() const override { return "app"; }
+  std::string description() const override { return "System application commands"; }
+  void setup(CLI::App *app) override {}
+
+public:
+  AppCommand() { registerCommand<LaunchAppCommand>(); }
+};
+
 class CliPing : public AbstractCommandLineCommand {
   std::string id() const override { return "ping"; }
   std::string description() const override { return "Ping the vicinae server"; }
@@ -194,6 +217,7 @@ int CommandLineInterface::execute(int ac, char **av) {
   app.registerCommand<DeeplinkCommand>();
   app.registerCommand<DMenuCommand>();
   app.registerCommand<ThemeCommand>();
+  app.registerCommand<AppCommand>();
 
   return app.run(ac, av);
 }

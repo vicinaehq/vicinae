@@ -24,6 +24,16 @@ void DaemonIpcClient::writeRequest(const Daemon::Request &req) {
   m_conn.waitForBytesWritten(1000);
 }
 
+void DaemonIpcClient::launchApp(const QString &id, const std::vector<QString> &args) {
+  QUrl url;
+  url.setScheme(Omnicast::APP_SCHEME);
+  url.setHost("apps");
+  url.setPath("/" + id);
+  if (auto res = deeplink(url); !res) {
+    throw std::runtime_error("Failed to launch app: " + res.error().toStdString());
+  }
+}
+
 void DaemonIpcClient::toggle() {
   QUrl url;
   url.setScheme(Omnicast::APP_SCHEME);

@@ -7,6 +7,7 @@
 #include "services/config/config-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/toast/toast-service.hpp"
+#include "services/app-service/app-service.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include <qapplication.h>
@@ -163,6 +164,16 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
   if (url.host() == "toast") {
     QString title = query.hasQueryItem("title") ? query.queryItemValue("title") : "Toast";
     m_ctx.services->toastService()->setToast(title, ToastStyle::Info);
+    return {};
+  }
+
+  if (url.host() == "apps") {
+    auto appId = url.path().sliced(1);
+    auto appDb = m_ctx.services->appDb();
+    auto app = appDb->findById(appId);
+    if (!app) { return tl::unexpected("No such app"); }
+
+    appDb->launch(*app);
     return {};
   }
 
