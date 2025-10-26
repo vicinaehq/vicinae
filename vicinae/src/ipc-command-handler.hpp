@@ -13,6 +13,7 @@ public:
 
   QFuture<proto::ext::daemon::Response *> processDmenu(const proto::ext::daemon::DmenuRequest &request);
   proto::ext::daemon::Response *launchApp(const proto::ext::daemon::LaunchAppRequest &request);
+  proto::ext::daemon::Response *listApps(const proto::ext::daemon::ListAppsRequest &request);
 
   IpcCommandHandler(ApplicationContext &ctx);
 

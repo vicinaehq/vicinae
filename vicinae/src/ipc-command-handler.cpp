@@ -46,6 +46,8 @@ IpcCommandHandler::handleCommand(const proto::ext::daemon::Request &request) {
     return processDmenu(request.dmenu());
   case Req::kLaunchApp:
     return launchApp(request.launch_app());
+  case Req::kListApps:
+    return listApps(request.list_apps());
   default:
     break;
   }
@@ -86,6 +88,40 @@ IpcCommandHandler::launchApp(const proto::ext::daemon::LaunchAppRequest &request
 
   if (!appDb->launch(*app, args)) {
     launchAppRes->set_error("Failed to launch app with id " + request.app_id());
+  }
+
+  return res;
+}
+
+proto::ext::daemon::Response *
+IpcCommandHandler::listApps(const proto::ext::daemon::ListAppsRequest &request) {
+  auto res = new proto::ext::daemon::Response;
+  auto listAppsRes = new proto::ext::daemon::ListAppsResponse;
+  auto appDb = m_ctx.services->appDb();
+
+  res->set_allocated_list_apps(listAppsRes);
+
+  auto apps = appDb->list();
+
+  for (const auto &app : apps) {
+    if (app->isAction() && !request.with_actions()) {
+      continue;
+    }
+
+    auto appInfo = listAppsRes->add_apps();
+    appInfo->set_id(app->id().toStdString());
+    appInfo->set_name(app->displayName().toStdString());
+    appInfo->set_hidden(!app->displayable());
+    appInfo->set_path(app->path().string());
+    appInfo->set_description(app->description().toStdString());
+    appInfo->set_program(app->program().toStdString());
+    appInfo->set_is_terminal_app(app->isTerminalApp());
+    appInfo->set_icon_url(app->iconUrl().name().toStdString());
+    appInfo->set_is_action(app->isAction());
+
+    for (const auto &keyword : app->keywords()) {
+      appInfo->add_keywords(keyword.toStdString());
+    }
   }
 
   return res;

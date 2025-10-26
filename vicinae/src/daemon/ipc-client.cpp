@@ -48,6 +48,26 @@ void DaemonIpcClient::launchApp(const std::string &id, const std::vector<std::st
   }
 }
 
+std::vector<proto::ext::daemon::AppInfo> DaemonIpcClient::listApps(bool withActions) {
+  Daemon::Request req;
+  auto listReq = new proto::ext::daemon::ListAppsRequest;
+
+  listReq->set_with_actions(withActions);
+
+  req.set_allocated_list_apps(listReq);
+  auto res = request(req);
+  auto listRes = res.list_apps();
+
+  std::vector<proto::ext::daemon::AppInfo> apps;
+  apps.reserve(listRes.apps_size());
+
+  for (const auto &app : listRes.apps()) {
+    apps.push_back(app);
+  }
+
+  return apps;
+}
+
 void DaemonIpcClient::toggle() {
   QUrl url;
   url.setScheme(Omnicast::APP_SCHEME);

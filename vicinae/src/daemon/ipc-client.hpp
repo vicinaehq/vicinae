@@ -30,6 +30,7 @@ public:
   void connectOrThrow();
   bool ping();
   void launchApp(const std::string &id, const std::vector<std::string> &args = {}, bool newInstance = false);
+  std::vector<proto::ext::daemon::AppInfo> listApps(bool withActions = false);
 
 private:
   void writeRequest(const proto::ext::daemon::Request &req);
