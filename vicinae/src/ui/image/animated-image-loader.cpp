@@ -17,26 +17,10 @@ void AnimatedIODeviceImageLoader::render(const RenderConfig &cfg) {
   connect(m_movie.get(), &QMovie::updated, this, [this, deviceSize, cfg]() {
     auto pix = m_movie->currentPixmap();
     QSize frameSize = pix.size();
-    // bool isDownScalable = frameSize.height() > deviceSize.height() || frameSize.width() >
-    // deviceSize.width();
-
     pix.setDevicePixelRatio(cfg.devicePixelRatio);
-
-    auto fitToAspectRatio = [](ObjectFit fit) {
-      switch (fit) {
-      case ObjectFit::Fill:
-        return Qt::KeepAspectRatioByExpanding;
-      case ObjectFit::Contain:
-        return Qt::KeepAspectRatio;
-      case ObjectFit::Stretch:
-        return Qt::IgnoreAspectRatio;
-      }
-      return Qt::IgnoreAspectRatio;
-    };
-    auto ar = fitToAspectRatio(cfg.fit);
+    auto ar = ImageURL::fitToAspectRatio(cfg.fit);
     auto size = frameSize.scaled(deviceSize, ar);
-
-    emit dataUpdated(pix.scaled(size, ar, Qt::SmoothTransformation));
+    emit dataUpdated(pix.scaled(size, ar, Qt::SmoothTransformation), false);
   });
   m_movie->start();
 }

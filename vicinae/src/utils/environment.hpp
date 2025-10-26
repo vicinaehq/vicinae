@@ -79,6 +79,12 @@ inline std::chrono::milliseconds pasteDelay() {
 
 inline bool isAppImage() { return appImageDir().has_value(); }
 
+inline int pixmapCacheLimit() {
+  static constexpr size_t MB = 1024 * 1024;
+  if (const char *delay = getenv("VICINAE_IMAGE_CACHE_SIZE")) { return std::stoi(delay); }
+  return 250 * MB; // we will very rarely reach this threshold anyways
+}
+
 inline QStringList fallbackIconSearchPaths() {
   QStringList list;
   auto dirs = xdgpp::dataDirs();

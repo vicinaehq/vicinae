@@ -8,12 +8,12 @@
 #include <QStyleHints>
 #include <qapplication.h>
 #include <qpalette.h>
+#include <qpixmapcache.h>
 
 void ThemeService::setTheme(const ThemeFile &info) {
   m_theme = std::make_unique<ThemeFile>(info);
 
   double mainInputSize = std::round(m_baseFontPointSize * 1.20);
-
   auto palette = QApplication::palette();
 
   palette.setBrush(QPalette::WindowText, info.resolve(SemanticColor::Foreground));
@@ -28,6 +28,7 @@ void ThemeService::setTheme(const ThemeFile &info) {
   Timer timer;
   QApplication::setPalette(palette);
   timer.time("Theme changed");
+  QPixmapCache::clear();
   emit themeChanged(info);
 }
 
