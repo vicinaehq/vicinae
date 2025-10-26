@@ -16,6 +16,119 @@
 #include "wlr-clip/app.hpp"
 #include "services/clipboard/wlr/wlr-clipboard-server.hpp"
 #include "version.h"
+#include <QJsonDocument>
+#include <QJsonArray>
+#include <QJsonObject>
+#include <iomanip>
+#include <sstream>
+
+class LaunchAppCommand : public AbstractCommandLineCommand {
+public:
+  std::string id() const override { return "launch"; }
+  std::string description() const override { return "Launch or focus an app from vicinae"; }
+  void setup(CLI::App *app) override {
+    app->add_option("app_id", m_appId, "The ID of the application");
+    app->add_option("args", m_args, "Arguments to pass to the launched application");
+    app->add_flag("--new", m_newInstance, "Always launch a new instance");
+  }
+  void run(CLI::App *app) override {
+    DaemonIpcClient client;
+    client.launchApp(m_appId.c_str(), m_args, m_newInstance);
+  }
+
+private:
+  std::string m_appId;
+  std::vector<std::string> m_args;
+  bool m_newInstance = false;
+};
+
+class ListAppsCommand : public AbstractCommandLineCommand {
+public:
+  std::string id() const override { return "list"; }
+  std::string description() const override { return "List all tracked applications"; }
+
+  void setup(CLI::App *app) override {
+    app->alias("ls");
+    app->add_flag("-j,--json", m_jsonOutput, "Output in JSON format");
+    app->add_flag("--with-actions", m_withActions, "Include application actions/subactions");
+  }
+
+  void run(CLI::App *app) override {
+    DaemonIpcClient client;
+    auto apps = client.listApps(m_withActions);
+
+    if (m_jsonOutput) {
+      outputJson(apps);
+    } else {
+      outputText(apps);
+    }
+  }
+
+private:
+  bool m_jsonOutput = false;
+  bool m_withActions = false;
+
+  void outputText(const std::vector<proto::ext::daemon::AppInfo> &apps) {
+    size_t maxIdLen = 2;
+    size_t maxNameLen = 4;
+
+    for (const auto &app : apps) {
+      maxIdLen = std::max(maxIdLen, app.id().length());
+      maxNameLen = std::max(maxNameLen, app.name().length());
+    }
+
+    std::cout << std::left << std::setw(maxIdLen + 2) << "ID" << std::setw(maxNameLen + 2) << "NAME"
+              << "HIDDEN" << std::endl;
+
+    std::cout << std::string(maxIdLen + 2, '-') << std::string(maxNameLen + 2, '-') << std::string(6, '-')
+              << std::endl;
+
+    for (const auto &app : apps) {
+      std::cout << std::left << std::setw(maxIdLen + 2) << app.id() << std::setw(maxNameLen + 2) << app.name()
+                << (app.hidden() ? "yes" : "no") << std::endl;
+    }
+  }
+
+  void outputJson(const std::vector<proto::ext::daemon::AppInfo> &apps) {
+    QJsonArray jsonApps;
+
+    for (const auto &app : apps) {
+      QJsonObject jsonApp;
+      jsonApp["id"] = QString::fromStdString(app.id());
+      jsonApp["name"] = QString::fromStdString(app.name());
+      jsonApp["hidden"] = app.hidden();
+      jsonApp["path"] = QString::fromStdString(app.path());
+      jsonApp["description"] = QString::fromStdString(app.description());
+      jsonApp["program"] = QString::fromStdString(app.program());
+      jsonApp["is_terminal_app"] = app.is_terminal_app();
+      jsonApp["icon_url"] = QString::fromStdString(app.icon_url());
+      jsonApp["is_action"] = app.is_action();
+
+      QJsonArray keywords;
+      for (const auto &kw : app.keywords()) {
+        keywords.append(QString::fromStdString(kw));
+      }
+      jsonApp["keywords"] = keywords;
+
+      jsonApps.append(jsonApp);
+    }
+
+    QJsonDocument doc(jsonApps);
+    std::cout << doc.toJson(QJsonDocument::Indented).toStdString();
+  }
+};
+
+class AppCommand : public AbstractCommandLineCommand {
+  std::string id() const override { return "app"; }
+  std::string description() const override { return "System application commands"; }
+  void setup(CLI::App *app) override {}
+
+public:
+  AppCommand() {
+    registerCommand<LaunchAppCommand>();
+    registerCommand<ListAppsCommand>();
+  }
+};
 
 class CliPing : public AbstractCommandLineCommand {
   std::string id() const override { return "ping"; }
@@ -194,6 +307,7 @@ int CommandLineInterface::execute(int ac, char **av) {
   app.registerCommand<DeeplinkCommand>();
   app.registerCommand<DMenuCommand>();
   app.registerCommand<ThemeCommand>();
+  app.registerCommand<AppCommand>();
 
   return app.run(ac, av);
 }

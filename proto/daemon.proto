@@ -26,6 +26,38 @@ message DmenuRequest {
   bool no_section = 6;
 };
 
+message LaunchAppRequest {
+  string app_id = 1;
+  repeated string args = 2;
+  bool new_instance = 3;
+};
+
+message LaunchAppResponse {
+  string error = 1;
+  string focused_window_title = 2;
+};
+
+message ListAppsRequest {
+  bool with_actions = 1;
+};
+
+message AppInfo {
+  string id = 1;
+  string name = 2;
+  bool hidden = 3;
+  string path = 4;
+  string description = 5;
+  string program = 6;
+  bool is_terminal_app = 7;
+  repeated string keywords = 8;
+  string icon_url = 9;
+  bool is_action = 10;
+};
+
+message ListAppsResponse {
+  repeated AppInfo apps = 1;
+};
+
 message DmenuResponse {
   string output = 1;
 };
@@ -35,6 +67,8 @@ message Request {
     PingRequest ping = 1;
     UrlRequest url = 2;
     DmenuRequest dmenu = 3;
+    LaunchAppRequest launch_app = 4;
+    ListAppsRequest list_apps = 5;
   };
 };
 
@@ -43,5 +77,7 @@ message Response {
     PingResponse ping = 1;
     UrlResponse url = 2;
     DmenuResponse dmenu = 3;
+    LaunchAppResponse launch_app = 4;
+    ListAppsResponse list_apps = 5;
   };
 };
