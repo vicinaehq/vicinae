@@ -9,8 +9,6 @@ variant = "{{mode}}"
 # ============================================================================
 # Core Colors
 # ============================================================================
-# Foundation colors that define the entire theme's personality
-# Uses Material You's semantic color system for perfect harmony
 
 [colors.core]
 accent = "{{colors.primary.default.hex}}"
@@ -21,9 +19,8 @@ secondary_background = "{{colors.surface_container.default.hex}}"
 border = "{{colors.outline_variant.default.hex}}"
 
 # ============================================================================
-# Window-Specific Colors
+# Window Borders
 # ============================================================================
-# Different borders for visual hierarchy between window types
 
 [colors.main_window]
 border = "{{colors.outline_variant.default.hex}}"
@@ -32,32 +29,29 @@ border = "{{colors.outline_variant.default.hex}}"
 border = "{{colors.outline.default.hex}}"
 
 # ============================================================================
-# Accent Colors
+# Accent Palette
 # ============================================================================
-# Complete color palette using Material You's harmonious color generation
-# Maps to various UI elements throughout Vicinae
 
 [colors.accents]
 blue = "{{colors.primary.default.hex}}"
 green = "{{colors.tertiary.default.hex}}"
 magenta = "{{colors.secondary.default.hex}}"
-orange = "{{colors.error.default.hex}}"
+orange = { name = "{{colors.error.default.hex}}", lighter = 40 }
 red = "{{colors.error.default.hex}}"
-yellow = "{{colors.tertiary.default.hex}}"
-cyan = "{{colors.primary.default.hex}}"
+yellow = { name = "{{colors.tertiary.default.hex}}", lighter = 80 }
+cyan = { name = "{{colors.primary.default.hex}}", lighter = 50 }
 purple = "{{colors.secondary.default.hex}}"
 
 # ============================================================================
-# Text Colors
+# Text System
 # ============================================================================
-# Semantic text colors for all states and contexts
 
 [colors.text]
 default = "{{colors.on_surface.default.hex}}"
 muted = "{{colors.on_surface_variant.default.hex}}"
 danger = "{{colors.error.default.hex}}"
 success = "{{colors.tertiary.default.hex}}"
-placeholder = "{{colors.on_surface_variant.default.hex}}"
+placeholder = { name = "{{colors.on_surface_variant.default.hex}}", opacity = 0.6 }
 
 [colors.text.selection]
 background = "{{colors.primary.default.hex}}"
@@ -65,12 +59,11 @@ foreground = "{{colors.on_primary.default.hex}}"
 
 [colors.text.links]
 default = "{{colors.primary.default.hex}}"
-visited = "{{colors.secondary.default.hex}}"
+visited = { name = "{{colors.tertiary.default.hex}}", darker = 20 }
 
 # ============================================================================
 # Input Fields
 # ============================================================================
-# Text inputs, search boxes with proper focus states
 
 [colors.input]
 border = "{{colors.outline.default.hex}}"
@@ -80,29 +73,27 @@ border_error = "{{colors.error.default.hex}}"
 # ============================================================================
 # Buttons
 # ============================================================================
-# All button states with subtle hover effects and focus indicators
 
 [colors.button.primary]
 background = "{{colors.surface_container_high.default.hex}}"
 foreground = "{{colors.on_surface.default.hex}}"
 
 [colors.button.primary.hover]
-background = { name = "{{colors.surface_container_highest.default.hex}}", opacity = 0.85 }
+background = "{{colors.surface_container_highest.default.hex}}"  
 
 [colors.button.primary.focus]
-outline = "colors.core.accent"
+outline = "{{colors.primary.default.hex}}"
 
 # ============================================================================
 # Lists
 # ============================================================================
-# Horizontal list views with elevation-based selection
 
 [colors.list.item.hover]
-background = { name = "{{colors.surface_container_high.default.hex}}", opacity = 0.7 }
+background = { name = "{{colors.primary_container.default.hex}}", opacity = 0.25 }  
 foreground = "{{colors.on_surface.default.hex}}"
 
 [colors.list.item.selection]
-background = { name = "{{colors.primary_container.default.hex}}", opacity = 0.5 }
+background = { name = "{{colors.primary_container.default.hex}}", opacity = 0.50 }
 foreground = "{{colors.on_primary_container.default.hex}}"
 secondary_background = "{{colors.primary_container.default.hex}}"
 secondary_foreground = "{{colors.on_primary_container.default.hex}}"
@@ -110,29 +101,26 @@ secondary_foreground = "{{colors.on_primary_container.default.hex}}"
 # ============================================================================
 # Grid Items
 # ============================================================================
-# Grid layouts (icon grids, tiles) with outline-based selection
 
 [colors.grid.item]
 background = "{{colors.surface_container.default.hex}}"
 
 [colors.grid.item.hover]
-outline = { name = "{{colors.primary.default.hex}}", opacity = 0.6 }
+outline = { name = "{{colors.secondary.default.hex}}", opacity = 0.8 }
 
 [colors.grid.item.selection]
-outline = { name = "{{colors.primary.default.hex}}", opacity = 0.9 }
+outline = { name = "{{colors.primary.default.hex}}" }
 
 # ============================================================================
 # Scrollbars
 # ============================================================================
-# Subtle scrollbar styling
 
 [colors.scrollbars]
-background = { name = "{{colors.on_surface.default.hex}}", opacity = 0.2 }
+background = { name = "{{colors.primary.default.hex}}", opacity = 0.2 }
 
 # ============================================================================
-# Loading Indicators
+# Loading States
 # ============================================================================
-# Progress bars and spinners for loading states
 
 [colors.loading]
 bar = "{{colors.primary.default.hex}}"
