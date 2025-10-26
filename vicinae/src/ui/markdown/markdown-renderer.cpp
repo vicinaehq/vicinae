@@ -474,6 +474,7 @@ MarkdownRenderer::MarkdownRenderer()
   _document->setUseDesignMetrics(true);
   _textEdit->setReadOnly(true);
   _textEdit->setFrameShape(QFrame::NoFrame);
+  _textEdit->setOpenExternalLinks(true);
   _textEdit->setDocument(_document);
   _textEdit->setVerticalScrollBar(new OmniScrollBar);
   _document->setDocumentMargin(10);
