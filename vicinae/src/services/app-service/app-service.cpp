@@ -78,6 +78,8 @@ bool AppService::openTarget(const QString &target) const {
   return false;
 }
 
+bool AppService::openTarget(const QUrl &target) const { return openTarget(target.toString()); }
+
 std::vector<fs::path> AppService::defaultSearchPaths() const { return m_provider->defaultSearchPaths(); }
 
 std::shared_ptr<AbstractApplication> AppService::textEditor() const {
