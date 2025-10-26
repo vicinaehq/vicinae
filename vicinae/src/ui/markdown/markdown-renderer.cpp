@@ -29,7 +29,6 @@
 #include <qtextlist.h>
 #include <qurl.h>
 #include <qurlquery.h>
-#include <x86gprintrin.h>
 #include "services/config/config-service.hpp"
 
 int MarkdownRenderer::getHeadingLevelPointSize(int level) const {
