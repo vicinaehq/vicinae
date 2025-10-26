@@ -33,6 +33,7 @@
 #include "vicinae.hpp"
 #include <QString>
 #include <qlogging.h>
+#include <qpixmapcache.h>
 #include <qstylefactory.h>
 #include "lib/CLI11.hpp"
 #include "server.hpp"
@@ -186,6 +187,7 @@ void CliServerCommand::run(CLI::App *app) {
     registry->fileService()->indexer()->start();
   }
 
+  QPixmapCache::setCacheLimit(Environment::pixmapCacheLimit());
   FaviconService::initialize(new FaviconService(Omnicast::dataDir() / "favicon"));
   QApplication::setApplicationName("vicinae");
   QApplication::setQuitOnLastWindowClosed(false);

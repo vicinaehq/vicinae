@@ -9,24 +9,55 @@
 #include "ui/image/local-image-loader.hpp"
 #include "ui/image/emoji-image-loader.hpp"
 #include "ui/image/qicon-image-loader.hpp"
+#include <qnamespace.h>
 #include <qpainterpath.h>
+#include <qpixmapcache.h>
 
-void ImageWidget::handleDataUpdated(const QPixmap &data) {
+void ImageWidget::handleDataUpdated(const QPixmap &data, bool cachable) {
+  if (cachable && m_source.cachable()) {
+    QPixmap cached;
+    bool isBigger = true;
+    if (QPixmapCache::find(m_source.cacheKey(), &cached); !cached.isNull()) {
+      isBigger = data.width() * data.height() > cached.width() * cached.height();
+    }
+    if (isBigger) { QPixmapCache::insert(m_source.cacheKey(), data); }
+  }
+
   m_data = data;
   update();
 }
 
 void ImageWidget::render() {
-  if (size().isNull() || size().isEmpty() || !size().isValid()) return;
-
+  if (size().isNull() || size().isEmpty() || !size().isValid()) { return; }
   if (!m_loader) { return; }
-
   QSize drawableSize = rect().marginsRemoved(contentsMargins()).size();
+
+  ++m_renderCount;
+
+  if (m_source.cachable()) {
+    QPixmap cached;
+
+    if (QPixmapCache::find(m_source.cacheKey(), &cached); !cached.isNull()) {
+      if (drawableSize == cached.size()) {
+        m_data = cached;
+        update();
+        return;
+      }
+
+      bool downScalable = drawableSize.width() * drawableSize.height() <= cached.width() * cached.height();
+
+      if (downScalable) {
+        m_data = cached.scaled(drawableSize, ImageURL::fitToAspectRatio(m_fit), Qt::SmoothTransformation);
+        update();
+        return;
+      }
+    }
+  }
+
   qreal pixelRatio = 1;
 
   if (auto sc = screen()) { pixelRatio = sc->devicePixelRatio(); }
 
-  m_renderCount += 1;
   m_loader->render(RenderConfig{
       .size = drawableSize, .fit = m_fit, .devicePixelRatio = pixelRatio, .fill = m_source.fillColor()});
 }
@@ -152,7 +183,7 @@ void ImageWidget::showEvent(QShowEvent *event) {
 }
 
 void ImageWidget::paintEvent(QPaintEvent *event) {
-  if (m_data.isNull()) return;
+  if (m_data.isNull()) { return; }
 
   auto logicalDataSize = m_data.size() / m_data.devicePixelRatio();
   int horizontalMargins = width() - logicalDataSize.width();
