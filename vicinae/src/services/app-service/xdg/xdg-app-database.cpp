@@ -8,6 +8,7 @@
 #include <qsettings.h>
 
 #include <queue>
+#include <qurl.h>
 #include <set>
 #include <QDir>
 #include <xdgpp/desktop-entry/iterator.hpp>
@@ -19,7 +20,6 @@ namespace fs = std::filesystem;
 using AppPtr = XdgAppDatabase::AppPtr;
 
 std::shared_ptr<AbstractApplication> XdgAppDatabase::defaultForMime(const QString &mime) const {
-
   for (const auto &list : m_mimeAppsLists) {
     for (const auto &appId : list.defaultAssociations(mime.toStdString())) {
       if (auto appIt = appMap.find(appId.c_str()); appIt != appMap.end()) { return appIt->second; }
@@ -32,6 +32,13 @@ std::shared_ptr<AbstractApplication> XdgAppDatabase::defaultForMime(const QStrin
 }
 
 AppPtr XdgAppDatabase::findDefaultOpener(const QString &target) const {
+  if (QUrl url = target; url.isValid()) {
+    if (auto scheme = url.scheme(); !scheme.isEmpty()) {
+      if (scheme == "http" || scheme == "https") return webBrowser();
+      if (scheme == "file") return fileBrowser();
+    }
+  }
+
   return defaultForMime(mimeNameForTarget(target));
 }
 

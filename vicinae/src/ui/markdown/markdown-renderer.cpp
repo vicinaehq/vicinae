@@ -492,8 +492,11 @@ MarkdownRenderer::MarkdownRenderer()
 
   connect(config, &ConfigService::configChanged, this,
           [this, config]() { _basePointSize = config->value().font.baseSize; });
-  connect(_textEdit, &QTextBrowser::anchorClicked, this,
-          [](const QUrl &url) { ServiceRegistry::instance()->appDb()->openTarget(url); });
+  connect(_textEdit, &QTextBrowser::anchorClicked, this, [](const QUrl &url) {
+    if (!ServiceRegistry::instance()->appDb()->openTarget(url)) {
+      qWarning() << "Failed to open link" << url;
+    }
+  });
 
   _cursor = QTextCursor(_document);
 }
