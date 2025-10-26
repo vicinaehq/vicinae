@@ -27,6 +27,10 @@ struct RenderConfig {
 class AbstractImageLoader : public QObject {
   Q_OBJECT
 
+signals:
+  void dataUpdated(const QPixmap &data, bool cachable = true) const;
+  void errorOccured(const QString &errorDescription) const;
+
 public:
   /**
    * Asks the loader to (re)load the image data and to start emitting
@@ -40,10 +44,6 @@ public:
     connect(this, &AbstractImageLoader::dataUpdated, other, &AbstractImageLoader::dataUpdated);
     connect(this, &AbstractImageLoader::errorOccured, other, &AbstractImageLoader::errorOccured);
   }
-
-signals:
-  void dataUpdated(const QPixmap &data) const;
-  void errorOccured(const QString &errorDescription) const;
 };
 
 class ImageWidget : public QWidget {
@@ -71,7 +71,7 @@ private:
   void resizeEvent(QResizeEvent *event) override;
   void handleLoadingError(const QString &reason);
   void showEvent(QShowEvent *event) override;
-  void handleDataUpdated(const QPixmap &data);
+  void handleDataUpdated(const QPixmap &data, bool cachable);
   QSize sizeHint() const override;
   void setUrlImpl(const ImageURL &url);
   void refreshTheme(const ThemeFile &theme);

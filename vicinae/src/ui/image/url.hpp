@@ -4,6 +4,7 @@
 #include "theme.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
 #include <filesystem>
+#include <qnamespace.h>
 #include <qstringview.h>
 #include <vector>
 #include <QString>
@@ -28,8 +29,9 @@ static std::vector<std::pair<QString, SemanticColor>> colorTints = {
     {"secondary-text", SemanticColor::TextMuted}};
 
 class ImageURL {
-
 public:
+  static Qt::AspectRatioMode fitToAspectRatio(ObjectFit fit);
+
   ImageURL &circle() {
     setMask(OmniPainter::CircleMask);
     return *this;
@@ -89,6 +91,10 @@ public:
   const std::optional<ColorLike> &fillColor() const;
   OmniPainter::ImageMaskType mask() const;
   std::optional<ObjectFit> fit() const { return m_fit; }
+  QString cacheKey() const { return m_cacheKey.value_or(toString()); }
+  void setCacheKey(const QString &key) { m_cacheKey = key; }
+  bool cachable() const { return m_cache; }
+  void setCachable(bool value) { m_cache = value; }
 
   void setFit(ObjectFit fit) { m_fit = fit; }
   void setType(ImageURLType type);
@@ -122,12 +128,14 @@ private:
   ImageURLType _type = ImageURLType::Invalid;
   bool _isValid = false;
   QString _name;
+  bool m_cache = true;
   std::optional<SemanticColor> _bgTint;
   std::optional<SemanticColor> _fgTint;
   OmniPainter::ImageMaskType _mask = OmniPainter::ImageMaskType::NoMask;
   std::optional<QString> _fallback;
   std::optional<ColorLike> _fillColor = std::nullopt;
   std::optional<ObjectFit> m_fit;
+  std::optional<QString> m_cacheKey;
 
   // url dependant custom params
   std::map<QString, QString> m_params;

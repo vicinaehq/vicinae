@@ -10,6 +10,18 @@
 #include <qurlquery.h>
 #include "url.hpp"
 
+Qt::AspectRatioMode ImageURL::fitToAspectRatio(ObjectFit fit) {
+  switch (fit) {
+  case ObjectFit::Fill:
+    return Qt::KeepAspectRatioByExpanding;
+  case ObjectFit::Contain:
+    return Qt::KeepAspectRatio;
+  case ObjectFit::Stretch:
+    return Qt::IgnoreAspectRatio;
+  }
+  return Qt::IgnoreAspectRatio;
+}
+
 ImageURL &ImageURL::setFill(const std::optional<ColorLike> &color) {
   _fillColor = color;
   return *this;
@@ -246,6 +258,7 @@ ImageURL ImageURL::favicon(const QString &domain) {
 
   url.setType(ImageURLType::Favicon);
   url.setName(domain);
+  url.setCacheKey(domain);
 
   return url;
 }
@@ -255,6 +268,7 @@ ImageURL ImageURL::system(const QString &name) {
 
   url.setType(ImageURLType::System);
   url.setName(name);
+  url.setCacheKey("system." + name);
 
   return url;
 }
@@ -263,6 +277,7 @@ ImageURL ImageURL::local(const QString &path) {
   ImageURL url;
 
   url.setType(ImageURLType::Local);
+  url.setCacheKey(path);
   url.setName(path);
 
   return url;
@@ -275,6 +290,7 @@ ImageURL ImageURL::http(const QUrl &httpUrl) {
 
   url.setType(ImageURLType::Http);
   url.setName(httpUrl.host() + httpUrl.path());
+  url.setCacheKey(httpUrl.toString());
 
   return url;
 }

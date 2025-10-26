@@ -15,20 +15,8 @@ QImage StaticIODeviceImageLoader::loadStatic(const QByteArray &bytes, const Rend
   bool isDownScalable =
       originalSize.height() > deviceSize.height() || originalSize.width() > deviceSize.width();
 
-  auto fitToAspectRatio = [](ObjectFit fit) {
-    switch (fit) {
-    case ObjectFit::Fill:
-      return Qt::KeepAspectRatioByExpanding;
-    case ObjectFit::Contain:
-      return Qt::KeepAspectRatio;
-    case ObjectFit::Stretch:
-      return Qt::IgnoreAspectRatio;
-    }
-    return Qt::IgnoreAspectRatio;
-  };
-
   if (originalSize.isValid() && isDownScalable) {
-    reader.setScaledSize(originalSize.scaled(deviceSize, fitToAspectRatio(cfg.fit)));
+    reader.setScaledSize(originalSize.scaled(deviceSize, ImageURL::fitToAspectRatio(cfg.fit)));
   }
 
   auto image = reader.read();
