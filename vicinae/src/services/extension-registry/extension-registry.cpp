@@ -16,12 +16,17 @@
 namespace fs = std::filesystem;
 
 ExtensionRegistry::ExtensionRegistry(LocalStorageService &storage) : m_storage(storage) {
+  using namespace std::chrono_literals;
+
+  m_rescanDebounce.setInterval(100ms);
+  m_rescanDebounce.setSingleShot(true);
   m_watcher->addPath(extensionDir().c_str());
 
   // XXX: we currently do not support removing extensions by filesystem removal
   // An extension should be removed from within Vicinae directly so that other cleanup tasks
   // can be performed.
-  connect(m_watcher, &QFileSystemWatcher::directoryChanged, this, [this]() { requestScan(); });
+  connect(m_watcher, &QFileSystemWatcher::directoryChanged, this, [this]() { m_rescanDebounce.start(); });
+  connect(&m_rescanDebounce, &QTimer::timeout, this, [this]() { requestScan(); });
 }
 
 fs::path ExtensionRegistry::extensionDir() const { return Omnicast::dataDir() / "extensions"; }
