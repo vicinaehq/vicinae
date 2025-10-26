@@ -9,6 +9,7 @@
 #include <wayland-client-protocol.h>
 #include <wayland-util.h>
 #include <sys/mman.h>
+#include <QGuiApplication>
 #include "virtual-keyboard.hpp"
 
 namespace chrono = std::chrono;
