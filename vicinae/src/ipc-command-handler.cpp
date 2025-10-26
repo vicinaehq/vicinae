@@ -244,16 +244,6 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
     return {};
   }
 
-  if (url.host() == "apps") {
-    auto appId = url.path().sliced(1);
-    auto appDb = m_ctx.services->appDb();
-    auto app = appDb->findById(appId);
-    if (!app) { return tl::unexpected("No such app"); }
-
-    appDb->launch(*app);
-    return {};
-  }
-
   if (url.host() == "extensions") {
     auto root = m_ctx.services->rootItemManager();
 
