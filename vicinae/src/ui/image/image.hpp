@@ -53,20 +53,11 @@ public:
   void setObjectFit(ObjectFit fit);
   const ImageURL &url() const;
   void setUrl(const ImageURL &url);
+  void setData(const QPixmap &pixmap);
   ImageWidget(QWidget *parent = nullptr);
   ~ImageWidget();
 
 private:
-  QObjectUniquePtr<AbstractImageLoader> m_loader;
-  QPixmap m_data;
-  ImageURL m_source;
-  QString m_fallback;
-  int m_renderCount = 0;
-  ObjectFit m_fit = ObjectFit::Contain;
-  QFlags<Qt::AlignmentFlag> m_alignment = Qt::AlignCenter;
-  std::optional<ColorLike> m_backgroundColor;
-  int m_borderRadius = 4;
-
   void paintEvent(QPaintEvent *event) override;
   void resizeEvent(QResizeEvent *event) override;
   void handleLoadingError(const QString &reason);
@@ -75,4 +66,16 @@ private:
   QSize sizeHint() const override;
   void setUrlImpl(const ImageURL &url);
   void refreshTheme(const ThemeFile &theme);
+  QString sizedCacheKey(const QString &key, const QSize &size) const;
+
+  QObjectUniquePtr<AbstractImageLoader> m_loader;
+  QPixmap m_data;
+  ImageURL m_source;
+  QString m_fallback;
+  int m_renderCount = 0;
+  uint8_t m_token = 0;
+  ObjectFit m_fit = ObjectFit::Contain;
+  QFlags<Qt::AlignmentFlag> m_alignment = Qt::AlignCenter;
+  std::optional<ColorLike> m_backgroundColor;
+  int m_borderRadius = 4;
 };
