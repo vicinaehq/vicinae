@@ -5,8 +5,6 @@
 #include "local-image-loader.hpp"
 
 void LocalImageLoader::render(const RenderConfig &cfg) {
-  qDebug() << "loading local image" << m_path;
-
   if (m_path.extension() == ".svg") {
     m_loader = std::make_unique<SvgImageLoader>(QString(m_path.c_str()));
   } else {
