@@ -150,7 +150,8 @@ public:
       if (!app) { app = appDb->findById(win->wmClass()); }
 
       bool appMatches = app && app->displayName().contains(s, Qt::CaseInsensitive);
-      bool matches = appMatches || win->title().contains(s, Qt::CaseInsensitive);
+      bool matches = appMatches || win->title().contains(s, Qt::CaseInsensitive) ||
+                     win->wmClass().contains(s, Qt::CaseInsensitive);
 
       if (!matches) continue;
 
