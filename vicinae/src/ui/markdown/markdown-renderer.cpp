@@ -21,6 +21,7 @@
 #include <qstringview.h>
 #include <QTextDocumentFragment>
 #include <QTextList>
+#include <qtextbrowser.h>
 #include <qtextcursor.h>
 #include <qtextdocument.h>
 #include <qtextformat.h>
@@ -463,7 +464,8 @@ void MarkdownRenderer::setFont(const QFont &font) {
 void MarkdownRenderer::setGrowAsRequired(bool value) { m_growAsRequired = value; }
 
 MarkdownRenderer::MarkdownRenderer()
-    : _document(new QTextDocument), _textEdit(new QTextEdit(this)), _basePointSize(DEFAULT_BASE_POINT_SIZE) {
+    : _document(new QTextDocument), _textEdit(new QTextBrowser(this)),
+      _basePointSize(DEFAULT_BASE_POINT_SIZE) {
   auto layout = new QVBoxLayout;
 
   _lastNodePosition.renderedText = 0;
