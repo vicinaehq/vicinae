@@ -1,5 +1,4 @@
 #pragma once
-#include "../image/url.hpp"
 #include "ui/image/image.hpp"
 #include <QTextBlock>
 #include <qlogging.h>
@@ -8,6 +7,7 @@
 #include <qstring.h>
 #include <cmark-gfm.h>
 #include <qstringview.h>
+#include <qtextbrowser.h>
 #include <qtextcursor.h>
 #include <qtextdocument.h>
 #include <qtextedit.h>
@@ -33,7 +33,7 @@ class MarkdownRenderer : public QWidget {
   std::vector<ImageResource> m_images;
   QString _markdown;
   QFont m_font;
-  QTextEdit *_textEdit;
+  QTextBrowser *_textEdit;
   QTextDocument *_document;
   QTextCursor _cursor;
   int _basePointSize;

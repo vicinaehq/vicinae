@@ -70,6 +70,7 @@ public:
   void setAdditionalSearchPaths(const std::vector<std::filesystem::path> &paths);
 
   bool openTarget(const QString &target) const;
+  bool openTarget(const QUrl &target) const;
 
   /**
    * Scan application directories synchronously.

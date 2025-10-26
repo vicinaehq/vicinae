@@ -6,6 +6,7 @@
 #include "ui/image/image.hpp"
 #include "ui/image/local-image-loader.hpp"
 #include "ui/scroll-bar/scroll-bar.hpp"
+#include "services/app-service/app-service.hpp"
 #include <cmark-gfm.h>
 #include <qapplication.h>
 #include <qboxlayout.h>
@@ -21,6 +22,7 @@
 #include <qstringview.h>
 #include <QTextDocumentFragment>
 #include <QTextList>
+#include <qtextbrowser.h>
 #include <qtextcursor.h>
 #include <qtextdocument.h>
 #include <qtextformat.h>
@@ -463,7 +465,8 @@ void MarkdownRenderer::setFont(const QFont &font) {
 void MarkdownRenderer::setGrowAsRequired(bool value) { m_growAsRequired = value; }
 
 MarkdownRenderer::MarkdownRenderer()
-    : _document(new QTextDocument), _textEdit(new QTextEdit(this)), _basePointSize(DEFAULT_BASE_POINT_SIZE) {
+    : _document(new QTextDocument), _textEdit(new QTextBrowser(this)),
+      _basePointSize(DEFAULT_BASE_POINT_SIZE) {
   auto layout = new QVBoxLayout;
 
   _lastNodePosition.renderedText = 0;
@@ -472,6 +475,7 @@ MarkdownRenderer::MarkdownRenderer()
   _document->setUseDesignMetrics(true);
   _textEdit->setReadOnly(true);
   _textEdit->setFrameShape(QFrame::NoFrame);
+  _textEdit->setOpenLinks(false); // we handle this ourselves, see below.
   _textEdit->setDocument(_document);
   _textEdit->setVerticalScrollBar(new OmniScrollBar);
   _document->setDocumentMargin(10);
@@ -487,6 +491,11 @@ MarkdownRenderer::MarkdownRenderer()
 
   connect(config, &ConfigService::configChanged, this,
           [this, config]() { _basePointSize = config->value().font.baseSize; });
+  connect(_textEdit, &QTextBrowser::anchorClicked, this, [](const QUrl &url) {
+    if (!ServiceRegistry::instance()->appDb()->openTarget(url)) {
+      qWarning() << "Failed to open link" << url;
+    }
+  });
 
   _cursor = QTextCursor(_document);
 }
