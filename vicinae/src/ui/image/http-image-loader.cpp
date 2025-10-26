@@ -3,7 +3,6 @@
 #include <qbuffer.h>
 
 void HttpImageLoader::render(const RenderConfig &cfg) {
-  qDebug() << "fetching" << m_url;
   if (m_reply) { m_reply->abort(); }
 
   QNetworkRequest request(m_url);
