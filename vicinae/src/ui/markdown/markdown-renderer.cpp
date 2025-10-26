@@ -6,6 +6,7 @@
 #include "ui/image/image.hpp"
 #include "ui/image/local-image-loader.hpp"
 #include "ui/scroll-bar/scroll-bar.hpp"
+#include "services/app-service/app-service.hpp"
 #include <cmark-gfm.h>
 #include <qapplication.h>
 #include <qboxlayout.h>
@@ -28,6 +29,7 @@
 #include <qtextlist.h>
 #include <qurl.h>
 #include <qurlquery.h>
+#include <x86gprintrin.h>
 #include "services/config/config-service.hpp"
 
 int MarkdownRenderer::getHeadingLevelPointSize(int level) const {
@@ -474,7 +476,7 @@ MarkdownRenderer::MarkdownRenderer()
   _document->setUseDesignMetrics(true);
   _textEdit->setReadOnly(true);
   _textEdit->setFrameShape(QFrame::NoFrame);
-  _textEdit->setOpenExternalLinks(true);
+  _textEdit->setOpenLinks(false); // we handle this ourselves, see below.
   _textEdit->setDocument(_document);
   _textEdit->setVerticalScrollBar(new OmniScrollBar);
   _document->setDocumentMargin(10);
@@ -490,6 +492,8 @@ MarkdownRenderer::MarkdownRenderer()
 
   connect(config, &ConfigService::configChanged, this,
           [this, config]() { _basePointSize = config->value().font.baseSize; });
+  connect(_textEdit, &QTextBrowser::anchorClicked, this,
+          [](const QUrl &url) { ServiceRegistry::instance()->appDb()->openTarget(url); });
 
   _cursor = QTextCursor(_document);
 }
