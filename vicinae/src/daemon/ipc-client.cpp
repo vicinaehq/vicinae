@@ -1,6 +1,7 @@
 #include "ipc-client.hpp"
 #include "proto/daemon.pb.h"
 #include "vicinae.hpp"
+#include <iostream>
 #include <qlocalsocket.h>
 #include <stdexcept>
 
@@ -22,6 +23,49 @@ void DaemonIpcClient::writeRequest(const Daemon::Request &req) {
   dataStream << QByteArray(data.data(), data.size());
   m_conn.write(message);
   m_conn.waitForBytesWritten(1000);
+}
+
+void DaemonIpcClient::launchApp(const std::string &id, const std::vector<std::string> &args,
+                                bool newInstance) {
+  Daemon::Request req;
+  auto launchReq = new proto::ext::daemon::LaunchAppRequest;
+
+  launchReq->set_app_id(id);
+  launchReq->set_new_instance(newInstance);
+
+  for (const auto &arg : args) {
+    launchReq->add_args(arg);
+  }
+
+  req.set_allocated_launch_app(launchReq);
+  auto res = request(req);
+  auto launchRes = res.launch_app();
+
+  if (auto str = launchRes.error(); !str.empty()) { throw std::runtime_error(launchRes.error()); }
+  if (auto focused = launchRes.focused_window_title(); !focused.empty()) {
+    std::cerr << "Focused existing window: " << std::quoted(focused)
+              << "\nPass --new if you want to spawn up a new instance every time." << std::endl;
+  }
+}
+
+std::vector<proto::ext::daemon::AppInfo> DaemonIpcClient::listApps(bool withActions) {
+  Daemon::Request req;
+  auto listReq = new proto::ext::daemon::ListAppsRequest;
+
+  listReq->set_with_actions(withActions);
+
+  req.set_allocated_list_apps(listReq);
+  auto res = request(req);
+  auto listRes = res.list_apps();
+
+  std::vector<proto::ext::daemon::AppInfo> apps;
+  apps.reserve(listRes.apps_size());
+
+  for (const auto &app : listRes.apps()) {
+    apps.push_back(app);
+  }
+
+  return apps;
 }
 
 void DaemonIpcClient::toggle() {
