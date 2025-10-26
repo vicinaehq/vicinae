@@ -20,15 +20,21 @@
 class LaunchAppCommand : public AbstractCommandLineCommand {
 public:
   std::string id() const override { return "launch"; }
-  std::string description() const override { return "Launch an app from vicinae"; }
-  void setup(CLI::App *app) override { app->add_option("app_id", m_appId, "The ID of the application"); }
+  std::string description() const override { return "Launch or focus an app from vicinae"; }
+  void setup(CLI::App *app) override {
+    app->add_option("app_id", m_appId, "The ID of the application");
+    app->add_option("args", m_args, "Arguments to pass to the launched application");
+    app->add_flag("--new", m_newInstance, "Always launch a new instance");
+  }
   void run(CLI::App *app) override {
     DaemonIpcClient client;
-    client.launchApp(m_appId.c_str());
+    client.launchApp(m_appId.c_str(), m_args, m_newInstance);
   }
 
 private:
   std::string m_appId;
+  std::vector<std::string> m_args;
+  bool m_newInstance = false;
 };
 
 class AppCommand : public AbstractCommandLineCommand {

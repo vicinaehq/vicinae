@@ -4,6 +4,7 @@
 #include <QDebug>
 #include "theme/theme-db.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
+#include "services/window-manager/window-manager.hpp"
 #include "services/config/config-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/toast/toast-service.hpp"
@@ -43,8 +44,48 @@ IpcCommandHandler::handleCommand(const proto::ext::daemon::Request &request) {
   }
   case Req::kDmenu:
     return processDmenu(request.dmenu());
+  case Req::kLaunchApp:
+    return launchApp(request.launch_app());
   default:
     break;
+  }
+
+  return res;
+}
+
+proto::ext::daemon::Response *
+IpcCommandHandler::launchApp(const proto::ext::daemon::LaunchAppRequest &request) {
+  auto res = new proto::ext::daemon::Response;
+  auto launchAppRes = new proto::ext::daemon::LaunchAppResponse;
+  auto appDb = m_ctx.services->appDb();
+  auto wm = m_ctx.services->windowManager();
+  auto app = appDb->findById(request.app_id().c_str());
+
+  res->set_allocated_launch_app(launchAppRes);
+
+  if (!app) {
+    launchAppRes->set_error("No app with id " + request.app_id());
+    return res;
+  }
+
+  if (!request.new_instance()) {
+    if (auto wins = wm->findAppWindows(*app); !wins.empty()) {
+      auto &win = wins.front();
+      wm->provider()->focusWindowSync(*win);
+      launchAppRes->set_focused_window_title(win->title().toStdString());
+      return res;
+    }
+  }
+
+  std::vector<QString> args;
+
+  args.reserve(request.args().size());
+  for (const auto &arg : request.args()) {
+    args.emplace_back(arg.c_str());
+  }
+
+  if (!appDb->launch(*app, args)) {
+    launchAppRes->set_error("Failed to launch app with id " + request.app_id());
   }
 
   return res;

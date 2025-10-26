@@ -29,7 +29,7 @@ public:
   bool connect();
   void connectOrThrow();
   bool ping();
-  void launchApp(const QString &id, const std::vector<QString> &args = {});
+  void launchApp(const std::string &id, const std::vector<std::string> &args = {}, bool newInstance = false);
 
 private:
   void writeRequest(const proto::ext::daemon::Request &req);

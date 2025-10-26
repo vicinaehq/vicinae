@@ -1,6 +1,7 @@
 #include "ipc-client.hpp"
 #include "proto/daemon.pb.h"
 #include "vicinae.hpp"
+#include <iostream>
 #include <qlocalsocket.h>
 #include <stdexcept>
 
@@ -24,13 +25,26 @@ void DaemonIpcClient::writeRequest(const Daemon::Request &req) {
   m_conn.waitForBytesWritten(1000);
 }
 
-void DaemonIpcClient::launchApp(const QString &id, const std::vector<QString> &args) {
-  QUrl url;
-  url.setScheme(Omnicast::APP_SCHEME);
-  url.setHost("apps");
-  url.setPath("/" + id);
-  if (auto res = deeplink(url); !res) {
-    throw std::runtime_error("Failed to launch app: " + res.error().toStdString());
+void DaemonIpcClient::launchApp(const std::string &id, const std::vector<std::string> &args,
+                                bool newInstance) {
+  Daemon::Request req;
+  auto launchReq = new proto::ext::daemon::LaunchAppRequest;
+
+  launchReq->set_app_id(id);
+  launchReq->set_new_instance(newInstance);
+
+  for (const auto &arg : args) {
+    launchReq->add_args(arg);
+  }
+
+  req.set_allocated_launch_app(launchReq);
+  auto res = request(req);
+  auto launchRes = res.launch_app();
+
+  if (auto str = launchRes.error(); !str.empty()) { throw std::runtime_error(launchRes.error()); }
+  if (auto focused = launchRes.focused_window_title(); !focused.empty()) {
+    std::cerr << "Focused existing window: " << std::quoted(focused)
+              << "\nPass --new if you want to spawn up a new instance every time." << std::endl;
   }
 }
 
