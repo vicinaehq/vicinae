@@ -11,7 +11,7 @@ void WatcherScanner::handleMessage(const wtr::event &ev) {
 
   case 's':
     if (err_case("s/self/live@")) {
-      qInfo() << "Creating inotify watchers in" << scan.path.c_str();
+      qInfo() << "Starting watcher for" << scan.path.c_str();
       start(scan);
       return;
     }
@@ -20,8 +20,9 @@ void WatcherScanner::handleMessage(const wtr::event &ev) {
     // TODO
     if (err_case("w/sys/not_watched@")) {
       qCritical()
-          << "Ran out of inotify watchers.\n"
-          << "    Please increase /proc/sys/fs/inotify/max_user_watches, or set it parmanently:\n"
+          << "Failed to create filesystem watcher.\n"
+          << "    If using FAN_MARK_FILESYSTEM: ensure you have CAP_SYS_ADMIN capability (run as root)\n"
+          << "    If using inotify: increase /proc/sys/fs/inotify/max_user_watches\n"
           << "    `echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p`";
       fail();
       return;
