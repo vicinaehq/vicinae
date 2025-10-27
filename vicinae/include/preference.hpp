@@ -27,7 +27,8 @@ public:
   };
 
 private:
-  using Data = std::variant<UnknownData, TextData, PasswordData, CheckboxData, DropdownData>;
+  using Data = std::variant<UnknownData, TextData, PasswordData, CheckboxData, DropdownData, FilePickerData,
+                            DirectoryPickerData, AppPickerData>;
   QString m_name;
   QString m_title;
   QString m_description;

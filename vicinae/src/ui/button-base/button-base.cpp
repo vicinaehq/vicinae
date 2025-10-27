@@ -64,11 +64,13 @@ void ButtonBase::setDisabled(bool disabled) {
 }
 
 void ButtonBase::keyPressEvent(QKeyEvent *event) {
-  switch (event->key()) {
-  case Qt::Key_Return:
-  case Qt::Key_Enter:
-    emit activated();
-    return;
+  if (!event->modifiers()) {
+    switch (event->key()) {
+    case Qt::Key_Return:
+    case Qt::Key_Enter:
+      emit clicked();
+      return;
+    }
   }
 
   QWidget::keyPressEvent(event);

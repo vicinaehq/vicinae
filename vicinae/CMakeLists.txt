@@ -443,6 +443,8 @@ set(SRCS
 	src/services/file-chooser/abstract-file-chooser.hpp
 	src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.hpp
 	src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.cpp
+	src/services/file-chooser/native/native-file-chooser.hpp
+	src/services/file-chooser/native/native-file-chooser.cpp
 	src/services/root-item-manager/root-item-manager.hpp
 	src/services/root-item-manager/root-item-manager.cpp
 	

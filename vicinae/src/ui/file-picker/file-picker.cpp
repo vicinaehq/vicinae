@@ -1,5 +1,6 @@
 #include "ui/file-picker/file-picker.hpp"
 #include "common.hpp"
+#include "layout.hpp"
 #include "services/file-chooser/abstract-file-chooser.hpp"
 #include "theme.hpp"
 #include "theme/colors.hpp"
@@ -9,13 +10,17 @@
 #include <qboxlayout.h>
 #include <qcontainerfwd.h>
 #include <qfiledialog.h>
+#include <qjsonvalue.h>
+#include <qlogging.h>
 #include <qwidget.h>
+
+namespace fs = std::filesystem;
 
 FilePicker::FilePicker(QWidget *parent) : JsonFormItemWidget(parent) { setupUI(); }
 
 void FilePicker::setMimeTypeFilters(const QStringList &filters) { m_mimeTypeFilters = filters; }
 
-std::vector<File> FilePicker::files() const { return m_files; }
+const std::vector<File> &FilePicker::files() const { return m_files; }
 
 void FilePicker::removeFile(const std::filesystem::path &path) {
   auto it = std::ranges::find_if(m_files, [&](auto &&file) { return file.path == path; });
@@ -26,15 +31,15 @@ void FilePicker::removeFile(const std::filesystem::path &path) {
 }
 
 void FilePicker::handleFileChoice() {
-  m_fileChooser->setMimeTypeFilters({"inode/directory"});
-  m_fileChooser->setMultipleSelection(true);
+  m_fileChooser->setMimeTypeFilters(m_mimeTypeFilters);
+  m_fileChooser->setMultipleSelection(m_multiple);
   m_fileChooser->openFile();
 }
 
 void FilePicker::regenerateList() {
-  m_fileCount->setText(QString("%1 Files").arg(m_files.size()));
-  m_fileCount->setVisible(!m_files.empty());
+  if (m_files.size() > 1) { m_fileCount->setText(QString("%1 Files").arg(m_files.size())); }
 
+  m_fileCount->setVisible(!m_files.empty());
   m_fileList->updateModel(
       [&]() {
         for (const auto &file : m_files) {
@@ -51,7 +56,27 @@ void FilePicker::regenerateList() {
 
 ButtonWidget *FilePicker::button() const { return m_button; }
 
-void FilePicker::filesChosen(const std::vector<std::filesystem::path> &paths) {
+void FilePicker::setMultiple(bool value) { m_multiple = true; }
+
+void FilePicker::clear() { m_files.clear(); }
+
+void FilePicker::setFile(const fs::path &path) {
+  clear();
+  addFile(path);
+}
+
+void FilePicker::setOnlyDirectories() { setMimeTypeFilters({"inode/directory"}); }
+
+void FilePicker::filesChosen(const std::vector<fs::path> &paths) {
+  if (!m_multiple) {
+    if (paths.empty()) {
+      qWarning() << "filesChosen with empty list of files";
+      return;
+    }
+    setFile(paths.front());
+    return;
+  }
+
   for (const auto &path : paths) {
     addFileImpl(path);
   }
@@ -91,20 +116,48 @@ void FilePicker::addFile(const std::filesystem::path &path) {
   regenerateList();
 }
 
-void FilePicker::setupUI() {
-  auto layout = new QVBoxLayout;
+QJsonValue FilePicker::asJsonValue() const {
+  if (!m_multiple) {
+    if (!m_files.empty()) return QString::fromStdString(m_files.front().path.string());
+    return QJsonValue();
+  }
 
+  QJsonArray array;
+
+  for (const auto &file : m_files) {
+    array.push_back(QString::fromStdString(file.path.string()));
+  }
+
+  return array;
+}
+
+void FilePicker::setValueAsJson(const QJsonValue &value) {
+  if (value.isArray()) {
+    clear();
+    for (const auto &file : value.toArray()) {
+      addFileImpl(file.toString().toStdString());
+    }
+    return;
+  }
+
+  if (value.isString()) {
+    setFile(value.toString().toStdString());
+    return;
+  }
+
+  qWarning() << "FilePicker::setValueAsJson: not an array or string";
+}
+
+void FilePicker::setupUI() {
   setDelegate<DefaultFilePickerItemDelegate>();
+  setFocusProxy(m_button);
+
   m_button->setBackgroundColor(SemanticColor::ListItemHoverBackground);
   m_button->setHoverBackgroundColor(SemanticColor::ListItemSelectionBackground);
   m_button->setText("Pick a file");
-  layout->setContentsMargins(0, 0, 0, 0);
-  layout->addWidget(m_button);
-  layout->addWidget(m_fileList);
-  layout->addWidget(m_fileCount);
   m_fileCount->hide();
 
-  setLayout(layout);
+  VStack().add(m_button).add(m_fileList).add(m_fileCount).imbue(this);
 
   connect(m_button, &ButtonWidget::clicked, this, &FilePicker::handleFileChoice);
   connect(m_fileChooser.get(), &AbstractFileChooser::filesChosen, this, &FilePicker::filesChosen);
