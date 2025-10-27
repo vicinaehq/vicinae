@@ -95,3 +95,7 @@ For more details on installation, usage, configuration, extension development, a
     alt="extension settings"
   />
 </p>
+
+# TEMP NOTES
+
+sudo setcap cap_dac_read_search,cap_sys_admin=+ep ./vicinae
