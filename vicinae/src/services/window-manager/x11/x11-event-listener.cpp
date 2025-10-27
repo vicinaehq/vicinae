@@ -1,6 +1,5 @@
 #include "x11-event-listener.hpp"
 
-#include <QDebug>
 #include <QSocketNotifier>
 #include <cstring>
 #include <qlogging.h>
@@ -155,7 +154,6 @@ void X11EventListener::drainEvents() {
 
   while (auto *event = xcb_poll_for_event(m_connection)) {
     uint8_t type = event->response_type & ~0x80;
-    qDebug() << "X11: Got event type" << type;
     switch (type) {
     case XCB_PROPERTY_NOTIFY: {
       auto *property = reinterpret_cast<xcb_property_notify_event_t *>(event);
@@ -179,15 +177,12 @@ void X11EventListener::drainEvents() {
       break;
     }
     case XCB_CREATE_NOTIFY:
-      qDebug() << "X11: Window created";
       m_pendingWindowListChanged = true;
       break;
     case XCB_DESTROY_NOTIFY:
-      qDebug() << "X11: Window destroyed";
       m_pendingWindowListChanged = true;
       break;
     case XCB_REPARENT_NOTIFY:
-      qDebug() << "X11: Window reparented";
       m_pendingWindowListChanged = true;
       break;
     default:
@@ -208,19 +203,16 @@ void X11EventListener::drainEvents() {
 void X11EventListener::emitDebouncedSignals() {
   // Emit all collected signals
   if (m_pendingWindowListChanged) {
-    qDebug() << "X11: Emitting windowListChanged signal";
     emit X11EventListener::windowListChanged();
     m_pendingWindowListChanged = false;
   }
 
   if (m_pendingActiveWindowChanged) {
-    qDebug() << "X11: Emitting activeWindowChanged signal";
     emit X11EventListener::activeWindowChanged();
     m_pendingActiveWindowChanged = false;
   }
 
   for (auto window : m_pendingTitlesChanged) {
-    qDebug() << "X11: Emitting windowTitleChanged signal for window" << window;
     emit windowTitleChanged(window);
   }
   m_pendingTitlesChanged.clear();
