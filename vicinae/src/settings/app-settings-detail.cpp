@@ -49,6 +49,8 @@ void AppSettingsDetail::savePreferences() {
   QJsonObject preferences;
   QJsonArray jsonPaths;
 
+  picker->setMultiple(true);
+
   for (const auto &file : picker->files()) {
     bool isDefaultSearchPath =
         std::ranges::any_of(defaultSearchPaths, [&](auto &&p) { return p == file.path; });

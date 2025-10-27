@@ -12,6 +12,7 @@
 #include <QJsonParseError>
 #include <qfuturewatcher.h>
 #include <qlogging.h>
+#include <qobjectdefs.h>
 
 namespace fs = std::filesystem;
 
@@ -120,20 +121,20 @@ Preference ExtensionRegistry::parsePreferenceFromObject(const QJsonObject &obj) 
   base.setRequired(obj["required"].toBool());
   base.setDefaultValue(obj.value("default"));
 
-  if (type == "textfield") { base.setData(Preference::TextData()); }
-  if (type == "password") { base.setData(Preference::PasswordData()); }
-
-  if (type == "checkbox") {
+  if (type == "textfield") {
+    base.setData(Preference::TextData());
+  } else if (type == "password") {
+    base.setData(Preference::PasswordData());
+  } else if (type == "checkbox") {
     auto checkbox = Preference::CheckboxData(obj["label"].toString());
-
     base.setData(checkbox);
-  }
-
-  if (type == "appPicker") {
-    // XXX: implement later - if we really need it
-  }
-
-  if (type == "dropdown") {
+  } else if (type == "appPicker") {
+    base.setData(Preference::AppPickerData());
+  } else if (type == "file") {
+    base.setData(Preference::FilePickerData());
+  } else if (type == "directory") {
+    base.setData(Preference::DirectoryPickerData());
+  } else if (type == "dropdown") {
     auto data = obj["data"].toArray();
     std::vector<Preference::DropdownData::Option> options;
 
@@ -146,6 +147,8 @@ Preference ExtensionRegistry::parsePreferenceFromObject(const QJsonObject &obj) 
     }
 
     base.setData(Preference::DropdownData{options});
+  } else {
+    qWarning() << "Unknown extension preference type" << type;
   }
 
   return base;

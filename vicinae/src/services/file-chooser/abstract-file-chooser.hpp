@@ -28,4 +28,5 @@ public:
 
 signals:
   void filesChosen(const std::vector<std::filesystem::path> &paths);
+  void rejected() const;
 };
