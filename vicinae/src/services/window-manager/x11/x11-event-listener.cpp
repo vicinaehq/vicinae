@@ -1,5 +1,6 @@
 #include "x11-event-listener.hpp"
 
+#include <QDebug>
 #include <QSocketNotifier>
 #include <cstring>
 #include <qlogging.h>

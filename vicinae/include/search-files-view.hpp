@@ -7,12 +7,14 @@
 #include "ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
+#include "services/files-service/file-indexer/file-indexer.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include "utils/utils.hpp"
 #include <filesystem>
 #include <qfuturewatcher.h>
 #include <qlocale.h>
 #include <qmimedatabase.h>
+#include <qtimer.h>
 #include "ui/text-file-viewer/text-file-viewer.hpp"
 
 class FileListItemMetadata : public DetailWithMetadataWidget {
@@ -111,6 +113,7 @@ class SearchFilesView : public ListView {
   Watcher m_pendingFileResults;
   QString m_lastSearchText;
   QString currentQuery;
+  QTimer m_debounceTimer;
 
   void initialize() override {
     setSearchPlaceholderText("Search for files...");
@@ -133,13 +136,24 @@ class SearchFilesView : public ListView {
     });
   }
 
-  void generateFilteredList(const QString &query) {
+  void executeSearch() {
     auto fileService = context()->services->fileService();
 
     if (m_pendingFileResults.isRunning()) { m_pendingFileResults.cancel(); }
-    m_lastSearchText = query;
+    m_lastSearchText = currentQuery;
     setLoading(true);
-    m_pendingFileResults.setFuture(fileService->queryAsync(query.toStdString()));
+    m_pendingFileResults.setFuture(fileService->queryAsync(currentQuery.toStdString()));
+  }
+
+  void generateFilteredList(const QString &query) {
+    auto fileService = context()->services->fileService();
+    auto indexer = dynamic_cast<FileIndexer *>(fileService->indexer());
+
+    if (indexer && indexer->useRegex()) {
+      m_debounceTimer.start();
+    } else {
+      executeSearch();
+    }
   }
 
   void renderRecentFiles() {
@@ -161,6 +175,11 @@ class SearchFilesView : public ListView {
 
 public:
   SearchFilesView() {
+    // debounce is important for regex searches to avoid excessive computation, could be removed or reduced
+    // for simple searches
+    m_debounceTimer.setSingleShot(true);
+    m_debounceTimer.setInterval(std::chrono::milliseconds(500));
+    connect(&m_debounceTimer, &QTimer::timeout, this, &SearchFilesView::executeSearch);
     connect(&m_pendingFileResults, &Watcher::finished, this, &SearchFilesView::handleSearchResults);
   }
 };
