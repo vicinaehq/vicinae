@@ -65,7 +65,8 @@ void FileIndexer::start() {
   }
 
   for (const auto &entrypoint : m_watcherPaths) {
-    m_dispatcher.enqueue({.type = ScanType::Watcher, .path = entrypoint});
+    m_dispatcher.enqueue(
+        {.type = ScanType::Watcher, .path = entrypoint, .excludedFilenames = m_excludedFilenames});
   }
 }
 
@@ -93,6 +94,9 @@ void FileIndexer::preferenceValuesChanged(const QJsonObject &preferences) {
   m_watcherPaths = ranges_to<std::vector>(
       preferences.value("watcherPaths").toString().split(';', Qt::SkipEmptyParts) |
       std::views::transform([](const QStringView &v) { return fs::path(v.toString().toStdString()); }));
+
+  std::string databaseFilename = FileIndexerDatabase::getDatabasePath().filename().string();
+  m_excludedFilenames = {databaseFilename, databaseFilename + "-wal"};
 }
 
 QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view view,
