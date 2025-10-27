@@ -38,6 +38,7 @@ public:
    * it's the most reliable way.
    */
   QString inputStyleSheet();
+  QString nativeFilePickerStyleSheet();
 
   ThemeService();
 

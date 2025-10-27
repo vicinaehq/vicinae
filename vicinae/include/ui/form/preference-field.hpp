@@ -1,6 +1,7 @@
 #pragma once
 #include "common.hpp"
 #include "preference.hpp"
+#include "ui/file-picker/file-picker.hpp"
 #include "ui/form/base-input.hpp"
 #include "ui/form/checkbox-input.hpp"
 #include "ui/form/form-field.hpp"
@@ -15,11 +16,17 @@ struct PreferenceFieldWidgetVisitor {
 
   BaseInput *createInput() {
     auto input = new BaseInput;
-
     input->setPlaceholderText(m_preference.placeholder());
     return input;
   }
 
+  JsonFormItemWidget *operator()(const auto &other) { return createInput(); }
+  JsonFormItemWidget *operator()(const Preference::FilePickerData &text) { return new FilePicker; }
+  JsonFormItemWidget *operator()(const Preference::DirectoryPickerData &text) {
+    auto picker = new FilePicker;
+    picker->setOnlyDirectories();
+    return picker;
+  }
   JsonFormItemWidget *operator()(const Preference::TextData &text) { return createInput(); }
   JsonFormItemWidget *operator()(const Preference::PasswordData &password) {
     auto input = createInput();

@@ -102,6 +102,26 @@ QString ThemeService::inputStyleSheet() {
   return style;
 }
 
+QString ThemeService::nativeFilePickerStyleSheet() {
+  TemplateEngine engine;
+
+  engine.setVar("BACKGROUND", m_theme->resolveAsString(SemanticColor::SecondaryBackground));
+  engine.setVar("FOREGROUND", m_theme->resolveAsString(SemanticColor::Foreground));
+
+  /**
+   * We try to not use stylesheets directly in most of the app, but some very high level
+   * rules can help fix issues that would be hard to fix otherwise.
+   */
+  auto style = engine.build(R"(
+  		QWidget {
+			background-color: {BACKGROUND};
+			color: {FOREGROUND};
+		}
+	)");
+
+  return style;
+}
+
 void ThemeService::applyBaseStyle() {
   // we can't really fix that other way than using css
   const char *stylesheet = R"(

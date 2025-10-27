@@ -119,6 +119,33 @@ public:
 struct PreferenceWidgetVisitor {
   Preference m_preference;
 
+  AbstractPreferenceFormItem *operator()(const auto &data) {
+    auto item = new VerticalFormItem;
+    item->setLabel(m_preference.title());
+    item->setContent(new BaseInput);
+    item->setDescription(m_preference.description());
+    return item;
+  }
+
+  AbstractPreferenceFormItem *operator()(const Preference::FilePickerData &data) {
+    auto item = new VerticalFormItem;
+    auto picker = new FilePicker;
+    item->setLabel(m_preference.title());
+    item->setContent(picker);
+    item->setDescription(m_preference.description());
+    return item;
+  }
+
+  AbstractPreferenceFormItem *operator()(const Preference::DirectoryPickerData &data) {
+    auto item = new VerticalFormItem;
+    auto picker = new FilePicker;
+    picker->setOnlyDirectories();
+    item->setLabel(m_preference.title());
+    item->setContent(picker);
+    item->setDescription(m_preference.description());
+    return item;
+  }
+
   AbstractPreferenceFormItem *operator()(const Preference::TextData &text) {
     auto item = new VerticalFormItem;
     item->setLabel(m_preference.title());

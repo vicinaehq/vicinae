@@ -62,13 +62,10 @@ public:
 
   void initialize() override final {
     initializeForm();
-
-    auto panel = std::make_unique<ActionPanelState>();
+    auto panel = std::make_unique<FormActionPanelState>();
     auto section = panel->createSection();
     auto submit = new StaticAction(submitTitle(), ImageURL::builtin("enter-key"), [this]() { onSubmit(); });
-
     submit->setPrimary(true);
-    submit->setShortcut(Keyboard::Shortcut::submit());
     section->addAction(submit);
     setActions(std::move(panel));
   }
