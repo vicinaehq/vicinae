@@ -32,7 +32,7 @@ Find the full stacktrace below. You can also directly copy it from the action me
   std::unique_ptr<ActionPanelState> generateActions() {
     auto panel = std::make_unique<ActionPanelState>();
     auto section = panel->createSection();
-    auto copy = new CopyToClipboardAction(Clipboard::Text(""));
+    auto copy = new CopyToClipboardAction(Clipboard::Text(m_errorText.trimmed()));
 
     copy->setPrimary(true);
     section->addAction(copy);
