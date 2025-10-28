@@ -25,7 +25,7 @@ export {
 	openCommandPreferences, openExtensionPreferences,
 	LaunchType,
 
-
+	AI,
 	OAuth,
 
 	List, Grid, Form, Detail,
