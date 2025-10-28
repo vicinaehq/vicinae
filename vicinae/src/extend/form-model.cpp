@@ -67,6 +67,9 @@ FormModel FormModel::fromJson(const QJsonObject &json) {
         model.items.emplace_back(std::make_shared<CheckboxField>(base));
       } else if (*it == "date-picker-field") {
       } else if (*it == "text-area-field") {
+        auto ta = std::make_shared<TextAreaField>(base);
+        if (props.contains("placeholder")) ta->placeholder = props.value("placeholder").toString();
+        model.items.emplace_back(ta);
       } else if (*it == "dropdown-field") {
         auto dropdown = std::make_shared<DropdownField>(base);
 
