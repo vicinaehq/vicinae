@@ -219,8 +219,7 @@ const TagPicker = Object.assign(TagPickerRoot, {
 
 interface TextAreaProps
   extends FormItemProps<string>,
-    WithFormRef<Form.TagPicker> {
-}
+    WithFormRef<Form.TextArea> {}
 
 const TextArea: React.FC<TextAreaProps> = ({ ref, ...props }) => {
   useImperativeFormHandle(ref);

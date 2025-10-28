@@ -71,8 +71,11 @@ struct FormModel {
     DropdownField(const FieldBase &base) : IField(base) {}
   };
 
-  struct TextAreaFieldModel : public FieldBase {
-    bool enableMarkdown;
+  struct TextAreaField : public IField {
+    std::optional<QString> placeholder;
+
+  public:
+    TextAreaField(const FieldBase &base) : IField(base) {}
   };
   struct DatePickerFieldModel : public FieldBase {};
   struct InvalidField : public FieldBase {};

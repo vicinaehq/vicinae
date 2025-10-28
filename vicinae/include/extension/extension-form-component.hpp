@@ -15,6 +15,7 @@
 #include "extension/extension-view.hpp"
 #include "extension/form/extension-checkbox-field.hpp"
 #include "extension/form/extension-text-field.hpp"
+#include "extension/form/extension-text-area.hpp"
 #include "ui/form/form-field.hpp"
 #include "ui/scroll-bar/scroll-bar.hpp"
 
@@ -28,6 +29,7 @@ class ExtensionFormField : public FormField {
     // XXX awful, we will fix this very soon
     if (auto f = dynamic_cast<const FormModel::CheckboxField *>(field)) { return new ExtensionCheckboxField; }
     if (auto f = dynamic_cast<const FormModel::TextField *>(field)) { return new ExtensionTextField; }
+    if (auto f = dynamic_cast<const FormModel::TextAreaField *>(field)) { return new ExtensionTextArea; }
     if (auto f = dynamic_cast<const FormModel::DropdownField *>(field)) { return new ExtensionDropdown; }
     if (auto f = dynamic_cast<const FormModel::PasswordField *>(field)) { return new ExtensionPasswordField; }
 
