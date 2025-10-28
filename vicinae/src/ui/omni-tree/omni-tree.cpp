@@ -12,6 +12,8 @@ OmniTree::OmniTree(QWidget *parent) : QWidget(parent) {
 
 bool OmniTree::selectUp() const { return m_list->selectUp(); }
 bool OmniTree::selectDown() { return m_list->selectDown(); }
+bool OmniTree::selectHome() const { return m_list->selectHome(); }
+bool OmniTree::selectEnd() { return m_list->selectEnd(); }
 void OmniTree::activateCurrentSelection() { m_list->activateCurrentSelection(); }
 bool OmniTree::selectFirst() const { return m_list->selectFirst(); }
 

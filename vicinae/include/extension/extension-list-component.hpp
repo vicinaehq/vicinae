@@ -130,6 +130,8 @@ public:
 
   bool selectUp() { return m_list->selectUp(); }
   bool selectDown() { return m_list->selectDown(); }
+  bool selectHome() { return m_list->selectHome(); }
+  bool selectEnd() { return m_list->selectEnd(); }
   void activateCurrentSelection() const { m_list->activateCurrentSelection(); }
 
   ListItemViewModel const *selected() const {
