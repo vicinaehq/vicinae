@@ -382,6 +382,8 @@ public:
 
   bool selectUp() const;
   bool selectDown();
+  bool selectHome() const;
+  bool selectEnd();
   void activateCurrentSelection();
   bool selectFirst() const;
   bool select(const QString &id);

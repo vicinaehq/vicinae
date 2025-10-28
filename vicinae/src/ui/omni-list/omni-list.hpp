@@ -414,6 +414,8 @@ public:
   bool selectDown();
   bool selectLeft();
   bool selectRight();
+  bool selectHome();
+  bool selectEnd();
   const AbstractVirtualItem *firstSelectableItem() const;
   void activateCurrentSelection() const;
 
