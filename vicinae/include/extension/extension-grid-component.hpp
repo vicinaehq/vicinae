@@ -145,6 +145,8 @@ public:
   bool selectDown() { return m_list->selectDown(); }
   bool selectLeft() { return m_list->selectLeft(); }
   bool selectRight() { return m_list->selectRight(); }
+  bool selectHome() { return m_list->selectHome(); }
+  bool selectEnd() { return m_list->selectEnd(); }
   void activateCurrentSelection() const { m_list->activateCurrentSelection(); }
 
   GridItemViewModel const *selected() const {
