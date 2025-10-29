@@ -26,15 +26,14 @@ void ButtonBase::setColor(ButtonColor color) {
 void ButtonBase::mouseDoubleClickEvent(QMouseEvent *event) {
   if (m_disabled) return;
 
+  emit clicked();
   emit doubleClicked();
-  emit activated();
 }
 
 void ButtonBase::mousePressEvent(QMouseEvent *event) {
   if (m_disabled) return;
 
   emit clicked();
-  emit activated();
 }
 
 void ButtonBase::setBackgroundColor(const ColorLike &color) {

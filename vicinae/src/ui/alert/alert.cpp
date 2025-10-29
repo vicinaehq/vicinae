@@ -149,6 +149,6 @@ AlertWidget::AlertWidget(QWidget *parent)
   layout->addWidget(HStack().add(_cancelBtn).add(_actionBtn).spacing(10).buildWidget());
   setLayout(layout);
 
-  connect(_cancelBtn, &ButtonWidget::activated, this, &AlertWidget::handleCancel);
-  connect(_actionBtn, &ButtonWidget::activated, this, &AlertWidget::handleConfirm);
+  connect(_cancelBtn, &ButtonWidget::clicked, this, &AlertWidget::handleCancel);
+  connect(_actionBtn, &ButtonWidget::clicked, this, &AlertWidget::handleConfirm);
 }
