@@ -7,8 +7,9 @@
 #include "ui/button-base/button-base.hpp"
 #include "ui/typography/typography.hpp"
 
-
 class ButtonWidget : public ButtonBase {
+  Q_OBJECT
+
 public:
   enum ButtonColor { Primary, Secondary, Transparent };
 
@@ -22,8 +23,6 @@ public:
   void setTextColor(const ColorLike &color);
 
 private:
-  Q_OBJECT
-
   QWidget *leftAccessory = new QWidget;
   QWidget *rightAccessory = new QWidget;
   TypographyWidget *label = new TypographyWidget;

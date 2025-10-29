@@ -11,6 +11,13 @@
  * can set its own.
  */
 class ButtonBase : public QWidget {
+  Q_OBJECT
+
+signals:
+  void clicked() const;
+  void doubleClicked() const;
+  void hoverChanged(bool value) const;
+
 public:
   enum ButtonColor { Primary, Secondary, Transparent };
 
@@ -23,12 +30,6 @@ public:
   void setHoverBackgroundColor(const ColorLike &color);
   void setFocused(bool value);
 
-signals:
-  void clicked() const;
-  void doubleClicked() const;
-  void activated() const;
-  void hoverChanged(bool value) const;
-
 protected:
   void paintEvent(QPaintEvent *event) override;
   void focusInEvent(QFocusEvent *event) override { setFocused(true); }
@@ -39,8 +40,6 @@ protected:
   void keyPressEvent(QKeyEvent *event) override;
 
 private:
-  Q_OBJECT
-
   bool m_focused = false;
   bool m_disabled = false;
   ColorLike m_color = Qt::transparent;
