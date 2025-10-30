@@ -30,7 +30,9 @@ class MarkdownRenderer : public QWidget {
   constexpr static float HEADING_LEVEL_SCALE_FACTORS[5] = {2, 1.6, 1.3, 1.16, 1};
   constexpr static int DEFAULT_BASE_POINT_SIZE = 12;
 
-  std::vector<ImageResource> m_images;
+  // Image loaders for async image placement
+  std::map<QString, std::unique_ptr<AbstractImageLoader>> m_imageLoaders;
+
   QString _markdown;
   QFont m_font;
   QTextBrowser *_textEdit;

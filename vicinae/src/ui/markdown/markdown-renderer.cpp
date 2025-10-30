@@ -111,26 +111,23 @@ void MarkdownRenderer::insertImageFromUrl(const QUrl &url, const QSize &iconSize
     imageLoader = std::make_unique<LocalImageLoader>(path);
   }
 
-  auto pos = _cursor.position();
+  QString loaderName = QUuid::createUuid().toString(QUuid::WithoutBraces);
 
-  connect(imageLoader.get(), &AbstractImageLoader::dataUpdated, this, [this, url, pos](const QPixmap &pix) {
-    auto old = _cursor.position();
+  // Create the image to mark position in document and set when it loads async-ly
+  QTextImageFormat imageFormat;
+  imageFormat.setName(loaderName);
+  imageFormat.setWidth(iconSize.width());
+  imageFormat.setHeight(iconSize.height());
+  _cursor.insertImage(imageFormat);
 
-    _cursor.setPosition(pos);
-    _document->addResource(QTextDocument::ImageResource, url, pix);
-
-    QTextBlockFormat blockFormat = _cursor.blockFormat();
-
-    blockFormat.setAlignment(Qt::AlignCenter);
-
-    _cursor.setBlockFormat(blockFormat);
-    _cursor.insertImage(url.toString());
-    _cursor.setPosition(old);
-    _document->markContentsDirty(0, _document->characterCount());
+  m_imageLoaders[loaderName] = std::move(imageLoader);
+  auto *loader = m_imageLoaders[loaderName].get();
+  connect(loader, &AbstractImageLoader::dataUpdated, this, [this, loaderName](const QPixmap &pix) {
+    _document->addResource(QTextDocument::ImageResource, QUrl(loaderName), pix);
+    _textEdit->viewport()->update();
   });
 
-  imageLoader->render({.size = iconSize, .devicePixelRatio = devicePixelRatio()});
-  m_images.push_back({.cursorPos = pos, .icon = std::move(imageLoader)});
+  loader->render({.size = iconSize, .devicePixelRatio = devicePixelRatio()});
 }
 
 void MarkdownRenderer::insertCodeBlock(cmark_node *node, bool isClosing) {
@@ -317,6 +314,8 @@ void MarkdownRenderer::insertParagraph(cmark_node *node) {
 }
 
 void MarkdownRenderer::parseAndInsertHtmlImages(const QString &html) {
+  insertIfNotFirstBlock();
+
   // for default size when width/height is not specified
   auto documentMargin = _document->documentMargin();
   int widthOffset = documentMargin * 4;
@@ -511,7 +510,6 @@ void MarkdownRenderer::appendMarkdown(QStringView markdown) {
 
 void MarkdownRenderer::setMarkdown(QStringView markdown) {
   m_isFirstBlock = true;
-  m_images.clear();
   clear();
   appendMarkdown(markdown);
   _cursor.setPosition(0);
