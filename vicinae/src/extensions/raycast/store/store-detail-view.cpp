@@ -42,6 +42,7 @@ Stack RaycastStoreDetailView::createHeader() {
                   .add(VStack().addTitle(m_ext.title).add(metadata).margins(0, 4, 0, 4).justifyBetween())
                   .spacing(20);
 
+  m_installedAccessory->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   m_installedAccessory->setAccessory({
       .text = "Installed",
       .color = SemanticColor::Green,
@@ -242,10 +243,16 @@ QString RaycastStoreDetailView::initialNavigationTitle() const {
 }
 
 QWidget *RaycastStoreDetailView::createUI(const Raycast::Extension &ext) {
-  return VStack().add(createPresentationSection()).add(createContentSection()).divided(1).buildWidget();
+  return VStack()
+      .add(createPresentationSection())
+      .add(createContentSection())
+      .addStretch()
+      .divided(1)
+      .buildWidget();
 }
 
 void RaycastStoreDetailView::setupUI(const Raycast::Extension &extension) {
   m_scrollArea->setWidget(createUI(extension));
+  m_scrollArea->setFocusPolicy(Qt::StrongFocus);
   VStack().add(m_scrollArea).imbue(this);
 }
