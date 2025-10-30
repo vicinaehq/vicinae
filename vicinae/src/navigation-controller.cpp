@@ -57,7 +57,6 @@ void NavigationController::setSearchPlaceholderText(const QString &text, const B
 }
 
 void NavigationController::setLoading(bool value, const BaseView *caller) {
-  qDebug() << "set loading to" << value << "caller" << caller << "is top" << (topView() == caller);
   if (auto state = findViewState(VALUE_OR(caller, topView()))) {
     state->isLoading = value;
     if (state->sender == topView()) { emit loadingChanged(value); }
