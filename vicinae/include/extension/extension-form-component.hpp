@@ -4,6 +4,7 @@
 #include <qjsonvalue.h>
 #include <qnamespace.h>
 #include <qscrollarea.h>
+#include <qlabel.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
 #include "extension/form/extension-form-input.hpp"
@@ -18,6 +19,7 @@
 #include "extension/form/extension-text-area.hpp"
 #include "ui/form/form-field.hpp"
 #include "ui/scroll-bar/scroll-bar.hpp"
+#include "common.hpp"
 
 class ExtensionFormField : public FormField {
   Q_OBJECT
@@ -85,6 +87,35 @@ signals:
   void notifyEvent(const QString &handler, const QJsonArray &args) const;
 };
 
+class FormDescriptionWidget : public JsonFormItemWidget {
+  QVBoxLayout *m_layout = new QVBoxLayout(this);
+
+public:
+  FormDescriptionWidget(const std::optional<QString> &title, const QString &text) {
+    m_layout->setContentsMargins(0, 0, 0, 0);
+    m_layout->setSpacing(2);
+
+    if (title) {
+      auto titleLabel = new QLabel(*title);
+      titleLabel->setTextFormat(Qt::PlainText);
+      titleLabel->setWordWrap(true);
+      QFont f = titleLabel->font();
+      f.setBold(true);
+      titleLabel->setFont(f);
+      m_layout->addWidget(titleLabel);
+    }
+
+    auto body = new QLabel(text);
+    body->setTextFormat(Qt::PlainText);
+    body->setWordWrap(true);
+    m_layout->addWidget(body);
+  }
+
+  QJsonValue asJsonValue() const override { return QJsonValue(); }
+  void setValueAsJson(const QJsonValue &) override {}
+  FocusNotifier *focusNotifier() const override { return nullptr; }
+};
+
 class ExtensionFormComponent : public ExtensionSimpleView {
   QScrollArea *m_scrollArea = new VerticalScrollArea(this);
   std::unordered_map<QString, ExtensionFormField *> m_fieldMap;
@@ -93,6 +124,14 @@ class ExtensionFormComponent : public ExtensionSimpleView {
   bool autoFocused = false;
 
   bool supportsSearch() const override { return false; }
+
+private:
+  QWidget *createDescriptionField(const FormModel::Description &d) const {
+    auto field = new FormField;
+    field->setName("");
+    field->setWidget(new FormDescriptionWidget(d.title, d.text));
+    return field;
+  }
 
 public:
   tl::expected<QJsonObject, QString> submit() override {
@@ -127,6 +166,7 @@ public:
     QWidget *lastAutoFocusable = nullptr;
     bool hasFocus = false;
 
+    int addedWidgets = 0;
     for (int i = 0; i != formModel.items.size(); ++i) {
       if (auto f = std::get_if<std::shared_ptr<FormModel::IField>>(&formModel.items.at(i))) {
         auto &field = *f;
@@ -150,6 +190,34 @@ public:
         } else {
           m_layout->addWidget(formField, 0, Qt::AlignTop);
         }
+        ++addedWidgets;
+      } else if (auto d = std::get_if<FormModel::Description>(&formModel.items.at(i))) {
+        auto field = createDescriptionField(*d);
+        if (m_layout->count() > i) {
+          if (auto w = m_layout->itemAt(i)->widget()) w->deleteLater();
+          m_layout->insertWidget(i, field, 0, Qt::AlignTop);
+        } else {
+          m_layout->addWidget(field, 0, Qt::AlignTop);
+        }
+        ++addedWidgets;
+      } else if (std::holds_alternative<FormModel::Separator>(formModel.items.at(i))) {
+        auto sep = new HDivider;
+        if (m_layout->count() > i) {
+          if (auto w = m_layout->itemAt(i)->widget()) w->deleteLater();
+          m_layout->insertWidget(i, sep);
+        } else {
+          m_layout->addWidget(sep);
+        }
+        ++addedWidgets;
+      }
+    }
+
+    // Trim leftover widgets if the new render has fewer items than before
+    while (m_layout->count() > addedWidgets) {
+      auto item = m_layout->takeAt(addedWidgets);
+      if (item) {
+        if (auto w = item->widget()) w->deleteLater();
+        delete item;
       }
     }
 
