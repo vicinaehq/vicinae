@@ -531,6 +531,7 @@ set(SRCS
 	src/extensions/vicinae/vicinae-extension.cpp
 
 	src/services/raycast/raycast-store.cpp
+	src/services/extension-store/vicinae-store.cpp
 
 	src/ui/thumbnail/thumbnail.hpp
 	src/ui/thumbnail/thumbnail.cpp
