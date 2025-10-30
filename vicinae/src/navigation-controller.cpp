@@ -58,7 +58,7 @@ void NavigationController::setSearchPlaceholderText(const QString &text, const B
 
 void NavigationController::setLoading(bool value, const BaseView *caller) {
   if (auto state = findViewState(VALUE_OR(caller, topView()))) {
-    state->loading = value;
+    state->isLoading = value;
     if (state->sender == topView()) { emit loadingChanged(value); }
   }
 }
@@ -407,50 +407,40 @@ AbstractAction *NavigationController::findBoundAction(const QKeyEvent *event) co
   return nullptr;
 }
 
-void NavigationController::pushView(BaseView *view) {
-  auto state = std::make_unique<ViewState>();
-
-  state->sender = view;
-  state->sender->setContext(&m_ctx);
-  state->sender->setCommandController(m_frames.back()->controller.get());
-  state->supportsSearch = view->supportsSearch();
-  state->needsTopBar = view->needsGlobalTopBar();
-  state->needsStatusBar = view->needsGlobalStatusBar();
-  state->placeholderText = view->initialSearchPlaceholderText();
-  state->navigation.title = view->initialNavigationTitle();
-  state->navigation.icon = view->initialNavigationIcon();
-  state->searchAccessory.reset(view->searchBarAccessory());
-
-  // state->sender->attachCommand(std::make_unique<CommandInterface>(m_ctx.command->activeFrame()));
-
-  if (auto &accessory = state->searchAccessory) {
+void NavigationController::activateView(const ViewState &state) {
+  if (auto &accessory = state.searchAccessory) {
     emit searchAccessoryChanged(accessory.get());
   } else {
     emit searchAccessoryCleared();
   }
 
-  emit headerVisiblityChanged(state->needsTopBar);
-  emit searchVisibilityChanged(state->supportsSearch);
-  emit statusBarVisiblityChanged(state->needsStatusBar);
-  emit loadingChanged(state->isLoading);
-  emit navigationStatusChanged(state->navigation.title, state->navigation.icon);
-
-  m_views.emplace_back(std::move(state));
-
+  emit headerVisiblityChanged(state.needsTopBar);
+  emit searchVisibilityChanged(state.supportsSearch);
+  emit statusBarVisiblityChanged(state.needsStatusBar);
+  emit loadingChanged(state.isLoading);
+  emit navigationStatusChanged(state.navigation.title, state.navigation.icon);
   emit actionsChanged({});
-  emit searchTextChanged(QString());
-  emit searchPlaceholderTextChanged(topState()->placeholderText);
-  view->initialize();
-  view->activate();
+  emit searchTextChanged(state.searchText);
+  emit searchPlaceholderTextChanged(state.placeholderText);
+
+  state.sender->activate();
 
   destroyCurrentCompletion();
-  emit currentViewChanged(*m_views.back());
+  emit currentViewChanged(state);
+}
+
+void NavigationController::replaceView(BaseView *view) {
+  m_views.back() = createViewState(view);
+  view->initialize();
+  activateView(*topState());
+}
+
+void NavigationController::pushView(BaseView *view) {
+  m_frames.back()->viewCount++;
+  m_views.emplace_back(createViewState(view));
+  topState()->sender->initialize();
+  activateView(*topState());
   emit viewPushed(view);
-
-  if (m_frames.empty()) return;
-
-  auto &frame = m_frames.back();
-  frame->viewCount += 1;
 }
 
 void NavigationController::setSearchAccessory(QWidget *accessory, const BaseView *caller) {
@@ -617,4 +607,19 @@ void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd) {
   frame->context->setContext(&m_ctx);
   m_frames.emplace_back(std::move(frame));
   m_frames.back()->context->load(props);
+}
+
+std::unique_ptr<NavigationController::ViewState> NavigationController::createViewState(BaseView *view) const {
+  auto state = std::make_unique<ViewState>();
+  state->sender = view;
+  state->sender->setContext(&m_ctx);
+  state->sender->setCommandController(m_frames.back()->controller.get());
+  state->supportsSearch = view->supportsSearch();
+  state->needsTopBar = view->needsGlobalTopBar();
+  state->needsStatusBar = view->needsGlobalStatusBar();
+  state->placeholderText = view->initialSearchPlaceholderText();
+  state->navigation.title = view->initialNavigationTitle();
+  state->navigation.icon = view->initialNavigationIcon();
+  state->searchAccessory.reset(view->searchBarAccessory());
+  return state;
 }
