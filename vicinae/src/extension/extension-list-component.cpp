@@ -62,6 +62,9 @@ void ExtensionListComponent::renderDropdown(const DropdownModel &dropdown) {
 
   m_selector->setEnableDefaultFilter(dropdown.filtering.enabled);
 
+  // Track if we are setting an initial value so we can fire onChange once on first load
+  const bool hadPreviousSelection = m_selector->value() != nullptr;
+
   if (auto controlledValue = dropdown.value) {
     m_selector->setValue(*controlledValue);
   } else if (!m_selector->value()) {
@@ -73,6 +76,13 @@ void ExtensionListComponent::renderDropdown(const DropdownModel &dropdown) {
   }
 
   m_selector->setIsLoading(dropdown.isLoading);
+
+  // If there was no previous selection and we just set one, invoke onChange once
+  if (!hadPreviousSelection) {
+    if (auto selected = m_selector->value()) {
+      if (auto onChange = dropdown.onChange) { notify(*onChange, {selected->generateId()}); }
+    }
+  }
 }
 
 bool ExtensionListComponent::inputFilter(QKeyEvent *event) {
