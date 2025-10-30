@@ -7,6 +7,7 @@
 #include <variant>
 #include "ui/flow-layout/flow-layout.hpp"
 #include "ui/image/image.hpp"
+#include "ui/markdown/markdown-renderer.hpp"
 #include "ui/typography/typography.hpp"
 #include "../ui/image/url.hpp"
 
@@ -41,6 +42,13 @@ Stack &Stack::addIcon(const ImageURL &url, QSize size, Qt::Alignment align) {
   icon->setUrl(url);
   add(icon, 0, align);
 
+  return *this;
+}
+
+Stack &Stack::markdown(const QString &text) {
+  auto markdown = new MarkdownRenderer;
+  markdown->setMarkdown(text);
+  add(markdown, 1);
   return *this;
 }
 
