@@ -95,6 +95,10 @@ void MarkdownRenderer::insertImage(cmark_node *node) {
     // implement for tint
   }
 
+  insertImageFromUrl(url, iconSize);
+}
+
+void MarkdownRenderer::insertImageFromUrl(const QUrl &url, const QSize &iconSize) {
   std::unique_ptr<AbstractImageLoader> imageLoader;
 
   if (url.scheme() == "https") {

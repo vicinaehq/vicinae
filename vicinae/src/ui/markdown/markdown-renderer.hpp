@@ -52,6 +52,7 @@ class MarkdownRenderer : public QWidget {
 
   void insertHeading(const QString &text, int level);
   void insertImage(cmark_node *node);
+  void insertImageFromUrl(const QUrl &url, const QSize &iconSize);
   QTextList *insertList(cmark_node *list, int indent = 1);
   void insertBlockParagraph(cmark_node *node);
   void insertSpan(cmark_node *node, QTextCharFormat &fmt);
