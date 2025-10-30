@@ -57,25 +57,25 @@ public:
       selectionPolicy = OmniList::SelectFirst;
     }
 
-    m_input->list()->updateModel(
-        [&]() {
-          OmniList::Section *currentSection = nullptr;
+    m_input->resetModel();
+    std::vector<std::shared_ptr<SelectorInput::AbstractItem>> rootSectionItems;
 
-          for (const auto &item : m_model->m_items) {
-            if (auto listItem = std::get_if<DropdownModel::Item>(&item)) {
-              if (!currentSection) { currentSection = &m_input->list()->addSection(); }
-
-              currentSection->addItem(std::make_unique<DropdownSelectorItem>(*listItem));
-            } else if (auto section = std::get_if<DropdownModel::Section>(&item)) {
-              auto &sec = m_input->list()->addSection(section->title);
-
-              for (const auto &item : section->items) {
-                sec.addItem(std::make_unique<DropdownSelectorItem>(item));
-              }
-            }
-          }
-        },
-        selectionPolicy);
+    for (const auto &item : m_model->m_items) {
+      if (auto listItem = std::get_if<DropdownModel::Item>(&item)) {
+        // root item
+        rootSectionItems.emplace_back(std::make_shared<DropdownSelectorItem>(*listItem));
+      } else if (auto section = std::get_if<DropdownModel::Section>(&item)) {
+        // section
+        std::vector<std::shared_ptr<SelectorInput::AbstractItem>> sectionItems;
+        for (const auto &sectionItem : section->items) {
+          // section items
+          sectionItems.emplace_back(std::make_shared<DropdownSelectorItem>(sectionItem));
+        }
+        if (!sectionItems.empty()) { m_input->addSection(section->title, sectionItems); }
+      }
+    }
+    if (!rootSectionItems.empty()) { m_input->addSection("", rootSectionItems); }
+    m_input->updateModel();
 
     m_input->setIsLoading(m_model->isLoading);
     m_input->setEnableDefaultFilter(m_model->filtering);
