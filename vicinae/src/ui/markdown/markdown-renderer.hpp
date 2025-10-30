@@ -61,6 +61,8 @@ class MarkdownRenderer : public QWidget {
   void insertHeading(cmark_node *node);
   void insertTopLevelNode(cmark_node *node);
 
+  void parseAndInsertHtmlImages(const QString &html);
+
   void insertIfNotFirstBlock();
 
 public:

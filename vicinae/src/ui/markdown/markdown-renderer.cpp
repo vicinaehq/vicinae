@@ -297,6 +297,11 @@ void MarkdownRenderer::insertParagraph(cmark_node *node) {
       if (_lastNodeType == CMARK_NODE_HEADING) insertIfNotFirstBlock();
       insertImage(child);
       break;
+    case CMARK_NODE_HTML_INLINE: {
+      QString html = cmark_node_get_literal(child);
+      parseAndInsertHtmlImages(html);
+      break;
+    }
     default:
       insertSpan(child, fmt);
       _cursor.setCharFormat(defaultFormat);
@@ -307,6 +312,55 @@ void MarkdownRenderer::insertParagraph(cmark_node *node) {
     child = cmark_node_next(child);
   }
   _cursor.setCharFormat(defaultFormat);
+}
+
+void MarkdownRenderer::parseAndInsertHtmlImages(const QString &html) {
+  // for default size when width/height is not specified
+  auto documentMargin = _document->documentMargin();
+  int widthOffset = documentMargin * 4;
+  QSize imgSize(size().width() - widthOffset, size().height() - documentMargin * 2);
+
+  // 1. Regex to find all <img> tags.
+  // This captures the *entire* tag open.
+  QRegularExpression imgTagRegex(R"(<img\s+(?:[^>"']|"[^"]*"|'[^']*')*>)",
+                                 QRegularExpression::CaseInsensitiveOption);
+
+  // 2. Regex to find specific attributes *within* a tag.
+  // (src|width|height) = Capture 1: the attribute name
+  // (["'])             = Capture 2: the opening quote (double or single)
+  // (.*?)              = Capture 3: the attribute value (non-greedy)
+  // \2                 = Matches the closing quote from Capture 2
+  QRegularExpression attrRegex(R"(\s+(src|width|height)=(["'])(.*?)\2)",
+                               QRegularExpression::CaseInsensitiveOption);
+
+  // Find all <img> tags in the input
+  auto tagIter = imgTagRegex.globalMatch(html);
+
+  while (tagIter.hasNext()) {
+    QRegularExpressionMatch tagMatch = tagIter.next();
+    QString imgTag = tagMatch.captured(0);
+
+    QString src;
+
+    // Find all attributes in this tag
+    auto attrIter = attrRegex.globalMatch(imgTag);
+    while (attrIter.hasNext()) {
+      QRegularExpressionMatch attrMatch = attrIter.next();
+
+      QString name = attrMatch.captured(1).toLower();
+      QString value = attrMatch.captured(3);
+
+      if (name == "src") {
+        src = value;
+      } else if (name == "width") {
+        if (!value.isEmpty()) { imgSize.setWidth(value.toInt()); }
+      } else if (name == "height") {
+        if (!value.isEmpty()) { imgSize.setHeight(value.toInt()); }
+      }
+    }
+
+    if (!src.isEmpty()) { insertImageFromUrl(QUrl(src), imgSize); }
+  }
 }
 
 void MarkdownRenderer::setBaseTextColor(const ColorLike &color) { m_baseTextColor = color; }
@@ -338,6 +392,11 @@ void MarkdownRenderer::insertTopLevelNode(cmark_node *node) {
   case CMARK_NODE_CODE_BLOCK:
     insertCodeBlock(node, !!cmark_node_next(node));
     break;
+  case CMARK_NODE_HTML_BLOCK: {
+    QString html = cmark_node_get_literal(node);
+    parseAndInsertHtmlImages(html);
+    break;
+  }
   default:
     break;
   }
