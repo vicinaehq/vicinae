@@ -70,15 +70,27 @@ export declare namespace Form {
   };
 }
 
-const wrapFormItemProps = <T extends Form.Value,>(props: FormItemProps<T>) => {
-	// TODO: pass the current value in the event
-
-	return {
-		...props,
-		onFocus: () => props.onFocus?.({ type: 'focus', target: { id: props.id } }),
-		onBlur: () => props.onBlur?.({ type: 'blur', target: { id: props.id } })
-	};
-}
+const wrapFormItemProps = <T extends Form.Value>(props: FormItemProps<T>) => {
+  return {
+    ...props,
+    onFocus: () =>
+      props.onFocus?.({
+        type: 'focus',
+        target: {
+          id: props.id,
+          value: (props.value ?? props.defaultValue) as T | undefined,
+        },
+      }),
+    onBlur: () =>
+      props.onBlur?.({
+        type: 'blur',
+        target: {
+          id: props.id,
+          value: (props.value ?? props.defaultValue) as T | undefined,
+        },
+      }),
+  };
+};
 
 const FormRoot: React.FC<Form.Props> = ({
   enableDrafts = false,

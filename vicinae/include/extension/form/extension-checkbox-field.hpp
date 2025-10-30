@@ -21,6 +21,8 @@ public:
   void render(const std::shared_ptr<FormModel::IField> &field) override {
     m_model = std::static_pointer_cast<FormModel::CheckboxField>(field);
 
+    if (m_model->m_label) { m_input->setLabel(*m_model->m_label); }
+
     if (auto value = m_model->value) { m_input->setValueAsJson(*value); }
   }
 
