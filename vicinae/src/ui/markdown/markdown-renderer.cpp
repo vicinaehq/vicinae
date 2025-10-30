@@ -5,6 +5,7 @@
 #include "ui/image/http-image-loader.hpp"
 #include "ui/image/image.hpp"
 #include "ui/image/local-image-loader.hpp"
+#include "ui/image/data-uri-image-loader.hpp"
 #include "ui/scroll-bar/scroll-bar.hpp"
 #include "services/app-service/app-service.hpp"
 #include <cmark-gfm.h>
@@ -95,36 +96,38 @@ void MarkdownRenderer::insertImage(cmark_node *node) {
     // implement for tint
   }
 
+  insertImageFromUrl(url, iconSize);
+}
+
+void MarkdownRenderer::insertImageFromUrl(const QUrl &url, const QSize &iconSize) {
   std::unique_ptr<AbstractImageLoader> imageLoader;
 
-  if (url.scheme() == "https") {
+  if (url.scheme() == "https" || url.scheme() == "http") {
     imageLoader = std::make_unique<HttpImageLoader>(url);
+  } else if (url.scheme() == "data") {
+    imageLoader = std::make_unique<DataUriImageLoader>(url.toString());
   } else {
     std::filesystem::path path = QString("%1%2").arg(url.host()).arg(url.path()).toStdString();
-
     imageLoader = std::make_unique<LocalImageLoader>(path);
   }
 
-  auto pos = _cursor.position();
+  QString loaderName = QUuid::createUuid().toString(QUuid::WithoutBraces);
 
-  connect(imageLoader.get(), &AbstractImageLoader::dataUpdated, this, [this, url, pos](const QPixmap &pix) {
-    auto old = _cursor.position();
+  // Create the image to mark position in document and set when it loads async-ly
+  QTextImageFormat imageFormat;
+  imageFormat.setName(loaderName);
+  imageFormat.setWidth(iconSize.width());
+  imageFormat.setHeight(iconSize.height());
+  _cursor.insertImage(imageFormat);
 
-    _cursor.setPosition(pos);
-    _document->addResource(QTextDocument::ImageResource, url, pix);
-
-    QTextBlockFormat blockFormat = _cursor.blockFormat();
-
-    blockFormat.setAlignment(Qt::AlignCenter);
-
-    _cursor.setBlockFormat(blockFormat);
-    _cursor.insertImage(url.toString());
-    _cursor.setPosition(old);
-    _document->markContentsDirty(0, _document->characterCount());
+  m_imageLoaders[loaderName] = std::move(imageLoader);
+  auto *loader = m_imageLoaders[loaderName].get();
+  connect(loader, &AbstractImageLoader::dataUpdated, this, [this, loaderName](const QPixmap &pix) {
+    _document->addResource(QTextDocument::ImageResource, QUrl(loaderName), pix);
+    _textEdit->viewport()->update();
   });
 
-  imageLoader->render({.size = iconSize, .devicePixelRatio = devicePixelRatio()});
-  m_images.push_back({.cursorPos = pos, .icon = std::move(imageLoader)});
+  loader->render({.size = iconSize, .devicePixelRatio = devicePixelRatio()});
 }
 
 void MarkdownRenderer::insertCodeBlock(cmark_node *node, bool isClosing) {
@@ -293,6 +296,11 @@ void MarkdownRenderer::insertParagraph(cmark_node *node) {
       if (_lastNodeType == CMARK_NODE_HEADING) insertIfNotFirstBlock();
       insertImage(child);
       break;
+    case CMARK_NODE_HTML_INLINE: {
+      QString html = cmark_node_get_literal(child);
+      parseAndInsertHtmlImages(html);
+      break;
+    }
     default:
       insertSpan(child, fmt);
       _cursor.setCharFormat(defaultFormat);
@@ -303,6 +311,57 @@ void MarkdownRenderer::insertParagraph(cmark_node *node) {
     child = cmark_node_next(child);
   }
   _cursor.setCharFormat(defaultFormat);
+}
+
+void MarkdownRenderer::parseAndInsertHtmlImages(const QString &html) {
+  insertIfNotFirstBlock();
+
+  // for default size when width/height is not specified
+  auto documentMargin = _document->documentMargin();
+  int widthOffset = documentMargin * 4;
+  QSize imgSize(size().width() - widthOffset, size().height() - documentMargin * 2);
+
+  // 1. Regex to find all <img> tags.
+  // This captures the *entire* tag open.
+  QRegularExpression imgTagRegex(R"(<img\s+(?:[^>"']|"[^"]*"|'[^']*')*>)",
+                                 QRegularExpression::CaseInsensitiveOption);
+
+  // 2. Regex to find specific attributes *within* a tag.
+  // (src|width|height) = Capture 1: the attribute name
+  // (["'])             = Capture 2: the opening quote (double or single)
+  // (.*?)              = Capture 3: the attribute value (non-greedy)
+  // \2                 = Matches the closing quote from Capture 2
+  QRegularExpression attrRegex(R"(\s+(src|width|height)=(["'])(.*?)\2)",
+                               QRegularExpression::CaseInsensitiveOption);
+
+  // Find all <img> tags in the input
+  auto tagIter = imgTagRegex.globalMatch(html);
+
+  while (tagIter.hasNext()) {
+    QRegularExpressionMatch tagMatch = tagIter.next();
+    QString imgTag = tagMatch.captured(0);
+
+    QString src;
+
+    // Find all attributes in this tag
+    auto attrIter = attrRegex.globalMatch(imgTag);
+    while (attrIter.hasNext()) {
+      QRegularExpressionMatch attrMatch = attrIter.next();
+
+      QString name = attrMatch.captured(1).toLower();
+      QString value = attrMatch.captured(3);
+
+      if (name == "src") {
+        src = value;
+      } else if (name == "width") {
+        if (!value.isEmpty()) { imgSize.setWidth(value.toInt()); }
+      } else if (name == "height") {
+        if (!value.isEmpty()) { imgSize.setHeight(value.toInt()); }
+      }
+    }
+
+    if (!src.isEmpty()) { insertImageFromUrl(QUrl(src), imgSize); }
+  }
 }
 
 void MarkdownRenderer::setBaseTextColor(const ColorLike &color) { m_baseTextColor = color; }
@@ -334,6 +393,11 @@ void MarkdownRenderer::insertTopLevelNode(cmark_node *node) {
   case CMARK_NODE_CODE_BLOCK:
     insertCodeBlock(node, !!cmark_node_next(node));
     break;
+  case CMARK_NODE_HTML_BLOCK: {
+    QString html = cmark_node_get_literal(node);
+    parseAndInsertHtmlImages(html);
+    break;
+  }
   default:
     break;
   }
@@ -446,7 +510,6 @@ void MarkdownRenderer::appendMarkdown(QStringView markdown) {
 
 void MarkdownRenderer::setMarkdown(QStringView markdown) {
   m_isFirstBlock = true;
-  m_images.clear();
   clear();
   appendMarkdown(markdown);
   _cursor.setPosition(0);
