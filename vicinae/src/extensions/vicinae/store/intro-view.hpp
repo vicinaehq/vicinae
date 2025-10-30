@@ -44,6 +44,5 @@ public:
 
     section->addAction(next);
     setActions(std::move(panel));
-    // add continue action
   }
 };
