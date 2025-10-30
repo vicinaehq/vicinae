@@ -13,36 +13,42 @@
   "pastContributors": [],
   "icon": "icon.png",
   "commands": [
-      {
-		"name": "list",
-		"title": "Simple List",
-		"description": "A simple list view",
-		"mode": "view"
-	  },
-	  {
-		"name": "list-detail",
-		"title": "List With Detail",
-		"description": "A list with a detail view",
-		"mode": "view"
-	  },
-	  {
-		"name": "controlled-list",
-		"title": "Controlled List",
-		"description": "A list where search is controlled by state",
-		"mode": "view"
-	  },
-	  {
-		"name": "simple-detail",
-		"title": "Simple Detail",
-		"description": "A simple detail view",
-		"mode": "view"
-	  },
-      {
-		"name": "no-view",
-		"title": "No View",
-		"description": "A basic no view command",
-		"mode": "no-view"
-	  }
+    {
+      "name": "list",
+      "title": "Simple List",
+      "description": "A simple list view",
+      "mode": "view"
+    },
+    {
+      "name": "list-detail",
+      "title": "List With Detail",
+      "description": "A list with a detail view",
+      "mode": "view"
+    },
+    {
+      "name": "controlled-list",
+      "title": "Controlled List",
+      "description": "A list where search is controlled by state",
+      "mode": "view"
+    },
+    {
+      "name": "simple-detail",
+      "title": "Simple Detail",
+      "description": "A simple detail view",
+      "mode": "view"
+    },
+    {
+      "name": "form",
+      "title": "Form Elements",
+      "description": "A collection of form elements",
+      "mode": "view"
+    },
+    {
+      "name": "no-view",
+      "title": "No View",
+      "description": "A basic no view command",
+      "mode": "no-view"
+    }
   ],
   "preferences": [],
   "scripts": {
@@ -50,7 +56,7 @@
     "dev": "vici develop"
   },
   "dependencies": {
-    "@vicinae/api": "^0.4.0"
+    "@vicinae/api": "^0.15.7"
   },
   "devDependencies": {
     "typescript": "^5.9.2"
