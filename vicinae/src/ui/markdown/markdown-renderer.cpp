@@ -5,6 +5,7 @@
 #include "ui/image/http-image-loader.hpp"
 #include "ui/image/image.hpp"
 #include "ui/image/local-image-loader.hpp"
+#include "ui/image/data-uri-image-loader.hpp"
 #include "ui/scroll-bar/scroll-bar.hpp"
 #include "services/app-service/app-service.hpp"
 #include <cmark-gfm.h>
@@ -101,11 +102,12 @@ void MarkdownRenderer::insertImage(cmark_node *node) {
 void MarkdownRenderer::insertImageFromUrl(const QUrl &url, const QSize &iconSize) {
   std::unique_ptr<AbstractImageLoader> imageLoader;
 
-  if (url.scheme() == "https") {
+  if (url.scheme() == "https" || url.scheme() == "http") {
     imageLoader = std::make_unique<HttpImageLoader>(url);
+  } else if (url.scheme() == "data") {
+    imageLoader = std::make_unique<DataUriImageLoader>(url.toString());
   } else {
     std::filesystem::path path = QString("%1%2").arg(url.host()).arg(url.path()).toStdString();
-
     imageLoader = std::make_unique<LocalImageLoader>(path);
   }
 
