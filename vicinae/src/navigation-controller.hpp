@@ -206,7 +206,6 @@ public:
     bool accessoryVisibility = true;
     std::optional<CompleterState> completer;
     std::unique_ptr<ActionPanelState> actionPanelState;
-    bool loading;
 
     bool isLoading = false;
     bool supportsSearch = true;
@@ -217,6 +216,40 @@ public:
     ~ViewState();
   };
 
+signals:
+  void currentViewStateChanged(const ViewState &state) const;
+  void currentViewChanged(const ViewState &state) const;
+  void viewPushed(const BaseView *view);
+  void viewPoped(const BaseView *view);
+  void actionPanelVisibilityChanged(bool visible);
+  void actionsChanged(const ActionPanelState &actions) const;
+  void windowVisiblityChanged(bool visible);
+  void searchTextSelected() const;
+  void searchTextChanged(const QString &text) const;
+  void searchPlaceholderTextChanged(const QString &text) const;
+  void navigationStatusChanged(const QString &text, const ImageURL &icon) const;
+  void navigationSuffixIconChanged(const std::optional<ImageURL> &icon) const;
+  void confirmAlertRequested(DialogContentWidget *widget);
+  void loadingChanged(bool value) const;
+  void showHudRequested(const QString &title, const std::optional<ImageURL> &icon);
+
+  void completionValuesChanged(const ArgumentValues &values) const;
+
+  void invalidCompletionFired();
+
+  void searchAccessoryChanged(QWidget *widget) const;
+  void searchAccessoryCleared() const;
+  void searchAccessoryVisiblityChanged(bool visible) const;
+
+  void completionCreated(const CompleterState &completer) const;
+  void completionDestroyed() const;
+
+  void headerVisiblityChanged(bool value);
+  void searchVisibilityChanged(bool value);
+  void statusBarVisiblityChanged(bool value);
+  void windowActivationChanged(bool value) const;
+
+public:
   void closeWindow(const CloseWindowOptions &settings = {});
   void closeWindow(const CloseWindowOptions &settings, std::chrono::milliseconds delay);
   void showWindow();
@@ -313,46 +346,24 @@ public:
 
   void popCurrentView();
   void pushView(BaseView *view);
+
+  /**
+   * Replace the current view without unloading the current command.
+   * Can be useful to display introduction views before pushing the actual view.
+   */
+  void replaceView(BaseView *view);
+  template <typename T> void replaceView() { replaceView(new T); }
+
   size_t viewStackSize() const;
   const ViewState *topState() const;
   ViewState *topState();
 
   NavigationController(ApplicationContext &ctx);
 
-signals:
-  void currentViewStateChanged(const ViewState &state) const;
-  void currentViewChanged(const ViewState &state) const;
-  void viewPushed(const BaseView *view);
-  void viewPoped(const BaseView *view);
-  void actionPanelVisibilityChanged(bool visible);
-  void actionsChanged(const ActionPanelState &actions) const;
-  void windowVisiblityChanged(bool visible);
-  void searchTextSelected() const;
-  void searchTextChanged(const QString &text) const;
-  void searchPlaceholderTextChanged(const QString &text) const;
-  void navigationStatusChanged(const QString &text, const ImageURL &icon) const;
-  void navigationSuffixIconChanged(const std::optional<ImageURL> &icon) const;
-  void confirmAlertRequested(DialogContentWidget *widget);
-  void loadingChanged(bool value) const;
-  void showHudRequested(const QString &title, const std::optional<ImageURL> &icon);
-
-  void completionValuesChanged(const ArgumentValues &values) const;
-
-  void invalidCompletionFired();
-
-  void searchAccessoryChanged(QWidget *widget) const;
-  void searchAccessoryCleared() const;
-  void searchAccessoryVisiblityChanged(bool visible) const;
-
-  void completionCreated(const CompleterState &completer) const;
-  void completionDestroyed() const;
-
-  void headerVisiblityChanged(bool value);
-  void searchVisibilityChanged(bool value);
-  void statusBarVisiblityChanged(bool value);
-  void windowActivationChanged(bool value) const;
-
 private:
+  std::unique_ptr<ViewState> createViewState(BaseView *view) const;
+  void activateView(const ViewState &state);
+
   ApplicationContext &m_ctx;
   std::vector<std::unique_ptr<CommandFrame>> m_frames;
 
