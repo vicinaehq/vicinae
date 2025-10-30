@@ -2,19 +2,19 @@
 #include "common.hpp"
 #include "navigation-controller.hpp"
 #include "services/extension-registry/extension-registry.hpp"
-#include "ui/screenshot-list/screenshot-list.hpp"
-#include "ui/thumbnail/thumbnail.hpp"
-#include "utils.hpp"
+#include "services/extension-store/vicinae-store.hpp"
 #include "services/toast/toast-service.hpp"
+#include "utils.hpp"
+#include <qnamespace.h>
 
-Stack RaycastStoreDetailView::createHeader() {
+Stack VicinaeStoreDetailView::createHeader() {
   auto author = HStack()
-                    .addIcon(ImageURL::http(m_ext.author.avatar).circle(), {16, 16})
+                    .addIcon(ImageURL::http(m_ext.author.avatarUrl).circle(), {16, 16})
                     .addText(m_ext.author.name)
                     .spacing(10);
   auto downloadCount = HStack()
                            .addIcon(ImageURL::builtin("arrow-down-circle"), {16, 16})
-                           .addText(formatCount(m_ext.download_count))
+                           .addText(formatCount(m_ext.downloadCount))
                            .spacing(5);
 
   auto metadata = HStack()
@@ -24,10 +24,13 @@ Stack RaycastStoreDetailView::createHeader() {
                              [&]() {
                                auto platforms = HStack().spacing(5);
 
-                               if (m_ext.platforms.contains("macOS")) {
+                               if (std::ranges::contains(m_ext.platforms, "linux")) {
+                                 platforms.addIcon(ImageURL::builtin("linux"), {16, 16});
+                               }
+                               if (std::ranges::contains(m_ext.platforms, "macOS")) {
                                  platforms.addIcon(ImageURL::builtin("apple"), {16, 16});
                                }
-                               if (m_ext.platforms.contains("Windows")) {
+                               if (std::ranges::contains(m_ext.platforms, "windows")) {
                                  platforms.addIcon(ImageURL::builtin("windows11"), {16, 16});
                                }
 
@@ -38,7 +41,7 @@ Stack RaycastStoreDetailView::createHeader() {
                       .spacing(10);
 
   auto left = HStack()
-                  .addIcon(m_ext.themedIcon(), {64, 64})
+                  .addIcon(ImageURL::http(m_ext.themedIcon()), {64, 64})
                   .add(VStack().addTitle(m_ext.title).add(metadata).margins(0, 4, 0, 4).justifyBetween())
                   .spacing(20);
 
@@ -54,39 +57,15 @@ Stack RaycastStoreDetailView::createHeader() {
   return HStack().add(left).add(m_installedAccessory).justifyBetween();
 }
 
-QWidget *RaycastStoreDetailView::createPresentationSection() {
+QWidget *VicinaeStoreDetailView::createPresentationSection() {
   auto header = createHeader().buildWidget();
 
   header->setMaximumHeight(70);
 
-  return VStack()
-      .add(header)
-      .addIf(m_ext.metadata_count > 0,
-             [&]() {
-               auto list = new ScreenshotList();
-               list->setFixedHeight(160);
-               list->setUrls(m_ext.screenshots());
-
-               connect(list, &ScreenshotList::clickedUrl, this,
-                       &RaycastStoreDetailView::handleClickedScreenshot);
-
-               return list;
-             })
-      .spacing(20)
-      .divided(1)
-      .margins(25)
-      .buildWidget();
+  return VStack().add(header).spacing(20).divided(1).margins(25).buildWidget();
 }
 
-Stack RaycastStoreDetailView::createContributorList() {
-  auto makeContributor = [&](const Raycast::User &user) {
-    return HStack().addIcon(user.validUserIcon().circle(), {16, 16}).addText(user.name).spacing(10);
-  };
-
-  return VStack().map(m_ext.contributors, makeContributor).spacing(10);
-}
-
-Stack RaycastStoreDetailView::createMainWidget() {
+Stack VicinaeStoreDetailView::createMainWidget() {
   return VStack()
       .add(VStack()
                .addText("Description")
@@ -99,7 +78,9 @@ Stack RaycastStoreDetailView::createMainWidget() {
                              [&](const auto &cmd) {
                                return VStack()
                                    .add(HStack()
-                                            .addIcon(cmd.themedIcon(), {20, 20})
+                                            .addIcon(
+                                                ImageURL::http(cmd.themedIcon().value_or(m_ext.themedIcon())),
+                                                {20, 20})
                                             .addText(cmd.title)
                                             .spacing(10))
                                    .addParagraph(cmd.description, SemanticColor::TextMuted)
@@ -116,31 +97,33 @@ Stack RaycastStoreDetailView::createMainWidget() {
       .spacing(20);
 }
 
-QWidget *RaycastStoreDetailView::createSideMetadataSection() {
-  auto readmeLink = VStack()
-                        .addText("README", SemanticColor::TextMuted)
-                        .add(new TextLinkWidget("Open README", QUrl(m_ext.readme_assets_path)))
-                        .spacing(5);
+QWidget *VicinaeStoreDetailView::createSideMetadataSection() {
   auto viewSource = VStack()
                         .addText("Source Code", SemanticColor::TextMuted)
-                        .add(new TextLinkWidget("View Code", QUrl(m_ext.source_url)))
+                        .add(new TextLinkWidget("View Code", QUrl(m_ext.sourceUrl)))
                         .spacing(5);
 
   auto lastUpdate = VStack()
                         .addText("Last update", SemanticColor::TextMuted)
-                        .addText(getRelativeTimeString(m_ext.updatedAtDateTime()), SemanticColor::Foreground)
+                        .addText(getRelativeTimeString(m_ext.updatedAt), SemanticColor::Foreground)
                         .spacing(5);
 
+  auto categories = VStack().addText("Categories", SemanticColor::TextMuted).spacing(5);
+
+  for (const auto &category : m_ext.categories) {
+    categories.addText(category.name, SemanticColor::Foreground);
+  }
+
   return VStack()
-      .add(readmeLink)
-      .add(lastUpdate)
-      .addIf(!m_ext.contributors.empty(),
+      .addIf(!m_ext.readmeUrl.isEmpty(),
              [&]() {
                return VStack()
-                   .addText("Contributors", SemanticColor::TextMuted)
-                   .add(createContributorList())
+                   .addText("README", SemanticColor::TextMuted)
+                   .add(new TextLinkWidget("Open README", QUrl(m_ext.readmeUrl)))
                    .spacing(5);
              })
+      .add(lastUpdate)
+      .addIf(!m_ext.categories.empty(), [&]() { return categories; })
       .add(viewSource)
       .addStretch()
       .spacing(15)
@@ -148,7 +131,7 @@ QWidget *RaycastStoreDetailView::createSideMetadataSection() {
       .buildWidget();
 }
 
-QWidget *RaycastStoreDetailView::createContentSection() {
+QWidget *VicinaeStoreDetailView::createContentSection() {
   return HStack()
       .add(createMainWidget().buildWidget(), 2)
       .add(createSideMetadataSection(), 1)
@@ -156,14 +139,7 @@ QWidget *RaycastStoreDetailView::createContentSection() {
       .buildWidget();
 }
 
-void RaycastStoreDetailView::handleClickedScreenshot(const ImageURL &url) {
-  auto dialog = new ImagePreviewDialogWidget(url);
-
-  dialog->setAspectRatio(16 / 10.f);
-  context()->navigation->setDialog(dialog);
-}
-
-void RaycastStoreDetailView::createActions() {
+void VicinaeStoreDetailView::createActions() {
   auto panel = std::make_unique<ActionPanelState>();
   auto registry = context()->services->extensionRegistry();
   bool isInstalled = registry->isInstalled(m_ext.id);
@@ -172,8 +148,8 @@ void RaycastStoreDetailView::createActions() {
   if (!isInstalled) {
     auto install = new StaticAction(
         "Install extension", m_ext.themedIcon(), [ext = m_ext](const ApplicationContext *ctx) {
-          using Watcher = QFutureWatcher<Raycast::DownloadExtensionResult>;
-          auto store = ctx->services->raycastStore();
+          using Watcher = QFutureWatcher<VicinaeStore::DownloadExtensionResult>;
+          auto store = ctx->services->vicinaeStore();
           auto watcher = new Watcher;
           auto toast = ctx->services->toastService();
           auto registry = ctx->services->extensionRegistry();
@@ -199,7 +175,7 @@ void RaycastStoreDetailView::createActions() {
             });
           });
 
-          auto downloadResult = store->downloadExtension(ext.download_url);
+          auto downloadResult = store->downloadExtension(ext.downloadUrl);
           watcher->setFuture(downloadResult);
         });
     main->addAction(install);
@@ -211,7 +187,7 @@ void RaycastStoreDetailView::createActions() {
   setActions(std::move(panel));
 }
 
-void RaycastStoreDetailView::initialize() {
+void VicinaeStoreDetailView::initialize() {
   auto registry = context()->services->extensionRegistry();
   bool isInstalled = registry->isInstalled(m_ext.id);
 
@@ -235,17 +211,23 @@ void RaycastStoreDetailView::initialize() {
   });
 }
 
-bool RaycastStoreDetailView::supportsSearch() const { return false; }
+bool VicinaeStoreDetailView::supportsSearch() const { return false; }
 
-QString RaycastStoreDetailView::initialNavigationTitle() const {
+QString VicinaeStoreDetailView::initialNavigationTitle() const {
   return QString("%1 - %2").arg(BaseView::initialNavigationTitle()).arg(m_ext.title);
 }
 
-QWidget *RaycastStoreDetailView::createUI(const Raycast::Extension &ext) {
-  return VStack().add(createPresentationSection()).add(createContentSection()).divided(1).buildWidget();
+QWidget *VicinaeStoreDetailView::createUI(const VicinaeStore::Extension &ext) {
+  return VStack()
+      .add(createPresentationSection())
+      .add(createContentSection())
+      .addStretch()
+      .divided(1)
+      .buildWidget();
 }
 
-void RaycastStoreDetailView::setupUI(const Raycast::Extension &extension) {
+void VicinaeStoreDetailView::setupUI(const VicinaeStore::Extension &extension) {
   m_scrollArea->setWidget(createUI(extension));
+  m_scrollArea->setFocusPolicy(Qt::StrongFocus);
   VStack().add(m_scrollArea).imbue(this);
 }

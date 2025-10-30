@@ -111,7 +111,13 @@ QJsonObject Command::toJson() const {
   return json;
 }
 
-QString Command::themedIcon() const { return icons.themedIcon(); }
+std::optional<QString> Command::themedIcon() const {
+  const auto &theme = ThemeService::instance().theme();
+  if (theme.variant() == ThemeVariant::Dark && !icons.dark.isEmpty()) { return icons.dark; }
+  if (theme.variant() == ThemeVariant::Light && !icons.light.isEmpty()) { return icons.light; }
+
+  return {};
+}
 
 // Extension implementation
 Extension Extension::fromJson(const QJsonObject &json) {
@@ -127,22 +133,22 @@ Extension Extension::fromJson(const QJsonObject &json) {
   extension.trending = json["trending"].toBool(false);
   extension.icons = Icons::fromJson(json["icons"].toObject());
 
-  // Parse categories
   const QJsonArray categoriesArray = json["categories"].toArray();
+  extension.categories.reserve(categoriesArray.size());
   for (const auto &categoryValue : categoriesArray) {
-    extension.categories.append(Category::fromJson(categoryValue.toObject()));
+    extension.categories.emplace_back(Category::fromJson(categoryValue.toObject()));
   }
 
-  // Parse platforms
   const QJsonArray platformsArray = json["platforms"].toArray();
+  extension.platforms.reserve(platformsArray.size());
   for (const auto &platform : platformsArray) {
-    extension.platforms.append(platform.toString());
+    extension.platforms.emplace_back(platform.toString());
   }
 
-  // Parse commands
   const QJsonArray commandsArray = json["commands"].toArray();
+  extension.commands.reserve(commandsArray.size());
   for (const auto &commandValue : commandsArray) {
-    extension.commands.append(Command::fromJson(commandValue.toObject()));
+    extension.commands.emplace_back(Command::fromJson(commandValue.toObject()));
   }
 
   extension.sourceUrl = json["sourceUrl"].toString();
