@@ -26,7 +26,7 @@ FormModel FormModel::fromJson(const QJsonObject &json) {
 
     if (type == "action-panel") {
       model.actions = ActionPannelParser().parse(obj);
-    } else if (type == "form-separator") {
+    } else if (type == "separator") {
       model.items.push_back(Separator{});
     } else if (type == "form-description") {
       Description desc;
