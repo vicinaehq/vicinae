@@ -6,7 +6,6 @@ void HttpImageLoader::render(const RenderConfig &cfg) {
   if (m_reply) { m_reply->abort(); }
 
   QNetworkRequest request(m_url);
-  qDebug() << "fetching" << m_url;
   auto reply = NetworkFetcher::instance()->fetch(m_url);
 
   // important: we connect to the current reply, not m_reply

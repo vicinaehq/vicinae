@@ -1,5 +1,4 @@
 #pragma once
-#include "actions/extension/extension-actions.hpp"
 #include "services/extension-store/vicinae-store.hpp"
 #include "ui/views/list-view.hpp"
 #include <qboxlayout.h>

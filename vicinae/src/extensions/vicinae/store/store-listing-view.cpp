@@ -74,7 +74,6 @@ public:
     item->setTitle(m_extension.title);
     item->setDescription(m_extension.description);
     item->setIcon(ImageURL::http(m_extension.themedIcon()));
-    qDebug() << "icon" << m_extension.themedIcon();
     item->setDownloadCount(m_extension.downloadCount);
     item->setInstalled(m_installed);
 
