@@ -54,7 +54,9 @@ struct FormModel {
     PasswordField(const FieldBase &base) : IField(base) {}
   };
 
-  class CheckboxField : public IField {
+  struct CheckboxField : public IField {
+    std::optional<QString> m_label;
+
   public:
     CheckboxField(const FieldBase &base) : IField(base) {}
   };

@@ -143,7 +143,7 @@ public:
       payload[field->id()] = field->valueAsJson();
     }
 
-    reset();
+    // reset();
     return payload;
   }
 
