@@ -30,7 +30,9 @@ class MarkdownRenderer : public QWidget {
   constexpr static float HEADING_LEVEL_SCALE_FACTORS[5] = {2, 1.6, 1.3, 1.16, 1};
   constexpr static int DEFAULT_BASE_POINT_SIZE = 12;
 
-  std::vector<ImageResource> m_images;
+  // Image loaders for async image placement
+  std::map<QString, std::unique_ptr<AbstractImageLoader>> m_imageLoaders;
+
   QString _markdown;
   QFont m_font;
   QTextBrowser *_textEdit;
@@ -52,6 +54,7 @@ class MarkdownRenderer : public QWidget {
 
   void insertHeading(const QString &text, int level);
   void insertImage(cmark_node *node);
+  void insertImageFromUrl(const QUrl &url, const QSize &iconSize);
   QTextList *insertList(cmark_node *list, int indent = 1);
   void insertBlockParagraph(cmark_node *node);
   void insertSpan(cmark_node *node, QTextCharFormat &fmt);
@@ -59,6 +62,8 @@ class MarkdownRenderer : public QWidget {
   void insertCodeBlock(cmark_node *node, bool isClosing = false);
   void insertHeading(cmark_node *node);
   void insertTopLevelNode(cmark_node *node);
+
+  void parseAndInsertHtmlImages(const QString &html);
 
   void insertIfNotFirstBlock();
 
