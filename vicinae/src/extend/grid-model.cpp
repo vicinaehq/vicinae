@@ -88,6 +88,8 @@ GridSectionModel GridModelParser::parseSection(const QJsonObject &instance) {
 GridItemContentWidget::Inset GridModelParser::parseInset(const QString &s) {
   using Inset = GridItemContentWidget::Inset;
 
+  if (s == "zero") return Inset::None;
+  if (s == "small") return Inset::Small;
   if (s == "medium") return Inset::Medium;
   if (s == "large") return Inset::Large;
 
