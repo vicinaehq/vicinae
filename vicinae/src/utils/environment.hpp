@@ -102,6 +102,11 @@ inline QStringList fallbackIconSearchPaths() {
   return list;
 }
 
+inline QString vicinaeApiBaseUrl() {
+  if (const char *url = getenv("VICINAE_API_BASE_URL")) { return url; }
+  return "https://api.vicinae.com/v1";
+}
+
 /**
  * Version of the Vicinae app.
  */

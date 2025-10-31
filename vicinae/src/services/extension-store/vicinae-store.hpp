@@ -126,8 +126,6 @@ public:
   QString baseUrl() const;
 
 private:
-  static constexpr const char *DEFAULT_BASE_URL = "http://localhost:3000/v1";
-
   QFuture<std::expected<QByteArray, QString>> get(const QUrl &url);
 
   QNetworkAccessManager *m_networkManager;

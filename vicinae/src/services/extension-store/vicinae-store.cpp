@@ -1,4 +1,5 @@
 #include "vicinae-store.hpp"
+#include "environment.hpp"
 #include "theme.hpp"
 #include "theme/theme-file.hpp"
 #include <QDir>
@@ -244,7 +245,8 @@ ListResponse ListResponse::fromJson(const QJsonDocument &doc) {
 
 // VicinaeStoreService implementation
 VicinaeStoreService::VicinaeStoreService(QObject *parent)
-    : QObject(parent), m_networkManager(new QNetworkAccessManager(this)), m_baseUrl(DEFAULT_BASE_URL) {
+    : QObject(parent), m_networkManager(new QNetworkAccessManager(this)),
+      m_baseUrl(Environment::vicinaeApiBaseUrl()) {
 
   // Set up disk cache for better performance
   auto cache = new QNetworkDiskCache(this);
