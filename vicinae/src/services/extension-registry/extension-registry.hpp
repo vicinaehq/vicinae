@@ -7,6 +7,7 @@
 #include <qfilesystemwatcher.h>
 #include <qjsonobject.h>
 #include <qobject.h>
+#include <qtimer.h>
 #include <qtmetamacros.h>
 #include <vector>
 #include <QString>
