@@ -6,9 +6,20 @@ import { Color, ColorLike } from "../color";
 import { Dropdown } from "./dropdown";
 
 enum GridInset {
+  Zero = "zero",
   Small = "small",
   Medium = "medium",
   Large = "large",
+}
+
+/**
+ * Enum representing the number of items that should be displayed on a single row.
+ * @deprecated - use `columns` instead.
+ */
+enum GridItemSize {
+  Small = "small", // Fits 8 items per row.
+  Medium = "medium", // Fits 5 items per row.
+  Large = "large", // Fits 3 items per row.
 }
 
 const aspectRatioMap: Record<Grid.AspectRatio, number> = {
@@ -33,6 +44,7 @@ enum GridFit {
 export namespace Grid {
   type BaseSection = {
 	  inset?: GridInset;
+    itemSize?: GridItemSize;
 	  columns?: number;
 	  fit?: GridFit;
 	  aspectRatio?: Grid.AspectRatio;
@@ -65,6 +77,7 @@ export namespace Grid {
 
   export type Fit = GridFit;
   export type Inset = GridInset;
+  export type ItemSize = GridItemSize;
   export type AspectRatio = "1" | "3/2" | "2/3" | "4/3" | "3/4" | "16/9" | "9/16" | '21/9' | '9/21' | '32/9' | '9/32';
 
   export namespace Item {
@@ -108,6 +121,7 @@ const GridRoot: React.FC<Grid.Props> = ({
   children,
   actions,
   inset,
+  itemSize,
   fit = GridFit.Contain,
   aspectRatio = "1",
   ...props
@@ -117,6 +131,14 @@ const GridRoot: React.FC<Grid.Props> = ({
     typeof props.filtering === "undefined"
   ) {
     props.filtering = props.enableFiltering;
+  }
+
+  if (props.columns === undefined && itemSize) {
+    props.columns = {
+      [GridItemSize.Small]: 8,
+      [GridItemSize.Medium]: 5,
+      [GridItemSize.Large]: 3,
+    }[itemSize];
   }
 
   return (
@@ -170,6 +192,7 @@ export const Grid = Object.assign(GridRoot, {
   Dropdown,
   Fit: GridFit,
   Inset: GridInset,
+  ItemSize: GridItemSize,
   Item: Object.assign(GridItem, {
   }),
 });
