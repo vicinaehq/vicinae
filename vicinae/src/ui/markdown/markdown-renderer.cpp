@@ -9,6 +9,8 @@
 #include "ui/scroll-bar/scroll-bar.hpp"
 #include "services/app-service/app-service.hpp"
 #include <cmark-gfm.h>
+#include <cmark-gfm-core-extensions.h>
+#include <cmark-gfm-extension_api.h>
 #include <qapplication.h>
 #include <qboxlayout.h>
 #include <qevent.h>
@@ -28,6 +30,7 @@
 #include <qtextdocument.h>
 #include <qtextformat.h>
 #include <qtextlist.h>
+#include <qtexttable.h>
 #include <qurl.h>
 #include <qurlquery.h>
 #include "services/config/config-service.hpp"
@@ -157,6 +160,179 @@ void MarkdownRenderer::insertCodeBlock(cmark_node *node, bool isClosing) {
 
   _cursor.insertText(code.trimmed(), fontFormat);
   _cursor.setPosition(frame->lastPosition());
+  _cursor.movePosition(QTextCursor::NextCharacter);
+}
+
+void MarkdownRenderer::insertTable(cmark_node *node) {
+  // Ensure we are on a new block before inserting the table
+  insertIfNotFirstBlock();
+
+  // Identify header/body sections if present
+  cmark_node *header = nullptr;
+  cmark_node *body = nullptr;
+  std::vector<cmark_node *> extraBodyRows;
+  for (auto *child = cmark_node_first_child(node); child; child = cmark_node_next(child)) {
+    switch (getGfmNodeType(child)) {
+    case GfmNodeType::TableHeader:
+      header = child;
+      break;
+    case GfmNodeType::TableBody:
+      body = child;
+      break;
+    case GfmNodeType::TableRow:
+      extraBodyRows.push_back(child);
+      break;
+    default:
+      break;
+    }
+  }
+
+  // Get the number of columns
+  int columnCount = cmark_gfm_extensions_get_table_columns(node);
+  if (columnCount <= 0) { return; }
+
+  // Counts the number of rows from either header or body
+  auto countRowsFromSection = [&](cmark_node *section) {
+    if (!section) return 0;
+    auto *first = cmark_node_first_child(section);
+    if (!first) return 0;
+    if (getGfmNodeType(first) == GfmNodeType::TableCell) {
+      return 1; // single row represented by direct cells
+    }
+    int rows = 0;
+    for (auto *row = first; row; row = cmark_node_next(row)) {
+      if (getGfmNodeType(row) == GfmNodeType::TableRow) { ++rows; }
+    }
+    return rows;
+  };
+
+  // Counts the total number of rows (header, body, and rows)
+  int headerRows = countRowsFromSection(header);
+  int bodyRows = countRowsFromSection(body);
+  int extraRows = static_cast<int>(extraBodyRows.size());
+  int rowCount = headerRows + bodyRows + extraRows;
+
+  // Create QTextTable with styling
+  QTextTableFormat tableFormat;
+  tableFormat.setCellPadding(8);
+  tableFormat.setCellSpacing(0);
+  tableFormat.setBorder(1);
+  tableFormat.setWidth(QTextLength(QTextLength::PercentageLength, 100));
+  tableFormat.setBorderStyle(QTextFrameFormat::BorderStyle_Solid);
+
+  QTextTable *table = _cursor.insertTable(rowCount, columnCount, tableFormat);
+
+  // Determine per-column alignment (default to left)
+  // https://github.com/github/cmark-gfm/blob/587a12bb54d95ac37241377e6ddc93ea0e45439b/extensions/table.c#L589-L592
+  std::vector<Qt::Alignment> columnAlignment(columnCount, Qt::AlignLeft);
+  if (auto *alignments = cmark_gfm_extensions_get_table_alignments(node)) {
+    for (int c = 0; c < columnCount; ++c) {
+      switch (alignments[c]) {
+      case 'l':
+        columnAlignment[c] = Qt::AlignLeft;
+        break;
+      case 'c':
+        columnAlignment[c] = Qt::AlignHCenter;
+        break;
+      case 'r':
+        columnAlignment[c] = Qt::AlignRight;
+        break;
+      default:
+        columnAlignment[c] = Qt::AlignLeft;
+        break;
+      }
+    }
+  }
+
+  // Text Formatting
+  OmniPainter painter;
+  QTextCharFormat defaultTextFormat;
+  defaultTextFormat.setFont(_document->defaultFont());
+  defaultTextFormat.setForeground(painter.resolveColor(SemanticColor::Foreground));
+  QTextCharFormat headerTextFormat = defaultTextFormat;
+  headerTextFormat.setFontWeight(QFont::DemiBold);
+
+  // Cell Formatting
+  QTextCharFormat headerCellFormat;
+  headerCellFormat.setBackground(painter.resolveColor(SemanticColor::SecondaryBackground));
+
+  // Renders all inline/block content inside a table cell
+  auto renderCellContents = [&](cmark_node *cell, bool isHeader) {
+    QTextCharFormat fmt = isHeader ? headerTextFormat : defaultTextFormat;
+    for (auto *content = cmark_node_first_child(cell); content; content = cmark_node_next(content)) {
+      switch (cmark_node_get_type(content)) {
+      case CMARK_NODE_PARAGRAPH:
+        insertParagraph(content);
+        break;
+      case CMARK_NODE_IMAGE:
+        insertImage(content);
+        break;
+      case CMARK_NODE_HTML_INLINE: {
+        QString html = cmark_node_get_literal(content);
+        parseAndInsertHtmlImages(html);
+        break;
+      }
+      default:
+        insertSpan(content, fmt);
+        break;
+      }
+    }
+  };
+
+  // Renders a list of cells for a given row
+  auto renderCellsList = [&](cmark_node *firstCell, int rowIdx, bool isHeader) {
+    int c = 0;
+    for (auto *cell = firstCell; cell && c < columnCount; cell = cmark_node_next(cell)) {
+      if (getGfmNodeType(cell) != GfmNodeType::TableCell) { continue; }
+      QTextTableCell qtCell = table->cellAt(rowIdx, c);
+      if (isHeader) { qtCell.setFormat(headerCellFormat); }
+      QTextCursor prevCursor = _cursor;
+      _cursor = qtCell.firstCursorPosition();
+      // Apply column alignment
+      {
+        QTextBlockFormat bf = _cursor.blockFormat();
+        bf.setAlignment(columnAlignment[c]);
+        _cursor.setBlockFormat(bf);
+      }
+      renderCellContents(cell, isHeader);
+      _cursor = prevCursor;
+      ++c;
+    }
+  };
+
+  // Renders a section of the table (header or body)
+  auto renderSection = [&](cmark_node *section, bool isHeader, int &rowIndex) {
+    if (!section) return;
+    auto *first = cmark_node_first_child(section);
+    if (!first) return;
+
+    // Direct table_cell children: render a single row
+    if (getGfmNodeType(first) == GfmNodeType::TableCell) {
+      renderCellsList(first, rowIndex, isHeader);
+      ++rowIndex;
+      return;
+    }
+
+    // table_row children: render each row
+    for (auto *row = first; row; row = cmark_node_next(row)) {
+      if (getGfmNodeType(row) != GfmNodeType::TableRow) { continue; }
+      renderCellsList(cmark_node_first_child(row), rowIndex, isHeader);
+      ++rowIndex;
+    }
+  };
+
+  int rowIndex = 0;
+  renderSection(header, true, rowIndex);
+  renderSection(body, false, rowIndex);
+  // Render any table_row children directly under the table node as body rows
+  for (auto *row : extraBodyRows) {
+    renderCellsList(cmark_node_first_child(row), rowIndex, false);
+    ++rowIndex;
+  }
+
+  // Ensure subsequent content is inserted AFTER the table.
+  // By default, after insertTable the cursor remains inside the first cell.
+  _cursor.setPosition(table->lastPosition());
   _cursor.movePosition(QTextCursor::NextCharacter);
 }
 
@@ -399,6 +575,9 @@ void MarkdownRenderer::insertTopLevelNode(cmark_node *node) {
     break;
   }
   default:
+    // Handle GFM extension nodes by type string
+    // Extensions get a dynamic type enum value, so can't depend on that
+    if (getGfmNodeType(node) == GfmNodeType::Table) { insertTable(node); }
     break;
   }
 
@@ -443,7 +622,17 @@ void MarkdownRenderer::appendMarkdown(QStringView markdown) {
   }
 
   auto buf = fragment.toUtf8();
-  cmark_node *root = cmark_parse_document(buf.data(), buf.size(), 0);
+
+  // Enable GFM core extensions (tables, etc.) and parse
+  cmark_gfm_core_extensions_ensure_registered();
+  cmark_parser *parser = cmark_parser_new(CMARK_OPT_DEFAULT);
+
+  if (cmark_syntax_extension *tableExt = cmark_find_syntax_extension("table")) {
+    cmark_parser_attach_syntax_extension(parser, tableExt);
+  }
+
+  cmark_parser_feed(parser, buf.data(), buf.size());
+  cmark_node *root = cmark_parser_finish(parser);
   cmark_node *node = cmark_node_first_child(root);
   cmark_node *lastNode = nullptr;
   std::vector<TopLevelBlock> topLevelBlocks;
@@ -494,6 +683,7 @@ void MarkdownRenderer::appendMarkdown(QStringView markdown) {
   }
 
   cmark_node_free(root);
+  cmark_parser_free(parser);
 
   QTextCursor newCursor = _textEdit->textCursor();
 
