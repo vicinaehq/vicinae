@@ -8,12 +8,13 @@
 #include <qnamespace.h>
 
 constexpr const char *description = R"(
-# Welcome to the Raycast extension store
+# Welcome to the Raycast Extension Store
 
-Vicinae provides a direct integration with the official [Raycast store](https://www.raycast.com/store), allowing you to search and install existing Raycast extensions from
-Vicinae directly.
+Vicinae provides direct integration with the official [Raycast store](https://www.raycast.com/store), allowing you to search and install Raycast extensions directly from Vicinae.
 
-Please note that at the moment, a lot of extensions may not fully work, due to us either not implementing some features, or the extension relying on MacOS specific tools or APIs.
+Please note that many extensions may not fully work at this time. This is either due to missing feature implementations in Vicinae, or extensions relying on macOS-specific tools and APIs.
+
+Vicinae also has its own [extension store](vicinae://extensions/vicinae/vicinae/store), which does not suffer from these limitations.
 )";
 
 // view shown the first time the user opens the store
@@ -37,14 +38,10 @@ public:
     setupUI();
     auto next = new StaticAction("Continue to store", icon(), [this]() {
       command()->storage().setItem("introCompleted", true);
-      qDebug() << "intro completed";
-      QString id = command()->info().uniqueId();
-      popSelf();
-      context()->navigation->pushView(new RaycastStoreListingView);
+      context()->navigation->replaceView<RaycastStoreListingView>();
     });
     auto panel = std::make_unique<FormActionPanelState>();
     auto section = panel->createSection();
-
     section->addAction(next);
     setActions(std::move(panel));
   }

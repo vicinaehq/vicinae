@@ -14,7 +14,11 @@ class RaycastStoreCommand : public BuiltinCallbackCommand {
     icon.setBackgroundTint(SemanticColor::Red);
     return icon;
   }
-  std::vector<Preference> preferences() const override { return {}; }
+  std::vector<Preference> preferences() const override {
+    auto alwaysShowIntro = Preference::makeCheckbox("alwaysShowIntro", "Always show intro");
+    alwaysShowIntro.setDefaultValue(false);
+    return {alwaysShowIntro};
+  }
 
   void execute(CommandController *ctrl) const override {
     auto ctx = ctrl->context();
