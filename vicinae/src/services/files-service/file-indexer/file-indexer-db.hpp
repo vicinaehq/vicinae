@@ -47,6 +47,7 @@ public:
   std::optional<QDateTime> getMaxLastModified(const std::filesystem::path &path) const;
   std::vector<std::filesystem::path> listIndexedDirectoryFiles(const std::filesystem::path &path) const;
 
+  void deleteAllIndexedFiles();
   void deleteIndexedFiles(const std::vector<std::filesystem::path> &paths);
   void indexFiles(const std::vector<std::filesystem::path> &paths);
   std::vector<std::filesystem::path> search(std::string_view searchQuery,
