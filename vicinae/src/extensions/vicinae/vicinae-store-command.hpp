@@ -2,7 +2,6 @@
 #include "extensions/vicinae/store/intro-view.hpp"
 #include "single-view-command-context.hpp"
 #include "store/store-listing-view.hpp"
-#include "theme.hpp"
 #include "vicinae.hpp"
 
 class VicinaeStoreCommand : public BuiltinCallbackCommand {

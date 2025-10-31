@@ -233,6 +233,7 @@ tl::expected<ExtensionManifest, ManifestError> ExtensionRegistry::scanBundle(con
 
   ExtensionManifest manifest;
   auto obj = json.object();
+  auto deps = obj.value("dependencies").toObject();
 
   manifest.path = path;
   manifest.id = QString::fromStdString(getLastPathComponent(path));
@@ -241,17 +242,14 @@ tl::expected<ExtensionManifest, ManifestError> ExtensionRegistry::scanBundle(con
   manifest.description = obj.value("description").toString();
   manifest.icon = obj.value("icon").toString();
   manifest.author = obj.value("author").toString();
+  manifest.needsRaycastApi = deps.contains(Omnicast::RAYCAST_NPM_API_PACKAGE);
 
-  auto deps = obj.value("dependencies").toObject();
-
-  if (deps.contains(Omnicast::RAYCAST_NPM_API_PACKAGE)) {
-    manifest.provenance = ExtensionManifest::Provenance::Raycast;
-  } else if (deps.contains(Omnicast::VICINAE_NPM_API_PACKAGE)) {
+  if (manifest.id.startsWith("store.vicinae.")) {
     manifest.provenance = ExtensionManifest::Provenance::Vicinae;
+  } else if (manifest.id.startsWith("store.raycast.")) {
+    manifest.provenance = ExtensionManifest::Provenance::Raycast;
   } else {
-    return tl::unexpected(QString("Manifest does not list %1 or %2 as a runtime dependency.")
-                              .arg(Omnicast::VICINAE_NPM_API_PACKAGE)
-                              .arg(Omnicast::RAYCAST_NPM_API_PACKAGE));
+    manifest.provenance = ExtensionManifest::Provenance::Local;
   }
 
   for (const auto &obj : obj.value("categories").toArray()) {

@@ -159,7 +159,6 @@ void RaycastStoreListingView::handleFinishedQuery() {
 
     for (const auto &extension : result->m_extensions) {
       bool installed = context()->services->extensionRegistry()->isInstalled(extension.id);
-
       results.addItem(std::make_unique<RaycastStoreExtensionItem>(extension, installed));
     }
   });
