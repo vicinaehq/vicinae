@@ -266,6 +266,12 @@ QString NavigationController::searchText(const BaseView *caller) const {
   return QString();
 }
 
+bool NavigationController::isLoading(const BaseView *caller) const {
+  if (auto state = findViewState(VALUE_OR(caller, topView()))) { return state->isLoading; }
+
+  return false;
+}
+
 void NavigationController::clearActions(const BaseView *caller) {
   setActions(std::make_unique<ActionPanelState>(), caller);
 }

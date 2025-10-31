@@ -120,6 +120,11 @@ QString BaseView::searchText() const {
   return m_ctx->navigation->searchText(m_navProxy);
 }
 
+bool BaseView::isLoading() const {
+  if (!m_ctx) return false;
+  return m_ctx->navigation->isLoading(m_navProxy);
+}
+
 void BaseView::setSearchText(const QString &value) {
   if (!m_ctx) return;
   return m_ctx->navigation->setSearchText(value, m_navProxy);

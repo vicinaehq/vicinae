@@ -275,6 +275,7 @@ public:
   void setSearchText(const QString &text, const BaseView *caller = nullptr);
 
   void setLoading(bool value, const BaseView *caller = nullptr);
+  bool isLoading(const BaseView *caller = nullptr) const;
 
   void popToRoot(const PopToRootOptions &opts = {});
 
