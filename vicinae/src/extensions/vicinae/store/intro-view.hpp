@@ -3,11 +3,12 @@
 #include "layout.hpp"
 #include "theme/colors.hpp"
 #include "ui/action-pannel/action.hpp"
+#include "ui/markdown/markdown-renderer.hpp"
 #include "ui/views/base-view.hpp"
 #include "navigation-controller.hpp"
 #include <qnamespace.h>
 
-constexpr const char *description = R"(
+const QString INTRO = R"(
 # Welcome to the Vicinae Extension Store
 
 The Vicinae extension store features community-built extensions that have been approved by the core contributors of the Vicinae project.
@@ -24,12 +25,15 @@ public:
     VStack()
         .add(UI::Icon(ImageURL::builtin("cart").setBackgroundTint(SemanticColor::Accent)).size({40, 40}), 0,
              Qt::AlignCenter)
-        .markdown(description)
+        .add(m_markdown, 1)
         .spacing(20)
         .margins(20)
         .addStretch()
         .imbue(this);
+    m_markdown->setMarkdown(INTRO);
   }
+
+  bool supportsSearch() const override { return false; }
 
   void initialize() override {
     auto next = new StaticAction("Continue to store", ImageURL::builtin("cart"), [this]() {
@@ -39,7 +43,11 @@ public:
     auto panel = std::make_unique<FormActionPanelState>();
     auto section = panel->createSection();
 
+    m_markdown->textEdit()->setFocus();
     section->addAction(next);
     setActions(std::move(panel));
   }
+
+private:
+  MarkdownRenderer *m_markdown = new MarkdownRenderer;
 };

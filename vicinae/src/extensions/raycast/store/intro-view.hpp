@@ -3,11 +3,12 @@
 #include "layout.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/image/url.hpp"
+#include "ui/markdown/markdown-renderer.hpp"
 #include "ui/views/base-view.hpp"
 #include "navigation-controller.hpp"
 #include <qnamespace.h>
 
-constexpr const char *description = R"(
+static const QString INTRO = R"(
 # Welcome to the Raycast Extension Store
 
 Vicinae provides direct integration with the official [Raycast store](https://www.raycast.com/store), allowing you to search and install Raycast extensions directly from Vicinae.
@@ -23,15 +24,17 @@ public:
   RaycastStoreIntroView() {}
 
   ImageURL icon() { return command()->info().iconUrl(); }
+  bool supportsSearch() const override { return false; };
 
   void setupUI() {
     VStack()
         .addIcon(icon(), {40, 40}, Qt::AlignCenter)
-        .markdown(description)
+        .add(m_markdown, 1)
         .spacing(20)
         .margins(20)
         .addStretch()
         .imbue(this);
+    m_markdown->setMarkdown(INTRO);
   }
 
   void initialize() override {
@@ -45,4 +48,7 @@ public:
     section->addAction(next);
     setActions(std::move(panel));
   }
+
+private:
+  MarkdownRenderer *m_markdown = new MarkdownRenderer;
 };
