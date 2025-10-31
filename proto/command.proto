@@ -1,0 +1,23 @@
+syntax = "proto3";
+import "common.proto";
+
+package proto.ext.command;
+
+message UpdateCommandMetadataRequest {
+  // Null/empty clears the override.
+  optional string subtitle = 1;
+};
+
+message Request {
+  oneof payload {
+    UpdateCommandMetadataRequest update_command_metadata = 1;
+  };
+};
+
+message Response {
+  oneof payload {
+    proto.ext.common.AckResponse update_command_metadata = 1;
+  };
+};
+
+

@@ -18,6 +18,7 @@
 #include <qthread.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
+#include <optional>
 
 class ExtensionCommand : public AbstractCmd {
   QString _extensionId;
@@ -28,6 +29,7 @@ class ExtensionCommand : public AbstractCmd {
   std::filesystem::path m_path;
   ExtensionManifest::Command m_command;
   QString m_author;
+  std::optional<QString> m_subtitleOverride;
 
 public:
   ExtensionCommand(const ExtensionManifest::Command &command) : m_command(command) {}
@@ -69,6 +71,9 @@ public:
   QString repositoryName() const override;
 
   bool isDefaultDisabled() const override;
+
+  std::optional<QString> overriddenSubtitle() const { return m_subtitleOverride; }
+  void setSubtitleOverride(const std::optional<QString> &subtitle) { m_subtitleOverride = subtitle; }
 
   void setPath(const std::filesystem::path &path);
   void setExtensionTitle(const QString &title);

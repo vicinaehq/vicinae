@@ -48,6 +48,10 @@ public:
 
   void setDevMode(bool mode) { m_devMode = mode; }
 
+  void setSubtitleOverride(const std::optional<QString> &subtitle) {
+    m_command->setSubtitleOverride(subtitle);
+  }
+
   ExtensionNavigationController(const std::shared_ptr<ExtensionCommand> &command,
                                 NavigationController *navigation, ExtensionManager *manager)
       : m_command(command), m_navigation(navigation),
