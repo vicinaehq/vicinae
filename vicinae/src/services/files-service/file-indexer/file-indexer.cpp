@@ -50,15 +50,18 @@ void FileIndexer::start() {
   // Scans marked as started when we call start() (that is, at the beginning of the program)
   // are considered failed because they were not able to finish.
   auto startedScans = m_db.listStartedScans();
+  bool fullScanStarted = false;
 
   for (const auto &scan : startedScans) {
     if (scan.type != ScanType::Full) continue;
     qWarning() << "Creating new scan after previous scan for" << scan.path.c_str() << "was interrupted";
     m_writer->setScanError(scan.id, "Interrupted");
     m_dispatcher.enqueue({.type = scan.type, .path = scan.path});
+    fullScanStarted = true;
   }
 
-  if (startedScans.empty()) {
+  // As of now, we do not resume incremental scans - we just enqueue new ones
+  if (!fullScanStarted) {
     for (const auto &entrypoint : m_entrypoints) {
       m_dispatcher.enqueue({.type = ScanType::Incremental, .path = entrypoint, .maxDepth = 5});
     }
