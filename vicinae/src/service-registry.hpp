@@ -18,6 +18,7 @@ class EmojiService;
 class CalculatorService;
 class FileService;
 class RaycastStoreService;
+class VicinaeStoreService;
 class ExtensionRegistry;
 class OAuthService;
 class WindowManager;
@@ -39,6 +40,7 @@ class ServiceRegistry : public QObject {
   std::unique_ptr<CalculatorService> m_calculatorService;
   std::unique_ptr<FileService> m_fileService;
   std::unique_ptr<RaycastStoreService> m_raycastStoreService;
+  std::unique_ptr<VicinaeStoreService> m_vicinaeStoreService;
   std::unique_ptr<ExtensionRegistry> m_extensionRegistry;
   std::unique_ptr<OAuthService> m_oauthService;
   std::unique_ptr<PowerManager> m_powerManager;
@@ -60,6 +62,7 @@ public:
   ShortcutService *shortcuts() const;
   FileService *fileService() const;
   RaycastStoreService *raycastStore() const;
+  VicinaeStoreService *vicinaeStore() const;
   ExtensionRegistry *extensionRegistry() const;
   OAuthService *oauthService() const;
   PowerManager *powerManager() const;
@@ -68,6 +71,7 @@ public:
   void setWindowManager(std::unique_ptr<WindowManager> manager);
   void setRootItemManager(std::unique_ptr<RootItemManager> manager);
   void setRaycastStore(std::unique_ptr<RaycastStoreService> service);
+  void setVicinaeStore(std::unique_ptr<VicinaeStoreService> service);
   void setOAuthService(std::unique_ptr<OAuthService> service);
   void setConfig(std::unique_ptr<ConfigService> cfg);
   void setShortcutService(std::unique_ptr<ShortcutService> service);

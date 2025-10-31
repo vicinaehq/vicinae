@@ -10,7 +10,7 @@
 #include <QString>
 
 enum class ObjectFit { Contain, Fill, Stretch };
-enum ImageURLType { Invalid, Builtin, Favicon, System, Http, Local, Emoji, DataURI };
+enum ImageURLType { Invalid, Builtin, Favicon, System, Http, Https, Local, Emoji, DataURI };
 
 static std::vector<std::pair<QString, ImageURLType>> iconTypes = {
     {"favicon", Favicon}, {"omnicast", Builtin}, {"system", System},

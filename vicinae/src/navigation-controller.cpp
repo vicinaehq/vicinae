@@ -430,9 +430,11 @@ void NavigationController::activateView(const ViewState &state) {
 }
 
 void NavigationController::replaceView(BaseView *view) {
-  m_views.back() = createViewState(view);
-  view->initialize();
-  activateView(*topState());
+  QTimer::singleShot(0, this, [this, view]() {
+    m_views.back() = createViewState(view);
+    view->initialize();
+    activateView(*topState());
+  });
 }
 
 void NavigationController::pushView(BaseView *view) {

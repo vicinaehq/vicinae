@@ -50,7 +50,7 @@ ListAccessoryWidget::ListAccessoryWidget(QWidget *parent)
   _layout->addWidget(_icon);
   _layout->addWidget(_text);
   _icon->setFixedSize(16, 16);
-
+  _text->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   setLayout(_layout);
 }
 

@@ -14,6 +14,7 @@
 #include "services/local-storage/local-storage-service.hpp"
 #include "services/oauth/oauth-service.hpp"
 #include "services/raycast/raycast-store.hpp"
+#include "services/extension-store/vicinae-store.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/window-manager/window-manager.hpp"
@@ -33,6 +34,7 @@ ToastService *ServiceRegistry::toastService() const { return m_toastService.get(
 ShortcutService *ServiceRegistry::shortcuts() const { return m_shortcutService.get(); }
 FileService *ServiceRegistry::fileService() const { return m_fileService.get(); }
 RaycastStoreService *ServiceRegistry::raycastStore() const { return m_raycastStoreService.get(); }
+VicinaeStoreService *ServiceRegistry::vicinaeStore() const { return m_vicinaeStoreService.get(); }
 ExtensionRegistry *ServiceRegistry::extensionRegistry() const { return m_extensionRegistry.get(); }
 OAuthService *ServiceRegistry::oauthService() const { return m_oauthService.get(); }
 
@@ -51,6 +53,9 @@ void ServiceRegistry::ServiceRegistry::setRootItemManager(std::unique_ptr<RootIt
 }
 void ServiceRegistry::ServiceRegistry::setRaycastStore(std::unique_ptr<RaycastStoreService> service) {
   m_raycastStoreService = std::move(service);
+}
+void ServiceRegistry::ServiceRegistry::setVicinaeStore(std::unique_ptr<VicinaeStoreService> service) {
+  m_vicinaeStoreService = std::move(service);
 }
 void ServiceRegistry::ServiceRegistry::setOAuthService(std::unique_ptr<OAuthService> service) {
   m_oauthService = std::move(service);

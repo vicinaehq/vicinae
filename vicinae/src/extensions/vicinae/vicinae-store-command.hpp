@@ -1,17 +1,19 @@
-#include "extensions/raycast/store/intro-view.hpp"
+#pragma once
+#include "extensions/vicinae/store/intro-view.hpp"
 #include "single-view-command-context.hpp"
 #include "store/store-listing-view.hpp"
 #include "theme.hpp"
+#include "vicinae.hpp"
 
-class RaycastStoreCommand : public BuiltinCallbackCommand {
+class VicinaeStoreCommand : public BuiltinCallbackCommand {
   QString id() const override { return "store"; }
-  QString name() const override { return "Raycast Store"; }
-  QString description() const override { return "Install compatible extensions from the Raycast store"; }
-  QString extensionId() const override { return "raycast-compat"; }
+  QString name() const override { return "Extension Store"; }
+  QString description() const override { return "Install extensions from the Vicinae store"; }
+  QString extensionId() const override { return "vicinae"; }
   QString commandId() const override { return "store"; }
   ImageURL iconUrl() const override {
-    auto icon = ImageURL::builtin("raycast");
-    icon.setBackgroundTint(SemanticColor::Red);
+    auto icon = ImageURL::builtin("cart");
+    icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
     return icon;
   }
   std::vector<Preference> preferences() const override {
@@ -25,10 +27,10 @@ class RaycastStoreCommand : public BuiltinCallbackCommand {
     auto alwaysShowIntro = ctrl->preferenceValues().value("alwaysShowIntro").toBool(false);
 
     if (alwaysShowIntro || !ctrl->storage().getItem("introCompleted").toBool()) {
-      ctx->navigation->pushView<RaycastStoreIntroView>();
+      ctx->navigation->pushView(new VicinaeStoreIntroView);
       return;
     }
 
-    ctx->navigation->pushView<RaycastStoreListingView>();
+    ctx->navigation->pushView(new VicinaeStoreListingView);
   }
 };
