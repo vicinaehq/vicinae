@@ -42,12 +42,12 @@ public:
       tag.text = "Raycast";
       tag.icon = ImageURL::builtin("raycast");
       tag.fillBackground = true;
-      tag.color = SemanticColor::Blue;
+      tag.color = SemanticColor::Red;
     } else if (m_manifest.isFromVicinaeStore()) {
       tag.text = "Vicinae";
       tag.icon = ImageURL::builtin("vicinae");
       tag.fillBackground = true;
-      tag.color = SemanticColor::Green;
+      tag.color = SemanticColor::Accent;
     } else if (m_manifest.isLocal()) {
       tag.text = "Local";
       tag.icon = ImageURL::builtin("folder");
