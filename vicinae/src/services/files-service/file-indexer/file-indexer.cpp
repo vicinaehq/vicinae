@@ -18,10 +18,9 @@ namespace fs = std::filesystem;
  * Contextual exclusions (using gitignore-like semantics) are handled separately.
  */
 static const std::vector<fs::path> EXCLUDED_PATHS = {"/sys", "/run",     "/proc", "/tmp",
-
                                                      "/mnt", "/var/tmp", "/efi",  "/dev"};
 
-void FileIndexer::startFullscan() {
+void FileIndexer::startFullScan() {
   for (auto const &[id, scan] : m_dispatcher.scans()) {
     if (scan.type == ScanType::Full || scan.type == ScanType::Watcher) { m_dispatcher.interrupt(id); }
   }
@@ -35,38 +34,55 @@ void FileIndexer::startFullscan() {
   }
 }
 
-void FileIndexer::rebuildIndex() { startFullscan(); }
+void FileIndexer::startSingleScan(std::filesystem::path entrypoint, ScanType type,
+                                  std::vector<std::string> excludedFilenames) {
+  for (auto const &[id, scan] : m_dispatcher.scans()) {
+    if (scan.type == type && scan.path == entrypoint) { m_dispatcher.interrupt(id); }
+  }
+
+  m_dispatcher.enqueue({.type = type, .path = entrypoint, .excludedFilenames = m_excludedFilenames});
+}
+
+void FileIndexer::rebuildIndex() { startFullScan(); }
+
+void FileIndexer::markScanAsInterrupted(std::optional<FileIndexerDatabase::ScanRecord> scan) {
+  if (!scan.has_value()) return;
+
+  qWarning() << "Creating new scan after previous scan for" << scan.value().path.c_str()
+             << "was unsuccessful";
+  m_writer->setScanError(scan.value().id, "Interrupted");
+}
 
 void FileIndexer::start() {
-  auto lastScan = m_db.getLastScan();
+  for (const auto &entrypoint : m_entrypoints) {
+    auto lastScan = m_db.getLastScan(entrypoint, ScanType::Full);
 
-  // this is our first scan
-  if (!lastScan) {
-    qInfo() << "This is our first startup, enqueuing a full scan...";
-    startFullscan();
-    return;
-  }
-
-  // Scans marked as started when we call start() (that is, at the beginning of the program)
-  // are considered failed because they were not able to finish.
-  auto startedScans = m_db.listStartedScans();
-
-  for (const auto &scan : startedScans) {
-    if (scan.type != ScanType::Full) continue;
-    qWarning() << "Creating new scan after previous scan for" << scan.path.c_str() << "was interrupted";
-    m_writer->setScanError(scan.id, "Interrupted");
-    m_dispatcher.enqueue({.type = scan.type, .path = scan.path});
-  }
-
-  if (startedScans.empty()) {
-    for (const auto &entrypoint : m_entrypoints) {
-      m_dispatcher.enqueue({.type = ScanType::Incremental, .path = entrypoint, .maxDepth = 5});
+    // we have never had a full scan or it failed
+    if (!lastScan) {
+      qInfo() << "This is our first startup for entrypoint" << entrypoint.c_str() << ", starting full scan";
+      startSingleScan(entrypoint, ScanType::Full);
+      continue;
     }
+
+    // Scans marked as started when we call start() (that is, at the beginning of the program)
+    // are considered failed because they were not able to finish.
+    if (lastScan->status != ScanStatus::Succeeded) {
+      qInfo() << "Last full scan for entrypoint" << entrypoint.c_str()
+              << "did not complete successfully, marking as interrupted and starting a new full scan";
+      markScanAsInterrupted(lastScan);
+      startSingleScan(entrypoint, ScanType::Full);
+      continue;
+    }
+
+    lastScan = m_db.getLastScan(entrypoint, ScanType::Incremental);
+    if (lastScan && lastScan.value().status != ScanStatus::Succeeded) { markScanAsInterrupted(lastScan); }
+
+    qInfo() << "Starting incremental scan for entrypoint" << entrypoint.c_str();
+    startSingleScan(entrypoint, ScanType::Incremental);
   }
 
   for (const auto &entrypoint : m_watcherPaths) {
-    m_dispatcher.enqueue(
-        {.type = ScanType::Watcher, .path = entrypoint, .excludedFilenames = m_excludedFilenames});
+    startSingleScan(entrypoint, ScanType::Watcher, m_excludedFilenames);
   }
 }
 

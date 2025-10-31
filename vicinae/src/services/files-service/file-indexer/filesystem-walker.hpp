@@ -19,6 +19,7 @@ public:
 class FileSystemWalker {
 public:
   using WalkCallback = std::function<void(const std::filesystem::directory_entry &path)>;
+  using DirectoryFilter = std::function<bool(const std::filesystem::directory_entry &dir)>;
 
   /**
    * Register specific filenames for them to be considered as ignore files.

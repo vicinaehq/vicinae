@@ -37,7 +37,10 @@ public:
   QString preparePrefixSearchQuery(std::string_view query) const;
 
 public:
-  void startFullscan();
+  void startFullScan();
+  void startSingleScan(std::filesystem::path entrypoint, ScanType type,
+                       std::vector<std::string> excludedFilenames = {});
+  void markScanAsInterrupted(std::optional<FileIndexerDatabase::ScanRecord> scan);
   void rebuildIndex() override;
   void preferenceValuesChanged(const QJsonObject &preferences) override;
   QFuture<std::vector<IndexerFileResult>> queryAsync(std::string_view view,
