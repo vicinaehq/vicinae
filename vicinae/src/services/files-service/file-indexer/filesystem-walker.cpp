@@ -152,9 +152,8 @@ void FileSystemWalker::walk(const fs::path &root, const WalkCallback &callback) 
 
       if (m_recursive && isDir) {
         size_t depth = std::distance(path.begin(), path.end()) - rootDepth;
-        bool isDepthLimited = m_maxDepth && depth > *m_maxDepth;
-
-        if (!isDepthLimited) dirStack.push(entry);
+        bool shouldDescend = !m_maxDepth || depth <= *m_maxDepth;
+        if (shouldDescend) dirStack.push(entry);
       }
 
       callback(entry);
