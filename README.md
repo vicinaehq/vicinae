@@ -10,11 +10,11 @@
 
 **Vicinae** (pronounced _"vih-SIN-ay"_) is a high-performance, native launcher for your desktop — built with C++ and Qt.
 
-It includes a set of built-in modules, and extensions can be developed quickly using fully server-side React/TypeScript — with no browser or Electron involved.
+It comes with a rich set of built-in modules and can be easily extended using the [Typescript SDK](https://docs.vicinae.com/extensions/introduction).
 
-Inspired by the popular [Raycast launcher](https://www.raycast.com/), Vicinae provides a mostly compatible extension API, allowing reuse of many existing Raycast extensions with minimal modification.
+Drawing inspiration from the [Raycast launcher](https://www.raycast.com/), Vicinae provides a mostly compatible extension API, allowing reuse of many existing Raycast extensions with minimal modification.
 
-Vicinae is designed for developers and power users who want fast, keyboard-first access to common system actions — without unnecessary overhead.
+Vicinae is designed for developers and power users who want fast, keyboard-first access to common system actions.
 
 <p align="center">
   
@@ -39,6 +39,7 @@ We can't show everything in the demo, far from it, so please [go read the docs](
 - Theming system 
 - Fallback commands
 - React/Typescript extension SDK, allowing to build complex search-focused UIs
+- Global [extension store](https://github.com/vicinaehq/extensions) (since v0.16.0)
 - Raycast compatibility support  
   → Includes access to the official Raycast extension store, with one-click installs directly from within the launcher  
   → Many extensions may not work yet due to missing APIs or general Linux incompatibilities (improvements in progress)
