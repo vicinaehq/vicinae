@@ -9,7 +9,17 @@
 #include "services/root-item-manager/root-item-manager.hpp"
 
 QString CommandRootItem::displayName() const { return m_command->name(); }
-QString CommandRootItem::subtitle() const { return m_command->repositoryDisplayName(); }
+
+QString CommandRootItem::subtitle() const {
+  // Display overriden subtitle if set
+  if (auto ext = std::dynamic_pointer_cast<ExtensionCommand>(m_command)) {
+    if (ext->overriddenSubtitle() && !ext->overriddenSubtitle()->isEmpty()) {
+      return *ext->overriddenSubtitle();
+    }
+  }
+  return m_command->repositoryDisplayName();
+}
+
 ImageURL CommandRootItem::iconUrl() const { return m_command->iconUrl(); }
 ArgumentList CommandRootItem::arguments() const { return m_command->arguments(); }
 QString CommandRootItem::providerId() const { return "command"; }
