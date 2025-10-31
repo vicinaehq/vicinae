@@ -81,6 +81,8 @@ type EndpointMapping = {
 
   "ui.popToRoot": "ui.popToRoot",
 
+  "command.updateCommandMetadata": "command.updateCommandMetadata";
+
   "storage.get": "storage.get";
   "storage.set": "storage.set";
   "storage.remove": "storage.remove";
