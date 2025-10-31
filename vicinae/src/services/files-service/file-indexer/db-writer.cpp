@@ -66,6 +66,13 @@ void DbWriter::deleteIndexedFiles(std::vector<std::filesystem::path> paths) {
   submit([paths = std::move(paths)](FileIndexerDatabase &db) { db.deleteIndexedFiles(paths); });
 }
 
+void DbWriter::deleteAllIndexedFiles(std::function<void()> onComplete) {
+  submit([onComplete = std::move(onComplete)](FileIndexerDatabase &db) {
+    db.deleteAllIndexedFiles();
+    if (onComplete) { onComplete(); }
+  });
+}
+
 void DbWriter::indexEvents(std::vector<FileEvent> events) {
   submit([events = std::move(events)](FileIndexerDatabase &db) { db.indexEvents(events); });
 }
