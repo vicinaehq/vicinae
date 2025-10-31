@@ -20,6 +20,11 @@ bool QalculateBackend::isActivatable() const {
 tl::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const QString &question) const {
   EvaluationOptions evalOpts;
 
+  QString q = question;
+  if (q.startsWith("=")) {
+    q = q.mid(1).trimmed();  // Remove leading '='
+  }
+
   evalOpts.auto_post_conversion = POST_CONVERSION_BEST;
   evalOpts.structuring = STRUCTURING_SIMPLIFY;
   evalOpts.parse_options.limit_implicit_multiplication = true;
@@ -27,7 +32,7 @@ tl::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const 
   evalOpts.parse_options.units_enabled = true;
   evalOpts.parse_options.unknowns_enabled = false;
 
-  MathStructure result = CALCULATOR->calculate(question.toStdString(), evalOpts);
+  MathStructure result = CALCULATOR->calculate(q.toStdString(), evalOpts);
 
   if (result.containsUnknowns()) { return tl::unexpected(CalculatorError("Unknown component in question")); }
 
