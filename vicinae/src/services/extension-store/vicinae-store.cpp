@@ -2,6 +2,7 @@
 #include "environment.hpp"
 #include "theme.hpp"
 #include "theme/theme-file.hpp"
+#include "vicinae.hpp"
 #include <QDir>
 #include <QJsonParseError>
 #include <QNetworkDiskCache>
@@ -271,6 +272,7 @@ QFuture<std::expected<QByteArray, QString>> VicinaeStoreService::get(const QUrl 
 
   QNetworkRequest request(url);
   request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
+  request.setHeader(QNetworkRequest::KnownHeaders::UserAgentHeader, Omnicast::USER_AGENT);
 
   QNetworkReply *reply = m_networkManager->get(request);
 
