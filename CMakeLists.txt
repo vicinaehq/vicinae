@@ -19,10 +19,10 @@ option(IGNORE_CCACHE "Always ignore ccache even if it is installed" OFF)
 option(LTO "Enable Link Time Optimization (LTO). This will result in better performance, but greatly increased compile time. (Gentoo chads can't live without this)" OFF)
 option(NOSTRIP "Never strip debug symbols from the binary, even in release mode. Note that symbols are never stripped for debug releases." OFF)
 option(
-	INSTALL_NODE_MODULES 
-	"Install required node_modules dependencies as part of the build process. 
+	INSTALL_NODE_MODULES
+	"Install required node_modules dependencies as part of the build process.
 	You can turn this off if you have another way to install the node_modules,
-	but they are still required build the project." 
+	but they are still required build the project."
 	ON
 )
 
@@ -107,6 +107,7 @@ configure_file(
 )
 
 set(CMARK_LIBRARY "cmark-gfm")
+set(CMARK_EXT_LIBRARY "cmark-gfm-extensions")
 
 if (NOT USE_SYSTEM_RAPIDFUZZ)
 	include(RapidFuzz)
@@ -134,7 +135,8 @@ endif()
 if (NOT USE_SYSTEM_CMARK_GFM)
 	include(CMark)
 	checkout_cmark()
-	set(CMARK_LIBRARY "libcmark-gfm_static")
+  set(CMARK_LIBRARY "libcmark-gfm_static")
+  set(CMARK_EXT_LIBRARY "libcmark-gfm-extensions_static")
 endif()
 
 if (NOT USE_SYSTEM_ABSEIL)
@@ -194,7 +196,7 @@ if (LTO)
 	add_link_options(-flto=auto)
 endif()
 
-if (CCACHE AND NOT IGNORE_CCACHE) 
+if (CCACHE AND NOT IGNORE_CCACHE)
 	message(STATUS "ccache is installed, changing CMAKE_CXX_COMPILER_LAUNCHER")
 	set(CMAKE_CXX_COMPILER_LAUNCHER "ccache")
 endif()

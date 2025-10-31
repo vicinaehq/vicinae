@@ -60,12 +60,26 @@ class MarkdownRenderer : public QWidget {
   void insertSpan(cmark_node *node, QTextCharFormat &fmt);
   void insertParagraph(cmark_node *node);
   void insertCodeBlock(cmark_node *node, bool isClosing = false);
+  void insertTable(cmark_node *node);
   void insertHeading(cmark_node *node);
   void insertTopLevelNode(cmark_node *node);
 
   void parseAndInsertHtmlImages(const QString &html);
 
   void insertIfNotFirstBlock();
+
+  enum class GfmNodeType { Table, TableHeader, TableBody, TableRow, TableCell, Unknown };
+
+  static GfmNodeType getGfmNodeType(cmark_node *node) {
+    const char *t = cmark_node_get_type_string(node);
+    if (!t) return GfmNodeType::Unknown;
+    if (std::strcmp(t, "table") == 0) return GfmNodeType::Table;
+    if (std::strcmp(t, "table_header") == 0) return GfmNodeType::TableHeader;
+    if (std::strcmp(t, "table_body") == 0) return GfmNodeType::TableBody;
+    if (std::strcmp(t, "table_row") == 0) return GfmNodeType::TableRow;
+    if (std::strcmp(t, "table_cell") == 0) return GfmNodeType::TableCell;
+    return GfmNodeType::Unknown;
+  }
 
 public:
   void setGrowAsRequired(bool value);
