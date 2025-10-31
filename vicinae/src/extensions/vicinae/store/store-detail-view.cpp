@@ -166,13 +166,14 @@ void VicinaeStoreDetailView::createActions() {
               return;
             }
 
-            registry->installFromZip(ext.id, result->toStdString(), [toast](bool ok) {
-              if (!ok) {
-                toast->failure("Failed to extract extension archive");
-                return;
-              }
-              toast->success("Extension installed");
-            });
+            registry->installFromZip(QString("store.vicinae.%1").arg(ext.name), result->toStdString(),
+                                     [toast](bool ok) {
+                                       if (!ok) {
+                                         toast->failure("Failed to extract extension archive");
+                                         return;
+                                       }
+                                       toast->success("Extension installed");
+                                     });
           });
 
           auto downloadResult = store->downloadExtension(ext.downloadUrl);

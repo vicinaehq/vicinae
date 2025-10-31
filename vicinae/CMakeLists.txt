@@ -533,6 +533,8 @@ set(SRCS
 	src/extensions/vicinae/store/store-listing-view.cpp
 	src/extensions/vicinae/store/store-detail-view.hpp
 	src/extensions/vicinae/store/store-detail-view.cpp
+	src/extensions/vicinae/list-installed-extensions-view.hpp
+	src/extensions/vicinae/list-installed-extensions-view.cpp
 
 	src/services/raycast/raycast-store.cpp
 	src/services/extension-store/vicinae-store.cpp

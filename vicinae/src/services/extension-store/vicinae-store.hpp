@@ -64,6 +64,7 @@ struct Command {
 
 struct Extension {
   QString id;
+  QString storeId;
   QString name;
   QString title;
   QString description;

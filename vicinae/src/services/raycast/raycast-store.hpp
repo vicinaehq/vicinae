@@ -215,6 +215,7 @@ struct Command {
 // Main extension/application structure
 struct Extension {
   QString id;
+  QString storeId;
   QString name;
   QString native_id;
   QStringList seo_categories;
@@ -249,9 +250,10 @@ struct Extension {
   // Convert from QJsonObject
   static Extension fromJson(const QJsonObject &json) {
     Extension ext;
-    ext.id = json["id"].toString();
+    ext.storeId = json["id"].toString();
     ext.name = json["name"].toString();
     ext.native_id = json["native_id"].toString();
+    ext.id = QString("store.raycast.%1").arg(ext.name);
 
     // Handle seo_categories array
     QJsonArray seoCategoriesArray = json["seo_categories"].toArray();

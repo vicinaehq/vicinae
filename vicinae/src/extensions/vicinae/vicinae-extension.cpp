@@ -1,6 +1,7 @@
 #include "vicinae-extension.hpp"
 #include "command-controller.hpp"
 #include "common.hpp"
+#include "extensions/vicinae/list-installed-extensions-command.hpp"
 #include "extensions/vicinae/report-bug-command.hpp"
 #include "navigation-controller.hpp"
 #include "open-about-command.hpp"
@@ -105,4 +106,5 @@ VicinaeExtension::VicinaeExtension() {
   registerCommand<SponsorVicinaeCommand>();
   registerCommand<OpenKeybindSettingsCommand>();
   registerCommand<VicinaeStoreCommand>();
+  registerCommand<VicinaeListInstalledExtensionsCommand>();
 }
