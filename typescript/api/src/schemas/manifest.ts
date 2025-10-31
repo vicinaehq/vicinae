@@ -267,7 +267,23 @@ export default z.object({
       "Extensions can contribute preferences that are shown in Vicinae Preferences > Extensions. You can use preferences for configuration values and passwords or personal access tokens.",
     )
     .optional(),
-  categories: z.array(z.string()).optional(),
+  categories: z.array(z.enum([
+  "Applications",
+  "Communication",
+  "Data",
+  "Documentation",
+  "Design Tools",
+  "Developer Tools",
+  "Finance",
+  "Fun",
+  "Media",
+  "News",
+  "Productivity",
+  "Security",
+  "System",
+  "Web",
+  "Other"
+])).optional(),
   contributors: z
     .array(
       z
@@ -296,7 +312,7 @@ export default z.object({
     .optional(),
   dependencies: z
     .object({
-      "@raycast/api": z
+      "@vicinae/api": z
         .string()
         .describe("The Vicinae API version used by this extension.")
         .optional(),

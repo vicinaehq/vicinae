@@ -53,7 +53,8 @@
   "preferences": [],
   "scripts": {
     "build": "vici build",
-    "dev": "vici develop"
+    "dev": "vici develop",
+	"lint": "vici lint"
   },
   "dependencies": {
     "@vicinae/api": "^0.15.7"
