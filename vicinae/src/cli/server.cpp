@@ -24,6 +24,7 @@
 #include "services/oauth/oauth-service.hpp"
 #include "services/power-manager/power-manager.hpp"
 #include "services/raycast/raycast-store.hpp"
+#include "services/extension-store/vicinae-store.hpp"
 #include "services/shortcut/shortcut-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/window-manager/window-manager.hpp"
@@ -94,6 +95,7 @@ void CliServerCommand::run(CLI::App *app) {
     auto fileService = std::make_unique<FileService>(*omniDb);
     auto extensionRegistry = std::make_unique<ExtensionRegistry>(*localStorage);
     auto raycastStore = std::make_unique<RaycastStoreService>();
+    auto vicinaeStore = std::make_unique<VicinaeStoreService>();
 
 #ifdef HAS_TYPESCRIPT_EXTENSIONS
     if (!extensionManager->start()) {
@@ -119,6 +121,7 @@ void CliServerCommand::run(CLI::App *app) {
     registry->setFontService(std::move(fontService));
     registry->setEmojiService(std::move(emojiService));
     registry->setRaycastStore(std::move(raycastStore));
+    registry->setVicinaeStore(std::move(vicinaeStore));
     registry->setExtensionRegistry(std::move(extensionRegistry));
     registry->setOAuthService(std::make_unique<OAuthService>());
     registry->setPowerManager(std::make_unique<PowerManager>());

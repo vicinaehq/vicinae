@@ -307,6 +307,7 @@ public:
   Stack &addSpacer(int space);
   Stack &addText(const QString &text, SemanticColor color = SemanticColor::Foreground,
                  TextSize size = TextSize::TextRegular, Qt::Alignment align = {});
+  Stack &markdown(const QString &text);
   Stack &addTitle(const QString &title, SemanticColor color = SemanticColor::Foreground,
                   Qt::Alignment align = {});
   Stack &addIcon(const ImageURL &url, QSize size = {20, 20}, Qt::Alignment align = {});

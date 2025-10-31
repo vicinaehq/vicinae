@@ -163,10 +163,9 @@ void ImageWidget::setUrlImpl(const ImageURL &url) {
     m_loader.reset(new LocalImageLoader(path));
   }
 
-  else if (type == ImageURLType::Http) {
-    QUrl httpUrl("https://" + url.name());
-
-    m_loader.reset(new HttpImageLoader(httpUrl));
+  if (type == ImageURLType::Http) {
+    // QUrl httpUrl("http://" + url.name());
+    m_loader.reset(new HttpImageLoader(url.name()));
   }
 
   else if (type == ImageURLType::Emoji) {

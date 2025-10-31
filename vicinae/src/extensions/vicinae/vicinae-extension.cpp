@@ -8,6 +8,7 @@
 #include "browse-icons-command.hpp"
 #include "configure-fallback-command.hpp"
 #include "extensions/vicinae/search-emoji-command.hpp"
+#include "extensions/vicinae/vicinae-store-command.hpp"
 #include "../../ui/image/url.hpp"
 #include "builtin-url-command.hpp"
 #include "single-view-command-context.hpp"
@@ -103,4 +104,5 @@ VicinaeExtension::VicinaeExtension() {
   registerCommand<OpenDiscordCommand>();
   registerCommand<SponsorVicinaeCommand>();
   registerCommand<OpenKeybindSettingsCommand>();
+  registerCommand<VicinaeStoreCommand>();
 }

@@ -345,6 +345,7 @@ public:
   void goBack(const GoBackOptions &opts = {});
 
   void popCurrentView();
+  template <typename T> void pushView() { pushView(new T); }
   void pushView(BaseView *view);
 
   /**

@@ -205,7 +205,7 @@ ImageURL::ImageURL(const ImageLikeModel &imageLike) : _mask(OmniPainter::NoMask)
 
       if (url.scheme() == "https" || url.scheme() == "http") {
         setType(ImageURLType::Http);
-        setName(source.split("://").at(1));
+        setName(url.toString());
         return;
       }
     }
@@ -289,7 +289,7 @@ ImageURL ImageURL::http(const QUrl &httpUrl) {
   ImageURL url;
 
   url.setType(ImageURLType::Http);
-  url.setName(httpUrl.host() + httpUrl.path());
+  url.setName(httpUrl.toString());
   url.setCacheKey(httpUrl.toString());
 
   return url;

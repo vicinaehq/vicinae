@@ -26,7 +26,7 @@ std::shared_ptr<AbstractApplication> XdgAppDatabase::defaultForMime(const QStrin
     }
   }
 
-  auto openers = findOpeners(mime);
+  auto openers = findAssociations(mime);
 
   return openers.empty() ? nullptr : openers.front();
 }
@@ -161,6 +161,8 @@ std::vector<AppPtr> XdgAppDatabase::findAssociations(const QString &mimeName) co
   std::vector<AppPtr> openers;
   std::queue<QString> mimeStack;
 
+  qDebug() << "find associations for" << mimeName;
+
   mimeStack.emplace(mimeName);
 
   while (!mimeStack.empty()) {
@@ -268,8 +270,6 @@ bool XdgAppDatabase::launch(const AbstractApplication &app, const std::vector<QS
 QString XdgAppDatabase::mimeNameForTarget(const QString &target) const {
   QString source = target;
 
-  if (m_mimeDb.mimeTypeForName(source).isValid()) { return source; }
-
   {
     QUrl url(source);
 
@@ -278,6 +278,8 @@ QString XdgAppDatabase::mimeNameForTarget(const QString &target) const {
       source = url.toDisplayString(QUrl::RemoveScheme);
     }
   }
+
+  if (m_mimeDb.mimeTypeForName(source).isValid()) { return source; }
 
   auto mime = m_mimeDb.mimeTypeForFile(source);
 
