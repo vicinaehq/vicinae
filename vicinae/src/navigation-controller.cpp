@@ -422,17 +422,17 @@ void NavigationController::activateView(const ViewState &state) {
   emit actionsChanged({});
   emit searchTextChanged(state.searchText);
   emit searchPlaceholderTextChanged(state.placeholderText);
+  destroyCurrentCompletion();
 
+  state.sender->initialize();
   state.sender->activate();
 
-  destroyCurrentCompletion();
   emit currentViewChanged(state);
 }
 
 void NavigationController::replaceView(BaseView *view) {
   QTimer::singleShot(0, this, [this, view]() {
     m_views.back() = createViewState(view);
-    view->initialize();
     activateView(*topState());
   });
 }
@@ -440,7 +440,6 @@ void NavigationController::replaceView(BaseView *view) {
 void NavigationController::pushView(BaseView *view) {
   m_frames.back()->viewCount++;
   m_views.emplace_back(createViewState(view));
-  topState()->sender->initialize();
   activateView(*topState());
   emit viewPushed(view);
 }
