@@ -9,7 +9,10 @@ void LocalImageLoader::render(const RenderConfig &cfg) {
     m_loader = std::make_unique<SvgImageLoader>(QString(m_path.c_str()));
   } else {
     QFile file(m_path);
-    file.open(QIODevice::ReadOnly);
+    if (!file.open(QIODevice::ReadOnly)) {
+      qWarning() << "Failed to open image file:" << m_path;
+      return;
+    }
     m_loader = std::make_unique<IODeviceImageLoader>(file.readAll());
   }
 
