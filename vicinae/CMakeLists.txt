@@ -522,6 +522,7 @@ set(SRCS
 	src/extension/requests/file-search-request-router.cpp
 	src/extension/requests/app-request-router.cpp
 	src/extension/requests/clipboard-request-router.cpp
+	src/extension/requests/command-request-router.cpp
 	src/extension/requests/wm-router.cpp
 	src/extension/extension-command-runtime.cpp
 

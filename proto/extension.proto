@@ -8,6 +8,7 @@ import "common.proto";
 import "oauth.proto";
 import "file-search.proto";
 import "wm.proto";
+import "command.proto";
 
 package proto.ext.extension;
 
@@ -25,6 +26,7 @@ message RequestData {
     oauth.Request oauth = 5;
     file_search.Request file_search = 6;
     wm.Request wm = 7;
+    command.Request command = 8;
   };
 };
 
@@ -45,6 +47,7 @@ message ResponseData {
     oauth.Response oauth = 5;
     file_search.Response file_search = 6;
     wm.Response wm = 7;
+    command.Response command = 8;
   };
 };
 
