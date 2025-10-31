@@ -35,6 +35,7 @@ public:
   void executePrimaryAction();
   virtual bool needsGlobalStatusBar() const;
   virtual bool needsGlobalTopBar() const;
+  bool isLoading() const;
 
   /**
    * Search placeholder text to set when first rendering the view, if
