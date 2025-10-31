@@ -62,7 +62,25 @@ markdown format image (data:image/png;base64 with raycast-* size):
 ![Logo](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4XiDAAAAOVBMVEX///8EBAQVFRUpKSk8PDxISEhUVFRfX19ycnJ+fn6Pj4+enp6qqqrBwcHOzs7Y2Njl5eXw8PD5+fkO8WfbAAAAE3RSTlP/1dja3d/h4+bo6+3w9Pb4+vz+kO1liAAAAaNJREFUeNq9ltt2hCAMRY/DRYNELv//sbWKDGmxtjx0P41r2CSTQRJMJ4o44QcSkypLcQou4pHo1FsxGyQ5xZ2UIdnMpcxRLA+erNE7xpIPQovzqdjWSH7WljyHHd5dPfvUOuZTUVsrGONCbkM6Y1ppU7vimmdbvxbb2GZXN0HFuuOq3SmkwN65lUMqpdJrjRwVqO5Gmg+TSb+mg5cmPtayphqdwJexmHAItqwv1nKsDWa54jCKnclEAHERwqSuYkRDxanhVh2OBITwooiLoFcINs0AWMkQPuMN600U0rqOwRA4m/DGmwTEL1kxJMl4yIe8TIKSutxYfmZZqzkD92Hy7IBsZVobvuPqPkGHxyB14Ym3GaBJwOiQ7ZUZEZC0MFRED6LGDQ951XxKIRjgSeDQhUuZow7AKhWPLkHHt+L+RfFSWW+VgZ8/UOTBv7J/YPzNgRk4lsOHv/+K2e4rNvAiD1wXA5fS4NUnL9jtS25L74IduMZ/3ywSTvixJaXSkjIKdNf41qbxJdn4BtrrUBOfzJ9GhYGBZGDsGR+unke43IxwH8fLHH399UsSAAAAAElFTkSuQmCC?raycast-width=50&raycast-height=50)
 `;
 
-const content = [intro, headings, textDecorations, lists, images];
+const table = `
+Table with formatting:
+
+| Name         | Age | Country    |
+|--------------|-----|------------|
+| Alice        |  28 | **Canada** |
+| Bob          |  34 | _Germany_  |
+| Charlie      |  25 | \`Brazil\` |
+
+
+Table with alignment:
+
+| Left Align | Center Align | Right Align |
+|:-----------|:------------:|------------:|
+| Apple      |   Orange     |        Pear |
+| Banana     |   Mango      |      Grape  |
+`;
+
+const content = [intro, headings, textDecorations, lists, images, table];
 
 export default function SimpleDetail() {
   return (
