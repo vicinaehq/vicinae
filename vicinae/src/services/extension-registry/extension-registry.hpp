@@ -18,7 +18,7 @@ struct ManifestError {
 };
 
 struct ExtensionManifest {
-  enum class Provenance { Vicinae, Raycast };
+  enum class Provenance { Local, Vicinae, Raycast };
 
   struct Command {
     QString name;
@@ -43,7 +43,12 @@ struct ExtensionManifest {
   std::vector<QString> categories;
   std::vector<Preference> preferences;
   std::vector<Command> commands;
+  bool needsRaycastApi = false;
   Provenance provenance;
+
+  bool isFromRaycastStore() const { return provenance == ExtensionManifest::Provenance::Raycast; }
+  bool isFromVicinaeStore() const { return provenance == ExtensionManifest::Provenance::Vicinae; }
+  bool isLocal() const { return provenance == ExtensionManifest::Provenance::Local; }
 };
 
 class ExtensionRegistry : public QObject {

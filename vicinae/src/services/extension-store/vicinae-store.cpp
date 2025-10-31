@@ -123,7 +123,7 @@ std::optional<QString> Command::themedIcon() const {
 // Extension implementation
 Extension Extension::fromJson(const QJsonObject &json) {
   Extension extension;
-  extension.id = json["id"].toString();
+  extension.storeId = json["id"].toString();
   extension.name = json["name"].toString();
   extension.title = json["title"].toString();
   extension.description = json["description"].toString();
@@ -133,6 +133,7 @@ Extension Extension::fromJson(const QJsonObject &json) {
   extension.checksum = json["checksum"].toString();
   extension.trending = json["trending"].toBool(false);
   extension.icons = Icons::fromJson(json["icons"].toObject());
+  extension.id = QString("store.vicinae.%1").arg(extension.name);
 
   const QJsonArray categoriesArray = json["categories"].toArray();
   extension.categories.reserve(categoriesArray.size());
