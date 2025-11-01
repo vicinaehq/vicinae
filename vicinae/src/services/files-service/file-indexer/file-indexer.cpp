@@ -34,12 +34,13 @@ void FileIndexer::startFullScan() {
 
       for (const auto &entrypoint : m_entrypoints) {
         qInfo() << "Enqueuing full scan for" << entrypoint.c_str();
-        m_dispatcher.enqueue({.type = ScanType::Full, .path = entrypoint});
+        m_dispatcher.enqueue({.type = ScanType::Full, .path = entrypoint, .excludedPaths = m_excludedPaths});
       }
 
       for (const auto &entrypoint : m_watcherPaths) {
         qInfo() << "Enqueuing watcher scan for" << entrypoint.c_str();
-        m_dispatcher.enqueue({.type = ScanType::Watcher, .path = entrypoint});
+        m_dispatcher.enqueue(
+            {.type = ScanType::Watcher, .path = entrypoint, .excludedPaths = m_excludedPaths});
       }
     });
   }).detach();
@@ -51,7 +52,10 @@ void FileIndexer::startSingleScan(std::filesystem::path entrypoint, ScanType typ
     if (scan.type == type && scan.path == entrypoint) { m_dispatcher.interrupt(id); }
   }
 
-  m_dispatcher.enqueue({.type = type, .path = entrypoint, .excludedFilenames = m_excludedFilenames});
+  m_dispatcher.enqueue({.type = type,
+                        .path = entrypoint,
+                        .excludedFilenames = m_excludedFilenames,
+                        .excludedPaths = m_excludedPaths});
 }
 
 void FileIndexer::rebuildIndex() { startFullScan(); }
@@ -116,6 +120,10 @@ QString FileIndexer::preparePrefixSearchQuery(std::string_view query) const {
 void FileIndexer::preferenceValuesChanged(const QJsonObject &preferences) {
   m_entrypoints = ranges_to<std::vector>(
       preferences.value("paths").toString().split(';', Qt::SkipEmptyParts) |
+      std::views::transform([](const QStringView &v) { return fs::path(v.toString().toStdString()); }));
+
+  m_excludedPaths = ranges_to<std::vector>(
+      preferences.value("excludedPaths").toString().split(';', Qt::SkipEmptyParts) |
       std::views::transform([](const QStringView &v) { return fs::path(v.toString().toStdString()); }));
 
   m_watcherPaths = ranges_to<std::vector>(

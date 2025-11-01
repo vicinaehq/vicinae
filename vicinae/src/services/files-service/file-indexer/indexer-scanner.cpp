@@ -28,12 +28,13 @@ void IndexerScanner::enqueueBatch(const std::vector<FileEvent> &paths) {
   m_batchCv.notify_one();
 }
 
-void IndexerScanner::scan(const std::filesystem::path &root) {
+void IndexerScanner::scan(const Scan &scan) {
   std::vector<FileEvent> batchedIndex;
   FileSystemWalker walker;
 
   walker.setVerbose();
-  walker.walk(root, [&](const fs::directory_entry &entry) {
+  walker.setExcludedPaths(scan.excludedPaths);
+  walker.walk(scan.path, [&](const fs::directory_entry &entry) {
     std::error_code ec;
     // In case of error, returns file_time_time::min() - erroring entries deserve a bad relevance score anyway
     batchedIndex.emplace_back(FileEventType::Modify, entry.path(), entry.last_write_time(ec));
@@ -56,7 +57,7 @@ IndexerScanner::IndexerScanner(std::shared_ptr<DbWriter> writer, const Scan &sc,
     start(sc);
 
     try {
-      scan(sc.path);
+      scan(sc);
       m_writerWorker->stop();
       finish();
     } catch (const std::exception &error) {

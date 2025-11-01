@@ -1,5 +1,4 @@
 #include "services/files-service/file-indexer/filesystem-walker.hpp"
-#include "file-indexer-db.hpp"
 #include "utils/utils.hpp"
 #include <chrono>
 #include <cstdlib>
@@ -68,6 +67,10 @@ GitIgnoreReader::GitIgnoreReader(const fs::path &path) : m_path(path) {
 
 void FileSystemWalker::setIgnoreFiles(const std::vector<std::string> &files) { m_ignoreFiles = files; }
 
+void FileSystemWalker::setExcludedPaths(const std::vector<std::filesystem::path> &paths) {
+  m_excludedPaths = paths;
+}
+
 void FileSystemWalker::setRecursive(bool value) { m_recursive = value; }
 
 void FileSystemWalker::setMaxDepth(std::optional<size_t> maxDepth) { m_maxDepth = maxDepth; }
@@ -94,6 +97,10 @@ bool FileSystemWalker::isIgnored(const std::filesystem::path &path) const {
   }
 
   return false;
+}
+
+bool FileSystemWalker::isExcludedPath(const std::filesystem::path &path) const {
+  return std::ranges::find(m_excludedPaths, path) != m_excludedPaths.end();
 }
 
 void FileSystemWalker::walk(const fs::path &root, const WalkCallback &callback) {
@@ -139,6 +146,11 @@ void FileSystemWalker::walk(const fs::path &root, const WalkCallback &callback) 
       if (std::ranges::find(EXCLUDED_FILENAMES, path.filename()) != EXCLUDED_FILENAMES.end()) { continue; }
       if (isIgnored(path)) {
         if (m_verbose) { qInfo() << "Indexing: ignoring git-ignored path" << path.c_str(); }
+        continue;
+      }
+
+      if (isExcludedPath(path)) {
+        if (m_verbose) { qInfo() << "FileSystemWalker: excluding path" << path.c_str(); }
         continue;
       }
 
