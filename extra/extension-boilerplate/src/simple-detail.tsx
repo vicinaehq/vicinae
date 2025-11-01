@@ -1,4 +1,4 @@
-import { Action, ActionPanel, Detail, showToast } from '@vicinae/api';
+import { Action, ActionPanel, Detail, showToast } from "@vicinae/api";
 
 const intro = `# Hello world
 
@@ -44,18 +44,18 @@ blue square (data:image/svg+xml;utf8 plain):
 
 green rectangle (data:image/svg+xml urlencoded):
 <img width="200" height='50' src="data:image/svg+xml;utf8,${encodeURIComponent(
-  "<svg xmlns='http://www.w3.org/2000/svg'><rect width='200' height='50' fill='green'/></svg>"
+	"<svg xmlns='http://www.w3.org/2000/svg'><rect width='200' height='50' fill='green'/></svg>",
 )}">
 
 yellow rectangle with text (data:image/svg+xml base64):
 <img width="200" height='50' src="data:image/svg+xml;utf8;base64,${Buffer.from(
-  `
+	`
 	<svg xmlns='http://www.w3.org/2000/svg'>
 		<rect width='200' height='50' fill='yellow'/>
 		<text x='100' y='30' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='12'>Text in rect!</text>
 	</svg>
-`
-).toString('base64')}">
+`,
+).toString("base64")}">
 
 markdown format image (data:image/png;base64 with raycast-* size):
 
@@ -83,17 +83,17 @@ Table with alignment:
 const content = [intro, headings, textDecorations, lists, images, table];
 
 export default function SimpleDetail() {
-  return (
-    <Detail
-      markdown={content.map((c) => c.trim()).join('\n\n')}
-      actions={
-        <ActionPanel>
-          <Action
-            title='Say hello'
-            onAction={() => showToast({ title: 'Hello!' })}
-          />
-        </ActionPanel>
-      }
-    />
-  );
+	return (
+		<Detail
+			markdown={content.map((c) => c.trim()).join("\n\n")}
+			actions={
+				<ActionPanel>
+					<Action
+						title="Say hello"
+						onAction={() => showToast({ title: "Hello!" })}
+					/>
+				</ActionPanel>
+			}
+		/>
+	);
 }
