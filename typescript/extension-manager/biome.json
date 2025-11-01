@@ -1,0 +1,5 @@
+{
+	"files": {
+		"includes": ["src/**", "!src/api"]
+	}
+}
