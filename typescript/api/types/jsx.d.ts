@@ -7,7 +7,7 @@ import { Keyboard } from "../api/keyboard";
 import { Grid } from "../api/components/grid";
 
 import "react";
-import { ImageLike, List } from "../src";
+import { List } from "../src";
 
 type BaseFormField = {
 	onBlur?: Function;
@@ -142,6 +142,10 @@ declare module "react" {
 				isLoading: boolean;
 				navigationTitle?: string;
 				children?: React.ReactNode;
+			};
+			"link-accessory": {
+				target: string;
+				text: string;
 			};
 			"text-field": BaseFormField & {};
 			"tag-picker-field": BaseFormField & {};

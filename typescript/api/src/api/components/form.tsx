@@ -254,4 +254,7 @@ export const Form = Object.assign(FormRoot, {
 	TagPicker,
 	FilePicker,
 	Separator: () => <separator />,
+	LinkAccessory: ({ target, text }: { target: string; text: string }) => (
+		<link-accessory target={target} text={text} />
+	),
 });
