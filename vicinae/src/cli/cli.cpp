@@ -22,6 +22,119 @@
 #include <iomanip>
 #include <sstream>
 
+class Formatter : public CLI::Formatter {
+public:
+  std::string make_help(const CLI::App *app, std::string name, CLI::AppFormatMode mode) const override {
+    // ANSI color codes - we use these directly because rang doesn't work with stringstream
+    const std::string BOLD = "\033[1m";
+    const std::string BRIGHT_GREEN = "\033[92m";
+    const std::string BLUE = "\033[34m";
+    const std::string CYAN = "\033[36m";
+    const std::string RESET = "\033[0m";
+
+    std::stringstream out;
+
+    // Show command description for subcommands, general headline for root
+    if (app->get_parent() != nullptr && !app->get_description().empty()) {
+      out << BOLD << app->get_description() << RESET << "\n\n";
+    } else {
+      out << BOLD << Omnicast::HEADLINE.toStdString() << RESET << "\n\n";
+    }
+
+    std::string bin_name = name.empty() ? app->get_name() : name;
+    out << BOLD << "Usage: " << RESET;
+
+    if (app->get_parent() != nullptr) {
+      out << bin_name << " [...flags] [...args]\n\n";
+    } else {
+      out << bin_name << " <command> [...flags] [...args]\n\n";
+    }
+
+    auto options = app->get_options();
+    if (!options.empty()) {
+      out << BOLD << "Options:\n" << RESET;
+      for (const auto *opt : options) {
+        if (opt->get_name().empty()) continue;
+
+        out << "  " << BRIGHT_GREEN;
+
+        // Format short and long names
+        auto snames = opt->get_snames();
+        auto lnames = opt->get_lnames();
+
+        // Calculate actual printed length for alignment
+        int printed_length = 0;
+        if (!snames.empty()) {
+          out << "-" << snames[0];
+          printed_length += 1 + snames[0].length(); // "-" + short name
+          if (!lnames.empty()) {
+            out << ", --";
+            printed_length += 4; // ", --"
+          }
+        } else if (!lnames.empty()) {
+          out << "    --";
+          printed_length += 6; // "    --"
+        }
+
+        if (!lnames.empty()) {
+          out << lnames[0];
+          printed_length += lnames[0].length();
+        }
+
+        out << RESET;
+
+        // Pad to align descriptions
+        int padding = 28 - printed_length;
+        if (padding > 0) {
+          out << std::string(padding, ' ');
+        } else {
+          out << "  ";
+        }
+
+        out << opt->get_description() << "\n";
+      }
+      out << "\n";
+    }
+
+    // Subcommands section
+    auto subcommands = app->get_subcommands({});
+    if (!subcommands.empty()) {
+      out << BOLD << "Commands:\n" << RESET;
+
+      // Find max command name length for alignment
+      size_t max_name_len = 0;
+      for (const auto *sub : subcommands) {
+        if (sub->get_name().empty()) continue;
+        max_name_len = std::max(max_name_len, sub->get_name().length());
+      }
+
+      for (const auto *sub : subcommands) {
+        if (sub->get_name().empty()) continue;
+
+        out << "  " << BLUE << sub->get_name() << RESET;
+
+        // Pad to align descriptions
+        int padding = max_name_len - sub->get_name().length() + 8;
+        if (padding > 0) {
+          out << std::string(padding, ' ');
+        } else {
+          out << "  ";
+        }
+
+        out << sub->get_description() << "\n";
+      }
+    }
+
+    if (mode == CLI::AppFormatMode::Normal && app->get_parent() == nullptr) {
+      out << "\n";
+      out << "Learn more about Vicinae:        " << BLUE << "https://vicinae.com/docs" << RESET << "\n";
+      out << "Join our Discord community:      " << CYAN << "https://vicinae.com/discord" << RESET << "\n";
+    }
+
+    return out.str();
+  }
+};
+
 class LaunchAppCommand : public AbstractCommandLineCommand {
 public:
   std::string id() const override { return "launch"; }
@@ -246,6 +359,9 @@ private:
 int CommandLineApp::run(int ac, char **av) {
   CLI::App app(m_name);
 
+  auto formatter = std::make_shared<Formatter>();
+  app.formatter(formatter);
+
   for (const auto &cmd : m_cmds) {
     auto sub = app.add_subcommand(cmd->id(), cmd->description());
     cmd->prepare(sub);
@@ -254,7 +370,7 @@ int CommandLineApp::run(int ac, char **av) {
   }
 
   if (ac == 1) {
-    std::cout << app.help() << std::endl;
+    std::cout << app.help(av[0]);
     return 0;
   }
 
