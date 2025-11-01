@@ -6,6 +6,7 @@
 #include <qscrollarea.h>
 #include <qlabel.h>
 #include <qtmetamacros.h>
+#include <qurl.h>
 #include <qwidget.h>
 #include "extension/form/extension-form-input.hpp"
 #include "extension/form/extension-form-input.hpp"
@@ -19,6 +20,8 @@
 #include "extension/form/extension-text-area.hpp"
 #include "ui/form/form-field.hpp"
 #include "ui/scroll-bar/scroll-bar.hpp"
+#include "service-registry.hpp"
+#include "services/app-service/app-service.hpp"
 #include "common.hpp"
 
 class ExtensionFormField : public FormField {
@@ -116,14 +119,48 @@ public:
   FocusNotifier *focusNotifier() const override { return nullptr; }
 };
 
+class FormLinkAccessoryWidget : public QWidget {
+  QWidget *m_inner = new QWidget(this);
+  QLabel *m_text = new QLabel(m_inner);
+  QUrl m_href;
+
+  void mousePressEvent(QMouseEvent *event) override {
+    if (event->button() == Qt::LeftButton && !m_href.isEmpty()) {
+      ServiceRegistry::instance()->appDb()->openTarget(m_href.toString());
+    }
+    QWidget::mousePressEvent(event);
+  }
+
+public:
+  FormLinkAccessoryWidget() {
+    // Inner layout that holds the text and sizes to content
+    auto innerLayout = new QHBoxLayout(m_inner);
+    innerLayout->setContentsMargins(10, 0, 10, 0);
+    innerLayout->addWidget(m_text);
+    m_inner->setLayout(innerLayout);
+    m_inner->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+
+    // Outer layout that aligns inner widget to right
+    auto outerLayout = new QHBoxLayout(this);
+    outerLayout->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    outerLayout->setContentsMargins(0, 0, 0, 0);
+    outerLayout->addWidget(m_inner);
+  }
+
+  void setText(const QString &text) { m_text->setText(text); }
+  void setHref(const QUrl &href) { m_href = href; }
+};
+
 class ExtensionFormComponent : public ExtensionSimpleView {
   QScrollArea *m_scrollArea = new VerticalScrollArea(this);
   std::unordered_map<QString, ExtensionFormField *> m_fieldMap;
   std::vector<ExtensionFormField *> m_fields;
   QVBoxLayout *m_layout = new QVBoxLayout;
   bool autoFocused = false;
+  FormLinkAccessoryWidget *m_linkAccessory = new FormLinkAccessoryWidget;
 
   bool supportsSearch() const override { return false; }
+  QWidget *searchBarAccessory() const override { return m_linkAccessory; }
 
 private:
   QWidget *createDescriptionField(const FormModel::Description &d) const {
@@ -155,6 +192,16 @@ public:
 
   void render(const RenderModel &model) override {
     auto formModel = std::get<FormModel>(model);
+
+    // Link Accessory
+    if (auto accessory = formModel.searchBarAccessory) {
+      if (auto link = std::get_if<FormModel::LinkAccessoryModel>(&*accessory)) {
+        m_linkAccessory->setText(link->text);
+        m_linkAccessory->setHref(QUrl(link->target));
+      }
+    }
+    setSearchAccessoryVisiblity(formModel.searchBarAccessory.has_value() && isVisible());
+
     size_t i = 0;
 
     if (auto pannel = formModel.actions) { setActionPanel(*pannel); }
