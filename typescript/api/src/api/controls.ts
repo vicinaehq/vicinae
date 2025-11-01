@@ -3,19 +3,19 @@ import * as ui from "./proto/ui";
 
 //e
 export enum PopToRootType {
-  /**
-   * Translates to Immediate or Suspended depending on the
-   * user configuration.
-   */
-  Default = "default",
-  /**
-   * Immediately pop to root
-   */
-  Immediate = "immediate",
-  /**
-   * Do not pop to root, preserve the navigation state as it is
-   */
-  Suspended = "suspended",
+	/**
+	 * Translates to Immediate or Suspended depending on the
+	 * user configuration.
+	 */
+	Default = "default",
+	/**
+	 * Immediately pop to root
+	 */
+	Immediate = "immediate",
+	/**
+	 * Do not pop to root, preserve the navigation state as it is
+	 */
+	Suspended = "suspended",
 }
 
 const popToRootProtoMap: Record<PopToRootType, ui.PopToRootType> = {
@@ -33,31 +33,35 @@ const popToRootProtoMap: Record<PopToRootType, ui.PopToRootType> = {
  * @see closeWindow
  */
 export const showHUD = async (
-  title: string,
-  options?: { clearRootSearch?: boolean; popToRootType?: PopToRootType },
+	title: string,
+	options?: { clearRootSearch?: boolean; popToRootType?: PopToRootType },
 ) => {
-  bus.turboRequest('ui.showHud', { 
-	  text: title, 
-	  clearRootSearch: options?.clearRootSearch ?? false, 
-	  popToRoot: popToRootProtoMap[options?.popToRootType ?? PopToRootType.Default]
-  });
+	bus.turboRequest("ui.showHud", {
+		text: title,
+		clearRootSearch: options?.clearRootSearch ?? false,
+		popToRoot:
+			popToRootProtoMap[options?.popToRootType ?? PopToRootType.Default],
+	});
 };
 
 /**
  * Close the vicinae launcher window immediately.
  * It is possible to override the `popToRoot` behavior defined in the settings using the options object.
  */
-export const closeMainWindow = async (options: { clearRootSearch?: boolean, popToRootType?: PopToRootType } = {}) => {
-  const { clearRootSearch = false, popToRootType = PopToRootType.Default } = options;
+export const closeMainWindow = async (
+	options: { clearRootSearch?: boolean; popToRootType?: PopToRootType } = {},
+) => {
+	const { clearRootSearch = false, popToRootType = PopToRootType.Default } =
+		options;
 
-  await bus.turboRequest("ui.closeMainWindow", {
-	  clearRootSearch,
-	  popToRoot: popToRootProtoMap[popToRootType]
-  });
+	await bus.turboRequest("ui.closeMainWindow", {
+		clearRootSearch,
+		popToRoot: popToRootProtoMap[popToRootType],
+	});
 };
 
 export const clearSearchBar = async () => {
-  await bus.turboRequest("ui.setSearchText", { text: "" });
+	await bus.turboRequest("ui.setSearchText", { text: "" });
 };
 
 /**
@@ -66,18 +70,20 @@ export const clearSearchBar = async () => {
  * read the clipboard's primary selection buffer.
  */
 export const getSelectedText = async () => {
-  const response = await bus.turboRequest("ui.getSelectedText", {});
+	const response = await bus.turboRequest("ui.getSelectedText", {});
 
-  if (!response.ok) {
-    throw new Error(`Failed to get selected text`);
-  }
+	if (!response.ok) {
+		throw new Error(`Failed to get selected text`);
+	}
 
-  return response.value.text;
+	return response.value.text;
 };
 
 /**
  * Pop to the root of the navigation stack, optionally clearing the search bar.
  */
 export const popToRoot = async (options?: { clearSearchBar?: boolean }) => {
-	await bus.turboRequest('ui.popToRoot', { clearSearchBar: options?.clearSearchBar ?? false });
-}
+	await bus.turboRequest("ui.popToRoot", {
+		clearSearchBar: options?.clearSearchBar ?? false,
+	});
+};

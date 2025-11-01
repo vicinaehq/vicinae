@@ -1,4 +1,4 @@
-import { bus } from './bus';
+import { bus } from "./bus";
 
 /**
  * Update the values of properties declared in the manifest of the current command.
@@ -7,12 +7,12 @@ import { bus } from './bus';
  * Raycast API: https://developers.raycast.com/api-reference/command#updatecommandmetadata
  */
 export async function updateCommandMetadata(metadata: {
-  subtitle?: string | null;
+	subtitle?: string | null;
 }): Promise<void> {
-  const payload: { subtitle?: string | undefined } = {};
-  if (Object.prototype.hasOwnProperty.call(metadata, 'subtitle')) {
-    payload.subtitle = metadata.subtitle ?? undefined;
-  }
+	const payload: { subtitle?: string | undefined } = {};
+	if (Object.prototype.hasOwnProperty.call(metadata, "subtitle")) {
+		payload.subtitle = metadata.subtitle ?? undefined;
+	}
 
-  await bus.turboRequest('command.updateCommandMetadata', payload);
+	await bus.turboRequest("command.updateCommandMetadata", payload);
 }

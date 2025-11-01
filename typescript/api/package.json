@@ -1,78 +1,75 @@
 {
-  "name": "@vicinae/api",
-  "version": "0.0.0",
-  "description": "TypeScript SDK to build Vicinae extensions",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc --outDir dist",
-	"protogen": "mkdir -p ./src/api/proto && protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto -I../../proto ../../proto/*.proto --ts_proto_out ./src/api/proto",
-    "pack": "npm run build && npm pack",
-    "docgen-html": "typedoc src/api/index.ts",
-    "docgen-md": "typedoc src/api/index.ts --disableSources --readme none --plugin typedoc-plugin-markdown --out ./docs"
-  },
-  "bin": {
-    "vici": "./bin/run.js"
-  },
-  "files": [
-    "dist",
-    "types"
-  ],
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "types": [
-    "./dist/index.d.ts"
-  ],
-  "publishConfig": {
-    "access": "public"
-  },
-  "main": "dist/index.js",
-  "dependencies": {
-    "@jgoz/esbuild-plugin-typecheck": "^4.0.3",
-    "@oclif/core": "^4",
-    "@oclif/plugin-help": "^6",
-    "@oclif/plugin-plugins": "^5",
-    "@types/node": ">=18",
-    "@types/react": "19.0.10",
-    "chalk": "^5.6.0",
-    "chokidar": "^4.0.3",
-    "esbuild": "^0.25.2",
-    "react": "19.0.0",
-    "zod": "^4.0.17"
-  },
-  "peerDependencies": {
-    "@types/node": ">=18",
-    "@types/react": "19.0.10"
-  },
-  "devDependencies": {
-    "@bufbuild/protobuf": "^2.7.0",
-    "@eslint/compat": "^1",
-    "@oclif/prettier-config": "^0.2.1",
-    "@oclif/test": "^4",
-    "@types/chai": "^4",
-    "@types/mocha": "^10",
-    "chai": "^4",
-    "eslint": "^9",
-    "eslint-config-oclif": "^6",
-    "eslint-config-prettier": "^10",
-    "mocha": "^10",
-    "oclif": "^4",
-    "shx": "^0.3.3",
-    "ts-node": "^10",
-    "ts-proto": "^2.7.5",
-    "typedoc": "^0.28.13",
-    "typedoc-plugin-markdown": "^4.8.1",
-    "typescript": "^5"
-  },
-  "oclif": {
-    "bin": "vici",
-    "dirname": "vici",
-    "commands": "./dist/commands",
-    "plugins": [
-      "@oclif/plugin-help"
-    ],
-    "topicSeparator": " ",
-    "topics": {}
-  },
-  "repository": "vicinaehq/vicinae"
+	"name": "@vicinae/api",
+	"version": "0.0.0",
+	"description": "TypeScript SDK to build Vicinae extensions",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"build": "tsc --outDir dist",
+		"protogen": "mkdir -p ./src/api/proto && protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto -I../../proto ../../proto/*.proto --ts_proto_out ./src/api/proto",
+		"pack": "npm run build && npm pack",
+		"docgen-html": "typedoc src/api/index.ts",
+		"docgen-md": "typedoc src/api/index.ts --disableSources --readme none --plugin typedoc-plugin-markdown --out ./docs",
+		"format": "biome format --write"
+	},
+	"bin": {
+		"vici": "./bin/run.js"
+	},
+	"files": [
+		"dist",
+		"types"
+	],
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"types": [
+		"./dist/index.d.ts"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
+	"main": "dist/index.js",
+	"dependencies": {
+		"@jgoz/esbuild-plugin-typecheck": "^4.0.3",
+		"@oclif/core": "^4",
+		"@oclif/plugin-help": "^6",
+		"@oclif/plugin-plugins": "^5",
+		"@types/node": ">=18",
+		"@types/react": "19.0.10",
+		"chalk": "^5.6.0",
+		"chokidar": "^4.0.3",
+		"esbuild": "^0.25.2",
+		"react": "19.0.0",
+		"zod": "^4.0.17"
+	},
+	"peerDependencies": {
+		"@types/node": ">=18",
+		"@types/react": "19.0.10"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.3.2",
+		"@bufbuild/protobuf": "^2.7.0",
+		"@oclif/test": "^4",
+		"@types/chai": "^4",
+		"@types/mocha": "^10",
+		"chai": "^4",
+		"mocha": "^10",
+		"oclif": "^4",
+		"shx": "^0.3.3",
+		"ts-node": "^10",
+		"ts-proto": "^2.7.5",
+		"typedoc": "^0.28.13",
+		"typedoc-plugin-markdown": "^4.8.1",
+		"typescript": "^5"
+	},
+	"oclif": {
+		"bin": "vici",
+		"dirname": "vici",
+		"commands": "./dist/commands",
+		"plugins": [
+			"@oclif/plugin-help"
+		],
+		"topicSeparator": " ",
+		"topics": {}
+	},
+	"repository": "vicinaehq/vicinae"
 }

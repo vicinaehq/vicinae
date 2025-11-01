@@ -1,20 +1,15 @@
 {
-  "include": [
-    "src/components",
-    "types",
-    "src",
-    "src/commands"
-  ],
-  "compilerOptions": {
-    "jsx": "react-jsx",
-    "module": "nodenext",
-    "declaration": true,
-    "declarationMap": false,
-    "noEmit": false,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "noImplicitAny": false,
-    "skipLibCheck": true
-  }
+	"include": ["src/components", "types", "src", "src/commands"],
+	"compilerOptions": {
+		"jsx": "react-jsx",
+		"module": "nodenext",
+		"declaration": true,
+		"declarationMap": false,
+		"noEmit": false,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"strict": true,
+		"noImplicitAny": false,
+		"skipLibCheck": true
+	}
 }
