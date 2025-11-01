@@ -45,7 +45,7 @@ let
   # Prepare node_modules for api folder
   apiDeps = fetchNpmDeps {
     src = src + /typescript/api;
-    hash = "sha256-dSHEzw15lSRRbldl9PljuWFf2htdG+HgSeKPAB88RBg=";
+    hash = "sha256-VrtxQG1wQGcRHbJWPPt6aS7x1hAHc4Z1+0l+cKv3YdI=";
   };
   ts-protoc-gen-wrapper = writeShellScriptBin "protoc-gen-ts_proto" ''
     exec node /build/source/vicinae-upstream/typescript/api/node_modules/.bin/protoc-gen-ts_proto
@@ -54,7 +54,7 @@ let
   # Prepare node_modules for extension-manager folder
   extensionManagerDeps = fetchNpmDeps {
     src = src + /typescript/extension-manager;
-    hash = "sha256-TCT7uZRZn4rsLA/z2yLeK5Bt4DJPmdSC4zkmuCxTtc8=";
+    hash = "sha256-krDFHTG8irgVk4a79LMz148drLgy2oxEoHCKRpur1R4=";
   };
 in
 stdenv.mkDerivation rec {
