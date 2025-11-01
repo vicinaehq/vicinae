@@ -7,9 +7,12 @@ class IncrementalScanner : public AbstractScanner, public NonCopyable {
 
   std::thread m_scanThread;
 
-  std::vector<std::filesystem::path> getScannableDirectories(const std::filesystem::path &path,
-                                                             std::optional<size_t> maxDepth) const;
+  std::vector<std::filesystem::path>
+  getScannableDirectories(const std::filesystem::path &path, std::optional<size_t> maxDepth,
+                          const std::vector<std::filesystem::path> &excludedPaths) const;
   void processDirectory(const std::filesystem::path &path);
+  bool shouldProcessEntry(const std::filesystem::directory_entry &entry,
+                          const QDateTime &cutOffDateTime) const;
 
   void scan(const Scan &scan);
 

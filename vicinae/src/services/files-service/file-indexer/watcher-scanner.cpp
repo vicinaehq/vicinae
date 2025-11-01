@@ -50,6 +50,12 @@ void WatcherScanner::handleEvent(const wtr::event &ev) {
     return;
   }
 
+  for (const auto &excludedPath : scan.excludedFilenames) {
+    auto eventPathStr = ev.path_name.string();
+    auto excludedPathStr = excludedPath;
+    if (eventPathStr.ends_with(excludedPathStr)) { return; }
+  }
+
   // WHY
   auto toFileTimeType = [](long long t) {
     using namespace std::chrono;
