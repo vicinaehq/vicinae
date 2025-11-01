@@ -7,7 +7,7 @@ PartOf=graphical-session.target
 
 [Service]
 Type=simple
-ExecStart=vicinae server
+ExecStart=%h/.local/bin/vicinae server
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
 RestartSec=5
