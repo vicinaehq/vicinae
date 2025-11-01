@@ -8,7 +8,7 @@ Now you can start making changes to this command source file and see it update l
 
 If you are online, you should be able to see the Vicinae logo below:
 
-![](https://github.com/vicinaehq/vicinae/raw/main/.github/assets/vicinae-banner.png?raycast-width=500&raycast-height=140)
+![](https://github.com/vicinaehq/vicinae/raw/main/.github/assets/vicinae-banner.png?raycast-height=100)
 
 ---
 
