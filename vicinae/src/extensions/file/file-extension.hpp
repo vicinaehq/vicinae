@@ -85,12 +85,17 @@ public:
     paths.setDescription("Semicolon-separated list of paths that vicinae will search");
     paths.setDefaultValue(homeDir().c_str());
 
+    auto excludedPaths = Preference::makeText("excludedPaths");
+    excludedPaths.setTitle("Excluded search paths");
+    excludedPaths.setDescription("Semicolon-separated list of paths to exclude from file indexing");
+    excludedPaths.setDefaultValue("");
+
     auto watcherPaths = Preference::makeText("watcherPaths");
     watcherPaths.setTitle("Watcher paths");
     watcherPaths.setDescription("Semicolon-separated list of paths watched by experimental watcher");
     watcherPaths.setDefaultValue("");
 
-    return {indexing, paths, watcherPaths};
+    return {indexing, paths, excludedPaths, watcherPaths};
   }
 
   void preferenceValuesChanged(const QJsonObject &preferences) const override {

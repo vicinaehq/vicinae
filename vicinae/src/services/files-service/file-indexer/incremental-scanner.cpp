@@ -32,8 +32,9 @@ void IncrementalScanner::processDirectory(const std::filesystem::path &root) {
   m_writer->indexFiles(std::move(ranges_to<std::vector>(currentFiles)));
 }
 
-std::vector<fs::path> IncrementalScanner::getScannableDirectories(const fs::path &path,
-                                                                  std::optional<size_t> maxDepth) const {
+std::vector<fs::path>
+IncrementalScanner::getScannableDirectories(const fs::path &path, std::optional<size_t> maxDepth,
+                                            const std::vector<fs::path> &excludedPaths) const {
   std::vector<fs::path> scannableDirs;
   std::error_code ec;
   FileSystemWalker walker;
@@ -55,6 +56,7 @@ std::vector<fs::path> IncrementalScanner::getScannableDirectories(const fs::path
   }
 
   walker.setMaxDepth(maxDepth);
+  walker.setExcludedPaths(excludedPaths);
   walker.walk(path, [&](const fs::directory_entry &entry) {
     if (!entry.is_directory(ec)) return;
     bool shouldProcess = shouldProcessEntry(entry, lastSuccessfulScan->createdAt);
@@ -84,7 +86,7 @@ bool IncrementalScanner::shouldProcessEntry(const fs::directory_entry &entry,
 }
 
 void IncrementalScanner::scan(const Scan &scan) {
-  for (const auto &dir : getScannableDirectories(scan.path, scan.maxDepth)) {
+  for (const auto &dir : getScannableDirectories(scan.path, scan.maxDepth, scan.excludedPaths)) {
     processDirectory(dir);
   }
 }
