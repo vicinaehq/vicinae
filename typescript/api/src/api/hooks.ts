@@ -2,10 +2,10 @@ import { useEffect, useRef } from "react";
 import { bus } from "./bus";
 
 const handlerIdFactory = {
-  nextHandlerId: 0,
-  next() {
-    return this.nextHandlerId++;
-  },
+	nextHandlerId: 0,
+	next() {
+		return this.nextHandlerId++;
+	},
 };
 
 /*

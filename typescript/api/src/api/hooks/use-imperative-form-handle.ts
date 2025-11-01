@@ -4,22 +4,22 @@ import { useImperativeHandle, useRef, Ref } from "react";
 import { bus } from "../bus";
 
 export const useImperativeFormHandle = (ref?: Ref<FormItemRef>): [string] => {
-  const handleId = useRef<string>(randomUUID());
+	const handleId = useRef<string>(randomUUID());
 
-  useImperativeHandle(ref, () => {
-    return {
-      focus: () => {
-        bus.emit(handleId.current, {
-          type: "focus",
-        });
-      },
-      reset: () => {
-        bus.emit(handleId.current, {
-          type: "reset",
-        });
-      },
-    };
-  }, []);
+	useImperativeHandle(ref, () => {
+		return {
+			focus: () => {
+				bus.emit(handleId.current, {
+					type: "focus",
+				});
+			},
+			reset: () => {
+				bus.emit(handleId.current, {
+					type: "reset",
+				});
+			},
+		};
+	}, []);
 
-  return [handleId.current];
+	return [handleId.current];
 };
