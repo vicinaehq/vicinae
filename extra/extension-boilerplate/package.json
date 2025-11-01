@@ -1,65 +1,67 @@
 {
-  "$schema": "https://raw.githubusercontent.com/vicinaehq/vicinae/refs/heads/main/extra/schemas/extension.json",
-  "name": "template",
-  "title": "Template",
-  "description": "A collection of command templates to build extensions from",
-  "categories": [
-    "Applications",
-    "Productivity"
-  ],
-  "license": "MIT",
-  "author": "vicinae",
-  "contributors": [],
-  "pastContributors": [],
-  "icon": "icon.png",
-  "commands": [
-    {
-      "name": "list",
-      "title": "Simple List",
-      "description": "A simple list view",
-      "mode": "view"
-    },
-    {
-      "name": "list-detail",
-      "title": "List With Detail",
-      "description": "A list with a detail view",
-      "mode": "view"
-    },
-    {
-      "name": "controlled-list",
-      "title": "Controlled List",
-      "description": "A list where search is controlled by state",
-      "mode": "view"
-    },
-    {
-      "name": "simple-detail",
-      "title": "Simple Detail",
-      "description": "A simple detail view",
-      "mode": "view"
-    },
-    {
-      "name": "form",
-      "title": "Form Elements",
-      "description": "A collection of form elements",
-      "mode": "view"
-    },
-    {
-      "name": "no-view",
-      "title": "No View",
-      "description": "A basic no view command",
-      "mode": "no-view"
-    }
-  ],
-  "preferences": [],
-  "scripts": {
-    "build": "vici build",
-    "dev": "vici develop",
-	"lint": "vici lint"
-  },
-  "dependencies": {
-    "@vicinae/api": "^0.15.7"
-  },
-  "devDependencies": {
-    "typescript": "^5.9.2"
-  }
+	"$schema": "https://raw.githubusercontent.com/vicinaehq/vicinae/refs/heads/main/extra/schemas/extension.json",
+	"name": "template",
+	"title": "Template",
+	"description": "A collection of command templates to build extensions from",
+	"categories": [
+		"Applications",
+		"Productivity"
+	],
+	"license": "MIT",
+	"author": "vicinae",
+	"contributors": [],
+	"pastContributors": [],
+	"icon": "icon.png",
+	"commands": [
+		{
+			"name": "list",
+			"title": "Simple List",
+			"description": "A simple list view",
+			"mode": "view"
+		},
+		{
+			"name": "list-detail",
+			"title": "List With Detail",
+			"description": "A list with a detail view",
+			"mode": "view"
+		},
+		{
+			"name": "controlled-list",
+			"title": "Controlled List",
+			"description": "A list where search is controlled by state",
+			"mode": "view"
+		},
+		{
+			"name": "simple-detail",
+			"title": "Simple Detail",
+			"description": "A simple detail view",
+			"mode": "view"
+		},
+		{
+			"name": "form",
+			"title": "Form Elements",
+			"description": "A collection of form elements",
+			"mode": "view"
+		},
+		{
+			"name": "no-view",
+			"title": "No View",
+			"description": "A basic no view command",
+			"mode": "no-view"
+		}
+	],
+	"preferences": [],
+	"scripts": {
+		"build": "vici build",
+		"dev": "vici develop",
+		"format": "biome format --write src",
+		"lint": "vici lint"
+	},
+	"dependencies": {
+		"@vicinae/api": "^0.15.7"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.3.2",
+		"typescript": "^5.9.2"
+	}
 }
