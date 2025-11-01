@@ -36,27 +36,51 @@ std::vector<fs::path> IncrementalScanner::getScannableDirectories(const fs::path
                                                                   std::optional<size_t> maxDepth) const {
   std::vector<fs::path> scannableDirs;
   std::error_code ec;
+  std::optional<QDateTime> cutOffDateTime;
   FileSystemWalker walker;
 
   scannableDirs.emplace_back(path);
+  auto lastScan = m_read_db->getLastScan(path, ScanType::Incremental);
+  if (lastScan && lastScan->status == ScanStatus::Succeeded) {
+    cutOffDateTime = m_read_db->getMaxLastModified(path);
+  }
+
+  if (!cutOffDateTime.has_value()) {
+    // Fallback to last successful full or incremental scan
+    auto lastSuccessfulScan = m_read_db->getLastSuccessfulScan(path);
+    if (lastSuccessfulScan) { cutOffDateTime = m_read_db->getMaxLastModified(path); }
+  }
+
+  // This should not happen as we would have run a full scan
+  if (!cutOffDateTime.has_value()) { return scannableDirs; }
 
   walker.setMaxDepth(maxDepth);
   walker.walk(path, [&](const fs::directory_entry &entry) {
     if (!entry.is_directory(ec)) return;
-
-    auto lastScanned = m_read_db->retrieveIndexedLastModified(entry);
-
-    if (auto lastModified = fs::last_write_time(entry, ec); lastScanned.has_value() && !ec) {
-      using namespace std::chrono;
-      auto sctp = clock_cast<system_clock>(lastModified);
-      auto lastModifiedDate =
-          QDateTime::fromSecsSinceEpoch(duration_cast<seconds>(sctp.time_since_epoch()).count());
-
-      if (lastScanned < lastModifiedDate) { scannableDirs.emplace_back(entry.path()); }
-    }
+    bool shouldProcess = shouldProcessEntry(entry, cutOffDateTime.value());
+    if (shouldProcess) { scannableDirs.emplace_back(entry.path()); }
   });
 
   return scannableDirs;
+}
+
+bool IncrementalScanner::shouldProcessEntry(const fs::directory_entry &entry,
+                                            const QDateTime &cutOffDateTime) const {
+  std::error_code ec;
+  bool shouldProcess = false;
+
+  if (auto lastModified = fs::last_write_time(entry, ec); !ec) {
+    using namespace std::chrono;
+    auto sctp = clock_cast<system_clock>(lastModified);
+    auto lastModifiedDate =
+        QDateTime::fromSecsSinceEpoch(duration_cast<seconds>(sctp.time_since_epoch()).count());
+
+    // Only process if directory was modified after the cutoff or equal (to be safe)
+    return lastModifiedDate >= cutOffDateTime;
+  }
+
+  // If we can't get mtime, process anyway to be safe
+  return true;
 }
 
 void IncrementalScanner::scan(const Scan &scan) {
