@@ -264,8 +264,14 @@ install_systemd_service() {
 	if [[ -f "$service_source" ]]; then
 		mkdir -p "$SYSTEMD_USER_DIR"
 
-		ln -sf "$service_source" "$SYSTEMD_USER_DIR/$SYSTEMD_SERVICE_NAME"
-		echo "✓ Systemd service linked to $SYSTEMD_USER_DIR/$SYSTEMD_SERVICE_NAME" >&2
+		# Copy the service file and replace vicinae with absolute path
+		local service_dest="$SYSTEMD_USER_DIR/$SYSTEMD_SERVICE_NAME"
+		cp "$service_source" "$service_dest"
+
+		# Replace 'vicinae' with absolute path in ExecStart
+		sed -i "s|ExecStart=vicinae|ExecStart=$BIN_DIR/$BINARY_NAME|g" "$service_dest"
+
+		echo "✓ Systemd service installed to $service_dest" >&2
 
 		# Reload systemd user daemon if available
 		if command -v systemctl >/dev/null 2>&1; then
