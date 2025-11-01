@@ -22,7 +22,6 @@
 #include <iomanip>
 #include <sstream>
 
-// Custom formatter for Bun-like CLI help output
 class Formatter : public CLI::Formatter {
 public:
   std::string make_help(const CLI::App *app, std::string name, CLI::AppFormatMode mode) const override {
@@ -45,14 +44,12 @@ public:
     std::string bin_name = name.empty() ? app->get_name() : name;
     out << BOLD << "Usage: " << RESET;
 
-    // Adjust usage based on whether this is a subcommand
     if (app->get_parent() != nullptr) {
       out << bin_name << " [...flags] [...args]\n\n";
     } else {
       out << bin_name << " <command> [...flags] [...args]\n\n";
     }
 
-    // Options section
     auto options = app->get_options();
     if (!options.empty()) {
       out << BOLD << "Options:\n" << RESET;
@@ -128,7 +125,6 @@ public:
       }
     }
 
-    // Footer with links (only for root help)
     if (mode == CLI::AppFormatMode::Normal && app->get_parent() == nullptr) {
       out << "\n";
       out << "Learn more about Vicinae:        " << BLUE << "https://vicinae.com/docs" << RESET << "\n";
