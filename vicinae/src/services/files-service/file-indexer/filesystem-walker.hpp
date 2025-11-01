@@ -19,6 +19,7 @@ public:
 class FileSystemWalker {
 public:
   using WalkCallback = std::function<void(const std::filesystem::directory_entry &path)>;
+  using DirectoryFilter = std::function<bool(const std::filesystem::directory_entry &dir)>;
 
   /**
    * Register specific filenames for them to be considered as ignore files.
@@ -46,6 +47,7 @@ public:
   void setVerbose(bool value = true);
   void setRecursive(bool value);
 
+  void setExcludedPaths(const std::vector<std::filesystem::path> &paths);
   void walk(const std::filesystem::path &path, const WalkCallback &fn);
   void stop();
 
@@ -57,6 +59,8 @@ private:
   std::optional<size_t> m_maxDepth;
   bool m_verbose = false;
   std::atomic<bool> m_alive = true;
+  std::vector<std::filesystem::path> m_excludedPaths = {};
 
   bool isIgnored(const std::filesystem::path &path) const;
+  bool isExcludedPath(const std::filesystem::path &path) const;
 };
