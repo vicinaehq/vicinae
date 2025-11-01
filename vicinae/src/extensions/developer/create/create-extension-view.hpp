@@ -72,9 +72,7 @@ class CreateExtensionView : public ManagedFormView {
     auto authorField = form()->addField("Author", m_username);
 
     authorField->setInfo(
-        "For now, you can set any username. The username will be used in the command deeplink, and "
-        "may carry more significance in the future.");
-
+        R"(If you plan on submitting your extension to the <a href="vicinae://extensions/vicinae/vicinae/store">Vicinae store</a>, this must exactly match your GitHub handle. Otherwise, you can set it to anything.)");
     authorField->setValidator(isMinStrLen(3));
 
     form()->addSeparator();

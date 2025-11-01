@@ -46,8 +46,8 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
 
   if (!fs::is_directory(targetDir, ec)) {
     return tl::unexpected(QString("%1 is not a directory. The boilerplate generator will not create the "
-                                   "containing directory for you")
-                               .arg(targetDir.c_str()));
+                                  "containing directory for you")
+                              .arg(targetDir.c_str()));
   }
 
   fs::path extDir = targetDir / extName.toStdString();
@@ -121,6 +121,11 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
     file.write(manifest.toUtf8());
   }
 
+  QFile gitignore(extDir / ".gitignore");
+
+  if (!gitignore.open(QIODevice::WriteOnly)) { return tl::unexpected(QString("Failed to write gitignore")); }
+
+  gitignore.write("node_modules\n");
   userCopy(":boilerplate/tsconfig.json", QString::fromStdString(extDir / "tsconfig.json"));
   userCopy(":boilerplate/extension_icon", QString::fromStdString(assetsDir / "extension_icon.png"));
   userCopy(":boilerplate/README.md", QString::fromStdString(extDir / "README.md"));
