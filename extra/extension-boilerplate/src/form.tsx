@@ -1,4 +1,4 @@
-import { Form, Action, ActionPanel } from "@vicinae/api";
+import { Action, ActionPanel, Form } from "@vicinae/api";
 
 // Examples taken from:
 // https://developers.raycast.com/api-reference/user-interface/form
@@ -12,12 +12,12 @@ export default function FormElements() {
 				</ActionPanel>
 			}
 			navigationTitle="Form Elements"
-			// searchBarAccessory={
-			//   <Form.LinkAccessory
-			//     target="https://developers.raycast.com/api-reference/user-interface/form"
-			//     text="Open Documentation"
-			//   />
-			// }
+			searchBarAccessory={
+				<Form.LinkAccessory
+					target="https://developers.raycast.com/api-reference/user-interface/form"
+					text="Open Documentation"
+				/>
+			}
 		>
 			{/* TextField */}
 			<Form.TextField id="name" title="TextField" defaultValue="Steve" />

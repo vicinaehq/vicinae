@@ -36,6 +36,12 @@ FormModel FormModel::fromJson(const QJsonObject &json) {
 
       model.items.push_back(desc);
 
+    } else if (type == "link-accessory") {
+      FormModel::LinkAccessoryModel link;
+      link.text = props.value("text").toString();
+      link.target = props.value("target").toString();
+      model.searchBarAccessory = link;
+
     } else if (auto it = std::find(fieldTypes.begin(), fieldTypes.end(), type); it != fieldTypes.end()) {
       FieldBase base;
 

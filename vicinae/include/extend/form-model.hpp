@@ -88,13 +88,19 @@ struct FormModel {
     std::optional<QString> title;
   };
 
-  using SearchAccessory = std::variant<DropdownModel>;
+  struct LinkAccessoryModel {
+    QString text;
+    QString target;
+  };
+
+  // note: only LinkAccessoryModel is possible right now
+  using FormSearchBarAccessory = std::variant<DropdownModel, LinkAccessoryModel>;
   using Item = std::variant<std::shared_ptr<IField>, Description, Separator>;
 
   bool isLoading;
   bool enableDrafts;
   std::optional<QString> navigationTitle;
-  std::optional<SearchAccessory> accessory;
+  std::optional<FormSearchBarAccessory> searchBarAccessory;
   std::optional<ActionPannelModel> actions;
   std::vector<Item> items;
 

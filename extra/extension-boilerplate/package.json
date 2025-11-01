@@ -58,10 +58,12 @@
 		"lint": "vici lint"
 	},
 	"dependencies": {
-		"@vicinae/api": "^0.15.7"
+		"@vicinae/api": "file:../../typescript/api"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.3.2",
+		"@types/node": "^24.9.2",
+		"@types/react": "^19.2.2",
 		"typescript": "^5.9.2"
 	}
 }
