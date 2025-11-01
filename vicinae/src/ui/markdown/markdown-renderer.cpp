@@ -79,7 +79,7 @@ void MarkdownRenderer::insertImage(cmark_node *node) {
   QUrlQuery query(url);
   auto documentMargin = _document->documentMargin();
   int widthOffset = documentMargin * 4;
-  QSize iconSize(size().width() - widthOffset, size().height() - documentMargin * 2);
+  QSize iconSize(0, 0);
 
   for (const auto &attr : widthAttributes) {
     if (auto value = query.queryItemValue(attr); !value.isEmpty()) {
@@ -116,21 +116,57 @@ void MarkdownRenderer::insertImageFromUrl(const QUrl &url, const QSize &iconSize
 
   QString loaderName = QUuid::createUuid().toString(QUuid::WithoutBraces);
 
-  // Create the image to mark position in document and set when it loads async-ly
-  QTextImageFormat imageFormat;
-  imageFormat.setName(loaderName);
-  imageFormat.setWidth(iconSize.width());
-  imageFormat.setHeight(iconSize.height());
-  _cursor.insertImage(imageFormat);
+  // Save current cursor position for image resizing after load
+  auto pos = _cursor.position();
+
+  // Create an image
+  _cursor.insertImage(loaderName);
 
   m_imageLoaders[loaderName] = std::move(imageLoader);
   auto *loader = m_imageLoaders[loaderName].get();
-  connect(loader, &AbstractImageLoader::dataUpdated, this, [this, loaderName](const QPixmap &pix) {
-    _document->addResource(QTextDocument::ImageResource, QUrl(loaderName), pix);
-    _textEdit->viewport()->update();
-  });
+  connect(loader, &AbstractImageLoader::dataUpdated, this,
+          [this, loaderName, pos, iconSize](const QPixmap &pix) {
+            auto old = _cursor.position();
 
-  loader->render({.size = iconSize, .devicePixelRatio = devicePixelRatio()});
+            // Select the placeholder image
+            _cursor.setPosition(pos);
+            _cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
+
+            QSize finalSize = iconSize;
+
+            // Calculate size maintaining aspect ratio
+            if (iconSize.width() > 0 && iconSize.height() == 0) {
+              // Only width specified, calculate height
+              qreal aspectRatio = static_cast<qreal>(pix.width()) / pix.height();
+              finalSize.setHeight(static_cast<int>(iconSize.width() / aspectRatio));
+            } else if (iconSize.height() > 0 && iconSize.width() == 0) {
+              // Only height specified, calculate width
+              qreal aspectRatio = static_cast<qreal>(pix.width()) / pix.height();
+              finalSize.setWidth(static_cast<int>(iconSize.height() * aspectRatio));
+            } else if (iconSize.width() == 0 && iconSize.height() == 0) {
+              // No size specified, use original image size
+              finalSize = QSize(pix.width(), pix.height());
+            }
+
+            // Set image size
+            QTextImageFormat imageFormat = _cursor.charFormat().toImageFormat();
+            imageFormat.setWidth(finalSize.width());
+            imageFormat.setHeight(finalSize.height());
+            imageFormat.setMaximumWidth(QTextLength(QTextLength::PercentageLength, 100));
+            _cursor.setCharFormat(imageFormat);
+
+            // Set block alignment to center
+            QTextBlockFormat blockFormat = _cursor.blockFormat();
+            blockFormat.setAlignment(Qt::AlignCenter);
+            _cursor.setBlockFormat(blockFormat);
+
+            _document->addResource(QTextDocument::ImageResource, loaderName, pix);
+
+            _cursor.clearSelection();
+            _cursor.setPosition(old);
+          });
+
+  loader->render({.size = QSize(INT_MAX, INT_MAX), .devicePixelRatio = devicePixelRatio()});
 }
 
 void MarkdownRenderer::insertCodeBlock(cmark_node *node, bool isClosing) {
@@ -495,7 +531,7 @@ void MarkdownRenderer::parseAndInsertHtmlImages(const QString &html) {
   // for default size when width/height is not specified
   auto documentMargin = _document->documentMargin();
   int widthOffset = documentMargin * 4;
-  QSize imgSize(size().width() - widthOffset, size().height() - documentMargin * 2);
+  QSize imgSize(0, 0);
 
   // 1. Regex to find all <img> tags.
   // This captures the *entire* tag open.
