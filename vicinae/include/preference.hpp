@@ -15,8 +15,12 @@ public:
     std::optional<QString> label;
   };
   struct AppPickerData {};
-  struct FilePickerData {};
-  struct DirectoryPickerData {};
+  struct FilePickerData {
+    bool multiple = false;
+  };
+  struct DirectoryPickerData {
+    bool multiple = false;
+  };
   struct DropdownData {
     struct Option {
       QString title;
@@ -34,6 +38,7 @@ private:
   QString m_description;
   QString m_placeholder;
   QJsonValue m_value;
+  bool m_readOnly = false;
   bool m_required;
   Data m_data = UnknownData();
 
@@ -48,16 +53,22 @@ public:
   static Preference makeDropdown(const QString &id, const std::vector<DropdownData::Option> &options = {}) {
     return {id, DropdownData{options}};
   }
+  static Preference file(const QString &id) { return {id, FilePickerData()}; }
+  static Preference files(const QString &id) { return {id, FilePickerData{.multiple = true}}; }
+  static Preference directory(const QString &id) { return {id, DirectoryPickerData{}}; }
+  static Preference directories(const QString &id) { return {id, DirectoryPickerData{.multiple = true}}; }
 
   void setName(const QString &name) { m_name = name; }
   void setTitle(const QString &name) { m_title = name; }
   void setDescription(const QString &name) { m_description = name; }
   void setPlaceholder(const QString &name) { m_placeholder = name; }
   void setRequired(bool required) { m_required = required; }
+  void setReadOnly(bool value = true) { m_readOnly = value; }
   void setData(const Data &data) { m_data = data; }
   void setDefaultValue(const QJsonValue &value) { m_value = value; }
   bool hasDefaultValue() const { return !m_value.isUndefined(); }
   bool isValid() const { return !std::holds_alternative<UnknownData>(m_data); }
+  bool isReadOnly() const { return m_readOnly; }
 
   QString name() const { return m_name; }
   QString title() const { return m_title; }

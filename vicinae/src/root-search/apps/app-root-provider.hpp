@@ -37,7 +37,8 @@ public:
   ImageURL icon() const override;
   QString displayName() const override;
   QString uniqueId() const override;
-  QWidget *settingsDetail() const override;
+  PreferenceList preferences() const override;
+  std::optional<QJsonObject> patchPreferences(const QJsonObject &values) override;
   void preferencesChanged(const QJsonObject &preferences) override;
 
 public:

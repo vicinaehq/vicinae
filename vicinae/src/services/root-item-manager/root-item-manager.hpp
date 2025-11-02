@@ -5,7 +5,7 @@
 #include "omni-database.hpp"
 #include "../../ui/image/url.hpp"
 #include "preference.hpp"
-#include "ui/default-list-item-widget/default-list-item-widget.hpp"
+#include "settings/provider-settings-detail.hpp"
 #include <qdnslookup.h>
 #include <qjsonobject.h>
 #include <qjsonvalue.h>
@@ -51,7 +51,7 @@ public:
 
   virtual ImageURL iconUrl() const = 0;
 
-  virtual QWidget *settingsDetail(const QJsonObject &preferences) const { return new QWidget; }
+  virtual QWidget *settingsDetail(const QJsonObject &preferences) const { return new QWidget(); }
 
   /**
    * Whether the item can be selected as a fallback command or not
@@ -172,10 +172,16 @@ public:
 
   virtual void itemPreferencesChanged(const QString &itemId, const QJsonObject &preferences) {}
 
-  virtual QWidget *settingsDetail() const { return new QWidget; }
+  virtual QWidget *settingsDetail() const { return new ProviderSettingsDetail(*this); }
 
   // Called the first time the root provider is loaded by the root item manager
   virtual void initialized(const QJsonObject &preference) {}
+
+  /**
+   * Called only once, right after `initialized`. This can be used to transform the preference object and save
+   * the changes in database right away. This can be useful to implement migrations from a version to another.
+   */
+  virtual std::optional<QJsonObject> patchPreferences(const QJsonObject &values) { return {}; }
 
   virtual std::vector<std::shared_ptr<RootItem>> loadItems() const = 0;
   virtual PreferenceList preferences() const { return {}; }
