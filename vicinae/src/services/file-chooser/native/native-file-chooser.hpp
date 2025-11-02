@@ -3,13 +3,14 @@
 #include <qcontainerfwd.h>
 #include <qevent.h>
 #include <qfiledialog.h>
+#include <qobject.h>
 
 /**
  * Uses the underlying platform's file chooser or the QT one if on Linux.
  */
 class NativeFileChooser : public AbstractFileChooser {
 public:
-  NativeFileChooser();
+  NativeFileChooser(QObject *parent = nullptr);
 
   bool openFile() override;
   void setMultipleSelection(bool value) override;

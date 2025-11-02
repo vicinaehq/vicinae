@@ -168,7 +168,7 @@ private:
   FocusNotifier *focusNotifier() const override { return m_focusNotifier; }
 
   FocusNotifier *m_focusNotifier = new FocusNotifier(this);
-  std::unique_ptr<AbstractFileChooser> m_fileChooser = std::make_unique<NativeFileChooser>();
+  AbstractFileChooser *m_chooser = nullptr;
   QMimeDatabase m_mimeDb;
   OmniList *m_fileList = new OmniList;
   TypographyWidget *m_fileCount = new TypographyWidget;
