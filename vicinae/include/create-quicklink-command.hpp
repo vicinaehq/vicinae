@@ -374,11 +374,46 @@ public:
     appSelector->setValue("default");
   }
 
+  void setPrefilledValues(const QString &link, const QString &name = "", const QString &application = "",
+                          const QString &icon = "") {
+    m_prefilledName = name;
+    m_prefilledLink = link;
+    m_prefilledApp = application;
+    m_prefilledIcon = icon;
+  }
+
   void initializeForm() override {
     initializeAppSelector();
     initializeIconSelector();
-    QTimer::singleShot(0, this, [this]() { form()->focusFirst(); });
+
+    auto appDb = context()->services->appDb();
+
+    if (!m_prefilledName.isEmpty()) { name->setText(m_prefilledName); }
+    if (!m_prefilledLink.isEmpty()) {
+      link->setText(m_prefilledLink);
+      handleLinkBlurred();
+    }
+    if (!m_prefilledApp.isEmpty() && appDb->findById(m_prefilledApp)) {
+      appSelector->setValue(m_prefilledApp);
+    }
+    if (!m_prefilledIcon.isEmpty()) { iconSelector->setValue(m_prefilledIcon); }
+
+    QTimer::singleShot(0, this, [this]() {
+      if (!m_prefilledName.isEmpty()) {
+        name->selectAll();
+      } else if (!m_prefilledLink.isEmpty()) {
+        link->input()->setFocus();
+      } else {
+        form()->focusFirst();
+      }
+    });
   }
+
+private:
+  QString m_prefilledLink;
+  QString m_prefilledName;
+  QString m_prefilledApp;
+  QString m_prefilledIcon;
 
   void onSubmit() override {
     auto shortcutDb = context()->services->shortcuts();

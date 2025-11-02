@@ -7,7 +7,7 @@ import { Keyboard } from "../api/keyboard";
 import { Grid } from "../api/components/grid";
 
 import "react";
-import { List } from "../src";
+import type { Application, Quicklink } from "../src";
 
 type BaseFormField = {
 	onBlur?: Function;
@@ -126,6 +126,8 @@ declare module "react" {
 				shortcut?: Keyboard.Shortcut;
 				icon?: ImageLike;
 				autoFocus?: boolean;
+				type?: string;
+				quicklink?: Quicklink;
 			};
 			"tag-list": {
 				title?: string;
