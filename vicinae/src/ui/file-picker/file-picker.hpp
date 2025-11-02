@@ -115,12 +115,15 @@ public:
   class AbstractFilePickerItemDelegate : public OmniList::AbstractVirtualItem {
     File m_file;
     FilePicker *m_picker;
+    bool m_readOnly = false;
 
   public:
     FilePicker *picker() const { return m_picker; }
     void setFile(const File &file) { m_file = file; }
     void setPicker(FilePicker *picker) { m_picker = picker; }
+    void setReadOnly(bool value) { m_readOnly = value; }
     const File &file() const { return m_file; }
+    bool readOnly() const { return m_readOnly; }
     QString generateId() const override { return m_file.path.c_str(); }
 
     AbstractFilePickerItemDelegate() {}
@@ -146,6 +149,10 @@ public:
   void setMimeTypeFilters(const QStringList &filters);
   void setOnlyDirectories();
   void setMultiple(bool);
+  void setReadOnly(bool value = true) {
+    m_button->setVisible(!value);
+    m_readOnly = value;
+  }
 
   template <class T> void setDelegate() { m_delegateFactory = std::make_unique<TypedDelegateFactory<T>>(); }
 
@@ -171,4 +178,5 @@ private:
   std::unique_ptr<AbstractDelegateFactory> m_delegateFactory;
 
   bool m_multiple = false;
+  bool m_readOnly = false;
 };

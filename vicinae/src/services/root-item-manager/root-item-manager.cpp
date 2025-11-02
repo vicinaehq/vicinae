@@ -1,6 +1,7 @@
 #include "root-item-manager.hpp"
 #include "root-search.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
+#include "utils.hpp"
 #include <qlogging.h>
 #include <ranges>
 
@@ -917,6 +918,12 @@ void RootItemManager::loadProvider(std::unique_ptr<RootProvider> provider) {
   m_providers.emplace_back(std::move(provider));
   auto preferenceValues = getProviderPreferenceValues(ptr->uniqueId());
   ptr->initialized(preferenceValues);
+
+  if (auto patched = ptr->patchPreferences(preferenceValues)) {
+    setProviderPreferenceValues(ptr->uniqueId(), patched.value());
+    preferenceValues = patched.value();
+  }
+
   ptr->preferencesChanged(preferenceValues);
   connect(ptr, &RootProvider::itemsChanged, this, [this]() { updateIndex(); });
 }

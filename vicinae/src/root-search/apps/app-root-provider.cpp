@@ -7,12 +7,10 @@
 #include "service-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "settings/app-metadata-settings-detail.hpp"
-#include "settings/app-settings-detail.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "switch-windows-view.hpp"
+#include <qjsonobject.h>
 #include <qwidget.h>
-
-namespace fs = std::filesystem;
 
 double AppRootItem::baseScoreWeight() const { return 1; }
 
@@ -53,6 +51,8 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
   auto resetRanking = new ResetItemRanking(uniqueId());
   auto markAsFavorite = new ToggleItemAsFavorite(uniqueId(), metadata.favorite);
   auto disable = new DisableApplication(uniqueId());
+  auto preferences = ctx->services->rootItemManager()->getPreferenceValues(uniqueId());
+  QString defaultAction = preferences.value("defaultAction").toString();
 
   auto mainSection = panel->createSection();
   auto utils = panel->createSection();
@@ -65,7 +65,7 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
 
   auto activeWindows = ctx->services->windowManager()->findAppWindows(*m_app);
 
-  if (!activeWindows.empty()) {
+  if (!activeWindows.empty() && defaultAction == "focus") {
     auto focus = new FocusWindowAction(activeWindows.front());
     mainSection->addAction(new DefaultActionWrapper(uniqueId(), focus));
     mainSection->addAction(open);
@@ -128,8 +128,6 @@ QJsonObject AppRootProvider::generateDefaultPreferences() const {
   return preferences;
 }
 
-QWidget *AppRootProvider::settingsDetail() const { return new AppSettingsDetail; }
-
 QString AppRootProvider::uniqueId() const { return "apps"; }
 
 std::vector<std::shared_ptr<RootItem>> AppRootProvider::loadItems() const {
@@ -146,18 +144,34 @@ AppRootProvider::AppRootProvider(AppService &appService) : m_appService(appServi
   connect(&m_appService, &AppService::appsChanged, this, &AppRootProvider::itemsChanged);
 }
 
-void AppRootProvider::preferencesChanged(const QJsonObject &preferences) {
-  QJsonArray jsonPaths = preferences.value("paths").toArray();
-
-  if (!jsonPaths.empty()) {
-    std::vector<fs::path> paths;
-    paths.reserve(jsonPaths.size());
-
-    for (const auto &jsonPath : jsonPaths) {
-      paths.emplace_back(jsonPath.toString().toStdString());
-    }
-
-    m_appService.setAdditionalSearchPaths(paths);
-    m_appService.scanSync();
-  }
+std::optional<QJsonObject> AppRootProvider::patchPreferences(const QJsonObject &values) {
+  QJsonObject patched = values;
+  patched["paths"] = QJsonValue::Undefined; // we no longer allow edits, we rely on defaults
+  return patched;
 }
+
+PreferenceList AppRootProvider::preferences() const {
+  auto defaultAction =
+      Preference::makeDropdown("defaultAction", {{"Focus window", "focus"}, {"Launch app", "launch"}});
+
+  defaultAction.setDefaultValue("focus");
+  defaultAction.setTitle("Default action");
+  defaultAction.setDescription("Action to perform when the return key is pressed. Always default to 'launch' "
+                               "if the app has no open window.");
+
+  auto paths = Preference::directories("paths");
+  QJsonArray defaultPaths;
+  for (const auto &searchPath : m_appService.defaultSearchPaths()) {
+    defaultPaths.push_back(QString::fromStdString(searchPath));
+  }
+  paths.setTitle("Application directories");
+  paths.setDescription(
+      "Directories applications are sourced from. The list cannot be modified directly. In order to do so, "
+      "you need to append additonal paths to the <b>XDG_DATA_DIRS</b> environment variables.");
+  paths.setReadOnly(true);
+  paths.setDefaultValue(defaultPaths);
+
+  return {defaultAction, paths};
+}
+
+void AppRootProvider::preferencesChanged(const QJsonObject &preferences) {}

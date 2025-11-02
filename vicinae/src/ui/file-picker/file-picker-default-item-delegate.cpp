@@ -12,7 +12,7 @@ void DefaultFilePickerItemDelegate::handleRemove() { picker()->removeFile(file()
 
 OmniListItemWidget *DefaultFilePickerItemDelegate::createWidget() const {
   SelectedFileWidget *widget = new SelectedFileWidget;
-
+  widget->setRemovable(!readOnly());
   widget->setFile(file());
   return widget;
 }

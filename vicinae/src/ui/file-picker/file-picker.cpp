@@ -39,13 +39,13 @@ void FilePicker::handleFileChoice() {
 void FilePicker::regenerateList() {
   if (m_files.size() > 1) { m_fileCount->setText(QString("%1 Files").arg(m_files.size())); }
 
-  m_fileCount->setVisible(!m_files.empty());
+  // m_fileCount->setVisible(!m_files.empty());
   m_fileList->updateModel(
       [&]() {
         for (const auto &file : m_files) {
           auto &section = m_fileList->addSection();
           auto item = (*m_delegateFactory)();
-
+          item->setReadOnly(m_readOnly);
           item->setPicker(this);
           item->setFile(file);
           section.addItem(std::move(item));
@@ -137,6 +137,7 @@ void FilePicker::setValueAsJson(const QJsonValue &value) {
     for (const auto &file : value.toArray()) {
       addFileImpl(file.toString().toStdString());
     }
+    regenerateList();
     return;
   }
 
