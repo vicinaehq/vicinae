@@ -152,15 +152,19 @@ struct PreferenceWidgetVisitor {
 
   AbstractPreferenceFormItem *operator()(const Preference::TextData &text) {
     auto item = new VerticalFormItem;
+    auto input = new BaseInput;
+    input->setPlaceholderText(m_preference.placeholder());
     item->setLabel(m_preference.title());
-    item->setContent(new BaseInput);
+    item->setContent(input);
     item->setDescription(m_preference.description());
     return item;
   }
   AbstractPreferenceFormItem *operator()(const Preference::PasswordData &password) {
     auto item = new VerticalFormItem;
+    auto input = new PasswordInput;
+    input->setPlaceholderText(m_preference.placeholder());
     item->setLabel(m_preference.title());
-    item->setContent(new PasswordInput);
+    item->setContent(input);
     item->setDescription(m_preference.description());
     return item;
   }

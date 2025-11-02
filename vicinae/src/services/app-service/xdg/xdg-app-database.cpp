@@ -1,9 +1,12 @@
 #include "xdg-app-database.hpp"
+#include "environment.hpp"
 #include "services/app-service/xdg/xdg-app.hpp"
 #include "timer.hpp"
 #include "xdgpp/desktop-entry/file.hpp"
 #include "xdgpp/mime/iterator.hpp"
+#include "xdgpp/desktop-entry/exec.hpp"
 #include <filesystem>
+#include <qcontainerfwd.h>
 #include <qlogging.h>
 #include <qsettings.h>
 
@@ -217,9 +220,10 @@ std::vector<AppPtr> XdgAppDatabase::findAssociations(const QString &mimeName) co
   return openers;
 }
 
-bool XdgAppDatabase::launch(const AbstractApplication &app, const std::vector<QString> &args) const {
+bool XdgAppDatabase::launch(const AbstractApplication &app, const std::vector<QString> &args,
+                            const std::optional<QString> &launchPrefix) const {
   auto &xdgApp = static_cast<const XdgApplication &>(app);
-  auto exec = xdgApp.parseExec(args);
+  auto exec = xdgApp.parseExec(args, launchPrefix);
 
   if (exec.empty()) {
     qWarning() << "No program to start the app";
@@ -259,9 +263,16 @@ bool XdgAppDatabase::launch(const AbstractApplication &app, const std::vector<QS
     process.setWorkingDirectory(wd->c_str());
   }
 
+  QStringList cmdLine;
+  cmdLine << process.program() << process.arguments();
+
   if (!process.startDetached()) {
-    qWarning() << "Failed to start app" << argv << process.errorString();
+    qWarning() << "Failed to start app" << cmdLine.join(' ');
     return false;
+  }
+
+  if (Environment::hasAppLaunchDebug()) {
+    qInfo() << "Started app with following command line:" << cmdLine.join(' ');
   }
 
   return true;

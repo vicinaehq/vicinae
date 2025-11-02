@@ -20,7 +20,8 @@ public:
   std::string name() const;
   std::optional<std::string> icon() const;
   std::optional<std::string> exec() const;
-  std::vector<std::string> parseExec(const std::vector<std::string> &s = {}, bool forceAppend = false) const;
+  std::vector<std::string> parseExec(const std::vector<std::string> &s = {}, bool forceAppend = false,
+                                     const std::optional<std::string> &launchPrefix = {}) const;
 
 private:
   DesktopEntryAction(const DesktopEntryGroup &group);

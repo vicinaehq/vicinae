@@ -8,8 +8,8 @@ std::string DesktopEntryAction::name() const { return m_name; }
 std::optional<std::string> DesktopEntryAction::icon() const { return m_icon; }
 std::optional<std::string> DesktopEntryAction::exec() const { return m_exec; }
 
-std::vector<std::string> DesktopEntryAction::parseExec(const std::vector<std::string> &uris,
-                                                       bool forceAppend) const {
+std::vector<std::string> DesktopEntryAction::parseExec(const std::vector<std::string> &uris, bool forceAppend,
+                                                       const std::optional<std::string> &launchPrefix) const {
   if (!m_exec) return {};
 
   ExecParser parser(m_name);
@@ -18,7 +18,12 @@ std::vector<std::string> DesktopEntryAction::parseExec(const std::vector<std::st
 
   if (m_icon) { parser.setIcon(*m_icon); }
 
-  return parser.parse(m_exec.value(), uris);
+  std::string input;
+
+  if (launchPrefix) { input = launchPrefix.value() + ' '; }
+  input += m_exec.value();
+
+  return parser.parse(input, uris);
 }
 
 DesktopEntryAction xdgpp::DesktopEntryAction::fromGroup(const DesktopEntryGroup &group) {

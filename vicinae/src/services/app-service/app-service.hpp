@@ -20,6 +20,7 @@ private:
   QFileSystemWatcher *m_watcher = new QFileSystemWatcher(this);
   OmniDatabase &m_db;
   std::unique_ptr<AbstractAppDatabase> m_provider;
+  std::optional<QString> m_prefix;
 
   static std::unique_ptr<AbstractAppDatabase> createLocalProvider();
   std::vector<std::filesystem::path> mergedPaths() const;
@@ -45,6 +46,12 @@ public:
    * will be performed.
    */
   bool launchRaw(const QString &prog, const std::vector<QString> &args);
+
+  /**
+   * Custom launcher that will be used to invoke all the applications.
+   * Typically used to integrate with programs such as uwsm: https://github.com/Vladimir-csp/uwsm
+   */
+  void setLaunchPrefix(const std::optional<QString> &prefix) { m_prefix = prefix; }
 
   std::vector<std::filesystem::path> defaultSearchPaths() const;
 

@@ -50,6 +50,8 @@ inline bool isHudDisabled() {
   return !isLayerShellEnabled() || qEnvironmentVariable("VICINAE_DISABLE_HUD", "0") == "1";
 }
 
+inline bool hasAppLaunchDebug() { return !qEnvironmentVariable("VICINAE_APP_LAUNCH_DEBUG").isEmpty(); }
+
 /**
  * App image directory if we are running in an appimage.
  * We typically use this in order to find the bundled
