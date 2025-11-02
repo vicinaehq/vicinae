@@ -271,7 +271,7 @@ bool XdgAppDatabase::launch(const AbstractApplication &app, const std::vector<QS
     return false;
   }
 
-  if (!Environment::hasAppLaunchDebug()) {
+  if (Environment::hasAppLaunchDebug()) {
     qInfo() << "Started app with following command line:" << cmdLine.join(' ');
   }
 
