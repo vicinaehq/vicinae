@@ -12,7 +12,13 @@
 class AbstractFileChooser : public QObject {
   Q_OBJECT
 
+signals:
+  void filesChosen(const std::vector<std::filesystem::path> &paths);
+  void rejected() const;
+
 public:
+  AbstractFileChooser(QObject *parent = nullptr) : QObject(parent) {}
+
   /**
    * Open the file chooser.
    * Return whether the operation succeeded or not.
@@ -25,8 +31,4 @@ public:
   virtual void setMultipleSelection(bool value) {}
   virtual void setAcceptLabel(const QString &value) {}
   virtual void setCurrentFolder(const std::filesystem::path &path) {}
-
-signals:
-  void filesChosen(const std::vector<std::filesystem::path> &paths);
-  void rejected() const;
 };

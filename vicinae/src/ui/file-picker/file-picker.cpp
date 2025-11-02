@@ -2,6 +2,7 @@
 #include "common.hpp"
 #include "layout.hpp"
 #include "services/file-chooser/abstract-file-chooser.hpp"
+#include "services/file-chooser/native/native-file-chooser.hpp"
 #include "theme.hpp"
 #include "theme/colors.hpp"
 #include "ui/file-picker/file-picker-default-item-delegate.hpp"
@@ -12,6 +13,7 @@
 #include <qfiledialog.h>
 #include <qjsonvalue.h>
 #include <qlogging.h>
+#include <qobject.h>
 #include <qwidget.h>
 
 namespace fs = std::filesystem;
@@ -31,9 +33,13 @@ void FilePicker::removeFile(const std::filesystem::path &path) {
 }
 
 void FilePicker::handleFileChoice() {
-  m_fileChooser->setMimeTypeFilters(m_mimeTypeFilters);
-  m_fileChooser->setMultipleSelection(m_multiple);
-  m_fileChooser->openFile();
+  if (m_chooser) { m_chooser->deleteLater(); }
+
+  m_chooser = new NativeFileChooser(this);
+  m_chooser->setMimeTypeFilters(m_mimeTypeFilters);
+  m_chooser->setMultipleSelection(m_multiple);
+  m_chooser->openFile();
+  connect(m_chooser, &AbstractFileChooser::filesChosen, this, &FilePicker::filesChosen);
 }
 
 void FilePicker::regenerateList() {
@@ -161,7 +167,6 @@ void FilePicker::setupUI() {
   VStack().add(m_button).add(m_fileList).add(m_fileCount).imbue(this);
 
   connect(m_button, &ButtonWidget::clicked, this, &FilePicker::handleFileChoice);
-  connect(m_fileChooser.get(), &AbstractFileChooser::filesChosen, this, &FilePicker::filesChosen);
   connect(m_fileList, &OmniList::virtualHeightChanged, this,
           [this](int height) { m_fileList->setFixedHeight(std::min(300, height)); });
 }
