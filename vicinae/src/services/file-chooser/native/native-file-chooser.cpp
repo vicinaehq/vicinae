@@ -1,14 +1,16 @@
 #include "native-file-chooser.hpp"
+#include "services/file-chooser/abstract-file-chooser.hpp"
 #include "theme.hpp"
 #include <qfiledialog.h>
 #include <qnamespace.h>
+#include <qobject.h>
 
 namespace fs = std::filesystem;
 
 static const int SIDE_PADDING = 20;
 static constexpr const int PADDING = SIDE_PADDING * 2;
 
-NativeFileChooser::NativeFileChooser() {
+NativeFileChooser::NativeFileChooser(QObject *parent) : AbstractFileChooser(parent) {
   auto stylesheet = ThemeService::instance().nativeFilePickerStyleSheet();
   m_dialog.setStyleSheet(stylesheet);
   m_dialog.setFileMode(QFileDialog::ExistingFile);
