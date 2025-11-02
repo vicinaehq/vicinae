@@ -33,13 +33,13 @@ public:
     if (shouldConfirm) {
       nav->confirmAlert("Are you sure", "High-impact operation, please confirm", [this, ctx, &nav]() {
         confirm(ctx);
-        nav->closeWindow();
+        nav->closeWindow({.clearRootSearch = true});
       });
       return;
     }
 
     confirm(controller->context());
-    nav->closeWindow();
+    nav->closeWindow({.clearRootSearch = true});
   }
 
   /**
@@ -86,7 +86,7 @@ class LockCommand : public BuiltinCallbackCommand {
       if (!pm->provider()->lock()) { return toast->failure("Failed to lock"); }
     }
 
-    ctx->navigation->closeWindow();
+    ctx->navigation->closeWindow({.clearRootSearch = true});
   }
 };
 
