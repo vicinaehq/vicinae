@@ -159,6 +159,13 @@ PreferenceList AppRootProvider::preferences() const {
   defaultAction.setDescription("Action to perform when the return key is pressed. Always default to 'launch' "
                                "if the app has no open window.");
 
+  auto launchPrefix = Preference::makeText("launchPrefix");
+
+  launchPrefix.setTitle("Launch Prefix");
+  launchPrefix.setDescription(
+      "Custom app launcher to use. Affects applications as well as their sub-actions.");
+  launchPrefix.setPlaceholder("uwsm app --");
+
   auto paths = Preference::directories("paths");
   QJsonArray defaultPaths;
   for (const auto &searchPath : m_appService.defaultSearchPaths()) {
@@ -171,7 +178,13 @@ PreferenceList AppRootProvider::preferences() const {
   paths.setReadOnly(true);
   paths.setDefaultValue(defaultPaths);
 
-  return {defaultAction, paths};
+  return {defaultAction, launchPrefix, paths};
 }
 
-void AppRootProvider::preferencesChanged(const QJsonObject &preferences) {}
+void AppRootProvider::preferencesChanged(const QJsonObject &preferences) {
+  if (preferences.contains("launchPrefix")) {
+    m_appService.setLaunchPrefix(preferences.value("launchPrefix").toString());
+  } else {
+    m_appService.setLaunchPrefix(std::nullopt);
+  }
+}

@@ -20,7 +20,8 @@ public:
   AppPtr findById(const QString &id) const override;
   std::vector<AppPtr> list() const override;
   std::vector<AppPtr> findOpeners(const QString &mimeName);
-  bool launch(const AbstractApplication &exec, const std::vector<QString> &args = {}) const override;
+  bool launch(const AbstractApplication &exec, const std::vector<QString> &args = {},
+              const std::optional<QString> &launchPrefix = {}) const override;
 
   AppPtr terminalEmulator() const override;
   AppPtr fileBrowser() const override;
