@@ -118,7 +118,8 @@ public:
 
   std::vector<std::string> parseExec() const;
 
-  std::vector<std::string> parseExec(const std::vector<std::string> &uris, bool forceAppend = false) const;
+  std::vector<std::string> parseExec(const std::vector<std::string> &uris, bool forceAppend = false,
+                                     const std::optional<std::string> &launchPrefix = {}) const;
 
   const std::vector<std::string> &onlyShowIn() const;
 
