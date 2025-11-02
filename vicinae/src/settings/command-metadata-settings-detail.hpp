@@ -130,7 +130,9 @@ struct PreferenceWidgetVisitor {
   AbstractPreferenceFormItem *operator()(const Preference::FilePickerData &data) {
     auto item = new VerticalFormItem;
     auto picker = new FilePicker;
+    picker->setMultiple(data.multiple);
     item->setLabel(m_preference.title());
+    if (m_preference.isReadOnly()) { picker->setReadOnly(); }
     item->setContent(picker);
     item->setDescription(m_preference.description());
     return item;
@@ -139,6 +141,8 @@ struct PreferenceWidgetVisitor {
   AbstractPreferenceFormItem *operator()(const Preference::DirectoryPickerData &data) {
     auto item = new VerticalFormItem;
     auto picker = new FilePicker;
+    picker->setMultiple(data.multiple);
+    if (m_preference.isReadOnly()) { picker->setReadOnly(); }
     picker->setOnlyDirectories();
     item->setLabel(m_preference.title());
     item->setContent(picker);

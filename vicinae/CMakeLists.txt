@@ -383,7 +383,7 @@ set(SRCS
 	src/settings/extension-settings.hpp
 	src/settings/command-metadata-settings-detail.cpp
 	src/settings/extension-settings-detail.cpp
-	src/settings/app-settings-detail.cpp
+	src/settings/provider-settings-detail.cpp
 	src/settings/keybind-settings.cpp
 
 	src/ui/omni-tree/omni-tree.hpp
