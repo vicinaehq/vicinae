@@ -447,6 +447,10 @@ public:
 class ExtensionSettingsContextLeftPane : public QWidget {
   Q_OBJECT
 
+signals:
+  void itemSelectionChanged(AbstractRootItemDelegate *next, AbstractRootItemDelegate *previous);
+
+public:
   ExtensionSettingsToolbar *m_toolbar = new ExtensionSettingsToolbar();
   OmniTree *m_tree = new OmniTree;
   QTimer m_searchDebounce;
@@ -581,7 +585,6 @@ class ExtensionSettingsContextLeftPane : public QWidget {
     m_searchDebounce.setSingleShot(true);
     m_toolbar->input()->installEventFilter(this);
     m_tree->setAlternateBackgroundColor(SemanticColor::ListItemHoverBackground);
-    populateTreeFromQuery("");
 
     VStack().add(m_toolbar).add(m_tree, 1).imbue(this);
 
@@ -595,6 +598,8 @@ class ExtensionSettingsContextLeftPane : public QWidget {
             &ExtensionSettingsContextLeftPane::handleTextChange);
     connect(&m_searchDebounce, &QTimer::timeout, this,
             &ExtensionSettingsContextLeftPane::handleDebouncedSearch);
+
+    QTimer::singleShot(0, this, [this]() { populateTreeFromQuery(""); });
   }
 
 public:
@@ -606,9 +611,6 @@ public:
     m_toolbar->input()->clear();
     m_tree->select(id);
   }
-
-signals:
-  void itemSelectionChanged(AbstractRootItemDelegate *next, AbstractRootItemDelegate *previous);
 };
 
 class ExtensionSettingsContent : public QWidget {
@@ -637,8 +639,6 @@ public:
 
     connect(m_left, &ExtensionSettingsContextLeftPane::itemSelectionChanged, this,
             &ExtensionSettingsContent::itemSelectionChanged);
-
-    itemSelectionChanged(m_left->selected(), nullptr);
   }
 
   ExtensionSettingsContent(const ApplicationContext *ctx) {
