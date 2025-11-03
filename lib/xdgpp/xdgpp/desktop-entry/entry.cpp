@@ -3,6 +3,7 @@
 #include "reader.hpp"
 #include "../utils/utils.hpp"
 #include "../env/env.hpp"
+#include <ranges>
 #include <algorithm>
 #include <filesystem>
 #include <iomanip>
@@ -120,6 +121,8 @@ std::optional<std::string> DesktopEntry::errorMessage() const { return m_error; 
 
 const std::vector<DesktopEntryAction> &DesktopEntry::actions() const { return m_actions; }
 
+const std::optional<DesktopEntry::TerminalExec> &DesktopEntry::terminalExec() { return m_terminalExec; }
+
 DesktopEntry::DesktopEntry(const fs::path &path, const ParseOptions &opts) {
   std::error_code ec;
 
@@ -186,7 +189,19 @@ DesktopEntry::DesktopEntry(std::string_view data, const ParseOptions &opts) {
       }
     }
   }
+
+  bool isTerminalEmulator = std::ranges::contains(m_categories, "TerminalEmulator");
+
+  if (isTerminalEmulator) {
+    TerminalExec texec;
+    if (auto appId = group->key("X-TerminalArgAppId")) { texec.appId = appId->asString(); }
+    if (auto title = group->key("X-TerminalArgTitle")) { texec.title = title->asString(); }
+    if (auto dir = group->key("X-TerminalArgDir")) { texec.dir = dir->asString(); }
+    if (auto hold = group->key("X-TerminalArgHold")) { texec.hold = hold->asString(); }
+    m_terminalExec = texec;
+  }
 }
+
 }; // namespace xdgpp
 
 std::ostream &operator<<(std::ostream &os, const xdgpp::DesktopEntry &entry) {
