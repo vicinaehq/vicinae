@@ -133,6 +133,7 @@ public:
   bool monitoring() const;
   void setMonitoring(bool value);
   void setEncryption(bool value);
+  void setIgnorePasswords(bool value);
   bool isEncryptionReady() const;
 
 private:
@@ -152,6 +153,7 @@ private:
   QByteArray computeSelectionHash(const ClipboardSelection &selection) const;
   bool isClearSelection(const ClipboardSelection &selection) const;
   static bool isConcealedSelection(const ClipboardSelection &selection);
+  static bool isPasswordSelection(const ClipboardSelection &selection);
 
   /**
    * Sanitize the passed selection by removing duplicate offers.
@@ -169,4 +171,5 @@ private:
 
   bool m_recordAllOffers = true;
   bool m_monitoring = false;
+  bool m_ignorePasswords = true;
 };
