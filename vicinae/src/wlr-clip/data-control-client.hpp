@@ -1,5 +1,5 @@
 #pragma once
-#include "seat.hpp"
+#include "lib/wayland/seat.hpp"
 #include "wlr-data-control-unstable-v1-client-protocol.h"
 #include "data-device.hpp"
 

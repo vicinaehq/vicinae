@@ -677,26 +677,40 @@ if (UNIX AND NOT APPLE)
 
     wayland_generate_protocol("${CMAKE_CURRENT_SOURCE_DIR}/protocols/wlr-foreign-toplevel-management-unstable-v1.xml")
 	wayland_generate_protocol("${CMAKE_CURRENT_SOURCE_DIR}/protocols/virtual-keyboard-unstable-v1.xml")
+		wayland_generate_protocol("${CMAKE_CURRENT_SOURCE_DIR}/protocols/ext-data-control-v1.xml")
 
 	list(APPEND LIBS xkbcommon)
 
-	if (WLR_DATA_CONTROL)
-		add_compile_definitions(WLR_DATA_CONTROL=1)
-		list(APPEND SRCS
-			src/wlr-clip/app.cpp
-			src/wlr-clip/data-control-client.cpp
-			src/wlr-clip/display.cpp
-			src/wlr-clip/registry.cpp
-			src/wlr-clip/seat.cpp
-			src/wlr-clip/data-device.cpp
-			src/wlr-clip/data-offer.cpp
-			src/services/clipboard/wlr/wlr-clipboard-server.hpp
-			src/services/clipboard/wlr/wlr-clipboard-server.cpp
-			src/lib/wayland/virtual-keyboard.hpp
-			src/lib/wayland/virtual-keyboard.cpp
-		)
-		wayland_generate_protocol("${CMAKE_CURRENT_SOURCE_DIR}/protocols/wlr-data-control-unstable-v1.xml")
-	endif()
+	# Common Wayland support files
+	list(APPEND SRCS
+		src/lib/wayland/globals.cpp
+		src/lib/wayland/display.cpp
+		src/lib/wayland/registry.cpp
+		src/lib/wayland/seat.cpp
+		src/lib/wayland/virtual-keyboard.hpp
+		src/lib/wayland/virtual-keyboard.cpp
+	)
+
+	# ext-data-control
+	list(APPEND SRCS
+		src/ext-clip/app.cpp
+		src/ext-clip/data-control-client.cpp
+		src/ext-clip/data-device.cpp
+		src/ext-clip/data-offer.cpp
+		src/services/clipboard/ext/ext-clipboard-server.hpp
+		src/services/clipboard/ext/ext-clipboard-server.cpp
+	)
+
+	# wlr-data-control
+	list(APPEND SRCS
+		src/wlr-clip/app.cpp
+		src/wlr-clip/data-control-client.cpp
+		src/wlr-clip/data-device.cpp
+		src/wlr-clip/data-offer.cpp
+		src/services/clipboard/wlr/wlr-clipboard-server.hpp
+		src/services/clipboard/wlr/wlr-clipboard-server.cpp
+	)
+	wayland_generate_protocol("${CMAKE_CURRENT_SOURCE_DIR}/protocols/wlr-data-control-unstable-v1.xml")
 endif()
 	
 
