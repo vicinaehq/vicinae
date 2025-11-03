@@ -106,7 +106,7 @@ private:
   }
 
   void handleDirectoryChanged(const QString &path) {
-    qDebug() << "directory changed";
+    qDebug() << "config directory changed, reloading config...";
     auto prev = m_config;
     m_config = load();
     emit configChanged(m_config, prev);
