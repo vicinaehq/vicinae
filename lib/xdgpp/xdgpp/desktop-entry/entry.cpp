@@ -121,7 +121,7 @@ std::optional<std::string> DesktopEntry::errorMessage() const { return m_error; 
 
 const std::vector<DesktopEntryAction> &DesktopEntry::actions() const { return m_actions; }
 
-const std::optional<DesktopEntry::TerminalExec> &DesktopEntry::terminalExec() { return m_terminalExec; }
+const std::optional<DesktopEntry::TerminalExec> &DesktopEntry::terminalExec() const { return m_terminalExec; }
 
 DesktopEntry::DesktopEntry(const fs::path &path, const ParseOptions &opts) {
   std::error_code ec;

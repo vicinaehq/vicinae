@@ -4,8 +4,10 @@
 #include "timer.hpp"
 #include "xdgpp/desktop-entry/file.hpp"
 #include "xdgpp/mime/iterator.hpp"
+#include <ranges>
 #include "xdgpp/desktop-entry/exec.hpp"
 #include <filesystem>
+#include <memory>
 #include <qcontainerfwd.h>
 #include <qlogging.h>
 #include <qsettings.h>
@@ -220,6 +222,52 @@ std::vector<AppPtr> XdgAppDatabase::findAssociations(const QString &mimeName) co
   return openers;
 }
 
+bool XdgAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
+                                           const LaunchTerminalCommandOptions &opts) const {
+  if (cmdline.empty()) return false;
+
+  auto terminal = std::static_pointer_cast<XdgApplication>(terminalEmulator());
+  auto exec = terminal->parseExec({});
+
+  if (exec.empty()) return false;
+
+  QProcess process;
+  QStringList argv;
+
+  process.setProgram(exec.front());
+
+  for (const auto &arg : exec | std::views::drop(1)) {
+    argv << arg;
+  }
+
+  if (auto texec = terminal->data().terminalExec()) {
+    if (texec->appId && opts.appId) { argv << texec->appId->c_str() << opts.appId.value(); }
+    if (texec->title && opts.title) { argv << texec->title->c_str() << opts.title.value(); }
+    if (texec->dir && opts.workingDirectory) { argv << texec->dir->c_str() << opts.workingDirectory.value(); }
+    if (texec->hold && opts.hold) { argv << texec->hold->c_str(); }
+    if (texec->exec) {
+      argv << texec->exec->c_str();
+    } else {
+      if (cmdline.front() == "gnome-terminal") {
+        argv << "--";
+      } else {
+        argv << "-e";
+      }
+    }
+  }
+
+  for (const auto &arg : cmdline) {
+    argv << arg;
+  }
+
+  process.setArguments(argv);
+
+  qDebug() << process.program() << process.arguments();
+  process.startDetached();
+
+  return true;
+}
+
 bool XdgAppDatabase::launch(const AbstractApplication &app, const std::vector<QString> &args,
                             const std::optional<QString> &launchPrefix) const {
   auto &xdgApp = static_cast<const XdgApplication &>(app);
@@ -234,6 +282,8 @@ bool XdgAppDatabase::launch(const AbstractApplication &app, const std::vector<QS
   QStringList argv;
 
   if (xdgApp.isTerminalApp()) {
+    return launchTerminalCommand(exec, {});
+
     if (auto emulator = terminalEmulator()) {
       process.setProgram(emulator->program());
 

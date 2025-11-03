@@ -175,7 +175,7 @@ public:
 
   // https://gitlab.freedesktop.org/terminal-wg/specifications/-/merge_requests/3/diffs
   // Only available if app has the TerminalEmulator category
-  const std::optional<TerminalExec> &terminalExec();
+  const std::optional<TerminalExec> &terminalExec() const;
 
 private:
   DesktopEntry(std::string_view data, const ParseOptions &opts = {});
