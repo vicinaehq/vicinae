@@ -26,6 +26,8 @@ struct ActionModel {
   std::optional<QString> onSubmit;
   std::optional<ImageLikeModel> icon;
   std::optional<Keyboard::Shortcut> shortcut;
+  QString type;
+  QJsonObject quicklink;
 };
 
 struct ActionPannelSectionModel {
