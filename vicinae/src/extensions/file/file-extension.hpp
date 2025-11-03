@@ -59,12 +59,27 @@ class FileExtension : public BuiltinCommandRepository {
   }
 
 public:
+  void initialized(const QJsonObject &preferences) const override {
+    auto files = ServiceRegistry::instance()->fileService();
+    if (preferences.value("autoIndexing").toBool()) { files->indexer()->start(); }
+  }
+
   FileExtension() {
     registerCommand<SearchFilesCommand>();
     registerCommand<RebuildFileIndexCommand>();
   }
 
   std::vector<Preference> preferences() const override {
+    auto indexing = Preference::makeCheckbox("autoIndexing");
+
+    indexing.setTitle("Auto Indexing");
+    indexing.setDescription(
+        "Whether to enable automatic file indexing in the background. If this is turned off, Vicinae will "
+        "still be "
+        "able to query the index if there is one, but will no longer update it by itself. This does not "
+        "cancel ongoing indexing tasks.");
+    indexing.setDefaultValue(true);
+
     auto paths = Preference::makeText("paths");
     paths.setTitle("Search paths");
     paths.setDescription("Semicolon-separated list of paths that vicinae will search");
@@ -75,7 +90,7 @@ public:
     watcherPaths.setDescription("Semicolon-separated list of paths watched by experimental watcher");
     watcherPaths.setDefaultValue("");
 
-    return {paths, watcherPaths};
+    return {indexing, paths, watcherPaths};
   }
 
   void preferenceValuesChanged(const QJsonObject &preferences) const override {
