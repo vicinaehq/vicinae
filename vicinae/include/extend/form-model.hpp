@@ -79,7 +79,14 @@ struct FormModel {
   public:
     TextAreaField(const FieldBase &base) : IField(base) {}
   };
-  struct DatePickerFieldModel : public FieldBase {};
+  struct DatePickerField : public IField {
+    std::optional<QString> min; // ISO string
+    std::optional<QString> max; // ISO string
+    std::optional<QString> type; // "date" | "dateTime"
+
+  public:
+    DatePickerField(const FieldBase &base) : IField(base) {}
+  };
   struct InvalidField : public FieldBase {};
 
   struct Separator {};

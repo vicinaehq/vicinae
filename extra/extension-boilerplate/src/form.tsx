@@ -40,6 +40,14 @@ export default function FormElements() {
 			<Form.DatePicker
 				id="dateOfBirth"
 				title="DatePicker"
+				type={Form.DatePicker.Type.Date}
+				defaultValue={new Date()}
+			/>
+
+			<Form.DatePicker
+				id="datetime"
+				title="DatePicker with time"
+				type={Form.DatePicker.Type.DateTime}
 				defaultValue={new Date()}
 			/>
 

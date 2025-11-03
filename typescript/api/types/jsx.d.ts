@@ -7,7 +7,7 @@ import { Keyboard } from "../api/keyboard";
 import { Grid } from "../api/components/grid";
 
 import "react";
-import type { Application, Quicklink } from "../src";
+import type { Application, DatePickerType, Quicklink } from "../src";
 
 type BaseFormField = {
 	onBlur?: Function;
@@ -161,7 +161,11 @@ declare module "react" {
 			"dropdown-field": BaseFormField & {
 				children?: ReactNode;
 			};
-			"date-picker-field": {};
+			"date-picker-field": BaseFormField & {
+				min?: Date;
+				max?: Date;
+				type?: DatePickerType;
+			};
 			"checkbox-field": BaseFormField & {};
 			"password-field": {};
 			"textarea-field": {};
