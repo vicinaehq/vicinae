@@ -27,7 +27,6 @@ option(
 )
 
 option(WAYLAND_LAYER_SHELL "Enable support for the layer shell Wayland protocol" ON)
-option(WLR_DATA_CONTROL "Enable WLR_DATA_CONTROL powered clipboard server" ON)
 option(TYPESCRIPT_EXTENSIONS "Enable support for extensions built with React/Typescript (no browser involved)" ON)
 
 option(PREFER_STATIC_LIBS "When available, link to a library statically instead of dynamically" OFF)

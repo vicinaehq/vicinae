@@ -1,7 +1,8 @@
-#include "wlr-clipboard-server.hpp"
+#include "ext-clipboard-server.hpp"
 #include "pid-file/pid-file.hpp"
 #include "proto/wlr-clipboard.pb.h"
 #include "services/clipboard/clipboard-server.hpp"
+#include "wayland/globals.hpp"
 #include <QtCore>
 #include <QApplication>
 #include <netinet/in.h>
@@ -10,13 +11,14 @@
 #include <qdebug.h>
 #include <qresource.h>
 #include <qstringview.h>
-#include "lib/wayland/globals.hpp"
 
-bool WlrClipboardServer::isAlive() const { return m_process.isOpen(); }
+bool ExtDataControlClipboardServer::isAlive() const { return m_process.isOpen(); }
 
-bool WlrClipboardServer::isActivatable() const { return Wayland::Globals::wlrDataControlManager(); }
+bool ExtDataControlClipboardServer::isActivatable() const {
+  return Wayland::Globals::dataControlDeviceManager();
+}
 
-void WlrClipboardServer::handleMessage(const proto::ext::wlrclip::Selection &sel) {
+void ExtDataControlClipboardServer::handleMessage(const proto::ext::wlrclip::Selection &sel) {
   ClipboardSelection cs;
 
   cs.offers.reserve(sel.offers().size());
@@ -28,32 +30,32 @@ void WlrClipboardServer::handleMessage(const proto::ext::wlrclip::Selection &sel
   emit selectionAdded(cs);
 }
 
-void WlrClipboardServer::handleExit(int code, QProcess::ExitStatus status) {
+void ExtDataControlClipboardServer::handleExit(int code, QProcess::ExitStatus status) {
   if (status == QProcess::ExitStatus::CrashExit) {
-    qCritical() << "wlr-clipboard process exited with status code" << status;
+    qCritical() << "ext-clipboard process exited with status code" << status;
   }
 }
 
-QString WlrClipboardServer::id() const { return "wlr-clipboard"; }
+QString ExtDataControlClipboardServer::id() const { return "ext-clipboard"; }
 
-int WlrClipboardServer::activationPriority() const { return 1; }
+int ExtDataControlClipboardServer::activationPriority() const { return 5; }
 
-bool WlrClipboardServer::stop() {
+bool ExtDataControlClipboardServer::stop() {
   m_process.terminate();
   return true;
 }
 
-bool WlrClipboardServer::start() {
+bool ExtDataControlClipboardServer::start() {
   PidFile pidFile(ENTRYPOINT);
   int maxWaitForStart = 5000;
   std::error_code ec;
 
-  if (pidFile.exists() && pidFile.kill()) { qInfo() << "Killed existing wlr-clip instance"; }
+  if (pidFile.exists() && pidFile.kill()) { qInfo() << "Killed existing ext-clip instance"; }
 
   m_process.start("/proc/self/exe", {ENTRYPOINT});
 
   if (!m_process.waitForStarted(maxWaitForStart)) {
-    qCritical() << "Failed to start wlr-clipboard process" << m_process.errorString();
+    qCritical() << "Failed to start ext-clipboard process" << m_process.errorString();
     return false;
   }
 
@@ -62,9 +64,11 @@ bool WlrClipboardServer::start() {
   return m_process.state() == QProcess::ProcessState::Running;
 }
 
-void WlrClipboardServer::handleReadError() { QTextStream(stderr) << m_process.readAllStandardError(); }
+void ExtDataControlClipboardServer::handleReadError() {
+  QTextStream(stderr) << m_process.readAllStandardError();
+}
 
-void WlrClipboardServer::handleRead() {
+void ExtDataControlClipboardServer::handleRead() {
   auto array = m_process.readAllStandardOutput();
   auto _buf = array.constData();
 
@@ -90,8 +94,9 @@ void WlrClipboardServer::handleRead() {
   }
 }
 
-WlrClipboardServer::WlrClipboardServer() {
-  connect(&m_process, &QProcess::readyReadStandardOutput, this, &WlrClipboardServer::handleRead);
-  connect(&m_process, &QProcess::readyReadStandardError, this, &WlrClipboardServer::handleReadError);
-  connect(&m_process, &QProcess::finished, this, &WlrClipboardServer::handleExit);
+ExtDataControlClipboardServer::ExtDataControlClipboardServer() {
+  connect(&m_process, &QProcess::readyReadStandardOutput, this, &ExtDataControlClipboardServer::handleRead);
+  connect(&m_process, &QProcess::readyReadStandardError, this,
+          &ExtDataControlClipboardServer::handleReadError);
+  connect(&m_process, &QProcess::finished, this, &ExtDataControlClipboardServer::handleExit);
 }

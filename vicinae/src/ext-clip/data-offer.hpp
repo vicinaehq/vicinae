@@ -1,18 +1,18 @@
 #pragma once
 #include "lib/wayland/display.hpp"
-#include "wlr-data-control-unstable-v1-client-protocol.h"
+#include "ext-data-control-v1-client-protocol.h"
 #include <vector>
 #include <string>
 
-class DataOffer {
-  zwlr_data_control_offer_v1 *_offer;
+class ExtDataOffer {
+  ext_data_control_offer_v1 *_offer;
   std::vector<std::string> _mimes;
   char _buf[1 << 16];
 
 public:
-  static void offer(void *data, zwlr_data_control_offer_v1 *offer, const char *mime);
+  static void offer(void *data, ext_data_control_offer_v1 *offer, const char *mime);
 
-  constexpr static struct zwlr_data_control_offer_v1_listener _listener = {.offer = offer};
+  constexpr static struct ext_data_control_offer_v1_listener _listener = {.offer = offer};
 
   /**
    * Receives the data associated with the specified mime type.
@@ -23,8 +23,8 @@ public:
    */
   std::string receive(const std::string &mime);
   const std::vector<std::string> &mimes() const;
-  zwlr_data_control_offer_v1 *pointer() const { return _offer; }
+  ext_data_control_offer_v1 *pointer() const { return _offer; }
 
-  DataOffer(zwlr_data_control_offer_v1 *offer);
-  ~DataOffer();
+  ExtDataOffer(ext_data_control_offer_v1 *offer);
+  ~ExtDataOffer();
 };
