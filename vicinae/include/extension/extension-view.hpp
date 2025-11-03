@@ -7,6 +7,8 @@
 #include "ui/image/url.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/views/simple-view.hpp"
+#include "common-actions.hpp"
+#include "create-quicklink-command.hpp"
 #include <qboxlayout.h>
 #include <qevent.h>
 #include <qjsonarray.h>
@@ -23,6 +25,32 @@ class ExtensionSimpleView : public SimpleView {
   std::vector<Keyboard::Shortcut> m_defaultActionShortcuts;
 
   AbstractAction *createActionFromModel(const ActionModel &model) {
+    if (model.type == "create-quicklink") {
+      auto quicklinkObj = model.quicklink;
+      QString name = quicklinkObj.value("name").toString();
+      QString link = quicklinkObj.value("link").toString();
+      QString application = quicklinkObj.value("application").toString();
+      QString icon;
+
+      if (quicklinkObj.contains("icon")) {
+        auto iconValue = quicklinkObj.value("icon");
+
+        if (iconValue.isString()) { icon = iconValue.toString(); }
+      }
+
+      auto view = new ShortcutFormView();
+      view->setPrefilledValues(link, name, application, icon);
+      ImageURL actionIcon;
+
+      if (model.icon) {
+        actionIcon = ImageURL(*model.icon);
+      } else {
+        actionIcon = ImageURL::builtin("link");
+      }
+
+      return new PushViewAction(model.title, view, actionIcon);
+    }
+
     return new StaticAction(model.title, model.icon, [this, model]() {
       qDebug() << "notify action" << model.onAction;
       notify(model.onAction, {});

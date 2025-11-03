@@ -55,6 +55,18 @@ export type ActionSubmitFormProps = Omit<BaseActionProps, "title"> & {
 	title?: string;
 };
 
+export type Quicklink = {
+	name?: string;
+	link: string;
+	application?: string | Application;
+	icon?: Icon;
+};
+
+export type ActionCreateQuicklinkProps = Omit<BaseActionProps, "title"> & {
+	title?: string;
+	quicklink: Quicklink;
+};
+
 const ActionRoot: React.FC<ActionProps> = (props) => {
 	return <action {...props} />;
 };
@@ -154,6 +166,30 @@ const SubmitForm: React.FC<ActionSubmitFormProps> = ({
 	return <action {...nativeProps} />;
 };
 
+const CreateQuicklink: React.FC<ActionCreateQuicklinkProps> = ({
+	title = "Create Quicklink",
+	quicklink,
+	...props
+}) => {
+	const nativeProps: React.JSX.IntrinsicElements["action"] = {
+		...props,
+		title,
+		type: "create-quicklink",
+		quicklink: {
+			link: quicklink.link,
+			name: quicklink.name,
+			application:
+				typeof quicklink.application === "string"
+					? quicklink.application
+					: quicklink.application?.name,
+			icon: quicklink.icon,
+		},
+		onAction: () => {},
+	};
+
+	return <action {...nativeProps} />;
+};
+
 export const Action = Object.assign(ActionRoot, {
 	CopyToClipboard,
 	Push,
@@ -161,6 +197,7 @@ export const Action = Object.assign(ActionRoot, {
 	Paste,
 	SubmitForm,
 	OpenInBrowser,
+	CreateQuicklink,
 	Style: {
 		Regular: "regular",
 		Destructive: "destructive",

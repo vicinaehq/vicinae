@@ -54,11 +54,13 @@ ActionModel ActionPannelParser::parseAction(const QJsonObject &instance) {
 
   if (props.contains("onSubmit")) { action.onSubmit = props.value("onSubmit").toString(); }
 
-  auto type = props.value("type").toString("callback");
+  action.type = props.value("type").toString("callback");
 
   if (props.contains("shortcut")) { action.shortcut = parseKeyboardShortcut(props.value("shortcut")); }
 
   if (props.contains("icon")) { action.icon = ImageModelParser().parse(props.value("icon")); }
+
+  if (props.contains("quicklink")) { action.quicklink = props.value("quicklink").toObject(); }
 
   return action;
 }
