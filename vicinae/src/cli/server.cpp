@@ -185,9 +185,6 @@ void CliServerCommand::run(CLI::App *app) {
 
     // Force reload providers to make sure items that depend on them are shown
     root->updateIndex();
-
-    // Start indexing after registerRepository() so that search paths are configured properly
-    registry->fileService()->indexer()->start();
   }
 
   QPixmapCache::setCacheLimit(Environment::pixmapCacheLimit());

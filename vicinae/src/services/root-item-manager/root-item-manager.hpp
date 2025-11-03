@@ -174,7 +174,8 @@ public:
 
   virtual QWidget *settingsDetail() const { return new ProviderSettingsDetail(*this); }
 
-  // Called the first time the root provider is loaded by the root item manager
+  // Called the first time the root provider is loaded by the root item manager, right after the first
+  // `preferencesChanged` call.
   virtual void initialized(const QJsonObject &preference) {}
 
   /**
