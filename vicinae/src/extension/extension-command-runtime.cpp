@@ -209,6 +209,8 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
   load->set_extension_id(m_command->extensionId().toStdString());
   load->set_vicinae_path(Omnicast::dataDir());
   load->set_command_name(m_command->commandId().toStdString());
+  load->set_extension_name(m_command->repositoryName().toStdString());
+  load->set_owner_or_author_name(m_command->author().toStdString());
 
   if (m_command->mode() == CommandMode::CommandModeView) {
     load->set_mode(proto::ext::manager::CommandMode::View);

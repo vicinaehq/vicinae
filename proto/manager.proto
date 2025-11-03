@@ -8,7 +8,7 @@ message RequestData {
   oneof data {
     ManagerPingRequestData ping = 1;
     ManagerLoadCommand load = 2;
-    ManagerUnloadCommand unload = 3;   
+    ManagerUnloadCommand unload = 3;
   };
 };
 
@@ -32,6 +32,8 @@ message ManagerLoadCommand {
   bool is_raycast = 7;
   string command_name = 8;
   string extension_id = 9;
+  string extension_name = 10;
+  string owner_or_author_name = 11;
 };
 
 enum CommandMode {
