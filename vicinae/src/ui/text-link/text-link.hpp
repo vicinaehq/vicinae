@@ -46,7 +46,7 @@ class TextLinkWidget : public QWidget {
     m_icon->setFixedSize(20, 20);
     setAttribute(Qt::WA_Hover);
     setArrowIcon(SemanticColor::TextMuted);
-    HStack().add(m_text).add(m_icon).justifyBetween().imbue(this);
+    HStack().add(m_text).add(m_icon).spacing(5).imbue(this);
   }
 
 public:
