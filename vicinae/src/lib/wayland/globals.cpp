@@ -2,11 +2,13 @@
 
 namespace Wayland {
 
-zwlr_data_control_manager_v1 *Globals::wlrDataControlDevice() {
+zwlr_data_control_manager_v1 *Globals::wlrDataControlManager() {
   return instance().m_zwlr_data_control_device;
 }
 
-ext_data_control_manager_v1 *Globals::dataControlDevice() { return instance().ext_data_control_device; }
+ext_data_control_manager_v1 *Globals::dataControlDeviceManager() {
+  return instance().ext_data_control_device;
+}
 
 void Globals::handleGlobal(void *data, struct wl_registry *registry, uint32_t name, const char *interface,
                            uint32_t version) {

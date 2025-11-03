@@ -14,7 +14,7 @@
 
 bool WlrClipboardServer::isAlive() const { return m_process.isOpen(); }
 
-bool WlrClipboardServer::isActivatable() const { return Wayland::Globals::wlrDataControlDevice(); }
+bool WlrClipboardServer::isActivatable() const { return Wayland::Globals::wlrDataControlManager(); }
 
 void WlrClipboardServer::handleMessage(const proto::ext::wlrclip::Selection &sel) {
   ClipboardSelection cs;

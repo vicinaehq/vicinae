@@ -14,7 +14,9 @@
 
 bool ExtDataControlClipboardServer::isAlive() const { return m_process.isOpen(); }
 
-bool ExtDataControlClipboardServer::isActivatable() const { return Wayland::Globals::dataControlDevice(); }
+bool ExtDataControlClipboardServer::isActivatable() const {
+  return Wayland::Globals::dataControlDeviceManager();
+}
 
 void ExtDataControlClipboardServer::handleMessage(const proto::ext::wlrclip::Selection &sel) {
   ClipboardSelection cs;

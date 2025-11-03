@@ -8,12 +8,12 @@ namespace Wayland {
 // binds useful wayland globals which we might need to use or check availability for
 class Globals : NonCopyable {
 public:
-  static zwlr_data_control_manager_v1 *wlrDataControlDevice();
+  static zwlr_data_control_manager_v1 *wlrDataControlManager();
   /**
    * The new data control device interface, basically a stable copy of the old wlr equivalent. Should be
    * preferred if available.
    */
-  static ext_data_control_manager_v1 *dataControlDevice();
+  static ext_data_control_manager_v1 *dataControlDeviceManager();
 
 private:
   static Globals &instance();
