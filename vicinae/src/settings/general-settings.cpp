@@ -227,8 +227,7 @@ void GeneralSettings::setupUI() {
 
 GeneralSettings::GeneralSettings() {
   auto config = ServiceRegistry::instance()->config();
-
   setupUI();
   setConfig(config->value());
-  connect(config, &ConfigService::configChanged, [this](auto next, auto prev) { setConfig(next); });
+  connect(config, &ConfigService::configChanged, this, [this](auto next, auto prev) { setConfig(next); });
 }

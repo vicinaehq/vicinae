@@ -105,16 +105,11 @@ private:
     return cfg;
   }
 
-  void handleDirectoryChanged(const QString &path) {}
-
-  void handleFileChanged(const QString &path) {
-    if (path != m_configFile.c_str()) return;
-
+  void handleDirectoryChanged(const QString &path) {
+    qDebug() << "directory changed";
     auto prev = m_config;
-
     m_config = load();
     emit configChanged(m_config, prev);
-    m_watcher.addPath(path);
   }
 
 public:
@@ -194,15 +189,11 @@ public:
 
     QFile file(m_configFile);
 
-    if (!file.open(QIODevice::WriteOnly)) { return; }
-
     doc.setObject(obj);
-    m_watcher.blockSignals(true);
+    file.remove();
+    if (!file.open(QIODevice::WriteOnly)) { return; }
     file.write(doc.toJson());
-    auto prev = m_config;
-    m_config = next;
-    emit configChanged(next, prev);
-    m_watcher.blockSignals(false);
+    qDebug() << "write config";
   }
 
   ConfigService() {
@@ -220,12 +211,7 @@ public:
       qWarning() << "Failed to watch config directory";
     }
 
-    if (!m_watcher.addPath(m_configFile.c_str())) {
-      qWarning() << "Failed to watch config file at" << m_configFile;
-    }
-
     connect(&m_watcher, &QFileSystemWatcher::directoryChanged, this, &ConfigService::handleDirectoryChanged);
-    connect(&m_watcher, &QFileSystemWatcher::fileChanged, this, &ConfigService::handleFileChanged);
   }
 
 signals:
