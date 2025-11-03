@@ -13,6 +13,8 @@
 #include "lib/rang.hpp"
 #include <exception>
 #include "vicinae.hpp"
+#include "ext-clip/app.hpp"
+#include "services/clipboard/ext/ext-clipboard-server.hpp"
 #include "wlr-clip/app.hpp"
 #include "services/clipboard/wlr/wlr-clipboard-server.hpp"
 #include "version.h"
@@ -31,7 +33,6 @@ public:
     const std::string BLUE = "\033[34m";
     const std::string CYAN = "\033[36m";
     const std::string RESET = "\033[0m";
-
     std::stringstream out;
 
     // Show command description for subcommands, general headline for root
@@ -374,12 +375,15 @@ int CommandLineApp::run(int ac, char **av) {
     return 0;
   }
 
-#ifdef WLR_DATA_CONTROL
+  if (ac == 2 && strcmp(av[1], ExtDataControlClipboardServer::ENTRYPOINT) == 0) {
+    ExtClipman::instance()->start();
+    return 0;
+  }
+
   if (ac == 2 && strcmp(av[1], WlrClipboardServer::ENTRYPOINT) == 0) {
     Clipman::instance()->start();
     return 0;
   }
-#endif
 
   // we still support direct deeplink usage
   // i.e vicinae vicinae://extensions/vicinae/clipboard/history

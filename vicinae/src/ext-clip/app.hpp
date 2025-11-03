@@ -10,19 +10,19 @@
 #include "data-control-client.hpp"
 #include "lib/wayland/display.hpp"
 
-class Clipman : public WaylandDisplay, public WaylandRegistry::Listener, public DataDevice::Listener {
+class ExtClipman : public WaylandDisplay, public WaylandRegistry::Listener, public ExtDataDevice::Listener {
 
 public:
-  static Clipman *instance();
+  static ExtClipman *instance();
   void start();
-  Clipman();
+  ExtClipman();
 
 private:
   std::unique_ptr<WaylandRegistry> _registry;
-  std::unique_ptr<DataControlManager> _dcm;
+  std::unique_ptr<ExtDataControlManager> _dcm;
   std::unique_ptr<WaylandSeat> _seat;
 
   void global(WaylandRegistry &reg, uint32_t name, const char *interface, uint32_t version) override;
-  void selection(DataDevice &device, DataOffer &offer) override;
-  void primarySelection(DataDevice &device, DataOffer &offer) override;
+  void selection(ExtDataDevice &device, ExtDataOffer &offer) override;
+  void primarySelection(ExtDataDevice &device, ExtDataOffer &offer) override;
 };
