@@ -262,7 +262,15 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
 
     for (ExtensionRootProvider *ext : root->extensions()) {
       for (const auto &cmd : ext->repository()->commands()) {
-        if (cmd->author() == author && cmd->commandId() == cmdName && cmd->repositoryName() == extName) {
+        // Author is suffixed, check author with suffix
+        if (author.contains("@")) {
+          if (cmd->authorSuffixed() != author) continue;
+        } else {
+          // otherwise check plain author name
+          if (cmd->author() != author) continue;
+        }
+
+        if (cmd->commandId() == cmdName && cmd->repositoryName() == extName) {
           m_ctx.navigation->popToRoot({.clearSearch = false});
 
           // Read `arguments` query parameter
