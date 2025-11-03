@@ -34,6 +34,7 @@
 #include <qurl.h>
 #include <qurlquery.h>
 #include "services/config/config-service.hpp"
+#include "services/asset-resolver/asset-resolver.hpp"
 
 int MarkdownRenderer::getHeadingLevelPointSize(int level) const {
   auto factor = HEADING_LEVEL_SCALE_FACTORS[std::clamp(level, 1, 4)];
@@ -109,8 +110,15 @@ void MarkdownRenderer::insertImageFromUrl(const QUrl &url, const QSize &iconSize
     imageLoader = std::make_unique<HttpImageLoader>(url);
   } else if (url.scheme() == "data") {
     imageLoader = std::make_unique<DataUriImageLoader>(url.toString());
+  } else if (url.scheme() == "file") {
+    std::filesystem::path path = url.host().isEmpty()
+                                     ? url.path().toStdString()
+                                     : QString("%1%2").arg(url.host()).arg(url.path()).toStdString();
+    imageLoader = std::make_unique<LocalImageLoader>(path);
   } else {
+    // Resolve relative image paths
     std::filesystem::path path = QString("%1%2").arg(url.host()).arg(url.path()).toStdString();
+    if (auto resolved = RelativeAssetResolver::instance()->resolve(path)) { path = *resolved; }
     imageLoader = std::make_unique<LocalImageLoader>(path);
   }
 
