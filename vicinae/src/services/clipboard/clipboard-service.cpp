@@ -37,6 +37,9 @@ namespace fs = std::filesystem;
  */
 static const std::set<QString> IGNORED_MIME_TYPES = {
     Clipboard::CONCEALED_MIME_TYPE,
+};
+
+static const std::set<QString> PASSWORD_MIME_TYPES = {
     "x-kde-passwordManagerHint",
 };
 
@@ -124,6 +127,8 @@ void ClipboardService::setEncryption(bool value) {
 }
 
 bool ClipboardService::isEncryptionReady() const { return m_encrypter.get(); }
+
+void ClipboardService::setIgnorePasswords(bool value) { m_ignorePasswords = value; }
 
 void ClipboardService::setMonitoring(bool value) {
   if (m_monitoring == value) return;
@@ -328,6 +333,11 @@ bool ClipboardService::isConcealedSelection(const ClipboardSelection &selection)
                              [](auto &&offer) { return IGNORED_MIME_TYPES.contains(offer.mimeType); });
 }
 
+bool ClipboardService::isPasswordSelection(const ClipboardSelection &selection) {
+  return std::ranges::any_of(selection.offers,
+                             [](auto &&offer) { return PASSWORD_MIME_TYPES.contains(offer.mimeType); });
+}
+
 ClipboardSelection &ClipboardService::sanitizeSelection(ClipboardSelection &selection) {
   std::ranges::sort(selection.offers, [](auto &&a, auto &&b) {
     return std::ranges::lexicographical_compare(a.mimeType, b.mimeType);
@@ -344,6 +354,11 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
 
   if (isConcealedSelection(selection)) {
     qDebug() << "Ignoring concealed selection";
+    return;
+  }
+
+  if (m_ignorePasswords && isPasswordSelection(selection)) {
+    qInfo() << "Ignored password clipboard selection";
     return;
   }
 
@@ -366,7 +381,7 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
   auto preferredKind = getKind(*preferredOfferIt);
 
   if (preferredKind == ClipboardOfferKind::Unknown) {
-    qDebug() << "Ignoring selection with primary offer of unknown kind" << preferredMimeType;
+    qWarning() << "Ignoring selection with primary offer of unknown kind" << preferredMimeType;
     return;
   }
 
