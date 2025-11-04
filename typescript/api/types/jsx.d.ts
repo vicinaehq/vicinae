@@ -18,6 +18,9 @@ type BaseFormField = {
 declare module "react" {
 	namespace JSX {
 		interface IntrinsicElements {
+			view: {
+				children: ReactNode;
+			};
 			detail: {
 				navigationTitle?: string;
 				markdown: string;
@@ -78,9 +81,9 @@ declare module "react" {
 				id?: string;
 				subtitle?: string;
 				content?:
-					| ImageLike
-					| { color: ColorLike }
-					| { value: ImageLike; tooltip?: string };
+				| ImageLike
+				| { color: ColorLike }
+				| { value: ImageLike; tooltip?: string };
 				keywords?: string[];
 				children?: ReactNode;
 			};

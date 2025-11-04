@@ -63,7 +63,7 @@ public:
       m_widget = createFieldWidget(model.get());
 
       connect(m_widget->m_extensionNotifier, &ExtensionEventNotifier::eventNotified, this,
-              &ExtensionFormField::notifyEvent);
+              &ExtensionFormField::notifyEvent, Qt::QueuedConnection);
 
       if (auto old = widget()) old->deleteLater();
 
@@ -80,12 +80,19 @@ public:
   }
 
   void handleFocusChanged(bool value) {
-    if (!value && m_model->onBlur) { emit notifyEvent(*m_model->onBlur, {}); }
-    if (value && m_model->onFocus) { emit notifyEvent(*m_model->onFocus, {}); }
+    if (!value && m_model->onBlur) {
+      QMetaObject::invokeMethod(
+          this, [this]() { emit notifyEvent(*m_model->onBlur, {}); }, Qt::QueuedConnection);
+    }
+    if (value && m_model->onFocus) {
+      QMetaObject::invokeMethod(
+          this, [this]() { emit notifyEvent(*m_model->onFocus, {}); }, Qt::QueuedConnection);
+    }
   }
 
   ExtensionFormField() {
-    connect(this, &ExtensionFormField::focusChanged, this, &ExtensionFormField::handleFocusChanged);
+    connect(this, &ExtensionFormField::focusChanged, this, &ExtensionFormField::handleFocusChanged,
+            Qt::QueuedConnection);
   }
 
 signals:
