@@ -12,6 +12,65 @@ export const trash = async (path: PathLike | PathLike[]): Promise<void> => {
 	await Promise.all(promises);
 };
 
+/**
+ * Additional options that can be passed in order to tweak the behavior of the terminal window.
+ * Note that most options are best-effort, which means that they may or may not work depending on
+ * the default terminal emulator that is available.
+ * On Linux, Vicinae honors the xdg-terminal-exec specification: https://gitlab.freedesktop.org/terminal-wg/specifications/-/merge_requests/3/diffs
+ */
+export type RunInTerminalOptions = {
+	/**
+	 * Ensure the terminal window is held open after the execution of the command completes.
+	 * This option is provided as a hint to the default terminal emulator, and might not be honored.
+	 */
+	hold?: boolean;
+
+	/**
+	 * Overrides the application ID used for this specific terminal window.
+	 * Can be useful if you want to target this window by its class with the window management API.
+	 * This option is provided as a hint to the default terminal emulator, and might not be honored.
+	 *
+	 * @see WindowManagement
+	 */
+	appId?: string;
+
+	/**
+	 * Overrides the title used for this specific terminal window.
+	 * Can be useful if you want to target this window by its title with the window management API.
+	 * This option is provided as a hint to the default terminal emulator, and might not be honored.
+	 *
+	 * @see WindowManagement
+	 */
+	title?: string;
+};
+
+/**
+ * Run a command in a new terminal emulator window.
+ *
+ * @param args - the command line to execute. This is *not* getting interpreted by a shell.
+ * @param options - list of options that can be passed in order to tweak the behavior of the terminal window.
+ *
+ * @example
+ * ```typescript
+ * await runInTerminal(['journalctl', '--user', '-u', '-f', 'vicinae']);
+ * // or, inside a shell:
+ * await runInTerminal(['/bin/bash', 'echo "dis is my home: $HOME"'], { hold: true });
+ * ```
+ */
+export const runInTerminal = async (
+	args: string[],
+	options: RunInTerminalOptions = {},
+) => {
+	const { hold = false, appId, title } = options;
+
+	await bus.turboRequest("app.runInTerminal", {
+		cmdline: args,
+		hold,
+		appId,
+		title,
+	});
+};
+
 export const open = async (target: string, app?: Application | string) => {
 	let appId: string | undefined;
 

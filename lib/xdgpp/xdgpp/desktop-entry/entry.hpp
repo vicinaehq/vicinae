@@ -15,6 +15,14 @@ public:
     std::optional<Locale> locale;
   };
 
+  struct TerminalExec {
+    std::optional<std::string> exec;
+    std::optional<std::string> appId;
+    std::optional<std::string> title;
+    std::optional<std::string> dir;
+    std::optional<std::string> hold;
+  };
+
   static DesktopEntry fromFile(const std::filesystem::path &path, const ParseOptions &opts = {});
   static DesktopEntry fromData(std::string_view data, const ParseOptions &opts = {});
 
@@ -165,6 +173,10 @@ public:
   std::optional<std::string> errorMessage() const;
   bool isValid() const;
 
+  // https://gitlab.freedesktop.org/terminal-wg/specifications/-/merge_requests/3/diffs
+  // Only available if app has the TerminalEmulator category
+  const std::optional<TerminalExec> &terminalExec() const;
+
 private:
   DesktopEntry(std::string_view data, const ParseOptions &opts = {});
   DesktopEntry(const std::filesystem::path &path, const ParseOptions &opts = {});
@@ -190,6 +202,7 @@ private:
   std::vector<std::string> m_notShowIn;
   std::optional<std::filesystem::path> m_path;
   std::vector<DesktopEntryAction> m_actions;
+  std::optional<TerminalExec> m_terminalExec;
 };
 
 }; // namespace xdgpp

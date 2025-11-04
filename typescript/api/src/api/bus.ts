@@ -57,6 +57,7 @@ type EndpointMapping = {
 	"app.list": "app.list";
 	"app.open": "app.open";
 	"app.getDefault": "app.getDefault";
+	"app.runInTerminal": "app.runInTerminal";
 
 	"ui.render": "ui.render";
 	"ui.showToast": "ui.showToast";
@@ -103,21 +104,21 @@ type ResponseEndpoint = EndpointMapping[RequestEndpoint];
 // Helper types to extract from dot notation
 type ExtractRequestType<T extends RequestEndpoint> =
 	T extends `${infer Category}.${infer Action}`
-		? Category extends keyof Requests
-			? Action extends keyof Requests[Category]
-				? Requests[Category][Action]
-				: never
-			: never
-		: never;
+	? Category extends keyof Requests
+	? Action extends keyof Requests[Category]
+	? Requests[Category][Action]
+	: never
+	: never
+	: never;
 
 type ExtractResponseType<T extends ResponseEndpoint> =
 	T extends `${infer Category}.${infer Action}`
-		? Category extends keyof Responses
-			? Action extends keyof Responses[Category]
-				? Responses[Category][Action]
-				: never
-			: never
-		: never;
+	? Category extends keyof Responses
+	? Action extends keyof Responses[Category]
+	? Responses[Category][Action]
+	: never
+	: never
+	: never;
 
 type Map = {
 	[K in RequestEndpoint]: {

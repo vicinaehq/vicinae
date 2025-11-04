@@ -41,6 +41,9 @@ public:
    */
   bool launch(const AbstractApplication &app, const std::vector<QString> &args = {}) const;
 
+  bool launchTerminalCommand(const std::vector<QString> &cmdLine,
+                             const LaunchTerminalCommandOptions &opts = {});
+
   /**
    * Launch a new process using arbitrary prog name and args. No expansion of any kind
    * will be performed.

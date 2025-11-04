@@ -23,6 +23,10 @@ public:
   bool launch(const AbstractApplication &exec, const std::vector<QString> &args = {},
               const std::optional<QString> &launchPrefix = {}) const override;
 
+  bool launchTerminalCommand(const std::vector<QString> &cmdline,
+                             const LaunchTerminalCommandOptions &opts = {},
+                             const std::optional<QString> &prefix = {}) const override;
+
   AppPtr terminalEmulator() const override;
   AppPtr fileBrowser() const override;
   AppPtr genericTextEditor() const override;
