@@ -5,6 +5,7 @@
 #include "xdgpp/desktop-entry/file.hpp"
 #include "xdgpp/mime/iterator.hpp"
 #include <algorithm>
+#include <qtenvironmentvariables.h>
 #include <ranges>
 #include "xdgpp/desktop-entry/exec.hpp"
 #include <filesystem>
@@ -99,13 +100,29 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
 AppPtr XdgAppDatabase::terminalEmulator() const {
   if (auto emulator = defaultForMime("x-scheme-handler/terminal")) { return emulator; }
 
-  qWarning()
-      << "No default terminal emulator could be found, will fallback on the first terminal emulator "
-         "we find. To learn how to set one for vicinae to use: https://docs.vicinae.com/default-terminal";
+  auto terms = m_apps | std::views::filter([](auto &&app) { return app->isTerminalEmulator(); });
+  auto findWithProg = [&](const QString &prog) -> std::optional<AppPtr> {
+    if (auto it = std::ranges::find_if(terms, [&](auto &&app) { return app->program() == prog; });
+        it != terms.end()) {
+      return *it;
+    }
+    return std::nullopt;
+  };
 
-  for (const auto &app : m_apps) {
-    if (app->isTerminalEmulator()) return app;
+  if (Environment::isGnomeEnvironment()) {
+    if (auto target = findWithProg("kgx")) { return *target; }
+    if (auto target = findWithProg("gnome-terminal")) { return *target; }
   }
+
+  else if (Environment::isPlasmaDesktop()) {
+    if (auto target = findWithProg("konsole")) { return *target; }
+  }
+
+  else if (Environment::isCosmicDesktop()) {
+    if (auto target = findWithProg("cosmic-term")) { return *target; }
+  }
+
+  if (!terms.empty()) { return terms.front(); }
 
   return nullptr;
 }
@@ -223,6 +240,44 @@ std::vector<AppPtr> XdgAppDatabase::findAssociations(const QString &mimeName) co
   return openers;
 }
 
+xdgpp::DesktopEntry::TerminalExec XdgAppDatabase::getTermExec(const XdgApplication &app) const {
+  using TExec = xdgpp::DesktopEntry::TerminalExec;
+
+  if (app.program() == "gnome-terminal") { return TExec{.exec = "--"}; }
+  // new gnome terminal
+  if (app.program() == "kgx") { return TExec{.exec = "--", .title = "--title", .dir = "working-directory"}; }
+  if (app.program() == "alacritty") {
+    return TExec{
+        .exec = "-e",
+        .appId = "--class",
+        .title = "--title",
+        .dir = "--working-directory",
+        .hold = "--hold",
+    };
+  }
+  if (app.program() == "cosmic-term") { return TExec{.exec = "-e"}; }
+  if (app.program() == "konsole") {
+    return TExec{
+        .exec = "-e",
+        .dir = "--workdir",
+        .hold = "--hold",
+    };
+  }
+  if (app.program() == "foot") {
+    return TExec{
+        .exec = "-e",
+        .appId = "--app-id",
+        .title = "--title",
+        .dir = "--working-directory",
+        .hold = "--hold",
+    };
+  }
+  if (app.program() == "mate-terminal") { return TExec{.exec = "-x"}; }
+  if (app.program() == "xfce4-terminal") { return TExec{.exec = "-x"}; }
+
+  return {.exec = "-e"};
+}
+
 bool XdgAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
                                            const LaunchTerminalCommandOptions &opts,
                                            const std::optional<QString> &prefix) const {
@@ -233,37 +288,41 @@ bool XdgAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
 
   if (exec.empty()) return false;
 
-  QProcess process;
   QStringList argv;
-
-  if (auto wd = terminal->data().workingDirectory()) { process.setWorkingDirectory(wd->c_str()); }
-  process.setProgram(exec.front());
   std::ranges::for_each(exec | std::views::drop(1), [&](auto &&arg) { argv << arg; });
+  auto texec = getTermExec(*terminal);
 
-  if (auto texec = terminal->data().terminalExec()) {
-    if (texec->appId && opts.appId) { argv << texec->appId->c_str() << opts.appId.value(); }
-    if (texec->title && opts.title) { argv << texec->title->c_str() << opts.title.value(); }
-    if (texec->dir && opts.workingDirectory) { argv << texec->dir->c_str() << opts.workingDirectory.value(); }
-    if (texec->hold && opts.hold) { argv << texec->hold->c_str(); }
-    if (texec->exec) {
-      argv << texec->exec->c_str();
-    } else {
-      if (cmdline.front() == "gnome-terminal") {
-        argv << "--";
-      } else {
-        argv << "-e";
-      }
-    }
-  }
+  if (texec.appId && opts.appId) { argv << texec.appId->c_str() << opts.appId.value(); }
+  if (texec.title && opts.title) { argv << texec.title->c_str() << opts.title.value(); }
+  if (texec.dir && opts.workingDirectory) { argv << texec.dir->c_str() << opts.workingDirectory.value(); }
+  if (texec.hold && opts.hold) { argv << texec.hold->c_str(); }
+  if (texec.exec) { argv << texec.exec->c_str(); }
 
   for (const auto &arg : cmdline) {
     argv << arg;
   }
 
-  process.setArguments(argv);
+  return launchProcess(exec.front(), argv, terminal->data().workingDirectory());
+}
 
-  qDebug() << process.program() << process.arguments();
-  process.startDetached();
+bool XdgAppDatabase::launchProcess(const QString &prog, const QStringList args,
+                                   const std::optional<std::filesystem::path> &workingDirectory) const {
+  QProcess process;
+  process.setProgram(prog);
+  process.setArguments(args);
+  process.setStandardOutputFile(QProcess::nullDevice());
+  process.setStandardErrorFile(QProcess::nullDevice());
+
+  if (auto dir = workingDirectory) { process.setWorkingDirectory(workingDirectory->c_str()); }
+
+  QStringList cmdline;
+  cmdline << prog << args;
+  qInfo() << "App started with command line" << cmdline.join(' ');
+
+  if (!process.startDetached()) {
+    qWarning() << "Failed to start app:" << process.errorString();
+    return false;
+  }
 
   return true;
 }
@@ -271,9 +330,6 @@ bool XdgAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
 bool XdgAppDatabase::launch(const AbstractApplication &app, const std::vector<QString> &args,
                             const std::optional<QString> &launchPrefix) const {
   auto &xdgApp = static_cast<const XdgApplication &>(app);
-
-  QProcess process;
-  QStringList argv;
 
   if (xdgApp.isTerminalApp()) return launchTerminalCommand(xdgApp.parseExec(args), {}, launchPrefix);
 
@@ -284,35 +340,9 @@ bool XdgAppDatabase::launch(const AbstractApplication &app, const std::vector<QS
     return false;
   }
 
-  for (const auto &[idx, arg] : exec | std::views::enumerate) {
-    if (idx == 0) {
-      process.setProgram(arg);
-    } else {
-      argv << arg;
-    }
-  }
+  auto argv = exec | std::views::drop(1) | std::ranges::to<QStringList>();
 
-  process.setArguments(argv);
-  process.setStandardOutputFile(QProcess::nullDevice());
-  process.setStandardErrorFile(QProcess::nullDevice());
-
-  if (auto wd = xdgApp.data().workingDirectory(); wd && !wd->empty()) {
-    process.setWorkingDirectory(wd->c_str());
-  }
-
-  QStringList cmdLine;
-  cmdLine << process.program() << process.arguments();
-
-  if (!process.startDetached()) {
-    qWarning() << "Failed to start app" << cmdLine.join(' ');
-    return false;
-  }
-
-  if (Environment::hasAppLaunchDebug()) {
-    qInfo() << "Started app with following command line:" << cmdLine.join(' ');
-  }
-
-  return true;
+  return launchProcess(exec.front(), argv, xdgApp.data().workingDirectory());
 }
 
 QString XdgAppDatabase::mimeNameForTarget(const QString &target) const {

@@ -33,10 +33,17 @@ inline bool isWlrootsCompositor() {
          desktop.contains("river", Qt::CaseInsensitive);
 }
 
-inline bool isCosmicDesktop() {
-  auto dd = xdgpp::currentDesktop();
-  return std::ranges::find(dd, "COSMIC") != dd.end();
+static inline bool containsIgnoreCase(const std::vector<std::string> &desktops, std::string_view str) {
+  return std::ranges::any_of(desktops, [&](auto &desktop) {
+    return std::ranges::equal(desktop, str, [](auto &&a, auto &&b) {
+      return std::tolower(static_cast<unsigned char>(a)) == std::tolower(static_cast<unsigned char>(b));
+    });
+  });
 }
+
+inline bool isCosmicDesktop() { return containsIgnoreCase(xdgpp::currentDesktop(), "cosmic"); }
+inline bool isPlasmaDesktop() { return containsIgnoreCase(xdgpp::currentDesktop(), "kde"); }
+inline bool isGnomeDesktop() { return containsIgnoreCase(xdgpp::currentDesktop(), "gnome"); }
 
 inline bool isLayerShellEnabled() {
 #ifndef WAYLAND_LAYER_SHELL
