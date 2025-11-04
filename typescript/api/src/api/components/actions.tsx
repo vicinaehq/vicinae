@@ -1,9 +1,10 @@
 import React, { ReactNode } from "react";
+import type { PathLike } from "node:fs";
 import { useNavigation } from "../hooks/index";
 import { Clipboard } from "../clipboard";
 import { ImageLike } from "../image";
 import { Keyboard } from "../keyboard";
-import { Application, open } from "../utils";
+import { Application, open, showInFileBrowser } from "../utils";
 import { Form } from "./form";
 import { Icon } from "../icon";
 import { closeMainWindow } from "../controls";
@@ -48,6 +49,14 @@ export type ActionPasteProps = BaseActionProps & {
 
 export type ActionOpenInBrowserProps = BaseActionProps & {
 	url: string;
+};
+
+export type ActionShowInFinderProps = {
+	path: PathLike;
+	icon?: ImageLike;
+	onShow?: (path: PathLike) => void;
+	shortcut?: Keyboard.Shortcut;
+	title?: string;
 };
 
 export type ActionSubmitFormProps = Omit<BaseActionProps, "title"> & {
@@ -139,6 +148,22 @@ const OpenInBrowser: React.FC<ActionOpenInBrowserProps> = ({
 	);
 };
 
+const ShowInFinder: React.FC<ActionShowInFinderProps> = ({
+	path,
+	title = "Show in Finder",
+	...props
+}) => {
+	return (
+		<ActionRoot
+			{...props}
+			title={title}
+			onAction={() => {
+				showInFileBrowser(path);
+			}}
+		/>
+	);
+};
+
 const Push: React.FC<ActionPushProps> = ({ target, ...props }) => {
 	const { push } = useNavigation();
 
@@ -197,6 +222,7 @@ export const Action = Object.assign(ActionRoot, {
 	Paste,
 	SubmitForm,
 	OpenInBrowser,
+	ShowInFinder,
 	CreateQuicklink,
 	Style: {
 		Regular: "regular",
