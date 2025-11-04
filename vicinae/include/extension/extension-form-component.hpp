@@ -12,6 +12,7 @@
 #include "extension/form/extension-form-input.hpp"
 #include "extension/form/extension-dropdown.hpp"
 #include "extension/form/extension-password-field.hpp"
+#include "extension/form/extension-date-picker.hpp"
 #include "ui/vertical-scroll-area/vertical-scroll-area.hpp"
 #include "extend/form-model.hpp"
 #include "extension/extension-view.hpp"
@@ -37,6 +38,7 @@ class ExtensionFormField : public FormField {
     if (auto f = dynamic_cast<const FormModel::TextAreaField *>(field)) { return new ExtensionTextArea; }
     if (auto f = dynamic_cast<const FormModel::DropdownField *>(field)) { return new ExtensionDropdown; }
     if (auto f = dynamic_cast<const FormModel::PasswordField *>(field)) { return new ExtensionPasswordField; }
+    if (auto f = dynamic_cast<const FormModel::DatePickerField *>(field)) { return new ExtensionDatePicker; }
 
     return nullptr;
   }
