@@ -8,6 +8,14 @@ message OpenApplicationRequest {
   optional string app_id = 2;
 };
 
+message RunInTerminalRequest {
+  repeated string cmdline = 1;
+  optional string app_id = 2;
+  optional string working_directory  = 3;
+  optional string title = 4;
+  bool hold = 5;
+};
+
 message ListApplicationRequest {
   optional string target = 1;
 };
@@ -29,6 +37,7 @@ message Request {
     ListApplicationRequest list = 1;
     OpenApplicationRequest open = 2;
     GetDefaultApplicationRequest get_default = 3;
+    RunInTerminalRequest run_in_terminal = 4;
   };
 };
 
@@ -37,6 +46,7 @@ message Response {
     ListApplicationResponse list = 1;
     common.AckResponse open = 2;
     GetDefaultApplicationResponse get_default = 3;
+    common.AckResponse run_in_terminal = 4;
   };
 };
 
