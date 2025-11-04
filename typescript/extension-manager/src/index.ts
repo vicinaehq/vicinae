@@ -85,10 +85,12 @@ class Vicinae {
 					preferenceValues: load.preferenceValues,
 					launchProps: { arguments: load.argumentValues },
 					commandMode:
-						load.mode == manager.CommandMode.View ? "view" : "no-view",
+						load.mode === manager.CommandMode.View ? "view" : "no-view",
 					supportPath,
 					assetsPath,
 					isRaycast: load.isRaycast,
+					extensionName: load.extensionName,
+					ownerOrAuthorName: load.ownerOrAuthorName,
 					commandName: load.commandName,
 					vicinaeVersion: {
 						tag: process.env.VICINAE_VERSION ?? "unknown",
@@ -100,7 +102,7 @@ class Vicinae {
 				env: {
 					...process.env,
 					NODE_ENV:
-						load.env == manager.CommandEnv.Development
+						load.env === manager.CommandEnv.Development
 							? "development"
 							: "production",
 				},

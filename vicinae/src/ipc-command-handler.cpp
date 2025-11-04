@@ -17,6 +17,9 @@
 #include <qsqlquery.h>
 #include <qurl.h>
 #include <qurlquery.h>
+#include <qjsondocument.h>
+#include <qjsonobject.h>
+#include <qjsonarray.h>
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "theme.hpp"
@@ -104,9 +107,7 @@ IpcCommandHandler::listApps(const proto::ext::daemon::ListAppsRequest &request) 
   auto apps = appDb->list();
 
   for (const auto &app : apps) {
-    if (app->isAction() && !request.with_actions()) {
-      continue;
-    }
+    if (app->isAction() && !request.with_actions()) { continue; }
 
     auto appInfo = listAppsRes->add_apps();
     appInfo->set_id(app->id().toStdString());
@@ -171,7 +172,7 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
     return tl::unexpected("Unsupported url scheme " + url.scheme().toStdString());
   }
 
-  QUrlQuery query(url.query());
+  QUrlQuery query(url.query(QUrl::FullyDecoded));
 
   if (url.host() == "ping") { return {}; }
 
@@ -261,9 +262,34 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
 
     for (ExtensionRootProvider *ext : root->extensions()) {
       for (const auto &cmd : ext->repository()->commands()) {
-        if (cmd->author() == author && cmd->commandId() == cmdName && cmd->repositoryName() == extName) {
+        // Author is suffixed, check author with suffix
+        if (author.contains("@")) {
+          if (cmd->authorSuffixed() != author) continue;
+        } else {
+          // otherwise check plain author name
+          if (cmd->author() != author) continue;
+        }
+
+        if (cmd->commandId() == cmdName && cmd->repositoryName() == extName) {
           m_ctx.navigation->popToRoot({.clearSearch = false});
-          m_ctx.navigation->launch(cmd);
+
+          // Read `arguments` query parameter
+          ArgumentValues arguments;
+          if (query.hasQueryItem("arguments")) {
+            QString argsText = query.queryItemValue("arguments");
+            QJsonParseError parseError;
+            QJsonDocument doc = QJsonDocument::fromJson(argsText.toUtf8(), &parseError);
+            if (parseError.error == QJsonParseError::NoError && doc.isObject()) {
+              QJsonObject obj = doc.object();
+              for (auto it = obj.begin(); it != obj.end(); ++it) {
+                arguments.emplace_back(it.key(), it.value().toString());
+              }
+            } else {
+              qWarning() << "Failed to parse arguments JSON:" << parseError.errorString();
+            }
+          }
+
+          m_ctx.navigation->launch(cmd, arguments);
 
           if (auto text = query.queryItemValue("fallbackText"); !text.isEmpty()) {
             m_ctx.navigation->setSearchText(text);

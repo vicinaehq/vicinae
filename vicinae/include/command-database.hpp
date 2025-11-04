@@ -40,6 +40,7 @@ public:
   QString repositoryName() const override { return _repositoryId; }
 
   QString author() const override { return Omnicast::APP_ID; }
+  QString authorSuffixed() const override { return Omnicast::APP_ID; }
 
   // TODO: remove
   void setRepositoryIconUrl(const ImageURL &icon) {}

@@ -49,20 +49,24 @@ const loadEnviron = () => {
 		commandName,
 		assetsPath,
 		commandMode,
+		extensionName,
+		ownerOrAuthorName,
 		vicinaeVersion,
 		isRaycast,
 	} = workerData;
 
 	environment.textSize = "medium";
 	environment.appearance = "dark";
-	(environment.canAccess = (api) => false),
-		(environment.isDevelopment = process.env.NODE_ENV === "development");
+	environment.canAccess = (api) => false;
+	environment.isDevelopment = process.env.NODE_ENV === "development";
 	environment.commandName = commandName;
 	environment.commandMode = commandMode;
 	environment.supportPath = supportPath;
 	environment.assetsPath = assetsPath;
 	environment.raycastVersion = "1.0.0"; // provided for compatibility only, not meaningful
 	environment.launchType = LaunchType.UserInitiated;
+	environment.extensionName = extensionName;
+	environment.ownerOrAuthorName = ownerOrAuthorName;
 	environment.vicinaeVersion = vicinaeVersion;
 	environment.isRaycast = isRaycast;
 };
@@ -115,9 +119,9 @@ export const main = async () => {
 
 	(process as any).noDeprecation = !environment.isDevelopment;
 
-	if (environment.commandMode == "view") {
+	if (environment.commandMode === "view") {
 		await loadView();
-	} else if (environment.commandMode == "no-view") {
+	} else if (environment.commandMode === "no-view") {
 		await loadNoView();
 	}
 

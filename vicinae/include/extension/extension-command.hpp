@@ -34,11 +34,13 @@ class ExtensionCommand : public AbstractCmd {
 public:
   ExtensionCommand(const ExtensionManifest::Command &command) : m_command(command) {}
 
-  QString author() const override {
+  QString author() const override { return m_author; }
+  QString authorSuffixed() const override {
     // as we plan on having our own store, we want raycast extension authors
     // to be properly segmented.
     if (isRaycast()) return m_author + "@raycast";
-    return m_author;
+    if (isVicinae()) return m_author + "@vicinae";
+    return m_author + "@local";
   }
 
   QString extensionId() const override;
@@ -61,6 +63,8 @@ public:
   std::vector<Preference> preferences() const override { return m_command.preferences; }
 
   bool isRaycast() const { return m_command.provenance == ExtensionManifest::Provenance::Raycast; }
+  bool isVicinae() const { return m_command.provenance == ExtensionManifest::Provenance::Vicinae; }
+  bool isLocal() const { return m_command.provenance == ExtensionManifest::Provenance::Local; }
 
   QString uniqueId() const override;
   QString name() const override;

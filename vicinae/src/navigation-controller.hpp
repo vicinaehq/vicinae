@@ -328,6 +328,7 @@ public:
   void showHud(const QString &title, const std::optional<ImageURL> &icon = std::nullopt);
 
   void launch(const std::shared_ptr<AbstractCmd> &cmd);
+  void launch(const std::shared_ptr<AbstractCmd> &cmd, const ArgumentValues &arguments);
   void launch(const QString &id);
   const AbstractCmd *activeCommand() const;
   CommandFrame *activeFrame() const { return m_frames.back().get(); }

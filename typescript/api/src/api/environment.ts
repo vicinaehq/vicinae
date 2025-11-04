@@ -59,6 +59,10 @@ export interface Environment {
 	 */
 	raycastVersion: string;
 	/**
+	 * The name of the extension owner (if any) or author, as specified in package.json
+	 */
+	ownerOrAuthorName: string;
+	/**
 	 * The name of the extension, as specified in package.json
 	 */
 	extensionName: string;
