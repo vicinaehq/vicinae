@@ -99,13 +99,28 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
 AppPtr XdgAppDatabase::terminalEmulator() const {
   if (auto emulator = defaultForMime("x-scheme-handler/terminal")) { return emulator; }
 
-  qWarning()
-      << "No default terminal emulator could be found, will fallback on the first terminal emulator "
-         "we find. To learn how to set one for vicinae to use: https://docs.vicinae.com/default-terminal";
+  auto terms = m_apps | std::views::filter([](auto &&app) { return app->isTerminalEmulator(); });
+  auto findWithProg = [&](const QString &prog) -> std::optional<AppPtr> {
+    if (auto it = std::ranges::find_if(terms, [&](auto &&app) { return app->program() == prog; });
+        it != terms.end()) {
+      return *it;
+    }
+    return std::nullopt;
+  };
 
-  for (const auto &app : m_apps) {
-    if (app->isTerminalEmulator()) return app;
+  if (Environment::isGnomeEnvironment()) {
+    if (auto target = findWithProg("gnome-terminal")) { return *target; }
   }
+
+  else if (Environment::isPlasmaDesktop()) {
+    if (auto target = findWithProg("konsole")) { return *target; }
+  }
+
+  else if (Environment::isCosmicDesktop()) {
+    if (auto target = findWithProg("cosmic-term")) { return *target; }
+  }
+
+  if (!terms.empty()) { return terms.front(); }
 
   return nullptr;
 }
@@ -233,11 +248,7 @@ bool XdgAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
 
   if (exec.empty()) return false;
 
-  QProcess process;
   QStringList argv;
-
-  if (auto wd = terminal->data().workingDirectory()) { process.setWorkingDirectory(wd->c_str()); }
-  process.setProgram(exec.front());
   std::ranges::for_each(exec | std::views::drop(1), [&](auto &&arg) { argv << arg; });
 
   if (auto texec = terminal->data().terminalExec()) {
@@ -260,10 +271,27 @@ bool XdgAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
     argv << arg;
   }
 
-  process.setArguments(argv);
+  return launchProcess(exec.front(), argv, terminal->data().workingDirectory());
+}
 
-  qDebug() << process.program() << process.arguments();
-  process.startDetached();
+bool XdgAppDatabase::launchProcess(const QString &prog, const QStringList args,
+                                   const std::optional<std::filesystem::path> &workingDirectory) const {
+  QProcess process;
+  process.setProgram(prog);
+  process.setArguments(args);
+  process.setStandardOutputFile(QProcess::nullDevice());
+  process.setStandardErrorFile(QProcess::nullDevice());
+
+  if (auto dir = workingDirectory) { process.setWorkingDirectory(workingDirectory->c_str()); }
+
+  QStringList cmdline;
+  cmdline << prog << args;
+  qInfo() << "App started with command line" << cmdline.join(' ');
+
+  if (!process.startDetached()) {
+    qWarning() << "Failed to start app:" << process.errorString();
+    return false;
+  }
 
   return true;
 }
@@ -271,9 +299,6 @@ bool XdgAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
 bool XdgAppDatabase::launch(const AbstractApplication &app, const std::vector<QString> &args,
                             const std::optional<QString> &launchPrefix) const {
   auto &xdgApp = static_cast<const XdgApplication &>(app);
-
-  QProcess process;
-  QStringList argv;
 
   if (xdgApp.isTerminalApp()) return launchTerminalCommand(xdgApp.parseExec(args), {}, launchPrefix);
 
@@ -284,35 +309,9 @@ bool XdgAppDatabase::launch(const AbstractApplication &app, const std::vector<QS
     return false;
   }
 
-  for (const auto &[idx, arg] : exec | std::views::enumerate) {
-    if (idx == 0) {
-      process.setProgram(arg);
-    } else {
-      argv << arg;
-    }
-  }
+  auto argv = exec | std::views::drop(1) | std::ranges::to<QStringList>();
 
-  process.setArguments(argv);
-  process.setStandardOutputFile(QProcess::nullDevice());
-  process.setStandardErrorFile(QProcess::nullDevice());
-
-  if (auto wd = xdgApp.data().workingDirectory(); wd && !wd->empty()) {
-    process.setWorkingDirectory(wd->c_str());
-  }
-
-  QStringList cmdLine;
-  cmdLine << process.program() << process.arguments();
-
-  if (!process.startDetached()) {
-    qWarning() << "Failed to start app" << cmdLine.join(' ');
-    return false;
-  }
-
-  if (Environment::hasAppLaunchDebug()) {
-    qInfo() << "Started app with following command line:" << cmdLine.join(' ');
-  }
-
-  return true;
+  return launchProcess(exec.front(), argv, xdgApp.data().workingDirectory());
 }
 
 QString XdgAppDatabase::mimeNameForTarget(const QString &target) const {
