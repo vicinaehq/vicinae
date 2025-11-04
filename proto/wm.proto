@@ -17,6 +17,18 @@ message Window {
   optional application.Application app = 9;
 };
 
+message Screen {
+  string name = 1;
+  string model = 2;
+  string make = 3;
+  optional string serial = 4;
+
+  int32 x = 5;
+  int32 y = 6;
+  int32 width = 7;
+  int32 height = 8;
+};
+
 message Workspace {
   string id = 1;
   string name = 2;
@@ -51,6 +63,13 @@ message GetActiveWorkspaceWindowsResponse {
   repeated Window windows = 1;
 };
 
+message GetScreensRequest {
+}
+
+message GetScreensResponse {
+  repeated Screen screens = 1;
+};
+
 message GetWindowsRequest {
   optional string workspace_id = 1;
 };
@@ -71,8 +90,9 @@ message Request {
     GetActiveWindowRequest get_active_window = 2;
     GetActiveWorkspaceRequest get_active_workspace = 3;
     GetWindowsRequest get_windows = 4;
-    GetWorkspacesRequest get_workspaces = 5;
-    SetWindowBoundsRequest set_window_bounds = 6;
+    GetScreensRequest get_screens = 5;
+    GetWorkspacesRequest get_workspaces = 6;
+    SetWindowBoundsRequest set_window_bounds = 7;
   };
 };
 
@@ -82,8 +102,9 @@ message Response {
     GetActiveWindowResponse get_active_window = 2;
     GetActiveWorkspaceResponse get_active_workspace = 3;
     GetWindowsResponse get_windows = 4;
-    GetWorkspacesResponse get_workspaces = 5;
-    SetWindowBoundsResponse set_window_bounds = 6;
+    GetScreensResponse get_screens = 5;
+    GetWorkspacesResponse get_workspaces = 6;
+    SetWindowBoundsResponse set_window_bounds = 7;
   };
 };
 

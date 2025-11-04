@@ -61,6 +61,17 @@ export namespace WindowManagement {
 		active: boolean;
 	};
 
+	export type Screen = {
+		name: string;
+		make: string;
+		model: string;
+		serial?: string;
+		bounds: {
+			position: { x: number; y: number };
+			size: { width: number; height: number };
+		};
+	};
+
 	export async function ping() {
 		const res = await bus.turboRequest("wm.ping", {});
 		return res.unwrap().ok;
@@ -72,6 +83,20 @@ export namespace WindowManagement {
 		const res = await bus.turboRequest("wm.getWindows", options);
 
 		return res.unwrap().windows.map(transformWindow);
+	}
+
+	export async function getScreens(): Promise<Screen[]> {
+		const res = await bus.turboRequest("wm.getScreens", {});
+		return res.unwrap().screens.map<Screen>((sc) => ({
+			name: sc.name,
+			make: sc.make,
+			model: sc.model,
+			serial: sc.serial,
+			bounds: {
+				position: { x: sc.x, y: sc.y },
+				size: { width: sc.width, height: sc.height },
+			},
+		}));
 	}
 
 	export async function getActiveWorkspace(): Promise<WindowManagement.Workspace> {

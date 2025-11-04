@@ -75,6 +75,7 @@ type EndpointMapping = {
 	"wm.getActiveWindow": "wm.getActiveWindow";
 	"wm.getActiveWorkspace": "wm.getActiveWorkspace";
 	"wm.getWindows": "wm.getWindows";
+	"wm.getScreens": "wm.getScreens";
 	"wm.getWorkspaces": "wm.getWorkspaces";
 	"wm.setWindowBounds": "wm.setWindowBounds";
 
