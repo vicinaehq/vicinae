@@ -74,6 +74,11 @@ FormModel FormModel::fromJson(const QJsonObject &json) {
         if (props.contains("label")) checkbox->m_label = props.value("label").toString();
         model.items.emplace_back(checkbox);
       } else if (*it == "date-picker-field") {
+        auto dp = std::make_shared<DatePickerField>(base);
+        if (props.contains("min")) dp->min = props.value("min").toString();
+        if (props.contains("max")) dp->max = props.value("max").toString();
+        if (props.contains("type")) dp->type = props.value("type").toString();
+        model.items.emplace_back(dp);
       } else if (*it == "text-area-field") {
         auto ta = std::make_shared<TextAreaField>(base);
         if (props.contains("placeholder")) ta->placeholder = props.value("placeholder").toString();

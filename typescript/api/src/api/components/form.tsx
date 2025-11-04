@@ -138,15 +138,50 @@ const PasswordField: React.FC<PasswordFieldProps> = ({ ref, ...props }) => {
 	return <password-field {...props} />;
 };
 
+export enum DatePickerType {
+	DateTime = "dateTime",
+	Date = "date",
+}
+
 interface DatePickerProps
 	extends FormItemProps<Date | null>,
-		WithFormRef<Form.DatePicker> {}
+		WithFormRef<Form.DatePicker> {
+	min?: Date;
+	max?: Date;
+	type?: DatePickerType;
+}
 
-const DatePicker: React.FC<DatePickerProps> = ({ ref, ...props }) => {
+const DatePickerRoot: React.FC<DatePickerProps> = ({
+	ref,
+	onChange,
+	...props
+}) => {
 	useImperativeFormHandle(ref);
 
-	return <date-picker-field {...props} />;
+	const _onChange = onChange
+		? (newValue: string | null) => {
+				const dateObj = newValue ? new Date(newValue) : null;
+				onChange(dateObj);
+			}
+		: undefined;
+
+	return (
+		<date-picker-field {...wrapFormItemProps(props)} onChange={_onChange} />
+	);
 };
+
+const DatePicker = Object.assign(DatePickerRoot, {
+	Type: DatePickerType,
+	isFullDay: (value: Date | null | undefined) => {
+		if (!value) return false;
+		return (
+			value.getHours() === 0 &&
+			value.getMinutes() === 0 &&
+			value.getSeconds() === 0 &&
+			value.getMilliseconds() === 0
+		);
+	},
+});
 
 interface CheckboxProps
 	extends FormItemProps<boolean>,
