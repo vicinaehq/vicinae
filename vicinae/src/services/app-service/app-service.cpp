@@ -28,6 +28,11 @@ bool AppService::launch(const AbstractApplication &app, const std::vector<QStrin
   return m_provider->launch(app, args, m_prefix);
 }
 
+bool AppService::launchTerminalCommand(const std::vector<QString> &cmdLine,
+                                       const LaunchTerminalCommandOptions &opts) {
+  return m_provider->launchTerminalCommand(cmdLine, opts, m_prefix);
+}
+
 std::unique_ptr<AbstractAppDatabase> AppService::createLocalProvider() {
 #ifdef Q_OS_DARWIN
   return nullptr;

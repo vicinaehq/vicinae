@@ -146,7 +146,8 @@ public:
    * Launch the specified command in the default terminal.
    */
   virtual bool launchTerminalCommand(const std::vector<QString> &cmdline,
-                                     const LaunchTerminalCommandOptions &opts = {}) const = 0;
+                                     const LaunchTerminalCommandOptions &opts = {},
+                                     const std::optional<QString> &prefix = {}) const = 0;
 
   /**
    * Find all the possible openers for the given target, from most to least preferred.

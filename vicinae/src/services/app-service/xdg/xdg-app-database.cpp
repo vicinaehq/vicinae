@@ -4,6 +4,7 @@
 #include "timer.hpp"
 #include "xdgpp/desktop-entry/file.hpp"
 #include "xdgpp/mime/iterator.hpp"
+#include <algorithm>
 #include <ranges>
 #include "xdgpp/desktop-entry/exec.hpp"
 #include <filesystem>
@@ -223,22 +224,21 @@ std::vector<AppPtr> XdgAppDatabase::findAssociations(const QString &mimeName) co
 }
 
 bool XdgAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
-                                           const LaunchTerminalCommandOptions &opts) const {
+                                           const LaunchTerminalCommandOptions &opts,
+                                           const std::optional<QString> &prefix) const {
   if (cmdline.empty()) return false;
 
   auto terminal = std::static_pointer_cast<XdgApplication>(terminalEmulator());
-  auto exec = terminal->parseExec({});
+  auto exec = terminal->parseExec({}, prefix);
 
   if (exec.empty()) return false;
 
   QProcess process;
   QStringList argv;
 
+  if (auto wd = terminal->data().workingDirectory()) { process.setWorkingDirectory(wd->c_str()); }
   process.setProgram(exec.front());
-
-  for (const auto &arg : exec | std::views::drop(1)) {
-    argv << arg;
-  }
+  std::ranges::for_each(exec | std::views::drop(1), [&](auto &&arg) { argv << arg; });
 
   if (auto texec = terminal->data().terminalExec()) {
     if (texec->appId && opts.appId) { argv << texec->appId->c_str() << opts.appId.value(); }
@@ -271,37 +271,24 @@ bool XdgAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
 bool XdgAppDatabase::launch(const AbstractApplication &app, const std::vector<QString> &args,
                             const std::optional<QString> &launchPrefix) const {
   auto &xdgApp = static_cast<const XdgApplication &>(app);
-  auto exec = xdgApp.parseExec(args, launchPrefix);
-
-  if (exec.empty()) {
-    qWarning() << "No program to start the app";
-    return false;
-  }
 
   QProcess process;
   QStringList argv;
 
-  if (xdgApp.isTerminalApp()) {
-    return launchTerminalCommand(exec, {});
+  if (xdgApp.isTerminalApp()) return launchTerminalCommand(xdgApp.parseExec(args), {}, launchPrefix);
 
-    if (auto emulator = terminalEmulator()) {
-      process.setProgram(emulator->program());
+  auto exec = xdgApp.parseExec(args, launchPrefix);
 
-      // because yes, gnome-terminal does not support -e properly
-      if (emulator->program() == "gnome-terminal") {
-        argv << "--";
-      } else {
-        argv << "-e";
-      }
+  if (exec.empty()) {
+    qWarning() << "Failed to launch app" << app.id() << "exec command line empty";
+    return false;
+  }
 
-      for (const auto &part : exec) {
-        argv << part;
-      }
-    }
-  } else {
-    process.setProgram(exec.at(0));
-    for (int i = 1; i < exec.size(); ++i) {
-      argv << exec[i];
+  for (const auto &[idx, arg] : exec | std::views::enumerate) {
+    if (idx == 0) {
+      process.setProgram(arg);
+    } else {
+      argv << arg;
     }
   }
 
