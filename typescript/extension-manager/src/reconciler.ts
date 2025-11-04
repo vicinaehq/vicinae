@@ -303,7 +303,7 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 			return null;
 		},
 
-		preparePortalMount(container) {},
+		preparePortalMount(container) { },
 
 		scheduleTimeout: setTimeout,
 		cancelTimeout: (id: MyTimeoutHandle) => clearTimeout(id),
@@ -323,16 +323,16 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 			return null;
 		},
 
-		beforeActiveInstanceBlur() {},
-		afterActiveInstanceBlur() {},
+		beforeActiveInstanceBlur() { },
+		afterActiveInstanceBlur() { },
 
-		prepareScopeUpdate(scope, instance) {},
+		prepareScopeUpdate(scope, instance) { },
 		getInstanceFromScope(scope) {
 			return null;
 		},
 
 		// not sure what this one is really about, as it's undocumented
-		detachDeletedInstance(instance) {},
+		detachDeletedInstance(instance) { },
 
 		appendChild(parent: Instance, child: Instance) {
 			const selfIdx = parent.children.indexOf(child);
@@ -388,11 +388,11 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 			hostConfig.removeChild?.(container, child);
 		},
 
-		resetTextContent() {},
+		resetTextContent() { },
 
-		commitTextUpdate() {},
+		commitTextUpdate() { },
 
-		commitMount() {},
+		commitMount() { },
 
 		commitUpdate(instance: Instance, type, prevProps, nextProps, handle) {
 			const props: Record<string, any> = {};
@@ -431,11 +431,11 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 			instance.props = props;
 		},
 
-		replaceContainerChildren() {},
-		hideInstance() {},
-		hideTextInstance() {},
-		unhideInstance() {},
-		unhideTextInstance() {},
+		replaceContainerChildren() { },
+		hideInstance() { },
+		hideTextInstance() { },
+		unhideInstance() { },
+		unhideTextInstance() { },
 
 		clearContainer(container) {
 			container.children = [];
@@ -445,7 +445,7 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		NotPendingTransition: null,
 		HostTransitionContext: {} as any,
 
-		setCurrentUpdatePriority(priority) {},
+		setCurrentUpdatePriority(priority) { },
 
 		getCurrentUpdatePriority() {
 			return DefaultEventPriority;
@@ -455,13 +455,13 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 			return DefaultEventPriority;
 		},
 
-		resetFormInstance(form) {},
-		requestPostPaintCallback() {},
+		resetFormInstance(form) { },
+		requestPostPaintCallback() { },
 		shouldAttemptEagerTransition() {
 			return false;
 		},
 
-		trackSchedulerEvent() {},
+		trackSchedulerEvent() { },
 		resolveEventType() {
 			return null;
 		},
@@ -475,8 +475,8 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		preloadInstance(type, props) {
 			return false;
 		},
-		startSuspendingCommit() {},
-		suspendInstance(type, props) {},
+		startSuspendingCommit() { },
+		suspendInstance(type, props) { },
 		waitForCommitToBeReady() {
 			return null;
 		},
@@ -543,7 +543,7 @@ const MAX_RENDER_PER_SECOND = 60;
 export const createRenderer = (config: RendererConfig) => {
 	const container = createContainer();
 	let debounce: NodeJS.Timer | null = null;
-	let debounceInterval = 1000 / MAX_RENDER_PER_SECOND;
+	const debounceInterval = 1000 / MAX_RENDER_PER_SECOND;
 	let lastRender = performance.now();
 
 	const renderImpl = () => {
@@ -552,17 +552,24 @@ export const createRenderer = (config: RendererConfig) => {
 				debounce = null;
 
 				const start = performance.now();
-				const views: ViewData[] = [];
 				const root = serializeInstance(container);
 
-				//writeFileSync('/tmp/render.txt', `${inspect(root, { depth: null, colors: true })}`);
+				//writeFileSync("/tmp/render.txt", `${inspect(root, { depth: null, colors: true })}`);
 				//appendFileSync('/tmp/render.txt', JSON.stringify(root, null, 2));
 
-				for (let i = 0; i != root.children.length; ++i) {
-					const view = root.children[i];
+				const views = root.children.map<ViewData>((child) => {
+					// We always take the last component in the view container.
+					// In almost every case, the view container should only have one,
+					// but some Raycast extensions have been observed using many, which
+					// is probably not even officially supported.
+					const component = child.children.at(-1);
 
-					views.push({ root: view });
-				}
+					if (!component) {
+						throw new Error(`View without children, this should be impossible`);
+					}
+
+					return { root: component };
+				});
 
 				config.onUpdate?.(views);
 
@@ -599,7 +606,7 @@ export const createRenderer = (config: RendererConfig) => {
 					(error) => {
 						throw error;
 					},
-					() => {},
+					() => { },
 					null,
 				);
 			}

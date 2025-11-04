@@ -3,7 +3,7 @@ import context from "./navigation-context";
 import { bus } from "../bus";
 
 const View: React.FC<{ children: ReactNode }> = ({ children }) => {
-	return <>{children}</>;
+	return <view>{children}</view>;
 };
 
 export const NavigationProvider: React.FC<{ root: ReactNode }> = ({ root }) => {
@@ -21,10 +21,6 @@ export const NavigationProvider: React.FC<{ root: ReactNode }> = ({ root }) => {
 			setNavStack((cur) => [...cur, node]);
 		});
 	};
-
-	useEffect(() => {
-		//console.log('changed nav stack size', navStack.length);
-	}, [navStack]);
 
 	useEffect(() => {
 		const listener = bus.subscribe("pop-view", () => {
