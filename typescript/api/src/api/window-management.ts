@@ -61,10 +61,19 @@ export namespace WindowManagement {
 		active: boolean;
 	};
 
+	/**
+	 * A screen, physical or virtual, attached to this computer.
+	 */
 	export type Screen = {
 		name: string;
+		/**
+		 * Name of the screen's manufacturer.
+		 */
 		make: string;
 		model: string;
+		/**
+		 * The serial number of the screen, if available.
+		 */
 		serial?: string;
 		bounds: {
 			position: { x: number; y: number };
@@ -85,6 +94,9 @@ export namespace WindowManagement {
 		return res.unwrap().windows.map(transformWindow);
 	}
 
+	/**
+	 * Return the list of screens (physical and virtual) currently attached to the computer.
+	 */
 	export async function getScreens(): Promise<Screen[]> {
 		const res = await bus.turboRequest("wm.getScreens", {});
 		return res.unwrap().screens.map<Screen>((sc) => ({
