@@ -38,6 +38,8 @@ private:
   bool launchProcess(const QString &prog, const QStringList args,
                      const std::optional<std::filesystem::path> &workingDirectory) const;
 
+  xdgpp::DesktopEntry::TerminalExec getTermExec(const XdgApplication &app) const;
+
   AppPtr defaultForMime(const QString &mime) const;
   std::vector<AppPtr> findAssociations(const QString &mime) const;
   QString mimeNameForTarget(const QString &target) const;

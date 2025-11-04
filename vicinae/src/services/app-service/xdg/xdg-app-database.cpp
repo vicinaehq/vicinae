@@ -5,6 +5,7 @@
 #include "xdgpp/desktop-entry/file.hpp"
 #include "xdgpp/mime/iterator.hpp"
 #include <algorithm>
+#include <qtenvironmentvariables.h>
 #include <ranges>
 #include "xdgpp/desktop-entry/exec.hpp"
 #include <filesystem>
@@ -109,6 +110,7 @@ AppPtr XdgAppDatabase::terminalEmulator() const {
   };
 
   if (Environment::isGnomeEnvironment()) {
+    if (auto target = findWithProg("kgx")) { return *target; }
     if (auto target = findWithProg("gnome-terminal")) { return *target; }
   }
 
@@ -238,6 +240,44 @@ std::vector<AppPtr> XdgAppDatabase::findAssociations(const QString &mimeName) co
   return openers;
 }
 
+xdgpp::DesktopEntry::TerminalExec XdgAppDatabase::getTermExec(const XdgApplication &app) const {
+  using TExec = xdgpp::DesktopEntry::TerminalExec;
+
+  if (app.program() == "gnome-terminal") { return TExec{.exec = "--"}; }
+  // new gnome terminal
+  if (app.program() == "kgx") { return TExec{.exec = "--", .title = "--title", .dir = "working-directory"}; }
+  if (app.program() == "alacritty") {
+    return TExec{
+        .exec = "-e",
+        .appId = "--class",
+        .title = "--title",
+        .dir = "--working-directory",
+        .hold = "--hold",
+    };
+  }
+  if (app.program() == "cosmic-term") { return TExec{.exec = "-e"}; }
+  if (app.program() == "konsole") {
+    return TExec{
+        .exec = "-e",
+        .dir = "--workdir",
+        .hold = "--hold",
+    };
+  }
+  if (app.program() == "foot") {
+    return TExec{
+        .exec = "-e",
+        .appId = "--app-id",
+        .title = "--title",
+        .dir = "--working-directory",
+        .hold = "--hold",
+    };
+  }
+  if (app.program() == "mate-terminal") { return TExec{.exec = "-x"}; }
+  if (app.program() == "xfce4-terminal") { return TExec{.exec = "-x"}; }
+
+  return {.exec = "-e"};
+}
+
 bool XdgAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
                                            const LaunchTerminalCommandOptions &opts,
                                            const std::optional<QString> &prefix) const {
@@ -250,22 +290,13 @@ bool XdgAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
 
   QStringList argv;
   std::ranges::for_each(exec | std::views::drop(1), [&](auto &&arg) { argv << arg; });
+  auto texec = getTermExec(*terminal);
 
-  if (auto texec = terminal->data().terminalExec()) {
-    if (texec->appId && opts.appId) { argv << texec->appId->c_str() << opts.appId.value(); }
-    if (texec->title && opts.title) { argv << texec->title->c_str() << opts.title.value(); }
-    if (texec->dir && opts.workingDirectory) { argv << texec->dir->c_str() << opts.workingDirectory.value(); }
-    if (texec->hold && opts.hold) { argv << texec->hold->c_str(); }
-    if (texec->exec) {
-      argv << texec->exec->c_str();
-    } else {
-      if (cmdline.front() == "gnome-terminal") {
-        argv << "--";
-      } else {
-        argv << "-e";
-      }
-    }
-  }
+  if (texec.appId && opts.appId) { argv << texec.appId->c_str() << opts.appId.value(); }
+  if (texec.title && opts.title) { argv << texec.title->c_str() << opts.title.value(); }
+  if (texec.dir && opts.workingDirectory) { argv << texec.dir->c_str() << opts.workingDirectory.value(); }
+  if (texec.hold && opts.hold) { argv << texec.hold->c_str(); }
+  if (texec.exec) { argv << texec.exec->c_str(); }
 
   for (const auto &arg : cmdline) {
     argv << arg;
