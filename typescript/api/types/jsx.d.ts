@@ -157,7 +157,12 @@ declare module "react" {
 				icon?: ImageLike;
 			};
 			"text-area-field": BaseFormField & {};
-			"file-picker-field": BaseFormField & {};
+			"file-picker-field": BaseFormField & {
+				allowMultipleSelection?: boolean;
+				canChooseDirectories?: boolean;
+				canChooseFiles?: boolean;
+				showHiddenFiles?: boolean;
+			};
 			"dropdown-field": BaseFormField & {
 				children?: ReactNode;
 			};

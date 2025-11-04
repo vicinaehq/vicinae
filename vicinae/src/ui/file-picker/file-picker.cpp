@@ -20,7 +20,11 @@ namespace fs = std::filesystem;
 
 FilePicker::FilePicker(QWidget *parent) : JsonFormItemWidget(parent) { setupUI(); }
 
-void FilePicker::setMimeTypeFilters(const QStringList &filters) { m_mimeTypeFilters = filters; }
+void FilePicker::setMimeTypeFilters(const QStringList &filters) {
+  m_mimeTypeFilters = filters;
+  m_directoriesOnly = m_mimeTypeFilters.contains("inode/directory");
+  updateButtonText();
+}
 
 const std::vector<File> &FilePicker::files() const { return m_files; }
 
@@ -30,6 +34,7 @@ void FilePicker::removeFile(const std::filesystem::path &path) {
   if (it != m_files.end()) { m_files.erase(it); }
 
   regenerateList();
+  emit valueChanged();
 }
 
 void FilePicker::handleFileChoice() {
@@ -62,16 +67,28 @@ void FilePicker::regenerateList() {
 
 ButtonWidget *FilePicker::button() const { return m_button; }
 
-void FilePicker::setMultiple(bool value) { m_multiple = true; }
+void FilePicker::setMultiple(bool value) {
+  m_multiple = value;
+  updateButtonText();
+}
 
-void FilePicker::clear() { m_files.clear(); }
+void FilePicker::clear() {
+  if (!m_files.empty()) {
+    m_files.clear();
+    emit valueChanged();
+  }
+}
 
 void FilePicker::setFile(const fs::path &path) {
   clear();
   addFile(path);
 }
 
-void FilePicker::setOnlyDirectories() { setMimeTypeFilters({"inode/directory"}); }
+void FilePicker::setOnlyDirectories() {
+  setMimeTypeFilters({"inode/directory"});
+  m_directoriesOnly = true;
+  updateButtonText();
+}
 
 void FilePicker::filesChosen(const std::vector<fs::path> &paths) {
   if (!m_multiple) {
@@ -88,6 +105,7 @@ void FilePicker::filesChosen(const std::vector<fs::path> &paths) {
   }
 
   regenerateList();
+  emit valueChanged();
 }
 
 void FilePicker::addFileImpl(const std::filesystem::path &path) {
@@ -120,6 +138,7 @@ void FilePicker::addFileImpl(const std::filesystem::path &path) {
 void FilePicker::addFile(const std::filesystem::path &path) {
   addFileImpl(path);
   regenerateList();
+  emit valueChanged();
 }
 
 QJsonValue FilePicker::asJsonValue() const {
@@ -161,7 +180,7 @@ void FilePicker::setupUI() {
 
   m_button->setBackgroundColor(SemanticColor::ListItemHoverBackground);
   m_button->setHoverBackgroundColor(SemanticColor::ListItemSelectionBackground);
-  m_button->setText("Pick a file");
+  updateButtonText();
   m_fileCount->hide();
 
   VStack().add(m_button).add(m_fileList).add(m_fileCount).imbue(this);
@@ -169,4 +188,13 @@ void FilePicker::setupUI() {
   connect(m_button, &ButtonWidget::clicked, this, &FilePicker::handleFileChoice);
   connect(m_fileList, &OmniList::virtualHeightChanged, this,
           [this](int height) { m_fileList->setFixedHeight(std::min(300, height)); });
+}
+
+void FilePicker::updateButtonText() {
+  if (!m_button) return;
+  if (m_directoriesOnly) {
+    m_button->setText(m_multiple ? "Pick folders" : "Pick a folder");
+  } else {
+    m_button->setText(m_multiple ? "Pick files" : "Pick a file");
+  }
 }
