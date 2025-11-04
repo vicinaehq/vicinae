@@ -48,6 +48,12 @@
 			"title": "No View",
 			"description": "A basic no view command",
 			"mode": "no-view"
+		},
+		{
+			"name": "app-utils",
+			"title": "App Utils",
+			"description": "Try out app related stuff",
+			"mode": "view"
 		}
 	],
 	"preferences": [],

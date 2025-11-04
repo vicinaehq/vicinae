@@ -4,8 +4,11 @@
 #include "timer.hpp"
 #include "xdgpp/desktop-entry/file.hpp"
 #include "xdgpp/mime/iterator.hpp"
+#include <algorithm>
+#include <ranges>
 #include "xdgpp/desktop-entry/exec.hpp"
 #include <filesystem>
+#include <memory>
 #include <qcontainerfwd.h>
 #include <qlogging.h>
 #include <qsettings.h>
@@ -220,38 +223,72 @@ std::vector<AppPtr> XdgAppDatabase::findAssociations(const QString &mimeName) co
   return openers;
 }
 
-bool XdgAppDatabase::launch(const AbstractApplication &app, const std::vector<QString> &args,
-                            const std::optional<QString> &launchPrefix) const {
-  auto &xdgApp = static_cast<const XdgApplication &>(app);
-  auto exec = xdgApp.parseExec(args, launchPrefix);
+bool XdgAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
+                                           const LaunchTerminalCommandOptions &opts,
+                                           const std::optional<QString> &prefix) const {
+  if (cmdline.empty()) return false;
 
-  if (exec.empty()) {
-    qWarning() << "No program to start the app";
-    return false;
-  }
+  auto terminal = std::static_pointer_cast<XdgApplication>(terminalEmulator());
+  auto exec = terminal->parseExec({}, prefix);
+
+  if (exec.empty()) return false;
 
   QProcess process;
   QStringList argv;
 
-  if (xdgApp.isTerminalApp()) {
-    if (auto emulator = terminalEmulator()) {
-      process.setProgram(emulator->program());
+  if (auto wd = terminal->data().workingDirectory()) { process.setWorkingDirectory(wd->c_str()); }
+  process.setProgram(exec.front());
+  std::ranges::for_each(exec | std::views::drop(1), [&](auto &&arg) { argv << arg; });
 
-      // because yes, gnome-terminal does not support -e properly
-      if (emulator->program() == "gnome-terminal") {
+  if (auto texec = terminal->data().terminalExec()) {
+    if (texec->appId && opts.appId) { argv << texec->appId->c_str() << opts.appId.value(); }
+    if (texec->title && opts.title) { argv << texec->title->c_str() << opts.title.value(); }
+    if (texec->dir && opts.workingDirectory) { argv << texec->dir->c_str() << opts.workingDirectory.value(); }
+    if (texec->hold && opts.hold) { argv << texec->hold->c_str(); }
+    if (texec->exec) {
+      argv << texec->exec->c_str();
+    } else {
+      if (cmdline.front() == "gnome-terminal") {
         argv << "--";
       } else {
         argv << "-e";
       }
-
-      for (const auto &part : exec) {
-        argv << part;
-      }
     }
-  } else {
-    process.setProgram(exec.at(0));
-    for (int i = 1; i < exec.size(); ++i) {
-      argv << exec[i];
+  }
+
+  for (const auto &arg : cmdline) {
+    argv << arg;
+  }
+
+  process.setArguments(argv);
+
+  qDebug() << process.program() << process.arguments();
+  process.startDetached();
+
+  return true;
+}
+
+bool XdgAppDatabase::launch(const AbstractApplication &app, const std::vector<QString> &args,
+                            const std::optional<QString> &launchPrefix) const {
+  auto &xdgApp = static_cast<const XdgApplication &>(app);
+
+  QProcess process;
+  QStringList argv;
+
+  if (xdgApp.isTerminalApp()) return launchTerminalCommand(xdgApp.parseExec(args), {}, launchPrefix);
+
+  auto exec = xdgApp.parseExec(args, launchPrefix);
+
+  if (exec.empty()) {
+    qWarning() << "Failed to launch app" << app.id() << "exec command line empty";
+    return false;
+  }
+
+  for (const auto &[idx, arg] : exec | std::views::enumerate) {
+    if (idx == 0) {
+      process.setProgram(arg);
+    } else {
+      argv << arg;
     }
   }
 

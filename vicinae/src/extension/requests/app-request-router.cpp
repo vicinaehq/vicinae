@@ -1,5 +1,6 @@
 #include "app-request-router.hpp"
 #include "proto/application.pb.h"
+#include "services/app-service/abstract-app-db.hpp"
 
 proto::ext::application::Response *
 AppRequestRouter::listApplications(const proto::ext::application::ListApplicationRequest &req) const {
@@ -30,6 +31,23 @@ AppRequestRouter::getDefault(const proto::ext::application::GetDefaultApplicatio
   }
 
   return res;
+}
+
+proto::ext::application::Response *
+AppRequestRouter::runInTerminal(const proto::ext::application::RunInTerminalRequest &req) const {
+  LaunchTerminalCommandOptions opts;
+  auto cmdline = req.cmdline() |
+                 std::views::transform([](auto &&str) { return QString::fromStdString(str); }) |
+                 std::ranges::to<std::vector>();
+
+  opts.hold = req.hold();
+  if (req.has_app_id()) opts.appId = req.app_id().c_str();
+  if (req.has_title()) opts.title = req.title().c_str();
+  if (req.has_working_directory()) opts.workingDirectory = req.working_directory().c_str();
+
+  m_appDb.launchTerminalCommand(cmdline, opts);
+
+  return nullptr;
 }
 
 proto::ext::application::Response *
@@ -67,6 +85,8 @@ proto::ext::extension::Response *AppRequestRouter::route(const proto::ext::appli
     return wrap(openApplication(req.open()));
   case app::Request::kGetDefault:
     return wrap(getDefault(req.get_default()));
+  case app::Request::kRunInTerminal:
+    return wrap(runInTerminal(req.run_in_terminal()));
   default:
     break;
   }

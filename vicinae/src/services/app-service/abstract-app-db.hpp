@@ -99,6 +99,13 @@ public:
   }
 };
 
+struct LaunchTerminalCommandOptions {
+  bool hold = false;
+  std::optional<QString> appId;
+  std::optional<QString> workingDirectory;
+  std::optional<QString> title;
+};
+
 class AbstractAppDatabase : public QObject {
 public:
   using AppPtr = std::shared_ptr<AbstractApplication>;
@@ -134,6 +141,13 @@ public:
    */
   virtual bool launch(const AbstractApplication &exec, const std::vector<QString> &args = {},
                       const std::optional<QString> &launchPrefix = {}) const = 0;
+
+  /**
+   * Launch the specified command in the default terminal.
+   */
+  virtual bool launchTerminalCommand(const std::vector<QString> &cmdline,
+                                     const LaunchTerminalCommandOptions &opts = {},
+                                     const std::optional<QString> &prefix = {}) const = 0;
 
   /**
    * Find all the possible openers for the given target, from most to least preferred.
