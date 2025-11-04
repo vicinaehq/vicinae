@@ -34,13 +34,7 @@ std::unique_ptr<AbstractWindowManager> WindowManager::createProvider() {
 
 AbstractWindowManager *WindowManager::provider() const { return m_provider.get(); }
 
-AbstractWindowManager::WindowList WindowManager::listWindowsSync() {
-  qDebug() << "list windows";
-  for (const auto &screen : m_provider->listScreensSync()) {
-    qDebug() << screen.name << screen.bounds << screen.manufacturer << screen.model;
-  }
-  return m_provider->listWindowsSync();
-}
+AbstractWindowManager::WindowList WindowManager::listWindowsSync() { return m_provider->listWindowsSync(); }
 
 AbstractWindowManager::WindowPtr WindowManager::getFocusedWindow() {
   return m_provider->getFocusedWindowSync();

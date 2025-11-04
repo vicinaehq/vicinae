@@ -50,12 +50,6 @@ export default function AppUtils() {
 	const shell = process.env.SHELL ?? "/bin/sh";
 
 	useEffect(() => {
-		WindowManagement.getScreens().then((screens) =>
-			console.log(JSON.stringify(screens, null, 2)),
-		);
-	}, []);
-
-	useEffect(() => {
 		getDefaultApplication(searchText)
 			.then((app) => setDefaultApp(app))
 			.catch(() => setDefaultApp(null));
