@@ -24,6 +24,8 @@ PromiseLike<ext::Response *> WindowManagementRouter::route(const wm::Request &re
     return wrapResponse(getActiveWorkspace(req.get_active_workspace()));
   case wm::Request::kGetWindows:
     return wrapResponse(getWindows(req.get_windows()));
+  case wm::Request::kGetScreens:
+    return wrapResponse(getScreens(req.get_screens()));
   case wm::Request::kSetWindowBounds:
     throw std::runtime_error("Not implemented");
     // TODO: implement
@@ -33,6 +35,27 @@ PromiseLike<ext::Response *> WindowManagementRouter::route(const wm::Request &re
   }
 
   return nullptr;
+}
+
+proto::ext::wm::Response *WindowManagementRouter::getScreens(const proto::ext::wm::GetScreensRequest &req) {
+  auto res = new wm::Response;
+  auto wmRes = new wm::GetScreensResponse;
+
+  res->set_allocated_get_screens(wmRes);
+
+  for (const auto &screen : m_wm.provider()->listScreensSync()) {
+    auto sc = wmRes->add_screens();
+    sc->set_name(screen.name.toStdString());
+    sc->set_make(screen.manufacturer.toStdString());
+    sc->set_model(screen.model.toStdString());
+    sc->set_x(screen.bounds.x());
+    sc->set_y(screen.bounds.y());
+    sc->set_width(screen.bounds.width());
+    sc->set_height(screen.bounds.height());
+    if (auto serial = screen.serial) { sc->set_serial(serial->toStdString()); }
+  }
+
+  return res;
 }
 
 proto::ext::wm::Response *WindowManagementRouter::getWindows(const proto::ext::wm::GetWindowsRequest &req) {

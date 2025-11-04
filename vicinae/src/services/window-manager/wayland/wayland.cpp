@@ -2,6 +2,7 @@
 #include "environment.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
 
+#include <qscreen.h>
 #include <wayland-client-protocol.h>
 #include "wayland/virtual-keyboard.hpp"
 #include "wlr-foreign-toplevel-management-unstable-v1-client-protocol.h"
@@ -158,6 +159,11 @@ const uint32_t WLR_FOREIGN_TOPLEVEL_VERSION = 3;
 static void handle_global(void *data, struct wl_registry *registry, uint32_t name, const char *interface,
                           uint32_t version) {
   WaylandWindowManager *wm = static_cast<WaylandWindowManager *>(data);
+
+  if (strcmp(interface, wl_output_interface.name) == 0) {
+    wl_output *output =
+        static_cast<wl_output *>(wl_registry_bind(registry, name, &wl_output_interface, version));
+  }
 
   if (strcmp(interface, zwlr_foreign_toplevel_manager_v1_interface.name) == 0) {
     wm->m_manager = (struct zwlr_foreign_toplevel_manager_v1 *)wl_registry_bind(

@@ -16,6 +16,7 @@ private:
   proto::ext::wm::Response *getActiveWindow(const proto::ext::wm::GetActiveWindowRequest &req);
   proto::ext::wm::Response *getActiveWorkspace(const proto::ext::wm::GetActiveWorkspaceRequest &req);
   proto::ext::wm::Response *getWindows(const proto::ext::wm::GetWindowsRequest &req);
+  proto::ext::wm::Response *getScreens(const proto::ext::wm::GetScreensRequest &req);
   proto::ext::wm::Response *getWorkspaces(const proto::ext::wm::GetWorkspacesRequest &req);
   proto::ext::wm::Response *ping(const proto::ext::wm::PingRequest &req);
 
