@@ -564,6 +564,10 @@ void NavigationController::launch(const QString &id) {
 }
 
 void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd) {
+  launch(cmd, completionValues());
+}
+
+void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd, const ArgumentValues &arguments) {
   // unload stalled no-view command
   if (!m_frames.empty() && m_frames.back()->viewCount == 0) { m_frames.pop_back(); }
 
@@ -575,7 +579,7 @@ void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd) {
   bool shouldCheckPreferences = cmd->type() == CommandType::CommandTypeExtension;
   LaunchProps props;
 
-  props.arguments = completionValues();
+  props.arguments = arguments;
 
   if (shouldCheckPreferences) {
     auto itemId = QString("extension.%1").arg(cmd->uniqueId());
