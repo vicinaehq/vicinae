@@ -5,7 +5,9 @@
 #include <qpromise.h>
 #include <qstringview.h>
 #include "services/app-service/abstract-app-db.hpp"
+#include <QScreen>
 #include <qtmetamacros.h>
+#include <ranges>
 #include <vector>
 
 /**
@@ -31,6 +33,14 @@ public:
     uint32_t y = 0;
     uint32_t width = 0;
     uint32_t height = 0;
+  };
+
+  struct Screen {
+    QString name;
+    QRect bounds;
+    QString manufacturer;
+    QString model;
+    std::optional<QString> serial;
   };
 
   /**
@@ -83,6 +93,18 @@ public:
   virtual QString displayName() const { return id(); }
 
   virtual WindowList listWindowsSync() const { return {}; };
+
+  virtual std::vector<Screen> listScreensSync() const {
+    auto tr = [](const QScreen *qtScreen) -> Screen {
+      Screen sc{.name = qtScreen->name(),
+                .bounds = qtScreen->geometry(),
+                .manufacturer = qtScreen->manufacturer(),
+                .model = qtScreen->model()};
+      if (auto serial = qtScreen->serialNumber(); !serial.isEmpty()) { sc.serial = serial; }
+      return sc;
+    };
+    return QApplication::screens() | std::views::transform(tr) | std::ranges::to<std::vector>();
+  }
 
   /**
    * Should return nullptr if there is no focused window (practically very rare).
