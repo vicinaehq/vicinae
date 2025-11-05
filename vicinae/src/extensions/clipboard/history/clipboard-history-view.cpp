@@ -150,7 +150,7 @@ class ClipboardHistoryDetail : public DetailWithMetadataWidget {
     };
     auto checksum = MetadataLabel{
         .text = entry.md5sum,
-        .title = "Checksum (MD5)",
+        .title = "MD5",
     };
 
     return {mime, size, copiedAt, checksum};
@@ -542,7 +542,7 @@ void ClipboardHistoryView::generateList(const PaginatedResponse<ClipboardHistory
     m_content->setCurrentWidget(m_split);
   }
 
-  m_statusToolbar->setLeftText(QString("%1 Items").arg(result.data.size()));
+  m_statusToolbar->setLeftText(QString("%1 Items").arg(QLocale().toString(result.totalCount)));
 
   m_list->updateModel([&]() {
     auto &pinnedSection = m_list->addSection();

@@ -179,7 +179,7 @@ bool ClipboardService::copyText(const QString &text, const Clipboard::CopyOption
 QFuture<PaginatedResponse<ClipboardHistoryEntry>>
 ClipboardService::listAll(int limit, int offset, const ClipboardListSettings &opts) const {
   return QtConcurrent::run(
-      [opts, limit, offset]() { return ClipboardDatabase().listAll(limit, offset, opts); });
+      [opts, limit, offset]() { return ClipboardDatabase().query(limit, offset, opts); });
 }
 
 ClipboardOfferKind ClipboardService::getKind(const ClipboardDataOffer &offer) {

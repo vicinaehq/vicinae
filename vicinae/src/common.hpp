@@ -30,9 +30,9 @@ template <class... Ts> struct overloads : Ts... {
 };
 
 template <typename T> struct PaginatedResponse {
-  int totalCount;
-  int currentPage;
-  int totalPages;
+  int totalCount = 0;
+  int currentPage = 0;
+  int totalPages = 0;
   std::vector<T> data;
 };
 

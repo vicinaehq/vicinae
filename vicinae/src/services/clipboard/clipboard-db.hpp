@@ -71,7 +71,6 @@ struct ClipboardSelectionRecord {
 };
 
 class ClipboardDatabase {
-  QSqlDatabase m_db;
 
 public:
   using TxHandle = std::function<bool(ClipboardDatabase &db)>;
@@ -80,8 +79,8 @@ public:
 
   std::optional<ClipboardSelectionRecord> findSelection(const QString &id);
 
-  PaginatedResponse<ClipboardHistoryEntry> listAll(int limit = 100, int offset = 0,
-                                                   const ClipboardListSettings &opts = {}) const;
+  PaginatedResponse<ClipboardHistoryEntry> query(int limit = 100, int offset = 0,
+                                                 const ClipboardListSettings &opts = {}) const;
 
   bool removeAll();
 
@@ -113,4 +112,7 @@ public:
 
   ClipboardDatabase();
   ~ClipboardDatabase();
+
+private:
+  QSqlDatabase m_db;
 };
