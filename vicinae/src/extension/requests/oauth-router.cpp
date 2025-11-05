@@ -1,24 +1,55 @@
 #include "oauth-router.hpp"
 #include "common.hpp"
+#include "proto/extension.pb.h"
 #include "proto/oauth.pb.h"
 #include "services/oauth/oauth-service.hpp"
 #include "service-registry.hpp"
 #include "overlay-controller/overlay-controller.hpp"
 #include "ui/oauth-view.hpp"
+#include <stdexcept>
 
 namespace oauth = proto::ext::oauth;
 
 OAuthRouter::OAuthRouter(const ApplicationContext &ctx) : m_ctx(ctx) {}
 
 PromiseLike<proto::ext::extension::Response *> OAuthRouter::route(const proto::ext::oauth::Request &req) {
+  using Req = oauth::Request;
+  using Res = oauth::Response;
+
+  auto wrapRes = [](Res *oauthRes) {
+    auto res = new proto::ext::extension::Response;
+    auto data = new proto::ext::extension::ResponseData;
+    data->set_allocated_oauth(oauthRes);
+    res->set_allocated_data(data);
+    return res;
+  };
+
   switch (req.payload_case()) {
-  case oauth::Request::kAuthorize:
+  case Req::kAuthorize:
     return authorize(req.authorize());
+  case Req::kGetTokens:
+    return wrapRes(getTokens(req.get_tokens()));
+  case Req::kSetTokens:
+    return wrapRes(setTokens(req.set_tokens()));
+  case Req::kRemoveTokens:
+    return wrapRes(removeTokens(req.remove_tokens()));
   default:
     break;
   }
 
   return nullptr;
+}
+
+oauth::Response *OAuthRouter::getTokens(const oauth::GetTokensRequest &req) {
+  throw std::runtime_error("getTokens: not implemented");
+}
+
+oauth::Response *OAuthRouter::setTokens(const oauth::SetTokensRequest &req) {
+  throw std::runtime_error("setTokens: not implemented");
+}
+
+oauth::Response *OAuthRouter::removeTokens(const oauth::RemoveTokensRequest &req) {
+  throw std::runtime_error("removeTokens: not implemented");
 }
 
 QFuture<proto::ext::extension::Response *>

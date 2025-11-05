@@ -92,6 +92,9 @@ type EndpointMapping = {
 	"storage.list": "storage.list";
 
 	"oauth.authorize": "oauth.authorize";
+	"oauth.getTokens": "oauth.getTokens";
+	"oauth.setTokens": "oauth.setTokens";
+	"oauth.removeTokens": "oauth.removeTokens";
 
 	"clipboard.copy": "clipboard.copy";
 	"clipboard.paste": "clipboard.paste";
