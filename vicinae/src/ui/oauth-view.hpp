@@ -27,36 +27,13 @@ class OAuthView : public OverlayView {
   QFutureWatcher<OAuthResponse> m_watcher;
   ExtensionRequest *m_request;
   proto::ext::oauth::AuthorizeRequest m_reqData;
-  ApplicationContext *m_ctx = nullptr;
+  const ApplicationContext *m_ctx = nullptr;
 
   void handleError(const QString &error) {
     auto toast = m_ctx->services->toastService();
 
     toast->setToast(error, ToastStyle::Danger);
     m_request->respondWithError(error);
-  }
-
-  void handleFinished() {
-    if (m_watcher.isCanceled()) { return; }
-
-    auto result = m_watcher.result();
-
-    auto toast = m_ctx->services->toastService();
-
-    if (!result) {
-      handleError(result.error());
-    } else {
-      auto res = new proto::ext::extension::Response;
-      auto resData = new proto::ext::extension::ResponseData;
-      auto oauthRes = new proto::ext::oauth::Response;
-      auto authorizeRes = new proto::ext::oauth::AuthorizeResponse;
-
-      res->set_allocated_data(resData);
-      resData->set_allocated_oauth(oauthRes);
-      oauthRes->set_allocated_authorize(authorizeRes);
-      authorizeRes->set_code(result.value().code.toStdString());
-      m_request->respond(res);
-    }
   }
 
   void abort() {
@@ -74,17 +51,12 @@ class OAuthView : public OverlayView {
   }
 
 public:
-  OAuthView(ApplicationContext *ctx, ExtensionRequest *request,
-            const proto::ext::oauth::AuthorizeRequest &reqData)
-      : m_ctx(ctx), m_request(request), m_reqData(reqData) {
+  OAuthView(const ApplicationContext *ctx, const proto::ext::oauth::AuthorizeRequest &reqData)
+      : m_ctx(ctx), m_reqData(reqData) {
     setFocusPolicy(Qt::StrongFocus);
 
     auto oauth = m_ctx->services->oauthService();
     auto data = OAuthRequestData::fromUrl(QUrl(m_reqData.url().c_str()));
-
-    m_watcher.setFuture(oauth->request(OAuthClient::fromProto(m_reqData.client()), data));
-
-    connect(&m_watcher, &QFutureWatcher<OAuthResponse>::finished, this, &OAuthView::handleFinished);
 
     auto backButton = new IconButton;
 
@@ -130,5 +102,25 @@ public:
                        .margins(40, 40, 40, 40);
 
     VStack().add(header).add(content).imbue(this);
+  }
+
+  void showSuccess() {
+    using namespace std::chrono_literals;
+
+    auto &client = m_reqData.client();
+    auto content =
+        HStack()
+            .add(VStack()
+                     .add(UI::Icon(ImageURL::builtin("check")).size({40, 40}), 0, Qt::AlignCenter)
+                     .add(UI::Text(client.name().c_str()).title().align(Qt::AlignHCenter))
+                     .add(UI::Text(QString("Successfully connected to %1").arg(client.name().c_str()))
+                              .align(Qt::AlignHCenter))
+                     .addStretch()
+                     .spacing(20))
+            .margins(40, 40, 40, 40);
+
+    VStack().add(content).imbue(this);
+
+    QTimer::singleShot(2s, [this]() { dismiss(); });
   }
 };

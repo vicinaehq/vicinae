@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { Image, serializeProtoImage } from "./image";
 import { bus } from "./bus";
 
@@ -317,7 +317,13 @@ export class PKCEClient {
 		const codeChallenge = createHash("sha256")
 			.update(codeVerifier)
 			.digest("base64url");
-		const state = randomBytes(32).toString("hex");
+		const state = Buffer.from(
+			JSON.stringify({
+				flavor: "release",
+				id: randomUUID(),
+				providerName: this.providerName,
+			}),
+		).toString("base64url");
 		const redirectURI = this.getRedirectURI();
 
 		return {
@@ -379,7 +385,7 @@ export class PKCEClient {
 	 */
 	async setTokens(
 		options: OAuth.TokenSetOptions | OAuth.TokenResponse,
-	): Promise<void> {}
+	): Promise<void> { }
 	/**
 	 * Retrieves the stored {@link OAuth.TokenSet} for the client.
 	 * You can use this to initially check whether the authorization flow should be initiated or
@@ -397,7 +403,7 @@ export class PKCEClient {
 	 * Use this method only if you need to provide an additional logout option in your extension or you want to remove the token set because of a migration.
 	 *
 	 */
-	async removeTokens(): Promise<void> {}
+	async removeTokens(): Promise<void> { }
 }
 
 class TokenSet {

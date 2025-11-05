@@ -74,8 +74,6 @@ struct OAuthResponseData {
 using OAuthResponse = tl::expected<OAuthResponseData, QString>;
 
 struct OAuthRequest {
-  OAuthClient client;
-  OAuthRequestData data;
   QPromise<OAuthResponse> promise;
 };
 
@@ -83,13 +81,12 @@ class OAuthService {
   std::unordered_map<QString, std::unique_ptr<OAuthRequest>> m_requests;
 
 public:
-  QFuture<OAuthResponse> request(const OAuthClient &client, const OAuthRequestData &req) {
+  QFuture<OAuthResponse> authorize(const QString &state) {
     QPromise<OAuthResponse> promise;
     auto future = promise.future();
-    auto request = std::make_unique<OAuthRequest>(
-        OAuthRequest{.client = client, .data = req, .promise = std::move(promise)});
+    auto request = std::make_unique<OAuthRequest>(OAuthRequest{.promise = std::move(promise)});
 
-    m_requests.insert({req.state, std::move(request)});
+    m_requests.insert({state, std::move(request)});
 
     return future;
   }

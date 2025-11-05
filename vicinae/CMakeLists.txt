@@ -520,6 +520,7 @@ set(SRCS
 
 	src/extension/requests/storage-request-router.cpp
 	src/extension/requests/ui-request-router.cpp
+	src/extension/requests/oauth-router.cpp
 	src/extension/requests/file-search-request-router.cpp
 	src/extension/requests/app-request-router.cpp
 	src/extension/requests/clipboard-request-router.cpp

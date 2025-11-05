@@ -16,22 +16,9 @@ class ExtensionEvent;
 class FileSearchRequestRouter;
 class WindowManagementRouter;
 class CommandRequestRouter;
+class OAuthRouter;
 
 class ExtensionCommandRuntime : public CommandContext {
-  bool m_isDevMode = false;
-
-  std::shared_ptr<ExtensionCommand> m_command;
-
-  std::unique_ptr<StorageRequestRouter> m_storageRouter;
-  std::unique_ptr<ExtensionNavigationController> m_navigation;
-  std::unique_ptr<UIRequestRouter> m_uiRouter;
-  std::unique_ptr<AppRequestRouter> m_appRouter;
-  std::unique_ptr<ClipboardRequestRouter> m_clipboardRouter;
-  std::unique_ptr<FileSearchRequestRouter> m_fileSearchRouter;
-  std::unique_ptr<WindowManagementRouter> m_wmRouter;
-  std::unique_ptr<CommandRequestRouter> m_commandRouter;
-
-  QString m_sessionId;
 
   proto::ext::extension::Response *makeErrorResponse(const QString &errorText);
 
@@ -39,11 +26,7 @@ class ExtensionCommandRuntime : public CommandContext {
 
   void handleRequest(ExtensionRequest *request);
   void handleCrash(const proto::ext::extension::CrashEventData &crash);
-
-  void handleOAuth(ExtensionRequest *request, const proto::ext::oauth::Request &req);
-
   void handleGenericEvent(const proto::ext::extension::GenericEventData &event) {}
-
   void handleEvent(const ExtensionEvent &event);
   void initialize();
 
@@ -56,4 +39,17 @@ public:
 private:
   using ResponseWatcher = QFutureWatcher<proto::ext::extension::Response *>;
   std::unordered_map<std::shared_ptr<ExtensionRequest>, std::shared_ptr<ResponseWatcher>> m_pendingFutures;
+
+  std::shared_ptr<ExtensionCommand> m_command;
+  std::unique_ptr<StorageRequestRouter> m_storageRouter;
+  std::unique_ptr<ExtensionNavigationController> m_navigation;
+  std::unique_ptr<UIRequestRouter> m_uiRouter;
+  std::unique_ptr<AppRequestRouter> m_appRouter;
+  std::unique_ptr<ClipboardRequestRouter> m_clipboardRouter;
+  std::unique_ptr<FileSearchRequestRouter> m_fileSearchRouter;
+  std::unique_ptr<WindowManagementRouter> m_wmRouter;
+  std::unique_ptr<CommandRequestRouter> m_commandRouter;
+  std::unique_ptr<OAuthRouter> m_oauthRouter;
+  QString m_sessionId;
+  bool m_isDevMode = false;
 };
