@@ -483,6 +483,8 @@ set(SRCS
 	src/services/extension-registry/extension-registry.hpp
 	src/services/extension-registry/extension-registry.cpp
 
+	src/services/oauth/oauth-token-store.cpp
+
 
 
 	src/utils/migration-manager/migration-manager.hpp

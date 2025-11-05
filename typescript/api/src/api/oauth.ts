@@ -399,9 +399,13 @@ export class PKCEClient {
 				idToken: options.id_token,
 				scope: options.scope,
 				expiresIn: options.expires_in,
+				providerId: this.providerId,
 			});
 		} else {
-			await bus.turboRequest("oauth.setTokens", options);
+			await bus.turboRequest("oauth.setTokens", {
+				...options,
+				providerId: this.providerId,
+			});
 		}
 	}
 	/**
@@ -412,7 +416,9 @@ export class PKCEClient {
 	 * @returns A promise that resolves when the token set has been retrieved.
 	 */
 	async getTokens(): Promise<OAuth.TokenSet | undefined> {
-		const res = await bus.turboRequest("oauth.getTokens", {});
+		const res = await bus.turboRequest("oauth.getTokens", {
+			providerId: this.providerId,
+		});
 		const set = res.unwrap().tokenSet;
 
 		if (!set) return undefined;
@@ -436,13 +442,11 @@ export class PKCEClient {
 	}
 	/**
 	 * Removes the stored {@link OAuth.TokenSet} for the client.
-	 *
-	 * @remarks Raycast automatically shows a logout preference that removes the token set.
-	 * Use this method only if you need to provide an additional logout option in your extension or you want to remove the token set because of a migration.
-	 *
 	 */
 	async removeTokens(): Promise<void> {
-		await bus.turboRequest("oauth.removeTokens", {});
+		await bus.turboRequest("oauth.removeTokens", {
+			providerId: this.providerId,
+		});
 	}
 }
 

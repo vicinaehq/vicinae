@@ -10,7 +10,8 @@
 
 namespace oauth = proto::ext::oauth;
 
-OAuthRouter::OAuthRouter(const ApplicationContext &ctx) : m_ctx(ctx) {}
+OAuthRouter::OAuthRouter(const QString &id, const ApplicationContext &ctx)
+    : m_ctx(ctx), m_oauth(*ctx.services->oauthService()), m_extensionId(id) {}
 
 PromiseLike<proto::ext::extension::Response *> OAuthRouter::route(const proto::ext::oauth::Request &req) {
   using Req = oauth::Request;
@@ -41,15 +42,74 @@ PromiseLike<proto::ext::extension::Response *> OAuthRouter::route(const proto::e
 }
 
 oauth::Response *OAuthRouter::getTokens(const oauth::GetTokensRequest &req) {
-  throw std::runtime_error("getTokens: not implemented");
+  auto res = new oauth::Response;
+  auto get = new oauth::GetTokensResponse;
+  QString setId;
+
+  res->set_allocated_get_tokens(get);
+
+  if (req.has_provider_id()) {
+    setId = computeTokenSetId(req.provider_id().c_str());
+  } else {
+    setId = m_extensionId;
+  }
+
+  auto set = m_oauth.store().getTokenSet(setId);
+
+  if (!set) return res;
+
+  auto sset = new oauth::TokenSet;
+  get->set_allocated_token_set(sset);
+  sset->set_access_token(set->accessToken.toStdString());
+  sset->set_updated_at(set->updatedAt);
+  if (auto v = set->refreshToken) { sset->set_refresh_token(v->toStdString()); }
+  if (auto v = set->idToken) { sset->set_id_token(v->toStdString()); }
+  if (auto v = set->scope) { sset->set_scope(v->toStdString()); }
+  if (auto v = set->expiresIn) { sset->set_expires_in(*v); }
+
+  return res;
 }
 
 oauth::Response *OAuthRouter::setTokens(const oauth::SetTokensRequest &req) {
-  throw std::runtime_error("setTokens: not implemented");
+  QString setId;
+
+  if (req.has_provider_id()) {
+    setId = computeTokenSetId(req.provider_id().c_str());
+  } else {
+    setId = m_extensionId;
+  }
+
+  OAuth::SetTokenSetPayload payload;
+
+  payload.id = setId;
+  payload.accessToken = req.access_token().c_str();
+
+  if (req.has_refresh_token()) { payload.refreshToken = req.refresh_token().c_str(); }
+  if (req.has_id_token()) { payload.idToken = req.id_token().c_str(); }
+  if (req.has_scope()) { payload.scope = req.scope().c_str(); }
+  if (req.has_expires_in()) { payload.expiresIn = req.expires_in(); }
+
+  if (!m_oauth.store().setTokenSet(payload)) { throw std::runtime_error("Failed to store token set"); }
+
+  return nullptr;
 }
 
 oauth::Response *OAuthRouter::removeTokens(const oauth::RemoveTokensRequest &req) {
-  throw std::runtime_error("removeTokens: not implemented");
+  QString setId;
+
+  if (req.has_provider_id()) {
+    setId = computeTokenSetId(req.provider_id().c_str());
+  } else {
+    setId = m_extensionId;
+  }
+
+  if (!m_oauth.store().removeTokenSet(setId)) { throw std::runtime_error("Failed to remove token set"); }
+
+  return nullptr;
+}
+
+QString OAuthRouter::computeTokenSetId(const QString &providerId) const {
+  return QString("%1.%2").arg(m_extensionId).arg(providerId);
 }
 
 QFuture<proto::ext::extension::Response *>

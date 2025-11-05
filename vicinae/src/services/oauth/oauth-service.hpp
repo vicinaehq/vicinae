@@ -1,7 +1,9 @@
 #pragma once
 #include "../../ui/image/url.hpp"
+#include "omni-database.hpp"
 #include "proto/oauth.pb.h"
 #include "utils/expected.hpp"
+#include "oauth-token-store.hpp"
 #include <qlogging.h>
 #include <qstring.h>
 #include <qurlquery.h>
@@ -78,9 +80,12 @@ struct OAuthRequest {
 };
 
 class OAuthService {
-  std::unordered_map<QString, std::unique_ptr<OAuthRequest>> m_requests;
 
 public:
+  OAuthService(OmniDatabase &db) : m_tokenStore(db) {}
+
+  OAuth::TokenStore &store() { return m_tokenStore; }
+
   QFuture<OAuthResponse> authorize(const QString &state) {
     QPromise<OAuthResponse> promise;
     auto future = promise.future();
@@ -117,4 +122,8 @@ public:
 
     qCritical() << "No oauth request for state" << state;
   }
+
+private:
+  std::unordered_map<QString, std::unique_ptr<OAuthRequest>> m_requests;
+  OAuth::TokenStore m_tokenStore;
 };

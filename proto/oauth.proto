@@ -34,6 +34,7 @@ message TokenSet {
 
 
 message GetTokensRequest {
+  optional string provider_id = 1;
 }
 
 message GetTokensResponse {
@@ -41,16 +42,19 @@ message GetTokensResponse {
 }
 
 message SetTokensRequest {
-  string access_token = 1;
-  optional string refresh_token = 2;
-  optional string id_token = 3;
-  optional uint32 expires_in = 4;
-  optional string scope = 5;
+  optional string provider_id = 1;
+  string access_token = 2;
+  optional string refresh_token = 3;
+  optional string id_token = 4;
+  optional uint32 expires_in = 5;
+  optional string scope = 6;
 };
 
 message SetTokensResponse {}
 
-message RemoveTokensRequest {};
+message RemoveTokensRequest {
+  optional string provider_id = 1;
+};
 
 message RemoveTokensResponse {}
 

@@ -147,7 +147,7 @@ void ExtensionCommandRuntime::initialize() {
   m_clipboardRouter = std::make_unique<ClipboardRequestRouter>(*context()->services->clipman());
   m_wmRouter = std::make_unique<WindowManagementRouter>(*context()->services->windowManager(),
                                                         *context()->services->appDb());
-  m_oauthRouter = std::make_unique<OAuthRouter>(*context());
+  m_oauthRouter = std::make_unique<OAuthRouter>(m_command->extensionId(), *context());
 
   connect(manager, &ExtensionManager::extensionRequest, this, &ExtensionCommandRuntime::handleRequest);
   connect(manager, &ExtensionManager::extensionEvent, this, &ExtensionCommandRuntime::handleEvent);
