@@ -9,6 +9,7 @@
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/app-service/app-service.hpp"
+#include "services/shortcut/shortcut-service.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include <qapplication.h>
@@ -341,6 +342,30 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
 
       return {};
     }
+  }
+
+  if (url.host() == "shortcuts") {
+    auto components = url.path().sliced(1).split('/');
+
+    if (components.isEmpty() || components[0].isEmpty()) {
+      return tl::unexpected("Shortcut name or ID is required");
+    }
+
+    QString identifier = components[0];
+    auto shortcutService = m_ctx.services->shortcuts();
+
+    // Try to find by name first (user-friendly), then by ID
+    Shortcut *shortcut = shortcutService->findByName(identifier);
+    if (!shortcut) { shortcut = shortcutService->findById(identifier); }
+
+    if (!shortcut) { return tl::unexpected("Shortcut '" + identifier.toStdString() + "' not found"); }
+
+    // Open the window with the shortcut pre-selected
+    m_ctx.navigation->popToRoot({.clearSearch = false});
+    m_ctx.navigation->setSearchText(shortcut->name());
+    m_ctx.navigation->showWindow();
+
+    return {};
   }
 
   if (url.host() == "api") {
