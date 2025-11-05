@@ -36,23 +36,26 @@ std::optional<ClipboardSelectionRecord> ClipboardDatabase::findSelection(const Q
   return selection;
 }
 
-PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::listAll(int limit, int offset,
-                                                                    const ClipboardListSettings &opts) const {
-
-  QSqlQuery query(m_db);
-
-  if (!query.exec("SELECT COUNT(*) FROM selection;") || !query.next()) { return {}; }
+PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int offset,
+                                                                  const ClipboardListSettings &opts) const {
 
   PaginatedResponse<ClipboardHistoryEntry> response;
 
-  response.totalCount = query.value(0).toInt();
-  response.totalPages = ceil(static_cast<double>(response.totalCount) / limit);
-  response.currentPage = ceil(static_cast<double>(offset) / limit);
   response.data.reserve(limit);
 
   QString queryString = R"(
 	  	SELECT
-			selection.id, o.mime_type, o.text_preview, pinned_at, o.content_hash_md5, updated_at, o.size, selection.kind, o.url_host, o.encryption_type
+			 selection.id,
+			 o.mime_type, 
+			 o.text_preview, 
+			 pinned_at, 
+			 o.content_hash_md5, 
+			 updated_at, 
+			 o.size, 
+			 selection.kind, 
+			 o.url_host,
+			 o.encryption_type, 
+			 COUNT(*) OVER() as count
 		FROM
 			selection
 		JOIN
@@ -61,7 +64,6 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::listAll(int limit, i
 			o.selection_id = selection.id
 		AND
 			o.mime_type = selection.preferred_mime_type
-
 	)";
 
   if (!opts.query.isEmpty()) {
@@ -80,12 +82,11 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::listAll(int limit, i
 
   if (!opts.query.isEmpty()) {}
   queryString += " GROUP BY selection.id ";
+  queryString += "ORDER BY pinned_at DESC, updated_at DESC";
 
-  queryString += "ORDER BY pinned_at DESC, updated_at DESC LIMIT :limit OFFSET :offset";
-
-  query.prepare(queryString);
-  query.bindValue(":limit", limit);
-  query.bindValue(":offset", offset);
+  auto finalQuery = QString("SELECT * FROM (%1) LIMIT %2 OFFSET %3").arg(queryString).arg(limit).arg(offset);
+  QSqlQuery query(m_db);
+  query.prepare(finalQuery);
 
   if (opts.kind) { query.bindValue(":kind", static_cast<quint8>(*opts.kind)); }
 
@@ -108,8 +109,12 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::listAll(int limit, i
 
     if (auto val = query.value(8); !val.isNull()) { dto.urlHost = val.toString(); }
 
+    response.totalCount = query.value(10).toInt();
     response.data.push_back(dto);
   }
+
+  response.totalPages = ceil(static_cast<double>(response.totalCount) / limit);
+  response.currentPage = ceil(static_cast<double>(offset) / limit);
 
   return response;
 }
