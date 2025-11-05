@@ -21,5 +21,6 @@ private:
   void handleFiles(const QStringList &files);
 
   bool m_multiple;
+  bool m_directoryMode;
   QFileDialog m_dialog;
 };

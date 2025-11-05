@@ -79,9 +79,20 @@ struct FormModel {
   public:
     TextAreaField(const FieldBase &base) : IField(base) {}
   };
+
+  struct FilePickerField : public IField {
+    bool allowMultipleSelection = false;
+    bool canChooseDirectories = false;
+    bool canChooseFiles = true;
+    bool showHiddenFiles = false;
+
+  public:
+    FilePickerField(const FieldBase &base) : IField(base) {}
+  };
+
   struct DatePickerField : public IField {
-    std::optional<QString> min; // ISO string
-    std::optional<QString> max; // ISO string
+    std::optional<QString> min;  // ISO string
+    std::optional<QString> max;  // ISO string
     std::optional<QString> type; // "date" | "dateTime"
 
   public:

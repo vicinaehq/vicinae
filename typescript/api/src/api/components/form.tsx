@@ -261,7 +261,12 @@ const TextArea: React.FC<TextAreaProps> = ({ ref, ...props }) => {
 
 interface FilePickerProps
 	extends FormItemProps<string[]>,
-		WithFormRef<Form.FilePicker> {}
+		WithFormRef<Form.FilePicker> {
+	allowMultipleSelection?: boolean;
+	canChooseDirectories?: boolean;
+	canChooseFiles?: boolean;
+	showHiddenFiles?: boolean;
+}
 
 const FilePicker: React.FC<FilePickerProps> = ({ ref, ...props }) => {
 	useImperativeFormHandle(ref);

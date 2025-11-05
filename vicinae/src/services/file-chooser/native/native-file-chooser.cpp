@@ -48,10 +48,24 @@ void NativeFileChooser::setCurrentFolder(const std::filesystem::path &path) { m_
 
 void NativeFileChooser::setMimeTypeFilters(const QStringList &filters) {
   // TODO: implement proper filtering
-  if (filters.contains("inode/directory")) { m_dialog.setFileMode(QFileDialog::FileMode::Directory); }
+  m_directoryMode = filters.contains("inode/directory");
+  if (m_directoryMode) {
+    m_dialog.setFileMode(QFileDialog::FileMode::Directory);
+  } else {
+    m_dialog.setFileMode(m_multiple ? QFileDialog::ExistingFiles : QFileDialog::ExistingFile);
+  }
 }
 
-void NativeFileChooser::setMultipleSelection(bool value) { m_dialog.setFileMode(QFileDialog::ExistingFiles); }
+void NativeFileChooser::setMultipleSelection(bool value) {
+  m_multiple = value;
+  if (m_directoryMode) {
+    // Qt's QFileDialog doesn't support multiple directory selection
+    // so we keep Directory mode even when multiple is requested
+    m_dialog.setFileMode(QFileDialog::FileMode::Directory);
+  } else {
+    m_dialog.setFileMode(value ? QFileDialog::ExistingFiles : QFileDialog::ExistingFile);
+  }
+}
 
 void NativeFileChooser::handleFiles(const QStringList &files) {
   std::vector<fs::path> paths;
