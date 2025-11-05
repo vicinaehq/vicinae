@@ -1,6 +1,4 @@
-import { environment } from "@vicinae/api";
-import Module from "module";
-import React from "react";
+import Module from "node:module";
 
 const requireOverrides: Record<string, any> = {
 	react: require("react"),
@@ -15,8 +13,8 @@ const injectJsxGlobals = () => {
 	// react/jsx-runtime always expect non-null props
 	const safeJsx =
 		(original: typeof jsx) =>
-		(type: React.ElementType, props: unknown, key: React.Key) =>
-			original(type, props ?? {}, key);
+			(type: React.ElementType, props: unknown, key: React.Key) =>
+				original(type, props ?? {}, key);
 
 	(globalThis as any)._jsx = safeJsx(jsx);
 	(globalThis as any)._jsxs = safeJsx(jsxs);
@@ -24,16 +22,12 @@ const injectJsxGlobals = () => {
 };
 
 export const patchRequire = () => {
-	if (environment.isRaycast) {
-		// may be required for raycast extensions developed with
-		// plain JS instead of TS.
-		injectJsxGlobals();
-	}
+	injectJsxGlobals();
 
 	const originalRequire = Module.prototype.require;
 
 	// @ts-ignore
-	Module.prototype.require = function (id: string) {
+	Module.prototype.require = function(id: string) {
 		return requireOverrides[id] ?? originalRequire.call(this, id);
 	};
 };
