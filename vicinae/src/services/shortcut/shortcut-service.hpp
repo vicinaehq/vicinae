@@ -24,6 +24,7 @@ public:
   bool updateShortcut(const QString &id, const QString &name, const QString &icon, const QString &url,
                       const QString &app);
   Shortcut *findById(const QString &id);
+  Shortcut *findByName(const QString &name);
   bool registerVisit(const QString &id);
 
   ShortcutService(OmniDatabase &db);
