@@ -1,8 +1,9 @@
 #include "extend/form-model.hpp"
 #include <qjsonobject.h>
 
-const static std::vector<QString> fieldTypes = {"dropdown-field", "password-field",    "text-field",
-                                                "checkbox-field", "date-picker-field", "text-area-field"};
+const static std::vector<QString> fieldTypes = {"dropdown-field",   "password-field",    "text-field",
+                                                "checkbox-field",   "date-picker-field", "text-area-field",
+                                                "file-picker-field"};
 
 FormModel FormModel::fromJson(const QJsonObject &json) {
   FormModel model;
@@ -102,6 +103,19 @@ FormModel FormModel::fromJson(const QJsonObject &json) {
         }
 
         model.items.emplace_back(dropdown);
+      } else if (*it == "file-picker-field") {
+        auto filePicker = std::make_shared<FilePickerField>(base);
+
+        if (props.contains("allowMultipleSelection"))
+          filePicker->allowMultipleSelection = props.value("allowMultipleSelection").toBool();
+        if (props.contains("canChooseDirectories"))
+          filePicker->canChooseDirectories = props.value("canChooseDirectories").toBool();
+        if (props.contains("canChooseFiles"))
+          filePicker->canChooseFiles = props.value("canChooseFiles").toBool();
+        if (props.contains("showHiddenFiles"))
+          filePicker->showHiddenFiles = props.value("showHiddenFiles").toBool();
+
+        model.items.emplace_back(filePicker);
       }
     } else {
       qWarning() << "Unknown form children of type" << type;

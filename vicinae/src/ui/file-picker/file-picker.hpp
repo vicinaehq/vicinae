@@ -110,6 +110,7 @@ private:
 };
 
 class FilePicker : public JsonFormItemWidget {
+  Q_OBJECT
 
 public:
   class AbstractFilePickerItemDelegate : public OmniList::AbstractVirtualItem {
@@ -156,16 +157,21 @@ public:
 
   template <class T> void setDelegate() { m_delegateFactory = std::make_unique<TypedDelegateFactory<T>>(); }
 
+  FocusNotifier *focusNotifier() const override { return m_focusNotifier; }
+
   FilePicker(QWidget *parent = nullptr);
+
+signals:
+  void valueChanged();
 
 private:
   void handleFileChoice();
   void setupUI();
   void regenerateList();
+  void updateButtonText();
   void addFileImpl(const std::filesystem::path &path);
   void setValueAsJson(const QJsonValue &value) override;
   void filesChosen(const std::vector<std::filesystem::path> &paths);
-  FocusNotifier *focusNotifier() const override { return m_focusNotifier; }
 
   FocusNotifier *m_focusNotifier = new FocusNotifier(this);
   AbstractFileChooser *m_chooser = nullptr;
@@ -179,4 +185,5 @@ private:
 
   bool m_multiple = false;
   bool m_readOnly = false;
+  bool m_directoriesOnly = false;
 };

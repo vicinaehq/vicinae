@@ -1,4 +1,4 @@
-import { Action, ActionPanel, Form } from "@vicinae/api";
+import { Action, ActionPanel, Form, showToast, Toast } from "@vicinae/api";
 
 // Examples taken from:
 // https://developers.raycast.com/api-reference/user-interface/form
@@ -84,11 +84,74 @@ export default function FormElements() {
 			{/* Separator */}
 			<Form.Separator />
 
-			{/* FilePicker */}
-			<Form.FilePicker id="files" title="FilePicker" />
+			{/* FilePicker - Single File */}
+			<Form.FilePicker
+				id="singleFile"
+				title="(single file)"
+				onChange={(files) =>
+					showToast(
+						Toast.Style.Success,
+						`Selected ${Array.isArray(files) ? files.length : files ? 1 : 0} file(s)`,
+					)
+				}
+			/>
 
-			{/* FilePicker (directories) */}
-			{/* <Form.FilePicker id='folders' title='FilePicker (directories)' canChooseDirectories canChooseFiles={false} /> */}
+			{/* FilePicker - Multiple Files */}
+			<Form.FilePicker
+				id="multipleFiles"
+				title="(multiple files)"
+				allowMultipleSelection={true}
+				onChange={(files) =>
+					showToast(
+						Toast.Style.Success,
+						`Selected ${Array.isArray(files) ? files.length : files ? 1 : 0} file(s)`,
+					)
+				}
+			/>
+
+			{/* FilePicker - Single Directory */}
+			<Form.FilePicker
+				id="singleDirectory"
+				title="(single directory)"
+				canChooseDirectories={true}
+				canChooseFiles={false}
+				onChange={(files) =>
+					showToast(
+						Toast.Style.Success,
+						`Selected ${Array.isArray(files) ? files.length : files ? 1 : 0} directory(ies)`,
+					)
+				}
+			/>
+
+			{/* FilePicker - Multiple Directories */}
+			{/* Qt doesn't support multi-directory picking */}
+			{/* <Form.FilePicker
+				id="multipleDirectories"
+				title="FilePicker (multiple directories)"
+				allowMultipleSelection={true}
+				canChooseDirectories={true}
+				canChooseFiles={false}
+				onChange={(files) =>
+					showToast(
+						Toast.Style.Success,
+						`Selected ${Array.isArray(files) ? files.length : files ? 1 : 0} directory(ies)`,
+					)
+				}
+			/> */}
+
+			{/* FilePicker - With Hidden Files */}
+			{/* TODO: filtering isn't implemented yet */}
+			{/* <Form.FilePicker
+				id="filesWithHidden"
+				title="(with hidden files)"
+				showHiddenFiles={true}
+				onChange={(files) =>
+					showToast(
+						Toast.Style.Success,
+						`Selected ${Array.isArray(files) ? files.length : files ? 1 : 0} file(s)`,
+					)
+				}
+			/> */}
 
 			{/* Description */}
 			<Form.Description
