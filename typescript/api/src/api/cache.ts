@@ -126,23 +126,23 @@ export class Cache {
 		}
 
 		const info = this.index.keys[key];
-		let newTotalSize = this.index.size + data.length - (info?.size ?? 0);
+		const newTotalSize = this.index.size + data.length - (info?.size ?? 0);
 
 		if (newTotalSize > this.capacity) {
 			this.popLRU();
-			return this.set(key, data); // FIXME: get rid of recursion
+			this.set(key, data); // FIXME: get rid of recursion
+			return;
 		}
 
 		this.index.size = newTotalSize;
 		this.index.keys[key] = { size: data.length };
 		this.updateLRU(key);
+		this.writeKeyData(key, data);
+		this.syncIndex();
 
 		for (const sub of this.subscribers) {
 			sub(key, data);
 		}
-
-		this.writeKeyData(key, data);
-		this.syncIndex();
 	};
 
 	/**
