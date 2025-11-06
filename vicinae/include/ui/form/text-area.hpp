@@ -61,6 +61,7 @@ protected:
 private:
   void resizeArea();
   void setupUI();
+  void setTextPreservingCursor(const QString &text);
 
   QPlainTextEdit *m_textEdit = nullptr;
   FocusNotifier *m_notifier = new FocusNotifier(this);
