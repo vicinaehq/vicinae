@@ -8,17 +8,17 @@
 #include "extension/requests/ui-request-router.hpp"
 #include "extension/requests/file-search-request-router.hpp"
 #include "extension/requests/wm-router.hpp"
+#include "extension/requests/oauth-router.hpp"
 #include "extension/requests/command-request-router.hpp"
 #include "proto/manager.pb.h"
 #include "proto/oauth.pb.h"
 #include "common.hpp"
 #include "service-registry.hpp"
 #include "services/asset-resolver/asset-resolver.hpp"
-#include "ui/oauth-view.hpp"
 #include <QString>
 #include <exception>
+#include <qurlquery.h>
 #include "services/root-item-manager/root-item-manager.hpp"
-#include "overlay-controller/overlay-controller.hpp"
 #include "utils/utils.hpp"
 
 proto::ext::extension::Response *ExtensionCommandRuntime::makeErrorResponse(const QString &errorText) {
@@ -29,33 +29,6 @@ proto::ext::extension::Response *ExtensionCommandRuntime::makeErrorResponse(cons
   res->set_allocated_error(err);
 
   return res;
-}
-
-void ExtensionCommandRuntime::handleOAuth(ExtensionRequest *request, const proto::ext::oauth::Request &req) {
-  auto oauth = context()->services->oauthService();
-
-  auto e = [request](const QString &code) {
-    auto res = new proto::ext::extension::Response;
-    auto resData = new proto::ext::extension::ResponseData;
-    auto oauthRes = new proto::ext::oauth::Response;
-    auto authorizeRes = new proto::ext::oauth::AuthorizeResponse;
-
-    res->set_allocated_data(resData);
-    resData->set_allocated_oauth(oauthRes);
-    oauthRes->set_allocated_authorize(authorizeRes);
-    authorizeRes->set_code(code.toStdString());
-
-    request->respond(res);
-    delete request;
-  };
-
-  switch (req.payload_case()) {
-  case proto::ext::oauth::Request::kAuthorize: {
-    context()->overlay->setCurrent(new OAuthView(context(), request, req.authorize()));
-  }
-  default:
-    break;
-  }
 }
 
 PromiseLike<proto::ext::extension::Response *>
@@ -79,11 +52,12 @@ ExtensionCommandRuntime::dispatchRequest(ExtensionRequest *request) {
   case Request::kCommand:
     return m_commandRouter->route(data.command());
   case Request::kOauth:
-    handleOAuth(request, data.oauth());
-    return nullptr;
+    return m_oauthRouter->route(data.oauth());
   default:
     break;
   }
+
+  qDebug() << request->requestData().DebugString();
 
   return makeErrorResponse("Unhandled top level request");
 }
@@ -173,6 +147,7 @@ void ExtensionCommandRuntime::initialize() {
   m_clipboardRouter = std::make_unique<ClipboardRequestRouter>(*context()->services->clipman());
   m_wmRouter = std::make_unique<WindowManagementRouter>(*context()->services->windowManager(),
                                                         *context()->services->appDb());
+  m_oauthRouter = std::make_unique<OAuthRouter>(m_command->extensionId(), *context());
 
   connect(manager, &ExtensionManager::extensionRequest, this, &ExtensionCommandRuntime::handleRequest);
   connect(manager, &ExtensionManager::extensionEvent, this, &ExtensionCommandRuntime::handleEvent);

@@ -22,6 +22,42 @@ message AuthorizeRequest {
   string url = 2;
 };
 
+message TokenSet {
+  string access_token = 1;
+  optional string refresh_token = 2;
+  optional string id_token = 3;
+  optional uint32 expires_in = 4;
+  optional string scope = 5;
+  uint64 updated_at = 6;
+};
+
+
+
+message GetTokensRequest {
+  optional string provider_id = 1;
+}
+
+message GetTokensResponse {
+  TokenSet token_set = 1;
+}
+
+message SetTokensRequest {
+  optional string provider_id = 1;
+  string access_token = 2;
+  optional string refresh_token = 3;
+  optional string id_token = 4;
+  optional uint32 expires_in = 5;
+  optional string scope = 6;
+};
+
+message SetTokensResponse {}
+
+message RemoveTokensRequest {
+  optional string provider_id = 1;
+};
+
+message RemoveTokensResponse {}
+
 message AuthorizeResponse {
   string code = 1;
 };
@@ -29,12 +65,19 @@ message AuthorizeResponse {
 message Request {
   oneof payload {
     AuthorizeRequest authorize = 1;
+    GetTokensRequest get_tokens = 2;
+    SetTokensRequest set_tokens = 3;
+    RemoveTokensRequest remove_tokens = 4;
   };
 };
+
 
 message Response {
   oneof payload {
     AuthorizeResponse authorize = 1;
+    GetTokensResponse get_tokens = 2;
+    SetTokensResponse set_tokens = 3;
+    RemoveTokensResponse remove_tokens = 4;
   };
 };
 

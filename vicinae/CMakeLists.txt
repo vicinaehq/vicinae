@@ -415,6 +415,8 @@ set(SRCS
 
 	src/extensions/vicinae/refresh-apps-command.hpp
 	src/extensions/vicinae/refresh-apps-command.cpp
+	src/extensions/vicinae/oauth-token-store/oauth-token-store-view.hpp
+	src/extensions/vicinae/oauth-token-store/oauth-token-store-view.cpp
 	src/extensions/power-management/power-management-extension.cpp
 	src/extensions/root/root-search-view.cpp
 
@@ -483,6 +485,12 @@ set(SRCS
 	src/services/extension-registry/extension-registry.hpp
 	src/services/extension-registry/extension-registry.cpp
 
+	src/services/oauth/oauth-token-store.hpp
+	src/services/oauth/oauth-token-store.cpp
+
+	src/ui/oauth-view/oauth-view.hpp
+	src/ui/oauth-view/oauth-view.cpp
+
 
 
 	src/utils/migration-manager/migration-manager.hpp
@@ -520,6 +528,7 @@ set(SRCS
 
 	src/extension/requests/storage-request-router.cpp
 	src/extension/requests/ui-request-router.cpp
+	src/extension/requests/oauth-router.cpp
 	src/extension/requests/file-search-request-router.cpp
 	src/extension/requests/app-request-router.cpp
 	src/extension/requests/clipboard-request-router.cpp

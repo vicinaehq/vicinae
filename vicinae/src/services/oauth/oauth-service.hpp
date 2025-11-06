@@ -1,7 +1,9 @@
 #pragma once
 #include "../../ui/image/url.hpp"
+#include "omni-database.hpp"
 #include "proto/oauth.pb.h"
 #include "utils/expected.hpp"
+#include "oauth-token-store.hpp"
 #include <qlogging.h>
 #include <qstring.h>
 #include <qurlquery.h>
@@ -74,22 +76,22 @@ struct OAuthResponseData {
 using OAuthResponse = tl::expected<OAuthResponseData, QString>;
 
 struct OAuthRequest {
-  OAuthClient client;
-  OAuthRequestData data;
   QPromise<OAuthResponse> promise;
 };
 
 class OAuthService {
-  std::unordered_map<QString, std::unique_ptr<OAuthRequest>> m_requests;
 
 public:
-  QFuture<OAuthResponse> request(const OAuthClient &client, const OAuthRequestData &req) {
+  OAuthService(OmniDatabase &db) : m_tokenStore(db) {}
+
+  OAuth::TokenStore &store() { return m_tokenStore; }
+
+  QFuture<OAuthResponse> authorize(const QString &state) {
     QPromise<OAuthResponse> promise;
     auto future = promise.future();
-    auto request = std::make_unique<OAuthRequest>(
-        OAuthRequest{.client = client, .data = req, .promise = std::move(promise)});
+    auto request = std::make_unique<OAuthRequest>(OAuthRequest{.promise = std::move(promise)});
 
-    m_requests.insert({req.state, std::move(request)});
+    m_requests.insert({state, std::move(request)});
 
     return future;
   }
@@ -120,4 +122,8 @@ public:
 
     qCritical() << "No oauth request for state" << state;
   }
+
+private:
+  std::unordered_map<QString, std::unique_ptr<OAuthRequest>> m_requests;
+  OAuth::TokenStore m_tokenStore;
 };
