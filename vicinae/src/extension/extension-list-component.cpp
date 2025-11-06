@@ -267,9 +267,6 @@ void ExtensionListComponent::handleDropdownSearchChanged(const QString &text) {
 
 void ExtensionListComponent::handleDebouncedSearchNotification() {
   auto text = searchText();
-  auto itemMatches = [&](const ListItemViewModel &model) -> bool {
-    return model.title.contains(searchText(), Qt::CaseInsensitive);
-  };
 
   if (_model.filtering) {
     m_list->setFilter(searchText());
@@ -283,6 +280,12 @@ void ExtensionListComponent::handleDebouncedSearchNotification() {
 
     notify(*handler, {text});
   }
+
+  if (m_list->empty()) {
+    if (_model.emptyView) { m_content->setCurrentWidget(m_emptyView); }
+  } else {
+    m_content->setCurrentWidget(m_split);
+  }
 }
 
 void ExtensionListComponent::onItemActivated(const ListItemViewModel &item) { executePrimaryAction(); }
@@ -292,25 +295,11 @@ void ExtensionListComponent::textChanged(const QString &text) {
     return;
   }
 
-  if (_model.filtering) {
-    m_list->setFilter(text);
+  if (_model.throttle) {
+    _debounce->start();
   } else {
-    m_list->setFilter("");
+    handleDebouncedSearchNotification();
   }
-
-  if (auto handler = _model.onSearchTextChange) {
-    // flag next render to reset the search selection
-    _shouldResetSelection = !_model.filtering;
-    notify(*handler, {text});
-  }
-
-  if (m_list->empty()) {
-    if (_model.emptyView) { m_content->setCurrentWidget(m_emptyView); }
-  } else {
-    m_content->setCurrentWidget(m_split);
-  }
-
-  //_debounce->start();
 }
 
 void ExtensionListComponent::initialize() { setSearchAccessoryVisiblity(false); }

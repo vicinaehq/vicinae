@@ -3,6 +3,7 @@
 #include "extension/extension-command.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "service-registry.hpp"
+#include "overlay-controller/overlay-controller.hpp"
 #include "extension/missing-extension-preference-view.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "extension/manager/extension-manager.hpp"
@@ -292,6 +293,9 @@ void NavigationController::closeWindow(const CloseWindowOptions &settings) {
   if (!m_windowOpened) return;
 
   PopToRootType type = settings.popToRootType;
+
+  // never pop if an overlay is shown
+  if (m_ctx.overlay->hasOverlay()) { type = PopToRootType::Suspended; }
 
   if (m_instantDismiss) {
     qDebug() << "Consumed instantDismiss flag";

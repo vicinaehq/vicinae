@@ -1,9 +1,13 @@
 import { Action, ActionPanel, Form, showToast, Toast } from "@vicinae/api";
+import { useState } from "react";
 
 // Examples taken from:
 // https://developers.raycast.com/api-reference/user-interface/form
 
 export default function FormElements() {
+	const [text, setText] = useState("");
+	const [checkbox, setCheckbox] = useState(true);
+
 	return (
 		<Form
 			actions={
@@ -20,13 +24,24 @@ export default function FormElements() {
 			}
 		>
 			{/* TextField */}
-			<Form.TextField id="name" title="TextField" defaultValue="Steve" />
+			<Form.TextField
+				id="name"
+				title="TextField"
+				defaultValue="Steve"
+				value={text}
+				onChange={setText}
+			/>
 
 			{/* PasswordField */}
 			<Form.PasswordField id="password" title="PasswordField" />
 
 			{/* TextArea */}
-			<Form.TextArea id="description" title="TextArea" />
+			<Form.TextArea
+				id="description"
+				title="TextArea"
+				value={text}
+				onChange={setText}
+			/>
 
 			{/* Checkbox */}
 			<Form.Checkbox
@@ -34,6 +49,8 @@ export default function FormElements() {
 				title="Checkbox"
 				label="Are you happy?"
 				defaultValue={true}
+				value={checkbox}
+				onChange={setCheckbox}
 			/>
 
 			{/* DatePicker */}
@@ -52,7 +69,14 @@ export default function FormElements() {
 			/>
 
 			{/* Dropdown */}
-			<Form.Dropdown id="emoji" title="Dropdown" defaultValue="lol">
+			<Form.Dropdown
+				id="emoji"
+				title="Dropdown"
+				defaultValue="lol"
+				onChange={(value) =>
+					showToast(Toast.Style.Success, `Selected ${value}`)
+				}
+			>
 				<Form.Dropdown.Item value="poop" title="Pile of poop" icon="💩" />
 				<Form.Dropdown.Item value="rocket" title="Rocket" icon="🚀" />
 				<Form.Dropdown.Item

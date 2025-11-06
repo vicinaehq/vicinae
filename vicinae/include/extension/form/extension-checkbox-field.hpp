@@ -10,8 +10,7 @@ class ExtensionCheckboxField : public ExtensionFormInput {
   void clear() override { return m_input->setValueAsJson(false); }
 
   void handleChange(bool value) {
-    if (auto value = m_model->value) { m_input->setValueAsJson(*value); }
-    if (auto change = m_model->onChange) { m_extensionNotifier->notify(*change, value); }
+    if (m_model && m_model->onChange) { m_extensionNotifier->notify(*m_model->onChange, value); }
   }
 
   void setValueAsJson(const QJsonValue &value) override { m_input->setValueAsJson(value); }
@@ -23,11 +22,11 @@ public:
 
     if (m_model->m_label) { m_input->setLabel(*m_model->m_label); }
 
-    if (auto value = m_model->value) { m_input->setValueAsJson(*value); }
+    if (auto value = m_model->value) { m_input->stealthySetValueAsJson(*value); }
   }
 
   ExtensionCheckboxField(QWidget *parent = nullptr) : ExtensionFormInput(parent) {
-    setWrapped(m_input);
+    setWrapped(m_input, m_input->focusNotifier());
     connect(m_input, &CheckboxInput::valueChanged, this, &ExtensionCheckboxField::handleChange);
   }
 };

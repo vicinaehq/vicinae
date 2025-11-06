@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { Image, serializeProtoImage } from "./image";
 import { bus } from "./bus";
 
@@ -313,11 +313,17 @@ export class PKCEClient {
 	async authorizationRequest(
 		options: OAuth.AuthorizationRequestOptions,
 	): Promise<OAuth.AuthorizationRequest> {
-		const codeVerifier = randomBytes(128).toString("hex");
+		const codeVerifier = randomBytes(32).toString("base64url");
 		const codeChallenge = createHash("sha256")
 			.update(codeVerifier)
 			.digest("base64url");
-		const state = randomBytes(32).toString("hex");
+		const state = Buffer.from(
+			JSON.stringify({
+				flavor: "release",
+				id: randomUUID(),
+				providerName: this.providerName,
+			}),
+		).toString("base64url");
 		const redirectURI = this.getRedirectURI();
 
 		return {
@@ -379,7 +385,29 @@ export class PKCEClient {
 	 */
 	async setTokens(
 		options: OAuth.TokenSetOptions | OAuth.TokenResponse,
-	): Promise<void> {}
+	): Promise<void> {
+		const isTokenResponse = (
+			options: OAuth.TokenSetOptions | OAuth.TokenResponse,
+		): options is OAuth.TokenResponse => {
+			return Object.hasOwn(options, "access_token");
+		};
+
+		if (isTokenResponse(options)) {
+			await bus.turboRequest("oauth.setTokens", {
+				accessToken: options.access_token,
+				refreshToken: options.refresh_token,
+				idToken: options.id_token,
+				scope: options.scope,
+				expiresIn: options.expires_in,
+				providerId: this.providerId,
+			});
+		} else {
+			await bus.turboRequest("oauth.setTokens", {
+				...options,
+				providerId: this.providerId,
+			});
+		}
+	}
 	/**
 	 * Retrieves the stored {@link OAuth.TokenSet} for the client.
 	 * You can use this to initially check whether the authorization flow should be initiated or
@@ -388,33 +416,51 @@ export class PKCEClient {
 	 * @returns A promise that resolves when the token set has been retrieved.
 	 */
 	async getTokens(): Promise<OAuth.TokenSet | undefined> {
-		return undefined;
+		const res = await bus.turboRequest("oauth.getTokens", {
+			providerId: this.providerId,
+		});
+		const set = res.unwrap().tokenSet;
+
+		if (!set) return undefined;
+
+		const tokenSet = {
+			accessToken: set.accessToken,
+			refreshToken: set.refreshToken,
+			scope: set.scope,
+			idToken: set.idToken,
+			updatedAt: new Date(set.updatedAt * 1000),
+			expiresIn: set.expiresIn,
+			isExpired: () => {
+				return !!(
+					tokenSet.expiresIn &&
+					tokenSet.updatedAt.getTime() + tokenSet.expiresIn * 1000 < Date.now()
+				);
+			},
+		};
+
+		return tokenSet;
 	}
 	/**
 	 * Removes the stored {@link OAuth.TokenSet} for the client.
-	 *
-	 * @remarks Raycast automatically shows a logout preference that removes the token set.
-	 * Use this method only if you need to provide an additional logout option in your extension or you want to remove the token set because of a migration.
-	 *
 	 */
-	async removeTokens(): Promise<void> {}
+	async removeTokens(): Promise<void> {
+		await bus.turboRequest("oauth.removeTokens", {
+			providerId: this.providerId,
+		});
+	}
 }
 
-class TokenSet {
-	accessToken: string = "";
+export type TokenSet = {
+	accessToken: string;
 	refreshToken?: string;
 	idToken?: string;
 	expiresIn?: number;
 	scope?: string;
-	updatedAt: Date = new Date();
-
-	isExpired(): boolean {
-		return true;
-	}
-}
+	updatedAt: Date;
+	isExpired: () => boolean;
+};
 
 export const OAuth = {
 	PKCEClient,
 	RedirectMethod: OauthRedirectMethod,
-	TokenSet,
 };
