@@ -11,11 +11,14 @@ class OverlayController : public QObject, NonCopyable {
   QObjectUniquePtr<OverlayView> m_current = nullptr;
 
 public:
+  bool hasOverlay() const { return m_current.get(); }
+
   void setCurrent(OverlayView *view) {
     view->setContext(m_ctx);
     emit currentOverlayChanged(view);
     m_current.reset(view);
   }
+
   void dismissCurrent() {
     emit currentOverlayDismissed();
     m_current.reset();
