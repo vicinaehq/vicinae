@@ -1,4 +1,10 @@
 import { Action, ActionPanel, Detail, showToast } from "@vicinae/api";
+import {
+	DATA_URI_PNG_BASE64,
+	DATA_URI_SVG_BASE64,
+	DATA_URI_SVG_PLAIN,
+	DATA_URI_SVG_URLENCODED,
+} from "./constants";
 
 const intro = `# Hello world
 
@@ -40,26 +46,17 @@ const lists = `
 
 const images = `
 blue square (data:image/svg+xml;utf8 plain):
-<img width="100" height='100' src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'><rect width='100' height='100' fill='blue'/></svg>">
+<img width="100" height='100' src="${DATA_URI_SVG_PLAIN}">
 
 green rectangle (data:image/svg+xml urlencoded):
-<img width="200" height='50' src="data:image/svg+xml;utf8,${encodeURIComponent(
-	"<svg xmlns='http://www.w3.org/2000/svg'><rect width='200' height='50' fill='green'/></svg>",
-)}">
+<img width="200" height='50' src="${DATA_URI_SVG_URLENCODED}">
 
 yellow rectangle with text (data:image/svg+xml base64):
-<img width="200" height='50' src="data:image/svg+xml;utf8;base64,${Buffer.from(
-	`
-	<svg xmlns='http://www.w3.org/2000/svg'>
-		<rect width='200' height='50' fill='yellow'/>
-		<text x='100' y='30' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='12'>Text in rect!</text>
-	</svg>
-`,
-).toString("base64")}">
+<img width="200" height='100' src="${DATA_URI_SVG_BASE64}">
 
 markdown format image (data:image/png;base64 with raycast-* size):
 
-![Logo](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4XiDAAAAOVBMVEX///8EBAQVFRUpKSk8PDxISEhUVFRfX19ycnJ+fn6Pj4+enp6qqqrBwcHOzs7Y2Njl5eXw8PD5+fkO8WfbAAAAE3RSTlP/1dja3d/h4+bo6+3w9Pb4+vz+kO1liAAAAaNJREFUeNq9ltt2hCAMRY/DRYNELv//sbWKDGmxtjx0P41r2CSTQRJMJ4o44QcSkypLcQou4pHo1FsxGyQ5xZ2UIdnMpcxRLA+erNE7xpIPQovzqdjWSH7WljyHHd5dPfvUOuZTUVsrGONCbkM6Y1ppU7vimmdbvxbb2GZXN0HFuuOq3SmkwN65lUMqpdJrjRwVqO5Gmg+TSb+mg5cmPtayphqdwJexmHAItqwv1nKsDWa54jCKnclEAHERwqSuYkRDxanhVh2OBITwooiLoFcINs0AWMkQPuMN600U0rqOwRA4m/DGmwTEL1kxJMl4yIe8TIKSutxYfmZZqzkD92Hy7IBsZVobvuPqPkGHxyB14Ym3GaBJwOiQ7ZUZEZC0MFRED6LGDQ951XxKIRjgSeDQhUuZow7AKhWPLkHHt+L+RfFSWW+VgZ8/UOTBv7J/YPzNgRk4lsOHv/+K2e4rNvAiD1wXA5fS4NUnL9jtS25L74IduMZ/3ywSTvixJaXSkjIKdNf41qbxJdn4BtrrUBOfzJ9GhYGBZGDsGR+unke43IxwH8fLHH399UsSAAAAAElFTkSuQmCC?raycast-width=50&raycast-height=50)
+![Logo](${DATA_URI_PNG_BASE64}?raycast-width=50&raycast-height=50)
 `;
 
 const table = `
