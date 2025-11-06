@@ -52,7 +52,6 @@ class MarkdownRenderer : public QWidget {
 
   int getHeadingLevelPointSize(int level) const;
 
-  void insertHeading(const QString &text, int level);
   void insertImage(cmark_node *node);
   void insertImageFromUrl(const QUrl &url, const QSize &iconSize);
   QTextList *insertList(cmark_node *list, int indent = 1);
