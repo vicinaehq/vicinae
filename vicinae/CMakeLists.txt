@@ -488,6 +488,9 @@ set(SRCS
 	src/services/oauth/oauth-token-store.hpp
 	src/services/oauth/oauth-token-store.cpp
 
+	src/ui/oauth-view/oauth-view.hpp
+	src/ui/oauth-view/oauth-view.cpp
+
 
 
 	src/utils/migration-manager/migration-manager.hpp

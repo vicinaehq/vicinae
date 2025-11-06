@@ -5,7 +5,7 @@
 #include "services/oauth/oauth-service.hpp"
 #include "service-registry.hpp"
 #include "overlay-controller/overlay-controller.hpp"
-#include "ui/oauth-view.hpp"
+#include "ui/oauth-view/oauth-view.hpp"
 #include <stdexcept>
 
 namespace oauth = proto::ext::oauth;

@@ -1,4 +1,5 @@
 #include "window-manager.hpp"
+#include <algorithm>
 #include <ranges>
 #include "hyprland/hyprland.hpp"
 #include "gnome/gnome-window-manager.hpp"
@@ -55,6 +56,15 @@ AbstractWindowManager::WindowList WindowManager::findWindowByClass(const QString
   }
 
   return filtered;
+}
+
+bool WindowManager::focusApp(const AbstractApplication &app) const {
+  if (auto wins = findAppWindows(app); !wins.empty()) {
+    provider()->focusWindowSync(*wins.front());
+    return true;
+  }
+
+  return false;
 }
 
 AbstractWindowManager::WindowList WindowManager::findAppWindows(const AbstractApplication &app) const {
