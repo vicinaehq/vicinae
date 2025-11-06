@@ -22,6 +22,7 @@
 #include "extension/form/extension-text-area.hpp"
 #include "ui/form/form-field.hpp"
 #include "ui/scroll-bar/scroll-bar.hpp"
+#include "ui/typography/typography.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 #include "common.hpp"
@@ -107,22 +108,13 @@ class FormDescriptionWidget : public JsonFormItemWidget {
   QVBoxLayout *m_layout = new QVBoxLayout(this);
 
 public:
-  FormDescriptionWidget(const std::optional<QString> &title, const QString &text) {
+  FormDescriptionWidget(const QString &text) {
     m_layout->setContentsMargins(0, 0, 0, 0);
     m_layout->setSpacing(2);
 
-    if (title) {
-      auto titleLabel = new QLabel(*title);
-      titleLabel->setTextFormat(Qt::PlainText);
-      titleLabel->setWordWrap(true);
-      QFont f = titleLabel->font();
-      f.setBold(true);
-      titleLabel->setFont(f);
-      m_layout->addWidget(titleLabel);
-    }
-
-    auto body = new QLabel(text);
-    body->setTextFormat(Qt::PlainText);
+    auto body = new TypographyWidget;
+    body->setText(text);
+    body->setColor(SemanticColor::TextMuted);
     body->setWordWrap(true);
     m_layout->addWidget(body);
   }
@@ -178,8 +170,12 @@ class ExtensionFormComponent : public ExtensionSimpleView {
 private:
   QWidget *createDescriptionField(const FormModel::Description &d) const {
     auto field = new FormField;
-    field->setName("");
-    field->setWidget(new FormDescriptionWidget(d.title, d.text));
+    if (d.title) {
+      field->setName(*d.title);
+    } else {
+      field->setName("");
+    }
+    field->setWidget(new FormDescriptionWidget(d.text));
     return field;
   }
 
