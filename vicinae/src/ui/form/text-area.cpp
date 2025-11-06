@@ -1,4 +1,4 @@
-#include "text-area.hpp"
+#include "ui/form/text-area.hpp"
 #include "common.hpp"
 #include "theme.hpp"
 #include "ui/scroll-bar/scroll-bar.hpp"
@@ -29,6 +29,8 @@ void TextArea::resizeEvent(QResizeEvent *event) {
 void TextArea::setForwardShiftReturn(bool value) { m_forwardShiftReturn = value; }
 
 bool TextArea::forwardShiftReturn() const { return m_forwardShiftReturn; }
+
+bool TextArea::growAsRequired() const { return m_growAsRequired; }
 
 void TextArea::setupUI() {
   m_textEdit = new QPlainTextEdit;
@@ -85,7 +87,20 @@ void TextArea::resizeArea() {
 
 QJsonValue TextArea::asJsonValue() const { return m_textEdit->toPlainText(); };
 
-void TextArea::setValueAsJson(const QJsonValue &value) { m_textEdit->setPlainText(value.toString()); };
+// Preserve cursor position when setting the text
+void TextArea::setTextPreservingCursor(const QString &text) {
+  const int oldPos = m_textEdit->textCursor().position();
+  m_textEdit->setPlainText(text);
+  QTextCursor cursor = m_textEdit->textCursor();
+  cursor.setPosition(std::min(oldPos, static_cast<int>(text.length())));
+  m_textEdit->setTextCursor(cursor);
+}
+
+void TextArea::setValueAsJson(const QJsonValue &value) {
+  const QString newText = value.toString();
+  if (m_textEdit->toPlainText() == newText) return;
+  setTextPreservingCursor(newText);
+};
 
 void TextArea::setTabSetFocus(bool ignore) { m_textEdit->setTabChangesFocus(ignore); }
 
@@ -95,10 +110,13 @@ void TextArea::setGrowAsRequired(bool value) {
   } else {
     m_textEdit->setVerticalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAsNeeded);
   }
-  m_growAsRequired = true;
+  m_growAsRequired = value;
 }
 
-void TextArea::setText(const QString &text) { m_textEdit->setPlainText(text); }
+void TextArea::setText(const QString &text) {
+  if (m_textEdit->toPlainText() == text) return;
+  setTextPreservingCursor(text);
+}
 
 void TextArea::setPlaceholderText(const QString &text) { m_textEdit->setPlaceholderText(text); }
 

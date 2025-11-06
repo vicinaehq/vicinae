@@ -22,6 +22,7 @@ public:
     m_label->setVisible(!label.isEmpty());
   }
   void setValueAsJson(const QJsonValue &value) override { m_checkbox->setValue(value.toBool(false)); }
+  void stealthySetValueAsJson(const QJsonValue &value) { m_checkbox->stealthySetValue(value.toBool(false)); }
   bool value() const { return m_checkbox->value(); }
   FocusNotifier *focusNotifier() const override { return m_checkbox->focusNotifier(); }
 
