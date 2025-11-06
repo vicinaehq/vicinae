@@ -28,10 +28,10 @@ bool TokenStore::setTokenSet(const SetTokenSetPayload &payload) const {
   query.bindValue(":extension_id", payload.extensionId);
   query.bindValue(":provider_id", payload.providerId.value_or(""));
   query.bindValue(":access_token", payload.accessToken);
-  query.bindValue(":refresh_token", payload.refreshToken.transform(strVar).value_or({}));
-  query.bindValue(":id_token", payload.idToken.transform(strVar).value_or({}));
-  query.bindValue(":scope", payload.scope.transform(strVar).value_or({}));
-  query.bindValue(":expires_in", payload.expiresIn.transform(intVar).value_or({}));
+  query.bindValue(":refresh_token", payload.refreshToken.transform(strVar).value_or(QVariant()));
+  query.bindValue(":id_token", payload.idToken.transform(strVar).value_or(QVariant()));
+  query.bindValue(":scope", payload.scope.transform(strVar).value_or(QVariant()));
+  query.bindValue(":expires_in", payload.expiresIn.transform(intVar).value_or(QVariant()));
   query.bindValue(":updated_at", QDateTime::currentSecsSinceEpoch());
 
   if (!query.exec()) {
