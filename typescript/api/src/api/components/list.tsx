@@ -38,7 +38,12 @@ export declare namespace List {
 			title: string;
 			keywords?: string[];
 			detail?: React.ReactNode;
-			icon?: ImageLike;
+			icon?:
+				| ImageLike
+				| {
+						value: ImageLike | undefined | null;
+						tooltip: string;
+				  };
 			id?: string;
 			subtitle?: string;
 			actions?: ReactNode;

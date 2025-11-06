@@ -44,7 +44,12 @@ declare module "react" {
 				title: string;
 				id?: string;
 				subtitle?: string;
-				icon?: ImageLike;
+				icon?:
+					| ImageLike
+					| {
+							value?: ImageLike | null;
+							tooltip: string;
+					  };
 				keywords?: string[];
 				children?: ReactNode;
 			};
@@ -81,9 +86,9 @@ declare module "react" {
 				id?: string;
 				subtitle?: string;
 				content?:
-				| ImageLike
-				| { color: ColorLike }
-				| { value: ImageLike; tooltip?: string };
+					| ImageLike
+					| { color: ColorLike }
+					| { value: ImageLike; tooltip?: string };
 				keywords?: string[];
 				children?: ReactNode;
 			};
