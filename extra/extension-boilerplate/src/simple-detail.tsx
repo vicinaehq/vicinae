@@ -22,6 +22,8 @@ const headings = `
 #### Heading 4
 ##### Heading 5
 ###### Heading 6
+
+## heading with _italic_ and \`code\` in the middle
 `;
 
 const textDecorations = `

@@ -1,8 +1,12 @@
 #pragma once
 #include "extend/form-model.hpp"
 #include "extension/form/extension-form-input.hpp"
+#include "theme.hpp"
 #include <qdatetime.h>
 #include <qdatetimeedit.h>
+#include <qevent.h>
+#include <qlineedit.h>
+#include <qmargins.h>
 
 class ExtensionDatePicker : public ExtensionFormInput {
   Q_OBJECT
@@ -80,7 +84,18 @@ public:
   ExtensionDatePicker() {
     m_input->setCalendarPopup(true);
     m_input->setButtonSymbols(QAbstractSpinBox::NoButtons);
+    m_input->setContentsMargins(0, 0, 0, 0);
+    m_input->setProperty("form-input", true); // used for border styling
+    setAttribute(Qt::WA_TranslucentBackground);
     setWrapped(m_input);
+    setStyleSheet(ThemeService::instance().inputStyleSheet());
+    connect(&ThemeService::instance(), &ThemeService::themeChanged, this,
+            [this]() { setStyleSheet(ThemeService::instance().inputStyleSheet()); });
     connect(m_input, &QDateTimeEdit::dateTimeChanged, this, &ExtensionDatePicker::handleChanged);
+
+    // Use findChild to access the internal QLineEdit since lineEdit() is protected
+    if (auto lineEdit = m_input->findChild<QLineEdit *>()) {
+      lineEdit->setTextMargins(QMargins(10, 5, 10, 5));
+    }
   }
 };
