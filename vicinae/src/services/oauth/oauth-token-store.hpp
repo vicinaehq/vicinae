@@ -4,8 +4,9 @@
 namespace OAuth {
 
 struct TokenSet {
-  QString id;
+  QString extensionId;
   QString accessToken;
+  std::optional<QString> providerId;
   std::optional<QString> refreshToken;
   std::optional<QString> idToken;
   std::optional<QString> scope;
@@ -14,8 +15,9 @@ struct TokenSet {
 };
 
 struct SetTokenSetPayload {
-  QString id;
+  QString extensionId;
   QString accessToken;
+  std::optional<QString> providerId;
   std::optional<QString> refreshToken;
   std::optional<QString> idToken;
   std::optional<QString> scope;
@@ -32,9 +34,10 @@ class TokenStore {
 public:
   TokenStore(OmniDatabase &db);
 
-  std::optional<TokenSet> getTokenSet(const QString &id) const;
+  std::optional<TokenSet> getTokenSet(const QString &extensionId,
+                                      const std::optional<QString> &providerId = {}) const;
   bool setTokenSet(const SetTokenSetPayload &payload) const;
-  bool removeTokenSet(const QString &id) const;
+  bool removeTokenSet(const QString &id, const std::optional<QString> &providerId = {}) const;
   TokenSetList getTokens() const;
 
 private:

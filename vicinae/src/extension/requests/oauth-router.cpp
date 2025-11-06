@@ -44,17 +44,13 @@ PromiseLike<proto::ext::extension::Response *> OAuthRouter::route(const proto::e
 oauth::Response *OAuthRouter::getTokens(const oauth::GetTokensRequest &req) {
   auto res = new oauth::Response;
   auto get = new oauth::GetTokensResponse;
-  QString setId;
+  std::optional<QString> providerId;
 
   res->set_allocated_get_tokens(get);
 
-  if (req.has_provider_id()) {
-    setId = computeTokenSetId(req.provider_id().c_str());
-  } else {
-    setId = m_extensionId;
-  }
+  if (req.has_provider_id()) { providerId = req.provider_id().c_str(); }
 
-  auto set = m_oauth.store().getTokenSet(setId);
+  auto set = m_oauth.store().getTokenSet(m_extensionId, providerId);
 
   if (!set) return res;
 
@@ -71,17 +67,12 @@ oauth::Response *OAuthRouter::getTokens(const oauth::GetTokensRequest &req) {
 }
 
 oauth::Response *OAuthRouter::setTokens(const oauth::SetTokensRequest &req) {
-  QString setId;
-
-  if (req.has_provider_id()) {
-    setId = computeTokenSetId(req.provider_id().c_str());
-  } else {
-    setId = m_extensionId;
-  }
-
   OAuth::SetTokenSetPayload payload;
 
-  payload.id = setId;
+  payload.extensionId = m_extensionId;
+
+  if (req.has_provider_id()) payload.providerId = req.provider_id().c_str();
+
   payload.accessToken = req.access_token().c_str();
 
   if (req.has_refresh_token()) { payload.refreshToken = req.refresh_token().c_str(); }
@@ -95,15 +86,13 @@ oauth::Response *OAuthRouter::setTokens(const oauth::SetTokensRequest &req) {
 }
 
 oauth::Response *OAuthRouter::removeTokens(const oauth::RemoveTokensRequest &req) {
-  QString setId;
+  std::optional<QString> providerId;
 
-  if (req.has_provider_id()) {
-    setId = computeTokenSetId(req.provider_id().c_str());
-  } else {
-    setId = m_extensionId;
+  if (req.has_provider_id()) providerId = req.provider_id().c_str();
+
+  if (!m_oauth.store().removeTokenSet(m_extensionId, providerId)) {
+    throw std::runtime_error("Failed to remove token set");
   }
-
-  if (!m_oauth.store().removeTokenSet(setId)) { throw std::runtime_error("Failed to remove token set"); }
 
   return nullptr;
 }
