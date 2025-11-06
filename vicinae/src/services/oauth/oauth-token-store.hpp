@@ -20,7 +20,7 @@ struct TokenSet {
   std::vector<QString> scopes() const {
     return scope
         .transform([](const QString &scope) { return scope.split(',') | std::ranges::to<std::vector>(); })
-        .value_or({});
+        .value_or(std::vector<QString>());
   }
 
   QString extensionId;
