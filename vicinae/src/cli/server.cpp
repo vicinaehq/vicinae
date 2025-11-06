@@ -93,6 +93,7 @@ void CliServerCommand::run(CLI::App *app) {
     auto emojiService = std::make_unique<EmojiService>(*omniDb.get());
     auto calculatorService = std::make_unique<CalculatorService>(*omniDb.get());
     auto fileService = std::make_unique<FileService>(*omniDb);
+    auto oauthService = std::make_unique<OAuthService>(*omniDb);
     auto extensionRegistry = std::make_unique<ExtensionRegistry>(*localStorage);
     auto raycastStore = std::make_unique<RaycastStoreService>();
     auto vicinaeStore = std::make_unique<VicinaeStoreService>();
@@ -123,7 +124,7 @@ void CliServerCommand::run(CLI::App *app) {
     registry->setRaycastStore(std::move(raycastStore));
     registry->setVicinaeStore(std::move(vicinaeStore));
     registry->setExtensionRegistry(std::move(extensionRegistry));
-    registry->setOAuthService(std::make_unique<OAuthService>());
+    registry->setOAuthService(std::move(oauthService));
     registry->setPowerManager(std::make_unique<PowerManager>());
 
     auto root = registry->rootItemManager();

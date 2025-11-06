@@ -2,6 +2,7 @@
 #include "command-controller.hpp"
 #include "common.hpp"
 #include "extensions/vicinae/list-installed-extensions-command.hpp"
+#include "extensions/vicinae/oauth-token-store/oauth-token-store-view.hpp"
 #include "extensions/vicinae/report-bug-command.hpp"
 #include "navigation-controller.hpp"
 #include "open-about-command.hpp"
@@ -92,6 +93,19 @@ class OpenKeybindSettingsCommand : public BuiltinCallbackCommand {
   }
 };
 
+class OAuthTokenStoreCommand : public BuiltinViewCommand<OAuthTokenStoreView> {
+  QString id() const override { return "oauth-token-store"; }
+  QString name() const override { return "Manage OAuth Token Sets"; }
+  QString description() const override {
+    return "Manage OAuth token sets that have been saved by extensions providing OAuth integrations.";
+  }
+  ImageURL iconUrl() const override {
+    auto icon = ImageURL::builtin("key");
+    icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return icon;
+  }
+};
+
 VicinaeExtension::VicinaeExtension() {
   registerCommand<OpenDocumentationCommand>();
   registerCommand<OpenAboutCommand>();
@@ -107,4 +121,5 @@ VicinaeExtension::VicinaeExtension() {
   registerCommand<OpenKeybindSettingsCommand>();
   registerCommand<VicinaeStoreCommand>();
   registerCommand<VicinaeListInstalledExtensionsCommand>();
+  registerCommand<OAuthTokenStoreCommand>();
 }

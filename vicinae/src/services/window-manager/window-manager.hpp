@@ -13,6 +13,7 @@ public:
   AbstractWindowManager::WindowList listWindowsSync();
   AbstractWindowManager::WindowPtr getFocusedWindow();
   bool canPaste() const;
+  bool focusApp(const AbstractApplication &app) const;
 
   AbstractWindowManager::WindowList findWindowByClass(const QString &wmClass) const;
   AbstractWindowManager::WindowList findAppWindows(const AbstractApplication &app) const;

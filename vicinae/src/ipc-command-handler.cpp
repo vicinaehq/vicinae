@@ -2,6 +2,7 @@
 #include "common.hpp"
 #include "proto/daemon.pb.h"
 #include <QDebug>
+#include "services/oauth/oauth-service.hpp"
 #include "theme/theme-db.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "services/window-manager/window-manager.hpp"
@@ -172,6 +173,8 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
     return tl::unexpected("Unsupported url scheme " + url.scheme().toStdString());
   }
 
+  qDebug() << "goot deeplink" << url.toString();
+
   QUrlQuery query(url.query(QUrl::FullyDecoded));
 
   if (url.host() == "ping") { return {}; }
@@ -341,6 +344,14 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
 
       return {};
     }
+  }
+
+  if (url.host() == "oauth") {
+    auto oauth = m_ctx.services->oauthService();
+    QString code = query.queryItemValue("code");
+    QString state = query.queryItemValue("state");
+    oauth->fullfillRequest(state, code);
+    return {};
   }
 
   if (url.host() == "api") {
