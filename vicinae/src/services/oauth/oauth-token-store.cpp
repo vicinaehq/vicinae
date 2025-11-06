@@ -39,6 +39,7 @@ bool TokenStore::setTokenSet(const SetTokenSetPayload &payload) const {
     return false;
   }
 
+  emit setUpdated(payload.extensionId);
   return true;
 }
 
@@ -55,6 +56,7 @@ bool TokenStore::removeTokenSet(const QString &extensionId, const std::optional<
     return false;
   }
 
+  emit setRemoved(extensionId);
   return true;
 }
 
@@ -89,6 +91,34 @@ std::optional<TokenSet> TokenStore::getTokenSet(const QString &extensionId,
   return set;
 }
 
-TokenSetList TokenStore::getTokens() const { return {}; }
+TokenSetList TokenStore::list() const {
+  auto query = m_db.createQuery();
+
+  query.prepare(R"(
+		SELECT extension_id, provider_id, access_token, refresh_token, id_token, scope, expires_in, updated_at FROM oauth_token_set
+	)");
+
+  if (!query.exec()) {
+    qWarning() << "Failed to list token sets" << query.lastError();
+    return {};
+  }
+
+  TokenSetList sets;
+
+  while (query.next()) {
+    TokenSet set;
+    set.extensionId = query.value(0).toString();
+    if (auto v = query.value(1).toString(); !v.isEmpty()) { set.providerId = v; }
+    set.accessToken = query.value(2).toString();
+    if (auto v = query.value(3); !v.isNull()) { set.refreshToken = v.toString(); }
+    if (auto v = query.value(4); !v.isNull()) { set.idToken = v.toString(); }
+    if (auto v = query.value(5); !v.isNull()) { set.scope = v.toString(); }
+    if (auto v = query.value(6); !v.isNull()) { set.expiresIn = v.toUInt(); }
+    set.updatedAt = query.value(7).toUInt();
+    sets.emplace_back(set);
+  }
+
+  return sets;
+}
 
 }; // namespace OAuth
