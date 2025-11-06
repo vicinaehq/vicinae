@@ -122,7 +122,7 @@ message Response {
     common.AckResponse clear_search = 7;
     common.AckResponse close_main_window = 8;
     common.AckResponse show_hud = 9;
-    common.AckResponse set_search_text = 10; 
+    common.AckResponse set_search_text = 10;
     ConfirmAlertResponse confirm_alert = 11;
     GetSelectedTextResponse get_selected_text = 12;
     common.AckResponse pop_to_root = 13;
@@ -155,9 +155,22 @@ enum ImageMask {
   RoundedRectangle = 2;
 };
 
+message DynamicColor {
+  string light = 1;
+  string dark = 2;
+  optional bool adjust_contrast = 3;
+};
+
+message ColorLike {
+  oneof payload {
+    string raw = 1;
+    DynamicColor dynamic = 2;
+  };
+};
+
 message Image {
   ImageSource source = 1;
   optional ImageSource fallback = 2;
   optional ImageMask mask = 3;
-  optional string color_tint = 4;
+  optional ColorLike color_tint = 4;
 };

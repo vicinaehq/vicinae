@@ -26,6 +26,12 @@
 			"mode": "view"
 		},
 		{
+			"name": "list-icons",
+			"title": "List With Icons",
+			"description": "A list with icons",
+			"mode": "view"
+		},
+		{
 			"name": "controlled-list",
 			"title": "Controlled List",
 			"description": "A list where search is controlled by state",
