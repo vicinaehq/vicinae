@@ -59,6 +59,9 @@ void VerticalMetadata::setMetadata(const std::vector<MetadataItem> &metadatas) {
     if (auto sep = std::get_if<MetadataSeparator>(&metadata)) { stack.add(new HDivider); }
   }
 
+  // Ensure remaining space is placed below content so items stay top-aligned
+  stack.addStretch(1);
+
   stack.imbue(container);
 }
 

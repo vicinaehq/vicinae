@@ -51,25 +51,6 @@ void MarkdownRenderer::insertIfNotFirstBlock() {
   _cursor.insertBlock();
 }
 
-void MarkdownRenderer::insertHeading(const QString &text, int level) {
-  QTextBlockFormat blockFormat;
-  QTextCharFormat charFormat;
-
-  insertIfNotFirstBlock();
-
-  // blockFormat.setAlignment(Qt::AlignLeft);
-  blockFormat.setTopMargin(level == 1 ? 20 : 15);
-  blockFormat.setBottomMargin(level == 1 ? 15 : 10);
-
-  charFormat.setFont(_document->defaultFont());
-  charFormat.setFontPointSize(getHeadingLevelPointSize(level));
-  charFormat.setFontWeight(QFont::Bold);
-
-  _cursor.setBlockFormat(blockFormat);
-  _cursor.setBlockCharFormat(charFormat);
-  _cursor.insertText(text);
-}
-
 void MarkdownRenderer::insertImage(cmark_node *node) {
   static std::vector<const char *> widthAttributes = {"raycast-width", "omnicast-width"};
   static std::vector<const char *> heightAttributes = {"raycast-height", "omnicast-height"};
@@ -587,14 +568,30 @@ void MarkdownRenderer::parseAndInsertHtmlImages(const QString &html) {
 void MarkdownRenderer::setBaseTextColor(const ColorLike &color) { m_baseTextColor = color; }
 
 void MarkdownRenderer::insertHeading(cmark_node *node) {
-  auto textNode = cmark_node_first_child(node);
-
-  if (cmark_node_get_type(textNode) != CMARK_NODE_TEXT) { return; }
-
   int level = cmark_node_get_heading_level(node);
-  auto text = cmark_node_get_literal(textNode);
 
-  insertHeading(text, level);
+  QTextBlockFormat blockFormat;
+  QTextCharFormat charFormat;
+
+  insertIfNotFirstBlock();
+
+  blockFormat.setTopMargin(level == 1 ? 20 : 15);
+  blockFormat.setBottomMargin(level == 1 ? 15 : 10);
+
+  charFormat.setFont(_document->defaultFont());
+  charFormat.setFontPointSize(getHeadingLevelPointSize(level));
+  charFormat.setFontWeight(QFont::Bold);
+
+  _cursor.setBlockFormat(blockFormat);
+  _cursor.setBlockCharFormat(charFormat);
+
+  // Render all inline children like inline code
+  for (auto *child = cmark_node_first_child(node); child; child = cmark_node_next(child)) {
+    QTextCharFormat childFormat = charFormat;
+    insertSpan(child, childFormat);
+    // Return to heading format
+    _cursor.setCharFormat(charFormat);
+  }
 }
 
 void MarkdownRenderer::insertTopLevelNode(cmark_node *node) {
