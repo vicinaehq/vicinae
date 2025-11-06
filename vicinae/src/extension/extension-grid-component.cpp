@@ -154,11 +154,9 @@ void ExtensionGridComponent::onSelectionChanged(const GridItemViewModel *next) {
   if (auto handler = _model.onSelectionChanged) { notify(*handler, {next->id}); }
 }
 
-void ExtensionGridComponent::handleDebouncedSearchNotification() { auto text = searchText(); }
+void ExtensionGridComponent::handleDebouncedSearchNotification() {
+  auto text = searchText();
 
-void ExtensionGridComponent::onItemActivated(const GridItemViewModel &item) { executePrimaryAction(); }
-
-void ExtensionGridComponent::textChanged(const QString &text) {
   if (_model.filtering) {
     m_list->setFilter(text);
   } else {
@@ -176,6 +174,16 @@ void ExtensionGridComponent::textChanged(const QString &text) {
     if (_model.emptyView) { m_content->setCurrentWidget(m_emptyView); }
   } else {
     m_content->setCurrentWidget(m_list);
+  }
+}
+
+void ExtensionGridComponent::onItemActivated(const GridItemViewModel &item) { executePrimaryAction(); }
+
+void ExtensionGridComponent::textChanged(const QString &text) {
+  if (_model.throttle) {
+    _debounce->start();
+  } else {
+    handleDebouncedSearchNotification();
   }
 }
 
