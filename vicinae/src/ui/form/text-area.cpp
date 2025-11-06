@@ -40,6 +40,7 @@ void TextArea::setupUI() {
   m_textEdit->installEventFilter(this);
   m_notifier->track(m_textEdit);
   setFocusProxy(m_textEdit);
+  setAttribute(Qt::WA_TranslucentBackground);
   setGrowAsRequired(true);
   setTabSetFocus(true);
   setMargins(10);

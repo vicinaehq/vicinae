@@ -87,16 +87,19 @@ QString ThemeService::inputStyleSheet() {
    * rules can help fix issues that would be hard to fix otherwise.
    */
   auto style = engine.build(R"(
-  		QLineEdit, QTextEdit, QPlainTextEdit {
+  		QLineEdit, QTextEdit, QPlainTextEdit, QDateTimeEdit {
 			font-size: {FONT_SIZE}pt;
 			background-color: transparent;
 			border: 2px solid {INPUT_BORDER_COLOR};
 			border-radius: 5px;
 		}
 
-		QLineEdit[form-input="true"]:focus, QTextEdit[form-input="true"]:focus, QPlainTextEdit[form-input="true"]:focus  {
+		QLineEdit[form-input="true"]:focus,
+    QTextEdit[form-input="true"]:focus,
+    QPlainTextEdit[form-input="true"]:focus,
+    QDateTimeEdit[form-input="true"]:focus {
 			border-color: {INPUT_FOCUS_BORDER_COLOR};
-		}
+    }
 	)");
 
   return style;
@@ -125,7 +128,7 @@ QString ThemeService::nativeFilePickerStyleSheet() {
 void ThemeService::applyBaseStyle() {
   // we can't really fix that other way than using css
   const char *stylesheet = R"(
-  		QLineEdit, QTextEdit, QPlainTextEdit {
+  		QLineEdit, QTextEdit, QPlainTextEdit, QDateTimeEdit {
 			background-color: transparent;
 			border: none;
  		}
@@ -134,10 +137,10 @@ void ThemeService::applyBaseStyle() {
 			border-radius: 5px;
 		}
 
-		QScrollArea, 
+		QScrollArea,
 		QScrollArea > QWidget,
-		QScrollArea > QWidget > QWidget { 
-			background: transparent; 
+		QScrollArea > QWidget > QWidget {
+			background: transparent;
 		}
 	)";
 
