@@ -25,10 +25,10 @@ ListItemViewModel ListModelParser::parseListItem(const QJsonObject &instance, si
   auto children = instance.value("children").toArray();
 
   model.id = props["id"].toString(QString::number(index));
-
   model.title = props["title"].toString();
   model.subtitle = props["subtitle"].toString();
-  model.icon = parseListItemIcon(props.value("icon"));
+
+  if (props.contains("icon")) { model.icon = parseListItemIcon(props.value("icon")); }
 
   {
     auto keywords = props.value("keywords").toArray();
