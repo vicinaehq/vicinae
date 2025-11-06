@@ -1,9 +1,11 @@
 #include "static-image-loader.hpp"
 #include "ui/image/url.hpp"
+#include "ui/omni-painter/omni-painter.hpp"
 #include <qimagereader.h>
 #include <QtConcurrent/QtConcurrent>
 #include <qnamespace.h>
 #include <qstringview.h>
+#include <qpainter.h>
 
 QImage StaticIODeviceImageLoader::loadStatic(const QByteArray &bytes, const RenderConfig &cfg) {
   QSize deviceSize = cfg.size * cfg.devicePixelRatio;
@@ -20,6 +22,27 @@ QImage StaticIODeviceImageLoader::loadStatic(const QByteArray &bytes, const Rend
   }
 
   auto image = reader.read();
+
+  // Apply tint if provided
+  if (cfg.fill) {
+    QPixmap pixmap = QPixmap::fromImage(image);
+    QPixmap tintedPixmap(pixmap.size());
+    tintedPixmap.fill(Qt::transparent);
+
+    QPainter painter(&tintedPixmap);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+
+    // Draw the original image
+    painter.drawPixmap(0, 0, pixmap);
+
+    // Apply tint using SourceIn composition mode (tints non-transparent pixels)
+    painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
+    QColor fillColor = OmniPainter::resolveColor(*cfg.fill);
+    painter.fillRect(tintedPixmap.rect(), fillColor);
+
+    image = tintedPixmap.toImage();
+  }
 
   image.setDevicePixelRatio(cfg.devicePixelRatio);
 

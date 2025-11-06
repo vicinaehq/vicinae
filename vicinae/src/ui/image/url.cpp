@@ -99,7 +99,32 @@ ImageURL::ImageURL(const proto::ext::ui::Image &image) {
   using Source = proto::ext::ui::ImageSource;
   ExtensionImageModel model;
 
-  if (image.has_color_tint()) { model.tintColor = ImageURL::tintForName(image.color_tint().c_str()); }
+  if (image.has_color_tint()) {
+    const auto &colorLike = image.color_tint();
+    switch (colorLike.payload_case()) {
+    case proto::ext::ui::ColorLike::kRaw: {
+      QString raw = colorLike.raw().c_str();
+      if (auto tint = ImageURL::tintForName(raw); tint != SemanticColor::InvalidTint) {
+        model.tintColor = tint;
+      } else {
+        model.tintColor = raw;
+      }
+      break;
+    }
+    case proto::ext::ui::ColorLike::kDynamic: {
+      const auto &dynamic = colorLike.dynamic();
+      DynamicColor dynamicColor{.light = dynamic.light().c_str(),
+                                .dark = dynamic.dark().c_str(),
+                                .adjustContrast =
+                                    dynamic.has_adjust_contrast() ? dynamic.adjust_contrast() : true};
+      model.tintColor = dynamicColor;
+      break;
+    }
+    default:
+      break;
+    }
+  }
+
   if (image.has_mask()) {
     switch (image.mask()) {
     case proto::ext::ui::ImageMask::Circle:
