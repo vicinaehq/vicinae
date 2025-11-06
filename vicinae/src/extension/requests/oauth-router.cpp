@@ -123,9 +123,6 @@ OAuthRouter::authorize(const proto::ext::oauth::AuthorizeRequest &req) {
     auto authorizeRes = new oauth::AuthorizeResponse();
 
     view->showSuccess();
-
-    qDebug() << "Got oauth response" << oauthRes->code;
-
     authorizeRes->set_code(oauthRes->code.toStdString());
     ores->set_allocated_authorize(authorizeRes);
     resData->set_allocated_oauth(ores);
