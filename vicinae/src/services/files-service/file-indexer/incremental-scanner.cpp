@@ -38,25 +38,49 @@ std::vector<fs::path> IncrementalScanner::getScannableDirectories(const fs::path
   std::error_code ec;
   FileSystemWalker walker;
 
+  /**
+   * We could have used the max last modified time of indexed files under this path
+   * but in the event that a file was missed for whatever reason, it would never be picked up again.
+   * Since it is assumed that incremental and full scans are more reliable than watchers, we simply use the
+   * last successful scan time (full or incremental).
+   */
+
   scannableDirs.emplace_back(path);
+  auto lastSuccessfulScan = m_read_db->getLastSuccessfulScan(path);
+
+  // This should not happen as we would have run a full scan before coming here
+  if (!lastSuccessfulScan.has_value()) {
+    qCritical() << "No previous successful scan found for incremental scan at" << path.c_str();
+    return scannableDirs;
+  }
 
   walker.setMaxDepth(maxDepth);
   walker.walk(path, [&](const fs::directory_entry &entry) {
     if (!entry.is_directory(ec)) return;
-
-    auto lastScanned = m_read_db->retrieveIndexedLastModified(entry);
-
-    if (auto lastModified = fs::last_write_time(entry, ec); lastScanned.has_value() && !ec) {
-      using namespace std::chrono;
-      auto sctp = clock_cast<system_clock>(lastModified);
-      auto lastModifiedDate =
-          QDateTime::fromSecsSinceEpoch(duration_cast<seconds>(sctp.time_since_epoch()).count());
-
-      if (lastScanned < lastModifiedDate) { scannableDirs.emplace_back(entry.path()); }
-    }
+    bool shouldProcess = shouldProcessEntry(entry, lastSuccessfulScan->createdAt);
+    if (shouldProcess) { scannableDirs.emplace_back(entry.path()); }
   });
 
   return scannableDirs;
+}
+
+bool IncrementalScanner::shouldProcessEntry(const fs::directory_entry &entry,
+                                            const QDateTime &cutOffDateTime) const {
+  std::error_code ec;
+  bool shouldProcess = false;
+
+  if (auto lastModified = fs::last_write_time(entry, ec); !ec) {
+    using namespace std::chrono;
+    auto sctp = clock_cast<system_clock>(lastModified);
+    auto lastModifiedDate =
+        QDateTime::fromSecsSinceEpoch(duration_cast<seconds>(sctp.time_since_epoch()).count());
+
+    // Only process if directory was modified after the cutoff or equal (to be safe)
+    return lastModifiedDate >= cutOffDateTime;
+  }
+
+  // If we can't get mtime, process anyway to be safe
+  return true;
 }
 
 void IncrementalScanner::scan(const Scan &scan) {

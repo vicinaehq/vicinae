@@ -31,10 +31,12 @@ public:
   static QString createRandomConnectionId();
   static std::filesystem::path getDatabasePath();
 
-  std::vector<ScanRecord> listScans();
-  std::optional<ScanRecord> getLastScan() const;
+  std::optional<ScanRecord> getLastScan(const std::filesystem::path &path, ScanType scanType) const;
+  std::optional<FileIndexerDatabase::ScanRecord>
+  getLastSuccessfulScan(const std::filesystem::path &path) const;
 
-  std::vector<ScanRecord> listStartedScans();
+  std::vector<ScanRecord> listScans();
+  std::vector<ScanRecord> listScans(ScanType scanType, ScanStatus scanStatus);
 
   bool updateScanStatus(int scanId, ScanStatus status);
   tl::expected<ScanRecord, QString> createScan(const std::filesystem::path &path, ScanType type);
