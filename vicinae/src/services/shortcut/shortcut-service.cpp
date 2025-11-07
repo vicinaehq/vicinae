@@ -48,6 +48,16 @@ Shortcut *ShortcutService::findById(const QString &id) {
   return nullptr;
 }
 
+Shortcut *ShortcutService::findByName(const QString &name) {
+  if (auto it = std::ranges::find_if(
+          m_shortcuts, [&](auto bk) { return name.compare(bk->name(), Qt::CaseInsensitive) == 0; });
+      it != m_shortcuts.end()) {
+    return it->get();
+  }
+
+  return nullptr;
+}
+
 bool ShortcutService::registerVisit(const QString &id) {
   {
     QSqlQuery query = m_db.createQuery();
