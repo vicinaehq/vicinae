@@ -1,7 +1,10 @@
 #include "root-item-manager.hpp"
-#include "root-search.hpp"
+#include "lib/fts_fuzzy.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
+#include "timer.hpp"
 #include "utils.hpp"
+#include <algorithm>
+#include <iterator>
 #include <qlogging.h>
 #include <ranges>
 
@@ -95,6 +98,7 @@ void RootItemManager::updateIndex() {
 
   if (!m_db.db().commit()) { qWarning() << "Failed to commit transaction" << m_db.db().lastError(); }
 
+  m_filteredItems = m_items;
   isReloading = false;
   emit itemsChanged();
 }
@@ -145,42 +149,48 @@ bool RootItemManager::upsertProvider(const RootProvider &provider) {
 
 std::vector<std::shared_ptr<RootItem>>
 RootItemManager::prefixSearch(const QString &query, const RootItemPrefixSearchOptions &opts) {
-  RootSearcher searcher(m_metadata);
-  std::vector<RootSearcher::ScoredItem> results;
+  Timer timer;
+  auto filterDisabled = [&](auto &&item) {
+    return opts.includeDisabled || itemMetadata(item->uniqueId()).isEnabled;
+  };
 
-  if (!opts.includeDisabled) {
-    std::vector<std::shared_ptr<RootItem>> candidates;
+  std::string pattern = query.toStdString();
+  auto score = [&](const std::shared_ptr<RootItem> &item) -> int {
+    std::string cur = item->displayName().toStdString();
+    int score = 0;
 
-    for (const auto &item : m_items) {
-      if (itemMetadata(item->uniqueId()).isEnabled) { candidates.emplace_back(item); }
+    if (fts::fuzzy_match(pattern.c_str(), cur.c_str(), score)) return score;
+
+    cur = item->subtitle().toStdString();
+
+    if (fts::fuzzy_match(pattern.c_str(), cur.c_str(), score)) return score;
+
+    for (const auto &kw : item->keywords()) {
+      cur = kw.toStdString();
+      if (fts::fuzzy_match(pattern.c_str(), cur.c_str(), score)) return score;
     }
 
-    results = searcher.search(candidates, query);
-  } else {
-    results = searcher.search(m_items, query);
-  }
+    return 0;
+  };
 
-  std::ranges::sort(results, [this, &query](const auto &a, const auto &b) {
-    auto ameta = itemMetadata(a.item->uniqueId());
-    auto bmeta = itemMetadata(b.item->uniqueId());
+  // we need stable sort to avoid flickering when updating quickly
+  std::ranges::stable_sort(m_items, [&](const auto &a, const auto &b) {
+    auto ameta = itemMetadata(a->uniqueId());
+    auto bmeta = itemMetadata(b->uniqueId());
     bool aHasAlias = !ameta.alias.isEmpty() && ameta.alias.startsWith(query, Qt::CaseInsensitive);
     bool bHasAlias = !bmeta.alias.isEmpty() && bmeta.alias.startsWith(query, Qt::CaseInsensitive);
 
+    // avoid computing scores for non enabled items, filtered later
+    if (ameta.isEnabled != bmeta.isEnabled) return ameta.isEnabled > bmeta.isEnabled;
     if (aHasAlias - bHasAlias) { return aHasAlias > bHasAlias; }
 
-    auto ascore = a.score * computeScore(ameta, a.item->baseScoreWeight());
-    auto bscore = b.score * computeScore(bmeta, b.item->baseScoreWeight());
+    double ascore = score(a) * computeScore(ameta, a->baseScoreWeight());
+    double bscore = score(b) * computeScore(bmeta, b->baseScoreWeight());
 
     return ascore > bscore;
   });
 
-  std::vector<std::shared_ptr<RootItem>> items;
-  items.reserve(results.size());
-  for (const auto &result : results) {
-    items.emplace_back(result.item);
-  }
-
-  return items;
+  return m_items | std::views::filter(filterDisabled) | std::views::take(50) | std::ranges::to<std::vector>();
 }
 
 bool RootItemManager::setItemEnabled(const QString &id, bool value) {

@@ -3,10 +3,10 @@ set(CMAKE_AUTORCC ON)
 set(LIBS)
 set(TARGET vicinae)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets Sql Network Svg DBus)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets Sql Network Svg DBus Concurrent)
 find_package(OpenSSL REQUIRED)
 
-list(APPEND LIBS  Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus ${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY} protobuf::libprotobuf minizip OpenSSL::Crypto wayland-client xdgpp qt6keychain)
+list(APPEND LIBS  Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus Qt6::Concurrent ${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY} protobuf::libprotobuf minizip OpenSSL::Crypto wayland-client xdgpp qt6keychain)
 
 set(WLR_CLIP_BIN ${CMAKE_BINARY_DIR}/wlr-clip/wlr-clip${CMAKE_EXECUTABLE_SUFFIX})
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)
@@ -606,8 +606,6 @@ set(SRCS
 
 	src/ui/arg-completer/arg-completer.hpp
 	src/ui/arg-completer/arg-completer.cpp
-
-	src/root-search.cpp
 
 	src/services/window-manager/window-manager.cpp
 
