@@ -190,8 +190,10 @@ public:
     QFile file(m_configFile);
 
     doc.setObject(obj);
-    file.remove();
-    if (!file.open(QIODevice::WriteOnly)) { return; }
+    if (!file.open(QIODevice::WriteOnly)) {
+      qWarning() << "Failed to open config file for writing";
+      return;
+    }
     file.write(doc.toJson());
     qDebug() << "write config";
   }
