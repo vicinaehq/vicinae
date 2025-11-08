@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { ImageLike } from "../image";
+import { ImageLike, serializeProtoImage } from "../image";
 
 export type EmptyViewProps = {
 	title?: string;
@@ -8,6 +8,15 @@ export type EmptyViewProps = {
 	actions?: ReactNode;
 };
 
-export const EmptyView: React.FC<EmptyViewProps> = ({ actions, ...props }) => {
-	return <empty-view {...props}>{actions}</empty-view>;
+export const EmptyView: React.FC<EmptyViewProps> = ({
+	actions,
+	icon,
+	...props
+}) => {
+	const serializedIcon = icon ? serializeProtoImage(icon) : icon;
+	return (
+		<empty-view {...props} icon={serializedIcon}>
+			{actions}
+		</empty-view>
+	);
 };

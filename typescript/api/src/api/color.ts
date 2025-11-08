@@ -24,9 +24,9 @@ export enum Color {
 }
 
 export type ColorLike = Color.Dynamic | Color.Raw | Color;
-export type SerializedColorLike = Color.Dynamic | string;
+export type SerializedColorLike = ui.ColorLike;
 
-export const serializeColorLike = (color: ColorLike): ui.ColorLike => {
+export const serializeColorLike = (color: ColorLike): SerializedColorLike => {
 	const colorLike = ui.ColorLike.create();
 
 	if (typeof color === "string") {

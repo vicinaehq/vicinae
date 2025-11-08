@@ -1,6 +1,6 @@
 import { ReactNode, Ref } from "react";
 import { useImperativeFormHandle } from "../hooks/use-imperative-form-handle";
-import { ImageLike } from "../image";
+import { type ImageLike, serializeProtoImage } from "../image";
 import { Dropdown as MainDropdown } from "./dropdown";
 
 type FormProps = {
@@ -242,7 +242,8 @@ const TagPickerItem: React.FC<{
 	value: string;
 	icon: ImageLike;
 }> = ({ icon, ...props }) => {
-	return <tag-picker-item {...props} icon={icon} />;
+	const serializedIcon = icon ? serializeProtoImage(icon) : icon;
+	return <tag-picker-item {...props} icon={serializedIcon} />;
 };
 
 const TagPicker = Object.assign(TagPickerRoot, {
