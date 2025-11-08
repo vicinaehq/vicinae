@@ -8,4 +8,4 @@ Terminal=false
 Icon=vicinae
 Categories=System;Utility;
 NoDisplay=true
-MimeType=x-scheme-handler/vicinae;x-scheme-handler/raycast;
+MimeType=x-scheme-handler/vicinae;x-scheme-handler/raycast;x-scheme-handler/com.raycast;

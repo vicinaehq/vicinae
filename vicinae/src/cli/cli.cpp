@@ -389,7 +389,8 @@ int CommandLineApp::run(int ac, char **av) {
   // i.e vicinae vicinae://extensions/vicinae/clipboard/history
   if (ac == 2) {
     QString arg = av[1];
-    auto pred = [&](const QString &scheme) { return arg.startsWith(scheme + "://"); };
+    // raycast:// or com.raycast:/
+    auto pred = [&](const QString &scheme) { return arg.startsWith(scheme + ":/"); };
     bool hasScheme = std::ranges::any_of(Omnicast::APP_SCHEMES, pred);
     if (hasScheme) {
       char *subAv[] = {av[0], strdup("deeplink"), strdup(arg.toStdString().c_str()), nullptr};
