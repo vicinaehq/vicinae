@@ -1,6 +1,7 @@
 #pragma once
 #include "action-panel/action-panel.hpp"
 #include "actions/theme/theme-actions.hpp"
+#include "fuzzy/weighted-fuzzy-scorer.hpp"
 #include "lib/fts_fuzzy.hpp"
 #include "navigation-controller.hpp"
 #include "simple-view.hpp"
@@ -119,23 +120,20 @@ public:
   void renderFiltered(const QString &query) {
     std::string sq = query.toStdString();
     auto score = [&](const std::shared_ptr<Actionnable> &action) -> int {
-      auto scoreString = [&](const QString &str) {
-        std::string s = str.toStdString();
-        int sc = 0;
-        fts::fuzzy_match(sq.c_str(), s.c_str(), sc);
-        return sc;
-      };
-      auto scores = action->searchStrings() | std::views::transform(scoreString);
-      return *std::ranges::max_element(scores);
+      fuzzy::WeightedScorer scorer;
+      auto strs = action->searchStrings();
+      scorer.reserve(strs.size());
+      for (const auto &str : strs) {
+        scorer.add(str.toStdString());
+      }
+      return scorer.score(sq);
     };
 
     auto filterScore = [&](auto &&scored) { return sq.empty() || scored.second > 0; };
     auto scored =
         QtConcurrent::blockingMapped(m_data, [&](const auto &item) { return std::pair{item, score(item)}; });
     auto filtered = QtConcurrent::blockingFiltered(scored, filterScore);
-
     std::ranges::stable_sort(scored, [&](auto &&a, auto &&b) { return a.second > b.second; });
-
     render(filtered | std::views::transform([](auto &&tr) { return tr.first; }));
   }
 

@@ -1,6 +1,6 @@
 #include "extension-grid.hpp"
 #include "layout.hpp"
-#include "lib/fts_fuzzy.hpp"
+#include "lib/fuzzy/weighted-fuzzy-scorer.hpp"
 #include "ui/omni-grid/omni-grid.hpp"
 #include "ui/omni-grid/grid-item-content-widget.hpp"
 #include "ui/image/image.hpp"
@@ -155,22 +155,15 @@ int ExtensionGridList::computeItemScore(const GridItemViewModel &item, const std
   static const constexpr double TITLE_WEIGHT = 1;
   static const constexpr double SUBTITLE_WEIGHT = 0.6;
   static const constexpr double KEYWORD_WEIGHT = 0.3;
-  std::vector<std::pair<std::string, double>> searchables;
+  fuzzy::WeightedScorer scorer;
 
-  searchables.reserve(2 + item.keywords.size());
-  searchables.emplace_back(std::pair{item.title.toStdString(), TITLE_WEIGHT});
-  searchables.emplace_back(std::pair{item.subtitle.toStdString(), SUBTITLE_WEIGHT});
+  scorer.reserve(2 + item.keywords.size());
+  scorer.add(item.title.toStdString(), TITLE_WEIGHT);
+  scorer.add(item.subtitle.toStdString(), SUBTITLE_WEIGHT);
   for (const auto &kw : item.keywords) {
-    searchables.emplace_back(std::pair{kw.toStdString(), KEYWORD_WEIGHT});
+    scorer.add(kw.toStdString(), KEYWORD_WEIGHT);
   }
-
-  auto scores = searchables | std::views::transform([&](auto &&a) {
-                  int score = 0;
-                  if (fts::fuzzy_match(query.c_str(), a.first.c_str(), score)) {}
-                  return static_cast<int>(score * a.second);
-                });
-
-  return *std::ranges::max_element(scores);
+  return scorer.score(query);
 }
 
 void ExtensionGridList::render(OmniList::SelectionPolicy selectionPolicy) {
