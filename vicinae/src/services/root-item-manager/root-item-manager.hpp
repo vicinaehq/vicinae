@@ -221,7 +221,15 @@ signals:
   void fallbackDisabled(const QString &id) const;
 
 public:
-  using ItemList = std::vector<std::shared_ptr<RootItem>>;
+  using ItemPtr = std::shared_ptr<RootItem>;
+  using ItemList = std::vector<ItemPtr>;
+  struct ScoredItem {
+    QString alias;
+    int score = 0;
+    bool matches = false;
+    bool enabled = false;
+    ItemPtr item;
+  };
 
   RootItemManager(OmniDatabase &db) : m_db(db) {}
 
@@ -292,14 +300,14 @@ public:
   RootProvider *provider(const QString &id) const;
   std::vector<std::shared_ptr<RootItem>> allItems() const { return m_items; }
   std::vector<std::shared_ptr<RootItem>> fallbackItems() const;
-  std::vector<std::shared_ptr<RootItem>> prefixSearch(const QString &query,
-                                                      const RootItemPrefixSearchOptions &opts = {});
+  std::vector<ScoredItem> prefixSearch(const QString &query, const RootItemPrefixSearchOptions &opts = {});
   RootItemMetadata loadMetadata(const QString &id);
   bool upsertProvider(const RootProvider &provider);
   bool upsertItem(const QString &providerId, const RootItem &item);
   RootItem *findItemById(const QString &id) const;
   bool pruneProvider(const QString &id);
 
+private:
   std::unordered_map<QString, RootItemMetadata> m_metadata;
   std::unordered_map<QString, RootProviderMetadata> m_provider_metadata;
   std::vector<std::unique_ptr<RootProvider>> m_providers;

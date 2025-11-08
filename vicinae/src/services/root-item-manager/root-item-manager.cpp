@@ -1,4 +1,5 @@
 #include "root-item-manager.hpp"
+#include "fuzzy/weighted-fuzzy-scorer.hpp"
 #include "lib/fts_fuzzy.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "timer.hpp"
@@ -6,6 +7,7 @@
 #include <algorithm>
 #include <iterator>
 #include <qlogging.h>
+#include <qtconcurrentfilter.h>
 #include <ranges>
 
 std::vector<std::shared_ptr<RootItem>> RootItemManager::fallbackItems() const {
@@ -147,50 +149,55 @@ bool RootItemManager::upsertProvider(const RootProvider &provider) {
   return true;
 }
 
-std::vector<std::shared_ptr<RootItem>>
+std::vector<RootItemManager::ScoredItem>
 RootItemManager::prefixSearch(const QString &query, const RootItemPrefixSearchOptions &opts) {
   Timer timer;
-  auto filterDisabled = [&](auto &&item) {
-    return opts.includeDisabled || itemMetadata(item->uniqueId()).isEnabled;
-  };
-
   std::string pattern = query.toStdString();
-  auto score = [&](const std::shared_ptr<RootItem> &item) -> int {
-    std::string cur = item->displayName().toStdString();
-    int score = 0;
-
-    if (fts::fuzzy_match(pattern.c_str(), cur.c_str(), score)) return score;
-
-    cur = item->subtitle().toStdString();
-
-    if (fts::fuzzy_match(pattern.c_str(), cur.c_str(), score)) return score;
-
-    for (const auto &kw : item->keywords()) {
-      cur = kw.toStdString();
-      if (fts::fuzzy_match(pattern.c_str(), cur.c_str(), score)) return score;
+  auto score = [&](const std::shared_ptr<RootItem> &item, const QString &alias) -> int {
+    fuzzy::WeightedScorer scorer;
+    auto kws = item->keywords();
+    scorer.reserve(3 + kws.size());
+    scorer.add(item->displayName().toStdString(), 1);
+    scorer.add(alias.toStdString(), 1);
+    scorer.add(item->subtitle().toStdString(), 0.6);
+    for (const auto &kw : kws) {
+      scorer.add(kw.toStdString(), 0.3);
     }
-
-    return 0;
+    return scorer.score(pattern);
   };
 
-  // we need stable sort to avoid flickering when updating quickly
-  std::ranges::stable_sort(m_items, [&](const auto &a, const auto &b) {
-    auto ameta = itemMetadata(a->uniqueId());
-    auto bmeta = itemMetadata(b->uniqueId());
-    bool aHasAlias = !ameta.alias.isEmpty() && ameta.alias.startsWith(query, Qt::CaseInsensitive);
-    bool bHasAlias = !bmeta.alias.isEmpty() && bmeta.alias.startsWith(query, Qt::CaseInsensitive);
+  // we compute all scores and required info in parallel to speed things up.
+  // this is safe as all we do is read data.
+  auto scored = QtConcurrent::blockingMapped(m_items, [&](auto &&item) {
+    ScoredItem scored;
+    RootItemMetadata meta = itemMetadata(item->uniqueId());
+    scored.item = item;
+    scored.enabled = meta.isEnabled;
 
-    // avoid computing scores for non enabled items, filtered later
-    if (ameta.isEnabled != bmeta.isEnabled) return ameta.isEnabled > bmeta.isEnabled;
-    if (aHasAlias - bHasAlias) { return aHasAlias > bHasAlias; }
+    // do not spend time computing score if it's disabled
+    if (!meta.isEnabled && !opts.includeDisabled) return scored;
 
-    double ascore = score(a) * computeScore(ameta, a->baseScoreWeight());
-    double bscore = score(b) * computeScore(bmeta, b->baseScoreWeight());
-
-    return ascore > bscore;
+    int fuzzyScore = score(item, meta.alias);
+    scored.matches = fuzzyScore > 0;
+    scored.score = fuzzyScore * computeScore(meta, item->baseScoreWeight());
+    scored.alias = meta.alias;
+    return scored;
+  });
+  auto filtered = QtConcurrent::blockingFiltered(scored, [&](auto &&scored) {
+    return query.isEmpty() || ((opts.includeDisabled || scored.enabled) && scored.matches);
   });
 
-  return m_items | std::views::filter(filterDisabled) | std::views::take(50) | std::ranges::to<std::vector>();
+  // we need stable sort to avoid flickering when updating quickly
+  std::ranges::stable_sort(filtered, [&](const auto &a, const auto &b) {
+    bool aHasAlias = !a.alias.isEmpty() && a.alias.startsWith(query, Qt::CaseInsensitive);
+    bool bHasAlias = !b.alias.isEmpty() && b.alias.startsWith(query, Qt::CaseInsensitive);
+    if (aHasAlias - bHasAlias) { return aHasAlias > bHasAlias; }
+    return a.score > b.score;
+  });
+
+  // timer.time("root search");
+
+  return filtered;
 }
 
 bool RootItemManager::setItemEnabled(const QString &id, bool value) {

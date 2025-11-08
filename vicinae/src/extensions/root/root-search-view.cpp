@@ -1,6 +1,5 @@
 #include "root-search-view.hpp"
 #include "misc/file-list-item.hpp"
-#include "services/window-manager/abstract-window-manager.hpp"
 #include "ui/views/base-view.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "service-registry.hpp"
@@ -342,7 +341,7 @@ void RootSearchView::render(const QString &text) {
   auto searchResults = rootItemManager->prefixSearch(text.trimmed());
 
   for (const auto &item : searchResults) {
-    results.addItem(std::make_unique<RootSearchItem>(item));
+    results.addItem(std::make_unique<RootSearchItem>(item.item));
   }
 
   if (!m_fileResults.empty()) {
