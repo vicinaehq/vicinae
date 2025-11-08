@@ -304,6 +304,14 @@ void FileIndexerDatabase::deleteIndexedFiles(const std::vector<fs::path> &paths)
   if (!m_db.commit()) { qCritical() << "Failed to commit"; }
 }
 
+void FileIndexerDatabase::deleteAllIndexedFiles() {
+  QSqlQuery query(m_db);
+
+  if (!query.exec("DELETE FROM indexed_file")) {
+    qCritical() << "Failed to delete all indexed files" << query.lastError();
+  }
+}
+
 void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
   if (!m_db.transaction()) {
     qWarning() << "Failed to start batch transaction" << m_db.lastError();

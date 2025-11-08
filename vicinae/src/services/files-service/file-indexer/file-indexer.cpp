@@ -9,6 +9,7 @@
 #include <QDebug>
 #include <ranges>
 #include <unistd.h>
+#include <thread>
 
 namespace fs = std::filesystem;
 
@@ -21,17 +22,27 @@ static const std::vector<fs::path> EXCLUDED_PATHS = {"/sys", "/run",     "/proc"
                                                      "/mnt", "/var/tmp", "/efi",  "/dev"};
 
 void FileIndexer::startFullScan() {
-  for (auto const &[id, scan] : m_dispatcher.scans()) {
-    if (scan.type == ScanType::Full || scan.type == ScanType::Watcher) { m_dispatcher.interrupt(id); }
-  }
+  m_dispatcher.interruptAll();
 
-  for (const auto &entrypoint : m_entrypoints) {
-    m_dispatcher.enqueue({.type = ScanType::Full, .path = entrypoint});
-  }
+  // Prevent starting the full scan and watchers before deletion is done
+  std::thread([this]() {
+    qInfo() << "Starting full scan, clearing existing index...";
 
-  for (const auto &entrypoint : m_watcherPaths) {
-    m_dispatcher.enqueue({.type = ScanType::Watcher, .path = entrypoint});
-  }
+    // Delete all indexed files, then enqueue new scans in the completion callback
+    m_writer->deleteAllIndexedFiles([this]() {
+      qInfo() << "Existing index cleared, enqueuing full scan tasks...";
+
+      for (const auto &entrypoint : m_entrypoints) {
+        qInfo() << "Enqueuing full scan for" << entrypoint.c_str();
+        m_dispatcher.enqueue({.type = ScanType::Full, .path = entrypoint});
+      }
+
+      for (const auto &entrypoint : m_watcherPaths) {
+        qInfo() << "Enqueuing watcher scan for" << entrypoint.c_str();
+        m_dispatcher.enqueue({.type = ScanType::Watcher, .path = entrypoint});
+      }
+    });
+  }).detach();
 }
 
 void FileIndexer::startSingleScan(std::filesystem::path entrypoint, ScanType type,
