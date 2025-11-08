@@ -1,11 +1,15 @@
 #pragma once
 #include "action-panel/action-panel.hpp"
 #include "actions/theme/theme-actions.hpp"
+#include "fuzzy/weighted-fuzzy-scorer.hpp"
+#include "lib/fts_fuzzy.hpp"
 #include "navigation-controller.hpp"
 #include "simple-view.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include "ui/search-bar/search-bar.hpp"
 #include <absl/strings/str_format.h>
+#include <algorithm>
+#include <qtconcurrentfilter.h>
 #include <qwidget.h>
 #include <ranges>
 
@@ -95,7 +99,7 @@ public:
 
   virtual QString sectionName() const { return "Results ({count})"; }
 
-  void render(const Data &filtered) {
+  void render(const auto &filtered) {
     auto name = sectionName();
     name.replace("{count}", QString::number(filtered.size()));
     m_list->updateModel([&]() {
@@ -113,23 +117,29 @@ public:
 
   virtual Data initData() const = 0;
 
-  const Data &filterData(const QString &query) {
-    Data filtered;
-    auto matches = [&](const QString &kw) { return kw.contains(query, Qt::CaseInsensitive); };
-    auto anyMatches = [&](const ItemPtr &ss) { return std::ranges::any_of(ss->searchStrings(), matches); };
+  void renderFiltered(const QString &query) {
+    std::string sq = query.toStdString();
+    auto score = [&](const std::shared_ptr<Actionnable> &action) -> int {
+      fuzzy::WeightedScorer scorer;
+      auto strs = action->searchStrings();
+      scorer.reserve(strs.size());
+      for (const auto &str : strs) {
+        scorer.add(str.toStdString());
+      }
+      return scorer.score(sq);
+    };
 
-    m_filtered.clear();
-
-    for (const auto &match : m_data | std::views::filter(anyMatches)) {
-      m_filtered.emplace_back(match);
-    }
-
-    return m_filtered;
+    auto filterScore = [&](auto &&scored) { return sq.empty() || scored.second > 0; };
+    auto scored = m_data |
+                  std::views::transform([&](const auto &item) { return std::pair{item, score(item)}; }) |
+                  std::views::filter(filterScore) | std::ranges::to<std::vector>();
+    std::ranges::stable_sort(scored, [&](auto &&a, auto &&b) { return a.second > b.second; });
+    render(scored | std::views::transform([](auto &&tr) { return tr.first; }));
   }
 
   void textChanged(const QString &text) override {
     if (text.trimmed().isEmpty()) return render(m_data);
-    return render(filterData(text));
+    renderFiltered(text);
   }
 
 private:
