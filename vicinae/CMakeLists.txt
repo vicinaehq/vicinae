@@ -222,6 +222,8 @@ set(SRCS
 
 	include/extension/extension-grid-component.hpp
 	src/extension/extension-grid-component.cpp
+	src/extension/extension-grid.hpp
+	src/extension/extension-grid.cpp
 
 	include/extension/extension.hpp
 	src/extension/extension.cpp
