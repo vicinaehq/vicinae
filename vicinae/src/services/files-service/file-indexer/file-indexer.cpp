@@ -34,13 +34,15 @@ void FileIndexer::startFullScan() {
 
       for (const auto &entrypoint : m_entrypoints) {
         qInfo() << "Enqueuing full scan for" << entrypoint.c_str();
+        // For now we don't exclude filenames during full scans, though this might change in the future.
+        // The reason being that we still want to know where the db file is (current use case), just not watch
+        // it. May want to split the list in two later (scan vs watch).
         m_dispatcher.enqueue({.type = ScanType::Full, .path = entrypoint, .excludedPaths = m_excludedPaths});
       }
 
       for (const auto &entrypoint : m_watcherPaths) {
         qInfo() << "Enqueuing watcher scan for" << entrypoint.c_str();
-        m_dispatcher.enqueue(
-            {.type = ScanType::Watcher, .path = entrypoint, .excludedPaths = m_excludedPaths});
+        startSingleScan(entrypoint, ScanType::Watcher, m_excludedFilenames);
       }
     });
   }).detach();
