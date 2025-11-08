@@ -151,7 +151,7 @@ bool RootItemManager::upsertProvider(const RootProvider &provider) {
 
 std::vector<RootItemManager::ScoredItem>
 RootItemManager::prefixSearch(const QString &query, const RootItemPrefixSearchOptions &opts) {
-  Timer timer;
+  // Timer timer;
   std::string pattern = query.toStdString();
   auto score = [&](const std::shared_ptr<RootItem> &item, const QString &alias) -> int {
     fuzzy::WeightedScorer scorer;
@@ -166,9 +166,7 @@ RootItemManager::prefixSearch(const QString &query, const RootItemPrefixSearchOp
     return scorer.score(pattern);
   };
 
-  // we compute all scores and required info in parallel to speed things up.
-  // this is safe as all we do is read data.
-  auto scored = QtConcurrent::blockingMapped(m_items, [&](auto &&item) {
+  auto toScoredItem = [&](auto &&item) {
     ScoredItem scored;
     RootItemMetadata meta = itemMetadata(item->uniqueId());
     scored.item = item;
@@ -182,10 +180,13 @@ RootItemManager::prefixSearch(const QString &query, const RootItemPrefixSearchOp
     scored.score = fuzzyScore * computeScore(meta, item->baseScoreWeight());
     scored.alias = meta.alias;
     return scored;
-  });
-  auto filtered = QtConcurrent::blockingFiltered(scored, [&](auto &&scored) {
+  };
+  auto filter = [&](auto &&scored) {
     return query.isEmpty() || ((opts.includeDisabled || scored.enabled) && scored.matches);
-  });
+  };
+
+  auto filtered = m_items | std::views::transform(toScoredItem) | std::views::filter(filter) |
+                  std::ranges::to<std::vector>();
 
   // we need stable sort to avoid flickering when updating quickly
   std::ranges::stable_sort(filtered, [&](const auto &a, const auto &b) {

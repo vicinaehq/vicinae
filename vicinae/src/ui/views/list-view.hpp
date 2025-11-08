@@ -130,11 +130,11 @@ public:
     };
 
     auto filterScore = [&](auto &&scored) { return sq.empty() || scored.second > 0; };
-    auto scored =
-        QtConcurrent::blockingMapped(m_data, [&](const auto &item) { return std::pair{item, score(item)}; });
-    auto filtered = QtConcurrent::blockingFiltered(scored, filterScore);
+    auto scored = m_data |
+                  std::views::transform([&](const auto &item) { return std::pair{item, score(item)}; }) |
+                  std::views::filter(filterScore) | std::ranges::to<std::vector>();
     std::ranges::stable_sort(scored, [&](auto &&a, auto &&b) { return a.second > b.second; });
-    render(filtered | std::views::transform([](auto &&tr) { return tr.first; }));
+    render(scored | std::views::transform([](auto &&tr) { return tr.first; }));
   }
 
   void textChanged(const QString &text) override {
