@@ -61,7 +61,7 @@ export const serializeProtoImage = (image: ImageLike): ui.Image => {
 	}
 
 	if (img.tintColor) {
-		proto.colorTint = serializeColorLike(img.tintColor);
+		proto.tintColor = serializeColorLike(img.tintColor);
 	}
 
 	return proto;

@@ -99,8 +99,8 @@ ImageURL::ImageURL(const proto::ext::ui::Image &image) {
   using Source = proto::ext::ui::ImageSource;
   ExtensionImageModel model;
 
-  if (image.has_color_tint()) {
-    const auto &colorLike = image.color_tint();
+  if (image.has_tint_color()) {
+    const auto &colorLike = image.tint_color();
     switch (colorLike.payload_case()) {
     case proto::ext::ui::ColorLike::kRaw: {
       QString raw = colorLike.raw().c_str();
@@ -144,7 +144,6 @@ ImageURL::ImageURL(const proto::ext::ui::Image &image) {
     break;
   case Source::kThemed: {
     auto &themed = image.source().themed();
-
     model.source = ThemedIconSource{.light = themed.light().c_str(), .dark = themed.dark().c_str()};
     break;
   }
