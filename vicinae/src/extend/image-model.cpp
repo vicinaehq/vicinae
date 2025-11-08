@@ -6,27 +6,33 @@
 ImageModelParser::ImageModelParser() {}
 
 ImageLikeModel ImageModelParser::parse(const QJsonValue &imageLike) {
-  ImageLikeModel model;
-
   if (imageLike.isString()) { return ExtensionImageModel{.source = imageLike.toString()}; }
   if (!imageLike.isObject()) { return InvalidImageModel(); }
 
   auto obj = imageLike.toObject();
 
+  // Parses Image.Source / Image.Fallback
+  auto parseSource = [](const QJsonValue &sourceValue) -> std::variant<QString, ThemedIconSource> {
+    if (!sourceValue.isObject()) { return sourceValue.toString(); }
+    auto sourceObj = sourceValue.toObject();
+
+    if (sourceObj.contains("raw")) { return sourceObj.value("raw").toString(); }
+
+    if (sourceObj.contains("themed")) {
+      auto themedObj = sourceObj.value("themed").toObject();
+      return ThemedIconSource{
+          .light = themedObj.value("light").toString(),
+          .dark = themedObj.value("dark").toString(),
+      };
+    }
+
+    qWarning() << "ImageModelParser::parse: Invalid source value. sourceValue =" << sourceValue;
+    return QString();
+  };
+
   if (obj.contains("source")) {
     ExtensionImageModel model;
-    auto source = obj.value("source");
-
-    if (source.isObject()) {
-      auto obj = source.toObject();
-
-      model.source = ThemedIconSource{
-          .light = obj.value("light").toString(),
-          .dark = obj.value("dark").toString(),
-      };
-    } else {
-      model.source = obj.value("source").toString();
-    }
+    model.source = parseSource(obj.value("source"));
 
     if (obj.contains("fallback")) { model.fallback = obj.value("fallback").toString(); }
 
