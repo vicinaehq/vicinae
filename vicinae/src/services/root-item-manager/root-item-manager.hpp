@@ -210,26 +210,27 @@ struct RootProviderMetadata {
 };
 
 class RootItemManager : public QObject {
-private:
   Q_OBJECT
 
-  struct RootItemHash {
-    size_t operator()(const std::shared_ptr<RootItem> &item) const { return qHash(item->uniqueId()); }
-  };
-
-  std::vector<std::shared_ptr<RootItem>> m_items;
-  std::unordered_map<QString, RootItemMetadata> m_metadata;
-  std::unordered_map<QString, RootProviderMetadata> m_provider_metadata;
-  std::vector<std::unique_ptr<RootProvider>> m_providers;
-  OmniDatabase &m_db;
-
-  RootItemMetadata loadMetadata(const QString &id);
-  bool upsertProvider(const RootProvider &provider);
-  bool upsertItem(const QString &providerId, const RootItem &item);
-  RootItem *findItemById(const QString &id) const;
-  bool pruneProvider(const QString &id);
+signals:
+  void itemsChanged() const;
+  void itemRankingReset(const QString &id) const;
+  void itemFavoriteChanged(const QString &id, bool favorite);
+  void fallbackEnabled(const QString &id) const;
+  void fallbackOrderChanged(const QString &id) const;
+  void fallbackDisabled(const QString &id) const;
 
 public:
+  using ItemPtr = std::shared_ptr<RootItem>;
+  using ItemList = std::vector<ItemPtr>;
+  struct ScoredItem {
+    QString alias;
+    int score = 0;
+    bool matches = false;
+    bool enabled = false;
+    ItemPtr item;
+  };
+
   RootItemManager(OmniDatabase &db) : m_db(db) {}
 
   RootProvider *findProviderById(const QString &id) const;
@@ -299,14 +300,23 @@ public:
   RootProvider *provider(const QString &id) const;
   std::vector<std::shared_ptr<RootItem>> allItems() const { return m_items; }
   std::vector<std::shared_ptr<RootItem>> fallbackItems() const;
-  std::vector<std::shared_ptr<RootItem>> prefixSearch(const QString &query,
-                                                      const RootItemPrefixSearchOptions &opts = {});
+  std::vector<ScoredItem> prefixSearch(const QString &query, const RootItemPrefixSearchOptions &opts = {});
+  RootItemMetadata loadMetadata(const QString &id);
+  bool upsertProvider(const RootProvider &provider);
+  bool upsertItem(const QString &providerId, const RootItem &item);
+  RootItem *findItemById(const QString &id) const;
+  bool pruneProvider(const QString &id);
 
-signals:
-  void itemsChanged() const;
-  void itemRankingReset(const QString &id) const;
-  void itemFavoriteChanged(const QString &id, bool favorite);
-  void fallbackEnabled(const QString &id) const;
-  void fallbackOrderChanged(const QString &id) const;
-  void fallbackDisabled(const QString &id) const;
+private:
+  std::unordered_map<QString, RootItemMetadata> m_metadata;
+  std::unordered_map<QString, RootProviderMetadata> m_provider_metadata;
+  std::vector<std::unique_ptr<RootProvider>> m_providers;
+  OmniDatabase &m_db;
+  ItemList m_items;
+
+  /**
+   * Second item list which is sorted in place every time the root is searched.
+   * This acts as some kind of double buffering to avoid unexpected flickering.
+   */
+  ItemList m_filteredItems;
 };

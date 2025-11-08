@@ -1,8 +1,13 @@
 #include "root-item-manager.hpp"
-#include "root-search.hpp"
+#include "fuzzy/weighted-fuzzy-scorer.hpp"
+#include "lib/fts_fuzzy.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
+#include "timer.hpp"
 #include "utils.hpp"
+#include <algorithm>
+#include <iterator>
 #include <qlogging.h>
+#include <qtconcurrentfilter.h>
 #include <ranges>
 
 std::vector<std::shared_ptr<RootItem>> RootItemManager::fallbackItems() const {
@@ -95,6 +100,7 @@ void RootItemManager::updateIndex() {
 
   if (!m_db.db().commit()) { qWarning() << "Failed to commit transaction" << m_db.db().lastError(); }
 
+  m_filteredItems = m_items;
   isReloading = false;
   emit itemsChanged();
 }
@@ -143,44 +149,56 @@ bool RootItemManager::upsertProvider(const RootProvider &provider) {
   return true;
 }
 
-std::vector<std::shared_ptr<RootItem>>
+std::vector<RootItemManager::ScoredItem>
 RootItemManager::prefixSearch(const QString &query, const RootItemPrefixSearchOptions &opts) {
-  RootSearcher searcher(m_metadata);
-  std::vector<RootSearcher::ScoredItem> results;
-
-  if (!opts.includeDisabled) {
-    std::vector<std::shared_ptr<RootItem>> candidates;
-
-    for (const auto &item : m_items) {
-      if (itemMetadata(item->uniqueId()).isEnabled) { candidates.emplace_back(item); }
+  // Timer timer;
+  std::string pattern = query.toStdString();
+  auto score = [&](const std::shared_ptr<RootItem> &item, const QString &alias) -> int {
+    fuzzy::WeightedScorer scorer;
+    auto kws = item->keywords();
+    scorer.reserve(3 + kws.size());
+    scorer.add(item->displayName().toStdString(), 1);
+    scorer.add(alias.toStdString(), 1);
+    scorer.add(item->subtitle().toStdString(), 0.6);
+    for (const auto &kw : kws) {
+      scorer.add(kw.toStdString(), 0.3);
     }
+    return scorer.score(pattern);
+  };
 
-    results = searcher.search(candidates, query);
-  } else {
-    results = searcher.search(m_items, query);
-  }
+  auto toScoredItem = [&](auto &&item) {
+    ScoredItem scored;
+    RootItemMetadata meta = itemMetadata(item->uniqueId());
+    scored.item = item;
+    scored.enabled = meta.isEnabled;
 
-  std::ranges::sort(results, [this, &query](const auto &a, const auto &b) {
-    auto ameta = itemMetadata(a.item->uniqueId());
-    auto bmeta = itemMetadata(b.item->uniqueId());
-    bool aHasAlias = !ameta.alias.isEmpty() && ameta.alias.startsWith(query, Qt::CaseInsensitive);
-    bool bHasAlias = !bmeta.alias.isEmpty() && bmeta.alias.startsWith(query, Qt::CaseInsensitive);
+    // do not spend time computing score if it's disabled
+    if (!meta.isEnabled && !opts.includeDisabled) return scored;
 
+    int fuzzyScore = score(item, meta.alias);
+    scored.matches = fuzzyScore > 0;
+    scored.score = fuzzyScore * computeScore(meta, item->baseScoreWeight());
+    scored.alias = meta.alias;
+    return scored;
+  };
+  auto filter = [&](auto &&scored) {
+    return query.isEmpty() || ((opts.includeDisabled || scored.enabled) && scored.matches);
+  };
+
+  auto filtered = m_items | std::views::transform(toScoredItem) | std::views::filter(filter) |
+                  std::ranges::to<std::vector>();
+
+  // we need stable sort to avoid flickering when updating quickly
+  std::ranges::stable_sort(filtered, [&](const auto &a, const auto &b) {
+    bool aHasAlias = !a.alias.isEmpty() && a.alias.startsWith(query, Qt::CaseInsensitive);
+    bool bHasAlias = !b.alias.isEmpty() && b.alias.startsWith(query, Qt::CaseInsensitive);
     if (aHasAlias - bHasAlias) { return aHasAlias > bHasAlias; }
-
-    auto ascore = a.score * computeScore(ameta, a.item->baseScoreWeight());
-    auto bscore = b.score * computeScore(bmeta, b.item->baseScoreWeight());
-
-    return ascore > bscore;
+    return a.score > b.score;
   });
 
-  std::vector<std::shared_ptr<RootItem>> items;
-  items.reserve(results.size());
-  for (const auto &result : results) {
-    items.emplace_back(result.item);
-  }
+  // timer.time("root search");
 
-  return items;
+  return filtered;
 }
 
 bool RootItemManager::setItemEnabled(const QString &id, bool value) {

@@ -10,7 +10,6 @@
 #include "ui/form/base-input.hpp"
 #include "ui/form/checkbox.hpp"
 #include "ui/image/image.hpp"
-#include "ui/shortcut-recorder/shortcut-recorder.hpp"
 #include "ui/vertical-scroll-area/vertical-scroll-area.hpp"
 #include "ui/scroll-bar/scroll-bar.hpp"
 #include "ui/omni-tree/omni-tree.hpp"
@@ -524,16 +523,16 @@ public:
     opts.includeDisabled = true;
 
     for (const auto &item : manager->prefixSearch(query, opts)) {
-      QString providerId = manager->getItemProviderId(item->uniqueId());
+      QString providerId = manager->getItemProviderId(item.item->uniqueId());
 
       if (providerId.isEmpty()) continue;
 
       auto pred = [&](auto &&pair) { return pair.first == providerId; };
 
       if (auto it = std::ranges::find_if(map, pred); it != map.end()) {
-        it->second.emplace_back(item);
+        it->second.emplace_back(item.item);
       } else {
-        map.push_back({providerId, {item}});
+        map.push_back({providerId, {item.item}});
       }
     }
 
