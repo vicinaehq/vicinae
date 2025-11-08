@@ -100,27 +100,14 @@ export namespace Grid {
 			content:
 				| Image.ImageLike
 				| { color: ColorLike }
-				| { value: Image.ImageLike; tooltip?: string };
+				| { value: Image.ImageLike | { color: ColorLike }; tooltip?: string };
 			id?: string;
 			subtitle?: string;
 			actions?: ReactNode;
-			accessories?: Grid.Item.Accessory[];
+			accessory?: Grid.Item.Accessory;
 		};
 
-		type Tag =
-			| string
-			| Date
-			| undefined
-			| null
-			| { color: ColorLike; value: string | Date | undefined | null };
-		type Text =
-			| string
-			| Date
-			| undefined
-			| null
-			| { color: Color; value: string | Date | undefined | null };
-
-		export type Accessory = ({ tag?: Tag } | { text?: Text }) & {
+		export type Accessory = {
 			icon?: Image.ImageLike;
 			tooltip?: string | null;
 		};
