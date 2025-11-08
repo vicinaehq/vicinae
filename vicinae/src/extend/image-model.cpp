@@ -34,7 +34,7 @@ ImageLikeModel ImageModelParser::parse(const QJsonValue &imageLike) {
     ExtensionImageModel model;
     model.source = parseSource(obj.value("source"));
 
-    if (obj.contains("fallback")) { model.fallback = obj.value("fallback").toString(); }
+    if (obj.contains("fallback")) { model.fallback = parseSource(obj.value("fallback")); }
 
     if (obj.contains("tintColor")) { model.tintColor = ColorLikeModelParser().parse(obj.value("tintColor")); }
 

@@ -156,6 +156,11 @@ ImageURL::ImageURL(const proto::ext::ui::Image &image) {
     case Source::kRaw:
       model.fallback = image.fallback().raw().c_str();
       break;
+    case Source::kThemed: {
+      auto &themed = image.fallback().themed();
+      model.fallback = ThemedIconSource{.light = themed.light().c_str(), .dark = themed.dark().c_str()};
+      break;
+    }
     default:
       break;
     }
