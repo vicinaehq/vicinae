@@ -84,7 +84,7 @@ void GlobalHeader::clearAccessory() {
 
 SearchBar *GlobalHeader::input() const { return m_input; }
 
-void GlobalHeader::handleTextEdited(const QString &text) { m_navigation.setSearchText(text); }
+void GlobalHeader::handleTextEdited(const QString &text) { m_navigation.broadcastSearchText(text); }
 
 bool GlobalHeader::filterInputEvents(QEvent *event) {
   if (event->type() == QEvent::KeyPress) {
@@ -149,7 +149,7 @@ GlobalHeader::GlobalHeader(NavigationController &controller) : m_navigation(cont
   connect(&m_navigation, &NavigationController::searchAccessoryVisiblityChanged, m_accessoryContainer,
           &QStackedWidget::setVisible);
   connect(&m_navigation, &NavigationController::searchAccessoryCleared, this, &GlobalHeader::clearAccessory);
-  connect(&m_navigation, &NavigationController::searchTextChanged, m_input, [this](const QString &text) {
+  connect(&m_navigation, &NavigationController::searchTextTampered, m_input, [this](const QString &text) {
     if (m_input->text() == text) return; // prevents losing cursor position during editing
     m_input->setText(text);
   });

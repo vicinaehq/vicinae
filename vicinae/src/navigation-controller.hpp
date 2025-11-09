@@ -225,7 +225,7 @@ signals:
   void actionsChanged(const ActionPanelState &actions) const;
   void windowVisiblityChanged(bool visible);
   void searchTextSelected() const;
-  void searchTextChanged(const QString &text) const;
+  void searchTextTampered(const QString &text) const;
   void searchPlaceholderTextChanged(const QString &text) const;
   void navigationStatusChanged(const QString &text, const ImageURL &icon) const;
   void navigationSuffixIconChanged(const std::optional<ImageURL> &icon) const;
@@ -274,6 +274,7 @@ public:
   void setInstantDismiss(bool value = true);
 
   void setSearchPlaceholderText(const QString &text, const BaseView *caller = nullptr);
+  void broadcastSearchText(const QString &text, const BaseView *caller = nullptr);
   void setSearchText(const QString &text, const BaseView *caller = nullptr);
 
   void setLoading(bool value, const BaseView *caller = nullptr);
