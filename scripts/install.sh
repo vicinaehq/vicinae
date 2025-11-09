@@ -266,6 +266,7 @@ extract_appimage() {
 			echo "✓ Extraction completed" >&2
 			echo "$extract_dir"
 			rm $extract_logs
+			rm $appimage_path
 		else
 			echo "Error: squashfs-root directory not found after extraction" >&2
 			ls -la >&2
@@ -475,7 +476,6 @@ show_usage() {
 self_download() {
 	curl -fsSL $SCRIPT_DOWNLOAD_URL > $VICINAE_SCRIPT_PATH
 	chmod +x $VICINAE_SCRIPT_PATH
-	TEMP_FILES+=($VICINAE_SCRIPT_PATH)
 }
 
 main() {
