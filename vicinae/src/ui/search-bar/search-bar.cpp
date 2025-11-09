@@ -2,6 +2,7 @@
 #include "service-registry.hpp"
 #include <qcoreevent.h>
 #include <qevent.h>
+#include <qlineedit.h>
 #include "services/config/config-service.hpp"
 #include "template-engine/template-engine.hpp"
 #include "theme.hpp"
@@ -125,6 +126,13 @@ bool SearchBar::event(QEvent *event) {
   }
 
   return QLineEdit::event(event);
+}
+
+void SearchBar::inputMethodEvent(QInputMethodEvent *event) {
+  QLineEdit::inputMethodEvent(event);
+  // TODO: Does this work for other IMEs?
+  // https://doc.qt.io/qt-6/qinputmethodevent.html
+  emit textEdited(text() + event->preeditString());
 }
 
 void SearchBar::refreshStyle() {

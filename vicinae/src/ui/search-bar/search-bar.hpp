@@ -2,6 +2,7 @@
 #include "argument.hpp"
 #include "ui/image/url.hpp"
 #include <qcontainerfwd.h>
+#include <qevent.h>
 #include <qlineedit.h>
 #include <qtimer.h>
 
@@ -26,6 +27,7 @@ public:
 
 protected:
   bool event(QEvent *event) override;
+  void inputMethodEvent(QInputMethodEvent *event) override;
 
 private:
   void refreshStyle();
