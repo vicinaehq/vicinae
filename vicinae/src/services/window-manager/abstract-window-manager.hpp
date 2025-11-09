@@ -5,6 +5,7 @@
 #include <qpromise.h>
 #include <qstringview.h>
 #include "services/app-service/abstract-app-db.hpp"
+#include <QApplication>
 #include <QScreen>
 #include <qtmetamacros.h>
 #include <ranges>
