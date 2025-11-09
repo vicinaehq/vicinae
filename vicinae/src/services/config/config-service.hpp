@@ -107,6 +107,10 @@ private:
 
   void handleDirectoryChanged(const QString &path) {
     qDebug() << "config directory changed, reloading config...";
+    reloadConfig();
+  }
+
+  void reloadConfig() {
     auto prev = m_config;
     m_config = load();
     emit configChanged(m_config, prev);
@@ -190,10 +194,13 @@ public:
     QFile file(m_configFile);
 
     doc.setObject(obj);
-    file.remove();
-    if (!file.open(QIODevice::WriteOnly)) { return; }
+    if (!file.open(QIODevice::WriteOnly)) {
+      qWarning() << "Failed to open config file for writing";
+      return;
+    }
     file.write(doc.toJson());
-    qDebug() << "write config";
+    // do not emit update signal during save, wait a bit
+    QTimer::singleShot(0, this, &ConfigService::reloadConfig);
   }
 
   ConfigService() {
