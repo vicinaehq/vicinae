@@ -2,7 +2,7 @@ import React, { ReactNode } from "react";
 import type { PathLike } from "node:fs";
 import { useNavigation } from "../hooks/index";
 import { Clipboard } from "../clipboard";
-import { ImageLike } from "../image";
+import { type ImageLike, serializeProtoImage } from "../image";
 import { Keyboard } from "../keyboard";
 import { Application, open, showInFileBrowser } from "../utils";
 import { Form } from "./form";
@@ -77,7 +77,10 @@ export type ActionCreateQuicklinkProps = Omit<BaseActionProps, "title"> & {
 };
 
 const ActionRoot: React.FC<ActionProps> = (props) => {
-	return <action {...props} />;
+	const serializedIcon = props.icon
+		? serializeProtoImage(props.icon)
+		: props.icon;
+	return <action {...props} icon={serializedIcon} />;
 };
 
 const CopyToClipboard: React.FC<CopyToClipboardProps> = ({
@@ -185,6 +188,7 @@ const SubmitForm: React.FC<ActionSubmitFormProps> = ({
 	const nativeProps: React.JSX.IntrinsicElements["action"] = {
 		...props,
 		title,
+		icon: props.icon ? serializeProtoImage(props.icon) : props.icon,
 		onAction: () => {},
 	};
 
@@ -209,6 +213,7 @@ const CreateQuicklink: React.FC<ActionCreateQuicklinkProps> = ({
 					: quicklink.application?.name,
 			icon: quicklink.icon,
 		},
+		icon: props.icon ? serializeProtoImage(props.icon) : props.icon,
 		onAction: () => {},
 	};
 

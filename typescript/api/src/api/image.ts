@@ -10,6 +10,12 @@ export type Image = {
 };
 
 export type ImageLike = Image.ImageLike;
+export type SerializedImageLike =
+	| URL
+	| Image.Asset
+	| Icon
+	| ui.Image
+	| Image.ThemedImage;
 
 export namespace Image {
 	export type Asset = string;
@@ -61,7 +67,7 @@ export const serializeProtoImage = (image: ImageLike): ui.Image => {
 	}
 
 	if (img.tintColor) {
-		proto.colorTint = serializeColorLike(img.tintColor);
+		proto.tintColor = serializeColorLike(img.tintColor);
 	}
 
 	return proto;

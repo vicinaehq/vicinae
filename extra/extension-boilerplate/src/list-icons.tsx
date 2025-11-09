@@ -49,6 +49,23 @@ export default function ListIcons() {
 						fallback: Icon.QuestionMark,
 					}}
 				/>
+				<List.Item
+					title="Non-existent Asset image with fallback to asset"
+					icon={{
+						source: "non_existent_image.png",
+						fallback: "transparent_icon.png",
+					}}
+				/>
+				<List.Item
+					title="Non-existent Asset image with fallback to themed source (dark/light)"
+					icon={{
+						source: "non_existent_image.png",
+						fallback: {
+							dark: "https://docs.vicinae.com/vicinae-dark.svg",
+							light: "https://docs.vicinae.com/vicinae.svg",
+						},
+					}}
+				/>
 			</List.Section>
 
 			{/* Icon Tint Color */}

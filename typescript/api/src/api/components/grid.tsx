@@ -1,8 +1,8 @@
 import React, { ReactNode, useRef } from "react";
-import { Image, ImageLike } from "../image";
+import { type Image, type ImageLike, serializeProtoImage } from "../image";
 import { randomUUID } from "crypto";
 import { EmptyView } from "./empty-view";
-import { Color, ColorLike } from "../color";
+import { type ColorLike, serializeColorLike } from "../color";
 import { Dropdown } from "./dropdown";
 
 enum GridInset {
@@ -100,27 +100,14 @@ export namespace Grid {
 			content:
 				| Image.ImageLike
 				| { color: ColorLike }
-				| { value: Image.ImageLike; tooltip?: string };
+				| { value: Image.ImageLike | { color: ColorLike }; tooltip?: string };
 			id?: string;
 			subtitle?: string;
 			actions?: ReactNode;
-			accessories?: Grid.Item.Accessory[];
+			accessory?: Grid.Item.Accessory;
 		};
 
-		type Tag =
-			| string
-			| Date
-			| undefined
-			| null
-			| { color: ColorLike; value: string | Date | undefined | null };
-		type Text =
-			| string
-			| Date
-			| undefined
-			| null
-			| { color: Color; value: string | Date | undefined | null };
-
-		export type Accessory = ({ tag?: Tag } | { text?: Text }) & {
+		export type Accessory = {
 			icon?: Image.ImageLike;
 			tooltip?: string | null;
 		};
@@ -166,11 +153,58 @@ const GridRoot: React.FC<Grid.Props> = ({
 	);
 };
 
-const GridItem: React.FC<Grid.Item.Props> = ({ detail, actions, ...props }) => {
+const GridItem: React.FC<Grid.Item.Props> = ({
+	detail,
+	actions,
+	content,
+	accessory,
+	...props
+}) => {
 	const id = useRef(props.id ?? randomUUID());
 
+	// Remove value wrapper
+	const innerContent =
+		typeof content === "object" && "value" in content ? content.value : content;
+
+	const tooltip =
+		typeof content === "object" && "tooltip" in content
+			? content.tooltip
+			: undefined;
+
+	// Content
+	let serializedContent: React.JSX.IntrinsicElements["grid-item"]["content"];
+	if (
+		innerContent &&
+		typeof innerContent === "object" &&
+		"color" in innerContent
+	) {
+		serializedContent = {
+			color: serializeColorLike(innerContent.color),
+		};
+	} else {
+		serializedContent = innerContent
+			? serializeProtoImage(innerContent)
+			: undefined;
+	}
+
+	// Accessory
+	const serializedAccessory = accessory
+		? {
+				icon: accessory.icon
+					? serializeProtoImage(accessory.icon)
+					: accessory.icon,
+				tooltip: accessory.tooltip,
+			}
+		: undefined;
+
 	return (
-		<grid-item {...props} id={id.current}>
+		<grid-item
+			{...props}
+			content={serializedContent}
+			tooltip={tooltip}
+			accessory={serializedAccessory}
+			id={id.current}
+		>
 			{detail}
 			{actions}
 		</grid-item>

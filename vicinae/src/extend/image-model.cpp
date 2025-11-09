@@ -6,29 +6,35 @@
 ImageModelParser::ImageModelParser() {}
 
 ImageLikeModel ImageModelParser::parse(const QJsonValue &imageLike) {
-  ImageLikeModel model;
-
   if (imageLike.isString()) { return ExtensionImageModel{.source = imageLike.toString()}; }
   if (!imageLike.isObject()) { return InvalidImageModel(); }
 
   auto obj = imageLike.toObject();
 
-  if (obj.contains("source")) {
-    ExtensionImageModel model;
-    auto source = obj.value("source");
+  // Parses Image.Source / Image.Fallback
+  auto parseSource = [](const QJsonValue &sourceValue) -> std::variant<QString, ThemedIconSource> {
+    if (!sourceValue.isObject()) { return sourceValue.toString(); }
+    auto sourceObj = sourceValue.toObject();
 
-    if (source.isObject()) {
-      auto obj = source.toObject();
+    if (sourceObj.contains("raw")) { return sourceObj.value("raw").toString(); }
 
-      model.source = ThemedIconSource{
-          .light = obj.value("light").toString(),
-          .dark = obj.value("dark").toString(),
+    if (sourceObj.contains("themed")) {
+      auto themedObj = sourceObj.value("themed").toObject();
+      return ThemedIconSource{
+          .light = themedObj.value("light").toString(),
+          .dark = themedObj.value("dark").toString(),
       };
-    } else {
-      model.source = obj.value("source").toString();
     }
 
-    if (obj.contains("fallback")) { model.fallback = obj.value("fallback").toString(); }
+    qWarning() << "ImageModelParser::parse: Invalid source value. sourceValue =" << sourceValue;
+    return QString();
+  };
+
+  if (obj.contains("source")) {
+    ExtensionImageModel model;
+    model.source = parseSource(obj.value("source"));
+
+    if (obj.contains("fallback")) { model.fallback = parseSource(obj.value("fallback")); }
 
     if (obj.contains("tintColor")) { model.tintColor = ColorLikeModelParser().parse(obj.value("tintColor")); }
 
