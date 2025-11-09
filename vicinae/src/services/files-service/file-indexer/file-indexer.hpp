@@ -25,6 +25,7 @@ class FileIndexer : public AbstractFileIndexer {
 public:
   std::shared_ptr<DbWriter> m_writer;
   std::vector<std::filesystem::path> m_entrypoints;
+  std::vector<std::filesystem::path> m_excludedPaths;
   std::vector<std::filesystem::path> m_watcherPaths;
   std::vector<std::string> m_excludedFilenames;
   FileIndexerDatabase m_db;
