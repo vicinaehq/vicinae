@@ -1,4 +1,5 @@
-self: {
+self:
+{
   config,
   pkgs,
   lib,
@@ -116,8 +117,8 @@ in
       }
       // lib.mapAttrs' (
         name: theme:
-        lib.nameValuePair "vicinae/themes/${name}.json" {
-          text = builtins.toJSON theme;
+        lib.nameValuePair "vicinae/themes/${name}.toml" {
+          source = (pkgs.formats.toml { }).generate "${name}.toml" theme;
         }
       ) cfg.themes;
 
