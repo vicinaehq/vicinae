@@ -4,14 +4,19 @@ set -euo pipefail
 
 # Constants
 REPO="vicinaehq/vicinae"
-INSTALL_DIR="$HOME/.local/vicinae"
-BIN_DIR="$HOME/.local/bin"
 BINARY_NAME="vicinae"
 TEMP_DIR="/tmp"
-THEMES_USER_DIR="$HOME/.local/share/vicinae/themes"
-APPLICATIONS_USER_DIR="$HOME/.local/share/applications"
 SYSTEMD_SERVICE_NAME="vicinae.service"
-SYSTEMD_USER_DIR="$HOME/.config/systemd/user"
+
+# Installation prefix - can be overridden via environment or --prefix flag
+PREFIX="${PREFIX:-/usr/local}"
+
+# Derived paths based on PREFIX
+INSTALL_DIR="$PREFIX/lib/vicinae"
+BIN_DIR="$PREFIX/bin"
+THEMES_DIR="$PREFIX/share/vicinae/themes"
+APPLICATIONS_DIR="$PREFIX/share/applications"
+SYSTEMD_USER_DIR="$PREFIX/lib/systemd/user"
 
 TEMP_FILES=()
 PRESERVE_FILES=()
@@ -80,6 +85,57 @@ check_dependencies() {
 	fi
 
 	echo "✓ All dependencies found"
+}
+
+check_permissions() {
+	echo "Checking installation permissions..."
+
+	# Check if we can write to the target directories
+	local test_dir="$BIN_DIR"
+	if [[ ! -w "$test_dir" && ! -w "$(dirname "$test_dir")" ]]; then
+		echo ""
+		echo "Warning: Installation to $PREFIX requires elevated permissions."
+		echo ""
+
+		if [[ $EUID -eq 0 ]]; then
+			echo "✓ Running as root"
+		else
+			# Check for available privilege escalation tools
+			local escalation_cmd=""
+			local escalation_name=""
+
+			if command -v doas >/dev/null 2>&1; then
+				escalation_cmd="doas"
+				escalation_name="doas"
+			elif command -v sudo >/dev/null 2>&1; then
+				escalation_cmd="sudo -E"
+				escalation_name="sudo"
+			else
+				echo "Error: Neither doas nor sudo is available."
+				echo "Please install doas or sudo, or use --prefix ~/.local for a user installation."
+				exit 1
+			fi
+
+			echo "This script will need $escalation_name access to install to $PREFIX"
+			echo ""
+			echo "You have the following options:"
+			echo "  1. Run this script with $escalation_name: $escalation_name $0 ${ORIGINAL_ARGS[*]}"
+			echo "  2. Install to a user directory: $0 --prefix ~/.local"
+			echo ""
+			read -p "Would you like to continue and use $escalation_name? [y/N] " -n 1 -r
+			echo
+			if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+				echo "Installation cancelled."
+				exit 0
+			fi
+
+			# Re-execute with privilege escalation
+			echo "Re-executing with $escalation_name..."
+			exec $escalation_cmd "$0" "${ORIGINAL_ARGS[@]}"
+		fi
+	else
+		echo "✓ Have write permissions to $PREFIX"
+	fi
 }
 
 get_latest_release_info() {
@@ -216,12 +272,12 @@ install_themes() {
 	local themes_source="$INSTALL_DIR/usr/share/vicinae/themes"
 
 	if [[ -d "$themes_source" ]]; then
-		mkdir -p "$THEMES_USER_DIR"
+		mkdir -p "$THEMES_DIR"
 
-		cp -r "$themes_source"/* "$THEMES_USER_DIR/" 2>/dev/null || true
+		cp -r "$themes_source"/* "$THEMES_DIR/" 2>/dev/null || true
 
-		if [[ -n "$(ls -A "$THEMES_USER_DIR" 2>/dev/null)" ]]; then
-			echo "✓ Themes installed to $THEMES_USER_DIR" >&2
+		if [[ -n "$(ls -A "$THEMES_DIR" 2>/dev/null)" ]]; then
+			echo "✓ Themes installed to $THEMES_DIR" >&2
 		else
 			echo "Note: No themes found in $themes_source" >&2
 		fi
@@ -236,16 +292,16 @@ install_desktop_files() {
 	local applications_source="$INSTALL_DIR/usr/share/applications"
 
 	if [[ -d "$applications_source" ]]; then
-		mkdir -p "$APPLICATIONS_USER_DIR"
+		mkdir -p "$APPLICATIONS_DIR"
 
 		# Copy only vicinae-related desktop files
 		if ls "$applications_source"/vicinae*.desktop >/dev/null 2>&1; then
-			cp "$applications_source"/vicinae*.desktop "$APPLICATIONS_USER_DIR/" 2>/dev/null || true
-			echo "✓ Desktop files installed to $APPLICATIONS_USER_DIR" >&2
+			cp "$applications_source"/vicinae*.desktop "$APPLICATIONS_DIR/" 2>/dev/null || true
+			echo "✓ Desktop files installed to $APPLICATIONS_DIR" >&2
 
 			# Update desktop database if available
 			if command -v update-desktop-database >/dev/null 2>&1; then
-				update-desktop-database "$APPLICATIONS_USER_DIR" 2>/dev/null || true
+				update-desktop-database "$APPLICATIONS_DIR" 2>/dev/null || true
 				echo "✓ Desktop database updated" >&2
 			fi
 		else
@@ -353,21 +409,21 @@ uninstall_vicinae() {
 		echo "✓ Removed Node.js symlink: $BIN_DIR/vicinae-node"
 	fi
 
-	if [[ -d "$THEMES_USER_DIR" ]]; then
-		rm -rf "$THEMES_USER_DIR"
-		echo "✓ Removed themes directory: $THEMES_USER_DIR"
+	if [[ -d "$THEMES_DIR" ]]; then
+		rm -rf "$THEMES_DIR"
+		echo "✓ Removed themes directory: $THEMES_DIR"
 	fi
 
-	if ls "$APPLICATIONS_USER_DIR"/vicinae*.desktop >/dev/null 2>&1; then
-		rm -f "$APPLICATIONS_USER_DIR"/vicinae*.desktop
-		echo "✓ Removed desktop files from: $APPLICATIONS_USER_DIR"
+	if ls "$APPLICATIONS_DIR"/vicinae*.desktop >/dev/null 2>&1; then
+		rm -f "$APPLICATIONS_DIR"/vicinae*.desktop
+		echo "✓ Removed desktop files from: $APPLICATIONS_DIR"
 		# Update desktop database if available
 		if command -v update-desktop-database >/dev/null 2>&1; then
-			update-desktop-database "$APPLICATIONS_USER_DIR" 2>/dev/null || true
+			update-desktop-database "$APPLICATIONS_DIR" 2>/dev/null || true
 		fi
 	fi
 
-	if [[ -L "$SYSTEMD_USER_DIR/$SYSTEMD_SERVICE_NAME" ]]; then
+	if [[ -f "$SYSTEMD_USER_DIR/$SYSTEMD_SERVICE_NAME" ]]; then
 		# Stop and disable the service if it's running
 		if command -v systemctl >/dev/null 2>&1; then
 			systemctl --user stop "$SYSTEMD_SERVICE_NAME" 2>/dev/null || true
@@ -388,35 +444,71 @@ show_usage() {
 	echo "Usage: $0 [OPTIONS]"
 	echo ""
 	echo "Options:"
+	echo "  --prefix PATH  Installation prefix (default: /usr/local)"
 	echo "  --uninstall    Uninstall Vicinae"
 	echo "  --help, -h     Show this help message"
 	echo ""
+	echo "Environment variables:"
+	echo "  PREFIX         Installation prefix (overridden by --prefix)"
+	echo ""
 	echo "Without options, the script will install or update Vicinae to the latest version."
+	echo ""
+	echo "Examples:"
+	echo "  $0                           # Install to /usr/local (requires sudo)"
+	echo "  $0 --prefix ~/.local         # Install to ~/.local (user install)"
+	echo "  PREFIX=/opt/vicinae $0       # Install to /opt/vicinae"
 }
 
 main() {
 	renderIcon
 
-	case "${1:-}" in
-	--uninstall)
+	# Save original arguments for potential re-execution with sudo/doas
+	ORIGINAL_ARGS=("$@")
+
+	# Parse arguments
+	local action=""
+	while [[ $# -gt 0 ]]; do
+		case "$1" in
+		--prefix)
+			if [[ -z "${2:-}" ]]; then
+				echo "Error: --prefix requires a path argument"
+				show_usage
+				exit 1
+			fi
+			PREFIX="$2"
+			# Recalculate derived paths
+			INSTALL_DIR="$PREFIX/lib/vicinae"
+			BIN_DIR="$PREFIX/bin"
+			THEMES_DIR="$PREFIX/share/vicinae/themes"
+			APPLICATIONS_DIR="$PREFIX/share/applications"
+			SYSTEMD_USER_DIR="$PREFIX/lib/systemd/user"
+			shift 2
+			;;
+		--uninstall)
+			action="uninstall"
+			shift
+			;;
+		--help | -h)
+			show_usage
+			exit 0
+			;;
+		*)
+			echo "Error: Unknown option '$1'"
+			show_usage
+			exit 1
+			;;
+		esac
+	done
+	
+	# Handle actions
+	if [[ "$action" == "uninstall" ]]; then
+		check_permissions
 		uninstall_vicinae
 		exit 0
-		;;
-	--help | -h)
-		show_usage
-		exit 0
-		;;
-	"")
-		# No arguments, proceed with install/update
-		;;
-	*)
-		echo "Error: Unknown option '$1'"
-		show_usage
-		exit 1
-		;;
-	esac
+	fi
 
 	check_dependencies
+	check_permissions
 
 	local release_info
 	release_info=$(get_latest_release_info)
@@ -451,13 +543,20 @@ main() {
 		echo "🎉 Vicinae $latest_version has been successfully installed!"
 		echo ""
 
-		local local_bin_path="$HOME/.local/bin"
-		if [[ ":$PATH:" == *":$local_bin_path:"* ]]; then
-			echo "✓ ~/.local/bin is already in your PATH"
+		# Check if binary directory is in PATH
+		if [[ ":$PATH:" == *":$BIN_DIR:"* ]]; then
+			echo "✓ $BIN_DIR is already in your PATH"
 			echo "You can now run 'vicinae' from anywhere in your terminal."
 		else
-			echo "To use Vicinae, add ~/.local/bin to your PATH:"
-			echo "  export PATH=\"\$HOME/.local/bin:\$PATH\""
+			echo "To use Vicinae, add $BIN_DIR to your PATH:"
+			if [[ "$BIN_DIR" == "$HOME"* ]]; then
+				# User installation - show unexpanded path
+				local_path="${BIN_DIR/#$HOME/\$HOME}"
+				echo "  export PATH=\"$local_path:\$PATH\""
+			else
+				# System installation
+				echo "  export PATH=\"$BIN_DIR:\$PATH\""
+			fi
 			echo ""
 			echo "You can add this to your shell profile (~/.bashrc, ~/.zshrc, etc.) for permanent access."
 			echo "Then restart your terminal or run the export command above."
