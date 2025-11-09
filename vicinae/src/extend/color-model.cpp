@@ -6,20 +6,26 @@
 ColorLikeModelParser::ColorLikeModelParser() {}
 
 ColorLike ColorLikeModelParser::parse(const QJsonValue &colorLike) {
-  if (colorLike.isString()) {
-    if (auto tint = ImageURL::tintForName(colorLike.toString()); tint != SemanticColor::InvalidTint) {
-      return tint;
-    }
-    return colorLike.toString();
+  auto colorLikeObj = colorLike.toObject();
+
+  if (colorLikeObj.isEmpty()) {
+    qWarning() << "ColorLikeModelParser: Input JSON object is empty. colorLike =" << colorLike;
+    return QColor();
   }
 
-  if (colorLike.isObject()) {
-    auto obj = colorLike.toObject();
-
-    return DynamicColor{.light = obj.value("light").toString(),
-                        .dark = obj.value("dark").toString(),
-                        .adjustContrast = obj.value("adjustContrast").toBool(true)};
+  if (colorLikeObj.contains("raw")) {
+    auto raw = colorLikeObj.value("raw").toString();
+    if (auto tint = ImageURL::tintForName(raw); tint != SemanticColor::InvalidTint) { return tint; }
+    return raw;
   }
 
+  if (colorLikeObj.contains("dynamic")) {
+    auto dynamic = colorLikeObj.value("dynamic").toObject();
+    return DynamicColor{.light = dynamic.value("light").toString(),
+                        .dark = dynamic.value("dark").toString(),
+                        .adjustContrast = dynamic.value("adjustContrast").toBool(true)};
+  }
+
+  qWarning() << "ColorLikeModelParser: Invalid colorLike input. colorLike =" << colorLike;
   return QColor();
 }

@@ -1,6 +1,6 @@
-import { ReactNode } from "react";
-import { Image } from "../image";
-import { Keyboard } from "../keyboard";
+import type { ReactNode } from "react";
+import { type Image, serializeProtoImage } from "../image";
+import type { Keyboard } from "../keyboard";
 
 export type ActionPanelProps = {
 	title?: string;
@@ -43,9 +43,15 @@ export type ActionPanelSubmenuProps = {
 
 const ActionPannelSubmenu: React.FC<ActionPanelSubmenuProps> = ({
 	children,
+	icon,
 	...props
 }) => {
-	return <action-panel-submenu {...props}>{children}</action-panel-submenu>;
+	const serializedIcon = icon ? serializeProtoImage(icon) : icon;
+	return (
+		<action-panel-submenu {...props} icon={serializedIcon}>
+			{children}
+		</action-panel-submenu>
+	);
 };
 
 export const ActionPanel = Object.assign(ActionPanelRoot, {
