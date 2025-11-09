@@ -18,10 +18,15 @@ THEMES_DIR="$PREFIX/share/vicinae/themes"
 APPLICATIONS_DIR="$PREFIX/share/applications"
 SYSTEMD_USER_DIR="$PREFIX/lib/systemd/user"
 
+VICINAE_SCRIPT_PATH="$TEMP_DIR/vicinae-install-script.sh"
+SCRIPT_DOWNLOAD_URL="https://vicinae.com/install.sh"
+DOCS_URL="https://docs.vicinae.com/install/script"
+
 TEMP_FILES=()
 PRESERVE_FILES=()
-
+ 
 cleanup() {
+	rm -f $VICINAE_SCRIPT_PATH
 	for file in "${TEMP_FILES[@]}"; do
 		if [[ -e "$file" ]]; then
 			rm -rf "$file"
@@ -92,6 +97,7 @@ check_permissions() {
 
 	# Check if we can write to the target directories
 	local test_dir="$BIN_DIR"
+
 	if [[ ! -w "$test_dir" && ! -w "$(dirname "$test_dir")" ]]; then
 		echo ""
 		echo "Warning: Installation to $PREFIX requires elevated permissions."
@@ -116,22 +122,26 @@ check_permissions() {
 				exit 1
 			fi
 
-			echo "This script will need $escalation_name access to install to $PREFIX"
+			echo "This script will need root privileges in order to install to $PREFIX"
 			echo ""
 			echo "You have the following options:"
-			echo "  1. Run this script with $escalation_name: $escalation_name $0 ${ORIGINAL_ARGS[*]}"
-			echo "  2. Install to a user directory: $0 --prefix ~/.local"
+			echo "  1. Re-run this script with $escalation_name: we will prompt you for your password (recommended)"
+			echo "  2. Install to a custom, local directory: full documentation available at ${DOCS_URL}"
 			echo ""
-			read -p "Would you like to continue and use $escalation_name? [y/N] " -n 1 -r
+			read -p "Would you like to continue with $escalation_name? [y/N] " -n 1 -r < /dev/tty
 			echo
+
 			if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-				echo "Installation cancelled."
+			echo "Installation cancelled."
 				exit 0
 			fi
 
+			echo "Re-downloading script to execute with elevated privileges..."
+			self_download
+			
 			# Re-execute with privilege escalation
 			echo "Re-executing with $escalation_name..."
-			exec $escalation_cmd "$0" "${ORIGINAL_ARGS[@]}"
+			exec $escalation_cmd "$VICINAE_SCRIPT_PATH" "${ORIGINAL_ARGS[@]}"
 		fi
 	else
 		echo "✓ Have write permissions to $PREFIX"
@@ -235,6 +245,7 @@ download_appimage() {
 extract_appimage() {
 	local appimage_path="$1"
 	local extract_dir="$INSTALL_DIR.extract"
+	local extract_logs="$TEMP_DIR/appimage-extract.log" 
 
 	echo "Extracting AppImage..." >&2
 
@@ -245,7 +256,7 @@ extract_appimage() {
 	cd "$extract_dir"
 
 	echo "This may take a moment..." >&2
-	"$appimage_path" --appimage-extract >"$TEMP_DIR/appimage-extract.log" 2>&1
+	"$appimage_path" --appimage-extract > $extract_logs 2>&1
 	local extract_status=$?
 
 	if [[ $extract_status -eq 0 ]]; then
@@ -254,6 +265,7 @@ extract_appimage() {
 			rmdir squashfs-root 2>/dev/null || rm -rf squashfs-root
 			echo "✓ Extraction completed" >&2
 			echo "$extract_dir"
+			rm $extract_logs
 		else
 			echo "Error: squashfs-root directory not found after extraction" >&2
 			ls -la >&2
@@ -459,12 +471,19 @@ show_usage() {
 	echo "  PREFIX=/opt/vicinae $0       # Install to /opt/vicinae"
 }
 
+# we need to download the script and store it on disk to re-execute it with privilege elevation, if needed
+self_download() {
+	curl -fsSL $SCRIPT_DOWNLOAD_URL > $VICINAE_SCRIPT_PATH
+	chmod +x $VICINAE_SCRIPT_PATH
+	TEMP_FILES+=($VICINAE_SCRIPT_PATH)
+}
+
 main() {
 	renderIcon
 
 	# Save original arguments for potential re-execution with sudo/doas
 	ORIGINAL_ARGS=("$@")
-
+	
 	# Parse arguments
 	local action=""
 	while [[ $# -gt 0 ]]; do
@@ -507,6 +526,7 @@ main() {
 		exit 0
 	fi
 
+	mkdir -p $PREFIX
 	check_dependencies
 	check_permissions
 
@@ -533,6 +553,8 @@ main() {
 
 		local appimage_path
 		appimage_path=$(download_appimage "$latest_version" "$appimage_name")
+
+		echo $appimage_path
 
 		local extract_dir
 		extract_dir=$(extract_appimage "$appimage_path")
