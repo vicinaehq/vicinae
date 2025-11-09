@@ -266,6 +266,7 @@ extract_appimage() {
 			echo "✓ Extraction completed" >&2
 			echo "$extract_dir"
 			rm $extract_logs
+			rm $appimage_path
 		else
 			echo "Error: squashfs-root directory not found after extraction" >&2
 			ls -la >&2
