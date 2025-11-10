@@ -1,7 +1,8 @@
 #pragma once
+#include "ui/omni-list/omni-list.hpp"
 #include "ui/views/list-view.hpp"
 
-class DMenuListView : public SearchableListView {
+class DMenuListView : public ListView {
   Q_OBJECT
 
 signals:
@@ -28,11 +29,15 @@ private:
   bool onBackspace() override { return true; }
   QString initialNavigationTitle() const override;
   QString initialSearchPlaceholderText() const override;
-  QString sectionName() const override;
-  Data initData() const override;
+  // Data initData() const override;
+  void textChanged(const QString &text) override;
   void beforePop() override;
   void selectEntry(const QString &text);
+  void initialize() override;
 
   bool m_selected = false;
   DmenuPayload m_data;
+
+  std::vector<std::string_view> m_lines;
+  std::vector<std::pair<std::string_view, int>> m_scoredItems;
 };
