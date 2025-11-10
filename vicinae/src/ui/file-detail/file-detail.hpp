@@ -3,7 +3,7 @@
 
 class FileDetail : public DetailWidget {
 public:
-  void setPath(const std::filesystem::path &path);
+  void setPath(const std::filesystem::path &path, bool withMetadata = true);
 
 private:
   std::vector<MetadataItem> createEntryMetadata(const std::filesystem::path &path) const;

@@ -118,7 +118,7 @@ bool DaemonIpcClient::ping() {
   return request(req).payload_case() == proto::ext::daemon::Response::kPing;
 }
 
-std::string DaemonIpcClient::dmenu(DMenu::Payload payload) {
+std::string DaemonIpcClient::dmenu(const DMenu::Payload &payload) {
   Daemon::Request req;
   req.set_allocated_dmenu(new proto::ext::daemon::DmenuRequest(payload.toProto()));
   auto res = request(req);

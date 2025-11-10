@@ -32,12 +32,13 @@ public:
 
   std::string_view text() const { return m_text; }
 
+  void setMetadata(bool value) { m_metadata = value; }
   void setQuickLook(bool value) { m_quickLook = value; }
 
   QWidget *generateDetail() const override {
     if (!m_isFile || !m_quickLook) return nullptr;
     auto detail = new FileDetail;
-    detail->setPath(m_text);
+    detail->setPath(m_text, m_metadata);
     return detail;
   }
 
@@ -50,6 +51,7 @@ private:
   std::string_view m_text;
   bool m_isFile = false;
   bool m_quickLook = true;
+  bool m_metadata = true;
 };
 
 View::View(Payload data) : m_data(data) {
@@ -130,6 +132,7 @@ void View::textChanged(const QString &text) {
     for (const auto &[view, score] : m_scoredItems) {
       auto item = std::make_shared<Item>(view);
       item->setQuickLook(!m_data.noQuickLook);
+      item->setMetadata(!m_data.noMetadata);
       section.addItem(item);
     }
   });
@@ -179,10 +182,11 @@ Payload Payload::fromProto(const proto::ext::daemon::DmenuRequest &req) {
   payload.query = nullable(req.query());
   payload.noSection = req.no_section();
   payload.noQuickLook = req.no_quick_look();
+  payload.noMetadata = req.no_metadata();
   return payload;
 }
 
-proto::ext::daemon::DmenuRequest Payload::toProto() {
+proto::ext::daemon::DmenuRequest Payload::toProto() const {
   proto::ext::daemon::DmenuRequest req;
   req.set_raw_content(raw);
   req.set_query(query.value_or(""));
@@ -191,6 +195,7 @@ proto::ext::daemon::DmenuRequest Payload::toProto() {
   req.set_section_title(sectionTitle.value_or(""));
   req.set_no_section(noSection);
   req.set_no_quick_look(noQuickLook);
+  req.set_no_metadata(noMetadata);
   return req;
 }
 

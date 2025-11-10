@@ -24,7 +24,9 @@ message DmenuRequest {
   string section_title = 4;
   bool no_section = 5;
   bool no_quick_look = 6;
-  string query = 7;
+  bool no_icon = 7;
+  bool no_metadata = 8;
+  string query = 9;
 };
 
 message LaunchAppRequest {

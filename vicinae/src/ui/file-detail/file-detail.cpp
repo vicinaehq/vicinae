@@ -6,16 +6,19 @@
 
 namespace fs = std::filesystem;
 
-void FileDetail::setPath(const fs::path &path) {
+void FileDetail::setPath(const fs::path &path, bool withMetadata) {
   if (auto previous = content()) { previous->deleteLater(); }
 
   m_path = path;
 
   auto widget = createEntryWidget(path);
-  auto metadata = createEntryMetadata(path);
 
   setContent(widget);
-  setMetadata(metadata);
+
+  if (withMetadata) {
+    auto metadata = createEntryMetadata(path);
+    setMetadata(metadata);
+  }
 }
 
 std::vector<MetadataItem> FileDetail::createEntryMetadata(const fs::path &path) const {

@@ -1,6 +1,5 @@
 #pragma once
 #include "proto/daemon.pb.h"
-#include "template-engine/template-engine.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include "ui/views/list-view.hpp"
 
@@ -13,9 +12,10 @@ struct Payload {
   std::optional<std::string> query;
   bool noSection = false;
   bool noQuickLook = false;
+  bool noMetadata = false;
 
   static Payload fromProto(const proto::ext::daemon::DmenuRequest &req);
-  proto::ext::daemon::DmenuRequest toProto();
+  proto::ext::daemon::DmenuRequest toProto() const;
 };
 
 class View : public ListView {
