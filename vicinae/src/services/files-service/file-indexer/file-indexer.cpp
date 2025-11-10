@@ -130,6 +130,8 @@ void FileIndexer::preferenceValuesChanged(const QJsonObject &preferences) {
       preferences.value("watcherPaths").toString().split(';', Qt::SkipEmptyParts) |
       std::views::transform([](const QStringView &v) { return fs::path(v.toString().toStdString()); }));
 
+  m_useRegex = preferences.value("useRegex").toBool();
+
   std::string databaseFilename = FileIndexerDatabase::getDatabasePath().filename().string();
   m_excludedFilenames = {databaseFilename, databaseFilename + "-wal"};
 }
@@ -137,26 +139,30 @@ void FileIndexer::preferenceValuesChanged(const QJsonObject &preferences) {
 QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view view,
                                                                 const QueryParams &params) const {
   auto searchQuery = qStringFromStdView(view);
-  QString finalQuery = preparePrefixSearchQuery(view);
+  QString finalQuery = m_useRegex ? searchQuery : preparePrefixSearchQuery(view);
   auto promise = std::make_shared<QPromise<std::vector<IndexerFileResult>>>();
   auto future = promise->future();
+  bool useRegex = m_useRegex;
 
-  QThreadPool::globalInstance()->start([params, finalQuery, promise = std::move(promise)]() mutable {
-    std::vector<fs::path> paths;
-    {
-      FileIndexerDatabase db;
-      paths = db.search(finalQuery.toStdString(), params);
-    }
+  QThreadPool::globalInstance()->start(
+      [params, finalQuery, useRegex, promise = std::move(promise)]() mutable {
+        std::vector<fs::path> paths;
+        {
+          FileIndexerDatabase db;
+          QueryParams paramsWithRegex = params;
+          paramsWithRegex.useRegex = useRegex;
+          paths = db.search(finalQuery.toStdString(), paramsWithRegex);
+        }
 
-    std::vector<IndexerFileResult> results;
+        std::vector<IndexerFileResult> results;
 
-    for (const auto &path : paths) {
-      results.emplace_back(IndexerFileResult{.path = path});
-    }
+        for (const auto &path : paths) {
+          results.emplace_back(IndexerFileResult{.path = path});
+        }
 
-    promise->addResult(results);
-    promise->finish();
-  });
+        promise->addResult(results);
+        promise->finish();
+      });
 
   return future;
 }

@@ -38,11 +38,14 @@ struct Pagination {
   int limit = 50;
 };
 
+struct FileIndexerQueryParams {
+  Pagination pagination;
+  bool useRegex = false;
+};
+
 class AbstractFileIndexer : public QObject {
 public:
-  struct QueryParams {
-    Pagination pagination;
-  };
+  using QueryParams = FileIndexerQueryParams;
 
 public:
   virtual void start() = 0;

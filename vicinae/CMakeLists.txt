@@ -6,7 +6,7 @@ set(TARGET vicinae)
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets Sql Network Svg DBus Concurrent)
 find_package(OpenSSL REQUIRED)
 
-list(APPEND LIBS  Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus Qt6::Concurrent ${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY} protobuf::libprotobuf minizip OpenSSL::Crypto wayland-client xdgpp qt6keychain)
+list(APPEND LIBS  Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus Qt6::Concurrent ${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY} protobuf::libprotobuf minizip OpenSSL::Crypto wayland-client xdgpp qt6keychain sqlite3)
 
 set(WLR_CLIP_BIN ${CMAKE_BINARY_DIR}/wlr-clip/wlr-clip${CMAKE_EXECUTABLE_SUFFIX})
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)
@@ -485,6 +485,8 @@ set(SRCS
 	src/services/files-service/file-indexer/writer-worker.cpp
 	src/services/files-service/file-indexer/scan-dispatcher.cpp
 	src/services/files-service/file-indexer/abstract-scanner.hpp
+	src/services/files-service/file-indexer/regex-utils.hpp
+	src/services/files-service/file-indexer/regex-utils.cpp
 
 	src/services/extension-registry/extension-registry.hpp
 	src/services/extension-registry/extension-registry.cpp
