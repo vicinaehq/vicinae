@@ -5,7 +5,9 @@
 #include "preference.hpp"
 #include "search-files-view.hpp"
 #include "ui/alert/alert.hpp"
+#include "utils.hpp"
 #include "vicinae.hpp"
+#include "services/toast/toast-service.hpp"
 
 class SearchFilesCommand : public BuiltinViewCommand<SearchFilesView> {
   QString id() const override { return "search"; }
