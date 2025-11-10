@@ -305,7 +305,6 @@ class DMenuCommand : public AbstractCommandLineCommand {
     DaemonIpcClient client;
 
     client.connectOrThrow();
-    qDebug() << "query" << m_query;
     payload.navigationTitle = m_navigationTitle;
     payload.placeholder = m_placeholder;
     payload.query = m_query;

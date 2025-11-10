@@ -91,7 +91,13 @@ void View::beforePop() {
   if (!m_selected) { emit selected(""); }
 }
 
-void View::initialize() { setSearchText(m_data.query.value_or("").c_str()); }
+void View::initialize() {
+  if (auto query = m_data.query) {
+    setSearchText(m_data.query.value_or("").c_str());
+  } else {
+    textChanged("");
+  }
+}
 
 void View::textChanged(const QString &text) {
   std::string pattern = text.toStdString();
@@ -130,11 +136,9 @@ void View::itemSelected(const OmniList::AbstractVirtualItem *item) {
 
   main->addAction(select);
 
-  if (auto text = searchText(); !text.isEmpty()) {
-    auto selectSearchText = new StaticAction("Pass search text", ImageURL::builtin("save-document"),
-                                             [this, text]() { selectEntry(text); });
-    main->addAction(selectSearchText);
-  }
+  auto selectSearchText = new StaticAction("Pass search text", ImageURL::builtin("save-document"),
+                                           [this]() { selectEntry(searchText()); });
+  main->addAction(selectSearchText);
 
   auto selectAndCopy = new StaticAction("Select and copy entry", ImageURL::builtin("copy-clipboard"),
                                         [this, text](ApplicationContext *ctx) {
