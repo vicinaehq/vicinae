@@ -34,6 +34,7 @@ protected:
 
 private:
   void itemSelected(const OmniList::AbstractVirtualItem *item) override;
+  void emptied() override;
   bool showBackButton() const override { return false; }
   bool onBackspace() override { return true; }
   QString initialNavigationTitle() const override;

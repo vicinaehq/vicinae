@@ -91,6 +91,15 @@ void View::beforePop() {
   if (!m_selected) { emit selected(""); }
 }
 
+void View::emptied() {
+  auto panel = std::make_unique<ListActionPanelState>();
+  auto main = panel->createSection();
+  auto selectSearchText = new StaticAction("Pass search text", ImageURL::builtin("save-document"),
+                                           [this]() { selectEntry(searchText()); });
+  main->addAction(selectSearchText);
+  setActions(std::move(panel));
+}
+
 void View::initialize() {
   if (auto query = m_data.query) {
     setSearchText(m_data.query.value_or("").c_str());
