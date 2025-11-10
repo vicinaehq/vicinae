@@ -1,5 +1,6 @@
 #include "ipc-client.hpp"
 #include "proto/daemon.pb.h"
+#include "ui/dmenu-view/dmenu-view.hpp"
 #include "vicinae.hpp"
 #include <iostream>
 #include <qlocalsocket.h>
@@ -92,10 +93,11 @@ bool DaemonIpcClient::close() {
 }
 
 proto::ext::daemon::Response DaemonIpcClient::request(const proto::ext::daemon::Request &req) {
+
   if (m_conn.state() != QLocalSocket::LocalSocketState::ConnectedState) { connectOrThrow(); }
 
   writeRequest(req);
-  m_conn.waitForReadyRead();
+  if (!m_conn.waitForReadyRead(60000)) { throw std::runtime_error("DMenu request timed out"); }
 
   auto buffer = m_conn.readAll();
   Daemon::Response res;
@@ -116,19 +118,10 @@ bool DaemonIpcClient::ping() {
   return request(req).payload_case() == proto::ext::daemon::Response::kPing;
 }
 
-std::string DaemonIpcClient::dmenu(DMenuListView::DmenuPayload payload) {
+std::string DaemonIpcClient::dmenu(DMenu::Payload payload) {
   Daemon::Request req;
-  auto dmenuReq = new proto::ext::daemon::DmenuRequest;
-
-  dmenuReq->set_navigation_title(payload.navigationTitle);
-  dmenuReq->set_raw_content(payload.raw);
-  dmenuReq->set_placeholder(payload.placeholder);
-  dmenuReq->set_section_title(payload.sectionTitle);
-  dmenuReq->set_no_section(payload.noSection);
-  req.set_allocated_dmenu(dmenuReq);
-
+  req.set_allocated_dmenu(new proto::ext::daemon::DmenuRequest(payload.toProto()));
   auto res = request(req);
-
   return res.dmenu().output();
 }
 

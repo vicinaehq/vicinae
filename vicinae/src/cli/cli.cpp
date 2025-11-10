@@ -295,18 +295,23 @@ class DMenuCommand : public AbstractCommandLineCommand {
         "-s,--section-title", m_sectionTitle,
         "Set the title of the main section. Use the {count} placeholder to render the current count.");
     app->add_option("-p,--placeholder", m_placeholder, "Placeholder text to use in the search bar");
+    app->add_option("-q,--query", m_query, "Initial search query");
     app->add_flag("--no-section", m_noSection, "Do not insert a section heading");
+    app->add_flag("--no-quick-look", m_noQuickLook, "Do not show quick look if available for a given entry");
   }
 
   void run(CLI::App *app) override {
-    DMenuListView::DmenuPayload payload;
+    DMenu::Payload payload;
     DaemonIpcClient client;
 
     client.connectOrThrow();
+    qDebug() << "query" << m_query;
     payload.navigationTitle = m_navigationTitle;
     payload.placeholder = m_placeholder;
+    payload.query = m_query;
     payload.sectionTitle = m_sectionTitle;
     payload.noSection = m_noSection;
+    payload.noQuickLook = m_noQuickLook;
     payload.raw = Utils::slurp(std::cin);
 
     auto output = client.dmenu(payload);
@@ -320,7 +325,9 @@ private:
   std::string m_navigationTitle;
   std::string m_placeholder;
   std::string m_sectionTitle;
+  std::string m_query;
   bool m_noSection = false;
+  bool m_noQuickLook = false;
 };
 
 class VersionCommand : public AbstractCommandLineCommand {

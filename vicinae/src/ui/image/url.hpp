@@ -123,6 +123,7 @@ public:
   static ImageURL http(const QUrl &httpUrl);
   static ImageURL emoji(const QString &emoji);
   static ImageURL rawData(const QByteArray &data, const QString &mimeType);
+  static ImageURL mimeType(const std::filesystem::path &path);
 
 private:
   ImageURLType _type = ImageURLType::Invalid;
