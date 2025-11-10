@@ -21,9 +21,12 @@ message DmenuRequest {
   string raw_content = 1;
   string navigation_title = 2;
   string placeholder = 3;
-  bool no_icon = 4;
-  string section_title = 5;
-  bool no_section = 6;
+  string section_title = 4;
+  bool no_section = 5;
+  bool no_quick_look = 6;
+  bool no_icon = 7;
+  bool no_metadata = 8;
+  string query = 9;
 };
 
 message LaunchAppRequest {

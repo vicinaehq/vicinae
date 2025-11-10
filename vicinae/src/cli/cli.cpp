@@ -290,37 +290,29 @@ class DMenuCommand : public AbstractCommandLineCommand {
   std::string description() const override { return "Render a list view from stdin"; }
 
   void setup(CLI::App *app) override {
-    app->add_option("-n,--navigation-title", m_navigationTitle, "Set the navigation title");
+    app->add_option("-n,--navigation-title", m_payload.navigationTitle, "Set the navigation title");
     app->add_option(
-        "-s,--section-title", m_sectionTitle,
+        "-s,--section-title", m_payload.sectionTitle,
         "Set the title of the main section. Use the {count} placeholder to render the current count.");
-    app->add_option("-p,--placeholder", m_placeholder, "Placeholder text to use in the search bar");
-    app->add_flag("--no-section", m_noSection, "Do not insert a section heading");
+    app->add_option("-p,--placeholder", m_payload.placeholder, "Placeholder text to use in the search bar");
+    app->add_option("-q,--query", m_payload.query, "Initial search query");
+    app->add_flag("--no-section", m_payload.noSection, "Do not insert a section heading");
+    app->add_flag("--no-quick-look", m_payload.noQuickLook,
+                  "Do not show quick look if available for a given entry");
+    app->add_flag("--no-metadata", m_payload.noMetadata, "Do not show metadata section in quick look");
   }
 
   void run(CLI::App *app) override {
-    DMenuListView::DmenuPayload payload;
     DaemonIpcClient client;
-
     client.connectOrThrow();
-    payload.navigationTitle = m_navigationTitle;
-    payload.placeholder = m_placeholder;
-    payload.sectionTitle = m_sectionTitle;
-    payload.noSection = m_noSection;
-    payload.raw = Utils::slurp(std::cin);
-
-    auto output = client.dmenu(payload);
-
+    m_payload.raw = Utils::slurp(std::cin);
+    auto output = client.dmenu(m_payload);
     if (output.empty()) { exit(1); }
-
     std::cout << output << std::endl;
   }
 
 private:
-  std::string m_navigationTitle;
-  std::string m_placeholder;
-  std::string m_sectionTitle;
-  bool m_noSection = false;
+  DMenu::Payload m_payload;
 };
 
 class VersionCommand : public AbstractCommandLineCommand {
