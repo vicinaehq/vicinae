@@ -2,8 +2,10 @@
 #include "proto/daemon.pb.h"
 #include "ui/dmenu-view/dmenu-view.hpp"
 #include "vicinae.hpp"
+#include <chrono>
 #include <iostream>
 #include <qlocalsocket.h>
+#include <random>
 #include <stdexcept>
 
 namespace Daemon = proto::ext::daemon;
@@ -93,11 +95,13 @@ bool DaemonIpcClient::close() {
 }
 
 proto::ext::daemon::Response DaemonIpcClient::request(const proto::ext::daemon::Request &req) {
+  using namespace std::chrono_literals;
+  constexpr const size_t timeout = std::chrono::duration_cast<std::chrono::milliseconds>(1min).count();
 
   if (m_conn.state() != QLocalSocket::LocalSocketState::ConnectedState) { connectOrThrow(); }
 
   writeRequest(req);
-  if (!m_conn.waitForReadyRead(60000)) { throw std::runtime_error("DMenu request timed out"); }
+  if (!m_conn.waitForReadyRead(timeout)) { throw std::runtime_error("DMenu request timed out"); }
 
   auto buffer = m_conn.readAll();
   Daemon::Response res;

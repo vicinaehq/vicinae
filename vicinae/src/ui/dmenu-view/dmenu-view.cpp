@@ -15,7 +15,8 @@ public:
   Item(std::string_view text) : m_text(text) {
     if (text.starts_with('/')) {
       std::filesystem::path path(text);
-      if (std::filesystem::exists(path)) { m_isFile = true; };
+      std::error_code ec;
+      if (std::filesystem::exists(path, ec)) { m_isFile = true; };
     }
   }
 
