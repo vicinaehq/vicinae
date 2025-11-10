@@ -1,5 +1,6 @@
 #pragma once
 #include "actions/shortcut/shortcut-actions.hpp"
+#include "ui/detail/detail-widget.hpp"
 #include "ui/search-bar/search-bar.hpp"
 #include "common.hpp"
 #include "services/shortcut/shortcut-service.hpp"
@@ -24,64 +25,7 @@
 #include "ui/views/list-view.hpp"
 #include "utils/layout.hpp"
 
-class DetailWithMetadataWidget : public QWidget {
-  HorizontalMetadata *m_metadata = new HorizontalMetadata;
-  QScrollArea *m_contentScrollArea = new QScrollArea(this);
-  HDivider *hdivider = new HDivider;
-
-public:
-  void setMetadata(const std::vector<MetadataItem> &items) {
-    m_metadata->setMetadata(items);
-    hdivider->show();
-    m_metadata->show();
-  }
-
-  void clearMetadata() {
-    // m_metadata->clear();
-    hdivider->hide();
-    m_metadata->hide();
-  }
-
-  QWidget *content() const { return m_contentScrollArea->widget(); }
-
-  void setContent(QWidget *widget) {
-    m_contentScrollArea->setWidget(widget);
-    m_contentScrollArea->setWidgetResizable(true);
-    m_contentScrollArea->setAutoFillBackground(false);
-    setAutoFillBackground(false);
-  }
-
-  void resizeEvent(QResizeEvent *event) override {
-    QWidget::resizeEvent(event);
-    m_metadata->setMaximumHeight(height() * 0.4);
-  }
-
-  void setupUI() {
-    auto layout = new QVBoxLayout;
-
-    m_contentScrollArea->setVerticalScrollBar(new OmniScrollBar);
-    m_contentScrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    m_contentScrollArea->setWidgetResizable(true);
-    m_contentScrollArea->setAutoFillBackground(false);
-    setAutoFillBackground(false);
-    m_contentScrollArea->setAttribute(Qt::WA_TranslucentBackground);
-
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->addWidget(m_contentScrollArea, 1);
-    m_contentScrollArea->setFocusPolicy(Qt::NoFocus);
-    layout->addWidget(hdivider);
-    layout->addWidget(m_metadata);
-    setLayout(layout);
-
-    hdivider->hide();
-    m_metadata->hide();
-  }
-
-public:
-  DetailWithMetadataWidget(QWidget *parent = nullptr) : QWidget(parent) { setupUI(); }
-};
-
-class ShortcutDetailWidget : public DetailWithMetadataWidget {
+class ShortcutDetailWidget : public DetailWidget {
   TypographyWidget *m_expandedLink = new TypographyWidget(this);
   std::shared_ptr<Shortcut> m_shortcut;
 

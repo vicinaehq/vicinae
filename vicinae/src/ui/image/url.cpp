@@ -5,6 +5,7 @@
 #include "ui/omni-painter/omni-painter.hpp"
 #include "theme/theme-file.hpp"
 #include <qdir.h>
+#include <qmimedatabase.h>
 #include <qstringview.h>
 #include <QIcon>
 #include <qurlquery.h>
@@ -340,4 +341,13 @@ ImageURL ImageURL::rawData(const QByteArray &data, const QString &mimeType) {
   url.setName(QString("data:%1;base64,%2").arg(mimeType).arg(data.toBase64(QByteArray::Base64UrlEncoding)));
 
   return url;
+}
+
+ImageURL ImageURL::mimeType(const std::filesystem::path &path) {
+  QMimeDatabase db;
+  auto mime = db.mimeTypeForFile(path.c_str());
+  if (auto icon = QIcon::fromTheme(mime.iconName()); !icon.isNull()) {
+    return ImageURL::system(mime.iconName());
+  }
+  return ImageURL::system(mime.genericIconName());
 }

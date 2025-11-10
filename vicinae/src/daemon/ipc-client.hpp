@@ -21,7 +21,7 @@ public:
    * Closing the launcher window or exiting from the dmenu view using
    * backspace will return std::nullopt.
    */
-  std::string dmenu(DMenuListView::DmenuPayload payload);
+  std::string dmenu(const DMenu::Payload &payload);
   void toggle();
   bool open();
   bool close();
