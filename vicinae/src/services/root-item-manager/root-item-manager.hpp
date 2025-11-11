@@ -223,6 +223,15 @@ signals:
 public:
   using ItemPtr = std::shared_ptr<RootItem>;
   using ItemList = std::vector<ItemPtr>;
+  struct SearchableRootItem {
+    std::shared_ptr<RootItem> item;
+    std::string title;
+    std::string subtitle;
+    std::string alias;
+    std::vector<std::string> keywords;
+    RootItemMetadata *meta;
+  };
+
   struct ScoredItem {
     QString alias;
     int score = 0;
@@ -298,7 +307,7 @@ public:
   void loadProvider(std::unique_ptr<RootProvider> provider);
 
   RootProvider *provider(const QString &id) const;
-  std::vector<std::shared_ptr<RootItem>> allItems() const { return m_items; }
+  std::vector<SearchableRootItem> allItems() const { return m_items; }
   std::vector<std::shared_ptr<RootItem>> fallbackItems() const;
   std::vector<ScoredItem> prefixSearch(const QString &query, const RootItemPrefixSearchOptions &opts = {});
   RootItemMetadata loadMetadata(const QString &id);
@@ -312,7 +321,7 @@ private:
   std::unordered_map<QString, RootProviderMetadata> m_provider_metadata;
   std::vector<std::unique_ptr<RootProvider>> m_providers;
   OmniDatabase &m_db;
-  ItemList m_items;
+  std::vector<SearchableRootItem> m_items;
 
   /**
    * Second item list which is sorted in place every time the root is searched.
