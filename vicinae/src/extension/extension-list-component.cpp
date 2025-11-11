@@ -311,6 +311,7 @@ ExtensionListComponent::ExtensionListComponent() : _debounce(new QTimer(this)), 
   setDefaultActionShortcuts({Keyboard::Shortcut::enter(), Keyboard::Shortcut::submit()});
   m_selector->setMinimumWidth(300);
   m_selector->setEnableDefaultFilter(false);
+  m_selector->setFocusPolicy(Qt::NoFocus);
   m_split->setMainWidget(m_list);
   m_split->setDetailWidget(m_detail);
   m_split->detailWidget()->hide();
