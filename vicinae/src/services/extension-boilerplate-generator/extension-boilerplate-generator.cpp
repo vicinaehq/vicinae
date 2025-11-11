@@ -125,7 +125,7 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
 
   if (!gitignore.open(QIODevice::WriteOnly)) { return tl::unexpected(QString("Failed to write gitignore")); }
 
-  gitignore.write("node_modules\n");
+  gitignore.write("node_modules\nvicinae-env.d.ts\n");
   userCopy(":boilerplate/tsconfig.json", QString::fromStdString(extDir / "tsconfig.json"));
   userCopy(":boilerplate/extension_icon", QString::fromStdString(assetsDir / "extension_icon.png"));
   userCopy(":boilerplate/README.md", QString::fromStdString(extDir / "README.md"));
