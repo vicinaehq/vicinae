@@ -151,13 +151,13 @@ class ManageFallbackCommandsView : public ListView {
   void renderList(const QString &text, OmniList::SelectionPolicy selectionPolicy = OmniList::SelectFirst) {
     QString query = text.trimmed();
     auto itemManager = ServiceRegistry::instance()->rootItemManager();
-    auto results = itemManager->prefixSearch(query);
-    auto fallbacks =
-        results | std::views::filter([](const auto &item) { return item.item->isSuitableForFallback(); });
+    auto results = itemManager->search(query);
+    auto fallbacks = results | std::views::filter(
+                                   [](const auto &item) { return item.item.get()->isSuitableForFallback(); });
     std::vector<std::shared_ptr<RootItem>> enabled;
 
     for (const auto &item : fallbacks) {
-      if (itemManager->isFallback(item.item->uniqueId())) { enabled.emplace_back(item.item); };
+      if (itemManager->isFallback(item.item.get()->uniqueId())) { enabled.emplace_back(item.item.get()); };
     }
 
     std::ranges::sort(enabled, [itemManager](const auto &a, const auto &b) {
@@ -179,13 +179,13 @@ class ManageFallbackCommandsView : public ListView {
     }
 
     auto available = fallbacks | std::views::filter([itemManager](const auto &item) {
-                       return !itemManager->isFallback(item.item->uniqueId());
+                       return !itemManager->isFallback(item.item.get()->uniqueId());
                      });
 
     auto &availableSection = m_list->addSection("Available");
 
     for (const auto &item : available) {
-      availableSection.addItem(std::make_unique<FallbackListItem>(item.item));
+      availableSection.addItem(std::make_unique<FallbackListItem>(item.item.get()));
     }
     m_list->endResetModel(selectionPolicy);
   }

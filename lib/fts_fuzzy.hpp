@@ -36,18 +36,25 @@
 // Public interface
 namespace fts {
 static bool fuzzy_match_simple(char const *pattern, char const *str);
-static bool fuzzy_match(char const *pattern, char const *str, int &outScore);
-static bool fuzzy_match(char const *pattern, char const *str, int &outScore, uint8_t *matches,
-                        int maxMatches);
+static bool fuzzy_match(std::string_view pattern, std::string_view str, int &outScore);
+static bool fuzzy_match(char const *pattern, size_t patternSize, char const *str, size_t strSize,
+                        int &outScore);
+static bool fuzzy_match(char const *pattern, size_t patternSize, char const *str, size_t strSize,
+                        int &outScore, uint8_t *matches, int maxMatches);
 } // namespace fts
 
 namespace fts {
 
 // Forward declarations for "private" implementation
 namespace fuzzy_internal {
-static bool fuzzy_match_recursive(const char *pattern, const char *str, int &outScore, const char *strBegin,
-                                  uint8_t const *srcMatches, uint8_t *newMatches, int maxMatches,
-                                  int nextMatch, int &recursionCount, int recursionLimit);
+static bool fuzzy_match_recursive(const char *pattern, size_t patternSize, const char *str, size_t strSize,
+                                  int &outScore, const char *strBegin, uint8_t const *srcMatches,
+                                  uint8_t *newMatches, int maxMatches, int nextMatch, int &recursionCount,
+                                  int recursionLimit, size_t patternIdx, size_t strIdx);
+}
+
+static bool fuzzy_match(std::string_view pattern, std::string_view str, int &outScore) {
+  return fuzzy_match(pattern.data(), pattern.size(), str.data(), str.size(), outScore);
 }
 
 // Public interface
@@ -60,32 +67,34 @@ static bool fuzzy_match_simple(char const *pattern, char const *str) {
   return *pattern == '\0' ? true : false;
 }
 
-static bool fuzzy_match(char const *pattern, char const *str, int &outScore) {
+static bool fuzzy_match(char const *pattern, size_t patternSize, char const *str, size_t strSize,
+                        int &outScore) {
 
   uint8_t matches[256];
-  return fuzzy_match(pattern, str, outScore, matches, sizeof(matches));
+  return fuzzy_match(pattern, patternSize, str, strSize, outScore, matches, sizeof(matches));
 }
 
-static bool fuzzy_match(char const *pattern, char const *str, int &outScore, uint8_t *matches,
-                        int maxMatches) {
+static bool fuzzy_match(char const *pattern, size_t patternSize, char const *str, size_t strSize,
+                        int &outScore, uint8_t *matches, int maxMatches) {
   int recursionCount = 0;
   int recursionLimit = 10;
 
-  return fuzzy_internal::fuzzy_match_recursive(pattern, str, outScore, str, nullptr, matches, maxMatches, 0,
-                                               recursionCount, recursionLimit);
+  return fuzzy_internal::fuzzy_match_recursive(pattern, patternSize, str, strSize, outScore, str, nullptr,
+                                               matches, maxMatches, 0, recursionCount, recursionLimit, 0, 0);
 }
 
 // Private implementation
-static bool fuzzy_internal::fuzzy_match_recursive(const char *pattern, const char *str, int &outScore,
-                                                  const char *strBegin, uint8_t const *srcMatches,
-                                                  uint8_t *matches, int maxMatches, int nextMatch,
-                                                  int &recursionCount, int recursionLimit) {
+static bool fuzzy_internal::fuzzy_match_recursive(const char *pattern, size_t patternSize, const char *str,
+                                                  size_t strSize, int &outScore, const char *strBegin,
+                                                  uint8_t const *srcMatches, uint8_t *matches, int maxMatches,
+                                                  int nextMatch, int &recursionCount, int recursionLimit,
+                                                  size_t patternIdx, size_t strIdx) {
   // Count recursions
   ++recursionCount;
   if (recursionCount >= recursionLimit) return false;
 
   // Detect end of strings
-  if (*pattern == '\0' || *str == '\0') return false;
+  if (patternIdx == patternSize || strIdx == strSize) return false;
 
   // Recursion params
   bool recursiveMatch = false;
@@ -94,7 +103,8 @@ static bool fuzzy_internal::fuzzy_match_recursive(const char *pattern, const cha
 
   // Loop through pattern and str looking for a match
   bool first_match = true;
-  while (*pattern != '\0' && *str != '\0') {
+  // while (*pattern != '\0' && *str != '\0') {
+  while (patternIdx < patternSize && strIdx < strSize) {
 
     // Found match
     if (tolower(*pattern) == tolower(*str)) {
@@ -111,8 +121,9 @@ static bool fuzzy_internal::fuzzy_match_recursive(const char *pattern, const cha
       // Recursive call that "skips" this match
       uint8_t recursiveMatches[256];
       int recursiveScore;
-      if (fuzzy_match_recursive(pattern, str + 1, recursiveScore, strBegin, matches, recursiveMatches,
-                                sizeof(recursiveMatches), nextMatch, recursionCount, recursionLimit)) {
+      if (fuzzy_match_recursive(pattern, patternSize, str + 1, strSize, recursiveScore, strBegin, matches,
+                                recursiveMatches, sizeof(recursiveMatches), nextMatch, recursionCount,
+                                recursionLimit, patternIdx, strIdx + 1)) {
 
         // Pick best recursive score
         if (!recursiveMatch || recursiveScore > bestRecursiveScore) {
@@ -125,12 +136,14 @@ static bool fuzzy_internal::fuzzy_match_recursive(const char *pattern, const cha
       // Advance
       matches[nextMatch++] = (uint8_t)(str - strBegin);
       ++pattern;
+      ++patternIdx;
     }
+    ++strIdx;
     ++str;
   }
 
   // Determine if full pattern was matched
-  bool matched = *pattern == '\0' ? true : false;
+  bool matched = patternIdx == patternSize;
 
   // Calculate score
   if (matched) {
@@ -144,8 +157,9 @@ static bool fuzzy_internal::fuzzy_match_recursive(const char *pattern, const cha
     const int unmatched_letter_penalty = -1;    // penalty for every letter that doesn't matter
 
     // Iterate str to end
-    while (*str != '\0')
-      ++str;
+    // while (*str != '\0')
+    //++str;
+    str = str + strSize - strIdx;
 
     // Initialize score
     outScore = 100;

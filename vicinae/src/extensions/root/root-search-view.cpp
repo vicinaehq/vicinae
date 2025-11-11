@@ -86,7 +86,7 @@ protected:
         .name = m_item->displayName(),
         .subtitle = m_item->subtitle(),
         .accessories = m_item->accessories(),
-        .alias = metadata.alias,
+        .alias = QString::fromStdString(metadata.alias),
         .active = m_item->isActive(),
     };
   }
@@ -223,7 +223,7 @@ bool RootSearchView::inputFilter(QKeyEvent *event) {
           auto manager = context()->services->rootItemManager();
           auto metadata = manager->itemMetadata(rootItem->uniqueId());
 
-          if (metadata.alias.startsWith(searchText())) {
+          if (metadata.alias.starts_with(searchText().toStdString())) {
             m_list->activateCurrentSelection();
             return true;
           }
@@ -338,10 +338,10 @@ void RootSearchView::render(const QString &text) {
 
   auto &results = m_list->addSection("Results");
 
-  auto searchResults = rootItemManager->prefixSearch(text.trimmed());
+  auto searchResults = rootItemManager->search(text.trimmed());
 
   for (const auto &item : searchResults) {
-    results.addItem(std::make_unique<RootSearchItem>(item.item));
+    results.addItem(std::make_unique<RootSearchItem>(item.item.get()));
   }
 
   if (!m_fileResults.empty()) {
@@ -378,7 +378,7 @@ void RootSearchView::renderEmpty() {
     auto &favorites = m_list->addSection("Favorites");
 
     for (const auto &item : rootManager->queryFavorites()) {
-      favorites.addItem(std::make_unique<FavoriteRootSearchItem>(item));
+      favorites.addItem(std::make_unique<FavoriteRootSearchItem>(item.item));
     }
   }
 
@@ -386,7 +386,7 @@ void RootSearchView::renderEmpty() {
     auto &suggestions = m_list->addSection("Suggestions");
 
     for (const auto &item : rootManager->querySuggestions()) {
-      suggestions.addItem(std::make_unique<SuggestionRootSearchItem>(item));
+      suggestions.addItem(std::make_unique<SuggestionRootSearchItem>(item.item));
     }
   }
 
