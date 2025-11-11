@@ -16,6 +16,7 @@ public:
   bool selectDown();
   bool selectHome();
   bool selectEnd();
+  void selectNext();
   void activateCurrentSelection() const;
   ListItemViewModel const *selected() const;
   bool empty() const;

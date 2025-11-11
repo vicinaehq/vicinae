@@ -1,4 +1,5 @@
 #include "extension-grid.hpp"
+#include "extension/extension-list.hpp"
 #include "layout.hpp"
 #include "lib/fuzzy/weighted-fuzzy-scorer.hpp"
 #include "ui/omni-grid/omni-grid.hpp"
@@ -127,6 +128,7 @@ bool ExtensionGridList::selectLeft() { return m_list->selectLeft(); }
 bool ExtensionGridList::selectRight() { return m_list->selectRight(); }
 bool ExtensionGridList::selectHome() { return m_list->selectHome(); }
 bool ExtensionGridList::selectEnd() { return m_list->selectEnd(); }
+void ExtensionGridList::selectNext() { return m_list->selectNext(); }
 void ExtensionGridList::activateCurrentSelection() const { m_list->activateCurrentSelection(); }
 
 bool ExtensionGridList::empty() const { return m_list->virtualHeight() == 0; }
