@@ -572,6 +572,17 @@ bool OmniList::selectDown() {
   return false;
 }
 
+void OmniList::selectNext() {
+  for (int i = m_selected + 1; i < m_items.size(); ++i) {
+    if (m_items[i].item->selectable()) {
+      setSelectedIndex(i, ScrollBehaviour::ScrollRelative);
+      return;
+    }
+  }
+
+  selectFirst();
+}
+
 bool OmniList::selectUp() {
   if (m_items.empty()) return false;
   if (m_selected == -1) {

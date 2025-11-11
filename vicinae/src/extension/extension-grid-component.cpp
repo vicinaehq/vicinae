@@ -31,6 +31,9 @@ bool ExtensionGridComponent::inputFilter(QKeyEvent *event) {
       return m_list->selectUp();
     case Qt::Key_Down:
       return m_list->selectDown();
+    case Qt::Key_Tab:
+      m_list->selectNext();
+      return true;
     case Qt::Key_Home:
       return m_list->selectHome();
     case Qt::Key_End:
