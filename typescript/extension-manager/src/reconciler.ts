@@ -486,7 +486,7 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 };
 
 export type ViewData = {
-	root: SerializedInstance;
+	root?: SerializedInstance;
 };
 
 export type RendererConfig = {
@@ -557,19 +557,9 @@ export const createRenderer = (config: RendererConfig) => {
 				//writeFileSync("/tmp/render.txt", `${inspect(root, { depth: null, colors: true })}`);
 				//appendFileSync('/tmp/render.txt', JSON.stringify(root, null, 2));
 
-				const views = root.children.map<ViewData>((child) => {
-					// We always take the last component in the view container.
-					// In almost every case, the view container should only have one,
-					// but some Raycast extensions have been observed using many, which
-					// is probably not even officially supported.
-					const component = child.children.at(-1);
-
-					if (!component) {
-						throw new Error(`View without children, this should be impossible`);
-					}
-
-					return { root: component };
-				});
+				const views = root.children.map<ViewData>((child) => ({
+					root: child.children.at(-1),
+				}));
 
 				config.onUpdate?.(views);
 
