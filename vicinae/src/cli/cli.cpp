@@ -258,21 +258,29 @@ class CliPing : public AbstractCommandLineCommand {
 class ToggleCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "toggle"; }
   std::string description() const override { return "Toggle the vicinae window"; }
+  void setup(CLI::App *app) override { app->add_option("-q,--query", m_settings.query, "Set search query"); }
 
   void run(CLI::App *app) override {
     DaemonIpcClient client;
-    client.toggle();
+    client.toggle(m_settings);
   }
+
+private:
+  DaemonIpcClient::ToggleSettings m_settings;
 };
 
 class OpenCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "open"; }
   std::string description() const override { return "Open the vicinae window"; }
+  void setup(CLI::App *app) override { app->add_option("-q,--query", m_settings.query, "Set search query"); }
 
   void run(CLI::App *app) override {
     DaemonIpcClient client;
-    if (!client.open()) { exit(1); }
+    if (!client.open(m_settings)) { exit(1); }
   }
+
+private:
+  DaemonIpcClient::OpenSettings m_settings;
 };
 
 class CloseCommand : public AbstractCommandLineCommand {

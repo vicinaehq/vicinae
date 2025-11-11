@@ -71,19 +71,31 @@ std::vector<proto::ext::daemon::AppInfo> DaemonIpcClient::listApps(bool withActi
   return apps;
 }
 
-void DaemonIpcClient::toggle() {
+void DaemonIpcClient::toggle(const DaemonIpcClient::ToggleSettings &settings) {
   QUrl url;
+  QUrlQuery query;
+
+  if (settings.query) { query.addQueryItem("fallbackText", settings.query->c_str()); }
+
   url.setScheme(Omnicast::APP_SCHEME);
   url.setHost("toggle");
+  url.setQuery(query);
+
   if (auto res = deeplink(url); !res) {
     throw std::runtime_error("Failed to toggle: " + res.error().toStdString());
   }
 }
 
-bool DaemonIpcClient::open() {
+bool DaemonIpcClient::open(const OpenSettings &settings) {
   QUrl url;
+  QUrlQuery query;
+
+  if (settings.query) { query.addQueryItem("fallbackText", settings.query->c_str()); }
+
   url.setScheme(Omnicast::APP_SCHEME);
   url.setHost("open");
+  url.setQuery(query);
+
   return deeplink(url).has_value();
 }
 
