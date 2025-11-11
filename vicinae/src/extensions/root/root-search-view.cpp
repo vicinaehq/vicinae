@@ -378,7 +378,7 @@ void RootSearchView::renderEmpty() {
     auto &favorites = m_list->addSection("Favorites");
 
     for (const auto &item : rootManager->queryFavorites()) {
-      favorites.addItem(std::make_unique<FavoriteRootSearchItem>(item));
+      favorites.addItem(std::make_unique<FavoriteRootSearchItem>(item.item));
     }
   }
 

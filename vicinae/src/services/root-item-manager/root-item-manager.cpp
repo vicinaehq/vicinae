@@ -738,27 +738,20 @@ double RootItemManager::computeScore(const RootItemMetadata &meta, int weight) c
   return (frequencyScore + recencyScore) * weight;
 }
 
-std::vector<std::shared_ptr<RootItem>> RootItemManager::queryFavorites(int limit) {
-  std::vector<std::shared_ptr<RootItem>> items;
-
-  for (const auto &item : m_items) {
-    RootItemMetadata meta = itemMetadata(item.item->uniqueId());
-
-    if (meta.isEnabled && meta.favorite) { items.emplace_back(item.item); }
-  }
-
-  std::ranges::sort(items, [this](const auto &a, const auto &b) {
-    RootItemMetadata ameta = itemMetadata(a->uniqueId());
-    RootItemMetadata bmeta = itemMetadata(b->uniqueId());
-    auto ascore = computeScore(ameta, a->baseScoreWeight());
-    auto bscore = computeScore(ameta, b->baseScoreWeight());
-
+std::vector<RootItemManager::SearchableRootItem> RootItemManager::queryFavorites(int limit) {
+  auto isFavorite = [](auto &&item) { return item.meta->favorite; };
+  auto favorites = m_items | std::views::filter(isFavorite) | std::ranges::to<std::vector>();
+  std::ranges::stable_sort(favorites, [this](const auto &a, const auto &b) {
+    RootItemMetadata ameta = itemMetadata(a.item->uniqueId());
+    RootItemMetadata bmeta = itemMetadata(b.item->uniqueId());
+    auto ascore = computeScore(ameta, a.item->baseScoreWeight());
+    auto bscore = computeScore(ameta, b.item->baseScoreWeight());
     return ameta.visitCount > bmeta.visitCount;
   });
 
-  if (items.size() > limit) { items.resize(limit); }
+  if (favorites.size() > limit) { favorites.resize(limit); }
 
-  return items;
+  return favorites;
 }
 
 std::vector<std::shared_ptr<RootItem>> RootItemManager::querySuggestions(int limit) {

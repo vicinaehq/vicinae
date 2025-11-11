@@ -278,7 +278,7 @@ public:
   bool enableFallback(const QString &id);
   double computeScore(const RootItemMetadata &meta, int weight) const;
   double computeRecencyScore(const RootItemMetadata &meta) const;
-  std::vector<std::shared_ptr<RootItem>> queryFavorites(int limit = 5);
+  std::vector<SearchableRootItem> queryFavorites(int limit = 5);
   std::vector<std::shared_ptr<RootItem>> querySuggestions(int limit = 5);
   bool resetRanking(const QString &id);
   bool registerVisit(const QString &id);
@@ -331,6 +331,7 @@ private:
   std::vector<std::unique_ptr<RootProvider>> m_providers;
   OmniDatabase &m_db;
   std::vector<SearchableRootItem> m_items;
+
   // always reserved to hold the maximum amount of items possible, to avoid reallocating
   // on every search
   std::vector<ScoredItem> m_scoredItems;
