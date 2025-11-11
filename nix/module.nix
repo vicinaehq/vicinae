@@ -1,4 +1,5 @@
-self: {
+self:
+{
   config,
   pkgs,
   lib,
@@ -9,6 +10,8 @@ let
 
   inherit (pkgs.stdenv.hostPlatform) system;
   vicinaePkg = self.packages.${system}.default;
+
+  settingsFormat = pkgs.formats.json { };
 in
 {
 
@@ -46,6 +49,16 @@ in
     };
 
     themes = lib.mkOption {
+      type =
+        with lib.types;
+        let
+          valueType = nullOr (oneOf [
+            str
+            path
+            (attrsOf valueType)
+          ]);
+        in
+        valueType;
       default = { };
       description = ''
         Theme settings to add to the themes folder in `~/.config/vicinae/themes`. 
@@ -77,12 +90,24 @@ in
               };
             }
           '';
-      type = lib.types.attrsOf lib.types.attrs;
     };
 
     settings = lib.mkOption {
-      type = lib.types.nullOr lib.types.attrs;
-      default = null;
+      type =
+        with lib.types;
+        let
+          valueType = nullOr (oneOf [
+            bool
+            int
+            float
+            str
+            path
+            (attrsOf valueType)
+            (listOf valueType)
+          ]);
+        in
+        valueType;
+      default = { };
       description = "Settings written as JSON to `~/.config/vicinae/vicinae.json.";
       example = lib.literalExpression ''
         {
@@ -110,16 +135,17 @@ in
   config = lib.mkIf cfg.enable {
     home.packages = [ cfg.package ];
 
-    xdg.configFile =
-      lib.optionalAttrs (cfg.settings != null) {
-        "vicinae/vicinae.json".text = builtins.toJSON cfg.settings;
+    xdg.configFile = {
+      "vicinae/vicinae.json" = {
+        source = settingsFormat.generate "vicinae.json" cfg.settings;
+      };
+    }
+    // lib.mapAttrs' (
+      name: theme:
+      lib.nameValuePair "vicinae/themes/${name}.json" {
+        source = settingsFormat.generate "${name}.json" theme;
       }
-      // lib.mapAttrs' (
-        name: theme:
-        lib.nameValuePair "vicinae/themes/${name}.json" {
-          text = builtins.toJSON theme;
-        }
-      ) cfg.themes;
+    ) cfg.themes;
 
     xdg.dataFile = builtins.listToAttrs (
       builtins.map (item: {
@@ -137,9 +163,9 @@ in
         BindsTo = [ "graphical-session.target" ];
       };
       Service = {
-        EnvironmentFile = pkgs.writeText "vicinae-env" ''
-          USE_LAYER_SHELL=${if cfg.useLayerShell then builtins.toString 1 else builtins.toString 0}
-        '';
+        Environment = [
+          "USE_LAYER_SHELL=${if cfg.useLayerShell then "1" else "0"}"
+        ];
         Type = "simple";
         ExecStart = "${lib.getExe' cfg.package "vicinae"} server";
         Restart = "always";
