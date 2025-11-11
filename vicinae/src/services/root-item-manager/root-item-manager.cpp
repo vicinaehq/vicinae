@@ -1,7 +1,6 @@
 #include "root-item-manager.hpp"
 #include "lib/fts_fuzzy.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
-#include "timer.hpp"
 #include <algorithm>
 #include <qlogging.h>
 #include <qtconcurrentfilter.h>
@@ -43,7 +42,7 @@ RootItemMetadata RootItemManager::loadMetadata(const QString &id) {
 
   item.isEnabled = query.value(0).toBool();
   item.fallbackPosition = query.value(1).toInt();
-  item.alias = query.value(2).toString();
+  item.alias = query.value(2).toString().toStdString();
   item.visitCount = query.value(3).toInt();
   item.lastVisitedAt = std::chrono::system_clock::from_time_t(query.value(4).toULongLong());
   item.providerId = query.value(5).toString();
@@ -55,6 +54,13 @@ RootItemMetadata RootItemManager::loadMetadata(const QString &id) {
 RootItem *RootItemManager::findItemById(const QString &id) const {
   for (const auto &item : m_items) {
     if (item.item->uniqueId() == id) { return item.item.get(); }
+  }
+  return nullptr;
+}
+
+RootItemManager::SearchableRootItem *RootItemManager::findSearchableItem(const QString &id) {
+  for (auto &item : m_items) {
+    if (item.item->uniqueId() == id) { return &item; }
   }
   return nullptr;
 }
@@ -96,7 +102,6 @@ void RootItemManager::updateIndex() {
       sitem.keywords = item->keywords() | std::views::transform([](auto &&s) { return s.toStdString(); }) |
                        std::ranges::to<std::vector>();
       sitem.meta = &m_metadata[item->uniqueId()];
-      sitem.alias = sitem.meta->alias.toStdString();
       m_items.emplace_back(sitem);
     }
   }
@@ -156,7 +161,7 @@ int RootItemManager::SearchableRootItem::fuzzyScore(std::string_view pattern) co
   int max = 0;
   int score = 0;
   if (fts::fuzzy_match(pattern, title, score)) { max = std::max(max, score); }
-  if (fts::fuzzy_match(pattern, alias, score)) { max = std::max(max, score); }
+  if (fts::fuzzy_match(pattern, meta->alias, score)) { max = std::max(max, score); }
   if (fts::fuzzy_match(pattern, subtitle, score)) { max = std::max(max, static_cast<int>(score * 0.6)); }
   for (const auto &kw : keywords) {
     if (fts::fuzzy_match(pattern, kw, score)) { max = std::max(max, static_cast<int>(score * 0.3)); }
@@ -177,7 +182,7 @@ std::span<RootItemManager::ScoredItem> RootItemManager::search(const QString &qu
     int fuzzyScore = item.fuzzyScore(patternView);
     if (!pattern.empty() && !fuzzyScore) continue;
     int finalScore = computeScore(*item.meta, item.item->baseScoreWeight());
-    m_scoredItems.emplace_back(ScoredItem{.alias = item.alias, .score = finalScore, .item = item.item});
+    m_scoredItems.emplace_back(ScoredItem{.alias = item.meta->alias, .score = finalScore, .item = item.item});
   }
 
   // we need stable sort to avoid flickering when updating quickly
@@ -313,7 +318,7 @@ void RootItemManager::setPreferenceValues(const QString &id, const QJsonObject &
 }
 
 bool RootItemManager::setAlias(const QString &id, const QString &alias) {
-  auto item = findItemById(id);
+  auto item = findSearchableItem(id);
 
   if (!item) {
     qCritical() << "setAlias: no item with id " << id;
@@ -333,7 +338,7 @@ bool RootItemManager::setAlias(const QString &id, const QString &alias) {
 
   auto metadata = itemMetadata(id);
 
-  metadata.alias = alias;
+  metadata.alias = alias.toStdString();
   m_metadata[id] = metadata;
 
   return true;

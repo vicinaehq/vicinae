@@ -6,7 +6,6 @@
 #include "../../ui/image/url.hpp"
 #include "preference.hpp"
 #include "settings/provider-settings-detail.hpp"
-#include <numbers>
 #include <qdnslookup.h>
 #include <qjsonobject.h>
 #include <qjsonvalue.h>
@@ -199,7 +198,7 @@ struct RootItemMetadata {
   bool isEnabled = true;
   std::optional<std::chrono::time_point<std::chrono::high_resolution_clock>> lastVisitedAt;
   // Alias can be made of multiple words, in which case each word is indexed separately
-  QString alias;
+  std::string alias; // std::string cause we want it to be fuzzy searchready
   bool favorite = false;
   int fallbackPosition = -1;
   QString providerId;
@@ -228,7 +227,6 @@ public:
     std::shared_ptr<RootItem> item;
     std::string title;
     std::string subtitle;
-    std::string alias;
     std::vector<std::string> keywords;
     RootItemMetadata *meta;
 
@@ -323,6 +321,7 @@ public:
   bool upsertProvider(const RootProvider &provider);
   bool upsertItem(const QString &providerId, const RootItem &item);
   RootItem *findItemById(const QString &id) const;
+  SearchableRootItem *findSearchableItem(const QString &id);
   bool pruneProvider(const QString &id);
 
 private:

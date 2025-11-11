@@ -126,7 +126,7 @@ public:
     auto manager = ServiceRegistry::instance()->rootItemManager();
     auto metadata = manager->itemMetadata(m_id);
 
-    setText(metadata.alias);
+    setText(QString::fromStdString(metadata.alias));
   }
 
   // TODO: we need to move that logic a few level above I think, as that's not pretty

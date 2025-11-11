@@ -86,7 +86,7 @@ protected:
         .name = m_item->displayName(),
         .subtitle = m_item->subtitle(),
         .accessories = m_item->accessories(),
-        .alias = metadata.alias,
+        .alias = QString::fromStdString(metadata.alias),
         .active = m_item->isActive(),
     };
   }
@@ -223,7 +223,7 @@ bool RootSearchView::inputFilter(QKeyEvent *event) {
           auto manager = context()->services->rootItemManager();
           auto metadata = manager->itemMetadata(rootItem->uniqueId());
 
-          if (metadata.alias.startsWith(searchText())) {
+          if (metadata.alias.starts_with(searchText().toStdString())) {
             m_list->activateCurrentSelection();
             return true;
           }
