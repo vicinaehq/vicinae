@@ -1,5 +1,243 @@
 import { z } from "zod";
 
+// Preference schema for extension and command preferences
+const preferenceBase = {
+	name: z.string().min(1).describe("A unique id for the preference."),
+	title: z
+		.string()
+		.describe(
+			"The display name of the preference shown in Raycast preferences. For 'checkbox', 'textfield' and 'password', it is shown as a section title above the respective input element. If you want to group multiple checkboxes into a single section, set the 'title' of the first checkbox and leave the 'title' of the other checkboxes empty.",
+		),
+	description: z
+		.string()
+		.describe(
+			"It helps users understand what the preference does. It will be displayed as a tooltip when hovering over it.",
+		),
+	required: z
+		.boolean()
+		.describe(
+			"Indicates whether the value is required and must be entered by the user before the extension is usable.",
+		),
+};
+
+const preferenceSchema = z.discriminatedUnion("type", [
+	// textfield preference
+	z
+		.object({
+			...preferenceBase,
+			type: z.literal("textfield"),
+			placeholder: z
+				.string()
+				.describe(
+					"Text displayed in the preference's field when no value has been input.",
+				)
+				.optional(),
+			default: z
+				.union([
+					z.string(),
+					z.object({
+						macOS: z.string().optional(),
+						Windows: z.string().optional(),
+					}),
+				])
+				.describe(
+					"The optional default value for the field. For textfields, this is a string value. Additionally, you can specify a different value per platform by passing an object: { 'macOS': ..., 'Windows': ... }.",
+				)
+				.optional(),
+		})
+		.strict(),
+	// password preference
+	z
+		.object({
+			...preferenceBase,
+			type: z.literal("password"),
+			placeholder: z
+				.string()
+				.describe(
+					"Text displayed in the preference's field when no value has been input.",
+				)
+				.optional(),
+			default: z
+				.union([
+					z.string(),
+					z.object({
+						macOS: z.string().optional(),
+						Windows: z.string().optional(),
+					}),
+				])
+				.describe(
+					"The optional default value for the field. For passwords, this is a string value. Additionally, you can specify a different value per platform by passing an object: { 'macOS': ..., 'Windows': ... }.",
+				)
+				.optional(),
+		})
+		.strict(),
+	// checkbox preference
+	z
+		.object({
+			...preferenceBase,
+			type: z.literal("checkbox"),
+			label: z
+				.string()
+				.min(1)
+				.describe("The label of the checkbox. Shown next to the checkbox."),
+			default: z
+				.union([
+					z.boolean(),
+					z.object({
+						macOS: z.boolean().optional(),
+						Windows: z.boolean().optional(),
+					}),
+				])
+				.describe(
+					"The optional default value for the field. For checkboxes, this is a boolean value. Additionally, you can specify a different value per platform by passing an object: { 'macOS': ..., 'Windows': ... }.",
+				)
+				.optional(),
+		})
+		.strict(),
+	// dropdown preference
+	z
+		.object({
+			...preferenceBase,
+			type: z.literal("dropdown"),
+			data: z
+				.array(
+					z.object({
+						title: z.string(),
+						value: z.string(),
+					}),
+				)
+				.min(1)
+				.describe(
+					"An array of objects with 'title' and 'value' properties, e.g.: [{'title': 'Item 1', 'value': '1'}]",
+				),
+			default: z
+				.union([
+					z.string(),
+					z.object({
+						macOS: z.string().optional(),
+						Windows: z.string().optional(),
+					}),
+				])
+				.describe(
+					"The optional default value for the field. For dropdowns, this is the value of an object in the data array. Additionally, you can specify a different value per platform by passing an object: { 'macOS': ..., 'Windows': ... }.",
+				)
+				.optional(),
+		})
+		.strict(),
+	// appPicker preference
+	z
+		.object({
+			...preferenceBase,
+			type: z.literal("appPicker"),
+			default: z
+				.union([
+					z.string(),
+					z.object({
+						macOS: z.string().optional(),
+						Windows: z.string().optional(),
+					}),
+				])
+				.describe(
+					"The optional default value for the field. For appPickers, this is an application name, bundle ID or path. Additionally, you can specify a different value per platform by passing an object: { 'macOS': ..., 'Windows': ... }.",
+				)
+				.optional(),
+		})
+		.strict(),
+	// file preference
+	z
+		.object({
+			...preferenceBase,
+			type: z.literal("file"),
+			default: z
+				.union([
+					z.string(),
+					z.object({
+						macOS: z.string().optional(),
+						Windows: z.string().optional(),
+					}),
+				])
+				.describe(
+					"The optional default value for the field. For file preferences, this is a file path. Additionally, you can specify a different value per platform by passing an object: { 'macOS': ..., 'Windows': ... }.",
+				)
+				.optional(),
+		})
+		.strict(),
+	// directory preference
+	z
+		.object({
+			...preferenceBase,
+			type: z.literal("directory"),
+			default: z
+				.union([
+					z.string(),
+					z.object({
+						macOS: z.string().optional(),
+						Windows: z.string().optional(),
+					}),
+				])
+				.describe(
+					"The optional default value for the field. For directory preferences, this is a directory path. Additionally, you can specify a different value per platform by passing an object: { 'macOS': ..., 'Windows': ... }.",
+				)
+				.optional(),
+		})
+		.strict(),
+]);
+
+// Argument schema for command arguments
+const argumentBase = {
+	name: z
+		.string()
+		.min(1)
+		.describe(
+			"A unique id for the argument. This value will be used to as the key in the object passed as top-level prop.",
+		),
+	placeholder: z
+		.string()
+		.min(1)
+		.describe("Placeholder for the argument's input field."),
+	required: z
+		.boolean()
+		.describe(
+			"Indicates whether the value is required and must be entered by the user before the command is opened. Default value for this is 'false'.",
+		)
+		.optional(),
+};
+
+const argumentSchema = z.discriminatedUnion("type", [
+	// text argument
+	z
+		.object({
+			...argumentBase,
+			type: z.literal("text"),
+		})
+		.strict(),
+	// password argument
+	z
+		.object({
+			...argumentBase,
+			type: z.literal("password"),
+		})
+		.strict(),
+	// dropdown argument
+	z
+		.object({
+			...argumentBase,
+			type: z.literal("dropdown"),
+			data: z
+				.array(
+					z.object({
+						title: z.string(),
+						value: z.string(),
+					}),
+				)
+				.min(1)
+				.describe(
+					"An array of objects with 'title' and 'value' properties, e.g.: [{'title': 'Item 1', 'value': '1'}]",
+				),
+		})
+		.strict(),
+]);
+
 export default z.object({
 	icon: z
 		.string()
@@ -143,13 +381,13 @@ export default z.object({
 						)
 						.optional(),
 					preferences: z
-						.any()
+						.array(preferenceSchema)
 						.describe(
 							'Commands can optionally contribute preferences that are shown in Vicinae Preferences > Extensions when selecting the command. You can use preferences for configuration values and passwords or personal access tokens. Commands automatically "inherit" extension preferences and can also override entries with the same `name`.',
 						)
 						.optional(),
 					arguments: z
-						.any()
+						.array(argumentSchema)
 						.describe(
 							"An optional array of arguments that are requested from user when the command is called",
 						)
@@ -209,7 +447,7 @@ export default z.object({
 						)
 						.optional(),
 					preferences: z
-						.any()
+						.array(preferenceSchema)
 						.describe(
 							'Tools can optionally contribute preferences that are shown in Vicinae Preferences > Extensions when selecting the AI Extension item. You can use preferences for configuration values and passwords or personal access tokens. Tools automatically "inherit" extension preferences and can also override entries with the same `name`.',
 						)
@@ -262,7 +500,7 @@ export default z.object({
 			"It helps users understand what the extension does. It will be displayed in the Store and in Preferences.",
 		),
 	preferences: z
-		.any()
+		.array(preferenceSchema)
 		.describe(
 			"Extensions can contribute preferences that are shown in Vicinae Preferences > Extensions. You can use preferences for configuration values and passwords or personal access tokens.",
 		)

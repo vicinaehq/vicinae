@@ -5,6 +5,7 @@ import { cpSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Logger } from "../../utils/logger.js";
 import { extensionDataDir } from "../../utils/utils.js";
+import { updateExtensionTypes } from "../../utils/extension-types.js";
 import ManifestSchema from "../../schemas/manifest.js";
 
 export default class Build extends Command {
@@ -71,14 +72,14 @@ export default class Build extends Command {
 				const tsSource = `${base}.ts`;
 				let source = tsxSource;
 
-				if (cmd.mode == "view" && !existsSync(tsxSource)) {
+				if (cmd.mode === "view" && !existsSync(tsxSource)) {
 					throw new Error(
 						`Unable to find view command ${cmd.name} at ${tsxSource}`,
 					);
 				}
 
 				// we allow .ts or .tsx for no-view
-				if (cmd.mode == "no-view") {
+				if (cmd.mode === "no-view") {
 					if (!existsSync(tsxSource)) {
 						source = tsSource;
 						if (!existsSync(tsSource)) {
@@ -115,6 +116,9 @@ export default class Build extends Command {
 		};
 
 		process.chdir(src);
+
+		logger.logInfo("Generating extension types...");
+		updateExtensionTypes(manifest, src);
 
 		logger.logInfo("Checking types...");
 		const typeCheck = spawnSync("npx", ["tsc", "--noEmit"]);
