@@ -743,7 +743,7 @@ double RootItemManager::computeScore(const RootItemMetadata &meta, int weight) c
   return (frequencyScore + recencyScore) * weight;
 }
 
-std::vector<RootItemManager::SearchableRootItem> RootItemManager::queryFavorites(int limit) {
+std::vector<RootItemManager::SearchableRootItem> RootItemManager::queryFavorites(std::optional<int> limit) {
   auto isFavorite = [](auto &&item) { return item.meta->favorite; };
   auto favorites = m_items | std::views::filter(isFavorite) | std::ranges::to<std::vector>();
   std::ranges::sort(favorites, [this](const auto &a, const auto &b) {
@@ -752,7 +752,7 @@ std::vector<RootItemManager::SearchableRootItem> RootItemManager::queryFavorites
     return ascore > bscore;
   });
 
-  if (favorites.size() > limit) { favorites.resize(limit); }
+  if (limit && favorites.size() > limit) { favorites.resize(limit.value()); }
 
   return favorites;
 }
