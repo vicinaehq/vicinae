@@ -14,6 +14,7 @@ import { open, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { Logger } from "../../utils/logger.js";
 import { extensionDataDir } from "../../utils/utils.js";
+import { updateExtensionTypes } from "../../utils/extension-types.js";
 import { VicinaeClient } from "../../utils/vicinae.js";
 import ManifestSchema from "../../schemas/manifest.js";
 
@@ -73,6 +74,9 @@ export default class Develop extends Command {
 		let manifest = parseManifest();
 		const vicinae = new VicinaeClient();
 
+		logger.logInfo("Generating extension types...");
+		updateExtensionTypes(manifest, flags.target);
+
 		const typeCheck = async (): Promise<TypeCheckResult> => {
 			const spawned = spawn("npx", ["tsc", "--noEmit"]);
 			let stderr = Buffer.from("");
@@ -111,14 +115,14 @@ export default class Develop extends Command {
 				const tsSource = `${base}.ts`;
 				let source = tsxSource;
 
-				if (cmd.mode == "view" && !existsSync(tsxSource)) {
+				if (cmd.mode === "view" && !existsSync(tsxSource)) {
 					throw new Error(
 						`could not find entrypoint src/${cmd.name}.tsx for command ${cmd.name}.`,
 					);
 				}
 
 				// we allow .ts or .tsx for no-view
-				if (cmd.mode == "no-view") {
+				if (cmd.mode === "no-view") {
 					if (!existsSync(tsxSource)) {
 						source = tsSource;
 						if (!existsSync(tsSource)) {
@@ -210,6 +214,8 @@ export default class Develop extends Command {
 			.on("all", async (_, path) => {
 				if (path.endsWith("package.json")) {
 					manifest = parseManifest();
+					logger.logInfo("Generating extension types...");
+					updateExtensionTypes(manifest, flags.target);
 				}
 
 				logger.logEvent(`changed file ${path}`);
