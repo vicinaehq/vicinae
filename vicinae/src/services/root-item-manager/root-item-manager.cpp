@@ -166,7 +166,7 @@ int RootItemManager::SearchableRootItem::fuzzyScore(std::string_view pattern) co
 
 std::span<RootItemManager::ScoredItem> RootItemManager::search(const QString &query,
                                                                const RootItemPrefixSearchOptions &opts) {
-  Timer timer;
+  // Timer timer;
   std::string pattern = query.toStdString();
   std::string_view patternView = pattern;
 
@@ -189,7 +189,7 @@ std::span<RootItemManager::ScoredItem> RootItemManager::search(const QString &qu
     return a.score > b.score;
   });
 
-  timer.time("root search");
+  // timer.time("root search");
 
   return m_scoredItems;
 }
@@ -741,12 +741,10 @@ double RootItemManager::computeScore(const RootItemMetadata &meta, int weight) c
 std::vector<RootItemManager::SearchableRootItem> RootItemManager::queryFavorites(int limit) {
   auto isFavorite = [](auto &&item) { return item.meta->favorite; };
   auto favorites = m_items | std::views::filter(isFavorite) | std::ranges::to<std::vector>();
-  std::ranges::stable_sort(favorites, [this](const auto &a, const auto &b) {
-    RootItemMetadata ameta = itemMetadata(a.item->uniqueId());
-    RootItemMetadata bmeta = itemMetadata(b.item->uniqueId());
-    auto ascore = computeScore(ameta, a.item->baseScoreWeight());
-    auto bscore = computeScore(ameta, b.item->baseScoreWeight());
-    return ameta.visitCount > bmeta.visitCount;
+  std::ranges::sort(favorites, [this](const auto &a, const auto &b) {
+    auto ascore = computeScore(*a.meta, a.item->baseScoreWeight());
+    auto bscore = computeScore(*b.meta, b.item->baseScoreWeight());
+    return ascore > bscore;
   });
 
   if (favorites.size() > limit) { favorites.resize(limit); }
@@ -754,27 +752,21 @@ std::vector<RootItemManager::SearchableRootItem> RootItemManager::queryFavorites
   return favorites;
 }
 
-std::vector<std::shared_ptr<RootItem>> RootItemManager::querySuggestions(int limit) {
-  std::vector<std::shared_ptr<RootItem>> items;
+std::vector<RootItemManager::SearchableRootItem> RootItemManager::querySuggestions(int limit) {
+  auto isSuggestable = [](auto &&item) {
+    return item.meta->isEnabled && item.meta->visitCount > 0 && !item.meta->favorite;
+  };
+  auto suggestions = m_items | std::views::filter(isSuggestable) | std::ranges::to<std::vector>();
 
-  for (const auto &item : m_items) {
-    RootItemMetadata meta = itemMetadata(item.item->uniqueId());
-
-    if (meta.isEnabled && meta.visitCount > 0) { items.emplace_back(item.item); }
-  }
-
-  std::ranges::sort(items, [this](const auto &a, const auto &b) {
-    RootItemMetadata ameta = itemMetadata(a->uniqueId());
-    RootItemMetadata bmeta = itemMetadata(b->uniqueId());
-    auto ascore = computeScore(ameta, a->baseScoreWeight());
-    auto bscore = computeScore(ameta, b->baseScoreWeight());
-
-    return ameta.visitCount > bmeta.visitCount;
+  std::ranges::sort(suggestions, [this](const auto &a, const auto &b) {
+    auto ascore = computeScore(*a.meta, a.item->baseScoreWeight());
+    auto bscore = computeScore(*b.meta, b.item->baseScoreWeight());
+    return ascore > bscore;
   });
 
-  if (items.size() > limit) { items.resize(limit); }
+  if (suggestions.size() > limit) { suggestions.resize(limit); }
 
-  return items;
+  return suggestions;
 }
 
 bool RootItemManager::resetRanking(const QString &id) {

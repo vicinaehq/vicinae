@@ -386,7 +386,7 @@ void RootSearchView::renderEmpty() {
     auto &suggestions = m_list->addSection("Suggestions");
 
     for (const auto &item : rootManager->querySuggestions()) {
-      suggestions.addItem(std::make_unique<SuggestionRootSearchItem>(item));
+      suggestions.addItem(std::make_unique<SuggestionRootSearchItem>(item.item));
     }
   }
 

@@ -279,7 +279,7 @@ public:
   double computeScore(const RootItemMetadata &meta, int weight) const;
   double computeRecencyScore(const RootItemMetadata &meta) const;
   std::vector<SearchableRootItem> queryFavorites(int limit = 5);
-  std::vector<std::shared_ptr<RootItem>> querySuggestions(int limit = 5);
+  std::vector<SearchableRootItem> querySuggestions(int limit = 5);
   bool resetRanking(const QString &id);
   bool registerVisit(const QString &id);
   bool setItemAsFavorite(const QString &item, bool value = true);
