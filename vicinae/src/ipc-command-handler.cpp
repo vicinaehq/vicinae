@@ -181,6 +181,9 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
 
   if (command == "toggle") {
     m_ctx.navigation->toggleWindow();
+    if (query.hasQueryItem("fallbackText")) {
+      m_ctx.navigation->setSearchText(query.queryItemValue("fallbackText"));
+    }
     return {};
   }
 
@@ -223,6 +226,11 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
     }
 
     m_ctx.navigation->showWindow();
+
+    if (query.hasQueryItem("fallbackText")) {
+      m_ctx.navigation->setSearchText(query.queryItemValue("fallbackText"));
+    }
+
     return {};
   }
 
