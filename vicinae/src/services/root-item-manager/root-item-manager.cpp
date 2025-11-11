@@ -181,7 +181,9 @@ std::span<RootItemManager::ScoredItem> RootItemManager::search(const QString &qu
     if (!item.meta->isEnabled && !opts.includeDisabled) continue;
     int fuzzyScore = item.fuzzyScore(patternView);
     if (!pattern.empty() && !fuzzyScore) continue;
-    int finalScore = computeScore(*item.meta, item.item->baseScoreWeight());
+    double frequency = std::log1p(item.meta->visitCount) * 0.5;
+    // TODO: re-introduce frecency component
+    int finalScore = fuzzyScore * (1.0 + frequency);
     m_scoredItems.emplace_back(ScoredItem{.alias = item.meta->alias, .score = finalScore, .item = item.item});
   }
 
@@ -740,6 +742,7 @@ double RootItemManager::computeRecencyScore(const RootItemMetadata &meta) const 
 double RootItemManager::computeScore(const RootItemMetadata &meta, int weight) const {
   double frequencyScore = std::log(meta.visitCount + 1);
   double recencyScore = computeRecencyScore(meta);
+
   return (frequencyScore + recencyScore) * weight;
 }
 
