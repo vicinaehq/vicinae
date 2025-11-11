@@ -410,6 +410,12 @@ public:
 
   int virtualHeight() const { return m_virtualHeight; }
 
+  /**
+   * Select next selectable item.
+   * If at the end of the list, loops back to the start.
+   */
+  void selectNext();
+
   bool selectUp();
   bool selectDown();
   bool selectLeft();

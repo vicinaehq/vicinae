@@ -35,6 +35,9 @@ bool ListView::inputFilter(QKeyEvent *event) {
     case Qt::Key_Down:
       return m_list->selectDown();
       break;
+    case Qt::Key_Tab:
+      m_list->selectNext();
+      return true;
     case Qt::Key_Home:
       return m_list->selectHome();
       break;
