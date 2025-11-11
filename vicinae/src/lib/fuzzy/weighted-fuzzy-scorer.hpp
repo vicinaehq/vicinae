@@ -16,7 +16,7 @@ public:
   int score(const std::string &pattern) const {
     auto scores = m_strings | std::views::transform([&](const WeightedString &str) {
                     int score = 0;
-                    fts::fuzzy_match(pattern.c_str(), str.first.c_str(), score);
+                    fts::fuzzy_match(pattern.c_str(), str.first, score);
                     return static_cast<int>(score * str.second);
                   });
 
@@ -24,7 +24,7 @@ public:
   }
 
 private:
-  using WeightedString = std::pair<std::string, double>;
+  using WeightedString = std::pair<std::string_view, double>;
   std::vector<WeightedString> m_strings;
 };
 }; // namespace fuzzy
