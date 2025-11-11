@@ -341,7 +341,7 @@ void RootSearchView::render(const QString &text) {
   auto searchResults = rootItemManager->search(text.trimmed());
 
   for (const auto &item : searchResults) {
-    results.addItem(std::make_unique<RootSearchItem>(item.item));
+    results.addItem(std::make_unique<RootSearchItem>(item.item.get()));
   }
 
   if (!m_fileResults.empty()) {

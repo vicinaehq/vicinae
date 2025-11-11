@@ -523,16 +523,16 @@ public:
     opts.includeDisabled = true;
 
     for (const auto &item : manager->search(query, opts)) {
-      QString providerId = manager->getItemProviderId(item.item->uniqueId());
+      QString providerId = manager->getItemProviderId(item.item.get()->uniqueId());
 
       if (providerId.isEmpty()) continue;
 
       auto pred = [&](auto &&pair) { return pair.first == providerId; };
 
       if (auto it = std::ranges::find_if(map, pred); it != map.end()) {
-        it->second.emplace_back(item.item);
+        it->second.emplace_back(item.item.get());
       } else {
-        map.push_back({providerId, {item.item}});
+        map.push_back({providerId, {item.item.get()}});
       }
     }
 

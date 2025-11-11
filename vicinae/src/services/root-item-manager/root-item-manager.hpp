@@ -6,6 +6,7 @@
 #include "../../ui/image/url.hpp"
 #include "preference.hpp"
 #include "settings/provider-settings-detail.hpp"
+#include <numbers>
 #include <qdnslookup.h>
 #include <qjsonobject.h>
 #include <qjsonvalue.h>
@@ -230,14 +231,16 @@ public:
     std::string alias;
     std::vector<std::string> keywords;
     RootItemMetadata *meta;
+
+    int fuzzyScore(std::string_view pattern) const;
   };
 
   struct ScoredItem {
-    QString alias;
+    std::string_view alias;
     int score = 0;
-    bool matches = false;
-    bool enabled = false;
-    ItemPtr item;
+    // we return the shared ptr so that callers can keep a ref to it if needed,
+    // but we don't want to increment the ref count as part of the search process.
+    std::reference_wrapper<ItemPtr> item;
   };
 
   RootItemManager(OmniDatabase &db) : m_db(db) {}

@@ -152,50 +152,40 @@ bool RootItemManager::upsertProvider(const RootProvider &provider) {
   return true;
 }
 
+int RootItemManager::SearchableRootItem::fuzzyScore(std::string_view pattern) const {
+  int max = 0;
+  int score = 0;
+  if (fts::fuzzy_match(pattern, title, score)) { max = std::max(max, score); }
+  if (fts::fuzzy_match(pattern, alias, score)) { max = std::max(max, score); }
+  if (fts::fuzzy_match(pattern, subtitle, score)) { max = std::max(max, static_cast<int>(score * 0.6)); }
+  for (const auto &kw : keywords) {
+    if (fts::fuzzy_match(pattern, kw, score)) { max = std::max(max, static_cast<int>(score * 0.3)); }
+  }
+  return max;
+}
+
 std::span<RootItemManager::ScoredItem> RootItemManager::search(const QString &query,
                                                                const RootItemPrefixSearchOptions &opts) {
   Timer timer;
   std::string pattern = query.toStdString();
-  auto score = [&](const SearchableRootItem &item) -> int {
-    int max = 0;
-    int score = 0;
-    if (fts::fuzzy_match(pattern, item.title, score)) { max = std::max(max, score); }
-    if (fts::fuzzy_match(pattern, item.alias, score)) { max = std::max(max, score); }
-    if (fts::fuzzy_match(pattern, item.subtitle, score)) {
-      max = std::max(max, static_cast<int>(score * 0.6));
-    }
-    for (const auto &kw : item.keywords) {
-      if (fts::fuzzy_match(pattern, kw, score)) { max = std::max(max, static_cast<int>(score * 0.3)); }
-    }
-    return max;
-  };
+  std::string_view patternView = pattern;
 
-  auto toScoredItem = [&](auto &&item) {
-    ScoredItem scored;
-    scored.item = item.item;
-    scored.enabled = item.meta->isEnabled;
-
-    // do not spend time computing score if it's disabled
-    if (!scored.enabled && !opts.includeDisabled) return scored;
-
-    int fuzzyScore = score(item);
-    scored.matches = fuzzyScore > 0;
-    scored.score = fuzzyScore * computeScore(*item.meta, item.item->baseScoreWeight());
-    scored.alias = item.alias.c_str();
-    return scored;
-  };
-  auto filter = [&](auto &&scored) {
-    return query.isEmpty() || ((opts.includeDisabled || scored.enabled) && scored.matches);
-  };
-
-  auto filtered = m_items | std::views::transform(toScoredItem) | std::views::filter(filter);
   m_scoredItems.clear();
-  std::ranges::copy(filtered, std::back_inserter(m_scoredItems));
+
+  for (auto &item : m_items) {
+    if (!item.meta->isEnabled && !opts.includeDisabled) continue;
+    int fuzzyScore = item.fuzzyScore(patternView);
+    if (!pattern.empty() && !fuzzyScore) continue;
+    int finalScore = computeScore(*item.meta, item.item->baseScoreWeight());
+    m_scoredItems.emplace_back(ScoredItem{.alias = item.alias, .score = finalScore, .item = item.item});
+  }
+
   // we need stable sort to avoid flickering when updating quickly
   std::ranges::stable_sort(m_scoredItems, [&](const auto &a, const auto &b) {
-    bool aHasAlias = !a.alias.isEmpty() && a.alias.startsWith(query, Qt::CaseInsensitive);
-    bool bHasAlias = !b.alias.isEmpty() && b.alias.startsWith(query, Qt::CaseInsensitive);
-    if (aHasAlias - bHasAlias) { return aHasAlias > bHasAlias; }
+    bool aa = !a.alias.empty() && a.alias.starts_with(pattern);
+    bool ab = !b.alias.empty() && b.alias.starts_with(pattern);
+    // always prioritize matching aliases over score
+    if (aa - ab) { return aa > ab; }
     return a.score > b.score;
   });
 
@@ -745,7 +735,6 @@ double RootItemManager::computeRecencyScore(const RootItemMetadata &meta) const 
 double RootItemManager::computeScore(const RootItemMetadata &meta, int weight) const {
   double frequencyScore = std::log(meta.visitCount + 1);
   double recencyScore = computeRecencyScore(meta);
-
   return (frequencyScore + recencyScore) * weight;
 }
 
