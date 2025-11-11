@@ -14,6 +14,13 @@
 
 class DaemonIpcClient {
 public:
+  struct OpenSettings {
+    std::optional<std::string> query;
+  };
+  struct ToggleSettings {
+    std::optional<std::string> query;
+  };
+
   DaemonIpcClient();
 
   /**
@@ -22,8 +29,8 @@ public:
    * backspace will return std::nullopt.
    */
   std::string dmenu(const DMenu::Payload &payload);
-  void toggle();
-  bool open();
+  void toggle(const ToggleSettings &settings = {});
+  bool open(const OpenSettings &settings = {});
   bool close();
   tl::expected<void, QString> deeplink(const QUrl &url);
   bool connect();
