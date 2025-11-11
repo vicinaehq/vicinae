@@ -522,7 +522,7 @@ public:
 
     opts.includeDisabled = true;
 
-    for (const auto &item : manager->prefixSearch(query, opts)) {
+    for (const auto &item : manager->search(query, opts)) {
       QString providerId = manager->getItemProviderId(item.item->uniqueId());
 
       if (providerId.isEmpty()) continue;

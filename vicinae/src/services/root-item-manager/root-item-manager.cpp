@@ -103,6 +103,7 @@ void RootItemManager::updateIndex() {
 
   if (!m_db.db().commit()) { qWarning() << "Failed to commit transaction" << m_db.db().lastError(); }
 
+  m_scoredItems.reserve(m_items.size());
   isReloading = false;
   emit itemsChanged();
 }
@@ -151,8 +152,8 @@ bool RootItemManager::upsertProvider(const RootProvider &provider) {
   return true;
 }
 
-std::vector<RootItemManager::ScoredItem>
-RootItemManager::prefixSearch(const QString &query, const RootItemPrefixSearchOptions &opts) {
+std::span<RootItemManager::ScoredItem> RootItemManager::search(const QString &query,
+                                                               const RootItemPrefixSearchOptions &opts) {
   Timer timer;
   std::string pattern = query.toStdString();
   auto score = [&](const SearchableRootItem &item) -> int {
@@ -171,28 +172,27 @@ RootItemManager::prefixSearch(const QString &query, const RootItemPrefixSearchOp
 
   auto toScoredItem = [&](auto &&item) {
     ScoredItem scored;
-    RootItemMetadata meta = itemMetadata(item.item->uniqueId());
     scored.item = item.item;
-    scored.enabled = meta.isEnabled;
+    scored.enabled = item.meta->isEnabled;
 
     // do not spend time computing score if it's disabled
-    if (!meta.isEnabled && !opts.includeDisabled) return scored;
+    if (!scored.enabled && !opts.includeDisabled) return scored;
 
     int fuzzyScore = score(item);
     scored.matches = fuzzyScore > 0;
-    scored.score = fuzzyScore * computeScore(meta, item.item->baseScoreWeight());
-    scored.alias = meta.alias;
+    scored.score = fuzzyScore * computeScore(*item.meta, item.item->baseScoreWeight());
+    scored.alias = item.alias.c_str();
     return scored;
   };
   auto filter = [&](auto &&scored) {
     return query.isEmpty() || ((opts.includeDisabled || scored.enabled) && scored.matches);
   };
 
-  auto filtered = m_items | std::views::transform(toScoredItem) | std::views::filter(filter) |
-                  std::ranges::to<std::vector>();
-
+  auto filtered = m_items | std::views::transform(toScoredItem) | std::views::filter(filter);
+  m_scoredItems.clear();
+  std::ranges::copy(filtered, std::back_inserter(m_scoredItems));
   // we need stable sort to avoid flickering when updating quickly
-  std::ranges::stable_sort(filtered, [&](const auto &a, const auto &b) {
+  std::ranges::stable_sort(m_scoredItems, [&](const auto &a, const auto &b) {
     bool aHasAlias = !a.alias.isEmpty() && a.alias.startsWith(query, Qt::CaseInsensitive);
     bool bHasAlias = !b.alias.isEmpty() && b.alias.startsWith(query, Qt::CaseInsensitive);
     if (aHasAlias - bHasAlias) { return aHasAlias > bHasAlias; }
@@ -201,7 +201,7 @@ RootItemManager::prefixSearch(const QString &query, const RootItemPrefixSearchOp
 
   timer.time("root search");
 
-  return filtered;
+  return m_scoredItems;
 }
 
 bool RootItemManager::setItemEnabled(const QString &id, bool value) {

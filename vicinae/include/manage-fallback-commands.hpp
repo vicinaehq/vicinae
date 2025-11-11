@@ -151,7 +151,7 @@ class ManageFallbackCommandsView : public ListView {
   void renderList(const QString &text, OmniList::SelectionPolicy selectionPolicy = OmniList::SelectFirst) {
     QString query = text.trimmed();
     auto itemManager = ServiceRegistry::instance()->rootItemManager();
-    auto results = itemManager->prefixSearch(query);
+    auto results = itemManager->search(query);
     auto fallbacks =
         results | std::views::filter([](const auto &item) { return item.item->isSuitableForFallback(); });
     std::vector<std::shared_ptr<RootItem>> enabled;

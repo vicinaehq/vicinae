@@ -131,6 +131,10 @@ public:
 class RootProvider : public QObject {
   Q_OBJECT
 
+signals:
+  void itemsChanged() const;
+  void itemRemoved(const QString &id) const;
+
 public:
   enum Type {
     ExtensionProvider, // a collection of commands
@@ -144,6 +148,7 @@ public:
   virtual QString displayName() const = 0;
   virtual ImageURL icon() const = 0;
   virtual Type type() const = 0;
+
   QString typeAsString() {
     switch (type()) {
     case ExtensionProvider:
@@ -186,10 +191,6 @@ public:
 
   virtual std::vector<std::shared_ptr<RootItem>> loadItems() const = 0;
   virtual PreferenceList preferences() const { return {}; }
-
-signals:
-  void itemsChanged() const;
-  void itemRemoved(const QString &id) const;
 };
 
 struct RootItemMetadata {
@@ -201,7 +202,6 @@ struct RootItemMetadata {
   bool favorite = false;
   int fallbackPosition = -1;
   QString providerId;
-
   bool isFallback() const { return fallbackPosition != -1; }
 };
 
@@ -309,7 +309,13 @@ public:
   RootProvider *provider(const QString &id) const;
   std::vector<SearchableRootItem> allItems() const { return m_items; }
   std::vector<std::shared_ptr<RootItem>> fallbackItems() const;
-  std::vector<ScoredItem> prefixSearch(const QString &query, const RootItemPrefixSearchOptions &opts = {});
+
+  /**
+   * Fuzzy search across all available root items, if option to include explicitly disabled items
+   * as part of the results.
+   */
+  std::span<ScoredItem> search(const QString &query, const RootItemPrefixSearchOptions &opts = {});
+
   RootItemMetadata loadMetadata(const QString &id);
   bool upsertProvider(const RootProvider &provider);
   bool upsertItem(const QString &providerId, const RootItem &item);
@@ -322,10 +328,7 @@ private:
   std::vector<std::unique_ptr<RootProvider>> m_providers;
   OmniDatabase &m_db;
   std::vector<SearchableRootItem> m_items;
-
-  /**
-   * Second item list which is sorted in place every time the root is searched.
-   * This acts as some kind of double buffering to avoid unexpected flickering.
-   */
-  ItemList m_filteredItems;
+  // always reserved to hold the maximum amount of items possible, to avoid reallocating
+  // on every search
+  std::vector<ScoredItem> m_scoredItems;
 };

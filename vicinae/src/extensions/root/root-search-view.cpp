@@ -338,7 +338,7 @@ void RootSearchView::render(const QString &text) {
 
   auto &results = m_list->addSection("Results");
 
-  auto searchResults = rootItemManager->prefixSearch(text.trimmed());
+  auto searchResults = rootItemManager->search(text.trimmed());
 
   for (const auto &item : searchResults) {
     results.addItem(std::make_unique<RootSearchItem>(item.item));
