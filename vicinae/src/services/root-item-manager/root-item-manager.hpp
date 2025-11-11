@@ -276,7 +276,7 @@ public:
   bool enableFallback(const QString &id);
   double computeScore(const RootItemMetadata &meta, int weight) const;
   double computeRecencyScore(const RootItemMetadata &meta) const;
-  std::vector<SearchableRootItem> queryFavorites(int limit = 5);
+  std::vector<SearchableRootItem> queryFavorites(std::optional<int> limit = {});
   std::vector<SearchableRootItem> querySuggestions(int limit = 5);
   bool resetRanking(const QString &id);
   bool registerVisit(const QString &id);
