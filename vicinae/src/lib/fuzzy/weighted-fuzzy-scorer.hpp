@@ -24,7 +24,7 @@ public:
   }
 
 private:
-  using WeightedString = std::pair<std::string_view, double>;
+  using WeightedString = std::pair<std::string, double>;
   std::vector<WeightedString> m_strings;
 };
 }; // namespace fuzzy
