@@ -14,7 +14,6 @@ void IODeviceImageLoader::render(const RenderConfig &cfg) {
   QMimeType mime = mimeDb.mimeTypeForData(m_data);
 
   if (isAnimatableMimeType(mime)) {
-    qDebug() << "is gif type";
     m_loader = std::make_unique<AnimatedIODeviceImageLoader>(m_data);
   } else {
     m_loader = std::make_unique<StaticIODeviceImageLoader>(m_data);
