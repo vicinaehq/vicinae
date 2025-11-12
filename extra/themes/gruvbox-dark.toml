@@ -26,6 +26,6 @@ yellow = "#D79921"            # yellow (neutral)
 cyan = "#83A598"              # aqua (bright)
 
 [colors.list.item.selection]
-background = "#504945"        # bg2
+background = { name = "#504945", opacity = 0.7 }  # bg2
 secondary_background = "#665C54"  # bg3
 

@@ -26,7 +26,7 @@ yellow = "#B58900"
 cyan = "#2AA198"
 
 [colors.list.item.selection]
-background = "#EEE8D5"        # base2 (darker/stronger on main bg)
+background = { name = "#EEE8D5", opacity = 0.7 }  # base2 (darker/stronger on main bg)
 secondary_background = "#F6F0DC"  # Between base3 and base2 (lighter/subtle on lighter surface)
 
 [colors.list.item.hover]

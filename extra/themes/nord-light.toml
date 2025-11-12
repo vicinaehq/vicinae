@@ -26,7 +26,7 @@ yellow = "#EBCB8B"            # nord13
 cyan = "#88C0D0"              # nord8
 
 [colors.list.item.selection]
-background = "#D8DEE9"        # nord4 (noticeable on main bg)
+background = { name = "#D8DEE9", opacity = 0.7 }  # nord4 (noticeable on main bg)
 secondary_background = "#CCD1DA"  # Between nord4 and nord5 (better contrast)
 
 [colors.list.item.hover]
