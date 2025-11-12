@@ -49,7 +49,7 @@ in
     themes = lib.mkOption {
       default = { };
       description = ''
-        Theme settings to add to the themes folder in `~/.config/vicinae/themes`. 
+        Theme settings to add to the themes folder in `~/.local/share/vicinae/themes`. 
         The attribute name of the theme will be the name of theme json file, 
         e.g. `base16-default-dark` will be `base16-default-dark.json`.
       '';
@@ -111,23 +111,23 @@ in
   config = lib.mkIf cfg.enable {
     home.packages = [ cfg.package ];
 
-    xdg.configFile =
-      lib.optionalAttrs (cfg.settings != null) {
-        "vicinae/vicinae.json".text = builtins.toJSON cfg.settings;
-      }
+    xdg.configFile = lib.optionalAttrs (cfg.settings != null) {
+      "vicinae/vicinae.json".text = builtins.toJSON cfg.settings;
+    };
+
+    xdg.dataFile =
+      builtins.listToAttrs (
+        builtins.map (item: {
+          name = "vicinae/extensions/${item.name}";
+          value.source = item;
+        }) config.services.vicinae.extensions
+      )
       // lib.mapAttrs' (
         name: theme:
         lib.nameValuePair "vicinae/themes/${name}.toml" {
           source = (pkgs.formats.toml { }).generate "${name}.toml" theme;
         }
       ) cfg.themes;
-
-    xdg.dataFile = builtins.listToAttrs (
-      builtins.map (item: {
-        name = "vicinae/extensions/${item.name}";
-        value.source = item;
-      }) config.services.vicinae.extensions
-    );
 
     systemd.user.services.vicinae = {
       Unit = {
