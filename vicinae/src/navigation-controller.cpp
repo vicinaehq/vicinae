@@ -28,6 +28,11 @@ void NavigationController::setNavigationTitle(const QString &navigationTitle, co
   }
 }
 
+bool NavigationController::hasCompleter() const {
+  if (auto state = topState()) { return state->completer.has_value(); }
+  return false;
+}
+
 void NavigationController::setInstantDismiss(bool value) { m_instantDismiss = value; }
 
 void NavigationController::goBack(const GoBackOptions &opts) {
