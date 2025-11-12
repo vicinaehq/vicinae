@@ -1,5 +1,5 @@
 import React from "react";
-import { ImageLike } from "../image";
+import { type ImageLike, serializeProtoImage } from "../image";
 import { TagList } from "./tag";
 
 export type MetadataProps = {
@@ -19,7 +19,10 @@ const MetadataRoot: React.FC<MetadataProps> = (props) => {
 };
 
 const MetadataLabel: React.FC<ListItemDetailMetadataLabelProps> = (props) => {
-	return <metadata-label {...props} />;
+	const serializedIcon = props.icon
+		? serializeProtoImage(props.icon)
+		: props.icon;
+	return <metadata-label {...props} icon={serializedIcon} />;
 };
 
 const MetadataSeparator: React.FC = () => {

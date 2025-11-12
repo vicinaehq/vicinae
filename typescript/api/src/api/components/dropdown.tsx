@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Image } from "../image";
+import { type Image, serializeProtoImage } from "../image";
 
 export declare namespace Dropdown {
 	type Props = DropdownProps;
@@ -39,7 +39,8 @@ const DropdownRoot: React.FC<DropdownProps> = ({ children, ...props }) => {
 };
 
 const Item: React.FC<DropdownItemProps> = ({ title, value, icon }) => {
-	return <dropdown-item title={title} value={value} icon={icon} />;
+	const serializedIcon = icon ? serializeProtoImage(icon) : icon;
+	return <dropdown-item title={title} value={value} icon={serializedIcon} />;
 };
 
 const Section: React.FC<DropdownSectionProps> = ({ title, children }) => {

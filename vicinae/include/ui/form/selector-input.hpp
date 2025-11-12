@@ -1,5 +1,6 @@
 #pragma once
 #include "common.hpp"
+#include "lib/fts_fuzzy.hpp"
 #include "trie.hpp"
 #include "../../../src/ui/image/url.hpp"
 #include "ui/focus-notifier.hpp"
@@ -16,6 +17,7 @@
 #include <qstackedwidget.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
+#include <ranges>
 
 class SelectorInput : public JsonFormItemWidget {
   Q_OBJECT
@@ -44,24 +46,34 @@ public:
 
   QJsonValue asJsonValue() const override;
 
+  struct ScoredItem {
+    std::shared_ptr<AbstractItem> item;
+    int score;
+  };
+
+  struct FuzzySearchResult {};
+
   struct DropdownSection {
     QString title;
     std::vector<std::shared_ptr<AbstractItem>> items;
-    Trie<std::shared_ptr<OmniList::AbstractVirtualItem>> index;
 
-    void buildIndex() {
-      std::ranges::for_each(
-          items, [&](auto &&item) { index.indexLatinText(item->displayName().toStdString(), item); });
-    }
+    std::vector<ScoredItem> search(const QString &text) const {
+      std::string pattern = text.toStdString();
+      auto withScore = [&](auto &&item) {
+        int fuzzyScore = 0;
+        fts::fuzzy_match(pattern, item->displayName().toStdString(), fuzzyScore);
+        return ScoredItem{item, fuzzyScore};
+      };
+      auto matches = [](auto &&item) { return item.score > 0; };
+      auto results = items | std::views::transform(withScore) | std::views::filter(matches) |
+                     std::ranges::to<std::vector>();
+      std::ranges::stable_sort(results, [](auto &&a, auto &&b) { return a.score > b.score; });
 
-    std::vector<std::shared_ptr<OmniList::AbstractVirtualItem>> search(const QString &query) const {
-      return index.prefixSearch(query.toStdString());
+      return results;
     }
 
     DropdownSection(const QString &title, const std::vector<std::shared_ptr<AbstractItem>> &items)
-        : title(title), items(items) {
-      buildIndex();
-    }
+        : title(title), items(items) {}
   };
 
 signals:

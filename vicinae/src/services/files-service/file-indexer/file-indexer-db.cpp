@@ -18,6 +18,7 @@ static const std::vector<std::string> SQLITE_PRAGMAS = {
 	"PRAGMA journal_mode = WAL",
 	"PRAGMA synchronous = normal",
 	"PRAGMA temp_store = memory",
+	"PRAGMA busy_timeout = 100",
 	// "PRAGMA mmap_size = 30000000000"
 };
 // clang-format on

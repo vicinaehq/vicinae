@@ -13,7 +13,7 @@ struct ThemedIconSource {
 
 struct ExtensionImageModel {
   std::variant<QString, ThemedIconSource> source;
-  std::optional<QString> fallback;
+  std::optional<std::variant<QString, ThemedIconSource>> fallback;
   std::optional<ColorLike> tintColor;
   std::optional<OmniPainter::ImageMaskType> mask;
 };

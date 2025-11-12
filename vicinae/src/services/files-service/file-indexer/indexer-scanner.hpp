@@ -18,7 +18,7 @@ private:
 
   std::thread m_scanThread;
 
-  void scan(const std::filesystem::path &path);
+  void scan(const Scan &scan);
   void enqueueBatch(const std::vector<FileEvent> &paths);
 
 public:

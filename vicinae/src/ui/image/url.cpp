@@ -5,6 +5,7 @@
 #include "ui/omni-painter/omni-painter.hpp"
 #include "theme/theme-file.hpp"
 #include <qdir.h>
+#include <qmimedatabase.h>
 #include <qstringview.h>
 #include <QIcon>
 #include <qurlquery.h>
@@ -99,8 +100,8 @@ ImageURL::ImageURL(const proto::ext::ui::Image &image) {
   using Source = proto::ext::ui::ImageSource;
   ExtensionImageModel model;
 
-  if (image.has_color_tint()) {
-    const auto &colorLike = image.color_tint();
+  if (image.has_tint_color()) {
+    const auto &colorLike = image.tint_color();
     switch (colorLike.payload_case()) {
     case proto::ext::ui::ColorLike::kRaw: {
       QString raw = colorLike.raw().c_str();
@@ -144,7 +145,6 @@ ImageURL::ImageURL(const proto::ext::ui::Image &image) {
     break;
   case Source::kThemed: {
     auto &themed = image.source().themed();
-
     model.source = ThemedIconSource{.light = themed.light().c_str(), .dark = themed.dark().c_str()};
     break;
   }
@@ -157,6 +157,11 @@ ImageURL::ImageURL(const proto::ext::ui::Image &image) {
     case Source::kRaw:
       model.fallback = image.fallback().raw().c_str();
       break;
+    case Source::kThemed: {
+      auto &themed = image.fallback().themed();
+      model.fallback = ThemedIconSource{.light = themed.light().c_str(), .dark = themed.dark().c_str()};
+      break;
+    }
     default:
       break;
     }
@@ -336,4 +341,13 @@ ImageURL ImageURL::rawData(const QByteArray &data, const QString &mimeType) {
   url.setName(QString("data:%1;base64,%2").arg(mimeType).arg(data.toBase64(QByteArray::Base64UrlEncoding)));
 
   return url;
+}
+
+ImageURL ImageURL::mimeType(const std::filesystem::path &path) {
+  QMimeDatabase db;
+  auto mime = db.mimeTypeForFile(path.c_str());
+  if (auto icon = QIcon::fromTheme(mime.iconName()); !icon.isNull()) {
+    return ImageURL::system(mime.iconName());
+  }
+  return ImageURL::system(mime.genericIconName());
 }

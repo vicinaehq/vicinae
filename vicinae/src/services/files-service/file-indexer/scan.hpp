@@ -20,6 +20,7 @@ struct Scan {
   std::filesystem::path path;
   std::optional<size_t> maxDepth;
   std::vector<std::string> excludedFilenames;
+  std::vector<std::filesystem::path> excludedPaths;
 
   bool operator<(const Scan &other) const {
     // TODO: Find a proper way to suppport std::set

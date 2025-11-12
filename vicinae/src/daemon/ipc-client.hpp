@@ -14,6 +14,13 @@
 
 class DaemonIpcClient {
 public:
+  struct OpenSettings {
+    std::optional<std::string> query;
+  };
+  struct ToggleSettings {
+    std::optional<std::string> query;
+  };
+
   DaemonIpcClient();
 
   /**
@@ -21,9 +28,9 @@ public:
    * Closing the launcher window or exiting from the dmenu view using
    * backspace will return std::nullopt.
    */
-  std::string dmenu(DMenuListView::DmenuPayload payload);
-  void toggle();
-  bool open();
+  std::string dmenu(const DMenu::Payload &payload);
+  void toggle(const ToggleSettings &settings = {});
+  bool open(const OpenSettings &settings = {});
   bool close();
   tl::expected<void, QString> deeplink(const QUrl &url);
   bool connect();

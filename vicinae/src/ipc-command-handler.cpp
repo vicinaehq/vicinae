@@ -135,30 +135,21 @@ IpcCommandHandler::processDmenu(const proto::ext::daemon::DmenuRequest &request)
   auto &nav = m_ctx.navigation;
   QPromise<proto::ext::daemon::Response *> promise;
   auto future = promise.future();
-  DMenuListView::DmenuPayload payload;
-
-  payload.raw = request.raw_content();
-  payload.placeholder = request.placeholder();
-  payload.sectionTitle = request.section_title();
-  payload.noSection = request.no_section();
-  payload.navigationTitle = request.navigation_title();
-
-  auto view = new DMenuListView(payload);
+  auto view = new DMenu::View(DMenu::Payload::fromProto(request));
   auto watcher = new Watcher;
 
   watcher->setFuture(future);
 
   QObject::connect(watcher, &Watcher::canceled, [nav = nav.get()]() { nav->closeWindow(); });
   QObject::connect(watcher, &Watcher::finished, [watcher]() { watcher->deleteLater(); });
-  QObject::connect(view, &DMenuListView::selected,
-                   [promise = std::move(promise)](const QString &text) mutable {
-                     auto dmenuRes = new proto::ext::daemon::DmenuResponse;
-                     auto res = new proto::ext::daemon::Response;
-                     res->set_allocated_dmenu(dmenuRes);
-                     dmenuRes->set_output(text.toStdString());
-                     promise.addResult(res);
-                     promise.finish();
-                   });
+  QObject::connect(view, &DMenu::View::selected, [promise = std::move(promise)](const QString &text) mutable {
+    auto dmenuRes = new proto::ext::daemon::DmenuResponse;
+    auto res = new proto::ext::daemon::Response;
+    res->set_allocated_dmenu(dmenuRes);
+    dmenuRes->set_output(text.toStdString());
+    promise.addResult(res);
+    promise.finish();
+  });
 
   nav->popToRoot({.clearSearch = false});
   nav->pushView(view);
@@ -190,6 +181,9 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
 
   if (command == "toggle") {
     m_ctx.navigation->toggleWindow();
+    if (query.hasQueryItem("fallbackText")) {
+      m_ctx.navigation->setSearchText(query.queryItemValue("fallbackText"));
+    }
     return {};
   }
 
@@ -232,6 +226,11 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
     }
 
     m_ctx.navigation->showWindow();
+
+    if (query.hasQueryItem("fallbackText")) {
+      m_ctx.navigation->setSearchText(query.queryItemValue("fallbackText"));
+    }
+
     return {};
   }
 

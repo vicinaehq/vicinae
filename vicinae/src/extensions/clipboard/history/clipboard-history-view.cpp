@@ -2,7 +2,6 @@
 #include "actions/root-search/root-search-actions.hpp"
 #include "clipboard-actions.hpp"
 #include "keyboard/keybind-manager.hpp"
-#include "manage-quicklinks-command.hpp"
 #include "navigation-controller.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include "services/clipboard/clipboard-service.hpp"
@@ -10,11 +9,13 @@
 #include "services/toast/toast-service.hpp"
 #include "layout.hpp"
 #include "theme.hpp"
+#include "ui/detail/detail-widget.hpp"
 #include "ui/empty-view/empty-view.hpp"
 #include "ui/text-file-viewer/text-file-viewer.hpp"
 #include "ui/action-pannel/push-action.hpp"
 #include "ui/alert/alert.hpp"
 #include "ui/form/text-area.hpp"
+#include "ui/views/form-view.hpp"
 #include "utils.hpp"
 #include <qmimedata.h>
 #include <qmimedatabase.h>
@@ -127,7 +128,7 @@ private:
   }
 };
 
-class ClipboardHistoryDetail : public DetailWithMetadataWidget {
+class ClipboardHistoryDetail : public DetailWidget {
   QTemporaryFile m_tmpFile;
 
   std::vector<MetadataItem> createEntryMetadata(const ClipboardHistoryEntry &entry) const {
@@ -663,6 +664,9 @@ bool ClipboardHistoryView::inputFilter(QKeyEvent *event) {
       return m_list->selectUp();
     case Qt::Key_Down:
       return m_list->selectDown();
+    case Qt::Key_Tab:
+      m_list->selectNext();
+      return true;
     case Qt::Key_Home:
       return m_list->selectHome();
     case Qt::Key_End:

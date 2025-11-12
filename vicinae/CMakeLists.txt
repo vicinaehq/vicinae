@@ -99,6 +99,11 @@ set(SRCS
 	include/ui/form/app-picker-input.hpp
 	src/ui/form/app-picker-input.cpp
 
+	src/ui/detail/detail-widget.hpp
+	src/ui/detail/detail-widget.cpp
+	src/ui/file-detail/file-detail.hpp
+	src/ui/file-detail/file-detail.cpp
+
 	src/ui/form/text-area.cpp
 
 	src/command-actions.cpp

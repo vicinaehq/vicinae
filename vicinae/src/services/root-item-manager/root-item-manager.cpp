@@ -1,11 +1,7 @@
 #include "root-item-manager.hpp"
-#include "fuzzy/weighted-fuzzy-scorer.hpp"
 #include "lib/fts_fuzzy.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
-#include "timer.hpp"
-#include "utils.hpp"
 #include <algorithm>
-#include <iterator>
 #include <qlogging.h>
 #include <qtconcurrentfilter.h>
 #include <ranges>
@@ -14,7 +10,7 @@ std::vector<std::shared_ptr<RootItem>> RootItemManager::fallbackItems() const {
   std::vector<std::shared_ptr<RootItem>> items;
 
   for (const auto &item : allItems()) {
-    if (isFallback(item->uniqueId())) { items.emplace_back(item); }
+    if (isFallback(item.item->uniqueId())) { items.emplace_back(item.item); }
   }
 
   std::ranges::sort(items, [&](auto &&a, auto &&b) {
@@ -46,7 +42,7 @@ RootItemMetadata RootItemManager::loadMetadata(const QString &id) {
 
   item.isEnabled = query.value(0).toBool();
   item.fallbackPosition = query.value(1).toInt();
-  item.alias = query.value(2).toString();
+  item.alias = query.value(2).toString().toStdString();
   item.visitCount = query.value(3).toInt();
   item.lastVisitedAt = std::chrono::system_clock::from_time_t(query.value(4).toULongLong());
   item.providerId = query.value(5).toString();
@@ -56,10 +52,16 @@ RootItemMetadata RootItemManager::loadMetadata(const QString &id) {
 }
 
 RootItem *RootItemManager::findItemById(const QString &id) const {
-  auto it = std::ranges::find_if(m_items, [&](auto &&v) { return v->uniqueId() == id; });
+  for (const auto &item : m_items) {
+    if (item.item->uniqueId() == id) { return item.item.get(); }
+  }
+  return nullptr;
+}
 
-  if (it != m_items.end()) return it->get();
-
+RootItemManager::SearchableRootItem *RootItemManager::findSearchableItem(const QString &id) {
+  for (auto &item : m_items) {
+    if (item.item->uniqueId() == id) { return &item; }
+  }
   return nullptr;
 }
 
@@ -93,14 +95,20 @@ void RootItemManager::updateIndex() {
 
     for (const auto &item : items) {
       upsertItem(provider->uniqueId(), *item.get());
+      SearchableRootItem sitem;
+      sitem.item = item;
+      sitem.title = item->displayName().toStdString();
+      sitem.subtitle = item->subtitle().toStdString();
+      sitem.keywords = item->keywords() | std::views::transform([](auto &&s) { return s.toStdString(); }) |
+                       std::ranges::to<std::vector>();
+      sitem.meta = &m_metadata[item->uniqueId()];
+      m_items.emplace_back(sitem);
     }
-
-    m_items.insert(m_items.end(), items.begin(), items.end());
   }
 
   if (!m_db.db().commit()) { qWarning() << "Failed to commit transaction" << m_db.db().lastError(); }
 
-  m_filteredItems = m_items;
+  m_scoredItems.reserve(m_items.size());
   isReloading = false;
   emit itemsChanged();
 }
@@ -149,62 +157,54 @@ bool RootItemManager::upsertProvider(const RootProvider &provider) {
   return true;
 }
 
-std::vector<RootItemManager::ScoredItem>
-RootItemManager::prefixSearch(const QString &query, const RootItemPrefixSearchOptions &opts) {
+int RootItemManager::SearchableRootItem::fuzzyScore(std::string_view pattern) const {
+  int max = 0;
+  int score = 0;
+  if (fts::fuzzy_match(pattern, title, score)) { max = std::max(max, score); }
+  if (fts::fuzzy_match(pattern, meta->alias, score)) { max = std::max(max, score); }
+  if (fts::fuzzy_match(pattern, subtitle, score)) { max = std::max(max, static_cast<int>(score * 0.6)); }
+  for (const auto &kw : keywords) {
+    if (fts::fuzzy_match(pattern, kw, score)) { max = std::max(max, static_cast<int>(score * 0.3)); }
+  }
+  return max;
+}
+
+std::span<RootItemManager::ScoredItem> RootItemManager::search(const QString &query,
+                                                               const RootItemPrefixSearchOptions &opts) {
   // Timer timer;
   std::string pattern = query.toStdString();
-  auto score = [&](const std::shared_ptr<RootItem> &item, const QString &alias) -> int {
-    fuzzy::WeightedScorer scorer;
-    auto kws = item->keywords();
-    scorer.reserve(3 + kws.size());
-    scorer.add(item->displayName().toStdString(), 1);
-    scorer.add(alias.toStdString(), 1);
-    scorer.add(item->subtitle().toStdString(), 0.6);
-    for (const auto &kw : kws) {
-      scorer.add(kw.toStdString(), 0.3);
-    }
-    return scorer.score(pattern);
-  };
+  std::string_view patternView = pattern;
 
-  auto toScoredItem = [&](auto &&item) {
-    ScoredItem scored;
-    RootItemMetadata meta = itemMetadata(item->uniqueId());
-    scored.item = item;
-    scored.enabled = meta.isEnabled;
+  m_scoredItems.clear();
 
-    // do not spend time computing score if it's disabled
-    if (!meta.isEnabled && !opts.includeDisabled) return scored;
-
-    int fuzzyScore = score(item, meta.alias);
-    scored.matches = fuzzyScore > 0;
-    scored.score = fuzzyScore * computeScore(meta, item->baseScoreWeight());
-    scored.alias = meta.alias;
-    return scored;
-  };
-  auto filter = [&](auto &&scored) {
-    return query.isEmpty() || ((opts.includeDisabled || scored.enabled) && scored.matches);
-  };
-
-  auto filtered = m_items | std::views::transform(toScoredItem) | std::views::filter(filter) |
-                  std::ranges::to<std::vector>();
+  for (auto &item : m_items) {
+    if (!item.meta->isEnabled && !opts.includeDisabled) continue;
+    int fuzzyScore = item.fuzzyScore(patternView);
+    if (!pattern.empty() && !fuzzyScore) continue;
+    double frequency = std::log1p(item.meta->visitCount) * 0.5;
+    // TODO: re-introduce frecency component
+    int finalScore = fuzzyScore * (1.0 + frequency);
+    m_scoredItems.emplace_back(ScoredItem{.alias = item.meta->alias, .score = finalScore, .item = item.item});
+  }
 
   // we need stable sort to avoid flickering when updating quickly
-  std::ranges::stable_sort(filtered, [&](const auto &a, const auto &b) {
-    bool aHasAlias = !a.alias.isEmpty() && a.alias.startsWith(query, Qt::CaseInsensitive);
-    bool bHasAlias = !b.alias.isEmpty() && b.alias.startsWith(query, Qt::CaseInsensitive);
-    if (aHasAlias - bHasAlias) { return aHasAlias > bHasAlias; }
+  std::ranges::stable_sort(m_scoredItems, [&](const auto &a, const auto &b) {
+    bool aa = !a.alias.empty() && a.alias.starts_with(pattern);
+    bool ab = !b.alias.empty() && b.alias.starts_with(pattern);
+    // always prioritize matching aliases over score
+    if (aa - ab) { return aa > ab; }
     return a.score > b.score;
   });
 
   // timer.time("root search");
 
-  return filtered;
+  return m_scoredItems;
 }
 
 bool RootItemManager::setItemEnabled(const QString &id, bool value) {
-  auto it = std::ranges::find_if(m_items, [&id](const auto &item) { return item->uniqueId() == id; });
+  auto item = findItemById(id);
 
-  if (it == m_items.end()) {
+  if (!item) {
     qCritical() << "No such item to enable" << id;
     return false;
   }
@@ -220,10 +220,10 @@ bool RootItemManager::setItemEnabled(const QString &id, bool value) {
     return false;
   }
 
-  auto metadata = itemMetadata((*it)->uniqueId());
+  auto metadata = itemMetadata(item->uniqueId());
 
   metadata.isEnabled = value;
-  m_metadata[(*it)->uniqueId()] = metadata;
+  m_metadata[item->uniqueId()] = metadata;
 
   return true;
 }
@@ -320,9 +320,9 @@ void RootItemManager::setPreferenceValues(const QString &id, const QJsonObject &
 }
 
 bool RootItemManager::setAlias(const QString &id, const QString &alias) {
-  auto it = std::ranges::find_if(m_items, [&id](const auto &item) { return item->uniqueId() == id; });
+  auto item = findSearchableItem(id);
 
-  if (it == m_items.end()) {
+  if (!item) {
     qCritical() << "setAlias: no item with id " << id;
     return false;
   }
@@ -340,7 +340,7 @@ bool RootItemManager::setAlias(const QString &id, const QString &alias) {
 
   auto metadata = itemMetadata(id);
 
-  metadata.alias = alias;
+  metadata.alias = alias.toStdString();
   m_metadata[id] = metadata;
 
   return true;
@@ -405,11 +405,9 @@ bool RootItemManager::pruneProvider(const QString &id) {
 
 QJsonObject RootItemManager::getItemPreferenceValues(const QString &id) const {
   auto query = m_db.createQuery();
-  auto it = std::ranges::find_if(m_items, [&id](const auto &item) { return item->uniqueId() == id; });
+  auto item = findItemById(id);
 
-  if (it == m_items.end()) { return {}; }
-
-  auto &item = *it;
+  if (!item) { return {}; }
 
   query.prepare(R"(
 		SELECT 
@@ -461,14 +459,12 @@ std::vector<Preference> RootItemManager::getMergedItemPreferences(const QString 
 
 QJsonObject RootItemManager::getPreferenceValues(const QString &id) const {
   auto query = m_db.createQuery();
-  auto it = std::ranges::find_if(m_items, [&](auto &&item) { return item->uniqueId() == id; });
+  auto item = findItemById(id);
 
-  if (it == m_items.end()) {
+  if (!item) {
     qWarning() << "No item with id" << id;
     return {};
   }
-
-  auto &item = *it;
 
   query.prepare(R"(
 		SELECT 
@@ -750,50 +746,35 @@ double RootItemManager::computeScore(const RootItemMetadata &meta, int weight) c
   return (frequencyScore + recencyScore) * weight;
 }
 
-std::vector<std::shared_ptr<RootItem>> RootItemManager::queryFavorites(int limit) {
-  std::vector<std::shared_ptr<RootItem>> items;
-
-  for (const auto &item : m_items) {
-    RootItemMetadata meta = itemMetadata(item->uniqueId());
-
-    if (meta.isEnabled && meta.favorite) { items.emplace_back(item); }
-  }
-
-  std::ranges::sort(items, [this](const auto &a, const auto &b) {
-    RootItemMetadata ameta = itemMetadata(a->uniqueId());
-    RootItemMetadata bmeta = itemMetadata(b->uniqueId());
-    auto ascore = computeScore(ameta, a->baseScoreWeight());
-    auto bscore = computeScore(ameta, b->baseScoreWeight());
-
-    return ameta.visitCount > bmeta.visitCount;
+std::vector<RootItemManager::SearchableRootItem> RootItemManager::queryFavorites(std::optional<int> limit) {
+  auto isFavorite = [](auto &&item) { return item.meta->favorite; };
+  auto favorites = m_items | std::views::filter(isFavorite) | std::ranges::to<std::vector>();
+  std::ranges::sort(favorites, [this](const auto &a, const auto &b) {
+    auto ascore = computeScore(*a.meta, a.item->baseScoreWeight());
+    auto bscore = computeScore(*b.meta, b.item->baseScoreWeight());
+    return ascore > bscore;
   });
 
-  if (items.size() > limit) { items.resize(limit); }
+  if (limit && favorites.size() > limit) { favorites.resize(limit.value()); }
 
-  return items;
+  return favorites;
 }
 
-std::vector<std::shared_ptr<RootItem>> RootItemManager::querySuggestions(int limit) {
-  std::vector<std::shared_ptr<RootItem>> items;
+std::vector<RootItemManager::SearchableRootItem> RootItemManager::querySuggestions(int limit) {
+  auto isSuggestable = [](auto &&item) {
+    return item.meta->isEnabled && item.meta->visitCount > 0 && !item.meta->favorite;
+  };
+  auto suggestions = m_items | std::views::filter(isSuggestable) | std::ranges::to<std::vector>();
 
-  for (const auto &item : m_items) {
-    RootItemMetadata meta = itemMetadata(item->uniqueId());
-
-    if (meta.isEnabled && meta.visitCount > 0) { items.emplace_back(item); }
-  }
-
-  std::ranges::sort(items, [this](const auto &a, const auto &b) {
-    RootItemMetadata ameta = itemMetadata(a->uniqueId());
-    RootItemMetadata bmeta = itemMetadata(b->uniqueId());
-    auto ascore = computeScore(ameta, a->baseScoreWeight());
-    auto bscore = computeScore(ameta, b->baseScoreWeight());
-
-    return ameta.visitCount > bmeta.visitCount;
+  std::ranges::sort(suggestions, [this](const auto &a, const auto &b) {
+    auto ascore = computeScore(*a.meta, a.item->baseScoreWeight());
+    auto bscore = computeScore(*b.meta, b.item->baseScoreWeight());
+    return ascore > bscore;
   });
 
-  if (items.size() > limit) { items.resize(limit); }
+  if (suggestions.size() > limit) { suggestions.resize(limit); }
 
-  return items;
+  return suggestions;
 }
 
 bool RootItemManager::resetRanking(const QString &id) {

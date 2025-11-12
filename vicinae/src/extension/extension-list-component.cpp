@@ -102,6 +102,9 @@ bool ExtensionListComponent::inputFilter(QKeyEvent *event) {
       return m_list->selectDown();
     case Qt::Key_Home:
       return m_list->selectHome();
+    case Qt::Key_Tab:
+      m_list->selectNext();
+      return true;
     case Qt::Key_End:
       return m_list->selectEnd();
     }
@@ -308,6 +311,7 @@ ExtensionListComponent::ExtensionListComponent() : _debounce(new QTimer(this)), 
   setDefaultActionShortcuts({Keyboard::Shortcut::enter(), Keyboard::Shortcut::submit()});
   m_selector->setMinimumWidth(300);
   m_selector->setEnableDefaultFilter(false);
+  m_selector->setFocusPolicy(Qt::NoFocus);
   m_split->setMainWidget(m_list);
   m_split->setDetailWidget(m_detail);
   m_split->detailWidget()->hide();

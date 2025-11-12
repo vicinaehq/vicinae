@@ -23,6 +23,7 @@ public:
   bool selectRight();
   bool selectHome();
   bool selectEnd();
+  void selectNext();
   void activateCurrentSelection() const;
   GridItemViewModel const *selected() const;
   bool empty() const;
