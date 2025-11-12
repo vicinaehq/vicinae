@@ -261,6 +261,8 @@ public:
 
   void setPopToRootOnClose(bool value);
 
+  bool hasCompleter() const;
+
   /**
    * If the instant dismiss flag is set to `true`, the next call to `goBack` or `closeWindow` will close the
    * window and pop to root regardless of the state of the navigation stack.
