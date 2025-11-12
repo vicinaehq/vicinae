@@ -103,3 +103,9 @@ use filtering
 ### searchText?
 
 > `optional` **searchText**: `string`
+
+***
+
+### throttle?
+
+> `optional` **throttle**: `boolean`

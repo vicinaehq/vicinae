@@ -31,6 +31,7 @@ export declare namespace List {
 		searchBarPlaceholder?: string;
 		navigationTitle?: string;
 		searchBarAccessory?: ReactNode;
+		throttle?: boolean;
 		onSearchTextChange?: (text: string) => void;
 		onSelectionChange?: (id: string) => void;
 	};
