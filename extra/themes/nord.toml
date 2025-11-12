@@ -26,6 +26,6 @@ yellow = "#EBCB8B"            # nord13
 cyan = "#88C0D0"              # nord8
 
 [colors.list.item.selection]
-background = "#434C5E"        # nord2
+background = { name = "#434C5E", opacity = 0.7 }  # nord2
 secondary_background = "#4C566A"  # nord3
 

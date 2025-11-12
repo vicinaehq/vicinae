@@ -26,6 +26,6 @@ yellow = "#F1FA8C"
 cyan = "#8BE9FD"
 
 [colors.list.item.selection]
-background = "#44475A"        # Current Line
+background = { name = "#44475A", opacity = 0.7 }  # Current Line
 secondary_background = "#6272A4"  # Comment (slightly highlighted)
 

@@ -26,7 +26,7 @@ yellow = "#EA9D34"            # gold
 cyan = "#56949F"              # foam
 
 [colors.list.item.selection]
-background = "#DFDAD9"        # highlight_med (darker/stronger on main bg)
+background = { name = "#DFDAD9", opacity = 0.7 }  # highlight_med (darker/stronger on main bg)
 secondary_background = "#F2E9E1"  # overlay (lighter/subtle on lighter surface)
 
 [colors.list.item.hover]

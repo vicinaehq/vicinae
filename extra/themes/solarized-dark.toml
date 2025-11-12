@@ -26,6 +26,6 @@ yellow = "#B58900"
 cyan = "#2AA198"
 
 [colors.list.item.selection]
-background = "#073642"        # base02
+background = { name = "#073642", opacity = 0.7 }  # base02
 secondary_background = "#586E75"  # base01
 
