@@ -1,0 +1,37 @@
+name: Deploy API Reference
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  deploy-api-reference:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./typescript/api
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Compile proto files
+        run: npm run protogen
+
+      - name: Generate documentation
+        run: npm run docgen
+
+      - name: Deploy to server via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          source: "typescript/api/docs/*"
+          target: "${{ secrets.DEPLOY_API_REFERENCE_PATH }}"
+          strip_components: 3
+          rm: true

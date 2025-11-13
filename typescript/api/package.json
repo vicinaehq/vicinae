@@ -7,8 +7,7 @@
 		"build": "tsc --outDir dist",
 		"protogen": "mkdir -p ./src/api/proto && protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto -I../../proto ../../proto/*.proto --ts_proto_out ./src/api/proto",
 		"pack": "npm run build && npm pack",
-		"docgen-html": "typedoc src/api/index.ts",
-		"docgen-md": "typedoc src/api/index.ts --disableSources --readme none --plugin typedoc-plugin-markdown --out ./docs",
+		"docgen": "typedoc",
 		"format": "biome format --write"
 	},
 	"bin": {
@@ -58,6 +57,7 @@
 		"ts-node": "^10",
 		"ts-proto": "^2.7.5",
 		"typedoc": "^0.28.13",
+		"typedoc-github-theme": "^0.3.1",
 		"typedoc-plugin-markdown": "^4.8.1",
 		"typescript": "^5"
 	},
