@@ -134,11 +134,15 @@ void SearchBar::inputMethodEvent(QInputMethodEvent *event) {
   auto config = ServiceRegistry::instance()->config();
   if (!config || !config->value().considerPreedit) return;
 
+  int insertionPos = cursorPosition() + event->replacementStart();
+
+  auto result = text().sliced(0, insertionPos)
+      + event->preeditString()
+      + text().sliced(insertionPos + event->replacementLength());
+
   // TODO: Does this work for other IMEs?
   // https://doc.qt.io/qt-6/qinputmethodevent.html
-  emit textEdited(text().sliced(0, event->replacementStart())
-      + event->preeditString()
-      + text().sliced(event->replacementStart() + event->replacementLength()));
+  emit textEdited(result);
 }
 
 void SearchBar::refreshStyle() {
