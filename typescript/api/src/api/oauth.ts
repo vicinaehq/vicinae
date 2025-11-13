@@ -25,6 +25,9 @@ enum OauthRedirectMethod {
 	AppURI = "appURI",
 }
 
+/**
+ * @category OAuth
+ */
 export declare namespace OAuth {
 	export namespace PKCEClient {
 		/**
@@ -252,6 +255,9 @@ export declare namespace OAuth {
 	}
 }
 
+/**
+ * @category OAuth
+ */
 export class PKCEClient {
 	redirectMethod: OAuth.RedirectMethod;
 	providerName: string;
@@ -450,6 +456,7 @@ export class PKCEClient {
 	}
 }
 
+/*
 export type TokenSet = {
 	accessToken: string;
 	refreshToken?: string;
@@ -459,7 +466,13 @@ export type TokenSet = {
 	updatedAt: Date;
 	isExpired: () => boolean;
 };
+*/
 
+/**
+ * Main OAuth object exporting all OAuth utilities
+ *
+ * @category OAuth
+ */
 export const OAuth = {
 	PKCEClient,
 	RedirectMethod: OauthRedirectMethod,

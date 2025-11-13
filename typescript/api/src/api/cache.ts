@@ -9,6 +9,9 @@ import {
 import { hash } from "node:crypto";
 import { environment } from "./environment";
 
+/**
+ * @category Cache
+ */
 export declare namespace Cache {
 	/**
 	 * The options for creating a new {@link Cache}.
@@ -54,6 +57,8 @@ type CacheIndex = {
  * No calls to internal Vicinae APIs are required, hence why all methods in this class are synchronous.
  * Another major difference is that cache data is not encrypted, so it's not suitable to store secrets.
  * (local storage currently isn't either, but that will change in the future)
+ *
+ * @category Cache
  */
 export class Cache {
 	constructor(options?: Cache.Options) {

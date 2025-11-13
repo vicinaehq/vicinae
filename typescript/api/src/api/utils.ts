@@ -1,8 +1,8 @@
-import { PathLike } from "fs";
-import { rm } from "fs/promises";
+import type { PathLike } from "node:fs";
+import { rm } from "node:fs/promises";
 import { bus } from "./bus";
 import { WindowManagement } from "./window-management";
-import { Application } from "./proto/application";
+import type { Application } from "./proto/application";
 
 // Linux systems usually do not have a trash, but maybe we should support one...
 export const trash = async (path: PathLike | PathLike[]): Promise<void> => {
@@ -17,6 +17,8 @@ export const trash = async (path: PathLike | PathLike[]): Promise<void> => {
  * Note that most options are best-effort, which means that they may or may not work depending on
  * the default terminal emulator that is available.
  * On Linux, Vicinae honors the xdg-terminal-exec specification: https://gitlab.freedesktop.org/terminal-wg/specifications/-/merge_requests/3/diffs
+ *
+ * @category System
  */
 export type RunInTerminalOptions = {
 	/**
@@ -56,6 +58,8 @@ export type RunInTerminalOptions = {
  * // or, inside a shell:
  * await runInTerminal(['/bin/bash', 'echo "dis is my home: $HOME"'], { hold: true });
  * ```
+ *
+ * @category System
  */
 export const runInTerminal = async (
 	args: string[],
@@ -71,6 +75,9 @@ export const runInTerminal = async (
 	});
 };
 
+/**
+ * @category System
+ */
 export const open = async (target: string, app?: Application | string) => {
 	let appId: string | undefined;
 
@@ -88,6 +95,9 @@ export const open = async (target: string, app?: Application | string) => {
 	});
 };
 
+/**
+ * @category System
+ */
 export const getFrontmostApplication = async (): Promise<Application> => {
 	const { application } = await WindowManagement.getActiveWindow();
 
@@ -98,6 +108,9 @@ export const getFrontmostApplication = async (): Promise<Application> => {
 	return application;
 };
 
+/**
+ * @category System
+ */
 export const getApplications = async (
 	target?: string,
 ): Promise<Application[]> => {
@@ -106,6 +119,9 @@ export const getApplications = async (
 	return res.unwrap().apps;
 };
 
+/**
+ * @category System
+ */
 export const getDefaultApplication = async (
 	path: string,
 ): Promise<Application> => {
@@ -117,6 +133,9 @@ export const getDefaultApplication = async (
 	return app;
 };
 
+/**
+ * @category System
+ */
 export const showInFileBrowser = async (path: PathLike): Promise<void> => {
 	const fileBrowser = await getDefaultApplication("inode/directory"); // FIXME: we may want something more robust
 	await open(path.toString(), fileBrowser);
