@@ -7,7 +7,7 @@ This package lets you extend the [Vicinae](https://docs.vicinae.com/) launcher u
 
 The recommend way to start developing a new extension is to [read the docs](https://docs.vicinae.com/extensions/introduction).
 
-The full API reference (expect breaking changes) can be found [here](./docs/README.md).
+The full API reference (expect breaking changes) can be found [here](https://api-reference.vicinae.com).
 
 # Installation 
 
