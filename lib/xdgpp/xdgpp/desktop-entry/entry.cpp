@@ -34,6 +34,8 @@ std::optional<std::string> DesktopEntry::version() const { return m_version; }
 
 std::string DesktopEntry::name() const { return m_name; }
 
+std::optional<std::string> DesktopEntry::url() const { return m_url; }
+
 std::optional<std::string> DesktopEntry::genericName() const { return m_genericName; }
 
 bool DesktopEntry::noDisplay() const { return m_noDisplay; }
@@ -151,6 +153,14 @@ DesktopEntry::DesktopEntry(std::string_view data, const ParseOptions &opts) {
       m_type = Type::Link;
     } else if (str == "Directory") {
       m_type = Type::Directory;
+    }
+  }
+
+  if (isLink()) {
+    if (auto url = group->key("URL")) {
+      m_url = url->asString();
+    } else {
+      m_error = "URL is required when type is link";
     }
   }
 
