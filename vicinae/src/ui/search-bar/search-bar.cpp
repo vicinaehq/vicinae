@@ -130,6 +130,10 @@ bool SearchBar::event(QEvent *event) {
 
 void SearchBar::inputMethodEvent(QInputMethodEvent *event) {
   QLineEdit::inputMethodEvent(event);
+
+  auto config = ServiceRegistry::instance()->config();
+  if (!config || !config->value().considerPreedit) return;
+
   // TODO: Does this work for other IMEs?
   // https://doc.qt.io/qt-6/qinputmethodevent.html
   emit textEdited(text() + event->preeditString());
