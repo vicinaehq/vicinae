@@ -136,7 +136,9 @@ void SearchBar::inputMethodEvent(QInputMethodEvent *event) {
 
   // TODO: Does this work for other IMEs?
   // https://doc.qt.io/qt-6/qinputmethodevent.html
-  emit textEdited(text() + event->preeditString());
+  emit textEdited(text().sliced(0, event->replacementStart())
+      + event->preeditString()
+      + text().sliced(event->replacementStart() + event->replacementLength()));
 }
 
 void SearchBar::refreshStyle() {
