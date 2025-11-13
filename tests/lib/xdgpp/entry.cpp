@@ -549,3 +549,25 @@ Exec = firefox %f
   REQUIRE(exec.at(1) == "1");
   REQUIRE(exec.size() == 2);
 }
+
+TEST_CASE("Should parse URL for link entries") {
+  auto file = DesktopEntry::fromData(R"(
+[Desktop Entry]
+Name=MyFile
+Type=Link
+URL=https://vicinae.com
+)");
+
+  REQUIRE(file.isValid());
+  REQUIRE(file.url() == "https://vicinae.com");
+}
+
+TEST_CASE("Should flag a link entry without an URL as invalid") {
+  auto file = DesktopEntry::fromData(R"(
+[Desktop Entry]
+Name=MyFile
+Type=Link
+)");
+
+  REQUIRE(!file.isValid());
+}
