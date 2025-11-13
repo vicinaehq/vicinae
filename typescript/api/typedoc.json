@@ -1,0 +1,7 @@
+{
+	"$schema": "https://typedoc.org/schema.json",
+	"entryPoints": ["./src/api/index.ts"],
+	"plugin": ["typedoc-github-theme"],
+	"out": "docs",
+	"router": "structure"
+}
