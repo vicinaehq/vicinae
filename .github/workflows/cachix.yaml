@@ -2,6 +2,9 @@ name: "Push to Cachix"
 on:
   pull_request:
   push:
+    paths:
+      - typescript
+      - vicinae
 
 jobs:
   push_to_cachix:

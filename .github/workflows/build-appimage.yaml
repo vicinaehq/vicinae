@@ -2,7 +2,9 @@ name: Build AppImage
 
 on:
   push:
-    branches: [main, develop]
+    paths:
+      - typescript
+      - vicinae
   pull_request:
     branches: [main]
   workflow_dispatch:
