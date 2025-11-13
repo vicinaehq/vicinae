@@ -31,8 +31,8 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          source: ./typescript/api/docs/*
-          target: "${{ secrets.DEPLOY_API_REFERENCE_PATH }}"
+          source: "./docs/*"
+          target: "/opt/vicinae/api-reference/" 
           rm: true
           overwrite: true
-          strip_components: 3
+          strip_components: 1
