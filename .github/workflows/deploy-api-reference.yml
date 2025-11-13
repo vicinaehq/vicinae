@@ -31,7 +31,8 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          source: "typescript/api/docs/*"
+          source: ./typescript/api/docs/*
           target: "${{ secrets.DEPLOY_API_REFERENCE_PATH }}"
-          strip_components: 3
           rm: true
+          overwrite: true
+          strip_components: 3
