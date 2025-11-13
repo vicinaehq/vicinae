@@ -331,6 +331,17 @@ bool XdgAppDatabase::launch(const AbstractApplication &app, const std::vector<QS
                             const std::optional<QString> &launchPrefix) const {
   auto &xdgApp = static_cast<const XdgApplication &>(app);
 
+  if (auto url = xdgApp.data().url().transform(QString::fromStdString)) {
+    auto opener = findDefaultOpener(*url);
+
+    if (!opener) {
+      qWarning() << "No opener for link entry with url" << url;
+      return false;
+    }
+
+    return launch(*opener, {*url}, launchPrefix);
+  }
+
   if (xdgApp.isTerminalApp()) return launchTerminalCommand(xdgApp.parseExec(args), {}, launchPrefix);
 
   auto exec = xdgApp.parseExec(args, launchPrefix);
