@@ -39,7 +39,7 @@ const transformWindow = (proto: wm.Window): WindowManagement.Window => {
  *
  * const windows = await WindowManagement.getWindows();
  * ```
- *
+ * @category Window Management
  * @public
  */
 export namespace WindowManagement {

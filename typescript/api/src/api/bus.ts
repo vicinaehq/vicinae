@@ -5,6 +5,9 @@ import * as ipc from "./proto/ipc";
 import * as extension from "./proto/extension";
 import { Err, Ok, Result } from "./lib/result";
 
+/**
+ * @ignore
+ */
 export type Message<T = Record<string, any>> = {
 	envelope: {
 		id: string;
@@ -329,6 +332,8 @@ class Bus {
 }
 
 /**
+ * @ignore
+ *
  * IPC bus to communicate with the extension manager.
  * If you are using this from inside your extension, you are WRONG and you should stop.
  */

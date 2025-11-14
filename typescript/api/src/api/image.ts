@@ -2,6 +2,10 @@ import { type ColorLike, serializeColorLike } from "./color";
 import type { Icon } from "./icon";
 import * as ui from "./proto/ui";
 
+/**
+ * Representation of an image, renderable everywhere Vicine expects them.
+ * @category Image
+ */
 export type Image = {
 	source: Image.Source;
 	fallback?: Image.Fallback | undefined | null;
@@ -9,7 +13,11 @@ export type Image = {
 	mask?: Image.Mask | undefined | null;
 };
 
-export type ImageLike = Image.ImageLike;
+/**
+ * @category Image
+ */
+export type ImageLike = Image.ImageLike; // TODO: FileIcon
+
 export type SerializedImageLike =
 	| URL
 	| Image.Asset
@@ -17,13 +25,16 @@ export type SerializedImageLike =
 	| ui.Image
 	| Image.ThemedImage;
 
+/**
+ * @category Image
+ */
 export namespace Image {
 	export type Asset = string;
 	export type ThemedSource = { light: URL | Asset; dark: URL | Asset };
 	export type Fallback = Source;
 	export type Source = URL | Asset | ThemedSource;
-	export type ImageLike = URL | Image.Asset | Icon | Image | ThemedImage; // TODO: FileIcon
 	export type ThemedImage = { light: URL | Asset; dark: URL | Asset };
+	export type ImageLike = URL | Image.Asset | Icon | Image | Image.ThemedImage;
 
 	export enum Mask {
 		Circle = "circle",

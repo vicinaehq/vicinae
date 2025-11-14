@@ -1,3 +1,6 @@
+/**
+ * @category Image
+ */
 export enum Icon {
 	AddPerson = "add-person",
 	Airplane = "airplane",

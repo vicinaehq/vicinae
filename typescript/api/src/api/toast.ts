@@ -20,8 +20,9 @@ import * as ui from "./proto/ui";
  *   toast.title = "Uploaded image";
  * };
  * ```
+ *
+ * @category Toast
  */
-
 export class Toast {
 	private options: {
 		title: string;
@@ -177,6 +178,9 @@ export class Toast {
 	}
 }
 
+/**
+ * @category Toast
+ */
 export namespace Toast {
 	/**
 	 * The options to create a {@link Toast}.
@@ -258,12 +262,12 @@ export namespace Toast {
 /**
  * @deprecated Use {@link Toast.ActionOptions} instead
  */
-export declare interface ToastActionOptions extends Toast.ActionOptions {}
+export declare interface ToastActionOptions extends Toast.ActionOptions { }
 
 /**
  * @deprecated Use {@link Toast.Options} instead
  */
-export declare interface ToastOptions extends Toast.Options {}
+export declare interface ToastOptions extends Toast.Options { }
 
 /**
  * @deprecated Use {@link Toast.Style} instead
@@ -286,6 +290,9 @@ type SerializedShowToastPayload = {
 	};
 };
 
+/**
+ * @category Toast
+ */
 export const showToast = async (
 	init: Toast.Style | Toast.Options,
 	title = "",

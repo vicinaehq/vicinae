@@ -1,8 +1,8 @@
-import { EventEmitter } from "stream";
-import { randomUUID } from "crypto";
-import { ImageLike } from "./image";
-import { bus } from "./bus";
+import type { ImageLike } from "./image";
 
+/**
+  @ignore - we don't support AI yet
+ */
 export namespace AI {
 	/**
 	 * Returns a prompt completion.

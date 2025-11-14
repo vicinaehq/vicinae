@@ -6,6 +6,9 @@ const View: React.FC<{ children: ReactNode }> = ({ children }) => {
 	return <view>{children}</view>;
 };
 
+/**
+ * @ignore
+ */
 export const NavigationProvider: React.FC<{ root: ReactNode }> = ({ root }) => {
 	const [navStack, setNavStack] = useState<ReactNode[]>([root]);
 

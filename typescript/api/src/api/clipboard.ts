@@ -2,6 +2,11 @@ import { PathLike } from "fs";
 import { bus } from "./bus";
 import { ClipboardContent } from "./proto/clipboard";
 
+/**
+ * Access system clipboard and clipboard history features.
+ *
+ * @category Clipboard
+ */
 export namespace Clipboard {
 	export type Content =
 		| { text: string }

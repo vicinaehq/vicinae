@@ -6,11 +6,17 @@ type DynamicColor = {
 	adjustContrast?: boolean;
 };
 
+/**
+ * @category Colors
+ */
 export namespace Color {
 	export type Dynamic = DynamicColor;
 	export type Raw = string;
 }
 
+/**
+ * @category Colors
+ */
 export enum Color {
 	Blue = "blue",
 	Green = "green",
@@ -23,7 +29,11 @@ export enum Color {
 	SecondaryText = "secondary-text",
 }
 
+/**
+ * @category Colors
+ */
 export type ColorLike = Color.Dynamic | Color.Raw | Color;
+
 export type SerializedColorLike = ui.ColorLike;
 
 export const serializeColorLike = (color: ColorLike): SerializedColorLike => {

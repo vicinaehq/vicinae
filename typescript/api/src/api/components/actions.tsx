@@ -3,13 +3,13 @@ import type { PathLike } from "node:fs";
 import { useNavigation } from "../hooks/index";
 import { Clipboard } from "../clipboard";
 import { type ImageLike, serializeProtoImage } from "../image";
-import { Keyboard } from "../keyboard";
+import type { Keyboard } from "../keyboard";
 import { Application, open, showInFileBrowser } from "../utils";
-import { Form } from "./form";
+import type { Form } from "./form";
 import { Icon } from "../icon";
 import { closeMainWindow } from "../controls";
 
-export type BaseActionProps = {
+type BaseActionProps = {
 	title: string;
 	icon?: ImageLike;
 	/**
@@ -22,58 +22,85 @@ export type BaseActionProps = {
 	style?: "regular" | "destructive";
 };
 
-export type ActionProps = BaseActionProps & {
+type ActionProps = BaseActionProps & {
 	onAction: () => void;
 };
 
-export type CopyToClipboardProps = Omit<BaseActionProps, "title"> & {
-	content: string;
-	concealed?: boolean;
-	onCopy?: (content: string | number | Clipboard.Content) => void;
-	title?: string;
-};
+/**
+ * Actions that can be used as part of an {@link ActionPanel}
+ *
+ * Most actions are just simple wrappers around the base {@link Action}. For any custom need, use that.
+ *
+ * @category Actions
+ */
+export namespace Action {
+	export namespace CopyToClipboard {
+		export type Props = Omit<BaseActionProps, "title"> & {
+			content: string;
+			concealed?: boolean;
+			onCopy?: (content: string | number | Clipboard.Content) => void;
+			title?: string;
+		};
+	}
 
-export type ActionPushProps = BaseActionProps & {
-	target: ReactNode;
-};
+	export namespace Push {
+		export type Props = BaseActionProps & {
+			target: ReactNode;
+		};
+	}
 
-export type ActionOpenProps = BaseActionProps & {
-	target: string;
-	app?: Application;
-};
+	export namespace Open {
+		export type Props = BaseActionProps & {
+			target: string;
+			app?: Application;
+		};
+	}
 
-export type ActionPasteProps = BaseActionProps & {
-	content: string;
-	onPaste?: (content: string | number | Clipboard.Content) => void;
-};
+	export namespace Paste {
+		export type Props = BaseActionProps & {
+			content: string;
+			onPaste?: (content: string | number | Clipboard.Content) => void;
+		};
+	}
 
-export type ActionOpenInBrowserProps = BaseActionProps & {
-	url: string;
-};
+	export namespace OpenInBrowser {
+		export type Props = BaseActionProps & {
+			url: string;
+		};
+	}
 
-export type ActionShowInFinderProps = {
-	path: PathLike;
-	icon?: ImageLike;
-	onShow?: (path: PathLike) => void;
-	shortcut?: Keyboard.Shortcut;
-	title?: string;
-};
+	export namespace ShowInFinderProps {
+		export type Props = {
+			path: PathLike;
+			icon?: ImageLike;
+			onShow?: (path: PathLike) => void;
+			shortcut?: Keyboard.Shortcut;
+			title?: string;
+		};
+	}
 
-export type ActionSubmitFormProps = Omit<BaseActionProps, "title"> & {
-	onSubmit: (input: Form.Values) => boolean | void | Promise<boolean | void>;
-	title?: string;
-};
+	export namespace SubmitForm {
+		export type Props = Omit<BaseActionProps, "title"> & {
+			onSubmit: (
+				input: Form.Values,
+			) => boolean | void | Promise<boolean | void>;
+			title?: string;
+		};
+	}
+
+	export namespace CreateQuicklink {
+		export type Props = Omit<BaseActionProps, "title"> & {
+			title?: string;
+			quicklink: Quicklink;
+		};
+	}
+}
 
 export type Quicklink = {
 	name?: string;
 	link: string;
 	application?: string | Application;
 	icon?: Icon;
-};
-
-export type ActionCreateQuicklinkProps = Omit<BaseActionProps, "title"> & {
-	title?: string;
-	quicklink: Quicklink;
 };
 
 const ActionRoot: React.FC<ActionProps> = (props) => {
@@ -83,7 +110,7 @@ const ActionRoot: React.FC<ActionProps> = (props) => {
 	return <action {...props} icon={serializedIcon} />;
 };
 
-const CopyToClipboard: React.FC<CopyToClipboardProps> = ({
+const CopyToClipboard: React.FC<Action.CopyToClipboard.Props> = ({
 	title = "Copy to clipboard",
 	icon = Icon.CopyClipboard,
 	content,
@@ -105,7 +132,7 @@ const CopyToClipboard: React.FC<CopyToClipboardProps> = ({
 	);
 };
 
-const Paste: React.FC<ActionPasteProps> = ({
+const Paste: React.FC<Action.Paste.Props> = ({
 	title = "Paste to active window",
 	icon = Icon.CopyClipboard,
 	content,
@@ -126,7 +153,7 @@ const Paste: React.FC<ActionPasteProps> = ({
 	);
 };
 
-const Open: React.FC<ActionOpenProps> = ({ target, app, ...props }) => {
+const Open: React.FC<Action.Open.Props> = ({ target, app, ...props }) => {
 	return (
 		<ActionRoot
 			{...props}
@@ -137,7 +164,7 @@ const Open: React.FC<ActionOpenProps> = ({ target, app, ...props }) => {
 	);
 };
 
-const OpenInBrowser: React.FC<ActionOpenInBrowserProps> = ({
+const OpenInBrowser: React.FC<Action.OpenInBrowser.Props> = ({
 	url,
 	...props
 }) => {
@@ -151,7 +178,7 @@ const OpenInBrowser: React.FC<ActionOpenInBrowserProps> = ({
 	);
 };
 
-const ShowInFinder: React.FC<ActionShowInFinderProps> = ({
+const ShowInFinder: React.FC<Action.ShowInFinderProps.Props> = ({
 	path,
 	title = "Show in Finder",
 	...props
@@ -167,7 +194,7 @@ const ShowInFinder: React.FC<ActionShowInFinderProps> = ({
 	);
 };
 
-const Push: React.FC<ActionPushProps> = ({ target, ...props }) => {
+const Push: React.FC<Action.Push.Props> = ({ target, ...props }) => {
 	const { push } = useNavigation();
 
 	return (
@@ -181,7 +208,7 @@ const Push: React.FC<ActionPushProps> = ({ target, ...props }) => {
 	);
 };
 
-const SubmitForm: React.FC<ActionSubmitFormProps> = ({
+const SubmitForm: React.FC<Action.SubmitForm.Props> = ({
 	title = "Submit",
 	...props
 }) => {
@@ -189,13 +216,13 @@ const SubmitForm: React.FC<ActionSubmitFormProps> = ({
 		...props,
 		title,
 		icon: props.icon ? serializeProtoImage(props.icon) : props.icon,
-		onAction: () => {},
+		onAction: () => { },
 	};
 
 	return <action {...nativeProps} />;
 };
 
-const CreateQuicklink: React.FC<ActionCreateQuicklinkProps> = ({
+const CreateQuicklink: React.FC<Action.CreateQuicklink.Props> = ({
 	title = "Create Quicklink",
 	quicklink,
 	...props
@@ -214,12 +241,15 @@ const CreateQuicklink: React.FC<ActionCreateQuicklinkProps> = ({
 			icon: quicklink.icon,
 		},
 		icon: props.icon ? serializeProtoImage(props.icon) : props.icon,
-		onAction: () => {},
+		onAction: () => { },
 	};
 
 	return <action {...nativeProps} />;
 };
 
+/**
+ * @category Actions
+ */
 export const Action = Object.assign(ActionRoot, {
 	CopyToClipboard,
 	Push,
