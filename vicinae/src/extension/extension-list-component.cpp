@@ -126,6 +126,8 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
   ++m_renderCount;
   auto newModel = std::get<ListModel>(baseModel);
 
+  m_onSelectionChanged = newModel.onSelectionChanged;
+
   if (auto accessory = newModel.searchBarAccessory) {
     auto dropdown = std::get<DropdownModel>(*accessory);
 
@@ -239,7 +241,7 @@ void ExtensionListComponent::onSelectionChanged(const ListItemViewModel *next) {
     return;
   }
 
-  if (auto handler = _model.onSelectionChanged) { notify(*handler, {next->id}); }
+  if (auto handler = m_onSelectionChanged) { notify(*handler, {next->id}); }
 
   m_split->setDetailVisibility(_model.isShowingDetail);
 
