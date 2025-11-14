@@ -9,5 +9,5 @@ class CliServerCommand : public AbstractCommandLineCommand {
 
 private:
   bool m_open = false;
-  bool m_noReplace = false;
+  bool m_replace = false;
 };

@@ -184,8 +184,6 @@ std::vector<AppPtr> XdgAppDatabase::findAssociations(const QString &mimeName) co
   std::vector<AppPtr> openers;
   std::queue<QString> mimeStack;
 
-  qDebug() << "find associations for" << mimeName;
-
   mimeStack.emplace(mimeName);
 
   while (!mimeStack.empty()) {

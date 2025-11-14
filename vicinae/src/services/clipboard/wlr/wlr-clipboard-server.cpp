@@ -29,6 +29,7 @@ void WlrClipboardServer::handleMessage(const proto::ext::wlrclip::Selection &sel
 }
 
 void WlrClipboardServer::handleExit(int code, QProcess::ExitStatus status) {
+  qDebug() << "code" << code;
   if (status == QProcess::ExitStatus::CrashExit) {
     qCritical() << "wlr-clipboard process exited with status code" << status;
   }
@@ -39,7 +40,7 @@ QString WlrClipboardServer::id() const { return "wlr-clipboard"; }
 int WlrClipboardServer::activationPriority() const { return 1; }
 
 bool WlrClipboardServer::stop() {
-  m_process.kill();
+  m_process.terminate();
   return m_process.waitForFinished();
 }
 
