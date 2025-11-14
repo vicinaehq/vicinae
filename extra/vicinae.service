@@ -7,10 +7,10 @@ PartOf=graphical-session.target
 
 [Service]
 Type=simple
-ExecStart=vicinae server
+ExecStart=vicinae server --replace
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
-RestartSec=5
+RestartSec=60
 KillMode=process
 
 [Install]
