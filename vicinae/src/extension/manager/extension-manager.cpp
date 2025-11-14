@@ -183,7 +183,7 @@ std::optional<fs::path> ExtensionManager::nodeExecutable() {
 }
 
 bool ExtensionManager::stop() {
-  m_process.kill();
+  m_process.terminate();
   return m_process.waitForFinished();
 }
 

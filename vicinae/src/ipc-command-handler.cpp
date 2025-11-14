@@ -181,10 +181,8 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
 
   // TODO: add a "quit" command to handle graceful shutdown (requires more work than you would expect)
   if (command == "kill") {
-    m_ctx.services->extensionManager()->stop();
-    m_ctx.services->clipman()->setMonitoring(false);
     qInfo() << "Killing vicinae server because a new instance was started";
-    exit(1);
+    QApplication::exit(1);
     return {};
   }
 

@@ -9,7 +9,6 @@
 #include "keyboard/keybind-manager.hpp"
 #include "log/message-handler.hpp"
 #include "overlay-controller/overlay-controller.hpp"
-#include "pid-file/pid-file.hpp"
 #include "extensions/root/root-command.hpp"
 #include "root-search/apps/app-root-provider.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
@@ -32,40 +31,73 @@
 #include "settings/settings-window.hpp"
 #include "ui/launcher-window/launcher-window.hpp"
 #include "vicinae.hpp"
+#include <signal.h>
 #include <QString>
+#include <qlockfile.h>
 #include <qlogging.h>
 #include <qpixmapcache.h>
 #include <qstylefactory.h>
 #include "lib/CLI11.hpp"
 #include "server.hpp"
 
+namespace fs = std::filesystem;
+
 void CliServerCommand::setup(CLI::App *app) {
   app->add_flag("--open", m_open, "Open the main window once the server is started");
-  app->add_flag("--no-replace", m_noReplace, "Exit with non-zero error code if a server is already running");
+  app->add_flag("--replace", m_replace, "Replace the currently running instance if there is one");
 }
 
 void CliServerCommand::run(CLI::App *app) {
-  {
+  using namespace std::chrono_literals;
+  fs::path lockPath = Omnicast::runtimeDir() / "vicinae.lock";
+  QLockFile lock(lockPath.c_str());
+
+  qInstallMessageHandler(coloredMessageHandler);
+
+  // we are dealing with a long running process so we dont want to use time
+  // as an indicator that the lock file might be stale.
+  lock.setStaleLockTime(0ms);
+
+  if (!lock.tryLock()) {
     DaemonIpcClient client;
-    bool hasExistingInstance = client.connect() && client.ping();
+    bool isServerReachable = client.connect() && client.ping();
 
-    if (hasExistingInstance) {
-      if (m_noReplace) {
-        std::cerr
-            << "A server is already running. Omit --no-replace if you want to replace the existing instance."
-            << std::endl;
+    if (!isServerReachable) {
+      lock.removeStaleLockFile();
+      lock.lock();
+    } else {
+      if (!m_replace) {
+        qWarning()
+            << "A server is already running. Pass --replace if you want to replace the existing instance.";
         exit(1);
-        if (m_open) { client.open(); }
-        return;
       }
 
+      qInfo() << "Killing existing vicinae server...";
+
+      // if we fail to kill gracefully, force kill by sending SIGKILL
       if (!client.kill()) {
-        throw std::runtime_error("Unable to kill existing server instance, will not continue.");
+        QString _;
+        qint64 pid = 0;
+
+        if (!lock.getLockInfo(&pid, &_, &_)) {
+          qCritical() << "Failed to get lock file info";
+          exit(1);
+        }
+
+        if (kill(pid, SIGKILL) != 0) {
+          qCritical() << "Failed to kill process with pid" << pid;
+          exit(1);
+        }
+
+        lock.removeStaleLockFile();
       }
+
+      qInfo() << "Waiting for lock to released...";
+      lock.lock();
     }
   }
 
-  qInstallMessageHandler(coloredMessageHandler);
+  qInfo() << "Initializing vicinae server...";
 
   int argc = 1;
   static char *argv[] = {strdup("command"), nullptr};
@@ -73,6 +105,7 @@ void CliServerCommand::run(CLI::App *app) {
 
   // discard system specific qt theming
   qapp.setStyle(QStyleFactory::create("fusion"));
+
   std::filesystem::create_directories(Omnicast::runtimeDir());
 
   {
@@ -269,4 +302,8 @@ void CliServerCommand::run(CLI::App *app) {
   }
 
   qApp->exec();
+  // make sure child processes are terminated
+  ctx.services->clipman()->clipboardServer()->stop();
+  ctx.services->extensionManager()->stop();
+  lock.unlock();
 }
