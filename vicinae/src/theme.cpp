@@ -3,7 +3,6 @@
 #include "theme/colors.hpp"
 #include "theme/theme-db.hpp"
 #include "theme/theme-file.hpp"
-#include "timer.hpp"
 #include <QLinearGradient>
 #include <QStyleHints>
 #include <qapplication.h>
@@ -25,9 +24,7 @@ void ThemeService::setTheme(const ThemeFile &info) {
   palette.setBrush(QPalette::HighlightedText, info.resolve(SemanticColor::TextSelectionForeground));
   palette.setBrush(QPalette::Accent, info.resolve(SemanticColor::TextSelectionBackground));
 
-  Timer timer;
   QApplication::setPalette(palette);
-  timer.time("Theme changed");
   QPixmapCache::clear();
   emit themeChanged(info);
 }

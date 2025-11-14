@@ -20,13 +20,7 @@ GnomeClipboardServer::GnomeClipboardServer() : m_bus(QDBusConnection::sessionBus
 GnomeClipboardServer::~GnomeClipboardServer() { cleanupDBusConnection(); }
 
 bool GnomeClipboardServer::isActivatable() const {
-  const QString envDesc = Environment::getEnvironmentDescription();
-  qDebug() << "GnomeClipboardServer: Detected environment:" << envDesc;
-
-  if (!Environment::isGnomeEnvironment()) {
-    qDebug() << "GnomeClipboardServer: Not in GNOME environment, skipping";
-    return false;
-  }
+  if (!Environment::isGnomeEnvironment()) return false;
 
   qInfo() << "GnomeClipboardServer: GNOME environment detected, checking for extension...";
 

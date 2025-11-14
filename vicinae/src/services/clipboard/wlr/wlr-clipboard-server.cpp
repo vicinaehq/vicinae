@@ -29,9 +29,8 @@ void WlrClipboardServer::handleMessage(const proto::ext::wlrclip::Selection &sel
 }
 
 void WlrClipboardServer::handleExit(int code, QProcess::ExitStatus status) {
-  qDebug() << "code" << code;
   if (status == QProcess::ExitStatus::CrashExit) {
-    qCritical() << "wlr-clipboard process exited with status code" << status;
+    qCritical() << "wlr-clipboard process exited with status code" << code;
   }
 }
 

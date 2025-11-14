@@ -9,8 +9,6 @@ namespace Gnome {
 EventListener::EventListener() : m_bus(QDBusConnection::sessionBus()) {
   using namespace std::chrono_literals;
 
-  qDebug() << "GnomeEventListener: Initializing GNOME event listener";
-
   // Initialize reconnection timer (same pattern as GnomeClipboardServer)
   m_reconnectTimer = new QTimer(this);
   m_reconnectTimer->setSingleShot(false);
