@@ -5,7 +5,6 @@
 #include <chrono>
 #include <iostream>
 #include <qlocalsocket.h>
-#include <random>
 #include <stdexcept>
 
 namespace Daemon = proto::ext::daemon;
@@ -17,7 +16,7 @@ class FailedToConnectException : public std::exception {
   }
 };
 
-void DaemonIpcClient::writeRequest(const Daemon::Request &req) {
+bool DaemonIpcClient::writeRequest(const Daemon::Request &req) {
   std::string data;
   QByteArray message;
   QDataStream dataStream(&message, QIODevice::WriteOnly);
@@ -25,7 +24,19 @@ void DaemonIpcClient::writeRequest(const Daemon::Request &req) {
   req.SerializeToString(&data);
   dataStream << QByteArray(data.data(), data.size());
   m_conn.write(message);
-  m_conn.waitForBytesWritten(1000);
+  return m_conn.waitForBytesWritten(1000);
+}
+
+bool DaemonIpcClient::kill() {
+  if (!connect()) return false;
+
+  proto::ext::daemon::Request req;
+  auto urlReq = new Daemon::UrlRequest();
+
+  urlReq->set_url("vicinae://kill");
+  req.set_allocated_url(urlReq);
+
+  return writeRequest(req);
 }
 
 void DaemonIpcClient::launchApp(const std::string &id, const std::vector<std::string> &args,

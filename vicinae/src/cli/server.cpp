@@ -39,40 +39,40 @@
 #include "lib/CLI11.hpp"
 #include "server.hpp"
 
-static char *argv[] = {strdup("command"), nullptr};
-
 void CliServerCommand::setup(CLI::App *app) {
   app->add_flag("--open", m_open, "Open the main window once the server is started");
   app->add_flag("--no-replace", m_noReplace, "Exit with non-zero error code if a server is already running");
 }
 
 void CliServerCommand::run(CLI::App *app) {
-  int argc = 1;
-  PidFile pidFile(Omnicast::APP_ID.toStdString());
-  DaemonIpcClient client;
-  bool killed = false;
+  {
+    DaemonIpcClient client;
+    bool hasExistingInstance = client.connect() && client.ping();
+
+    if (hasExistingInstance) {
+      if (m_noReplace) {
+        std::cerr
+            << "A server is already running. Omit --no-replace if you want to replace the existing instance."
+            << std::endl;
+        exit(1);
+        if (m_open) { client.open(); }
+        return;
+      }
+
+      if (!client.kill()) {
+        throw std::runtime_error("Unable to kill existing server instance, will not continue.");
+      }
+    }
+  }
 
   qInstallMessageHandler(coloredMessageHandler);
 
-  if (client.connect() && client.ping() && pidFile.exists()) {
-    if (m_noReplace) {
-      std::cerr
-          << "A server is already running. Omit --no-replace if you want to replace the existing instance."
-          << std::endl;
-      exit(1);
-      if (m_open) { client.open(); }
-      return;
-    }
-
-    pidFile.kill();
-    qInfo() << "Killed existing vicinae instance";
-  }
-
+  int argc = 1;
+  static char *argv[] = {strdup("command"), nullptr};
   QApplication qapp(argc, argv);
 
   // discard system specific qt theming
   qapp.setStyle(QStyleFactory::create("fusion"));
-  pidFile.write(qApp->applicationPid());
   std::filesystem::create_directories(Omnicast::runtimeDir());
 
   {

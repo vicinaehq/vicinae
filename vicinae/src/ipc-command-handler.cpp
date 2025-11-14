@@ -26,6 +26,7 @@
 #include "theme.hpp"
 #include "ui/dmenu-view/dmenu-view.hpp"
 #include "ui/toast/toast.hpp"
+#include <csignal>
 #include "vicinae.hpp"
 
 PromiseLike<proto::ext::daemon::Response *>
@@ -164,7 +165,7 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
     return tl::unexpected("Unsupported url scheme " + url.scheme().toStdString());
   }
 
-  qDebug() << "goot deeplink" << url.toString();
+  qDebug() << "got deeplink" << url.toString();
 
   QUrlQuery query(url.query(QUrl::FullyDecoded));
 
@@ -175,6 +176,13 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
     QStringList pathParts = path.split('/', Qt::SkipEmptyParts);
     command = pathParts.at(0);
     path = "/" + pathParts.mid(1).join('/');
+  }
+
+  // TODO: add a "quit" command to handle graceful shutdown (requires more work than you would expect)
+  if (command == "kill") {
+    qInfo() << "Killing vicinae server because a new instance was started";
+    kill(getpid(), SIGKILL);
+    return {};
   }
 
   if (command == "ping") { return {}; }
