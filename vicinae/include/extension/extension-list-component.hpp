@@ -49,4 +49,5 @@ private:
   QTimer *m_dropdownDebounce = new QTimer(this);
   bool m_dropdownShouldResetSelection = false;
   int m_renderCount = 0;
+  std::optional<QString> m_onSelectionChanged;
 };
