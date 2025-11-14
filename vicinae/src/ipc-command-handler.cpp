@@ -3,6 +3,7 @@
 #include "proto/daemon.pb.h"
 #include <QDebug>
 #include "services/oauth/oauth-service.hpp"
+#include "services/clipboard/clipboard-service.hpp"
 #include "theme/theme-db.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "services/window-manager/window-manager.hpp"
@@ -180,8 +181,10 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
 
   // TODO: add a "quit" command to handle graceful shutdown (requires more work than you would expect)
   if (command == "kill") {
+    m_ctx.services->extensionManager()->stop();
+    m_ctx.services->clipman()->setMonitoring(false);
     qInfo() << "Killing vicinae server because a new instance was started";
-    kill(getpid(), SIGKILL);
+    exit(1);
     return {};
   }
 

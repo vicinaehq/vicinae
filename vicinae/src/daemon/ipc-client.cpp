@@ -36,7 +36,11 @@ bool DaemonIpcClient::kill() {
   urlReq->set_url("vicinae://kill");
   req.set_allocated_url(urlReq);
 
-  return writeRequest(req);
+  if (!writeRequest(req)) { return false; }
+
+  // the server will give no response as it will get instantly killed.
+  // However, we need to wait for the socket disconnection to make sure cleanup was fully performed.
+  return m_conn.waitForDisconnected();
 }
 
 void DaemonIpcClient::launchApp(const std::string &id, const std::vector<std::string> &args,
