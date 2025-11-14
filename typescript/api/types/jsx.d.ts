@@ -107,7 +107,7 @@ declare module "react" {
 			};
 			"metadata-label": {
 				title: string;
-				text: string;
+				text: string | { color?: SerializedColorLike; value: string };
 				icon?: SerializedImageLike;
 			};
 			"metadata-separator": {};
