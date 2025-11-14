@@ -159,6 +159,7 @@ public:
 
   bool isRunning() const;
   bool start();
+  bool stop();
 
   void loadCommand(const QString &extensionId, const QString &cmd, const QJsonObject &preferenceValues = {},
                    const LaunchProps &launchProps = {});
