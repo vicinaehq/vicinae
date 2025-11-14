@@ -13,8 +13,6 @@
 #include <QGuiApplication>
 
 GnomeWindowManager::GnomeWindowManager() {
-  qDebug() << "GnomeWindowManager: Initializing GNOME window manager";
-
   m_eventListener = std::make_unique<Gnome::EventListener>();
 
   // Connect event listener signals to our windowsChanged signal
@@ -56,10 +54,7 @@ GnomeWindowManager::GnomeWindowManager() {
   });
 }
 
-GnomeWindowManager::~GnomeWindowManager() {
-  // Event listener will be automatically cleaned up
-  qDebug() << "GnomeWindowManager: Destroyed";
-}
+GnomeWindowManager::~GnomeWindowManager() {}
 
 QDBusInterface *GnomeWindowManager::getDBusInterface() const {
   if (!m_dbusInterface) {
@@ -247,17 +242,10 @@ void GnomeWindowManager::focusWindowSync(const AbstractWindow &window) const {
 }
 
 bool GnomeWindowManager::isActivatable() const {
-  const QString envDesc = Environment::getEnvironmentDescription();
-  qInfo() << "GnomeWindowManager: Detected environment:" << envDesc;
+  if (!Environment::isGnomeEnvironment()) return false;
 
-  // Check if we're running on GNOME
-  if (!Environment::isGnomeEnvironment()) {
-    qInfo() << "GnomeWindowManager: Not in GNOME environment, skipping";
-    return false;
-  }
-
-  // Test D-Bus connectivity
   auto *interface = getDBusInterface();
+
   if (!interface || !interface->isValid()) {
     qDebug() << "GnomeWindowManager: D-Bus interface not available";
     return false;
