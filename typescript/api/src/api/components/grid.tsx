@@ -36,21 +36,69 @@ const aspectRatioMap: Record<Grid.AspectRatio, number> = {
 	"9/32": 9 / 32,
 };
 
+/**
+ * Controls how the grid content should fit its allocated space.
+ */
 enum GridFit {
+	/**
+	 * The content will be contained within the grid cell, with vertical/horizontal bars if its aspect ratio differs from the cell's
+	 */
 	Contain = "contain",
+	/**
+	 * The content will be scaled proportionally so that it fill the entire cell; parts of the content could end up being cropped out.
+	 */
 	Fill = "fill",
 }
 
+/**
+ * A grid component is very similar to the {@link List} component, but is optimized to render items
+ * that are primarily represented as an icon or an image.
+ *
+ * Grids are commonly used to implement wallpaper, icon or emoji pickers.
+ *
+ * Grid can be organized in sections and define an arbitrary number of columns and aspect ratio.
+ *
+ * Grid can also render cells filled with a single color, which can be useful in order to implement color pickers.
+ *
+ * ![](../../../assets/grid.png)
+ *
+ * @category UI Components
+ */
 export namespace Grid {
 	type BaseSection = {
+		/**
+		 * Amount of space to keep free around the edges of each item.
+		 * The real amount of space this translates to depends on the selected on the aspect ratio
+		 * and the number of columns.
+		 */
+		inset?: GridInset;
+		itemSize?: GridItemSize;
+
+		/**
+		 * How many items to fit in a single row.
+		 */
+		columns?: number;
+
+		fit?: GridFit;
+
+		/**
+		 * Specific aspect ratio to enforce for every cell.
+		 */
+		aspectRatio?: Grid.AspectRatio;
+	};
+
+	export type Props = BaseSection & {
+		/**
+		 * Amount of space to keep free around the edges of each item.
+		 * The real amount of space this translates to depends on the selected on the aspect ratio
+		 * and the number of columns.
+		 */
 		inset?: GridInset;
 		itemSize?: GridItemSize;
 		columns?: number;
 		fit?: GridFit;
 		aspectRatio?: Grid.AspectRatio;
-	};
 
-	export type Props = BaseSection & {
 		actions?: React.ReactNode;
 		children?: React.ReactNode;
 		filtering?: boolean;
@@ -67,10 +115,18 @@ export namespace Grid {
 		onSelectionChange?: (id: string) => void;
 	};
 
+	/**
+	 * A specific subsection of the grid.
+	 * Each subsection can specificy its own number of columns and aspect ratio.
+	 */
 	export namespace Section {
 		export type Props = BaseSection & {
 			title?: string;
 			subtitle?: string;
+			/**
+			 * The grid items that are part of this section.
+			 * @see {@link Grid.Item}
+			 */
 			children?: ReactNode;
 		};
 	}
@@ -78,6 +134,7 @@ export namespace Grid {
 	export type Fit = GridFit;
 	export type Inset = GridInset;
 	export type ItemSize = GridItemSize;
+
 	export type AspectRatio =
 		| "1"
 		| "3/2"
@@ -98,9 +155,9 @@ export namespace Grid {
 			keywords?: string[];
 			icon?: ImageLike;
 			content:
-				| Image.ImageLike
-				| { color: ColorLike }
-				| { value: Image.ImageLike | { color: ColorLike }; tooltip?: string };
+			| Image.ImageLike
+			| { color: ColorLike }
+			| { value: Image.ImageLike | { color: ColorLike }; tooltip?: string };
 			id?: string;
 			subtitle?: string;
 			actions?: ReactNode;
@@ -190,11 +247,11 @@ const GridItem: React.FC<Grid.Item.Props> = ({
 	// Accessory
 	const serializedAccessory = accessory
 		? {
-				icon: accessory.icon
-					? serializeProtoImage(accessory.icon)
-					: accessory.icon,
-				tooltip: accessory.tooltip,
-			}
+			icon: accessory.icon
+				? serializeProtoImage(accessory.icon)
+				: accessory.icon,
+			tooltip: accessory.tooltip,
+		}
 		: undefined;
 
 	return (
@@ -227,6 +284,9 @@ const GridSection: React.FC<Grid.Section.Props> = ({
 	return <grid-section {...nativeProps} />;
 };
 
+/**
+ * @category UI Components
+ */
 export const Grid = Object.assign(GridRoot, {
 	Section: GridSection,
 	EmptyView,

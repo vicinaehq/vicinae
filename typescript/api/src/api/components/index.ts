@@ -1,4 +1,4 @@
-export * from "./list.js";
+export { List } from "./list.js";
 export * from "./grid.js";
 export * from "./detail.js";
 export * from "./action-pannel.js";

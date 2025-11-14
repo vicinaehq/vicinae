@@ -17,6 +17,7 @@ import { FileInfo as ProtoFileInfo } from "./proto/file-search";
  * console.log(`Found ${results.length} files`);
  * ```
  *
+ * @category File Search
  * @public
  */
 export namespace FileSearch {

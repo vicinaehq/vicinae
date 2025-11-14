@@ -3,5 +3,8 @@
 	"entryPoints": ["./src/api/index.ts"],
 	"plugin": ["typedoc-github-theme"],
 	"out": "docs",
-	"router": "structure"
+	"router": "structure",
+	"navigation": {
+		"includeCategories": true
+	}
 }
