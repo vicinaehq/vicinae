@@ -18,7 +18,7 @@ import { Metadata } from "./metadata";
  * }
  * ```
  *
- * @category User Interface
+ * @category UI Components
  * @public
  */
 export namespace Detail {
@@ -45,6 +45,9 @@ const DetailRoot: React.FC<Detail.Props> = ({
 	);
 };
 
+/**
+ * @category UI Components
+ */
 export const Detail = Object.assign(DetailRoot, {
 	Metadata,
 });

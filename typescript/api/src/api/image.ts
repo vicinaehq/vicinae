@@ -4,7 +4,7 @@ import * as ui from "./proto/ui";
 
 /**
  * Representation of an image, renderable everywhere Vicine expects them.
- * @category User Interface
+ * @category Image
  */
 export type Image = {
 	source: Image.Source;
@@ -14,7 +14,7 @@ export type Image = {
 };
 
 /**
- * @category User Interface
+ * @category Image
  */
 export type ImageLike = Image.ImageLike; // TODO: FileIcon
 
@@ -26,7 +26,7 @@ export type SerializedImageLike =
 	| Image.ThemedImage;
 
 /**
- * @category User Interface
+ * @category Image
  */
 export namespace Image {
 	export type Asset = string;

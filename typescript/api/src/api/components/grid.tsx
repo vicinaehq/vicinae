@@ -62,7 +62,7 @@ enum GridFit {
  *
  * ![](../../../assets/grid.png)
  *
- * @category User Interface
+ * @category UI Components
  */
 export namespace Grid {
 	type BaseSection = {
@@ -285,7 +285,7 @@ const GridSection: React.FC<Grid.Section.Props> = ({
 };
 
 /**
- * @ignore
+ * @category UI Components
  */
 export const Grid = Object.assign(GridRoot, {
 	Section: GridSection,

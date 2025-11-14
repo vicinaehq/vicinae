@@ -40,6 +40,9 @@ const Separator: React.FC<any> = () => {
 	return <separator />;
 };
 
+/**
+ * @ignore
+ */
 export const MenuBarExtra = Object.assign(Root, {
 	Item,
 	Submenu,

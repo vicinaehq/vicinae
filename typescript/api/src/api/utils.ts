@@ -4,7 +4,9 @@ import { bus } from "./bus";
 import { WindowManagement } from "./window-management";
 import type { Application } from "./proto/application";
 
-// Linux systems usually do not have a trash, but maybe we should support one...
+/**
+  @ignore - we should probably move this to raycast compat, I don't think we want that.
+ */
 export const trash = async (path: PathLike | PathLike[]): Promise<void> => {
 	const targets = Array.isArray(path) ? path : [path];
 	const promises = targets.map((p) => rm(p, { recursive: true }));

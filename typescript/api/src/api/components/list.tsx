@@ -30,7 +30,7 @@ import { Dropdown } from "./dropdown";
  *
  * ![](../../../assets/list.png)
  *
- * @category User Interface
+ * @category UI Components
  */
 export declare namespace List {
 	export type Props = {
@@ -371,7 +371,7 @@ const ListSection: React.FC<List.Section.Props> = (props) => {
 };
 
 /**
- * @ignore
+ * @category UI Components
  */
 export const List = Object.assign(ListRoot, {
 	Section: ListSection,

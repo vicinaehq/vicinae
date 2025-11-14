@@ -1,10 +1,10 @@
-import { ReactNode, Ref } from "react";
+import type { ReactNode, Ref } from "react";
 import { useImperativeFormHandle } from "../hooks/use-imperative-form-handle";
 import { type ImageLike, serializeProtoImage } from "../image";
 import { Dropdown as MainDropdown } from "./dropdown";
 
 /**
- * @category User Interface
+ * @category UI Components
  */
 export namespace Form {
 	export type Props = {
@@ -284,6 +284,9 @@ const Description: React.FC<DescriptionProps> = (props) => {
 	return <form-description {...props} />;
 };
 
+/**
+ * @category UI Components
+ */
 export const Form = Object.assign(FormRoot, {
 	TextField,
 	PasswordField,

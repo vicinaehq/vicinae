@@ -7,7 +7,7 @@ type DynamicColor = {
 };
 
 /**
- * @category User Interface
+ * @category Colors
  */
 export namespace Color {
 	export type Dynamic = DynamicColor;
@@ -15,7 +15,7 @@ export namespace Color {
 }
 
 /**
- * @category User Interface
+ * @category Colors
  */
 export enum Color {
 	Blue = "blue",
@@ -30,7 +30,7 @@ export enum Color {
 }
 
 /**
- * @category User Interface
+ * @category Colors
  */
 export type ColorLike = Color.Dynamic | Color.Raw | Color;
 
