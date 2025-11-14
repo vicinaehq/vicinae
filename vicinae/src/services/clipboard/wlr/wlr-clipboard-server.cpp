@@ -39,8 +39,8 @@ QString WlrClipboardServer::id() const { return "wlr-clipboard"; }
 int WlrClipboardServer::activationPriority() const { return 1; }
 
 bool WlrClipboardServer::stop() {
-  m_process.terminate();
-  return true;
+  m_process.kill();
+  return m_process.waitForFinished();
 }
 
 bool WlrClipboardServer::start() {
