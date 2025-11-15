@@ -19,14 +19,24 @@ ImageLikeModel ListModelParser::parseListItemIcon(const QJsonValue &value) const
   return ImageModelParser().parse(value);
 }
 
+QString ListModelParser::parseListItemTitle(const QJsonValue &value) const {
+  if (value.isObject()) {
+    // we ignore the tooltip for now
+    auto obj = value.toObject();
+    if (obj.contains("value")) { return obj.value("value").toString(); }
+  }
+
+  return value.toString();
+}
+
 ListItemViewModel ListModelParser::parseListItem(const QJsonObject &instance, size_t index) {
   ListItemViewModel model;
   auto props = instance.value("props").toObject();
   auto children = instance.value("children").toArray();
 
   model.id = props["id"].toString(QString::number(index));
-  model.title = props["title"].toString();
-  model.subtitle = props["subtitle"].toString();
+  model.title = parseListItemTitle(props["title"]);
+  model.subtitle = parseListItemTitle(props["subtitle"]);
 
   if (props.contains("icon")) { model.icon = parseListItemIcon(props.value("icon")); }
 
