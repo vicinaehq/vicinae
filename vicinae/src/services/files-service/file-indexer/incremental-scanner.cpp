@@ -37,6 +37,7 @@ IncrementalScanner::getScannableDirectories(const fs::path &path, std::optional<
                                             const std::vector<fs::path> &excludedPaths) const {
   std::vector<fs::path> scannableDirs;
   std::error_code ec;
+  std::optional<QDateTime> cutOffDateTime;
   FileSystemWalker walker;
 
   /**

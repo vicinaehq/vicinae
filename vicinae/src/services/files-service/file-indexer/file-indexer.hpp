@@ -28,7 +28,8 @@ public:
   std::vector<std::filesystem::path> m_excludedPaths;
   std::vector<std::filesystem::path> m_watcherPaths;
   std::vector<std::string> m_excludedFilenames;
-  FileIndexerDatabase m_db;
+  std::unique_ptr<FileIndexerDatabase> m_ownedDb;  // Owned database for production use
+  FileIndexerDatabase* m_db;  // Points to either owned or injected database
 
   ScanDispatcher m_dispatcher;
 
@@ -48,5 +49,5 @@ public:
                                                      const QueryParams &params = {}) const override;
   void start() override;
 
-  FileIndexer();
+  FileIndexer(std::optional<std::reference_wrapper<FileIndexerDatabase>> db = std::nullopt);
 };

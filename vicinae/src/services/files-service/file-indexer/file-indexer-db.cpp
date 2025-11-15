@@ -424,12 +424,15 @@ void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &p
   if (!m_db.commit()) { qCritical() << "Failed to commit batchIndex" << m_db.lastError(); }
 }
 
-FileIndexerDatabase::FileIndexerDatabase() : m_connectionId(createRandomConnectionId()) {
+FileIndexerDatabase::FileIndexerDatabase(std::optional<std::filesystem::path> dbPath)
+    : m_connectionId(createRandomConnectionId()) {
   m_db = QSqlDatabase::addDatabase("QSQLITE", m_connectionId);
-  m_db.setDatabaseName(getDatabasePath().c_str());
+
+  std::string dbPathStr = dbPath.value_or(getDatabasePath()).string();
+  m_db.setDatabaseName(QString::fromStdString(dbPathStr));
 
   if (!m_db.open()) {
-    qCritical() << "Failed to open datbase at" << getDatabasePath();
+    qCritical() << "Failed to open database at" << dbPathStr.c_str();
     return;
   }
 
