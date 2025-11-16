@@ -108,7 +108,7 @@ in
           ]);
         in
         valueType;
-      default = { };
+      default = null;
       description = "Settings written as JSON to `~/.config/vicinae/vicinae.json.";
       example = lib.literalExpression ''
         {
@@ -149,8 +149,8 @@ in
           source = themesFormat.generate "${name}.toml" theme;
         }
       ) cfg.themes;
-      
-    xdg.configFile = {
+
+    xdg.configFile = lib.optionalAttrs (cfg.settings != null) {
       "vicinae/vicinae.json" = {
         source = settingsFormat.generate "vicinae.json" cfg.settings;
       };
