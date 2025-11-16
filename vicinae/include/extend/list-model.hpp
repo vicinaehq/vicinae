@@ -54,6 +54,7 @@ class ListModelParser {
   ListItemViewModel parseListItem(const QJsonObject &instance, size_t index);
   ListSectionModel parseSection(const QJsonObject &instance);
   ImageLikeModel parseListItemIcon(const QJsonValue &value) const;
+  QString parseListItemTitle(const QJsonValue &value) const;
 
 public:
   ListModelParser();
