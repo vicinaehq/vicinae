@@ -22,6 +22,6 @@ private:
   void handleExit(int code, QProcess::ExitStatus status);
 
   QProcess m_process;
-  std::vector<uint8_t> _message;
-  uint32_t _messageLength = 0;
+  std::string m_message;
+  uint32_t m_messageLength = 0;
 };

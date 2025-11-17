@@ -68,18 +68,18 @@ void WlrClipboardServer::handleRead() {
   auto array = m_process.readAllStandardOutput();
   auto _buf = array.constData();
 
-  _message.reserve(array.size());
-  _message.insert(_message.end(), _buf, _buf + array.size());
+  m_message.reserve(array.size());
+  m_message.insert(m_message.end(), _buf, _buf + array.size());
 
-  while (!_message.empty()) {
-    if (_messageLength == 0 && _message.size() > sizeof(uint32_t)) {
-      _messageLength = ntohl(*reinterpret_cast<uint32_t *>(_message.data()));
-      _message.erase(_message.begin(), _message.begin() + sizeof(uint32_t));
+  while (!m_message.empty()) {
+    if (m_messageLength == 0 && m_message.size() > sizeof(uint32_t)) {
+      m_messageLength = ntohl(*reinterpret_cast<uint32_t *>(m_message.data()));
+      m_message.erase(m_message.begin(), m_message.begin() + sizeof(uint32_t));
     }
 
-    if (_message.size() < _messageLength) break;
+    if (m_message.size() < m_messageLength) break;
 
-    std::string data(_message.begin(), _message.begin() + _messageLength);
+    std::string_view data(m_message.begin(), m_message.begin() + m_messageLength);
     proto::ext::wlrclip::Selection selection;
 
     if (!selection.ParseFromString(data)) {
@@ -88,8 +88,8 @@ void WlrClipboardServer::handleRead() {
       handleMessage(selection);
     }
 
-    _message.erase(_message.begin(), _message.begin() + _messageLength);
-    _messageLength = 0;
+    m_message.erase(m_message.begin(), m_message.begin() + m_messageLength);
+    m_messageLength = 0;
   }
 }
 
