@@ -34,15 +34,21 @@ const transformWindow = (proto: wm.Window): WindowManagement.Window => {
  * Access Vicinae's window management features.
  *
  * @remarks
- * Window management features are available to a different degree depending on what environment vicinae runs
- * in.
+ * Window management support varies a lot depending on the environment.
+ * Right now it is pretty well supported on almost all linux desktop environments except KDE.
  *
  * @example
  * ```typescript
  * import { WindowManagement } from '@vicinae/api';
  *
- * const windows = await WindowManagement.getWindows();
+ * const wins = await WindowManagement.getWindows();
+ * const browserWindow = wins.find(w => w.application?.name?.includes('firefox'));
+ *
+ * if (browserWindow) {
+ *  await browserWindow.focus();
+ * }
  * ```
+ *
  * @category Window Management
  * @public
  */
@@ -96,7 +102,15 @@ export namespace WindowManagement {
 	 * A screen, physical or virtual, attached to this computer.
 	 */
 	export type Screen = {
+		/**
+		 * Name assigned by the windowing system to that screen.
+		 *
+		 * In Wayland environments for instance, the name is set to something like `DP-1`, `DP-2`, `e-DP1`...
+		 *
+		 * @remarks The name is not guaranteed to remain stable but is usually stable enough to uniquely identify a screen.
+		 */
 		name: string;
+
 		/**
 		 * Name of the screen's manufacturer.
 		 */
