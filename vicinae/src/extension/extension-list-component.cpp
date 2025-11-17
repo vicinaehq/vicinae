@@ -38,7 +38,7 @@ void ExtensionListComponent::renderDropdown(const DropdownModel &dropdown) {
         freeSectionItems.emplace_back(std::make_shared<DropdownSelectorItem>(*listItem));
       } else if (auto section = std::get_if<DropdownModel::Section>(&item)) {
         if (!freeSectionItems.empty()) {
-          // m_selector->addSection("", freeSectionItems);
+          m_selector->addSection("", freeSectionItems);
           freeSectionItems.clear();
         }
 
