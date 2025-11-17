@@ -68,14 +68,17 @@ void WlrClipboardServer::handleRead() {
   auto array = m_process.readAllStandardOutput();
   auto _buf = array.constData();
 
+  _message.reserve(array.size());
   _message.insert(_message.end(), _buf, _buf + array.size());
 
-  if (_messageLength == 0 && _message.size() > sizeof(uint32_t)) {
-    _messageLength = ntohl(*reinterpret_cast<uint32_t *>(_message.data()));
-    _message.erase(_message.begin(), _message.begin() + sizeof(uint32_t));
-  }
+  while (!_message.empty()) {
+    if (_messageLength == 0 && _message.size() > sizeof(uint32_t)) {
+      _messageLength = ntohl(*reinterpret_cast<uint32_t *>(_message.data()));
+      _message.erase(_message.begin(), _message.begin() + sizeof(uint32_t));
+    }
 
-  if (_message.size() >= _messageLength) {
+    if (_message.size() < _messageLength) break;
+
     std::string data(_message.begin(), _message.begin() + _messageLength);
     proto::ext::wlrclip::Selection selection;
 
