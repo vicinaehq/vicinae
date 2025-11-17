@@ -34,10 +34,11 @@ void FaviconService::handleFetchedFavicon(const QString &domain, const QPixmap &
   QSqlQuery query(_db);
 
   query.prepare(R"(
-		INSERT INTO favicon (id, size)
-		VALUES (:id, :size)
+		INSERT INTO favicon (id, created_at, size)
+		VALUES (:id, :epoch, :size)
 	)");
   query.bindValue(":id", domain);
+  query.bindValue(":epoch", QDateTime::currentSecsSinceEpoch());
   query.bindValue(":size", favicon.width());
 
   if (!query.exec()) {
@@ -52,8 +53,9 @@ QPixmap FaviconService::retrieveFromCache(const QString &domain) {
   QPixmap pm;
   QSqlQuery query(_db);
 
-  query.prepare("UPDATE favicon SET last_used_at = unixepoch() WHERE id = :domain;");
+  query.prepare("UPDATE favicon SET last_used_at = :epoch WHERE id = :domain;");
   query.bindValue(":domain", domain);
+  query.bindValue(":epoch", QDateTime::currentSecsSinceEpoch());
 
   if (!query.exec()) { qDebug() << "Favicon DB: failed to update last_used_at" << query.lastError(); }
 
@@ -140,8 +142,8 @@ FaviconService::FaviconService(const std::filesystem::path &path, QObject *paren
 		CREATE TABLE IF NOT EXISTS favicon (
 			id TEXT PRIMARY KEY,
 			size INTEGER,
-			created_at INTEGER DEFAULT (unixepoch()),
-			last_used_at INTEGER DEFAULT (unixepoch()),
+			created_at INTEGER NOT NULL,
+			last_used_at INTEGER,
 			updated_at INTEGER
 		);
 	)");
