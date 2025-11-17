@@ -1,8 +1,6 @@
 #include "emoji-service.hpp"
 #include "omni-database.hpp"
 #include "services/emoji-service/emoji.hpp"
-#include <cstdlib>
-#include <qcontainerfwd.h>
 #include <qlogging.h>
 #include "utils/utils.hpp"
 #include <qsqlquery.h>
@@ -40,16 +38,18 @@ void EmojiService::createDbEntry(std::string_view emoji) {
 
 bool EmojiService::registerVisit(std::string_view emoji) {
   QSqlQuery query = m_db.createQuery();
+  qint64 epoch = QDateTime::currentSecsSinceEpoch();
 
   query.prepare(R"(
   	INSERT INTO visited_emoji (emoji, visit_count, last_visited_at)
-	VALUES (:emoji, 1, (unixepoch()))
+	VALUES (:emoji, 1, :epoch)
 	ON CONFLICT(emoji) DO UPDATE 
 	SET 
 		visit_count = visit_count + 1, 
-		last_visited_at = unixepoch()
+		last_visited_at = :epoch
 	)");
-  query.addBindValue(QString::fromUtf8(emoji.data(), emoji.size()));
+  query.bindValue(":emoji", QString::fromUtf8(emoji.data(), emoji.size()));
+  query.bindValue(":epoch", epoch);
 
   if (!query.exec()) {
     qCritical() << "Failed to register visit for emoji" << query.lastError();
@@ -239,8 +239,9 @@ bool EmojiService::pin(std::string_view emoji) {
 
   QSqlQuery query = m_db.createQuery();
 
-  query.prepare("UPDATE visited_emoji SET pinned_at = unixepoch() WHERE emoji = :emoji");
-  query.addBindValue(QString::fromUtf8(emoji.data(), emoji.size()));
+  query.prepare("UPDATE visited_emoji SET pinned_at = :epoch WHERE emoji = :emoji");
+  query.bindValue(":emoji", QString::fromUtf8(emoji.data(), emoji.size()));
+  query.bindValue(":epoch", QDateTime::currentSecsSinceEpoch());
 
   if (!query.exec()) {
     qCritical() << "Failed to pin emoji";

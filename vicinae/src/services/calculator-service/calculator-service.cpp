@@ -198,13 +198,14 @@ bool CalculatorService::addRecord(const AbstractCalculatorBackend::CalculatorRes
   QSqlQuery query = m_db.createQuery();
 
   query.prepare(R"(
-		INSERT INTO calculator_history (id, type_hint, question, answer)
-		VALUES (:id, :type_hint, :question, :answer)
+		INSERT INTO calculator_history (id, type_hint, question, answer, created_at)
+		VALUES (:id, :type_hint, :question, :answer, :epoch)
 	)");
   query.bindValue(":id", Crypto::UUID::v4());
   query.bindValue(":type_hint", result.type);
   query.bindValue(":question", result.question);
   query.bindValue(":answer", result.answer);
+  query.bindValue(":epoch", QDateTime::currentSecsSinceEpoch());
 
   if (!query.exec()) {
     qCritical() << "Failed to add calculator record" << query.lastError();
@@ -233,8 +234,9 @@ bool CalculatorService::addRecord(const AbstractCalculatorBackend::CalculatorRes
 bool CalculatorService::pinRecord(const QString &id) {
   QSqlQuery query = m_db.createQuery();
 
-  query.prepare("UPDATE calculator_history SET pinned_at = unixepoch() WHERE id = :id");
-  query.addBindValue(id);
+  query.prepare("UPDATE calculator_history SET pinned_at = :epoch WHERE id = :id");
+  query.bindValue(":id", id);
+  query.bindValue(":epoch", QDateTime::currentSecsSinceEpoch());
 
   if (!query.exec()) {
     qCritical() << "Failed to pin record with id" << id << query.lastError();
