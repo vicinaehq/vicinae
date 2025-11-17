@@ -5,8 +5,8 @@ CREATE TABLE IF NOT EXISTS shortcut (
 		url TEXT NOT NULL,
 		app TEXT NOT NULL,
 		open_count INTEGER DEFAULT 0,
-		created_at INTEGER DEFAULT (unixepoch()),
-		updated_at INTEGER DEFAULT (unixepoch()),
+		created_at INTEGER NOT NULL,
+		updated_at INTEGER NOT NULL,
 		last_used_at INTEGER
 );
 
@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS calculator_history (
 	type_hint INTEGER NOT NULL, -- unit conversion / regular arithmetic
 	question TEXT NOT NULL,
 	answer TEXT NOT NULL,
-	created_at INTEGER DEFAULT (unixepoch()),
+	created_at INTEGER NOT NULL,
 	pinned_at INTEGER
 );
 

@@ -7,8 +7,8 @@ CREATE TABLE IF NOT EXISTS selection (
 	preferred_mime_type TEXT NOT NULL,
 	source TEXT,
 	offer_count INTEGER,
-	created_at INTEGER DEFAULT (unixepoch()),
-	updated_at INTEGER DEFAULT (unixepoch()), -- updated when the same selection is reselected
+	created_at INTEGER NOT NULL,
+	updated_at INTEGER NOT NULL, -- updated when the same selection is reselected
 	pinned_at INTEGER,
 	kind INTEGER,
 	keywords TEXT DEFAULT '' -- additional user defined text to index

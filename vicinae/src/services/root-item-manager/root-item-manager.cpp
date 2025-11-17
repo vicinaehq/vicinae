@@ -804,6 +804,7 @@ bool RootItemManager::resetRanking(const QString &id) {
 }
 
 bool RootItemManager::registerVisit(const QString &id) {
+  qint64 epoch = QDateTime::currentSecsSinceEpoch();
   QSqlQuery query = m_db.createQuery();
 
   query.prepare(R"(
@@ -811,12 +812,13 @@ bool RootItemManager::registerVisit(const QString &id) {
 		SET 
 			visit_count = visit_count + 1,
 			rank_visit_count = rank_visit_count + 1,
-			last_visited_at = unixepoch(),
-			rank_last_visited_at = unixepoch()
+			last_visited_at = :epoch,
+			rank_last_visited_at = :epoch 
 		WHERE id = :id
 		RETURNING rank_visit_count, rank_last_visited_at, visit_count, last_visited_at
 	)");
   query.bindValue(":id", id);
+  query.bindValue(":epoch", epoch);
 
   if (!query.exec() || !query.next()) {
     qDebug() << "Failed to update item" << query.lastError();
@@ -826,7 +828,7 @@ bool RootItemManager::registerVisit(const QString &id) {
   RootItemMetadata &meta = m_metadata[id];
 
   meta.visitCount = query.value(0).toInt();
-  meta.lastVisitedAt = std::chrono::system_clock::from_time_t(query.value(1).toULongLong());
+  meta.lastVisitedAt = std::chrono::system_clock::from_time_t(epoch);
 
   return true;
 }
