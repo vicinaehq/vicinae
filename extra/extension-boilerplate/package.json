@@ -60,6 +60,12 @@
 			"title": "App Utils",
 			"description": "Try out app related stuff",
 			"mode": "view"
+		},
+		{
+			"name": "window-switcher",
+			"title": "Window Switcher",
+			"description": "Test window management APIs",
+			"mode": "view"
 		}
 	],
 	"preferences": [],
