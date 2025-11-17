@@ -16,6 +16,7 @@ const transformWorkspace = (
 const transformWindow = (proto: wm.Window): WindowManagement.Window => {
 	return {
 		id: proto.id,
+		title: proto.title,
 		workspaceId: proto.workspaceId,
 		active: proto.active,
 		bounds: {
@@ -52,6 +53,8 @@ export namespace WindowManagement {
 	 */
 	export type Window = {
 		id: string;
+
+		title: string;
 
 		/**
 		 * Whether this window is currently active.

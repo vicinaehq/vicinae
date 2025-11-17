@@ -5,16 +5,16 @@ package proto.ext.wm;
 
 message Window {
   string id = 1;
-  string workspace_id = 2;
-  bool active = 3;
-  bool fullscreen = 4;
+  string title = 2;
+  string workspace_id = 3;
+  bool active = 4;
+  bool fullscreen = 5;
+  int32 x = 6;
+  int32 y = 7;
+  int32 width = 8;
+  int32 height = 9;
 
-  int32 x = 5;
-  int32 y = 6;
-  int32 width = 7;
-  int32 height = 8;
-
-  optional application.Application app = 9;
+  optional application.Application app = 10;
 };
 
 message Screen {

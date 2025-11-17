@@ -84,7 +84,6 @@ proto::ext::wm::Response *WindowManagementRouter::getWindows(const proto::ext::w
   res->set_allocated_get_windows(winRes);
 
   for (const auto &win : m_wm.provider()->listWindowsSync()) {
-    qDebug() << "wid" << win->workspace() << "vs" << req.workspace_id();
     if (req.has_workspace_id() && win->workspace().value_or("") != req.workspace_id().c_str()) { continue; }
 
     bool isActive = activeWin && activeWin->id() == win->id();
@@ -176,6 +175,7 @@ WindowManagementRouter::getActiveWorkspace(const proto::ext::wm::GetActiveWorksp
 void WindowManagementRouter::initWindow(AbstractWindowManager::AbstractWindow &win,
                                         proto::ext::wm::Window &obj) {
   obj.set_id(win.id().toStdString());
+  obj.set_title(win.title().toStdString());
   obj.set_workspace_id(win.workspace()->toStdString());
   obj.set_fullscreen(win.fullScreen());
 
