@@ -30,6 +30,7 @@ void GeneralSettings::setConfig(const ConfigService::Value &value) {
   m_keybindingSelector->setValue(value.keybinding);
   m_popToRootOnClose->setValueAsJson(value.popToRootOnClose);
   m_closeOnFocusLoss->setValueAsJson(value.closeOnFocusLoss);
+  m_considerPreedit->setValueAsJson(value.considerPreedit);
   m_fontSize->setText(QString::number(value.font.baseSize));
 }
 
@@ -100,6 +101,12 @@ void GeneralSettings::handleCloseOnFocusLossChange(bool value) {
   config->updateConfig([&](ConfigService::Value &cfg) { cfg.closeOnFocusLoss = value; });
 }
 
+void GeneralSettings::handleConsiderPreeditChange(bool value) {
+  auto config = ServiceRegistry::instance()->config();
+
+  config->updateConfig([&](ConfigService::Value &cfg) { cfg.considerPreedit = value; });
+}
+
 void GeneralSettings::setupUI() {
   auto config = ServiceRegistry::instance()->config();
   auto appFont = QApplication::font().family();
@@ -115,6 +122,7 @@ void GeneralSettings::setupUI() {
   m_keybindingSelector = new KeyBindingSelector;
   m_popToRootOnClose = new CheckboxInput;
   m_closeOnFocusLoss = new CheckboxInput;
+  m_considerPreedit = new CheckboxInput;
   m_fontSize = new BaseInput;
 
   m_popToRootOnClose->setLabel("Pop to root on window close");
@@ -135,6 +143,13 @@ void GeneralSettings::setupUI() {
 
   connect(m_closeOnFocusLoss, &CheckboxInput::valueChanged, this,
           &GeneralSettings::handleCloseOnFocusLossChange);
+
+  auto considerPreeditField = form->addField("IME handling", m_considerPreedit);
+  m_considerPreedit->setLabel("Include Preedit strings in search");
+  considerPreeditField->setInfo("Whether to include IME Preedit strings as part of search queries.");
+
+  connect(m_considerPreedit, &CheckboxInput::valueChanged, this,
+          &GeneralSettings::handleConsiderPreeditChange);
 
   auto fontField = form->addField("Font", m_fontSelector);
 

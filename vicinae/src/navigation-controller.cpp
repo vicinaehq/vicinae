@@ -46,13 +46,17 @@ void NavigationController::goBack(const GoBackOptions &opts) {
   popCurrentView();
 }
 
-void NavigationController::setSearchText(const QString &text, const BaseView *caller) {
+void NavigationController::broadcastSearchText(const QString &text, const BaseView *caller) {
   if (auto state = findViewState(VALUE_OR(caller, topView()))) {
     if (state->searchText == text) return;
     state->searchText = text;
     state->sender->textChanged(text);
-    if (state->sender == topView()) { emit searchTextChanged(state->searchText); }
   }
+}
+
+void NavigationController::setSearchText(const QString &text, const BaseView *caller) {
+  broadcastSearchText(text, caller);
+  if (caller == nullptr || caller == topView()) {emit searchTextTampered(text);}
 }
 
 void NavigationController::setSearchPlaceholderText(const QString &text, const BaseView *caller) {
@@ -210,7 +214,7 @@ void NavigationController::popCurrentView() {
 
   emit currentViewChanged(*next.get());
 
-  emit searchTextChanged(next->searchText);
+  emit searchTextTampered(next->searchText);
   emit searchPlaceholderTextChanged(next->placeholderText);
   emit navigationStatusChanged(next->navigation.title, next->navigation.icon);
   emit headerVisiblityChanged(next->needsTopBar);
@@ -435,7 +439,7 @@ void NavigationController::activateView(const ViewState &state) {
   emit loadingChanged(state.isLoading);
   emit navigationStatusChanged(state.navigation.title, state.navigation.icon);
   emit actionsChanged({});
-  emit searchTextChanged(state.searchText);
+  emit searchTextTampered(state.searchText);
   emit searchPlaceholderTextChanged(state.placeholderText);
   destroyCurrentCompletion();
 
