@@ -81,6 +81,7 @@ type EndpointMapping = {
 	"wm.getScreens": "wm.getScreens";
 	"wm.getWorkspaces": "wm.getWorkspaces";
 	"wm.setWindowBounds": "wm.setWindowBounds";
+	"wm.focusWindow": "wm.focusWindow";
 
 	"fileSearch.search": "fileSearch.search";
 

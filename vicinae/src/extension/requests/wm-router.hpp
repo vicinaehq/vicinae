@@ -19,6 +19,7 @@ private:
   proto::ext::wm::Response *getScreens(const proto::ext::wm::GetScreensRequest &req);
   proto::ext::wm::Response *getWorkspaces(const proto::ext::wm::GetWorkspacesRequest &req);
   proto::ext::wm::Response *ping(const proto::ext::wm::PingRequest &req);
+  proto::ext::wm::Response *focusWindow(const proto::ext::wm::FocusWindowRequest &req);
 
   static proto::ext::extension::Response *wrapResponse(proto::ext::wm::Response *wmRes);
   proto::ext::wm::Window *serializeWindow(AbstractWindowManager::AbstractWindow &win);

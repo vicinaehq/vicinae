@@ -26,6 +26,8 @@ PromiseLike<ext::Response *> WindowManagementRouter::route(const wm::Request &re
     return wrapResponse(getWindows(req.get_windows()));
   case wm::Request::kGetScreens:
     return wrapResponse(getScreens(req.get_screens()));
+  case wm::Request::kFocusWindow:
+    return wrapResponse(focusWindow(req.focus_window()));
   case wm::Request::kSetWindowBounds:
     throw std::runtime_error("Not implemented");
     // TODO: implement
@@ -35,6 +37,21 @@ PromiseLike<ext::Response *> WindowManagementRouter::route(const wm::Request &re
   }
 
   return nullptr;
+}
+
+proto::ext::wm::Response *WindowManagementRouter::focusWindow(const proto::ext::wm::FocusWindowRequest &req) {
+  auto res = new wm::Response;
+  auto wmRes = new wm::FocusWindowResponse;
+
+  res->set_allocated_focus_window(wmRes);
+  wmRes->set_ok(false);
+
+  if (auto win = m_wm.findWindowById(req.id().c_str())) {
+    m_wm.provider()->focusWindowSync(*win);
+    wmRes->set_ok(true);
+  }
+
+  return res;
 }
 
 proto::ext::wm::Response *WindowManagementRouter::getScreens(const proto::ext::wm::GetScreensRequest &req) {

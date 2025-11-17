@@ -44,6 +44,14 @@ message PingResponse {
   bool ok = 1;
 };
 
+message FocusWindowRequest {
+  string id = 1;
+};
+
+message FocusWindowResponse {
+  bool ok = 1;
+};
+
 message GetActiveWindowRequest {};
 message GetActiveWindowResponse { Window window = 1; };
 
@@ -93,6 +101,7 @@ message Request {
     GetScreensRequest get_screens = 5;
     GetWorkspacesRequest get_workspaces = 6;
     SetWindowBoundsRequest set_window_bounds = 7;
+    FocusWindowRequest focus_window = 8;
   };
 };
 
@@ -105,6 +114,7 @@ message Response {
     GetScreensResponse get_screens = 5;
     GetWorkspacesResponse get_workspaces = 6;
     SetWindowBoundsResponse set_window_bounds = 7;
+    FocusWindowResponse focus_window = 8;
   };
 };
 

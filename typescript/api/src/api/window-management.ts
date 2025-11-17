@@ -23,6 +23,9 @@ const transformWindow = (proto: wm.Window): WindowManagement.Window => {
 			size: { width: proto.width, height: proto.height },
 		},
 		application: proto.app,
+		focus() {
+			return WindowManagement.focusWindow(this);
+		},
 	};
 };
 
@@ -43,15 +46,40 @@ const transformWindow = (proto: wm.Window): WindowManagement.Window => {
  * @public
  */
 export namespace WindowManagement {
+	/**
+	 * A window as defined by the windowing system in use.
+	 * A window can be optionally tied to an application or a workspace.
+	 */
 	export type Window = {
 		id: string;
+
+		/**
+		 * Whether this window is currently active.
+		 * This is usually the window that currently owns focus.
+		 */
 		active: boolean;
+
 		bounds: {
 			position: { x: number; y: number };
 			size: { height: number; width: number };
 		};
+
+		/**
+		 * The ID of the workspace this window belongs to, if applicable in the context
+		 * of the current window manager.
+		 */
 		workspaceId?: string;
+
+		/**
+		 * The application this window belongs to, if any.
+		 */
 		application?: Application;
+
+		/**
+		 * Request that the window manager focuses this window.
+		 * @see {@link focusWindow}
+		 */
+		focus: () => Promise<boolean>;
 	};
 
 	export type Workspace = {
@@ -81,17 +109,34 @@ export namespace WindowManagement {
 		};
 	};
 
-	export async function ping() {
-		const res = await bus.turboRequest("wm.ping", {});
-		return res.unwrap().ok;
-	}
-
 	export async function getWindows(
 		options: wm.GetWindowsRequest = {},
 	): Promise<WindowManagement.Window[]> {
 		const res = await bus.turboRequest("wm.getWindows", options);
 
 		return res.unwrap().windows.map(transformWindow);
+	}
+
+	/**
+	 * Focus `window`.
+	 *
+	 * @remarks
+	 * Window objects have a {@link Window.focus} method that can be used to achieve the same thing on a specific window directly.
+	 *
+	 * @param window - the window to focus. You may want to make sure this window still exists when you request focus.
+	 *
+	 * @return `true` if the window was focused, `false` otherwise.
+	 * A window may not have been focused because it doesn't accept focus (e.g some layer shell surfaces)
+	 * or simply because it doesn't exist anymore.
+	 *
+	 * @see {@link Window.focus}
+	 */
+	export async function focusWindow(window: Window): Promise<boolean> {
+		const res = await bus.turboRequest("wm.focusWindow", {
+			id: window.id,
+		});
+
+		return res.unwrap().ok;
 	}
 
 	/**
