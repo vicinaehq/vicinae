@@ -5,10 +5,9 @@
  * but remaining compatible with it.
  */
 
-export { 
-	useNavigation, 
-	Clipboard, 
-	Toast, showToast, 
+export {
+	useNavigation,
+	Toast, showToast,
 	ImageLike, Image,
 	Keyboard, KeyModifier,
 	Icon,
@@ -30,16 +29,17 @@ export {
 	OAuth,
 
 	List, Grid, Form, Detail,
-	Action 
+	Action
 } from '@vicinae/api';
 
-export { 
-	getFrontmostApplication, 
-	getApplications, 
-	getDefaultApplication, 
+export {
+	getFrontmostApplication,
+	getApplications,
+	getDefaultApplication,
 	showInFinder
 } from "./system.js";
 
+export { Clipboard } from './clipboard.js';
 export { ActionPanel } from "./components/action-panel.js";
 export { randomId } from './utils.js';
 export * from "./local-storage.js";

@@ -28,7 +28,7 @@ export namespace Clipboard {
 	): ClipboardContent {
 		let ct = ClipboardContent.create();
 
-		if (typeof content != "object") {
+		if (typeof content !== "object") {
 			ct.text = `${content}`;
 		} else {
 			if (content["file"]) {
@@ -64,7 +64,7 @@ export namespace Clipboard {
 	 * or pasting content to it directly, this will fallback to a regular
 	 * clipboard copy.
 	 */
-	export async function paste(text: string | Clipboard.Content) {
+	export async function paste(text: string | number | Clipboard.Content) {
 		await bus.turboRequest("clipboard.paste", {
 			content: mapContent(text),
 		});
