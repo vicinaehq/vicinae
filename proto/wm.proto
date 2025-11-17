@@ -5,16 +5,16 @@ package proto.ext.wm;
 
 message Window {
   string id = 1;
-  string workspace_id = 2;
-  bool active = 3;
-  bool fullscreen = 4;
+  string title = 2;
+  string workspace_id = 3;
+  bool active = 4;
+  bool fullscreen = 5;
+  int32 x = 6;
+  int32 y = 7;
+  int32 width = 8;
+  int32 height = 9;
 
-  int32 x = 5;
-  int32 y = 6;
-  int32 width = 7;
-  int32 height = 8;
-
-  optional application.Application app = 9;
+  optional application.Application app = 10;
 };
 
 message Screen {
@@ -41,6 +41,14 @@ message PingRequest {
 };
 
 message PingResponse {
+  bool ok = 1;
+};
+
+message FocusWindowRequest {
+  string id = 1;
+};
+
+message FocusWindowResponse {
   bool ok = 1;
 };
 
@@ -93,6 +101,7 @@ message Request {
     GetScreensRequest get_screens = 5;
     GetWorkspacesRequest get_workspaces = 6;
     SetWindowBoundsRequest set_window_bounds = 7;
+    FocusWindowRequest focus_window = 8;
   };
 };
 
@@ -105,6 +114,7 @@ message Response {
     GetScreensResponse get_screens = 5;
     GetWorkspacesResponse get_workspaces = 6;
     SetWindowBoundsResponse set_window_bounds = 7;
+    FocusWindowResponse focus_window = 8;
   };
 };
 
