@@ -65,10 +65,15 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
 
   auto activeWindows = ctx->services->windowManager()->findAppWindows(*m_app);
 
-  if (!activeWindows.empty() && defaultAction == "focus") {
+  if (!activeWindows.empty()) {
     auto focus = new FocusWindowAction(activeWindows.front());
-    mainSection->addAction(new DefaultActionWrapper(uniqueId(), focus));
-    mainSection->addAction(open);
+    if (defaultAction == "focus") {
+      mainSection->addAction(new DefaultActionWrapper(uniqueId(), focus));
+      mainSection->addAction(open);
+    } else {
+      mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
+      mainSection->addAction(focus);
+    }
   } else {
     mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
   }
