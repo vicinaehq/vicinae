@@ -79,7 +79,7 @@ void WlrClipboardServer::handleRead() {
 
     if (m_message.size() < m_messageLength) break;
 
-    std::string_view data(m_message.begin(), m_message.begin() + m_messageLength);
+    std::string data(m_message.begin(), m_message.begin() + m_messageLength);
     proto::ext::wlrclip::Selection selection;
 
     if (!selection.ParseFromString(data)) {
