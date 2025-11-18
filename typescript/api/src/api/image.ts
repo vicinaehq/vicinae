@@ -67,7 +67,11 @@ export const serializeProtoImage = (image: ImageLike): ui.Image => {
 	const proto = ui.Image.create();
 	const img = image as Image;
 
-	proto.source = serializeSource(img.source);
+	// img.source should technically not be null, but it somehow still happens at times with some
+	// raycast extensions
+	if (img.source) {
+		proto.source = serializeSource(img.source);
+	}
 
 	if (img.fallback) {
 		proto.fallback = serializeSource(img.fallback);
