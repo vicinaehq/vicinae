@@ -1,5 +1,5 @@
 const ts = require("typescript")
-const fs = require("fs")
+const fs = require("node:fs")
 const {
   ReflectionKind,
   Converter,
@@ -7,7 +7,7 @@ const {
   Comment
 } = require("typedoc")
 
-module.exports.load = function (app) {
+module.exports.load = (app) => {
   app.converter.on(Converter.EVENT_RESOLVE_END, (context) => {
     const project = context.project
 
@@ -143,7 +143,7 @@ function injectEnumDocumentation(typeAlias, enumInfo) {
   // Add main enum comment
   if (enumInfo.comment?.summary) {
     const mainText = enumInfo.comment.summary.map(p => p.text || "").join(" ")
-    if (mainText) summary.push({ kind: "text", text: mainText + "\n\n" })
+    if (mainText) summary.push({ kind: "text", text: `${mainText}\n\n` })
   }
 
   summary.push({ kind: "text", text: "## Enumeration Members\n\n" })
