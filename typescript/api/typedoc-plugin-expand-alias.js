@@ -1,13 +1,8 @@
-const ts = require("typescript")
-const fs = require("node:fs")
-const {
-  ReflectionKind,
-  Converter,
-  ReferenceType,
-  Comment
-} = require("typedoc")
+import fs from "node:fs"
+import { Comment, Converter, ReferenceType, ReflectionKind } from "typedoc"
+import ts from "typescript"
 
-module.exports.load = (app) => {
+export function load(app) {
   app.converter.on(Converter.EVENT_RESOLVE_END, (context) => {
     const project = context.project
 
@@ -30,12 +25,10 @@ function shouldSkip(typeAlias) {
   if (!comment) return false
 
   const noExpandTag =
-    comment.getTag?.("@noExpand") ||
-    comment.modifierTags?.has("@noExpand")
+    comment.getTag?.("@noExpand") || comment.modifierTags?.has("@noExpand")
 
   return Boolean(noExpandTag)
 }
-
 
 function resolveEnumForAlias(typeAlias, project) {
   const aliasType = typeAlias.type
@@ -60,10 +53,8 @@ function findEnumReflectionByName(project, name) {
   function search(reflection) {
     if (!reflection) return null
 
-    if (
-      reflection.kind === ReflectionKind.Enum &&
-      reflection.name === name
-    ) return reflection
+    if (reflection.kind === ReflectionKind.Enum && reflection.name === name)
+      return reflection
 
     if (reflection.children) {
       for (const child of reflection.children) {
@@ -82,7 +73,7 @@ function buildEnumInfoFromReflection(enumReflection) {
   return {
     name: enumReflection.name,
     comment: enumReflection.comment,
-    members: (enumReflection.children || []).map(child => {
+    members: (enumReflection.children || []).map((child) => {
       const value =
         child.type?.value ??
         child.defaultValue?.replace(/['"]/g, "") ??
@@ -91,16 +82,23 @@ function buildEnumInfoFromReflection(enumReflection) {
       return {
         name: child.name,
         value,
-        comment: (child.comment?.summary || []).map(p => p.text || "").join(""),
-        parts: child.comment?.summary || []
+        comment: (child.comment?.summary || [])
+          .map((p) => p.text || "")
+          .join(""),
+        parts: child.comment?.summary || [],
       }
-    })
+    }),
   }
 }
 
 function buildEnumInfoFromAST(sourceFilePath, enumName) {
   const sourceText = fs.readFileSync(sourceFilePath, "utf-8")
-  const tsSource = ts.createSourceFile(sourceFilePath, sourceText, ts.ScriptTarget.Latest, true)
+  const tsSource = ts.createSourceFile(
+    sourceFilePath,
+    sourceText,
+    ts.ScriptTarget.Latest,
+    true,
+  )
 
   let foundEnum = null
   ts.forEachChild(tsSource, function visit(node) {
@@ -112,14 +110,16 @@ function buildEnumInfoFromAST(sourceFilePath, enumName) {
 
   if (!foundEnum) return null
 
-  const members = foundEnum.members.map(member => {
+  const members = foundEnum.members.map((member) => {
     const name = member.name.getText(tsSource)
     const initializer = member.initializer?.getText(tsSource)
-    const value = initializer ? initializer.replace(/['"]/g, "") : name.toLowerCase()
+    const value = initializer
+      ? initializer.replace(/['"]/g, "")
+      : name.toLowerCase()
 
     const jsDoc = ts.getJSDocCommentsAndTags(member) || []
     const comment = jsDoc
-      .map(doc => doc.getText(tsSource))
+      .map((doc) => doc.getText(tsSource))
       .join(" ")
       .replace(/\/\*\*|\*\//g, "")
       .replace(/^\s*\*\s?/gm, "")
@@ -129,7 +129,7 @@ function buildEnumInfoFromAST(sourceFilePath, enumName) {
       name,
       value,
       comment,
-      parts: [{ kind: "text", text: comment }]
+      parts: [{ kind: "text", text: comment }],
     }
   })
 
@@ -142,7 +142,9 @@ function injectEnumDocumentation(typeAlias, enumInfo) {
 
   // Add main enum comment
   if (enumInfo.comment?.summary) {
-    const mainText = enumInfo.comment.summary.map(p => p.text || "").join(" ")
+    const mainText = enumInfo.comment.summary
+      .map((p) => p.text || "")
+      .join(" ")
     if (mainText) summary.push({ kind: "text", text: `${mainText}\n\n` })
   }
 
@@ -157,7 +159,7 @@ function injectEnumDocumentation(typeAlias, enumInfo) {
     summary.push({ kind: "text", text: `### ${member.name}\n\n` })
     summary.push({
       kind: "text",
-      text: `> **${member.name}**: \`${displayValue}\`\n\n`
+      text: `> **${member.name}**: \`${displayValue}\`\n\n`,
     })
 
     if (member.parts) summary.push(...member.parts)
