@@ -30,18 +30,19 @@ jobs:
           set -euo pipefail
 
           ROOT_DIR="$(pwd)"
-          SPEC_FILE="vicinae.spec"
+          PACKAGING_DIR="${ROOT_DIR}/packaging/fedora"
+          SPEC_FILE="${PACKAGING_DIR}/vicinae.spec"
           SRPM_DIR="${ROOT_DIR}/.srpm"
 
           mkdir -p "${SRPM_DIR}"
 
           echo "[copr-release] Fetching remote sources defined in ${SPEC_FILE}..."
-          spectool -g -R "${SPEC_FILE}" --define "_sourcedir ${ROOT_DIR}"
+          spectool -g -R "${SPEC_FILE}" --define "_sourcedir ${PACKAGING_DIR}"
 
           echo "[copr-release] Building SRPM..."
           rpmbuild -bs "${SPEC_FILE}" \
-            --define "_sourcedir ${ROOT_DIR}" \
-            --define "_specdir ${ROOT_DIR}" \
+            --define "_sourcedir ${PACKAGING_DIR}" \
+            --define "_specdir ${PACKAGING_DIR}" \
             --define "_srcrpmdir ${SRPM_DIR}"
 
           LATEST_SRPM="$(ls -t "${SRPM_DIR}"/vicinae-*.src.rpm | head -n 1)"

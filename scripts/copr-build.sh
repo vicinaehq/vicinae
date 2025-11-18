@@ -8,19 +8,20 @@ set -euo pipefail
 #   * rpm-build tooling is installed (rpmbuild, spectool, etc.)
 
 PROJECT_NAME="vicinae"           # COPR project name
-SPEC_FILE="vicinae.spec"
 ROOT_DIR="$(pwd)"
+PACKAGING_DIR="${ROOT_DIR}/packaging/fedora"
+SPEC_FILE="${PACKAGING_DIR}/vicinae.spec"
 SRPM_DIR="${ROOT_DIR}/.srpm"
 
 mkdir -p "${SRPM_DIR}"
 
 echo "[copr-build] Fetching remote sources defined in ${SPEC_FILE}..."
-spectool -g -R "${SPEC_FILE}" --define "_sourcedir ${ROOT_DIR}"
+spectool -g -R "${SPEC_FILE}" --define "_sourcedir ${PACKAGING_DIR}"
 
 echo "[copr-build] Building source RPM..."
 rpmbuild -bs "${SPEC_FILE}" \
-  --define "_sourcedir ${ROOT_DIR}" \
-  --define "_specdir ${ROOT_DIR}" \
+  --define "_sourcedir ${PACKAGING_DIR}" \
+  --define "_specdir ${PACKAGING_DIR}" \
   --define "_srcrpmdir ${SRPM_DIR}"
 
 LATEST_SRPM="$(ls -t "${SRPM_DIR}"/vicinae-*.src.rpm | head -n 1)"
