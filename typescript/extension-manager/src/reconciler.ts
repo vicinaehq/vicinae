@@ -6,6 +6,7 @@ import { isDeepEqual } from "./utils";
 import { bus } from "@vicinae/api";
 import { writeFileSync } from "node:fs";
 import { inspect } from "node:util";
+import { RenderNode, RenderNodeProp } from "./proto/ui";
 
 type LinkNode = {
 	next: LinkNode | null;
@@ -486,7 +487,7 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 };
 
 export type ViewData = {
-	root?: SerializedInstance;
+	root?: RenderNode;
 };
 
 export type RendererConfig = {
@@ -503,13 +504,18 @@ type SerializedInstance = {
 	children: SerializedInstance[];
 };
 
-const serializeInstance = (instance: Instance): SerializedInstance => {
-	const obj: SerializedInstance = {
-		props: instance.props,
+const serializeInstance = (instance: Instance): RenderNode => {
+	const node: RenderNode = {
 		type: instance.type,
-		dirty: instance.dirty,
-		propsDirty: instance.propsDirty,
+		hasDirtyChild: instance.dirty,
+		hasDirtyProps: instance.propsDirty,
 		children: instance.children.map(serializeInstance),
+		props: Object.entries(instance.props).map<RenderNodeProp>(
+			([key, value]) => ({
+				name: key,
+				value,
+			}),
+		),
 	};
 
 	instance.dirty = false;
@@ -523,7 +529,7 @@ const serializeInstance = (instance: Instance): SerializedInstance => {
 	}
 	*/
 
-	return obj;
+	return node;
 };
 
 const createContainer = (): Container => {

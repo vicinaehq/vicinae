@@ -9,7 +9,7 @@
 		"build-only": "node scripts/build.mjs",
 		"build": "run-p typecheck build-only",
 		"dev": "nodemon -e ts,tsx --watch src --watch ../api/src --exec \"node scripts/dev.mjs\"",
-		"protogen": "mkdir ./src/proto && protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto -I../../proto ../../proto/*.proto --ts_proto_out ./src/proto",
+		"protogen": "mkdir -p ./src/proto && protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto -I../../proto ../../proto/*.proto --ts_proto_out ./src/proto",
 		"format": "biome format --write"
 	},
 	"keywords": [

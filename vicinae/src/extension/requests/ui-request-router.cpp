@@ -258,23 +258,23 @@ proto::ext::ui::Response *UIRequestRouter::handleRender(const proto::ext::ui::Re
    * but that will require writing more serialization code in the reconciler.
    */
   QJsonParseError parseError;
-  auto doc = QJsonDocument::fromJson(request.json().c_str(), &parseError);
+  // auto doc = QJsonDocument::fromJson(request.json().c_str(), &parseError);
 
   if (parseError.error) {
     qWarning() << "Failed to parse render tree";
     return {};
   }
 
-  auto views = doc.object().value("views").toArray();
+  // auto views = doc.object().value("views").toArray();
 
   if (m_modelWatcher.isRunning()) {
     m_modelWatcher.cancel();
     m_modelWatcher.waitForFinished();
   }
 
-  m_modelWatcher.setFuture(QtConcurrent::run([views]() {
+  m_modelWatcher.setFuture(QtConcurrent::run([]() {
     Timer timer;
-    auto model = ModelParser().parse(views);
+    auto model = ModelParser().parse(QJsonArray());
 
     // timer.time("Model parsed");
     return model;

@@ -61,7 +61,8 @@ message ShowHudRequest {
 message RenderRequest {
    //repeated RenderNode views = 1;
    // we will migrate to actual protobuf
-   string json = 1;
+   //string json = 1;
+   repeated RenderNode views = 1;
 };
 
 enum ConfirmAlertActionStyle {
@@ -129,11 +130,16 @@ message Response {
   };
 };
 
+message RenderNodeProp {
+  string name = 1;
+  google.protobuf.Value value = 2;
+}
+
 message RenderNode {
   string type = 1;
   bool has_dirty_child = 2;
   bool has_dirty_props = 3;
-  map<string, google.protobuf.Value> props = 4;
+  repeated RenderNodeProp props = 4;
   repeated RenderNode children = 5;
 };
 

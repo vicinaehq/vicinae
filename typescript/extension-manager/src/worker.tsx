@@ -79,12 +79,12 @@ const loadView = async () => {
 
 	const renderer = createRenderer({
 		onInitialRender: (views) => {
-			bus.turboRequest("ui.render", { json: JSON.stringify({ views }) });
+			bus.turboRequest("ui.render", { views: [] });
 		},
 		onUpdate: (views) => {
 			const now = performance.now();
 			lastRender = now;
-			bus.turboRequest("ui.render", { json: JSON.stringify({ views }) });
+			bus.turboRequest("ui.render", { views: [] });
 		},
 	});
 
