@@ -1,11 +1,9 @@
 {
 	"$schema": "https://typedoc.org/schema.json",
-	"entryPoints": [
-		"./src/api/index.ts"
-	],
+	"entryPoints": ["./src/api/index.ts"],
 	"plugin": [
 		"typedoc-github-theme",
-		"./typedoc-plugin-expand-alias.js"
+		"./typedoc/typedoc-plugin-expand-alias.js"
 	],
 	"out": "docs",
 	"router": "structure",
@@ -13,3 +11,4 @@
 		"includeCategories": true
 	}
 }
+
