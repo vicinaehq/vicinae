@@ -5,6 +5,7 @@
 #include <chrono>
 #include <iostream>
 #include <qlocalsocket.h>
+#include <qurlquery.h>
 #include <stdexcept>
 
 namespace Daemon = proto::ext::daemon;

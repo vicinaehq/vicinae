@@ -1,5 +1,7 @@
 #pragma once
 #include "ui/detail/detail-widget.hpp"
+#include <qmimedatabase.h>
+#include <qmimetype.h>
 
 class FileDetail : public DetailWidget {
 public:
