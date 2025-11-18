@@ -17,6 +17,19 @@ bool QalculateBackend::isActivatable() const {
   return true;
 }
 
+bool QalculateBackend::start() {
+  if (!m_initialized) {
+    m_calc.loadGlobalDefinitions();
+    m_calc.loadLocalDefinitions();
+    qInfo() << "Refreshing Qalculate exchange rates...";
+    reloadExchangeRates();
+    qInfo() << "Exchange rates refreshed successfully";
+    m_initialized = true;
+  }
+
+  return true;
+}
+
 tl::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const QString &question) const {
   EvaluationOptions evalOpts;
 
@@ -74,14 +87,10 @@ QString QalculateBackend::displayName() const { return "Qalculate!"; }
 
 bool QalculateBackend::reloadExchangeRates() const {
   CALCULATOR->fetchExchangeRates();
-  return false;
+  CALCULATOR->loadExchangeRates();
+  return true;
 }
 
 bool QalculateBackend::supportsCurrencyConversion() const { return true; }
 
-QalculateBackend::QalculateBackend() {
-  m_calc.checkExchangeRatesDate(1);
-  m_calc.loadExchangeRates();
-  m_calc.loadGlobalDefinitions();
-  m_calc.loadLocalDefinitions();
-}
+QalculateBackend::QalculateBackend() {}

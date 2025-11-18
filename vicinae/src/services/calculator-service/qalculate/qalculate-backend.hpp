@@ -3,12 +3,12 @@
 #include <libqalculate/Calculator.h>
 
 class QalculateBackend : public AbstractCalculatorBackend {
-  Calculator m_calc;
 
   QString displayName() const override;
   QString id() const override;
   bool supportsCurrencyConversion() const override;
   bool reloadExchangeRates() const override;
+  bool start() override;
   ComputeResult compute(const QString &question) const override;
   QFuture<ComputeResult> asyncCompute(const QString &question) const override;
 
@@ -16,4 +16,8 @@ class QalculateBackend : public AbstractCalculatorBackend {
 
 public:
   QalculateBackend();
+
+private:
+  Calculator m_calc;
+  bool m_initialized = false;
 };
