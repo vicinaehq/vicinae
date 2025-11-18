@@ -57,7 +57,7 @@ export const serializeProtoImage = (image: ImageLike): ui.Image => {
 			};
 		}
 
-		return { raw: payload.toString() };
+		return { raw: payload?.toString() };
 	};
 
 	if (image instanceof URL || typeof image === "string") {
