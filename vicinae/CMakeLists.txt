@@ -706,6 +706,9 @@ if (UNIX AND NOT APPLE)
 		src/lib/wayland/seat.cpp
 		src/lib/wayland/virtual-keyboard.hpp
 		src/lib/wayland/virtual-keyboard.cpp
+
+		src/services/clipboard/data-control/data-control-clipboard-server.hpp
+		src/services/clipboard/data-control/data-control-clipboard-server.cpp
 	)
 
 	# ext-data-control
@@ -714,8 +717,6 @@ if (UNIX AND NOT APPLE)
 		src/ext-clip/data-control-client.cpp
 		src/ext-clip/data-device.cpp
 		src/ext-clip/data-offer.cpp
-		src/services/clipboard/ext/ext-clipboard-server.hpp
-		src/services/clipboard/ext/ext-clipboard-server.cpp
 	)
 
 	# wlr-data-control
@@ -724,8 +725,6 @@ if (UNIX AND NOT APPLE)
 		src/wlr-clip/data-control-client.cpp
 		src/wlr-clip/data-device.cpp
 		src/wlr-clip/data-offer.cpp
-		src/services/clipboard/wlr/wlr-clipboard-server.hpp
-		src/services/clipboard/wlr/wlr-clipboard-server.cpp
 	)
 	wayland_generate_protocol("${CMAKE_CURRENT_SOURCE_DIR}/protocols/wlr-data-control-unstable-v1.xml")
 endif()

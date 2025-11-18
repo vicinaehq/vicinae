@@ -1,27 +1,12 @@
 #pragma once
-#include "proto/wlr-clipboard.pb.h"
-#include "services/clipboard/clipboard-server.hpp"
-#include <qprocess.h>
+#include "services/clipboard/data-control/data-control-clipboard-server.hpp"
+#include "wayland/globals.hpp"
 
-class ExtDataControlClipboardServer : public AbstractClipboardServer {
+class ExtDataControlClipboardServer : public DataControlClipboardServer {
 public:
   static constexpr const char *ENTRYPOINT = "ext-clip";
 
-  ExtDataControlClipboardServer();
-  bool start() override;
-  bool stop() override;
-  bool isActivatable() const override;
-  QString id() const override;
-  int activationPriority() const override;
+  ExtDataControlClipboardServer() : DataControlClipboardServer(ENTRYPOINT) {}
 
-private:
-  bool isAlive() const override;
-  void handleMessage(const proto::ext::wlrclip::Selection &selection);
-  void handleRead();
-  void handleReadError();
-  void handleExit(int code, QProcess::ExitStatus status);
-
-  QProcess m_process;
-  std::vector<uint8_t> _message;
-  uint32_t _messageLength = 0;
+  bool isActivatable() const override { return Wayland::Globals::dataControlDeviceManager(); }
 };
