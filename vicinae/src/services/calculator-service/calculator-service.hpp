@@ -72,13 +72,6 @@ public:
   bool setBackend(const QString &id);
 
   /**
-   * Refresh exchange rates if the backend supports it.
-   * If m_updateConversionsAfterRateUpdate is set to true, records with a type hint of CONVERSION
-   * will be updated to reflect the new rates.
-   */
-  bool refreshExchangeRates();
-
-  /**
    * The list of activatable backends.
    */
   const std::vector<std::unique_ptr<AbstractCalculatorBackend>> &backends() const;

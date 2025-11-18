@@ -311,13 +311,6 @@ void CalculatorService::setUpdateConversionsAfterRateUpdate(bool value) {
   m_updateConversionsAfterRateUpdate = value;
 }
 
-bool CalculatorService::refreshExchangeRates() {
-  if (!m_backend->reloadExchangeRates()) { return false; }
-  if (m_updateConversionsAfterRateUpdate) { updateConversionRecords(); }
-
-  return true;
-}
-
 bool CalculatorService::removeAll() {
   QSqlQuery query = m_db.createQuery();
 

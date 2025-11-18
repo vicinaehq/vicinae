@@ -1,10 +1,12 @@
 #include "services/calculator-service/qalculate/qalculate-backend.hpp"
+#include "services/calculator-service/abstract-calculator-backend.hpp"
 #include <QDebug>
 #include <libqalculate/MathStructure.h>
 #include <libqalculate/QalculateDateTime.h>
 #include <libqalculate/includes.h>
 #include <qlogging.h>
 #include <QtConcurrent/QtConcurrent>
+#include <stdexcept>
 
 using CalculatorResult = QalculateBackend::CalculatorResult;
 using CalculatorError = QalculateBackend::CalculatorError;
@@ -19,15 +21,22 @@ bool QalculateBackend::isActivatable() const {
 
 bool QalculateBackend::start() {
   if (!m_initialized) {
-    m_calc.loadGlobalDefinitions();
-    m_calc.loadLocalDefinitions();
-    qInfo() << "Refreshing Qalculate exchange rates...";
-    reloadExchangeRates();
-    qInfo() << "Exchange rates refreshed successfully";
+    initializeCalculator();
     m_initialized = true;
   }
 
   return true;
+}
+
+void QalculateBackend::initializeCalculator() {
+  m_calc.reset();
+  m_calc.loadGlobalDefinitions();
+  m_calc.loadLocalDefinitions();
+  m_calc.loadExchangeRates();
+  m_calc.loadGlobalCurrencies();
+  m_calc.loadGlobalUnits();
+  m_calc.loadGlobalVariables();
+  m_calc.loadGlobalFunctions();
 }
 
 tl::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const QString &question) const {
@@ -85,10 +94,20 @@ QString QalculateBackend::id() const { return "qalculate"; }
 
 QString QalculateBackend::displayName() const { return "Qalculate!"; }
 
-bool QalculateBackend::reloadExchangeRates() const {
-  CALCULATOR->fetchExchangeRates();
-  CALCULATOR->loadExchangeRates();
-  return true;
+bool QalculateBackend::supportsRefreshExchangeRates() const { return true; }
+
+QFuture<AbstractCalculatorBackend::RefreshExchangeRatesResult> QalculateBackend::refreshExchangeRates() {
+  return QtConcurrent::run([this]() {
+    qInfo() << "Refreshing Qalculate exchange rates...";
+    auto die = [](auto &&s) {
+      qWarning() << "Failed to refresh exchange rates" << s;
+      return RefreshExchangeRatesResult{tl::unexpected(s)};
+    };
+    if (!CALCULATOR->fetchExchangeRates()) { return die("Failed to fetch exchange rates"); }
+    QTimer::singleShot(0, [this]() { initializeCalculator(); });
+    qInfo() << "Done refreshing exchange rates";
+    return RefreshExchangeRatesResult{};
+  });
 }
 
 bool QalculateBackend::supportsCurrencyConversion() const { return true; }
