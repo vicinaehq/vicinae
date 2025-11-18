@@ -1,4 +1,5 @@
 #pragma once
+#include <format>
 #include <qfuture.h>
 #include <qstring.h>
 #include "utils/expected.hpp"
@@ -25,6 +26,7 @@ public:
   };
 
   using ComputeResult = tl::expected<CalculatorResult, CalculatorError>;
+  using RefreshExchangeRatesResult = tl::expected<void, std::string>;
 
   virtual QString id() const = 0;
   virtual QString displayName() const { return id(); }
@@ -33,7 +35,24 @@ public:
   virtual QFuture<ComputeResult> asyncCompute(const QString &question) const = 0;
 
   virtual bool supportsCurrencyConversion() const { return false; }
-  virtual bool reloadExchangeRates() const { return false; }
+
+  virtual bool supportsRefreshExchangeRates() const { return false; }
+
+  /**
+   * Refresh currency exchange rates.
+   *
+   * If the backend implements this, it also need to impleemnt `supportsRefreshExchangeRates` to explicitly
+   * indicate that it supports it.
+   *
+   * Returns a future that fullfills when the rates have been refreshed or an error occured.
+   * An optional error is returned.
+   */
+  virtual QFuture<RefreshExchangeRatesResult> refreshExchangeRates() {
+    QPromise<RefreshExchangeRatesResult> promise;
+    promise.addResult(tl::unexpected("Not implemented"));
+    promise.finish();
+    return promise.future();
+  }
 
   /**
    * Whether this calculator implementation can be used in the current environment.
