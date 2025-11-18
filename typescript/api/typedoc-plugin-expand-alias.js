@@ -42,7 +42,7 @@ function resolveEnumForAlias(typeAlias, project) {
   if (!(aliasType instanceof ReferenceType)) return null
 
   // Attempt reflection resolve
-  const reflectionEnum = project.getReflectionFromSymbolId?.(aliasType._target)
+  const reflectionEnum = findEnumReflectionByName(project, aliasType.name)
   if (reflectionEnum) {
     return buildEnumInfoFromReflection(reflectionEnum)
   }
@@ -54,6 +54,28 @@ function resolveEnumForAlias(typeAlias, project) {
   }
 
   return buildEnumInfoFromAST(sourceFilePath, aliasType.name)
+}
+
+function findEnumReflectionByName(project, name) {
+  function search(reflection) {
+    if (!reflection) return null
+
+    if (
+      reflection.kind === ReflectionKind.Enum &&
+      reflection.name === name
+    ) return reflection
+
+    if (reflection.children) {
+      for (const child of reflection.children) {
+        const result = search(child)
+        if (result) return result
+      }
+    }
+
+    return null
+  }
+
+  return search(project)
 }
 
 function buildEnumInfoFromReflection(enumReflection) {
