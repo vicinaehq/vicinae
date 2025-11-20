@@ -635,6 +635,8 @@ set(SRCS
 
 	src/services/power-manager/systemd/systemd-power-manager.cpp
 
+	src/ui/monkeytypewriter/monkey-typewriter.cpp
+
 ) 
 
 if (UNIX)
