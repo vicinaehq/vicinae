@@ -1,7 +1,8 @@
 #include "monkey-typewriter.hpp"
 #include "theme/colors.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
-#include <numbers>
+#include <chrono>
+#include <qcontainerinfo.h>
 #include <qevent.h>
 #include <qnamespace.h>
 #include <qobjectdefs.h>
@@ -10,25 +11,36 @@
 static const std::vector<QString> quotes = {
     "never child house see so house out just go develop person can large day up place feel point more off "
     "have only early around state life eye there who because play large head home never public old lead get "
-    "problem still with year"};
+    "problem still with year ありがとうこさいます "};
 
 const QString QUOTE =
     R"(neverrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr do it please or else... You know what's gonna happen. Yeah you know bro.
 )";
 
+/**
+ * How much time to wait before switching to 'not typing' state
+ */
+static constexpr const std::chrono::milliseconds DEFAULT_TYPING_DEBOUNCE = std::chrono::milliseconds(100);
+
 MonkeyTypeWriter::MonkeyTypeWriter() {
+  using namespace std::chrono_literals;
+
   auto font = QFont();
   font.setPointSize(16);
   font.setHintingPreference(QFont::PreferFullHinting); // prevent flickering
   setFont(font);
-  setQuote(QUOTE);
+  setQuote(quotes[0]);
   setFocusPolicy(Qt::StrongFocus);
   setBlinkingCursorInterval(m_defaultBlinkingInterval);
 
+  m_timer.start();
   connect(&m_timer, &QTimer::timeout, this, [this]() {
     m_cursorShown = !m_cursorShown;
     renderText();
   });
+  m_typingDebounce.setInterval(200ms);
+  m_typingDebounce.setSingleShot(true);
+  connect(&m_typingDebounce, &QTimer::timeout, this, [this]() { m_isTyping = false; });
 }
 
 void MonkeyTypeWriter::setBlinkingCursorInterval(std::chrono::milliseconds ms) { m_timer.setInterval(ms); }
@@ -46,8 +58,41 @@ void MonkeyTypeWriter::keyPressEvent(QKeyEvent *event) {
   // do not block escape
   if (event->key() == Qt::Key_Escape) { return QWidget::keyPressEvent(event); }
 
-  if (event->key() == Qt::Key_Delete) {
-    qDebug() << "delete TBD";
+  bool isSpaceNext = m_cursor < m_quote.size() && m_quote.at(m_cursor) == ' ';
+
+  if (event->key() == Qt::Key_Space && !isSpaceNext) {
+    bool isWordBeginning = m_cursor > 0 && m_quote.at(m_cursor) != ' ';
+
+    if (isWordBeginning) {
+      int idx = m_quote.indexOf(' ', m_cursor);
+      QString untyped = m_quote.sliced(m_cursor, idx - m_cursor + 1).toString();
+
+      m_charGroups.emplace_back(CharGroup{.str = untyped,
+                                          .state = CharState::Untyped,
+                                          .cursor = m_cursor,
+                                          .endCursor = m_cursor + untyped.size()});
+
+      m_cursor += untyped.size();
+      renderText();
+
+      m_isTyping = true;
+      m_typingDebounce.start();
+    }
+    return;
+  }
+
+  if (event->key() == Qt::Key_Backspace) {
+    if (m_charGroups.empty()) return;
+    auto &grp = m_charGroups.back();
+
+    grp.str.removeLast();
+    if (grp.str.isEmpty()) { m_charGroups.erase(m_charGroups.end() - 1); }
+
+    m_cursor--;
+    renderText();
+    m_isTyping = true;
+    m_typingDebounce.start();
+
     return;
   }
 
@@ -69,6 +114,8 @@ void MonkeyTypeWriter::keyPressEvent(QKeyEvent *event) {
     m_charGroups.back().endCursor += refText.size();
   }
 
+  m_isTyping = true;
+  m_typingDebounce.start();
   m_cursor += refText.size();
   renderText();
 }
@@ -89,7 +136,6 @@ void MonkeyTypeWriter::renderText() {
   size_t cursorIdx = 0;
 
   QPoint cursorPoint;
-  size_t groupIdx = 0;
 
   std::vector<QStringView> groups;
 
@@ -105,11 +151,9 @@ void MonkeyTypeWriter::renderText() {
       bool newline = false;
       bool isLast = idx == words.size() - 1;
       bool isFirst = idx == 0;
-      bool preventCut = false;
 
       if (advance > canva.width()) {
         int n = canva.width() / fm.averageCharWidth();
-        int nparts = word.size() / n;
 
         for (auto ch : word) {
           int advance = fm.horizontalAdvance(ch);
@@ -117,38 +161,25 @@ void MonkeyTypeWriter::renderText() {
           if (point.x() + advance > canva.width()) { point = QPoint(0, point.y() + fm.lineSpacing()); }
 
           painter.drawText(point, ch);
+          ++cursorIdx;
           point = QPoint(point.x() + advance, point.y());
         }
         continue;
       }
 
-      // we need to get the word we are in
       if (isFirst) {
-        qDebug() << "first word";
-        size_t cursor = endCursor;
-        int low = 0;
-        int high = 0;
 
-        for (int i = cursor; i >= 0; --i) {
-          if (m_quote[i] == ' ') {
-            low = i;
-            break;
-          }
+        for (auto ch : word) {
+          int advance = fm.horizontalAdvance(ch);
+
+          if (point.x() + advance > canva.width()) { point = QPoint(0, point.y() + fm.lineSpacing()); }
+
+          painter.drawText(point, ch);
+          if (cursorIdx == m_cursor) cursorPoint = point;
+          point = QPoint(point.x() + advance, point.y());
+          ++cursorIdx;
         }
-
-        for (int i = cursor; i < m_quote.size(); ++i) {
-          if (m_quote[i] == ' ') {
-            high = i;
-            break;
-          }
-        }
-
-        QString fullWord = m_quote.sliced(low, high - low).toString();
-        qDebug() << "got isolated full word" << fullWord;
-        int fullAdv = fm.horizontalAdvance(fullWord);
-
-        if (fullAdv > canva.width()) { preventCut = true; }
-
+        continue;
       }
 
       // last "word" might not be complete, so we need to get the full word
@@ -164,19 +195,23 @@ void MonkeyTypeWriter::renderText() {
         qDebug() << "is last, full word is" << fullWord;
       }
 
-      if (!preventCut && point.x() + fullAdvance > canva.width()) {
+      if (point.x() + fullAdvance > canva.width()) {
         point = QPoint(0, point.y() + fm.lineSpacing());
         newline = true;
+        ++cursorIdx;
       }
 
-      if (newline || idx == 0) {
-        painter.drawText(point, word);
-        point = QPoint(point.x() + advance, point.y());
-      } else {
-        QString txt = " " + word;
-        painter.drawText(point, txt);
-        point = QPoint(point.x() + fm.horizontalAdvance(txt), point.y());
+      QString textToDraw = newline || idx == 0 ? word : " " + word;
+
+      for (const auto &ch : textToDraw) {
+        painter.drawText(point, ch);
+        if (cursorIdx == m_cursor) cursorPoint = point;
+        point = QPoint(point.x() + fm.horizontalAdvance(ch), point.y());
+        ++cursorIdx;
       }
+
+      // painter.drawText(point, textToDraw);
+      // point = QPoint(point.x() + fm.horizontalAdvance(textToDraw), point.y());
     }
   };
 
@@ -191,13 +226,12 @@ void MonkeyTypeWriter::renderText() {
     }
 
     appendText(grp.str, grp.endCursor);
-    ++groupIdx;
   }
 
   painter.setThemePen(untypedColor);
   appendText(m_quote.sliced(m_cursor).toString(), 0);
 
-  if (m_cursorShown) {
+  if (m_cursorShown || m_isTyping) {
     painter.setThemeBrush(SemanticColor::Accent);
     painter.setPen(Qt::NoPen);
     painter.drawRoundedRect(QRect(cursorPoint.x(), cursorPoint.y() - fm.ascent(), 2, fm.ascent()), 6, 6);

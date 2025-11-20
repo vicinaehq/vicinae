@@ -24,7 +24,7 @@ protected:
   }
 
 private:
-  static constexpr const std::chrono::milliseconds m_defaultBlinkingInterval = std::chrono::seconds(1);
+  static constexpr const std::chrono::milliseconds m_defaultBlinkingInterval = std::chrono::milliseconds(500);
   enum class CharState {
     Untyped,
     Mistyped,
@@ -46,4 +46,7 @@ private:
   std::vector<CharGroup> m_charGroups;
   size_t m_cursor = 0;
   QTimer m_timer;
+  QTimer m_typingDebounce;
+
+  bool m_isTyping = false;
 };
