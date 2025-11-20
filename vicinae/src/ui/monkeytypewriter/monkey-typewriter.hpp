@@ -35,6 +35,7 @@ private:
     QString str;
     CharState state;
     size_t cursor;
+    size_t endCursor;
   };
 
   void renderText();
