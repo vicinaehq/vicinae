@@ -5,14 +5,9 @@
 }:
 pkgs.buildNpmPackage {
   inherit name src;
-  installPhase = ''
-    runHook preInstall
-
-    mkdir -p $out
-    cp -r /build/.local/share/vicinae/extensions/${name}/* $out/
-
-    runHook postInstall
-  '';
   npmDeps = pkgs.importNpmLock { npmRoot = src; };
   npmConfigHook = pkgs.importNpmLock.npmConfigHook;
+  # NOTE: using buildPhase because $out doesn't work with npmBuildFlags
+  buildPhase = "npm run build -- --out=$out";
+  dontNpmInstall = true;
 }
