@@ -165,9 +165,9 @@ protected:
     auto w = new TransformResult;
 
     w->setBase(
-        item.question.question,
+        item.question.text,
         item.question.unit.transform([](auto &&unit) { return unit.displayName; }).value_or("Expression"));
-    w->setResult(item.answer.answer,
+    w->setResult(item.answer.text,
                  item.answer.unit.transform([](auto &&unit) { return unit.displayName; }).value_or("Answer"));
 
     return w;
@@ -181,7 +181,7 @@ protected:
 
   const RootItem *asRootItem() const override { return nullptr; }
 
-  QString generateId() const override { return item.question.question; }
+  QString generateId() const override { return item.question.text; }
 
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
     auto panel = std::make_unique<ActionPanelState>();

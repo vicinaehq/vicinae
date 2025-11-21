@@ -14,6 +14,8 @@
 using CalculatorResult = QalculateBackend::CalculatorResult;
 using CalculatorError = QalculateBackend::CalculatorError;
 
+QalculateBackend::QalculateBackend() {}
+
 bool QalculateBackend::isActivatable() const {
   /**
    * if QalculateBackend is considered as an option, it means support for it was compiled in
@@ -31,51 +33,13 @@ bool QalculateBackend::start() {
   return true;
 }
 
-void QalculateBackend::initializeCalculator() {
-  m_calc.reset();
-  m_calc.loadGlobalDefinitions();
-  m_calc.loadLocalDefinitions();
-  m_calc.loadExchangeRates();
-  m_calc.loadGlobalCurrencies();
-  m_calc.loadGlobalUnits();
-  m_calc.loadGlobalVariables();
-  m_calc.loadGlobalFunctions();
-}
-
-std::optional<std::string> QalculateBackend::getUnitDisplayName(const MathStructure &s,
-                                                                std::string_view prefix = "") {
-  if (prefix.empty() && s.prefix()) {
-    std::string_view prefix = s.prefix()->preferredDisplayName().name;
-    if (!prefix.empty()) { return getUnitDisplayName(s, prefix); }
-  }
-
-  if (auto unit = s.unit()) {
-    return std::format("{}{}", prefix, unit->preferredDisplayName(false, false, true, false).name);
-  }
-
-  for (int i = 0; i != s.size(); ++i) {
-    if (auto unit = getUnitDisplayName(s[i], prefix)) { return unit; }
-  }
-
-  return std::nullopt;
-}
-
 tl::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const QString &question) const {
   QString expression = preprocessQuestion(question);
 
-  EvaluationOptions evalOpts;
-
-  evalOpts.auto_post_conversion = POST_CONVERSION_BEST;
-  evalOpts.structuring = STRUCTURING_SIMPLIFY;
-  evalOpts.parse_options.limit_implicit_multiplication = true;
-  evalOpts.parse_options.parsing_mode = PARSING_MODE_CONVENTIONAL;
-  evalOpts.parse_options.units_enabled = true;
-  evalOpts.parse_options.unknowns_enabled = false;
-
   MathStructure out;
   MathStructure in;
-  MathStructure result =
-      CALCULATOR->calculate(CALCULATOR->unlocalizeExpression(expression.toStdString()), evalOpts, &in, &out);
+  MathStructure result = CALCULATOR->calculate(CALCULATOR->unlocalizeExpression(expression.toStdString()),
+                                               m_evalOpts, &in, &out);
 
   if (result.containsUnknowns()) { return tl::unexpected(CalculatorError("Unknown component in question")); }
 
@@ -87,22 +51,14 @@ tl::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const 
 
   if (error) return tl::unexpected(CalculatorError("Calculation error"));
 
-  PrintOptions printOpts;
-
-  printOpts.indicate_infinite_series = true;
-  printOpts.interval_display = INTERVAL_DISPLAY_SIGNIFICANT_DIGITS;
-  printOpts.use_unicode_signs = true;
-
-  std::string res = result.print(printOpts);
-
+  std::string res = result.print(m_printOpts);
   CalculatorResult calcRes;
 
   if (auto unit = getUnitDisplayName(in)) { calcRes.question.unit = Unit{.displayName = unit->c_str()}; }
   if (auto unit = getUnitDisplayName(result)) { calcRes.answer.unit = Unit{.displayName = unit->c_str()}; }
 
-  calcRes.question.question = question;
-
-  calcRes.answer.answer = QString::fromStdString(res);
+  calcRes.question.text = question;
+  calcRes.answer.text = QString::fromStdString(res);
 
   if (result.containsType(STRUCT_UNIT)) {
     calcRes.type = CalculatorAnswerType::CONVERSION;
@@ -144,4 +100,42 @@ QFuture<AbstractCalculatorBackend::RefreshExchangeRatesResult> QalculateBackend:
 
 bool QalculateBackend::supportsCurrencyConversion() const { return true; }
 
-QalculateBackend::QalculateBackend() {}
+void QalculateBackend::initializeCalculator() {
+  m_evalOpts.auto_post_conversion = POST_CONVERSION_BEST;
+  m_evalOpts.structuring = STRUCTURING_SIMPLIFY;
+  m_evalOpts.parse_options.limit_implicit_multiplication = true;
+  m_evalOpts.parse_options.parsing_mode = PARSING_MODE_CONVENTIONAL;
+  m_evalOpts.parse_options.units_enabled = true;
+  m_evalOpts.parse_options.unknowns_enabled = false;
+
+  m_printOpts.indicate_infinite_series = true;
+  m_printOpts.interval_display = INTERVAL_DISPLAY_SIGNIFICANT_DIGITS;
+  m_printOpts.use_unicode_signs = true;
+
+  m_calc.reset();
+  m_calc.loadGlobalDefinitions();
+  m_calc.loadLocalDefinitions();
+  m_calc.loadExchangeRates();
+  m_calc.loadGlobalCurrencies();
+  m_calc.loadGlobalUnits();
+  m_calc.loadGlobalVariables();
+  m_calc.loadGlobalFunctions();
+}
+
+std::optional<std::string> QalculateBackend::getUnitDisplayName(const MathStructure &s,
+                                                                std::string_view prefix) {
+  if (prefix.empty() && s.prefix()) {
+    std::string_view prefix = s.prefix()->preferredDisplayName().name;
+    if (!prefix.empty()) { return getUnitDisplayName(s, prefix); }
+  }
+
+  if (auto unit = s.unit()) {
+    return std::format("{}{}", prefix, unit->preferredDisplayName(false, false, true, false).name);
+  }
+
+  for (int i = 0; i != s.size(); ++i) {
+    if (auto unit = getUnitDisplayName(s[i], prefix)) { return unit; }
+  }
+
+  return std::nullopt;
+}

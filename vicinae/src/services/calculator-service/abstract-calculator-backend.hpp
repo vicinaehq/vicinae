@@ -1,5 +1,4 @@
 #pragma once
-#include <format>
 #include <qfuture.h>
 #include <qstring.h>
 #include "utils/expected.hpp"
@@ -18,12 +17,12 @@ public:
   struct CalculatorResult {
     CalculatorAnswerType type;
     struct {
-      QString question;
+      QString text;
       std::optional<Unit> unit;
     } question;
 
     struct {
-      QString answer;
+      QString text;
       std::optional<Unit> unit;
     } answer;
   };
