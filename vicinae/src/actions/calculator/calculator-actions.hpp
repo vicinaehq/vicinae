@@ -22,7 +22,7 @@ class CopyCalculatorAnswerAction : public AbstractAction {
 
     if (m_addToHistory) { calculator->addRecord(m_item); }
 
-    if (clip->copyText(m_item.answer)) {
+    if (clip->copyText(m_item.answer.text)) {
       ctx->navigation->showHud("Answer copied to clipboard", ImageURL::builtin("copy-clipboard"));
     } else {
       ctx->services->toastService()->setToast("Failed to copy answer", ToastStyle::Danger);
@@ -43,7 +43,7 @@ class CopyCalculatorQuestionAndAnswerAction : public AbstractAction {
   void execute(ApplicationContext *ctx) override {
     auto calculator = ServiceRegistry::instance()->calculatorService();
     auto clip = ServiceRegistry::instance()->clipman();
-    auto result = QString("%1 = %2").arg(m_item.question).arg(m_item.answer);
+    auto result = QString("%1 = %2").arg(m_item.question.text).arg(m_item.answer.text);
 
     if (m_addToHistory) { calculator->addRecord(m_item); }
 
@@ -72,7 +72,7 @@ public:
 class PutCalculatorAnswerInSearchBar : public AbstractAction {
   AbstractCalculatorBackend::CalculatorResult m_item;
 
-  void execute(ApplicationContext *ctx) override { ctx->navigation->setSearchText(m_item.answer); }
+  void execute(ApplicationContext *ctx) override { ctx->navigation->setSearchText(m_item.answer.text); }
 
 public:
   QString title() const override { return "Put answer in search bar"; }
