@@ -5,6 +5,7 @@
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
+#include "utils.hpp"
 #include <qmimedatabase.h>
 
 /**
@@ -15,17 +16,7 @@ protected:
   QMimeDatabase m_mimeDb;
   std::filesystem::path m_path;
 
-  ImageURL getIcon() const {
-    auto mime = m_mimeDb.mimeTypeForFile(m_path.c_str());
-
-    if (!mime.name().isEmpty()) {
-      if (!QIcon::fromTheme(mime.iconName()).isNull()) { return ImageURL::system(mime.iconName()); }
-
-      return ImageURL::system(mime.genericIconName());
-    }
-
-    return ImageURL::builtin("question-mark-circle");
-  }
+  ImageURL getIcon() const { return ImageURL::fileIcon(m_path); }
 
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
     auto panel = std::make_unique<ActionPanelState>();
@@ -72,7 +63,7 @@ public:
   ItemData data() const override {
     return {
         .iconUrl = getIcon(),
-        .name = m_path.filename().c_str(),
+        .name = getLastPathComponent(m_path).c_str(),
     };
   }
 

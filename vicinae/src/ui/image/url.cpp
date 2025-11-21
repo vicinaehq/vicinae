@@ -11,6 +11,8 @@
 #include <qurlquery.h>
 #include "url.hpp"
 
+namespace fs = std::filesystem;
+
 Qt::AspectRatioMode ImageURL::fitToAspectRatio(ObjectFit fit) {
   switch (fit) {
   case ObjectFit::Fill:
@@ -298,7 +300,7 @@ ImageURL ImageURL::system(const QString &name) {
 
   url.setType(ImageURLType::System);
   url.setName(name);
-  url.setCacheKey("system." + name);
+  url.setCachable(false); // cached internally
 
   return url;
 }
@@ -343,11 +345,14 @@ ImageURL ImageURL::rawData(const QByteArray &data, const QString &mimeType) {
   return url;
 }
 
-ImageURL ImageURL::mimeType(const std::filesystem::path &path) {
+ImageURL ImageURL::fileIcon(const fs::path &path) {
   QMimeDatabase db;
   auto mime = db.mimeTypeForFile(path.c_str());
   if (auto icon = QIcon::fromTheme(mime.iconName()); !icon.isNull()) {
     return ImageURL::system(mime.iconName());
   }
-  return ImageURL::system(mime.genericIconName());
+  if (auto icon = QIcon::fromTheme(mime.genericIconName()); !icon.isNull()) {
+    return ImageURL::system(mime.genericIconName());
+  }
+  return ImageURL::builtin(mime.name() == "inode/directory" ? "folder" : "blank-document");
 }
