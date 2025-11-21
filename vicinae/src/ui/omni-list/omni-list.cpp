@@ -800,10 +800,6 @@ bool OmniList::event(QEvent *event) {
       return selectLeft();
     case Qt::Key_Right:
       return selectRight();
-    case Qt::Key_Home:
-      return selectHome();
-    case Qt::Key_End:
-      return selectEnd();
     case Qt::Key_Return:
       activateCurrentSelection();
       return true;

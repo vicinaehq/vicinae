@@ -35,10 +35,6 @@ bool ActionPannelListView::eventFilter(QObject *sender, QEvent *event) {
         return _list->selectUp();
       case Qt::Key_Down:
         return _list->selectDown();
-      case Qt::Key_Home:
-        return _list->selectHome();
-      case Qt::Key_End:
-        return _list->selectEnd();
       case Qt::Key_Return:
         _list->activateCurrentSelection();
         return true;
