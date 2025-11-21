@@ -35,7 +35,7 @@ std::vector<MetadataItem> FileDetail::createEntryMetadata(const fs::path &path) 
       .title = "Type",
   };
   auto name = MetadataLabel{
-      .text = path.filename().c_str(),
+      .text = getLastPathComponent(path).c_str(),
       .title = "Name",
   };
   auto where = MetadataLabel{
