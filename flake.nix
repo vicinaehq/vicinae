@@ -38,8 +38,14 @@
 
           [[ "$OLD_EXT_MAN_DEPS_HASH" == "$NEW_EXT_MAN_DEPS_HASH" ]] || { echo -e "\e[31mHash mismatch for extension-manager npm deps, please replace the value in vicinae.nix with '$NEW_EXT_MAN_DEPS_HASH'.\e[0m" >&2; exit 1;}
         '';
+        mkVicinaeExtension = pkgs.callPackage ./nix/mkVicinaeExtension.nix { };
       });
-      mkVicinaeExtension = forEachPkgs (_: import ./nix/mkVicinaeExtension.nix);
+      mkVicinaeExtension = forEachPkgs (
+        _:
+        lib.warn
+          "vicinae: accessing mkVicinaeExtension from flake top level is deprecated, use packages.<system>.mkVicinaeExtension instaed"
+          ({ pkgs, ... }@args: pkgs.callPackage ./nix/mkVicinaeExtension.nix { } args)
+      );
       devShells = forEachPkgs (pkgs: {
         default = pkgs.mkShell {
           # automatically pulls nativeBuildInputs + buildInputs
@@ -56,7 +62,7 @@
       });
       overlays.default = final: prev: {
         vicinae = prev.callPackage ./nix/vicinae.nix { };
-        mkVicinaeExtension = import ./nix/mkVicinaeExtension.nix;
+        mkVicinaeExtension = prev.callPackage ./nix/mkVicinaeExtension.nix { };
       };
       homeManagerModules.default = import ./nix/module.nix self;
     };
