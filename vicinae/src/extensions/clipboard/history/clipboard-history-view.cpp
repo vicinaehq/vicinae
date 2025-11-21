@@ -667,10 +667,6 @@ bool ClipboardHistoryView::inputFilter(QKeyEvent *event) {
     case Qt::Key_Tab:
       m_list->selectNext();
       return true;
-    case Qt::Key_Home:
-      return m_list->selectHome();
-    case Qt::Key_End:
-      return m_list->selectEnd();
     case Qt::Key_Return:
       m_list->activateCurrentSelection();
       return true;
