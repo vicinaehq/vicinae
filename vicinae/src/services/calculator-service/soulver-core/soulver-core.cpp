@@ -65,8 +65,8 @@ SoulverCoreCalculator::compute(const QString &question) const {
 
   CalculatorResult result;
 
-  result.question = question;
-  result.answer = soulverRes.value().result;
+  result.question.text = question;
+  result.answer.text = soulverRes.value().result;
   result.type = CalculatorAnswerType::NORMAL;
 
   return result;

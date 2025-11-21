@@ -1,6 +1,8 @@
 #pragma once
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include <libqalculate/Calculator.h>
+#include <libqalculate/MathStructure.h>
+#include <libqalculate/includes.h>
 
 class QalculateBackend : public AbstractCalculatorBackend {
 
@@ -19,8 +21,13 @@ public:
   QalculateBackend();
 
 private:
+  static std::optional<std::string> getUnitDisplayName(const MathStructure &s, std::string_view prefix = "");
+
   void initializeCalculator();
+  QString preprocessQuestion(const QString &question) const;
 
   Calculator m_calc;
   bool m_initialized = false;
+  EvaluationOptions m_evalOpts;
+  PrintOptions m_printOpts;
 };
