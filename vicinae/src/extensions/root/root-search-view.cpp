@@ -19,6 +19,7 @@
 #include <QtConcurrent/QtConcurrent>
 #include <chrono>
 #include "utils/utils.hpp"
+#include <filesystem>
 #include <memory>
 #include <qbrush.h>
 #include <qcoreevent.h>
@@ -41,6 +42,8 @@
 #include <ranges>
 #include "ui/views/list-view.hpp"
 
+namespace fs = std::filesystem;
+
 // prefix used to disambiguate calculator queries for regular search if needed
 static const QString CALCULATOR_PREFIX = "=";
 
@@ -60,7 +63,10 @@ public:
 class RootFileListItem : public FileListItemBase, public AbstractRootListItem {
 public:
   ItemData data() const override {
-    return {.iconUrl = getIcon(), .name = m_path.filename().c_str(), .subtitle = compressPath(m_path)};
+    return {.iconUrl = getIcon(),
+            .name = getLastPathComponent(m_path).c_str(),
+            .subtitle = compressPath(m_path),
+            .accessories = {{"File"}}};
   }
 
   const RootItem *asRootItem() const override { return nullptr; }
@@ -340,30 +346,30 @@ void RootSearchView::handleCalculationResult() {
 void RootSearchView::render(const QString &text) {
   auto rootItemManager = ServiceRegistry::instance()->rootItemManager();
   auto appDb = ServiceRegistry::instance()->appDb();
-  const auto &appEntries = appDb->list();
+  std::error_code ec;
 
   m_list->beginResetModel();
 
-  auto start = std::chrono::high_resolution_clock::now();
+  auto &results = m_list->addSection("Results");
 
   if (m_currentCalculatorEntry) {
     m_list->addSection("Calculator")
         .addItem(std::make_unique<BaseCalculatorListItem>(*m_currentCalculatorEntry));
   }
 
-  auto &results = m_list->addSection("Results");
+  if (auto path = expandPath(text.toStdString()); fs::exists(path, ec)) {
+    results.addItem(std::make_unique<RootFileListItem>(path));
+  }
 
-  auto searchResults = rootItemManager->search(text.trimmed());
-
-  for (const auto &item : searchResults) {
+  for (const auto &item : rootItemManager->search(text.trimmed())) {
     results.addItem(std::make_unique<RootSearchItem>(item.item.get()));
   }
 
-  if (!m_fileResults.empty()) {
-    auto &section = m_list->addSection("Files");
+  {
+    auto &files = m_list->addSection("Files");
 
     for (const auto &file : m_fileResults) {
-      section.addItem(std::make_unique<RootFileListItem>(file.path));
+      files.addItem(std::make_unique<RootFileListItem>(file.path));
     }
   }
 
@@ -373,11 +379,7 @@ void RootSearchView::render(const QString &text) {
     fallbackSection.addItem(std::make_unique<FallbackRootSearchItem>(fallback));
   }
 
-  auto end = std::chrono::high_resolution_clock::now();
-  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-
   m_list->endResetModel(OmniList::SelectFirst);
-  // qDebug() << "root searched in " << duration << "ms";
 }
 
 void RootSearchView::renderEmpty() {

@@ -33,6 +33,7 @@ std::filesystem::path expandPath(const std::filesystem::path &path) {
   auto str = path.string();
 
   if (str.starts_with("~")) { return homeStr + str.substr(1); }
+  if (str.starts_with("~/")) { return homeStr + str.substr(2); }
 
   return path;
 }
@@ -104,7 +105,10 @@ std::filesystem::path downloadsFolder() { return homeDir() / "Downloads"; }
 std::filesystem::path documentsFolder() { return homeDir() / "Documents"; }
 
 std::string getLastPathComponent(const std::filesystem::path &path) {
-  if (!path.has_filename() && path.has_parent_path()) { return path.parent_path().filename(); }
+  if (!path.has_filename()) {
+    if (path.has_parent_path()) return path.parent_path().filename();
+    return path;
+  }
 
   return path.filename();
 }

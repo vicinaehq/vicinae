@@ -556,6 +556,9 @@ set(SRCS
 	src/extensions/vicinae/list-installed-extensions-view.hpp
 	src/extensions/vicinae/list-installed-extensions-view.cpp
 
+	src/extensions/file/search/search-files-view.hpp
+	src/extensions/file/search/search-files-view.cpp
+
 	src/services/raycast/raycast-store.cpp
 	src/services/extension-store/vicinae-store.cpp
 
