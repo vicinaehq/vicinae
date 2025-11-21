@@ -58,6 +58,6 @@ public:
 
   QSqlDatabase *database();
 
-  FileIndexerDatabase();
+  FileIndexerDatabase(std::optional<std::filesystem::path> dbPath = std::nullopt);
   ~FileIndexerDatabase();
 };
