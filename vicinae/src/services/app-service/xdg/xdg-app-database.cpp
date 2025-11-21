@@ -39,13 +39,6 @@ std::shared_ptr<AbstractApplication> XdgAppDatabase::defaultForMime(const QStrin
 }
 
 AppPtr XdgAppDatabase::findDefaultOpener(const QString &target) const {
-  if (QUrl url = target; url.isValid()) {
-    if (auto scheme = url.scheme(); !scheme.isEmpty()) {
-      if (scheme == "http" || scheme == "https") return webBrowser();
-      if (scheme == "file") return fileBrowser();
-    }
-  }
-
   return defaultForMime(mimeNameForTarget(target));
 }
 
@@ -360,10 +353,7 @@ QString XdgAppDatabase::mimeNameForTarget(const QString &target) const {
   {
     QUrl url(source);
 
-    if (!url.scheme().isEmpty()) {
-      if (url.scheme() != "file") { return "x-scheme-handler/" + url.scheme(); }
-      source = url.toDisplayString(QUrl::RemoveScheme);
-    }
+    if (!url.scheme().isEmpty()) { return "x-scheme-handler/" + url.scheme(); }
   }
 
   if (m_mimeDb.mimeTypeForName(source).isValid()) { return source; }

@@ -1,5 +1,7 @@
 #include "root-search-view.hpp"
+#include "actions/app/app-actions.hpp"
 #include "misc/file-list-item.hpp"
+#include "services/app-service/abstract-app-db.hpp"
 #include "ui/transform-result/transform-result.hpp"
 #include "ui/views/base-view.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
@@ -72,6 +74,42 @@ public:
   const RootItem *asRootItem() const override { return nullptr; }
 
   RootFileListItem(const std::filesystem::path &path) : FileListItemBase(path) {}
+};
+
+class OpenUrlItem : public AbstractDefaultListItem,
+                    public ListView::Actionnable,
+                    public AbstractRootListItem {
+public:
+  OpenUrlItem(const QUrl &url, const std::shared_ptr<AbstractApplication> &app) : m_url(url), m_app(app) {}
+
+  ItemData data() const override {
+    return ItemData{.iconUrl = m_app->iconUrl(),
+                    .name = QString("Open URL").arg(m_app->displayName()),
+                    .subtitle = m_app->displayName(),
+                    .accessories = {{"URL"}}};
+  }
+
+  const RootItem *asRootItem() const override { return nullptr; }
+
+  QString generateId() const override { return "open-url"; }
+
+  std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
+    auto state = std::make_unique<ActionPanelState>();
+    auto section = state->createSection();
+
+    for (const auto &opener : ctx->services->appDb()->findOpeners(m_url.toString())) {
+      auto action =
+          new OpenAppAction(opener, QString("Open with %1").arg(opener->displayName()), {m_url.toString()});
+      action->setClearSearch(true);
+      section->addAction(action);
+    }
+
+    return state;
+  }
+
+private:
+  QUrl m_url;
+  std::shared_ptr<AbstractApplication> m_app;
 };
 
 class RootSearchItem : public AbstractDefaultListItem,
@@ -361,6 +399,13 @@ void RootSearchView::render(const QString &text) {
   if (hasExactFileMatch) {
     auto &files = m_list->addSection("Files");
     files.addItem(std::make_unique<RootFileListItem>(path));
+  }
+
+  if (QUrl url(text); url.isValid() && !url.scheme().isEmpty()) {
+    if (auto opener = appDb->findDefaultOpener(url.toString())) {
+      auto &openWith = m_list->addSection("Open URL with...");
+      openWith.addItem(std::make_unique<OpenUrlItem>(std::move(url), opener));
+    }
   }
 
   auto &results = m_list->addSection("Results");
