@@ -350,22 +350,26 @@ void RootSearchView::render(const QString &text) {
 
   m_list->beginResetModel();
 
-  auto &results = m_list->addSection("Results");
-
   if (m_currentCalculatorEntry) {
     m_list->addSection("Calculator")
         .addItem(std::make_unique<BaseCalculatorListItem>(*m_currentCalculatorEntry));
   }
 
-  if (auto path = expandPath(text.toStdString()); fs::exists(path, ec)) {
-    results.addItem(std::make_unique<RootFileListItem>(path));
+  fs::path path = expandPath(text.toStdString());
+  bool hasExactFileMatch = path != "/" && fs::exists(path, ec);
+
+  if (hasExactFileMatch) {
+    auto &files = m_list->addSection("Files");
+    files.addItem(std::make_unique<RootFileListItem>(path));
   }
+
+  auto &results = m_list->addSection("Results");
 
   for (const auto &item : rootItemManager->search(text.trimmed())) {
     results.addItem(std::make_unique<RootSearchItem>(item.item.get()));
   }
 
-  {
+  if (!hasExactFileMatch) {
     auto &files = m_list->addSection("Files");
 
     for (const auto &file : m_fileResults) {

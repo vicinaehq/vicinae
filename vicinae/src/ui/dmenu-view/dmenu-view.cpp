@@ -26,7 +26,7 @@ public:
     ItemData data;
     data.name = displayName();
 
-    if (m_isFile) { data.iconUrl = ImageURL::mimeType(m_text); }
+    if (m_isFile) { data.iconUrl = ImageURL::fileIcon(m_text); }
 
     return data;
   }

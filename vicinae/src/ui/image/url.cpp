@@ -345,11 +345,14 @@ ImageURL ImageURL::rawData(const QByteArray &data, const QString &mimeType) {
   return url;
 }
 
-ImageURL ImageURL::mimeType(const fs::path &path) {
+ImageURL ImageURL::fileIcon(const fs::path &path) {
   QMimeDatabase db;
   auto mime = db.mimeTypeForFile(path.c_str());
   if (auto icon = QIcon::fromTheme(mime.iconName()); !icon.isNull()) {
     return ImageURL::system(mime.iconName());
   }
-  return ImageURL::system(mime.genericIconName());
+  if (auto icon = QIcon::fromTheme(mime.genericIconName()); !icon.isNull()) {
+    return ImageURL::system(mime.genericIconName());
+  }
+  return ImageURL::builtin(mime.name() == "inode/directory" ? "folder" : "blank-document");
 }

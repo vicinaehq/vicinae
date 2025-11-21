@@ -71,10 +71,9 @@ void SearchFilesView::handleSearchResults() {
 }
 
 void SearchFilesView::generateFilteredList(const QString &query) {
-  fs::path path = expandPath(query.toStdString());
   std::error_code ec;
 
-  if (fs::exists(path, ec)) {
+  if (auto path = expandPath(query.toStdString()); path != "/" && fs::exists(path, ec)) {
     m_list->updateModel([&]() {
       auto &section = m_list->addSection("Files");
       section.addItem(std::make_unique<FileListItem>(path));

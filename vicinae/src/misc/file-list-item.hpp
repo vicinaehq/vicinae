@@ -16,7 +16,7 @@ protected:
   QMimeDatabase m_mimeDb;
   std::filesystem::path m_path;
 
-  ImageURL getIcon() const { return ImageURL::mimeType(m_path); }
+  ImageURL getIcon() const { return ImageURL::fileIcon(m_path); }
 
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
     auto panel = std::make_unique<ActionPanelState>();
