@@ -1,12 +1,15 @@
 #include "services/calculator-service/qalculate/qalculate-backend.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include <QDebug>
+#include <format>
 #include <libqalculate/MathStructure.h>
 #include <libqalculate/QalculateDateTime.h>
 #include <libqalculate/includes.h>
+#include <libqalculate/Unit.h>
+#include <libqalculate/Prefix.h>
 #include <qlogging.h>
 #include <QtConcurrent/QtConcurrent>
-#include <stdexcept>
+#include <qobjectdefs.h>
 
 using CalculatorResult = QalculateBackend::CalculatorResult;
 using CalculatorError = QalculateBackend::CalculatorError;
@@ -39,7 +42,27 @@ void QalculateBackend::initializeCalculator() {
   m_calc.loadGlobalFunctions();
 }
 
+std::optional<std::string> QalculateBackend::getUnitDisplayName(const MathStructure &s,
+                                                                std::string_view prefix = "") {
+  if (prefix.empty() && s.prefix()) {
+    std::string_view prefix = s.prefix()->preferredDisplayName().name;
+    if (!prefix.empty()) { return getUnitDisplayName(s, prefix); }
+  }
+
+  if (auto unit = s.unit()) {
+    return std::format("{}{}", prefix, unit->preferredDisplayName(false, false, true, false).name);
+  }
+
+  for (int i = 0; i != s.size(); ++i) {
+    if (auto unit = getUnitDisplayName(s[i], prefix)) { return unit; }
+  }
+
+  return std::nullopt;
+}
+
 tl::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const QString &question) const {
+  QString expression = preprocessQuestion(question);
+
   EvaluationOptions evalOpts;
 
   evalOpts.auto_post_conversion = POST_CONVERSION_BEST;
@@ -49,7 +72,10 @@ tl::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const 
   evalOpts.parse_options.units_enabled = true;
   evalOpts.parse_options.unknowns_enabled = false;
 
-  MathStructure result = CALCULATOR->calculate(question.toStdString(), evalOpts);
+  MathStructure out;
+  MathStructure in;
+  MathStructure result =
+      CALCULATOR->calculate(CALCULATOR->unlocalizeExpression(expression.toStdString()), evalOpts, &in, &out);
 
   if (result.containsUnknowns()) { return tl::unexpected(CalculatorError("Unknown component in question")); }
 
@@ -71,8 +97,12 @@ tl::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const 
 
   CalculatorResult calcRes;
 
-  calcRes.question = question;
-  calcRes.answer = QString::fromStdString(res);
+  if (auto unit = getUnitDisplayName(in)) { calcRes.question.unit = Unit{.displayName = unit->c_str()}; }
+  if (auto unit = getUnitDisplayName(result)) { calcRes.answer.unit = Unit{.displayName = unit->c_str()}; }
+
+  calcRes.question.question = question;
+
+  calcRes.answer.answer = QString::fromStdString(res);
 
   if (result.containsType(STRUCT_UNIT)) {
     calcRes.type = CalculatorAnswerType::CONVERSION;
@@ -82,6 +112,8 @@ tl::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const 
 
   return calcRes;
 }
+
+QString QalculateBackend::preprocessQuestion(const QString &query) const { return query.simplified(); }
 
 QFuture<QalculateBackend::ComputeResult> QalculateBackend::asyncCompute(const QString &question) const {
   QPromise<ComputeResult> promise;

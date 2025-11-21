@@ -1,5 +1,6 @@
 #include "root-search-view.hpp"
 #include "misc/file-list-item.hpp"
+#include "ui/transform-result/transform-result.hpp"
 #include "ui/views/base-view.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "service-registry.hpp"
@@ -37,7 +38,11 @@
 #include <qthreadpool.h>
 #include <quuid.h>
 #include <qwidget.h>
+#include <ranges>
 #include "ui/views/list-view.hpp"
+
+// prefix used to disambiguate calculator queries for regular search if needed
+static const QString CALCULATOR_PREFIX = "=";
 
 /**
  * Common interface used by all root list items, whether they are attached to an actual root item or not.
@@ -157,7 +162,15 @@ protected:
   const AbstractCalculatorBackend::CalculatorResult item;
 
   OmniListItemWidget *createWidget() const override {
-    return new CalculatorListItemWidget(CalculatorItem{.expression = item.question, .result = item.answer});
+    auto w = new TransformResult;
+
+    w->setBase(
+        item.question.question,
+        item.question.unit.transform([](auto &&unit) { return unit.displayName; }).value_or("Expression"));
+    w->setResult(item.answer.answer,
+                 item.answer.unit.transform([](auto &&unit) { return unit.displayName; }).value_or("Answer"));
+
+    return w;
   }
 
   int calculateHeight(int width) const override {
@@ -168,7 +181,7 @@ protected:
 
   const RootItem *asRootItem() const override { return nullptr; }
 
-  QString generateId() const override { return item.question; }
+  QString generateId() const override { return item.question.question; }
 
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
     auto panel = std::make_unique<ActionPanelState>();
@@ -288,17 +301,19 @@ void RootSearchView::initialize() {
 
 void RootSearchView::handleCalculatorTimeout() {
   auto calculator = context()->services->calculatorService();
-  QString expression = searchText().trimmed();
-  bool isComputable = false;
+  QString expression = searchText().simplified();
 
   if (expression.isEmpty()) return;
 
-  for (const auto &ch : expression) {
-    if (!ch.isLetterOrNumber() || ch.isSpace()) {
-      isComputable = true;
-      break;
-    }
+  if (expression.startsWith(CALCULATOR_PREFIX) && expression.size() > 1) {
+    auto stripped = expression.mid(CALCULATOR_PREFIX.size());
+    m_pendingCalculation.setFuture(calculator->backend()->asyncCompute(stripped));
+    return;
   }
+
+  bool containsNonAlnum = std::ranges::any_of(expression, [](QChar ch) { return !ch.isLetterOrNumber(); });
+  auto isAllowedLeadingChar = [](QChar c) { return c == '(' || c == ')' || c.isLetterOrNumber(); };
+  bool isComputable = expression.size() > 1 && isAllowedLeadingChar(expression.at(0)) && containsNonAlnum;
 
   if (!isComputable || !calculator->backend()) {
     m_currentCalculatorEntry.reset();

@@ -203,8 +203,8 @@ bool CalculatorService::addRecord(const AbstractCalculatorBackend::CalculatorRes
 	)");
   query.bindValue(":id", Crypto::UUID::v4());
   query.bindValue(":type_hint", result.type);
-  query.bindValue(":question", result.question);
-  query.bindValue(":answer", result.answer);
+  query.bindValue(":question", result.question.question);
+  query.bindValue(":answer", result.answer.answer);
   query.bindValue(":epoch", QDateTime::currentSecsSinceEpoch());
 
   if (!query.exec()) {
@@ -215,8 +215,8 @@ bool CalculatorService::addRecord(const AbstractCalculatorBackend::CalculatorRes
   CalculatorRecord record;
 
   record.id = query.lastInsertId().toString();
-  record.question = result.question;
-  record.answer = result.answer;
+  record.question = result.question.question;
+  record.answer = result.answer.answer;
   record.typeHint = result.type;
   record.createdAt = QDateTime::currentDateTime();
 
@@ -341,13 +341,13 @@ void CalculatorService::updateConversionRecords() {
 
     if (!result) continue;
 
-    query.bindValue(":answer", result->answer);
+    query.bindValue(":answer", result->answer.answer);
     query.bindValue(":type", result->type);
     query.bindValue(":id", record.id);
 
     if (!query.exec()) { qCritical() << "Failed to update conversion record" << query.lastError(); }
 
-    record.answer = result->answer;
+    record.answer = result->answer.answer;
     record.typeHint = result->type;
   }
 

@@ -11,10 +11,21 @@ public:
     CONVERSION // unit/currency conversion
   };
 
+  struct Unit {
+    QString displayName;
+  };
+
   struct CalculatorResult {
-    QString question;
-    QString answer;
     CalculatorAnswerType type;
+    struct {
+      QString question;
+      std::optional<Unit> unit;
+    } question;
+
+    struct {
+      QString answer;
+      std::optional<Unit> unit;
+    } answer;
   };
 
   struct CalculatorError {

@@ -7,37 +7,6 @@
 #include "ui/calculator-list-item-widget.hpp"
 #include "ui/omni-list/omni-list.hpp"
 
-class CalculatorListItem : public OmniList::AbstractVirtualItem, public ListView::Actionnable {
-protected:
-  const AbstractCalculatorBackend::CalculatorResult item;
-
-  OmniListItemWidget *createWidget() const override {
-    return new CalculatorListItemWidget(CalculatorItem{.expression = item.question, .result = item.answer});
-  }
-
-  int calculateHeight(int width) const override {
-    static CalculatorListItemWidget ruler({});
-
-    return ruler.sizeHint().height();
-  }
-
-  QString generateId() const override { return item.question; }
-
-  QList<AbstractAction *> generateActions() const override {
-    QString sresult = item.answer;
-    auto copyAnswer = new CopyCalculatorAnswerAction(item);
-    auto copyQA = new CopyCalculatorQuestionAndAnswerAction(item);
-    auto putAnswerInSearchBar = new PutCalculatorAnswerInSearchBar(item);
-
-    copyAnswer->setPrimary(true);
-
-    return {copyAnswer, copyQA, putAnswerInSearchBar};
-  }
-
-public:
-  CalculatorListItem(const AbstractCalculatorBackend::CalculatorResult &item) : item(item) {}
-};
-
 class CalculatorHistoryListItem : public AbstractDefaultListItem, public ListView::Actionnable {
   CalculatorService::CalculatorRecord m_record;
 
@@ -132,9 +101,11 @@ void CalculatorHistoryView::generateRootList() {
 
 void CalculatorHistoryView::generateFilteredList(const QString &text) {
   m_list->updateModel([&]() {
-    if (m_calcRes) {
-      m_list->addSection("Calculator").addItem(std::make_unique<CalculatorListItem>(*m_calcRes));
-    }
+    /*
+if (m_calcRes) {
+m_list->addSection("Calculator").addItem(std::make_unique<CalculatorListItem>(*m_calcRes));
+}
+*/
 
     for (const auto &[group, records] : m_calculator->groupRecordsByTime(m_calculator->query(text))) {
       auto &section = m_list->addSection(group);
@@ -180,7 +151,7 @@ void CalculatorHistoryView::textChanged(const QString &text) {
 }
 
 void CalculatorHistoryView::initialize() {
-  setSearchPlaceholderText("Do maths, convert units or search past calculations...");
+  setSearchPlaceholderText("Search past calculations...");
   generateRootList();
 }
 
