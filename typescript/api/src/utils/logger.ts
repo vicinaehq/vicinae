@@ -1,11 +1,11 @@
-import chalk from "chalk";
+import { red, magenta, blue, green, reset, gray } from "./yoctocolors";
 
 export class Logger {
 	prefixes = {
-		error: `${chalk.red("error")}${chalk.reset()}`,
-		event: `${chalk.magenta("event")}${chalk.reset()}`,
-		info: `${chalk.blue("info")}${chalk.reset()}`,
-		ready: `${chalk.green("ready")}${chalk.reset()}`,
+		error: `${red("error")}${reset()}`,
+		event: `${magenta("event")}${reset()}`,
+		info: `${blue("info")}${reset()}`,
+		ready: `${green("ready")}${reset()}`,
 	};
 
 	logError(message: string) {
@@ -29,7 +29,7 @@ export class Logger {
 	}
 
 	logExtensionError(s: string) {
-		this.logTimestamp(`${chalk.red(s)}${chalk.reset()}`);
+		this.logTimestamp(`${red(s)}${reset()}`);
 	}
 
 	logTimestamp(s: string) {
@@ -41,7 +41,7 @@ export class Logger {
 
 			if (i === lines.length - 1 && line.length === 0) continue;
 
-			console.log(`${chalk.gray(ts.padEnd(20))}${chalk.reset()} - ${line}`);
+			console.log(`${gray(ts.padEnd(20))}${reset()} - ${line}`);
 		}
 	}
 }
