@@ -1,10 +1,11 @@
-import React, { ReactNode } from "react";
+import React, { type ReactNode, useRef } from "react";
+import { randomUUID } from "node:crypto";
 import type { PathLike } from "node:fs";
 import { useNavigation } from "../hooks/index";
 import { Clipboard } from "../clipboard";
 import { type ImageLike, serializeProtoImage } from "../image";
 import type { Keyboard } from "../keyboard";
-import { Application, open, showInFileBrowser } from "../utils";
+import { type Application, open, showInFileBrowser } from "../utils";
 import type { Form } from "./form";
 import { Icon } from "../icon";
 import { closeMainWindow } from "../controls";
@@ -103,11 +104,15 @@ export type Quicklink = {
 	icon?: Icon;
 };
 
-const ActionRoot: React.FC<ActionProps> = (props) => {
-	const serializedIcon = props.icon
-		? serializeProtoImage(props.icon)
-		: props.icon;
-	return <action {...props} icon={serializedIcon} />;
+const ActionRoot: React.FC<ActionProps> = ({ icon, ...props }) => {
+	const serializedIcon = icon ? serializeProtoImage(icon) : icon;
+	const stableIdRef = useRef<string | undefined>(undefined);
+	if (!stableIdRef.current) {
+		stableIdRef.current = randomUUID();
+	}
+	return (
+		<action {...props} icon={serializedIcon} stableId={stableIdRef.current} />
+	);
 };
 
 const CopyToClipboard: React.FC<Action.CopyToClipboard.Props> = ({
@@ -166,11 +171,13 @@ const Open: React.FC<Action.Open.Props> = ({ target, app, ...props }) => {
 
 const OpenInBrowser: React.FC<Action.OpenInBrowser.Props> = ({
 	url,
+	title = "Open in Browser",
 	...props
 }) => {
 	return (
 		<ActionRoot
 			{...props}
+			title={title}
 			onAction={() => {
 				open(url);
 			}}
@@ -212,8 +219,13 @@ const SubmitForm: React.FC<Action.SubmitForm.Props> = ({
 	title = "Submit",
 	...props
 }) => {
+	const stableIdRef = useRef<string | undefined>(undefined);
+	if (!stableIdRef.current) {
+		stableIdRef.current = randomUUID();
+	}
 	const nativeProps: React.JSX.IntrinsicElements["action"] = {
 		...props,
+		stableId: stableIdRef.current,
 		title,
 		icon: props.icon ? serializeProtoImage(props.icon) : props.icon,
 		onAction: () => { },
@@ -227,8 +239,13 @@ const CreateQuicklink: React.FC<Action.CreateQuicklink.Props> = ({
 	quicklink,
 	...props
 }) => {
+	const stableIdRef = useRef<string | undefined>(undefined);
+	if (!stableIdRef.current) {
+		stableIdRef.current = randomUUID();
+	}
 	const nativeProps: React.JSX.IntrinsicElements["action"] = {
 		...props,
+		stableId: stableIdRef.current,
 		title,
 		type: "create-quicklink",
 		quicklink: {

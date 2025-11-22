@@ -432,6 +432,8 @@ public:
     endResetModel(policy);
   }
 
+  void scrollToTop();
+
   void beginResetModel() {
     m_model.clear();
     m_model.reserve(0xF);

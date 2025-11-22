@@ -62,39 +62,80 @@ ActionModel ActionPannelParser::parseAction(const QJsonObject &instance) {
 
   if (props.contains("quicklink")) { action.quicklink = props.value("quicklink").toObject(); }
 
+  if (props.contains("stableId")) { action.stableId = props.value("stableId").toString(); }
+
   return action;
 }
 
-ActionPannelSubmenuModel ActionPannelParser::parseActionPannelSubmenu(const QJsonObject &instance) {
+ActionPannelSubmenuPtr ActionPannelParser::parseActionPannelSubmenu(const QJsonObject &instance) {
   auto props = instance.value("props").toObject();
-  ActionPannelSubmenuModel model;
+  auto model = std::make_shared<ActionPannelSubmenuModel>();
 
-  model.title = props.value("title").toString();
-  model.onOpen = props.value("onOpen").toString();
-  model.onSearchTextChange = props.value("onSearchTextChange").toString();
+  // TODO: these are stored, but not used anywhere yet:
+  // onSearchTextChange, autoFocus, filtering, isLoading, throttle
 
-  if (props.contains("icon")) { model.icon = ImageModelParser().parse(props.value("icon")); }
+  model->title = props.value("title").toString();
+  model->onOpen = props.value("onOpen").toString();
+  model->onSearchTextChange = props.value("onSearchTextChange").toString();
+
+  if (props.contains("icon")) { model->icon = ImageModelParser().parse(props.value("icon")); }
+
+  if (props.contains("shortcut")) { model->shortcut = parseKeyboardShortcut(props.value("shortcut")); }
+
+  if (props.contains("autoFocus")) { model->autoFocus = props.value("autoFocus").toBool(); }
+
+  if (props.contains("filtering")) {
+    auto filteringValue = props.value("filtering");
+    if (filteringValue.isBool()) {
+      model->filtering = filteringValue.toBool();
+    } else if (filteringValue.isObject()) {
+      auto filteringObj = filteringValue.toObject();
+      ActionPannelSubmenuFiltering filtering;
+      if (filteringObj.contains("keepSectionOrder")) {
+        filtering.keepSectionOrder = filteringObj.value("keepSectionOrder").toBool();
+      }
+      model->filtering = filtering;
+    }
+  }
+
+  if (props.contains("isLoading")) { model->isLoading = props.value("isLoading").toBool(); }
+
+  if (props.contains("throttle")) { model->throttle = props.value("throttle").toBool(); }
+
+  if (props.contains("stableId")) { model->stableId = props.value("stableId").toString(); }
 
   for (const auto &child : instance.value("children").toArray()) {
     auto obj = child.toObject();
     auto type = obj.value("type").toString();
 
-    if (type == "action-panel-section") { model.children.push_back(parseActionPannelSection(obj)); }
-
-    if (type == "action") { model.children.push_back(parseAction(obj)); }
+    if (type == "action-panel-section") {
+      model->children.push_back(parseActionPannelSection(obj));
+    } else if (type == "action-panel-submenu") {
+      model->children.push_back(parseActionPannelSubmenu(obj));
+    } else if (type == "action") {
+      model->children.push_back(parseAction(obj));
+    }
   }
 
   return model;
 }
 
-ActionPannelSectionModel ActionPannelParser::parseActionPannelSection(const QJsonObject &instance) {
+ActionPannelSectionPtr ActionPannelParser::parseActionPannelSection(const QJsonObject &instance) {
   auto props = instance.value("props").toObject();
-  ActionPannelSectionModel model;
+  auto model = std::make_shared<ActionPannelSectionModel>();
+  if (props.contains("title")) { model->title = props.value("title").toString(); }
 
   for (const auto &child : instance.value("children").toArray()) {
-    auto action = parseAction(child.toObject());
+    auto obj = child.toObject();
+    auto type = obj.value("type").toString();
 
-    model.actions.push_back(action);
+    if (type == "action") {
+      auto action = parseAction(obj);
+      model->items.push_back(action);
+    } else if (type == "action-panel-submenu") {
+      auto submenu = parseActionPannelSubmenu(obj);
+      model->items.push_back(submenu);
+    }
   }
 
   return model;
@@ -109,6 +150,7 @@ ActionPannelModel ActionPannelParser::parse(const QJsonObject &instance) {
 
   pannel.dirty = instance.value("dirty").toBool(false);
   pannel.title = props["title"].toString();
+  if (props.contains("stableId")) { pannel.stableId = props.value("stableId").toString(); }
 
   for (const auto &ref : children) {
     auto obj = ref.toObject();
