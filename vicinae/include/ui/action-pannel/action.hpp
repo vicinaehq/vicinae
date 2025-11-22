@@ -46,7 +46,16 @@ public:
   bool isBoundTo(const QKeyEvent *event) {
     if (event->key() == Qt::Key_Enter) {
       qDebug() << "remapping numpad enter to return";
-      return isBoundTo(Keyboard::Shortcut(Qt::Key_Return, event->modifiers()));
+
+      /*
+       * The action is being compared with the modifier in Shortcut::operator==.
+       * Users may want to be able to use the numpad's Enter key like the (non-numpad) return key. (Issue 734)
+       * For that to work, we need to remove the KeypadModifier flag from the modifiers list.
+       */
+      Qt::KeyboardModifiers modifiers = event->modifiers();
+      modifiers ^= Qt::KeypadModifier;
+
+      return isBoundTo(Keyboard::Shortcut(Qt::Key_Return, modifiers));
     }
 
     return isBoundTo(Keyboard::Shortcut(event));
