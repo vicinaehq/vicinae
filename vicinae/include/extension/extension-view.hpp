@@ -86,33 +86,19 @@ class ExtensionSimpleView : public SimpleView {
             auto action = createActionFromModel(*actionModel);
             if (actionModel->shortcut) { action->addShortcut(actionModel->shortcut.value()); }
             panel->addAction(action);
-            hasActions = true;
           } else if (auto submenuPtr = std::get_if<ActionPannelSubmenuPtr>(&item)) {
             auto action = createSubmenuAction(*submenuPtr);
-            if (action) {
-              panel->addAction(action);
-              hasActions = true;
-            }
+            if (action) { panel->addAction(action); }
           }
         }
       } else if (auto actionModel = std::get_if<ActionModel>(&child)) {
         auto action = createActionFromModel(*actionModel);
         if (actionModel->shortcut) { action->addShortcut(actionModel->shortcut.value()); }
         panel->addAction(action);
-        hasActions = true;
       } else if (auto submenuPtr = std::get_if<ActionPannelSubmenuPtr>(&child)) {
         auto action = createSubmenuAction(*submenuPtr);
-        if (action) {
-          panel->addAction(action);
-          hasActions = true;
-        }
+        if (action) { panel->addAction(action); }
       }
-    }
-
-    if (!hasActions) {
-      qWarning() << "Submenu" << submenuModel->title << "has no actions";
-      panel->deleteLater();
-      return nullptr;
     }
 
     return panel;
