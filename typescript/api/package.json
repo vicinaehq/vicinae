@@ -34,7 +34,6 @@
 		"@oclif/plugin-plugins": "^5",
 		"@types/node": ">=18",
 		"@types/react": "19.0.10",
-		"chalk": "^5.6.0",
 		"chokidar": "^4.0.3",
 		"esbuild": "^0.25.2",
 		"react": "19.0.0",
