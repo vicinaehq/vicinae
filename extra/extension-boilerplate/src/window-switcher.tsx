@@ -16,7 +16,6 @@ const useWindowList = () => {
 	const [error, setError] = useState<Error | null>(null);
 
 	const refreshWindows = () => {
-		console.error(`refreshing windows2`);
 		setLoading(true);
 		wm.getWindows()
 			.then(setWindows)
