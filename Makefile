@@ -102,6 +102,11 @@ gen-emoji:
 	cd ./scripts/emoji && npm install && tsc --outDir dist && node dist/main.js
 .PHONY: gen-emoji
 
+copr-build:
+	chmod +x ./scripts/copr-build.sh
+	./scripts/copr-build.sh
+.PHONY: copr-build
+
 clean:
 	rm -rf $(BUILD_DIR)
 	$(RM) -rf ./typescript/api/node_modules
