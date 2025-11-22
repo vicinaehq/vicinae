@@ -493,6 +493,8 @@ set(SRCS
 
 	src/services/extension-registry/extension-registry.hpp
 	src/services/extension-registry/extension-registry.cpp
+	src/services/extension-registry/extension-manifest.hpp
+	src/services/extension-registry/extension-manifest.cpp
 
 	src/services/oauth/oauth-token-store.hpp
 	src/services/oauth/oauth-token-store.cpp

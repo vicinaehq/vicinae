@@ -1,56 +1,15 @@
 #pragma once
-#include "common.hpp"
-#include "preference.hpp"
 #include "services/local-storage/local-storage-service.hpp"
-#include "utils/expected.hpp"
+#include "extension-manifest.hpp"
 #include <filesystem>
 #include <qfilesystemwatcher.h>
 #include <qjsonobject.h>
+#include <expected>
 #include <qobject.h>
 #include <qtimer.h>
 #include <qtmetamacros.h>
 #include <vector>
 #include <QString>
-
-struct ManifestError {
-  QString m_message;
-
-  ManifestError(const QString &message) : m_message(message) {}
-};
-
-struct ExtensionManifest {
-  enum class Provenance { Local, Vicinae, Raycast };
-
-  struct Command {
-    QString name;
-    QString title;
-    QString description;
-    CommandMode mode;
-    std::vector<Preference> preferences;
-    std::vector<CommandArgument> arguments;
-    std::optional<QString> icon;
-    std::filesystem::path entrypoint;
-    bool defaultDisabled;
-    Provenance provenance;
-  };
-
-  std::filesystem::path path;
-  QString id;
-  QString name;
-  QString title;
-  QString description;
-  QString icon;
-  QString author;
-  std::vector<QString> categories;
-  std::vector<Preference> preferences;
-  std::vector<Command> commands;
-  bool needsRaycastApi = false;
-  Provenance provenance;
-
-  bool isFromRaycastStore() const { return provenance == ExtensionManifest::Provenance::Raycast; }
-  bool isFromVicinaeStore() const { return provenance == ExtensionManifest::Provenance::Vicinae; }
-  bool isLocal() const { return provenance == ExtensionManifest::Provenance::Local; }
-};
 
 class ExtensionRegistry : public QObject {
   Q_OBJECT
@@ -64,10 +23,17 @@ signals:
 
 public:
   /**
+   * List of directories scanned for extensions bundles, in order.
+   * An extension is uniquely identified by its directory name and the first occurence shadows
+   * all subsequent ones.
+   */
+  static std::vector<std::filesystem::path> extensionDirectories();
+
+  /**
    * Extension directory of the local user.
    * Store extensions are always installed in the local extension directory.
    */
-  static std::filesystem::path localExtensionDir();
+  static std::filesystem::path localExtensionDirectory();
 
   /**
    * Support directory used by extensions to store additional data at runtime.
@@ -91,30 +57,16 @@ public:
    */
   QFuture<bool> installFromZip(const QString &id, std::string data, std::function<void(bool)> cb = {});
 
-  tl::expected<ExtensionManifest, ManifestError> scanBundle(const std::filesystem::path &path);
-  std::vector<ExtensionManifest> scanAll();
-
-  void rescanBundle();
   bool isInstalled(const QString &id) const;
   bool uninstall(const QString &id);
-
   void requestScan() { emit extensionsChanged(); }
+  std::vector<ExtensionManifest> scanAll();
 
-  CommandArgument parseArgumentFromObject(const QJsonObject &obj);
-  Preference parsePreferenceFromObject(const QJsonObject &obj);
-  ExtensionManifest::Command parseCommandFromObject(const QJsonObject &obj);
-
-  /**
-   * List of directories scanned for extensions bundles, in order.
-   * An extension is uniquely identified by its directory name and the first occurence shadows
-   * all subsequent ones.
-   */
-  std::span<const std::filesystem::path> extensionDirs() const;
-
+private:
   QTimer m_rescanDebounce;
   LocalStorageService &m_storage;
   QFileSystemWatcher *m_watcher = new QFileSystemWatcher(this);
-  std::vector<std::filesystem::path> m_paths;
+  std::vector<std::filesystem::path> m_extDirs;
 
   // filename of every installed extension
   std::unordered_map<std::string, std::filesystem::path> m_installed;
