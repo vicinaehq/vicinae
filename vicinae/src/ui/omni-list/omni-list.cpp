@@ -218,6 +218,11 @@ qDebug() << "Widget" << vinfo.item->id() << "visible:" << widget->isVisible()
   this->visibleIndexRange = {startIndex, endIndex - startIndex};
 }
 
+void OmniList::scrollToTop() {
+  if (m_items.empty()) return;
+  scrollTo(0, ScrollBehaviour::ScrollAbsolute);
+}
+
 bool OmniList::isDividableContent(const ModelItem &item) {
   if (auto section = std::get_if<std::unique_ptr<Section>>(&item)) {
     return (*section)->layoutItems().size() > 0;
