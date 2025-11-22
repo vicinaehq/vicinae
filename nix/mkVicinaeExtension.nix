@@ -16,18 +16,20 @@
 lib.warnIf (pkgs != null)
   "mkVicinaeExtension: calling with pkgs is deprecated and no longer necessary"
   (
-    buildNpmPackage {
-      inherit pname version;
-      npmDeps = importNpmLock { npmRoot = src; };
-      npmConfigHook = importNpmLock.npmConfigHook;
-      # NOTE: using buildPhase because $out doesn't work with npmBuildFlags
-      buildPhase = "npm run build -- --out=$out";
-      dontNpmInstall = true;
-    }
-    // builtins.removeAttrs args [
-      "pname"
-      "version"
-      "name"
-      "pkgs"
-    ]
+    buildNpmPackage (
+      {
+        inherit pname version;
+        npmDeps = importNpmLock { npmRoot = src; };
+        npmConfigHook = importNpmLock.npmConfigHook;
+        # NOTE: using buildPhase because $out doesn't work with npmBuildFlags
+        buildPhase = "npm run build -- --out=$out";
+        dontNpmInstall = true;
+      }
+      // builtins.removeAttrs args [
+        "pname"
+        "version"
+        "name"
+        "pkgs"
+      ]
+    )
   )
