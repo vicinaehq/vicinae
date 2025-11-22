@@ -1,4 +1,4 @@
-import { Command, CommandHelp, Flags } from "@oclif/core";
+import { Command, Flags } from "@oclif/core";
 import * as chokidar from "chokidar";
 import * as esbuild from "esbuild";
 import { spawn } from "node:child_process";
@@ -13,7 +13,10 @@ import {
 import { open, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { Logger } from "../../utils/logger.js";
-import { extensionDataDir } from "../../utils/utils.js";
+import {
+	extensionDataDir,
+	extensionInternalSupportDir,
+} from "../../utils/utils.js";
 import { updateExtensionTypes } from "../../utils/extension-types.js";
 import { VicinaeClient } from "../../utils/vicinae.js";
 import ManifestSchema from "../../schemas/manifest.js";
@@ -94,14 +97,14 @@ export default class Develop extends Command {
 
 		const build = async (outDir: string) => {
 			/*
-      logger.logInfo("Started type checking in background thread");
-      typeCheck().then(({ error, ok }) => {
-        if (!ok) {
-          logger.logInfo(`Type checking error: ${error}`);
-        }
+	  logger.logInfo("Started type checking in background thread");
+	  typeCheck().then(({ error, ok }) => {
+		if (!ok) {
+		  logger.logInfo(`Type checking error: ${error}`);
+		}
 
-        logger.logInfo("Done type checking");
-      });
+		logger.logInfo("Done type checking");
+	  });
 	  */
 
 			const entryPoints = manifest.commands
@@ -185,10 +188,12 @@ export default class Develop extends Command {
 		const dataDir = extensionDataDir();
 		const id = `${manifest.name}`;
 		const extensionDir = join(dataDir, id);
-		const logFile = join(extensionDir, "dev.log");
-		const pidFile = join(extensionDir, "cli.pid");
+		const internalSupportDir = extensionInternalSupportDir(id);
+		const logFile = join(internalSupportDir, "dev.log");
+		const pidFile = join(internalSupportDir, "cli.pid");
 
 		mkdirSync(extensionDir, { recursive: true });
+		mkdirSync(internalSupportDir, { recursive: true });
 		writeFileSync(pidFile, `${process.pid}`);
 		writeFileSync(logFile, "");
 		await safeBuild(extensionDir);
