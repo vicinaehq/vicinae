@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { existsSync } from "node:fs";
+import { createWriteStream, existsSync } from "node:fs";
 import { isatty } from "node:tty";
 import { isMainThread, Worker } from "node:worker_threads";
 import { main as workerMain } from "./worker";
@@ -68,8 +68,9 @@ class Vicinae {
 				fsp.mkdir(supportInternal, { recursive: true }),
 			]);
 
-			const devLogPath = path.join(supportInternal, "dev.log");
-			const shouldLog = existsSync(devLogPath);
+			const stdoutLog = path.join(supportInternal, "stdout.txt");
+			const stderrLog = path.join(supportInternal, "stderr.txt");
+
 			const worker = new Worker(__filename, {
 				workerData: {
 					// the transpiled JS file to execute
@@ -91,6 +92,7 @@ class Vicinae {
 				},
 
 				stdout: true,
+				stderr: true,
 				env: {
 					...process.env,
 					NODE_ENV:
@@ -159,14 +161,15 @@ class Vicinae {
 				}
 			});
 
+			const stdoutStream = createWriteStream(stdoutLog);
+			const stderrStream = createWriteStream(stderrLog);
+
 			worker.stdout.on("data", async (buf: Buffer) => {
-				//console.error(buf.toString());
-				if (shouldLog) await fsp.appendFile(devLogPath, buf);
+				stdoutStream.write(buf);
 			});
 
 			worker.stderr.on("data", async (buf: Buffer) => {
-				if (shouldLog) await fsp.appendFile(devLogPath, buf);
-				else console.error(buf.toString());
+				stderrStream.write(buf);
 			});
 
 			worker.on("error", (error) => {
@@ -174,6 +177,8 @@ class Vicinae {
 			});
 
 			worker.on("exit", (_) => {
+				stdoutStream.close();
+				stderrStream.close();
 				this.workerMap.delete(sessionId);
 			});
 

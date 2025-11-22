@@ -24,6 +24,14 @@ export class Logger {
 		console.log(`${this.prefixes.ready.padEnd(15)} - ${message}`);
 	}
 
+	logExtensionOut(s: string) {
+		this.logTimestamp(s);
+	}
+
+	logExtensionError(s: string) {
+		this.logTimestamp(`${chalk.red(s)}${chalk.reset()}`);
+	}
+
 	logTimestamp(s: string) {
 		const ts = new Date().toJSON();
 		const lines = s.split("\n");
