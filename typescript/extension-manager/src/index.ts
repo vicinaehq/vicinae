@@ -1,14 +1,14 @@
-import { randomUUID } from "crypto";
-import { isMainThread, Worker } from "worker_threads";
+import { randomUUID } from "node:crypto";
+import { existsSync } from "node:fs";
+import { isatty } from "node:tty";
+import { isMainThread, Worker } from "node:worker_threads";
 import { main as workerMain } from "./worker";
-import { isatty } from "tty";
 import * as ipc from "./proto/ipc";
-import * as common from "./proto/common";
+import type * as common from "./proto/common";
 import * as manager from "./proto/manager";
 import * as extension from "./proto/extension";
-import { existsSync } from "fs";
-import { appendFile, mkdir, rename } from "fs/promises";
-import { join } from "path";
+import * as path from "node:path";
+import * as fsp from "node:fs/promises";
 
 class Vicinae {
 	private readonly workerMap = new Map<string, Worker>();
@@ -50,34 +50,26 @@ class Vicinae {
 		if (request.payload?.load) {
 			const load = request.payload.load;
 			const sessionId = randomUUID();
-			const supportPath = join(load.vicinaePath, "support", load.extensionId);
-			const assetsPath = join(
+			const supportPath = path.join(
 				load.vicinaePath,
-				"extensions/",
+				"support",
+				load.extensionId,
+			);
+			const supportInternal = path.join(supportPath, ".vicinae"); // for log stream, cli pid file...
+			const assetsPath = path.join(
+				load.vicinaePath,
+				"extensions",
 				load.extensionId,
 				"assets",
 			);
 
 			await Promise.all([
-				mkdir(supportPath, { recursive: true }),
-				mkdir(assetsPath, { recursive: true }),
+				fsp.mkdir(assetsPath, { recursive: true }),
+				fsp.mkdir(supportInternal, { recursive: true }),
 			]);
 
-			// move directories from old to new support path
-			// this should be removed in a future version
-			const oldSupportPath = join(
-				load.vicinaePath,
-				"extensions",
-				load.extensionId,
-				"support",
-			);
-			if (existsSync(oldSupportPath)) {
-				console.error(
-					`Moving support directory from ${oldSupportPath} to ${supportPath}`,
-				);
-				await rename(oldSupportPath, supportPath);
-			}
-
+			const devLogPath = path.join(supportInternal, "dev.log");
+			const shouldLog = existsSync(devLogPath);
 			const worker = new Worker(__filename, {
 				workerData: {
 					// the transpiled JS file to execute
@@ -127,7 +119,7 @@ class Vicinae {
 				console.error(`worker error`, error);
 			});
 
-			worker.on("online", () => {});
+			worker.on("online", () => { });
 
 			worker.on("message", (buf: Buffer) => {
 				try {
@@ -139,7 +131,6 @@ class Vicinae {
 					 */
 
 					if (request) {
-						//console.error('request of type', JSON.stringify(request, null, 2));
 						this.requestMap.set(request.requestId, worker);
 						this.writeMessage({ extensionRequest: { sessionId, request } });
 						return;
@@ -153,7 +144,7 @@ class Vicinae {
 
 						this.writeMessage({ extensionEvent: { sessionId, event } });
 					}
-				} catch (error) {
+				} catch (_) {
 					const crash = extension.CrashEventData.create({
 						text: `The extension manager process received a malformed request.\nThis most likely indicates a problem with Vicinae, not the extension.\nPlease file a bug report: https://github.com/vicinaehq/vicinae/issues/new`,
 					});
@@ -168,22 +159,13 @@ class Vicinae {
 				}
 			});
 
-			const devLogPath = join(
-				load.vicinaePath,
-				"extensions",
-				load.extensionId,
-				"dev.log",
-			);
-			const shouldLog =
-				load.env === manager.CommandEnv.Development && existsSync(devLogPath);
-
 			worker.stdout.on("data", async (buf: Buffer) => {
 				//console.error(buf.toString());
-				if (shouldLog) await appendFile(devLogPath, buf);
+				if (shouldLog) await fsp.appendFile(devLogPath, buf);
 			});
 
 			worker.stderr.on("data", async (buf: Buffer) => {
-				if (shouldLog) await appendFile(devLogPath, buf);
+				if (shouldLog) await fsp.appendFile(devLogPath, buf);
 				else console.error(buf.toString());
 			});
 
@@ -191,7 +173,7 @@ class Vicinae {
 				console.error(`worker error: ${error.name}:${error.message}`);
 			});
 
-			worker.on("exit", (code) => {
+			worker.on("exit", (_) => {
 				this.workerMap.delete(sessionId);
 			});
 

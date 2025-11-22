@@ -20,30 +20,6 @@ fs::path Omnicast::configDir() { return homeDir() / ".config" / "vicinae"; }
 fs::path Omnicast::commandSocketPath() { return runtimeDir() / "vicinae.sock"; }
 fs::path Omnicast::pidFile() { return runtimeDir() / "vicinae.pid"; }
 
-std::vector<fs::path> Omnicast::xdgConfigDirs() {
-  std::set<fs::path> seen;
-  std::vector<fs::path> paths;
-  fs::path configHome = homeDir() / ".config";
-
-  if (auto value = qEnvironmentVariable("XDG_CONFIG_HOME"); !value.isEmpty()) {
-    configHome = value.toStdString();
-  }
-
-  paths.emplace_back(configHome);
-  seen.insert(configHome);
-
-  for (const QString &dir : qEnvironmentVariable("XDG_CONFIG_DIRS").split(':')) {
-    fs::path path = dir.toStdString();
-
-    if (seen.contains(path)) { continue; }
-
-    seen.insert(path);
-    paths.emplace_back(path);
-  }
-
-  return paths;
-}
-
 std::vector<fs::path> Omnicast::systemPaths() {
   const char *path = getenv("PATH");
 

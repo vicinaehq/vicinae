@@ -45,16 +45,6 @@ std::filesystem::path configDir();
 
 std::vector<std::filesystem::path> systemPaths();
 
-/**
- * Reads XDG_CONFIG_HOME and XDG_CONFIG_DIRS and returns a vector such as
- * [XDG_CONFIG_HOME, ...XDG_CONFIG_DIRS].
- * Duplicate paths are automatically removed.
- * The order in which the paths have been scanned is preserved. For duplicate paths, only the
- * position of the first one is meaningful: subsequent occurences are fully ignored.
- */
-std::vector<std::filesystem::path> xdgConfigDirs();
-std::vector<std::filesystem::path> xdgDataDirs();
-
 static const int TOP_BAR_HEIGHT = 60;
 static const int STATUS_BAR_HEIGHT = 40;
 
