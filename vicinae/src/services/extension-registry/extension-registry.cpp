@@ -100,8 +100,20 @@ fs::path ExtensionRegistry::supportDirectory() { return xdgpp::dataHome() / "vic
 fs::path ExtensionRegistry::supportDirectory(const std::string &id) { return supportDirectory() / id; }
 
 std::vector<fs::path> ExtensionRegistry::extensionDirectories() {
-  return xdgpp::dataDirs() | std::views::transform([](auto &&p) { return p / "vicinae" / "extensions"; }) |
-         std::ranges::to<std::vector>();
+  std::vector<fs::path> paths;
+  auto dd = xdgpp::dataDirs();
+  auto local = localExtensionDirectory();
+
+  paths.reserve(dd.size() + 1);
+  paths.push_back(local); // we always consider local directory first, no matter what's
+                          // in XDG_DATA_DIRS
+
+  for (const auto &dir : dd) {
+    fs::path extDir = dir / "vicinae" / "extensions";
+    if (extDir != local) paths.emplace_back(extDir);
+  }
+
+  return paths;
 }
 
 std::vector<ExtensionManifest> ExtensionRegistry::scanAll() {
