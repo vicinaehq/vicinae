@@ -5,23 +5,31 @@
 #include <QJsonArray>
 #include "services/extension-registry/extension-registry.hpp"
 #include "utils/utils.hpp"
+#include "xdgpp/env/env.hpp"
 #include "zip/unzip.hpp"
 #include <QtConcurrent/qtconcurrentrun.h>
 #include <filesystem>
+#include <malloc.h>
 #include <qfilesystemwatcher.h>
 #include <QJsonParseError>
 #include <qfuturewatcher.h>
 #include <qlogging.h>
 #include <qobjectdefs.h>
+#include <ranges>
 
 namespace fs = std::filesystem;
 
 ExtensionRegistry::ExtensionRegistry(LocalStorageService &storage) : m_storage(storage) {
   using namespace std::chrono_literals;
 
+  m_paths = xdgpp::dataDirs() | std::views::transform([](auto &&p) { return p / "vicinae" / "extensions"; }) |
+            std::ranges::to<std::vector>();
   m_rescanDebounce.setInterval(100ms);
   m_rescanDebounce.setSingleShot(true);
-  m_watcher->addPath(extensionDir().c_str());
+
+  for (const auto &dir : extensionDirs()) {
+    m_watcher->addPath(dir.c_str());
+  }
 
   // XXX: we currently do not support removing extensions by filesystem removal
   // An extension should be removed from within Vicinae directly so that other cleanup tasks
@@ -29,8 +37,6 @@ ExtensionRegistry::ExtensionRegistry(LocalStorageService &storage) : m_storage(s
   connect(m_watcher, &QFileSystemWatcher::directoryChanged, this, [this]() { m_rescanDebounce.start(); });
   connect(&m_rescanDebounce, &QTimer::timeout, this, [this]() { requestScan(); });
 }
-
-fs::path ExtensionRegistry::extensionDir() const { return Omnicast::dataDir() / "extensions"; }
 
 CommandArgument ExtensionRegistry::parseArgumentFromObject(const QJsonObject &obj) {
   CommandArgument arg;
@@ -64,7 +70,7 @@ CommandArgument ExtensionRegistry::parseArgumentFromObject(const QJsonObject &ob
 
 QFuture<bool> ExtensionRegistry::installFromZip(const QString &id, std::string data,
                                                 std::function<void(bool)> cb) {
-  fs::path extractDir = extensionDir() / id.toStdString();
+  fs::path extractDir = localExtensionDir() / id.toStdString();
   auto future = QtConcurrent::run([id, data, extractDir]() {
     Unzipper unzip = std::string_view(data);
 
@@ -96,16 +102,27 @@ QFuture<bool> ExtensionRegistry::installFromZip(const QString &id, std::string d
 }
 
 bool ExtensionRegistry::uninstall(const QString &id) {
-  fs::path bundle = extensionDir() / id.toStdString();
+  std::string sid = id.toStdString();
+  auto it = m_installed.find(sid);
+
+  if (it == m_installed.end()) {
+    qWarning() << "Tried to uninstall extension with id" << id << "but could not find any installation of it";
+    return false;
+  }
+
+  auto &bundle = it->second;
   std::error_code ec;
 
-  if (!fs::is_directory(bundle, ec)) return false;
+  if (!fs::is_directory(bundle, ec)) {
+    qDebug() << "could not remove extension bundle at" << bundle << "not a directory";
+    return false;
+  }
 
-  fs::remove_all(bundle);
+  fs::remove_all(bundle, ec);
+  fs::remove_all(supportDirectory(sid), ec);
+  m_installed.erase(it);
   m_storage.clearNamespace(id);
-
   emit extensionUninstalled(id);
-  // emit extensionsChanged();
 
   return true;
 }
@@ -184,28 +201,54 @@ ExtensionManifest::Command ExtensionRegistry::parseCommandFromObject(const QJson
   return command;
 }
 
+fs::path ExtensionRegistry::localExtensionDir() { return xdgpp::dataHome() / "vicinae" / "extensions"; }
+
+fs::path ExtensionRegistry::supportDirectory() { return xdgpp::dataHome() / "vicinae" / "support"; }
+
+fs::path ExtensionRegistry::supportDirectory(const std::string &id) { return supportDirectory() / id; }
+
+std::span<const fs::path> ExtensionRegistry::extensionDirs() const { return m_paths; }
+
 std::vector<ExtensionManifest> ExtensionRegistry::scanAll() {
   std::error_code ec;
   std::vector<ExtensionManifest> manifests;
 
-  for (const auto &entry : fs::directory_iterator(extensionDir(), ec)) {
-    if (!entry.is_directory(ec)) continue;
+  manifests.reserve(m_installed.size());
+  m_installed.clear();
 
-    auto manifest = scanBundle(entry.path());
+  for (const fs::path &path : extensionDirs()) {
+    for (const auto &entry : fs::directory_iterator(path, ec)) {
+      if (!entry.is_directory(ec)) continue;
 
-    if (!manifest) {
-      qCritical() << "Failed to load bundle at" << entry.path().c_str() << manifest.error().m_message;
-      continue;
+      fs::path path = entry.path();
+      std::string filename = path.filename();
+
+      if (filename.starts_with('.')) continue;
+
+      if (auto it = m_installed.find(filename); it != m_installed.end()) {
+        qWarning() << path.c_str()
+                   << "shadowed by extension with same directory name in higher precedence directory"
+                   << it->second;
+        continue;
+      }
+
+      auto manifest = scanBundle(entry.path());
+
+      if (!manifest) {
+        qCritical() << "Failed to load bundle at" << entry.path().c_str() << manifest.error().m_message;
+        continue;
+      }
+
+      m_installed.insert({filename, path});
+      manifests.emplace_back(manifest.value());
     }
-
-    manifests.emplace_back(manifest.value());
   }
 
   return manifests;
 }
 
 bool ExtensionRegistry::isInstalled(const QString &id) const {
-  return fs::is_directory(extensionDir() / id.toStdString());
+  return m_installed.contains(id.toStdString());
 }
 
 tl::expected<ExtensionManifest, ManifestError> ExtensionRegistry::scanBundle(const fs::path &path) {

@@ -63,6 +63,23 @@ signals:
   void extensionsChanged() const;
 
 public:
+  /**
+   * Extension directory of the local user.
+   * Store extensions are always installed in the local extension directory.
+   */
+  static std::filesystem::path localExtensionDir();
+
+  /**
+   * Support directory used by extensions to store additional data at runtime.
+   * This location is not related to the extension installation directory in any way.
+   */
+  static std::filesystem::path supportDirectory();
+
+  /**
+   * Support directory for extension with ID `id`.
+   */
+  static std::filesystem::path supportDirectory(const std::string &id);
+
   ExtensionRegistry(LocalStorageService &storage);
 
   /**
@@ -76,6 +93,7 @@ public:
 
   tl::expected<ExtensionManifest, ManifestError> scanBundle(const std::filesystem::path &path);
   std::vector<ExtensionManifest> scanAll();
+
   void rescanBundle();
   bool isInstalled(const QString &id) const;
   bool uninstall(const QString &id);
@@ -85,9 +103,19 @@ public:
   CommandArgument parseArgumentFromObject(const QJsonObject &obj);
   Preference parsePreferenceFromObject(const QJsonObject &obj);
   ExtensionManifest::Command parseCommandFromObject(const QJsonObject &obj);
-  std::filesystem::path extensionDir() const;
+
+  /**
+   * List of directories scanned for extensions bundles, in order.
+   * An extension is uniquely identified by its directory name and the first occurence shadows
+   * all subsequent ones.
+   */
+  std::span<const std::filesystem::path> extensionDirs() const;
 
   QTimer m_rescanDebounce;
   LocalStorageService &m_storage;
   QFileSystemWatcher *m_watcher = new QFileSystemWatcher(this);
+  std::vector<std::filesystem::path> m_paths;
+
+  // filename of every installed extension
+  std::unordered_map<std::string, std::filesystem::path> m_installed;
 };
