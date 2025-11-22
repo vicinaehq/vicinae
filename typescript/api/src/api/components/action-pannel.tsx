@@ -23,6 +23,10 @@ export namespace ActionPanel {
 			title: string;
 			icon?: Image.ImageLike;
 			shortcut?: Keyboard.Shortcut;
+			autoFocus?: boolean;
+			filtering?: boolean | { keepSectionOrder: boolean };
+			isLoading?: boolean;
+			throttle?: boolean;
 			onOpen?: () => void;
 			onSearchTextChange?: (text: string) => void;
 			children: ReactNode;

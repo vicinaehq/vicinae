@@ -9,6 +9,7 @@
 #include "ui/views/simple-view.hpp"
 #include "common-actions.hpp"
 #include "create-quicklink-command.hpp"
+#include "action-panel/action-panel.hpp"
 #include <qboxlayout.h>
 #include <qevent.h>
 #include <qjsonarray.h>
@@ -17,6 +18,7 @@
 #include <qstackedlayout.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
+#include <functional>
 
 class ExtensionSimpleView : public SimpleView {
   Q_OBJECT
@@ -67,6 +69,80 @@ class ExtensionSimpleView : public SimpleView {
     });
   }
 
+  ActionPanelView *createSubmenuView(const ActionPannelSubmenuPtr &submenuModel) {
+    if (!submenuModel) return nullptr;
+    auto panel = new ActionPanelStaticListView;
+    panel->setTitle(submenuModel->title);
+
+    bool hasActions = false;
+    for (const auto &child : submenuModel->children) {
+      if (auto sectionPtr = std::get_if<ActionPannelSectionPtr>(&child)) {
+        auto section = sectionPtr ? *sectionPtr : nullptr;
+        if (!section) continue;
+        panel->addSection(section->title);
+
+        for (const auto &item : section->items) {
+          if (auto actionModel = std::get_if<ActionModel>(&item)) {
+            auto action = createActionFromModel(*actionModel);
+            if (actionModel->shortcut) { action->addShortcut(actionModel->shortcut.value()); }
+            panel->addAction(action);
+            hasActions = true;
+          } else if (auto submenuPtr = std::get_if<ActionPannelSubmenuPtr>(&item)) {
+            auto action = createSubmenuAction(*submenuPtr);
+            if (action) {
+              panel->addAction(action);
+              hasActions = true;
+            }
+          }
+        }
+      } else if (auto actionModel = std::get_if<ActionModel>(&child)) {
+        auto action = createActionFromModel(*actionModel);
+        if (actionModel->shortcut) { action->addShortcut(actionModel->shortcut.value()); }
+        panel->addAction(action);
+        hasActions = true;
+      } else if (auto submenuPtr = std::get_if<ActionPannelSubmenuPtr>(&child)) {
+        auto action = createSubmenuAction(*submenuPtr);
+        if (action) {
+          panel->addAction(action);
+          hasActions = true;
+        }
+      }
+    }
+
+    if (!hasActions) {
+      qWarning() << "Submenu" << submenuModel->title << "has no actions";
+      panel->deleteLater();
+      return nullptr;
+    }
+
+    return panel;
+  }
+
+  AbstractAction *createSubmenuAction(const ActionPannelSubmenuPtr &submenuModel) {
+    if (!submenuModel) return nullptr;
+
+    std::optional<ImageURL> icon;
+    if (submenuModel->icon) { icon = ImageURL(*submenuModel->icon); }
+
+    std::function<void()> onOpen = nullptr;
+    if (!submenuModel->onOpen.isEmpty()) {
+      onOpen = [this, handler = submenuModel->onOpen]() {
+        if (!handler.isEmpty()) { notify(handler, {}); }
+      };
+    }
+
+    auto submenuCopy = submenuModel;
+    auto createSubmenuFn = [this, submenuCopy]() -> ActionPanelView * {
+      return createSubmenuView(submenuCopy);
+    };
+
+    auto action = new SubmenuAction(submenuModel->title, icon, createSubmenuFn, onOpen);
+
+    if (submenuModel->shortcut) { action->addShortcut(submenuModel->shortcut.value()); }
+
+    return action;
+  }
+
   /**
    * Called when a submit action is executed.
    * This function should return the submission data that is going to be sent
@@ -98,24 +174,41 @@ public:
     ActionPanelSectionState *outsideSection = nullptr;
 
     for (const auto &item : model.children) {
-      if (auto section = std::get_if<ActionPannelSectionModel>(&item)) {
+      if (auto sectionPtr = std::get_if<ActionPannelSectionPtr>(&item)) {
+        auto section = sectionPtr ? *sectionPtr : nullptr;
+        if (!section) continue;
         outsideSection = nullptr;
 
         auto sec = panel->createSection(section->title);
 
-        for (const auto &model : section->actions) {
-          auto action = createActionFromModel(model);
+        for (const auto &sectionItem : section->items) {
+          if (auto actionModel = std::get_if<ActionModel>(&sectionItem)) {
+            auto action = createActionFromModel(*actionModel);
 
-          if (idx == 0) { action->setPrimary(true); }
+            if (idx == 0) { action->setPrimary(true); }
 
-          if (idx < m_defaultActionShortcuts.size()) {
-            action->addShortcut(m_defaultActionShortcuts.at(idx));
-            ++idx;
+            if (idx < m_defaultActionShortcuts.size()) {
+              action->addShortcut(m_defaultActionShortcuts.at(idx));
+              ++idx;
+            }
+
+            if (actionModel->shortcut) { action->addShortcut(actionModel->shortcut.value()); }
+
+            sec->addAction(action);
+          } else if (auto submenuPtr = std::get_if<ActionPannelSubmenuPtr>(&sectionItem)) {
+            auto action = createSubmenuAction(*submenuPtr);
+
+            if (!action) continue;
+
+            if (idx == 0) { action->setPrimary(true); }
+
+            if (idx < m_defaultActionShortcuts.size()) {
+              action->setShortcut(m_defaultActionShortcuts.at(idx));
+              ++idx;
+            }
+
+            sec->addAction(action);
           }
-
-          if (model.shortcut) { action->addShortcut(model.shortcut.value()); }
-
-          sec->addAction(action);
         }
       }
 
@@ -132,6 +225,23 @@ public:
         }
 
         if (actionModel->shortcut) { action->addShortcut(actionModel->shortcut.value()); }
+
+        outsideSection->addAction(action);
+      }
+
+      if (auto submenuPtr = std::get_if<ActionPannelSubmenuPtr>(&item)) {
+        if (!outsideSection) { outsideSection = panel->createSection(); }
+
+        auto action = createSubmenuAction(*submenuPtr);
+
+        if (!action) continue;
+
+        if (idx == 0) { action->setPrimary(true); }
+
+        if (idx < m_defaultActionShortcuts.size()) {
+          action->setShortcut(m_defaultActionShortcuts.at(idx));
+          ++idx;
+        }
 
         outsideSection->addAction(action);
       }
