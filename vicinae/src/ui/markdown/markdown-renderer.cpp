@@ -625,6 +625,24 @@ void MarkdownRenderer::insertTopLevelNode(cmark_node *node) {
   _lastNodeType = type;
 }
 
+cmark_node *MarkdownRenderer::parseMarkdown(const QString &markdown) {
+  auto buf = markdown.toUtf8();
+
+  // Enable GFM core extensions (tables, etc.) and parse
+  cmark_gfm_core_extensions_ensure_registered();
+  cmark_parser *parser = cmark_parser_new(CMARK_OPT_DEFAULT);
+
+  if (cmark_syntax_extension *tableExt = cmark_find_syntax_extension("table")) {
+    cmark_parser_attach_syntax_extension(parser, tableExt);
+  }
+
+  cmark_parser_feed(parser, buf.data(), buf.size());
+  cmark_node *root = cmark_parser_finish(parser);
+  cmark_parser_free(parser);
+
+  return root;
+}
+
 QTextEdit *MarkdownRenderer::textEdit() const { return _textEdit; }
 
 QStringView MarkdownRenderer::markdown() const { return _markdown; }
@@ -662,18 +680,7 @@ void MarkdownRenderer::appendMarkdown(QStringView markdown) {
     fragment = markdown.toString();
   }
 
-  auto buf = fragment.toUtf8();
-
-  // Enable GFM core extensions (tables, etc.) and parse
-  cmark_gfm_core_extensions_ensure_registered();
-  cmark_parser *parser = cmark_parser_new(CMARK_OPT_DEFAULT);
-
-  if (cmark_syntax_extension *tableExt = cmark_find_syntax_extension("table")) {
-    cmark_parser_attach_syntax_extension(parser, tableExt);
-  }
-
-  cmark_parser_feed(parser, buf.data(), buf.size());
-  cmark_node *root = cmark_parser_finish(parser);
+  cmark_node *root = parseMarkdown(fragment);
   cmark_node *node = cmark_node_first_child(root);
   cmark_node *lastNode = nullptr;
   std::vector<TopLevelBlock> topLevelBlocks;
@@ -724,7 +731,6 @@ void MarkdownRenderer::appendMarkdown(QStringView markdown) {
   }
 
   cmark_node_free(root);
-  cmark_parser_free(parser);
 
   QTextCursor newCursor = _textEdit->textCursor();
 
