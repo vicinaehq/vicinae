@@ -156,6 +156,8 @@ GridModel GridModelParser::parse(const QJsonObject &instance) {
       model.items.push_back(section);
     }
 
+    if (type == "dropdown") { model.searchBarAccessory = DropdownModel::fromJson(childObj); }
+
     if (type == "empty-view") { model.emptyView = EmptyViewModelParser().parse(childObj); }
 
     ++index;

@@ -3,6 +3,7 @@
 #include "extend/empty-view-model.hpp"
 #include "extend/image-model.hpp"
 #include "extend/pagination-model.hpp"
+#include "extend/dropdown-model.hpp"
 #include "ui/image/image.hpp"
 #include "ui/omni-grid/grid-item-content-widget.hpp"
 #include <qjsonobject.h>
@@ -40,6 +41,8 @@ struct GridSectionModel {
 
 using GridChild = std::variant<GridItemViewModel, GridSectionModel>;
 
+using GridSearchBarAccessory = std::variant<DropdownModel>;
+
 struct GridModel {
   bool isLoading;
   bool filtering;
@@ -60,9 +63,7 @@ struct GridModel {
   std::optional<EmptyViewModel> emptyView;
   std::optional<QString> selectedItemId;
   std::optional<PaginationModel> pagination;
-
-  // not implemented, placeholder for now
-  std::optional<int> searchBarAccessory;
+  std::optional<GridSearchBarAccessory> searchBarAccessory;
 };
 
 class GridModelParser {

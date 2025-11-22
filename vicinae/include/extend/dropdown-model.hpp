@@ -1,3 +1,4 @@
+#pragma once
 #include "extend/image-model.hpp"
 #include <optional>
 #include <qjsonobject.h>
