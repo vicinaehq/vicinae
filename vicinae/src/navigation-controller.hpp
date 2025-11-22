@@ -223,6 +223,7 @@ signals:
   void viewPoped(const BaseView *view);
   void actionPanelVisibilityChanged(bool visible);
   void actionsChanged(const ActionPanelState &actions) const;
+  void submenuRequested(ActionPanelView *view);
   void windowVisiblityChanged(bool visible);
   void searchTextSelected() const;
   void searchTextTampered(const QString &text) const;

@@ -123,6 +123,11 @@ declare module "react" {
 			"action-panel-submenu": {
 				title: string;
 				icon?: SerializedImageLike;
+				shortcut?: Keyboard.Shortcut | Keyboard.Shortcut.Common;
+				autoFocus?: boolean;
+				filtering?: boolean | { keepSectionOrder: boolean };
+				isLoading?: boolean;
+				throttle?: boolean;
 				onOpen?: () => void;
 				onSearchTextChange?: (text: string) => void;
 				children?: React.ReactNode;

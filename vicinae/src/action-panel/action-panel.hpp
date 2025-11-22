@@ -307,6 +307,7 @@ public:
     }
 
     m_list->endResetModel(OmniList::SelectFirst);
+    m_list->scrollToTop();
   }
 
   void buildFiltered(const QString &query) {
@@ -324,6 +325,7 @@ public:
     }
 
     m_list->endResetModel(OmniList::SelectFirst);
+    m_list->scrollToTop();
   }
 
   void onSearchChanged(const QString &text) override {

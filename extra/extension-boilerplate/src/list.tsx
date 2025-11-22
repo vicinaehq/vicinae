@@ -1,5 +1,4 @@
-import React from "react";
-import { List, ActionPanel, Action, showToast, Icon } from "@vicinae/api";
+import { Action, ActionPanel, Icon, List, showToast } from "@vicinae/api";
 
 export default function SimpleList() {
 	return (
@@ -24,6 +23,64 @@ export default function SimpleList() {
 										showToast({ title: "Hello from custom action" })
 									}
 								/>
+
+								{/* Sub Menu */}
+								<ActionPanel.Submenu
+									title="More actions"
+									icon={Icon.Stars}
+									shortcut={{ modifiers: ["shift"], key: "m" }}
+									onOpen={() =>
+										showToast({ title: `More actions for ${fruit.name}` })
+									}
+								>
+									{/* Sections inside Sub Menu */}
+									<ActionPanel.Section title="Recipe ideas">
+										{/* Sub Menu inside Section */}
+										<ActionPanel.Submenu title="Smoothies" icon={Icon.Hammer}>
+											{["Breakfast boost", "Green refresh"].map((recipe) => (
+												<Action
+													key={recipe}
+													title={recipe}
+													icon={Icon.Leaf}
+													onAction={() =>
+														showToast({
+															title: `${recipe} smoothie recipe selected with fruit ${fruit.name}`,
+														})
+													}
+												/>
+											))}
+										</ActionPanel.Submenu>
+
+										{/* Multiple Sub Menus in a Section */}
+										<ActionPanel.Submenu title="Snacks" icon={Icon.Box}>
+											{["Fruit skewer", "Yogurt parfait"].map((recipe) => (
+												<Action
+													key={recipe}
+													title={recipe}
+													icon={Icon.Snowflake}
+													onAction={() =>
+														showToast({
+															title: `${recipe} snack recipe selected with fruit ${fruit.name}`,
+														})
+													}
+												/>
+											))}
+										</ActionPanel.Submenu>
+									</ActionPanel.Section>
+
+									{/* Regular action in a Sub Menu */}
+									<ActionPanel.Section title="Fun">
+										<Action
+											title="Random fun fact"
+											icon={Icon.LightBulb}
+											onAction={() =>
+												showToast({
+													title: `Random ${fruit.name} fact: ${randomFact(fruit.name)}`,
+												})
+											}
+										/>
+									</ActionPanel.Section>
+								</ActionPanel.Submenu>
 							</ActionPanel>
 						}
 					/>
@@ -126,3 +183,13 @@ const fruits: Fruit[] = [
 		keywords: ["tart", "Granny Smith", "baking", "crisp", "sour"],
 	},
 ];
+
+const randomFact = (fruitName: string) => {
+	const facts = [
+		(name: string) => `${name} are tasty!`,
+		(name: string) => `People love ${name.toLowerCase()}s.`,
+		(name: string) => `${name}s are cool.`,
+	];
+
+	return facts[Math.floor(Math.random() * facts.length)](fruitName);
+};
