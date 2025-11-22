@@ -166,11 +166,13 @@ const Open: React.FC<Action.Open.Props> = ({ target, app, ...props }) => {
 
 const OpenInBrowser: React.FC<Action.OpenInBrowser.Props> = ({
 	url,
+	title = "Open in Browser",
 	...props
 }) => {
 	return (
 		<ActionRoot
 			{...props}
+			title={title}
 			onAction={() => {
 				open(url);
 			}}
