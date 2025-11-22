@@ -19,12 +19,15 @@
 #include <qtmetamacros.h>
 #include <qwidget.h>
 #include <functional>
+#include <unordered_map>
 
 class ExtensionSimpleView : public SimpleView {
   Q_OBJECT
 
   ExtensionCommandController *m_controller;
   std::vector<Keyboard::Shortcut> m_defaultActionShortcuts;
+  // Store latest submenu models keyed by stableId for dynamic updates
+  std::unordered_map<QString, ActionPannelSubmenuPtr> m_submenuModels;
 
   AbstractAction *createActionFromModel(const ActionModel &model) {
     if (model.type == "create-quicklink") {
@@ -50,10 +53,12 @@ class ExtensionSimpleView : public SimpleView {
         actionIcon = ImageURL::builtin("link");
       }
 
-      return new PushViewAction(model.title, view, actionIcon);
+      auto action = new PushViewAction(model.title, view, actionIcon);
+      if (model.stableId) { action->setId(*model.stableId); }
+      return action;
     }
 
-    return new StaticAction(model.title, model.icon, [this, model]() {
+    auto action = new StaticAction(model.title, model.icon, [this, model]() {
       qDebug() << "notify action" << model.onAction;
       notify(model.onAction, {});
 
@@ -67,14 +72,17 @@ class ExtensionSimpleView : public SimpleView {
         }
       }
     });
+
+    if (model.stableId) { action->setId(*model.stableId); }
+    return action;
   }
 
   ActionPanelView *createSubmenuView(const ActionPannelSubmenuPtr &submenuModel) {
     if (!submenuModel) return nullptr;
     auto panel = new ActionPanelStaticListView;
     panel->setTitle(submenuModel->title);
+    if (submenuModel->stableId) { panel->setId(*submenuModel->stableId); }
 
-    bool hasActions = false;
     for (const auto &child : submenuModel->children) {
       if (auto sectionPtr = std::get_if<ActionPannelSectionPtr>(&child)) {
         auto section = sectionPtr ? *sectionPtr : nullptr;
@@ -107,6 +115,9 @@ class ExtensionSimpleView : public SimpleView {
   AbstractAction *createSubmenuAction(const ActionPannelSubmenuPtr &submenuModel) {
     if (!submenuModel) return nullptr;
 
+    // Store the latest model for this submenu (will be updated on each setActionPanel call)
+    if (submenuModel->stableId) { m_submenuModels[*submenuModel->stableId] = submenuModel; }
+
     std::optional<ImageURL> icon;
     if (submenuModel->icon) { icon = ImageURL(*submenuModel->icon); }
 
@@ -117,12 +128,21 @@ class ExtensionSimpleView : public SimpleView {
       };
     }
 
-    auto submenuCopy = submenuModel;
-    auto createSubmenuFn = [this, submenuCopy]() -> ActionPanelView * {
-      return createSubmenuView(submenuCopy);
+    // Lambda looks up the latest model by stableId when called, ensuring we always use fresh data
+    QString stableId = submenuModel->stableId.value_or(QString());
+    auto createSubmenuFn = [this, stableId]() -> ActionPanelView * {
+      // Always get the latest model from the map (updated on each setActionPanel call)
+      // This ensures submenu content reflects the latest React props
+      if (!stableId.isEmpty()) {
+        auto it = m_submenuModels.find(stableId);
+        if (it != m_submenuModels.end()) { return createSubmenuView(it->second); }
+      }
+      qWarning() << "Submenu model not found in map for stableId:" << stableId;
+      return nullptr;
     };
 
     auto action = new SubmenuAction(submenuModel->title, icon, createSubmenuFn, onOpen);
+    if (submenuModel->stableId) { action->setId(*submenuModel->stableId); }
 
     if (submenuModel->shortcut) { action->addShortcut(submenuModel->shortcut.value()); }
 
@@ -155,7 +175,46 @@ public:
   void setExtensionCommandController(ExtensionCommandController *controller) { m_controller = controller; }
 
   void setActionPanel(const ActionPannelModel &model) {
+    // Updates submenu models map with latest data before creating actions
+    // This ensures refreshOpenSubmenus() will use the latest models
+    std::function<void(const ActionPannelSubmenuPtr &)> updateSubmenuModel =
+        [&](const ActionPannelSubmenuPtr &submenu) {
+          if (submenu && submenu->stableId) {
+            m_submenuModels[*submenu->stableId] = submenu;
+            // Recursively update nested submenus (both direct children and within sections)
+            for (const auto &child : submenu->children) {
+              if (auto nestedSubmenuPtr = std::get_if<ActionPannelSubmenuPtr>(&child)) {
+                updateSubmenuModel(*nestedSubmenuPtr);
+              } else if (auto sectionPtr = std::get_if<ActionPannelSectionPtr>(&child)) {
+                // Also check for submenus within sections
+                if (*sectionPtr) {
+                  for (const auto &sectionItem : (*sectionPtr)->items) {
+                    if (auto submenuInSection = std::get_if<ActionPannelSubmenuPtr>(&sectionItem)) {
+                      updateSubmenuModel(*submenuInSection);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        };
+
+    for (const auto &item : model.children) {
+      if (auto submenuPtr = std::get_if<ActionPannelSubmenuPtr>(&item)) {
+        updateSubmenuModel(*submenuPtr);
+      } else if (auto sectionPtr = std::get_if<ActionPannelSectionPtr>(&item)) {
+        for (const auto &sectionItem : (*sectionPtr)->items) {
+          if (auto submenuPtr = std::get_if<ActionPannelSubmenuPtr>(&sectionItem)) {
+            updateSubmenuModel(*submenuPtr);
+          }
+        }
+      }
+    }
+
     auto panel = std::make_unique<ActionPanelState>();
+    panel->setDirty(model.dirty);
+    panel->setTitle(model.title);
+    if (model.stableId) { panel->setId(*model.stableId); }
     size_t idx = 0;
     ActionPanelSectionState *outsideSection = nullptr;
 

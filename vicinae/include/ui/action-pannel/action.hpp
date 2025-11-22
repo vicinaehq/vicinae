@@ -76,6 +76,8 @@ public:
     return m_id;
   }
 
+  void setId(const QString &id) const { m_id = id; }
+
   virtual QString title() const { return m_title; }
   virtual std::optional<ImageURL> icon() const { return m_icon; }
 
@@ -169,6 +171,10 @@ public:
 
   ActionPanelView *createSubmenu() const override {
     if (m_onOpen) { m_onOpen(); }
+    return createSubmenuStealthily();
+  }
+
+  ActionPanelView *createSubmenuStealthily() const {
     if (m_createSubmenuFn) { return m_createSubmenuFn(); }
     return nullptr;
   }

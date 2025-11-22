@@ -81,6 +81,9 @@ public:
   void setTitle(const QString &title) { m_title = title; }
   QString title() const { return m_title; }
 
+  void setId(const QString &id) { m_id = id; }
+  QString id() const { return m_id; }
+
   void setShortcutPreset(ShortcutPreset preset) { m_defaultShortcuts = shortcutsForPreset(preset); }
 
   ActionPanelState() { setShortcutPreset(ShortcutPreset::None); }
@@ -90,6 +93,9 @@ public:
 
     return std::accumulate(m_sections.begin(), m_sections.end(), 0, acc);
   }
+
+  void setDirty(bool value) { m_dirty = value; }
+  bool dirty() const { return m_dirty; }
 
 private:
   void computePrimaryAction() {
@@ -145,7 +151,9 @@ private:
   }
 
   bool m_autoSelectPrimary = true;
+  bool m_dirty = true;
   QString m_title;
+  QString m_id;
   std::vector<std::unique_ptr<ActionPanelSectionState>> m_sections;
   std::vector<Keyboard::Shortcut> m_defaultShortcuts;
   AbstractAction *m_primary = nullptr;

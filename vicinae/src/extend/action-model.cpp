@@ -62,6 +62,8 @@ ActionModel ActionPannelParser::parseAction(const QJsonObject &instance) {
 
   if (props.contains("quicklink")) { action.quicklink = props.value("quicklink").toObject(); }
 
+  if (props.contains("stableId")) { action.stableId = props.value("stableId").toString(); }
+
   return action;
 }
 
@@ -99,6 +101,8 @@ ActionPannelSubmenuPtr ActionPannelParser::parseActionPannelSubmenu(const QJsonO
   if (props.contains("isLoading")) { model->isLoading = props.value("isLoading").toBool(); }
 
   if (props.contains("throttle")) { model->throttle = props.value("throttle").toBool(); }
+
+  if (props.contains("stableId")) { model->stableId = props.value("stableId").toString(); }
 
   for (const auto &child : instance.value("children").toArray()) {
     auto obj = child.toObject();
@@ -146,6 +150,7 @@ ActionPannelModel ActionPannelParser::parse(const QJsonObject &instance) {
 
   pannel.dirty = instance.value("dirty").toBool(false);
   pannel.title = props["title"].toString();
+  if (props.contains("stableId")) { pannel.stableId = props.value("stableId").toString(); }
 
   for (const auto &ref : children) {
     auto obj = ref.toObject();

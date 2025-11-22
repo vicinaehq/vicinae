@@ -31,6 +31,7 @@ struct ActionModel {
   std::optional<Keyboard::Shortcut> shortcut;
   QString type;
   QJsonObject quicklink;
+  std::optional<QString> stableId;
 };
 
 struct ActionPannelSectionModel;
@@ -69,6 +70,7 @@ struct ActionPannelSubmenuModel {
   QString onOpen;
   QString onSearchTextChange;
   QList<ActionPannelSubmenuChild> children;
+  std::optional<QString> stableId;
 };
 
 using ActionPannelItem = std::variant<ActionModel, ActionPannelSectionPtr, ActionPannelSubmenuPtr>;
@@ -77,6 +79,7 @@ struct ActionPannelModel {
   bool dirty;
   QString title;
   std::vector<ActionPannelItem> children;
+  std::optional<QString> stableId;
 };
 
 class ActionPannelParser {
