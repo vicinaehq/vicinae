@@ -393,6 +393,14 @@ void NavigationController::executeAction(AbstractAction *action) {
 
   if (!state) return;
 
+  if (action->isSubmenu()) {
+    if (auto view = action->createSubmenu()) {
+      openActionPanel();
+      emit submenuRequested(view);
+    }
+    return;
+  }
+
   if (auto cmpl = state->completer; cmpl && action->isPrimary()) {
     for (int i = 0; i != cmpl->args.size() && i != cmpl->values.size(); ++i) {
       const auto &arg = cmpl->args[i];

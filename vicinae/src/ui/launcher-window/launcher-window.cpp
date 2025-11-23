@@ -86,9 +86,26 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
   });
 
   connect(m_actionPanel, &ActionPanelV2Widget::actionActivated, this, [this](AbstractAction *action) {
+    if (action->isSubmenu()) {
+      // For submenu actions, push the submenu view instead of executing
+      auto submenuView = action->createSubmenu();
+      if (submenuView) {
+        m_actionPanel->pushView(submenuView);
+        // Keep the panel open for submenus
+        return;
+      }
+    }
+
+    // For regular actions, execute and close the panel
     m_ctx.navigation->executeAction(action);
     m_ctx.navigation->closeActionPanel();
   });
+
+  connect(m_ctx.navigation.get(), &NavigationController::submenuRequested, this,
+          [this](ActionPanelView *view) {
+            if (!view) return;
+            m_actionPanel->pushView(view);
+          });
 
   connect(m_hudDismissTimer, &QTimer::timeout, this, [this]() { m_hud->hide(); });
 
@@ -102,8 +119,8 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
               m_actionVeil->show();
               m_actionPanel->show();
             } else {
-              m_actionVeil->hide();
-              m_actionPanel->hide();
+              m_actionVeil->close();
+              m_actionPanel->close();
               if (m_focusWidget) {
                 QTimer::singleShot(0, [this]() {
                   m_focusWidget->setFocus();
