@@ -50,7 +50,7 @@ export namespace FileSearch {
 		query: string,
 		_: FileSearch.SearchOptions = {},
 	): Promise<FileSearch.FileInfo[]> {
-		const res = await bus.turboRequest("fileSearch.search", { query });
+		const res = await bus.request("fileSearch.search", { query });
 
 		return res.unwrap().files;
 	}
