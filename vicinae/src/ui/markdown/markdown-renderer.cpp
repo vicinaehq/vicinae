@@ -535,17 +535,12 @@ void MarkdownRenderer::parseAndInsertHtmlImages(const QString &html) {
   QRegularExpression attrRegex(R"(\s+(src|width|height)=(["'])(.*?)\2)",
                                QRegularExpression::CaseInsensitiveOption);
 
-  // Extract and insert all images, then remove image tags from HTML
-  QString remainingContent = html;
-  std::vector<std::pair<int, int>> imgTagPositions; // start, length pairs
-
   // Find all <img> tags in the input
   auto tagIter = imgTagRegex.globalMatch(html);
 
   while (tagIter.hasNext()) {
     QRegularExpressionMatch tagMatch = tagIter.next();
     QString imgTag = tagMatch.captured(0);
-    imgTagPositions.push_back({tagMatch.capturedStart(0), tagMatch.capturedLength(0)});
 
     QString src;
 
@@ -567,23 +562,6 @@ void MarkdownRenderer::parseAndInsertHtmlImages(const QString &html) {
     }
 
     if (!src.isEmpty()) { insertImageFromUrl(QUrl(src), imgSize); }
-  }
-
-  // Remove <img> tags from end to start to preserve positions
-  for (int i = imgTagPositions.size() - 1; i >= 0; --i) {
-    remainingContent.remove(imgTagPositions[i].first, imgTagPositions[i].second);
-  }
-
-  // If there's remaining content after removing image tags, parse it as markdown
-  QString trimmed = remainingContent.trimmed();
-  if (!trimmed.isEmpty()) {
-    cmark_node *root = parseMarkdown(trimmed);
-    cmark_node *node = cmark_node_first_child(root);
-    while (node) {
-      insertTopLevelNode(node);
-      node = cmark_node_next(node);
-    }
-    cmark_node_free(root);
   }
 }
 
@@ -647,24 +625,6 @@ void MarkdownRenderer::insertTopLevelNode(cmark_node *node) {
   _lastNodeType = type;
 }
 
-cmark_node *MarkdownRenderer::parseMarkdown(const QString &markdown) {
-  auto buf = markdown.toUtf8();
-
-  // Enable GFM core extensions (tables, etc.) and parse
-  cmark_gfm_core_extensions_ensure_registered();
-  cmark_parser *parser = cmark_parser_new(CMARK_OPT_DEFAULT);
-
-  if (cmark_syntax_extension *tableExt = cmark_find_syntax_extension("table")) {
-    cmark_parser_attach_syntax_extension(parser, tableExt);
-  }
-
-  cmark_parser_feed(parser, buf.data(), buf.size());
-  cmark_node *root = cmark_parser_finish(parser);
-  cmark_parser_free(parser);
-
-  return root;
-}
-
 QTextEdit *MarkdownRenderer::textEdit() const { return _textEdit; }
 
 QStringView MarkdownRenderer::markdown() const { return _markdown; }
@@ -702,7 +662,18 @@ void MarkdownRenderer::appendMarkdown(QStringView markdown) {
     fragment = markdown.toString();
   }
 
-  cmark_node *root = parseMarkdown(fragment);
+  auto buf = fragment.toUtf8();
+
+  // Enable GFM core extensions (tables, etc.) and parse
+  cmark_gfm_core_extensions_ensure_registered();
+  cmark_parser *parser = cmark_parser_new(CMARK_OPT_DEFAULT);
+
+  if (cmark_syntax_extension *tableExt = cmark_find_syntax_extension("table")) {
+    cmark_parser_attach_syntax_extension(parser, tableExt);
+  }
+
+  cmark_parser_feed(parser, buf.data(), buf.size());
+  cmark_node *root = cmark_parser_finish(parser);
   cmark_node *node = cmark_node_first_child(root);
   cmark_node *lastNode = nullptr;
   std::vector<TopLevelBlock> topLevelBlocks;
@@ -753,6 +724,7 @@ void MarkdownRenderer::appendMarkdown(QStringView markdown) {
   }
 
   cmark_node_free(root);
+  cmark_parser_free(parser);
 
   QTextCursor newCursor = _textEdit->textCursor();
 
