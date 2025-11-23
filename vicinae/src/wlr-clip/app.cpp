@@ -35,9 +35,9 @@ void Clipman::primarySelection(DataDevice &device, DataOffer &offer) {
 }
 
 void Clipman::selection(DataDevice &device, DataOffer &offer) {
-  // preferred image type from least to most preferred
-  static const std::vector<std::string_view> preferredImageTypes = {"image/gif", "image/webp", "image/jpg",
-                                                                    "image/jpeg", "image/png"};
+  // preferred image type from most to least preferred
+  static const std::vector<std::string_view> preferredImageTypes = {"image/gif", "image/png", "image/jpeg",
+                                                                    "image/jpg", "image/webp"};
   std::set<std::string> filteredMimes;
   auto filter = [](const std::string &mime) {
     return Wayland::isFlagMime(mime) || Wayland::isDataMime(mime);
@@ -49,9 +49,9 @@ void Clipman::selection(DataDevice &device, DataOffer &offer) {
     if (mime.starts_with("image/")) {
       if (savedImageType) {
         int currentPriority =
-            std::distance(preferredImageTypes.begin(), std::ranges::find(preferredImageTypes, mime));
-        int savedPriority = std::distance(preferredImageTypes.begin(),
-                                          std::ranges::find(preferredImageTypes, *savedImageType));
+            -std::distance(preferredImageTypes.begin(), std::ranges::find(preferredImageTypes, mime));
+        int savedPriority = -std::distance(preferredImageTypes.begin(),
+                                           std::ranges::find(preferredImageTypes, *savedImageType));
 
         if (currentPriority <= savedPriority) continue;
 
