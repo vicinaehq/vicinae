@@ -13,15 +13,13 @@ bool SystemdPowerManager::sleep() const { return m_iface->call("Sleep", false).e
 bool SystemdPowerManager::suspend() { return m_iface->call("Suspend", false).errorMessage().isEmpty(); }
 bool SystemdPowerManager::hibernate() { return m_iface->call("Hibernate", false).errorMessage().isEmpty(); }
 bool SystemdPowerManager::lock() {
-  auto session = getUserSession();
-
-  if (!session) { return false; }
-
-  return m_iface->call("LockSession", session->id).errorMessage().isEmpty();
+  if (!m_session) { return false; }
+  return m_iface->call("LockSession", m_session->id).errorMessage().isEmpty();
 }
 
 bool SystemdPowerManager::logout() {
-  return m_iface->call("TerminateUser", getuid()).errorMessage().isEmpty();
+  if (!m_session) { return false; }
+  return m_iface->call("TerminateSession", m_session->id).errorMessage().isEmpty();
 }
 
 bool SystemdPowerManager::softReboot() {
@@ -36,8 +34,8 @@ bool SystemdPowerManager::canSleep() const { return can("CanSleep"); }
 bool SystemdPowerManager::canHibernate() const { return can("CanHibernate"); }
 bool SystemdPowerManager::canReboot() const { return can("CanReboot"); }
 bool SystemdPowerManager::canSoftReboot() const { return canReboot(); }
-bool SystemdPowerManager::canLock() const { return true; }
-bool SystemdPowerManager::canLogOut() const { return true; }
+bool SystemdPowerManager::canLock() const { return m_session.has_value(); }
+bool SystemdPowerManager::canLogOut() const { return m_session.has_value(); }
 
 QString SystemdPowerManager::id() const { return "systemd"; }
 
@@ -48,9 +46,11 @@ SystemdPowerManager::SystemdPowerManager() {
   if (!m_iface->isValid()) {
     qWarning() << "Failed to create D-Bus interface:" << m_iface->lastError().message();
   }
+
+  m_session = getUserSession();
 }
 
-std::optional<SystemdPowerManager::Session> SystemdPowerManager::getUserSession() {
+std::optional<SystemdPowerManager::Session> SystemdPowerManager::getUserSession() const {
   auto reply = m_iface->call("ListSessions");
   auto args = reply.arguments();
 

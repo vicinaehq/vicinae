@@ -46,13 +46,14 @@ public:
 
 private:
   bool can(const QString &method) const;
-  std::optional<Session> getUserSession();
+  std::optional<Session> getUserSession() const;
 
   static constexpr const char *DBUS_SERVICE = "org.freedesktop.login1";
   static constexpr const char *DBUS_PATH = "/org/freedesktop/login1";
   static constexpr const char *DBUS_INTERFACE = "org.freedesktop.login1.Manager";
 
   std::unique_ptr<QDBusInterface> m_iface;
+  std::optional<Session> m_session;
 };
 
 const QDBusArgument &operator>>(const QDBusArgument &argument, SystemdPowerManager::SessionList &session);
