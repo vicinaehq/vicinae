@@ -40,21 +40,20 @@ public:
   bool canSoftReboot() const override;
   bool canLock() const override;
   bool canLogOut() const override;
+
+  std::optional<uint32_t> currentSessionId() const;
   QString id() const override;
 
   SystemdPowerManager();
 
 private:
-  bool can(const QString &method) const;
-  std::optional<Session> getUserSession() const;
-
   static constexpr const char *DBUS_SERVICE = "org.freedesktop.login1";
   static constexpr const char *DBUS_PATH = "/org/freedesktop/login1";
   static constexpr const char *DBUS_INTERFACE = "org.freedesktop.login1.Manager";
 
-  std::unique_ptr<QDBusInterface> m_iface;
-  std::optional<Session> m_session;
-};
+  bool can(const QString &method) const;
+  std::optional<uint> getUserSessionId() const;
 
-const QDBusArgument &operator>>(const QDBusArgument &argument, SystemdPowerManager::SessionList &session);
-const QDBusArgument &operator>>(const QDBusArgument &argument, SystemdPowerManager::Session &session);
+  std::unique_ptr<QDBusInterface> m_iface;
+  std::optional<uint32_t> m_sessionId;
+};
