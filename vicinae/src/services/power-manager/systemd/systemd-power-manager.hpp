@@ -1,6 +1,7 @@
 #pragma once
 #include <qdbusargument.h>
 #include <qdbusinterface.h>
+#include <qdbusmessage.h>
 #include <qdbusmetatype.h>
 #include <unistd.h>
 #include <vector>
@@ -44,9 +45,20 @@ public:
   std::optional<uint32_t> currentSessionId() const;
   QString id() const override;
 
+  QDBusMessage logindCall(const QString &method) const { return createInterface()->call(method); };
+
+  template <typename... Args> QDBusMessage logindCall(const QString &method, Args &&...args) const {
+    return createInterface()->call(method, args...);
+  }
+
   SystemdPowerManager();
 
 private:
+  std::unique_ptr<QDBusInterface> createInterface() const {
+    return std::make_unique<QDBusInterface>(DBUS_SERVICE, DBUS_PATH, DBUS_INTERFACE,
+                                            QDBusConnection::systemBus());
+  }
+
   static constexpr const char *DBUS_SERVICE = "org.freedesktop.login1";
   static constexpr const char *DBUS_PATH = "/org/freedesktop/login1";
   static constexpr const char *DBUS_INTERFACE = "org.freedesktop.login1.Manager";
@@ -54,6 +66,5 @@ private:
   bool can(const QString &method) const;
   std::optional<uint> getUserSessionId() const;
 
-  std::unique_ptr<QDBusInterface> m_iface;
   std::optional<uint32_t> m_sessionId;
 };
