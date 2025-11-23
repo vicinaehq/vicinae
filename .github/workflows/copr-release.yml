@@ -1,0 +1,57 @@
+name: COPR Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  copr-build:
+    runs-on: [self-hosted, Linux, X64, prod]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure build tools are installed (dnf)
+        run: |
+          set -euo pipefail
+          if command -v dnf >/dev/null 2>&1; then
+            sudo dnf install -y rpm-build rpmdevtools redhat-rpm-config copr-cli fedpkg spectool
+          fi
+
+      - name: Build SRPM and trigger COPR build
+        env:
+          COPR_PROJECT: vicinae
+        run: |
+          set -euo pipefail
+
+          ROOT_DIR="$(pwd)"
+          PACKAGING_DIR="${ROOT_DIR}/packaging/fedora"
+          SPEC_FILE="${PACKAGING_DIR}/vicinae.spec"
+          SRPM_DIR="${ROOT_DIR}/.srpm"
+
+          mkdir -p "${SRPM_DIR}"
+
+          echo "[copr-release] Fetching remote sources defined in ${SPEC_FILE}..."
+          spectool -g -R "${SPEC_FILE}" --define "_sourcedir ${PACKAGING_DIR}"
+
+          echo "[copr-release] Building SRPM..."
+          rpmbuild -bs "${SPEC_FILE}" \
+            --define "_sourcedir ${PACKAGING_DIR}" \
+            --define "_specdir ${PACKAGING_DIR}" \
+            --define "_srcrpmdir ${SRPM_DIR}"
+
+          LATEST_SRPM="$(ls -t "${SRPM_DIR}"/vicinae-*.src.rpm | head -n 1)"
+          if [[ -z "${LATEST_SRPM:-}" ]]; then
+            echo "[copr-release] ERROR: No SRPM found in ${SRPM_DIR}" >&2
+            exit 1
+          fi
+
+          echo "[copr-release] Triggering COPR build for project '${COPR_PROJECT}' with SRPM: ${LATEST_SRPM}"
+          copr build "${COPR_PROJECT}" "${LATEST_SRPM}"
+
+          echo "[copr-release] Build submitted. Use 'copr list-builds ${COPR_PROJECT}' to inspect builds."

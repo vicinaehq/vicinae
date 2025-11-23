@@ -4,7 +4,9 @@
 #include <qevent.h>
 #include <qobjectdefs.h>
 #include <qpixmap.h>
+#ifdef WAYLAND_LAYER_SHELL
 #include <LayerShellQt/Window>
+#endif
 #include <qtimer.h>
 #include <qwidget.h>
 
