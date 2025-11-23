@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { createWriteStream, existsSync } from "node:fs";
+import * as fs from "node:fs";
 import { isatty } from "node:tty";
 import { isMainThread, Worker } from "node:worker_threads";
 import { main as workerMain } from "./worker";
@@ -10,8 +10,15 @@ import * as extension from "./proto/extension";
 import * as path from "node:path";
 import * as fsp from "node:fs/promises";
 
+const WORKER_GRACE_PERIOD_MS = 10_000;
+
+type WorkerInfo = {
+	worker: Worker;
+	pendingTermination?: NodeJS.Timeout;
+};
+
 class Vicinae {
-	private readonly workerMap = new Map<string, Worker>();
+	private readonly workerMap = new Map<string, WorkerInfo>();
 	private readonly requestMap = new Map<string, Worker>();
 	private currentMessage: { data: Buffer } = {
 		data: Buffer.from(""),
@@ -102,22 +109,25 @@ class Vicinae {
 				},
 			});
 
-			this.workerMap.set(sessionId, worker);
+			const workerInfo: WorkerInfo = { worker };
+
+			this.workerMap.set(sessionId, workerInfo);
 
 			worker.on("messageerror", (error) => {
 				console.error(error);
 			});
 
-			worker.on("error", (error) => {
-				const crash = extension.CrashEventData.create({
-					text: this.formatError(error),
+			const sendCrash = (text: string) => {
+				this.writeMessage({
+					extensionEvent: {
+						sessionId,
+						event: { id: randomUUID(), crash: { text } },
+					},
 				});
-				const event = ipc.QualifiedExtensionEvent.create({
-					sessionId,
-					event: { id: randomUUID(), crash },
-				});
+			};
 
-				this.writeMessage({ extensionEvent: event });
+			worker.on("error", (error) => {
+				sendCrash(this.formatError(error));
 				console.error(`worker error`, error);
 			});
 
@@ -147,22 +157,15 @@ class Vicinae {
 						this.writeMessage({ extensionEvent: { sessionId, event } });
 					}
 				} catch (_) {
-					const crash = extension.CrashEventData.create({
-						text: `The extension manager process received a malformed request.\nThis most likely indicates a problem with Vicinae, not the extension.\nPlease file a bug report: https://github.com/vicinaehq/vicinae/issues/new`,
-					});
-					const event = ipc.QualifiedExtensionEvent.create({
-						sessionId,
-						event: { id: randomUUID(), crash },
-					});
-
-					this.writeMessage({ extensionEvent: event });
-					this.workerMap.delete(sessionId);
+					sendCrash(
+						`The extension manager process received a malformed request.\nThis most likely indicates a problem with Vicinae, not the extension.\nPlease file a bug report: https://github.com/vicinaehq/vicinae/issues/new`,
+					);
 					worker.terminate();
 				}
 			});
 
-			const stdoutStream = createWriteStream(stdoutLog);
-			const stderrStream = createWriteStream(stderrLog);
+			const stdoutStream = fs.createWriteStream(stdoutLog);
+			const stderrStream = fs.createWriteStream(stderrLog);
 
 			worker.stdout.on("data", async (buf: Buffer) => {
 				stdoutStream.write(buf);
@@ -176,7 +179,16 @@ class Vicinae {
 				console.error(`worker error: ${error.name}:${error.message}`);
 			});
 
-			worker.on("exit", (_) => {
+			worker.on("exit", (code) => {
+				console.error(`Worker exited with code ${code}`);
+
+				// any exit is considered as a crash if not flagged for termination
+				if (!workerInfo.pendingTermination) {
+					sendCrash(`Extension exited prematurely with exit code ${code}`);
+				} else {
+					clearTimeout(workerInfo.pendingTermination);
+				}
+
 				stdoutStream.close();
 				stderrStream.close();
 				this.workerMap.delete(sessionId);
@@ -187,18 +199,24 @@ class Vicinae {
 
 		if (request.payload?.unload) {
 			const { sessionId } = request.payload.unload;
-			const worker = this.workerMap.get(sessionId);
+			const workerInfo = this.workerMap.get(sessionId);
 
-			if (!worker) {
+			if (!workerInfo) {
 				return this.respondError(request.requestId, {
 					errorText: `No running command with session ${sessionId}`,
 				});
 			}
 
-			if (worker) {
-				this.workerMap.delete(sessionId);
-				await worker.terminate();
-			}
+			workerInfo.worker.postMessage(
+				ipc.ExtensionMessage.encode({
+					event: { id: "shutdown", generic: { json: "[]" } },
+				}).finish(),
+			);
+
+			// force kill after 10s
+			workerInfo.pendingTermination = setTimeout(() => {
+				workerInfo.worker.terminate();
+			}, WORKER_GRACE_PERIOD_MS);
 
 			return this.respond(request.requestId, { ack: {} });
 		}
@@ -219,7 +237,7 @@ class Vicinae {
 			const worker = this.workerMap.get(extensionEvent.sessionId);
 
 			if (worker) {
-				worker.postMessage(
+				worker.worker.postMessage(
 					ipc.ExtensionMessage.encode({ event: extensionEvent.event }).finish(),
 				);
 			}
@@ -229,7 +247,7 @@ class Vicinae {
 			const worker = this.workerMap.get(extensionResponse.sessionId);
 
 			if (worker) {
-				worker.postMessage(
+				worker.worker.postMessage(
 					ipc.ExtensionMessage.encode({
 						response: extensionResponse.response,
 					}).finish(),

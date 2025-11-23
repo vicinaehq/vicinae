@@ -25,8 +25,11 @@ const useWindowList = () => {
 
 	useEffect(() => {
 		refreshWindows();
-		const id = setInterval(refreshWindows, REFRESH_INTERVAL_MS);
-		return () => clearInterval(id);
+		const interval = setInterval(refreshWindows, REFRESH_INTERVAL_MS);
+		return () => {
+			console.log("clearing interval");
+			clearInterval(interval);
+		};
 	}, []);
 
 	return { windows, loading, error };
@@ -58,6 +61,7 @@ export default function WindowSwitcher() {
 						actions={
 							<ActionPanel>
 								<Action title="Focus window" onAction={() => win.focus()} />
+								<Action title="Focus window" onAction={() => process.exit(0)} />
 							</ActionPanel>
 						}
 					/>
