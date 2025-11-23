@@ -1,26 +1,11 @@
-#include "app.hpp"
-#include <cctype>
 #include <iostream>
 #include <iomanip>
 #include <ranges>
 #include <string>
 #include <unistd.h>
+#include "app.hpp"
 #include "proto/wlr-clipboard.pb.h"
-
-// such as STRING, UTF8_STRING, MULTIPLE...
-static bool isLegacyContentType(const std::string &str) {
-  if (str.starts_with("-x") || str.starts_with("-X")) return false;
-
-  auto isOnlyUpperCase = [](const std::string &str) {
-    return std::ranges::all_of(str, [](char c) -> bool {
-      if (std::isalpha(c)) return std::isupper(c);
-      return true;
-    });
-  };
-  bool isMimeType = str.find('/') != std::string::npos;
-
-  return isOnlyUpperCase(str) && !isMimeType;
-}
+#include "wayland/mime.hpp"
 
 void Clipman::global(WaylandRegistry &reg, uint32_t name, const char *interface, uint32_t version) {
   if (strcmp(interface, zwlr_data_control_manager_v1_interface.name) == 0) {
@@ -50,25 +35,29 @@ void Clipman::primarySelection(DataDevice &device, DataOffer &offer) {
 }
 
 void Clipman::selection(DataDevice &device, DataOffer &offer) {
-
-  // for now, we apply a simplistic filtering so that we ignore
-  // all the X11 clipboard types (STRING, UTF8_STRING and the like)
-  // we also limit to one image/* type, as it is common for applications
-  // to offer the same content as many different image types.
-  // we keep all text/* types as well as other types, ignoring any encoding part.
+  // preferred image type from most to least preferred
+  static const std::vector<std::string_view> preferredImageTypes = {"image/gif", "image/png", "image/jpeg",
+                                                                    "image/jpg", "image/webp"};
   std::set<std::string> filteredMimes;
-  bool hasImage = false;
-
-  auto stripEncoding = [](const std::string &mime) {
-    if (auto pos = mime.find(';'); pos != std::string::npos) { return mime.substr(0, pos); }
-    return mime;
+  auto filter = [](const std::string &mime) {
+    return Wayland::isFlagMime(mime) || Wayland::isDataMime(mime);
   };
-  auto filter = std::not_fn(isLegacyContentType);
+
+  std::optional<std::string> savedImageType;
 
   for (const auto &mime : offer.mimes() | std::views::filter(filter)) {
     if (mime.starts_with("image/")) {
-      if (hasImage) continue;
-      hasImage = true;
+      if (savedImageType) {
+        int currentPriority =
+            -std::distance(preferredImageTypes.begin(), std::ranges::find(preferredImageTypes, mime));
+        int savedPriority = -std::distance(preferredImageTypes.begin(),
+                                           std::ranges::find(preferredImageTypes, *savedImageType));
+
+        if (currentPriority <= savedPriority) continue;
+
+        filteredMimes.erase(*savedImageType);
+      }
+      savedImageType = mime;
     }
     filteredMimes.insert(mime);
   }
@@ -93,9 +82,8 @@ void Clipman::selection(DataDevice &device, DataOffer &offer) {
 
   for (const auto &mime : filteredMimes) {
     auto dataOffer = selection.add_offers();
-
-    dataOffer->set_data(offer.receive(mime));
     dataOffer->set_mime_type(mime);
+    if (!Wayland::isFlagMime(mime)) { dataOffer->set_data(offer.receive(mime)); }
   }
 
   std::string data;
@@ -127,7 +115,6 @@ void Clipman::start() {
 
 Clipman *Clipman::instance() {
   static Clipman app;
-
   return &app;
 }
 
