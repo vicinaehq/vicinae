@@ -534,8 +534,14 @@ bool ClipboardService::copySelection(const ClipboardSelection &selection,
   for (const auto &offer : selection.offers) {
     if (offer.mimeType == "application/x-qt-image") continue; // we handle that ourselves
     if (offer.mimeType.startsWith("image/") && !mimeData->hasImage()) {
-      // this will automatically offer the image type as any format supported by QT
-      mimeData->setImageData(QImage::fromData(offer.data));
+      auto img = QImage::fromData(offer.data);
+
+      if (img.isNull()) {
+        qWarning() << offer.mimeType << "could not be converted to valid image format";
+        mimeData->setData(offer.mimeType, offer.data);
+      } else {
+        mimeData->setImageData(img);
+      }
     } else {
       mimeData->setData(offer.mimeType, offer.data);
     }
