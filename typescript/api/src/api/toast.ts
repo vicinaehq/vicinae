@@ -122,7 +122,7 @@ export class Toast {
 	}
 
 	async update() {
-		await bus.turboRequest("ui.showToast", {
+		await bus.request("ui.showToast", {
 			id: this.id,
 			title: this.title,
 			style: this.styleMap[this.style],
@@ -161,7 +161,7 @@ export class Toast {
 			};
 		}
 
-		await bus.turboRequest("ui.showToast", {
+		await bus.request("ui.showToast", {
 			id: this.id,
 			title: payload.title,
 			style: this.styleMap[payload.style ?? Toast.Style.Success],
@@ -174,7 +174,7 @@ export class Toast {
 	 * @returns A Promise that resolves when toast is hidden.
 	 */
 	async hide(): Promise<void> {
-		await bus.turboRequest("ui.hideToast", { id: this.id });
+		await bus.request("ui.hideToast", { id: this.id });
 	}
 }
 

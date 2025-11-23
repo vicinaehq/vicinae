@@ -40,7 +40,7 @@ export const showHUD = async (
 	title: string,
 	options?: { clearRootSearch?: boolean; popToRootType?: PopToRootType },
 ) => {
-	bus.turboRequest("ui.showHud", {
+	bus.request("ui.showHud", {
 		text: title,
 		clearRootSearch: options?.clearRootSearch ?? false,
 		popToRoot:
@@ -60,7 +60,7 @@ export const closeMainWindow = async (
 	const { clearRootSearch = false, popToRootType = PopToRootType.Default } =
 		options;
 
-	await bus.turboRequest("ui.closeMainWindow", {
+	await bus.request("ui.closeMainWindow", {
 		clearRootSearch,
 		popToRoot: popToRootProtoMap[popToRootType],
 	});
@@ -70,7 +70,7 @@ export const closeMainWindow = async (
  * @category Launcher Window
  */
 export const clearSearchBar = async () => {
-	await bus.turboRequest("ui.setSearchText", { text: "" });
+	await bus.request("ui.setSearchText", { text: "" });
 };
 
 /**
@@ -81,7 +81,7 @@ export const clearSearchBar = async () => {
  * @category Launcher Window
  */
 export const getSelectedText = async () => {
-	const response = await bus.turboRequest("ui.getSelectedText", {});
+	const response = await bus.request("ui.getSelectedText", {});
 
 	if (!response.ok) {
 		throw new Error(`Failed to get selected text`);
@@ -96,7 +96,7 @@ export const getSelectedText = async () => {
  * @category Launcher Window
  */
 export const popToRoot = async (options?: { clearSearchBar?: boolean }) => {
-	await bus.turboRequest("ui.popToRoot", {
+	await bus.request("ui.popToRoot", {
 		clearSearchBar: options?.clearSearchBar ?? false,
 	});
 };

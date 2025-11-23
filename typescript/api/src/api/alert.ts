@@ -58,7 +58,7 @@ export const confirmAlert = async (
 			},
 		});
 
-		bus.turboRequest("ui.confirmAlert", req).then((res) => {
+		bus.request("ui.confirmAlert", req).then((res) => {
 			if (!res.ok) return false;
 
 			if (res.value.confirmed) {
