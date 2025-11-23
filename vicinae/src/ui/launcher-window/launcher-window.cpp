@@ -119,8 +119,8 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
               m_actionVeil->show();
               m_actionPanel->show();
             } else {
-              m_actionVeil->hide();
-              m_actionPanel->hide();
+              m_actionVeil->close();
+              m_actionPanel->close();
               if (m_focusWidget) {
                 QTimer::singleShot(0, [this]() {
                   m_focusWidget->setFocus();
