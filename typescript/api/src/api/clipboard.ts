@@ -52,7 +52,7 @@ export namespace Clipboard {
 		text: string | number | Clipboard.Content,
 		options: Clipboard.CopyOptions = {},
 	) {
-		await bus.turboRequest("clipboard.copy", {
+		await bus.request("clipboard.copy", {
 			content: mapContent(text),
 			options: { concealed: options.concealed ?? false },
 		});
@@ -65,7 +65,7 @@ export namespace Clipboard {
 	 * clipboard copy.
 	 */
 	export async function paste(text: string | number | Clipboard.Content) {
-		await bus.turboRequest("clipboard.paste", {
+		await bus.request("clipboard.paste", {
 			content: mapContent(text),
 		});
 	}
@@ -81,7 +81,7 @@ export namespace Clipboard {
 	export async function read(options?: {
 		offset?: number;
 	}): Promise<Clipboard.ReadContent> {
-		const res = await bus.turboRequest("clipboard.readContent", {});
+		const res = await bus.request("clipboard.readContent", {});
 		return res.unwrap().content!;
 	}
 
@@ -106,6 +106,6 @@ export namespace Clipboard {
 	 * Clear the current clipboard content.
 	 */
 	export async function clear() {
-		await bus.turboRequest("clipboard.clear", {});
+		await bus.request("clipboard.clear", {});
 	}
 }

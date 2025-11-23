@@ -69,7 +69,7 @@ export const runInTerminal = async (
 ) => {
 	const { hold = false, appId, title } = options;
 
-	await bus.turboRequest("app.runInTerminal", {
+	await bus.request("app.runInTerminal", {
 		cmdline: args,
 		hold,
 		appId,
@@ -91,7 +91,7 @@ export const open = async (target: string, app?: Application | string) => {
 		}
 	}
 
-	await bus.turboRequest("app.open", {
+	await bus.request("app.open", {
 		target,
 		appId,
 	});
@@ -116,7 +116,7 @@ export const getFrontmostApplication = async (): Promise<Application> => {
 export const getApplications = async (
 	target?: string,
 ): Promise<Application[]> => {
-	const res = await bus.turboRequest("app.list", { target });
+	const res = await bus.request("app.list", { target });
 
 	return res.unwrap().apps;
 };
@@ -127,7 +127,7 @@ export const getApplications = async (
 export const getDefaultApplication = async (
 	path: string,
 ): Promise<Application> => {
-	const res = await bus.turboRequest("app.getDefault", { target: path });
+	const res = await bus.request("app.getDefault", { target: path });
 	const app = res.unwrap().app;
 
 	if (!app) throw new Error(`No default application for target ${path}`);

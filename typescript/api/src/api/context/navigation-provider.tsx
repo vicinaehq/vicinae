@@ -19,13 +19,13 @@ export const NavigationProvider: React.FC<{ root: ReactNode }> = ({ root }) => {
 		// we ask Vicinae to pop the current view, but we need to wait
 		// for the pop-view event to be fired in order to dismount it from
 		// our local view stack: otherwise Vicinae might miss a render.
-		bus.turboRequest("ui.popView", {});
+		bus.request("ui.popView", {});
 	};
 
 	const push = (node: ReactNode) => {
 		if (pendingShutdown.current) return;
 
-		bus.turboRequest("ui.pushView", {}).then(() => {
+		bus.request("ui.pushView", {}).then(() => {
 			setNavStack((cur) => [...cur, node]);
 		});
 	};

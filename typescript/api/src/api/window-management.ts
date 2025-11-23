@@ -129,7 +129,7 @@ export namespace WindowManagement {
 	export async function getWindows(
 		options: wm.GetWindowsRequest = {},
 	): Promise<WindowManagement.Window[]> {
-		const res = await bus.turboRequest("wm.getWindows", options);
+		const res = await bus.request("wm.getWindows", options);
 
 		return res.unwrap().windows.map(transformWindow);
 	}
@@ -149,7 +149,7 @@ export namespace WindowManagement {
 	 * @see {@link Window.focus}
 	 */
 	export async function focusWindow(window: Window): Promise<boolean> {
-		const res = await bus.turboRequest("wm.focusWindow", {
+		const res = await bus.request("wm.focusWindow", {
 			id: window.id,
 		});
 
@@ -160,7 +160,7 @@ export namespace WindowManagement {
 	 * Return the list of screens (physical and virtual) currently attached to the computer.
 	 */
 	export async function getScreens(): Promise<Screen[]> {
-		const res = await bus.turboRequest("wm.getScreens", {});
+		const res = await bus.request("wm.getScreens", {});
 		return res.unwrap().screens.map<Screen>((sc) => ({
 			name: sc.name,
 			make: sc.make,
@@ -174,13 +174,13 @@ export namespace WindowManagement {
 	}
 
 	export async function getActiveWorkspace(): Promise<WindowManagement.Workspace> {
-		const res = await bus.turboRequest("wm.getActiveWorkspace", {});
+		const res = await bus.request("wm.getActiveWorkspace", {});
 
 		return transformWorkspace(res.unwrap().workspace!);
 	}
 
 	export async function getWorkspaces(): Promise<WindowManagement.Workspace[]> {
-		const res = await bus.turboRequest("wm.getWorkspaces", {});
+		const res = await bus.request("wm.getWorkspaces", {});
 
 		return res.unwrap().workspaces.map(transformWorkspace);
 	}
@@ -194,11 +194,11 @@ export namespace WindowManagement {
 	}
 
 	export async function setWindowBounds(payload: wm.SetWindowBoundsRequest) {
-		await bus.turboRequest("wm.setWindowBounds", payload);
+		await bus.request("wm.setWindowBounds", payload);
 	}
 
 	export async function getActiveWindow(): Promise<WindowManagement.Window> {
-		const res = await bus.turboRequest("wm.getActiveWindow", {});
+		const res = await bus.request("wm.getActiveWindow", {});
 
 		return transformWindow(res.unwrap().window!);
 	}
