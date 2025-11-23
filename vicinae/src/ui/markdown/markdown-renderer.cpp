@@ -537,7 +537,7 @@ void MarkdownRenderer::parseAndInsertHtmlImages(const QString &html) {
 
   // Extract and insert all images, then remove image tags from HTML
   QString remainingContent = html;
-  QList<QPair<int, int>> imgTagPositions; // start, length pairs
+  std::vector<std::pair<int, int>> imgTagPositions; // start, length pairs
 
   // Find all <img> tags in the input
   auto tagIter = imgTagRegex.globalMatch(html);
@@ -545,7 +545,7 @@ void MarkdownRenderer::parseAndInsertHtmlImages(const QString &html) {
   while (tagIter.hasNext()) {
     QRegularExpressionMatch tagMatch = tagIter.next();
     QString imgTag = tagMatch.captured(0);
-    imgTagPositions.append({tagMatch.capturedStart(0), tagMatch.capturedLength(0)});
+    imgTagPositions.push_back({tagMatch.capturedStart(0), tagMatch.capturedLength(0)});
 
     QString src;
 
