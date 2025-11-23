@@ -45,11 +45,11 @@ declare module "react" {
 				id?: string;
 				subtitle?: string;
 				icon?:
-					| SerializedImageLike
-					| {
-							value?: SerializedImageLike | null;
-							tooltip: string;
-					  };
+				| SerializedImageLike
+				| {
+					value?: SerializedImageLike | null;
+					tooltip: string;
+				};
 				keywords?: string[];
 				accessories?: List.Item.SerializedAccessory[];
 				children?: React.ReactNode;
