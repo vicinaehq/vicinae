@@ -11,6 +11,8 @@
 #include <cmark-gfm.h>
 #include <cmark-gfm-core-extensions.h>
 #include <cmark-gfm-extension_api.h>
+#include <libxml/HTMLparser.h>
+#include <libxml/xpath.h>
 #include <qapplication.h>
 #include <qboxlayout.h>
 #include <qevent.h>
@@ -294,7 +296,7 @@ void MarkdownRenderer::insertTable(cmark_node *node) {
         break;
       case CMARK_NODE_HTML_INLINE: {
         QString html = cmark_node_get_literal(content);
-        parseAndInsertHtmlImages(html);
+        insertHtmlBlock(html);
         break;
       }
       default:
@@ -499,7 +501,7 @@ void MarkdownRenderer::insertParagraph(cmark_node *node) {
       break;
     case CMARK_NODE_HTML_INLINE: {
       QString html = cmark_node_get_literal(child);
-      parseAndInsertHtmlImages(html);
+      insertHtmlBlock(html);
       break;
     }
     default:
@@ -514,43 +516,75 @@ void MarkdownRenderer::insertParagraph(cmark_node *node) {
   _cursor.setCharFormat(defaultFormat);
 }
 
-void MarkdownRenderer::parseAndInsertHtmlImages(const QString &html) {
+void MarkdownRenderer::insertHtmlBlock(const QString &html) {
   insertIfNotFirstBlock();
 
-  // for default size when width/height is not specified
-  auto documentMargin = _document->documentMargin();
-  int widthOffset = documentMargin * 4;
+  // Wrap HTML fragment in a root element for parsing
+  QByteArray htmlBytes = html.toUtf8();
+  QByteArray wrappedHtml = "<div>" + htmlBytes + "</div>";
+
+  htmlDocPtr doc = htmlReadMemory(wrappedHtml.constData(), wrappedHtml.size(), nullptr, nullptr,
+                                  HTML_PARSE_RECOVER | HTML_PARSE_NOERROR | HTML_PARSE_NOWARNING);
+  if (!doc) { return; }
+
+  xmlNode *root = xmlDocGetRootElement(doc);
+  if (root) { processHtmlNodes(root->children); }
+
+  xmlFreeDoc(doc);
+}
+
+void MarkdownRenderer::processHtmlNodes(xmlNode *node) {
+  if (!node) return;
+
+  for (xmlNode *cur = node; cur != nullptr; cur = cur->next) {
+    // element nodes are tags
+    if (cur->type == XML_ELEMENT_NODE) {
+      // insert images
+      if (xmlStrcmp(cur->name, BAD_CAST "img") == 0) {
+        insertHtmlImage(cur);
+      } else {
+        // recurse inside, ignoring the tag itself
+        processHtmlNodes(cur->children);
+      }
+      continue;
+    }
+
+    // Render text nodes as markdown
+    if (cur->type == XML_TEXT_NODE) {
+      xmlChar *content = xmlNodeGetContent(cur);
+      if (!content) { continue; }
+      QString trimmed = QString::fromUtf8(reinterpret_cast<const char *>(content)).trimmed();
+      if (!trimmed.isEmpty()) {
+        cmark_node *root = parseMarkdown(trimmed);
+        cmark_node *node = cmark_node_first_child(root);
+        while (node) {
+          insertTopLevelNode(node);
+          node = cmark_node_next(node);
+        }
+        cmark_node_free(root);
+      }
+      xmlFree(content);
+      continue;
+    }
+
+    // ignore other element types (comments, etc.)
+  }
+}
+
+void MarkdownRenderer::insertHtmlImage(xmlNode *node) {
+  if (!node || xmlStrcmp(node->name, BAD_CAST "img") != 0) { return; }
+
+  QString src;
   QSize imgSize(0, 0);
 
-  // 1. Regex to find all <img> tags.
-  // This captures the *entire* tag open.
-  QRegularExpression imgTagRegex(R"(<img\s+(?:[^>"']|"[^"]*"|'[^']*')*>)",
-                                 QRegularExpression::CaseInsensitiveOption);
+  // Extract attributes from the img node
+  for (xmlAttrPtr attr = node->properties; attr != nullptr; attr = attr->next) {
+    const xmlChar *attrName = attr->name;
+    xmlChar *attrValue = xmlNodeListGetString(node->doc, attr->children, 1);
 
-  // 2. Regex to find specific attributes *within* a tag.
-  // (src|width|height) = Capture 1: the attribute name
-  // (["'])             = Capture 2: the opening quote (double or single)
-  // (.*?)              = Capture 3: the attribute value (non-greedy)
-  // \2                 = Matches the closing quote from Capture 2
-  QRegularExpression attrRegex(R"(\s+(src|width|height)=(["'])(.*?)\2)",
-                               QRegularExpression::CaseInsensitiveOption);
-
-  // Find all <img> tags in the input
-  auto tagIter = imgTagRegex.globalMatch(html);
-
-  while (tagIter.hasNext()) {
-    QRegularExpressionMatch tagMatch = tagIter.next();
-    QString imgTag = tagMatch.captured(0);
-
-    QString src;
-
-    // Find all attributes in this tag
-    auto attrIter = attrRegex.globalMatch(imgTag);
-    while (attrIter.hasNext()) {
-      QRegularExpressionMatch attrMatch = attrIter.next();
-
-      QString name = attrMatch.captured(1).toLower();
-      QString value = attrMatch.captured(3);
+    if (attrValue) {
+      QString name = QString::fromUtf8(reinterpret_cast<const char *>(attrName)).toLower();
+      QString value = QString::fromUtf8(reinterpret_cast<const char *>(attrValue));
 
       if (name == "src") {
         src = value;
@@ -559,10 +593,12 @@ void MarkdownRenderer::parseAndInsertHtmlImages(const QString &html) {
       } else if (name == "height") {
         if (!value.isEmpty()) { imgSize.setHeight(value.toInt()); }
       }
-    }
 
-    if (!src.isEmpty()) { insertImageFromUrl(QUrl(src), imgSize); }
+      xmlFree(attrValue);
+    }
   }
+
+  if (!src.isEmpty()) { insertImageFromUrl(QUrl(src), imgSize); }
 }
 
 void MarkdownRenderer::setBaseTextColor(const ColorLike &color) { m_baseTextColor = color; }
@@ -612,7 +648,7 @@ void MarkdownRenderer::insertTopLevelNode(cmark_node *node) {
     break;
   case CMARK_NODE_HTML_BLOCK: {
     QString html = cmark_node_get_literal(node);
-    parseAndInsertHtmlImages(html);
+    insertHtmlBlock(html);
     break;
   }
   default:
@@ -623,6 +659,24 @@ void MarkdownRenderer::insertTopLevelNode(cmark_node *node) {
   }
 
   _lastNodeType = type;
+}
+
+cmark_node *MarkdownRenderer::parseMarkdown(const QString &markdown) {
+  auto buf = markdown.toUtf8();
+
+  // Enable GFM core extensions (tables, etc.) and parse
+  cmark_gfm_core_extensions_ensure_registered();
+  cmark_parser *parser = cmark_parser_new(CMARK_OPT_DEFAULT);
+
+  if (cmark_syntax_extension *tableExt = cmark_find_syntax_extension("table")) {
+    cmark_parser_attach_syntax_extension(parser, tableExt);
+  }
+
+  cmark_parser_feed(parser, buf.data(), buf.size());
+  cmark_node *root = cmark_parser_finish(parser);
+  cmark_parser_free(parser);
+
+  return root;
 }
 
 QTextEdit *MarkdownRenderer::textEdit() const { return _textEdit; }
@@ -662,18 +716,7 @@ void MarkdownRenderer::appendMarkdown(QStringView markdown) {
     fragment = markdown.toString();
   }
 
-  auto buf = fragment.toUtf8();
-
-  // Enable GFM core extensions (tables, etc.) and parse
-  cmark_gfm_core_extensions_ensure_registered();
-  cmark_parser *parser = cmark_parser_new(CMARK_OPT_DEFAULT);
-
-  if (cmark_syntax_extension *tableExt = cmark_find_syntax_extension("table")) {
-    cmark_parser_attach_syntax_extension(parser, tableExt);
-  }
-
-  cmark_parser_feed(parser, buf.data(), buf.size());
-  cmark_node *root = cmark_parser_finish(parser);
+  cmark_node *root = parseMarkdown(fragment);
   cmark_node *node = cmark_node_first_child(root);
   cmark_node *lastNode = nullptr;
   std::vector<TopLevelBlock> topLevelBlocks;
@@ -724,7 +767,6 @@ void MarkdownRenderer::appendMarkdown(QStringView markdown) {
   }
 
   cmark_node_free(root);
-  cmark_parser_free(parser);
 
   QTextCursor newCursor = _textEdit->textCursor();
 
