@@ -640,6 +640,8 @@ set(SRCS
 
 	src/services/power-manager/systemd/systemd-power-manager.cpp
 
+	src/ui/vlist/vlist.hpp
+
 ) 
 
 if (UNIX)

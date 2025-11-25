@@ -1,20 +1,23 @@
 #include "common.hpp"
 #include "layout.hpp"
 #include "lib/fts_fuzzy.hpp"
+#include "services/emoji-service/emoji.hpp"
 #include "ui/default-list-item-widget/default-list-item-widget.hpp"
-#include "ui/typography/typography.hpp"
+#include "ui/list-section-header.hpp"
 #include "ui/views/base-view.hpp"
-#include "ui/vlist.hpp"
-#include <absl/strings/internal/str_format/extension.h>
-#include <format>
+#include "ui/vlist/vlist.hpp"
+#include <qwizard.h>
 #include <ranges>
 
+/**
+ * A simple model that render regular list items in an horizontal list view, divided into sections.
+ */
 class HorizontalListModel : public vicinae::ui::VListModel {
-  static constexpr const int ITEM_HEIGHT = 40;
-  static constexpr const int HEADER_HEIGHT = 40;
-
+public:
   struct Item {
     std::string name;
+    std::optional<std::string> subtitle;
+    std::optional<ImageURL> icon;
   };
 
   struct Section {
@@ -33,30 +36,25 @@ class HorizontalListModel : public vicinae::ui::VListModel {
     int bestScore = 0;
   };
 
-  std::vector<FilteredSection> m_filteredSections;
-  std::vector<Section> m_sections;
+  HorizontalListModel() {}
 
-public:
-  HorizontalListModel() {
-    m_sections.emplace_back(Section{
-        .name = "Fruits", .items = {{"banana"}, {"orange"}, {"apple"}, {"pineapple"}, {"strawberry"}}});
-    m_sections.emplace_back(
-        Section{.name = "Games", .items = {{"Elden Ring"}, {"Black Myth Wukong"}, {"Mario Kart"}}});
-    m_sections.emplace_back(
-        Section{.name = "Bands", .items = {{"Sabaton"}, {"PowerWolf"}, {"Rigel Theater"}}});
-
-    Section otherSection{.name = "Numbers"};
-    int n = 10000;
-
-    otherSection.items.reserve(n);
-    for (int i = 0; i != n; ++i) {
-      otherSection.items.emplace_back(Item{.name = std::format("Item {}", i)});
-    }
-
-    m_sections.emplace_back(otherSection);
-
-    setFilter("");
+  void clear() {
+    m_sections.clear();
+    m_filteredSections.clear();
   }
+
+  void addSection(std::string_view name, const std::vector<Item> &&items) {
+    m_sections.emplace_back(Section{.name = std::string(name), .items = items});
+  }
+
+  void update(const std::function<void(void)> &fn) {
+    fn();
+    finishUpdate();
+  }
+
+  void finishUpdate() { setFilter(""); }
+
+  void setPreserveSectionOrder(bool value) { m_preserveSectionOrder = value; }
 
   void setFilter(std::string_view text) {
     m_filteredSections.clear();
@@ -81,6 +79,12 @@ public:
 
       if (!sec.items.empty()) { m_filteredSections.emplace_back(sec); }
     }
+
+    if (!m_preserveSectionOrder) {
+      std::ranges::sort(m_filteredSections, [](auto &&a, auto &&b) { return a.bestScore > b.bestScore; });
+    }
+
+    emit dataChanged();
   }
 
   bool isSectionHeading(Index idx) const {
@@ -88,12 +92,6 @@ public:
   }
 
   bool isSelectable(Index idx) const override { return !isSectionHeading(idx); }
-
-  void selectionChanged(Index idx, QWidget *widget, bool value) override {
-    qDebug() << "selection callback for idx" << idx;
-    auto w = static_cast<DefaultListItemWidget *>(widget);
-    w->selectionChanged(value);
-  }
 
   size_t heightAtIndex(Index idx) const override {
     size_t height = 0;
@@ -132,12 +130,12 @@ public:
     return -1;
   }
 
-  std::optional<std::variant<const Section *, const std::string *>> fromFlatIdx(Index idx) const {
+  std::optional<std::variant<const Section *, const Item *>> fromFlatIdx(Index idx) const {
     int i = 0;
     for (const auto &section : m_filteredSections) {
       if (i == idx) return section.section;
       ++i;
-      if (idx >= i && idx < i + section.items.size()) { return &section.items.at(idx - i).item->name; }
+      if (idx >= i && idx < i + section.items.size()) { return section.items.at(idx - i).item; }
       i += section.items.size();
     }
 
@@ -146,17 +144,15 @@ public:
 
   StableID stableId(size_t idx) const override {
     auto item = fromFlatIdx(idx);
-    const auto visitor = overloads{[&](const std::string *str) { return m_hasher(*str); },
+    const auto visitor = overloads{[&](const Item *item) { return m_hasher(item->name); },
                                    [&](const Section *str) { return m_hasher(str->name); }};
     return std::visit(visitor, item.value());
   }
 
   size_t height() const override {
-    size_t height = 0;
-    for (const auto &section : m_filteredSections) {
-      height = height + HEADER_HEIGHT + ITEM_HEIGHT * section.items.size();
-    }
-    return height;
+    return std::ranges::fold_left(m_filteredSections, 0, [](int height, const FilteredSection &sec) {
+      return height + HEADER_HEIGHT + ITEM_HEIGHT * sec.items.size();
+    });
   }
 
   size_t height(size_t idx) const override { return ITEM_HEIGHT; }
@@ -174,93 +170,34 @@ public:
     return 1;
   }
 
-  QWidget *createWidget(size_t idx) const override {
-    if (isSectionHeading(idx)) { return new TypographyWidget; }
+  WidgetType *createWidget(size_t idx) const override {
+    if (isSectionHeading(idx)) { return new OmniListSectionHeader("", "", 0); }
     return new DefaultListItemWidget;
   }
 
-  void refreshWidget(size_t idx, QWidget *widget) const override {
+  void refreshWidget(size_t idx, WidgetType *widget) const override {
     auto item = fromFlatIdx(idx);
-    const auto visitor = overloads{[&](const std::string *str) {
+    const auto visitor = overloads{[&](const Item *item) {
                                      auto w = static_cast<DefaultListItemWidget *>(widget);
-                                     w->setName(str->c_str());
-                                     w->setIconUrl(ImageURL::builtin("cog"));
+                                     w->setName(item->name.c_str());
+                                     w->setIconUrl(item->icon);
                                    },
                                    [&](const Section *str) {
-                                     auto w = static_cast<TypographyWidget *>(widget);
-                                     return w->setText(str->name.c_str());
+                                     auto w = static_cast<OmniListSectionHeader *>(widget);
+                                     w->setTitle(str->name.c_str());
                                    }};
     std::visit(visitor, *item);
   }
 
 private:
-  std::hash<std::string_view> m_hasher;
-};
+  bool m_preserveSectionOrder = false;
 
-class SimpleVListStaticModel : public vicinae::ui::VListModel {
+  std::vector<FilteredSection> m_filteredSections;
+  std::vector<Section> m_sections;
+  std::hash<std::string_view> m_hasher;
+
   static constexpr const int ITEM_HEIGHT = 40;
-
-public:
-  SimpleVListStaticModel() {
-    int n = 100;
-    m_items.reserve(n);
-    for (int i = 0; i != n; ++i) {
-      m_items.emplace_back(StandardItem{.title = std::format("Item {}", i), .subtitle = "Fancy subitle"});
-    }
-    setFilter("");
-  }
-
-  void setFilter(const std::string &query) {
-    m_filteredItems.reserve(m_items.size());
-    m_filteredItems.clear();
-
-    auto matches = [&](const std::string &s) { return s.contains(query); };
-    for (const auto &item : m_items | std::views::filter([&](const auto &item) {
-                              return matches(item.title) || matches(item.subtitle);
-                            })) {
-      m_filteredItems.push_back(&item);
-    }
-  }
-
-  bool isSelectable(Index idx) const override { return true; }
-
-  void selectionChanged(Index idx, QWidget *widget, bool value) override {
-    qDebug() << "selection callback for idx" << idx;
-    auto w = static_cast<DefaultListItemWidget *>(widget);
-    w->selectionChanged(value);
-  }
-
-  size_t heightAtIndex(Index idx) const override { return idx * ITEM_HEIGHT; }
-
-  Index indexAtHeight(int height) const override { return height / ITEM_HEIGHT; }
-
-  StableID stableId(size_t idx) const override { return m_hasher(m_filteredItems[idx]->title); }
-
-  size_t height() const override { return m_filteredItems.size() * ITEM_HEIGHT; }
-
-  size_t height(size_t idx) const override { return ITEM_HEIGHT; }
-
-  size_t count() const override { return m_filteredItems.size(); };
-
-  QWidget *createWidget(size_t idx) const override { return new DefaultListItemWidget; }
-
-  void refreshWidget(size_t idx, QWidget *widget) const override {
-    auto w = static_cast<DefaultListItemWidget *>(widget);
-    auto &item = m_filteredItems[idx];
-    w->setName(item->title.c_str());
-    w->setSubtitle(item->subtitle);
-    w->setIconUrl(ImageURL::builtin("cog"));
-  }
-
-private:
-  struct StandardItem {
-    std::string title;
-    std::string subtitle;
-  };
-
-  std::hash<std::string_view> m_hasher;
-  std::vector<const StandardItem *> m_filteredItems;
-  std::vector<StandardItem> m_items;
+  static constexpr const int HEADER_HEIGHT = 40;
 };
 
 class PlaygroundView : public BaseView {
@@ -268,6 +205,18 @@ public:
   PlaygroundView() {
     VStack().add(m_list).imbue(this);
     m_list->setModel(m_model);
+
+    std::vector<HorizontalListModel::Item> items;
+
+    for (const auto &emoji : StaticEmojiDatabase::orderedList()) {
+      items.emplace_back(HorizontalListModel::Item{
+          .name = std::string(emoji.name),
+          .icon = ImageURL::emoji(QString::fromUtf8(emoji.emoji.data(), emoji.emoji.size()))});
+    }
+
+    m_model->update([&]() { m_model->addSection("Emojis", std::move(items)); });
+    m_list->calculate();
+    m_list->selectFirst();
   }
 
   bool inputFilter(QKeyEvent *event) override {
@@ -282,7 +231,6 @@ public:
 
   void textChanged(const QString &text) override {
     m_model->setFilter(text.toStdString());
-    m_list->calculate();
     m_list->selectFirst();
   }
 
