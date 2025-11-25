@@ -1,5 +1,6 @@
 #include "timer.hpp"
 #include "ui/scroll-bar/scroll-bar.hpp"
+#include <qobject.h>
 #include <qobjectdefs.h>
 #include <qscrollbar.h>
 #include <qtsqlglobal.h>
@@ -7,20 +8,43 @@
 
 namespace vicinae::ui {
 
-class VListModel {
+class VListModel : public QObject {
 public:
   using StableID = size_t;
+  using WidgetTag = size_t;
   using Index = size_t;
 
+  /**
+   * The number of items this model currently has.
+   * If count() returns `n` that implies a valid index range of`[0;n-1].
+   */
   virtual size_t count() const = 0;
+
+  /**
+   * The height that should be allocated for a widget if the item at this index
+   * needs to be shown on screen.
+   */
   virtual size_t height(Index idx) const = 0;
+
+  /**
+   * Find what model item is located at a given height.
+   * This is used to determine the first item in the viewport depending on the current scroll height.
+   * Models that have items with mostly uniform heights can make this very fast and speed up viewport
+   * updates.
+   */
   virtual Index indexAtHeight(int height) const = 0;
+
   virtual size_t heightAtIndex(Index idx) const = 0;
 
+  /**
+   * Whether the item at `idx` can be selectable or not. This is used to implement things such as
+   * section headers, which are part of the model and are associated with a specific widget, but should not
+   * be considered during navigation.
+   */
   virtual bool isSelectable(Index idx) const = 0;
 
   /**
-   * The full height of the list
+   * The full height of the list, computed on a full model change.
    */
   virtual size_t height() const = 0;
 
@@ -31,9 +55,30 @@ public:
    */
   virtual StableID stableId(Index idx) const = 0;
 
+  virtual WidgetTag widgetTag(Index idx) const = 0;
+
+  /**
+   * Called when the selected widget changes.
+   * Visual modifications on selection should be applied in this callback.
+   */
   virtual void selectionChanged(Index idx, QWidget *w, bool selected) {}
 
+  /**
+   * Create a widget that represents the item at index `idx`.
+   * This method should only take care of the initialization work and return
+   * the widget as soon as possible.
+   *
+   * `refreshWidget` is called right after a new widget is created in order to apply
+   * the data at the current index to it.
+   */
   virtual QWidget *createWidget(Index idx) const = 0;
+
+  /**
+   * Apply the data at `idx` to `widget`. The widget is one that has been created by `createWidget` for this
+   * same index or another index that is represented using the same widget type. This is used to implement
+   * proper widget recycling.
+   * Widget types are compared using `typeid`.
+   */
   virtual void refreshWidget(Index idx, QWidget *widget) const = 0;
 };
 
@@ -71,7 +116,7 @@ public:
 
     if (m_selected != -1) {
       if (auto it = m_widgetMap.find(m_model->stableId(m_selected)); it != m_widgetMap.end()) {
-        m_model->selectionChanged(idx, it->second, false);
+        m_model->selectionChanged(idx, it->second.widget, false);
       }
     }
 
@@ -86,7 +131,7 @@ public:
     m_selected = idx;
 
     if (auto it = m_widgetMap.find(m_model->stableId(idx)); it != m_widgetMap.end()) {
-      m_model->selectionChanged(idx, it->second, true);
+      m_model->selectionChanged(idx, it->second.widget, true);
     }
   }
 
@@ -153,6 +198,22 @@ protected:
   }
 
 private:
+  struct WidgetData {
+    QWidget *widget = nullptr;
+    VListModel::WidgetTag tag = 0;
+  };
+
+  QWidget *getFromPool(VListModel::WidgetTag tag) {
+    if (auto it = m_recyclingPool.find(tag); it != m_recyclingPool.end()) {
+      if (it->second.empty()) return nullptr;
+      auto back = it->second.back();
+      it->second.pop_back();
+      return back;
+    }
+
+    return nullptr;
+  }
+
   void updateViewport() {
     Timer timer;
     int x = m_margins.left(), y = 0;
@@ -172,7 +233,7 @@ private:
     qDebug() << "computed y" << y;
     qDebug() << ">>>>>>> END FRAME <<<<<";
 
-    std::unordered_map<VListModel::StableID, QWidget *> newMap;
+    std::unordered_map<VListModel::StableID, WidgetData> newMap;
 
     m_visibleRange.first = idx;
 
@@ -182,23 +243,35 @@ private:
       qDebug() << "index" << idx;
 
       VListModel::StableID id = m_model->stableId(idx);
-      QWidget *w = nullptr;
+      WidgetData wdata;
 
       if (auto it = m_widgetMap.find(id); it != m_widgetMap.end()) {
-        w = it->second;
+        wdata.tag = it->second.tag;
+        wdata.widget = it->second.widget;
       } else {
-        w = m_model->createWidget(idx);
-        w->setParent(this);
+        auto tag = m_model->widgetTag(idx);
+
+        wdata.tag = tag;
+        wdata.widget = getFromPool(tag);
+
+        if (!wdata.widget) {
+          wdata.widget = m_model->createWidget(idx);
+          wdata.widget->setParent(this);
+        } else {
+          if (m_model->isSelectable(idx)) { m_model->selectionChanged(idx, wdata.widget, false); }
+          qWarning() << "recycled widget";
+        }
       }
 
-      newMap[id] = w;
+      newMap[id] = wdata;
 
       int height = m_model->height(idx);
 
-      w->setFixedSize(availableWidth, height);
-      w->move(x, y);
-      m_model->refreshWidget(idx, w);
-      w->show();
+      wdata.widget->setFixedSize(availableWidth, height);
+      wdata.widget->move(x, y);
+      // TODO: maybe do not refresh if direct cache hit?
+      m_model->refreshWidget(idx, wdata.widget);
+      wdata.widget->show();
       y += height;
       ++idx;
     }
@@ -206,7 +279,11 @@ private:
     m_visibleRange.second = idx - 1;
 
     for (const auto &[id, w] : m_widgetMap) {
-      if (!newMap.contains(id)) { w->deleteLater(); }
+      if (!newMap.contains(id)) {
+        qDebug() << "sent to recycling";
+        w.widget->hide();
+        m_recyclingPool[w.tag].emplace_back(w.widget);
+      }
     }
 
     m_widgetMap = newMap;
@@ -214,7 +291,9 @@ private:
     timer.time("update viewport");
   }
 
-  std::unordered_map<VListModel::StableID, QWidget *> m_widgetMap;
+  std::unordered_map<VListModel::StableID, WidgetData> m_widgetMap;
+  std::unordered_map<VListModel::WidgetTag, std::vector<QWidget *>> m_recyclingPool;
+
   int m_selected = -1;
 
   std::pair<VListModel::Index, VListModel::Index> m_visibleRange;

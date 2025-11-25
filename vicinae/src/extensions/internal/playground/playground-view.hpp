@@ -13,33 +13,72 @@ class HorizontalListModel : public vicinae::ui::VListModel {
   static constexpr const int ITEM_HEIGHT = 40;
   static constexpr const int HEADER_HEIGHT = 40;
 
-  struct Section {
+  struct Item {
     std::string name;
-    std::vector<std::string> items;
   };
 
-  std::vector<Section> m_filteredSections;
+  struct Section {
+    std::string name;
+    std::vector<Item> items;
+  };
+
+  struct ScoredItem {
+    const Item *item = nullptr;
+    int score = 0;
+  };
+
+  struct FilteredSection {
+    const Section *section;
+    std::vector<ScoredItem> items;
+    int bestScore = 0;
+  };
+
+  std::vector<FilteredSection> m_filteredSections;
   std::vector<Section> m_sections;
 
 public:
   HorizontalListModel() {
+    m_sections.emplace_back(Section{
+        .name = "Fruits", .items = {{"banana"}, {"orange"}, {"apple"}, {"pineapple"}, {"strawberry"}}});
     m_sections.emplace_back(
-        Section{.name = "Fruits", .items = {"banana", "orange", "apple", "pineapple", "strawberry"}});
+        Section{.name = "Games", .items = {{"Elden Ring"}, {"Black Myth Wukong"}, {"Mario Kart"}}});
     m_sections.emplace_back(
-        Section{.name = "Games", .items = {"Elden Ring", "Black Myth Wukong", "Mario Kart"}});
-    m_sections.emplace_back(Section{.name = "Bands", .items = {"Sabaton", "PowerWolf", "Rigel Theater"}});
-    m_filteredSections = m_sections;
+        Section{.name = "Bands", .items = {{"Sabaton"}, {"PowerWolf"}, {"Rigel Theater"}}});
+
+    Section otherSection{.name = "Numbers"};
+    int n = 10000;
+
+    otherSection.items.reserve(n);
+    for (int i = 0; i != n; ++i) {
+      otherSection.items.emplace_back(Item{.name = std::format("Item {}", i)});
+    }
+
+    m_sections.emplace_back(otherSection);
+
+    setFilter("");
   }
 
   void setFilter(std::string_view text) {
     m_filteredSections.clear();
     for (const auto &section : m_sections) {
-      Section sec;
-      sec.name = section.name;
+      FilteredSection sec;
+      sec.section = &section;
       sec.items.reserve(section.items.size());
-      for (const auto &item : section.items) {
-        if (item.contains(text)) { sec.items.emplace_back(item); }
+
+      auto scored = section.items | std::views::transform([&](const Item &item) {
+                      int score = 0;
+                      fts::fuzzy_match(text, item.name, score);
+                      return ScoredItem{.item = &item, .score = score};
+                    }) |
+                    std::views::filter([&](auto &&item) { return text.empty() || item.score > 0; });
+
+      for (const auto &&item : scored) {
+        sec.bestScore = std::max(sec.bestScore, item.score);
+        sec.items.emplace_back(item);
       }
+
+      std::ranges::stable_sort(sec.items, [](auto a, auto b) { return a.score > b.score; });
+
       if (!sec.items.empty()) { m_filteredSections.emplace_back(sec); }
     }
   }
@@ -96,9 +135,9 @@ public:
   std::optional<std::variant<const Section *, const std::string *>> fromFlatIdx(Index idx) const {
     int i = 0;
     for (const auto &section : m_filteredSections) {
-      if (i == idx) return &section;
+      if (i == idx) return section.section;
       ++i;
-      if (idx >= i && idx < i + section.items.size()) { return &section.items.at(idx - i); }
+      if (idx >= i && idx < i + section.items.size()) { return &section.items.at(idx - i).item->name; }
       i += section.items.size();
     }
 
@@ -129,6 +168,11 @@ public:
     }
     return count;
   };
+
+  WidgetTag widgetTag(Index idx) const override {
+    if (isSectionHeading(idx)) return 0;
+    return 1;
+  }
 
   QWidget *createWidget(size_t idx) const override {
     if (isSectionHeading(idx)) { return new TypographyWidget; }
