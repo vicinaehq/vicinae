@@ -9,62 +9,285 @@
 #include "ui/transform-result/transform-result.hpp"
 #include "ui/views/base-view.hpp"
 #include "ui/vlist/vlist.hpp"
-#include "vicinae.hpp"
 #include <catch2/internal/catch_result_type.hpp>
 #include <qlocale.h>
+#include <stdexcept>
 #include <variant>
 
-class RootSearchModel : public vicinae::ui::VListModel {
+template <typename ItemType, typename SectionId> class SectionListModel : public vicinae::ui::VListModel {
 public:
+  virtual int sectionCount() const = 0;
+  virtual int sectionItemCount(SectionId id) const = 0;
+  virtual int sectionItemHeight(SectionId id) const = 0;
+
+  virtual ItemType sectionItemAt(SectionId id, int itemIdx) const = 0;
+
+  virtual SectionId sectionIdFromIndex(int idx) const = 0;
+  virtual std::string_view sectionName(SectionId id) const = 0;
+
+  virtual WidgetType *createItemWidget(const ItemType &type) const = 0;
+  virtual void refreshItemWidget(const ItemType &type, WidgetType *widget) const = 0;
+
+  virtual StableID stableId(const ItemType &item) const = 0;
+  virtual WidgetTag widgetTag(const ItemType &item) const = 0;
+
+  struct SectionHeader {
+    std::string_view name;
+  };
+
+  struct SectionItem {
+    ItemType data;
+    int sectionIdx = -1;
+    int itemIdx = -1;
+  };
+
+protected:
+  WidgetType *createWidget(Index idx) const final override {
+    const auto visitor = overloads{
+        [&](const SectionHeader &header) -> WidgetType * { return new OmniListSectionHeader("", "", 0); },
+        [&](const SectionItem &item) -> WidgetType * { return createItemWidget(item.data); }};
+    return std::visit(visitor, fromFlatIndex(idx));
+  }
+
+  WidgetTag widgetTag(Index idx) const final override {
+    const auto visitor =
+        overloads{[&](const SectionHeader &header) { return typeid(OmniListSectionHeader).hash_code(); },
+                  [&](const SectionItem &item) { return widgetTag(item.data); }};
+    return std::visit(visitor, fromFlatIndex(idx));
+  }
+
+  StableID stableId(Index idx) const final override {
+    static std::hash<std::string_view> hasher = {};
+    const auto visitor = overloads{[&](const SectionHeader &header) { return hasher(header.name); },
+                                   [&](const SectionItem &item) { return stableId(item.data); }};
+    return std::visit(visitor, fromFlatIndex(idx));
+  }
+
+  void refreshWidget(Index idx, WidgetType *widget) const final override {
+    const auto visitor = overloads{[&](const SectionHeader &header) {
+                                     static_cast<OmniListSectionHeader *>(widget)->setTitle(
+                                         QString::fromUtf8(header.name.data(), header.name.size()));
+                                   },
+                                   [&](const SectionItem &item) { refreshItemWidget(item.data, widget); }};
+    return std::visit(visitor, fromFlatIndex(idx));
+  }
+
+  std::variant<SectionItem, SectionHeader> fromFlatIndex(Index idx) const {
+    // TODO: optimize, that's obviously slow
+    int currentIndex = 0;
+
+    for (int i = 0; i != sectionCount(); ++i) {
+      auto id = sectionIdFromIndex(i);
+      int itemCount = sectionItemCount(id);
+      bool withHeader = itemCount > 0 && !sectionName(id).empty();
+
+      if (withHeader) {
+        if (currentIndex == idx) return SectionHeader{.name = sectionName(id)};
+        ++currentIndex;
+      }
+
+      for (int j = 0; j != itemCount; ++j) {
+        if (currentIndex == idx) {
+          return SectionItem{.data = sectionItemAt(id, j), .sectionIdx = i, .itemIdx = j};
+        }
+        ++currentIndex;
+      }
+    }
+
+    qDebug() << "idx" << idx;
+
+    throw std::runtime_error("Invalid index, this should not happen");
+  }
+
+  size_t count() const final override {
+    int c = 0;
+    for (int i = 0; i != sectionCount(); ++i) {
+      auto id = sectionIdFromIndex(i);
+      int itemCount = sectionItemCount(id);
+      bool withHeader = itemCount > 0 && !sectionName(id).empty();
+      c = c + itemCount + withHeader * 1;
+    }
+    return c;
+  }
+
+  size_t height() const final override {
+    int height = 0;
+    for (int i = 0; i != sectionCount(); ++i) {
+      auto id = sectionIdFromIndex(i);
+      int itemCount = sectionItemCount(id);
+      int itemHeight = sectionItemHeight(id);
+      bool withHeader = itemCount > 0 && !sectionName(id).empty();
+
+      height = height + itemCount * itemHeight + withHeader * HEADER_HEIGHT;
+    }
+    return height;
+  }
+
+  size_t heightAtIndex(Index idx) const final override {
+    int currentIndex = 0;
+    int height = 0;
+
+    for (int i = 0; i != sectionCount(); ++i) {
+      auto id = sectionIdFromIndex(i);
+      int itemCount = sectionItemCount(id);
+      int itemHeight = sectionItemHeight(id);
+      bool withHeader = itemCount > 0 && !sectionName(id).empty();
+
+      if (withHeader) {
+        if (currentIndex == idx) return height;
+        height += HEADER_HEIGHT;
+        ++currentIndex;
+      }
+
+      for (int j = 0; j != itemCount; ++j) {
+        if (currentIndex == idx) { return height; }
+        height += itemHeight;
+        ++currentIndex;
+      }
+    }
+
+    return height;
+  }
+
+  bool isSelectable(Index idx) const final override {
+    return !std::holds_alternative<SectionHeader>(fromFlatIndex(idx));
+  }
+
+  Index indexAtHeight(int targetHeight) const final override {
+    int currentIndex = 0;
+    int height = 0;
+
+    for (int i = 0; i != sectionCount(); ++i) {
+      auto id = sectionIdFromIndex(i);
+      int itemCount = sectionItemCount(id);
+      int itemHeight = sectionItemHeight(id);
+      bool withHeader = itemCount > 0 && !sectionName(id).empty();
+
+      if (withHeader) {
+        if (targetHeight < height + HEADER_HEIGHT) return currentIndex;
+        height += HEADER_HEIGHT;
+        ++currentIndex;
+      }
+
+      for (int j = 0; j != itemCount; ++j) {
+        if (targetHeight < height + itemHeight) { return currentIndex; }
+        height += itemHeight;
+        ++currentIndex;
+      }
+    }
+
+    return InvalidIndex;
+  }
+
+  size_t height(Index idx) const final override {
+    const auto visitor = overloads{[&](const SectionHeader &header) -> size_t { return HEADER_HEIGHT; },
+                                   [&](const SectionItem &item) -> size_t {
+                                     return sectionItemHeight(sectionIdFromIndex(item.sectionIdx));
+                                   }};
+    return std::visit(visitor, fromFlatIndex(idx));
+  }
+
+private:
+  static const constexpr size_t HEADER_HEIGHT = 40;
+};
+
+enum class SectionType { Calculator, Results, Files };
+
+using RootItemVariant = std::variant<AbstractCalculatorBackend::CalculatorResult, const RootItem *>;
+
+class RootSearchModel : public SectionListModel<RootItemVariant, SectionType> {
+public:
+  std::array<SectionType, 3> m_sections = {SectionType::Calculator, SectionType::Results, SectionType::Files};
   RootSearchModel(RootItemManager *manager) : m_manager(manager) {}
 
   void setFilter(const QString &text) {
     m_items = m_manager->search(text);
-    /*
-m_calc = AbstractCalculatorBackend::CalculatorResult{.question =
-                                                         {
-                                                             .text = "1 + 1",
-                                                         },
-                                                     .answer = {.text = "2"}};
-                                                                                                             */
     qDebug() << "items" << m_items.size() << "for" << text;
     emit dataChanged();
   }
 
-  struct SectionHeader {
-    const char *name;
-  };
+  int sectionCount() const override { return m_sections.size(); }
+
+  int sectionItemHeight(SectionType id) const override {
+    switch (id) {
+    case SectionType::Calculator:
+      return CALCULATOR_HEIGHT;
+    default:
+      return ITEM_HEIGHT;
+    }
+  }
+
+  SectionType sectionIdFromIndex(int idx) const override { return m_sections[idx]; }
+
+  int sectionItemCount(SectionType id) const override {
+    switch (id) {
+    case SectionType::Calculator:
+      return m_calc.has_value() * 1;
+    case SectionType::Results:
+      return m_items.size();
+    default:
+      return 0;
+    }
+  }
+
+  std::string_view sectionName(SectionType id) const override {
+    static std::string resultName;
+
+    switch (id) {
+    case SectionType::Calculator:
+      return "Calculator";
+    case SectionType::Results: {
+      resultName = std::format("Results ({})", m_items.size());
+      return resultName;
+    }
+    case SectionType::Files:
+      return "Files";
+    }
+    return "";
+  }
+
+  RootItemVariant sectionItemAt(SectionType id, int itemIdx) const override {
+    switch (id) {
+    case SectionType::Calculator:
+      return m_calc.value();
+    case SectionType::Results:
+      return m_items[itemIdx].item.get().get();
+      // FIXME: implement
+    case SectionType::Files:
+      return {};
+    }
+
+    return {};
+  }
+
+  StableID stableId(const RootItemVariant &item) const override {
+    static std::hash<QString> hasher = {};
+    const auto visitor =
+        overloads{[](const AbstractCalculatorBackend::CalculatorResult &) { return hasher("calculator"); },
+                  [](const RootItem *item) { return hasher(item->uniqueId()); }};
+    return std::visit(visitor, item);
+  }
+
+  WidgetTag widgetTag(const RootItemVariant &item) const override { return item.index(); }
 
 protected:
-  WidgetType *createWidget(Index idx) const override {
+  WidgetType *createItemWidget(const RootItemVariant &type) const override {
     const auto visitor =
         overloads{[](const AbstractCalculatorBackend::CalculatorResult &) -> WidgetType * {
                     return new TransformResult;
                   },
-                  [](const SectionHeader &) -> WidgetType * { return new OmniListSectionHeader("", "", 0); },
                   [](const RootItem *) -> WidgetType * { return new DefaultListItemWidget; }};
-
-    return std::visit(visitor, fromFlatIndex(idx));
+    return std::visit(visitor, type);
   }
 
-  size_t calculatorHeightOffset() const {
-    if (!m_calc) return 0;
-    return CALCULATOR_HEIGHT + HEADER_HEIGHT;
-  }
-
-  void refreshWidget(Index idx, WidgetType *widget) const override {
+  void refreshItemWidget(const RootItemVariant &type, WidgetType *widget) const override {
     const auto visitor = overloads{[&](const AbstractCalculatorBackend::CalculatorResult &calc) {
                                      auto w = static_cast<TransformResult *>(widget);
                                      w->setBase(calc.question.text, "Expression");
                                      w->setResult(calc.answer.text, "Answer");
                                    },
-                                   [&](const SectionHeader &header) {
-                                     auto w = static_cast<OmniListSectionHeader *>(widget);
-                                     w->setTitle(header.name);
-                                   },
                                    [&](const RootItem *item) {
                                      auto w = static_cast<DefaultListItemWidget *>(widget);
-
                                      w->setName(item->displayName());
                                      w->setIconUrl(item->iconUrl());
                                      w->setSubtitle(item->subtitle());
@@ -72,93 +295,11 @@ protected:
                                      w->setActive(item->isActive());
                                    }};
 
-    std::visit(visitor, fromFlatIndex(idx));
-  }
-
-  size_t count() const override { return m_items.size() + 1 + (m_calc.has_value() ? 2 : 0); }
-
-  size_t height(Index idx) const override {
-    const auto visitor = overloads{
-        [](const AbstractCalculatorBackend::CalculatorResult &) { return CALCULATOR_HEIGHT; },
-        [](const SectionHeader &) { return HEADER_HEIGHT; }, [](const RootItem *) { return ITEM_HEIGHT; }};
-
-    return std::visit(visitor, fromFlatIndex(idx));
-  }
-
-  std::variant<AbstractCalculatorBackend::CalculatorResult, const RootItem *, SectionHeader>
-  fromFlatIndex(Index idx) const {
-    if (m_calc) {
-      switch (idx) {
-      case 0:
-        return SectionHeader{.name = "Calculator"};
-        break;
-      case 1:
-        return m_calc.value();
-        break;
-      case 2:
-        return SectionHeader{.name = "Results"};
-        break;
-      default: {
-        qDebug() << "idx" << idx << "items" << m_items.size();
-        return m_items[idx - 3].item.get().get();
-      }
-      }
-    }
-
-    if (idx == 0) return SectionHeader{.name = "Results"};
-    return m_items[idx - 1].item.get().get();
-  }
-
-  size_t height() const override {
-    return m_items.size() * ITEM_HEIGHT + HEADER_HEIGHT + calculatorHeightOffset();
-  }
-
-  bool isSelectable(Index idx) const override {
-    return !std::holds_alternative<SectionHeader>(fromFlatIndex(idx));
-  }
-
-  size_t heightAtIndex(Index idx) const override {
-    int height = 0;
-    if (m_calc && idx > 0) { height += HEADER_HEIGHT; }
-    if (m_calc && idx > 1) { height += CALCULATOR_HEIGHT; }
-    if (m_calc && idx > 2) { height += HEADER_HEIGHT; }
-    if (!m_calc && idx > 0) { height += HEADER_HEIGHT; }
-
-    if (m_calc) { height += std::max(0, (int)idx - 3) * ITEM_HEIGHT; }
-    if (!m_calc) { height += std::max(0, (int)idx - 1) * ITEM_HEIGHT; }
-
-    return height;
-  }
-
-  Index indexAtHeight(int height) const override {
-    if (m_calc) {
-      if (height < HEADER_HEIGHT) return 0;
-      if (height < HEADER_HEIGHT + CALCULATOR_HEIGHT) return 1;
-      if (height < HEADER_HEIGHT + CALCULATOR_HEIGHT + HEADER_HEIGHT) return 2;
-      int min = height - HEADER_HEIGHT - HEADER_HEIGHT - CALCULATOR_HEIGHT;
-      return ceil(min / ITEM_HEIGHT) + 3;
-    }
-
-    if (height < HEADER_HEIGHT) return 0;
-    int min = height - HEADER_HEIGHT;
-    return min / ITEM_HEIGHT + 1;
-  }
-
-  WidgetTag widgetTag(Index idx) const override { return fromFlatIndex(idx).index(); }
-
-  StableID stableId(Index idx) const override {
-    static std::hash<QString> hasher = {};
-    const auto visitor =
-        overloads{[&](const AbstractCalculatorBackend::CalculatorResult &) { return hasher("calculator"); },
-                  [&](const SectionHeader &header) { return hasher(header.name); },
-                  [&](const RootItem *item) { return hasher(item->uniqueId()); }};
-
-    return std::visit(visitor, fromFlatIndex(idx));
+    std::visit(visitor, type);
   }
 
 private:
   static constexpr const size_t ITEM_HEIGHT = 40;
-  static constexpr const size_t HEADER_HEIGHT = 40;
   static constexpr const size_t CALCULATOR_HEIGHT = 80;
   std::span<RootItemManager::ScoredItem> m_items;
   std::optional<AbstractCalculatorBackend::CalculatorResult> m_calc;

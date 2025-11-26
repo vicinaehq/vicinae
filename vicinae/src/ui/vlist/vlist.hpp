@@ -25,6 +25,7 @@ public:
   using WidgetTag = size_t;
   using Index = size_t;
   using WidgetType = OmniListItemWidget;
+  static constexpr const Index InvalidIndex = -1;
 
   /**
    * The number of items this model currently has.
@@ -292,7 +293,9 @@ private:
 
       qDebug() << "start index" << idx << viewport;
 
-      y = -(scrollHeight % m_model->height(idx)); // account for partially visible item
+      if (idx < m_count) {
+        y = -(scrollHeight % m_model->height(idx)); // account for partially visible item
+      }
 
       while (y < viewport.height() && idx < m_count) {
         bool directHit = false;
