@@ -290,6 +290,8 @@ private:
       int availableWidth = viewport.width() - m_margins.left() - m_margins.right();
       VListModel::Index idx = m_model->indexAtHeight(scrollHeight);
 
+      qDebug() << "start index" << idx << viewport;
+
       y = -(scrollHeight % m_model->height(idx)); // account for partially visible item
 
       while (y < viewport.height() && idx < m_count) {
