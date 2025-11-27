@@ -1,212 +1,103 @@
 #pragma once
 #include "layout.hpp"
 #include "service-registry.hpp"
+#include "services/app-service/abstract-app-db.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
+#include "services/calculator-service/calculator-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
+#include "services/app-service/app-service.hpp"
 #include "ui/default-list-item-widget/default-list-item-widget.hpp"
-#include "ui/list-section-header.hpp"
 #include "ui/transform-result/transform-result.hpp"
 #include "ui/views/base-view.hpp"
 #include "ui/vlist/vlist.hpp"
-#include <catch2/internal/catch_result_type.hpp>
+#include "ui/vlist/common/section-model.hpp"
+#include "utils.hpp"
+#include <qfuturewatcher.h>
 #include <qlocale.h>
-#include <stdexcept>
+#include <qobjectdefs.h>
 #include <variant>
 
-template <typename ItemType, typename SectionId> class SectionListModel : public vicinae::ui::VListModel {
-public:
-  virtual int sectionCount() const = 0;
-  virtual int sectionItemCount(SectionId id) const = 0;
-  virtual int sectionItemHeight(SectionId id) const = 0;
+// clang-format off
+enum class SectionType { 
+	Link, Calculator, Results, Files, Fallback,
+	Favorites
+};
+// clang-format on
 
-  virtual ItemType sectionItemAt(SectionId id, int itemIdx) const = 0;
-
-  virtual SectionId sectionIdFromIndex(int idx) const = 0;
-  virtual std::string_view sectionName(SectionId id) const = 0;
-
-  virtual WidgetType *createItemWidget(const ItemType &type) const = 0;
-  virtual void refreshItemWidget(const ItemType &type, WidgetType *widget) const = 0;
-
-  virtual StableID stableId(const ItemType &item) const = 0;
-  virtual WidgetTag widgetTag(const ItemType &item) const = 0;
-
-  struct SectionHeader {
-    std::string_view name;
-  };
-
-  struct SectionItem {
-    ItemType data;
-    int sectionIdx = -1;
-    int itemIdx = -1;
-  };
-
-protected:
-  WidgetType *createWidget(Index idx) const final override {
-    const auto visitor = overloads{
-        [&](const SectionHeader &header) -> WidgetType * { return new OmniListSectionHeader("", "", 0); },
-        [&](const SectionItem &item) -> WidgetType * { return createItemWidget(item.data); }};
-    return std::visit(visitor, fromFlatIndex(idx));
-  }
-
-  WidgetTag widgetTag(Index idx) const final override {
-    const auto visitor =
-        overloads{[&](const SectionHeader &header) { return typeid(OmniListSectionHeader).hash_code(); },
-                  [&](const SectionItem &item) { return widgetTag(item.data); }};
-    return std::visit(visitor, fromFlatIndex(idx));
-  }
-
-  StableID stableId(Index idx) const final override {
-    static std::hash<std::string_view> hasher = {};
-    const auto visitor = overloads{[&](const SectionHeader &header) { return hasher(header.name); },
-                                   [&](const SectionItem &item) { return stableId(item.data); }};
-    return std::visit(visitor, fromFlatIndex(idx));
-  }
-
-  void refreshWidget(Index idx, WidgetType *widget) const final override {
-    const auto visitor = overloads{[&](const SectionHeader &header) {
-                                     static_cast<OmniListSectionHeader *>(widget)->setTitle(
-                                         QString::fromUtf8(header.name.data(), header.name.size()));
-                                   },
-                                   [&](const SectionItem &item) { refreshItemWidget(item.data, widget); }};
-    return std::visit(visitor, fromFlatIndex(idx));
-  }
-
-  std::variant<SectionItem, SectionHeader> fromFlatIndex(Index idx) const {
-    // TODO: optimize, that's obviously slow
-    int currentIndex = 0;
-
-    for (int i = 0; i != sectionCount(); ++i) {
-      auto id = sectionIdFromIndex(i);
-      int itemCount = sectionItemCount(id);
-      bool withHeader = itemCount > 0 && !sectionName(id).empty();
-
-      if (withHeader) {
-        if (currentIndex == idx) return SectionHeader{.name = sectionName(id)};
-        ++currentIndex;
-      }
-
-      for (int j = 0; j != itemCount; ++j) {
-        if (currentIndex == idx) {
-          return SectionItem{.data = sectionItemAt(id, j), .sectionIdx = i, .itemIdx = j};
-        }
-        ++currentIndex;
-      }
-    }
-
-    qDebug() << "idx" << idx;
-
-    throw std::runtime_error("Invalid index, this should not happen");
-  }
-
-  size_t count() const final override {
-    int c = 0;
-    for (int i = 0; i != sectionCount(); ++i) {
-      auto id = sectionIdFromIndex(i);
-      int itemCount = sectionItemCount(id);
-      bool withHeader = itemCount > 0 && !sectionName(id).empty();
-      c = c + itemCount + withHeader * 1;
-    }
-    return c;
-  }
-
-  size_t height() const final override {
-    int height = 0;
-    for (int i = 0; i != sectionCount(); ++i) {
-      auto id = sectionIdFromIndex(i);
-      int itemCount = sectionItemCount(id);
-      int itemHeight = sectionItemHeight(id);
-      bool withHeader = itemCount > 0 && !sectionName(id).empty();
-
-      height = height + itemCount * itemHeight + withHeader * HEADER_HEIGHT;
-    }
-    return height;
-  }
-
-  size_t heightAtIndex(Index idx) const final override {
-    int currentIndex = 0;
-    int height = 0;
-
-    for (int i = 0; i != sectionCount(); ++i) {
-      auto id = sectionIdFromIndex(i);
-      int itemCount = sectionItemCount(id);
-      int itemHeight = sectionItemHeight(id);
-      bool withHeader = itemCount > 0 && !sectionName(id).empty();
-
-      if (withHeader) {
-        if (currentIndex == idx) return height;
-        height += HEADER_HEIGHT;
-        ++currentIndex;
-      }
-
-      for (int j = 0; j != itemCount; ++j) {
-        if (currentIndex == idx) { return height; }
-        height += itemHeight;
-        ++currentIndex;
-      }
-    }
-
-    return height;
-  }
-
-  bool isSelectable(Index idx) const final override {
-    return !std::holds_alternative<SectionHeader>(fromFlatIndex(idx));
-  }
-
-  Index indexAtHeight(int targetHeight) const final override {
-    int currentIndex = 0;
-    int height = 0;
-
-    for (int i = 0; i != sectionCount(); ++i) {
-      auto id = sectionIdFromIndex(i);
-      int itemCount = sectionItemCount(id);
-      int itemHeight = sectionItemHeight(id);
-      bool withHeader = itemCount > 0 && !sectionName(id).empty();
-
-      if (withHeader) {
-        if (targetHeight < height + HEADER_HEIGHT) return currentIndex;
-        height += HEADER_HEIGHT;
-        ++currentIndex;
-      }
-
-      for (int j = 0; j != itemCount; ++j) {
-        if (targetHeight < height + itemHeight) { return currentIndex; }
-        height += itemHeight;
-        ++currentIndex;
-      }
-    }
-
-    return InvalidIndex;
-  }
-
-  size_t height(Index idx) const final override {
-    const auto visitor = overloads{[&](const SectionHeader &header) -> size_t { return HEADER_HEIGHT; },
-                                   [&](const SectionItem &item) -> size_t {
-                                     return sectionItemHeight(sectionIdFromIndex(item.sectionIdx));
-                                   }};
-    return std::visit(visitor, fromFlatIndex(idx));
-  }
-
-private:
-  static const constexpr size_t HEADER_HEIGHT = 40;
+struct FallbackItem {
+  const RootItem *item;
 };
 
-enum class SectionType { Calculator, Results, Files };
+struct FavoriteItem {
+  const RootItem *item;
+};
 
-using RootItemVariant = std::variant<AbstractCalculatorBackend::CalculatorResult, const RootItem *>;
+struct LinkItem {
+  std::shared_ptr<AbstractApplication> app;
+  QString url;
+};
 
-class RootSearchModel : public SectionListModel<RootItemVariant, SectionType> {
+using RootItemVariant = std::variant<AbstractCalculatorBackend::CalculatorResult, const RootItem *,
+                                     std::filesystem::path, FallbackItem, FavoriteItem, LinkItem>;
+
+class RootSearchModel : public vicinae::ui::SectionListModel<RootItemVariant, SectionType> {
 public:
-  std::array<SectionType, 3> m_sections = {SectionType::Calculator, SectionType::Results, SectionType::Files};
-  RootSearchModel(RootItemManager *manager) : m_manager(manager) {}
+  RootSearchModel(RootItemManager *manager) : m_manager(manager) {
+    m_files = {};
+    regenerateFallback();
+    connect(&m_calcWatcher, &QFutureWatcher<AbstractCalculatorBackend::ComputeResult>::finished, this,
+            &RootSearchModel::handleCalculatorResult);
+    connect(m_manager, &RootItemManager::fallbackDisabled, this, &RootSearchModel::regenerateFallback);
+    connect(m_manager, &RootItemManager::fallbackEnabled, this, &RootSearchModel::regenerateFallback);
+    connect(m_manager, &RootItemManager::itemsChanged, this, &RootSearchModel::reloadSearch);
+    connect(m_manager, &RootItemManager::itemFavoriteChanged, this, &RootSearchModel::reloadSearch);
+  }
 
-  void setFilter(const QString &text) {
-    m_items = m_manager->search(text);
-    qDebug() << "items" << m_items.size() << "for" << text;
+  void reloadSearch() { setFilter(query); }
+
+  void regenerateFallback() { m_fallbackItems = m_manager->fallbackItems(); }
+
+  void handleCalculatorResult() {
+    if (!m_calcWatcher.isFinished()) return;
+
+    auto result = m_calcWatcher.result();
+
+    if (result.has_value()) { m_calc = result.value(); }
     emit dataChanged();
   }
 
-  int sectionCount() const override { return m_sections.size(); }
+  std::span<const SectionType> sections() const {
+    if (query.isEmpty()) return m_rootSections;
+    return m_searchSections;
+  }
+
+  void setFilter(const QString &text) {
+    auto calc = ServiceRegistry::instance()->calculatorService();
+    auto appDb = ServiceRegistry::instance()->appDb();
+
+    m_defaultOpener.reset();
+    m_calc.reset();
+    m_items = {};
+    m_items = m_manager->search(text);
+
+    if (text.isEmpty()) {
+      m_favorites = m_manager->queryFavorites();
+    } else {
+      if (auto app = appDb->findDefaultOpener(text)) { m_defaultOpener = LinkItem{.app = app, .url = text}; }
+
+      m_resultSectionTitle = std::format("Results ({})", m_items.size());
+      m_fallbackSectionTitle = std::format("Use \"{}\" with...", text.toStdString());
+
+      if (m_calcWatcher.isRunning()) m_calcWatcher.cancel();
+      m_calcWatcher.setFuture(calc->backend()->asyncCompute(text));
+    }
+
+    query = text;
+    emit dataChanged();
+  }
+
+  int sectionCount() const override { return sections().size(); }
 
   int sectionItemHeight(SectionType id) const override {
     switch (id) {
@@ -217,44 +108,59 @@ public:
     }
   }
 
-  SectionType sectionIdFromIndex(int idx) const override { return m_sections[idx]; }
+  SectionType sectionIdFromIndex(int idx) const override { return sections()[idx]; }
 
   int sectionItemCount(SectionType id) const override {
     switch (id) {
+    case SectionType::Link:
+      return m_defaultOpener.has_value();
     case SectionType::Calculator:
-      return m_calc.has_value() * 1;
+      return m_calc.has_value();
     case SectionType::Results:
       return m_items.size();
+    case SectionType::Files:
+      return m_files.size();
+    case SectionType::Fallback:
+      return m_fallbackItems.size();
+    case SectionType::Favorites:
+      return m_favorites.size();
     default:
       return 0;
     }
   }
 
   std::string_view sectionName(SectionType id) const override {
-    static std::string resultName;
-
     switch (id) {
+    case SectionType::Link:
+      return "Link";
     case SectionType::Calculator:
       return "Calculator";
-    case SectionType::Results: {
-      resultName = std::format("Results ({})", m_items.size());
-      return resultName;
-    }
+    case SectionType::Results:
+      return query.isEmpty() ? std::string_view("Suggestions") : m_resultSectionTitle;
     case SectionType::Files:
       return "Files";
+    case SectionType::Fallback:
+      return m_fallbackSectionTitle;
+
+    case SectionType::Favorites:
+      return "Favorites";
     }
-    return "";
   }
 
   RootItemVariant sectionItemAt(SectionType id, int itemIdx) const override {
     switch (id) {
+    case SectionType::Link:
+      return m_defaultOpener.value();
     case SectionType::Calculator:
       return m_calc.value();
     case SectionType::Results:
       return m_items[itemIdx].item.get().get();
-      // FIXME: implement
     case SectionType::Files:
-      return {};
+      return m_files[itemIdx];
+    case SectionType::Fallback:
+      return FallbackItem{.item = m_fallbackItems[itemIdx].get()};
+    case SectionType::Favorites:
+      return FavoriteItem{.item = m_favorites[itemIdx].item.get()};
     }
 
     return {};
@@ -264,7 +170,11 @@ public:
     static std::hash<QString> hasher = {};
     const auto visitor =
         overloads{[](const AbstractCalculatorBackend::CalculatorResult &) { return hasher("calculator"); },
-                  [](const RootItem *item) { return hasher(item->uniqueId()); }};
+                  [](const RootItem *item) { return hasher(item->uniqueId()); },
+                  [](const LinkItem &item) { return hasher(item.url); },
+                  [](const std::filesystem::path &path) { return hasher(path.c_str()); },
+                  [](const FallbackItem &item) { return hasher(item.item->uniqueId() + ".fallback"); },
+                  [](const FavoriteItem &item) { return hasher(item.item->uniqueId() + ".favorite"); }};
     return std::visit(visitor, item);
   }
 
@@ -276,24 +186,45 @@ protected:
         overloads{[](const AbstractCalculatorBackend::CalculatorResult &) -> WidgetType * {
                     return new TransformResult;
                   },
-                  [](const RootItem *) -> WidgetType * { return new DefaultListItemWidget; }};
+                  [](const RootItem *) -> WidgetType * { return new DefaultListItemWidget; },
+                  [](const std::filesystem::path &path) -> WidgetType * { return new DefaultListItemWidget; },
+                  [](const LinkItem &item) -> WidgetType * { return new DefaultListItemWidget; },
+                  [](const FallbackItem &item) -> WidgetType * { return new DefaultListItemWidget; },
+                  [](const FavoriteItem &item) -> WidgetType * { return new DefaultListItemWidget; }};
+
     return std::visit(visitor, type);
   }
 
   void refreshItemWidget(const RootItemVariant &type, WidgetType *widget) const override {
+    auto refreshRootItem = [&](const RootItem *item) {
+      auto w = static_cast<DefaultListItemWidget *>(widget);
+      w->setName(item->displayName());
+      w->setIconUrl(item->iconUrl());
+      w->setSubtitle(item->subtitle());
+      w->setAccessories(item->accessories());
+      w->setActive(item->isActive());
+    };
     const auto visitor = overloads{[&](const AbstractCalculatorBackend::CalculatorResult &calc) {
                                      auto w = static_cast<TransformResult *>(widget);
                                      w->setBase(calc.question.text, "Expression");
                                      w->setResult(calc.answer.text, "Answer");
                                    },
-                                   [&](const RootItem *item) {
+                                   [&](const std::filesystem::path &path) {
                                      auto w = static_cast<DefaultListItemWidget *>(widget);
-                                     w->setName(item->displayName());
-                                     w->setIconUrl(item->iconUrl());
-                                     w->setSubtitle(item->subtitle());
-                                     w->setAccessories(item->accessories());
-                                     w->setActive(item->isActive());
-                                   }};
+                                     w->setName(getLastPathComponent(path).c_str());
+                                     w->setIconUrl(ImageURL::fileIcon(path));
+                                     w->setSubtitle(path);
+                                     w->setActive(false);
+                                   },
+                                   [&](const LinkItem &item) {
+                                     auto w = static_cast<DefaultListItemWidget *>(widget);
+                                     w->setName(item.url);
+                                     w->setIconUrl(item.app->iconUrl());
+                                     w->setActive(false);
+                                   },
+                                   refreshRootItem,
+                                   [&](const FallbackItem &item) { refreshRootItem(item.item); },
+                                   [&](const FavoriteItem &item) { refreshRootItem(item.item); }};
 
     std::visit(visitor, type);
   }
@@ -301,8 +232,32 @@ protected:
 private:
   static constexpr const size_t ITEM_HEIGHT = 40;
   static constexpr const size_t CALCULATOR_HEIGHT = 80;
+
+  static constexpr const std::array<SectionType, 2> m_rootSections = {SectionType::Favorites,
+                                                                      SectionType::Results};
+  static constexpr const std::array<SectionType, 6> m_searchSections = {
+      SectionType::Link, SectionType::Calculator, SectionType::Results, SectionType::Files,
+      SectionType::Fallback};
+
+  QString query;
   std::span<RootItemManager::ScoredItem> m_items;
   std::optional<AbstractCalculatorBackend::CalculatorResult> m_calc;
+  QFutureWatcher<AbstractCalculatorBackend::ComputeResult> m_calcWatcher;
+  std::vector<std::filesystem::path> m_files;
+  std::vector<std::shared_ptr<RootItem>> m_fallbackItems;
+
+  // root
+  std::vector<RootItemManager::SearchableRootItem> m_favorites;
+  std::vector<RootItemManager::SearchableRootItem> m_suggestions;
+  std::vector<std::shared_ptr<RootItem>> m_shortcuts;
+  std::vector<std::shared_ptr<RootItem>> m_commands;
+  std::vector<std::shared_ptr<RootItem>> m_apps;
+
+  std::optional<LinkItem> m_defaultOpener;
+
+  std::string m_fallbackSectionTitle;
+  std::string m_resultSectionTitle;
+
   RootItemManager *m_manager;
 };
 
@@ -310,11 +265,34 @@ class RootSearchView2 : public BaseView {
 public:
   RootSearchView2() { VStack().add(m_list).imbue(this); }
 
+  void handleSelection(std::optional<vicinae::ui::VListModel::Index> idx) {
+    qDebug() << "selection changed";
+    if (!idx) {
+      qDebug() << "no index, clearing";
+      clearActions();
+      return;
+    }
+
+    const auto visitor =
+        overloads{[this](const RootItem *item) {
+                    setActions(item->newActionPanel(context(), m_manager->itemMetadata(item->uniqueId())));
+                  },
+                  [](auto &&a) {}};
+
+    if (auto data = m_model->fromIndex(idx.value())) {
+      qDebug() << "index" << idx;
+      std::visit(visitor, data.value());
+    } else {
+      qDebug() << "no data";
+    }
+  }
+
   void initialize() override {
-    auto manager = context()->services->rootItemManager();
-    m_model = new RootSearchModel(manager);
+    m_manager = context()->services->rootItemManager();
+    m_model = new RootSearchModel(m_manager);
     m_list->setModel(m_model);
     m_model->setFilter("");
+    connect(m_list, &vicinae::ui::VListWidget::itemSelected, this, &RootSearchView2::handleSelection);
   }
 
   void textChanged(const QString &text) override {
@@ -323,6 +301,7 @@ public:
   }
 
 private:
+  RootItemManager *m_manager = nullptr;
   RootSearchModel *m_model = nullptr;
   vicinae::ui::VListWidget *m_list = new vicinae::ui::VListWidget;
 };

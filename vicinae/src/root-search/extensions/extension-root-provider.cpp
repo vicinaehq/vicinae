@@ -28,7 +28,7 @@ double CommandRootItem::baseScoreWeight() const { return 1.1; }
 QString CommandRootItem::typeDisplayName() const { return "Command"; }
 
 std::unique_ptr<ActionPanelState> CommandRootItem::newActionPanel(ApplicationContext *ctx,
-                                                                  const RootItemMetadata &metadata) {
+                                                                  const RootItemMetadata &metadata) const {
   auto panel = std::make_unique<ActionPanelState>();
   auto open = new OpenBuiltinCommandAction(m_command, "Open command");
   auto resetRanking = new ResetItemRanking(uniqueId());

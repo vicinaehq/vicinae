@@ -11,7 +11,7 @@
 #include <qlogging.h>
 
 std::unique_ptr<ActionPanelState> RootShortcutItem::newActionPanel(ApplicationContext *ctx,
-                                                                   const RootItemMetadata &metadata) {
+                                                                   const RootItemMetadata &metadata) const {
   auto panel = std::make_unique<ActionPanelState>();
   auto mainSection = panel->createSection();
   auto itemSection = panel->createSection();

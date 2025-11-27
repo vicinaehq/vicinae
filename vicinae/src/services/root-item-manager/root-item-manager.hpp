@@ -99,7 +99,7 @@ public:
    * action.
    */
   virtual std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx,
-                                                           const RootItemMetadata &metadata) {
+                                                           const RootItemMetadata &metadata) const {
     return {};
   }
 

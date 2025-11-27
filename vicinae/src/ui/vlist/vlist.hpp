@@ -1,3 +1,4 @@
+#pragma once
 #include "timer.hpp"
 #include "ui/omni-list/omni-list-item-widget.hpp"
 #include "ui/scroll-bar/scroll-bar.hpp"
@@ -144,10 +145,12 @@ public:
   }
 
   void calculate() {
-    m_scrollBar->setMinimum(0);
-    m_scrollBar->setMaximum(std::max(0, (int)m_model->height() - (int)size().height()));
-    m_scrollBar->setPageStep(DEFAULT_PAGE_STEP);
+    m_height = m_model->height();
     m_count = m_model->count();
+    m_scrollBar->setMinimum(0);
+    m_scrollBar->setMaximum(std::max(0, m_height - (int)size().height()));
+    m_scrollBar->setPageStep(DEFAULT_PAGE_STEP);
+    m_scrollBar->setVisible(m_height > size().height());
     if (m_scrollBar->value() != 0) {
       m_scrollBar->setValue(0);
     } else {
@@ -168,6 +171,7 @@ public:
 
     m_selected = idx;
     updateViewport();
+    emit itemSelected(idx);
   }
 
   void scrollToTop() { scrollToHeight(0); }
@@ -291,11 +295,7 @@ private:
       int availableWidth = viewport.width() - m_margins.left() - m_margins.right();
       VListModel::Index idx = m_model->indexAtHeight(scrollHeight);
 
-      qDebug() << "start index" << idx << viewport;
-
-      if (idx < m_count) {
-        y = -(scrollHeight % m_model->height(idx)); // account for partially visible item
-      }
+      if (scrollHeight > 0 && idx < m_count) { y = -(scrollHeight - m_model->heightAtIndex(idx)); }
 
       while (y < viewport.height() && idx < m_count) {
         bool directHit = false;
@@ -374,7 +374,8 @@ private:
   std::unordered_map<VListModel::WidgetTag, std::vector<WidgetWrapper *>> m_recyclingPool;
   std::vector<ViewportItem> m_visibleItems;
 
-  int m_selected = -1;
+  VListModel::Index m_selected = VListModel::InvalidIndex;
+  int m_height = 0;
 
   QMargins m_margins;
   QScrollBar *m_scrollBar = nullptr;
