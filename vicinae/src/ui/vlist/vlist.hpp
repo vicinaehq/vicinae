@@ -29,6 +29,8 @@ public:
   static constexpr const Index InvalidIndex = -1;
   static constexpr const WidgetTag InvalidTag = -1;
 
+  VListModel(QObject *parent = nullptr) : QObject(parent) {}
+
   /**
    * The number of items this model currently has.
    * If count() returns `n` that implies a valid index range of`[0;n-1].

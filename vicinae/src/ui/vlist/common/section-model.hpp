@@ -2,6 +2,7 @@
 #include "common.hpp"
 #include "ui/list-section-header.hpp"
 #include "ui/vlist/vlist.hpp"
+#include <qobject.h>
 
 namespace vicinae::ui {
 
@@ -17,7 +18,7 @@ template <typename ItemType, typename SectionId = int> class SectionListModel : 
 public:
   using Item = ItemType;
 
-  SectionListModel() {}
+  SectionListModel(QObject *parent = nullptr) : VListModel(parent) {}
 
   virtual int sectionCount() const = 0;
   virtual int sectionItemCount(SectionId id) const = 0;
