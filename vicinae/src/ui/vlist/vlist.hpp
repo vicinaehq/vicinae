@@ -35,6 +35,8 @@ public:
    */
   virtual size_t count() const = 0;
 
+  virtual bool isEmpty() const { return height() == 0; }
+
   /**
    * The height that should be allocated for a widget if the item at this index
    * needs to be shown on screen.
@@ -149,6 +151,7 @@ signals:
    * The currently selected item changed.
    */
   void itemSelected(std::optional<VListModel::Index> idx) const;
+
   /*
    * Item double-clicked or manually activated.
    */
@@ -170,20 +173,9 @@ public:
   void scrollToHeight(int height) { m_scrollBar->setValue(height); }
   void scrollToIndex(VListModel::Index idx);
 
-  void selectFirst() {
-    for (int i = 0; i != m_count; ++i) {
-      if (m_model->isSelectable(i)) {
-        setSelected(i);
-        break;
-      }
-    }
-  }
+  void selectFirst();
 
-  bool activateCurrentSelection() {
-    if (!m_selected) return false;
-    emit itemActivated(m_selected->idx);
-    return true;
-  }
+  bool activateCurrentSelection();
 
   /**
    * Select the item above the current selection.
@@ -234,10 +226,9 @@ private:
   std::unordered_map<VListModel::StableID, WidgetData> m_widgetMap;
   std::unordered_map<VListModel::WidgetTag, std::vector<WidgetWrapper *>> m_recyclingPool;
   std::vector<ViewportItem> m_visibleItems;
-
   std::optional<Selection> m_selected;
-  int m_height = 0;
 
+  int m_height = 0;
   QMargins m_margins;
   QScrollBar *m_scrollBar = nullptr;
   VListModel *m_model = nullptr;

@@ -1,13 +1,10 @@
 #pragma once
-#include "services/clipboard/clipboard-db.hpp"
+#include "extensions/clipboard/history/clipboard-history-model.hpp"
 #include "ui/icon-button/icon-button.hpp"
 #include "ui/preference-dropdown/preference-dropdown.hpp"
 #include "ui/form/selector-input.hpp"
-#include "ui/views/simple-view.hpp"
 #include "ui/empty-view/empty-view.hpp"
-#include "common.hpp"
-#include "ui/omni-list/omni-list.hpp"
-#include "ui/split-detail/split-detail.hpp"
+#include "ui/views/typed-list-view.hpp"
 #include <QtCore>
 #include <qboxlayout.h>
 #include <qevent.h>
@@ -98,7 +95,7 @@ signals:
   void statusIconClicked();
 };
 
-class ClipboardHistoryView : public SimpleView {
+class ClipboardHistoryView : public TypedListView<ClipboardHistoryModel> {
 public:
   enum class DefaultAction { Paste, Copy };
 
@@ -107,39 +104,25 @@ public:
   void initialize() override;
   void textChanged(const QString &value) override;
 
+protected:
+  std::unique_ptr<ActionPanelState> createActionPanel(const ItemType &item) const override;
+  QWidget *generateDetail(const ItemType &item) const override;
+
 private:
   static DefaultAction parseDefaultAction(const QString &str);
 
   void reloadCurrentSearch();
-
   void handleListFinished();
   QWidget *searchBarAccessory() const override { return m_filterInput; }
-
-  void generateList(const PaginatedResponse<ClipboardHistoryEntry> &result);
-  void selectionChanged(const OmniList::AbstractVirtualItem *next,
-                        const OmniList::AbstractVirtualItem *previous);
-
-  void clipboardSelectionInserted(const ClipboardHistoryEntry &entry);
-  void handlePinChanged(int entryId, bool value);
-  void handleRemoved(int entryId);
-
-  void onSelectionUpdated();
+  QWidget *wrapUI(QWidget *m_content) override;
   void handleMonitoringChanged(bool monitor);
   void handleStatusClipboard();
-  bool inputFilter(QKeyEvent *event) override;
-  void startSearch(const ClipboardListSettings &opts);
   void handleFilterChange(const SelectorInput::AbstractItem &item);
   std::optional<QString> getSavedDropdownFilter();
   void saveDropdownFilter(const QString &value);
 
-  OmniList *m_list = new OmniList();
+  ClipboardHistoryModel *m_model;
   ClipboardStatusToolbar *m_statusToolbar;
-  SplitDetailWidget *m_split = new SplitDetailWidget(this);
-  EmptyViewWidget *m_emptyView = new EmptyViewWidget;
-  QStackedWidget *m_content = new QStackedWidget(this);
   PreferenceDropdown *m_filterInput = new PreferenceDropdown(this);
-  using Watcher = QFutureWatcher<PaginatedResponse<ClipboardHistoryEntry>>;
-  Watcher m_watcher;
-  std::optional<ClipboardOfferKind> m_kindFilter;
   DefaultAction m_defaultAction = DefaultAction::Copy;
 };

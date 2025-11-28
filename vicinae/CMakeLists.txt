@@ -411,6 +411,8 @@ set(SRCS
 	src/extensions/clipboard/clipboard-history-command.cpp
 	src/extensions/clipboard/history/clipboard-history-view.hpp
 	src/extensions/clipboard/history/clipboard-history-view.cpp
+	src/extensions/clipboard/history/clipboard-history-model.hpp
+
 	src/extensions/calculator/history/calculator-history-view.hpp
 	src/extensions/calculator/history/calculator-history-view.cpp
 	src/extensions/theme/manage/manage-themes-view.hpp

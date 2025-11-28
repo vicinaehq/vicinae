@@ -1,7 +1,6 @@
 #include "vlist.hpp"
 
 namespace vicinae::ui {
-
 VListWidget::VListWidget() {
   m_visibleItems.reserve(32);
   setupUI();
@@ -14,7 +13,9 @@ void VListWidget::setModel(VListModel *model) {
 }
 
 void VListWidget::calculate() {
-  m_height = m_model->height();
+  if (!m_model) return;
+
+  m_height = m_model->height() + m_margins.top() + m_margins.bottom();
   m_count = m_model->count();
   m_scrollBar->setMinimum(0);
   m_scrollBar->setMaximum(std::max(0, m_height - (int)size().height()));
@@ -28,9 +29,29 @@ void VListWidget::calculate() {
     } else {
       setSelected(m_selected->idx);
     }
+  } else {
+    selectFirst();
   }
 
   updateViewport();
+}
+
+void VListWidget::selectFirst() {
+  for (int i = 0; i != m_count; ++i) {
+    if (m_model->isSelectable(i)) {
+      setSelected(i);
+      return;
+    }
+  }
+
+  m_selected.reset();
+  emit itemSelected({});
+}
+
+bool VListWidget::activateCurrentSelection() {
+  if (!m_selected) return false;
+  emit itemActivated(m_selected->idx);
+  return true;
 }
 
 bool VListWidget::selectUp() {
@@ -64,13 +85,10 @@ bool VListWidget::selectDown() {
 
 void VListWidget::setMargins(const QMargins &margins) {
   m_margins = margins;
-  updateViewport();
-}
-
-void VListWidget::setMargins(int n) {
-  setMargins(QMargins{n, n, n, n});
   calculate();
 }
+
+void VListWidget::setMargins(int n) { setMargins(QMargins{n, n, n, n}); }
 
 void VListWidget::setSelected(VListModel::Index idx) {
   bool isInViewport =
@@ -78,10 +96,13 @@ void VListWidget::setSelected(VListModel::Index idx) {
 
   if (!isInViewport) { scrollToIndex(idx); }
 
-  m_selected = Selection{.idx = idx, .id = m_model->stableId(idx)};
+  auto id = m_model->stableId(idx);
 
+  if (!m_selected || m_selected->id != id) {
+    m_selected = Selection{.idx = idx, .id = id};
+    emit itemSelected(idx);
+  }
   updateViewport();
-  emit itemSelected(idx);
 }
 
 void VListWidget::scrollToIndex(VListModel::Index idx) {
@@ -106,7 +127,7 @@ void VListWidget::scrollToIndex(VListModel::Index idx) {
 
 void VListWidget::setupUI() {
   m_scrollBar = new OmniScrollBar(this);
-  m_margins = QMargins(5, 0, 5, 0);
+  m_margins = QMargins(5, 10, 5, 10);
   connect(m_scrollBar, &QScrollBar::valueChanged, this, &VListWidget::handleScrollChanged);
 }
 
@@ -141,8 +162,6 @@ void VListWidget::updateViewport() {
   Timer timer;
   std::unordered_map<VListModel::StableID, WidgetData> newMap;
 
-  // TODO: handle top margin
-
   newMap.reserve(m_widgetMap.size());
 
   {
@@ -154,7 +173,7 @@ void VListWidget::updateViewport() {
     int availableWidth = viewport.width() - m_margins.left() - m_margins.right();
     VListModel::Index idx = m_model->indexAtHeight(scrollHeight);
 
-    if (scrollHeight > 0 && idx < m_count) { y = -(scrollHeight - m_model->heightAtIndex(idx)); }
+    if (idx < m_count) { y = -(scrollHeight - (m_margins.top() + m_model->heightAtIndex(idx))); }
 
     while (y < viewport.height() && idx < m_count) {
       bool directHit = false;

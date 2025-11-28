@@ -1,4 +1,5 @@
 #pragma once
+#include "keyboard/keyboard.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/keybinding/keybinding-service.hpp"
@@ -6,6 +7,7 @@
 #include "ui/empty-view/empty-view.hpp"
 #include "services/config/config-service.hpp"
 #include "navigation-controller.hpp"
+#include "ui/form/selector-input.hpp"
 #include "ui/search-bar/search-bar.hpp"
 #include <absl/strings/str_format.h>
 #include <qlogging.h>
@@ -18,13 +20,13 @@ template <typename ModelType> class TypedListView : public SimpleView {
 public:
   using ItemType = typename ModelType::Item;
 
-  TypedListView(QWidget *parent = nullptr) { setupUI(); }
+  TypedListView(QWidget *parent = nullptr) {}
 
   virtual ~TypedListView() = default;
 
   void setModel(ModelType *model) {
-    m_list->setModel(model);
     m_model = model;
+    m_list->setModel(model);
   }
 
   ModelType *model() const { return m_model; }
@@ -55,6 +57,13 @@ protected:
       }
     }
 
+    if (Keyboard::Shortcut(Keybind::OpenSearchAccessorySelector) == event) {
+      // FIXME: improve this so that we don't need dynamic cast
+      if (auto accessory = dynamic_cast<SelectorInput *>(currentSearchAccessory())) {
+        accessory->openSelector();
+      }
+    }
+
     if (event->modifiers().toInt() == 0) {
       switch (event->key()) {
       case Qt::Key_Up:
@@ -82,13 +91,20 @@ protected:
 
   void forceReselection() {}
 
+  virtual void initialize() override { setupUI(); }
+
   virtual void selectionChanged(std::optional<typename ModelType::Index> idx) {
-    if (!idx) {
+    if (!idx || !m_model) {
       destroyCompleter();
       clearActions();
       m_split->setDetailVisibility(false);
+
+      if (m_model && m_model->isEmpty()) { m_content->setCurrentWidget(m_emptyView); }
+
       return;
     }
+
+    if (m_content->currentWidget() != m_split) { m_content->setCurrentWidget(m_split); }
 
     std::optional<ItemType> item = m_model->fromIndex(idx.value());
 
@@ -116,6 +132,11 @@ protected:
   QWidget *detail() const { return m_split->detailWidget(); }
 
   void setDetail(QWidget *widget) { m_split->setDetailWidget(widget); }
+
+  /**
+   * Wrap the list view UI inside a layout if necessary
+   */
+  virtual QWidget *wrapUI(QWidget *content) { return content; }
 
   void setupUI() {
     m_split = new SplitDetailWidget(this);
@@ -146,7 +167,7 @@ connect(m_list, &OmniList::virtualHeightChanged, this, [this](int height) {
 });
     */
 
-    SimpleView::setupUI(m_content);
+    SimpleView::setupUI(wrapUI(m_content));
   }
 
   vicinae::ui::VListWidget *m_list;

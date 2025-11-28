@@ -1,6 +1,8 @@
 #include "clipboard-history-view.hpp"
 #include "actions/root-search/root-search-actions.hpp"
 #include "clipboard-actions.hpp"
+#include "common.hpp"
+#include "extensions/clipboard/history/clipboard-history-model.hpp"
 #include "keyboard/keybind-manager.hpp"
 #include "navigation-controller.hpp"
 #include "services/clipboard/clipboard-db.hpp"
@@ -70,62 +72,6 @@ class CopyClipboardSelection : public AbstractAction {
 public:
   CopyClipboardSelection(const QString &id)
       : AbstractAction("Copy to clipboard", ImageURL::builtin("copy-clipboard")), m_id(id) {}
-};
-
-class ClipboardHistoryItemWidget : public SelectableOmniListWidget {
-public:
-  void setEntry(const ClipboardHistoryEntry &entry) {
-    auto createdAt = QDateTime::fromSecsSinceEpoch(entry.updatedAt);
-    m_title->setText(entry.textPreview);
-    m_pinIcon->setVisible(entry.pinnedAt);
-    m_description->setText(QString("%1").arg(getRelativeTimeString(createdAt)));
-    m_icon->setFixedSize(25, 25);
-    m_icon->setUrl(iconForMime(entry));
-  }
-
-  ClipboardHistoryItemWidget() { setupUI(); }
-
-private:
-  TypographyWidget *m_title = new TypographyWidget;
-  TypographyWidget *m_description = new TypographyWidget;
-  ImageWidget *m_icon = new ImageWidget;
-  ImageWidget *m_pinIcon = new ImageWidget;
-
-  ImageURL getLinkIcon(const std::optional<QString> &urlHost) const {
-    auto dflt = ImageURL::builtin("link");
-
-    if (urlHost) return ImageURL::favicon(*urlHost).withFallback(dflt);
-
-    return dflt;
-  }
-
-  ImageURL iconForMime(const ClipboardHistoryEntry &entry) const {
-    switch (entry.kind) {
-    case ClipboardOfferKind::Image:
-      return ImageURL::builtin("image");
-    case ClipboardOfferKind::Link:
-      return getLinkIcon(entry.urlHost);
-    case ClipboardOfferKind::Text:
-      return ImageURL::builtin("text");
-    case ClipboardOfferKind::File:
-      return ImageURL::builtin("folder");
-    default:
-      break;
-    }
-    return ImageURL::builtin("question-mark-circle");
-  }
-
-  void setupUI() {
-    m_pinIcon->setUrl(ImageURL::builtin("pin").setFill(SemanticColor::Red));
-    m_pinIcon->setFixedSize(16, 16);
-    m_description->setColor(SemanticColor::TextMuted);
-    m_description->setSize(TextSize::TextSmaller);
-
-    auto layout = HStack().margins(5).spacing(10).add(m_icon).add(
-        VStack().add(m_title).add(HStack().add(m_pinIcon).add(m_description).spacing(5)));
-
-    setLayout(layout.buildLayout());
-  }
 };
 
 class ClipboardHistoryDetail : public DetailWidget {
@@ -388,97 +334,6 @@ public:
   RemoveAllSelectionsAction() { setStyle(AbstractAction::Style::Danger); }
 };
 
-class ClipboardHistoryItem : public OmniList::AbstractVirtualItem, public ListView::Actionnable {
-public:
-  ClipboardHistoryEntry info;
-
-  std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx,
-                                                   ClipboardHistoryView::DefaultAction defaultAction) const {
-    auto panel = std::make_unique<ListActionPanelState>();
-    auto clipman = ctx->services->clipman();
-    auto mainSection = panel->createSection();
-    bool isCopyable = info.encryption == ClipboardEncryptionType::None || clipman->isEncryptionReady();
-
-    if (!isCopyable) { mainSection->addAction(new OpenItemPreferencesAction("extension.clipboard")); }
-
-    auto wm = ctx->services->windowManager();
-    auto pin = new PinClipboardAction(info.id, !info.pinnedAt);
-    auto editKeywords = new EditClipboardKeywordsAction(info.id);
-    auto remove = new RemoveSelectionAction(info.id);
-    auto removeAll = new RemoveAllSelectionsAction();
-
-    editKeywords->setShortcut(Keybind::EditAction);
-    remove->setStyle(AbstractAction::Style::Danger);
-    remove->setShortcut(Keybind::RemoveAction);
-    removeAll->setShortcut(Keybind::DangerousRemoveAction);
-    pin->setShortcut(Keybind::PinAction);
-
-    if (isCopyable) {
-      auto copy = new CopyClipboardSelection(info.id);
-      copy->addShortcut(Keybind::CopyAction);
-
-      if (wm->canPaste()) {
-        auto paste = new PasteClipboardSelection(info.id);
-        paste->addShortcut(Keybind::PasteAction);
-        if (defaultAction == ClipboardHistoryView::DefaultAction::Copy) {
-          mainSection->addAction(copy);
-          mainSection->addAction(paste);
-        } else {
-          mainSection->addAction(paste);
-          mainSection->addAction(copy);
-        }
-      } else {
-        mainSection->addAction(copy);
-      }
-    }
-
-    auto toolsSection = panel->createSection();
-    auto dangerSection = panel->createSection();
-
-    toolsSection->addAction(pin);
-    toolsSection->addAction(editKeywords);
-    dangerSection->addAction(remove);
-    dangerSection->addAction(removeAll);
-
-    return panel;
-  }
-
-  OmniListItemWidget *createWidget() const override {
-    auto widget = new ClipboardHistoryItemWidget();
-
-    widget->setEntry(info);
-
-    return widget;
-  }
-
-  void refresh(QWidget *widget) const override {
-    static_cast<ClipboardHistoryItemWidget *>(widget)->setEntry(info);
-  }
-
-  bool recyclable() const override { return true; }
-
-  void recycle(QWidget *widget) const override {
-    static_cast<ClipboardHistoryItemWidget *>(widget)->setEntry(info);
-  }
-
-  bool hasUniformHeight() const override { return true; }
-
-  const QString &name() const { return info.textPreview; }
-
-  QWidget *generateDetail() const override {
-    auto detail = new ClipboardHistoryDetail();
-
-    detail->setEntry(info);
-
-    return detail;
-  }
-
-  QString generateId() const override { return info.id; }
-
-public:
-  ClipboardHistoryItem(const ClipboardHistoryEntry &info) : info(info) {}
-};
-
 static const std::vector<Preference::DropdownData::Option> filterSelectorOptions = {
     {"All", "all"}, {"Text", "text"}, {"Images", "image"}, {"Links", "link"}, {"Files", "file"},
 };
@@ -489,6 +344,10 @@ static const std::unordered_map<QString, ClipboardOfferKind> typeToOfferKind{
     {"text", ClipboardOfferKind::Text},
     {"file", ClipboardOfferKind::File},
 };
+
+QWidget *ClipboardHistoryView::wrapUI(QWidget *content) {
+  return VStack().add(m_statusToolbar).add(content, 1).divided(1).buildWidget();
+}
 
 ClipboardHistoryView::ClipboardHistoryView() {
   auto clipman = ServiceRegistry::instance()->clipman();
@@ -505,69 +364,29 @@ ClipboardHistoryView::ClipboardHistoryView() {
   m_filterInput->setFocusPolicy(Qt::NoFocus);
   m_filterInput->setOptions(filterSelectorOptions);
 
-  m_content->addWidget(m_split);
-  m_content->addWidget(m_emptyView);
-  m_content->setCurrentWidget(m_split);
-
-  m_emptyView->setTitle("No clipboard entries");
-  m_emptyView->setDescription("No results matching your search. You can try to refine your search.");
-  m_emptyView->setIcon(ImageURL::builtin("magnifying-glass"));
-
-  m_split->setMainWidget(m_list);
-  m_split->setDetailVisibility(false);
-
-  VStack().add(m_statusToolbar).add(m_content, 1).divided(1).imbue(this);
-
-  connect(clipman, &ClipboardService::selectionPinStatusChanged, this, [this]() { reloadCurrentSearch(); });
-  connect(clipman, &ClipboardService::selectionRemoved, this, [this]() { reloadCurrentSearch(); });
-  connect(clipman, &ClipboardService::allSelectionsRemoved, this, [this]() { reloadCurrentSearch(); });
-
-  connect(m_list, &OmniList::selectionChanged, this, &ClipboardHistoryView::selectionChanged);
-  connect(m_list, &OmniList::itemActivated, this, [this]() { executePrimaryAction(); });
-  connect(clipman, &ClipboardService::itemInserted, this, &ClipboardHistoryView::clipboardSelectionInserted);
-  connect(clipman, &ClipboardService::selectionUpdated, this, &ClipboardHistoryView::onSelectionUpdated);
   connect(clipman, &ClipboardService::monitoringChanged, this,
           &ClipboardHistoryView::handleMonitoringChanged);
   connect(m_statusToolbar, &ClipboardStatusToolbar::statusIconClicked, this,
           &ClipboardHistoryView::handleStatusClipboard);
   connect(m_filterInput, &SelectorInput::selectionChanged, this, &ClipboardHistoryView::handleFilterChange);
-  connect(&m_watcher, &Watcher::finished, this, &ClipboardHistoryView::handleListFinished);
-}
-
-void ClipboardHistoryView::generateList(const PaginatedResponse<ClipboardHistoryEntry> &result) {
-  size_t i = 0;
-
-  if (result.data.empty()) {
-    m_content->setCurrentWidget(m_emptyView);
-  } else {
-    m_content->setCurrentWidget(m_split);
-  }
-
-  m_statusToolbar->setLeftText(QString("%1 Items").arg(QLocale().toString(result.totalCount)));
-
-  m_list->updateModel([&]() {
-    auto &pinnedSection = m_list->addSection();
-
-    while (i < result.data.size() && result.data[i].pinnedAt) {
-      auto &entry = result.data[i];
-      auto candidate = std::make_unique<ClipboardHistoryItem>(entry);
-
-      pinnedSection.addItem(std::move(candidate));
-      ++i;
-    }
-
-    while (i < result.data.size()) {
-      auto &entry = result.data[i];
-      auto candidate = std::make_unique<ClipboardHistoryItem>(entry);
-
-      pinnedSection.addItem(std::move(candidate));
-      ++i;
-    }
-  });
 }
 
 void ClipboardHistoryView::initialize() {
+  TypedListView::initialize();
+
+  auto clipman = ServiceRegistry::instance()->clipman();
+  m_model = new ClipboardHistoryModel(clipman);
+
+  connect(m_model, &ClipboardHistoryModel::dataLoadingChanged, this, &BaseView::setLoading);
+
   auto preferences = command()->preferenceValues();
+
+  setModel(m_model);
+
+  connect(m_model, &ClipboardHistoryModel::dataRetrieved, this,
+          [this](const PaginatedResponse<ClipboardHistoryEntry> &page) {
+            m_statusToolbar->setLeftText(QString("%1 Items").arg(page.totalCount));
+          });
 
   m_defaultAction = parseDefaultAction(preferences.value("defaultAction").toString());
   setSearchPlaceholderText("Browse clipboard history...");
@@ -576,49 +395,66 @@ void ClipboardHistoryView::initialize() {
   handleFilterChange(*m_filterInput->value());
 }
 
-void ClipboardHistoryView::reloadCurrentSearch() {
-  startSearch({.query = searchText(), .kind = m_kindFilter});
-}
+std::unique_ptr<ActionPanelState> ClipboardHistoryView::createActionPanel(const ItemType &info) const {
+  auto panel = std::make_unique<ListActionPanelState>();
+  auto clipman = context()->services->clipman();
+  auto mainSection = panel->createSection();
+  bool isCopyable = info->encryption == ClipboardEncryptionType::None || clipman->isEncryptionReady();
 
-void ClipboardHistoryView::handleListFinished() {
-  if (!m_watcher.isFinished()) return;
+  if (!isCopyable) { mainSection->addAction(new OpenItemPreferencesAction("extension.clipboard")); }
 
-  generateList(m_watcher.result());
-}
+  auto wm = context()->services->windowManager();
+  auto pin = new PinClipboardAction(info->id, !info->pinnedAt);
+  auto editKeywords = new EditClipboardKeywordsAction(info->id);
+  auto remove = new RemoveSelectionAction(info->id);
+  auto removeAll = new RemoveAllSelectionsAction();
 
-void ClipboardHistoryView::selectionChanged(const OmniList::AbstractVirtualItem *next,
-                                            const OmniList::AbstractVirtualItem *previous) {
-  if (!next) {
-    m_split->setDetailVisibility(false);
-    clearActions();
-    return;
+  editKeywords->setShortcut(Keybind::EditAction);
+  remove->setStyle(AbstractAction::Style::Danger);
+  remove->setShortcut(Keybind::RemoveAction);
+  removeAll->setShortcut(Keybind::DangerousRemoveAction);
+  pin->setShortcut(Keybind::PinAction);
+
+  if (isCopyable) {
+    auto copy = new CopyClipboardSelection(info->id);
+    copy->addShortcut(Keybind::CopyAction);
+
+    if (wm->canPaste()) {
+      auto paste = new PasteClipboardSelection(info->id);
+      paste->addShortcut(Keybind::PasteAction);
+      if (m_defaultAction == ClipboardHistoryView::DefaultAction::Copy) {
+        mainSection->addAction(copy);
+        mainSection->addAction(paste);
+      } else {
+        mainSection->addAction(paste);
+        mainSection->addAction(copy);
+      }
+    } else {
+      mainSection->addAction(copy);
+    }
   }
 
-  auto entry = static_cast<const ClipboardHistoryItem *>(next);
+  auto toolsSection = panel->createSection();
+  auto dangerSection = panel->createSection();
 
-  context()->navigation->setActions(entry->newActionPanel(context(), m_defaultAction));
+  toolsSection->addAction(pin);
+  toolsSection->addAction(editKeywords);
+  dangerSection->addAction(remove);
+  dangerSection->addAction(removeAll);
 
-  if (auto detail = entry->generateDetail()) {
-    if (auto current = m_split->detailWidget()) { current->deleteLater(); }
+  return panel;
+}
 
-    m_split->setDetailWidget(detail);
-    m_split->setDetailVisibility(true);
-  }
+QWidget *ClipboardHistoryView::generateDetail(const ItemType &item) const {
+  auto detail = new ClipboardHistoryDetail;
+  detail->setEntry(*item);
+  return detail;
 }
 
 void ClipboardHistoryView::textChanged(const QString &value) {
-  startSearch({.query = value, .kind = m_kindFilter});
+  m_model->setFilter(value);
+  m_list->selectFirst();
 }
-
-void ClipboardHistoryView::clipboardSelectionInserted(const ClipboardHistoryEntry &entry) {
-  reloadCurrentSearch();
-}
-
-void ClipboardHistoryView::handlePinChanged(int entryId, bool value) { reloadCurrentSearch(); }
-
-void ClipboardHistoryView::handleRemoved(int entryId) { reloadCurrentSearch(); }
-
-void ClipboardHistoryView::onSelectionUpdated() { reloadCurrentSearch(); }
 
 void ClipboardHistoryView::handleMonitoringChanged(bool monitor) {
   if (monitor) {
@@ -641,68 +477,16 @@ void ClipboardHistoryView::handleStatusClipboard() {
   command()->setPreferenceValues(preferences);
 }
 
-bool ClipboardHistoryView::inputFilter(QKeyEvent *event) {
-  auto config = ServiceRegistry::instance()->config();
-  auto &keybinding = config->value().keybinding;
-
-  if (event->modifiers() == Qt::ControlModifier) {
-    if (KeyBindingService::isDownKey(event, keybinding)) { return m_list->selectDown(); }
-    if (KeyBindingService::isUpKey(event, keybinding)) { return m_list->selectUp(); }
-    if (KeyBindingService::isLeftKey(event, keybinding)) {
-      context()->navigation->popCurrentView();
-      return true;
-    }
-    if (KeyBindingService::isRightKey(event, keybinding)) {
-      m_list->activateCurrentSelection();
-      return true;
-    }
-  }
-
-  if (event->modifiers().toInt() == 0) {
-    switch (event->key()) {
-    case Qt::Key_Up:
-      return m_list->selectUp();
-    case Qt::Key_Down:
-      return m_list->selectDown();
-    case Qt::Key_Tab:
-      m_list->selectNext();
-      return true;
-    case Qt::Key_Return:
-      m_list->activateCurrentSelection();
-      return true;
-    }
-  }
-
-  if (KeybindManager::instance()->resolve(Keybind::OpenSearchAccessorySelector) == event) {
-    m_filterInput->openSelector();
-    return true;
-  }
-
-  return SimpleView::inputFilter(event);
-}
-
-void ClipboardHistoryView::startSearch(const ClipboardListSettings &opts) {
-  auto clipman = context()->services->clipman();
-
-  if (m_watcher.isRunning()) { m_watcher.cancel(); }
-
-  m_watcher.setFuture(clipman->listAll(1000, 0, opts));
-}
-
 void ClipboardHistoryView::handleFilterChange(const SelectorInput::AbstractItem &item) {
   saveDropdownFilter(item.id());
 
   if (auto it = typeToOfferKind.find(item.id()); it != typeToOfferKind.end()) {
-    m_kindFilter = it->second;
+    m_model->setKindFilter(it->second);
   } else {
-    m_kindFilter.reset();
+    m_model->setKindFilter({});
   }
 
-  if (!searchText().isEmpty()) {
-    clearSearchText();
-  } else {
-    reloadCurrentSearch();
-  }
+  if (!searchText().isEmpty()) { clearSearchText(); }
 }
 
 ClipboardHistoryView::DefaultAction ClipboardHistoryView::parseDefaultAction(const QString &str) {

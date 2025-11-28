@@ -110,6 +110,8 @@ public:
   }
 
   void initialize() override {
+    TypedListView::initialize();
+
     auto config = context()->services->config();
     m_manager = context()->services->rootItemManager();
     m_model = new RootSearchModel(m_manager, context()->services->fileService(), context()->services->appDb(),

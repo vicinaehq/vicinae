@@ -13,7 +13,7 @@ namespace vicinae::ui {
  * are considered to have the same height. This restriction does not apply to the model as a whole,
  * but only individual sections.
  */
-template <typename ItemType, typename SectionId> class SectionListModel : public VListModel {
+template <typename ItemType, typename SectionId = int> class SectionListModel : public VListModel {
 public:
   using Item = ItemType;
 
@@ -210,6 +210,6 @@ protected:
   }
 
 private:
-  static const constexpr size_t HEADER_HEIGHT = 40;
+  static const constexpr size_t HEADER_HEIGHT = 30;
 };
 }; // namespace vicinae::ui
