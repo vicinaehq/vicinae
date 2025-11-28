@@ -49,8 +49,8 @@ std::unique_ptr<ActionPanelState> RootShortcutItem::newActionPanel(ApplicationCo
   return panel;
 }
 
-std::unique_ptr<ActionPanelState> RootShortcutItem::fallbackActionPanel(ApplicationContext *ctx,
-                                                                        const RootItemMetadata &metadata) {
+std::unique_ptr<ActionPanelState>
+RootShortcutItem::fallbackActionPanel(ApplicationContext *ctx, const RootItemMetadata &metadata) const {
   auto panel = std::make_unique<ActionPanelState>();
   auto main = panel->createSection();
 

@@ -61,8 +61,8 @@ std::unique_ptr<ActionPanelState> CommandRootItem::newActionPanel(ApplicationCon
   return panel;
 }
 
-std::unique_ptr<ActionPanelState> CommandRootItem::fallbackActionPanel(ApplicationContext *ctx,
-                                                                       const RootItemMetadata &metadata) {
+std::unique_ptr<ActionPanelState>
+CommandRootItem::fallbackActionPanel(ApplicationContext *ctx, const RootItemMetadata &metadata) const {
   auto panel = std::make_unique<ActionPanelState>();
   auto main = panel->createSection();
   auto open = new OpenBuiltinCommandAction(m_command, "Open command", "");

@@ -6,7 +6,7 @@ namespace vicinae::ui {
 
 /**
  * A VList model optimized to render data organized in sections.
- * This is the model used by most lists in Vicinae.
+ * This is the model used by most vertical lists in Vicinae.
  *
  * Currently, this model suffer from one notable limitation: for a given section, all items
  * are considered to have the same height. This restriction does not apply to the model as a whole,
@@ -14,6 +14,8 @@ namespace vicinae::ui {
  */
 template <typename ItemType, typename SectionId> class SectionListModel : public VListModel {
 public:
+  SectionListModel() {}
+
   virtual int sectionCount() const = 0;
   virtual int sectionItemCount(SectionId id) const = 0;
   virtual int sectionItemHeight(SectionId id) const = 0;
@@ -47,6 +49,8 @@ public:
     return std::visit(visitor, fromFlatIndex(idx));
   }
 
+  using FlattenedItem = std::variant<SectionItem, SectionHeader>;
+
 protected:
   WidgetType *createWidget(Index idx) const final override {
     const auto visitor = overloads{
@@ -78,8 +82,7 @@ protected:
     return std::visit(visitor, fromFlatIndex(idx));
   }
 
-  std::variant<SectionItem, SectionHeader> fromFlatIndex(Index idx) const {
-    // TODO: optimize, that's obviously slow
+  FlattenedItem fromFlatIndex(Index idx) const {
     int currentIndex = 0;
 
     for (int i = 0; i != sectionCount(); ++i) {
@@ -92,12 +95,12 @@ protected:
         ++currentIndex;
       }
 
-      for (int j = 0; j != itemCount; ++j) {
-        if (currentIndex == idx) {
-          return SectionItem{.data = sectionItemAt(id, j), .sectionIdx = i, .itemIdx = j};
-        }
-        ++currentIndex;
+      if (itemCount > 0 && idx >= currentIndex && idx < currentIndex + itemCount) {
+        int j = idx - currentIndex;
+        return SectionItem{.data = sectionItemAt(id, j), .sectionIdx = i, .itemIdx = j};
       }
+
+      currentIndex += itemCount;
     }
 
     throw std::runtime_error("Invalid index, this should not happen");
@@ -121,7 +124,6 @@ protected:
       int itemCount = sectionItemCount(id);
       int itemHeight = sectionItemHeight(id);
       bool withHeader = itemCount > 0 && !sectionName(id).empty();
-
       height = height + itemCount * itemHeight + withHeader * HEADER_HEIGHT;
     }
     return height;
@@ -143,14 +145,22 @@ protected:
         ++currentIndex;
       }
 
-      for (int j = 0; j != itemCount; ++j) {
-        if (currentIndex == idx) { return height; }
-        height += itemHeight;
-        ++currentIndex;
+      int sectionHeight = itemCount * itemHeight;
+
+      if (itemCount > 0 && idx >= currentIndex && idx < currentIndex + itemCount) {
+        int itemIdx = idx - currentIndex;
+        return height + itemIdx * itemHeight;
       }
+
+      currentIndex += itemCount;
+      height += sectionHeight;
     }
 
     return height;
+  }
+
+  bool isAnchor(Index idx) const override {
+    return std::holds_alternative<SectionHeader>(fromFlatIndex(idx));
   }
 
   bool isSelectable(Index idx) const final override {
@@ -173,11 +183,16 @@ protected:
         ++currentIndex;
       }
 
-      for (int j = 0; j != itemCount; ++j) {
-        if (targetHeight < height + itemHeight) { return currentIndex; }
-        height += itemHeight;
-        ++currentIndex;
+      int sectionHeight = itemHeight * itemCount;
+
+      if (itemCount > 0) {
+        if (targetHeight < height + sectionHeight) {
+          return currentIndex + (targetHeight - height) / itemHeight;
+        }
       }
+
+      height += sectionHeight;
+      currentIndex += itemCount;
     }
 
     return InvalidIndex;

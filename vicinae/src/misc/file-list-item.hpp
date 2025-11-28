@@ -18,6 +18,46 @@ protected:
 
   ImageURL getIcon() const { return ImageURL::fileIcon(m_path); }
 
+public:
+  static std::unique_ptr<ActionPanelState> actionPanel(const std::filesystem::path &path, AppService *appDb) {
+    QMimeDatabase mimeDb;
+    auto panel = std::make_unique<ActionPanelState>();
+    auto section = panel->createSection();
+    auto mime = mimeDb.mimeTypeForFile(path.c_str());
+    auto openers = appDb->findCuratedOpeners(mime.name());
+    auto fileBrowser = appDb->fileBrowser();
+
+    if (!openers.empty()) {
+      auto open = new OpenFileAction(path, openers.front());
+      section->addAction(open);
+    }
+
+    if (fileBrowser && (!openers.empty() && openers.front()->id() != fileBrowser->id())) {
+      auto open = new OpenFileInAppAction(path, fileBrowser, "Open in folder");
+      section->addAction(open);
+    }
+
+    auto suggested = panel->createSection("Suggested apps");
+
+    for (int i = 1; i < openers.size(); ++i) {
+      auto opener = openers[i];
+      if (fileBrowser && fileBrowser->id() == opener->id()) continue;
+      auto open = new OpenFileAction(path, opener);
+      suggested->addAction(open);
+    }
+
+    auto utils = panel->createSection();
+
+    utils->addAction(new CopyToClipboardAction(Clipboard::Text(path.c_str()), "Copy file path"));
+    utils->addAction(new CopyToClipboardAction(Clipboard::Text(path.filename().c_str()), "Copy file name"));
+
+    if (mime.isValid()) {
+      utils->addAction(new CopyToClipboardAction(Clipboard::Text(mime.name()), "Copy mime type"));
+    }
+
+    return panel;
+  }
+
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
     auto panel = std::make_unique<ActionPanelState>();
     auto appDb = ctx->services->appDb();

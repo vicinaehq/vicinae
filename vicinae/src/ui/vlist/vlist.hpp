@@ -27,6 +27,7 @@ public:
   using Index = size_t;
   using WidgetType = OmniListItemWidget;
   static constexpr const Index InvalidIndex = -1;
+  static constexpr const WidgetTag InvalidTag = -1;
 
   /**
    * The number of items this model currently has.
@@ -56,6 +57,14 @@ public:
    * be considered during navigation.
    */
   virtual bool isSelectable(Index idx) const = 0;
+
+  /**
+   * Whether this item acts as an 'anchor'.
+   * When an item gets selected, if the item above it is an anchor the list will scroll to the anchor instead
+   * of scrolling to the item itself. This is used to implement e.g section headers where we always want to
+   * make sure the header is visible.
+   */
+  virtual bool isAnchor(Index idx) const { return false; }
 
   /**
    * The full height of the list, computed on a full model change.
@@ -88,6 +97,16 @@ public:
    * Widget types are compared using `typeid`.
    */
   virtual void refreshWidget(Index idx, WidgetType *widget) const = 0;
+
+protected:
+  /**
+   * Simple utility to generate a random ID, generally used to generate
+   * widget tags or not so stable IDs.
+   */
+  size_t randomId() const {
+    static size_t random = 0;
+    return random++;
+  }
 };
 
 class WidgetWrapper : public QWidget {
@@ -130,6 +149,10 @@ signals:
    * The currently selected item changed.
    */
   void itemSelected(std::optional<VListModel::Index> idx) const;
+  /*
+   * Item double-clicked or manually activated.
+   */
+  void itemActivated(VListModel::Index idx) const;
 
 private:
 public:
@@ -149,13 +172,19 @@ public:
     m_count = m_model->count();
     m_scrollBar->setMinimum(0);
     m_scrollBar->setMaximum(std::max(0, m_height - (int)size().height()));
-    m_scrollBar->setPageStep(DEFAULT_PAGE_STEP);
+    m_scrollBar->setSingleStep(DEFAULT_PAGE_STEP);
     m_scrollBar->setVisible(m_height > size().height());
-    if (m_scrollBar->value() != 0) {
-      m_scrollBar->setValue(0);
-    } else {
-      updateViewport();
+
+    if (m_selected) {
+      if (m_selected->idx >= m_count) {
+        m_selected.reset();
+        selectFirst();
+      } else {
+        setSelected(m_selected->idx);
+      }
     }
+
+    updateViewport();
   }
 
   void setMargins(const QMargins &margins) {
@@ -169,7 +198,8 @@ public:
 
     if (!isInViewport) { scrollToIndex(idx); }
 
-    m_selected = idx;
+    m_selected = Selection{.idx = idx, .id = m_model->stableId(idx)};
+
     updateViewport();
     emit itemSelected(idx);
   }
@@ -181,11 +211,21 @@ public:
   void scrollToHeight(int height) { m_scrollBar->setValue(height); }
 
   void scrollToIndex(VListModel::Index idx) {
-    // int currentHeight = m_selected != -1 ? m_model->heightAtIndex(m_selected) : 0;
-    int currentHeight = m_scrollBar->value();
-    int newHeight = m_model->heightAtIndex(idx);
+    VListModel::Index actualIdx = idx;
 
-    m_scrollBar->setValue(m_scrollBar->value() + (newHeight - currentHeight));
+    if (idx > 0 && m_model->isAnchor(idx - 1)) { actualIdx = idx - 1; }
+
+    int newY = m_model->heightAtIndex(actualIdx);
+    int itemHeight = m_model->height(actualIdx);
+    int scrollHeight = m_scrollBar->value();
+    int newScroll = 0;
+
+    if (newY + itemHeight - scrollHeight > height()) {
+      newScroll = (newY + itemHeight - height());
+    } else if (newY - scrollHeight < 0) {
+      newScroll = (scrollHeight - (scrollHeight - newY));
+    }
+    m_scrollBar->setValue(newScroll);
     updateViewport();
   }
 
@@ -198,12 +238,23 @@ public:
     }
   }
 
+  bool activateCurrentSelection() {
+    if (!m_selected) return false;
+    emit itemActivated(m_selected->idx);
+    return true;
+  }
+
   /**
    * Select the item above the current selection.
    * `true` is selected if such an item exists and was selected, `false` otherwise.
    */
   bool selectUp() {
-    for (int i = m_selected - 1; i >= 0; --i) {
+    if (!m_selected) {
+      selectFirst();
+      return true;
+    }
+
+    for (int i = m_selected->idx - 1; i >= 0; --i) {
       if (m_model->isSelectable(i)) {
         setSelected(i);
         return true;
@@ -217,7 +268,11 @@ public:
    * `true` is selected if such an item exists and was selected, `false` otherwise.
    */
   bool selectDown() {
-    for (int i = m_selected + 1; i < m_count; ++i) {
+    if (!m_selected) {
+      selectFirst();
+      return true;
+    }
+    for (int i = m_selected->idx + 1; i < m_count; ++i) {
       if (m_model->isSelectable(i)) {
         setSelected(i);
         return true;
@@ -226,7 +281,14 @@ public:
     return false;
   }
 
-  void setMargins(int n) { setMargins(QMargins{n, n, n, n}); }
+  void setMargins(int n) {
+    setMargins(QMargins{n, n, n, n});
+    calculate();
+  }
+
+  std::optional<VListModel::Index> currentSelection() const {
+    return m_selected.transform([](auto &&s) { return s.idx; });
+  };
 
 protected:
   void setupUI() {
@@ -260,6 +322,11 @@ private:
   struct WidgetData {
     WidgetWrapper *widget = nullptr;
     VListModel::WidgetTag tag = 0;
+  };
+
+  struct Selection {
+    VListModel::Index idx;
+    VListModel::StableID id;
   };
 
   struct ViewportItem {
@@ -297,6 +364,8 @@ private:
 
       if (scrollHeight > 0 && idx < m_count) { y = -(scrollHeight - m_model->heightAtIndex(idx)); }
 
+      qDebug() << "starting at index" << idx;
+
       while (y < viewport.height() && idx < m_count) {
         bool directHit = false;
         ViewportItem item;
@@ -322,33 +391,36 @@ private:
     for (auto &item : m_visibleItems) {
       if (!item.widget) {
         item.tag = m_model->widgetTag(item.index);
-        // before we consider querying recycling pools, try to reuse a similar widget
-        // that is already on screen (cheaper)
-        auto recyclable =
-            std::ranges::find_if(m_widgetMap, [&](auto &&p) { return p.second.tag == item.tag; });
 
-        if (recyclable != m_widgetMap.end()) {
-          item.widget = recyclable->second.widget;
-          m_widgetMap.erase(recyclable);
-        } else {
-          item.widget = getFromPool(item.tag);
-          if (!item.widget) {
-            auto wrapper = new WidgetWrapper;
+        if (item.tag != VListModel::InvalidTag) {
+          // before we consider querying recycling pools, try to reuse a similar widget
+          // that is already on screen (cheaper)
+          auto recyclable =
+              std::ranges::find_if(m_widgetMap, [&](auto &&p) { return p.second.tag == item.tag; });
 
-            connect(wrapper, &WidgetWrapper::clicked, this,
-                    [wrapper, this]() { setSelected(wrapper->index()); });
-            connect(wrapper, &WidgetWrapper::doubleClicked, this,
-                    [wrapper, this]() { setSelected(wrapper->index()); });
-
-            wrapper->setWidget(m_model->createWidget(item.index));
-            wrapper->setParent(this);
-            item.widget = wrapper;
+          if (recyclable != m_widgetMap.end()) {
+            item.widget = recyclable->second.widget;
+            m_widgetMap.erase(recyclable);
           } else {
+            item.widget = getFromPool(item.tag);
           }
+        }
+
+        if (!item.widget) {
+          auto wrapper = new WidgetWrapper;
+
+          connect(wrapper, &WidgetWrapper::clicked, this,
+                  [wrapper, this]() { setSelected(wrapper->index()); });
+          connect(wrapper, &WidgetWrapper::doubleClicked, this,
+                  [wrapper, this]() { emit itemActivated(wrapper->index()); });
+
+          wrapper->setWidget(m_model->createWidget(item.index));
+          wrapper->setParent(this);
+          item.widget = wrapper;
         }
       }
 
-      item.widget->widget()->selectionChanged(item.index == m_selected);
+      item.widget->widget()->selectionChanged(m_selected && item.index == m_selected->idx);
 
       newMap[item.id] = {.widget = item.widget, .tag = item.tag};
       item.widget->setIndex(item.index);
@@ -374,7 +446,7 @@ private:
   std::unordered_map<VListModel::WidgetTag, std::vector<WidgetWrapper *>> m_recyclingPool;
   std::vector<ViewportItem> m_visibleItems;
 
-  VListModel::Index m_selected = VListModel::InvalidIndex;
+  std::optional<Selection> m_selected;
   int m_height = 0;
 
   QMargins m_margins;
@@ -384,5 +456,4 @@ private:
 
   static constexpr const size_t DEFAULT_PAGE_STEP = 40;
 };
-
 }; // namespace vicinae::ui
