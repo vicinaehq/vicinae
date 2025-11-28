@@ -2,9 +2,9 @@
 #include "actions/app/app-actions.hpp"
 #include "actions/calculator/calculator-actions.hpp"
 #include "common.hpp"
-#include "layout.hpp"
 #include "misc/file-list-item.hpp"
 #include "navigation-controller.hpp"
+#include "ui/views/typed-list-view.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/abstract-app-db.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
@@ -47,21 +47,10 @@ struct LinkItem {
   QString url;
 };
 
-/**
- * A model that produces actionnable items, that is items that generate an action panel
- * and an optional completer.
- */
-template <typename T> class ListModelActionnable {
-  virtual std::unique_ptr<ActionPanelState> createActionPanel(const T &item,
-                                                              ApplicationContext *ctx) const = 0;
-  virtual std::unique_ptr<CompleterData> createCompleter(const T &item) const = 0;
-};
-
 using RootItemVariant = std::variant<AbstractCalculatorBackend::CalculatorResult, const RootItem *,
                                      std::filesystem::path, FallbackItem, FavoriteItem, LinkItem>;
 
-class RootSearchModel : public vicinae::ui::SectionListModel<RootItemVariant, SectionType>,
-                        public ListModelActionnable<RootItemVariant> {
+class RootSearchModel : public vicinae::ui::SectionListModel<RootItemVariant, SectionType> {
   using FileSearchWatcher = QFutureWatcher<std::vector<IndexerFileResult>>;
 
 public:
@@ -85,68 +74,6 @@ public:
     connect(m_manager, &RootItemManager::itemsChanged, this, &RootSearchModel::reloadSearch);
     connect(m_manager, &RootItemManager::itemFavoriteChanged, this, [this]() { regenerateFavorites(); });
     connect(&m_fileWatcher, &FileSearchWatcher::finished, this, &RootSearchModel::handleFileSearchFinished);
-  }
-
-  std::unique_ptr<ActionPanelState> createActionPanel(const RootItemVariant &item,
-                                                      ApplicationContext *ctx) const override {
-    const auto visitor = overloads{
-        [&](const RootItem *item) {
-          return item->newActionPanel(ctx, m_manager->itemMetadata(item->uniqueId()));
-        },
-        [](const AbstractCalculatorBackend::CalculatorResult &item) {
-          auto panel = std::make_unique<ActionPanelState>();
-          auto copyAnswer = new CopyCalculatorAnswerAction(item);
-          auto copyQA = new CopyCalculatorQuestionAndAnswerAction(item);
-          auto putAnswerInSearchBar = new PutCalculatorAnswerInSearchBar(item);
-          auto openHistory = new OpenCalculatorHistoryAction();
-          auto main = panel->createSection();
-
-          copyAnswer->setPrimary(true);
-          main->addAction(copyAnswer);
-          main->addAction(copyQA);
-          main->addAction(putAnswerInSearchBar);
-          main->addAction(openHistory);
-
-          return panel;
-        },
-        [&](const FallbackItem &item) {
-          return item.item->fallbackActionPanel(ctx, m_manager->itemMetadata(item.item->uniqueId()));
-        },
-        [&](const std::filesystem::path &path) { return FileListItemBase::actionPanel(path, m_appDb); },
-        [&](const FavoriteItem &item) {
-          return item.item->newActionPanel(ctx, m_manager->itemMetadata(item.item->uniqueId()));
-        },
-        [&](const LinkItem &item) {
-          auto panel = std::make_unique<ActionPanelState>();
-          auto section = panel->createSection();
-          auto open =
-              new OpenAppAction(item.app, QString("Open in %1").arg(item.app->displayName()), {item.url});
-          open->setClearSearch(true);
-          section->addAction(open);
-          return panel;
-        }};
-
-    return std::visit(visitor, item);
-  }
-
-  std::unique_ptr<CompleterData> createCompleter(const RootItemVariant &item) const override {
-    auto rootItemCompleter = [](const RootItem *item) -> std::unique_ptr<CompleterData> {
-      ArgumentList args = item->arguments();
-
-      if (args.empty()) return nullptr;
-
-      auto cmpl = std::make_unique<CompleterData>();
-      cmpl->arguments = args;
-      cmpl->iconUrl = item->iconUrl();
-
-      return cmpl;
-    };
-
-    const auto visitor = overloads{[&](const RootItem *item) { return rootItemCompleter(item); },
-                                   [&](const FavoriteItem &item) { return rootItemCompleter(item.item); },
-                                   [](auto &&a) { return std::unique_ptr<CompleterData>(); }};
-
-    return std::visit(visitor, item);
   }
 
   bool shouldFastTrack(const RootItemVariant &item) const {
@@ -449,31 +376,71 @@ private:
   std::string m_calculatorSearchQuery;
 };
 
-class RootSearchView2 : public BaseView {
+class RootSearchView2 : public TypedListView<RootSearchModel> {
 public:
-  RootSearchView2() { VStack().add(m_list).imbue(this); }
-
   QString initialSearchPlaceholderText() const override { return "Search for anything..."; }
 
-  void handleSelection(std::optional<vicinae::ui::VListModel::Index> idx) {
-    auto &nav = context()->navigation;
+  std::unique_ptr<ActionPanelState> createActionPanel(const RootItemVariant &item) const override {
+    const auto visitor = overloads{
+        [&](const RootItem *item) {
+          return item->newActionPanel(context(), m_manager->itemMetadata(item->uniqueId()));
+        },
+        [](const AbstractCalculatorBackend::CalculatorResult &item) {
+          auto panel = std::make_unique<ActionPanelState>();
+          auto copyAnswer = new CopyCalculatorAnswerAction(item);
+          auto copyQA = new CopyCalculatorQuestionAndAnswerAction(item);
+          auto putAnswerInSearchBar = new PutCalculatorAnswerInSearchBar(item);
+          auto openHistory = new OpenCalculatorHistoryAction();
+          auto main = panel->createSection();
 
-    if (!idx) {
-      nav->destroyCurrentCompletion();
-      clearActions();
-      return;
-    }
+          copyAnswer->setPrimary(true);
+          main->addAction(copyAnswer);
+          main->addAction(copyQA);
+          main->addAction(putAnswerInSearchBar);
+          main->addAction(openHistory);
 
-    if (auto data = m_model->fromIndex(idx.value())) {
-      setActions(m_model->createActionPanel(data.value(), context()));
-      if (auto completer = m_model->createCompleter(data.value())) {
-        nav->createCompletion(completer->arguments, completer->iconUrl);
-      } else {
-        nav->destroyCurrentCompletion();
-      }
-    } else {
-      qDebug() << "no data";
-    }
+          return panel;
+        },
+        [&](const FallbackItem &item) {
+          return item.item->fallbackActionPanel(context(), m_manager->itemMetadata(item.item->uniqueId()));
+        },
+        [&](const std::filesystem::path &path) {
+          return FileListItemBase::actionPanel(path, context()->services->appDb());
+        },
+        [&](const FavoriteItem &item) {
+          return item.item->newActionPanel(context(), m_manager->itemMetadata(item.item->uniqueId()));
+        },
+        [&](const LinkItem &item) {
+          auto panel = std::make_unique<ActionPanelState>();
+          auto section = panel->createSection();
+          auto open =
+              new OpenAppAction(item.app, QString("Open in %1").arg(item.app->displayName()), {item.url});
+          open->setClearSearch(true);
+          section->addAction(open);
+          return panel;
+        }};
+
+    return std::visit(visitor, item);
+  }
+
+  std::unique_ptr<CompleterData> createCompleter(const RootItemVariant &item) const override {
+    auto rootItemCompleter = [](const RootItem *item) -> std::unique_ptr<CompleterData> {
+      ArgumentList args = item->arguments();
+
+      if (args.empty()) return nullptr;
+
+      auto cmpl = std::make_unique<CompleterData>();
+      cmpl->arguments = args;
+      cmpl->iconUrl = item->iconUrl();
+
+      return cmpl;
+    };
+
+    const auto visitor = overloads{[&](const RootItem *item) { return rootItemCompleter(item); },
+                                   [&](const FavoriteItem &item) { return rootItemCompleter(item.item); },
+                                   [](auto &&a) { return std::unique_ptr<CompleterData>(); }};
+
+    return std::visit(visitor, item);
   }
 
   bool tryAliasFastTrack() {
@@ -490,47 +457,13 @@ public:
   }
 
   bool inputFilter(QKeyEvent *event) override {
-    auto config = ServiceRegistry::instance()->config();
-    const QString &keybinding = config->value().keybinding;
-
-    if (event->modifiers() == Qt::ControlModifier) {
-      if (KeyBindingService::isDownKey(event, keybinding)) { return m_list->selectDown(); }
-      if (KeyBindingService::isUpKey(event, keybinding)) { return m_list->selectUp(); }
-      if (KeyBindingService::isLeftKey(event, keybinding)) {
-        context()->navigation->popCurrentView();
-        return true;
-      }
-      if (KeyBindingService::isRightKey(event, keybinding)) {
-        m_list->activateCurrentSelection();
-        return true;
-      }
-    }
-
     if (event->modifiers().toInt() == 0) {
       switch (event->key()) {
       case Qt::Key_Space:
         return tryAliasFastTrack();
-      case Qt::Key_Up:
-        return m_list->selectUp();
-        break;
-      case Qt::Key_Down:
-        return m_list->selectDown();
-        break;
-      case Qt::Key_Tab: {
-        if (!context()->navigation->hasCompleter()) {
-          // m_list->selectNext();
-          return true;
-        }
-        break;
-      }
-      case Qt::Key_Return:
-      case Qt::Key_Enter:
-        m_list->activateCurrentSelection();
-        return true;
       }
     }
-
-    return BaseView::inputFilter(event);
+    return TypedListView::inputFilter(event);
   }
 
   void initialize() override {
@@ -540,9 +473,7 @@ public:
                                   context()->services->calculatorService());
     m_list->setModel(m_model);
     m_model->setFilter("");
-
-    connect(m_list, &vicinae::ui::VListWidget::itemSelected, this, &RootSearchView2::handleSelection);
-    connect(m_list, &vicinae::ui::VListWidget::itemActivated, this, [this]() { executePrimaryAction(); });
+    setModel(m_model);
     connect(config, &ConfigService::configChanged, this,
             [&](const ConfigService::Value &next, const ConfigService::Value &prev) {
               m_model->setFileSearch(next.rootSearch.searchFiles);
@@ -557,5 +488,4 @@ public:
 private:
   RootItemManager *m_manager = nullptr;
   RootSearchModel *m_model = nullptr;
-  vicinae::ui::VListWidget *m_list = new vicinae::ui::VListWidget;
 };

@@ -1,3 +1,4 @@
+#pragma once
 #include "common.hpp"
 #include "ui/list-section-header.hpp"
 #include "ui/vlist/vlist.hpp"
@@ -14,6 +15,8 @@ namespace vicinae::ui {
  */
 template <typename ItemType, typename SectionId> class SectionListModel : public VListModel {
 public:
+  using Item = ItemType;
+
   SectionListModel() {}
 
   virtual int sectionCount() const = 0;
