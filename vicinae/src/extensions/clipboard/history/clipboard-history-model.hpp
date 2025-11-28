@@ -76,7 +76,8 @@ signals:
 public:
   using QueryWatcher = QFutureWatcher<PaginatedResponse<ClipboardHistoryEntry>>;
 
-  ClipboardHistoryModel(ClipboardService *clipboard) : m_clipboard(clipboard) {
+  ClipboardHistoryModel(ClipboardService *clipboard, QObject *parent = nullptr) : m_clipboard(clipboard) {
+    setParent(parent);
     connect(&m_watcher, &QueryWatcher::finished, this, &ClipboardHistoryModel::handleResults);
     connect(clipboard, &ClipboardService::selectionPinStatusChanged, this,
             &ClipboardHistoryModel::reloadSearch);

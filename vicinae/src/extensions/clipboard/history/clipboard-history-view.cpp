@@ -3,11 +3,9 @@
 #include "clipboard-actions.hpp"
 #include "common.hpp"
 #include "extensions/clipboard/history/clipboard-history-model.hpp"
-#include "keyboard/keybind-manager.hpp"
 #include "navigation-controller.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include "services/clipboard/clipboard-service.hpp"
-#include "services/keybinding/keybinding-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "layout.hpp"
 #include "theme.hpp"
@@ -373,26 +371,21 @@ ClipboardHistoryView::ClipboardHistoryView() {
 
 void ClipboardHistoryView::initialize() {
   TypedListView::initialize();
-
-  auto clipman = ServiceRegistry::instance()->clipman();
-  m_model = new ClipboardHistoryModel(clipman);
-
-  connect(m_model, &ClipboardHistoryModel::dataLoadingChanged, this, &BaseView::setLoading);
-
   auto preferences = command()->preferenceValues();
 
+  m_model = new ClipboardHistoryModel(context()->services->clipman(), this);
   setModel(m_model);
-
-  connect(m_model, &ClipboardHistoryModel::dataRetrieved, this,
-          [this](const PaginatedResponse<ClipboardHistoryEntry> &page) {
-            m_statusToolbar->setLeftText(QString("%1 Items").arg(page.totalCount));
-          });
-
   m_defaultAction = parseDefaultAction(preferences.value("defaultAction").toString());
   setSearchPlaceholderText("Browse clipboard history...");
   textChanged("");
   m_filterInput->setValue(getSavedDropdownFilter().value_or("all"));
   handleFilterChange(*m_filterInput->value());
+
+  connect(m_model, &ClipboardHistoryModel::dataLoadingChanged, this, &BaseView::setLoading);
+  connect(m_model, &ClipboardHistoryModel::dataRetrieved, this,
+          [this](const PaginatedResponse<ClipboardHistoryEntry> &page) {
+            m_statusToolbar->setLeftText(QString("%1 Items").arg(page.totalCount));
+          });
 }
 
 std::unique_ptr<ActionPanelState> ClipboardHistoryView::createActionPanel(const ItemType &info) const {
