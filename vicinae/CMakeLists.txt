@@ -428,6 +428,8 @@ set(SRCS
 	src/extensions/vicinae/oauth-token-store/oauth-token-store-view.cpp
 	src/extensions/power-management/power-management-extension.cpp
 	src/extensions/root/root-search-view.cpp
+	src/extensions/root/root-search-model.hpp
+	src/extensions/root/root-search-model.cpp
 
 	src/extensions/system/browse-apps/browse-apps-view.cpp
 
@@ -641,6 +643,7 @@ set(SRCS
 	src/services/power-manager/systemd/systemd-power-manager.cpp
 
 	src/ui/vlist/vlist.hpp
+	src/ui/vlist/vlist.cpp
 
 ) 
 
