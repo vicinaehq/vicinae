@@ -2,6 +2,7 @@
 #include "timer.hpp"
 #include "ui/omni-list/omni-list-item-widget.hpp"
 #include "ui/scroll-bar/scroll-bar.hpp"
+#include <numbers>
 #include <qobject.h>
 #include <qobjectdefs.h>
 #include <qscrollbar.h>
@@ -111,6 +112,8 @@ protected:
     static size_t random = 0;
     return random++;
   }
+
+  template <typename T> static size_t hash(const T &t) { return std::hash<T>()(t); }
 };
 
 class WidgetWrapper : public QWidget {

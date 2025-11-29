@@ -47,12 +47,12 @@ private:
 
 public:
   AbstractCalculatorBackend *backend() const;
+  using GroupedRecordList = std::vector<std::pair<QString, std::vector<CalculatorRecord>>>;
 
   void startFirstHealthy();
   void setUpdateConversionsAfterRateUpdate(bool value);
   std::vector<CalculatorRecord> records() const;
-  std::vector<std::pair<QString, std::vector<CalculatorRecord>>>
-  groupRecordsByTime(const std::vector<CalculatorRecord> &records) const;
+  GroupedRecordList groupRecordsByTime(const std::vector<CalculatorRecord> &records) const;
   bool addRecord(const AbstractCalculatorBackend::CalculatorResult &result);
   std::vector<CalculatorRecord> query(const QString &query);
   bool removeRecord(const QString &id);
