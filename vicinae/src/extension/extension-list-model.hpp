@@ -6,8 +6,7 @@
 
 class ExtensionListModel : public vicinae::ui::SectionListModel<const ListItemViewModel *> {
 public:
-  ExtensionListModel(QObject *parent = nullptr)
-      : vicinae::ui::SectionListModel<const ListItemViewModel *>(parent) {}
+  ExtensionListModel(QObject *parent = nullptr) { setParent(parent); }
 
   void setData(const std::vector<ListChild> &data) { m_items = data; }
 

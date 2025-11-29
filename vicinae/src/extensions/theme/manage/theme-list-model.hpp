@@ -105,6 +105,7 @@ public:
     case ThemeSection::Available:
       return m_themes.size();
     }
+    return 0;
   }
 
   WidgetType *createItemWidget(const Item &type) const override { return new ThemeItemWidget; }

@@ -154,6 +154,9 @@ void VListWidget::scrollToIndex(VListModel::Index idx, ScrollAnchor anchor) {
   }
   }
 }
+std::optional<VListModel::Index> VListWidget::currentSelection() const {
+  return m_selected.transform([](auto &&s) { return s.idx; });
+};
 
 void VListWidget::setupUI() {
   m_scrollBar = new OmniScrollBar(this);

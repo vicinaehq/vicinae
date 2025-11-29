@@ -57,8 +57,11 @@ void SearchBar::debounce() { emit debouncedTextEdited(text()); }
 bool SearchBar::event(QEvent *event) {
   if (event->type() == QEvent::KeyPress) {
     auto keyEvent = static_cast<QKeyEvent *>(event);
+    QString txt = text();
 
-    if (keyEvent->key() == Qt::Key_Backspace && text().isEmpty()) {
+    if (keyEvent->key() == Qt::Key_Space && txt.isEmpty()) { return true; }
+
+    if (keyEvent->key() == Qt::Key_Backspace && txt.isEmpty()) {
       emit pop();
       return true;
     }
@@ -136,9 +139,8 @@ void SearchBar::inputMethodEvent(QInputMethodEvent *event) {
 
   int insertionPos = cursorPosition() + event->replacementStart();
 
-  auto result = text().sliced(0, insertionPos)
-      + event->preeditString()
-      + text().sliced(insertionPos + event->replacementLength());
+  auto result = text().sliced(0, insertionPos) + event->preeditString() +
+                text().sliced(insertionPos + event->replacementLength());
 
   // TODO: Does this work for other IMEs?
   // https://doc.qt.io/qt-6/qinputmethodevent.html

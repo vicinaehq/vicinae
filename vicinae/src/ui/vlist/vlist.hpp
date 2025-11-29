@@ -203,9 +203,7 @@ public:
 
   void setMargins(int n);
 
-  std::optional<VListModel::Index> currentSelection() const {
-    return m_selected.transform([](auto &&s) { return s.idx; });
-  };
+  std::optional<VListModel::Index> currentSelection() const;
 
 protected:
   void setupUI();
@@ -214,8 +212,6 @@ protected:
   void resizeEvent(QResizeEvent *event) override;
 
 private:
-  std::optional<VListModel::Index> getPreviousSelectable(VListModel::Index index) const;
-
   struct WidgetData {
     WidgetWrapper *widget = nullptr;
     VListModel::WidgetTag tag = 0;
