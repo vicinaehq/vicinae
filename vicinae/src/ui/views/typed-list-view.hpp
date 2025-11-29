@@ -36,7 +36,7 @@ protected:
   virtual std::unique_ptr<CompleterData> createCompleter(const ItemType &item) const { return nullptr; }
   virtual std::unique_ptr<ActionPanelState> createActionPanel(const ItemType &item) const { return nullptr; }
 
-  virtual void itemSelected() {}
+  virtual void itemSelected(const ItemType &item) {}
 
   virtual void emptied() {}
 
@@ -125,6 +125,8 @@ protected:
 
     if (detail) { setDetail(detail); }
     m_split->setDetailVisibility(detail);
+
+    itemSelected(item.value());
   }
 
   virtual void itemActivated(typename ModelType::Index idx) { executePrimaryAction(); }

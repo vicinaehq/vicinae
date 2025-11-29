@@ -33,7 +33,7 @@ public:
   virtual void refreshItemWidget(const ItemType &type, WidgetType *widget) const = 0;
 
   virtual StableID stableId(const ItemType &item) const = 0;
-  virtual WidgetTag widgetTag(const ItemType &item) const = 0;
+  virtual WidgetTag widgetTag(const ItemType &item) const { return InvalidTag; }
 
   struct SectionHeader {
     std::string_view name;
