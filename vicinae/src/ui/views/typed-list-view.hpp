@@ -99,7 +99,10 @@ protected:
       clearActions();
       m_split->setDetailVisibility(false);
 
-      if (m_model && m_model->isEmpty()) { m_content->setCurrentWidget(m_emptyView); }
+      if (m_model && m_model->isEmpty()) {
+        m_content->setCurrentWidget(m_emptyView);
+        emptied();
+      }
 
       return;
     }

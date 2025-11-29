@@ -63,6 +63,8 @@ set(SRCS
 
 	src/ui/dmenu-view/dmenu-view.hpp
 	src/ui/dmenu-view/dmenu-view.cpp
+	src/ui/dmenu-view/dmenu.hpp
+	src/ui/dmenu-view/dmenu.cpp
 
 	include/font-service.hpp
 	src/font-service.cpp
