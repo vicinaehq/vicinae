@@ -1,71 +1,56 @@
 #include "root-search-model.hpp"
-#include "services/app-service/app-service.hpp"
-#include "services/calculator-service/calculator-service.hpp"
 #include "ui/transform-result/transform-result.hpp"
 
-RootSearchModel::RootSearchModel(RootItemManager *manager, FileService *fs, AppService *appDb,
-                                 CalculatorService *calculator)
-    : m_manager(manager), m_fs(fs), m_appDb(appDb), m_calculator(calculator) {
-  using namespace std::chrono_literals;
+RootSearchModel::RootSearchModel(RootItemManager *manager) : m_manager(manager) {}
 
-  regenerateFallback();
-  regenerateFavorites();
-  m_fileSearchDebounce.setInterval(100ms);
-  m_fileSearchDebounce.setSingleShot(true);
-  m_calculatorDebounce.setInterval(100ms);
-  m_calculatorDebounce.setSingleShot(true);
-
-  connect(&m_fileSearchDebounce, &QTimer::timeout, this, &RootSearchModel::startFileSearch);
-  connect(&m_calculatorDebounce, &QTimer::timeout, this, &RootSearchModel::startCalculator);
-  connect(&m_calcWatcher, &QFutureWatcher<AbstractCalculatorBackend::ComputeResult>::finished, this,
-          &RootSearchModel::handleCalculatorFinished);
-  connect(m_manager, &RootItemManager::fallbackDisabled, this, &RootSearchModel::regenerateFallback);
-  connect(m_manager, &RootItemManager::fallbackEnabled, this, &RootSearchModel::regenerateFallback);
-  connect(m_manager, &RootItemManager::itemsChanged, this, &RootSearchModel::reloadSearch);
-  connect(m_manager, &RootItemManager::itemFavoriteChanged, this, [this]() { regenerateFavorites(); });
-  connect(&m_fileWatcher, &FileSearchWatcher::finished, this, &RootSearchModel::handleFileSearchFinished);
-}
-
-void RootSearchModel::setFileSearch(bool value) { m_isFileSearchEnabled = value; }
-
-void RootSearchModel::setFilter(std::string_view text) {
-  query = text;
-  m_defaultOpener.reset();
-  m_calc.reset();
-  m_items = {};
-  m_files.clear();
-
-  if (text.empty()) {
-    m_items = m_manager->search("", {.includeFavorites = false, .prioritizeAliased = false});
-    emit dataChanged();
-    return;
-  }
-
-  if (text.starts_with('/')) {
-    std::error_code ec;
-    if (std::filesystem::exists(text, ec)) {
-      m_files = {{.path = text}};
-      emit dataChanged();
-      return;
-    }
-  }
-
-  if (auto url = QUrl(QString::fromUtf8(text.data(), text.size()));
-      url.isValid() && !url.scheme().isEmpty()) {
-    if (auto app = m_appDb->findDefaultOpener(query.c_str())) {
-      m_defaultOpener = LinkItem{.app = app, .url = query.c_str()};
-      emit dataChanged();
-      return;
-    }
-  }
-
-  m_items = m_manager->search(query.c_str());
+void RootSearchModel::setSearchResults(const SearchResults &results) {
+  query = results.query;
+  m_items = results.items;
+  m_calc = results.calculator;
+  m_files = results.files;
+  m_defaultOpener = results.defaultOpener;
 
   m_resultSectionTitle = std::format("Results ({})", m_items.size());
   m_fallbackSectionTitle = std::format("Use \"{}\" with...", query);
-  m_calculatorDebounce.start();
-  m_fileSearchDebounce.start();
 
+  emit dataChanged();
+}
+
+void RootSearchModel::setQuery(std::string_view text) {
+  query = text;
+  m_resultSectionTitle = std::format("Results ({})", m_items.size());
+  m_fallbackSectionTitle = std::format("Use \"{}\" with...", query);
+  emit dataChanged();
+}
+
+void RootSearchModel::setItems(std::span<RootItemManager::ScoredItem> items) {
+  m_items = items;
+  m_resultSectionTitle = std::format("Results ({})", m_items.size());
+  emit dataChanged();
+}
+
+void RootSearchModel::setCalculatorResult(const AbstractCalculatorBackend::CalculatorResult &result) {
+  m_calc = result;
+  emit dataChanged();
+}
+
+void RootSearchModel::setFileResults(const std::vector<IndexerFileResult> &files) {
+  m_files = files;
+  emit dataChanged();
+}
+
+void RootSearchModel::setFallbackItems(const std::vector<std::shared_ptr<RootItem>> &items) {
+  m_fallbackItems = items;
+  emit dataChanged();
+}
+
+void RootSearchModel::setFavorites(const std::vector<RootItemManager::SearchableRootItem> &favorites) {
+  m_favorites = favorites;
+  emit dataChanged();
+}
+
+void RootSearchModel::setDefaultOpener(const LinkItem &opener) {
+  m_defaultOpener = opener;
   emit dataChanged();
 }
 
@@ -205,49 +190,3 @@ void RootSearchModel::refreshItemWidget(const RootItemVariant &type, WidgetType 
   std::visit(visitor, type);
 }
 
-void RootSearchModel::startCalculator() {
-  if (m_calcWatcher.isRunning()) { m_calcWatcher.cancel(); }
-
-  auto expression = QString::fromStdString(query);
-
-  m_calculatorSearchQuery = query;
-
-  if (expression.startsWith("=") && expression.size() > 1) {
-    auto stripped = expression.mid(1);
-    m_calcWatcher.setFuture(m_calculator->backend()->asyncCompute(stripped));
-    return;
-  }
-
-  bool containsNonAlnum = std::ranges::any_of(query, [](QChar ch) { return !ch.isLetterOrNumber(); });
-  const auto isAllowedLeadingChar = [](QChar c) { return c == '(' || c == ')' || c.isLetterOrNumber(); };
-  bool isComputable = expression.size() > 1 && isAllowedLeadingChar(expression.at(0)) && containsNonAlnum;
-
-  auto e = []() {};
-
-  if (!isComputable || !m_calculator->backend()) { return; }
-
-  m_calcWatcher.setFuture(m_calculator->backend()->asyncCompute(expression));
-}
-
-void RootSearchModel::handleCalculatorFinished() {
-  if (!m_calcWatcher.isFinished() || m_calculatorSearchQuery != query) return;
-  if (auto res = m_calcWatcher.result()) {
-    m_calc = res.value();
-    emit dataChanged();
-  }
-}
-
-void RootSearchModel::startFileSearch() {
-  if (m_isFileSearchEnabled && query.size() >= MIN_FS_TEXT_LENGTH) {
-    if (m_fileWatcher.isRunning()) { m_fileWatcher.cancel(); }
-    m_fileSearchQuery = query;
-    m_fileWatcher.setFuture(m_fs->queryAsync(query));
-  }
-}
-
-void RootSearchModel::handleFileSearchFinished() {
-  if (!m_fileWatcher.isFinished() || m_fileSearchQuery != query) return;
-  m_files = m_fileWatcher.result();
-  m_fileSearchQuery.clear();
-  emit dataChanged();
-}

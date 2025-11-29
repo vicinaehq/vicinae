@@ -1,5 +1,6 @@
 #pragma once
 #include "extensions/clipboard/history/clipboard-history-model.hpp"
+#include "extensions/clipboard/history/clipboard-history-controller.hpp"
 #include "ui/icon-button/icon-button.hpp"
 #include "ui/preference-dropdown/preference-dropdown.hpp"
 #include "ui/form/selector-input.hpp"
@@ -122,6 +123,7 @@ private:
   void saveDropdownFilter(const QString &value);
 
   ClipboardHistoryModel *m_model;
+  ClipboardHistoryController *m_controller;
   ClipboardStatusToolbar *m_statusToolbar;
   PreferenceDropdown *m_filterInput = new PreferenceDropdown(this);
   DefaultAction m_defaultAction = DefaultAction::Copy;

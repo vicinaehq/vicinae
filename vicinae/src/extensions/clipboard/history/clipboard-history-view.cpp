@@ -373,7 +373,8 @@ void ClipboardHistoryView::initialize() {
   TypedListView::initialize();
   auto preferences = command()->preferenceValues();
 
-  m_model = new ClipboardHistoryModel(context()->services->clipman(), this);
+  m_model = new ClipboardHistoryModel(this);
+  m_controller = new ClipboardHistoryController(context()->services->clipman(), m_model, this);
   setModel(m_model);
   m_defaultAction = parseDefaultAction(preferences.value("defaultAction").toString());
   setSearchPlaceholderText("Browse clipboard history...");
@@ -381,8 +382,8 @@ void ClipboardHistoryView::initialize() {
   m_filterInput->setValue(getSavedDropdownFilter().value_or("all"));
   handleFilterChange(*m_filterInput->value());
 
-  connect(m_model, &ClipboardHistoryModel::dataLoadingChanged, this, &BaseView::setLoading);
-  connect(m_model, &ClipboardHistoryModel::dataRetrieved, this,
+  connect(m_controller, &ClipboardHistoryController::dataLoadingChanged, this, &BaseView::setLoading);
+  connect(m_controller, &ClipboardHistoryController::dataRetrieved, this,
           [this](const PaginatedResponse<ClipboardHistoryEntry> &page) {
             m_statusToolbar->setLeftText(QString("%1 Items").arg(page.totalCount));
           });
@@ -445,7 +446,7 @@ QWidget *ClipboardHistoryView::generateDetail(const ItemType &item) const {
 }
 
 void ClipboardHistoryView::textChanged(const QString &value) {
-  m_model->setFilter(value);
+  m_controller->setFilter(value);
   m_list->selectFirst();
 }
 
@@ -474,9 +475,9 @@ void ClipboardHistoryView::handleFilterChange(const SelectorInput::AbstractItem 
   saveDropdownFilter(item.id());
 
   if (auto it = typeToOfferKind.find(item.id()); it != typeToOfferKind.end()) {
-    m_model->setKindFilter(it->second);
+    m_controller->setKindFilter(it->second);
   } else {
-    m_model->setKindFilter({});
+    m_controller->setKindFilter({});
   }
 
   if (!searchText().isEmpty()) { clearSearchText(); }

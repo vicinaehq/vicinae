@@ -1,6 +1,7 @@
 #pragma once
 #include "ui/views/typed-list-view.hpp"
 #include "theme-list-model.hpp"
+#include "theme-list-controller.hpp"
 
 class ManageThemesView : public TypedListView<ThemeListModel> {
 public:
@@ -16,4 +17,5 @@ private:
   void itemSelected(const ItemType &item) override;
 
   ThemeListModel *m_model = nullptr;
+  ThemeListController *m_controller = nullptr;
 };

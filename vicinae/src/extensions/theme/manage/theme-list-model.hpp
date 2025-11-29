@@ -1,5 +1,4 @@
 #include "layout.hpp"
-#include "services/config/config-service.hpp"
 #include "theme.hpp"
 #include "ui/color-circle/color_circle.hpp"
 #include "ui/default-list-item-widget/default-list-item-widget.hpp"
@@ -62,33 +61,12 @@ enum class ThemeSection { Current, Available };
 
 class ThemeListModel : public vicinae::ui::SectionListModel<std::shared_ptr<ThemeFile>, ThemeSection> {
 public:
-  ThemeListModel(ConfigService *configService, ThemeService *themeService, QObject *parent = nullptr)
-      : m_themeService(themeService), m_configService(configService) {
-    setParent(parent);
-    regenerateThemes();
-    connect(m_configService, &ConfigService::configChanged, this,
-            [this](auto &&next, auto &&prev) { regenerateThemes(); });
-  }
+  ThemeListModel(QObject *parent = nullptr) { setParent(parent); }
 
-  void regenerateThemes() { setFilter(m_query); }
-
-  void setFilter(const QString &query) {
-    m_query = query;
-    auto themes = m_themeService->themes();
-
-    m_themes.clear();
-    m_selectedTheme.reset();
-    m_themes.reserve(themes.size() - 1);
-
-    for (auto &theme : themes) {
-      if (!theme->name().contains(query, Qt::CaseInsensitive)) continue;
-      if (theme->id() == m_configService->value().theme.name) {
-        m_selectedTheme = std::move(theme);
-      } else {
-        m_themes.emplace_back(std::move(theme));
-      }
-    }
-
+  void setThemes(const std::optional<std::shared_ptr<ThemeFile>> &selected,
+                 const std::vector<std::shared_ptr<ThemeFile>> &available) {
+    m_selectedTheme = selected;
+    m_themes = available;
     emit dataChanged();
   }
 
@@ -160,9 +138,6 @@ public:
   }
 
 private:
-  QString m_query;
-  ThemeService *m_themeService = nullptr;
-  ConfigService *m_configService = nullptr;
   std::optional<Item> m_selectedTheme;
   std::vector<Item> m_themes;
 };

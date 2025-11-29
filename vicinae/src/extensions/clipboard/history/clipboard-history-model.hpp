@@ -69,39 +69,12 @@ class ClipboardHistoryModel
     : public vicinae::ui::SectionListModel<const ClipboardHistoryEntry *, ClipboardHistorySection> {
   Q_OBJECT
 
-signals:
-  void dataRetrieved(const PaginatedResponse<ClipboardHistoryEntry> &res) const;
-  void dataLoadingChanged(bool value) const;
-
 public:
-  using QueryWatcher = QFutureWatcher<PaginatedResponse<ClipboardHistoryEntry>>;
+  ClipboardHistoryModel(QObject *parent = nullptr) { setParent(parent); }
 
-  ClipboardHistoryModel(ClipboardService *clipboard, QObject *parent = nullptr) : m_clipboard(clipboard) {
-    setParent(parent);
-    connect(&m_watcher, &QueryWatcher::finished, this, &ClipboardHistoryModel::handleResults);
-    connect(clipboard, &ClipboardService::selectionPinStatusChanged, this,
-            &ClipboardHistoryModel::reloadSearch);
-    connect(clipboard, &ClipboardService::selectionRemoved, this, &ClipboardHistoryModel::reloadSearch);
-    connect(clipboard, &ClipboardService::allSelectionsRemoved, this, &ClipboardHistoryModel::reloadSearch);
-    connect(clipboard, &ClipboardService::itemInserted, this, &ClipboardHistoryModel::reloadSearch);
-    connect(clipboard, &ClipboardService::selectionUpdated, this, &ClipboardHistoryModel::reloadSearch);
-  }
-
-  void setKindFilter(std::optional<ClipboardOfferKind> kind) {
-    m_kind = kind;
-    setFilter(m_query);
-  }
-
-  void reloadSearch() { setFilter(m_query); }
-
-  void setFilter(const QString &query) {
-    m_query = query;
-    if (m_watcher.isRunning()) {
-      m_watcher.cancel();
-      m_watcher.waitForFinished();
-    }
-    emit dataLoadingChanged(true);
-    m_watcher.setFuture(m_clipboard->listAll(1000, 0, {.query = query, .kind = m_kind}));
+  void setData(const PaginatedResponse<ClipboardHistoryEntry> &data) {
+    m_res = data;
+    emit dataChanged();
   }
 
 protected:
@@ -128,18 +101,6 @@ protected:
     static_cast<ClipboardHistoryItemWidget *>(widget)->setEntry(*entry);
   }
 
-  void handleResults() {
-    if (!m_watcher.isFinished()) return;
-    emit dataLoadingChanged(false);
-    m_res = m_watcher.result();
-    emit dataChanged();
-    emit dataRetrieved(m_res);
-  }
-
 private:
-  QString m_query;
-  std::optional<ClipboardOfferKind> m_kind;
-  QueryWatcher m_watcher;
   PaginatedResponse<ClipboardHistoryEntry> m_res;
-  ClipboardService *m_clipboard;
 };

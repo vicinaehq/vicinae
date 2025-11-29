@@ -55,7 +55,8 @@ ManageThemesView::ManageThemesView() {
 
 void ManageThemesView::initialize() {
   TypedListView::initialize();
-  m_model = new ThemeListModel(context()->services->config(), &ThemeService::instance(), this);
+  m_model = new ThemeListModel(this);
+  m_controller = new ThemeListController(context()->services->config(), &ThemeService::instance(), m_model, this);
   setModel(m_model);
   setSearchPlaceholderText("Search for a theme...");
 }
@@ -71,4 +72,4 @@ void ManageThemesView::itemSelected(const ItemType &theme) {
   service.setTheme(theme->id());
 }
 
-void ManageThemesView::textChanged(const QString &s) { m_model->setFilter(s); }
+void ManageThemesView::textChanged(const QString &s) { m_controller->setFilter(s); }
