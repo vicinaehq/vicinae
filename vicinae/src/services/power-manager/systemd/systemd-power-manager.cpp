@@ -9,7 +9,7 @@ static const constexpr uint64_t SD_LOGIND_SOFT_REBOOT = 1 << 2;
 
 bool SystemdPowerManager::powerOff() { return m_iface->call("PowerOff", false).errorMessage().isEmpty(); }
 bool SystemdPowerManager::reboot() { return m_iface->call("Reboot", false).errorMessage().isEmpty(); }
-bool SystemdPowerManager::sleep() const { return m_iface->call("Sleep", false).errorMessage().isEmpty(); }
+bool SystemdPowerManager::sleep() const { return m_iface->call("Sleep", static_cast<quint64>(0)).errorMessage().isEmpty(); }
 bool SystemdPowerManager::suspend() { return m_iface->call("Suspend", false).errorMessage().isEmpty(); }
 bool SystemdPowerManager::hibernate() { return m_iface->call("Hibernate", false).errorMessage().isEmpty(); }
 bool SystemdPowerManager::lock() {
