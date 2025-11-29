@@ -1,4 +1,5 @@
 #include "vlist.hpp"
+#include <absl/base/call_once.h>
 
 namespace vicinae::ui {
 VListWidget::VListWidget() {
@@ -36,6 +37,19 @@ void VListWidget::calculate() {
   updateViewport();
 }
 
+void VListWidget::selectNext() {
+  int startIdx = m_selected.transform([](const Selection &s) { return s.idx + 1; }).value_or(0);
+
+  for (int i = startIdx; i < m_count; ++i) {
+    if (m_model->isSelectable(i)) {
+      setSelected(i);
+      return;
+    }
+  }
+
+  selectFirst();
+}
+
 void VListWidget::selectFirst() {
   for (int i = 0; i != m_count; ++i) {
     if (m_model->isSelectable(i)) {
@@ -66,6 +80,7 @@ bool VListWidget::selectUp() {
       return true;
     }
   }
+
   return false;
 }
 
@@ -91,43 +106,58 @@ void VListWidget::setMargins(const QMargins &margins) {
 void VListWidget::setMargins(int n) { setMargins(QMargins{n, n, n, n}); }
 
 void VListWidget::setSelected(VListModel::Index idx) {
-  bool isInViewport =
-      !m_visibleItems.empty() && idx > m_visibleItems.front().index && idx < m_visibleItems.back().index;
-
-  if (!isInViewport) { scrollToIndex(idx); }
-
   auto id = m_model->stableId(idx);
 
   if (!m_selected || m_selected->id != id) {
     m_selected = Selection{.idx = idx, .id = id};
     emit itemSelected(idx);
   }
+
+  scrollToIndex(idx);
   updateViewport();
 }
 
-void VListWidget::scrollToIndex(VListModel::Index idx) {
-  VListModel::Index actualIdx = idx;
-
-  if (idx > 0 && m_model->isAnchor(idx - 1)) { actualIdx = idx - 1; }
-
-  int newY = m_model->heightAtIndex(actualIdx);
-  int itemHeight = m_model->height(actualIdx);
-  int scrollHeight = m_scrollBar->value();
-  int newScroll = 0;
-
-  if (newY + itemHeight - scrollHeight > height()) {
-    newScroll = (newY + itemHeight - height());
-  } else if (newY - scrollHeight < 0) {
-    newScroll = (scrollHeight - (scrollHeight - newY));
+void VListWidget::scrollToIndex(VListModel::Index idx, ScrollAnchor anchor) {
+  if (idx == 0) {
+    m_scrollBar->setValue(0);
+    return;
   }
 
-  m_scrollBar->setValue(newScroll);
-  updateViewport();
+  int startY = m_margins.top() + m_model->heightAtIndex(idx);
+  int itemHeight = m_model->height(idx);
+
+  switch (anchor) {
+  case ScrollAnchor::Top: {
+    m_scrollBar->setValue(startY - height());
+    break;
+  }
+  case ScrollAnchor::Bottom: {
+    m_scrollBar->setValue(startY);
+    break;
+  }
+  case ScrollAnchor::Relative: {
+    int distance = 0;
+    int endY = startY + itemHeight;
+    int scrollHeight = m_scrollBar->value();
+    bool isFullyInViewport = startY >= scrollHeight && endY <= scrollHeight + height();
+
+    if (endY > scrollHeight + height()) {
+      if (isFullyInViewport) return;
+      distance = endY - scrollHeight - height();
+    } else {
+      if (idx > 0 && m_model->isAnchor(idx - 1)) { return scrollToIndex(idx - 1, anchor); }
+      if (isFullyInViewport) return;
+      distance = startY - scrollHeight;
+    }
+    m_scrollBar->setValue(scrollHeight + distance);
+    break;
+  }
+  }
 }
 
 void VListWidget::setupUI() {
   m_scrollBar = new OmniScrollBar(this);
-  m_margins = QMargins(5, 10, 5, 10);
+  m_scrollBar->raise();
   connect(m_scrollBar, &QScrollBar::valueChanged, this, &VListWidget::handleScrollChanged);
 }
 

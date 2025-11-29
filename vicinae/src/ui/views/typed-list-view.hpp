@@ -74,7 +74,7 @@ protected:
         break;
       case Qt::Key_Tab: {
         if (!context()->navigation->hasCompleter()) {
-          // m_list->selectNext();
+          m_list->selectNext();
           return true;
         }
         break;

@@ -2,7 +2,6 @@
 #include "common.hpp"
 #include "ui/list-section-header.hpp"
 #include "ui/vlist/vlist.hpp"
-#include <qobject.h>
 
 namespace vicinae::ui {
 

@@ -148,6 +148,8 @@ private:
   VListModel::WidgetType *m_widget = nullptr;
 };
 
+enum class ScrollAnchor { Top, Bottom, Relative };
+
 class VListWidget : public QWidget {
   Q_OBJECT
 
@@ -176,9 +178,14 @@ public:
   void scrollToBottom() { scrollToHeight(m_scrollBar->maximum()); }
 
   void scrollToHeight(int height) { m_scrollBar->setValue(height); }
-  void scrollToIndex(VListModel::Index idx);
+  void scrollToIndex(VListModel::Index idx, ScrollAnchor anchor = ScrollAnchor::Relative);
 
   void selectFirst();
+
+  /**
+   * Select next item. If we are the end of the list, go to the first.
+   */
+  void selectNext();
 
   bool activateCurrentSelection();
 
@@ -207,6 +214,8 @@ protected:
   void resizeEvent(QResizeEvent *event) override;
 
 private:
+  std::optional<VListModel::Index> getPreviousSelectable(VListModel::Index index) const;
+
   struct WidgetData {
     WidgetWrapper *widget = nullptr;
     VListModel::WidgetTag tag = 0;
@@ -234,11 +243,12 @@ private:
   std::optional<Selection> m_selected;
 
   int m_height = 0;
-  QMargins m_margins;
+  QMargins m_margins = DEFAULT_MARGINS;
   QScrollBar *m_scrollBar = nullptr;
   VListModel *m_model = nullptr;
   size_t m_count = 0;
 
   static constexpr const size_t DEFAULT_PAGE_STEP = 40;
+  static QMargins constexpr const DEFAULT_MARGINS = {5, 5, 5, 5};
 };
 }; // namespace vicinae::ui
