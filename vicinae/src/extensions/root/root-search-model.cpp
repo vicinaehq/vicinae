@@ -189,4 +189,3 @@ void RootSearchModel::refreshItemWidget(const RootItemVariant &type, WidgetType 
 
   std::visit(visitor, type);
 }
-

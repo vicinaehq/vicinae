@@ -55,6 +55,7 @@ public:
     return m_searchSections;
   }
 
+  void reset();
   void setSearchResults(const SearchResults &results);
   void setQuery(std::string_view text);
   void setItems(std::span<RootItemManager::ScoredItem> items);

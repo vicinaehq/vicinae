@@ -5,23 +5,27 @@
 RootSearchController::RootSearchController(RootItemManager *manager, FileService *fs, AppService *appDb,
                                            CalculatorService *calculator, RootSearchModel *model,
                                            QObject *parent)
-    : QObject(parent), m_model(model), m_manager(manager), m_fs(fs), m_appDb(appDb), m_calculator(calculator) {
+    : QObject(parent), m_model(model), m_manager(manager), m_fs(fs), m_appDb(appDb),
+      m_calculator(calculator) {
   using namespace std::chrono_literals;
 
-  m_fileSearchDebounce.setInterval(100ms);
+  m_fileSearchDebounce.setInterval(200ms);
   m_fileSearchDebounce.setSingleShot(true);
-  m_calculatorDebounce.setInterval(100ms);
+  m_calculatorDebounce.setInterval(200ms);
   m_calculatorDebounce.setSingleShot(true);
 
   connect(&m_fileSearchDebounce, &QTimer::timeout, this, &RootSearchController::startFileSearch);
   connect(&m_calculatorDebounce, &QTimer::timeout, this, &RootSearchController::startCalculator);
-  connect(&m_calcWatcher, &CalculatorWatcher::finished, this, &RootSearchController::handleCalculatorFinished);
-  connect(&m_fileWatcher, &FileSearchWatcher::finished, this, &RootSearchController::handleFileSearchFinished);
+  connect(&m_calcWatcher, &CalculatorWatcher::finished, this,
+          &RootSearchController::handleCalculatorFinished);
+  connect(&m_fileWatcher, &FileSearchWatcher::finished, this,
+          &RootSearchController::handleFileSearchFinished);
 
   connect(m_manager, &RootItemManager::fallbackDisabled, this, &RootSearchController::handleFallbackChanged);
   connect(m_manager, &RootItemManager::fallbackEnabled, this, &RootSearchController::handleFallbackChanged);
   connect(m_manager, &RootItemManager::itemsChanged, this, &RootSearchController::handleItemsChanged);
-  connect(m_manager, &RootItemManager::itemFavoriteChanged, this, &RootSearchController::handleFavoriteChanged);
+  connect(m_manager, &RootItemManager::itemFavoriteChanged, this,
+          &RootSearchController::handleFavoriteChanged);
 
   regenerateFallback();
   regenerateFavorites();
@@ -37,9 +41,6 @@ void RootSearchController::setFilter(std::string_view text) {
     m_model->setSearchResults({
         .query = std::string(text),
         .items = items,
-        .calculator = std::nullopt,
-        .files = {},
-        .defaultOpener = std::nullopt,
     });
     return;
   }
@@ -47,8 +48,10 @@ void RootSearchController::setFilter(std::string_view text) {
   if (text.starts_with('/')) {
     std::error_code ec;
     if (std::filesystem::exists(text, ec)) {
-      m_model->setFileResults({{.path = std::filesystem::path(text)}});
-      m_model->setQuery(text);
+      m_model->setSearchResults({
+          .query = std::string(text),
+          .files = {{text}},
+      });
       return;
     }
   }
@@ -56,16 +59,19 @@ void RootSearchController::setFilter(std::string_view text) {
   if (auto url = QUrl(QString::fromUtf8(text.data(), text.size()));
       url.isValid() && !url.scheme().isEmpty()) {
     if (auto app = m_appDb->findDefaultOpener(m_query.c_str())) {
-      m_model->setDefaultOpener(LinkItem{.app = app, .url = m_query.c_str()});
-      m_model->setQuery(text);
+      m_model->setSearchResults(
+          {.query = std::string(text), .defaultOpener = LinkItem{.app = app, .url = m_query.c_str()}});
       return;
     }
   }
 
   auto items = m_manager->search(m_query.c_str());
-  m_model->setItems(items);
-  m_model->setQuery(text);
 
+  m_model->setSearchResults({
+      .query = std::string(text),
+      .items = items,
+      .files = {},
+  });
   m_calculatorDebounce.start();
   m_fileSearchDebounce.start();
 }

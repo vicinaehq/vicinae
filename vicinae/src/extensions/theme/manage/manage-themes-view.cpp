@@ -29,8 +29,6 @@ std::unique_ptr<ActionPanelState> ManageThemesView::createActionPanel(const Item
   }
 
   auto utils = panel->createSection();
-
-  // we don't want to generate toml right now, we wait for action
   auto copyId = new CopyToClipboardAction(Clipboard::Text(theme->id()), "Copy ID");
 
   copyId->setShortcut(Keybind::CopyNameAction);
@@ -56,7 +54,8 @@ ManageThemesView::ManageThemesView() {
 void ManageThemesView::initialize() {
   TypedListView::initialize();
   m_model = new ThemeListModel(this);
-  m_controller = new ThemeListController(context()->services->config(), &ThemeService::instance(), m_model, this);
+  m_controller =
+      new ThemeListController(context()->services->config(), &ThemeService::instance(), m_model, this);
   setModel(m_model);
   setSearchPlaceholderText("Search for a theme...");
 }
