@@ -1,36 +1,45 @@
 #include "layout.hpp"
+#include "services/emoji-service/emoji-service.hpp"
 #include "services/emoji-service/emoji.hpp"
 #include "ui/views/base-view.hpp"
+#include "service-registry.hpp"
 #include "ui/vlist/vlist.hpp"
 #include <qwizard.h>
 #include "ui/vlist/common/simple-grid-model.hpp"
 
-enum class EmojiSection { Main };
+class EmojiGridModel : public vicinae::ui::SimpleGridModel<EmojiData, int> {
+public:
+  void setGroupedEmojis(EmojiService::GroupedEmojis emojis) {
+    m_grouped = emojis;
+    emit dataChanged();
+  }
 
-class EmojiGridModel : public vicinae::ui::SimpleGridModel<EmojiData, EmojiSection> {
   GridData createItemData(const EmojiData &item) const override {
     return {.icon = ImageURL::emoji(QString::fromUtf8(item.emoji.data(), item.emoji.size()))};
   }
 
   VListModel::StableID stableId(const EmojiData &item) const override { return hash(item.emoji); }
 
-  EmojiData sectionItemAt(EmojiSection id, int itemIdx) const override {
-    return StaticEmojiDatabase::orderedList()[itemIdx];
-  }
+  EmojiData sectionItemAt(int id, int itemIdx) const override { return *m_grouped[id].second[itemIdx]; }
 
-  int sectionCount() const override { return 1; }
-  double sectionAspectRatio(EmojiSection id) const override { return 1; }
-  int sectionColumns(EmojiSection id) const override { return 8; }
-  int sectionItemCount(EmojiSection id) const override { return StaticEmojiDatabase::orderedList().size(); }
-  EmojiSection sectionIdFromIndex(int idx) const override { return EmojiSection::Main; }
-  std::string_view sectionName(EmojiSection id) const override { return "Emojis"; }
+  int sectionCount() const override { return m_grouped.size(); }
+  double sectionAspectRatio(int id) const override { return 1; }
+  int sectionColumns(int id) const override { return 8; }
+  int sectionItemCount(int id) const override { return m_grouped[id].second.size(); }
+  int sectionIdFromIndex(int idx) const override { return idx; }
+  std::string_view sectionName(int id) const override { return m_grouped[id].first; }
+
+private:
+  EmojiService::GroupedEmojis m_grouped;
 };
 
 class PlaygroundView : public BaseView {
 public:
-  PlaygroundView() {
-    VStack().add(m_list).imbue(this);
+  PlaygroundView() { VStack().add(m_list).imbue(this); }
+
+  void initialize() override {
     m_list->setModel(m_model);
+    m_model->setGroupedEmojis(context()->services->emojiService()->grouped());
   }
 
   bool inputFilter(QKeyEvent *event) override {

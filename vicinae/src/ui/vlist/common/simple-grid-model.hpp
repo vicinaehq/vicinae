@@ -41,7 +41,7 @@ public:
     return height;
   }
 
-  // virtual VListModel::WidgetTag widgetTag(const ItemType &item) const override { return 1; }
+  virtual VListModel::WidgetTag widgetTag(const ItemType &item) const override { return 1; }
 
   virtual VListModel::WidgetType *createItemWidget(const ItemType &type) const override {
     auto grid = new GridItemWidget;

@@ -30,7 +30,9 @@ public:
   static constexpr const Index InvalidIndex = -1;
   static constexpr const WidgetTag InvalidTag = -1;
 
-  VListModel(QObject *parent = nullptr) : QObject(parent) {}
+  VListModel(QObject *parent = nullptr) : QObject(parent) {
+    connect(this, &VListModel::dataChanged, this, &VListModel::onDataChanged);
+  }
 
   /**
    * The number of items this model currently has.
@@ -117,6 +119,8 @@ public:
   virtual void viewportChanged(QSize size) {}
 
 protected:
+  virtual void onDataChanged() {}
+
   /**
    * Simple utility to generate a random ID, generally used to generate
    * widget tags or not so stable IDs.
@@ -137,9 +141,9 @@ signals:
   void doubleClicked() const;
 
 public:
-  WidgetWrapper(QWidget *parent = nullptr) : QWidget(parent) {
-    setAttribute(Qt::WA_Hover);
-  }
+  WidgetWrapper(QWidget *parent = nullptr) : QWidget(parent) { setAttribute(Qt::WA_Hover); }
+
+  void setSelected(bool selected) { m_widget->selectionChanged(selected); }
 
   VListModel::Index index() const { return m_index; }
   VListModel::WidgetType *widget() const { return m_widget; }
@@ -221,11 +225,16 @@ public:
 
   bool selectRight();
 
+  void pageDown();
+  void pageUp();
+
   void setMargins(int n);
 
   std::optional<VListModel::Index> currentSelection() const;
 
 protected:
+  std::optional<VListModel::Index> getTopItem(VListModel::Index idx) const;
+
   void setupUI();
   bool event(QEvent *event) override;
   void handleScrollChanged(int value) { updateViewport(); }

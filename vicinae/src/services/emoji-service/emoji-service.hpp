@@ -32,6 +32,8 @@ class EmojiService : public QObject {
   void createDbEntry(std::string_view emoji);
 
 public:
+  using GroupedEmojis = std::vector<std::pair<std::string_view, std::vector<const EmojiData *>>>;
+
   /**
    * Synchronously build search index.
    */
@@ -41,7 +43,7 @@ public:
   /**
    * List of emojis, ordered and grouped.
    */
-  std::vector<std::pair<std::string_view, std::vector<const EmojiData *>>> grouped();
+  GroupedEmojis grouped();
 
   /**
    * Map metadata to the provided list of emojis.

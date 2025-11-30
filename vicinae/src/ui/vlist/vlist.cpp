@@ -1,6 +1,7 @@
 #include "vlist.hpp"
 #include <absl/base/call_once.h>
 #include <absl/time/time.h>
+#include <qobjectdefs.h>
 
 namespace vicinae::ui {
 VListWidget::VListWidget() {
@@ -10,7 +11,7 @@ VListWidget::VListWidget() {
 }
 
 void VListWidget::setModel(VListModel *model) {
-  connect(model, &VListModel::dataChanged, this, &VListWidget::calculate);
+  connect(model, &VListModel::dataChanged, this, [this]() { calculate(); });
   m_model = model;
   calculate();
 }
@@ -109,19 +110,14 @@ bool VListWidget::selectUp() {
     return true;
   }
 
-  int currentX = m_model->xAtIndex(m_selected->idx);
-  int currentY = m_model->heightAtIndex(m_selected->idx);
+  int idx = m_selected->idx;
 
-  for (int i = m_selected->idx - 1; i >= 0; --i) {
-    int newX = m_model->xAtIndex(i);
-    int newY = m_model->heightAtIndex(i);
-
-    // qDebug() << newX << newY;
-
-    if (newY < currentY && newX <= currentX && m_model->isSelectable(i)) {
-      setSelected(i);
+  while (auto topIdx = getTopItem(idx)) {
+    if (m_model->isSelectable(topIdx.value())) {
+      setSelected(topIdx.value());
       return true;
     }
+    idx = topIdx.value();
   }
 
   return false;
@@ -136,13 +132,9 @@ bool VListWidget::selectDown() {
   int currentY = m_model->heightAtIndex(m_selected->idx);
   int currentX = m_model->xAtIndex(m_selected->idx);
 
-  // qDebug() << "current" << currentX << currentY;
-
   for (int i = m_selected->idx + 1; i < m_count; ++i) {
     int newX = m_model->xAtIndex(i);
     int newY = m_model->heightAtIndex(i);
-
-    // qDebug() << "idx" << i << "newY" << newY << "newX" << newX;
 
     if (newY > currentY && newX >= currentX && m_model->isSelectable(i)) {
       setSelected(i);
@@ -151,6 +143,17 @@ bool VListWidget::selectDown() {
   }
 
   return false;
+}
+
+void VListWidget::pageDown() {
+  m_scrollBar->setValue(
+      std::min(m_scrollBar->value() + m_scrollBar->pageStep(), m_scrollBar->maximumHeight()));
+  if (!m_visibleItems.empty()) { setSelected(m_visibleItems.front().index); }
+}
+
+void VListWidget::pageUp() {
+  m_scrollBar->setValue(std::max(0, m_scrollBar->value() - m_scrollBar->pageStep()));
+  if (!m_visibleItems.empty()) { setSelected(m_visibleItems.front().index); }
 }
 
 void VListWidget::setMargins(const QMargins &margins) {
@@ -170,6 +173,20 @@ void VListWidget::setSelected(VListModel::Index idx) {
 
   scrollToIndex(idx);
   updateViewport();
+}
+
+std::optional<VListModel::Index> VListWidget::getTopItem(VListModel::Index idx) const {
+  int currentX = m_model->xAtIndex(idx);
+  int currentY = m_model->heightAtIndex(idx);
+
+  for (int i = idx - 1; i >= 0; --i) {
+    int newX = m_model->xAtIndex(i);
+    int newY = m_model->heightAtIndex(i);
+
+    if (newY < currentY && newX <= currentX) { return i; }
+  }
+
+  return std::nullopt;
 }
 
 void VListWidget::scrollToIndex(VListModel::Index idx, ScrollAnchor anchor) {
@@ -200,7 +217,9 @@ void VListWidget::scrollToIndex(VListModel::Index idx, ScrollAnchor anchor) {
       if (isFullyInViewport) return;
       distance = endY - scrollHeight - height();
     } else {
-      if (idx > 0 && m_model->isAnchor(idx - 1)) { return scrollToIndex(idx - 1, anchor); }
+      if (auto top = getTopItem(idx); top && m_model->isAnchor(top.value())) {
+        return scrollToIndex(top.value(), anchor);
+      }
       if (isFullyInViewport) return;
       distance = startY - scrollHeight;
     }
@@ -262,39 +281,44 @@ void VListWidget::updateViewport() {
     QSize viewport = size();
     int availableWidth = viewport.width() - m_margins.left() - m_margins.right();
     QSize allocatableViewport(availableWidth, height());
-    VListModel::Index idx = m_model->indexAtHeight(scrollHeight);
-    int maxHeight = 0;
-    int offset = 0;
-    int startingY = m_margins.top() + m_model->heightAtIndex(idx);
 
-    if (idx < m_count) {
-      int heightAtIndex = m_model->heightAtIndex(idx);
-      offset = -(scrollHeight - (m_margins.top() + m_model->heightAtIndex(idx)));
-    }
+    if (m_count > 0) {
+      VListModel::Index idx = m_model->indexAtHeight(scrollHeight);
+      if (idx != VListModel::InvalidIndex) {
+        int maxHeight = 0;
+        int offset = 0;
+        int startingY = m_margins.top() + m_model->heightAtIndex(idx);
 
-    int max = startingY + viewport.height() - offset;
+        if (idx < m_count) {
+          int heightAtIndex = m_model->heightAtIndex(idx);
+          offset = -(scrollHeight - (m_margins.top() + m_model->heightAtIndex(idx)));
+        }
 
-    while (idx < m_count) {
-      int currentY = m_margins.top() + m_model->heightAtIndex(idx);
-      if (currentY > max) break;
+        int max = startingY + viewport.height() - offset;
 
-      ViewportItem item;
+        while (idx < m_count) {
+          int currentY = m_margins.top() + m_model->heightAtIndex(idx);
+          if (currentY > max) break;
 
-      item.id = m_model->stableId(idx);
+          ViewportItem item;
 
-      if (auto it = m_widgetMap.find(item.id); it != m_widgetMap.end()) {
-        item.widget = it->second.widget;
-        item.tag = it->second.tag;
-        m_widgetMap.erase(it);
+          item.id = m_model->stableId(idx);
+
+          if (auto it = m_widgetMap.find(item.id); it != m_widgetMap.end()) {
+            item.widget = it->second.widget;
+            item.tag = it->second.tag;
+            m_widgetMap.erase(it);
+          }
+
+          QSize allocatedSize = m_model->allocateSize(idx, allocatableViewport);
+
+          item.bounds = QRect{m_margins.left() + m_model->xAtIndex(idx), currentY - startingY + offset,
+                              allocatedSize.width(), allocatedSize.height()};
+          item.index = idx;
+          m_visibleItems.emplace_back(item);
+          ++idx;
+        }
       }
-
-      QSize allocatedSize = m_model->allocateSize(idx, allocatableViewport);
-
-      item.bounds = QRect{m_margins.left() + m_model->xAtIndex(idx), currentY - startingY + offset,
-                          allocatedSize.width(), allocatedSize.height()};
-      item.index = idx;
-      m_visibleItems.emplace_back(item);
-      ++idx;
     }
   }
 
@@ -331,14 +355,12 @@ void VListWidget::updateViewport() {
 
     item.widget->blockSignals(true);
     item.widget->setIndex(item.index);
-    item.widget->widget()->selectionChanged(m_selected && item.index == m_selected->idx);
-    if (item.widget->size() != QSize(item.bounds.width(), item.bounds.height())) {
-      item.widget->setFixedSize(item.bounds.width(), item.bounds.height());
-    }
+    item.widget->setSelected(m_selected && item.index == m_selected->idx);
+    item.widget->setFixedSize(item.bounds.width(), item.bounds.height());
     item.widget->move(item.bounds.x(), item.bounds.y());
+    m_model->refreshWidget(item.index, item.widget->widget());
     item.widget->show();
     item.widget->blockSignals(false);
-    m_model->refreshWidget(item.index, item.widget->widget());
 
     newMap[item.id] = {.widget = item.widget, .tag = item.tag};
   }
