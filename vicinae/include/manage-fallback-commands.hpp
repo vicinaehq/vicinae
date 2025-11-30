@@ -7,9 +7,11 @@
 #include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/omni-list/omni-list.hpp"
+#include <absl/container/internal/hashtablez_sampler.h>
 #include <qobjectdefs.h>
 #include <ranges>
 #include "ui/views/list-view.hpp"
+#include "ui/vlist/common/vertical-list-model.hpp"
 
 class DisableFallbackAction : public AbstractAction {
   QString m_id;

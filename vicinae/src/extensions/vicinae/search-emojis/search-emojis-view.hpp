@@ -1,5 +1,7 @@
 #pragma once
+#include "services/emoji-service/emoji.hpp"
 #include "ui/views/grid-view.hpp"
+#include "ui/vlist/common/simple-grid-model.hpp"
 
 class EmojiView : public GridView {
 public:

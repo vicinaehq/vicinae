@@ -75,7 +75,7 @@ void GridItemContentWidget::recalculate() {
 void GridItemContentWidget::mousePressEvent(QMouseEvent *event) { emit clicked(); }
 void GridItemContentWidget::mouseDoubleClickEvent(QMouseEvent *event) { emit doubleClicked(); }
 
-void GridItemContentWidget::hideEvent(QHideEvent *event) { m_tooltip->hide(); }
+void GridItemContentWidget::hideEvent(QHideEvent *event) { /*m_tooltip->hide();*/ }
 
 QSize GridItemContentWidget::innerWidgetSize() const {
   int inset = insetForSize(m_inset, size());
@@ -96,6 +96,7 @@ void GridItemContentWidget::setWidget(QWidget *widget) {
   HStack().add(widget).imbue(this);
 
   m_widget = widget;
+  m_widget->setAttribute(Qt::WA_TransparentForMouseEvents);
   recalculate();
   // widget->setParent(this);
   // repositionCenterWidget();
@@ -115,17 +116,17 @@ void GridItemContentWidget::setInset(Inset inset) {
   update();
 }
 
-void GridItemContentWidget::hideTooltip() { m_tooltip->hide(); }
+void GridItemContentWidget::hideTooltip() { /* m_tooltip->hide();*/ }
 
 void GridItemContentWidget::showTooltip() {}
 
-void GridItemContentWidget::setTooltipText(const QString &text) { m_tooltip->setText(text); }
+void GridItemContentWidget::setTooltipText(const QString &text) { /*m_tooltip->setText(text);*/ }
 
 GridItemContentWidget::GridItemContentWidget()
-    : m_widget(nullptr), m_selected(false), m_tooltip(new TooltipWidget(this)), m_inset(Inset::Small) {
+    : m_widget(nullptr), m_selected(false), m_tooltip(nullptr), m_inset(Inset::Small) {
   setAttribute(Qt::WA_Hover);
-  m_tooltip->hide();
-  m_tooltip->setTarget(this);
+  // m_tooltip->hide();
+  //  m_tooltip->setTarget(this);
 }
 
-GridItemContentWidget::~GridItemContentWidget() { m_tooltip->deleteLater(); }
+GridItemContentWidget::~GridItemContentWidget() { /*m_tooltip->deleteLater();*/ }

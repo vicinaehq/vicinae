@@ -1,9 +1,11 @@
 #include "vlist.hpp"
 #include <absl/base/call_once.h>
+#include <absl/time/time.h>
 
 namespace vicinae::ui {
 VListWidget::VListWidget() {
   m_visibleItems.reserve(32);
+  setMouseTracking(true);
   setupUI();
 }
 
@@ -16,6 +18,7 @@ void VListWidget::setModel(VListModel *model) {
 void VListWidget::calculate() {
   if (!m_model) return;
 
+  if (m_model) m_model->viewportChanged(QSize(width() - m_margins.left() - m_margins.right(), height()));
   m_height = m_model->height() + m_margins.top() + m_margins.bottom();
   m_count = m_model->count();
   m_scrollBar->setMinimum(0);
@@ -68,7 +71,7 @@ bool VListWidget::activateCurrentSelection() {
   return true;
 }
 
-bool VListWidget::selectUp() {
+bool VListWidget::selectLeft() {
   if (!m_selected) {
     selectFirst();
     return true;
@@ -84,17 +87,69 @@ bool VListWidget::selectUp() {
   return false;
 }
 
-bool VListWidget::selectDown() {
+bool VListWidget::selectRight() {
   if (!m_selected) {
     selectFirst();
     return true;
   }
+
   for (int i = m_selected->idx + 1; i < m_count; ++i) {
     if (m_model->isSelectable(i)) {
       setSelected(i);
       return true;
     }
   }
+
+  return false;
+}
+
+bool VListWidget::selectUp() {
+  if (!m_selected) {
+    selectFirst();
+    return true;
+  }
+
+  int currentX = m_model->xAtIndex(m_selected->idx);
+  int currentY = m_model->heightAtIndex(m_selected->idx);
+
+  for (int i = m_selected->idx - 1; i >= 0; --i) {
+    int newX = m_model->xAtIndex(i);
+    int newY = m_model->heightAtIndex(i);
+
+    // qDebug() << newX << newY;
+
+    if (newY < currentY && newX <= currentX && m_model->isSelectable(i)) {
+      setSelected(i);
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool VListWidget::selectDown() {
+  if (!m_selected) {
+    selectFirst();
+    return true;
+  }
+
+  int currentY = m_model->heightAtIndex(m_selected->idx);
+  int currentX = m_model->xAtIndex(m_selected->idx);
+
+  // qDebug() << "current" << currentX << currentY;
+
+  for (int i = m_selected->idx + 1; i < m_count; ++i) {
+    int newX = m_model->xAtIndex(i);
+    int newY = m_model->heightAtIndex(i);
+
+    // qDebug() << "idx" << i << "newY" << newY << "newX" << newX;
+
+    if (newY > currentY && newX >= currentX && m_model->isSelectable(i)) {
+      setSelected(i);
+      return true;
+    }
+  }
+
   return false;
 }
 
@@ -180,6 +235,7 @@ void VListWidget::resizeEvent(QResizeEvent *event) {
   m_scrollBar->move(size.width() - scrollbarSize.width(), 0);
   m_scrollBar->setFixedHeight(size.height());
   m_scrollBar->show();
+  if (m_model) m_model->viewportChanged(QSize(width() - m_margins.left() - m_margins.right(), height()));
   calculate();
 }
 
@@ -192,6 +248,8 @@ WidgetWrapper *VListWidget::getFromPool(VListModel::WidgetTag tag) {
 }
 
 void VListWidget::updateViewport() {
+  if (!size().isValid() || size().isNull() || size().isEmpty()) return;
+
   Timer timer;
   std::unordered_map<VListModel::StableID, WidgetData> newMap;
 
@@ -200,16 +258,26 @@ void VListWidget::updateViewport() {
   {
     m_visibleItems.clear();
     int x = m_margins.left();
-    int y = 0;
     int scrollHeight = m_scrollBar->value();
     QSize viewport = size();
     int availableWidth = viewport.width() - m_margins.left() - m_margins.right();
+    QSize allocatableViewport(availableWidth, height());
     VListModel::Index idx = m_model->indexAtHeight(scrollHeight);
+    int maxHeight = 0;
+    int offset = 0;
+    int startingY = m_margins.top() + m_model->heightAtIndex(idx);
 
-    if (idx < m_count) { y = -(scrollHeight - (m_margins.top() + m_model->heightAtIndex(idx))); }
+    if (idx < m_count) {
+      int heightAtIndex = m_model->heightAtIndex(idx);
+      offset = -(scrollHeight - (m_margins.top() + m_model->heightAtIndex(idx)));
+    }
 
-    while (y < viewport.height() && idx < m_count) {
-      bool directHit = false;
+    int max = startingY + viewport.height() - offset;
+
+    while (idx < m_count) {
+      int currentY = m_margins.top() + m_model->heightAtIndex(idx);
+      if (currentY > max) break;
+
       ViewportItem item;
 
       item.id = m_model->stableId(idx);
@@ -220,13 +288,13 @@ void VListWidget::updateViewport() {
         m_widgetMap.erase(it);
       }
 
-      int height = m_model->height(idx);
+      QSize allocatedSize = m_model->allocateSize(idx, allocatableViewport);
 
-      item.bounds = QRect{x, y, availableWidth, height};
+      item.bounds = QRect{m_margins.left() + m_model->xAtIndex(idx), currentY - startingY + offset,
+                          allocatedSize.width(), allocatedSize.height()};
       item.index = idx;
-      y += height;
-      ++idx;
       m_visibleItems.emplace_back(item);
+      ++idx;
     }
   }
 
@@ -249,26 +317,30 @@ void VListWidget::updateViewport() {
       }
 
       if (!item.widget) {
-        auto wrapper = new WidgetWrapper;
+        auto wrapper = new WidgetWrapper(this);
+
+        wrapper->setWidget(m_model->createWidget(item.index));
+        wrapper->stackUnder(m_scrollBar);
+        item.widget = wrapper;
 
         connect(wrapper, &WidgetWrapper::clicked, this, [wrapper, this]() { setSelected(wrapper->index()); });
         connect(wrapper, &WidgetWrapper::doubleClicked, this,
                 [wrapper, this]() { emit itemActivated(wrapper->index()); });
-
-        wrapper->setWidget(m_model->createWidget(item.index));
-        wrapper->setParent(this);
-        item.widget = wrapper;
       }
     }
 
+    item.widget->blockSignals(true);
+    item.widget->setIndex(item.index);
     item.widget->widget()->selectionChanged(m_selected && item.index == m_selected->idx);
+    if (item.widget->size() != QSize(item.bounds.width(), item.bounds.height())) {
+      item.widget->setFixedSize(item.bounds.width(), item.bounds.height());
+    }
+    item.widget->move(item.bounds.x(), item.bounds.y());
+    item.widget->show();
+    item.widget->blockSignals(false);
+    m_model->refreshWidget(item.index, item.widget->widget());
 
     newMap[item.id] = {.widget = item.widget, .tag = item.tag};
-    item.widget->setIndex(item.index);
-    item.widget->setFixedSize(item.bounds.width(), item.bounds.height());
-    item.widget->move(item.bounds.x(), item.bounds.y());
-    m_model->refreshWidget(item.index, item.widget->widget());
-    item.widget->show();
   }
 
   for (const auto &[id, w] : m_widgetMap) {

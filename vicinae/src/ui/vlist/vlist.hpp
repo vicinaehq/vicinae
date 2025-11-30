@@ -46,6 +46,15 @@ public:
    */
   virtual size_t height(Index idx) const = 0;
 
+  virtual QSize allocateSize(VListModel::Index idx, QSize viewport) const {
+    return QSize(viewport.width(), height(idx));
+  }
+
+  /**
+   * Spacing between every element, horizontal and vertical.
+   */
+  virtual size_t spacing() const { return 0; }
+
   /**
    * Find what model item is located at a given height.
    * This is used to determine the first item in the viewport depending on the current scroll height.
@@ -55,6 +64,8 @@ public:
   virtual Index indexAtHeight(int height) const = 0;
 
   virtual size_t heightAtIndex(Index idx) const = 0;
+
+  virtual int xAtIndex(Index index) const = 0;
 
   /**
    * Whether the item at `idx` can be selectable or not. This is used to implement things such as
@@ -103,6 +114,8 @@ public:
    */
   virtual void refreshWidget(Index idx, WidgetType *widget) const = 0;
 
+  virtual void viewportChanged(QSize size) {}
+
 protected:
   /**
    * Simple utility to generate a random ID, generally used to generate
@@ -124,13 +137,16 @@ signals:
   void doubleClicked() const;
 
 public:
-  WidgetWrapper() {}
+  WidgetWrapper(QWidget *parent = nullptr) : QWidget(parent) {
+    setAttribute(Qt::WA_Hover);
+  }
 
   VListModel::Index index() const { return m_index; }
   VListModel::WidgetType *widget() const { return m_widget; }
   void setWidget(VListModel::WidgetType *w) {
     m_widget = w;
     m_widget->setParent(this);
+    m_widget->setMouseTracking(true);
     m_widget->show();
     connect(m_widget, &VListModel::WidgetType::clicked, this, &WidgetWrapper::clicked);
     connect(m_widget, &VListModel::WidgetType::doubleClicked, this, &WidgetWrapper::doubleClicked);
@@ -140,7 +156,7 @@ public:
 protected:
   void resizeEvent(QResizeEvent *event) override {
     QWidget::resizeEvent(event);
-    m_widget->setFixedSize(event->size());
+    if (m_widget) m_widget->setFixedSize(event->size());
   }
 
 private:
@@ -200,6 +216,10 @@ public:
    * `true` is selected if such an item exists and was selected, `false` otherwise.
    */
   bool selectDown();
+
+  bool selectLeft();
+
+  bool selectRight();
 
   void setMargins(int n);
 
