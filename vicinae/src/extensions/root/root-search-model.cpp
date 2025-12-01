@@ -174,7 +174,7 @@ void RootSearchModel::refreshItemWidget(const RootItemVariant &type, WidgetType 
                   auto w = static_cast<DefaultListItemWidget *>(widget);
                   w->setName(getLastPathComponent(path).c_str());
                   w->setIconUrl(ImageURL::fileIcon(path));
-                  w->setSubtitle(path);
+                  w->setSubtitle(compressPath(path));
                   w->setActive(false);
                 },
                 [&](const LinkItem &item) {

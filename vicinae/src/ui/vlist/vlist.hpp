@@ -282,6 +282,7 @@ private:
   QScrollBar *m_scrollBar = nullptr;
   VListModel *m_model = nullptr;
   int m_count = 0;
+  QTimer m_scrollTimer;
 
   static constexpr const int DEFAULT_PAGE_STEP = 40;
   static QMargins constexpr const DEFAULT_MARGINS = {5, 5, 5, 5};

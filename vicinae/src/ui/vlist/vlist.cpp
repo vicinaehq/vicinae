@@ -4,9 +4,12 @@
 #include <qobjectdefs.h>
 
 namespace vicinae::ui {
+
+static constexpr const int SCROLL_FPS = 120;
+static constexpr const double SCROLL_FRAME_TIME = 1000.0 / SCROLL_FPS;
+
 VListWidget::VListWidget() {
   m_visibleItems.reserve(32);
-  setMouseTracking(true);
   setupUI();
 }
 
@@ -280,7 +283,11 @@ std::optional<VListModel::Index> VListWidget::currentSelection() const {
 void VListWidget::setupUI() {
   m_scrollBar = new OmniScrollBar(this);
   m_scrollBar->raise();
-  connect(m_scrollBar, &QScrollBar::valueChanged, this, &VListWidget::handleScrollChanged);
+  m_scrollTimer.setSingleShot(true);
+  connect(&m_scrollTimer, &QTimer::timeout, this, [this]() { handleScrollChanged(m_scrollBar->value()); });
+  connect(m_scrollBar, &QScrollBar::valueChanged, this, [this]() {
+    if (!m_scrollTimer.isActive()) m_scrollTimer.start(SCROLL_FRAME_TIME);
+  });
 }
 
 bool VListWidget::event(QEvent *event) {

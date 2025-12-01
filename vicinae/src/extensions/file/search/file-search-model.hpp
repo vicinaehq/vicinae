@@ -53,7 +53,6 @@ public:
     auto w = static_cast<DefaultListItemWidget *>(widget);
     w->setIconUrl(ImageURL::fileIcon(path));
     w->setName(getLastPathComponent(path).c_str());
-    w->setSubtitle(path);
     w->setActive(false);
   }
 
