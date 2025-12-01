@@ -1,5 +1,4 @@
 #include "search-files-view.hpp"
-#include "ui/omni-list/omni-list.hpp"
 #include <filesystem>
 #include <ranges>
 #include "misc/file-list-item.hpp"

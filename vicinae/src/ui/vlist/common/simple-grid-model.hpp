@@ -1,3 +1,4 @@
+#pragma once
 #include "ui/image/image.hpp"
 #include "ui/image/url.hpp"
 #include "ui/omni-grid/grid-item-widget.hpp"
@@ -17,7 +18,7 @@ public:
 
   virtual GridData createItemData(const ItemType &item) const = 0;
 
-  virtual VListModel::StableID stableId(const ItemType &item) const override = 0;
+  virtual VListModel::StableID stableId(const ItemType &item, int sectionId) const override = 0;
   virtual int sectionCount() const override = 0;
   virtual int sectionItemCount(SectionId id) const override = 0;
 

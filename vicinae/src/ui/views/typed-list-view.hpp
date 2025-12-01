@@ -9,7 +9,6 @@
 #include "navigation-controller.hpp"
 #include "ui/form/selector-input.hpp"
 #include "ui/search-bar/search-bar.hpp"
-#include <absl/strings/str_format.h>
 #include <qlogging.h>
 #include <qtconcurrentfilter.h>
 #include <qwidget.h>
@@ -26,6 +25,7 @@ public:
 
   void setModel(ModelType *model) {
     m_model = model;
+    m_model->setParent(this);
     m_list->setModel(model);
   }
 
@@ -35,8 +35,11 @@ protected:
   virtual QWidget *generateDetail(const ItemType &item) const { return nullptr; }
   virtual std::unique_ptr<CompleterData> createCompleter(const ItemType &item) const { return nullptr; }
   virtual std::unique_ptr<ActionPanelState> createActionPanel(const ItemType &item) const { return nullptr; }
+  virtual std::optional<QString> navigationTitle(const ItemType &item) const { return std::nullopt; }
 
   virtual void itemSelected(const ItemType &item) {}
+
+  virtual QString rootNavigationTitle() const { return command()->info().name(); }
 
   virtual void emptied() {}
 
@@ -68,10 +71,12 @@ protected:
       switch (event->key()) {
       case Qt::Key_Up:
         return m_list->selectUp();
-        break;
       case Qt::Key_Down:
         return m_list->selectDown();
-        break;
+      case Qt::Key_Left:
+        return m_list->selectLeft();
+      case Qt::Key_Right:
+        return m_list->selectRight();
       case Qt::Key_Tab: {
         if (!context()->navigation->hasCompleter()) {
           m_list->selectNext();
@@ -97,6 +102,7 @@ protected:
     if (!idx || !m_model) {
       destroyCompleter();
       clearActions();
+      setNavigationTitle(rootNavigationTitle());
       m_split->setDetailVisibility(false);
 
       if (m_model && m_model->isEmpty()) {
@@ -122,6 +128,12 @@ protected:
       activateCompleter(completer->arguments, completer->iconUrl);
     } else {
       destroyCompleter();
+    }
+
+    if (auto title = navigationTitle(item.value())) {
+      setNavigationTitle(QString("%1 - %2").arg(rootNavigationTitle()).arg(title.value()));
+    } else {
+      setNavigationTitle(rootNavigationTitle());
     }
 
     auto detail = generateDetail(item.value());

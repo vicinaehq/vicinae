@@ -11,11 +11,11 @@ VListWidget::VListWidget() {
 }
 
 void VListWidget::setModel(VListModel *model) {
+  m_model = model;
   connect(model, &VListModel::dataChanged, this, [this]() {
     m_model->onDataChanged();
     calculate();
   });
-  m_model = model;
   calculate();
 }
 

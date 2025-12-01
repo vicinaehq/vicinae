@@ -33,7 +33,7 @@ public:
   virtual WidgetType *createItemWidget(const ItemType &type) const = 0;
   virtual void refreshItemWidget(const ItemType &type, WidgetType *widget) const = 0;
 
-  virtual StableID stableId(const ItemType &item) const = 0;
+  virtual StableID stableId(const ItemType &item, SectionId id) const = 0;
 
   virtual WidgetTag widgetTag(const ItemType &item) const { return InvalidTag; }
 
@@ -125,8 +125,9 @@ protected:
 
   StableID stableId(Index idx) const final override {
     static std::hash<std::string_view> hasher = {};
-    const auto visitor = overloads{[&](const SectionHeader &header) { return hasher(header.name); },
-                                   [&](const SectionItem &item) { return stableId(item.data); }};
+    const auto visitor = overloads{
+        [&](const SectionHeader &header) { return hasher(header.name); },
+        [&](const SectionItem &item) { return stableId(item.data, sectionIdFromIndex(item.sectionIdx)); }};
     return std::visit(visitor, fromFlatIndex(idx));
   }
 
@@ -163,11 +164,27 @@ protected:
   FlattenedItem fromFlatIndex(Index idx) const {
     auto &item = m_cache[idx];
     auto id = sectionIdFromIndex(item.sectionIdx);
+    int currentIndex = 0;
 
-    if (item.isSection) { return SectionHeader{.name = sectionName(id)}; }
+    for (int i = 0; i != sectionCount(); ++i) {
+      auto id = sectionIdFromIndex(i);
+      int itemCount = sectionItemCount(id);
+      bool withHeader = itemCount > 0 && !sectionName(id).empty();
 
-    return SectionItem{
-        .data = sectionItemAt(id, item.itemIdx), .sectionIdx = item.sectionIdx, .itemIdx = item.itemIdx};
+      if (withHeader) {
+        if (currentIndex == idx) return SectionHeader{.name = sectionName(id)};
+        ++currentIndex;
+      }
+
+      if (itemCount > 0 && idx >= currentIndex && idx < currentIndex + itemCount) {
+        int j = idx - currentIndex;
+        return SectionItem{.data = sectionItemAt(id, j), .sectionIdx = i, .itemIdx = j};
+      }
+
+      currentIndex += itemCount;
+    }
+
+    throw std::runtime_error("Invalid index, this should not happen");
   }
 
   int count() const final override {
