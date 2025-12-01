@@ -9,8 +9,6 @@
 #include "navigation-controller.hpp"
 #include "ui/form/selector-input.hpp"
 #include "ui/search-bar/search-bar.hpp"
-#include <qlogging.h>
-#include <qtconcurrentfilter.h>
 #include <qwidget.h>
 #include "ui/split-detail/split-detail.hpp"
 #include "ui/vlist/vlist.hpp"
@@ -174,24 +172,13 @@ protected:
 
     connect(m_list, &vicinae::ui::VListWidget::itemSelected, this, &TypedListView::selectionChanged);
     connect(m_list, &vicinae::ui::VListWidget::itemActivated, this, &TypedListView::itemActivated);
-    /*
-connect(m_list, &OmniList::virtualHeightChanged, this, [this](int height) {
-  if (m_list->items().empty() && (!searchText().isEmpty() || !isLoading())) {
-    // ui->destroyCompleter();
-    m_content->setCurrentWidget(m_emptyView);
-    return;
-  }
-
-  m_content->setCurrentWidget(m_split);
-});
-    */
 
     SimpleView::setupUI(wrapUI(m_content));
   }
 
-  vicinae::ui::VListWidget *m_list;
+  vicinae::ui::VListWidget *m_list = nullptr;
   ModelType *m_model = nullptr;
-  SplitDetailWidget *m_split;
-  QStackedWidget *m_content;
-  EmptyViewWidget *m_emptyView;
+  SplitDetailWidget *m_split = nullptr;
+  QStackedWidget *m_content = nullptr;
+  EmptyViewWidget *m_emptyView = nullptr;
 };
