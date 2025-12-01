@@ -36,6 +36,15 @@ template <typename T> struct PaginatedResponse {
   std::vector<T> data;
 };
 
+template <typename T> struct Scored {
+  T data;
+  int score = 0;
+
+  bool operator<(const Scored<T> &rhs) const { return score < rhs.score; }
+  bool operator>(const Scored<T> &rhs) const { return score > rhs.score; }
+  bool operator==(const Scored<T> &rhs) const { return score == rhs.score; }
+};
+
 class NonCopyable {
 public:
   NonCopyable(const NonCopyable &) = delete;

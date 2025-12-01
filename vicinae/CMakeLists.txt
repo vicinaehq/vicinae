@@ -63,6 +63,8 @@ set(SRCS
 
 	src/ui/dmenu-view/dmenu-view.hpp
 	src/ui/dmenu-view/dmenu-view.cpp
+	src/ui/dmenu-view/dmenu.hpp
+	src/ui/dmenu-view/dmenu.cpp
 
 	include/font-service.hpp
 	src/font-service.cpp
@@ -411,10 +413,17 @@ set(SRCS
 	src/extensions/clipboard/clipboard-history-command.cpp
 	src/extensions/clipboard/history/clipboard-history-view.hpp
 	src/extensions/clipboard/history/clipboard-history-view.cpp
+	src/extensions/clipboard/history/clipboard-history-model.hpp
+	src/extensions/clipboard/history/clipboard-history-controller.hpp
+	src/extensions/clipboard/history/clipboard-history-controller.cpp
+
 	src/extensions/calculator/history/calculator-history-view.hpp
 	src/extensions/calculator/history/calculator-history-view.cpp
 	src/extensions/theme/manage/manage-themes-view.hpp
 	src/extensions/theme/manage/manage-themes-view.cpp
+	src/extensions/theme/manage/theme-list-model.hpp
+	src/extensions/theme/manage/theme-list-controller.hpp
+	src/extensions/theme/manage/theme-list-controller.cpp
 	
 	src/extensions/clipboard/clipboard-extension.hpp
 	src/extensions/clipboard/clipboard-extension.cpp
@@ -428,6 +437,10 @@ set(SRCS
 	src/extensions/vicinae/oauth-token-store/oauth-token-store-view.cpp
 	src/extensions/power-management/power-management-extension.cpp
 	src/extensions/root/root-search-view.cpp
+	src/extensions/root/root-search-model.hpp
+	src/extensions/root/root-search-model.cpp
+	src/extensions/root/root-search-controller.hpp
+	src/extensions/root/root-search-controller.cpp
 
 	src/extensions/system/browse-apps/browse-apps-view.cpp
 
@@ -639,6 +652,9 @@ set(SRCS
 	src/ui/button-base/button-base.cpp
 
 	src/services/power-manager/systemd/systemd-power-manager.cpp
+
+	src/ui/vlist/vlist.hpp
+	src/ui/vlist/vlist.cpp
 
 ) 
 

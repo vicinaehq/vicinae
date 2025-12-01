@@ -57,6 +57,11 @@ void BaseView::setSearchAccessory(QWidget *accessory) {
   m_ctx->navigation->setSearchAccessory(accessory, m_navProxy);
 }
 
+QWidget *BaseView::currentSearchAccessory() const {
+  if (!m_ctx) return nullptr;
+  return m_ctx->navigation->topState()->searchAccessory.get();
+}
+
 void BaseView::onActivate() {}
 
 /**

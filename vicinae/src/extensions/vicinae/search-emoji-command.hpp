@@ -5,9 +5,9 @@
 
 class SearchEmojiCommand : public BuiltinViewCommand<EmojiView> {
   QString id() const override { return "search-emojis"; }
-  QString name() const override { return "Search Emojis & Symbols"; }
+  QString name() const override { return "Search Emojis"; }
   QString description() const override {
-    return "Search for any emoji or symbol to copy it into the clipboard. Also offers pinning, usage "
+    return "Search for any emoji to copy it into the clipboard. Also offers pinning, usage "
            "tracking, and custom keyword indexing.";
   }
   ImageURL iconUrl() const override {

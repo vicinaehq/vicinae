@@ -62,6 +62,7 @@ public:
   QString navigationTitle() const;
   void setSearchAccessory(QWidget *accessory);
   void setSearchAccessoryVisiblity(bool value);
+  QWidget *currentSearchAccessory() const;
 
   /**
    * Called when the view becomes visible. This is called the first time the view is shown
@@ -92,9 +93,7 @@ public:
 
   virtual void beforePop() {}
 
-  void activateCompleter(const ArgumentList &args, const ImageURL &icon) {
-    // m_uiController->activateCompleter(args, icon);
-  }
+  void activateCompleter(const ArgumentList &args, const ImageURL &icon);
 
   void setContext(ApplicationContext *ctx);
   void setCommandController(CommandController *commandController) { m_cmd = commandController; }

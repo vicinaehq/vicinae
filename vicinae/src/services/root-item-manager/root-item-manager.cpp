@@ -179,6 +179,7 @@ std::span<RootItemManager::ScoredItem> RootItemManager::search(const QString &qu
 
   for (auto &item : m_items) {
     if (!item.meta->isEnabled && !opts.includeDisabled) continue;
+    if (item.meta->favorite && !opts.includeFavorites) continue;
     int fuzzyScore = item.fuzzyScore(patternView);
     if (!pattern.empty() && !fuzzyScore) continue;
     double frequency = std::log1p(item.meta->visitCount) * 0.5;
@@ -189,10 +190,12 @@ std::span<RootItemManager::ScoredItem> RootItemManager::search(const QString &qu
 
   // we need stable sort to avoid flickering when updating quickly
   std::ranges::stable_sort(m_scoredItems, [&](const auto &a, const auto &b) {
-    bool aa = !a.alias.empty() && a.alias.starts_with(pattern);
-    bool ab = !b.alias.empty() && b.alias.starts_with(pattern);
-    // always prioritize matching aliases over score
-    if (aa - ab) { return aa > ab; }
+    if (opts.prioritizeAliased) {
+      bool aa = !a.alias.empty() && a.alias.starts_with(pattern);
+      bool ab = !b.alias.empty() && b.alias.starts_with(pattern);
+      // always prioritize matching aliases over score
+      if (aa - ab) { return aa > ab; }
+    }
     return a.score > b.score;
   });
 

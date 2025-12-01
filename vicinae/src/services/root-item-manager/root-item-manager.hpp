@@ -24,6 +24,8 @@ class ExtensionRootProvider;
 
 struct RootItemPrefixSearchOptions {
   bool includeDisabled = false;
+  bool includeFavorites = true;
+  bool prioritizeAliased = true;
 };
 
 class RootItem {
@@ -99,7 +101,7 @@ public:
    * action.
    */
   virtual std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx,
-                                                           const RootItemMetadata &metadata) {
+                                                           const RootItemMetadata &metadata) const {
     return {};
   }
 
@@ -107,7 +109,7 @@ public:
    * Action panel shown when this item is used as a fallback command.
    */
   virtual std::unique_ptr<ActionPanelState> fallbackActionPanel(ApplicationContext *ctx,
-                                                                const RootItemMetadata &metadata) {
+                                                                const RootItemMetadata &metadata) const {
     return {};
   }
 

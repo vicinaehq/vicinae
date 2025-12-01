@@ -1,6 +1,9 @@
 #pragma once
 #include "extend/list-model.hpp"
 #include "ui/omni-list/omni-list.hpp"
+#include "ui/vlist/vlist.hpp"
+#include "extension-list-model.hpp"
+#include <qobject.h>
 
 class ExtensionList : public QWidget {
   Q_OBJECT
@@ -14,8 +17,6 @@ public:
 
   bool selectUp();
   bool selectDown();
-  bool selectHome();
-  bool selectEnd();
   void selectNext();
   void activateCurrentSelection() const;
   ListItemViewModel const *selected() const;
@@ -25,20 +26,9 @@ public:
   void setFilter(const QString &query);
 
 private:
-  struct SectionGroup {
-    const ListSectionModel *section = nullptr;
-    std::vector<std::pair<const ListItemViewModel *, int>> scoredItems;
-    int bestScore = 0; // we could use this to reorder sections
-  };
+  void handleSelectionChanged(const std::optional<vicinae::ui::VListModel::Index> idx);
+  void handleItemActivated(vicinae::ui::VListModel::Index idx);
 
-  static int computeItemScore(const ListItemViewModel &model, const std::string &query);
-
-  void render(OmniList::SelectionPolicy selectionPolicy);
-  void handleSelectionChanged(const OmniList::AbstractVirtualItem *next,
-                              const OmniList::AbstractVirtualItem *previous);
-  void handleItemActivated(const OmniList::AbstractVirtualItem &item);
-
-  OmniList *m_list = new OmniList;
-  std::vector<ListChild> m_model;
-  QString m_filter;
+  ExtensionListModel *m_model = new ExtensionListModel(this);
+  vicinae::ui::VListWidget *m_list = new vicinae::ui::VListWidget;
 };
