@@ -1,24 +1,10 @@
 #pragma once
-#include "proto/daemon.pb.h"
-#include "ui/omni-list/omni-list.hpp"
-#include "ui/views/list-view.hpp"
+#include "ui/dmenu-view/dmenu.hpp"
+#include "ui/dmenu-view/dmenu-model.hpp"
+#include "ui/views/typed-list-view.hpp"
 
 namespace DMenu {
-struct Payload {
-  std::string raw;
-  std::optional<std::string> navigationTitle;
-  std::optional<std::string> placeholder;
-  std::optional<std::string> sectionTitle;
-  std::optional<std::string> query;
-  bool noSection = false;
-  bool noQuickLook = false;
-  bool noMetadata = false;
-
-  static Payload fromProto(const proto::ext::daemon::DmenuRequest &req);
-  proto::ext::daemon::DmenuRequest toProto() const;
-};
-
-class View : public ListView {
+class View : public TypedListView<DMenuModel> {
   Q_OBJECT
 
 signals:
@@ -30,26 +16,31 @@ public:
 
 protected:
   void hideEvent(QHideEvent *event) override;
-  QString expandSectionName(size_t count) const;
+  QWidget *generateDetail(const ItemType &item) const override;
 
 private:
-  void itemSelected(const OmniList::AbstractVirtualItem *item) override;
+  void setFilter(std::string_view query);
+  void updateSectionName(std::string_view name);
+  std::string expandSection(std::string_view name, size_t count);
+  void itemSelected(const ItemType &item) override;
   void emptied() override;
   bool showBackButton() const override { return false; }
   bool onBackspace() override { return true; }
   QString initialNavigationTitle() const override;
   QString initialSearchPlaceholderText() const override;
-  // Data initData() const override;
   void textChanged(const QString &text) override;
   void beforePop() override;
   void selectEntry(const QString &text);
   void initialize() override;
 
+  std::vector<std::string_view> m_entries;
+  std::vector<Scored<std::string_view>> m_filteredEntries;
+  std::string_view m_sectionNameTemplate;
+  std::string m_sectionName;
   bool m_selected = false;
   Payload m_data;
 
-  std::vector<std::string_view> m_lines;
-  std::vector<std::pair<std::string_view, int>> m_scoredItems;
+  DMenuModel *m_model = nullptr;
 };
 
 }; // namespace DMenu

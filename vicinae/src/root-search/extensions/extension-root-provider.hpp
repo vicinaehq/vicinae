@@ -19,9 +19,9 @@ public:
   bool isSuitableForFallback() const override;
   double baseScoreWeight() const override;
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx,
-                                                   const RootItemMetadata &metadata) override;
+                                                   const RootItemMetadata &metadata) const override;
   std::unique_ptr<ActionPanelState> fallbackActionPanel(ApplicationContext *ctx,
-                                                        const RootItemMetadata &metadata) override;
+                                                        const RootItemMetadata &metadata) const override;
 
   bool supportsAliasSpaceShortcut() const override { return m_command->isView(); }
 

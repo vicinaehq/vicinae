@@ -1,30 +1,38 @@
 #include "emoji-service.hpp"
+#include "fuzzy/weighted-fuzzy-scorer.hpp"
 #include "omni-database.hpp"
 #include "services/emoji-service/emoji.hpp"
 #include <qlogging.h>
 #include "utils/utils.hpp"
 #include <qsqlquery.h>
 
-void EmojiService::buildIndex() {
-  std::unordered_map<std::string_view, QString> keywordMap;
-
+void EmojiService::loadKeywords() {
   for (const auto &visited : getVisited()) {
-    if (!visited.keywords.isEmpty()) { keywordMap.insert({visited.data->emoji, visited.keywords}); }
-  }
-
-  for (const auto &emoji : StaticEmojiDatabase::orderedList()) {
-    if (auto it = keywordMap.find(emoji.emoji); it != keywordMap.end()) {
-      m_index.indexLatinText(it->second.toStdString(), &emoji);
-    }
-
-    for (const auto &keyword : emoji.keywords) {
-      m_index.indexLatinText(keyword, &emoji);
+    if (!visited.keywords.isEmpty()) {
+      m_keywordMap.insert({visited.data->emoji, visited.keywords.toStdString()});
     }
   }
 }
 
-std::vector<const EmojiData *> EmojiService::search(std::string_view query) const {
-  return m_index.prefixSearch(query);
+std::span<Scored<const EmojiData *>> EmojiService::search(std::string_view query) const {
+  static std::vector<Scored<const EmojiData *>> searchResults;
+  auto withScore = [&](const EmojiData &data) -> Scored<const EmojiData *> {
+    fuzzy::WeightedScorer scorer;
+    scorer.add(std::string(data.name), 1);
+    scorer.add(std::string(data.group), 0.7);
+    for (const auto &kw : data.keywords) {
+      scorer.add(std::string(kw), 0.3);
+    }
+    return {&data, scorer.score(std::string{query})};
+  };
+
+  auto filtered = StaticEmojiDatabase::orderedList() | std::views::transform(withScore) |
+                  std::views::filter([](auto &&s) { return s.score > 0; });
+  searchResults.clear();
+  std::ranges::copy(filtered, std::back_inserter(searchResults));
+  std::ranges::stable_sort(searchResults, std::greater{});
+
+  return searchResults;
 }
 
 void EmojiService::createDbEntry(std::string_view emoji) {
@@ -187,13 +195,7 @@ bool EmojiService::setCustomKeywords(std::string_view emoji, const QString &keyw
     return false;
   }
 
-  // hot reload index
-
-  if (oldMetadata.data && !oldMetadata.keywords.isEmpty()) {
-    m_index.removeLatinTextItem(oldMetadata.keywords.toStdString(), oldMetadata.data);
-  }
-
-  m_index.indexLatinText(keywords.toStdString(), oldMetadata.data);
+  m_keywordMap[keywords.toStdString()] = keywords.toStdString();
 
   return true;
 }
@@ -253,4 +255,4 @@ bool EmojiService::pin(std::string_view emoji) {
   return true;
 }
 
-EmojiService::EmojiService(OmniDatabase &db) : m_db(db) { buildIndex(); }
+EmojiService::EmojiService(OmniDatabase &db) : m_db(db) { loadKeywords(); }

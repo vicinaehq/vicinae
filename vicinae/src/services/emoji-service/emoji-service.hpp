@@ -1,4 +1,5 @@
 #pragma once
+#include "common.hpp"
 #include "trie.hpp"
 #include "omni-database.hpp"
 #include "services/emoji-service/emoji.hpp"
@@ -26,22 +27,24 @@ struct EmojiWithMetadata {
 class EmojiService : public QObject {
   Q_OBJECT
 
-  Trie<const EmojiData *, EmojiDataHash> m_index;
-  OmniDatabase &m_db;
-
-  void createDbEntry(std::string_view emoji);
+signals:
+  void pinned(std::string_view emoji) const;
+  void unpinned(std::string_view emoji) const;
+  void visited(std::string_view emoji) const;
+  void rankingReset(std::string_view emoji) const;
 
 public:
-  /**
-   * Synchronously build search index.
-   */
-  void buildIndex();
-  std::vector<const EmojiData *> search(std::string_view query) const;
+  using GroupedEmojis = std::vector<std::pair<std::string_view, std::vector<const EmojiData *>>>;
+
+  EmojiService(OmniDatabase &db);
+
+  void loadKeywords();
+  std::span<Scored<const EmojiData *>> search(std::string_view query) const;
 
   /**
    * List of emojis, ordered and grouped.
    */
-  std::vector<std::pair<std::string_view, std::vector<const EmojiData *>>> grouped();
+  GroupedEmojis grouped();
 
   /**
    * Map metadata to the provided list of emojis.
@@ -61,11 +64,15 @@ public:
    */
   bool setCustomKeywords(std::string_view emoji, const QString &keywords);
 
-  EmojiService(OmniDatabase &db);
+private:
+  void createDbEntry(std::string_view emoji);
 
-signals:
-  void pinned(std::string_view emoji) const;
-  void unpinned(std::string_view emoji) const;
-  void visited(std::string_view emoji) const;
-  void rankingReset(std::string_view emoji) const;
+  /**
+   * Additional keywords set by the user
+   */
+  std::unordered_map<std::string_view, std::string> m_keywordMap;
+  std::unordered_set<std::string_view> m_pinned;
+  std::vector<Scored<const EmojiData *>> m_searchResults;
+
+  OmniDatabase &m_db;
 };
