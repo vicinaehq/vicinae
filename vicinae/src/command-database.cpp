@@ -51,7 +51,10 @@ CommandDatabase::CommandDatabase() {
   registerRepository<ThemeExtension>();
   registerRepository<FontExtension>();
   registerRepository<DeveloperExtension>();
+
+#ifdef QT_DEBUG
   registerRepository<InternalExtension>();
+#endif
 
 #ifdef Q_OS_UNIX
   registerRepository<SystemExtension>();

@@ -105,6 +105,7 @@ public:
   virtual QString repositoryName() const { return ""; }
   virtual bool isFallback() const { return false; }
   virtual void preferenceValuesChanged(const QJsonObject &value) const {}
+  virtual bool isInternal() const { return false; }
 
   /**
    * Optional override of the navigation title that is to be shown when
