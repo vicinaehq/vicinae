@@ -93,9 +93,7 @@ public:
 
   virtual void beforePop() {}
 
-  void activateCompleter(const ArgumentList &args, const ImageURL &icon) {
-    // m_uiController->activateCompleter(args, icon);
-  }
+  void activateCompleter(const ArgumentList &args, const ImageURL &icon);
 
   void setContext(ApplicationContext *ctx);
   void setCommandController(CommandController *commandController) { m_cmd = commandController; }

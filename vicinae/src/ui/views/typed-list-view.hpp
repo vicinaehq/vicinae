@@ -124,10 +124,12 @@ protected:
 
     setActions(createActionPanel(item.value()));
 
+    auto &nav = context()->navigation;
+
     if (auto completer = createCompleter(item.value())) {
-      activateCompleter(completer->arguments, completer->iconUrl);
+      nav->createCompletion(completer->arguments, completer->iconUrl);
     } else {
-      destroyCompleter();
+      nav->destroyCurrentCompletion();
     }
 
     if (auto title = navigationTitle(item.value())) {

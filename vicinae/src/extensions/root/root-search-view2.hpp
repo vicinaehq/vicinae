@@ -83,7 +83,11 @@ public:
                                    [&](const FavoriteItem &item) { return rootItemCompleter(item.item); },
                                    [](auto &&a) { return std::unique_ptr<CompleterData>(); }};
 
-    return std::visit(visitor, item);
+    auto completer = std::visit(visitor, item);
+
+    if (completer) { qDebug() << "completer here!"; }
+
+    return completer;
   }
 
   bool tryAliasFastTrack() {
@@ -115,9 +119,9 @@ public:
     auto config = context()->services->config();
     m_manager = context()->services->rootItemManager();
     m_model = new RootSearchModel(m_manager);
-    m_controller = new RootSearchController(m_manager, context()->services->fileService(),
-                                            context()->services->appDb(),
-                                            context()->services->calculatorService(), m_model, this);
+    m_controller =
+        new RootSearchController(m_manager, context()->services->fileService(), context()->services->appDb(),
+                                 context()->services->calculatorService(), m_model, this);
 
     m_list->setModel(m_model);
     setModel(m_model);

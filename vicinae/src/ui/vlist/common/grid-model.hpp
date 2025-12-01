@@ -162,8 +162,6 @@ protected:
   }
 
   FlattenedItem fromFlatIndex(Index idx) const {
-    auto &item = m_cache[idx];
-    auto id = sectionIdFromIndex(item.sectionIdx);
     int currentIndex = 0;
 
     for (int i = 0; i != sectionCount(); ++i) {
