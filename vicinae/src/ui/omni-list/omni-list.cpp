@@ -990,7 +990,7 @@ OmniList::OmniList() {
 
   int scrollBarWidth = scrollBar->sizeHint().width();
 
-  setMargins(8, 5, 8, 5);
+  setMargins(5, 5, 5, 5);
   _widgetCache.reserve(20);
   setMouseTracking(true);
 }

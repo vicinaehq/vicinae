@@ -150,6 +150,7 @@ public:
     bool hasUniformHeight() const override { return true; }
     QString generateId() const override;
     OmniListItemWidget *createWidget() const override;
+    int calculateHeight(int width) const override { return 30; }
 
     VirtualSection(const QString &name);
     ~VirtualSection() {}
