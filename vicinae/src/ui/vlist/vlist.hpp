@@ -30,9 +30,7 @@ public:
   static constexpr const Index InvalidIndex = -1;
   static constexpr const WidgetTag InvalidTag = -1;
 
-  VListModel(QObject *parent = nullptr) : QObject(parent) {
-    connect(this, &VListModel::dataChanged, this, &VListModel::onDataChanged);
-  }
+  VListModel(QObject *parent = nullptr) : QObject(parent) {}
 
   /**
    * The number of items this model currently has.
@@ -118,9 +116,9 @@ public:
 
   virtual void viewportChanged(QSize size) {}
 
-protected:
   virtual void onDataChanged() {}
 
+protected:
   /**
    * Simple utility to generate a random ID, generally used to generate
    * widget tags or not so stable IDs.

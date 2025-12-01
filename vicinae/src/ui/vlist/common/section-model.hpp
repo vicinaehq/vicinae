@@ -8,10 +8,6 @@ namespace vicinae::ui {
 /**
  * A VList model optimized to render data organized in sections.
  * This is the model used by most vertical lists in Vicinae.
- *
- * Currently, this model suffer from one notable limitation: for a given section, all items
- * are considered to have the same height. This restriction does not apply to the model as a whole,
- * but only individual sections.
  */
 template <typename ItemType, typename SectionId = int> class SectionListModel : public VListModel {
 public:
@@ -57,6 +53,48 @@ public:
   using FlattenedItem = std::variant<SectionItem, SectionHeader>;
 
 protected:
+  void viewportChanged(QSize size) override { rebuildMap(); }
+
+  void rebuildMap() {
+    int currentIndex = 0;
+    int y = 0;
+
+    m_cache.resize(count());
+
+    qDebug() << "section count" << sectionCount();
+
+    for (int i = 0; i != sectionCount(); ++i) {
+      auto id = sectionIdFromIndex(i);
+      int itemCount = sectionItemCount(id);
+      int itemHeight = sectionItemHeight(id);
+      bool withHeader = itemCount > 0 && !sectionName(id).empty();
+
+      if (withHeader) {
+        auto &item = m_cache[currentIndex];
+        item.y = y;
+        item.height = HEADER_HEIGHT;
+        item.sectionIdx = i;
+        item.isSection = true;
+        y += HEADER_HEIGHT;
+        ++currentIndex;
+      }
+
+      for (int j = 0; j != itemCount; ++j) {
+        auto &item = m_cache[currentIndex];
+        item.y = y;
+        item.height = itemHeight;
+        item.sectionIdx = i;
+        item.isSection = false;
+        item.itemIdx = j;
+        y += itemHeight;
+        ++currentIndex;
+      }
+    }
+    m_height = y;
+  }
+
+  void onDataChanged() override { rebuildMap(); }
+
   WidgetType *createWidget(Index idx) const final override {
     const auto visitor = overloads{
         [&](const SectionHeader &header) -> WidgetType * { return new OmniListSectionHeader("", "", 0); },
@@ -88,27 +126,13 @@ protected:
   }
 
   FlattenedItem fromFlatIndex(Index idx) const {
-    int currentIndex = 0;
+    auto &item = m_cache[idx];
+    auto id = sectionIdFromIndex(item.sectionIdx);
 
-    for (int i = 0; i != sectionCount(); ++i) {
-      auto id = sectionIdFromIndex(i);
-      int itemCount = sectionItemCount(id);
-      bool withHeader = itemCount > 0 && !sectionName(id).empty();
+    if (item.isSection) { return SectionHeader{.name = sectionName(id)}; }
 
-      if (withHeader) {
-        if (currentIndex == idx) return SectionHeader{.name = sectionName(id)};
-        ++currentIndex;
-      }
-
-      if (itemCount > 0 && idx >= currentIndex && idx < currentIndex + itemCount) {
-        int j = idx - currentIndex;
-        return SectionItem{.data = sectionItemAt(id, j), .sectionIdx = i, .itemIdx = j};
-      }
-
-      currentIndex += itemCount;
-    }
-
-    throw std::runtime_error("Invalid index, this should not happen");
+    return SectionItem{
+        .data = sectionItemAt(id, item.itemIdx), .sectionIdx = item.sectionIdx, .itemIdx = item.itemIdx};
   }
 
   size_t count() const final override {
@@ -122,47 +146,9 @@ protected:
     return c;
   }
 
-  size_t height() const final override {
-    int height = 0;
-    for (int i = 0; i != sectionCount(); ++i) {
-      auto id = sectionIdFromIndex(i);
-      int itemCount = sectionItemCount(id);
-      int itemHeight = sectionItemHeight(id);
-      bool withHeader = itemCount > 0 && !sectionName(id).empty();
-      height = height + itemCount * itemHeight + withHeader * HEADER_HEIGHT;
-    }
-    return height;
-  }
+  size_t height() const final override { return m_height; }
 
-  size_t heightAtIndex(Index idx) const final override {
-    int currentIndex = 0;
-    int height = 0;
-
-    for (int i = 0; i != sectionCount(); ++i) {
-      auto id = sectionIdFromIndex(i);
-      int itemCount = sectionItemCount(id);
-      int itemHeight = sectionItemHeight(id);
-      bool withHeader = itemCount > 0 && !sectionName(id).empty();
-
-      if (withHeader) {
-        if (currentIndex == idx) return height;
-        height += HEADER_HEIGHT;
-        ++currentIndex;
-      }
-
-      int sectionHeight = itemCount * itemHeight;
-
-      if (itemCount > 0 && idx >= currentIndex && idx < currentIndex + itemCount) {
-        int itemIdx = idx - currentIndex;
-        return height + itemIdx * itemHeight;
-      }
-
-      currentIndex += itemCount;
-      height += sectionHeight;
-    }
-
-    return height;
-  }
+  size_t heightAtIndex(Index idx) const final override { return m_cache[idx].y; }
 
   bool isAnchor(Index idx) const override {
     return std::holds_alternative<SectionHeader>(fromFlatIndex(idx));
@@ -173,31 +159,20 @@ protected:
   }
 
   Index indexAtHeight(int targetHeight) const final override {
-    int currentIndex = 0;
-    int height = 0;
+    int low = 0;
+    int high = m_cache.size() - 1;
 
-    for (int i = 0; i != sectionCount(); ++i) {
-      auto id = sectionIdFromIndex(i);
-      int itemCount = sectionItemCount(id);
-      int itemHeight = sectionItemHeight(id);
-      bool withHeader = itemCount > 0 && !sectionName(id).empty();
+    while (low <= high) {
+      int mid = low + (high - low) / 2;
+      auto &item = m_cache[mid];
 
-      if (withHeader) {
-        if (targetHeight < height + HEADER_HEIGHT) return currentIndex;
-        height += HEADER_HEIGHT;
-        ++currentIndex;
+      if (targetHeight >= item.y && targetHeight <= item.y + item.height) { return mid; }
+
+      if (targetHeight > item.y + item.height) {
+        low = mid + 1;
+      } else {
+        high = mid - 1;
       }
-
-      int sectionHeight = itemHeight * itemCount;
-
-      if (itemCount > 0) {
-        if (targetHeight < height + sectionHeight) {
-          return currentIndex + (targetHeight - height) / itemHeight;
-        }
-      }
-
-      height += sectionHeight;
-      currentIndex += itemCount;
     }
 
     return InvalidIndex;
@@ -212,6 +187,16 @@ protected:
   }
 
 private:
+  struct CachedItem {
+    int y = 0;
+    int height = 0;
+    bool isSection = false;
+    int sectionIdx = 0;
+    int itemIdx = 0;
+  };
+
   static const constexpr size_t HEADER_HEIGHT = 30;
+  int m_height = 0;
+  std::vector<CachedItem> m_cache;
 };
 }; // namespace vicinae::ui
