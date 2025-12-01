@@ -58,6 +58,10 @@ For more details on installation, usage, configuration, extension development, a
 ## A few more sick screenshots :)
 
 <p align="center">
+  <img width="786" height="501" alt="image" src="https://github.com/user-attachments/assets/efb3af3f-d3f0-4bf5-8ae0-ca762042c5e3" />
+</p>
+
+<p align="center">
   <img
     src=".github/assets/clipboard-history-gruvbox.png"
     alt="clipboard history gruvbox"
