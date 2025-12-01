@@ -184,21 +184,27 @@ signals:
    */
   void itemActivated(VListModel::Index idx) const;
 
-private:
 public:
   VListWidget();
 
   void setModel(VListModel *model);
-  void calculate();
   void setMargins(const QMargins &margins);
   void setSelected(VListModel::Index idx);
 
-  void scrollToTop() { scrollToHeight(0); }
+  /**
+   * Force widget at index to be refreshed.
+   * If `idx` is not in the viewport then this is a no-op.
+   * Returns whether a widget was refreshed or not.
+   */
+  bool refresh(VListModel::Index idx) const;
 
-  void scrollToBottom() { scrollToHeight(m_scrollBar->maximum()); }
-
-  void scrollToHeight(int height) { m_scrollBar->setValue(height); }
-  void scrollToIndex(VListModel::Index idx, ScrollAnchor anchor = ScrollAnchor::Relative);
+  /**
+   * Get the widget at the given index, if any.
+   * This will only return a widget if the item at this index is currently in the viewport.
+   * If it's not, then there is no visual representation for it, so nullptr is returned.
+   * It is possible to manually make changes to this widget and then call `refresh`,
+   */
+  VListModel::WidgetType *widgetAt(VListModel::Index idx) const;
 
   void selectFirst();
 
@@ -235,7 +241,11 @@ public:
 protected:
   std::optional<VListModel::Index> getTopItem(VListModel::Index idx) const;
 
+  void scrollToHeight(int height) { m_scrollBar->setValue(height); }
+  void scrollToIndex(VListModel::Index idx, ScrollAnchor anchor = ScrollAnchor::Relative);
+
   void setupUI();
+  void calculate();
   bool event(QEvent *event) override;
   void handleScrollChanged(int value) { updateViewport(); }
   void resizeEvent(QResizeEvent *event) override;

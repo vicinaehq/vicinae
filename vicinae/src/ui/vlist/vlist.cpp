@@ -66,6 +66,21 @@ void VListWidget::selectFirst() {
   emit itemSelected({});
 }
 
+bool VListWidget::refresh(VListModel::Index idx) const {
+  auto w = widgetAt(idx);
+  if (!w) return false;
+  m_model->refreshWidget(idx, w);
+  return w;
+}
+
+VListModel::WidgetType *VListWidget::widgetAt(VListModel::Index idx) const {
+  if (auto it = std::ranges::find_if(m_visibleItems, [&](auto &&w) { return w.index == idx; });
+      it != m_visibleItems.end()) {
+    return it->widget->widget();
+  }
+  return nullptr;
+}
+
 bool VListWidget::activateCurrentSelection() {
   if (!m_selected) return false;
   emit itemActivated(m_selected->idx);
@@ -111,13 +126,27 @@ bool VListWidget::selectUp() {
   }
 
   int idx = m_selected->idx;
+  int currentX = m_model->xAtIndex(idx);
+  int currentY = m_model->heightAtIndex(idx);
+  std::optional<std::pair<VListModel::Index, int>> firstSelectable;
 
-  while (auto topIdx = getTopItem(idx)) {
-    if (m_model->isSelectable(topIdx.value())) {
-      setSelected(topIdx.value());
+  for (int i = idx - 1; i >= 0; --i) {
+    int newX = m_model->xAtIndex(i);
+    int newY = m_model->heightAtIndex(i);
+
+    if (firstSelectable && newY < firstSelectable->second) {
+      setSelected(firstSelectable->first);
       return true;
     }
-    idx = topIdx.value();
+    if (newY < currentY) {
+      if (m_model->isSelectable(i)) {
+        if (newX <= currentX) {
+          setSelected(i);
+          return true;
+        }
+        if (!firstSelectable) { firstSelectable = {i, newY}; }
+      }
+    }
   }
 
   return false;
@@ -131,14 +160,25 @@ bool VListWidget::selectDown() {
 
   int currentY = m_model->heightAtIndex(m_selected->idx);
   int currentX = m_model->xAtIndex(m_selected->idx);
+  std::optional<std::pair<VListModel::Index, int>> firstSelectable;
 
   for (int i = m_selected->idx + 1; i < m_count; ++i) {
     int newX = m_model->xAtIndex(i);
     int newY = m_model->heightAtIndex(i);
 
-    if (newY > currentY && newX >= currentX && m_model->isSelectable(i)) {
-      setSelected(i);
+    if (firstSelectable && newY > firstSelectable->second) {
+      setSelected(firstSelectable->first);
       return true;
+    }
+
+    if (newY > currentY) {
+      if (m_model->isSelectable(i)) {
+        if (newX >= currentX) {
+          setSelected(i);
+          return true;
+        }
+        if (!firstSelectable) { firstSelectable = {i, newY}; }
+      }
     }
   }
 
