@@ -80,6 +80,7 @@ CommandRootItem::fallbackActionPanel(ApplicationContext *ctx, const RootItemMeta
 QString CommandRootItem::uniqueId() const { return QString("extension.%1").arg(m_command->uniqueId()); }
 
 AccessoryList CommandRootItem::accessories() const {
+  if (m_command->isInternal()) { return {{.text = "Internal Command", .color = SemanticColor::Blue}}; }
   return {{.text = "Command", .color = SemanticColor::TextMuted}};
 }
 

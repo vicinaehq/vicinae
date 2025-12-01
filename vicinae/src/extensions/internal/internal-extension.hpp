@@ -12,6 +12,8 @@ class UIPlayground : public BuiltinViewCommand<PlaygroundView> {
   ImageURL iconUrl() const override {
     return ImageURL::builtin("opentelemetry").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
+
+  virtual bool isInternal() const override { return true; }
 };
 
 class InternalExtension : public BuiltinCommandRepository {
