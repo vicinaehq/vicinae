@@ -53,7 +53,8 @@ public:
     return grid;
   }
 
-  virtual void refreshItemWidget(const ItemType &type, VListModel::WidgetType *widget) const override {
+  virtual void refreshItemWidget(const ItemType &type, VListModel::WidgetType *widget,
+                                 SectionId id) const override {
     auto w = static_cast<GridItemWidget *>(widget);
     auto img = static_cast<ImageWidget *>(w->widget());
     auto data = createItemData(type);

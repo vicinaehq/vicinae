@@ -1,5 +1,6 @@
 #pragma once
 #include "extend/grid-model.hpp"
+#include "extension/extension-grid-model.hpp"
 #include "ui/omni-list/omni-list.hpp"
 
 class ExtensionGridList : public QWidget {
@@ -21,8 +22,6 @@ public:
   bool selectDown();
   bool selectLeft();
   bool selectRight();
-  bool selectHome();
-  bool selectEnd();
   void selectNext();
   void activateCurrentSelection() const;
   GridItemViewModel const *selected() const;
@@ -32,24 +31,16 @@ public:
   void setFilter(const QString &query);
 
 private:
-  struct SectionGroup {
-    const GridSectionModel *section = nullptr;
-    std::vector<std::pair<const GridItemViewModel *, int>> scoredItems;
-    int bestScore = 0;
-  };
+  void handleSelectionChanged(const std::optional<vicinae::ui::VListModel::Index> idx);
 
-  static int computeItemScore(const GridItemViewModel &model, const std::string &query);
+  void handleItemActivated(vicinae::ui::VListModel::Index idx);
 
-  void render(OmniList::SelectionPolicy selectionPolicy);
-  void handleSelectionChanged(const OmniList::AbstractVirtualItem *next,
-                              const OmniList::AbstractVirtualItem *previous);
-  void handleItemActivated(const OmniList::AbstractVirtualItem &item);
-
-  OmniList *m_list = new OmniList;
-  std::vector<GridChild> m_model;
   int m_columns = 1;
   double m_aspectRatio = 1;
   ObjectFit m_fit = ObjectFit::Contain;
   GridItemContentWidget::Inset m_inset = GridItemContentWidget::Inset::None;
   QString m_filter;
+
+  vicinae::ui::VListWidget *m_list = new vicinae::ui::VListWidget;
+  ExtensionGridModel *m_model = new ExtensionGridModel(this);
 };

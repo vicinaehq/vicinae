@@ -31,7 +31,7 @@ public:
   virtual std::string_view sectionName(SectionId id) const = 0;
 
   virtual WidgetType *createItemWidget(const ItemType &type) const = 0;
-  virtual void refreshItemWidget(const ItemType &type, WidgetType *widget) const = 0;
+  virtual void refreshItemWidget(const ItemType &type, WidgetType *widget, SectionId sectionId) const = 0;
 
   virtual StableID stableId(const ItemType &item, SectionId id) const = 0;
 
@@ -132,11 +132,14 @@ protected:
   }
 
   void refreshWidget(Index idx, WidgetType *widget) const final override {
-    const auto visitor = overloads{[&](const SectionHeader &header) {
-                                     static_cast<OmniListSectionHeader *>(widget)->setTitle(
-                                         QString::fromUtf8(header.name.data(), header.name.size()));
-                                   },
-                                   [&](const SectionItem &item) { refreshItemWidget(item.data, widget); }};
+    const auto visitor =
+        overloads{[&](const SectionHeader &header) {
+                    static_cast<OmniListSectionHeader *>(widget)->setTitle(
+                        QString::fromUtf8(header.name.data(), header.name.size()));
+                  },
+                  [&](const SectionItem &item) {
+                    refreshItemWidget(item.data, widget, sectionIdFromIndex(item.sectionIdx));
+                  }};
     return std::visit(visitor, fromFlatIndex(idx));
   }
 
