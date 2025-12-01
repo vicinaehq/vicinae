@@ -144,7 +144,7 @@ protected:
         overloads{[&](const SectionHeader &header) { return QSize(viewport.width(), HEADER_HEIGHT); },
                   [&](const SectionItem &item) {
                     auto id = sectionIdFromIndex(item.sectionIdx);
-                    size_t cols = sectionColumns(id);
+                    int cols = sectionColumns(id);
                     double ratio = sectionAspectRatio(id);
                     int width = cellWidth(cols, viewport.width());
                     int height = itemHeight(item.data, width, ratio);
@@ -153,7 +153,7 @@ protected:
     return std::visit(visitor, fromFlatIndex(idx));
   }
 
-  size_t spacing() const override { return 10; }
+  int spacing() const override { return 10; }
 
   int cellWidth(int cols, int viewportWidth) const {
     int availableWidth = viewportWidth - spacing() * (cols - 1);
@@ -170,7 +170,7 @@ protected:
         .data = sectionItemAt(id, item.itemIdx), .sectionIdx = item.sectionIdx, .itemIdx = item.itemIdx};
   }
 
-  size_t count() const final override {
+  int count() const final override {
     int c = 0;
     for (int i = 0; i != sectionCount(); ++i) {
       auto id = sectionIdFromIndex(i);
@@ -181,9 +181,9 @@ protected:
     return c;
   }
 
-  size_t height() const final override { return m_height; }
+  int height() const final override { return m_height; }
 
-  size_t heightAtIndex(Index idx) const final override { return m_cache[idx].y; }
+  int heightAtIndex(Index idx) const final override { return m_cache[idx].y; }
 
   bool isAnchor(Index idx) const override {
     return std::holds_alternative<SectionHeader>(fromFlatIndex(idx));
@@ -194,8 +194,8 @@ protected:
   }
 
   int xAtIndex(Index index) const override {
-    const auto visitor = overloads{[&](const SectionHeader &header) -> size_t { return 0; },
-                                   [&](const SectionItem &item) -> size_t {
+    const auto visitor = overloads{[&](const SectionHeader &header) -> int { return 0; },
+                                   [&](const SectionItem &item) -> int {
                                      auto id = sectionIdFromIndex(item.sectionIdx);
                                      int cols = sectionColumns(id);
                                      int w = cellWidth(cols, m_viewport.width());
@@ -230,9 +230,9 @@ protected:
     return InvalidIndex;
   }
 
-  size_t height(Index idx) const final override {
-    const auto visitor = overloads{[&](const SectionHeader &header) -> size_t { return HEADER_HEIGHT; },
-                                   [&](const SectionItem &item) -> size_t {
+  int height(Index idx) const final override {
+    const auto visitor = overloads{[&](const SectionHeader &header) -> int { return HEADER_HEIGHT; },
+                                   [&](const SectionItem &item) -> int {
                                      auto id = sectionIdFromIndex(item.sectionIdx);
                                      int w = cellWidth(sectionColumns(id), m_viewport.width());
                                      double ratio = sectionAspectRatio(id);
@@ -257,8 +257,8 @@ private:
   };
 
   QSize m_viewport;
-  size_t m_height = 0;
+  int m_height = 0;
   std::vector<CachedItem> m_cache;
-  static const constexpr size_t HEADER_HEIGHT = 30;
+  static const constexpr int HEADER_HEIGHT = 30;
 };
 }; // namespace vicinae::ui

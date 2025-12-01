@@ -69,6 +69,8 @@ void VListWidget::selectFirst() {
   emit itemSelected({});
 }
 
+std::span<const VListWidget::ViewportItem> VListWidget::visibleItems() const { return m_visibleItems; }
+
 bool VListWidget::refresh(VListModel::Index idx) const {
   auto w = widgetAt(idx);
   if (!w) return false;
@@ -312,7 +314,7 @@ WidgetWrapper *VListWidget::getFromPool(VListModel::WidgetTag tag) {
 void VListWidget::updateViewport() {
   if (!size().isValid() || size().isNull() || size().isEmpty()) return;
 
-  Timer timer;
+  // Timer timer;
   std::unordered_map<VListModel::StableID, WidgetData> newMap;
 
   newMap.reserve(m_widgetMap.size());
@@ -417,7 +419,7 @@ void VListWidget::updateViewport() {
 
   m_widgetMap = newMap;
 
-  timer.time("update viewport");
+  // timer.time("update viewport");
 }
 
 }; // namespace vicinae::ui

@@ -25,7 +25,7 @@ signals:
 public:
   using StableID = size_t;
   using WidgetTag = size_t;
-  using Index = size_t;
+  using Index = int;
   using WidgetType = OmniListItemWidget;
   static constexpr const Index InvalidIndex = -1;
   static constexpr const WidgetTag InvalidTag = -1;
@@ -36,7 +36,7 @@ public:
    * The number of items this model currently has.
    * If count() returns `n` that implies a valid index range of`[0;n-1].
    */
-  virtual size_t count() const = 0;
+  virtual int count() const = 0;
 
   virtual bool isEmpty() const { return height() == 0; }
 
@@ -44,7 +44,7 @@ public:
    * The height that should be allocated for a widget if the item at this index
    * needs to be shown on screen.
    */
-  virtual size_t height(Index idx) const = 0;
+  virtual int height(Index idx) const = 0;
 
   virtual QSize allocateSize(VListModel::Index idx, QSize viewport) const {
     return QSize(viewport.width(), height(idx));
@@ -53,7 +53,7 @@ public:
   /**
    * Spacing between every element, horizontal and vertical.
    */
-  virtual size_t spacing() const { return 0; }
+  virtual int spacing() const { return 0; }
 
   /**
    * Find what model item is located at a given height.
@@ -63,7 +63,7 @@ public:
    */
   virtual Index indexAtHeight(int height) const = 0;
 
-  virtual size_t heightAtIndex(Index idx) const = 0;
+  virtual int heightAtIndex(Index idx) const = 0;
 
   virtual int xAtIndex(Index index) const = 0;
 
@@ -85,7 +85,7 @@ public:
   /**
    * The full height of the list, computed on a full model change.
    */
-  virtual size_t height() const = 0;
+  virtual int height() const = 0;
 
   /**
    * A stable ID that can be used to identify the item that is currently at index `idx`.
@@ -183,11 +183,21 @@ signals:
   void itemActivated(VListModel::Index idx) const;
 
 public:
+  struct ViewportItem {
+    QRect bounds;
+    VListModel::StableID id;
+    VListModel::Index index = -1;
+    VListModel::WidgetTag tag = -1;
+    WidgetWrapper *widget = nullptr;
+  };
+
   VListWidget();
 
   void setModel(VListModel *model);
   void setMargins(const QMargins &margins);
   void setSelected(VListModel::Index idx);
+
+  std::span<const ViewportItem> visibleItems() const;
 
   /**
    * Force widget at index to be refreshed.
@@ -259,14 +269,6 @@ private:
     VListModel::StableID id;
   };
 
-  struct ViewportItem {
-    QRect bounds;
-    VListModel::StableID id;
-    VListModel::Index index = -1;
-    VListModel::WidgetTag tag = -1;
-    WidgetWrapper *widget = nullptr;
-  };
-
   WidgetWrapper *getFromPool(VListModel::WidgetTag tag);
   void updateViewport();
 
@@ -279,9 +281,9 @@ private:
   QMargins m_margins = DEFAULT_MARGINS;
   QScrollBar *m_scrollBar = nullptr;
   VListModel *m_model = nullptr;
-  size_t m_count = 0;
+  int m_count = 0;
 
-  static constexpr const size_t DEFAULT_PAGE_STEP = 40;
+  static constexpr const int DEFAULT_PAGE_STEP = 40;
   static QMargins constexpr const DEFAULT_MARGINS = {5, 5, 5, 5};
 };
 }; // namespace vicinae::ui

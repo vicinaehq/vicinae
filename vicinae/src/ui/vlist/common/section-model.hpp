@@ -61,8 +61,6 @@ protected:
 
     m_cache.resize(count());
 
-    qDebug() << "section count" << sectionCount();
-
     for (int i = 0; i != sectionCount(); ++i) {
       auto id = sectionIdFromIndex(i);
       int itemCount = sectionItemCount(id);
@@ -135,7 +133,7 @@ protected:
         .data = sectionItemAt(id, item.itemIdx), .sectionIdx = item.sectionIdx, .itemIdx = item.itemIdx};
   }
 
-  size_t count() const final override {
+  int count() const final override {
     int c = 0;
     for (int i = 0; i != sectionCount(); ++i) {
       auto id = sectionIdFromIndex(i);
@@ -146,9 +144,9 @@ protected:
     return c;
   }
 
-  size_t height() const final override { return m_height; }
+  int height() const final override { return m_height; }
 
-  size_t heightAtIndex(Index idx) const final override { return m_cache[idx].y; }
+  int heightAtIndex(Index idx) const final override { return m_cache[idx].y; }
 
   bool isAnchor(Index idx) const override {
     return std::holds_alternative<SectionHeader>(fromFlatIndex(idx));
@@ -178,9 +176,9 @@ protected:
     return InvalidIndex;
   }
 
-  size_t height(Index idx) const final override {
-    const auto visitor = overloads{[&](const SectionHeader &header) -> size_t { return HEADER_HEIGHT; },
-                                   [&](const SectionItem &item) -> size_t {
+  int height(Index idx) const final override {
+    const auto visitor = overloads{[&](const SectionHeader &header) -> int { return HEADER_HEIGHT; },
+                                   [&](const SectionItem &item) -> int {
                                      return sectionItemHeight(sectionIdFromIndex(item.sectionIdx));
                                    }};
     return std::visit(visitor, fromFlatIndex(idx));
@@ -195,7 +193,7 @@ private:
     int itemIdx = 0;
   };
 
-  static const constexpr size_t HEADER_HEIGHT = 30;
+  static const constexpr int HEADER_HEIGHT = 30;
   int m_height = 0;
   std::vector<CachedItem> m_cache;
 };
