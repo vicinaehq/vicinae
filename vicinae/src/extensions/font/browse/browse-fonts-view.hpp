@@ -1,25 +1,29 @@
 #pragma once
 #include "common.hpp"
+#include "layout.hpp"
 #include "ui/views/list-view.hpp"
 #include "clipboard-actions.hpp"
 #include "trie.hpp"
 #include <QtConcurrent/QtConcurrent>
 #include "services/config/config-service.hpp"
-#include "src/ui/image/url.hpp"
+#include "ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "font-service.hpp"
 #include "timer.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/markdown/markdown-renderer.hpp"
 #include "ui/omni-list/omni-list.hpp"
+#include "ui/views/typed-list-view.hpp"
 #include <memory>
 #include <qboxlayout.h>
 #include <qfuture.h>
 #include <qfuturewatcher.h>
 #include <qnamespace.h>
+#include <qtextformat.h>
 #include <qvariant.h>
 #include <qwidget.h>
 #include <ranges>
+#include "font-list-model.hpp"
 
 static const QString loremIpsum = R"(
 # Lorem Ipsum Font Showcase
@@ -92,48 +96,59 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas tempus, tellus
 )";
 
 class FontShowcaseWidget : public QWidget {
-  MarkdownRenderer *m_markdown = new MarkdownRenderer();
 
 public:
-  FontShowcaseWidget(QWidget *parent = nullptr) : QWidget(parent) {
-    auto layout = new QVBoxLayout(this);
-
-    layout->addWidget(m_markdown);
-    setLayout(layout);
-  }
+  FontShowcaseWidget(QWidget *parent = nullptr) : QWidget(parent) { VStack().add(m_markdown).imbue(this); }
 
   void setFont(const QFont &font) {
     m_markdown->setFont(font);
     m_markdown->setMarkdown(loremIpsum);
   }
+
+private:
+  MarkdownRenderer *m_markdown = new MarkdownRenderer();
 };
 
-class FontListItem : public AbstractDefaultListItem, public ListView::Actionnable {
-  class SetAppFont : public AbstractAction {
-    QFont m_font;
+class SetAppFont : public AbstractAction {
+  QFont m_font;
 
-    void execute(ApplicationContext *ctx) override {
-      ctx->services->config()->updateConfig(
-          [&](ConfigService::Value &value) { value.font.normal = m_font.family(); });
-    }
-
-  public:
-    SetAppFont(const QFont &font)
-        : AbstractAction("Set as vicinae font", ImageURL::builtin("text")), m_font(font) {}
-  };
-
-  QString m_family;
+  void execute(ApplicationContext *ctx) override {
+    ctx->services->config()->updateConfig(
+        [&](ConfigService::Value &value) { value.font.normal = m_font.family(); });
+  }
 
 public:
-  QString generateId() const override { return m_family; }
-  ItemData data() const override { return {.iconUrl = ImageURL::builtin("text"), .name = m_family}; }
+  SetAppFont(const QFont &font)
+      : AbstractAction("Set as vicinae font", ImageURL::builtin("text")), m_font(font) {}
+};
 
-  std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
+class BrowseFontsView : public TypedListView<FontListModel> {
+public:
+  BrowseFontsView() {}
+
+  void textChanged(const QString &text) override { m_model->setFilter(text); }
+
+  void initialize() override {
+    TypedListView::initialize();
+    setModel(m_model);
+    setSearchPlaceholderText("Browse fonts to preview...");
+    textChanged(searchText());
+  }
+
+private:
+  QWidget *generateDetail(const ItemType &item) const override {
+    QFont family(QString{item});
+    auto widget = new FontShowcaseWidget;
+    widget->setFont(family);
+    return widget;
+  }
+
+  std::unique_ptr<ActionPanelState> createActionPanel(const ItemType &item) const override {
     auto panel = std::make_unique<ActionPanelState>();
     auto section = panel->createSection();
-
-    auto copyFamily = new CopyToClipboardAction(Clipboard::Text(m_family), "Copy font family");
-    auto setFont = new SetAppFont(m_family);
+    QFont family(QString{item});
+    auto copyFamily = new CopyToClipboardAction(Clipboard::Text(QString(item)), "Copy font family");
+    auto setFont = new SetAppFont(family);
 
     copyFamily->setPrimary(true);
     section->addAction(copyFamily);
@@ -142,82 +157,5 @@ public:
     return panel;
   }
 
-  QWidget *generateDetail() const override {
-    auto widget = new FontShowcaseWidget;
-
-    widget->setFont(m_family);
-
-    return widget;
-  }
-
-  QString navigationTitle() const override { return m_family; }
-
-  FontListItem(const QString &family) : m_family(family) {}
-};
-
-class BrowseFontsView : public ListView {
-  std::unique_ptr<Trie<QString>> m_trie;
-
-  QFuture<std::unique_ptr<Trie<QString>>> buildTrieAsync() {
-    auto fontService = ServiceRegistry::instance()->fontService();
-
-    return QtConcurrent::run(
-        [&fontService]() { return std::make_unique<Trie<QString>>(fontService->buildFontSearchIndex()); });
-  }
-
-public:
-  void renderEmptySearch() {
-    m_list->beginResetModel();
-
-    for (const auto &system : QFontDatabase::writingSystems()) {
-      QString sname = QFontDatabase::writingSystemName(system);
-      auto &section = m_list->addSection(QString("%1 Fonts").arg(sname));
-      auto nonWide = [](const QString &name) { return !name.contains("wide", Qt::CaseInsensitive); };
-      auto items =
-          QFontDatabase::families(system) | std::views::filter(nonWide) |
-          std::views::transform([](const QString &family) { return std::make_unique<FontListItem>(family); });
-
-      for (auto item : items) {
-        section.addItem(std::move(item));
-      }
-    }
-
-    m_list->endResetModel(OmniList::SelectFirst);
-  }
-
-  void render(const QString &s) {
-    QString query = s.trimmed();
-
-    if (query.isEmpty()) return renderEmptySearch();
-    if (!m_trie) return;
-
-    m_list->beginResetModel();
-    Timer timer;
-    auto results = m_trie->prefixSearch(query.toStdString(), 500);
-    auto nonWide = [](const QString &name) { return !name.contains("wide", Qt::CaseInsensitive); };
-
-    auto &section = m_list->addSection("Fonts");
-    auto items = results | std::views::filter(nonWide) | std::views::transform([](const QString &family) {
-                   return std::make_unique<FontListItem>(family);
-                 });
-
-    for (auto item : items) {
-      section.addItem(std::move(item));
-    }
-    m_list->endResetModel(OmniList::SelectFirst);
-  }
-
-  void textChanged(const QString &text) override { render(text); }
-
-  void initialize() override { setSearchPlaceholderText("Browse fonts to preview..."); }
-
-  BrowseFontsView() {
-    auto watcher = QSharedPointer<QFutureWatcher<std::unique_ptr<Trie<QString>>>>::create();
-
-    watcher->setFuture(buildTrieAsync());
-    connect(watcher.get(), &QFutureWatcher<Trie<QString>>::finished, this, [this, watcher]() {
-      m_trie = watcher->future().takeResult();
-      render(searchText());
-    });
-  }
+  FontListModel *m_model = new FontListModel;
 };
