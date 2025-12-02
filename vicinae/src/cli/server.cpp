@@ -28,7 +28,6 @@
 #include "services/toast/toast-service.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "settings-controller/settings-controller.hpp"
-#include "settings/settings-window.hpp"
 #include "ui/launcher-window/launcher-window.hpp"
 #include "vicinae.hpp"
 #include <signal.h>
@@ -229,7 +228,7 @@ void CliServerCommand::run(CLI::App *app) {
 
   ctx.navigation = std::make_unique<NavigationController>(ctx);
   ctx.overlay = std::make_unique<OverlayController>(&ctx);
-  ctx.settings = std::make_unique<SettingsController>();
+  ctx.settings = std::make_unique<SettingsController>(ctx);
   ctx.services = ServiceRegistry::instance();
 
   IpcCommandServer commandServer;
@@ -291,7 +290,6 @@ void CliServerCommand::run(CLI::App *app) {
   KeybindManager::instance()->fromSerializedMap(cfgService->value().keybinds);
 
   LauncherWindow launcher(ctx);
-  SettingsWindow settings(&ctx);
 
   ctx.navigation->launch(std::make_shared<RootCommand>());
 
