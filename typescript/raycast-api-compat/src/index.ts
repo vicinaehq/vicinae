@@ -36,7 +36,8 @@ export {
 	getFrontmostApplication,
 	getApplications,
 	getDefaultApplication,
-	showInFinder
+	showInFinder,
+	captureException,
 } from "./system.js";
 
 export { Clipboard } from './clipboard.js';
