@@ -62,19 +62,21 @@ QWidget *SettingsWindow::createWidget() {
 
 void SettingsWindow::showEvent(QShowEvent *event) { QMainWindow::showEvent(event); }
 
+void SettingsWindow::hideEvent(QHideEvent *event) {
+  QWidget::hideEvent(event);
+  m_ctx->settings->closeWindow();
+};
+
 SettingsWindow::SettingsWindow(ApplicationContext *ctx) : m_ctx(ctx) {
   setWindowFlags(Qt::FramelessWindowHint);
-  setAttribute(Qt::WA_TranslucentBackground, true);
+  setAttribute(Qt::WA_TranslucentBackground);
   setMinimumSize(windowSize);
   setMaximumSize(windowSize);
-
   setWindowTitle("Vicinae Settings");
-
   m_categories.reserve(4);
   m_categories.emplace_back(std::make_unique<GeneralSettingsCategory>());
   m_categories.emplace_back(std::make_unique<ExtensionSettingsCategory>());
   m_categories.emplace_back(std::make_unique<KeybindSettingsCategory>());
-  // m_categories.emplace_back(std::make_unique<AdvancedSettingsCategory>());
   m_categories.emplace_back(std::make_unique<AboutSettingsCategory>());
   setCentralWidget(createWidget());
 
@@ -89,8 +91,6 @@ SettingsWindow::SettingsWindow(ApplicationContext *ctx) : m_ctx(ctx) {
         it != m_categories.end()) {
       m_navigation->setSelected(id);
       content->setCurrentIndex(std::distance(m_categories.begin(), it));
-      hide();
-      show();
     }
   });
 
