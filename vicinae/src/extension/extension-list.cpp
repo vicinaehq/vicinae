@@ -13,7 +13,7 @@ ExtensionList::ExtensionList() {
 
 bool ExtensionList::selectUp() { return m_list->selectUp(); }
 bool ExtensionList::selectDown() { return m_list->selectDown(); }
-void ExtensionList::selectNext() { /*return m_list->selectNext();*/ }
+void ExtensionList::selectNext() { return m_list->selectNext(); }
 void ExtensionList::activateCurrentSelection() const { m_list->activateCurrentSelection(); }
 
 bool ExtensionList::empty() const { return m_model->isEmpty(); }
