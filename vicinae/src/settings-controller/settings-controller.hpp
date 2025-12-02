@@ -16,6 +16,7 @@ signals:
 
 public:
   SettingsController(ApplicationContext &ctx);
+  ~SettingsController();
 
   void openWindow();
   bool closeWindow(bool destroy = true);

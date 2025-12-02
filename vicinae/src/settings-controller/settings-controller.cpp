@@ -1,6 +1,12 @@
 #include "settings-controller/settings-controller.hpp"
 #include "settings/settings-window.hpp"
 
+SettingsController::SettingsController(ApplicationContext &ctx) : m_ctx(ctx) {}
+
+SettingsController::~SettingsController() {
+  if (m_window) m_window->deleteLater();
+}
+
 void SettingsController::openWindow() {
   // if window is already shown, hide/show again to force it to reposition itself
   closeWindow(false);
@@ -26,8 +32,6 @@ void SettingsController::openExtensionPreferences(const QString &id) {
   openTab("extensions");
   emit openExtensionPreferencesRequested(id);
 }
-
-SettingsController::SettingsController(ApplicationContext &ctx) : m_ctx(ctx) {}
 
 void SettingsController::createSettingsWindow() {
   if (m_window) return;
