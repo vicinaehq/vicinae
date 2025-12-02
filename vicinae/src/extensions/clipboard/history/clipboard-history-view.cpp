@@ -375,6 +375,7 @@ void ClipboardHistoryView::initialize() {
 
   m_model = new ClipboardHistoryModel(this);
   m_controller = new ClipboardHistoryController(context()->services->clipman(), m_model, this);
+  setLoading(true);
   setModel(m_model);
   m_defaultAction = parseDefaultAction(preferences.value("defaultAction").toString());
   setSearchPlaceholderText("Browse clipboard history...");

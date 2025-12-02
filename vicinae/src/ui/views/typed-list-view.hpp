@@ -103,7 +103,7 @@ protected:
       setNavigationTitle(rootNavigationTitle());
       m_split->setDetailVisibility(false);
 
-      if (m_model && m_model->isEmpty()) {
+      if (m_model && m_model->isEmpty() && !(searchText().isEmpty() && isLoading())) {
         m_content->setCurrentWidget(m_emptyView);
         emptied();
       }
