@@ -12,6 +12,11 @@
 namespace fs = std::filesystem;
 
 SearchFilesView::SearchFilesView() {
+  using namespace std::chrono_literals;
+
+  m_debounce.setSingleShot(true);
+  m_debounce.setInterval(100ms);
+  connect(&m_debounce, &QTimer::timeout, this, &SearchFilesView::handleDebounce);
   connect(&m_pendingFileResults, &Watcher::finished, this, &SearchFilesView::handleSearchResults);
 }
 
@@ -36,7 +41,10 @@ void SearchFilesView::initialize() {
 
 void SearchFilesView::textChanged(const QString &query) {
   currentQuery = query;
-  if (query.isEmpty()) return renderRecentFiles();
+  if (query.isEmpty()) {
+    m_debounce.stop();
+    return renderRecentFiles();
+  }
   generateFilteredList(query);
 }
 
@@ -63,6 +71,15 @@ void SearchFilesView::handleSearchResults() {
   m_list->selectFirst();
 }
 
+void SearchFilesView::handleDebounce() {
+  auto fileService = context()->services->fileService();
+  QString query = searchText();
+
+  if (m_pendingFileResults.isRunning()) { m_pendingFileResults.cancel(); }
+  m_lastSearchText = query;
+  m_pendingFileResults.setFuture(fileService->queryAsync(query.toStdString()));
+}
+
 void SearchFilesView::generateFilteredList(const QString &query) {
   std::error_code ec;
 
@@ -73,10 +90,6 @@ void SearchFilesView::generateFilteredList(const QString &query) {
     return;
   }
 
-  auto fileService = context()->services->fileService();
-
-  if (m_pendingFileResults.isRunning()) { m_pendingFileResults.cancel(); }
-  m_lastSearchText = query;
   setLoading(true);
-  m_pendingFileResults.setFuture(fileService->queryAsync(query.toStdString()));
+  m_debounce.start();
 }
