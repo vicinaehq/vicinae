@@ -1,5 +1,4 @@
 #include "file-indexer.hpp"
-
 #include <filesystem>
 #include <QtConcurrent/QtConcurrent>
 #include "services/files-service/file-indexer/scan.hpp"
@@ -7,6 +6,7 @@
 #include "file-indexer-db.hpp"
 #include "utils/utils.hpp"
 #include <QDebug>
+#include <qthread.h>
 #include <ranges>
 #include <unistd.h>
 #include <thread>
@@ -137,30 +137,8 @@ void FileIndexer::preferenceValuesChanged(const QJsonObject &preferences) {
 }
 
 QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view view,
-                                                                const QueryParams &params) const {
-  auto searchQuery = qStringFromStdView(view);
-  QString finalQuery = preparePrefixSearchQuery(view);
-  auto promise = std::make_shared<QPromise<std::vector<IndexerFileResult>>>();
-  auto future = promise->future();
-
-  QThreadPool::globalInstance()->start([params, finalQuery, promise = std::move(promise)]() mutable {
-    std::vector<fs::path> paths;
-    {
-      FileIndexerDatabase db;
-      paths = db.search(finalQuery.toStdString(), params);
-    }
-
-    std::vector<IndexerFileResult> results;
-
-    for (const auto &path : paths) {
-      results.emplace_back(IndexerFileResult{.path = path});
-    }
-
-    promise->addResult(results);
-    promise->finish();
-  });
-
-  return future;
+                                                                const QueryParams &params) {
+  return m_queryEngine.query(view, params);
 }
 
 FileIndexer::FileIndexer() : m_writer(std::make_shared<DbWriter>()), m_dispatcher(m_writer) {
