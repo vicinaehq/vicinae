@@ -49,7 +49,7 @@ public:
   virtual void rebuildIndex() = 0;
   virtual void preferenceValuesChanged(const QJsonObject &preferences) = 0;
   virtual QFuture<std::vector<IndexerFileResult>> queryAsync(std::string_view view,
-                                                             const QueryParams &params = {}) const = 0;
+                                                             const QueryParams &params = {}) = 0;
 
   virtual ~AbstractFileIndexer() = default;
 };

@@ -4,6 +4,7 @@
 #include <qsqlquery.h>
 #include <qthread.h>
 #include "services/files-service/abstract-file-indexer.hpp"
+#include "services/files-service/file-indexer/file-indexer-query-engine.hpp"
 #include "services/files-service/file-indexer/home-directory-watcher.hpp"
 #include "services/files-service/file-indexer/file-indexer-db.hpp"
 #include "services/files-service/file-indexer/scan-dispatcher.hpp"
@@ -28,6 +29,7 @@ public:
   std::vector<std::filesystem::path> m_excludedPaths;
   std::vector<std::filesystem::path> m_watcherPaths;
   std::vector<std::string> m_excludedFilenames;
+  FileIndexerQueryEngine m_queryEngine;
   FileIndexerDatabase m_db;
 
   ScanDispatcher m_dispatcher;
@@ -45,7 +47,7 @@ public:
   void rebuildIndex() override;
   void preferenceValuesChanged(const QJsonObject &preferences) override;
   QFuture<std::vector<IndexerFileResult>> queryAsync(std::string_view view,
-                                                     const QueryParams &params = {}) const override;
+                                                     const QueryParams &params = {}) override;
   void start() override;
 
   FileIndexer();

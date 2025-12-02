@@ -19,7 +19,9 @@ private:
   void generateFilteredList(const QString &query);
   void renderRecentFiles();
   void textChanged(const QString &query) override;
+  void handleDebounce();
 
+  QTimer m_debounce;
   Watcher m_pendingFileResults;
   QString m_lastSearchText;
   QString currentQuery;
