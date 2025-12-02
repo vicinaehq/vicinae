@@ -24,6 +24,8 @@
 #include <qstackedwidget.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
+#include <algorithm>
+#include <memory>
 
 class NoResultListItem : public OmniList::AbstractVirtualItem {
   class NoResultWidget : public OmniListItemWidget {
@@ -166,10 +168,6 @@ protected:
           return m_list->selectUp();
         case Qt::Key_Down:
           return m_list->selectDown();
-        case Qt::Key_Home:
-          return m_list->selectHome();
-        case Qt::Key_End:
-          return m_list->selectEnd();
         case Qt::Key_Return:
         case Qt::Key_Enter:
           m_list->activateCurrentSelection();
@@ -236,6 +234,7 @@ class ActionPanelStaticListView : public ActionPanelListView {
 
   std::vector<ActionSection> m_sections;
   QString m_title;
+  QString m_id;
 
   void onInitialize() override { onSearchChanged(""); }
 
@@ -266,6 +265,24 @@ public:
   void addAction(AbstractAction *action) {
     if (m_sections.empty()) { addSection(m_title); }
     m_sections.at(m_sections.size() - 1).actions.emplace_back(std::shared_ptr<AbstractAction>(action));
+  }
+
+  QString title() const { return m_title; }
+
+  QString id() const { return m_id; }
+  void setId(const QString &id) { m_id = id; }
+
+  QString currentSearchText() const { return ActionPanelListView::searchText(); }
+
+  void copyFrom(const ActionPanelStaticListView &other) {
+    const QString currentSearch = currentSearchText();
+    m_title = other.m_title;
+    m_sections = other.m_sections;
+    m_id = other.m_id;
+    // Invalidate the list cache to ensure widgets are recreated with new action properties
+    m_list->invalidateCache();
+    // Force a rebuild of the list to show updated action properties
+    onSearchChanged(currentSearch);
   }
 
   std::vector<AbstractAction *> filterActions(const QString &text) {
@@ -311,6 +328,7 @@ public:
     }
 
     m_list->endResetModel(OmniList::SelectFirst);
+    m_list->scrollToTop();
   }
 
   void buildFiltered(const QString &query) {
@@ -328,6 +346,7 @@ public:
     }
 
     m_list->endResetModel(OmniList::SelectFirst);
+    m_list->scrollToTop();
   }
 
   void onSearchChanged(const QString &text) override {
@@ -344,6 +363,7 @@ class ActionPanelV2Widget : public Popover {
   Q_OBJECT
 
   std::stack<ActionPanelView *> m_viewStack;
+  ActionPanelStaticListView *m_rootView = nullptr;
   QStackedLayout *m_layout = new QStackedLayout(this);
 
   bool eventFilter(QObject *obj, QEvent *event) override {
@@ -403,6 +423,7 @@ public:
     while (!m_viewStack.empty()) {
       popCurrentView();
     }
+    m_rootView = nullptr;
   }
 
   QList<AbstractAction *> actions() const {
@@ -478,19 +499,80 @@ public:
     m_layout->addWidget(view);
     m_layout->setCurrentWidget(view);
     m_viewStack.push(view);
-    view->initialize();
-    view->activate();
 
+    // Store root view pointer when it's first pushed
     if (m_viewStack.size() == 1) {
+      m_rootView = dynamic_cast<ActionPanelStaticListView *>(view);
       connect(view, &ActionPanelView::actionsChanged, this, &ActionPanelV2Widget::actionsChanged);
       emit actionsChanged();
     }
 
+    view->initialize();
+    view->activate();
+
     resizeView();
   }
 
+  /**
+   * Checks if the root view structure matches the new state by comparing action IDs.
+   * This is used to determine if we can update the existing root view in-place
+   * instead of rebuilding the entire view stack, which preserves open submenus.
+   *
+   * @param state The new action panel state to compare against
+   */
+  bool isRootStructureSame(const ActionPanelState &state) const {
+    if (!m_rootView) return false;
+
+    const auto currentActions = m_rootView->actions();
+    std::vector<QString> stateActionIds;
+    stateActionIds.reserve(state.actionCount());
+
+    for (const auto &section : state.sections()) {
+      for (const auto &action : section->actions()) {
+        stateActionIds.emplace_back(action->id());
+      }
+    }
+
+    if (stateActionIds.size() != static_cast<size_t>(currentActions.size())) { return false; }
+
+    for (size_t index = 0; index < stateActionIds.size(); ++index) {
+      if (currentActions.at(index)->id() != stateActionIds.at(index)) { return false; }
+    }
+
+    return true;
+  }
+
+  void updateRootView(const ActionPanelState &state) {
+    if (!m_rootView) return;
+
+    auto rebuiltRoot = std::make_unique<ActionPanelStaticListView>();
+    rebuiltRoot->setId(state.id());
+
+    for (const auto &section : state.sections()) {
+      rebuiltRoot->addSection(section->name());
+
+      for (const auto &action : section->actions()) {
+        rebuiltRoot->addAction(action);
+      }
+    }
+
+    m_rootView->copyFrom(*rebuiltRoot);
+
+    refreshOpenSubmenus();
+
+    if (!state.actionCount()) close();
+  }
+
   void setNewActions(const ActionPanelState &state) {
+    // If a submenu is open and the root structure hasn't changed, update in-place
+    // This preserves the open submenu stack instead of resetting it
+    if (m_viewStack.size() > 1 && m_rootView && isRootStructureSame(state)) {
+      updateRootView(state);
+      return;
+    }
+
     auto panel = new ActionPanelStaticListView;
+    panel->setId(state.id());
     size_t count = 0;
 
     for (const auto &section : state.sections()) {
@@ -522,4 +604,73 @@ signals:
   void closed() const;
   void openChanged(bool value);
   void actionsChanged() const;
+
+private:
+  std::vector<ActionPanelView *> stackViews() const {
+    std::vector<ActionPanelView *> views;
+    auto copy = m_viewStack;
+    while (!copy.empty()) {
+      views.push_back(copy.top());
+      copy.pop();
+    }
+    std::reverse(views.begin(), views.end());
+    return views;
+  }
+
+  SubmenuAction *findSubmenuAction(ActionPanelStaticListView *view, const QString &id) const {
+    if (!view) return nullptr;
+
+    auto match = [&](auto *action) {
+      if (id.isEmpty()) { return action->title() == view->title(); }
+      return action->id() == id;
+    };
+
+    for (auto action : view->actions()) {
+      if (!action || !action->isSubmenu()) continue;
+      if (match(action)) { return static_cast<SubmenuAction *>(action); }
+    }
+
+    return nullptr;
+  }
+
+  /**
+   * Refreshes all open submenus in the view stack with their latest content.
+   * When the root view is updated, we need to refresh nested submenus to reflect
+   * any changes in their parent actions. This walks through the view stack from
+   * root to deepest submenu, recreating each submenu view from its parent action.
+   */
+  void refreshOpenSubmenus() {
+    auto views = stackViews();
+    if (views.size() <= 1) return;
+
+    // Start with the root view
+    auto *parent = dynamic_cast<ActionPanelStaticListView *>(views.front());
+    if (!parent) return;
+
+    // Walk through each submenu in the stack and refresh it
+    for (size_t index = 1; index < views.size(); ++index) {
+      auto submenuView = dynamic_cast<ActionPanelStaticListView *>(views[index]);
+      if (!submenuView) break;
+
+      // Find the action that created this submenu
+      const QString submenuId = submenuView->id();
+      auto submenuAction = findSubmenuAction(parent, submenuId);
+      if (!submenuAction) break;
+
+      // Create a fresh submenu view from the parent action (without triggering onOpen)
+      std::unique_ptr<ActionPanelView> fresh(submenuAction->createSubmenuStealthily());
+      auto freshStatic = dynamic_cast<ActionPanelStaticListView *>(fresh.get());
+      if (!freshStatic) break;
+
+      // Copy the fresh content to the existing submenu view to preserve its state
+      submenuView->copyFrom(*freshStatic);
+      submenuView->setId(freshStatic->id());
+
+      // Clean up the temporary fresh view
+      if (auto raw = fresh.release()) { raw->deleteLater(); }
+
+      // Move to the next level in the hierarchy
+      parent = submenuView;
+    }
+  }
 };

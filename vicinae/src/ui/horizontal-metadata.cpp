@@ -29,10 +29,13 @@ void HorizontalMetadata::setMetadata(const std::vector<MetadataItem> &metadatas)
     }
 
     if (auto label = std::get_if<MetadataLabel>(&metadata)) {
+      auto textWidget = UI::Text(label->text);
+      if (label->color) { textWidget.color(*label->color); }
+
       auto hstack = HStack()
                         .addIf(label->icon.has_value(),
                                [&]() -> QWidget * { return UI::Icon(*label->icon).size({16, 16}); })
-                        .add(UI::Text(label->text))
+                        .add(textWidget)
                         .spacing(5);
 
       stack.add(HStack()

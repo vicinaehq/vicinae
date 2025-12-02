@@ -1,7 +1,7 @@
-import { parentPort, workerData } from "worker_threads";
+import { parentPort, workerData } from "node:worker_threads";
 import { createRenderer } from "./reconciler";
 import { LaunchType, NavigationProvider, bus, environment } from "@vicinae/api";
-import { ComponentType, ReactNode, Suspense } from "react";
+import { type ComponentType, type ReactNode, Suspense } from "react";
 import * as React from "react";
 import { patchRequire } from "./patch-require";
 
@@ -79,12 +79,12 @@ const loadView = async () => {
 
 	const renderer = createRenderer({
 		onInitialRender: (views) => {
-			bus.turboRequest("ui.render", { json: JSON.stringify({ views }) });
+			bus.request("ui.render", { json: JSON.stringify({ views }) });
 		},
 		onUpdate: (views) => {
 			const now = performance.now();
 			lastRender = now;
-			bus.turboRequest("ui.render", { json: JSON.stringify({ views }) });
+			bus.request("ui.render", { json: JSON.stringify({ views }) });
 		},
 	});
 

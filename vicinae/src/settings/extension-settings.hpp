@@ -126,7 +126,7 @@ public:
     auto manager = ServiceRegistry::instance()->rootItemManager();
     auto metadata = manager->itemMetadata(m_id);
 
-    setText(metadata.alias);
+    setText(QString::fromStdString(metadata.alias));
   }
 
   // TODO: we need to move that logic a few level above I think, as that's not pretty
@@ -522,17 +522,17 @@ public:
 
     opts.includeDisabled = true;
 
-    for (const auto &item : manager->prefixSearch(query, opts)) {
-      QString providerId = manager->getItemProviderId(item.item->uniqueId());
+    for (const auto &item : manager->search(query, opts)) {
+      QString providerId = manager->getItemProviderId(item.item.get()->uniqueId());
 
       if (providerId.isEmpty()) continue;
 
       auto pred = [&](auto &&pair) { return pair.first == providerId; };
 
       if (auto it = std::ranges::find_if(map, pred); it != map.end()) {
-        it->second.emplace_back(item.item);
+        it->second.emplace_back(item.item.get());
       } else {
-        map.push_back({providerId, {item.item}});
+        map.push_back({providerId, {item.item.get()}});
       }
     }
 

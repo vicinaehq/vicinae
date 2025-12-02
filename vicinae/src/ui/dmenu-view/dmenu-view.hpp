@@ -1,7 +1,10 @@
 #pragma once
-#include "ui/views/list-view.hpp"
+#include "ui/dmenu-view/dmenu.hpp"
+#include "ui/dmenu-view/dmenu-model.hpp"
+#include "ui/views/typed-list-view.hpp"
 
-class DMenuListView : public SearchableListView {
+namespace DMenu {
+class View : public TypedListView<DMenuModel> {
   Q_OBJECT
 
 signals:
@@ -9,30 +12,35 @@ signals:
   void aborted() const;
 
 public:
-  struct DmenuPayload {
-    std::string raw;
-    std::string navigationTitle;
-    std::string placeholder;
-    std::string sectionTitle;
-    bool noSection;
-  };
-
-  DMenuListView(DmenuPayload data);
+  View(Payload data);
 
 protected:
   void hideEvent(QHideEvent *event) override;
+  QWidget *generateDetail(const ItemType &item) const override;
 
 private:
-  void itemSelected(const OmniList::AbstractVirtualItem *item) override;
+  void setFilter(std::string_view query);
+  void updateSectionName(std::string_view name);
+  std::string expandSection(std::string_view name, size_t count);
+  void itemSelected(const ItemType &item) override;
+  void emptied() override;
   bool showBackButton() const override { return false; }
   bool onBackspace() override { return true; }
   QString initialNavigationTitle() const override;
   QString initialSearchPlaceholderText() const override;
-  QString sectionName() const override;
-  Data initData() const override;
+  void textChanged(const QString &text) override;
   void beforePop() override;
   void selectEntry(const QString &text);
+  void initialize() override;
 
+  std::vector<std::string_view> m_entries;
+  std::vector<Scored<std::string_view>> m_filteredEntries;
+  std::string_view m_sectionNameTemplate;
+  std::string m_sectionName;
   bool m_selected = false;
-  DmenuPayload m_data;
+  Payload m_data;
+
+  DMenuModel *m_model = nullptr;
 };
+
+}; // namespace DMenu

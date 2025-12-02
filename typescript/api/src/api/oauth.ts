@@ -25,6 +25,9 @@ enum OauthRedirectMethod {
 	AppURI = "appURI",
 }
 
+/**
+ * @category OAuth
+ */
 export declare namespace OAuth {
 	export namespace PKCEClient {
 		/**
@@ -252,6 +255,9 @@ export declare namespace OAuth {
 	}
 }
 
+/**
+ * @category OAuth
+ */
 export class PKCEClient {
 	redirectMethod: OAuth.RedirectMethod;
 	providerName: string;
@@ -353,7 +359,7 @@ export class PKCEClient {
 			return typeof (s as any).url === "string";
 		};
 
-		const res = await bus.turboRequest("oauth.authorize", {
+		const res = await bus.request("oauth.authorize", {
 			client: {
 				id: this.providerId,
 				description: this.description ?? "Connect to your account",
@@ -393,7 +399,7 @@ export class PKCEClient {
 		};
 
 		if (isTokenResponse(options)) {
-			await bus.turboRequest("oauth.setTokens", {
+			await bus.request("oauth.setTokens", {
 				accessToken: options.access_token,
 				refreshToken: options.refresh_token,
 				idToken: options.id_token,
@@ -402,7 +408,7 @@ export class PKCEClient {
 				providerId: this.providerId,
 			});
 		} else {
-			await bus.turboRequest("oauth.setTokens", {
+			await bus.request("oauth.setTokens", {
 				...options,
 				providerId: this.providerId,
 			});
@@ -416,7 +422,7 @@ export class PKCEClient {
 	 * @returns A promise that resolves when the token set has been retrieved.
 	 */
 	async getTokens(): Promise<OAuth.TokenSet | undefined> {
-		const res = await bus.turboRequest("oauth.getTokens", {
+		const res = await bus.request("oauth.getTokens", {
 			providerId: this.providerId,
 		});
 		const set = res.unwrap().tokenSet;
@@ -444,12 +450,13 @@ export class PKCEClient {
 	 * Removes the stored {@link OAuth.TokenSet} for the client.
 	 */
 	async removeTokens(): Promise<void> {
-		await bus.turboRequest("oauth.removeTokens", {
+		await bus.request("oauth.removeTokens", {
 			providerId: this.providerId,
 		});
 	}
 }
 
+/*
 export type TokenSet = {
 	accessToken: string;
 	refreshToken?: string;
@@ -459,7 +466,13 @@ export type TokenSet = {
 	updatedAt: Date;
 	isExpired: () => boolean;
 };
+*/
 
+/**
+ * Main OAuth object exporting all OAuth utilities
+ *
+ * @category OAuth
+ */
 export const OAuth = {
 	PKCEClient,
 	RedirectMethod: OauthRedirectMethod,

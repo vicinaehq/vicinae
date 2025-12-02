@@ -42,8 +42,8 @@ QString AppRootItem::uniqueId() const { return QString("apps.%1").arg(m_app->id(
 ImageURL AppRootItem::iconUrl() const { return m_app->iconUrl(); }
 
 std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext *ctx,
-                                                              const RootItemMetadata &metadata) {
-  auto panel = std::make_unique<ActionPanelState>();
+                                                              const RootItemMetadata &metadata) const {
+  auto panel = std::make_unique<ListActionPanelState>();
   auto appDb = ctx->services->appDb();
   auto open = new OpenAppAction(m_app, "Open Application", {});
   auto copyId = new CopyToClipboardAction(Clipboard::Text(m_app->id()), "Copy App ID");
@@ -65,10 +65,15 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
 
   auto activeWindows = ctx->services->windowManager()->findAppWindows(*m_app);
 
-  if (!activeWindows.empty() && defaultAction == "focus") {
+  if (!activeWindows.empty()) {
     auto focus = new FocusWindowAction(activeWindows.front());
-    mainSection->addAction(new DefaultActionWrapper(uniqueId(), focus));
-    mainSection->addAction(open);
+    if (defaultAction == "focus") {
+      mainSection->addAction(new DefaultActionWrapper(uniqueId(), focus));
+      mainSection->addAction(open);
+    } else {
+      mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
+      mainSection->addAction(focus);
+    }
   } else {
     mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
   }

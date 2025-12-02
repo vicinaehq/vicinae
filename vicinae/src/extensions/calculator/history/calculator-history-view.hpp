@@ -1,4 +1,5 @@
 #pragma once
+#include "extensions/calculator/history/calculator-history-controller.hpp"
 #include "service-registry.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include <qfuturewatcher.h>
@@ -8,28 +9,21 @@
 #include <qthreadpool.h>
 #include <qtimer.h>
 #include <qtmetamacros.h>
-#include "ui/views/list-view.hpp"
+#include "ui/views/typed-list-view.hpp"
+#include "calculator-history-model.hpp"
 
-class CalculatorHistoryView : public ListView {
+class CalculatorHistoryView : public TypedListView<CalculatorHistoryModel> {
 public:
   CalculatorHistoryView();
   using CalculatorWatcher = QFutureWatcher<AbstractCalculatorBackend::ComputeResult>;
 
+protected:
+  std::unique_ptr<ActionPanelState> createActionPanel(const ItemType &item) const override;
+
 private:
-  void handlePinned(const QString &id);
-  void handleUnpinned(const QString &id);
-  void handleRemoved(const QString &id);
-  void handleAllRemoved();
-  void generateRootList();
-  void generateFilteredList(const QString &text);
-  void handleCalculatorTimeout();
   void textChanged(const QString &text) override;
   void initialize() override;
-  void handleComputationFinished();
 
-  QString m_searchQuery;
-  CalculatorService *m_calculator;
-  QTimer *m_calcDebounce = new QTimer(this);
-  std::optional<AbstractCalculatorBackend::CalculatorResult> m_calcRes;
-  CalculatorWatcher m_pendingComputation;
+  CalculatorHistoryModel *m_model = nullptr;
+  CalculatorHistoryController *m_controller = nullptr;
 };

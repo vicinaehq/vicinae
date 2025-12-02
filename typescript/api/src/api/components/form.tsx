@@ -1,18 +1,47 @@
-import { ReactNode, Ref } from "react";
+import type { ReactNode, Ref } from "react";
 import { useImperativeFormHandle } from "../hooks/use-imperative-form-handle";
 import { type ImageLike, serializeProtoImage } from "../image";
 import { Dropdown as MainDropdown } from "./dropdown";
 
-type FormProps = {
-	actions?: React.ReactNode;
-	children?: React.ReactNode;
-	enableDrafts?: boolean;
-	isLoading?: boolean;
-	navigationTitle?: string;
-	searchBarAccessory?: React.ReactNode;
-};
+/**
+ * @category UI Components
+ */
+export namespace Form {
+	export type Props = {
+		actions?: React.ReactNode;
+		children?: React.ReactNode;
+		enableDrafts?: boolean;
+		isLoading?: boolean;
+		navigationTitle?: string;
+		searchBarAccessory?: React.ReactNode;
+	};
 
-export type FormItemRef = {
+	export type TextField = FormItemRef;
+	export type PasswordField = FormItemRef;
+	export type TextArea = FormItemRef;
+	export type Checkbox = FormItemRef;
+	export type DatePicker = FormItemRef;
+	export type Dropdown = FormItemRef;
+	export type TagPicker = FormItemRef;
+	export type FilePicker = FormItemRef;
+	export type ItemReference = FormItemRef;
+	export type ItemProps<T extends Value> = FormItemProps<T>;
+
+	export type Value =
+		| string
+		| number
+		| boolean
+		| string[]
+		| number[]
+		| Date
+		| null;
+
+	export type Values = {
+		[itemId: string]: Value;
+	};
+}
+
+type FormItemRef = {
 	focus: () => void;
 	reset: () => void;
 };
@@ -40,35 +69,6 @@ interface FormEvent<T extends Form.Value> {
 }
 
 type FormEventType = "focus" | "blur";
-
-export declare namespace Form {
-	export type Props = FormProps;
-	export type TextField = FormItemRef;
-	export type PasswordField = FormItemRef;
-	export type TextArea = FormItemRef;
-	export type Checkbox = FormItemRef;
-	export type DatePicker = FormItemRef;
-	export type Dropdown = FormItemRef;
-	export type TagPicker = FormItemRef;
-	export type FilePicker = FormItemRef;
-
-	export type ItemReference = FormItemRef;
-
-	export type ItemProps<T extends Value> = FormItemProps<T>;
-
-	export type Value =
-		| string
-		| number
-		| boolean
-		| string[]
-		| number[]
-		| Date
-		| null;
-
-	export type Values = {
-		[itemId: string]: Value;
-	};
-}
 
 const wrapFormItemProps = <T extends Form.Value>(props: FormItemProps<T>) => {
 	return {
@@ -120,7 +120,7 @@ interface WithFormRef<T> {
 
 interface TextFieldProps
 	extends FormItemProps<string>,
-		WithFormRef<Form.TextField> {}
+	WithFormRef<Form.TextField> { }
 
 const TextField: React.FC<TextFieldProps> = ({ ref, ...props }) => {
 	useImperativeFormHandle(ref);
@@ -130,7 +130,7 @@ const TextField: React.FC<TextFieldProps> = ({ ref, ...props }) => {
 
 interface PasswordFieldProps
 	extends FormItemProps<string>,
-		WithFormRef<Form.PasswordField> {}
+	WithFormRef<Form.PasswordField> { }
 
 const PasswordField: React.FC<PasswordFieldProps> = ({ ref, ...props }) => {
 	useImperativeFormHandle(ref);
@@ -145,7 +145,7 @@ export enum DatePickerType {
 
 interface DatePickerProps
 	extends FormItemProps<Date | null>,
-		WithFormRef<Form.DatePicker> {
+	WithFormRef<Form.DatePicker> {
 	min?: Date;
 	max?: Date;
 	type?: DatePickerType;
@@ -160,9 +160,9 @@ const DatePickerRoot: React.FC<DatePickerProps> = ({
 
 	const _onChange = onChange
 		? (newValue: string | null) => {
-				const dateObj = newValue ? new Date(newValue) : null;
-				onChange(dateObj);
-			}
+			const dateObj = newValue ? new Date(newValue) : null;
+			onChange(dateObj);
+		}
 		: undefined;
 
 	return (
@@ -185,7 +185,7 @@ const DatePicker = Object.assign(DatePickerRoot, {
 
 interface CheckboxProps
 	extends FormItemProps<boolean>,
-		WithFormRef<Form.Checkbox> {
+	WithFormRef<Form.Checkbox> {
 	label?: string;
 }
 
@@ -197,7 +197,7 @@ const Checkbox: React.FC<CheckboxProps> = ({ ref, ...props }) => {
 
 interface DropdownProps
 	extends FormItemProps<string>,
-		WithFormRef<Form.Dropdown> {
+	WithFormRef<Form.Dropdown> {
 	tooltip?: string;
 	children?: ReactNode;
 	filtering?: boolean;
@@ -225,7 +225,7 @@ const Dropdown = Object.assign(DropdownRoot, {
 
 interface TagPickerProps
 	extends FormItemProps<string[]>,
-		WithFormRef<Form.TagPicker> {
+	WithFormRef<Form.TagPicker> {
 	children?: ReactNode;
 }
 
@@ -252,7 +252,7 @@ const TagPicker = Object.assign(TagPickerRoot, {
 
 interface TextAreaProps
 	extends FormItemProps<string>,
-		WithFormRef<Form.TextArea> {}
+	WithFormRef<Form.TextArea> { }
 
 const TextArea: React.FC<TextAreaProps> = ({ ref, ...props }) => {
 	useImperativeFormHandle(ref);
@@ -262,7 +262,7 @@ const TextArea: React.FC<TextAreaProps> = ({ ref, ...props }) => {
 
 interface FilePickerProps
 	extends FormItemProps<string[]>,
-		WithFormRef<Form.FilePicker> {
+	WithFormRef<Form.FilePicker> {
 	allowMultipleSelection?: boolean;
 	canChooseDirectories?: boolean;
 	canChooseFiles?: boolean;
@@ -284,6 +284,9 @@ const Description: React.FC<DescriptionProps> = (props) => {
 	return <form-description {...props} />;
 };
 
+/**
+ * @category UI Components
+ */
 export const Form = Object.assign(FormRoot, {
 	TextField,
 	PasswordField,

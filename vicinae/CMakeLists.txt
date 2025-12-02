@@ -5,8 +5,9 @@ set(TARGET vicinae)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets Sql Network Svg DBus Concurrent)
 find_package(OpenSSL REQUIRED)
+find_package(LibXml2 REQUIRED)
 
-list(APPEND LIBS  Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus Qt6::Concurrent ${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY} protobuf::libprotobuf minizip OpenSSL::Crypto wayland-client xdgpp qt6keychain sqlite3)
+list(APPEND LIBS  Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus Qt6::Concurrent ${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY} protobuf::libprotobuf minizip OpenSSL::Crypto wayland-client xdgpp qt6keychain sqlite3 LibXml2::LibXml2)
 
 set(WLR_CLIP_BIN ${CMAKE_BINARY_DIR}/wlr-clip/wlr-clip${CMAKE_EXECUTABLE_SUFFIX})
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)
@@ -63,6 +64,8 @@ set(SRCS
 
 	src/ui/dmenu-view/dmenu-view.hpp
 	src/ui/dmenu-view/dmenu-view.cpp
+	src/ui/dmenu-view/dmenu.hpp
+	src/ui/dmenu-view/dmenu.cpp
 
 	include/font-service.hpp
 	src/font-service.cpp
@@ -98,6 +101,11 @@ set(SRCS
 	include/ui/form/checkbox-input.hpp
 	include/ui/form/app-picker-input.hpp
 	src/ui/form/app-picker-input.cpp
+
+	src/ui/detail/detail-widget.hpp
+	src/ui/detail/detail-widget.cpp
+	src/ui/file-detail/file-detail.hpp
+	src/ui/file-detail/file-detail.cpp
 
 	src/ui/form/text-area.cpp
 
@@ -406,10 +414,17 @@ set(SRCS
 	src/extensions/clipboard/clipboard-history-command.cpp
 	src/extensions/clipboard/history/clipboard-history-view.hpp
 	src/extensions/clipboard/history/clipboard-history-view.cpp
+	src/extensions/clipboard/history/clipboard-history-model.hpp
+	src/extensions/clipboard/history/clipboard-history-controller.hpp
+	src/extensions/clipboard/history/clipboard-history-controller.cpp
+
 	src/extensions/calculator/history/calculator-history-view.hpp
 	src/extensions/calculator/history/calculator-history-view.cpp
 	src/extensions/theme/manage/manage-themes-view.hpp
 	src/extensions/theme/manage/manage-themes-view.cpp
+	src/extensions/theme/manage/theme-list-model.hpp
+	src/extensions/theme/manage/theme-list-controller.hpp
+	src/extensions/theme/manage/theme-list-controller.cpp
 	
 	src/extensions/clipboard/clipboard-extension.hpp
 	src/extensions/clipboard/clipboard-extension.cpp
@@ -423,6 +438,10 @@ set(SRCS
 	src/extensions/vicinae/oauth-token-store/oauth-token-store-view.cpp
 	src/extensions/power-management/power-management-extension.cpp
 	src/extensions/root/root-search-view.cpp
+	src/extensions/root/root-search-model.hpp
+	src/extensions/root/root-search-model.cpp
+	src/extensions/root/root-search-controller.hpp
+	src/extensions/root/root-search-controller.cpp
 
 	src/extensions/system/browse-apps/browse-apps-view.cpp
 
@@ -487,9 +506,12 @@ set(SRCS
 	src/services/files-service/file-indexer/abstract-scanner.hpp
 	src/services/files-service/file-indexer/regex-utils.hpp
 	src/services/files-service/file-indexer/regex-utils.cpp
+	src/services/files-service/file-indexer/file-indexer-query-engine.hpp
 
 	src/services/extension-registry/extension-registry.hpp
 	src/services/extension-registry/extension-registry.cpp
+	src/services/extension-registry/extension-manifest.hpp
+	src/services/extension-registry/extension-manifest.cpp
 
 	src/services/oauth/oauth-token-store.hpp
 	src/services/oauth/oauth-token-store.cpp
@@ -552,6 +574,9 @@ set(SRCS
 	src/extensions/vicinae/store/store-detail-view.cpp
 	src/extensions/vicinae/list-installed-extensions-view.hpp
 	src/extensions/vicinae/list-installed-extensions-view.cpp
+
+	src/extensions/file/search/search-files-view.hpp
+	src/extensions/file/search/search-files-view.cpp
 
 	src/services/raycast/raycast-store.cpp
 	src/services/extension-store/vicinae-store.cpp
@@ -632,6 +657,9 @@ set(SRCS
 
 	src/services/power-manager/systemd/systemd-power-manager.cpp
 
+	src/ui/vlist/vlist.hpp
+	src/ui/vlist/vlist.cpp
+
 ) 
 
 if (UNIX)
@@ -703,6 +731,9 @@ if (UNIX AND NOT APPLE)
 		src/lib/wayland/seat.cpp
 		src/lib/wayland/virtual-keyboard.hpp
 		src/lib/wayland/virtual-keyboard.cpp
+
+		src/services/clipboard/data-control/data-control-clipboard-server.hpp
+		src/services/clipboard/data-control/data-control-clipboard-server.cpp
 	)
 
 	# ext-data-control
@@ -711,8 +742,6 @@ if (UNIX AND NOT APPLE)
 		src/ext-clip/data-control-client.cpp
 		src/ext-clip/data-device.cpp
 		src/ext-clip/data-offer.cpp
-		src/services/clipboard/ext/ext-clipboard-server.hpp
-		src/services/clipboard/ext/ext-clipboard-server.cpp
 	)
 
 	# wlr-data-control
@@ -721,8 +750,6 @@ if (UNIX AND NOT APPLE)
 		src/wlr-clip/data-control-client.cpp
 		src/wlr-clip/data-device.cpp
 		src/wlr-clip/data-offer.cpp
-		src/services/clipboard/wlr/wlr-clipboard-server.hpp
-		src/services/clipboard/wlr/wlr-clipboard-server.cpp
 	)
 	wayland_generate_protocol("${CMAKE_CURRENT_SOURCE_DIR}/protocols/wlr-data-control-unstable-v1.xml")
 endif()

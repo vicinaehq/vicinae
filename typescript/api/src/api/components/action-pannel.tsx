@@ -1,25 +1,56 @@
-import type { ReactNode } from "react";
+import { randomUUID } from "node:crypto";
+import React, { type ReactNode, useRef } from "react";
 import { type Image, serializeProtoImage } from "../image";
 import type { Keyboard } from "../keyboard";
 
-export type ActionPanelProps = {
-	title?: string;
-	children?: ReactNode;
-};
+/**
+ * @category Actions
+ */
+export namespace ActionPanel {
+	export type Props = {
+		title?: string;
+		children?: ReactNode;
+	};
 
-const ActionPanelRoot: React.FC<ActionPanelProps> = (props) => {
-	const nativeProps: React.JSX.IntrinsicElements["action-panel"] = props;
+	export namespace Section {
+		export type Props = {
+			title?: string;
+			children?: ReactNode;
+		};
+	}
+
+	export namespace Submenu {
+		export type Props = {
+			title: string;
+			icon?: Image.ImageLike;
+			shortcut?: Keyboard.Shortcut;
+			//autoFocus?: boolean;
+			//filtering?: boolean | { keepSectionOrder: boolean };
+			//isLoading?: boolean;
+			//throttle?: boolean;
+			onOpen?: () => void;
+			//onSearchTextChange?: (text: string) => void;
+			children: ReactNode;
+		};
+	}
+}
+
+const ActionPanelRoot: React.FC<ActionPanel.Props> = (props) => {
+	const stableIdRef = useRef<string | undefined>(undefined);
+	if (!stableIdRef.current) {
+		stableIdRef.current = randomUUID();
+	}
+
+	const nativeProps: React.JSX.IntrinsicElements["action-panel"] = {
+		...props,
+		stableId: stableIdRef.current,
+	};
 
 	return <action-panel {...nativeProps} />;
 };
 
-export type ActionPanelSectionProps = {
-	title?: string;
-	children?: ReactNode;
-};
-
 const ActionPanelSection: React.FC<
-	React.PropsWithChildren<ActionPanelSectionProps>
+	React.PropsWithChildren<ActionPanel.Section.Props>
 > = (props) => {
 	const nativeProps: React.JSX.IntrinsicElements["action-panel-section"] = {
 		title: props.title,
@@ -32,28 +63,31 @@ const ActionPanelSection: React.FC<
 	);
 };
 
-export type ActionPanelSubmenuProps = {
-	title: string;
-	icon?: Image.ImageLike;
-	shortcut?: Keyboard.Shortcut;
-	onOpen?: () => void;
-	onSearchTextChange?: (text: string) => void;
-	children: ReactNode;
-};
-
-const ActionPannelSubmenu: React.FC<ActionPanelSubmenuProps> = ({
+const ActionPannelSubmenu: React.FC<ActionPanel.Submenu.Props> = ({
 	children,
 	icon,
 	...props
 }) => {
+	const stableIdRef = useRef<string | undefined>(undefined);
+	if (!stableIdRef.current) {
+		stableIdRef.current = randomUUID();
+	}
+
 	const serializedIcon = icon ? serializeProtoImage(icon) : icon;
 	return (
-		<action-panel-submenu {...props} icon={serializedIcon}>
+		<action-panel-submenu
+			{...props}
+			icon={serializedIcon}
+			stableId={stableIdRef.current}
+		>
 			{children}
 		</action-panel-submenu>
 	);
 };
 
+/**
+ * @category Actions
+ */
 export const ActionPanel = Object.assign(ActionPanelRoot, {
 	Section: ActionPanelSection,
 	Submenu: ActionPannelSubmenu,

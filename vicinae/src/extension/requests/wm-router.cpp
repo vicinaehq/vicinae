@@ -26,6 +26,8 @@ PromiseLike<ext::Response *> WindowManagementRouter::route(const wm::Request &re
     return wrapResponse(getWindows(req.get_windows()));
   case wm::Request::kGetScreens:
     return wrapResponse(getScreens(req.get_screens()));
+  case wm::Request::kFocusWindow:
+    return wrapResponse(focusWindow(req.focus_window()));
   case wm::Request::kSetWindowBounds:
     throw std::runtime_error("Not implemented");
     // TODO: implement
@@ -35,6 +37,21 @@ PromiseLike<ext::Response *> WindowManagementRouter::route(const wm::Request &re
   }
 
   return nullptr;
+}
+
+proto::ext::wm::Response *WindowManagementRouter::focusWindow(const proto::ext::wm::FocusWindowRequest &req) {
+  auto res = new wm::Response;
+  auto wmRes = new wm::FocusWindowResponse;
+
+  res->set_allocated_focus_window(wmRes);
+  wmRes->set_ok(false);
+
+  if (auto win = m_wm.findWindowById(req.id().c_str())) {
+    m_wm.provider()->focusWindowSync(*win);
+    wmRes->set_ok(true);
+  }
+
+  return res;
 }
 
 proto::ext::wm::Response *WindowManagementRouter::getScreens(const proto::ext::wm::GetScreensRequest &req) {
@@ -67,7 +84,6 @@ proto::ext::wm::Response *WindowManagementRouter::getWindows(const proto::ext::w
   res->set_allocated_get_windows(winRes);
 
   for (const auto &win : m_wm.provider()->listWindowsSync()) {
-    qDebug() << "wid" << win->workspace() << "vs" << req.workspace_id();
     if (req.has_workspace_id() && win->workspace().value_or("") != req.workspace_id().c_str()) { continue; }
 
     bool isActive = activeWin && activeWin->id() == win->id();
@@ -159,6 +175,7 @@ WindowManagementRouter::getActiveWorkspace(const proto::ext::wm::GetActiveWorksp
 void WindowManagementRouter::initWindow(AbstractWindowManager::AbstractWindow &win,
                                         proto::ext::wm::Window &obj) {
   obj.set_id(win.id().toStdString());
+  obj.set_title(win.title().toStdString());
   obj.set_workspace_id(win.workspace()->toStdString());
   obj.set_fullscreen(win.fullScreen());
 

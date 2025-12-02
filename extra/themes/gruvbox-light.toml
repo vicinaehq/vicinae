@@ -26,7 +26,7 @@ yellow = "#D79921"            # yellow (neutral)
 cyan = "#689D6A"              # aqua (neutral)
 
 [colors.list.item.selection]
-background = "#EBDBB2"        # bg1 (darker/stronger on main bg)
+background = { name = "#EBDBB2", opacity = 0.7 }  # bg1 (darker/stronger on main bg)
 secondary_background = "#F5E8C6"  # Between bg0_h and bg0_s (lighter/subtle on lighter surface)
 
 [colors.list.item.hover]

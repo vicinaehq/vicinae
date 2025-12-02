@@ -230,21 +230,25 @@ void SelectorInput::setEnableDefaultFilter(bool value) {
 }
 
 void SelectorInput::handleTextChanged(const QString &text) {
+
+  // TODO: improve this, probably support sorted sections as well
   if (m_defaultFilterEnabled) {
     m_list->updateModel([&]() {
       for (const auto &section : m_sections) {
-        auto results = section.search(text);
-
-        if (results.empty()) continue;
-
         auto &listSection = m_list->addSection(section.title);
-
-        listSection.addItems(results);
+        if (!text.isEmpty()) {
+          for (const auto &scored : section.search(text)) {
+            listSection.addItem(scored.item);
+          }
+        } else {
+          for (const auto &item : section.items) {
+            listSection.addItem(item);
+          }
+        }
       }
     });
-
-    // m_list->setFilter(std::make_unique<ItemFilter>(text));
   }
+
   emit textChanged(text);
 }
 

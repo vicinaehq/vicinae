@@ -1,12 +1,14 @@
 #pragma once
 #include "extend/tag-model.hpp"
-#include "../../src/ui/image/url.hpp"
+#include "../theme.hpp"
+#include "../ui/image/url.hpp"
 #include <qjsonobject.h>
 
 struct MetadataLabel {
   QString text;
   QString title;
   std::optional<ImageURL> icon;
+  std::optional<ColorLike> color;
 };
 
 struct MetadataLink {

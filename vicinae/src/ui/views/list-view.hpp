@@ -56,6 +56,7 @@ protected:
   OmniList *m_list;
 
   virtual void itemSelected(const OmniList::AbstractVirtualItem *item);
+  virtual void emptied();
   virtual bool inputFilter(QKeyEvent *event) override;
   void forceReselection();
 

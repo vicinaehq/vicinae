@@ -218,6 +218,11 @@ qDebug() << "Widget" << vinfo.item->id() << "visible:" << widget->isVisible()
   this->visibleIndexRange = {startIndex, endIndex - startIndex};
 }
 
+void OmniList::scrollToTop() {
+  if (m_items.empty()) return;
+  scrollTo(0, ScrollBehaviour::ScrollAbsolute);
+}
+
 bool OmniList::isDividableContent(const ModelItem &item) {
   if (auto section = std::get_if<std::unique_ptr<Section>>(&item)) {
     return (*section)->layoutItems().size() > 0;
@@ -572,6 +577,17 @@ bool OmniList::selectDown() {
   return false;
 }
 
+void OmniList::selectNext() {
+  for (int i = m_selected + 1; i < m_items.size(); ++i) {
+    if (m_items[i].item->selectable()) {
+      setSelectedIndex(i, ScrollBehaviour::ScrollRelative);
+      return;
+    }
+  }
+
+  selectFirst();
+}
+
 bool OmniList::selectUp() {
   if (m_items.empty()) return false;
   if (m_selected == -1) {
@@ -789,10 +805,6 @@ bool OmniList::event(QEvent *event) {
       return selectLeft();
     case Qt::Key_Right:
       return selectRight();
-    case Qt::Key_Home:
-      return selectHome();
-    case Qt::Key_End:
-      return selectEnd();
     case Qt::Key_Return:
       activateCurrentSelection();
       return true;
@@ -978,7 +990,7 @@ OmniList::OmniList() {
 
   int scrollBarWidth = scrollBar->sizeHint().width();
 
-  setMargins(8, 5, 8, 5);
+  setMargins(5, 5, 5, 5);
   _widgetCache.reserve(20);
   setMouseTracking(true);
 }

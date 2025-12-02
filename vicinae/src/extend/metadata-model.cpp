@@ -18,9 +18,20 @@ MetadataModel MetadataModelParser::parse(const QJsonObject &instance) {
 
     if (type == "metadata-label") {
       MetadataLabel label{
-          .text = props["text"].toString(),
           .title = props["title"].toString(),
       };
+
+      auto textValue = props["text"];
+      if (textValue.isString()) {
+        label.text = textValue.toString();
+      } else if (textValue.isObject()) {
+        auto textObj = textValue.toObject();
+        label.text = textObj["value"].toString();
+        if (textObj.contains("color")) {
+          ColorLikeModelParser parser;
+          label.color = parser.parse(textObj["color"]);
+        }
+      }
 
       if (props.contains("icon")) { label.icon = ImageModelParser().parse(props.value("icon")); }
 

@@ -30,10 +30,12 @@ bool GridView::inputFilter(QKeyEvent *event) {
       return m_grid->selectLeft();
     case Qt::Key_Right:
       return m_grid->selectRight();
-    case Qt::Key_Home:
-      return m_grid->selectHome();
-    case Qt::Key_End:
-      return m_grid->selectEnd();
+    case Qt::Key_Tab:
+      if (!context()->navigation->hasCompleter()) {
+        m_grid->selectNext();
+        return true;
+      }
+      break;
     case Qt::Key_Return:
     case Qt::Key_Enter:
       m_grid->activateCurrentSelection();

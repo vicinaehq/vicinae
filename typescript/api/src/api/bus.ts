@@ -1,10 +1,12 @@
-import { randomUUID } from "crypto";
-import { parentPort, MessagePort } from "worker_threads";
-
+import { randomUUID } from "node:crypto";
+import { parentPort, type MessagePort } from "node:worker_threads";
 import * as ipc from "./proto/ipc";
 import * as extension from "./proto/extension";
-import { Err, Ok, Result } from "./lib/result";
+import { Err, Ok, type Result } from "./lib/result";
 
+/**
+ * @ignore
+ */
 export type Message<T = Record<string, any>> = {
 	envelope: {
 		id: string;
@@ -78,6 +80,7 @@ type EndpointMapping = {
 	"wm.getScreens": "wm.getScreens";
 	"wm.getWorkspaces": "wm.getWorkspaces";
 	"wm.setWindowBounds": "wm.setWindowBounds";
+	"wm.focusWindow": "wm.focusWindow";
 
 	"fileSearch.search": "fileSearch.search";
 
@@ -142,7 +145,7 @@ class Bus {
 	>();
 	private eventListeners = new Map<string, EventListenerInfo[]>();
 
-	async turboRequest<T extends RequestEndpoint>(
+	async request<T extends RequestEndpoint>(
 		endpoint: T,
 		data: Map[T]["request"],
 	): Promise<Result<Map[T]["response"], Error>> {
@@ -150,7 +153,7 @@ class Bus {
 		const request = extension.RequestData.create({
 			[category]: { [requestId]: data },
 		} as any);
-		const res = await this.request2(request);
+		const res = await this.requestImpl(request);
 
 		if (!res.ok) {
 			return Err(res.error);
@@ -158,14 +161,13 @@ class Bus {
 
 		const resData = res.value[category]?.[requestId];
 
-		if (!resData)
+		if (!resData) {
 			return Err(
 				Error(
 					`Invalid response for request of type ${endpoint}: ${JSON.stringify(res, null, 2)}`,
 				),
 			);
-
-		//console.error(`Got valid response for ${endpoint}`);
+		}
 
 		return Ok(resData);
 	}
@@ -231,7 +233,7 @@ class Bus {
 
 	subscribe(type: string, cb: EventListenerInfo["callback"]) {
 		const item: EventListenerInfo = { callback: cb };
-		let listeners = this.eventListeners.get(type);
+		const listeners = this.eventListeners.get(type);
 
 		if (!listeners) {
 			this.eventListeners.set(type, [item]);
@@ -286,7 +288,7 @@ class Bus {
 		this.eventListeners.delete(id);
 	}
 
-	private request2(
+	private requestImpl(
 		data: extension.RequestData,
 		options: { timeout?: number } = {},
 	): Promise<Result<extension.ResponseData, Error>> {
@@ -329,6 +331,8 @@ class Bus {
 }
 
 /**
+ * @ignore
+ *
  * IPC bus to communicate with the extension manager.
  * If you are using this from inside your extension, you are WRONG and you should stop.
  */

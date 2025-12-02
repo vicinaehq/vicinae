@@ -26,6 +26,6 @@ yellow = "#E0AF68"
 cyan = "#7DCFFF"
 
 [colors.list.item.selection]
-background = "#292E42"        # bg_highlight
+background = { name = "#292E42", opacity = 0.7 }  # bg_highlight
 secondary_background = "#3B4261"  # blue0 (subtle highlight)
 

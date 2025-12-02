@@ -2,6 +2,11 @@ import { PathLike } from "fs";
 import { bus } from "./bus";
 import { ClipboardContent } from "./proto/clipboard";
 
+/**
+ * Access system clipboard and clipboard history features.
+ *
+ * @category Clipboard
+ */
 export namespace Clipboard {
 	export type Content =
 		| { text: string }
@@ -23,7 +28,7 @@ export namespace Clipboard {
 	): ClipboardContent {
 		let ct = ClipboardContent.create();
 
-		if (typeof content != "object") {
+		if (typeof content !== "object") {
 			ct.text = `${content}`;
 		} else {
 			if (content["file"]) {
@@ -47,7 +52,7 @@ export namespace Clipboard {
 		text: string | number | Clipboard.Content,
 		options: Clipboard.CopyOptions = {},
 	) {
-		await bus.turboRequest("clipboard.copy", {
+		await bus.request("clipboard.copy", {
 			content: mapContent(text),
 			options: { concealed: options.concealed ?? false },
 		});
@@ -59,8 +64,8 @@ export namespace Clipboard {
 	 * or pasting content to it directly, this will fallback to a regular
 	 * clipboard copy.
 	 */
-	export async function paste(text: string | Clipboard.Content) {
-		await bus.turboRequest("clipboard.paste", {
+	export async function paste(text: string | number | Clipboard.Content) {
+		await bus.request("clipboard.paste", {
 			content: mapContent(text),
 		});
 	}
@@ -76,7 +81,7 @@ export namespace Clipboard {
 	export async function read(options?: {
 		offset?: number;
 	}): Promise<Clipboard.ReadContent> {
-		const res = await bus.turboRequest("clipboard.readContent", {});
+		const res = await bus.request("clipboard.readContent", {});
 		return res.unwrap().content!;
 	}
 
@@ -101,6 +106,6 @@ export namespace Clipboard {
 	 * Clear the current clipboard content.
 	 */
 	export async function clear() {
-		await bus.turboRequest("clipboard.clear", {});
+		await bus.request("clipboard.clear", {});
 	}
 }

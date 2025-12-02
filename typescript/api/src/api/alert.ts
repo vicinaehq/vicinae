@@ -1,8 +1,10 @@
-import { randomUUID } from "node:crypto";
 import { bus } from "./bus";
 import { Image, serializeProtoImage } from "./image";
 import { ConfirmAlertActionStyle, ConfirmAlertRequest } from "./proto/ui";
 
+/**
+ * @category Alert
+ */
 export namespace Alert {
 	export type Options = {
 		title: string;
@@ -32,10 +34,13 @@ const styleMap: Record<Alert.ActionStyle, ConfirmAlertActionStyle> = {
 	[Alert.ActionStyle.Cancel]: ConfirmAlertActionStyle.Cancel,
 };
 
+/**
+ * @category Alert
+ */
 export const confirmAlert = async (
 	options: Alert.Options,
 ): Promise<boolean> => {
-	return new Promise<boolean>(async (resolve) => {
+	return new Promise<boolean>((resolve) => {
 		const req = ConfirmAlertRequest.create({
 			title: options.title,
 			description: options.message ?? "Are you sure?",
@@ -53,16 +58,16 @@ export const confirmAlert = async (
 			},
 		});
 
-		const res = await bus.turboRequest("ui.confirmAlert", req);
+		bus.request("ui.confirmAlert", req).then((res) => {
+			if (!res.ok) return false;
 
-		if (!res.ok) return false;
+			if (res.value.confirmed) {
+				options.primaryAction?.onAction?.();
+			} else {
+				options.dismissAction?.onAction?.();
+			}
 
-		if (res.value.confirmed) {
-			options.primaryAction?.onAction?.();
-		} else {
-			options.dismissAction?.onAction?.();
-		}
-
-		resolve(res.value.confirmed);
+			resolve(res.value.confirmed);
+		});
 	});
 };

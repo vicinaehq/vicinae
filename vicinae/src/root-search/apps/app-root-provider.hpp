@@ -13,7 +13,7 @@ class AppRootItem : public RootItem {
   QString displayName() const override;
   QString subtitle() const override;
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx,
-                                                   const RootItemMetadata &metadata) override;
+                                                   const RootItemMetadata &metadata) const override;
   AccessoryList accessories() const override;
   QString uniqueId() const override;
   ImageURL iconUrl() const override;

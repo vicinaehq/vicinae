@@ -14,9 +14,9 @@ class RootShortcutItem : public RootItem {
   ImageURL iconUrl() const override;
   QString uniqueId() const override;
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx,
-                                                   const RootItemMetadata &metadata) override;
+                                                   const RootItemMetadata &metadata) const override;
   std::unique_ptr<ActionPanelState> fallbackActionPanel(ApplicationContext *ctx,
-                                                        const RootItemMetadata &metadata) override;
+                                                        const RootItemMetadata &metadata) const override;
   QString typeDisplayName() const override;
 
 public:

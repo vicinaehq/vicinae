@@ -14,6 +14,13 @@
 
 class DaemonIpcClient {
 public:
+  struct OpenSettings {
+    std::optional<std::string> query;
+  };
+  struct ToggleSettings {
+    std::optional<std::string> query;
+  };
+
   DaemonIpcClient();
 
   /**
@@ -21,10 +28,18 @@ public:
    * Closing the launcher window or exiting from the dmenu view using
    * backspace will return std::nullopt.
    */
-  std::string dmenu(DMenuListView::DmenuPayload payload);
-  void toggle();
-  bool open();
+  std::string dmenu(const DMenu::Payload &payload);
+  void toggle(const ToggleSettings &settings = {});
+  bool open(const OpenSettings &settings = {});
   bool close();
+
+  /**
+   * Kill the running server instance, if any.
+   * The server won't respond as it will be killed instantly.
+   * However, this call can still fail if we are unable to send the kill request to the server.
+   */
+  bool kill();
+
   tl::expected<void, QString> deeplink(const QUrl &url);
   bool connect();
   void connectOrThrow();
@@ -33,7 +48,7 @@ public:
   std::vector<proto::ext::daemon::AppInfo> listApps(bool withActions = false);
 
 private:
-  void writeRequest(const proto::ext::daemon::Request &req);
+  bool writeRequest(const proto::ext::daemon::Request &req);
   proto::ext::daemon::Response request(const proto::ext::daemon::Request &req);
 
   QLocalSocket m_conn;

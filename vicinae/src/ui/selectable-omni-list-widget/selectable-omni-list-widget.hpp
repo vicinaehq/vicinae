@@ -9,10 +9,10 @@ public:
   SelectableOmniListWidget(QWidget *parent = nullptr);
   bool selected() const;
   bool hovered() const;
+  void selectionChanged(bool selected) override;
 
 protected:
   void paintEvent(QPaintEvent *event) override;
-  void selectionChanged(bool selected) override;
   void mousePressEvent(QMouseEvent *event) override;
   void mouseDoubleClickEvent(QMouseEvent *event) override;
   void setHovered(bool hovered);

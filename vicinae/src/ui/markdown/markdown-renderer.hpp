@@ -6,6 +6,7 @@
 #include <qplaintextedit.h>
 #include <qstring.h>
 #include <cmark-gfm.h>
+#include <libxml/tree.h>
 #include <qstringview.h>
 #include <qtextbrowser.h>
 #include <qtextcursor.h>
@@ -63,7 +64,10 @@ class MarkdownRenderer : public QWidget {
   void insertHeading(cmark_node *node);
   void insertTopLevelNode(cmark_node *node);
 
-  void parseAndInsertHtmlImages(const QString &html);
+  void insertHtmlBlock(const QString &html);
+  void processHtmlNodes(xmlNode *node);
+  void insertHtmlImage(xmlNode *node);
+  cmark_node *parseMarkdown(const QString &markdown);
 
   void insertIfNotFirstBlock();
 

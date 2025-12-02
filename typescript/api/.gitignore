@@ -9,6 +9,8 @@ oclif.manifest.json
 
 /src/api/proto
 
+/docs
+
 
 yarn.lock
 pnpm-lock.yaml

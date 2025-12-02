@@ -20,7 +20,7 @@ function(checkout_minizip)
 	set(MZ_WZAES OFF)
 	set(MZ_ICONV OFF)
 	set(MZ_FORCE_FETCH_LIBS ON)
-	set(MZ_FETCH_LIBS ON)
+	#set(MZ_FETCH_LIBS ON)
 	set(BUILD_SHARED_LIBS OFF)
 	
 	FetchContent_MakeAvailable(minizip)

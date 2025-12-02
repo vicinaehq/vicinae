@@ -1,0 +1,229 @@
+#pragma once
+#include "extend/grid-model.hpp"
+#include "fuzzy/weighted-fuzzy-scorer.hpp"
+#include "layout.hpp"
+#include "ui/color-box/color-box.hpp"
+#include "ui/image/url.hpp"
+#include "ui/omni-grid/grid-item-content-widget.hpp"
+#include "ui/omni-grid/grid-item-widget.hpp"
+#include "ui/vlist/common/grid-model.hpp"
+
+class ExtensionGridContentWidget : public QWidget {
+public:
+  void render(const GridItemViewModel::Content &content) {
+    if (content.index() != m_idx) {
+      m_widget = createWidget(content);
+      m_idx = content.index();
+      HStack().add(m_widget).imbue(this);
+    }
+
+    applyWidget(content);
+  }
+
+  void setFit(const std::optional<ObjectFit> fit) { m_fit = fit; }
+
+private:
+  void applyWidget(const GridItemViewModel::Content &content) {
+    const auto visitor =
+        overloads{[&](const ImageLikeModel &model) {
+                    auto icon = static_cast<ImageWidget *>(m_widget);
+                    icon->setObjectFit(m_fit.value_or(ObjectFit::Contain));
+                    icon->setUrl(model);
+                  },
+                  [&](const ColorLike &color) { static_cast<ColorBox *>(m_widget)->setColor(color); }};
+
+    std::visit(visitor, content);
+  }
+
+  QWidget *createWidget(const GridItemViewModel::Content &content) {
+    const auto visitor = overloads{[](const ColorLike &color) -> QWidget * {
+                                     auto widget = new ColorBox();
+                                     widget->setBorderRadius(6);
+                                     return widget;
+                                   },
+                                   [](const ImageLikeModel &image) -> QWidget * { return new ImageWidget; }};
+
+    return std::visit(visitor, content);
+  }
+
+  std::optional<ObjectFit> m_fit = ObjectFit::Contain;
+  QWidget *m_widget = nullptr;
+  size_t m_idx = -1;
+};
+
+class ExtensionGridModel : public vicinae::ui::GridModel<const GridItemViewModel *> {
+public:
+  ExtensionGridModel(QObject *parent = nullptr) { setParent(parent); }
+
+  void setData(const std::vector<GridChild> &data) { m_items = data; }
+
+  void reload() { setFilter(m_query); }
+
+  void setColumns(int cols) {
+    if (cols == m_columns) return;
+    m_columns = cols;
+    emit dataChanged();
+  }
+
+  void setInset(GridItemContentWidget::Inset inset) {
+    if (m_inset == inset) return;
+    m_inset = inset;
+    emit dataChanged();
+  }
+
+  void setFit(ObjectFit fit) { m_fit = fit; }
+
+  void setAspectRatio(double ratio) {
+    if (m_aspectRatio == ratio) return;
+    m_aspectRatio = ratio;
+    emit dataChanged();
+  }
+
+  void setFilter(const QString &query) {
+    m_query = query;
+    m_sortedSections.clear();
+
+    SectionData m_anonymousSection;
+
+    const auto toScored = [&](const GridItemViewModel &item) {
+      static const constexpr double TITLE_WEIGHT = 1;
+      static const constexpr double SUBTITLE_WEIGHT = 0.6;
+      static const constexpr double KEYWORD_WEIGHT = 0.3;
+      fuzzy::WeightedScorer scorer;
+
+      scorer.reserve(2 + item.keywords.size());
+      scorer.add(item.title.toStdString(), TITLE_WEIGHT);
+      scorer.add(item.subtitle.toStdString(), SUBTITLE_WEIGHT);
+      for (const auto &kw : item.keywords) {
+        scorer.add(kw.toStdString(), KEYWORD_WEIGHT);
+      }
+      int score = scorer.score(query.toStdString());
+
+      return ScoredItem{.item = &item, .score = score};
+    };
+
+    const auto tryCommitAnonymous = [&]() {
+      if (!m_anonymousSection.items.empty()) { m_sortedSections.emplace_back(m_anonymousSection); }
+    };
+
+    const auto visitor = overloads{
+        [&](const GridItemViewModel &item) {
+          if (!m_anonymousSection.items.empty()) { m_anonymousSection.items.reserve(0xFF); }
+          if (auto scored = toScored(item); query.isEmpty() || scored.score) {
+            m_anonymousSection.bestScore = std::max(m_anonymousSection.bestScore, scored.score);
+            m_anonymousSection.items.emplace_back(scored);
+          }
+        },
+        [&](const GridSectionModel &section) {
+          tryCommitAnonymous();
+
+          SectionData data{.name = section.title.toStdString(),
+                           .columns = section.columns,
+                           .aspectRatio = section.aspectRatio,
+                           .inset = section.inset,
+                           .fit = section.fit};
+          data.items.reserve(section.children.size());
+
+          for (const auto &item : section.children) {
+            if (auto scored = toScored(item); query.isEmpty() || scored.score) {
+              data.bestScore = std::max(data.bestScore, scored.score);
+              data.items.emplace_back(scored);
+            }
+          }
+
+          m_sortedSections.emplace_back(data);
+        },
+    };
+
+    for (const auto &item : m_items) {
+      std::visit(visitor, item);
+    }
+
+    tryCommitAnonymous();
+
+    for (SectionData &section : m_sortedSections) {
+      std::ranges::stable_sort(section.items, [](auto &&a, auto &&b) { return a.score > b.score; });
+    }
+    std::ranges::stable_sort(m_sortedSections, [](auto &&a, auto &&b) { return a.bestScore > b.bestScore; });
+
+    emit dataChanged();
+  }
+
+protected:
+  int sectionCount() const override { return m_sortedSections.size(); }
+
+  int sectionColumns(int id) const override { return m_sortedSections[id].columns.value_or(m_columns); }
+
+  double sectionAspectRatio(int id) const override {
+    return m_sortedSections[id].aspectRatio.value_or(m_aspectRatio);
+  }
+
+  virtual int itemHeight(const GridItemViewModel *const &item, int width, double ratio) const override {
+    static GridItemWidget ruler;
+    auto fm = ruler.fontMetrics();
+    auto spacing = 10;
+    int height = width / ratio;
+
+    if (!item->title.isEmpty()) { height += 15 + spacing; }
+    if (!item->subtitle.isEmpty()) { height += 15 + spacing; }
+
+    return height;
+  }
+
+  int sectionItemCount(int id) const override { return m_sortedSections[id].items.size(); }
+  const GridItemViewModel *sectionItemAt(int id, int itemIdx) const override {
+    return m_sortedSections[id].items[itemIdx].item;
+  }
+  int sectionIdFromIndex(int idx) const override { return idx; }
+  std::string_view sectionName(int idx) const override { return m_sortedSections[idx].name; }
+  WidgetTag widgetTag(const GridItemViewModel *const &item) const override { return 1; }
+  WidgetType *createItemWidget(const GridItemViewModel *const &type) const override {
+    auto gridContent = new ExtensionGridContentWidget;
+    auto w = new GridItemWidget;
+    w->setWidget(gridContent);
+    return w;
+  }
+  void refreshItemWidget(const GridItemViewModel *const &type, WidgetType *widget,
+                         int sectionId) const override {
+    auto w = static_cast<GridItemWidget *>(widget);
+    auto content = static_cast<ExtensionGridContentWidget *>(w->widget());
+    auto &sec = m_sortedSections[sectionId];
+
+    content->setFit(sec.fit.value_or(m_fit));
+    content->render(type->content);
+    w->setTitle(type->title);
+    w->setSubtitle(type->subtitle);
+    w->setAspectRatio(sec.aspectRatio.value_or(m_aspectRatio));
+    w->setInset(sec.inset.value_or(m_inset));
+  }
+  StableID stableId(const GridItemViewModel *const &item, int sectionId) const override {
+    static std::hash<QString> hasher = {};
+    return hasher(item->id);
+  }
+
+private:
+  QString m_query;
+
+  int m_columns = 6;
+  ObjectFit m_fit = ObjectFit::Contain;
+  double m_aspectRatio = 1;
+  GridItemContentWidget::Inset m_inset = GridItemContentWidget::Inset::None;
+
+  struct ScoredItem {
+    const GridItemViewModel *item;
+    int score;
+  };
+
+  struct SectionData {
+    std::vector<ScoredItem> items;
+    std::string name;
+    std::optional<int> columns;
+    std::optional<double> aspectRatio;
+    std::optional<GridItemContentWidget::Inset> inset;
+    std::optional<ObjectFit> fit;
+    int bestScore;
+  };
+
+  std::vector<SectionData> m_sortedSections;
+  std::vector<GridChild> m_items;
+};

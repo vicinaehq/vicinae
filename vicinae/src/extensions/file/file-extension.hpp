@@ -1,11 +1,13 @@
 #pragma once
 #include "command-database.hpp"
-#include "../../ui/image/url.hpp"
-#include "common.hpp"
 #include "preference.hpp"
-#include "search-files-view.hpp"
+#include "services/files-service/file-service.hpp"
+#include "search/search-files-view.hpp"
+#include "single-view-command-context.hpp"
 #include "ui/alert/alert.hpp"
+#include "utils.hpp"
 #include "vicinae.hpp"
+#include "services/toast/toast-service.hpp"
 
 class SearchFilesCommand : public BuiltinViewCommand<SearchFilesView> {
   QString id() const override { return "search"; }

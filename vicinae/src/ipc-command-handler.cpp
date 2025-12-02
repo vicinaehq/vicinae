@@ -3,6 +3,7 @@
 #include "proto/daemon.pb.h"
 #include <QDebug>
 #include "services/oauth/oauth-service.hpp"
+#include "services/clipboard/clipboard-service.hpp"
 #include "theme/theme-db.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "services/window-manager/window-manager.hpp"
@@ -26,6 +27,7 @@
 #include "theme.hpp"
 #include "ui/dmenu-view/dmenu-view.hpp"
 #include "ui/toast/toast.hpp"
+#include <csignal>
 #include "vicinae.hpp"
 
 PromiseLike<proto::ext::daemon::Response *>
@@ -135,30 +137,21 @@ IpcCommandHandler::processDmenu(const proto::ext::daemon::DmenuRequest &request)
   auto &nav = m_ctx.navigation;
   QPromise<proto::ext::daemon::Response *> promise;
   auto future = promise.future();
-  DMenuListView::DmenuPayload payload;
-
-  payload.raw = request.raw_content();
-  payload.placeholder = request.placeholder();
-  payload.sectionTitle = request.section_title();
-  payload.noSection = request.no_section();
-  payload.navigationTitle = request.navigation_title();
-
-  auto view = new DMenuListView(payload);
+  auto view = new DMenu::View(DMenu::Payload::fromProto(request));
   auto watcher = new Watcher;
 
   watcher->setFuture(future);
 
   QObject::connect(watcher, &Watcher::canceled, [nav = nav.get()]() { nav->closeWindow(); });
   QObject::connect(watcher, &Watcher::finished, [watcher]() { watcher->deleteLater(); });
-  QObject::connect(view, &DMenuListView::selected,
-                   [promise = std::move(promise)](const QString &text) mutable {
-                     auto dmenuRes = new proto::ext::daemon::DmenuResponse;
-                     auto res = new proto::ext::daemon::Response;
-                     res->set_allocated_dmenu(dmenuRes);
-                     dmenuRes->set_output(text.toStdString());
-                     promise.addResult(res);
-                     promise.finish();
-                   });
+  QObject::connect(view, &DMenu::View::selected, [promise = std::move(promise)](const QString &text) mutable {
+    auto dmenuRes = new proto::ext::daemon::DmenuResponse;
+    auto res = new proto::ext::daemon::Response;
+    res->set_allocated_dmenu(dmenuRes);
+    dmenuRes->set_output(text.toStdString());
+    promise.addResult(res);
+    promise.finish();
+  });
 
   nav->popToRoot({.clearSearch = false});
   nav->pushView(view);
@@ -173,7 +166,7 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
     return tl::unexpected("Unsupported url scheme " + url.scheme().toStdString());
   }
 
-  qDebug() << "goot deeplink" << url.toString();
+  qDebug() << "got deeplink" << url.toString();
 
   QUrlQuery query(url.query(QUrl::FullyDecoded));
 
@@ -186,10 +179,20 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
     path = "/" + pathParts.mid(1).join('/');
   }
 
+  // TODO: add a "quit" command to handle graceful shutdown (requires more work than you would expect)
+  if (command == "kill") {
+    qInfo() << "Killing vicinae server because a new instance was started";
+    QApplication::exit(1);
+    return {};
+  }
+
   if (command == "ping") { return {}; }
 
   if (command == "toggle") {
     m_ctx.navigation->toggleWindow();
+    if (query.hasQueryItem("fallbackText")) {
+      m_ctx.navigation->setSearchText(query.queryItemValue("fallbackText"));
+    }
     return {};
   }
 
@@ -232,6 +235,11 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
     }
 
     m_ctx.navigation->showWindow();
+
+    if (query.hasQueryItem("fallbackText")) {
+      m_ctx.navigation->setSearchText(query.queryItemValue("fallbackText"));
+    }
+
     return {};
   }
 

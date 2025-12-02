@@ -76,6 +76,8 @@ public:
    */
   bool noDisplay() const;
 
+  std::optional<std::string> url() const;
+
   /**
    * Tooltip for the entry, for example "View sites on the Internet".
    * The value should not be redundant with the values of Name and GenericName.
@@ -202,6 +204,7 @@ private:
   std::vector<std::string> m_notShowIn;
   std::optional<std::filesystem::path> m_path;
   std::vector<DesktopEntryAction> m_actions;
+  std::optional<std::string> m_url;
   std::optional<TerminalExec> m_terminalExec;
 };
 

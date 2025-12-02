@@ -141,4 +141,15 @@ export interface Environment {
 	isRaycast: boolean;
 }
 
-export const environment: Environment = {} as any;
+/**
+ * General information about the running extension command, the vicinae version, the capabilities of
+ * the system we are running on, etc...
+ *
+ * @example
+ * ```typescript
+ * import { environment } from '@vicinae/api';
+ *
+ * console.log({ environment });
+ * ```
+ */
+export const environment: Environment = {} as Environment;

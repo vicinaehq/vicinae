@@ -353,8 +353,15 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
 
   sanitizeSelection(selection);
 
+  qInfo() << "Received new clipboard selection with" << selection.offers.size() << "offers";
+
+  for (const auto &offer : selection.offers) {
+    qInfo().nospace() << offer.mimeType << " (size=" << formatSize(offer.data.size())
+                      << ", password=" << PASSWORD_MIME_TYPES.contains(offer.mimeType) << ")";
+  }
+
   if (isConcealedSelection(selection)) {
-    qDebug() << "Ignoring concealed selection";
+    qInfo() << "Ignoring concealed selection";
     return;
   }
 
@@ -364,7 +371,7 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
   }
 
   if (isClearSelection(selection)) {
-    qDebug() << "Ignored clipboard clear selection";
+    qInfo() << "Ignored clipboard clear selection";
     return;
   }
 
@@ -389,17 +396,15 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
   auto selectionHash = QCryptographicHash::hash(preferredOfferIt->data, QCryptographicHash::Md5).toHex();
 
   if (preferredKind == ClipboardOfferKind::Text && preferredOfferIt->data.trimmed().isEmpty()) {
-    qDebug() << "Ignore empty text for preferred offer of type" << preferredMimeType;
+    qInfo() << "Ignored text selection with empty text";
     return;
   }
 
   cdb.transaction([&](ClipboardDatabase &db) {
     if (db.tryBubbleUpSelection(selectionHash)) {
-      qDebug() << "bubbled up selection hash" << selectionHash;
+      qInfo() << "A similar clipboard selection is already indexed: moving it on top of the history";
       return true;
     }
-
-    qDebug() << "process selectionHash" << selectionHash;
 
     QString selectionId = Crypto::UUID::v4();
 
@@ -420,7 +425,10 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
       QString textPreview = getOfferTextPreview(offer);
 
       if (isIndexableText && !offer.data.isEmpty()) {
-        if (!db.indexSelectionContent(selectionId, offer.data)) return false;
+        if (!db.indexSelectionContent(selectionId, offer.data)) {
+          qWarning() << "Failed to index selection content for offer" << offer.mimeType;
+          return false;
+        }
       }
 
       auto md5sum = QCryptographicHash::hash(offer.data, QCryptographicHash::Md5).toHex();
@@ -444,7 +452,10 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
         if (url.scheme().startsWith("http")) { dto.urlHost = url.host(); }
       }
 
-      db.insertOffer(dto);
+      if (!db.insertOffer(dto)) {
+        qWarning() << "Failed to insert offer" << offer.mimeType;
+        return false;
+      }
 
       fs::path targetPath = m_dataDir / offerId.toStdString();
       QFile targetFile(targetPath);
@@ -521,7 +532,19 @@ bool ClipboardService::copySelection(const ClipboardSelection &selection,
   QMimeData *mimeData = new QMimeData;
 
   for (const auto &offer : selection.offers) {
-    mimeData->setData(offer.mimeType, offer.data);
+    if (offer.mimeType == "application/x-qt-image") continue; // we handle that ourselves
+    if (offer.mimeType.startsWith("image/") && !mimeData->hasImage()) {
+      auto img = QImage::fromData(offer.data);
+
+      if (img.isNull()) {
+        qWarning() << offer.mimeType << "could not be converted to valid image format";
+        mimeData->setData(offer.mimeType, offer.data);
+      } else {
+        mimeData->setImageData(img);
+      }
+    } else {
+      mimeData->setData(offer.mimeType, offer.data);
+    }
   }
 
   return copyQMimeData(mimeData, options);

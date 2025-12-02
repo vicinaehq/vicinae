@@ -20,8 +20,9 @@ import * as ui from "./proto/ui";
  *   toast.title = "Uploaded image";
  * };
  * ```
+ *
+ * @category Toast
  */
-
 export class Toast {
 	private options: {
 		title: string;
@@ -121,7 +122,7 @@ export class Toast {
 	}
 
 	async update() {
-		await bus.turboRequest("ui.showToast", {
+		await bus.request("ui.showToast", {
 			id: this.id,
 			title: this.title,
 			style: this.styleMap[this.style],
@@ -160,7 +161,7 @@ export class Toast {
 			};
 		}
 
-		await bus.turboRequest("ui.showToast", {
+		await bus.request("ui.showToast", {
 			id: this.id,
 			title: payload.title,
 			style: this.styleMap[payload.style ?? Toast.Style.Success],
@@ -173,10 +174,13 @@ export class Toast {
 	 * @returns A Promise that resolves when toast is hidden.
 	 */
 	async hide(): Promise<void> {
-		await bus.turboRequest("ui.hideToast", { id: this.id });
+		await bus.request("ui.hideToast", { id: this.id });
 	}
 }
 
+/**
+ * @category Toast
+ */
 export namespace Toast {
 	/**
 	 * The options to create a {@link Toast}.
@@ -258,12 +262,12 @@ export namespace Toast {
 /**
  * @deprecated Use {@link Toast.ActionOptions} instead
  */
-export declare interface ToastActionOptions extends Toast.ActionOptions {}
+export declare interface ToastActionOptions extends Toast.ActionOptions { }
 
 /**
  * @deprecated Use {@link Toast.Options} instead
  */
-export declare interface ToastOptions extends Toast.Options {}
+export declare interface ToastOptions extends Toast.Options { }
 
 /**
  * @deprecated Use {@link Toast.Style} instead
@@ -286,6 +290,9 @@ type SerializedShowToastPayload = {
 	};
 };
 
+/**
+ * @category Toast
+ */
 export const showToast = async (
 	init: Toast.Style | Toast.Options,
 	title = "",

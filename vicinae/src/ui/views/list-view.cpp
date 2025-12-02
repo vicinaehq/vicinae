@@ -35,12 +35,13 @@ bool ListView::inputFilter(QKeyEvent *event) {
     case Qt::Key_Down:
       return m_list->selectDown();
       break;
-    case Qt::Key_Home:
-      return m_list->selectHome();
+    case Qt::Key_Tab: {
+      if (!context()->navigation->hasCompleter()) {
+        m_list->selectNext();
+        return true;
+      }
       break;
-    case Qt::Key_End:
-      return m_list->selectEnd();
-      break;
+    }
     case Qt::Key_Return:
     case Qt::Key_Enter:
       m_list->activateCurrentSelection();
@@ -55,6 +56,8 @@ void ListView::itemSelected(const OmniList::AbstractVirtualItem *item) {}
 
 void ListView::forceReselection() { selectionChanged(m_list->selected(), nullptr); }
 
+void ListView::emptied() {}
+
 void ListView::selectionChanged(const OmniList::AbstractVirtualItem *next,
                                 const OmniList::AbstractVirtualItem *previous) {
   auto &nav = context()->navigation;
@@ -62,6 +65,7 @@ void ListView::selectionChanged(const OmniList::AbstractVirtualItem *next,
   if (!next) {
     m_split->setDetailVisibility(false);
     clearActions();
+    emptied();
     return;
   }
 

@@ -28,6 +28,11 @@ void NavigationController::setNavigationTitle(const QString &navigationTitle, co
   }
 }
 
+bool NavigationController::hasCompleter() const {
+  if (auto state = topState()) { return state->completer.has_value(); }
+  return false;
+}
+
 void NavigationController::setInstantDismiss(bool value) { m_instantDismiss = value; }
 
 void NavigationController::goBack(const GoBackOptions &opts) {
@@ -41,13 +46,17 @@ void NavigationController::goBack(const GoBackOptions &opts) {
   popCurrentView();
 }
 
-void NavigationController::setSearchText(const QString &text, const BaseView *caller) {
+void NavigationController::broadcastSearchText(const QString &text, const BaseView *caller) {
   if (auto state = findViewState(VALUE_OR(caller, topView()))) {
     if (state->searchText == text) return;
     state->searchText = text;
     state->sender->textChanged(text);
-    if (state->sender == topView()) { emit searchTextChanged(state->searchText); }
   }
+}
+
+void NavigationController::setSearchText(const QString &text, const BaseView *caller) {
+  broadcastSearchText(text, caller);
+  if (caller == nullptr || caller == topView()) { emit searchTextTampered(text); }
 }
 
 void NavigationController::setSearchPlaceholderText(const QString &text, const BaseView *caller) {
@@ -205,7 +214,7 @@ void NavigationController::popCurrentView() {
 
   emit currentViewChanged(*next.get());
 
-  emit searchTextChanged(next->searchText);
+  emit searchTextTampered(next->searchText);
   emit searchPlaceholderTextChanged(next->placeholderText);
   emit navigationStatusChanged(next->navigation.title, next->navigation.icon);
   emit headerVisiblityChanged(next->needsTopBar);
@@ -384,6 +393,14 @@ void NavigationController::executeAction(AbstractAction *action) {
 
   if (!state) return;
 
+  if (action->isSubmenu()) {
+    if (auto view = action->createSubmenu()) {
+      openActionPanel();
+      emit submenuRequested(view);
+    }
+    return;
+  }
+
   if (auto cmpl = state->completer; cmpl && action->isPrimary()) {
     for (int i = 0; i != cmpl->args.size() && i != cmpl->values.size(); ++i) {
       const auto &arg = cmpl->args[i];
@@ -430,7 +447,7 @@ void NavigationController::activateView(const ViewState &state) {
   emit loadingChanged(state.isLoading);
   emit navigationStatusChanged(state.navigation.title, state.navigation.icon);
   emit actionsChanged({});
-  emit searchTextChanged(state.searchText);
+  emit searchTextTampered(state.searchText);
   emit searchPlaceholderTextChanged(state.placeholderText);
   destroyCurrentCompletion();
 

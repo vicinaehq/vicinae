@@ -51,6 +51,7 @@ using AccessoryList = std::vector<ListAccessory>;
 class DefaultListItemWidget : public SelectableOmniListWidget {
 
 public:
+  void selectionChanged(bool selected) override;
   void setActive(bool active = true);
   void setAccessories(const AccessoryList &list);
   void setName(const QString &name);
@@ -63,7 +64,6 @@ public:
 private:
   void positionActiveIndicator();
   void resizeEvent(QResizeEvent *event) override;
-  void selectionChanged(bool selected) override;
 
   ImageWidget *m_icon = new ImageWidget(this);
   TypographyWidget *m_name = new TypographyWidget(this);

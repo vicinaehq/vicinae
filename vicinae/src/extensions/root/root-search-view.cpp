@@ -1,5 +1,8 @@
 #include "root-search-view.hpp"
+#include "actions/app/app-actions.hpp"
 #include "misc/file-list-item.hpp"
+#include "services/app-service/abstract-app-db.hpp"
+#include "ui/transform-result/transform-result.hpp"
 #include "ui/views/base-view.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "service-registry.hpp"
@@ -18,6 +21,7 @@
 #include <QtConcurrent/QtConcurrent>
 #include <chrono>
 #include "utils/utils.hpp"
+#include <filesystem>
 #include <memory>
 #include <qbrush.h>
 #include <qcoreevent.h>
@@ -37,7 +41,13 @@
 #include <qthreadpool.h>
 #include <quuid.h>
 #include <qwidget.h>
+#include <ranges>
 #include "ui/views/list-view.hpp"
+
+namespace fs = std::filesystem;
+
+// prefix used to disambiguate calculator queries for regular search if needed
+static const QString CALCULATOR_PREFIX = "=";
 
 /**
  * Common interface used by all root list items, whether they are attached to an actual root item or not.
@@ -55,12 +65,51 @@ public:
 class RootFileListItem : public FileListItemBase, public AbstractRootListItem {
 public:
   ItemData data() const override {
-    return {.iconUrl = getIcon(), .name = m_path.filename().c_str(), .subtitle = compressPath(m_path)};
+    return {.iconUrl = getIcon(),
+            .name = getLastPathComponent(m_path).c_str(),
+            .subtitle = compressPath(m_path),
+            .accessories = {{"File"}}};
   }
 
   const RootItem *asRootItem() const override { return nullptr; }
 
   RootFileListItem(const std::filesystem::path &path) : FileListItemBase(path) {}
+};
+
+class OpenUrlItem : public AbstractDefaultListItem,
+                    public ListView::Actionnable,
+                    public AbstractRootListItem {
+public:
+  OpenUrlItem(const QUrl &url, const std::shared_ptr<AbstractApplication> &app) : m_url(url), m_app(app) {}
+
+  ItemData data() const override {
+    return ItemData{.iconUrl = m_app->iconUrl(),
+                    .name = QString("Open URL").arg(m_app->displayName()),
+                    .subtitle = m_app->displayName(),
+                    .accessories = {{"URL"}}};
+  }
+
+  const RootItem *asRootItem() const override { return nullptr; }
+
+  QString generateId() const override { return "open-url"; }
+
+  std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
+    auto state = std::make_unique<ActionPanelState>();
+    auto section = state->createSection();
+
+    for (const auto &opener : ctx->services->appDb()->findOpeners(m_url.toString())) {
+      auto action =
+          new OpenAppAction(opener, QString("Open with %1").arg(opener->displayName()), {m_url.toString()});
+      action->setClearSearch(true);
+      section->addAction(action);
+    }
+
+    return state;
+  }
+
+private:
+  QUrl m_url;
+  std::shared_ptr<AbstractApplication> m_app;
 };
 
 class RootSearchItem : public AbstractDefaultListItem,
@@ -86,7 +135,7 @@ protected:
         .name = m_item->displayName(),
         .subtitle = m_item->subtitle(),
         .accessories = m_item->accessories(),
-        .alias = metadata.alias,
+        .alias = QString::fromStdString(metadata.alias),
         .active = m_item->isActive(),
     };
   }
@@ -157,7 +206,15 @@ protected:
   const AbstractCalculatorBackend::CalculatorResult item;
 
   OmniListItemWidget *createWidget() const override {
-    return new CalculatorListItemWidget(CalculatorItem{.expression = item.question, .result = item.answer});
+    auto w = new TransformResult;
+
+    w->setBase(
+        item.question.text,
+        item.question.unit.transform([](auto &&unit) { return unit.displayName; }).value_or("Expression"));
+    w->setResult(item.answer.text,
+                 item.answer.unit.transform([](auto &&unit) { return unit.displayName; }).value_or("Answer"));
+
+    return w;
   }
 
   int calculateHeight(int width) const override {
@@ -168,7 +225,7 @@ protected:
 
   const RootItem *asRootItem() const override { return nullptr; }
 
-  QString generateId() const override { return item.question; }
+  QString generateId() const override { return item.question.text; }
 
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
     auto panel = std::make_unique<ActionPanelState>();
@@ -223,7 +280,7 @@ bool RootSearchView::inputFilter(QKeyEvent *event) {
           auto manager = context()->services->rootItemManager();
           auto metadata = manager->itemMetadata(rootItem->uniqueId());
 
-          if (metadata.alias.startsWith(searchText())) {
+          if (metadata.alias.starts_with(searchText().toStdString())) {
             m_list->activateCurrentSelection();
             return true;
           }
@@ -288,17 +345,19 @@ void RootSearchView::initialize() {
 
 void RootSearchView::handleCalculatorTimeout() {
   auto calculator = context()->services->calculatorService();
-  QString expression = searchText().trimmed();
-  bool isComputable = false;
+  QString expression = searchText().simplified();
 
   if (expression.isEmpty()) return;
 
-  for (const auto &ch : expression) {
-    if (!ch.isLetterOrNumber() || ch.isSpace()) {
-      isComputable = true;
-      break;
-    }
+  if (expression.startsWith(CALCULATOR_PREFIX) && expression.size() > 1) {
+    auto stripped = expression.mid(CALCULATOR_PREFIX.size());
+    m_pendingCalculation.setFuture(calculator->backend()->asyncCompute(stripped));
+    return;
   }
+
+  bool containsNonAlnum = std::ranges::any_of(expression, [](QChar ch) { return !ch.isLetterOrNumber(); });
+  auto isAllowedLeadingChar = [](QChar c) { return c == '(' || c == ')' || c.isLetterOrNumber(); };
+  bool isComputable = expression.size() > 1 && isAllowedLeadingChar(expression.at(0)) && containsNonAlnum;
 
   if (!isComputable || !calculator->backend()) {
     m_currentCalculatorEntry.reset();
@@ -325,30 +384,41 @@ void RootSearchView::handleCalculationResult() {
 void RootSearchView::render(const QString &text) {
   auto rootItemManager = ServiceRegistry::instance()->rootItemManager();
   auto appDb = ServiceRegistry::instance()->appDb();
-  const auto &appEntries = appDb->list();
+  std::error_code ec;
 
   m_list->beginResetModel();
-
-  auto start = std::chrono::high_resolution_clock::now();
 
   if (m_currentCalculatorEntry) {
     m_list->addSection("Calculator")
         .addItem(std::make_unique<BaseCalculatorListItem>(*m_currentCalculatorEntry));
   }
 
-  auto &results = m_list->addSection("Results");
+  fs::path path = expandPath(text.toStdString());
+  bool hasExactFileMatch = path != "/" && fs::exists(path, ec);
 
-  auto searchResults = rootItemManager->prefixSearch(text.trimmed());
-
-  for (const auto &item : searchResults) {
-    results.addItem(std::make_unique<RootSearchItem>(item.item));
+  if (hasExactFileMatch) {
+    auto &files = m_list->addSection("Files");
+    files.addItem(std::make_unique<RootFileListItem>(path));
   }
 
-  if (!m_fileResults.empty()) {
-    auto &section = m_list->addSection("Files");
+  if (QUrl url(text); url.isValid() && !url.scheme().isEmpty()) {
+    if (auto opener = appDb->findDefaultOpener(url.toString())) {
+      auto &openWith = m_list->addSection("Open URL with...");
+      openWith.addItem(std::make_unique<OpenUrlItem>(std::move(url), opener));
+    }
+  }
+
+  auto &results = m_list->addSection("Results");
+
+  for (const auto &item : rootItemManager->search(text.trimmed())) {
+    results.addItem(std::make_unique<RootSearchItem>(item.item.get()));
+  }
+
+  if (!hasExactFileMatch) {
+    auto &files = m_list->addSection("Files");
 
     for (const auto &file : m_fileResults) {
-      section.addItem(std::make_unique<RootFileListItem>(file.path));
+      files.addItem(std::make_unique<RootFileListItem>(file.path));
     }
   }
 
@@ -358,11 +428,7 @@ void RootSearchView::render(const QString &text) {
     fallbackSection.addItem(std::make_unique<FallbackRootSearchItem>(fallback));
   }
 
-  auto end = std::chrono::high_resolution_clock::now();
-  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-
   m_list->endResetModel(OmniList::SelectFirst);
-  // qDebug() << "root searched in " << duration << "ms";
 }
 
 void RootSearchView::renderEmpty() {
@@ -378,7 +444,7 @@ void RootSearchView::renderEmpty() {
     auto &favorites = m_list->addSection("Favorites");
 
     for (const auto &item : rootManager->queryFavorites()) {
-      favorites.addItem(std::make_unique<FavoriteRootSearchItem>(item));
+      favorites.addItem(std::make_unique<FavoriteRootSearchItem>(item.item));
     }
   }
 
@@ -386,7 +452,7 @@ void RootSearchView::renderEmpty() {
     auto &suggestions = m_list->addSection("Suggestions");
 
     for (const auto &item : rootManager->querySuggestions()) {
-      suggestions.addItem(std::make_unique<SuggestionRootSearchItem>(item));
+      suggestions.addItem(std::make_unique<SuggestionRootSearchItem>(item.item));
     }
   }
 

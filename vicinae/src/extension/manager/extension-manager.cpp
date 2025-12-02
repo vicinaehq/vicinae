@@ -182,6 +182,11 @@ std::optional<fs::path> ExtensionManager::nodeExecutable() {
   return {};
 }
 
+bool ExtensionManager::stop() {
+  m_process.terminate();
+  return m_process.waitForFinished();
+}
+
 bool ExtensionManager::start() {
 #ifndef HAS_TYPESCRIPT_EXTENSIONS
   qCritical() << "Cannot start extension manager as extension support was disabled at compile time";

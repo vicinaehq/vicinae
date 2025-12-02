@@ -17,6 +17,7 @@ import { FileInfo as ProtoFileInfo } from "./proto/file-search";
  * console.log(`Found ${results.length} files`);
  * ```
  *
+ * @category File Search
  * @public
  */
 export namespace FileSearch {
@@ -49,7 +50,7 @@ export namespace FileSearch {
 		query: string,
 		_: FileSearch.SearchOptions = {},
 	): Promise<FileSearch.FileInfo[]> {
-		const res = await bus.turboRequest("fileSearch.search", { query });
+		const res = await bus.request("fileSearch.search", { query });
 
 		return res.unwrap().files;
 	}

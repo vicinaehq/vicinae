@@ -86,6 +86,7 @@ Unzipper::Unzipper(std::string_view path) {
   }
 
   m_tmpFile->write(path.data(), path.size());
+  m_tmpFile->flush();
   m_handle.file = unzOpen(m_tmpFile->filesystemFileName().c_str());
   unzGetGlobalInfo(m_handle.file, &m_handle.info);
 }

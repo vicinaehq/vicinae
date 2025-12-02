@@ -38,7 +38,7 @@ void ExtensionListComponent::renderDropdown(const DropdownModel &dropdown) {
         freeSectionItems.emplace_back(std::make_shared<DropdownSelectorItem>(*listItem));
       } else if (auto section = std::get_if<DropdownModel::Section>(&item)) {
         if (!freeSectionItems.empty()) {
-          // m_selector->addSection("", freeSectionItems);
+          m_selector->addSection("", freeSectionItems);
           freeSectionItems.clear();
         }
 
@@ -100,10 +100,12 @@ bool ExtensionListComponent::inputFilter(QKeyEvent *event) {
       return m_list->selectUp();
     case Qt::Key_Down:
       return m_list->selectDown();
-    case Qt::Key_Home:
-      return m_list->selectHome();
-    case Qt::Key_End:
-      return m_list->selectEnd();
+    case Qt::Key_Tab:
+      if (!context()->navigation->hasCompleter()) {
+        m_list->selectNext();
+        return true;
+      }
+      break;
     }
   }
 
@@ -119,6 +121,8 @@ bool ExtensionListComponent::inputFilter(QKeyEvent *event) {
 void ExtensionListComponent::render(const RenderModel &baseModel) {
   ++m_renderCount;
   auto newModel = std::get<ListModel>(baseModel);
+
+  m_onSelectionChanged = newModel.onSelectionChanged;
 
   if (auto accessory = newModel.searchBarAccessory) {
     auto dropdown = std::get<DropdownModel>(*accessory);
@@ -233,7 +237,7 @@ void ExtensionListComponent::onSelectionChanged(const ListItemViewModel *next) {
     return;
   }
 
-  if (auto handler = _model.onSelectionChanged) { notify(*handler, {next->id}); }
+  if (auto handler = m_onSelectionChanged) { notify(*handler, {next->id}); }
 
   m_split->setDetailVisibility(_model.isShowingDetail);
 
@@ -308,6 +312,7 @@ ExtensionListComponent::ExtensionListComponent() : _debounce(new QTimer(this)), 
   setDefaultActionShortcuts({Keyboard::Shortcut::enter(), Keyboard::Shortcut::submit()});
   m_selector->setMinimumWidth(300);
   m_selector->setEnableDefaultFilter(false);
+  m_selector->setFocusPolicy(Qt::NoFocus);
   m_split->setMainWidget(m_list);
   m_split->setDetailWidget(m_detail);
   m_split->detailWidget()->hide();

@@ -198,13 +198,14 @@ bool CalculatorService::addRecord(const AbstractCalculatorBackend::CalculatorRes
   QSqlQuery query = m_db.createQuery();
 
   query.prepare(R"(
-		INSERT INTO calculator_history (id, type_hint, question, answer)
-		VALUES (:id, :type_hint, :question, :answer)
+		INSERT INTO calculator_history (id, type_hint, question, answer, created_at)
+		VALUES (:id, :type_hint, :question, :answer, :epoch)
 	)");
   query.bindValue(":id", Crypto::UUID::v4());
   query.bindValue(":type_hint", result.type);
-  query.bindValue(":question", result.question);
-  query.bindValue(":answer", result.answer);
+  query.bindValue(":question", result.question.text);
+  query.bindValue(":answer", result.answer.text);
+  query.bindValue(":epoch", QDateTime::currentSecsSinceEpoch());
 
   if (!query.exec()) {
     qCritical() << "Failed to add calculator record" << query.lastError();
@@ -214,8 +215,8 @@ bool CalculatorService::addRecord(const AbstractCalculatorBackend::CalculatorRes
   CalculatorRecord record;
 
   record.id = query.lastInsertId().toString();
-  record.question = result.question;
-  record.answer = result.answer;
+  record.question = result.question.text;
+  record.answer = result.answer.text;
   record.typeHint = result.type;
   record.createdAt = QDateTime::currentDateTime();
 
@@ -233,8 +234,9 @@ bool CalculatorService::addRecord(const AbstractCalculatorBackend::CalculatorRes
 bool CalculatorService::pinRecord(const QString &id) {
   QSqlQuery query = m_db.createQuery();
 
-  query.prepare("UPDATE calculator_history SET pinned_at = unixepoch() WHERE id = :id");
-  query.addBindValue(id);
+  query.prepare("UPDATE calculator_history SET pinned_at = :epoch WHERE id = :id");
+  query.bindValue(":id", id);
+  query.bindValue(":epoch", QDateTime::currentSecsSinceEpoch());
 
   if (!query.exec()) {
     qCritical() << "Failed to pin record with id" << id << query.lastError();
@@ -309,13 +311,6 @@ void CalculatorService::setUpdateConversionsAfterRateUpdate(bool value) {
   m_updateConversionsAfterRateUpdate = value;
 }
 
-bool CalculatorService::refreshExchangeRates() {
-  if (!m_backend->reloadExchangeRates()) { return false; }
-  if (m_updateConversionsAfterRateUpdate) { updateConversionRecords(); }
-
-  return true;
-}
-
 bool CalculatorService::removeAll() {
   QSqlQuery query = m_db.createQuery();
 
@@ -346,13 +341,13 @@ void CalculatorService::updateConversionRecords() {
 
     if (!result) continue;
 
-    query.bindValue(":answer", result->answer);
+    query.bindValue(":answer", result->answer.text);
     query.bindValue(":type", result->type);
     query.bindValue(":id", record.id);
 
     if (!query.exec()) { qCritical() << "Failed to update conversion record" << query.lastError(); }
 
-    record.answer = result->answer;
+    record.answer = result->answer.text;
     record.typeHint = result->type;
   }
 

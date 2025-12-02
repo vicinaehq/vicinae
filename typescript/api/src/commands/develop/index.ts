@@ -1,30 +1,23 @@
-import { Command, CommandHelp, Flags } from "@oclif/core";
+import { Command, Flags } from "@oclif/core";
 import * as chokidar from "chokidar";
 import * as esbuild from "esbuild";
 import { spawn } from "node:child_process";
-import {
-	cpSync,
-	existsSync,
-	mkdirSync,
-	read,
-	readFileSync,
-	writeFileSync,
-} from "node:fs";
-import { open, stat } from "node:fs/promises";
-import { join } from "node:path";
+import * as fs from "node:fs";
+import * as fsp from "node:fs/promises";
+import * as path from "node:path";
 import { Logger } from "../../utils/logger.js";
-import { extensionDataDir } from "../../utils/utils.js";
+import {
+	extensionDataDir,
+	extensionInternalSupportDir,
+} from "../../utils/utils.js";
+import { updateExtensionTypes } from "../../utils/extension-types.js";
 import { VicinaeClient } from "../../utils/vicinae.js";
 import ManifestSchema from "../../schemas/manifest.js";
+import { Tail } from "../../utils/tail.js";
 
 type TypeCheckResult = {
 	error: string;
 	ok: boolean;
-};
-
-type LogFileData = {
-	cursor: number;
-	path: string;
 };
 
 export default class Develop extends Command {
@@ -47,16 +40,16 @@ export default class Develop extends Command {
 	async run(): Promise<void> {
 		const { flags } = await this.parse(Develop);
 		const logger = new Logger();
-		const pkgPath = join(flags.target, "package.json");
+		const pkgPath = path.join(flags.target, "package.json");
 		const parseManifest = () => {
-			if (!existsSync(pkgPath)) {
+			if (!fs.existsSync(pkgPath)) {
 				logger.logError(
 					`No package.json found at ${pkgPath}. Does this location point to a valid extension repository?`,
 				);
 				process.exit(1);
 			}
 
-			const json = JSON.parse(readFileSync(pkgPath, "utf8"));
+			const json = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
 
 			const e = ManifestSchema.safeParse(json);
 
@@ -72,6 +65,9 @@ export default class Develop extends Command {
 
 		let manifest = parseManifest();
 		const vicinae = new VicinaeClient();
+
+		logger.logInfo("Generating extension types...");
+		updateExtensionTypes(manifest, flags.target);
 
 		const typeCheck = async (): Promise<TypeCheckResult> => {
 			const spawned = spawn("npx", ["tsc", "--noEmit"]);
@@ -90,38 +86,38 @@ export default class Develop extends Command {
 
 		const build = async (outDir: string) => {
 			/*
-      logger.logInfo("Started type checking in background thread");
-      typeCheck().then(({ error, ok }) => {
-        if (!ok) {
-          logger.logInfo(`Type checking error: ${error}`);
-        }
+	  logger.logInfo("Started type checking in background thread");
+	  typeCheck().then(({ error, ok }) => {
+		if (!ok) {
+		  logger.logInfo(`Type checking error: ${error}`);
+		}
 
-        logger.logInfo("Done type checking");
-      });
+		logger.logInfo("Done type checking");
+	  });
 	  */
 
 			const entryPoints = manifest.commands
-				.map((cmd) => join("src", `${cmd.name}.tsx`))
-				.filter(existsSync);
+				.map((cmd) => path.join("src", `${cmd.name}.tsx`))
+				.filter(fs.existsSync);
 			logger.logInfo(`entrypoints [${entryPoints.join(", ")}]`);
 
 			const promises = manifest.commands.map((cmd) => {
-				const base = join(process.cwd(), "src", `${cmd.name}`);
+				const base = path.join(process.cwd(), "src", `${cmd.name}`);
 				const tsxSource = `${base}.tsx`;
 				const tsSource = `${base}.ts`;
 				let source = tsxSource;
 
-				if (cmd.mode == "view" && !existsSync(tsxSource)) {
+				if (cmd.mode === "view" && !fs.existsSync(tsxSource)) {
 					throw new Error(
 						`could not find entrypoint src/${cmd.name}.tsx for command ${cmd.name}.`,
 					);
 				}
 
 				// we allow .ts or .tsx for no-view
-				if (cmd.mode == "no-view") {
-					if (!existsSync(tsxSource)) {
+				if (cmd.mode === "no-view") {
+					if (!fs.existsSync(tsxSource)) {
 						source = tsSource;
-						if (!existsSync(tsSource)) {
+						if (!fs.existsSync(tsSource)) {
 							throw new Error(
 								`could not find entrypoint src/${cmd.name}.{ts,tsx} for command ${cmd.name}.`,
 							);
@@ -134,22 +130,22 @@ export default class Develop extends Command {
 					entryPoints: [source],
 					external: ["react", "@vicinae/api", "@raycast/api"],
 					format: "cjs",
-					outfile: join(outDir, `${cmd.name}.js`),
+					outfile: path.join(outDir, `${cmd.name}.js`),
 					platform: "node",
 				});
 			});
 
 			await Promise.all(promises);
 
-			const targetPkg = join(outDir, "package.json");
-			const targetAssets = join(outDir, "assets");
+			const targetPkg = path.join(outDir, "package.json");
+			const targetAssets = path.join(outDir, "assets");
 
-			cpSync("package.json", targetPkg, { force: true });
+			fs.cpSync("package.json", targetPkg, { force: true });
 
-			if (existsSync("assets")) {
-				cpSync("assets", targetAssets, { force: true, recursive: true });
+			if (fs.existsSync("assets")) {
+				fs.cpSync("assets", targetAssets, { force: true, recursive: true });
 			} else {
-				mkdirSync(targetAssets, { recursive: true });
+				fs.mkdirSync(targetAssets, { recursive: true });
 			}
 		};
 
@@ -180,13 +176,32 @@ export default class Develop extends Command {
 
 		const dataDir = extensionDataDir();
 		const id = `${manifest.name}`;
-		const extensionDir = join(dataDir, id);
-		const logFile = join(extensionDir, "dev.log");
-		const pidFile = join(extensionDir, "cli.pid");
+		const extensionDir = path.join(dataDir, id);
+		const internalSupportDir = extensionInternalSupportDir(id);
+		const stdoutPath = path.join(internalSupportDir, "stdout.txt");
+		const stderrPath = path.join(internalSupportDir, "stderr.txt");
+		const pidFile = path.join(internalSupportDir, "cli.pid");
 
-		mkdirSync(extensionDir, { recursive: true });
-		writeFileSync(pidFile, `${process.pid}`);
-		writeFileSync(logFile, "");
+		await Promise.all(
+			[extensionDir, internalSupportDir].map((dir) =>
+				fsp.mkdir(dir, { recursive: true }),
+			),
+		);
+		await fsp.writeFile(pidFile, `${process.pid}`);
+
+		const outStream = new Tail(stdoutPath, { forceCreate: true, nLines: 0 });
+		const errStream = new Tail(stderrPath, { forceCreate: true, nLines: 0 });
+
+		outStream.on("line", (data) => {
+			logger.logExtensionOut(data.toString());
+		});
+		outStream.on("error", () => { });
+
+		errStream.on("line", (data) => {
+			logger.logExtensionError(data.toString());
+		});
+		errStream.on("error", () => { });
+
 		await safeBuild(extensionDir);
 
 		process.on("SIGINT", () => {
@@ -210,42 +225,12 @@ export default class Develop extends Command {
 			.on("all", async (_, path) => {
 				if (path.endsWith("package.json")) {
 					manifest = parseManifest();
+					logger.logInfo("Generating extension types...");
+					updateExtensionTypes(manifest, flags.target);
 				}
 
 				logger.logEvent(`changed file ${path}`);
 				await safeBuild(extensionDir);
 			});
-
-		const logFiles = new Map<string, LogFileData>();
-
-		chokidar.watch(logFile).on("all", async (_, path) => {
-			const stats = await stat(path);
-
-			if (!stats.isFile()) return;
-
-			if (!logFiles.has(path)) {
-				//logger.logInfo(`Monitoring new log file at ${path}`);
-				logFiles.set(path, { cursor: 0, path });
-			}
-
-			const info = logFiles.get(path)!;
-
-			if (info.cursor > stats.size) {
-				info.cursor = 0;
-			}
-
-			if (stats.size === info.cursor) return;
-
-			const handle = await open(path, "r");
-			const buffer = Buffer.alloc(stats.size - info.cursor);
-
-			read(handle.fd, buffer, 0, buffer.length, info.cursor, (error, nRead) => {
-				if (error) return;
-
-				info.cursor += nRead;
-				logger.logTimestamp(buffer.toString());
-				handle.close();
-			});
-		});
 	}
 }

@@ -1,5 +1,4 @@
 #include "file-indexer.hpp"
-
 #include <filesystem>
 #include <QtConcurrent/QtConcurrent>
 #include "services/files-service/file-indexer/scan.hpp"
@@ -7,6 +6,7 @@
 #include "file-indexer-db.hpp"
 #include "utils/utils.hpp"
 #include <QDebug>
+#include <qthread.h>
 #include <ranges>
 #include <unistd.h>
 #include <thread>
@@ -34,13 +34,15 @@ void FileIndexer::startFullScan() {
 
       for (const auto &entrypoint : m_entrypoints) {
         qInfo() << "Enqueuing full scan for" << entrypoint.c_str();
+        // For now we don't exclude filenames during full scans, though this might change in the future.
+        // The reason being that we still want to know where the db file is (current use case), just not watch
+        // it. May want to split the list in two later (scan vs watch).
         m_dispatcher.enqueue({.type = ScanType::Full, .path = entrypoint, .excludedPaths = m_excludedPaths});
       }
 
       for (const auto &entrypoint : m_watcherPaths) {
         qInfo() << "Enqueuing watcher scan for" << entrypoint.c_str();
-        m_dispatcher.enqueue(
-            {.type = ScanType::Watcher, .path = entrypoint, .excludedPaths = m_excludedPaths});
+        startSingleScan(entrypoint, ScanType::Watcher, m_excludedFilenames);
       }
     });
   }).detach();
@@ -137,34 +139,10 @@ void FileIndexer::preferenceValuesChanged(const QJsonObject &preferences) {
 }
 
 QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view view,
-                                                                const QueryParams &params) const {
-  auto searchQuery = qStringFromStdView(view);
-  QString finalQuery = m_useRegex ? searchQuery : preparePrefixSearchQuery(view);
-  auto promise = std::make_shared<QPromise<std::vector<IndexerFileResult>>>();
-  auto future = promise->future();
-  bool useRegex = m_useRegex;
-
-  QThreadPool::globalInstance()->start(
-      [params, finalQuery, useRegex, promise = std::move(promise)]() mutable {
-        std::vector<fs::path> paths;
-        {
-          FileIndexerDatabase db;
-          QueryParams paramsWithRegex = params;
-          paramsWithRegex.useRegex = useRegex;
-          paths = db.search(finalQuery.toStdString(), paramsWithRegex);
-        }
-
-        std::vector<IndexerFileResult> results;
-
-        for (const auto &path : paths) {
-          results.emplace_back(IndexerFileResult{.path = path});
-        }
-
-        promise->addResult(results);
-        promise->finish();
-      });
-
-  return future;
+                                                                const QueryParams &params) {
+  QueryParams paramsWithRegex = params;
+  paramsWithRegex.useRegex = m_useRegex;
+  return m_queryEngine.query(view, paramsWithRegex);
 }
 
 FileIndexer::FileIndexer() : m_writer(std::make_shared<DbWriter>()), m_dispatcher(m_writer) {

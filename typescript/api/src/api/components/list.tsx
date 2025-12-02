@@ -1,11 +1,12 @@
-import React, { ReactNode, useRef } from "react";
+import type { ReactNode } from "react";
+import { useRef } from "react";
 import {
 	type Image,
 	type ImageLike,
 	type SerializedImageLike,
 	serializeProtoImage,
 } from "../image";
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 import { Metadata } from "./metadata";
 import { EmptyView } from "./empty-view";
 import {
@@ -16,25 +17,131 @@ import {
 } from "../color";
 import { Dropdown } from "./dropdown";
 
+/**
+ * A List component that can be used to render a list of items sharing a similar representation.
+ *
+ * This component comes with many quality of life features out of the box:
+ *
+ * - Items are fuzzy searched by default, without the need for explicit filtering logic
+ * - Items can be grouped in sections for clearer organization
+ * - Search can be throttled in order to provide typeahead experiences, ideal when dealing with remote data sources
+ * - Builtin loading indicator to show that something is loading
+ * - For a specific item, can render additonal markdown and metadata in a side panel
+ *
+ * ![](../../../assets/list.png)
+ *
+ * @category UI Components
+ */
 export declare namespace List {
 	export type Props = {
+		/**
+		 * Action panel to use when no list item matches the current search query.
+		 */
 		actions?: React.ReactNode;
+
+		/**
+		 * List items or sections to render inside this list.
+		 */
 		children?: React.ReactNode;
+
+		/**
+		 * Whether to use Vicinae's builtin fuzzy filtering.
+		 *
+		 * This is turned on by default unless a `onSearchTextChange` handler is passed, indicating that
+		 * custom filtering is desired.
+		 */
 		filtering?: boolean;
+
 		/**
 		 * @deprecated use filtering
 		 */
 		enableFiltering?: boolean;
+
+		/**
+		 * If true, a loading indicator is shown right below the search bar to indicate loading activity.
+		 */
 		isLoading?: boolean;
+
+		/**
+		 * Whether to show the current list item's detail, if any.
+		 * If the current list item does not have a `detail`, this does nothing.
+		 */
 		isShowingDetail?: boolean;
+
+		/**
+		 * Bind this prop to the value of the search text. This is used to turn the List into a [controlled component](https://react.dev/learn/sharing-state-between-components#controlled-and-uncontrolled-components).
+		 */
 		searchText?: string;
+
+		/**
+		 * The placeholder to show in the search bar if there is no search query.
+		 */
 		searchBarPlaceholder?: string;
+
+		/**
+		 * The navigation title to display on the bottom left of the status bar, next to the command icon.
+		 * This defaults to the name of the command.
+		 */
 		navigationTitle?: string;
+
+		/**
+		 * Accessory to show on the right of the search input.
+		 * The list component only supports rendering a dropdown, in order to provide more filtering options.
+		 *
+		 * @see Dropdown
+		 */
 		searchBarAccessory?: ReactNode;
+
+		/**
+		 * Throttle the search so that search text change events are sent after a short delay instead of instaneously.
+		 * **Highly** recommended if you need to fetch data on every change.
+		 * @default false
+		 */
+		throttle?: boolean;
+
+		/**
+		 * Called every time the user modifies the search text by typing or editing.
+		 * This can be throttled using the `throttle` prop.
+		 *
+		 * @param text - The new search text
+		 */
 		onSearchTextChange?: (text: string) => void;
+
+		/**
+		 * Called every time the currently selected item changes.
+		 * Note that this does *not* fire when transitioning from having a selected item to none at all.
+		 */
 		onSelectionChange?: (id: string) => void;
 	};
 
+	/**
+	 * List items can be organized inside sections, in order to further categorize them.
+	 *
+	 * Note that item inside sections still benefit from automatic fuzzy filtering, but items remain grouped by
+	 * section no matter their matching scores.
+	 *
+	 * A list can render sections and render items that are not inside any section.
+	 * While this is generally considered bad design, it will work as list items placed outside sections
+	 * will automatically be attached to an unnamed section.
+	 *
+	 * @example
+	 * ```typescript
+	 * export default MyCommand() {
+	 * return (
+	 *   <List>
+	 *     <List.Section title="Section 1">
+	 * 	     <List.Item title="Item 1" />
+	 * 		   <List.Item title="Item 2" />
+	 *     </List.Section />
+	 *     <List.Section title="Section 2">
+	 * 	     <List.Item title="Item 1" />
+	 * 	     <List.Item title="Item 2" />
+	 * 	   </List.Section />
+	 *   </List>
+	 * 	);
+	 * }
+	 * ```
+	 */
 	export namespace Section {
 		export type Props = {
 			title?: string;
@@ -43,27 +150,82 @@ export declare namespace List {
 		};
 	}
 
+	/**
+	 * An individual list item rendered in a fixed size row.
+	 */
 	export namespace Item {
 		export type Props = {
 			title: string;
+
+			/**
+			 * Additional keywords the builtin filtering will consider when ranking items.
+			 *
+			 * Note that keywords match with a lower score than the title or subtitle fields.
+			 *
+			 * If builtin filtering is disabled, these are not used.
+			 */
 			keywords?: string[];
-			detail?: React.ReactNode;
+
+			/**
+			 * Icon to show to the left of the item.
+			 * @see {@link ImageLike}
+			 */
 			icon?:
-				| ImageLike
-				| {
-						value: ImageLike | undefined | null;
-						tooltip: string;
-				  };
+			| ImageLike
+			| {
+				value: ImageLike | undefined | null;
+				tooltip: string;
+			};
+
+			/**
+			 * Unique identifier for this item.
+			 * If not explicitly specified, Vicinae will create one automatically.
+			 */
 			id?: string;
+
+			/**
+			 * Subtitle to show next to the title, using a dampened color.
+			 */
 			subtitle?: string;
+
+			/**
+			 * Action panel to show when this item is selected.
+			 */
 			actions?: ReactNode;
+
 			accessories?: List.Item.Accessory[];
+
+			/**
+			 * Additional information to display in a side panel if it is the currently selected item.
+			 * @see {@link List.Item.Detail}
+			 */
+			detail?: React.ReactNode;
 		};
 
+		/**
+		 * Side panel which can be used to render markdown text and an optional metadata section.
+		 * In order for a detail to be shown, the List's `isShowingDetail` prop should be set to `true` and the
+		 * currently selected item should have a valid `detail` prop.
+		 *
+		 * ![](../../../assets/list-detail.png)
+		 */
 		export namespace Detail {
 			export type Props = {
+				/**
+				 * Whether to show a loading indicator under the search bar.
+				 */
 				isLoading?: boolean;
+
+				/**
+				 * Markdown content to render in the main view.
+				 * @see {@link Detail}
+				 */
 				markdown?: string;
+
+				/**
+				 * Additional metadata.
+				 * @see Metadata
+				 */
 				metadata?: React.ReactNode;
 			};
 		}
@@ -208,6 +370,9 @@ const ListSection: React.FC<List.Section.Props> = (props) => {
 	return <list-section {...props} />;
 };
 
+/**
+ * @category UI Components
+ */
 export const List = Object.assign(ListRoot, {
 	Section: ListSection,
 	EmptyView,

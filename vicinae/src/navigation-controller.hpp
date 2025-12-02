@@ -81,6 +81,9 @@ public:
   void setTitle(const QString &title) { m_title = title; }
   QString title() const { return m_title; }
 
+  void setId(const QString &id) { m_id = id; }
+  QString id() const { return m_id; }
+
   void setShortcutPreset(ShortcutPreset preset) { m_defaultShortcuts = shortcutsForPreset(preset); }
 
   ActionPanelState() { setShortcutPreset(ShortcutPreset::None); }
@@ -90,6 +93,9 @@ public:
 
     return std::accumulate(m_sections.begin(), m_sections.end(), 0, acc);
   }
+
+  void setDirty(bool value) { m_dirty = value; }
+  bool dirty() const { return m_dirty; }
 
 private:
   void computePrimaryAction() {
@@ -145,7 +151,9 @@ private:
   }
 
   bool m_autoSelectPrimary = true;
+  bool m_dirty = true;
   QString m_title;
+  QString m_id;
   std::vector<std::unique_ptr<ActionPanelSectionState>> m_sections;
   std::vector<Keyboard::Shortcut> m_defaultShortcuts;
   AbstractAction *m_primary = nullptr;
@@ -223,9 +231,10 @@ signals:
   void viewPoped(const BaseView *view);
   void actionPanelVisibilityChanged(bool visible);
   void actionsChanged(const ActionPanelState &actions) const;
+  void submenuRequested(ActionPanelView *view);
   void windowVisiblityChanged(bool visible);
   void searchTextSelected() const;
-  void searchTextChanged(const QString &text) const;
+  void searchTextTampered(const QString &text) const;
   void searchPlaceholderTextChanged(const QString &text) const;
   void navigationStatusChanged(const QString &text, const ImageURL &icon) const;
   void navigationSuffixIconChanged(const std::optional<ImageURL> &icon) const;
@@ -261,6 +270,8 @@ public:
 
   void setPopToRootOnClose(bool value);
 
+  bool hasCompleter() const;
+
   /**
    * If the instant dismiss flag is set to `true`, the next call to `goBack` or `closeWindow` will close the
    * window and pop to root regardless of the state of the navigation stack.
@@ -272,6 +283,7 @@ public:
   void setInstantDismiss(bool value = true);
 
   void setSearchPlaceholderText(const QString &text, const BaseView *caller = nullptr);
+  void broadcastSearchText(const QString &text, const BaseView *caller = nullptr);
   void setSearchText(const QString &text, const BaseView *caller = nullptr);
 
   void setLoading(bool value, const BaseView *caller = nullptr);

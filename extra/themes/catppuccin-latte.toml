@@ -26,7 +26,7 @@ yellow = "#DF8E1D"
 cyan = "#179299"
 
 [colors.list.item.selection]
-background = "#CCD0DA"        # Surface0 (darker/stronger on main bg)
+background = { name = "#CCD0DA", opacity = 0.7 }  # Surface0 (darker/stronger on main bg)
 secondary_background = "#DCE0E8"  # Crust (lighter/subtle on lighter surface)
 
 [colors.list.item.hover]

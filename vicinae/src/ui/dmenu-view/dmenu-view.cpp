@@ -1,80 +1,124 @@
 #include "ui/dmenu-view/dmenu-view.hpp"
 #include "services/clipboard/clipboard-service.hpp"
+#include "ui/dmenu-view/dmenu-model.hpp"
+#include "ui/file-detail/file-detail.hpp"
+#include "ui/views/typed-list-view.hpp"
+#include <filesystem>
+#include <qwidget.h>
+#include <ranges>
 
-class Item : public SearchableListView::Actionnable {
-public:
-  Item(const QString &text) : m_text(text) {}
+namespace DMenu {
+View::View(Payload data) : m_data(data), m_model(new DMenuModel(this)) {
+  m_entries = std::views::split(m_data.raw, std::string_view("\n")) |
+              std::views::transform([](auto &&s) { return std::string_view(s); }) |
+              std::ranges::to<std::vector>();
+}
 
-  QString generateId() const override { return QUuid::createUuid().toString(); };
-  std::vector<QString> searchStrings() const override { return {m_text}; }
-  ItemData data() const override {
-    return {
-        .name = m_text,
-    };
-  }
-  const QString &text() const { return m_text; }
+QWidget *View::generateDetail(const std::string_view &text) const {
+  if (m_data.noQuickLook) return nullptr;
+  auto detail = new FileDetail;
+  detail->setPath(text, !m_data.noMetadata);
+  return detail;
+}
 
-private:
-  QString m_text;
-};
-
-DMenuListView::DMenuListView(DmenuPayload data) : m_data(data) {}
-
-void DMenuListView::hideEvent(QHideEvent *event) {
+void View::hideEvent(QHideEvent *event) {
   popSelf();
   QWidget::hideEvent(event);
 }
 
-QString DMenuListView::initialNavigationTitle() const { return m_data.navigationTitle.c_str(); }
+QString View::initialNavigationTitle() const { return m_data.navigationTitle.value_or("").c_str(); }
 
-QString DMenuListView::initialSearchPlaceholderText() const {
-  return m_data.placeholder.empty() ? "Search entries..." : m_data.placeholder.c_str();
+QString View::initialSearchPlaceholderText() const {
+  return m_data.placeholder.value_or("Search entries...").c_str();
 }
 
-QString DMenuListView::sectionName() const {
-  if (m_data.noSection) return QString();
-  return m_data.sectionTitle.empty() ? "Entries ({count})" : m_data.sectionTitle.c_str();
-}
-
-void DMenuListView::beforePop() {
+void View::beforePop() {
   if (!m_selected) { emit selected(""); }
 }
 
-void DMenuListView::itemSelected(const OmniList::AbstractVirtualItem *item) {
-  QString text = static_cast<const Item *>(item)->text();
+void View::emptied() {
+  auto panel = std::make_unique<ListActionPanelState>();
+  auto main = panel->createSection();
+  auto selectSearchText = new StaticAction("Pass search text", ImageURL::builtin("save-document"),
+                                           [this]() { selectEntry(searchText()); });
+  main->addAction(selectSearchText);
+  setActions(std::move(panel));
+}
+
+void View::initialize() {
+  TypedListView::initialize();
+  setModel(m_model);
+
+  if (auto query = m_data.query) {
+    setSearchText(m_data.query.value_or("").c_str());
+  } else {
+    textChanged("");
+  }
+}
+
+void View::textChanged(const QString &text) {
+  setFilter(text.toStdString());
+  m_list->selectFirst();
+}
+
+void View::setFilter(std::string_view query) {
+  auto toScore = [&](std::string_view s) {
+    int score = 0;
+    fts::fuzzy_match(query, s, score);
+    return Scored<std::string_view>{.data = s, .score = score};
+  };
+
+  auto filtered = m_entries | std::views::transform(toScore) |
+                  std::views::filter([&](auto &&s) { return query.empty() || s.score > 0; });
+
+  m_filteredEntries.clear();
+  std::ranges::copy(filtered, std::back_inserter(m_filteredEntries));
+  std::ranges::stable_sort(m_filteredEntries, std::greater{});
+
+  if (!m_data.noSection) { updateSectionName(m_data.sectionTitle.value_or("Entries ({count})")); }
+
+  m_model->setEntries(m_filteredEntries);
+}
+
+std::string View::expandSection(std::string_view name, size_t count) {
+  TemplateEngine engine;
+  engine.setVar("count", QString::number(count));
+  return engine.build(QString::fromUtf8(name.data(), name.size())).toStdString();
+}
+
+void View::updateSectionName(std::string_view name) {
+  m_sectionName = expandSection(name, m_filteredEntries.size());
+  m_model->setSectionName(m_sectionName);
+}
+
+void View::itemSelected(const std::string_view &view) {
+  auto text = QString::fromUtf8(view.data(), view.size());
   auto panel = std::make_unique<ListActionPanelState>();
   auto main = panel->createSection();
   auto select = new StaticAction("Select entry", ImageURL::builtin("save-document"),
                                  [this, text]() { selectEntry(text); });
+
+  main->addAction(select);
+
+  auto selectSearchText = new StaticAction("Pass search text", ImageURL::builtin("save-document"),
+                                           [this]() { selectEntry(searchText()); });
+  main->addAction(selectSearchText);
+
   auto selectAndCopy = new StaticAction("Select and copy entry", ImageURL::builtin("copy-clipboard"),
                                         [this, text](ApplicationContext *ctx) {
                                           ctx->services->clipman()->copyText(text);
                                           selectEntry(text);
                                         });
+  selectAndCopy->setShortcut(Keybind::CopyAction);
 
-  main->addAction(select);
   main->addAction(selectAndCopy);
   setActions(std::move(panel));
 }
 
-DMenuListView::Data DMenuListView::initData() const {
-  Data data;
-  auto source = QString::fromStdString(m_data.raw);
-  auto lines = source.split('\n', Qt::SkipEmptyParts);
-  auto trim = [](const QString &s) { return s.trimmed(); };
-  auto filter = [](const QString &s) { return !s.isEmpty(); };
-
-  data.reserve(lines.size());
-
-  for (const auto &menu : lines | std::views::transform(trim) | std::views::filter(filter)) {
-    data.emplace_back(std::make_shared<Item>(menu));
-  }
-
-  return data;
-}
-
-void DMenuListView::selectEntry(const QString &text) {
+void View::selectEntry(const QString &text) {
   m_selected = true;
   emit selected(text);
   context()->navigation->closeWindow();
 }
+
+}; // namespace DMenu

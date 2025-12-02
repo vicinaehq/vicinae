@@ -110,7 +110,7 @@ VicinaeExtension::VicinaeExtension() {
   registerCommand<OpenDocumentationCommand>();
   registerCommand<OpenAboutCommand>();
   registerCommand<RefreshAppsCommand>();
-  registerCommand<BrowseIconsCommand>();
+  // registerCommand<BrowseIconsCommand>(); // TODO: migrate to new model and add better actions
   registerCommand<ManageFallbackCommand>();
   registerCommand<SearchEmojiCommand>();
   registerCommand<GetVicinaeSourceCodeCommand>();

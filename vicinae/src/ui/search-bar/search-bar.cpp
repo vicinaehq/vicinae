@@ -2,6 +2,7 @@
 #include "service-registry.hpp"
 #include <qcoreevent.h>
 #include <qevent.h>
+#include <qlineedit.h>
 #include "services/config/config-service.hpp"
 #include "template-engine/template-engine.hpp"
 #include "theme.hpp"
@@ -56,8 +57,11 @@ void SearchBar::debounce() { emit debouncedTextEdited(text()); }
 bool SearchBar::event(QEvent *event) {
   if (event->type() == QEvent::KeyPress) {
     auto keyEvent = static_cast<QKeyEvent *>(event);
+    QString txt = text();
 
-    if (keyEvent->key() == Qt::Key_Backspace && text().isEmpty()) {
+    if (keyEvent->key() == Qt::Key_Space && txt.isEmpty()) { return true; }
+
+    if (keyEvent->key() == Qt::Key_Backspace && txt.isEmpty()) {
       emit pop();
       return true;
     }
@@ -125,6 +129,22 @@ bool SearchBar::event(QEvent *event) {
   }
 
   return QLineEdit::event(event);
+}
+
+void SearchBar::inputMethodEvent(QInputMethodEvent *event) {
+  QLineEdit::inputMethodEvent(event);
+
+  auto config = ServiceRegistry::instance()->config();
+  if (!config || !config->value().considerPreedit) return;
+
+  int insertionPos = cursorPosition() + event->replacementStart();
+
+  auto result = text().sliced(0, insertionPos) + event->preeditString() +
+                text().sliced(insertionPos + event->replacementLength());
+
+  // TODO: Does this work for other IMEs?
+  // https://doc.qt.io/qt-6/qinputmethodevent.html
+  emit textEdited(result);
 }
 
 void SearchBar::refreshStyle() {

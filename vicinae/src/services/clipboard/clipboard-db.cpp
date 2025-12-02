@@ -227,15 +227,17 @@ ClipboardDatabase::findPreferredOffer(const QString &selectionId) {
 }
 
 bool ClipboardDatabase::setPinned(const QString &id, bool pinned) {
+  qint64 epoch = QDateTime::currentSecsSinceEpoch();
   QSqlQuery query(m_db);
 
   if (pinned) {
-    query.prepare("UPDATE selection SET pinned_at = unixepoch() WHERE id = :id");
+    query.prepare("UPDATE selection SET pinned_at = :epoch WHERE id = :id");
   } else {
     query.prepare("UPDATE selection SET pinned_at = NULL WHERE id = :id");
   }
 
   query.bindValue(":id", id);
+  query.bindValue(":epoch", epoch);
 
   return query.exec();
 }
@@ -244,8 +246,8 @@ bool ClipboardDatabase::insertSelection(const InsertSelectionPayload &payload) {
   QSqlQuery query(m_db);
 
   query.prepare(R"(
-  	INSERT INTO selection (id, kind, offer_count, hash_md5, preferred_mime_type, source, created_at)
-	VALUES (:id, :kind, :offer_count, :hash_md5, :preferred_mime_type, :source, unixepoch())
+  	INSERT INTO selection (id, kind, offer_count, hash_md5, preferred_mime_type, source, created_at, updated_at)
+	VALUES (:id, :kind, :offer_count, :hash_md5, :preferred_mime_type, :source, :epoch, :epoch)
 	RETURNING id, created_at;
   )");
   query.bindValue(":id", payload.id);
@@ -253,6 +255,7 @@ bool ClipboardDatabase::insertSelection(const InsertSelectionPayload &payload) {
   query.bindValue(":offer_count", static_cast<uint>(payload.offerCount));
   query.bindValue(":hash_md5", payload.hash);
   query.bindValue(":preferred_mime_type", payload.preferredMimeType);
+  query.bindValue(":epoch", QDateTime::currentSecsSinceEpoch());
 
   if (payload.source) { query.bindValue(":source", *payload.source); }
 
@@ -276,10 +279,12 @@ bool ClipboardDatabase::transaction(const TxHandle &handle) {
 }
 
 bool ClipboardDatabase::tryBubbleUpSelection(const QString &idLike) {
+  qint64 updatedAt = QDateTime::currentSecsSinceEpoch();
   QSqlQuery query(m_db);
 
-  query.prepare("UPDATE selection SET updated_at = unixepoch() WHERE hash_md5 = :id OR id = :id");
+  query.prepare("UPDATE selection SET updated_at = :updated_at WHERE hash_md5 = :id OR id = :id");
   query.bindValue(":id", idLike);
+  query.bindValue(":updated_at", updatedAt);
 
   if (!query.exec()) { qCritical() << "Failed to execute clipboard update"; }
 

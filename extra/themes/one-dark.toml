@@ -26,7 +26,7 @@ yellow = "#E5C07B"
 cyan = "#56B6C2"
 
 [colors.list.item.selection]
-background = "#2C313C"        # Slightly lighter than background
+background = { name = "#2C313C", opacity = 0.7 }  # Slightly lighter than background
 secondary_background = "#3E4451"  # More visible on secondary bg
 
 [colors.list.item.hover]

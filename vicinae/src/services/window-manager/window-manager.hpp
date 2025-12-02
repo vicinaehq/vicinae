@@ -18,6 +18,7 @@ public:
   AbstractWindowManager::WindowList findWindowByClass(const QString &wmClass) const;
   AbstractWindowManager::WindowList findAppWindows(const AbstractApplication &app) const;
   AbstractWindowManager::WindowList listWindows() const;
+  const AbstractWindowManager::AbstractWindow *findWindowById(const QString &id);
 
   WindowManager();
 

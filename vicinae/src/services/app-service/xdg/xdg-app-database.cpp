@@ -39,13 +39,6 @@ std::shared_ptr<AbstractApplication> XdgAppDatabase::defaultForMime(const QStrin
 }
 
 AppPtr XdgAppDatabase::findDefaultOpener(const QString &target) const {
-  if (QUrl url = target; url.isValid()) {
-    if (auto scheme = url.scheme(); !scheme.isEmpty()) {
-      if (scheme == "http" || scheme == "https") return webBrowser();
-      if (scheme == "file") return fileBrowser();
-    }
-  }
-
   return defaultForMime(mimeNameForTarget(target));
 }
 
@@ -183,8 +176,6 @@ std::vector<AppPtr> XdgAppDatabase::findAssociations(const QString &mimeName) co
   std::set<std::string> seen;
   std::vector<AppPtr> openers;
   std::queue<QString> mimeStack;
-
-  qDebug() << "find associations for" << mimeName;
 
   mimeStack.emplace(mimeName);
 
@@ -331,6 +322,17 @@ bool XdgAppDatabase::launch(const AbstractApplication &app, const std::vector<QS
                             const std::optional<QString> &launchPrefix) const {
   auto &xdgApp = static_cast<const XdgApplication &>(app);
 
+  if (auto url = xdgApp.data().url().transform(QString::fromStdString)) {
+    auto opener = findDefaultOpener(*url);
+
+    if (!opener) {
+      qWarning() << "No opener for link entry with url" << url;
+      return false;
+    }
+
+    return launch(*opener, {*url}, launchPrefix);
+  }
+
   if (xdgApp.isTerminalApp()) return launchTerminalCommand(xdgApp.parseExec(args), {}, launchPrefix);
 
   auto exec = xdgApp.parseExec(args, launchPrefix);
@@ -351,10 +353,7 @@ QString XdgAppDatabase::mimeNameForTarget(const QString &target) const {
   {
     QUrl url(source);
 
-    if (!url.scheme().isEmpty()) {
-      if (url.scheme() != "file") { return "x-scheme-handler/" + url.scheme(); }
-      source = url.toDisplayString(QUrl::RemoveScheme);
-    }
+    if (!url.scheme().isEmpty()) { return "x-scheme-handler/" + url.scheme(); }
   }
 
   if (m_mimeDb.mimeTypeForName(source).isValid()) { return source; }

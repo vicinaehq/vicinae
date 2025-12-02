@@ -45,11 +45,11 @@ declare module "react" {
 				id?: string;
 				subtitle?: string;
 				icon?:
-					| SerializedImageLike
-					| {
-							value?: SerializedImageLike | null;
-							tooltip: string;
-					  };
+				| SerializedImageLike
+				| {
+					value?: SerializedImageLike | null;
+					tooltip: string;
+				};
 				keywords?: string[];
 				accessories?: List.Item.SerializedAccessory[];
 				children?: React.ReactNode;
@@ -107,7 +107,7 @@ declare module "react" {
 			};
 			"metadata-label": {
 				title: string;
-				text: string;
+				text: string | { color?: SerializedColorLike; value: string };
 				icon?: SerializedImageLike;
 			};
 			"metadata-separator": {};
@@ -119,17 +119,25 @@ declare module "react" {
 			"action-panel": {
 				title?: string;
 				children?: React.ReactNode;
+				stableId?: string;
 			};
 			"action-panel-submenu": {
 				title: string;
 				icon?: SerializedImageLike;
+				shortcut?: Keyboard.Shortcut | Keyboard.Shortcut.Common;
+				autoFocus?: boolean;
+				filtering?: boolean | { keepSectionOrder: boolean };
+				isLoading?: boolean;
+				throttle?: boolean;
 				onOpen?: () => void;
 				onSearchTextChange?: (text: string) => void;
 				children?: React.ReactNode;
+				stableId?: string;
 			};
 			"action-panel-section": {
 				title?: string;
 				children?: React.ReactNode;
+				stableId?: string;
 			};
 			action: {
 				title: string;
@@ -140,6 +148,7 @@ declare module "react" {
 				autoFocus?: boolean;
 				type?: string;
 				quicklink?: Quicklink;
+				stableId?: string;
 			};
 			"tag-list": {
 				title?: string;

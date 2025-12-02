@@ -2,6 +2,7 @@
 #include "extensions/clipboard/clipboard-extension.hpp"
 #include "extensions/calculator/calculator-extension.hpp"
 #include "extensions/file/file-extension.hpp"
+#include "extensions/internal/internal-extension.hpp"
 #include "extensions/power-management/power-management-extension.hpp"
 #include "extensions/shortcut/shortcut-extension.hpp"
 #include "extensions/font/font-extension.hpp"
@@ -50,6 +51,10 @@ CommandDatabase::CommandDatabase() {
   registerRepository<ThemeExtension>();
   registerRepository<FontExtension>();
   registerRepository<DeveloperExtension>();
+
+#ifdef QT_DEBUG
+  registerRepository<InternalExtension>();
+#endif
 
 #ifdef Q_OS_UNIX
   registerRepository<SystemExtension>();

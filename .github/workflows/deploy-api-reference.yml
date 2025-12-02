@@ -1,0 +1,52 @@
+name: Deploy API Reference
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  deploy-api-reference:
+    runs-on: [self-hosted, Linux, X64, prod]
+    defaults:
+      run:
+        working-directory: ./typescript/api
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Compile proto files
+        run: npm run protogen
+
+      - name: Generate documentation
+        run: npm run docgen
+
+      - name: Deploy to server via SCP
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          REMOTE_HOST: ${{ secrets.DEPLOY_HOST }}
+          REMOTE_USER: ${{ secrets.DEPLOY_USER }}
+          REMOTE_PATH: ${{ secrets.DEPLOY_API_REFERENCE_PATH }}
+        run: |
+          # Setup SSH key
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+          # Add host to known_hosts
+          ssh-keyscan -H "$REMOTE_HOST" >> ~/.ssh/known_hosts
+
+          # Clean remote directory
+          ssh -i ~/.ssh/deploy_key "$REMOTE_USER@$REMOTE_HOST" \
+            "rm -rf $REMOTE_PATH/* && mkdir -p $REMOTE_PATH"
+
+          # Deploy docs via scp
+          scp -i ~/.ssh/deploy_key -r ./docs/* \
+            "$REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH/"
+
+          # Cleanup
+          rm -f ~/.ssh/deploy_key

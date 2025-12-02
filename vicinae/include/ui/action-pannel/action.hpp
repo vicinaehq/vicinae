@@ -5,10 +5,14 @@
 #include <qcontainerfwd.h>
 #include <qevent.h>
 #include <qlogging.h>
+#include <qnamespace.h>
 #include <qtmetamacros.h>
+#include <functional>
+#include <memory>
 
 class AppWindow;
 class ActionPanelView;
+class ExtensionSimpleView;
 
 /**
  * The base class any action shown in the action panel inherits from.
@@ -46,7 +50,7 @@ public:
   bool isBoundTo(const QKeyEvent *event) {
     if (event->key() == Qt::Key_Enter) {
       qDebug() << "remapping numpad enter to return";
-      return isBoundTo(Keyboard::Shortcut(Qt::Key_Return, event->modifiers()));
+      return isBoundTo(Keyboard::Shortcut(Qt::Key_Return, event->modifiers() ^= Qt::KeypadModifier));
     }
 
     return isBoundTo(Keyboard::Shortcut(event));
@@ -72,6 +76,8 @@ public:
     if (m_id.isEmpty()) { m_id = QUuid::createUuid().toString(QUuid::WithoutBraces); }
     return m_id;
   }
+
+  void setId(const QString &id) const { m_id = id; }
 
   virtual QString title() const { return m_title; }
   virtual std::optional<ImageURL> icon() const { return m_icon; }
@@ -142,4 +148,35 @@ class SubmitAction : public AbstractAction {
 
 public:
   SubmitAction(const std::function<void(void)> &fn) { m_fn = fn; }
+};
+
+class SubmenuAction : public AbstractAction {
+  std::function<ActionPanelView *()> m_createSubmenuFn;
+  std::function<void()> m_onOpen;
+  bool m_autoClose = false;
+
+public:
+  SubmenuAction(const QString &title, const std::optional<ImageURL> &icon,
+                std::function<ActionPanelView *()> createSubmenuFn, std::function<void()> onOpen = nullptr)
+      : AbstractAction(title, icon), m_createSubmenuFn(createSubmenuFn), m_onOpen(onOpen) {
+    // Submenu actions should not auto-close the panel
+    setAutoClose(false);
+  }
+
+  bool isSubmenu() const override { return true; }
+
+  void execute(ApplicationContext *context) override {
+    // Submenu actions should not execute like regular actions
+    // They are handled by the action panel widget to push views
+  }
+
+  ActionPanelView *createSubmenu() const override {
+    if (m_onOpen) { m_onOpen(); }
+    return createSubmenuStealthily();
+  }
+
+  ActionPanelView *createSubmenuStealthily() const {
+    if (m_createSubmenuFn) { return m_createSubmenuFn(); }
+    return nullptr;
+  }
 };

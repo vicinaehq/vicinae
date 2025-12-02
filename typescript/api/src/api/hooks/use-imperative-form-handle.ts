@@ -1,9 +1,12 @@
-import { randomUUID } from "crypto";
-import { FormItemRef } from "../components/form";
-import { useImperativeHandle, useRef, Ref } from "react";
+import type { Form } from "../components/form";
+import { useImperativeHandle, useRef } from "react";
+import type { Ref } from "react";
 import { bus } from "../bus";
+import { randomUUID } from "node:crypto";
 
-export const useImperativeFormHandle = (ref?: Ref<FormItemRef>): [string] => {
+export const useImperativeFormHandle = (
+	ref?: Ref<Form.ItemReference>,
+): [string] => {
 	const handleId = useRef<string>(randomUUID());
 
 	useImperativeHandle(ref, () => {

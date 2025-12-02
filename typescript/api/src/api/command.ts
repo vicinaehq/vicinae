@@ -14,5 +14,5 @@ export async function updateCommandMetadata(metadata: {
 		payload.subtitle = metadata.subtitle ?? undefined;
 	}
 
-	await bus.turboRequest("command.updateCommandMetadata", payload);
+	await bus.request("command.updateCommandMetadata", payload);
 }

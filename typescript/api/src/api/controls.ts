@@ -1,7 +1,9 @@
 import { bus } from "./bus";
 import * as ui from "./proto/ui";
 
-//e
+/**
+ * @category Launcher Window
+ */
 export enum PopToRootType {
 	/**
 	 * Translates to Immediate or Suspended depending on the
@@ -31,12 +33,14 @@ const popToRootProtoMap: Record<PopToRootType, ui.PopToRootType> = {
  * by passing options to this function.
  *
  * @see closeWindow
+ *
+ * @category Launcher Window
  */
 export const showHUD = async (
 	title: string,
 	options?: { clearRootSearch?: boolean; popToRootType?: PopToRootType },
 ) => {
-	bus.turboRequest("ui.showHud", {
+	bus.request("ui.showHud", {
 		text: title,
 		clearRootSearch: options?.clearRootSearch ?? false,
 		popToRoot:
@@ -47,6 +51,8 @@ export const showHUD = async (
 /**
  * Close the vicinae launcher window immediately.
  * It is possible to override the `popToRoot` behavior defined in the settings using the options object.
+ *
+ * @category Launcher Window
  */
 export const closeMainWindow = async (
 	options: { clearRootSearch?: boolean; popToRootType?: PopToRootType } = {},
@@ -54,23 +60,28 @@ export const closeMainWindow = async (
 	const { clearRootSearch = false, popToRootType = PopToRootType.Default } =
 		options;
 
-	await bus.turboRequest("ui.closeMainWindow", {
+	await bus.request("ui.closeMainWindow", {
 		clearRootSearch,
 		popToRoot: popToRootProtoMap[popToRootType],
 	});
 };
 
+/**
+ * @category Launcher Window
+ */
 export const clearSearchBar = async () => {
-	await bus.turboRequest("ui.setSearchText", { text: "" });
+	await bus.request("ui.setSearchText", { text: "" });
 };
 
 /**
  * Get the text that is currently selected by the user.
  * How this is implemented depends on the environment but all it does is usually
  * read the clipboard's primary selection buffer.
+ *
+ * @category Launcher Window
  */
 export const getSelectedText = async () => {
-	const response = await bus.turboRequest("ui.getSelectedText", {});
+	const response = await bus.request("ui.getSelectedText", {});
 
 	if (!response.ok) {
 		throw new Error(`Failed to get selected text`);
@@ -81,9 +92,11 @@ export const getSelectedText = async () => {
 
 /**
  * Pop to the root of the navigation stack, optionally clearing the search bar.
+ *
+ * @category Launcher Window
  */
 export const popToRoot = async (options?: { clearSearchBar?: boolean }) => {
-	await bus.turboRequest("ui.popToRoot", {
+	await bus.request("ui.popToRoot", {
 		clearSearchBar: options?.clearSearchBar ?? false,
 	});
 };

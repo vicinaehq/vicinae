@@ -1,3 +1,6 @@
+/**
+ * @category Keyboard
+ */
 export type KeyEquivalent =
 	| "a"
 	| "b"
@@ -74,8 +77,14 @@ export type KeyEquivalent =
 	| "enter"
 	| "backspace";
 
+/**
+ * @category Keyboard
+ */
 export type KeyModifier = "cmd" | "ctrl" | "opt" | "shift";
 
+/**
+ * @category Keyboard
+ */
 export namespace Keyboard {
 	export namespace Shortcut {
 		export type Common =

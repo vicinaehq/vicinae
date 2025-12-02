@@ -52,10 +52,10 @@ bool ShortcutService::registerVisit(const QString &id) {
   {
     QSqlQuery query = m_db.createQuery();
 
-    query.prepare(
-        "UPDATE shortcut SET last_used_at = unixepoch(), open_count = open_count + 1 WHERE id = :id "
-        "RETURNING last_used_at, open_count");
+    query.prepare("UPDATE shortcut SET last_used_at = :epoch, open_count = open_count + 1 WHERE id = :id "
+                  "RETURNING last_used_at, open_count");
     query.bindValue(":id", id);
+    query.bindValue(":epoch", QDateTime::currentSecsSinceEpoch());
 
     if (!query.exec()) {
       qWarning() << "Failed to register shortcut visit" << query.lastError();
@@ -103,14 +103,15 @@ bool ShortcutService::updateShortcut(const QString &id, const QString &name, con
 
     query.prepare(R"(
 		UPDATE shortcut
-		SET name = :name, icon = :icon, url = :url, app = :app, updated_at = unixepoch()
+		SET name = :name, icon = :icon, url = :url, app = :app, updated_at = :updated_at
 		WHERE id = :id
 	)");
-    query.addBindValue(name);
-    query.addBindValue(icon);
-    query.addBindValue(url);
-    query.addBindValue(app);
+    query.bindValue(":name", name);
+    query.bindValue(":icon", icon);
+    query.bindValue(":url", url);
+    query.bindValue(":app", app);
     query.bindValue(":id", id);
+    query.bindValue(":updated_at", QDateTime::currentSecsSinceEpoch());
 
     if (!query.exec()) {
       qCritical() << "Failed to update shortcut" << query.lastError();
@@ -157,16 +158,18 @@ bool ShortcutService::createShortcut(const QString &name, const QString &icon, c
   {
     QSqlQuery query = m_db.createQuery();
     QString id = Crypto::UUID::v4();
+    auto now = QDateTime::currentDateTime();
 
     query.prepare(R"(
-		INSERT INTO shortcut (id, name, icon, url, app) VALUES (:id, :name, :icon, :url, :app)
-		RETURNING id, name, icon, url, app, open_count, created_at, updated_at
+		INSERT INTO shortcut (id, name, icon, url, app, created_at, updated_at) VALUES (:id, :name, :icon, :url, :app, :epoch, :epoch)
+		RETURNING id, name, icon, url, app, open_count
   )");
     query.bindValue(":id", id);
     query.bindValue(":name", name);
     query.bindValue(":icon", icon);
     query.bindValue(":url", url);
     query.bindValue(":app", app);
+    query.bindValue(":epoch", now.currentSecsSinceEpoch());
 
     if (!query.exec()) {
       qWarning() << "Failed to save shortcut" << query.lastError();
@@ -184,8 +187,8 @@ bool ShortcutService::createShortcut(const QString &name, const QString &icon, c
     shortcut.parseLink(query.value(3).toString());
     shortcut.setApp(query.value(4).toString());
     shortcut.setOpenCount(query.value(5).toInt());
-    shortcut.setCreatedAt(QDateTime::fromSecsSinceEpoch(query.value(6).toULongLong()));
-    shortcut.setUpdatedAt(QDateTime::fromSecsSinceEpoch(query.value(7).toULongLong()));
+    shortcut.setCreatedAt(now);
+    shortcut.setUpdatedAt(now);
     m_shortcuts.emplace_back(std::make_shared<Shortcut>(shortcut));
   }
 
