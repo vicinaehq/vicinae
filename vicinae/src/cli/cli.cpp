@@ -3,7 +3,6 @@
 #include "daemon/ipc-client.hpp"
 #include "utils.hpp"
 #include "lib/CLI11.hpp"
-#include "ui/dmenu-view/dmenu-view.hpp"
 #include "vicinae.hpp"
 #include "server.hpp"
 #include <iostream>
@@ -75,6 +74,9 @@ public:
         } else if (!lnames.empty()) {
           out << "    --";
           printed_length += 6; // "    --"
+        } else if (auto name = opt->get_name(); !name.empty()) {
+          out << name;
+          printed_length += name.length();
         }
 
         if (!lnames.empty()) {
