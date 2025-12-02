@@ -503,6 +503,7 @@ set(SRCS
 	src/services/files-service/file-indexer/writer-worker.cpp
 	src/services/files-service/file-indexer/scan-dispatcher.cpp
 	src/services/files-service/file-indexer/abstract-scanner.hpp
+	src/services/files-service/file-indexer/file-indexer-query-engine.hpp
 
 	src/services/extension-registry/extension-registry.hpp
 	src/services/extension-registry/extension-registry.cpp
