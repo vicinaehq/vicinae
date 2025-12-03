@@ -2,6 +2,7 @@
 #include "environment.hpp"
 #include "services/app-service/xdg/xdg-app.hpp"
 #include "timer.hpp"
+#include "xdgpp/desktop-entry/entry.hpp"
 #include "xdgpp/desktop-entry/file.hpp"
 #include "xdgpp/mime/iterator.hpp"
 #include <algorithm>
@@ -231,7 +232,7 @@ std::vector<AppPtr> XdgAppDatabase::findAssociations(const QString &mimeName) co
   return openers;
 }
 
-xdgpp::DesktopEntry::TerminalExec XdgAppDatabase::getTermExec(const XdgApplication &app) const {
+xdgpp::DesktopEntry::TerminalExec XdgAppDatabase::inferTermExec(const XdgApplication &app) const {
   using TExec = xdgpp::DesktopEntry::TerminalExec;
 
   if (app.program() == "gnome-terminal") { return TExec{.exec = "--"}; }
@@ -267,6 +268,11 @@ xdgpp::DesktopEntry::TerminalExec XdgAppDatabase::getTermExec(const XdgApplicati
   if (app.program() == "xfce4-terminal") { return TExec{.exec = "-x"}; }
 
   return {.exec = "-e"};
+}
+
+xdgpp::DesktopEntry::TerminalExec XdgAppDatabase::getTermExec(const XdgApplication &app) const {
+  using TExec = xdgpp::DesktopEntry::TerminalExec;
+  return *app.data().terminalExec().or_else([&]() { return std::optional<TExec>{inferTermExec(app)}; });
 }
 
 bool XdgAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
