@@ -1,16 +1,37 @@
+#pragma once
 #include "command-database.hpp"
 #include "browse-apps/browse-apps-view.hpp"
 #include "single-view-command-context.hpp"
 #include "run/system-run-view.hpp"
-#include "theme.hpp"
+#include "utils.hpp"
+#include "xdgpp/desktop-entry/exec.hpp"
 
-class SystemRunCommand : public BuiltinViewCommand<SystemRunView> {
+class SystemRunCommand : public BuiltinCallbackCommand {
   QString id() const override { return "run"; }
   QString name() const override { return "Run Program"; }
   QString description() const override { return "Run any system program, in typical dmenu fashion"; }
   std::vector<QString> keywords() const override { return {"dmenu", "binary", "execute"}; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("terminal").setBackgroundTint(SemanticColor::Orange);
+  }
+  virtual std::vector<CommandArgument> arguments() const override {
+    return {CommandArgument{.name = "command", .placeholder = "command", .required = false}};
+  }
+
+  void execute(CommandController *ctrl) const override {
+    auto ctx = ctrl->context();
+    auto args = ctrl->launchProps().arguments;
+
+    if (args.empty() || args.front().second.isEmpty()) {
+      ctrl->context()->navigation->pushView(new SystemRunView);
+      return;
+    }
+
+    auto command = args.front().second;
+    auto parsedArgs = xdgpp::ExecParser("").parse(command.toStdString());
+
+    ctx->services->appDb()->launchTerminalCommand(Utils::toQStringVec(parsedArgs), {.hold = true});
+    ctx->navigation->closeWindow({.clearRootSearch = true});
   }
 };
 
