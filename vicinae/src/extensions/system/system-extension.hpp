@@ -9,9 +9,9 @@
 
 class SystemRunCommand : public BuiltinCallbackCommand {
   QString id() const override { return "run"; }
-  QString name() const override { return "Run Program"; }
-  QString description() const override { return "Run any system program, in typical dmenu fashion"; }
-  std::vector<QString> keywords() const override { return {"dmenu", "binary", "execute"}; }
+  QString name() const override { return "Run Terminal Program"; }
+  QString description() const override { return "Run a program in a terminal window"; }
+  std::vector<QString> keywords() const override { return {"shell command", "run program"}; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("terminal").setBackgroundTint(SemanticColor::Orange);
   }
