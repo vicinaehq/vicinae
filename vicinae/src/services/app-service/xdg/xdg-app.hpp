@@ -27,22 +27,18 @@ public:
     return ss.empty() ? QString() : ss.at(0);
   }
 
-  std::optional<QString> wmClass() const {
-    return m_entry.startupWMClass().transform(
-        [](const std::string &str) { return QString::fromStdString(str); });
+  bool matchesWindowClass(const QString &target) const override {
+    auto normalizeClass = [](const QString &s) { return s.toLower().remove(".desktop"); };
+    QString normalizedTarget = normalizeClass(target);
+
+    if (auto cl = windowClass(); cl && normalizeClass(cl.value()) == normalizedTarget) { return true; }
+
+    return normalizeClass(id()) == normalizedTarget;
   }
 
-  std::vector<QString> windowClasses() const override {
-    std::vector<QString> classes;
-
-    if (auto wmClass = m_entry.startupWMClass()) {
-      classes.emplace_back(QString::fromStdString(wmClass.value()));
-    }
-
-    classes.emplace_back(program());
-    classes.emplace_back(simplifiedId());
-
-    return classes;
+  std::optional<QString> windowClass() const override {
+    return m_entry.startupWMClass().transform(
+        [](const std::string &str) { return QString::fromStdString(str); });
   }
 
   std::vector<QString> keywords() const override {
