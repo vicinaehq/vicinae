@@ -4,6 +4,7 @@
 #include "single-view-command-context.hpp"
 #include "run/system-run-view.hpp"
 #include "utils.hpp"
+#include "services/toast/toast-service.hpp"
 #include "xdgpp/desktop-entry/exec.hpp"
 
 class SystemRunCommand : public BuiltinCallbackCommand {
@@ -20,6 +21,7 @@ class SystemRunCommand : public BuiltinCallbackCommand {
 
   void execute(CommandController *ctrl) const override {
     auto ctx = ctrl->context();
+    auto toast = ctx->services->toastService();
     auto args = ctrl->launchProps().arguments;
 
     if (args.empty() || args.front().second.isEmpty()) {
@@ -29,6 +31,11 @@ class SystemRunCommand : public BuiltinCallbackCommand {
 
     auto command = args.front().second;
     auto parsedArgs = xdgpp::ExecParser("").parse(command.toStdString());
+
+    if (parsedArgs.empty() || !ProgramDb::programPath(parsedArgs.front())) {
+      toast->failure("Not a valid executable");
+      return;
+    }
 
     ctx->services->appDb()->launchTerminalCommand(Utils::toQStringVec(parsedArgs), {.hold = true});
     ctx->navigation->closeWindow({.clearRootSearch = true});

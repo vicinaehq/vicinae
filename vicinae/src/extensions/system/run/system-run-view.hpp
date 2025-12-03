@@ -1,5 +1,6 @@
 #pragma once
 #include "actions/app/app-actions.hpp"
+#include "clipboard-actions.hpp"
 #include "program-db/program-db.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
@@ -111,15 +112,24 @@ class SystemRunView : public TypedListView<RunProgramListModel> {
     auto appDb = context()->services->appDb();
     auto terminal = appDb->terminalEmulator();
     auto section = panel->createSection();
-    const auto visitor =
-        overloads{[&](const std::filesystem::path &path) {
-                    section->addAction(new OpenInTerminalAction(terminal, {path.c_str()}));
-                  },
-                  [&](const CommandLine &cmdline) {
-                    if (terminal) {
-                      section->addAction(new OpenInTerminalAction(terminal, Utils::toQStringVec(cmdline)));
-                    }
-                  }};
+    auto createTerminalActions = [&](const std::vector<QString> &&args) {
+      if (!terminal) return;
+
+      auto hold = new OpenInTerminalAction(terminal, args);
+      auto noHold = new OpenInTerminalAction(terminal, args, {.hold = false});
+
+      hold->setTitle(QString("Open in %1").arg(terminal->displayName()));
+      noHold->setTitle(QString("Open in %1 (no hold)").arg(terminal->displayName()));
+      section->addAction(hold);
+      section->addAction(noHold);
+    };
+
+    const auto visitor = overloads{
+        [&](const std::filesystem::path &path) {
+          createTerminalActions({path.c_str()});
+          section->addAction(new CopyToClipboardAction(Clipboard::Text(path.c_str()), "Copy exec path"));
+        },
+        [&](const CommandLine &cmdline) { createTerminalActions(Utils::toQStringVec(cmdline)); }};
 
     std::visit(visitor, item);
     return panel;
@@ -127,9 +137,13 @@ class SystemRunView : public TypedListView<RunProgramListModel> {
 
   void initialize() override {
     TypedListView::initialize();
+    setLoading(true);
     setModel(m_model);
     setSearchPlaceholderText("Search for a program to execute...");
-    connect(&m_programDb, &ProgramDb::backgroundScanFinished, this, [this]() { textChanged(searchText()); });
+    connect(&m_programDb, &ProgramDb::backgroundScanFinished, this, [this]() {
+      setLoading(false);
+      textChanged(searchText());
+    });
     m_programDb.backgroundScan();
   }
 
