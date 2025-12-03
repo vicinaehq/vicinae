@@ -1,10 +1,8 @@
 #pragma once
 #include "common.hpp"
-#include "trie.hpp"
 #include "omni-database.hpp"
 #include "services/emoji-service/emoji.hpp"
 #include <qobject.h>
-#include <qtmetamacros.h>
 #include <string_view>
 
 /**
