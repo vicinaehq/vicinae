@@ -1,8 +1,7 @@
 #pragma once
 #include "common.hpp"
 #include "lib/fts_fuzzy.hpp"
-#include "trie.hpp"
-#include "../../../src/ui/image/url.hpp"
+#include "ui/image/url.hpp"
 #include "ui/focus-notifier.hpp"
 #include "ui/form/base-input.hpp"
 #include "ui/loading-bar/horizontal-loading-bar.hpp"
