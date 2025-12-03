@@ -104,6 +104,8 @@ struct LaunchTerminalCommandOptions {
   std::optional<QString> appId;
   std::optional<QString> workingDirectory;
   std::optional<QString> title;
+  // default will be chosen if not specified
+  AbstractApplication *emulator = nullptr;
 };
 
 class AbstractAppDatabase : public QObject {

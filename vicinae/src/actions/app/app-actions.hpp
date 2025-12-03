@@ -17,6 +17,23 @@ private:
   bool m_clearSearch = false;
 };
 
+class OpenInTerminalAction : public AbstractAction {
+public:
+  void setClearSearch(bool value) { m_clearSearch = value; }
+  void execute(ApplicationContext *context) override;
+
+  QString title() const override { return QString("Open in %1").arg(m_emulator->displayName()); }
+  std::optional<ImageURL> icon() const override { return m_emulator->iconUrl(); }
+
+  OpenInTerminalAction(const std::shared_ptr<AbstractApplication> &emulator,
+                       const std::vector<QString> &cmdline);
+
+private:
+  std::shared_ptr<AbstractApplication> m_emulator;
+  std::vector<QString> args;
+  bool m_clearSearch = false;
+};
+
 class OpenRawProgramAction : public AbstractAction {
   QString m_prog;
   std::vector<QString> m_args;

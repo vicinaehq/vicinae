@@ -5,6 +5,23 @@
 #include "services/app-service/app-service.hpp"
 #include "services/toast/toast-service.hpp"
 
+void OpenInTerminalAction::execute(ApplicationContext *ctx) {
+  auto appDb = ctx->services->appDb();
+  auto toast = ctx->services->toastService();
+
+  if (!appDb->launchTerminalCommand(args, {.hold = true, .emulator = m_emulator.get()})) {
+    toast->setToast("Failed to start app", ToastStyle::Danger);
+    return;
+  }
+
+  ctx->navigation->closeWindow();
+  if (m_clearSearch) ctx->navigation->clearSearchText();
+}
+
+OpenInTerminalAction::OpenInTerminalAction(const std::shared_ptr<AbstractApplication> &emulator,
+                                           const std::vector<QString> &cmdline)
+    : m_emulator(emulator), args(cmdline) {}
+
 void OpenAppAction::execute(ApplicationContext *ctx) {
   auto appDb = ctx->services->appDb();
   auto toast = ctx->services->toastService();

@@ -1,4 +1,5 @@
 #include "program-db/program-db.hpp"
+#include "fuzzy/weighted-fuzzy-scorer.hpp"
 #include "utils.hpp"
 #include "vicinae.hpp"
 #include <filesystem>
@@ -17,20 +18,32 @@ ProgramDb::ProgramDb() {
   });
 }
 
-std::vector<fs::path> ProgramDb::search(const QString &query, int limit) const {
-  // simple for now, we will optimize if needed
+std::optional<fs::path> ProgramDb::programPath(std::string_view name) {
+  auto isRegularFile = [](const fs::path &path) { return fs::is_regular_file(path); };
 
-  auto filter = [&](const fs::path &path) {
-    return QString(path.filename().c_str()).contains(query, Qt::CaseInsensitive);
-  };
+  if (isRegularFile(name)) return name;
 
-  std::vector<fs::path> filtered;
+  auto candidates =
+      Omnicast::systemPaths() | std::views::transform([&](const fs::path &path) { return path / name; });
+  std::error_code ec;
 
-  for (const auto &prog : m_progs) {
-    if (!filter(prog)) continue;
-    filtered.emplace_back(prog);
-    if (filtered.size() >= limit) break;
-  }
+  if (auto it = std::ranges::find_if(candidates, isRegularFile); it != candidates.end()) { return *it; }
+
+  return std::nullopt;
+}
+
+std::vector<Scored<fs::path>> ProgramDb::search(std::string_view query, int limit) const {
+  std::vector<Scored<fs::path>> filtered;
+  fuzzy::FuzzyScorer<fs::path> scorer;
+
+  scorer.score(
+      m_progs, query,
+      [](std::string_view query, const fs::path &path) {
+        int score = 0;
+        fts::fuzzy_match(query, path.c_str(), score);
+        return score;
+      },
+      filtered);
 
   return filtered;
 }

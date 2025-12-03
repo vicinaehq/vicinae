@@ -274,14 +274,26 @@ bool XdgAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
                                            const std::optional<QString> &prefix) const {
   if (cmdline.empty()) return false;
 
-  auto terminal = std::static_pointer_cast<XdgApplication>(terminalEmulator());
-  auto exec = terminal->parseExec({}, prefix);
+  auto terminal = opts.emulator;
+
+  if (!terminal) {
+    if (auto term = terminalEmulator()) { terminal = term.get(); }
+  }
+
+  if (!terminal) {
+    qWarning() << "No terminal is available to launch the command";
+    return false;
+  }
+
+  auto xdgApp = static_cast<XdgApplication *>(terminal);
+
+  auto exec = xdgApp->parseExec({}, prefix);
 
   if (exec.empty()) return false;
 
   QStringList argv;
   std::ranges::for_each(exec | std::views::drop(1), [&](auto &&arg) { argv << arg; });
-  auto texec = getTermExec(*terminal);
+  auto texec = getTermExec(*xdgApp);
 
   if (texec.appId && opts.appId) { argv << texec.appId->c_str() << opts.appId.value(); }
   if (texec.title && opts.title) { argv << texec.title->c_str() << opts.title.value(); }
@@ -293,7 +305,7 @@ bool XdgAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
     argv << arg;
   }
 
-  return launchProcess(exec.front(), argv, terminal->data().workingDirectory());
+  return launchProcess(exec.front(), argv, xdgApp->data().workingDirectory());
 }
 
 bool XdgAppDatabase::launchProcess(const QString &prog, const QStringList args,
