@@ -1,4 +1,5 @@
 #pragma once
+#include "common.hpp"
 #include <qfuturewatcher.h>
 #include <qobject.h>
 #include <filesystem>
@@ -9,9 +10,11 @@ class ProgramDb : public QObject {
 public:
   using PathList = std::vector<std::filesystem::path>;
 
+  static std::optional<std::filesystem::path> programPath(std::string_view name);
+
   void scanSync();
   void backgroundScan();
-  PathList search(const QString &programs, int limit = 50) const;
+  std::vector<Scored<std::filesystem::path>> search(std::string_view programs, int limit = 50) const;
   const PathList &programs() const;
 
   ProgramDb();
