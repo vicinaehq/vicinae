@@ -1,29 +1,11 @@
 #pragma once
-#include "common.hpp"
-#include "layout.hpp"
-#include "ui/views/list-view.hpp"
 #include "clipboard-actions.hpp"
-#include "trie.hpp"
-#include <QtConcurrent/QtConcurrent>
+#include "extensions/font/browse/font-list-model.hpp"
+#include "layout.hpp"
 #include "services/config/config-service.hpp"
-#include "ui/image/url.hpp"
-#include "service-registry.hpp"
-#include "font-service.hpp"
-#include "timer.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/markdown/markdown-renderer.hpp"
-#include "ui/omni-list/omni-list.hpp"
 #include "ui/views/typed-list-view.hpp"
-#include <memory>
-#include <qboxlayout.h>
-#include <qfuture.h>
-#include <qfuturewatcher.h>
-#include <qnamespace.h>
-#include <qtextformat.h>
-#include <qvariant.h>
-#include <qwidget.h>
-#include <ranges>
-#include "font-list-model.hpp"
 
 static const QString loremIpsum = R"(
 # Lorem Ipsum Font Showcase
@@ -137,17 +119,18 @@ public:
 
 private:
   QWidget *generateDetail(const ItemType &item) const override {
-    QFont family(QString{item});
+    QFont family(qStringFromStdView(item));
     auto widget = new FontShowcaseWidget;
     widget->setFont(family);
     return widget;
   }
 
   std::unique_ptr<ActionPanelState> createActionPanel(const ItemType &item) const override {
+    QString text = qStringFromStdView(item);
     auto panel = std::make_unique<ActionPanelState>();
     auto section = panel->createSection();
-    QFont family(QString{item});
-    auto copyFamily = new CopyToClipboardAction(Clipboard::Text(QString(item)), "Copy font family");
+    QFont family(text);
+    auto copyFamily = new CopyToClipboardAction(Clipboard::Text(text), "Copy font family");
     auto setFont = new SetAppFont(family);
 
     copyFamily->setPrimary(true);
