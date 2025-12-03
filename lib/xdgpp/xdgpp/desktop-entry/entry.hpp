@@ -184,7 +184,7 @@ private:
   DesktopEntry(const std::filesystem::path &path, const ParseOptions &opts = {});
 
   std::optional<std::string> m_error;
-  Type m_type;
+  Type m_type = Type::Application;
   std::string m_version;
   std::string m_name;
   std::string m_genericName;
