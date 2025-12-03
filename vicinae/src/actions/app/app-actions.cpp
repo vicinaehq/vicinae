@@ -1,6 +1,7 @@
 #include "actions/app/app-actions.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
+#include "services/app-service/abstract-app-db.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/toast/toast-service.hpp"
@@ -9,7 +10,9 @@ void OpenInTerminalAction::execute(ApplicationContext *ctx) {
   auto appDb = ctx->services->appDb();
   auto toast = ctx->services->toastService();
 
-  if (!appDb->launchTerminalCommand(args, {.hold = true, .emulator = m_emulator.get()})) {
+  m_opts.emulator = m_emulator.get();
+
+  if (!appDb->launchTerminalCommand(m_args, m_opts)) {
     toast->setToast("Failed to start app", ToastStyle::Danger);
     return;
   }
@@ -19,8 +22,9 @@ void OpenInTerminalAction::execute(ApplicationContext *ctx) {
 }
 
 OpenInTerminalAction::OpenInTerminalAction(const std::shared_ptr<AbstractApplication> &emulator,
-                                           const std::vector<QString> &cmdline)
-    : m_emulator(emulator), args(cmdline) {}
+                                           const std::vector<QString> &cmdline,
+                                           const LaunchTerminalCommandOptions &opts)
+    : m_emulator(emulator), m_args(cmdline), m_opts(opts) {}
 
 void OpenAppAction::execute(ApplicationContext *ctx) {
   auto appDb = ctx->services->appDb();
