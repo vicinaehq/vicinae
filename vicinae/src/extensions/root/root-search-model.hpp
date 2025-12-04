@@ -16,12 +16,16 @@ struct FavoriteItem {
   const RootItem *item;
 };
 
+struct RootSearchResult {
+  const RootItemManager::ScoredItem *scored;
+};
+
 struct LinkItem {
   std::shared_ptr<AbstractApplication> app;
   QString url;
 };
 
-using RootItemVariant = std::variant<AbstractCalculatorBackend::CalculatorResult, const RootItem *,
+using RootItemVariant = std::variant<AbstractCalculatorBackend::CalculatorResult, RootSearchResult,
                                      std::filesystem::path, FallbackItem, FavoriteItem, LinkItem>;
 
 struct SearchResults {

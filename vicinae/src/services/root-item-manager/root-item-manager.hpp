@@ -232,12 +232,13 @@ public:
     std::vector<std::string> keywords;
     RootItemMetadata *meta;
 
-    int fuzzyScore(std::string_view pattern) const;
+    float fuzzyScore(std::string_view pattern) const;
   };
 
   struct ScoredItem {
     std::string_view alias;
-    int score = 0;
+    RootItemMetadata *meta = nullptr;
+    double score = 0;
     // we return the shared ptr so that callers can keep a ref to it if needed,
     // but we don't want to increment the ref count as part of the search process.
     std::reference_wrapper<ItemPtr> item;

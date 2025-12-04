@@ -2,6 +2,7 @@
 #include "lib/fts_fuzzy.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include <algorithm>
+#include "lib/jaro.hpp"
 #include <qlogging.h>
 #include <qtconcurrentfilter.h>
 #include <ranges>
@@ -157,15 +158,17 @@ bool RootItemManager::upsertProvider(const RootProvider &provider) {
   return true;
 }
 
-int RootItemManager::SearchableRootItem::fuzzyScore(std::string_view pattern) const {
-  int max = 0;
-  int score = 0;
-  if (fts::fuzzy_match(pattern, title, score)) { max = std::max(max, score); }
-  if (fts::fuzzy_match(pattern, meta->alias, score)) { max = std::max(max, score); }
-  if (fts::fuzzy_match(pattern, subtitle, score)) { max = std::max(max, static_cast<int>(score * 0.6)); }
+float RootItemManager::SearchableRootItem::fuzzyScore(std::string_view pattern) const {
+  float max = 0;
+
+  if (float score = fuzz::jaroWinklerLatinText(pattern, title)) { max = std::max(max, score); }
+  if (float score = fuzz::jaroWinklerLatinText(pattern, meta->alias)) { max = std::max(max, score); }
+  if (float score = fuzz::jaroWinklerLatinText(pattern, subtitle)) { max = std::max(max, score * 0.9f); }
+
   for (const auto &kw : keywords) {
-    if (fts::fuzzy_match(pattern, kw, score)) { max = std::max(max, static_cast<int>(score * 0.3)); }
+    if (auto score = fuzz::jaroWinklerSimilarity(pattern, kw)) { max = std::max(max, score * 0.6f); }
   }
+
   return max;
 }
 
@@ -180,12 +183,14 @@ std::span<RootItemManager::ScoredItem> RootItemManager::search(const QString &qu
   for (auto &item : m_items) {
     if (!item.meta->isEnabled && !opts.includeDisabled) continue;
     if (item.meta->favorite && !opts.includeFavorites) continue;
-    int fuzzyScore = item.fuzzyScore(patternView);
+    double fuzzyScore = item.fuzzyScore(patternView);
     if (!pattern.empty() && !fuzzyScore) continue;
     double frequency = std::log1p(item.meta->visitCount) * 0.5;
     // TODO: re-introduce frecency component
-    int finalScore = fuzzyScore * (1.0 + frequency);
-    m_scoredItems.emplace_back(ScoredItem{.alias = item.meta->alias, .score = finalScore, .item = item.item});
+    double finalScore = fuzzyScore;
+
+    m_scoredItems.emplace_back(
+        ScoredItem{.alias = item.meta->alias, .meta = item.meta, .score = finalScore, .item = item.item});
   }
 
   // we need stable sort to avoid flickering when updating quickly
@@ -196,8 +201,20 @@ std::span<RootItemManager::ScoredItem> RootItemManager::search(const QString &qu
       // always prioritize matching aliases over score
       if (aa - ab) { return aa > ab; }
     }
+
+    auto ascore = computeScore(*a.meta, a.item.get()->baseScoreWeight());
+    auto bscore = computeScore(*b.meta, b.item.get()->baseScoreWeight());
+
     return a.score > b.score;
+
+    // return ascore * std::max(1, a.score) > bscore * std::max(1, b.score);
   });
+
+  /*
+  for (const auto &scored : m_scoredItems) {
+    qDebug() << scored.item.get()->uniqueId() << scored.score;
+  }
+  */
 
   // timer.time("root search");
 
