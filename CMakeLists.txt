@@ -36,7 +36,6 @@ option(USE_SYSTEM_CMARK_GFM "Use system cmark-gfm (github's fork of cmark) inste
 option(USE_SYSTEM_MINIZIP "Use system minizip instead of building it from source" ON)
 option(USE_SYSTEM_LAYER_SHELL "Use system qt layer shell instead of building it from source" ON)
 option(USE_SYSTEM_QT_KEYCHAIN "Use system qt-keychain instead of building it from source. Note: still depends on system libsecret." ON)
-option(USE_SYSTEM_RAPIDFUZZ "Use system version of the rapidfuzz-cpp header only library" ON)
 option(LIBQALCULATE_BACKEND "Compile in support for the Qalculate! calculator backend" ON)
 option(USE_PRECOMPILED_HEADERS "Use precompiled headers to speed up compilation" ON)
 
@@ -71,7 +70,6 @@ if (PREFER_STATIC_LIBS)
 	set(USE_SYSTEM_MINIZIP OFF)
 	set(USE_SYSTEM_LAYER_SHELL OFF)
 	set(USE_SYSTEM_QT_KEYCHAIN OFF)
-	set(USE_SYSTEM_RAPIDFUZZ OFF)
 	set(LIBQALCULATE_BACKEND OFF)
 endif()
 
@@ -107,14 +105,6 @@ configure_file(
 
 set(CMARK_LIBRARY "cmark-gfm")
 set(CMARK_EXT_LIBRARY "cmark-gfm-extensions")
-
-if (NOT USE_SYSTEM_RAPIDFUZZ)
-	include(RapidFuzz)
-	checkout_rapidfuzz()
-	# there is probably a better way, but the headers are not part of the build output
-	# so cmake won't find them
-	include_directories(${CMAKE_CURRENT_BINARY_DIR}/_deps/rapidfuzz-src/)
-endif()
 
 if (NOT USE_SYSTEM_QT_KEYCHAIN)
 	include(QtKeychain)

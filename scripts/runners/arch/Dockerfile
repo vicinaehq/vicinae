@@ -27,8 +27,7 @@ RUN pacman -Syu --needed --noconfirm \
     libqalculate \
     minizip \
     gcc14	\
-    qtkeychain-qt6	\
-    rapidfuzz-cpp
+    qtkeychain-qt6
 
 # Download and install GitHub Actions runner
 WORKDIR /home/runner
