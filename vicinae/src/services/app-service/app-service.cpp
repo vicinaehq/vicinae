@@ -1,7 +1,6 @@
 #include "app-service.hpp"
 #include "services/app-service/xdg/xdg-app-database.hpp"
 #include "omni-database.hpp"
-#include "utils.hpp"
 #include <filesystem>
 #include <qcontainerfwd.h>
 #include <qfilesystemwatcher.h>
@@ -44,21 +43,17 @@ std::unique_ptr<AbstractAppDatabase> AppService::createLocalProvider() {
 }
 
 std::shared_ptr<AbstractApplication> AppService::terminalEmulator() const {
-  if (auto emulator = m_provider->findDefaultOpener("x-scheme-handler/terminal")) { return emulator; }
-
-  auto isTerminal = [](auto &&app) { return app->isTerminalEmulator(); };
-  auto result = list() | std::views::filter(isTerminal) | std::views::take(1);
-
-  if (result.empty()) return nullptr;
-
-  return *result.begin();
+  return m_provider->terminalEmulator();
 }
 
-bool AppService::launchRaw(const QString &prog, const std::vector<QString> &args) {
+bool AppService::launchRaw(const std::vector<QString> &args) {
+  if (args.empty()) { return false; }
+
   QProcess process;
+  const QString &prog = args.at(0);
 
   process.setProgram(prog);
-  process.setArguments(ranges_to<QStringList>(args));
+  process.setArguments(args | std::views::drop(1) | std::ranges::to<QStringList>());
   process.setStandardOutputFile(QProcess::nullDevice());
   process.setStandardErrorFile(QProcess::nullDevice());
 

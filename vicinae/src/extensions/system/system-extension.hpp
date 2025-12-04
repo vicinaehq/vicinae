@@ -19,6 +19,21 @@ class SystemRunCommand : public BuiltinCallbackCommand {
     return {CommandArgument{.name = "command", .placeholder = "command", .required = false}};
   }
 
+  virtual std::vector<Preference> preferences() const override {
+    std::vector<Preference::DropdownData::Option> defaultActions = {
+        {"Run in terminal", "run-in-terminal"},
+        {"Run in terminal (hold)", "run-in-terminal-hold"},
+        {"Run directly", "run"},
+    };
+    Preference defaultAction = Preference::makeDropdown("default-action", defaultActions);
+
+    defaultAction.setTitle("Default Action");
+    defaultAction.setDescription("The default action to run on pressing return");
+    defaultAction.setDefaultValue("run-in-terminal");
+
+    return {defaultAction};
+  }
+
   void execute(CommandController *ctrl) const override {
     auto ctx = ctrl->context();
     auto toast = ctx->services->toastService();
@@ -37,7 +52,23 @@ class SystemRunCommand : public BuiltinCallbackCommand {
       return;
     }
 
-    ctx->services->appDb()->launchTerminalCommand(Utils::toQStringVec(parsedArgs), {.hold = true});
+    auto appDb = ctx->services->appDb();
+    auto argv = Utils::toQStringVec(parsedArgs);
+
+    using DA = SystemRunView::DefaultAction;
+
+    switch (SystemRunView::parseDefaultAction(ctrl->preferenceValues().value("default-action").toString())) {
+    case DA::Run:
+      appDb->launchRaw(argv);
+      break;
+    case DA::RunInTerminal:
+      appDb->launchTerminalCommand(argv);
+      break;
+    case DA::RunInTerminalHold:
+      appDb->launchTerminalCommand(argv, {.hold = true});
+      break;
+    }
+
     ctx->navigation->closeWindow({.clearRootSearch = true});
   }
 };

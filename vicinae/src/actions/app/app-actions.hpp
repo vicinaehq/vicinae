@@ -42,16 +42,16 @@ private:
 };
 
 class OpenRawProgramAction : public AbstractAction {
-  QString m_prog;
-  std::vector<QString> m_args;
-  bool m_clearSearch = false;
+public:
+  OpenRawProgramAction(const std::vector<QString> args);
 
   void execute(ApplicationContext *context) override;
-
-public:
   void setClearSearch(bool value) { m_clearSearch = value; }
   QString title() const override { return "Execute program"; }
   std::optional<ImageURL> icon() const override { return ImageURL::builtin("terminal"); }
 
-  OpenRawProgramAction(const QString &prog, const std::vector<QString> args);
+private:
+  QString m_prog;
+  std::vector<QString> m_args;
+  bool m_clearSearch = false;
 };

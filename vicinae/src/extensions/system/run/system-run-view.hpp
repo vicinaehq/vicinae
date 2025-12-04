@@ -8,6 +8,7 @@
 #include "ui/vlist/common/vertical-list-model.hpp"
 #include "utils/utils.hpp"
 #include "xdgpp/desktop-entry/exec.hpp"
+#include <algorithm>
 
 using CommandLine = std::vector<std::string>;
 
@@ -94,6 +95,16 @@ private:
 };
 
 class SystemRunView : public TypedListView<RunProgramListModel> {
+public:
+  enum class DefaultAction { RunInTerminal, RunInTerminalHold, Run };
+
+  static DefaultAction parseDefaultAction(QStringView s) {
+    if (s == "run-in-terminal") return DefaultAction::RunInTerminal;
+    if (s == "run-in-terminal-hold") return DefaultAction::RunInTerminalHold;
+    return DefaultAction::Run;
+  }
+
+private:
   void textChanged(const QString &text) override {
     auto str = text.trimmed().toStdString();
     auto ss = xdgpp::ExecParser("").parse(str);
@@ -117,11 +128,27 @@ class SystemRunView : public TypedListView<RunProgramListModel> {
 
       auto hold = new OpenInTerminalAction(terminal, args);
       auto noHold = new OpenInTerminalAction(terminal, args, {.hold = false});
+      auto runRaw = new OpenRawProgramAction(args);
 
-      hold->setTitle(QString("Open in %1").arg(terminal->displayName()));
-      noHold->setTitle(QString("Open in %1 (no hold)").arg(terminal->displayName()));
-      section->addAction(hold);
-      section->addAction(noHold);
+      hold->setTitle(QString("Open in %1 (hold)").arg(terminal->displayName()));
+      noHold->setTitle(QString("Open in %1").arg(terminal->displayName()));
+
+      std::array<AbstractAction *, 3> actions = {hold, noHold, runRaw};
+
+      switch (m_defaultAction) {
+      case DefaultAction::RunInTerminal:
+        std::iter_swap(actions.begin(), std::ranges::find(actions, noHold));
+        break;
+      case DefaultAction::Run:
+        std::iter_swap(actions.begin(), std::ranges::find(actions, runRaw));
+        break;
+      default:
+        break;
+      }
+
+      for (auto action : actions) {
+        section->addAction(action);
+      }
     };
 
     const auto visitor = overloads{
@@ -137,6 +164,7 @@ class SystemRunView : public TypedListView<RunProgramListModel> {
 
   void initialize() override {
     TypedListView::initialize();
+    m_defaultAction = parseDefaultAction(command()->preferenceValues().value("default-action").toString());
     setLoading(true);
     setModel(m_model);
     setSearchPlaceholderText("Search for a program to execute...");
@@ -150,4 +178,5 @@ class SystemRunView : public TypedListView<RunProgramListModel> {
 private:
   RunProgramListModel *m_model = new RunProgramListModel;
   ProgramDb m_programDb;
+  DefaultAction m_defaultAction;
 };
