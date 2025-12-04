@@ -47,7 +47,7 @@ void OpenRawProgramAction::execute(ApplicationContext *ctx) {
   auto appDb = ctx->services->appDb();
   auto toast = ctx->services->toastService();
 
-  if (!appDb->launchRaw(m_prog, m_args)) {
+  if (!appDb->launchRaw(m_args)) {
     toast->failure("Failed to start app");
     return;
   }
@@ -56,5 +56,4 @@ void OpenRawProgramAction::execute(ApplicationContext *ctx) {
   if (m_clearSearch) ctx->navigation->clearSearchText();
 }
 
-OpenRawProgramAction::OpenRawProgramAction(const QString &prog, const std::vector<QString> args)
-    : m_prog(prog), m_args(args) {}
+OpenRawProgramAction::OpenRawProgramAction(const std::vector<QString> args) : m_args(args) {}
