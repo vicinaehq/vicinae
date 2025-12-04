@@ -59,8 +59,7 @@ bool WindowManager::focusApp(const AbstractApplication &app) const {
 }
 
 AbstractWindowManager::WindowList WindowManager::findAppWindows(const AbstractApplication &app) const {
-  return m_provider->listWindowsSync() |
-         std::views::filter([&](auto &&win) { return app.matchesWindowClass(win->wmClass()); }) |
+  return m_windows | std::views::filter([&](auto &&win) { return app.matchesWindowClass(win->wmClass()); }) |
          std::ranges::to<std::vector>();
 }
 
