@@ -4,7 +4,6 @@
   cmake,
   pkg-config,
   kdePackages,
-  rapidfuzz-cpp,
   protobuf,
   grpc-tools,
   nodejs,
@@ -82,7 +81,6 @@ stdenv.mkDerivation rec {
     nodejs
     pkg-config
     qt6.wrapQtAppsHook
-    rapidfuzz-cpp
     protoc-gen-js
     protobuf
     grpc-tools
