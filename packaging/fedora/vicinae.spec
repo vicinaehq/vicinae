@@ -53,6 +53,7 @@ cp %{SOURCE1} cmark-gfm-0.29.0.gfm.13.tar.gz
 %build
 %cmake -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
+  -DBUILD_SHARED_LIBS=OFF \
   -DTYPESCRIPT_EXTENSIONS=ON \
   -DINSTALL_NODE_MODULES=ON \
   -DWAYLAND_LAYER_SHELL=OFF \
