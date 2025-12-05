@@ -1,7 +1,7 @@
 #include "contribs.hpp"
 
 static std::vector<Contributor::Contributor> CONTRIB_LIST = {
-	Contributor::Contributor{.login = "aurelien-brabant", .resource = ":contribs/aurelien-brabant", .contribs = 1145 },
+	Contributor::Contributor{.login = "aurelleb", .resource = ":contribs/aurelien-brabant", .contribs = 1145 },
 Contributor::Contributor{.login = "cilginc", .resource = ":contribs/cilginc", .contribs = 40 },
 Contributor::Contributor{.login = "quadratech188", .resource = ":contribs/quadratech188", .contribs = 25 },
 Contributor::Contributor{.login = "dagimg-dot", .resource = ":contribs/dagimg-dot", .contribs = 24 },
