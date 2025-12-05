@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <xdgpp/xdgpp.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <cstdlib>
@@ -18,8 +19,8 @@ TEST_CASE("XDG_DATA_DIRS should provide spec-compliant defaults", XDGPP_GROUP) {
   unsetenv("XDG_DATA_DIRS");
   auto dirs = xdgpp::dataDirs();
 
-  REQUIRE(std::ranges::find(dirs, "/usr/local/share") != dirs.end());
-  REQUIRE(std::ranges::find(dirs, "/usr/share") != dirs.end());
+  REQUIRE(std::ranges::contains(dirs, "/usr/local/share"));
+  REQUIRE(std::ranges::contains(dirs, "/usr/share"));
 }
 
 TEST_CASE("XDG_CONFIG_DIRS should provide spec-compliant defaults", XDGPP_GROUP) {
