@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <xdgpp/xdgpp.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <string_view>
@@ -32,7 +33,7 @@ StartupWMClass=firefox
   REQUIRE(file.isApplication());
   REQUIRE(file.icon() == "firefox-bin");
   REQUIRE(file.name() == "Mozilla Firefox (bin)");
-  REQUIRE(std::ranges::find(file.mimes(), "application/pdf") != file.mimes().end());
+  REQUIRE((std::ranges::contains(file.mimes(), std::string("application/pdf"))));
   REQUIRE(file.comment() == "Browse the Web");
   REQUIRE(file.genericName() == "Web Browser");
   REQUIRE(file.startupWMClass() == "firefox");

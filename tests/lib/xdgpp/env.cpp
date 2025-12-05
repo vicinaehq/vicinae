@@ -19,15 +19,15 @@ TEST_CASE("XDG_DATA_DIRS should provide spec-compliant defaults", XDGPP_GROUP) {
   unsetenv("XDG_DATA_DIRS");
   auto dirs = xdgpp::dataDirs();
 
-  REQUIRE(std::ranges::contains(dirs, "/usr/local/share"));
-  REQUIRE(std::ranges::contains(dirs, "/usr/share"));
+  REQUIRE(std::ranges::contains(dirs, fs::path("/usr/local/share")));
+  REQUIRE(std::ranges::contains(dirs, fs::path("/usr/share")));
 }
 
 TEST_CASE("XDG_CONFIG_DIRS should provide spec-compliant defaults", XDGPP_GROUP) {
   unsetenv("XDG_CONFIG_DIRS");
   auto dirs = xdgpp::configDirs();
 
-  REQUIRE(std::ranges::find(dirs, "/etc/xdg") != dirs.end());
+  REQUIRE(std::ranges::contains(dirs, fs::path("/etc/xdg")));
 }
 
 TEST_CASE("XDG_CONFIG_HOME should provide a spec-compliant default", XDGPP_GROUP) {
