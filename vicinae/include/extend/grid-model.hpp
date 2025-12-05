@@ -4,7 +4,7 @@
 #include "extend/image-model.hpp"
 #include "extend/pagination-model.hpp"
 #include "extend/dropdown-model.hpp"
-#include "ui/image/image.hpp"
+#include "ui/image/url.hpp"
 #include "ui/omni-grid/grid-item-content-widget.hpp"
 #include <qjsonobject.h>
 
@@ -12,24 +12,24 @@ enum GridFit { GridContain, GridFill };
 
 struct ImageContentWithTooltip {
   ImageLikeModel value;
-  std::optional<QString> tooltip;
+  std::optional<std::string> tooltip;
 };
 
 struct GridItemViewModel {
   using Content = std::variant<ImageLikeModel, ColorLike>;
 
-  QString id;
-  QString title;
-  QString subtitle;
+  std::string id;
+  std::string title;
+  std::string subtitle;
   Content content;
-  std::optional<QString> tooltip;
-  std::vector<QString> keywords;
+  std::optional<std::string> tooltip;
+  std::vector<std::string> keywords;
   std::optional<ActionPannelModel> actionPannel;
 };
 
 struct GridSectionModel {
-  QString title;
-  QString subtitle;
+  std::string title;
+  std::string subtitle;
 
   std::optional<double> aspectRatio;
   std::optional<int> columns;
@@ -53,24 +53,24 @@ struct GridModel {
   GridItemContentWidget::Inset inset = GridItemContentWidget::Inset::None;
   ObjectFit fit = ObjectFit::Contain;
 
-  QString navigationTitle;
-  QString searchPlaceholderText;
-  std::optional<QString> onSelectionChanged;
-  std::optional<QString> onSearchTextChange;
-  std::optional<QString> searchText;
+  std::string navigationTitle;
+  std::string searchPlaceholderText;
+  std::optional<std::string> onSelectionChanged;
+  std::optional<std::string> onSearchTextChange;
+  std::optional<std::string> searchText;
   std::vector<GridChild> items;
   std::optional<ActionPannelModel> actions;
   std::optional<EmptyViewModel> emptyView;
-  std::optional<QString> selectedItemId;
+  std::optional<std::string> selectedItemId;
   std::optional<PaginationModel> pagination;
   std::optional<GridSearchBarAccessory> searchBarAccessory;
 };
 
 class GridModelParser {
-  GridItemContentWidget::Inset parseInset(const QString &s);
+  GridItemContentWidget::Inset parseInset(const std::string &s);
   GridItemViewModel parseListItem(const QJsonObject &instance, size_t index);
   GridSectionModel parseSection(const QJsonObject &instance);
-  ObjectFit parseFit(const QString &fit);
+  ObjectFit parseFit(const std::string &fit);
 
 public:
   GridModelParser();

@@ -1,5 +1,5 @@
 #include "emoji-service.hpp"
-#include "fuzzy/weighted-fuzzy-scorer.hpp"
+#include "lib/fzf.hpp"
 #include "omni-database.hpp"
 #include "services/emoji-service/emoji.hpp"
 #include <qlogging.h>
@@ -17,13 +17,16 @@ void EmojiService::loadKeywords() {
 std::span<Scored<const EmojiData *>> EmojiService::search(std::string_view query) const {
   static std::vector<Scored<const EmojiData *>> searchResults;
   auto withScore = [&](const EmojiData &data) -> Scored<const EmojiData *> {
-    fuzzy::WeightedScorer scorer;
-    scorer.add(std::string(data.name), 1);
-    scorer.add(std::string(data.group), 0.7);
-    for (const auto &kw : data.keywords) {
-      scorer.add(std::string(kw), 0.3);
-    }
-    return {&data, scorer.score(std::string{query})};
+    using WS = fzf::WeightedString;
+
+    auto fields = std::initializer_list<WS>{WS{data.name, 1.0f}, WS{data.group, 0.7f}};
+    auto kws = data.keywords | std::views::transform([](auto &&s) {
+                 return WS{s, 1.0f};
+               }); // keywords are manually set by the user, they have high relevance
+    auto ss = std::views::concat(fields, kws);
+    int score = fzf::defaultMatcher.fuzzy_match_v2_score_query(ss, query);
+
+    return {&data, score};
   };
 
   auto filtered = StaticEmojiDatabase::orderedList() | std::views::transform(withScore) |

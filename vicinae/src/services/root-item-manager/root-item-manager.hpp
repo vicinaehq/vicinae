@@ -233,7 +233,7 @@ public:
     RootItemMetadata *meta;
     std::string searchStr;
 
-    float fuzzyScore(std::string_view pattern) const;
+    float fuzzyScore(std::string_view pattern = "") const;
   };
 
   struct ScoredItem {

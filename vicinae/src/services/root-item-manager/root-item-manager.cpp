@@ -100,13 +100,6 @@ void RootItemManager::updateIndex() {
       SearchableRootItem sitem;
 
       sitem.item = item;
-      std::initializer_list<std::string> ss = {item->displayName().toStdString(),
-                                               item->subtitle().toStdString()};
-      sitem.searchStr = std::views::concat(ss, item->keywords() | std::views::transform([](auto &&s) {
-                                                 return s.toStdString();
-                                               })) |
-                        std::views::join_with(' ') | std::ranges::to<std::string>();
-
       sitem.title = item->displayName().toStdString();
       sitem.subtitle = item->subtitle().toStdString();
       sitem.keywords = item->keywords() | std::views::transform([](auto &&s) { return s.toStdString(); }) |
@@ -172,20 +165,18 @@ float RootItemManager::SearchableRootItem::fuzzyScore(std::string_view pattern) 
   std::initializer_list<WS> ss = {{title, 1.0f}, {subtitle, 0.6f}};
   auto kws = keywords | std::views::transform([](auto &&kw) { return WS{kw, 0.3f}; });
   auto strs = std::views::concat(ss, kws);
-  float score = fzf::defaultMatcher.fuzzy_match_v2_score_query(strs, pattern, false);
+  float score = pattern.empty() ? 1 : fzf::defaultMatcher.fuzzy_match_v2_score_query(strs, pattern, false);
   double frequencyScore = std::log(1 + meta->visitCount * 0.1);
   float frequencyWeight = 0.2;
 
-  // auto now = std::chrono::high_resolution_clock::now();
-  // auto hoursSince = std::chrono::duration_cast<std::chrono::hours>(now - *meta->lastVisitedAt).count()
-  // / 24.0;
+  // TODO: add recency support
 
   return score * (1 + frequencyScore * frequencyWeight);
 }
 
 std::span<RootItemManager::ScoredItem> RootItemManager::search(const QString &query,
                                                                const RootItemPrefixSearchOptions &opts) {
-  Timer timer;
+  // Timer timer;
   std::string pattern = query.toStdString();
   std::string_view patternView = pattern;
 
@@ -195,13 +186,11 @@ std::span<RootItemManager::ScoredItem> RootItemManager::search(const QString &qu
     if (!item.meta->isEnabled && !opts.includeDisabled) continue;
     if (item.meta->favorite && !opts.includeFavorites) continue;
     double fuzzyScore = item.fuzzyScore(patternView);
-    if (!pattern.empty() && !fuzzyScore) continue;
-    double frequency = std::log1p(item.meta->visitCount) * 0.5;
-    // TODO: re-introduce frecency component
-    double finalScore = fuzzyScore;
+
+    if (!fuzzyScore) { continue; }
 
     m_scoredItems.emplace_back(
-        ScoredItem{.alias = item.meta->alias, .meta = item.meta, .score = finalScore, .item = item.item});
+        ScoredItem{.alias = item.meta->alias, .meta = item.meta, .score = fuzzyScore, .item = item.item});
   }
 
   // we need stable sort to avoid flickering when updating quickly
@@ -213,15 +202,10 @@ std::span<RootItemManager::ScoredItem> RootItemManager::search(const QString &qu
       if (aa - ab) { return aa > ab; }
     }
 
-    auto ascore = computeScore(*a.meta, a.item.get()->baseScoreWeight());
-    auto bscore = computeScore(*b.meta, b.item.get()->baseScoreWeight());
-
     return a.score > b.score;
-
-    // return ascore * std::max(1, a.score) > bscore * std::max(1, b.score);
   });
 
-  timer.time("root search");
+  // timer.time("root search");
 
   return m_scoredItems;
 }
@@ -774,10 +758,8 @@ double RootItemManager::computeScore(const RootItemMetadata &meta, int weight) c
 std::vector<RootItemManager::SearchableRootItem> RootItemManager::queryFavorites(std::optional<int> limit) {
   auto isFavorite = [](auto &&item) { return item.meta->favorite; };
   auto favorites = m_items | std::views::filter(isFavorite) | std::ranges::to<std::vector>();
-  std::ranges::sort(favorites, [this](const auto &a, const auto &b) {
-    auto ascore = computeScore(*a.meta, a.item->baseScoreWeight());
-    auto bscore = computeScore(*b.meta, b.item->baseScoreWeight());
-    return ascore > bscore;
+  std::ranges::sort(favorites, [this](const SearchableRootItem &a, const SearchableRootItem &b) {
+    return a.fuzzyScore() > b.fuzzyScore();
   });
 
   if (limit && favorites.size() > limit) { favorites.resize(limit.value()); }

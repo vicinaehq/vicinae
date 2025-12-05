@@ -137,10 +137,12 @@ void ExtensionGridComponent::render(const RenderModel &baseModel) {
 
   setSearchAccessoryVisiblity(newModel.searchBarAccessory.has_value() && isVisible());
 
-  if (!newModel.navigationTitle.isEmpty()) { setNavigationTitle(newModel.navigationTitle); }
-  if (!newModel.searchPlaceholderText.isEmpty()) { setSearchPlaceholderText(newModel.searchPlaceholderText); }
+  if (!newModel.navigationTitle.empty()) { setNavigationTitle(newModel.navigationTitle.c_str()); }
+  if (!newModel.searchPlaceholderText.empty()) {
+    setSearchPlaceholderText(newModel.searchPlaceholderText.c_str());
+  }
 
-  if (auto text = newModel.searchText) { setSearchText(*text); }
+  if (auto text = newModel.searchText) { setSearchText(text->c_str()); }
 
   if (newModel.throttle != _model.throttle) {
     _debounce->stop();
@@ -233,7 +235,7 @@ void ExtensionGridComponent::onSelectionChanged(const GridItemViewModel *next) {
   } else {
     clearActions();
   }
-  if (auto handler = _model.onSelectionChanged) { notify(*handler, {next->id}); }
+  if (auto handler = _model.onSelectionChanged) { notify(handler->c_str(), {next->id.c_str()}); }
 }
 
 void ExtensionGridComponent::handleDropdownSelectionChanged(const SelectorInput::AbstractItem &item) {
@@ -267,7 +269,7 @@ void ExtensionGridComponent::handleDebouncedSearchNotification() {
     // flag next render to reset the search selection
     _shouldResetSelection = !_model.filtering;
 
-    notify(*handler, {text});
+    notify(handler->c_str(), {text});
   }
 
   if (m_list->empty()) {

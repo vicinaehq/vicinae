@@ -1,5 +1,5 @@
 #include "program-db/program-db.hpp"
-#include "fuzzy/weighted-fuzzy-scorer.hpp"
+#include "lib/fzf.hpp"
 #include "utils.hpp"
 #include "vicinae.hpp"
 #include <filesystem>
@@ -34,16 +34,15 @@ std::optional<fs::path> ProgramDb::programPath(std::string_view name) {
 
 std::vector<Scored<fs::path>> ProgramDb::search(std::string_view query, int limit) const {
   std::vector<Scored<fs::path>> filtered;
-  fuzzy::FuzzyScorer<fs::path> scorer;
 
-  scorer.score(
-      m_progs, query,
-      [](std::string_view query, const fs::path &path) {
-        int score = 0;
-        fts::fuzzy_match(query, path.c_str(), score);
-        return score;
-      },
-      filtered);
+  for (const auto &prog : m_progs) {
+    auto result = fzf::defaultMatcher.fuzzy_match_v2(prog.c_str(), query, false, false);
+    if (result.matched() || query.empty()) {
+      filtered.push_back({prog, result.score});
+    }
+  }
+
+  std::ranges::stable_sort(filtered, std::greater{});
 
   return filtered;
 }

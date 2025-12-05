@@ -113,7 +113,8 @@ public:
     int globalScore = 0;
     int globalCount = 0;
     auto words = std::views::split(query, std::string_view{" "}) |
-                 std::views::transform([](auto &&part) { return std::string_view{part}; });
+                 std::views::transform([](auto &&part) { return std::string_view{part}; }) |
+                 std::views::filter([](auto &&s) { return !s.empty(); });
 
     for (auto word : words) {
       int maxScore = std::ranges::max(weightedStrs | std::views::transform([&](const WeightedString &str) {
@@ -127,6 +128,12 @@ public:
     }
 
     return globalCount != 0 ? globalScore / globalCount : 0;
+  }
+
+  int fuzzy_match_v2_score_query(std::string_view text, std::string_view query,
+                                 bool case_sensitive = false) const {
+    std::initializer_list<WeightedString> lst{{text, 1.0f}};
+    return fuzzy_match_v2_score_query(std::views::concat(lst), query, case_sensitive);
   }
 
   Result fuzzy_match_v2(std::string_view text, std::string_view pattern, bool case_sensitive = false,

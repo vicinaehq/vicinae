@@ -1,8 +1,9 @@
 #pragma once
 #include "extend/list-model.hpp"
-#include "fuzzy/weighted-fuzzy-scorer.hpp"
+#include "lib/fzf.hpp"
 #include "ui/default-list-item-widget/default-list-item-widget.hpp"
 #include "ui/vlist/common/section-model.hpp"
+#include <ranges>
 
 class ExtensionListModel : public vicinae::ui::SectionListModel<const ListItemViewModel *> {
 public:
@@ -13,24 +14,23 @@ public:
   void reload() { setFilter(m_query); }
 
   void setFilter(const QString &query) {
+    std::string q = query.toStdString();
+
     m_query = query;
     m_sortedSections.clear();
 
     SectionData m_anonymousSection;
 
     const auto toScored = [&](const ListItemViewModel &item) {
-      static const constexpr double TITLE_WEIGHT = 1;
-      static const constexpr double SUBTITLE_WEIGHT = 0.6;
-      static const constexpr double KEYWORD_WEIGHT = 0.3;
-      fuzzy::WeightedScorer scorer;
+      static const constexpr float TITLE_WEIGHT = 1.0f;
+      static const constexpr float SUBTITLE_WEIGHT = 0.6f;
+      static const constexpr float KEYWORD_WEIGHT = 0.3f;
 
-      scorer.reserve(2 + item.keywords.size());
-      scorer.add(item.title.toStdString(), TITLE_WEIGHT);
-      scorer.add(item.subtitle.toStdString(), SUBTITLE_WEIGHT);
-      for (const auto &kw : item.keywords) {
-        scorer.add(kw.toStdString(), KEYWORD_WEIGHT);
-      }
-      int score = scorer.score(query.toStdString());
+      using WS = fzf::WeightedString;
+      std::initializer_list<WS> fields = {WS{item.title, TITLE_WEIGHT}, WS{item.subtitle, SUBTITLE_WEIGHT}};
+      auto kws = item.keywords | std::views::transform([](auto &&s) { return WS{s, KEYWORD_WEIGHT}; });
+      auto ss = std::views::concat(fields, kws);
+      int score = fzf::defaultMatcher.fuzzy_match_v2_score_query(ss, q);
 
       return ScoredItem{.item = &item, .score = score};
     };
@@ -50,7 +50,7 @@ public:
         [&](const ListSectionModel &section) {
           tryCommitAnonymous();
 
-          SectionData data{.name = section.title.toStdString()};
+          SectionData data{.name = section.title};
           data.items.reserve(section.children.size());
 
           for (const auto &item : section.children) {
@@ -93,7 +93,7 @@ protected:
   }
   void refreshItemWidget(const ListItemViewModel *const &type, WidgetType *widget) const override {
     auto w = static_cast<DefaultListItemWidget *>(widget);
-    w->setName(type->title);
+    w->setName(type->title.c_str());
     w->setSubtitle(type->subtitle);
     w->setIconUrl(type->icon);
     w->setAccessories(makeAccessoryList(*type));
@@ -101,7 +101,7 @@ protected:
   }
   StableID stableId(const ListItemViewModel *const &item) const override {
     static std::hash<QString> hasher = {};
-    return hasher(item->id);
+    return hasher(item->id.c_str());
   }
 
 private:
