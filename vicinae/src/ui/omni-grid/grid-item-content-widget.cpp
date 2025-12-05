@@ -3,6 +3,7 @@
 #include "theme.hpp"
 #include "theme/colors.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
+#include "ui/tooltip/tooltip.hpp"
 #include <absl/strings/internal/str_format/extension.h>
 #include <qnamespace.h>
 #include <qwidget.h>
@@ -75,7 +76,7 @@ void GridItemContentWidget::recalculate() {
 void GridItemContentWidget::mousePressEvent(QMouseEvent *event) { emit clicked(); }
 void GridItemContentWidget::mouseDoubleClickEvent(QMouseEvent *event) { emit doubleClicked(); }
 
-void GridItemContentWidget::hideEvent(QHideEvent *event) { /*m_tooltip->hide();*/ }
+void GridItemContentWidget::hideEvent(QHideEvent *event) { m_tooltip->hide(); }
 
 QSize GridItemContentWidget::innerWidgetSize() const {
   int inset = insetForSize(m_inset, size());
@@ -116,17 +117,17 @@ void GridItemContentWidget::setInset(Inset inset) {
   update();
 }
 
-void GridItemContentWidget::hideTooltip() { /* m_tooltip->hide();*/ }
+void GridItemContentWidget::hideTooltip() { m_tooltip->hide(); }
 
 void GridItemContentWidget::showTooltip() {}
 
-void GridItemContentWidget::setTooltipText(const QString &text) { /*m_tooltip->setText(text);*/ }
+void GridItemContentWidget::setTooltipText(const QString &text) { m_tooltip->setText(text); }
 
 GridItemContentWidget::GridItemContentWidget()
-    : m_widget(nullptr), m_selected(false), m_tooltip(nullptr), m_inset(Inset::Small) {
+    : m_widget(nullptr), m_selected(false), m_tooltip(new TooltipWidget), m_inset(Inset::Small) {
   setAttribute(Qt::WA_Hover);
-  // m_tooltip->hide();
-  //  m_tooltip->setTarget(this);
+  m_tooltip->hide();
+  m_tooltip->setTarget(this);
 }
 
-GridItemContentWidget::~GridItemContentWidget() { /*m_tooltip->deleteLater();*/ }
+GridItemContentWidget::~GridItemContentWidget() { m_tooltip->deleteLater(); }

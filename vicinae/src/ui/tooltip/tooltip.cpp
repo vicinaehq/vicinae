@@ -7,7 +7,7 @@ bool TooltipWidget::eventFilter(QObject *watched, QEvent *event) {
   if (watched != m_target) return QWidget::eventFilter(watched, event);
 
   if (event->type() == QEvent::HoverEnter) {
-    if (m_target->isVisible()) { show(); }
+    if (m_target->isVisible() && m_content) { show(); }
   }
   if (event->type() == QEvent::HoverLeave) { hide(); }
   if (event->type() == QEvent::Hide) { hide(); }
