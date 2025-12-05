@@ -26,7 +26,6 @@ RUN pacman -Syu --needed --noconfirm \
     aspnet-runtime \
     libqalculate \
     minizip \
-    gcc14	\
     qtkeychain-qt6
 
 # Download and install GitHub Actions runner
@@ -39,8 +38,5 @@ RUN curl -o actions-runner-linux-x64.tar.gz -L \
 # Copy startup script
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
-
-ENV CC=gcc-14
-ENV CXX=g++-14
 
 ENTRYPOINT ["/start.sh"]
