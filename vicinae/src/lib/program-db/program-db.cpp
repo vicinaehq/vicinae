@@ -35,11 +35,11 @@ std::optional<fs::path> ProgramDb::programPath(std::string_view name) {
 std::vector<Scored<fs::path>> ProgramDb::search(std::string_view query, int limit) const {
   std::vector<Scored<fs::path>> filtered;
 
+  filtered.reserve(m_progs.size());
+
   for (const auto &prog : m_progs) {
-    auto result = fzf::defaultMatcher.fuzzy_match_v2(prog.c_str(), query, false, false);
-    if (result.matched() || query.empty()) {
-      filtered.push_back({prog, result.score});
-    }
+    auto score = fzf::defaultMatcher.fuzzy_match_v2_score_query(prog.c_str(), query);
+    if (score || query.empty()) { filtered.push_back({prog, score}); }
   }
 
   std::ranges::stable_sort(filtered, std::greater{});
