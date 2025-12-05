@@ -2,7 +2,7 @@
 <RCC version="1.0">
   <qresource prefix="/contribs">
     <file alias="ArjixWasTaken">contribs/ArjixWasTaken.png</file>
-    <file alias="aurelleb">contribs/aurelien-brabant.png</file>
+    <file alias="aurelleb">contribs/aurelleb.png</file>
     <file alias="bendi-github">contribs/bendi-github.png</file>
     <file alias="chmanie">contribs/chmanie.png</file>
     <file alias="cilginc">contribs/cilginc.png</file>
