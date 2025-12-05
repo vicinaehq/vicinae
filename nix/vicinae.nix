@@ -22,6 +22,7 @@
   qt6,
   typescript,
   wayland,
+  gcc15Stdenv,
 }:
 let
   src = ../.;
@@ -56,7 +57,7 @@ let
     hash = "sha256-krDFHTG8irgVk4a79LMz148drLgy2oxEoHCKRpur1R4=";
   };
 in
-stdenv.mkDerivation rec {
+gcc15Stdenv.mkDerivation rec {
   name = "vicinae";
 
   inherit src;
