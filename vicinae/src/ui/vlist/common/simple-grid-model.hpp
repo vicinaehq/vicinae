@@ -14,6 +14,7 @@ public:
     ImageURL icon;
     std::optional<QString> title;
     std::optional<QString> subtitle;
+    std::optional<QString> tooltip;
   };
 
   virtual GridData createItemData(const ItemType &item) const = 0;
@@ -63,6 +64,7 @@ public:
     w->setAspectRatio(1);
     w->setTitle(data.title.value_or(""));
     w->setSubtitle(data.subtitle.value_or(""));
+    w->setTooltipText(data.tooltip.value_or(""));
   }
 };
 }; // namespace vicinae::ui

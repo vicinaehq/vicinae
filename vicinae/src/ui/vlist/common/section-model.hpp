@@ -1,5 +1,6 @@
 #pragma once
 #include "common.hpp"
+#include "template-engine/template-engine.hpp"
 #include "ui/list-section-header.hpp"
 #include "ui/vlist/vlist.hpp"
 
@@ -34,6 +35,7 @@ public:
 
   struct SectionHeader {
     std::string_view name;
+    int count;
   };
 
   struct SectionItem {
@@ -114,10 +116,16 @@ protected:
     return std::visit(visitor, fromFlatIndex(idx));
   }
 
+  static QString parseSectionName(std::string_view tmpl, int count) {
+    TemplateEngine engine;
+    engine.setVar("count", QString::number(count));
+    return engine.build(QString::fromUtf8(tmpl.data(), tmpl.size()));
+  }
+
   void refreshWidget(Index idx, WidgetType *widget) const final override {
     const auto visitor = overloads{[&](const SectionHeader &header) {
                                      static_cast<OmniListSectionHeader *>(widget)->setTitle(
-                                         QString::fromUtf8(header.name.data(), header.name.size()));
+                                         parseSectionName(header.name, header.count));
                                    },
                                    [&](const SectionItem &item) { refreshItemWidget(item.data, widget); }};
     return std::visit(visitor, fromFlatIndex(idx));
@@ -127,7 +135,7 @@ protected:
     auto &item = m_cache[idx];
     auto id = sectionIdFromIndex(item.sectionIdx);
 
-    if (item.isSection) { return SectionHeader{.name = sectionName(id)}; }
+    if (item.isSection) { return SectionHeader{.name = sectionName(id), .count = sectionItemCount(id)}; }
 
     return SectionItem{
         .data = sectionItemAt(id, item.itemIdx), .sectionIdx = item.sectionIdx, .itemIdx = item.itemIdx};

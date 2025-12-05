@@ -200,15 +200,19 @@ DesktopEntry::DesktopEntry(std::string_view data, const ParseOptions &opts) {
     }
   }
 
-  bool isTerminalEmulator = std::ranges::contains(m_categories, "TerminalEmulator");
+  bool isTerminalEmulator = std::ranges::contains(m_categories, std::string("TerminalEmulator"));
 
   if (isTerminalEmulator) {
-    TerminalExec texec;
-    if (auto appId = group->key("X-TerminalArgAppId")) { texec.appId = appId->asString(); }
-    if (auto title = group->key("X-TerminalArgTitle")) { texec.title = title->asString(); }
-    if (auto dir = group->key("X-TerminalArgDir")) { texec.dir = dir->asString(); }
-    if (auto hold = group->key("X-TerminalArgHold")) { texec.hold = hold->asString(); }
-    m_terminalExec = texec;
+    auto terminalExec = group->key("X-TerminalArgExec");
+
+    if (terminalExec) {
+      TerminalExec texec{.exec = terminalExec->asString()};
+      if (auto appId = group->key("X-TerminalArgAppId")) { texec.appId = appId->asString(); }
+      if (auto title = group->key("X-TerminalArgTitle")) { texec.title = title->asString(); }
+      if (auto dir = group->key("X-TerminalArgDir")) { texec.dir = dir->asString(); }
+      if (auto hold = group->key("X-TerminalArgHold")) { texec.hold = hold->asString(); }
+      m_terminalExec = texec;
+    }
   }
 }
 

@@ -73,11 +73,9 @@ public:
    */
   virtual QString program() const = 0;
 
-  /**
-   * A specific set of ids that can be used to link the application to its active windows.
-   * All are tried in order, until one matches.
-   */
-  virtual std::vector<QString> windowClasses() const { return {}; }
+  virtual std::optional<QString> windowClass() const { return std::nullopt; }
+
+  virtual bool matchesWindowClass(const QString &wmClass) const { return false; }
 
   /**
    * A short multiline description that explains what the app does.
@@ -104,6 +102,8 @@ struct LaunchTerminalCommandOptions {
   std::optional<QString> appId;
   std::optional<QString> workingDirectory;
   std::optional<QString> title;
+  // default will be chosen if not specified
+  AbstractApplication *emulator = nullptr;
 };
 
 class AbstractAppDatabase : public QObject {

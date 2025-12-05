@@ -10,19 +10,19 @@
 
 struct ListItemViewModel {
   bool changed;
-  QString id;
-  QString title;
-  QString subtitle;
+  std::string id;
+  std::string title;
+  std::string subtitle;
   std::optional<ImageLikeModel> icon;
   std::optional<DetailModel> detail;
   std::optional<ActionPannelModel> actionPannel;
   std::vector<AccessoryModel> accessories;
-  std::vector<QString> keywords;
+  std::vector<std::string> keywords;
 };
 
 struct ListSectionModel {
-  QString title;
-  QString subtitle;
+  std::string title;
+  std::string subtitle;
   std::vector<ListItemViewModel> children;
 };
 
@@ -37,15 +37,14 @@ struct ListModel {
   bool dirty = false;
   bool propsDirty = false;
   bool isShowingDetail = false;
-  QString navigationTitle;
-  QString searchPlaceholderText;
-  std::optional<QString> onSelectionChanged;
-  std::optional<QString> onSearchTextChange;
-  std::optional<QString> searchText;
+  std::string navigationTitle;
+  std::string searchPlaceholderText;
+  std::optional<std::string> onSelectionChanged;
+  std::optional<std::string> onSearchTextChange;
+  std::optional<std::string> searchText;
   std::vector<ListChild> items;
   std::optional<ActionPannelModel> actions;
   std::optional<EmptyViewModel> emptyView;
-  std::optional<QString> selectedItemId;
   std::optional<PaginationModel> pagination;
   std::optional<ListSearchBarAccessory> searchBarAccessory;
 };

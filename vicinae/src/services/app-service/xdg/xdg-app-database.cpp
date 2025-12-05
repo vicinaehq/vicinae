@@ -2,6 +2,7 @@
 #include "environment.hpp"
 #include "services/app-service/xdg/xdg-app.hpp"
 #include "timer.hpp"
+#include "xdgpp/desktop-entry/entry.hpp"
 #include "xdgpp/desktop-entry/file.hpp"
 #include "xdgpp/mime/iterator.hpp"
 #include <algorithm>
@@ -47,7 +48,6 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
   m_apps.clear();
   m_mimeAppsLists.clear();
   m_dataDirToApps.clear();
-  m_wmClassToApp.clear();
   m_mimeAppsLists = xdgpp::getAllMimeAppsLists();
 
   std::set<std::string> seen;
@@ -76,9 +76,6 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
 
       m_apps.emplace_back(app);
       m_dataDirToApps[dir].emplace_back(app);
-
-      if (auto wmClass = app->wmClass()) { m_wmClassToApp[wmClass->toLower()] = app; }
-
       appMap[app->id()] = app;
 
       for (const auto &action : app->actions()) {
@@ -231,7 +228,7 @@ std::vector<AppPtr> XdgAppDatabase::findAssociations(const QString &mimeName) co
   return openers;
 }
 
-xdgpp::DesktopEntry::TerminalExec XdgAppDatabase::getTermExec(const XdgApplication &app) const {
+xdgpp::DesktopEntry::TerminalExec XdgAppDatabase::inferTermExec(const XdgApplication &app) const {
   using TExec = xdgpp::DesktopEntry::TerminalExec;
 
   if (app.program() == "gnome-terminal") { return TExec{.exec = "--"}; }
@@ -269,19 +266,36 @@ xdgpp::DesktopEntry::TerminalExec XdgAppDatabase::getTermExec(const XdgApplicati
   return {.exec = "-e"};
 }
 
+xdgpp::DesktopEntry::TerminalExec XdgAppDatabase::getTermExec(const XdgApplication &app) const {
+  using TExec = xdgpp::DesktopEntry::TerminalExec;
+  return *app.data().terminalExec().or_else([&]() { return std::optional<TExec>{inferTermExec(app)}; });
+}
+
 bool XdgAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
                                            const LaunchTerminalCommandOptions &opts,
                                            const std::optional<QString> &prefix) const {
   if (cmdline.empty()) return false;
 
-  auto terminal = std::static_pointer_cast<XdgApplication>(terminalEmulator());
-  auto exec = terminal->parseExec({}, prefix);
+  auto terminal = opts.emulator;
+
+  if (!terminal) {
+    if (auto term = terminalEmulator()) { terminal = term.get(); }
+  }
+
+  if (!terminal) {
+    qWarning() << "No terminal is available to launch the command";
+    return false;
+  }
+
+  auto xdgApp = static_cast<XdgApplication *>(terminal);
+
+  auto exec = xdgApp->parseExec({}, prefix);
 
   if (exec.empty()) return false;
 
   QStringList argv;
   std::ranges::for_each(exec | std::views::drop(1), [&](auto &&arg) { argv << arg; });
-  auto texec = getTermExec(*terminal);
+  auto texec = getTermExec(*xdgApp);
 
   if (texec.appId && opts.appId) { argv << texec.appId->c_str() << opts.appId.value(); }
   if (texec.title && opts.title) { argv << texec.title->c_str() << opts.title.value(); }
@@ -293,7 +307,7 @@ bool XdgAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
     argv << arg;
   }
 
-  return launchProcess(exec.front(), argv, terminal->data().workingDirectory());
+  return launchProcess(exec.front(), argv, xdgApp->data().workingDirectory());
 }
 
 bool XdgAppDatabase::launchProcess(const QString &prog, const QStringList args,
@@ -372,17 +386,10 @@ AppPtr XdgAppDatabase::findByCategory(const QString &category) const {
 }
 
 AppPtr XdgAppDatabase::findByClass(const QString &name) const {
-  // TODO: if that's too slow we might need a map
-  QString normalizedWmClass = name.toLower();
-
-  // try direct wm class match first
-  if (auto it = m_wmClassToApp.find(normalizedWmClass); it != m_wmClassToApp.end()) { return it->second; }
-
-  auto pred = [&](const QString &str) { return str.toLower() == normalizedWmClass; };
-
-  // try to find by id
-  for (const auto &app : m_apps) {
-    if (std::ranges::any_of(app->windowClasses(), pred)) { return app; }
+  // we might need to use a map to speed that up
+  if (auto it = std::ranges::find_if(m_apps, [&](auto &&app) { return app->matchesWindowClass(name); });
+      it != m_apps.end()) {
+    return *it;
   }
 
   return nullptr;

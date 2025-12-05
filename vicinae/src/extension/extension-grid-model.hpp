@@ -1,6 +1,6 @@
 #pragma once
 #include "extend/grid-model.hpp"
-#include "fuzzy/weighted-fuzzy-scorer.hpp"
+#include "lib/fzf.hpp"
 #include "layout.hpp"
 #include "ui/color-box/color-box.hpp"
 #include "ui/image/url.hpp"
@@ -80,24 +80,22 @@ public:
   }
 
   void setFilter(const QString &query) {
+    std::string q = query.toStdString();
+    SectionData m_anonymousSection;
+
     m_query = query;
     m_sortedSections.clear();
 
-    SectionData m_anonymousSection;
-
     const auto toScored = [&](const GridItemViewModel &item) {
-      static const constexpr double TITLE_WEIGHT = 1;
-      static const constexpr double SUBTITLE_WEIGHT = 0.6;
-      static const constexpr double KEYWORD_WEIGHT = 0.3;
-      fuzzy::WeightedScorer scorer;
+      using WS = fzf::WeightedString;
+      static const constexpr float TITLE_WEIGHT = 1.0f;
+      static const constexpr float SUBTITLE_WEIGHT = 0.6f;
+      static const constexpr float KEYWORD_WEIGHT = 0.3f;
 
-      scorer.reserve(2 + item.keywords.size());
-      scorer.add(item.title.toStdString(), TITLE_WEIGHT);
-      scorer.add(item.subtitle.toStdString(), SUBTITLE_WEIGHT);
-      for (const auto &kw : item.keywords) {
-        scorer.add(kw.toStdString(), KEYWORD_WEIGHT);
-      }
-      int score = scorer.score(query.toStdString());
+      std::initializer_list<WS> fields = {WS{item.title, TITLE_WEIGHT}, WS{item.subtitle, SUBTITLE_WEIGHT}};
+      auto kws = item.keywords | std::views::transform([](auto &&s) { return WS{s, KEYWORD_WEIGHT}; });
+      auto ss = std::views::concat(fields, kws);
+      int score = fzf::defaultMatcher.fuzzy_match_v2_score_query(fields, q, false);
 
       return ScoredItem{.item = &item, .score = score};
     };
@@ -117,7 +115,7 @@ public:
         [&](const GridSectionModel &section) {
           tryCommitAnonymous();
 
-          SectionData data{.name = section.title.toStdString(),
+          SectionData data{.name = section.title,
                            .columns = section.columns,
                            .aspectRatio = section.aspectRatio,
                            .inset = section.inset,
@@ -164,8 +162,8 @@ protected:
     auto spacing = 10;
     int height = width / ratio;
 
-    if (!item->title.isEmpty()) { height += 15 + spacing; }
-    if (!item->subtitle.isEmpty()) { height += 15 + spacing; }
+    if (!item->title.empty()) { height += 15 + spacing; }
+    if (!item->subtitle.empty()) { height += 15 + spacing; }
 
     return height;
   }
@@ -191,14 +189,14 @@ protected:
 
     content->setFit(sec.fit.value_or(m_fit));
     content->render(type->content);
-    w->setTitle(type->title);
-    w->setSubtitle(type->subtitle);
+    w->setTitle(type->title.c_str());
+    w->setSubtitle(type->subtitle.c_str());
     w->setAspectRatio(sec.aspectRatio.value_or(m_aspectRatio));
     w->setInset(sec.inset.value_or(m_inset));
   }
   StableID stableId(const GridItemViewModel *const &item, int sectionId) const override {
     static std::hash<QString> hasher = {};
-    return hasher(item->id);
+    return hasher(item->id.c_str());
   }
 
 private:

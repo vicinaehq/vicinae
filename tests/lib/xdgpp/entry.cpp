@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <xdgpp/xdgpp.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <string_view>
@@ -32,7 +33,7 @@ StartupWMClass=firefox
   REQUIRE(file.isApplication());
   REQUIRE(file.icon() == "firefox-bin");
   REQUIRE(file.name() == "Mozilla Firefox (bin)");
-  REQUIRE(std::ranges::find(file.mimes(), "application/pdf") != file.mimes().end());
+  REQUIRE((std::ranges::contains(file.mimes(), std::string("application/pdf"))));
   REQUIRE(file.comment() == "Browse the Web");
   REQUIRE(file.genericName() == "Web Browser");
   REQUIRE(file.startupWMClass() == "firefox");
@@ -570,4 +571,78 @@ Type=Link
 )");
 
   REQUIRE(!file.isValid());
+}
+
+TEST_CASE("Create xdg terminal exec struct if category and main key are present") {
+  auto file = DesktopEntry::fromData(R"(
+[Desktop Entry]
+Name=A wonderful terminal emulator
+Categories=TerminalEmulator
+Exec=term
+X-TerminalArgExec=-e
+)");
+
+  REQUIRE(file.isValid());
+  REQUIRE(file.terminalExec().has_value());
+}
+
+TEST_CASE("Should not have terminal exec struct if no terminal emulator category") {
+  auto file = DesktopEntry::fromData(R"(
+[Desktop Entry]
+Name=A wonderful terminal emulator
+Categories=WebBrowser
+Exec=term
+X-TerminalArgExec=-e
+)");
+
+  REQUIRE(file.isValid());
+  REQUIRE(!file.terminalExec().has_value());
+}
+
+TEST_CASE("Should not have terminal exec struct if no X-TerminalArgExec key") {
+  auto file = DesktopEntry::fromData(R"(
+[Desktop Entry]
+Name=A wonderful terminal emulator
+Categories=TerminalEmulator
+Exec=term
+)");
+
+  REQUIRE(file.isValid());
+  REQUIRE(!file.terminalExec().has_value());
+}
+
+TEST_CASE("Parse all xdg-terminal-exec keys") {
+  auto file = DesktopEntry::fromData(R"(
+[Desktop Entry]
+Name=Ghostty
+Type=Application
+Comment=A terminal emulator
+Exec=ghostty
+Icon=com.mitchellh.ghostty
+Categories=System;TerminalEmulator;
+Keywords=terminal;tty;pty;
+StartupNotify=true
+StartupWMClass=com.mitchellh.ghostty
+Terminal=false
+Actions=new-window;
+X-GNOME-UsesNotifications=true
+X-TerminalArgExec=-e
+X-TerminalArgTitle=--title=
+X-TerminalArgAppId=--class=
+X-TerminalArgDir=--working-directory=
+X-TerminalArgHold=--wait-after-command
+
+[Desktop Action new-window]
+Name=New Window
+Exec=ghostty
+)");
+
+  REQUIRE(file.isValid());
+  auto exec = file.terminalExec();
+  REQUIRE(exec.has_value());
+  REQUIRE(exec->exec == "-e");
+  REQUIRE(exec->title == "--title=");
+  REQUIRE(exec->appId == "--class=");
+  REQUIRE(exec->dir == "--working-directory=");
+  REQUIRE(exec->hold == "--wait-after-command");
 }

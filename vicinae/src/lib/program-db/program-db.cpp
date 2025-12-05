@@ -1,4 +1,5 @@
 #include "program-db/program-db.hpp"
+#include "lib/fzf.hpp"
 #include "utils.hpp"
 #include "vicinae.hpp"
 #include <filesystem>
@@ -17,20 +18,31 @@ ProgramDb::ProgramDb() {
   });
 }
 
-std::vector<fs::path> ProgramDb::search(const QString &query, int limit) const {
-  // simple for now, we will optimize if needed
+std::optional<fs::path> ProgramDb::programPath(std::string_view name) {
+  auto isRegularFile = [](const fs::path &path) { return fs::is_regular_file(path); };
 
-  auto filter = [&](const fs::path &path) {
-    return QString(path.filename().c_str()).contains(query, Qt::CaseInsensitive);
-  };
+  if (isRegularFile(name)) return name;
 
-  std::vector<fs::path> filtered;
+  auto candidates =
+      Omnicast::systemPaths() | std::views::transform([&](const fs::path &path) { return path / name; });
+  std::error_code ec;
+
+  if (auto it = std::ranges::find_if(candidates, isRegularFile); it != candidates.end()) { return *it; }
+
+  return std::nullopt;
+}
+
+std::vector<Scored<fs::path>> ProgramDb::search(std::string_view query, int limit) const {
+  std::vector<Scored<fs::path>> filtered;
+
+  filtered.reserve(m_progs.size());
 
   for (const auto &prog : m_progs) {
-    if (!filter(prog)) continue;
-    filtered.emplace_back(prog);
-    if (filtered.size() >= limit) break;
+    auto score = fzf::defaultMatcher.fuzzy_match_v2_score_query(prog.c_str(), query);
+    if (score || query.empty()) { filtered.push_back({prog, score}); }
   }
+
+  std::ranges::stable_sort(filtered, std::greater{});
 
   return filtered;
 }

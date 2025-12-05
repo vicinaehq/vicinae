@@ -39,6 +39,7 @@ private:
                      const std::optional<std::filesystem::path> &workingDirectory) const;
 
   xdgpp::DesktopEntry::TerminalExec getTermExec(const XdgApplication &app) const;
+  xdgpp::DesktopEntry::TerminalExec inferTermExec(const XdgApplication &app) const;
 
   AppPtr defaultForMime(const QString &mime) const;
   std::vector<AppPtr> findAssociations(const QString &mime) const;
@@ -52,5 +53,4 @@ private:
 
   // apps segmented by data dir (needed for association resolution)
   std::unordered_map<std::filesystem::path, std::vector<std::shared_ptr<XdgApplication>>> m_dataDirToApps;
-  std::unordered_map<QString, std::shared_ptr<XdgApplication>> m_wmClassToApp;
 };
