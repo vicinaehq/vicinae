@@ -25,8 +25,9 @@ public:
 
   std::unique_ptr<ActionPanelState> createActionPanel(const RootItemVariant &item) const override {
     const auto visitor = overloads{
-        [&](const RootItem *item) {
-          return item->newActionPanel(context(), m_manager->itemMetadata(item->uniqueId()));
+        [&](const RootSearchResult &item) {
+          auto rootItem = item.scored->item.get();
+          return rootItem->newActionPanel(context(), m_manager->itemMetadata(rootItem->uniqueId()));
         },
         [](const AbstractCalculatorBackend::CalculatorResult &item) {
           auto panel = std::make_unique<ActionPanelState>();
@@ -79,9 +80,10 @@ public:
       return cmpl;
     };
 
-    const auto visitor = overloads{[&](const RootItem *item) { return rootItemCompleter(item); },
-                                   [&](const FavoriteItem &item) { return rootItemCompleter(item.item); },
-                                   [](auto &&a) { return std::unique_ptr<CompleterData>(); }};
+    const auto visitor = overloads{
+        [&](const RootSearchResult &result) { return rootItemCompleter(result.scored->item.get().get()); },
+        [&](const FavoriteItem &item) { return rootItemCompleter(item.item); },
+        [](auto &&a) { return std::unique_ptr<CompleterData>(); }};
 
     auto completer = std::visit(visitor, item);
 

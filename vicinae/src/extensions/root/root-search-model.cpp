@@ -1,4 +1,5 @@
 #include "root-search-model.hpp"
+#include "environment.hpp"
 #include "ui/transform-result/transform-result.hpp"
 
 RootSearchModel::RootSearchModel(RootItemManager *manager) : m_manager(manager) {}
@@ -112,7 +113,7 @@ RootItemVariant RootSearchModel::sectionItemAt(SectionType id, int itemIdx) cons
   case SectionType::Calculator:
     return m_calc.value();
   case SectionType::Results:
-    return m_items[itemIdx].item.get().get();
+    return RootSearchResult{.scored = &m_items[itemIdx]};
   case SectionType::Files:
     return m_files[itemIdx].path;
   case SectionType::Fallback:
@@ -128,7 +129,7 @@ RootSearchModel::StableID RootSearchModel::stableId(const RootItemVariant &item)
   static std::hash<QString> hasher = {};
   const auto visitor =
       overloads{[&](const AbstractCalculatorBackend::CalculatorResult &) { return randomId(); },
-                [](const RootItem *item) { return hasher(item->uniqueId()); },
+                [](const RootSearchResult &item) { return hasher(item.scored->item.get()->uniqueId()); },
                 [](const LinkItem &item) { return hasher(item.url + ".url"); },
                 [](const std::filesystem::path &path) { return hasher(QString(path.c_str()) + ".files"); },
                 [](const FallbackItem &item) { return hasher(item.item->uniqueId() + ".fallback"); },
@@ -144,7 +145,7 @@ RootSearchModel::WidgetTag RootSearchModel::widgetTag(const RootItemVariant &ite
 RootSearchModel::WidgetType *RootSearchModel::createItemWidget(const RootItemVariant &type) const {
   const auto visitor = overloads{
       [](const AbstractCalculatorBackend::CalculatorResult &) -> WidgetType * { return new TransformResult; },
-      [](const RootItem *) -> WidgetType * { return new DefaultListItemWidget; },
+      [](const RootSearchResult &) -> WidgetType * { return new DefaultListItemWidget; },
       [](const std::filesystem::path &path) -> WidgetType * { return new DefaultListItemWidget; },
       [](const LinkItem &item) -> WidgetType * { return new DefaultListItemWidget; },
       [](const FallbackItem &item) -> WidgetType * { return new DefaultListItemWidget; },
@@ -183,7 +184,7 @@ void RootSearchModel::refreshItemWidget(const RootItemVariant &type, WidgetType 
                   w->setIconUrl(item.app->iconUrl());
                   w->setActive(false);
                 },
-                refreshRootItem,
+                [&](const RootSearchResult &res) { refreshRootItem(res.scored->item.get().get(), true); },
                 [&](const FallbackItem &item) { refreshRootItem(item.item, false); },
                 [&](const FavoriteItem &item) { refreshRootItem(item.item); }};
 

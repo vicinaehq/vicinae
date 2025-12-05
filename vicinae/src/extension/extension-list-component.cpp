@@ -3,9 +3,6 @@
 #include "extension/extension-list-detail.hpp"
 #include <chrono>
 #include <memory>
-#include <qcoreevent.h>
-#include <qlogging.h>
-#include <qnamespace.h>
 #include "extension/form/extension-dropdown.hpp"
 #include "keyboard/keybind-manager.hpp"
 #include "ui/form/app-picker-input.hpp"
@@ -132,9 +129,11 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
 
   setSearchAccessoryVisiblity(newModel.searchBarAccessory.has_value() && isVisible());
 
-  if (!newModel.navigationTitle.isEmpty()) { setNavigationTitle(newModel.navigationTitle); }
-  if (!newModel.searchPlaceholderText.isEmpty()) { setSearchPlaceholderText(newModel.searchPlaceholderText); }
-  if (auto text = newModel.searchText) { setSearchText(*text); }
+  if (!newModel.navigationTitle.empty()) { setNavigationTitle(newModel.navigationTitle.c_str()); }
+  if (!newModel.searchPlaceholderText.empty()) {
+    setSearchPlaceholderText(newModel.searchPlaceholderText.c_str());
+  }
+  if (auto text = newModel.searchText) { setSearchText(text->c_str()); }
 
   if (newModel.throttle != _model.throttle) {
     _debounce->stop();
@@ -237,7 +236,7 @@ void ExtensionListComponent::onSelectionChanged(const ListItemViewModel *next) {
     return;
   }
 
-  if (auto handler = m_onSelectionChanged) { notify(*handler, {next->id}); }
+  if (auto handler = m_onSelectionChanged) { notify(handler->c_str(), {next->id.c_str()}); }
 
   m_split->setDetailVisibility(_model.isShowingDetail);
 
@@ -282,7 +281,7 @@ void ExtensionListComponent::handleDebouncedSearchNotification() {
     // flag next render to reset the search selection
     _shouldResetSelection = !_model.filtering;
 
-    notify(*handler, {text});
+    notify(handler->c_str(), {text});
   }
 
   if (m_list->empty()) {
