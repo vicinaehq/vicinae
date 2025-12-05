@@ -168,13 +168,19 @@ bool RootItemManager::upsertProvider(const RootProvider &provider) {
 }
 
 float RootItemManager::SearchableRootItem::fuzzyScore(std::string_view pattern) const {
-  static fzf::Matcher matcher;
   using WS = fzf::WeightedString;
   std::initializer_list<WS> ss = {{title, 1.0f}, {subtitle, 0.6f}};
   auto kws = keywords | std::views::transform([](auto &&kw) { return WS{kw, 0.3f}; });
   auto strs = std::views::concat(ss, kws);
+  float score = fzf::defaultMatcher.fuzzy_match_v2_score_query(strs, pattern, false);
+  double frequencyScore = std::log(1 + meta->visitCount * 0.1);
+  float frequencyWeight = 0.2;
 
-  return matcher.fuzzy_match_v2_score_query(strs, pattern, false);
+  // auto now = std::chrono::high_resolution_clock::now();
+  // auto hoursSince = std::chrono::duration_cast<std::chrono::hours>(now - *meta->lastVisitedAt).count()
+  // / 24.0;
+
+  return score * (1 + frequencyScore * frequencyWeight);
 }
 
 std::span<RootItemManager::ScoredItem> RootItemManager::search(const QString &query,

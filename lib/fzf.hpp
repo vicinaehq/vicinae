@@ -13,6 +13,9 @@
 #include <array>
 #include <cctype>
 #include <cstdint>
+#include <iterator>
+#include <numbers>
+#include <qlogging.h>
 #include <ranges>
 #include <string>
 #include <string_view>
@@ -103,24 +106,6 @@ public:
     }
   }
 
-  /**
-   * score every weighted string in the range and return the result with the maximum score
-   */
-  Result fuzzy_match_v2_many(const std::ranges::view auto &weightedStrs, std::string_view pattern,
-                             bool case_sensitive = false, bool with_pos = false) {
-    auto results = weightedStrs | std::views::transform([&](const WeightedString &str) {
-                     Result res = fuzzy_match_v2(std::string_view{str.str}, pattern, false, false);
-                     res.score *= str.weight;
-                     return res;
-                   });
-    auto it =
-        std::ranges::max_element(results, [](const Result &a, const Result &b) { return a.score < b.score; });
-
-    if (it == results.end()) return {};
-
-    return *it;
-  }
-
   template <std::ranges::input_range R>
     requires std::same_as<std::ranges::range_value_t<R>, WeightedString>
   int fuzzy_match_v2_score_query(R &&weightedStrs, std::string_view query,
@@ -146,13 +131,6 @@ public:
 
   Result fuzzy_match_v2(std::string_view text, std::string_view pattern, bool case_sensitive = false,
                         bool with_pos = false) const {
-    // Allocate working arrays
-    static std::vector<int> H0; // Score for first pattern char
-    static std::vector<int> C0; // Consecutive count for first char
-    static std::vector<int> B;  // Bonus for each position
-    static std::vector<int> F;  // First occurrence of each pattern char
-    static std::vector<char> T; // Normalized text
-
     const int M = static_cast<int>(pattern.length());
     const int N = static_cast<int>(text.length());
 
@@ -235,8 +213,6 @@ public:
     // Phase 3: Fill in score matrix (dynamic programming)
     const int f0 = F[0];
     const int width = last_idx - f0 + 1;
-    static std::vector<int> H(width * M); // Score matrix
-    static std::vector<int> C(width * M); // Consecutive match matrix
 
     H.resize(width * M);
     C.resize(width * M);
@@ -437,6 +413,15 @@ private:
     return {first_idx, last_idx + 1};
   }
 
+  size_t cacheKey(std::string_view txt, std::string_view pattern) const {
+    std::string s;
+    s.reserve(txt.size() + pattern.size() + 1);
+    std::ranges::copy(txt, std::back_inserter(s));
+    std::ranges::copy("\0", std::back_inserter(s));
+    std::ranges::copy(pattern, std::back_inserter(s));
+    return std::hash<std::string>()(s);
+  }
+
   Scheme m_scheme_;
   int m_bonus_boundary_white;
   int m_bonus_boundary_delimiter;
@@ -444,5 +429,23 @@ private:
   CharClass m_initial_char_class;
   std::array<CharClass, 128> ascii_char_classes_;
   std::array<std::array<int, 8>, 8> bonus_matrix_;
+
+  // we reuse these vectors across search in order to not allocate on every search
+  // this is what makes this matcher non thread safe,
+
+  mutable std::vector<int> H0; // Score for first pattern char
+  mutable std::vector<int> C0; // Consecutive count for first char
+  mutable std::vector<int> B;  // Bonus for each position
+  mutable std::vector<int> F;  // First occurrence of each pattern char
+  mutable std::vector<char> T; // Normalized text
+  mutable std::vector<int> H;  // Score matrix
+  mutable std::vector<int> C;  // Consecutive match matrix
 };
+
+/**
+ * Non thread-safe global instance
+ * If doing fuzzy matching work across threads, you need one matcher per thread.
+ */
+static const Matcher defaultMatcher;
+
 } // namespace fzf
