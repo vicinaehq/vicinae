@@ -25,12 +25,12 @@ bool SettingsController::closeWindow(bool destroy) {
 
 void SettingsController::openTab(const QString &tabId) {
   openWindow();
-  emit tabIdOpened(tabId);
+  QTimer::singleShot(0, [this, tabId]() { emit tabIdOpened(tabId); });
 }
 
 void SettingsController::openExtensionPreferences(const QString &id) {
   openTab("extensions");
-  emit openExtensionPreferencesRequested(id);
+  QTimer::singleShot(0, [this, id]() { emit openExtensionPreferencesRequested(id); });
 }
 
 void SettingsController::createSettingsWindow() {
