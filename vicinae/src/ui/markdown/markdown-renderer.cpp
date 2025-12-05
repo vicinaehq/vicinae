@@ -600,6 +600,37 @@ void MarkdownRenderer::insertHtmlImage(xmlNode *node) {
         if (!value.isEmpty()) { imgSize.setWidth(value.toInt()); }
       } else if (name == "height") {
         if (!value.isEmpty()) { imgSize.setHeight(value.toInt()); }
+      } else if (name == "style") {
+        // Support inline CSS sizing, e.g. style="width: 200px; height: 300px;"
+        const auto declarations = value.split(';', Qt::SkipEmptyParts);
+        for (const auto &decl : declarations) {
+          const auto parts = decl.split(':', Qt::SkipEmptyParts);
+          if (parts.size() != 2) continue;
+          QString prop = parts[0].trimmed().toLower();
+          QString val = parts[1].trimmed();
+
+          auto parsePx = [](const QString &s, bool *okOut) -> int {
+            bool ok = false;
+            QString v = s.trimmed();
+            if (v.endsWith("px", Qt::CaseInsensitive)) {
+              v.chop(2);
+              v = v.trimmed();
+            }
+            int res = v.toInt(&ok);
+            if (okOut) *okOut = ok;
+            return res;
+          };
+
+          if (prop == "width") {
+            bool ok = false;
+            int w = parsePx(val, &ok);
+            if (ok && w > 0) { imgSize.setWidth(w); }
+          } else if (prop == "height") {
+            bool ok = false;
+            int h = parsePx(val, &ok);
+            if (ok && h > 0) { imgSize.setHeight(h); }
+          }
+        }
       }
 
       xmlFree(attrValue);
