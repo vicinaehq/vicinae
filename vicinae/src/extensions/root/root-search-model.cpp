@@ -1,4 +1,5 @@
 #include "root-search-model.hpp"
+#include "environment.hpp"
 #include "ui/transform-result/transform-result.hpp"
 
 RootSearchModel::RootSearchModel(RootItemManager *manager) : m_manager(manager) {}
@@ -183,11 +184,7 @@ void RootSearchModel::refreshItemWidget(const RootItemVariant &type, WidgetType 
                   w->setIconUrl(item.app->iconUrl());
                   w->setActive(false);
                 },
-                [&](const RootSearchResult &res) {
-                  refreshRootItem(res.scored->item.get().get(), true);
-                  auto w = static_cast<DefaultListItemWidget *>(widget);
-                  w->setAlias(QString::number(res.scored->score));
-                },
+                [&](const RootSearchResult &res) { refreshRootItem(res.scored->item.get().get(), true); },
                 [&](const FallbackItem &item) { refreshRootItem(item.item, false); },
                 [&](const FavoriteItem &item) { refreshRootItem(item.item); }};
 
