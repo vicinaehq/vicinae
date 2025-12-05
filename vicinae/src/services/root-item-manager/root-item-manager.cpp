@@ -1,8 +1,9 @@
 #include "root-item-manager.hpp"
-#include "lib/fts_fuzzy.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
+#include <ranges>
+#include "lib/fzf.hpp"
 #include <algorithm>
-#include "lib/jaro.hpp"
+#include "timer.hpp"
 #include <qlogging.h>
 #include <qtconcurrentfilter.h>
 #include <ranges>
@@ -97,7 +98,15 @@ void RootItemManager::updateIndex() {
     for (const auto &item : items) {
       upsertItem(provider->uniqueId(), *item.get());
       SearchableRootItem sitem;
+
       sitem.item = item;
+      std::initializer_list<std::string> ss = {item->displayName().toStdString(),
+                                               item->subtitle().toStdString()};
+      sitem.searchStr = std::views::concat(ss, item->keywords() | std::views::transform([](auto &&s) {
+                                                 return s.toStdString();
+                                               })) |
+                        std::views::join_with(' ') | std::ranges::to<std::string>();
+
       sitem.title = item->displayName().toStdString();
       sitem.subtitle = item->subtitle().toStdString();
       sitem.keywords = item->keywords() | std::views::transform([](auto &&s) { return s.toStdString(); }) |
@@ -159,22 +168,18 @@ bool RootItemManager::upsertProvider(const RootProvider &provider) {
 }
 
 float RootItemManager::SearchableRootItem::fuzzyScore(std::string_view pattern) const {
-  float max = 0;
+  static fzf::Matcher matcher;
+  using WS = fzf::WeightedString;
+  std::initializer_list<WS> ss = {{title, 1.0f}, {subtitle, 0.6f}};
+  auto kws = keywords | std::views::transform([](auto &&kw) { return WS{kw, 0.3f}; });
+  auto strs = std::views::concat(ss, kws);
 
-  if (float score = fuzz::jaroWinklerLatinText(pattern, title)) { max = std::max(max, score); }
-  if (float score = fuzz::jaroWinklerLatinText(pattern, meta->alias)) { max = std::max(max, score); }
-  if (float score = fuzz::jaroWinklerLatinText(pattern, subtitle)) { max = std::max(max, score * 0.9f); }
-
-  for (const auto &kw : keywords) {
-    if (auto score = fuzz::jaroWinklerSimilarity(pattern, kw)) { max = std::max(max, score * 0.6f); }
-  }
-
-  return max;
+  return matcher.fuzzy_match_v2_score_query(strs, pattern, false);
 }
 
 std::span<RootItemManager::ScoredItem> RootItemManager::search(const QString &query,
                                                                const RootItemPrefixSearchOptions &opts) {
-  // Timer timer;
+  Timer timer;
   std::string pattern = query.toStdString();
   std::string_view patternView = pattern;
 
@@ -210,13 +215,7 @@ std::span<RootItemManager::ScoredItem> RootItemManager::search(const QString &qu
     // return ascore * std::max(1, a.score) > bscore * std::max(1, b.score);
   });
 
-  /*
-  for (const auto &scored : m_scoredItems) {
-    qDebug() << scored.item.get()->uniqueId() << scored.score;
-  }
-  */
-
-  // timer.time("root search");
+  timer.time("root search");
 
   return m_scoredItems;
 }

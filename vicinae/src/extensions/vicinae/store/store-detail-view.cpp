@@ -6,6 +6,7 @@
 #include "services/toast/toast-service.hpp"
 #include "utils.hpp"
 #include <qnamespace.h>
+#include <qstringliteral.h>
 
 Stack VicinaeStoreDetailView::createHeader() {
   auto author = HStack()
@@ -24,13 +25,13 @@ Stack VicinaeStoreDetailView::createHeader() {
                              [&]() {
                                auto platforms = HStack().spacing(5);
 
-                               if (std::ranges::contains(m_ext.platforms, "linux")) {
+                               if (std::ranges::contains(m_ext.platforms, QStringLiteral("linux"))) {
                                  platforms.addIcon(ImageURL::builtin("linux"), {16, 16});
                                }
-                               if (std::ranges::contains(m_ext.platforms, "macOS")) {
+                               if (std::ranges::contains(m_ext.platforms, QStringLiteral("macOS"))) {
                                  platforms.addIcon(ImageURL::builtin("apple"), {16, 16});
                                }
-                               if (std::ranges::contains(m_ext.platforms, "windows")) {
+                               if (std::ranges::contains(m_ext.platforms, QStringLiteral("windows"))) {
                                  platforms.addIcon(ImageURL::builtin("windows11"), {16, 16});
                                }
 

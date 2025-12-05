@@ -3,7 +3,7 @@
 #include "common.hpp"
 #include "navigation-controller.hpp"
 #include "omni-database.hpp"
-#include "../../ui/image/url.hpp"
+#include "ui/image/url.hpp"
 #include "preference.hpp"
 #include "settings/provider-settings-detail.hpp"
 #include <qdnslookup.h>
@@ -231,6 +231,7 @@ public:
     std::string subtitle;
     std::vector<std::string> keywords;
     RootItemMetadata *meta;
+    std::string searchStr;
 
     float fuzzyScore(std::string_view pattern) const;
   };
