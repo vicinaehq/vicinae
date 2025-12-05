@@ -15,16 +15,16 @@ GridItemViewModel GridModelParser::parseListItem(const QJsonObject &instance, si
   auto props = instance.value("props").toObject();
   auto children = instance.value("children").toArray();
 
-  model.id = props["id"].toString(QString::number(index));
-  model.title = props["title"].toString();
-  model.subtitle = props["subtitle"].toString();
+  model.id = props["id"].toString(QString::number(index)).toStdString();
+  model.title = props["title"].toString().toStdString();
+  model.subtitle = props["subtitle"].toString().toStdString();
 
   auto content = props.value("content");
 
   if (content.isObject()) {
     auto obj = content.toObject();
 
-    if (obj.contains("tooltip")) { model.tooltip = obj.value("tooltip").toString(); }
+    if (obj.contains("tooltip")) { model.tooltip = obj.value("tooltip").toString().toStdString(); }
 
     if (obj.contains("color")) {
       model.content = ColorLikeModelParser().parse(obj.value("color"));
@@ -38,14 +38,14 @@ GridItemViewModel GridModelParser::parseListItem(const QJsonObject &instance, si
   }
 
   if (props.contains("keywords")) {
-    model.keywords =
-        ranges_to<std::vector>(props.value("keywords").toArray() |
-                               std::views::transform([](const QJsonValue &&a) { return a.toString(); }));
+    model.keywords = ranges_to<std::vector>(
+        props.value("keywords").toArray() |
+        std::views::transform([](const QJsonValue &&a) { return a.toString().toStdString(); }));
   }
 
   for (const auto &child : children) {
     auto obj = child.toObject();
-    auto type = obj["type"].toString();
+    auto type = obj["type"].toString().toStdString();
 
     if (type == "action-panel") { model.actionPannel = ActionPannelParser().parse(obj); }
   }
@@ -59,19 +59,21 @@ GridSectionModel GridModelParser::parseSection(const QJsonObject &instance) {
   auto props = instance.value("props").toObject();
   auto arr = instance.value("children").toArray();
 
-  model.title = props.value("title").toString();
-  model.subtitle = props.value("subtitle").toString();
+  model.title = props.value("title").toString().toStdString();
+  model.subtitle = props.value("subtitle").toString().toStdString();
 
-  if (props.contains("fit")) { model.fit = parseFit(props.value("fit").toString()); }
+  if (props.contains("fit")) { model.fit = parseFit(props.value("fit").toString().toStdString()); }
   if (props.contains("aspectRatio")) { model.aspectRatio = props.value("aspectRatio").toDouble(1); }
   if (props.contains("columns")) { model.columns = props.value("columns").toInt(); }
-  if (auto inset = props.value("inset"); inset.isString()) { model.inset = parseInset(inset.toString()); }
+  if (auto inset = props.value("inset"); inset.isString()) {
+    model.inset = parseInset(inset.toString().toStdString());
+  }
 
   model.children.reserve(arr.size());
 
   for (const auto &child : arr) {
     auto obj = child.toObject();
-    auto type = obj.value("type").toString();
+    auto type = obj.value("type").toString().toStdString();
 
     if (type == "grid-item") {
       auto item = parseListItem(obj, index);
@@ -85,7 +87,7 @@ GridSectionModel GridModelParser::parseSection(const QJsonObject &instance) {
   return model;
 }
 
-GridItemContentWidget::Inset GridModelParser::parseInset(const QString &s) {
+GridItemContentWidget::Inset GridModelParser::parseInset(const std::string &s) {
   using Inset = GridItemContentWidget::Inset;
 
   if (s == "zero") return Inset::None;
@@ -96,7 +98,7 @@ GridItemContentWidget::Inset GridModelParser::parseInset(const QString &s) {
   return Inset::Small;
 }
 
-ObjectFit GridModelParser::parseFit(const QString &fit) {
+ObjectFit GridModelParser::parseFit(const std::string &fit) {
   if (fit == "fill") return ObjectFit::Fill;
   return ObjectFit::Contain;
 }
@@ -110,28 +112,32 @@ GridModel GridModelParser::parse(const QJsonObject &instance) {
   model.dirty = instance.value("dirty").toBool(true);
   model.isLoading = props["isLoading"].toBool(false);
   model.throttle = props["throttle"].toBool(false);
-  model.fit = parseFit(props.value("fit").toString());
+  model.fit = parseFit(props.value("fit").toString().toStdString());
   model.aspectRatio = props.value("aspectRatio").toDouble(1);
-  model.searchPlaceholderText = props["searchBarPlaceholder"].toString();
+  model.searchPlaceholderText = props["searchBarPlaceholder"].toString().toStdString();
   model.filtering = props["filtering"].toBool(defaultFiltering);
 
-  if (auto inset = props.value("inset"); inset.isString()) { model.inset = parseInset(inset.toString()); }
+  if (auto inset = props.value("inset"); inset.isString()) {
+    model.inset = parseInset(inset.toString().toStdString());
+  }
   if (auto cols = props.value("columns"); cols.isDouble()) { model.columns = cols.toInt(); }
 
   if (props.contains("navigationTitle")) {
-    model.navigationTitle = props.value("navigationTitle").toString();
+    model.navigationTitle = props.value("navigationTitle").toString().toStdString();
   }
 
   if (props.contains("onSearchTextChange")) {
-    model.onSearchTextChange = props.value("onSearchTextChange").toString();
+    model.onSearchTextChange = props.value("onSearchTextChange").toString().toStdString();
   }
 
   if (props.contains("onSelectionChange")) {
-    model.onSelectionChanged = props.value("onSelectionChange").toString();
+    model.onSelectionChanged = props.value("onSelectionChange").toString().toStdString();
   }
 
-  if (props.contains("selectedItemId")) { model.selectedItemId = props.value("selectedItemId").toString(); }
-  if (props.contains("searchText")) { model.searchText = props.value("searchText").toString(); }
+  if (props.contains("selectedItemId")) {
+    model.selectedItemId = props.value("selectedItemId").toString().toStdString();
+  }
+  if (props.contains("searchText")) { model.searchText = props.value("searchText").toString().toStdString(); }
   if (props.contains("pagination")) {
     model.pagination = PaginationModel::fromJson(props.value("pagination").toObject());
   }
@@ -140,7 +146,7 @@ GridModel GridModelParser::parse(const QJsonObject &instance) {
 
   for (const auto &child : instance.value("children").toArray()) {
     auto childObj = child.toObject();
-    auto type = childObj.value("type").toString();
+    auto type = childObj.value("type").toString().toStdString();
 
     if (type == "action-panel") { model.actions = ActionPannelParser().parse(childObj); }
 
