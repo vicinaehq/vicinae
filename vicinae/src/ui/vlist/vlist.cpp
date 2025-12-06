@@ -1,6 +1,7 @@
 #include "vlist.hpp"
 #include <absl/base/call_once.h>
 #include <absl/time/time.h>
+#include <qapplication.h>
 #include <qobjectdefs.h>
 
 namespace vicinae::ui {

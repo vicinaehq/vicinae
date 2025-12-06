@@ -132,13 +132,17 @@ void FileIndexer::preferenceValuesChanged(const QJsonObject &preferences) {
       preferences.value("watcherPaths").toString().split(';', Qt::SkipEmptyParts) |
       std::views::transform([](const QStringView &v) { return fs::path(v.toString().toStdString()); }));
 
+  m_useRegex = preferences.value("useRegex").toBool();
+
   std::string databaseFilename = FileIndexerDatabase::getDatabasePath().filename().string();
   m_excludedFilenames = {databaseFilename, databaseFilename + "-wal"};
 }
 
 QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view view,
                                                                 const QueryParams &params) {
-  return m_queryEngine.query(view, params);
+  QueryParams paramsWithRegex = params;
+  paramsWithRegex.useRegex = m_useRegex;
+  return m_queryEngine.query(view, paramsWithRegex);
 }
 
 FileIndexer::FileIndexer() : m_writer(std::make_shared<DbWriter>()), m_dispatcher(m_writer) {
