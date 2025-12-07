@@ -6,11 +6,11 @@ import { main as workerMain } from "./worker";
 import * as ipc from "./proto/ipc";
 import type * as common from "./proto/common";
 import * as manager from "./proto/manager";
-import * as extension from "./proto/extension";
 import * as path from "node:path";
 import * as fsp from "node:fs/promises";
 
 const WORKER_GRACE_PERIOD_MS = 10_000;
+const WORKER_MAX_HEAP_SIZE_MB = 100;
 
 type WorkerInfo = {
 	worker: Worker;
@@ -18,6 +18,7 @@ type WorkerInfo = {
 };
 
 class Vicinae {
+	private readonly workerPool: Worker[] = [];
 	private readonly workerMap = new Map<string, WorkerInfo>();
 	private readonly requestMap = new Map<string, Worker>();
 	private currentMessage: { data: Buffer } = {
@@ -53,6 +54,23 @@ class Vicinae {
 		return ipc.IpcMessage.decode(packet);
 	}
 
+	private acquireWorker(env: manager.CommandEnv): Worker {
+		if (env === manager.CommandEnv.Development) {
+			// we create a new development worker on the fly all the time
+			// for development extensions. This is because the worker preloads
+			// React and we need to know whether we want the dev or prod version
+			// from the get go. We don't preload dev workers to keep resource
+			// usage low.
+			return this.createWorker("development");
+		}
+
+		if (!this.workerPool.length) {
+			console.error("no worker in pool!");
+		}
+
+		return this.workerPool.pop() ?? this.createWorker("production");
+	}
+
 	private async handleManagerRequest(request: ipc.ManagerRequest) {
 		if (request.payload?.load) {
 			const load = request.payload.load;
@@ -77,38 +95,9 @@ class Vicinae {
 
 			const stdoutLog = path.join(supportInternal, "stdout.txt");
 			const stderrLog = path.join(supportInternal, "stderr.txt");
+			const startedAt: DOMHighResTimeStamp | null = null;
 
-			const worker = new Worker(__filename, {
-				workerData: {
-					// the transpiled JS file to execute
-					entrypoint: load.entrypoint,
-					preferenceValues: load.preferenceValues,
-					launchProps: { arguments: load.argumentValues },
-					commandMode:
-						load.mode === manager.CommandMode.View ? "view" : "no-view",
-					supportPath,
-					assetsPath,
-					isRaycast: load.isRaycast,
-					extensionName: load.extensionName,
-					ownerOrAuthorName: load.ownerOrAuthorName,
-					commandName: load.commandName,
-					vicinaeVersion: {
-						tag: process.env.VICINAE_VERSION ?? "unknown",
-						commit: process.env.VICINAE_COMMIT ?? "unknown",
-					},
-				},
-
-				stdout: true,
-				stderr: true,
-				env: {
-					...process.env,
-					NODE_ENV:
-						load.env === manager.CommandEnv.Development
-							? "development"
-							: "production",
-				},
-			});
-
+			const worker = this.acquireWorker(load.env);
 			const workerInfo: WorkerInfo = { worker };
 
 			this.workerMap.set(sessionId, workerInfo);
@@ -135,6 +124,14 @@ class Vicinae {
 
 			worker.on("message", (buf: Buffer) => {
 				try {
+					if (startedAt) {
+						console.error(
+							"time to first message",
+							performance.now() - startedAt,
+							"ms",
+						);
+					}
+
 					const { event, request } = ipc.ExtensionMessage.decode(buf);
 
 					/**
@@ -192,7 +189,32 @@ class Vicinae {
 				stdoutStream.close();
 				stderrStream.close();
 				this.workerMap.delete(sessionId);
+				// immediately prepare a new worker for next time we launch an extension
+				// we don't reuse the same worker twice to preserve isolation
+				if (load.env === manager.CommandEnv.Production) {
+					this.workerPool.push(this.createWorker("production"));
+				}
 			});
+
+			worker.postMessage(
+				ipc.ExtensionMessage.encode({
+					event: {
+						id: randomUUID(),
+						launch: {
+							entrypoint: load.entrypoint,
+							preferenceValues: load.preferenceValues,
+							argumentValues: load.argumentValues,
+							mode: load.mode,
+							supportPath,
+							assetPath: assetsPath,
+							isRaycast: load.isRaycast,
+							extensionName: load.extensionName,
+							ownerOrAuthorName: load.ownerOrAuthorName,
+							commandName: load.commandName,
+						},
+					},
+				}).finish(),
+			);
 
 			return this.respond(request.requestId, { load: { sessionId } });
 		}
@@ -223,6 +245,20 @@ class Vicinae {
 
 		return this.respondError(request.requestId, {
 			errorText: "No handler configured for this command",
+		});
+	}
+
+	private createWorker(env: "production" | "development"): Worker {
+		return new Worker(__filename, {
+			stdout: true,
+			stderr: true,
+			resourceLimits: {
+				maxOldGenerationSizeMb: WORKER_MAX_HEAP_SIZE_MB,
+			},
+			env: {
+				...process.env,
+				NODE_ENV: env,
+			},
 		});
 	}
 
@@ -278,6 +314,7 @@ class Vicinae {
 	}
 
 	constructor() {
+		this.workerPool.push(this.createWorker("production"));
 		process.stdin.on("error", (error) => {
 			throw new Error(`${error}`);
 		});
@@ -286,14 +323,17 @@ class Vicinae {
 }
 
 const main = async () => {
-	if (!isMainThread) workerMain();
+	if (!isMainThread) {
+		workerMain();
+		return;
+	}
 
 	if (isatty(process.stdout.fd)) {
 		console.error("Running the extension manager from a TTY is not supported.");
 		process.exit(1);
 	}
 
-	const vicinae = new Vicinae();
+	new Vicinae();
 };
 
 main();
