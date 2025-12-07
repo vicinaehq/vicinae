@@ -68,7 +68,13 @@ class Vicinae {
 			console.error("no worker in pool!");
 		}
 
-		return this.workerPool.pop() ?? this.createWorker("production");
+		const acquired = this.workerPool.pop() ?? this.createWorker("production");
+
+		// immediately prepare a new worker for next time we launch an extension
+		// we don't reuse the same worker twice to guarantee isolation
+		this.workerPool.push(this.createWorker("production"));
+
+		return acquired;
 	}
 
 	private async handleManagerRequest(request: ipc.ManagerRequest) {
@@ -180,11 +186,6 @@ class Vicinae {
 				stdoutStream.close();
 				stderrStream.close();
 				this.workerMap.delete(sessionId);
-				// immediately prepare a new worker for next time we launch an extension
-				// we don't reuse the same worker twice to preserve isolation
-				if (load.env === manager.CommandEnv.Production) {
-					this.workerPool.push(this.createWorker("production"));
-				}
 			});
 
 			worker.postMessage(
