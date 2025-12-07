@@ -152,4 +152,4 @@ export interface Environment {
  * console.log({ environment });
  * ```
  */
-export const environment: Environment = {} as Environment;
+export const environment: Environment = (globalThis as any).vicinae.environ;

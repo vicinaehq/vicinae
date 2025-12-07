@@ -1,109 +1,44 @@
-import { parentPort, workerData } from "node:worker_threads";
-import { createRenderer } from "./reconciler";
-import { LaunchType, NavigationProvider, bus, environment } from "@vicinae/api";
-import { type ComponentType, type ReactNode, Suspense } from "react";
-import * as React from "react";
+import "./globals";
+import type { Global } from "./globals";
+import { parentPort } from "node:worker_threads";
+import { LaunchType, bus } from "@vicinae/api";
 import { patchRequire } from "./patch-require";
+import type { LaunchEventData } from "./proto/extension";
+import { CommandMode } from "./proto/manager";
+import loadView from "./loaders/load-view-command";
+import loadNoView from "./loaders/load-no-view-command";
 
-class ErrorBoundary extends React.Component<
-	{ children: ReactNode },
-	{ error: string }
-> {
-	constructor(props: { children: ReactNode }) {
-		super(props);
-		this.state = { error: "" };
-	}
-
-	componentDidCatch(error: Error) {
-		this.setState({ error: `${error.name}: ${error.message}` });
-	}
-
-	render() {
-		const { error } = this.state;
-
-		if (error) {
-			bus.emitCrash(error);
-			return null;
-		}
-
-		return <>{this.props.children}</>;
-	}
-}
-
-const App: React.FC<{ component: ComponentType; launchProps: any }> = ({
-	component: Component,
-	launchProps,
-}) => {
-	return (
-		<ErrorBoundary>
-			<Suspense fallback={<></>}>
-				<NavigationProvider root={<Component {...launchProps} />} />
-			</Suspense>
-		</ErrorBoundary>
-	);
-};
-
-const loadEnviron = () => {
-	const {
-		supportPath,
-		commandName,
-		assetsPath,
-		commandMode,
-		extensionName,
-		ownerOrAuthorName,
-		vicinaeVersion,
-		isRaycast,
-	} = workerData;
-
-	environment.textSize = "medium";
-	environment.appearance = "dark";
-	environment.canAccess = (api) => false;
-	environment.isDevelopment = process.env.NODE_ENV === "development";
-	environment.commandName = commandName;
-	environment.commandMode = commandMode;
-	environment.supportPath = supportPath;
-	environment.assetsPath = assetsPath;
-	environment.raycastVersion = "1.0.0"; // provided for compatibility only, not meaningful
-	environment.launchType = LaunchType.UserInitiated;
-	environment.extensionName = extensionName;
-	environment.ownerOrAuthorName = ownerOrAuthorName;
-	environment.vicinaeVersion = vicinaeVersion;
-	environment.isRaycast = isRaycast;
-};
-
-const loadView = async () => {
-	const module = await import(workerData.entrypoint);
-	const Component = module.default.default;
-
-	let lastRender = performance.now();
-
-	const renderer = createRenderer({
-		onInitialRender: (views) => {
-			bus.request("ui.render", { json: JSON.stringify({ views }) });
+const loadEnviron = (data: LaunchEventData) => {
+	const g = globalThis as Global;
+	Object.assign(g.vicinae.environ, {
+		theme: "dark",
+		textSize: "medium",
+		appearance: "dark",
+		canAccess: (_: unknown) => false,
+		isDevelopment: process.env.NODE_ENV === "development",
+		commandName: data.commandName,
+		commandMode: data.mode === CommandMode.View ? "view" : "no-view",
+		supportPath: data.supportPath,
+		assetsPath: data.assetPath,
+		raycastVersion: "1.0.0", // provided for compatibility only, not meaningful
+		launchType: LaunchType.UserInitiated,
+		extensionName: data.extensionName,
+		ownerOrAuthorName: data.ownerOrAuthorName,
+		vicinaeVersion: {
+			tag: process.env.VICINAE_VERSION ?? "unknown",
+			commit: process.env.VICINAE_COMMIT ?? "unknown",
 		},
-		onUpdate: (views) => {
-			const now = performance.now();
-			lastRender = now;
-			bus.request("ui.render", { json: JSON.stringify({ views }) });
-		},
+		isRaycast: data.isRaycast,
 	});
-
-	renderer.render(
-		<App launchProps={workerData.launchProps} component={Component} />,
-	);
+	g.vicinae.preferences = data.preferenceValues;
 };
 
-const loadNoView = async () => {
-	const module = await import(workerData.entrypoint);
-	const entrypoint = module.default.default;
-
-	if (typeof entrypoint !== "function") {
-		throw new Error(
-			`no-view command does not export a function as its default export`,
-		);
-	}
-
-	await entrypoint(workerData.launchProps);
+const loaders: Record<CommandMode, (data: LaunchEventData) => Promise<void>> = {
+	[CommandMode.View]: loadView,
+	[CommandMode.NoView]: loadNoView,
+	[CommandMode.UNRECOGNIZED]: () => {
+		throw new Error("Unsupported command type");
+	},
 };
 
 export const main = async () => {
@@ -114,16 +49,15 @@ export const main = async () => {
 		return;
 	}
 
-	loadEnviron();
 	patchRequire();
 
-	(process as any).noDeprecation = !environment.isDevelopment;
-
-	if (environment.commandMode === "view") {
-		await loadView();
-	} else if (environment.commandMode === "no-view") {
-		await loadNoView();
-	}
-
-	bus.emit("exit", {});
+	// workers are provisioned before extension commands are launched, in order to avoid cold starts.
+	// we need to wait for the manager to send the launch event to initialize stuff.
+	// a worker is only used for a command once
+	bus.onLaunch(async (data) => {
+		loadEnviron(data);
+		(process as any).noDeprecation = process.env.NODE_ENV === "production";
+		await loaders[data.mode](data);
+		bus.emit("exit", {});
+	});
 };
