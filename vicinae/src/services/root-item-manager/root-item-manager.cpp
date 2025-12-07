@@ -162,7 +162,7 @@ bool RootItemManager::upsertProvider(const RootProvider &provider) {
 
 float RootItemManager::SearchableRootItem::fuzzyScore(std::string_view pattern) const {
   using WS = fzf::WeightedString;
-  std::initializer_list<WS> ss = {{title, 1.0f}, {subtitle, 0.6f}};
+  std::initializer_list<WS> ss = {{title, 1.0f}, {subtitle, 0.6f}, {meta->alias, 1.0f}};
   auto kws = keywords | std::views::transform([](auto &&kw) { return WS{kw, 0.3f}; });
   auto strs = std::views::concat(ss, kws);
   float score = pattern.empty() ? 1 : fzf::defaultMatcher.fuzzy_match_v2_score_query(strs, pattern, false);
