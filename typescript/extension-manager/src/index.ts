@@ -59,7 +59,7 @@ class Vicinae {
 			// we create a new development worker on the fly all the time
 			// for development extensions. This is because the worker preloads
 			// React and we need to know whether we want the dev or prod version
-			// from the get go. We don't preload dev workers to keep resource
+			// from the get go. We don't preload a dev worker to keep resource
 			// usage low.
 			return this.createWorker("development");
 		}
@@ -95,7 +95,6 @@ class Vicinae {
 
 			const stdoutLog = path.join(supportInternal, "stdout.txt");
 			const stderrLog = path.join(supportInternal, "stderr.txt");
-			const startedAt: DOMHighResTimeStamp | null = null;
 
 			const worker = this.acquireWorker(load.env);
 			const workerInfo: WorkerInfo = { worker };
@@ -124,14 +123,6 @@ class Vicinae {
 
 			worker.on("message", (buf: Buffer) => {
 				try {
-					if (startedAt) {
-						console.error(
-							"time to first message",
-							performance.now() - startedAt,
-							"ms",
-						);
-					}
-
 					const { event, request } = ipc.ExtensionMessage.decode(buf);
 
 					/**

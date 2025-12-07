@@ -85,11 +85,7 @@ public:
         [&](const FavoriteItem &item) { return rootItemCompleter(item.item); },
         [](auto &&a) { return std::unique_ptr<CompleterData>(); }};
 
-    auto completer = std::visit(visitor, item);
-
-    if (completer) { qDebug() << "completer here!"; }
-
-    return completer;
+    return std::visit(visitor, item);
   }
 
   bool tryAliasFastTrack() {

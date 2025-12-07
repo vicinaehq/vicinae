@@ -3,7 +3,6 @@ import { parentPort, type MessagePort } from "node:worker_threads";
 import * as ipc from "./proto/ipc";
 import * as extension from "./proto/extension";
 import { Err, Ok, type Result } from "./lib/result";
-import { ManagerLoadCommand } from "./proto/manager";
 
 /**
  * @ignore
