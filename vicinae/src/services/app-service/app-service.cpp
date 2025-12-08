@@ -1,6 +1,8 @@
 #include "app-service.hpp"
 #include "services/app-service/xdg/xdg-app-database.hpp"
 #include "omni-database.hpp"
+#include "service-registry.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 #include <filesystem>
 #include <qcontainerfwd.h>
 #include <qfilesystemwatcher.h>
@@ -24,7 +26,14 @@ std::vector<std::filesystem::path> AppService::mergedPaths() const {
 AbstractAppDatabase *AppService::provider() const { return m_provider.get(); }
 
 bool AppService::launch(const AbstractApplication &app, const std::vector<QString> &args) const {
-  return m_provider->launch(app, args, m_prefix);
+  bool ok = m_provider->launch(app, args, m_prefix);
+
+  if (ok) {
+    QString itemId = QString("apps.%1").arg(app.id());
+    ServiceRegistry::instance()->rootItemManager()->registerVisit(itemId);
+  }
+
+  return ok;
 }
 
 bool AppService::launchTerminalCommand(const std::vector<QString> &cmdLine,
