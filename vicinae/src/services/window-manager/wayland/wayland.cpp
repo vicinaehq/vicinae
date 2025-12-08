@@ -110,10 +110,10 @@ bool WaylandWindowManager::pasteToWindow(const AbstractWindow *window, const Abs
   if (!m_keyboard.isAvailable()) { return false; }
 
   if (app && app->isTerminalEmulator()) {
-    return m_keyboard.sendKeySequence(XKB_KEY_V, VK::MOD_CTRL | VK::MOD_SHIFT);
+    return m_keyboard.sendKeySequence(XKB_KEY_v, VK::MOD_CTRL | VK::MOD_SHIFT);
   }
 
-  return m_keyboard.sendKeySequence(XKB_KEY_V, VK::MOD_CTRL);
+  return m_keyboard.sendKeySequence(XKB_KEY_v, VK::MOD_CTRL);
 }
 
 void WaylandWindowManager::focusWindowSync(const AbstractWindow &window) const {
