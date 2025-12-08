@@ -7,6 +7,7 @@
 #include "ui/omni-list/omni-list.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 
 class BrowseAppItem : public SearchableListView::Actionnable {
 public:
@@ -112,9 +113,26 @@ BrowseAppsView::Data BrowseAppsView::initData() const {
   Data data;
   auto appDb = context()->services->appDb();
 
+  auto mgr = ServiceRegistry::instance()->rootItemManager();
+
+  std::vector<std::pair<std::shared_ptr<AbstractApplication>, double>> scored;
+  scored.reserve(appDb->list().size());
+
   for (const auto &app : appDb->list()) {
     if (!preferences.value("showHidden").toBool() && !app->displayable()) continue;
-    data.emplace_back(std::make_shared<BrowseAppItem>(app));
+
+    QString itemId = QString("apps.%1").arg(app->id());
+    auto meta = mgr->itemMetadata(itemId);
+    double score = mgr->computeScore(meta, 1);
+    scored.emplace_back(app, score);
+  }
+
+  std::stable_sort(scored.begin(), scored.end(), [](const auto &a, const auto &b) {
+    return a.second > b.second;
+  });
+
+  for (const auto &p : scored) {
+    data.emplace_back(std::make_shared<BrowseAppItem>(p.first));
   }
 
   return data;
