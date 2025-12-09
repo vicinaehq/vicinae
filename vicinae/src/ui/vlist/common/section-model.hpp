@@ -111,7 +111,7 @@ protected:
 
   StableID stableId(Index idx) const final override {
     static std::hash<std::string_view> hasher = {};
-    const auto visitor = overloads{[&](const SectionHeader &header) { return hasher(header.name); },
+    const auto visitor = overloads{[&](const SectionHeader &header) { return randomId(); },
                                    [&](const SectionItem &item) { return stableId(item.data); }};
     return std::visit(visitor, fromFlatIndex(idx));
   }

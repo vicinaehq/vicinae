@@ -123,12 +123,12 @@ protected:
    * Simple utility to generate a random ID, generally used to generate
    * widget tags or not so stable IDs.
    */
-  size_t randomId() const {
-    static size_t random = 0;
-    return random++;
-  }
+  size_t randomId() const { return m_serial++; }
 
   template <typename T> static size_t hash(const T &t) { return std::hash<T>()(t); }
+
+private:
+  mutable size_t m_serial = 0;
 };
 
 class WidgetWrapper : public QWidget {
