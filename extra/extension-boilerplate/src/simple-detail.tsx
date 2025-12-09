@@ -59,6 +59,14 @@ yellow rectangle with text (data:image/svg+xml base64):
 markdown format image (data:image/png;base64 with raycast-* size):
 
 ![Logo](${DATA_URI_PNG_BASE64}?raycast-width=50&raycast-height=50)
+
+markdown format image with style attribute (no unit):
+
+<img src=${DATA_URI_PNG_BASE64} style="width:50; height:50">
+
+markdown format image with style attribute (px):
+
+<img src=${DATA_URI_PNG_BASE64} style="width:50px; height:50px">
 `;
 
 const table = `
