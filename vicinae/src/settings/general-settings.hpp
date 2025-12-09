@@ -15,6 +15,7 @@
 // We will implement something better than this, eventually
 class GeneralSettings : public VerticalScrollArea {
   CheckboxInput *m_rootFileSearch;
+  CheckboxInput *m_sortAlphabetically;
   CheckboxInput *m_csd;
   CheckboxInput *m_closeOnFocusLoss;
   CheckboxInput *m_considerPreedit;
@@ -33,6 +34,7 @@ class GeneralSettings : public VerticalScrollArea {
   void handleCloseOnFocusLossChange(bool value);
   void handleConsiderPreeditChange(bool value);
   void handleRootSearchFilesChange(bool value);
+  void handleSortAlphabeticallyChange(bool value);
   void handleThemeChange(const QString &id);
   void handleClientSideDecorationChange(bool value);
   void handleFontChange(const QString &fontFamily);
