@@ -15,6 +15,9 @@ Payload Payload::fromProto(const proto::ext::daemon::DmenuRequest &req) {
   payload.noSection = req.no_section();
   payload.noQuickLook = req.no_quick_look();
   payload.noMetadata = req.no_metadata();
+  payload.noFooter = req.no_footer();
+  if (req.has_width()) payload.width = req.width();
+  if (req.has_height()) payload.height = req.height();
   return payload;
 }
 
@@ -28,6 +31,9 @@ proto::ext::daemon::DmenuRequest Payload::toProto() const {
   req.set_no_section(noSection);
   req.set_no_quick_look(noQuickLook);
   req.set_no_metadata(noMetadata);
+  req.set_no_footer(noFooter);
+  if (width) req.set_width(*width);
+  if (height) req.set_height(*height);
   return req;
 }
 }; // namespace DMenu
