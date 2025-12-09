@@ -125,7 +125,7 @@ void MarkdownRenderer::insertImageFromUrl(const QUrl &url, const QSize &iconSize
 
             QSize finalSize = iconSize;
 
-            // Calculate size maintaining aspect ratio
+            // Calculate size maintaining aspect ratio based on the loaded pixmap
             if (iconSize.width() > 0 && iconSize.height() == 0) {
               // Only width specified, calculate height
               qreal aspectRatio = static_cast<qreal>(pix.width()) / pix.height();
@@ -139,11 +139,19 @@ void MarkdownRenderer::insertImageFromUrl(const QUrl &url, const QSize &iconSize
               finalSize = QSize(pix.width(), pix.height());
             }
 
-            // Set image size
+            // Downscale the image to fit within the viewport width while preserving aspect ratio
+            qreal docMargin = _document->documentMargin();
+            int availableWidth = _textEdit->viewport()->width() - static_cast<int>(2 * docMargin);
+            if (availableWidth > 0 && finalSize.width() > availableWidth) {
+              qreal scale = static_cast<qreal>(availableWidth) / static_cast<qreal>(finalSize.width());
+              finalSize.setWidth(availableWidth);
+              finalSize.setHeight(static_cast<int>(finalSize.height() * scale));
+            }
+
+            // Set image size without forcing a percentage-based maximum width
             QTextImageFormat imageFormat = _cursor.charFormat().toImageFormat();
             imageFormat.setWidth(finalSize.width());
             imageFormat.setHeight(finalSize.height());
-            imageFormat.setMaximumWidth(QTextLength(QTextLength::PercentageLength, 100));
             _cursor.setCharFormat(imageFormat);
 
             // Set block alignment to center
@@ -592,6 +600,37 @@ void MarkdownRenderer::insertHtmlImage(xmlNode *node) {
         if (!value.isEmpty()) { imgSize.setWidth(value.toInt()); }
       } else if (name == "height") {
         if (!value.isEmpty()) { imgSize.setHeight(value.toInt()); }
+      } else if (name == "style") {
+        // Support inline CSS sizing, e.g. style="width: 200px; height: 300px;"
+        const auto declarations = value.split(';', Qt::SkipEmptyParts);
+        for (const auto &decl : declarations) {
+          const auto parts = decl.split(':', Qt::SkipEmptyParts);
+          if (parts.size() != 2) continue;
+          QString prop = parts[0].trimmed().toLower();
+          QString val = parts[1].trimmed();
+
+          auto parsePx = [](const QString &s, bool *okOut) -> int {
+            bool ok = false;
+            QString v = s.trimmed();
+            if (v.endsWith("px", Qt::CaseInsensitive)) {
+              v.chop(2);
+              v = v.trimmed();
+            }
+            int res = v.toInt(&ok);
+            if (okOut) *okOut = ok;
+            return res;
+          };
+
+          if (prop == "width") {
+            bool ok = false;
+            int w = parsePx(val, &ok);
+            if (ok && w > 0) { imgSize.setWidth(w); }
+          } else if (prop == "height") {
+            bool ok = false;
+            int h = parsePx(val, &ok);
+            if (ok && h > 0) { imgSize.setHeight(h); }
+          }
+        }
       }
 
       xmlFree(attrValue);
