@@ -420,6 +420,8 @@ set(SRCS
 
 	src/extensions/calculator/history/calculator-history-view.hpp
 	src/extensions/calculator/history/calculator-history-view.cpp
+	src/extensions/calculator/history/calculator-history-controller.hpp
+	src/extensions/calculator/history/calculator-history-controller.cpp
 	src/extensions/theme/manage/manage-themes-view.hpp
 	src/extensions/theme/manage/manage-themes-view.cpp
 	src/extensions/theme/manage/theme-list-model.hpp
