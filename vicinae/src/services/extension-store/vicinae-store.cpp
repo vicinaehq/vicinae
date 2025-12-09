@@ -1,8 +1,8 @@
 #include "vicinae-store.hpp"
+#include "version.h"
 #include "environment.hpp"
 #include "theme.hpp"
 #include "theme/theme-file.hpp"
-#include "vicinae.hpp"
 #include <QDir>
 #include <QJsonParseError>
 #include <QNetworkDiskCache>
@@ -246,6 +246,7 @@ ListResponse ListResponse::fromJson(const QJsonDocument &doc) {
 } // namespace VicinaeStore
 
 // VicinaeStoreService implementation
+//
 VicinaeStoreService::VicinaeStoreService(QObject *parent)
     : QObject(parent), m_networkManager(new QNetworkAccessManager(this)),
       m_baseUrl(Environment::vicinaeApiBaseUrl()) {
@@ -272,7 +273,7 @@ QFuture<std::expected<QByteArray, QString>> VicinaeStoreService::get(const QUrl 
 
   QNetworkRequest request(url);
   request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
-  request.setHeader(QNetworkRequest::KnownHeaders::UserAgentHeader, Omnicast::USER_AGENT);
+  request.setHeader(QNetworkRequest::KnownHeaders::UserAgentHeader, userAgent());
 
   QNetworkReply *reply = m_networkManager->get(request);
 
@@ -335,3 +336,5 @@ QFuture<VicinaeStore::DownloadExtensionResult> VicinaeStoreService::downloadExte
         return *result;
       });
 }
+
+QString VicinaeStoreService::userAgent() { return QString("vicinae/%1").arg(VICINAE_GIT_TAG); }
