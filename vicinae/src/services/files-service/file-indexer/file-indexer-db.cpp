@@ -4,6 +4,7 @@
 #include "services/files-service/file-indexer/relevancy-scorer.hpp"
 #include "utils/migration-manager/migration-manager.hpp"
 #include "utils/utils.hpp"
+#include "regex-utils.hpp"
 #include <chrono>
 #include <qlogging.h>
 #include <qsqldatabase.h>
@@ -12,6 +13,10 @@
 #include <quuid.h>
 #include <qdebug.h>
 #include <QSqlError>
+#include <QRegularExpression>
+#include <QSqlDriver>
+#include <QVariant>
+#include <sqlite3.h>
 
 // clang-format off
 static const std::vector<std::string> SQLITE_PRAGMAS = {
@@ -247,7 +252,32 @@ QSqlDatabase *FileIndexerDatabase::database() { return &m_db; }
 
 std::vector<fs::path> FileIndexerDatabase::search(std::string_view searchQuery,
                                                   const AbstractFileIndexer::QueryParams &params) {
-  auto queryString = QString(R"(
+  QString queryString;
+  std::string_view regexString;
+  std::string staticChars;
+  bool hasPattern = false;
+
+  if (params.useRegex) {
+    regexString = searchQuery;
+    // trigram search requires at least 3 characters
+    staticChars = extractStaticCharsFromRegex(searchQuery, 3);
+    searchQuery = staticChars;
+    bool hasSearchString = !searchQuery.empty();
+    hasPattern = !regexString.empty();
+
+    queryString =
+        QString(R"(
+    SELECT f.path, tri_idx.rank FROM indexed_file f 
+        JOIN tri_idx ON tri_idx.rowid = f.id
+        WHERE %2%3
+        ORDER BY f.relevancy_score, tri_idx.rank
+        LIMIT :limit
+        OFFSET :offset
+  )")
+            .arg(hasSearchString ? "tri_idx MATCH '" + qStringFromStdView(searchQuery) + "'" : "1=1")
+            .arg(hasPattern ? " AND f.name REGEXP :pattern" : "");
+  } else {
+    queryString = QString(R"(
   	SELECT path, rank FROM indexed_file f 
 	JOIN unicode_idx ON unicode_idx.rowid = f.id 
 	WHERE 
@@ -256,11 +286,13 @@ std::vector<fs::path> FileIndexerDatabase::search(std::string_view searchQuery,
 	LIMIT :limit
 	OFFSET :offset
   )")
-                         .arg(qStringFromStdView(searchQuery));
+                      .arg(qStringFromStdView(searchQuery));
+  }
 
   QSqlQuery query(m_db);
-
   query.prepare(queryString);
+
+  if (params.useRegex && hasPattern) { query.bindValue(":pattern", qStringFromStdView(regexString)); }
   query.bindValue(":limit", params.pagination.limit);
   query.bindValue(":offset", params.pagination.offset);
 
@@ -424,6 +456,31 @@ void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &p
   if (!m_db.commit()) { qCritical() << "Failed to commit batchIndex" << m_db.lastError(); }
 }
 
+static void sqliteRegexpCallback(sqlite3_context *context, int argc, sqlite3_value **argv) {
+  if (argc != 2) {
+    sqlite3_result_error(context, "REGEXP requires 2 arguments", -1);
+    return;
+  }
+
+  const char *pattern = reinterpret_cast<const char *>(sqlite3_value_text(argv[0]));
+  const char *text = reinterpret_cast<const char *>(sqlite3_value_text(argv[1]));
+
+  if (!pattern || !text) {
+    sqlite3_result_null(context);
+    return;
+  }
+
+  QRegularExpression regex(QString::fromUtf8(pattern));
+  QString textStr = QString::fromUtf8(text);
+
+  if (!regex.isValid()) {
+    sqlite3_result_error(context, "Invalid regular expression", -1);
+    return;
+  }
+
+  sqlite3_result_int(context, regex.match(textStr).hasMatch() ? 1 : 0);
+}
+
 FileIndexerDatabase::FileIndexerDatabase() : m_connectionId(createRandomConnectionId()) {
   m_db = QSqlDatabase::addDatabase("QSQLITE", m_connectionId);
   m_db.setDatabaseName(getDatabasePath().c_str());
@@ -431,6 +488,15 @@ FileIndexerDatabase::FileIndexerDatabase() : m_connectionId(createRandomConnecti
   if (!m_db.open()) {
     qCritical() << "Failed to open datbase at" << getDatabasePath();
     return;
+  }
+
+  QVariant v = m_db.driver()->handle();
+  if (v.isValid() && qstrcmp(v.typeName(), "sqlite3*") == 0) {
+    sqlite3 *db_handle = *static_cast<sqlite3 **>(v.data());
+    if (db_handle) {
+      sqlite3_create_function(db_handle, "REGEXP", 2, SQLITE_UTF8, nullptr, sqliteRegexpCallback, nullptr,
+                              nullptr);
+    }
   }
 
   QSqlQuery query(m_db);
