@@ -5,7 +5,6 @@
 #include <qsize.h>
 #include <set>
 #include "theme/colors.hpp"
-#include "version.h"
 
 namespace Omnicast {
 
@@ -24,7 +23,6 @@ static const QString APP_SCHEME = APP_ID;
 static const std::set<QString> APP_SCHEMES = {APP_SCHEME, "raycast", "com.raycast"};
 static const QString DEFAULT_FAVICON_SERVICE = "twenty";
 static const QString DEFAULT_ICON_THEME_NAME = "vicinae";
-static const QString USER_AGENT = QString("vicinae/") + VICINAE_GIT_TAG;
 static const QString VICINAE_NPM_API_PACKAGE = "@vicinae/api";
 static const QString RAYCAST_NPM_API_PACKAGE = "@raycast/api";
 

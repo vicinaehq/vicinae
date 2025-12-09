@@ -1,6 +1,4 @@
 #pragma once
-#include "vicinae.hpp"
-#include "xdgpp/desktop-entry/iterator.hpp"
 #include "xdgpp/env/env.hpp"
 #include <QString>
 #include <QApplication>
@@ -10,7 +8,6 @@
 #include <cstdlib>
 #include <filesystem>
 #include <qtenvironmentvariables.h>
-#include "version.h"
 
 namespace Environment {
 
@@ -115,11 +112,6 @@ inline QString vicinaeApiBaseUrl() {
   if (const char *url = getenv("VICINAE_API_BASE_URL")) { return url; }
   return "https://api.vicinae.com/v1";
 }
-
-/**
- * Version of the Vicinae app.
- */
-inline QString version() { return VICINAE_GIT_TAG; }
 
 /**
  * Gets human-readable environment description

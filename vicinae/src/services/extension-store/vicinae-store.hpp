@@ -127,6 +127,8 @@ public:
   QString baseUrl() const;
 
 private:
+  static QString userAgent();
+
   QFuture<std::expected<QByteArray, QString>> get(const QUrl &url);
 
   QNetworkAccessManager *m_networkManager;

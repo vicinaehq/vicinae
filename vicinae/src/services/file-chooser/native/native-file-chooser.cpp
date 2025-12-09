@@ -5,6 +5,7 @@
 #include <qfiledialog.h>
 #include <qnamespace.h>
 #include "environment.hpp"
+#include "vicinae.hpp"
 #include <qobject.h>
 
 namespace fs = std::filesystem;
