@@ -19,11 +19,8 @@ static const std::vector<Preference::DropdownData::Option> refreshRatesOptions =
 
 class CalculatorHistoryCommand : public BuiltinViewCommand<CalculatorHistoryView> {
   QString id() const override { return "history"; }
-  QString name() const override { return "Calculator history"; }
-  QString description() const override {
-    return "Browse past calculations. You need to copy the result of a calculation for it to be saved in "
-           "history.";
-  }
+  QString name() const override { return "Calculator History"; }
+  QString description() const override { return "Perform calculations and browse past results."; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("plus-minus-divide-multiply").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
