@@ -49,6 +49,7 @@ void View::emptied() {
 void View::initialize() {
   TypedListView::initialize();
   setModel(m_model);
+  if (m_data.noFooter) setStatusBarVisiblity(false);
 
   if (auto query = m_data.query) {
     setSearchText(m_data.query.value_or("").c_str());

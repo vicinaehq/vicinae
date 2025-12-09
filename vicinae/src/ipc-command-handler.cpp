@@ -137,7 +137,12 @@ IpcCommandHandler::processDmenu(const proto::ext::daemon::DmenuRequest &request)
   auto &nav = m_ctx.navigation;
   QPromise<proto::ext::daemon::Response *> promise;
   auto future = promise.future();
-  auto view = new DMenu::View(DMenu::Payload::fromProto(request));
+  auto payload = DMenu::Payload::fromProto(request);
+  if (payload.width && *payload.width < 500) {
+    payload.noFooter = true;
+    payload.noQuickLook = true;
+  }
+  auto view = new DMenu::View(payload);
   auto watcher = new Watcher;
 
   watcher->setFuture(future);
@@ -156,6 +161,11 @@ IpcCommandHandler::processDmenu(const proto::ext::daemon::DmenuRequest &request)
   nav->popToRoot({.clearSearch = false});
   nav->pushView(view);
   nav->setInstantDismiss(true);
+  if (payload.width || payload.height) {
+    int w = payload.width.value_or(Omnicast::WINDOW_SIZE.width());
+    int h = payload.height.value_or(Omnicast::WINDOW_SIZE.height());
+    nav->requestWindowSize(QSize(w, h));
+  }
   nav->showWindow();
 
   return future;

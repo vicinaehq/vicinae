@@ -27,6 +27,9 @@ message DmenuRequest {
   bool no_icon = 7;
   bool no_metadata = 8;
   string query = 9;
+  optional int32 width = 10;
+  optional int32 height = 11;
+  bool no_footer = 12;
 };
 
 message LaunchAppRequest {

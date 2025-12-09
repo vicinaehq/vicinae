@@ -160,8 +160,12 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
   connect(m_ctx.navigation.get(), &NavigationController::actionsChanged, this,
           [this](auto &&actions) { m_actionPanel->setNewActions(actions); });
 
-  connect(m_ctx.navigation.get(), &NavigationController::windowVisiblityChanged, this,
-          [this](bool visible) { setVisible(visible); });
+  connect(m_ctx.navigation.get(), &NavigationController::windowVisiblityChanged, this, [this](bool visible) {
+    setVisible(visible);
+    if (!visible) setFixedSize(Omnicast::WINDOW_SIZE);
+  });
+  connect(m_ctx.navigation.get(), &NavigationController::windowSizeRequested, this,
+          [this](QSize size) { setFixedSize(size); });
 
   connect(m_ctx.navigation.get(), &NavigationController::headerVisiblityChanged, this, [this](bool value) {
     if (m_currentOverlayWrapper->isVisible()) return;
