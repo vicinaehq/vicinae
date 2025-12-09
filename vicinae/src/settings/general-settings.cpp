@@ -25,6 +25,7 @@ void GeneralSettings::setConfig(const ConfigService::Value &value) {
   m_themeSelector->setValue(value.theme.name.value_or("vicinae-dark"));
   m_fontSelector->setValue(value.font.normal.value_or(appFont));
   m_rootFileSearch->setValueAsJson(value.rootSearch.searchFiles);
+  m_sortAlphabetically->setValueAsJson(value.rootSearch.sortAlphabetically);
   m_qThemeSelector->setValue(value.theme.iconTheme.value_or(currentIconTheme));
   m_faviconSelector->setValue(value.faviconService);
   m_keybindingSelector->setValue(value.keybinding);
@@ -76,6 +77,12 @@ void GeneralSettings::handleRootSearchFilesChange(bool enabled) {
   config->updateConfig([&](ConfigService::Value &value) { value.rootSearch.searchFiles = enabled; });
 }
 
+void GeneralSettings::handleSortAlphabeticallyChange(bool enabled) {
+  auto config = ServiceRegistry::instance()->config();
+
+  config->updateConfig([&](ConfigService::Value &value) { value.rootSearch.sortAlphabetically = enabled; });
+}
+
 void GeneralSettings::handleOpacityChange(double opacity) {
   auto config = ServiceRegistry::instance()->config();
 
@@ -113,6 +120,7 @@ void GeneralSettings::setupUI() {
   auto value = config->value();
 
   m_rootFileSearch = new CheckboxInput;
+  m_sortAlphabetically = new CheckboxInput;
   m_csd = new CheckboxInput;
   m_opacity = new BaseInput;
   m_themeSelector = new ThemeSelector;
@@ -215,6 +223,13 @@ void GeneralSettings::setupUI() {
 
   connect(m_rootFileSearch, &CheckboxInput::valueChanged, this,
           &GeneralSettings::handleRootSearchFilesChange);
+
+  m_sortAlphabetically->setLabel("Sort items alphabetically");
+  auto sortAlphaField = form->addField("Sorting", m_sortAlphabetically);
+  sortAlphaField->setInfo("Sort applications and commands alphabetically instead of by recent usage.");
+
+  connect(m_sortAlphabetically, &CheckboxInput::valueChanged, this,
+          &GeneralSettings::handleSortAlphabeticallyChange);
 
   connect(m_popToRootOnClose, &CheckboxInput::valueChanged, this,
           [this](bool value) { handlePopToRootOnCloseChange(value); });

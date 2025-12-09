@@ -1,5 +1,7 @@
 #include "root-item-manager.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
+#include "service-registry.hpp"
+#include "services/config/config-service.hpp"
 #include <ranges>
 #include "lib/fzf.hpp"
 #include <algorithm>
@@ -193,8 +195,14 @@ std::span<RootItemManager::ScoredItem> RootItemManager::search(const QString &qu
         ScoredItem{.alias = item.meta->alias, .meta = item.meta, .score = fuzzyScore, .item = item.item});
   }
 
+  bool sortAlpha = pattern.empty() && ServiceRegistry::instance()->config()->value().rootSearch.sortAlphabetically;
+
   // we need stable sort to avoid flickering when updating quickly
   std::ranges::stable_sort(m_scoredItems, [&](const auto &a, const auto &b) {
+    if (sortAlpha) {
+      return a.item.get()->displayName().toLower() < b.item.get()->displayName().toLower();
+    }
+
     if (opts.prioritizeAliased) {
       bool aa = !a.alias.empty() && a.alias.starts_with(pattern);
       bool ab = !b.alias.empty() && b.alias.starts_with(pattern);
@@ -772,12 +780,19 @@ std::vector<RootItemManager::SearchableRootItem> RootItemManager::querySuggestio
     return item.meta->isEnabled && item.meta->visitCount > 0 && !item.meta->favorite;
   };
   auto suggestions = m_items | std::views::filter(isSuggestable) | std::ranges::to<std::vector>();
+  bool sortAlpha = ServiceRegistry::instance()->config()->value().rootSearch.sortAlphabetically;
 
-  std::ranges::sort(suggestions, [this](const auto &a, const auto &b) {
-    auto ascore = computeScore(*a.meta, a.item->baseScoreWeight());
-    auto bscore = computeScore(*b.meta, b.item->baseScoreWeight());
-    return ascore > bscore;
-  });
+  if (sortAlpha) {
+    std::ranges::sort(suggestions, [](const auto &a, const auto &b) {
+      return a.item->displayName().toLower() < b.item->displayName().toLower();
+    });
+  } else {
+    std::ranges::sort(suggestions, [this](const auto &a, const auto &b) {
+      auto ascore = computeScore(*a.meta, a.item->baseScoreWeight());
+      auto bscore = computeScore(*b.meta, b.item->baseScoreWeight());
+      return ascore > bscore;
+    });
+  }
 
   if (suggestions.size() > limit) { suggestions.resize(limit); }
 
