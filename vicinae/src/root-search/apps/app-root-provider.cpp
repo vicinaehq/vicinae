@@ -10,6 +10,7 @@
 #include "settings/app-metadata-settings-detail.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "switch-windows-view.hpp"
+#include "utils/environment.hpp"
 #include <qjsonobject.h>
 #include <qwidget.h>
 
@@ -189,8 +190,13 @@ PreferenceList AppRootProvider::preferences() const {
 
 void AppRootProvider::preferencesChanged(const QJsonObject &preferences) {
   if (preferences.contains("launchPrefix")) {
-    m_appService.setLaunchPrefix(preferences.value("launchPrefix").toString());
+    auto val = preferences.value("launchPrefix").toString();
+    if (!val.isEmpty()) {
+      m_appService.setLaunchPrefix(val);
+    } else {
+      m_appService.setLaunchPrefix(Environment::detectAppLauncher());
+    }
   } else {
-    m_appService.setLaunchPrefix(std::nullopt);
+    m_appService.setLaunchPrefix(Environment::detectAppLauncher());
   }
 }

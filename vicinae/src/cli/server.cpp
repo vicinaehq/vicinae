@@ -110,6 +110,10 @@ void CliServerCommand::run(CLI::App *app) {
 
   qInfo() << "Initializing vicinae server...";
 
+  if (auto launcher = Environment::detectAppLauncher()) {
+    qInfo() << "Detected launch prefix:" << *launcher;
+  }
+
   int argc = 1;
   static char *argv[] = {strdup("command"), nullptr};
   QApplication qapp(argc, argv);
