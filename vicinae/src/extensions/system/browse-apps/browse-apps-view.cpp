@@ -2,11 +2,13 @@
 #include "actions/app/app-actions.hpp"
 #include "clipboard-actions.hpp"
 #include "services/app-service/abstract-app-db.hpp"
+#include "services/config/config-service.hpp"
 #include "theme.hpp"
 #include "ui/default-list-item-widget/default-list-item-widget.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
+#include <algorithm>
 
 class BrowseAppItem : public SearchableListView::Actionnable {
 public:
@@ -111,8 +113,16 @@ BrowseAppsView::Data BrowseAppsView::initData() const {
   auto preferences = command()->preferenceValues();
   Data data;
   auto appDb = context()->services->appDb();
+  auto apps = appDb->list();
+  bool sortAlpha = ServiceRegistry::instance()->config()->value().rootSearch.sortAlphabetically;
 
-  for (const auto &app : appDb->list()) {
+  if (sortAlpha) {
+    std::ranges::sort(apps, [](const auto &a, const auto &b) {
+      return a->displayName().toLower() < b->displayName().toLower();
+    });
+  }
+
+  for (const auto &app : apps) {
     if (!preferences.value("showHidden").toBool() && !app->displayable()) continue;
     data.emplace_back(std::make_shared<BrowseAppItem>(app));
   }

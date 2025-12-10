@@ -104,6 +104,7 @@ void TransformResult::setBase(QWidget *widget, const QString &chip) {
   label->setText(chip);
   m_base = createVContainer(widget, label);
   m_base->setParent(this);
+  m_base->show();
   update();
 }
 
@@ -115,6 +116,7 @@ void TransformResult::setResult(QWidget *widget, const QString &chip) {
   label->setText(chip);
   m_result = createVContainer(widget, label);
   m_result->setParent(this);
+  m_result->show();
   update();
 }
 

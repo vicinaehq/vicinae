@@ -36,6 +36,7 @@ public:
     } window;
     struct {
       bool searchFiles;
+      bool sortAlphabetically = false;
     } rootSearch;
     struct {
       std::optional<QString> normal;
@@ -94,6 +95,7 @@ private:
       auto rootSearch = obj.value("rootSearch").toObject();
 
       cfg.rootSearch.searchFiles = rootSearch.value("searchFiles").toBool(true);
+      cfg.rootSearch.sortAlphabetically = rootSearch.value("sortAlphabetically").toBool(false);
     }
 
     {
@@ -182,6 +184,7 @@ public:
       QJsonObject rootSearch;
 
       rootSearch["searchFiles"] = next.rootSearch.searchFiles;
+      rootSearch["sortAlphabetically"] = next.rootSearch.sortAlphabetically;
       obj["rootSearch"] = rootSearch;
     }
 

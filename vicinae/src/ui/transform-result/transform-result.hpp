@@ -21,9 +21,9 @@ class TransformResult : public SelectableOmniListWidget {
 protected:
   void paintEvent(QPaintEvent *event) override;
   int availableHeight() const;
-  void selectionChanged(bool selected) override;
 
 public:
+  void selectionChanged(bool selected) override;
   QSize sizeHint() const override;
   void setDividerVisible(bool visible);
 
