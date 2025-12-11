@@ -3,6 +3,7 @@
 #include "argument.hpp"
 #include "command.hpp"
 #include "../../src/ui/image/url.hpp"
+#include "common.hpp"
 #include "preference.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include <qstring.h>
@@ -66,7 +67,7 @@ public:
   bool isVicinae() const { return m_command.provenance == ExtensionManifest::Provenance::Vicinae; }
   bool isLocal() const { return m_command.provenance == ExtensionManifest::Provenance::Local; }
 
-  QString uniqueId() const override;
+  EntrypointId uniqueId() const override;
   QString name() const override;
   QString commandId() const override;
 

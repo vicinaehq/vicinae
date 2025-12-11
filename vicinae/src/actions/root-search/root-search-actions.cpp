@@ -37,7 +37,7 @@ void ResetItemRanking::execute(ApplicationContext *ctx) {
   ctx->navigation->setDialog(alert);
 }
 
-ResetItemRanking::ResetItemRanking(const QString &id)
+ResetItemRanking::ResetItemRanking(const EntrypointId &id)
     : AbstractAction("Reset ranking", ImageURL::builtin("arrow-counter-clockwise")), m_id(id) {}
 
 void MarkItemAsFavorite::execute(ApplicationContext *ctx) {
@@ -77,7 +77,7 @@ void ToggleItemAsFavorite::execute(ApplicationContext *ctx) {
   }
 };
 
-ToggleItemAsFavorite::ToggleItemAsFavorite(const QString &id, bool currentValue)
+ToggleItemAsFavorite::ToggleItemAsFavorite(const EntrypointId &id, bool currentValue)
     : m_id(id), m_value(currentValue) {}
 
 void DefaultActionWrapper::execute(ApplicationContext *ctx) {
@@ -93,7 +93,7 @@ void DefaultActionWrapper::execute(ApplicationContext *ctx) {
 
 QString DefaultActionWrapper::title() const { return m_action->title(); }
 
-DefaultActionWrapper::DefaultActionWrapper(const QString &id, AbstractAction *action)
+DefaultActionWrapper::DefaultActionWrapper(const EntrypointId &id, AbstractAction *action)
     : AbstractAction(action->title(), action->icon()), m_id(id), m_action(action) {
   setAutoClose(action->autoClose());
 }
@@ -120,7 +120,7 @@ void DisableItemAction::execute(ApplicationContext *ctx) {
   ctx->navigation->setDialog(alert);
 }
 
-DisableItemAction::DisableItemAction(const QString &id)
+DisableItemAction::DisableItemAction(const EntrypointId &id)
     : AbstractAction("Disable item", ImageURL::builtin("trash")), m_id(id) {
   setStyle(AbstractAction::Style::Danger);
 }

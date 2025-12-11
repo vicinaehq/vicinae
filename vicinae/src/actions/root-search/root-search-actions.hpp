@@ -3,20 +3,20 @@
 #include "ui/action-pannel/action.hpp"
 
 class DisableItemAction : public AbstractAction {
-  QString m_id;
+  EntrypointId m_id;
 
   void execute(ApplicationContext *ctx) override;
 
 public:
-  DisableItemAction(const QString &id);
+  DisableItemAction(const EntrypointId &id);
 };
 
 class ResetItemRanking : public AbstractAction {
-  QString m_id;
+  EntrypointId m_id;
   void execute(ApplicationContext *context) override;
 
 public:
-  ResetItemRanking(const QString &id);
+  ResetItemRanking(const EntrypointId &id);
 };
 
 class MarkItemAsFavorite : public AbstractAction {
@@ -29,7 +29,7 @@ public:
 };
 
 class ToggleItemAsFavorite : public AbstractAction {
-  QString m_id;
+  EntrypointId m_id;
   bool m_value;
 
   void execute(ApplicationContext *ctx) override;
@@ -37,25 +37,25 @@ class ToggleItemAsFavorite : public AbstractAction {
   std::optional<ImageURL> icon() const override;
 
 public:
-  ToggleItemAsFavorite(const QString &id, bool currentValue);
+  ToggleItemAsFavorite(const EntrypointId &id, bool currentValue);
 };
 
 class OpenItemPreferencesAction : public AbstractAction {
 public:
-  OpenItemPreferencesAction(const QString &id) : m_id(id) {}
+  OpenItemPreferencesAction(const EntrypointId &id) : m_id(id) {}
   void execute(ApplicationContext *context) override;
   QString title() const override { return "Open Preferences"; }
   std::optional<ImageURL> icon() const override { return ImageURL::builtin("cog"); }
 
 private:
-  QString m_id;
+  EntrypointId m_id;
 };
 
 class DisableApplication : public DisableItemAction {
   QString title() const override { return "Disable item"; }
 
 public:
-  DisableApplication(const QString &itemId) : DisableItemAction(itemId) {}
+  DisableApplication(const EntrypointId &itemId) : DisableItemAction(itemId) {}
 };
 
 /**
@@ -63,12 +63,12 @@ public:
  */
 class DefaultActionWrapper : public AbstractAction {
   std::unique_ptr<AbstractAction> m_action;
-  QString m_id;
+  EntrypointId m_id;
 
   void execute(ApplicationContext *context) override;
 
 public:
   QString title() const override;
 
-  DefaultActionWrapper(const QString &id, AbstractAction *action);
+  DefaultActionWrapper(const EntrypointId &id, AbstractAction *action);
 };

@@ -1,10 +1,10 @@
 #pragma once
-#include "services/app-service/app-service.hpp"
+#include "services/app-service/abstract-app-db.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
+#include "services/files-service/abstract-file-indexer.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "ui/vlist/vlist.hpp"
 #include "ui/vlist/common/section-model.hpp"
-#include "services/files-service/file-service.hpp"
 
 enum class SectionType { Link, Calculator, Results, Files, Fallback, Favorites };
 
@@ -44,7 +44,7 @@ public:
     const auto handleRootItem = [&](const RootItem *item) {
       if (!item->supportsAliasSpaceShortcut()) return false;
       auto alias = m_manager->itemMetadata(item->uniqueId()).alias;
-      return !alias.empty() && alias.starts_with(query);
+      return alias && alias->starts_with(query);
     };
 
     const auto visitor = overloads{

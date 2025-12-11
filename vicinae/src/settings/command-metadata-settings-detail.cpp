@@ -65,15 +65,15 @@ void CommandMetadataSettingsDetailWidget::savePendingPreferences() {
     obj[preferenceId] = value;
   }
 
-  manager->setItemPreferenceValues(m_rootItemId, obj);
+  manager->setItemPreferenceValues(m_command->uniqueId(), obj);
 }
 
 CommandMetadataSettingsDetailWidget::CommandMetadataSettingsDetailWidget(
-    const QString &rootItemId, const std::shared_ptr<AbstractCmd> &cmd)
-    : m_rootItemId(rootItemId), m_command(cmd) {
+    const std::shared_ptr<AbstractCmd> &cmd)
+    : m_command(cmd) {
   auto manager = ServiceRegistry::instance()->rootItemManager();
 
-  m_preferenceValues = manager->getItemPreferenceValues(rootItemId);
+  m_preferenceValues = manager->getItemPreferenceValues(m_command->uniqueId());
   setupUI();
 }
 

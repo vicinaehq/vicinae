@@ -116,7 +116,7 @@ public:
 
     if (!validated) return;
 
-    manager->setPreferenceValues(QString("extension.%1").arg(m_command->uniqueId()), obj);
+    manager->setPreferenceValues(m_command->uniqueId(), obj);
     context()->navigation->popCurrentView();
     context()->navigation->launch(m_command);
   }

@@ -1,4 +1,5 @@
 #include "settings-controller/settings-controller.hpp"
+#include "common.hpp"
 #include "settings/settings-window.hpp"
 
 SettingsController::SettingsController(ApplicationContext &ctx) : m_ctx(ctx) {}
@@ -28,7 +29,7 @@ void SettingsController::openTab(const QString &tabId) {
   QTimer::singleShot(0, [this, tabId]() { emit tabIdOpened(tabId); });
 }
 
-void SettingsController::openExtensionPreferences(const QString &id) {
+void SettingsController::openExtensionPreferences(const EntrypointId &id) {
   openTab("extensions");
   QTimer::singleShot(0, [this, id]() { emit openExtensionPreferencesRequested(id); });
 }

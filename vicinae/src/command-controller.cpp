@@ -18,15 +18,11 @@ ScopedLocalStorage CommandController::storage() const {
 const AbstractCmd &CommandController::info() const { return m_cmd; }
 
 QJsonObject CommandController::preferenceValues() const {
-  QString id = QString("extension.%1").arg(m_cmd.uniqueId());
-
-  return m_ctx.services->rootItemManager()->getPreferenceValues(id);
+  return m_ctx.services->rootItemManager()->getPreferenceValues(m_cmd.uniqueId());
 }
 
 void CommandController::setPreferenceValues(const QJsonObject &value) const {
-  QString id = QString("extension.%1").arg(m_cmd.uniqueId());
-
-  m_ctx.services->rootItemManager()->setPreferenceValues(id, value);
+  m_ctx.services->rootItemManager()->setPreferenceValues(m_cmd.uniqueId(), value);
 }
 
 const ApplicationContext *CommandController::context() const { return &m_ctx; }

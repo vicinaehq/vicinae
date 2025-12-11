@@ -198,7 +198,7 @@ public:
 
     ~CommandFrame() {
       context->unload();
-      qDebug() << "Unloading command" << command->uniqueId();
+      qDebug() << "Unloading command" << QString::fromStdString(command->uniqueId());
     }
   };
 
@@ -341,7 +341,7 @@ public:
 
   void launch(const std::shared_ptr<AbstractCmd> &cmd);
   void launch(const std::shared_ptr<AbstractCmd> &cmd, const ArgumentValues &arguments);
-  void launch(const QString &id);
+  void launch(const EntrypointId &id);
   const AbstractCmd *activeCommand() const;
   CommandFrame *activeFrame() const { return m_frames.back().get(); }
   bool reloadActiveCommand();

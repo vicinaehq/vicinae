@@ -194,7 +194,6 @@ public:
 };
 
 class CommandMetadataSettingsDetailWidget : public QWidget {
-  QString m_rootItemId;
   std::shared_ptr<AbstractCmd> m_command;
   QJsonObject m_preferenceValues;
   FormWidget *m_form = new FormWidget;
@@ -205,6 +204,6 @@ class CommandMetadataSettingsDetailWidget : public QWidget {
   void savePendingPreferences();
 
 public:
-  CommandMetadataSettingsDetailWidget(const QString &rootItemId, const std::shared_ptr<AbstractCmd> &cmd);
+  CommandMetadataSettingsDetailWidget(const std::shared_ptr<AbstractCmd> &cmd);
   ~CommandMetadataSettingsDetailWidget();
 };

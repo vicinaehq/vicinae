@@ -11,7 +11,6 @@
 #include "extension/requests/oauth-router.hpp"
 #include "extension/requests/command-request-router.hpp"
 #include "proto/manager.pb.h"
-#include "proto/oauth.pb.h"
 #include "common.hpp"
 #include "service-registry.hpp"
 #include "services/asset-resolver/asset-resolver.hpp"
@@ -157,8 +156,7 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
   initialize();
 
   auto rootItemManager = context()->services->rootItemManager();
-  auto preferenceValues =
-      rootItemManager->getPreferenceValues(QString("extension.%1").arg(m_command->uniqueId()));
+  auto preferenceValues = rootItemManager->getPreferenceValues(m_command->uniqueId());
   auto manager = context()->services->extensionManager();
 
   if (m_command->mode() == CommandModeView) {

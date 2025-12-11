@@ -27,7 +27,9 @@ class BuiltinCommand : public AbstractCmd {
   QString _repositoryName;
 
 public:
-  QString uniqueId() const override final { return _repositoryId + "." + id(); }
+  EntrypointId uniqueId() const override final {
+    return EntrypointId{_repositoryId.toStdString(), id().toStdString()};
+  }
 
   virtual QString id() const = 0;
   QString name() const override = 0;
@@ -87,7 +89,6 @@ public:
 
   template <typename T> void registerRepository() { _repositories.push_back(std::make_shared<T>()); }
 
-  const AbstractCmd *findCommand(const QString &id);
   const AbstractCommandRepository *findRepository(const QString &name);
 
   CommandDatabase();

@@ -109,7 +109,7 @@ public:
 };
 
 class AliasInput : public BaseInput {
-  QString m_id;
+  EntrypointId m_id;
 
   void showEvent(QShowEvent *event) override {
     refreshAlias();
@@ -126,17 +126,17 @@ public:
     auto manager = ServiceRegistry::instance()->rootItemManager();
     auto metadata = manager->itemMetadata(m_id);
 
-    setText(QString::fromStdString(metadata.alias));
+    setText(QString::fromStdString(metadata.alias.value_or("")));
   }
 
   // TODO: we need to move that logic a few level above I think, as that's not pretty
   void handleSave() {
     auto manager = ServiceRegistry::instance()->rootItemManager();
 
-    manager->setAlias(m_id, text());
+    manager->setAlias(m_id, text().toStdString());
   }
 
-  AliasInput(const QString &rootItemId) : m_id(rootItemId) {
+  AliasInput(const EntrypointId &id) : m_id(id) {
     setFocusPolicy(Qt::ClickFocus);
     setPlaceholderText("Add alias");
     setTextMargins(QMargins{2, 2, 2, 2});
@@ -205,7 +205,7 @@ public:
 
   void setEnabled(bool value) { m_enabled = value; }
 
-  QString id() const override { return m_item->uniqueId(); }
+  QString id() const override { return QString::fromStdString(m_item->uniqueId()); }
 
   void refreshForColumn(QWidget *widget, int column) const override {
     if (column == 3) {
@@ -518,21 +518,19 @@ public:
 
     // we use a vector of pairs so that providers are ranked by their best ranked
     // items
-    std::vector<std::pair<QString, std::vector<std::shared_ptr<RootItem>>>> map;
+    std::vector<std::pair<std::string, std::vector<std::shared_ptr<RootItem>>>> map;
 
     opts.includeDisabled = true;
 
     for (const auto &item : manager->search(query, opts)) {
-      QString providerId = manager->getItemProviderId(item.item.get()->uniqueId());
+      EntrypointId id = item.item.get()->uniqueId();
 
-      if (providerId.isEmpty()) continue;
-
-      auto pred = [&](auto &&pair) { return pair.first == providerId; };
+      auto pred = [&](auto &&pair) { return pair.first == id.provider; };
 
       if (auto it = std::ranges::find_if(map, pred); it != map.end()) {
         it->second.emplace_back(item.item.get());
       } else {
-        map.push_back({providerId, {item.item.get()}});
+        map.push_back({id.provider, {item.item.get()}});
       }
     }
 
@@ -606,9 +604,9 @@ public:
 
   auto selected() { return static_cast<AbstractRootItemDelegate *>(m_tree->value()); }
 
-  void select(const QString &id) {
+  void select(const EntrypointId &id) {
     m_toolbar->input()->clear();
-    m_tree->select(id);
+    m_tree->select(QString::fromStdString(id));
   }
 };
 
@@ -642,7 +640,7 @@ public:
 
   ExtensionSettingsContent(const ApplicationContext *ctx) {
     connect(ctx->settings.get(), &SettingsController::openExtensionPreferencesRequested, this,
-            [this](const QString &id) { m_left->select(id); });
+            [this](const EntrypointId &id) { m_left->select(id); });
     setupUI();
   }
 };
