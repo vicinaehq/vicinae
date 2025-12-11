@@ -1,0 +1,78 @@
+{
+   "imports": [],
+   "closeOnFocusLoss": false,
+   "considerPreedit": false,
+   "popToRootOnClose": false,
+   "faviconService": "google",
+   "font": {
+      "normal": "Departure Mono",
+      "size": 10.5
+   },
+   "theme": {
+      "iconTheme": "Papirus-Dark",
+      "name": "vicinae-dark"
+   },
+   "favorites": [],
+   "fallbacks": [],
+   "window": {
+      "rounding": 10,
+      "opacity": 0.95,
+      "csd": false
+   },
+   "keybinds": {
+      "action.dangerous-remove": "control+shift+X",
+      "action.save": "control+S",
+      "action.duplicate": "control+D",
+      "action.new": "control+N",
+      "action.open": "control+O",
+      "action.move-down": "control+shift+O",
+      "action.copy": "control+shift+C",
+      "action.copy-name": "control+shift+.",
+      "action.edit-secondary": "control+shift+E",
+      "open-search-filter": "control+P",
+      "action.remove": "control+X",
+      "open-settings": "control+,",
+      "action.move-up": "control+shift+,",
+      "action.edit": "control+E",
+      "action.copy-path": "control+shift+,",
+      "action.pin": "control+shift+P",
+      "action.refresh": "control+R",
+      "toggle-action-panel": "control+SPACE"
+   },
+   "providers": {
+      "power": {
+         "items": {
+            "suspend": {
+               "alias": "ssp"
+            }
+         }
+      },
+      "shortcut": {
+         "items": {
+            "create": {
+               "alias": "eeee"
+            }
+         }
+      },
+      "vicinae.store.nix": {
+         "preferences": {
+            "token": "HELLO"
+         },
+         "items": {}
+      },
+      "apps": {
+         "items": {
+            "firefox-bin.desktop": {
+               "alias": "ffx"
+            }
+         }
+      },
+      "calculator": {
+         "items": {
+            "history": {
+               "alias": "hisot"
+            }
+         }
+      }
+   }
+}

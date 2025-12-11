@@ -396,7 +396,7 @@ std::unique_ptr<ActionPanelState> ClipboardHistoryView::createActionPanel(const 
   auto mainSection = panel->createSection();
   bool isCopyable = info->encryption == ClipboardEncryptionType::None || clipman->isEncryptionReady();
 
-  if (!isCopyable) { mainSection->addAction(new OpenItemPreferencesAction("extension.clipboard")); }
+  if (!isCopyable) { mainSection->addAction(new OpenItemPreferencesAction(EntrypointId{"clipboard", ""})); }
 
   auto wm = context()->services->windowManager();
   auto pin = new PinClipboardAction(info->id, !info->pinnedAt);

@@ -11,22 +11,21 @@
 #include <qobjectdefs.h>
 #include <ranges>
 #include "ui/views/list-view.hpp"
-#include "ui/vlist/common/vertical-list-model.hpp"
 
 class DisableFallbackAction : public AbstractAction {
-  QString m_id;
+  EntrypointId m_id;
 
   void execute(ApplicationContext *ctx) override {
     auto manager = ctx->services->rootItemManager();
 
-    manager->disableFallback(m_id);
+    // manager->disableFallback(m_id);
   }
 
   QString title() const override { return "Disable fallback"; }
   std::optional<ImageURL> icon() const override { return ImageURL::builtin("trash"); }
 
 public:
-  DisableFallbackAction(const QString &id) : m_id(id) {}
+  DisableFallbackAction(const EntrypointId &id) : m_id(id) {}
 };
 
 class MoveFallbackUpAction : public AbstractAction {
@@ -34,7 +33,7 @@ class MoveFallbackUpAction : public AbstractAction {
 
   void execute(ApplicationContext *ctx) override {
     auto manager = ctx->services->rootItemManager();
-    int pos = manager->itemMetadata(m_id).fallbackPosition;
+    // int pos = manager->itemMetadata(m_id).fallbackPosition;
 
     manager->moveFallbackUp(m_id);
   }
@@ -51,9 +50,9 @@ class MoveFallbackDownAction : public AbstractAction {
 
   void execute(ApplicationContext *ctx) override {
     auto manager = ctx->services->rootItemManager();
-    int pos = manager->itemMetadata(m_id).fallbackPosition;
+    // int pos = manager->itemMetadata(m_id).fallbackPosition;
 
-    manager->moveFallbackDown(m_id);
+    // manager->moveFallbackDown(m_id);
   }
 
   QString title() const override { return "Move fallback down"; }
@@ -64,19 +63,19 @@ public:
 };
 
 class EnableFallbackAction : public AbstractAction {
-  QString m_id;
+  EntrypointId m_id;
 
   void execute(ApplicationContext *ctx) override {
     auto manager = ctx->services->rootItemManager();
 
-    manager->enableFallback(m_id);
+    // manager->enableFallback(m_id);
   }
 
   QString title() const override { return "Enable fallback"; }
   std::optional<ImageURL> icon() const override { return ImageURL::builtin("checkmark"); }
 
 public:
-  EnableFallbackAction(const QString &id) : m_id(id) {}
+  EnableFallbackAction(const EntrypointId &id) : m_id(id) {}
 };
 
 class FallbackListItem : public AbstractDefaultListItem, public ListView::Actionnable {
@@ -94,8 +93,10 @@ protected:
 
   QString generateId() const override {
     auto manager = ServiceRegistry::instance()->rootItemManager();
-    if (manager->isFallback(m_item->uniqueId())) { return QString("fallback.%1").arg(m_item->uniqueId()); }
-    return QString("available.%1").arg(m_item->uniqueId());
+    if (manager->isFallback(m_item->uniqueId())) {
+      return QString("fallback.%1").arg(std::string(m_item->uniqueId()));
+    }
+    return QString("available.%1").arg(std::string(m_item->uniqueId()));
   }
 
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
@@ -129,18 +130,20 @@ class RootFallbackListItem : public FallbackListItem {
     auto metadata = manager->itemMetadata(m_item->uniqueId());
     int maxFallbackPosition = manager->maxFallbackPosition();
 
-    if (metadata.isFallback()) {
-      auto disableFallback = new DisableFallbackAction(m_item->uniqueId());
+    /*
+if (metadata.isFallback()) {
+  auto disableFallback = new DisableFallbackAction(m_item->uniqueId());
 
-      section->addAction(disableFallback);
-      if (metadata.fallbackPosition > 0) { section->addAction(new MoveFallbackUpAction(m_item->uniqueId())); }
-      if (metadata.fallbackPosition < maxFallbackPosition) {
-        section->addAction(new MoveFallbackDownAction(m_item->uniqueId()));
-      }
-    } else {
-      auto enableFallback = new EnableFallbackAction(m_item->uniqueId());
-      section->addAction(enableFallback);
-    }
+  section->addAction(disableFallback);
+  //if (metadata.fallbackPosition > 0) { section->addAction(new MoveFallbackUpAction(m_item->uniqueId())); }
+  if (metadata.fallbackPosition < maxFallbackPosition) {
+    section->addAction(new MoveFallbackDownAction(m_item->uniqueId()));
+  }
+} else {
+  auto enableFallback = new EnableFallbackAction(m_item->uniqueId());
+  section->addAction(enableFallback);
+}
+*/
 
     return panel;
   }
@@ -162,12 +165,14 @@ class ManageFallbackCommandsView : public ListView {
       if (itemManager->isFallback(item.item.get()->uniqueId())) { enabled.emplace_back(item.item.get()); };
     }
 
-    std::ranges::sort(enabled, [itemManager](const auto &a, const auto &b) {
-      auto ma = itemManager->itemMetadata(a->uniqueId());
-      auto mb = itemManager->itemMetadata(b->uniqueId());
+    /*
+std::ranges::sort(enabled, [itemManager](const auto &a, const auto &b) {
+  auto ma = itemManager->itemMetadata(a->uniqueId());
+  auto mb = itemManager->itemMetadata(b->uniqueId());
 
-      return ma.fallbackPosition < mb.fallbackPosition;
-    });
+  return ma.fallbackPosition < mb.fallbackPosition;
+});
+    */
 
     m_list->beginResetModel();
     auto &enabledSection = m_list->addSection("Enabled");

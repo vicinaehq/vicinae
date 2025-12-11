@@ -4,9 +4,9 @@
 #include "preference.hpp"
 #include "ui/focus-notifier.hpp"
 #include "vicinae.hpp"
-#include "ui/divider/divider.hpp"
 #include <QHBoxLayout>
 #include <QString>
+#include <format>
 #include <functional>
 #include <optional>
 #include <qboxlayout.h>
@@ -24,6 +24,7 @@
 #include <qstack.h>
 #include <qwidget.h>
 #include <qwindowdefs.h>
+#include "ui/divider/divider.hpp"
 
 template <class... Ts> struct overloads : Ts... {
   using Ts::operator()...;
@@ -88,9 +89,35 @@ class CommandContext;
 enum CommandMode { CommandModeInvalid, CommandModeView, CommandModeNoView, CommandModeMenuBar };
 enum CommandType { CommandTypeBuiltin, CommandTypeExtension };
 
+/**
+ * Represents an entrypoint.
+ * An entrypoint is always scoped under a provider.
+ * extension = provider, command = entrypoint inside the extension
+ */
+struct EntrypointId {
+  std::string provider;
+  std::string entrypoint;
+
+  operator std::string() const { return std::format("{}__{}", provider, entrypoint); }
+
+  bool operator==(const EntrypointId &rhs) const {
+    return provider == rhs.provider && entrypoint == rhs.entrypoint;
+  }
+};
+
+namespace std {
+template <> class hash<EntrypointId> {
+public:
+  std::uint64_t operator()(const EntrypointId &id) const {
+    std::hash<std::string> hasher;
+    return hasher(std::format("{}__{}", id.provider, id.entrypoint));
+  }
+};
+}; // namespace std
+
 class AbstractCmd {
 public:
-  virtual QString uniqueId() const = 0;
+  virtual EntrypointId uniqueId() const = 0;
   virtual QString name() const = 0;
   virtual QString description() const = 0;
   virtual ImageURL iconUrl() const = 0;

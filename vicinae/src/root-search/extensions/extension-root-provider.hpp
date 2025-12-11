@@ -3,7 +3,6 @@
 #include "services/root-item-manager/root-item-manager.hpp"
 #include <qjsonobject.h>
 #include <qwidget.h>
-#include "settings/command-metadata-settings-detail.hpp"
 #include "settings/extension-settings-detail.hpp"
 
 class CommandRootItem : public RootItem {
@@ -15,7 +14,6 @@ public:
   ImageURL iconUrl() const override;
   ArgumentList arguments() const override;
   std::vector<QString> keywords() const override { return m_command->keywords(); }
-  QString providerId() const override;
   bool isSuitableForFallback() const override;
   double baseScoreWeight() const override;
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx,
@@ -26,12 +24,12 @@ public:
   bool supportsAliasSpaceShortcut() const override { return m_command->isView(); }
 
   QString typeDisplayName() const override;
-  QString uniqueId() const override;
+  EntrypointId uniqueId() const override;
   AccessoryList accessories() const override;
   PreferenceList preferences() const override { return m_command->preferences(); }
   bool isDefaultDisabled() const override { return m_command->isDefaultDisabled(); }
   QWidget *settingsDetail(const QJsonObject &preferences) const override {
-    return new CommandMetadataSettingsDetailWidget(uniqueId(), m_command);
+    return new CommandMetadataSettingsDetailWidget(m_command);
   }
 
   void preferenceValuesChanged(const QJsonObject &values) const override {
@@ -50,7 +48,7 @@ public:
   const std::shared_ptr<AbstractCommandRepository> &repository() const { return m_repo; }
   PreferenceList preferences() const override { return m_repo->preferences(); }
   QString displayName() const override { return m_repo->displayName(); }
-  QString uniqueId() const override { return QString("extension.%1").arg(m_repo->id()); }
+  QString uniqueId() const override { return m_repo->id(); }
   ImageURL icon() const override { return m_repo->iconUrl(); };
   Type type() const override { return RootProvider::Type::ExtensionProvider; }
   std::vector<std::shared_ptr<RootItem>> loadItems() const override;

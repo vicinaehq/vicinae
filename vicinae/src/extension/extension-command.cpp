@@ -1,5 +1,6 @@
 #include "extension/extension-command.hpp"
 #include "command.hpp"
+#include "common.hpp"
 #include "extension/extension-command-runtime.hpp"
 #include "../ui/image/url.hpp"
 #include <filesystem>
@@ -18,7 +19,10 @@ CommandType ExtensionCommand::type() const { return CommandType::CommandTypeExte
 
 CommandMode ExtensionCommand::mode() const { return m_command.mode; }
 
-QString ExtensionCommand::uniqueId() const { return QString("%1.%2").arg(_extensionId).arg(m_command.name); }
+EntrypointId ExtensionCommand::uniqueId() const {
+  // return QString("%1.%2").arg(_extensionId).arg(m_command.name);
+  return EntrypointId{_extensionId.toStdString(), m_command.name.toStdString()};
+}
 
 QString ExtensionCommand::commandId() const { return m_command.name; }
 

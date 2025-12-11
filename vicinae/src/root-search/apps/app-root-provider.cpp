@@ -2,6 +2,7 @@
 #include "actions/app/app-actions.hpp"
 #include "actions/root-search/root-search-actions.hpp"
 #include "clipboard-actions.hpp"
+#include "common.hpp"
 #include "navigation-controller.hpp"
 #include "ui/image/url.hpp"
 #include "service-registry.hpp"
@@ -20,8 +21,6 @@ std::vector<QString> AppRootItem::keywords() const { return m_app->keywords(); }
 
 QString AppRootItem::subtitle() const { return m_app->description(); }
 
-QString AppRootItem::providerId() const { return "app"; }
-
 QString AppRootItem::displayName() const { return m_app->displayName(); }
 
 QWidget *AppRootItem::settingsDetail(const QJsonObject &preferences) const {
@@ -37,7 +36,7 @@ AccessoryList AppRootItem::accessories() const {
   return {{.text = "Application", .color = SemanticColor::TextMuted}};
 }
 
-QString AppRootItem::uniqueId() const { return QString("apps.%1").arg(m_app->id()); }
+EntrypointId AppRootItem::uniqueId() const { return EntrypointId{"apps", m_app->id().toStdString()}; }
 
 ImageURL AppRootItem::iconUrl() const { return m_app->iconUrl(); }
 
