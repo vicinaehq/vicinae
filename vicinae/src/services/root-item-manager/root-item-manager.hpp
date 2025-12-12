@@ -242,7 +242,7 @@ public:
     std::reference_wrapper<ItemPtr> item;
   };
 
-  RootItemManager(OmniDatabase &db);
+  RootItemManager(config::Manager &config, OmniDatabase &db);
 
   RootProvider *findProviderById(const QString &id) const;
   bool setProviderPreferenceValues(const QString &id, const QJsonObject &preferences);
@@ -326,11 +326,10 @@ private:
   std::unordered_map<QString, RootProviderMetadata> m_provider_metadata;
   std::vector<std::unique_ptr<RootProvider>> m_providers;
   OmniDatabase &m_db;
+  config::Manager &m_cfg;
   std::vector<SearchableRootItem> m_items;
 
   // always reserved to hold the maximum amount of items possible, to avoid reallocating
   // on every search
   std::vector<ScoredItem> m_scoredItems;
-
-  config::ConfigValue m_cfg;
 };

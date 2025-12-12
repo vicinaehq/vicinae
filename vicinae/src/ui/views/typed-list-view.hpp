@@ -1,11 +1,11 @@
 #pragma once
 #include "keyboard/keyboard.hpp"
 #include "navigation-controller.hpp"
+#include "config/config.hpp"
 #include "service-registry.hpp"
 #include "services/keybinding/keybinding-service.hpp"
 #include "simple-view.hpp"
 #include "ui/empty-view/empty-view.hpp"
-#include "services/config/config-service.hpp"
 #include "navigation-controller.hpp"
 #include "ui/form/selector-input.hpp"
 #include "ui/search-bar/search-bar.hpp"
@@ -43,7 +43,7 @@ protected:
 
   virtual bool inputFilter(QKeyEvent *event) override {
     auto config = ServiceRegistry::instance()->config();
-    const QString &keybinding = config->value().keybinding;
+    const std::string &keybinding = config->value().keybinding;
 
     if (event->modifiers() == Qt::ControlModifier) {
       if (KeyBindingService::isDownKey(event, keybinding)) { return m_list->selectDown(); }

@@ -1,13 +1,13 @@
 #include "theme-actions.hpp"
 #include "service-registry.hpp"
-#include "services/config/config-service.hpp"
+#include "config/config.hpp"
 #include "services/toast/toast-service.hpp"
 
 void SetThemeAction::execute(ApplicationContext *ctx) {
-  auto configService = ctx->services->config();
+  auto cfg = ctx->services->config();
   auto toast = ctx->services->toastService();
 
-  configService->updateConfig([&](ConfigService::Value &value) { value.theme.name = m_themeId; });
+  cfg->mergeWithUser({.theme = config::Partial<config::ThemeConfig>{.name = m_themeId.toStdString()}});
   toast->success("Theme successfully updated");
 }
 

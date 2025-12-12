@@ -1,5 +1,5 @@
 #pragma once
-#include "services/config/config-service.hpp"
+#include "config/config.hpp"
 #include "ui/favicon-service-selector/favicon-service-selector.hpp"
 #include "ui/font-selector/font-selector.hpp"
 #include "ui/form/base-input.hpp"
@@ -26,6 +26,7 @@ class GeneralSettings : public VerticalScrollArea {
   KeyBindingSelector *m_keybindingSelector;
   CheckboxInput *m_popToRootOnClose;
   BaseInput *m_fontSize;
+  config::Manager &m_cfg;
 
   void setupUI();
 
@@ -35,15 +36,15 @@ class GeneralSettings : public VerticalScrollArea {
   void handleThemeChange(const QString &id);
   void handleClientSideDecorationChange(bool value);
   void handleFontChange(const QString &fontFamily);
-  void handleOpacityChange(double opacity);
+  void handleOpacityChange(float opacity);
   void handleIconThemeChange(const QString &iconTheme);
   void handleFaviconServiceChange(const QString &service);
   void handleKeybindingChange(const QString &keybinding);
   void handlePopToRootOnCloseChange(bool popToRootOnClose);
   void handleFontSizeChange(double size);
 
-  void setConfig(const ConfigService::Value &value);
+  void setConfig(const config::ConfigValue &value);
 
 public:
-  GeneralSettings();
+  GeneralSettings(config::Manager &manager);
 };

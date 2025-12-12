@@ -2,10 +2,9 @@
 #include "theme.hpp"
 #include "theme/colors.hpp"
 #include "utils/layout.hpp"
-#include <qnamespace.h>
 #include "service-registry.hpp"
-#include "services/config/config-service.hpp"
 #include "services/keybinding/keybinding-service.hpp"
+#include "config/config.hpp"
 #include "vicinae.hpp"
 #include <qpainterpath.h>
 
@@ -89,7 +88,7 @@ void AlertWidget::setConfirmText(const QString &text, const ColorLike &color) {
 void AlertWidget::keyPressEvent(QKeyEvent *event) {
   if (event->modifiers() == Qt::ControlModifier) {
     auto config = ServiceRegistry::instance()->config();
-    const QString keybinding = config ? config->value().keybinding : QString("default");
+    const std::string &keybinding = config->value().keybinding;
 
     if (KeyBindingService::isLeftKey(event, keybinding)) { return _cancelBtn->setFocus(); }
     if (KeyBindingService::isRightKey(event, keybinding)) { return _actionBtn->setFocus(); }

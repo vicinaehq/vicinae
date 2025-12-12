@@ -1,4 +1,5 @@
 #include "general-settings.hpp"
+#include "config/config.hpp"
 #include "service-registry.hpp"
 #include "ui/favicon-service-selector/favicon-service-selector.hpp"
 #include "ui/font-selector/font-selector.hpp"
@@ -12,105 +13,78 @@
 #include "ui/keybinding-selector/keybinding-selector.hpp"
 #include "utils/layout.hpp"
 #include "ui/font-selector/font-selector.hpp"
-#include "services/config/config-service.hpp"
-#include <algorithm>
 #include <qlogging.h>
 
-void GeneralSettings::setConfig(const ConfigService::Value &value) {
+void GeneralSettings::setConfig(const config::ConfigValue &value) {
   auto appFont = QApplication::font().family();
   auto currentIconTheme = QIcon::themeName();
 
   m_opacity->setText(QString::number(value.window.opacity));
   m_csd->setValueAsJson(value.window.csd);
-  m_themeSelector->setValue(value.theme.name.value_or("vicinae-dark"));
-  m_fontSelector->setValue(value.font.normal.value_or(appFont));
-  m_rootFileSearch->setValueAsJson(value.rootSearch.searchFiles);
-  m_qThemeSelector->setValue(value.theme.iconTheme.value_or(currentIconTheme));
-  m_faviconSelector->setValue(value.faviconService);
-  m_keybindingSelector->setValue(value.keybinding);
+  m_themeSelector->setValue(value.theme.name.c_str());
+  m_fontSelector->setValue(value.font.normal.value_or(appFont.toStdString()).c_str());
+  // m_rootFileSearch->setValueAsJson(value.rootSearch.searchFiles);
+  m_qThemeSelector->setValue(value.theme.iconTheme.value_or(currentIconTheme.toStdString()).c_str());
+  m_faviconSelector->setValue(value.faviconService.c_str());
+  m_keybindingSelector->setValue(value.keybinding.c_str());
   m_popToRootOnClose->setValueAsJson(value.popToRootOnClose);
   m_closeOnFocusLoss->setValueAsJson(value.closeOnFocusLoss);
   m_considerPreedit->setValueAsJson(value.considerPreedit);
-  m_fontSize->setText(QString::number(value.font.baseSize));
+  m_fontSize->setText(QString::number(value.font.size));
 }
 
 void GeneralSettings::handleFaviconServiceChange(const QString &service) {
-  auto config = ServiceRegistry::instance()->config();
-
-  config->updateConfig([&](ConfigService::Value &value) { value.faviconService = service; });
+  m_cfg.mergeWithUser({.faviconService = service.toStdString()});
 }
 
 void GeneralSettings::handleKeybindingChange(const QString &keybinding) {
-  auto config = ServiceRegistry::instance()->config();
-
-  config->updateConfig([&](ConfigService::Value &value) { value.keybinding = keybinding; });
+  m_cfg.mergeWithUser({.keybinding = keybinding.toStdString()});
 }
 
 void GeneralSettings::handleIconThemeChange(const QString &iconTheme) {
-  auto config = ServiceRegistry::instance()->config();
-
-  config->updateConfig([&](ConfigService::Value &value) { value.theme.iconTheme = iconTheme; });
+  m_cfg.mergeWithUser({.theme = config::Partial<config::ThemeConfig>{.iconTheme = iconTheme.toStdString()}});
 }
 
 void GeneralSettings::handleThemeChange(const QString &id) {
-  auto config = ServiceRegistry::instance()->config();
-
-  config->updateConfig([&](ConfigService::Value &value) { value.theme.name = id; });
+  m_cfg.mergeWithUser({.theme = config::Partial<config::ThemeConfig>{.name = id.toStdString()}});
 }
 
 void GeneralSettings::handleClientSideDecorationChange(bool csd) {
-  auto config = ServiceRegistry::instance()->config();
-
-  config->updateConfig([&](ConfigService::Value &value) { value.window.csd = csd; });
+  m_cfg.mergeWithUser({.window = config::Partial<config::WindowConfig>{.csd = csd}});
 }
 
 void GeneralSettings::handleFontChange(const QString &font) {
-  auto config = ServiceRegistry::instance()->config();
-
-  config->updateConfig([&](ConfigService::Value &value) { value.font.normal = font; });
+  m_cfg.mergeWithUser({.font = config::Partial<config::FontConfig>{.normal = font.toStdString()}});
 }
 
 void GeneralSettings::handleRootSearchFilesChange(bool enabled) {
-  auto config = ServiceRegistry::instance()->config();
-
-  config->updateConfig([&](ConfigService::Value &value) { value.rootSearch.searchFiles = enabled; });
+  // config->updateConfig([&](ConfigService::Value &value) { value.rootSearch.searchFiles = enabled; });
 }
 
-void GeneralSettings::handleOpacityChange(double opacity) {
-  auto config = ServiceRegistry::instance()->config();
-
-  config->updateConfig([&](ConfigService::Value &value) { value.window.opacity = opacity; });
+void GeneralSettings::handleOpacityChange(float opacity) {
+  m_cfg.mergeWithUser({.window = config::Partial<config::WindowConfig>{.opacity = opacity}});
 }
 
 void GeneralSettings::handlePopToRootOnCloseChange(bool popToRootOnClose) {
-  auto config = ServiceRegistry::instance()->config();
-
-  config->updateConfig([&](ConfigService::Value &value) { value.popToRootOnClose = popToRootOnClose; });
+  m_cfg.mergeWithUser({.popToRootOnClose = popToRootOnClose});
 }
 
 void GeneralSettings::handleFontSizeChange(double size) {
-  auto config = ServiceRegistry::instance()->config();
-
-  config->updateConfig(
-      [&](ConfigService::Value &value) { value.font.baseSize = std::clamp(size, 1.0, 99.0); });
+  m_cfg.mergeWithUser({.font = config::Partial<config::FontConfig>{.size = (float)size}});
 }
 
 void GeneralSettings::handleCloseOnFocusLossChange(bool value) {
-  auto config = ServiceRegistry::instance()->config();
-
-  config->updateConfig([&](ConfigService::Value &cfg) { cfg.closeOnFocusLoss = value; });
+  m_cfg.mergeWithUser({.closeOnFocusLoss = value});
 }
 
 void GeneralSettings::handleConsiderPreeditChange(bool value) {
-  auto config = ServiceRegistry::instance()->config();
-
-  config->updateConfig([&](ConfigService::Value &cfg) { cfg.considerPreedit = value; });
+  m_cfg.mergeWithUser({.considerPreedit = value});
 }
 
 void GeneralSettings::setupUI() {
   auto config = ServiceRegistry::instance()->config();
   auto appFont = QApplication::font().family();
-  auto value = config->value();
+  auto value = m_cfg.user();
 
   m_rootFileSearch = new CheckboxInput;
   m_csd = new CheckboxInput;
@@ -176,7 +150,7 @@ void GeneralSettings::setupUI() {
   connect(opacityField, &FormField::blurred, this,
           [this]() { handleOpacityChange(m_opacity->text().toDouble()); });
 
-  m_rootFileSearch->setValueAsJson(value.rootSearch.searchFiles);
+  // m_rootFileSearch->setValueAsJson(value.rootSearch.searchFiles);
 
   m_csd->setLabel("Use client-side decorations");
   m_csd->setValueAsJson(value.window.csd);
@@ -188,8 +162,8 @@ void GeneralSettings::setupUI() {
   csdField->setInfo(
       R"(Let Vicinae draw its own rounded borders instead of relying on the windowing system to do so. You can usually get more refined results by properly configuring your window manager.)");
 
-  m_themeSelector->setValue(value.theme.name.value_or("vicinae-dark"));
-  m_fontSelector->setValue(value.font.normal.value_or(appFont));
+  m_themeSelector->setValue(value.theme.name.c_str());
+  m_fontSelector->setValue(value.font.normal.value_or(appFont.toStdString()).c_str());
 
   m_rootFileSearch->setLabel("Show files in root search");
 
@@ -240,9 +214,9 @@ void GeneralSettings::setupUI() {
   setWidget(VStack().margins(0, 20, 0, 20).add(HStack().add(form).center()).buildWidget());
 }
 
-GeneralSettings::GeneralSettings() {
+GeneralSettings::GeneralSettings(config::Manager &manager) : m_cfg(manager) {
   auto config = ServiceRegistry::instance()->config();
   setupUI();
-  setConfig(config->value());
-  connect(config, &ConfigService::configChanged, this, [this](auto next, auto prev) { setConfig(next); });
+  setConfig(m_cfg.user());
+  connect(&m_cfg, &config::Manager::configChanged, this, [this](auto next, auto prev) { setConfig(next); });
 }

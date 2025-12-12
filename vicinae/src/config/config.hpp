@@ -3,6 +3,8 @@
 #include <filesystem>
 #include "common.hpp"
 #include "glaze/glaze.hpp"
+#include "utils.hpp"
+#include "vicinae.hpp"
 #include <fstream>
 #include <glaze/core/common.hpp>
 #include <glaze/core/reflect.hpp>
@@ -12,37 +14,65 @@
 #include <glaze/json/write.hpp>
 #include <iostream>
 #include <qdnslookup.h>
+#include <qfilesystemwatcher.h>
 #include <qjsondocument.h>
 #include <qjsonobject.h>
 #include <qjsonparseerror.h>
 #include <qjsonvalue.h>
 #include <qlogging.h>
+#include <qobject.h>
+#include <qtmetamacros.h>
 #include <string>
 
 namespace config {
 
-struct PreferenceData {};
-
 struct ProviderItemData {
   std::optional<std::string> alias;
   std::optional<bool> enabled;
-  std::optional<glz::raw_json> preferences;
+  std::optional<glz::generic::object_t> preferences;
 };
 
 struct ProviderData {
   std::optional<bool> enabled;
-  std::optional<glz::raw_json> preferences;
-  std::unordered_map<std::string, ProviderItemData> items;
+  std::optional<glz::generic::object_t> preferences;
+  std::map<std::string, ProviderItemData> items;
+};
+
+// TODO: populate this
+struct LayerShellConfig {};
+
+template <typename T> struct Partial;
+
+struct Size {
+  int width;
+  int height;
+};
+
+template <> struct Partial<Size> {
+  std::optional<int> width;
+  std::optional<int> height;
 };
 
 struct WindowConfig {
+  static const constexpr Size DFLT_SIZE = {770, 480};
   static const constexpr int DFLT_ROUNDING = 6;
-  static const constexpr int DFLT_OPACITY = 6;
+  static const constexpr float DFLT_OPACITY = 0.98;
   static const constexpr bool DFLT_CSD = true;
 
   int rounding = DFLT_ROUNDING;
-  float opacity = DFLT_ROUNDING;
+  float opacity = DFLT_OPACITY;
   bool csd = DFLT_CSD;
+  Size size = DFLT_SIZE;
+
+  std::optional<LayerShellConfig> layerShell;
+};
+
+template <> struct Partial<WindowConfig> {
+  std::optional<int> rounding;
+  std::optional<float> opacity;
+  std::optional<bool> csd;
+  Partial<Size> size;
+  std::optional<LayerShellConfig> layerShell;
 };
 
 struct FontConfig {
@@ -50,10 +80,23 @@ struct FontConfig {
   float size = 10.5;
 };
 
+template <> struct Partial<FontConfig> {
+  std::optional<std::string> normal;
+  std::optional<float> size;
+};
+
 struct ThemeConfig {
   std::optional<std::string> iconTheme;
   std::string name = "vicinae-dark";
 };
+
+template <> struct Partial<ThemeConfig> {
+  std::optional<std::string> iconTheme;
+  std::optional<std::string> name;
+};
+
+using KeybindMap = std::map<std::string, std::string>;
+using ProviderMap = std::map<std::string, ProviderData>;
 
 struct ConfigValue {
   static const constexpr bool DFLT_CLOSE_ON_FOCUS_LOSS = true;
@@ -64,69 +107,189 @@ struct ConfigValue {
   bool closeOnFocusLoss = DFLT_CLOSE_ON_FOCUS_LOSS;
   bool considerPreedit = DFLT_CONSIDER_PRE_EDIT;
   bool popToRootOnClose = DFLT_POP_TO_ROOT_ON_CLOSE;
-  std::optional<std::string> faviconService;
+  std::string faviconService = "google";
+  std::string keybinding = "default";
 
   FontConfig font;
   ThemeConfig theme;
 
   std::vector<std::string> favorites;
   std::vector<std::string> fallbacks;
-  std::optional<WindowConfig> window;
-  std::unordered_map<std::string, std::string> keybinds;
-  std::unordered_map<std::string, ProviderData> providers;
+  WindowConfig window;
+
+  // we use maps to keep serialized output predictable
+  KeybindMap keybinds;
+  ProviderMap providers;
 };
 
-class Manager {
+template <> struct Partial<ConfigValue> {
+  std::optional<bool> closeOnFocusLoss;
+  std::optional<bool> considerPreedit;
+  std::optional<bool> popToRootOnClose;
+  std::optional<std::string> faviconService;
+  std::optional<std::string> keybinding;
+
+  std::optional<Partial<FontConfig>> font;
+  std::optional<Partial<ThemeConfig>> theme;
+
+  std::optional<std::vector<std::string>> favorites;
+  std::optional<std::vector<std::string>> fallbacks;
+  std::optional<Partial<WindowConfig>> window;
+
+  std::optional<KeybindMap> keybinds;
+  std::optional<ProviderMap> providers;
+};
+
+class Manager : public QObject {
+  Q_OBJECT
+
+signals:
+  void configChanged(const ConfigValue &next, const ConfigValue &prev) const;
 
 private:
+  static constexpr const char *TOP_COMMENT = R"(// This is the main vicinae user config file.
+//
+// You can make manual edits to this file, however you should keep in mind that this file may be written to by vicinae directly,
+// typically when a configuration change is made through the GUI.
+// When that happens, any custom comments or formatting will be lost.
+//
+// If you want to maintain a configuration file with your own comments and formatting, you should create a separate one
+// and import it here using the `$import` meta key.
+//
+// Learn more about configuration at https://docs.vicinae.com/config)";
+
   struct LoadingOptions {
-    bool mergeImports;
+    bool resolveImports;
   };
 
-  ConfigValue load(const std::filesystem::path &path, LoadingOptions &&opts = {.mergeImports = false}) {
+  ConfigValue merge(const ConfigValue &v1, const ConfigValue &v2) {
+    std::string buf;
+    if (auto error = glz::write_json(glz::merge{v1, v2}, buf)) {
+      std::cerr << "Failed to merge " << glz::format_error(error);
+      // todo: do smth about that
+    }
     ConfigValue cfg;
-    auto res = glz::read_file_jsonc<glz::opts{.error_on_unknown_keys = false}>(cfg, path.c_str(), m_buf);
-    if (res) { std::cerr << "Failed to load" << glz::format_error(res); }
+    if (auto error = glz::read_json(cfg, buf)) {
+      qWarning() << "Failed to read merged " << glz::format_error(error);
+    }
     return cfg;
   }
 
-  ConfigValue loadUser() { return load("config.json"); }
+  ConfigValue mergePartial(const ConfigValue &v1, const Partial<ConfigValue> &patch) {
+    std::string buf;
+    if (auto error = glz::write_json(glz::merge{v1, patch}, buf)) {
+      std::cerr << "Failed to merge " << glz::format_error(error);
+      // todo: do smth about that
+    }
+    ConfigValue cfg;
+    if (auto error = glz::read_json(cfg, buf)) {
+      qWarning() << "Failed to read merged " << glz::format_error(error);
+    }
+    return cfg;
+  }
+
+  ConfigValue load(const std::filesystem::path &path, const LoadingOptions &opts = {.resolveImports = true}) {
+    m_watcher.addPath(path.parent_path().c_str());
+
+    std::cout << "loading" << path << std::endl;
+
+    std::string buf;
+    ConfigValue cfg;
+    auto res = glz::read_file_jsonc<glz::opts{.error_on_unknown_keys = false}>(cfg, path.c_str(), buf);
+
+    if (res) { std::cerr << "Failed to load " << glz::format_error(res) << std::endl; }
+
+    if (opts.resolveImports) {
+      for (const auto &imp : cfg.imports) {
+        std::string importPath = expandPath(imp);
+
+        if (!importPath.starts_with('/')) { importPath = path.parent_path() / importPath; }
+        if (std::filesystem::exists(importPath)) {
+          ConfigValue imported = load(importPath, opts);
+          cfg = merge(imported, cfg);
+        } else {
+          qWarning() << "config file at" << importPath << "could not be found";
+        }
+      }
+    }
+
+    return cfg;
+  }
+
+  ConfigValue loadUser(const LoadingOptions &opts) { return load(m_userPath, opts); }
 
 public:
-  Manager() { m_user = loadUser(); }
-
-  void mergeProviderWithUser(std::string_view id, ProviderData &&data) {
-    mergeWithUser({.providers = {{std::string{id}, data}}});
+  Manager(std::filesystem::path path = Omnicast::configDir() / "vicinae.json") : m_userPath(path) {
+    m_user = loadUser({.resolveImports = true});
+    connect(&m_watcher, &QFileSystemWatcher::directoryChanged, this, [this]() {
+      ConfigValue prev = std::move(m_user);
+      m_user = loadUser({.resolveImports = true});
+      emit configChanged(m_user, prev);
+    });
   }
 
-  void mergeEntrypointWithUser(const EntrypointId &id, ProviderItemData &&data) {
-    ConfigValue patch;
-    patch.providers[id.provider] = {.items = {{id.entrypoint, data}}};
-    mergeWithUser(std::move(patch));
+  bool mergeProviderWithUser(std::string_view id, ProviderData &&data) {
+    return mergeWithUser({.providers = ProviderMap{{std::string{id}, data}}});
   }
 
-  void mergeWithUser(ConfigValue &&value) {
+  bool mergeEntrypointWithUser(const EntrypointId &id, ProviderItemData &&data) {
+    ProviderMap providers;
+    providers[id.provider] = {.items = {{id.entrypoint, data}}};
+    return mergeWithUser({.providers = providers});
+  }
+
+  bool mergeWithUser(const Partial<ConfigValue> &patch) {
     std::string buf;
-    glz::write_json(glz::merge{m_user, value}, buf);
-    ConfigValue cfg;
-    if (auto error = glz::read_json(cfg, buf)) { qWarning() << "Failed to read" << glz::format_error(error); }
-    glz::write_json(cfg, buf);
-    std::ofstream ofs("config.json");
-    ofs << glz::prettify_json(buf);
+    Partial<ConfigValue> user;
+
+    if (auto error =
+            glz::read_file_jsonc<glz::opts{.error_on_unknown_keys = false}>(user, m_userPath.c_str(), buf)) {
+      qWarning() << "Failed to read user config as partial";
+      return false;
+    }
+
+    if (auto error = glz::write_json(glz::merge{user, patch}, buf)) {
+      qWarning() << "Failed to merge partials";
+      return false;
+    }
+
+    if (auto error = glz::read_json(user, buf)) {
+      qWarning() << "Failed to read merged partials";
+      return false;
+    }
+
+    return writeUser(user);
+  }
+
+  bool writeUser(const Partial<ConfigValue> &cfg) {
+    std::string buf;
+
+    if (auto error = glz::write_json(cfg, buf)) {
+      qWarning() << "Failed to write json" << glz::format_error(error);
+      return false;
+    }
+
+    std::ofstream(m_userPath) << TOP_COMMENT << "\n\n" << glz::prettify_json(buf);
+    m_user = loadUser({.resolveImports = true});
+
+    return true;
   }
 
   void print(const ConfigValue &value) const {
+
     std::string buf;
     auto res = glz::write_json(value, buf);
     std::cout << glz::prettify_json(buf) << std::endl;
   }
 
   const ConfigValue &user() const { return m_user; }
+  const ConfigValue &value() const { return m_user; }
 
+private:
+  QFileSystemWatcher m_watcher;
+  std::filesystem::path m_userPath;
   ConfigValue m_user;
-  std::string m_buf;
 };
-
 }; // namespace config
 
 template <> struct glz::meta<config::WindowConfig> {
@@ -140,11 +303,17 @@ template <> struct glz::meta<config::WindowConfig> {
     } else if constexpr (std::same_as<V, bool>) {
       return key == "csd" && value == config::WindowConfig::DFLT_CSD;
     }
+
     return false;
   }
 };
 
 template <> struct glz::meta<config::ConfigValue> {
+  static constexpr std::string_view rename_key(const std::string_view key) {
+    if (key == "imports") { return "$import"; }
+    return key;
+  }
+
   template <class T>
   static constexpr bool skip_if(T &&value, std::string_view key, const glz::meta_context &) {
     using V = std::decay_t<T>;
@@ -154,7 +323,10 @@ template <> struct glz::meta<config::ConfigValue> {
       return key == "considerPreedit" && value == config::ConfigValue::DFLT_CONSIDER_PRE_EDIT;
     } else if constexpr (std::same_as<V, bool>) {
       return key == "popToRootOnClose" && value == config::ConfigValue::DFLT_POP_TO_ROOT_ON_CLOSE;
+    } else if constexpr (std::same_as<V, config::FontConfig>) {
+      return value.size == 10.5 && !value.normal;
     }
+
     return false;
   }
 };

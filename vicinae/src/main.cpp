@@ -3,10 +3,6 @@
 #include <QString>
 
 int main(int argc, char **argv) {
-  config::Manager manager;
-  auto cfg = manager.user();
-
-  manager.print(cfg);
 
   // std::cout << "final toml\n" << cfg.value().toToml() << std::endl;
 

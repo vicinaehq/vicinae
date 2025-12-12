@@ -7,8 +7,8 @@
 #include "ui/omni-list/omni-list.hpp"
 #include "ui/form/selector-input.hpp"
 #include "services/keybinding/keybinding-service.hpp"
-#include "services/config/config-service.hpp"
 #include "service-registry.hpp"
+#include "config/config.hpp"
 #include <chrono>
 #include <memory>
 
@@ -86,7 +86,7 @@ void ExtensionGridComponent::renderDropdown(const DropdownModel &dropdown) {
 
 bool ExtensionGridComponent::inputFilter(QKeyEvent *event) {
   auto config = ServiceRegistry::instance()->config();
-  const QString &keybinding = config->value().keybinding;
+  const std::string &keybinding = config->value().keybinding;
 
   if (event->modifiers() == Qt::ControlModifier) {
     if (KeyBindingService::isLeftKey(event, keybinding)) { return m_list->selectLeft(); }

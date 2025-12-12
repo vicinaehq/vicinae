@@ -1,6 +1,7 @@
 #include "extension/extension-list-component.hpp"
 #include "extend/list-model.hpp"
 #include "extension/extension-list-detail.hpp"
+#include "config/config.hpp"
 #include <chrono>
 #include <memory>
 #include "extension/form/extension-dropdown.hpp"
@@ -9,7 +10,6 @@
 #include "ui/form/selector-input.hpp"
 #include "services/keybinding/keybinding-service.hpp"
 #include "ui/omni-list/omni-list.hpp"
-#include "services/config/config-service.hpp"
 #include "service-registry.hpp"
 
 static const std::chrono::milliseconds THROTTLE_DEBOUNCE_DURATION(300);
@@ -84,7 +84,7 @@ void ExtensionListComponent::renderDropdown(const DropdownModel &dropdown) {
 
 bool ExtensionListComponent::inputFilter(QKeyEvent *event) {
   auto config = ServiceRegistry::instance()->config();
-  const QString keybinding = config->value().keybinding;
+  const std::string &keybinding = config->value().keybinding;
 
   if (event->modifiers() == Qt::ControlModifier) {
     if (KeyBindingService::isDownKey(event, keybinding)) { return m_list->selectDown(); }

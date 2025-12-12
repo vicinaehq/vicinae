@@ -1,5 +1,5 @@
 #pragma once
-#include "services/config/config-service.hpp"
+#include "config/config.hpp"
 #include "theme.hpp"
 #include <qobject.h>
 
@@ -9,7 +9,7 @@ class ThemeListController : public QObject {
   Q_OBJECT
 
 public:
-  ThemeListController(ConfigService *configService, ThemeService *themeService, ThemeListModel *model,
+  ThemeListController(config::Manager *configService, ThemeService *themeService, ThemeListModel *model,
                       QObject *parent = nullptr);
 
   void setFilter(const QString &query);
@@ -20,7 +20,7 @@ private slots:
 
 private:
   ThemeListModel *m_model = nullptr;
-  ConfigService *m_configService = nullptr;
+  config::Manager *m_configService = nullptr;
   ThemeService *m_themeService = nullptr;
   QString m_query;
 };

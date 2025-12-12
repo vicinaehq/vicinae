@@ -7,7 +7,6 @@
 #include "navigation-controller.hpp"
 #include "open-about-command.hpp"
 #include "refresh-apps-command.hpp"
-#include "browse-icons-command.hpp"
 #include "configure-fallback-command.hpp"
 #include "extensions/vicinae/search-emoji-command.hpp"
 #include "extensions/vicinae/vicinae-store-command.hpp"
@@ -110,7 +109,6 @@ VicinaeExtension::VicinaeExtension() {
   registerCommand<OpenDocumentationCommand>();
   registerCommand<OpenAboutCommand>();
   registerCommand<RefreshAppsCommand>();
-  // registerCommand<BrowseIconsCommand>(); // TODO: migrate to new model and add better actions
   registerCommand<ManageFallbackCommand>();
   registerCommand<SearchEmojiCommand>();
   registerCommand<GetVicinaeSourceCodeCommand>();
