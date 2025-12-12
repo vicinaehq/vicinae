@@ -4,7 +4,7 @@
 #include <qevent.h>
 #include <qlogging.h>
 #include <qnamespace.h>
-#include "services/config/config-service.hpp"
+#include "config/config.hpp"
 
 DialogContentWidget::DialogContentWidget(QWidget *parent) : QWidget(parent) {}
 

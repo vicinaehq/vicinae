@@ -2,6 +2,7 @@
 #include "common.hpp"
 #include "settings/extension-settings.hpp"
 #include "general-settings.hpp"
+#include "config/config.hpp"
 #include "settings-about.hpp"
 #include "settings/keybind-settings.hpp"
 #include <qwidget.h>
@@ -41,7 +42,9 @@ class GeneralSettingsCategory : public SettingsCategory {
   QString id() const override { return "general"; }
   QString title() const override { return "General"; }
   ImageURL icon() const override { return ImageURL::builtin("cog"); }
-  QWidget *createContent(const ApplicationContext *ctx) override { return new GeneralSettings(); }
+  QWidget *createContent(const ApplicationContext *ctx) override {
+    return new GeneralSettings(*ctx->services->config());
+  }
 };
 
 class KeybindSettingsCategory : public SettingsCategory {

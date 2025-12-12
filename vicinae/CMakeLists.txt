@@ -533,7 +533,6 @@ set(SRCS
 	src/ui/views/base-view.cpp
 	src/ui/views/simple-view.cpp
 	src/ui/views/list-view.cpp
-	src/ui/views/grid-view.cpp
 	#src/ui/views/form-view.cpp
 	
 	src/ui/launcher-window/launcher-window.cpp
@@ -656,6 +655,8 @@ set(SRCS
 
 	src/ui/vlist/vlist.hpp
 	src/ui/vlist/vlist.cpp
+
+	src/config/config.hpp
 
 ) 
 

@@ -24,6 +24,10 @@ class OAuthService;
 class WindowManager;
 class PowerManager;
 
+namespace config {
+class Manager;
+};
+
 class ServiceRegistry : public QObject {
   std::unique_ptr<WindowManager> m_windowManager;
   std::unique_ptr<AppService> m_appDb;
@@ -33,7 +37,7 @@ class ServiceRegistry : public QObject {
   std::unique_ptr<ClipboardService> m_clipman;
   std::unique_ptr<FontService> m_fontService;
   std::unique_ptr<RootItemManager> m_rootItemManager;
-  std::unique_ptr<ConfigService> m_config;
+  std::unique_ptr<config::Manager> m_config;
   std::unique_ptr<ShortcutService> m_shortcutService;
   std::unique_ptr<ToastService> m_toastService;
   std::unique_ptr<EmojiService> m_emojiService;
@@ -48,7 +52,7 @@ class ServiceRegistry : public QObject {
 public:
   static ServiceRegistry *instance();
   RootItemManager *rootItemManager() const;
-  ConfigService *config() const;
+  config::Manager *config() const;
   OmniDatabase *omniDb() const;
   CalculatorService *calculatorService() const;
   WindowManager *windowManager() const;
@@ -73,7 +77,7 @@ public:
   void setRaycastStore(std::unique_ptr<RaycastStoreService> service);
   void setVicinaeStore(std::unique_ptr<VicinaeStoreService> service);
   void setOAuthService(std::unique_ptr<OAuthService> service);
-  void setConfig(std::unique_ptr<ConfigService> cfg);
+  void setConfig(std::unique_ptr<config::Manager> cfg);
   void setShortcutService(std::unique_ptr<ShortcutService> service);
   void setCalculatorService(std::unique_ptr<CalculatorService> service);
   void setExtensionRegistry(std::unique_ptr<ExtensionRegistry> service);

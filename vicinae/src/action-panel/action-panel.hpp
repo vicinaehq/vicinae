@@ -3,12 +3,12 @@
 #include "navigation-controller.hpp"
 #include "template-engine/template-engine.hpp"
 #include "theme.hpp"
+#include "config/config.hpp"
 #include "ui/action-pannel/action-list-item.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/omni-list/omni-list-item-widget.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include "service-registry.hpp"
-#include "services/config/config-service.hpp"
 #include "services/keybinding/keybinding-service.hpp"
 #include "ui/popover/popover.hpp"
 #include "ui/typography/typography.hpp"
@@ -148,7 +148,7 @@ protected:
 
       if (keyEvent->modifiers() == Qt::ControlModifier) {
         auto config = ServiceRegistry::instance()->config();
-        const QString keybinding = config ? config->value().keybinding : QString("default");
+        const std::string &keybinding = config->value().keybinding;
 
         if (KeyBindingService::isDownKey(keyEvent, keybinding)) { return m_list->selectDown(); }
         if (KeyBindingService::isUpKey(keyEvent, keybinding)) { return m_list->selectUp(); }

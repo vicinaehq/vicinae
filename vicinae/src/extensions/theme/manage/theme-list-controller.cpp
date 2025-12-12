@@ -1,11 +1,12 @@
 #include "theme-list-controller.hpp"
+#include "config/config.hpp"
 #include "theme-list-model.hpp"
 
-ThemeListController::ThemeListController(ConfigService *configService, ThemeService *themeService,
+ThemeListController::ThemeListController(config::Manager *configService, ThemeService *themeService,
                                          ThemeListModel *model, QObject *parent)
     : QObject(parent), m_model(model), m_configService(configService), m_themeService(themeService) {
 
-  connect(m_configService, &ConfigService::configChanged, this, &ThemeListController::handleConfigChanged);
+  connect(m_configService, &config::Manager::configChanged, this, &ThemeListController::handleConfigChanged);
   regenerateThemes();
 }
 

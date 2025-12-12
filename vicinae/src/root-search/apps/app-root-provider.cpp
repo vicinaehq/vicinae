@@ -36,7 +36,9 @@ AccessoryList AppRootItem::accessories() const {
   return {{.text = "Application", .color = SemanticColor::TextMuted}};
 }
 
-EntrypointId AppRootItem::uniqueId() const { return EntrypointId{"apps", m_app->id().toStdString()}; }
+EntrypointId AppRootItem::uniqueId() const {
+  return EntrypointId{"apps", m_app->id().remove(".desktop").toStdString()};
+}
 
 ImageURL AppRootItem::iconUrl() const { return m_app->iconUrl(); }
 

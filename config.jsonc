@@ -1,5 +1,14 @@
+// This is the main vicinae user config file.
+// This configuration may be written to by vicinae directly, typically when a configuration change is made through the GUI.
+// When that happens, any custom comments or formatting will be lost.
+// If you want to maintain a configuration file with your own comments and formatting, you should create a separate one
+// and import it here using the $import meta key.
+// Learn more about configuration at https://docs.vicinae.com/config
+
 {
-   "imports": [],
+	"$import": [
+	   "keybinds.json"
+   ],
    "closeOnFocusLoss": false,
    "considerPreedit": false,
    "popToRootOnClose": false,
@@ -20,7 +29,7 @@
       "csd": false
    },
    "keybinds": {
-      "action.dangerous-remove": "control+shift+X",
+      //"action.dangerous-remove": "control+shift+X",
       "action.save": "control+S",
       "action.duplicate": "control+D",
       "action.new": "control+N",
@@ -58,7 +67,13 @@
          "preferences": {
             "token": "HELLO"
          },
-         "items": {}
+         "items": {
+			 "pull-requests": {
+				 "preferences": {
+					 "test": true
+				 }
+			 }
+		 }
       },
       "apps": {
          "items": {

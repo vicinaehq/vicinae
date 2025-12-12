@@ -10,16 +10,17 @@
 #include "config/config.hpp"
 #include <ranges>
 
-RootItemManager::RootItemManager(OmniDatabase &db) : m_db(db) {
-  config::Manager manager;
-
-  for (const auto &[id, provider] : manager.user().providers) {
-    for (const auto &[itemId, item] : provider.items) {
-      EntrypointId entrypoint{id, itemId};
-      m_metadata[entrypoint] =
-          RootItemMetadata{.isEnabled = item.enabled.value_or(true), .alias = item.alias};
-    }
-  }
+RootItemManager::RootItemManager(config::Manager &cfg, OmniDatabase &db) : m_cfg(cfg), m_db(db) {
+  connect(&cfg, &config::Manager::configChanged, this,
+          [this](const config::ConfigValue &next, const config::ConfigValue &prev) {
+            for (const auto &[id, provider] : next.providers) {
+              for (const auto &[itemId, item] : provider.items) {
+                EntrypointId entrypoint{id, itemId};
+                m_metadata[entrypoint] =
+                    RootItemMetadata{.isEnabled = item.enabled.value_or(true), .alias = item.alias};
+              }
+            }
+          });
 }
 
 std::vector<std::shared_ptr<RootItem>> RootItemManager::fallbackItems() const {
@@ -197,11 +198,7 @@ std::span<RootItemManager::ScoredItem> RootItemManager::search(const QString &qu
 }
 
 bool RootItemManager::setItemEnabled(const EntrypointId &id, bool value) {
-  auto item = findItemById(id);
-
-  m_metadata[id].isEnabled = value;
-  m_cfg.providers[id.provider].items[id.entrypoint].enabled = value;
-
+  auto merged = m_cfg.mergeEntrypointWithUser(id, {.enabled = value});
   return true;
 }
 
@@ -286,10 +283,7 @@ bool RootItemManager::setAlias(const EntrypointId &id, std::string_view alias) {
   auto &meta = m_metadata[id];
 
   m_metadata[id].alias = alias;
-
-  config::Manager manager;
-
-  manager.mergeEntrypointWithUser(id, {.alias = std::string{alias}});
+  m_cfg.mergeEntrypointWithUser(id, {.alias = std::string{alias}});
 
   return true;
 }
