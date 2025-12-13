@@ -75,6 +75,11 @@ void ExtensionSettingsDetail::savePendingPreferences() {
     obj[preferenceId] = value;
   }
 
+  if (obj == m_preferenceValues) {
+    qDebug() << "no changes to preferences!";
+    return;
+  }
+
   manager->setProviderPreferenceValues(m_rootItemId, obj);
 }
 

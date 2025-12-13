@@ -207,22 +207,40 @@ bool RootItemManager::setProviderPreferenceValues(const QString &id, const QJson
 
   if (!provider) return false;
 
-  auto query = m_db.createQuery();
-  QJsonDocument json;
-
-  json.setObject(preferences);
-  query.prepare("UPDATE root_provider SET preference_values = :preferences WHERE id = :id");
-  query.bindValue(":preferences", json.toJson());
-  query.bindValue(":id", id);
-
-  if (!query.exec()) {
-    qDebug() << "setRepositoryPreferenceValues:" << query.lastError();
-    return false;
-  }
-
+  m_cfg.mergeProviderWithUser(id.toStdString(), {.preferences = transformPreferenceValues(preferences)});
   provider->preferencesChanged(preferences);
 
   return true;
+}
+
+QJsonObject RootItemManager::transformPreferenceValues(const glz::generic::object_t &preferences) {
+  QJsonObject obj;
+
+  for (const auto &[key, v] : preferences) {
+    QString k = key.c_str();
+    if (v.is_boolean()) obj[k] = v.get_boolean();
+    if (v.is_string()) obj[k] = v.get_string().c_str();
+    if (v.is_number()) obj[k] = v.get_number();
+    if (v.is_null()) obj[k] = QJsonValue::Null;
+  }
+
+  return obj;
+}
+
+glz::generic::object_t RootItemManager::transformPreferenceValues(const QJsonObject &preferences) {
+  glz::generic::object_t obj;
+
+  for (const auto &key : preferences.keys()) {
+    std::string k = key.toStdString();
+    QJsonValue v = preferences.value(key);
+
+    if (v.isBool()) obj[k] = v.toBool();
+    if (v.isString()) obj[k] = v.toString().toStdString();
+    if (v.isDouble()) obj[k] = v.toDouble();
+    if (v.isNull()) obj[k] = glz::generic::null_t{};
+  }
+
+  return obj;
 }
 
 bool RootItemManager::setItemPreferenceValues(const EntrypointId &id, const QJsonObject &preferences) {
@@ -233,10 +251,7 @@ bool RootItemManager::setItemPreferenceValues(const EntrypointId &id, const QJso
   if (!item) return false;
 
   m_metadata[id].preferences = preferences;
-  // m_cfg.providers[id.provider].items[id.entrypoint].preferences = preferences;
-
-  // m_cfg.print();
-
+  m_cfg.mergeEntrypointWithUser(id, {.preferences = transformPreferenceValues(preferences)});
   item->preferenceValuesChanged(preferences);
 
   return true;
@@ -266,15 +281,19 @@ void RootItemManager::setPreferenceValues(const EntrypointId &id, const QJsonObj
     }
   }
 
-  if (!providerPreferenceValues.empty()) {
-    // m_cfg.providers[id.provider].preferences = providerPreferenceValues;
-  }
-
-  if (!entrypointPreferenceValues.empty()) {
-    // m_cfg.providers[id.provider].items[id.entrypoint].preferences = entrypointPreferenceValues;
-  }
-
-  // m_cfg.print();
+  // clang-format off
+  m_cfg.mergeWithUser({
+		  .providers = config::ProviderMap{
+		  	{id.provider, {
+				.preferences = transformPreferenceValues(providerPreferenceValues),
+				.items = {
+					{id.entrypoint, {.preferences = transformPreferenceValues(entrypointPreferenceValues)}}
+				}
+			}
+		  }
+		  }
+  });
+  // clang-format on
 
   qWarning() << "setPreferences not yet implemented";
 }
@@ -292,35 +311,7 @@ bool RootItemManager::clearAlias(const EntrypointId &id) { return setAlias(id, "
 
 QJsonObject RootItemManager::getProviderPreferenceValues(const QString &id) const {
   auto provider = findProviderById(id);
-
-  if (!provider) {
-    qWarning() << "No provider with id" << id;
-    return {};
-  }
-
-  auto query = m_db.createQuery();
-
-  query.prepare(R"(
-		SELECT 
-			provider.preference_values as preference_values 
-		FROM 
-			root_provider as provider
-		WHERE
-			provider.id = :id
-	)");
-  query.addBindValue(id);
-
-  if (!query.exec()) {
-    qDebug() << "Failed to get preference values for provider with ID" << id << query.lastError();
-    return {};
-  }
-
-  if (!query.next()) {
-    qDebug() << "No results";
-    return {};
-  }
-  auto rawJson = query.value(0).toString();
-  auto json = QJsonDocument::fromJson(rawJson.toUtf8()).object();
+  auto json = transformPreferenceValues(m_cfg.user().providerPreferences(id.toStdString()).value_or({}));
 
   for (const auto &pref : provider->preferences()) {
     auto dflt = pref.defaultValue();
@@ -372,55 +363,17 @@ std::vector<Preference> RootItemManager::getMergedItemPreferences(const Entrypoi
 }
 
 QJsonObject RootItemManager::getPreferenceValues(const EntrypointId &id) const {
-  /*
-auto query = m_db.createQuery();
-auto item = findItemById(id);
+  auto preferenceValues = transformPreferenceValues(m_cfg.user().preferences(id));
 
-if (!item) {
-qWarning() << "No item with id" << id;
-return {};
-}
+  for (auto pref : getMergedItemPreferences(id)) {
+    auto dflt = pref.defaultValue();
+    auto value = preferenceValues.value(pref.name());
+    auto hasValue = !value.isUndefined() && !value.isNull();
 
-query.prepare(R"(
-          SELECT
-                  json_patch(provider.preference_values, item.preference_values) as preference_values
-          FROM
-                  root_provider_item as item
-          LEFT JOIN
-                  root_provider as provider
-          ON
-                  provider.id = item.provider_id
-          WHERE
-                  item.id = :id
-  )");
-query.addBindValue(id);
+    if (!hasValue && !dflt.isUndefined()) { preferenceValues[pref.name()] = dflt; }
+  }
 
-if (!query.exec()) {
-qDebug() << "Failed to get preference values for command with ID" << id << query.lastError();
-return {};
-}
-
-if (!query.next()) {
-qWarning() << "No results";
-return {};
-}
-auto rawJson = query.value(0).toString();
-
-auto json = QJsonDocument::fromJson(rawJson.toUtf8());
-auto preferenceValues = json.object();
-
-for (auto pref : getMergedItemPreferences(id)) {
-auto dflt = pref.defaultValue();
-auto value = preferenceValues.value(pref.name());
-auto hasValue = !value.isUndefined() && !value.isNull();
-
-if (!hasValue && !dflt.isUndefined()) { preferenceValues[pref.name()] = dflt; }
-}
-
-return preferenceValues;
-*/
-
-  return QJsonObject();
+  return preferenceValues;
 }
 
 RootItemMetadata RootItemManager::itemMetadata(const EntrypointId &id) const {

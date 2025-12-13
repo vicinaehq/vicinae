@@ -110,6 +110,7 @@ public:
 
 class AliasInput : public BaseInput {
   EntrypointId m_id;
+  std::string m_alias;
 
   void showEvent(QShowEvent *event) override {
     refreshAlias();
@@ -126,6 +127,7 @@ public:
     auto manager = ServiceRegistry::instance()->rootItemManager();
     auto metadata = manager->itemMetadata(m_id);
 
+    m_alias = metadata.alias.value_or("");
     setText(QString::fromStdString(metadata.alias.value_or("")));
   }
 
@@ -133,7 +135,7 @@ public:
   void handleSave() {
     auto manager = ServiceRegistry::instance()->rootItemManager();
 
-    manager->setAlias(m_id, text().toStdString());
+    if (text().toStdString() != m_alias) { manager->setAlias(m_id, text().toStdString()); }
   }
 
   AliasInput(const EntrypointId &id) : m_id(id) {

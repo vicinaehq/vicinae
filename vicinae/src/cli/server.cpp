@@ -255,6 +255,8 @@ void CliServerCommand::run(CLI::App *app) {
     ctx.navigation->setPopToRootOnClose(next.popToRootOnClose);
     ctx.navigation->setCloseOnFocusLoss(next.closeOnFocusLoss);
 
+    KeybindManager::instance()->fromSerializedMap({next.keybinds.begin(), next.keybinds.end()});
+
     FaviconService::instance()->setService(next.faviconService.c_str());
 
     if (next.theme.iconTheme) {
@@ -277,9 +279,13 @@ void CliServerCommand::run(CLI::App *app) {
 
   auto cfgService = ServiceRegistry::instance()->config();
 
-  QObject::connect(KeybindManager::instance(), &KeybindManager::keybindChanged, [cfgService]() {
-    // cfgService->mergeWithUser({.keybinds = KeybindManager::instance()->toSerializedMap()});
-  });
+  QObject::connect(
+      KeybindManager::instance(), &KeybindManager::keybindChanged,
+      [cfgService](Keybind bind, const Keyboard::Shortcut &shortcut) {
+        auto info = KeybindManager::instance()->findBoundInfo(shortcut);
+        cfgService->mergeWithUser(
+            {.keybinds = config::KeybindMap{{info->id.toStdString(), shortcut.toString().toStdString()}}});
+      });
 
   QObject::connect(cfgService, &config::Manager::configChanged, configChanged);
   QIcon::setFallbackSearchPaths(Environment::fallbackIconSearchPaths());

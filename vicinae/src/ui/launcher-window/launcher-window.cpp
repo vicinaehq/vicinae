@@ -1,6 +1,7 @@
 #include "launcher-window.hpp"
 #include "action-panel/action-panel.hpp"
 #include "common.hpp"
+#include "config/config.hpp"
 #include "keyboard/keybind-manager.hpp"
 #include "theme.hpp"
 #include "theme/colors.hpp"
@@ -190,27 +191,27 @@ void LauncherWindow::changeEvent(QEvent *event) {
 void LauncherWindow::setupUI() {
   setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
   setAttribute(Qt::WA_TranslucentBackground);
-  setFixedSize(Omnicast::WINDOW_SIZE);
   setCentralWidget(createWidget());
-
+  createWinId();
   m_hud->setMaximumWidth(300);
 
-#ifdef WAYLAND_LAYER_SHELL
-  if (Environment::isLayerShellEnabled()) {
-    namespace Shell = LayerShellQt;
+  auto &cfg = m_ctx.services->config()->value();
 
-    createWinId();
+  setFixedSize(QSize{cfg.window.size.width, cfg.window.size.height});
+
+  // layer shell config can only be applied on boot
+#ifdef WAYLAND_LAYER_SHELL
+  const auto &lc = cfg.window.layerShell;
+
+  if (lc.enabled) {
+    namespace Shell = LayerShellQt;
     if (auto lshell = Shell::Window::get(windowHandle())) {
-      lshell->setLayer(Shell::Window::LayerTop);
-      lshell->setScope("vicinae");
+      lshell->setLayer(lc.layer == config::LayerShellConfig::Layer::Overlay ? Shell::Window::LayerOverlay
+                                                                            : Shell::Window::LayerTop);
+      lshell->setScope(lc.scope.c_str());
       lshell->setScreenConfiguration(Shell::Window::ScreenFromCompositor);
-      // we will switch to on demand in future version of layer-shell-qt when proper activation
-      // requests are sent.
-      lshell->setKeyboardInteractivity(Shell::Window::KeyboardInteractivityExclusive);
       lshell->setAnchors(Shell::Window::AnchorNone);
-    } else {
-      qWarning()
-          << "Unable apply layer shell rules to main window: LayerShellQt::Window::get() returned null";
+      lshell->setKeyboardInteractivity(Shell::Window::KeyboardInteractivityExclusive);
     }
   }
 #endif
@@ -221,6 +222,13 @@ void LauncherWindow::setupUI() {
           &LauncherWindow::handleDialog);
   connect(m_actionVeil, &ActionVeilWidget::mousePressed, this,
           [this]() { m_ctx.navigation->closeActionPanel(); });
+
+  connect(m_ctx.services->config(), &config::Manager::configChanged, this,
+          [this](const config::ConfigValue &next, const config::ConfigValue &prev) {
+            auto &size = next.window.size;
+            setFixedSize(QSize{size.width, size.height});
+            update();
+          });
 }
 
 void LauncherWindow::handleDialog(DialogContentWidget *alert) {

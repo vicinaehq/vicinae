@@ -62,7 +62,16 @@ void CommandMetadataSettingsDetailWidget::savePendingPreferences() {
   for (const auto &[preferenceId, widget] : m_preferenceFields) {
     QJsonValue value = widget->formItem()->asJsonValue();
 
+    // we do not store null or undefined values, so that the default value
+    // is used instead.
+    if (value.isNull() || value.isUndefined()) { continue; };
+
     obj[preferenceId] = value;
+  }
+
+  if (m_preferenceValues == obj && obj.keys().size() == m_preferenceValues.keys().size()) {
+    qDebug() << "preferences unchanged";
+    return;
   }
 
   manager->setItemPreferenceValues(m_command->uniqueId(), obj);

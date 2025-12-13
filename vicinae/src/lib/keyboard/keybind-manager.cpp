@@ -181,7 +181,7 @@ void KeybindManager::fromSerializedMap(const SerializedKeybindMap &map) {
   SerializedKeybindMap mp;
 
   for (const auto &[id, str] : map) {
-    m_shortcuts[m_idToBind[id]] = Keyboard::Shortcut(str);
+    m_shortcuts[m_idToBind[id.c_str()]] = Keyboard::Shortcut(str.c_str());
   }
 }
 
@@ -208,7 +208,7 @@ KeybindManager::SerializedKeybindMap KeybindManager::toSerializedMap() {
     auto it = infos.find(bind);
     if (it == infos.end()) { continue; }
     auto &info = it->second;
-    mp[info.id] = shortcut.toString();
+    mp[info.id.toStdString()] = shortcut.toString().toStdString();
   }
 
   return mp;

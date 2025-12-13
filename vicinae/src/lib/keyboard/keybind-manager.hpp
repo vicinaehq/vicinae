@@ -30,7 +30,7 @@ public:
 
   using KeybindMap = std::unordered_map<Keybind, Keyboard::Shortcut>;
   // [keybind_id]: shortcut string
-  using SerializedKeybindMap = std::unordered_map<QString, QString>;
+  using SerializedKeybindMap = std::unordered_map<std::string, std::string>;
 
   Keyboard::Shortcut resolve(Keybind bind) const;
 

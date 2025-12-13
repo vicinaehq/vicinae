@@ -244,6 +244,9 @@ public:
 
   RootItemManager(config::Manager &config, OmniDatabase &db);
 
+  static glz::generic::object_t transformPreferenceValues(const QJsonObject &preferences);
+  static QJsonObject transformPreferenceValues(const glz::generic::object_t &preferences);
+
   RootProvider *findProviderById(const QString &id) const;
   bool setProviderPreferenceValues(const QString &id, const QJsonObject &preferences);
 
