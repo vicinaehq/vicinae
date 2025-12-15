@@ -11,6 +11,7 @@
 #include <sys/mman.h>
 #include <QGuiApplication>
 #include "virtual-keyboard.hpp"
+#include "virtual-keyboard-unstable-v1-client-protocol.h"
 
 namespace chrono = std::chrono;
 using namespace std::chrono_literals;
@@ -47,6 +48,7 @@ VirtualKeyboard::VirtualKeyboard() {
 
 VirtualKeyboard::~VirtualKeyboard() {
   if (!m_map.empty()) { releaseMods(); }
+  if (m_keyboard) { zwp_virtual_keyboard_v1_destroy(m_keyboard); }
 }
 
 bool VirtualKeyboard::isAvailable() const { return m_iface && m_keyboard; }

@@ -1,10 +1,10 @@
 import Module from "node:module";
 
 const requireOverrides: Record<string, any> = {
-	react: require("react"),
-	"react/jsx-runtime": require("react/jsx-runtime"),
-	"@vicinae/api": require("@vicinae/api"),
-	"@raycast/api": require("@vicinae/raycast-api-compat"),
+	react: () => require("react"),
+	"react/jsx-runtime": () => require("react/jsx-runtime"),
+	"@vicinae/api": () => require("@vicinae/api"),
+	"@raycast/api": () => require("@vicinae/raycast-api-compat"),
 };
 
 const injectJsxGlobals = () => {
@@ -28,6 +28,6 @@ export const patchRequire = () => {
 
 	// @ts-ignore
 	Module.prototype.require = function(id: string) {
-		return requireOverrides[id] ?? originalRequire.call(this, id);
+		return requireOverrides[id]?.() ?? originalRequire.call(this, id);
 	};
 };

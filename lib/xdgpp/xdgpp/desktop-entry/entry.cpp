@@ -200,7 +200,7 @@ DesktopEntry::DesktopEntry(std::string_view data, const ParseOptions &opts) {
     }
   }
 
-  bool isTerminalEmulator = std::ranges::contains(m_categories, "TerminalEmulator");
+  bool isTerminalEmulator = std::ranges::contains(m_categories, std::string("TerminalEmulator"));
 
   if (isTerminalEmulator) {
     auto terminalExec = group->key("X-TerminalArgExec");

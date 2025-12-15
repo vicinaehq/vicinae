@@ -1,11 +1,7 @@
-import { workerData } from "worker_threads";
-
 export const getPreferenceValues = <
 	T = { [preferenceName: string]: any },
 >(): T => {
-	const { preferenceValues = {} } = workerData;
-
-	return preferenceValues;
+	return (globalThis as any).vicinae.preferences;
 };
 
 /**

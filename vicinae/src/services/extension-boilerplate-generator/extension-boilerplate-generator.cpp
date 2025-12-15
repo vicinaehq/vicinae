@@ -1,7 +1,7 @@
 #include "services/extension-boilerplate-generator/extension-boilerplate-generator.hpp"
 #include "common.hpp"
-#include "utils/environment.hpp"
 #include "utils/utils.hpp"
+#include "version.h"
 #include <filesystem>
 #include <qfile.h>
 
@@ -96,13 +96,13 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
     cmdStrings << cmdString;
   }
 
-  QString version = Environment::version();
+  QString version = VICINAE_GIT_TAG;
   bool isValidVersion = version.startsWith('v') && version.sliced(1).split('.').size() == 3;
 
   if (isValidVersion) {
     version[0] = '^';
   } else {
-    version = "^0.8.0"; // TODO: all builds should have a valid version, but this is provided as a quick fix
+    version = "latest"; // all builds should have a valid version, but this is provided as a fallback
   }
 
   // we don't use QJson because key order would not be preserved

@@ -34,9 +34,9 @@ ListItemViewModel ListModelParser::parseListItem(const QJsonObject &instance, si
   auto props = instance.value("props").toObject();
   auto children = instance.value("children").toArray();
 
-  model.id = props["id"].toString(QString::number(index));
-  model.title = parseListItemTitle(props["title"]);
-  model.subtitle = parseListItemTitle(props["subtitle"]);
+  model.id = props["id"].toString(QString::number(index)).toStdString();
+  model.title = parseListItemTitle(props["title"]).toStdString();
+  model.subtitle = parseListItemTitle(props["subtitle"]).toStdString();
 
   if (props.contains("icon")) { model.icon = parseListItemIcon(props.value("icon")); }
 
@@ -45,7 +45,7 @@ ListItemViewModel ListModelParser::parseListItem(const QJsonObject &instance, si
 
     model.keywords.reserve(keywords.size());
     for (const auto &value : keywords) {
-      model.keywords.emplace_back(value.toString());
+      model.keywords.emplace_back(value.toString().toStdString());
     }
   }
 
@@ -75,8 +75,8 @@ ListSectionModel ListModelParser::parseSection(const QJsonObject &instance) {
   auto children = instance.value("children").toArray();
   size_t index = 0;
 
-  model.title = props.value("title").toString();
-  model.subtitle = props.value("subtitle").toString();
+  model.title = props.value("title").toString().toStdString();
+  model.subtitle = props.value("subtitle").toString().toStdString();
   model.children.reserve(children.size());
 
   for (const auto &child : children) {
@@ -108,21 +108,22 @@ ListModel ListModelParser::parse(const QJsonObject &instance) {
   model.isLoading = props["isLoading"].toBool(false);
   model.throttle = props["throttle"].toBool(false);
   model.isShowingDetail = props["isShowingDetail"].toBool(false);
-  model.searchPlaceholderText = props["searchBarPlaceholder"].toString();
+  model.searchPlaceholderText = props["searchBarPlaceholder"].toString().toStdString();
   model.filtering = props["filtering"].toBool(defaultFiltering);
 
-  if (props.contains("navigationTitle")) { model.navigationTitle = props["navigationTitle"].toString(); }
+  if (props.contains("navigationTitle")) {
+    model.navigationTitle = props["navigationTitle"].toString().toStdString();
+  }
 
   if (props.contains("onSearchTextChange")) {
-    model.onSearchTextChange = props.value("onSearchTextChange").toString();
+    model.onSearchTextChange = props.value("onSearchTextChange").toString().toStdString();
   }
 
   if (props.contains("onSelectionChange")) {
-    model.onSelectionChanged = props.value("onSelectionChange").toString();
+    model.onSelectionChanged = props.value("onSelectionChange").toString().toStdString();
   }
 
-  if (props.contains("selectedItemId")) { model.selectedItemId = props.value("selectedItemId").toString(); }
-  if (props.contains("searchText")) { model.searchText = props.value("searchText").toString(); }
+  if (props.contains("searchText")) { model.searchText = props.value("searchText").toString().toStdString(); }
   if (props.contains("pagination")) {
     model.pagination = PaginationModel::fromJson(props.value("pagination").toObject());
   }

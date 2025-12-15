@@ -1,7 +1,9 @@
 #include "root-item-manager.hpp"
-#include "lib/fts_fuzzy.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
+#include <ranges>
+#include "lib/fzf.hpp"
 #include <algorithm>
+#include "timer.hpp"
 #include <qlogging.h>
 #include <qtconcurrentfilter.h>
 #include <ranges>
@@ -96,6 +98,7 @@ void RootItemManager::updateIndex() {
     for (const auto &item : items) {
       upsertItem(provider->uniqueId(), *item.get());
       SearchableRootItem sitem;
+
       sitem.item = item;
       sitem.title = item->displayName().toStdString();
       sitem.subtitle = item->subtitle().toStdString();
@@ -157,16 +160,18 @@ bool RootItemManager::upsertProvider(const RootProvider &provider) {
   return true;
 }
 
-int RootItemManager::SearchableRootItem::fuzzyScore(std::string_view pattern) const {
-  int max = 0;
-  int score = 0;
-  if (fts::fuzzy_match(pattern, title, score)) { max = std::max(max, score); }
-  if (fts::fuzzy_match(pattern, meta->alias, score)) { max = std::max(max, score); }
-  if (fts::fuzzy_match(pattern, subtitle, score)) { max = std::max(max, static_cast<int>(score * 0.6)); }
-  for (const auto &kw : keywords) {
-    if (fts::fuzzy_match(pattern, kw, score)) { max = std::max(max, static_cast<int>(score * 0.3)); }
-  }
-  return max;
+float RootItemManager::SearchableRootItem::fuzzyScore(std::string_view pattern) const {
+  using WS = fzf::WeightedString;
+  std::initializer_list<WS> ss = {{title, 1.0f}, {subtitle, 0.6f}, {meta->alias, 1.0f}};
+  auto kws = keywords | std::views::transform([](auto &&kw) { return WS{kw, 0.3f}; });
+  auto strs = std::views::concat(ss, kws);
+  float score = pattern.empty() ? 1 : fzf::defaultMatcher.fuzzy_match_v2_score_query(strs, pattern, false);
+  double frequencyScore = std::log(1 + meta->visitCount * 0.1);
+  float frequencyWeight = 0.2;
+
+  // TODO: add recency support
+
+  return score * (1 + frequencyScore * frequencyWeight);
 }
 
 std::span<RootItemManager::ScoredItem> RootItemManager::search(const QString &query,
@@ -180,12 +185,12 @@ std::span<RootItemManager::ScoredItem> RootItemManager::search(const QString &qu
   for (auto &item : m_items) {
     if (!item.meta->isEnabled && !opts.includeDisabled) continue;
     if (item.meta->favorite && !opts.includeFavorites) continue;
-    int fuzzyScore = item.fuzzyScore(patternView);
-    if (!pattern.empty() && !fuzzyScore) continue;
-    double frequency = std::log1p(item.meta->visitCount) * 0.5;
-    // TODO: re-introduce frecency component
-    int finalScore = fuzzyScore * (1.0 + frequency);
-    m_scoredItems.emplace_back(ScoredItem{.alias = item.meta->alias, .score = finalScore, .item = item.item});
+    double fuzzyScore = item.fuzzyScore(patternView);
+
+    if (!fuzzyScore) { continue; }
+
+    m_scoredItems.emplace_back(
+        ScoredItem{.alias = item.meta->alias, .meta = item.meta, .score = fuzzyScore, .item = item.item});
   }
 
   // we need stable sort to avoid flickering when updating quickly
@@ -196,6 +201,7 @@ std::span<RootItemManager::ScoredItem> RootItemManager::search(const QString &qu
       // always prioritize matching aliases over score
       if (aa - ab) { return aa > ab; }
     }
+
     return a.score > b.score;
   });
 
@@ -752,10 +758,8 @@ double RootItemManager::computeScore(const RootItemMetadata &meta, int weight) c
 std::vector<RootItemManager::SearchableRootItem> RootItemManager::queryFavorites(std::optional<int> limit) {
   auto isFavorite = [](auto &&item) { return item.meta->favorite; };
   auto favorites = m_items | std::views::filter(isFavorite) | std::ranges::to<std::vector>();
-  std::ranges::sort(favorites, [this](const auto &a, const auto &b) {
-    auto ascore = computeScore(*a.meta, a.item->baseScoreWeight());
-    auto bscore = computeScore(*b.meta, b.item->baseScoreWeight());
-    return ascore > bscore;
+  std::ranges::sort(favorites, [this](const SearchableRootItem &a, const SearchableRootItem &b) {
+    return a.fuzzyScore() > b.fuzzyScore();
   });
 
   if (limit && favorites.size() > limit) { favorites.resize(limit.value()); }

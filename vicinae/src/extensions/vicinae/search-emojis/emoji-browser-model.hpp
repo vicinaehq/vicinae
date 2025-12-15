@@ -1,6 +1,7 @@
 #pragma once
 #include "ui/vlist/common/simple-grid-model.hpp"
 #include "services/emoji-service/emoji-service.hpp"
+#include "utils.hpp"
 
 class EmojiBrowserModel : public vicinae::ui::SimpleGridModel<EmojiData, int> {
 public:
@@ -19,7 +20,8 @@ public:
   void setDisplayMode(DisplayMode mode) { m_root = mode == DisplayMode::Root; }
 
   GridData createItemData(const EmojiData &item) const override {
-    return {.icon = ImageURL::emoji(QString::fromUtf8(item.emoji.data(), item.emoji.size()))};
+    return {.icon = ImageURL::emoji(qStringFromStdView(item.emoji)),
+            .tooltip = qStringFromStdView(item.name)};
   }
 
   VListModel::StableID stableId(const EmojiData &item, int sectionId) const override {

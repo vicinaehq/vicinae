@@ -48,7 +48,7 @@ public:
    * Launch a new process using arbitrary prog name and args. No expansion of any kind
    * will be performed.
    */
-  bool launchRaw(const QString &prog, const std::vector<QString> &args);
+  bool launchRaw(const std::vector<QString> &args);
 
   /**
    * Custom launcher that will be used to invoke all the applications.

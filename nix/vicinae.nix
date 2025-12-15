@@ -4,7 +4,6 @@
   cmake,
   pkg-config,
   kdePackages,
-  rapidfuzz-cpp,
   protobuf,
   grpc-tools,
   nodejs,
@@ -23,6 +22,7 @@
   qt6,
   typescript,
   wayland,
+  gcc15Stdenv,
 }:
 let
   src = ../.;
@@ -57,7 +57,7 @@ let
     hash = "sha256-krDFHTG8irgVk4a79LMz148drLgy2oxEoHCKRpur1R4=";
   };
 in
-stdenv.mkDerivation rec {
+gcc15Stdenv.mkDerivation rec {
   name = "vicinae";
 
   inherit src;
@@ -82,7 +82,6 @@ stdenv.mkDerivation rec {
     nodejs
     pkg-config
     qt6.wrapQtAppsHook
-    rapidfuzz-cpp
     protoc-gen-js
     protobuf
     grpc-tools

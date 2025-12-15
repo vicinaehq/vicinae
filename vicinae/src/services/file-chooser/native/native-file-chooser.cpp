@@ -7,6 +7,7 @@
 #include <qfiledialog.h>
 #include <qnamespace.h>
 #include "environment.hpp"
+#include "vicinae.hpp"
 #include <qobject.h>
 
 namespace fs = std::filesystem;
@@ -28,7 +29,7 @@ NativeFileChooser::NativeFileChooser(QObject *parent) : AbstractFileChooser(pare
 
     m_dialog.createWinId();
     if (auto lshell = Shell::Window::get(m_dialog.windowHandle())) {
-      lshell->setLayer(Shell::Window::LayerOverlay);
+      lshell->setLayer(Shell::Window::LayerTop);
       lshell->setScope(Omnicast::APP_ID);
       lshell->setScreenConfiguration(Shell::Window::ScreenFromCompositor);
       lshell->setKeyboardInteractivity(Shell::Window::KeyboardInteractivityExclusive);

@@ -134,6 +134,8 @@ type Map = {
 	};
 };
 
+type LaunchHandler = (data: extension.LaunchEventData) => void;
+
 class Bus {
 	private requestMap = new Map<
 		string,
@@ -144,6 +146,7 @@ class Bus {
 		{ resolve: (message: extension.Response) => void }
 	>();
 	private eventListeners = new Map<string, EventListenerInfo[]>();
+	private onLaunchHandlers: LaunchHandler[] = [];
 
 	async request<T extends RequestEndpoint>(
 		endpoint: T,
@@ -188,7 +191,13 @@ class Bus {
 		}
 
 		if (message.event) {
-			const { id, generic } = message.event;
+			const { id, generic, launch } = message.event;
+
+			if (launch) {
+				for (const fn of this.onLaunchHandlers) {
+					fn(launch);
+				}
+			}
 
 			//console.error('got event with id', id);
 
@@ -201,6 +210,10 @@ class Bus {
 				}
 			}
 		}
+	}
+
+	onLaunch(handler: LaunchHandler) {
+		this.onLaunchHandlers.push(handler);
 	}
 
 	emitCrash(errorText: string) {
@@ -337,3 +350,4 @@ class Bus {
  * If you are using this from inside your extension, you are WRONG and you should stop.
  */
 export const bus = new Bus(parentPort!);
+//e

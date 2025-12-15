@@ -3,6 +3,7 @@
 #include "ui/dmenu-view/dmenu-model.hpp"
 #include "ui/file-detail/file-detail.hpp"
 #include "ui/views/typed-list-view.hpp"
+#include "lib/fzf.hpp"
 #include <filesystem>
 #include <qwidget.h>
 #include <ranges>
@@ -63,8 +64,7 @@ void View::textChanged(const QString &text) {
 
 void View::setFilter(std::string_view query) {
   auto toScore = [&](std::string_view s) {
-    int score = 0;
-    fts::fuzzy_match(query, s, score);
+    int score = fzf::defaultMatcher.fuzzy_match_v2_score_query(s, query);
     return Scored<std::string_view>{.data = s, .score = score};
   };
 

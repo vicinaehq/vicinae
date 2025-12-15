@@ -30,7 +30,7 @@ void HudWidget::setupUI() {
 
     createWinId();
     if (auto lshell = Shell::Window::get(windowHandle())) {
-      lshell->setLayer(Shell::Window::LayerOverlay);
+      lshell->setLayer(Shell::Window::LayerTop);
       lshell->setScope(Omnicast::APP_ID);
       lshell->setScreenConfiguration(Shell::Window::ScreenFromCompositor);
       lshell->setKeyboardInteractivity(Shell::Window::KeyboardInteractivityNone);

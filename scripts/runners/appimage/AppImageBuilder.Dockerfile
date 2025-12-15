@@ -182,15 +182,6 @@ RUN git clone https://github.com/zlib-ng/minizip-ng --branch 4.0.10 &&	\
 	cmake --install build &&											\
 	rm -rf /minizip-ng
 
-RUN git clone https://github.com/rapidfuzz/rapidfuzz-cpp --branch v3.3.3 &&	\
-    cd rapidfuzz-cpp &&														\
-	mkdir build &&															\
-	cmake																	\
-	-B build && 															\
-	cmake --build build --parallel $(nproc) &&								\
-	cmake --install build &&												\
-	rm -rf /rapidfuzz-cpp
-
 # install node 22 (used to build the main vicinae binary and bundled in the app image)
 RUN wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz
 RUN mkdir /opt/node && tar -xf node-v${NODE_VERSION}-linux-x64.tar.xz --strip-components=1 -C /opt/node && rm -rf *.tar.xz

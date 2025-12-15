@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 set(PROJECT_NAME vicinae)
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -33,10 +33,8 @@ option(PREFER_STATIC_LIBS "When available, link to a library statically instead 
 option(USE_SYSTEM_PROTOBUF "Use system protobuf instead of building it from source" ON)
 option(USE_SYSTEM_ABSEIL "Use system abseil (libabsl) instead of building it from source" ON)
 option(USE_SYSTEM_CMARK_GFM "Use system cmark-gfm (github's fork of cmark) instead of building it from source" ON)
-option(USE_SYSTEM_MINIZIP "Use system minizip instead of building it from source" ON)
 option(USE_SYSTEM_LAYER_SHELL "Use system qt layer shell instead of building it from source" ON)
 option(USE_SYSTEM_QT_KEYCHAIN "Use system qt-keychain instead of building it from source. Note: still depends on system libsecret." ON)
-option(USE_SYSTEM_RAPIDFUZZ "Use system version of the rapidfuzz-cpp header only library" ON)
 option(LIBQALCULATE_BACKEND "Compile in support for the Qalculate! calculator backend" ON)
 option(USE_PRECOMPILED_HEADERS "Use precompiled headers to speed up compilation" ON)
 
@@ -68,10 +66,8 @@ if (PREFER_STATIC_LIBS)
 	set(USE_SYSTEM_PROTOBUF OFF)
 	set(USE_SYSTEM_ABSEIL OFF)
 	set(USE_SYSTEM_CMARK_GFM OFF)
-	set(USE_SYSTEM_MINIZIP OFF)
 	set(USE_SYSTEM_LAYER_SHELL OFF)
 	set(USE_SYSTEM_QT_KEYCHAIN OFF)
-	set(USE_SYSTEM_RAPIDFUZZ OFF)
 	set(LIBQALCULATE_BACKEND OFF)
 endif()
 
@@ -108,14 +104,6 @@ configure_file(
 set(CMARK_LIBRARY "cmark-gfm")
 set(CMARK_EXT_LIBRARY "cmark-gfm-extensions")
 
-if (NOT USE_SYSTEM_RAPIDFUZZ)
-	include(RapidFuzz)
-	checkout_rapidfuzz()
-	# there is probably a better way, but the headers are not part of the build output
-	# so cmake won't find them
-	include_directories(${CMAKE_CURRENT_BINARY_DIR}/_deps/rapidfuzz-src/)
-endif()
-
 if (NOT USE_SYSTEM_QT_KEYCHAIN)
 	include(QtKeychain)
 	checkout_qt_keychain()
@@ -124,11 +112,6 @@ endif()
 if (NOT USE_SYSTEM_LAYER_SHELL)
 	include(QtLayerShell)
 	checkout_layer_shell_qt()
-endif()
-
-if (NOT USE_SYSTEM_MINIZIP)
-	include(Minizip)
-	checkout_minizip()
 endif()
 
 if (NOT USE_SYSTEM_CMARK_GFM)
