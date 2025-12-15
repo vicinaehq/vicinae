@@ -7,11 +7,12 @@
 #include "theme/colors.hpp"
 #include "ui/status-bar/status-bar.hpp"
 #include "service-registry.hpp"
-#include "services/config/config-service.hpp"
 #include "lib/keyboard/keyboard.hpp"
 #include "ui/top-bar/top-bar.hpp"
-#include "utils/environment.hpp"
+#include "utils.hpp"
 #include <qcoreevent.h>
+#include <qscreen.h>
+#include <QStackedWidget>
 #ifdef WAYLAND_LAYER_SHELL
 #include <LayerShellQt/Window>
 #endif
@@ -21,16 +22,15 @@
 #include <qnamespace.h>
 #include <qstackedwidget.h>
 #include <qwidget.h>
-#include "../image/url.hpp"
 #include "vicinae.hpp"
 #include "overlay-controller/overlay-controller.hpp"
 #include "ui/action-pannel/action.hpp"
+#include "ui/image/url.hpp"
 #include "ui/search-bar/search-bar.hpp"
 #include "ui/dialog/dialog.hpp"
 #include "ui/overlay/overlay.hpp"
 #include "ui/hud/hud.hpp"
 #include "ui/views/base-view.hpp"
-#include <QStackedWidget>
 #include "settings-controller/settings-controller.hpp"
 
 void LauncherWindow::showEvent(QShowEvent *event) {
@@ -42,11 +42,23 @@ void LauncherWindow::showEvent(QShowEvent *event) {
 }
 
 void LauncherWindow::tryCenter() {
-  if (!Environment::supportsArbitraryWindowPlacement()) return;
+  QScreen *targetScreen = screen();
 
-  QPoint center(screen()->geometry().center().x() - width() / 2,
-                screen()->geometry().center().y() - height() / 2);
+  if (auto name = m_ctx.services->config()->value().launcherWindow.screen; name != "auto") {
+    auto screens = QApplication::screens();
+    if (auto it = std::ranges::find_if(
+            screens, [&](const QScreen *s) { return s->name() == qStringFromStdView(name); });
+        it != screens.end()) {
+      targetScreen = *it;
+    }
+  }
 
+  centerOnScreen(targetScreen);
+}
+
+void LauncherWindow::centerOnScreen(const QScreen *screen) {
+  QPoint center(screen->geometry().center().x() - width() / 2,
+                screen->geometry().center().y() - height() / 2);
   move(center);
 }
 
@@ -70,8 +82,6 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
 
   m_hud->hide();
   m_actionVeil->hide();
-  m_header->setFixedHeight(Omnicast::TOP_BAR_HEIGHT);
-  m_bar->setFixedHeight(Omnicast::STATUS_BAR_HEIGHT);
   m_hudDismissTimer->setInterval(1500ms);
   m_hudDismissTimer->setSingleShot(true);
   m_dialog->hide();
@@ -195,26 +205,7 @@ void LauncherWindow::setupUI() {
   createWinId();
   m_hud->setMaximumWidth(300);
 
-  auto &cfg = m_ctx.services->config()->value();
-
-  setFixedSize(QSize{cfg.window.size.width, cfg.window.size.height});
-
-  // layer shell config can only be applied on boot
-#ifdef WAYLAND_LAYER_SHELL
-  const auto &lc = cfg.window.layerShell;
-
-  if (lc.enabled) {
-    namespace Shell = LayerShellQt;
-    if (auto lshell = Shell::Window::get(windowHandle())) {
-      lshell->setLayer(lc.layer == config::LayerShellConfig::Layer::Overlay ? Shell::Window::LayerOverlay
-                                                                            : Shell::Window::LayerTop);
-      lshell->setScope(lc.scope.c_str());
-      lshell->setScreenConfiguration(Shell::Window::ScreenFromCompositor);
-      lshell->setAnchors(Shell::Window::AnchorNone);
-      lshell->setKeyboardInteractivity(Shell::Window::KeyboardInteractivityExclusive);
-    }
-  }
-#endif
+  handleConfigurationChange(m_ctx.services->config()->value());
 
   connect(m_ctx.navigation.get(), &NavigationController::currentViewChanged, this,
           &LauncherWindow::handleViewChange);
@@ -225,10 +216,38 @@ void LauncherWindow::setupUI() {
 
   connect(m_ctx.services->config(), &config::Manager::configChanged, this,
           [this](const config::ConfigValue &next, const config::ConfigValue &prev) {
-            auto &size = next.window.size;
-            setFixedSize(QSize{size.width, size.height});
-            update();
+            handleConfigurationChange(next);
           });
+}
+
+void LauncherWindow::handleConfigurationChange(const config::ConfigValue &value) {
+#ifdef WAYLAND_LAYER_SHELL
+  const auto &lc = value.launcherWindow.layerShell;
+  if (lc.enabled) {
+    namespace Shell = LayerShellQt;
+    using clsh = config::LayerShellConfig;
+
+    if (auto lshell = Shell::Window::get(windowHandle())) {
+      lshell->setLayer(lc.layer == config::LayerShellConfig::Layer::Overlay ? Shell::Window::LayerOverlay
+                                                                            : Shell::Window::LayerTop);
+      lshell->setScope(lc.scope.c_str());
+      lshell->setScreenConfiguration(Shell::Window::ScreenFromCompositor);
+      lshell->setAnchors(Shell::Window::AnchorNone);
+      lshell->setKeyboardInteractivity(lc.keyboardInteractivity == clsh::KeyboardInteractivity::Exclusive
+                                           ? Shell::Window::KeyboardInteractivityExclusive
+                                           : Shell::Window::KeyboardInteractivityOnDemand);
+    }
+  }
+#endif
+
+  m_header->setFixedHeight(value.header.height);
+  m_bar->setFixedHeight(value.footer.height);
+
+  auto &size = value.launcherWindow.size;
+  setFixedSize(QSize{size.width, size.height});
+  tryCenter();
+
+  update();
 }
 
 void LauncherWindow::handleDialog(DialogContentWidget *alert) {
@@ -284,13 +303,10 @@ bool LauncherWindow::event(QEvent *event) {
 }
 
 void LauncherWindow::handleActionVisibilityChanged(bool visible) {
-  qDebug() << "action panel visilibty" << visible;
   if (visible) {
     m_actionPanel->show();
     return;
   }
-
-  qDebug() << "close panel";
 
   m_actionPanel->hide();
 }
@@ -300,15 +316,15 @@ void LauncherWindow::paintEvent(QPaintEvent *event) {
   OmniPainter painter(this);
   QColor finalBgColor = painter.resolveColor(SemanticColor::Background);
 
-  finalBgColor.setAlphaF(config.window.opacity);
+  finalBgColor.setAlphaF(config.launcherWindow.opacity);
   painter.setRenderHint(QPainter::Antialiasing, true);
 
-  if (config.window.csd) {
+  if (config.launcherWindow.csd.enabled) {
     QPainterPath path;
-    path.addRoundedRect(rect(), config.window.rounding, config.window.rounding);
+    path.addRoundedRect(rect(), config.launcherWindow.csd.rounding, config.launcherWindow.csd.rounding);
     painter.setClipPath(path);
     painter.fillPath(path, finalBgColor);
-    painter.setThemePen(SemanticColor::MainWindowBorder, Omnicast::WINDOW_BORDER_WIDTH);
+    painter.setThemePen(SemanticColor::MainWindowBorder, config.launcherWindow.csd.borderWidth);
     painter.drawPath(path);
   } else {
     painter.fillRect(rect(), finalBgColor);

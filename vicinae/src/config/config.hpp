@@ -5,6 +5,7 @@
 #include "glaze/glaze.hpp"
 #include "utils.hpp"
 #include "vicinae.hpp"
+#include <format>
 #include <fstream>
 #include <glaze/core/common.hpp>
 #include <glaze/core/reflect.hpp>
@@ -13,9 +14,7 @@
 #include <glaze/json/read.hpp>
 #include <glaze/json/write.hpp>
 #include <glaze/util/key_transformers.hpp>
-#include <ios>
 #include <iostream>
-#include <qdnslookup.h>
 #include <qfilesystemwatcher.h>
 #include <qmargins.h>
 #include <string>
@@ -35,21 +34,22 @@ struct ProviderData {
   std::map<std::string, ProviderItemData> items;
 };
 
-// TODO: populate this
-
 template <typename T> struct Partial;
 
 struct LayerShellConfig {
   enum class Layer { Top, Overlay };
+  enum class KeyboardInteractivity { Exclusive, OnDemand };
 
   std::string scope = "vicinae";
   Layer layer = Layer::Top;
+  KeyboardInteractivity keyboardInteractivity = KeyboardInteractivity::Exclusive;
   bool enabled = true;
 };
 
 template <> struct Partial<LayerShellConfig> {
   std::optional<std::string> scope;
   std::optional<LayerShellConfig::Layer> layer;
+  std::optional<LayerShellConfig::KeyboardInteractivity> keyboardInteractivity;
   std::optional<bool> enabled;
 };
 
@@ -63,16 +63,28 @@ template <> struct Partial<Size> {
   std::optional<int> height;
 };
 
+struct WindowCSD {
+  bool enabled = true;
+  int rounding = 10;
+  int borderWidth = 3;
+};
+
+template <> struct Partial<WindowCSD> {
+  std::optional<bool> enabled;
+  std::optional<int> rounding;
+  std::optional<int> borderWidth;
+};
+
 struct WindowConfig {
   static const constexpr Size DFLT_SIZE = {770, 480};
   static const constexpr int DFLT_ROUNDING = 6;
   static const constexpr float DFLT_OPACITY = 0.98;
   static const constexpr bool DFLT_CSD = true;
 
-  int rounding = DFLT_ROUNDING;
   float opacity = DFLT_OPACITY;
-  bool csd = DFLT_CSD;
+  WindowCSD csd;
   Size size = DFLT_SIZE;
+  std::string screen = "auto";
 
   LayerShellConfig layerShell;
 };
@@ -80,7 +92,7 @@ struct WindowConfig {
 template <> struct Partial<WindowConfig> {
   std::optional<int> rounding;
   std::optional<float> opacity;
-  std::optional<bool> csd;
+  std::optional<WindowCSD> csd;
   std::optional<Partial<Size>> size;
   std::optional<Partial<LayerShellConfig>> layerShell;
 };
@@ -111,8 +123,8 @@ struct Meta {
 };
 
 template <> struct Partial<Meta> {
-  std::optional<bool> insecurelySerializePasswordPreferences = false;
   std::optional<std::vector<std::string>> imports;
+  std::optional<bool> insecurelySerializePasswordPreferences = false;
 };
 
 struct Margin {
@@ -125,11 +137,21 @@ struct Margin {
 };
 
 struct Header {
+  int height = 60;
   Margin margins = {15, 5, 15, 5};
 };
 
 template <> struct Partial<Header> {
   std::optional<Margin> margins;
+  std::optional<int> height;
+};
+
+struct Footer {
+  int height = 40;
+};
+
+template <> struct Partial<Footer> {
+  std::optional<int> height;
 };
 
 using KeybindMap = std::map<std::string, std::string>;
@@ -144,7 +166,7 @@ struct ConfigValue {
   bool closeOnFocusLoss = DFLT_CLOSE_ON_FOCUS_LOSS;
   bool considerPreedit = DFLT_CONSIDER_PRE_EDIT;
   bool popToRootOnClose = DFLT_POP_TO_ROOT_ON_CLOSE;
-  std::string faviconService = "google";
+  std::string faviconService = "twenty";
   std::string keybinding = "default";
 
   FontConfig font;
@@ -152,8 +174,9 @@ struct ConfigValue {
 
   std::vector<std::string> favorites;
   std::vector<std::string> fallbacks;
-  WindowConfig window;
+  WindowConfig launcherWindow;
   Header header;
+  Footer footer;
 
   // we use maps to keep serialized output predictable
   KeybindMap keybinds;
@@ -197,8 +220,9 @@ template <> struct Partial<ConfigValue> {
 
   std::optional<std::vector<std::string>> favorites;
   std::optional<std::vector<std::string>> fallbacks;
-  std::optional<Partial<WindowConfig>> window;
+  std::optional<Partial<WindowConfig>> launcherWindow;
   std::optional<Partial<Header>> header;
+  std::optional<Partial<Footer>> footer;
 
   std::optional<KeybindMap> keybinds;
   std::optional<ProviderMap> providers;
@@ -227,6 +251,9 @@ private:
     bool resolveImports;
   };
 
+  using ConfigResult = std::expected<ConfigValue, std::string>;
+  using PartialConfigResult = std::expected<Partial<ConfigValue>, std::string>;
+
   template <typename T> T merge(const auto &v1, const auto &v2) {
     std::string buf;
     if (auto error = glz::write_json(glz::merge{v1, v2}, buf)) {
@@ -240,17 +267,18 @@ private:
     return cfg;
   }
 
-  Partial<ConfigValue> load(const std::filesystem::path &path,
-                            const LoadingOptions &opts = {.resolveImports = true}) {
+  PartialConfigResult load(const std::filesystem::path &path,
+                           const LoadingOptions &opts = {.resolveImports = true}) {
     m_watcher.addPath(path.parent_path().c_str());
-
-    std::cout << "loading" << path << std::endl;
 
     std::string buf;
     Partial<ConfigValue> cfg;
-    auto res = glz::read_file_jsonc<glz::opts{.error_on_unknown_keys = false}>(cfg, path.c_str(), buf);
+    auto glzError = glz::read_file_jsonc<glz::opts{.error_on_unknown_keys = false}>(cfg, path.c_str(), buf);
 
-    if (res) { std::cerr << "Failed to load " << path << glz::format_error(res) << std::endl; }
+    if (glzError) {
+      std::string glzErrMsg = glz::format_error(glzError);
+      return std::unexpected(std::format("Failed to read JSONC file at {}: {}", path.c_str(), glzErrMsg));
+    }
 
     if (opts.resolveImports) {
       if (cfg.meta && cfg.meta->imports) {
@@ -259,7 +287,13 @@ private:
 
           if (!importPath.starts_with('/')) { importPath = path.parent_path() / importPath; }
           if (std::filesystem::exists(importPath)) {
-            Partial<ConfigValue> imported = load(importPath, opts);
+            PartialConfigResult imported = load(importPath, opts);
+
+            if (!imported) {
+              return std::unexpected(
+                  std::format("Failed to import file \"{}\": {}", importPath, imported.error()));
+            }
+
             cfg = merge<Partial<ConfigValue>>(imported, cfg);
           } else {
             qWarning() << "config file at" << importPath << "could not be found";
@@ -271,9 +305,53 @@ private:
     return cfg;
   }
 
-  ConfigValue loadUser(const LoadingOptions &opts) {
-    auto user = load(m_userPath, opts);
-    return merge<ConfigValue>(defaultConfig(), user);
+  ConfigResult loadUser(const LoadingOptions &opts) {
+    PartialConfigResult user = load(m_userPath, opts);
+
+    if (!user) { return std::unexpected(user.error()); }
+
+    return merge<ConfigValue>(defaultConfig(), user.value());
+  }
+
+  void reloadConfig() {
+    std::error_code ec;
+    if (!std::filesystem::is_regular_file(m_userPath, ec)) { writeUser({}); }
+
+    auto res = loadUser({.resolveImports = true});
+
+    if (!res) {
+      emit configLoadingError(res.error());
+      return;
+    }
+
+    ConfigValue prev = std::move(m_user);
+    m_user = std::move(res.value());
+    emit configChanged(m_user, prev);
+  }
+
+  bool writeUser(const Partial<ConfigValue> &cfg) {
+    std::string buf;
+
+    if (auto error = glz::write_json(cfg, buf)) {
+      qWarning() << "Failed to write json" << glz::format_error(error);
+      return false;
+    }
+
+    {
+      std::ofstream ofs(m_userPath);
+      ofs << TOP_COMMENT << "\n\n" << glz::prettify_json(buf);
+    }
+
+    ConfigValue prev = std::move(m_user);
+    m_user = loadUser({.resolveImports = true}).value();
+    emit configChanged(m_user, prev);
+
+    return true;
+  }
+
+  void initConfig() {
+    std::error_code ec;
+    if (!std::filesystem::is_regular_file(m_userPath, ec)) { writeUser({}); }
   }
 
 public:
@@ -281,13 +359,9 @@ public:
     using namespace std::chrono_literals;
     m_watcherDebounce.setInterval(100ms);
     m_watcherDebounce.setSingleShot(true);
-    m_user = loadUser({.resolveImports = true});
 
-    connect(&m_watcherDebounce, &QTimer::timeout, this, [this]() {
-      ConfigValue prev = std::move(m_user);
-      m_user = loadUser({.resolveImports = true});
-      emit configChanged(m_user, prev);
-    });
+    reloadConfig();
+    connect(&m_watcherDebounce, &QTimer::timeout, this, [this]() { reloadConfig(); });
     connect(&m_watcher, &QFileSystemWatcher::directoryChanged, this, [this]() { m_watcherDebounce.start(); });
   }
 
@@ -324,26 +398,6 @@ public:
     }
 
     return writeUser(user);
-  }
-
-  bool writeUser(const Partial<ConfigValue> &cfg) {
-    std::string buf;
-
-    if (auto error = glz::write_json(cfg, buf)) {
-      qWarning() << "Failed to write json" << glz::format_error(error);
-      return false;
-    }
-
-    {
-      std::ofstream ofs(m_userPath);
-      ofs << TOP_COMMENT << "\n\n" << glz::prettify_json(buf);
-    }
-
-    ConfigValue prev = std::move(m_user);
-    m_user = loadUser({.resolveImports = true});
-    emit configChanged(m_user, prev);
-
-    return true;
   }
 
   void print(const ConfigValue &value) const {
@@ -386,10 +440,23 @@ private:
 };
 }; // namespace config
 
-template <> struct glz::meta<config::ConfigValue> {
-  static constexpr std::string rename_key(const std::string_view key) { return glz::to_snake_case(key); }
+#define SNAKE_CASIFY(T)                                                                                      \
+  template <> struct glz::meta<T> : glz::snake_case {};                                                      \
+  template <> struct glz::meta<config::Partial<T>> : glz::snake_case {};
+
+SNAKE_CASIFY(config::Meta);
+SNAKE_CASIFY(config::LayerShellConfig);
+SNAKE_CASIFY(config::WindowConfig);
+SNAKE_CASIFY(config::ConfigValue);
+SNAKE_CASIFY(config::ThemeConfig);
+SNAKE_CASIFY(config::WindowCSD);
+
+template <> struct glz::meta<config::LayerShellConfig::Layer> {
+  using enum config::LayerShellConfig::Layer;
+  static constexpr auto value = glz::enumerate(Overlay, Top);
 };
 
-template <> struct glz::meta<config::Partial<config::ConfigValue>> {
-  static constexpr std::string rename_key(const std::string_view key) { return glz::to_snake_case(key); }
+template <> struct glz::meta<config::LayerShellConfig::KeyboardInteractivity> {
+  using enum config::LayerShellConfig::KeyboardInteractivity;
+  static constexpr auto value = glz::enumerate(Exclusive, OnDemand);
 };

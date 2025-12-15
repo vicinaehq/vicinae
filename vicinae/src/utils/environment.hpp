@@ -50,11 +50,7 @@ inline bool isLayerShellEnabled() {
   return isWaylandSession() && !isCosmicDesktop() && !isGnomeEnvironment();
 }
 
-inline bool isHudDisabled() {
-  return !isLayerShellEnabled() || qEnvironmentVariable("VICINAE_DISABLE_HUD", "0") == "1";
-}
-
-inline bool hasAppLaunchDebug() { return !qEnvironmentVariable("VICINAE_APP_LAUNCH_DEBUG").isEmpty(); }
+inline bool isHudDisabled() { return !isLayerShellEnabled(); }
 
 /**
  * App image directory if we are running in an appimage.

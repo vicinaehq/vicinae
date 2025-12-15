@@ -30,6 +30,7 @@
 #include "services/window-manager/window-manager.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "ui/launcher-window/launcher-window.hpp"
+#include "utils.hpp"
 #include "vicinae.hpp"
 #include <signal.h>
 #include <QString>
@@ -278,6 +279,10 @@ void CliServerCommand::run(CLI::App *app) {
   }
 
   auto cfgService = ServiceRegistry::instance()->config();
+
+  QObject::connect(cfgService, &config::Manager::configLoadingError, [&ctx](std::string_view message) {
+    ctx.navigation->confirmAlert("Failed to load config", qStringFromStdView(message), []() {});
+  });
 
   QObject::connect(
       KeybindManager::instance(), &KeybindManager::keybindChanged,

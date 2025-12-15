@@ -19,8 +19,8 @@ void GeneralSettings::setConfig(const config::ConfigValue &value) {
   auto appFont = QApplication::font().family();
   auto currentIconTheme = QIcon::themeName();
 
-  m_opacity->setText(QString::number(value.window.opacity));
-  m_csd->setValueAsJson(value.window.csd);
+  m_opacity->setText(QString::number(value.launcherWindow.opacity));
+  m_csd->setValueAsJson(value.launcherWindow.csd.enabled);
   m_themeSelector->setValue(value.theme.name.c_str());
   m_fontSelector->setValue(value.font.normal.value_or(appFont.toStdString()).c_str());
   // m_rootFileSearch->setValueAsJson(value.rootSearch.searchFiles);
@@ -50,7 +50,8 @@ void GeneralSettings::handleThemeChange(const QString &id) {
 }
 
 void GeneralSettings::handleClientSideDecorationChange(bool csd) {
-  m_cfg.mergeWithUser({.window = config::Partial<config::WindowConfig>{.csd = csd}});
+  m_cfg.mergeWithUser(
+      {.launcherWindow = config::Partial<config::WindowConfig>{.csd = config::WindowCSD{.enabled = csd}}});
 }
 
 void GeneralSettings::handleFontChange(const QString &font) {
@@ -62,7 +63,7 @@ void GeneralSettings::handleRootSearchFilesChange(bool enabled) {
 }
 
 void GeneralSettings::handleOpacityChange(float opacity) {
-  m_cfg.mergeWithUser({.window = config::Partial<config::WindowConfig>{.opacity = opacity}});
+  m_cfg.mergeWithUser({.launcherWindow = config::Partial<config::WindowConfig>{.opacity = opacity}});
 }
 
 void GeneralSettings::handlePopToRootOnCloseChange(bool popToRootOnClose) {
@@ -133,7 +134,7 @@ void GeneralSettings::setupUI() {
   auto themeField = form->addField("Theme", m_themeSelector);
   auto opacityField = form->addField("Window opacity", m_opacity);
 
-  m_opacity->setText(QString::number(value.window.opacity));
+  m_opacity->setText(QString::number(value.launcherWindow.opacity));
 
   connect(m_themeSelector, &ThemeSelector::selectionChanged, this,
           [this](auto &&item) { handleThemeChange(item.id()); });
@@ -153,7 +154,7 @@ void GeneralSettings::setupUI() {
   // m_rootFileSearch->setValueAsJson(value.rootSearch.searchFiles);
 
   m_csd->setLabel("Use client-side decorations");
-  m_csd->setValueAsJson(value.window.csd);
+  m_csd->setValueAsJson(value.launcherWindow.csd.enabled);
 
   connect(m_csd, &CheckboxInput::valueChanged, this, &GeneralSettings::handleClientSideDecorationChange);
 

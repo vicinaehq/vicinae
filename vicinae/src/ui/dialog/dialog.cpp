@@ -16,7 +16,7 @@ void DialogWidget::paintEvent(QPaintEvent *event) {
   finalColor.setAlphaF(0.5);
   painter.setBrush(finalColor);
   painter.setPen(Qt::NoPen);
-  painter.drawRoundedRect(rect(), config.window.rounding, config.window.rounding);
+  painter.drawRoundedRect(rect(), 10, 10);
 
   QWidget::paintEvent(event);
 }
