@@ -37,7 +37,7 @@ private:
   QString m_title;
   QString m_description;
   QString m_placeholder;
-  QJsonValue m_value;
+  QJsonValue m_value = QJsonValue::Null;
   bool m_readOnly = false;
   bool m_required;
   Data m_data = UnknownData();

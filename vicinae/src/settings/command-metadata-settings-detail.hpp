@@ -194,16 +194,18 @@ public:
 };
 
 class CommandMetadataSettingsDetailWidget : public QWidget {
+public:
+  CommandMetadataSettingsDetailWidget(const std::shared_ptr<AbstractCmd> &cmd);
+  ~CommandMetadataSettingsDetailWidget();
+
+private:
+  void setupUI();
+  void savePendingPreferences();
+
   std::shared_ptr<AbstractCmd> m_command;
   QJsonObject m_preferenceValues;
   FormWidget *m_form = new FormWidget;
   std::map<QString, AbstractPreferenceFormItem *> m_preferenceFields;
   QVBoxLayout *m_layout = new QVBoxLayout;
-
-  void setupUI();
-  void savePendingPreferences();
-
-public:
-  CommandMetadataSettingsDetailWidget(const std::shared_ptr<AbstractCmd> &cmd);
-  ~CommandMetadataSettingsDetailWidget();
+  QTimer m_timer;
 };

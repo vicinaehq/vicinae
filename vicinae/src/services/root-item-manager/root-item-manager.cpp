@@ -15,7 +15,8 @@ RootItemManager::RootItemManager(config::Manager &cfg)
     : m_cfg(cfg), m_visitTracker(Omnicast::dataDir() / "visits.json") {
   connect(&cfg, &config::Manager::configChanged, this, [this](const config::ConfigValue &next) {
     mergeConfigWithMetadata(next);
-    emit itemsChanged();
+    qDebug() << "configuration changed";
+    // emit itemsChanged();
   });
 }
 
@@ -298,7 +299,7 @@ QJsonObject RootItemManager::getProviderPreferenceValues(const QString &id) cons
   for (const auto &pref : provider->preferences()) {
     auto dflt = pref.defaultValue();
 
-    if (!json.contains(pref.name()) && !dflt.isNull()) { json[pref.name()] = dflt; }
+    if (!json.contains(pref.name())) { json[pref.name()] = dflt; }
   }
 
   return json;
@@ -315,17 +316,13 @@ bool RootItemManager::pruneProvider(const QString &id) {
 QJsonObject RootItemManager::getItemPreferenceValues(const EntrypointId &id) const {
   auto item = findItemById(id);
 
-  if (!item) { return {}; }
+  if (!item) return {};
 
-  // QJsonObject values = itemMetadata(id).preferences.value_or(QJsonObject());
-  //  TODO: implement
-  QJsonObject values;
+  QJsonObject values = transformPreferenceValues(m_cfg.value().preferences(id).value_or({}));
 
   for (const auto &preference : item->preferences()) {
     QJsonValue defaultValue = preference.defaultValue();
-    if (!values.contains(preference.name()) && !defaultValue.isNull()) {
-      values[preference.name()] = defaultValue;
-    }
+    if (!values.contains(preference.name())) { values[preference.name()] = defaultValue; }
   }
 
   return values;
@@ -489,11 +486,6 @@ void RootItemManager::loadProvider(std::unique_ptr<RootProvider> provider) {
 
   m_providers.emplace_back(std::move(provider));
   auto preferenceValues = getProviderPreferenceValues(ptr->uniqueId());
-
-  if (auto patched = ptr->patchPreferences(preferenceValues)) {
-    setProviderPreferenceValues(ptr->uniqueId(), patched.value());
-    preferenceValues = patched.value();
-  }
 
   ptr->preferencesChanged(preferenceValues);
   ptr->initialized(preferenceValues);

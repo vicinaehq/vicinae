@@ -8,26 +8,13 @@
 #include <qwidget.h>
 #include "provider-settings-detail.hpp"
 
-void ProviderSettingsDetail::handleFocusChanged(bool focused) {
-  if (!focused) { savePendingPreferences(); }
-}
-
 void ProviderSettingsDetail::setupUI(const RootProvider &provider) {
-  /*
-if (auto description = item.description(); !description.isEmpty()) {
-MetadataRowWidget *descriptionLabel = new MetadataRowWidget(this);
-TypographyWidget *descriptionText = new TypographyWidget;
+  using namespace std::chrono_literals;
 
-descriptionLabel->setLabel("Description");
-descriptionText->setText(description);
-descriptionText->setWordWrap(true);
+  m_timer.setInterval(1s);
+  m_timer.start();
 
-m_layout->addWidget(descriptionLabel);
-m_layout->addSpacing(5);
-m_layout->addWidget(descriptionText);
-m_layout->addSpacing(20);
-}
-*/
+  connect(&m_timer, &QTimer::timeout, this, [this]() { savePendingPreferences(); });
 
   QWidget *m_formContainer = new QWidget;
   QVBoxLayout *m_formLayout = new QVBoxLayout;
@@ -50,9 +37,6 @@ m_layout->addSpacing(20);
       widget->formItem()->setValueAsJson(defaultValue);
     }
 
-    connect(widget->formItem()->focusNotifier(), &FocusNotifier::focusChanged, this,
-            &ProviderSettingsDetail::handleFocusChanged, Qt::DirectConnection);
-
     m_preferenceFields[preference.name()] = widget;
     m_formLayout->addWidget(widget);
   }
@@ -64,19 +48,17 @@ m_layout->addSpacing(20);
 
 void ProviderSettingsDetail::savePendingPreferences() {
   auto manager = ServiceRegistry::instance()->rootItemManager();
-  QJsonObject obj;
+  QJsonObject patch;
 
-  for (const auto &[preferenceId, widget] : m_preferenceFields) {
-    auto value = widget->formItem()->asJsonValue();
-
-    // we do not store null or undefined values, so that the default value
-    // is used instead.
-    if (value.isNull() || value.isUndefined()) continue;
-
-    obj[preferenceId] = value;
+  for (const auto &[name, w] : m_preferenceFields) {
+    QJsonValue currentValue = w->formItem()->asJsonValue();
+    if (currentValue != m_preferenceValues.value(name)) {
+      m_preferenceValues[name] = currentValue;
+      patch[name] = currentValue;
+    }
   }
 
-  manager->setProviderPreferenceValues(m_rootItemId, obj);
+  if (!patch.empty()) { manager->setProviderPreferenceValues(m_rootItemId, patch); }
 }
 
 ProviderSettingsDetail::ProviderSettingsDetail(const RootProvider &provider)
