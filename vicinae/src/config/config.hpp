@@ -270,6 +270,8 @@ public:
 
   bool mergeWithUser(const Partial<ConfigValue> &patch);
 
+  std::filesystem::path path() const { return m_userPath; }
+
   void print(const ConfigValue &value) const {
     std::string buf;
     auto res = glz::write_json(value, buf);
