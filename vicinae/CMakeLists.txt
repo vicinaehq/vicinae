@@ -472,6 +472,7 @@ set(SRCS
 	src/services/file-chooser/native/native-file-chooser.cpp
 	src/services/root-item-manager/root-item-manager.hpp
 	src/services/root-item-manager/root-item-manager.cpp
+	src/services/root-item-manager/visit-tracker.cpp
 	
 	src/services/app-service/app-service.hpp
 	src/services/app-service/app-service.cpp
@@ -657,6 +658,7 @@ set(SRCS
 	src/ui/vlist/vlist.cpp
 
 	src/config/config.hpp
+	src/config/config.cpp
 
 ) 
 

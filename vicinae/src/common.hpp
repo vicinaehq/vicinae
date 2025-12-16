@@ -24,6 +24,7 @@
 #include <qstack.h>
 #include <qwidget.h>
 #include <qwindowdefs.h>
+#include <ranges>
 #include "ui/divider/divider.hpp"
 
 template <class... Ts> struct overloads : Ts... {
@@ -98,7 +99,13 @@ struct EntrypointId {
   std::string provider;
   std::string entrypoint;
 
-  operator std::string() const { return std::format("{}__{}", provider, entrypoint); }
+  operator std::string() const { return std::format("{}:{}", provider, entrypoint); }
+
+  static EntrypointId fromSerialized(std::string_view s) {
+    auto pos = s.find(":");
+    if (pos == std::string::npos) return {};
+    return {std::string{s.substr(0, pos)}, std::string{s.substr(pos + 1)}};
+  }
 
   bool operator==(const EntrypointId &rhs) const {
     return provider == rhs.provider && entrypoint == rhs.entrypoint;

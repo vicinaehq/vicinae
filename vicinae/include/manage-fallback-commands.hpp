@@ -17,8 +17,7 @@ class DisableFallbackAction : public AbstractAction {
 
   void execute(ApplicationContext *ctx) override {
     auto manager = ctx->services->rootItemManager();
-
-    // manager->disableFallback(m_id);
+    manager->disableFallback(m_id);
   }
 
   QString title() const override { return "Disable fallback"; }
@@ -29,7 +28,7 @@ public:
 };
 
 class MoveFallbackUpAction : public AbstractAction {
-  QString m_id;
+  EntrypointId m_id;
 
   void execute(ApplicationContext *ctx) override {
     auto manager = ctx->services->rootItemManager();
@@ -42,24 +41,22 @@ class MoveFallbackUpAction : public AbstractAction {
   std::optional<ImageURL> icon() const override { return ImageURL::builtin("arrow-up"); }
 
 public:
-  MoveFallbackUpAction(const QString &id) : m_id(id) {}
+  MoveFallbackUpAction(const EntrypointId &id) : m_id(id) {}
 };
 
 class MoveFallbackDownAction : public AbstractAction {
-  QString m_id;
+  EntrypointId m_id;
 
   void execute(ApplicationContext *ctx) override {
     auto manager = ctx->services->rootItemManager();
-    // int pos = manager->itemMetadata(m_id).fallbackPosition;
-
-    // manager->moveFallbackDown(m_id);
+    manager->moveFallbackDown(m_id);
   }
 
   QString title() const override { return "Move fallback down"; }
   std::optional<ImageURL> icon() const override { return ImageURL::builtin("arrow-down"); }
 
 public:
-  MoveFallbackDownAction(const QString &id) : m_id(id) {}
+  MoveFallbackDownAction(const EntrypointId &id) : m_id(id) {}
 };
 
 class EnableFallbackAction : public AbstractAction {
@@ -67,8 +64,7 @@ class EnableFallbackAction : public AbstractAction {
 
   void execute(ApplicationContext *ctx) override {
     auto manager = ctx->services->rootItemManager();
-
-    // manager->enableFallback(m_id);
+    manager->enableFallback(m_id);
   }
 
   QString title() const override { return "Enable fallback"; }
@@ -127,23 +123,17 @@ class RootFallbackListItem : public FallbackListItem {
     auto panel = std::make_unique<ListActionPanelState>();
     auto manager = ctx->services->rootItemManager();
     auto section = panel->createSection();
-    auto metadata = manager->itemMetadata(m_item->uniqueId());
-    int maxFallbackPosition = manager->maxFallbackPosition();
+    bool isFallback = manager->isFallback(m_item->uniqueId());
 
-    /*
-if (metadata.isFallback()) {
-  auto disableFallback = new DisableFallbackAction(m_item->uniqueId());
-
-  section->addAction(disableFallback);
-  //if (metadata.fallbackPosition > 0) { section->addAction(new MoveFallbackUpAction(m_item->uniqueId())); }
-  if (metadata.fallbackPosition < maxFallbackPosition) {
-    section->addAction(new MoveFallbackDownAction(m_item->uniqueId()));
-  }
-} else {
-  auto enableFallback = new EnableFallbackAction(m_item->uniqueId());
-  section->addAction(enableFallback);
-}
-*/
+    if (isFallback) {
+      auto disableFallback = new DisableFallbackAction(m_item->uniqueId());
+      section->addAction(disableFallback);
+      section->addAction(new MoveFallbackUpAction(m_item->uniqueId()));
+      section->addAction(new MoveFallbackDownAction(m_item->uniqueId()));
+    } else {
+      auto enableFallback = new EnableFallbackAction(m_item->uniqueId());
+      section->addAction(enableFallback);
+    }
 
     return panel;
   }
@@ -157,24 +147,14 @@ class ManageFallbackCommandsView : public ListView {
     QString query = text.trimmed();
     auto itemManager = ServiceRegistry::instance()->rootItemManager();
     auto results = itemManager->search(query);
-    auto fallbacks = results | std::views::filter(
-                                   [](const auto &item) { return item.item.get()->isSuitableForFallback(); });
-    std::vector<std::shared_ptr<RootItem>> enabled;
-
-    for (const auto &item : fallbacks) {
-      if (itemManager->isFallback(item.item.get()->uniqueId())) { enabled.emplace_back(item.item.get()); };
-    }
-
-    /*
-std::ranges::sort(enabled, [itemManager](const auto &a, const auto &b) {
-  auto ma = itemManager->itemMetadata(a->uniqueId());
-  auto mb = itemManager->itemMetadata(b->uniqueId());
-
-  return ma.fallbackPosition < mb.fallbackPosition;
-});
-    */
+    auto fallbacks = results | std::views::transform([](auto &&item) { return item.item.get(); }) |
+                     std::views::filter([](const auto &item) { return item->isSuitableForFallback(); });
 
     m_list->beginResetModel();
+
+    auto enabled = fallbacks |
+                   std::views::filter([&](auto &&item) { return itemManager->isFallback(item->uniqueId()); });
+
     auto &enabledSection = m_list->addSection("Enabled");
 
     for (const auto &item : enabled) {
@@ -186,13 +166,13 @@ std::ranges::sort(enabled, [itemManager](const auto &a, const auto &b) {
     }
 
     auto available = fallbacks | std::views::filter([itemManager](const auto &item) {
-                       return !itemManager->isFallback(item.item.get()->uniqueId());
+                       return !itemManager->isFallback(item->uniqueId());
                      });
 
     auto &availableSection = m_list->addSection("Available");
 
     for (const auto &item : available) {
-      availableSection.addItem(std::make_unique<FallbackListItem>(item.item.get()));
+      availableSection.addItem(std::make_unique<FallbackListItem>(item));
     }
     m_list->endResetModel(selectionPolicy);
   }

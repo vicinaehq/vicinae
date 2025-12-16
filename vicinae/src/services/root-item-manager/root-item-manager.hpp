@@ -4,6 +4,7 @@
 #include "config/config.hpp"
 #include "navigation-controller.hpp"
 #include "omni-database.hpp"
+#include "services/root-item-manager/visit-tracker.hpp"
 #include "ui/image/url.hpp"
 #include "preference.hpp"
 #include "settings/provider-settings-detail.hpp"
@@ -196,16 +197,13 @@ public:
 
 struct RootItemMetadata {
   int visitCount = 0;
-  bool isEnabled = true;
+  bool enabled = true;
   bool favorite = false;
+  bool fallback = false;
   std::optional<std::chrono::time_point<std::chrono::high_resolution_clock>> lastVisitedAt;
   std::optional<std::string> alias;
-  std::optional<QJsonObject> preferences;
   std::string providerId;
-};
-
-struct RootProviderMetadata {
-  bool enabled;
+  std::shared_ptr<RootItem> item;
 };
 
 class RootItemManager : public QObject {
@@ -213,22 +211,22 @@ class RootItemManager : public QObject {
 
 signals:
   void itemsChanged() const;
-  void itemRankingReset(const QString &id) const;
-  void itemFavoriteChanged(const QString &id, bool favorite);
-  void fallbackEnabled(const QString &id) const;
-  void fallbackOrderChanged(const QString &id) const;
-  void fallbackDisabled(const QString &id) const;
+  void itemRankingReset(const EntrypointId &id) const;
+  void itemFavoriteChanged(const EntrypointId &id, bool favorite) const;
+  void fallbackEnabled(const EntrypointId &id) const;
+  void fallbackOrderChanged(const EntrypointId &id) const;
+  void fallbackDisabled(const EntrypointId &id) const;
 
 public:
   using ItemPtr = std::shared_ptr<RootItem>;
   using ItemList = std::vector<ItemPtr>;
+
   struct SearchableRootItem {
     std::shared_ptr<RootItem> item;
     std::string title;
     std::string subtitle;
     std::vector<std::string> keywords;
-    RootItemMetadata *meta;
-    std::string searchStr;
+    RootItemMetadata *meta = nullptr;
 
     float fuzzyScore(std::string_view pattern = "") const;
   };
@@ -242,7 +240,7 @@ public:
     std::reference_wrapper<ItemPtr> item;
   };
 
-  RootItemManager(config::Manager &config, OmniDatabase &db);
+  RootItemManager(config::Manager &config);
 
   static glz::generic::object_t transformPreferenceValues(const QJsonObject &preferences);
   static QJsonObject transformPreferenceValues(const glz::generic::object_t &preferences);
@@ -261,7 +259,6 @@ public:
   void setPreferenceValues(const EntrypointId &id, const QJsonObject &preferences);
 
   bool setAlias(const EntrypointId &id, std::string_view alias);
-  bool clearAlias(const EntrypointId &id);
 
   QJsonObject getProviderPreferenceValues(const QString &id) const;
   QJsonObject getItemPreferenceValues(const EntrypointId &id) const;
@@ -274,13 +271,13 @@ public:
   RootItemMetadata itemMetadata(const EntrypointId &id) const;
   int maxFallbackPosition();
   bool isFallback(const EntrypointId &id) const;
-  bool disableFallback(const QString &id);
-  bool moveFallbackDown(const QString &id);
-  bool moveFallbackUp(const QString &id);
-  bool enableFallback(const QString &id);
+  bool disableFallback(const EntrypointId &id);
+  bool moveFallbackDown(const EntrypointId &id);
+  bool moveFallbackUp(const EntrypointId &id);
+  bool enableFallback(const EntrypointId &id);
   double computeScore(const RootItemMetadata &meta, int weight) const;
   double computeRecencyScore(const RootItemMetadata &meta) const;
-  std::vector<SearchableRootItem> queryFavorites(std::optional<int> limit = {});
+  std::vector<std::shared_ptr<RootItem>> queryFavorites(std::optional<int> limit = {});
   std::vector<SearchableRootItem> querySuggestions(int limit = 5);
   bool resetRanking(const EntrypointId &id);
   bool registerVisit(const EntrypointId &id);
@@ -320,17 +317,20 @@ public:
    */
   std::span<ScoredItem> search(const QString &query, const RootItemPrefixSearchOptions &opts = {});
 
-  bool upsertProvider(const RootProvider &provider);
   RootItem *findItemById(const EntrypointId &id) const;
   bool pruneProvider(const QString &id);
 
 private:
+  void mergeConfigWithMetadata(const config::ConfigValue &cfg);
+
+  std::vector<std::shared_ptr<RootItem>>
+  getFromSerializedEntrypointIds(std::span<const std::string> ids) const;
+
   std::unordered_map<EntrypointId, RootItemMetadata> m_metadata;
-  std::unordered_map<QString, RootProviderMetadata> m_provider_metadata;
   std::vector<std::unique_ptr<RootProvider>> m_providers;
-  OmniDatabase &m_db;
   config::Manager &m_cfg;
   std::vector<SearchableRootItem> m_items;
+  VisitTracker m_visitTracker;
 
   // always reserved to hold the maximum amount of items possible, to avoid reallocating
   // on every search

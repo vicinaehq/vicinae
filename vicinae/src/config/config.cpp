@@ -1,0 +1,200 @@
+#include <format>
+#include <fstream>
+#include "utils.hpp"
+#include "config.hpp"
+
+namespace fs = std::filesystem;
+
+namespace config {
+static constexpr const char *TOP_COMMENT = R"(// This is the main vicinae user config file.
+//
+// You can make manual edits to this file, however you should keep in mind that this file may be written to by vicinae directly,
+// typically when a configuration change is made through the GUI.
+// When that happens, any custom comments or formatting will be lost.
+//
+// If you want to maintain a configuration file with your own comments and formatting, you should create a separate one
+// and import it here using the `$import` meta key.
+//
+// Learn more about configuration at https://docs.vicinae.com/config)";
+
+template <typename T> T static merge(const auto &v1, const auto &v2) {
+  std::string buf;
+  if (auto error = glz::write_json(glz::merge{v1, v2}, buf)) {
+    std::cerr << "Failed to merge " << glz::format_error(error);
+    // todo: do smth about that
+  }
+  T cfg;
+  if (auto error = glz::read_json(cfg, buf)) {
+    qWarning() << "Failed to read merged " << glz::format_error(error);
+  }
+  return cfg;
+}
+
+Manager::Manager(fs::path path) : m_userPath(path) {
+  initConfig();
+  reloadConfig();
+  connect(&m_watcher, &QFileSystemWatcher::fileChanged, this, [this](const QString &path) {
+    m_watcher.addPath(m_userPath.c_str());
+    reloadConfig();
+  });
+}
+
+bool Manager::mergeProviderWithUser(std::string_view id, ProviderData &&data) {
+  return mergeWithUser({.providers = ProviderMap{{std::string{id}, data}}});
+}
+
+bool Manager::updateUser(const std::function<void(Partial<ConfigValue> &value)> &updater) {
+  std::string buf;
+  Partial<ConfigValue> user;
+
+  if (auto error =
+          glz::read_file_jsonc<glz::opts{.error_on_unknown_keys = false}>(user, m_userPath.c_str(), buf)) {
+    qWarning() << "Failed to read user config as partial";
+    return false;
+  }
+
+  updater(user);
+  return writeUser(user);
+}
+
+bool Manager::mergeEntrypointWithUser(const EntrypointId &id, ProviderItemData &&data) {
+  ProviderMap providers;
+  providers[id.provider] = {.entrypoints = {{id.entrypoint, data}}};
+  return mergeWithUser({.providers = providers});
+}
+
+bool Manager::mergeWithUser(const Partial<ConfigValue> &patch) {
+  std::string buf;
+  Partial<ConfigValue> user;
+
+  if (auto error =
+          glz::read_file_jsonc<glz::opts{.error_on_unknown_keys = false}>(user, m_userPath.c_str(), buf)) {
+    qWarning() << "Failed to read user config as partial";
+    return false;
+  }
+
+  if (auto error = glz::write_json(glz::merge{user, patch}, buf)) {
+    qWarning() << "Failed to merge partials";
+    return false;
+  }
+
+  if (auto error = glz::read_json(user, buf)) {
+    qWarning() << "Failed to read merged partials";
+    return false;
+  }
+
+  prunePartial(user);
+
+  return writeUser(user);
+}
+
+bool Manager::writeUser(const Partial<ConfigValue> &cfg) {
+  std::string buf;
+
+  if (auto error = glz::write_json(cfg, buf)) {
+    qWarning() << "Failed to write json" << glz::format_error(error);
+    return false;
+  }
+
+  {
+    std::ofstream ofs(m_userPath);
+    ofs << TOP_COMMENT << "\n\n" << glz::prettify_json(buf);
+  }
+
+  ConfigValue prev = std::move(m_user);
+  m_user = loadUser({.resolveImports = true}).value();
+  emit configChanged(m_user, prev);
+
+  return true;
+}
+
+Manager::ConfigResult Manager::loadUser(const LoadingOptions &opts) {
+  return load(m_userPath, opts).transform([&](auto &&res) {
+    return merge<ConfigValue>(defaultConfig(), res);
+  });
+}
+
+void Manager::reloadConfig() {
+  std::error_code ec;
+  if (!std::filesystem::is_regular_file(m_userPath, ec)) return;
+
+  auto res = loadUser({.resolveImports = true});
+
+  if (!res) {
+    emit configLoadingError(res.error());
+    return;
+  }
+
+  ConfigValue prev = std::move(m_user);
+  m_user = std::move(res.value());
+  emit configChanged(m_user, prev);
+}
+
+void Manager::initConfig() {
+  std::error_code ec;
+  if (!std::filesystem::is_regular_file(m_userPath, ec)) { writeUser({}); }
+}
+
+Manager::PartialConfigResult Manager::load(const std::filesystem::path &path, const LoadingOptions &opts) {
+  m_watcher.addPath(path.c_str());
+
+  std::string buf;
+  Partial<ConfigValue> cfg;
+  auto glzError = glz::read_file_jsonc<glz::opts{.error_on_unknown_keys = false}>(cfg, path.c_str(), buf);
+
+  if (glzError) {
+    std::string glzErrMsg = glz::format_error(glzError);
+    return std::unexpected(std::format("Failed to read JSONC file at {}: {}", path.c_str(), glzErrMsg));
+  }
+
+  if (opts.resolveImports) {
+    if (cfg.meta && cfg.meta->imports) {
+      for (const auto &imp : cfg.meta->imports.value()) {
+        std::string importPath = expandPath(imp);
+
+        if (!importPath.starts_with('/')) { importPath = path.parent_path() / importPath; }
+        if (std::filesystem::exists(importPath)) {
+          PartialConfigResult imported = load(importPath, opts);
+
+          if (!imported) {
+            return std::unexpected(
+                std::format("Failed to import file \"{}\": {}", importPath, imported.error()));
+          }
+
+          cfg = merge<Partial<ConfigValue>>(imported, cfg);
+        } else {
+          qWarning() << "config file at" << importPath << "could not be found";
+        }
+      }
+    }
+  }
+
+  return cfg;
+}
+
+void Manager::prunePartial(Partial<ConfigValue> &user) {
+  if (user.providers) {
+    auto &pvd = user.providers.value();
+
+    for (auto it = pvd.begin(); it != pvd.end();) {
+      auto &v = it->second;
+      auto currentIt = it++;
+
+      for (auto it2 = v.entrypoints.begin(); it2 != v.entrypoints.end();) {
+        auto currentIt = it2++;
+        ProviderItemData &vi = currentIt->second;
+
+        if (vi.alias && vi.alias->empty()) { vi.alias.reset(); }
+        if (!vi.enabled.has_value() && vi.preferences.value_or({}).empty() && !vi.alias) {
+          v.entrypoints.erase(currentIt);
+        }
+      }
+
+      if (!v.enabled && v.preferences.value_or({}).empty() && v.entrypoints.empty()) { pvd.erase(currentIt); }
+    }
+
+    if (pvd.empty()) { user.providers.reset(); }
+  }
+}
+
+}; // namespace config

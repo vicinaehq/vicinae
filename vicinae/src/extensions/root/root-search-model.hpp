@@ -66,7 +66,7 @@ public:
   void setCalculatorResult(const AbstractCalculatorBackend::CalculatorResult &result);
   void setFileResults(const std::vector<IndexerFileResult> &files);
   void setFallbackItems(const std::vector<std::shared_ptr<RootItem>> &items);
-  void setFavorites(const std::vector<RootItemManager::SearchableRootItem> &favorites);
+  void setFavorites(const std::vector<std::shared_ptr<RootItem>> &favorites);
   void setDefaultOpener(const LinkItem &opener);
 
 protected:
@@ -103,7 +103,7 @@ private:
   std::optional<AbstractCalculatorBackend::CalculatorResult> m_calc;
   std::vector<IndexerFileResult> m_files;
   std::vector<std::shared_ptr<RootItem>> m_fallbackItems;
-  std::vector<RootItemManager::SearchableRootItem> m_favorites;
+  std::vector<std::shared_ptr<RootItem>> m_favorites;
   std::optional<LinkItem> m_defaultOpener;
 
   std::string m_fallbackSectionTitle;

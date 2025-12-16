@@ -128,7 +128,11 @@ void RootSearchController::handleFileSearchFinished() {
   m_fileSearchQuery.clear();
 }
 
-void RootSearchController::handleItemsChanged() { reloadSearch(); }
+void RootSearchController::handleItemsChanged() {
+  regenerateFallback();
+  regenerateFavorites();
+  reloadSearch();
+}
 
 void RootSearchController::handleFallbackChanged() { regenerateFallback(); }
 

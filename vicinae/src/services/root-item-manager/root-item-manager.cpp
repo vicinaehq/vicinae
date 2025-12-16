@@ -8,72 +8,66 @@
 #include <qlogging.h>
 #include <qtconcurrentfilter.h>
 #include "config/config.hpp"
+#include "vicinae.hpp"
 #include <ranges>
 
-RootItemManager::RootItemManager(config::Manager &cfg, OmniDatabase &db) : m_cfg(cfg), m_db(db) {
-  connect(&cfg, &config::Manager::configChanged, this,
-          [this](const config::ConfigValue &next, const config::ConfigValue &prev) {
-            for (const auto &[id, provider] : next.providers) {
-              for (const auto &[itemId, item] : provider.items) {
-                EntrypointId entrypoint{id, itemId};
-                m_metadata[entrypoint] =
-                    RootItemMetadata{.isEnabled = item.enabled.value_or(true), .alias = item.alias};
-              }
-            }
-          });
+RootItemManager::RootItemManager(config::Manager &cfg)
+    : m_cfg(cfg), m_visitTracker(Omnicast::dataDir() / "visits.json") {
+  connect(&cfg, &config::Manager::configChanged, this, [this](const config::ConfigValue &next) {
+    mergeConfigWithMetadata(next);
+    emit itemsChanged();
+  });
 }
 
 std::vector<std::shared_ptr<RootItem>> RootItemManager::fallbackItems() const {
-  std::vector<std::shared_ptr<RootItem>> items;
+  return getFromSerializedEntrypointIds(m_cfg.value().fallbacks);
+}
 
-  for (const auto &item : allItems()) {
-    // if (isFallback(item.item->uniqueId())) { items.emplace_back(item.item); }
-  }
-
-  /*
-  std::ranges::sort(items, [&](auto &&a, auto &&b) {
-    return itemMetadata(a->uniqueId()).fallbackPosition < itemMetadata(b->uniqueId()).fallbackPosition;
+bool RootItemManager::moveFallbackDown(const EntrypointId &id) {
+  m_cfg.updateUser([&](config::PartialValue &v) {
+    if (auto fbs = v.fallbacks) {
+      auto it = std::ranges::find(fbs.value(), std::string{id});
+      if (it != fbs->end()) { std::iter_swap(it, it + 1); }
+    }
   });
-  */
-
-  return items;
+  emit fallbackOrderChanged(id);
+  return true;
 }
 
-/*
-RootItemMetadata RootItemManager::loadMetadata(const EntrypointId &id) {
-RootItemMetadata &item = m_metadata[id];
-QSqlQuery query = m_db.createQuery();
-
-query.prepare(R"(
-        SELECT
-                rank_visit_count, rank_last_visited_at, provider_id
-        FROM
-                root_provider_item
-        WHERE id = :id
-)");
-query.bindValue(":id", id);
-
-if (!query.exec()) {
-qCritical() << "Failed to load item metadata for" << id << query.lastError();
-return {};
+bool RootItemManager::moveFallbackUp(const EntrypointId &id) {
+  m_cfg.updateUser([&](config::PartialValue &v) {
+    if (auto fbs = v.fallbacks) {
+      auto it = std::ranges::find(fbs.value(), std::string{id});
+      if (it != fbs->end() && it != fbs->begin()) { std::iter_swap(it, it - 1); }
+    }
+  });
+  emit fallbackOrderChanged(id);
+  return true;
 }
 
-if (!query.next()) { return {}; };
-
-item.visitCount = query.value(0).toInt();
-item.lastVisitedAt = std::chrono::system_clock::from_time_t(query.value(1).toULongLong());
-item.providerId = query.value(2).toString().toStdString();
-
-return item;
-
-return {};
+bool RootItemManager::enableFallback(const EntrypointId &id) {
+  m_cfg.updateUser([&](config::PartialValue &v) {
+    auto fbs = v.fallbacks.value_or({});
+    fbs.insert(fbs.begin(), id);
+    v.fallbacks = fbs;
+  });
+  emit fallbackEnabled(id);
+  return true;
 }
-*/
+
+bool RootItemManager::disableFallback(const EntrypointId &id) {
+  m_cfg.updateUser([&](config::PartialValue &v) {
+    if (auto fbs = v.fallbacks) { fbs->erase(std::ranges::find(fbs.value(), std::string{id})); }
+  });
+  emit fallbackDisabled(id);
+  return true;
+}
 
 RootItem *RootItemManager::findItemById(const EntrypointId &id) const {
   for (const auto &item : m_items) {
     if (item.item->uniqueId() == id) { return item.item.get(); }
   }
+
   return nullptr;
 }
 
@@ -95,55 +89,51 @@ void RootItemManager::updateIndex() {
 
   isReloading = true;
 
-  if (!m_db.db().transaction()) {
-    qWarning() << "Failed to create transaction" << m_db.db().lastError();
-    return;
-  }
-
   m_items.clear();
+
+  auto &cfg = m_cfg.value();
 
   for (const auto &provider : m_providers) {
     auto items = provider->loadItems();
+    const config::ProviderData *providerConfig = nullptr;
+
+    if (auto it = cfg.providers.find(provider->uniqueId().toStdString()); it != cfg.providers.end()) {
+      providerConfig = &it->second;
+    }
 
     for (const auto &item : items) {
+      const config::ProviderItemData *itemConfig = nullptr;
+
+      if (providerConfig) {
+        if (auto it = providerConfig->entrypoints.find(item->uniqueId().entrypoint);
+            it != providerConfig->entrypoints.end()) {
+          itemConfig = &it->second;
+        }
+      }
+
       SearchableRootItem sitem;
+      auto id = item->uniqueId();
 
       sitem.item = item;
       sitem.title = item->displayName().toStdString();
       sitem.subtitle = item->subtitle().toStdString();
       sitem.keywords = item->keywords() | std::views::transform([](auto &&s) { return s.toStdString(); }) |
                        std::ranges::to<std::vector>();
-      sitem.meta = &m_metadata[item->uniqueId()];
-      sitem.meta->providerId = provider->uniqueId().toStdString();
+
+      sitem.meta = &m_metadata[id];
+      sitem.meta->item = item;
+
+      auto visitInfo = m_visitTracker.getVisit(id);
+
+      sitem.meta->visitCount = visitInfo.visitCount;
       m_items.emplace_back(sitem);
     }
   }
 
-  if (!m_db.db().commit()) { qWarning() << "Failed to commit transaction" << m_db.db().lastError(); }
-
+  mergeConfigWithMetadata(m_cfg.value());
   m_scoredItems.reserve(m_items.size());
   isReloading = false;
   emit itemsChanged();
-}
-
-bool RootItemManager::upsertProvider(const RootProvider &provider) {
-  QSqlQuery query = m_db.createQuery();
-
-  query.prepare(R"(
-		INSERT INTO 
-			root_provider (id) 
-		VALUES (:id) 
-		ON CONFLICT(id) 
-		DO NOTHING 
-	)");
-  query.bindValue(":id", provider.uniqueId());
-
-  if (!query.exec()) {
-    qWarning() << "Failed to upsert provider with id" << provider.uniqueId() << query.lastError();
-    return false;
-  }
-
-  return true;
 }
 
 float RootItemManager::SearchableRootItem::fuzzyScore(std::string_view pattern) const {
@@ -163,15 +153,14 @@ float RootItemManager::SearchableRootItem::fuzzyScore(std::string_view pattern) 
 
 std::span<RootItemManager::ScoredItem> RootItemManager::search(const QString &query,
                                                                const RootItemPrefixSearchOptions &opts) {
-  // Timer timer;
   std::string pattern = query.toStdString();
   std::string_view patternView = pattern;
 
   m_scoredItems.clear();
 
   for (auto &item : m_items) {
-    if (!item.meta->isEnabled && !opts.includeDisabled) continue;
-    // if (item.meta->favorite && !opts.includeFavorites) continue;
+    if (!item.meta->enabled && !opts.includeDisabled) continue;
+    if (item.meta->favorite && !opts.includeFavorites) continue;
     double fuzzyScore = item.fuzzyScore(patternView);
 
     if (!fuzzyScore) { continue; }
@@ -191,8 +180,6 @@ std::span<RootItemManager::ScoredItem> RootItemManager::search(const QString &qu
 
     return a.score > b.score;
   });
-
-  // timer.time("root search");
 
   return m_scoredItems;
 }
@@ -244,13 +231,10 @@ glz::generic::object_t RootItemManager::transformPreferenceValues(const QJsonObj
 }
 
 bool RootItemManager::setItemPreferenceValues(const EntrypointId &id, const QJsonObject &preferences) {
-  auto query = m_db.createQuery();
-  QJsonDocument json;
   RootItem *item = findItemById(id);
 
   if (!item) return false;
 
-  m_metadata[id].preferences = preferences;
   m_cfg.mergeEntrypointWithUser(id, {.preferences = transformPreferenceValues(preferences)});
   item->preferenceValuesChanged(preferences);
 
@@ -286,7 +270,7 @@ void RootItemManager::setPreferenceValues(const EntrypointId &id, const QJsonObj
 		  .providers = config::ProviderMap{
 		  	{id.provider, {
 				.preferences = transformPreferenceValues(providerPreferenceValues),
-				.items = {
+				.entrypoints = {
 					{id.entrypoint, {.preferences = transformPreferenceValues(entrypointPreferenceValues)}}
 				}
 			}
@@ -307,8 +291,6 @@ bool RootItemManager::setAlias(const EntrypointId &id, std::string_view alias) {
   return true;
 }
 
-bool RootItemManager::clearAlias(const EntrypointId &id) { return setAlias(id, ""); }
-
 QJsonObject RootItemManager::getProviderPreferenceValues(const QString &id) const {
   auto provider = findProviderById(id);
   auto json = transformPreferenceValues(m_cfg.user().providerPreferences(id.toStdString()).value_or({}));
@@ -323,15 +305,9 @@ QJsonObject RootItemManager::getProviderPreferenceValues(const QString &id) cons
 }
 
 bool RootItemManager::pruneProvider(const QString &id) {
-  auto query = m_db.createQuery();
-
-  query.prepare("DELETE FROM root_provider WHERE id = :id");
-  query.addBindValue(id);
-
-  if (!query.exec()) {
-    qCritical() << "pruneProvider() failed" << id << query.lastError();
-    return false;
-  }
+  m_cfg.updateUser([&](config::PartialValue &v) {
+    if (v.providers) { v.providers->erase(id.toStdString()); }
+  });
 
   return true;
 }
@@ -341,7 +317,9 @@ QJsonObject RootItemManager::getItemPreferenceValues(const EntrypointId &id) con
 
   if (!item) { return {}; }
 
-  QJsonObject values = itemMetadata(id).preferences.value_or(QJsonObject());
+  // QJsonObject values = itemMetadata(id).preferences.value_or(QJsonObject());
+  //  TODO: implement
+  QJsonObject values;
 
   for (const auto &preference : item->preferences()) {
     QJsonValue defaultValue = preference.defaultValue();
@@ -363,7 +341,7 @@ std::vector<Preference> RootItemManager::getMergedItemPreferences(const Entrypoi
 }
 
 QJsonObject RootItemManager::getPreferenceValues(const EntrypointId &id) const {
-  auto preferenceValues = transformPreferenceValues(m_cfg.user().preferences(id));
+  auto preferenceValues = transformPreferenceValues(m_cfg.user().mergedPreferences(id));
 
   for (auto pref : getMergedItemPreferences(id)) {
     auto dflt = pref.defaultValue();
@@ -383,40 +361,23 @@ RootItemMetadata RootItemManager::itemMetadata(const EntrypointId &id) const {
 }
 
 int RootItemManager::maxFallbackPosition() {
-  int max = -1;
-
-  for (const auto &[k, v] : m_metadata) {
-    // if (v.fallbackPosition > max) max = v.fallbackPosition;
-  }
-
-  return max;
+  // TODO: implement
+  return 0;
 }
 
 bool RootItemManager::isFallback(const EntrypointId &id) const {
-  return false;
-  // return itemMetadata(id).fallbackPosition != -1;
+  return std::ranges::contains(m_cfg.value().fallbacks, std::string{id});
 }
 
 bool RootItemManager::setItemAsFavorite(const EntrypointId &itemId, bool value) {
-  /*
-auto query = m_db.createQuery();
+  auto favorites = m_cfg.value().favorites;
+  std::string id{itemId};
 
-query.prepare(R"(
-          UPDATE root_provider_item
-          SET favorite = :favorite
-          WHERE id = :id
-  )");
-query.addBindValue(value);
-query.addBindValue(itemId);
+  if (std::ranges::contains(favorites, id)) { return true; }
 
-if (!query.exec()) {
-qCritical() << "Failed to set item as favorite" << itemId << value;
-return false;
-}
-
-// m_metadata[itemId].favorite = value;
-emit itemFavoriteChanged(itemId, value);
-*/
+  favorites.insert(favorites.begin(), id);
+  m_cfg.mergeWithUser({.favorites = favorites});
+  emit itemFavoriteChanged(itemId, value);
 
   return true;
 }
@@ -441,25 +402,13 @@ double RootItemManager::computeScore(const RootItemMetadata &meta, int weight) c
   return (frequencyScore + recencyScore) * weight;
 }
 
-std::vector<RootItemManager::SearchableRootItem> RootItemManager::queryFavorites(std::optional<int> limit) {
-  /*
-auto isFavorite = [](auto &&item) { return item.meta->favorite; };
-auto favorites = m_items | std::views::filter(isFavorite) | std::ranges::to<std::vector>();
-std::ranges::sort(favorites, [this](const SearchableRootItem &a, const SearchableRootItem &b) {
-return a.fuzzyScore() > b.fuzzyScore();
-});
-
-if (limit && favorites.size() > limit) { favorites.resize(limit.value()); }
-
-return favorites;
-*/
-  return {};
+std::vector<std::shared_ptr<RootItem>> RootItemManager::queryFavorites(std::optional<int> limit) {
+  return getFromSerializedEntrypointIds(m_cfg.value().favorites);
 }
 
 std::vector<RootItemManager::SearchableRootItem> RootItemManager::querySuggestions(int limit) {
   auto isSuggestable = [](auto &&item) {
-    // return item.meta->isEnabled && item.meta->visitCount > 0 && !item.meta->favorite;
-    return item.meta->isEnabled && item.meta->visitCount > 0;
+    return item.meta->enabled && item.meta->visitCount > 0 && !item.meta->favorite;
   };
   auto suggestions = m_items | std::views::filter(isSuggestable) | std::ranges::to<std::vector>();
 
@@ -475,87 +424,19 @@ std::vector<RootItemManager::SearchableRootItem> RootItemManager::querySuggestio
 }
 
 bool RootItemManager::resetRanking(const EntrypointId &id) {
-  /*
-QSqlQuery query = m_db.createQuery();
-
-query.prepare(R"(
-          UPDATE root_provider_item
-          SET
-                  rank_visit_count = 0,
-                  rank_last_visited_at = NULL
-          WHERE id = :id
-  )");
-query.addBindValue(id);
-
-if (!query.exec()) {
-qCritical() << "Failed to reset ranking" << query.lastError();
-return false;
-}
-
-RootItemMetadata &metadata = m_metadata[id];
-
-metadata.lastVisitedAt = std::nullopt;
-metadata.visitCount = 0;
-emit itemRankingReset(id);
-*/
-
+  m_metadata[id].visitCount = 0;
+  m_visitTracker.forget(id);
   return true;
 }
 
 bool RootItemManager::registerVisit(const EntrypointId &id) {
-  /*
-qint64 epoch = QDateTime::currentSecsSinceEpoch();
-QSqlQuery query = m_db.createQuery();
-
-query.prepare(R"(
-          UPDATE root_provider_item
-          SET
-                  visit_count = visit_count + 1,
-                  rank_visit_count = rank_visit_count + 1,
-                  last_visited_at = :epoch,
-                  rank_last_visited_at = :epoch
-          WHERE id = :id
-          RETURNING rank_visit_count, rank_last_visited_at, visit_count, last_visited_at
-  )");
-query.bindValue(":id", id);
-query.bindValue(":epoch", epoch);
-
-if (!query.exec() || !query.next()) {
-qDebug() << "Failed to update item" << query.lastError();
-return false;
-}
-
-RootItemMetadata &meta = m_metadata[id];
-
-meta.visitCount = query.value(0).toInt();
-meta.lastVisitedAt = std::chrono::system_clock::from_time_t(epoch);
-*/
-
-  return false;
+  ++m_metadata[id].visitCount;
+  m_visitTracker.registerVisit(id);
+  return true;
 }
 
 bool RootItemManager::setProviderEnabled(const QString &providerId, bool value) {
-  QSqlQuery query = m_db.createQuery();
-
-  query.prepare(R"(
-		UPDATE root_provider_item
-		SET enabled = :enabled
-		WHERE provider_id = :provider_id
-	)");
-  query.bindValue(":enabled", value);
-  query.bindValue(":provider_id", providerId);
-
-  if (!query.exec()) {
-    qDebug() << "Failed to update item" << query.lastError();
-    return false;
-  }
-
-  for (auto &[id, metadata] : m_metadata) {
-    if (providerId == metadata.providerId) { metadata.isEnabled = value; }
-  }
-
-  m_provider_metadata[providerId].enabled = value;
-
+  m_cfg.mergeProviderWithUser(providerId.toStdString(), {.enabled = value});
   return true;
 }
 
@@ -596,11 +477,6 @@ void RootItemManager::unloadProvider(const QString &id) {
 }
 
 void RootItemManager::loadProvider(std::unique_ptr<RootProvider> provider) {
-  if (!upsertProvider(*provider)) {
-    qWarning() << "Failed to upsert provider";
-    return;
-  };
-
   auto pred = [&](auto &&p) { return p->uniqueId() == provider->uniqueId(); };
   auto it = std::ranges::find_if(m_providers, pred);
 
@@ -630,4 +506,58 @@ RootProvider *RootItemManager::provider(std::string_view id) const {
   if (it != m_providers.end()) return it->get();
 
   return nullptr;
+}
+
+std::vector<std::shared_ptr<RootItem>>
+RootItemManager::getFromSerializedEntrypointIds(std::span<const std::string> ids) const {
+  std::vector<std::shared_ptr<RootItem>> entrypoints;
+
+  entrypoints.reserve(ids.size());
+
+  for (const auto &id : ids) {
+    auto entrypointId = EntrypointId::fromSerialized(id);
+
+    if (auto it = m_metadata.find(entrypointId); it != m_metadata.end()) {
+      entrypoints.push_back(it->second.item);
+    }
+  }
+
+  return entrypoints;
+}
+
+void RootItemManager::mergeConfigWithMetadata(const config::ConfigValue &cfg) {
+  auto favoriteSet = cfg.favorites | std::ranges::to<std::unordered_set>();
+  auto fallbackSet = cfg.fallbacks | std::ranges::to<std::unordered_set>();
+
+  for (const SearchableRootItem &item : m_items) {
+    auto entrypointId = item.item->uniqueId();
+    const config::ProviderData *providerConfig = nullptr;
+    const config::ProviderItemData *itemConfig = nullptr;
+
+    if (auto it = cfg.providers.find(entrypointId.provider); it != cfg.providers.end()) {
+      providerConfig = &it->second;
+    }
+
+    if (providerConfig) {
+      if (auto it = providerConfig->entrypoints.find(entrypointId.entrypoint);
+          it != providerConfig->entrypoints.end()) {
+        itemConfig = &it->second;
+      }
+    }
+
+    auto &meta = m_metadata[entrypointId];
+
+    meta.providerId = entrypointId.provider;
+    meta.enabled = !item.item->isDefaultDisabled();
+    meta.favorite = favoriteSet.contains(entrypointId);
+
+    if (itemConfig) {
+      if (auto enabled = itemConfig->enabled) { meta.enabled = enabled.value(); }
+      if (auto alias = itemConfig->alias) { meta.alias = alias.value(); }
+    }
+
+    if (providerConfig) {
+      if (auto enabled = providerConfig->enabled) { meta.enabled = enabled.value(); }
+    }
+  }
 }

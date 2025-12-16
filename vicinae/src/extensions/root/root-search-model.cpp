@@ -1,4 +1,5 @@
 #include "root-search-model.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 #include "ui/transform-result/transform-result.hpp"
 
 RootSearchModel::RootSearchModel(RootItemManager *manager) : m_manager(manager) {}
@@ -44,7 +45,7 @@ void RootSearchModel::setFallbackItems(const std::vector<std::shared_ptr<RootIte
   emit dataChanged();
 }
 
-void RootSearchModel::setFavorites(const std::vector<RootItemManager::SearchableRootItem> &favorites) {
+void RootSearchModel::setFavorites(const std::vector<std::shared_ptr<RootItem>> &favorites) {
   m_favorites = favorites;
   emit dataChanged();
 }
@@ -118,7 +119,7 @@ RootItemVariant RootSearchModel::sectionItemAt(SectionType id, int itemIdx) cons
   case SectionType::Fallback:
     return FallbackItem{.item = m_fallbackItems[itemIdx].get()};
   case SectionType::Favorites:
-    return FavoriteItem{.item = m_favorites[itemIdx].item.get()};
+    return FavoriteItem{.item = m_favorites[itemIdx].get()};
   }
 
   return {};

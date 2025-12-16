@@ -372,8 +372,8 @@ public:
       auto metadata = manager->itemMetadata(item->uniqueId());
       auto delegate = new RootItemDelegate(item);
 
-      disabledCount += !metadata.isEnabled;
-      delegate->setEnabled(metadata.isEnabled);
+      disabledCount += !metadata.enabled;
+      delegate->setEnabled(metadata.enabled);
 
       connect(delegate, &RootItemDelegate::itemEnabledChanged, this,
               [delegate, this](auto a, bool value) { emit itemEnabledChanged(delegate, value); });

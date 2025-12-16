@@ -4,6 +4,7 @@
 #include "extension/extension-command-runtime.hpp"
 #include "../ui/image/url.hpp"
 #include <filesystem>
+#include <format>
 
 QString ExtensionCommand::extensionId() const { return _extensionId; }
 void ExtensionCommand::setExtensionId(const QString &text) { _extensionId = text; }
@@ -20,8 +21,8 @@ CommandType ExtensionCommand::type() const { return CommandType::CommandTypeExte
 CommandMode ExtensionCommand::mode() const { return m_command.mode; }
 
 EntrypointId ExtensionCommand::uniqueId() const {
-  // return QString("%1.%2").arg(_extensionId).arg(m_command.name);
-  return EntrypointId{_extensionId.toStdString(), m_command.name.toStdString()};
+  std::string provider = std::format("@{}/{}", m_author.toStdString(), _extensionId.toStdString());
+  return EntrypointId{provider, m_command.name.toStdString()};
 }
 
 QString ExtensionCommand::commandId() const { return m_command.name; }
