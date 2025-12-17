@@ -1,5 +1,6 @@
 #include "extension-manifest.hpp"
 #include "utils.hpp"
+#include <QJsonArray>
 
 namespace fs = std::filesystem;
 
@@ -100,7 +101,7 @@ Preference ExtensionManifest::parsePreferenceFromObject(const QJsonObject &obj) 
     for (const auto &child : data) {
       auto obj = child.toObject();
 
-      options.push_back({.title = obj["title"].toString(), .value = obj["value"].toString()});
+      options.push_back(Preference::DropdownData::Option{obj["title"].toString(), obj["value"].toString()});
     }
 
     base.setData(Preference::DropdownData{options});
@@ -150,7 +151,7 @@ CommandArgument ExtensionManifest::parseArgumentFromObject(const QJsonObject &ob
     for (const auto &child : data) {
       auto obj = child.toObject();
 
-      options.push_back({.title = obj["title"].toString(), .value = obj["value"].toString()});
+      options.push_back(CommandArgument::DropdownData{obj["title"].toString(), obj["value"].toString()});
     }
 
     arg.data = options;

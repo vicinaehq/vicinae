@@ -36,10 +36,13 @@ public:
 
   std::unique_ptr<HomeDirectoryWatcher> m_homeWatcher;
 
-  // move that somewhere else later
+  bool m_useRegex = false;
+
   QString preparePrefixSearchQuery(std::string_view query) const;
 
 public:
+  bool useRegex() const { return m_useRegex; }
+
   void startFullScan();
   void startSingleScan(std::filesystem::path entrypoint, ScanType type,
                        std::vector<std::string> excludedFilenames = {});

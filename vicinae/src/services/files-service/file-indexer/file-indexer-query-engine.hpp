@@ -21,7 +21,7 @@ public:
 public slots:
   void handleQuery(const QString &query, const AbstractFileIndexer::QueryParams &params) {
     std::vector<std::filesystem::path> paths;
-    QString finalQuery = preparePrefixSearchQuery(query);
+    QString finalQuery = params.useRegex ? query : preparePrefixSearchQuery(query);
     paths = db->search(finalQuery.toStdString(), params);
 
     std::vector<IndexerFileResult> results;
