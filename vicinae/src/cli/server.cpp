@@ -120,7 +120,7 @@ void CliServerCommand::run(CLI::App *app) {
         std::make_unique<ClipboardService>(Omnicast::dataDir() / "clipboard.db", *windowManager, *appService);
     auto fontService = std::make_unique<FontService>();
     auto configService = std::make_unique<config::Manager>();
-    auto rootItemManager = std::make_unique<RootItemManager>(*configService);
+    auto rootItemManager = std::make_unique<RootItemManager>(*configService, *localStorage);
     auto shortcutService = std::make_unique<ShortcutService>(*omniDb.get());
     auto toastService = std::make_unique<ToastService>();
     auto currentConfig = configService->value();

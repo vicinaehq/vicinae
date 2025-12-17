@@ -8,11 +8,12 @@
 #include <qlogging.h>
 #include <qtconcurrentfilter.h>
 #include "config/config.hpp"
+#include "services/local-storage/local-storage-service.hpp"
 #include "vicinae.hpp"
 #include <ranges>
 
-RootItemManager::RootItemManager(config::Manager &cfg)
-    : m_cfg(cfg), m_visitTracker(Omnicast::dataDir() / "visits.json") {
+RootItemManager::RootItemManager(config::Manager &cfg, LocalStorageService &storage)
+    : m_cfg(cfg), m_storage(storage), m_visitTracker(Omnicast::dataDir() / "visits.json") {
   connect(&cfg, &config::Manager::configChanged, this, [this](const config::ConfigValue &next) {
     mergeConfigWithMetadata(next);
     qDebug() << "configuration changed";
@@ -195,7 +196,22 @@ bool RootItemManager::setProviderPreferenceValues(const QString &id, const QJson
 
   if (!provider) return false;
 
-  m_cfg.mergeProviderWithUser(id.toStdString(), {.preferences = transformPreferenceValues(preferences)});
+  QJsonObject filteredPreferences;
+  auto storage = getProviderSecretStorage(id);
+
+  for (const Preference &pref : provider->preferences()) {
+    QJsonValue v = preferences.value(pref.name());
+    if (!v.isUndefined()) {
+      if (pref.isSecret() && !m_cfg.value().meta.insecurelySerializePasswordPreferences) {
+        storage.setItem(pref.name(), v);
+      } else {
+        filteredPreferences[pref.name()] = v;
+      }
+    }
+  }
+
+  m_cfg.mergeProviderWithUser(id.toStdString(),
+                              {.preferences = transformPreferenceValues(filteredPreferences)});
   provider->preferencesChanged(preferences);
 
   return true;
@@ -236,10 +252,29 @@ bool RootItemManager::setItemPreferenceValues(const EntrypointId &id, const QJso
 
   if (!item) return false;
 
-  m_cfg.mergeEntrypointWithUser(id, {.preferences = transformPreferenceValues(preferences)});
+  auto storage = getProviderSecretStorage(id.provider.c_str());
+  QJsonObject itemPreferences;
+
+  for (const Preference &pref : item->preferences()) {
+    QJsonValue v = preferences.value(pref.name());
+    if (!v.isUndefined()) {
+      QString key = QString("%1.%2").arg(id.entrypoint).arg(pref.name());
+      if (pref.isSecret() && !m_cfg.value().meta.insecurelySerializePasswordPreferences) {
+        storage.setItem(key, v);
+      } else {
+        itemPreferences[key] = v;
+      }
+    }
+  }
+
+  m_cfg.mergeEntrypointWithUser(id, {.preferences = transformPreferenceValues(itemPreferences)});
   item->preferenceValuesChanged(preferences);
 
   return true;
+}
+
+ScopedLocalStorage RootItemManager::getProviderSecretStorage(const QString &id) const {
+  return m_storage.scoped(id + ".secrets");
 }
 
 void RootItemManager::setPreferenceValues(const EntrypointId &id, const QJsonObject &preferences) {
@@ -254,15 +289,31 @@ void RootItemManager::setPreferenceValues(const EntrypointId &id, const QJsonObj
     return;
   }
 
+  auto storage = getProviderSecretStorage(id.provider.c_str());
+
   for (const auto &pref : prvd->preferences()) {
-    if (preferences.contains(pref.name())) {
-      providerPreferenceValues[pref.name()] = preferences.value(pref.name());
+    QJsonValue val = preferences.value(pref.name());
+    if (!val.isUndefined()) {
+      if (pref.isSecret() && !m_cfg.value().meta.insecurelySerializePasswordPreferences) {
+        storage.setItem(pref.name(), val);
+      } else {
+        providerPreferenceValues[pref.name()] = val;
+      }
     }
   }
 
   for (const auto &pref : item->preferences()) {
-    if (preferences.contains(pref.name())) {
-      entrypointPreferenceValues[pref.name()] = preferences.value(pref.name());
+    QJsonValue val = preferences.value(pref.name());
+
+    if (!val.isUndefined()) {
+      QString key = QString("%1.%2").arg(id.entrypoint).arg(pref.name());
+
+      if (pref.isSecret()) {
+        qDebug() << "stored preference with key" << key;
+        storage.setItem(key, val);
+      } else {
+        entrypointPreferenceValues[key] = val;
+      }
     }
   }
 

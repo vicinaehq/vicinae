@@ -77,6 +77,7 @@ public:
   QJsonValue defaultValue() const { return m_value; }
   bool required() const { return m_required; }
   Data data() const { return m_data; }
+  bool isSecret() const { return std::holds_alternative<PasswordData>(m_data); }
 
   Preference() {}
 };

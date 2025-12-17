@@ -42,6 +42,18 @@ void LocalStorageService::setItemAsJson(const QString &namespaceId, const QStrin
   setItem(namespaceId, key, QString::fromUtf8(json.toJson(QJsonDocument::JsonFormat::Compact)));
 }
 
+std::vector<QString> LocalStorageService::namespaces() const {
+  std::vector<QString> ss;
+  auto query = db.createQuery();
+  query.exec("SELECT DISTINCT(namespace_id) FROM storage_data_item");
+
+  while (query.next()) {
+    ss.emplace_back(query.value(0).toString());
+  }
+
+  return ss;
+}
+
 QJsonValue LocalStorageService::getItem(const QString &namespaceId, const QString &key) {
   m_getQuery.bindValue(":namespace_id", namespaceId);
   m_getQuery.bindValue(":key", key);

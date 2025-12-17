@@ -3,7 +3,8 @@
 #include "common.hpp"
 #include "config/config.hpp"
 #include "navigation-controller.hpp"
-#include "omni-database.hpp"
+#include "services/local-storage/local-storage-service.hpp"
+#include "services/local-storage/scoped-local-storage.hpp"
 #include "services/root-item-manager/visit-tracker.hpp"
 #include "ui/image/url.hpp"
 #include "preference.hpp"
@@ -240,7 +241,7 @@ public:
     std::reference_wrapper<ItemPtr> item;
   };
 
-  RootItemManager(config::Manager &config);
+  RootItemManager(config::Manager &config, LocalStorageService &storage);
 
   static glz::generic::object_t transformPreferenceValues(const QJsonObject &preferences);
   static QJsonObject transformPreferenceValues(const glz::generic::object_t &preferences);
@@ -321,6 +322,8 @@ public:
   bool pruneProvider(const QString &id);
 
 private:
+  ScopedLocalStorage getProviderSecretStorage(const QString &providerId) const;
+
   void mergeConfigWithMetadata(const config::ConfigValue &cfg);
 
   std::vector<std::shared_ptr<RootItem>>
@@ -329,6 +332,7 @@ private:
   std::unordered_map<EntrypointId, RootItemMetadata> m_metadata;
   std::vector<std::unique_ptr<RootProvider>> m_providers;
   config::Manager &m_cfg;
+  LocalStorageService &m_storage;
   std::vector<SearchableRootItem> m_items;
   VisitTracker m_visitTracker;
 
