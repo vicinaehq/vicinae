@@ -29,3 +29,5 @@ __cmake*
 /result
 
 CLAUDE.md
+
+.vscode/
