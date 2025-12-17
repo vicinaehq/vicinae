@@ -660,6 +660,8 @@ set(SRCS
 	src/config/config.hpp
 	src/config/config.cpp
 
+	src/extensions/vicinae/local-storage/browse-local-storage.hpp
+
 ) 
 
 if (UNIX)

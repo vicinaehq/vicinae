@@ -322,6 +322,9 @@ public:
   bool pruneProvider(const QString &id);
 
 private:
+  QJsonValue getEntrypointSecretPreference(const EntrypointId &entrypoint, const QString &prefName) const;
+  QJsonValue getProviderSecretPreference(const QString &providerId, const QString &prefName) const;
+
   ScopedLocalStorage getProviderSecretStorage(const QString &providerId) const;
 
   void mergeConfigWithMetadata(const config::ConfigValue &cfg);

@@ -5,6 +5,7 @@
 #include "extensions/vicinae/oauth-token-store/oauth-token-store-view.hpp"
 #include "extensions/vicinae/report-bug-command.hpp"
 #include "navigation-controller.hpp"
+#include "local-storage/browse-local-storage.hpp"
 #include "open-about-command.hpp"
 #include "refresh-apps-command.hpp"
 #include "configure-fallback-command.hpp"
@@ -109,6 +110,20 @@ class OAuthTokenStoreCommand : public BuiltinViewCommand<OAuthTokenStoreView> {
   }
 };
 
+class InspectLocalStorage : public BuiltinViewCommand<BrowseLocalStorageView> {
+  QString id() const override { return "inspect-local-storage"; }
+  QString name() const override { return "Inspect Local Storage"; }
+  QString description() const override {
+    return "Browse data stored in Vicinae's local storage. This includes data stored for builtin extensions "
+           "as well as third-party extensions making use of the LocalStorage API.";
+  }
+  ImageURL iconUrl() const override {
+    auto icon = ImageURL::builtin("coin");
+    icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return icon;
+  }
+};
+
 VicinaeExtension::VicinaeExtension() {
   registerCommand<OpenDocumentationCommand>();
   registerCommand<OpenAboutCommand>();
@@ -123,4 +138,5 @@ VicinaeExtension::VicinaeExtension() {
   registerCommand<VicinaeListInstalledExtensionsCommand>();
   registerCommand<OAuthTokenStoreCommand>();
   registerCommand<OpenVicinaeConfig>();
+  registerCommand<InspectLocalStorage>();
 }

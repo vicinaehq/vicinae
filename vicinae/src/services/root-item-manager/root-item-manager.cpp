@@ -2,6 +2,7 @@
 #include "common.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include <qjsonobject.h>
+#include <qjsonvalue.h>
 #include <ranges>
 #include "lib/fzf.hpp"
 #include <algorithm>
@@ -202,7 +203,7 @@ bool RootItemManager::setProviderPreferenceValues(const QString &id, const QJson
   for (const Preference &pref : provider->preferences()) {
     QJsonValue v = preferences.value(pref.name());
     if (!v.isUndefined()) {
-      if (pref.isSecret() && !m_cfg.value().meta.insecurelySerializePasswordPreferences) {
+      if (pref.isSecret()) {
         storage.setItem(pref.name(), v);
       } else {
         filteredPreferences[pref.name()] = v;
@@ -259,10 +260,10 @@ bool RootItemManager::setItemPreferenceValues(const EntrypointId &id, const QJso
     QJsonValue v = preferences.value(pref.name());
     if (!v.isUndefined()) {
       QString key = QString("%1.%2").arg(id.entrypoint).arg(pref.name());
-      if (pref.isSecret() && !m_cfg.value().meta.insecurelySerializePasswordPreferences) {
+      if (pref.isSecret()) {
         storage.setItem(key, v);
       } else {
-        itemPreferences[key] = v;
+        itemPreferences[pref.name()] = v;
       }
     }
   }
@@ -274,7 +275,7 @@ bool RootItemManager::setItemPreferenceValues(const EntrypointId &id, const QJso
 }
 
 ScopedLocalStorage RootItemManager::getProviderSecretStorage(const QString &id) const {
-  return m_storage.scoped(id + ".secrets");
+  return m_storage.scoped(id + ":preferences");
 }
 
 void RootItemManager::setPreferenceValues(const EntrypointId &id, const QJsonObject &preferences) {
@@ -285,7 +286,7 @@ void RootItemManager::setPreferenceValues(const EntrypointId &id, const QJsonObj
   QJsonObject entrypointPreferenceValues;
 
   if (!item) {
-    // qCritical() << "setPreferenceValues: no item with id" << id
+    qWarning() << "setPreferenceValues: no item with id" << std::string{id};
     return;
   }
 
@@ -294,7 +295,7 @@ void RootItemManager::setPreferenceValues(const EntrypointId &id, const QJsonObj
   for (const auto &pref : prvd->preferences()) {
     QJsonValue val = preferences.value(pref.name());
     if (!val.isUndefined()) {
-      if (pref.isSecret() && !m_cfg.value().meta.insecurelySerializePasswordPreferences) {
+      if (pref.isSecret()) {
         storage.setItem(pref.name(), val);
       } else {
         providerPreferenceValues[pref.name()] = val;
@@ -312,7 +313,7 @@ void RootItemManager::setPreferenceValues(const EntrypointId &id, const QJsonObj
         qDebug() << "stored preference with key" << key;
         storage.setItem(key, val);
       } else {
-        entrypointPreferenceValues[key] = val;
+        entrypointPreferenceValues[pref.name()] = val;
       }
     }
   }
@@ -330,8 +331,6 @@ void RootItemManager::setPreferenceValues(const EntrypointId &id, const QJsonObj
 		  }
   });
   // clang-format on
-
-  qWarning() << "setPreferences not yet implemented";
 }
 
 bool RootItemManager::setAlias(const EntrypointId &id, std::string_view alias) {
@@ -347,10 +346,15 @@ QJsonObject RootItemManager::getProviderPreferenceValues(const QString &id) cons
   auto provider = findProviderById(id);
   auto json = transformPreferenceValues(m_cfg.user().providerPreferences(id.toStdString()).value_or({}));
 
-  for (const auto &pref : provider->preferences()) {
-    auto dflt = pref.defaultValue();
-
-    if (!json.contains(pref.name())) { json[pref.name()] = dflt; }
+  for (const Preference &pref : provider->preferences()) {
+    if (!json.contains(pref.name())) {
+      if (pref.isSecret()) {
+        QJsonValue value = getProviderSecretPreference(id, pref.name());
+        json[pref.name()] = value.isUndefined() ? pref.defaultValue() : value;
+      } else {
+        json[pref.name()] = pref.defaultValue();
+      }
+    }
   }
 
   return json;
@@ -369,14 +373,21 @@ QJsonObject RootItemManager::getItemPreferenceValues(const EntrypointId &id) con
 
   if (!item) return {};
 
-  QJsonObject values = transformPreferenceValues(m_cfg.value().preferences(id).value_or({}));
+  QJsonObject json = transformPreferenceValues(m_cfg.value().preferences(id).value_or({}));
+  auto storage = getProviderSecretStorage(id.provider.c_str());
 
-  for (const auto &preference : item->preferences()) {
-    QJsonValue defaultValue = preference.defaultValue();
-    if (!values.contains(preference.name())) { values[preference.name()] = defaultValue; }
+  for (const auto &pref : item->preferences()) {
+    if (!json.contains(pref.name())) {
+      if (pref.isSecret()) {
+        QJsonValue value = getEntrypointSecretPreference(id, pref.name());
+        json[pref.name()] = value.isUndefined() ? pref.defaultValue() : value;
+      } else {
+        json[pref.name()] = pref.defaultValue();
+      }
+    }
   }
 
-  return values;
+  return json;
 }
 
 std::vector<Preference> RootItemManager::getMergedItemPreferences(const EntrypointId &id) const {
@@ -389,17 +400,14 @@ std::vector<Preference> RootItemManager::getMergedItemPreferences(const Entrypoi
 }
 
 QJsonObject RootItemManager::getPreferenceValues(const EntrypointId &id) const {
-  auto preferenceValues = transformPreferenceValues(m_cfg.user().mergedPreferences(id));
+  QJsonObject providerValues = getProviderPreferenceValues(id.provider.c_str());
+  QJsonObject itemValues = getItemPreferenceValues(id);
 
-  for (auto pref : getMergedItemPreferences(id)) {
-    auto dflt = pref.defaultValue();
-    auto value = preferenceValues.value(pref.name());
-    auto hasValue = !value.isUndefined() && !value.isNull();
-
-    if (!hasValue && !dflt.isUndefined()) { preferenceValues[pref.name()] = dflt; }
+  for (auto it = itemValues.begin(); it != itemValues.end(); ++it) {
+    providerValues[it.key()] = it.value();
   }
 
-  return preferenceValues;
+  return providerValues;
 }
 
 RootItemMetadata RootItemManager::itemMetadata(const EntrypointId &id) const {
@@ -551,6 +559,17 @@ RootProvider *RootItemManager::provider(std::string_view id) const {
   return nullptr;
 }
 
+QJsonValue RootItemManager::getEntrypointSecretPreference(const EntrypointId &entrypoint,
+                                                          const QString &prefName) const {
+  QString key = QString("%1.%2").arg(entrypoint.entrypoint).arg(prefName);
+  return getProviderSecretStorage(entrypoint.provider.c_str()).getItem(key);
+}
+
+QJsonValue RootItemManager::getProviderSecretPreference(const QString &providerId,
+                                                        const QString &prefName) const {
+  return getProviderSecretStorage(providerId).getItem(prefName);
+}
+
 std::vector<std::shared_ptr<RootItem>>
 RootItemManager::getFromSerializedEntrypointIds(std::span<const std::string> ids) const {
   std::vector<std::shared_ptr<RootItem>> entrypoints;
@@ -581,7 +600,13 @@ void RootItemManager::mergeConfigWithMetadata(const config::ConfigValue &cfg) {
       providerConfig = &it->second;
     }
 
+    auto prvd = provider(entrypointId.provider.c_str());
+
     if (providerConfig) {
+      if (prvd) {
+        prvd->preferencesChanged(transformPreferenceValues(providerConfig->preferences.value_or({})));
+      }
+
       if (auto it = providerConfig->entrypoints.find(entrypointId.entrypoint);
           it != providerConfig->entrypoints.end()) {
         itemConfig = &it->second;
@@ -595,6 +620,7 @@ void RootItemManager::mergeConfigWithMetadata(const config::ConfigValue &cfg) {
     meta.favorite = favoriteSet.contains(entrypointId);
 
     if (itemConfig) {
+      item.item->preferenceValuesChanged(transformPreferenceValues(providerConfig->preferences.value_or({})));
       if (auto enabled = itemConfig->enabled) { meta.enabled = enabled.value(); }
       if (auto alias = itemConfig->alias) { meta.alias = alias.value(); }
     }

@@ -117,12 +117,10 @@ template <> struct Partial<ThemeConfig> {
 
 struct Meta {
   std::vector<std::string> imports;
-  bool insecurelySerializePasswordPreferences = false;
 };
 
 template <> struct Partial<Meta> {
   std::optional<std::vector<std::string>> imports;
-  std::optional<bool> insecurelySerializePasswordPreferences = false;
 };
 
 struct Margin {
