@@ -256,8 +256,7 @@ void CliServerCommand::run(CLI::App *app) {
     ctx.navigation->setPopToRootOnClose(next.popToRootOnClose);
     ctx.navigation->setCloseOnFocusLoss(next.closeOnFocusLoss);
 
-    KeybindManager::instance()->fromSerializedMap({next.keybinds.begin(), next.keybinds.end()});
-
+    KeybindManager::instance()->mergeBinds({next.keybinds.begin(), next.keybinds.end()});
     FaviconService::instance()->setService(next.faviconService.c_str());
 
     if (next.theme.iconTheme) {

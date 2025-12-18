@@ -46,7 +46,7 @@ public:
   const KeybindMap &map() const;
 
   void setKeybind(Keybind bind, const Keyboard::Shortcut &shortcut);
-  void fromSerializedMap(const SerializedKeybindMap &map);
+  void mergeBinds(const SerializedKeybindMap &map);
   std::vector<std::pair<Keybind, const KeybindInfo *>> orderedInfoList();
   SerializedKeybindMap toSerializedMap();
 

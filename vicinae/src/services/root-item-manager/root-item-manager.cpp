@@ -86,7 +86,6 @@ void RootItemManager::updateIndex() {
   }
 
   isReloading = true;
-
   m_items.clear();
 
   auto &cfg = m_cfg.value();
@@ -401,11 +400,6 @@ RootItemMetadata RootItemManager::itemMetadata(const EntrypointId &id) const {
   if (auto it = m_metadata.find(id); it != m_metadata.end()) { return it->second; }
 
   return {};
-}
-
-int RootItemManager::maxFallbackPosition() {
-  // TODO: implement
-  return 0;
 }
 
 bool RootItemManager::isFallback(const EntrypointId &id) const {

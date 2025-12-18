@@ -177,11 +177,13 @@ void KeybindManager::setKeybind(Keybind bind, const Keyboard::Shortcut &shortcut
   emit keybindChanged(bind, shortcut);
 }
 
-void KeybindManager::fromSerializedMap(const SerializedKeybindMap &map) {
-  SerializedKeybindMap mp;
-
-  for (const auto &[id, str] : map) {
-    m_shortcuts[m_idToBind[id.c_str()]] = Keyboard::Shortcut(str.c_str());
+void KeybindManager::mergeBinds(const SerializedKeybindMap &map) {
+  for (const auto &[bind, info] : infos) {
+    if (auto it = map.find(info.id.toStdString()); it != map.end()) {
+      m_shortcuts[bind] = Keyboard::Shortcut{it->second.c_str()};
+    } else {
+      m_shortcuts[bind] = info.dflt;
+    }
   }
 }
 
