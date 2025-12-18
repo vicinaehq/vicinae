@@ -33,13 +33,12 @@ template <typename T> T static merge(const auto &v1, const auto &v2) {
 
 Manager::Manager(fs::path path) : m_userPath(path) {
   auto file = QFile(":default_config.json");
-  ConfigValue cfg;
 
   if (!file.open(QIODevice::ReadOnly)) { throw std::runtime_error("Failed to open default config"); }
 
   m_defaultData = file.readAll().toStdString();
 
-  if (auto error = glz::read_jsonc(cfg, m_defaultData)) {
+  if (auto error = glz::read_jsonc(m_defaultConfig, m_defaultData)) {
     throw std::runtime_error(
         std::format("Failed to parse default config file: {}", glz::format_error(error)));
   }
@@ -188,6 +187,13 @@ Manager::PartialConfigResult Manager::load(const std::filesystem::path &path, co
 }
 
 void Manager::prunePartial(Partial<ConfigValue> &user) {
+  auto prunePreferences = [](glz::generic::object_t &obj) {
+    for (auto it = obj.begin(); it != obj.end();) {
+      auto cur = it++;
+      if (cur->second.is_null()) { obj.erase(cur); }
+    }
+  };
+
   if (user.providers) {
     auto &pvd = user.providers.value();
 
@@ -195,9 +201,13 @@ void Manager::prunePartial(Partial<ConfigValue> &user) {
       auto &v = it->second;
       auto currentIt = it++;
 
+      if (v.preferences) { prunePreferences(v.preferences.value()); }
+
       for (auto it2 = v.entrypoints.begin(); it2 != v.entrypoints.end();) {
         auto currentIt = it2++;
         ProviderItemData &vi = currentIt->second;
+
+        if (vi.preferences) { prunePreferences(vi.preferences.value()); }
 
         if (vi.alias && vi.alias->empty()) { vi.alias.reset(); }
         if (!vi.enabled.has_value() && vi.preferences.value_or({}).empty() && !vi.alias) {

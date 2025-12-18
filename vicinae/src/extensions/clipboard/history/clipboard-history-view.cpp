@@ -461,15 +461,15 @@ void ClipboardHistoryView::handleMonitoringChanged(bool monitor) {
 }
 
 void ClipboardHistoryView::handleStatusClipboard() {
-  auto preferences = command()->preferenceValues();
+  QJsonObject patch;
 
   if (m_statusToolbar->clipboardStatus() == ClipboardStatusToolbar::Paused) {
-    preferences["monitoring"] = true;
+    patch["monitoring"] = true;
   } else {
-    preferences["monitoring"] = false;
+    patch["monitoring"] = false;
   }
 
-  command()->setPreferenceValues(preferences);
+  command()->setPreferenceValues(patch);
 }
 
 void ClipboardHistoryView::handleFilterChange(const SelectorInput::AbstractItem &item) {

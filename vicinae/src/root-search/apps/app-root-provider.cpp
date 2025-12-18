@@ -37,7 +37,7 @@ AccessoryList AppRootItem::accessories() const {
 }
 
 EntrypointId AppRootItem::uniqueId() const {
-  return EntrypointId{"apps", m_app->id().remove(".desktop").toStdString()};
+  return EntrypointId{"@vicinae/applications", m_app->id().remove(".desktop").toStdString()};
 }
 
 ImageURL AppRootItem::iconUrl() const { return m_app->iconUrl(); }
@@ -134,7 +134,7 @@ QJsonObject AppRootProvider::generateDefaultPreferences() const {
   return preferences;
 }
 
-QString AppRootProvider::uniqueId() const { return "apps"; }
+QString AppRootProvider::uniqueId() const { return "@vicinae/applications"; }
 
 std::vector<std::shared_ptr<RootItem>> AppRootProvider::loadItems() const {
   std::vector<std::shared_ptr<RootItem>> items;

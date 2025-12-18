@@ -48,7 +48,7 @@ public:
   const std::shared_ptr<AbstractCommandRepository> &repository() const { return m_repo; }
   PreferenceList preferences() const override { return m_repo->preferences(); }
   QString displayName() const override { return m_repo->displayName(); }
-  QString uniqueId() const override { return m_repo->id(); }
+  QString uniqueId() const override { return repositoryId(); }
   ImageURL icon() const override { return m_repo->iconUrl(); };
   Type type() const override { return RootProvider::Type::ExtensionProvider; }
   std::vector<std::shared_ptr<RootItem>> loadItems() const override;
@@ -59,8 +59,10 @@ public:
 
   void initialized(const QJsonObject &preferences) override { return m_repo->initialized(preferences); }
 
-  QString repositoryId() const { return m_repo->id(); }
-  // TODO: user better logic
+  QString repositoryId() const {
+    if (isBuiltin()) return QString("@vicinae/") + m_repo->id();
+    return m_repo->id();
+  }
   bool isBuiltin() const { return m_repo->author() == "vicinae"; }
 
   ExtensionRootProvider(const std::shared_ptr<AbstractCommandRepository> &repo) : m_repo(repo) {}

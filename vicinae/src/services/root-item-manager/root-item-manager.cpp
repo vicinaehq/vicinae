@@ -618,7 +618,7 @@ void RootItemManager::mergeConfigWithMetadata(const config::ConfigValue &cfg) {
 
     if (providerConfig) {
       if (auto p = provider(entrypointId.provider.c_str())) {
-        p->preferencesChanged(transformPreferenceValues(providerConfig->preferences.value_or({})));
+        p->preferencesChanged(getProviderPreferenceValues(entrypointId.provider.c_str()));
       }
 
       if (auto it = providerConfig->entrypoints.find(entrypointId.entrypoint);
@@ -635,7 +635,7 @@ void RootItemManager::mergeConfigWithMetadata(const config::ConfigValue &cfg) {
     meta.fallback = fallbackSet.contains(entrypointId);
 
     if (itemConfig) {
-      item.item->preferenceValuesChanged(transformPreferenceValues(providerConfig->preferences.value_or({})));
+      item.item->preferenceValuesChanged(getItemPreferenceValues(entrypointId));
       if (auto enabled = itemConfig->enabled) { meta.enabled = enabled.value(); }
       if (auto alias = itemConfig->alias) { meta.alias = alias.value(); }
     }
