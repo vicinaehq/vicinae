@@ -1,7 +1,7 @@
 #pragma once
 #include "cli/cli.hpp"
-#include "config/config.hpp"
 #include "config/template.hpp"
+#include <stdexcept>
 
 class TemplateConfigCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "template"; }
@@ -23,8 +23,11 @@ class DefaultConfigCommand : public AbstractCommandLineCommand {
   void setup(CLI::App *app) override {}
 
   void run(CLI::App *app) override {
-    config::Manager manager;
-    std::cout << manager.defaultConfigData();
+    auto file = QFile(":config.jsonc");
+
+    if (!file.open(QIODevice::ReadOnly)) { throw std::runtime_error("Failed to open default config file!"); }
+
+    std::cout << file.readAll().toStdString();
     return;
   }
 

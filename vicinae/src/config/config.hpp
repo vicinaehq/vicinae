@@ -116,14 +116,6 @@ template <> struct Partial<ThemeConfig> {
   std::optional<std::string> name;
 };
 
-struct Meta {
-  std::vector<std::string> imports;
-};
-
-template <> struct Partial<Meta> {
-  std::optional<std::vector<std::string>> imports;
-};
-
 struct Margin {
   int left;
   int top;
@@ -159,7 +151,7 @@ struct ConfigValue {
   static const constexpr bool DFLT_CONSIDER_PRE_EDIT = false;
   static const constexpr bool DFLT_POP_TO_ROOT_ON_CLOSE = false;
 
-  Meta meta;
+  std::vector<std::string> imports;
   bool searchFilesInRoot = false;
   bool closeOnFocusLoss = DFLT_CLOSE_ON_FOCUS_LOSS;
   bool considerPreedit = DFLT_CONSIDER_PRE_EDIT;
@@ -199,7 +191,7 @@ struct ConfigValue {
 using PartialValue = Partial<ConfigValue>;
 
 template <> struct Partial<ConfigValue> {
-  std::optional<Partial<Meta>> meta;
+  std::optional<std::vector<std::string>> imports;
   std::optional<bool> closeOnFocusLoss;
   std::optional<bool> considerPreedit;
   std::optional<bool> popToRootOnClose;
@@ -288,7 +280,6 @@ private:
   template <> struct glz::meta<T> : glz::snake_case {};                                                      \
   template <> struct glz::meta<config::Partial<T>> : glz::snake_case {};
 
-SNAKE_CASIFY(config::Meta);
 SNAKE_CASIFY(config::LayerShellConfig);
 SNAKE_CASIFY(config::WindowConfig);
 SNAKE_CASIFY(config::ConfigValue);

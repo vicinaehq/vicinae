@@ -53,16 +53,14 @@ public:
   Type type() const override { return RootProvider::Type::ExtensionProvider; }
   std::vector<std::shared_ptr<RootItem>> loadItems() const override;
   QWidget *settingsDetail() const override { return new ExtensionSettingsDetail(uniqueId(), m_repo); }
+
   void preferencesChanged(const QJsonObject &preferences) override {
     return m_repo->preferenceValuesChanged(preferences);
   }
 
   void initialized(const QJsonObject &preferences) override { return m_repo->initialized(preferences); }
 
-  QString repositoryId() const {
-    if (isBuiltin()) return QString("@vicinae/") + m_repo->id();
-    return m_repo->id();
-  }
+  QString repositoryId() const { return m_repo->id(); }
   bool isBuiltin() const { return m_repo->author() == "vicinae"; }
 
   ExtensionRootProvider(const std::shared_ptr<AbstractCommandRepository> &repo) : m_repo(repo) {}

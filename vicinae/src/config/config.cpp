@@ -7,14 +7,14 @@
 namespace fs = std::filesystem;
 
 namespace config {
-static constexpr const char *TOP_COMMENT = R"(// This is the main vicinae user config file.
+static constexpr const char *TOP_COMMENT = R"(// This is your vicinae user configuration file.
+// This configuration is merged with the default vicinae configuration file, which you can obtain by running the `vicinae config default` command.
+// Every item defined in this file takes precedence over the values defined in the default config or any other imported file,
 //
-// You can make manual edits to this file, however you should keep in mind that this file may be written to by vicinae directly,
-// typically when a configuration change is made through the GUI.
+// You can make manual edits to this file, however you should keep in mind that this file may be written to by vicinae when a configuration change is made through the GUI.
 // When that happens, any custom comments or formatting will be lost.
 //
-// If you want to maintain a configuration file with your own comments and formatting, you should create a separate one
-// and import it here using the `$import` meta key.
+// If you want to maintain a configuration file with your own comments and formatting, you should create a separate file and add it to the 'imports' array.
 //
 // Learn more about configuration at https://docs.vicinae.com/config)";
 
@@ -32,7 +32,7 @@ template <typename T> T static merge(const auto &v1, const auto &v2) {
 }
 
 Manager::Manager(fs::path path) : m_userPath(path) {
-  auto file = QFile(":default_config.json");
+  auto file = QFile(":config.jsonc");
 
   if (!file.open(QIODevice::ReadOnly)) { throw std::runtime_error("Failed to open default config"); }
 
@@ -162,23 +162,21 @@ Manager::PartialConfigResult Manager::load(const std::filesystem::path &path, co
   }
 
   if (opts.resolveImports) {
-    if (cfg.meta && cfg.meta->imports) {
-      for (const auto &imp : cfg.meta->imports.value()) {
-        std::string importPath = expandPath(imp);
+    for (const auto &imp : cfg.imports.value_or({})) {
+      std::string importPath = expandPath(imp);
 
-        if (!importPath.starts_with('/')) { importPath = path.parent_path() / importPath; }
-        if (std::filesystem::exists(importPath)) {
-          PartialConfigResult imported = load(importPath, opts);
+      if (!importPath.starts_with('/')) { importPath = path.parent_path() / importPath; }
+      if (std::filesystem::exists(importPath)) {
+        PartialConfigResult imported = load(importPath, opts);
 
-          if (!imported) {
-            return std::unexpected(
-                std::format("Failed to import file \"{}\": {}", importPath, imported.error()));
-          }
-
-          cfg = merge<Partial<ConfigValue>>(imported, cfg);
-        } else {
-          qWarning() << "config file at" << importPath << "could not be found";
+        if (!imported) {
+          return std::unexpected(
+              std::format("Failed to import file \"{}\": {}", importPath, imported.error()));
         }
+
+        cfg = merge<Partial<ConfigValue>>(imported, cfg);
+      } else {
+        qWarning() << "config file at" << importPath << "could not be found";
       }
     }
   }
@@ -201,13 +199,19 @@ void Manager::prunePartial(Partial<ConfigValue> &user) {
       auto &v = it->second;
       auto currentIt = it++;
 
-      if (v.preferences) { prunePreferences(v.preferences.value()); }
+      if (v.preferences) {
+        prunePreferences(v.preferences.value());
+        if (v.preferences.value().empty()) { v.preferences.reset(); }
+      }
 
       for (auto it2 = v.entrypoints.begin(); it2 != v.entrypoints.end();) {
         auto currentIt = it2++;
         ProviderItemData &vi = currentIt->second;
 
-        if (vi.preferences) { prunePreferences(vi.preferences.value()); }
+        if (vi.preferences) {
+          prunePreferences(vi.preferences.value());
+          if (v.preferences.value().empty()) { v.preferences.reset(); }
+        }
 
         if (vi.alias && vi.alias->empty()) { vi.alias.reset(); }
         if (!vi.enabled.has_value() && vi.preferences.value_or({}).empty() && !vi.alias) {

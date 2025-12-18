@@ -1,7 +1,9 @@
 {
-	"meta": {
-		"imports": []
-	},
+	// A list of paths pointed to separate configuration files to source during loading.
+	// Note that values defined in the main configuration file always take precedence over imported
+	// files.
+	// Relative paths are accepted, and are relative to the configuration directory in which the main configuration file is located.
+	"imports": [],
 
 	// Whether root search should also search files directly.
 	// File search is asynchronous, so file search results may take additional time to show up.
@@ -48,14 +50,14 @@
 	// They show up on the very top of the root search when no search query is active.
 	// Each value is a serialized entrypoint ID.
 	"favorites": [
-		"@vicinae/clipboard:history"
+		"clipboard:history"
 	],
 
 	// List of entrypoints to suggest as a fallback when no results match the
 	// provided search query.
 	// Each value is a serialized entrypoint ID.
 	"fallbacks": [
-		"@vicinae/files:search"
+		"files:search"
 	],
 
 	"launcher_window": {
@@ -121,19 +123,17 @@
 	//
 	// Every item that can be activated from the vicinae root search is referred as an entrypoint, or sometimes, in the case of extensions, as a "command".
 	// Entrypoints are always grouped under a provider.
-	// For instance, applications entrypoints are all grouped under the "@vicinae/applications" provider 
+	// For instance, applications entrypoints are all grouped under the "applications" provider 
 	//
 	// Providers and entrypoints may accept a custom set of preferences in order to further configure them.
 	// They can also be enabled or disabled, which means they will no longer show up in search results.
 	// An alias can be defined for any entrypoint, as a mean to index it against a custom keyword.
 	//
-	// Provider names follow the simple syntax @<author>/<provider_id>
-	//
-	// The @vicinae author is reserved and is used for every built-in Vicinae provider, which vicinae comes with quite a lot of out of the box.
+	// Provider names follow the simple syntax [@<author>/]<provider_id>. The author part is only present if the extension is third-party.
 	//
 	// Sometimes, it is necessary to seralize a given entrypoint as a single string (e.g to define the list of favorite and fallback entrypoints).
-	// The syntax is as follows: @<author>/<provider_name>:<entrypoint_name>
-	// e.g @vicinae/clipboard:history
+	// The syntax is as follows: [@<author>/]<provider_name>:<entrypoint_name>
+	// e.g clipboard:history
 	//
 	// The best way to interact with providers and entrypoints is through the graphical interface provided by the
 	// settings window ("extensions" tab). Every time a change is made through this GUI, the relevant values will be
@@ -147,7 +147,7 @@
 	// that are installed on the system.
 	//
 	//"providers": {
-	//	"@vicinae/applications": {
+	//	"applications": {
 	//		"enabled": true,
 	//		"preferences": {
 	//			"launchPrefix": "uwsm app --"

@@ -68,7 +68,7 @@ RootShortcutItem::fallbackActionPanel(ApplicationContext *ctx, const RootItemMet
 QString RootShortcutItem::typeDisplayName() const { return "Shortcut"; }
 
 EntrypointId RootShortcutItem::uniqueId() const {
-  return EntrypointId{"@vicinae/shortcuts", m_link->id().toStdString()};
+  return EntrypointId{"shortcuts", m_link->id().toStdString()};
 }
 
 QString RootShortcutItem::displayName() const { return m_link->name(); }
@@ -126,7 +126,7 @@ ImageURL ShortcutRootProvider::icon() const {
   return icon;
 }
 
-QString ShortcutRootProvider::uniqueId() const { return "@vicinae/shortcuts"; }
+QString ShortcutRootProvider::uniqueId() const { return "shortcuts"; }
 RootProvider::Type ShortcutRootProvider::type() const { return RootProvider::Type::GroupProvider; }
 
 ShortcutRootProvider::ShortcutRootProvider(ShortcutService &db) : m_db(db) {
