@@ -252,11 +252,6 @@ public:
   bool setItemEnabled(const EntrypointId &id, bool value);
   bool setItemPreferenceValues(const EntrypointId &id, const QJsonObject &preferences);
 
-  /**
-   * Set preference values for the item with _id_.
-   * This method dissociates preference values that belong to the provider's preferences from
-   * those that belong to the item with _id_.
-   */
   void setPreferenceValues(const EntrypointId &id, const QJsonObject &preferences);
 
   bool setAlias(const EntrypointId &id, std::string_view alias);
@@ -270,7 +265,6 @@ public:
   std::vector<Preference> getMergedItemPreferences(const EntrypointId &id) const;
   QJsonObject getPreferenceValues(const EntrypointId &id) const;
   RootItemMetadata itemMetadata(const EntrypointId &id) const;
-  int maxFallbackPosition();
   bool isFallback(const EntrypointId &id) const;
   bool disableFallback(const EntrypointId &id);
   bool moveFallbackDown(const EntrypointId &id);
@@ -322,8 +316,12 @@ public:
   bool pruneProvider(const QString &id);
 
 private:
+  static QString getEntrypointSecretPreferenceKey(const EntrypointId &id, const QString &prefName);
+  void setEntrypointSecretPreference(const EntrypointId &id, const QString &prefName,
+                                     const QJsonValue &value);
   QJsonValue getEntrypointSecretPreference(const EntrypointId &entrypoint, const QString &prefName) const;
   QJsonValue getProviderSecretPreference(const QString &providerId, const QString &prefName) const;
+  void setProviderSecretPreference(const QString &id, const QString &prefName, const QJsonValue &value);
 
   ScopedLocalStorage getProviderSecretStorage(const QString &providerId) const;
 
