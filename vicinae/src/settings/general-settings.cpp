@@ -18,19 +18,20 @@
 void GeneralSettings::setConfig(const config::ConfigValue &value) {
   auto appFont = QApplication::font().family();
   auto currentIconTheme = QIcon::themeName();
+  auto &normalFont = value.font.normal;
 
   m_opacity->setText(QString::number(value.launcherWindow.opacity));
-  m_csd->setValueAsJson(value.launcherWindow.csd.enabled);
+  m_csd->setValueAsJson(value.launcherWindow.clientSideDecorations.enabled);
   m_themeSelector->setValue(value.theme.name.c_str());
-  m_fontSelector->setValue(value.font.normal.value_or(appFont.toStdString()).c_str());
-  // m_rootFileSearch->setValueAsJson(value.rootSearch.searchFiles);
+  m_fontSelector->setValue(normalFont.family == "auto" ? appFont : normalFont.family.c_str());
+  m_rootFileSearch->setValueAsJson(value.searchFilesInRoot);
   m_qThemeSelector->setValue(value.theme.iconTheme.value_or(currentIconTheme.toStdString()).c_str());
   m_faviconSelector->setValue(value.faviconService.c_str());
   m_keybindingSelector->setValue(value.keybinding.c_str());
   m_popToRootOnClose->setValueAsJson(value.popToRootOnClose);
   m_closeOnFocusLoss->setValueAsJson(value.closeOnFocusLoss);
   m_considerPreedit->setValueAsJson(value.considerPreedit);
-  m_fontSize->setText(QString::number(value.font.size));
+  m_fontSize->setText(QString::number(value.font.normal.size));
 }
 
 void GeneralSettings::handleFaviconServiceChange(const QString &service) {
@@ -50,16 +51,17 @@ void GeneralSettings::handleThemeChange(const QString &id) {
 }
 
 void GeneralSettings::handleClientSideDecorationChange(bool csd) {
-  m_cfg.mergeWithUser(
-      {.launcherWindow = config::Partial<config::WindowConfig>{.csd = config::WindowCSD{.enabled = csd}}});
+  m_cfg.mergeWithUser({.launcherWindow = config::Partial<config::WindowConfig>{
+                           .clientSideDecorations = config::WindowCSD{.enabled = csd}}});
 }
 
 void GeneralSettings::handleFontChange(const QString &font) {
-  m_cfg.mergeWithUser({.font = config::Partial<config::FontConfig>{.normal = font.toStdString()}});
+  m_cfg.mergeWithUser(
+      {.font = config::Partial<config::FontConfig>{.normal = {.family = font.toStdString()}}});
 }
 
 void GeneralSettings::handleRootSearchFilesChange(bool enabled) {
-  // config->updateConfig([&](ConfigService::Value &value) { value.rootSearch.searchFiles = enabled; });
+  m_cfg.mergeWithUser({.searchFilesInRoot = enabled});
 }
 
 void GeneralSettings::handleOpacityChange(float opacity) {
@@ -71,7 +73,7 @@ void GeneralSettings::handlePopToRootOnCloseChange(bool popToRootOnClose) {
 }
 
 void GeneralSettings::handleFontSizeChange(double size) {
-  m_cfg.mergeWithUser({.font = config::Partial<config::FontConfig>{.size = (float)size}});
+  m_cfg.mergeWithUser({.font = config::Partial<config::FontConfig>{.normal{.size = (float)size}}});
 }
 
 void GeneralSettings::handleCloseOnFocusLossChange(bool value) {
@@ -151,10 +153,10 @@ void GeneralSettings::setupUI() {
   connect(opacityField, &FormField::blurred, this,
           [this]() { handleOpacityChange(m_opacity->text().toDouble()); });
 
-  // m_rootFileSearch->setValueAsJson(value.rootSearch.searchFiles);
+  m_rootFileSearch->setValueAsJson(value.searchFilesInRoot);
 
   m_csd->setLabel("Use client-side decorations");
-  m_csd->setValueAsJson(value.launcherWindow.csd.enabled);
+  m_csd->setValueAsJson(value.launcherWindow.clientSideDecorations.enabled);
 
   connect(m_csd, &CheckboxInput::valueChanged, this, &GeneralSettings::handleClientSideDecorationChange);
 
@@ -163,8 +165,8 @@ void GeneralSettings::setupUI() {
   csdField->setInfo(
       R"(Let Vicinae draw its own rounded borders instead of relying on the windowing system to do so. You can usually get more refined results by properly configuring your window manager.)");
 
-  m_themeSelector->setValue(value.theme.name.c_str());
-  m_fontSelector->setValue(value.font.normal.value_or(appFont.toStdString()).c_str());
+  // m_themeSelector->setValue(value.theme.name.c_str());
+  // m_fontSelector->setValue(value.font.normal.value_or(appFont.toStdString()).c_str());
 
   m_rootFileSearch->setLabel("Show files in root search");
 

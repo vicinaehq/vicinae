@@ -862,10 +862,10 @@ MarkdownRenderer::MarkdownRenderer()
 
   auto config = ServiceRegistry::instance()->config();
 
-  _basePointSize = config->value().font.size;
+  _basePointSize = config->value().font.normal.size;
 
   connect(config, &config::Manager::configChanged, this,
-          [this, config]() { _basePointSize = config->value().font.size; });
+          [this, config]() { _basePointSize = config->value().font.normal.size; });
   connect(_textEdit, &QTextBrowser::anchorClicked, this, [](const QUrl &url) {
     if (!ServiceRegistry::instance()->appDb()->openTarget(url)) {
       qWarning() << "Failed to open link" << url;

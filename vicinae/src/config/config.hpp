@@ -15,11 +15,11 @@
 #include <iostream>
 #include <qfilesystemwatcher.h>
 #include <qmargins.h>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 
 namespace config {
-
 struct ProviderItemData {
   std::optional<std::string> alias;
   std::optional<bool> enabled;
@@ -35,19 +35,16 @@ struct ProviderData {
 template <typename T> struct Partial;
 
 struct LayerShellConfig {
-  enum class Layer { Top, Overlay };
-  enum class KeyboardInteractivity { Exclusive, OnDemand };
-
   std::string scope = "vicinae";
-  Layer layer = Layer::Top;
-  KeyboardInteractivity keyboardInteractivity = KeyboardInteractivity::Exclusive;
+  std::string keyboardInteractivity = "exclusive";
+  std::string layer = "top";
   bool enabled = true;
 };
 
 template <> struct Partial<LayerShellConfig> {
   std::optional<std::string> scope;
-  std::optional<LayerShellConfig::Layer> layer;
-  std::optional<LayerShellConfig::KeyboardInteractivity> keyboardInteractivity;
+  std::optional<std::string> layer;
+  std::optional<std::string> keyboardInteractivity;
   std::optional<bool> enabled;
 };
 
@@ -80,7 +77,7 @@ struct WindowConfig {
   static const constexpr bool DFLT_CSD = true;
 
   float opacity = DFLT_OPACITY;
-  WindowCSD csd;
+  WindowCSD clientSideDecorations;
   Size size = DFLT_SIZE;
   std::string screen = "auto";
 
@@ -90,19 +87,23 @@ struct WindowConfig {
 template <> struct Partial<WindowConfig> {
   std::optional<int> rounding;
   std::optional<float> opacity;
-  std::optional<WindowCSD> csd;
+  std::optional<WindowCSD> clientSideDecorations;
   std::optional<Partial<Size>> size;
   std::optional<Partial<LayerShellConfig>> layerShell;
 };
 
 struct FontConfig {
-  std::optional<std::string> normal;
-  float size = 10.5;
+  struct {
+    std::string family = "auto";
+    float size = 10.5;
+  } normal;
 };
 
 template <> struct Partial<FontConfig> {
-  std::optional<std::string> normal;
-  std::optional<float> size;
+  struct {
+    std::optional<std::string> family;
+    std::optional<float> size;
+  } normal;
 };
 
 struct ThemeConfig {
@@ -159,6 +160,7 @@ struct ConfigValue {
   static const constexpr bool DFLT_POP_TO_ROOT_ON_CLOSE = false;
 
   Meta meta;
+  bool searchFilesInRoot = false;
   bool closeOnFocusLoss = DFLT_CLOSE_ON_FOCUS_LOSS;
   bool considerPreedit = DFLT_CONSIDER_PRE_EDIT;
   bool popToRootOnClose = DFLT_POP_TO_ROOT_ON_CLOSE;
@@ -192,25 +194,6 @@ struct ConfigValue {
 
     return std::nullopt;
   }
-
-  glz::generic::object_t mergedPreferences(const EntrypointId &id) const {
-    glz::generic::object_t prefs;
-    std::string buf;
-
-    if (auto it = providers.find(id.provider); it != providers.end()) {
-      prefs = it->second.preferences.value_or({});
-
-      if (auto it2 = it->second.entrypoints.find(id.entrypoint); it2 != it->second.entrypoints.end()) {
-        if (auto preferences = it2->second.preferences) {
-          auto merged = glz::merge{prefs, preferences.value()};
-          (void)glz::write_json(merged, buf);
-          (void)glz::read_json(prefs, buf);
-        }
-      }
-    }
-
-    return prefs;
-  }
 };
 
 using PartialValue = Partial<ConfigValue>;
@@ -222,6 +205,7 @@ template <> struct Partial<ConfigValue> {
   std::optional<bool> popToRootOnClose;
   std::optional<std::string> faviconService;
   std::optional<std::string> keybinding;
+  std::optional<bool> searchFilesInRoot;
 
   std::optional<Partial<FontConfig>> font;
   std::optional<Partial<ThemeConfig>> theme;
@@ -254,7 +238,8 @@ private:
 public:
   Manager(std::filesystem::path path = Omnicast::configDir() / "vicinae.json");
 
-  ConfigValue defaultConfig() const { return {}; }
+  ConfigValue defaultConfig() const;
+  std::string_view defaultConfigData() const;
 
   bool mergeProviderWithUser(std::string_view id, ProviderData &&data);
 
@@ -270,7 +255,7 @@ public:
 
   std::filesystem::path path() const { return m_userPath; }
 
-  void print(const ConfigValue &value) const {
+  static void print(const ConfigValue &value) {
     std::string buf;
     auto res = glz::write_json(value, buf);
     std::cout << glz::prettify_json(buf) << std::endl;
@@ -293,6 +278,9 @@ private:
   QFileSystemWatcher m_watcher;
   std::filesystem::path m_userPath;
   ConfigValue m_user;
+
+  std::string m_defaultData;
+  ConfigValue m_defaultConfig;
 };
 }; // namespace config
 
@@ -306,13 +294,3 @@ SNAKE_CASIFY(config::WindowConfig);
 SNAKE_CASIFY(config::ConfigValue);
 SNAKE_CASIFY(config::ThemeConfig);
 SNAKE_CASIFY(config::WindowCSD);
-
-template <> struct glz::meta<config::LayerShellConfig::Layer> {
-  using enum config::LayerShellConfig::Layer;
-  static constexpr auto value = glz::enumerate(Overlay, Top);
-};
-
-template <> struct glz::meta<config::LayerShellConfig::KeyboardInteractivity> {
-  using enum config::LayerShellConfig::KeyboardInteractivity;
-  static constexpr auto value = glz::enumerate(Exclusive, OnDemand);
-};

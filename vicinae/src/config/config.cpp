@@ -1,5 +1,6 @@
 #include <format>
 #include <fstream>
+#include <string_view>
 #include "utils.hpp"
 #include "config.hpp"
 
@@ -31,13 +32,29 @@ template <typename T> T static merge(const auto &v1, const auto &v2) {
 }
 
 Manager::Manager(fs::path path) : m_userPath(path) {
+  auto file = QFile(":default_config.json");
+  ConfigValue cfg;
+
+  if (!file.open(QIODevice::ReadOnly)) { throw std::runtime_error("Failed to open default config"); }
+
+  m_defaultData = file.readAll().toStdString();
+
+  if (auto error = glz::read_jsonc(cfg, m_defaultData)) {
+    throw std::runtime_error(
+        std::format("Failed to parse default config file: {}", glz::format_error(error)));
+  }
+
   initConfig();
   reloadConfig();
+
   connect(&m_watcher, &QFileSystemWatcher::fileChanged, this, [this](const QString &path) {
     m_watcher.addPath(m_userPath.c_str());
     reloadConfig();
   });
 }
+
+ConfigValue Manager::defaultConfig() const { return m_defaultConfig; }
+std::string_view Manager::defaultConfigData() const { return m_defaultData; }
 
 bool Manager::mergeProviderWithUser(std::string_view id, ProviderData &&data) {
   return mergeWithUser({.providers = ProviderMap{{std::string{id}, data}}});
@@ -101,9 +118,7 @@ bool Manager::writeUser(const Partial<ConfigValue> &cfg) {
     ofs << TOP_COMMENT << "\n\n" << glz::prettify_json(buf);
   }
 
-  ConfigValue prev = std::move(m_user);
-  m_user = loadUser({.resolveImports = true}).value();
-  emit configChanged(m_user, prev);
+  reloadConfig();
 
   return true;
 }

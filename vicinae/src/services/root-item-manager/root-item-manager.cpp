@@ -1,3 +1,4 @@
+#include <qjsonvalue.h>
 #include <ranges>
 #include <algorithm>
 #include <qlogging.h>
@@ -214,12 +215,19 @@ bool RootItemManager::setProviderPreferenceValues(const QString &id, const QJson
 QJsonObject RootItemManager::transformPreferenceValues(const glz::generic::object_t &preferences) {
   QJsonObject obj;
 
+  std::function<QJsonValue(const glz::generic &)> transformValue = [&](const glz::generic &v) -> QJsonValue {
+    if (v.is_boolean()) return v.get_boolean();
+    if (v.is_string()) return v.get_string().c_str();
+    if (v.is_number()) return v.get_number();
+    if (v.is_null()) return QJsonValue::Null;
+    if (v.is_array())
+      return v.get_array() | std::views::transform(transformValue) | std::ranges::to<QJsonArray>();
+    if (v.is_object()) return transformValue(v.get_object());
+    return QJsonValue::Undefined;
+  };
+
   for (const auto &[key, v] : preferences) {
-    QString k = key.c_str();
-    if (v.is_boolean()) obj[k] = v.get_boolean();
-    if (v.is_string()) obj[k] = v.get_string().c_str();
-    if (v.is_number()) obj[k] = v.get_number();
-    if (v.is_null()) obj[k] = QJsonValue::Null;
+    obj[key.c_str()] = transformValue(v);
   }
 
   return obj;
@@ -227,6 +235,17 @@ QJsonObject RootItemManager::transformPreferenceValues(const glz::generic::objec
 
 glz::generic::object_t RootItemManager::transformPreferenceValues(const QJsonObject &preferences) {
   glz::generic::object_t obj;
+
+  std::function<glz::generic(const QJsonValue &)> transformValue = [&](const QJsonValue &v) -> glz::generic {
+    if (v.isBool()) return v.toBool();
+    if (v.isString()) return v.toString().toStdString();
+    if (v.isDouble()) return v.toDouble();
+    if (v.isNull()) return glz::generic::null_t{};
+    if (v.isArray())
+      return v.toArray() | std::views::transform(transformValue) | std::ranges::to<glz::generic::array_t>();
+    if (v.isObject()) return transformPreferenceValues(v.toObject());
+    return {};
+  };
 
   for (const auto &key : preferences.keys()) {
     std::string k = key.toStdString();
@@ -246,11 +265,11 @@ bool RootItemManager::setItemPreferenceValues(const EntrypointId &id, const QJso
 
   if (!item) return false;
 
-  auto storage = getProviderSecretStorage(id.provider.c_str());
   QJsonObject itemPreferences;
 
   for (const Preference &pref : item->preferences()) {
     QJsonValue v = preferences.value(pref.name());
+
     if (!v.isUndefined()) {
       if (pref.isSecret()) {
         setEntrypointSecretPreference(id, pref.name(), v);
@@ -398,7 +417,6 @@ QJsonObject RootItemManager::getPreferenceValues(const EntrypointId &id) const {
 
 RootItemMetadata RootItemManager::itemMetadata(const EntrypointId &id) const {
   if (auto it = m_metadata.find(id); it != m_metadata.end()) { return it->second; }
-
   return {};
 }
 

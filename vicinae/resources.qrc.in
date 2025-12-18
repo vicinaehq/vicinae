@@ -3,4 +3,7 @@
   <qresource prefix="/bin">
   	<file alias="extension-manager">@ASSET_PATH@/extension-runtime.js</file>
   </qresource>
+  <qresource>
+  	<file alias="default_config.json">@ASSET_PATH@/config.jsonc</file>
+  </qresource>
 </RCC>

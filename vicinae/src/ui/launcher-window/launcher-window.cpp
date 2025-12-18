@@ -228,12 +228,11 @@ void LauncherWindow::handleConfigurationChange(const config::ConfigValue &value)
     using clsh = config::LayerShellConfig;
 
     if (auto lshell = Shell::Window::get(windowHandle())) {
-      lshell->setLayer(lc.layer == config::LayerShellConfig::Layer::Overlay ? Shell::Window::LayerOverlay
-                                                                            : Shell::Window::LayerTop);
+      lshell->setLayer(lc.layer == "overlay" ? Shell::Window::LayerOverlay : Shell::Window::LayerTop);
       lshell->setScope(lc.scope.c_str());
       lshell->setScreenConfiguration(Shell::Window::ScreenFromCompositor);
       lshell->setAnchors(Shell::Window::AnchorNone);
-      lshell->setKeyboardInteractivity(lc.keyboardInteractivity == clsh::KeyboardInteractivity::Exclusive
+      lshell->setKeyboardInteractivity(lc.keyboardInteractivity == "exclusive"
                                            ? Shell::Window::KeyboardInteractivityExclusive
                                            : Shell::Window::KeyboardInteractivityOnDemand);
     }
@@ -319,12 +318,14 @@ void LauncherWindow::paintEvent(QPaintEvent *event) {
   finalBgColor.setAlphaF(config.launcherWindow.opacity);
   painter.setRenderHint(QPainter::Antialiasing, true);
 
-  if (config.launcherWindow.csd.enabled) {
+  if (config.launcherWindow.clientSideDecorations.enabled) {
     QPainterPath path;
-    path.addRoundedRect(rect(), config.launcherWindow.csd.rounding, config.launcherWindow.csd.rounding);
+    path.addRoundedRect(rect(), config.launcherWindow.clientSideDecorations.rounding,
+                        config.launcherWindow.clientSideDecorations.rounding);
     painter.setClipPath(path);
     painter.fillPath(path, finalBgColor);
-    painter.setThemePen(SemanticColor::MainWindowBorder, config.launcherWindow.csd.borderWidth);
+    painter.setThemePen(SemanticColor::MainWindowBorder,
+                        config.launcherWindow.clientSideDecorations.borderWidth);
     painter.drawPath(path);
   } else {
     painter.fillRect(rect(), finalBgColor);

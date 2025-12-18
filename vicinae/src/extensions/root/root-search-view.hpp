@@ -126,7 +126,7 @@ public:
 
     connect(config, &config::Manager::configChanged, this,
             [&](const config::ConfigValue &next, const config::ConfigValue &prev) {
-              // m_controller->setFileSearch(next.rootSearch.searchFiles);
+              m_controller->setFileSearch(next.searchFilesInRoot);
             });
   }
 

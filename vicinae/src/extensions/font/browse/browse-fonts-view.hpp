@@ -96,7 +96,7 @@ class SetAppFont : public AbstractAction {
 
   void execute(ApplicationContext *ctx) override {
     ctx->services->config()->mergeWithUser(
-        {.font = config::Partial<config::FontConfig>{.normal = m_font.family().toStdString()}});
+        {.font = config::Partial<config::FontConfig>{.normal = {.family = m_font.family().toStdString()}}});
   }
 
 public:

@@ -28,7 +28,7 @@ class BuiltinCommand : public AbstractCmd {
 
 public:
   EntrypointId uniqueId() const override final {
-    return EntrypointId{_repositoryId.toStdString(), id().toStdString()};
+    return EntrypointId{std::format("@vicinae/{}", _repositoryId.toStdString()), id().toStdString()};
   }
 
   virtual QString id() const = 0;

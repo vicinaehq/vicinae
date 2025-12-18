@@ -245,9 +245,9 @@ void CliServerCommand::run(CLI::App *app) {
         next.theme.iconTheme && next.theme.iconTheme.value_or("") != prev.theme.iconTheme.value_or("");
     IconThemeDatabase iconThemeDb;
 
-    theme.setFontBasePointSize(next.font.size);
+    theme.setFontBasePointSize(next.font.normal.size);
 
-    if (next.font.size != prev.font.size) {
+    if (next.font.normal.size != prev.font.normal.size) {
       if (!themeChangeRequired) { theme.reloadCurrentTheme(); }
     }
 
@@ -265,8 +265,14 @@ void CliServerCommand::run(CLI::App *app) {
       QIcon::setThemeName(iconThemeDb.guessBestTheme());
     }
 
-    if (next.font.normal && *next.font.normal != prev.font.normal.value_or("")) {
-      QApplication::setFont(QFont(next.font.normal->c_str()));
+    if (next.font.normal.family != prev.font.normal.family) {
+      auto family = next.font.normal.family;
+      if (family == "auto") {
+        QApplication::setFont(QFont());
+      } else {
+        QApplication::setFont(QFont(family.c_str()));
+      }
+
       qApp->setStyleSheet(qApp->styleSheet());
     }
   };
