@@ -228,7 +228,7 @@ private:
   using PartialConfigResult = std::expected<Partial<ConfigValue>, std::string>;
 
 public:
-  Manager(std::filesystem::path path = Omnicast::configDir() / "vicinae.json");
+  Manager(std::filesystem::path path = Omnicast::configDir() / "settings.json");
 
   ConfigValue defaultConfig() const;
   std::string_view defaultConfigData() const;

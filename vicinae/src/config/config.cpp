@@ -7,9 +7,9 @@
 namespace fs = std::filesystem;
 
 namespace config {
-static constexpr const char *TOP_COMMENT = R"(// This is your vicinae user configuration file.
-// This configuration is merged with the default vicinae configuration file, which you can obtain by running the `vicinae config default` command.
-// Every item defined in this file takes precedence over the values defined in the default config or any other imported file,
+static constexpr const char *TOP_COMMENT =
+    R"(// This configuration is merged with the default vicinae configuration file, which you can obtain by running the `vicinae config default` command.
+// Every item defined in this file takes precedence over the values defined in the default config or any other imported file.
 //
 // You can make manual edits to this file, however you should keep in mind that this file may be written to by vicinae when a configuration change is made through the GUI.
 // When that happens, any custom comments or formatting will be lost.
