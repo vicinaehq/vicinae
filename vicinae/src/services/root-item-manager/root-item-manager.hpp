@@ -238,7 +238,6 @@ public:
   };
 
   struct ScoredItem {
-    std::string_view alias;
     RootItemMetadata *meta = nullptr;
     double score = 0;
     // we return the shared ptr so that callers can keep a ref to it if needed,

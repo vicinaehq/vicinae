@@ -174,15 +174,14 @@ std::span<RootItemManager::ScoredItem> RootItemManager::search(const QString &qu
 
     if (!fuzzyScore) { continue; }
 
-    m_scoredItems.emplace_back(ScoredItem{
-        .alias = item.meta->alias.value_or(""), .meta = item.meta, .score = fuzzyScore, .item = item.item});
+    m_scoredItems.emplace_back(ScoredItem{.meta = item.meta, .score = fuzzyScore, .item = item.item});
   }
 
   // we need stable sort to avoid flickering when updating quickly
   std::ranges::stable_sort(m_scoredItems, [&](const auto &a, const auto &b) {
     if (opts.prioritizeAliased) {
-      bool aa = !a.alias.empty() && a.alias.starts_with(pattern);
-      bool ab = !b.alias.empty() && b.alias.starts_with(pattern);
+      bool aa = !a.meta->alias.value_or("").empty() && a.meta->alias->starts_with(pattern);
+      bool ab = !b.meta->alias.value_or("").empty() && b.meta->alias->starts_with(pattern);
       // always prioritize matching aliases over score
       if (aa - ab) { return aa > ab; }
     }

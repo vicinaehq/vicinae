@@ -168,14 +168,16 @@ struct ConfigValue {
   FontConfig font;
   ThemeConfig theme;
 
-  std::vector<std::string> favorites;
-  std::vector<std::string> fallbacks;
   WindowConfig launcherWindow;
   Header header;
   Footer footer;
 
   // we use maps to keep serialized output predictable
   KeybindMap keybinds;
+
+  std::vector<std::string> favorites;
+  std::vector<std::string> fallbacks;
+
   ProviderMap providers;
 
   std::optional<glz::generic::object_t> providerPreferences(std::string_view id) const {
@@ -208,13 +210,15 @@ template <> struct Partial<ConfigValue> {
   std::optional<Partial<FontConfig>> font;
   std::optional<Partial<ThemeConfig>> theme;
 
-  std::optional<std::vector<std::string>> favorites;
-  std::optional<std::vector<std::string>> fallbacks;
   std::optional<Partial<WindowConfig>> launcherWindow;
   std::optional<Partial<Header>> header;
   std::optional<Partial<Footer>> footer;
 
   std::optional<KeybindMap> keybinds;
+
+  std::optional<std::vector<std::string>> favorites;
+  std::optional<std::vector<std::string>> fallbacks;
+
   std::optional<std::map<std::string, Partial<ProviderData>>> providers;
 };
 
