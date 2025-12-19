@@ -62,6 +62,7 @@ class OpenVicinaeConfig : public BuiltinCallbackCommand {
     auto ctx = controller->context();
     ctx->services->appDb()->openTarget(ctx->services->config()->path().c_str());
     ctx->navigation->closeWindow();
+    ctx->navigation->clearSearchText();
   }
 };
 
@@ -93,6 +94,7 @@ class OpenDefaultVicinaeConfig : public BuiltinCallbackCommand {
     file.setPermissions(QFileDevice::ReadOwner);
     ctx->services->appDb()->openTarget(file.fileName());
     ctx->navigation->closeWindow();
+    ctx->navigation->clearSearchText();
   }
 };
 
