@@ -148,6 +148,7 @@ class OAuthTokenStoreCommand : public BuiltinViewCommand<OAuthTokenStoreView> {
 class InspectLocalStorage : public BuiltinViewCommand<BrowseLocalStorageView> {
   QString id() const override { return "inspect-local-storage"; }
   QString name() const override { return "Inspect Local Storage"; }
+  bool isDefaultDisabled() const override { return true; }
   QString description() const override {
     return "Browse data stored in Vicinae's local storage. This includes data stored for builtin extensions "
            "as well as third-party extensions making use of the LocalStorage API.";
