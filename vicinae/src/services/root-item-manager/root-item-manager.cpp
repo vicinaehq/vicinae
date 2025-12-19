@@ -11,7 +11,7 @@
 #include "vicinae.hpp"
 
 RootItemManager::RootItemManager(config::Manager &cfg, LocalStorageService &storage)
-    : m_cfg(cfg), m_storage(storage), m_visitTracker(Omnicast::dataDir() / "visits.json") {
+    : m_cfg(cfg), m_storage(storage), m_visitTracker(Omnicast::dataDir() / "metadata.json") {
   connect(&cfg, &config::Manager::configChanged, this, [this](const config::ConfigValue &next) {
     mergeConfigWithMetadata(next);
     qDebug() << "configuration changed";
@@ -366,7 +366,7 @@ QJsonObject RootItemManager::getProviderPreferenceValues(const QString &id) cons
     if (!json.contains(pref.name())) {
       if (pref.isSecret()) {
         QJsonValue value = getProviderSecretPreference(id, pref.name());
-        json[pref.name()] = value.isUndefined() ? pref.defaultValue() : value;
+        json[pref.name()] = value.isNull() ? pref.defaultValue() : value;
       } else {
         json[pref.name()] = pref.defaultValue();
       }
@@ -398,7 +398,7 @@ QJsonObject RootItemManager::getItemPreferenceValues(const EntrypointId &id) con
     if (!json.contains(pref.name())) {
       if (pref.isSecret()) {
         QJsonValue value = getEntrypointSecretPreference(id, pref.name());
-        json[pref.name()] = value.isUndefined() ? pref.defaultValue() : value;
+        json[pref.name()] = value.isNull() ? pref.defaultValue() : value;
       } else {
         json[pref.name()] = pref.defaultValue();
       }
