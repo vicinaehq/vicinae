@@ -89,6 +89,7 @@ bool ExtensionRegistry::uninstall(const QString &id) {
   m_installed.erase(it);
   m_storage.clearNamespace(id);
   emit extensionUninstalled(id);
+  emit extensionsChanged();
 
   return true;
 }

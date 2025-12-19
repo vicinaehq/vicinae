@@ -42,12 +42,10 @@ void RootSearchModel::setFileResults(const std::vector<IndexerFileResult> &files
 
 void RootSearchModel::setFallbackItems(const std::vector<std::shared_ptr<RootItem>> &items) {
   m_fallbackItems = items;
-  emit dataChanged();
 }
 
 void RootSearchModel::setFavorites(const std::vector<std::shared_ptr<RootItem>> &favorites) {
   m_favorites = favorites;
-  emit dataChanged();
 }
 
 void RootSearchModel::setDefaultOpener(const LinkItem &opener) {

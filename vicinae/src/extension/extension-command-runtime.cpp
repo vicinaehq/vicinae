@@ -140,8 +140,11 @@ void ExtensionCommandRuntime::initialize() {
   m_commandRouter =
       std::make_unique<CommandRequestRouter>(m_navigation.get(), context()->services->rootItemManager());
   m_fileSearchRouter = std::make_unique<FileSearchRequestRouter>(*context()->services->fileService());
+
+  QString storageNamespace = QString("%1:data").arg(m_command->uniqueId().provider.c_str());
+
   m_storageRouter =
-      std::make_unique<StorageRequestRouter>(context()->services->localStorage(), m_command->extensionId());
+      std::make_unique<StorageRequestRouter>(context()->services->localStorage(), storageNamespace);
   m_appRouter = std::make_unique<AppRequestRouter>(*context()->services->appDb());
   m_clipboardRouter = std::make_unique<ClipboardRequestRouter>(*context()->services->clipman());
   m_wmRouter = std::make_unique<WindowManagementRouter>(*context()->services->windowManager(),

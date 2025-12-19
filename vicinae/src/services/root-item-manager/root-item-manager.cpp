@@ -98,6 +98,7 @@ void RootItemManager::updateIndex() {
 
   isReloading = true;
   m_items.clear();
+  m_metadata.clear();
 
   auto &cfg = m_cfg.value();
 
@@ -380,6 +381,9 @@ bool RootItemManager::pruneProvider(const QString &id) {
   m_cfg.updateUser([&](config::PartialValue &v) {
     if (v.providers) { v.providers->erase(id.toStdString()); }
   });
+
+  m_storage.clearNamespace(id + ":preferences");
+  m_storage.clearNamespace(id + ":data");
 
   return true;
 }

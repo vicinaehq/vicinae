@@ -189,7 +189,7 @@ void CliServerCommand::run(CLI::App *app) {
 
         auto extp = static_cast<ExtensionRootProvider *>(provider);
 
-        if (!extp->isBuiltin() && !scanned.contains(extp->repositoryId())) {
+        if (!extp->isBuiltin() && !scanned.contains(extp->uniqueId())) {
           removed.emplace_back(extp->uniqueId());
         }
       }
@@ -198,12 +198,6 @@ void CliServerCommand::run(CLI::App *app) {
         root->uninstallProvider(id);
       }
 
-      root->updateIndex();
-    });
-
-    QObject::connect(reg, &ExtensionRegistry::extensionUninstalled, [reg](const QString &id) {
-      auto root = ServiceRegistry::instance()->rootItemManager();
-      root->uninstallProvider(QString("extension.%1").arg(id));
       root->updateIndex();
     });
 
