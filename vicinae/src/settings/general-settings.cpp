@@ -21,16 +21,16 @@ void GeneralSettings::setConfig(const config::ConfigValue &value) {
   auto &normalFont = value.font.normal;
 
   m_opacity->setText(QString::number(value.launcherWindow.opacity));
-  m_csd->setValueAsJson(value.launcherWindow.clientSideDecorations.enabled);
+  m_csd->stealthySetValueAsJson(value.launcherWindow.clientSideDecorations.enabled);
   m_themeSelector->setValue(value.theme.name.c_str());
   m_fontSelector->setValue(normalFont.family == "auto" ? appFont : normalFont.family.c_str());
-  m_rootFileSearch->setValueAsJson(value.searchFilesInRoot);
+  m_rootFileSearch->stealthySetValueAsJson(value.searchFilesInRoot);
   m_qThemeSelector->setValue(value.theme.iconTheme.value_or(currentIconTheme.toStdString()).c_str());
   m_faviconSelector->setValue(value.faviconService.c_str());
   m_keybindingSelector->setValue(value.keybinding.c_str());
-  m_popToRootOnClose->setValueAsJson(value.popToRootOnClose);
-  m_closeOnFocusLoss->setValueAsJson(value.closeOnFocusLoss);
-  m_considerPreedit->setValueAsJson(value.considerPreedit);
+  m_popToRootOnClose->stealthySetValueAsJson(value.popToRootOnClose);
+  m_closeOnFocusLoss->stealthySetValueAsJson(value.closeOnFocusLoss);
+  m_considerPreedit->stealthySetValueAsJson(value.considerPreedit);
   m_fontSize->setText(QString::number(value.font.normal.size));
 }
 
@@ -164,9 +164,6 @@ void GeneralSettings::setupUI() {
 
   csdField->setInfo(
       R"(Let Vicinae draw its own rounded borders instead of relying on the windowing system to do so. You can usually get more refined results by properly configuring your window manager.)");
-
-  // m_themeSelector->setValue(value.theme.name.c_str());
-  // m_fontSelector->setValue(value.font.normal.value_or(appFont.toStdString()).c_str());
 
   m_rootFileSearch->setLabel("Show files in root search");
 
