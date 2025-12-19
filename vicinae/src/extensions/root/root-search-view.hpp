@@ -116,12 +116,13 @@ public:
     auto config = context()->services->config();
     m_manager = context()->services->rootItemManager();
     m_model = new RootSearchModel(m_manager);
+    setModel(m_model);
+
     m_controller =
         new RootSearchController(m_manager, context()->services->fileService(), context()->services->appDb(),
                                  context()->services->calculatorService(), m_model, this);
 
     m_list->setModel(m_model);
-    setModel(m_model);
     m_controller->setFilter("");
 
     connect(config, &config::Manager::configChanged, this,
