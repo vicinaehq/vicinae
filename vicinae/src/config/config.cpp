@@ -90,17 +90,17 @@ bool Manager::mergeWithUser(const Partial<ConfigValue> &patch) {
 
   if (auto error =
           glz::read_file_jsonc<glz::opts{.error_on_unknown_keys = false}>(user, m_userPath.c_str(), buf)) {
-    qWarning() << "Failed to read user config as partial";
+    qWarning() << "Failed to read user config as partial, config changes haven't been applied.";
     return false;
   }
 
   if (auto error = glz::write_json(glz::merge{user, patch}, buf)) {
-    qWarning() << "Failed to merge partials";
+    qWarning() << "Failed to merge partials: config changes haven't been applied";
     return false;
   }
 
   if (auto error = glz::read_json(user, buf)) {
-    qWarning() << "Failed to read merged partials";
+    qWarning() << "Failed to read merged partials: config changes haven't been applied";
     return false;
   }
 

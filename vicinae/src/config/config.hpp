@@ -243,7 +243,6 @@ public:
 
   /**
    * Update the current user configuration, instead of merging.
-   *
    */
   bool updateUser(const std::function<void(Partial<ConfigValue> &value)> &updater);
 
