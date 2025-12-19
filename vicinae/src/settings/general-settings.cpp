@@ -52,7 +52,7 @@ void GeneralSettings::handleThemeChange(const QString &id) {
 
 void GeneralSettings::handleClientSideDecorationChange(bool csd) {
   m_cfg.mergeWithUser({.launcherWindow = config::Partial<config::WindowConfig>{
-                           .clientSideDecorations = config::WindowCSD{.enabled = csd}}});
+                           .clientSideDecorations = config::Partial<config::WindowCSD>{.enabled = csd}}});
 }
 
 void GeneralSettings::handleFontChange(const QString &font) {

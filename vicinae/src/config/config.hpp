@@ -87,7 +87,7 @@ struct WindowConfig {
 template <> struct Partial<WindowConfig> {
   std::optional<int> rounding;
   std::optional<float> opacity;
-  std::optional<WindowCSD> clientSideDecorations;
+  std::optional<Partial<WindowCSD>> clientSideDecorations;
   std::optional<Partial<Size>> size;
   std::optional<Partial<LayerShellConfig>> layerShell;
 };

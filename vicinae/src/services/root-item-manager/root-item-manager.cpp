@@ -56,7 +56,9 @@ bool RootItemManager::enableFallback(const EntrypointId &id) {
 
 bool RootItemManager::disableFallback(const EntrypointId &id) {
   m_cfg.updateUser([&](config::PartialValue &v) {
-    if (auto fbs = v.fallbacks) { fbs->erase(std::ranges::find(fbs.value(), std::string{id})); }
+    auto fbs = v.fallbacks.value_or({});
+    fbs.erase(std::ranges::find(fbs, std::string{id}));
+    v.fallbacks = fbs;
   });
   emit fallbackDisabled(id);
   return true;
