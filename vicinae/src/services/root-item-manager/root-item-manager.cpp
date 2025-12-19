@@ -577,7 +577,7 @@ RootProvider *RootItemManager::provider(std::string_view id) const {
 }
 
 QString RootItemManager::getEntrypointSecretPreferenceKey(const EntrypointId &id, const QString &prefName) {
-  return QString("%1.%2").arg(id.entrypoint).arg(prefName);
+  return QString("%1.%2").arg(id.entrypoint.c_str()).arg(prefName);
 }
 
 QJsonValue RootItemManager::getEntrypointSecretPreference(const EntrypointId &id,

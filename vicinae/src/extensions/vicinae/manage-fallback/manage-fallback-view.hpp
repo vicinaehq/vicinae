@@ -31,21 +31,11 @@ protected:
 
   virtual int sectionCount() const override { return 2; }
   virtual int sectionItemCount(ManageFallbackSection id) const override {
-    switch (id) {
-    case S::Enabled:
-      return m_enabled.size();
-    case S::Available:
-      return m_available.size();
-    }
+    return id == S::Enabled ? m_enabled.size() : m_available.size();
   }
 
   virtual Item sectionItemAt(ManageFallbackSection id, int itemIdx) const override {
-    switch (id) {
-    case S::Enabled:
-      return m_enabled.at(itemIdx);
-    case S::Available:
-      return m_available.at(itemIdx);
-    }
+    return id == S::Enabled ? m_enabled.at(itemIdx) : m_available.at(itemIdx);
   }
 
   virtual ManageFallbackSection sectionIdFromIndex(int idx) const override {
@@ -53,12 +43,7 @@ protected:
   }
 
   virtual std::string_view sectionName(ManageFallbackSection id) const override {
-    switch (id) {
-    case S::Enabled:
-      return "Enabled";
-    case S::Available:
-      return "Available";
-    }
+    return id == S::Enabled ? "Enabled" : "Available";
   }
 
   virtual VListModel::StableID stableId(const Item &item) const override { return hash(item->uniqueId()); }
