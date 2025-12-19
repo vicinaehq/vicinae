@@ -543,7 +543,11 @@ bool ClipboardService::copySelection(const ClipboardSelection &selection,
         mimeData->setImageData(img);
       }
     } else {
-      mimeData->setData(offer.mimeType, offer.data);
+      if (Utils::isTextMimeType(offer.mimeType)) {
+        mimeData->setText(QString::fromUtf8(offer.data));
+      } else {
+        mimeData->setData(offer.mimeType, offer.data);
+      }
     }
   }
 
