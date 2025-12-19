@@ -336,15 +336,15 @@ void RootItemManager::setPreferenceValues(const EntrypointId &id, const QJsonObj
 
   // clang-format off
   m_cfg.mergeWithUser({
-		  .providers = config::ProviderMap{
-		  	{id.provider, {
+		  .providers = std::map<std::string, config::Partial<config::ProviderData>>{
+		  	{id.provider, config::Partial<config::ProviderData>{
 				.preferences = transformPreferenceValues(providerPreferenceValues),
-				.entrypoints = {
+				.entrypoints = std::map<std::string, config::ProviderItemData>{
 					{id.entrypoint, {.preferences = transformPreferenceValues(entrypointPreferenceValues)}}
 				}
 			}
 		  }
-		  }
+		}
   });
   // clang-format on
 }

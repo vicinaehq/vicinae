@@ -33,6 +33,12 @@ struct ProviderData {
 
 template <typename T> struct Partial;
 
+template <> struct Partial<ProviderData> {
+  std::optional<bool> enabled;
+  std::optional<glz::generic::object_t> preferences;
+  std::optional<std::map<std::string, ProviderItemData>> entrypoints;
+};
+
 struct LayerShellConfig {
   std::string scope = "vicinae";
   std::string keyboardInteractivity = "exclusive";
@@ -143,6 +149,7 @@ template <> struct Partial<Footer> {
 };
 
 using KeybindMap = std::map<std::string, std::string>;
+
 using ProviderMap = std::map<std::string, ProviderData>;
 
 struct ConfigValue {
@@ -208,7 +215,7 @@ template <> struct Partial<ConfigValue> {
   std::optional<Partial<Footer>> footer;
 
   std::optional<KeybindMap> keybinds;
-  std::optional<ProviderMap> providers;
+  std::optional<std::map<std::string, Partial<ProviderData>>> providers;
 };
 
 class Manager : public QObject {
@@ -232,7 +239,7 @@ public:
   ConfigValue defaultConfig() const;
   const char *defaultConfigData() const;
 
-  bool mergeProviderWithUser(std::string_view id, ProviderData &&data);
+  bool mergeProviderWithUser(std::string_view id, Partial<ProviderData> &&data);
 
   /**
    * Update the current user configuration, instead of merging.

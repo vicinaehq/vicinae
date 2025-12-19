@@ -59,8 +59,8 @@ Manager::Manager(fs::path path) : m_userPath(path) {
 ConfigValue Manager::defaultConfig() const { return m_defaultConfig; }
 const char *Manager::defaultConfigData() const { return m_defaultData.c_str(); }
 
-bool Manager::mergeProviderWithUser(std::string_view id, ProviderData &&data) {
-  return mergeWithUser({.providers = ProviderMap{{std::string{id}, data}}});
+bool Manager::mergeProviderWithUser(std::string_view id, Partial<ProviderData> &&data) {
+  return mergeWithUser({.providers = std::map<std::string, Partial<ProviderData>>{{std::string{id}, data}}});
 }
 
 bool Manager::updateUser(const std::function<void(Partial<ConfigValue> &value)> &updater) {
@@ -78,8 +78,9 @@ bool Manager::updateUser(const std::function<void(Partial<ConfigValue> &value)> 
 }
 
 bool Manager::mergeEntrypointWithUser(const EntrypointId &id, ProviderItemData &&data) {
-  ProviderMap providers;
-  providers[id.provider] = {.entrypoints = {{id.entrypoint, data}}};
+  std::map<std::string, Partial<ProviderData>> providers;
+  providers[id.provider] =
+      Partial<ProviderData>{.entrypoints = std::map<std::string, ProviderItemData>{{id.entrypoint, data}}};
   return mergeWithUser({.providers = providers});
 }
 
@@ -208,22 +209,26 @@ void Manager::prunePartial(Partial<ConfigValue> &user) {
         if (v.preferences.value().empty()) { v.preferences.reset(); }
       }
 
-      for (auto it2 = v.entrypoints.begin(); it2 != v.entrypoints.end();) {
-        auto currentIt = it2++;
-        ProviderItemData &vi = currentIt->second;
+      if (v.entrypoints) {
+        for (auto it2 = v.entrypoints->begin(); it2 != v.entrypoints->end();) {
+          auto currentIt = it2++;
+          ProviderItemData &vi = currentIt->second;
 
-        if (vi.preferences) {
-          prunePreferences(vi.preferences.value());
-          if (v.preferences.value().empty()) { v.preferences.reset(); }
+          if (vi.preferences) {
+            prunePreferences(vi.preferences.value());
+            if (vi.preferences->empty()) { vi.preferences.reset(); }
+          }
+
+          if (vi.alias && vi.alias->empty()) { vi.alias.reset(); }
+          if (!vi.enabled.has_value() && vi.preferences.value_or({}).empty() && !vi.alias) {
+            v.entrypoints->erase(currentIt);
+          }
         }
 
-        if (vi.alias && vi.alias->empty()) { vi.alias.reset(); }
-        if (!vi.enabled.has_value() && vi.preferences.value_or({}).empty() && !vi.alias) {
-          v.entrypoints.erase(currentIt);
-        }
+        if (v.entrypoints->empty()) { v.entrypoints.reset(); }
       }
 
-      if (!v.enabled && v.preferences.value_or({}).empty() && v.entrypoints.empty()) { pvd.erase(currentIt); }
+      if (!v.enabled && v.preferences.value_or({}).empty() && !v.entrypoints) { pvd.erase(currentIt); }
     }
 
     if (pvd.empty()) { user.providers.reset(); }
