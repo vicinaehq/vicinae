@@ -2,12 +2,14 @@
 	// A list of paths pointed to separate configuration files to source during loading.
 	// Note that values defined in the main configuration file always take precedence over imported
 	// files.
-	// Relative paths are accepted, and are relative to the configuration directory in which the main configuration file is located.
+	// Relative paths are accepted, and are relative to the configuration directory in which the importing configuration file is located.
 	"imports": [],
 
 	// Whether root search should also search files directly.
-	// File search is asynchronous, so file search results may take additional time to show up.
-	// Note that there is a proper "File Search" command that can be used to search files, with content preview: this may be enough for most users.
+	// File search is performed asynchrounously: files may take an instant to appear after a query is entered.
+	// Turning this on results in an increase in CPU usage when searching.
+	// Note that vicinae has a built-in file search command that can be used to perform file search in isolation, accompanied with
+	// rich content preview. This should be more than enough for most users.
 	"search_files_in_root": false,
 
 	// If the layer shell protocol is used to position the window and the keyboard interactivity is
@@ -23,8 +25,7 @@
 
 	// What favicon service to use when loading favicons is needed.
 	// Available values are: 'twenty' | 'google' | 'none'
-	// If this is set to 'none', favicon loading is disabled and a placeholder icon will be used
-	// everywhere a favicon is expected.
+	// If this is set to 'none', favicon loading is disabled and a placeholder icon will be used when a favicon is expected.
 	"favicon_service": "twenty",
 
 	// EXPERIMENTAL!
@@ -37,7 +38,7 @@
 		// The font family to use for the general vicinae UI.
 		"normal": {
 			"family": "auto",
-			// The point size of the font
+			// The point size of the font (unlike pixel size, the point size scales with resolution)
 			"size": 10.5
 		}
 	},
@@ -46,25 +47,13 @@
 		"name": "vicinae-dark"
 	},
 
-	// List of entrypoints that are tagged as "favorite".
-	// They show up on the very top of the root search when no search query is active.
-	// Each value is a serialized entrypoint ID.
-	"favorites": [
-		"clipboard:history"
-	],
-
-	// List of entrypoints to suggest as a fallback when no results match the
-	// provided search query.
-	// Each value is a serialized entrypoint ID.
-	"fallbacks": [
-		"files:search"
-	],
-
 	"launcher_window": {
 		// Control the opacity of the main window.
 		// Opacity for other surfaces are controlled by the active theme.
 		"opacity": 0.98,
 
+		// You can turn client side decorations off if you want to let your compositor draw the rounded
+		// borders and such. This usually gives better results, but is more complicated to setup, if at all possible.
 		"client_side_decorations": {
 			"enabled": true,
 			"rounding": 10,
@@ -96,8 +85,16 @@
 		}
 	},
 
-	// Customizable keybinds
+	// Keybinds are serialized using a custom format.
+	// It is recommended to edit them through the settings GUI, which will write them to this file.
 	"keybinds": {
+		// common shortcuts
+		"open-search-filter": "control+P",
+		"open-settings": "control+,",
+		"toggle-action-panel": "control+B",
+
+		// used to assign shortcuts to generic actions
+		// if an extension provides a specific kind of action, it is encouraged to use shortcuts as defined here.
 		"action.copy": "control+shift+C",
 		"action.copy-name": "control+shift+.",
 		"action.copy-path": "control+shift+,",
@@ -112,12 +109,22 @@
 		"action.pin": "control+shift+P",
 		"action.refresh": "control+R",
 		"action.remove": "control+X",
-		"action.save": "control+S",
-		"open-search-filter": "control+P",
-		"open-settings": "control+,",
-		"toggle-action-panel": "control+B"
-	}
+		"action.save": "control+S"
+	},
 
+	// List of entrypoints that are tagged as "favorite".
+	// They show up on the very top of the root search when no search query is active.
+	// Each value is a serialized entrypoint ID.
+	"favorites": [
+		"clipboard:history"
+	],
+
+	// List of entrypoints to suggest as a fallback when no result matches the
+	// provided search query.
+	// Each value is a serialized entrypoint ID.
+	"fallbacks": [
+		"files:search"
+	]
 
 	// ABOUT PROVIDER CONFIGURATION
 	//
