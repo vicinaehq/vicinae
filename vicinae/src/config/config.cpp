@@ -1,3 +1,4 @@
+#include <filesystem>
 #include <format>
 #include <fstream>
 #include <string_view>
@@ -151,7 +152,11 @@ void Manager::reloadConfig() {
 
 void Manager::initConfig() {
   std::error_code ec;
-  if (!std::filesystem::is_regular_file(m_userPath, ec)) { writeUser({}); }
+
+  if (!fs::is_regular_file(m_userPath, ec)) {
+    fs::create_directories(m_userPath.parent_path());
+    writeUser({});
+  }
 }
 
 Manager::PartialConfigResult Manager::load(const std::filesystem::path &path, const LoadingOptions &opts) {
