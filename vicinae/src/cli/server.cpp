@@ -17,7 +17,6 @@
 #include "service-registry.hpp"
 #include "services/calculator-service/calculator-service.hpp"
 #include "services/clipboard/clipboard-service.hpp"
-#include "services/config/config-service.hpp"
 #include "services/emoji-service/emoji-service.hpp"
 #include "services/files-service/file-service.hpp"
 #include "services/local-storage/local-storage-service.hpp"
@@ -32,12 +31,14 @@
 #include "ui/launcher-window/launcher-window.hpp"
 #include "utils.hpp"
 #include "vicinae.hpp"
+#include <filesystem>
 #include <signal.h>
 #include <QString>
 #include <qlockfile.h>
 #include <qlogging.h>
 #include <qpixmapcache.h>
 #include <qstylefactory.h>
+#include <system_error>
 #include "lib/CLI11.hpp"
 #include "server.hpp"
 
@@ -46,6 +47,13 @@ namespace fs = std::filesystem;
 void CliServerCommand::setup(CLI::App *app) {
   app->add_flag("--open", m_open, "Open the main window once the server is started");
   app->add_flag("--replace", m_replace, "Replace the currently running instance if there is one");
+  app->add_option("--config", m_config, "Path to the main config file")
+      ->default_val(Omnicast::configDir() / "settings.json")
+      ->check([](const std::string &path) {
+        std::error_code ec;
+        if (!fs::is_regular_file(path, ec)) { return "not a valid file"; }
+        return "";
+      });
 }
 
 void CliServerCommand::run(CLI::App *app) {
@@ -119,7 +127,7 @@ void CliServerCommand::run(CLI::App *app) {
     auto clipboardManager =
         std::make_unique<ClipboardService>(Omnicast::dataDir() / "clipboard.db", *windowManager, *appService);
     auto fontService = std::make_unique<FontService>();
-    auto configService = std::make_unique<config::Manager>();
+    auto configService = std::make_unique<config::Manager>(m_config);
     auto rootItemManager = std::make_unique<RootItemManager>(*configService, *localStorage);
     auto shortcutService = std::make_unique<ShortcutService>(*omniDb.get());
     auto toastService = std::make_unique<ToastService>();
