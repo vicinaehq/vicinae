@@ -57,7 +57,7 @@ Manager::Manager(fs::path path) : m_userPath(path) {
 }
 
 ConfigValue Manager::defaultConfig() const { return m_defaultConfig; }
-std::string_view Manager::defaultConfigData() const { return m_defaultData; }
+const char *Manager::defaultConfigData() const { return m_defaultData.c_str(); }
 
 bool Manager::mergeProviderWithUser(std::string_view id, ProviderData &&data) {
   return mergeWithUser({.providers = ProviderMap{{std::string{id}, data}}});

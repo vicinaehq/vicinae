@@ -1,5 +1,5 @@
 #include "command-database.hpp"
-#include "../../ui/image/url.hpp"
+#include "ui/image/url.hpp"
 #include "vicinae.hpp"
 #include <qsqlquery.h>
 #include <qurlquery.h>

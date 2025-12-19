@@ -230,7 +230,7 @@ public:
   Manager(std::filesystem::path path = Omnicast::configDir() / "settings.json");
 
   ConfigValue defaultConfig() const;
-  std::string_view defaultConfigData() const;
+  const char *defaultConfigData() const;
 
   bool mergeProviderWithUser(std::string_view id, ProviderData &&data);
 

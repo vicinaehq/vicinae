@@ -11,10 +11,12 @@
 #include "configure-fallback-command.hpp"
 #include "extensions/vicinae/search-emoji-command.hpp"
 #include "extensions/vicinae/vicinae-store-command.hpp"
+#include "theme/colors.hpp"
 #include "ui/image/url.hpp"
 #include "builtin-url-command.hpp"
 #include "single-view-command-context.hpp"
 #include "vicinae.hpp"
+#include <QtCore>
 #include <qsqlquery.h>
 #include <qurlquery.h>
 
@@ -49,7 +51,7 @@ class SponsorVicinaeCommand : public BuiltinUrlCommand {
 };
 
 class OpenVicinaeConfig : public BuiltinCallbackCommand {
-  QString id() const override { return "config_file"; }
+  QString id() const override { return "open-config-file"; }
   QString name() const override { return "Open Config File"; }
   QString description() const override { return "Open the main vicinae configuration file"; }
   ImageURL iconUrl() const override {
@@ -59,6 +61,37 @@ class OpenVicinaeConfig : public BuiltinCallbackCommand {
   void execute(CommandController *controller) const override {
     auto ctx = controller->context();
     ctx->services->appDb()->openTarget(ctx->services->config()->path().c_str());
+    ctx->navigation->closeWindow();
+  }
+};
+
+class OpenDefaultVicinaeConfig : public BuiltinCallbackCommand {
+  QString id() const override { return "open-default-config"; }
+  QString name() const override { return "Open Default Config File"; }
+  QString description() const override { return "Open the default vicinae configuration file"; }
+  ImageURL iconUrl() const override {
+    return ImageURL::builtin("pencil").setBackgroundTint(SemanticColor::Orange);
+  }
+
+  void execute(CommandController *controller) const override {
+    auto ctx = controller->context();
+    auto toast = ctx->services->toastService();
+    auto path = Omnicast::runtimeDir() / "default-config.jsonc";
+
+    QFile::remove(path);
+
+    QFile file(path);
+    auto configFile = QFile(":config.jsonc");
+
+    if (!file.open(QIODevice::WriteOnly)) { return toast->failure("Failed to open temporary file"); }
+    if (!configFile.open(QIODevice::ReadOnly)) {
+      return toast->failure("Failed to open default config file");
+    }
+
+    file.write(configFile.readAll());
+    file.flush();
+    file.setPermissions(QFileDevice::ReadOwner);
+    ctx->services->appDb()->openTarget(file.fileName());
     ctx->navigation->closeWindow();
   }
 };
@@ -138,5 +171,6 @@ VicinaeExtension::VicinaeExtension() {
   registerCommand<VicinaeListInstalledExtensionsCommand>();
   registerCommand<OAuthTokenStoreCommand>();
   registerCommand<OpenVicinaeConfig>();
+  registerCommand<OpenDefaultVicinaeConfig>();
   registerCommand<InspectLocalStorage>();
 }
