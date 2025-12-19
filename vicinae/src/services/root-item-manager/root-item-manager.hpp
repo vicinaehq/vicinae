@@ -218,6 +218,11 @@ signals:
   void fallbackOrderChanged(const EntrypointId &id) const;
   void fallbackDisabled(const EntrypointId &id) const;
 
+  /**
+   * Some item metadata changed.
+   */
+  void metadataChanged() const;
+
 public:
   using ItemPtr = std::shared_ptr<RootItem>;
   using ItemList = std::vector<ItemPtr>;

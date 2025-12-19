@@ -15,7 +15,6 @@
 #include <iostream>
 #include <qfilesystemwatcher.h>
 #include <qmargins.h>
-#include <stdexcept>
 #include <string>
 #include <string_view>
 
@@ -273,6 +272,8 @@ private:
 
   std::string m_defaultData;
   ConfigValue m_defaultConfig;
+
+  QTimer m_fsDebounce;
 };
 }; // namespace config
 

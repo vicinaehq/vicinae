@@ -15,6 +15,7 @@ RootItemManager::RootItemManager(config::Manager &cfg, LocalStorageService &stor
   connect(&cfg, &config::Manager::configChanged, this, [this](const config::ConfigValue &next) {
     mergeConfigWithMetadata(next);
     qDebug() << "configuration changed";
+    emit metadataChanged();
   });
 }
 
@@ -23,44 +24,51 @@ std::vector<std::shared_ptr<RootItem>> RootItemManager::fallbackItems() const {
 }
 
 bool RootItemManager::moveFallbackDown(const EntrypointId &id) {
-  m_cfg.updateUser([&](config::PartialValue &v) {
-    if (auto fbs = v.fallbacks) {
-      auto it = std::ranges::find(fbs.value(), std::string{id});
-      if (it != fbs->end()) { std::iter_swap(it, it + 1); }
-    }
-  });
+  auto fbs = m_cfg.value().fallbacks;
+  auto it = std::ranges::find(fbs, std::string{id});
+
+  if (it != fbs.end()) { std::iter_swap(it, it + 1); }
+  m_cfg.mergeWithUser({.fallbacks = fbs});
   emit fallbackOrderChanged(id);
+
   return true;
 }
 
 bool RootItemManager::moveFallbackUp(const EntrypointId &id) {
-  m_cfg.updateUser([&](config::PartialValue &v) {
-    if (auto fbs = v.fallbacks) {
-      auto it = std::ranges::find(fbs.value(), std::string{id});
-      if (it != fbs->end() && it != fbs->begin()) { std::iter_swap(it, it - 1); }
-    }
-  });
+  auto fbs = m_cfg.value().fallbacks;
+  auto it = std::ranges::find(fbs, std::string{id});
+
+  if (it != fbs.end() && it != fbs.begin()) { std::iter_swap(it, it - 1); }
+
+  m_cfg.mergeWithUser({.fallbacks = fbs});
   emit fallbackOrderChanged(id);
+
   return true;
 }
 
 bool RootItemManager::enableFallback(const EntrypointId &id) {
-  m_cfg.updateUser([&](config::PartialValue &v) {
-    auto fbs = v.fallbacks.value_or({});
-    fbs.insert(fbs.begin(), id);
-    v.fallbacks = fbs;
-  });
+  auto fbs = m_cfg.value().fallbacks;
+  std::string sid = id;
+
+  if (std::ranges::contains(fbs, sid)) return false;
+
+  fbs.insert(fbs.begin(), sid);
+  m_cfg.mergeWithUser({.fallbacks = fbs});
   emit fallbackEnabled(id);
+  emit metadataChanged();
+
   return true;
 }
 
 bool RootItemManager::disableFallback(const EntrypointId &id) {
-  m_cfg.updateUser([&](config::PartialValue &v) {
-    auto fbs = v.fallbacks.value_or({});
-    fbs.erase(std::ranges::find(fbs, std::string{id}));
-    v.fallbacks = fbs;
-  });
+  auto fbs = m_cfg.value().fallbacks;
+  std::string sid = id;
+
+  fbs.erase(std::ranges::find(fbs, sid));
+  m_cfg.mergeWithUser({.fallbacks = fbs});
   emit fallbackDisabled(id);
+  emit metadataChanged();
+
   return true;
 }
 
@@ -427,14 +435,18 @@ bool RootItemManager::isFallback(const EntrypointId &id) const {
 }
 
 bool RootItemManager::setItemAsFavorite(const EntrypointId &itemId, bool value) {
-  auto favorites = m_cfg.value().favorites;
+  auto favorites = m_cfg.value().favorites; // we take the merged config to account for default favorites
   std::string id{itemId};
 
-  if (std::ranges::contains(favorites, id)) { return true; }
+  if (value) {
+    favorites.insert(favorites.begin(), id);
+  } else {
+    favorites.erase(std::ranges::find(favorites, id));
+  }
 
-  favorites.insert(favorites.begin(), id);
   m_cfg.mergeWithUser({.favorites = favorites});
   emit itemFavoriteChanged(itemId, value);
+  emit metadataChanged();
 
   return true;
 }

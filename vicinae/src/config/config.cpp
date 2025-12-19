@@ -43,13 +43,17 @@ Manager::Manager(fs::path path) : m_userPath(path) {
         std::format("Failed to parse default config file: {}", glz::format_error(error)));
   }
 
+  m_fsDebounce.setSingleShot(true);
+  m_fsDebounce.setInterval(100);
+
   initConfig();
   reloadConfig();
 
   connect(&m_watcher, &QFileSystemWatcher::fileChanged, this, [this](const QString &path) {
+    m_fsDebounce.start();
     m_watcher.addPath(m_userPath.c_str());
-    reloadConfig();
   });
+  connect(&m_fsDebounce, &QTimer::timeout, this, [this]() { reloadConfig(); });
 }
 
 ConfigValue Manager::defaultConfig() const { return m_defaultConfig; }
