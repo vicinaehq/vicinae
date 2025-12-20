@@ -7,7 +7,7 @@ void SetThemeAction::execute(ApplicationContext *ctx) {
   auto cfg = ctx->services->config();
   auto toast = ctx->services->toastService();
 
-  cfg->mergeWithUser({.theme = config::Partial<config::ThemeConfig>{.name = m_themeId.toStdString()}});
+  cfg->mergeThemeConfig({.name = m_themeId.toStdString()});
   toast->success("Theme successfully updated");
 }
 

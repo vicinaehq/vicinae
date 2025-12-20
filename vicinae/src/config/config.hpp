@@ -33,6 +33,26 @@ struct ProviderData {
 
 template <typename T> struct Partial;
 
+struct SystemThemeConfig {
+  std::string name;
+  std::string iconTheme;
+};
+
+struct ThemeConfig {
+  SystemThemeConfig light;
+  SystemThemeConfig dark;
+};
+
+template <> struct Partial<SystemThemeConfig> {
+  std::optional<std::string> name;
+  std::optional<std::string> iconTheme;
+};
+
+template <> struct Partial<ThemeConfig> {
+  std::optional<Partial<SystemThemeConfig>> light;
+  std::optional<Partial<SystemThemeConfig>> dark;
+};
+
 template <> struct Partial<ProviderData> {
   std::optional<bool> enabled;
   std::optional<glz::generic::object_t> preferences;
@@ -111,16 +131,6 @@ template <> struct Partial<FontConfig> {
   } normal;
 };
 
-struct ThemeConfig {
-  std::optional<std::string> iconTheme;
-  std::string name = "vicinae-dark";
-};
-
-template <> struct Partial<ThemeConfig> {
-  std::optional<std::string> iconTheme;
-  std::optional<std::string> name;
-};
-
 struct Margin {
   int left;
   int top;
@@ -194,6 +204,8 @@ struct ConfigValue {
 
     return std::nullopt;
   }
+
+  const SystemThemeConfig &systemTheme() const;
 };
 
 using PartialValue = Partial<ConfigValue>;
@@ -254,6 +266,10 @@ public:
 
   bool mergeWithUser(const Partial<ConfigValue> &patch);
 
+  bool mergeThemeConfig(const config::Partial<config::SystemThemeConfig> &cfg);
+
+  const SystemThemeConfig &theme() const;
+
   std::filesystem::path path() const { return m_userPath; }
 
   static void print(const ConfigValue &value) {
@@ -262,7 +278,6 @@ public:
     std::cout << glz::prettify_json(buf) << std::endl;
   }
 
-  const ConfigValue &user() const { return m_user; }
   const ConfigValue &value() const { return m_user; }
 
 private:
@@ -271,8 +286,8 @@ private:
   PartialConfigResult load(const std::filesystem::path &path,
                            const LoadingOptions &opts = {.resolveImports = true});
 
-  ConfigResult loadUser(const LoadingOptions &opts);
   void reloadConfig();
+  ConfigResult loadUser(const LoadingOptions &opts);
   bool writeUser(const Partial<ConfigValue> &cfg);
   void initConfig();
 
