@@ -117,15 +117,6 @@ bool Manager::mergeThemeConfig(const config::Partial<config::SystemThemeConfig> 
   }
 }
 
-const SystemThemeConfig &Manager::theme() const {
-  switch (QApplication::styleHints()->colorScheme()) {
-  case Qt::ColorScheme::Light:
-    return m_user.theme.light;
-  default:
-    return m_user.theme.dark;
-  }
-}
-
 bool Manager::mergeWithUser(const Partial<ConfigValue> &patch) {
   std::string buf;
   Partial<ConfigValue> user;

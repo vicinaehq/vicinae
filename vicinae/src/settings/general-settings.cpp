@@ -89,7 +89,7 @@ void GeneralSettings::handleConsiderPreeditChange(bool value) {
 void GeneralSettings::setupUI() {
   auto config = ServiceRegistry::instance()->config();
   auto appFont = QApplication::font().family();
-  auto value = m_cfg.user();
+  auto &value = m_cfg.value();
 
   m_rootFileSearch = new CheckboxInput;
   m_csd = new CheckboxInput;
@@ -217,8 +217,7 @@ void GeneralSettings::setupUI() {
 }
 
 GeneralSettings::GeneralSettings(config::Manager &manager) : m_cfg(manager) {
-  auto config = ServiceRegistry::instance()->config();
   setupUI();
-  setConfig(m_cfg.user());
+  setConfig(m_cfg.value());
   connect(&m_cfg, &config::Manager::configChanged, this, [this](auto next, auto prev) { setConfig(next); });
 }

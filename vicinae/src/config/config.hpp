@@ -278,8 +278,6 @@ public:
     std::cout << glz::prettify_json(buf) << std::endl;
   }
 
-  const ConfigValue &user() const { return m_user; }
-  void reloadConfig();
   const ConfigValue &value() const { return m_user; }
 
 private:
@@ -288,6 +286,7 @@ private:
   PartialConfigResult load(const std::filesystem::path &path,
                            const LoadingOptions &opts = {.resolveImports = true});
 
+  void reloadConfig();
   ConfigResult loadUser(const LoadingOptions &opts);
   bool writeUser(const Partial<ConfigValue> &cfg);
   void initConfig();

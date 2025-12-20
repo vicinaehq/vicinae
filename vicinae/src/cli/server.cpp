@@ -322,7 +322,7 @@ void CliServerCommand::run(CLI::App *app) {
   QObject::connect(cfgService, &config::Manager::configChanged, configChanged);
   QIcon::setFallbackSearchPaths(Environment::fallbackIconSearchPaths());
 
-  configChanged(cfgService->user(), {});
+  configChanged(cfgService->value(), {});
 
   // KeybindManager::instance()->fromSerializedMap(cfgService->value().keybinds);
 
