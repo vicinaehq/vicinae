@@ -4,10 +4,6 @@
 #include "services/calculator-service/calculator-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/files-service/file-service.hpp"
-#include <qfuturewatcher.h>
-#include <qtimer.h>
-#include <qobject.h>
-#include <optional>
 #include <vector>
 #include <string>
 

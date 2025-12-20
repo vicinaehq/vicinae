@@ -1,4 +1,5 @@
 #include "cli.hpp"
+#include <filesystem>
 
 class CliServerCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "server"; }
@@ -10,4 +11,5 @@ class CliServerCommand : public AbstractCommandLineCommand {
 private:
   bool m_open = false;
   bool m_replace = false;
+  std::filesystem::path m_config;
 };

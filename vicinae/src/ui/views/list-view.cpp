@@ -5,14 +5,14 @@
 #include "ui/empty-view/empty-view.hpp"
 #include "ui/split-detail/split-detail.hpp"
 #include "services/keybinding/keybinding-service.hpp"
-#include "services/config/config-service.hpp"
+#include "config/config.hpp"
 #include "service-registry.hpp"
 #include <qlogging.h>
 #include <qstackedwidget.h>
 
 bool ListView::inputFilter(QKeyEvent *event) {
   auto config = ServiceRegistry::instance()->config();
-  const QString &keybinding = config->value().keybinding;
+  const std::string &keybinding = config->value().keybinding;
 
   if (event->modifiers() == Qt::ControlModifier) {
     if (KeyBindingService::isDownKey(event, keybinding)) { return m_list->selectDown(); }

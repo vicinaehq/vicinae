@@ -1,6 +1,5 @@
 #include "root-search-controller.hpp"
 #include "root-search-model.hpp"
-#include <ranges>
 
 RootSearchController::RootSearchController(RootItemManager *manager, FileService *fs, AppService *appDb,
                                            CalculatorService *calculator, RootSearchModel *model,
@@ -21,17 +20,21 @@ RootSearchController::RootSearchController(RootItemManager *manager, FileService
   connect(&m_fileWatcher, &FileSearchWatcher::finished, this,
           &RootSearchController::handleFileSearchFinished);
 
-  connect(m_manager, &RootItemManager::fallbackDisabled, this, &RootSearchController::handleFallbackChanged);
-  connect(m_manager, &RootItemManager::fallbackEnabled, this, &RootSearchController::handleFallbackChanged);
+  connect(m_manager, &RootItemManager::metadataChanged, this, [this]() {
+    regenerateFallback();
+    regenerateFavorites();
+    reloadSearch();
+  });
   connect(m_manager, &RootItemManager::itemsChanged, this, &RootSearchController::handleItemsChanged);
-  connect(m_manager, &RootItemManager::itemFavoriteChanged, this,
-          &RootSearchController::handleFavoriteChanged);
 
   regenerateFallback();
   regenerateFavorites();
 }
 
-void RootSearchController::setFileSearch(bool value) { m_isFileSearchEnabled = value; }
+void RootSearchController::setFileSearch(bool value) {
+  m_isFileSearchEnabled = value;
+  reloadSearch();
+}
 
 void RootSearchController::setFilter(std::string_view text) {
   m_query = text;
@@ -128,7 +131,11 @@ void RootSearchController::handleFileSearchFinished() {
   m_fileSearchQuery.clear();
 }
 
-void RootSearchController::handleItemsChanged() { reloadSearch(); }
+void RootSearchController::handleItemsChanged() {
+  regenerateFallback();
+  regenerateFavorites();
+  reloadSearch();
+}
 
 void RootSearchController::handleFallbackChanged() { regenerateFallback(); }
 

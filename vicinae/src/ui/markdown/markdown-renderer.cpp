@@ -35,7 +35,7 @@
 #include <qtexttable.h>
 #include <qurl.h>
 #include <qurlquery.h>
-#include "services/config/config-service.hpp"
+#include "config/config.hpp"
 #include "services/asset-resolver/asset-resolver.hpp"
 
 int MarkdownRenderer::getHeadingLevelPointSize(int level) const {
@@ -862,10 +862,10 @@ MarkdownRenderer::MarkdownRenderer()
 
   auto config = ServiceRegistry::instance()->config();
 
-  _basePointSize = config->value().font.baseSize;
+  _basePointSize = config->value().font.normal.size;
 
-  connect(config, &ConfigService::configChanged, this,
-          [this, config]() { _basePointSize = config->value().font.baseSize; });
+  connect(config, &config::Manager::configChanged, this,
+          [this, config]() { _basePointSize = config->value().font.normal.size; });
   connect(_textEdit, &QTextBrowser::anchorClicked, this, [](const QUrl &url) {
     if (!ServiceRegistry::instance()->appDb()->openTarget(url)) {
       qWarning() << "Failed to open link" << url;

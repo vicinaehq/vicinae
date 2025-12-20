@@ -53,7 +53,7 @@ class RebuildFileIndexCommand : public BuiltinCallbackCommand {
 };
 
 class FileExtension : public BuiltinCommandRepository {
-  QString id() const override { return "file"; }
+  QString id() const override { return "files"; }
   QString displayName() const override { return "System files"; }
   QString description() const override { return "Integrate with system files"; }
   ImageURL iconUrl() const override {

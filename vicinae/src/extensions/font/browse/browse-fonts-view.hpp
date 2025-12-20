@@ -2,10 +2,10 @@
 #include "clipboard-actions.hpp"
 #include "extensions/font/browse/font-list-model.hpp"
 #include "layout.hpp"
-#include "services/config/config-service.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/markdown/markdown-renderer.hpp"
 #include "ui/views/typed-list-view.hpp"
+#include "config/config.hpp"
 
 static const QString loremIpsum = R"(
 # Lorem Ipsum Font Showcase
@@ -95,8 +95,8 @@ class SetAppFont : public AbstractAction {
   QFont m_font;
 
   void execute(ApplicationContext *ctx) override {
-    ctx->services->config()->updateConfig(
-        [&](ConfigService::Value &value) { value.font.normal = m_font.family(); });
+    ctx->services->config()->mergeWithUser(
+        {.font = config::Partial<config::FontConfig>{.normal = {.family = m_font.family().toStdString()}}});
   }
 
 public:

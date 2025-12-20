@@ -4,6 +4,7 @@
 #include "actions/root-search/root-search-actions.hpp"
 #include "clipboard-actions.hpp"
 #include "command-actions.hpp"
+#include "common.hpp"
 #include "extension/extension-command.hpp"
 #include "navigation-controller.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
@@ -22,7 +23,6 @@ QString CommandRootItem::subtitle() const {
 
 ImageURL CommandRootItem::iconUrl() const { return m_command->iconUrl(); }
 ArgumentList CommandRootItem::arguments() const { return m_command->arguments(); }
-QString CommandRootItem::providerId() const { return "command"; }
 bool CommandRootItem::isSuitableForFallback() const { return m_command->isFallback(); }
 double CommandRootItem::baseScoreWeight() const { return 1.1; }
 QString CommandRootItem::typeDisplayName() const { return "Command"; }
@@ -77,7 +77,7 @@ CommandRootItem::fallbackActionPanel(ApplicationContext *ctx, const RootItemMeta
   return panel;
 }
 
-QString CommandRootItem::uniqueId() const { return QString("extension.%1").arg(m_command->uniqueId()); }
+EntrypointId CommandRootItem::uniqueId() const { return m_command->uniqueId(); }
 
 AccessoryList CommandRootItem::accessories() const {
   if (m_command->isInternal()) { return {{.text = "Internal Command", .color = SemanticColor::Blue}}; }

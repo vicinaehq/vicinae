@@ -1,16 +1,19 @@
 #pragma once
 #include "keyboard/keyboard.hpp"
 #include "navigation-controller.hpp"
+#include "config/config.hpp"
 #include "service-registry.hpp"
 #include "services/keybinding/keybinding-service.hpp"
 #include "simple-view.hpp"
 #include "ui/empty-view/empty-view.hpp"
-#include "services/config/config-service.hpp"
 #include "navigation-controller.hpp"
 #include "ui/form/selector-input.hpp"
 #include "ui/search-bar/search-bar.hpp"
+#include <algorithm>
+#include <libqalculate/includes.h>
 #include <qwidget.h>
 #include "ui/split-detail/split-detail.hpp"
+#include "ui/vlist/common/vertical-list-model.hpp"
 #include "ui/vlist/vlist.hpp"
 
 template <typename ModelType> class TypedListView : public SimpleView {
@@ -43,7 +46,7 @@ protected:
 
   virtual bool inputFilter(QKeyEvent *event) override {
     auto config = ServiceRegistry::instance()->config();
-    const QString &keybinding = config->value().keybinding;
+    const std::string &keybinding = config->value().keybinding;
 
     if (event->modifiers() == Qt::ControlModifier) {
       if (KeyBindingService::isDownKey(event, keybinding)) { return m_list->selectDown(); }
@@ -144,6 +147,8 @@ protected:
     itemSelected(item.value());
   }
 
+  void refreshCurrent() { selectionChanged(m_list->currentSelection()); }
+
   virtual void itemActivated(typename ModelType::Index idx) { executePrimaryAction(); }
 
   QWidget *detail() const { return m_split->detailWidget(); }
@@ -181,4 +186,143 @@ protected:
   SplitDetailWidget *m_split = nullptr;
   QStackedWidget *m_content = nullptr;
   EmptyViewWidget *m_emptyView = nullptr;
+};
+
+struct FilteredItemData {
+  std::string id;
+  std::string title;
+  std::optional<std::string> subtitle;
+  std::optional<ImageURL> icon;
+  AccessoryList accessories;
+  bool isActive = false;
+};
+
+/**
+ * Vertical list model with built-in fuzzy filtering capabilities.
+ */
+class FilteredVerticalListModel : public vicinae::ui::VerticalListModel<FilteredItemData> {
+public:
+  struct Section {
+    std::string name;
+    std::vector<FilteredItemData> items;
+  };
+  struct ScoredSection {
+    std::string name;
+    int bestScore = 0;
+    std::vector<Scored<FilteredItemData>> items;
+  };
+
+  void setSections(const std::vector<Section> &sections) { m_sections = sections; }
+  void setItems(const std::vector<FilteredItemData> &items) { m_sections = {Section{.items = items}}; }
+
+  void setFilter(std::string_view query) {
+    m_filteredSections.clear();
+    for (const Section &section : m_sections) {
+      ScoredSection scoredSection{.name = section.name};
+
+      for (const FilteredItemData &item : section.items) {
+        int score = query.empty() ? 1 : fzf::defaultMatcher.fuzzy_match_v2_score_query(item.title, query);
+        if (!score) continue;
+        scoredSection.bestScore = std::max(scoredSection.bestScore, score);
+        scoredSection.items.emplace_back(Scored<FilteredItemData>{.data = item, .score = score});
+      }
+
+      std::ranges::stable_sort(scoredSection.items, [](auto &&a, auto &&b) { return a.score > b.score; });
+
+      if (!scoredSection.items.empty()) { m_filteredSections.emplace_back(scoredSection); }
+    }
+
+    std::ranges::stable_sort(m_filteredSections,
+                             [](auto &&a, auto &&b) { return a.bestScore > b.bestScore; });
+
+    emit dataChanged();
+  }
+
+protected:
+  virtual ItemData createItemData(const FilteredItemData &item) const override {
+    return ItemData{.title = item.title.c_str(),
+                    .subtitle = item.subtitle.value_or("").c_str(),
+                    .icon = item.icon,
+                    .accessories = item.accessories};
+  }
+
+  virtual int sectionCount() const override { return m_filteredSections.size(); }
+  virtual int sectionItemCount(int id) const override { return m_filteredSections.at(id).items.size(); }
+
+  virtual FilteredItemData sectionItemAt(int id, int itemIdx) const override {
+    return m_filteredSections.at(id).items.at(itemIdx).data;
+  }
+
+  virtual int sectionIdFromIndex(int idx) const override { return idx; }
+  virtual std::string_view sectionName(int id) const override { return m_filteredSections.at(id).name; }
+  virtual VListModel::StableID stableId(const FilteredItemData &item) const override { return hash(item.id); }
+
+private:
+  std::vector<Section> m_sections;
+  std::vector<ScoredSection> m_filteredSections;
+};
+
+template <typename T> class FilteredTypedListView : public TypedListView<FilteredVerticalListModel> {
+public:
+  struct Section {
+    std::string name;
+    std::vector<T> items;
+  };
+  using DataSet = std::vector<Section>;
+
+  virtual FilteredItemData mapFilteredData(const T &item) const = 0;
+  virtual std::unique_ptr<ActionPanelState> createActionPanel(const T &item) const = 0;
+  virtual QWidget *generateDetail(const T &item) const { return nullptr; }
+
+  QWidget *generateDetail(const ItemType &item) const override {
+    if (auto it = m_objectMap.find(item.id); it != m_objectMap.end()) { return generateDetail(*it->second); }
+    return nullptr;
+  }
+
+  std::unique_ptr<ActionPanelState> createActionPanel(const ItemType &item) const override {
+    if (auto it = m_objectMap.find(item.id); it != m_objectMap.end()) {
+      return createActionPanel(*it->second);
+    }
+    return {};
+  }
+
+  virtual DataSet initializeDataSet() = 0;
+
+  void initialize() override final {
+    TypedListView::initialize();
+    setModel(new FilteredVerticalListModel);
+    setDataSet(initializeDataSet());
+  }
+
+  void setDataSet(const DataSet &set) {
+    m_data = set;
+    m_objectMap.clear();
+
+    std::vector<FilteredVerticalListModel::Section> modelSections;
+
+    for (const auto &section : m_data) {
+      FilteredVerticalListModel::Section msec{.name = section.name};
+
+      for (const auto &item : section.items) {
+        auto data = mapFilteredData(item);
+        m_objectMap[data.id] = &item;
+        msec.items.emplace_back(data);
+      }
+
+      modelSections.emplace_back(msec);
+    }
+
+    model()->setSections(modelSections);
+    model()->setFilter(searchText().toStdString());
+    model()->dataChanged();
+  }
+
+  void textChanged(const QString &text) override {
+    model()->setFilter(text.toStdString());
+    m_list->selectFirst();
+  }
+
+private:
+  DataSet m_data;
+  std::unordered_map<std::string, const T *> m_objectMap;
 };

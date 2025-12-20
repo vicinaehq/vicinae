@@ -37,7 +37,7 @@ private:
   QString m_title;
   QString m_description;
   QString m_placeholder;
-  QJsonValue m_value;
+  QJsonValue m_value = QJsonValue::Null;
   bool m_readOnly = false;
   bool m_required;
   Data m_data = UnknownData();
@@ -77,6 +77,7 @@ public:
   QJsonValue defaultValue() const { return m_value; }
   bool required() const { return m_required; }
   Data data() const { return m_data; }
+  bool isSecret() const { return std::holds_alternative<PasswordData>(m_data); }
 
   Preference() {}
 };

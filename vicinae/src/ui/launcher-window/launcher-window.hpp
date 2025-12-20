@@ -4,9 +4,11 @@
 #include <qevent.h>
 #include <qlogging.h>
 #include <qmainwindow.h>
+#include <qscreen.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
 #include "../image/url.hpp"
+#include "config/config.hpp"
 #include "navigation-controller.hpp"
 
 class ApplicationContext;
@@ -47,6 +49,8 @@ protected:
   void showEvent(QShowEvent *event) override;
   void changeEvent(QEvent *event) override;
 
+  void handleConfigurationChange(const config::ConfigValue &value);
+
 private:
   ActionVeilWidget *m_actionVeil;
   ApplicationContext &m_ctx;
@@ -64,6 +68,7 @@ private:
   QWidget *m_focusWidget = nullptr;
 
   void tryCenter();
+  void centerOnScreen(const QScreen *screen);
 
   void handleShowHUD(const QString &text, const std::optional<ImageURL> &icon);
   void handleDialog(DialogContentWidget *alert);

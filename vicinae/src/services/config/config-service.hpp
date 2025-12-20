@@ -20,7 +20,7 @@ class ConfigService : public QObject {
 
 public:
   struct Value {
-    QString faviconService = Omnicast::DEFAULT_FAVICON_SERVICE;
+    QString faviconService;
     bool popToRootOnClose = true;
     bool closeOnFocusLoss = false;
     bool considerPreedit = false;
