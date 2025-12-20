@@ -43,6 +43,9 @@
 		}
 	},
 
+	// The general vicinae theme as well as the system icon theme (used for applications and file icons) can be customized
+	// according to the system appearance.
+	// When editing the current theme through the vicinae GUI, it will modify the value that maps to the current system appearance.
 	"theme": {
 		"light": {
 			"name": "vicinae-light",
