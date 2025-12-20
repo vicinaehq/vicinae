@@ -7,6 +7,16 @@
 
 namespace fs = std::filesystem;
 
+#define SNAKE_CASIFY(T)                                                                                      \
+  template <> struct glz::meta<T> : glz::snake_case {};                                                      \
+  template <> struct glz::meta<config::Partial<T>> : glz::snake_case {};
+
+SNAKE_CASIFY(config::LayerShellConfig);
+SNAKE_CASIFY(config::WindowConfig);
+SNAKE_CASIFY(config::ConfigValue);
+SNAKE_CASIFY(config::ThemeConfig);
+SNAKE_CASIFY(config::WindowCSD);
+
 namespace config {
 static constexpr const char *TOP_COMMENT =
     R"(// This configuration is merged with the default vicinae configuration file, which you can obtain by running the `vicinae config default` command.

@@ -3,6 +3,7 @@
 #include <glaze/core/reflect.hpp>
 #include <glaze/json/read.hpp>
 #include <glaze/json/write.hpp>
+#include <glaze/util/key_transformers.hpp>
 #include <qlogging.h>
 
 namespace fs = std::filesystem;
@@ -38,3 +39,5 @@ void VisitTracker::saveToDisk() {
     qWarning() << "Failed to save visit to" << m_path << glz::format_error(error);
   }
 }
+
+template <> struct glz::meta<VisitTracker::VisitInfo> : glz::snake_case {};

@@ -286,13 +286,3 @@ private:
   QTimer m_fsDebounce;
 };
 }; // namespace config
-
-#define SNAKE_CASIFY(T)                                                                                      \
-  template <> struct glz::meta<T> : glz::snake_case {};                                                      \
-  template <> struct glz::meta<config::Partial<T>> : glz::snake_case {};
-
-SNAKE_CASIFY(config::LayerShellConfig);
-SNAKE_CASIFY(config::WindowConfig);
-SNAKE_CASIFY(config::ConfigValue);
-SNAKE_CASIFY(config::ThemeConfig);
-SNAKE_CASIFY(config::WindowCSD);
