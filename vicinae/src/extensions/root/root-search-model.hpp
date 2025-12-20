@@ -1,10 +1,10 @@
 #pragma once
-#include "services/app-service/app-service.hpp"
+#include "services/app-service/abstract-app-db.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
+#include "services/files-service/abstract-file-indexer.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "ui/vlist/vlist.hpp"
 #include "ui/vlist/common/section-model.hpp"
-#include "services/files-service/file-service.hpp"
 
 enum class SectionType { Link, Calculator, Results, Files, Fallback, Favorites };
 
@@ -44,7 +44,7 @@ public:
     const auto handleRootItem = [&](const RootItem *item) {
       if (!item->supportsAliasSpaceShortcut()) return false;
       auto alias = m_manager->itemMetadata(item->uniqueId()).alias;
-      return !alias.empty() && alias.starts_with(query);
+      return alias && alias->starts_with(query);
     };
 
     const auto visitor = overloads{
@@ -66,7 +66,7 @@ public:
   void setCalculatorResult(const AbstractCalculatorBackend::CalculatorResult &result);
   void setFileResults(const std::vector<IndexerFileResult> &files);
   void setFallbackItems(const std::vector<std::shared_ptr<RootItem>> &items);
-  void setFavorites(const std::vector<RootItemManager::SearchableRootItem> &favorites);
+  void setFavorites(const std::vector<std::shared_ptr<RootItem>> &favorites);
   void setDefaultOpener(const LinkItem &opener);
 
 protected:
@@ -103,7 +103,7 @@ private:
   std::optional<AbstractCalculatorBackend::CalculatorResult> m_calc;
   std::vector<IndexerFileResult> m_files;
   std::vector<std::shared_ptr<RootItem>> m_fallbackItems;
-  std::vector<RootItemManager::SearchableRootItem> m_favorites;
+  std::vector<std::shared_ptr<RootItem>> m_favorites;
   std::optional<LinkItem> m_defaultOpener;
 
   std::string m_fallbackSectionTitle;

@@ -1,4 +1,5 @@
 #pragma once
+#include "common.hpp"
 #include "services/shortcut/shortcut-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 
@@ -7,12 +8,11 @@ class RootShortcutItem : public RootItem {
 
   QString displayName() const override;
   double baseScoreWeight() const override;
-  QString providerId() const override;
   AccessoryList accessories() const override;
   bool isSuitableForFallback() const override;
   ArgumentList arguments() const override;
   ImageURL iconUrl() const override;
-  QString uniqueId() const override;
+  EntrypointId uniqueId() const override;
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx,
                                                    const RootItemMetadata &metadata) const override;
   std::unique_ptr<ActionPanelState> fallbackActionPanel(ApplicationContext *ctx,

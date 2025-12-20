@@ -196,10 +196,7 @@ private:
 class TemplateThemeCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "template"; }
   std::string description() const override { return "Print out template"; }
-  void setup(CLI::App *app) override {
-    app->alias("tmpl");
-    app->add_option("-o,--output", m_path);
-  }
+  void setup(CLI::App *app) override { app->alias("tmpl"); }
 
   void run(CLI::App *app) override {
     std::cout << THEME_TEMPLATE << std::endl;

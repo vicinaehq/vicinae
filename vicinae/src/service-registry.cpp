@@ -18,9 +18,10 @@
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/window-manager/window-manager.hpp"
+#include "config/config.hpp"
 
 RootItemManager *ServiceRegistry::rootItemManager() const { return m_rootItemManager.get(); }
-ConfigService *ServiceRegistry::config() const { return m_config.get(); }
+config::Manager *ServiceRegistry::config() const { return m_config.get(); }
 OmniDatabase *ServiceRegistry::omniDb() const { return m_omniDb.get(); }
 CalculatorService *ServiceRegistry::calculatorService() const { return m_calculatorService.get(); }
 WindowManager *ServiceRegistry::windowManager() const { return m_windowManager.get(); }
@@ -61,7 +62,7 @@ void ServiceRegistry::ServiceRegistry::setOAuthService(std::unique_ptr<OAuthServ
   m_oauthService = std::move(service);
 }
 
-void ServiceRegistry::setConfig(std::unique_ptr<ConfigService> cfg) { m_config = std::move(cfg); }
+void ServiceRegistry::setConfig(std::unique_ptr<config::Manager> cfg) { m_config = std::move(cfg); }
 void ServiceRegistry::setShortcutService(std::unique_ptr<ShortcutService> service) {
   m_shortcutService = std::move(service);
 }

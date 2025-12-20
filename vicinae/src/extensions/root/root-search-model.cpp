@@ -1,5 +1,5 @@
 #include "root-search-model.hpp"
-#include "environment.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 #include "ui/transform-result/transform-result.hpp"
 
 RootSearchModel::RootSearchModel(RootItemManager *manager) : m_manager(manager) {}
@@ -42,12 +42,10 @@ void RootSearchModel::setFileResults(const std::vector<IndexerFileResult> &files
 
 void RootSearchModel::setFallbackItems(const std::vector<std::shared_ptr<RootItem>> &items) {
   m_fallbackItems = items;
-  emit dataChanged();
 }
 
-void RootSearchModel::setFavorites(const std::vector<RootItemManager::SearchableRootItem> &favorites) {
+void RootSearchModel::setFavorites(const std::vector<std::shared_ptr<RootItem>> &favorites) {
   m_favorites = favorites;
-  emit dataChanged();
 }
 
 void RootSearchModel::setDefaultOpener(const LinkItem &opener) {
@@ -119,21 +117,27 @@ RootItemVariant RootSearchModel::sectionItemAt(SectionType id, int itemIdx) cons
   case SectionType::Fallback:
     return FallbackItem{.item = m_fallbackItems[itemIdx].get()};
   case SectionType::Favorites:
-    return FavoriteItem{.item = m_favorites[itemIdx].item.get()};
+    return FavoriteItem{.item = m_favorites[itemIdx].get()};
   }
 
   return {};
 }
 
 RootSearchModel::StableID RootSearchModel::stableId(const RootItemVariant &item) const {
-  static std::hash<QString> hasher = {};
-  const auto visitor =
-      overloads{[&](const AbstractCalculatorBackend::CalculatorResult &) { return randomId(); },
-                [](const RootSearchResult &item) { return hasher(item.scored->item.get()->uniqueId()); },
-                [](const LinkItem &item) { return hasher(item.url + ".url"); },
-                [](const std::filesystem::path &path) { return hasher(QString(path.c_str()) + ".files"); },
-                [](const FallbackItem &item) { return hasher(item.item->uniqueId() + ".fallback"); },
-                [](const FavoriteItem &item) { return hasher(item.item->uniqueId() + ".favorite"); }};
+  static std::hash<std::string> hasher = {};
+
+  const auto visitor = overloads{
+      [&](const AbstractCalculatorBackend::CalculatorResult &) { return randomId(); },
+      [](const RootSearchResult &item) {
+        return std::hash<EntrypointId>()(item.scored->item.get()->uniqueId());
+      },
+      [](const LinkItem &item) { return hasher(item.url.toStdString() + ".url"); },
+      [](const std::filesystem::path &path) { return hasher(path.string() + ".files"); },
+      [](const FallbackItem &item) {
+        return hasher(std::string{item.item->uniqueId()} + std::string_view{".fallback"});
+      },
+      [](const FavoriteItem &item) { return hasher(std::string{item.item->uniqueId()} + ".favorite"); }};
+
   return std::visit(visitor, item);
 }
 
@@ -157,7 +161,7 @@ RootSearchModel::WidgetType *RootSearchModel::createItemWidget(const RootItemVar
 void RootSearchModel::refreshItemWidget(const RootItemVariant &type, WidgetType *widget) const {
   auto refreshRootItem = [&](const RootItem *item, bool showAlias = true) {
     auto w = static_cast<DefaultListItemWidget *>(widget);
-    w->setAlias(showAlias ? m_manager->itemMetadata(item->uniqueId()).alias.c_str() : "");
+    w->setAlias(showAlias ? m_manager->itemMetadata(item->uniqueId()).alias.value_or("").c_str() : "");
     w->setName(item->displayName());
     w->setIconUrl(item->iconUrl());
     w->setSubtitle(item->subtitle());

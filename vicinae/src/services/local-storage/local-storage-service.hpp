@@ -15,6 +15,7 @@ public:
 
   bool clearNamespace(const QString &namespaceId);
   QJsonObject listNamespaceItems(const QString &namespaceId);
+  std::vector<QString> namespaces() const;
   bool removeItem(const QString &namespaceId, const QString &key);
   bool setItem(const QString &namespaceId, const QString &key, const QJsonValue &json);
   QJsonValue getItem(const QString &namespaceId, const QString &key);

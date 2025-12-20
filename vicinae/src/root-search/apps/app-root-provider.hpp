@@ -1,4 +1,5 @@
 #pragma once
+#include "common.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include <qjsonobject.h>
@@ -8,14 +9,13 @@ class AppRootItem : public RootItem {
   std::shared_ptr<AbstractApplication> m_app;
 
   double baseScoreWeight() const override;
-  QString providerId() const override;
   QString typeDisplayName() const override;
   QString displayName() const override;
   QString subtitle() const override;
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx,
                                                    const RootItemMetadata &metadata) const override;
   AccessoryList accessories() const override;
-  QString uniqueId() const override;
+  EntrypointId uniqueId() const override;
   ImageURL iconUrl() const override;
   QWidget *settingsDetail(const QJsonObject &preferences) const override;
   std::vector<QString> keywords() const override;

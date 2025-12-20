@@ -16,6 +16,7 @@
   gcc15Stdenv,
   wayland,
   libxml2,
+  glaze,
 }:
 let
   manifestRaw = builtins.readFile ../manifest.yaml;
@@ -47,6 +48,7 @@ gcc15Stdenv.mkDerivation (finalAttrs: {
     "VICINAE_GIT_COMMIT_HASH" = manifestGet "short_rev";
     "VICINAE_PROVENANCE" = "nix";
     "INSTALL_NODE_MODULES" = "OFF";
+    "USE_SYSTEM_GLAZE" = "ON";
     "CMAKE_INSTALL_PREFIX" = placeholder "out";
     "CMAKE_INSTALL_DATAROOTDIR" = "share";
     "CMAKE_INSTALL_BINDIR" = "bin";
@@ -78,6 +80,7 @@ gcc15Stdenv.mkDerivation (finalAttrs: {
     qt6.qtwayland
     wayland
     libxml2
+    glaze
   ];
 
   postPatch = ''

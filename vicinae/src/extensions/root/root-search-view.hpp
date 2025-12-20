@@ -1,6 +1,7 @@
 #pragma once
 #include "actions/app/app-actions.hpp"
 #include "actions/calculator/calculator-actions.hpp"
+#include "config/config.hpp"
 #include "misc/file-list-item.hpp"
 #include "root-search-model.hpp"
 #include "root-search-controller.hpp"
@@ -9,11 +10,9 @@
 #include "service-registry.hpp"
 #include "ui/views/typed-list-view.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
-#include "services/config/config-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "ui/search-bar/search-bar.hpp"
 #include "ui/views/base-view.hpp"
-#include <absl/strings/str_format.h>
 #include <qfuturewatcher.h>
 #include <qlocale.h>
 #include <qobjectdefs.h>
@@ -117,17 +116,18 @@ public:
     auto config = context()->services->config();
     m_manager = context()->services->rootItemManager();
     m_model = new RootSearchModel(m_manager);
+    setModel(m_model);
+
     m_controller =
         new RootSearchController(m_manager, context()->services->fileService(), context()->services->appDb(),
                                  context()->services->calculatorService(), m_model, this);
 
     m_list->setModel(m_model);
-    setModel(m_model);
     m_controller->setFilter("");
 
-    connect(config, &ConfigService::configChanged, this,
-            [&](const ConfigService::Value &next, const ConfigService::Value &prev) {
-              m_controller->setFileSearch(next.rootSearch.searchFiles);
+    connect(config, &config::Manager::configChanged, this,
+            [&](const config::ConfigValue &next, const config::ConfigValue &prev) {
+              m_controller->setFileSearch(next.searchFilesInRoot);
             });
   }
 

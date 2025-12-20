@@ -3,6 +3,7 @@
 #include "actions/fallback-actions.hpp"
 #include "actions/root-search/root-search-actions.hpp"
 #include "argument.hpp"
+#include "common.hpp"
 #include "ui/image/url.hpp"
 #include "services/shortcut/shortcut-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
@@ -66,13 +67,13 @@ RootShortcutItem::fallbackActionPanel(ApplicationContext *ctx, const RootItemMet
 
 QString RootShortcutItem::typeDisplayName() const { return "Shortcut"; }
 
-QString RootShortcutItem::uniqueId() const { return QString("shortcuts.%1").arg(m_link->id()); }
+EntrypointId RootShortcutItem::uniqueId() const {
+  return EntrypointId{"shortcuts", m_link->id().toStdString()};
+}
 
 QString RootShortcutItem::displayName() const { return m_link->name(); }
 
 double RootShortcutItem::baseScoreWeight() const { return 1.4; }
-
-QString RootShortcutItem::providerId() const { return "shortcut"; }
 
 AccessoryList RootShortcutItem::accessories() const {
   return {{.text = "Shortcut", .color = SemanticColor::TextMuted}};

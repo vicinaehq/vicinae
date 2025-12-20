@@ -3,8 +3,8 @@
 #include <qcoreevent.h>
 #include <qevent.h>
 #include <qlineedit.h>
-#include "services/config/config-service.hpp"
 #include "template-engine/template-engine.hpp"
+#include "config/config.hpp"
 #include "theme.hpp"
 
 SearchBar::SearchBar(QWidget *parent) : QLineEdit(parent) {

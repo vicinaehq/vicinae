@@ -25,6 +25,7 @@ private:
   QWidget *m_backButtonSpacer = new QWidget;
   QStackedWidget *m_accessoryContainer;
   ArgCompleter *m_completer;
+  QWidget *m_left = nullptr;
 
   void setAccessory(QWidget *accessory);
   void clearAccessory();

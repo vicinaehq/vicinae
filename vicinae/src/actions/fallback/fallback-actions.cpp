@@ -17,7 +17,7 @@ ManageFallbackAction::ManageFallbackAction()
 void DisableFallbackAction::execute() {
   auto manager = ServiceRegistry::instance()->rootItemManager();
 
-  manager->disableFallback(m_id);
+  // manager->disableFallback(m_id);
 }
 
 DisableFallbackAction::DisableFallbackAction(const QString &id)
@@ -27,9 +27,9 @@ DisableFallbackAction::DisableFallbackAction(const QString &id)
 
 void MoveFallbackUpAction::execute() {
   auto manager = ServiceRegistry::instance()->rootItemManager();
-  int pos = manager->itemMetadata(m_id).fallbackPosition;
+  // int pos = manager->itemMetadata(m_id).fallbackPosition;
 
-  manager->setFallback(m_id, std::max(0, pos - 1));
+  // manager->setFallback(m_id, std::max(0, pos - 1));
 }
 
 MoveFallbackUpAction::MoveFallbackUpAction(const QString &id)
@@ -39,9 +39,9 @@ MoveFallbackUpAction::MoveFallbackUpAction(const QString &id)
 
 void MoveFallbackDownAction::execute() {
   auto manager = ServiceRegistry::instance()->rootItemManager();
-  int pos = manager->itemMetadata(m_id).fallbackPosition;
+  // int pos = manager->itemMetadata(m_id).fallbackPosition;
 
-  manager->setFallback(m_id, pos + 1);
+  // manager->setFallback(m_id, pos + 1);
 }
 
 MoveFallbackDownAction::MoveFallbackDownAction(const QString &id)
@@ -52,7 +52,7 @@ MoveFallbackDownAction::MoveFallbackDownAction(const QString &id)
 void EnableFallbackAction::execute() {
   auto manager = ServiceRegistry::instance()->rootItemManager();
 
-  manager->setFallback(m_id);
+  // manager->setFallback(m_id);
 }
 
 EnableFallbackAction::EnableFallbackAction(const QString &id)

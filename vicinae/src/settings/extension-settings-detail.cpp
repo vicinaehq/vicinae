@@ -9,11 +9,14 @@
 #include <qwidget.h>
 #include "services/root-item-manager/root-item-manager.hpp"
 
-void ExtensionSettingsDetail::handleFocusChanged(bool focused) {
-  if (!focused) { savePendingPreferences(); }
-}
-
 void ExtensionSettingsDetail::setupUI() {
+  using namespace std::chrono_literals;
+
+  m_timer.setInterval(1s);
+  m_timer.start();
+
+  connect(&m_timer, &QTimer::timeout, this, [this]() { savePendingPreferences(); });
+
   if (auto description = m_command->description(); !description.isEmpty()) {
     MetadataRowWidget *descriptionLabel = new MetadataRowWidget(this);
     TypographyWidget *descriptionText = new TypographyWidget;
@@ -49,9 +52,6 @@ void ExtensionSettingsDetail::setupUI() {
       widget->formItem()->setValueAsJson(defaultValue);
     }
 
-    connect(widget->formItem()->focusNotifier(), &FocusNotifier::focusChanged, this,
-            &ExtensionSettingsDetail::handleFocusChanged, Qt::DirectConnection);
-
     m_preferenceFields[preference.name()] = widget;
     m_formLayout->addWidget(widget);
   }
@@ -63,19 +63,17 @@ void ExtensionSettingsDetail::setupUI() {
 
 void ExtensionSettingsDetail::savePendingPreferences() {
   auto manager = ServiceRegistry::instance()->rootItemManager();
-  QJsonObject obj;
+  QJsonObject patch;
 
-  for (const auto &[preferenceId, widget] : m_preferenceFields) {
-    auto value = widget->formItem()->asJsonValue();
-
-    // we do not store null or undefined values, so that the default value
-    // is used instead.
-    if (value.isNull() || value.isUndefined()) continue;
-
-    obj[preferenceId] = value;
+  for (const auto &[name, w] : m_preferenceFields) {
+    QJsonValue currentValue = w->formItem()->asJsonValue();
+    if (currentValue != m_preferenceValues.value(name)) {
+      m_preferenceValues[name] = currentValue;
+      patch[name] = currentValue;
+    }
   }
 
-  manager->setProviderPreferenceValues(m_rootItemId, obj);
+  if (!patch.empty()) { manager->setProviderPreferenceValues(m_rootItemId, patch); }
 }
 
 ExtensionSettingsDetail::ExtensionSettingsDetail(const QString &providerId,
