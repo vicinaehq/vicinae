@@ -50,11 +50,8 @@ if (NOT USE_SYSTEM_GLAZE)
 	  GIT_TAG v6.4.0  # Replace with desired version
 	  GIT_SHALLOW TRUE
 	)
+	FetchContent_MakeAvailable(glaze)
 endif()
-
-FetchContent_MakeAvailable(glaze)
-
-#target_link_libraries(${PROJECT_NAME} PRIVATE glaze::glaze)
 
 if (BUILD_TESTS)
 	add_subdirectory(tests)
