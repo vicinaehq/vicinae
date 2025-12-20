@@ -17,9 +17,15 @@ View::View(Payload data) : m_data(data), m_model(new DMenuModel(this)) {
 
 QWidget *View::generateDetail(const std::string_view &text) const {
   if (m_data.noQuickLook) return nullptr;
-  auto detail = new FileDetail;
-  detail->setPath(text, !m_data.noMetadata);
-  return detail;
+  std::error_code ec;
+
+  if (text.starts_with('/') && std::filesystem::exists(text, ec)) {
+    auto detail = new FileDetail;
+    detail->setPath(text, !m_data.noMetadata);
+    return detail;
+  }
+
+  return nullptr;
 }
 
 void View::hideEvent(QHideEvent *event) {
