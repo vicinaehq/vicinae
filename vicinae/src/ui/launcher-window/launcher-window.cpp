@@ -160,8 +160,15 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
   connect(m_ctx.navigation.get(), &NavigationController::actionsChanged, this,
           [this](auto &&actions) { m_actionPanel->setNewActions(actions); });
 
-  connect(m_ctx.navigation.get(), &NavigationController::windowVisiblityChanged, this,
-          [this](bool visible) { setVisible(visible); });
+  connect(m_ctx.navigation.get(), &NavigationController::windowVisiblityChanged, this, [this](bool visible) {
+    setVisible(visible);
+    if (!visible) {
+      auto &cfg = m_ctx.services->config()->value();
+      setFixedSize(QSize{cfg.launcherWindow.size.width, cfg.launcherWindow.size.height});
+    }
+  });
+  connect(m_ctx.navigation.get(), &NavigationController::windowSizeRequested, this,
+          [this](QSize size) { setFixedSize(size); });
 
   connect(m_ctx.navigation.get(), &NavigationController::headerVisiblityChanged, this, [this](bool value) {
     if (m_currentOverlayWrapper->isVisible()) return;

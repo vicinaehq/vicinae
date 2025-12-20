@@ -506,6 +506,8 @@ void NavigationController::showWindow() {
   emit windowVisiblityChanged(true);
 }
 
+void NavigationController::requestWindowSize(QSize size) { emit windowSizeRequested(size); }
+
 NavigationController::ViewState *NavigationController::topState() {
   if (m_views.empty()) return nullptr;
 

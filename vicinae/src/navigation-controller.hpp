@@ -233,6 +233,7 @@ signals:
   void actionsChanged(const ActionPanelState &actions) const;
   void submenuRequested(ActionPanelView *view);
   void windowVisiblityChanged(bool visible);
+  void windowSizeRequested(QSize size);
   void searchTextSelected() const;
   void searchTextTampered(const QString &text) const;
   void searchPlaceholderTextChanged(const QString &text) const;
@@ -264,6 +265,7 @@ public:
   void showWindow();
   void toggleWindow();
   bool isWindowOpened() const;
+  void requestWindowSize(QSize size);
 
   bool windowActivated();
   void setWindowActivated(bool value = true);
