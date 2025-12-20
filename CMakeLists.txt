@@ -145,6 +145,8 @@ if (NOT USE_SYSTEM_PROTOBUF)
 	set(COMMON_PROTO_DIR ${CMAKE_CURRENT_BINARY_DIR}/_deps/protobuf-src/src)
 endif()
 
+find_package(glaze)
+
 set(CMAKE_FIND_PACKAGE_PREFER_CONFIG TRUE)
 find_package(Protobuf)
 unset(CMAKE_FIND_PACKAGE_PREFER_CONFIG)
