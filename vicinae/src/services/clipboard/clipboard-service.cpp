@@ -540,7 +540,10 @@ bool ClipboardService::copySelection(const ClipboardSelection &selection,
         qWarning() << offer.mimeType << "could not be converted to valid image format";
         mimeData->setData(offer.mimeType, offer.data);
       } else {
+        mimeData->setData(offer.mimeType, offer.data);
         mimeData->setImageData(img);
+        qDebug() << "ClipboardService: Set image data with mime type" << offer.mimeType
+                 << "size:" << offer.data.size();
       }
     } else {
       if (Utils::isTextMimeType(offer.mimeType)) {
