@@ -294,8 +294,21 @@ void CliServerCommand::run(CLI::App *app) {
   QObject::connect(cfgService, &config::Manager::configLoadingError, [&ctx](std::string_view message) {
     ctx.navigation->confirmAlert("Failed to load config", qStringFromStdView(message), []() {});
   });
-  QObject::connect(QApplication::styleHints(), &QStyleHints::colorSchemeChanged,
-                   [cfgService]() { cfgService->reloadConfig(); });
+
+  QObject::connect(QApplication::styleHints(), &QStyleHints::colorSchemeChanged, [cfgService]() {
+    IconThemeDatabase iconThemeDb;
+    auto &value = cfgService->value();
+    auto &theme = value.systemTheme();
+
+    if (theme.iconTheme != "auto") {
+      QIcon::setThemeName(theme.iconTheme.c_str());
+    } else if (QIcon::themeName() == "hicolor") {
+      QIcon::setThemeName(iconThemeDb.guessBestTheme());
+    }
+
+    ThemeService::instance().setTheme(theme.name.c_str());
+    qApp->setStyleSheet(qApp->styleSheet());
+  });
 
   QObject::connect(
       KeybindManager::instance(), &KeybindManager::keybindChanged,
