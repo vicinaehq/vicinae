@@ -22,10 +22,12 @@ void GeneralSettings::setConfig(const config::ConfigValue &value) {
 
   m_opacity->setText(QString::number(value.launcherWindow.opacity));
   m_csd->stealthySetValueAsJson(value.launcherWindow.clientSideDecorations.enabled);
-  m_themeSelector->setValue(value.theme.name.c_str());
+  m_themeSelector->setValue(value.systemTheme().name.c_str());
   m_fontSelector->setValue(normalFont.family == "auto" ? appFont : normalFont.family.c_str());
   m_rootFileSearch->stealthySetValueAsJson(value.searchFilesInRoot);
-  m_qThemeSelector->setValue(value.theme.iconTheme.value_or(currentIconTheme.toStdString()).c_str());
+
+  if (auto ith = value.systemTheme().iconTheme; ith != "auto") { m_qThemeSelector->setValue(ith.c_str()); }
+
   m_faviconSelector->setValue(value.faviconService.c_str());
   m_keybindingSelector->setValue(value.keybinding.c_str());
   m_popToRootOnClose->stealthySetValueAsJson(value.popToRootOnClose);
@@ -43,11 +45,11 @@ void GeneralSettings::handleKeybindingChange(const QString &keybinding) {
 }
 
 void GeneralSettings::handleIconThemeChange(const QString &iconTheme) {
-  m_cfg.mergeWithUser({.theme = config::Partial<config::ThemeConfig>{.iconTheme = iconTheme.toStdString()}});
+  m_cfg.mergeThemeConfig({.iconTheme = iconTheme.toStdString()});
 }
 
 void GeneralSettings::handleThemeChange(const QString &id) {
-  m_cfg.mergeWithUser({.theme = config::Partial<config::ThemeConfig>{.name = id.toStdString()}});
+  m_cfg.mergeThemeConfig({.name = id.toStdString()});
 }
 
 void GeneralSettings::handleClientSideDecorationChange(bool csd) {

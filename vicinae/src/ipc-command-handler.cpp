@@ -368,11 +368,10 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
         return tl::unexpected(std::string("theme with id ") + id.toStdString() + " does not exist");
       }
 
-      if (theme->id() == cfg->value().theme.name) {
+      if (theme->id() == cfg->value().systemTheme().name) {
         service.reloadCurrentTheme();
       } else {
-        cfg->mergeWithUser(
-            {.theme = config::Partial<config::ThemeConfig>{.name = theme->id().toStdString()}});
+        cfg->mergeThemeConfig({.name = theme->id().toStdString()});
       }
 
       if (auto text = query.queryItemValue("openWindow"); text == "true" || text == "1") {

@@ -46,7 +46,7 @@ ManageThemesView::ManageThemesView() {
   auto config = ServiceRegistry::instance()->config();
   connect(config, &config::Manager::configChanged, this,
           [this](const config::ConfigValue &next, const config::ConfigValue &prev) {
-            if (next.theme.name != prev.theme.name) { m_list->selectFirst(); }
+            if (next.systemTheme().name != prev.systemTheme().name) { m_list->selectFirst(); }
           });
 }
 
@@ -62,7 +62,7 @@ void ManageThemesView::initialize() {
 void ManageThemesView::beforePop() {
   auto config = ServiceRegistry::instance()->config();
   auto &service = ThemeService::instance();
-  service.setTheme(config->value().theme.name.c_str());
+  service.setTheme(config->value().systemTheme().name.c_str());
 }
 
 void ManageThemesView::itemSelected(const ItemType &theme) {

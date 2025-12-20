@@ -44,7 +44,14 @@
 	},
 
 	"theme": {
-		"name": "vicinae-dark"
+		"light": {
+			"name": "vicinae-light",
+			"icon_theme": "auto"
+		},
+		"dark": {
+			"name": "vicinae-dark",
+			"icon_theme": "auto"
+		}
 	},
 
 	"launcher_window": {
