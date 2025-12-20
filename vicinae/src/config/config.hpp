@@ -279,6 +279,7 @@ public:
   }
 
   const ConfigValue &user() const { return m_user; }
+  void reloadConfig();
   const ConfigValue &value() const { return m_user; }
 
 private:
@@ -288,7 +289,6 @@ private:
                            const LoadingOptions &opts = {.resolveImports = true});
 
   ConfigResult loadUser(const LoadingOptions &opts);
-  void reloadConfig();
   bool writeUser(const Partial<ConfigValue> &cfg);
   void initConfig();
 

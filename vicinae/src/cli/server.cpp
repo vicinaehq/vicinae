@@ -1,6 +1,7 @@
 #include "config/config.hpp"
 #include "daemon/ipc-client.hpp"
 #include "environment.hpp"
+#include <QStyleHints>
 #include "extension/manager/extension-manager.hpp"
 #include "favicon/favicon-service.hpp"
 #include "font-service.hpp"
@@ -32,6 +33,7 @@
 #include "utils.hpp"
 #include "vicinae.hpp"
 #include <filesystem>
+#include <qapplication.h>
 #include <signal.h>
 #include <QString>
 #include <qlockfile.h>
@@ -292,6 +294,8 @@ void CliServerCommand::run(CLI::App *app) {
   QObject::connect(cfgService, &config::Manager::configLoadingError, [&ctx](std::string_view message) {
     ctx.navigation->confirmAlert("Failed to load config", qStringFromStdView(message), []() {});
   });
+  QObject::connect(QApplication::styleHints(), &QStyleHints::colorSchemeChanged,
+                   [cfgService]() { cfgService->reloadConfig(); });
 
   QObject::connect(
       KeybindManager::instance(), &KeybindManager::keybindChanged,
