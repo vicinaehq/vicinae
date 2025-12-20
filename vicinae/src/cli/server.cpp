@@ -115,7 +115,8 @@ void CliServerCommand::run(CLI::App *app) {
   QApplication qapp(argc, argv);
 
   // discard system specific qt theming
-  qapp.setStyle(QStyleFactory::create("fusion"));
+  auto fusionStyle = QStyleFactory::create("fusion");
+  qapp.setStyle(fusionStyle);
 
   std::filesystem::create_directories(Omnicast::runtimeDir());
 
@@ -295,7 +296,7 @@ void CliServerCommand::run(CLI::App *app) {
     ctx.navigation->confirmAlert("Failed to load config", qStringFromStdView(message), []() {});
   });
 
-  QObject::connect(QApplication::styleHints(), &QStyleHints::colorSchemeChanged, [cfgService]() {
+  QObject::connect(QApplication::styleHints(), &QStyleHints::colorSchemeChanged, [&]() {
     IconThemeDatabase iconThemeDb;
     auto &value = cfgService->value();
     auto &theme = value.systemTheme();
@@ -307,6 +308,7 @@ void CliServerCommand::run(CLI::App *app) {
     }
 
     ThemeService::instance().setTheme(theme.name.c_str());
+    qApp->setStyle(fusionStyle);
     qApp->setStyleSheet(qApp->styleSheet());
   });
 
