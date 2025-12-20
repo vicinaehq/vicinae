@@ -20,7 +20,7 @@ void ThemeListController::setFilter(const QString &query) {
 
   for (auto &theme : themes) {
     if (!theme->name().contains(query, Qt::CaseInsensitive)) continue;
-    if (theme->id() == m_configService->value().theme.name) {
+    if (theme->id() == m_configService->value().systemTheme().name) {
       selectedTheme = std::move(theme);
     } else {
       availableThemes.emplace_back(std::move(theme));

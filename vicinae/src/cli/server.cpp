@@ -1,6 +1,7 @@
 #include "config/config.hpp"
 #include "daemon/ipc-client.hpp"
 #include "environment.hpp"
+#include <QStyleHints>
 #include "extension/manager/extension-manager.hpp"
 #include "favicon/favicon-service.hpp"
 #include "font-service.hpp"
@@ -32,6 +33,7 @@
 #include "utils.hpp"
 #include "vicinae.hpp"
 #include <filesystem>
+#include <qapplication.h>
 #include <signal.h>
 #include <QString>
 #include <qlockfile.h>
@@ -242,9 +244,11 @@ void CliServerCommand::run(CLI::App *app) {
 
   auto configChanged = [&](const config::ConfigValue &next, const config::ConfigValue &prev) {
     auto &theme = ThemeService::instance();
-    bool themeChangeRequired = next.theme.name != prev.theme.name;
-    bool iconThemeChangeRequired =
-        next.theme.iconTheme && next.theme.iconTheme.value_or("") != prev.theme.iconTheme.value_or("");
+    auto nextTheme = next.systemTheme();
+    auto prevTheme = prev.systemTheme();
+    bool themeChangeRequired = nextTheme.name != prevTheme.name;
+
+    bool iconThemeChangeRequired = nextTheme.iconTheme != prevTheme.iconTheme;
     IconThemeDatabase iconThemeDb;
 
     theme.setFontBasePointSize(next.font.normal.size);
@@ -253,7 +257,7 @@ void CliServerCommand::run(CLI::App *app) {
       if (!themeChangeRequired) { theme.reloadCurrentTheme(); }
     }
 
-    if (themeChangeRequired) { theme.setTheme(next.theme.name.c_str()); }
+    if (themeChangeRequired) { theme.setTheme(nextTheme.name.c_str()); }
 
     ctx.navigation->setPopToRootOnClose(next.popToRootOnClose);
     ctx.navigation->setCloseOnFocusLoss(next.closeOnFocusLoss);
@@ -261,8 +265,8 @@ void CliServerCommand::run(CLI::App *app) {
     KeybindManager::instance()->mergeBinds({next.keybinds.begin(), next.keybinds.end()});
     FaviconService::instance()->setService(next.faviconService.c_str());
 
-    if (next.theme.iconTheme) {
-      QIcon::setThemeName(next.theme.iconTheme->c_str());
+    if (nextTheme.iconTheme != "auto") {
+      QIcon::setThemeName(nextTheme.iconTheme.c_str());
     } else if (QIcon::themeName() == "hicolor") {
       QIcon::setThemeName(iconThemeDb.guessBestTheme());
     }
@@ -291,6 +295,22 @@ void CliServerCommand::run(CLI::App *app) {
     ctx.navigation->confirmAlert("Failed to load config", qStringFromStdView(message), []() {});
   });
 
+  QObject::connect(QApplication::styleHints(), &QStyleHints::colorSchemeChanged, [&]() {
+    IconThemeDatabase iconThemeDb;
+    auto &value = cfgService->value();
+    auto &theme = value.systemTheme();
+
+    if (theme.iconTheme != "auto") {
+      QIcon::setThemeName(theme.iconTheme.c_str());
+    } else if (QIcon::themeName() == "hicolor") {
+      QIcon::setThemeName(iconThemeDb.guessBestTheme());
+    }
+
+    ThemeService::instance().setTheme(theme.name.c_str());
+    qApp->setStyle(QStyleFactory::create("fusion"));
+    qApp->setStyleSheet(qApp->styleSheet());
+  });
+
   QObject::connect(
       KeybindManager::instance(), &KeybindManager::keybindChanged,
       [cfgService](Keybind bind, const Keyboard::Shortcut &shortcut) {
@@ -302,7 +322,7 @@ void CliServerCommand::run(CLI::App *app) {
   QObject::connect(cfgService, &config::Manager::configChanged, configChanged);
   QIcon::setFallbackSearchPaths(Environment::fallbackIconSearchPaths());
 
-  configChanged(cfgService->user(), {});
+  configChanged(cfgService->value(), {});
 
   // KeybindManager::instance()->fromSerializedMap(cfgService->value().keybinds);
 

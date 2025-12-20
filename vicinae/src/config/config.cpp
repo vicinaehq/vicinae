@@ -1,6 +1,9 @@
 #include <filesystem>
 #include <format>
 #include <fstream>
+#include <QStyleHints>
+#include <qnamespace.h>
+#include <qstylehints.h>
 #include <string_view>
 #include "utils.hpp"
 #include "config.hpp"
@@ -14,6 +17,7 @@ namespace fs = std::filesystem;
 SNAKE_CASIFY(config::LayerShellConfig);
 SNAKE_CASIFY(config::WindowConfig);
 SNAKE_CASIFY(config::ConfigValue);
+SNAKE_CASIFY(config::SystemThemeConfig);
 SNAKE_CASIFY(config::ThemeConfig);
 SNAKE_CASIFY(config::WindowCSD);
 
@@ -40,6 +44,15 @@ template <typename T> T static merge(const auto &v1, const auto &v2) {
     qWarning() << "Failed to read merged " << glz::format_error(error);
   }
   return cfg;
+}
+
+const SystemThemeConfig &ConfigValue::systemTheme() const {
+  switch (QApplication::styleHints()->colorScheme()) {
+  case Qt::ColorScheme::Light:
+    return theme.light;
+  default:
+    return theme.dark;
+  }
 }
 
 Manager::Manager(fs::path path) : m_userPath(path) {
@@ -93,6 +106,15 @@ bool Manager::mergeEntrypointWithUser(const EntrypointId &id, ProviderItemData &
   providers[id.provider] =
       Partial<ProviderData>{.entrypoints = std::map<std::string, ProviderItemData>{{id.entrypoint, data}}};
   return mergeWithUser({.providers = providers});
+}
+
+bool Manager::mergeThemeConfig(const config::Partial<config::SystemThemeConfig> &cfg) {
+  switch (QApplication::styleHints()->colorScheme()) {
+  case Qt::ColorScheme::Light:
+    return mergeWithUser({.theme = config::Partial<config::ThemeConfig>{.light = cfg}});
+  default:
+    return mergeWithUser({.theme = config::Partial<config::ThemeConfig>{.dark = cfg}});
+  }
 }
 
 bool Manager::mergeWithUser(const Partial<ConfigValue> &patch) {

@@ -360,7 +360,7 @@ bool RootItemManager::setAlias(const EntrypointId &id, std::string_view alias) {
 
 QJsonObject RootItemManager::getProviderPreferenceValues(const QString &id) const {
   auto provider = findProviderById(id);
-  auto json = transformPreferenceValues(m_cfg.user().providerPreferences(id.toStdString()).value_or({}));
+  auto json = transformPreferenceValues(m_cfg.value().providerPreferences(id.toStdString()).value_or({}));
 
   for (const Preference &pref : provider->preferences()) {
     if (!json.contains(pref.name())) {
