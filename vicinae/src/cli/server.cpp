@@ -115,8 +115,7 @@ void CliServerCommand::run(CLI::App *app) {
   QApplication qapp(argc, argv);
 
   // discard system specific qt theming
-  auto fusionStyle = QStyleFactory::create("fusion");
-  qapp.setStyle(fusionStyle);
+  qapp.setStyle(QStyleFactory::create("fusion"));
 
   std::filesystem::create_directories(Omnicast::runtimeDir());
 
@@ -308,7 +307,7 @@ void CliServerCommand::run(CLI::App *app) {
     }
 
     ThemeService::instance().setTheme(theme.name.c_str());
-    qApp->setStyle(fusionStyle);
+    qApp->setStyle(QStyleFactory::create("fusion"));
     qApp->setStyleSheet(qApp->styleSheet());
   });
 
