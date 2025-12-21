@@ -33,8 +33,7 @@ private:
 
 // only for KDE Wayland, X11 uses its own generic window manager implementation
 class WindowManager : public AbstractWindowManager {
-  static QDBusInterface getKRunnerInterface();
-
+public:
   QString id() const override { return "kde"; }
   QString displayName() const override { return "KDE"; }
 
@@ -50,6 +49,9 @@ class WindowManager : public AbstractWindowManager {
   bool ping() const override { return true; }
 
   void start() override {}
+
+private:
+  static QDBusInterface getKRunnerInterface();
 };
 } // namespace KDE
 

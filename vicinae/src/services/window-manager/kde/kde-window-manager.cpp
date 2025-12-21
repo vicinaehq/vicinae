@@ -1,4 +1,5 @@
 #include <qdbusargument.h>
+#include <qlogging.h>
 #include <ranges>
 #include "kde-window-manager.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
@@ -11,11 +12,21 @@ QDBusInterface WindowManager::getKRunnerInterface() {
 
 WindowManager::WindowList WindowManager::listWindowsSync() const {
   auto iface = getKRunnerInterface();
+
+  if (!iface.isValid()) {
+    qWarning() << "krunner interface is not valid";
+    return {};
+  }
+
   auto res = iface.call("Match", "");
   auto args = res.arguments();
   KDE::KRunnerWindowList lst;
 
   args.front().value<QDBusArgument>() >> lst;
+
+  // we get rid of duplicates, as for some reason some windows seem to be duplicated
+  std::ranges::sort(lst.windows, [](const auto &w1, const auto &w2) { return w1.id < w2.id; });
+  std::ranges::unique(lst.windows, [](const auto &w1, const auto &w2) { return w1.id == w2.id; });
 
   return lst.windows | std::views::transform([](auto &&w) -> AbstractWindowManager::WindowPtr {
            return std::make_shared<Window>(w);
