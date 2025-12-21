@@ -32,7 +32,7 @@ void WindowManager::focusWindowSync(const AbstractWindow &window) const {
 
 const QDBusArgument &operator>>(const QDBusArgument &arg, KDE::KRunnerWindowList &lst) {
   arg.beginArray();
-  while (arg.atEnd()) {
+  while (!arg.atEnd()) {
     KDE::KRunnerWindowData win;
     arg >> win;
     lst.windows.emplace_back(win);
