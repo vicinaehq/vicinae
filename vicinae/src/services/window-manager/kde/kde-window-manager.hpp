@@ -1,7 +1,6 @@
 #pragma once
 #include "environment.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
-#include "services/window-manager/window-manager.hpp"
 #include <qdbusargument.h>
 #include <qdbusinterface.h>
 
@@ -23,9 +22,10 @@ struct KRunnerWindowList {
 class Window : public AbstractWindowManager::AbstractWindow {
 public:
   Window(const KRunnerWindowData &data) : m_data(data) {}
-  QString id() const override { return ""; }
-  QString title() const override { return ""; }
-  QString wmClass() const override { return title(); }
+
+  QString id() const override { return m_data.id; }
+  QString title() const override { return m_data.title; }
+  QString wmClass() const override { return title().split('-').last(); }
 
 private:
   KRunnerWindowData m_data;
@@ -33,14 +33,13 @@ private:
 
 // only for KDE Wayland, X11 uses its own generic window manager implementation
 class WindowManager : public AbstractWindowManager {
+  static QDBusInterface getKRunnerInterface();
+
   QString id() const override { return "kde"; }
   QString displayName() const override { return "KDE"; }
 
-  QDBusInterface getKRunnerInterface() const {
-    return QDBusInterface("org.kde.KWin", "/WindowsRunner", "org.kde.krunner1");
-  }
-
   WindowList listWindowsSync() const override;
+  void focusWindowSync(const AbstractWindow &window) const override;
 
   // I don't know if there is a reliable way to do it on kde, it doesn't have the
   // virtual keyboard protocol

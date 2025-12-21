@@ -4,6 +4,11 @@
 #include "services/window-manager/abstract-window-manager.hpp"
 
 namespace KDE {
+
+QDBusInterface WindowManager::getKRunnerInterface() {
+  return QDBusInterface("org.kde.KWin", "/WindowsRunner", "org.kde.krunner1");
+}
+
 WindowManager::WindowList WindowManager::listWindowsSync() const {
   auto iface = getKRunnerInterface();
   auto res = iface.call("Match", "");
@@ -17,6 +22,12 @@ WindowManager::WindowList WindowManager::listWindowsSync() const {
          }) |
          std::ranges::to<std::vector>();
 }
+
+void WindowManager::focusWindowSync(const AbstractWindow &window) const {
+  QDBusInterface iface = getKRunnerInterface();
+  iface.call("Run", window.id());
+}
+
 }; // namespace KDE
 
 const QDBusArgument &operator>>(const QDBusArgument &arg, KDE::KRunnerWindowList &lst) {
