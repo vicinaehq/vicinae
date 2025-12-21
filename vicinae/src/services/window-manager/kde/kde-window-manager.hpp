@@ -25,7 +25,16 @@ public:
 
   QString id() const override { return m_data.id; }
   QString title() const override { return m_data.title; }
-  QString wmClass() const override { return title().split('-').last(); }
+  QString wmClass() const override {
+    // we don't have direct window class access, so we try to extract what is the most likely
+    // to match with it
+
+    for (const char *sep : {" - ", " — "}) {
+      if (m_data.title.contains(sep)) { return m_data.title.split(sep).last().trimmed(); }
+    }
+
+    return m_data.title;
+  }
 
 private:
   KRunnerWindowData m_data;
