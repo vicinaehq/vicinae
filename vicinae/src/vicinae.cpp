@@ -1,5 +1,5 @@
 #include "vicinae.hpp"
-#include "utils/utils.hpp"
+#include "xdgpp/env/env.hpp"
 #include <qprocess.h>
 #include <QProcessEnvironment>
 #include <ranges>
@@ -13,9 +13,9 @@ fs::path Omnicast::runtimeDir() {
   return osRundir / "vicinae";
 }
 
-fs::path Omnicast::dataDir() { return homeDir() / ".local" / "share" / "vicinae"; }
+fs::path Omnicast::dataDir() { return xdgpp::dataHome() / "vicinae"; }
 
-fs::path Omnicast::configDir() { return homeDir() / ".config" / "vicinae"; }
+fs::path Omnicast::configDir() { return xdgpp::configHome() / "vicinae"; }
 
 fs::path Omnicast::commandSocketPath() { return runtimeDir() / "vicinae.sock"; }
 fs::path Omnicast::pidFile() { return runtimeDir() / "vicinae.pid"; }
