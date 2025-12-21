@@ -1,5 +1,6 @@
 #include "window-manager.hpp"
 #include <algorithm>
+#include <qnamespace.h>
 #include <ranges>
 #include "hyprland/hyprland.hpp"
 #include "gnome/gnome-window-manager.hpp"
@@ -62,7 +63,8 @@ bool WindowManager::focusApp(const AbstractApplication &app) const {
 
 AbstractWindowManager::WindowList WindowManager::findAppWindows(const AbstractApplication &app) const {
   return m_windows | std::views::filter([&](auto &&win) {
-           return app.matchesWindowClass(win->wmClass()) || app.displayName() == win->title();
+           return app.matchesWindowClass(win->wmClass()) ||
+                  app.displayName().compare(win->title(), Qt::CaseInsensitive) == 0;
          }) |
          std::ranges::to<std::vector>();
 }
