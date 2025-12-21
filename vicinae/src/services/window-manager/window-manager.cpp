@@ -3,6 +3,7 @@
 #include <ranges>
 #include "hyprland/hyprland.hpp"
 #include "gnome/gnome-window-manager.hpp"
+#include "services/window-manager/kde/kde-window-manager.hpp"
 #include "x11/x11-window-manager.hpp"
 #include "dummy-window-manager.hpp"
 #include "wayland/wayland.hpp"
@@ -14,6 +15,7 @@ std::vector<std::unique_ptr<AbstractWindowManager>> WindowManager::createCandida
 
   candidates.emplace_back(std::make_unique<HyprlandWindowManager>());
   candidates.emplace_back(std::make_unique<GnomeWindowManager>());
+  candidates.emplace_back(std::make_unique<KDE::WindowManager>());
   candidates.emplace_back(std::make_unique<X11WindowManager>());
 
   // this implementation is good enough for most standalone wayland compositors
