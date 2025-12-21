@@ -19,24 +19,38 @@ WindowManager::WindowList WindowManager::listWindowsSync() const {
   }
 
   auto res = iface.call("Match", "");
+
+  if (auto msg = res.errorMessage(); !msg.isEmpty()) {
+    qWarning() << "listWindowsSync: failed to find matching windows" << msg;
+    return {};
+  }
+
   auto args = res.arguments();
+
+  if (args.empty()) {
+    qWarning() << "listWindowsSync: empty list of arguments";
+    return {};
+  }
+
   KDE::KRunnerWindowList lst;
 
   args.front().value<QDBusArgument>() >> lst;
 
   // we get rid of duplicates, as for some reason some windows seem to be duplicated
   std::ranges::sort(lst.windows, [](const auto &w1, const auto &w2) { return w1.id < w2.id; });
-  std::ranges::unique(lst.windows, [](const auto &w1, const auto &w2) { return w1.id == w2.id; });
+  const auto [first, last] =
+      std::ranges::unique(lst.windows, [](const auto &w1, const auto &w2) { return w1.id == w2.id; });
+  lst.windows.erase(first, last);
 
-  return lst.windows | std::views::transform([](auto &&w) -> AbstractWindowManager::WindowPtr {
-           return std::make_shared<Window>(w);
-         }) |
+  return lst.windows | std::views::filter([](auto &&w) { return !w.title.isEmpty(); }) |
+         std::views::transform(
+             [](auto &&w) -> AbstractWindowManager::WindowPtr { return std::make_shared<Window>(w); }) |
          std::ranges::to<std::vector>();
 }
 
 void WindowManager::focusWindowSync(const AbstractWindow &window) const {
   QDBusInterface iface = getKRunnerInterface();
-  iface.call("Run", window.id());
+  iface.call("Run", window.id(), "");
 }
 
 }; // namespace KDE
@@ -49,6 +63,7 @@ const QDBusArgument &operator>>(const QDBusArgument &arg, KDE::KRunnerWindowList
     lst.windows.emplace_back(win);
   }
   arg.endArray();
+
   return arg;
 }
 
