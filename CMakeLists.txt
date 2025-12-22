@@ -49,6 +49,7 @@ if (NOT USE_SYSTEM_GLAZE)
 	  GIT_REPOSITORY https://github.com/stephenberry/glaze.git
 	  GIT_TAG v6.4.0  # Replace with desired version
 	  GIT_SHALLOW TRUE
+	  EXCLUDE_FROM_ALL
 	)
 	FetchContent_MakeAvailable(glaze)
 endif()
