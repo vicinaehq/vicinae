@@ -10,7 +10,6 @@ Source1:        https://github.com/github/cmark-gfm/archive/refs/tags/0.29.0.gfm
 Patch0:         cmark-gfm-no-git.patch
 
 BuildRequires:  cmake
-BuildRequires:  ninja-build
 BuildRequires:  gcc
 BuildRequires:  gcc-c++
 BuildRequires:  pkgconf-pkg-config
@@ -54,14 +53,14 @@ cp %{SOURCE1} cmark-gfm-0.29.0.gfm.13.tar.gz
 # Set BUILD_SHARED_LIBS=OFF to prevent xdgpp from building as shared library
 # (xdgpp installation is disabled, so shared library would create missing runtime dependency)
 # Using :BOOL type to force the cache variable to override any default from %cmake macro
-%cmake -G Ninja \
+%cmake \
   -DCMAKE_BUILD_TYPE=Release \
   -DBUILD_SHARED_LIBS:BOOL=OFF \
   -DTYPESCRIPT_EXTENSIONS=ON \
   -DINSTALL_NODE_MODULES=ON \
   -DWAYLAND_LAYER_SHELL=ON \
   -DUSE_SYSTEM_CMARK_GFM=ON
-%cmake_build -- -v
+%cmake_build
 
 %install
 %cmake_install
@@ -80,6 +79,7 @@ cp %{SOURCE1} cmark-gfm-0.29.0.gfm.13.tar.gz
 * Sun Dec 22 2025 dacrab <dacrab@example.com> - 0.17.1-1
 - Update to version 0.17.1
 - Fix xdgpp dependency issue by forcing BUILD_SHARED_LIBS=OFF (prevents missing libxdgpp.so runtime dependency)
+- Fix CMake generator conflict by removing -G Ninja (use default Unix Makefiles)
 - Enable WAYLAND_LAYER_SHELL support
 * Sun Nov 16 2025 You <you@example.com> - 0.16.6-1
 - Initial COPR packaging for vicinae
