@@ -57,7 +57,7 @@ public:
 
   bool ping() const override { return true; }
 
-  void start() override {}
+  void start() override;
 
 private:
   static QDBusInterface getKRunnerInterface();

@@ -53,6 +53,11 @@ void WindowManager::focusWindowSync(const AbstractWindow &window) const {
   iface.call("Run", window.id(), "");
 }
 
+void WindowManager::start() {
+  qWarning() << "KDE window management is currently experimental. App to window matching may not work for "
+                "some applications.";
+}
+
 }; // namespace KDE
 
 const QDBusArgument &operator>>(const QDBusArgument &arg, KDE::KRunnerWindowList &lst) {
