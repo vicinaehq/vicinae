@@ -14,16 +14,6 @@
 #include "extensions/system/system-extension.hpp"
 #include <memory>
 
-const AbstractCmd *CommandDatabase::findCommand(const QString &id) {
-  if (auto repo = findRepository(id)) {
-    for (const auto &cmd : repo->commands()) {
-      if (cmd->uniqueId() == id) { return cmd.get(); }
-    }
-  }
-
-  return nullptr;
-}
-
 const std::vector<std::shared_ptr<AbstractCommandRepository>> &CommandDatabase::repositories() const {
   return _repositories;
 }

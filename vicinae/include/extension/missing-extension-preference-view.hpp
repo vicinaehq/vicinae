@@ -95,7 +95,7 @@ public:
   void onSubmit() override {
     auto manager = context()->services->rootItemManager();
     bool validated = true;
-    QJsonObject obj(m_existingPreferenceValues);
+    QJsonObject patch;
 
     for (const auto &field : m_preferenceFields) {
       auto value = field->widget()->asJsonValue();
@@ -107,16 +107,12 @@ public:
       }
 
       field->clearError();
-      obj[field->preference().name()] = value;
+      patch[field->preference().name()] = value;
     }
-
-    QJsonDocument doc;
-
-    doc.setObject(obj);
 
     if (!validated) return;
 
-    manager->setPreferenceValues(QString("extension.%1").arg(m_command->uniqueId()), obj);
+    manager->setPreferenceValues(m_command->uniqueId(), patch);
     context()->navigation->popCurrentView();
     context()->navigation->launch(m_command);
   }

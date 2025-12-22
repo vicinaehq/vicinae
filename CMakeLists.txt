@@ -34,11 +34,25 @@ option(USE_SYSTEM_PROTOBUF "Use system protobuf instead of building it from sour
 option(USE_SYSTEM_ABSEIL "Use system abseil (libabsl) instead of building it from source" ON)
 option(USE_SYSTEM_CMARK_GFM "Use system cmark-gfm (github's fork of cmark) instead of building it from source" ON)
 option(USE_SYSTEM_LAYER_SHELL "Use system qt layer shell instead of building it from source" ON)
+option(USE_SYSTEM_GLAZE "Use system glaze instead of fetching it. This is a header only library so only required at build time" OFF)
 option(USE_SYSTEM_QT_KEYCHAIN "Use system qt-keychain instead of building it from source. Note: still depends on system libsecret." ON)
 option(LIBQALCULATE_BACKEND "Compile in support for the Qalculate! calculator backend" ON)
 option(USE_PRECOMPILED_HEADERS "Use precompiled headers to speed up compilation" ON)
 
 option(BUILD_TESTS "Build all vicinae tests" OFF)
+
+include(FetchContent)
+
+if (NOT USE_SYSTEM_GLAZE)
+	FetchContent_Declare(
+	  glaze
+	  GIT_REPOSITORY https://github.com/stephenberry/glaze.git
+	  GIT_TAG v6.4.0  # Replace with desired version
+	  GIT_SHALLOW TRUE
+	  EXCLUDE_FROM_ALL
+	)
+	FetchContent_MakeAvailable(glaze)
+endif()
 
 if (BUILD_TESTS)
 	add_subdirectory(tests)
@@ -131,6 +145,8 @@ if (NOT USE_SYSTEM_PROTOBUF)
 	checkout_protobuf()
 	set(COMMON_PROTO_DIR ${CMAKE_CURRENT_BINARY_DIR}/_deps/protobuf-src/src)
 endif()
+
+find_package(glaze)
 
 set(CMAKE_FIND_PACKAGE_PREFER_CONFIG TRUE)
 find_package(Protobuf)

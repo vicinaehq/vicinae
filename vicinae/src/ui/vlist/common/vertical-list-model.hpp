@@ -1,4 +1,6 @@
 #pragma once
+#include "common.hpp"
+#include "lib/fzf.hpp"
 #include "ui/default-list-item-widget/default-list-item-widget.hpp"
 #include "ui/vlist/common/section-model.hpp"
 #include "ui/vlist/vlist.hpp"
@@ -52,4 +54,7 @@ public:
     return tag;
   }
 };
-} // namespace vicinae::ui
+
+}; // namespace vicinae::ui
+
+// namespace vicinae::ui

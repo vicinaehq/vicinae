@@ -40,6 +40,7 @@ static inline bool containsIgnoreCase(const std::vector<std::string> &desktops, 
 
 inline bool isCosmicDesktop() { return containsIgnoreCase(xdgpp::currentDesktop(), "cosmic"); }
 inline bool isPlasmaDesktop() { return containsIgnoreCase(xdgpp::currentDesktop(), "kde"); }
+inline bool isWaylandPlasmaDesktop() { return isWaylandSession() && isPlasmaDesktop(); }
 inline bool isGnomeDesktop() { return containsIgnoreCase(xdgpp::currentDesktop(), "gnome"); }
 
 inline bool isLayerShellEnabled() {
@@ -50,11 +51,7 @@ inline bool isLayerShellEnabled() {
   return isWaylandSession() && !isCosmicDesktop() && !isGnomeEnvironment();
 }
 
-inline bool isHudDisabled() {
-  return !isLayerShellEnabled() || qEnvironmentVariable("VICINAE_DISABLE_HUD", "0") == "1";
-}
-
-inline bool hasAppLaunchDebug() { return !qEnvironmentVariable("VICINAE_APP_LAUNCH_DEBUG").isEmpty(); }
+inline bool isHudDisabled() { return !isLayerShellEnabled(); }
 
 /**
  * App image directory if we are running in an appimage.

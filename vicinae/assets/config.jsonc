@@ -1,0 +1,149 @@
+{
+	// A list of paths pointed to separate configuration files to source during loading.
+	// Note that values defined in the main configuration file always take precedence over imported
+	// files.
+	// Relative paths are accepted, and are relative to the configuration directory in which the importing configuration file is located.
+	"imports": [],
+
+	// Whether root search should also search files directly.
+	// File search is performed asynchrounously: files may take an instant to appear after a query is entered.
+	// Turning this on results in an increase in CPU usage when searching.
+	// Note that vicinae has a built-in file search command that can be used to perform file search in isolation, accompanied with
+	// rich content preview. This should be more than enough for most users.
+	"search_files_in_root": false,
+
+	// If the layer shell protocol is used to position the window and the keyboard interactivity is
+	// set to "exclusive" (the default) then this setting will have no effect. Either switch to "on_demand" interactivity
+	// or disable layer shell.
+	"close_on_focus_loss": false,
+
+	// Whether IME preedit strings should be searched in real time.
+	"consider_preedit": false,
+
+	// Reset the navigation state every time the window is closed
+	"pop_to_root_on_close": false,
+
+	// What favicon service to use when loading favicons is needed.
+	// Available values are: 'twenty' | 'google' | 'none'
+	// If this is set to 'none', favicon loading is disabled and a placeholder icon will be used when a favicon is expected.
+	"favicon_service": "twenty",
+
+	// EXPERIMENTAL!
+	// Enable specific editing motions in the main search bar and during navigation.
+	// This will probably be changed in future updates.
+	// Supports: 'default' | 'emacs'
+	"keybinding": "default",
+
+	"font": {
+		// The font family to use for the general vicinae UI.
+		"normal": {
+			"family": "auto",
+			// The point size of the font (unlike pixel size, the point size scales with resolution)
+			"size": 10.5
+		}
+	},
+
+	// The general vicinae theme as well as the system icon theme (used for applications and file icons) can be customized
+	// according to the system appearance.
+	// When editing the current theme through the vicinae GUI, it will modify the value that maps to the current system appearance.
+	"theme": {
+		"light": {
+			"name": "vicinae-light",
+			"icon_theme": "auto"
+		},
+		"dark": {
+			"name": "vicinae-dark",
+			"icon_theme": "auto"
+		}
+	},
+
+	"launcher_window": {
+		// Control the opacity of the main window.
+		// Opacity for other surfaces are controlled by the active theme.
+		"opacity": 0.98,
+
+		// You can turn client side decorations off if you want to let your compositor draw the rounded
+		// borders and such. This usually gives better results, but is more complicated to setup, if at all possible.
+		"client_side_decorations": {
+			"enabled": true,
+			"rounding": 10,
+			"border_width": 3
+		},
+
+		// The vicinae UI is designed to work best at the default size. If you change this it is highly recommended
+		// that you preserve a similar aspect ratio.
+		"size": {
+			"width": 770,
+			"height": 480
+		},
+
+		// EXPERIMENTAL - X11 ONLY!
+		// The name of the screen (as provided by a tool like xrandr) on which the vicinae window
+		// needs to be shown.
+		// e.g "eDP1", "DP-1"
+		"screen": "auto",
+
+		// Only for wayland compositors that support the 'wlr-layer-shell' protocol (https://wayland.app/protocols/wlr-layer-shell-unstable-v1)
+		"layer_shell": {
+			"enabled": true,
+			"scope": "vicinae",
+			"keyboard_interactivity": "exclusive", // 'exclusive' | 'on_demand'
+			// either 'overlay' or 'top'.
+			// Other layers are not supported as they are unsuitable for a launcher.
+			// 'top' is recommended as using 'overlay' will make the vicinae window appear on top of IME popovers in some scenarios.
+			"layer": "top" 
+		}
+	},
+
+	// Keybinds are serialized using a custom format.
+	// It is recommended to edit them through the settings GUI, which will write them to this file.
+	"keybinds": {
+		// common shortcuts
+		"open-search-filter": "control+P",
+		"open-settings": "control+,",
+		"toggle-action-panel": "control+B",
+
+		// used to assign shortcuts to generic actions
+		// if an extension provides a specific kind of action, it is encouraged to use shortcuts as defined here.
+		"action.copy": "control+shift+C",
+		"action.copy-name": "control+shift+.",
+		"action.copy-path": "control+shift+,",
+		"action.dangerous-remove": "control+shift+X",
+		"action.duplicate": "control+D",
+		"action.edit": "control+E",
+		"action.edit-secondary": "control+shift+E",
+		"action.move-down": "control+shift+ARROWDOWN",
+		"action.move-up": "control+shift+ARROWUP",
+		"action.new": "control+N",
+		"action.open": "control+O",
+		"action.pin": "control+shift+P",
+		"action.refresh": "control+R",
+		"action.remove": "control+X",
+		"action.save": "control+S"
+	},
+
+	// List of entrypoints that are tagged as "favorite".
+	// They show up on the very top of the root search when no search query is active.
+	// Each value is a serialized entrypoint ID.
+	"favorites": [
+		"clipboard:history"
+	],
+
+	// List of entrypoints to suggest as a fallback when no result matches the
+	// provided search query.
+	// Each value is a serialized entrypoint ID.
+	"fallbacks": [
+		"files:search"
+	],
+
+	// Every item that can be activated from the vicinae root search is referred as an entrypoint, or sometimes, in the case of extensions, as a "command".
+	// Entrypoints are always grouped under a provider.
+	// e,g applications entrypoints are all grouped under the "applications" provider
+	//
+	// The best way to interact with providers and entrypoints is through the graphical interface provided by the
+	// settings window ("extensions" tab). Every time a change is made through this GUI, the relevant values will be
+	// written to the "providers" object below (password preferences excluded).
+	//
+	// The exact list of available providers depends on what extensions have been installed.
+	"providers": {}
+}

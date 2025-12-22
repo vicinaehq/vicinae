@@ -178,8 +178,9 @@ const OpenInBrowser: React.FC<Action.OpenInBrowser.Props> = ({
 		<ActionRoot
 			{...props}
 			title={title}
-			onAction={() => {
-				open(url);
+			onAction={async () => {
+				await open(url);
+				await closeMainWindow();
 			}}
 		/>
 	);

@@ -1,8 +1,7 @@
 #include "extension/extension.hpp"
 #include "extension/extension-command.hpp"
-#include "../ui/image/url.hpp"
+#include "ui/image/url.hpp"
 #include "preference.hpp"
-#include "services/extension-registry/extension-registry.hpp"
 #include <qjsonobject.h>
 #include <qjsonarray.h>
 #include <qlogging.h>
@@ -17,7 +16,7 @@ ImageURL Extension::iconUrl() const {
   return fallback;
 }
 
-QString Extension::id() const { return m_manifest.id; }
+QString Extension::id() const { return QString("@%1/%2").arg(m_manifest.author).arg(m_manifest.id); }
 
 QString Extension::displayName() const { return m_manifest.title; }
 

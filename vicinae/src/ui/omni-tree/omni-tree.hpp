@@ -1,7 +1,8 @@
 #pragma once
-#include "../image/url.hpp"
+#include "ui/image/url.hpp"
 #include "theme.hpp"
 #include "theme/colors.hpp"
+#include "ui/divider/divider.hpp"
 #include "ui/image/image.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include "ui/typography/typography.hpp"

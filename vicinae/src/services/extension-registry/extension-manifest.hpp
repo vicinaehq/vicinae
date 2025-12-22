@@ -1,6 +1,8 @@
 #pragma once
-#include "common.hpp"
 #include <expected>
+#include "argument.hpp"
+#include "common.hpp"
+#include "preference.hpp"
 
 struct ManifestError {
   QString m_message;

@@ -3,7 +3,6 @@
 #include <qwidget.h>
 #include "settings-window.hpp"
 #include "common.hpp"
-#include "services/config/config-service.hpp"
 #include "service-registry.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "theme.hpp"
@@ -17,10 +16,10 @@ void SettingsWindow::paintEvent(QPaintEvent *event) {
   OmniPainter painter(this);
   QColor finalBgColor = painter.resolveColor(SemanticColor::Background);
 
-  finalBgColor.setAlphaF(config.window.opacity);
+  finalBgColor.setAlphaF(config.launcherWindow.opacity);
   painter.setRenderHint(QPainter::Antialiasing);
   QPainterPath path;
-  path.addRoundedRect(rect(), config.window.rounding, config.window.rounding);
+  path.addRoundedRect(rect(), 10, 10);
   painter.setClipPath(path);
   painter.fillPath(path, finalBgColor);
   painter.setThemePen(SemanticColor::BackgroundBorder, Omnicast::WINDOW_BORDER_WIDTH);

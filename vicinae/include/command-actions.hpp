@@ -1,4 +1,5 @@
 #pragma once
+#include "command.hpp"
 #include "ui/action-pannel/action.hpp"
 
 struct OpenBuiltinCommandAction : public AbstractAction {

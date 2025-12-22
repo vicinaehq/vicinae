@@ -3,14 +3,13 @@
 #include "common.hpp"
 #include "keyboard/keybind.hpp"
 #include "service-registry.hpp"
-#include "services/config/config-service.hpp"
 #include "theme.hpp"
 #include "ui/typography/typography.hpp"
 #include "actions/theme/theme-actions.hpp"
 #include "ui/views/base-view.hpp"
 #include "ui/views/typed-list-view.hpp"
+#include "config/config.hpp"
 #include <memory>
-#include <qnamespace.h>
 #include "manage-themes-view.hpp"
 
 std::unique_ptr<ActionPanelState> ManageThemesView::createActionPanel(const ItemType &theme) const {
@@ -45,9 +44,9 @@ std::unique_ptr<ActionPanelState> ManageThemesView::createActionPanel(const Item
 
 ManageThemesView::ManageThemesView() {
   auto config = ServiceRegistry::instance()->config();
-  connect(config, &ConfigService::configChanged, this,
-          [this](const ConfigService::Value &next, const ConfigService::Value &prev) {
-            if (next.theme.name != prev.theme.name) { m_list->selectFirst(); }
+  connect(config, &config::Manager::configChanged, this,
+          [this](const config::ConfigValue &next, const config::ConfigValue &prev) {
+            if (next.systemTheme().name != prev.systemTheme().name) { m_list->selectFirst(); }
           });
 }
 
@@ -63,7 +62,7 @@ void ManageThemesView::initialize() {
 void ManageThemesView::beforePop() {
   auto config = ServiceRegistry::instance()->config();
   auto &service = ThemeService::instance();
-  service.setTheme(config->value().theme.name.value_or("vicinae-dark"));
+  service.setTheme(config->value().systemTheme().name.c_str());
 }
 
 void ManageThemesView::itemSelected(const ItemType &theme) {

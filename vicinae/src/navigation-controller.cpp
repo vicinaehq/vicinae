@@ -1,5 +1,6 @@
 #include "navigation-controller.hpp"
 #include "command-controller.hpp"
+#include "common.hpp"
 #include "extension/extension-command.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "service-registry.hpp"
@@ -505,6 +506,8 @@ void NavigationController::showWindow() {
   emit windowVisiblityChanged(true);
 }
 
+void NavigationController::requestWindowSize(QSize size) { emit windowSizeRequested(size); }
+
 NavigationController::ViewState *NavigationController::topState() {
   if (m_views.empty()) return nullptr;
 
@@ -544,7 +547,7 @@ bool NavigationController::reloadActiveCommand() {
 
   // we only store the id, as the pointer will likely become invalid
   // after unloading.
-  QString id = cmd->uniqueId();
+  EntrypointId id = cmd->uniqueId();
 
   unloadActiveCommand();
   launch(id);
@@ -571,7 +574,7 @@ void NavigationController::unloadActiveCommand() {
   }
 }
 
-void NavigationController::launch(const QString &id) {
+void NavigationController::launch(const EntrypointId &id) {
   auto root = m_ctx.services->rootItemManager();
 
   for (ExtensionRootProvider *extension : root->extensions()) {
@@ -603,7 +606,7 @@ void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd, const
   props.arguments = arguments;
 
   if (shouldCheckPreferences) {
-    auto itemId = QString("extension.%1").arg(cmd->uniqueId());
+    auto itemId = cmd->uniqueId();
     auto manager = m_ctx.services->rootItemManager();
     auto preferences = manager->getMergedItemPreferences(itemId);
     auto preferenceValues = manager->getPreferenceValues(itemId);

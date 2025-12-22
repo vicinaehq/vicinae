@@ -1,13 +1,13 @@
 #pragma once
 #include <QKeyEvent>
-#include <QString>
+#include <string>
 #include <qevent.h>
 
 enum class KeyBindingMode { Default, Emacs };
 
 class KeyBindingService {
 public:
-  static KeyBindingMode getMode(const QString &keybinding) {
+  static KeyBindingMode getMode(const std::string &keybinding) {
     if (keybinding == "emacs") { return KeyBindingMode::Emacs; }
     return KeyBindingMode::Default;
   }
@@ -18,7 +18,7 @@ public:
            (mods & ~(required | Qt::KeypadModifier | Qt::GroupSwitchModifier)) == 0;
   }
 
-  static bool isDownKey(QKeyEvent *event, const QString &keybinding) {
+  static bool isDownKey(QKeyEvent *event, const std::string &keybinding) {
     KeyBindingMode mode = getMode(keybinding);
 
     if (!usesOnly(event, Qt::ControlModifier)) { return false; }
@@ -32,7 +32,7 @@ public:
     return false;
   }
 
-  static bool isUpKey(QKeyEvent *event, const QString &keybinding) {
+  static bool isUpKey(QKeyEvent *event, const std::string &keybinding) {
     KeyBindingMode mode = getMode(keybinding);
 
     if (!usesOnly(event, Qt::ControlModifier)) { return false; }
@@ -46,7 +46,7 @@ public:
     return false;
   }
 
-  static bool isLeftKey(QKeyEvent *event, const QString &keybinding) {
+  static bool isLeftKey(QKeyEvent *event, const std::string &keybinding) {
     KeyBindingMode mode = getMode(keybinding);
     switch (mode) {
     case KeyBindingMode::Default:
@@ -57,7 +57,7 @@ public:
     return false;
   }
 
-  static bool isRightKey(QKeyEvent *event, const QString &keybinding) {
+  static bool isRightKey(QKeyEvent *event, const std::string &keybinding) {
     KeyBindingMode mode = getMode(keybinding);
     switch (mode) {
     case KeyBindingMode::Default:

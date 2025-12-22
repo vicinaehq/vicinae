@@ -25,8 +25,8 @@
       packages = forEachPkgs (pkgs: {
         default = pkgs.callPackage ./nix/vicinae.nix { gcc15Stdenv = pkgs.gcc15Stdenv; };
         nix-update-script = pkgs.writeShellScriptBin "nix-update-script" ''
-          OLD_API_DEPS_HASH=$(${pkgs.lib.getExe pkgs.nix} eval --raw .#packages.x86_64-linux.default.passthru.apiDeps.hash)
-          OLD_EXT_MAN_DEPS_HASH=$(${pkgs.lib.getExe pkgs.nix} eval --raw .#packages.x86_64-linux.default.passthru.extensionManagerDeps.hash)
+          OLD_API_DEPS_HASH=$(${pkgs.lib.getExe pkgs.nix} eval --raw .#packages.x86_64-linux.default.apiDeps.hash)
+          OLD_EXT_MAN_DEPS_HASH=$(${pkgs.lib.getExe pkgs.nix} eval --raw .#packages.x86_64-linux.default.extensionManagerDeps.hash)
 
           cd typescript/api
           NEW_API_DEPS_HASH=$(${pkgs.lib.getExe pkgs.prefetch-npm-deps} package-lock.json)

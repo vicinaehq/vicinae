@@ -10,6 +10,7 @@ Categories=Utility;Accessibility;
 NoDisplay=false
 Actions=open;close;toggle
 StartupWMClass=vicinae
+StartupNotify=false
 
 [Desktop Action open]
 Name=Open Vicinae Window

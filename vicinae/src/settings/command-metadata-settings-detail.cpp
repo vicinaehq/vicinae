@@ -7,6 +7,13 @@
 #include <qwidget.h>
 
 void CommandMetadataSettingsDetailWidget::setupUI() {
+  using namespace std::chrono_literals;
+
+  m_timer.setInterval(1s);
+  m_timer.start();
+
+  connect(&m_timer, &QTimer::timeout, this, [this]() { savePendingPreferences(); });
+
   if (auto description = m_command->description(); !description.isEmpty()) {
     MetadataRowWidget *descriptionLabel = new MetadataRowWidget(this);
     TypographyWidget *descriptionText = new TypographyWidget;
@@ -42,10 +49,6 @@ void CommandMetadataSettingsDetailWidget::setupUI() {
       widget->formItem()->setValueAsJson(defaultValue);
     }
 
-    connect(widget->formItem()->focusNotifier(), &FocusNotifier::focusChanged, this, [this](bool focused) {
-      if (!focused) savePendingPreferences();
-    });
-
     m_preferenceFields[preference.name()] = widget;
     m_formLayout->addWidget(widget);
   }
@@ -57,24 +60,26 @@ void CommandMetadataSettingsDetailWidget::setupUI() {
 
 void CommandMetadataSettingsDetailWidget::savePendingPreferences() {
   auto manager = ServiceRegistry::instance()->rootItemManager();
-  QJsonObject obj;
+  QJsonObject patch;
 
-  for (const auto &[preferenceId, widget] : m_preferenceFields) {
-    QJsonValue value = widget->formItem()->asJsonValue();
-
-    obj[preferenceId] = value;
+  for (const auto &[name, w] : m_preferenceFields) {
+    QJsonValue currentValue = w->formItem()->asJsonValue();
+    if (currentValue != m_preferenceValues.value(name)) {
+      m_preferenceValues[name] = currentValue;
+      patch[name] = currentValue;
+    }
   }
 
-  manager->setItemPreferenceValues(m_rootItemId, obj);
+  if (!patch.empty()) { manager->setItemPreferenceValues(m_command->uniqueId(), patch); }
 }
 
 CommandMetadataSettingsDetailWidget::CommandMetadataSettingsDetailWidget(
-    const QString &rootItemId, const std::shared_ptr<AbstractCmd> &cmd)
-    : m_rootItemId(rootItemId), m_command(cmd) {
+    const std::shared_ptr<AbstractCmd> &cmd)
+    : m_command(cmd) {
   auto manager = ServiceRegistry::instance()->rootItemManager();
 
-  m_preferenceValues = manager->getItemPreferenceValues(rootItemId);
+  m_preferenceValues = manager->getItemPreferenceValues(m_command->uniqueId());
   setupUI();
 }
 
-CommandMetadataSettingsDetailWidget::~CommandMetadataSettingsDetailWidget() { savePendingPreferences(); }
+CommandMetadataSettingsDetailWidget::~CommandMetadataSettingsDetailWidget() {}

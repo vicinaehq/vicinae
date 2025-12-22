@@ -396,7 +396,7 @@ std::unique_ptr<ActionPanelState> ClipboardHistoryView::createActionPanel(const 
   auto mainSection = panel->createSection();
   bool isCopyable = info->encryption == ClipboardEncryptionType::None || clipman->isEncryptionReady();
 
-  if (!isCopyable) { mainSection->addAction(new OpenItemPreferencesAction("extension.clipboard")); }
+  if (!isCopyable) { mainSection->addAction(new OpenItemPreferencesAction(EntrypointId{"clipboard", ""})); }
 
   auto wm = context()->services->windowManager();
   auto pin = new PinClipboardAction(info->id, !info->pinnedAt);
@@ -461,15 +461,15 @@ void ClipboardHistoryView::handleMonitoringChanged(bool monitor) {
 }
 
 void ClipboardHistoryView::handleStatusClipboard() {
-  auto preferences = command()->preferenceValues();
+  QJsonObject patch;
 
   if (m_statusToolbar->clipboardStatus() == ClipboardStatusToolbar::Paused) {
-    preferences["monitoring"] = true;
+    patch["monitoring"] = true;
   } else {
-    preferences["monitoring"] = false;
+    patch["monitoring"] = false;
   }
 
-  command()->setPreferenceValues(preferences);
+  command()->setPreferenceValues(patch);
 }
 
 void ClipboardHistoryView::handleFilterChange(const SelectorInput::AbstractItem &item) {

@@ -1,8 +1,10 @@
 #include "window-manager.hpp"
 #include <algorithm>
+#include <qnamespace.h>
 #include <ranges>
 #include "hyprland/hyprland.hpp"
 #include "gnome/gnome-window-manager.hpp"
+#include "services/window-manager/kde/kde-window-manager.hpp"
 #include "x11/x11-window-manager.hpp"
 #include "dummy-window-manager.hpp"
 #include "wayland/wayland.hpp"
@@ -14,6 +16,7 @@ std::vector<std::unique_ptr<AbstractWindowManager>> WindowManager::createCandida
 
   candidates.emplace_back(std::make_unique<HyprlandWindowManager>());
   candidates.emplace_back(std::make_unique<GnomeWindowManager>());
+  candidates.emplace_back(std::make_unique<KDE::WindowManager>());
   candidates.emplace_back(std::make_unique<X11WindowManager>());
 
   // this implementation is good enough for most standalone wayland compositors
@@ -59,7 +62,10 @@ bool WindowManager::focusApp(const AbstractApplication &app) const {
 }
 
 AbstractWindowManager::WindowList WindowManager::findAppWindows(const AbstractApplication &app) const {
-  return m_windows | std::views::filter([&](auto &&win) { return app.matchesWindowClass(win->wmClass()); }) |
+  return m_windows | std::views::filter([&](auto &&win) {
+           return app.matchesWindowClass(win->wmClass()) ||
+                  app.displayName().compare(win->title(), Qt::CaseInsensitive) == 0;
+         }) |
          std::ranges::to<std::vector>();
 }
 

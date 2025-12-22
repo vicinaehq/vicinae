@@ -61,7 +61,7 @@ public:
     case RunProgramSection::CommandLine:
       return m_hasProgram;
     default:
-      break;
+      return 0;
     }
   }
 

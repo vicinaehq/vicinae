@@ -7,7 +7,7 @@ find_package(Qt6 REQUIRED COMPONENTS Core Widgets Sql Network Svg DBus Concurren
 find_package(OpenSSL REQUIRED)
 find_package(LibXml2 REQUIRED)
 
-list(APPEND LIBS  Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus Qt6::Concurrent ${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY} protobuf::libprotobuf minizip OpenSSL::Crypto wayland-client xdgpp qt6keychain LibXml2::LibXml2)
+list(APPEND LIBS  Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus Qt6::Concurrent ${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY} protobuf::libprotobuf minizip OpenSSL::Crypto wayland-client xdgpp qt6keychain LibXml2::LibXml2 glaze::glaze)
 
 set(WLR_CLIP_BIN ${CMAKE_BINARY_DIR}/wlr-clip/wlr-clip${CMAKE_EXECUTABLE_SUFFIX})
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)
@@ -50,7 +50,7 @@ file(GLOB PROTO_FILES "${PROTO_SRC_DIR}/*.proto")
 set(SRCS
 	src/main.cpp
 
-	include/theme.hpp
+	src/theme.hpp
 	src/theme.cpp
 
 	src/cli/cli.hpp
@@ -177,8 +177,6 @@ set(SRCS
 
 	src/settings-controller/settings-controller.hpp
 	src/settings-controller/settings-controller.cpp
-
-	src/services/config/config-service.hpp
 
 	src/services/toast/toast-service.hpp
 
@@ -326,8 +324,6 @@ set(SRCS
 
 	src/manage-quicklinks-command.hpp
 
-	include/ui/metadata-pane.hpp
-
 	include/ui/horizontal-metadata.hpp
 	src/ui/horizontal-metadata.cpp
 
@@ -472,6 +468,7 @@ set(SRCS
 	src/services/file-chooser/native/native-file-chooser.cpp
 	src/services/root-item-manager/root-item-manager.hpp
 	src/services/root-item-manager/root-item-manager.cpp
+	src/services/root-item-manager/visit-tracker.cpp
 	
 	src/services/app-service/app-service.hpp
 	src/services/app-service/app-service.cpp
@@ -533,7 +530,6 @@ set(SRCS
 	src/ui/views/base-view.cpp
 	src/ui/views/simple-view.cpp
 	src/ui/views/list-view.cpp
-	src/ui/views/grid-view.cpp
 	#src/ui/views/form-view.cpp
 	
 	src/ui/launcher-window/launcher-window.cpp
@@ -657,6 +653,11 @@ set(SRCS
 	src/ui/vlist/vlist.hpp
 	src/ui/vlist/vlist.cpp
 
+	src/config/config.hpp
+	src/config/config.cpp
+
+	src/extensions/vicinae/local-storage/browse-local-storage.hpp
+
 ) 
 
 if (UNIX)
@@ -697,6 +698,8 @@ if (UNIX AND NOT APPLE)
 		src/services/window-manager/gnome/gnome-workspace.cpp
 		src/services/window-manager/gnome/gnome-listener.cpp
 		src/services/window-manager/wayland/wayland.cpp
+		src/services/window-manager/kde/kde-window-manager.hpp
+		src/services/window-manager/kde/kde-window-manager.cpp
 		src/services/window-manager/x11/x11-window-manager.cpp
 		src/services/window-manager/x11/x11-event-listener.cpp
 		src/services/window-manager/x11/x11-window.cpp

@@ -1,4 +1,5 @@
 #include "cli.hpp"
+#include "cli/config.hpp"
 #include "cli/theme.hpp"
 #include "daemon/ipc-client.hpp"
 #include "utils.hpp"
@@ -306,10 +307,13 @@ class DMenuCommand : public AbstractCommandLineCommand {
         "Set the title of the main section. Use the {count} placeholder to render the current count.");
     app->add_option("-p,--placeholder", m_payload.placeholder, "Placeholder text to use in the search bar");
     app->add_option("-q,--query", m_payload.query, "Initial search query");
+    app->add_option("-W,--width", m_payload.width, "Window width in pixels");
+    app->add_option("-H,--height", m_payload.height, "Window height in pixels");
     app->add_flag("--no-section", m_payload.noSection, "Do not insert a section heading");
     app->add_flag("--no-quick-look", m_payload.noQuickLook,
                   "Do not show quick look if available for a given entry");
     app->add_flag("--no-metadata", m_payload.noMetadata, "Do not show metadata section in quick look");
+    app->add_flag("--no-footer", m_payload.noFooter, "Hide the status bar footer");
   }
 
   void run(CLI::App *app) override {
@@ -431,6 +435,7 @@ int CommandLineInterface::execute(int ac, char **av) {
   app.registerCommand<DMenuCommand>();
   app.registerCommand<ThemeCommand>();
   app.registerCommand<AppCommand>();
+  app.registerCommand<ConfigCommand>();
 
   return app.run(ac, av);
 }

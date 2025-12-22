@@ -1,5 +1,7 @@
+#include "config/config.hpp"
 #include "daemon/ipc-client.hpp"
 #include "environment.hpp"
+#include <QStyleHints>
 #include "extension/manager/extension-manager.hpp"
 #include "favicon/favicon-service.hpp"
 #include "font-service.hpp"
@@ -16,8 +18,8 @@
 #include "service-registry.hpp"
 #include "services/calculator-service/calculator-service.hpp"
 #include "services/clipboard/clipboard-service.hpp"
-#include "services/config/config-service.hpp"
 #include "services/emoji-service/emoji-service.hpp"
+#include "services/extension-registry/extension-registry.hpp"
 #include "services/files-service/file-service.hpp"
 #include "services/local-storage/local-storage-service.hpp"
 #include "services/oauth/oauth-service.hpp"
@@ -29,13 +31,17 @@
 #include "services/window-manager/window-manager.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "ui/launcher-window/launcher-window.hpp"
+#include "utils.hpp"
 #include "vicinae.hpp"
+#include <filesystem>
+#include <qapplication.h>
 #include <signal.h>
 #include <QString>
 #include <qlockfile.h>
 #include <qlogging.h>
 #include <qpixmapcache.h>
 #include <qstylefactory.h>
+#include <system_error>
 #include "lib/CLI11.hpp"
 #include "server.hpp"
 
@@ -44,6 +50,13 @@ namespace fs = std::filesystem;
 void CliServerCommand::setup(CLI::App *app) {
   app->add_flag("--open", m_open, "Open the main window once the server is started");
   app->add_flag("--replace", m_replace, "Replace the currently running instance if there is one");
+  app->add_option("--config", m_config, "Path to the main config file")
+      ->default_val(Omnicast::configDir() / "settings.json")
+      ->check([](const std::string &path) {
+        std::error_code ec;
+        if (!fs::is_regular_file(path, ec)) { return "not a valid file"; }
+        return "";
+      });
 }
 
 void CliServerCommand::run(CLI::App *app) {
@@ -111,14 +124,14 @@ void CliServerCommand::run(CLI::App *app) {
     auto registry = ServiceRegistry::instance();
     auto omniDb = std::make_unique<OmniDatabase>(Omnicast::dataDir() / "vicinae.db");
     auto localStorage = std::make_unique<LocalStorageService>(*omniDb);
-    auto rootItemManager = std::make_unique<RootItemManager>(*omniDb.get());
     auto extensionManager = std::make_unique<ExtensionManager>();
     auto windowManager = std::make_unique<WindowManager>();
     auto appService = std::make_unique<AppService>(*omniDb.get());
     auto clipboardManager =
         std::make_unique<ClipboardService>(Omnicast::dataDir() / "clipboard.db", *windowManager, *appService);
     auto fontService = std::make_unique<FontService>();
-    auto configService = std::make_unique<ConfigService>();
+    auto configService = std::make_unique<config::Manager>(m_config);
+    auto rootItemManager = std::make_unique<RootItemManager>(*configService, *localStorage);
     auto shortcutService = std::make_unique<ShortcutService>(*omniDb.get());
     auto toastService = std::make_unique<ToastService>();
     auto currentConfig = configService->value();
@@ -187,7 +200,7 @@ void CliServerCommand::run(CLI::App *app) {
 
         auto extp = static_cast<ExtensionRootProvider *>(provider);
 
-        if (!extp->isBuiltin() && !scanned.contains(extp->repositoryId())) {
+        if (!extp->isBuiltin() && !scanned.contains(extp->uniqueId())) {
           removed.emplace_back(extp->uniqueId());
         }
       }
@@ -196,12 +209,6 @@ void CliServerCommand::run(CLI::App *app) {
         root->uninstallProvider(id);
       }
 
-      root->updateIndex();
-    });
-
-    QObject::connect(reg, &ExtensionRegistry::extensionUninstalled, [reg](const QString &id) {
-      auto root = ServiceRegistry::instance()->rootItemManager();
-      root->uninstallProvider(QString("extension.%1").arg(id));
       root->updateIndex();
     });
 
@@ -236,35 +243,43 @@ void CliServerCommand::run(CLI::App *app) {
   commandServer.setHandler(new IpcCommandHandler(ctx));
   commandServer.start(Omnicast::commandSocketPath());
 
-  auto configChanged = [&](const ConfigService::Value &next, const ConfigService::Value &prev) {
+  auto configChanged = [&](const config::ConfigValue &next, const config::ConfigValue &prev) {
     auto &theme = ThemeService::instance();
-    bool themeChangeRequired =
-        next.theme.name && next.theme.name.value_or("") != prev.theme.name.value_or("");
-    bool iconThemeChangeRequired =
-        next.theme.iconTheme && next.theme.iconTheme.value_or("") != prev.theme.iconTheme.value_or("");
+    auto nextTheme = next.systemTheme();
+    auto prevTheme = prev.systemTheme();
+    bool themeChangeRequired = nextTheme.name != prevTheme.name;
+
+    bool iconThemeChangeRequired = nextTheme.iconTheme != prevTheme.iconTheme;
     IconThemeDatabase iconThemeDb;
 
-    theme.setFontBasePointSize(next.font.baseSize);
+    theme.setFontBasePointSize(next.font.normal.size);
 
-    if (next.font.baseSize != prev.font.baseSize) {
+    if (next.font.normal.size != prev.font.normal.size) {
       if (!themeChangeRequired) { theme.reloadCurrentTheme(); }
     }
 
-    if (themeChangeRequired) { theme.setTheme(*next.theme.name); }
+    if (themeChangeRequired) { theme.setTheme(nextTheme.name.c_str()); }
 
     ctx.navigation->setPopToRootOnClose(next.popToRootOnClose);
     ctx.navigation->setCloseOnFocusLoss(next.closeOnFocusLoss);
 
-    FaviconService::instance()->setService(next.faviconService);
+    KeybindManager::instance()->mergeBinds({next.keybinds.begin(), next.keybinds.end()});
+    FaviconService::instance()->setService(next.faviconService.c_str());
 
-    if (next.theme.iconTheme) {
-      QIcon::setThemeName(*next.theme.iconTheme);
+    if (nextTheme.iconTheme != "auto") {
+      QIcon::setThemeName(nextTheme.iconTheme.c_str());
     } else if (QIcon::themeName() == "hicolor") {
       QIcon::setThemeName(iconThemeDb.guessBestTheme());
     }
 
-    if (next.font.normal && *next.font.normal != prev.font.normal.value_or("")) {
-      QApplication::setFont(*next.font.normal);
+    if (next.font.normal.family != prev.font.normal.family) {
+      auto family = next.font.normal.family;
+      if (family == "auto") {
+        QApplication::setFont(QFont());
+      } else {
+        QApplication::setFont(QFont(family.c_str()));
+      }
+
       qApp->setStyleSheet(qApp->styleSheet());
     }
   };
@@ -277,17 +292,40 @@ void CliServerCommand::run(CLI::App *app) {
 
   auto cfgService = ServiceRegistry::instance()->config();
 
-  QObject::connect(KeybindManager::instance(), &KeybindManager::keybindChanged, [cfgService]() {
-    cfgService->updateConfig(
-        [](ConfigService::Value &value) { value.keybinds = KeybindManager::instance()->toSerializedMap(); });
+  QObject::connect(cfgService, &config::Manager::configLoadingError, [&ctx](std::string_view message) {
+    ctx.navigation->confirmAlert("Failed to load config", qStringFromStdView(message), []() {});
   });
 
-  QObject::connect(cfgService, &ConfigService::configChanged, configChanged);
+  QObject::connect(QApplication::styleHints(), &QStyleHints::colorSchemeChanged, [&]() {
+    IconThemeDatabase iconThemeDb;
+    auto &value = cfgService->value();
+    auto &theme = value.systemTheme();
+
+    if (theme.iconTheme != "auto") {
+      QIcon::setThemeName(theme.iconTheme.c_str());
+    } else if (QIcon::themeName() == "hicolor") {
+      QIcon::setThemeName(iconThemeDb.guessBestTheme());
+    }
+
+    ThemeService::instance().setTheme(theme.name.c_str());
+    qApp->setStyle(QStyleFactory::create("fusion"));
+    qApp->setStyleSheet(qApp->styleSheet());
+  });
+
+  QObject::connect(
+      KeybindManager::instance(), &KeybindManager::keybindChanged,
+      [cfgService](Keybind bind, const Keyboard::Shortcut &shortcut) {
+        auto info = KeybindManager::instance()->findBoundInfo(shortcut);
+        cfgService->mergeWithUser(
+            {.keybinds = config::KeybindMap{{info->id.toStdString(), shortcut.toString().toStdString()}}});
+      });
+
+  QObject::connect(cfgService, &config::Manager::configChanged, configChanged);
   QIcon::setFallbackSearchPaths(Environment::fallbackIconSearchPaths());
 
   configChanged(cfgService->value(), {});
 
-  KeybindManager::instance()->fromSerializedMap(cfgService->value().keybinds);
+  // KeybindManager::instance()->fromSerializedMap(cfgService->value().keybinds);
 
   LauncherWindow launcher(ctx);
 

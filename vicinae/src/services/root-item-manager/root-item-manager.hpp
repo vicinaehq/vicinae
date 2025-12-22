@@ -1,8 +1,11 @@
 #pragma once
 #include "argument.hpp"
 #include "common.hpp"
+#include "config/config.hpp"
 #include "navigation-controller.hpp"
-#include "omni-database.hpp"
+#include "services/local-storage/local-storage-service.hpp"
+#include "services/local-storage/scoped-local-storage.hpp"
+#include "services/root-item-manager/visit-tracker.hpp"
 #include "ui/image/url.hpp"
 #include "preference.hpp"
 #include "settings/provider-settings-detail.hpp"
@@ -32,9 +35,7 @@ class RootItem {
 public:
   virtual ~RootItem() = default;
 
-  virtual QString providerId() const = 0;
-
-  virtual QString uniqueId() const = 0;
+  virtual EntrypointId uniqueId() const = 0;
 
   /**
    * If true, the 'space' key can be used to activate the item in the root search
@@ -197,18 +198,13 @@ public:
 
 struct RootItemMetadata {
   int visitCount = 0;
-  bool isEnabled = true;
-  std::optional<std::chrono::time_point<std::chrono::high_resolution_clock>> lastVisitedAt;
-  // Alias can be made of multiple words, in which case each word is indexed separately
-  std::string alias; // std::string cause we want it to be fuzzy searchready
+  bool enabled = true;
   bool favorite = false;
-  int fallbackPosition = -1;
-  QString providerId;
-  bool isFallback() const { return fallbackPosition != -1; }
-};
-
-struct RootProviderMetadata {
-  bool enabled;
+  bool fallback = false;
+  std::optional<std::chrono::time_point<std::chrono::high_resolution_clock>> lastVisitedAt;
+  std::optional<std::string> alias;
+  std::string providerId;
+  std::shared_ptr<RootItem> item;
 };
 
 class RootItemManager : public QObject {
@@ -216,28 +212,32 @@ class RootItemManager : public QObject {
 
 signals:
   void itemsChanged() const;
-  void itemRankingReset(const QString &id) const;
-  void itemFavoriteChanged(const QString &id, bool favorite);
-  void fallbackEnabled(const QString &id) const;
-  void fallbackOrderChanged(const QString &id) const;
-  void fallbackDisabled(const QString &id) const;
+  void itemRankingReset(const EntrypointId &id) const;
+  void itemFavoriteChanged(const EntrypointId &id, bool favorite) const;
+  void fallbackEnabled(const EntrypointId &id) const;
+  void fallbackOrderChanged(const EntrypointId &id) const;
+  void fallbackDisabled(const EntrypointId &id) const;
+
+  /**
+   * Some item metadata changed.
+   */
+  void metadataChanged() const;
 
 public:
   using ItemPtr = std::shared_ptr<RootItem>;
   using ItemList = std::vector<ItemPtr>;
+
   struct SearchableRootItem {
     std::shared_ptr<RootItem> item;
     std::string title;
     std::string subtitle;
     std::vector<std::string> keywords;
-    RootItemMetadata *meta;
-    std::string searchStr;
+    RootItemMetadata *meta = nullptr;
 
     float fuzzyScore(std::string_view pattern = "") const;
   };
 
   struct ScoredItem {
-    std::string_view alias;
     RootItemMetadata *meta = nullptr;
     double score = 0;
     // we return the shared ptr so that callers can keep a ref to it if needed,
@@ -245,51 +245,46 @@ public:
     std::reference_wrapper<ItemPtr> item;
   };
 
-  RootItemManager(OmniDatabase &db) : m_db(db) {}
+  RootItemManager(config::Manager &config, LocalStorageService &storage);
+
+  static glz::generic::object_t transformPreferenceValues(const QJsonObject &preferences);
+  static QJsonObject transformPreferenceValues(const glz::generic::object_t &preferences);
 
   RootProvider *findProviderById(const QString &id) const;
   bool setProviderPreferenceValues(const QString &id, const QJsonObject &preferences);
 
-  bool setItemEnabled(const QString &id, bool value);
-  bool setItemPreferenceValues(const QString &id, const QJsonObject &preferences);
+  bool setItemEnabled(const EntrypointId &id, bool value);
+  bool setItemPreferenceValues(const EntrypointId &id, const QJsonObject &preferences);
 
-  /**
-   * Set preference values for the item with _id_.
-   * This method dissociates preference values that belong to the provider's preferences from
-   * those that belong to the item with _id_.
-   */
-  void setPreferenceValues(const QString &id, const QJsonObject &preferences);
+  void setPreferenceValues(const EntrypointId &id, const QJsonObject &preferences);
 
-  bool setAlias(const QString &id, const QString &alias);
-  bool clearAlias(const QString &id);
+  bool setAlias(const EntrypointId &id, std::string_view alias);
 
   QJsonObject getProviderPreferenceValues(const QString &id) const;
-  QJsonObject getItemPreferenceValues(const QString &id) const;
+  QJsonObject getItemPreferenceValues(const EntrypointId &id) const;
 
   /**
    * Merge the item preferences with the provider preferences.
    */
-  std::vector<Preference> getMergedItemPreferences(const QString &rootItemId) const;
-  QJsonObject getPreferenceValues(const QString &id) const;
-  RootItemMetadata itemMetadata(const QString &id) const;
-  int maxFallbackPosition();
-  bool isFallback(const QString &id) const;
-  bool disableFallback(const QString &id);
-  bool moveFallbackDown(const QString &id);
-  bool moveFallbackUp(const QString &id);
-  bool enableFallback(const QString &id);
+  std::vector<Preference> getMergedItemPreferences(const EntrypointId &id) const;
+  QJsonObject getPreferenceValues(const EntrypointId &id) const;
+  RootItemMetadata itemMetadata(const EntrypointId &id) const;
+  bool isFallback(const EntrypointId &id) const;
+  bool disableFallback(const EntrypointId &id);
+  bool moveFallbackDown(const EntrypointId &id);
+  bool moveFallbackUp(const EntrypointId &id);
+  bool enableFallback(const EntrypointId &id);
   double computeScore(const RootItemMetadata &meta, int weight) const;
   double computeRecencyScore(const RootItemMetadata &meta) const;
-  std::vector<SearchableRootItem> queryFavorites(std::optional<int> limit = {});
+  std::vector<std::shared_ptr<RootItem>> queryFavorites(std::optional<int> limit = {});
   std::vector<SearchableRootItem> querySuggestions(int limit = 5);
-  bool resetRanking(const QString &id);
-  bool registerVisit(const QString &id);
-  bool setItemAsFavorite(const QString &item, bool value = true);
-  QString getItemProviderId(const QString &id);
+  bool resetRanking(const EntrypointId &id);
+  bool registerVisit(const EntrypointId &id);
+  bool setItemAsFavorite(const EntrypointId &item, bool value = true);
   bool setProviderEnabled(const QString &providerId, bool value);
-  bool disableItem(const QString &id);
+  bool disableItem(const EntrypointId &id);
 
-  bool enableItem(const QString &id);
+  bool enableItem(const EntrypointId &id);
 
   std::vector<RootProvider *> providers() const;
   std::vector<ExtensionRootProvider *> extensions() const;
@@ -311,7 +306,7 @@ public:
 
   void loadProvider(std::unique_ptr<RootProvider> provider);
 
-  RootProvider *provider(const QString &id) const;
+  RootProvider *provider(std::string_view id) const;
   std::vector<SearchableRootItem> allItems() const { return m_items; }
   std::vector<std::shared_ptr<RootItem>> fallbackItems() const;
 
@@ -321,19 +316,30 @@ public:
    */
   std::span<ScoredItem> search(const QString &query, const RootItemPrefixSearchOptions &opts = {});
 
-  RootItemMetadata loadMetadata(const QString &id);
-  bool upsertProvider(const RootProvider &provider);
-  bool upsertItem(const QString &providerId, const RootItem &item);
-  RootItem *findItemById(const QString &id) const;
-  SearchableRootItem *findSearchableItem(const QString &id);
+  RootItem *findItemById(const EntrypointId &id) const;
   bool pruneProvider(const QString &id);
 
 private:
-  std::unordered_map<QString, RootItemMetadata> m_metadata;
-  std::unordered_map<QString, RootProviderMetadata> m_provider_metadata;
+  static QString getEntrypointSecretPreferenceKey(const EntrypointId &id, const QString &prefName);
+  void setEntrypointSecretPreference(const EntrypointId &id, const QString &prefName,
+                                     const QJsonValue &value);
+  QJsonValue getEntrypointSecretPreference(const EntrypointId &entrypoint, const QString &prefName) const;
+  QJsonValue getProviderSecretPreference(const QString &providerId, const QString &prefName) const;
+  void setProviderSecretPreference(const QString &id, const QString &prefName, const QJsonValue &value);
+
+  ScopedLocalStorage getProviderSecretStorage(const QString &providerId) const;
+
+  void mergeConfigWithMetadata(const config::ConfigValue &cfg);
+
+  std::vector<std::shared_ptr<RootItem>>
+  getFromSerializedEntrypointIds(std::span<const std::string> ids) const;
+
+  std::unordered_map<EntrypointId, RootItemMetadata> m_metadata;
   std::vector<std::unique_ptr<RootProvider>> m_providers;
-  OmniDatabase &m_db;
+  config::Manager &m_cfg;
+  LocalStorageService &m_storage;
   std::vector<SearchableRootItem> m_items;
+  VisitTracker m_visitTracker;
 
   // always reserved to hold the maximum amount of items possible, to avoid reallocating
   // on every search

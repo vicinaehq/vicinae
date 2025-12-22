@@ -1,6 +1,6 @@
 #pragma once
-#include "common.hpp"
 #include "extend/detail-model.hpp"
+#include "ui/divider/hdivider.hpp"
 #include "ui/horizontal-metadata.hpp"
 #include "ui/markdown/markdown-renderer.hpp"
 #include "utils/layout.hpp"

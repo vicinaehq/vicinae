@@ -10,6 +10,8 @@
 #include "ui/image/emoji-image-loader.hpp"
 #include "ui/image/qicon-image-loader.hpp"
 #include "ui/image/url.hpp"
+#include <QScreen>
+#include <QPaintEvent>
 #include <qlogging.h>
 #include <qnamespace.h>
 #include <qpainterpath.h>

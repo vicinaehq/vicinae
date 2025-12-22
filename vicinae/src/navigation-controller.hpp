@@ -198,7 +198,7 @@ public:
 
     ~CommandFrame() {
       context->unload();
-      qDebug() << "Unloading command" << command->uniqueId();
+      qDebug() << "Unloading command" << QString::fromStdString(command->uniqueId());
     }
   };
 
@@ -233,6 +233,7 @@ signals:
   void actionsChanged(const ActionPanelState &actions) const;
   void submenuRequested(ActionPanelView *view);
   void windowVisiblityChanged(bool visible);
+  void windowSizeRequested(QSize size);
   void searchTextSelected() const;
   void searchTextTampered(const QString &text) const;
   void searchPlaceholderTextChanged(const QString &text) const;
@@ -264,6 +265,7 @@ public:
   void showWindow();
   void toggleWindow();
   bool isWindowOpened() const;
+  void requestWindowSize(QSize size);
 
   bool windowActivated();
   void setWindowActivated(bool value = true);
@@ -341,7 +343,7 @@ public:
 
   void launch(const std::shared_ptr<AbstractCmd> &cmd);
   void launch(const std::shared_ptr<AbstractCmd> &cmd, const ArgumentValues &arguments);
-  void launch(const QString &id);
+  void launch(const EntrypointId &id);
   const AbstractCmd *activeCommand() const;
   CommandFrame *activeFrame() const { return m_frames.back().get(); }
   bool reloadActiveCommand();

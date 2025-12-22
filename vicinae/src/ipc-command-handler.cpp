@@ -7,7 +7,6 @@
 #include "theme/theme-db.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "services/window-manager/window-manager.hpp"
-#include "services/config/config-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/app-service/app-service.hpp"
@@ -133,11 +132,23 @@ IpcCommandHandler::listApps(const proto::ext::daemon::ListAppsRequest &request) 
 
 QFuture<proto::ext::daemon::Response *>
 IpcCommandHandler::processDmenu(const proto::ext::daemon::DmenuRequest &request) {
+  static constexpr const int DMENU_SMALL_WIDTH_THRESHOLD = 500;
+
   using Watcher = QFutureWatcher<proto::ext::daemon::Response *>;
   auto &nav = m_ctx.navigation;
+  auto &cfg = m_ctx.services->config()->value();
+
   QPromise<proto::ext::daemon::Response *> promise;
   auto future = promise.future();
-  auto view = new DMenu::View(DMenu::Payload::fromProto(request));
+  auto payload = DMenu::Payload::fromProto(request);
+
+  if (payload.width < DMENU_SMALL_WIDTH_THRESHOLD) {
+    qInfo() << "dmenu: disabling quicklook and footer because width is too low";
+    payload.noFooter = true;
+    payload.noQuickLook = true;
+  }
+
+  auto view = new DMenu::View(payload);
   auto watcher = new Watcher;
 
   watcher->setFuture(future);
@@ -156,6 +167,13 @@ IpcCommandHandler::processDmenu(const proto::ext::daemon::DmenuRequest &request)
   nav->popToRoot({.clearSearch = false});
   nav->pushView(view);
   nav->setInstantDismiss(true);
+
+  if (payload.width || payload.height) {
+    int w = payload.width.value_or(cfg.launcherWindow.size.width);
+    int h = payload.height.value_or(cfg.launcherWindow.size.height);
+    nav->requestWindowSize(QSize(w, h));
+  }
+
   nav->showWindow();
 
   return future;
@@ -349,10 +367,10 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
         return tl::unexpected(std::string("theme with id ") + id.toStdString() + " does not exist");
       }
 
-      if (theme->id() == cfg->value().theme.name.value_or("")) {
+      if (theme->id() == cfg->value().systemTheme().name) {
         service.reloadCurrentTheme();
       } else {
-        cfg->updateConfig([&](ConfigService::Value &value) { value.theme.name = theme->id(); });
+        cfg->mergeThemeConfig({.name = theme->id().toStdString()});
       }
 
       if (auto text = query.queryItemValue("openWindow"); text == "true" || text == "1") {

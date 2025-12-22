@@ -1,6 +1,8 @@
 #include "top-bar.hpp"
+#include "config/config.hpp"
 #include "keyboard/keybind-manager.hpp"
 #include "navigation-controller.hpp"
+#include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/arg-completer/arg-completer.hpp"
 #include "vicinae.hpp"
@@ -38,17 +40,19 @@ void GlobalHeader::setupUI() {
 
   setFixedHeight(Omnicast::TOP_BAR_HEIGHT);
 
-  auto left = HStack()
-                  .add(m_backButton)
-                  .add(m_backButtonSpacer)
-                  .add(m_input, 1)
-                  .add(m_completer)
-                  .addStretch()
-                  .add(m_accessoryContainer, 0, Qt::AlignVCenter);
+  m_left = HStack()
+               .add(m_backButton)
+               .add(m_backButtonSpacer)
+               .add(m_input, 1)
+               .add(m_completer)
+               .addStretch()
+               .add(m_accessoryContainer, 0, Qt::AlignVCenter)
+               .margins(15, 5, 15, 5)
+               .buildWidget();
 
   m_completer->hide();
 
-  VStack().add(left.margins(15, 5, 15, 5)).add(m_loadingBar).imbue(this);
+  VStack().add(m_left).add(m_loadingBar).imbue(this);
 
   m_input->installEventFilter(this);
   m_input->setFocus();
@@ -70,6 +74,11 @@ void GlobalHeader::setupUI() {
 
   connect(m_completer, &ArgCompleter::valueChanged, this,
           [this](auto &&values) { m_navigation.setCompletionValues(values); });
+
+  connect(ServiceRegistry::instance()->config(), &config::Manager::configChanged, this,
+          [this](const config::ConfigValue &next, const config::ConfigValue &prev) {
+            m_left->layout()->setContentsMargins(next.header.margins);
+          });
 }
 
 void GlobalHeader::setAccessory(QWidget *accessory) {

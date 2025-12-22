@@ -5,33 +5,24 @@
 #include "extensions/vicinae/oauth-token-store/oauth-token-store-view.hpp"
 #include "extensions/vicinae/report-bug-command.hpp"
 #include "navigation-controller.hpp"
+#include "local-storage/browse-local-storage.hpp"
 #include "open-about-command.hpp"
 #include "refresh-apps-command.hpp"
-#include "browse-icons-command.hpp"
 #include "configure-fallback-command.hpp"
 #include "extensions/vicinae/search-emoji-command.hpp"
 #include "extensions/vicinae/vicinae-store-command.hpp"
-#include "../../ui/image/url.hpp"
+#include "theme/colors.hpp"
+#include "ui/image/url.hpp"
 #include "builtin-url-command.hpp"
 #include "single-view-command-context.hpp"
-#include "theme.hpp"
 #include "vicinae.hpp"
+#include <QtCore>
 #include <qsqlquery.h>
 #include <qurlquery.h>
 
-class GetVicinaeSourceCodeCommand : public BuiltinUrlCommand {
-  QString id() const override { return "get-source-code"; }
-  QString name() const override { return "Get Vicinae Source Code"; }
-  QString description() const override { return "Navigate to the vicinae GitHub repository."; }
-  ImageURL iconUrl() const override {
-    return ImageURL::builtin("code").setBackgroundTint(Omnicast::ACCENT_COLOR);
-  }
-  QUrl url(const ArgumentValues &values) const override { return Omnicast::GH_REPO; }
-};
-
 class OpenDocumentationCommand : public BuiltinUrlCommand {
   QString id() const override { return "documentation"; }
-  QString name() const override { return "Open Vicinae Documentation"; }
+  QString name() const override { return "Open Online Documentation"; }
   QString description() const override { return "Navigate to the official vicinae documentation website."; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("book").setBackgroundTint(Omnicast::ACCENT_COLOR);
@@ -41,7 +32,7 @@ class OpenDocumentationCommand : public BuiltinUrlCommand {
 
 class OpenDiscordCommand : public BuiltinUrlCommand {
   QString id() const override { return "join-discord-server"; }
-  QString name() const override { return "Join Vicinae Discord Server"; }
+  QString name() const override { return "Join the Discord Server"; }
   QString description() const override { return "Open link to join the official Vicinae discord server."; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("discord").setBackgroundTint(Omnicast::ACCENT_COLOR);
@@ -52,11 +43,59 @@ class OpenDiscordCommand : public BuiltinUrlCommand {
 
 class SponsorVicinaeCommand : public BuiltinUrlCommand {
   QString id() const override { return "sponsor"; }
-  QString name() const override { return "Become a sponsor"; }
+  QString name() const override { return "Donate to Vicinae"; }
   QString description() const override { return "Open link to Vicinae's GitHub sponsor page"; }
   ImageURL iconUrl() const override { return ImageURL::builtin("heart").setFill(SemanticColor::Magenta); }
   std::vector<QString> keywords() const override { return {"sponsor", "donate"}; }
   QUrl url(const ArgumentValues &values) const override { return Omnicast::GH_SPONSOR_LINK; }
+};
+
+class OpenVicinaeConfig : public BuiltinCallbackCommand {
+  QString id() const override { return "open-config-file"; }
+  QString name() const override { return "Open Config File"; }
+  QString description() const override { return "Open the main vicinae configuration file"; }
+  ImageURL iconUrl() const override {
+    return ImageURL::builtin("pencil").setBackgroundTint(Omnicast::ACCENT_COLOR);
+  }
+
+  void execute(CommandController *controller) const override {
+    auto ctx = controller->context();
+    ctx->services->appDb()->openTarget(ctx->services->config()->path().c_str());
+    ctx->navigation->closeWindow();
+    ctx->navigation->clearSearchText();
+  }
+};
+
+class OpenDefaultVicinaeConfig : public BuiltinCallbackCommand {
+  QString id() const override { return "open-default-config"; }
+  QString name() const override { return "Open Default Config File"; }
+  QString description() const override { return "Open the default vicinae configuration file"; }
+  ImageURL iconUrl() const override {
+    return ImageURL::builtin("pencil").setBackgroundTint(SemanticColor::Orange);
+  }
+
+  void execute(CommandController *controller) const override {
+    auto ctx = controller->context();
+    auto toast = ctx->services->toastService();
+    auto path = Omnicast::runtimeDir() / "default-config.jsonc";
+
+    QFile::remove(path);
+
+    QFile file(path);
+    auto configFile = QFile(":config.jsonc");
+
+    if (!file.open(QIODevice::WriteOnly)) { return toast->failure("Failed to open temporary file"); }
+    if (!configFile.open(QIODevice::ReadOnly)) {
+      return toast->failure("Failed to open default config file");
+    }
+
+    file.write(configFile.readAll());
+    file.flush();
+    file.setPermissions(QFileDevice::ReadOwner);
+    ctx->services->appDb()->openTarget(file.fileName());
+    ctx->navigation->closeWindow();
+    ctx->navigation->clearSearchText();
+  }
 };
 
 class OpenSettingsCommand : public BuiltinCallbackCommand {
@@ -106,20 +145,35 @@ class OAuthTokenStoreCommand : public BuiltinViewCommand<OAuthTokenStoreView> {
   }
 };
 
+class InspectLocalStorage : public BuiltinViewCommand<BrowseLocalStorageView> {
+  QString id() const override { return "inspect-local-storage"; }
+  QString name() const override { return "Inspect Local Storage"; }
+  bool isDefaultDisabled() const override { return true; }
+  QString description() const override {
+    return "Browse data stored in Vicinae's local storage. This includes data stored for builtin extensions "
+           "as well as third-party extensions making use of the LocalStorage API.";
+  }
+  ImageURL iconUrl() const override {
+    auto icon = ImageURL::builtin("coin");
+    icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return icon;
+  }
+};
+
 VicinaeExtension::VicinaeExtension() {
   registerCommand<OpenDocumentationCommand>();
   registerCommand<OpenAboutCommand>();
   registerCommand<RefreshAppsCommand>();
-  // registerCommand<BrowseIconsCommand>(); // TODO: migrate to new model and add better actions
   registerCommand<ManageFallbackCommand>();
   registerCommand<SearchEmojiCommand>();
-  registerCommand<GetVicinaeSourceCodeCommand>();
   registerCommand<ReportVicinaeBugCommand>();
   registerCommand<OpenSettingsCommand>();
-  registerCommand<OpenDiscordCommand>();
   registerCommand<SponsorVicinaeCommand>();
   registerCommand<OpenKeybindSettingsCommand>();
   registerCommand<VicinaeStoreCommand>();
   registerCommand<VicinaeListInstalledExtensionsCommand>();
   registerCommand<OAuthTokenStoreCommand>();
+  registerCommand<OpenVicinaeConfig>();
+  registerCommand<OpenDefaultVicinaeConfig>();
+  registerCommand<InspectLocalStorage>();
 }
