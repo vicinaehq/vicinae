@@ -1,7 +1,6 @@
 #include "ui/switch/switch.hpp"
 #include "theme.hpp"
-#include <qjsonvalue.h>
-#include <qnamespace.h>
+#include "ui/omni-painter/omni-painter.hpp"
 
 void Switch::paintEvent(QPaintEvent *event) {
   auto &theme = ThemeService::instance().theme();

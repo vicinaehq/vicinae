@@ -1,5 +1,5 @@
 #pragma once
-#include "common.hpp"
+#include "ui/divider/divider.hpp"
 #include <qwidget.h>
 
 class SplitDetailWidget : public QWidget {

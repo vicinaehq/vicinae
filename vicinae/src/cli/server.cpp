@@ -19,6 +19,7 @@
 #include "services/calculator-service/calculator-service.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/emoji-service/emoji-service.hpp"
+#include "services/extension-registry/extension-registry.hpp"
 #include "services/files-service/file-service.hpp"
 #include "services/local-storage/local-storage-service.hpp"
 #include "services/oauth/oauth-service.hpp"

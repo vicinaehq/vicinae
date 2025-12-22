@@ -1,5 +1,5 @@
 #include "ui/horizontal-metadata.hpp"
-#include "common.hpp"
+#include "ui/divider/hdivider.hpp"
 #include "ui/tag/tag.hpp"
 #include "utils/layout.hpp"
 #include "ui/text-link/text-link.hpp"

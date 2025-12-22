@@ -7,7 +7,6 @@
 #include "services/shortcut/shortcut-service.hpp"
 #include "services/calculator-service/calculator-service.hpp"
 #include "services/clipboard/clipboard-service.hpp"
-#include "services/config/config-service.hpp"
 #include "services/emoji-service/emoji-service.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include "services/files-service/file-service.hpp"

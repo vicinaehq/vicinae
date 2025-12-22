@@ -50,7 +50,7 @@ file(GLOB PROTO_FILES "${PROTO_SRC_DIR}/*.proto")
 set(SRCS
 	src/main.cpp
 
-	include/theme.hpp
+	src/theme.hpp
 	src/theme.cpp
 
 	src/cli/cli.hpp
@@ -177,8 +177,6 @@ set(SRCS
 
 	src/settings-controller/settings-controller.hpp
 	src/settings-controller/settings-controller.cpp
-
-	src/services/config/config-service.hpp
 
 	src/services/toast/toast-service.hpp
 
@@ -325,8 +323,6 @@ set(SRCS
 
 
 	src/manage-quicklinks-command.hpp
-
-	include/ui/metadata-pane.hpp
 
 	include/ui/horizontal-metadata.hpp
 	src/ui/horizontal-metadata.cpp

@@ -1,5 +1,5 @@
 #include "settings-about.hpp"
-#include "../ui/image/url.hpp"
+#include "ui/image/url.hpp"
 #include "contribs/contribs.hpp"
 #include "service-registry.hpp"
 #include "ui/vertical-scroll-area/vertical-scroll-area.hpp"
@@ -10,6 +10,7 @@
 #include "services/app-service/app-service.hpp"
 #include "vicinae.hpp"
 #include "version.h"
+#include <QMouseEvent>
 
 class ContributorWidget : public QWidget {
   Contributor::Contributor m_contrib;
