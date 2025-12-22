@@ -3,6 +3,7 @@
 #include "omni-database.hpp"
 #include "services/emoji-service/emoji.hpp"
 #include <qobject.h>
+#include <unordered_set>
 #include <string_view>
 
 /**
