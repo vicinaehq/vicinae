@@ -61,19 +61,16 @@ public:
   }
 
   std::unique_ptr<CompleterData> createCompleter(const ItemType &item) const override {
-    auto rootItemCompleter = [](const RootItem *item) -> std::unique_ptr<CompleterData> {
-      ArgumentList args = item->arguments();
+    ArgumentList args = item->arguments();
 
-      if (args.empty()) return nullptr;
+    if (args.empty()) return nullptr;
 
-      auto cmpl = std::make_unique<CompleterData>();
-      cmpl->arguments = args;
-      cmpl->iconUrl = item->iconUrl();
+    auto cmpl = std::make_unique<CompleterData>();
 
-      return cmpl;
-    };
+    cmpl->arguments = args;
+    cmpl->iconUrl = item->iconUrl();
 
-    return rootItemCompleter(item);
+    return cmpl;
   }
 
   bool tryAliasFastTrack() {
