@@ -1,5 +1,6 @@
 #include "ui/form/form.hpp"
 #include "common.hpp"
+#include "ui/divider/hdivider.hpp"
 #include "ui/form/form-field.hpp"
 #include <qwidget.h>
 

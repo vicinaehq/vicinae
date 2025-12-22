@@ -1,14 +1,13 @@
 #pragma once
-#include "common.hpp"
-#include "../image/url.hpp"
+#include "ui/image/url.hpp"
 #include "theme/colors.hpp"
+#include "ui/divider/hdivider.hpp"
 #include "ui/omni-list/omni-list-item-widget.hpp"
 #include "ui/omni-list/omni-list-item-widget-wrapper.hpp"
 #include "ui/default-list-item-widget/default-list-item-widget.hpp"
 #include "ui/scroll-bar/scroll-bar.hpp"
 #include <algorithm>
 #include <bits/ranges_algo.h>
-#include <cmath>
 #include <cstdio>
 #include <QPainterPath>
 #include <functional>
@@ -25,7 +24,6 @@
 #include <qtimer.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
-#include <ranges>
 #include <stack>
 #include <unordered_map>
 #include <variant>

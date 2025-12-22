@@ -88,16 +88,5 @@ void RemoveShortcutAction::execute() {
 RemoveShortcutAction::RemoveShortcutAction(const std::shared_ptr<Shortcut> &link)
     : AbstractAction("Remove link", ImageURL::builtin("trash")), m_shortcut(link) {}
 
-// DuplicateShortcutAction
-
-void DuplicateShortcutAction::execute() {
-  auto ui = ServiceRegistry::instance()->UI();
-  auto view = new DuplicateShortcutView(link);
-
-  emit ui->pushView(view, {.navigation = NavigationStatus{
-                               .title = "Duplicate link",
-                               .iconUrl = ImageURL::builtin("link").setBackgroundTint(ColorTint::Red)}});
-}
-
 DuplicateShortcutAction::DuplicateShortcutAction(const std::shared_ptr<Shortcut> &link)
     : AbstractAction("Duplicate link", ImageURL::builtin("duplicate")), link(link) {}

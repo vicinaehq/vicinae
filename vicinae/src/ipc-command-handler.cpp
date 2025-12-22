@@ -7,7 +7,6 @@
 #include "theme/theme-db.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "services/window-manager/window-manager.hpp"
-#include "services/config/config-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/app-service/app-service.hpp"

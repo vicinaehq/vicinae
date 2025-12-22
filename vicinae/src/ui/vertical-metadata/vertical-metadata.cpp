@@ -1,10 +1,8 @@
 #include "ui/vertical-metadata/vertical-metadata.hpp"
-#include "common.hpp"
 #include "extend/tag-model.hpp"
 #include "extensions/raycast/store/store-detail-view.hpp"
 #include "theme.hpp"
-#include "ui/typography/typography.hpp"
-#include "ui/vertical-scroll-area/vertical-scroll-area.hpp"
+#include "ui/divider/hdivider.hpp"
 #include "utils/layout.hpp"
 #include <qboxlayout.h>
 #include <qlabel.h>
