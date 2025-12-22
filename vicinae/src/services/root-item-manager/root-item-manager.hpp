@@ -29,6 +29,7 @@ struct RootItemPrefixSearchOptions {
   bool includeDisabled = false;
   bool includeFavorites = true;
   bool prioritizeAliased = true;
+  std::optional<std::string> providerId;
 };
 
 class RootItem {
@@ -314,7 +315,9 @@ public:
    * Fuzzy search across all available root items, if option to include explicitly disabled items
    * as part of the results.
    */
-  std::span<ScoredItem> search(const QString &query, const RootItemPrefixSearchOptions &opts = {});
+  void search(const QString &query, std::vector<ScoredItem> &results,
+              const RootItemPrefixSearchOptions &opts = {});
+  std::vector<ScoredItem> search(const QString &query, const RootItemPrefixSearchOptions &opts = {});
 
   RootItem *findItemById(const EntrypointId &id) const;
   bool pruneProvider(const QString &id);
@@ -340,8 +343,4 @@ private:
   LocalStorageService &m_storage;
   std::vector<SearchableRootItem> m_items;
   VisitTracker m_visitTracker;
-
-  // always reserved to hold the maximum amount of items possible, to avoid reallocating
-  // on every search
-  std::vector<ScoredItem> m_scoredItems;
 };

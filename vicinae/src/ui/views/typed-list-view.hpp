@@ -40,8 +40,6 @@ protected:
 
   virtual void itemSelected(const ItemType &item) {}
 
-  virtual QString rootNavigationTitle() const { return command()->info().name(); }
-
   virtual void emptied() {}
 
   virtual bool inputFilter(QKeyEvent *event) override {
@@ -103,7 +101,7 @@ protected:
     if (!idx || !m_model) {
       destroyCompleter();
       clearActions();
-      setNavigationTitle(rootNavigationTitle());
+      setNavigationTitle(initialNavigationTitle());
       m_split->setDetailVisibility(false);
 
       if (m_model && m_model->isEmpty() && !(searchText().isEmpty() && isLoading())) {
@@ -134,9 +132,9 @@ protected:
     }
 
     if (auto title = navigationTitle(item.value())) {
-      setNavigationTitle(QString("%1 - %2").arg(rootNavigationTitle()).arg(title.value()));
+      setNavigationTitle(QString("%1 - %2").arg(initialNavigationTitle()).arg(title.value()));
     } else {
-      setNavigationTitle(rootNavigationTitle());
+      setNavigationTitle(initialNavigationTitle());
     }
 
     auto detail = generateDetail(item.value());

@@ -30,7 +30,7 @@ using RootItemVariant = std::variant<AbstractCalculatorBackend::CalculatorResult
 
 struct SearchResults {
   std::string query;
-  std::span<RootItemManager::ScoredItem> items;
+  std::vector<RootItemManager::ScoredItem> items;
   std::optional<AbstractCalculatorBackend::CalculatorResult> calculator;
   std::vector<IndexerFileResult> files;
   std::optional<LinkItem> defaultOpener;
@@ -62,7 +62,7 @@ public:
   void reset();
   void setSearchResults(const SearchResults &results);
   void setQuery(std::string_view text);
-  void setItems(std::span<RootItemManager::ScoredItem> items);
+  void setItems(std::vector<RootItemManager::ScoredItem> items);
   void setCalculatorResult(const AbstractCalculatorBackend::CalculatorResult &result);
   void setFileResults(const std::vector<IndexerFileResult> &files);
   void setFallbackItems(const std::vector<std::shared_ptr<RootItem>> &items);
@@ -99,7 +99,7 @@ private:
       SectionType::Fallback};
 
   std::string query;
-  std::span<RootItemManager::ScoredItem> m_items;
+  std::vector<RootItemManager::ScoredItem> m_items;
   std::optional<AbstractCalculatorBackend::CalculatorResult> m_calc;
   std::vector<IndexerFileResult> m_files;
   std::vector<std::shared_ptr<RootItem>> m_fallbackItems;
