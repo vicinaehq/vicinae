@@ -4,6 +4,7 @@
 #include "theme/colors.hpp"
 #include "theme/theme-file.hpp"
 #include <variant>
+#include <set>
 
 namespace fs = std::filesystem;
 
