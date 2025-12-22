@@ -1,4 +1,5 @@
 #pragma once
+#include "command.hpp"
 #include "common.hpp"
 #include "preference.hpp"
 #include "theme.hpp"

@@ -1,8 +1,6 @@
 #pragma once
-#include "common.hpp"
 #include "services/local-storage/scoped-local-storage.hpp"
-#include <qjsonobject.h>
-#include <qobject.h>
+#include "command.hpp"
 
 class CommandController {
 public:

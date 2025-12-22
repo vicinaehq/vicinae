@@ -1,5 +1,6 @@
 #include "extension-manifest.hpp"
 #include "utils.hpp"
+#include "vicinae.hpp"
 
 namespace fs = std::filesystem;
 

@@ -1,15 +1,15 @@
 #include "layout.hpp"
-#include "common.hpp"
 #include <qboxlayout.h>
 #include <qlayout.h>
 #include <qnamespace.h>
 #include <qwidget.h>
 #include <variant>
+#include "ui/divider/divider.hpp"
 #include "ui/flow-layout/flow-layout.hpp"
 #include "ui/image/image.hpp"
 #include "ui/markdown/markdown-renderer.hpp"
 #include "ui/typography/typography.hpp"
-#include "../ui/image/url.hpp"
+#include "ui/image/url.hpp"
 
 Stack &Stack::add(QWidget *widget, int stretch, Qt::Alignment align) {
   m_items.emplace_back(LayoutWidget{.widget = widget, .stretch = stretch, .align = align});
