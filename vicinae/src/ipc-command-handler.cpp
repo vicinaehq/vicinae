@@ -12,6 +12,7 @@
 #include "services/app-service/app-service.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "services/extension-registry/extension-registry.hpp"
+#include <algorithm>
 #include <qapplication.h>
 #include <qobjectdefs.h>
 #include "extension/manager/extension-manager.hpp"
@@ -25,6 +26,7 @@
 #include "service-registry.hpp"
 #include "theme.hpp"
 #include "ui/dmenu-view/dmenu-view.hpp"
+#include "ui/provider-view/provider-view.hpp"
 #include "ui/toast/toast.hpp"
 #include <csignal>
 #include "vicinae.hpp"
@@ -285,8 +287,34 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
 
   if (command == "extensions") {
     auto root = m_ctx.services->rootItemManager();
-
     auto components = path.sliced(1).split('/');
+
+    if (components.size() == 2) {
+      QString author = components[0];
+      QString extName = components[1];
+      auto pred = [&](const ExtensionRootProvider *s) {
+        return s->repository()->author() == author && s->repository()->name() == extName;
+      };
+
+      auto extensions = root->extensions();
+
+      if (auto it = std::ranges::find_if(extensions, pred); it != extensions.end()) {
+        m_ctx.navigation->popToRoot({.clearSearch = false});
+        m_ctx.navigation->pushView(new ProviderSearchView(**it));
+
+        if (auto text = query.queryItemValue("fallbackText"); !text.isEmpty()) {
+          m_ctx.navigation->setSearchText(text);
+        }
+
+        if (!m_ctx.navigation->isWindowOpened()) {
+          m_ctx.navigation->setInstantDismiss();
+          m_ctx.navigation->showWindow();
+        }
+        return {};
+      }
+
+      return tl::unexpected("No such extension");
+    }
 
     if (components.size() < 3) {
       qWarning() << "Invalid use of extensions verb: expected format is "

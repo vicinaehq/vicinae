@@ -140,7 +140,6 @@ void RootItemManager::updateIndex() {
   }
 
   mergeConfigWithMetadata(m_cfg.value());
-  m_scoredItems.reserve(m_items.size());
   isReloading = false;
   emit itemsChanged();
 }
@@ -160,25 +159,34 @@ float RootItemManager::SearchableRootItem::fuzzyScore(std::string_view pattern) 
   return score * (1 + frequencyScore * frequencyWeight);
 }
 
-std::span<RootItemManager::ScoredItem> RootItemManager::search(const QString &query,
-                                                               const RootItemPrefixSearchOptions &opts) {
+std::vector<RootItemManager::ScoredItem> RootItemManager::search(const QString &query,
+                                                                 const RootItemPrefixSearchOptions &opts) {
+  std::vector<ScoredItem> items;
+  search(query, items, opts);
+  return items;
+}
+
+void RootItemManager::search(const QString &query, std::vector<ScoredItem> &results,
+                             const RootItemPrefixSearchOptions &opts) {
   std::string pattern = query.toStdString();
   std::string_view patternView = pattern;
 
-  m_scoredItems.clear();
+  results.clear();
+  results.reserve(m_items.size());
 
   for (auto &item : m_items) {
     if (!item.meta->enabled && !opts.includeDisabled) continue;
+    if (opts.providerId && opts.providerId != item.meta->providerId) continue;
     if (item.meta->favorite && !opts.includeFavorites) continue;
     double fuzzyScore = item.fuzzyScore(patternView);
 
     if (!fuzzyScore) { continue; }
 
-    m_scoredItems.emplace_back(ScoredItem{.meta = item.meta, .score = fuzzyScore, .item = item.item});
+    results.emplace_back(ScoredItem{.meta = item.meta, .score = fuzzyScore, .item = item.item});
   }
 
   // we need stable sort to avoid flickering when updating quickly
-  std::ranges::stable_sort(m_scoredItems, [&](const auto &a, const auto &b) {
+  std::ranges::stable_sort(results, [&](const auto &a, const auto &b) {
     if (opts.prioritizeAliased) {
       bool aa = !a.meta->alias.value_or("").empty() && a.meta->alias->starts_with(pattern);
       bool ab = !b.meta->alias.value_or("").empty() && b.meta->alias->starts_with(pattern);
@@ -189,7 +197,7 @@ std::span<RootItemManager::ScoredItem> RootItemManager::search(const QString &qu
     return a.score > b.score;
   });
 
-  return m_scoredItems;
+  return;
 }
 
 bool RootItemManager::setItemEnabled(const EntrypointId &id, bool value) {
