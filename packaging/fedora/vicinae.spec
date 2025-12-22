@@ -64,10 +64,6 @@ cp %{SOURCE1} cmark-gfm-0.29.0.gfm.13.tar.gz
 
 %install
 %cmake_install
-# Remove glaze headers and CMake files that shouldn't be packaged
-# (glaze is a build-time only dependency, headers shouldn't be installed)
-rm -rf %{buildroot}%{_includedir}/glaze
-rm -rf %{buildroot}%{_datadir}/glaze
 
 %files
 %license LICENSE
@@ -84,7 +80,6 @@ rm -rf %{buildroot}%{_datadir}/glaze
 - Update to version 0.17.1
 - Fix xdgpp dependency issue by forcing BUILD_SHARED_LIBS=OFF (prevents missing libxdgpp.so runtime dependency)
 - Fix CMake generator conflict by removing -G Ninja (use default Unix Makefiles)
-- Remove glaze headers/CMake files from package (build-time only dependency)
 - Enable WAYLAND_LAYER_SHELL support
 * Sun Nov 16 2025 You <you@example.com> - 0.16.6-1
 - Initial COPR packaging for vicinae
