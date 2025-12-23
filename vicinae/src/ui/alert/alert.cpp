@@ -29,7 +29,9 @@ void AlertWidget::focusInEvent(QFocusEvent *event) {
   DialogContentWidget::focusInEvent(event);
 }
 
-void AlertWidget::interrupted() { canceled(); }
+void AlertWidget::interrupted() {
+  if (!m_finished) { canceled(); }
+}
 
 void AlertWidget::paintEvent(QPaintEvent *event) {
   auto &theme = ThemeService::instance().theme();
@@ -49,11 +51,13 @@ void AlertWidget::paintEvent(QPaintEvent *event) {
 
 void AlertWidget::handleConfirm() {
   confirm();
+  m_finished = true;
   emit closeRequested();
 }
 
 void AlertWidget::handleCancel() {
   canceled();
+  m_finished = true;
   emit closeRequested();
 }
 

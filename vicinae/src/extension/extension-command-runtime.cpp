@@ -82,12 +82,12 @@ void ExtensionCommandRuntime::handleRequest(ExtensionRequest *req) {
     auto future = std::get<QFuture<proto::ext::extension::Response *>>(result);
     auto watcher = std::shared_ptr<ResponseWatcher>(new ResponseWatcher, QObjectDeleter{});
 
-    watcher->setFuture(future);
     m_pendingFutures.insert({request, watcher});
+
     connect(watcher.get(), &ResponseWatcher::finished, this, [this, watcher, request]() {
       m_pendingFutures.erase(request);
 
-      if (!watcher->isFinished()) {
+      if (watcher->isCanceled()) {
         request->respondWithError("Failed to send response");
         return;
       }
@@ -101,6 +101,9 @@ void ExtensionCommandRuntime::handleRequest(ExtensionRequest *req) {
 
       request->respond(res);
     });
+
+    watcher->setFuture(future);
+
   } catch (const std::exception &except) { request->respondWithError(except.what()); }
 }
 

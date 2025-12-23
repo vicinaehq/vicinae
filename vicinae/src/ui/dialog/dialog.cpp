@@ -22,7 +22,11 @@ void DialogWidget::paintEvent(QPaintEvent *event) {
 }
 
 void DialogWidget::setContent(DialogContentWidget *content) {
-  if (auto item = _layout->takeAt(0)) { item->widget()->deleteLater(); }
+  if (auto item = _layout->takeAt(0)) {
+    auto w = static_cast<DialogContentWidget *>(item->widget());
+    w->interrupted();
+    w->deleteLater();
+  }
 
   setFocusProxy(content);
   connect(content, &DialogContentWidget::closeRequested, this, &DialogWidget::hide);

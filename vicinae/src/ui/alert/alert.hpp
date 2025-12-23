@@ -18,6 +18,7 @@ class AlertWidget : public DialogContentWidget {
   ButtonWidget *_actionBtn;
   std::function<void(void)> m_confirmCallback;
   std::function<void(void)> m_cancelCallback;
+  bool m_finished = false;
 
   void focusInEvent(QFocusEvent *event) override;
   void paintEvent(QPaintEvent *event) override;
