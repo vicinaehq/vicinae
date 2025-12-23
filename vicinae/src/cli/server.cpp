@@ -114,6 +114,10 @@ void CliServerCommand::run(CLI::App *app) {
   static char *argv[] = {strdup("command"), nullptr};
   QApplication qapp(argc, argv);
 
+  if (auto launcher = Environment::detectAppLauncher()) {
+    qInfo() << "Detected launch prefix:" << *launcher;
+  }
+
   // discard system specific qt theming
   qapp.setStyle(QStyleFactory::create("fusion"));
 

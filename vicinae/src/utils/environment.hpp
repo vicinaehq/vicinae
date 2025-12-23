@@ -2,7 +2,9 @@
 #include "xdgpp/env/env.hpp"
 #include <QString>
 #include <QApplication>
+#include <QProcess>
 #include <QProcessEnvironment>
+#include <QStandardPaths>
 #include <algorithm>
 #include <chrono>
 #include <cstdlib>
@@ -131,6 +133,14 @@ inline QString getEnvironmentDescription() {
   }
 
   return desc;
+}
+
+inline std::optional<QString> detectAppLauncher() {
+  QProcess proc;
+  proc.start("uwsm", {"check", "is-active"});
+  if (!proc.waitForFinished(1000) || proc.exitCode() != 0) return std::nullopt;
+  if (!QStandardPaths::findExecutable("uwsm-app").isEmpty()) return "uwsm-app --";
+  return "uwsm app --";
 }
 
 } // namespace Environment
