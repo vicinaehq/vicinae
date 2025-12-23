@@ -192,7 +192,7 @@ QSize ImageWidget::sizeHint() const {
 }
 
 void ImageWidget::handleLoadingError(const QString &reason) {
-  if (auto fallback = m_source.fallback()) { return setUrl(*fallback); }
+  if (auto fallback = m_source.fallback()) { return setUrlImpl(*fallback); }
   return setUrlImpl(ImageURL::builtin("question-mark-circle"));
 }
 
