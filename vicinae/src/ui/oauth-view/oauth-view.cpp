@@ -38,7 +38,7 @@ OAuthView::OAuthView(const ApplicationContext *ctx, const proto::ext::oauth::Aut
                       .arg(reqData.url().c_str());
 
   auto clicked = [this, url]() {
-    if (Environment::isLayerShellEnabled()) {
+    if (Environment::isLayerShellSupported()) {
       m_ctx->navigation->closeWindow({.popToRootType = PopToRootType::Suspended});
     }
     m_ctx->services->appDb()->openTarget(url);
@@ -48,7 +48,7 @@ OAuthView::OAuthView(const ApplicationContext *ctx, const proto::ext::oauth::Aut
   auto m_continueBtn = new ButtonWidget;
 
   connect(m_continueBtn, &ButtonWidget::clicked, this, [this, url]() {
-    if (Environment::isLayerShellEnabled()) {
+    if (Environment::isLayerShellSupported()) {
       m_ctx->navigation->closeWindow({.popToRootType = PopToRootType::Suspended});
     }
     auto appDb = m_ctx->services->appDb();

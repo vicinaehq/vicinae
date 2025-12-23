@@ -284,12 +284,6 @@ void CliServerCommand::run(CLI::App *app) {
     }
   };
 
-  if (!Environment::isLayerShellEnabled() && Environment::isCosmicDesktop()) {
-    qWarning() << "Vicinae doesn't use layer-shell on the Cosmic desktop as it is currently broken. See "
-                  "https://github.com/pop-os/cosmic-comp/issues/1590. If you want to force enable it, you "
-                  "can set USE_LAYER_SHELL=1 in your environment.";
-  }
-
   auto cfgService = ServiceRegistry::instance()->config();
 
   QObject::connect(cfgService, &config::Manager::configLoadingError, [&ctx](std::string_view message) {
