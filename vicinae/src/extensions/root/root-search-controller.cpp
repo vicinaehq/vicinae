@@ -31,10 +31,7 @@ RootSearchController::RootSearchController(RootItemManager *manager, FileService
   regenerateFavorites();
 }
 
-void RootSearchController::setFileSearch(bool value) {
-  m_isFileSearchEnabled = value;
-  reloadSearch();
-}
+void RootSearchController::setFileSearch(bool value) { m_isFileSearchEnabled = value; }
 
 void RootSearchController::setFilter(std::string_view text) {
   m_query = text;
