@@ -84,6 +84,7 @@
 		"screen": "auto",
 
 		// Only for wayland compositors that support the 'wlr-layer-shell' protocol (https://wayland.app/protocols/wlr-layer-shell-unstable-v1)
+		// NOTE: layer shell support for the cosmic compositor is explicitly disabled as it is currently broken
 		"layer_shell": {
 			"enabled": true,
 			"scope": "vicinae",
