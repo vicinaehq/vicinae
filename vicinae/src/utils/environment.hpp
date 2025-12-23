@@ -43,15 +43,15 @@ inline bool isPlasmaDesktop() { return containsIgnoreCase(xdgpp::currentDesktop(
 inline bool isWaylandPlasmaDesktop() { return isWaylandSession() && isPlasmaDesktop(); }
 inline bool isGnomeDesktop() { return containsIgnoreCase(xdgpp::currentDesktop(), "gnome"); }
 
-inline bool isLayerShellEnabled() {
+// used mostly to exclude cosmic which's implementation is currently broken
+inline bool isLayerShellSupported() {
 #ifndef WAYLAND_LAYER_SHELL
   return false;
 #endif
-  if (auto value = qEnvironmentVariable("USE_LAYER_SHELL"); !value.isEmpty()) { return value == "1"; }
   return isWaylandSession() && !isCosmicDesktop() && !isGnomeEnvironment();
 }
 
-inline bool isHudDisabled() { return !isLayerShellEnabled(); }
+inline bool isHudDisabled() { return !isLayerShellSupported(); }
 
 /**
  * App image directory if we are running in an appimage.

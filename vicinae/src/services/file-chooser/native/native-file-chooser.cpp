@@ -22,7 +22,7 @@ NativeFileChooser::NativeFileChooser(QObject *parent) : AbstractFileChooser(pare
   connect(&m_dialog, &QFileDialog::rejected, this, &NativeFileChooser::rejected);
 
 #ifdef WAYLAND_LAYER_SHELL
-  if (Environment::isLayerShellEnabled()) {
+  if (Environment::isLayerShellSupported()) {
     namespace Shell = LayerShellQt;
 
     m_dialog.createWinId();

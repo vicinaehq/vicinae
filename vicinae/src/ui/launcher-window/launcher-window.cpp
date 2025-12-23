@@ -2,6 +2,7 @@
 #include "action-panel/action-panel.hpp"
 #include "common.hpp"
 #include "config/config.hpp"
+#include "environment.hpp"
 #include "keyboard/keybind-manager.hpp"
 #include "theme.hpp"
 #include "theme/colors.hpp"
@@ -230,7 +231,7 @@ void LauncherWindow::setupUI() {
 void LauncherWindow::handleConfigurationChange(const config::ConfigValue &value) {
 #ifdef WAYLAND_LAYER_SHELL
   const auto &lc = value.launcherWindow.layerShell;
-  if (lc.enabled) {
+  if (Environment::isLayerShellSupported() && lc.enabled) {
     namespace Shell = LayerShellQt;
     using clsh = config::LayerShellConfig;
 
