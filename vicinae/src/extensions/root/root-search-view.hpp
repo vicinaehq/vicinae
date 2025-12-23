@@ -124,6 +124,7 @@ public:
 
     m_list->setModel(m_model);
     m_controller->setFilter("");
+    m_controller->setFileSearch(config->value().searchFilesInRoot);
 
     connect(config, &config::Manager::configChanged, this,
             [&](const config::ConfigValue &next, const config::ConfigValue &prev) {
