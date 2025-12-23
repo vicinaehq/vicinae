@@ -257,6 +257,7 @@ void LauncherWindow::handleConfigurationChange(const config::ConfigValue &value)
 }
 
 void LauncherWindow::handleDialog(DialogContentWidget *alert) {
+  m_dialog->hide();
   m_dialog->setContent(alert);
   m_ctx.navigation->closeActionPanel();
   m_dialog->showDialog();
