@@ -31,6 +31,9 @@ public:
   OpenFileInAppAction(const std::filesystem::path &path, const std::shared_ptr<AbstractApplication> &app,
                       const QString &title)
       : OpenAppAction(app, title, {path.c_str()}), m_path(path) {}
+  OpenFileInAppAction(const std::filesystem::path &path, const std::shared_ptr<AbstractApplication> &app,
+                      const QString &title, std::vector<QString> overrideArgs)
+      : OpenAppAction(app, title, overrideArgs), m_path(path) {}
 
 private:
   std::filesystem::path m_path;

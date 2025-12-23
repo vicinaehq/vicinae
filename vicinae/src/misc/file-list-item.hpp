@@ -18,6 +18,14 @@ protected:
 
   ImageURL getIcon() const { return ImageURL::fileIcon(m_path); }
 
+  static OpenFileInAppAction *createOpenInFolderAction(const std::filesystem::path &path,
+      std::shared_ptr<AbstractApplication> browser) {
+
+    // TODO: Specialize for file managers that support --select
+
+    return new OpenFileInAppAction(path, browser, "Open in folder", {path.parent_path().c_str()});
+  }
+
 public:
   static std::unique_ptr<ActionPanelState> actionPanel(const std::filesystem::path &path, AppService *appDb) {
     QMimeDatabase mimeDb;
@@ -33,8 +41,7 @@ public:
     }
 
     if (fileBrowser && (!openers.empty() && openers.front()->id() != fileBrowser->id())) {
-      auto open = new OpenFileInAppAction(path, fileBrowser, "Open in folder");
-      section->addAction(open);
+      section->addAction(createOpenInFolderAction(path, fileBrowser));
     }
 
     auto suggested = panel->createSection("Suggested apps");
@@ -73,7 +80,7 @@ public:
 
     if (fileBrowser && (!openers.empty() && openers.front()->id() != fileBrowser->id())) {
       auto open = new OpenFileInAppAction(m_path, fileBrowser, "Open in folder");
-      section->addAction(open);
+      section->addAction(createOpenInFolderAction(m_path, fileBrowser));
     }
 
     auto suggested = panel->createSection("Suggested apps");
