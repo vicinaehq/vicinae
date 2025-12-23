@@ -96,6 +96,7 @@ void ImageWidget::setObjectFit(ObjectFit fit) {
 
 void ImageWidget::setUrl(const ImageURL &url) {
   if (url == m_source) { return; }
+  m_source = url;
   setUrlImpl(url);
 }
 
@@ -120,7 +121,6 @@ void ImageWidget::setUrlImpl(const ImageURL &url) {
 
   m_token++; // to make sure we don't update from a previous loader
   m_loader.reset();
-  m_source = url;
   m_data = {};
 
   if (type == ImageURLType::Favicon) {
@@ -192,9 +192,8 @@ QSize ImageWidget::sizeHint() const {
 }
 
 void ImageWidget::handleLoadingError(const QString &reason) {
-  // qCritical() << "Failed to load" << reason;
   if (auto fallback = m_source.fallback()) { return setUrl(*fallback); }
-  return setUrl(ImageURL::builtin("question-mark-circle"));
+  return setUrlImpl(ImageURL::builtin("question-mark-circle"));
 }
 
 void ImageWidget::resizeEvent(QResizeEvent *event) {
