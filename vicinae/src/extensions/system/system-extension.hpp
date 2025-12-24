@@ -84,8 +84,10 @@ class SystemBrowseApps : public BuiltinViewCommand<BrowseAppsView> {
   }
   std::vector<Preference> preferences() const override {
     auto showHidden = Preference::makeCheckbox("showHidden", "Show hidden apps");
+    auto sortAlphabetically = Preference::makeCheckbox("sortAlphabetically", "Sort alphabetically");
     showHidden.setDefaultValue(false);
-    return {showHidden};
+    sortAlphabetically.setDefaultValue(true);
+    return {sortAlphabetically, showHidden};
   }
 };
 
