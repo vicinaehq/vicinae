@@ -10,6 +10,10 @@
 #include "common.hpp"
 #include "omni-database.hpp"
 
+struct AppListOptions {
+	bool sortAlphabetically = true;
+};
+
 class AppService : public QObject, public NonCopyable {
   Q_OBJECT
 
@@ -33,7 +37,7 @@ public:
    * Concrete implementation for the underlying system.
    */
   AbstractAppDatabase *provider() const;
-  std::vector<std::shared_ptr<AbstractApplication>> list() const;
+  std::vector<std::shared_ptr<AbstractApplication>> list(const AppListOptions &opts = {}) const;
 
   /**
    * Launch application with the provided set of arguments. If the application

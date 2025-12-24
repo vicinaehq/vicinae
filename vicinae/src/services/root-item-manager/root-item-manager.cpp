@@ -639,13 +639,7 @@ void RootItemManager::mergeConfigWithMetadata(const config::ConfigValue &cfg) {
       providerConfig = &it->second;
     }
 
-    auto prvd = provider(entrypointId.provider.c_str());
-
     if (providerConfig) {
-      if (auto p = provider(entrypointId.provider.c_str())) {
-        p->preferencesChanged(getProviderPreferenceValues(entrypointId.provider.c_str()));
-      }
-
       if (auto it = providerConfig->entrypoints.find(entrypointId.entrypoint);
           it != providerConfig->entrypoints.end()) {
         itemConfig = &it->second;
@@ -668,5 +662,10 @@ void RootItemManager::mergeConfigWithMetadata(const config::ConfigValue &cfg) {
     if (providerConfig) {
       if (auto enabled = providerConfig->enabled) { meta.enabled = enabled.value(); }
     }
+  }
+
+  // update provider preferences to make sure they are in sync
+  for (const auto &provider : m_providers) {
+    provider->preferencesChanged(getProviderPreferenceValues(provider->uniqueId()));
   }
 }
