@@ -1,14 +1,9 @@
 #pragma once
-#include "timer.hpp"
-#include "ui/omni-list/omni-list-item-widget.hpp"
-#include "ui/scroll-bar/scroll-bar.hpp"
-#include <numbers>
+#include <qevent.h>
 #include <qobject.h>
-#include <qobjectdefs.h>
 #include <qscrollbar.h>
-#include <qtmetamacros.h>
-#include <qtsqlglobal.h>
 #include <qwidget.h>
+#include "ui/omni-list/omni-list-item-widget.hpp"
 
 namespace vicinae::ui {
 

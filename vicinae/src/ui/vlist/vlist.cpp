@@ -1,7 +1,5 @@
 #include "vlist.hpp"
-#include <absl/base/call_once.h>
-#include <absl/time/time.h>
-#include <qobjectdefs.h>
+#include "ui/scroll-bar/scroll-bar.hpp"
 
 namespace vicinae::ui {
 
@@ -321,6 +319,8 @@ WidgetWrapper *VListWidget::getFromPool(VListModel::WidgetTag tag) {
 void VListWidget::updateViewport() {
   if (!size().isValid() || size().isNull() || size().isEmpty()) return;
 
+  setUpdatesEnabled(false);
+
   // Timer timer;
   std::unordered_map<VListModel::StableID, WidgetData> newMap;
 
@@ -375,6 +375,8 @@ void VListWidget::updateViewport() {
   }
 
   for (auto &item : m_visibleItems) {
+    bool wasCached = item.widget;
+
     if (!item.widget) {
       item.tag = m_model->widgetTag(item.index);
 
@@ -405,14 +407,13 @@ void VListWidget::updateViewport() {
       }
     }
 
-    item.widget->blockSignals(true);
+    if (!wasCached) { m_model->refreshWidget(item.index, item.widget->widget()); }
+
     item.widget->setIndex(item.index);
     item.widget->setSelected(m_selected && item.index == m_selected->idx);
     item.widget->setFixedSize(item.bounds.width(), item.bounds.height());
     item.widget->move(item.bounds.x(), item.bounds.y());
-    m_model->refreshWidget(item.index, item.widget->widget());
     item.widget->show();
-    item.widget->blockSignals(false);
 
     newMap[item.id] = {.widget = item.widget, .tag = item.tag};
   }
@@ -425,6 +426,9 @@ void VListWidget::updateViewport() {
   }
 
   m_widgetMap = newMap;
+
+  setUpdatesEnabled(true);
+  update();
 
   // timer.time("update viewport");
 }
