@@ -109,11 +109,14 @@ private:
 
 BrowseAppsView::Data BrowseAppsView::initData() const {
   auto preferences = command()->preferenceValues();
-  Data data;
+  auto config = context()->services->config();
   auto appDb = context()->services->appDb();
+  Data data;
+  AppListOptions opts{.sortAlphabetically = preferences.value("sortAlphabetically").toBool()};
+  bool showHidden = preferences.value("showHidden").toBool();
 
-  for (const auto &app : appDb->list()) {
-    if (!preferences.value("showHidden").toBool() && !app->displayable()) continue;
+  for (const auto &app : appDb->list(opts)) {
+    if (!showHidden && !app->displayable()) continue;
     data.emplace_back(std::make_shared<BrowseAppItem>(app));
   }
 
