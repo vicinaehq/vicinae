@@ -169,6 +169,7 @@ struct ConfigValue {
 
   std::vector<std::string> imports;
   bool searchFilesInRoot = false;
+  bool sortAppsAlphabetically = true;
   bool closeOnFocusLoss = DFLT_CLOSE_ON_FOCUS_LOSS;
   bool considerPreedit = DFLT_CONSIDER_PRE_EDIT;
   bool popToRootOnClose = DFLT_POP_TO_ROOT_ON_CLOSE;
@@ -218,6 +219,7 @@ template <> struct Partial<ConfigValue> {
   std::optional<std::string> faviconService;
   std::optional<std::string> keybinding;
   std::optional<bool> searchFilesInRoot;
+  std::optional<bool> sortAppsAlphabetically;
 
   std::optional<Partial<FontConfig>> font;
   std::optional<Partial<ThemeConfig>> theme;
