@@ -257,8 +257,6 @@ void LauncherWindow::setupUI() {
 
   connect(m_header->input(), &QLineEdit::textChanged, this, [this](const QString &text) { tryCompaction(); });
 
-  setCompacted(true);
-
   connect(m_actionVeil, &ActionVeilWidget::mousePressed, this,
           [this]() { m_ctx.navigation->closeActionPanel(); });
 
@@ -303,7 +301,7 @@ void LauncherWindow::handleConfigurationChange(const config::ConfigValue &value)
   auto &size = value.launcherWindow.size;
   setFixedSize(QSize{size.width, size.height});
   tryCenter();
-
+  tryCompaction();
   update();
 }
 
