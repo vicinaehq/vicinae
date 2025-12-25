@@ -4,6 +4,7 @@
 #include <qevent.h>
 #include <qlogging.h>
 #include <qmainwindow.h>
+#include <qobject.h>
 #include <qscreen.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
@@ -48,9 +49,14 @@ protected:
   void hideEvent(QHideEvent *event) override;
   void showEvent(QShowEvent *event) override;
   void changeEvent(QEvent *event) override;
+  bool eventFilter(QObject *watched, QEvent *event) override;
 
   void handleConfigurationChange(const config::ConfigValue &value);
   void applyWindowConfig(const config::WindowConfig &cfg);
+  bool isCompactable() const;
+
+  void setCompacted(bool value);
+  void tryCompaction();
 
 private:
   ActionVeilWidget *m_actionVeil;
@@ -67,6 +73,7 @@ private:
   QStackedWidget *m_currentOverlayWrapper = nullptr;
   DialogWidget *m_dialog = nullptr;
   QWidget *m_focusWidget = nullptr;
+  bool m_compacted = false;
 
   void tryCenter();
   void centerOnScreen(const QScreen *screen);

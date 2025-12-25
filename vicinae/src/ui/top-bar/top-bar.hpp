@@ -13,6 +13,7 @@ class GlobalHeader : public QWidget {
 public:
   GlobalHeader(NavigationController &controller);
   SearchBar *input() const;
+  void setLoadingBarVisibility(bool value);
 
 protected:
   bool eventFilter(QObject *watched, QEvent *event) override;
@@ -32,6 +33,12 @@ private:
 
   void setupUI();
   void handleViewStateChange(const NavigationController::ViewState &state);
+
+  /**
+   * Controls whether the loading bar is visible or not, not if it's displaying its loading indicator.
+   * When nothing is loading the bar is still rendered as a regular separator: this allows disabling that.
+   */
+
   void handleSearchPop();
   bool filterInputEvents(QEvent *event);
   void handleTextEdited(const QString &text);
