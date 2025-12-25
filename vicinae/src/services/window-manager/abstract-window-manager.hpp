@@ -8,7 +8,6 @@
 #include "services/app-service/abstract-app-db.hpp"
 #include <QApplication>
 #include <QScreen>
-#include <qtmetamacros.h>
 #include <ranges>
 #include <vector>
 
@@ -30,10 +29,6 @@ signals:
   void windowsChanged() const;
 
 public:
-  enum WindowDecoration { Blur, BoxShadow, Rounding };
-
-  Q_DECLARE_FLAGS(WindowDecorations, WindowDecoration);
-
   struct WindowBounds {
     uint32_t x = 0;
     uint32_t y = 0;
@@ -101,8 +96,6 @@ public:
    * a unique string. Defaults to `id()` if not reimplemented.
    */
   virtual QString displayName() const { return id(); }
-
-  virtual WindowDecorations supportedDecorations() { return {}; }
 
   /**
    * Apply blur to the vicinae windows.
@@ -211,5 +204,3 @@ public:
 
 private:
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(AbstractWindowManager::WindowDecorations)
