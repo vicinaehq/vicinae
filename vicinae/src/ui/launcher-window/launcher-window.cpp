@@ -286,6 +286,7 @@ void LauncherWindow::handleViewChange(const NavigationController::ViewState &sta
 
 bool LauncherWindow::event(QEvent *event) {
   auto kb = KeybindManager::instance();
+  auto &cfg = m_ctx.services->config()->value();
 
   if (event->type() == QEvent::KeyPress) {
     auto keyEvent = static_cast<QKeyEvent *>(event);
@@ -307,7 +308,11 @@ bool LauncherWindow::event(QEvent *event) {
     }
 
     if (keyEvent == Keyboard::Shortcut(Qt::Key_Escape)) {
-      m_ctx.navigation->goBack();
+      if (cfg.escapeKeyBehavior == "close_window") {
+        m_ctx.navigation->closeWindow();
+      } else {
+        m_ctx.navigation->goBack();
+      }
       return true;
     }
 

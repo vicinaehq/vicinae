@@ -176,6 +176,7 @@ struct ConfigValue {
   bool closeOnFocusLoss = DFLT_CLOSE_ON_FOCUS_LOSS;
   bool considerPreedit = DFLT_CONSIDER_PRE_EDIT;
   bool popToRootOnClose = DFLT_POP_TO_ROOT_ON_CLOSE;
+  std::string escapeKeyBehavior;
   std::string faviconService = "twenty";
   std::string keybinding = "default";
 
@@ -219,6 +220,7 @@ template <> struct Partial<ConfigValue> {
   std::optional<bool> closeOnFocusLoss;
   std::optional<bool> considerPreedit;
   std::optional<bool> popToRootOnClose;
+  std::optional<std::string> escapeKeyBehavior;
   std::optional<std::string> faviconService;
   std::optional<std::string> keybinding;
   std::optional<bool> searchFilesInRoot;

@@ -12,6 +12,10 @@
 	// rich content preview. This should be more than enough for most users.
 	"search_files_in_root": false,
 
+	// What vicinae should do when the "escape" key is pressed
+	// Supports "navigate_back" or "close_window"
+	"escape_key_behavior": "navigate_back",
+
 	// If the layer shell protocol is used to position the window and the keyboard interactivity is
 	// set to "exclusive" (the default) then this setting will have no effect. Either switch to "on_demand" interactivity
 	// or disable layer shell.
