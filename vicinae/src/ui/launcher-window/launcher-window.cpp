@@ -1,6 +1,7 @@
 #include "launcher-window.hpp"
 #include "action-panel/action-panel.hpp"
 #include "common.hpp"
+#include "services/window-manager/window-manager.hpp"
 #include "config/config.hpp"
 #include "environment.hpp"
 #include "keyboard/keybind-manager.hpp"
@@ -35,9 +36,12 @@
 #include "settings-controller/settings-controller.hpp"
 
 void LauncherWindow::showEvent(QShowEvent *event) {
+  auto &cfg = m_ctx.services->config()->value();
+
   m_hud->hide();
   m_ctx.navigation->closeActionPanel();
   tryCenter();
+  applyWindowConfig(cfg.launcherWindow);
   QWidget::showEvent(event);
   activateWindow(); // gnome needs this
 }
@@ -228,6 +232,12 @@ void LauncherWindow::setupUI() {
           });
 }
 
+void LauncherWindow::applyWindowConfig(const config::WindowConfig &cfg) {
+  auto wm = m_ctx.services->windowManager();
+  wm->provider()->setBlur({.enabled = cfg.blur.enabled});
+  wm->provider()->setDimAround(cfg.dimAround);
+}
+
 void LauncherWindow::handleConfigurationChange(const config::ConfigValue &value) {
 #ifdef WAYLAND_LAYER_SHELL
   const auto &lc = value.launcherWindow.layerShell;
@@ -237,7 +247,7 @@ void LauncherWindow::handleConfigurationChange(const config::ConfigValue &value)
 
     if (auto lshell = Shell::Window::get(windowHandle())) {
       lshell->setLayer(lc.layer == "overlay" ? Shell::Window::LayerOverlay : Shell::Window::LayerTop);
-      lshell->setScope(lc.scope.c_str());
+      lshell->setScope(Omnicast::LAYER_SCOPE);
       lshell->setScreenConfiguration(Shell::Window::ScreenFromCompositor);
       lshell->setAnchors(Shell::Window::AnchorNone);
       lshell->setKeyboardInteractivity(lc.keyboardInteractivity == "exclusive"
@@ -249,6 +259,7 @@ void LauncherWindow::handleConfigurationChange(const config::ConfigValue &value)
 
   m_header->setFixedHeight(value.header.height);
   m_bar->setFixedHeight(value.footer.height);
+  applyWindowConfig(value.launcherWindow);
 
   auto &size = value.launcherWindow.size;
   setFixedSize(QSize{size.width, size.height});

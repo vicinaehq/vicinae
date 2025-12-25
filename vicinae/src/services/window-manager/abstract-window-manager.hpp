@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <qflags.h>
 #include <qfuture.h>
 #include <qobject.h>
 #include <qpromise.h>
@@ -7,7 +8,6 @@
 #include "services/app-service/abstract-app-db.hpp"
 #include <QApplication>
 #include <QScreen>
-#include <qtmetamacros.h>
 #include <ranges>
 #include <vector>
 
@@ -42,6 +42,10 @@ public:
     QString manufacturer;
     QString model;
     std::optional<QString> serial;
+  };
+
+  struct BlurConfig {
+    bool enabled = true;
   };
 
   /**
@@ -92,6 +96,15 @@ public:
    * a unique string. Defaults to `id()` if not reimplemented.
    */
   virtual QString displayName() const { return id(); }
+
+  /**
+   * Apply blur to the vicinae windows.
+   *
+   * Returns whether blur could be applied or not.
+   */
+  virtual bool setBlur(const BlurConfig &cfg) { return false; }
+
+  virtual bool setDimAround(bool value = true) { return false; }
 
   virtual WindowList listWindowsSync() const { return {}; };
 
