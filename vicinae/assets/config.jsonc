@@ -86,6 +86,14 @@
 			"border_width": 3
 		},
 
+		// In compact mode, vicinae only shows a search bar in the root search if no query is entered, only expanding to its full size when searching.
+		// WARNING: compact mode works best when vicinae is rendered as a layer surface (the default if available), as opposed to a regular floating window.
+		// That's because the part that is not rendered in compact mode is still part of the full window size, allowing the window to be gracefully expanded without having to deal
+		// with a compositor window resize which can generate a lot of visual noise. Server side borders and blur will look notably out of place.
+		"compact_mode": {
+			"enabled": false
+		},
+
 		// The vicinae UI is designed to work best at the default size. If you change this it is highly recommended
 		// that you preserve a similar aspect ratio.
 		"size": {
