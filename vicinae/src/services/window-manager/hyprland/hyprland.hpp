@@ -16,6 +16,7 @@
 #include <QJsonObject>
 #include <qpromise.h>
 #include <qstringview.h>
+#include <string_view>
 
 class HyprlandWindow : public AbstractWindowManager::AbstractWindow {
 public:
@@ -45,6 +46,9 @@ public:
   WindowList listWindowsSync() const override;
   AbstractWindowManager::WindowPtr getFocusedWindowSync() const override;
 
+  bool setBlur(const BlurConfig &cfg) override;
+  bool setDimAround(bool value = true) override;
+
   WorkspacePtr getActiveWorkspace() const override;
 
   bool supportsPaste() const override;
@@ -59,9 +63,13 @@ public:
   void start() override;
 
 private:
+  void applyLayerRule(std::string_view rule);
+  void applyLayerRules();
   QString id() const override;
   QString displayName() const override;
 
+  bool m_blur = false;
+  bool m_dimAround = false;
   Hyprland::EventListener m_ev;
   Wayland::VirtualKeyboard m_kb;
 };

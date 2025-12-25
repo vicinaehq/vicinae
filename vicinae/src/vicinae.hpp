@@ -19,6 +19,7 @@ static const QString MAIN_WINDOW_NAME = "Vicinae Launcher";
 static const QString DOC_URL = "https://docs.vicinae.com";
 static const QString HEADLINE = "A focused launcher for your desktop — native, fast, extensible";
 static const QString APP_ID = "vicinae";
+static constexpr const char *LAYER_SCOPE = "vicinae";
 static const QString APP_SCHEME = APP_ID;
 static const std::set<QString> APP_SCHEMES = {APP_SCHEME, "raycast", "com.raycast"};
 static const QString DEFAULT_ICON_THEME_NAME = "vicinae";
