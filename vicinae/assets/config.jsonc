@@ -60,7 +60,7 @@
 	"launcher_window": {
 		// Control the opacity of the main window.
 		// Opacity for other surfaces are controlled by the active theme.
-		"opacity": 0.98,
+		"opacity": 0.95,
 		
 		// Blur the window background.
 		// Only suported on Hyprland for now.
