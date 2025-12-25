@@ -111,6 +111,8 @@ public:
    */
   virtual bool setBlur(const BlurConfig &cfg) { return false; }
 
+  virtual bool setDimAround(bool value = true) { return false; }
+
   virtual WindowList listWindowsSync() const { return {}; };
 
   virtual std::vector<Screen> listScreensSync() const {

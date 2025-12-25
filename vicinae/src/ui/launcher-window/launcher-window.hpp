@@ -50,6 +50,7 @@ protected:
   void changeEvent(QEvent *event) override;
 
   void handleConfigurationChange(const config::ConfigValue &value);
+  void applyWindowConfig(const config::WindowConfig &cfg);
 
 private:
   ActionVeilWidget *m_actionVeil;

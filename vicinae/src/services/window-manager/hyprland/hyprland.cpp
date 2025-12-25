@@ -29,20 +29,30 @@ AbstractWindowManager::WindowList HyprlandWindowManager::listWindowsSync() const
   return windows;
 }
 
-void HyprlandWindowManager::applyLayerRule(std::string_view rule) const {
+void HyprlandWindowManager::applyLayerRule(std::string_view rule) {
   Hyprctl::oneshot(std::format("keyword layerrule {}, {}", rule, Omnicast::LAYER_SCOPE));
 }
 
-bool HyprlandWindowManager::setBlur(const BlurConfig &cfg) {
-  applyLayerRule("unset");
-
-  if (cfg.enabled) {
+void HyprlandWindowManager::applyLayerRules() {
+  if (m_blur) {
     for (const char *rule : {"blur", "blurpopups", "ignorealpha 0.35"}) {
       applyLayerRule(rule);
     }
   }
 
+  if (m_dimAround) { applyLayerRule("dimaround"); }
+}
+
+bool HyprlandWindowManager::setBlur(const BlurConfig &cfg) {
+  m_blur = cfg.enabled;
+  applyLayerRules();
   return true;
+}
+
+bool HyprlandWindowManager::setDimAround(bool value) {
+  m_dimAround = value;
+  applyLayerRules();
+  return false;
 }
 
 bool HyprlandWindowManager::pasteToWindow(const AbstractWindow *window, const AbstractApplication *app) {

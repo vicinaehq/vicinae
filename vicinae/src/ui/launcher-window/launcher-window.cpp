@@ -36,9 +36,12 @@
 #include "settings-controller/settings-controller.hpp"
 
 void LauncherWindow::showEvent(QShowEvent *event) {
+  auto &cfg = m_ctx.services->config()->value();
+
   m_hud->hide();
   m_ctx.navigation->closeActionPanel();
   tryCenter();
+  applyWindowConfig(cfg.launcherWindow);
   QWidget::showEvent(event);
   activateWindow(); // gnome needs this
 }
@@ -229,6 +232,12 @@ void LauncherWindow::setupUI() {
           });
 }
 
+void LauncherWindow::applyWindowConfig(const config::WindowConfig &cfg) {
+  auto wm = m_ctx.services->windowManager();
+  wm->provider()->setBlur({.enabled = cfg.blur.enabled});
+  wm->provider()->setDimAround(cfg.dimAround);
+}
+
 void LauncherWindow::handleConfigurationChange(const config::ConfigValue &value) {
 #ifdef WAYLAND_LAYER_SHELL
   const auto &lc = value.launcherWindow.layerShell;
@@ -248,13 +257,9 @@ void LauncherWindow::handleConfigurationChange(const config::ConfigValue &value)
   }
 #endif
 
-  auto wm = m_ctx.services->windowManager();
-  auto &blurCfg = value.launcherWindow.blur;
-
-  wm->provider()->setBlur({.enabled = blurCfg.enabled});
-
   m_header->setFixedHeight(value.header.height);
   m_bar->setFixedHeight(value.footer.height);
+  applyWindowConfig(value.launcherWindow);
 
   auto &size = value.launcherWindow.size;
   setFixedSize(QSize{size.width, size.height});
