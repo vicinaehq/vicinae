@@ -87,6 +87,8 @@ void GlobalHeader::setAccessory(QWidget *accessory) {
   m_accessoryContainer->setCurrentWidget(accessory);
 }
 
+void GlobalHeader::setLoadingBarVisibility(bool value) { m_loadingBar->setVisible(value); }
+
 void GlobalHeader::clearAccessory() {
   if (auto widget = m_accessoryContainer->widget(0)) { m_accessoryContainer->removeWidget(widget); }
 }

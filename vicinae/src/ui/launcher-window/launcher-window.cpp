@@ -13,6 +13,7 @@
 #include "ui/top-bar/top-bar.hpp"
 #include "utils.hpp"
 #include <qcoreevent.h>
+#include <qlineedit.h>
 #include <qscreen.h>
 #include <QStackedWidget>
 #ifdef WAYLAND_LAYER_SHELL
@@ -42,6 +43,7 @@ void LauncherWindow::showEvent(QShowEvent *event) {
   m_ctx.navigation->closeActionPanel();
   tryCenter();
   applyWindowConfig(cfg.launcherWindow);
+  tryCompaction();
   QWidget::showEvent(event);
   activateWindow(); // gnome needs this
 }
@@ -185,7 +187,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
     if (visible && !m_currentOverlayWrapper->isVisible()) m_header->input()->setFocus();
   });
   connect(m_ctx.navigation.get(), &NavigationController::statusBarVisiblityChanged, this, [this](bool value) {
-    if (m_currentOverlayWrapper->isVisible()) return;
+    if (m_currentOverlayWrapper->isVisible() || m_compacted) return;
     m_bar->setVisible(value);
   });
   connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() { repaint(); });
@@ -210,19 +212,51 @@ void LauncherWindow::changeEvent(QEvent *event) {
   QWidget::changeEvent(event);
 }
 
+void LauncherWindow::setCompacted(bool value) {
+  if (m_compacted == value) return;
+
+  auto &cfg = m_ctx.services->config()->value();
+
+  if (value) {
+    centralWidget()->setFixedHeight(cfg.header.height);
+    m_bar->hide();
+    m_currentViewWrapper->hide();
+    m_header->setLoadingBarVisibility(false);
+    m_barDivider->hide();
+  } else {
+    centralWidget()->setFixedHeight(QWIDGETSIZE_MAX);
+    m_bar->show();
+    m_currentViewWrapper->show();
+    m_barDivider->show();
+    m_header->setLoadingBarVisibility(true);
+  }
+
+  m_compacted = value;
+  update();
+}
+
+void LauncherWindow::tryCompaction() {
+  auto &cfg = m_ctx.services->config()->value().launcherWindow.compactMode;
+  setCompacted(cfg.enabled && m_ctx.navigation->searchText().isEmpty() &&
+               m_ctx.navigation->viewStackSize() == 1);
+}
+
 void LauncherWindow::setupUI() {
   setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
   setAttribute(Qt::WA_TranslucentBackground);
   setCentralWidget(createWidget());
   createWinId();
   m_hud->setMaximumWidth(300);
-
+  m_header->input()->installEventFilter(this);
   handleConfigurationChange(m_ctx.services->config()->value());
 
   connect(m_ctx.navigation.get(), &NavigationController::currentViewChanged, this,
           &LauncherWindow::handleViewChange);
   connect(m_ctx.navigation.get(), &NavigationController::confirmAlertRequested, this,
           &LauncherWindow::handleDialog);
+
+  connect(m_header->input(), &QLineEdit::textChanged, this, [this](const QString &text) { tryCompaction(); });
+
   connect(m_actionVeil, &ActionVeilWidget::mousePressed, this,
           [this]() { m_ctx.navigation->closeActionPanel(); });
 
@@ -230,6 +264,10 @@ void LauncherWindow::setupUI() {
           [this](const config::ConfigValue &next, const config::ConfigValue &prev) {
             handleConfigurationChange(next);
           });
+}
+
+bool LauncherWindow::isCompactable() const {
+  return m_ctx.navigation->viewStackSize() == 1 && m_ctx.navigation->searchText().isEmpty();
 }
 
 void LauncherWindow::applyWindowConfig(const config::WindowConfig &cfg) {
@@ -244,7 +282,6 @@ void LauncherWindow::handleConfigurationChange(const config::ConfigValue &value)
   if (Environment::isLayerShellSupported() && lc.enabled) {
     namespace Shell = LayerShellQt;
     using clsh = config::LayerShellConfig;
-
     if (auto lshell = Shell::Window::get(windowHandle())) {
       lshell->setLayer(lc.layer == "overlay" ? Shell::Window::LayerOverlay : Shell::Window::LayerTop);
       lshell->setScope(Omnicast::LAYER_SCOPE);
@@ -264,7 +301,7 @@ void LauncherWindow::handleConfigurationChange(const config::ConfigValue &value)
   auto &size = value.launcherWindow.size;
   setFixedSize(QSize{size.width, size.height});
   tryCenter();
-
+  tryCompaction();
   update();
 }
 
@@ -276,12 +313,34 @@ void LauncherWindow::handleDialog(DialogContentWidget *alert) {
 }
 
 void LauncherWindow::handleViewChange(const NavigationController::ViewState &state) {
+  tryCompaction();
   if (m_dialog->isVisible()) { m_dialog->hide(); }
   if (auto current = m_currentViewWrapper->widget(0)) { m_currentViewWrapper->removeWidget(current); }
 
   m_currentViewWrapper->addWidget(state.sender);
 
   if (state.supportsSearch) { m_header->input()->setFocus(); }
+}
+
+bool LauncherWindow::eventFilter(QObject *watched, QEvent *event) {
+  if (watched == m_header->input() && event->type() == QEvent::KeyPress) {
+    QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
+
+    if (m_compacted) {
+      if (Keyboard::Shortcut(keyEvent) == Keybind::ToggleActionPanel || keyEvent->key() == Qt::Key_Up ||
+          keyEvent->key() == Qt::Key_Down) {
+        setCompacted(false);
+        return false;
+      }
+
+      if (keyEvent->key() == Qt::Key_Return) {
+        setCompacted(false);
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 bool LauncherWindow::event(QEvent *event) {
@@ -342,9 +401,11 @@ void LauncherWindow::paintEvent(QPaintEvent *event) {
   finalBgColor.setAlphaF(config.launcherWindow.opacity);
   painter.setRenderHint(QPainter::Antialiasing, true);
 
+  QRect contentRect = m_compacted ? QRect{0, 0, width(), config.header.height} : rect();
+
   if (config.launcherWindow.clientSideDecorations.enabled) {
     QPainterPath path;
-    path.addRoundedRect(rect(), config.launcherWindow.clientSideDecorations.rounding,
+    path.addRoundedRect(contentRect, config.launcherWindow.clientSideDecorations.rounding,
                         config.launcherWindow.clientSideDecorations.rounding);
     painter.setClipPath(path);
     painter.fillPath(path, finalBgColor);
@@ -352,7 +413,7 @@ void LauncherWindow::paintEvent(QPaintEvent *event) {
                         config.launcherWindow.clientSideDecorations.borderWidth);
     painter.drawPath(path);
   } else {
-    painter.fillRect(rect(), finalBgColor);
+    painter.fillRect(contentRect, finalBgColor);
   }
 }
 
