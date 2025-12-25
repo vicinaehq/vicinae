@@ -61,6 +61,13 @@
 		// Control the opacity of the main window.
 		// Opacity for other surfaces are controlled by the active theme.
 		"opacity": 0.98,
+		
+		// Blur the window background.
+		// As of now, only Hyprland supports this.
+		// This setting does nothing in unsupported environments.
+		"blur": {
+			"enabled": true
+		},
 
 		// You can turn client side decorations off if you want to let your compositor draw the rounded
 		// borders and such. This usually gives better results, but is more complicated to setup, if at all possible.
@@ -87,7 +94,6 @@
 		// NOTE: layer shell support for the cosmic compositor is explicitly disabled as it is currently broken
 		"layer_shell": {
 			"enabled": true,
-			"scope": "vicinae",
 			"keyboard_interactivity": "exclusive", // 'exclusive' | 'on_demand'
 			// either 'overlay' or 'top'.
 			// Other layers are not supported as they are unsuitable for a launcher.

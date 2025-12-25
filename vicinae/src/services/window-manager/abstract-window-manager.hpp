@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <qflags.h>
 #include <qfuture.h>
 #include <qobject.h>
 #include <qpromise.h>
@@ -29,6 +30,10 @@ signals:
   void windowsChanged() const;
 
 public:
+  enum WindowDecoration { Blur, BoxShadow, Rounding };
+
+  Q_DECLARE_FLAGS(WindowDecorations, WindowDecoration);
+
   struct WindowBounds {
     uint32_t x = 0;
     uint32_t y = 0;
@@ -42,6 +47,10 @@ public:
     QString manufacturer;
     QString model;
     std::optional<QString> serial;
+  };
+
+  struct BlurConfig {
+    bool enabled = true;
   };
 
   /**
@@ -92,6 +101,15 @@ public:
    * a unique string. Defaults to `id()` if not reimplemented.
    */
   virtual QString displayName() const { return id(); }
+
+  virtual WindowDecorations supportedDecorations() { return {}; }
+
+  /**
+   * Apply blur to the vicinae windows.
+   *
+   * Returns whether blur could be applied or not.
+   */
+  virtual bool setBlur(const BlurConfig &cfg) { return false; }
 
   virtual WindowList listWindowsSync() const { return {}; };
 
@@ -191,3 +209,5 @@ public:
 
 private:
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(AbstractWindowManager::WindowDecorations)

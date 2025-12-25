@@ -60,16 +60,22 @@ template <> struct Partial<ProviderData> {
 };
 
 struct LayerShellConfig {
-  std::string scope = "vicinae";
   std::string keyboardInteractivity = "exclusive";
   std::string layer = "top";
   bool enabled = true;
 };
 
 template <> struct Partial<LayerShellConfig> {
-  std::optional<std::string> scope;
   std::optional<std::string> layer;
   std::optional<std::string> keyboardInteractivity;
+  std::optional<bool> enabled;
+};
+
+struct BlurConfig {
+  bool enabled;
+};
+
+template <> struct Partial<BlurConfig> {
   std::optional<bool> enabled;
 };
 
@@ -96,16 +102,12 @@ template <> struct Partial<WindowCSD> {
 };
 
 struct WindowConfig {
-  static const constexpr Size DFLT_SIZE = {770, 480};
-  static const constexpr int DFLT_ROUNDING = 6;
-  static const constexpr float DFLT_OPACITY = 0.98;
-  static const constexpr bool DFLT_CSD = true;
-
-  float opacity = DFLT_OPACITY;
+  float opacity;
   WindowCSD clientSideDecorations;
-  Size size = DFLT_SIZE;
-  std::string screen = "auto";
+  Size size;
+  std::string screen;
 
+  BlurConfig blur;
   LayerShellConfig layerShell;
 };
 
@@ -114,6 +116,7 @@ template <> struct Partial<WindowConfig> {
   std::optional<float> opacity;
   std::optional<Partial<WindowCSD>> clientSideDecorations;
   std::optional<Partial<Size>> size;
+  std::optional<Partial<BlurConfig>> blur;
   std::optional<Partial<LayerShellConfig>> layerShell;
 };
 

@@ -1,6 +1,7 @@
 #include "launcher-window.hpp"
 #include "action-panel/action-panel.hpp"
 #include "common.hpp"
+#include "services/window-manager/window-manager.hpp"
 #include "config/config.hpp"
 #include "environment.hpp"
 #include "keyboard/keybind-manager.hpp"
@@ -237,7 +238,7 @@ void LauncherWindow::handleConfigurationChange(const config::ConfigValue &value)
 
     if (auto lshell = Shell::Window::get(windowHandle())) {
       lshell->setLayer(lc.layer == "overlay" ? Shell::Window::LayerOverlay : Shell::Window::LayerTop);
-      lshell->setScope(lc.scope.c_str());
+      lshell->setScope(Omnicast::LAYER_SCOPE);
       lshell->setScreenConfiguration(Shell::Window::ScreenFromCompositor);
       lshell->setAnchors(Shell::Window::AnchorNone);
       lshell->setKeyboardInteractivity(lc.keyboardInteractivity == "exclusive"
@@ -246,6 +247,11 @@ void LauncherWindow::handleConfigurationChange(const config::ConfigValue &value)
     }
   }
 #endif
+
+  auto wm = m_ctx.services->windowManager();
+  auto &blurCfg = value.launcherWindow.blur;
+
+  wm->provider()->setBlur({.enabled = blurCfg.enabled});
 
   m_header->setFixedHeight(value.header.height);
   m_bar->setFixedHeight(value.footer.height);

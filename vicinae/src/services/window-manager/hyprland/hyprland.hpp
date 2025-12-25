@@ -45,6 +45,8 @@ public:
   WindowList listWindowsSync() const override;
   AbstractWindowManager::WindowPtr getFocusedWindowSync() const override;
 
+  bool setBlur(const BlurConfig &cfg) override;
+
   WorkspacePtr getActiveWorkspace() const override;
 
   bool supportsPaste() const override;
@@ -59,6 +61,8 @@ public:
   void start() override;
 
 private:
+  void applyLayerRule(std::string_view rule) const;
+
   QString id() const override;
   QString displayName() const override;
 
