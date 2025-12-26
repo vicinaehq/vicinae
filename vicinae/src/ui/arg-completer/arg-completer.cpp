@@ -1,6 +1,5 @@
 #include "ui/arg-completer/arg-completer.hpp"
 #include "navigation-controller.hpp"
-#include <ranges>
 
 void ArgCompleter::clear() {
   m_args.clear();
@@ -11,11 +10,21 @@ void ArgCompleter::clear() {
 void ArgCompleter::setIconUrl(const ImageURL &url) { m_icon->setUrl(url); }
 
 void ArgCompleter::validate() {
+  bool requiredFocused = false;
+
   for (int i = 0; i != m_args.size() && i != m_inputs.size(); ++i) {
     auto &arg = m_args[i];
     auto &input = m_inputs[i];
 
-    if (arg.required && input->text().isEmpty()) { input->setError("Required"); }
+    if (arg.required && input->text().isEmpty()) {
+      input->setError("Required");
+
+      // make sure we always focus the first required argument
+      if (!requiredFocused) {
+        input->setFocus();
+        requiredFocused = true;
+      }
+    }
   }
 }
 
@@ -70,7 +79,8 @@ std::vector<std::pair<QString, QString>> ArgCompleter::collect() {
   items.reserve(m_args.size());
 
   for (int i = 0; i != m_args.size(); ++i) {
-    items.push_back({m_args.at(i).name, m_inputs.at(i)->text()});
+    std::pair<QString, QString> p{m_args.at(i).name, m_inputs.at(i)->text()};
+    items.emplace_back(p);
   }
 
   return items;
