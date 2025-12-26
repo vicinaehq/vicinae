@@ -1,3 +1,4 @@
+#include "builtin_icon.hpp"
 #include "extend/image-model.hpp"
 #include "services/asset-resolver/asset-resolver.hpp"
 #include "services/emoji-service/emoji.hpp"
@@ -283,6 +284,19 @@ ImageURL ImageURL::builtin(const QString &name) {
   url.setFill(SemanticColor::Foreground);
 
   return url;
+}
+
+ImageURL::ImageURL(BuiltinIcon icon) {
+  ImageURL url;
+
+  url.setType(ImageURLType::Builtin);
+  url.setFill(SemanticColor::Foreground);
+
+  if (auto name = BuiltinIconService::nameForIcon(icon)) {
+    url.setName(name);
+  } else {
+    url.setName(BuiltinIconService::nameForIcon(BuiltinIconService::unknownIcon()));
+  }
 }
 
 ImageURL ImageURL::favicon(const QString &domain) {

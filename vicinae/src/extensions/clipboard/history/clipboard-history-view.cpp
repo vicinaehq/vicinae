@@ -1,5 +1,6 @@
 #include "clipboard-history-view.hpp"
 #include "actions/root-search/root-search-actions.hpp"
+#include "builtin_icon.hpp"
 #include "clipboard-actions.hpp"
 #include "common.hpp"
 #include "extensions/clipboard/history/clipboard-history-model.hpp"
@@ -69,7 +70,7 @@ class CopyClipboardSelection : public AbstractAction {
 
 public:
   CopyClipboardSelection(const QString &id)
-      : AbstractAction("Copy to clipboard", ImageURL::builtin("copy-clipboard")), m_id(id) {}
+      : AbstractAction("Copy to clipboard", BuiltinIcon::CopyClipboard), m_id(id) {}
 };
 
 class ClipboardHistoryDetail : public DetailWidget {
