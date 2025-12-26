@@ -1,7 +1,7 @@
 #pragma once
 #include "services/files-service/abstract-file-indexer.hpp"
 #include "services/files-service/file-indexer/scan.hpp"
-#include "utils/expected.hpp"
+#include <expected>
 #include <qdatetime.h>
 #include <qobject.h>
 #include <qrandom.h>
@@ -39,7 +39,7 @@ public:
   std::vector<ScanRecord> listScans(ScanType scanType, ScanStatus scanStatus);
 
   bool updateScanStatus(int scanId, ScanStatus status);
-  tl::expected<ScanRecord, QString> createScan(const std::filesystem::path &path, ScanType type);
+  std::expected<ScanRecord, QString> createScan(const std::filesystem::path &path, ScanType type);
 
   bool setScanError(int scanId, const QString &error);
 

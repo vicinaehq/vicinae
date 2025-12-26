@@ -1,7 +1,7 @@
 #pragma once
 #include <qfuture.h>
 #include <qstring.h>
-#include "utils/expected.hpp"
+#include <expected>
 
 class AbstractCalculatorBackend {
 public:
@@ -35,8 +35,8 @@ public:
     CalculatorError(const QString &message) : m_message(message) {}
   };
 
-  using ComputeResult = tl::expected<CalculatorResult, CalculatorError>;
-  using RefreshExchangeRatesResult = tl::expected<void, std::string>;
+  using ComputeResult = std::expected<CalculatorResult, CalculatorError>;
+  using RefreshExchangeRatesResult = std::expected<void, std::string>;
 
   virtual QString id() const = 0;
   virtual QString displayName() const { return id(); }
@@ -59,7 +59,7 @@ public:
    */
   virtual QFuture<RefreshExchangeRatesResult> refreshExchangeRates() {
     QPromise<RefreshExchangeRatesResult> promise;
-    promise.addResult(tl::unexpected("Not implemented"));
+    promise.addResult(std::unexpected("Not implemented"));
     promise.finish();
     return promise.future();
   }

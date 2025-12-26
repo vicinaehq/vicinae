@@ -181,9 +181,9 @@ IpcCommandHandler::processDmenu(const proto::ext::daemon::DmenuRequest &request)
   return future;
 }
 
-tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
+std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
   if (!Omnicast::APP_SCHEMES.contains(url.scheme())) {
-    return tl::unexpected("Unsupported url scheme " + url.scheme().toStdString());
+    return std::unexpected("Unsupported url scheme " + url.scheme().toStdString());
   }
 
   qDebug() << "got deeplink" << url.toString();
@@ -231,7 +231,7 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
   }
 
   if (command == "close") {
-    if (!m_ctx.navigation->isWindowOpened()) return tl::unexpected("Already closed");
+    if (!m_ctx.navigation->isWindowOpened()) return std::unexpected("Already closed");
 
     CloseWindowOptions opts;
 
@@ -249,7 +249,7 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
   }
 
   if (command == "open") {
-    if (m_ctx.navigation->isWindowOpened()) return tl::unexpected("Already opened");
+    if (m_ctx.navigation->isWindowOpened()) return std::unexpected("Already opened");
     if (auto text = query.queryItemValue("popToRoot"); text == "true" || text == "1") {
       m_ctx.navigation->popToRoot();
     }
@@ -313,7 +313,7 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
         return {};
       }
 
-      return tl::unexpected("No such extension");
+      return std::unexpected("No such extension");
     }
 
     if (components.size() < 3) {
@@ -380,7 +380,7 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
 
     if (verb == "set") {
       if (components.size() != 2) {
-        return tl::unexpected("Correct usage is vicinae://theme/set/<theme_id>");
+        return std::unexpected("Correct usage is vicinae://theme/set/<theme_id>");
       }
 
       QString id = components.at(1);
@@ -392,7 +392,7 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
       auto theme = service.findTheme(id);
 
       if (!theme) {
-        return tl::unexpected(std::string("theme with id ") + id.toStdString() + " does not exist");
+        return std::unexpected(std::string("theme with id ") + id.toStdString() + " does not exist");
       }
 
       if (theme->id() == cfg->value().systemTheme().name) {
@@ -472,7 +472,7 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
     }
   }
 
-  return tl::unexpected(std::string("invalid deeplink ") + url.toString().toStdString());
+  return std::unexpected(std::string("invalid deeplink ") + url.toString().toStdString());
 }
 
 IpcCommandHandler::IpcCommandHandler(ApplicationContext &ctx) : m_ctx(ctx) {}

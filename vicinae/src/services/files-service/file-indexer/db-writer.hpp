@@ -33,7 +33,7 @@ public:
   void updateScanStatus(int scanId, ScanStatus status);
 
   void setScanError(int scanId, const QString &error);
-  tl::expected<FileIndexerDatabase::ScanRecord, QString> createScan(const std::filesystem::path &path,
+  std::expected<FileIndexerDatabase::ScanRecord, QString> createScan(const std::filesystem::path &path,
                                                                     ScanType type);
 
   // Receive by value because `paths` could mutate while the work is waiting in queue

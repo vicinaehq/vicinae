@@ -57,12 +57,12 @@ QString ColorFormatter::formatName(ColorFormat format) const {
   }
 }
 
-tl::expected<ColorFormatter::ParsedColor, ColorFormatter::GenericError>
+std::expected<ColorFormatter::ParsedColor, ColorFormatter::GenericError>
 ColorFormatter::parse(const QString &text) {
   QString cleanText = text.trimmed().toLower();
 
   if (cleanText.isEmpty()) {
-    return tl::unexpected(GenericError(GenericError::NotAColorFormat, "Empty string"));
+    return std::unexpected(GenericError(GenericError::NotAColorFormat, "Empty string"));
   }
 
   // Try each format in order of likelihood
@@ -74,7 +74,7 @@ ColorFormatter::parse(const QString &text) {
 
   if (auto result = tryParseHsv(cleanText)) { return result.value(); }
 
-  return tl::unexpected(
+  return std::unexpected(
       GenericError(GenericError::NotAColorFormat, "Text does not match any known color format"));
 }
 

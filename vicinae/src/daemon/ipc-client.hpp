@@ -40,7 +40,7 @@ public:
    */
   bool kill();
 
-  tl::expected<void, QString> deeplink(const QUrl &url);
+  std::expected<void, QString> deeplink(const QUrl &url);
   bool connect();
   void connectOrThrow();
   bool ping();

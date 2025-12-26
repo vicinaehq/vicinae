@@ -33,7 +33,7 @@ bool QalculateBackend::start() {
   return true;
 }
 
-tl::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const QString &question) const {
+std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const QString &question) const {
   QString expression = preprocessQuestion(question);
 
   MathStructure out;
@@ -41,7 +41,7 @@ tl::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const 
   MathStructure result = CALCULATOR->calculate(CALCULATOR->unlocalizeExpression(expression.toStdString()),
                                                m_evalOpts, &in, &out);
 
-  if (result.containsUnknowns()) { return tl::unexpected(CalculatorError("Unknown component in question")); }
+  if (result.containsUnknowns()) { return std::unexpected(CalculatorError("Unknown component in question")); }
 
   bool error = false;
 
@@ -49,7 +49,7 @@ tl::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const 
     error = true;
   }
 
-  if (error) return tl::unexpected(CalculatorError("Calculation error"));
+  if (error) return std::unexpected(CalculatorError("Calculation error"));
 
   std::string res = result.print(m_printOpts);
   CalculatorResult calcRes;
@@ -89,7 +89,7 @@ QFuture<AbstractCalculatorBackend::RefreshExchangeRatesResult> QalculateBackend:
     qInfo() << "Refreshing Qalculate exchange rates...";
     auto die = [](auto &&s) {
       qWarning() << "Failed to refresh exchange rates" << s;
-      return RefreshExchangeRatesResult{tl::unexpected(s)};
+      return RefreshExchangeRatesResult{std::unexpected(s)};
     };
     if (!CALCULATOR->fetchExchangeRates()) { return die("Failed to fetch exchange rates"); }
     QTimer::singleShot(0, [this]() { initializeCalculator(); });
