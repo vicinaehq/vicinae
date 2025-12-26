@@ -1,6 +1,6 @@
 #include "theme-file.hpp"
 #include "common.hpp"
-#include "expected.hpp"
+#include <expected>
 #include "theme.hpp"
 #include "theme/colors.hpp"
 #include "theme/theme-parser.hpp"
@@ -219,7 +219,7 @@ QColor ThemeFile::withAlphaF(const QColor &color, float alpha) {
   return col;
 }
 
-tl::expected<ThemeFile, std::string> ThemeFile::fromFile(const fs::path &path) {
+std::expected<ThemeFile, std::string> ThemeFile::fromFile(const fs::path &path) {
   return ThemeParser().parse(path);
 }
 

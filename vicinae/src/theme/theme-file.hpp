@@ -1,5 +1,5 @@
 #pragma once
-#include "expected.hpp"
+#include <expected>
 #include <algorithm>
 #include <filesystem>
 #include <qcolor.h>
@@ -32,7 +32,7 @@ public:
     Semantics semantics;
   };
 
-  static tl::expected<ThemeFile, std::string> fromFile(const std::filesystem::path &path);
+  static std::expected<ThemeFile, std::string> fromFile(const std::filesystem::path &path);
   explicit ThemeFile(const InitData &data) : m_data(data) {}
   ThemeFile(const ThemeFile &file) = default;
 

@@ -1,12 +1,12 @@
 #pragma once
-#include "expected.hpp"
+#include <expected>
 #include <qobject.h>
 #include <qstringview.h>
 
 class ClipboardEncrypter : public QObject {
 public:
-  using EncryptResult = tl::expected<QByteArray, QString>;
-  using DecryptResult = tl::expected<QByteArray, QString>;
+  using EncryptResult = std::expected<QByteArray, QString>;
+  using DecryptResult = std::expected<QByteArray, QString>;
 
   void loadKey();
   EncryptResult encrypt(const QByteArray &plain) const;

@@ -1,6 +1,6 @@
 #pragma once
 #include "common.hpp"
-#include "utils/expected.hpp"
+#include <expected>
 #include <qstring.h>
 #include <filesystem>
 
@@ -26,7 +26,7 @@ struct CommandBoilerplate {
 
 class ExtensionBoilerplateGenerator {
   // returns the generated extension path or an error
-  using BoilerplateGenRes = tl::expected<std::filesystem::path, QString>;
+  using BoilerplateGenRes = std::expected<std::filesystem::path, QString>;
 
 public:
   const std::vector<CommandBoilerplate> &commandBoilerplates() const;

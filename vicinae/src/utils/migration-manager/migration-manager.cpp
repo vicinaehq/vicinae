@@ -41,7 +41,7 @@ std::vector<MigrationManager::RegisteredMigration> MigrationManager::loadDatabas
   return migrations;
 }
 
-tl::expected<MigrationManager::Migration, MigrationLoadingError>
+std::expected<MigrationManager::Migration, MigrationLoadingError>
 MigrationManager::loadMigrationFile(const std::filesystem::path &path) {
   Migration migration;
 
@@ -58,7 +58,7 @@ MigrationManager::loadMigrationFile(const std::filesystem::path &path) {
       error.path = path;
       error.message = QString("Could not parse version from migration file name: %1").arg(filename.c_str());
 
-      return tl::unexpected(error);
+      return std::unexpected(error);
     }
 
     migration.version = std::stoi(filenameMatch[1].str());

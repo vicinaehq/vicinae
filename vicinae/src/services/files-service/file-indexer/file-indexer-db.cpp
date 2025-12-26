@@ -107,7 +107,7 @@ bool FileIndexerDatabase::updateScanStatus(int scanId, ScanStatus status) {
   return true;
 }
 
-tl::expected<FileIndexerDatabase::ScanRecord, QString>
+std::expected<FileIndexerDatabase::ScanRecord, QString>
 FileIndexerDatabase::createScan(const std::filesystem::path &path, ScanType type) {
   QSqlQuery query(m_db);
 
@@ -120,12 +120,12 @@ FileIndexerDatabase::createScan(const std::filesystem::path &path, ScanType type
 
   if (!query.exec()) {
     qWarning() << "Failed to create scan history" << query.lastError();
-    return tl::unexpected("Failed to create scan history");
+    return std::unexpected("Failed to create scan history");
   }
 
   if (!query.next()) {
     qWarning() << "No next entry after createScan" << query.lastError();
-    return tl::unexpected("No next entry after createScan");
+    return std::unexpected("No next entry after createScan");
   }
 
   ScanRecord record;

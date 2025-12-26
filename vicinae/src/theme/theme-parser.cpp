@@ -115,7 +115,7 @@ static std::optional<SemanticColor> semanticFromKey(const std::string &key) {
   return {};
 }
 
-static tl::expected<ThemeFile::MappedColor, std::string> parseColorName(const QString &colorName) {
+static std::expected<ThemeFile::MappedColor, std::string> parseColorName(const QString &colorName) {
   if (colorName.startsWith("colors.")) {
     std::string name = colorName.sliced(7).toStdString();
     if (auto semantic = semanticFromKey(name)) { return ThemeFile::ColorRef{.color = *semantic}; }
@@ -127,16 +127,16 @@ static tl::expected<ThemeFile::MappedColor, std::string> parseColorName(const QS
   color = QColor("#" + colorName);
   if (color.isValid()) return color;
 
-  return tl::unexpected(colorName.toStdString() + " is not a valid color name or reference");
+  return std::unexpected(colorName.toStdString() + " is not a valid color name or reference");
 }
 
-static tl::expected<ThemeFile::MappedColor, std::string> parseColor(toml::node_view<toml::node> node) {
+static std::expected<ThemeFile::MappedColor, std::string> parseColor(toml::node_view<toml::node> node) {
   if (auto str = node.as_string()) { return parseColorName(str->value_or("")); }
 
   if (auto table = node.as_table()) {
     auto name = (*table)["name"].value<std::string>();
 
-    if (!name) { return tl::unexpected("Color value expressed as a map should have a name key"); }
+    if (!name) { return std::unexpected("Color value expressed as a map should have a name key"); }
 
     auto color = parseColorName(name->c_str());
 
@@ -161,10 +161,10 @@ static tl::expected<ThemeFile::MappedColor, std::string> parseColor(toml::node_v
     return std::visit(visitor, *color);
   }
 
-  return tl::unexpected("Not a valid color");
+  return std::unexpected("Not a valid color");
 }
 
-tl::expected<ThemeFile, std::string> ThemeParser::parse(const fs::path &path) {
+std::expected<ThemeFile, std::string> ThemeParser::parse(const fs::path &path) {
   try {
     ThemeFile::InitData data;
     auto file = toml::parse_file(path.c_str());
@@ -174,7 +174,7 @@ tl::expected<ThemeFile, std::string> ThemeParser::parse(const fs::path &path) {
 
     auto metaPtr = file["meta"].as_table();
 
-    if (!metaPtr) { return tl::unexpected("a [meta] table is required"); }
+    if (!metaPtr) { return std::unexpected("a [meta] table is required"); }
 
     auto &meta = *metaPtr;
 
@@ -182,9 +182,9 @@ tl::expected<ThemeFile, std::string> ThemeParser::parse(const fs::path &path) {
     auto description = meta["description"].as_string();
     auto variant = meta["variant"].as_string();
 
-    if (!name) return tl::unexpected("meta.name must be a string");
-    if (!description) return tl::unexpected("meta.description must be a string");
-    if (!variant) return tl::unexpected("meta.variant must be a string (\"light\" | \"dark\")");
+    if (!name) return std::unexpected("meta.name must be a string");
+    if (!description) return std::unexpected("meta.description must be a string");
+    if (!variant) return std::unexpected("meta.variant must be a string (\"light\" | \"dark\")");
 
     data.name = QString::fromStdString(name->value_or(""));
     data.description = QString::fromStdString(description->value_or(""));
@@ -259,14 +259,14 @@ tl::expected<ThemeFile, std::string> ThemeParser::parse(const fs::path &path) {
       if (auto ref = std::get_if<ThemeFile::ColorRef>(&v)) {
         refCallStack.clear();
         if (!checkRef(*ref)) {
-          return tl::unexpected("Detected circular binding for key " + keyFromSemantic(k).value_or("???"));
+          return std::unexpected("Detected circular binding for key " + keyFromSemantic(k).value_or("???"));
         }
       }
     }
 
     return ThemeFile(data);
   } catch (const std::exception &error) {
-    return tl::unexpected(std::string("Parsing error: ") + error.what());
+    return std::unexpected(std::string("Parsing error: ") + error.what());
   }
 }
 
