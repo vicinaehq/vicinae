@@ -1,5 +1,5 @@
 #pragma once
-#include "expected.hpp"
+#include <expected>
 #include <QByteArray>
 
 namespace Crypto::AES256GCM {
@@ -12,8 +12,8 @@ enum class DecryptError {
 
 enum class EncryptError { OpenSslError };
 
-tl::expected<QByteArray, EncryptError> encrypt(const QByteArray &dta, const QByteArray &ky);
-tl::expected<QByteArray, DecryptError> decrypt(const QByteArray &dta, const QByteArray &ky);
+std::expected<QByteArray, EncryptError> encrypt(const QByteArray &dta, const QByteArray &ky);
+std::expected<QByteArray, DecryptError> decrypt(const QByteArray &dta, const QByteArray &ky);
 QByteArray generateKey();
 } // namespace Crypto::AES256GCM
 

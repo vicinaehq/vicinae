@@ -1,5 +1,5 @@
 #pragma once
-#include "utils/expected.hpp"
+#include <expected>
 #include <qcryptographichash.h>
 #include <qlogging.h>
 #include <qsqlerror.h>
@@ -32,7 +32,7 @@ class MigrationManager {
 
   void initialize();
   std::vector<RegisteredMigration> loadDatabaseMigrations();
-  tl::expected<Migration, MigrationLoadingError> loadMigrationFile(const std::filesystem::path &path);
+  std::expected<Migration, MigrationLoadingError> loadMigrationFile(const std::filesystem::path &path);
 
   void executeMigration(const Migration &migration);
   QStringList splitSqlStatements(const QString &content);
