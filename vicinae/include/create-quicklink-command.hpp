@@ -336,12 +336,12 @@ public:
 
   void initializeIconSelector() {
     std::vector<std::shared_ptr<SelectorInput::AbstractItem>> iconItems;
-    auto mapItem = [](auto &&name) -> std::shared_ptr<SelectorInput::AbstractItem> {
-      return std::make_shared<IconSelectorItem>(ImageURL::builtin(name));
+    auto mapItem = [](auto &&p) -> std::shared_ptr<SelectorInput::AbstractItem> {
+      return std::make_shared<IconSelectorItem>(ImageURL::builtin(p.second));
     };
 
-    iconItems.reserve(BuiltinIconService::icons().size() + 1);
-    auto items = BuiltinIconService::icons() | std::views::transform(mapItem);
+    iconItems.reserve(BuiltinIconService::mapping().size() + 1);
+    auto items = BuiltinIconService::mapping() | std::views::transform(mapItem);
 
     iconItems.emplace_back(std::make_shared<DefaultIconSelectorItem>(ImageURL::builtin("link"), "Default"));
     std::ranges::for_each(items, [&](auto item) { iconItems.emplace_back(item); });

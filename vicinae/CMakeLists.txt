@@ -303,7 +303,6 @@ set(SRCS
 
 	include/create-quicklink-command.hpp
 
-	include/builtin_icon.hpp
 	src/builtin_icon.cpp
 
 	src/ui/transform-result/transform-result.hpp
