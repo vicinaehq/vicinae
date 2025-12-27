@@ -197,6 +197,6 @@ CheckOptions:
   readability-braces-around-statements.ShortStatementLines: 0
   readability-identifier-naming.ClassCase: CamelCase
   readability-identifier-naming.EnumCase: CamelCase
-  readability-identifier-naming.EnumConstantCase: UPPER_CASE
+  readability-identifier-naming.EnumConstantCase: CamelCase
   readability-identifier-naming.FunctionCase: camelBack
   readability-identifier-naming.StructCase: CamelCase

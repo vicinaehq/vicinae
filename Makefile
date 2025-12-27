@@ -17,6 +17,10 @@ debug:
 	cmake --build $(BUILD_DIR)
 .PHONY: debug
 
+genicon:
+	node scripts/generate-icons.js
+.PHONY: genicon
+
 strip:
 	strip -s ./build/vicinae/vicinae
 .PHONY: strip
