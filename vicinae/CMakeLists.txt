@@ -359,10 +359,6 @@ set(SRCS
 
 	../extra/extension-boilerplate/boilerplate.qrc
 
-	contribs.qrc
-
-	src/contribs/contribs.cpp
-
 	./icons/icons.qrc
 
 	./database/vicinae/migrations.qrc
