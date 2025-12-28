@@ -212,6 +212,7 @@ public:
   VListModel::WidgetType *widgetAt(VListModel::Index idx) const;
 
   void selectFirst();
+  void selectLast();
 
   /**
    * Select next item. If we are the end of the list, go to the first.
@@ -254,6 +255,9 @@ protected:
   bool event(QEvent *event) override;
   void handleScrollChanged(int value) { updateViewport(); }
   void resizeEvent(QResizeEvent *event) override;
+
+  int firstSelectableIndex() const;
+  int lastSelectableIndex() const;
 
 private:
   struct WidgetData {

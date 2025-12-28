@@ -21,7 +21,10 @@ void VListWidget::setModel(VListModel *model) {
 }
 
 void VListWidget::calculate() {
-  if (!m_model) return;
+  if (!m_model) {
+    m_count = 0;
+    return;
+  }
 
   if (m_model) m_model->viewportChanged(QSize(width() - m_margins.left() - m_margins.right(), height()));
   m_height = m_model->height() + m_margins.top() + m_margins.bottom();
@@ -46,6 +49,7 @@ void VListWidget::calculate() {
 }
 
 void VListWidget::selectNext() {
+  if (!m_model) return;
   int startIdx = m_selected.transform([](const Selection &s) { return s.idx + 1; }).value_or(0);
 
   for (int i = startIdx; i < m_count; ++i) {
@@ -58,16 +62,32 @@ void VListWidget::selectNext() {
   selectFirst();
 }
 
-void VListWidget::selectFirst() {
+int VListWidget::firstSelectableIndex() const {
+  if (!m_model) return -1;
   for (int i = 0; i != m_count; ++i) {
     if (m_model->isSelectable(i)) {
-      setSelected(i);
-      return;
+      return i;
     }
   }
+  return -1;
+}
 
-  m_selected.reset();
-  emit itemSelected({});
+int VListWidget::lastSelectableIndex() const {
+  if (!m_model) return -1;
+  for (int i = m_count - 1; i >= 0; --i) {
+    if (m_model->isSelectable(i)) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+void VListWidget::selectFirst() {
+  setSelected(firstSelectableIndex());
+}
+
+void VListWidget::selectLast() {
+  setSelected(lastSelectableIndex());
 }
 
 std::span<const VListWidget::ViewportItem> VListWidget::visibleItems() const { return m_visibleItems; }
@@ -100,6 +120,7 @@ bool VListWidget::activateCurrentSelection() {
 }
 
 bool VListWidget::selectLeft() {
+  if (!m_model) return false;
   if (!m_selected) {
     selectFirst();
     return true;
@@ -116,6 +137,7 @@ bool VListWidget::selectLeft() {
 }
 
 bool VListWidget::selectRight() {
+  if (!m_model) return false;
   if (!m_selected) {
     selectFirst();
     return true;
@@ -132,8 +154,14 @@ bool VListWidget::selectRight() {
 }
 
 bool VListWidget::selectUp() {
+  if (!m_model) return false;
   if (!m_selected) {
     selectFirst();
+    return true;
+  }
+
+  if(m_selected->idx == firstSelectableIndex()){
+    selectLast();
     return true;
   }
 
@@ -165,7 +193,13 @@ bool VListWidget::selectUp() {
 }
 
 bool VListWidget::selectDown() {
+  if (!m_model) return false;
   if (!m_selected) {
+    selectFirst();
+    return true;
+  }
+
+  if(m_selected->idx == lastSelectableIndex()){
     selectFirst();
     return true;
   }
@@ -216,6 +250,14 @@ void VListWidget::setMargins(const QMargins &margins) {
 void VListWidget::setMargins(int n) { setMargins(QMargins{n, n, n, n}); }
 
 void VListWidget::setSelected(VListModel::Index idx) {
+  if (!m_model || idx < 0 || idx >= m_count) {
+    if (m_selected) {
+      m_selected.reset();
+      emit itemSelected(-1);
+    }
+    return;
+  }
+
   auto id = m_model->stableId(idx);
 
   if (!m_selected || m_selected->id != id) {
