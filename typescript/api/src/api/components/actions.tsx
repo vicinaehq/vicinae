@@ -209,7 +209,6 @@ const Push: React.FC<Action.Push.Props> = ({ target, ...props }) => {
 		<ActionRoot
 			{...props}
 			onAction={() => {
-				console.log("activate push action");
 				push(target);
 			}}
 		/>
