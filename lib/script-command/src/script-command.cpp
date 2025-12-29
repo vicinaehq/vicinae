@@ -128,22 +128,17 @@ std::optional<std::vector<std::string>> parseShebang(std::string_view line) {
   std::string_view s = line;
   trim(s);
 
-  if (!s.starts_with("#!")) {
-    return {};
-  }
+  if (!s.starts_with("#!")) { return {}; }
 
   s.remove_prefix(2);
   trim(s);
 
-  if (s.empty()) {
-    return {};
-  }
+  if (s.empty()) { return {}; }
 
-  auto tokens = s
-    | std::views::split(' ')
-    | std::views::filter([](auto&& token) { return !std::ranges::empty(token); })
-    | std::views::transform([](auto&& token) { return std::string(std::string_view(token)); })
-    | std::ranges::to<std::vector>();
+  auto tokens = s | std::views::split(' ') |
+                std::views::filter([](auto &&token) { return !std::ranges::empty(token); }) |
+                std::views::transform([](auto &&token) { return std::string(std::string_view(token)); }) |
+                std::ranges::to<std::vector>();
 
   return tokens;
 }
@@ -268,6 +263,15 @@ std::expected<ScriptCommand, std::string> ScriptCommand::parse(std::string_view 
           return std::unexpected(std::format("Failed to parse refreshTime: {}", seconds.error()));
         }
         data.refreshTime = seconds.value();
+      }
+      if (kv->k == "keywords") {
+        if (kv->scope != "@vicinae") {
+          return std::unexpected("keywords field is only supported in @vicinae scope");
+        }
+        std::string buf{kv->v};
+        if (auto error = glz::read_json(data.keywords, buf)) {
+          return std::unexpected(std::format("Failed to parse keywords: {}", glz::format_error(error)));
+        }
       }
 
       for (const char *argKey : {"argument1", "argument2", "argument3"}) {

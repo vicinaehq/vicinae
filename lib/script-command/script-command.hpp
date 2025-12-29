@@ -48,6 +48,7 @@ struct ScriptCommand {
   std::optional<std::string> author;
   std::optional<std::string> authorUrl;
   std::optional<std::string> description;
+  std::vector<std::string> keywords;
   std::vector<ScriptArgument> arguments;
 
   static std::expected<ScriptCommand, std::string> parse(std::string_view str);

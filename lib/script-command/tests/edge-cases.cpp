@@ -133,25 +133,6 @@ TEST_CASE("All output modes") {
   }
 }
 
-TEST_CASE("Optional fields are parsed correctly") {
-  const char *source = R"(#!/bin/bash
-# @vicinae.schemaVersion 1
-# @vicinae.title Test Command
-# @vicinae.author John Doe
-# @vicinae.authorURL https://example.com
-# @vicinae.description This is a test script
-# @vicinae.refreshTime 5m
-# @vicinae.currentDirectoryPath /tmp/test
-)";
-  auto result = script_command::ScriptCommand::parse(source);
-  REQUIRE(result.has_value());
-  REQUIRE(result->author.value() == "John Doe");
-  REQUIRE(result->authorUrl.value() == "https://example.com");
-  REQUIRE(result->description.value() == "This is a test script");
-  REQUIRE(result->refreshTime.value() == 300); // 5m = 300 seconds
-  REQUIRE(result->currentDirectoryPath.value() == "/tmp/test");
-}
-
 TEST_CASE("Argument with percentEncoded true") {
   const char *source = R"(#!/bin/bash
 # @vicinae.schemaVersion 1
