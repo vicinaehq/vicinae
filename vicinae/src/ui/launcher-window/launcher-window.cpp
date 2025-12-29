@@ -12,6 +12,9 @@
 #include "lib/keyboard/keyboard.hpp"
 #include "ui/top-bar/top-bar.hpp"
 #include "utils.hpp"
+#ifdef WAYLAND_LAYER_SHELL
+#include "lib/wayland/keyboard-focus-monitor.hpp"
+#endif
 #include <qcoreevent.h>
 #include <qlineedit.h>
 #include <qscreen.h>
@@ -191,6 +194,16 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
     m_bar->setVisible(value);
   });
   connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() { repaint(); });
+
+#ifdef WAYLAND_LAYER_SHELL
+  if (Environment::isLayerShellSupported()) {
+    m_keyboardFocusMonitor = new Wayland::KeyboardFocusMonitor(this);
+    if (m_keyboardFocusMonitor->isAvailable()) {
+      connect(m_keyboardFocusMonitor, &Wayland::KeyboardFocusMonitor::focusLost, this,
+              [this]() { m_ctx.navigation->setWindowActivated(false); });
+    }
+  }
+#endif
 }
 
 void LauncherWindow::handleShowHUD(const QString &text, const std::optional<ImageURL> &icon) {
