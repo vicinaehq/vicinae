@@ -68,6 +68,8 @@ if (UNIX AND NOT APPLE)
 	add_subdirectory("./lib/xdgpp")
 endif()
 
+add_subdirectory("./lib/script-command")
+
 if (USE_SYSTEM_PROTOBUF)
 	set(USE_SYSTEM_ABSEIL ON)
 endif()
