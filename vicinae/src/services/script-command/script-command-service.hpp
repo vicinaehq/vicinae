@@ -29,6 +29,15 @@ public:
     return file;
   }
 
+  std::string packageName() const {
+    if (m_data.mode == script_command::OutputMode::Inline) {
+      // TODO: retrieve result from last execution or execute
+      return "Inline";
+    }
+
+    return m_data.packageName.value_or(m_path.parent_path().filename());
+  }
+
   ImageURL icon() const {
     if (!m_data.icon) return ImageURL::emoji("🤖");
     std::error_code ec;

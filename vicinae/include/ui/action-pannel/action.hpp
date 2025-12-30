@@ -31,9 +31,9 @@ class AbstractAction : public NonCopyable {
 public:
   enum class Style { Normal, Danger };
 
-  AbstractAction() {}
+  AbstractAction() = default;
   AbstractAction(const QString &title, const std::optional<ImageURL> &icon) : m_title(title), m_icon(icon) {}
-  ~AbstractAction() {}
+  virtual ~AbstractAction() = default;
 
   void setShortcut(const Keyboard::Shortcut &shortcut) { m_shortcuts = {shortcut}; }
   void addShortcut(const Keyboard::Shortcut &shortcut) { m_shortcuts.emplace_back(shortcut); }
