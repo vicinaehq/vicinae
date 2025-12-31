@@ -60,6 +60,8 @@ set(SRCS
 	src/cli/server.hpp
 	src/cli/server.cpp
 
+	src/script-output-tokenizer.cpp
+
 	src/ui/spinner/spinner.hpp
 
 	src/ui/dmenu-view/dmenu-view.hpp
