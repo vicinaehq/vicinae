@@ -15,6 +15,7 @@
 #include "ui/views/base-view.hpp"
 #include <qfuturewatcher.h>
 #include <qlocale.h>
+#include <qnamespace.h>
 #include <qobjectdefs.h>
 #include <variant>
 
@@ -102,10 +103,7 @@ public:
 
   bool inputFilter(QKeyEvent *event) override {
     if (event->modifiers().toInt() == 0) {
-      switch (event->key()) {
-      case Qt::Key_Space:
-        return tryAliasFastTrack();
-      }
+      if (event->key() == Qt::Key_Space) { return tryAliasFastTrack(); }
     }
     return TypedListView::inputFilter(event);
   }
@@ -130,6 +128,7 @@ public:
             [&](const config::ConfigValue &next, const config::ConfigValue &prev) {
               m_controller->setFileSearch(next.searchFilesInRoot);
             });
+    connect(m_manager, &RootItemManager::metadataChanged, this, [this]() { m_list->refreshAll(); });
   }
 
   void textChanged(const QString &text) override {

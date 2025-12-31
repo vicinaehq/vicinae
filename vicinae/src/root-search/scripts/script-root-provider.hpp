@@ -1,37 +1,25 @@
+#pragma once
 #include "actions/files/file-actions.hpp"
-#include "argument.hpp"
-#include "common.hpp"
-#include "navigation-controller.hpp"
-#include "script-command.hpp"
+#include "actions/root-search/root-search-actions.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/script-command/script-command-service.hpp"
-#include "ui/action-pannel/action.hpp"
-#include "ui/views/base-view.hpp"
-#include "utils.hpp"
 #include "services/app-service/app-service.hpp"
+#include "ui/action-pannel/action.hpp"
+#include "navigation-controller.hpp"
+#include "service-registry.hpp"
 #include "services/toast/toast-service.hpp"
-#include <algorithm>
-#include <cassert>
-#include <qnamespace.h>
-#include <qplaintextedit.h>
-#include <qprocess.h>
-#include <qstringliteral.h>
-#include <qstringview.h>
-#include <qtextbrowser.h>
-#include <qtextdocument.h>
-#include <qtextedit.h>
-#include <qtextformat.h>
-#include <ranges>
 #include "ui/script-output/script-executor-view.hpp"
+#include "ui/toast/toast.hpp"
+#include "utils.hpp"
 
 class ScriptExecutorAction : public AbstractAction {
 public:
-  ScriptExecutorAction(const std::filesystem::path &path,
+  ScriptExecutorAction(const ScriptCommandFile &file,
                        std::optional<script_command::OutputMode> mode = std::nullopt)
-      : m_path(path), m_outputModeOverride(mode) {}
+      : m_file(file), m_outputModeOverride(mode) {}
 
   void execute(ApplicationContext *ctx) override {
-    const auto result = ScriptCommandFile::fromFile(m_path);
+    const auto result = ScriptCommandFile::fromFile(m_file.path(), std::string{m_file.id()});
 
     if (!result) {
       ctx->services->toastService()->failure(
@@ -39,68 +27,105 @@ public:
       return;
     }
 
-    auto cmdline = result->data().exec;
+    bool needsConfirm = result->data().needsConfirmation;
 
-    assert(!cmdline.empty());
+    const auto outputMode = m_outputModeOverride.value_or(result->data().mode);
+    const auto runScript = [script = result.value(), ctx, outputMode]() {
+      auto cmdline = script.createCommandLine(ctx->navigation->unnamedCompletionValues());
 
-    if (QStandardPaths::findExecutable(cmdline.front().c_str()).isEmpty()) {
-      ctx->services->toastService()->failure(QString("Unknown executable %1").arg(cmdline.front()));
+      assert(!cmdline.empty());
+
+      if (QStandardPaths::findExecutable(cmdline.front()).isEmpty()) {
+        ctx->services->toastService()->failure(QString("Unknown executable %1").arg(cmdline.front()));
+        return;
+      }
+
+      using Mode = script_command::OutputMode;
+
+      switch (outputMode) {
+      case Mode::Full:
+        ctx->navigation->pushView(new ScriptExecutorView(cmdline));
+        ctx->navigation->setNavigationIcon(script.icon());
+        break;
+      case Mode::Silent:
+        executeOneLine(cmdline, [ctx](bool ok, const QString &line) {
+          if (line.isEmpty()) {
+            ctx->navigation->showHud(ok ? "Script executed" : "Script execution failed");
+          } else {
+            ctx->navigation->showHud(line);
+          }
+          ctx->navigation->clearSearchText();
+        });
+        break;
+      case Mode::Compact:
+        executeOneLine(cmdline, [ctx](bool ok, const QString &line) {
+          const auto toastService = ctx->services->toastService();
+          ToastStyle style = ok ? ToastStyle::Success : ToastStyle::Danger;
+
+          if (line.isEmpty()) {
+            toastService->setToast(ok ? "Script executed" : "Script execution failed", style);
+          } else {
+            toastService->setToast(line, style);
+          }
+
+          ctx->services->toastService()->setToast(line.isEmpty() ? "Script executed" : line);
+        });
+        break;
+      case Mode::Terminal:
+        ctx->services->appDb()->launchTerminalCommand(cmdline, {.hold = true});
+        ctx->navigation->closeWindow();
+        break;
+      case Mode::Inline:
+        executeOneLine(cmdline, [id = std::string(script.id()), ctx](bool ok, const QString &line) {
+          if (!ok) {
+            ctx->services->toastService()->failure("Script exited with error code");
+            return;
+          }
+
+          ScriptMetadataStore store;
+          store.saveRun(id, line.toStdString());
+          emit ctx->services->rootItemManager()->metadataChanged();
+        });
+        break;
+      }
+    };
+
+    if (needsConfirm) {
+      ctx->navigation->confirmAlert("Are you sure", "This script needs confirmation to execute", runScript);
       return;
     }
 
-    cmdline.emplace_back(m_path);
-
-    for (const auto &value : ctx->navigation->completionValues()) {
-      cmdline.emplace_back(value.second.toStdString());
-    }
-
-    using Mode = script_command::OutputMode;
-
-    switch (m_outputModeOverride.value_or(result->data().mode)) {
-    case Mode::Full:
-      ctx->navigation->pushView(new ScriptExecutorView(cmdline));
-      ctx->navigation->setNavigationIcon(result->icon());
-      break;
-    case Mode::Silent:
-      executeOneLine(Utils::toQStringVec(cmdline),
-                     [ctx](const QString &line) { ctx->navigation->showHud(line); });
-      break;
-    case Mode::Compact:
-      executeOneLine(Utils::toQStringVec(cmdline),
-                     [ctx](const QString &line) { ctx->services->toastService()->setToast(line); });
-      break;
-    case Mode::Terminal:
-      ctx->services->appDb()->launchTerminalCommand(Utils::toQStringVec(cmdline), {.hold = true});
-      ctx->navigation->closeWindow();
-      break;
-    case Mode::Inline:
-      break;
-    }
+    runScript();
   }
 
   QString title() const override { return "Run script"; }
 
-  void executeOneLine(const std::vector<QString> &cmdline,
-                      const std::function<void(QString line)> &callback) {
+private:
+  // FIXME: in the future we should make it so that script commands are considered as regular
+  // commands and have a properly defined lifetime using an execution context, so that if another command is
+  // activated we can automatically cancel any pending script execution. The current architecture does not
+  // allow this, so this will have to do for now.
+  static void executeOneLine(const std::vector<QString> &cmdline,
+                             const std::function<void(bool ok, QString line)> &callback) {
     auto process = new QProcess;
     process->setProgram(cmdline.at(0));
     process->setArguments(cmdline | std::views::drop(1) | std::ranges::to<QList>());
     process->start();
 
-    QObject::connect(process, &QProcess::readyReadStandardOutput, [process, callback]() {
-      QString line = process->readAllStandardOutput().split('\n').first();
-      callback(line);
-    });
-
+    // times out after 10s
     QTimer::singleShot(10000, process, [process]() {
       if (process->state() == QProcess::Running) { process->kill(); }
     });
 
-    QObject::connect(process, &QProcess::finished, [process]() { process->deleteLater(); });
+    QObject::connect(process, &QProcess::finished,
+                     [process, callback](int exit, QProcess::ExitStatus status) {
+                       QString line = process->readAllStandardOutput().split('\n').first();
+                       callback(status == QProcess::ExitStatus::NormalExit, line);
+                       process->deleteLater();
+                     });
   }
 
-private:
-  std::filesystem::path m_path;
+  ScriptCommandFile m_file;
   std::optional<script_command::OutputMode> m_outputModeOverride;
 };
 
@@ -147,8 +172,9 @@ class ScriptRootItem : public RootItem {
     auto panel = std::make_unique<ListActionPanelState>();
     auto section = panel->createSection();
     auto editor = ctx->services->appDb()->textEditor();
+    auto exec = new ScriptExecutorAction(m_file);
 
-    section->addAction(new ScriptExecutorAction(m_file.path()));
+    section->addAction(new DefaultActionWrapper(uniqueId(), exec));
 
     if (editor) { section->addAction(new OpenFileAction(m_file.path(), editor)); }
 
@@ -157,7 +183,7 @@ class ScriptRootItem : public RootItem {
 
   AccessoryList accessories() const override { return {{.text = "Script"}}; }
 
-  EntrypointId uniqueId() const override { return EntrypointId("scripts", m_file.path()); };
+  EntrypointId uniqueId() const override { return EntrypointId("scripts", std::string{m_file.id()}); };
 
   ImageURL iconUrl() const override { return m_file.icon(); }
 
@@ -173,7 +199,7 @@ private:
 class ScriptRootProvider : public RootProvider {
 public:
   std::vector<std::shared_ptr<RootItem>> loadItems() const override {
-    return m_service.scanAll() | std::views::transform([](auto item) -> std::shared_ptr<RootItem> {
+    return m_service.scripts() | std::views::transform([](auto item) -> std::shared_ptr<RootItem> {
              return std::make_shared<ScriptRootItem>(std::move(item));
            }) |
            std::ranges::to<std::vector>();
@@ -191,7 +217,9 @@ public:
 
   void preferencesChanged(const QJsonObject &preferences) override {}
 
-  ScriptRootProvider() = default;
+  ScriptRootProvider() {
+    connect(&m_service, &ScriptCommandService::scriptsChanged, this, [this]() { emit itemsChanged(); });
+  }
 
 private:
   ScriptCommandService m_service;

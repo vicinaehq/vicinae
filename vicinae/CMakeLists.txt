@@ -61,6 +61,7 @@ set(SRCS
 	src/cli/server.cpp
 
 	src/script-output-tokenizer.cpp
+	src/services/script-command/script-command-service.hpp
 
 	src/ui/spinner/spinner.hpp
 

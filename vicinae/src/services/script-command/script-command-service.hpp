@@ -2,16 +2,91 @@
 #include "script-command.hpp"
 #include "services/emoji-service/emoji.hpp"
 #include "ui/image/url.hpp"
+#include "utils.hpp"
+#include "vicinae.hpp"
 #include "xdgpp/env/env.hpp"
+#include <cstdint>
 #include <filesystem>
 #include <format>
 #include <fstream>
+#include <glaze/core/reflect.hpp>
+#include <glaze/json/read.hpp>
+#include <glaze/json/write.hpp>
+#include <qfuturewatcher.h>
 #include <qlogging.h>
+#include <QtConcurrent/QtConcurrent>
+#include <qobject.h>
+#include <qtmetamacros.h>
 #include <ranges>
+#include <stack>
+
+class ScriptMetadataStore {
+  struct RunMetadata {
+    std::int64_t lastRunAt;
+    std::string output;
+  };
+
+  struct Data {
+    std::unordered_map<std::string, RunMetadata> inlineRuns;
+  };
+
+public:
+  ScriptMetadataStore(const std::filesystem::path &path = Omnicast::dataDir() / "script-metadata.json")
+      : m_path(path) {
+    std::error_code ec;
+
+    if (!std::filesystem::is_regular_file(path, ec)) { syncWithDisk(); }
+
+    auto result = loadDataFromDisk();
+
+    if (!result) {
+      qWarning() << "Failed to load script metadata from" << m_path << result.error();
+      return;
+    }
+
+    m_data = *result;
+  }
+
+  void saveRun(std::string_view scriptId, std::string_view line) {
+    m_data.inlineRuns[std::string{scriptId}] =
+        RunMetadata{.lastRunAt = QDateTime::currentSecsSinceEpoch(), .output = std::string{line}};
+
+    syncWithDisk();
+  }
+
+  std::optional<RunMetadata> lastRun(const std::string &id) const {
+    if (const auto it = m_data.inlineRuns.find(id); it != m_data.inlineRuns.end()) { return it->second; }
+    return {};
+  }
+
+private:
+  std::optional<std::string> syncWithDisk() {
+    std::string buf;
+
+    if (const auto error = glz::write_file_json(m_data, m_path.c_str(), buf)) {
+      return glz::format_error(error);
+    }
+
+    return {};
+  }
+
+  std::expected<Data, std::string> loadDataFromDisk() {
+    Data data;
+    std::string buf;
+    if (const auto error = glz::read_file_json(data, m_path.c_str(), buf)) {
+      return std::unexpected(glz::format_error(error));
+    }
+    return data;
+  }
+
+  Data m_data;
+  std::filesystem::path m_path;
+};
 
 class ScriptCommandFile {
 public:
-  static std::expected<ScriptCommandFile, std::string> fromFile(const std::filesystem::path &path) {
+  static std::expected<ScriptCommandFile, std::string> fromFile(const std::filesystem::path &path,
+                                                                const std::string &id) {
     if (!std::filesystem::is_regular_file(path)) {
       return std::unexpected(std::format("{} is not a valid file", path.c_str()));
     }
@@ -25,17 +100,44 @@ public:
 
     file.m_data = std::move(parsed.value());
     file.m_path = path;
+    file.m_id = id;
 
     return file;
   }
 
   std::string packageName() const {
     if (m_data.mode == script_command::OutputMode::Inline) {
-      // TODO: retrieve result from last execution or execute
-      return "Inline";
+      // FIXME: we probably shouldn't do that here
+      const ScriptMetadataStore store;
+
+      if (const auto run = store.lastRun(m_id)) { return run->output; }
+
+      return "No data";
     }
 
     return m_data.packageName.value_or(m_path.parent_path().filename());
+  }
+
+  std::vector<QString> createCommandLine(std::span<const QString> args = {}) const {
+    std::vector<QString> cmdline;
+
+    cmdline.reserve(m_data.exec.size() + m_data.arguments.size() + 1);
+
+    for (const std::string &s : m_data.exec) {
+      cmdline.emplace_back(s.c_str());
+    }
+
+    cmdline.emplace_back(m_path.c_str());
+
+    for (const auto &[arg, value] : std::views::zip(m_data.arguments, args)) {
+      if (arg.percentEncoded) {
+        cmdline.emplace_back(QUrl::toPercentEncoding(value));
+      } else {
+        cmdline.emplace_back(value);
+      }
+    }
+
+    return cmdline;
   }
 
   ImageURL icon() const {
@@ -61,23 +163,52 @@ public:
 
   const script_command::ScriptCommand &data() const { return m_data; }
   const std::filesystem::path &path() const { return m_path; }
+  std::string_view id() const { return m_id; }
 
 private:
   std::filesystem::path m_path;
+  std::string m_id;
   script_command::ScriptCommand m_data;
 };
 
-class ScriptCommandService {
-public:
-  std::vector<ScriptCommandFile> scanAll() const {
-    auto scriptDirs =
-        xdgpp::dataDirs() | std::views::transform([](auto &&p) { return p / "vicinae" / "scripts"; });
-    std::error_code ec;
-    std::vector<ScriptCommandFile> scripts;
+struct ScriptScanner {
+  struct ScannedDirectory {
+    std::string id;
+    std::filesystem::path path;
+    std::uint8_t depth = 0;
+  };
 
-    for (const std::filesystem::path &script : scriptDirs) {
-      for (const auto &ent : std::filesystem::recursive_directory_iterator(script, ec)) {
-        auto script = ScriptCommandFile::fromFile(ent.path());
+  static constexpr const std::uint8_t MAX_DEPTH = 5;
+
+  static std::vector<ScriptCommandFile> scan(const std::vector<std::filesystem::path> &dirs) {
+    std::vector<ScriptCommandFile> scripts;
+    std::error_code ec;
+    std::stack<ScannedDirectory> dirStack;
+    std::unordered_set<std::string> idsSeen;
+
+    for (const auto &dir : dirs) {
+      dirStack.emplace(ScannedDirectory("", dir));
+    }
+
+    while (!dirStack.empty()) {
+      const ScannedDirectory dir = std::move(dirStack.top());
+      dirStack.pop();
+
+      for (const auto &ent : std::filesystem::directory_iterator(dir.path, ec)) {
+        std::string id = dir.id;
+
+        if (!id.empty()) id += '.';
+
+        id += getLastPathComponent(ent.path());
+
+        if (ent.is_directory() && dir.depth + 1 < MAX_DEPTH) {
+          dirStack.emplace(ScannedDirectory(id, ent.path(), dir.depth + 1));
+          continue;
+        }
+
+        if (idsSeen.contains(id)) continue;
+
+        auto script = ScriptCommandFile::fromFile(ent.path(), id);
 
         if (!script) {
           qWarning() << "Failed to parse script at" << ent.path().c_str() << script.error().c_str();
@@ -85,13 +216,55 @@ public:
         }
 
         scripts.emplace_back(script.value());
+        idsSeen.insert(id);
       }
     }
 
-    qDebug() << "got XXX scripts" << scripts.size();
-
     return scripts;
+  }
+};
+
+class ScriptCommandService : public QObject {
+  Q_OBJECT
+
+signals:
+  void scriptsChanged() const;
+
+public:
+  using Watcher = QFutureWatcher<std::vector<ScriptCommandFile>>;
+
+  ScriptCommandService() {
+    triggerScan();
+    connect(&m_scanWatcher, &Watcher::finished, this, [this]() {
+      m_scripts = std::move(m_scanWatcher.future().takeResult());
+      emit scriptsChanged();
+    });
+  }
+
+  void setCustomScriptPaths(const std::vector<std::filesystem::path> &paths) {
+    m_customScriptPaths = paths;
+    triggerScan();
+  }
+
+  std::vector<std::filesystem::path> defaultScriptDirectories() const {
+    return xdgpp::dataDirs() | std::views::transform([](auto &&p) { return p / "vicinae" / "scripts"; }) |
+           std::ranges::to<std::vector>();
+  }
+
+  std::vector<std::filesystem::path> scriptDirectories() const {
+    return std::views::concat(m_customScriptPaths, defaultScriptDirectories()) |
+           std::ranges::to<std::vector>();
+  }
+
+  std::vector<ScriptCommandFile> scripts() const { return m_scripts; }
+
+  void triggerScan() {
+    m_scanWatcher.setFuture(
+        QtConcurrent::run([dirs = scriptDirectories()]() { return ScriptScanner::scan(dirs); }));
   }
 
 private:
+  std::vector<ScriptCommandFile> m_scripts;
+  std::vector<std::filesystem::path> m_customScriptPaths;
+  Watcher m_scanWatcher;
 };

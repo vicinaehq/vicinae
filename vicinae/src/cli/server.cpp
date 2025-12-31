@@ -336,10 +336,6 @@ void CliServerCommand::run(CLI::App *app) {
     qInfo() << "Vicinae server successfully started. Call \"vicinae toggle\" to toggle the window";
   }
 
-  ScriptCommandService scommand;
-
-  scommand.scanAll();
-
   qApp->exec();
   // make sure child processes are terminated
   ctx.services->clipman()->clipboardServer()->stop();

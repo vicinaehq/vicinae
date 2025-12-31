@@ -201,6 +201,8 @@ public:
    */
   bool refresh(VListModel::Index idx) const;
 
+  void refreshAll();
+
   /**
    * Get the widget at the given index, if any.
    * This will only return a widget if the item at this index is currently in the viewport.

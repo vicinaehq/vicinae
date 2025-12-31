@@ -10,11 +10,13 @@
 #include "common.hpp"
 #include "utils.hpp"
 #include <memory>
+#include <qnamespace.h>
 #include <qtimer.h>
 
 class ScriptExecutorView : public BaseView {
 public:
-  ScriptExecutorView(std::vector<std::string> cmdline) : m_cmdline(cmdline) {
+  ScriptExecutorView(const std::vector<QString> &cmdline) : m_cmdline(cmdline) {
+    m_renderer->setFocusPolicy(Qt::StrongFocus);
     VStack().add(m_renderer, 1).spacing(0).imbue(this);
   }
 
@@ -51,15 +53,14 @@ protected:
 
   void startProcess() {
     const auto toastService = context()->services->toastService();
-    auto ss = Utils::toQStringVec(m_cmdline);
     auto env = QProcessEnvironment::systemEnvironment();
 
-    assert(ss.size() != 0);
+    assert(m_cmdline.size() != 0);
     m_renderer->clear();
     m_exited = false;
     m_startedAt.reset();
-    m_process.setProgram(ss.at(0));
-    m_process.setArguments(ss | std::views::drop(1) | std::ranges::to<QList>());
+    m_process.setProgram(m_cmdline.at(0));
+    m_process.setArguments(m_cmdline | std::views::drop(1) | std::ranges::to<QList>());
     env.insert("FORCE_COLOR", "1");
     m_process.setEnvironment(env.toStringList());
     m_process.start();
@@ -78,6 +79,8 @@ protected:
   void initialize() override {
     const auto toastService = context()->services->toastService();
 
+    QTimer::singleShot(0, [this]() { m_renderer->setFocus(); });
+
     connect(&m_process, &QProcess::readyReadStandardOutput, this,
             [this]() { m_renderer->append(m_process.readAllStandardOutput()); });
 
@@ -89,14 +92,16 @@ protected:
     connect(&m_toastUpdater, &QTimer::timeout, this, [this, toastService]() {
       if (!m_startedAt || m_exited) return;
       const auto secondsElapsed = m_startedAt->secsTo(QDateTime::currentDateTime());
+      if (secondsElapsed < 1) return;
       toastService->dynamic(QString("Running... (%1s ago)").arg(secondsElapsed));
     });
 
     connect(&m_process, &QProcess::finished, this, [this, toastService](int code) {
-      const auto secondsElapsed = m_startedAt->secsTo(QDateTime::currentDateTime());
+      const auto msElapsed = m_startedAt->msecsTo(QDateTime::currentDateTime());
       m_exited = true;
       m_toastUpdater.stop();
-      setNavigationTitle(QString("Done in %1s (exit=%2)").arg(secondsElapsed).arg(code));
+      toastService->clear();
+      setNavigationTitle(QString("Done in %1s (exit=%2)").arg(msElapsed / 1e3).arg(code));
       generateActions();
     });
 
@@ -106,7 +111,7 @@ protected:
   std::optional<QDateTime> m_startedAt;
   ScriptOutputRenderer *m_renderer = new ScriptOutputRenderer;
   QTimer m_toastUpdater;
-  std::vector<std::string> m_cmdline;
+  std::vector<QString> m_cmdline;
   QProcess m_process;
   bool m_exited = false;
 };

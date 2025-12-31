@@ -38,7 +38,7 @@ AccessoryList AppRootItem::accessories() const {
 }
 
 EntrypointId AppRootItem::uniqueId() const {
-  return EntrypointId{"applications", m_app->id().remove(".desktop").toStdString()};
+  return EntrypointId("applications", m_app->id().remove(".desktop").toStdString());
 }
 
 ImageURL AppRootItem::iconUrl() const { return m_app->iconUrl(); }
@@ -94,7 +94,7 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
   auto actions = m_app->actions();
 
   for (int i = 0; i != appActions.size(); ++i) {
-    auto action = actions[i];
+    const auto &action = actions[i];
     auto openAction = new OpenAppAction(action, action->displayName(), {});
 
     if (i < 9) { openAction->setShortcut(QString("ctrl+shift+%1").arg(i + 1)); }

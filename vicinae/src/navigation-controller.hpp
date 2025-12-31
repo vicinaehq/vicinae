@@ -306,6 +306,7 @@ public:
   void destroyCurrentCompletion();
 
   ArgumentValues completionValues() const;
+  std::vector<QString> unnamedCompletionValues() const;
   void setCompletionValues(const ArgumentValues &values);
 
   void selectSearchText() const;
