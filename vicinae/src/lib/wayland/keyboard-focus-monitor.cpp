@@ -1,28 +1,19 @@
 #include "keyboard-focus-monitor.hpp"
 #include <QGuiApplication>
-#include <qlogging.h>
 #include <unistd.h>
 
 namespace Wayland {
 
-KeyboardFocusMonitor::KeyboardFocusMonitor(QObject *parent) : QObject(parent) {
+KeyboardFocusMonitor::KeyboardFocusMonitor(QObject *parent) 
+    : QObject(parent) {
   auto *waylandApp = qApp->nativeInterface<QNativeInterface::QWaylandApplication>();
-  if (!waylandApp) {
-    qDebug() << "KeyboardFocusMonitor: not running on wayland";
-    return;
-  }
+  if (!waylandApp) return;
 
   wl_seat *seat = waylandApp->seat();
-  if (!seat) {
-    qWarning() << "KeyboardFocusMonitor: no seat available";
-    return;
-  }
+  if (!seat) return;
 
   m_keyboard = wl_seat_get_keyboard(seat);
-  if (!m_keyboard) {
-    qWarning() << "KeyboardFocusMonitor: no keyboard available";
-    return;
-  }
+  if (!m_keyboard) return;
 
   wl_keyboard_add_listener(m_keyboard, &s_keyboardListener, this);
 }
@@ -33,15 +24,31 @@ KeyboardFocusMonitor::~KeyboardFocusMonitor() {
 
 bool KeyboardFocusMonitor::isAvailable() const { return m_keyboard != nullptr; }
 
+void KeyboardFocusMonitor::setEnabled(bool enabled) { 
+  m_enabled = enabled;
+  if (enabled) {
+    m_hasFocus = false;
+  }
+}
+
 void KeyboardFocusMonitor::handleKeyboardEnter(void *data, wl_keyboard *keyboard, uint32_t serial,
                                                wl_surface *surface, wl_array *keys) {
   auto *self = static_cast<KeyboardFocusMonitor *>(data);
-  self->m_hasFocus = true;
+  
+  if (!self->m_enabled) return;
+  
+  if (!self->m_hasFocus) {
+    self->m_hasFocus = true;
+    emit self->focusGained();
+  }
 }
 
 void KeyboardFocusMonitor::handleKeyboardLeave(void *data, wl_keyboard *keyboard, uint32_t serial,
                                                wl_surface *surface) {
   auto *self = static_cast<KeyboardFocusMonitor *>(data);
+  
+  if (!self->m_enabled) return;
+  
   if (self->m_hasFocus) {
     self->m_hasFocus = false;
     emit self->focusLost();

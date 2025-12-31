@@ -47,6 +47,13 @@ void LauncherWindow::showEvent(QShowEvent *event) {
   tryCenter();
   applyWindowConfig(cfg.launcherWindow);
   tryCompaction();
+
+#ifdef WAYLAND_LAYER_SHELL
+  if (m_keyboardFocusMonitor && m_keyboardFocusMonitor->isAvailable()) {
+    m_keyboardFocusMonitor->setEnabled(true);
+  }
+#endif
+
   QWidget::showEvent(event);
   activateWindow(); // gnome needs this
 }
@@ -199,6 +206,9 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
   if (Environment::isLayerShellSupported()) {
     m_keyboardFocusMonitor = new Wayland::KeyboardFocusMonitor(this);
     if (m_keyboardFocusMonitor->isAvailable()) {
+      m_ctx.navigation->setCloseOnFocusLoss(true);
+      connect(m_keyboardFocusMonitor, &Wayland::KeyboardFocusMonitor::focusGained, this,
+              [this]() { m_ctx.navigation->setWindowActivated(true); });
       connect(m_keyboardFocusMonitor, &Wayland::KeyboardFocusMonitor::focusLost, this,
               [this]() { m_ctx.navigation->setWindowActivated(false); });
     }
@@ -215,6 +225,11 @@ void LauncherWindow::handleShowHUD(const QString &text, const std::optional<Imag
 }
 
 void LauncherWindow::hideEvent(QHideEvent *event) {
+#ifdef WAYLAND_LAYER_SHELL
+  if (m_keyboardFocusMonitor) {
+    m_keyboardFocusMonitor->setEnabled(false);
+  }
+#endif
   m_ctx.navigation->closeWindow();
   QWidget::hideEvent(event);
 }

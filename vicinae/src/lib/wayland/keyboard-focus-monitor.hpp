@@ -12,8 +12,10 @@ public:
   ~KeyboardFocusMonitor();
 
   bool isAvailable() const;
+  void setEnabled(bool enabled);
 
 signals:
+  void focusGained();
   void focusLost();
 
 private:
@@ -39,6 +41,7 @@ private:
 
   wl_keyboard *m_keyboard = nullptr;
   bool m_hasFocus = false;
+  bool m_enabled = false;
 };
 
 } // namespace Wayland

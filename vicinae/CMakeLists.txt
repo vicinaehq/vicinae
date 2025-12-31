@@ -3,7 +3,7 @@ set(CMAKE_AUTORCC ON)
 set(LIBS)
 set(TARGET vicinae)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets Sql Network Svg DBus Concurrent)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets Gui Sql Network Svg DBus Concurrent)
 find_package(OpenSSL REQUIRED)
 find_package(LibXml2 REQUIRED)
 
@@ -42,6 +42,8 @@ include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}  # For generated headers
     ${CMAKE_BINARY_DIR}/generated  # For version.h
 )
+
+
 
 set(PROTO_SRC_DIR ${CMAKE_SOURCE_DIR}/proto)
 
