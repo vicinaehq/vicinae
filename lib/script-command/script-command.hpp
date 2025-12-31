@@ -10,7 +10,7 @@
 
 namespace script_command {
 
-enum class OutputMode : std::uint8_t { Full, Compact, Inline, Silent };
+enum class OutputMode : std::uint8_t { Full, Compact, Inline, Silent, Terminal };
 enum class ArgumentType : std::uint8_t { Text, Password, Dropdown };
 
 struct ArgumentDataOption {

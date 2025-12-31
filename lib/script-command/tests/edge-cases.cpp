@@ -58,11 +58,11 @@ TEST_CASE("Parse script with mixed whitespace") {
   const char *source = "#!/bin/bash\n"
                        "#   @vicinae.schemaVersion   1  \n"
                        "#\t@vicinae.title\t  Whitespace Test  \n"
-                       "#  @vicinae.mode   inline  \n";
+                       "#  @vicinae.mode   silent  \n";
   auto result = script_command::ScriptCommand::parse(source);
   REQUIRE(result.has_value());
   REQUIRE(result->title == "Whitespace Test");
-  REQUIRE(result->mode == script_command::OutputMode::Inline);
+  REQUIRE(result->mode == script_command::OutputMode::Silent);
 }
 
 TEST_CASE("needsConfirmation with true value") {
@@ -115,6 +115,7 @@ TEST_CASE("All output modes") {
 # @vicinae.schemaVersion 1
 # @vicinae.title Test
 # @vicinae.mode inline
+# @vicinae.refreshTime 1d
 )";
     auto result = script_command::ScriptCommand::parse(source);
     REQUIRE(result.has_value());
@@ -130,6 +131,17 @@ TEST_CASE("All output modes") {
     auto result = script_command::ScriptCommand::parse(source);
     REQUIRE(result.has_value());
     REQUIRE(result->mode == script_command::OutputMode::Silent);
+  }
+
+  SECTION("terminal mode") {
+    const char *source = R"(#!/bin/bash
+# @vicinae.schemaVersion 1
+# @vicinae.title Test
+# @vicinae.mode terminal
+)";
+    auto result = script_command::ScriptCommand::parse(source);
+    REQUIRE(result.has_value());
+    REQUIRE(result->mode == script_command::OutputMode::Terminal);
   }
 }
 
@@ -285,4 +297,25 @@ TEST_CASE("Empty lines and whitespace-only lines are ignored") {
   auto result = script_command::ScriptCommand::parse(source);
   REQUIRE(result.has_value());
   REQUIRE(result->title == "Test");
+}
+
+TEST_CASE("needs refreshTime when output mode is set to inline") {
+  const char *source = R"(#!/bin/bash
+# @vicinae.schemaVersion 1
+# @vicinae.title Test
+# @vicinae.mode inline
+)";
+  auto result = script_command::ScriptCommand::parse(source);
+  REQUIRE(!result.has_value());
+}
+
+TEST_CASE("needs inline output mode when refreshTime is present") {
+  const char *source = R"(#!/bin/bash
+# @vicinae.schemaVersion 1
+# @vicinae.title Test
+# @vicinae.mode silent
+# @vicinae.refreshTime 1d
+)";
+  auto result = script_command::ScriptCommand::parse(source);
+  REQUIRE(!result.has_value());
 }

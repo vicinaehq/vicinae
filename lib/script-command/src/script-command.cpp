@@ -3,11 +3,9 @@
 #include <charconv>
 #include <format>
 #include <fstream>
-#include <glaze/core/reflect.hpp>
 #include <glaze/json/read.hpp>
 #include <iostream>
 #include <ranges>
-#include "glaze/json/read.hpp"
 
 namespace script_command {
 
@@ -236,6 +234,8 @@ std::expected<ScriptCommand, std::string> ScriptCommand::parse(std::string_view 
           data.mode = OutputMode::Silent;
         } else if (kv->v == "inline") {
           data.mode = OutputMode::Inline;
+        } else if (kv->v == "terminal") {
+          data.mode = OutputMode::Terminal;
         } else {
           return std::unexpected(std::format("Invalid mode: \"{}\"", kv->v));
         }
@@ -288,6 +288,12 @@ std::expected<ScriptCommand, std::string> ScriptCommand::parse(std::string_view 
   if (data.exec.empty()) { return std::unexpected("Shebang is required"); }
   if (data.schemaVersion != "1") { return std::unexpected("Invalid schema version, expected 1"); }
   if (data.title.empty()) { return std::unexpected("Title should not be empty"); }
+  if (data.refreshTime.has_value() && data.mode != OutputMode::Inline) {
+    return std::unexpected("refreshTime is only allowed when output mode is inline");
+  }
+  if (data.mode == OutputMode::Inline && !data.refreshTime.has_value()) {
+    return std::unexpected("refreshTime is required when output mode is inline");
+  }
 
   return data;
 }

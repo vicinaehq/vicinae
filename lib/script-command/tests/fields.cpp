@@ -5,6 +5,7 @@ TEST_CASE("Optional fields are parsed correctly") {
   const char *source = R"(#!/bin/bash
 # @vicinae.schemaVersion 1
 # @vicinae.title Test Command
+# @vicinae.mode inline
 # @vicinae.author John Doe
 # @vicinae.authorURL https://example.com
 # @vicinae.description This is a test script

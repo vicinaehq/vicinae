@@ -69,10 +69,16 @@ public:
       executeOneLine(Utils::toQStringVec(cmdline),
                      [ctx](const QString &line) { ctx->services->toastService()->setToast(line); });
       break;
+    case Mode::Terminal:
+      ctx->services->appDb()->launchTerminalCommand(Utils::toQStringVec(cmdline), {.hold = true});
+      ctx->navigation->closeWindow();
+      break;
     case Mode::Inline:
       break;
     }
   }
+
+  QString title() const override { return "Run script"; }
 
   void executeOneLine(const std::vector<QString> &cmdline,
                       const std::function<void(QString line)> &callback) {
