@@ -1,5 +1,6 @@
 #pragma once
 #include "script/script-command-file.hpp"
+#include "script/script-metadata-store.hpp"
 #include "script/script-scanner.hpp"
 #include "xdgpp/env/env.hpp"
 
@@ -51,6 +52,9 @@ public:
         QtConcurrent::run([dirs = scriptDirectories()]() { return ScriptScanner::scan(dirs); }));
   }
 
+  ScriptMetadataStore *metadata() { return &m_metadataStore; }
+  const ScriptMetadataStore *metadata() const { return &m_metadataStore; }
+
 private:
   void updateWatchedPaths() {
     for (const QString &dir : m_watcher->directories()) {
@@ -61,6 +65,7 @@ private:
     }
   }
 
+  ScriptMetadataStore m_metadataStore;
   QFileSystemWatcher *m_watcher = new QFileSystemWatcher(this);
   QTimer m_watcherDebounce;
   std::vector<std::shared_ptr<ScriptCommandFile>> m_scripts;

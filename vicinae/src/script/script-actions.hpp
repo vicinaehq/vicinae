@@ -53,8 +53,6 @@ public:
           } else {
             toastService->setToast(line, style);
           }
-
-          ctx->services->toastService()->setToast(line.isEmpty() ? "Script executed" : line);
         });
         break;
       case Mode::Terminal:
@@ -71,8 +69,7 @@ public:
             return;
           }
 
-          ScriptMetadataStore store;
-          store.saveRun(id, line.toStdString());
+          ctx->services->scriptDb()->metadata()->saveRun(id, line.toStdString());
           emit ctx->services->rootItemManager()->metadataChanged();
         });
         break;
@@ -112,7 +109,7 @@ private:
     QObject::connect(process, &QProcess::finished,
                      [process, callback](int exit, QProcess::ExitStatus status) {
                        QString line = process->readAllStandardOutput().split('\n').first();
-                       callback(status == QProcess::ExitStatus::NormalExit, line);
+                       callback(exit == 0, line);
                        process->deleteLater();
                      });
   }

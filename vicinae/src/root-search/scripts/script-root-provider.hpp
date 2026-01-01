@@ -119,10 +119,10 @@ public:
 
   void preferencesChanged(const QJsonObject &preferences) override {}
 
-  ScriptRootProvider() {
+  ScriptRootProvider(ScriptCommandService &service) : m_service(service) {
     connect(&m_service, &ScriptCommandService::scriptsChanged, this, [this]() { emit itemsChanged(); });
   }
 
 private:
-  ScriptCommandService m_service;
+  ScriptCommandService &m_service;
 };

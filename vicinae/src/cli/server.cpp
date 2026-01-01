@@ -175,6 +175,7 @@ void CliServerCommand::run(CLI::App *app) {
     registry->setExtensionRegistry(std::move(extensionRegistry));
     registry->setOAuthService(std::move(oauthService));
     registry->setPowerManager(std::make_unique<PowerManager>());
+    registry->setScriptDb(std::make_unique<ScriptCommandService>());
 
     auto root = registry->rootItemManager();
     auto builtinCommandDb = std::make_unique<CommandDatabase>();
@@ -226,7 +227,7 @@ void CliServerCommand::run(CLI::App *app) {
 
     root->loadProvider(std::make_unique<AppRootProvider>(*registry->appDb()));
     root->loadProvider(std::make_unique<ShortcutRootProvider>(*registry->shortcuts()));
-    root->loadProvider(std::make_unique<ScriptRootProvider>());
+    root->loadProvider(std::make_unique<ScriptRootProvider>(*registry->scriptDb()));
 
     // Force reload providers to make sure items that depend on them are shown
     root->updateIndex();

@@ -60,6 +60,8 @@ set(SRCS
 	src/cli/server.hpp
 	src/cli/server.cpp
 
+	src/script/script-command-file.cpp
+
 	src/script/script-output-tokenizer.cpp
 
 	src/services/script-command/script-command-service.hpp

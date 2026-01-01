@@ -1,5 +1,4 @@
 #pragma once
-
 #include <memory>
 #include <qobject.h>
 
@@ -23,6 +22,7 @@ class ExtensionRegistry;
 class OAuthService;
 class WindowManager;
 class PowerManager;
+class ScriptCommandService;
 
 namespace config {
 class Manager;
@@ -48,6 +48,7 @@ class ServiceRegistry : public QObject {
   std::unique_ptr<ExtensionRegistry> m_extensionRegistry;
   std::unique_ptr<OAuthService> m_oauthService;
   std::unique_ptr<PowerManager> m_powerManager;
+  std::unique_ptr<ScriptCommandService> m_scriptCommandService;
 
 public:
   static ServiceRegistry *instance();
@@ -70,11 +71,13 @@ public:
   ExtensionRegistry *extensionRegistry() const;
   OAuthService *oauthService() const;
   PowerManager *powerManager() const;
+  ScriptCommandService *scriptDb() const;
 
   void setPowerManager(std::unique_ptr<PowerManager> manager);
   void setWindowManager(std::unique_ptr<WindowManager> manager);
   void setRootItemManager(std::unique_ptr<RootItemManager> manager);
   void setRaycastStore(std::unique_ptr<RaycastStoreService> service);
+  void setScriptDb(std::unique_ptr<ScriptCommandService> service);
   void setVicinaeStore(std::unique_ptr<VicinaeStoreService> service);
   void setOAuthService(std::unique_ptr<OAuthService> service);
   void setConfig(std::unique_ptr<config::Manager> cfg);
