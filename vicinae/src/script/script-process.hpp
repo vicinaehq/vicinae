@@ -1,29 +1,18 @@
 #pragma once
+#include <ranges>
 #include "script-command-file.hpp"
 
 class ScriptProcess : public QProcess {
 public:
   ScriptProcess(const ScriptCommandFile &script, const std::vector<QString> &args) {
+    const auto cmdline = script.createCommandLine(args);
     QStringList argv;
 
-    if (!script.data().exec.empty()) {
-      for (const auto &[idx, exec] : script.data().exec | std::views::enumerate) {
-        if (idx == 0) {
-          setProgram(exec.c_str());
-        } else {
-          argv << exec.c_str();
-        }
-      }
-      argv << script.path().c_str();
-    } else {
-      setProgram(script.path().c_str());
-    }
-
-    for (const auto &[arg, value] : std::views::zip(script.data().arguments, args)) {
-      if (arg.percentEncoded) {
-        argv << QUrl::toPercentEncoding(value);
+    for (const auto &[idx, arg] : cmdline | std::views::enumerate) {
+      if (idx == 0) {
+        setProgram(arg);
       } else {
-        argv << value;
+        argv << arg;
       }
     }
 

@@ -2,6 +2,7 @@
 #include "actions/files/file-actions.hpp"
 #include "actions/root-search/root-search-actions.hpp"
 #include "script-command.hpp"
+#include "script/script-command-file.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/script-command/script-command-service.hpp"
 #include "services/app-service/app-service.hpp"
@@ -35,19 +36,17 @@ public:
 
     const auto outputMode = m_outputModeOverride.value_or(m_file->data().mode);
     const auto runScript = [script = m_file, ctx, outputMode]() {
-      auto process = new ScriptProcess(*script, ctx->navigation->unnamedCompletionValues());
+      const auto args = ctx->navigation->unnamedCompletionValues();
 
       using Mode = script_command::OutputMode;
 
-      std::vector<QString> cmdline;
-
       switch (outputMode) {
       case Mode::Full:
-        ctx->navigation->pushView(new ScriptExecutorView(process));
+        ctx->navigation->pushView(new ScriptExecutorView(new ScriptProcess(*script, args)));
         ctx->navigation->setNavigationIcon(script->icon());
         break;
       case Mode::Silent:
-        executeOneLine(process, [ctx](bool ok, const QString &line) {
+        executeOneLine(*script, args, [ctx](bool ok, const QString &line) {
           if (line.isEmpty()) {
             ctx->navigation->showHud(ok ? "Script executed" : "Script execution failed");
           } else {
@@ -57,7 +56,7 @@ public:
         });
         break;
       case Mode::Compact:
-        executeOneLine(process, [ctx](bool ok, const QString &line) {
+        executeOneLine(*script, args, [ctx](bool ok, const QString &line) {
           const auto toastService = ctx->services->toastService();
           ToastStyle style = ok ? ToastStyle::Success : ToastStyle::Danger;
 
@@ -71,11 +70,14 @@ public:
         });
         break;
       case Mode::Terminal:
-        ctx->services->appDb()->launchTerminalCommand(cmdline, {.hold = true});
-        ctx->navigation->closeWindow();
+        if (!ctx->services->appDb()->launchTerminalCommand(script->createCommandLine(args), {.hold = true})) {
+          ctx->services->toastService()->failure("Failed to execute script");
+        } else {
+          ctx->navigation->closeWindow();
+        }
         break;
       case Mode::Inline:
-        executeOneLine(process, [id = std::string(script->id()), ctx](bool ok, const QString &line) {
+        executeOneLine(*script, args, [id = std::string(script->id()), ctx](bool ok, const QString &line) {
           if (!ok) {
             ctx->services->toastService()->failure("Script exited with error code");
             return;
@@ -104,7 +106,10 @@ private:
   // commands and have a properly defined lifetime using an execution context, so that if another command is
   // activated we can automatically cancel any pending script execution. The current architecture does not
   // allow this, so this will have to do for now.
-  static void executeOneLine(QProcess *process, const std::function<void(bool ok, QString line)> &callback) {
+  static void executeOneLine(const ScriptCommandFile &script, const std::vector<QString> &args,
+                             const std::function<void(bool ok, QString line)> &callback) {
+    auto process = new ScriptProcess(script, args);
+
     process->start();
 
     // times out after 10s
@@ -112,6 +117,10 @@ private:
       if (process->state() == QProcess::Running) { process->kill(); }
     });
 
+    QObject::connect(process, &QProcess::errorOccurred, [process, callback]() {
+      callback(false, QString());
+      process->deleteLater();
+    });
     QObject::connect(process, &QProcess::finished,
                      [process, callback](int exit, QProcess::ExitStatus status) {
                        QString line = process->readAllStandardOutput().split('\n').first();

@@ -8,6 +8,7 @@
 #include "ui/script-output/script-output-renderer.hpp"
 #include "service-registry.hpp"
 #include "services/toast/toast-service.hpp"
+#include "script/script-process.hpp"
 #include "common.hpp"
 #include <memory>
 #include <qnamespace.h>

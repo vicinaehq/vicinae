@@ -48,6 +48,28 @@ public:
     return m_data.packageName.value_or(m_path.parent_path().filename());
   }
 
+  std::vector<QString> createCommandLine(std::span<const QString> args) const {
+    std::vector<QString> cmdline;
+
+    if (!data().exec.empty()) {
+      for (const auto &exec : data().exec) {
+        cmdline.emplace_back(exec.c_str());
+      }
+    }
+
+    cmdline.emplace_back(path().c_str());
+
+    for (const auto &[arg, value] : std::views::zip(data().arguments, args)) {
+      if (arg.percentEncoded) {
+        cmdline.emplace_back(QUrl::toPercentEncoding(value));
+      } else {
+        cmdline.emplace_back(value);
+      }
+    }
+
+    return cmdline;
+  }
+
   ImageURL icon() const {
     if (!m_data.icon) return ImageURL::emoji("🤖");
     std::error_code ec;
