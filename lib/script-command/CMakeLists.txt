@@ -31,6 +31,6 @@ target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_26)
 
 # tests
 add_compile_definitions(${TEST_TARGET} FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures")
-add_executable(${TEST_TARGET} tests/main.cpp tests/failure.cpp tests/edge-cases.cpp tests/time-parsing.cpp tests/argument-validation.cpp tests/shebang-parsing.cpp tests/fields.cpp tests/comment-styles.cpp)
+add_executable(${TEST_TARGET} tests/main.cpp tests/failure.cpp tests/edge-cases.cpp tests/time-parsing.cpp tests/argument-validation.cpp tests/fields.cpp tests/comment-styles.cpp)
 target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain ${PROJECT_NAME})
 target_include_directories(${TEST_TARGET} PRIVATE .)

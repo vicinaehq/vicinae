@@ -89,3 +89,37 @@ TEST_CASE("Keywords in raycast scope should fail") {
   REQUIRE(!result.has_value());
   REQUIRE(result.error().contains("keywords field is only supported in @vicinae scope"));
 }
+
+TEST_CASE("Exec field parses JSON array") {
+  const char *source = R"(#!/bin/bash
+# @vicinae.schemaVersion 1
+# @vicinae.title Test
+# @vicinae.exec ["/bin/bash", "-e"]
+)";
+  auto result = script_command::ScriptCommand::parse(source);
+  REQUIRE(result.has_value());
+  REQUIRE(result->exec.size() == 2);
+  REQUIRE(result->exec[0] == "/bin/bash");
+  REQUIRE(result->exec[1] == "-e");
+}
+
+TEST_CASE("Exec field is optional") {
+  const char *source = R"(#!/bin/bash
+# @vicinae.schemaVersion 1
+# @vicinae.title Test
+)";
+  auto result = script_command::ScriptCommand::parse(source);
+  REQUIRE(result.has_value());
+  REQUIRE(result->exec.empty());
+}
+
+TEST_CASE("Exec in raycast scope should fail") {
+  const char *source = R"(#!/bin/bash
+# @raycast.schemaVersion 1
+# @raycast.title Test
+# @raycast.exec ["/bin/bash"]
+)";
+  auto result = script_command::ScriptCommand::parse(source);
+  REQUIRE(!result.has_value());
+  REQUIRE(result.error().contains("exec field is only supported in @vicinae scope"));
+}

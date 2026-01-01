@@ -53,83 +53,92 @@ public:
     // clang-format off
     static const std::unordered_map<Language, LanguageInfo> info = {
       {Language::Bash, {
-        "#! /bin/bash\n"
+        "#!/bin/bash\n"
         "# @vicinae.schemaVersion 1\n"
         "# @vicinae.title {title}\n"
         "# @vicinae.mode {mode}\n"
+        "# @vicinae.exec [\"/bin/bash\"]\n"
         "\n"
         "echo \"Hello world!\"",
         "Bash"
       }},
       {Language::Python, {
-        "#! /usr/bin/env python3\n"
+        "#!/usr/bin/env python3\n"
         "# @vicinae.schemaVersion 1\n"
         "# @vicinae.title {title}\n"
         "# @vicinae.mode {mode}\n"
+        "# @vicinae.exec [\"/usr/bin/env\", \"python3\"]\n"
         "\n"
         "print(\"Hello world!\")",
         "Python"
       }},
       {Language::Javascript, {
-        "#! /usr/bin/env node\n"
+        "#!/usr/bin/env node\n"
         "// @vicinae.schemaVersion 1\n"
         "// @vicinae.title {title}\n"
         "// @vicinae.mode {mode}\n"
+        "// @vicinae.exec [\"/usr/bin/env\", \"node\"]\n"
         "\n"
         "console.log('Hello world!');",
         "JavaScript"
       }},
       {Language::TypeScript, {
-        "#! /usr/bin/env ts-node\n"
+        "#!/usr/bin/env ts-node\n"
         "// @vicinae.schemaVersion 1\n"
         "// @vicinae.title {title}\n"
         "// @vicinae.mode {mode}\n"
+        "// @vicinae.exec [\"/usr/bin/env\", \"ts-node\"]\n"
         "\n"
         "console.log('Hello world!');",
         "TypeScript"
       }},
       {Language::Ruby, {
-        "#! /usr/bin/env ruby\n"
+        "#!/usr/bin/env ruby\n"
         "# @vicinae.schemaVersion 1\n"
         "# @vicinae.title {title}\n"
         "# @vicinae.mode {mode}\n"
+        "# @vicinae.exec [\"/usr/bin/env\", \"ruby\"]\n"
         "\n"
         "puts 'Hello world!'",
         "Ruby"
       }},
       {Language::Perl, {
-        "#! /usr/bin/env perl\n"
+        "#!/usr/bin/env perl\n"
         "# @vicinae.schemaVersion 1\n"
         "# @vicinae.title {title}\n"
         "# @vicinae.mode {mode}\n"
+        "# @vicinae.exec [\"/usr/bin/env\", \"perl\"]\n"
         "\n"
         "print \"Hello world!\\n\";",
         "Perl"
       }},
       {Language::Php, {
-        "#! /usr/bin/env php\n"
+        "#!/usr/bin/env php\n"
         "<?php\n"
         "// @vicinae.schemaVersion 1\n"
         "// @vicinae.title {title}\n"
         "// @vicinae.mode {mode}\n"
+        "// @vicinae.exec [\"/usr/bin/env\", \"php\"]\n"
         "\n"
         "echo \"Hello world!\\n\";",
         "PHP"
       }},
       {Language::Lua, {
-        "#! /usr/bin/env lua\n"
+        "#!/usr/bin/env lua\n"
         "-- @vicinae.schemaVersion 1\n"
         "-- @vicinae.title {title}\n"
         "-- @vicinae.mode {mode}\n"
+        "-- @vicinae.exec [\"/usr/bin/env\", \"lua\"]\n"
         "\n"
         "print(\"Hello world!\")",
         "Lua"
       }},
       {Language::Golang, {
-        "#! /usr/bin/env go run\n"
+        "#!/usr/bin/env go\n"
         "// @vicinae.schemaVersion 1\n"
         "// @vicinae.title {title}\n"
         "// @vicinae.mode {mode}\n"
+        "// @vicinae.exec [\"/usr/bin/env\", \"go\", \"run\"]\n"
         "\n"
         "package main\n"
         "\n"
@@ -141,10 +150,11 @@ public:
         "Go"
       }},
       {Language::Swift, {
-        "#! /usr/bin/env swift\n"
+        "#!/usr/bin/env swift\n"
         "// @vicinae.schemaVersion 1\n"
         "// @vicinae.title {title}\n"
         "// @vicinae.mode {mode}\n"
+        "// @vicinae.exec [\"/usr/bin/env\", \"swift\"]\n"
         "\n"
         "print(\"Hello world!\")",
         "Swift"

@@ -2,20 +2,55 @@
 #include "builtin_icon.hpp"
 #include "layout.hpp"
 #include "navigation-controller.hpp"
+#include "services/script-command/script-command-service.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/views/base-view.hpp"
 #include "ui/script-output/script-output-renderer.hpp"
 #include "service-registry.hpp"
 #include "services/toast/toast-service.hpp"
 #include "common.hpp"
-#include "utils.hpp"
 #include <memory>
 #include <qnamespace.h>
+#include <qprocess.h>
 #include <qtimer.h>
+
+class ScriptProcess : public QProcess {
+public:
+  ScriptProcess(const ScriptCommandFile &script, const std::vector<QString> &args) {
+    QStringList argv;
+
+    if (!script.data().exec.empty()) {
+      for (const auto &[idx, exec] : script.data().exec | std::views::enumerate) {
+        if (idx == 0) {
+          setProgram(exec.c_str());
+        } else {
+          argv << exec.c_str();
+        }
+      }
+      argv << script.path().c_str();
+    } else {
+      setProgram(script.path().c_str());
+    }
+
+    for (const auto &[arg, value] : std::views::zip(script.data().arguments, args)) {
+      if (arg.percentEncoded) {
+        argv << QUrl::toPercentEncoding(value);
+      } else {
+        argv << value;
+      }
+    }
+
+    const auto cwd = script.data().currentDirectoryPath.value_or(script.path().parent_path());
+
+    setWorkingDirectory(cwd.c_str());
+    setArguments(argv);
+  }
+};
 
 class ScriptExecutorView : public BaseView {
 public:
-  ScriptExecutorView(const std::vector<QString> &cmdline) : m_cmdline(cmdline) {
+  ScriptExecutorView(ScriptProcess *process) : m_process(process) {
+    process->setParent(this);
     m_renderer->setFocusPolicy(Qt::StrongFocus);
     VStack().add(m_renderer, 1).spacing(0).imbue(this);
   }
@@ -28,8 +63,8 @@ protected:
   void abort() {
     const auto toastService = context()->services->toastService();
 
-    if (!m_exited && m_process.state() == QProcess::Running) {
-      m_process.kill();
+    if (!m_exited && m_process->state() == QProcess::Running) {
+      m_process->kill();
       context()->services->toastService()->failure("Script process killed");
     } else {
       toastService->clear();
@@ -55,15 +90,12 @@ protected:
     const auto toastService = context()->services->toastService();
     auto env = QProcessEnvironment::systemEnvironment();
 
-    assert(m_cmdline.size() != 0);
     m_renderer->clear();
     m_exited = false;
     m_startedAt.reset();
-    m_process.setProgram(m_cmdline.at(0));
-    m_process.setArguments(m_cmdline | std::views::drop(1) | std::ranges::to<QList>());
     env.insert("FORCE_COLOR", "1");
-    m_process.setEnvironment(env.toStringList());
-    m_process.start();
+    m_process->setEnvironment(env.toStringList());
+    m_process->start();
     toastService->dynamic("Running...");
     m_toastUpdater.setInterval(1000);
     m_toastUpdater.start();
@@ -81,10 +113,12 @@ protected:
 
     QTimer::singleShot(0, [this]() { m_renderer->setFocus(); });
 
-    connect(&m_process, &QProcess::readyReadStandardOutput, this,
-            [this]() { m_renderer->append(m_process.readAllStandardOutput()); });
+    connect(m_process, &QProcess::readyReadStandardOutput, this,
+            [this]() { m_renderer->append(m_process->readAllStandardOutput()); });
+    connect(m_process, &QProcess::readyReadStandardError, this,
+            [this]() { m_renderer->append(m_process->readAllStandardError()); });
 
-    connect(&m_process, &QProcess::started, this, [this, toastService]() {
+    connect(m_process, &QProcess::started, this, [this, toastService]() {
       m_startedAt = QDateTime::currentDateTime();
       generateActions();
     });
@@ -96,7 +130,7 @@ protected:
       toastService->dynamic(QString("Running... (%1s ago)").arg(secondsElapsed));
     });
 
-    connect(&m_process, &QProcess::finished, this, [this, toastService](int code) {
+    connect(m_process, &QProcess::finished, this, [this, toastService](int code) {
       const auto msElapsed = m_startedAt->msecsTo(QDateTime::currentDateTime());
       m_exited = true;
       m_toastUpdater.stop();
@@ -108,10 +142,10 @@ protected:
     startProcess();
   }
 
+private:
   std::optional<QDateTime> m_startedAt;
   ScriptOutputRenderer *m_renderer = new ScriptOutputRenderer;
   QTimer m_toastUpdater;
-  std::vector<QString> m_cmdline;
-  QProcess m_process;
+  QProcess *m_process;
   bool m_exited = false;
 };

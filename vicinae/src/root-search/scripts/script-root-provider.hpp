@@ -13,6 +13,10 @@
 #include "ui/settings-item-info/settings-item-info.hpp"
 #include "ui/toast/toast.hpp"
 #include "utils.hpp"
+#include <QtCore>
+#include <qcontainerfwd.h>
+#include <qprocess.h>
+#include <ranges>
 
 class ScriptExecutorAction : public AbstractAction {
 public:
@@ -32,24 +36,19 @@ public:
 
     const auto outputMode = m_outputModeOverride.value_or(m_file->data().mode);
     const auto runScript = [script = m_file, ctx, outputMode]() {
-      auto cmdline = script->createCommandLine(ctx->navigation->unnamedCompletionValues());
-
-      assert(!cmdline.empty());
-
-      if (QStandardPaths::findExecutable(cmdline.front()).isEmpty()) {
-        ctx->services->toastService()->failure(QString("Unknown executable %1").arg(cmdline.front()));
-        return;
-      }
+      auto process = new ScriptProcess(*script, ctx->navigation->unnamedCompletionValues());
 
       using Mode = script_command::OutputMode;
 
+      std::vector<QString> cmdline;
+
       switch (outputMode) {
       case Mode::Full:
-        ctx->navigation->pushView(new ScriptExecutorView(cmdline));
+        ctx->navigation->pushView(new ScriptExecutorView(process));
         ctx->navigation->setNavigationIcon(script->icon());
         break;
       case Mode::Silent:
-        executeOneLine(cmdline, [ctx](bool ok, const QString &line) {
+        executeOneLine(process, [ctx](bool ok, const QString &line) {
           if (line.isEmpty()) {
             ctx->navigation->showHud(ok ? "Script executed" : "Script execution failed");
           } else {
@@ -59,7 +58,7 @@ public:
         });
         break;
       case Mode::Compact:
-        executeOneLine(cmdline, [ctx](bool ok, const QString &line) {
+        executeOneLine(process, [ctx](bool ok, const QString &line) {
           const auto toastService = ctx->services->toastService();
           ToastStyle style = ok ? ToastStyle::Success : ToastStyle::Danger;
 
@@ -77,7 +76,7 @@ public:
         ctx->navigation->closeWindow();
         break;
       case Mode::Inline:
-        executeOneLine(cmdline, [id = std::string(script->id()), ctx](bool ok, const QString &line) {
+        executeOneLine(process, [id = std::string(script->id()), ctx](bool ok, const QString &line) {
           if (!ok) {
             ctx->services->toastService()->failure("Script exited with error code");
             return;
@@ -106,11 +105,7 @@ private:
   // commands and have a properly defined lifetime using an execution context, so that if another command is
   // activated we can automatically cancel any pending script execution. The current architecture does not
   // allow this, so this will have to do for now.
-  static void executeOneLine(const std::vector<QString> &cmdline,
-                             const std::function<void(bool ok, QString line)> &callback) {
-    auto process = new QProcess;
-    process->setProgram(cmdline.at(0));
-    process->setArguments(cmdline | std::views::drop(1) | std::ranges::to<QList>());
+  static void executeOneLine(QProcess *process, const std::function<void(bool ok, QString line)> &callback) {
     process->start();
 
     // times out after 10s

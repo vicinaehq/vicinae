@@ -152,29 +152,6 @@ static void trim(std::string_view &s, char c = ' ') {
 }
 
 /**
- * Parse shebang line and extract exec command and arguments
- * Example: "#!/bin/bash -c hello" -> ["bin/bash", "-c", "hello"]
- */
-static std::optional<std::vector<std::string>> parseShebang(std::string_view line) {
-  std::string_view s = line;
-  trim(s);
-
-  if (!s.starts_with("#!")) { return {}; }
-
-  s.remove_prefix(2);
-  trim(s);
-
-  if (s.empty()) { return {}; }
-
-  auto tokens = s | std::views::split(' ') |
-                std::views::filter([](auto &&token) { return !std::ranges::empty(token); }) |
-                std::views::transform([](auto &&token) { return std::string(std::string_view(token)); }) |
-                std::ranges::to<std::vector>();
-
-  return tokens;
-}
-
-/**
  * Parse time string with unit suffix (s, m, h, d) to seconds
  * Examples: "5s" -> 5, "2m" -> 120, "1h" -> 3600, "1d" -> 86400
  */
@@ -221,21 +198,12 @@ std::expected<ScriptCommand, std::string> ScriptCommand::parse(std::string_view 
   static const auto inlineCommentMarkers = {"//", "--", "#", ";"};
   ScriptCommand data;
   std::optional<std::string> scope;
-  bool firstLine = true;
 
   data.arguments.reserve(3);
 
   for (const auto &line : std::views::split(str, std::string_view{"\n"})) {
     std::string_view s{line};
     trim(s);
-
-    if (firstLine) {
-      firstLine = false;
-      if (auto exec = parseShebang(s)) {
-        data.exec = std::move(exec.value());
-        continue;
-      }
-    }
 
     auto marker =
         std::ranges::find_if(inlineCommentMarkers, [&](const char *marker) { return s.starts_with(marker); });
@@ -259,9 +227,7 @@ std::expected<ScriptCommand, std::string> ScriptCommand::parse(std::string_view 
 
       if (kv->k == "mode") {
         auto mode = parseOutputMode(kv->v);
-        if (!mode) {
-          return std::unexpected(std::format("Invalid mode: \"{}\"", kv->v));
-        }
+        if (!mode) { return std::unexpected(std::format("Invalid mode: \"{}\"", kv->v)); }
         data.mode = *mode;
       }
 
@@ -297,6 +263,15 @@ std::expected<ScriptCommand, std::string> ScriptCommand::parse(std::string_view 
           return std::unexpected(std::format("Failed to parse keywords: {}", glz::format_error(error)));
         }
       }
+      if (kv->k == "exec") {
+        if (kv->scope != "@vicinae") {
+          return std::unexpected("exec field is only supported in @vicinae scope");
+        }
+        std::string buf{kv->v};
+        if (auto error = glz::read_json(data.exec, buf)) {
+          return std::unexpected(std::format("Failed to parse exec: {}", glz::format_error(error)));
+        }
+      }
 
       for (const char *argKey : {"argument1", "argument2", "argument3"}) {
         if (kv->k == argKey) {
@@ -321,39 +296,9 @@ std::expected<ScriptCommand, std::string> ScriptCommand::parse(std::string_view 
   return data;
 }
 
-static std::optional<std::vector<std::string>> inferExecFromExtension(const std::string &ext) {
-  // clang-format off
-  static const std::unordered_map<std::string, std::vector<std::string>> map = {
-      {".py", {"/usr/bin/env", "python"}},    
-	  {".rb", {"/usr/bin/env", "ruby"}},
-      {".go", {"/usr/bin/env", "go", "run"}}, 
-	  {".sh", {"/bin/sh"}},
-      {".js", {"/usr/bin/env", "node"}},      
-	  {".ts", {"/usr/bin/env", "node"}},
-	  {".swift", {"/usr/bin/env", "swift"}},
-	  {".lua", {"/usr/bin/env", "lua"}},
-	  {".php", {"/usr/bin/env", "php"}},
-  };
-  // clang-format on
-
-  if (auto it = map.find(ext); it != map.end()) return it->second;
-
-  return {};
-}
-
 std::expected<ScriptCommand, std::string> ScriptCommand::fromFile(const std::filesystem::path &path) {
   std::ifstream ifs(path);
-  auto parsed = ScriptCommand::parse(ifs);
-
-  if (!parsed) { return parsed; }
-
-  if (parsed->exec.empty()) {
-    if (auto infered = inferExecFromExtension(path.extension())) { parsed->exec = infered.value(); }
-  }
-
-  if (parsed->exec.empty()) { return std::unexpected("No program to execute this script"); }
-
-  return parsed;
+  return ScriptCommand::parse(ifs);
 }
 
 std::expected<ScriptCommand, std::string> ScriptCommand::parse(std::ifstream &ifs) {

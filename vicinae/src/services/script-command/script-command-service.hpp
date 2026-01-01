@@ -135,9 +135,11 @@ public:
 
     cmdline.reserve(m_data.exec.size() + m_data.arguments.size() + 1);
 
-    for (const std::string &s : m_data.exec) {
-      cmdline.emplace_back(s.c_str());
-    }
+    /*
+for (const std::string &s : m_data.exec) {
+  cmdline.emplace_back(s.c_str());
+}
+    */
 
     cmdline.emplace_back(m_path.c_str());
 
