@@ -121,10 +121,7 @@ static std::optional<KV> parseKV(std::string_view line) {
 
   std::string_view scope = line.substr(i, pos - i);
 
-  if (!std::ranges::contains(scopes, scope)) {
-    std::println(std::cerr, "Unknown scope in comment: {}", scope);
-    return {};
-  }
+  if (!std::ranges::contains(scopes, scope)) { return {}; }
 
   int keyStart = pos + 1;
   int keyEnd = keyStart;
@@ -288,9 +285,6 @@ std::expected<ScriptCommand, std::string> ScriptCommand::parse(std::string_view 
   if (data.title.empty()) { return std::unexpected("Title should not be empty"); }
   if (data.refreshTime.has_value() && data.mode != OutputMode::Inline) {
     return std::unexpected("refreshTime is only allowed when output mode is inline");
-  }
-  if (data.mode == OutputMode::Inline && !data.refreshTime.has_value()) {
-    return std::unexpected("refreshTime is required when output mode is inline");
   }
 
   return data;

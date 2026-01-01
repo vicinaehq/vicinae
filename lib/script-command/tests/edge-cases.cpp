@@ -300,14 +300,16 @@ TEST_CASE("Empty lines and whitespace-only lines are ignored") {
   REQUIRE(result->title == "Test");
 }
 
-TEST_CASE("needs refreshTime when output mode is set to inline") {
+TEST_CASE("inline output mode without refreshTime is valid") {
   const char *source = R"(#!/bin/bash
 # @vicinae.schemaVersion 1
 # @vicinae.title Test
 # @vicinae.mode inline
 )";
   auto result = script_command::ScriptCommand::parse(source);
-  REQUIRE(!result.has_value());
+  REQUIRE(result.has_value());
+  REQUIRE(result->mode == script_command::OutputMode::Inline);
+  REQUIRE(!result->refreshTime.has_value());
 }
 
 TEST_CASE("needs inline output mode when refreshTime is present") {
