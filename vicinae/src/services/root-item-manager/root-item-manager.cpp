@@ -660,7 +660,9 @@ void RootItemManager::mergeConfigWithMetadata(const config::ConfigValue &cfg) {
     }
 
     if (providerConfig) {
-      if (auto enabled = providerConfig->enabled) { meta.enabled = enabled.value(); }
+      if (auto enabled = providerConfig->enabled; enabled.has_value() && !enabled.value()) {
+        meta.enabled = false;
+      }
     }
   }
 
