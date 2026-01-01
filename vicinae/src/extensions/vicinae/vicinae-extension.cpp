@@ -84,9 +84,14 @@ class OpenDefaultVicinaeConfig : public BuiltinCallbackCommand {
     QFile file(path);
     auto configFile = QFile(":config.jsonc");
 
-    if (!file.open(QIODevice::WriteOnly)) { return toast->failure("Failed to open temporary file"); }
+    if (!file.open(QIODevice::WriteOnly)) {
+      toast->failure("Failed to open temporary file");
+      return;
+    }
+
     if (!configFile.open(QIODevice::ReadOnly)) {
-      return toast->failure("Failed to open default config file");
+      toast->failure("Failed to open default config file");
+      return;
     }
 
     file.write(configFile.readAll());
