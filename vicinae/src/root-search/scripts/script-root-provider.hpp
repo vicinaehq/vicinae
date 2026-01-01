@@ -16,23 +16,23 @@
 
 class ScriptExecutorAction : public AbstractAction {
 public:
-  ScriptExecutorAction(const ScriptCommandFile &file,
+  ScriptExecutorAction(const std::shared_ptr<ScriptCommandFile> &file,
                        std::optional<script_command::OutputMode> mode = std::nullopt)
       : m_file(file), m_outputModeOverride(mode) {}
 
   void execute(ApplicationContext *ctx) override {
-    const auto error = m_file.reload();
+    const auto error = m_file->reload();
 
     if (error) {
       ctx->services->toastService()->failure(QString("Failed to parse script: %1").arg(error.value()));
       return;
     }
 
-    bool needsConfirm = m_file.data().needsConfirmation;
+    bool needsConfirm = m_file->data().needsConfirmation;
 
-    const auto outputMode = m_outputModeOverride.value_or(m_file.data().mode);
+    const auto outputMode = m_outputModeOverride.value_or(m_file->data().mode);
     const auto runScript = [script = m_file, ctx, outputMode]() {
-      auto cmdline = script.createCommandLine(ctx->navigation->unnamedCompletionValues());
+      auto cmdline = script->createCommandLine(ctx->navigation->unnamedCompletionValues());
 
       assert(!cmdline.empty());
 
@@ -46,7 +46,7 @@ public:
       switch (outputMode) {
       case Mode::Full:
         ctx->navigation->pushView(new ScriptExecutorView(cmdline));
-        ctx->navigation->setNavigationIcon(script.icon());
+        ctx->navigation->setNavigationIcon(script->icon());
         break;
       case Mode::Silent:
         executeOneLine(cmdline, [ctx](bool ok, const QString &line) {
@@ -77,7 +77,7 @@ public:
         ctx->navigation->closeWindow();
         break;
       case Mode::Inline:
-        executeOneLine(cmdline, [id = std::string(script.id()), ctx](bool ok, const QString &line) {
+        executeOneLine(cmdline, [id = std::string(script->id()), ctx](bool ok, const QString &line) {
           if (!ok) {
             ctx->services->toastService()->failure("Script exited with error code");
             return;
@@ -126,22 +126,22 @@ private:
                      });
   }
 
-  ScriptCommandFile m_file;
+  std::shared_ptr<ScriptCommandFile> m_file;
   std::optional<script_command::OutputMode> m_outputModeOverride;
 };
 
 class ScriptRootItem : public RootItem {
-  QString displayName() const override { return m_file.data().title.c_str(); }
+  QString displayName() const override { return m_file->data().title.c_str(); }
 
-  QString subtitle() const override { return m_file.packageName().c_str(); }
+  QString subtitle() const override { return m_file->packageName().c_str(); }
 
   QString typeDisplayName() const override { return "Script"; }
 
   ArgumentList arguments() const override {
     ArgumentList args;
-    args.reserve(m_file.data().arguments.size());
+    args.reserve(m_file->data().arguments.size());
 
-    for (const auto &[idx, arg] : m_file.data().arguments | std::views::enumerate) {
+    for (const auto &[idx, arg] : m_file->data().arguments | std::views::enumerate) {
       CommandArgument cmdArg;
 
       cmdArg.required = !arg.optional;
@@ -174,15 +174,15 @@ class ScriptRootItem : public RootItem {
 
     args.reserve(6);
     args.emplace_back(
-        std::pair{"Mode", qStringFromStdView(script_command::outputModeToString(m_file.data().mode))});
-    args.emplace_back(std::pair{"Path", compressPath(m_file.path()).c_str()});
+        std::pair{"Mode", qStringFromStdView(script_command::outputModeToString(m_file->data().mode))});
+    args.emplace_back(std::pair{"Path", compressPath(m_file->path()).c_str()});
 
-    if (const auto author = m_file.data().author) {
+    if (const auto author = m_file->data().author) {
       args.emplace_back(std::pair{"Author", author.value().c_str()});
     }
 
     return new SettingsItemInfo(
-        args, m_file.data().description.transform([](auto &&s) { return QString::fromStdString(s); }));
+        args, m_file->data().description.transform([](auto &&s) { return QString::fromStdString(s); }));
   }
 
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx,
@@ -194,24 +194,24 @@ class ScriptRootItem : public RootItem {
 
     section->addAction(new DefaultActionWrapper(uniqueId(), exec));
 
-    if (editor) { section->addAction(new OpenFileAction(m_file.path(), editor)); }
+    if (editor) { section->addAction(new OpenFileAction(m_file->path(), editor)); }
 
     return panel;
   }
 
   AccessoryList accessories() const override { return {{.text = "Script"}}; }
 
-  EntrypointId uniqueId() const override { return EntrypointId("scripts", std::string{m_file.id()}); };
+  EntrypointId uniqueId() const override { return EntrypointId("scripts", std::string{m_file->id()}); };
 
-  ImageURL iconUrl() const override { return m_file.icon(); }
+  ImageURL iconUrl() const override { return m_file->icon(); }
 
-  std::vector<QString> keywords() const override { return Utils::toQStringVec(m_file.data().keywords); }
+  std::vector<QString> keywords() const override { return Utils::toQStringVec(m_file->data().keywords); }
 
 public:
-  ScriptRootItem(ScriptCommandFile &&file) : m_file(std::move(file)) {}
+  ScriptRootItem(const std::shared_ptr<ScriptCommandFile> &file) : m_file(file) {}
 
 private:
-  ScriptCommandFile m_file;
+  std::shared_ptr<ScriptCommandFile> m_file;
 };
 
 class ScriptRootProvider : public RootProvider {

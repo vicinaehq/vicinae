@@ -9,7 +9,6 @@
 #include <cstdint>
 #include <filesystem>
 #include <format>
-#include <fstream>
 #include <glaze/core/reflect.hpp>
 #include <glaze/json/read.hpp>
 #include <glaze/json/write.hpp>
@@ -195,8 +194,9 @@ struct ScriptScanner {
 
   static constexpr const std::uint8_t MAX_DEPTH = 5;
 
-  static std::vector<ScriptCommandFile> scan(const std::vector<std::filesystem::path> &dirs) {
-    std::vector<ScriptCommandFile> scripts;
+  static std::vector<std::shared_ptr<ScriptCommandFile>>
+  scan(const std::vector<std::filesystem::path> &dirs) {
+    std::vector<std::shared_ptr<ScriptCommandFile>> scripts;
     std::error_code ec;
     std::stack<ScannedDirectory> dirStack;
     std::unordered_set<std::string> idsSeen;
@@ -246,7 +246,7 @@ struct ScriptScanner {
           continue;
         }
 
-        scripts.emplace_back(script.value());
+        scripts.emplace_back(std::make_shared<ScriptCommandFile>(script.value()));
         idsSeen.insert(id);
       }
     }
@@ -262,7 +262,7 @@ signals:
   void scriptsChanged() const;
 
 public:
-  using Watcher = QFutureWatcher<std::vector<ScriptCommandFile>>;
+  using Watcher = QFutureWatcher<std::vector<std::shared_ptr<ScriptCommandFile>>>;
 
   ScriptCommandService() {
     triggerScan();
@@ -287,7 +287,7 @@ public:
            std::ranges::to<std::vector>();
   }
 
-  std::vector<ScriptCommandFile> scripts() const { return m_scripts; }
+  const std::vector<std::shared_ptr<ScriptCommandFile>> &scripts() const { return m_scripts; }
 
   void triggerScan() {
     m_scanWatcher.setFuture(
@@ -295,7 +295,7 @@ public:
   }
 
 private:
-  std::vector<ScriptCommandFile> m_scripts;
+  std::vector<std::shared_ptr<ScriptCommandFile>> m_scripts;
   std::vector<std::filesystem::path> m_customScriptPaths;
   Watcher m_scanWatcher;
 };
