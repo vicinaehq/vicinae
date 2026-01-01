@@ -1,4 +1,5 @@
 #pragma once
+#include "builtin_icon.hpp"
 #include "script-command.hpp"
 #include "services/emoji-service/emoji.hpp"
 #include "ui/image/url.hpp"
@@ -15,6 +16,8 @@
 #include <qfuturewatcher.h>
 #include <qlogging.h>
 #include <QtConcurrent/QtConcurrent>
+#include <qmimedata.h>
+#include <qmimedatabase.h>
 #include <qobject.h>
 #include <qtmetamacros.h>
 #include <ranges>
@@ -91,8 +94,7 @@ public:
       return std::unexpected(std::format("{} is not a valid file", path.c_str()));
     }
 
-    std::ifstream ifs(path);
-    auto parsed = script_command::ScriptCommand::parse(ifs);
+    auto parsed = script_command::ScriptCommand::fromFile(path);
 
     if (!parsed) return std::unexpected(parsed.error());
 
@@ -103,6 +105,15 @@ public:
     file.m_id = id;
 
     return file;
+  }
+
+  std::optional<std::string> reload() {
+    auto parsed = script_command::ScriptCommand::fromFile(m_path);
+
+    if (!parsed) return parsed.error();
+
+    m_data = parsed.value();
+    return std::nullopt;
   }
 
   std::string packageName() const {
@@ -158,7 +169,11 @@ public:
       return ImageURL::local(QString::fromStdString(relativePath));
     }
 
-    return {};
+    if (const auto url = QUrl(m_data.icon->c_str()); url.isValid()) {
+      if (url.scheme() == "https") { return ImageURL::http(url); }
+    }
+
+    return ImageURL(BuiltinIcon::Code).setFill(Omnicast::ACCENT_COLOR);
   }
 
   const script_command::ScriptCommand &data() const { return m_data; }
@@ -185,6 +200,9 @@ struct ScriptScanner {
     std::error_code ec;
     std::stack<ScannedDirectory> dirStack;
     std::unordered_set<std::string> idsSeen;
+    QMimeDatabase mimeDb;
+
+    static const auto forbiddenExtensions = {".md", ".svg", ".txt"};
 
     for (const auto &dir : dirs) {
       dirStack.emplace(ScannedDirectory("", dir));
@@ -195,11 +213,15 @@ struct ScriptScanner {
       dirStack.pop();
 
       for (const auto &ent : std::filesystem::directory_iterator(dir.path, ec)) {
+        std::string filename = getLastPathComponent(ent.path());
+
+        if (filename.starts_with('.') || filename.contains(".template")) continue;
+
         std::string id = dir.id;
 
         if (!id.empty()) id += '.';
 
-        id += getLastPathComponent(ent.path());
+        id += filename;
 
         if (ent.is_directory() && dir.depth + 1 < MAX_DEPTH) {
           dirStack.emplace(ScannedDirectory(id, ent.path(), dir.depth + 1));
@@ -208,10 +230,19 @@ struct ScriptScanner {
 
         if (idsSeen.contains(id)) continue;
 
+        const auto ext = ent.path().extension();
+
+        if (std::ranges::contains(forbiddenExtensions, ext)) { continue; }
+
+        QMimeType mime = mimeDb.mimeTypeForFile(ent.path().c_str());
+        bool plainText = mime.inherits("text/plain");
+
+        if (!plainText) continue;
+
         auto script = ScriptCommandFile::fromFile(ent.path(), id);
 
         if (!script) {
-          qWarning() << "Failed to parse script at" << ent.path().c_str() << script.error().c_str();
+          qDebug() << "Failed to parse script at" << ent.path().c_str() << script.error().c_str();
           continue;
         }
 

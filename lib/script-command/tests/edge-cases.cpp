@@ -230,7 +230,7 @@ TEST_CASE("Multiple arguments in order") {
   REQUIRE(result->arguments.at(2).type == script_command::ArgumentType::Dropdown);
 }
 
-TEST_CASE("Script stops parsing at first non-comment line") {
+TEST_CASE("Script keeps parsing after non comment") {
   const char *source = R"(#!/bin/bash
 # @vicinae.schemaVersion 1
 # @vicinae.title Test
@@ -239,8 +239,9 @@ echo "This is code"
 )";
   auto result = script_command::ScriptCommand::parse(source);
   REQUIRE(result.has_value());
-  // mode should not be parsed since it comes after non-comment line
-  // The mode field will have whatever default value it has
+  REQUIRE(result->schemaVersion == "1");
+  REQUIRE(result->title == "Test");
+  REQUIRE(result->mode == script_command::OutputMode::Silent);
 }
 
 TEST_CASE("Unknown scope should be ignored") {

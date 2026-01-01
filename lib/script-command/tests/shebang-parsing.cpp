@@ -50,13 +50,13 @@ TEST_CASE("Parse shebang with multiple arguments") {
   REQUIRE(result->exec[2] == "--no-warnings");
 }
 
-TEST_CASE("Script without shebang should fail") {
+TEST_CASE("Script without shebang should have empty command line") {
   const char *source = R"(# @vicinae.schemaVersion 1
 # @vicinae.title Test
 )";
   auto result = script_command::ScriptCommand::parse(source);
-  REQUIRE(!result.has_value());
-  REQUIRE(result.error().contains("Shebang is required"));
+  REQUIRE(result.has_value());
+  REQUIRE(result->exec.empty());
 }
 
 TEST_CASE("Shebang with extra whitespace") {
@@ -72,12 +72,12 @@ TEST_CASE("Shebang with extra whitespace") {
   REQUIRE(result->exec[2] == "hello");
 }
 
-TEST_CASE("Empty shebang (just #!) should fail") {
+TEST_CASE("Empty shebang (just #!) should be zero arguments") {
   const char *source = R"(#!
 # @vicinae.schemaVersion 1
 # @vicinae.title Test
 )";
   auto result = script_command::ScriptCommand::parse(source);
-  REQUIRE(!result.has_value());
-  REQUIRE(result.error().contains("Shebang is required"));
+  REQUIRE(result.has_value());
+  REQUIRE(result->exec.empty());
 }

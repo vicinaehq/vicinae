@@ -89,3 +89,39 @@ TEST_CASE("Optional and percentEncoded can be set to true") {
   REQUIRE(arg.optional == true);
   REQUIRE(arg.percentEncoded == true);
 }
+
+TEST_CASE("Placeholder should be optional") {
+  const char *source = R"(#!/bin/bash
+# @vicinae.schemaVersion 1
+# @vicinae.title Test
+# @vicinae.argument1 { "type": "text"}
+)";
+  auto result = script_command::ScriptCommand::parse(source);
+  REQUIRE(result.has_value());
+  auto &arg = result->arguments.at(0);
+  REQUIRE(!arg.placeholder.has_value());
+}
+
+TEST_CASE("Argument with secure=true field should turn type to password (raycast compat)") {
+  const char *source = R"(#!/bin/bash
+# @vicinae.schemaVersion 1
+# @vicinae.title Test
+# @vicinae.argument1 { "type": "text", "placeholder": "test", "secure": true }
+)";
+  auto result = script_command::ScriptCommand::parse(source);
+  REQUIRE(result.has_value());
+  auto &arg = result->arguments.at(0);
+  REQUIRE(arg.type == script_command::ArgumentType::Password);
+}
+
+TEST_CASE("Argument with secure=false does nothing (raycast compat)") {
+  const char *source = R"(#!/bin/bash
+# @vicinae.schemaVersion 1
+# @vicinae.title Test
+# @vicinae.argument1 { "type": "password", "placeholder": "test", "secure": false }
+)";
+  auto result = script_command::ScriptCommand::parse(source);
+  REQUIRE(result.has_value());
+  auto &arg = result->arguments.at(0);
+  REQUIRE(arg.type == script_command::ArgumentType::Password);
+}

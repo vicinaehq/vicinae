@@ -13,6 +13,7 @@ shared:
 .PHONY: shared
 
 test:
+	cmake -GNinja -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)
 	./$(BUILD_DIR)/tests
 .PHONY: test

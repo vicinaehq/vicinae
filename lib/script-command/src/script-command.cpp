@@ -24,7 +24,7 @@ std::ostream &operator<<(std::ostream &ofs, const ScriptCommand &cmd) {
   if (cmd.description) std::println(ofs, "description => {}", cmd.description.value());
 
   for (const auto &[idx, arg] : cmd.arguments | std::views::enumerate) {
-    std::println(ofs, "argument{} => {}", idx, arg.placeholder);
+    std::println(ofs, "argument{} => {}", idx, arg.placeholder.value_or("no placeholder"));
   }
 
   return ofs;
@@ -49,6 +49,8 @@ static std::expected<ScriptArgument, std::string> parseArgument(std::string_view
   } else {
     return std::unexpected(std::format("Unknown argument type: \"{}\"", parsed.type));
   }
+
+  if (parsed.secure) { result.type = ArgumentType::Password; }
 
   if (result.type == ArgumentType::Dropdown && !parsed.data.has_value()) {
     return std::unexpected("Dropdown argument must have a 'data' field");
@@ -112,8 +114,7 @@ static std::optional<KV> parseKV(std::string_view line) {
   return KV(scope, key, value);
 }
 
-namespace {
-void trim(std::string_view &s, char c = ' ') {
+static void trim(std::string_view &s, char c = ' ') {
   s.remove_prefix(std::min(s.find_first_not_of(c), s.size()));
   if (auto pos = s.find_last_not_of(c); pos != std::string::npos) { s.remove_suffix(s.size() - pos - 1); }
 }
@@ -122,7 +123,7 @@ void trim(std::string_view &s, char c = ' ') {
  * Parse shebang line and extract exec command and arguments
  * Example: "#!/bin/bash -c hello" -> ["bin/bash", "-c", "hello"]
  */
-std::optional<std::vector<std::string>> parseShebang(std::string_view line) {
+static std::optional<std::vector<std::string>> parseShebang(std::string_view line) {
   std::string_view s = line;
   trim(s);
 
@@ -145,7 +146,7 @@ std::optional<std::vector<std::string>> parseShebang(std::string_view line) {
  * Parse time string with unit suffix (s, m, h, d) to seconds
  * Examples: "5s" -> 5, "2m" -> 120, "1h" -> 3600, "1d" -> 86400
  */
-std::expected<std::uint64_t, std::string> parseTimeToSeconds(std::string_view timeStr) {
+static std::expected<std::uint64_t, std::string> parseTimeToSeconds(std::string_view timeStr) {
   if (timeStr.empty()) { return std::unexpected("Time string is empty"); }
 
   size_t unitPos = timeStr.size();
@@ -183,10 +184,9 @@ std::expected<std::uint64_t, std::string> parseTimeToSeconds(std::string_view ti
   return value * multiplier;
 }
 
-} // namespace
-
 std::expected<ScriptCommand, std::string> ScriptCommand::parse(std::string_view str) {
-  static const auto inlineCommentMarkers = {"#", "//"};
+  // Note: Order matters! Check longer markers first to avoid false matches
+  static const auto inlineCommentMarkers = {"//", "--", "#", ";"};
   ScriptCommand data;
   std::optional<std::string> scope;
   bool firstLine = true;
@@ -285,7 +285,6 @@ std::expected<ScriptCommand, std::string> ScriptCommand::parse(std::string_view 
     }
   }
 
-  if (data.exec.empty()) { return std::unexpected("Shebang is required"); }
   if (data.schemaVersion != "1") { return std::unexpected("Invalid schema version, expected 1"); }
   if (data.title.empty()) { return std::unexpected("Title should not be empty"); }
   if (data.refreshTime.has_value() && data.mode != OutputMode::Inline) {
@@ -298,10 +297,46 @@ std::expected<ScriptCommand, std::string> ScriptCommand::parse(std::string_view 
   return data;
 }
 
+static std::optional<std::vector<std::string>> inferExecFromExtension(const std::string &ext) {
+  // clang-format off
+  static const std::unordered_map<std::string, std::vector<std::string>> map = {
+      {".py", {"/usr/bin/env", "python"}},    
+	  {".rb", {"/usr/bin/env", "ruby"}},
+      {".go", {"/usr/bin/env", "go", "run"}}, 
+	  {".sh", {"/bin/sh"}},
+      {".js", {"/usr/bin/env", "node"}},      
+	  {".ts", {"/usr/bin/env", "node"}},
+	  {".swift", {"/usr/bin/env", "swift"}},
+	  {".lua", {"/usr/bin/env", "lua"}},
+	  {".php", {"/usr/bin/env", "php"}},
+  };
+  // clang-format on
+
+  if (auto it = map.find(ext); it != map.end()) return it->second;
+
+  return {};
+}
+
+std::expected<ScriptCommand, std::string> ScriptCommand::fromFile(const std::filesystem::path &path) {
+  std::ifstream ifs(path);
+  auto parsed = ScriptCommand::parse(ifs);
+
+  if (!parsed) { return parsed; }
+
+  if (parsed->exec.empty()) {
+    if (auto infered = inferExecFromExtension(path.extension())) { parsed->exec = infered.value(); }
+  }
+
+  if (parsed->exec.empty()) { return std::unexpected("No program to execute this script"); }
+
+  return parsed;
+}
+
 std::expected<ScriptCommand, std::string> ScriptCommand::parse(std::ifstream &ifs) {
   std::string buf;
   std::string line;
-  static const auto inlineCommentMarkers = {"#", "//"};
+  // Note: Order matters! Check longer markers first to avoid false matches
+  static const auto inlineCommentMarkers = {"//", "--", "#", ";"};
 
   while (std::getline(ifs, line)) {
     if (line.empty()) continue;
@@ -311,8 +346,6 @@ std::expected<ScriptCommand, std::string> ScriptCommand::parse(std::ifstream &if
 
     bool startsWithComment =
         std::ranges::any_of(inlineCommentMarkers, [&](const char *marker) { return s.starts_with(marker); });
-
-    if (!startsWithComment) break;
 
     buf.append(s);
     buf.append("\n");

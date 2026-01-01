@@ -20,15 +20,16 @@ struct ArgumentDataOption {
 
 struct ParsedScriptArgument {
   std::string type;
-  std::string placeholder;
+  std::optional<std::string> placeholder;
   std::optional<bool> optional;
   std::optional<bool> percentEncoded;
   std::optional<ArgumentDataOption> data;
+  std::optional<bool> secure; // legacy, for raycast compat
 };
 
 struct ScriptArgument {
   ArgumentType type;
-  std::string placeholder;
+  std::optional<std::string> placeholder;
   bool optional = false;
   bool percentEncoded = false;
   std::optional<ArgumentDataOption> data;
@@ -53,6 +54,7 @@ struct ScriptCommand {
 
   static std::expected<ScriptCommand, std::string> parse(std::string_view str);
   static std::expected<ScriptCommand, std::string> parse(std::ifstream &ifs);
+  static std::expected<ScriptCommand, std::string> fromFile(const std::filesystem::path &path);
 };
 
 std::ostream &operator<<(std::ostream &ofs, const ScriptCommand &cmd);

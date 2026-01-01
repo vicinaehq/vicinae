@@ -19,18 +19,17 @@ public:
       : m_file(file), m_outputModeOverride(mode) {}
 
   void execute(ApplicationContext *ctx) override {
-    const auto result = ScriptCommandFile::fromFile(m_file.path(), std::string{m_file.id()});
+    const auto error = m_file.reload();
 
-    if (!result) {
-      ctx->services->toastService()->failure(
-          QString("Failed to parse script: %1").arg(result.error().c_str()));
+    if (error) {
+      ctx->services->toastService()->failure(QString("Failed to parse script: %1").arg(error.value()));
       return;
     }
 
-    bool needsConfirm = result->data().needsConfirmation;
+    bool needsConfirm = m_file.data().needsConfirmation;
 
-    const auto outputMode = m_outputModeOverride.value_or(result->data().mode);
-    const auto runScript = [script = result.value(), ctx, outputMode]() {
+    const auto outputMode = m_outputModeOverride.value_or(m_file.data().mode);
+    const auto runScript = [script = m_file, ctx, outputMode]() {
       auto cmdline = script.createCommandLine(ctx->navigation->unnamedCompletionValues());
 
       assert(!cmdline.empty());
@@ -145,7 +144,8 @@ class ScriptRootItem : public RootItem {
 
       cmdArg.required = !arg.optional;
       cmdArg.name = QString("argument%1").arg(idx);
-      cmdArg.placeholder = arg.placeholder.c_str();
+      cmdArg.placeholder =
+          arg.placeholder.transform([](auto &&s) { return QString::fromStdString(s); }).value_or(cmdArg.name);
 
       using T = script_command::ArgumentType;
 
