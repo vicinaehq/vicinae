@@ -2,12 +2,14 @@
 #include <expected>
 #include <glaze/json/read.hpp>
 #include <glaze/json/write.hpp>
+#include <glaze/util/key_transformers.hpp>
+#include "utils.hpp"
 #include "vicinae.hpp"
 
 class ScriptMetadataStore {
   struct RunMetadata {
     std::int64_t lastRunAt;
-    std::string output;
+    std::string output; // encoded as base64 to make sure we always serialize valid json
   };
 
   struct Data {
@@ -33,13 +35,16 @@ public:
 
   void saveRun(std::string_view scriptId, std::string_view line) {
     m_data.inlineRuns[std::string{scriptId}] =
-        RunMetadata{.lastRunAt = QDateTime::currentSecsSinceEpoch(), .output = std::string{line}};
+        RunMetadata{.lastRunAt = QDateTime::currentSecsSinceEpoch(), .output = Utils::toBase64(line)};
 
     syncWithDisk();
   }
 
-  std::optional<RunMetadata> lastRun(const std::string &id) const {
-    if (const auto it = m_data.inlineRuns.find(id); it != m_data.inlineRuns.end()) { return it->second; }
+  std::optional<std::string> lastRunData(const std::string &id) const {
+    if (const auto it = m_data.inlineRuns.find(id); it != m_data.inlineRuns.end()) {
+      return Utils::fromBase64(it->second.output);
+    }
+
     return {};
   }
 
@@ -66,3 +71,6 @@ private:
   Data m_data;
   std::filesystem::path m_path;
 };
+
+template <> struct glz::meta<ScriptMetadataStore::Data> : glz::snake_case {};
+template <> struct glz::meta<ScriptMetadataStore::RunMetadata> : glz::snake_case {};

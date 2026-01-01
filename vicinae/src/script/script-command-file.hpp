@@ -40,7 +40,7 @@ public:
       // FIXME: we probably shouldn't do that here
       const ScriptMetadataStore store;
 
-      if (const auto run = store.lastRun(m_id)) { return run->output; }
+      if (const auto output = store.lastRunData(m_id)) { return output.value(); }
 
       return "No data";
     }
