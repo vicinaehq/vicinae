@@ -12,12 +12,14 @@
 #include <glaze/core/reflect.hpp>
 #include <glaze/json/read.hpp>
 #include <glaze/json/write.hpp>
+#include <qfilesystemwatcher.h>
 #include <qfuturewatcher.h>
 #include <qlogging.h>
 #include <QtConcurrent/QtConcurrent>
 #include <qmimedata.h>
 #include <qmimedatabase.h>
 #include <qobject.h>
+#include <qtimer.h>
 #include <qtmetamacros.h>
 #include <ranges>
 #include <stack>
@@ -265,16 +267,25 @@ public:
   using Watcher = QFutureWatcher<std::vector<std::shared_ptr<ScriptCommandFile>>>;
 
   ScriptCommandService() {
+    m_watcherDebounce.setInterval(100);
+    m_watcherDebounce.setSingleShot(true);
+    updateWatchedPaths();
     triggerScan();
     connect(&m_scanWatcher, &Watcher::finished, this, [this]() {
       m_scripts = std::move(m_scanWatcher.future().takeResult());
       emit scriptsChanged();
+    });
+    connect(m_watcher, &QFileSystemWatcher::directoryChanged, this, [this]() { m_watcherDebounce.start(); });
+    connect(&m_watcherDebounce, &QTimer::timeout, this, [this]() {
+      qInfo() << "script directory changed, triggering rescan";
+      triggerScan();
     });
   }
 
   void setCustomScriptPaths(const std::vector<std::filesystem::path> &paths) {
     m_customScriptPaths = paths;
     triggerScan();
+    updateWatchedPaths();
   }
 
   std::vector<std::filesystem::path> defaultScriptDirectories() const {
@@ -295,6 +306,17 @@ public:
   }
 
 private:
+  void updateWatchedPaths() {
+    for (const QString &dir : m_watcher->directories()) {
+      m_watcher->removePath(dir);
+    }
+    for (const auto &path : std::views::concat(m_customScriptPaths, defaultScriptDirectories())) {
+      m_watcher->addPath(path.c_str());
+    }
+  }
+
+  QFileSystemWatcher *m_watcher = new QFileSystemWatcher(this);
+  QTimer m_watcherDebounce;
   std::vector<std::shared_ptr<ScriptCommandFile>> m_scripts;
   std::vector<std::filesystem::path> m_customScriptPaths;
   Watcher m_scanWatcher;
