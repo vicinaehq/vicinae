@@ -54,10 +54,6 @@ if (NOT USE_SYSTEM_GLAZE)
 	FetchContent_MakeAvailable(glaze)
 endif()
 
-if (BUILD_TESTS)
-	add_subdirectory(tests)
-endif()
-
 if (APPLE)
 	set(WAYLAND_LAYER_SHELL OFF)
 	set(WLR_DATA_CONTROL OFF)
@@ -65,9 +61,15 @@ endif()
 
 if (UNIX AND NOT APPLE)
 	set(XDGPP_INSTALL OFF CACHE BOOL "Don't install xdgpp when building vicinae" FORCE)
+	if (BUILD_TESTS)
+		set(XDGPP_BUILD_TESTS ON CACHE BOOL "Build xdgpp tests" FORCE)
+	endif()
 	add_subdirectory("./lib/xdgpp")
 endif()
 
+if (BUILD_TESTS)
+	set(SCRIPTCOMMAND_BUILD_TESTS ON CACHE BOOL "Build script-command tests" FORCE)
+endif()
 add_subdirectory("./lib/script-command")
 
 if (USE_SYSTEM_PROTOBUF)

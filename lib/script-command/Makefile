@@ -13,9 +13,9 @@ shared:
 .PHONY: shared
 
 test:
-	cmake -GNinja -B $(BUILD_DIR)
+	cmake -GNinja -DSCRIPTCOMMAND_BUILD_TESTS=ON -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)
-	./$(BUILD_DIR)/tests
+	./$(BUILD_DIR)/scriptcommand-tests
 .PHONY: test
 
 install:

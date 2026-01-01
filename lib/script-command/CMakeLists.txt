@@ -5,8 +5,7 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(TEST_TARGET tests)
-find_package(Catch2 3 REQUIRED)
+OPTION(SCRIPTCOMMAND_BUILD_TESTS "Build the script-command test suite" OFF)
 
 find_package(glaze)
 
@@ -29,8 +28,11 @@ target_include_directories(${PROJECT_NAME} PUBLIC .)
 target_link_libraries(${PROJECT_NAME} PUBLIC glaze::glaze)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_26)
 
-# tests
-add_compile_definitions(${TEST_TARGET} FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures")
-add_executable(${TEST_TARGET} tests/main.cpp tests/failure.cpp tests/edge-cases.cpp tests/time-parsing.cpp tests/argument-validation.cpp tests/fields.cpp tests/comment-styles.cpp)
-target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain ${PROJECT_NAME})
-target_include_directories(${TEST_TARGET} PRIVATE .)
+if (SCRIPTCOMMAND_BUILD_TESTS)
+	set(TEST_TARGET scriptcommand-tests)
+	find_package(Catch2 3 REQUIRED)
+	add_compile_definitions(${TEST_TARGET} FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures")
+	add_executable(${TEST_TARGET} tests/main.cpp tests/failure.cpp tests/edge-cases.cpp tests/time-parsing.cpp tests/argument-validation.cpp tests/fields.cpp tests/comment-styles.cpp)
+	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain ${PROJECT_NAME})
+	target_include_directories(${TEST_TARGET} PRIVATE .)
+endif()
