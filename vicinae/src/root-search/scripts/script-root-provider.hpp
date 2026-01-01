@@ -1,6 +1,7 @@
 #pragma once
 #include "actions/files/file-actions.hpp"
 #include "actions/root-search/root-search-actions.hpp"
+#include "script-command.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/script-command/script-command-service.hpp"
 #include "services/app-service/app-service.hpp"
@@ -9,6 +10,7 @@
 #include "service-registry.hpp"
 #include "services/toast/toast-service.hpp"
 #include "ui/script-output/script-executor-view.hpp"
+#include "ui/settings-item-info/settings-item-info.hpp"
 #include "ui/toast/toast.hpp"
 #include "utils.hpp"
 
@@ -165,6 +167,22 @@ class ScriptRootItem : public RootItem {
     }
 
     return args;
+  }
+
+  QWidget *settingsDetail(const QJsonObject &preferences) const override {
+    std::vector<std::pair<QString, QString>> args;
+
+    args.reserve(6);
+    args.emplace_back(
+        std::pair{"Mode", qStringFromStdView(script_command::outputModeToString(m_file.data().mode))});
+    args.emplace_back(std::pair{"Path", compressPath(m_file.path()).c_str()});
+
+    if (const auto author = m_file.data().author) {
+      args.emplace_back(std::pair{"Author", author.value().c_str()});
+    }
+
+    return new SettingsItemInfo(
+        args, m_file.data().description.transform([](auto &&s) { return QString::fromStdString(s); }));
   }
 
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx,

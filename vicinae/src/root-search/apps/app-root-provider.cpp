@@ -7,9 +7,9 @@
 #include "ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
-#include "settings/app-metadata-settings-detail.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "switch-windows-view.hpp"
+#include "ui/settings-item-info/settings-item-info.hpp"
 #include "utils/environment.hpp"
 #include <qjsonobject.h>
 #include <qwidget.h>
@@ -25,7 +25,15 @@ QString AppRootItem::subtitle() const { return m_app->description(); }
 QString AppRootItem::displayName() const { return m_app->displayName(); }
 
 QWidget *AppRootItem::settingsDetail(const QJsonObject &preferences) const {
-  return new AppMetadataSettingsDetail(m_app);
+  std::vector<std::pair<QString, QString>> args;
+
+  args.reserve(4);
+  args.emplace_back(std::pair{"ID", m_app->id()});
+  args.emplace_back(std::pair{"Name", m_app->displayName()});
+  args.emplace_back(std::pair{"Where", m_app->path().c_str()});
+  args.emplace_back(std::pair{"Opens in terminal", m_app->isTerminalApp() ? "Yes" : "No"});
+
+  return new SettingsItemInfo(args, m_app->description());
 }
 
 bool AppRootItem::isActive() const {

@@ -1,8 +1,5 @@
 #pragma once
-#include "services/app-service/abstract-app-db.hpp"
-#include "common.hpp"
 #include "ui/typography/typography.hpp"
-#include "utils/utils.hpp"
 #include <qboxlayout.h>
 #include <qevent.h>
 #include <qlogging.h>
@@ -43,54 +40,4 @@ public:
     m_layout->addWidget(m_widget, 0, Qt::AlignRight | Qt::AlignHCenter);
     setLayout(m_layout);
   }
-};
-
-class AppMetadataSettingsDetail : public QWidget {
-  std::shared_ptr<AbstractApplication> m_app;
-  MetadataRowWidget *m_description = new MetadataRowWidget(this);
-  TypographyWidget *m_descriptionParagraph = new TypographyWidget(this);
-  MetadataRowWidget *m_id = new MetadataRowWidget(this);
-  MetadataRowWidget *m_name = new MetadataRowWidget(this);
-  MetadataRowWidget *m_where = new MetadataRowWidget(this);
-  MetadataRowWidget *m_terminal = new MetadataRowWidget(this);
-
-  void resizeEvent(QResizeEvent *event) override { QWidget::resizeEvent(event); }
-
-  void setupUI(const std::shared_ptr<AbstractApplication> &app) {
-    auto layout = new QVBoxLayout;
-
-    m_descriptionParagraph->setWordWrap(true);
-
-    m_id->setLabel("ID");
-    m_id->setText(app->id());
-    m_name->setLabel("Name");
-    m_name->setText(app->displayName());
-    m_where->setLabel("Where");
-    m_where->setText(compressPath(app->path().parent_path()).c_str());
-
-    if (auto description = app->description(); !description.isEmpty()) {
-      m_description->setLabel("Description");
-      m_descriptionParagraph->setText(description);
-      layout->addWidget(m_description);
-      layout->addWidget(m_descriptionParagraph);
-      layout->addWidget(new HDivider);
-    }
-
-    layout->addWidget(m_id);
-    layout->addWidget(new HDivider);
-    layout->addWidget(m_name);
-    layout->addWidget(new HDivider);
-    layout->addWidget(m_where);
-
-    m_terminal->setLabel("Opens in terminal");
-    m_terminal->setText(app->isTerminalApp() ? "Yes" : "No");
-    layout->addWidget(new HDivider);
-    layout->addWidget(m_terminal);
-
-    layout->addStretch();
-    setLayout(layout);
-  }
-
-public:
-  AppMetadataSettingsDetail(const std::shared_ptr<AbstractApplication> &app) : m_app(app) { setupUI(app); }
 };

@@ -9,6 +9,38 @@
 
 namespace script_command {
 
+std::string_view outputModeToString(OutputMode mode) {
+  switch (mode) {
+  case OutputMode::Full:
+    return "fullOutput";
+  case OutputMode::Compact:
+    return "compact";
+  case OutputMode::Inline:
+    return "inline";
+  case OutputMode::Silent:
+    return "silent";
+  case OutputMode::Terminal:
+    return "terminal";
+  default:
+    return "fullOutput";
+  }
+}
+
+std::optional<OutputMode> parseOutputMode(std::string_view str) {
+  if (str == "fullOutput") {
+    return OutputMode::Full;
+  } else if (str == "compact") {
+    return OutputMode::Compact;
+  } else if (str == "inline") {
+    return OutputMode::Inline;
+  } else if (str == "silent") {
+    return OutputMode::Silent;
+  } else if (str == "terminal") {
+    return OutputMode::Terminal;
+  }
+  return std::nullopt;
+}
+
 std::ostream &operator<<(std::ostream &ofs, const ScriptCommand &cmd) {
   std::println(ofs, "schemaVersion => {}", cmd.schemaVersion);
   std::println(ofs, "title => {}", cmd.title);
@@ -226,19 +258,11 @@ std::expected<ScriptCommand, std::string> ScriptCommand::parse(std::string_view 
       }
 
       if (kv->k == "mode") {
-        if (kv->v == "fullOutput") {
-          data.mode = OutputMode::Full;
-        } else if (kv->v == "compact") {
-          data.mode = OutputMode::Compact;
-        } else if (kv->v == "silent") {
-          data.mode = OutputMode::Silent;
-        } else if (kv->v == "inline") {
-          data.mode = OutputMode::Inline;
-        } else if (kv->v == "terminal") {
-          data.mode = OutputMode::Terminal;
-        } else {
+        auto mode = parseOutputMode(kv->v);
+        if (!mode) {
           return std::unexpected(std::format("Invalid mode: \"{}\"", kv->v));
         }
+        data.mode = *mode;
       }
 
       if (kv->k == "icon") { data.icon = kv->v; }

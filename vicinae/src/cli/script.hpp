@@ -14,8 +14,8 @@ public:
   void setup(CLI::App *app) override {
     app->add_option("-t,--title", m_title, "Title for the script")->required();
     app->add_option("-l,--lang", m_lang, "Language for the script")->default_val("bash");
-    app->add_option("-m,--mode", m_mode, "Output mode (full, compact, inline, silent, terminal)")
-        ->default_val("full");
+    app->add_option("-m,--mode", m_mode, "Output mode (fullOutput, compact, inline, silent, terminal)")
+        ->default_val("fullOutput");
   }
 
   void run(CLI::App *app) override {
@@ -31,11 +31,11 @@ public:
       throw CLI::ValidationError("--lang", oss.str());
     }
 
-    auto mode = parseOutputMode(m_mode);
+    auto mode = script_command::parseOutputMode(m_mode);
     if (!mode) {
       throw CLI::ValidationError("--mode",
                                  "Invalid output mode: " + m_mode +
-                                     "\n\nSupported modes: full, compact, inline, silent, terminal");
+                                     "\n\nSupported modes: fullOutput, compact, inline, silent, terminal");
     }
 
     auto script = ScriptCommandGenerator::generate(m_title, *lang, *mode);
@@ -47,18 +47,6 @@ private:
   std::string m_title;
   std::string m_lang;
   std::string m_mode;
-
-  std::optional<script_command::OutputMode> parseOutputMode(const std::string &mode) {
-    static const std::unordered_map<std::string, script_command::OutputMode> modeMap = {
-        {"full", script_command::OutputMode::Full},         {"compact", script_command::OutputMode::Compact},
-        {"inline", script_command::OutputMode::Inline},     {"silent", script_command::OutputMode::Silent},
-        {"terminal", script_command::OutputMode::Terminal},
-    };
-
-    auto it = modeMap.find(mode);
-    if (it == modeMap.end()) { return std::nullopt; }
-    return it->second;
-  }
 };
 
 class ScriptCheckCommand : public AbstractCommandLineCommand {

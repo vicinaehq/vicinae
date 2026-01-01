@@ -1,10 +1,6 @@
 #include "script-command.hpp"
-#include "services/script-command/script-command-service.hpp"
 #include <cstdint>
-#include <format>
 #include <optional>
-#include <qabstractitemview.h>
-#include <sstream>
 #include <unordered_map>
 #include <vector>
 
@@ -45,9 +41,7 @@ public:
     };
 
     auto it = langMap.find(lang);
-    if (it == langMap.end()) {
-      return std::nullopt;
-    }
+    if (it == langMap.end()) { return std::nullopt; }
     return it->second;
   }
 
@@ -159,43 +153,22 @@ public:
     // clang-format on
 
     const auto langInfo = info.find(lang)->second;
-    const auto modeStr = outputModeToString(mode);
-
-    // Simple template replacement
+    const auto modeStr = script_command::outputModeToString(mode);
     std::string result(langInfo.templateStr);
-
-    // Replace {title} placeholder
     size_t pos = 0;
+
     while ((pos = result.find("{title}", pos)) != std::string::npos) {
       result.replace(pos, 7, title);
       pos += title.length();
     }
 
-    // Replace {mode} placeholder
     pos = 0;
+
     while ((pos = result.find("{mode}", pos)) != std::string::npos) {
       result.replace(pos, 6, modeStr);
       pos += modeStr.length();
     }
 
     return result;
-  }
-
-private:
-  static std::string_view outputModeToString(script_command::OutputMode mode) {
-    switch (mode) {
-    case script_command::OutputMode::Full:
-      return "full";
-    case script_command::OutputMode::Compact:
-      return "compact";
-    case script_command::OutputMode::Inline:
-      return "inline";
-    case script_command::OutputMode::Silent:
-      return "silent";
-    case script_command::OutputMode::Terminal:
-      return "terminal";
-    default:
-      return "full";
-    }
   }
 };
