@@ -1,5 +1,7 @@
 #include "vicinae-extension.hpp"
+#include "builtin_icon.hpp"
 #include "command-controller.hpp"
+#include "services/script-command/script-command-service.hpp"
 #include "common.hpp"
 #include "extensions/vicinae/list-installed-extensions-command.hpp"
 #include "extensions/vicinae/oauth-token-store/oauth-token-store-view.hpp"
@@ -121,6 +123,22 @@ class OpenSettingsCommand : public BuiltinCallbackCommand {
   }
 };
 
+class ReloadScriptDirectoriesCommand : public BuiltinCallbackCommand {
+  QString id() const override { return "reload-scripts"; }
+  QString name() const override { return "Reload Script Directories"; }
+  QString description() const override { return "Reload script directories"; }
+  ImageURL iconUrl() const override {
+    return ImageURL(BuiltinIcon::Code).setBackgroundTint(Omnicast::ACCENT_COLOR);
+  }
+
+  void execute(CommandController *controller) const override {
+    auto ctx = controller->context();
+
+    ctx->services->scriptDb()->triggerScan();
+    ctx->services->toastService()->success("New scan triggered, index will update shortly");
+  }
+};
+
 class OpenKeybindSettingsCommand : public BuiltinCallbackCommand {
   QString id() const override { return "keybind-settings"; }
   QString name() const override { return "Open Vicinae Keybind Settings"; }
@@ -181,4 +199,5 @@ VicinaeExtension::VicinaeExtension() {
   registerCommand<OpenVicinaeConfig>();
   registerCommand<OpenDefaultVicinaeConfig>();
   registerCommand<InspectLocalStorage>();
+  registerCommand<ReloadScriptDirectoriesCommand>();
 }

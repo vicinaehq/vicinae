@@ -1,10 +1,12 @@
 #pragma once
+#include "builtin_icon.hpp"
 #include "script-command.hpp"
 #include "script/script-command-file.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/script-output/script-executor-view.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/app-service/app-service.hpp"
+#include "vicinae.hpp"
 
 class ScriptExecutorAction : public AbstractAction {
 public:
@@ -85,6 +87,10 @@ public:
   }
 
   QString title() const override { return "Run script"; }
+
+  std::optional<ImageURL> icon() const override {
+    return ImageURL(BuiltinIcon::Code).setBackgroundTint(Omnicast::ACCENT_COLOR);
+  }
 
 private:
   // FIXME: in the future we should make it so that script commands are considered as regular

@@ -89,5 +89,5 @@ ImageURL ScriptCommandFile::icon() const {
     if (url.scheme() == "https") { return ImageURL::http(url); }
   }
 
-  return ImageURL(BuiltinIcon::Code).setFill(Omnicast::ACCENT_COLOR);
+  return ImageURL(BuiltinIcon::Code).setBackgroundTint(Omnicast::ACCENT_COLOR);
 }

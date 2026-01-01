@@ -118,6 +118,7 @@ public:
   operator QString() const { return toString(); }
 
   static ImageURL builtin(const QString &name);
+  static ImageURL builtin(BuiltinIcon icon);
   static ImageURL favicon(const QString &domain);
   static ImageURL system(const QString &name);
   static ImageURL local(const QString &path);
