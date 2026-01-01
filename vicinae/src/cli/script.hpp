@@ -1,10 +1,10 @@
 #pragma once
 #include "cli.hpp"
-#include "script-command-generator.hpp"
 #include <filesystem>
 #include <iostream>
 #include <sstream>
 #include <string>
+#include "script/script-command-generator.hpp"
 
 class ScriptTemplateCommand : public AbstractCommandLineCommand {
 public:

@@ -9,13 +9,12 @@
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/toast/toast-service.hpp"
+#include "script/script-process.hpp"
 #include "ui/script-output/script-executor-view.hpp"
 #include "ui/settings-item-info/settings-item-info.hpp"
 #include "ui/toast/toast.hpp"
 #include "utils.hpp"
-#include <QtCore>
-#include <qcontainerfwd.h>
-#include <qprocess.h>
+#include <QProcess>
 #include <ranges>
 
 class ScriptExecutorAction : public AbstractAction {

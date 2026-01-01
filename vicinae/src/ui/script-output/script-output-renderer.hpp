@@ -1,5 +1,5 @@
 #pragma once
-#include "script-output-tokenizer.hpp"
+#include "script/script-output-tokenizer.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
 #include "ui/scroll-bar/scroll-bar.hpp"
 #include <qtextbrowser.h>
