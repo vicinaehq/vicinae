@@ -144,7 +144,7 @@ IpcCommandHandler::processDmenu(const proto::ext::daemon::DmenuRequest &request)
   auto future = promise.future();
   auto payload = DMenu::Payload::fromProto(request);
 
-  if (payload.width < DMENU_SMALL_WIDTH_THRESHOLD) {
+  if (payload.width.has_value() && payload.width.value() < DMENU_SMALL_WIDTH_THRESHOLD) {
     qInfo() << "dmenu: disabling quicklook and footer because width is too low";
     payload.noFooter = true;
     payload.noQuickLook = true;
