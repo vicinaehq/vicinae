@@ -18,6 +18,20 @@ protected:
 
   ImageURL getIcon() const { return ImageURL::fileIcon(m_path); }
 
+  static OpenFileInAppAction *createOpenInFolderAction(const std::filesystem::path &path,
+                                                       const std::shared_ptr<AbstractApplication> &browser) {
+
+    // These file managers don't work correctly when they're passed a file path
+    // We work around this by passing the parent folder path instead
+    static const std::set<QString> exceptions = {"org.kde.dolphin.desktop", "ranger.desktop"};
+
+    if (exceptions.contains(browser->id())) {
+      return new OpenFileInAppAction(path, browser, "Open in folder", {path.parent_path().c_str()});
+    }
+
+    return new OpenFileInAppAction(path, browser, "Open in folder");
+  }
+
 public:
   static std::unique_ptr<ActionPanelState> actionPanel(const std::filesystem::path &path, AppService *appDb) {
     QMimeDatabase mimeDb;
@@ -33,8 +47,7 @@ public:
     }
 
     if (fileBrowser && (!openers.empty() && openers.front()->id() != fileBrowser->id())) {
-      auto open = new OpenFileInAppAction(path, fileBrowser, "Open in folder");
-      section->addAction(open);
+      section->addAction(createOpenInFolderAction(path, fileBrowser));
     }
 
     auto suggested = panel->createSection("Suggested apps");
@@ -73,7 +86,7 @@ public:
 
     if (fileBrowser && (!openers.empty() && openers.front()->id() != fileBrowser->id())) {
       auto open = new OpenFileInAppAction(m_path, fileBrowser, "Open in folder");
-      section->addAction(open);
+      section->addAction(createOpenInFolderAction(m_path, fileBrowser));
     }
 
     auto suggested = panel->createSection("Suggested apps");
