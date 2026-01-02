@@ -56,7 +56,11 @@ public:
   static Preference file(const QString &id) { return {id, FilePickerData()}; }
   static Preference files(const QString &id) { return {id, FilePickerData{.multiple = true}}; }
   static Preference directory(const QString &id) { return {id, DirectoryPickerData{}}; }
-  static Preference directories(const QString &id) { return {id, DirectoryPickerData{.multiple = true}}; }
+  static Preference directories(const QString &id) {
+    Preference preference{id, DirectoryPickerData{.multiple = true}};
+    preference.setDefaultValue(QJsonArray());
+    return preference;
+  }
 
   void setName(const QString &name) { m_name = name; }
   void setTitle(const QString &name) { m_title = name; }

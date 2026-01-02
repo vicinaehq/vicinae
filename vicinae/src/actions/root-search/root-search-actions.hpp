@@ -42,7 +42,8 @@ public:
 
 class OpenItemPreferencesAction : public AbstractAction {
 public:
-  OpenItemPreferencesAction(const EntrypointId &id) : m_id(id) {}
+  OpenItemPreferencesAction(const EntrypointId &id) : m_id(id) { setShortcut(Keybind::OpenSettings); }
+
   void execute(ApplicationContext *context) override;
   QString title() const override { return "Open Preferences"; }
   std::optional<ImageURL> icon() const override { return ImageURL::builtin("cog"); }

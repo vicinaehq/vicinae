@@ -266,13 +266,7 @@ glz::generic::object_t RootItemManager::transformPreferenceValues(const QJsonObj
   };
 
   for (const auto &key : preferences.keys()) {
-    std::string k = key.toStdString();
-    QJsonValue v = preferences.value(key);
-
-    if (v.isBool()) obj[k] = v.toBool();
-    if (v.isString()) obj[k] = v.toString().toStdString();
-    if (v.isDouble()) obj[k] = v.toDouble();
-    if (v.isNull()) obj[k] = glz::generic::null_t{};
+    obj[key.toStdString()] = transformValue(preferences.value(key));
   }
 
   return obj;

@@ -4,8 +4,6 @@
 #include <LayerShellQt/Shell>
 #include <qfiledialog.h>
 #include <qnamespace.h>
-#include "environment.hpp"
-#include "vicinae.hpp"
 #include <qobject.h>
 
 namespace fs = std::filesystem;
@@ -17,27 +15,8 @@ NativeFileChooser::NativeFileChooser(QObject *parent) : AbstractFileChooser(pare
   auto stylesheet = ThemeService::instance().nativeFilePickerStyleSheet();
   m_dialog.setStyleSheet(stylesheet);
   m_dialog.setFileMode(QFileDialog::ExistingFile);
-  m_dialog.setModal(true);
   connect(&m_dialog, &QFileDialog::filesSelected, this, &NativeFileChooser::handleFiles);
   connect(&m_dialog, &QFileDialog::rejected, this, &NativeFileChooser::rejected);
-
-#ifdef WAYLAND_LAYER_SHELL
-  if (Environment::isLayerShellSupported()) {
-    namespace Shell = LayerShellQt;
-
-    m_dialog.createWinId();
-    if (auto lshell = Shell::Window::get(m_dialog.windowHandle())) {
-      lshell->setLayer(Shell::Window::LayerTop);
-      lshell->setScope(Omnicast::APP_ID);
-      lshell->setScreenConfiguration(Shell::Window::ScreenFromCompositor);
-      lshell->setKeyboardInteractivity(Shell::Window::KeyboardInteractivityExclusive);
-      lshell->setAnchors(Shell::Window::AnchorNone);
-    } else {
-      qWarning() << "Unable apply layer shell rules to QFileDialog window: LayerShellQt::Window::get() "
-                    "returned null";
-    }
-  }
-#endif
 }
 
 bool NativeFileChooser::openFile() {

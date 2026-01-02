@@ -32,4 +32,5 @@ private:
   std::vector<std::shared_ptr<ScriptCommandFile>> m_scripts;
   std::vector<std::filesystem::path> m_customScriptPaths;
   Watcher m_scanWatcher;
+  size_t scanCount = 0;
 };

@@ -1,6 +1,7 @@
 #include "script-command-service.hpp"
 #include "script/script-scanner.hpp"
 #include "xdgpp/env/env.hpp"
+#include <algorithm>
 
 ScriptCommandService::ScriptCommandService() {
   using namespace std::chrono_literals;
@@ -10,8 +11,6 @@ ScriptCommandService::ScriptCommandService() {
   m_watcherDebounce.setInterval(100ms);
   m_watcherDebounce.setSingleShot(true);
 
-  updateWatchedPaths();
-  triggerScan();
   connect(&m_scanWatcher, &Watcher::finished, this, [this]() {
     m_scripts = std::move(m_scanWatcher.future().takeResult());
     emit scriptsChanged();
@@ -25,6 +24,8 @@ ScriptCommandService::ScriptCommandService() {
 }
 
 void ScriptCommandService::setCustomScriptPaths(const std::vector<std::filesystem::path> &paths) {
+  if (scanCount > 0 && std::ranges::equal(m_customScriptPaths, paths)) return;
+
   m_customScriptPaths = paths;
   triggerScan();
   updateWatchedPaths();
@@ -49,6 +50,7 @@ void ScriptCommandService::triggerScan() {
   m_refreshTimer.start();
   m_scanWatcher.setFuture(
       QtConcurrent::run([dirs = scriptDirectories()]() { return ScriptScanner::scan(dirs); }));
+  ++scanCount;
 }
 
 void ScriptCommandService::updateWatchedPaths() {

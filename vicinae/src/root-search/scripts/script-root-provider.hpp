@@ -1,6 +1,7 @@
 #pragma once
 #include "actions/files/file-actions.hpp"
 #include "actions/root-search/root-search-actions.hpp"
+#include "clipboard-actions.hpp"
 #include "script-command.hpp"
 #include "script/script-actions.hpp"
 #include "script/script-command-file.hpp"
@@ -12,6 +13,7 @@
 #include "ui/settings-item-info/settings-item-info.hpp"
 #include "utils.hpp"
 #include <QProcess>
+#include <qjsonobject.h>
 #include <ranges>
 
 class ScriptRootItem : public RootItem {
@@ -74,11 +76,37 @@ class ScriptRootItem : public RootItem {
     auto panel = std::make_unique<ListActionPanelState>();
     auto section = panel->createSection();
     auto editor = ctx->services->appDb()->textEditor();
+    auto fileBrowser = ctx->services->appDb()->fileBrowser();
     auto exec = new ScriptExecutorAction(m_file);
+    auto extraSection = panel->createSection();
 
     section->addAction(new DefaultActionWrapper(uniqueId(), exec));
 
-    if (editor) { section->addAction(new OpenFileAction(m_file->path(), editor)); }
+    if (editor) {
+      auto open = new OpenFileAction(m_file->path(), editor);
+      open->setShortcut(Keybind::OpenAction);
+      extraSection->addAction(open);
+    }
+
+    if (fileBrowser) {
+      extraSection->addAction(
+          new OpenFileInAppAction(m_file->path().parent_path(), fileBrowser, "Open script directory"));
+    }
+
+    auto copyPath = new CopyToClipboardAction(Clipboard::Text(m_file->path().c_str()), "Copy path to script");
+
+    extraSection->addAction(copyPath);
+
+    auto itemSection = panel->createSection();
+    auto resetRanking = new ResetItemRanking(uniqueId());
+    auto markAsFavorite = new ToggleItemAsFavorite(uniqueId(), metadata.favorite);
+    auto disable = new DisableApplication(uniqueId());
+    auto openPreferences = new OpenItemPreferencesAction(uniqueId());
+
+    itemSection->addAction(resetRanking);
+    itemSection->addAction(markAsFavorite);
+    itemSection->addAction(disable);
+    itemSection->addAction(openPreferences);
 
     return panel;
   }
@@ -109,15 +137,31 @@ public:
 
   Type type() const override { return Type::GroupProvider; }
 
-  ImageURL icon() const override { return ImageURL::emoji("🤖"); }
+  ImageURL icon() const override { return ScriptCommandFile::defaultIcon(); }
 
   QString displayName() const override { return "Script Commands"; }
 
   QString uniqueId() const override { return "scripts"; }
 
-  PreferenceList preferences() const override { return {}; }
+  PreferenceList preferences() const override {
+    Preference customDirs = Preference::directories("customDirs");
 
-  void preferencesChanged(const QJsonObject &preferences) override {}
+    customDirs.setTitle("Custom directories");
+    customDirs.setDescription("Additional list of directories to source scripts from. These directories "
+                              "always take precedence over the default system ones");
+
+    return {customDirs};
+  }
+
+  void preferencesChanged(const QJsonObject &preferences) override {
+    auto files = preferences.value("customDirs").toArray() |
+                 std::views::transform([](const QJsonValue &obj) -> std::filesystem::path {
+                   return obj.toString().toStdString();
+                 }) |
+                 std::ranges::to<std::vector>();
+
+    m_service.setCustomScriptPaths(files);
+  }
 
   ScriptRootProvider(ScriptCommandService &service) : m_service(service) {
     connect(&m_service, &ScriptCommandService::scriptsChanged, this, [this]() { emit itemsChanged(); });

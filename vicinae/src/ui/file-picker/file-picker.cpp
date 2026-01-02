@@ -115,7 +115,7 @@ void FilePicker::addFileImpl(const std::filesystem::path &path) {
 
   allMimes << mime.name() << mime.parentMimeTypes();
 
-  for (const auto mime : allMimes) {
+  for (const auto &mime : allMimes) {
     if (m_mimeTypeFilters.contains(mime)) {
       isFilteredMimeType = true;
       break;
