@@ -1,10 +1,15 @@
 #pragma once
 #include <expected>
+#include "builtin_icon.hpp"
 #include "script-command.hpp"
+#include "theme/colors.hpp"
 #include "ui/image/url.hpp"
 
 class ScriptCommandFile {
 public:
+  static ImageURL defaultIcon() {
+    return ImageURL(BuiltinIcon::Code).setBackgroundTint(SemanticColor::Accent);
+  }
   static std::expected<ScriptCommandFile, std::string> fromFile(const std::filesystem::path &path,
                                                                 const std::string &id);
 

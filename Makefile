@@ -26,8 +26,8 @@ strip:
 .PHONY: strip
 
 test:
-	@$(BUILD_DIR)/lib/xdgpp/xdgpp-tests
-	@$(BUILD_DIR)/lib/script-command/scriptcommand-tests
+	$(BUILD_DIR)/lib/xdgpp/xdgpp-tests
+	$(BUILD_DIR)/lib/script-command/scriptcommand-tests
 .PHONY: test
 
 no-ts-ext:

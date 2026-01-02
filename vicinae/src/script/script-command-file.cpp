@@ -68,7 +68,8 @@ std::vector<QString> ScriptCommandFile::createCommandLine(std::span<const QStrin
 }
 
 ImageURL ScriptCommandFile::icon() const {
-  if (!m_data.icon) return ImageURL::emoji("🤖");
+  if (!m_data.icon) return defaultIcon();
+
   std::error_code ec;
 
   if (StaticEmojiDatabase::mapping().contains(m_data.icon.value())) {
@@ -89,5 +90,5 @@ ImageURL ScriptCommandFile::icon() const {
     if (url.scheme() == "https") { return ImageURL::http(url); }
   }
 
-  return ImageURL(BuiltinIcon::Code).setBackgroundTint(Omnicast::ACCENT_COLOR);
+  return defaultIcon();
 }

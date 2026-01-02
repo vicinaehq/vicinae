@@ -124,7 +124,7 @@ proto::ext::ui::Response *UIRequestRouter::showHud(const proto::ext::ui::ShowHud
 }
 
 proto::ext::ui::Response *UIRequestRouter::hideToast(const proto::ext::ui::HideToastRequest &req) {
-  // TODO: implement needed
+  // TODO: implementation needed
   auto res = new proto::ext::ui::Response;
   auto ack = new proto::ext::common::AckResponse;
 

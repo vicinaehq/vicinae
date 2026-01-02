@@ -4,11 +4,6 @@
 #include <unordered_map>
 #include <vector>
 
-struct LanguageInfo {
-  std::string_view templateStr;
-  std::string_view name;
-};
-
 class ScriptCommandGenerator {
 public:
   enum class Language : std::uint8_t {
@@ -22,6 +17,11 @@ public:
     Lua,
     Golang,
     Swift,
+  };
+
+  struct LanguageInfo {
+    std::string_view templateStr;
+    std::string_view name;
   };
 
   ScriptCommandGenerator() = default;
