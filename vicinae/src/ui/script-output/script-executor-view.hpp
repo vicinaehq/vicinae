@@ -85,6 +85,9 @@ protected:
             [this]() { m_renderer->append(m_process->readAllStandardOutput()); });
     connect(m_process, &QProcess::readyReadStandardError, this,
             [this]() { m_renderer->append(m_process->readAllStandardError()); });
+    connect(m_process, &QProcess::errorOccurred, this, [this, toastService]() {
+      toastService->failure(QString("Script execution failed: %1").arg(m_process->errorString()));
+    });
 
     connect(m_process, &QProcess::started, this, [this, toastService]() {
       m_startedAt = QDateTime::currentDateTime();
