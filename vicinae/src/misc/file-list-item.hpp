@@ -19,13 +19,12 @@ protected:
   ImageURL getIcon() const { return ImageURL::fileIcon(m_path); }
 
   static OpenFileInAppAction *createOpenInFolderAction(const std::filesystem::path &path,
-      std::shared_ptr<AbstractApplication> browser) {
+                                                       const std::shared_ptr<AbstractApplication> &browser) {
 
     // These file managers don't work correctly when they're passed a file path
     // We work around this by passing the parent folder path instead
-    static std::set<QString> exceptions = {
-      "org.kde.dolphin.desktop", "ranger.desktop"
-    };
+    static const std::set<QString> exceptions = {"org.kde.dolphin.desktop", "ranger.desktop"};
+
     if (exceptions.contains(browser->id())) {
       return new OpenFileInAppAction(path, browser, "Open in folder", {path.parent_path().c_str()});
     }
