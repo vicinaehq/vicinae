@@ -128,7 +128,7 @@ public:
             [&](const config::ConfigValue &next, const config::ConfigValue &prev) {
               m_controller->setFileSearch(next.searchFilesInRoot);
             });
-    connect(m_manager, &RootItemManager::metadataChanged, this, [this]() { m_list->refreshAll(); });
+    connect(m_manager, &RootItemManager::subtitleChanged, this, [this]() { m_list->refreshAll(); });
   }
 
   void textChanged(const QString &text) override {

@@ -101,7 +101,7 @@ void ScriptExecutorAction::execute(ApplicationContext *ctx) {
         }
 
         ctx->services->scriptDb()->metadata()->saveRun(id, line.toStdString());
-        emit ctx->services->rootItemManager()->metadataChanged();
+        emit ctx->services->rootItemManager()->subtitleChanged();
       });
       break;
     }
