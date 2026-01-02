@@ -3,7 +3,7 @@ set(CMAKE_AUTORCC ON)
 set(LIBS)
 set(TARGET vicinae)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets Sql Network Svg DBus Concurrent)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets Gui Sql Network Svg DBus Concurrent)
 find_package(OpenSSL REQUIRED)
 find_package(LibXml2 REQUIRED)
 
@@ -42,6 +42,8 @@ include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}  # For generated headers
     ${CMAKE_BINARY_DIR}/generated  # For version.h
 )
+
+
 
 set(PROTO_SRC_DIR ${CMAKE_SOURCE_DIR}/proto)
 
@@ -710,6 +712,8 @@ if (UNIX AND NOT APPLE)
 
 		src/lib/wayland/virtual-keyboard.hpp
 		src/lib/wayland/virtual-keyboard.cpp
+		src/lib/wayland/keyboard-focus-monitor.hpp
+		src/lib/wayland/keyboard-focus-monitor.cpp
 	)
 
 	# Add XCB (X11 C Bindings) library for X11 window manager support
@@ -735,6 +739,8 @@ if (UNIX AND NOT APPLE)
 		src/lib/wayland/seat.cpp
 		src/lib/wayland/virtual-keyboard.hpp
 		src/lib/wayland/virtual-keyboard.cpp
+		src/lib/wayland/keyboard-focus-monitor.hpp
+		src/lib/wayland/keyboard-focus-monitor.cpp
 
 		src/services/clipboard/data-control/data-control-clipboard-server.hpp
 		src/services/clipboard/data-control/data-control-clipboard-server.cpp

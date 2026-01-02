@@ -60,7 +60,7 @@ template <> struct Partial<ProviderData> {
 };
 
 struct LayerShellConfig {
-  std::string keyboardInteractivity = "exclusive";
+  std::string keyboardInteractivity = "on_demand";
   std::string layer = "top";
   bool enabled = true;
 };

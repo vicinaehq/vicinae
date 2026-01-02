@@ -12,6 +12,10 @@
 #include "config/config.hpp"
 #include "navigation-controller.hpp"
 
+namespace Wayland {
+class KeyboardFocusMonitor;
+}
+
 class ApplicationContext;
 class QMainWindow;
 class ActionPanelV2Widget;
@@ -74,6 +78,7 @@ private:
   DialogWidget *m_dialog = nullptr;
   QWidget *m_focusWidget = nullptr;
   bool m_compacted = false;
+  Wayland::KeyboardFocusMonitor *m_keyboardFocusMonitor = nullptr;
 
   void tryCenter();
   void centerOnScreen(const QScreen *screen);
