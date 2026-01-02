@@ -14,7 +14,6 @@
 
 class CalculatorHistoryView : public TypedListView<CalculatorHistoryModel> {
 public:
-  CalculatorHistoryView();
   using CalculatorWatcher = QFutureWatcher<AbstractCalculatorBackend::ComputeResult>;
 
 protected:

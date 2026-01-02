@@ -131,7 +131,7 @@ public:
   }
 
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
-    auto panel = std::make_unique<ActionPanelState>();
+    auto panel = std::make_unique<ListActionPanelState>();
     auto mainSection = panel->createSection();
     auto itemSection = panel->createSection();
     auto dangerSection = panel->createSection();

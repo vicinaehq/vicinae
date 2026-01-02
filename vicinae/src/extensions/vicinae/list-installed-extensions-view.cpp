@@ -61,7 +61,7 @@ public:
   }
 
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
-    auto panel = std::make_unique<ActionPanelState>();
+    auto panel = std::make_unique<ListActionPanelState>();
     panel->setTitle(m_manifest.title);
 
     // Primary section with uninstall

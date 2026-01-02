@@ -2,6 +2,7 @@
 #include "clipboard-actions.hpp"
 #include "extensions/font/browse/font-list-model.hpp"
 #include "layout.hpp"
+#include "navigation-controller.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/markdown/markdown-renderer.hpp"
 #include "ui/views/typed-list-view.hpp"
@@ -106,8 +107,6 @@ public:
 
 class BrowseFontsView : public TypedListView<FontListModel> {
 public:
-  BrowseFontsView() {}
-
   void textChanged(const QString &text) override { m_model->setFilter(text); }
 
   void initialize() override {
@@ -127,7 +126,7 @@ private:
 
   std::unique_ptr<ActionPanelState> createActionPanel(const ItemType &item) const override {
     QString text = qStringFromStdView(item);
-    auto panel = std::make_unique<ActionPanelState>();
+    auto panel = std::make_unique<ListActionPanelState>();
     auto section = panel->createSection();
     QFont family(text);
     auto copyFamily = new CopyToClipboardAction(Clipboard::Text(text), "Copy font family");

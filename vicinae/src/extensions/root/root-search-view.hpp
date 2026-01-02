@@ -29,8 +29,8 @@ public:
           auto rootItem = item.scored->item.get();
           return rootItem->newActionPanel(context(), m_manager->itemMetadata(rootItem->uniqueId()));
         },
-        [](const AbstractCalculatorBackend::CalculatorResult &item) {
-          auto panel = std::make_unique<ActionPanelState>();
+        [](const AbstractCalculatorBackend::CalculatorResult &item) -> std::unique_ptr<ActionPanelState> {
+          auto panel = std::make_unique<ListActionPanelState>();
           auto copyAnswer = new CopyCalculatorAnswerAction(item);
           auto copyQA = new CopyCalculatorQuestionAndAnswerAction(item);
           auto putAnswerInSearchBar = new PutCalculatorAnswerInSearchBar(item);
