@@ -214,6 +214,8 @@ void LauncherWindow::changeEvent(QEvent *event) {
 }
 
 void LauncherWindow::mouseMoveEvent(QMouseEvent *event) {
+  // Not sure how reliable this is. When layer shell is enabled, some compositors send mouse events when
+  // the mouse goes outside of the layer surface, so this may fix it.
   if (m_closeOnFocusLoss && !centralWidget()->rect().contains(event->pos())) {
     m_ctx.navigation->closeWindow();
   }
