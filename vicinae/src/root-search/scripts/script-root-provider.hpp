@@ -128,6 +128,10 @@ private:
 
 class ScriptRootProvider : public RootProvider {
 public:
+  ScriptRootProvider(ScriptCommandService &service) : m_service(service) {
+    connect(&m_service, &ScriptCommandService::scriptsChanged, this, [this]() { emit itemsChanged(); });
+  }
+
   std::vector<std::shared_ptr<RootItem>> loadItems() const override {
     return m_service.scripts() | std::views::transform([](auto item) -> std::shared_ptr<RootItem> {
              return std::make_shared<ScriptRootItem>(std::move(item));
@@ -161,10 +165,6 @@ public:
                  std::ranges::to<std::vector>();
 
     m_service.setCustomScriptPaths(files);
-  }
-
-  ScriptRootProvider(ScriptCommandService &service) : m_service(service) {
-    connect(&m_service, &ScriptCommandService::scriptsChanged, this, [this]() { emit itemsChanged(); });
   }
 
 private:

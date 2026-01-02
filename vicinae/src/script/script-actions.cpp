@@ -50,8 +50,7 @@ void ScriptExecutorAction::execute(ApplicationContext *ctx) {
     return;
   }
 
-  bool needsConfirm = m_file->data().needsConfirmation;
-
+  const bool needsConfirm = m_file->data().needsConfirmation;
   const auto outputMode = m_outputModeOverride.value_or(m_file->data().mode);
   const auto runScript = [script = m_file, ctx, outputMode]() {
     const auto args = ctx->navigation->unnamedCompletionValues();
@@ -65,11 +64,12 @@ void ScriptExecutorAction::execute(ApplicationContext *ctx) {
       break;
     case Mode::Silent:
       executeOneLine(*script, args, [ctx](bool ok, const QString &line) {
-        if (line.isEmpty()) {
-          ctx->navigation->showHud(ok ? "Script executed" : "Script execution failed");
-        } else {
-          ctx->navigation->showHud(line);
+        if (!ok) {
+          ctx->services->toastService()->failure(line.isEmpty() ? "Failed to execute script" : line);
+          return;
         }
+
+        ctx->navigation->showHud(line.isEmpty() ? "Script executed" : line);
         ctx->navigation->clearSearchText();
       });
       break;
@@ -90,12 +90,13 @@ void ScriptExecutorAction::execute(ApplicationContext *ctx) {
         ctx->services->toastService()->failure("Failed to execute script");
       } else {
         ctx->navigation->closeWindow();
+        ctx->navigation->clearSearchText();
       }
       break;
     case Mode::Inline:
       executeOneLine(*script, args, [id = std::string(script->id()), ctx](bool ok, const QString &line) {
         if (!ok) {
-          ctx->services->toastService()->failure("Script exited with error code");
+          ctx->services->toastService()->failure(line.isEmpty() ? "Script exited with error code" : line);
           return;
         }
 
