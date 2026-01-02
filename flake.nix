@@ -61,7 +61,7 @@
         };
       });
       overlays.default = final: prev: {
-        vicinae = prev.callPackage ./nix/vicinae.nix { gcc15Stdenv = prev.gcc15Stdenv; };
+        vicinae = final.callPackage ./nix/vicinae.nix { };
         mkVicinaeExtension = prev.callPackage ./nix/mkVicinaeExtension.nix { };
       };
       homeManagerModules.default = import ./nix/module.nix self;
