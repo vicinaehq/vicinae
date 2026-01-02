@@ -128,4 +128,13 @@ QColor colorFromString(const QString &str);
 QString rgbaFromColor(const QColor &color);
 
 std::string slurp(std::istream &ifs);
+
+inline std::string toBase64(std::string_view data) {
+  return QByteArray(data.data(), data.size()).toBase64().toStdString();
+}
+
+inline std::string fromBase64(std::string_view data) {
+  return QByteArray::fromBase64(QByteArray(data.data(), data.size())).toStdString();
+}
+
 }; // namespace Utils

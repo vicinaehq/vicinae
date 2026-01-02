@@ -4,6 +4,7 @@
 #include "vicinae.hpp"
 #include "preference.hpp"
 #include "ui/action-pannel/action.hpp"
+#include <endian.h>
 #include <qobject.h>
 #include <qdebug.h>
 #include <qtmetamacros.h>
@@ -13,6 +14,7 @@ class LaunchProps;
 
 class AbstractCmd {
 public:
+  virtual ~AbstractCmd() = default;
   virtual EntrypointId uniqueId() const = 0;
   virtual QString name() const = 0;
   virtual QString description() const = 0;
@@ -75,6 +77,8 @@ public:
   virtual void initialized(const QJsonObject &preferences) const {}
 
   virtual void preferenceValuesChanged(const QJsonObject &value) const {}
+
+  virtual ~AbstractCommandRepository() = default;
 };
 
 class CommandContext : public QObject {

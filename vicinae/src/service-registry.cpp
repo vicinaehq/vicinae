@@ -4,6 +4,7 @@
 #include "omni-database.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/power-manager/power-manager.hpp"
+#include "services/script-command/script-command-service.hpp"
 #include "services/shortcut/shortcut-service.hpp"
 #include "services/calculator-service/calculator-service.hpp"
 #include "services/clipboard/clipboard-service.hpp"
@@ -39,6 +40,8 @@ ExtensionRegistry *ServiceRegistry::extensionRegistry() const { return m_extensi
 OAuthService *ServiceRegistry::oauthService() const { return m_oauthService.get(); }
 
 PowerManager *ServiceRegistry::powerManager() const { return m_powerManager.get(); }
+
+ScriptCommandService *ServiceRegistry::scriptDb() const { return m_scriptCommandService.get(); }
 
 void ServiceRegistry::setPowerManager(std::unique_ptr<PowerManager> powman) {
   m_powerManager = std::move(powman);
@@ -93,6 +96,10 @@ void ServiceRegistry::setClipman(std::unique_ptr<ClipboardService> service) {
   m_clipman = std::move(service);
 }
 void ServiceRegistry::setAppDb(std::unique_ptr<AppService> service) { m_appDb = std::move(service); }
+
+void ServiceRegistry::setScriptDb(std::unique_ptr<ScriptCommandService> service) {
+  m_scriptCommandService = std::move(service);
+}
 
 ServiceRegistry *ServiceRegistry::instance() {
   static ServiceRegistry instance;

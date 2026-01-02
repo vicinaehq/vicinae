@@ -31,4 +31,4 @@ jobs:
         run: cmake --build build --parallel ${nproc}
 
       - name: Run Tests
-        run: ./build/tests/all_tests
+        run: make test 

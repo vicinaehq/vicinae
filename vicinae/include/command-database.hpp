@@ -58,7 +58,7 @@ public:
 
   virtual std::vector<QString> keywords() const override { return {}; }
 
-  BuiltinCommand() {}
+  virtual ~BuiltinCommand() = default;
 };
 
 class BuiltinCommandRepository : public AbstractCommandRepository {
@@ -76,9 +76,6 @@ protected:
     cmd->setRepositoryName(displayName());
     _commands.emplace_back(cmd);
   }
-
-public:
-  BuiltinCommandRepository() {}
 };
 
 class CommandDatabase {

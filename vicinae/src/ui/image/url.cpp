@@ -286,18 +286,13 @@ ImageURL ImageURL::builtin(const QString &name) {
   return url;
 }
 
-ImageURL::ImageURL(BuiltinIcon icon) {
-  ImageURL url;
-
-  url.setType(ImageURLType::Builtin);
-  url.setFill(SemanticColor::Foreground);
-
-  if (auto name = BuiltinIconService::nameForIcon(icon)) {
-    url.setName(name);
-  } else {
-    url.setName(BuiltinIconService::nameForIcon(BuiltinIconService::unknownIcon()));
-  }
+ImageURL ImageURL::builtin(BuiltinIcon icon) {
+  if (auto name = BuiltinIconService::nameForIcon(icon)) { return ImageURL::builtin(name); }
+  if (auto name = ImageURL::builtin(BuiltinIconService::unknownIcon())) { return ImageURL::builtin(name); }
+  return {};
 }
+
+ImageURL::ImageURL(BuiltinIcon icon) { *this = ImageURL::builtin(icon); }
 
 ImageURL ImageURL::favicon(const QString &domain) {
   ImageURL url;

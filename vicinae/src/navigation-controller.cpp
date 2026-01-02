@@ -16,6 +16,7 @@
 #include <qlogging.h>
 #include <qwidget.h>
 #include <QProcessEnvironment>
+#include <ranges>
 
 NavigationController::NavigationController(ApplicationContext &ctx) : m_ctx(ctx) {}
 
@@ -161,6 +162,11 @@ ArgumentValues NavigationController::completionValues() const {
   }
 
   return {};
+}
+
+std::vector<QString> NavigationController::unnamedCompletionValues() const {
+  return completionValues() | std::views::transform([](auto &&p) { return p.second; }) |
+         std::ranges::to<std::vector>();
 }
 
 void NavigationController::setCompletionValues(const ArgumentValues &values) {

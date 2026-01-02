@@ -13,7 +13,7 @@ host-optimized:
 .PHONY: optimized
 
 debug:
-	cmake -G Ninja -DLTO=OFF -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
+	cmake -G Ninja -DLTO=OFF -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)
 .PHONY: debug
 
@@ -26,9 +26,8 @@ strip:
 .PHONY: strip
 
 test:
-	cmake -G Ninja -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
-	cmake --build $(BUILD_DIR)
-	./build/tests/all_tests
+	$(BUILD_DIR)/lib/xdgpp/xdgpp-tests
+	$(BUILD_DIR)/lib/script-command/scriptcommand-tests
 .PHONY: test
 
 no-ts-ext:
@@ -115,6 +114,7 @@ clean:
 	$(RM) -rf ./typescript/extension-manager/node_modules
 	$(RM) -rf ./typescript/extension-manager/src/proto
 	$(RM) -rf ./scripts/.tmp
+	$(RM) -rf lib/*/build
 .PHONY: clean
 
 re: clean release

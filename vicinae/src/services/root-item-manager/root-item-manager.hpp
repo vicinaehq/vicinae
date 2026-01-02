@@ -224,6 +224,10 @@ signals:
    */
   void metadataChanged() const;
 
+  // An item subtitle was modified, which means a refresh of the widget may be
+  // required to pick up on the change.
+  void subtitleChanged() const;
+
 public:
   using ItemPtr = std::shared_ptr<RootItem>;
   using ItemList = std::vector<ItemPtr>;

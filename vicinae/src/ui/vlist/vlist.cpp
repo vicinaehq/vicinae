@@ -79,6 +79,12 @@ bool VListWidget::refresh(VListModel::Index idx) const {
   return w;
 }
 
+void VListWidget::refreshAll() {
+  for (const auto &item : m_visibleItems) {
+    m_model->refreshWidget(item.index, item.widget->widget());
+  }
+}
+
 VListModel::WidgetType *VListWidget::widgetAt(VListModel::Index idx) const {
   if (auto it = std::ranges::find_if(m_visibleItems, [&](auto &&w) { return w.index == idx; });
       it != m_visibleItems.end()) {
