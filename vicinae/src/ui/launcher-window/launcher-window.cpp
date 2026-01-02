@@ -7,6 +7,7 @@
 #include "keyboard/keybind-manager.hpp"
 #include "theme.hpp"
 #include "theme/colors.hpp"
+#include "ui/omni-painter/omni-painter.hpp"
 #include "ui/status-bar/status-bar.hpp"
 #include "service-registry.hpp"
 #include "lib/keyboard/keyboard.hpp"
@@ -212,6 +213,14 @@ void LauncherWindow::changeEvent(QEvent *event) {
   QWidget::changeEvent(event);
 }
 
+void LauncherWindow::mouseMoveEvent(QMouseEvent *event) {
+  if (m_closeOnFocusLoss && !centralWidget()->rect().contains(event->pos())) {
+    m_ctx.navigation->closeWindow();
+  }
+
+  QMainWindow::mouseMoveEvent(event);
+}
+
 void LauncherWindow::setCompacted(bool value) {
   if (m_compacted == value) return;
 
@@ -294,6 +303,8 @@ void LauncherWindow::handleConfigurationChange(const config::ConfigValue &value)
   }
 #endif
 
+  setMouseTracking(value.closeOnFocusLoss);
+  m_closeOnFocusLoss = value.closeOnFocusLoss;
   m_header->setFixedHeight(value.header.height);
   m_bar->setFixedHeight(value.footer.height);
   applyWindowConfig(value.launcherWindow);
@@ -396,7 +407,7 @@ void LauncherWindow::handleActionVisibilityChanged(bool visible) {
 void LauncherWindow::paintEvent(QPaintEvent *event) {
   auto &config = m_ctx.services->config()->value();
   OmniPainter painter(this);
-  QColor finalBgColor = painter.resolveColor(SemanticColor::Background);
+  QColor finalBgColor = OmniPainter::resolveColor(SemanticColor::Background);
 
   finalBgColor.setAlphaF(config.launcherWindow.opacity);
   painter.setRenderHint(QPainter::Antialiasing, true);
