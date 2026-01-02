@@ -64,6 +64,7 @@
       overlays.default = final: prev: {
         vicinae = prev.callPackage ./nix/vicinae.nix { gcc15Stdenv = prev.gcc15Stdenv; };
         mkVicinaeExtension = prev.callPackage ./nix/mkVicinaeExtension.nix { };
+        mkRayCastExtension = prev.callPackage ./nix/mkRayCastExtension.nix { };
       };
       homeManagerModules.default = import ./nix/module.nix self;
     };
