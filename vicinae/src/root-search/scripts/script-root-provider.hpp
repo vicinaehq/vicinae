@@ -105,8 +105,8 @@ class ScriptRootItem : public RootItem {
 
     itemSection->addAction(resetRanking);
     itemSection->addAction(markAsFavorite);
-    itemSection->addAction(disable);
     itemSection->addAction(openPreferences);
+    itemSection->addAction(disable);
 
     return panel;
   }
