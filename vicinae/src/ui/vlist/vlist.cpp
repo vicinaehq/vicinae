@@ -170,7 +170,8 @@ bool VListWidget::selectUp() {
     return true;
   }
 
-  if(m_selected->idx == firstSelectableIndex()){
+  const auto first = firstSelectableIndex();
+  if (first && m_selected->idx == *first) {
     selectLast();
     return true;
   }
@@ -209,7 +210,8 @@ bool VListWidget::selectDown() {
     return true;
   }
 
-  if(m_selected->idx == lastSelectableIndex()){
+  const auto last = lastSelectableIndex();
+  if (last && m_selected->idx == *last) {
     selectFirst();
     return true;
   }
