@@ -8,7 +8,7 @@
 #include <qscreen.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
-#include "../image/url.hpp"
+#include "ui/image/url.hpp"
 #include "config/config.hpp"
 #include "navigation-controller.hpp"
 
@@ -58,6 +58,16 @@ protected:
   void setCompacted(bool value);
   void tryCompaction();
 
+protected:
+  void mouseMoveEvent(QMouseEvent *event) override;
+  void tryCenter();
+  void centerOnScreen(const QScreen *screen);
+  void handleShowHUD(const QString &text, const std::optional<ImageURL> &icon);
+  void handleDialog(DialogContentWidget *alert);
+  void handleViewChange(const NavigationController::ViewState &state);
+  void setupUI();
+  QWidget *createWidget() const;
+
 private:
   ActionVeilWidget *m_actionVeil;
   ApplicationContext &m_ctx;
@@ -74,13 +84,5 @@ private:
   DialogWidget *m_dialog = nullptr;
   QWidget *m_focusWidget = nullptr;
   bool m_compacted = false;
-
-  void tryCenter();
-  void centerOnScreen(const QScreen *screen);
-
-  void handleShowHUD(const QString &text, const std::optional<ImageURL> &icon);
-  void handleDialog(DialogContentWidget *alert);
-  void handleViewChange(const NavigationController::ViewState &state);
-  void setupUI();
-  QWidget *createWidget() const;
+  bool m_closeOnFocusLoss = false;
 };
