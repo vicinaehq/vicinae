@@ -4,6 +4,7 @@
 #include "actions/root-search/root-search-actions.hpp"
 #include "argument.hpp"
 #include "common.hpp"
+#include "navigation-controller.hpp"
 #include "ui/image/url.hpp"
 #include "services/shortcut/shortcut-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
@@ -13,7 +14,7 @@
 
 std::unique_ptr<ActionPanelState> RootShortcutItem::newActionPanel(ApplicationContext *ctx,
                                                                    const RootItemMetadata &metadata) const {
-  auto panel = std::make_unique<ActionPanelState>();
+  auto panel = std::make_unique<ListActionPanelState>();
   auto mainSection = panel->createSection();
   auto itemSection = panel->createSection();
   auto dangerSection = panel->createSection();

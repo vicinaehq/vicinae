@@ -28,9 +28,7 @@ public:
 public:
   CopyToClipboardAction(const Clipboard::Content &content, const QString &title = "Copy to clipboard",
                         const Clipboard::CopyOptions options = {})
-      : AbstractAction(title, BuiltinIcon::CopyClipboard), m_content(content), m_opts(options) {
-    setShortcut(Keybind::CopyAction);
-  }
+      : AbstractAction(title, BuiltinIcon::CopyClipboard), m_content(content), m_opts(options) {}
 };
 
 class PasteToFocusedWindowAction : public AbstractAction {

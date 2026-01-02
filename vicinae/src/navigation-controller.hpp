@@ -144,10 +144,8 @@ private:
     case ShortcutPreset::Form:
       return {Keyboard::Shortcut::submit()};
     default:
-      break;
+      return {};
     }
-
-    return {Keyboard::Shortcut::enter()};
   }
 
   bool m_autoSelectPrimary = true;

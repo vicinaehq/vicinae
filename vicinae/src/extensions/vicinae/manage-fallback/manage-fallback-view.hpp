@@ -1,5 +1,6 @@
 #pragma once
 #include <algorithm>
+#include <cstdint>
 #include <memory>
 #include "common.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
@@ -8,7 +9,7 @@
 #include "ui/vlist/common/section-model.hpp"
 #include "ui/vlist/common/vertical-list-model.hpp"
 
-enum class ManageFallbackSection { Enabled, Available };
+enum class ManageFallbackSection : std::uint8_t { Enabled, Available };
 
 class ManageFallbackModel
     : public vicinae::ui::VerticalListModel<std::shared_ptr<RootItem>, ManageFallbackSection> {
@@ -55,7 +56,7 @@ private:
 
 class ManageFallbackView : public TypedListView<ManageFallbackModel> {
   std::unique_ptr<ActionPanelState> createActionPanel(const ItemType &item) const override {
-    auto panel = std::make_unique<ActionPanelState>();
+    auto panel = std::make_unique<ListActionPanelState>();
     auto section = panel->createSection();
     auto it = std::ranges::find(m_fallbacks, item);
 

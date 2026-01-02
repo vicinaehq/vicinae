@@ -1,14 +1,13 @@
 #include "calculator-history-view.hpp"
 #include "actions/calculator/calculator-actions.hpp"
 #include "extensions/calculator/history/calculator-history-controller.hpp"
+#include "navigation-controller.hpp"
 #include "ui/views/base-view.hpp"
 #include "clipboard-actions.hpp"
 #include "ui/views/typed-list-view.hpp"
 
-CalculatorHistoryView::CalculatorHistoryView() {}
-
 std::unique_ptr<ActionPanelState> CalculatorHistoryView::createActionPanel(const ItemType &record) const {
-  auto panel = std::make_unique<ActionPanelState>();
+  auto panel = std::make_unique<ListActionPanelState>();
   auto copyAnswer = new CopyToClipboardAction(Clipboard::Text(record.answer), "Copy answer");
   auto copyQuestion = new CopyToClipboardAction(Clipboard::Text(record.question), "Copy question");
   auto copyQuestionAndAnswer =

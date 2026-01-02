@@ -40,7 +40,7 @@ public:
     auto suggested = panel->createSection("Suggested apps");
 
     for (int i = 1; i < openers.size(); ++i) {
-      auto opener = openers[i];
+      auto &opener = openers[i];
       if (fileBrowser && fileBrowser->id() == opener->id()) continue;
       auto open = new OpenFileAction(path, opener);
       suggested->addAction(open);
@@ -59,7 +59,7 @@ public:
   }
 
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
-    auto panel = std::make_unique<ActionPanelState>();
+    auto panel = std::make_unique<ListActionPanelState>();
     auto appDb = ctx->services->appDb();
     auto section = panel->createSection();
     auto mime = m_mimeDb.mimeTypeForFile(m_path.c_str());
