@@ -46,7 +46,7 @@ void ScriptExecutorAction::execute(ApplicationContext *ctx) {
   const auto error = m_file->reload();
 
   if (error) {
-    ctx->services->toastService()->failure(QString("Failed to parse script: %1").arg(error.value()));
+    ctx->services->toastService()->failure(QString("Failed to parse script: %1").arg(error->c_str()));
     return;
   }
 
