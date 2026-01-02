@@ -62,32 +62,42 @@ void VListWidget::selectNext() {
   selectFirst();
 }
 
-int VListWidget::firstSelectableIndex() const {
-  if (!m_model) return -1;
+std::optional<VListModel::Index> VListWidget::firstSelectableIndex() const {
+  if (!m_model) return std::nullopt;
   for (int i = 0; i != m_count; ++i) {
     if (m_model->isSelectable(i)) {
       return i;
     }
   }
-  return -1;
+  return std::nullopt;
 }
 
-int VListWidget::lastSelectableIndex() const {
-  if (!m_model) return -1;
+std::optional<VListModel::Index> VListWidget::lastSelectableIndex() const {
+  if (!m_model) return std::nullopt;
   for (int i = m_count - 1; i >= 0; --i) {
     if (m_model->isSelectable(i)) {
       return i;
     }
   }
-  return -1;
+  return std::nullopt;
 }
 
 void VListWidget::selectFirst() {
-  setSelected(firstSelectableIndex());
+  if (auto idx = firstSelectableIndex()) {
+    setSelected(*idx);
+    return;
+  }
+  m_selected.reset();
+  emit itemSelected({});
 }
 
 void VListWidget::selectLast() {
-  setSelected(lastSelectableIndex());
+  if (auto idx = lastSelectableIndex()) {
+    setSelected(*idx);
+    return;
+  }
+  m_selected.reset();
+  emit itemSelected({});
 }
 
 std::span<const VListWidget::ViewportItem> VListWidget::visibleItems() const { return m_visibleItems; }
@@ -250,10 +260,10 @@ void VListWidget::setMargins(const QMargins &margins) {
 void VListWidget::setMargins(int n) { setMargins(QMargins{n, n, n, n}); }
 
 void VListWidget::setSelected(VListModel::Index idx) {
-  if (!m_model || idx < 0 || idx >= m_count) {
+  if (!m_model) {
     if (m_selected) {
       m_selected.reset();
-      emit itemSelected(-1);
+      emit itemSelected(std::nullopt);
     }
     return;
   }

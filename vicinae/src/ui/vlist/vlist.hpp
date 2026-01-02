@@ -1,4 +1,5 @@
 #pragma once
+#include <optional>
 #include <qevent.h>
 #include <qobject.h>
 #include <qscrollbar.h>
@@ -256,8 +257,8 @@ protected:
   void handleScrollChanged(int value) { updateViewport(); }
   void resizeEvent(QResizeEvent *event) override;
 
-  int firstSelectableIndex() const;
-  int lastSelectableIndex() const;
+  std::optional<VListModel::Index> firstSelectableIndex() const;
+  std::optional<VListModel::Index> lastSelectableIndex() const;
 
 private:
   struct WidgetData {
