@@ -76,7 +76,7 @@ jobs:
           cmake --build build --config ${BUILD_TYPE} --parallel $(nproc)
 
       - name: Run Tests
-        run: ./build/tests/all_tests
+        run: make test
 
       - name: Install
         run: |
