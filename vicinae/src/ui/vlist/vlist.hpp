@@ -1,4 +1,5 @@
 #pragma once
+#include <optional>
 #include <qevent.h>
 #include <qobject.h>
 #include <qscrollbar.h>
@@ -212,6 +213,7 @@ public:
   VListModel::WidgetType *widgetAt(VListModel::Index idx) const;
 
   void selectFirst();
+  void selectLast();
 
   /**
    * Select next item. If we are the end of the list, go to the first.
@@ -254,6 +256,9 @@ protected:
   bool event(QEvent *event) override;
   void handleScrollChanged(int value) { updateViewport(); }
   void resizeEvent(QResizeEvent *event) override;
+
+  std::optional<VListModel::Index> firstSelectableIndex() const;
+  std::optional<VListModel::Index> lastSelectableIndex() const;
 
 private:
   struct WidgetData {
