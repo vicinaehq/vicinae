@@ -93,7 +93,7 @@ Manager::Manager(fs::path path) : m_userPath(path) {
 ConfigValue Manager::defaultConfig() const { return m_defaultConfig; }
 const char *Manager::defaultConfigData() const { return m_defaultData.c_str(); }
 
-bool Manager::mergeProviderWithUser(std::string_view id, Partial<ProviderData> &&data) {
+bool Manager::mergeProviderWithUser(std::string_view id, const Partial<ProviderData> &data) {
   return mergeWithUser({.providers = std::map<std::string, Partial<ProviderData>>{{std::string{id}, data}}});
 }
 
@@ -111,7 +111,7 @@ bool Manager::updateUser(const std::function<void(Partial<ConfigValue> &value)> 
   return writeUser(user);
 }
 
-bool Manager::mergeEntrypointWithUser(const EntrypointId &id, ProviderItemData &&data) {
+bool Manager::mergeEntrypointWithUser(const EntrypointId &id, const ProviderItemData &data) {
   std::map<std::string, Partial<ProviderData>> providers;
   providers[id.provider] =
       Partial<ProviderData>{.entrypoints = std::map<std::string, ProviderItemData>{{id.entrypoint, data}}};

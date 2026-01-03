@@ -266,14 +266,14 @@ public:
   ConfigValue defaultConfig() const;
   const char *defaultConfigData() const;
 
-  bool mergeProviderWithUser(std::string_view id, Partial<ProviderData> &&data);
+  bool mergeProviderWithUser(std::string_view id, const Partial<ProviderData> &data);
 
   /**
    * Update the current user configuration, instead of merging.
    */
   bool updateUser(const std::function<void(Partial<ConfigValue> &value)> &updater);
 
-  bool mergeEntrypointWithUser(const EntrypointId &id, ProviderItemData &&data);
+  bool mergeEntrypointWithUser(const EntrypointId &id, const ProviderItemData &data);
 
   bool mergeWithUser(const Partial<ConfigValue> &patch);
 
