@@ -37,11 +37,45 @@ SkinToneInfo skinToneInfo(SkinTone tone) {
   throw std::runtime_error("skin tone info should map to a valid skin tone");
 }
 
-std::string applySkinTone(std::string_view emoji, SkinTone tone) {
+static constexpr std::string_view kVariationSelector16 = "\xEF\xB8\x8F";
+
+static std::string stripVariationSelectors(std::string_view str) {
   std::string result;
-  auto info = skinToneInfo(tone);
+  result.reserve(str.size());
+
+  size_t pos = 0;
+  while (pos < str.size()) {
+    if (pos + kVariationSelector16.size() <= str.size() &&
+        str.substr(pos, kVariationSelector16.size()) == kVariationSelector16) {
+      pos += kVariationSelector16.size();
+    } else {
+      result.push_back(str[pos]);
+      pos++;
+    }
+  }
+
+  return result;
+}
+
+std::string applySkinTone(std::string_view emoji, SkinTone tone) {
+  const auto info = skinToneInfo(tone);
+  int32_t i = 0;
+  int32_t const length = static_cast<int32_t>(emoji.size());
+  UChar32 c;
+
+  U8_NEXT(emoji, i, length, c);
+
+  if (c < 0) { return std::string(emoji); }
+
+  std::string result;
+
   result.reserve(emoji.size() + info.utf8.size());
-  result.append(emoji).append(info.utf8);
+  result.append(emoji.substr(0, i));
+  result.append(info.utf8);
+  // variation selectors should not appear if we add skin tone, because the skin tone makes it clear
+  // it needs to be treated as a colored emoji.
+  result.append(stripVariationSelectors(emoji.substr(i)));
+
   return result;
 }
 
@@ -150,7 +184,6 @@ bool isUtf8EncodedEmoji(std::string_view str) {
   bool has_vs = false;
   std::string segmented = segment(str);
   scan_emoji_presentation(segmented.data(), segmented.data() + segmented.size(), &is_emoji, &has_vs);
-
   return is_emoji;
 }
 

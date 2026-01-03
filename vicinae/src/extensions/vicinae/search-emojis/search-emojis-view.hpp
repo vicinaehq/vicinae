@@ -1,7 +1,7 @@
 #pragma once
+#include "emoji/emoji.hpp"
 #include "services/emoji-service/emoji-service.hpp"
 #include "ui/views/typed-list-view.hpp"
-#include "ui/vlist/common/simple-grid-model.hpp"
 #include "emoji-browser-model.hpp"
 
 class EmojiView : public TypedListView<EmojiBrowserModel> {
@@ -21,4 +21,5 @@ protected:
 
   EmojiService *m_emojiService = nullptr;
   EmojiBrowserModel *m_model = nullptr;
+  std::optional<emoji::SkinTone> m_skinTone;
 };
