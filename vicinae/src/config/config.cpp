@@ -2,6 +2,7 @@
 #include <format>
 #include <fstream>
 #include <QStyleHints>
+#include <glaze/util/key_transformers.hpp>
 #include <qnamespace.h>
 #include <qstylehints.h>
 #include <string_view>
@@ -16,10 +17,19 @@ namespace fs = std::filesystem;
 
 SNAKE_CASIFY(config::LayerShellConfig);
 SNAKE_CASIFY(config::WindowConfig);
-SNAKE_CASIFY(config::ConfigValue);
 SNAKE_CASIFY(config::SystemThemeConfig);
 SNAKE_CASIFY(config::ThemeConfig);
 SNAKE_CASIFY(config::WindowCSD);
+
+struct ConfigTransformer : glz::snake_case {
+  static constexpr std::string rename_key(const std::string_view key) {
+    if (key == "schema") return "$schema";
+    return glz::to_snake_case(key);
+  }
+};
+
+template <> struct glz::meta<config::ConfigValue> : ConfigTransformer {};
+template <> struct glz::meta<config::Partial<config::ConfigValue>> : ConfigTransformer {};
 
 namespace config {
 static constexpr const char *TOP_COMMENT =
@@ -83,7 +93,7 @@ Manager::Manager(fs::path path) : m_userPath(path) {
 ConfigValue Manager::defaultConfig() const { return m_defaultConfig; }
 const char *Manager::defaultConfigData() const { return m_defaultData.c_str(); }
 
-bool Manager::mergeProviderWithUser(std::string_view id, Partial<ProviderData> &&data) {
+bool Manager::mergeProviderWithUser(std::string_view id, const Partial<ProviderData> &data) {
   return mergeWithUser({.providers = std::map<std::string, Partial<ProviderData>>{{std::string{id}, data}}});
 }
 
@@ -101,7 +111,7 @@ bool Manager::updateUser(const std::function<void(Partial<ConfigValue> &value)> 
   return writeUser(user);
 }
 
-bool Manager::mergeEntrypointWithUser(const EntrypointId &id, ProviderItemData &&data) {
+bool Manager::mergeEntrypointWithUser(const EntrypointId &id, const ProviderItemData &data) {
   std::map<std::string, Partial<ProviderData>> providers;
   providers[id.provider] =
       Partial<ProviderData>{.entrypoints = std::map<std::string, ProviderItemData>{{id.entrypoint, data}}};
