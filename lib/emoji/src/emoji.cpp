@@ -112,8 +112,8 @@ static inline bool isEmojiTextDefault(char32_t cp) {
 static inline bool isEmoji(char32_t cp) { return u_hasBinaryProperty(cp, UCHAR_EMOJI); }
 } // namespace Character
 
-enum EMOJI : std::uint8_t {
-  EMOJI = 0,
+enum EmojiCategory : std::uint8_t {
+  Emoji = 0,
   EmojiTextPresentation = 1,
   EmojiEmojiPresentation = 2,
   EmojiModifierBase = 3,
@@ -148,7 +148,7 @@ static char emojiSegmentationCategory(char32_t codepoint) {
 
   if (Character::isEmojiEmojiDefault(codepoint)) return EmojiEmojiPresentation;
   if (Character::isEmojiTextDefault(codepoint)) return EmojiTextPresentation;
-  if (Character::isEmoji(codepoint)) return EMOJI;
+  if (Character::isEmoji(codepoint)) return Emoji;
 
   // Ragel state machine will interpret unknown category as "any".
   return kMaxEmojiScannerCategory;
@@ -175,7 +175,7 @@ static std::string segment(std::string_view str) {
 
 bool isUtf8EncodedEmoji(std::string_view str) {
   bool is_emoji = false;
-  bool has_vs = false;
+  [[maybe_unused]] bool has_vs = false;
   std::string segmented = segment(str);
   scan_emoji_presentation(segmented.data(), segmented.data() + segmented.size(), &is_emoji, &has_vs);
   return is_emoji;
