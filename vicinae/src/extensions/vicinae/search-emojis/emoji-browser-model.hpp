@@ -1,11 +1,13 @@
 #pragma once
+#include "emoji/emoji.hpp"
 #include "ui/vlist/common/simple-grid-model.hpp"
 #include "services/emoji-service/emoji-service.hpp"
 #include "utils.hpp"
+#include <cstdint>
 
 class EmojiBrowserModel : public vicinae::ui::SimpleGridModel<EmojiData, int> {
 public:
-  enum class DisplayMode { Root, Search };
+  enum class DisplayMode : std::uint8_t { Root, Search };
 
   void setGroupedEmojis(EmojiService::GroupedEmojis emojis) { m_grouped = emojis; }
 
@@ -20,6 +22,13 @@ public:
   void setDisplayMode(DisplayMode mode) { m_root = mode == DisplayMode::Root; }
 
   GridData createItemData(const EmojiData &item) const override {
+    auto &map = StaticEmojiDatabase::mapping();
+
+    if (item.skinToneSupport) {
+      auto emoji = emoji::applySkinTone(item.emoji, emoji::SkinTone::Light);
+      return {.icon = ImageURL::emoji(qStringFromStdView(emoji)), .tooltip = qStringFromStdView(item.name)};
+    }
+
     return {.icon = ImageURL::emoji(qStringFromStdView(item.emoji)),
             .tooltip = qStringFromStdView(item.name)};
   }

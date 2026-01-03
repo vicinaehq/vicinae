@@ -28,6 +28,7 @@ strip:
 test:
 	$(BUILD_DIR)/lib/xdgpp/xdgpp-tests
 	$(BUILD_DIR)/lib/script-command/scriptcommand-tests
+	$(BUILD_DIR)/lib/emoji/emoji-tests
 .PHONY: test
 
 no-ts-ext:
@@ -100,10 +101,6 @@ gen-contrib:
 	node ./scripts/gen-contrib.js
 .PHONY: gen-contrib
 
-# we run this from time to time only, it's not part of the build pipeline
-gen-emoji:
-	cd ./scripts/emoji && npm install && tsc --outDir dist && node dist/main.js
-.PHONY: gen-emoji
 
 clean:
 	rm -rf $(BUILD_DIR)

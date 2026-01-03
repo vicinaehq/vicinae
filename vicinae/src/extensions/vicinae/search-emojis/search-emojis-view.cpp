@@ -5,7 +5,7 @@
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/emoji-service/emoji-service.hpp"
-#include "services/emoji-service/emoji.hpp"
+#include "emoji/emoji.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/action-pannel/push-action.hpp"
 #include "ui/form/text-area.hpp"

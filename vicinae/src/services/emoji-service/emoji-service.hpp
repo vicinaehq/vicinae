@@ -1,7 +1,7 @@
 #pragma once
 #include "common.hpp"
+#include "emoji/emoji.hpp"
 #include "omni-database.hpp"
-#include "services/emoji-service/emoji.hpp"
 #include <qobject.h>
 #include <unordered_set>
 #include <string_view>
@@ -69,7 +69,7 @@ private:
   /**
    * Additional keywords set by the user
    */
-  std::unordered_map<std::string_view, std::string> m_keywordMap;
+  std::unordered_map<std::string, std::string> m_keywordMap;
   std::unordered_set<std::string_view> m_pinned;
   std::vector<Scored<const EmojiData *>> m_searchResults;
 

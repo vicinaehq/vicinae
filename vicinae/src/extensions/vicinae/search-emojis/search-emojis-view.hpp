@@ -1,6 +1,5 @@
 #pragma once
 #include "services/emoji-service/emoji-service.hpp"
-#include "services/emoji-service/emoji.hpp"
 #include "ui/views/typed-list-view.hpp"
 #include "ui/vlist/common/simple-grid-model.hpp"
 #include "emoji-browser-model.hpp"

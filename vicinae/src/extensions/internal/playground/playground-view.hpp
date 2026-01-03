@@ -1,11 +1,10 @@
 #include "fuzzy/weighted-fuzzy-scorer.hpp"
 #include "layout.hpp"
 #include "services/emoji-service/emoji-service.hpp"
-#include "services/emoji-service/emoji.hpp"
+#include "emoji/emoji.hpp"
 #include "ui/views/base-view.hpp"
 #include "service-registry.hpp"
 #include "ui/vlist/vlist.hpp"
-#include <qwizard.h>
 #include <ranges>
 #include "ui/vlist/common/simple-grid-model.hpp"
 
@@ -80,8 +79,9 @@ public:
       return m_list->selectLeft();
     case Qt::Key_Right:
       return m_list->selectRight();
+    default:
+      return false;
     }
-    return false;
   }
 
   void textChanged(const QString &text) override {
@@ -107,7 +107,7 @@ public:
       return {&data, scorer.score(pattern)};
     };
 
-    auto filtered = StaticEmojiDatabase::orderedList() | std::views::transform(withScore) |
+    auto filtered = emoji::emojis() | std::views::transform(withScore) |
                     std::views::filter([](auto &&s) { return s.score > 0; });
     m_results.clear();
     std::ranges::copy(filtered, std::back_inserter(m_results));

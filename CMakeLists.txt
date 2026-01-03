@@ -70,7 +70,9 @@ endif()
 if (BUILD_TESTS)
 	set(SCRIPTCOMMAND_BUILD_TESTS ON CACHE BOOL "Build script-command tests" FORCE)
 endif()
+
 add_subdirectory("./lib/script-command")
+add_subdirectory("./lib/emoji")
 
 if (USE_SYSTEM_PROTOBUF)
 	set(USE_SYSTEM_ABSEIL ON)
