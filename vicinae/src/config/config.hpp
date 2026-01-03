@@ -177,9 +177,9 @@ struct ConfigValue {
   std::string schema = SCHEMA;
   std::vector<std::string> imports;
   bool searchFilesInRoot = false;
-  bool closeOnFocusLoss;
-  bool considerPreedit;
-  bool popToRootOnClose;
+  bool closeOnFocusLoss = false;
+  bool considerPreedit = false;
+  bool popToRootOnClose = false;
   std::string escapeKeyBehavior;
   std::string faviconService = "twenty";
   std::string keybinding = "default";
