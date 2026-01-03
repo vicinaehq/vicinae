@@ -1,8 +1,6 @@
 #include "emoji/emoji.hpp"
-#include <algorithm>
 #include <array>
 #include <cstdint>
-#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <unicode/uchar.h>
@@ -31,11 +29,7 @@ static constexpr std::array<SkinToneInfo, skinToneCount> skinToneInfos = {
 
 std::span<const SkinToneInfo> skinTones() { return skinToneInfos; }
 
-SkinToneInfo skinToneInfo(SkinTone tone) {
-  auto it = std::ranges::find_if(skinToneInfos, [&](const SkinToneInfo &info) { return info.tone == tone; });
-  if (it != skinToneInfos.end()) { return *it; }
-  throw std::runtime_error("skin tone info should map to a valid skin tone");
-}
+SkinToneInfo skinToneInfo(SkinTone tone) { return skinToneInfos.at(static_cast<std::uint8_t>(tone)); }
 
 static constexpr std::string_view kVariationSelector16 = "\xEF\xB8\x8F";
 
@@ -187,4 +181,4 @@ bool isUtf8EncodedEmoji(std::string_view str) {
   return is_emoji;
 }
 
-}; // namespace emoji
+} // namespace emoji

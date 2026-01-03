@@ -6,7 +6,6 @@
 #include "single-view-command-context.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "utils.hpp"
-#include <ranges>
 
 class SearchEmojiCommand : public BuiltinViewCommand<EmojiView> {
   QString id() const override { return "search-emojis"; }
