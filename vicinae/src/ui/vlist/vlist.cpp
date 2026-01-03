@@ -30,7 +30,7 @@ void VListWidget::calculate() {
   m_height = m_model->height() + m_margins.top() + m_margins.bottom();
   m_count = m_model->count();
   m_scrollBar->setMinimum(0);
-  m_scrollBar->setMaximum(std::max(0, m_height - (int)size().height()));
+  m_scrollBar->setMaximum(std::max(0, m_height - size().height()));
   m_scrollBar->setSingleStep(DEFAULT_PAGE_STEP);
   m_scrollBar->setVisible(m_height > size().height());
 
@@ -65,9 +65,7 @@ void VListWidget::selectNext() {
 std::optional<VListModel::Index> VListWidget::firstSelectableIndex() const {
   if (!m_model) return std::nullopt;
   for (int i = 0; i != m_count; ++i) {
-    if (m_model->isSelectable(i)) {
-      return i;
-    }
+    if (m_model->isSelectable(i)) { return i; }
   }
   return std::nullopt;
 }
@@ -75,9 +73,7 @@ std::optional<VListModel::Index> VListWidget::firstSelectableIndex() const {
 std::optional<VListModel::Index> VListWidget::lastSelectableIndex() const {
   if (!m_model) return std::nullopt;
   for (int i = m_count - 1; i >= 0; --i) {
-    if (m_model->isSelectable(i)) {
-      return i;
-    }
+    if (m_model->isSelectable(i)) { return i; }
   }
   return std::nullopt;
 }
