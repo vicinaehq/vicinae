@@ -1,5 +1,5 @@
 #include "script/script-command-file.hpp"
-#include "services/emoji-service/emoji.hpp"
+#include "emoji/emoji.hpp"
 #include "services/script-command/script-command-service.hpp"
 #include "service-registry.hpp"
 #include "ui/image/url.hpp"
@@ -72,9 +72,7 @@ ImageURL ScriptCommandFile::icon() const {
 
   std::error_code ec;
 
-  if (StaticEmojiDatabase::mapping().contains(m_data.icon.value())) {
-    return ImageURL::emoji(m_data.icon.value().c_str());
-  }
+  if (emoji::isUtf8EncodedEmoji(m_data.icon.value())) { return ImageURL::emoji(m_data.icon.value().c_str()); }
 
   if (std::filesystem::is_regular_file(m_data.icon.value(), ec)) {
     return ImageURL::local(QString::fromStdString(m_data.icon.value()));

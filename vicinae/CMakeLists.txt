@@ -7,7 +7,7 @@ find_package(Qt6 REQUIRED COMPONENTS Core Widgets Sql Network Svg DBus Concurren
 find_package(OpenSSL REQUIRED)
 find_package(LibXml2 REQUIRED)
 
-list(APPEND LIBS  Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus Qt6::Concurrent ${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY} protobuf::libprotobuf minizip OpenSSL::Crypto wayland-client xdgpp qt6keychain LibXml2::LibXml2 glaze::glaze scriptcommand)
+list(APPEND LIBS  Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus Qt6::Concurrent ${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY} protobuf::libprotobuf minizip OpenSSL::Crypto wayland-client xdgpp qt6keychain LibXml2::LibXml2 glaze::glaze scriptcommand emoji)
 
 set(WLR_CLIP_BIN ${CMAKE_BINARY_DIR}/wlr-clip/wlr-clip${CMAKE_EXECUTABLE_SUFFIX})
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)
@@ -477,8 +477,6 @@ set(SRCS
 	src/services/app-service/app-service.hpp
 	src/services/app-service/app-service.cpp
 
-	src/services/emoji-service/emoji.hpp
-	src/services/emoji-service/emoji.cpp
 	src/services/emoji-service/emoji-service.hpp
 	src/services/emoji-service/emoji-service.cpp
 

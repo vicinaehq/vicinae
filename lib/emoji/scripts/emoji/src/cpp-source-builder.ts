@@ -1,6 +1,5 @@
 import { join } from 'path';
 import { mkdir, writeFile } from 'fs/promises';
-import { spawnSync } from 'child_process';
 
 type EmojiInfo = {
 	emoji: string;
@@ -24,17 +23,17 @@ export class CppSourceBuilder {
 	}
 
 	private buildHeader = (): string => {
-const HEADER_BASE = `#pragma once
-#include <vector>
+		const HEADER_BASE = `#pragma once
 #include <string_view>
 #include <array>
 #include <unordered_map>
+#include <initializer_list>
 
 struct EmojiData {
 	std::string_view emoji;
 	std::string_view name;
 	std::string_view group;
-	std::vector<std::string_view> keywords;
+	std::initializer_list<std::string_view> keywords;
 	bool skinToneSupport = false;
 };
 
@@ -53,9 +52,9 @@ class StaticEmojiDatabase {
 	private buildStaticArray() {
 		return `static const std::array<EmojiData, ${this.m_emojis.length}> EMOJI_LIST = {\n${this.m_emojis.map(this.buildItemStruct).join(',\n')}\n};`;
 	}
-	
+
 	private buildSource() {
-		return `// clang-format off\n\n#include "emoji.hpp"\n#include <string_view>\n#include <array>\n\n${this.buildCategories()}\n\n${this.buildKeywords()}\n\n${this.buildStaticArray()}\n\nconst std::array<EmojiData, ${this.m_emojis.length}>& StaticEmojiDatabase::orderedList() { return EMOJI_LIST; }\n${this.buildMap()} const std::unordered_map<std::string_view, const EmojiData*>& StaticEmojiDatabase::mapping() { return MAPPING; }\n\nconst std::array<std::string_view, ${this.m_groups.length}>& StaticEmojiDatabase::groups() { return GROUPS; }`;
+		return `// clang-format off\n\n#include "generated/db.hpp"\n#include <string_view>\n#include <array>\n\n${this.buildCategories()}\n\n${this.buildKeywords()}\n\n${this.buildStaticArray()}\n\nconst std::array<EmojiData, ${this.m_emojis.length}>& StaticEmojiDatabase::orderedList() { return EMOJI_LIST; }\n${this.buildMap()} const std::unordered_map<std::string_view, const EmojiData*>& StaticEmojiDatabase::mapping() { return MAPPING; }\n\nconst std::array<std::string_view, ${this.m_groups.length}>& StaticEmojiDatabase::groups() { return GROUPS; }`;
 	}
 
 	private buildCategories() {
@@ -79,7 +78,7 @@ ${this.m_emojis.map(({ emoji }, idx) => `{ ${quoted(emoji)}, &EMOJI_LIST[${idx}]
 	addEmoji(emoji: string, name: string, group: string, keywords: string[], skinToneSupport: boolean) {
 		let groupIdx = -1;
 		const keywordIndexes: number[] = [];
-		
+
 		if (this.m_groupMap.has(group)) {
 			groupIdx = this.m_groupMap.get(group)!;
 		} else {
@@ -89,7 +88,7 @@ ${this.m_emojis.map(({ emoji }, idx) => `{ ${quoted(emoji)}, &EMOJI_LIST[${idx}]
 		}
 
 		for (const keyword of keywords) {
-			if (keyword.includes("\\")) continue ;
+			if (keyword.includes("\\")) continue;
 
 			if (!this.m_keywordMap.has(keyword)) {
 				this.m_keywordMap.set(keyword, this.m_keywords.length);
@@ -104,8 +103,8 @@ ${this.m_emojis.map(({ emoji }, idx) => `{ ${quoted(emoji)}, &EMOJI_LIST[${idx}]
 	}
 
 	async build(outDir: string) {
-		const sourceDst = join(outDir, "emoji.cpp");
-		const  headerDst = join(outDir, "emoji.hpp");
+		const sourceDst = join(outDir, "db.cpp");
+		const headerDst = join(outDir, "db.hpp");
 
 		console.log(`Building source files for ${this.m_emojis.length} emojis...`);
 		await mkdir(outDir, { recursive: true });
@@ -114,17 +113,5 @@ ${this.m_emojis.map(({ emoji }, idx) => `{ ${quoted(emoji)}, &EMOJI_LIST[${idx}]
 		await writeFile(join(outDir, "emoji.hpp"), this.buildHeader(), 'utf8');
 		console.log(`Successfully generated ${headerDst}`);
 		console.log(`Successfully generated ${sourceDst}`);
-	}
-
-	async tryCompile(outDir: string) {
-		let old = process.cwd();
-		process.chdir(outDir);
-		console.log('Attempting compilation...');
-		let result = spawnSync('/usr/bin/c++', ['emoji.cpp', '-c', '-o', 'emoji.o']);
-		if (result.status != 0) {
-			throw new Error(`Failed to compile: ${result.stderr.toString()}`);
-		}
-		process.chdir(old);
-		console.log('Succesfully compiled, ready to embed');
 	}
 };

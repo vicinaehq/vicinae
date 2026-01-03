@@ -1,7 +1,7 @@
 #include "builtin_icon.hpp"
+#include "emoji/emoji.hpp"
 #include "extend/image-model.hpp"
 #include "services/asset-resolver/asset-resolver.hpp"
-#include "services/emoji-service/emoji.hpp"
 #include "theme.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
 #include "theme/theme-file.hpp"
@@ -243,7 +243,7 @@ ImageURL::ImageURL(const ImageLikeModel &imageLike) : _mask(OmniPainter::NoMask)
       }
     }
 
-    if (StaticEmojiDatabase::mapping().contains(source.toStdString())) {
+    if (emoji::isUtf8EncodedEmoji(source.toStdString())) {
       setType(ImageURLType::Emoji);
       setName(source);
       return;

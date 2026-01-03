@@ -1,7 +1,6 @@
 #include "emoji-service.hpp"
 #include "lib/fzf.hpp"
 #include "omni-database.hpp"
-#include "services/emoji-service/emoji.hpp"
 #include <qlogging.h>
 #include "utils/utils.hpp"
 #include <qsqlquery.h>
@@ -9,7 +8,7 @@
 void EmojiService::loadKeywords() {
   for (const auto &visited : getVisited()) {
     if (!visited.keywords.isEmpty()) {
-      m_keywordMap.insert({visited.data->emoji, visited.keywords.toStdString()});
+      m_keywordMap.insert({std::string(visited.data->emoji), visited.keywords.toStdString()});
     }
   }
 }

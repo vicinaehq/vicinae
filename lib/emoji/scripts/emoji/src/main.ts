@@ -16,7 +16,6 @@ const main = async () => {
 	}
 
 	await builder.build("dist");
-	await builder.tryCompile("dist");
 }
 
 main();
