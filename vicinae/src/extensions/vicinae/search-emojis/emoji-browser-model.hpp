@@ -25,8 +25,6 @@ public:
   void setDisplayMode(DisplayMode mode) { m_root = mode == DisplayMode::Root; }
 
   GridData createItemData(const EmojiData &item) const override {
-    auto &map = StaticEmojiDatabase::mapping();
-
     if (item.skinToneSupport) {
       return {.icon = ImageURL::emoji(getSkinTonedEmoji(item).c_str()),
               .tooltip = qStringFromStdView(item.name)};
