@@ -2,15 +2,10 @@
 #include <expected>
 #include <filesystem>
 #include "common.hpp"
-#include "glaze/glaze.hpp"
-#include "utils.hpp"
 #include "vicinae.hpp"
 #include <glaze/core/common.hpp>
 #include <glaze/core/reflect.hpp>
-#include <glaze/json/prettify.hpp>
-#include <glaze/json/ptr.hpp>
-#include <glaze/json/read.hpp>
-#include <glaze/json/write.hpp>
+#include <glaze/json.hpp>
 #include <glaze/util/key_transformers.hpp>
 #include <iostream>
 #include <qfilesystemwatcher.h>
@@ -176,16 +171,15 @@ using KeybindMap = std::map<std::string, std::string>;
 
 using ProviderMap = std::map<std::string, ProviderData>;
 
-struct ConfigValue {
-  static const constexpr bool DFLT_CLOSE_ON_FOCUS_LOSS = true;
-  static const constexpr bool DFLT_CONSIDER_PRE_EDIT = false;
-  static const constexpr bool DFLT_POP_TO_ROOT_ON_CLOSE = false;
+static constexpr const char *SCHEMA = "https://vicinae.com/schemas/config.json";
 
+struct ConfigValue {
+  std::string schema = SCHEMA;
   std::vector<std::string> imports;
   bool searchFilesInRoot = false;
-  bool closeOnFocusLoss = DFLT_CLOSE_ON_FOCUS_LOSS;
-  bool considerPreedit = DFLT_CONSIDER_PRE_EDIT;
-  bool popToRootOnClose = DFLT_POP_TO_ROOT_ON_CLOSE;
+  bool closeOnFocusLoss;
+  bool considerPreedit;
+  bool popToRootOnClose;
   std::string escapeKeyBehavior;
   std::string faviconService = "twenty";
   std::string keybinding = "default";
@@ -226,6 +220,7 @@ struct ConfigValue {
 using PartialValue = Partial<ConfigValue>;
 
 template <> struct Partial<ConfigValue> {
+  std::string schema = SCHEMA;
   std::optional<std::vector<std::string>> imports;
   std::optional<bool> closeOnFocusLoss;
   std::optional<bool> considerPreedit;

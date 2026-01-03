@@ -1,4 +1,6 @@
 {
+	"$schema": "https://vicinae.com/schemas/config.json",
+
 	// A list of paths pointed to separate configuration files to source during loading.
 	// Note that values defined in the main configuration file always take precedence over imported
 	// files.

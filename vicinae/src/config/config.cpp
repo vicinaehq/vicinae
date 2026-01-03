@@ -2,6 +2,7 @@
 #include <format>
 #include <fstream>
 #include <QStyleHints>
+#include <glaze/util/key_transformers.hpp>
 #include <qnamespace.h>
 #include <qstylehints.h>
 #include <string_view>
@@ -16,10 +17,19 @@ namespace fs = std::filesystem;
 
 SNAKE_CASIFY(config::LayerShellConfig);
 SNAKE_CASIFY(config::WindowConfig);
-SNAKE_CASIFY(config::ConfigValue);
 SNAKE_CASIFY(config::SystemThemeConfig);
 SNAKE_CASIFY(config::ThemeConfig);
 SNAKE_CASIFY(config::WindowCSD);
+
+struct ConfigTransformer : glz::snake_case {
+  static constexpr std::string rename_key(const std::string_view key) {
+    if (key == "schema") return "$schema";
+    return glz::to_snake_case(key);
+  }
+};
+
+template <> struct glz::meta<config::ConfigValue> : ConfigTransformer {};
+template <> struct glz::meta<config::Partial<config::ConfigValue>> : ConfigTransformer {};
 
 namespace config {
 static constexpr const char *TOP_COMMENT =
