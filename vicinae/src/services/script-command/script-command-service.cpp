@@ -32,7 +32,7 @@ void ScriptCommandService::setCustomScriptPaths(const std::vector<std::filesyste
 }
 
 const std::vector<std::filesystem::path> &ScriptCommandService::defaultScriptDirectories() const {
-  static const auto dirs = xdgpp::dataDirs() |
+  static const auto dirs = xdgpp::commonDataDirs() |
                            std::views::transform([](auto &&p) { return p / "vicinae" / "scripts"; }) |
                            std::ranges::to<std::vector>();
   return dirs;
