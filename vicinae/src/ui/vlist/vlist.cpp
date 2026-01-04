@@ -1,5 +1,6 @@
 #include "vlist.hpp"
 #include "ui/scroll-bar/scroll-bar.hpp"
+#include <ranges>
 
 namespace vicinae::ui {
 
@@ -18,6 +19,32 @@ void VListWidget::setModel(VListModel *model) {
     calculate();
   });
   calculate();
+}
+
+void VListWidget::recalculateMousePosition() {
+  QPoint globalPos = QCursor::pos();
+
+  for (const auto &info : visibleItems()) {
+    QPoint localPos = info.widget->mapFromGlobal(globalPos);
+    bool isUnderCursor = info.widget->rect().contains(localPos);
+
+    if (!isUnderCursor) { info.widget->widget()->clearTransientState(); }
+
+    if (info.widget->underMouse()) {
+      info.widget->hide();
+      info.widget->show();
+    }
+  }
+}
+
+void VListWidget::updateFocusChain() {
+  int lastIdx = std::max(0, static_cast<int>(m_visibleItems.size() - 1));
+
+  for (int i = 0; i != lastIdx; ++i) {
+    QWidget *current = m_visibleItems.at(i).widget;
+    QWidget *next = m_visibleItems.at(i + 1).widget;
+    setTabOrder(current, next);
+  }
 }
 
 void VListWidget::calculate() {
@@ -483,6 +510,8 @@ void VListWidget::updateViewport() {
 
   m_widgetMap = newMap;
 
+  recalculateMousePosition();
+  updateFocusChain();
   setUpdatesEnabled(true);
   update();
 

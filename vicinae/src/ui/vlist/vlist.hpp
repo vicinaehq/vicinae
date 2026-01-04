@@ -162,7 +162,7 @@ private:
   VListModel::WidgetType *m_widget = nullptr;
 };
 
-enum class ScrollAnchor { Top, Bottom, Relative };
+enum class ScrollAnchor : std::uint8_t { Top, Bottom, Relative };
 
 class VListWidget : public QWidget {
   Q_OBJECT
@@ -246,6 +246,14 @@ public:
   std::optional<VListModel::Index> currentSelection() const;
 
 protected:
+  /**
+   * Makes sure widgets that may have a specific appearance due to them having been hovered
+   * are updated if this is no longer the case.
+   */
+  void recalculateMousePosition();
+
+  void updateFocusChain();
+
   std::optional<VListModel::Index> getTopItem(VListModel::Index idx) const;
 
   void scrollToHeight(int height) { m_scrollBar->setValue(height); }
