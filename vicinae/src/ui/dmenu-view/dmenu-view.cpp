@@ -70,17 +70,7 @@ void View::textChanged(const QString &text) {
 }
 
 void View::setFilter(std::string_view query) {
-  auto toScore = [&](std::string_view s) {
-    int score = fzf::defaultMatcher.fuzzy_match_v2_score_query(s, query);
-    return Scored<std::string_view>{.data = s, .score = score};
-  };
-
-  auto filtered = m_entries | std::views::transform(toScore) |
-                  std::views::filter([&](auto &&s) { return query.empty() || s.score > 0; });
-
-  m_filteredEntries.clear();
-  std::ranges::copy(filtered, std::back_inserter(m_filteredEntries));
-  std::ranges::stable_sort(m_filteredEntries, std::greater{});
+  fzf::search(m_entries, m_filteredEntries, query);
 
   if (!m_data.noSection) { updateSectionName(m_data.sectionTitle.value_or("Entries ({count})")); }
 

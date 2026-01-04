@@ -105,23 +105,9 @@ std::optional<VListModel::Index> VListWidget::lastSelectableIndex() const {
   return std::nullopt;
 }
 
-void VListWidget::selectFirst() {
-  if (auto idx = firstSelectableIndex()) {
-    setSelected(*idx);
-    return;
-  }
-  m_selected.reset();
-  emit itemSelected({});
-}
+void VListWidget::selectFirst() { setSelected(firstSelectableIndex()); }
 
-void VListWidget::selectLast() {
-  if (auto idx = lastSelectableIndex()) {
-    setSelected(*idx);
-    return;
-  }
-  m_selected.reset();
-  emit itemSelected({});
-}
+void VListWidget::selectLast() { setSelected(lastSelectableIndex()); }
 
 std::span<const VListWidget::ViewportItem> VListWidget::visibleItems() const { return m_visibleItems; }
 
@@ -284,7 +270,7 @@ void VListWidget::setMargins(const QMargins &margins) {
 
 void VListWidget::setMargins(int n) { setMargins(QMargins{n, n, n, n}); }
 
-void VListWidget::setSelected(VListModel::Index idx) {
+void VListWidget::setSelected(std::optional<VListModel::Index> idx) {
   if (!m_model) {
     if (m_selected) {
       m_selected.reset();
@@ -293,14 +279,22 @@ void VListWidget::setSelected(VListModel::Index idx) {
     return;
   }
 
-  auto id = m_model->stableId(idx);
+  if (!idx) {
+    if (m_selected) {
+      m_selected.reset();
+      emit itemSelected(std::nullopt);
+    }
+    return;
+  }
+
+  auto id = m_model->stableId(idx.value());
 
   if (!m_selected || m_selected->id != id) {
-    m_selected = Selection{.idx = idx, .id = id};
+    m_selected = Selection{.idx = idx.value(), .id = id};
     emit itemSelected(idx);
   }
 
-  scrollToIndex(idx);
+  scrollToIndex(idx.value());
   updateViewport();
 }
 

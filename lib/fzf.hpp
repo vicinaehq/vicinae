@@ -6,12 +6,14 @@
  */
 
 #pragma once
+#include "common.hpp"
 #include <algorithm>
 #include <array>
 #include <cctype>
 #include <cstdint>
 #include <iterator>
 #include <qlogging.h>
+#include <qstringview.h>
 #include <ranges>
 #include <string>
 #include <string_view>
@@ -48,6 +50,30 @@ struct WeightedString {
 };
 
 enum class Scheme { Default, Path, History };
+
+template <typename TIn> struct Searchable {
+  using Input = TIn;
+  using Output = TIn;
+  static constexpr std::vector<std::string> strings(const TIn &in) { return {}; }
+  static constexpr Output transform(const TIn &in) { return in; }
+};
+
+template <typename T> struct SelfSearchable {
+  using Input = T;
+  using Output = T;
+  static constexpr std::vector<std::string> strings(const T &in) { return {std::string(in)}; }
+  static constexpr T transform(const T &in) { return in; }
+};
+
+template <> struct Searchable<QString> {
+  using Input = QString;
+  using Output = QStringView;
+  static constexpr std::vector<std::string> strings(const QString &in) { return {in.toStdString()}; }
+  static constexpr Output transform(const QString &in) { return in; }
+};
+
+template <> struct Searchable<std::string> : public SelfSearchable<std::string> {};
+template <> struct Searchable<std::string_view> : public SelfSearchable<std::string_view> {};
 
 class Matcher {
 public:
@@ -115,6 +141,28 @@ public:
     for (auto word : words) {
       int maxScore = std::ranges::max(weightedStrs | std::views::transform([&](const WeightedString &str) {
                                         return fuzzy_match_v2(str.str, word, false, false).score * str.weight;
+                                      }));
+
+      if (!maxScore) return 0;
+
+      globalScore += maxScore;
+      ++globalCount;
+    }
+
+    return globalCount != 0 ? globalScore / globalCount : 0;
+  }
+
+  int fuzzy_match_v2_score_query(std::span<const std::string> strings, std::string_view query,
+                                 bool case_sensitive = false) const {
+    int globalScore = 0;
+    int globalCount = 0;
+    auto words = std::views::split(query, std::string_view{" "}) |
+                 std::views::transform([](auto &&part) { return std::string_view{part}; }) |
+                 std::views::filter([](auto &&s) { return !s.empty(); });
+
+    for (auto word : words) {
+      int maxScore = std::ranges::max(strings | std::views::transform([&](const std::string &str) {
+                                        return fuzzy_match_v2(str, word, false, false).score;
                                       }));
 
       if (!maxScore) return 0;
@@ -444,6 +492,37 @@ private:
   mutable std::vector<int> H;  // Score matrix
   mutable std::vector<int> C;  // Consecutive match matrix
 };
+
+template <typename T>
+void search(const std::vector<T> &in, std::vector<Scored<typename fzf::Searchable<T>::Output>> &out,
+            std::string_view query) {
+  static constexpr const int MULTITHREAD_THRESHOLD = 1000;
+
+  using FZ = fzf::Searchable<T>;
+  using Out = Scored<typename FZ::Output>;
+
+  if (in.size() > 50) {
+    auto seq = QtConcurrent::blockingMapped<std::vector<Out>>(in, [query](const auto &item) {
+      static thread_local fzf::Matcher matcher;
+      int score = matcher.fuzzy_match_v2_score_query(FZ::strings(item), query);
+      return Out(FZ::transform(item), score);
+    });
+
+    /*
+if (!query.empty()) {
+  QtConcurrent::filter(seq, [](auto &&s) { return s.score > 0; });
+}
+    */
+
+    out.reserve(seq.size());
+    out.clear();
+    std::ranges::copy(seq, std::back_inserter(out));
+  } else {
+    for (const auto &item : in) {}
+  }
+
+  std::ranges::sort(out, std::greater{});
+}
 
 /**
  * Non thread-safe global instance

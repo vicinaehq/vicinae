@@ -3,6 +3,9 @@
 #include "template-engine/template-engine.hpp"
 #include "ui/list-section-header.hpp"
 #include "ui/vlist/vlist.hpp"
+#include <algorithm>
+#include <numeric>
+#include <ranges>
 
 namespace vicinae::ui {
 
@@ -150,6 +153,26 @@ protected:
       c = c + itemCount + withHeader * 1;
     }
     return c;
+  }
+
+  std::optional<VListModel::Index> findItemIf(std::function<bool(const Item &item)> pred) {
+    int c = 0;
+    for (int i = 0; i != sectionCount(); ++i) {
+      auto id = sectionIdFromIndex(i);
+      int itemCount = sectionItemCount(id);
+      bool withHeader = itemCount > 0 && !sectionName(id).empty();
+
+      if (withHeader) { ++c; }
+
+      const auto items =
+          std::views::iota(0, itemCount) | std::views::transform([&](auto j) { return sectionItemAt(i, j); });
+
+      for (const auto &item : items) {
+        if (pred(item)) { return c; }
+        ++c;
+      }
+    }
+    return {};
   }
 
   int height() const final override { return m_height; }

@@ -27,7 +27,7 @@ class NonCopyable {
 public:
   NonCopyable(const NonCopyable &) = delete;
   NonCopyable &operator=(const NonCopyable &) = delete;
-  NonCopyable() {}
+  NonCopyable() = default;
 };
 
 template <class T> using OptionalRef = std::optional<std::reference_wrapper<T>>;
