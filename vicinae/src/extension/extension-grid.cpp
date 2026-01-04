@@ -27,7 +27,7 @@ bool ExtensionGridList::selectUp() { return m_list->selectUp(); }
 bool ExtensionGridList::selectDown() { return m_list->selectDown(); }
 bool ExtensionGridList::selectLeft() { return m_list->selectLeft(); }
 bool ExtensionGridList::selectRight() { return m_list->selectRight(); }
-void ExtensionGridList::selectNext() { return m_list->selectNext(); }
+void ExtensionGridList::selectNext() { m_list->selectNext(); }
 void ExtensionGridList::activateCurrentSelection() const { m_list->activateCurrentSelection(); }
 
 bool ExtensionGridList::empty() const { return m_model->isEmpty(); }
@@ -35,6 +35,7 @@ bool ExtensionGridList::empty() const { return m_model->isEmpty(); }
 void ExtensionGridList::setModel(const std::vector<GridChild> &model, OmniList::SelectionPolicy selection) {
   m_model->setData(model);
   m_model->reload();
+  m_list->refreshAll();
 }
 
 void ExtensionGridList::setFilter(const QString &query) {
