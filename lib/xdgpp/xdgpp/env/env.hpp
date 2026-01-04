@@ -25,6 +25,11 @@ std::filesystem::path cacheHome();
 std::vector<std::filesystem::path> dataDirs();
 
 /**
+ * Like `dataDirs` but makes sure common directories are included if they are not in the XDG_DATA_DIRS.
+ */
+std::vector<std::filesystem::path> commonDataDirs();
+
+/**
  * Directories where applications (desktop entries) are looked for.
  * This is essentially dataDirs() but with /applications appended to each path.
  */
