@@ -9,6 +9,10 @@ find_package(LibXml2 REQUIRED)
 
 list(APPEND LIBS  Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus Qt6::Concurrent ${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY} protobuf::libprotobuf minizip OpenSSL::Crypto wayland-client xdgpp qt6keychain LibXml2::LibXml2 glaze::glaze scriptcommand emoji)
 
+if (UNIX AND NOT APPLE)
+	list(APPEND LIBS cap)
+endif()
+
 set(WLR_CLIP_BIN ${CMAKE_BINARY_DIR}/wlr-clip/wlr-clip${CMAKE_EXECUTABLE_SUFFIX})
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)
 set(EXTRA_PATH ${CMAKE_SOURCE_DIR}/extra)
@@ -792,3 +796,4 @@ protobuf_generate(
 )
 
 install(TARGETS ${TARGET})
+install(CODE "execute_process(COMMAND setcap cap_sys_admin,cap_dac_read_search+ep \${CMAKE_INSTALL_PREFIX}/bin/${TARGET})")
