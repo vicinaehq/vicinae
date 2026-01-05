@@ -4,6 +4,7 @@
 #include "services/window-manager/hyprland/hyprctl.hpp"
 #include "lib/wayland/virtual-keyboard.hpp"
 #include "vicinae.hpp"
+#include "wayland/globals.hpp"
 #include <format>
 #include <xkbcommon/xkbcommon-keysyms.h>
 
@@ -77,7 +78,7 @@ AbstractWindowManager::WindowPtr HyprlandWindowManager::getFocusedWindowSync() c
   return std::make_shared<HyprlandWindow>(json.object());
 }
 
-bool HyprlandWindowManager::supportsPaste() const { return m_kb.isAvailable(); }
+bool HyprlandWindowManager::supportsPaste() const { return Wayland::Globals::virtualKeyboardManager(); }
 
 void HyprlandWindowManager::focusWindowSync(const AbstractWindow &window) const {
   Hyprctl::oneshot(std::format("dispatch focuswindow address:{}", window.id().toStdString()));

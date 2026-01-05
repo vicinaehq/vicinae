@@ -1,4 +1,5 @@
 #include "globals.hpp"
+#include "virtual-keyboard-unstable-v1-client-protocol.h"
 
 namespace Wayland {
 
@@ -8,6 +9,10 @@ zwlr_data_control_manager_v1 *Globals::wlrDataControlManager() {
 
 ext_data_control_manager_v1 *Globals::dataControlDeviceManager() {
   return instance().ext_data_control_device;
+}
+
+zwp_virtual_keyboard_manager_v1 *Globals::virtualKeyboardManager() {
+  return instance().m_virtual_keyboard_manager;
 }
 
 void Globals::handleGlobal(void *data, struct wl_registry *registry, uint32_t name, const char *interface,
@@ -22,6 +27,11 @@ void Globals::handleGlobal(void *data, struct wl_registry *registry, uint32_t na
   if (strcmp(interface, ext_data_control_manager_v1_interface.name) == 0) {
     self->ext_data_control_device = static_cast<ext_data_control_manager_v1 *>(
         wl_registry_bind(registry, name, &ext_data_control_manager_v1_interface, version));
+  }
+
+  if (strcmp(interface, zwp_virtual_keyboard_manager_v1_interface.name) == 0) {
+    self->m_virtual_keyboard_manager = static_cast<zwp_virtual_keyboard_manager_v1 *>(
+        wl_registry_bind(registry, name, &zwp_virtual_keyboard_manager_v1_interface, version));
   }
 }
 

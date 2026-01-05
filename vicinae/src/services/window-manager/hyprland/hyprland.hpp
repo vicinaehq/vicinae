@@ -1,7 +1,6 @@
 #pragma once
 #include "services/window-manager/abstract-window-manager.hpp"
 #include "services/window-manager/hyprland/hypr-listener.hpp"
-#include "wayland/virtual-keyboard.hpp"
 #include <QtConcurrent/qtconcurrentrun.h>
 #include <qapplication.h>
 #include <qfuture.h>
@@ -71,5 +70,4 @@ private:
   bool m_blur = false;
   bool m_dimAround = false;
   Hyprland::EventListener m_ev;
-  Wayland::VirtualKeyboard m_kb;
 };

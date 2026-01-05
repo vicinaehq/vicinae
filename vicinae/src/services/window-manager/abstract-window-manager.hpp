@@ -53,6 +53,8 @@ public:
    */
   class AbstractWindow {
   public:
+    virtual ~AbstractWindow() = default;
+
     virtual QString id() const = 0;
     virtual QString title() const = 0;
     virtual QString wmClass() const = 0;
@@ -72,6 +74,8 @@ public:
 
   class AbstractWorkspace {
   public:
+    virtual ~AbstractWorkspace() = default;
+
     virtual QString id() const = 0;
     virtual QString name() const { return id(); }
     virtual QString monitor() const = 0;

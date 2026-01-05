@@ -40,13 +40,6 @@ public:
   bool uploadKeymap(const std::vector<xkb_keysym_t> &keysyms);
 
 private:
-  static void handleGlobal(void *data, struct wl_registry *registry, uint32_t name, const char *interface,
-                           uint32_t version);
-  static void globalRemove(void *data, struct wl_registry *registry, uint32_t name);
-
-  constexpr static const struct wl_registry_listener _listener = {.global = handleGlobal,
-                                                                  .global_remove = globalRemove};
-
   void roundtrip();
   std::string generateKeymap(const std::vector<xkb_keysym_t> &keys) const;
   uint32_t mappedKeyCode(xkb_keysym_t sym);
