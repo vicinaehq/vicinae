@@ -86,17 +86,13 @@ struct QObjectDeleter {
 template <typename T = QObject> using QObjectUniquePtr = std::unique_ptr<T, QObjectDeleter>;
 template <typename T> using UniqueFutureWatcher = QObjectUniquePtr<QFutureWatcher<T>>;
 
-class AbstractArgumentProvider {
-  virtual std::vector<std::pair<QString, QString>> args() const = 0;
-};
-
 class NavigationController;
 class CommandController;
 class ServiceRegistry;
 class OverlayController;
 class SettingsController;
 
-struct ApplicationContext {
+struct ApplicationContext : NonCopyable {
   std::unique_ptr<NavigationController> navigation;
   std::unique_ptr<OverlayController> overlay;
   ServiceRegistry *services;

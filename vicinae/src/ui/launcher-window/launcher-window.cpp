@@ -65,28 +65,21 @@ void LauncherWindow::tryCenter() {
 }
 
 void LauncherWindow::centerOnScreen(const QScreen *screen) {
-  QPoint center(screen->geometry().center().x() - width() / 2,
-                screen->geometry().center().y() - height() / 2);
+  QPoint center(screen->geometry().center().x() - (width() / 2),
+                screen->geometry().center().y() - (height() / 2));
   move(center);
 }
 
-LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
+LauncherWindow::LauncherWindow(ApplicationContext &ctx)
+    : m_ctx(ctx), m_hud(new HudWidget), m_header(new GlobalHeader(*ctx.navigation)),
+      m_bar(new GlobalBar(ctx)), m_actionPanel(new ActionPanelV2Widget(this)),
+      m_dialog(new DialogWidget(this)), m_currentView(new QStackedWidget(this)),
+      m_currentViewWrapper(new QStackedWidget(this)), m_currentOverlayWrapper(new QStackedWidget(this)),
+      m_mainWidget(new QWidget(this)), m_barDivider(new HDivider(this)), m_hudDismissTimer(new QTimer(this)),
+      m_actionVeil(new ActionVeilWidget(this)) {
   using namespace std::chrono_literals;
 
   setWindowTitle(Omnicast::MAIN_WINDOW_NAME);
-
-  m_hud = new HudWidget;
-  m_header = new GlobalHeader(*m_ctx.navigation);
-  m_bar = new GlobalBar(m_ctx);
-  m_actionPanel = new ActionPanelV2Widget(this);
-  m_dialog = new DialogWidget(this);
-  m_currentView = new QStackedWidget(this);
-  m_currentViewWrapper = new QStackedWidget(this);
-  m_currentOverlayWrapper = new QStackedWidget(this);
-  m_mainWidget = new QWidget(this);
-  m_barDivider = new HDivider(this);
-  m_hudDismissTimer = new QTimer(this);
-  m_actionVeil = new ActionVeilWidget(this);
 
   m_hud->hide();
   m_actionVeil->hide();
@@ -357,10 +350,10 @@ bool LauncherWindow::eventFilter(QObject *watched, QEvent *event) {
 }
 
 bool LauncherWindow::event(QEvent *event) {
-  auto kb = KeybindManager::instance();
-  auto &cfg = m_ctx.services->config()->value();
-
   if (event->type() == QEvent::KeyPress) {
+    const auto kb = KeybindManager::instance();
+    auto &cfg = m_ctx.services->config()->value();
+
     auto keyEvent = static_cast<QKeyEvent *>(event);
 
     if (kb->resolve(Keybind::ToggleActionPanel) == keyEvent) {
