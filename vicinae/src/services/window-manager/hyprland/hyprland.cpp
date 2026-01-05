@@ -57,9 +57,15 @@ bool HyprlandWindowManager::setDimAround(bool value) {
 
 bool HyprlandWindowManager::pasteToWindow(const AbstractWindow *window, const AbstractApplication *app) {
   using VK = Wayland::VirtualKeyboard;
-  if (!m_kb.isAvailable()) return false;
-  if (app->isTerminalEmulator()) { return m_kb.sendKeySequence(XKB_KEY_v, VK::MOD_CTRL | VK::MOD_SHIFT); }
-  return m_kb.sendKeySequence(XKB_KEY_v, VK::MOD_CTRL);
+  Wayland::VirtualKeyboard kb;
+
+  if (!kb.isAvailable()) { return false; }
+
+  if (app && app->isTerminalEmulator()) {
+    return kb.sendKeySequence(XKB_KEY_v, VK::MOD_CTRL | VK::MOD_SHIFT);
+  }
+
+  return kb.sendKeySequence(XKB_KEY_v, VK::MOD_CTRL);
 }
 
 AbstractWindowManager::WindowPtr HyprlandWindowManager::getFocusedWindowSync() const {
