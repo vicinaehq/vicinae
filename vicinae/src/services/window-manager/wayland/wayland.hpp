@@ -1,7 +1,5 @@
 #pragma once
 #include "services/window-manager/abstract-window-manager.hpp"
-#include "lib/wayland/virtual-keyboard.hpp"
-#include <xkbcommon/xkbcommon-keysyms.h>
 
 class WaylandWindowManager;
 
@@ -52,7 +50,6 @@ public:
   WindowList m_toplevels;
 
 private:
-  Wayland::VirtualKeyboard m_keyboard;
   struct wl_display *m_display;
   struct wl_seat *m_seat;
 };
