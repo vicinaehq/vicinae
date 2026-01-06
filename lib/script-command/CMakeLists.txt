@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-OPTION(SCRIPTCOMMAND_BUILD_TESTS "Build the script-command test suite" OFF)
+OPTION(BUILD_TESTS "Build the script-command test suite" ON)
 
 find_package(glaze)
 
@@ -28,7 +28,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC .)
 target_link_libraries(${PROJECT_NAME} PUBLIC glaze::glaze)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)
 
-if (SCRIPTCOMMAND_BUILD_TESTS)
+if (BUILD_TESTS)
 	set(TEST_TARGET scriptcommand-tests)
 	find_package(Catch2 3 REQUIRED)
 	add_compile_definitions(FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures")
