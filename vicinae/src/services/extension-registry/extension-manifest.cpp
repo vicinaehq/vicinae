@@ -2,6 +2,7 @@
 #include "utils.hpp"
 #include "vicinae.hpp"
 #include <QJsonObject>
+#include <QJsonDocument>
 
 namespace fs = std::filesystem;
 
