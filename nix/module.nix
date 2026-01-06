@@ -42,6 +42,7 @@ in
             valueType = attrsOf (oneOf [
               str
               int
+              float
               bool
             ]);
           in
