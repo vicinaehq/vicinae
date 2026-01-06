@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-OPTION(XDGPP_BUILD_TESTS "Build the xdgpp test suite" OFF)
+OPTION(BUILD_TESTS "Build the xdgpp test suite" ON)
 OPTION(XDGPP_INSTALL "Install xdgpp library and headers" OFF)
 
 add_library(${PROJECT_NAME}
@@ -47,7 +47,7 @@ if(XDGPP_INSTALL)
     )
 endif()
 
-if (XDGPP_BUILD_TESTS)
+if (BUILD_TESTS)
 	set(TEST_TARGET xdgpp-tests)
 	set(FIXTURE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/fixtures)
 	find_package(Catch2 3 REQUIRED)
