@@ -3,6 +3,7 @@
 #include <qevent.h>
 #include <qobject.h>
 #include <qscrollbar.h>
+#include <qtimer.h>
 #include <qwidget.h>
 #include "ui/omni-list/omni-list-item-widget.hpp"
 

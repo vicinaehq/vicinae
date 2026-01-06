@@ -1,5 +1,6 @@
 #include "globals.hpp"
 #include "virtual-keyboard-unstable-v1-client-protocol.h"
+#include <QApplication>
 
 namespace Wayland {
 

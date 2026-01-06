@@ -1,4 +1,5 @@
 #pragma once
+#include <qprocess.h>
 #include <ranges>
 #include "script-command-file.hpp"
 

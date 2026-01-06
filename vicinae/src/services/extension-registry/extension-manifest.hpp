@@ -1,5 +1,6 @@
 #pragma once
 #include <expected>
+#include <filesystem>
 #include "argument.hpp"
 #include "common.hpp"
 #include "preference.hpp"

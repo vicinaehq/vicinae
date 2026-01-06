@@ -3,6 +3,7 @@
 #include <qnetworkdiskcache.h>
 #include <qnetworkreply.h>
 #include <expected>
+#include <qstandardpaths.h>
 
 QNetworkRequest RaycastStoreService::createJsonApiRequest(const QUrl &url) {
   QNetworkRequest request(url);

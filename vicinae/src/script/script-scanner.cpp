@@ -1,3 +1,4 @@
+#include <qmimedatabase.h>
 #include <stack>
 #include "script-scanner.hpp"
 #include "script-command-file.hpp"

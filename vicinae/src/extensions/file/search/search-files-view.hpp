@@ -2,6 +2,7 @@
 #include "services/files-service/abstract-file-indexer.hpp"
 #include "ui/views/typed-list-view.hpp"
 #include "file-search-model.hpp"
+#include <qfuturewatcher.h>
 
 class SearchFilesView : public TypedListView<FileSearchModel> {
 public:

@@ -8,8 +8,10 @@
 #include <glaze/json.hpp>
 #include <glaze/util/key_transformers.hpp>
 #include <iostream>
+#include <qdatetime.h>
 #include <qfilesystemwatcher.h>
 #include <qmargins.h>
+#include <QTimer>
 #include <string>
 #include <string_view>
 

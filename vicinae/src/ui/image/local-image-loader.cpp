@@ -1,6 +1,7 @@
 #include "ui/image/image.hpp"
 #include "ui/image/io-image-loader.hpp"
 #include "ui/image/svg-image-loader.hpp"
+#include <qdir.h>
 #include <qlogging.h>
 #include "local-image-loader.hpp"
 
@@ -20,4 +21,4 @@ void LocalImageLoader::render(const RenderConfig &cfg) {
   m_loader->render(cfg);
 }
 
-LocalImageLoader::LocalImageLoader(const std::filesystem::path &path) { m_path = path; }
+LocalImageLoader::LocalImageLoader(const std::filesystem::path &path) : m_path(path) {}

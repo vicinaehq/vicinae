@@ -2,8 +2,9 @@
 #include <cstdint>
 #include <qdatetime.h>
 #include <qobject.h>
-#include <qtmetamacros.h>
 #include <qtypes.h>
+#include <ranges>
+
 namespace OAuth {
 
 struct TokenSet {

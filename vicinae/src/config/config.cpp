@@ -3,9 +3,9 @@
 #include <fstream>
 #include <QStyleHints>
 #include <glaze/util/key_transformers.hpp>
-#include <qnamespace.h>
 #include <qstylehints.h>
 #include <string_view>
+#include <QApplication>
 #include "utils.hpp"
 #include "config.hpp"
 

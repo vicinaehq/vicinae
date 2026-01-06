@@ -2,6 +2,9 @@
 #include "common.hpp"
 #include "script/script-command-file.hpp"
 #include "script/script-metadata-store.hpp"
+#include <qfilesystemwatcher.h>
+#include <qfuturewatcher.h>
+#include <qtimer.h>
 
 class ScriptCommandService : public QObject, NonCopyable {
   Q_OBJECT

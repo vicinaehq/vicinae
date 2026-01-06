@@ -1,10 +1,12 @@
 #pragma once
-#include "../../ui/image/url.hpp"
+#include "ui/image/url.hpp"
 #include "omni-database.hpp"
 #include "proto/oauth.pb.h"
 #include <expected>
 #include "oauth-token-store.hpp"
+#include <qfuture.h>
 #include <qlogging.h>
+#include <qpromise.h>
 #include <qstring.h>
 #include <qurlquery.h>
 #include <qvariant.h>

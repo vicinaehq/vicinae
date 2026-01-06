@@ -1,6 +1,7 @@
 #include "vlist.hpp"
 #include "ui/scroll-bar/scroll-bar.hpp"
 #include <ranges>
+#include <QApplication>
 
 namespace vicinae::ui {
 

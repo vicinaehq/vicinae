@@ -1,5 +1,6 @@
 #pragma once
 #include <qboxlayout.h>
+#include <qjsonarray.h>
 #include <qjsonvalue.h>
 #include <qnamespace.h>
 #include <qstring.h>
@@ -83,7 +84,7 @@ public:
   Data data() const { return m_data; }
   bool isSecret() const { return std::holds_alternative<PasswordData>(m_data); }
 
-  Preference() {}
+  Preference() = default;
 };
 
 using PreferenceList = std::vector<Preference>;

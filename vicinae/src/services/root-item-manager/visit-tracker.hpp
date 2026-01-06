@@ -2,6 +2,7 @@
 #include "common.hpp"
 #include <cstdint>
 #include <unordered_map>
+#include <filesystem>
 
 class VisitTracker {
 public:

@@ -1,6 +1,7 @@
 #include "extension-manifest.hpp"
 #include "utils.hpp"
 #include "vicinae.hpp"
+#include <QJsonObject>
 
 namespace fs = std::filesystem;
 

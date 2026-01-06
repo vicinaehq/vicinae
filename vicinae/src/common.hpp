@@ -1,4 +1,7 @@
 #pragma once
+#include <qjsonvalue.h>
+#include <qwidget.h>
+#include <vector>
 // Include as few files as possible, this header is included in many places
 
 class FocusNotifier;
@@ -27,7 +30,7 @@ class NonCopyable {
 public:
   NonCopyable(const NonCopyable &) = delete;
   NonCopyable &operator=(const NonCopyable &) = delete;
-  NonCopyable() {}
+  NonCopyable() = default;
 };
 
 template <class T> using OptionalRef = std::optional<std::reference_wrapper<T>>;
@@ -84,7 +87,6 @@ struct QObjectDeleter {
 };
 
 template <typename T = QObject> using QObjectUniquePtr = std::unique_ptr<T, QObjectDeleter>;
-template <typename T> using UniqueFutureWatcher = QObjectUniquePtr<QFutureWatcher<T>>;
 
 class NavigationController;
 class CommandController;
