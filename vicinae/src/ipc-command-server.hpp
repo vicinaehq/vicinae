@@ -49,7 +49,6 @@ public:
   virtual PromiseLike<proto::ext::daemon::Response *>
   handleCommand(const proto::ext::daemon::Request &request) = 0;
   virtual ~ICommandHandler() = default;
-  ;
 };
 
 class IpcCommandServer : public QObject {
