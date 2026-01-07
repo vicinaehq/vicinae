@@ -2,8 +2,8 @@
 #include "common.hpp"
 #include "proto/daemon.pb.h"
 #include <QDebug>
+#include <QFutureWatcher>
 #include "services/oauth/oauth-service.hpp"
-#include "services/clipboard/clipboard-service.hpp"
 #include "theme/theme-db.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "services/window-manager/window-manager.hpp"
@@ -14,6 +14,7 @@
 #include "services/extension-registry/extension-registry.hpp"
 #include <algorithm>
 #include <qapplication.h>
+#include <qfuturewatcher.h>
 #include <qobjectdefs.h>
 #include "extension/manager/extension-manager.hpp"
 #include <qsqlquery.h>

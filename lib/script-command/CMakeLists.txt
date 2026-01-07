@@ -15,7 +15,7 @@ if (!glaze_FOUND)
 	FetchContent_Declare(
 	  glaze
 	  GIT_REPOSITORY https://github.com/stephenberry/glaze.git
-	  GIT_TAG v6.4.0  # Replace with desired version
+	  GIT_TAG b64f4a68d3a08e6515a9322a9740cf652ade0bb7
 	  GIT_SHALLOW TRUE
 	  EXCLUDE_FROM_ALL
 	)
