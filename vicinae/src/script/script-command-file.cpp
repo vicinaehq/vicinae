@@ -1,3 +1,4 @@
+#include <ranges>
 #include "script/script-command-file.hpp"
 #include "emoji/emoji.hpp"
 #include "services/script-command/script-command-service.hpp"
