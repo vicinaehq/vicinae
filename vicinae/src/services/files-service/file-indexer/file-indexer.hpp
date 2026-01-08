@@ -36,9 +36,6 @@ public:
 
   std::unique_ptr<HomeDirectoryWatcher> m_homeWatcher;
 
-  // move that somewhere else later
-  QString preparePrefixSearchQuery(std::string_view query) const;
-
 public:
   void startFullScan();
   void startSingleScan(std::filesystem::path entrypoint, ScanType type,
