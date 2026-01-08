@@ -103,22 +103,6 @@ void FileIndexer::start() {
   }
 }
 
-QString FileIndexer::preparePrefixSearchQuery(std::string_view query) const {
-  QString finalQuery;
-
-  for (const auto &word : std::views::split(query, std::string_view(" "))) {
-    std::string_view view(word.begin(), word.end());
-
-    if (!finalQuery.isEmpty()) { finalQuery += ' '; }
-
-    finalQuery += QString("\"%1\"").arg(qStringFromStdView(view));
-  }
-
-  finalQuery += '*';
-
-  return finalQuery;
-}
-
 void FileIndexer::preferenceValuesChanged(const QJsonObject &preferences) {
   m_entrypoints = ranges_to<std::vector>(
       preferences.value("paths").toString().split(';', Qt::SkipEmptyParts) |
