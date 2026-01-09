@@ -2,6 +2,7 @@
 #include "script/script-scanner.hpp"
 #include "xdgpp/env/env.hpp"
 #include <algorithm>
+#include <ranges>
 #include <QtConcurrentRun>
 
 ScriptCommandService::ScriptCommandService() {
