@@ -1,0 +1,16 @@
+--- a/cmake/CMark.cmake
++++ b/cmake/CMark.cmake
+@@ -5,10 +5,9 @@ function(checkout_cmark)
+ 	set(FETCHCONTENT_QUIET OFF)
+ 
+ 	FetchContent_Declare(
+-	  cmark-gfm
+-	  EXCLUDE_FROM_ALL
+-	  GIT_REPOSITORY https://github.com/github/cmark-gfm
+-	  GIT_TAG        0.29.0.gfm.13
++	  cmark-gfm
++	  EXCLUDE_FROM_ALL
++	  URL ${CMAKE_SOURCE_DIR}/cmark-gfm-0.29.0.gfm.13.tar.gz
+ 	)
+ 
+ 	set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
