@@ -1,0 +1,2 @@
+pack:
+	zip extension.zip *

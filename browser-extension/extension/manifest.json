@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Vicinae Browser Integration",
+  "version": "1.0.0",
+  "description": "Gives vicinae access to your browser tabs and much more",
+  "permissions": [
+    "nativeMessaging"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Vicinae Browser Integration"
+  }
+}

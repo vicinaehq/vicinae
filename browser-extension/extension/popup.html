@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Vicinae IPC Extension</title>
+  <style>
+    body {
+      width: 400px;
+      padding: 15px;
+      font-family: Arial, sans-serif;
+    }
+    .section {
+      margin-bottom: 15px;
+    }
+    .status {
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 15px;
+      font-weight: bold;
+    }
+    .status.connected {
+      background: #d4edda;
+      color: #155724;
+    }
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    .status.disconnected {
+      background: #fff3cd;
+      color: #856404;
+    }
+    .setup-box {
+      background: #e7f3ff;
+      border: 1px solid #b3d9ff;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 15px 0;
+    }
+    .setup-box h3 {
+      margin-top: 0;
+    }
+    .command {
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 10px;
+      border-radius: 3px;
+      font-family: monospace;
+      font-size: 11px;
+      margin: 10px 0;
+      word-wrap: break-word;
+      cursor: pointer;
+      position: relative;
+    }
+    .command:hover {
+      background: #3d3d3d;
+    }
+    .copy-btn {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 11px;
+      margin-top: 5px;
+    }
+    .copy-btn:hover {
+      background: #0056b3;
+    }
+    button {
+      padding: 8px 15px;
+      margin: 5px 0;
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    #messages {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+      background: #f5f5f5;
+      font-size: 12px;
+    }
+    .message {
+      margin: 5px 0;
+      padding: 5px;
+      background: white;
+      border-radius: 3px;
+    }
+    input {
+      width: calc(100% - 10px);
+      padding: 5px;
+      margin: 5px 0;
+    }
+    .hidden {
+      display: none;
+    }
+    .info {
+      font-size: 12px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <h2>Vicinae IPC</h2>
+
+  <div id="statusBar" class="status disconnected">
+    Status: <span id="statusText">Checking...</span>
+  </div>
+
+  <!-- Setup instructions (shown when not connected) -->
+  <div id="setupInstructions" class="setup-box hidden">
+    <h3>One-Time Setup Required</h3>
+    <p>Run this command in your terminal:</p>
+    <div class="command" id="setupCommand">Loading...</div>
+    <button class="copy-btn" id="copySetup">Copy Command</button>
+    <p class="info">This configures vicinae to connect with the browser extension.</p>
+  </div>
+
+  <!-- Main UI (shown when connected) -->
+  <div id="mainUI" class="hidden">
+    <div class="section">
+      <input type="text" id="messageInput" placeholder="Type a message...">
+      <button id="send">Send Message</button>
+    </div>
+
+    <div class="section">
+      <h3>Messages:</h3>
+      <div id="messages"></div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

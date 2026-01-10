@@ -28,6 +28,7 @@ option(
 	ON
 )
 
+option(BROWSER_INTEGRATION "Build and install components required for browser integration using native host messaging" ON)
 option(WAYLAND_LAYER_SHELL "Enable support for the layer shell Wayland protocol" ON)
 option(TYPESCRIPT_EXTENSIONS "Enable support for extensions built with React/Typescript (no browser involved)" ON)
 option(PREFER_STATIC_LIBS "When available, link to a library statically instead of dynamically" OFF)
@@ -63,6 +64,10 @@ endif()
 add_subdirectory(${LIB_DIR}/script-command)
 add_subdirectory(${LIB_DIR}/emoji)
 add_subdirectory(${LIB_DIR}/xdgpp)
+
+if (BROWSER_INTEGRATION)
+	add_subdirectory(./browser-extension/)
+endif()
 
 if (USE_SYSTEM_PROTOBUF)
 	set(USE_SYSTEM_ABSEIL ON)
