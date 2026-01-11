@@ -96,12 +96,14 @@ export namespace Action {
 		};
 	}
 
-	/**
-	 * @ignore - not implemented
-	 */
 	export namespace PickDate {
-		export type Props = BaseActionProps & {
-		}
+		export type Props = Omit<BaseActionProps, "title"> & {
+			title?: string;
+			onChange: (date: Date | null) => void;
+			min?: Date;
+			max?: Date;
+			type?: PickDateType;
+		};
 	}
 }
 
@@ -111,6 +113,11 @@ export type Quicklink = {
 	application?: string | Application;
 	icon?: Icon;
 };
+
+export enum PickDateType {
+	Date = "date",
+	DateTime = "date-time",
+}
 
 const ActionRoot: React.FC<ActionProps> = ({ icon, ...props }) => {
 	const serializedIcon = icon ? serializeProtoImage(icon) : icon;
@@ -242,10 +249,38 @@ const SubmitForm: React.FC<Action.SubmitForm.Props> = ({
 	return <action {...nativeProps} />;
 };
 
-// TODO: implement date picker action. This probably requires a full rework of the action panel.
-const PickDate: React.FC<Action.PickDate.Props> = () => {
-	return null;
-}
+const PickDate: React.FC<Action.PickDate.Props> = ({
+	title = "Pick Date",
+	onChange,
+	min,
+	max,
+	type = PickDateType.Date,
+	icon,
+	...props
+}) => {
+	const stableIdRef = useRef<string | undefined>(undefined);
+	if (!stableIdRef.current) {
+		stableIdRef.current = randomUUID();
+	}
+
+	const nativeProps: React.JSX.IntrinsicElements["action"] = {
+		...props,
+		stableId: stableIdRef.current,
+		title,
+		type: "pick-date",
+		pickDate: {
+			min: min?.toISOString(),
+			max: max?.toISOString(),
+			dateType: type,
+		},
+		icon: icon ? serializeProtoImage(icon) : icon,
+		onAction: (dateStr: string | null) => {
+			onChange(dateStr ? new Date(dateStr) : null);
+		},
+	};
+
+	return <action {...nativeProps} />;
+};
 
 const CreateQuicklink: React.FC<Action.CreateQuicklink.Props> = ({
 	title = "Create Quicklink",
@@ -290,8 +325,16 @@ export const Action = Object.assign(ActionRoot, {
 	ShowInFinder,
 	CreateQuicklink,
 	PickDate: Object.assign(PickDate, {
-		// TODO: to implement too
-		isFullDay: () => false
+		Type: PickDateType,
+		isFullDay: (value: Date | null | undefined) => {
+			if (!value) return false;
+			return (
+				value.getHours() === 0 &&
+				value.getMinutes() === 0 &&
+				value.getSeconds() === 0 &&
+				value.getMilliseconds() === 0
+			);
+		},
 	}),
 	Style: {
 		Regular: "regular",

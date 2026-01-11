@@ -31,6 +31,7 @@ struct ActionModel {
   std::optional<Keyboard::Shortcut> shortcut;
   QString type;
   QJsonObject quicklink;
+  QJsonObject pickDate;
   std::optional<QString> stableId;
 };
 

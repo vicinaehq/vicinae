@@ -4,6 +4,7 @@
 #include "extend/action-model.hpp"
 #include "extend/model-parser.hpp"
 #include "extension/extension-command-controller.hpp"
+#include "extension/date-picker-dialog.hpp"
 #include "ui/image/url.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/views/simple-view.hpp"
@@ -54,6 +55,32 @@ class ExtensionSimpleView : public SimpleView {
       }
 
       auto action = new PushViewAction(model.title, view, actionIcon);
+      if (model.stableId) { action->setId(*model.stableId); }
+      return action;
+    }
+
+    if (model.type == "pick-date") {
+      auto pickDateObj = model.pickDate;
+      QString dateType = pickDateObj.value("dateType").toString("date");
+      std::optional<QDateTime> minDt, maxDt;
+
+      if (pickDateObj.contains("min")) {
+        minDt = QDateTime::fromString(pickDateObj.value("min").toString(), Qt::ISODateWithMs);
+      }
+      if (pickDateObj.contains("max")) {
+        maxDt = QDateTime::fromString(pickDateObj.value("max").toString(), Qt::ISODateWithMs);
+      }
+
+      ImageURL actionIcon = model.icon ? ImageURL(*model.icon) : ImageURL::builtin("calendar");
+
+      auto action = new StaticAction(model.title, actionIcon, [this, model, dateType, minDt, maxDt]() {
+        auto dialog = new DatePickerDialog(dateType == "date-time", minDt, maxDt);
+        connect(dialog, &DatePickerDialog::dateSelected, this,
+                [this, model](const QString &isoDate) { notify(model.onAction, {isoDate}); });
+        dialog->setAttribute(Qt::WA_DeleteOnClose);
+        dialog->exec();
+      });
+
       if (model.stableId) { action->setId(*model.stableId); }
       return action;
     }
