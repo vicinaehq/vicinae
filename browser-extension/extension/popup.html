@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Vicinae IPC Extension</title>
+  <title>Vicinae Extension</title>
   <style>
     body {
       width: 400px;
@@ -106,19 +106,10 @@
   </style>
 </head>
 <body>
-  <h2>Vicinae IPC</h2>
+  <h2>Vicinae</h2>
 
   <div id="statusBar" class="status disconnected">
     Status: <span id="statusText">Checking...</span>
-  </div>
-
-  <!-- Setup instructions (shown when not connected) -->
-  <div id="setupInstructions" class="setup-box hidden">
-    <h3>One-Time Setup Required</h3>
-    <p>Run this command in your terminal:</p>
-    <div class="command" id="setupCommand">Loading...</div>
-    <button class="copy-btn" id="copySetup">Copy Command</button>
-    <p class="info">This configures vicinae to connect with the browser extension.</p>
   </div>
 
   <!-- Main UI (shown when connected) -->

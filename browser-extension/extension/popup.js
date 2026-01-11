@@ -29,41 +29,49 @@ function updateConnectionState(state, error = null) {
   }
 }
 
+function setConnected(version, pid) {
+    statusBar.className = 'status ' + 'connected';
+	statusText.textContent = `Connected to Vicinae ${version} (pid=${pid})`;
+    setupInstructions.classList.add('hidden');
+    mainUI.classList.remove('hidden');
+}
+
 // Initialize popup
 async function initialize() {
   // Get extension ID
   chrome.runtime.sendMessage({ type: 'get_extension_id' }, (response) => {
     if (response && response.extensionId) {
       extensionId = response.extensionId;
-      updateSetupCommand(extensionId);
     }
   });
 
+
+chrome.runtime.sendMessage({
+    target: 'native_host',
+    data: {
+      type: 'version',
+	  data: {
+		  version: true
+	  }
+    }
+  }, (response) => {
+	  console.log({ response });
+    if (response && response.success) {
+      addMessage(`Sent: ${message}`, 'sent');
+      messageInput.value = '';
+    }
+  });
+
+
+	/*
   // Check connection state
   chrome.runtime.sendMessage({ type: 'get_connection_state' }, (response) => {
     if (response) {
       updateConnectionState(response.state);
     }
   });
+  */
 }
-
-// Generate setup command
-function updateSetupCommand(extId) {
-  const cmd = `curl -fsSL https://raw.githubusercontent.com/vicinaehq/browser-extension/main/install.sh | bash -s -- ${extId}`;
-  setupCommand.textContent = cmd;
-}
-
-// Copy setup command to clipboard
-document.getElementById('copySetup').addEventListener('click', () => {
-  navigator.clipboard.writeText(setupCommand.textContent).then(() => {
-    const btn = document.getElementById('copySetup');
-    const originalText = btn.textContent;
-    btn.textContent = 'Copied!';
-    setTimeout(() => {
-      btn.textContent = originalText;
-    }, 2000);
-  });
-});
 
 function addMessage(text, type = 'info') {
   const messageEl = document.createElement('div');
@@ -95,10 +103,15 @@ document.getElementById('send').addEventListener('click', () => {
 
 // Listen for messages from native host (via background)
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+	console.log({ message });
   if (message.source === 'native_host') {
+	  if (message.data.type == "version") {
+		  const { tag, pid } = message.data.data;
+		setConnected(tag, pid);
+	  }
     addMessage(JSON.stringify(message.data), 'received');
   } else if (message.source === 'connection_state') {
-    updateConnectionState(message.state, message.error);
+    //updateConnectionState(message.state, message.error);
   }
 });
 

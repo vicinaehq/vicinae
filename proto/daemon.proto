@@ -17,6 +17,37 @@ message PingRequest {
 message PingResponse {
 };
 
+enum ClientType {
+  CommandDispatcher = 0;
+  BrowserExtension = 1;
+}
+
+// sent by the client to announce what it is
+message HandshakeRequest {
+  ClientType type = 1;
+}
+
+message HandshakeResponse {
+  bool ok = 1;
+  string version = 2;
+  int64 pid = 3;
+};
+
+message BrowserTabInfo {
+  int32 id = 1;
+  string title = 2;
+  string url = 3;
+  int32 window_id = 4;
+  bool active = 5;
+};
+
+message BrowserTabChangedRequest {
+  repeated BrowserTabInfo tabs = 1;
+};
+
+message BrowserTabChangedResponse {
+};
+
 message DmenuRequest {
   string raw_content = 1;
   string navigation_title = 2;
@@ -75,6 +106,8 @@ message Request {
     DmenuRequest dmenu = 3;
     LaunchAppRequest launch_app = 4;
     ListAppsRequest list_apps = 5;
+    HandshakeRequest handshake = 6;
+    BrowserTabChangedRequest browser_tabs_changed = 7;
   };
 };
 
@@ -85,5 +118,7 @@ message Response {
     DmenuResponse dmenu = 3;
     LaunchAppResponse launch_app = 4;
     ListAppsResponse list_apps = 5;
+    HandshakeResponse handshake = 6;
+    BrowserTabChangedResponse browser_tabs_changed = 7;
   };
 };

@@ -29,8 +29,8 @@
 #include "ui/dmenu-view/dmenu-view.hpp"
 #include "ui/provider-view/provider-view.hpp"
 #include "ui/toast/toast.hpp"
-#include <csignal>
 #include "vicinae.hpp"
+#include "version.h"
 
 PromiseLike<proto::ext::daemon::Response *>
 IpcCommandHandler::handleCommand(const proto::ext::daemon::Request &request) {
@@ -43,6 +43,25 @@ IpcCommandHandler::handleCommand(const proto::ext::daemon::Request &request) {
   case Req::kPing:
     res->set_allocated_ping(new proto::ext::daemon::PingResponse());
     break;
+  case Req::kHandshake: {
+    qDebug() << "get handshake";
+    auto res = std::make_unique<proto::ext::daemon::Response>();
+    auto hres = std::make_unique<proto::ext::daemon::HandshakeResponse>();
+    hres->set_ok(true);
+    hres->set_version(VICINAE_GIT_TAG);
+    hres->set_pid(QApplication::applicationPid());
+    res->set_allocated_handshake(hres.release());
+    return res.release();
+  }
+  case Req::kBrowserTabsChanged: {
+    for (const auto &tab : request.browser_tabs_changed().tabs()) {
+      qDebug() << tab.title() << tab.url();
+    }
+    auto res = std::make_unique<proto::ext::daemon::Response>();
+    auto bres = std::make_unique<proto::ext::daemon::BrowserTabChangedResponse>();
+    res->set_allocated_browser_tabs_changed(bres.release());
+    return res.release();
+  }
   case Req::kUrl: {
     auto verbRes = handleUrl(QUrl(request.url().url().c_str()));
     auto urlRes = new proto::ext::daemon::UrlResponse();

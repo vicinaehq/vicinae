@@ -5,15 +5,19 @@
 #include <qlocalsocket.h>
 #include <qlogging.h>
 
+namespace wire = proto::ext::daemon;
+
 void IpcCommandServer::processFrame(QLocalSocket *conn, QByteArrayView frame) {
-  auto clientInfoIt = std::find_if(_clients.begin(), _clients.end(),
-                                   [conn](const ClientInfo &info) { return info.conn == conn; });
+  auto clientInfoIt =
+      std::ranges::find_if(_clients, [conn](const ClientInfo &info) { return info.conn == conn; });
 
   if (clientInfoIt == _clients.end()) return;
 
-  proto::ext::daemon::Request req;
+  wire::Request req;
 
   req.ParseFromString(frame.toByteArray().toStdString());
+
+  if (req.payload_case() == wire::Request::kHandshake) { clientInfoIt->type = req.handshake().type(); }
 
   if (!_handler) {
     qWarning() << "no handler was configured";
@@ -44,12 +48,16 @@ void IpcCommandServer::processFrame(QLocalSocket *conn, QByteArrayView frame) {
   std::string packet;
 
   result->SerializeToString(&packet);
-  conn->write(packet.data(), packet.size());
+  QByteArray message;
+  QDataStream dataStream(&message, QIODevice::WriteOnly);
+
+  dataStream << QByteArray(packet.data(), packet.size());
+
+  conn->write(message);
 }
 
 void IpcCommandServer::handleRead(QLocalSocket *conn) {
-  auto it = std::find_if(_clients.begin(), _clients.end(),
-                         [conn](const ClientInfo &info) { return info.conn == conn; });
+  auto it = std::ranges::find_if(_clients, [conn](const ClientInfo &info) { return info.conn == conn; });
 
   if (it == _clients.end()) {
     qWarning() << "CommandServer::handleRead: could not find client info";
@@ -76,8 +84,7 @@ void IpcCommandServer::handleRead(QLocalSocket *conn) {
 }
 
 void IpcCommandServer::handleDisconnection(QLocalSocket *conn) {
-  auto it = std::find_if(_clients.begin(), _clients.end(),
-                         [conn](const ClientInfo &info) { return info.conn == conn; });
+  auto it = std::ranges::find_if(_clients, [conn](const ClientInfo &info) { return info.conn == conn; });
 
   for (const auto &watcher : it->m_pending) {
     if (!watcher->isFinished()) { watcher->cancel(); }
@@ -89,6 +96,8 @@ void IpcCommandServer::handleDisconnection(QLocalSocket *conn) {
 
 void IpcCommandServer::handleConnection() {
   QLocalSocket *conn = _server->nextPendingConnection();
+
+  qDebug() << "ipc command server received new connection";
 
   _clients.push_back({.conn = conn});
   connect(conn, &QLocalSocket::disconnected, this, [this, conn]() { handleDisconnection(conn); });

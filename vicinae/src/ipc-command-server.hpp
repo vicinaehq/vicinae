@@ -33,6 +33,7 @@ struct ClientInfo {
     uint32_t length;
   } frame;
   std::vector<QObjectUniquePtr<Watcher>> m_pending;
+  std::optional<proto::ext::daemon::ClientType> type;
 };
 
 struct CommandError {

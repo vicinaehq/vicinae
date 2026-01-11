@@ -22,7 +22,7 @@ function connectToNativeHost() {
       chrome.runtime.sendMessage({
         source: "native_host",
         data: message
-      }).catch(() => {
+      }).catch((error) => {
         // Ignore errors if no listeners
       });
 
@@ -100,9 +100,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   return true;
 });
 
+function sendToNative(type, data) {
+	sendToNativeHost({ type, data });
+}
+
+chrome.tabs.query({}, (tabs) => {
+  sendToNative('tab_list', tabs.map(tab => ({
+    id: tab.id,
+    title: tab.title,
+    url: tab.url,
+    windowId: tab.windowId,
+    active: tab.active
+  })));
+});
 
 // Auto-connect on startup
 connectToNativeHost();
-sendToNativeHost({"hello": "hilou"});
 
 console.log("IPC Extension background service worker loaded2");

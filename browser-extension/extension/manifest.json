@@ -4,8 +4,10 @@
   "version": "1.0.0",
   "description": "Gives vicinae access to your browser tabs and much more",
   "permissions": [
-    "nativeMessaging"
+    "nativeMessaging",
+	"tabs"
   ],
+  "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js"
   },
