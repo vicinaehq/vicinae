@@ -655,6 +655,7 @@ set(SRCS
 	src/ui/form/directory-input.cpp
 
 	src/services/window-manager/abstract-window-manager.hpp
+	src/services/browser-extension-service.hpp
 
 	src/lib/program-db/program-db.hpp
 	src/lib/program-db/program-db.cpp

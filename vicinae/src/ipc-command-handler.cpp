@@ -3,6 +3,7 @@
 #include "proto/daemon.pb.h"
 #include <QDebug>
 #include <QFutureWatcher>
+#include "services/browser-extension-service.hpp"
 #include "services/oauth/oauth-service.hpp"
 #include "theme/theme-db.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
@@ -23,6 +24,7 @@
 #include <qjsondocument.h>
 #include <qjsonobject.h>
 #include <qjsonarray.h>
+#include <ranges>
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "theme.hpp"
@@ -54,9 +56,14 @@ IpcCommandHandler::handleCommand(const proto::ext::daemon::Request &request) {
     return res.release();
   }
   case Req::kBrowserTabsChanged: {
-    for (const auto &tab : request.browser_tabs_changed().tabs()) {
-      qDebug() << tab.title() << tab.url();
-    }
+    auto tabs = request.browser_tabs_changed().tabs() |
+                std::views::transform([](auto &&tab) { return BrowserTab::fromProto(tab); }) |
+                std::ranges::to<std::vector>();
+
+    qDebug() << "got tabs" << tabs.size();
+
+    m_ctx.services->browserExtension()->setTabs(tabs);
+
     auto res = std::make_unique<proto::ext::daemon::Response>();
     auto bres = std::make_unique<proto::ext::daemon::BrowserTabChangedResponse>();
     res->set_allocated_browser_tabs_changed(bres.release());

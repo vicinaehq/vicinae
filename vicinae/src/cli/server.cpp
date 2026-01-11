@@ -2,6 +2,7 @@
 #include "daemon/ipc-client.hpp"
 #include "environment.hpp"
 #include <QStyleHints>
+#include "root-search/browser-tabs/browser-tabs-provider.hpp"
 #include "root-search/scripts/script-root-provider.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "favicon/favicon-service.hpp"
@@ -17,6 +18,7 @@
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "root-search/shortcuts/shortcut-root-provider.hpp"
 #include "service-registry.hpp"
+#include "services/browser-extension-service.hpp"
 #include "services/calculator-service/calculator-service.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/emoji-service/emoji-service.hpp"
@@ -176,6 +178,7 @@ void CliServerCommand::run(CLI::App *app) {
     registry->setOAuthService(std::move(oauthService));
     registry->setPowerManager(std::make_unique<PowerManager>());
     registry->setScriptDb(std::make_unique<ScriptCommandService>());
+    registry->setBrowserExtension(std::make_unique<BrowserExtensionService>());
 
     auto root = registry->rootItemManager();
     auto builtinCommandDb = std::make_unique<CommandDatabase>();
@@ -228,6 +231,7 @@ void CliServerCommand::run(CLI::App *app) {
     root->loadProvider(std::make_unique<AppRootProvider>(*registry->appDb()));
     root->loadProvider(std::make_unique<ShortcutRootProvider>(*registry->shortcuts()));
     root->loadProvider(std::make_unique<ScriptRootProvider>(*registry->scriptDb()));
+    root->loadProvider(std::make_unique<BrowserTabProvider>(*registry->browserExtension()));
 
     // Force reload providers to make sure items that depend on them are shown
     root->updateIndex();

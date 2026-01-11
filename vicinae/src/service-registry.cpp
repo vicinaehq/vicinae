@@ -3,6 +3,7 @@
 #include "font-service.hpp"
 #include "omni-database.hpp"
 #include "services/app-service/app-service.hpp"
+#include "services/browser-extension-service.hpp"
 #include "services/power-manager/power-manager.hpp"
 #include "services/script-command/script-command-service.hpp"
 #include "services/shortcut/shortcut-service.hpp"
@@ -42,6 +43,8 @@ OAuthService *ServiceRegistry::oauthService() const { return m_oauthService.get(
 PowerManager *ServiceRegistry::powerManager() const { return m_powerManager.get(); }
 
 ScriptCommandService *ServiceRegistry::scriptDb() const { return m_scriptCommandService.get(); }
+
+BrowserExtensionService *ServiceRegistry::browserExtension() const { return m_browserExtensionService.get(); }
 
 void ServiceRegistry::setPowerManager(std::unique_ptr<PowerManager> powman) {
   m_powerManager = std::move(powman);
@@ -99,6 +102,10 @@ void ServiceRegistry::setAppDb(std::unique_ptr<AppService> service) { m_appDb = 
 
 void ServiceRegistry::setScriptDb(std::unique_ptr<ScriptCommandService> service) {
   m_scriptCommandService = std::move(service);
+}
+
+void ServiceRegistry::setBrowserExtension(std::unique_ptr<BrowserExtensionService> service) {
+  m_browserExtensionService = std::move(service);
 }
 
 ServiceRegistry *ServiceRegistry::instance() {

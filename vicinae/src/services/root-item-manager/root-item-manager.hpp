@@ -9,6 +9,7 @@
 #include "ui/image/url.hpp"
 #include "preference.hpp"
 #include "settings/provider-settings-detail.hpp"
+#include <cstdint>
 #include <qdnslookup.h>
 #include <qjsonobject.h>
 #include <qjsonvalue.h>
@@ -140,13 +141,20 @@ signals:
   void itemRemoved(const QString &id) const;
 
 public:
-  enum Type {
+  enum Type : std::uint8_t {
     ExtensionProvider, // a collection of commands
     GroupProvider,     // a collection of other things
   };
 
-  RootProvider() {}
+  RootProvider() = default;
   virtual ~RootProvider() = default;
+
+  /**
+   * A provider flagged as transient will not list its items in the settings window
+   * because the items are considered to be volatile by nature.
+   * This applies to windows, browser tabs...
+   */
+  virtual bool isTransient() const { return false; }
 
   virtual QString uniqueId() const = 0;
   virtual QString displayName() const = 0;

@@ -121,11 +121,14 @@ struct BrowserTab {
 
 using TabList = std::vector<BrowserTab>;
 
-struct VersionRequest {
-  bool version = true;
-};
+struct VersionRequest {};
 
 using IncomingMessageData = std::variant<TabList, VersionRequest>;
+
+template <> struct glz::meta<IncomingMessageData> {
+  static constexpr std::string_view tag = "type";
+  static constexpr auto ids = std::array{"tab_list", "version"};
+};
 
 struct IncomingExtensionMessage {
   std::string type;
