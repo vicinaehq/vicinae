@@ -1,30 +1,15 @@
 #pragma once
 #include "common.hpp"
-#include "proto/daemon.pb.h"
 #include "types.hpp"
-#include <cstdint>
-#include <filesystem>
-#include <netinet/in.h>
-#include <qbytearrayview.h>
-#include <qcontainerfwd.h>
-#include <qdebug.h>
-#include <qfuturewatcher.h>
+#include <QLocalSocket>
+#include <QFutureWatcher>
 #include <qlocalserver.h>
-#include <qlocalsocket.h>
-#include <qlogging.h>
-#include <qobject.h>
-#include <qsocketnotifier.h>
-#include <qwidget.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <unistd.h>
-#include <fcntl.h>
+#include <vicinae-ipc/ipc.hpp>
 
-struct CommandMessage {
-  std::string type;
-};
+using ServerSchema = ipc::RpcSchema<ipc::Handshake, ipc::DMenu, ipc::Deeplink, ipc::Ping, ipc::ListApps,
+                                    ipc::LaunchApp, ipc::BrowserTabsChanged>;
 
-using Watcher = QFutureWatcher<proto::ext::daemon::Response *>;
+using Watcher = QFutureWatcher<ServerSchema::ResponseVariant>;
 
 struct ClientInfo {
   QLocalSocket *conn;
@@ -33,32 +18,89 @@ struct ClientInfo {
     uint32_t length;
   } frame;
   std::vector<QObjectUniquePtr<Watcher>> m_pending;
-  std::optional<proto::ext::daemon::ClientType> type;
+  std::optional<ipc::ClientType> type;
 };
 
-struct CommandError {
-  std::string error;
+struct IpcContext {
+  using CallerContext = ClientInfo;
+  struct GlobalContext {
+    ApplicationContext *app = nullptr;
+  };
 };
 
-enum CommandResponseStatus {
-  CommandOkStatus,
-  CommandErrorStatus,
-};
-
-class ICommandHandler {
+template <ipc::IsRpcSchema SchemaT, typename Context> class RpcServer {
 public:
-  virtual PromiseLike<proto::ext::daemon::Response *>
-  handleCommand(const proto::ext::daemon::Request &request) = 0;
-  virtual ~ICommandHandler() = default;
+  struct ContextHandle {
+    Context::GlobalContext *global = nullptr;
+    Context::CallerContext *caller = nullptr;
+    std::string method;
+  };
+
+  using Schema = SchemaT;
+
+  RpcServer(Context::GlobalContext ctx) : m_ctx(ctx) {}
+
+  using HRet = std::expected<PromiseLike<typename SchemaT::ResponseVariant>, std::string>;
+  using Handler = std::function<HRet(const typename SchemaT::RequestVariant &req, ContextHandle ctx)>;
+  using MiddlewareHandler = std::function<std::optional<std::string>(
+      const typename SchemaT::RequestVariant &request, ContextHandle ctx)>;
+
+  template <ipc::InSchema<Schema> T>
+  void route(std::function<std::expected<PromiseLike<typename T::Response>, std::string>(
+                 const typename T::Request &reqData, ContextHandle ctx)>
+                 fn) {
+    std::string method = T::key;
+
+    m_handlers[method] = [fn](const SchemaT::RequestVariant &req, ContextHandle ctx) -> HRet {
+      if (auto actualReq = std::get_if<typename T::Request>(&req)) {
+        std::expected<PromiseLike<typename T::Response>, std::string> res = fn(*actualReq, ctx);
+
+        if (!res) { return std::unexpected(res.error()); }
+
+        if (auto future = std::get_if<QFuture<typename T::Response>>(&res.value())) {
+          return HRet(future->then(
+              [](const T::Response &response) { return typename Schema::ResponseVariant(response); }));
+        } else {
+          return std::get<typename T::Response>(res.value());
+        }
+      } else {
+        return std::unexpected("Mismatched request type");
+      }
+    };
+  }
+
+  void middleware(MiddlewareHandler fn) { m_middlewares.emplace_back(fn); }
+
+  HRet call(const SchemaT::Request &req, typename Context::CallerContext &callerCtx) {
+    ContextHandle handle(&m_ctx, &callerCtx, req.method);
+
+    if (auto it = m_handlers.find(req.method); it != m_handlers.end()) {
+      try {
+        for (const auto &handler : m_middlewares) {
+          if (const auto error = handler(req.data, handle)) { return std::unexpected(error.value()); }
+        }
+      } catch (const std::exception &e) { return std::unexpected(e.what()); }
+
+      return it->second(req.data, handle);
+    }
+
+    return std::unexpected("No handler for method");
+  }
+
+private:
+  Context::GlobalContext m_ctx;
+  std::unordered_map<std::string, Handler> m_handlers;
+  std::vector<MiddlewareHandler> m_middlewares;
 };
 
+/**
+ * IPC server used to dispatch CLI commands and communicate with browser extensions.
+ * Integrates with the main thread event loop.
+ */
 class IpcCommandServer : public QObject {
-
 public:
-  IpcCommandServer(QWidget *parent = nullptr) : QObject(parent), _server(new QLocalServer(this)) {}
+  IpcCommandServer(ApplicationContext *ctx, QWidget *parent = nullptr);
   bool start(const std::filesystem::path &localPath);
-
-  void setHandler(ICommandHandler *handler);
 
 private:
   void processFrame(QLocalSocket *conn, QByteArrayView frame);
@@ -67,7 +109,8 @@ private:
   void handleConnection();
   std::optional<QLocalSocket *> getConn();
 
-  ICommandHandler *_handler;
-  QLocalServer *_server;
-  std::vector<ClientInfo> _clients;
+  QLocalServer m_server;
+  std::vector<ClientInfo> m_clients;
+
+  RpcServer<ServerSchema, IpcContext> m_rpc;
 };

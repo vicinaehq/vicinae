@@ -41,19 +41,19 @@ class BrowserTabRootItem : public RootItem {
   bool isActive() const override { return m_tab.active; }
 
 public:
-  BrowserTabRootItem(const BrowserTab &tab) : m_tab(tab) {}
+  BrowserTabRootItem(const ipc::BrowserTabInfo &tab) : m_tab(tab) {}
 
 private:
-  BrowserTab m_tab;
+  ipc::BrowserTabInfo m_tab;
 };
 
 class BrowserTabProvider : public RootProvider {
 public:
   std::vector<std::shared_ptr<RootItem>> loadItems() const override {
-    auto items =
-        m_service.tabs() | std::views::transform([](const BrowserTab &tab) -> std::shared_ptr<RootItem> {
-          return std::make_shared<BrowserTabRootItem>(tab);
-        });
+    auto items = m_service.tabs() |
+                 std::views::transform([](const ipc::BrowserTabInfo &tab) -> std::shared_ptr<RootItem> {
+                   return std::make_shared<BrowserTabRootItem>(tab);
+                 });
 
     return items | std::ranges::to<std::vector>();
   }

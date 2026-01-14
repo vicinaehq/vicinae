@@ -1,5 +1,4 @@
 #include "config/config.hpp"
-#include "daemon/ipc-client.hpp"
 #include "environment.hpp"
 #include <QStyleHints>
 #include "root-search/browser-tabs/browser-tabs-provider.hpp"
@@ -36,6 +35,7 @@
 #include "settings-controller/settings-controller.hpp"
 #include "ui/launcher-window/launcher-window.hpp"
 #include "utils.hpp"
+#include "vicinae-ipc/client.hpp"
 #include "vicinae.hpp"
 #include <filesystem>
 #include <qapplication.h>
@@ -75,8 +75,7 @@ void CliServerCommand::run(CLI::App *app) {
   lock.setStaleLockTime(0ms);
 
   if (!lock.tryLock()) {
-    DaemonIpcClient client;
-    bool isServerReachable = client.connect() && client.ping();
+    bool isServerReachable = ipc::Client::oneshot<ipc::Ping>({}).has_value();
 
     if (!isServerReachable) {
       lock.removeStaleLockFile();
@@ -90,27 +89,24 @@ void CliServerCommand::run(CLI::App *app) {
 
       qInfo() << "Killing existing vicinae server...";
 
-      // if we fail to kill gracefully, force kill by sending SIGKILL
-      if (!client.kill()) {
-        QString _;
-        qint64 pid = 0;
+      QString _;
+      qint64 pid = 0;
 
-        if (!lock.getLockInfo(&pid, &_, &_)) {
-          qCritical() << "Failed to get lock file info";
-          exit(1);
-        }
-
-        if (kill(pid, SIGKILL) != 0) {
-          qCritical() << "Failed to kill process with pid" << pid;
-          exit(1);
-        }
-
-        lock.removeStaleLockFile();
+      if (!lock.getLockInfo(&pid, &_, &_)) {
+        qCritical() << "Failed to get lock file info";
+        exit(1);
       }
 
-      qInfo() << "Waiting for lock to released...";
-      lock.lock();
+      if (kill(pid, SIGKILL) != 0) {
+        qCritical() << "Failed to kill process with pid" << pid;
+        exit(1);
+      }
+
+      lock.removeStaleLockFile();
     }
+
+    qInfo() << "Waiting for lock to released...";
+    lock.lock();
   }
 
   qInfo() << "Initializing vicinae server...";
@@ -248,9 +244,8 @@ void CliServerCommand::run(CLI::App *app) {
   ctx.settings = std::make_unique<SettingsController>(ctx);
   ctx.services = ServiceRegistry::instance();
 
-  IpcCommandServer commandServer;
+  IpcCommandServer commandServer(&ctx);
 
-  commandServer.setHandler(new IpcCommandHandler(ctx));
   commandServer.start(Omnicast::commandSocketPath());
 
   auto configChanged = [&](const config::ConfigValue &next, const config::ConfigValue &prev) {

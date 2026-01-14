@@ -1,7 +1,7 @@
 #pragma once
-#include "ui/dmenu-view/dmenu.hpp"
 #include "ui/dmenu-view/dmenu-model.hpp"
 #include "ui/views/typed-list-view.hpp"
+#include "vicinae-ipc/ipc.hpp"
 
 namespace DMenu {
 class View : public TypedListView<DMenuModel> {
@@ -12,7 +12,7 @@ signals:
   void aborted() const;
 
 public:
-  View(Payload data);
+  View(ipc::DMenu::Request data);
 
 protected:
   void hideEvent(QHideEvent *event) override;
@@ -38,7 +38,7 @@ private:
   std::string_view m_sectionNameTemplate;
   std::string m_sectionName;
   bool m_selected = false;
-  Payload m_data;
+  ipc::DMenu::Request m_data;
 
   DMenuModel *m_model = nullptr;
 };

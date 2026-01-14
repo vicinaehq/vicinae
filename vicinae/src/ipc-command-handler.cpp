@@ -1,5 +1,7 @@
 #include "ipc-command-handler.hpp"
 #include "common.hpp"
+#include "ipc-command-server.hpp"
+#include "vicinae-ipc/ipc.hpp"
 #include "proto/daemon.pb.h"
 #include <QDebug>
 #include <QFutureWatcher>
@@ -24,7 +26,6 @@
 #include <qjsondocument.h>
 #include <qjsonobject.h>
 #include <qjsonarray.h>
-#include <ranges>
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "theme.hpp"
@@ -34,99 +35,7 @@
 #include "vicinae.hpp"
 #include "version.h"
 
-PromiseLike<proto::ext::daemon::Response *>
-IpcCommandHandler::handleCommand(const proto::ext::daemon::Request &request) {
-  auto res = new proto::ext::daemon::Response;
-  auto &nav = m_ctx.navigation;
-
-  using Req = proto::ext::daemon::Request;
-
-  switch (request.payload_case()) {
-  case Req::kPing:
-    res->set_allocated_ping(new proto::ext::daemon::PingResponse());
-    break;
-  case Req::kHandshake: {
-    qDebug() << "get handshake";
-    auto res = std::make_unique<proto::ext::daemon::Response>();
-    auto hres = std::make_unique<proto::ext::daemon::HandshakeResponse>();
-    hres->set_ok(true);
-    hres->set_version(VICINAE_GIT_TAG);
-    hres->set_pid(QApplication::applicationPid());
-    res->set_allocated_handshake(hres.release());
-    return res.release();
-  }
-  case Req::kBrowserTabsChanged: {
-    auto tabs = request.browser_tabs_changed().tabs() |
-                std::views::transform([](auto &&tab) { return BrowserTab::fromProto(tab); }) |
-                std::ranges::to<std::vector>();
-
-    qDebug() << "got tabs" << tabs.size();
-
-    m_ctx.services->browserExtension()->setTabs(tabs);
-
-    auto res = std::make_unique<proto::ext::daemon::Response>();
-    auto bres = std::make_unique<proto::ext::daemon::BrowserTabChangedResponse>();
-    res->set_allocated_browser_tabs_changed(bres.release());
-    return res.release();
-  }
-  case Req::kUrl: {
-    auto verbRes = handleUrl(QUrl(request.url().url().c_str()));
-    auto urlRes = new proto::ext::daemon::UrlResponse();
-    if (!verbRes) { urlRes->set_error(verbRes.error()); }
-    res->set_allocated_url(urlRes);
-    return res;
-  }
-  case Req::kDmenu:
-    return processDmenu(request.dmenu());
-  case Req::kLaunchApp:
-    return launchApp(request.launch_app());
-  case Req::kListApps:
-    return listApps(request.list_apps());
-  default:
-    break;
-  }
-
-  return res;
-}
-
-proto::ext::daemon::Response *
-IpcCommandHandler::launchApp(const proto::ext::daemon::LaunchAppRequest &request) {
-  auto res = new proto::ext::daemon::Response;
-  auto launchAppRes = new proto::ext::daemon::LaunchAppResponse;
-  auto appDb = m_ctx.services->appDb();
-  auto wm = m_ctx.services->windowManager();
-  auto app = appDb->findById(request.app_id().c_str());
-
-  res->set_allocated_launch_app(launchAppRes);
-
-  if (!app) {
-    launchAppRes->set_error("No app with id " + request.app_id());
-    return res;
-  }
-
-  if (!request.new_instance()) {
-    if (auto wins = wm->findAppWindows(*app); !wins.empty()) {
-      auto &win = wins.front();
-      wm->provider()->focusWindowSync(*win);
-      launchAppRes->set_focused_window_title(win->title().toStdString());
-      return res;
-    }
-  }
-
-  std::vector<QString> args;
-
-  args.reserve(request.args().size());
-  for (const auto &arg : request.args()) {
-    args.emplace_back(arg.c_str());
-  }
-
-  if (!appDb->launch(*app, args)) {
-    launchAppRes->set_error("Failed to launch app with id " + request.app_id());
-  }
-
-  return res;
-}
-
+/*
 proto::ext::daemon::Response *
 IpcCommandHandler::listApps(const proto::ext::daemon::ListAppsRequest &request) {
   auto res = new proto::ext::daemon::Response;
@@ -158,55 +67,7 @@ IpcCommandHandler::listApps(const proto::ext::daemon::ListAppsRequest &request) 
 
   return res;
 }
-
-QFuture<proto::ext::daemon::Response *>
-IpcCommandHandler::processDmenu(const proto::ext::daemon::DmenuRequest &request) {
-  static constexpr const int DMENU_SMALL_WIDTH_THRESHOLD = 500;
-
-  using Watcher = QFutureWatcher<proto::ext::daemon::Response *>;
-  auto &nav = m_ctx.navigation;
-  auto &cfg = m_ctx.services->config()->value();
-
-  QPromise<proto::ext::daemon::Response *> promise;
-  auto future = promise.future();
-  auto payload = DMenu::Payload::fromProto(request);
-
-  if (payload.width.has_value() && payload.width.value() < DMENU_SMALL_WIDTH_THRESHOLD) {
-    qInfo() << "dmenu: disabling quicklook and footer because width is too low";
-    payload.noFooter = true;
-    payload.noQuickLook = true;
-  }
-
-  auto view = new DMenu::View(payload);
-  auto watcher = new Watcher;
-
-  watcher->setFuture(future);
-
-  QObject::connect(watcher, &Watcher::canceled, [nav = nav.get()]() { nav->closeWindow(); });
-  QObject::connect(watcher, &Watcher::finished, [watcher]() { watcher->deleteLater(); });
-  QObject::connect(view, &DMenu::View::selected, [promise = std::move(promise)](const QString &text) mutable {
-    auto dmenuRes = new proto::ext::daemon::DmenuResponse;
-    auto res = new proto::ext::daemon::Response;
-    res->set_allocated_dmenu(dmenuRes);
-    dmenuRes->set_output(text.toStdString());
-    promise.addResult(res);
-    promise.finish();
-  });
-
-  nav->popToRoot({.clearSearch = false});
-  nav->pushView(view);
-  nav->setInstantDismiss(true);
-
-  if (payload.width || payload.height) {
-    int w = payload.width.value_or(cfg.launcherWindow.size.width);
-    int h = payload.height.value_or(cfg.launcherWindow.size.height);
-    nav->requestWindowSize(QSize(w, h));
-  }
-
-  nav->showWindow();
-
-  return future;
-}
+*/
 
 std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
   if (!Omnicast::APP_SCHEMES.contains(url.scheme())) {

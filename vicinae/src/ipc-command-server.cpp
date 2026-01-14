@@ -1,65 +1,216 @@
 #include "ipc-command-server.hpp"
-#include "common.hpp"
-#include "proto/daemon.pb.h"
-#include <qfuturewatcher.h>
-#include <qlocalsocket.h>
-#include <qlogging.h>
+#include "ipc-command-handler.hpp"
+#include "ui/dmenu-view/dmenu-view.hpp"
+#include "utils.hpp"
+#include "vicinae-ipc/ipc.hpp"
+#include <functional>
+#include <glaze/core/reflect.hpp>
+#include <glaze/json/write.hpp>
+#include <netinet/in.h>
+#include <variant>
+#include <glaze/rpc/registry.hpp>
+#include "services/app-service/app-service.hpp"
+#include "services/window-manager/window-manager.hpp"
+#include "navigation-controller.hpp"
+#include "version.h"
 
-namespace wire = proto::ext::daemon;
+IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
+    : QObject(parent), m_rpc(IpcContext::GlobalContext{.app = ctx}) {
+  m_rpc.middleware([](const decltype(m_rpc)::Schema::RequestVariant &req,
+                      decltype(m_rpc)::ContextHandle info) -> std::optional<std::string> {
+    constexpr static const auto BROWSER_METHODS = std::array{ipc::BrowserTabsChanged::key};
+
+    if (!info.caller->type && !std::holds_alternative<ipc::Handshake::Request>(req)) {
+      return "Handshake required before further command";
+    }
+
+    if (std::ranges::contains(BROWSER_METHODS, info.method) &&
+        info.caller->type != ipc::ClientType::BrowserExtension) {
+      return "Only browser extension clients can do this kind of request";
+    }
+
+    return {};
+  });
+
+  m_rpc.route<ipc::Ping>([&](const ipc::Ping::Request &req, decltype(m_rpc)::ContextHandle ctx) {
+    return ipc::Ping::Response();
+  });
+
+  m_rpc.route<ipc::Handshake>([](const ipc::Handshake::Request &req, decltype(m_rpc)::ContextHandle client) {
+    client.caller->type = req.clientType;
+    return ipc::Handshake::Response({.version = VICINAE_GIT_TAG, .pid = QApplication::applicationPid()});
+  });
+
+  m_rpc.route<ipc::ListApps>([](const ipc::ListApps::Request &req, decltype(m_rpc)::ContextHandle ctx) {
+    return ipc::ListApps::Response();
+  });
+
+  m_rpc.route<ipc::LaunchApp>(
+      [](const ipc::LaunchApp::Request &req,
+         decltype(m_rpc)::ContextHandle ctx) -> std::expected<ipc::LaunchApp::Response, std::string> {
+        auto appDb = ctx.global->app->services->appDb();
+        auto wm = ctx.global->app->services->windowManager();
+        auto app = appDb->findById(req.appId.c_str());
+
+        if (!app) { return std::unexpected("No app with id"); }
+
+        if (!req.newInstance) {
+          if (auto wins = wm->findAppWindows(*app); !wins.empty()) {
+            auto &win = wins.front();
+            wm->provider()->focusWindowSync(*win);
+            return ipc::LaunchApp::Response({.focusedWindowTitle = win->title().toStdString()});
+          }
+        }
+
+        std::vector<QString> args = Utils::toQStringVec(req.args);
+
+        if (!appDb->launch(*app, args)) {
+          return std::unexpected(std::format("Failed to launch app with id {}", req.appId));
+        }
+
+        return ipc::LaunchApp::Response();
+      });
+
+  m_rpc.route<ipc::BrowserTabsChanged>(
+      [](const ipc::BrowserTabsChanged::Request &req, decltype(m_rpc)::ContextHandle ctx) {
+        return ipc::BrowserTabsChanged::Response();
+      });
+
+  m_rpc.route<ipc::DMenu>([](const ipc::DMenu::Request &request, decltype(m_rpc)::ContextHandle ctx) {
+    using Watcher = QFutureWatcher<ipc::DMenu::Response>;
+    static constexpr const int DMENU_SMALL_WIDTH_THRESHOLD = 500;
+    auto &m_ctx = *ctx.global->app;
+
+    auto &nav = m_ctx.navigation;
+    auto &cfg = m_ctx.services->config()->value();
+
+    QPromise<ipc::DMenu::Response> promise;
+    auto future = promise.future();
+
+    if (request.width.has_value() && request.width.value() < DMENU_SMALL_WIDTH_THRESHOLD) {
+      qInfo() << "dmenu: disabling quicklook and footer because width is too low";
+      // request.noFooter = true;
+      // request.noQuickLook = true;
+    }
+
+    auto view = new DMenu::View(request);
+    auto watcher = new Watcher;
+
+    watcher->setFuture(future);
+
+    QObject::connect(watcher, &Watcher::canceled, [nav = nav.get()]() { nav->closeWindow(); });
+    QObject::connect(watcher, &Watcher::finished, [watcher]() { watcher->deleteLater(); });
+    QObject::connect(view, &DMenu::View::selected,
+                     [promise = std::move(promise)](const QString &text) mutable {
+                       promise.addResult(ipc::DMenu::Response(text.toStdString()));
+                       promise.finish();
+                     });
+
+    nav->popToRoot({.clearSearch = false});
+    nav->pushView(view);
+    nav->setInstantDismiss(true);
+
+    if (request.width || request.height) {
+      int w = request.width.value_or(cfg.launcherWindow.size.width);
+      int h = request.height.value_or(cfg.launcherWindow.size.height);
+      nav->requestWindowSize(QSize(w, h));
+    }
+
+    nav->showWindow();
+
+    return future;
+  });
+
+  m_rpc.route<ipc::Deeplink>(
+      [](const ipc::Deeplink::Request &req,
+         decltype(m_rpc)::ContextHandle ctx) -> std::expected<ipc::Deeplink::Response, std::string> {
+        IpcCommandHandler handler(*ctx.global->app);
+        QUrl url(req.url.c_str());
+
+        if (!url.isValid()) { return std::unexpected("Not a valid URL"); }
+
+        const auto res = handler.handleUrl(QUrl(req.url.c_str()));
+
+        if (!res) return std::unexpected(res.error());
+
+        return ipc::Deeplink::Response();
+      });
+}
 
 void IpcCommandServer::processFrame(QLocalSocket *conn, QByteArrayView frame) {
+
   auto clientInfoIt =
-      std::ranges::find_if(_clients, [conn](const ClientInfo &info) { return info.conn == conn; });
+      std::ranges::find_if(m_clients, [conn](const ClientInfo &info) { return info.conn == conn; });
 
-  if (clientInfoIt == _clients.end()) return;
+  auto respond = [](QLocalSocket *conn, ServerSchema::Response res) {
+    std::string buf;
 
-  wire::Request req;
+    if (const auto error = glz::write_json(res, buf)) {
+      qCritical() << "Failed to serialize ipc response";
+      return;
+    }
 
-  req.ParseFromString(frame.toByteArray().toStdString());
+    qDebug() << "IPC Response" << buf;
 
-  if (req.payload_case() == wire::Request::kHandshake) { clientInfoIt->type = req.handshake().type(); }
+    uint32_t size = htonl(buf.size());
 
-  if (!_handler) {
-    qWarning() << "no handler was configured";
+    conn->write(reinterpret_cast<const char *>(&size), sizeof(size));
+    conn->write(reinterpret_cast<const char *>(buf.data()), buf.size());
+  };
+
+  if (clientInfoIt == m_clients.end()) return;
+
+  qDebug() << "IPC Request" << frame.toByteArray().toStdString();
+
+  const auto parseResult = ServerSchema::parseRequest(frame.toByteArray().toStdString());
+
+  if (!parseResult) {
+    qWarning() << "Failed to parse";
     return;
   }
 
-  auto handlerResult = _handler->handleCommand(req);
+  const auto &request = parseResult.value();
 
-  if (auto future = std::get_if<QFuture<proto::ext::daemon::Response *>>(&handlerResult)) {
+  auto call = m_rpc.call(request, *clientInfoIt);
+
+  if (!call) {
+    respond(conn, request.makeErrorResponse({.code = 0, .message = call.error()}));
+    return;
+  }
+
+  const auto &value = call.value();
+
+  // auto handlerResult = _handler->handleCommand(request.data);
+
+  if (auto future = std::get_if<QFuture<ServerSchema::ResponseVariant>>(&value)) {
     auto watcher = QObjectUniquePtr<Watcher>(new Watcher);
 
     watcher->setFuture(*future);
-    connect(watcher.get(), &Watcher::finished, this, [watcher = watcher.get(), conn]() {
+    // TODO: we must check that connection still exist
+    connect(watcher.get(), &Watcher::finished, this, [respond, watcher = watcher.get(), request, conn]() {
       if (watcher->isCanceled()) { return; }
 
       std::string packet;
-      auto result = watcher->result();
+      auto response = request.makeResponse(watcher->result());
 
-      result->SerializeToString(&packet);
-      conn->write(packet.data(), packet.size());
+      if (const auto error = glz::write_json(response, packet)) {
+        qDebug() << "Failed to write response" << glz::format_error(error);
+      }
+
+      respond(conn, response);
     });
     clientInfoIt->m_pending.emplace_back(std::move(watcher));
 
     return;
   }
 
-  auto result = std::get<proto::ext::daemon::Response *>(handlerResult);
-  std::string packet;
-
-  result->SerializeToString(&packet);
-  QByteArray message;
-  QDataStream dataStream(&message, QIODevice::WriteOnly);
-
-  dataStream << QByteArray(packet.data(), packet.size());
-
-  conn->write(message);
+  respond(conn, request.makeResponse(std::get<ServerSchema::ResponseVariant>(value)));
 }
 
 void IpcCommandServer::handleRead(QLocalSocket *conn) {
-  auto it = std::ranges::find_if(_clients, [conn](const ClientInfo &info) { return info.conn == conn; });
+  auto it = std::ranges::find_if(m_clients, [conn](const ClientInfo &info) { return info.conn == conn; });
 
-  if (it == _clients.end()) {
+  if (it == m_clients.end()) {
     qWarning() << "CommandServer::handleRead: could not find client info";
     conn->disconnect();
     return;
@@ -84,39 +235,38 @@ void IpcCommandServer::handleRead(QLocalSocket *conn) {
 }
 
 void IpcCommandServer::handleDisconnection(QLocalSocket *conn) {
-  auto it = std::ranges::find_if(_clients, [conn](const ClientInfo &info) { return info.conn == conn; });
+  auto it = std::ranges::find_if(m_clients, [conn](const ClientInfo &info) { return info.conn == conn; });
 
   for (const auto &watcher : it->m_pending) {
     if (!watcher->isFinished()) { watcher->cancel(); }
   }
 
-  _clients.erase(it);
+  m_clients.erase(it);
   conn->deleteLater();
 }
 
 void IpcCommandServer::handleConnection() {
-  QLocalSocket *conn = _server->nextPendingConnection();
+  QLocalSocket *conn = m_server.nextPendingConnection();
 
   qDebug() << "ipc command server received new connection";
 
-  _clients.push_back({.conn = conn});
+  m_clients.push_back({.conn = conn});
   connect(conn, &QLocalSocket::disconnected, this, [this, conn]() { handleDisconnection(conn); });
   connect(conn, &QLocalSocket::readyRead, this, [this, conn]() { handleRead(conn); });
 }
 
 bool IpcCommandServer::start(const std::filesystem::path &localPath) {
+
   if (std::filesystem::exists(localPath)) { std::filesystem::remove(localPath); }
 
-  if (!_server->listen(localPath.c_str())) {
-    qDebug() << "CommandServer failed to listen" << _server->errorString();
+  if (!m_server.listen(localPath.c_str())) {
+    qDebug() << "CommandServer failed to listen" << m_server.errorString();
     return false;
   }
 
-  connect(_server, &QLocalServer::newConnection, this, &IpcCommandServer::handleConnection);
+  connect(&m_server, &QLocalServer::newConnection, this, &IpcCommandServer::handleConnection);
 
   qDebug() << "Server started, listening on:" << localPath.c_str();
 
   return true;
 }
-
-void IpcCommandServer::setHandler(ICommandHandler *handler) { _handler = handler; }

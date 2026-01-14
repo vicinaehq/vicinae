@@ -1,0 +1,20 @@
+{
+  "name": "emoji",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^24.0.10",
+    "emojilib": "^4.0.2",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "unicode-emoji-json": "^0.8.0"
+  }
+}

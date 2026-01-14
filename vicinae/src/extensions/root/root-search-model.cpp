@@ -1,6 +1,4 @@
 #include "root-search-model.hpp"
-#include "builtin_icon.hpp"
-#include "services/browser-extension-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "ui/transform-result/transform-result.hpp"
 #include <format>
@@ -191,16 +189,6 @@ void RootSearchModel::refreshItemWidget(const RootItemVariant &type, WidgetType 
                   w->setName(item.url);
                   w->setIconUrl(item.app->iconUrl());
                   w->setActive(false);
-                },
-                [&](const BrowserTab &tab) {
-                  auto w = static_cast<DefaultListItemWidget *>(widget);
-                  w->setName(tab.title.c_str());
-                  if (auto url = QUrl(tab.url.c_str()); url.isValid()) {
-                    w->setIconUrl(ImageURL::favicon(url.host()).withFallback(BuiltinIcon::Globe01));
-                  } else {
-                    w->setIconUrl(BuiltinIcon::Globe01);
-                  }
-                  w->setActive(tab.active);
                 },
                 [&](const RootSearchResult &res) { refreshRootItem(res.scored->item.get().get(), true); },
                 [&](const FallbackItem &item) { refreshRootItem(item.item, false); },

@@ -64,6 +64,7 @@ endif()
 add_subdirectory(${LIB_DIR}/script-command)
 add_subdirectory(${LIB_DIR}/emoji)
 add_subdirectory(${LIB_DIR}/xdgpp)
+add_subdirectory(${LIB_DIR}/vicinae-ipc)
 
 if (BROWSER_INTEGRATION)
 	add_subdirectory(./browser-extension/)

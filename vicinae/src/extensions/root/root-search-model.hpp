@@ -1,11 +1,11 @@
 #pragma once
 #include "services/app-service/abstract-app-db.hpp"
-#include "services/browser-extension-service.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "ui/vlist/vlist.hpp"
 #include "ui/vlist/common/section-model.hpp"
+#include "vicinae-ipc/ipc.hpp"
 #include <cstdint>
 
 enum class SectionType : std::uint8_t { Link, Calculator, Results, Files, Fallback, Favorites };
@@ -36,7 +36,7 @@ struct SearchResults {
   std::optional<AbstractCalculatorBackend::CalculatorResult> calculator;
   std::vector<IndexerFileResult> files;
   std::optional<LinkItem> defaultOpener;
-  std::vector<BrowserTab> tabs;
+  std::vector<ipc::BrowserTabInfo> tabs;
 };
 
 class RootSearchModel : public vicinae::ui::SectionListModel<RootItemVariant, SectionType> {
@@ -107,7 +107,7 @@ private:
   std::vector<std::shared_ptr<RootItem>> m_fallbackItems;
   std::vector<std::shared_ptr<RootItem>> m_favorites;
   std::optional<LinkItem> m_defaultOpener;
-  std::vector<BrowserTab> m_tabs;
+  std::vector<ipc::BrowserTabInfo> m_tabs;
 
   std::string m_fallbackSectionTitle;
   std::string m_resultSectionTitle;

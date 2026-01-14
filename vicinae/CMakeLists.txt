@@ -20,6 +20,7 @@ list(APPEND LIBS
 	glaze::glaze 
 	scriptcommand 
 	emoji
+	vicinae-ipc
 )
 
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)
@@ -85,13 +86,11 @@ set(SRCS
 
 	src/ui/dmenu-view/dmenu-view.hpp
 	src/ui/dmenu-view/dmenu-view.cpp
-	src/ui/dmenu-view/dmenu.hpp
-	src/ui/dmenu-view/dmenu.cpp
 
 	include/font-service.hpp
 	src/font-service.cpp
 
-	src/daemon/ipc-client.cpp
+	#src/daemon/ipc-client.cpp
 	src/lib/template-engine/template-engine.cpp
 
 	include/favicon/favicon-service.hpp

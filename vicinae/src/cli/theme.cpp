@@ -1,9 +1,9 @@
 #include "theme.hpp"
 #include "cli/theme.hpp"
-#include "daemon/ipc-client.hpp"
 #include "theme/theme-db.hpp"
 #include "lib/rang.hpp"
 #include "theme/theme-parser.hpp"
+#include "vicinae-ipc/client.hpp"
 #include <stdexcept>
 
 static const char *THEME_TEMPLATE = R"(# Example Theme Configuration
@@ -162,9 +162,8 @@ class SetCliThemeCommand : public AbstractCommandLineCommand {
   void setup(CLI::App *app) override { app->add_option("theme_id", m_path)->required(); }
 
   void run(CLI::App *app) override {
-    DaemonIpcClient client;
-    if (auto res = client.deeplink(QString("vicinae://theme/set/%1").arg(m_path.c_str())); !res) {
-      throw std::runtime_error("Failed to set theme: " + res.error().toStdString());
+    if (auto res = ipc::Client::deeplink(std::format("vicinae://theme/set/{}", m_path.c_str())); !res) {
+      throw std::runtime_error("Failed to set theme: " + res.error());
     }
   }
 
@@ -198,10 +197,7 @@ class TemplateThemeCommand : public AbstractCommandLineCommand {
   std::string description() const override { return "Print out template"; }
   void setup(CLI::App *app) override { app->alias("tmpl"); }
 
-  void run(CLI::App *app) override {
-    std::cout << THEME_TEMPLATE << std::endl;
-    return;
-  }
+  void run(CLI::App *app) override { std::cout << THEME_TEMPLATE << std::endl; }
 
 private:
   std::optional<std::filesystem::path> m_path;
