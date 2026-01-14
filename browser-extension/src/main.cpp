@@ -1,17 +1,22 @@
+#include <cassert>
 #include <cstdint>
+#include <cstring>
 #include <glaze/core/common.hpp>
 #include <glaze/core/reflect.hpp>
 #include <glaze/json/generic.hpp>
 #include <glaze/json.hpp>
-#include <istream>
+#include "poll.h"
+#include "vicinae-ipc/ipc.hpp"
 #include <netinet/in.h>
 #include <ostream>
 #include <string>
 #include <iostream>
 #include <glaze/glaze.hpp>
+#include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
+#include <zconf-ng.h>
 
 struct BrowserTab {
   int id;
@@ -25,18 +30,6 @@ using TabList = std::vector<BrowserTab>;
 
 struct VersionRequest {};
 
-using IncomingMessageData = std::variant<TabList, VersionRequest>;
-
-template <> struct glz::meta<IncomingMessageData> {
-  static constexpr std::string_view tag = "type";
-  static constexpr auto ids = std::array{"tab_list", "version"};
-};
-
-struct IncomingExtensionMessage {
-  std::string type;
-  IncomingMessageData data;
-};
-
 struct VersionInfo {
   std::string tag;
   std::int64_t pid;
@@ -47,42 +40,84 @@ struct OutgoingExtensionMessage {
   std::variant<VersionInfo> data;
 };
 
-static bool readMessage(std::istream &ifs, std::string &data) {
-  uint32_t length = 0;
+class Frame {
+public:
+  static constexpr auto READ_SIZE = 1;
 
-  ifs.read(reinterpret_cast<char *>(&length), sizeof(length));
-  data.resize(length);
-  ifs.read(data.data(), data.size());
+  enum class ByteOrder : std::uint8_t { Host, Network };
 
-  return !(ifs.eof() && data.size() == 0);
-}
+  using Handler = std::function<void(std::string_view message)>;
 
-template <class... Ts> struct overloads : Ts... {
-  using Ts::operator()...;
-};
+  Frame(ByteOrder bo, Handler fn) : m_bo(bo), m_fn(fn) {}
 
-template <typename T, class... Ts> static auto match(const T &type, overloads<Ts...> visitor) {
-  return std::visit(visitor, type);
-}
+  uint32_t transformSize(uint32_t s) { return m_bo == ByteOrder::Host ? s : ntohl(s); }
 
-static bool sendMessage(OutgoingExtensionMessage message) {
+  void readPart(int fd) {
+    for (;;) {
+      int rc = read(fd, m_buf.data(), m_buf.size());
 
-  std::string buf;
+      if (rc == -1) {
+        std::println(std::cerr, "Failed to read fd {}: {}", fd, strerror(errno));
+        return;
+      }
 
-  if (const auto error = glz::write_json(message, buf)) {
-    std::println(std::cerr, "Failed to serialize json: {}", glz::format_error(error));
-    return false;
+      data.append(std::string_view(m_buf.data(), rc));
+
+      for (;;) {
+        if (size == 0 && data.size() >= sizeof(size)) {
+          size = transformSize(*reinterpret_cast<decltype(size) *>(data.data()));
+          data.erase(data.begin(),
+                     data.begin() + sizeof(size)); // we need a better way than this, this is slow
+        }
+
+        if (size) {
+          if (size < data.size()) {
+            std::string_view view(data);
+            m_fn(view.substr(0, size));
+            data = view.substr(size);
+          } else {
+            break;
+          }
+        }
+      }
+
+      if (rc < m_buf.size()) break;
+    }
   }
 
-  std::println(std::cerr, "wrote {}", buf);
+private:
+  std::array<char, READ_SIZE> m_buf;
+  std::string data;
+  uint32_t size = 0;
+  ByteOrder m_bo;
+  Handler m_fn;
+};
 
-  uint32_t size = buf.size();
+struct Version {
+  static constexpr const auto key = "version";
+  struct Request {};
+  struct Response {};
+};
 
-  std::cout.write(reinterpret_cast<const char *>(&size), sizeof(size));
-  std::cout.write(buf.data(), buf.size());
+namespace commands {
+struct FocusTab {
+  static constexpr const auto key = "focus-tab";
+  struct Request {
+    std::string windowId;
+    std::string tabId;
+  };
+  struct Response {};
+};
+
+}; // namespace commands
+
+using ExtensionRpcSchema = ipc::RpcSchema<commands::FocusTab>;
+
+static void sendExtensionCommand(std::string_view message) {
+  uint32_t size = message.size();
+  std::cout.write(reinterpret_cast<char *>(&size), sizeof(size));
+  std::cout.write(message.data(), message.size());
   std::cout.flush();
-
-  return true;
 }
 
 int main() {
@@ -95,41 +130,61 @@ int main() {
     return 1;
   }
 
-  std::string buf;
-
   std::println(std::cerr, "Listening for messages...");
 
-  while (readMessage(std::cin, buf)) {
-    IncomingExtensionMessage msg;
+  int sock = -1;
 
-    if (const auto error = glz::read_json(msg, buf)) {
-      std::println(std::cerr, "\"{}\"", buf);
-      std::println(std::cerr, "Failed to parse json: {}", glz::format_error(error));
-      continue;
-    }
-
-    std::println(std::cerr, "Processing message: {}", buf);
-
+  Frame extensionFrame(Frame::ByteOrder::Host, [](std::string_view message) {
     /*
-match(msg.data, overloads{[&](const TabList &tabs) {
-                            wire::Request req;
-                            auto tabsChanged = std::make_unique<wire::BrowserTabChangedRequest>();
+if (const auto error = glz::read_json(msg, message)) {
+std::println(std::cerr, "\"{}\"", message);
+std::println(std::cerr, "Failed to parse json: {}", glz::format_error(error));
+}
 
-                            for (const auto &tab : tabs) {
-                              auto data = tabsChanged->add_tabs();
-                              *data = tab;
-                            }
+std::println(std::cerr, "Processing message: {}", message);
+*/
+  });
 
-                            req.set_allocated_browser_tabs_changed(tabsChanged.release());
-                            client.sendRequestSync(req);
-                          },
-                          [&](const VersionRequest &req) {
-                            VersionInfo info;
-                            sendMessage(OutgoingExtensionMessage(
-                                msg.type, VersionInfo(handshake.version(), handshake.pid())));
-                          }});
-                                                      */
+  Frame vicinaeFrame(Frame::ByteOrder::Network, [](std::string_view message) {
+    // focus tab
+    ipc::RpcClient<ExtensionRpcSchema> client;
+    const auto json = client.request<commands::FocusTab>({.windowId = "", .tabId = "some"});
+    sendExtensionCommand(json);
+  });
+
+  auto fds = std::array{pollfd(STDIN_FILENO, POLLIN), pollfd(sock, POLLIN)};
+
+  assert(fds.size() == 2);
+
+  while (true) {
+    int ready = poll(fds.data(), fds.size(), 1000);
+
+    // read extension stuff
+    if (fds[0].revents & POLLIN) { extensionFrame.readPart(fds[0].fd); }
+
+    // take vicinae requests/response
+    if (fds[1].revents & POLLIN) { vicinaeFrame.readPart(fds[1].fd); }
   }
 
   std::println(std::cerr, "Got EOF, exiting...");
+
+  /*
+match(msg.data, overloads{[&](const TabList &tabs) {
+                          wire::Request req;
+                          auto tabsChanged = std::make_unique<wire::BrowserTabChangedRequest>();
+
+                          for (const auto &tab : tabs) {
+                            auto data = tabsChanged->add_tabs();
+                            *data = tab;
+                          }
+
+                          req.set_allocated_browser_tabs_changed(tabsChanged.release());
+                          client.sendRequestSync(req);
+                        },
+                        [&](const VersionRequest &req) {
+                          VersionInfo info;
+                          sendMessage(OutgoingExtensionMessage(
+                              msg.type, VersionInfo(handshake.version(), handshake.pid())));
+                        }});
+                                                    */
 }
