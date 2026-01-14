@@ -18,6 +18,17 @@ function connectToNativeHost() {
       console.log("Received from native host:", message);
       connectionState = "connected";
 
+	  if (message.method == "browser/focus-tab") {
+		 const { tabId } = message.data;
+		  
+		 chrome.tabs.get(tabId, (tab) => {
+  			chrome.tabs.update(tabId, { active: true });
+  			chrome.windows.update(tab.windowId, { focused: true });
+		});
+
+		return ;
+	  }
+
       // Broadcast to all extension contexts (popup, content scripts, etc.)
       chrome.runtime.sendMessage({
         source: "native_host",
@@ -101,18 +112,49 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 function sendToNative(type, data) {
-	sendToNativeHost({ type, data });
+	sendToNativeHost({
+		id: 0,
+		method: type,
+		data,
+	});
 }
 
-chrome.tabs.query({}, (tabs) => {
-  sendToNative('tab_list', tabs.map(tab => ({
-    id: tab.id,
-    title: tab.title,
-    url: tab.url,
-    windowId: tab.windowId,
-    active: tab.active
-  })));
+function sendCurrentTabs() {
+	chrome.tabs.query({}, (tabs) => {
+	  sendToNative('browser/tabs-changed', tabs.map(tab => ({
+		id: tab.id,
+		title: tab.title,
+		url: tab.url,
+		windowId: tab.windowId,
+		active: tab.active
+	  })));
+	});
+}
+
+// Incremental updates seem overkill in this scenario; so we only send a 
+// fresh new list every time here.
+
+chrome.tabs.onCreated.addListener((tab) => {
+	sendCurrentTabs();
 });
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+	sendCurrentTabs();
+});
+
+chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
+	sendCurrentTabs();
+});
+
+chrome.tabs.onActivated.addListener((activeInfo) => {
+	sendCurrentTabs(); // maybe remove that if that's too much
+});
+
+chrome.tabs.onMoved.addListener((tabId, moveInfo) => {
+	// TODO: maybe handle this one day
+});
+
+
 
 // Auto-connect on startup
 connectToNativeHost();

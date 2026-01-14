@@ -10,7 +10,6 @@
 #include <glaze/json.hpp>
 #include "ipc.hpp"
 #include <unistd.h>
-#include <iostream>
 
 namespace ipc {
 class Client {
@@ -59,7 +58,7 @@ public:
   void shutdown() {}
 
   void sendRaw(std::string_view data) {
-    uint32_t size = htonl(data.size());
+    uint32_t size = data.size();
     ::send(m_sock, reinterpret_cast<const char *>(&size), sizeof(size), 0);
     ::send(m_sock, data.data(), data.size(), 0);
   }
@@ -90,7 +89,6 @@ public:
     sendRaw(json);
 
     n = ::recv(m_sock, reinterpret_cast<char *>(&size), sizeof(size), 0);
-    size = ntohl(size);
     data.resize(size);
     n = ::recv(m_sock, data.data(), data.size(), 0);
 
@@ -105,21 +103,6 @@ public:
     if (auto matchingRes = std::get_if<typename T::Response>(&res.result.value())) { return *matchingRes; }
 
     return std::unexpected("Returned response if not of expected type for request");
-  }
-
-  void listen() {
-    std::string data;
-    uint32_t size;
-    int n;
-
-    while (true) {
-      n = ::recv(m_sock, reinterpret_cast<char *>(&size), sizeof(size), 0);
-      if (n < sizeof(size)) break;
-      data.resize(size);
-      n = ::recv(m_sock, data.data(), data.size(), 0);
-      if (n < data.size()) break;
-      // m_client.call(data);
-    }
   }
 
   /**

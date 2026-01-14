@@ -7,6 +7,7 @@
 #include <glaze/core/reflect.hpp>
 #include <glaze/json/write.hpp>
 #include <netinet/in.h>
+#include <qlogging.h>
 #include <variant>
 #include <glaze/rpc/registry.hpp>
 #include "services/app-service/app-service.hpp"
@@ -16,6 +17,27 @@
 
 IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
     : QObject(parent), m_rpc(IpcContext::GlobalContext{.app = ctx}) {
+  connect(
+      ctx->services->browserExtension(), &BrowserExtensionService::tabFocusRequested, this,
+      [this](int tabId) {
+        auto it = std::ranges::find_if(
+            m_clients, [](auto &&client) { return client.type == ipc::ClientType::BrowserExtension; });
+
+        if (it == m_clients.end()) {
+          qWarning() << "focus tab requested but there is no browser extension client currently connected";
+          return;
+        }
+
+        ipc::RpcClient<ipc::RpcSchema<ipc::FocusTab>> client;
+        const auto json = client.request<ipc::FocusTab>({.tabId = tabId});
+        uint32_t size = json.size();
+
+        qDebug() << "focus tab written";
+
+        it->conn->write(reinterpret_cast<const char *>(&size), sizeof(size));
+        it->conn->write(json.data(), json.size());
+      });
+
   m_rpc.middleware([](const decltype(m_rpc)::Schema::RequestVariant &req,
                       decltype(m_rpc)::ContextHandle info) -> std::optional<std::string> {
     constexpr static const auto BROWSER_METHODS = std::array{ipc::BrowserTabsChanged::key};
@@ -73,6 +95,8 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
 
   m_rpc.route<ipc::BrowserTabsChanged>(
       [](const ipc::BrowserTabsChanged::Request &req, decltype(m_rpc)::ContextHandle ctx) {
+        qDebug() << "set" << req.size() << "browser tabs";
+        ctx.global->app->services->browserExtension()->setTabs(req);
         return ipc::BrowserTabsChanged::Response();
       });
 
@@ -152,8 +176,7 @@ void IpcCommandServer::processFrame(QLocalSocket *conn, QByteArrayView frame) {
 
     qDebug() << "IPC Response" << buf;
 
-    uint32_t size = htonl(buf.size());
-
+    uint32_t size = buf.size();
     conn->write(reinterpret_cast<const char *>(&size), sizeof(size));
     conn->write(reinterpret_cast<const char *>(buf.data()), buf.size());
   };
@@ -220,7 +243,7 @@ void IpcCommandServer::handleRead(QLocalSocket *conn) {
     it->frame.data.append(conn->readAll());
 
     while (it->frame.data.size() >= sizeof(uint32_t)) {
-      uint32_t length = ntohl(*reinterpret_cast<uint32_t *>(it->frame.data.data()));
+      uint32_t length = *reinterpret_cast<uint32_t *>(it->frame.data.data());
       bool isComplete = it->frame.data.size() - sizeof(uint32_t) >= length;
 
       if (!isComplete) break;

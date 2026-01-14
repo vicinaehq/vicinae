@@ -49,10 +49,9 @@ async function initialize() {
 chrome.runtime.sendMessage({
     target: 'native_host',
     data: {
-      type: 'version',
-	  data: {
-		  version: true
-	  }
+	  id: 0,
+      method: 'version',
+	  data: {}
     }
   }, (response) => {
 	  console.log({ response });

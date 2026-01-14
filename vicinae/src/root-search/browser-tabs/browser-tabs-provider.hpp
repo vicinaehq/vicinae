@@ -1,8 +1,11 @@
 #pragma once
 #include "builtin_icon.hpp"
 #include "common.hpp"
+#include "navigation-controller.hpp"
+#include "service-registry.hpp"
 #include "services/browser-extension-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
+#include "ui/action-pannel/action.hpp"
 #include <qjsonobject.h>
 #include <qstringliteral.h>
 #include <qwidget.h>
@@ -19,7 +22,18 @@ class BrowserTabRootItem : public RootItem {
 
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx,
                                                    const RootItemMetadata &metadata) const override {
-    return {};
+    auto panel = std::make_unique<ListActionPanelState>();
+    auto section = panel->createSection();
+
+    auto focusTab =
+        new StaticAction("Switch to tab", BuiltinIcon::Switch, [id = m_tab.id](ApplicationContext *ctx) {
+          ctx->services->browserExtension()->focusTab(id);
+          ctx->navigation->closeWindow({.clearRootSearch = true});
+        });
+
+    section->addAction(focusTab);
+
+    return panel;
   }
 
   AccessoryList accessories() const override { return {{.text = "Browser Tab"}}; }

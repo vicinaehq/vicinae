@@ -1,12 +1,10 @@
 #include <cassert>
 #include <cstdint>
 #include <cstring>
-#include <glaze/core/common.hpp>
-#include <glaze/core/reflect.hpp>
-#include <glaze/json/generic.hpp>
 #include <glaze/json.hpp>
 #include "poll.h"
 #include "vicinae-ipc/ipc.hpp"
+#include "vicinae-ipc/client.hpp"
 #include <netinet/in.h>
 #include <ostream>
 #include <string>
@@ -16,108 +14,78 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
-#include <zconf-ng.h>
 
-struct BrowserTab {
-  int id;
-  std::string title;
-  std::string url;
-  int windowId;
-  bool active;
-};
+#ifdef NDEBUG
+#define READ_SIZE 8096
+#else
+#define READ_SIZE 1
+#endif
 
-using TabList = std::vector<BrowserTab>;
-
-struct VersionRequest {};
-
-struct VersionInfo {
-  std::string tag;
-  std::int64_t pid;
-};
-
-struct OutgoingExtensionMessage {
-  std::string type;
-  std::variant<VersionInfo> data;
-};
-
+/**
+ * Parse message as data gets in, and call the provided callback once a full message
+ * has been parsed.
+ */
 class Frame {
 public:
-  static constexpr auto READ_SIZE = 1;
-
-  enum class ByteOrder : std::uint8_t { Host, Network };
-
   using Handler = std::function<void(std::string_view message)>;
 
-  Frame(ByteOrder bo, Handler fn) : m_bo(bo), m_fn(fn) {}
+  void setHandler(Handler fn) { m_fn = fn; }
 
-  uint32_t transformSize(uint32_t s) { return m_bo == ByteOrder::Host ? s : ntohl(s); }
+  bool readPart(int fd) {
+    int rc = read(fd, m_buf.data(), m_buf.size());
 
-  void readPart(int fd) {
-    for (;;) {
-      int rc = read(fd, m_buf.data(), m_buf.size());
-
-      if (rc == -1) {
-        std::println(std::cerr, "Failed to read fd {}: {}", fd, strerror(errno));
-        return;
-      }
-
-      data.append(std::string_view(m_buf.data(), rc));
-
-      for (;;) {
-        if (size == 0 && data.size() >= sizeof(size)) {
-          size = transformSize(*reinterpret_cast<decltype(size) *>(data.data()));
-          data.erase(data.begin(),
-                     data.begin() + sizeof(size)); // we need a better way than this, this is slow
-        }
-
-        if (size) {
-          if (size < data.size()) {
-            std::string_view view(data);
-            m_fn(view.substr(0, size));
-            data = view.substr(size);
-          } else {
-            break;
-          }
-        }
-      }
-
-      if (rc < m_buf.size()) break;
+    if (rc == -1) {
+      std::println(std::cerr, "Failed to read fd {}: {}", fd, strerror(errno));
+      return false;
     }
+
+    if (rc == 0) { return false; }
+
+    data.append(std::string_view(m_buf.data(), rc));
+
+    for (;;) {
+      if (size == 0 && data.size() >= sizeof(size)) {
+        size = *reinterpret_cast<decltype(size) *>(data.data());
+        data.erase(data.begin(),
+                   data.begin() + sizeof(size)); // we need a better way than this, this is slow
+      }
+
+      if (size && size <= data.size()) {
+        std::string_view view(data);
+        if (m_fn) m_fn(view.substr(0, size));
+        data = view.substr(size);
+        size = 0;
+        continue;
+      }
+
+      break;
+    }
+
+    return true;
   }
 
 private:
   std::array<char, READ_SIZE> m_buf;
   std::string data;
   uint32_t size = 0;
-  ByteOrder m_bo;
   Handler m_fn;
 };
 
 struct Version {
   static constexpr const auto key = "version";
   struct Request {};
-  struct Response {};
-};
-
-namespace commands {
-struct FocusTab {
-  static constexpr const auto key = "focus-tab";
-  struct Request {
-    std::string windowId;
-    std::string tabId;
+  struct Response {
+    std::string tag;
   };
-  struct Response {};
 };
+; // namespace commands
 
-}; // namespace commands
+using ExtensionRpcSchema = ipc::RpcSchema<ipc::FocusTab>;
 
-using ExtensionRpcSchema = ipc::RpcSchema<commands::FocusTab>;
-
-static void sendExtensionCommand(std::string_view message) {
+static void sendExtensionCommand(int fd, std::string_view message) {
   uint32_t size = message.size();
-  std::cout.write(reinterpret_cast<char *>(&size), sizeof(size));
-  std::cout.write(message.data(), message.size());
-  std::cout.flush();
+  write(fd, reinterpret_cast<char *>(&size), sizeof(size));
+  write(fd, message.data(), message.size());
 }
 
 int main() {
@@ -130,61 +98,119 @@ int main() {
     return 1;
   }
 
+  auto vicinaeClient = ipc::Client::make().value();
+
+  if (auto result = vicinaeClient.connect(); !result) {
+    std::println(std::cerr, "Failed to connect: {}", result.error());
+    return 1;
+  }
+
+  auto res = vicinaeClient.request<ipc::Handshake>(
+      ipc::Handshake::Request{.clientType = ipc::ClientType::BrowserExtension});
+
+  if (!res) {
+    std::println(std::cerr, "Failed to handshake: {}", res.error());
+    return 1;
+  }
+
   std::println(std::cerr, "Listening for messages...");
 
-  int sock = -1;
+  ipc::RpcServer<ipc::RpcSchema<ipc::FocusTab>> vicinaeReceiver; // listen to vicinae requests
+  ipc::RpcServer<ipc::RpcSchema<ipc::BrowserTabsChanged, Version>>
+      extensionReceiver; // listen to browser extension requests
 
-  Frame extensionFrame(Frame::ByteOrder::Host, [](std::string_view message) {
-    /*
-if (const auto error = glz::read_json(msg, message)) {
-std::println(std::cerr, "\"{}\"", message);
-std::println(std::cerr, "Failed to parse json: {}", glz::format_error(error));
-}
-
-std::println(std::cerr, "Processing message: {}", message);
-*/
+  vicinaeReceiver.route<ipc::FocusTab>([](const ipc::FocusTab::Request &req) {
+    ipc::RpcClient<decltype(vicinaeReceiver)::SchemaType> client;
+    sendExtensionCommand(STDOUT_FILENO, client.request<ipc::FocusTab>(req));
+    return ipc::FocusTab::Response();
   });
 
-  Frame vicinaeFrame(Frame::ByteOrder::Network, [](std::string_view message) {
-    // focus tab
-    ipc::RpcClient<ExtensionRpcSchema> client;
-    const auto json = client.request<commands::FocusTab>({.windowId = "", .tabId = "some"});
-    sendExtensionCommand(json);
+  extensionReceiver.route<ipc::BrowserTabsChanged>([&](const ipc::BrowserTabsChanged::Request &req) {
+    ipc::RpcClient<decltype(extensionReceiver)::SchemaType> vicinae;
+    // pass tab changes to vicinae
+    const auto json = vicinae.request<ipc::BrowserTabsChanged>(req);
+    sendExtensionCommand(vicinaeClient.handle(), json);
+    return ipc::BrowserTabsChanged::Response();
   });
 
-  auto fds = std::array{pollfd(STDIN_FILENO, POLLIN), pollfd(sock, POLLIN)};
+  extensionReceiver.route<Version>([&](const Version::Request &req) { return Version::Response("v0.0.0"); });
+
+  Frame extensionFrame;
+
+  extensionFrame.setHandler([&](std::string_view message) {
+    assert(!message.empty());
+    decltype(extensionReceiver)::SchemaType::Request req;
+
+    std::println(std::cerr, "got message from extension frame: {}", message);
+
+    if (const auto error = glz::read_json(req, message)) {
+      std::println(std::cerr, "\"{}\"", message);
+      std::println(std::cerr, "Failed to parse json: {}", glz::format_error(error));
+      return;
+    }
+
+    const auto callRes = extensionReceiver.call(req);
+
+    if (!callRes) {
+      std::println(std::cerr, "Failed to call extension rpc: {}", callRes.error());
+      return;
+    }
+
+    std::println(std::cerr, "Processing message: {}", message);
+  });
+
+  Frame vicinaeFrame;
+
+  vicinaeFrame.setHandler([&](std::string_view message) {
+    assert(!message.empty());
+    decltype(vicinaeReceiver)::SchemaType::Request req;
+
+    std::println(std::cerr, "got message from vicinae frame: {}", message);
+
+    if (const auto error = glz::read_json(req, message)) {
+      std::println(std::cerr, "\"{}\"", message);
+      std::println(std::cerr, "Failed to parse json: {}", glz::format_error(error));
+      return;
+    }
+
+    const auto callRes = vicinaeReceiver.call(req);
+
+    if (!callRes) {
+      std::println(std::cerr, "Failed to call extension rpc: {}", callRes.error());
+      return;
+    }
+  });
+
+  auto fds = std::array{pollfd(STDIN_FILENO, POLLIN), pollfd(vicinaeClient.handle(), POLLIN)};
 
   assert(fds.size() == 2);
 
   while (true) {
-    int ready = poll(fds.data(), fds.size(), 1000);
+    int ready = poll(fds.data(), fds.size(), -1);
+
+    if (ready == -1) {
+      std::println(std::cerr, "poll() failed: {} (exiting)", strerror(errno));
+      break;
+    }
+
+    std::println(std::cerr, "Something is ready to read");
 
     // read extension stuff
-    if (fds[0].revents & POLLIN) { extensionFrame.readPart(fds[0].fd); }
+    if (fds[0].revents & POLLIN) {
+      if (!extensionFrame.readPart(fds[0].fd)) {
+        std::println(std::cerr, "extension input closed, exiting...");
+        break;
+      }
+    }
 
     // take vicinae requests/response
-    if (fds[1].revents & POLLIN) { vicinaeFrame.readPart(fds[1].fd); }
+    if (fds[1].revents & POLLIN) {
+      if (!vicinaeFrame.readPart(fds[1].fd)) {
+        std::println(std::cerr, "The connection to the vicinae dameon broke, exiting...");
+        break;
+      }
+    }
   }
 
-  std::println(std::cerr, "Got EOF, exiting...");
-
-  /*
-match(msg.data, overloads{[&](const TabList &tabs) {
-                          wire::Request req;
-                          auto tabsChanged = std::make_unique<wire::BrowserTabChangedRequest>();
-
-                          for (const auto &tab : tabs) {
-                            auto data = tabsChanged->add_tabs();
-                            *data = tab;
-                          }
-
-                          req.set_allocated_browser_tabs_changed(tabsChanged.release());
-                          client.sendRequestSync(req);
-                        },
-                        [&](const VersionRequest &req) {
-                          VersionInfo info;
-                          sendMessage(OutgoingExtensionMessage(
-                              msg.type, VersionInfo(handshake.version(), handshake.pid())));
-                        }});
-                                                    */
+  std::println(std::cerr, "Native host was terminated.");
 }

@@ -21,7 +21,7 @@ template <typename T>
 concept IsCommandVerb = requires {
   { T::key } -> std::convertible_to<std::string>;
   typename T::Request;
-  typename T::Response;
+  // typename T::Response;
 };
 
 struct Handshake {
@@ -126,12 +126,18 @@ struct BrowserTabInfo {
 };
 
 struct BrowserTabsChanged {
-  static constexpr const auto key = "browser-tabs-changed";
+  static constexpr const auto key = "browser/tabs-changed";
 
+  using Request = std::vector<BrowserTabInfo>;
+
+  struct Response {};
+};
+
+struct FocusTab {
+  static constexpr const auto key = "browser/focus-tab";
   struct Request {
-    std::vector<BrowserTabInfo> tabs;
+    int tabId;
   };
-
   struct Response {};
 };
 
@@ -187,11 +193,16 @@ struct ErrorContext {
   std::string message;
 };
 
+template <typename T>
+concept hasResponse = requires { typename T::Response; };
+
 template <IsCommandVerb... Ts> struct RpcSchema {
   using RequestVariant = RequestType<Ts...>::type;
   using ResponseVariant = ResponseType<Ts...>::type;
 
   template <typename T> static constexpr bool contains = (std::same_as<T, Ts> || ...);
+
+  template <typename T> static constexpr bool isNotification = (std::same_as<T, Ts> || ...);
 
   struct Response {
     int id;
@@ -240,41 +251,42 @@ template <typename Schema> struct RpcClient {
 private:
 };
 
-/*
 template <typename Schema> class RpcServer {
 public:
-  struct ContextHandle {
-    Context::GlobalContext *global = nullptr;
-    Context::CallerContext *caller = nullptr;
-  };
-
-  RpcServer(Context::GlobalContext ctx) : m_ctx(ctx) {}
-
-  using HRet = std::expected<PromiseLike<ipc::ResponseTypeVariant>, std::string>;
-  using Handler = std::function<HRet(const ipc::RequestTypeVariant &req, ContextHandle ctx)>;
+  using SchemaType = Schema;
+  using HRet = std::expected<typename Schema::ResponseVariant, std::string>;
+  using Handler = std::function<HRet(const typename Schema::RequestVariant &req)>;
+  using NotificationHandler =
+      std::function<std::expected<void, std::string>(const typename Schema::RequestVariant &req)>;
   using MiddlewareHandler =
-      std::function<std::optional<std::string>(const ipc::RequestTypeVariant &request, ContextHandle ctx)>;
+      std::function<std::optional<std::string>(const typename Schema::RequestVariant &request)>;
 
   template <ipc::IsCommandVerb T>
-  void route(std::function<std::expected<PromiseLike<typename T::Response>, std::string>(
-                 const typename T::Request &reqData, ContextHandle ctx)>
-                 fn) {
+    requires hasResponse<T>
+  void
+  route(std::function<std::expected<typename T::Response, std::string>(const typename T::Request &reqData)>
+            fn) {
     std::string method = T::key;
 
-    m_handlers[method] = [fn](const ipc::RequestTypeVariant &req, ContextHandle ctx) -> HRet {
+    m_handlers[method] = [fn](const typename Schema::RequestVariant &req) -> HRet {
       if (auto actualReq = std::get_if<typename T::Request>(&req)) {
-        std::expected<PromiseLike<typename T::Response>, std::string> res = fn(*actualReq, ctx);
+        return fn(*actualReq).transform([](auto &&value) { return typename Schema::ResponseVariant(value); });
+      } else {
+        return std::unexpected("Mismatched request type");
+      }
+    };
+  }
 
-        if (!res) { return std::unexpected(res.error()); }
+  // notification overload - no response
+  template <ipc::IsCommandVerb T>
+    requires(!hasResponse<T>)
+  void route(std::function<std::expected<void, std::string>(const typename T::Request &reqData)> fn) {
+    std::string method = T::key;
 
-        if (auto future = std::get_if<QFuture<typename T::Response>>(&res.value())) {
-          return HRet(
-              future->then([](const T::Response &response) { return ipc::ResponseTypeVariant(response); }));
-        } else {
-          typename T::Response actualRes = std::get<typename T::Response>(res.value());
-          ipc::ResponseTypeVariant variant(actualRes);
-          return HRet(variant);
-        }
+    m_handlers[method] =
+        [fn](const typename Schema::RequestVariant &req) -> std::expected<void, std::string> {
+      if (auto actualReq = std::get_if<typename T::Request>(&req)) {
+        return fn(*actualReq);
       } else {
         return std::unexpected("Mismatched request type");
       }
@@ -283,28 +295,26 @@ public:
 
   void middleware(MiddlewareHandler fn) { m_middlewares.emplace_back(fn); }
 
-  HRet call(const ipc::GenericRequest &req, typename Context::CallerContext &callerCtx) {
-    ContextHandle handle(&m_ctx, &callerCtx);
-
+  std::expected<void, std::string> call(const typename Schema::Request &req) {
     if (auto it = m_handlers.find(req.method); it != m_handlers.end()) {
       try {
         for (const auto &handler : m_middlewares) {
-          if (const auto error = handler(req.data, handle)) { return std::unexpected(error.value()); }
+          if (const auto error = handler(req.data)) { return std::unexpected(error.value()); }
         }
       } catch (const std::exception &e) { return std::unexpected(e.what()); }
 
-      return it->second(req.data, handle);
+      it->second(req.data);
+      return {};
     }
 
     return std::unexpected("No handler for method");
   }
 
 private:
-  Context::GlobalContext m_ctx;
   std::unordered_map<std::string, Handler> m_handlers;
+  std::unordered_map<std::string, NotificationHandler> m_notificationHandlers;
   std::vector<MiddlewareHandler> m_middlewares;
 };
-*/
 
 static void test() {
   using Schema = RpcSchema<Deeplink>;
