@@ -15,6 +15,7 @@
 #include "ui/views/base-view.hpp"
 #include <qfuturewatcher.h>
 #include <qlocale.h>
+#include <qnamespace.h>
 #include <qobjectdefs.h>
 #include <variant>
 
@@ -28,8 +29,8 @@ public:
           auto rootItem = item.scored->item.get();
           return rootItem->newActionPanel(context(), m_manager->itemMetadata(rootItem->uniqueId()));
         },
-        [](const AbstractCalculatorBackend::CalculatorResult &item) {
-          auto panel = std::make_unique<ActionPanelState>();
+        [](const AbstractCalculatorBackend::CalculatorResult &item) -> std::unique_ptr<ActionPanelState> {
+          auto panel = std::make_unique<ListActionPanelState>();
           auto copyAnswer = new CopyCalculatorAnswerAction(item);
           auto copyQA = new CopyCalculatorQuestionAndAnswerAction(item);
           auto putAnswerInSearchBar = new PutCalculatorAnswerInSearchBar(item);
@@ -102,10 +103,7 @@ public:
 
   bool inputFilter(QKeyEvent *event) override {
     if (event->modifiers().toInt() == 0) {
-      switch (event->key()) {
-      case Qt::Key_Space:
-        return tryAliasFastTrack();
-      }
+      if (event->key() == Qt::Key_Space) { return tryAliasFastTrack(); }
     }
     return TypedListView::inputFilter(event);
   }
@@ -124,11 +122,13 @@ public:
 
     m_list->setModel(m_model);
     m_controller->setFilter("");
+    m_controller->setFileSearch(config->value().searchFilesInRoot);
 
     connect(config, &config::Manager::configChanged, this,
             [&](const config::ConfigValue &next, const config::ConfigValue &prev) {
               m_controller->setFileSearch(next.searchFilesInRoot);
             });
+    connect(m_manager, &RootItemManager::subtitleChanged, this, [this]() { m_list->refreshAll(); });
   }
 
   void textChanged(const QString &text) override {

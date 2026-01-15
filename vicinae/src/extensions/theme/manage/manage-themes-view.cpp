@@ -13,7 +13,7 @@
 #include "manage-themes-view.hpp"
 
 std::unique_ptr<ActionPanelState> ManageThemesView::createActionPanel(const ItemType &theme) const {
-  auto panel = std::make_unique<ActionPanelState>();
+  auto panel = std::make_unique<ListActionPanelState>();
   auto section = panel->createSection();
   auto setTheme = new SetThemeAction(theme->id());
   auto textEditor = context()->services->appDb()->textEditor();

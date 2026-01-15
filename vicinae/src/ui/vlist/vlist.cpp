@@ -1,7 +1,7 @@
 #include "vlist.hpp"
-#include <absl/base/call_once.h>
-#include <absl/time/time.h>
-#include <qobjectdefs.h>
+#include "ui/scroll-bar/scroll-bar.hpp"
+#include <ranges>
+#include <QApplication>
 
 namespace vicinae::ui {
 
@@ -22,14 +22,43 @@ void VListWidget::setModel(VListModel *model) {
   calculate();
 }
 
+void VListWidget::recalculateMousePosition() {
+  QPoint globalPos = QCursor::pos();
+
+  for (const auto &info : visibleItems()) {
+    QPoint localPos = info.widget->mapFromGlobal(globalPos);
+    bool isUnderCursor = info.widget->rect().contains(localPos);
+
+    if (!isUnderCursor) { info.widget->widget()->clearTransientState(); }
+
+    if (info.widget->underMouse()) {
+      info.widget->hide();
+      info.widget->show();
+    }
+  }
+}
+
+void VListWidget::updateFocusChain() {
+  int lastIdx = std::max(0, static_cast<int>(m_visibleItems.size() - 1));
+
+  for (int i = 0; i != lastIdx; ++i) {
+    QWidget *current = m_visibleItems.at(i).widget;
+    QWidget *next = m_visibleItems.at(i + 1).widget;
+    setTabOrder(current, next);
+  }
+}
+
 void VListWidget::calculate() {
-  if (!m_model) return;
+  if (!m_model) {
+    m_count = 0;
+    return;
+  }
 
   if (m_model) m_model->viewportChanged(QSize(width() - m_margins.left() - m_margins.right(), height()));
   m_height = m_model->height() + m_margins.top() + m_margins.bottom();
   m_count = m_model->count();
   m_scrollBar->setMinimum(0);
-  m_scrollBar->setMaximum(std::max(0, m_height - (int)size().height()));
+  m_scrollBar->setMaximum(std::max(0, m_height - size().height()));
   m_scrollBar->setSingleStep(DEFAULT_PAGE_STEP);
   m_scrollBar->setVisible(m_height > size().height());
 
@@ -48,6 +77,7 @@ void VListWidget::calculate() {
 }
 
 void VListWidget::selectNext() {
+  if (!m_model) return;
   int startIdx = m_selected.transform([](const Selection &s) { return s.idx + 1; }).value_or(0);
 
   for (int i = startIdx; i < m_count; ++i) {
@@ -60,14 +90,36 @@ void VListWidget::selectNext() {
   selectFirst();
 }
 
-void VListWidget::selectFirst() {
+std::optional<VListModel::Index> VListWidget::firstSelectableIndex() const {
+  if (!m_model) return std::nullopt;
   for (int i = 0; i != m_count; ++i) {
-    if (m_model->isSelectable(i)) {
-      setSelected(i);
-      return;
-    }
+    if (m_model->isSelectable(i)) { return i; }
   }
+  return std::nullopt;
+}
 
+std::optional<VListModel::Index> VListWidget::lastSelectableIndex() const {
+  if (!m_model) return std::nullopt;
+  for (int i = m_count - 1; i >= 0; --i) {
+    if (m_model->isSelectable(i)) { return i; }
+  }
+  return std::nullopt;
+}
+
+void VListWidget::selectFirst() {
+  if (auto idx = firstSelectableIndex()) {
+    setSelected(*idx);
+    return;
+  }
+  m_selected.reset();
+  emit itemSelected({});
+}
+
+void VListWidget::selectLast() {
+  if (auto idx = lastSelectableIndex()) {
+    setSelected(*idx);
+    return;
+  }
   m_selected.reset();
   emit itemSelected({});
 }
@@ -79,6 +131,12 @@ bool VListWidget::refresh(VListModel::Index idx) const {
   if (!w) return false;
   m_model->refreshWidget(idx, w);
   return w;
+}
+
+void VListWidget::refreshAll() {
+  for (const auto &item : m_visibleItems) {
+    m_model->refreshWidget(item.index, item.widget->widget());
+  }
 }
 
 VListModel::WidgetType *VListWidget::widgetAt(VListModel::Index idx) const {
@@ -96,6 +154,7 @@ bool VListWidget::activateCurrentSelection() {
 }
 
 bool VListWidget::selectLeft() {
+  if (!m_model) return false;
   if (!m_selected) {
     selectFirst();
     return true;
@@ -112,6 +171,7 @@ bool VListWidget::selectLeft() {
 }
 
 bool VListWidget::selectRight() {
+  if (!m_model) return false;
   if (!m_selected) {
     selectFirst();
     return true;
@@ -128,8 +188,15 @@ bool VListWidget::selectRight() {
 }
 
 bool VListWidget::selectUp() {
+  if (!m_model) return false;
   if (!m_selected) {
     selectFirst();
+    return true;
+  }
+
+  const auto first = firstSelectableIndex();
+  if (first && m_selected->idx == *first) {
+    selectLast();
     return true;
   }
 
@@ -161,7 +228,14 @@ bool VListWidget::selectUp() {
 }
 
 bool VListWidget::selectDown() {
+  if (!m_model) return false;
   if (!m_selected) {
+    selectFirst();
+    return true;
+  }
+
+  const auto last = lastSelectableIndex();
+  if (last && m_selected->idx == *last) {
     selectFirst();
     return true;
   }
@@ -212,6 +286,14 @@ void VListWidget::setMargins(const QMargins &margins) {
 void VListWidget::setMargins(int n) { setMargins(QMargins{n, n, n, n}); }
 
 void VListWidget::setSelected(VListModel::Index idx) {
+  if (!m_model) {
+    if (m_selected) {
+      m_selected.reset();
+      emit itemSelected(std::nullopt);
+    }
+    return;
+  }
+
   auto id = m_model->stableId(idx);
 
   if (!m_selected || m_selected->id != id) {
@@ -321,6 +403,8 @@ WidgetWrapper *VListWidget::getFromPool(VListModel::WidgetTag tag) {
 void VListWidget::updateViewport() {
   if (!size().isValid() || size().isNull() || size().isEmpty()) return;
 
+  setUpdatesEnabled(false);
+
   // Timer timer;
   std::unordered_map<VListModel::StableID, WidgetData> newMap;
 
@@ -375,6 +459,8 @@ void VListWidget::updateViewport() {
   }
 
   for (auto &item : m_visibleItems) {
+    bool wasCached = item.widget;
+
     if (!item.widget) {
       item.tag = m_model->widgetTag(item.index);
 
@@ -405,14 +491,13 @@ void VListWidget::updateViewport() {
       }
     }
 
-    item.widget->blockSignals(true);
+    if (!wasCached) { m_model->refreshWidget(item.index, item.widget->widget()); }
+
     item.widget->setIndex(item.index);
     item.widget->setSelected(m_selected && item.index == m_selected->idx);
     item.widget->setFixedSize(item.bounds.width(), item.bounds.height());
     item.widget->move(item.bounds.x(), item.bounds.y());
-    m_model->refreshWidget(item.index, item.widget->widget());
     item.widget->show();
-    item.widget->blockSignals(false);
 
     newMap[item.id] = {.widget = item.widget, .tag = item.tag};
   }
@@ -425,6 +510,11 @@ void VListWidget::updateViewport() {
   }
 
   m_widgetMap = newMap;
+
+  recalculateMousePosition();
+  updateFocusChain();
+  setUpdatesEnabled(true);
+  update();
 
   // timer.time("update viewport");
 }

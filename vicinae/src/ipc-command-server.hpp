@@ -8,6 +8,7 @@
 #include <qbytearrayview.h>
 #include <qcontainerfwd.h>
 #include <qdebug.h>
+#include <qfuturewatcher.h>
 #include <qlocalserver.h>
 #include <qlocalsocket.h>
 #include <qlogging.h>
@@ -47,6 +48,7 @@ class ICommandHandler {
 public:
   virtual PromiseLike<proto::ext::daemon::Response *>
   handleCommand(const proto::ext::daemon::Request &request) = 0;
+  virtual ~ICommandHandler() = default;
 };
 
 class IpcCommandServer : public QObject {

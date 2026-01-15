@@ -2,7 +2,8 @@
 #include <qfuture.h>
 #include <qnetworkdiskcache.h>
 #include <qnetworkreply.h>
-#include "utils/expected.hpp"
+#include <expected>
+#include <qstandardpaths.h>
 
 QNetworkRequest RaycastStoreService::createJsonApiRequest(const QUrl &url) {
   QNetworkRequest request(url);
@@ -28,7 +29,7 @@ QFuture<Raycast::ListResult> RaycastStoreService::search(const QString &query) {
 
   connect(reply, &QNetworkReply::finished, this, [this, reply, promise = std::move(promise)]() mutable {
     if (reply->error() != QNetworkReply::NoError) {
-      promise.addResult(tl::unexpected(""));
+      promise.addResult(std::unexpected(""));
     } else {
       std::vector<Raycast::Extension> extensions;
       auto data = reply->readAll();
@@ -37,7 +38,7 @@ QFuture<Raycast::ListResult> RaycastStoreService::search(const QString &query) {
 
       if (error.error != QJsonParseError::NoError) {
         qWarning() << "JSON parse error:" << error.errorString();
-        promise.addResult(tl::unexpected("Failed to parse response"));
+        promise.addResult(std::unexpected("Failed to parse response"));
         promise.finish();
         reply->deleteLater();
         return;
@@ -72,7 +73,7 @@ QFuture<Raycast::DownloadExtensionResult> RaycastStoreService::downloadExtension
 
   connect(reply, &QNetworkReply::finished, this, [this, reply, promise = std::move(promise)]() mutable {
     if (reply->error() != QNetworkReply::NoError) {
-      promise.addResult(tl::unexpected("Failed to fetch"));
+      promise.addResult(std::unexpected("Failed to fetch"));
     } else {
       promise.addResult(reply->readAll());
     }
@@ -103,7 +104,7 @@ RaycastStoreService::fetchExtensions(const Raycast::ListPaginationOptions &opts)
 
   connect(reply, &QNetworkReply::finished, this, [this, opts, reply, promise = std::move(promise)]() mutable {
     if (reply->error() != QNetworkReply::NoError) {
-      promise.addResult(tl::unexpected(""));
+      promise.addResult(std::unexpected(""));
     } else {
       std::vector<Raycast::Extension> extensions;
       auto data = reply->readAll();
@@ -112,7 +113,7 @@ RaycastStoreService::fetchExtensions(const Raycast::ListPaginationOptions &opts)
 
       if (error.error != QJsonParseError::NoError) {
         qWarning() << "JSON parse error:" << error.errorString();
-        promise.addResult(tl::unexpected("Failed to parse response"));
+        promise.addResult(std::unexpected("Failed to parse response"));
         promise.finish();
         reply->deleteLater();
         return;

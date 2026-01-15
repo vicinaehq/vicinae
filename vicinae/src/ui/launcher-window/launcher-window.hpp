@@ -4,10 +4,11 @@
 #include <qevent.h>
 #include <qlogging.h>
 #include <qmainwindow.h>
+#include <qobject.h>
 #include <qscreen.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
-#include "../image/url.hpp"
+#include "ui/image/url.hpp"
 #include "config/config.hpp"
 #include "navigation-controller.hpp"
 
@@ -48,8 +49,24 @@ protected:
   void hideEvent(QHideEvent *event) override;
   void showEvent(QShowEvent *event) override;
   void changeEvent(QEvent *event) override;
+  bool eventFilter(QObject *watched, QEvent *event) override;
 
   void handleConfigurationChange(const config::ConfigValue &value);
+  void applyWindowConfig(const config::WindowConfig &cfg);
+  bool isCompactable() const;
+
+  void setCompacted(bool value);
+  void tryCompaction();
+
+protected:
+  void mouseMoveEvent(QMouseEvent *event) override;
+  void tryCenter();
+  void centerOnScreen(const QScreen *screen);
+  void handleShowHUD(const QString &text, const std::optional<ImageURL> &icon);
+  void handleDialog(DialogContentWidget *alert);
+  void handleViewChange(const NavigationController::ViewState &state);
+  void setupUI();
+  QWidget *createWidget() const;
 
 private:
   ActionVeilWidget *m_actionVeil;
@@ -66,13 +83,6 @@ private:
   QStackedWidget *m_currentOverlayWrapper = nullptr;
   DialogWidget *m_dialog = nullptr;
   QWidget *m_focusWidget = nullptr;
-
-  void tryCenter();
-  void centerOnScreen(const QScreen *screen);
-
-  void handleShowHUD(const QString &text, const std::optional<ImageURL> &icon);
-  void handleDialog(DialogContentWidget *alert);
-  void handleViewChange(const NavigationController::ViewState &state);
-  void setupUI();
-  QWidget *createWidget() const;
+  bool m_compacted = false;
+  bool m_closeOnFocusLoss = false;
 };

@@ -8,7 +8,7 @@
 #include "services/window-manager/abstract-window-manager.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include <QString>
-#include "utils/expected.hpp"
+#include <expected>
 #include <filesystem>
 #include <QJsonObject>
 #include <qdir.h>
@@ -101,7 +101,7 @@ public:
   std::optional<QString> retrieveKeywords(const QString &id);
   bool setKeywords(const QString &id, const QString &keywords);
 
-  tl::expected<QByteArray, OfferDecryptionError> getMainOfferData(const QString &selectionId) const;
+  std::expected<QByteArray, OfferDecryptionError> getMainOfferData(const QString &selectionId) const;
   AbstractClipboardServer *clipboardServer() const;
   bool removeSelection(const QString &id);
   bool setPinned(const QString id, bool pinned);
@@ -161,7 +161,7 @@ private:
    */
   static ClipboardSelection &sanitizeSelection(ClipboardSelection &selection);
 
-  tl::expected<QByteArray, ClipboardService::OfferDecryptionError>
+  std::expected<QByteArray, ClipboardService::OfferDecryptionError>
   decryptOffer(const QByteArray &data, ClipboardEncryptionType type) const;
 
   static ClipboardOfferKind getKind(const ClipboardDataOffer &offer);

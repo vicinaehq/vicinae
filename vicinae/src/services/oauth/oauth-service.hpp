@@ -1,10 +1,12 @@
 #pragma once
-#include "../../ui/image/url.hpp"
+#include "ui/image/url.hpp"
 #include "omni-database.hpp"
 #include "proto/oauth.pb.h"
-#include "utils/expected.hpp"
+#include <expected>
 #include "oauth-token-store.hpp"
+#include <qfuture.h>
 #include <qlogging.h>
+#include <qpromise.h>
 #include <qstring.h>
 #include <qurlquery.h>
 #include <qvariant.h>
@@ -73,7 +75,7 @@ struct OAuthResponseData {
   QString code;
 };
 
-using OAuthResponse = tl::expected<OAuthResponseData, QString>;
+using OAuthResponse = std::expected<OAuthResponseData, QString>;
 
 struct OAuthRequest {
   QPromise<OAuthResponse> promise;
@@ -100,7 +102,7 @@ public:
     if (auto it = m_requests.find(state); it != m_requests.end()) {
       auto req = it->second.get();
 
-      req->promise.addResult(tl::unexpected("Request was canceled"));
+      req->promise.addResult(std::unexpected("Request was canceled"));
       req->promise.finish();
       m_requests.erase(it);
       return;

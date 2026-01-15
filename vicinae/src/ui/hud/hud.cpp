@@ -25,7 +25,7 @@ void HudWidget::setupUI() {
   setAttribute(Qt::WA_TranslucentBackground, true);
 
 #ifdef WAYLAND_LAYER_SHELL
-  if (Environment::isLayerShellEnabled()) {
+  if (Environment::isLayerShellSupported()) {
     namespace Shell = LayerShellQt;
 
     createWinId();

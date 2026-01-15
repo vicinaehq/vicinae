@@ -1,10 +1,11 @@
 #include "search-emojis-view.hpp"
 #include "clipboard-actions.hpp"
 #include "common.hpp"
+#include "emoji/emoji.hpp"
 #include "extensions/vicinae/search-emojis/emoji-browser-model.hpp"
+#include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/emoji-service/emoji-service.hpp"
-#include "services/emoji-service/emoji.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/action-pannel/push-action.hpp"
 #include "ui/form/text-area.hpp"
@@ -149,9 +150,15 @@ void EmojiView::regenerateMetaSections() {
 
 std::unique_ptr<ActionPanelState> EmojiView::createActionPanel(const ItemType &info) const {
   auto metadata = m_emojiService->mapMetadata(info.emoji);
+  // the copied emoji should be toned, but the scoring should still target the generic version
+  // so that it doesn't change on tone change.
+  QString copiedEmoji = info.skinToneSupport && m_skinTone
+                            ? emoji::applySkinTone(info.emoji, m_skinTone.value()).c_str()
+                            : QString::fromUtf8(info.emoji);
+
   auto wm = context()->services->windowManager();
-  auto panel = std::make_unique<ActionPanelState>();
-  auto copyEmoji = new CopyToClipboardAction(Clipboard::Text(QString::fromUtf8(info.emoji)), "Copy emoji");
+  auto panel = std::make_unique<ListActionPanelState>();
+  auto copyEmoji = new CopyToClipboardAction(Clipboard::Text(copiedEmoji), "Copy emoji");
   auto copyName = new CopyToClipboardAction(
       Clipboard::Text(QString::fromUtf8(info.name.data(), info.name.size())), "Copy emoji name");
   auto copyGroup = new CopyToClipboardAction(
@@ -159,18 +166,24 @@ std::unique_ptr<ActionPanelState> EmojiView::createActionPanel(const ItemType &i
   auto editKeywords = new EditEmojiKeywordsAction(info.emoji);
   auto resetRanking = new ResetEmojiRankingAction(info.emoji);
   auto mainSection = panel->createSection();
+  const QString defaultAction = command()->preferenceValues().value("defaultAction").toString();
 
   editKeywords->setShortcut(Keybind::EditAction);
 
   if (wm->canPaste()) {
-    auto paste = new PasteToFocusedWindowAction(Clipboard::Text(QString::fromUtf8(info.emoji)));
-    paste->setPrimary(true);
-    mainSection->addAction(new VisitEmojiActionWrapper(info.emoji, paste));
+    auto paste = new PasteToFocusedWindowAction(Clipboard::Text(copiedEmoji));
+
+    if (defaultAction == "paste") {
+      mainSection->addAction(new VisitEmojiActionWrapper(info.emoji, paste));
+      mainSection->addAction(new VisitEmojiActionWrapper(info.emoji, copyEmoji));
+    } else {
+      mainSection->addAction(new VisitEmojiActionWrapper(info.emoji, copyEmoji));
+      mainSection->addAction(new VisitEmojiActionWrapper(info.emoji, paste));
+    }
   } else {
-    copyEmoji->setPrimary(true);
+    mainSection->addAction(new VisitEmojiActionWrapper(info.emoji, copyEmoji));
   }
 
-  mainSection->addAction(new VisitEmojiActionWrapper(info.emoji, copyEmoji));
   mainSection->addAction(copyName);
   mainSection->addAction(copyGroup);
   mainSection->addAction(editKeywords);
@@ -218,7 +231,17 @@ void EmojiView::initialize() {
   m_model = new EmojiBrowserModel;
   regenerateMetaSections();
   m_model->setGroupedEmojis(m_emojiService->grouped());
+
+  const auto skinToneId = command()->preferenceValues().value("skinTone").toString().toStdString();
+
+  if (const auto it =
+          std::ranges::find_if(emoji::skinTones(), [&](auto &&info) { return info.id == skinToneId; });
+      it != emoji::skinTones().end()) {
+    m_skinTone = it->tone;
+  }
+
   setModel(m_model);
+  m_model->setSkinTone(m_skinTone);
   textChanged(searchText());
 }
 

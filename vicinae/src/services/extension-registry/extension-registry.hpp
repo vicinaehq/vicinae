@@ -3,6 +3,7 @@
 #include "extension-manifest.hpp"
 #include <filesystem>
 #include <qfilesystemwatcher.h>
+#include <qfuture.h>
 #include <qjsonobject.h>
 #include <expected>
 #include <qobject.h>

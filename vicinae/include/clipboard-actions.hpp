@@ -1,4 +1,5 @@
 #pragma once
+#include "builtin_icon.hpp"
 #include "common.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "../src/ui/image/url.hpp"
@@ -27,7 +28,7 @@ public:
 public:
   CopyToClipboardAction(const Clipboard::Content &content, const QString &title = "Copy to clipboard",
                         const Clipboard::CopyOptions options = {})
-      : AbstractAction(title, ImageURL::builtin("copy-clipboard")), m_content(content), m_opts(options) {}
+      : AbstractAction(title, BuiltinIcon::CopyClipboard), m_content(content), m_opts(options) {}
 };
 
 class PasteToFocusedWindowAction : public AbstractAction {

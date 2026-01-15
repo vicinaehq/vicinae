@@ -2,8 +2,8 @@
 #include "common.hpp"
 #include "proto/daemon.pb.h"
 #include <QDebug>
+#include <QFutureWatcher>
 #include "services/oauth/oauth-service.hpp"
-#include "services/clipboard/clipboard-service.hpp"
 #include "theme/theme-db.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "services/window-manager/window-manager.hpp"
@@ -12,7 +12,9 @@
 #include "services/app-service/app-service.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "services/extension-registry/extension-registry.hpp"
+#include <algorithm>
 #include <qapplication.h>
+#include <qfuturewatcher.h>
 #include <qobjectdefs.h>
 #include "extension/manager/extension-manager.hpp"
 #include <qsqlquery.h>
@@ -25,6 +27,7 @@
 #include "service-registry.hpp"
 #include "theme.hpp"
 #include "ui/dmenu-view/dmenu-view.hpp"
+#include "ui/provider-view/provider-view.hpp"
 #include "ui/toast/toast.hpp"
 #include <csignal>
 #include "vicinae.hpp"
@@ -142,7 +145,7 @@ IpcCommandHandler::processDmenu(const proto::ext::daemon::DmenuRequest &request)
   auto future = promise.future();
   auto payload = DMenu::Payload::fromProto(request);
 
-  if (payload.width < DMENU_SMALL_WIDTH_THRESHOLD) {
+  if (payload.width.has_value() && payload.width.value() < DMENU_SMALL_WIDTH_THRESHOLD) {
     qInfo() << "dmenu: disabling quicklook and footer because width is too low";
     payload.noFooter = true;
     payload.noQuickLook = true;
@@ -179,9 +182,9 @@ IpcCommandHandler::processDmenu(const proto::ext::daemon::DmenuRequest &request)
   return future;
 }
 
-tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
+std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
   if (!Omnicast::APP_SCHEMES.contains(url.scheme())) {
-    return tl::unexpected("Unsupported url scheme " + url.scheme().toStdString());
+    return std::unexpected("Unsupported url scheme " + url.scheme().toStdString());
   }
 
   qDebug() << "got deeplink" << url.toString();
@@ -229,7 +232,7 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
   }
 
   if (command == "close") {
-    if (!m_ctx.navigation->isWindowOpened()) return tl::unexpected("Already closed");
+    if (!m_ctx.navigation->isWindowOpened()) return std::unexpected("Already closed");
 
     CloseWindowOptions opts;
 
@@ -247,7 +250,7 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
   }
 
   if (command == "open") {
-    if (m_ctx.navigation->isWindowOpened()) return tl::unexpected("Already opened");
+    if (m_ctx.navigation->isWindowOpened()) return std::unexpected("Already opened");
     if (auto text = query.queryItemValue("popToRoot"); text == "true" || text == "1") {
       m_ctx.navigation->popToRoot();
     }
@@ -285,8 +288,34 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
 
   if (command == "extensions") {
     auto root = m_ctx.services->rootItemManager();
-
     auto components = path.sliced(1).split('/');
+
+    if (components.size() == 2) {
+      QString author = components[0];
+      QString extName = components[1];
+      auto pred = [&](const ExtensionRootProvider *s) {
+        return s->repository()->author() == author && s->repository()->name() == extName;
+      };
+
+      auto extensions = root->extensions();
+
+      if (auto it = std::ranges::find_if(extensions, pred); it != extensions.end()) {
+        m_ctx.navigation->popToRoot({.clearSearch = false});
+        m_ctx.navigation->pushView(new ProviderSearchView(**it));
+
+        if (auto text = query.queryItemValue("fallbackText"); !text.isEmpty()) {
+          m_ctx.navigation->setSearchText(text);
+        }
+
+        if (!m_ctx.navigation->isWindowOpened()) {
+          m_ctx.navigation->setInstantDismiss();
+          m_ctx.navigation->showWindow();
+        }
+        return {};
+      }
+
+      return std::unexpected("No such extension");
+    }
 
     if (components.size() < 3) {
       qWarning() << "Invalid use of extensions verb: expected format is "
@@ -352,7 +381,7 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
 
     if (verb == "set") {
       if (components.size() != 2) {
-        return tl::unexpected("Correct usage is vicinae://theme/set/<theme_id>");
+        return std::unexpected("Correct usage is vicinae://theme/set/<theme_id>");
       }
 
       QString id = components.at(1);
@@ -364,7 +393,7 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
       auto theme = service.findTheme(id);
 
       if (!theme) {
-        return tl::unexpected(std::string("theme with id ") + id.toStdString() + " does not exist");
+        return std::unexpected(std::string("theme with id ") + id.toStdString() + " does not exist");
       }
 
       if (theme->id() == cfg->value().systemTheme().name) {
@@ -444,7 +473,7 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
     }
   }
 
-  return tl::unexpected(std::string("invalid deeplink ") + url.toString().toStdString());
+  return std::unexpected(std::string("invalid deeplink ") + url.toString().toStdString());
 }
 
 IpcCommandHandler::IpcCommandHandler(ApplicationContext &ctx) : m_ctx(ctx) {}

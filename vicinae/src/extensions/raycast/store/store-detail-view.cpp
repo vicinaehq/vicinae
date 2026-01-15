@@ -165,7 +165,7 @@ void RaycastStoreDetailView::handleClickedScreenshot(const ImageURL &url) {
 }
 
 void RaycastStoreDetailView::createActions() {
-  auto panel = std::make_unique<ActionPanelState>();
+  auto panel = std::make_unique<ListActionPanelState>();
   auto registry = context()->services->extensionRegistry();
   bool isInstalled = registry->isInstalled(m_ext.id);
   auto main = panel->createSection();
@@ -224,6 +224,8 @@ void RaycastStoreDetailView::initialize() {
   }
 
   createActions();
+  QTimer::singleShot(0, this, [this]() { m_scrollArea->setFocus(); });
+
   connect(registry, &ExtensionRegistry::extensionAdded, this, [this](const QString &id) {
     if (id != m_ext.id) return;
     extensionInstalled();

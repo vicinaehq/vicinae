@@ -1,4 +1,5 @@
 #pragma once
+#include "builtin_icon.hpp"
 #include "extend/image-model.hpp"
 #include "proto/ui.pb.h"
 #include "theme.hpp"
@@ -108,6 +109,7 @@ public:
 
   ImageURL();
   ImageURL(const QString &s) noexcept;
+  ImageURL(BuiltinIcon icon);
   ImageURL(const proto::ext::ui::Image &image);
   ImageURL(const ImageLikeModel &imageLike);
   ImageURL(const QUrl &url);
@@ -116,6 +118,7 @@ public:
   operator QString() const { return toString(); }
 
   static ImageURL builtin(const QString &name);
+  static ImageURL builtin(BuiltinIcon icon);
   static ImageURL favicon(const QString &domain);
   static ImageURL system(const QString &name);
   static ImageURL local(const QString &path);

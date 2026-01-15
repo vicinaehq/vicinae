@@ -248,13 +248,13 @@ bool ClipboardService::removeSelection(const QString &selectionId) {
   return true;
 }
 
-tl::expected<QByteArray, ClipboardService::OfferDecryptionError>
+std::expected<QByteArray, ClipboardService::OfferDecryptionError>
 ClipboardService::decryptOffer(const QByteArray &data, ClipboardEncryptionType type) const {
   switch (type) {
   case ClipboardEncryptionType::Local: {
-    if (!m_encrypter) { return tl::unexpected(OfferDecryptionError::DecryptionRequired); }
+    if (!m_encrypter) { return std::unexpected(OfferDecryptionError::DecryptionRequired); }
     auto decryption = m_encrypter->decrypt(data);
-    if (!decryption) { return tl::unexpected(OfferDecryptionError::DecryptionFailed); }
+    if (!decryption) { return std::unexpected(OfferDecryptionError::DecryptionFailed); }
     return decryption.value();
   }
   default:
@@ -262,7 +262,7 @@ ClipboardService::decryptOffer(const QByteArray &data, ClipboardEncryptionType t
   }
 }
 
-tl::expected<QByteArray, ClipboardService::OfferDecryptionError>
+std::expected<QByteArray, ClipboardService::OfferDecryptionError>
 ClipboardService::getMainOfferData(const QString &selectionId) const {
   ClipboardDatabase cdb;
 

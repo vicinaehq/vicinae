@@ -40,17 +40,17 @@ void ClipboardEncrypter::loadKey() {
 }
 
 ClipboardEncrypter::EncryptResult ClipboardEncrypter::encrypt(const QByteArray &plain) const {
-  if (!m_keychainError.isEmpty()) return tl::unexpected(m_keychainError);
+  if (!m_keychainError.isEmpty()) return std::unexpected(m_keychainError);
 
   auto encrypted = Crypto::AES256GCM::encrypt(plain, m_key);
-  if (!encrypted) return tl::unexpected("Encryption failed");
+  if (!encrypted) return std::unexpected("Encryption failed");
   return encrypted.value();
 }
 
 ClipboardEncrypter::DecryptResult ClipboardEncrypter::decrypt(const QByteArray &encrypted) const {
-  if (!m_keychainError.isEmpty()) return tl::unexpected(m_keychainError);
+  if (!m_keychainError.isEmpty()) return std::unexpected(m_keychainError);
 
   auto decrypted = Crypto::AES256GCM::decrypt(encrypted, m_key);
-  if (!decrypted) return tl::unexpected("Decryption failed");
+  if (!decrypted) return std::unexpected("Decryption failed");
   return decrypted.value();
 }

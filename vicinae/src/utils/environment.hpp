@@ -2,7 +2,9 @@
 #include "xdgpp/env/env.hpp"
 #include <QString>
 #include <QApplication>
+#include <QProcess>
 #include <QProcessEnvironment>
+#include <QStandardPaths>
 #include <algorithm>
 #include <chrono>
 #include <cstdlib>
@@ -43,15 +45,15 @@ inline bool isPlasmaDesktop() { return containsIgnoreCase(xdgpp::currentDesktop(
 inline bool isWaylandPlasmaDesktop() { return isWaylandSession() && isPlasmaDesktop(); }
 inline bool isGnomeDesktop() { return containsIgnoreCase(xdgpp::currentDesktop(), "gnome"); }
 
-inline bool isLayerShellEnabled() {
+// used mostly to exclude cosmic which's implementation is currently broken
+inline bool isLayerShellSupported() {
 #ifndef WAYLAND_LAYER_SHELL
   return false;
 #endif
-  if (auto value = qEnvironmentVariable("USE_LAYER_SHELL"); !value.isEmpty()) { return value == "1"; }
   return isWaylandSession() && !isCosmicDesktop() && !isGnomeEnvironment();
 }
 
-inline bool isHudDisabled() { return !isLayerShellEnabled(); }
+inline bool isHudDisabled() { return !isLayerShellSupported(); }
 
 /**
  * App image directory if we are running in an appimage.
@@ -132,6 +134,14 @@ inline QString getEnvironmentDescription() {
   }
 
   return desc;
+}
+
+inline std::optional<QString> detectAppLauncher() {
+  QProcess proc;
+  proc.start("uwsm", {"check", "is-active"});
+  if (!proc.waitForFinished(1000) || proc.exitCode() != 0) return std::nullopt;
+  if (!QStandardPaths::findExecutable("uwsm-app").isEmpty()) return "uwsm-app --";
+  return "uwsm app --";
 }
 
 } // namespace Environment

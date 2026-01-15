@@ -1,4 +1,6 @@
 {
+	"$schema": "https://vicinae.com/schemas/config.json",
+
 	// A list of paths pointed to separate configuration files to source during loading.
 	// Note that values defined in the main configuration file always take precedence over imported
 	// files.
@@ -11,6 +13,10 @@
 	// Note that vicinae has a built-in file search command that can be used to perform file search in isolation, accompanied with
 	// rich content preview. This should be more than enough for most users.
 	"search_files_in_root": false,
+
+	// What vicinae should do when the "escape" key is pressed
+	// Supports "navigate_back" or "close_window"
+	"escape_key_behavior": "navigate_back",
 
 	// If the layer shell protocol is used to position the window and the keyboard interactivity is
 	// set to "exclusive" (the default) then this setting will have no effect. Either switch to "on_demand" interactivity
@@ -60,14 +66,34 @@
 	"launcher_window": {
 		// Control the opacity of the main window.
 		// Opacity for other surfaces are controlled by the active theme.
-		"opacity": 0.98,
+		"opacity": 0.95,
+		
+		// Blur the window background.
+		// Only suported on Hyprland for now.
+		// May require a server restart to disable properly.
+		"blur": {
+			"enabled": true
+		},
+
+		// Dims everything behind the vicinae window.
+		// Only supported on Hyprland for now.
+		// May require a server restart to disable properly.
+		"dim_around": true,
 
 		// You can turn client side decorations off if you want to let your compositor draw the rounded
 		// borders and such. This usually gives better results, but is more complicated to setup, if at all possible.
 		"client_side_decorations": {
 			"enabled": true,
 			"rounding": 10,
-			"border_width": 3
+			"border_width": 1
+		},
+
+		// In compact mode, vicinae only shows a search bar in the root search if no query is entered, only expanding to its full size when searching.
+		// WARNING: compact mode works best when vicinae is rendered as a layer surface (the default if available), as opposed to a regular floating window.
+		// That's because the part that is not rendered in compact mode is still part of the full window size, allowing the window to be gracefully expanded without having to deal
+		// with a compositor window resize which can generate a lot of visual noise. Server side borders and blur will look notably out of place.
+		"compact_mode": {
+			"enabled": false
 		},
 
 		// The vicinae UI is designed to work best at the default size. If you change this it is highly recommended
@@ -84,9 +110,9 @@
 		"screen": "auto",
 
 		// Only for wayland compositors that support the 'wlr-layer-shell' protocol (https://wayland.app/protocols/wlr-layer-shell-unstable-v1)
+		// NOTE: layer shell support for the cosmic compositor is explicitly disabled as it is currently broken
 		"layer_shell": {
 			"enabled": true,
-			"scope": "vicinae",
 			"keyboard_interactivity": "exclusive", // 'exclusive' | 'on_demand'
 			// either 'overlay' or 'top'.
 			// Other layers are not supported as they are unsuitable for a launcher.

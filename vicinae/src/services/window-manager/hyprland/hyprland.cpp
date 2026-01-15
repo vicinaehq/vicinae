@@ -3,6 +3,9 @@
 #include "services/window-manager/hyprland/hypr-workspace.hpp"
 #include "services/window-manager/hyprland/hyprctl.hpp"
 #include "lib/wayland/virtual-keyboard.hpp"
+#include "vicinae.hpp"
+#include "wayland/globals.hpp"
+#include <format>
 #include <xkbcommon/xkbcommon-keysyms.h>
 
 using Hyprctl = Hyprland::Controller;
@@ -27,11 +30,43 @@ AbstractWindowManager::WindowList HyprlandWindowManager::listWindowsSync() const
   return windows;
 }
 
+void HyprlandWindowManager::applyLayerRule(std::string_view rule) {
+  Hyprctl::oneshot(std::format("keyword layerrule {}, {}", rule, Omnicast::LAYER_SCOPE));
+}
+
+void HyprlandWindowManager::applyLayerRules() {
+  if (m_blur) {
+    for (const char *rule : {"blur", "blurpopups", "ignorealpha 0.35"}) {
+      applyLayerRule(rule);
+    }
+  }
+
+  if (m_dimAround) { applyLayerRule("dimaround"); }
+}
+
+bool HyprlandWindowManager::setBlur(const BlurConfig &cfg) {
+  m_blur = cfg.enabled;
+  applyLayerRules();
+  return true;
+}
+
+bool HyprlandWindowManager::setDimAround(bool value) {
+  m_dimAround = value;
+  applyLayerRules();
+  return false;
+}
+
 bool HyprlandWindowManager::pasteToWindow(const AbstractWindow *window, const AbstractApplication *app) {
   using VK = Wayland::VirtualKeyboard;
-  if (!m_kb.isAvailable()) return false;
-  if (app->isTerminalEmulator()) { return m_kb.sendKeySequence(XKB_KEY_v, VK::MOD_CTRL | VK::MOD_SHIFT); }
-  return m_kb.sendKeySequence(XKB_KEY_v, VK::MOD_CTRL);
+  Wayland::VirtualKeyboard kb;
+
+  if (!kb.isAvailable()) { return false; }
+
+  if (app && app->isTerminalEmulator()) {
+    return kb.sendKeySequence(XKB_KEY_v, VK::MOD_CTRL | VK::MOD_SHIFT);
+  }
+
+  return kb.sendKeySequence(XKB_KEY_v, VK::MOD_CTRL);
 }
 
 AbstractWindowManager::WindowPtr HyprlandWindowManager::getFocusedWindowSync() const {
@@ -43,7 +78,7 @@ AbstractWindowManager::WindowPtr HyprlandWindowManager::getFocusedWindowSync() c
   return std::make_shared<HyprlandWindow>(json.object());
 }
 
-bool HyprlandWindowManager::supportsPaste() const { return m_kb.isAvailable(); }
+bool HyprlandWindowManager::supportsPaste() const { return Wayland::Globals::virtualKeyboardManager(); }
 
 void HyprlandWindowManager::focusWindowSync(const AbstractWindow &window) const {
   Hyprctl::oneshot(std::format("dispatch focuswindow address:{}", window.id().toStdString()));

@@ -7,10 +7,12 @@
 #include "ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
-#include "settings/app-metadata-settings-detail.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "switch-windows-view.hpp"
+#include "ui/settings-item-info/settings-item-info.hpp"
+#include "utils/environment.hpp"
 #include <qjsonobject.h>
+#include <qkeysequence.h>
 #include <qwidget.h>
 
 double AppRootItem::baseScoreWeight() const { return 1; }
@@ -24,7 +26,15 @@ QString AppRootItem::subtitle() const { return m_app->description(); }
 QString AppRootItem::displayName() const { return m_app->displayName(); }
 
 QWidget *AppRootItem::settingsDetail(const QJsonObject &preferences) const {
-  return new AppMetadataSettingsDetail(m_app);
+  std::vector<std::pair<QString, QString>> args;
+
+  args.reserve(4);
+  args.emplace_back(std::pair{"ID", m_app->id()});
+  args.emplace_back(std::pair{"Name", m_app->displayName()});
+  args.emplace_back(std::pair{"Where", m_app->path().c_str()});
+  args.emplace_back(std::pair{"Opens in terminal", m_app->isTerminalApp() ? "Yes" : "No"});
+
+  return new SettingsItemInfo(args, m_app->description());
 }
 
 bool AppRootItem::isActive() const {
@@ -37,7 +47,7 @@ AccessoryList AppRootItem::accessories() const {
 }
 
 EntrypointId AppRootItem::uniqueId() const {
-  return EntrypointId{"applications", m_app->id().remove(".desktop").toStdString()};
+  return EntrypointId("applications", m_app->id().remove(".desktop").toStdString());
 }
 
 ImageURL AppRootItem::iconUrl() const { return m_app->iconUrl(); }
@@ -51,6 +61,7 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
   auto copyLocation = new CopyToClipboardAction(Clipboard::Text(m_app->path().c_str()), "Copy App Location");
   auto resetRanking = new ResetItemRanking(uniqueId());
   auto markAsFavorite = new ToggleItemAsFavorite(uniqueId(), metadata.favorite);
+  auto openPreferences = new OpenItemPreferencesAction(uniqueId());
   auto disable = new DisableApplication(uniqueId());
   auto preferences = ctx->services->rootItemManager()->getPreferenceValues(uniqueId());
   QString defaultAction = preferences.value("defaultAction").toString();
@@ -93,7 +104,7 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
   auto actions = m_app->actions();
 
   for (int i = 0; i != appActions.size(); ++i) {
-    auto action = actions[i];
+    const auto &action = actions[i];
     auto openAction = new OpenAppAction(action, action->displayName(), {});
 
     if (i < 9) { openAction->setShortcut(QString("ctrl+shift+%1").arg(i + 1)); }
@@ -108,8 +119,11 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
 
   utils->addAction(copyId);
   utils->addAction(copyLocation);
+
   itemSection->addAction(resetRanking);
   itemSection->addAction(markAsFavorite);
+  itemSection->addAction(openPreferences);
+
   dangerSection->addAction(disable);
 
   return panel;
@@ -188,9 +202,10 @@ PreferenceList AppRootProvider::preferences() const {
 }
 
 void AppRootProvider::preferencesChanged(const QJsonObject &preferences) {
-  if (preferences.contains("launchPrefix")) {
-    m_appService.setLaunchPrefix(preferences.value("launchPrefix").toString());
+  auto val = preferences.value("launchPrefix").toString();
+  if (val.isEmpty()) {
+    m_appService.setLaunchPrefix(Environment::detectAppLauncher());
   } else {
-    m_appService.setLaunchPrefix(std::nullopt);
+    m_appService.setLaunchPrefix(val);
   }
 }

@@ -68,6 +68,21 @@ std::vector<fs::path> xdgpp::dataDirs() {
   return parseDirs<fs::path>(xdd);
 }
 
+std::vector<fs::path> xdgpp::commonDataDirs() {
+  std::vector<fs::path> paths;
+  auto dirs = xdgpp::dataDirs();
+  auto home = dataHome();
+
+  paths.reserve(dirs.size() + 1);
+  paths.emplace_back(home);
+
+  for (const auto &dir : dirs) {
+    if (dir != home) { paths.emplace_back(dir); }
+  }
+
+  return paths;
+}
+
 std::vector<fs::path> xdgpp::appDirs() {
   std::vector<fs::path> paths;
   auto dirs = xdgpp::dataDirs();

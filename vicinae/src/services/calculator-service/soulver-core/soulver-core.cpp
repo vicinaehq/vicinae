@@ -56,12 +56,12 @@ std::vector<fs::path> SoulverCoreCalculator::availableResourcePaths() const {
   return paths;
 }
 
-tl::expected<AbstractCalculatorBackend::CalculatorResult, AbstractCalculatorBackend::CalculatorError>
+std::expected<AbstractCalculatorBackend::CalculatorResult, AbstractCalculatorBackend::CalculatorError>
 SoulverCoreCalculator::compute(const QString &question) const {
   auto soulverRes = calculate(question);
 
-  if (!soulverRes) { return tl::unexpected(CalculatorError(soulverRes.error())); }
-  if (soulverRes.value().type == "none") return tl::unexpected(CalculatorError("Result type is none"));
+  if (!soulverRes) { return std::unexpected(CalculatorError(soulverRes.error())); }
+  if (soulverRes.value().type == "none") return std::unexpected(CalculatorError("Result type is none"));
 
   CalculatorResult result;
 
@@ -80,14 +80,14 @@ SoulverCoreCalculator::asyncCompute(const QString &question) const {
   return promise.future();
 }
 
-tl::expected<SoulverCoreCalculator::SoulverResult, QString>
+std::expected<SoulverCoreCalculator::SoulverResult, QString>
 SoulverCoreCalculator::calculate(const QString &expression) const {
   char *answer = m_abi.soulver_evaluate(expression.toStdString().c_str());
 
   if (!answer) {
     qWarning() << "soulver_evaluate returned a null pointer. This suggests soulver crashed or wasn't "
                   "properly initialized.";
-    return tl::unexpected("Failed to parse json");
+    return std::unexpected("Failed to parse json");
   }
 
   QJsonParseError parseError;
@@ -95,7 +95,7 @@ SoulverCoreCalculator::calculate(const QString &expression) const {
 
   free(answer);
 
-  if (parseError.error != QJsonParseError::NoError) { return tl::unexpected("Failed to parse json"); }
+  if (parseError.error != QJsonParseError::NoError) { return std::unexpected("Failed to parse json"); }
 
   auto json = doc.object();
   QString value = json.value("value").toString();

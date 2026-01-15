@@ -144,10 +144,8 @@ private:
     case ShortcutPreset::Form:
       return {Keyboard::Shortcut::submit()};
     default:
-      break;
+      return {};
     }
-
-    return {Keyboard::Shortcut::enter()};
   }
 
   bool m_autoSelectPrimary = true;
@@ -306,6 +304,7 @@ public:
   void destroyCurrentCompletion();
 
   ArgumentValues completionValues() const;
+  std::vector<QString> unnamedCompletionValues() const;
   void setCompletionValues(const ArgumentValues &values);
 
   void selectSearchText() const;

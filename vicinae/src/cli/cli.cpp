@@ -1,5 +1,6 @@
 #include "cli.hpp"
 #include "cli/config.hpp"
+#include "cli/script.hpp"
 #include "cli/theme.hpp"
 #include "daemon/ipc-client.hpp"
 #include "utils.hpp"
@@ -436,6 +437,7 @@ int CommandLineInterface::execute(int ac, char **av) {
   app.registerCommand<ThemeCommand>();
   app.registerCommand<AppCommand>();
   app.registerCommand<ConfigCommand>();
+  app.registerCommand<ScriptCommand>();
 
   return app.run(ac, av);
 }

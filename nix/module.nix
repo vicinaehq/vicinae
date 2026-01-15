@@ -11,15 +11,13 @@ let
   inherit (pkgs.stdenv.hostPlatform) system;
   vicinaePkg = self.packages.${system}.default;
 
-  settingsFormat = pkgs.formats.json { };
-  themesFormat = pkgs.formats.toml { };
+  jsonFormat = pkgs.formats.json { };
+  tomlFormat = pkgs.formats.toml { };
 in
 {
 
   options.services.vicinae = {
-    enable = lib.mkEnableOption "vicinae launcher daemon" // {
-      default = false;
-    };
+    enable = lib.mkEnableOption "vicinae launcher daemon";
 
     package = lib.mkOption {
       type = lib.types.package;
@@ -28,16 +26,45 @@ in
       description = "The vicinae package to use";
     };
 
-    autoStart = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = "If the vicinae daemon should be started automatically";
-    };
+    systemd = {
+      enable = lib.mkEnableOption "vicinae systemd integration";
 
-    useLayerShell = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = "If vicinae should use the layer shell";
+      autoStart = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "If the vicinae daemon should be started automatically";
+      };
+
+      environment = lib.mkOption {
+        type =
+          with lib.types;
+          let
+            valueType = attrsOf (oneOf [
+              str
+              int
+              float
+              bool
+            ]);
+          in
+          valueType;
+        default = { };
+        description = "Environment variables for the vicinae daemon. See <https://docs.vicinae.com/launcher-window#wayland-layer-shell>";
+        example = lib.literalExpression ''
+          {
+            USE_LAYER_SHELL=1;
+            QT_SCALE_FACTOR=1.5;
+          }
+        '';
+      };
+
+      target = lib.mkOption {
+        type = lib.types.str;
+        default = "graphical-session.target";
+        example = "sway-session.target";
+        description = ''
+          The systemd target that will automatically start the vicinae service.
+        '';
+      };
     };
 
     extensions = lib.mkOption {
@@ -50,43 +77,45 @@ in
     };
 
     themes = lib.mkOption {
-      type =
-        with lib.types;
-        let
-          valueType = nullOr (oneOf [
-            str
-            path
-            (attrsOf valueType)
-          ]);
-        in
-        valueType;
+      inherit (tomlFormat) type;
       default = { };
       description = ''
-        Theme settings to add to the themes folder in `~/.local/share/vicinae/themes`. 
-        The attribute name of the theme will be the name of theme json file, 
-        e.g. `base16-default-dark` will be `base16-default-dark.json`.
+        Theme settings to add to the themes folder in `~/.config/vicinae/themes`. See <https://docs.vicinae.com/theming/getting-started> for supported values.
+
+        The attribute name of the theme will be the name of theme file,
       '';
       example =
         lib.literalExpression # nix
           ''
             {
-              base16-default-dark = {
-                version = "1.0.0";
-                appearance = "dark";
-                icon = /path/to/icon.png;
-                name = "base16 default dark";
-                description = "base16 default dark by Chris Kempson";
-                palette = {
-                  background = "#181818";
-                  foreground = "#d8d8d8";
-                  blue = "#7cafc2";
-                  green = "#a3be8c";
-                  magenta = "#ba8baf";
-                  orange = "#dc9656";
-                  purple = "#a16946";
-                  red = "#ab4642";
-                  yellow = "#f7ca88";
-                  cyan = "#86c1b9";
+              catppuccin-mocha = {
+                meta = {
+                  version = 1;
+                  name = "Catppuccin Mocha";
+                  description = "Cozy feeling with color-rich accents";
+                  variant = "dark";
+                  icon = "icons/catppuccin-mocha.png";
+                  inherits = "vicinae-dark";
+                };
+
+                colors = {
+                  core = {
+                    background = "#1E1E2E";
+                    foreground = "#CDD6F4";
+                    secondary_background = "#181825";
+                    border = "#313244";
+                    accent = "#89B4FA";
+                  };
+                  accents = {
+                    blue = "#89B4FA";
+                    green = "#A6E3A1";
+                    magenta = "#F5C2E7";
+                    orange = "#FAB387";
+                    purple = "#CBA6F7";
+                    red = "#F38BA8";
+                    yellow = "#F9E2AF";
+                    cyan = "#94E2D5";
+                  };
                 };
               };
             }
@@ -94,39 +123,34 @@ in
     };
 
     settings = lib.mkOption {
-      type =
-        with lib.types;
-        let
-          valueType = nullOr (oneOf [
-            bool
-            int
-            float
-            str
-            path
-            (attrsOf valueType)
-            (listOf valueType)
-          ]);
-        in
-        valueType;
-      default = null;
-      description = "Settings written as JSON to `~/.config/vicinae/vicinae.json.";
+      inherit (jsonFormat) type;
+      default = { };
+      description = "Settings written as JSON to `~/.config/vicinae/settings.json.";
       example = lib.literalExpression ''
         {
-          faviconService = "twenty";
+          close_on_focus_loss = true;
+          consider_preedit = true;
+          pop_to_root_on_close = true;
+          favicon_service = "twenty";
+          search_files_in_root = true;
           font = {
-            size = 10;
-          };
-          popToRootOnClose = false;
-          rootSearch = {
-            searchFiles = false;
+            normal = {
+              size = 12;
+              normal = "Maple Nerd Font";
+            };
           };
           theme = {
-            name = "vicinae-dark";
+            light = {
+              name = "vicinae-light";
+              icon_theme = "default";
+            };
+            dark = {
+              name = "vicinae-dark";
+              icon_theme = "default";
+            };
           };
-          window = {
-           csd = true;
-           opacity = 0.95;
-           rounding = 10;
+          launcher_window = {
+            opacity = 0.98;
           };
         }
       '';
@@ -136,47 +160,57 @@ in
   config = lib.mkIf cfg.enable {
     home.packages = [ cfg.package ];
 
-    xdg.dataFile =
-      builtins.listToAttrs (
-        builtins.map (item: {
-          name = "vicinae/extensions/${item.name}";
-          value.source = item;
-        }) config.services.vicinae.extensions
-      )
-      // lib.mapAttrs' (
-        name: theme:
-        lib.nameValuePair "vicinae/themes/${name}.toml" {
-          source = themesFormat.generate "${name}.toml" theme;
-        }
-      ) cfg.themes;
+    xdg =
+      let
+        themeFiles = lib.mapAttrs' (
+          name: theme:
+          lib.nameValuePair "vicinae/themes/${name}.toml" {
+            source = tomlFormat.generate "vicinae-${name}-theme" theme;
+          }
+        ) cfg.themes;
+      in
+      {
+        configFile = {
+          "vicinae/settings.json" = lib.mkIf (cfg.settings != { }) {
+            source = jsonFormat.generate "vicinae-settings" cfg.settings;
+          };
+        };
 
-    xdg.configFile = lib.optionalAttrs (cfg.settings != null) {
-      "vicinae/vicinae.json" = {
-        source = settingsFormat.generate "vicinae.json" cfg.settings;
+        dataFile =
+          builtins.listToAttrs (
+            builtins.map (item: {
+              name = "vicinae/extensions/${item.name}";
+              value.source = item;
+            }) cfg.extensions
+          )
+          // themeFiles;
       };
-    };
 
-    systemd.user.services.vicinae = {
+    systemd.user.services.vicinae = lib.mkIf (cfg.systemd.enable) {
       Unit = {
         Description = "Vicinae server daemon";
         Documentation = [ "https://docs.vicinae.com" ];
-        After = [ "graphical-session.target" ];
-        PartOf = [ "graphical-session.target" ];
-        BindsTo = [ "graphical-session.target" ];
+        After = [ cfg.systemd.target ];
+        PartOf = [ cfg.systemd.target ];
       };
       Service = {
-        Environment = [
-          "USE_LAYER_SHELL=${if cfg.useLayerShell then "1" else "0"}"
-        ];
+        Environment = lib.mapAttrsToList (
+          key: val:
+          let
+            valueStr = if lib.isBool val then (if val then "1" else "0") else toString val;
+          in
+          "${key}=${valueStr}"
+        ) cfg.systemd.environment;
         Type = "simple";
         ExecStart = "${lib.getExe' cfg.package "vicinae"} server";
         Restart = "always";
         RestartSec = 5;
         KillMode = "process";
       };
-      Install = lib.mkIf cfg.autoStart {
-        WantedBy = [ "graphical-session.target" ];
+      Install = lib.mkIf cfg.systemd.autoStart {
+        WantedBy = [ cfg.systemd.target ];
       };
     };
+
   };
 }

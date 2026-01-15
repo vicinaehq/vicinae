@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <qflags.h>
 #include <qfuture.h>
 #include <qobject.h>
 #include <qpromise.h>
@@ -7,7 +8,6 @@
 #include "services/app-service/abstract-app-db.hpp"
 #include <QApplication>
 #include <QScreen>
-#include <qtmetamacros.h>
 #include <ranges>
 #include <vector>
 
@@ -44,11 +44,17 @@ public:
     std::optional<QString> serial;
   };
 
+  struct BlurConfig {
+    bool enabled = true;
+  };
+
   /**
    * A Window from the current window manager.
    */
   class AbstractWindow {
   public:
+    virtual ~AbstractWindow() = default;
+
     virtual QString id() const = 0;
     virtual QString title() const = 0;
     virtual QString wmClass() const = 0;
@@ -68,6 +74,8 @@ public:
 
   class AbstractWorkspace {
   public:
+    virtual ~AbstractWorkspace() = default;
+
     virtual QString id() const = 0;
     virtual QString name() const { return id(); }
     virtual QString monitor() const = 0;
@@ -92,6 +100,15 @@ public:
    * a unique string. Defaults to `id()` if not reimplemented.
    */
   virtual QString displayName() const { return id(); }
+
+  /**
+   * Apply blur to the vicinae windows.
+   *
+   * Returns whether blur could be applied or not.
+   */
+  virtual bool setBlur(const BlurConfig &cfg) { return false; }
+
+  virtual bool setDimAround(bool value = true) { return false; }
 
   virtual WindowList listWindowsSync() const { return {}; };
 

@@ -13,18 +13,22 @@ host-optimized:
 .PHONY: optimized
 
 debug:
-	cmake -G Ninja -DLTO=OFF -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
+	cmake -G Ninja -DLTO=OFF -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)
 .PHONY: debug
+
+genicon:
+	node scripts/generate-icons.js
+.PHONY: genicon
 
 strip:
 	strip -s ./build/vicinae/vicinae
 .PHONY: strip
 
 test:
-	cmake -G Ninja -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
-	cmake --build $(BUILD_DIR)
-	./build/tests/all_tests
+	$(BUILD_DIR)/lib/xdgpp/xdgpp-tests
+	$(BUILD_DIR)/lib/script-command/scriptcommand-tests
+	$(BUILD_DIR)/lib/emoji/emoji-tests
 .PHONY: test
 
 no-ts-ext:
@@ -97,10 +101,6 @@ gen-contrib:
 	node ./scripts/gen-contrib.js
 .PHONY: gen-contrib
 
-# we run this from time to time only, it's not part of the build pipeline
-gen-emoji:
-	cd ./scripts/emoji && npm install && tsc --outDir dist && node dist/main.js
-.PHONY: gen-emoji
 
 copr-build:
 	chmod +x ./scripts/copr-build.sh
@@ -116,6 +116,7 @@ clean:
 	$(RM) -rf ./typescript/extension-manager/node_modules
 	$(RM) -rf ./typescript/extension-manager/src/proto
 	$(RM) -rf ./scripts/.tmp
+	$(RM) -rf lib/*/build
 .PHONY: clean
 
 re: clean release

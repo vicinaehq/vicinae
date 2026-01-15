@@ -1,6 +1,6 @@
 #pragma once
 #include "services/calculator-service/abstract-calculator-backend.hpp"
-#include "utils/expected.hpp"
+#include <expected>
 #include <filesystem>
 
 class SoulverCoreCalculator : public AbstractCalculatorBackend {
@@ -31,7 +31,7 @@ private:
 
   void loadABI();
 
-  tl::expected<SoulverResult, QString> calculate(const QString &expression) const;
+  std::expected<SoulverResult, QString> calculate(const QString &expression) const;
   std::vector<std::filesystem::path> availableResourcePaths() const;
   ABI m_abi;
 

@@ -157,7 +157,7 @@ std::string DaemonIpcClient::dmenu(const DMenu::Payload &payload) {
   return res.dmenu().output();
 }
 
-tl::expected<void, QString> DaemonIpcClient::deeplink(const QUrl &url) {
+std::expected<void, QString> DaemonIpcClient::deeplink(const QUrl &url) {
   proto::ext::daemon::Request req;
   auto urlReq = new Daemon::UrlRequest();
 
@@ -165,7 +165,7 @@ tl::expected<void, QString> DaemonIpcClient::deeplink(const QUrl &url) {
   req.set_allocated_url(urlReq);
   auto res = request(req);
 
-  if (auto error = res.url().error(); !error.empty()) { return tl::unexpected(error.c_str()); }
+  if (auto error = res.url().error(); !error.empty()) { return std::unexpected(error.c_str()); }
   return {};
 }
 

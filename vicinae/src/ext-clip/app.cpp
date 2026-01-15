@@ -2,6 +2,7 @@
 #include <iostream>
 #include <iomanip>
 #include <string>
+#include <ranges>
 #include <unistd.h>
 #include "proto/wlr-clipboard.pb.h"
 #include "wayland/mime.hpp"

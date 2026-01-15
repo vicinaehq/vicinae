@@ -35,6 +35,21 @@ const styleMap: Record<Alert.ActionStyle, ConfirmAlertActionStyle> = {
 };
 
 /**
+ * Display a confirmation dialog with a cancel and confirm options.
+ * The action is canceled if the cancel button is pressed or if the alert is dismissed for any reason.
+ *
+ * @remarks Calling this function when another alert is currently pending will result in the pending alert
+ * to be automatically canceled, replacing it with the new one.
+ *
+ * @returns - whether the action was confirmed.
+ *
+ * @example
+ * ```typescript
+ * if (await confirmAlert({ title: 'Are you sure?', description: 'This can't be undone' })) {
+ * 	performDangerousAction();
+ * }
+ * ```
+ *
  * @category Alert
  */
 export const confirmAlert = async (

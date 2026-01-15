@@ -12,6 +12,7 @@
 #include <QGuiApplication>
 #include "virtual-keyboard.hpp"
 #include "virtual-keyboard-unstable-v1-client-protocol.h"
+#include "wayland/globals.hpp"
 
 namespace chrono = std::chrono;
 using namespace std::chrono_literals;
@@ -27,17 +28,10 @@ VirtualKeyboard::VirtualKeyboard() {
   if (!m_display) { return; }
 
   wl_seat *seat = waylandApp->seat();
+
   if (!seat) { return; }
 
-  wl_keyboard *kb = waylandApp->keyboard();
-  if (!kb) { return; }
-
-  wl_registry *registry = wl_display_get_registry(m_display);
-  if (!registry) { return; }
-
-  wl_registry_add_listener(registry, &_listener, this);
-  wl_display_dispatch(m_display);
-  wl_display_roundtrip(m_display);
+  m_iface = Globals::virtualKeyboardManager();
 
   if (!m_iface) { return; }
 
@@ -140,19 +134,6 @@ bool VirtualKeyboard::uploadKeymap(const std::vector<xkb_keysym_t> &keysyms) {
   close(fd);
   return true;
 }
-
-void VirtualKeyboard::handleGlobal(void *data, struct wl_registry *registry, uint32_t name,
-                                   const char *interface, uint32_t version) {
-  static const wl_interface &iface = zwp_virtual_keyboard_manager_v1_interface;
-  VirtualKeyboard *vkb = static_cast<VirtualKeyboard *>(data);
-
-  if (strcmp(interface, iface.name) == 0 && version == iface.version) {
-    vkb->m_iface =
-        static_cast<zwp_virtual_keyboard_manager_v1 *>(wl_registry_bind(registry, name, &iface, version));
-  }
-}
-
-void VirtualKeyboard::globalRemove(void *data, struct wl_registry *registry, uint32_t name) {}
 
 uint32_t VirtualKeyboard::mappedKeyCode(xkb_keysym_t sym) {
   if (auto idx = indexOfKey(sym)) return idx.value() + 1;

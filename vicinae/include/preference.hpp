@@ -1,5 +1,6 @@
 #pragma once
 #include <qboxlayout.h>
+#include <qjsonarray.h>
 #include <qjsonvalue.h>
 #include <qnamespace.h>
 #include <qstring.h>
@@ -56,7 +57,11 @@ public:
   static Preference file(const QString &id) { return {id, FilePickerData()}; }
   static Preference files(const QString &id) { return {id, FilePickerData{.multiple = true}}; }
   static Preference directory(const QString &id) { return {id, DirectoryPickerData{}}; }
-  static Preference directories(const QString &id) { return {id, DirectoryPickerData{.multiple = true}}; }
+  static Preference directories(const QString &id) {
+    Preference preference{id, DirectoryPickerData{.multiple = true}};
+    preference.setDefaultValue(QJsonArray());
+    return preference;
+  }
 
   void setName(const QString &name) { m_name = name; }
   void setTitle(const QString &name) { m_title = name; }
@@ -79,7 +84,7 @@ public:
   Data data() const { return m_data; }
   bool isSecret() const { return std::holds_alternative<PasswordData>(m_data); }
 
-  Preference() {}
+  Preference() = default;
 };
 
 using PreferenceList = std::vector<Preference>;

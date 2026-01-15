@@ -2,6 +2,7 @@
 #include "daemon/ipc-client.hpp"
 #include "environment.hpp"
 #include <QStyleHints>
+#include "root-search/scripts/script-root-provider.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "favicon/favicon-service.hpp"
 #include "font-service.hpp"
@@ -26,6 +27,7 @@
 #include "services/power-manager/power-manager.hpp"
 #include "services/raycast/raycast-store.hpp"
 #include "services/extension-store/vicinae-store.hpp"
+#include "services/script-command/script-command-service.hpp"
 #include "services/shortcut/shortcut-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/window-manager/window-manager.hpp"
@@ -115,6 +117,8 @@ void CliServerCommand::run(CLI::App *app) {
   static char *argv[] = {strdup("command"), nullptr};
   QApplication qapp(argc, argv);
 
+  if (auto launcher = Environment::detectAppLauncher()) { qInfo() << "Detected launch prefix:" << *launcher; }
+
   // discard system specific qt theming
   qapp.setStyle(QStyleFactory::create("fusion"));
 
@@ -171,6 +175,7 @@ void CliServerCommand::run(CLI::App *app) {
     registry->setExtensionRegistry(std::move(extensionRegistry));
     registry->setOAuthService(std::move(oauthService));
     registry->setPowerManager(std::make_unique<PowerManager>());
+    registry->setScriptDb(std::make_unique<ScriptCommandService>());
 
     auto root = registry->rootItemManager();
     auto builtinCommandDb = std::make_unique<CommandDatabase>();
@@ -222,6 +227,7 @@ void CliServerCommand::run(CLI::App *app) {
 
     root->loadProvider(std::make_unique<AppRootProvider>(*registry->appDb()));
     root->loadProvider(std::make_unique<ShortcutRootProvider>(*registry->shortcuts()));
+    root->loadProvider(std::make_unique<ScriptRootProvider>(*registry->scriptDb()));
 
     // Force reload providers to make sure items that depend on them are shown
     root->updateIndex();
@@ -245,8 +251,8 @@ void CliServerCommand::run(CLI::App *app) {
 
   auto configChanged = [&](const config::ConfigValue &next, const config::ConfigValue &prev) {
     auto &theme = ThemeService::instance();
-    auto nextTheme = next.systemTheme();
-    auto prevTheme = prev.systemTheme();
+    auto &nextTheme = next.systemTheme();
+    auto &prevTheme = prev.systemTheme();
     bool themeChangeRequired = nextTheme.name != prevTheme.name;
 
     bool iconThemeChangeRequired = nextTheme.iconTheme != prevTheme.iconTheme;
@@ -283,12 +289,6 @@ void CliServerCommand::run(CLI::App *app) {
       qApp->setStyleSheet(qApp->styleSheet());
     }
   };
-
-  if (!Environment::isLayerShellEnabled() && Environment::isCosmicDesktop()) {
-    qWarning() << "Vicinae doesn't use layer-shell on the Cosmic desktop as it is currently broken. See "
-                  "https://github.com/pop-os/cosmic-comp/issues/1590. If you want to force enable it, you "
-                  "can set USE_LAYER_SHELL=1 in your environment.";
-  }
 
   auto cfgService = ServiceRegistry::instance()->config();
 

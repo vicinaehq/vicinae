@@ -24,7 +24,7 @@ void RootSearchModel::setQuery(std::string_view text) {
   emit dataChanged();
 }
 
-void RootSearchModel::setItems(std::span<RootItemManager::ScoredItem> items) {
+void RootSearchModel::setItems(std::vector<RootItemManager::ScoredItem> items) {
   m_items = items;
   m_resultSectionTitle = std::format("Results ({})", m_items.size());
   emit dataChanged();

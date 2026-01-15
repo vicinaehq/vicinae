@@ -16,6 +16,7 @@
 #include <qlogging.h>
 #include <qwidget.h>
 #include <QProcessEnvironment>
+#include <ranges>
 
 NavigationController::NavigationController(ApplicationContext &ctx) : m_ctx(ctx) {}
 
@@ -161,6 +162,11 @@ ArgumentValues NavigationController::completionValues() const {
   }
 
   return {};
+}
+
+std::vector<QString> NavigationController::unnamedCompletionValues() const {
+  return completionValues() | std::views::transform([](auto &&p) { return p.second; }) |
+         std::ranges::to<std::vector>();
 }
 
 void NavigationController::setCompletionValues(const ArgumentValues &values) {
@@ -482,7 +488,7 @@ void NavigationController::setSearchAccessory(QWidget *accessory, const BaseView
 
 void NavigationController::setActions(std::unique_ptr<ActionPanelState> panel, const BaseView *caller) {
   if (!panel) {
-    qWarning() << "setActions called with a null pointer";
+    qDebug() << "setActions called with a null pointer";
     return;
   }
 
@@ -491,7 +497,7 @@ void NavigationController::setActions(std::unique_ptr<ActionPanelState> panel, c
 
   if (auto state = findViewState(VALUE_OR(caller, topView()))) {
     state->actionPanelState = std::move(panel);
-    if (state->sender == topView()) { emit actionsChanged(*state->actionPanelState.get()); }
+    if (state->sender == topView()) { emit actionsChanged(*state->actionPanelState); }
   }
 }
 

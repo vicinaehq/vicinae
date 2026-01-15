@@ -1,6 +1,7 @@
 #pragma once
 #include "cli/cli.hpp"
 #include "config/template.hpp"
+#include <qdir.h>
 #include <stdexcept>
 
 class DefaultConfigCommand : public AbstractCommandLineCommand {
@@ -14,7 +15,6 @@ class DefaultConfigCommand : public AbstractCommandLineCommand {
     if (!file.open(QIODevice::ReadOnly)) { throw std::runtime_error("Failed to open default config file!"); }
 
     std::cout << file.readAll().toStdString();
-    return;
   }
 
 private:

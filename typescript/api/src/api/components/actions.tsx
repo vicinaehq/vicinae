@@ -95,6 +95,14 @@ export namespace Action {
 			quicklink: Quicklink;
 		};
 	}
+
+	/**
+	 * @ignore - not implemented
+	 */
+	export namespace PickDate {
+		export type Props = BaseActionProps & {
+		}
+	}
 }
 
 export type Quicklink = {
@@ -209,7 +217,6 @@ const Push: React.FC<Action.Push.Props> = ({ target, ...props }) => {
 		<ActionRoot
 			{...props}
 			onAction={() => {
-				console.log("activate push action");
 				push(target);
 			}}
 		/>
@@ -234,6 +241,11 @@ const SubmitForm: React.FC<Action.SubmitForm.Props> = ({
 
 	return <action {...nativeProps} />;
 };
+
+// TODO: implement date picker action. This probably requires a full rework of the action panel.
+const PickDate: React.FC<Action.PickDate.Props> = () => {
+	return null;
+}
 
 const CreateQuicklink: React.FC<Action.CreateQuicklink.Props> = ({
 	title = "Create Quicklink",
@@ -277,6 +289,10 @@ export const Action = Object.assign(ActionRoot, {
 	OpenInBrowser,
 	ShowInFinder,
 	CreateQuicklink,
+	PickDate: Object.assign(PickDate, {
+		// TODO: to implement too
+		isFullDay: () => false
+	}),
 	Style: {
 		Regular: "regular",
 		Destructive: "destructive",

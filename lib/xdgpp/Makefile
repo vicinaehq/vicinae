@@ -15,7 +15,7 @@ shared:
 test:
 	cmake -GNinja -DXDGPP_BUILD_TESTS=ON -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)
-	./$(BUILD_DIR)/tests
+	./$(BUILD_DIR)/xdgpp-tests
 .PHONY: test
 
 install:

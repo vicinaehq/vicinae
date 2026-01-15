@@ -140,7 +140,6 @@ void RootItemManager::updateIndex() {
   }
 
   mergeConfigWithMetadata(m_cfg.value());
-  m_scoredItems.reserve(m_items.size());
   isReloading = false;
   emit itemsChanged();
 }
@@ -160,25 +159,34 @@ float RootItemManager::SearchableRootItem::fuzzyScore(std::string_view pattern) 
   return score * (1 + frequencyScore * frequencyWeight);
 }
 
-std::span<RootItemManager::ScoredItem> RootItemManager::search(const QString &query,
-                                                               const RootItemPrefixSearchOptions &opts) {
+std::vector<RootItemManager::ScoredItem> RootItemManager::search(const QString &query,
+                                                                 const RootItemPrefixSearchOptions &opts) {
+  std::vector<ScoredItem> items;
+  search(query, items, opts);
+  return items;
+}
+
+void RootItemManager::search(const QString &query, std::vector<ScoredItem> &results,
+                             const RootItemPrefixSearchOptions &opts) {
   std::string pattern = query.toStdString();
   std::string_view patternView = pattern;
 
-  m_scoredItems.clear();
+  results.clear();
+  results.reserve(m_items.size());
 
   for (auto &item : m_items) {
     if (!item.meta->enabled && !opts.includeDisabled) continue;
+    if (opts.providerId && opts.providerId != item.meta->providerId) continue;
     if (item.meta->favorite && !opts.includeFavorites) continue;
     double fuzzyScore = item.fuzzyScore(patternView);
 
     if (!fuzzyScore) { continue; }
 
-    m_scoredItems.emplace_back(ScoredItem{.meta = item.meta, .score = fuzzyScore, .item = item.item});
+    results.emplace_back(ScoredItem{.meta = item.meta, .score = fuzzyScore, .item = item.item});
   }
 
   // we need stable sort to avoid flickering when updating quickly
-  std::ranges::stable_sort(m_scoredItems, [&](const auto &a, const auto &b) {
+  std::ranges::stable_sort(results, [&](const auto &a, const auto &b) {
     if (opts.prioritizeAliased) {
       bool aa = !a.meta->alias.value_or("").empty() && a.meta->alias->starts_with(pattern);
       bool ab = !b.meta->alias.value_or("").empty() && b.meta->alias->starts_with(pattern);
@@ -189,7 +197,7 @@ std::span<RootItemManager::ScoredItem> RootItemManager::search(const QString &qu
     return a.score > b.score;
   });
 
-  return m_scoredItems;
+  return;
 }
 
 bool RootItemManager::setItemEnabled(const EntrypointId &id, bool value) {
@@ -258,13 +266,7 @@ glz::generic::object_t RootItemManager::transformPreferenceValues(const QJsonObj
   };
 
   for (const auto &key : preferences.keys()) {
-    std::string k = key.toStdString();
-    QJsonValue v = preferences.value(key);
-
-    if (v.isBool()) obj[k] = v.toBool();
-    if (v.isString()) obj[k] = v.toString().toStdString();
-    if (v.isDouble()) obj[k] = v.toDouble();
-    if (v.isNull()) obj[k] = glz::generic::null_t{};
+    obj[key.toStdString()] = transformValue(preferences.value(key));
   }
 
   return obj;
@@ -631,13 +633,7 @@ void RootItemManager::mergeConfigWithMetadata(const config::ConfigValue &cfg) {
       providerConfig = &it->second;
     }
 
-    auto prvd = provider(entrypointId.provider.c_str());
-
     if (providerConfig) {
-      if (auto p = provider(entrypointId.provider.c_str())) {
-        p->preferencesChanged(getProviderPreferenceValues(entrypointId.provider.c_str()));
-      }
-
       if (auto it = providerConfig->entrypoints.find(entrypointId.entrypoint);
           it != providerConfig->entrypoints.end()) {
         itemConfig = &it->second;
@@ -658,7 +654,14 @@ void RootItemManager::mergeConfigWithMetadata(const config::ConfigValue &cfg) {
     }
 
     if (providerConfig) {
-      if (auto enabled = providerConfig->enabled) { meta.enabled = enabled.value(); }
+      if (auto enabled = providerConfig->enabled; enabled.has_value() && !enabled.value()) {
+        meta.enabled = false;
+      }
     }
+  }
+
+  // update provider preferences to make sure they are in sync
+  for (const auto &provider : m_providers) {
+    provider->preferencesChanged(getProviderPreferenceValues(provider->uniqueId()));
   }
 }

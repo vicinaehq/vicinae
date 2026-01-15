@@ -1,7 +1,6 @@
 #pragma once
 #include "actions/extension/extension-actions.hpp"
 #include "services/extension-store/vicinae-store.hpp"
-#include "ui/image/url.hpp"
 #include "ui/list-accessory/list-accessory.hpp"
 #include "ui/text-link/text-link.hpp"
 #include "ui/vertical-scroll-area/vertical-scroll-area.hpp"

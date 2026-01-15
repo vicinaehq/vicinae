@@ -2,7 +2,6 @@
 #include "actions/app/app-actions.hpp"
 #include "clipboard-actions.hpp"
 #include "services/app-service/abstract-app-db.hpp"
-#include "theme.hpp"
 #include "ui/default-list-item-widget/default-list-item-widget.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include "service-registry.hpp"
@@ -36,7 +35,7 @@ private:
   }
 
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
-    auto panel = std::make_unique<ActionPanelState>();
+    auto panel = std::make_unique<ListActionPanelState>();
     auto appDb = ctx->services->appDb();
     auto open = new OpenAppAction(m_app, "Open Application", {});
     auto copyId = new CopyToClipboardAction(Clipboard::Text(m_app->id()), "Copy App ID");
@@ -75,7 +74,7 @@ private:
     auto actions = m_app->actions();
 
     for (int i = 0; i != appActions.size(); ++i) {
-      auto action = actions[i];
+      auto &action = actions[i];
       auto openAction = new OpenAppAction(action, action->displayName(), {});
 
       if (i < 9) { openAction->setShortcut(QString("control+shift+%1").arg(i + 1)); }
@@ -109,11 +108,14 @@ private:
 
 BrowseAppsView::Data BrowseAppsView::initData() const {
   auto preferences = command()->preferenceValues();
-  Data data;
+  auto config = context()->services->config();
   auto appDb = context()->services->appDb();
+  Data data;
+  AppListOptions opts{.sortAlphabetically = preferences.value("sortAlphabetically").toBool()};
+  bool showHidden = preferences.value("showHidden").toBool();
 
-  for (const auto &app : appDb->list()) {
-    if (!preferences.value("showHidden").toBool() && !app->displayable()) continue;
+  for (const auto &app : appDb->list(opts)) {
+    if (!showHidden && !app->displayable()) continue;
     data.emplace_back(std::make_shared<BrowseAppItem>(app));
   }
 

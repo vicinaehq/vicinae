@@ -1,14 +1,11 @@
 #pragma once
-#include "timer.hpp"
-#include "ui/omni-list/omni-list-item-widget.hpp"
-#include "ui/scroll-bar/scroll-bar.hpp"
-#include <numbers>
+#include <optional>
+#include <qevent.h>
 #include <qobject.h>
-#include <qobjectdefs.h>
 #include <qscrollbar.h>
-#include <qtmetamacros.h>
-#include <qtsqlglobal.h>
+#include <qtimer.h>
 #include <qwidget.h>
+#include "ui/omni-list/omni-list-item-widget.hpp"
 
 namespace vicinae::ui {
 
@@ -166,7 +163,7 @@ private:
   VListModel::WidgetType *m_widget = nullptr;
 };
 
-enum class ScrollAnchor { Top, Bottom, Relative };
+enum class ScrollAnchor : std::uint8_t { Top, Bottom, Relative };
 
 class VListWidget : public QWidget {
   Q_OBJECT
@@ -206,6 +203,8 @@ public:
    */
   bool refresh(VListModel::Index idx) const;
 
+  void refreshAll();
+
   /**
    * Get the widget at the given index, if any.
    * This will only return a widget if the item at this index is currently in the viewport.
@@ -215,6 +214,7 @@ public:
   VListModel::WidgetType *widgetAt(VListModel::Index idx) const;
 
   void selectFirst();
+  void selectLast();
 
   /**
    * Select next item. If we are the end of the list, go to the first.
@@ -247,6 +247,14 @@ public:
   std::optional<VListModel::Index> currentSelection() const;
 
 protected:
+  /**
+   * Makes sure widgets that may have a specific appearance due to them having been hovered
+   * are updated if this is no longer the case.
+   */
+  void recalculateMousePosition();
+
+  void updateFocusChain();
+
   std::optional<VListModel::Index> getTopItem(VListModel::Index idx) const;
 
   void scrollToHeight(int height) { m_scrollBar->setValue(height); }
@@ -257,6 +265,9 @@ protected:
   bool event(QEvent *event) override;
   void handleScrollChanged(int value) { updateViewport(); }
   void resizeEvent(QResizeEvent *event) override;
+
+  std::optional<VListModel::Index> firstSelectableIndex() const;
+  std::optional<VListModel::Index> lastSelectableIndex() const;
 
 private:
   struct WidgetData {

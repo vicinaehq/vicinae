@@ -23,6 +23,7 @@ private:
   void updateSectionName(std::string_view name);
   std::string expandSection(std::string_view name, size_t count);
   void itemSelected(const ItemType &item) override;
+
   void emptied() override;
   bool showBackButton() const override { return false; }
   bool onBackspace() override { return true; }

@@ -161,8 +161,8 @@ class ExtensionSimpleView : public SimpleView {
    *
    * The onAction handler is fired before the submission one.
    */
-  virtual tl::expected<QJsonObject, QString> submit() {
-    return tl::unexpected("This view can't handle submit actions");
+  virtual std::expected<QJsonObject, QString> submit() {
+    return std::unexpected("This view can't handle submit actions");
   }
 
 public:

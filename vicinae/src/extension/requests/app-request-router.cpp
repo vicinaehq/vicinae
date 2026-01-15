@@ -1,3 +1,4 @@
+#include <ranges>
 #include "app-request-router.hpp"
 #include "proto/application.pb.h"
 #include "services/app-service/abstract-app-db.hpp"

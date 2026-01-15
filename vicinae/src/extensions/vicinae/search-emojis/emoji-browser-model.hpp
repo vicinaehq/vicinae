@@ -1,11 +1,16 @@
 #pragma once
+#include "emoji/emoji.hpp"
+#include "emoji/generated/db.hpp"
 #include "ui/vlist/common/simple-grid-model.hpp"
 #include "services/emoji-service/emoji-service.hpp"
 #include "utils.hpp"
+#include <cstdint>
 
 class EmojiBrowserModel : public vicinae::ui::SimpleGridModel<EmojiData, int> {
 public:
-  enum class DisplayMode { Root, Search };
+  enum class DisplayMode : std::uint8_t { Root, Search };
+
+  void setSkinTone(std::optional<emoji::SkinTone> tone) { m_skinTone = tone; }
 
   void setGroupedEmojis(EmojiService::GroupedEmojis emojis) { m_grouped = emojis; }
 
@@ -20,6 +25,11 @@ public:
   void setDisplayMode(DisplayMode mode) { m_root = mode == DisplayMode::Root; }
 
   GridData createItemData(const EmojiData &item) const override {
+    if (item.skinToneSupport) {
+      return {.icon = ImageURL::emoji(getSkinTonedEmoji(item).c_str()),
+              .tooltip = qStringFromStdView(item.name)};
+    }
+
     return {.icon = ImageURL::emoji(qStringFromStdView(item.emoji)),
             .tooltip = qStringFromStdView(item.name)};
   }
@@ -89,6 +99,11 @@ public:
   }
 
 private:
+  std::string getSkinTonedEmoji(const EmojiData &info) const {
+    if (!info.skinToneSupport || !m_skinTone) return std::string(info.emoji);
+    return emoji::applySkinTone(info.emoji, m_skinTone.value());
+  }
+
   const std::pair<std::string_view, std::vector<const EmojiData *>> &groupFromIdx(int idx) const {
     return m_grouped[idx - 2];
   }
@@ -98,4 +113,5 @@ private:
   std::vector<const EmojiData *> m_pinned;
   std::vector<const EmojiData *> m_recent;
   EmojiService::GroupedEmojis m_grouped;
+  std::optional<emoji::SkinTone> m_skinTone;
 };

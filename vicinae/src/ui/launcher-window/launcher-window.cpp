@@ -1,16 +1,20 @@
 #include "launcher-window.hpp"
 #include "action-panel/action-panel.hpp"
 #include "common.hpp"
+#include "services/window-manager/window-manager.hpp"
 #include "config/config.hpp"
+#include "environment.hpp"
 #include "keyboard/keybind-manager.hpp"
 #include "theme.hpp"
 #include "theme/colors.hpp"
+#include "ui/omni-painter/omni-painter.hpp"
 #include "ui/status-bar/status-bar.hpp"
 #include "service-registry.hpp"
 #include "lib/keyboard/keyboard.hpp"
 #include "ui/top-bar/top-bar.hpp"
 #include "utils.hpp"
 #include <qcoreevent.h>
+#include <qlineedit.h>
 #include <qscreen.h>
 #include <QStackedWidget>
 #ifdef WAYLAND_LAYER_SHELL
@@ -34,9 +38,13 @@
 #include "settings-controller/settings-controller.hpp"
 
 void LauncherWindow::showEvent(QShowEvent *event) {
+  auto &cfg = m_ctx.services->config()->value();
+
   m_hud->hide();
   m_ctx.navigation->closeActionPanel();
   tryCenter();
+  applyWindowConfig(cfg.launcherWindow);
+  tryCompaction();
   QWidget::showEvent(event);
   activateWindow(); // gnome needs this
 }
@@ -57,28 +65,21 @@ void LauncherWindow::tryCenter() {
 }
 
 void LauncherWindow::centerOnScreen(const QScreen *screen) {
-  QPoint center(screen->geometry().center().x() - width() / 2,
-                screen->geometry().center().y() - height() / 2);
+  QPoint center(screen->geometry().center().x() - (width() / 2),
+                screen->geometry().center().y() - (height() / 2));
   move(center);
 }
 
-LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
+LauncherWindow::LauncherWindow(ApplicationContext &ctx)
+    : m_ctx(ctx), m_hud(new HudWidget), m_header(new GlobalHeader(*ctx.navigation)),
+      m_bar(new GlobalBar(ctx)), m_actionPanel(new ActionPanelV2Widget(this)),
+      m_dialog(new DialogWidget(this)), m_currentView(new QStackedWidget(this)),
+      m_currentViewWrapper(new QStackedWidget(this)), m_currentOverlayWrapper(new QStackedWidget(this)),
+      m_mainWidget(new QWidget(this)), m_barDivider(new HDivider(this)), m_hudDismissTimer(new QTimer(this)),
+      m_actionVeil(new ActionVeilWidget(this)) {
   using namespace std::chrono_literals;
 
   setWindowTitle(Omnicast::MAIN_WINDOW_NAME);
-
-  m_hud = new HudWidget;
-  m_header = new GlobalHeader(*m_ctx.navigation);
-  m_bar = new GlobalBar(m_ctx);
-  m_actionPanel = new ActionPanelV2Widget(this);
-  m_dialog = new DialogWidget(this);
-  m_currentView = new QStackedWidget(this);
-  m_currentViewWrapper = new QStackedWidget(this);
-  m_currentOverlayWrapper = new QStackedWidget(this);
-  m_mainWidget = new QWidget(this);
-  m_barDivider = new HDivider(this);
-  m_hudDismissTimer = new QTimer(this);
-  m_actionVeil = new ActionVeilWidget(this);
 
   m_hud->hide();
   m_actionVeil->hide();
@@ -180,7 +181,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
     if (visible && !m_currentOverlayWrapper->isVisible()) m_header->input()->setFocus();
   });
   connect(m_ctx.navigation.get(), &NavigationController::statusBarVisiblityChanged, this, [this](bool value) {
-    if (m_currentOverlayWrapper->isVisible()) return;
+    if (m_currentOverlayWrapper->isVisible() || m_compacted) return;
     m_bar->setVisible(value);
   });
   connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() { repaint(); });
@@ -205,19 +206,61 @@ void LauncherWindow::changeEvent(QEvent *event) {
   QWidget::changeEvent(event);
 }
 
+void LauncherWindow::mouseMoveEvent(QMouseEvent *event) {
+  // Not sure how reliable this is. When layer shell is enabled, some compositors send mouse events when
+  // the mouse goes outside of the layer surface, so this may fix it.
+  if (m_closeOnFocusLoss && !centralWidget()->rect().contains(event->pos())) {
+    m_ctx.navigation->closeWindow();
+  }
+
+  QMainWindow::mouseMoveEvent(event);
+}
+
+void LauncherWindow::setCompacted(bool value) {
+  if (m_compacted == value) return;
+
+  auto &cfg = m_ctx.services->config()->value();
+
+  if (value) {
+    centralWidget()->setFixedHeight(cfg.header.height);
+    m_bar->hide();
+    m_currentViewWrapper->hide();
+    m_header->setLoadingBarVisibility(false);
+    m_barDivider->hide();
+  } else {
+    centralWidget()->setFixedHeight(QWIDGETSIZE_MAX);
+    m_bar->show();
+    m_currentViewWrapper->show();
+    m_barDivider->show();
+    m_header->setLoadingBarVisibility(true);
+  }
+
+  m_compacted = value;
+  update();
+}
+
+void LauncherWindow::tryCompaction() {
+  auto &cfg = m_ctx.services->config()->value().launcherWindow.compactMode;
+  setCompacted(cfg.enabled && m_ctx.navigation->searchText().isEmpty() &&
+               m_ctx.navigation->viewStackSize() == 1);
+}
+
 void LauncherWindow::setupUI() {
   setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
   setAttribute(Qt::WA_TranslucentBackground);
   setCentralWidget(createWidget());
   createWinId();
   m_hud->setMaximumWidth(300);
-
+  m_header->input()->installEventFilter(this);
   handleConfigurationChange(m_ctx.services->config()->value());
 
   connect(m_ctx.navigation.get(), &NavigationController::currentViewChanged, this,
           &LauncherWindow::handleViewChange);
   connect(m_ctx.navigation.get(), &NavigationController::confirmAlertRequested, this,
           &LauncherWindow::handleDialog);
+
+  connect(m_header->input(), &QLineEdit::textChanged, this, [this](const QString &text) { tryCompaction(); });
+
   connect(m_actionVeil, &ActionVeilWidget::mousePressed, this,
           [this]() { m_ctx.navigation->closeActionPanel(); });
 
@@ -227,16 +270,25 @@ void LauncherWindow::setupUI() {
           });
 }
 
+bool LauncherWindow::isCompactable() const {
+  return m_ctx.navigation->viewStackSize() == 1 && m_ctx.navigation->searchText().isEmpty();
+}
+
+void LauncherWindow::applyWindowConfig(const config::WindowConfig &cfg) {
+  auto wm = m_ctx.services->windowManager();
+  wm->provider()->setBlur({.enabled = cfg.blur.enabled});
+  wm->provider()->setDimAround(cfg.dimAround);
+}
+
 void LauncherWindow::handleConfigurationChange(const config::ConfigValue &value) {
 #ifdef WAYLAND_LAYER_SHELL
   const auto &lc = value.launcherWindow.layerShell;
-  if (lc.enabled) {
+  if (Environment::isLayerShellSupported() && lc.enabled) {
     namespace Shell = LayerShellQt;
     using clsh = config::LayerShellConfig;
-
     if (auto lshell = Shell::Window::get(windowHandle())) {
       lshell->setLayer(lc.layer == "overlay" ? Shell::Window::LayerOverlay : Shell::Window::LayerTop);
-      lshell->setScope(lc.scope.c_str());
+      lshell->setScope(Omnicast::LAYER_SCOPE);
       lshell->setScreenConfiguration(Shell::Window::ScreenFromCompositor);
       lshell->setAnchors(Shell::Window::AnchorNone);
       lshell->setKeyboardInteractivity(lc.keyboardInteractivity == "exclusive"
@@ -246,13 +298,16 @@ void LauncherWindow::handleConfigurationChange(const config::ConfigValue &value)
   }
 #endif
 
+  setMouseTracking(value.closeOnFocusLoss);
+  m_closeOnFocusLoss = value.closeOnFocusLoss;
   m_header->setFixedHeight(value.header.height);
   m_bar->setFixedHeight(value.footer.height);
+  applyWindowConfig(value.launcherWindow);
 
   auto &size = value.launcherWindow.size;
   setFixedSize(QSize{size.width, size.height});
   tryCenter();
-
+  tryCompaction();
   update();
 }
 
@@ -264,6 +319,7 @@ void LauncherWindow::handleDialog(DialogContentWidget *alert) {
 }
 
 void LauncherWindow::handleViewChange(const NavigationController::ViewState &state) {
+  tryCompaction();
   if (m_dialog->isVisible()) { m_dialog->hide(); }
   if (auto current = m_currentViewWrapper->widget(0)) { m_currentViewWrapper->removeWidget(current); }
 
@@ -272,10 +328,32 @@ void LauncherWindow::handleViewChange(const NavigationController::ViewState &sta
   if (state.supportsSearch) { m_header->input()->setFocus(); }
 }
 
-bool LauncherWindow::event(QEvent *event) {
-  auto kb = KeybindManager::instance();
+bool LauncherWindow::eventFilter(QObject *watched, QEvent *event) {
+  if (watched == m_header->input() && event->type() == QEvent::KeyPress) {
+    QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
 
+    if (m_compacted) {
+      if (Keyboard::Shortcut(keyEvent) == Keybind::ToggleActionPanel || keyEvent->key() == Qt::Key_Up ||
+          keyEvent->key() == Qt::Key_Down) {
+        setCompacted(false);
+        return false;
+      }
+
+      if (keyEvent->key() == Qt::Key_Return) {
+        setCompacted(false);
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+bool LauncherWindow::event(QEvent *event) {
   if (event->type() == QEvent::KeyPress) {
+    const auto kb = KeybindManager::instance();
+    auto &cfg = m_ctx.services->config()->value();
+
     auto keyEvent = static_cast<QKeyEvent *>(event);
 
     if (kb->resolve(Keybind::ToggleActionPanel) == keyEvent) {
@@ -295,7 +373,11 @@ bool LauncherWindow::event(QEvent *event) {
     }
 
     if (keyEvent == Keyboard::Shortcut(Qt::Key_Escape)) {
-      m_ctx.navigation->goBack();
+      if (cfg.escapeKeyBehavior == "close_window") {
+        m_ctx.navigation->closeWindow();
+      } else {
+        m_ctx.navigation->goBack();
+      }
       return true;
     }
 
@@ -319,24 +401,23 @@ void LauncherWindow::handleActionVisibilityChanged(bool visible) {
 
 void LauncherWindow::paintEvent(QPaintEvent *event) {
   auto &config = m_ctx.services->config()->value();
+  const auto &csd = config.launcherWindow.clientSideDecorations;
+  QColor finalBgColor = OmniPainter::resolveColor(SemanticColor::Background);
+  QRect windowRect = m_compacted ? QRect{0, 0, width(), config.header.height} : rect();
   OmniPainter painter(this);
-  QColor finalBgColor = painter.resolveColor(SemanticColor::Background);
+  int adjust = 2; // rounded rect should be adjusted in order for borders to be drawn cleanly
 
   finalBgColor.setAlphaF(config.launcherWindow.opacity);
   painter.setRenderHint(QPainter::Antialiasing, true);
 
-  if (config.launcherWindow.clientSideDecorations.enabled) {
-    QPainterPath path;
-    path.addRoundedRect(rect(), config.launcherWindow.clientSideDecorations.rounding,
-                        config.launcherWindow.clientSideDecorations.rounding);
-    painter.setClipPath(path);
-    painter.fillPath(path, finalBgColor);
-    painter.setThemePen(SemanticColor::MainWindowBorder,
-                        config.launcherWindow.clientSideDecorations.borderWidth);
-    painter.drawPath(path);
-  } else {
-    painter.fillRect(rect(), finalBgColor);
+  if (!csd.enabled) {
+    painter.fillRect(windowRect, finalBgColor);
+    return;
   }
+
+  painter.setBrush(finalBgColor);
+  painter.setThemePen(SemanticColor::MainWindowBorder, csd.borderWidth);
+  painter.drawRoundedRect(windowRect.adjusted(adjust, adjust, -adjust, -adjust), csd.rounding, csd.rounding);
 }
 
 QWidget *LauncherWindow::createWidget() const {

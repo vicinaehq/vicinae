@@ -6,7 +6,6 @@
 #include "services/keybinding/keybinding-service.hpp"
 #include "simple-view.hpp"
 #include "ui/empty-view/empty-view.hpp"
-#include "navigation-controller.hpp"
 #include "ui/form/selector-input.hpp"
 #include "ui/search-bar/search-bar.hpp"
 #include <algorithm>
@@ -36,11 +35,10 @@ protected:
   virtual QWidget *generateDetail(const ItemType &item) const { return nullptr; }
   virtual std::unique_ptr<CompleterData> createCompleter(const ItemType &item) const { return nullptr; }
   virtual std::unique_ptr<ActionPanelState> createActionPanel(const ItemType &item) const { return nullptr; }
+
   virtual std::optional<QString> navigationTitle(const ItemType &item) const { return std::nullopt; }
 
   virtual void itemSelected(const ItemType &item) {}
-
-  virtual QString rootNavigationTitle() const { return command()->info().name(); }
 
   virtual void emptied() {}
 
@@ -103,7 +101,7 @@ protected:
     if (!idx || !m_model) {
       destroyCompleter();
       clearActions();
-      setNavigationTitle(rootNavigationTitle());
+      setNavigationTitle(initialNavigationTitle());
       m_split->setDetailVisibility(false);
 
       if (m_model && m_model->isEmpty() && !(searchText().isEmpty() && isLoading())) {
@@ -134,9 +132,9 @@ protected:
     }
 
     if (auto title = navigationTitle(item.value())) {
-      setNavigationTitle(QString("%1 - %2").arg(rootNavigationTitle()).arg(title.value()));
+      setNavigationTitle(QString("%1 - %2").arg(initialNavigationTitle()).arg(title.value()));
     } else {
-      setNavigationTitle(rootNavigationTitle());
+      setNavigationTitle(initialNavigationTitle());
     }
 
     auto detail = generateDetail(item.value());

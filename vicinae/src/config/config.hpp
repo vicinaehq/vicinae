@@ -2,19 +2,16 @@
 #include <expected>
 #include <filesystem>
 #include "common.hpp"
-#include "glaze/glaze.hpp"
-#include "utils.hpp"
 #include "vicinae.hpp"
 #include <glaze/core/common.hpp>
 #include <glaze/core/reflect.hpp>
-#include <glaze/json/prettify.hpp>
-#include <glaze/json/ptr.hpp>
-#include <glaze/json/read.hpp>
-#include <glaze/json/write.hpp>
+#include <glaze/json.hpp>
 #include <glaze/util/key_transformers.hpp>
 #include <iostream>
+#include <qdatetime.h>
 #include <qfilesystemwatcher.h>
 #include <qmargins.h>
+#include <QTimer>
 #include <string>
 #include <string_view>
 
@@ -60,16 +57,22 @@ template <> struct Partial<ProviderData> {
 };
 
 struct LayerShellConfig {
-  std::string scope = "vicinae";
   std::string keyboardInteractivity = "exclusive";
   std::string layer = "top";
   bool enabled = true;
 };
 
 template <> struct Partial<LayerShellConfig> {
-  std::optional<std::string> scope;
   std::optional<std::string> layer;
   std::optional<std::string> keyboardInteractivity;
+  std::optional<bool> enabled;
+};
+
+struct BlurConfig {
+  bool enabled;
+};
+
+template <> struct Partial<BlurConfig> {
   std::optional<bool> enabled;
 };
 
@@ -95,17 +98,22 @@ template <> struct Partial<WindowCSD> {
   std::optional<int> borderWidth;
 };
 
+struct WindowCompactMode {
+  bool enabled;
+};
+
+template <> struct Partial<WindowCompactMode> {
+  std::optional<bool> enabled;
+};
+
 struct WindowConfig {
-  static const constexpr Size DFLT_SIZE = {770, 480};
-  static const constexpr int DFLT_ROUNDING = 6;
-  static const constexpr float DFLT_OPACITY = 0.98;
-  static const constexpr bool DFLT_CSD = true;
-
-  float opacity = DFLT_OPACITY;
+  float opacity;
   WindowCSD clientSideDecorations;
-  Size size = DFLT_SIZE;
-  std::string screen = "auto";
-
+  Size size;
+  std::string screen;
+  bool dimAround;
+  BlurConfig blur;
+  WindowCompactMode compactMode;
   LayerShellConfig layerShell;
 };
 
@@ -114,6 +122,9 @@ template <> struct Partial<WindowConfig> {
   std::optional<float> opacity;
   std::optional<Partial<WindowCSD>> clientSideDecorations;
   std::optional<Partial<Size>> size;
+  std::optional<bool> dimAround;
+  std::optional<Partial<BlurConfig>> blur;
+  std::optional<Partial<WindowCompactMode>> compactMode;
   std::optional<Partial<LayerShellConfig>> layerShell;
 };
 
@@ -162,16 +173,16 @@ using KeybindMap = std::map<std::string, std::string>;
 
 using ProviderMap = std::map<std::string, ProviderData>;
 
-struct ConfigValue {
-  static const constexpr bool DFLT_CLOSE_ON_FOCUS_LOSS = true;
-  static const constexpr bool DFLT_CONSIDER_PRE_EDIT = false;
-  static const constexpr bool DFLT_POP_TO_ROOT_ON_CLOSE = false;
+static constexpr const char *SCHEMA = "https://vicinae.com/schemas/config.json";
 
+struct ConfigValue {
+  std::string schema = SCHEMA;
   std::vector<std::string> imports;
   bool searchFilesInRoot = false;
-  bool closeOnFocusLoss = DFLT_CLOSE_ON_FOCUS_LOSS;
-  bool considerPreedit = DFLT_CONSIDER_PRE_EDIT;
-  bool popToRootOnClose = DFLT_POP_TO_ROOT_ON_CLOSE;
+  bool closeOnFocusLoss = false;
+  bool considerPreedit = false;
+  bool popToRootOnClose = false;
+  std::string escapeKeyBehavior;
   std::string faviconService = "twenty";
   std::string keybinding = "default";
 
@@ -211,10 +222,12 @@ struct ConfigValue {
 using PartialValue = Partial<ConfigValue>;
 
 template <> struct Partial<ConfigValue> {
+  std::string schema = SCHEMA;
   std::optional<std::vector<std::string>> imports;
   std::optional<bool> closeOnFocusLoss;
   std::optional<bool> considerPreedit;
   std::optional<bool> popToRootOnClose;
+  std::optional<std::string> escapeKeyBehavior;
   std::optional<std::string> faviconService;
   std::optional<std::string> keybinding;
   std::optional<bool> searchFilesInRoot;
@@ -255,14 +268,14 @@ public:
   ConfigValue defaultConfig() const;
   const char *defaultConfigData() const;
 
-  bool mergeProviderWithUser(std::string_view id, Partial<ProviderData> &&data);
+  bool mergeProviderWithUser(std::string_view id, const Partial<ProviderData> &data);
 
   /**
    * Update the current user configuration, instead of merging.
    */
   bool updateUser(const std::function<void(Partial<ConfigValue> &value)> &updater);
 
-  bool mergeEntrypointWithUser(const EntrypointId &id, ProviderItemData &&data);
+  bool mergeEntrypointWithUser(const EntrypointId &id, const ProviderItemData &data);
 
   bool mergeWithUser(const Partial<ConfigValue> &patch);
 
