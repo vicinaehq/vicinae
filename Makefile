@@ -102,6 +102,11 @@ gen-contrib:
 .PHONY: gen-contrib
 
 
+copr-build:
+	chmod +x ./scripts/copr-build.sh
+	./scripts/copr-build.sh
+.PHONY: copr-build
+
 clean:
 	rm -rf $(BUILD_DIR)
 	$(RM) -rf ./typescript/api/node_modules

@@ -13,6 +13,9 @@ vicinae/assets/extension-runtime.js
 
 *.tar.gz
 !extra/icons/vicinae-icon-theme.tar.gz
+/.build
+/.rpm
+/.srpm
 /dist
 
 __cmake*
@@ -26,3 +29,5 @@ __cmake*
 /result
 
 CLAUDE.md
+
+.vscode/

@@ -1,7 +1,9 @@
 #include "native-file-chooser.hpp"
 #include "services/file-chooser/abstract-file-chooser.hpp"
 #include "theme.hpp"
+#ifdef WAYLAND_LAYER_SHELL
 #include <LayerShellQt/Shell>
+#endif
 #include <qfiledialog.h>
 #include <qnamespace.h>
 #include <qobject.h>

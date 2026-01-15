@@ -2,7 +2,9 @@
 #include "utils/environment.hpp"
 #include "utils/layout.hpp"
 #include <qnamespace.h>
+#ifdef WAYLAND_LAYER_SHELL
 #include "LayerShellQt/Window"
+#endif
 #include "vicinae.hpp"
 
 void HudWidget::paintEvent(QPaintEvent *event) {
