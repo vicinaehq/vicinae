@@ -21,6 +21,7 @@ list(APPEND LIBS
 	scriptcommand 
 	emoji
 	vicinae-ipc
+	browser
 )
 
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)

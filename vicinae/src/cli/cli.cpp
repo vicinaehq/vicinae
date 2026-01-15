@@ -3,6 +3,7 @@
 #include "cli/script.hpp"
 #include "cli/theme.hpp"
 #include "utils.hpp"
+#include "browser/browser.hpp"
 #include "lib/CLI11.hpp"
 #include "vicinae-ipc/ipc.hpp"
 #include "vicinae.hpp"
@@ -22,13 +23,12 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
-#include <iomanip>
 #include <sstream>
+#include <string_view>
 
 class Formatter : public CLI::Formatter {
 public:
   std::string make_help(const CLI::App *app, std::string name, CLI::AppFormatMode mode) const override {
-    // ANSI color codes - we use these directly because rang doesn't work with stringstream
     const std::string BOLD = "\033[1m";
     const std::string BRIGHT_GREEN = "\033[92m";
     const std::string BLUE = "\033[34m";
@@ -402,6 +402,18 @@ int CommandLineApp::run(int ac, char **av) {
 
   if (ac == 1) {
     std::cout << app.help(av[0]);
+    return 0;
+  }
+
+  // invoked as chrome extension native host
+  if (ac == 2 && std::string_view(av[1]).starts_with("chrome-extension://")) {
+    browser_extension::chromeEntrypoint(std::string_view(av[1]));
+    return 0;
+  }
+
+  // invoked as firefox extension native host
+  if (ac == 3 && browser_extension::isNativeHostManifest(std::string_view(av[1]))) {
+    browser_extension::firefoxEntrypoint(std::string_view(av[2]));
     return 0;
   }
 
