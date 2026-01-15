@@ -12,7 +12,7 @@ namespace DMenu {
 View::View(Payload data) : m_data(data), m_model(new DMenuModel(this)) {
   m_entries = std::views::split(m_data.raw, std::string_view("\n")) |
               std::views::transform([](auto &&s) { return std::string_view(s); }) |
-              std::ranges::to<std::vector>();
+              std::views::filter([](auto &&s) { return !s.empty(); }) | std::ranges::to<std::vector>();
 }
 
 QWidget *View::generateDetail(const std::string_view &text) const {
