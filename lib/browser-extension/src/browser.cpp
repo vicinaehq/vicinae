@@ -16,6 +16,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
+#include <variant>
 
 #ifdef NDEBUG
 #define READ_SIZE 8096
@@ -73,16 +74,17 @@ private:
   Handler m_fn;
 };
 
-struct Version {
-  static constexpr const auto key = "version";
+struct BrowserInit {
+  static constexpr const auto key = "init";
+
   struct Request {};
+
   struct Response {
-    std::string tag;
+    std::string browserId;
   };
 };
-; // namespace commands
 
-using ExtensionRpcSchema = ipc::RpcSchema<ipc::FocusTab>;
+using ExtensionRpcSchema = ipc::RpcSchema<ipc::FocusTab, BrowserInit>;
 
 static void sendExtensionCommand(int fd, std::string_view message) {
   uint32_t size = message.size();
@@ -107,18 +109,19 @@ static int entrypoint() {
     return 1;
   }
 
-  auto res = vicinaeClient.request<ipc::Handshake>(
-      ipc::Handshake::Request{.clientType = ipc::ClientType::BrowserExtension});
+  ipc::RpcClient<ExtensionRpcSchema> extensionClient;
 
-  if (!res) {
-    std::println(std::cerr, "Failed to handshake: {}", res.error());
-    return 1;
-  }
+  const auto json = extensionClient.request<BrowserInit>({}, [&](BrowserInit::Response res) {
+    auto handshakeRes = vicinaeClient.request<ipc::Handshake>(
+        ipc::Handshake::Request{.clientType = ipc::ClientType::BrowserExtension, .id = res.browserId});
+  });
+
+  sendExtensionCommand(STDOUT_FILENO, json);
 
   std::println(std::cerr, "Listening for messages...");
 
   ipc::RpcServer<ipc::RpcSchema<ipc::FocusTab>> vicinaeReceiver; // listen to vicinae requests
-  ipc::RpcServer<ipc::RpcSchema<ipc::BrowserTabsChanged, Version>>
+  ipc::RpcServer<ipc::RpcSchema<ipc::BrowserTabsChanged>>
       extensionReceiver; // listen to browser extension requests
 
   vicinaeReceiver.route<ipc::FocusTab>([](const ipc::FocusTab::Request &req) {
@@ -135,27 +138,35 @@ static int entrypoint() {
     return ipc::BrowserTabsChanged::Response();
   });
 
-  extensionReceiver.route<Version>([&](const Version::Request &req) { return Version::Response("v0.0.0"); });
-
   Frame extensionFrame;
 
   extensionFrame.setHandler([&](std::string_view message) {
-    assert(!message.empty());
-    decltype(extensionReceiver)::SchemaType::Request req;
+    using Req = decltype(extensionReceiver)::SchemaType::Request;
+    using Res = decltype(extensionClient)::Schema::Response;
+
+    std::variant<decltype(extensionReceiver)::SchemaType::Request,
+                 decltype(extensionClient)::Schema::Response>
+        msg;
 
     std::println(std::cerr, "got message from extension frame: {}", message);
 
-    if (const auto error = glz::read_json(req, message)) {
+    if (const auto error = glz::read_json(msg, message)) {
       std::println(std::cerr, "\"{}\"", message);
       std::println(std::cerr, "Failed to parse json: {}", glz::format_error(error));
       return;
     }
 
-    const auto callRes = extensionReceiver.call(req);
+    if (Req *req = std::get_if<Req>(&msg)) {
+      const auto callRes = extensionReceiver.call(*req);
 
-    if (!callRes) {
-      std::println(std::cerr, "Failed to call extension rpc: {}", callRes.error());
-      return;
+      if (!callRes) {
+        std::println(std::cerr, "Failed to call extension rpc: {}", callRes.error());
+        return;
+      }
+    } else if (auto res = std::get_if<Res>(&msg)) {
+      if (const auto result = extensionClient.call(*res); !result) {
+        std::println(std::cerr, "Failed to process extension response");
+      }
     }
 
     std::println(std::cerr, "Processing message: {}", message);
@@ -194,8 +205,6 @@ static int entrypoint() {
       std::println(std::cerr, "poll() failed: {} (exiting)", strerror(errno));
       break;
     }
-
-    std::println(std::cerr, "Something is ready to read");
 
     // read extension stuff
     if (fds[0].revents & POLLIN) {

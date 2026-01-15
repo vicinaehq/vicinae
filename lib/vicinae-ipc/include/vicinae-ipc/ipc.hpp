@@ -9,7 +9,6 @@
 #include <glaze/ext/jsonrpc.hpp>
 #include <glaze/json/read.hpp>
 #include <glaze/util/string_literal.hpp>
-#include <numbers>
 #include <string>
 #include <variant>
 
@@ -29,6 +28,7 @@ struct Handshake {
 
   struct Request {
     ClientType clientType;
+    std::string id;
   };
 
   struct Response {
@@ -238,9 +238,13 @@ concept IsRpcSchema = requires {
 template <typename T, typename Schema>
 concept InSchema = Schema::template contains<T>;
 
-template <typename Schema> struct RpcClient {
-  template <InSchema<Schema> T> typename std::string request(T::Request payload) {
-    typename Schema::Request req{.id = 0, .method = T::key, .data = payload};
+template <typename SchemaT> struct RpcClient {
+  using Schema = SchemaT;
+
+  using RequestHandler = std::function<void(const typename Schema::ResponseVariant &var)>;
+
+  template <InSchema<SchemaT> T> typename std::string request(T::Request payload) {
+    typename SchemaT::Request req{.id = 0, .method = T::key, .data = payload};
     std::string buf;
 
     if (const auto error = glz::write_json(req, buf)) {}
@@ -248,7 +252,31 @@ template <typename Schema> struct RpcClient {
     return buf;
   }
 
+  template <InSchema<SchemaT> T>
+  typename std::string request(T::Request payload, std::function<void(const typename T::Response &res)> fn) {
+    typename SchemaT::Request req{.id = 0, .method = T::key, .data = payload};
+    std::string buf;
+
+    if (const auto error = glz::write_json(req, buf)) {}
+
+    m_requestMap[req.id] = [fn](const typename Schema::ResponseVariant &res) {
+      if (auto typedRes = std::get_if<typename T::Response>(&res)) { fn(*typedRes); }
+    };
+
+    return buf;
+  }
+
+  std::expected<void, std::string> call(const typename Schema::Response &res) {
+    if (auto it = m_requestMap.find(res.id); it != m_requestMap.end()) {
+      it->second(res.result.value());
+      m_requestMap.erase(it);
+    }
+
+    return std::unexpected(std::format("No request with this id {}", res.id));
+  }
+
 private:
+  std::unordered_map<int, RequestHandler> m_requestMap;
 };
 
 template <typename Schema> class RpcServer {
