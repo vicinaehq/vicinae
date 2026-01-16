@@ -14,7 +14,7 @@
 namespace ipc {
 class Client {
   using Schema =
-      RpcSchema<ipc::Handshake, ipc::Ping, ipc::DMenu, ipc::Deeplink, ipc::ListApps, ipc::LaunchApp>;
+      RpcSchema<ipc::Ping, ipc::BrowserInit, ipc::DMenu, ipc::Deeplink, ipc::ListApps, ipc::LaunchApp>;
 
 public:
   static std::filesystem::path vicinaeSocketPath() {
@@ -67,9 +67,7 @@ public:
     return ipc::Client::make().and_then(
         [payload = std::move(payload)](Client client) -> std::expected<typename T::Response, std::string> {
           if (const auto result = client.connect(); !result) { return std::unexpected(result.error()); }
-
-          return client.request<ipc::Handshake>({.clientType = ClientType::CommandDispatcher})
-              .and_then([&](const auto &res) { return client.request<T>(payload); });
+          return client.request<T>(payload);
         });
   }
 

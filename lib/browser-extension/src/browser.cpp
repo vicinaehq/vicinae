@@ -74,17 +74,7 @@ private:
   Handler m_fn;
 };
 
-struct BrowserInit {
-  static constexpr const auto key = "init";
-
-  struct Request {};
-
-  struct Response {
-    std::string browserId;
-  };
-};
-
-using ExtensionRpcSchema = ipc::RpcSchema<ipc::FocusTab, BrowserInit>;
+using ExtensionRpcSchema = ipc::RpcSchema<ipc::FocusTab, ipc::BrowserInit>;
 
 static void sendExtensionCommand(int fd, std::string_view message) {
   uint32_t size = message.size();
@@ -111,24 +101,20 @@ static int entrypoint() {
 
   ipc::RpcClient<ExtensionRpcSchema> extensionClient;
 
-  const auto json = extensionClient.request<BrowserInit>({}, [&](BrowserInit::Response res) {
-    auto handshakeRes = vicinaeClient.request<ipc::Handshake>(
-        ipc::Handshake::Request{.clientType = ipc::ClientType::BrowserExtension, .id = res.browserId});
-  });
-
-  sendExtensionCommand(STDOUT_FILENO, json);
-
   std::println(std::cerr, "Listening for messages...");
 
   ipc::RpcServer<ipc::RpcSchema<ipc::FocusTab>> vicinaeReceiver; // listen to vicinae requests
-  ipc::RpcServer<ipc::RpcSchema<ipc::BrowserTabsChanged>>
+  ipc::RpcServer<ipc::RpcSchema<ipc::BrowserInit, ipc::BrowserTabsChanged>>
       extensionReceiver; // listen to browser extension requests
 
   vicinaeReceiver.route<ipc::FocusTab>([](const ipc::FocusTab::Request &req) {
     ipc::RpcClient<decltype(vicinaeReceiver)::SchemaType> client;
-    sendExtensionCommand(STDOUT_FILENO, client.request<ipc::FocusTab>(req));
+    sendExtensionCommand(STDOUT_FILENO, client.notify<ipc::FocusTab>(req));
     return ipc::FocusTab::Response();
   });
+
+  extensionReceiver.route<ipc::BrowserInit>(
+      [&](const ipc::BrowserInit::Request &init) { return vicinaeClient.request<ipc::BrowserInit>(init); });
 
   extensionReceiver.route<ipc::BrowserTabsChanged>([&](const ipc::BrowserTabsChanged::Request &req) {
     ipc::RpcClient<decltype(extensionReceiver)::SchemaType> vicinae;
@@ -163,6 +149,8 @@ static int entrypoint() {
         std::println(std::cerr, "Failed to call extension rpc: {}", callRes.error());
         return;
       }
+
+      if (req->id) { sendExtensionCommand(STDOUT_FILENO, callRes.value()); }
     } else if (auto res = std::get_if<Res>(&msg)) {
       if (const auto result = extensionClient.call(*res); !result) {
         std::println(std::cerr, "Failed to process extension response");

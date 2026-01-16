@@ -13,15 +13,15 @@
 #include "services/app-service/app-service.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "navigation-controller.hpp"
-#include "version.h"
 
 IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
     : QObject(parent), m_rpc(IpcContext::GlobalContext{.app = ctx}) {
+  using Ctx = decltype(m_rpc)::ContextHandle;
+
   connect(
       ctx->services->browserExtension(), &BrowserExtensionService::tabFocusRequested, this,
       [this](int tabId) {
-        auto it = std::ranges::find_if(
-            m_clients, [](auto &&client) { return client.type == ipc::ClientType::BrowserExtension; });
+        auto it = std::ranges::find_if(m_clients, [](auto &&client) { return client.browser.has_value(); });
 
         if (it == m_clients.end()) {
           qWarning() << "focus tab requested but there is no browser extension client currently connected";
@@ -29,7 +29,7 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
         }
 
         ipc::RpcClient<ipc::RpcSchema<ipc::FocusTab>> client;
-        const auto json = client.request<ipc::FocusTab>({.tabId = tabId});
+        const auto json = client.notify<ipc::FocusTab>({.tabId = tabId});
         uint32_t size = json.size();
 
         qDebug() << "focus tab written";
@@ -42,13 +42,8 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
                       decltype(m_rpc)::ContextHandle info) -> std::optional<std::string> {
     constexpr static const auto BROWSER_METHODS = std::array{ipc::BrowserTabsChanged::key};
 
-    if (!info.caller->type && !std::holds_alternative<ipc::Handshake::Request>(req)) {
-      return "Handshake required before further command";
-    }
-
-    if (std::ranges::contains(BROWSER_METHODS, info.method) &&
-        info.caller->type != ipc::ClientType::BrowserExtension) {
-      return "Only browser extension clients can do this kind of request";
+    if (std::ranges::contains(BROWSER_METHODS, info.method) && !info.caller->browser) {
+      return "Only browser extensions can do this";
     }
 
     return {};
@@ -58,9 +53,9 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
     return ipc::Ping::Response();
   });
 
-  m_rpc.route<ipc::Handshake>([](const ipc::Handshake::Request &req, decltype(m_rpc)::ContextHandle client) {
-    client.caller->type = req.clientType;
-    return ipc::Handshake::Response({.version = VICINAE_GIT_TAG, .pid = QApplication::applicationPid()});
+  m_rpc.route<ipc::BrowserInit>([this](const ipc::BrowserInit::Request &init, Ctx context) {
+    context.caller->browser = init;
+    return ipc::BrowserInit::Response();
   });
 
   m_rpc.route<ipc::ListApps>([](const ipc::ListApps::Request &req, decltype(m_rpc)::ContextHandle ctx) {

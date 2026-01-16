@@ -6,8 +6,8 @@
 #include <qlocalserver.h>
 #include <vicinae-ipc/ipc.hpp>
 
-using ServerSchema = ipc::RpcSchema<ipc::Handshake, ipc::DMenu, ipc::Deeplink, ipc::Ping, ipc::ListApps,
-                                    ipc::LaunchApp, ipc::BrowserTabsChanged>;
+using ServerSchema = ipc::RpcSchema<ipc::DMenu, ipc::Deeplink, ipc::Ping, ipc::ListApps, ipc::LaunchApp,
+                                    ipc::BrowserInit, ipc::BrowserTabsChanged>;
 
 using Watcher = QFutureWatcher<ServerSchema::ResponseVariant>;
 
@@ -18,7 +18,7 @@ struct ClientInfo {
     uint32_t length;
   } frame;
   std::vector<QObjectUniquePtr<Watcher>> m_pending;
-  std::optional<ipc::ClientType> type;
+  std::optional<ipc::BrowserInit::Request> browser;
 };
 
 struct IpcContext {

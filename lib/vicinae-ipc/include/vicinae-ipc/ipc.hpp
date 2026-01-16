@@ -8,6 +8,7 @@
 #include <glaze/core/write.hpp>
 #include <glaze/ext/jsonrpc.hpp>
 #include <glaze/json/read.hpp>
+#include <glaze/json/write.hpp>
 #include <glaze/util/string_literal.hpp>
 #include <string>
 #include <variant>
@@ -21,20 +22,6 @@ concept IsCommandVerb = requires {
   { T::key } -> std::convertible_to<std::string>;
   typename T::Request;
   // typename T::Response;
-};
-
-struct Handshake {
-  static constexpr const auto key = "handshake";
-
-  struct Request {
-    ClientType clientType;
-    std::string id;
-  };
-
-  struct Response {
-    std::string version;
-    std::int64_t pid;
-  };
 };
 
 struct Deeplink {
@@ -117,6 +104,17 @@ struct DMenu {
   };
 };
 
+struct BrowserInit {
+  static constexpr const auto key = "browser/init";
+
+  struct Request {
+    std::string id;
+    std::string name;
+  };
+
+  struct Response {};
+};
+
 struct BrowserTabInfo {
   int id;
   int windowId;
@@ -168,17 +166,6 @@ template <IsCommandVerb... Types> struct ResponseType {
   static constexpr const auto keys = std::array{Types::key...};
 };
 
-using CommandTypes = TypeList<Handshake>;
-
-using RequestTypeVariant =
-    RequestType<Ping, Handshake, Deeplink, LaunchApp, ListApps, DMenu, BrowserTabsChanged>::type;
-
-static constexpr const auto RequestKeys =
-    RequestType<Ping, Handshake, Deeplink, LaunchApp, ListApps, DMenu, BrowserTabsChanged>::keys;
-
-using ResponseTypeVariant =
-    ResponseType<Ping, Handshake, Deeplink, LaunchApp, ListApps, DMenu, BrowserTabsChanged>::type;
-
 struct ResponseError {
   int code;
   std::string error;
@@ -211,13 +198,13 @@ template <IsCommandVerb... Ts> struct RpcSchema {
   };
 
   struct Request {
-    int id;
+    std::optional<int> id; // if no id, we assume we are dealing with a notification
     std::string method;
     RequestVariant data;
 
-    Response makeResponse(ResponseVariant data) const { return Response(id, data); }
+    Response makeResponse(ResponseVariant data) const { return Response(id.value_or(0), data); }
 
-    Response makeErrorResponse(ErrorContext error) const { return Response(id, {}, error); }
+    Response makeErrorResponse(ErrorContext error) const { return Response(id.value_or(0), {}, error); }
   };
 
   static std::expected<Request, std::string> parseRequest(std::string_view buf) {
@@ -240,7 +227,6 @@ concept InSchema = Schema::template contains<T>;
 
 template <typename SchemaT> struct RpcClient {
   using Schema = SchemaT;
-
   using RequestHandler = std::function<void(const typename Schema::ResponseVariant &var)>;
 
   template <InSchema<SchemaT> T> typename std::string request(T::Request payload) {
@@ -249,6 +235,16 @@ template <typename SchemaT> struct RpcClient {
 
     if (const auto error = glz::write_json(req, buf)) {}
 
+    return buf;
+  }
+
+  /**
+   * Send a notification, that is a request that does not expect a response
+   */
+  template <InSchema<SchemaT> T> typename std::string notify(T::Request payload) const {
+    typename SchemaT::Request req{.method = T::key, .data = payload};
+    std::string buf;
+    if (const auto error = glz::write_json(req, buf)) {}
     return buf;
   }
 
@@ -323,7 +319,7 @@ public:
 
   void middleware(MiddlewareHandler fn) { m_middlewares.emplace_back(fn); }
 
-  std::expected<void, std::string> call(const typename Schema::Request &req) {
+  std::expected<std::string, std::string> call(const typename Schema::Request &req) {
     if (auto it = m_handlers.find(req.method); it != m_handlers.end()) {
       try {
         for (const auto &handler : m_middlewares) {
@@ -331,8 +327,15 @@ public:
         }
       } catch (const std::exception &e) { return std::unexpected(e.what()); }
 
-      it->second(req.data);
-      return {};
+      auto res = it->second(req.data);
+
+      if (req.id) {
+        std::string buf;
+        glz::write_json(res, buf);
+        return buf;
+      }
+
+      return "";
     }
 
     return std::unexpected("No handler for method");
@@ -344,16 +347,10 @@ private:
   std::vector<MiddlewareHandler> m_middlewares;
 };
 
-static void test() {
-  using Schema = RpcSchema<Deeplink>;
-  RpcClient<Schema> link;
-
-  link.request<Deeplink>({});
-}
-
 }; // namespace ipc
 
-template <> struct glz::meta<ipc::RequestTypeVariant> {
+/*
+template <typename T> struct glz::meta<ipc::RpcSchema<T>> {
   static constexpr std::string_view tag = "method";
   static constexpr const auto ids = ipc::RequestKeys;
 };
@@ -362,3 +359,4 @@ template <> struct glz::meta<ipc::ResponseTypeVariant> {
   static constexpr std::string_view tag = "method";
   static constexpr const auto ids = ipc::RequestKeys;
 };
+*/
