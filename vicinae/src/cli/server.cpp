@@ -233,7 +233,6 @@ void CliServerCommand::run(CLI::App *app) {
     root->updateIndex();
   }
 
-  QPixmapCache::setCacheLimit(Environment::pixmapCacheLimit());
   FaviconService::initialize(new FaviconService(Omnicast::dataDir() / "favicon"));
   QApplication::setApplicationName("vicinae");
   QApplication::setQuitOnLastWindowClosed(false);
