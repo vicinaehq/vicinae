@@ -121,6 +121,10 @@
 		}
 	},
 
+	// How much memory (in MB) can be used to cache small image assets in memory directly
+	// The higher this value is the more memory vicinae will use. In exchange for this, you get lower cpu usage.
+	"pixmap_cache_mb": 50,
+
 	// Keybinds are serialized using a custom format.
 	// It is recommended to edit them through the settings GUI, which will write them to this file.
 	"keybinds": {

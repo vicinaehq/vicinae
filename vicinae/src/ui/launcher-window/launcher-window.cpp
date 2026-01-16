@@ -15,6 +15,7 @@
 #include "utils.hpp"
 #include <qcoreevent.h>
 #include <qlineedit.h>
+#include <qpixmapcache.h>
 #include <qscreen.h>
 #include <QStackedWidget>
 #ifdef WAYLAND_LAYER_SHELL
@@ -303,6 +304,7 @@ void LauncherWindow::handleConfigurationChange(const config::ConfigValue &value)
   m_header->setFixedHeight(value.header.height);
   m_bar->setFixedHeight(value.footer.height);
   applyWindowConfig(value.launcherWindow);
+  QPixmapCache::setCacheLimit(value.pixmapCacheMb * 1024 * 1024);
 
   auto &size = value.launcherWindow.size;
   setFixedSize(QSize{size.width, size.height});

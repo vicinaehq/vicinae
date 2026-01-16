@@ -185,6 +185,7 @@ struct ConfigValue {
   std::string escapeKeyBehavior;
   std::string faviconService = "twenty";
   std::string keybinding = "default";
+  int pixmapCacheMb = 50;
 
   FontConfig font;
   ThemeConfig theme;
@@ -230,6 +231,7 @@ template <> struct Partial<ConfigValue> {
   std::optional<std::string> escapeKeyBehavior;
   std::optional<std::string> faviconService;
   std::optional<std::string> keybinding;
+  std::optional<int> pixmapCacheMb;
   std::optional<bool> searchFilesInRoot;
 
   std::optional<Partial<FontConfig>> font;
