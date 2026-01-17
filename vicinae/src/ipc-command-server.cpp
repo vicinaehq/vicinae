@@ -1,9 +1,11 @@
 #include "ipc-command-server.hpp"
 #include "ipc-command-handler.hpp"
+#include "services/browser-extension-service.hpp"
 #include "ui/dmenu-view/dmenu-view.hpp"
 #include "utils.hpp"
 #include "vicinae-ipc/ipc.hpp"
 #include <functional>
+#include <glaze/core/common.hpp>
 #include <glaze/core/reflect.hpp>
 #include <glaze/json/write.hpp>
 #include <netinet/in.h>
@@ -19,8 +21,8 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
   using Ctx = decltype(m_rpc)::ContextHandle;
 
   connect(
-      ctx->services->browserExtension(), &BrowserExtensionService::tabFocusRequested, this,
-      [this](std::string_view browserId, int tabId) {
+      ctx->services->browserExtension(), &BrowserExtensionService::tabActionRequested, this,
+      [this](std::string_view browserId, int tabId, BrowserExtensionService::TabAction action) {
         auto it = std::ranges::find_if(
             m_clients, [&](auto &&client) { return client.browser && client.browser->id == browserId; });
 
@@ -29,18 +31,28 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
           return;
         }
 
-        ipc::RpcClient<ipc::RpcSchema<ipc::FocusTab>> client;
-        const auto json = client.notify<ipc::FocusTab>({.tabId = tabId});
+        ipc::RpcClient<ipc::RpcSchema<ipc::FocusTab, ipc::CloseBrowserTab>> client;
+        std::string json;
 
-        qDebug() << "focus tab written";
+        switch (action) {
+        case BrowserExtensionService::TabAction::Focus:
+          json = client.notify<ipc::FocusTab>({.tabId = tabId});
+          break;
+        case BrowserExtensionService::TabAction::Close:
+          json = client.notify<ipc::CloseBrowserTab>({.tabId = tabId});
+          break;
+        }
+
+        qDebug() << "send to browser" << json;
+
         it->sendMessage(json);
       });
 
-  m_rpc.middleware([](const decltype(m_rpc)::Schema::RequestVariant &req,
+  m_rpc.middleware([](const decltype(m_rpc)::Schema::Request &req,
                       decltype(m_rpc)::ContextHandle info) -> std::optional<std::string> {
     constexpr static const auto BROWSER_METHODS = std::array{ipc::BrowserTabsChanged::key};
 
-    if (std::ranges::contains(BROWSER_METHODS, info.method) && !info.caller->browser) {
+    if (std::ranges::contains(BROWSER_METHODS, req.method) && !info.caller->browser) {
       return "Only browser extensions can do this";
     }
 
@@ -203,7 +215,7 @@ void IpcCommandServer::processFrame(QLocalSocket *conn, QByteArrayView frame) {
 
   // auto handlerResult = _handler->handleCommand(request.data);
 
-  if (auto future = std::get_if<QFuture<ServerSchema::ResponseVariant>>(&value)) {
+  if (auto future = std::get_if<QFuture<glz::raw_json>>(&value)) {
     auto watcher = QObjectUniquePtr<Watcher>(new Watcher);
 
     watcher->setFuture(*future);
@@ -225,7 +237,7 @@ void IpcCommandServer::processFrame(QLocalSocket *conn, QByteArrayView frame) {
     return;
   }
 
-  respond(conn, request.makeResponse(std::get<ServerSchema::ResponseVariant>(value)));
+  respond(conn, request.makeResponse(std::get<glz::raw_json>(value)));
 }
 
 void IpcCommandServer::handleRead(QLocalSocket *conn) {

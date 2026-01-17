@@ -5,7 +5,9 @@
 #include "service-registry.hpp"
 #include "services/browser-extension-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
+#include "services/toast/toast-service.hpp"
 #include "ui/action-pannel/action.hpp"
+#include "ui/default-list-item-widget/default-list-item-widget.hpp"
 #include <qjsonobject.h>
 #include <qstringliteral.h>
 #include <qwidget.h>
@@ -31,12 +33,28 @@ class BrowserTabRootItem : public RootItem {
           ctx->navigation->closeWindow({.clearRootSearch = true});
         });
 
+    auto closeTab = new StaticAction("Close tab", BuiltinIcon::Trash, [tab = m_tab](ApplicationContext *ctx) {
+      if (const auto result = ctx->services->browserExtension()->closeTab(tab); !result) {
+        ctx->services->toastService()->failure(QString("Failed to close tab: %1").arg(result.error()));
+        return;
+      }
+      ctx->navigation->closeWindow({.clearRootSearch = true});
+    });
+    closeTab->setShortcut(Keybind::RemoveAction);
+
     section->addAction(focusTab);
+    section->addAction(closeTab);
 
     return panel;
   }
 
-  AccessoryList accessories() const override { return {{.text = "Browser Tab"}}; }
+  AccessoryList accessories() const override {
+    ListAccessory accessory{.text = "Tab"};
+
+    if (m_tab.audible) { accessory.icon = ImageURL::emoji(m_tab.muted ? "🔇" : "🔊"); }
+
+    return {accessory};
+  }
 
   EntrypointId uniqueId() const override { return EntrypointId("browser-tabs", std::to_string(m_tab.id)); }
 

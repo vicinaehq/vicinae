@@ -1,6 +1,7 @@
 #pragma once
 #include <QObject>
 #include <algorithm>
+#include <cstdint>
 #include <glaze/core/reflect.hpp>
 #include <ranges>
 #include "vicinae-ipc/ipc.hpp"
@@ -8,8 +9,11 @@
 class BrowserExtensionService : public QObject {
   Q_OBJECT
 
+public:
+  enum class TabAction : std::uint8_t { Focus, Close };
+
 signals:
-  void tabFocusRequested(std::string_view browserId, int id) const;
+  void tabActionRequested(std::string browserId, int id, TabAction action) const;
   void tabsChanged() const;
   void browsersChanged() const;
 
@@ -48,9 +52,33 @@ public:
     }
   }
 
-  void focusTab(std::string_view browserId, int tabId) { emit tabFocusRequested(browserId, tabId); }
+  void focusTab(const std::string &browserId, int tabId) {
+    emit tabActionRequested(browserId, tabId, TabAction::Focus);
+  }
 
   void focusTab(const BrowserTab &tab) { focusTab(tab.browserId, tab.id); }
+
+  std::expected<void, std::string> closeTab(const std::string &browserId, int tabId) {
+    // remove it immediately, don't wait for the next tab change event so that root search
+    // is updated immediately.
+
+    auto browserIt = std::ranges::find_if(m_browsers, [&](auto &&info) { return info.id == browserId; });
+
+    if (browserIt == m_browsers.end()) { return std::unexpected("No such browser"); }
+
+    auto tabIt = std::ranges::find_if(browserIt->tabs, [&](auto &&tab) { return tab.id == tabId; });
+
+    if (tabIt == browserIt->tabs.end()) { return std::unexpected("No such tab"); }
+
+    browserIt->tabs.erase(tabIt);
+
+    emit tabsChanged();
+    emit tabActionRequested(browserId, tabId, TabAction::Close);
+
+    return {};
+  }
+
+  auto closeTab(const BrowserTab &tab) { return closeTab(tab.browserId, tab.id); }
 
   void registerBrowser(const BrowserInfo &info) {
     if (auto it = findById(info.id); it != m_browsers.end()) {
@@ -70,6 +98,5 @@ public:
   }
 
 private:
-  std::vector<ipc::BrowserTabInfo> m_tabs;
   std::vector<BrowserInfo> m_browsers;
 };

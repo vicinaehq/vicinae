@@ -3,6 +3,7 @@
 #include <expected>
 #include <format>
 #include <glaze/core/reflect.hpp>
+#include <glaze/json/read.hpp>
 #include <glaze/util/string_literal.hpp>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -79,15 +80,11 @@ public:
    */
   template <InSchema<Schema> T> std::expected<typename T::Response, std::string> request(T::Request payload) {
     int id = 0;
-
     std::string data;
     uint32_t size;
     int n;
 
-    std::string json = m_rpc.template request<T>(payload);
-
-    sendRaw(json);
-
+    sendRaw(m_rpc.template request<T>(payload));
     n = ::recv(m_sock, reinterpret_cast<char *>(&size), sizeof(size), 0);
     data.resize(size);
     n = ::recv(m_sock, data.data(), data.size(), 0);
@@ -100,9 +97,13 @@ public:
 
     if (res.error) { return std::unexpected(res.error->message); }
 
-    if (auto matchingRes = std::get_if<typename T::Response>(&res.result.value())) { return *matchingRes; }
+    typename T::Response resData;
 
-    return std::unexpected("Returned response if not of expected type for request");
+    if (const auto error = glz::read_json(resData, res.result->str)) {
+      return std::unexpected(std::format("Failed to read response data: {}", glz::format_error(error)));
+    }
+
+    return resData;
   }
 
   /**

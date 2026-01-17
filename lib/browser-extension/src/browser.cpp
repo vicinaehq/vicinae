@@ -106,7 +106,8 @@ static int entrypoint() {
 
   ipc::RpcClient<ExtensionRpcSchema> extensionClient;
 
-  ipc::RpcServer<ipc::RpcSchema<ipc::FocusTab>> vicinaeReceiver; // listen to vicinae requests
+  ipc::RpcServer<ipc::RpcSchema<ipc::FocusTab, ipc::CloseBrowserTab>>
+      vicinaeReceiver; // listen to vicinae requests
   ipc::RpcServer<ipc::RpcSchema<ipc::BrowserInit, ipc::BrowserTabsChanged>>
       extensionReceiver; // listen to browser extension requests
 
@@ -114,6 +115,13 @@ static int entrypoint() {
     ipc::RpcClient<decltype(vicinaeReceiver)::SchemaType> client;
     sendExtensionCommand(STDOUT_FILENO, client.notify<ipc::FocusTab>(req));
     return ipc::FocusTab::Response();
+  });
+
+  vicinaeReceiver.route<ipc::CloseBrowserTab>([](const ipc::CloseBrowserTab::Request &req) {
+    ipc::RpcClient<decltype(vicinaeReceiver)::SchemaType> client;
+    std::println(std::cerr, "close tab event gotten");
+    sendExtensionCommand(STDOUT_FILENO, client.notify<ipc::CloseBrowserTab>(req));
+    return ipc::CloseBrowserTab::Response();
   });
 
   extensionReceiver.route<ipc::BrowserInit>(
@@ -136,9 +144,7 @@ static int entrypoint() {
     using Req = decltype(extensionReceiver)::SchemaType::Request;
     using Res = decltype(extensionClient)::Schema::Response;
 
-    std::variant<decltype(extensionReceiver)::SchemaType::Request,
-                 decltype(extensionClient)::Schema::Response>
-        msg;
+    std::variant<Req, Res> msg;
 
     std::println(std::cerr, "got message from extension frame: {}", message);
 
@@ -155,6 +161,8 @@ static int entrypoint() {
         std::println(std::cerr, "Failed to call extension rpc: {}", callRes.error());
         return;
       }
+
+      std::println(std::cerr, "response => {}", callRes.value());
 
       if (req->id) { sendExtensionCommand(STDOUT_FILENO, callRes.value()); }
     } else if (auto res = std::get_if<Res>(&msg)) {
@@ -186,6 +194,8 @@ static int entrypoint() {
       std::println(std::cerr, "Failed to call extension rpc: {}", callRes.error());
       return;
     }
+
+    std::println(std::cerr, "Response: {}", callRes.value());
   });
 
   auto fds = std::array{pollfd(STDIN_FILENO, POLLIN), pollfd(vicinaeClient->handle(), POLLIN)};

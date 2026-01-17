@@ -1,15 +1,17 @@
 #pragma once
 #include <concepts>
-#include <cstdint>
 #include <expected>
 #include <format>
+#include <glaze/core/common.hpp>
 #include <glaze/core/meta.hpp>
 #include <glaze/core/reflect.hpp>
 #include <glaze/core/write.hpp>
 #include <glaze/ext/jsonrpc.hpp>
+#include <glaze/json/generic.hpp>
 #include <glaze/json/read.hpp>
 #include <glaze/json/write.hpp>
 #include <glaze/util/string_literal.hpp>
+#include <iostream>
 #include <string>
 #include <variant>
 
@@ -120,6 +122,8 @@ struct BrowserTabInfo {
   std::string title;
   std::string url;
   bool active;
+  bool muted;
+  bool audible;
 };
 
 struct BrowserTabsChanged {
@@ -138,41 +142,13 @@ struct FocusTab {
   struct Response {};
 };
 
-/*
-template <typename... Ts> struct variant_types<std::variant<Ts...>> {
-  static constexpr auto ids = std::array{Ts::key...};
+struct CloseBrowserTab {
+  static constexpr const auto key = "browser/close-tab";
+  struct Request {
+    int tabId;
+  };
+  struct Response {};
 };
-*/
-
-template <typename... Ts> struct TypeList {};
-
-using MyTypes = TypeList<int, double, std::string>;
-
-template <typename List> struct Instantiator;
-
-template <glz::rpc::concepts::method_type... Ts> struct Rpc {
-  using Server = glz::rpc::server<Ts...>;
-  using Client = glz::rpc::client<Ts...>;
-};
-
-template <IsCommandVerb... Types> struct RequestType {
-  using type = std::variant<typename Types::Request...>;
-  static constexpr const auto keys = std::array{Types::key...};
-};
-
-template <IsCommandVerb... Types> struct ResponseType {
-  using type = std::variant<typename Types::Response...>;
-  static constexpr const auto keys = std::array{Types::key...};
-};
-
-struct ResponseError {
-  int code;
-  std::string error;
-};
-
-template <IsCommandVerb... Ts> constexpr auto makeKeyArray() { return std::array{Ts::key...}; }
-
-template <typename Variant> struct variant_types;
 
 struct ErrorContext {
   int code;
@@ -183,25 +159,21 @@ template <typename T>
 concept hasResponse = requires { typename T::Response; };
 
 template <IsCommandVerb... Ts> struct RpcSchema {
-  using RequestVariant = RequestType<Ts...>::type;
-  using ResponseVariant = ResponseType<Ts...>::type;
-
   template <typename T> static constexpr bool contains = (std::same_as<T, Ts> || ...);
-
   template <typename T> static constexpr bool isNotification = (std::same_as<T, Ts> || ...);
 
   struct Response {
     int id;
-    std::optional<ResponseVariant> result;
+    std::optional<glz::raw_json> result;
     std::optional<ErrorContext> error;
   };
 
   struct Request {
     std::optional<int> id; // if no id, we assume we are dealing with a notification
     std::string method;
-    RequestVariant data;
+    glz::raw_json data;
 
-    Response makeResponse(ResponseVariant data) const { return Response(id.value_or(0), data); }
+    Response makeResponse(glz::raw_json data) const { return Response(id.value_or(0), data); }
 
     Response makeErrorResponse(ErrorContext error) const { return Response(id.value_or(0), {}, error); }
   };
@@ -215,8 +187,6 @@ template <IsCommandVerb... Ts> struct RpcSchema {
 
 template <typename T>
 concept IsRpcSchema = requires {
-  typename T::RequestVariant;
-  typename T::ResponseVariant;
   typename T::Request;
   typename T::Response;
 };
@@ -226,11 +196,16 @@ concept InSchema = Schema::template contains<T>;
 
 template <typename SchemaT> struct RpcClient {
   using Schema = SchemaT;
-  using RequestHandler = std::function<void(const typename Schema::ResponseVariant &var)>;
+  using RequestHandler = std::function<void(const glz::raw_json &var)>;
 
   template <InSchema<SchemaT> T> typename std::string request(T::Request payload) {
-    typename SchemaT::Request req{.id = 0, .method = T::key, .data = payload};
+    typename SchemaT::Request req{.id = 0, .method = T::key};
     std::string buf;
+    std::string payloadJson;
+
+    if (const auto error = glz::write_json(payload, payloadJson)) {}
+
+    req.data = payloadJson;
 
     if (const auto error = glz::write_json(req, buf)) {}
 
@@ -241,7 +216,13 @@ template <typename SchemaT> struct RpcClient {
    * Send a notification, that is a request that does not expect a response
    */
   template <InSchema<SchemaT> T> typename std::string notify(T::Request payload) const {
-    typename SchemaT::Request req{.method = T::key, .data = payload};
+    typename SchemaT::Request req{.method = T::key};
+    std::string payloadJson;
+
+    if (const auto error = glz::write_json(payload, payloadJson)) {}
+
+    req.data = payloadJson;
+
     std::string buf;
     if (const auto error = glz::write_json(req, buf)) {}
     return buf;
@@ -277,12 +258,10 @@ private:
 template <IsRpcSchema Schema> class RpcServer {
 public:
   using SchemaType = Schema;
-  using HRet = std::expected<typename Schema::ResponseVariant, std::string>;
-  using Handler = std::function<HRet(const typename Schema::RequestVariant &req)>;
-  using NotificationHandler =
-      std::function<std::expected<void, std::string>(const typename Schema::RequestVariant &req)>;
-  using MiddlewareHandler =
-      std::function<std::optional<std::string>(const typename Schema::RequestVariant &request)>;
+  using HRet = std::expected<glz::raw_json, std::string>;
+  using Handler = std::function<HRet(const glz::raw_json &req)>;
+  using NotificationHandler = std::function<std::expected<void, std::string>(const glz::raw_json &reqData)>;
+  using MiddlewareHandler = std::function<std::optional<std::string>(const glz::raw_json &reqData)>;
 
   template <ipc::IsCommandVerb T>
     requires hasResponse<T>
@@ -291,28 +270,20 @@ public:
             fn) {
     std::string method = T::key;
 
-    m_handlers[method] = [fn](const typename Schema::RequestVariant &req) -> HRet {
-      if (auto actualReq = std::get_if<typename T::Request>(&req)) {
-        return fn(*actualReq).transform([](auto &&value) { return typename Schema::ResponseVariant(value); });
-      } else {
-        return std::unexpected("Mismatched request type");
-      }
-    };
-  }
+    m_handlers[method] = [fn](const glz::raw_json &raw) -> HRet {
+      typename T::Request req;
 
-  // notification overload - no response
-  template <ipc::IsCommandVerb T>
-    requires(!hasResponse<T>)
-  void route(std::function<std::expected<void, std::string>(const typename T::Request &reqData)> fn) {
-    std::string method = T::key;
-
-    m_handlers[method] =
-        [fn](const typename Schema::RequestVariant &req) -> std::expected<void, std::string> {
-      if (auto actualReq = std::get_if<typename T::Request>(&req)) {
-        return fn(*actualReq);
-      } else {
-        return std::unexpected("Mismatched request type");
+      if (const auto error = glz::read_json(req, raw.str)) {
+        return std::unexpected(std::format("Failed to parse request data: {}", glz::format_error(error)));
       }
+
+      return fn(req).and_then([](auto &&value) -> HRet {
+        std::string json;
+        if (const auto error = glz::write_json(value, json)) {
+          return std::unexpected(std::format("Failed to parse response data: {}", glz::format_error(error)));
+        }
+        return glz::raw_json{json};
+      });
     };
   }
 
@@ -328,6 +299,10 @@ public:
 
       auto resData = it->second(req.data);
 
+      if (!resData) { return std::unexpected(resData.error()); }
+
+      std::println(std::cerr, "Called handler for key {}", req.method);
+
       if (req.id) {
         typename Schema::Response res(req.id.value());
 
@@ -338,7 +313,11 @@ public:
         }
 
         std::string buf;
-        glz::write_json(res, buf);
+
+        if (const auto error = glz::write_json(res, buf)) {
+          return std::unexpected(std::format("Failed to write json response: {}", glz::format_error(error)));
+        }
+
         return buf;
       }
 
@@ -355,15 +334,3 @@ private:
 };
 
 }; // namespace ipc
-
-/*
-template <typename T> struct glz::meta<ipc::RpcSchema<T>> {
-  static constexpr std::string_view tag = "method";
-  static constexpr const auto ids = ipc::RequestKeys;
-};
-
-template <> struct glz::meta<ipc::ResponseTypeVariant> {
-  static constexpr std::string_view tag = "method";
-  static constexpr const auto ids = ipc::RequestKeys;
-};
-*/
