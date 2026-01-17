@@ -113,4 +113,5 @@ private:
   std::vector<ClientInfo> m_clients;
 
   RpcServer<ServerSchema, IpcContext> m_rpc;
+  ApplicationContext &m_ctx;
 };

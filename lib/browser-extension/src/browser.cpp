@@ -92,16 +92,19 @@ static int entrypoint() {
     return 1;
   }
 
-  auto vicinaeClient = ipc::Client::make().value();
+  auto vicinaeClient = ipc::Client<ipc::BrowserExtensionSchema>::make();
 
-  if (auto result = vicinaeClient.connect(); !result) {
+  if (!vicinaeClient) {
+    std::println(std::cerr, "Failed to create vicinae client");
+    return false;
+  }
+
+  if (auto result = vicinaeClient->connect(); !result) {
     std::println(std::cerr, "Failed to connect: {}", result.error());
     return 1;
   }
 
   ipc::RpcClient<ExtensionRpcSchema> extensionClient;
-
-  std::println(std::cerr, "Listening for messages...");
 
   ipc::RpcServer<ipc::RpcSchema<ipc::FocusTab>> vicinaeReceiver; // listen to vicinae requests
   ipc::RpcServer<ipc::RpcSchema<ipc::BrowserInit, ipc::BrowserTabsChanged>>
@@ -114,15 +117,18 @@ static int entrypoint() {
   });
 
   extensionReceiver.route<ipc::BrowserInit>(
-      [&](const ipc::BrowserInit::Request &init) { return vicinaeClient.request<ipc::BrowserInit>(init); });
+      [&](const ipc::BrowserInit::Request &init) { return vicinaeClient->request<ipc::BrowserInit>(init); });
 
-  extensionReceiver.route<ipc::BrowserTabsChanged>([&](const ipc::BrowserTabsChanged::Request &req) {
-    ipc::RpcClient<decltype(extensionReceiver)::SchemaType> vicinae;
-    // pass tab changes to vicinae
-    const auto json = vicinae.request<ipc::BrowserTabsChanged>(req);
-    sendExtensionCommand(vicinaeClient.handle(), json);
-    return ipc::BrowserTabsChanged::Response();
-  });
+  extensionReceiver.route<ipc::BrowserTabsChanged>(
+      [&](const ipc::BrowserTabsChanged::Request &req)
+          -> std::expected<ipc::BrowserTabsChanged::Response, std::string> {
+        // pass tab changes to vicinae
+        if (const auto result = vicinaeClient->notify<ipc::BrowserTabsChanged>(req); !result) {
+          return std::unexpected(result.error());
+        }
+
+        return ipc::BrowserTabsChanged::Response();
+      });
 
   Frame extensionFrame;
 
@@ -182,9 +188,10 @@ static int entrypoint() {
     }
   });
 
-  auto fds = std::array{pollfd(STDIN_FILENO, POLLIN), pollfd(vicinaeClient.handle(), POLLIN)};
+  auto fds = std::array{pollfd(STDIN_FILENO, POLLIN), pollfd(vicinaeClient->handle(), POLLIN)};
 
   assert(fds.size() == 2);
+  std::println(std::cerr, "Listening for messages...");
 
   while (true) {
     int ready = poll(fds.data(), fds.size(), -1);
@@ -211,7 +218,7 @@ static int entrypoint() {
     }
   }
 
-  std::println(std::cerr, "Native host was terminated.");
+  std::println(std::cerr, "Native host is exiting.");
 
   return 0;
 }

@@ -4,7 +4,7 @@
 #include "vicinae-ipc/ipc.hpp"
 
 TEST_CASE("test") {
-  auto client = ipc::Client::make().value();
+  auto client = ipc::Client<ipc::CliSchema>::make().value();
 
   auto err = client.request<ipc::Deeplink>({.url = "vicinae://toggle"});
 

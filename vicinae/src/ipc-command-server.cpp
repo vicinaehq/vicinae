@@ -15,7 +15,7 @@
 #include "navigation-controller.hpp"
 
 IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
-    : QObject(parent), m_rpc(IpcContext::GlobalContext{.app = ctx}) {
+    : QObject(parent), m_ctx(*ctx), m_rpc(IpcContext::GlobalContext{.app = ctx}) {
   using Ctx = decltype(m_rpc)::ContextHandle;
 
   connect(
@@ -55,6 +55,7 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
 
   m_rpc.route<ipc::BrowserInit>([this](const ipc::BrowserInit::Request &init, Ctx context) {
     context.caller->browser = init;
+    m_ctx.services->browserExtension()->registerBrowser({.id = init.id, .name = init.name});
     return ipc::BrowserInit::Response();
   });
 
@@ -89,9 +90,10 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
       });
 
   m_rpc.route<ipc::BrowserTabsChanged>(
-      [](const ipc::BrowserTabsChanged::Request &req, decltype(m_rpc)::ContextHandle ctx) {
+      [](const ipc::BrowserTabsChanged::Request &req, decltype(m_rpc)::ContextHandle ctx) -> std::expected<ipc::BrowserTabsChanged::Response, std::string> {
         qDebug() << "set" << req.size() << "browser tabs";
-        ctx.global->app->services->browserExtension()->setTabs(req);
+        if (!ctx.caller->browser) return std::unexpected("setTabs only permitted for browsers");
+        ctx.global->app->services->browserExtension()->setTabs(ctx.caller->browser->id, req);
         return ipc::BrowserTabsChanged::Response();
       });
 
@@ -191,6 +193,8 @@ void IpcCommandServer::processFrame(QLocalSocket *conn, QByteArrayView frame) {
 
   auto call = m_rpc.call(request, *clientInfoIt);
 
+  if (!request.id) { return; }
+
   if (!call) {
     respond(conn, request.makeErrorResponse({.code = 0, .message = call.error()}));
     return;
@@ -258,6 +262,8 @@ void IpcCommandServer::handleDisconnection(QLocalSocket *conn) {
   for (const auto &watcher : it->m_pending) {
     if (!watcher->isFinished()) { watcher->cancel(); }
   }
+
+  if (it->browser) { m_ctx.services->browserExtension()->unregisterBrowser(it->browser->id); }
 
   m_clients.erase(it);
   conn->deleteLater();

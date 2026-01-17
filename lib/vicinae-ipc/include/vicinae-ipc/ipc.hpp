@@ -275,7 +275,7 @@ private:
   std::unordered_map<int, RequestHandler> m_requestMap;
 };
 
-template <typename Schema> class RpcServer {
+template <IsRpcSchema Schema> class RpcServer {
 public:
   using SchemaType = Schema;
   using HRet = std::expected<typename Schema::ResponseVariant, std::string>;
@@ -327,9 +327,17 @@ public:
         }
       } catch (const std::exception &e) { return std::unexpected(e.what()); }
 
-      auto res = it->second(req.data);
+      auto resData = it->second(req.data);
 
       if (req.id) {
+        typename Schema::Response res(req.id.value());
+
+        if (!resData) {
+          res.error = ErrorContext(-1, resData.error());
+        } else {
+          res.result = resData.value();
+        }
+
         std::string buf;
         glz::write_json(res, buf);
         return buf;

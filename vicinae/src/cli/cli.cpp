@@ -152,7 +152,7 @@ public:
   }
 
   void run(CLI::App *app) override {
-    const auto res = ipc::Client::oneshot<ipc::LaunchApp>(
+    const auto res = ipc::CliClient::oneshot<ipc::LaunchApp>(
         {.appId = m_appId, .args = m_args, .newInstance = m_newInstance});
 
     if (!res) {
@@ -271,7 +271,7 @@ class CliPing : public AbstractCommandLineCommand {
   std::string description() const override { return "Ping the vicinae server"; }
 
   void run(CLI::App *app) override {
-    const auto res = ipc::Client::oneshot<ipc::Ping>({});
+    const auto res = ipc::CliClient::oneshot<ipc::Ping>({});
 
     if (!res) {
       std::println(std::cerr, "Failed to ping: {}", res.error());
@@ -288,7 +288,7 @@ class ToggleCommand : public AbstractCommandLineCommand {
   void setup(CLI::App *app) override { app->add_option("-q,--query", m_query, "Set search query"); }
 
   void run(CLI::App *app) override {
-    if (auto res = ipc::Client::deeplink(std::format("vicinae://toggle")); !res) {
+    if (auto res = ipc::CliClient::deeplink(std::format("vicinae://toggle")); !res) {
       std::println(std::cerr, "Failed to toggle: {}", res.error());
     }
   }
@@ -303,7 +303,7 @@ class OpenCommand : public AbstractCommandLineCommand {
   void setup(CLI::App *app) override { app->add_option("-q,--query", query, "Set search query"); }
 
   void run(CLI::App *app) override {
-    if (auto res = ipc::Client::deeplink(std::format("vicinae://open")); !res) {
+    if (auto res = ipc::CliClient::deeplink(std::format("vicinae://open")); !res) {
       std::println(std::cerr, "Failed to toggle: {}", res.error());
     }
   }
@@ -317,7 +317,7 @@ class CloseCommand : public AbstractCommandLineCommand {
   std::string description() const override { return "Close the vicinae window"; }
 
   void run(CLI::App *app) override {
-    if (auto res = ipc::Client::deeplink(std::format("vicinae://open")); !res) {
+    if (auto res = ipc::CliClient::deeplink(std::format("vicinae://open")); !res) {
       std::println(std::cerr, "Failed to close: {}", res.error());
     }
   }
@@ -346,7 +346,7 @@ class DMenuCommand : public AbstractCommandLineCommand {
   void run(CLI::App *app) override {
     m_req.rawContent = Utils::slurp(std::cin);
 
-    const auto res = ipc::Client::oneshot<ipc::DMenu>(m_req);
+    const auto res = ipc::CliClient::oneshot<ipc::DMenu>(m_req);
 
     if (!res) { std::println(std::cerr, "Failed to invoke dmenu: {}", res.error()); }
     if (res->output.empty()) { exit(1); }
@@ -381,7 +381,11 @@ public:
         ->required();
   }
 
-  void run(CLI::App *app) override { ipc::Client::oneshot<ipc::Deeplink>({.url = link}); }
+  void run(CLI::App *app) override {
+    if (const auto result = ipc::CliClient::deeplink(link); !result) {
+      std::println(std::cerr, "Failed to execute deeplink: {}", result.error());
+    }
+  }
 
 private:
   std::string link;

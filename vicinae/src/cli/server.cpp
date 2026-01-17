@@ -75,7 +75,8 @@ void CliServerCommand::run(CLI::App *app) {
   lock.setStaleLockTime(0ms);
 
   if (!lock.tryLock()) {
-    bool isServerReachable = ipc::Client::oneshot<ipc::Ping>({}).has_value();
+    const auto pingRes = ipc::CliClient::oneshot<ipc::Ping>({});
+    bool isServerReachable = pingRes && pingRes->ok;
 
     if (!isServerReachable) {
       lock.removeStaleLockFile();

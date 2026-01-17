@@ -12,9 +12,12 @@
 #include <unistd.h>
 
 namespace ipc {
-class Client {
-  using Schema =
-      RpcSchema<ipc::Ping, ipc::BrowserInit, ipc::DMenu, ipc::Deeplink, ipc::ListApps, ipc::LaunchApp>;
+
+using CliSchema = RpcSchema<ipc::Ping, ipc::DMenu, ipc::Deeplink, ipc::ListApps, ipc::LaunchApp>;
+using BrowserExtensionSchema = RpcSchema<ipc::Ping, ipc::BrowserInit, ipc::BrowserTabsChanged>;
+
+template <IsRpcSchema SchemaType = CliSchema> class Client {
+  using Schema = SchemaType;
 
 public:
   static std::filesystem::path vicinaeSocketPath() {
@@ -49,12 +52,6 @@ public:
     return {};
   }
 
-  void dmenu(auto cb) {
-    // std::string uuid{"42"};
-    // auto [request, inserted] = m_client.request<"dmenu">(uuid, DMenu::Request(), cb);
-    // sendRaw(request);
-  }
-
   void shutdown() {}
 
   void sendRaw(std::string_view data) {
@@ -63,17 +60,22 @@ public:
     ::send(m_sock, data.data(), data.size(), 0);
   }
 
-  template <ipc::IsCommandVerb T> static auto oneshot(T::Request payload) {
-    return ipc::Client::make().and_then(
+  template <InSchema<Schema> T> static auto oneshot(T::Request payload) {
+    return ipc::Client<SchemaType>::make().and_then(
         [payload = std::move(payload)](Client client) -> std::expected<typename T::Response, std::string> {
           if (const auto result = client.connect(); !result) { return std::unexpected(result.error()); }
-          return client.request<T>(payload);
+          return client.template request<T>(payload);
         });
   }
 
-  static auto deeplink(std::string_view url) { return oneshot<ipc::Deeplink>({.url = std::string(url)}); }
+  template <InSchema<Schema> T> std::expected<void, std::string> notify(const T::Request &payload) {
+    const std::string json = m_rpc.template notify<T>(payload);
+    sendRaw(json);
+    return {};
+  }
 
   /**
+   * Make a request and block until we get a response.
    */
   template <InSchema<Schema> T> std::expected<typename T::Response, std::string> request(T::Request payload) {
     int id = 0;
@@ -82,7 +84,7 @@ public:
     uint32_t size;
     int n;
 
-    std::string json = m_rpc.request<T>(payload);
+    std::string json = m_rpc.template request<T>(payload);
 
     sendRaw(json);
 
@@ -90,7 +92,7 @@ public:
     data.resize(size);
     n = ::recv(m_sock, data.data(), data.size(), 0);
 
-    Schema::Response res;
+    typename Schema::Response res;
 
     if (const auto error = glz::read_json(res, data)) {
       return std::unexpected(std::format("Failed to parse response: {}", glz::format_error(error)));
@@ -115,9 +117,15 @@ private:
   bool m_connected = false;
   std::string m_path;
   RpcClient<Schema> m_rpc;
-
-  // ipc::RpcClient m_client;
-  // ipc::RpcServer m_receiver;
 };
+
+struct CliClient : public Client<CliSchema> {
+  static auto deeplink(std::string_view url) { return oneshot<ipc::Deeplink>({.url = std::string(url)}); }
+};
+
+/**
+ * Client to communicate from a browser extension native host to the vicinae daemon
+ */
+class BrowserExtensionClient : public Client<BrowserExtensionSchema> {};
 
 } // namespace ipc
