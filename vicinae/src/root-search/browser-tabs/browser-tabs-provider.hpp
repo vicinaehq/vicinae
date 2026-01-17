@@ -20,7 +20,7 @@ class BrowserTabRootItem : public RootItem {
 
   QString displayName() const override { return m_tab.title.c_str(); }
 
-  QString subtitle() const override { return QUrl(m_tab.url.c_str()).host(); }
+  QString subtitle() const override { return ""; }
 
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx,
                                                    const RootItemMetadata &metadata) const override {
