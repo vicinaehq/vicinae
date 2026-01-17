@@ -19,7 +19,6 @@ void VListWidget::setModel(VListModel *model) {
     m_model->onDataChanged();
     calculate();
     refreshAll();
-
   });
   calculate();
 }
