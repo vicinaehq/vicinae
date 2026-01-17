@@ -1,7 +1,6 @@
 #include "root-search-controller.hpp"
 #include "root-search-model.hpp"
 #include "service-registry.hpp"
-#include <ranges>
 
 RootSearchController::RootSearchController(RootItemManager *manager, FileService *fs, AppService *appDb,
                                            CalculatorService *calculator, RootSearchModel *model,
@@ -42,8 +41,7 @@ void RootSearchController::setFilter(std::string_view text) {
 
   if (text.empty()) {
     auto items = m_manager->search("", {.includeFavorites = false, .prioritizeAliased = false});
-    m_model->setSearchResults(
-        {.query = std::string(text), .items = items, .tabs = tabs | std::ranges::to<std::vector>()});
+    m_model->setSearchResults({.query = std::string(text), .items = items});
     return;
   }
 

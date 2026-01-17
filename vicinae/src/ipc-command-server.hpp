@@ -3,7 +3,9 @@
 #include "types.hpp"
 #include <QLocalSocket>
 #include <QFutureWatcher>
+#include <cstdint>
 #include <qlocalserver.h>
+#include <string_view>
 #include <vicinae-ipc/ipc.hpp>
 
 using ServerSchema = ipc::RpcSchema<ipc::DMenu, ipc::Deeplink, ipc::Ping, ipc::ListApps, ipc::LaunchApp,
@@ -19,6 +21,12 @@ struct ClientInfo {
   } frame;
   std::vector<QObjectUniquePtr<Watcher>> m_pending;
   std::optional<ipc::BrowserInit::Request> browser;
+
+  void sendMessage(std::string_view message) {
+    uint32_t size = message.size();
+    conn->write(reinterpret_cast<const char *>(&size), sizeof(size));
+    conn->write(message.data(), message.size());
+  }
 };
 
 struct IpcContext {

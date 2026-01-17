@@ -15,13 +15,11 @@
 
 namespace ipc {
 
-enum class ClientType : std::uint8_t { CommandDispatcher, BrowserExtension };
-
 template <typename T>
 concept IsCommandVerb = requires {
   { T::key } -> std::convertible_to<std::string>;
   typename T::Request;
-  // typename T::Response;
+  typename T::Response;
 };
 
 struct Deeplink {
@@ -110,6 +108,7 @@ struct BrowserInit {
   struct Request {
     std::string id;
     std::string name;
+    std::string engine; // "chromimum" | "firefox"
   };
 
   struct Response {};

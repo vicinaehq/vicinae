@@ -26,8 +26,8 @@ class BrowserTabRootItem : public RootItem {
     auto section = panel->createSection();
 
     auto focusTab =
-        new StaticAction("Switch to tab", BuiltinIcon::Switch, [id = m_tab.id](ApplicationContext *ctx) {
-          ctx->services->browserExtension()->focusTab(id);
+        new StaticAction("Switch to tab", BuiltinIcon::Switch, [tab = m_tab](ApplicationContext *ctx) {
+          ctx->services->browserExtension()->focusTab(tab);
           ctx->navigation->closeWindow({.clearRootSearch = true});
         });
 
@@ -55,19 +55,20 @@ class BrowserTabRootItem : public RootItem {
   bool isActive() const override { return m_tab.active; }
 
 public:
-  BrowserTabRootItem(const ipc::BrowserTabInfo &tab) : m_tab(tab) {}
+  BrowserTabRootItem(const BrowserExtensionService::BrowserTab &tab) : m_tab(tab) {}
 
 private:
-  ipc::BrowserTabInfo m_tab;
+  BrowserExtensionService::BrowserTab m_tab;
 };
 
 class BrowserTabProvider : public RootProvider {
 public:
   std::vector<std::shared_ptr<RootItem>> loadItems() const override {
     auto items = m_service.tabs() |
-                 std::views::transform([](const ipc::BrowserTabInfo &tab) -> std::shared_ptr<RootItem> {
-                   return std::make_shared<BrowserTabRootItem>(tab);
-                 });
+                 std::views::transform(
+                     [](const BrowserExtensionService::BrowserTab &tab) -> std::shared_ptr<RootItem> {
+                       return std::make_shared<BrowserTabRootItem>(tab);
+                     });
 
     return items | std::ranges::to<std::vector>();
   }

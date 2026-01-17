@@ -2,128 +2,79 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Vicinae Extension</title>
+  <title>Vicinae</title>
   <style>
     body {
-      width: 400px;
-      padding: 15px;
-      font-family: Arial, sans-serif;
+      width: 200px;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      text-align: center;
+      margin: 0;
     }
-    .section {
-      margin-bottom: 15px;
-    }
-    .status {
-      padding: 10px;
-      border-radius: 5px;
-      margin-bottom: 15px;
-      font-weight: bold;
-    }
-    .status.connected {
-      background: #d4edda;
-      color: #155724;
-    }
-    .status.error {
-      background: #f8d7da;
-      color: #721c24;
-    }
-    .status.disconnected {
-      background: #fff3cd;
-      color: #856404;
-    }
-    .setup-box {
-      background: #e7f3ff;
-      border: 1px solid #b3d9ff;
-      padding: 15px;
-      border-radius: 5px;
-      margin: 15px 0;
-    }
-    .setup-box h3 {
-      margin-top: 0;
-    }
-    .command {
-      background: #2d2d2d;
-      color: #f8f8f2;
-      padding: 10px;
-      border-radius: 3px;
-      font-family: monospace;
-      font-size: 11px;
-      margin: 10px 0;
-      word-wrap: break-word;
-      cursor: pointer;
+
+    .logo-container {
       position: relative;
+      display: inline-block;
+      margin-bottom: 8px;
     }
-    .command:hover {
-      background: #3d3d3d;
+
+    .logo {
+      width: 64px;
+      height: 64px;
     }
-    .copy-btn {
-      background: #007bff;
-      color: white;
-      border: none;
-      padding: 5px 10px;
-      border-radius: 3px;
-      cursor: pointer;
-      font-size: 11px;
-      margin-top: 5px;
+
+    .status-pin {
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid white;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
     }
-    .copy-btn:hover {
-      background: #0056b3;
+
+    .status-pin.connected {
+      background: #22c55e;
     }
-    button {
-      padding: 8px 15px;
-      margin: 5px 0;
-      cursor: pointer;
+
+    .status-pin.disconnected {
+      background: #f59e0b;
     }
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
+
+    .status-pin.error {
+      background: #ef4444;
     }
-    #messages {
-      max-height: 200px;
-      overflow-y: auto;
-      border: 1px solid #ccc;
-      padding: 10px;
-      background: #f5f5f5;
+
+    .title {
+      font-size: 16px;
+      font-weight: 600;
+      margin: 0 0 4px 0;
+      color: #1f2937;
+    }
+
+    .status-text {
       font-size: 12px;
+      color: #6b7280;
+      margin: 0;
     }
-    .message {
-      margin: 5px 0;
-      padding: 5px;
-      background: white;
-      border-radius: 3px;
+
+    .status-text.connected {
+      color: #22c55e;
     }
-    input {
-      width: calc(100% - 10px);
-      padding: 5px;
-      margin: 5px 0;
-    }
-    .hidden {
-      display: none;
-    }
-    .info {
-      font-size: 12px;
-      color: #666;
+
+    .status-text.error {
+      color: #ef4444;
     }
   </style>
 </head>
 <body>
-  <h2>Vicinae</h2>
-
-  <div id="statusBar" class="status disconnected">
-    Status: <span id="statusText">Checking...</span>
+  <div class="logo-container">
+    <img src="icons/icon128.png" class="logo" alt="Vicinae">
+    <div id="statusPin" class="status-pin disconnected"></div>
   </div>
-
-  <!-- Main UI (shown when connected) -->
-  <div id="mainUI" class="hidden">
-    <div class="section">
-      <input type="text" id="messageInput" placeholder="Type a message...">
-      <button id="send">Send Message</button>
-    </div>
-
-    <div class="section">
-      <h3>Messages:</h3>
-      <div id="messages"></div>
-    </div>
-  </div>
+  <h1 class="title">Vicinae</h1>
+  <p id="statusText" class="status-text">Connecting...</p>
 
   <script src="popup.js"></script>
 </body>

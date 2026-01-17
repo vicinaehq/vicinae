@@ -1,6 +1,7 @@
 #pragma once
 #include <QObject>
 #include <algorithm>
+#include <glaze/core/reflect.hpp>
 #include <ranges>
 #include "vicinae-ipc/ipc.hpp"
 
@@ -8,23 +9,25 @@ class BrowserExtensionService : public QObject {
   Q_OBJECT
 
 signals:
-  void tabFocusRequested(int id) const;
+  void tabFocusRequested(std::string_view browserId, int id) const;
   void tabsChanged() const;
+  void browsersChanged() const;
 
 public:
-  struct BrowserTab : public ipc::BrowserTabInfo {
+  struct BrowserTab : ipc::BrowserTabInfo {
     std::string browserId;
   };
 
   struct BrowserInfo {
     std::string id;
     std::string name;
-    std::vector<ipc::BrowserTabInfo> tabs;
+    std::string engine;
+    std::vector<BrowserTab> tabs;
   };
 
   BrowserExtensionService() = default;
 
-  std::vector<ipc::BrowserTabInfo> tabs() const {
+  std::vector<BrowserTab> tabs() const {
     return m_browsers | std::views::transform([](auto &&b) { return b.tabs; }) | std::views::join |
            std::ranges::to<std::vector>();
   }
@@ -35,12 +38,19 @@ public:
 
   void setTabs(std::string id, std::vector<ipc::BrowserTabInfo> tabs) {
     if (auto it = findById(id); it != m_browsers.end()) {
-      it->tabs = tabs;
+      it->tabs = tabs | std::views::transform([&](const ipc::BrowserTabInfo &info) {
+                   auto tab = BrowserTab(info);
+                   tab.browserId = id;
+                   return tab;
+                 }) |
+                 std::ranges::to<std::vector>();
       emit tabsChanged();
     }
   }
 
-  void focusTab(int id) { emit tabFocusRequested(id); }
+  void focusTab(std::string_view browserId, int tabId) { emit tabFocusRequested(browserId, tabId); }
+
+  void focusTab(const BrowserTab &tab) { focusTab(tab.browserId, tab.id); }
 
   void registerBrowser(const BrowserInfo &info) {
     if (auto it = findById(info.id); it != m_browsers.end()) {
@@ -48,12 +58,14 @@ public:
     } else {
       m_browsers.emplace_back(info);
     }
+    emit browsersChanged();
   }
 
   void unregisterBrowser(std::string id) {
     if (auto it = findById(id); it != m_browsers.end()) {
       m_browsers.erase(it);
       emit tabsChanged();
+      emit browsersChanged();
     }
   }
 

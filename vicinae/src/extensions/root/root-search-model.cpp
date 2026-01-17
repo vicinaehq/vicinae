@@ -11,8 +11,6 @@ void RootSearchModel::setSearchResults(const SearchResults &results) {
   m_calc = results.calculator;
   m_files = results.files;
   m_defaultOpener = results.defaultOpener;
-  m_tabs = results.tabs;
-
   m_resultSectionTitle = std::format("Results ({})", m_items.size());
   m_fallbackSectionTitle = std::format("Use \"{}\" with...", query);
 

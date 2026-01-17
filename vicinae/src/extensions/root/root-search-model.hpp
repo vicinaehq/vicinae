@@ -36,7 +36,6 @@ struct SearchResults {
   std::optional<AbstractCalculatorBackend::CalculatorResult> calculator;
   std::vector<IndexerFileResult> files;
   std::optional<LinkItem> defaultOpener;
-  std::vector<ipc::BrowserTabInfo> tabs;
 };
 
 class RootSearchModel : public vicinae::ui::SectionListModel<RootItemVariant, SectionType> {
@@ -107,7 +106,6 @@ private:
   std::vector<std::shared_ptr<RootItem>> m_fallbackItems;
   std::vector<std::shared_ptr<RootItem>> m_favorites;
   std::optional<LinkItem> m_defaultOpener;
-  std::vector<ipc::BrowserTabInfo> m_tabs;
 
   std::string m_fallbackSectionTitle;
   std::string m_resultSectionTitle;

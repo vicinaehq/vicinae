@@ -20,8 +20,9 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
 
   connect(
       ctx->services->browserExtension(), &BrowserExtensionService::tabFocusRequested, this,
-      [this](int tabId) {
-        auto it = std::ranges::find_if(m_clients, [](auto &&client) { return client.browser.has_value(); });
+      [this](std::string_view browserId, int tabId) {
+        auto it = std::ranges::find_if(
+            m_clients, [&](auto &&client) { return client.browser && client.browser->id == browserId; });
 
         if (it == m_clients.end()) {
           qWarning() << "focus tab requested but there is no browser extension client currently connected";
@@ -30,12 +31,9 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
 
         ipc::RpcClient<ipc::RpcSchema<ipc::FocusTab>> client;
         const auto json = client.notify<ipc::FocusTab>({.tabId = tabId});
-        uint32_t size = json.size();
 
         qDebug() << "focus tab written";
-
-        it->conn->write(reinterpret_cast<const char *>(&size), sizeof(size));
-        it->conn->write(json.data(), json.size());
+        it->sendMessage(json);
       });
 
   m_rpc.middleware([](const decltype(m_rpc)::Schema::RequestVariant &req,
@@ -90,7 +88,8 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
       });
 
   m_rpc.route<ipc::BrowserTabsChanged>(
-      [](const ipc::BrowserTabsChanged::Request &req, decltype(m_rpc)::ContextHandle ctx) -> std::expected<ipc::BrowserTabsChanged::Response, std::string> {
+      [](const ipc::BrowserTabsChanged::Request &req, decltype(m_rpc)::ContextHandle ctx)
+          -> std::expected<ipc::BrowserTabsChanged::Response, std::string> {
         qDebug() << "set" << req.size() << "browser tabs";
         if (!ctx.caller->browser) return std::unexpected("setTabs only permitted for browsers");
         ctx.global->app->services->browserExtension()->setTabs(ctx.caller->browser->id, req);
