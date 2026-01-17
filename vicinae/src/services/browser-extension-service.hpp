@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <glaze/core/reflect.hpp>
 #include <ranges>
+#include "ui/image/url.hpp"
 #include "vicinae-ipc/ipc.hpp"
 
 class BrowserExtensionService : public QObject {
@@ -20,6 +21,14 @@ signals:
 public:
   struct BrowserTab : ipc::BrowserTabInfo {
     std::string browserId;
+
+    ImageURL icon() const {
+      if (QUrl qurl = QUrl(url.c_str());
+          qurl.isValid() && std::ranges::contains(std::initializer_list{"https", "http"}, qurl.scheme())) {
+        return ImageURL::favicon(qurl.host()).withFallback(BuiltinIcon::AppWindowSidebarLeft);
+      }
+      return BuiltinIcon::AppWindowSidebarLeft;
+    }
   };
 
   struct BrowserInfo {

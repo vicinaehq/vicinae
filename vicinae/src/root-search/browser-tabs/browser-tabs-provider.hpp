@@ -1,5 +1,6 @@
 #pragma once
 #include "builtin_icon.hpp"
+#include "clipboard-actions.hpp"
 #include "common.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
@@ -24,7 +25,7 @@ class BrowserTabRootItem : public RootItem {
 
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx,
                                                    const RootItemMetadata &metadata) const override {
-    auto panel = std::make_unique<ListActionPanelState>();
+    auto panel = std::make_unique<ActionPanelState>();
     auto section = panel->createSection();
 
     auto focusTab =
@@ -32,6 +33,8 @@ class BrowserTabRootItem : public RootItem {
           ctx->services->browserExtension()->focusTab(tab);
           ctx->navigation->closeWindow({.clearRootSearch = true});
         });
+
+    focusTab->setShortcut(Keyboard::Shortcut::enter());
 
     auto closeTab = new StaticAction("Close tab", BuiltinIcon::Trash, [tab = m_tab](ApplicationContext *ctx) {
       if (const auto result = ctx->services->browserExtension()->closeTab(tab); !result) {
@@ -42,8 +45,20 @@ class BrowserTabRootItem : public RootItem {
     });
     closeTab->setShortcut(Keybind::RemoveAction);
 
+    auto copyUrl = new CopyToClipboardAction(Clipboard::Text(m_tab.url.c_str()), "Copy URL");
+    auto copyTitle = new CopyToClipboardAction(Clipboard::Text(m_tab.title.c_str()), "Copy Title");
+    auto copyId = new CopyToClipboardAction(Clipboard::Text(QString::number(m_tab.id)), "Copy ID");
+
+    copyUrl->setShortcut(Keybind::CopyAction);
+
     section->addAction(focusTab);
     section->addAction(closeTab);
+
+    auto utilsSection = panel->createSection();
+
+    utilsSection->addAction(copyUrl);
+    utilsSection->addAction(copyTitle);
+    utilsSection->addAction(copyId);
 
     return panel;
   }
@@ -58,13 +73,7 @@ class BrowserTabRootItem : public RootItem {
 
   EntrypointId uniqueId() const override { return EntrypointId("browser-tabs", std::to_string(m_tab.id)); }
 
-  ImageURL iconUrl() const override {
-    if (QUrl url = QUrl(m_tab.url.c_str());
-        url.isValid() && std::ranges::contains(std::initializer_list{"https", "http"}, url.scheme())) {
-      return ImageURL::favicon(url.host()).withFallback(BuiltinIcon::AppWindowSidebarLeft);
-    }
-    return BuiltinIcon::AppWindowSidebarLeft;
-  }
+  ImageURL iconUrl() const override { return m_tab.icon(); }
 
   QWidget *settingsDetail(const QJsonObject &preferences) const override { return nullptr; }
 
