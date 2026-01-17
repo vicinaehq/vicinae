@@ -1,6 +1,11 @@
 {
   "manifest_version": 3,
   "name": "Vicinae Browser Integration",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "vicinae@vicinae.com"
+    }
+  },
   "version": "1.0.0",
   "description": "Connects to the Vicinae desktop app to search and switch browser tabs from the launcher.",
   "homepage_url": "https://vicinae.com",
@@ -9,7 +14,7 @@
     "tabs"
   ],
   "background": {
-    "service_worker": "background.js"
+    "scripts": ["background.js"]
   },
   "icons": {
     "16": "icons/icon16.png",

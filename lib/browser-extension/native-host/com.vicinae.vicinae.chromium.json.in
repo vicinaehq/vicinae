@@ -1,7 +1,7 @@
 {
-  "name": "com.vicinaehq.vicinae",
+  "name": "com.vicinae.vicinae",
   "description": "IPC Native Messaging Host",
-  "path": "@CHROME_EXTENSION_LINK_BIN@",
+  "path": "@NATIVE_HOST_BIN@",
   "type": "stdio",
   "allowed_origins": [
     "chrome-extension://@CHROME_EXTENSION_ID@/"
