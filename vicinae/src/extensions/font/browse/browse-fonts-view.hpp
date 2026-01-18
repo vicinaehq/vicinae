@@ -107,7 +107,10 @@ public:
 
 class BrowseFontsView : public TypedListView<FontListModel> {
 public:
-  void textChanged(const QString &text) override { m_model->setFilter(text); }
+  void textChanged(const QString &text) override {
+    m_model->setFilter(text);
+    m_list->selectFirst();
+  }
 
   void initialize() override {
     TypedListView::initialize();
