@@ -26,8 +26,8 @@ yellow = "#E5C07B"
 cyan = "#56B6C2"
 
 [colors.list.item.selection]
-background = { name = "#2C313C", opacity = 0.7 }  # Slightly lighter than background
-secondary_background = "#3E4451"  # More visible on secondary bg
+background = { name = "#3E4451", opacity = 0.45 }  # Slightly elevated (subtle)
+secondary_background = "#4B5263"  # More visible on secondary bg
 
 [colors.list.item.hover]
-background = "#2C313A"        # Subtle hover
+background = { name = "#3E4451", opacity = 0.3 }  # Elevated (subtler than selection)

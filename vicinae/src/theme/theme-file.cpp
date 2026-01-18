@@ -56,11 +56,12 @@ ThemeFile ThemeFile::vicinaeDark() {
   data.variant = ThemeVariant::Dark;
   data.description = "Default Vicinae dark palette";
   data.semantics = {
-      {SemanticColor::Background, QColor("#1A1A1A")},
-      {SemanticColor::ListItemSelectionBackground, withAlphaF("#2E2E2E", 0.7)},
+      {SemanticColor::Background, QColor("#121212")},
+      {SemanticColor::ListItemSelectionBackground, withAlphaF("#2A2A2A", 0.45)},
+      {SemanticColor::ListItemHoverBackground, withAlphaF("#333333", 0.35)},
       {SemanticColor::Foreground, QColor("#E8E6E1")},
-      {SemanticColor::BackgroundBorder, QColor("#2E2E2E")},
-      {SemanticColor::SecondaryBackground, QColor("#242424")},
+      {SemanticColor::BackgroundBorder, QColor("#2A2A2A")},
+      {SemanticColor::SecondaryBackground, QColor("#1A1A1A")},
 
       {SemanticColor::Red, QColor("#B9543B")},
       {SemanticColor::Orange, QColor("#F0883E")},
@@ -83,10 +84,12 @@ ThemeFile ThemeFile::vicinaeLight() {
   data.description = "Default Vicinae light palette";
   data.semantics = {
       {SemanticColor::Background, QColor("#F4F2EE")},
-      {SemanticColor::ListItemSelectionBackground, withAlphaF("#D8D6D1", 0.7)},
+      {SemanticColor::ListItemSelectionBackground, withAlphaF("#B8B5AE", 0.5)},
+      {SemanticColor::ListItemHoverBackground, withAlphaF("#C0BDB6", 0.35)},
       {SemanticColor::Foreground, QColor("#1A1A1A")},
-      {SemanticColor::BackgroundBorder, QColor("#D8D6D1")},
-      {SemanticColor::SecondaryBackground, QColor("#E6E4DF")},
+      {SemanticColor::BackgroundBorder, QColor("#ABA8A1")},
+      {SemanticColor::SecondaryBackground, QColor("#E0DDD6")},
+      {SemanticColor::GridItemBackground, withAlphaF("#C8C5BE", 0.6)},
 
       {SemanticColor::Red, QColor("#C25C49")},
       {SemanticColor::Orange, QColor("#DA8A48")},

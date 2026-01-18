@@ -26,9 +26,9 @@ yellow = "#E5C890"
 cyan = "#81C8BE"
 
 [colors.list.item.selection]
-background = { name = "#414559", opacity = 0.7 }  # Surface0
+background = { name = "#414559", opacity = 0.45 }  # Surface0 (subtle)
 secondary_background = "#51576D"  # Surface1
 
 [colors.list.item.hover]
-background = "#626880"        # Surface2 with reduced opacity
+background = { name = "#414559", opacity = 0.3 }  # Surface0 (subtler than selection)
 

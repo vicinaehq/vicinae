@@ -26,9 +26,12 @@ yellow = "#D79921"            # yellow (neutral)
 cyan = "#689D6A"              # aqua (neutral)
 
 [colors.list.item.selection]
-background = { name = "#EBDBB2", opacity = 0.7 }  # bg1 (darker/stronger on main bg)
-secondary_background = "#F5E8C6"  # Between bg0_h and bg0_s (lighter/subtle on lighter surface)
+background = { name = "#D5C4A1", opacity = 0.5 }  # bg2 (subtle selection)
+secondary_background = "#EBDBB2"  # bg1
 
 [colors.list.item.hover]
-background = "#F2E5BC"        # Between bg0 and bg1 (lighter than selection)
+background = { name = "#EBDBB2", opacity = 0.35 }  # bg1 (subtler than selection)
+
+[colors.grid.item]
+background = { name = "#BDAE93", opacity = 0.5 }  # bg3
 

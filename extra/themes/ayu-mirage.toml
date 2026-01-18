@@ -26,8 +26,8 @@ yellow = "#FFD173"            # Function
 cyan = "#95E6CB"              # Regexp
 
 [colors.list.item.selection]
-background = { name = "#292E3E", opacity = 0.7 }  # Slightly lighter than UI bg
-secondary_background = "#343C4D"  # Border color on secondary
+background = { name = "#343C4D", opacity = 0.45 }  # Border color (subtle)
+secondary_background = "#3E4759"  # Slightly elevated
 
 [colors.list.item.hover]
-background = "#252A37"        # Subtle hover
+background = { name = "#343C4D", opacity = 0.3 }  # Border color (subtler than selection)
