@@ -1,8 +1,9 @@
-#include "vlist.hpp"
-#include "ui/scroll-bar/scroll-bar.hpp"
 #include <qlogging.h>
 #include <ranges>
+#include <unordered_set>
 #include <QApplication>
+#include "vlist.hpp"
+#include "ui/scroll-bar/scroll-bar.hpp"
 
 namespace vicinae::ui {
 
