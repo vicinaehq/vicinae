@@ -41,9 +41,12 @@ void SearchFilesView::initialize() {
 
 void SearchFilesView::textChanged(const QString &query) {
   currentQuery = query;
+
+  if (m_pendingFileResults.isRunning()) { m_pendingFileResults.cancel(); }
+
   if (query.isEmpty()) {
     m_debounce.stop();
-    return renderRecentFiles();
+    renderRecentFiles();
   }
   generateFilteredList(query);
 }
@@ -51,6 +54,7 @@ void SearchFilesView::textChanged(const QString &query) {
 void SearchFilesView::renderRecentFiles() {
   auto fileService = context()->services->fileService();
 
+  setLoading(false);
   m_model->setSectionName("Recently Accessed");
   m_model->setFiles(fileService->getRecentlyAccessed() |
                     std::views::transform([](auto &&f) { return f.path; }) | std::ranges::to<std::vector>());
@@ -59,7 +63,8 @@ void SearchFilesView::renderRecentFiles() {
 
 void SearchFilesView::handleSearchResults() {
   setLoading(false);
-  if (!m_pendingFileResults.isFinished()) return;
+
+  if (!m_pendingFileResults.isFinished() || m_pendingFileResults.isCanceled()) return;
 
   if (currentQuery != m_lastSearchText) return;
 
@@ -76,6 +81,12 @@ void SearchFilesView::handleDebounce() {
   QString query = searchText();
 
   if (m_pendingFileResults.isRunning()) { m_pendingFileResults.cancel(); }
+
+  if (query.isEmpty()) {
+    setLoading(false);
+    return;
+  }
+
   m_lastSearchText = query;
   m_pendingFileResults.setFuture(fileService->queryAsync(query.toStdString()));
 }

@@ -3,6 +3,7 @@
 #include "services/files-service/file-indexer/file-indexer-db.hpp"
 #include "utils.hpp"
 #include <QtConcurrent/QtConcurrentRun>
+#include <ranges>
 
 // FIXME: this fires a new query and creates a database connection on each search, which can
 // potentially cause issues when doing a lot of file search. Adding a slight debounce on
@@ -13,18 +14,11 @@ public:
                                                 const AbstractFileIndexer::QueryParams &params) {
     return QtConcurrent::run([params, query = qStringFromStdView(q)]() {
       FileIndexerDatabase db;
-      std::vector<std::filesystem::path> paths;
       QString finalQuery = preparePrefixSearchQuery(query);
-      std::vector<IndexerFileResult> results;
 
-      paths = db.search(finalQuery.toStdString(), params);
-      results.reserve(paths.size());
-
-      for (const auto &path : paths) {
-        results.emplace_back(IndexerFileResult{.path = path});
-      }
-
-      return results;
+      return db.search(finalQuery.toStdString(), params) |
+             std::views::transform([](auto &&path) { return IndexerFileResult(path); }) |
+             std::ranges::to<std::vector>();
     });
   }
 
