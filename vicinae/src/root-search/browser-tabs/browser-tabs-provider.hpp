@@ -38,7 +38,8 @@ class BrowserTabRootItem : public RootItem {
 
     auto closeTab = new StaticAction("Close tab", BuiltinIcon::Trash, [tab = m_tab](ApplicationContext *ctx) {
       if (const auto result = ctx->services->browserExtension()->closeTab(tab); !result) {
-        ctx->services->toastService()->failure(QString("Failed to close tab: %1").arg(result.error()));
+        ctx->services->toastService()->failure(
+            QString("Failed to close tab: %1").arg(result.error().c_str()));
         return;
       }
       ctx->navigation->closeWindow({.clearRootSearch = true});
