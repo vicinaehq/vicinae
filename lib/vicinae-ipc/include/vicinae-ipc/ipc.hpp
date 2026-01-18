@@ -62,17 +62,6 @@ struct AppInfo {
   bool isAction;
 };
 
-struct ListApps {
-  static constexpr const auto key = "list-apps";
-  struct Request {
-    bool withActions = false;
-  };
-
-  struct Response {
-    std::vector<AppInfo> apps;
-  };
-};
-
 struct Ping {
   static constexpr const auto key = "ping";
   struct Request {};
