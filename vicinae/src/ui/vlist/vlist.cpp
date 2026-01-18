@@ -16,12 +16,11 @@ VListWidget::VListWidget() {
 
 void VListWidget::setModel(VListModel *model) {
   m_model = model;
+  calculate();
   connect(model, &VListModel::dataChanged, this, [this]() {
     m_model->onDataChanged();
     calculate();
-    refreshAll();
   });
-  calculate();
 }
 
 void VListWidget::recalculateMousePosition() {
@@ -440,9 +439,9 @@ void VListWidget::updateViewport() {
             qWarning() << "Found duplicate ID while rendering the list. This may impact list performance.";
             item.id =
                 item.id + idx; // we don't care about the exact replacement ID, just make it random enough
+          } else {
+            m_idsSeen.insert(item.id);
           }
-
-          m_idsSeen.insert(item.id);
 
           if (auto it = m_widgetMap.find(item.id); it != m_widgetMap.end()) {
             item.widget = it->second.widget;
@@ -463,8 +462,6 @@ void VListWidget::updateViewport() {
   }
 
   for (auto &item : m_visibleItems) {
-    bool wasCached = item.widget;
-
     if (!item.widget) {
       item.tag = m_model->widgetTag(item.index);
 
@@ -492,8 +489,7 @@ void VListWidget::updateViewport() {
       }
     }
 
-    if (!wasCached) { m_model->refreshWidget(item.index, item.widget->widget()); }
-
+    m_model->refreshWidget(item.index, item.widget->widget());
     item.widget->setIndex(item.index);
     item.widget->setSelected(m_selected && item.index == m_selected->idx);
     item.widget->setFixedSize(item.bounds.width(), item.bounds.height());
