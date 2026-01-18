@@ -17,9 +17,19 @@ The browser extension uses [Native messaging](https://developer.mozilla.org/en-U
 
 You need to install the corresponding native host manifest at one of the expected locations.
 
+Installing the manifests in system directories is **strongly recommended** because it makes them automatically discoverable by any chromium/firefox based browser.
+
+### Using CMake
+
 The recommended way of installing the manifests is to use the provided CMake install rule to install vicinae. This rule will automatically install both manifests in the correct system locations (root access required).
 
-Installing the manifests in system directories is **strongly recommended** because it makes them automatically discoverable by any chromium/firefox based browser.
+### Manual native host manifest install
+
+Copy the right manifest template from `./native-host/` and change the placeholder values.
+
+For firefox, you only need to replace `@NATIVE_HOST_BIN` with the absolute path to the vicinae executable (e.g: `/usr/bin/vicinae`). Then copy the manifest at `/usr/lib/mozilla/native-messaging-hosts/com.vicinae.vicinae.json`.
+
+For chromium you will also need to change the allowed origins, more on that below. The manifest needs to be copied at `/etc/chromium/native-messaging-hosts/com.vicinae.vicinae.json`.
 
 ## Load the browser extension
 
