@@ -393,14 +393,6 @@ void VListWidget::resizeEvent(QResizeEvent *event) {
   calculate();
 }
 
-WidgetWrapper *VListWidget::getFromPool(VListModel::WidgetTag tag) {
-  auto pool = m_recyclingPool.find(tag);
-  if (pool == m_recyclingPool.end() || pool->second.empty()) return nullptr;
-  auto back = pool->second.back();
-  pool->second.pop_back();
-  return back;
-}
-
 void VListWidget::updateViewport() {
   if (!size().isValid() || size().isNull() || size().isEmpty()) return;
 
@@ -466,16 +458,13 @@ void VListWidget::updateViewport() {
       item.tag = m_model->widgetTag(item.index);
 
       if (item.tag != VListModel::InvalidTag) {
-        // before we consider querying recycling pools, try to reuse a similar widget
-        // that is already on screen (cheaper)
+        // try to reuse a widget of the same type that is already on screen (very efficient)
         auto recyclable =
             std::ranges::find_if(m_widgetMap, [&](auto &&p) { return p.second.tag == item.tag; });
 
         if (recyclable != m_widgetMap.end()) {
           item.widget = recyclable->second.widget;
           m_widgetMap.erase(recyclable);
-        } else {
-          item.widget = getFromPool(item.tag);
         }
       }
 
@@ -504,10 +493,7 @@ void VListWidget::updateViewport() {
   }
 
   for (const auto &[id, w] : m_widgetMap) {
-    if (!newMap.contains(id)) {
-      w.widget->hide();
-      m_recyclingPool[w.tag].emplace_back(w.widget);
-    }
+    if (!newMap.contains(id)) { w.widget->deleteLater(); }
   }
 
   m_widgetMap = newMap;
