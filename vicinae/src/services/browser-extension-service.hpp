@@ -22,6 +22,8 @@ public:
   struct BrowserTab : ipc::BrowserTabInfo {
     std::string browserId;
 
+    std::string uniqueId() const { return std::format("{}-{}", browserId, id); }
+
     ImageURL icon() const {
       if (QUrl qurl = QUrl(url.c_str());
           qurl.isValid() && std::ranges::contains(std::initializer_list{"https", "http"}, qurl.scheme())) {
