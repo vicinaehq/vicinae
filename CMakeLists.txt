@@ -28,7 +28,6 @@ option(
 	ON
 )
 
-option(BROWSER_INTEGRATION "Build and install components required for browser integration using native host messaging" ON)
 option(WAYLAND_LAYER_SHELL "Enable support for the layer shell Wayland protocol" ON)
 option(TYPESCRIPT_EXTENSIONS "Enable support for extensions built with React/Typescript (no browser involved)" ON)
 option(PREFER_STATIC_LIBS "When available, link to a library statically instead of dynamically" OFF)
