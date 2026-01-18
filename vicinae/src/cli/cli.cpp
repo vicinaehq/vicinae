@@ -2,18 +2,19 @@
 #include "cli/config.hpp"
 #include "cli/script.hpp"
 #include "cli/theme.hpp"
-#include "daemon/ipc-client.hpp"
 #include "utils.hpp"
+#include "browser/browser.hpp"
 #include "lib/CLI11.hpp"
+#include "vicinae-ipc/ipc.hpp"
 #include "vicinae.hpp"
 #include "server.hpp"
+#include <format>
 #include <iostream>
 #include <qdir.h>
 #include <qobjectdefs.h>
-#include <stdexcept>
 #include "lib/rang.hpp"
 #include <exception>
-#include "vicinae.hpp"
+#include "vicinae-ipc/client.hpp"
 #include "ext-clip/app.hpp"
 #include "services/clipboard/ext/ext-clipboard-server.hpp"
 #include "wlr-clip/app.hpp"
@@ -22,13 +23,12 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
-#include <iomanip>
 #include <sstream>
+#include <string_view>
 
 class Formatter : public CLI::Formatter {
 public:
   std::string make_help(const CLI::App *app, std::string name, CLI::AppFormatMode mode) const override {
-    // ANSI color codes - we use these directly because rang doesn't work with stringstream
     const std::string BOLD = "\033[1m";
     const std::string BRIGHT_GREEN = "\033[92m";
     const std::string BLUE = "\033[34m";
@@ -144,14 +144,26 @@ class LaunchAppCommand : public AbstractCommandLineCommand {
 public:
   std::string id() const override { return "launch"; }
   std::string description() const override { return "Launch or focus an app from vicinae"; }
+
   void setup(CLI::App *app) override {
     app->add_option("app_id", m_appId, "The ID of the application");
     app->add_option("args", m_args, "Arguments to pass to the launched application");
     app->add_flag("--new", m_newInstance, "Always launch a new instance");
   }
+
   void run(CLI::App *app) override {
-    DaemonIpcClient client;
-    client.launchApp(m_appId.c_str(), m_args, m_newInstance);
+    const auto res = ipc::CliClient::oneshot<ipc::LaunchApp>(
+        {.appId = m_appId, .args = m_args, .newInstance = m_newInstance});
+
+    if (!res) {
+      std::println(std::cerr, "Failed to launch app: {}", res.error());
+      return;
+    }
+
+    if (auto title = res->focusedWindowTitle; !title.empty()) {
+      std::println(std::cout,
+                   "Focused existing window \"{}\"\nPass --new if you want to launch a new instance.", title);
+    }
   }
 
 private:
@@ -160,92 +172,13 @@ private:
   bool m_newInstance = false;
 };
 
-class ListAppsCommand : public AbstractCommandLineCommand {
-public:
-  std::string id() const override { return "list"; }
-  std::string description() const override { return "List all tracked applications"; }
-
-  void setup(CLI::App *app) override {
-    app->alias("ls");
-    app->add_flag("-j,--json", m_jsonOutput, "Output in JSON format");
-    app->add_flag("--with-actions", m_withActions, "Include application actions/subactions");
-  }
-
-  void run(CLI::App *app) override {
-    DaemonIpcClient client;
-    auto apps = client.listApps(m_withActions);
-
-    if (m_jsonOutput) {
-      outputJson(apps);
-    } else {
-      outputText(apps);
-    }
-  }
-
-private:
-  bool m_jsonOutput = false;
-  bool m_withActions = false;
-
-  void outputText(const std::vector<proto::ext::daemon::AppInfo> &apps) {
-    size_t maxIdLen = 2;
-    size_t maxNameLen = 4;
-
-    for (const auto &app : apps) {
-      maxIdLen = std::max(maxIdLen, app.id().length());
-      maxNameLen = std::max(maxNameLen, app.name().length());
-    }
-
-    std::cout << std::left << std::setw(maxIdLen + 2) << "ID" << std::setw(maxNameLen + 2) << "NAME"
-              << "HIDDEN" << std::endl;
-
-    std::cout << std::string(maxIdLen + 2, '-') << std::string(maxNameLen + 2, '-') << std::string(6, '-')
-              << std::endl;
-
-    for (const auto &app : apps) {
-      std::cout << std::left << std::setw(maxIdLen + 2) << app.id() << std::setw(maxNameLen + 2) << app.name()
-                << (app.hidden() ? "yes" : "no") << std::endl;
-    }
-  }
-
-  void outputJson(const std::vector<proto::ext::daemon::AppInfo> &apps) {
-    QJsonArray jsonApps;
-
-    for (const auto &app : apps) {
-      QJsonObject jsonApp;
-      jsonApp["id"] = QString::fromStdString(app.id());
-      jsonApp["name"] = QString::fromStdString(app.name());
-      jsonApp["hidden"] = app.hidden();
-      jsonApp["path"] = QString::fromStdString(app.path());
-      jsonApp["description"] = QString::fromStdString(app.description());
-      jsonApp["program"] = QString::fromStdString(app.program());
-      jsonApp["is_terminal_app"] = app.is_terminal_app();
-      jsonApp["icon_url"] = QString::fromStdString(app.icon_url());
-      jsonApp["is_action"] = app.is_action();
-
-      QJsonArray keywords;
-      for (const auto &kw : app.keywords()) {
-        keywords.append(QString::fromStdString(kw));
-      }
-      jsonApp["keywords"] = keywords;
-
-      jsonApps.append(jsonApp);
-    }
-
-    QJsonDocument doc(jsonApps);
-    std::cout << doc.toJson(QJsonDocument::Indented).toStdString();
-  }
-};
-
 class AppCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "app"; }
   std::string description() const override { return "System application commands"; }
   void setup(CLI::App *app) override {}
 
 public:
-  AppCommand() {
-    registerCommand<LaunchAppCommand>();
-    registerCommand<ListAppsCommand>();
-  }
+  AppCommand() { registerCommand<LaunchAppCommand>(); }
 };
 
 class CliPing : public AbstractCommandLineCommand {
@@ -253,8 +186,13 @@ class CliPing : public AbstractCommandLineCommand {
   std::string description() const override { return "Ping the vicinae server"; }
 
   void run(CLI::App *app) override {
-    DaemonIpcClient client;
-    client.ping();
+    const auto res = ipc::CliClient::oneshot<ipc::Ping>({});
+
+    if (!res) {
+      std::println(std::cerr, "Failed to ping: {}", res.error());
+      return;
+    }
+
     std::cout << "Pinged successfully." << std::endl;
   }
 };
@@ -262,29 +200,32 @@ class CliPing : public AbstractCommandLineCommand {
 class ToggleCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "toggle"; }
   std::string description() const override { return "Toggle the vicinae window"; }
-  void setup(CLI::App *app) override { app->add_option("-q,--query", m_settings.query, "Set search query"); }
+  void setup(CLI::App *app) override { app->add_option("-q,--query", m_query, "Set search query"); }
 
   void run(CLI::App *app) override {
-    DaemonIpcClient client;
-    client.toggle(m_settings);
+    if (auto res = ipc::CliClient::deeplink("vicinae://toggle", {.query = {{"fallbackText", m_query}}});
+        !res) {
+      std::println(std::cerr, "Failed to toggle: {}", res.error());
+    }
   }
 
 private:
-  DaemonIpcClient::ToggleSettings m_settings;
+  std::string m_query;
 };
 
 class OpenCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "open"; }
   std::string description() const override { return "Open the vicinae window"; }
-  void setup(CLI::App *app) override { app->add_option("-q,--query", m_settings.query, "Set search query"); }
+  void setup(CLI::App *app) override { app->add_option("-q,--query", query, "Set search query"); }
 
   void run(CLI::App *app) override {
-    DaemonIpcClient client;
-    if (!client.open(m_settings)) { exit(1); }
+    if (auto res = ipc::CliClient::deeplink("vicinae://open", {.query = {{"fallbackText", query}}}); !res) {
+      std::println(std::cerr, "Failed to toggle: {}", res.error());
+    }
   }
 
 private:
-  DaemonIpcClient::OpenSettings m_settings;
+  std::string query;
 };
 
 class CloseCommand : public AbstractCommandLineCommand {
@@ -292,8 +233,9 @@ class CloseCommand : public AbstractCommandLineCommand {
   std::string description() const override { return "Close the vicinae window"; }
 
   void run(CLI::App *app) override {
-    DaemonIpcClient client;
-    if (!client.close()) { exit(1); }
+    if (auto res = ipc::CliClient::deeplink(std::format("vicinae://close")); !res) {
+      std::println(std::cerr, "Failed to close: {}", res.error());
+    }
   }
 };
 
@@ -302,32 +244,34 @@ class DMenuCommand : public AbstractCommandLineCommand {
   std::string description() const override { return "Render a list view from stdin"; }
 
   void setup(CLI::App *app) override {
-    app->add_option("-n,--navigation-title", m_payload.navigationTitle, "Set the navigation title");
+    app->add_option("-n,--navigation-title", m_req.navigationTitle, "Set the navigation title");
     app->add_option(
-        "-s,--section-title", m_payload.sectionTitle,
+        "-s,--section-title", m_req.sectionTitle,
         "Set the title of the main section. Use the {count} placeholder to render the current count.");
-    app->add_option("-p,--placeholder", m_payload.placeholder, "Placeholder text to use in the search bar");
-    app->add_option("-q,--query", m_payload.query, "Initial search query");
-    app->add_option("-W,--width", m_payload.width, "Window width in pixels");
-    app->add_option("-H,--height", m_payload.height, "Window height in pixels");
-    app->add_flag("--no-section", m_payload.noSection, "Do not insert a section heading");
-    app->add_flag("--no-quick-look", m_payload.noQuickLook,
+    app->add_option("-p,--placeholder", m_req.placeholder, "Placeholder text to use in the search bar");
+    app->add_option("-q,--query", m_req.query, "Initial search query");
+    app->add_option("-W,--width", m_req.width, "Window width in pixels");
+    app->add_option("-H,--height", m_req.height, "Window height in pixels");
+    app->add_flag("--no-section", m_req.noSection, "Do not insert a section heading");
+    app->add_flag("--no-quick-look", m_req.noQuickLook,
                   "Do not show quick look if available for a given entry");
-    app->add_flag("--no-metadata", m_payload.noMetadata, "Do not show metadata section in quick look");
-    app->add_flag("--no-footer", m_payload.noFooter, "Hide the status bar footer");
+    app->add_flag("--no-metadata", m_req.noMetadata, "Do not show metadata section in quick look");
+    app->add_flag("--no-footer", m_req.noFooter, "Hide the status bar footer");
   }
 
   void run(CLI::App *app) override {
-    DaemonIpcClient client;
-    client.connectOrThrow();
-    m_payload.raw = Utils::slurp(std::cin);
-    auto output = client.dmenu(m_payload);
-    if (output.empty()) { exit(1); }
-    std::cout << output << std::endl;
+    m_req.rawContent = Utils::slurp(std::cin);
+
+    const auto res = ipc::CliClient::oneshot<ipc::DMenu>(m_req);
+
+    if (!res) { std::println(std::cerr, "Failed to invoke dmenu: {}", res.error()); }
+    if (res->output.empty()) { exit(1); }
+
+    std::println(std::cout, "{}", res->output);
   }
 
 private:
-  DMenu::Payload m_payload;
+  ipc::DMenu::Request m_req;
 };
 
 class VersionCommand : public AbstractCommandLineCommand {
@@ -354,9 +298,8 @@ public:
   }
 
   void run(CLI::App *app) override {
-    DaemonIpcClient client;
-    if (auto res = client.deeplink(QString(link.c_str())); !res) {
-      throw std::runtime_error("Failed: " + res.error().toStdString());
+    if (const auto result = ipc::CliClient::deeplink(link); !result) {
+      std::println(std::cerr, "Failed to execute deeplink: {}", result.error());
     }
   }
 
@@ -379,6 +322,18 @@ int CommandLineApp::run(int ac, char **av) {
 
   if (ac == 1) {
     std::cout << app.help(av[0]);
+    return 0;
+  }
+
+  // invoked as chrome extension native host
+  if (ac == 2 && std::string_view(av[1]).starts_with("chrome-extension://")) {
+    browser_extension::chromeEntrypoint(std::string_view(av[1]));
+    return 0;
+  }
+
+  // invoked as firefox extension native host
+  if (ac == 3 && browser_extension::isNativeHostManifest(std::string_view(av[1]))) {
+    browser_extension::firefoxEntrypoint(std::string_view(av[2]));
     return 0;
   }
 

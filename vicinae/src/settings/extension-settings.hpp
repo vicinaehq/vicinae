@@ -543,7 +543,7 @@ public:
     for (const auto &[providerId, items] : map) {
       auto provider = manager->provider(providerId);
 
-      if (!provider) continue;
+      if (!provider || provider->isTransient()) continue;
 
       auto delegate = std::make_shared<ProviderItemDelegate>(provider, items);
       auto delegatePtr = delegate.get();

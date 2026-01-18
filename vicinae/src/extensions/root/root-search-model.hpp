@@ -5,8 +5,10 @@
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "ui/vlist/vlist.hpp"
 #include "ui/vlist/common/section-model.hpp"
+#include "vicinae-ipc/ipc.hpp"
+#include <cstdint>
 
-enum class SectionType { Link, Calculator, Results, Files, Fallback, Favorites };
+enum class SectionType : std::uint8_t { Link, Calculator, Results, Files, Fallback, Favorites };
 
 struct FallbackItem {
   const RootItem *item;
@@ -92,11 +94,10 @@ private:
   static constexpr const size_t ITEM_HEIGHT = 41;
   static constexpr const size_t CALCULATOR_HEIGHT = 90;
 
-  static constexpr const std::array<SectionType, 2> m_rootSections = {SectionType::Favorites,
-                                                                      SectionType::Results};
-  static constexpr const std::array<SectionType, 5> m_searchSections = {
-      SectionType::Link, SectionType::Calculator, SectionType::Results, SectionType::Files,
-      SectionType::Fallback};
+  static constexpr const auto m_rootSections = std::array{SectionType::Favorites, SectionType::Results};
+  static constexpr const auto m_searchSections =
+      std::array{SectionType::Link, SectionType::Calculator, SectionType::Results, SectionType::Files,
+                 SectionType::Fallback};
 
   std::string query;
   std::vector<RootItemManager::ScoredItem> m_items;

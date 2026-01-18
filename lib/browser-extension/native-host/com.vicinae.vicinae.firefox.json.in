@@ -1,0 +1,9 @@
+{
+  "name": "com.vicinae.vicinae",
+  "description": "Vicinae Native Messaging Host",
+  "path": "@NATIVE_HOST_BIN@",
+  "type": "stdio",
+  "allowed_extensions": [
+    "vicinae@vicinae.com"
+  ]
+}

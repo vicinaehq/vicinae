@@ -63,6 +63,8 @@ endif()
 add_subdirectory(${LIB_DIR}/script-command)
 add_subdirectory(${LIB_DIR}/emoji)
 add_subdirectory(${LIB_DIR}/xdgpp)
+add_subdirectory(${LIB_DIR}/vicinae-ipc)
+add_subdirectory(${LIB_DIR}/browser-extension)
 
 if (USE_SYSTEM_PROTOBUF)
 	set(USE_SYSTEM_ABSEIL ON)

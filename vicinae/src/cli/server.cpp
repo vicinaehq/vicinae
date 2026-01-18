@@ -1,13 +1,12 @@
 #include "config/config.hpp"
-#include "daemon/ipc-client.hpp"
 #include "environment.hpp"
 #include <QStyleHints>
+#include "root-search/browser-tabs/browser-tabs-provider.hpp"
 #include "root-search/scripts/script-root-provider.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "favicon/favicon-service.hpp"
 #include "font-service.hpp"
 #include "icon-theme-db/icon-theme-db.hpp"
-#include "ipc-command-handler.hpp"
 #include "ipc-command-server.hpp"
 #include "keyboard/keybind-manager.hpp"
 #include "log/message-handler.hpp"
@@ -17,6 +16,7 @@
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "root-search/shortcuts/shortcut-root-provider.hpp"
 #include "service-registry.hpp"
+#include "services/browser-extension-service.hpp"
 #include "services/calculator-service/calculator-service.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/emoji-service/emoji-service.hpp"
@@ -34,6 +34,7 @@
 #include "settings-controller/settings-controller.hpp"
 #include "ui/launcher-window/launcher-window.hpp"
 #include "utils.hpp"
+#include "vicinae-ipc/client.hpp"
 #include "vicinae.hpp"
 #include <filesystem>
 #include <qapplication.h>
@@ -63,64 +64,36 @@ void CliServerCommand::setup(CLI::App *app) {
 
 void CliServerCommand::run(CLI::App *app) {
   using namespace std::chrono_literals;
-  fs::path lockPath = Omnicast::runtimeDir() / "vicinae.lock";
-  QLockFile lock(lockPath.c_str());
 
   qInstallMessageHandler(coloredMessageHandler);
 
-  // we are dealing with a long running process so we dont want to use time
-  // as an indicator that the lock file might be stale.
-  lock.setStaleLockTime(0ms);
+  const auto pingRes = ipc::CliClient::oneshot<ipc::Ping>({});
 
-  if (!lock.tryLock()) {
-    DaemonIpcClient client;
-    bool isServerReachable = client.connect() && client.ping();
+  if (pingRes) {
+    if (!m_replace) {
+      qWarning()
+          << "A server is already running. Pass --replace if you want to replace the existing instance.";
+      exit(1);
+    }
 
-    if (!isServerReachable) {
-      lock.removeStaleLockFile();
-      lock.lock();
-    } else {
-      if (!m_replace) {
-        qWarning()
-            << "A server is already running. Pass --replace if you want to replace the existing instance.";
-        exit(1);
-      }
+    qInfo() << "Killing existing vicinae server...";
 
-      qInfo() << "Killing existing vicinae server...";
-
-      // if we fail to kill gracefully, force kill by sending SIGKILL
-      if (!client.kill()) {
-        QString _;
-        qint64 pid = 0;
-
-        if (!lock.getLockInfo(&pid, &_, &_)) {
-          qCritical() << "Failed to get lock file info";
-          exit(1);
-        }
-
-        if (kill(pid, SIGKILL) != 0) {
-          qCritical() << "Failed to kill process with pid" << pid;
-          exit(1);
-        }
-
-        lock.removeStaleLockFile();
-      }
-
-      qInfo() << "Waiting for lock to released...";
-      lock.lock();
+    if (kill(pingRes->pid, SIGKILL) != 0) {
+      qCritical() << "Failed to kill process with pid" << pingRes->pid;
+      exit(1);
     }
   }
-
-  qInfo() << "Initializing vicinae server...";
 
   int argc = 1;
   static char *argv[] = {strdup("command"), nullptr};
   QApplication qapp(argc, argv);
 
-  if (auto launcher = Environment::detectAppLauncher()) { qInfo() << "Detected launch prefix:" << *launcher; }
+  if (const auto launcher = Environment::detectAppLauncher()) {
+    qInfo() << "Detected launch prefix:" << *launcher;
+  }
 
   // discard system specific qt theming
-  qapp.setStyle(QStyleFactory::create("fusion"));
+  QApplication::setStyle(QStyleFactory::create("fusion"));
 
   std::filesystem::create_directories(Omnicast::runtimeDir());
 
@@ -176,6 +149,7 @@ void CliServerCommand::run(CLI::App *app) {
     registry->setOAuthService(std::move(oauthService));
     registry->setPowerManager(std::make_unique<PowerManager>());
     registry->setScriptDb(std::make_unique<ScriptCommandService>());
+    registry->setBrowserExtension(std::make_unique<BrowserExtensionService>());
 
     auto root = registry->rootItemManager();
     auto builtinCommandDb = std::make_unique<CommandDatabase>();
@@ -228,6 +202,7 @@ void CliServerCommand::run(CLI::App *app) {
     root->loadProvider(std::make_unique<AppRootProvider>(*registry->appDb()));
     root->loadProvider(std::make_unique<ShortcutRootProvider>(*registry->shortcuts()));
     root->loadProvider(std::make_unique<ScriptRootProvider>(*registry->scriptDb()));
+    root->loadProvider(std::make_unique<BrowserTabProvider>(*registry->browserExtension()));
 
     // Force reload providers to make sure items that depend on them are shown
     root->updateIndex();
@@ -243,9 +218,8 @@ void CliServerCommand::run(CLI::App *app) {
   ctx.settings = std::make_unique<SettingsController>(ctx);
   ctx.services = ServiceRegistry::instance();
 
-  IpcCommandServer commandServer;
+  IpcCommandServer commandServer(&ctx);
 
-  commandServer.setHandler(new IpcCommandHandler(ctx));
   commandServer.start(Omnicast::commandSocketPath());
 
   auto configChanged = [&](const config::ConfigValue &next, const config::ConfigValue &prev) {
@@ -340,5 +314,4 @@ void CliServerCommand::run(CLI::App *app) {
   // make sure child processes are terminated
   ctx.services->clipman()->clipboardServer()->stop();
   ctx.services->extensionManager()->stop();
-  lock.unlock();
 }

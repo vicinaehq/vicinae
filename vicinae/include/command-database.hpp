@@ -1,9 +1,7 @@
 #pragma once
 #include "argument.hpp"
 #include "command.hpp"
-#include "../src/ui/image/url.hpp"
-#include "preference.hpp"
-#include "theme.hpp"
+#include "ui/image/url.hpp"
 #include <QKeyEvent>
 #include <QString>
 #include <memory>

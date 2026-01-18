@@ -1,5 +1,6 @@
 #include "root-search-controller.hpp"
 #include "root-search-model.hpp"
+#include "service-registry.hpp"
 
 RootSearchController::RootSearchController(RootItemManager *manager, FileService *fs, AppService *appDb,
                                            CalculatorService *calculator, RootSearchModel *model,
@@ -36,12 +37,11 @@ void RootSearchController::setFileSearch(bool value) { m_isFileSearchEnabled = v
 void RootSearchController::setFilter(std::string_view text) {
   m_query = text;
 
+  auto tabs = ServiceRegistry::instance()->browserExtension()->tabs();
+
   if (text.empty()) {
     auto items = m_manager->search("", {.includeFavorites = false, .prioritizeAliased = false});
-    m_model->setSearchResults({
-        .query = std::string(text),
-        .items = items,
-    });
+    m_model->setSearchResults({.query = std::string(text), .items = items});
     return;
   }
 

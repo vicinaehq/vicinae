@@ -1,4 +1,5 @@
 #pragma once
+#include "services/browser-extension-service.hpp"
 #include <memory>
 #include <qobject.h>
 
@@ -29,26 +30,6 @@ class Manager;
 };
 
 class ServiceRegistry : public QObject {
-  std::unique_ptr<WindowManager> m_windowManager;
-  std::unique_ptr<AppService> m_appDb;
-  std::unique_ptr<OmniDatabase> m_omniDb;
-  std::unique_ptr<LocalStorageService> m_localStorage;
-  std::unique_ptr<ExtensionManager> m_extensionManager;
-  std::unique_ptr<ClipboardService> m_clipman;
-  std::unique_ptr<FontService> m_fontService;
-  std::unique_ptr<RootItemManager> m_rootItemManager;
-  std::unique_ptr<config::Manager> m_config;
-  std::unique_ptr<ShortcutService> m_shortcutService;
-  std::unique_ptr<ToastService> m_toastService;
-  std::unique_ptr<EmojiService> m_emojiService;
-  std::unique_ptr<CalculatorService> m_calculatorService;
-  std::unique_ptr<FileService> m_fileService;
-  std::unique_ptr<RaycastStoreService> m_raycastStoreService;
-  std::unique_ptr<VicinaeStoreService> m_vicinaeStoreService;
-  std::unique_ptr<ExtensionRegistry> m_extensionRegistry;
-  std::unique_ptr<OAuthService> m_oauthService;
-  std::unique_ptr<PowerManager> m_powerManager;
-  std::unique_ptr<ScriptCommandService> m_scriptCommandService;
 
 public:
   static ServiceRegistry *instance();
@@ -72,6 +53,7 @@ public:
   OAuthService *oauthService() const;
   PowerManager *powerManager() const;
   ScriptCommandService *scriptDb() const;
+  BrowserExtensionService *browserExtension() const;
 
   void setPowerManager(std::unique_ptr<PowerManager> manager);
   void setWindowManager(std::unique_ptr<WindowManager> manager);
@@ -94,4 +76,28 @@ public:
   void setExtensionManager(std::unique_ptr<ExtensionManager> service);
   void setClipman(std::unique_ptr<ClipboardService> service);
   void setAppDb(std::unique_ptr<AppService> service);
+  void setBrowserExtension(std::unique_ptr<BrowserExtensionService> service);
+
+private:
+  std::unique_ptr<WindowManager> m_windowManager;
+  std::unique_ptr<AppService> m_appDb;
+  std::unique_ptr<OmniDatabase> m_omniDb;
+  std::unique_ptr<LocalStorageService> m_localStorage;
+  std::unique_ptr<ExtensionManager> m_extensionManager;
+  std::unique_ptr<ClipboardService> m_clipman;
+  std::unique_ptr<FontService> m_fontService;
+  std::unique_ptr<RootItemManager> m_rootItemManager;
+  std::unique_ptr<config::Manager> m_config;
+  std::unique_ptr<ShortcutService> m_shortcutService;
+  std::unique_ptr<ToastService> m_toastService;
+  std::unique_ptr<EmojiService> m_emojiService;
+  std::unique_ptr<CalculatorService> m_calculatorService;
+  std::unique_ptr<FileService> m_fileService;
+  std::unique_ptr<RaycastStoreService> m_raycastStoreService;
+  std::unique_ptr<VicinaeStoreService> m_vicinaeStoreService;
+  std::unique_ptr<ExtensionRegistry> m_extensionRegistry;
+  std::unique_ptr<OAuthService> m_oauthService;
+  std::unique_ptr<PowerManager> m_powerManager;
+  std::unique_ptr<ScriptCommandService> m_scriptCommandService;
+  std::unique_ptr<BrowserExtensionService> m_browserExtensionService;
 };

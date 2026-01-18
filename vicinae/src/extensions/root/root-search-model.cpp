@@ -1,6 +1,7 @@
 #include "root-search-model.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "ui/transform-result/transform-result.hpp"
+#include <format>
 
 RootSearchModel::RootSearchModel(RootItemManager *manager) : m_manager(manager) {}
 
@@ -10,7 +11,6 @@ void RootSearchModel::setSearchResults(const SearchResults &results) {
   m_calc = results.calculator;
   m_files = results.files;
   m_defaultOpener = results.defaultOpener;
-
   m_resultSectionTitle = std::format("Results ({})", m_items.size());
   m_fallbackSectionTitle = std::format("Use \"{}\" with...", query);
 
@@ -111,13 +111,13 @@ RootItemVariant RootSearchModel::sectionItemAt(SectionType id, int itemIdx) cons
   case SectionType::Calculator:
     return m_calc.value();
   case SectionType::Results:
-    return RootSearchResult{.scored = &m_items[itemIdx]};
+    return RootSearchResult{.scored = &m_items.at(itemIdx)};
   case SectionType::Files:
     return m_files[itemIdx].path;
   case SectionType::Fallback:
-    return FallbackItem{.item = m_fallbackItems[itemIdx].get()};
+    return FallbackItem{.item = m_fallbackItems.at(itemIdx).get()};
   case SectionType::Favorites:
-    return FavoriteItem{.item = m_favorites[itemIdx].get()};
+    return FavoriteItem{.item = m_favorites.at(itemIdx).get()};
   }
 
   return {};

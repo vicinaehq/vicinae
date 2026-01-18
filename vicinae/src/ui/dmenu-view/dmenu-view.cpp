@@ -9,8 +9,8 @@
 #include <ranges>
 
 namespace DMenu {
-View::View(Payload data) : m_data(data), m_model(new DMenuModel(this)) {
-  m_entries = std::views::split(m_data.raw, std::string_view("\n")) |
+View::View(ipc::DMenu::Request data) : m_data(data), m_model(new DMenuModel(this)) {
+  m_entries = std::views::split(m_data.rawContent, std::string_view("\n")) |
               std::views::transform([](auto &&s) { return std::string_view(s); }) |
               std::views::filter([](auto &&s) { return !s.empty(); }) | std::ranges::to<std::vector>();
 }
