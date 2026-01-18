@@ -1,6 +1,7 @@
 #include "launcher-window.hpp"
 #include "action-panel/action-panel.hpp"
 #include "common.hpp"
+#include "layout.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "config/config.hpp"
 #include "environment.hpp"
@@ -298,6 +299,7 @@ void LauncherWindow::handleConfigurationChange(const config::ConfigValue &value)
     }
   }
 #endif
+  int bwidth = value.launcherWindow.clientSideDecorations.borderWidth;
 
   setMouseTracking(value.closeOnFocusLoss);
   m_closeOnFocusLoss = value.closeOnFocusLoss;
@@ -308,6 +310,7 @@ void LauncherWindow::handleConfigurationChange(const config::ConfigValue &value)
 
   auto &size = value.launcherWindow.size;
   setFixedSize(QSize{size.width, size.height});
+  m_mainWidget->layout()->setContentsMargins(QMargins{bwidth, bwidth, bwidth, bwidth});
   tryCenter();
   tryCompaction();
   update();
@@ -426,15 +429,7 @@ void LauncherWindow::paintEvent(QPaintEvent *event) {
 }
 
 QWidget *LauncherWindow::createWidget() const {
-  auto layout = new QVBoxLayout;
-
-  layout->setContentsMargins(2, 2, 2, 2);
-  layout->setSpacing(0);
-  layout->addWidget(m_header);
-  layout->addWidget(m_currentViewWrapper, 1);
-  layout->addWidget(m_barDivider);
-  layout->addWidget(m_bar);
-  m_mainWidget->setLayout(layout);
+  VStack().add(m_header).add(m_currentViewWrapper, 1).add(m_barDivider).add(m_bar).imbue(m_mainWidget);
 
   m_currentView->addWidget(m_mainWidget);
   m_currentView->addWidget(m_currentOverlayWrapper);
