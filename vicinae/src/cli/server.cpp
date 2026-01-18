@@ -3,6 +3,7 @@
 #include <QStyleHints>
 #include "root-search/browser-tabs/browser-tabs-provider.hpp"
 #include "root-search/scripts/script-root-provider.hpp"
+#include "qt-utils.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "favicon/favicon-service.hpp"
 #include "font-service.hpp"
@@ -298,9 +299,15 @@ void CliServerCommand::run(CLI::App *app) {
 
   configChanged(cfgService->value(), {});
 
-  // KeybindManager::instance()->fromSerializedMap(cfgService->value().keybinds);
-
   LauncherWindow launcher(ctx);
+
+  /*
+  QTimer timer;
+
+  QObject::connect(&timer, &QTimer::timeout,
+                   [&]() { qDebug() << "widget count" << qt_utils::countQObjectChildren(&launcher); });
+  timer.start(1000);
+  */
 
   ctx.navigation->launch(std::make_shared<RootCommand>());
 

@@ -280,22 +280,21 @@ private:
     VListModel::StableID id;
   };
 
-  WidgetWrapper *getFromPool(VListModel::WidgetTag tag);
+  static constexpr const int DEFAULT_PAGE_STEP = 40;
+  static QMargins constexpr const DEFAULT_MARGINS = {5, 5, 5, 5};
+
   void updateViewport();
 
   std::unordered_map<VListModel::StableID, WidgetData> m_widgetMap;
-  std::unordered_map<VListModel::WidgetTag, std::vector<WidgetWrapper *>> m_recyclingPool;
   std::vector<ViewportItem> m_visibleItems;
   std::optional<Selection> m_selected;
 
+  bool m_canRecycle = false;
   int m_height = 0;
   QMargins m_margins = DEFAULT_MARGINS;
   QScrollBar *m_scrollBar = nullptr;
   VListModel *m_model = nullptr;
   int m_count = 0;
   QTimer m_scrollTimer;
-
-  static constexpr const int DEFAULT_PAGE_STEP = 40;
-  static QMargins constexpr const DEFAULT_MARGINS = {5, 5, 5, 5};
 };
 }; // namespace vicinae::ui
