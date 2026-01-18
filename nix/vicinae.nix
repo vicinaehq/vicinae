@@ -53,6 +53,7 @@ gcc15Stdenv.mkDerivation (finalAttrs: {
     "CMAKE_INSTALL_DATAROOTDIR" = "share";
     "CMAKE_INSTALL_BINDIR" = "bin";
     "CMAKE_INSTALL_LIBDIR" = "lib";
+    "INSTALL_BROWSER_NATIVE_HOST" = "OFF";
   };
 
   strictDeps = true;
