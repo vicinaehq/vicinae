@@ -19,9 +19,13 @@ double AppRootItem::baseScoreWeight() const { return 1; }
 
 QString AppRootItem::typeDisplayName() const { return "Application"; }
 
-std::vector<QString> AppRootItem::keywords() const { return m_app->keywords(); }
+std::vector<QString> AppRootItem::keywords() const {
+  auto keywords = m_app->keywords();
+  keywords.emplace_back(m_app->description());
+  return keywords;
+}
 
-QString AppRootItem::subtitle() const { return m_app->description(); }
+QString AppRootItem::subtitle() const { return QString(); }
 
 QString AppRootItem::displayName() const { return m_app->displayName(); }
 
