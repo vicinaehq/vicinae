@@ -403,23 +403,26 @@ void LauncherWindow::handleActionVisibilityChanged(bool visible) {
 
 void LauncherWindow::paintEvent(QPaintEvent *event) {
   auto &config = m_ctx.services->config()->value();
-  const auto &csd = config.launcherWindow.clientSideDecorations;
-  QColor finalBgColor = OmniPainter::resolveColor(SemanticColor::Background);
-  QRect windowRect = m_compacted ? QRect{0, 0, width(), config.header.height} : rect();
   OmniPainter painter(this);
-  int adjust = 2; // rounded rect should be adjusted in order for borders to be drawn cleanly
+  QColor finalBgColor = OmniPainter::resolveColor(SemanticColor::Background);
 
   finalBgColor.setAlphaF(config.launcherWindow.opacity);
   painter.setRenderHint(QPainter::Antialiasing, true);
 
-  if (!csd.enabled) {
-    painter.fillRect(windowRect, finalBgColor);
-    return;
-  }
+  QRect contentRect = m_compacted ? QRect{0, 0, width(), config.header.height} : rect();
 
-  painter.setBrush(finalBgColor);
-  painter.setThemePen(SemanticColor::MainWindowBorder, csd.borderWidth);
-  painter.drawRoundedRect(windowRect.adjusted(adjust, adjust, -adjust, -adjust), csd.rounding, csd.rounding);
+  if (config.launcherWindow.clientSideDecorations.enabled) {
+    QPainterPath path;
+    path.addRoundedRect(contentRect, config.launcherWindow.clientSideDecorations.rounding,
+                        config.launcherWindow.clientSideDecorations.rounding);
+    painter.setClipPath(path);
+    painter.fillPath(path, finalBgColor);
+    painter.setThemePen(SemanticColor::MainWindowBorder,
+                        config.launcherWindow.clientSideDecorations.borderWidth);
+    painter.drawPath(path);
+  } else {
+    painter.fillRect(contentRect, finalBgColor);
+  }
 }
 
 QWidget *LauncherWindow::createWidget() const {
