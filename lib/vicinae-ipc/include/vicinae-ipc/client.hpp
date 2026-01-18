@@ -6,6 +6,7 @@
 #include <glaze/json/read.hpp>
 #include <glaze/util/string_literal.hpp>
 #include <netinet/in.h>
+#include <ranges>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <glaze/json.hpp>
@@ -121,7 +122,21 @@ private:
 };
 
 struct CliClient : public Client<CliSchema> {
-  static auto deeplink(std::string_view url) { return oneshot<ipc::Deeplink>({.url = std::string(url)}); }
+  struct DeeplinkOptions {
+    std::vector<std::pair<std::string, std::string>> query;
+  };
+
+  static auto deeplink(std::string_view url, const DeeplinkOptions &opts = {}) {
+    std::string fullUrl{url};
+
+    if (!opts.query.empty()) {
+      for (const auto &[idx, arg] : opts.query | std::views::enumerate) {
+        fullUrl.append(std::format("{}{}={}", idx == 0 ? "?" : "&", arg.first, arg.second));
+      }
+    }
+
+    return oneshot<ipc::Deeplink>({.url = std::string(fullUrl)});
+  }
 };
 
 /**

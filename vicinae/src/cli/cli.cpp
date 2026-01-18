@@ -172,98 +172,13 @@ private:
   bool m_newInstance = false;
 };
 
-class ListAppsCommand : public AbstractCommandLineCommand {
-public:
-  std::string id() const override { return "list"; }
-  std::string description() const override { return "List all tracked applications"; }
-
-  void setup(CLI::App *app) override {
-    app->alias("ls");
-    app->add_flag("-j,--json", m_jsonOutput, "Output in JSON format");
-    app->add_flag("--with-actions", m_withActions, "Include application actions/subactions");
-  }
-
-  void run(CLI::App *app) override {
-    // DaemonIpcClient client;
-    // auto apps = client.listApps(m_withActions);
-
-    // TODO: implement
-
-    /*
-if (m_jsonOutput) {
-outputJson(apps);
-} else {
-outputText(apps);
-}
-  */
-  }
-
-private:
-  bool m_jsonOutput = false;
-  bool m_withActions = false;
-
-  /*
-  void outputText(const std::vector<proto::ext::daemon::AppInfo> &apps) {
-    size_t maxIdLen = 2;
-    size_t maxNameLen = 4;
-
-    for (const auto &app : apps) {
-      maxIdLen = std::max(maxIdLen, app.id().length());
-      maxNameLen = std::max(maxNameLen, app.name().length());
-    }
-
-    std::cout << std::left << std::setw(maxIdLen + 2) << "ID" << std::setw(maxNameLen + 2) << "NAME"
-              << "HIDDEN" << std::endl;
-
-    std::cout << std::string(maxIdLen + 2, '-') << std::string(maxNameLen + 2, '-') << std::string(6, '-')
-              << std::endl;
-
-    for (const auto &app : apps) {
-      std::cout << std::left << std::setw(maxIdLen + 2) << app.id() << std::setw(maxNameLen + 2) << app.name()
-                << (app.hidden() ? "yes" : "no") << std::endl;
-    }
-  }
-
-  void outputJson(const std::vector<proto::ext::daemon::AppInfo> &apps) {
-    QJsonArray jsonApps;
-
-    for (const auto &app : apps) {
-      QJsonObject jsonApp;
-      jsonApp["id"] = QString::fromStdString(app.id());
-      jsonApp["name"] = QString::fromStdString(app.name());
-      jsonApp["hidden"] = app.hidden();
-      jsonApp["path"] = QString::fromStdString(app.path());
-      jsonApp["description"] = QString::fromStdString(app.description());
-      jsonApp["program"] = QString::fromStdString(app.program());
-      jsonApp["is_terminal_app"] = app.is_terminal_app();
-      jsonApp["icon_url"] = QString::fromStdString(app.icon_url());
-      jsonApp["is_action"] = app.is_action();
-
-      QJsonArray keywords;
-      for (const auto &kw : app.keywords()) {
-        keywords.append(QString::fromStdString(kw));
-      }
-      jsonApp["keywords"] = keywords;
-
-      jsonApps.append(jsonApp);
-    }
-
-    QJsonDocument doc(jsonApps);
-    std::cout << doc.toJson(QJsonDocument::Indented).toStdString();
-  }
-  */
-};
-
 class AppCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "app"; }
   std::string description() const override { return "System application commands"; }
   void setup(CLI::App *app) override {}
 
 public:
-  AppCommand() {
-    registerCommand<LaunchAppCommand>();
-    registerCommand<ListAppsCommand>();
-  }
+  AppCommand() { registerCommand<LaunchAppCommand>(); }
 };
 
 class CliPing : public AbstractCommandLineCommand {
@@ -288,7 +203,8 @@ class ToggleCommand : public AbstractCommandLineCommand {
   void setup(CLI::App *app) override { app->add_option("-q,--query", m_query, "Set search query"); }
 
   void run(CLI::App *app) override {
-    if (auto res = ipc::CliClient::deeplink(std::format("vicinae://toggle")); !res) {
+    if (auto res = ipc::CliClient::deeplink("vicinae://toggle", {.query = {{"fallbackText", m_query}}});
+        !res) {
       std::println(std::cerr, "Failed to toggle: {}", res.error());
     }
   }
@@ -303,7 +219,7 @@ class OpenCommand : public AbstractCommandLineCommand {
   void setup(CLI::App *app) override { app->add_option("-q,--query", query, "Set search query"); }
 
   void run(CLI::App *app) override {
-    if (auto res = ipc::CliClient::deeplink(std::format("vicinae://open")); !res) {
+    if (auto res = ipc::CliClient::deeplink("vicinae://open", {.query = {{"fallbackText", query}}}); !res) {
       std::println(std::cerr, "Failed to toggle: {}", res.error());
     }
   }
@@ -317,7 +233,7 @@ class CloseCommand : public AbstractCommandLineCommand {
   std::string description() const override { return "Close the vicinae window"; }
 
   void run(CLI::App *app) override {
-    if (auto res = ipc::CliClient::deeplink(std::format("vicinae://open")); !res) {
+    if (auto res = ipc::CliClient::deeplink(std::format("vicinae://close")); !res) {
       std::println(std::cerr, "Failed to close: {}", res.error());
     }
   }
