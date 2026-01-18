@@ -13,7 +13,7 @@ add_library(${TARGET} STATIC src/browser.cpp)
 target_include_directories(${TARGET} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include PRIVATE)
 target_compile_features(${TARGET} PUBLIC cxx_std_23)
 target_compile_definitions(${TARGET} PUBLIC NATIVE_MESSAGING_HOST="${NATIVE_MESSAGING_HOST}")
-target_link_libraries(${TARGET} PUBLIC vicinae-ipc)
+target_link_libraries(${TARGET} PUBLIC vicinae-ipc glaze::glaze)
 
 if (INSTALL_CHROME_HOST)
 	configure_file(native-host/${NATIVE_MESSAGING_HOST}.chromium.json.in ${NATIVE_MESSAGING_HOST}.chromium.json)

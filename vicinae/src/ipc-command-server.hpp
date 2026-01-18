@@ -8,12 +8,13 @@
 #include <glaze/core/common.hpp>
 #include <glaze/core/reflect.hpp>
 #include <glaze/json/read.hpp>
+#include <glaze/json/write.hpp>
 #include <qlocalserver.h>
 #include <string_view>
 #include <vicinae-ipc/ipc.hpp>
 
-using ServerSchema = ipc::RpcSchema<ipc::DMenu, ipc::Deeplink, ipc::Ping, ipc::ListApps, ipc::LaunchApp,
-                                    ipc::BrowserInit, ipc::BrowserTabsChanged>;
+using ServerSchema = ipc::RpcSchema<ipc::DMenu, ipc::Deeplink, ipc::Ping, ipc::LaunchApp, ipc::BrowserInit,
+                                    ipc::BrowserTabsChanged>;
 
 using Watcher = QFutureWatcher<glz::raw_json>;
 

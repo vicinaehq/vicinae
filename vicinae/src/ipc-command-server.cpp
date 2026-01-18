@@ -48,8 +48,7 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
         it->sendMessage(json);
       });
 
-  m_rpc.middleware([](const decltype(m_rpc)::Schema::Request &req,
-                      decltype(m_rpc)::ContextHandle info) -> std::optional<std::string> {
+  m_rpc.middleware([](const decltype(m_rpc)::Schema::Request &req, Ctx info) -> std::optional<std::string> {
     constexpr static const auto BROWSER_METHODS = std::array{ipc::BrowserTabsChanged::key};
 
     if (std::ranges::contains(BROWSER_METHODS, req.method) && !info.caller->browser) {
@@ -59,9 +58,7 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
     return {};
   });
 
-  m_rpc.route<ipc::Ping>([&](const ipc::Ping::Request &req, decltype(m_rpc)::ContextHandle ctx) {
-    return ipc::Ping::Response();
-  });
+  m_rpc.route<ipc::Ping>([&](const ipc::Ping::Request &req, Ctx ctx) { return ipc::Ping::Response(); });
 
   m_rpc.route<ipc::BrowserInit>([this](const ipc::BrowserInit::Request &init, Ctx context) {
     context.caller->browser = init;
@@ -69,46 +66,41 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
     return ipc::BrowserInit::Response();
   });
 
-  m_rpc.route<ipc::ListApps>([](const ipc::ListApps::Request &req, decltype(m_rpc)::ContextHandle ctx) {
-    return ipc::ListApps::Response();
+  m_rpc.route<ipc::LaunchApp>([](const ipc::LaunchApp::Request &req,
+                                 Ctx ctx) -> std::expected<ipc::LaunchApp::Response, std::string> {
+    auto appDb = ctx.global->app->services->appDb();
+    auto wm = ctx.global->app->services->windowManager();
+    auto app = appDb->findById(req.appId.c_str());
+
+    if (!app) { return std::unexpected("No app with id"); }
+
+    if (!req.newInstance) {
+      if (auto wins = wm->findAppWindows(*app); !wins.empty()) {
+        auto &win = wins.front();
+        wm->provider()->focusWindowSync(*win);
+        return ipc::LaunchApp::Response({.focusedWindowTitle = win->title().toStdString()});
+      }
+    }
+
+    std::vector<QString> args = Utils::toQStringVec(req.args);
+
+    if (!appDb->launch(*app, args)) {
+      return std::unexpected(std::format("Failed to launch app with id {}", req.appId));
+    }
+
+    return ipc::LaunchApp::Response();
   });
 
-  m_rpc.route<ipc::LaunchApp>(
-      [](const ipc::LaunchApp::Request &req,
-         decltype(m_rpc)::ContextHandle ctx) -> std::expected<ipc::LaunchApp::Response, std::string> {
-        auto appDb = ctx.global->app->services->appDb();
-        auto wm = ctx.global->app->services->windowManager();
-        auto app = appDb->findById(req.appId.c_str());
-
-        if (!app) { return std::unexpected("No app with id"); }
-
-        if (!req.newInstance) {
-          if (auto wins = wm->findAppWindows(*app); !wins.empty()) {
-            auto &win = wins.front();
-            wm->provider()->focusWindowSync(*win);
-            return ipc::LaunchApp::Response({.focusedWindowTitle = win->title().toStdString()});
-          }
-        }
-
-        std::vector<QString> args = Utils::toQStringVec(req.args);
-
-        if (!appDb->launch(*app, args)) {
-          return std::unexpected(std::format("Failed to launch app with id {}", req.appId));
-        }
-
-        return ipc::LaunchApp::Response();
-      });
-
   m_rpc.route<ipc::BrowserTabsChanged>(
-      [](const ipc::BrowserTabsChanged::Request &req, decltype(m_rpc)::ContextHandle ctx)
-          -> std::expected<ipc::BrowserTabsChanged::Response, std::string> {
+      [](const ipc::BrowserTabsChanged::Request &req,
+         Ctx ctx) -> std::expected<ipc::BrowserTabsChanged::Response, std::string> {
         qDebug() << "set" << req.size() << "browser tabs";
         if (!ctx.caller->browser) return std::unexpected("setTabs only permitted for browsers");
         ctx.global->app->services->browserExtension()->setTabs(ctx.caller->browser->id, req);
         return ipc::BrowserTabsChanged::Response();
       });
 
-  m_rpc.route<ipc::DMenu>([](const ipc::DMenu::Request &request, decltype(m_rpc)::ContextHandle ctx) {
+  m_rpc.route<ipc::DMenu>([](ipc::DMenu::Request request, Ctx ctx) {
     using Watcher = QFutureWatcher<ipc::DMenu::Response>;
     static constexpr const int DMENU_SMALL_WIDTH_THRESHOLD = 500;
     auto &m_ctx = *ctx.global->app;
@@ -121,8 +113,8 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
 
     if (request.width.has_value() && request.width.value() < DMENU_SMALL_WIDTH_THRESHOLD) {
       qInfo() << "dmenu: disabling quicklook and footer because width is too low";
-      // request.noFooter = true;
-      // request.noQuickLook = true;
+      request.noFooter = true;
+      request.noQuickLook = true;
     }
 
     auto view = new DMenu::View(request);
@@ -154,8 +146,7 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
   });
 
   m_rpc.route<ipc::Deeplink>(
-      [](const ipc::Deeplink::Request &req,
-         decltype(m_rpc)::ContextHandle ctx) -> std::expected<ipc::Deeplink::Response, std::string> {
+      [](const ipc::Deeplink::Request &req, Ctx ctx) -> std::expected<ipc::Deeplink::Response, std::string> {
         IpcCommandHandler handler(*ctx.global->app);
         QUrl url(req.url.c_str());
 
@@ -212,8 +203,6 @@ void IpcCommandServer::processFrame(QLocalSocket *conn, QByteArrayView frame) {
   }
 
   const auto &value = call.value();
-
-  // auto handlerResult = _handler->handleCommand(request.data);
 
   if (auto future = std::get_if<QFuture<glz::raw_json>>(&value)) {
     auto watcher = QObjectUniquePtr<Watcher>(new Watcher);
