@@ -299,16 +299,15 @@ void CliServerCommand::run(CLI::App *app) {
 
   configChanged(cfgService->value(), {});
 
-  // KeybindManager::instance()->fromSerializedMap(cfgService->value().keybinds);
-
   LauncherWindow launcher(ctx);
 
+  /*
   QTimer timer;
 
   QObject::connect(&timer, &QTimer::timeout,
                    [&]() { qDebug() << "widget count" << qt_utils::countQObjectChildren(&launcher); });
-
   timer.start(1000);
+  */
 
   ctx.navigation->launch(std::make_shared<RootCommand>());
 
