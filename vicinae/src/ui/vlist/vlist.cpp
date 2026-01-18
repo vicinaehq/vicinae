@@ -1,7 +1,9 @@
+#include <qlogging.h>
+#include <ranges>
+#include <unordered_set>
+#include <QApplication>
 #include "vlist.hpp"
 #include "ui/scroll-bar/scroll-bar.hpp"
-#include <ranges>
-#include <QApplication>
 
 namespace vicinae::ui {
 
@@ -15,12 +17,11 @@ VListWidget::VListWidget() {
 
 void VListWidget::setModel(VListModel *model) {
   m_model = model;
+  calculate();
   connect(model, &VListModel::dataChanged, this, [this]() {
     m_model->onDataChanged();
     calculate();
-    refreshAll();
   });
-  calculate();
 }
 
 void VListWidget::recalculateMousePosition() {
@@ -402,6 +403,7 @@ void VListWidget::updateViewport() {
   std::unordered_map<VListModel::StableID, WidgetData> newMap;
 
   newMap.reserve(m_widgetMap.size());
+  m_idsSeen.clear();
 
   {
     m_visibleItems.clear();
@@ -433,6 +435,15 @@ void VListWidget::updateViewport() {
 
           item.id = m_model->stableId(idx);
 
+          // duplicate ID - considered a user error
+          if (m_idsSeen.contains(item.id)) {
+            qWarning() << "Found duplicate ID while rendering the list. This may impact list performance.";
+            item.id =
+                item.id + idx; // we don't care about the exact replacement ID, just make it random enough
+          } else {
+            m_idsSeen.insert(item.id);
+          }
+
           if (auto it = m_widgetMap.find(item.id); it != m_widgetMap.end()) {
             item.widget = it->second.widget;
             item.tag = it->second.tag;
@@ -452,8 +463,6 @@ void VListWidget::updateViewport() {
   }
 
   for (auto &item : m_visibleItems) {
-    bool wasCached = item.widget;
-
     if (!item.widget) {
       item.tag = m_model->widgetTag(item.index);
 
@@ -481,8 +490,7 @@ void VListWidget::updateViewport() {
       }
     }
 
-    if (!wasCached) { m_model->refreshWidget(item.index, item.widget->widget()); }
-
+    m_model->refreshWidget(item.index, item.widget->widget());
     item.widget->setIndex(item.index);
     item.widget->setSelected(m_selected && item.index == m_selected->idx);
     item.widget->setFixedSize(item.bounds.width(), item.bounds.height());

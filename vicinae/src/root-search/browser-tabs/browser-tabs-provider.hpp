@@ -72,7 +72,7 @@ class BrowserTabRootItem : public RootItem {
     return {accessory};
   }
 
-  EntrypointId uniqueId() const override { return EntrypointId("browser-tabs", std::to_string(m_tab.id)); }
+  EntrypointId uniqueId() const override { return EntrypointId("browser-tabs", m_tab.uniqueId()); }
 
   ImageURL iconUrl() const override { return m_tab.icon(); }
 
