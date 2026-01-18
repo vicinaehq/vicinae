@@ -26,7 +26,7 @@ endif()
 add_library(${PROJECT_NAME} STATIC src/ipc.cpp)
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include PRIVATE src)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)
-target_link_libraries(${PROJECT_NAME} PUBLIC)
+target_link_libraries(${PROJECT_NAME} PUBLIC glaze::glaze)
 
 if (BUILD_TESTS)
 	set(TEST_TARGET ${PROJECT_NAME}-tests)
