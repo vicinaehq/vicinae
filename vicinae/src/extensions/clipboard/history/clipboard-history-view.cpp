@@ -384,6 +384,7 @@ void ClipboardHistoryView::initialize() {
   m_filterInput->setValue(getSavedDropdownFilter().value_or("all"));
   handleFilterChange(*m_filterInput->value());
 
+  connect(m_model, &ClipboardHistoryModel::dataChanged, this, [this]() { refreshCurrent(); });
   connect(m_controller, &ClipboardHistoryController::dataLoadingChanged, this, &BaseView::setLoading);
   connect(m_controller, &ClipboardHistoryController::dataRetrieved, this,
           [this](const PaginatedResponse<ClipboardHistoryEntry> &page) {
