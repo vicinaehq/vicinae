@@ -15,6 +15,7 @@
 #include "services/app-service/app-service.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "navigation-controller.hpp"
+#include "version.h"
 
 IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
     : QObject(parent), m_ctx(*ctx), m_rpc(IpcContext::GlobalContext{.app = ctx}) {
@@ -58,7 +59,9 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
     return {};
   });
 
-  m_rpc.route<ipc::Ping>([&](const ipc::Ping::Request &req, Ctx ctx) { return ipc::Ping::Response(); });
+  m_rpc.route<ipc::Ping>([&](const ipc::Ping::Request &req, Ctx ctx) {
+    return ipc::Ping::Response(VICINAE_GIT_TAG, QApplication::applicationPid());
+  });
 
   m_rpc.route<ipc::BrowserInit>([this](const ipc::BrowserInit::Request &init, Ctx context) {
     context.caller->browser = init;

@@ -7,7 +7,6 @@
 #include "favicon/favicon-service.hpp"
 #include "font-service.hpp"
 #include "icon-theme-db/icon-theme-db.hpp"
-#include "ipc-command-handler.hpp"
 #include "ipc-command-server.hpp"
 #include "keyboard/keybind-manager.hpp"
 #include "log/message-handler.hpp"
@@ -65,61 +64,36 @@ void CliServerCommand::setup(CLI::App *app) {
 
 void CliServerCommand::run(CLI::App *app) {
   using namespace std::chrono_literals;
-  fs::path lockPath = Omnicast::runtimeDir() / "vicinae.lock";
-  QLockFile lock(lockPath.c_str());
 
   qInstallMessageHandler(coloredMessageHandler);
 
-  // we are dealing with a long running process so we dont want to use time
-  // as an indicator that the lock file might be stale.
-  lock.setStaleLockTime(0ms);
+  const auto pingRes = ipc::CliClient::oneshot<ipc::Ping>({});
 
-  if (!lock.tryLock()) {
-    const auto pingRes = ipc::CliClient::oneshot<ipc::Ping>({});
-    bool isServerReachable = pingRes && pingRes->ok;
-
-    if (!isServerReachable) {
-      lock.removeStaleLockFile();
-      lock.lock();
-    } else {
-      if (!m_replace) {
-        qWarning()
-            << "A server is already running. Pass --replace if you want to replace the existing instance.";
-        exit(1);
-      }
-
-      qInfo() << "Killing existing vicinae server...";
-
-      QString _;
-      qint64 pid = 0;
-
-      if (!lock.getLockInfo(&pid, &_, &_)) {
-        qCritical() << "Failed to get lock file info";
-        exit(1);
-      }
-
-      if (kill(pid, SIGKILL) != 0) {
-        qCritical() << "Failed to kill process with pid" << pid;
-        exit(1);
-      }
-
-      lock.removeStaleLockFile();
+  if (pingRes) {
+    if (!m_replace) {
+      qWarning()
+          << "A server is already running. Pass --replace if you want to replace the existing instance.";
+      exit(1);
     }
 
-    qInfo() << "Waiting for lock to released...";
-    lock.lock();
-  }
+    qInfo() << "Killing existing vicinae server...";
 
-  qInfo() << "Initializing vicinae server...";
+    if (kill(pingRes->pid, SIGKILL) != 0) {
+      qCritical() << "Failed to kill process with pid" << pingRes->pid;
+      exit(1);
+    }
+  }
 
   int argc = 1;
   static char *argv[] = {strdup("command"), nullptr};
   QApplication qapp(argc, argv);
 
-  if (auto launcher = Environment::detectAppLauncher()) { qInfo() << "Detected launch prefix:" << *launcher; }
+  if (const auto launcher = Environment::detectAppLauncher()) {
+    qInfo() << "Detected launch prefix:" << *launcher;
+  }
 
   // discard system specific qt theming
-  qapp.setStyle(QStyleFactory::create("fusion"));
+  QApplication::setStyle(QStyleFactory::create("fusion"));
 
   std::filesystem::create_directories(Omnicast::runtimeDir());
 
@@ -341,5 +315,4 @@ void CliServerCommand::run(CLI::App *app) {
   // make sure child processes are terminated
   ctx.services->clipman()->clipboardServer()->stop();
   ctx.services->extensionManager()->stop();
-  lock.unlock();
 }

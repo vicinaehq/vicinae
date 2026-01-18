@@ -1,5 +1,6 @@
 #pragma once
 #include <concepts>
+#include <cstdint>
 #include <expected>
 #include <format>
 #include <glaze/core/common.hpp>
@@ -66,7 +67,8 @@ struct Ping {
   static constexpr const auto key = "ping";
   struct Request {};
   struct Response {
-    bool ok;
+    std::string version;
+    std::int64_t pid;
   };
 };
 
