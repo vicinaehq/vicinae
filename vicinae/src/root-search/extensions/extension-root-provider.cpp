@@ -29,7 +29,7 @@ QString CommandRootItem::typeDisplayName() const { return "Command"; }
 
 std::unique_ptr<ActionPanelState> CommandRootItem::newActionPanel(ApplicationContext *ctx,
                                                                   const RootItemMetadata &metadata) const {
-  auto panel = std::make_unique<ActionPanelState>();
+  auto panel = std::make_unique<ListActionPanelState>();
   auto open = new OpenBuiltinCommandAction(m_command, "Open command");
   auto resetRanking = new ResetItemRanking(uniqueId());
   auto markAsFavorite = new ToggleItemAsFavorite(uniqueId(), metadata.favorite);
