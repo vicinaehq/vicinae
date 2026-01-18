@@ -1,18 +1,12 @@
 #include "ipc-command-handler.hpp"
 #include "common.hpp"
-#include "ipc-command-server.hpp"
-#include "vicinae-ipc/ipc.hpp"
-#include "proto/daemon.pb.h"
 #include <QDebug>
 #include <QFutureWatcher>
-#include "services/browser-extension-service.hpp"
 #include "services/oauth/oauth-service.hpp"
 #include "theme/theme-db.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
-#include "services/window-manager/window-manager.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/toast/toast-service.hpp"
-#include "services/app-service/app-service.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include <algorithm>
@@ -29,45 +23,9 @@
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "theme.hpp"
-#include "ui/dmenu-view/dmenu-view.hpp"
 #include "ui/provider-view/provider-view.hpp"
 #include "ui/toast/toast.hpp"
 #include "vicinae.hpp"
-#include "version.h"
-
-/*
-proto::ext::daemon::Response *
-IpcCommandHandler::listApps(const proto::ext::daemon::ListAppsRequest &request) {
-  auto res = new proto::ext::daemon::Response;
-  auto listAppsRes = new proto::ext::daemon::ListAppsResponse;
-  auto appDb = m_ctx.services->appDb();
-
-  res->set_allocated_list_apps(listAppsRes);
-
-  auto apps = appDb->list();
-
-  for (const auto &app : apps) {
-    if (app->isAction() && !request.with_actions()) { continue; }
-
-    auto appInfo = listAppsRes->add_apps();
-    appInfo->set_id(app->id().toStdString());
-    appInfo->set_name(app->displayName().toStdString());
-    appInfo->set_hidden(!app->displayable());
-    appInfo->set_path(app->path().string());
-    appInfo->set_description(app->description().toStdString());
-    appInfo->set_program(app->program().toStdString());
-    appInfo->set_is_terminal_app(app->isTerminalApp());
-    appInfo->set_icon_url(app->iconUrl().name().toStdString());
-    appInfo->set_is_action(app->isAction());
-
-    for (const auto &keyword : app->keywords()) {
-      appInfo->add_keywords(keyword.toStdString());
-    }
-  }
-
-  return res;
-}
-*/
 
 std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
   if (!Omnicast::APP_SCHEMES.contains(url.scheme())) {
