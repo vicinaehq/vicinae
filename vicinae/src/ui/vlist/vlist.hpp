@@ -286,6 +286,7 @@ private:
   void updateViewport();
 
   std::unordered_map<VListModel::StableID, WidgetData> m_widgetMap;
+  std::unordered_set<size_t> m_idsSeen;
   std::vector<ViewportItem> m_visibleItems;
   std::optional<Selection> m_selected;
 

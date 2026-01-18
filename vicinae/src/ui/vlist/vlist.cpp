@@ -1,5 +1,6 @@
 #include "vlist.hpp"
 #include "ui/scroll-bar/scroll-bar.hpp"
+#include <qlogging.h>
 #include <ranges>
 #include <QApplication>
 
@@ -402,6 +403,7 @@ void VListWidget::updateViewport() {
   std::unordered_map<VListModel::StableID, WidgetData> newMap;
 
   newMap.reserve(m_widgetMap.size());
+  m_idsSeen.clear();
 
   {
     m_visibleItems.clear();
@@ -432,6 +434,15 @@ void VListWidget::updateViewport() {
           ViewportItem item;
 
           item.id = m_model->stableId(idx);
+
+          // duplicate ID - considered a user error
+          if (m_idsSeen.contains(item.id)) {
+            qWarning() << "Found duplicate ID while rendering the list. This may impact list performance.";
+            item.id =
+                item.id + idx; // we don't care about the exact replacement ID, just make it random enough
+          }
+
+          m_idsSeen.insert(item.id);
 
           if (auto it = m_widgetMap.find(item.id); it != m_widgetMap.end()) {
             item.widget = it->second.widget;
