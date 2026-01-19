@@ -12,14 +12,22 @@ lib.extendMkDerivation {
     {
       name,
       rev,
-      sha256,
+      hash ? null,
+      sha256 ? null,
       ...
     }:
     {
       inherit name;
       src =
         fetchgit {
-          inherit rev sha256;
+          inherit rev;
+          hash =
+            if hash != null then
+              hash
+            else if sha256 != null then
+              sha256
+            else
+              throw "mkRayCastExtension: `hash` or `sha256` is required";
           url = "https://github.com/raycast/extensions";
           sparseCheckout = [
             "/extensions/${name}"
