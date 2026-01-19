@@ -2,7 +2,7 @@
   lib,
   buildNpmPackage,
   importNpmLock,
-  fetchgit,
+  fetchFromGitHub,
 }:
 lib.extendMkDerivation {
   constructDrv = buildNpmPackage;
@@ -19,7 +19,9 @@ lib.extendMkDerivation {
     {
       inherit name;
       src =
-        fetchgit {
+        fetchFromGitHub {
+          owner = "raycast";
+          repo = "extensions";
           inherit rev;
           hash =
             if hash != null then
@@ -28,7 +30,6 @@ lib.extendMkDerivation {
               sha256
             else
               throw "mkRayCastExtension: `hash` or `sha256` is required";
-          url = "https://github.com/raycast/extensions";
           sparseCheckout = [
             "/extensions/${name}"
           ];
