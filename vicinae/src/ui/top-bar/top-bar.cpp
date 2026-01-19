@@ -16,9 +16,12 @@
 #include "ui/loading-bar/horizontal-loading-bar.hpp"
 #include "ui/icon-button/icon-button.hpp"
 #include "ui/search-bar/search-bar.hpp"
-#include "ui/icon-button/icon-button.hpp"
 #include "utils/layout.hpp"
-#include "ui/search-bar/search-bar.hpp"
+
+void GlobalHeader::showEvent(QShowEvent *event) {
+  if (!m_input->text().isEmpty()) { m_input->selectAll(); }
+  QWidget::showEvent(event);
+}
 
 void GlobalHeader::setupUI() {
   setAttribute(Qt::WA_TranslucentBackground);
