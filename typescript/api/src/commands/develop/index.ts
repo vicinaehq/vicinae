@@ -130,8 +130,11 @@ export default class Develop extends Command {
 					entryPoints: [source],
 					external: ["react", "@vicinae/api", "@raycast/api"],
 					format: "cjs",
-					outfile: path.join(outDir, `${cmd.name}.js`),
+					outdir: outDir,
 					platform: "node",
+					loader: {
+						".node": "file",
+					},
 				});
 			});
 
@@ -195,12 +198,12 @@ export default class Develop extends Command {
 		outStream.on("line", (data) => {
 			logger.logExtensionOut(data.toString());
 		});
-		outStream.on("error", () => { });
+		outStream.on("error", () => {});
 
 		errStream.on("line", (data) => {
 			logger.logExtensionError(data.toString());
 		});
-		errStream.on("error", () => { });
+		errStream.on("error", () => {});
 
 		await safeBuild(extensionDir);
 

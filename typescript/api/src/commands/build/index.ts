@@ -95,9 +95,12 @@ export default class Build extends Command {
 					entryPoints: [source],
 					external: ["react", "@vicinae/api", "@raycast/api"],
 					format: "cjs",
-					outfile: join(outDir, `${cmd.name}.js`),
+					outdir: outDir,
 					platform: "node",
 					minify: true,
+					loader: {
+						".node": "file",
+					},
 				});
 			});
 
