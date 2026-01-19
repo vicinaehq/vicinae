@@ -203,29 +203,36 @@ class ToggleCommand : public AbstractCommandLineCommand {
   void setup(CLI::App *app) override { app->add_option("-q,--query", m_query, "Set search query"); }
 
   void run(CLI::App *app) override {
-    if (auto res = ipc::CliClient::deeplink("vicinae://toggle", {.query = {{"fallbackText", m_query}}});
-        !res) {
+    ipc::CliClient::DeeplinkOptions opts;
+
+    if (m_query) { opts.query = {{"fallbackText", m_query.value()}}; }
+
+    if (auto res = ipc::CliClient::deeplink("vicinae://toggle", opts); !res) {
       std::println(std::cerr, "Failed to toggle: {}", res.error());
     }
   }
 
 private:
-  std::string m_query;
+  std::optional<std::string> m_query;
 };
 
 class OpenCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "open"; }
   std::string description() const override { return "Open the vicinae window"; }
-  void setup(CLI::App *app) override { app->add_option("-q,--query", query, "Set search query"); }
+  void setup(CLI::App *app) override { app->add_option("-q,--query", m_query, "Set search query"); }
 
   void run(CLI::App *app) override {
-    if (auto res = ipc::CliClient::deeplink("vicinae://open", {.query = {{"fallbackText", query}}}); !res) {
+    ipc::CliClient::DeeplinkOptions opts;
+
+    if (m_query) { opts.query = {{"fallbackText", m_query.value()}}; }
+
+    if (auto res = ipc::CliClient::deeplink("vicinae://open", opts); !res) {
       std::println(std::cerr, "Failed to toggle: {}", res.error());
     }
   }
 
 private:
-  std::string query;
+  std::optional<std::string> m_query;
 };
 
 class CloseCommand : public AbstractCommandLineCommand {
