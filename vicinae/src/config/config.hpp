@@ -69,7 +69,7 @@ template <> struct Partial<LayerShellConfig> {
 };
 
 struct BlurConfig {
-  bool enabled;
+  bool enabled = true;
 };
 
 template <> struct Partial<BlurConfig> {
@@ -111,7 +111,7 @@ struct WindowConfig {
   WindowCSD clientSideDecorations;
   Size size;
   std::string screen;
-  bool dimAround;
+  bool dimAround = true;
   BlurConfig blur;
   WindowCompactMode compactMode;
   LayerShellConfig layerShell;

@@ -40,7 +40,7 @@ private:
   QString m_placeholder;
   QJsonValue m_value = QJsonValue::Null;
   bool m_readOnly = false;
-  bool m_required;
+  bool m_required = true;
   Data m_data = UnknownData();
 
   Preference(const QString &id, const Data &data) : m_name(id), m_data(data) {}

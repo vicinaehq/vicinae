@@ -62,9 +62,9 @@ public:
   bool operator==(const Shortcut &other) const;
 
 private:
-  Qt::Key m_key;
+  Qt::Key m_key = Qt::Key_unknown;
   Qt::KeyboardModifiers m_modifiers;
-  bool m_isValid;
+  bool m_isValid = false;
 };
 
 }; // namespace Keyboard
