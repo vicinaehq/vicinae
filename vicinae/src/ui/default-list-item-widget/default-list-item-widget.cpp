@@ -39,6 +39,7 @@ void DefaultListItemWidget::setSubtitle(const std::variant<QString, std::filesys
 	   [&](const QString& text){
   		m_category->setText(text);
   		m_category->setEllideMode(Qt::ElideRight);
+		m_category->setVisible(!text.isEmpty());
 	   }
   };
   // clang-format on
@@ -84,7 +85,7 @@ void DefaultListItemWidget::resizeEvent(QResizeEvent *event) {
 DefaultListItemWidget::DefaultListItemWidget(QWidget *parent) : SelectableOmniListWidget(parent) {
   auto left = HStack().spacing(15).add(m_icon).add(m_name).add(m_category).add(m_alias);
 
-  HStack().mx(10).my(8).add(left).add(m_accessoryList).justifyBetween().imbue(this);
+  HStack().mx(10).my(8).spacing(10).add(left).add(m_accessoryList).justifyBetween().imbue(this);
 
   m_category->setColor(SemanticColor::TextMuted);
   m_icon->setFixedSize(25, 25);
