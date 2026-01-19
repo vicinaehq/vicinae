@@ -1,12 +1,8 @@
 #pragma once
-#include "common.hpp"
 #include "ui/focus-notifier.hpp"
 #include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
-#include <qcoreevent.h>
-#include <qlabel.h>
-#include <qobject.h>
-#include <qtmetamacros.h>
+#include "ui/form/json-form-item-widget.hpp"
 #include <qwidget.h>
 
 class FormField : public QWidget {

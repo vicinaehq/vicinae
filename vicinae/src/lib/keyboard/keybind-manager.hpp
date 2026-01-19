@@ -1,5 +1,5 @@
 #pragma once
-#include "common.hpp"
+#include "common/types.hpp"
 #include "keyboard/keyboard.hpp"
 #include <qjsonobject.h>
 #include <qnamespace.h>

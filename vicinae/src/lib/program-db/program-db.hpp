@@ -1,12 +1,10 @@
 #pragma once
-#include "common.hpp"
+#include "common/scored.hpp"
 #include <qfuturewatcher.h>
 #include <qobject.h>
 #include <filesystem>
-#include <qtmetamacros.h>
 
 class ProgramDb : public QObject {
-
 public:
   using PathList = std::vector<std::filesystem::path>;
 

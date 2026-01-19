@@ -1,5 +1,6 @@
 #pragma once
 #include "common.hpp"
+#include "common/types.hpp"
 #include "ui/image/url.hpp"
 #include "theme.hpp"
 #include "theme/theme-file.hpp"

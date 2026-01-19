@@ -1,5 +1,5 @@
 #pragma once
-#include "common.hpp"
+#include "common/entrypoint.hpp"
 #include "ui/action-pannel/action.hpp"
 
 class DisableItemAction : public AbstractAction {

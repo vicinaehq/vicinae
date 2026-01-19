@@ -52,9 +52,9 @@ void Checkbox::keyPressEvent(QKeyEvent *event) {
   case Qt::Key_Enter:
     toggle();
     return;
+  default:
+    QWidget::keyPressEvent(event);
   }
-
-  QWidget::keyPressEvent(event);
 }
 
 void Checkbox::mousePressEvent(QMouseEvent *event) {
@@ -66,7 +66,7 @@ QSize Checkbox::sizeHint() const { return {20, 20}; }
 
 QJsonValue Checkbox::asJsonValue() const { return value(); }
 
-void Checkbox::setValueAsJson(const QJsonValue &value) { return setValue(value.toBool(false)); }
+void Checkbox::setValueAsJson(const QJsonValue &value) { setValue(value.toBool(false)); }
 
 void Checkbox::toggle() { setValue(!m_value); }
 

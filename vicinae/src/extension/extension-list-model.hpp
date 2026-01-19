@@ -1,9 +1,10 @@
 #pragma once
+#include <ranges>
+#include "common/types.hpp"
 #include "extend/list-model.hpp"
 #include "lib/fzf.hpp"
 #include "ui/default-list-item-widget/default-list-item-widget.hpp"
 #include "ui/vlist/common/section-model.hpp"
-#include <ranges>
 
 class ExtensionListModel : public vicinae::ui::SectionListModel<const ListItemViewModel *> {
 public:

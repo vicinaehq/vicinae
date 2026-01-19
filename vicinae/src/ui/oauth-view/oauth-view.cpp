@@ -3,6 +3,7 @@
 #include "theme.hpp"
 #include "navigation-controller.hpp"
 #include "ui/icon-button/icon-button.hpp"
+#include "ui/image/proto-url.hpp"
 #include "ui/toast/toast.hpp"
 #include "utils/layout.hpp"
 #include "service-registry.hpp"
@@ -63,7 +64,7 @@ OAuthView::OAuthView(const ApplicationContext *ctx, const proto::ext::oauth::Aut
   m_continueBtn->setText(QString("Continue with %1").arg(client.name().c_str()));
   QTimer::singleShot(0, this, [m_continueBtn]() { m_continueBtn->setFocus(); });
 
-  if (reqData.client().has_icon()) { m_providerIcon = reqData.client().icon(); }
+  if (reqData.client().has_icon()) { m_providerIcon = ProtoUrl::parse(reqData.client().icon()); }
 
   m_initView = HStack()
                    .add(VStack()

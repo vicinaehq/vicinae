@@ -1,10 +1,10 @@
+#include <variant>
+#include <set>
 #include "theme-parser.hpp"
-#include "common.hpp"
 #include "lib/toml.hpp"
 #include "theme/colors.hpp"
 #include "theme/theme-file.hpp"
-#include <variant>
-#include <set>
+#include "common/types.hpp"
 
 namespace fs = std::filesystem;
 
@@ -286,7 +286,7 @@ std::string ThemeSerializer::toToml(const ThemeFile &file) const {
   std::map<std::string, std::vector<std::pair<std::string, SemanticColor>>> mapped;
   std::vector<std::string> tableNames;
 
-  for (const auto [k, v] : recognizedKeys) {
+  for (const auto &[k, v] : recognizedKeys) {
     auto pos = k.find_last_of('.');
     std::string tableName = k.substr(0, pos);
     std::string key = k.substr(pos + 1);
@@ -297,7 +297,7 @@ std::string ThemeSerializer::toToml(const ThemeFile &file) const {
   for (const auto &tableName : tableNames) {
     doc << "\n";
     doc << "[colors." << tableName << "]\n";
-    for (const auto [k, v] : mapped[tableName]) {
+    for (const auto &[k, v] : mapped[tableName]) {
       std::string full = "colors." + tableName + "." + k;
       QColor color = file.resolve(v);
       QString colorName = color.name(color.alpha() == 0xFF ? QColor::NameFormat::HexRgb : QColor::HexArgb);

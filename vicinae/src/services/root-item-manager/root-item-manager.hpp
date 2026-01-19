@@ -2,6 +2,7 @@
 #include "argument.hpp"
 #include "common.hpp"
 #include "config/config.hpp"
+#include "common/entrypoint.hpp"
 #include "navigation-controller.hpp"
 #include "services/local-storage/local-storage-service.hpp"
 #include "services/local-storage/scoped-local-storage.hpp"

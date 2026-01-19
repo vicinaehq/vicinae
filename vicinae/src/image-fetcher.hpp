@@ -1,5 +1,4 @@
 #pragma once
-#include "common.hpp"
 #include "vicinae.hpp"
 #include <qmetacontainer.h>
 #include <qnetworkaccessmanager.h>
@@ -12,8 +11,9 @@
 #include <deque>
 #include <qtmetamacros.h>
 #include <qurl.h>
-#include <quuid.h>
 #include <unordered_map>
+#include "common/qt.hpp"
+#include <QUuid>
 
 class FetcherWorker : public QObject {
   Q_OBJECT
@@ -41,8 +41,6 @@ class FetcherWorker : public QObject {
   }
 
 public:
-  FetcherWorker() {}
-
   void initialize() {
     QString directory =
         QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QString("/vicinae/");

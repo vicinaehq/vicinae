@@ -1,14 +1,13 @@
 #include "navigation-controller.hpp"
 #include "command-controller.hpp"
-#include "common.hpp"
 #include "extension/extension-command.hpp"
-#include "root-search/extensions/extension-root-provider.hpp"
 #include "service-registry.hpp"
 #include "overlay-controller/overlay-controller.hpp"
 #include "extension/missing-extension-preference-view.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "services/toast/toast-service.hpp"
+#include "root-search/extensions/extension-root-provider.hpp"
 #include "ui/alert/alert.hpp"
 #include "ui/views/base-view.hpp"
 #include "utils/environment.hpp"
@@ -38,11 +37,11 @@ bool NavigationController::hasCompleter() const {
 void NavigationController::setInstantDismiss(bool value) { m_instantDismiss = value; }
 
 void NavigationController::goBack(const GoBackOptions &opts) {
-  if (!opts.ignoreInstantDismiss && m_instantDismiss) return closeWindow();
+  if (!opts.ignoreInstantDismiss && m_instantDismiss) closeWindow();
 
   if (isRootSearch()) {
-    if (searchText().isEmpty()) return closeWindow();
-    return clearSearchText();
+    if (searchText().isEmpty()) closeWindow();
+    clearSearchText();
   }
 
   popCurrentView();

@@ -1,11 +1,11 @@
 #pragma once
 #include "argument.hpp"
-#include "argument.hpp"
 #include "command.hpp"
-#include "../../src/ui/image/url.hpp"
+#include "ui/image/url.hpp"
 #include "common.hpp"
 #include "preference.hpp"
 #include "services/extension-registry/extension-registry.hpp"
+#include "common/entrypoint.hpp"
 #include <qstring.h>
 #include <qboxlayout.h>
 #include <qfuturewatcher.h>

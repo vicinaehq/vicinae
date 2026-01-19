@@ -4,6 +4,7 @@
 #include <qjsonobject.h>
 #include <qwidget.h>
 #include "settings/extension-settings-detail.hpp"
+#include "common/entrypoint.hpp"
 
 class CommandRootItem : public RootItem {
   std::shared_ptr<AbstractCmd> m_command;

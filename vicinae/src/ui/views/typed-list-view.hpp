@@ -1,4 +1,7 @@
 #pragma once
+#include <algorithm>
+#include <qwidget.h>
+#include "common/scored.hpp"
 #include "keyboard/keyboard.hpp"
 #include "navigation-controller.hpp"
 #include "config/config.hpp"
@@ -8,9 +11,6 @@
 #include "ui/empty-view/empty-view.hpp"
 #include "ui/form/selector-input.hpp"
 #include "ui/search-bar/search-bar.hpp"
-#include <algorithm>
-#include <libqalculate/includes.h>
-#include <qwidget.h>
 #include "ui/split-detail/split-detail.hpp"
 #include "ui/vlist/common/vertical-list-model.hpp"
 #include "ui/vlist/vlist.hpp"

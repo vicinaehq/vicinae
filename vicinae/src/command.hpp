@@ -7,7 +7,7 @@
 #include <endian.h>
 #include <qobject.h>
 #include <qdebug.h>
-#include <qtmetamacros.h>
+#include "common/entrypoint.hpp"
 
 class View;
 class LaunchProps;

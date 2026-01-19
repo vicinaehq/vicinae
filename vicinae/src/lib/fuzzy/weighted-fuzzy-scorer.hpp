@@ -1,7 +1,9 @@
 #pragma once
 #include <algorithm>
 #include <ranges>
-#include "common.hpp"
+#include <vector>
+#include <functional>
+#include "common/scored.hpp"
 #include "lib/fts_fuzzy.hpp"
 
 namespace fuzzy {
@@ -17,7 +19,7 @@ public:
   int score(const std::string &pattern) const {
     auto scores = m_strings | std::views::transform([&](const WeightedString &str) {
                     int score = 0;
-                    fts::fuzzy_match(pattern.c_str(), str.first, score);
+                    fts::fuzzy_match(pattern, str.first, score);
                     return static_cast<int>(score * str.second);
                   });
 

@@ -1,4 +1,5 @@
 #pragma once
+#include "common/types.hpp"
 #include "extend/grid-model.hpp"
 #include "lib/fzf.hpp"
 #include "layout.hpp"

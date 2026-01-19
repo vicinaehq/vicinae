@@ -1,6 +1,5 @@
 #include "ui/keyboard-shortcut-indicator/keyboard-shortcut-indicator.hpp"
-#include "common.hpp"
-#include "extend/action-model.hpp"
+#include "common/types.hpp"
 #include "keyboard/keyboard.hpp"
 #include "theme.hpp"
 #include "ui/image/builtin-icon-loader.hpp"

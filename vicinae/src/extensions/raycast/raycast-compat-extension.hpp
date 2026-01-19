@@ -1,7 +1,6 @@
 #pragma once
-#include "../../ui/image/url.hpp"
+#include "ui/image/url.hpp"
 #include "raycast-store-command.hpp"
-#include "theme.hpp"
 
 class RaycastCompatExtension : public BuiltinCommandRepository {
 public:

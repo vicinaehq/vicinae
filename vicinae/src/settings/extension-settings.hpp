@@ -1,6 +1,6 @@
 #pragma once
 #include "common.hpp"
-#include "../ui/image/url.hpp"
+#include "ui/image/url.hpp"
 #include "layout.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "service-registry.hpp"
@@ -29,11 +29,8 @@
 #include <qscrollarea.h>
 #include <qstackedwidget.h>
 #include <qtmetamacros.h>
-#include <qtreeview.h>
-#include <qtreewidget.h>
 #include <qlineedit.h>
 #include <qwidget.h>
-#include <qtreeview.h>
 
 class NameTreeWidget : public QWidget {
   QHBoxLayout *m_layout = new QHBoxLayout;
