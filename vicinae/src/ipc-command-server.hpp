@@ -1,9 +1,9 @@
 #pragma once
-#include "common.hpp"
-#include "types.hpp"
+#include "common/context.hpp"
 #include <QLocalSocket>
 #include <QFutureWatcher>
 #include <cstdint>
+#include <QDebug>
 #include <format>
 #include <glaze/core/common.hpp>
 #include <glaze/core/reflect.hpp>
@@ -12,6 +12,8 @@
 #include <qlocalserver.h>
 #include <string_view>
 #include <vicinae-ipc/ipc.hpp>
+#include "common/qt.hpp"
+#include "types.hpp"
 
 using ServerSchema = ipc::RpcSchema<ipc::DMenu, ipc::Deeplink, ipc::Ping, ipc::LaunchApp, ipc::BrowserInit,
                                     ipc::BrowserTabsChanged>;

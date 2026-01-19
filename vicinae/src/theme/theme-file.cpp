@@ -1,5 +1,5 @@
 #include "theme-file.hpp"
-#include "common.hpp"
+#include "common/types.hpp"
 #include <expected>
 #include "theme.hpp"
 #include "theme/colors.hpp"

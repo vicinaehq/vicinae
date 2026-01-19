@@ -7,7 +7,7 @@ class ExtensionCheckboxField : public ExtensionFormInput {
   CheckboxInput *m_input = new CheckboxInput;
   std::shared_ptr<FormModel::CheckboxField> m_model;
 
-  void clear() override { return m_input->setValueAsJson(false); }
+  void clear() override { m_input->setValueAsJson(false); }
 
   void handleChange(bool value) {
     if (m_model && m_model->onChange) { m_extensionNotifier->notify(*m_model->onChange, value); }

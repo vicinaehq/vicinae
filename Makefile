@@ -31,11 +31,6 @@ test:
 	$(BUILD_DIR)/lib/emoji/emoji-tests
 .PHONY: test
 
-no-ts-ext:
-	cmake -G Ninja -DTYPESCRIPT_EXTENSIONS=OFF -DCMAKE_BUILD_TYPE=Release -B $(BUILD_DIR)
-	cmake --build $(BUILD_DIR)
-.PHONY: no-ts-ext
-
 static:
 	cmake -G Ninja -DPREFER_STATIC_LIBS=ON -DCMAKE_BUILD_TYPE=Release -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)
@@ -56,13 +51,6 @@ appimage:
 	cmake --install $(BUILD_DIR)
 	./scripts/mkappimage.sh ./build/install AppDir
 .PHONY: appimage
-
-dev: debug
-.PHONY: dev
-
-extdev: debug
-	./scripts/vicinae-ext-dev.sh
-.PHONY: extdev
 
 runner:
 	cd ./scripts/runners/ && ./start.sh
@@ -95,12 +83,6 @@ gh-release:
 	cmake --install build
 	tar -czvf vicinae-linux-x86_64-$(TAG).tar.gz -C dist .
 .PHONY: gh-release
-
-# we run this from time to time only, it's not part of the build pipeline
-gen-contrib:
-	node ./scripts/gen-contrib.js
-.PHONY: gen-contrib
-
 
 clean:
 	rm -rf $(BUILD_DIR)

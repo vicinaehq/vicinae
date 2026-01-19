@@ -34,7 +34,7 @@ class ExtensionFormField : public FormField {
   ExtensionFormInput *m_widget = nullptr;
 
   static ExtensionFormInput *createFieldWidget(const FormModel::IField *field) {
-    // XXX awful, we will fix this very soon
+    // XXX awful, we will fix this very soon - edit: still not fixed months later
     if (auto f = dynamic_cast<const FormModel::CheckboxField *>(field)) { return new ExtensionCheckboxField; }
     if (auto f = dynamic_cast<const FormModel::TextField *>(field)) { return new ExtensionTextField; }
     if (auto f = dynamic_cast<const FormModel::TextAreaField *>(field)) { return new ExtensionTextArea; }

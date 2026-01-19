@@ -1,8 +1,8 @@
 #pragma once
 #include "common.hpp"
+#include "common/qt.hpp"
 #include "ui/overlay/overlay.hpp"
 #include <qobject.h>
-#include <qtmetamacros.h>
 
 class OverlayController : public QObject, NonCopyable {
   Q_OBJECT

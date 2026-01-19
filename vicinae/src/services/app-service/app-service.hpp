@@ -7,14 +7,14 @@
 #include <qsqlquery.h>
 #include <qtmetamacros.h>
 #include "abstract-app-db.hpp"
-#include "common.hpp"
+#include "common/types.hpp"
 #include "omni-database.hpp"
 
 struct AppListOptions {
-	bool sortAlphabetically = true;
+  bool sortAlphabetically = true;
 };
 
-class AppService : public QObject, public NonCopyable {
+class AppService : public QObject, NonCopyable {
   Q_OBJECT
 
 public:

@@ -1,17 +1,16 @@
 #pragma once
 #include "builtin_icon.hpp"
 #include "extend/image-model.hpp"
-#include "proto/ui.pb.h"
 #include "theme.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
+#include <cstdint>
 #include <filesystem>
-#include <qnamespace.h>
 #include <qstringview.h>
 #include <vector>
 #include <QString>
 
-enum class ObjectFit { Contain, Fill, Stretch };
-enum ImageURLType { Invalid, Builtin, Favicon, System, Http, Https, Local, Emoji, DataURI };
+enum class ObjectFit : std::uint8_t { Contain, Fill, Stretch };
+enum ImageURLType : std::uint8_t { Invalid, Builtin, Favicon, System, Http, Https, Local, Emoji, DataURI };
 
 static std::vector<std::pair<QString, ImageURLType>> iconTypes = {
     {"favicon", Favicon}, {"omnicast", Builtin}, {"system", System},
@@ -110,7 +109,6 @@ public:
   ImageURL();
   ImageURL(const QString &s) noexcept;
   ImageURL(BuiltinIcon icon);
-  ImageURL(const proto::ext::ui::Image &image);
   ImageURL(const ImageLikeModel &imageLike);
   ImageURL(const QUrl &url);
 

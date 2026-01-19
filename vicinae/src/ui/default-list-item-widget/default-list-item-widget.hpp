@@ -1,5 +1,5 @@
 #pragma once
-#include "../image/url.hpp"
+#include "ui/image/url.hpp"
 #include "ui/color-circle/color_circle.hpp"
 #include "ui/typography/typography.hpp"
 #include "ui/image/image.hpp"

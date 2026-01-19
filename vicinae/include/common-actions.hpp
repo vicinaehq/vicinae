@@ -1,8 +1,8 @@
 #pragma once
-#include "common.hpp"
-#include "../src/ui/image/url.hpp"
+#include "ui/image/url.hpp"
 #include "ui/action-pannel/action.hpp"
-#include <qobjectdefs.h>
+#include "ui/views/base-view.hpp"
+#include "navigation-controller.hpp"
 
 class PushViewAction : public AbstractAction {
   BaseView *m_view;

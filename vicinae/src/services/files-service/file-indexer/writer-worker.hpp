@@ -1,9 +1,9 @@
 #include <atomic>
 #include <deque>
-#include "common.hpp"
+#include "common/types.hpp"
 #include "services/files-service/file-indexer/db-writer.hpp"
 
-class WriterWorker : public NonCopyable {
+class WriterWorker : NonCopyable {
   std::shared_ptr<DbWriter> m_writer;
 
   std::mutex &batchMutex;

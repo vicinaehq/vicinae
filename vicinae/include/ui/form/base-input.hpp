@@ -9,8 +9,7 @@
 #include <QFocusEvent>
 #include <qmargins.h>
 #include <qobject.h>
-#include <qproperty.h>
-#include <qtmetamacros.h>
+#include "ui/form/json-form-item-widget.hpp"
 
 class BaseInput : public JsonFormItemWidget {
   Q_OBJECT

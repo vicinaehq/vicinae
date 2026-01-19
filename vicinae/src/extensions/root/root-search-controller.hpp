@@ -6,6 +6,7 @@
 #include "services/files-service/file-service.hpp"
 #include <vector>
 #include <string>
+#include <QFutureWatcher>
 
 class RootSearchModel;
 

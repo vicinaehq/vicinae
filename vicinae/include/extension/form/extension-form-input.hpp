@@ -1,10 +1,10 @@
 #pragma once
-#include "common.hpp"
-#include "extend/form-model.hpp"
-#include "ui/focus-notifier.hpp"
 #include <qboxlayout.h>
 #include <qjsonarray.h>
 #include <qwidget.h>
+#include "ui/form/json-form-item-widget.hpp"
+#include "extend/form-model.hpp"
+#include "ui/focus-notifier.hpp"
 
 class ExtensionEventNotifier : public QObject {
   Q_OBJECT
@@ -32,7 +32,7 @@ public:
 
   virtual void reset() {
     if (m_field->storeValue) return;
-    if (auto value = m_field->defaultValue) { return setValueAsJson(*value); }
+    if (auto value = m_field->defaultValue) { setValueAsJson(*value); }
 
     clear();
   }

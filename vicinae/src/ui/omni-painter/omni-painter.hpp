@@ -1,16 +1,13 @@
 #pragma once
+#include <QPainter>
 #include "theme.hpp"
-#include <qbrush.h>
-#include <qpainter.h>
-#include <qpixmap.h>
-#include <qpoint.h>
-#include <qwindowdefs.h>
+#include <cstdint>
 
 class OmniPainter : public QPainter {
 public:
   static QString serializeColor(const ColorLike &color);
 
-  enum ImageMaskType { NoMask, CircleMask, RoundedRectangleMask };
+  enum ImageMaskType : std::uint8_t { NoMask, CircleMask, RoundedRectangleMask };
 
   static ImageMaskType maskForName(const QString &name);
 

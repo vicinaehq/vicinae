@@ -1,9 +1,7 @@
 #pragma once
-#include "common.hpp"
-#include "../image/url.hpp"
+#include "ui/form/json-form-item-widget.hpp"
+#include "ui/image/url.hpp"
 #include "services/file-chooser/abstract-file-chooser.hpp"
-#include "services/file-chooser/native/native-file-chooser.hpp"
-#include "services/file-chooser/xdp-file-chooser/xdp-file-chooser.hpp"
 #include "ui/focus-notifier.hpp"
 #include "ui/icon-button/icon-button.hpp"
 #include "ui/image/image.hpp"

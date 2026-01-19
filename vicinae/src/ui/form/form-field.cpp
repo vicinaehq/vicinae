@@ -1,10 +1,7 @@
-#include "ui/form/form-field.hpp"
-#include "common.hpp"
 #include "theme.hpp"
+#include "ui/form/form-field.hpp"
 #include "ui/focus-notifier.hpp"
 #include "ui/typography/typography.hpp"
-#include <qnamespace.h>
-#include <qwidget.h>
 
 FormField::FormField(QWidget *parent)
     : QWidget(parent), _nameLabel(new TypographyWidget), _errorLabel(new TypographyWidget), m_widget(nullptr),

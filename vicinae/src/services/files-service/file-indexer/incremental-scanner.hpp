@@ -1,10 +1,9 @@
 #pragma once
-#include "common.hpp"
+#include "common/types.hpp"
 #include "services/files-service/file-indexer/abstract-scanner.hpp"
 
-class IncrementalScanner : public AbstractScanner, public NonCopyable {
+class IncrementalScanner : public AbstractScanner, NonCopyable {
   std::unique_ptr<FileIndexerDatabase> m_read_db;
-
   std::thread m_scanThread;
 
   std::vector<std::filesystem::path>

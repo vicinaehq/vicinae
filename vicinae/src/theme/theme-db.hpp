@@ -1,13 +1,11 @@
 #pragma once
-#include "common.hpp"
 #include "theme-file.hpp"
 #include <filesystem>
 #include <QDebug>
 #include <qfilesystemwatcher.h>
 #include <qobject.h>
 #include <qtimer.h>
-#include <qtmetamacros.h>
-#include <unordered_map>
+#include "common/qt.hpp"
 
 class QFileSystemWatcher;
 

@@ -11,6 +11,7 @@
 #include <qsize.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
+#include "common/qt.hpp"
 
 struct RenderConfig {
   QSize size;
@@ -38,7 +39,7 @@ public:
    */
   void virtual render(const RenderConfig &config) = 0;
   void virtual abort() const {};
-  virtual ~AbstractImageLoader() {}
+  virtual ~AbstractImageLoader() = default;
 
   void forwardSignals(AbstractImageLoader *other) const {
     connect(this, &AbstractImageLoader::dataUpdated, other, &AbstractImageLoader::dataUpdated);

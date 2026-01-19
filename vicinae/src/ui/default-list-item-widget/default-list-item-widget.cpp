@@ -1,14 +1,13 @@
+#include <qsizepolicy.h>
+#include <qwidget.h>
 #include "ui/default-list-item-widget/default-list-item-widget.hpp"
-#include "common.hpp"
-#include "../image/url.hpp"
+#include "common/types.hpp"
+#include "ui/image/url.hpp"
 #include "theme.hpp"
 #include "theme/colors.hpp"
 #include "ui/image/image.hpp"
 #include "ui/list-accessory/list-accessory.hpp"
 #include "utils/layout.hpp"
-#include <qnamespace.h>
-#include <qsizepolicy.h>
-#include <qwidget.h>
 
 namespace fs = std::filesystem;
 

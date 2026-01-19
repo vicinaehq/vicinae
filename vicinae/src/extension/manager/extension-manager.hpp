@@ -6,7 +6,6 @@
 #include <QtCore>
 #include <cstdint>
 #include "common.hpp"
-#include "extension/extension.hpp"
 #include "proto/common.pb.h"
 #include "proto/extension.pb.h"
 #include "proto/ipc.pb.h"
@@ -28,15 +27,12 @@
 #include <qprocess.h>
 #include <qstringview.h>
 #include <qthread.h>
-#include <qtmetamacros.h>
 #include <quuid.h>
 #include <unistd.h>
+#include "common/types.hpp"
 
 class ManagerRequest : public QObject {
   Q_OBJECT
-
-public:
-  ManagerRequest() {}
 
 signals:
   void finished(proto::ext::manager::ResponseData data);
@@ -73,7 +69,7 @@ signals:
   void extensionEvent(const proto::ext::QualifiedExtensionEvent &event);
 };
 
-class ExtensionRequest : public NonCopyable {
+class ExtensionRequest : NonCopyable {
   proto::ext::QualifiedExtensionRequest m_request;
   Bus &m_bus;
   bool m_responded = false;

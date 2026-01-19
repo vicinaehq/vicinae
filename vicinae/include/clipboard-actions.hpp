@@ -1,8 +1,7 @@
 #pragma once
 #include "builtin_icon.hpp"
-#include "common.hpp"
 #include "services/clipboard/clipboard-service.hpp"
-#include "../src/ui/image/url.hpp"
+#include "ui/image/url.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "navigation-controller.hpp"
 #include "services/app-service/app-service.hpp"

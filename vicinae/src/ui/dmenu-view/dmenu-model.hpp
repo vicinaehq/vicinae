@@ -1,6 +1,7 @@
 #pragma once
 #include <filesystem>
 #include "ui/vlist/common/vertical-list-model.hpp"
+#include "common/scored.hpp"
 #include "utils.hpp"
 
 class DMenuModel : public vicinae::ui::VerticalListModel<std::string_view> {

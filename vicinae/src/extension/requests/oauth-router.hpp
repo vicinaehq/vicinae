@@ -1,5 +1,5 @@
 #pragma once
-#include "common.hpp"
+#include "common/context.hpp"
 #include "proto/extension.pb.h"
 #include "proto/oauth.pb.h"
 #include "services/oauth/oauth-service.hpp"

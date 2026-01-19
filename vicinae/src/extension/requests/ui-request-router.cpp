@@ -1,6 +1,5 @@
 #include "ui-request-router.hpp"
-#include "common.hpp"
-#include "environment.hpp"
+#include "ui/image/proto-url.hpp"
 #include "navigation-controller.hpp"
 #include "proto/extension.pb.h"
 #include "proto/ui.pb.h"
@@ -200,7 +199,7 @@ QFuture<proto::ext::extension::Response *> UIRequestRouter::confirmAlert(const u
   alert->setConfirmText(req.primary_action().title().c_str(), SemanticColor::Red);
 
   if (req.has_icon()) {
-    ImageURL url(req.icon());
+    ImageURL url = ProtoUrl::parse(req.icon());
     if (url.isBuiltin()) { url.setFill(SemanticColor::Red); }
     alert->setIcon(url);
   }

@@ -1,9 +1,9 @@
 #include "config/config.hpp"
 #include "environment.hpp"
 #include <QStyleHints>
+#include "extension/extension.hpp"
 #include "root-search/browser-tabs/browser-tabs-provider.hpp"
 #include "root-search/scripts/script-root-provider.hpp"
-#include "qt-utils.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "favicon/favicon-service.hpp"
 #include "font-service.hpp"

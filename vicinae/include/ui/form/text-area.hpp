@@ -6,9 +6,9 @@
 #include <qobject.h>
 #include <qwidget.h>
 #include <QPlainTextEdit>
+#include "ui/form/json-form-item-widget.hpp"
 
 class TextArea : public JsonFormItemWidget {
-
 public:
   TextArea(QWidget *m_parent = nullptr);
 

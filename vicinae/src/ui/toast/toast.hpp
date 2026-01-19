@@ -6,10 +6,11 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QTimer>
+#include <cstdint>
 #include <qstackedwidget.h>
 
 class Toast;
-enum ToastStyle { Success, Info, Warning, Danger, Dynamic };
+enum ToastStyle : std::uint8_t { Success, Info, Warning, Danger, Dynamic };
 
 class ToastWidget : public QWidget {
 

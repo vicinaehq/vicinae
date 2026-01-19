@@ -1,11 +1,8 @@
 #pragma once
-#include "common.hpp"
 #include "theme.hpp"
 #include "ui/focus-notifier.hpp"
+#include "ui/form/json-form-item-widget.hpp"
 #include <qcoreevent.h>
-#include <qnamespace.h>
-#include <qsvgrenderer.h>
-#include <qtmetamacros.h>
 #include <qwidget.h>
 
 class Checkbox : public JsonFormItemWidget {

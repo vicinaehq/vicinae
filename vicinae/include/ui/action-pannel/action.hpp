@@ -1,5 +1,5 @@
 #pragma once
-#include "common.hpp"
+#include "common/context.hpp"
 #include "ui/image/url.hpp"
 #include "lib/keyboard/keyboard.hpp"
 #include <qcontainerfwd.h>
@@ -147,7 +147,7 @@ class SubmitAction : public AbstractAction {
   }
 
 public:
-  SubmitAction(const std::function<void(void)> &fn) { m_fn = fn; }
+  SubmitAction(const std::function<void(void)> &fn) : m_fn(fn) {}
 };
 
 class SubmenuAction : public AbstractAction {

@@ -1,5 +1,5 @@
 #pragma once
-#include "common.hpp"
+#include "common/entrypoint.hpp"
 #include <cstdint>
 #include <unordered_map>
 #include <filesystem>

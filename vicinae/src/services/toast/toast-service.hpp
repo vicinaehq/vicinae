@@ -1,10 +1,7 @@
 #pragma once
-#include "common.hpp"
 #include "ui/toast/toast.hpp"
-#include <deque>
-#include <qobject.h>
 #include <qstring.h>
-#include <qtmetamacros.h>
+#include "common/qt.hpp"
 
 class Toast : public QObject {
   Q_OBJECT

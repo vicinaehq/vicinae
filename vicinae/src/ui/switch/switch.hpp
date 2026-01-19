@@ -5,6 +5,7 @@
 #include <qdnslookup.h>
 #include <qevent.h>
 #include <qwidget.h>
+#include "ui/form/json-form-item-widget.hpp"
 
 class Switch : public JsonFormItemWidget {
   bool m_value = false;

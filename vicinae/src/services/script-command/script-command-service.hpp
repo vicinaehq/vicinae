@@ -1,5 +1,5 @@
 #pragma once
-#include "common.hpp"
+#include "common/types.hpp"
 #include "script/script-command-file.hpp"
 #include "script/script-metadata-store.hpp"
 #include <qfilesystemwatcher.h>

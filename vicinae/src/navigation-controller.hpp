@@ -1,5 +1,6 @@
 #pragma once
-
+#include "common/qt.hpp"
+#include "common/entrypoint.hpp"
 #include "argument.hpp"
 #include "command-controller.hpp"
 #include "command.hpp"
@@ -9,7 +10,7 @@
 #include "ui/image/url.hpp"
 #include <QString>
 #include <chrono>
-#include <google/protobuf/message.h>
+#include <cstdint>
 #include <numeric>
 #include <qevent.h>
 
@@ -30,7 +31,7 @@ struct ActionPanelSectionState {
 
 // matches raycast pop to root type policiy
 // https://developers.raycast.com/api-reference/window-and-search-bar#poptoroottype
-enum class PopToRootType { Default, Immediate, Suspended };
+enum class PopToRootType : std::uint8_t { Default, Immediate, Suspended };
 
 struct CloseWindowOptions {
   PopToRootType popToRootType = PopToRootType::Default;
@@ -43,7 +44,7 @@ struct PopToRootOptions {
 
 class ActionPanelState : public NonCopyable {
 public:
-  enum class ShortcutPreset {
+  enum class ShortcutPreset : std::uint8_t {
     None,
     List,
     Form,
@@ -343,6 +344,7 @@ public:
   void launch(const std::shared_ptr<AbstractCmd> &cmd);
   void launch(const std::shared_ptr<AbstractCmd> &cmd, const ArgumentValues &arguments);
   void launch(const EntrypointId &id);
+
   const AbstractCmd *activeCommand() const;
   CommandFrame *activeFrame() const { return m_frames.back().get(); }
   bool reloadActiveCommand();

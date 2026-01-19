@@ -1,8 +1,7 @@
 #pragma once
-#include "common.hpp"
-#include <qobject.h>
-#include <qstandardpaths.h>
-#include <qtmetamacros.h>
+#include <QObject>
+#include "common/entrypoint.hpp"
+#include "common/context.hpp"
 
 class SettingsWindow;
 

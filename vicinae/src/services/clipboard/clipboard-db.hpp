@@ -1,9 +1,10 @@
 #pragma once
-#include "common.hpp"
+#include <cstdint>
 #include <qsqldatabase.h>
 #include <qvariant.h>
+#include "common/paginated.hpp"
 
-enum class ClipboardEncryptionType {
+enum class ClipboardEncryptionType : std::uint8_t {
   None,
   Local,
 };
@@ -13,7 +14,14 @@ struct PreferredClipboardOfferRecord {
   ClipboardEncryptionType encryption;
 };
 
-enum class ClipboardOfferKind { Unknown = 0, Text, Link, Image, File, Count /* a link ot a file */ };
+enum class ClipboardOfferKind : std::uint8_t {
+  Unknown = 0,
+  Text,
+  Link,
+  Image,
+  File,
+  Count /* a link ot a file */
+};
 
 struct InsertSelectionPayload {
   QString id;

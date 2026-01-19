@@ -1,6 +1,7 @@
 #pragma once
-#include "common.hpp"
+#include "common/context.hpp"
 #include <expected>
+#include <QUrl>
 
 class IpcCommandHandler {
 public:

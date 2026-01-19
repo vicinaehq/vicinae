@@ -1,7 +1,7 @@
 #pragma once
 #include <expected>
 #include <filesystem>
-#include "common.hpp"
+#include "common/entrypoint.hpp"
 #include "vicinae.hpp"
 #include <glaze/core/common.hpp>
 #include <glaze/core/reflect.hpp>

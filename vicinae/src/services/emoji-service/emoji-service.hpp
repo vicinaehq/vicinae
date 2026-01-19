@@ -1,10 +1,10 @@
 #pragma once
-#include "common.hpp"
 #include "emoji/emoji.hpp"
 #include "omni-database.hpp"
 #include <qobject.h>
 #include <unordered_set>
 #include <string_view>
+#include "common/scored.hpp"
 
 /**
  * Provides all emoji-related services. Also integrates with the local sqlite database to provide
