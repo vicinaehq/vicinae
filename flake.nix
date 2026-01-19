@@ -41,12 +41,6 @@
         mkVicinaeExtension = pkgs.callPackage ./nix/mkVicinaeExtension.nix { };
         mkRayCastExtension = pkgs.callPackage ./nix/mkRayCastExtension.nix { };
       });
-      mkVicinaeExtension = forEachPkgs (
-        _:
-        lib.warn
-          "vicinae: accessing mkVicinaeExtension from flake top level is deprecated, use packages.<system>.mkVicinaeExtension instaed"
-          ({ pkgs, ... }@args: pkgs.callPackage ./nix/mkVicinaeExtension.nix { } args)
-      );
       devShells = forEachPkgs (pkgs: {
         default = pkgs.mkShell {
           # automatically pulls nativeBuildInputs + buildInputs
