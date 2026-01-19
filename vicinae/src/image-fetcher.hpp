@@ -95,8 +95,8 @@ class NetworkFetcher : public QObject {
 
   void handleFetchFinished(const QString &id, const QByteArray &data) {
     if (auto it = m_replies.find(id); it != m_replies.end()) {
-      m_replies.erase(id);
       emit it->second->finished(data);
+      m_replies.erase(id);
     }
     startRequests();
   }

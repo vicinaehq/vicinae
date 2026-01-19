@@ -35,8 +35,8 @@ void Bus::handleMessage(const proto::ext::IpcMessage &msg) {
 
     if (auto it = m_pendingManagerRequests.find(response.request_id());
         it != m_pendingManagerRequests.end()) {
-      m_pendingManagerRequests.erase(it);
       emit it->second->finished(response.value());
+      m_pendingManagerRequests.erase(it);
     } else {
       qWarning() << "Got response but no matching request id" << response.request_id().c_str();
     }

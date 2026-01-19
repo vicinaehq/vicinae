@@ -38,6 +38,7 @@ option(USE_SYSTEM_LAYER_SHELL "Use system qt layer shell instead of building it 
 option(USE_SYSTEM_GLAZE "Use system glaze instead of fetching it. This is a header only library so only required at build time" OFF)
 option(USE_SYSTEM_QT_KEYCHAIN "Use system qt-keychain instead of building it from source. Note: still depends on system libsecret." ON)
 option(LIBQALCULATE_BACKEND "Compile in support for the Qalculate! calculator backend" ON)
+option(ENABLE_SANITIZERS "Enable ASan + UBSan for debug builds" OFF)
 
 # disabled for now, as it seems to be incompatible with ccache, and as such slows us down more than anything
 option(USE_PRECOMPILED_HEADERS "Use precompiled headers to speed up compilation" OFF)
@@ -160,6 +161,12 @@ message(STATUS "Configured build type ${CMAKE_BUILD_TYPE}")
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_RELEASE} -g3 -O0")
+
+if (ENABLE_SANITIZERS AND CMAKE_BUILD_TYPE MATCHES "Debug")
+	message(STATUS "Sanitizers enabled (ASan + UBSan)")
+	add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer)
+	add_link_options(-fsanitize=address,undefined)
+endif()
 
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release ReleaseHost)
 

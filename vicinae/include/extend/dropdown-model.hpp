@@ -74,8 +74,8 @@ struct DropdownModel {
   std::optional<QString> placeholder;
   std::optional<QString> value;
   std::vector<Child> children;
-  bool storeValue;
-  bool throttle;
+  bool storeValue = true;
+  bool throttle = false;
   Filtering filtering;
   bool isLoading;
 
