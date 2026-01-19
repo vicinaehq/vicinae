@@ -5,6 +5,7 @@
 #include <qscrollbar.h>
 #include <qtimer.h>
 #include <qwidget.h>
+#include <unordered_set>
 #include "ui/omni-list/omni-list-item-widget.hpp"
 
 namespace vicinae::ui {
