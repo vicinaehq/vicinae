@@ -8,6 +8,8 @@ import type * as common from "./proto/common";
 import * as manager from "./proto/manager";
 import * as path from "node:path";
 import * as fsp from "node:fs/promises";
+import { environment } from "@vicinae/api/dist";
+import { EnvironmentType } from "./types";
 
 const WORKER_GRACE_PERIOD_MS = 10_000;
 const WORKER_MAX_HEAP_SIZE_MB = 1000; // really high limit just to make sure an extension command can't exhaust RAM by itself
@@ -240,16 +242,18 @@ class Vicinae {
 		});
 	}
 
-	private createWorker(env: "production" | "development"): Worker {
+	private createWorker(environment: EnvironmentType): Worker {
 		return new Worker(__filename, {
 			stdout: true,
 			stderr: true,
 			resourceLimits: {
 				maxOldGenerationSizeMb: WORKER_MAX_HEAP_SIZE_MB,
 			},
+			workerData: {
+				environment
+			},
 			env: {
 				...process.env,
-				NODE_ENV: env,
 			},
 		});
 	}
