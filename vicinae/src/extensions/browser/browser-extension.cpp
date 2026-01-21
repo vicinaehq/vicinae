@@ -63,6 +63,8 @@ class SearchBrowserTabsView : public FilteredTypedListView<BrowserExtensionServi
     return makeSet();
   }
 
+  QString initialSearchPlaceholderText() const override { return "Search, focus and close tabs"; }
+
   std::unique_ptr<ActionPanelState>
   createActionPanel(const BrowserExtensionService::BrowserTab &item) const override {
     return BrowserTabActionGenerator::generate(context(), item);
