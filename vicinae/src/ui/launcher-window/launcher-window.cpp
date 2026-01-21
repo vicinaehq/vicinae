@@ -185,6 +185,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx)
   connect(m_ctx.navigation.get(), &NavigationController::statusBarVisiblityChanged, this, [this](bool value) {
     if (m_currentOverlayWrapper->isVisible() || m_compacted) return;
     m_bar->setVisible(value);
+    m_barDivider->setVisible(value);
   });
   connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() { repaint(); });
 }
