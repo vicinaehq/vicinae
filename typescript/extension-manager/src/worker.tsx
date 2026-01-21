@@ -1,6 +1,7 @@
 import "./globals";
 import type { Global } from "./globals";
-import { parentPort } from "node:worker_threads";
+import type { EnvironmentType } from "./types";
+import { parentPort, workerData } from "node:worker_threads";
 import { LaunchType, bus } from "@vicinae/api";
 import { patchRequire } from "./patch-require";
 import type { LaunchEventData } from "./proto/extension";
@@ -8,14 +9,14 @@ import { CommandMode } from "./proto/manager";
 import loadView from "./loaders/load-view-command";
 import loadNoView from "./loaders/load-no-view-command";
 
-const loadEnviron = (data: LaunchEventData) => {
+const loadEnviron = (environment: EnvironmentType, data: LaunchEventData) => {
 	const g = globalThis as Global;
 	Object.assign(g.vicinae.environ, {
 		theme: "dark",
 		textSize: "medium",
 		appearance: "dark",
 		canAccess: (_: unknown) => false,
-		isDevelopment: process.env.NODE_ENV === "development",
+		isDevelopment: environment === "development",
 		commandName: data.commandName,
 		commandMode: data.mode === CommandMode.View ? "view" : "no-view",
 		supportPath: data.supportPath,
@@ -49,14 +50,16 @@ export const main = async () => {
 		return;
 	}
 
-	patchRequire();
+	const { environment } = workerData as { environment: EnvironmentType };
+
+	patchRequire(environment);
 
 	// workers are provisioned before extension commands are launched, in order to avoid cold starts.
 	// we need to wait for the manager to send the launch event to initialize stuff.
 	// a worker is only used for a command once
 	bus.onLaunch(async (data) => {
-		loadEnviron(data);
-		(process as any).noDeprecation = process.env.NODE_ENV === "production";
+		loadEnviron(environment, data);
+		(process as any).noDeprecation = environment === "production";
 		await loaders[data.mode](data);
 		bus.emit("exit", {});
 	});
