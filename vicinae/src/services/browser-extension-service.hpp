@@ -91,6 +91,20 @@ public:
 
   auto closeTab(const BrowserTab &tab) { return closeTab(tab.browserId, tab.id); }
 
+  /**
+   * Find the first active tab. If many browsers are connected, the active tab from the first connected
+   * browser is returned.
+   */
+  const BrowserTab *findActiveTab() {
+    for (const auto &browser : m_browsers) {
+      if (auto it = std::ranges::find_if(browser.tabs, [](auto &&tab) { return tab.active; });
+          it != browser.tabs.end()) {
+        return &*it;
+      }
+    }
+    return nullptr;
+  }
+
   void registerBrowser(const BrowserInfo &info) {
     if (auto it = findById(info.id); it != m_browsers.end()) {
       *it = info;
@@ -107,6 +121,8 @@ public:
       emit browsersChanged();
     }
   }
+
+  std::span<const BrowserInfo> browsers() const { return m_browsers; }
 
 private:
   std::vector<BrowserInfo> m_browsers;

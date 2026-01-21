@@ -429,6 +429,7 @@ set(SRCS
 	src/extensions/clipboard/history/clipboard-history-model.hpp
 	src/extensions/clipboard/history/clipboard-history-controller.hpp
 	src/extensions/clipboard/history/clipboard-history-controller.cpp
+	src/extensions/browser/browser-extension.cpp
 
 	src/extensions/calculator/history/calculator-history-view.hpp
 	src/extensions/calculator/history/calculator-history-view.cpp

@@ -30,7 +30,7 @@ void OpenAppAction::execute(ApplicationContext *ctx) {
   auto appDb = ctx->services->appDb();
   auto toast = ctx->services->toastService();
 
-  if (!appDb->launch(*application.get(), args)) {
+  if (!appDb->launch(*application, args)) {
     toast->setToast("Failed to start app", ToastStyle::Danger);
     return;
   }
@@ -57,3 +57,14 @@ void OpenRawProgramAction::execute(ApplicationContext *ctx) {
 }
 
 OpenRawProgramAction::OpenRawProgramAction(const std::vector<QString> args) : m_args(args) {}
+
+void OpenInBrowserAction::execute(ApplicationContext *ctx) {
+  const auto toast = ctx->services->toastService();
+
+  if (!ctx->services->appDb()->openTarget(m_url)) {
+    toast->failure("Failed to open toast");
+    return;
+  }
+
+  ctx->navigation->showHud("Opened in browser");
+}

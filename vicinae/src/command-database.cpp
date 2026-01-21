@@ -1,4 +1,5 @@
 #include "command-database.hpp"
+#include "extensions/browser/browser-extension.hpp"
 #include "extensions/clipboard/clipboard-extension.hpp"
 #include "extensions/calculator/calculator-extension.hpp"
 #include "extensions/file/file-extension.hpp"
@@ -30,6 +31,7 @@ CommandDatabase::CommandDatabase() {
   registerRepository<ClipboardExtension>();
   registerRepository<FileExtension>();
   registerRepository<PowerManagementExtension>();
+  registerRepository<BrowserExtension>();
 
 #ifdef HAS_TYPESCRIPT_EXTENSIONS
   registerRepository<RaycastCompatExtension>();

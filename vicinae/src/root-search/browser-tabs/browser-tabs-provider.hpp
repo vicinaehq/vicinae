@@ -1,13 +1,10 @@
 #pragma once
+#include "actions/browser-tab-actions.hpp"
 #include "builtin_icon.hpp"
-#include "clipboard-actions.hpp"
 #include "common.hpp"
 #include "navigation-controller.hpp"
-#include "service-registry.hpp"
 #include "services/browser-extension-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
-#include "services/toast/toast-service.hpp"
-#include "ui/action-pannel/action.hpp"
 #include "ui/default-list-item-widget/default-list-item-widget.hpp"
 #include <qjsonobject.h>
 #include <qstringliteral.h>
@@ -25,43 +22,7 @@ class BrowserTabRootItem : public RootItem {
 
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx,
                                                    const RootItemMetadata &metadata) const override {
-    auto panel = std::make_unique<ActionPanelState>();
-    auto section = panel->createSection();
-
-    auto focusTab =
-        new StaticAction("Switch to tab", BuiltinIcon::Switch, [tab = m_tab](ApplicationContext *ctx) {
-          ctx->services->browserExtension()->focusTab(tab);
-          ctx->navigation->closeWindow({.clearRootSearch = true});
-        });
-
-    focusTab->setShortcut(Keyboard::Shortcut::enter());
-
-    auto closeTab = new StaticAction("Close tab", BuiltinIcon::Trash, [tab = m_tab](ApplicationContext *ctx) {
-      if (const auto result = ctx->services->browserExtension()->closeTab(tab); !result) {
-        ctx->services->toastService()->failure(
-            QString("Failed to close tab: %1").arg(result.error().c_str()));
-        return;
-      }
-      ctx->navigation->closeWindow({.clearRootSearch = true});
-    });
-    closeTab->setShortcut(Keybind::RemoveAction);
-
-    auto copyUrl = new CopyToClipboardAction(Clipboard::Text(m_tab.url.c_str()), "Copy URL");
-    auto copyTitle = new CopyToClipboardAction(Clipboard::Text(m_tab.title.c_str()), "Copy Title");
-    auto copyId = new CopyToClipboardAction(Clipboard::Text(QString::number(m_tab.id)), "Copy ID");
-
-    copyUrl->setShortcut(Keybind::CopyAction);
-
-    section->addAction(focusTab);
-    section->addAction(closeTab);
-
-    auto utilsSection = panel->createSection();
-
-    utilsSection->addAction(copyUrl);
-    utilsSection->addAction(copyTitle);
-    utilsSection->addAction(copyId);
-
-    return panel;
+    return BrowserTabActionGenerator::generate(ctx, m_tab);
   }
 
   AccessoryList accessories() const override {
