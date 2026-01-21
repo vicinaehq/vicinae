@@ -89,7 +89,10 @@ class CreateShortcutFromActiveBrowserTabCommand : public BuiltinCallbackCommand 
     const auto browser = controller->context()->services->browserExtension();
     const auto tab = browser->findActiveTab();
 
-    if (!tab) { toast->failure("No active tab!"); }
+    if (!tab) {
+      toast->failure("No active tab!");
+      return;
+    }
 
     auto view = new ShortcutFormView;
 
