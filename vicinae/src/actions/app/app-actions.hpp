@@ -1,4 +1,5 @@
 #pragma once
+#include "builtin_icon.hpp"
 #include "services/app-service/abstract-app-db.hpp"
 #include "ui/action-pannel/action.hpp"
 
@@ -54,4 +55,19 @@ private:
   QString m_prog;
   std::vector<QString> m_args;
   bool m_clearSearch = false;
+};
+
+class OpenInBrowserAction : public AbstractAction {
+public:
+  OpenInBrowserAction(QUrl url, const QString &title = "Open in browser") : m_url(url), m_title(title) {}
+
+  QString title() const override { return m_title; }
+
+  std::optional<ImageURL> icon() const override { return BuiltinIcon::Link; }
+
+  void execute(ApplicationContext *ctx) override;
+
+private:
+  QString m_title;
+  QUrl m_url;
 };

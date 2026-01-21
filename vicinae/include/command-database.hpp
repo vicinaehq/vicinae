@@ -19,6 +19,9 @@
 class AppWindow;
 class ViewCommandContext;
 
+template <typename T>
+concept DerivedFromCommand = std::derived_from<T, AbstractCmd>;
+
 class BuiltinCommand : public AbstractCmd {
   std::optional<ImageURL> _url;
   QString _repositoryId;
@@ -68,7 +71,7 @@ class BuiltinCommandRepository : public AbstractCommandRepository {
   QString author() const override final { return Omnicast::APP_ID; }
 
 protected:
-  template <typename T> void registerCommand() {
+  template <DerivedFromCommand T> void registerCommand() {
     auto cmd = std::make_shared<T>();
     cmd->setRepositoryId(id());
     cmd->setRepositoryName(displayName());
