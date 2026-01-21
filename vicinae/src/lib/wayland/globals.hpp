@@ -1,6 +1,7 @@
 #pragma once
 #include "common/types.hpp"
 #include "ext-data-control-v1-client-protocol.h"
+#include "kde-blur-client-protocol.h"
 #include "virtual-keyboard-unstable-v1-client-protocol.h"
 #include "wlr-data-control-unstable-v1-client-protocol.h"
 
@@ -9,6 +10,7 @@ namespace Wayland {
 // binds useful wayland globals which we might need to use or check availability for
 class Globals : NonCopyable {
 public:
+  static auto kwinBlur() { return instance().m_kwin_blur; }
   static zwlr_data_control_manager_v1 *wlrDataControlManager();
   /**
    * The new data control device interface, basically a stable copy of the old wlr equivalent. Should be
@@ -32,5 +34,6 @@ private:
   zwlr_data_control_manager_v1 *m_zwlr_data_control_device = nullptr;
   ext_data_control_manager_v1 *ext_data_control_device = nullptr;
   zwp_virtual_keyboard_manager_v1 *m_virtual_keyboard_manager = nullptr;
+  org_kde_kwin_blur_manager *m_kwin_blur = nullptr;
 };
 } // namespace Wayland

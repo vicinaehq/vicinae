@@ -34,6 +34,11 @@ void Globals::handleGlobal(void *data, struct wl_registry *registry, uint32_t na
     self->m_virtual_keyboard_manager = static_cast<zwp_virtual_keyboard_manager_v1 *>(
         wl_registry_bind(registry, name, &zwp_virtual_keyboard_manager_v1_interface, version));
   }
+
+  if (strcmp(interface, org_kde_kwin_blur_manager_interface.name) == 0) {
+    self->m_kwin_blur = static_cast<decltype(self->m_kwin_blur)>(
+        wl_registry_bind(registry, name, &org_kde_kwin_blur_manager_interface, version));
+  }
 }
 
 Globals &Globals::instance() {

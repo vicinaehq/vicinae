@@ -731,9 +731,12 @@ if (UNIX AND NOT APPLE)
 
     include("Wayland")
 
-    wayland_generate_protocol("${CMAKE_CURRENT_SOURCE_DIR}/protocols/wlr-foreign-toplevel-management-unstable-v1.xml")
-	wayland_generate_protocol("${CMAKE_CURRENT_SOURCE_DIR}/protocols/virtual-keyboard-unstable-v1.xml")
-		wayland_generate_protocol("${CMAKE_CURRENT_SOURCE_DIR}/protocols/ext-data-control-v1.xml")
+	set(PROTOCOL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/protocols")
+
+    wayland_generate_protocol("${PROTOCOL_DIR}/wlr-foreign-toplevel-management-unstable-v1.xml")
+	wayland_generate_protocol("${PROTOCOL_DIR}/virtual-keyboard-unstable-v1.xml")
+	wayland_generate_protocol("${PROTOCOL_DIR}/ext-data-control-v1.xml")
+	wayland_generate_protocol("${PROTOCOL_DIR}/kde-blur.xml")
 
 	list(APPEND LIBS xkbcommon)
 
