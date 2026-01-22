@@ -41,6 +41,8 @@ static inline bool containsIgnoreCase(const std::vector<std::string> &desktops, 
 }
 
 inline bool isCosmicDesktop() { return containsIgnoreCase(xdgpp::currentDesktop(), "cosmic"); }
+inline bool isNiriCompositor() { return containsIgnoreCase(xdgpp::currentDesktop(), "niri"); }
+inline bool isHyprlandCompositor() { return containsIgnoreCase(xdgpp::currentDesktop(), "Hyprland"); }
 inline bool isPlasmaDesktop() { return containsIgnoreCase(xdgpp::currentDesktop(), "kde"); }
 inline bool isWaylandPlasmaDesktop() { return isWaylandSession() && isPlasmaDesktop(); }
 inline bool isGnomeDesktop() { return containsIgnoreCase(xdgpp::currentDesktop(), "gnome"); }
