@@ -94,24 +94,13 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
     mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
   }
 
-  auto makeAction = [](auto &&pair) -> OpenAppAction * {
-    const auto &[index, appAction] = pair;
-    auto openAction = new OpenAppAction(appAction, appAction->name(), {});
-
-    if (index < 9) {
-      openAction->setShortcut({.key = QString::number(index + 1), .modifiers = {"ctrl", "shift"}});
-    }
-
-    return openAction;
-  };
-
   auto actions = m_app->actions();
 
   for (int i = 0; i != appActions.size(); ++i) {
     const auto &action = actions[i];
     auto openAction = new OpenAppAction(action, action->displayName(), {});
 
-    if (i < 9) { openAction->setShortcut(QString("ctrl+shift+%1").arg(i + 1)); }
+    if (i < 9) { openAction->setShortcut(QString("ctrl+alt+%1").arg(i + 1)); }
     mainSection->addAction(openAction);
   }
 
