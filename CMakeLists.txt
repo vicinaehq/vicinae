@@ -166,13 +166,15 @@ if (ENABLE_SANITIZERS AND CMAKE_BUILD_TYPE MATCHES "Debug")
 	message(STATUS "Sanitizers enabled (ASan + UBSan)")
 	add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer)
 	add_link_options(-fsanitize=address,undefined)
+	add_compile_definitions(DEBUG=1)
 endif()
 
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release ReleaseHost)
 
-if (NOT NOSTRIP AND NOT ${CMAKE_BUILD_TYPE} MATCHES "Debug")
-	#set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
-	message(STATUS "Built binaries will be stripped")
+if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
+	add_compile_definitions(DEBUG=1)
+else()
+	add_compile_definitions(DEBUG=0)
 endif()
 
 set(BUILD_INFO "${CXX_COMPILER_NAME} ${CMAKE_CXX_COMPILER_VERSION} - ${CMAKE_BUILD_TYPE}")

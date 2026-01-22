@@ -3,6 +3,7 @@
 #include "common.hpp"
 #include "layout.hpp"
 #include "services/window-manager/window-manager.hpp"
+#include "services/toast/toast-service.hpp"
 #include "config/config.hpp"
 #include "environment.hpp"
 #include "keyboard/keybind-manager.hpp"
@@ -385,6 +386,21 @@ bool LauncherWindow::event(QEvent *event) {
       }
       return true;
     }
+
+// mostly to help take promotional screenshots - not included in the feature set yet
+#ifdef DEBUG
+    if (keyEvent == Keyboard::Shortcut(Qt::Key_P, Qt::ControlModifier | Qt::ShiftModifier)) {
+      const auto data = grab();
+
+      if (!data.save("/tmp/vicinae.png", "png")) {
+        m_ctx.services->toastService()->failure("Failed to take screenshot");
+        return true;
+      }
+
+      m_ctx.navigation->showHud("Screenshot taken 📸");
+      return true;
+    }
+#endif
 
     if (AbstractAction *action = m_ctx.navigation->findBoundAction(keyEvent)) {
       m_ctx.navigation->executeAction(action);
