@@ -20,7 +20,7 @@ void EmptyViewWidget::setupUi() {
 
   m_title->setAlignment(Qt::AlignCenter);
   m_description->setAlignment(Qt::AlignCenter);
-  content->setFixedWidth(400);
+  content->setMaximumWidth(400);
 
   HStack().add(VStack().add(content).center()).center().imbue(this);
 }
