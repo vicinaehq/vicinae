@@ -63,3 +63,10 @@ public:
     });
   }
 };
+
+/**
+ * A view command gated by some logic
+ */
+class GuardedBuiltinCallbackCommand : public BuiltinCallbackCommand {
+  CommandMode mode() const override { return CommandMode::CommandModeView; }
+};

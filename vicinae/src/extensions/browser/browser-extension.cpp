@@ -71,7 +71,7 @@ class SearchBrowserTabsView : public FilteredTypedListView<BrowserExtensionServi
   }
 };
 
-class CreateShortcutFromActiveBrowserTabCommand : public BuiltinCallbackCommand {
+class CreateShortcutFromActiveBrowserTabCommand : public GuardedBuiltinCallbackCommand {
   QString id() const override { return "shortcut-active-tab"; }
   QString name() const override { return "Create Shortcut from Active Tab"; }
   QString description() const override {
@@ -101,7 +101,7 @@ class CreateShortcutFromActiveBrowserTabCommand : public BuiltinCallbackCommand 
   }
 };
 
-class SearchBrowserTabsCommand : public BuiltinCallbackCommand {
+class SearchBrowserTabsCommand : public GuardedBuiltinCallbackCommand {
   QString id() const override { return "browse-tabs"; }
   QString name() const override { return "Search Browser Tabs"; }
   QString description() const override { return "Search tabs from all connected browsers"; }
