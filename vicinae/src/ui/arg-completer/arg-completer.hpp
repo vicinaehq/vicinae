@@ -2,7 +2,6 @@
 #include "argument.hpp"
 #include "navigation-controller.hpp"
 #include "ui/image/image.hpp"
-#include "ui/image/image.hpp"
 #include "ui/image/url.hpp"
 #include "ui/inline-input/inline_qline_edit.hpp"
 #include <qboxlayout.h>
@@ -33,5 +32,6 @@ public:
 signals:
   void activated() const;
   void destroyed() const;
+  void escapePressed() const;
   void valueChanged(const std::vector<std::pair<QString, QString>> &arguments);
 };

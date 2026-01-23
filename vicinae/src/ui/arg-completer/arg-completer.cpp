@@ -54,6 +54,8 @@ void ArgCompleter::setArguments(const ArgumentList &args) {
       emit valueChanged(collect());
     });
 
+    connect(edit, &InlineQLineEdit::escapePressed, this, &ArgCompleter::escapePressed);
+
     if (arg.type == CommandArgument::Password) edit->setEchoMode(QLineEdit::EchoMode::Password);
 
     m_inputs.emplace_back(edit);

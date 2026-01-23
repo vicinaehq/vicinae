@@ -4,6 +4,8 @@
 #include "theme/colors.hpp"
 #include <QLineEdit>
 #include <QStyle>
+#include <qevent.h>
+#include <qnamespace.h>
 #include <qpainter.h>
 #include <qpainterpath.h>
 #include "theme/theme-file.hpp"
@@ -69,4 +71,13 @@ void InlineQLineEdit::updateStyle() {
 	)");
 
   setStyleSheet(style);
+}
+
+void InlineQLineEdit::keyPressEvent(QKeyEvent *event) {
+  if (event->key() == Qt::Key_Escape) {
+    emit escapePressed();
+    event->accept();
+    return;
+  }
+  QLineEdit::keyPressEvent(event);
 }
