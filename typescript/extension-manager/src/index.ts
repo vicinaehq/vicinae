@@ -21,7 +21,6 @@ type WorkerInfo = {
 class Vicinae {
 	private readonly workerPool: Worker[] = [];
 	private readonly workerMap = new Map<string, WorkerInfo>();
-	private readonly requestMap = new Map<string, Worker>();
 	private currentMessage: { data: Buffer } = {
 		data: Buffer.from(""),
 	};
@@ -138,7 +137,6 @@ class Vicinae {
 					 */
 
 					if (request) {
-						this.requestMap.set(request.requestId, worker);
 						this.writeMessage({ extensionRequest: { sessionId, request } });
 						return;
 					}
