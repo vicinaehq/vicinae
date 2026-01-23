@@ -8,7 +8,7 @@
 
 [![Discord](https://discord.com/api/guilds/1407488619765174273/widget.png?style=shield&nonce=1756955967)](https://discord.gg/rP4ecD42p7)
 
-**Vicinae** (pronounced _"vih-SIN-ay"_) is a high-performance, native launcher for your desktop — built with C++ and Qt.
+**Vicinae** (pronounced _"vih-SIN-ay"_) is a high-performance, native launcher for your desktop.
 
 It comes with a rich set of built-in modules and can be easily extended using the [Typescript SDK](https://docs.vicinae.com/extensions/introduction).
 
@@ -16,17 +16,13 @@ Drawing inspiration from the [Raycast launcher](https://www.raycast.com/), Vicin
 
 Vicinae is designed for developers and power users who want fast, keyboard-first access to common system actions.
 
-<p align="center">
-  
-https://github.com/user-attachments/assets/b5831ba7-dd16-407e-a05c-c2dbb468a0d6
+Check the [website](https://vicinae.com) ;)
 
+<p align="center">
+  <img  height="500" alt="image" src="https://github.com/user-attachments/assets/4aabc3fe-11a9-4902-b1ce-26db23b40d04" />
 </p>
 
-We can't show everything in the demo, far from it, so please [go read the docs](https://docs.vicinae.com)!
-
----
-
-## ✏️ Features
+## Features
 
 - Launch apps
 - File search
@@ -35,6 +31,7 @@ We can't show everything in the demo, far from it, so please [go read the docs](
 - Clipboard history
 - Quickly open links using any app (can be used to set up web search)
 - Focus open windows
+- script commands
 - `dmenu` compatibility mode
 - Theming system 
 - Fallback commands
@@ -42,7 +39,7 @@ We can't show everything in the demo, far from it, so please [go read the docs](
 - Global [extension store](https://github.com/vicinaehq/extensions) (since v0.16.0)
 - Raycast compatibility support  
   → Includes access to the official Raycast extension store, with one-click installs directly from within the launcher  
-  → Many extensions may not work yet due to missing APIs or general Linux incompatibilities (improvements in progress)
+  → Many extensions may not work yet due to missing APIs or general Linux incompatibilities
 
 
 ## Breaking changes
@@ -51,47 +48,6 @@ Until we reach version 1 you should expect breaking changes from release to rele
 
 We try to not introduce breaking changes that result in a definitive loss of data, but you should expect to have to redo your configuration from time to time.
 
-## 📚 Documentation
+## Documentation
 
-For more details on installation, usage, configuration, extension development, and contributing, visit [docs.vicinae.com](https://docs.vicinae.com).
-
-## A few more sick screenshots :)
-
-<p align="center">
-  <img width="786" height="501" alt="image" src="https://github.com/user-attachments/assets/efb3af3f-d3f0-4bf5-8ae0-ca762042c5e3" />
-</p>
-
-<p align="center">
-  <img
-    src=".github/assets/clipboard-history-gruvbox.png"
-    alt="clipboard history gruvbox"
-  />
-</p>
-
-<p align="center">
-  <img
-    src=".github/assets/dmenu-run.png"
-    alt="dmenu-style run command"
-  />
-</p>
-
-<p align="center">
-  <img
-    src=".github/assets/theme-view.png"
-    alt="manage themes view"
-  />
-</p>
-
-<p align="center">
-  <img
-    src=".github/assets/pikachu-detail.png"
-    alt="pikachu detail view from pokemon extension"
-  />
-</p>
-
-<p align="center">
-  <img
-    src=".github/assets/extension-settings.png"
-    alt="extension settings"
-  />
-</p>
+All you need to know is at [docs.vicinae.com](https://docs.vicinae.com).
