@@ -282,6 +282,7 @@ set(SRCS
 	src/ui/image/builtin-icon-loader.cpp
 	src/ui/image/qicon-image-loader.cpp
 	src/ui/image/emoji-image-loader.cpp
+	src/ui/image/image-decoder.hpp
 
 	src/ui/spinner/spinner.hpp
 	src/ui/spinner/spinner.cpp

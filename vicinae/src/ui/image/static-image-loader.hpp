@@ -1,3 +1,5 @@
+#pragma once
+#include "ui/image/image-decoder.hpp"
 #include "ui/image/image.hpp"
 #include <qbuffer.h>
 #include <qfuturewatcher.h>
@@ -8,8 +10,6 @@ class StaticIODeviceImageLoader : public AbstractImageLoader {
   QSharedPointer<ImageWatcher> m_watcher;
   QByteArray m_data;
 
-  static QImage loadStatic(const QByteArray &data, const RenderConfig &cfg);
-
 public:
   void abort() const override;
   void render(const RenderConfig &cfg) override;
@@ -17,4 +17,7 @@ public:
 public:
   StaticIODeviceImageLoader(const QByteArray &data);
   ~StaticIODeviceImageLoader();
+
+private:
+  BackgroundImageDecoder::ResponsePtr m_res;
 };

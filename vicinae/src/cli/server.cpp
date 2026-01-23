@@ -61,6 +61,8 @@ void CliServerCommand::setup(CLI::App *app) {
         if (!fs::is_regular_file(path, ec)) { return "not a valid file"; }
         return "";
       });
+  app->add_flag("--no-extension-runtime", m_noExtensionRuntime,
+                "Do not start the extension runtime node process. Typescript extensions will not run.");
 }
 
 void CliServerCommand::run(CLI::App *app) {
@@ -122,8 +124,12 @@ void CliServerCommand::run(CLI::App *app) {
     auto vicinaeStore = std::make_unique<VicinaeStoreService>();
 
 #ifdef HAS_TYPESCRIPT_EXTENSIONS
-    if (!extensionManager->start()) {
-      qCritical() << "Failed to load extension manager. Extensions will not work";
+    if (!m_noExtensionRuntime) {
+      if (!extensionManager->start()) {
+        qCritical() << "Failed to load extension manager. Extensions will not work";
+      }
+    } else {
+      qWarning() << "--no-extension-runtime flag was passed, third-party Typescript extensions will not run.";
     }
 #else
     qInfo() << "Not starting extension manager has support for typescript extensions has been disabled for "

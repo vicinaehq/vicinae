@@ -1,53 +1,4 @@
 #include "static-image-loader.hpp"
-#include "ui/image/url.hpp"
-#include "ui/omni-painter/omni-painter.hpp"
-#include <qimagereader.h>
-#include <QtConcurrent/QtConcurrent>
-#include <qnamespace.h>
-#include <qstringview.h>
-#include <qpainter.h>
-
-QImage StaticIODeviceImageLoader::loadStatic(const QByteArray &bytes, const RenderConfig &cfg) {
-  QSize deviceSize = cfg.size * cfg.devicePixelRatio;
-  QBuffer buf;
-  buf.setData(bytes);
-  buf.open(QIODevice::ReadOnly);
-  QImageReader reader(&buf);
-  QSize originalSize = reader.size();
-  bool isDownScalable =
-      originalSize.height() > deviceSize.height() || originalSize.width() > deviceSize.width();
-
-  if (originalSize.isValid() && isDownScalable) {
-    reader.setScaledSize(originalSize.scaled(deviceSize, ImageURL::fitToAspectRatio(cfg.fit)));
-  }
-
-  auto image = reader.read();
-
-  // Apply tint if provided
-  if (cfg.fill) {
-    QPixmap pixmap = QPixmap::fromImage(image);
-    QPixmap tintedPixmap(pixmap.size());
-    tintedPixmap.fill(Qt::transparent);
-
-    QPainter painter(&tintedPixmap);
-    painter.setRenderHint(QPainter::Antialiasing, true);
-    painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
-
-    // Draw the original image
-    painter.drawPixmap(0, 0, pixmap);
-
-    // Apply tint using SourceIn composition mode (tints non-transparent pixels)
-    painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
-    QColor fillColor = OmniPainter::resolveColor(*cfg.fill);
-    painter.fillRect(tintedPixmap.rect(), fillColor);
-
-    image = tintedPixmap.toImage();
-  }
-
-  image.setDevicePixelRatio(cfg.devicePixelRatio);
-
-  return image;
-}
 
 void StaticIODeviceImageLoader::abort() const {
   if (m_watcher) m_watcher->cancel();
@@ -55,16 +6,14 @@ void StaticIODeviceImageLoader::abort() const {
 
 void StaticIODeviceImageLoader::render(const RenderConfig &cfg) {
   // TODO: allow rendering with a new config instead of no op
-  auto future = QtConcurrent::run([cfg, data = m_data, this]() { return loadStatic(data, cfg); });
-  m_watcher->setFuture(future);
+  m_res = BackgroundImageDecoder::instance()->decode(std::move(m_data), cfg);
+  connect(m_res.get(), &BackgroundImageDecodeResponse::dataDecoded, this,
+          [this](QPixmap pixmap) { emit dataUpdated(pixmap); });
 }
 
 StaticIODeviceImageLoader::StaticIODeviceImageLoader(const QByteArray &data)
-    : m_data(data), m_watcher(QSharedPointer<ImageWatcher>::create()) {
-  connect(m_watcher.get(), &ImageWatcher::finished, this,
-          [this]() { emit dataUpdated(QPixmap::fromImage(m_watcher->future().takeResult())); });
-}
+    : m_data(data), m_watcher(QSharedPointer<ImageWatcher>::create()) {}
 
 StaticIODeviceImageLoader::~StaticIODeviceImageLoader() {
-  if (m_watcher && m_watcher->isRunning()) { m_watcher->cancel(); }
+  if (m_res) { BackgroundImageDecoder::instance()->cancel(m_res->id()); }
 }

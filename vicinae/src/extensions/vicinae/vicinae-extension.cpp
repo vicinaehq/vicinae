@@ -2,7 +2,6 @@
 #include "builtin_icon.hpp"
 #include "command-controller.hpp"
 #include "services/script-command/script-command-service.hpp"
-#include "common.hpp"
 #include "extensions/vicinae/list-installed-extensions-command.hpp"
 #include "extensions/vicinae/oauth-token-store/oauth-token-store-view.hpp"
 #include "extensions/vicinae/report-bug-command.hpp"
@@ -18,7 +17,8 @@
 #include "builtin-url-command.hpp"
 #include "single-view-command-context.hpp"
 #include "vicinae.hpp"
-#include <QtCore>
+#include <malloc.h>
+#include <qpixmapcache.h>
 #include <qsqlquery.h>
 #include <qurlquery.h>
 
@@ -105,6 +105,24 @@ class OpenDefaultVicinaeConfig : public BuiltinCallbackCommand {
   }
 };
 
+class PruneMemoryCommand : public BuiltinCallbackCommand {
+  QString id() const override { return "prune-memory"; }
+  QString name() const override { return "Prune Vicinae Memory Usage"; }
+  QString description() const override {
+    return "Try pruning vicinae's memory usage by clearing pixmap cache and calling malloc_trim(). Mostly "
+           "provided for internal testing.";
+  }
+  ImageURL iconUrl() const override {
+    return ImageURL::emoji("🥊").setBackgroundTint(Omnicast::ACCENT_COLOR);
+  }
+
+  void execute(CommandController *controller) const override {
+    QPixmapCache::clear();
+    malloc_trim(0);
+    controller->context()->services->toastService()->success("Pruned 🥊");
+  }
+};
+
 class OpenSettingsCommand : public BuiltinCallbackCommand {
   QString id() const override { return "settings"; }
   QString name() const override { return "Open Vicinae Settings"; }
@@ -114,6 +132,7 @@ class OpenSettingsCommand : public BuiltinCallbackCommand {
   ImageURL iconUrl() const override {
     return ImageURL::builtin("cog").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
+  bool isDefaultDisabled() const override { return true; }
 
   void execute(CommandController *controller) const override {
     auto ctx = controller->context();
@@ -200,4 +219,5 @@ VicinaeExtension::VicinaeExtension() {
   registerCommand<OpenDefaultVicinaeConfig>();
   registerCommand<InspectLocalStorage>();
   registerCommand<ReloadScriptDirectoriesCommand>();
+  registerCommand<PruneMemoryCommand>();
 }
