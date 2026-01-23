@@ -23,6 +23,7 @@ public:
   ArgCompleter(QWidget *parent = nullptr);
 
   void clear();
+  void clearInputs();
   void setIconUrl(const ImageURL &url);
   void setArguments(const ArgumentList &args);
   void setValues(const ArgumentValues values);

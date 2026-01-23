@@ -9,6 +9,13 @@ void ArgCompleter::clear() {
 
 void ArgCompleter::setIconUrl(const ImageURL &url) { m_icon->setUrl(url); }
 
+void ArgCompleter::clearInputs() {
+  for (auto &input : m_inputs) {
+    input->clear();
+  }
+  emit valueChanged(collect());
+}
+
 void ArgCompleter::validate() {
   bool requiredFocused = false;
 
