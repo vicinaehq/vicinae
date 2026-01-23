@@ -44,10 +44,7 @@ void SplitDetailWidget::setMainWidget(QWidget *widget) {
 }
 
 void SplitDetailWidget::setDetailWidget(QWidget *widget) {
-  if (m_detailWidget) {
-    // m_detailWidget->setParent(nullptr);
-    m_detailWidget->hide();
-  }
+  if (m_detailWidget) { m_detailWidget->deleteLater(); }
 
   widget->setParent(this);
   m_detailWidget = widget;
