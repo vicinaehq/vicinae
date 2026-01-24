@@ -10,10 +10,12 @@ function die() {
 
 [ $# -ne 2 ] && die "Usage: $0 <install_dir> <app_dir>"
 
-command -v linuxdeployqt || die "linuxdeployqt needs to be in PATH"
+command -v linuxdeploy || die "linuxdeployqt needs to be in PATH"
+command -v linuxdeploy-plugin-qt || die "linuxdeploy-plugin-qt needs to be in PATH"
 
 APPDIR=$2
 
+rm -rf $APPDIR
 mkdir -p $APPDIR/usr
 cp -r $1/* $APPDIR/usr
 
@@ -21,11 +23,10 @@ cp $(which node) ${APPDIR}/usr/bin/node
 cp extra/vicinae.png ${APPDIR}
 cp extra/vicinae.desktop ${APPDIR}
 
-# for some reason we need this, otherewise libssl is not getting included
+# https://github.com/linuxdeploy/linuxdeploy-plugin-qt/issues/57
 cp /usr/lib/x86_64-linux-gnu/libssl.so* ${APPDIR}/usr/lib/
 
-linuxdeployqt					\
-	$APPDIR/usr/bin/vicinae		\
-	-verbose=2					\
-	-appimage					\
-	-extra-plugins=platforms/libqwayland-generic.so,platforms/libqwayland-egl.so,wayland-graphics-integration-client,wayland-decoration-client,wayland-shell-integration,tls
+export EXTRA_PLATFORM_PLUGINS=libqwayland.so
+export EXTRA_QT_PLUGINS=waylandcompositor
+
+linuxdeploy --appdir $APPDIR --executable $APPDIR/usr/bin/vicinae --plugin qt --output appimage
