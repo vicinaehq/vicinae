@@ -116,9 +116,13 @@ RUN cmake --build . --parallel $(nproc) \
 FROM qt-builder AS deps-builder
 ARG NODE_VERSION=22.19.0
 
+RUN apt-get install -y python3-pip libxml2-dev
+RUN pip install meson
+
 # extra vicinae deps
-RUN apt-get install	-y	\
-	wayland-protocols
+RUN git clone https://gitlab.freedesktop.org/wayland/wayland && cd wayland && meson build/ -Ddocumentation=false --prefix=/usr/local && ninja -C build/ install
+
+RUN git clone https://gitlab.freedesktop.org/wayland/wayland-protocols && cd wayland-protocols && meson build/ --prefix=/usr/local && ninja -C build/ install
 
 RUN git clone --branch v6.18.0 https://github.com/KDE/extra-cmake-modules ecm &&	\
 	cd ecm			\
@@ -196,6 +200,32 @@ RUN apt-get install -y	\
 
 RUN git clone https://github.com/Qalculate/libqalculate --branch v5.9.0
 RUN cd libqalculate && ./autogen.sh && ./configure --disable-static --enable-compiled-definitions && make -j$(nproc) && make install
+
+RUN git clone https://github.com/fcitx/xcb-imdkit.git && cd xcb-imdkit && cmake . && cmake --build . && cmake --install .
+
+RUN apt-get install -y libdbus-1-dev libuv1-dev libcairo2-dev libxkbfile-dev iso-codes nlohmann-json3-dev libpango1.0-dev libgdk-pixbuf-2.0-dev
+
+RUN git clone https://github.com/fcitx/fcitx5 && cd fcitx5 && cmake \
+	-DENABLE_WAYLAND=ON . \
+	-DEVENT_LOOP_BACKEND=none	\
+	-DENABLE_SERVER=OFF			\
+	-DENABLE_TEST=OFF			\
+	-DENABLE_TESTING_ADDONS=OFF	\
+	-DENABLE_ENCHANT=OFF		\
+	-DBUILD_SPELL_DICT=OFF		\
+	-DENABLE_XDGAUTOSTART=OFF	\
+	&& cmake --build . --parallel $(nproc) && cmake --install . 
+
+RUN git clone --recursive https://github.com/fcitx/fcitx5-qt
+RUN cd fcitx5-qt && mkdir build && \
+	/usr/bin/cmake -B build \
+	-DCMAKE_POLICY_VERSION_MINIMUM=3.5	\
+	-DBUILD_ONLY_PLUGIN=ON 	\
+	-DENABLE_QT4=OFF 	\
+	-DENABLE_QT5=OFF	\
+	-DENABLE_QT6=ON 	&& \
+	/usr/bin/cmake --build build --parallel $(nproc) && \
+	/usr/bin/cmake --install build
 
 # install node 22 (used to build the main vicinae binary and bundled in the app image)
 RUN wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz
