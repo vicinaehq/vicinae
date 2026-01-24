@@ -7,7 +7,7 @@
 class AnimatedIODeviceImageLoader : public AbstractImageLoader {
 public:
   void render(const RenderConfig &cfg) override;
-  AnimatedIODeviceImageLoader(const QByteArray &bytes);
+  AnimatedIODeviceImageLoader(QByteArray bytes);
 
 private:
   std::unique_ptr<QMovie> m_movie;

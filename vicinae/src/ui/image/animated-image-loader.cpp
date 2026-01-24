@@ -25,7 +25,7 @@ void AnimatedIODeviceImageLoader::render(const RenderConfig &cfg) {
   m_movie->start();
 }
 
-AnimatedIODeviceImageLoader::AnimatedIODeviceImageLoader(const QByteArray &data) : m_data(data) {
+AnimatedIODeviceImageLoader::AnimatedIODeviceImageLoader(QByteArray data) : m_data(data) {
   m_buf.setData(m_data);
   m_buf.open(QIODevice::ReadOnly);
 }

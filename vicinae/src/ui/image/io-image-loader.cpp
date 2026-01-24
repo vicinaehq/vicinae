@@ -14,9 +14,9 @@ void IODeviceImageLoader::render(const RenderConfig &cfg) {
   QMimeType mime = mimeDb.mimeTypeForData(m_data);
 
   if (isAnimatableMimeType(mime)) {
-    m_loader = std::make_unique<AnimatedIODeviceImageLoader>(m_data);
+    m_loader = std::make_unique<AnimatedIODeviceImageLoader>(std::move(m_data));
   } else {
-    m_loader = std::make_unique<StaticIODeviceImageLoader>(m_data);
+    m_loader = std::make_unique<StaticIODeviceImageLoader>(std::move(m_data));
   }
 
   m_loader->forwardSignals(this);

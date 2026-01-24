@@ -11,5 +11,6 @@ class CliServerCommand : public AbstractCommandLineCommand {
 private:
   bool m_open = false;
   bool m_replace = false;
+  bool m_noExtensionRuntime = false;
   std::filesystem::path m_config;
 };
