@@ -49,7 +49,7 @@ appimage:
 	cmake -G Ninja -DCMAKE_INSTALL_PREFIX=./build/install -DVICINAE_PROVENANCE=appimage -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)
 	cmake --install $(BUILD_DIR)
-	./scripts/mkappimage.sh ./build/install AppDir
+	./scripts/mkappimage2.sh ./build/install AppDir
 .PHONY: appimage
 
 runner:
