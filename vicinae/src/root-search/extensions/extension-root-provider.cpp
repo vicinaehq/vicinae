@@ -33,6 +33,7 @@ std::unique_ptr<ActionPanelState> CommandRootItem::newActionPanel(ApplicationCon
   auto open = new OpenBuiltinCommandAction(m_command, "Open command");
   auto resetRanking = new ResetItemRanking(uniqueId());
   auto markAsFavorite = new ToggleItemAsFavorite(uniqueId(), metadata.favorite);
+  auto setAlias = new SetRootItemAliasAction(uniqueId());
   auto mainSection = panel->createSection();
   auto itemSection = panel->createSection();
   auto extensionSection = panel->createSection();
@@ -43,6 +44,7 @@ std::unique_ptr<ActionPanelState> CommandRootItem::newActionPanel(ApplicationCon
   mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
   itemSection->addAction(resetRanking);
   itemSection->addAction(markAsFavorite);
+  itemSection->addAction(setAlias);
   itemSection->addAction(copyDeeplink);
   itemSection->addAction(openPreferences);
   dangerSection->addAction(new DisableApplication(uniqueId()));

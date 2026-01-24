@@ -65,6 +65,7 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
   auto copyLocation = new CopyToClipboardAction(Clipboard::Text(m_app->path().c_str()), "Copy App Location");
   auto resetRanking = new ResetItemRanking(uniqueId());
   auto markAsFavorite = new ToggleItemAsFavorite(uniqueId(), metadata.favorite);
+  auto setAlias = new SetRootItemAliasAction(uniqueId());
   auto openPreferences = new OpenItemPreferencesAction(uniqueId());
   auto disable = new DisableApplication(uniqueId());
   auto preferences = ctx->services->rootItemManager()->getPreferenceValues(uniqueId());
@@ -115,6 +116,7 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
 
   itemSection->addAction(resetRanking);
   itemSection->addAction(markAsFavorite);
+  itemSection->addAction(setAlias);
   itemSection->addAction(openPreferences);
 
   dangerSection->addAction(disable);

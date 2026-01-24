@@ -196,8 +196,6 @@ void RootItemManager::search(const QString &query, std::vector<ScoredItem> &resu
 
     return a.score > b.score;
   });
-
-  return;
 }
 
 bool RootItemManager::setItemEnabled(const EntrypointId &id, bool value) {

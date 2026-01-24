@@ -26,11 +26,11 @@ std::unique_ptr<ActionPanelState> RootShortcutItem::newActionPanel(ApplicationCo
 
   auto resetRanking = new ResetItemRanking(uniqueId());
   auto markAsFavorite = new ToggleItemAsFavorite(uniqueId(), metadata.favorite);
+  auto setAlias = new SetRootItemAliasAction(uniqueId());
 
   auto disable = new DisableItemAction(uniqueId());
 
   open->setClearSearch(true);
-  // openWith->setShortcut({.key = "return", .modifiers = {"shift"}});
   duplicate->setShortcut(Keybind::DuplicateAction);
   edit->setShortcut(Keybind::EditAction);
   remove->setShortcut(Keybind::RemoveAction);
@@ -38,12 +38,12 @@ std::unique_ptr<ActionPanelState> RootShortcutItem::newActionPanel(ApplicationCo
 
   panel->setTitle(m_link->name());
   mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
-  // mainSection->addAction(openWith);
   mainSection->addAction(edit);
   mainSection->addAction(duplicate);
 
   itemSection->addAction(resetRanking);
   itemSection->addAction(markAsFavorite);
+  itemSection->addAction(setAlias);
 
   dangerSection->addAction(remove);
   dangerSection->addAction(disable);
