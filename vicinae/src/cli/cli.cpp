@@ -2,6 +2,7 @@
 #include "cli/config.hpp"
 #include "cli/script.hpp"
 #include "cli/theme.hpp"
+#include "environment.hpp"
 #include "utils.hpp"
 #include "browser/browser.hpp"
 #include "lib/CLI11.hpp"
@@ -385,6 +386,22 @@ int CommandLineApp::run(int ac, char **av) {
 }
 
 int CommandLineInterface::execute(int ac, char **av) {
+  bool ignoreAppImageWarning = false;
+
+  if (const char *p = getenv("IGNORE_APPIMAGE_WARNING"); p && std::string_view{p} == "1") {
+    ignoreAppImageWarning = true;
+  }
+
+  if (Environment::isAppImage() && !ignoreAppImageWarning) {
+    std::cerr
+        << rang::fg::red
+        << "Running Vicinae directly as an AppImage is not officially supported.\nThe AppImage version is "
+           "intended to be installed using the script: https://docs.vicinae.com/install/script\nIf you "
+           "REALLY want to do this, relaunch with IGNORE_APPIMAGE_WARNING=1. Please do not file bug reports "
+           "if using it like this.\n";
+    return false;
+  }
+
   std::vector<std::unique_ptr<AbstractCommandLineCommand>> commands;
   CommandLineApp app(Omnicast::HEADLINE.toStdString());
 
