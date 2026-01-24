@@ -100,11 +100,13 @@ class ScriptRootItem : public RootItem {
     auto itemSection = panel->createSection();
     auto resetRanking = new ResetItemRanking(uniqueId());
     auto markAsFavorite = new ToggleItemAsFavorite(uniqueId(), metadata.favorite);
+    auto setAlias = new SetRootItemAliasAction(uniqueId());
     auto disable = new DisableApplication(uniqueId());
     auto openPreferences = new OpenItemPreferencesAction(uniqueId());
 
     itemSection->addAction(resetRanking);
     itemSection->addAction(markAsFavorite);
+    itemSection->addAction(setAlias);
     itemSection->addAction(openPreferences);
     itemSection->addAction(disable);
 

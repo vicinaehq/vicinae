@@ -73,3 +73,14 @@ public:
 
   DefaultActionWrapper(const EntrypointId &id, AbstractAction *action);
 };
+
+class SetRootItemAliasAction : public AbstractAction {
+public:
+  QString title() const override { return "Set alias"; }
+  std::optional<ImageURL> icon() const override { return BuiltinIcon::Devicon; }
+  void execute(ApplicationContext *context) override;
+  SetRootItemAliasAction(EntrypointId id) : m_id(id) { setShortcut(Keybind::EditSecondaryAction); }
+
+private:
+  EntrypointId m_id;
+};

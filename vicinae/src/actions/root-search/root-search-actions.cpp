@@ -1,5 +1,5 @@
 #include "actions/root-search/root-search-actions.hpp"
-#include "common.hpp"
+#include "ui/alias-view/alias-view.hpp"
 #include "ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
@@ -128,4 +128,8 @@ DisableItemAction::DisableItemAction(const EntrypointId &id)
 void OpenItemPreferencesAction::execute(ApplicationContext *ctx) {
   ctx->navigation->closeWindow();
   ctx->settings->openExtensionPreferences(m_id);
+}
+
+void SetRootItemAliasAction::execute(ApplicationContext *ctx) {
+  ctx->navigation->pushView(new RootItemAliasView(m_id));
 }
