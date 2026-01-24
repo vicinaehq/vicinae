@@ -19,11 +19,13 @@ signals:
   void dataDecoded(QPixmap pixmap) const;
 
 public:
-  BackgroundImageDecodeResponse(int id) : m_id(id) {}
-  int id() const { return m_id; }
+  using Handle = uint32_t;
+
+  BackgroundImageDecodeResponse(Handle id) : m_id(id) {}
+  Handle id() const { return m_id; }
 
 private:
-  int m_id;
+  Handle m_id;
 };
 
 /**
@@ -36,11 +38,11 @@ public:
   using ResponsePtr = QSharedPointer<BackgroundImageDecodeResponse>;
 
 private:
-  using DecodeJobHandle = uint32_t;
   using Watcher = QFutureWatcher<QImage>;
+  using Handle = BackgroundImageDecodeResponse::Handle;
 
   struct ImageData {
-    ResponsePtr id;
+    ResponsePtr res;
     QByteArray bytes;
     RenderConfig cfg;
   };
@@ -69,9 +71,9 @@ public:
     return response;
   }
 
-  void cancel(DecodeJobHandle id) {
+  void cancel(Handle id) {
     if (auto it = m_tasks.find(id); it != m_tasks.end()) { it->second.watcher->cancel(); }
-    if (auto it = std::ranges::find_if(m_pending, [id](auto &&img) { return img.id->id() == id; });
+    if (auto it = std::ranges::find_if(m_pending, [id](auto &&img) { return img.res->id() == id; });
         it != m_pending.end()) {
       m_pending.erase(it);
     }
@@ -123,7 +125,7 @@ private:
     while (!m_pending.empty() && m_tasks.size() < MAX_CONCURRENT_JOBS) {
       auto data = m_pending.front();
       m_pending.pop_front();
-      enqueueJob(data.id, std::move(data.bytes), data.cfg);
+      enqueueJob(data.res, std::move(data.bytes), data.cfg);
     }
   }
 
@@ -144,5 +146,5 @@ private:
 
   std::unordered_map<uint32_t, JobData> m_tasks;
   std::deque<ImageData> m_pending;
-  DecodeJobHandle m_serial = 0;
+  Handle m_serial = 0;
 };

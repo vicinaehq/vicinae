@@ -1,7 +1,7 @@
 #include "static-image-loader.hpp"
 
 void StaticIODeviceImageLoader::abort() const {
-  if (m_watcher) m_watcher->cancel();
+  if (m_res) { BackgroundImageDecoder::instance()->cancel(m_res->id()); }
 }
 
 void StaticIODeviceImageLoader::render(const RenderConfig &cfg) {
@@ -11,9 +11,4 @@ void StaticIODeviceImageLoader::render(const RenderConfig &cfg) {
           [this](QPixmap pixmap) { emit dataUpdated(pixmap); });
 }
 
-StaticIODeviceImageLoader::StaticIODeviceImageLoader(const QByteArray &data)
-    : m_data(data), m_watcher(QSharedPointer<ImageWatcher>::create()) {}
-
-StaticIODeviceImageLoader::~StaticIODeviceImageLoader() {
-  if (m_res) { BackgroundImageDecoder::instance()->cancel(m_res->id()); }
-}
+StaticIODeviceImageLoader::StaticIODeviceImageLoader(QByteArray data) : m_data(data) {}
