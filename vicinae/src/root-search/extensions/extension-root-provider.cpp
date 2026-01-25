@@ -31,31 +31,24 @@ std::unique_ptr<ActionPanelState> CommandRootItem::newActionPanel(ApplicationCon
                                                                   const RootItemMetadata &metadata) const {
   auto panel = std::make_unique<ListActionPanelState>();
   auto open = new OpenBuiltinCommandAction(m_command, "Open command");
-  auto resetRanking = new ResetItemRanking(uniqueId());
-  auto markAsFavorite = new ToggleItemAsFavorite(uniqueId(), metadata.favorite);
-  auto setAlias = new SetRootItemAliasAction(uniqueId());
   auto mainSection = panel->createSection();
   auto itemSection = panel->createSection();
   auto extensionSection = panel->createSection();
   auto dangerSection = panel->createSection();
   auto copyDeeplink = new CopyToClipboardAction(Clipboard::Text(m_command->deeplink()), "Copy deeplink");
-  auto openPreferences = new OpenItemPreferencesAction(uniqueId());
 
   mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
-  itemSection->addAction(resetRanking);
-  itemSection->addAction(markAsFavorite);
-  itemSection->addAction(setAlias);
   itemSection->addAction(copyDeeplink);
-  itemSection->addAction(openPreferences);
-  dangerSection->addAction(new DisableApplication(uniqueId()));
+
+  for (const auto action : RootSearchActionGenerator::generateActions(*this, metadata)) {
+    itemSection->addAction(action);
+  }
 
   if (m_command->type() == CommandType::CommandTypeExtension) {
     auto cmd = static_cast<ExtensionCommand *>(m_command.get());
-    auto copyId = new CopyToClipboardAction(Clipboard::Text(cmd->extensionId()), "Copy extension ID");
     auto copyLocation =
         new CopyToClipboardAction(Clipboard::Text(cmd->path().c_str()), "Copy extension path");
 
-    extensionSection->addAction(copyId);
     extensionSection->addAction(copyLocation);
     dangerSection->addAction(new UninstallExtensionAction(cmd->extensionId()));
   }

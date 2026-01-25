@@ -1,5 +1,7 @@
 #pragma once
+#include "clipboard-actions.hpp"
 #include "common/entrypoint.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 #include "ui/action-pannel/action.hpp"
 
 class DisableItemAction : public AbstractAction {
@@ -83,4 +85,21 @@ public:
 
 private:
   EntrypointId m_id;
+};
+
+// common actions applicable to all root search items
+class RootSearchActionGenerator {
+public:
+  static std::vector<AbstractAction *> generateActions(const RootItem &item,
+                                                       const RootItemMetadata &metadata) {
+    const auto id = item.uniqueId();
+    const auto copyId = new CopyToClipboardAction(Clipboard::Text(QString::fromStdString(id)), "Copy ID");
+    const auto resetRanking = new ResetItemRanking(id);
+    const auto markAsFavorite = new ToggleItemAsFavorite(id, metadata.favorite);
+    const auto setAlias = new SetRootItemAliasAction(id);
+    const auto openPreferences = new OpenItemPreferencesAction(id);
+    const auto disable = new DisableApplication(id);
+
+    return {resetRanking, markAsFavorite, setAlias, openPreferences, copyId, disable};
+  }
 };
