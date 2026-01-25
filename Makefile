@@ -62,6 +62,10 @@ appimage-build-env:
 	docker build -f $(APPIMAGE_BUILD_ENV_DIR)/AppImageBuilder.Dockerfile $(APPIMAGE_BUILD_ENV_DIR) -t $(APPIMAGE_BUILD_ENV_IMAGE_TAG)
 .PHONY: appimage-build-env
 
+appimage-build-gh-runner: appimage-build-env
+	docker build -f $(APPIMAGE_BUILD_ENV_DIR)/gh-runner.Dockerfile $(APPIMAGE_BUILD_ENV_DIR) -t vicinae/appimage-gh-runner
+.PHONY: appimage-build-gh-runner
+
 format:
 	@echo -e 'vicinae\nwlr-clip' | xargs -I{} find {} -type d -iname 'build' -prune -o -type f -iname '*.hpp' -o -type f -iname '*.cpp' | xargs -I{} bash -c '[ -f {} ] && clang-format -i {} && echo "Formatted {}" || echo "Failed to format {}"'
 .PHONY: format

@@ -1,7 +1,7 @@
 # You need to build AppImageBuilder.Dockerfile locally before you can build this:
 # docker build -f AppImageBuilder.Dockerfile -t appimage-builder
 
-FROM appimage-builder:latest
+FROM vicinae/appimage-build-env:latest
 
 ARG RUNNER_VERSION=2.327.1
 ENV REPO_URL=https://github.com/vicinaehq/vicinae
