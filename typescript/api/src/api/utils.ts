@@ -58,7 +58,7 @@ export type RunInTerminalOptions = {
  * ```typescript
  * await runInTerminal(['journalctl', '--user', '-u', '-f', 'vicinae']);
  * // or, inside a shell:
- * await runInTerminal(['/bin/bash', 'echo "dis is my home: $HOME"'], { hold: true });
+ * await runInTerminal(['/bin/bash', '-c', 'echo "dis is my home: $HOME"'], { hold: true });
  * ```
  *
  * @category System
