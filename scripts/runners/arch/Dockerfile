@@ -1,9 +1,5 @@
 FROM archlinux:latest
 
-RUN useradd -m -G wheel dummy
-
-RUN echo 'dummy ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
-
 # Install dependencies
 RUN pacman -Syu --needed --noconfirm \
     curl \
@@ -26,10 +22,19 @@ RUN pacman -Syu --needed --noconfirm \
     aspnet-runtime \
     libqalculate \
     minizip \
-    qtkeychain-qt6
+    gcc		\
+    qtkeychain-qt6	\
+    rapidfuzz-cpp	\
+    mold		\
+    ccache		\
+    extra-cmake-modules	\
+    wayland-protocols	\
+	clang				\
+    catch2
+
+WORKDIR /home/runner
 
 # Download and install GitHub Actions runner
-WORKDIR /home/runner
 RUN curl -o actions-runner-linux-x64.tar.gz -L \
     "https://github.com/actions/runner/releases/download/v2.327.1/actions-runner-linux-x64-2.327.1.tar.gz" && \
     tar xzf actions-runner-linux-x64.tar.gz && \

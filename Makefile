@@ -1,6 +1,8 @@
-BUILD_DIR := build
-RM := rm
-TAG := $(shell git describe --tags --abbrev=0)
+BUILD_DIR						:= build
+RM								:= rm
+TAG 							:= $(shell git describe --tags --abbrev=0)
+APPIMAGE_BUILD_ENV_DIR			:= ./scripts/runners/appimage/
+APPIMAGE_BUILD_ENV_IMAGE_TAG	:= vicinae/appimage-build-env
 
 release:
 	cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -B $(BUILD_DIR)
@@ -52,10 +54,13 @@ appimage:
 	./scripts/mkappimage.sh ./build/install AppDir
 .PHONY: appimage
 
-runner:
-	cd ./scripts/runners/ && ./start.sh
-.PHONY:
-	runner
+appimage-build-env-run:
+	docker run -v$(PWD):/work --cap-add SYS_ADMIN --device /dev/fuse -it $(APPIMAGE_BUILD_ENV_IMAGE_TAG) 
+.PHONY: appimage-dev
+
+appimage-build-env:
+	docker build -f $(APPIMAGE_BUILD_ENV_DIR)/AppImageBuilder.Dockerfile $(APPIMAGE_BUILD_ENV_DIR) -t $(APPIMAGE_BUILD_ENV_IMAGE_TAG)
+.PHONY: appimage-build-env
 
 format:
 	@echo -e 'vicinae\nwlr-clip' | xargs -I{} find {} -type d -iname 'build' -prune -o -type f -iname '*.hpp' -o -type f -iname '*.cpp' | xargs -I{} bash -c '[ -f {} ] && clang-format -i {} && echo "Formatted {}" || echo "Failed to format {}"'
