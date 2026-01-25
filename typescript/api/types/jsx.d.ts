@@ -141,13 +141,18 @@ declare module "react" {
 			};
 			action: {
 				title: string;
-				onAction: () => void;
+				onAction: ((dateStr: string | null) => void) | (() => void);
 				onSubmit?: Function;
 				shortcut?: Keyboard.Shortcut | Keyboard.Shortcut.Common;
 				icon?: SerializedImageLike;
 				autoFocus?: boolean;
 				type?: string;
 				quicklink?: Quicklink;
+				pickDate?: {
+					min?: string;
+					max?: string;
+					dateType: string;
+				};
 				stableId?: string;
 			};
 			"tag-list": {

@@ -252,6 +252,9 @@ set(SRCS
 	src/extension/extension-grid.hpp
 	src/extension/extension-grid.cpp
 
+	include/extension/date-picker-dialog.hpp
+	src/extension/date-picker-dialog.cpp
+
 	include/extension/extension.hpp
 	src/extension/extension.cpp
 

@@ -62,6 +62,8 @@ ActionModel ActionPannelParser::parseAction(const QJsonObject &instance) {
 
   if (props.contains("quicklink")) { action.quicklink = props.value("quicklink").toObject(); }
 
+  if (props.contains("pickDate")) { action.pickDate = props.value("pickDate").toObject(); }
+
   if (props.contains("stableId")) { action.stableId = props.value("stableId").toString(); }
 
   return action;
