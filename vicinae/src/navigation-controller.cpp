@@ -101,7 +101,13 @@ void NavigationController::applyPopToRoot(const PendingPopToRoot &settings) {
   if (isRootSearch() && settings.clearSearch) clearSearchText();
 }
 
-void NavigationController::setDialog(DialogContentWidget *widget) { emit confirmAlertRequested(widget); }
+void NavigationController::setDialog(DialogContentWidget *widget) {
+  if (!m_windowOpened) {
+    m_pendingPopToRoot.reset();
+    showWindow();
+  }
+  emit confirmAlertRequested(widget);
+}
 
 void NavigationController::confirmAlert(const QString &title, const QString &description,
                                         const std::function<void()> &onConfirm) {
