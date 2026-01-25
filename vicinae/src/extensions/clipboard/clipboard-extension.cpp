@@ -1,16 +1,15 @@
 #include "extensions/clipboard/clipboard-extension.hpp"
+#include "builtin_icon.hpp"
 #include "single-view-command-context.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "extensions/clipboard/clipboard-history-command.hpp"
-#include "single-view-command-context.hpp"
 #include "service-registry.hpp"
-#include "services/clipboard/clipboard-service.hpp"
 
 class ClipboardClearCommand : public BuiltinCallbackCommand {
   QString id() const override { return "clear"; }
-  QString name() const override { return "Clear Clipboard"; }
-  QString description() const override { return "Clear the content of your system clipboard"; }
+  QString name() const override { return "Clear Current Clipboard Data"; }
+  QString description() const override { return "Clear the current content of the clipboard"; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("delete-document").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
@@ -19,15 +18,43 @@ class ClipboardClearCommand : public BuiltinCallbackCommand {
     auto clipman = ctx->services->clipman();
     auto toast = ctx->services->toastService();
 
-    if (!clipman->clear()) { return toast->failure("Failed to clear clipboard"); }
+    if (!clipman->clear()) {
+      toast->failure("Failed to clear clipboard");
+      return;
+    }
 
     ctx->navigation->showHud("Clipboard cleared", ImageURL::emoji("🤫"));
+  }
+};
+
+class ClearClipboardHistoryCommand : public BuiltinCallbackCommand {
+  QString id() const override { return "clear-history"; }
+  QString name() const override { return "Clear Clipboard History"; }
+  QString description() const override { return "Clear the clipboard history"; }
+  ImageURL iconUrl() const override {
+    return ImageURL(BuiltinIcon::Trash).setBackgroundTint(Omnicast::ACCENT_COLOR);
+  }
+  void execute(CommandController *ctrl) const override {
+    auto ctx = ctrl->context();
+    auto clipman = ctx->services->clipman();
+    auto toast = ctx->services->toastService();
+
+    ctx->navigation->confirmAlert("Are you sure?", "Your clipboard history will be gone forever :(",
+                                  [clipman, toast]() {
+                                    if (!clipman->removeAllSelections()) {
+                                      toast->failure("Failed to clear clipboard history");
+                                      return;
+                                    }
+
+                                    toast->success("Clipboard history cleared");
+                                  });
   }
 };
 
 ClipboardExtension::ClipboardExtension() {
   registerCommand<ClipboardHistoryCommand>();
   registerCommand<ClipboardClearCommand>();
+  registerCommand<ClearClipboardHistoryCommand>();
 }
 
 void ClipboardExtension::initialized(const QJsonObject &preferences) const {
