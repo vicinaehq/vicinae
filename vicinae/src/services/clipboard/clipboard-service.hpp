@@ -20,6 +20,7 @@
 #include <qsqlquery.h>
 #include <qstringview.h>
 #include <qt6keychain/keychain.h>
+#include <qtimer.h>
 
 namespace Clipboard {
 static const char *CONCEALED_MIME_TYPE = "vicinae/concealed";
@@ -137,6 +138,11 @@ public:
   bool isEncryptionReady() const;
 
 private:
+  struct PasteSession {
+    QTimer timer;
+    size_t attempts = 0;
+  };
+
   std::unique_ptr<ClipboardEncrypter> m_encrypter;
 
   QMimeDatabase _mimeDb;
@@ -169,6 +175,7 @@ private:
   WindowManager &m_wm;
   AppService &m_appDb;
 
+  std::unique_ptr<PasteSession> m_pasteSession;
   bool m_recordAllOffers = true;
   bool m_monitoring = false;
   bool m_ignorePasswords = true;

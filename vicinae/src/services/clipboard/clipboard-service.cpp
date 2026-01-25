@@ -88,6 +88,10 @@ bool ClipboardService::copyContent(const Clipboard::Content &content, const Clip
 }
 
 bool ClipboardService::pasteContent(const Clipboard::Content &content, const Clipboard::CopyOptions options) {
+  using namespace std::chrono_literals;
+  static constexpr const size_t PASTE_MAX_ATTEMPTS = 10;
+  static constexpr const auto PASTE_INTERVAL = 50ms;
+
   if (!copyContent(content, options)) return false;
 
   if (!m_wm.provider()->supportsPaste()) {
@@ -95,11 +99,27 @@ bool ClipboardService::pasteContent(const Clipboard::Content &content, const Cli
     return false;
   }
 
-  QTimer::singleShot(Environment::pasteDelay(), [wm = &m_wm, appDb = &m_appDb]() {
-    auto window = wm->getFocusedWindow();
-    std::shared_ptr<AbstractApplication> app;
-    if (window) { app = appDb->find(window->wmClass()); }
-    wm->provider()->pasteToWindow(window.get(), app.get());
+  m_pasteSession = std::make_unique<PasteSession>(); // automatically destroys any previous paste session
+  m_pasteSession->timer.setInterval(PASTE_INTERVAL);
+  m_pasteSession->timer.start();
+
+  connect(&m_pasteSession->timer, &QTimer::timeout, this, [this]() {
+    auto window = m_wm.getFocusedWindow();
+
+    ++m_pasteSession->attempts;
+
+    if (!window || window->wmClass() == "vicinae") {
+      if (m_pasteSession->attempts > PASTE_MAX_ATTEMPTS) {
+        qWarning() << "Aborted paste session after" << PASTE_MAX_ATTEMPTS << "unsuccessful paste attempts";
+        m_pasteSession->timer.stop();
+        m_pasteSession.reset();
+      }
+      return;
+    }
+
+    m_wm.provider()->pasteToWindow(window.get(), m_appDb.find(window->wmClass()).get());
+    m_pasteSession->timer.stop();
+    m_pasteSession.reset();
   });
 
   return true;
