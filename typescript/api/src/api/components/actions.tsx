@@ -1,11 +1,17 @@
 import React, { type ReactNode, useRef } from "react";
 import { randomUUID } from "node:crypto";
+import type { RunInTerminalOptions } from "../utils";
 import type { PathLike } from "node:fs";
 import { useNavigation } from "../hooks/index";
 import { Clipboard } from "../clipboard";
 import { type ImageLike, serializeProtoImage } from "../image";
 import type { Keyboard } from "../keyboard";
-import { type Application, open, showInFileBrowser } from "../utils";
+import {
+	type Application,
+	open,
+	runInTerminal,
+	showInFileBrowser,
+} from "../utils";
 import type { Form } from "./form";
 import { Icon } from "../icon";
 import { closeMainWindow } from "../controls";
@@ -100,8 +106,17 @@ export namespace Action {
 	 * @ignore - not implemented
 	 */
 	export namespace PickDate {
+		export type Props = BaseActionProps & {};
+	}
+
+	/**
+	 * Simple action wrapper around {@link runInTerminal}
+	 */
+	export namespace RunInTerminal {
 		export type Props = BaseActionProps & {
-		}
+			args: string[];
+			options?: RunInTerminalOptions;
+		};
 	}
 }
 
@@ -245,7 +260,7 @@ const SubmitForm: React.FC<Action.SubmitForm.Props> = ({
 // TODO: implement date picker action. This probably requires a full rework of the action panel.
 const PickDate: React.FC<Action.PickDate.Props> = () => {
 	return null;
-}
+};
 
 const CreateQuicklink: React.FC<Action.CreateQuicklink.Props> = ({
 	title = "Create Quicklink",
@@ -277,6 +292,23 @@ const CreateQuicklink: React.FC<Action.CreateQuicklink.Props> = ({
 	return <action {...nativeProps} />;
 };
 
+const RunInTerminal: React.FC<Action.RunInTerminal.Props> = ({
+	args,
+	options,
+	icon = Icon.Terminal,
+	...props
+}) => {
+	return (
+		<ActionRoot
+			{...props}
+			icon={icon}
+			onAction={() => {
+				runInTerminal(args, options);
+			}}
+		/>
+	);
+};
+
 /**
  * @category Actions
  */
@@ -288,10 +320,11 @@ export const Action = Object.assign(ActionRoot, {
 	SubmitForm,
 	OpenInBrowser,
 	ShowInFinder,
+	RunInTerminal,
 	CreateQuicklink,
 	PickDate: Object.assign(PickDate, {
 		// TODO: to implement too
-		isFullDay: () => false
+		isFullDay: () => false,
 	}),
 	Style: {
 		Regular: "regular",
