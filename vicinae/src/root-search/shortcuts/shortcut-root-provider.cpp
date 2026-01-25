@@ -27,7 +27,7 @@ std::unique_ptr<ActionPanelState> RootShortcutItem::newActionPanel(ApplicationCo
   open->setClearSearch(true);
   duplicate->setShortcut(Keybind::DuplicateAction);
   edit->setShortcut(Keybind::EditAction);
-  remove->setShortcut(Keybind::RemoveAction);
+  remove->setShortcut(Keybind::DangerousRemoveAction);
 
   panel->setTitle(m_link->name());
   mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));

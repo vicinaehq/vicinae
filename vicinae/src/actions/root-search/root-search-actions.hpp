@@ -79,7 +79,7 @@ public:
 class SetRootItemAliasAction : public AbstractAction {
 public:
   QString title() const override { return "Set alias"; }
-  std::optional<ImageURL> icon() const override { return BuiltinIcon::Devicon; }
+  std::optional<ImageURL> icon() const override { return BuiltinIcon::Text; }
   void execute(ApplicationContext *context) override;
   SetRootItemAliasAction(EntrypointId id) : m_id(id) { setShortcut(Keybind::EditSecondaryAction); }
 
@@ -99,6 +99,8 @@ public:
     const auto setAlias = new SetRootItemAliasAction(id);
     const auto openPreferences = new OpenItemPreferencesAction(id);
     const auto disable = new DisableApplication(id);
+
+    disable->setShortcut(Keybind::RemoveAction);
 
     return {resetRanking, markAsFavorite, setAlias, openPreferences, copyId, disable};
   }
