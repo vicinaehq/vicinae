@@ -24,29 +24,21 @@ std::unique_ptr<ActionPanelState> RootShortcutItem::newActionPanel(ApplicationCo
   auto duplicate = new DuplicateShortcutAction(m_link);
   auto remove = new RemoveShortcutAction(m_link);
 
-  auto resetRanking = new ResetItemRanking(uniqueId());
-  auto markAsFavorite = new ToggleItemAsFavorite(uniqueId(), metadata.favorite);
-  auto setAlias = new SetRootItemAliasAction(uniqueId());
-
-  auto disable = new DisableItemAction(uniqueId());
-
   open->setClearSearch(true);
   duplicate->setShortcut(Keybind::DuplicateAction);
   edit->setShortcut(Keybind::EditAction);
-  remove->setShortcut(Keybind::RemoveAction);
-  disable->setShortcut(Keybind::DangerousRemoveAction);
+  remove->setShortcut(Keybind::DangerousRemoveAction);
 
   panel->setTitle(m_link->name());
   mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
   mainSection->addAction(edit);
   mainSection->addAction(duplicate);
 
-  itemSection->addAction(resetRanking);
-  itemSection->addAction(markAsFavorite);
-  itemSection->addAction(setAlias);
+  for (const auto action : RootSearchActionGenerator::generateActions(*this, metadata)) {
+    itemSection->addAction(action);
+  }
 
   dangerSection->addAction(remove);
-  dangerSection->addAction(disable);
 
   return panel;
 }

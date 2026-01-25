@@ -63,18 +63,12 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
   auto open = new OpenAppAction(m_app, "Open Application", {});
   auto copyId = new CopyToClipboardAction(Clipboard::Text(m_app->id()), "Copy App ID");
   auto copyLocation = new CopyToClipboardAction(Clipboard::Text(m_app->path().c_str()), "Copy App Location");
-  auto resetRanking = new ResetItemRanking(uniqueId());
-  auto markAsFavorite = new ToggleItemAsFavorite(uniqueId(), metadata.favorite);
-  auto setAlias = new SetRootItemAliasAction(uniqueId());
-  auto openPreferences = new OpenItemPreferencesAction(uniqueId());
-  auto disable = new DisableApplication(uniqueId());
   auto preferences = ctx->services->rootItemManager()->getPreferenceValues(uniqueId());
   QString defaultAction = preferences.value("defaultAction").toString();
 
   auto mainSection = panel->createSection();
   auto utils = panel->createSection();
   auto itemSection = panel->createSection();
-  auto dangerSection = panel->createSection();
   auto appActions = m_app->actions();
 
   open->setClearSearch(true);
@@ -114,12 +108,9 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
   utils->addAction(copyId);
   utils->addAction(copyLocation);
 
-  itemSection->addAction(resetRanking);
-  itemSection->addAction(markAsFavorite);
-  itemSection->addAction(setAlias);
-  itemSection->addAction(openPreferences);
-
-  dangerSection->addAction(disable);
+  for (const auto &action : RootSearchActionGenerator::generateActions(*this, metadata)) {
+    itemSection->addAction(action);
+  }
 
   return panel;
 }
