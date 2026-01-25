@@ -2,9 +2,6 @@ name: Build
 
 on:
   push:
-    paths:
-      - typescript
-      - vicinae
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -13,19 +10,26 @@ jobs:
   build:
     runs-on: [self-hosted, Linux, X64, prod]
 
+    strategy:
+      max-parallel: 1
+      matrix:
+        compiler:
+          - name: GCC
+            cc: gcc
+            cxx: g++
+          - name: Clang
+            cc: clang
+            cxx: clang++
+
+    name: Build (${{ matrix.compiler.name }})
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: ccache
-        uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          key: self-hosted-prod
-          max-size: 0
-
       - name: Configure CMake
         run: |
-          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON -DCMAKE_PREFIX_PATH=$Qt6_DIR -DCMAKE_C_COMPILER_LAUNCHER="ccache" -DCMAKE_CXX_COMPILER_LAUNCHER="ccache"
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON -DCMAKE_PREFIX_PATH=$Qt6_DIR -DCMAKE_C_COMPILER=${{ matrix.compiler.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }}
 
       - name: Build
         run: cmake --build build --parallel ${nproc}
