@@ -49,7 +49,6 @@ void NavigationController::goBack(const GoBackOptions &opts) {
 
 void NavigationController::broadcastSearchText(const QString &text, const BaseView *caller) {
   if (auto state = findViewState(VALUE_OR(caller, topView()))) {
-    if (state->searchText == text) return;
     state->searchText = text;
     state->sender->textChanged(text);
   }
@@ -301,7 +300,7 @@ QString NavigationController::navigationTitle(const BaseView *caller) const {
 void NavigationController::setPopToRootOnClose(bool value) { m_popToRootOnClose = value; }
 
 void NavigationController::closeWindow(const CloseWindowOptions &settings, std::chrono::milliseconds delay) {
-  QTimer::singleShot(delay, [this, settings]() { return closeWindow(settings); });
+  QTimer::singleShot(delay, [this, settings]() { closeWindow(settings); });
 }
 
 void NavigationController::closeWindow(const CloseWindowOptions &settings) {
