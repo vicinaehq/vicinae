@@ -4,6 +4,7 @@
 #include <numeric>
 #include <qapplication.h>
 #include "environment.hpp"
+#include "linux/keyboard.hpp"
 #include "services/app-service/abstract-app-db.hpp"
 #include "x11/x11-clipboard-server.hpp"
 #include <qclipboard.h>
@@ -117,7 +118,14 @@ bool ClipboardService::pasteContent(const Clipboard::Content &content, const Cli
       return;
     }
 
-    m_wm.provider()->pasteToWindow(window.get(), m_appDb.find(window->wmClass()).get());
+    const auto app = m_appDb.find(window->wmClass()).get();
+
+    if (app && app->isTerminalEmulator()) {
+      m_keyboard.sendKey(KEY_V, UInputKeyboard::MOD_CTRL | UInputKeyboard::MOD_SHIFT);
+    } else {
+      m_keyboard.sendKey(KEY_V, UInputKeyboard::MOD_CTRL);
+    }
+
     m_pasteSession->timer.stop();
     m_pasteSession.reset();
   });

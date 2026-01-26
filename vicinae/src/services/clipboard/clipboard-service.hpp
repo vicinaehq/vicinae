@@ -1,6 +1,7 @@
 #pragma once
 #include "common.hpp"
 #include "extensions/wm/wm-extension.hpp"
+#include "linux/keyboard.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include "services/clipboard/clipboard-encrypter.hpp"
@@ -179,4 +180,5 @@ private:
   bool m_recordAllOffers = true;
   bool m_monitoring = false;
   bool m_ignorePasswords = true;
+  UInputKeyboard m_keyboard;
 };

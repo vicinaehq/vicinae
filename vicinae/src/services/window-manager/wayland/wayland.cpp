@@ -1,7 +1,9 @@
 #include "wayland.hpp"
 #include "environment.hpp"
+#include "linux/keyboard.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
 
+#include <qlogging.h>
 #include <qscreen.h>
 #include <wayland-client-protocol.h>
 #include "wayland/globals.hpp"
@@ -106,17 +108,7 @@ AbstractWindowManager::WindowPtr WaylandWindowManager::getFocusedWindowSync() co
 }
 
 bool WaylandWindowManager::pasteToWindow(const AbstractWindow *window, const AbstractApplication *app) {
-  using VK = Wayland::VirtualKeyboard;
-
-  VK kb;
-
-  if (!kb.isAvailable()) { return false; }
-
-  if (app && app->isTerminalEmulator()) {
-    return kb.sendKeySequence(XKB_KEY_v, VK::MOD_CTRL | VK::MOD_SHIFT);
-  }
-
-  return kb.sendKeySequence(XKB_KEY_v, VK::MOD_CTRL);
+  return true;
 }
 
 void WaylandWindowManager::focusWindowSync(const AbstractWindow &window) const {
@@ -131,9 +123,7 @@ bool WaylandWindowManager::closeWindow(const AbstractWindow &window) const {
   return true;
 }
 
-bool WaylandWindowManager::supportsPaste() const {
-  return !Environment::isNiriCompositor() && Wayland::Globals::virtualKeyboardManager();
-}
+bool WaylandWindowManager::supportsPaste() const { return true; }
 
 // cosmic needs its own top level management protocol integration
 bool WaylandWindowManager::isActivatable() const {
