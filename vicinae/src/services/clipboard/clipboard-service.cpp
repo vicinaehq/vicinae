@@ -105,11 +105,12 @@ bool ClipboardService::pasteContent(const Clipboard::Content &content, const Cli
   m_pasteSession->timer.start();
 
   connect(&m_pasteSession->timer, &QTimer::timeout, this, [this]() {
-    auto window = m_wm.getFocusedWindow();
+    const auto window = m_wm.getFocusedWindow();
+    const auto wmClass = window->wmClass();
 
     ++m_pasteSession->attempts;
 
-    if (!window || window->wmClass() == "vicinae") {
+    if (!window || wmClass.isEmpty() || wmClass == "vicinae") {
       if (m_pasteSession->attempts > PASTE_MAX_ATTEMPTS) {
         qWarning() << "Aborted paste session after" << PASTE_MAX_ATTEMPTS << "unsuccessful paste attempts";
         m_pasteSession->timer.stop();
