@@ -37,7 +37,6 @@ public:
   bool closeWindow(const AbstractWindow &window) const override;
 
   bool supportsPaste() const override;
-  bool pasteToWindow(const AbstractWindow *window, const AbstractApplication *app) override;
   bool ping() const override;
   bool isActivatable() const override;
 
