@@ -168,23 +168,10 @@ public:
 
   /**
    * Whether pasting the content of the clipboard to a window is supported.
-   * If it is the window manager should implement `pasteToWindow`.
+   * Window managers that cannot query the currently focused window should return false
+   * as this is a prerequisite.
    */
   virtual bool supportsPaste() const { return false; }
-
-  /**
-   * Paste the current content of the clipboard to the specified window.
-   *
-   * The `window` object is the currently focused window, if this information is available. Some environments
-   * may be paste-capable but not have a way to get the currently focused window.
-   *
-   * `app` refers to the application `window` refers to, if such an information is known. It is null
-   * otherwise. This is typically used to figure out whether the window is a terminal emulator so that a
-   * different shortcut can be sent (ctrl+shift+V for most UNIX terminals).
-   *
-   *
-   */
-  virtual bool pasteToWindow(const AbstractWindow *window, const AbstractApplication *app) { return false; }
 
   /**
    * To make sure the window manager IPC link is healthy.

@@ -107,10 +107,6 @@ AbstractWindowManager::WindowPtr WaylandWindowManager::getFocusedWindowSync() co
   return nullptr;
 }
 
-bool WaylandWindowManager::pasteToWindow(const AbstractWindow *window, const AbstractApplication *app) {
-  return true;
-}
-
 void WaylandWindowManager::focusWindowSync(const AbstractWindow &window) const {
   const WaylandWindow &ww = static_cast<const WaylandWindow &>(window);
   zwlr_foreign_toplevel_handle_v1_activate(ww.m_handle, m_seat);
