@@ -14,7 +14,7 @@ std::vector<std::unique_ptr<AbstractWindowManager>> WindowManager::createCandida
   // XXX - For all new window managers, it is needed to add it to this vector
   std::vector<std::unique_ptr<AbstractWindowManager>> candidates;
 
-  // candidates.emplace_back(std::make_unique<HyprlandWindowManager>());
+  candidates.emplace_back(std::make_unique<HyprlandWindowManager>());
   candidates.emplace_back(std::make_unique<GnomeWindowManager>());
   candidates.emplace_back(std::make_unique<KDE::WindowManager>());
   candidates.emplace_back(std::make_unique<X11WindowManager>());
@@ -71,7 +71,7 @@ AbstractWindowManager::WindowList WindowManager::findAppWindows(const AbstractAp
 
 void WindowManager::updateWindowCache() { m_windows = m_provider->listWindowsSync(); }
 
-bool WindowManager::canPaste() const { return true; }
+bool WindowManager::canPaste() const { return m_provider->supportsPaste(); }
 
 WindowManager::WindowManager() {
   m_provider = createProvider();
