@@ -653,6 +653,10 @@ ClipboardService::ClipboardService(const std::filesystem::path &path, WindowMana
   m_dataDir = path.parent_path() / "clipboard-data";
   auto clip = QApplication::clipboard();
 
+  if (m_keyboard.error()) {
+    qCritical() << "Failed to create virtual keyboard device, paste will not work:" << m_keyboard.error();
+  }
+
   {
     ClipboardServerFactory factory;
 
