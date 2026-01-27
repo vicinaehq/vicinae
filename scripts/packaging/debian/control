@@ -1,0 +1,58 @@
+Source: vicinae
+Section: utils
+Priority: optional
+Maintainer: Vicinae Developers <dev@vicinae.org>
+Build-Depends: debhelper-compat (= 13),
+               cmake (>= 3.16),
+               ninja-build,
+               pkg-config,
+               qt6-base-dev,
+               qt6-wayland-dev,
+               qt6-svg-dev,
+               libqt6sql6-sqlite,
+               libprotobuf-dev,
+               protobuf-compiler,
+               libabsl-dev,
+               libcmark-gfm-dev,
+               libcmark-gfm-extensions-dev,
+               libsecret-1-dev,
+               libqalculate-dev,
+               libssl-dev,
+               libxml2-dev,
+               libxkbcommon-dev,
+               libwayland-dev,
+               nodejs (>= 18)
+Standards-Version: 4.6.2
+Homepage: https://github.com/nicola02nb/Vicinae
+Rules-Requires-Root: no
+
+Package: vicinae
+Architecture: amd64
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+         libqt6core6 | libqt6core6t64,
+         libqt6widgets6 | libqt6widgets6t64,
+         libqt6gui6 | libqt6gui6t64,
+         libqt6sql6-sqlite,
+         libqt6svg6 | libqt6svg6t64,
+         libqt6dbus6 | libqt6dbus6t64,
+         libqt6concurrent6 | libqt6concurrent6t64,
+         qt6-wayland | qt6-wayland-dev,
+         libssl3 | libssl3t64,
+         libxml2,
+         libxkbcommon0,
+         libwayland-client0,
+         nodejs (>= 18)
+Recommends: chromium | chromium-browser | google-chrome-stable,
+            firefox | firefox-esr
+Description: A focused launcher for your desktop
+ Vicinae is a modern, keyboard-driven application launcher for Linux
+ desktops. It provides quick access to applications, files, and system
+ functions through an elegant and customizable interface.
+ .
+ Features include:
+  - Fast application launching
+  - Browser extension integration
+  - Wayland and X11 support
+  - Customizable themes
+  - Extension support via TypeScript/React

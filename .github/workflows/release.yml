@@ -150,3 +150,30 @@ jobs:
           files: |
             *.AppImage
 
+
+  build-deb:
+    needs: build-binary
+    runs-on: [self-hosted, Linux, X64, deb]
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.build-binary.outputs.tag }}
+
+      - name: Build DEB package
+        run: |
+          chmod +x ./scripts/mkdeb.sh
+          ./scripts/mkdeb.sh
+
+      - name: Create GitHub Release and upload asset
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.build-binary.outputs.tag }}
+          name: ${{ needs.build-binary.outputs.tag }}
+          generate_release_notes: true
+          files: |
+            vicinae_*_amd64.deb

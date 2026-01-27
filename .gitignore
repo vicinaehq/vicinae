@@ -23,6 +23,9 @@ __cmake*
 /AppDir
 *AppImage
 
+/debian/
+*.deb
+
 /result
 
 CLAUDE.md

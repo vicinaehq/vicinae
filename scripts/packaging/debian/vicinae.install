@@ -1,0 +1,8 @@
+usr/bin/vicinae
+usr/share/vicinae/themes/*
+usr/share/applications/vicinae.desktop
+usr/share/applications/vicinae-url-handler.desktop
+usr/share/icons/hicolor/512x512/apps/vicinae.png
+usr/lib/systemd/user/vicinae.service
+etc/chromium/native-messaging-hosts/com.vicinae.vicinae.json
+usr/lib/mozilla/native-messaging-hosts/com.vicinae.vicinae.json

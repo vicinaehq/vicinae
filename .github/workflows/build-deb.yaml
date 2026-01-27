@@ -1,0 +1,29 @@
+name: Build DEB
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: [self-hosted, Linux, X64, deb]
+    env:
+      INSTALL_DIR: ${{ github.workspace }}/install
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: self-hosted-deb
+          max-size: 0
+
+      - name: Build DEB package
+        run: |
+          chmod +x ./scripts/mkdeb.sh
+          ./scripts/mkdeb.sh

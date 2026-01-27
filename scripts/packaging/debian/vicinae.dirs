@@ -1,0 +1,7 @@
+usr/bin
+usr/share/vicinae/themes
+usr/share/applications
+usr/share/icons/hicolor/512x512/apps
+usr/lib/systemd/user
+etc/chromium/native-messaging-hosts
+usr/lib/mozilla/native-messaging-hosts
