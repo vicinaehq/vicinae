@@ -721,8 +721,6 @@ if (UNIX AND NOT APPLE)
 
 		src/lib/wayland/virtual-keyboard.hpp
 		src/lib/wayland/virtual-keyboard.cpp
-
-		src/lib/linux/keyboard.cpp
 	)
 
 	# Add XCB (X11 C Bindings) library for X11 window manager support

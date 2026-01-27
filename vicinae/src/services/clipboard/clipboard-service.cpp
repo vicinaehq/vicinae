@@ -4,7 +4,6 @@
 #include <numeric>
 #include <qapplication.h>
 #include "environment.hpp"
-#include "linux/keyboard.hpp"
 #include "services/app-service/abstract-app-db.hpp"
 #include "x11/x11-clipboard-server.hpp"
 #include <qclipboard.h>
@@ -89,10 +88,6 @@ bool ClipboardService::copyContent(const Clipboard::Content &content, const Clip
 }
 
 bool ClipboardService::pasteContent(const Clipboard::Content &content, const Clipboard::CopyOptions options) {
-  using namespace std::chrono_literals;
-  static constexpr const size_t PASTE_MAX_ATTEMPTS = 10;
-  static constexpr const auto PASTE_INTERVAL = 50ms;
-
   if (!copyContent(content, options)) return false;
 
   if (!m_wm.provider()->supportsPaste()) {
@@ -100,35 +95,11 @@ bool ClipboardService::pasteContent(const Clipboard::Content &content, const Cli
     return false;
   }
 
-  m_pasteSession = std::make_unique<PasteSession>(); // automatically destroys any previous paste session
-  m_pasteSession->timer.setInterval(PASTE_INTERVAL);
-  m_pasteSession->timer.start();
-
-  connect(&m_pasteSession->timer, &QTimer::timeout, this, [this]() {
-    const auto window = m_wm.getFocusedWindow();
-    const auto wmClass = window->wmClass();
-
-    ++m_pasteSession->attempts;
-
-    if (!window || wmClass.isEmpty() || wmClass == "vicinae") {
-      if (m_pasteSession->attempts > PASTE_MAX_ATTEMPTS) {
-        qWarning() << "Aborted paste session after" << PASTE_MAX_ATTEMPTS << "unsuccessful paste attempts";
-        m_pasteSession->timer.stop();
-        m_pasteSession.reset();
-      }
-      return;
-    }
-
-    const auto app = m_appDb.find(window->wmClass()).get();
-
-    if (app && app->isTerminalEmulator()) {
-      m_keyboard.sendKey(KEY_V, UInputKeyboard::MOD_CTRL | UInputKeyboard::MOD_SHIFT);
-    } else {
-      m_keyboard.sendKey(KEY_V, UInputKeyboard::MOD_CTRL);
-    }
-
-    m_pasteSession->timer.stop();
-    m_pasteSession.reset();
+  QTimer::singleShot(Environment::pasteDelay(), [wm = &m_wm, appDb = &m_appDb]() {
+    auto window = wm->getFocusedWindow();
+    std::shared_ptr<AbstractApplication> app;
+    if (window) { app = appDb->find(window->wmClass()); }
+    wm->provider()->pasteToWindow(window.get(), app.get());
   });
 
   return true;
