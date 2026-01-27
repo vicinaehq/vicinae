@@ -19,6 +19,7 @@
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/window-manager/window-manager.hpp"
+#include "services/snippet/snippet-service.hpp"
 #include "config/config.hpp"
 
 RootItemManager *ServiceRegistry::rootItemManager() const { return m_rootItemManager.get(); }
@@ -45,6 +46,8 @@ PowerManager *ServiceRegistry::powerManager() const { return m_powerManager.get(
 ScriptCommandService *ServiceRegistry::scriptDb() const { return m_scriptCommandService.get(); }
 
 BrowserExtensionService *ServiceRegistry::browserExtension() const { return m_browserExtensionService.get(); }
+
+SnippetService *ServiceRegistry::snippetService() const { return m_snippetService.get(); }
 
 void ServiceRegistry::setPowerManager(std::unique_ptr<PowerManager> powman) {
   m_powerManager = std::move(powman);
@@ -106,6 +109,10 @@ void ServiceRegistry::setScriptDb(std::unique_ptr<ScriptCommandService> service)
 
 void ServiceRegistry::setBrowserExtension(std::unique_ptr<BrowserExtensionService> service) {
   m_browserExtensionService = std::move(service);
+}
+
+void ServiceRegistry::setSnippetService(std::unique_ptr<SnippetService> service) {
+  m_snippetService = std::move(service);
 }
 
 ServiceRegistry *ServiceRegistry::instance() {

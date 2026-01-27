@@ -32,6 +32,7 @@
 #include "services/shortcut/shortcut-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/window-manager/window-manager.hpp"
+#include "services/snippet/snippet-service.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "ui/launcher-window/launcher-window.hpp"
 #include "utils.hpp"
@@ -157,6 +158,7 @@ void CliServerCommand::run(CLI::App *app) {
     registry->setPowerManager(std::make_unique<PowerManager>());
     registry->setScriptDb(std::make_unique<ScriptCommandService>());
     registry->setBrowserExtension(std::make_unique<BrowserExtensionService>());
+    registry->setSnippetService(std::make_unique<SnippetService>());
 
     auto root = registry->rootItemManager();
     auto builtinCommandDb = std::make_unique<CommandDatabase>();
@@ -228,6 +230,7 @@ void CliServerCommand::run(CLI::App *app) {
   IpcCommandServer commandServer(&ctx);
 
   commandServer.start(Omnicast::commandSocketPath());
+  ctx.services->snippetService()->start();
 
   auto configChanged = [&](const config::ConfigValue &next, const config::ConfigValue &prev) {
     auto &theme = ThemeService::instance();

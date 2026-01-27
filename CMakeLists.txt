@@ -3,6 +3,8 @@ set(PROJECT_NAME vicinae)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 project(${PROJECT_NAME} VERSION 1.0.0 LANGUAGES C CXX)
 
+set(LIB_NAMESPACE "vicinae")
+
 if (QT_DIR)
 	set(CMAKE_PREFIX_PATH ${QT_DIR} ${CMAKE_PREFIX_PATH})
 	message(STATUS "Using QT installation at ${QT_DIR}")
@@ -66,6 +68,7 @@ add_subdirectory(${LIB_DIR}/emoji)
 add_subdirectory(${LIB_DIR}/xdgpp)
 add_subdirectory(${LIB_DIR}/vicinae-ipc)
 add_subdirectory(${LIB_DIR}/browser-extension)
+add_subdirectory(${LIB_DIR}/snippet)
 
 if (USE_SYSTEM_PROTOBUF)
 	set(USE_SYSTEM_ABSEIL ON)

@@ -22,6 +22,7 @@ list(APPEND LIBS
 	emoji
 	vicinae-ipc
 	browser
+	vicinae::snippet
 )
 
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)
