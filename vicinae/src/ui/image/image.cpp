@@ -94,8 +94,9 @@ void ImageWidget::setObjectFit(ObjectFit fit) {
   update();
 }
 
-void ImageWidget::setUrl(const ImageURL &url) {
+void ImageWidget::setUrl(ImageURL url) {
   if (url == m_source) { return; }
+  m_isFallback = false;
   m_source = url;
   setUrlImpl(url);
 }
@@ -115,7 +116,7 @@ const ImageURL &ImageWidget::url() const { return m_source; }
 
 void ImageWidget::refreshTheme(const ThemeFile &theme) { setUrlImpl(m_source); }
 
-void ImageWidget::setUrlImpl(const ImageURL &url) {
+void ImageWidget::setUrlImpl(ImageURL url) {
   auto &theme = ThemeService::instance().theme();
   auto type = url.type();
 
@@ -174,7 +175,7 @@ void ImageWidget::setUrlImpl(const ImageURL &url) {
     m_loader.reset(new EmojiImageLoader(url.name()));
   }
 
-  if (!m_loader) { return handleLoadingError("No loader"); }
+  if (!m_loader) { handleLoadingError("No loader"); }
 
   if (m_loader) {
     connect(m_loader.get(), &AbstractImageLoader::dataUpdated, this,
@@ -192,8 +193,15 @@ QSize ImageWidget::sizeHint() const {
 }
 
 void ImageWidget::handleLoadingError(const QString &reason) {
-  if (auto fallback = m_source.fallback()) { return setUrlImpl(*fallback); }
-  return setUrlImpl(ImageURL::builtin("question-mark-circle"));
+  if (!m_isFallback) {
+    if (auto fallback = m_source.fallback()) {
+      m_isFallback = true;
+      setUrlImpl(*fallback);
+      return;
+    }
+  }
+
+  setUrlImpl(ImageURL::builtin("question-mark-circle"));
 }
 
 void ImageWidget::resizeEvent(QResizeEvent *event) {
