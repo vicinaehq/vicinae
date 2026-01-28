@@ -1,11 +1,16 @@
 #include "snippet/snippet.hpp"
 #include "vicinae-ipc/ipc.hpp"
+#include <chrono>
 #include <cstdint>
 #include <cstring>
 #include <glaze/json/read.hpp>
 #include <linux/input-event-codes.h>
+#include <expected>
 #include <linux/input.h>
+#include <libudev.h>
 #include <linux/uinput.h>
+#include <string_view>
+#include <sys/inotify.h>
 #include <xkbcommon/xkbcommon.h>
 #include <fcntl.h>
 #include <filesystem>
@@ -78,7 +83,83 @@ namespace snippet {
 struct Input {
   int fd = -1;
   std::string name;
+  epoll_event ev;
 };
+
+Server::Server() : m_udev(udev_new()), m_xkb(xkb_context_new(XKB_CONTEXT_NO_FLAGS)) {
+  static constexpr const xkb_rule_names rules{.rules = nullptr,   // defaults to "evdev"
+                                              .model = nullptr,   // defaults to "pc105"
+                                              .layout = "us",     // or "fr", "de", etc.
+                                              .variant = nullptr, // e.g. "azerty" for French
+                                              .options = nullptr};
+
+  m_keymap = xkb_keymap_new_from_names(m_xkb, &rules, XKB_KEYMAP_COMPILE_NO_FLAGS);
+  m_kbState = xkb_state_new(m_keymap);
+  setupIPC();
+}
+
+Server::~Server() { udev_unref(m_udev); }
+
+std::vector<std::string> Server::enumerateKeyboards() {
+  udev_enumerate *enumerate = udev_enumerate_new(m_udev);
+  std::vector<std::string> devNames;
+
+  udev_enumerate_add_match_subsystem(enumerate, "input");
+  udev_enumerate_add_match_property(enumerate, "ID_INPUT_KEYBOARD", "1");
+  udev_enumerate_scan_devices(enumerate);
+
+  udev_list_entry *devices = udev_enumerate_get_list_entry(enumerate);
+  udev_list_entry *entry;
+
+  udev_list_entry_foreach(entry, devices) {
+    const char *path = udev_list_entry_get_name(entry);
+    struct udev_device *dev = udev_device_new_from_syspath(m_udev, path);
+    const char *node = udev_device_get_devnode(dev);
+
+    if (node) { devNames.emplace_back(node); }
+
+    udev_device_unref(dev);
+  }
+
+  udev_enumerate_unref(enumerate);
+
+  return devNames;
+}
+
+void Server::setupIPC() {
+  m_server.route<snippet::ipc::SetKeymap>([this](const snippet::ipc::SetKeymap::Request &req) {
+    const auto toPtr = [](const std::optional<std::string> &str) {
+      return str.transform([](auto &&str) { return str.c_str(); }).value_or(nullptr);
+    };
+
+    const xkb_rule_names rules{.rules = toPtr(req.rules),
+                               .model = toPtr(req.model),
+                               .layout = req.layout.c_str(),
+                               .variant = toPtr(req.variant),
+                               .options = toPtr(req.options)};
+    auto keymap = xkb_keymap_new_from_names(m_xkb, &rules, XKB_KEYMAP_COMPILE_NO_FLAGS);
+    auto state = xkb_state_new(keymap);
+
+    xkb_state_unref(m_kbState);
+    xkb_keymap_unref(m_keymap);
+    m_keymap = keymap;
+    m_kbState = state;
+    std::println(std::cerr, "changed keyboard layout to {}", rules.layout);
+
+    return snippet::ipc::SetKeymap::Response();
+  });
+
+  m_server.route<snippet::ipc::CreateSnippet>([this](const snippet::ipc::CreateSnippet::Request &req) {
+    std::println(std::cerr, "Created new snippet with trigger {}", req.trigger);
+    m_snippetMap[req.trigger] = {req.trigger};
+    return snippet::ipc::CreateSnippet::Response();
+  });
+
+  m_server.route<snippet::ipc::RemoveSnippet>([this](const snippet::ipc::RemoveSnippet::Request &req) {
+    m_snippetMap.erase(req.trigger);
+    return snippet::ipc::RemoveSnippet::Response();
+  });
+}
 
 void Server::listen() {
   std::error_code ec;
@@ -102,30 +183,49 @@ void Server::listen() {
     exit(1);
   }
 
-  for (const auto &entry : fs::directory_iterator("/dev/input", ec)) {
-    if (entry.is_other()) {
-      const auto &pathStr = entry.path().string();
-      if (entry.path().filename().string().starts_with("event")) {
-        int fd = open(entry.path().c_str(), O_RDONLY);
+  udev_monitor *mon = udev_monitor_new_from_netlink(m_udev, "udev");
 
-        if (fd == -1) {
-          std::println(std::cerr, "Failed to open {}: {}", entry.path().c_str(), strerror(errno));
-          continue;
-        }
+  udev_monitor_filter_add_match_subsystem_devtype(mon, "input", nullptr);
+  udev_monitor_enable_receiving(mon);
 
-        ev.events = EPOLLIN;
-        ev.data.fd = fd;
+  int udevFd = udev_monitor_get_fd(mon);
 
-        if (epoll_ctl(epollfd, EPOLL_CTL_ADD, ev.data.fd, &ev) == -1) {
-          std::println(std::cerr, "Failed to add fd {} for {} to epoll: {}", fd, entry.path().c_str(),
-                       strerror(errno));
-          close(fd);
-          continue;
-        }
+  if (udevFd == -1) {
+    std::println(std::cerr, "Failed to create inotify file descriptor", strerror(errno));
+    exit(1);
+  }
 
-        inputs[fd] = {.fd = fd, .name = entry.path()};
-      }
+  ev.data.fd = udevFd;
+  ev.events = EPOLLIN;
+
+  if (epoll_ctl(epollfd, EPOLL_CTL_ADD, ev.data.fd, &ev) == -1) {
+    std::println(std::cerr, "Failed to add watch to epoll: {}", strerror(errno));
+    exit(1);
+  }
+
+  const auto createInput = [&](const char *device) -> bool {
+    int fd = open(device, O_RDONLY);
+
+    if (fd == -1) {
+      std::println(std::cerr, "Failed to open {}: {}", device, strerror(errno));
+      return false;
     }
+
+    ev.events = EPOLLIN;
+    ev.data.fd = fd;
+
+    if (epoll_ctl(epollfd, EPOLL_CTL_ADD, ev.data.fd, &ev) == -1) {
+      std::println(std::cerr, "Failed to add fd {} for {} to epoll: {}", fd, device, strerror(errno));
+      close(fd);
+      return false;
+    }
+
+    inputs[fd] = {.fd = fd, .name = device, .ev = ev};
+    return true;
+  };
+
+  for (const auto &device : enumerateKeyboards()) {
+    createInput(device.c_str());
   }
 
   for (const auto &[fd, data] : inputs) {
@@ -145,23 +245,13 @@ void Server::listen() {
   struct xkb_keymap *keymap = xkb_keymap_new_from_names(ctx, &rules, XKB_KEYMAP_COMPILE_NO_FLAGS);
   struct xkb_state *state = xkb_state_new(keymap);
 
+  auto lastKeyTime = std::chrono::steady_clock::now();
+
   Frame ipcFrame;
 
-  ::ipc::RpcServer<snippet::ipc::ClientSchema> server; // vicinae -> snippet requests
-  ::ipc::RpcClient<snippet::ipc::ServerSchema> client; // snippet -> vicinae requests/notifications
-
-  server.route<snippet::ipc::CreateSnippet>([](const snippet::ipc::CreateSnippet::Request &req) {
-    std::println(std::cerr, "Created new snippet with trigger {}", req.trigger);
-    return snippet::ipc::CreateSnippet::Response();
-  });
-
-  server.route<snippet::ipc::RemoveSnippet>([](const snippet::ipc::RemoveSnippet::Request &req) {
-    return snippet::ipc::RemoveSnippet::Response();
-  });
-
   ipcFrame.setHandler([&](std::string_view message) {
-    using Req = decltype(server)::SchemaType::Request;
-    using Res = decltype(client)::Schema::Response;
+    using Req = decltype(m_server)::SchemaType::Request;
+    using Res = decltype(m_client)::Schema::Response;
 
     std::variant<Req, Res> v;
     if (const auto error = glz::read_json(v, message)) {
@@ -170,7 +260,7 @@ void Server::listen() {
     }
 
     if (auto it = std::get_if<Req>(&v)) {
-      const auto res = server.call(*it);
+      const auto res = m_server.call(*it);
 
       if (!res) {
         std::println(std::cerr, "Request failed: {}", res.error());
@@ -187,7 +277,7 @@ void Server::listen() {
     }
 
     if (auto it = std::get_if<Res>(&v)) {
-      auto _ = client.call(*it);
+      auto _ = m_client.call(*it);
       return;
     }
   });
@@ -208,6 +298,43 @@ void Server::listen() {
         continue;
       }
 
+      // hot plug/unplug
+      if (fd == udevFd) {
+        udev_device *dev = udev_monitor_receive_device(mon);
+        std::string_view action = udev_device_get_action(dev);
+        const char *node = udev_device_get_devnode(dev);
+
+        if (!node) continue;
+
+        const char *kb = udev_device_get_property_value(dev, "ID_INPUT_KEYBOARD");
+
+        if (!kb || std::string_view{kb} != "1") continue;
+
+        if (action == "add") {
+          std::println(std::cerr, "CREATE ev: {}", node);
+
+          if (createInput(node)) {
+            std::println(std::cerr, "Hot plugged device {}", node);
+          } else {
+            std::println(std::cerr, "Failed to hot plug device {}", node);
+          }
+        }
+
+        else if (action == "remove") {
+          std::println(std::cerr, "DELETE ev: {}", node);
+
+          if (auto it = std::ranges::find_if(inputs, [&](auto &&input) { return input.second.name == node; });
+              it != inputs.end()) {
+            epoll_ctl(epollfd, EPOLL_CTL_DEL, it->second.ev.data.fd, &it->second.ev);
+            close(it->second.fd);
+            std::println(std::cerr, "Removed device {} (fd={})", it->second.name, it->second.fd);
+            inputs.erase(it);
+          }
+        }
+
+        continue;
+      }
+
       auto it = inputs.find(fd);
 
       if (it == inputs.end()) {
@@ -224,6 +351,14 @@ void Server::listen() {
         continue;
       }
 
+      if (rc <= 0) {
+        epoll_ctl(epollfd, EPOLL_CTL_DEL, it->second.ev.data.fd, &it->second.ev);
+        close(it->second.fd);
+        std::println(std::cerr, "Removed device {} (fd={})", it->second.name, it->second.fd);
+        inputs.erase(it);
+        continue;
+      }
+
       if (ev.type != EV_KEY) {
         // std::println(std::cerr, "Reading key input {} (fd={}) code={}", it->second.name, fd, ev.code);
         continue;
@@ -237,12 +372,23 @@ void Server::listen() {
       std::println(std::cerr, "len={}", len);
 
       if (ev.value == 0) {
-        xkb_state_update_key(state, keycode, XKB_KEY_DOWN);
-      } else if (ev.value == 1) {
         xkb_state_update_key(state, keycode, XKB_KEY_UP);
+      } else if (ev.value == 1) {
+
+        xkb_state_update_key(state, keycode, XKB_KEY_DOWN);
+
+        if (!keyStr.empty()) {
+          const auto now = std::chrono::steady_clock::now();
+          const auto elapsed =
+              std::chrono::duration_cast<std::chrono::milliseconds>(now - lastKeyTime).count();
+
+          if (elapsed > 1000) { m_text.clear(); }
+          m_text.append(keyStr);
+          lastKeyTime = now;
+        }
       }
 
-      std::println(std::cerr, "key={} ({})", keyStr, ev.value == 0 ? "down" : "up");
+      std::println(std::cerr, "text='{}'", m_text);
     }
   }
 }

@@ -26,7 +26,7 @@ add_library(${PROJECT_NAME}  STATIC src/server.cpp)
 add_library(${LIB_NAMESPACE}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include PRIVATE src)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)
-target_link_libraries(${PROJECT_NAME} PUBLIC vicinae-ipc glaze::glaze xkbcommon)
+target_link_libraries(${PROJECT_NAME} PUBLIC vicinae-ipc glaze::glaze xkbcommon udev)
 
 if (BUILD_TESTS)
 	set(TEST_TARGET ${PROJECT_NAME}-tests)
