@@ -53,7 +53,7 @@ public:
   void setAlignment(Qt::Alignment alignment);
   void setObjectFit(ObjectFit fit);
   const ImageURL &url() const;
-  void setUrl(const ImageURL &url);
+  void setUrl(ImageURL url);
   void setData(const QPixmap &pixmap);
   ImageWidget(QWidget *parent = nullptr);
   ~ImageWidget();
@@ -65,18 +65,18 @@ private:
   void showEvent(QShowEvent *event) override;
   void handleDataUpdated(const QPixmap &data, bool cachable);
   QSize sizeHint() const override;
-  void setUrlImpl(const ImageURL &url);
+  void setUrlImpl(ImageURL url);
   void refreshTheme(const ThemeFile &theme);
   QString sizedCacheKey(const QString &key, const QSize &size) const;
 
   QObjectUniquePtr<AbstractImageLoader> m_loader;
   QPixmap m_data;
   ImageURL m_source;
-  QString m_fallback;
   int m_renderCount = 0;
   uint8_t m_token = 0;
   ObjectFit m_fit = ObjectFit::Contain;
   QFlags<Qt::AlignmentFlag> m_alignment = Qt::AlignCenter;
   std::optional<ColorLike> m_backgroundColor;
   int m_borderRadius = 4;
+  bool m_isFallback = false;
 };
