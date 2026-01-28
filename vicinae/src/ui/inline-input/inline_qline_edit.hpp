@@ -11,8 +11,11 @@ public:
   void clearError();
   void handleTextChanged(const QString &s);
 
+signals:
+  void escapePressed();
+
 protected:
-  // void paintEvent(QPaintEvent *) override;
+  void keyPressEvent(QKeyEvent *event) override;
 
 private:
   void resizeFromText(const QString &s);
