@@ -1,20 +1,17 @@
-# libemoji
+# vicinae snippet server
 
-`libemoji` is a very simple library providing a simple API to work with emojis. It is used by vicinae to provide emoji picking capabilities and decide when to render emoji icons.
+This library exports a snippet server that can register snippets and send notifications when expansion is required.
 
-## Dependencies
+The main vicinae server will start the snippet server by calling itself with a specific set of arguments.
 
-- [ICU](https://github.com/unicode-org/icu). Already required by Qt and many other packages, should be installed on most systems by default.
+Communication between the main vicinae server and the snippet server is done using stdin and stdout. stderr is used for debug logs.
 
-## Static emoji database
+The vicinae server typically starts the snipet server, registers snippets that were persisted, and then starts listening for expansions.
 
-Due to how emojis and unicode work, there is no good way to enumerate emojis. In order to provide emoji picking, the most reliable way is to generate a static list of emojis and use that.
-This is what the stuff in `scripts` does. The list is regenerated from time to time and is directly bundled with the library. This is automated through the use of the `make gen-db` command.
+The vicinae server receives an expansion notification when a given snippet is triggered, and shall populate the clipboard with whatever that specific snippet needs to be expanded to.
 
-## Emoji segmentation
+It then sends another request to the snippet server in order to inject ctrl+v or ctrl+shift+v at the cursor position.
 
-The vicinae extension ecosystem allows extensions to make use of regular emoji strings as valid icons. For that to work reliably, we need a way to identify whether a given string is an emoji or something else entirely.
+Expansion is performed in vicinae because vicinae already has all the context required for expansion, and complex expansion types may require accessing vicinae data directly (focused window, active app, clipboard contents...).
 
-Matching against the static database is not a viable option because it doesn't handle all the emoji variations, of which there are a ton. See [this article](https://www.qt.io/blog/emoji-in-qt-6.9) for a nice overview of how this stuff works.
-
-This library uses the [google emoji segmenter](https://github.com/google/emoji-segmenter) to achieve that.
+For the snippet server to work as intended, relevant udev rules need to be enabled. In most cases, this is done through the vicinae installation process.

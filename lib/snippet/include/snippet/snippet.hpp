@@ -1,6 +1,8 @@
 #pragma once
 #include "vicinae-ipc/ipc.hpp"
+#include "keyboard.hpp"
 #include <libudev.h>
+#include <unistd.h>
 #include <unordered_map>
 #include <xkbcommon/xkbcommon.h>
 
@@ -39,6 +41,17 @@ struct RemoveSnippet {
   };
 };
 
+struct InjectClipboardExpansion {
+  static constexpr const auto key = "snippet/inject";
+
+  struct Request {
+    std::string trigger;
+    bool terminal = false;
+  };
+
+  struct Response {};
+};
+
 struct TriggerSnippet {
   static constexpr const auto key = "snippet/trigger";
   struct Request {
@@ -47,7 +60,7 @@ struct TriggerSnippet {
   struct Response {};
 };
 
-using ClientSchema = ::ipc::RpcSchema<SetKeymap, CreateSnippet, RemoveSnippet>;
+using ClientSchema = ::ipc::RpcSchema<SetKeymap, CreateSnippet, RemoveSnippet, InjectClipboardExpansion>;
 using ServerSchema = ::ipc::RpcSchema<TriggerSnippet>;
 
 }; // namespace ipc
@@ -63,11 +76,20 @@ protected:
   std::vector<std::string> enumerateKeyboards();
   void setupIPC();
 
+  template <typename T> void notify(typename T::Request req) {
+    const auto json = m_client.notify<T>(req);
+    uint32_t size = json.size();
+    std::cout.write(reinterpret_cast<const char *>(&size), sizeof(size));
+    std::cout.write(json.data(), json.size());
+    std::cout.flush();
+  };
+
 private:
   struct Snippet {
     std::string trigger;
   };
 
+  UInputKeyboard m_kb;
   std::string m_text;
   udev *m_udev = nullptr;
   xkb_context *m_xkb = nullptr;

@@ -13,7 +13,6 @@
 #include <sys/inotify.h>
 #include <xkbcommon/xkbcommon.h>
 #include <fcntl.h>
-#include <filesystem>
 #include <iostream>
 #include <ostream>
 #include <sys/epoll.h>
@@ -22,11 +21,7 @@
 
 namespace fs = std::filesystem;
 
-#ifdef NDEBUG
-#define READ_SIZE 8096
-#else
-#define READ_SIZE 1
-#endif
+static auto lastExpansionTime = std::chrono::steady_clock::now();
 
 /**
  * Parse message as data gets in, and call the provided callback once a full message
@@ -72,7 +67,7 @@ public:
   }
 
 private:
-  std::array<char, READ_SIZE> m_buf;
+  std::array<char, 8096> m_buf;
   std::string data;
   uint32_t size = 0;
   Handler m_fn;
@@ -159,6 +154,20 @@ void Server::setupIPC() {
     m_snippetMap.erase(req.trigger);
     return snippet::ipc::RemoveSnippet::Response();
   });
+
+  m_server.route<snippet::ipc::InjectClipboardExpansion>(
+      [this](const snippet::ipc::InjectClipboardExpansion::Request &req) {
+        std::println(std::cerr, "Received expansion request for snippet {} (took {}ms)", req.trigger,
+                     std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() -
+                                                                           lastExpansionTime)
+                         .count());
+        m_kb.repeatKey(KEY_BACKSPACE, req.trigger.size());
+        usleep(2000);
+
+        m_kb.sendKey(KEY_V, UInputKeyboard::Modifier::MOD_CTRL);
+
+        return snippet::ipc::InjectClipboardExpansion::Response();
+      });
 }
 
 void Server::listen() {
@@ -369,12 +378,10 @@ void Server::listen() {
       int len = xkb_state_key_get_utf8(state, keycode, key.data(), key.size());
       std::string_view keyStr{key.data(), static_cast<size_t>(len)};
 
-      std::println(std::cerr, "len={}", len);
-
       if (ev.value == 0) {
         xkb_state_update_key(state, keycode, XKB_KEY_UP);
-      } else if (ev.value == 1) {
 
+      } else if (ev.value == 1) {
         xkb_state_update_key(state, keycode, XKB_KEY_DOWN);
 
         if (!keyStr.empty()) {
@@ -383,7 +390,20 @@ void Server::listen() {
               std::chrono::duration_cast<std::chrono::milliseconds>(now - lastKeyTime).count();
 
           if (elapsed > 1000) { m_text.clear(); }
-          m_text.append(keyStr);
+
+          if (ev.code == KEY_BACKSPACE) {
+            if (!m_text.empty()) { m_text.erase(m_text.end() - 1); }
+          } else {
+            m_text.append(keyStr);
+          }
+
+          if (const auto it = m_snippetMap.find(m_text); it != m_snippetMap.end()) {
+            std::println(std::cerr, "SNIPPET EXPANDED: {}", it->second.trigger);
+            lastExpansionTime = std::chrono::steady_clock::now();
+            notify<ipc::TriggerSnippet>({.trigger = it->second.trigger});
+            m_text.clear();
+          }
+
           lastKeyTime = now;
         }
       }
