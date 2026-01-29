@@ -41,6 +41,7 @@ void UInputKeyboard::sendKey(int code, int mods) {
   sendKey(code);
   usleep(KEY_DELAY_US);
   sync();
+  usleep(KEY_DELAY_US);
   clearMods(mods);
   sync();
 }

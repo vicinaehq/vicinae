@@ -1,5 +1,6 @@
 #include "snippet/snippet.hpp"
 #include "vicinae-ipc/ipc.hpp"
+#include <cctype>
 #include <chrono>
 #include <cstdint>
 #include <cstring>
@@ -10,7 +11,6 @@
 #include <libudev.h>
 #include <linux/uinput.h>
 #include <string_view>
-#include <sys/inotify.h>
 #include <xkbcommon/xkbcommon.h>
 #include <fcntl.h>
 #include <iostream>
@@ -18,8 +18,6 @@
 #include <sys/epoll.h>
 #include <unistd.h>
 #include <unordered_map>
-
-namespace fs = std::filesystem;
 
 static auto lastExpansionTime = std::chrono::steady_clock::now();
 
@@ -123,24 +121,7 @@ std::vector<std::string> Server::enumerateKeyboards() {
 
 void Server::setupIPC() {
   m_server.route<snippet::ipc::SetKeymap>([this](const snippet::ipc::SetKeymap::Request &req) {
-    const auto toPtr = [](const std::optional<std::string> &str) {
-      return str.transform([](auto &&str) { return str.c_str(); }).value_or(nullptr);
-    };
-
-    const xkb_rule_names rules{.rules = toPtr(req.rules),
-                               .model = toPtr(req.model),
-                               .layout = req.layout.c_str(),
-                               .variant = toPtr(req.variant),
-                               .options = toPtr(req.options)};
-    auto keymap = xkb_keymap_new_from_names(m_xkb, &rules, XKB_KEYMAP_COMPILE_NO_FLAGS);
-    auto state = xkb_state_new(keymap);
-
-    xkb_state_unref(m_kbState);
-    xkb_keymap_unref(m_keymap);
-    m_keymap = keymap;
-    m_kbState = state;
-    std::println(std::cerr, "changed keyboard layout to {}", rules.layout);
-
+    setLayout(req);
     return snippet::ipc::SetKeymap::Response();
   });
 
@@ -168,6 +149,25 @@ void Server::setupIPC() {
 
         return snippet::ipc::InjectClipboardExpansion::Response();
       });
+}
+
+void Server::setLayout(const LayoutInfo &info) {
+  const auto toPtr = [](const std::optional<std::string> &str) {
+    return str.transform([](auto &&str) { return str.c_str(); }).value_or(nullptr);
+  };
+  const xkb_rule_names rules{.rules = toPtr(info.rules),
+                             .model = toPtr(info.model),
+                             .layout = info.layout.c_str(),
+                             .variant = toPtr(info.variant),
+                             .options = toPtr(info.options)};
+  auto keymap = xkb_keymap_new_from_names(m_xkb, &rules, XKB_KEYMAP_COMPILE_NO_FLAGS);
+  auto state = xkb_state_new(keymap);
+
+  xkb_state_unref(m_kbState);
+  xkb_keymap_unref(m_keymap);
+  m_keymap = keymap;
+  m_kbState = state;
+  std::println(std::cerr, "changed keyboard layout to {}", rules.layout);
 }
 
 void Server::listen() {
@@ -243,16 +243,6 @@ void Server::listen() {
 
   constexpr const int MAX_EVENTS = 256;
   std::array<epoll_event, MAX_EVENTS> events;
-  xkb_context *ctx = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-
-  xkb_rule_names rules{.rules = nullptr,   // defaults to "evdev"
-                       .model = nullptr,   // defaults to "pc105"
-                       .layout = "us",     // or "fr", "de", etc.
-                       .variant = nullptr, // e.g. "azerty" for French
-                       .options = nullptr};
-
-  struct xkb_keymap *keymap = xkb_keymap_new_from_names(ctx, &rules, XKB_KEYMAP_COMPILE_NO_FLAGS);
-  struct xkb_state *state = xkb_state_new(keymap);
 
   auto lastKeyTime = std::chrono::steady_clock::now();
 
@@ -290,6 +280,8 @@ void Server::listen() {
       return;
     }
   });
+
+  setLayout({.layout = "us"});
 
   for (;;) {
     int nfds = epoll_wait(epollfd, events.data(), events.size(), -1);
@@ -374,43 +366,56 @@ void Server::listen() {
       }
 
       xkb_keycode_t keycode = ev.code + 8;
-      std::array<char, 32> key;
-      int len = xkb_state_key_get_utf8(state, keycode, key.data(), key.size());
-      std::string_view keyStr{key.data(), static_cast<size_t>(len)};
 
       if (ev.value == 0) {
-        xkb_state_update_key(state, keycode, XKB_KEY_UP);
-
+        xkb_state_update_key(m_kbState, keycode, XKB_KEY_UP);
       } else if (ev.value == 1) {
-        xkb_state_update_key(state, keycode, XKB_KEY_DOWN);
+        std::array<char, 32> key;
+        int len = xkb_state_key_get_utf8(m_kbState, keycode, key.data(), key.size());
+        std::string_view keyStr{key.data(), static_cast<size_t>(len)};
+
+        xkb_state_update_key(m_kbState, keycode, XKB_KEY_DOWN);
 
         if (!keyStr.empty()) {
           const auto now = std::chrono::steady_clock::now();
           const auto elapsed =
               std::chrono::duration_cast<std::chrono::milliseconds>(now - lastKeyTime).count();
 
-          if (elapsed > 1000) { m_text.clear(); }
+          // if (elapsed > 1000) { m_text.clear(); }
 
           if (ev.code == KEY_BACKSPACE) {
             if (!m_text.empty()) { m_text.erase(m_text.end() - 1); }
-          } else {
+          } else if (std::isprint(keyStr.at(0))) {
             m_text.append(keyStr);
           }
 
-          if (const auto it = m_snippetMap.find(m_text); it != m_snippetMap.end()) {
-            std::println(std::cerr, "SNIPPET EXPANDED: {}", it->second.trigger);
-            lastExpansionTime = std::chrono::steady_clock::now();
-            notify<ipc::TriggerSnippet>({.trigger = it->second.trigger});
-            m_text.clear();
+          const auto it = m_snippetMap.find(m_text);
+
+          if (it != m_snippetMap.end()) {
+            switch (it->second.mode) {
+            case ipc::ExpansionMode::Keydown:
+              emitExpansion(it->second);
+              break;
+            case ipc::ExpansionMode::Word:
+              if (ev.code == KEY_SPACE || ev.code == KEY_ENTER) { emitExpansion(it->second); }
+              break;
+            }
           }
 
-          lastKeyTime = now;
+          if (ev.code == KEY_SPACE) { m_text.clear(); }
         }
-      }
 
-      std::println(std::cerr, "text='{}'", m_text);
+        std::println(std::cerr, "text='{}'", m_text);
+      }
     }
   }
+}
+
+void Server::emitExpansion(const Snippet &snippet) {
+  std::println(std::cerr, "SNIPPET EXPANDED: {}", snippet.trigger);
+  lastExpansionTime = std::chrono::steady_clock::now();
+  notify<ipc::TriggerSnippet>({.trigger = snippet.trigger});
+  m_text.clear();
 }
 
 }; // namespace snippet
