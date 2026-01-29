@@ -369,12 +369,12 @@ void Server::listen() {
 
       if (ev.value == 0) {
         xkb_state_update_key(m_kbState, keycode, XKB_KEY_UP);
-      } else if (ev.value == 1) {
+      } else if (ev.value <= 2) {
         std::array<char, 32> key;
         int len = xkb_state_key_get_utf8(m_kbState, keycode, key.data(), key.size());
         std::string_view keyStr{key.data(), static_cast<size_t>(len)};
 
-        xkb_state_update_key(m_kbState, keycode, XKB_KEY_DOWN);
+        if (ev.value == 1) { xkb_state_update_key(m_kbState, keycode, XKB_KEY_DOWN); }
 
         if (!keyStr.empty()) {
           const auto now = std::chrono::steady_clock::now();
