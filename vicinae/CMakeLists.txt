@@ -676,6 +676,8 @@ set(SRCS
 
 	src/extensions/vicinae/local-storage/browse-local-storage.hpp
 
+	src/services/snippet/snippet-db.cpp
+
 ) 
 
 if (UNIX)

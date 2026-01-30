@@ -158,7 +158,7 @@ void CliServerCommand::run(CLI::App *app) {
     registry->setPowerManager(std::make_unique<PowerManager>());
     registry->setScriptDb(std::make_unique<ScriptCommandService>());
     registry->setBrowserExtension(std::make_unique<BrowserExtensionService>());
-    registry->setSnippetService(std::make_unique<SnippetService>());
+    registry->setSnippetService(std::make_unique<SnippetService>(Omnicast::dataDir() / "snippets.json"));
 
     auto root = registry->rootItemManager();
     auto builtinCommandDb = std::make_unique<CommandDatabase>();
