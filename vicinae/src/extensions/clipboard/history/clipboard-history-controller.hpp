@@ -11,8 +11,11 @@ class ClipboardHistoryController : public QObject {
   Q_OBJECT
 
   using QueryWatcher = QFutureWatcher<PaginatedResponse<ClipboardHistoryEntry>>;
+  using CountWatcher = QFutureWatcher<int>;
 
 public:
+  static constexpr int DEFAULT_PAGE_SIZE = 1000;
+
   ClipboardHistoryController(ClipboardService *clipboard, ClipboardHistoryModel *model,
                              QObject *parent = nullptr);
 
@@ -23,9 +26,11 @@ public:
 signals:
   void dataLoadingChanged(bool value);
   void dataRetrieved(const PaginatedResponse<ClipboardHistoryEntry> &res);
+  void countRetrieved(int count);
 
 private slots:
   void handleResults();
+  void handleCountResults();
   void handleClipboardChanged();
 
 private:
@@ -33,6 +38,7 @@ private:
   ClipboardService *m_clipboard = nullptr;
 
   QueryWatcher m_watcher;
+  CountWatcher m_countWatcher;
   QString m_query;
   std::optional<ClipboardOfferKind> m_kind;
 };

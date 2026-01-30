@@ -40,53 +40,83 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
                                                                   const ClipboardListSettings &opts) const {
 
   PaginatedResponse<ClipboardHistoryEntry> response;
-
   response.data.reserve(limit);
 
-  QString queryString = R"(
-	  	SELECT
-			 selection.id,
-			 o.mime_type, 
-			 o.text_preview, 
-			 pinned_at, 
-			 o.content_hash_md5, 
-			 updated_at, 
-			 o.size, 
-			 selection.kind, 
-			 o.url_host,
-			 o.encryption_type, 
-			 COUNT(*) OVER() as count
-		FROM
-			selection
-		JOIN
-			data_offer o
-		ON 
-			o.selection_id = selection.id
-		AND
-			o.mime_type = selection.preferred_mime_type
-	)";
+  QString queryString;
 
-  if (!opts.query.isEmpty()) {
-    queryString += " JOIN selection_fts ON selection_fts.selection_id = selection.id ";
-  }
+  bool hasFilters = !opts.query.isEmpty() || opts.kind.has_value();
 
-  if (!opts.query.isEmpty()) { queryString += " WHERE selection_fts MATCH '\"" + opts.query + "\"*' "; }
+  // Use different query strategies based on whether we have filters:
+  // - Without filters: Sort-before-join strategy allows the index on (pinned_at, updated_at)
+  //   to be used for sorting before the expensive JOIN operation. This is critical for
+  //   performance on large datasets where sorting after JOIN+GROUP BY
+  //   would require materializing and sorting the entire result set.
+  // - With filters: FTS search or kind filter already reduces the dataset significantly,
+  //   so the standard join approach is acceptable.
+  if (!hasFilters) {
+    queryString = QString(R"(
+      SELECT 
+        s.id,
+        o.mime_type, 
+        o.text_preview, 
+        s.pinned_at, 
+        o.content_hash_md5, 
+        s.updated_at, 
+        o.size, 
+        s.kind, 
+        o.url_host,
+        o.encryption_type
+      FROM (
+        SELECT id, pinned_at, updated_at, kind, preferred_mime_type
+        FROM selection
+        ORDER BY pinned_at DESC, updated_at DESC
+        LIMIT %1 OFFSET %2
+      ) s
+      JOIN data_offer o
+        ON o.selection_id = s.id
+        AND o.mime_type = s.preferred_mime_type
+    )")
+                      .arg(limit)
+                      .arg(offset);
+  } else {
+    queryString = R"(
+      SELECT
+        selection.id,
+        o.mime_type, 
+        o.text_preview, 
+        pinned_at, 
+        o.content_hash_md5, 
+        updated_at, 
+        o.size, 
+        selection.kind, 
+        o.url_host,
+        o.encryption_type
+      FROM selection
+      JOIN data_offer o
+        ON o.selection_id = selection.id
+        AND o.mime_type = selection.preferred_mime_type
+    )";
 
-  if (opts.kind) {
-    if (opts.query.isEmpty()) {
-      queryString += " WHERE selection.kind = :kind";
-    } else {
-      queryString += " AND selection.kind = :kind";
+    if (!opts.query.isEmpty()) {
+      queryString += " JOIN selection_fts ON selection_fts.selection_id = selection.id ";
+      queryString += " WHERE selection_fts MATCH '\"" + opts.query + "\"*' ";
     }
+
+    if (opts.kind) {
+      if (opts.query.isEmpty()) {
+        queryString += " WHERE selection.kind = :kind";
+      } else {
+        queryString += " AND selection.kind = :kind";
+      }
+    }
+
+    queryString += " GROUP BY selection.id ";
+    queryString += " ORDER BY pinned_at DESC, updated_at DESC";
+    queryString = QString("SELECT * FROM (%1) LIMIT %2 OFFSET %3").arg(queryString).arg(limit).arg(offset);
   }
 
-  if (!opts.query.isEmpty()) {}
-  queryString += " GROUP BY selection.id ";
-  queryString += "ORDER BY pinned_at DESC, updated_at DESC";
-
-  auto finalQuery = QString("SELECT * FROM (%1) LIMIT %2 OFFSET %3").arg(queryString).arg(limit).arg(offset);
   QSqlQuery query(m_db);
-  query.prepare(finalQuery);
+  query.prepare(queryString);
 
   if (opts.kind) { query.bindValue(":kind", static_cast<quint8>(*opts.kind)); }
 
@@ -96,12 +126,11 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
   }
 
   while (query.next()) {
-    auto sum = query.value(4).toString();
     ClipboardHistoryEntry dto{.id = query.value(0).toString(),
                               .mimeType = query.value(1).toString(),
                               .textPreview = query.value(2).toString(),
                               .pinnedAt = query.value(3).toULongLong(),
-                              .md5sum = sum,
+                              .md5sum = query.value(4).toString(),
                               .updatedAt = query.value(5).toULongLong(),
                               .size = query.value(6).toULongLong(),
                               .kind = static_cast<ClipboardOfferKind>(query.value(7).toUInt()),
@@ -109,14 +138,47 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
 
     if (auto val = query.value(8); !val.isNull()) { dto.urlHost = val.toString(); }
 
-    response.totalCount = query.value(10).toInt();
     response.data.push_back(dto);
   }
 
-  response.totalPages = ceil(static_cast<double>(response.totalCount) / limit);
-  response.currentPage = ceil(static_cast<double>(offset) / limit);
-
   return response;
+}
+
+int ClipboardDatabase::count(const ClipboardListSettings &opts) const {
+  QString queryString;
+
+  if (!opts.query.isEmpty() || opts.kind.has_value()) {
+    queryString = "SELECT COUNT(DISTINCT selection.id) FROM selection";
+
+    if (!opts.query.isEmpty()) {
+      queryString += " JOIN selection_fts ON selection_fts.selection_id = selection.id ";
+      queryString += " WHERE selection_fts MATCH '\"" + opts.query + "\"*' ";
+    }
+
+    if (opts.kind) {
+      if (opts.query.isEmpty()) {
+        queryString += " WHERE kind = :kind";
+      } else {
+        queryString += " AND kind = :kind";
+      }
+    }
+  } else {
+    queryString = "SELECT COUNT(*) FROM selection";
+  }
+
+  QSqlQuery query(m_db);
+  query.prepare(queryString);
+
+  if (opts.kind) { query.bindValue(":kind", static_cast<quint8>(*opts.kind)); }
+
+  if (!query.exec()) {
+    qWarning() << "Failed to count clipboard items" << query.lastError();
+    return 0;
+  }
+
+  if (query.next()) { return query.value(0).toInt(); }
+
+  return 0;
 }
 
 std::optional<QString> ClipboardDatabase::retrieveKeywords(const QString &id) {
