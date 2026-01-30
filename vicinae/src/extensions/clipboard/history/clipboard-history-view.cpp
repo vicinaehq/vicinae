@@ -387,8 +387,10 @@ void ClipboardHistoryView::initialize() {
 
   connect(m_model, &ClipboardHistoryModel::dataChanged, this, [this]() { refreshCurrent(); });
   connect(m_controller, &ClipboardHistoryController::dataLoadingChanged, this, &BaseView::setLoading);
-  connect(m_controller, &ClipboardHistoryController::countRetrieved, this,
-          [this](int count) { m_statusToolbar->setLeftText(QString("%1 Items").arg(count)); });
+  connect(m_controller, &ClipboardHistoryController::dataRetrieved, this,
+          [this](const PaginatedResponse<ClipboardHistoryEntry> &page) {
+            m_statusToolbar->setLeftText(QString("%1 Items").arg(page.totalCount));
+          });
 }
 
 std::unique_ptr<ActionPanelState> ClipboardHistoryView::createActionPanel(const ItemType &info) const {

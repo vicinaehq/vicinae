@@ -90,8 +90,6 @@ public:
   PaginatedResponse<ClipboardHistoryEntry> query(int limit = 100, int offset = 0,
                                                  const ClipboardListSettings &opts = {}) const;
 
-  int count(const ClipboardListSettings &opts = {}) const;
-
   bool removeAll();
 
   bool setKeywords(const QString &id, const QString &keywords);

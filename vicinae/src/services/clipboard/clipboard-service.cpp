@@ -182,10 +182,6 @@ ClipboardService::listAll(int limit, int offset, const ClipboardListSettings &op
       [opts, limit, offset]() { return ClipboardDatabase().query(limit, offset, opts); });
 }
 
-QFuture<int> ClipboardService::countAll(const ClipboardListSettings &opts) const {
-  return QtConcurrent::run([opts]() { return ClipboardDatabase().count(opts); });
-}
-
 ClipboardOfferKind ClipboardService::getKind(const ClipboardDataOffer &offer) {
   if (offer.mimeType == "text/uri-list") {
     QString text = offer.data;

@@ -65,9 +65,11 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
         o.size, 
         s.kind, 
         o.url_host,
-        o.encryption_type
+        o.encryption_type,
+        s.total_count
       FROM (
-        SELECT id, pinned_at, updated_at, kind, preferred_mime_type
+        SELECT id, pinned_at, updated_at, kind, preferred_mime_type,
+               COUNT(*) OVER() as total_count
         FROM selection
         ORDER BY pinned_at DESC, updated_at DESC
         LIMIT %1 OFFSET %2
@@ -90,7 +92,8 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
         o.size, 
         selection.kind, 
         o.url_host,
-        o.encryption_type
+        o.encryption_type, 
+        COUNT(*) OVER() as count
       FROM selection
       JOIN data_offer o
         ON o.selection_id = selection.id
@@ -99,8 +102,9 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
 
     if (!opts.query.isEmpty()) {
       queryString += " JOIN selection_fts ON selection_fts.selection_id = selection.id ";
-      queryString += " WHERE selection_fts MATCH '\"" + opts.query + "\"*' ";
     }
+
+    if (!opts.query.isEmpty()) { queryString += " WHERE selection_fts MATCH '\"" + opts.query + "\"*' "; }
 
     if (opts.kind) {
       if (opts.query.isEmpty()) {
@@ -138,47 +142,15 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
 
     if (auto val = query.value(8); !val.isNull()) { dto.urlHost = val.toString(); }
 
+    // Get total count from the last column (index 10 for filtered, 10 for optimized)
+    response.totalCount = query.value(10).toInt();
     response.data.push_back(dto);
   }
 
+  response.totalPages = ceil(static_cast<double>(response.totalCount) / limit);
+  response.currentPage = ceil(static_cast<double>(offset) / limit);
+
   return response;
-}
-
-int ClipboardDatabase::count(const ClipboardListSettings &opts) const {
-  QString queryString;
-
-  if (!opts.query.isEmpty() || opts.kind.has_value()) {
-    queryString = "SELECT COUNT(DISTINCT selection.id) FROM selection";
-
-    if (!opts.query.isEmpty()) {
-      queryString += " JOIN selection_fts ON selection_fts.selection_id = selection.id ";
-      queryString += " WHERE selection_fts MATCH '\"" + opts.query + "\"*' ";
-    }
-
-    if (opts.kind) {
-      if (opts.query.isEmpty()) {
-        queryString += " WHERE kind = :kind";
-      } else {
-        queryString += " AND kind = :kind";
-      }
-    }
-  } else {
-    queryString = "SELECT COUNT(*) FROM selection";
-  }
-
-  QSqlQuery query(m_db);
-  query.prepare(queryString);
-
-  if (opts.kind) { query.bindValue(":kind", static_cast<quint8>(*opts.kind)); }
-
-  if (!query.exec()) {
-    qWarning() << "Failed to count clipboard items" << query.lastError();
-    return 0;
-  }
-
-  if (query.next()) { return query.value(0).toInt(); }
-
-  return 0;
 }
 
 std::optional<QString> ClipboardDatabase::retrieveKeywords(const QString &id) {
