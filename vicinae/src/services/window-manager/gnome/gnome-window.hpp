@@ -44,6 +44,7 @@ public:
   QString wmClassInstance() const { return m_wmClassInstance; }
   bool focused() const { return m_focused; }
   bool inCurrentWorkspace() const { return m_inCurrentWorkspace; }
+  void setFocused(bool focused) { m_focused = focused; }
 
   /**
    * Update window with detailed information from Details() response

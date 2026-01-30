@@ -1,12 +1,13 @@
 #pragma once
-#include "services/window-manager/abstract-window-manager.hpp"
-#include "services/app-service/abstract-app-db.hpp"
-#include "lib/keyboard/keyboard.hpp"
-#include "gnome-window.hpp"
 #include "gnome-listener.hpp"
+#include "gnome-window.hpp"
+#include "lib/keyboard/keyboard.hpp"
+#include "services/app-service/abstract-app-db.hpp"
+#include "services/window-manager/abstract-window-manager.hpp"
 #include <QDBusInterface>
-#include <QJsonObject>
 #include <QJsonArray>
+#include <QJsonObject>
+#include <QTimer>
 #include <memory>
 
 /**
@@ -14,6 +15,11 @@
  * Communicates with the Vicinae GNOME extension via D-Bus to manage windows.
  */
 class GnomeWindowManager : public AbstractWindowManager {
+  Q_OBJECT
+
+signals:
+  void windowFocused(const QString &windowId);
+
 private:
   static constexpr const char *DBUS_SERVICE = "org.gnome.Shell";
   static constexpr const char *DBUS_PATH = "/org/gnome/Shell/Extensions/Windows";
@@ -21,6 +27,8 @@ private:
 
   mutable std::unique_ptr<QDBusInterface> m_dbusInterface;
   std::unique_ptr<Gnome::EventListener> m_eventListener;
+  QTimer m_debounceTimer;
+  bool m_pendingWindowsChanged = false;
 
   /**
    * Get or create the D-Bus interface

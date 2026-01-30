@@ -1,6 +1,7 @@
 #include "gnome-window-manager.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
 #include "services/window-manager/gnome/gnome-workspace.hpp"
+#include "services/window-manager/window-manager.hpp"
 #include "utils/environment.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
@@ -15,43 +16,57 @@
 GnomeWindowManager::GnomeWindowManager() {
   m_eventListener = std::make_unique<Gnome::EventListener>();
 
-  // Connect event listener signals to our windowsChanged signal
-  connect(m_eventListener.get(), &Gnome::EventListener::openwindow, this, [this]() {
-    qDebug() << "GnomeWindowManager: Received openwindow event, emitting windowsChanged";
-    emit windowsChanged();
+  m_debounceTimer.setSingleShot(true);
+  m_debounceTimer.setInterval(50);
+  connect(&m_debounceTimer, &QTimer::timeout, this, [this]() {
+    if (m_pendingWindowsChanged) {
+      m_pendingWindowsChanged = false;
+      emit windowsChanged();
+    }
   });
 
-  connect(m_eventListener.get(), &Gnome::EventListener::closewindow, this, [this]() {
-    qDebug() << "GnomeWindowManager: Received closewindow event, emitting windowsChanged";
-    emit windowsChanged();
+  connect(m_eventListener.get(), &Gnome::EventListener::openwindow, this, [this]() {
+    m_pendingWindowsChanged = true;
+    m_debounceTimer.start();
   });
+
+  connect(m_eventListener.get(), &Gnome::EventListener::closewindow, this,
+          [this](const Gnome::WindowAddress &addr) {
+            auto wm = ServiceRegistry::instance()->windowManager();
+            if (wm->findWindowById(addr)) {
+              m_pendingWindowsChanged = true;
+              m_debounceTimer.start();
+            }
+          });
 
   connect(m_eventListener.get(), &Gnome::EventListener::focuswindow, this,
           [this](const Gnome::WindowAddress &addr) {
-            qDebug() << "GnomeWindowManager: Received focuswindow event for window" << addr
-                     << ", emitting windowsChanged";
-            emit windowsChanged();
+            auto wm = ServiceRegistry::instance()->windowManager();
+            auto windows = wm->listWindows();
+
+            qDebug() << "GnomeWindowManager: focus update for" << addr;
+
+            for (auto &win : windows) {
+              if (win->id() == addr) {
+                if (auto gnomeWin = std::dynamic_pointer_cast<GnomeWindow>(win)) {
+                  gnomeWin->setFocused(true);
+
+                  for (auto &otherWin : windows) {
+                    if (otherWin != win) {
+                      if (auto otherGnomeWin = std::dynamic_pointer_cast<GnomeWindow>(otherWin)) {
+                        if (otherGnomeWin->focused()) {
+                          otherGnomeWin->setFocused(false);
+                        }
+                      }
+                    }
+                  }
+                  
+                  emit windowFocused(addr);
+                  return;
+                }
+              }
+            }
           });
-
-  connect(m_eventListener.get(), &Gnome::EventListener::movewindow, this, [this]() {
-    qDebug() << "GnomeWindowManager: Received movewindow event, emitting windowsChanged";
-    emit windowsChanged();
-  });
-
-  connect(m_eventListener.get(), &Gnome::EventListener::statewindow, this, [this]() {
-    qDebug() << "GnomeWindowManager: Received statewindow event, emitting windowsChanged";
-    emit windowsChanged();
-  });
-
-  connect(m_eventListener.get(), &Gnome::EventListener::workspacechanged, this, [this]() {
-    qDebug() << "GnomeWindowManager: Received workspacechanged event, emitting windowsChanged";
-    emit windowsChanged();
-  });
-
-  connect(m_eventListener.get(), &Gnome::EventListener::monitorlayoutchanged, this, [this]() {
-    qDebug() << "GnomeWindowManager: Received monitorlayoutchanged event, emitting windowsChanged";
-    emit windowsChanged();
-  });
 }
 
 GnomeWindowManager::~GnomeWindowManager() {}
