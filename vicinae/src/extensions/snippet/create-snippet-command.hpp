@@ -7,6 +7,6 @@ class CreateSnippetCommand : public BuiltinViewCommand<CreateSnippetView> {
   QString id() const override { return "create"; }
   QString name() const override { return "Create Snippet"; }
   ImageURL iconUrl() const override {
-    return ImageURL(BuiltinIcon::Anchor).setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL(BuiltinIcon::Snippets).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 };

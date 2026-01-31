@@ -9,6 +9,7 @@ FormField::FormField(QWidget *parent)
   setFocusPolicy(Qt::StrongFocus);
   _nameLabel->setColor(SemanticColor::TextMuted);
   _errorLabel->setColor(SemanticColor::Red);
+  _errorLabel->setSize(TextSize::TextSmaller);
   _layout->setSpacing(20);
   _layout->setContentsMargins(0, 0, 0, 0);
   _layout->addWidget(_nameLabel, 2, Qt::AlignVCenter | Qt::AlignRight);

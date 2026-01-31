@@ -25,8 +25,17 @@ public:
         MetadataLabel{.text = "Text", .title = "Type"},
     };
 
-    if (item.trigger) {
-      metadata.emplace_back(MetadataLabel{.text = item.trigger->c_str(), .title = "Keyword"});
+    const auto createdAt = QDateTime::fromSecsSinceEpoch(item.createdAt).toString();
+
+    metadata.emplace_back(MetadataLabel{.text = createdAt, .title = "Created at"});
+
+    if (item.updatedAt) {
+      const auto updatedAt = QDateTime::fromSecsSinceEpoch(item.updatedAt.value()).toString();
+      metadata.emplace_back(MetadataLabel{.text = updatedAt, .title = "Updated at"});
+    }
+
+    if (item.expansion) {
+      metadata.emplace_back(MetadataLabel{.text = item.expansion->keyword.c_str(), .title = "Keyword"});
     }
 
     detail->setContent(viewer);
@@ -47,6 +56,7 @@ public:
   createActionPanel(const SnippetDatabase::SerializedSnippet &item) const override {
     auto panel = std::make_unique<ListActionPanelState>();
     auto section = panel->createSection();
+    auto toast = context()->services->toastService();
 
     const auto edit = new StaticAction("Edit snippet", BuiltinIcon::Pencil, [item](ApplicationContext *ctx) {
       ctx->navigation->pushView(new UpdateSnippetView(item));
@@ -55,10 +65,11 @@ public:
         new StaticAction("Duplicate snippet", BuiltinIcon::Pencil, [item](ApplicationContext *ctx) {
           ctx->navigation->pushView(new DuplicateSnippetView(item));
         });
-
     const auto remove =
-        new StaticAction("Remove snippet", BuiltinIcon::Trash, [item](ApplicationContext *ctx) {
-          ctx->services->snippetService()->removeSnippet(item.id);
+        new StaticAction("Remove snippet", BuiltinIcon::Trash, [item, toast](ApplicationContext *ctx) {
+          if (const auto result = ctx->services->snippetService()->removeSnippet(item.id); !result) {
+            toast->failure("Failed to remove snippet");
+          }
         });
 
     edit->setShortcut(Keybind::EditAction);

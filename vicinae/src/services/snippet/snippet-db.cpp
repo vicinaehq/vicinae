@@ -29,11 +29,17 @@ std::expected<std::vector<SnippetDatabase::SerializedSnippet>, std::string> Snip
 std::vector<SnippetDatabase::SerializedSnippet> SnippetDatabase::snippets() const { return m_snippets; }
 
 std::expected<void, std::string> SnippetDatabase::updateSnippet(std::string_view id, SnippetPayload payload) {
+  if (const auto e = payload.expansion) {
+    if (const auto existing = findByKeyword(e->keyword)) {
+      return std::unexpected(std::format("keyword already assigned to \"{}\"", existing->name));
+    }
+  }
+
   if (const auto snippet = findById(id)) {
     snippet->name = payload.name;
-    snippet->trigger = payload.trigger;
+    snippet->expansion = payload.expansion;
     snippet->data = payload.data;
-    snippet->word = payload.word;
+    snippet->updatedAt = QDateTime::currentSecsSinceEpoch();
 
     return setSnippets(m_snippets);
   }
@@ -59,18 +65,33 @@ SnippetDatabase::SerializedSnippet *SnippetDatabase::findById(std::string_view i
   return nullptr;
 }
 
+SnippetDatabase::SerializedSnippet *SnippetDatabase::findByKeyword(std::string_view keyword) {
+  if (auto it = std::ranges::find_if(
+          m_snippets, [&](auto &&item) { return item.expansion && item.expansion->keyword == keyword; });
+      it != m_snippets.end()) {
+    return &*it;
+  }
+  return nullptr;
+}
+
 std::expected<SnippetDatabase::SerializedSnippet, std::string>
 SnippetDatabase::addSnippet(SnippetDatabase::SnippetPayload snippet) {
   if (m_snippets.size() >= MAX_SNIPPETS) {
     return std::unexpected(std::format("Snippet limit reached ({})", MAX_SNIPPETS));
   }
 
+  if (const auto e = snippet.expansion) {
+    if (const auto existing = findByKeyword(e->keyword)) {
+      return std::unexpected(std::format("keyword already assigned to \"{}\"", existing->name));
+    }
+  }
+
   SerializedSnippet serialized = {
       .id = generatePrefixedId("snp"),
       .name = snippet.name,
-      .trigger = snippet.trigger,
-      .word = snippet.word,
       .data = snippet.data,
+      .createdAt = static_cast<std::uint64_t>(QDateTime::currentSecsSinceEpoch()),
+      .expansion = snippet.expansion,
   };
 
   m_snippets.emplace_back(serialized);

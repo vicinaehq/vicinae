@@ -8,7 +8,7 @@ class SnippetExtension : public BuiltinCommandRepository {
   QString id() const override { return "snippets"; }
   QString displayName() const override { return "Snippets"; }
   ImageURL iconUrl() const override {
-    return ImageURL(BuiltinIcon::Anchor).setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL(BuiltinIcon::Snippets).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
 public:

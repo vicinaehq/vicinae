@@ -35,11 +35,13 @@ public:
 
   virtual SnippetDatabase::SnippetPayload initialData() { return {}; }
 
-  virtual void handleSubmit(SnippetDatabase::SnippetPayload payload) = 0;
+  virtual bool handleSubmit(SnippetDatabase::SnippetPayload payload) = 0;
 
   void setSnippetData(SnippetDatabase::SnippetPayload snippet) {
     m_name->setText(snippet.name.c_str());
-    m_keyword->setText(snippet.trigger.value_or("").c_str());
+
+    if (const auto exp = snippet.expansion) { m_keyword->setText(exp->keyword.c_str()); }
+
     std::visit(
         [this](const auto &d) {
           if constexpr (std::is_same_v<std::decay_t<decltype(d)>, SnippetDatabase::TextSnippet>)
@@ -60,20 +62,27 @@ public:
     if (name.size() < 2) { form()->setError(m_name, "2 chars min."); }
     if (m_content->text().isEmpty()) { form()->setError(m_content, "Content should not be empty"); }
 
+    if (!keyword.isEmpty()) {
+      const bool hasSpaces = std::ranges::any_of(keyword, [](QChar c) { return c.isSpace(); });
+      if (hasSpaces) { form()->setError(m_keyword, "No spaces"); }
+    }
+
     if (!form()->isValid()) {
-      toast->failure("Validation errors");
+      toast->failure("Validation failed");
       return;
     }
 
     SnippetDatabase::SnippetPayload payload;
     payload.name = name.toStdString();
     payload.data = SnippetDatabase::TextSnippet(content.toStdString());
-    payload.word = true;
 
-    if (!keyword.isEmpty()) { payload.trigger = keyword.toStdString(); }
+    if (!keyword.isEmpty()) {
+      SnippetDatabase::Expansion expansion;
+      expansion.keyword = keyword.toStdString();
+      payload.expansion = expansion;
+    }
 
-    handleSubmit(payload);
-    popSelf();
+    if (handleSubmit(payload)) { popSelf(); }
   }
 
 protected:
@@ -85,16 +94,17 @@ protected:
 
 class CreateSnippetView : public BasicFormSnippetView {
 public:
-  void handleSubmit(SnippetDatabase::SnippetPayload payload) override {
+  bool handleSubmit(SnippetDatabase::SnippetPayload payload) override {
     const auto toast = context()->services->toastService();
     const auto result = m_service->createSnippet(payload);
 
     if (!result) {
       toast->failure(result.error().c_str());
-      return;
+      return false;
     }
 
     toast->success("Snippet successfully created");
+    return true;
   }
 };
 
@@ -105,22 +115,22 @@ public:
   SnippetDatabase::SnippetPayload initialData() override {
     return SnippetDatabase::SnippetPayload{
         .name = m_snippet.name,
-        .trigger = m_snippet.trigger,
-        .word = m_snippet.word,
         .data = m_snippet.data,
+        .expansion = m_snippet.expansion,
     };
   }
 
-  void handleSubmit(SnippetDatabase::SnippetPayload payload) override {
+  bool handleSubmit(SnippetDatabase::SnippetPayload payload) override {
     const auto toast = context()->services->toastService();
     const auto result = m_service->updateSnippet(m_snippet.id, payload);
 
     if (!result) {
       toast->failure(result.error().c_str());
-      return;
+      return false;
     }
 
     toast->success("Snippet updated");
+    return true;
   }
 
 private:
@@ -134,9 +144,8 @@ public:
   SnippetDatabase::SnippetPayload initialData() override {
     return SnippetDatabase::SnippetPayload{
         .name = std::format("Copy of {}", m_snippet.name),
-        .trigger = m_snippet.trigger,
-        .word = m_snippet.word,
         .data = m_snippet.data,
+        .expansion = m_snippet.expansion,
     };
   }
 

@@ -1,5 +1,6 @@
 #pragma once
 #include <QDebug>
+#include <cstdint>
 #include <variant>
 #include <filesystem>
 #include <string>
@@ -15,21 +16,30 @@ public:
     std::string text;
   };
 
+  struct Expansion {
+    std::string keyword;
+    std::vector<std::string> apps;
+    bool word = false;
+  };
+
   using SnippetData = std::variant<FileSnippet, TextSnippet>;
 
   struct SnippetPayload {
     std::string name;
-    std::optional<std::string> trigger;
-    bool word = false;
     SnippetData data;
+    std::optional<Expansion> expansion;
   };
 
   struct SerializedSnippet {
     std::string id;
     std::string name;
-    std::optional<std::string> trigger;
-    bool word = false;
     SnippetData data;
+    std::uint64_t createdAt;
+    std::optional<std::uint64_t> updatedAt;
+
+    // snippet may not necessarily define an expansion trigger, just be used
+    // for paste.
+    std::optional<Expansion> expansion;
   };
 
   static constexpr size_t MAX_SNIPPETS = 10000;
@@ -46,6 +56,7 @@ public:
 protected:
   std::expected<std::vector<SerializedSnippet>, std::string> loadSnippets();
   SerializedSnippet *findById(std::string_view id);
+  SerializedSnippet *findByKeyword(std::string_view keyword);
 
 private:
   std::string m_buf;

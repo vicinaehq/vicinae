@@ -7,6 +7,6 @@ class ManageSnippetsCommand : public BuiltinViewCommand<ManageSnippetsView> {
   QString id() const override { return "manage"; }
   QString name() const override { return "Manage Snippets"; }
   ImageURL iconUrl() const override {
-    return ImageURL(BuiltinIcon::Anchor).setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL(BuiltinIcon::Snippets).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 };

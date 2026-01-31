@@ -5,6 +5,8 @@
 #include "extensions/vicinae/list-installed-extensions-command.hpp"
 #include "extensions/vicinae/oauth-token-store/oauth-token-store-view.hpp"
 #include "extensions/vicinae/report-bug-command.hpp"
+#include "extensions/vicinae/browse-icons/search-builtin-icons-view.hpp"
+
 #include "navigation-controller.hpp"
 #include "local-storage/browse-local-storage.hpp"
 #include "open-about-command.hpp"
@@ -187,6 +189,17 @@ class OAuthTokenStoreCommand : public BuiltinViewCommand<OAuthTokenStoreView> {
   }
 };
 
+class IconBrowserCommand : public BuiltinViewCommand<SearchBuiltinIconView> {
+  QString id() const override { return "search-builtin-icons"; }
+  QString name() const override { return "Search Builtin Icons"; }
+  QString description() const override { return "Search Vicinae builtin set of icons"; }
+  ImageURL iconUrl() const override {
+    ImageURL icon{BuiltinIcon::Box};
+    icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return icon;
+  }
+};
+
 class InspectLocalStorage : public BuiltinViewCommand<BrowseLocalStorageView> {
   QString id() const override { return "inspect-local-storage"; }
   QString name() const override { return "Inspect Local Storage"; }
@@ -220,4 +233,5 @@ VicinaeExtension::VicinaeExtension() {
   registerCommand<InspectLocalStorage>();
   registerCommand<ReloadScriptDirectoriesCommand>();
   registerCommand<PruneMemoryCommand>();
+  registerCommand<IconBrowserCommand>();
 }
