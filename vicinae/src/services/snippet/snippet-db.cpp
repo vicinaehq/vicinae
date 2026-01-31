@@ -30,7 +30,7 @@ std::vector<SnippetDatabase::SerializedSnippet> SnippetDatabase::snippets() cons
 
 std::expected<void, std::string> SnippetDatabase::updateSnippet(std::string_view id, SnippetPayload payload) {
   if (const auto e = payload.expansion) {
-    if (const auto existing = findByKeyword(e->keyword)) {
+    if (const auto existing = findByKeyword(e->keyword); existing && existing->id != id) {
       return std::unexpected(std::format("keyword already assigned to \"{}\"", existing->name));
     }
   }

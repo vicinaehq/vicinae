@@ -47,14 +47,18 @@ bool Checkbox::event(QEvent *event) {
 }
 
 void Checkbox::keyPressEvent(QKeyEvent *event) {
-  switch (event->key()) {
-  case Qt::Key_Return:
-  case Qt::Key_Enter:
-    toggle();
-    return;
-  default:
-    QWidget::keyPressEvent(event);
+  if (!event->modifiers()) {
+    switch (event->key()) {
+    case Qt::Key_Return:
+    case Qt::Key_Enter:
+      toggle();
+      return;
+    default:
+      break;
+    }
   }
+
+  QWidget::keyPressEvent(event);
 }
 
 void Checkbox::mousePressEvent(QMouseEvent *event) {

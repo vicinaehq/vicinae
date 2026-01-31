@@ -19,7 +19,7 @@ public:
   struct Expansion {
     std::string keyword;
     std::vector<std::string> apps;
-    bool word = false;
+    bool word = true;
   };
 
   using SnippetData = std::variant<FileSnippet, TextSnippet>;

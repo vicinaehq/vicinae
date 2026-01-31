@@ -1,6 +1,7 @@
 #pragma once
 #include "services/snippet/snippet-db.hpp"
 #include "ui/form/base-input.hpp"
+#include "ui/form/checkbox-input.hpp"
 #include "ui/form/text-area.hpp"
 #include "ui/views/form-view.hpp"
 #include "service-registry.hpp"
@@ -14,6 +15,7 @@ public:
     m_name->setPlaceholderText("Euro symbol");
     m_content->setPlaceholderText("€");
     m_keyword->setPlaceholderText(":!euro");
+    m_word->setValueAsJson(true);
   }
 
   void initializeForm() final override {
@@ -27,11 +29,19 @@ public:
     contentField->setInfo("You can enrich the content with {dynamic placeholder}");
     contentField->setWidget(m_content);
 
+    form()->addSeparator();
+
     auto keywordField = form()->addField();
     keywordField->setName("Keyword");
     keywordField->setInfo(
         "When typing this text anywhere, it will be automatically expanded to this snippet's content.");
     keywordField->setWidget(m_keyword);
+
+    auto wordCheckbox = form()->addField();
+    wordCheckbox->setName("Expand as word");
+    wordCheckbox->setWidget(m_word);
+    wordCheckbox->setInfo(
+        "If a keyword is typed, it will only be expanded after space or return is pressed.");
 
     auto init = initialData();
 
@@ -47,7 +57,10 @@ public:
   void setSnippetData(SnippetDatabase::SnippetPayload snippet) {
     m_name->setText(snippet.name.c_str());
 
-    if (const auto exp = snippet.expansion) { m_keyword->setText(exp->keyword.c_str()); }
+    if (const auto exp = snippet.expansion) {
+      m_keyword->setText(exp->keyword.c_str());
+      m_word->setValueAsJson(exp->word);
+    }
 
     std::visit(
         [this](const auto &d) {
@@ -88,6 +101,7 @@ public:
     if (!keyword.isEmpty()) {
       SnippetDatabase::Expansion expansion;
       expansion.keyword = keyword.toStdString();
+      expansion.word = m_word->value();
       payload.expansion = expansion;
     }
 
@@ -99,6 +113,7 @@ protected:
   BaseInput *m_name = new BaseInput;
   TextArea *m_content = new TextArea;
   BaseInput *m_keyword = new BaseInput;
+  CheckboxInput *m_word = new CheckboxInput;
 };
 
 class CreateSnippetView : public BasicFormSnippetView {
@@ -154,7 +169,6 @@ public:
     return SnippetDatabase::SnippetPayload{
         .name = std::format("Copy of {}", m_snippet.name),
         .data = m_snippet.data,
-        .expansion = m_snippet.expansion,
     };
   }
 

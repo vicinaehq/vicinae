@@ -91,7 +91,10 @@ public:
   DataSet initializeDataSet() override {
     auto service = context()->services->snippetService();
 
-    connect(service, &SnippetService::snippetsChanged, this, [this]() { setDataSet(generateData()); });
+    connect(service, &SnippetService::snippetsChanged, this, [this]() {
+      setDataSet(generateData());
+      refreshCurrent();
+    });
 
     setSearchPlaceholderText("Search by snippet name, contents or keyword...");
 
