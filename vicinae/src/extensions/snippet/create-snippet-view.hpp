@@ -7,19 +7,26 @@
 #include "services/snippet/snippet-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "utils.hpp"
-#include <type_traits>
 
 class BasicFormSnippetView : public ManagedFormView {
 public:
+  BasicFormSnippetView() {
+    m_name->setPlaceholderText("Euro symbol");
+    m_content->setPlaceholderText("€");
+    m_keyword->setPlaceholderText(":!euro");
+  }
+
   void initializeForm() final override {
     m_service = context()->services->snippetService();
     auto nameField = form()->addField();
     nameField->setName("Title");
     nameField->setWidget(m_name);
+
     auto contentField = form()->addField();
     contentField->setName("Content");
     contentField->setInfo("You can enrich the content with {dynamic placeholder}");
     contentField->setWidget(m_content);
+
     auto keywordField = form()->addField();
     keywordField->setName("Keyword");
     keywordField->setInfo(
@@ -58,6 +65,8 @@ public:
     const auto slug = slugify(name);
     const auto content = m_content->text();
     const auto keyword = m_keyword->text();
+
+    form()->clearAllErrors();
 
     if (name.size() < 2) { form()->setError(m_name, "2 chars min."); }
     if (m_content->text().isEmpty()) { form()->setError(m_content, "Content should not be empty"); }
