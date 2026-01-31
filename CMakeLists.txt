@@ -51,7 +51,7 @@ if (NOT USE_SYSTEM_GLAZE)
 	FetchContent_Declare(
 	  glaze
 	  GIT_REPOSITORY https://github.com/stephenberry/glaze.git
-	  GIT_TAG b64f4a68d3a08e6515a9322a9740cf652ade0bb7
+	  GIT_TAG 7fccd73a5e1d9723a4a26d77979ecaa554c45a14
 	  GIT_SHALLOW FALSE
 	  EXCLUDE_FROM_ALL
 	)
@@ -167,8 +167,10 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_RELEASE} -g3 -O0")
 
 if (ENABLE_SANITIZERS AND CMAKE_BUILD_TYPE MATCHES "Debug")
 	message(STATUS "Sanitizers enabled (ASan + UBSan)")
-	add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer)
-	add_link_options(-fsanitize=address,undefined)
+	# glaze has issues with ubsan+variants
+	#add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer)
+	add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
+	add_link_options(-fsanitize=address)
 	add_compile_definitions(DEBUG=1)
 endif()
 

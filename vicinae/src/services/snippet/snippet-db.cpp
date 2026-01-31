@@ -86,13 +86,3 @@ SnippetDatabase::setSnippets(std::span<SnippetDatabase::SerializedSnippet> snipp
 
   return {};
 }
-
-template <> struct glz::meta<SnippetDatabase::FileSnippet> {
-  using mimic = std::string;
-  static constexpr auto value = &SnippetDatabase::FileSnippet::file;
-};
-
-template <> struct glz::meta<SnippetDatabase::TextSnippet> {
-  using mimic = std::string;
-  static constexpr auto value = &SnippetDatabase::TextSnippet::text;
-};
