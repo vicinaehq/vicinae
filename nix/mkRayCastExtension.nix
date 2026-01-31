@@ -11,41 +11,43 @@ lib.extendMkDerivation {
     finalAttrs:
     {
       name,
-      rev,
       hash ? null,
       sha256 ? null,
       ...
-    }:
+    }@attrs:
     {
       inherit name;
       src =
-        fetchFromGitHub {
-          owner = "raycast";
-          repo = "extensions";
-          inherit rev;
-          hash =
-            if hash != null then
-              hash
-            else if sha256 != null then
-              sha256
-            else
-              throw "mkRayCastExtension: `hash` or `sha256` is required";
-          sparseCheckout = [
-            "/extensions/${name}"
-          ];
-        }
-        + "/extensions/${name}";
+        attrs.src or (
+          fetchFromGitHub {
+            owner = "raycast";
+            repo = "extensions";
+            rev = attrs.rev or throw "mkRayCastExtension: `rev` is required when src isn't suplied";
+            hash =
+              if hash != null then
+                hash
+              else if sha256 != null then
+                sha256
+              else
+                throw "mkRayCastExtension: `hash` or `sha256` is required";
+            sparseCheckout = [
+              "/extensions/${name}"
+            ];
+          }
+          + "/extensions/${name}"
+        );
 
-      npmDeps = importNpmLock { npmRoot = finalAttrs.src; };
-      npmConfigHook = importNpmLock.npmConfigHook;
+      npmDeps = attrs.npmDeps or (importNpmLock { npmRoot = finalAttrs.src; });
+      npmConfigHook = attrs.npmConfigHook or importNpmLock.npmConfigHook;
 
-      installPhase = ''
-        runHook preInstall
+      installPhase =
+        attrs.installPhase or ''
+          runHook preInstall
 
-        mkdir -p $out
-        cp -r /build/.config/raycast/extensions/${name}/* $out/
+          mkdir -p $out
+          cp -r /build/.config/raycast/extensions/${name}/* $out/
 
-        runHook postInstall
-      '';
+          runHook postInstall
+        '';
     };
 }
