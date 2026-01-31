@@ -44,7 +44,10 @@ CommandDatabase::CommandDatabase() {
   registerRepository<ThemeExtension>();
   registerRepository<FontExtension>();
   registerRepository<DeveloperExtension>();
+
+#ifdef ENABLE_PREVIEW_FEATURES
   registerRepository<SnippetExtension>();
+#endif
 
 #ifdef QT_DEBUG
   registerRepository<InternalExtension>();

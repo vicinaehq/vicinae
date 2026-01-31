@@ -41,6 +41,7 @@ option(USE_SYSTEM_GLAZE "Use system glaze instead of fetching it. This is a head
 option(USE_SYSTEM_QT_KEYCHAIN "Use system qt-keychain instead of building it from source. Note: still depends on system libsecret." ON)
 option(LIBQALCULATE_BACKEND "Compile in support for the Qalculate! calculator backend" ON)
 option(ENABLE_SANITIZERS "Enable ASan + UBSan for debug builds" OFF)
+option(ENABLE_PREVIEW_FEATURES "Enable preview features that are not yet ready for global release" OFF)
 
 # disabled for now, as it seems to be incompatible with ccache, and as such slows us down more than anything
 option(USE_PRECOMPILED_HEADERS "Use precompiled headers to speed up compilation" OFF)
@@ -154,6 +155,10 @@ unset(CMAKE_FIND_PACKAGE_PREFER_CONFIG)
 if (TYPESCRIPT_EXTENSIONS)
 	add_subdirectory(typescript)
 	add_compile_definitions(HAS_TYPESCRIPT_EXTENSIONS=1)
+endif()
+
+if (ENABLE_PREVIEW_FEATURES)
+	add_compile_definitions(ENABLE_PREVIEW_FEATURES=1)
 endif()
 
 if(NOT CMAKE_BUILD_TYPE)

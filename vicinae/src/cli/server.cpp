@@ -230,7 +230,10 @@ void CliServerCommand::run(CLI::App *app) {
   IpcCommandServer commandServer(&ctx);
 
   commandServer.start(Omnicast::commandSocketPath());
+
+#ifdef ENABLE_PREVIEW_FEATURES
   ctx.services->snippetService()->start();
+#endif
 
   auto configChanged = [&](const config::ConfigValue &next, const config::ConfigValue &prev) {
     auto &theme = ThemeService::instance();

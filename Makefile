@@ -14,8 +14,13 @@ host-optimized:
 	cmake --build $(BUILD_DIR)
 .PHONY: optimized
 
+preview:
+	cmake -G Ninja -DENABLE_PREVIEW_FEATURES=ON -DCMAKE_BUILD_TYPE=Release -B $(BUILD_DIR)
+	cmake --build $(BUILD_DIR)
+.PHONY: preview
+
 debug:
-	cmake -G Ninja -DLTO=OFF -DENABLE_SANITIZERS=ON -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
+	cmake -G Ninja -DLTO=OFF -DENABLE_PREVIEW_FEATURES=ON -DENABLE_SANITIZERS=ON -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)
 .PHONY: debug
 
