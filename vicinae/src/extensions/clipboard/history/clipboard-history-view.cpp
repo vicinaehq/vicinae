@@ -380,16 +380,15 @@ void ClipboardHistoryView::initialize() {
   setModel(m_model);
   m_defaultAction = parseDefaultAction(preferences.value("defaultAction").toString());
   setSearchPlaceholderText("Browse clipboard history...");
+  m_statusToolbar->setLeftText("Loading...");
   textChanged("");
   m_filterInput->setValue(getSavedDropdownFilter().value_or("all"));
   handleFilterChange(*m_filterInput->value());
 
   connect(m_model, &ClipboardHistoryModel::dataChanged, this, [this]() { refreshCurrent(); });
   connect(m_controller, &ClipboardHistoryController::dataLoadingChanged, this, &BaseView::setLoading);
-  connect(m_controller, &ClipboardHistoryController::dataRetrieved, this,
-          [this](const PaginatedResponse<ClipboardHistoryEntry> &page) {
-            m_statusToolbar->setLeftText(QString("%1 Items").arg(page.totalCount));
-          });
+  connect(m_controller, &ClipboardHistoryController::countRetrieved, this,
+          [this](int count) { m_statusToolbar->setLeftText(QString("%1 Items").arg(count)); });
 }
 
 std::unique_ptr<ActionPanelState> ClipboardHistoryView::createActionPanel(const ItemType &info) const {
