@@ -89,7 +89,8 @@ void TextArea::resizeArea() {
 
     if (height == this->height()) return;
 
-    setFixedHeight(height);
+    setFixedHeight(textHeight);
+    m_textEdit->setFixedHeight(textHeight);
   }
 }
 
