@@ -191,6 +191,7 @@ struct FilteredItemData {
   std::string title;
   std::optional<std::string> subtitle;
   std::optional<ImageURL> icon;
+  std::optional<std::string> alias;
   AccessoryList accessories;
   bool isActive = false;
 };
@@ -238,10 +239,13 @@ public:
 
 protected:
   virtual ItemData createItemData(const FilteredItemData &item) const override {
-    return ItemData{.title = item.title.c_str(),
-                    .subtitle = item.subtitle.value_or("").c_str(),
-                    .icon = item.icon,
-                    .accessories = item.accessories};
+    return ItemData{
+        .title = item.title.c_str(),
+        .subtitle = item.subtitle.value_or("").c_str(),
+        .icon = item.icon,
+        .alias = item.alias.value_or("").c_str(),
+        .accessories = item.accessories,
+    };
   }
 
   virtual int sectionCount() const override { return m_filteredSections.size(); }

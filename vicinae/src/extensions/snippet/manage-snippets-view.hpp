@@ -15,7 +15,8 @@
 class ManageSnippetsView : public FilteredTypedListView<SnippetDatabase::SerializedSnippet> {
 public:
   FilteredItemData mapFilteredData(const SnippetDatabase::SerializedSnippet &item) const override {
-    return {.id = item.name, .title = item.name, .icon = BuiltinIcon::BlankDocument};
+    auto alias = item.expansion.transform([](auto &&e) { return e.keyword; });
+    return {.id = item.name, .title = item.name, .icon = BuiltinIcon::BlankDocument, .alias = alias};
   }
 
   QWidget *generateDetail(const SnippetDatabase::SerializedSnippet &item) const override {
