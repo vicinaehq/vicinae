@@ -107,7 +107,8 @@ bool GnomeClipboardServer::setupDBusConnection() {
 
   // Connect to ClipboardChanged signal
   // Signal signature: (ayss) = array of bytes, string, string
-  bool connected = m_bus.connect(DBUS_SERVICE, DBUS_PATH, DBUS_INTERFACE, "ClipboardChanged", this,
+  // Explicitly specify the D-Bus signature to ensure proper type matching in Qt6
+  bool connected = m_bus.connect(DBUS_SERVICE, DBUS_PATH, DBUS_INTERFACE, "ClipboardChanged", "ayss", this,
                                  SLOT(handleClipboardChanged(QByteArray, QString, QString)));
 
   if (!connected) {
@@ -140,8 +141,8 @@ void GnomeClipboardServer::cleanupDBusConnection() {
     // Stop listening to clipboard changes
     m_interface->call("StopListening");
 
-    // Disconnect from D-Bus signal
-    m_bus.disconnect(DBUS_SERVICE, DBUS_PATH, DBUS_INTERFACE, "ClipboardChanged", this,
+    // Disconnect from D-Bus signal (must use same signature as connect)
+    m_bus.disconnect(DBUS_SERVICE, DBUS_PATH, DBUS_INTERFACE, "ClipboardChanged", "ayss", this,
                      SLOT(handleClipboardChanged(QByteArray, QString, QString)));
 
     delete m_interface;
