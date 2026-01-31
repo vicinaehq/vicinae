@@ -1,5 +1,4 @@
 #pragma once
-#include <cstdint>
 #include <QDebug>
 #include <variant>
 #include <filesystem>
@@ -18,20 +17,38 @@ public:
 
   using SnippetData = std::variant<FileSnippet, TextSnippet>;
 
-  struct SerializedSnippet {
-    std::string trigger;
+  struct SnippetPayload {
+    std::string name;
+    std::optional<std::string> trigger;
     bool word = false;
     SnippetData data;
-    std::uint64_t createdAt;
-    std::uint64_t updatedAt;
   };
 
+  struct SerializedSnippet {
+    std::string id;
+    std::string name;
+    std::optional<std::string> trigger;
+    bool word = false;
+    SnippetData data;
+  };
+
+  static constexpr size_t MAX_SNIPPETS = 10000;
+
   SnippetDatabase(std::filesystem::path path);
-  std::expected<std::vector<SerializedSnippet>, std::string> loadSnippets();
-  std::expected<void, std::string> addSnippet(SerializedSnippet snippet);
+
+  std::expected<SerializedSnippet, std::string> addSnippet(SnippetPayload snippet);
   std::expected<void, std::string> setSnippets(std::span<SerializedSnippet> snippets);
+  std::expected<void, std::string> updateSnippet(std::string_view id, SnippetPayload payload);
+  std::expected<void, std::string> removeSnippet(std::string_view id);
+
+  std::vector<SerializedSnippet> snippets() const;
+
+protected:
+  std::expected<std::vector<SerializedSnippet>, std::string> loadSnippets();
+  SerializedSnippet *findById(std::string_view id);
 
 private:
   std::string m_buf;
   std::filesystem::path m_path;
+  std::vector<SerializedSnippet> m_snippets;
 };

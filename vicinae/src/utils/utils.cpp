@@ -1,5 +1,6 @@
 #include "utils.hpp"
 #include <cmath>
+#include <random>
 #include <cstdlib>
 #include <filesystem>
 #include <qmimedatabase.h>
@@ -162,6 +163,22 @@ QString slugify(const QString &input, const QString &separator) {
   result.replace(QRegularExpression(QString("%1{2,}").arg(escapedSep)), separator);
 
   return result;
+}
+
+std::string generatePrefixedId(std::string_view prefix, int length) {
+  static std::mt19937 rng(std::random_device{}());
+  static constexpr char hex[] = "0123456789abcdef";
+
+  std::string id;
+  id.reserve(prefix.size() + 1 + length);
+  id.append(prefix);
+  id.push_back('-');
+
+  for (int i = 0; i < length; ++i) {
+    id.push_back(hex[rng() % 16]);
+  }
+
+  return id;
 }
 
 QString formatSize(size_t bytes) {
