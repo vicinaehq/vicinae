@@ -35,12 +35,12 @@ bool QalculateBackend::start() {
 
 std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const QString &question) const {
   QString expression = preprocessQuestion(question);
+  std::string localizedExpression = CALCULATOR->unlocalizeExpression(expression.toStdString());
+  std::string res;
+  res = CALCULATOR->calculateAndPrint(localizedExpression, 10000, m_evalOpts, m_printOpts);
 
-  MathStructure out;
-  MathStructure in;
-  MathStructure result = CALCULATOR->calculate(CALCULATOR->unlocalizeExpression(expression.toStdString()),
-                                               m_evalOpts, &in, &out);
-
+  MathStructure in = CALCULATOR->parse(localizedExpression);
+  MathStructure result = CALCULATOR->parse(res);
   if (result.containsUnknowns()) { return std::unexpected(CalculatorError("Unknown component in question")); }
 
   bool error = false;
@@ -51,20 +51,17 @@ std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const
 
   if (error) return std::unexpected(CalculatorError("Calculation error"));
 
-  std::string res = result.print(m_printOpts);
   CalculatorResult calcRes;
-
-  if (auto unit = getUnitDisplayName(in)) { calcRes.question.unit = Unit{.displayName = unit->c_str()}; }
-  if (auto unit = getUnitDisplayName(result)) { calcRes.answer.unit = Unit{.displayName = unit->c_str()}; }
-
-  calcRes.question.text = question;
-  calcRes.answer.text = QString::fromStdString(res);
-
   if (result.containsType(STRUCT_UNIT)) {
+    if (auto unit = getUnitDisplayName(in)) { calcRes.question.unit = Unit{.displayName = unit->c_str()}; }
+    if (auto unit = getUnitDisplayName(result)) { calcRes.answer.unit = Unit{.displayName = unit->c_str()}; }
     calcRes.type = CalculatorAnswerType::CONVERSION;
   } else {
     calcRes.type = CalculatorAnswerType::NORMAL;
   }
+
+  calcRes.question.text = question;
+  calcRes.answer.text = QString::fromStdString(res);
 
   return calcRes;
 }
@@ -111,6 +108,7 @@ void QalculateBackend::initializeCalculator() {
   m_printOpts.indicate_infinite_series = true;
   m_printOpts.interval_display = INTERVAL_DISPLAY_SIGNIFICANT_DIGITS;
   m_printOpts.use_unicode_signs = true;
+  m_printOpts.base_display = BASE_DISPLAY_ALTERNATIVE;
 
   m_calc.reset();
   m_calc.loadGlobalDefinitions();
