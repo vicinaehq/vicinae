@@ -8,6 +8,7 @@
 #include "navigation-controller.hpp"
 #include "placeholder.hpp"
 #include "services/snippet/snippet-db.hpp"
+#include "services/snippet/snippet-expander.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/detail/detail-widget.hpp"
 #include "ui/text-file-viewer/text-file-viewer.hpp"
@@ -70,14 +71,19 @@ public:
 
     detail->setContent(viewer);
     detail->setMetadata(metadata);
-    std::visit(
-        [viewer](const auto &d) {
-          if constexpr (std::is_same_v<std::decay_t<decltype(d)>, SnippetDatabase::TextSnippet>) {
-            viewer->load(QByteArray::fromStdString(d.text));
-          } else
-            viewer->load(QByteArray::fromStdString(d.file));
+
+    const auto visitor = overloads{
+        [this](const SnippetDatabase::TextSnippet &snippet) {
+          const auto result = m_expander.expand(snippet.text.c_str(), {});
+          const auto expanded = result.parts | std::views::transform([](auto &&r) { return r.text; }) |
+                                std::views::join | std::ranges::to<QString>();
+          return expanded.toUtf8();
         },
-        item.data);
+        [](const SnippetDatabase::FileSnippet &file) { return QByteArray::fromStdString(file.file); }};
+
+    QByteArray buf = std::visit(visitor, item.data);
+
+    viewer->load(buf);
 
     return detail;
   }
@@ -121,6 +127,25 @@ public:
   DataSet initializeDataSet() override {
     auto service = context()->services->snippetService();
 
+    connect(context()->navigation.get(), &NavigationController::completionValuesChanged, this,
+            [this](const ArgumentValues &values) {
+              const auto snippet = currentItem();
+
+              if (!snippet) return;
+
+              if (const auto text = std::get_if<SnippetDatabase::TextSnippet>(&currentItem()->data)) {
+                const auto result = m_expander.expand(text->text.c_str(), values);
+                const auto expanded = result.parts | std::views::transform([](auto &&r) { return r.text; }) |
+                                      std::views::join | std::ranges::to<QString>();
+
+                if (const auto d = detail()) {
+                  TextFileViewer *viewer =
+                      static_cast<TextFileViewer *>(static_cast<DetailWidget *>(d)->content());
+                  viewer->load(expanded.toUtf8());
+                }
+              }
+            });
+
     connect(service, &SnippetService::snippetsChanged, this, [this]() {
       setDataSet(generateData());
       refreshCurrent();
@@ -130,4 +155,7 @@ public:
 
     return generateData();
   }
+
+private:
+  SnippetExpander m_expander;
 };

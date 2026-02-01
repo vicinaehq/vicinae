@@ -275,10 +275,8 @@ void VListWidget::setMargins(int n) { setMargins(QMargins{n, n, n, n}); }
 
 void VListWidget::setSelected(std::optional<VListModel::Index> idx) {
   if (!m_model || !idx) {
-    if (m_selected) {
-      m_selected.reset();
-      emit itemSelected(std::nullopt);
-    }
+    if (m_selected) { m_selected.reset(); }
+    emit itemSelected(std::nullopt);
     return;
   }
 

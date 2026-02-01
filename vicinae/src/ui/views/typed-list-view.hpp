@@ -145,6 +145,10 @@ protected:
     itemSelected(item.value());
   }
 
+  std::optional<ItemType> currentItem() const {
+    return m_list->currentSelection().and_then([&](auto idx) { return m_model->fromIndex(idx); });
+  }
+
   void refreshCurrent() { selectionChanged(m_list->currentSelection()); }
 
   virtual void itemActivated(typename ModelType::Index idx) { executePrimaryAction(); }
@@ -292,6 +296,15 @@ public:
       return createActionPanel(*it->second);
     }
     return {};
+  }
+
+  const T *currentItem() const {
+    return TypedListView::currentItem()
+        .transform([&](auto &&item) -> const T * {
+          if (auto it = m_objectMap.find(item.id); it != m_objectMap.end()) { return &*it->second; }
+          return nullptr;
+        })
+        .value_or(nullptr);
   }
 
   virtual DataSet initializeDataSet() = 0;

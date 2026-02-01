@@ -28,9 +28,7 @@ PlaceholderString PlaceholderString::parse(QString link, std::span<const QString
   const auto insertPlaceholder = [&](const ParsedPlaceholder &placeholder) {
     bool isReserved = std::ranges::any_of(reserved, [&](const QString &s) { return s == placeholder.id; });
 
-    if (!isReserved) {
-      pstr.m_args.emplace_back(Argument(placeholder.id));
-    } else if (placeholder.id == "argument") {
+    if (placeholder.id == "argument") {
       Argument arg;
       if (auto it = placeholder.args.find("name"); it != placeholder.args.end()) { arg.name = it->second; }
       if (auto it = placeholder.args.find("default"); it != placeholder.args.end()) {
@@ -38,6 +36,8 @@ PlaceholderString PlaceholderString::parse(QString link, std::span<const QString
       }
 
       pstr.m_args.emplace_back(arg);
+    } else if (!isReserved) {
+      pstr.m_args.emplace_back(Argument(placeholder.id));
     }
 
     pstr.m_placeholders.emplace_back(placeholder);
