@@ -82,7 +82,7 @@ void TextArea::resizeArea() {
     // document height is number of rows in QPlainTextDocument
     int rowCount = m_textEdit->document()->size().height();
     bool overflows = rowCount > m_maxRows;
-    int textHeight = heightForRowCount(std::min(rowCount, m_maxRows));
+    int textHeight = heightForRowCount(std::clamp(m_minRows, rowCount, m_maxRows));
     int height = std::max(minTextHeight, textHeight);
 
     m_textEdit->setVerticalScrollBarPolicy(overflows ? Qt::ScrollBarAsNeeded : Qt::ScrollBarAlwaysOff);
