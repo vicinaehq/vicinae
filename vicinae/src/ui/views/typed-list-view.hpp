@@ -275,6 +275,12 @@ public:
   virtual FilteredItemData mapFilteredData(const T &item) const = 0;
   virtual std::unique_ptr<ActionPanelState> createActionPanel(const T &item) const = 0;
   virtual QWidget *generateDetail(const T &item) const { return nullptr; }
+  virtual std::unique_ptr<CompleterData> createCompleter(const T &item) const { return nullptr; }
+
+  virtual std::unique_ptr<CompleterData> createCompleter(const ItemType &item) const override {
+    if (auto it = m_objectMap.find(item.id); it != m_objectMap.end()) { return createCompleter(*it->second); }
+    return nullptr;
+  }
 
   QWidget *generateDetail(const ItemType &item) const override {
     if (auto it = m_objectMap.find(item.id); it != m_objectMap.end()) { return generateDetail(*it->second); }

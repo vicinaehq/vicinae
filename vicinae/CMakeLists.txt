@@ -83,6 +83,8 @@ set(SRCS
 	src/services/script-command/script-command-service.hpp
 	src/services/script-command/script-command-service.cpp
 
+	src/placeholder.cpp
+
 
 	src/ui/spinner/spinner.hpp
 

@@ -1,7 +1,12 @@
+#pragma once
+#include <iterator>
+#include <ranges>
 #include "clipboard-actions.hpp"
 #include "common/context.hpp"
+#include "common/types.hpp"
 #include "extend/metadata-model.hpp"
 #include "navigation-controller.hpp"
+#include "placeholder.hpp"
 #include "services/snippet/snippet-db.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/detail/detail-widget.hpp"
@@ -9,14 +14,38 @@
 #include "ui/views/typed-list-view.hpp"
 #include "services/snippet/snippet-service.hpp"
 #include "extensions/snippet/create-snippet-view.hpp"
-#include <qaccessible_base.h>
-#include <type_traits>
 
 class ManageSnippetsView : public FilteredTypedListView<SnippetDatabase::SerializedSnippet> {
 public:
   FilteredItemData mapFilteredData(const SnippetDatabase::SerializedSnippet &item) const override {
     auto alias = item.expansion.transform([](auto &&e) { return e.keyword; });
     return {.id = item.name, .title = item.name, .icon = BuiltinIcon::BlankDocument, .alias = alias};
+  }
+
+  std::unique_ptr<CompleterData>
+  createCompleter(const SnippetDatabase::SerializedSnippet &item) const override {
+    const auto visitor =
+        overloads{[](const SnippetDatabase::TextSnippet &text) -> std::unique_ptr<CompleterData> {
+                    const auto str = PlaceholderString::parseSnippetText(text.text.c_str());
+                    const auto args = str.arguments();
+                    if (args.empty()) return nullptr;
+
+                    CompleterData data;
+                    const auto completerArgs =
+                        args | std::views::transform([](auto &&arg) {
+                          return CommandArgument{.name = arg.name,
+                                                 .type = CommandArgument::Type::Text,
+                                                 .placeholder = arg.name,
+                                                 .required = arg.defaultValue.isEmpty()};
+                        });
+
+                    std::ranges::copy(completerArgs, std::back_inserter(data.arguments));
+
+                    return std::make_unique<CompleterData>(data);
+                  },
+                  [](auto &&other) -> std::unique_ptr<CompleterData> { return nullptr; }};
+
+    return std::visit(visitor, item.data);
   }
 
   QWidget *generateDetail(const SnippetDatabase::SerializedSnippet &item) const override {
@@ -43,9 +72,9 @@ public:
     detail->setMetadata(metadata);
     std::visit(
         [viewer](const auto &d) {
-          if constexpr (std::is_same_v<std::decay_t<decltype(d)>, SnippetDatabase::TextSnippet>)
+          if constexpr (std::is_same_v<std::decay_t<decltype(d)>, SnippetDatabase::TextSnippet>) {
             viewer->load(QByteArray::fromStdString(d.text));
-          else
+          } else
             viewer->load(QByteArray::fromStdString(d.file));
         },
         item.data);
