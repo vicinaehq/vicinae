@@ -18,6 +18,8 @@ public:
     m_word->setValueAsJson(true);
   }
 
+  virtual void initializeSnippetForm() {}
+
   void initializeForm() final override {
     m_service = context()->services->snippetService();
     auto nameField = form()->addField();
@@ -48,6 +50,8 @@ public:
     setSnippetData(init);
 
     if (!init.name.empty()) { m_name->selectAll(); }
+
+    initializeSnippetForm();
   }
 
   virtual SnippetDatabase::SnippetPayload initialData() { return {}; }
@@ -62,14 +66,11 @@ public:
       m_word->setValueAsJson(exp->word);
     }
 
-    std::visit(
-        [this](const auto &d) {
-          if constexpr (std::is_same_v<std::decay_t<decltype(d)>, SnippetDatabase::TextSnippet>)
-            m_content->setText(d.text.c_str());
-          else
-            m_content->setText(d.file.c_str());
-        },
-        snippet.data);
+    const auto visitor =
+        overloads{[&](const SnippetDatabase::TextSnippet &text) { m_content->setText(text.text.c_str()); },
+                  [&](const SnippetDatabase::FileSnippet &file) { m_content->setText(file.file.c_str()); }};
+
+    std::visit(visitor, snippet.data);
   }
 
   void onSubmit() override {
@@ -132,9 +133,9 @@ public:
   }
 };
 
-class UpdateSnippetView : public BasicFormSnippetView {
+class EditSnippetView : public BasicFormSnippetView {
 public:
-  UpdateSnippetView(SnippetDatabase::SerializedSnippet snippet) : m_snippet(snippet) {}
+  EditSnippetView(SnippetDatabase::SerializedSnippet snippet) : m_snippet(snippet) {}
 
   SnippetDatabase::SnippetPayload initialData() override {
     return SnippetDatabase::SnippetPayload{
@@ -143,6 +144,8 @@ public:
         .expansion = m_snippet.expansion,
     };
   }
+
+  void initializeSnippetForm() override { setNavigationTitle(QString("Edit \"%1\"").arg(m_snippet.name)); }
 
   bool handleSubmit(SnippetDatabase::SnippetPayload payload) override {
     const auto toast = context()->services->toastService();
@@ -170,6 +173,10 @@ public:
         .name = std::format("Copy of {}", m_snippet.name),
         .data = m_snippet.data,
     };
+  }
+
+  void initializeSnippetForm() override {
+    setNavigationTitle(QString("Duplicate \"%1\"").arg(m_snippet.name));
   }
 
 private:

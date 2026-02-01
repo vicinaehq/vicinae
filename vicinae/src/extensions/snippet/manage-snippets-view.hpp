@@ -89,7 +89,7 @@ public:
     auto toast = context()->services->toastService();
 
     const auto edit = new StaticAction("Edit snippet", BuiltinIcon::Pencil, [item](ApplicationContext *ctx) {
-      ctx->navigation->pushView(new UpdateSnippetView(item));
+      ctx->navigation->pushView(new EditSnippetView(item));
     });
     const auto duplicate =
         new StaticAction("Duplicate snippet", BuiltinIcon::Pencil, [item](ApplicationContext *ctx) {
