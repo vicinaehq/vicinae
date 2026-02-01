@@ -1,7 +1,8 @@
 #pragma once
 #include <iterator>
+#include <qapplication.h>
 #include <ranges>
-#include "clipboard-actions.hpp"
+#include "services/snippet/snippet-copy.hpp"
 #include "common/context.hpp"
 #include "common/types.hpp"
 #include "extend/metadata-model.hpp"
@@ -94,6 +95,13 @@ public:
     auto section = panel->createSection();
     auto toast = context()->services->toastService();
 
+    const auto copy =
+        new StaticAction("Copy to clipboard", BuiltinIcon::CopyClipboard, [item](ApplicationContext *ctx) {
+          auto clip = QApplication::clipboard();
+          SnippetCopy::copyToClipboard(item, ctx->navigation->completionValues(), clip);
+          ctx->navigation->showHud("Copied to clipboard");
+        });
+
     const auto edit = new StaticAction("Edit snippet", BuiltinIcon::Pencil, [item](ApplicationContext *ctx) {
       ctx->navigation->pushView(new EditSnippetView(item));
     });
@@ -112,7 +120,7 @@ public:
     duplicate->setShortcut(Keybind::DuplicateAction);
     remove->setShortcut(Keybind::RemoveAction);
 
-    section->addAction(new CopyToClipboardAction(Clipboard::Text()));
+    section->addAction(copy);
     section->addAction(edit);
     section->addAction(duplicate);
     section->addAction(remove);
