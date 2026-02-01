@@ -35,11 +35,11 @@ public:
     request(m_client.request<snippet::ipc::CreateSnippet>(payload));
   }
 
-  void injectClipboardText(std::string_view trigger, std::string text) {
+  void injectClipboardText(std::string_view trigger, QString text) {
     auto clip = QApplication::clipboard();
     auto expansionData = new QMimeData;
 
-    expansionData->setData("text/plain;charset=utf-8", text.c_str());
+    expansionData->setData("text/plain;charset=utf-8", text.toUtf8());
     expansionData->setData("vicinae/concealed", "1");
     clip->setMimeData(expansionData);
 

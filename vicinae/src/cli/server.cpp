@@ -107,6 +107,8 @@ void CliServerCommand::run(CLI::App *app) {
     auto localStorage = std::make_unique<LocalStorageService>(*omniDb);
     auto extensionManager = std::make_unique<ExtensionManager>();
     auto windowManager = std::make_unique<WindowManager>();
+    auto snippetService =
+        std::make_unique<SnippetService>(Omnicast::dataDir() / "snippets.json", *windowManager);
     auto appService = std::make_unique<AppService>(*omniDb.get());
     auto clipboardManager =
         std::make_unique<ClipboardService>(Omnicast::dataDir() / "clipboard.db", *windowManager, *appService);
@@ -148,6 +150,7 @@ void CliServerCommand::run(CLI::App *app) {
     registry->setLocalStorage(std::move(localStorage));
     registry->setExtensionManager(std::move(extensionManager));
     registry->setClipman(std::move(clipboardManager));
+    registry->setSnippetService(std::move(snippetService));
     registry->setWindowManager(std::move(windowManager));
     registry->setFontService(std::move(fontService));
     registry->setEmojiService(std::move(emojiService));
@@ -158,7 +161,6 @@ void CliServerCommand::run(CLI::App *app) {
     registry->setPowerManager(std::make_unique<PowerManager>());
     registry->setScriptDb(std::make_unique<ScriptCommandService>());
     registry->setBrowserExtension(std::make_unique<BrowserExtensionService>());
-    registry->setSnippetService(std::make_unique<SnippetService>(Omnicast::dataDir() / "snippets.json"));
 
     auto root = registry->rootItemManager();
     auto builtinCommandDb = std::make_unique<CommandDatabase>();

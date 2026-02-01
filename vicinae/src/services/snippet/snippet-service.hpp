@@ -1,4 +1,6 @@
 #pragma once
+#include "services/snippet/snippet-expander.hpp"
+#include "services/window-manager/window-manager.hpp"
 #include "snippet-server.hpp"
 #include "snippet-db.hpp"
 #include <qtmetamacros.h>
@@ -13,7 +15,7 @@ signals:
   void snippetsChanged(); // add/updated/remove
 
 public:
-  SnippetService(std::filesystem::path path) : m_db(path) {
+  SnippetService(std::filesystem::path path, WindowManager &wm) : m_db(path), m_wm(wm) {
     connect(&m_server, &SnippetServer::keywordTriggered, this, &SnippetService::handleKeywordTrigger);
   }
 
@@ -75,10 +77,13 @@ private:
     if (!snippet || !snippet->expansion) return;
 
     if (const auto text = std::get_if<SnippetDatabase::TextSnippet>(&snippet->data)) {
-      m_server.injectClipboardText(keyword, text->text);
+      SnippetExpander expander;
+
+      m_server.injectClipboardText(keyword, expander.expandToString(text->text.c_str(), {}));
     }
   }
 
   SnippetServer m_server;
   SnippetDatabase m_db;
+  WindowManager &m_wm;
 };

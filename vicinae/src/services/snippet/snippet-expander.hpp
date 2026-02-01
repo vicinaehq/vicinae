@@ -4,6 +4,7 @@
 #include <qclipboard.h>
 #include <qcontainerfwd.h>
 #include <quuid.h>
+#include <ranges>
 #include "common/types.hpp"
 #include "placeholder.hpp"
 
@@ -20,6 +21,14 @@ class SnippetExpander {
 
 public:
   SnippetExpander() : m_uuid(QUuid::createUuid().toString(QUuid::WithoutBraces)) {}
+
+  QString expandToString(const QString &text,
+                         const std::vector<std::pair<QString, QString>> &arguments) const {
+    const auto expanded = expand(text, arguments);
+
+    return expanded.parts | std::views::transform([](auto &&pair) { return pair.text; }) | std::views::join |
+           std::ranges::to<QString>();
+  }
 
   Result expand(const QString &text, const std::vector<std::pair<QString, QString>> &arguments) const {
     const auto clip = QApplication::clipboard();
