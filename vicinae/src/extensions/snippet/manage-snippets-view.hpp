@@ -2,6 +2,7 @@
 #include <iterator>
 #include <qapplication.h>
 #include <ranges>
+#include "builtin_icon.hpp"
 #include "services/snippet/snippet-copy.hpp"
 #include "common/context.hpp"
 #include "common/types.hpp"
@@ -12,6 +13,7 @@
 #include "services/snippet/snippet-expander.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/detail/detail-widget.hpp"
+#include "ui/image/url.hpp"
 #include "ui/text-file-viewer/text-file-viewer.hpp"
 #include "ui/views/typed-list-view.hpp"
 #include "services/snippet/snippet-service.hpp"
@@ -19,20 +21,31 @@
 
 class ManageSnippetsView : public FilteredTypedListView<SnippetDatabase::SerializedSnippet> {
 public:
+  ImageURL getIcon(const SnippetDatabase::SerializedSnippet &item) const {
+    const auto visitor =
+        overloads{[](const SnippetDatabase::TextSnippet &text) { return BuiltinIcon::TextInput; },
+                  [](const auto &other) { return BuiltinIcon::BlankDocument; }};
+
+    return std::visit(visitor, item.data);
+  }
+
   FilteredItemData mapFilteredData(const SnippetDatabase::SerializedSnippet &item) const override {
     auto alias = item.expansion.transform([](auto &&e) { return e.keyword; });
-    return {.id = item.name, .title = item.name, .icon = BuiltinIcon::BlankDocument, .alias = alias};
+    return {.id = item.name, .title = item.name, .icon = getIcon(item), .alias = alias};
   }
 
   std::unique_ptr<CompleterData>
   createCompleter(const SnippetDatabase::SerializedSnippet &item) const override {
     const auto visitor =
-        overloads{[](const SnippetDatabase::TextSnippet &text) -> std::unique_ptr<CompleterData> {
+        overloads{[&](const SnippetDatabase::TextSnippet &text) -> std::unique_ptr<CompleterData> {
                     const auto str = PlaceholderString::parseSnippetText(text.text.c_str());
                     const auto args = str.arguments();
                     if (args.empty()) return nullptr;
 
                     CompleterData data;
+
+                    data.iconUrl = getIcon(item);
+
                     const auto completerArgs =
                         args | std::views::transform([](auto &&arg) {
                           return CommandArgument{.name = arg.name,
