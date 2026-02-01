@@ -677,6 +677,7 @@ set(SRCS
 	src/extensions/vicinae/local-storage/browse-local-storage.hpp
 
 	src/services/snippet/snippet-service.hpp
+	src/services/snippet/snippet-server.hpp
 	src/services/snippet/snippet-db.cpp
 
 ) 

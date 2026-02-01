@@ -49,14 +49,15 @@ public:
   std::expected<SerializedSnippet, std::string> addSnippet(SnippetPayload snippet);
   std::expected<void, std::string> setSnippets(std::span<SerializedSnippet> snippets);
   std::expected<void, std::string> updateSnippet(std::string_view id, SnippetPayload payload);
-  std::expected<void, std::string> removeSnippet(std::string_view id);
+  std::expected<SerializedSnippet, std::string> removeSnippet(std::string_view id);
 
   std::vector<SerializedSnippet> snippets() const;
 
+  SerializedSnippet *findByKeyword(std::string_view keyword);
+  SerializedSnippet *findById(std::string_view id);
+
 protected:
   std::expected<std::vector<SerializedSnippet>, std::string> loadSnippets();
-  SerializedSnippet *findById(std::string_view id);
-  SerializedSnippet *findByKeyword(std::string_view keyword);
 
 private:
   std::string m_buf;

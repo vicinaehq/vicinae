@@ -13,25 +13,35 @@ signals:
   void snippetsChanged(); // add/updated/remove
 
 public:
-  SnippetService(std::filesystem::path path) : m_db(path) {}
+  SnippetService(std::filesystem::path path) : m_db(path) {
+    connect(&m_server, &SnippetServer::keywordTriggered, this, &SnippetService::handleKeywordTrigger);
+  }
 
   bool start() {
     m_server.start();
+
+    for (const auto &snippet : m_db.snippets()) {
+      if (const auto e = snippet.expansion) { m_server.registerSnippet({.trigger = e->keyword}); }
+    }
+
     return true;
   }
 
   auto createSnippet(SnippetDatabase::SnippetPayload payload) {
     auto res = m_db.addSnippet(payload);
-    if (res) {
-      emit snippetAdded();
-      emit snippetsChanged();
-    }
+    if (!res) return res;
+
+    if (payload.expansion) { m_server.registerSnippet({.trigger = payload.expansion->keyword}); }
+    emit snippetAdded();
+    emit snippetsChanged();
+
     return res;
   }
 
   auto updateSnippet(std::string_view id, SnippetDatabase::SnippetPayload payload) {
     auto res = m_db.updateSnippet(id, payload);
     if (res) {
+      if (payload.expansion) { m_server.registerSnippet({.trigger = payload.expansion->keyword}); }
       emit snippetUpdated();
       emit snippetsChanged();
     }
@@ -40,10 +50,13 @@ public:
 
   auto removeSnippet(std::string_view id) {
     auto res = m_db.removeSnippet(id);
-    if (res) {
-      emit snippetRemoved();
-      emit snippetsChanged();
-    }
+
+    if (!res) return res;
+    if (res->expansion) { m_server.unregisterSnippet(res->expansion->keyword); }
+
+    emit snippetRemoved();
+    emit snippetsChanged();
+
     return res;
   }
 
@@ -57,6 +70,15 @@ public:
   SnippetDatabase *database() { return &m_db; }
 
 private:
+  void handleKeywordTrigger(std::string keyword) {
+    const auto snippet = m_db.findByKeyword(keyword);
+    if (!snippet || !snippet->expansion) return;
+
+    if (const auto text = std::get_if<SnippetDatabase::TextSnippet>(&snippet->data)) {
+      m_server.injectClipboardText(keyword, text->text);
+    }
+  }
+
   SnippetServer m_server;
   SnippetDatabase m_db;
 };

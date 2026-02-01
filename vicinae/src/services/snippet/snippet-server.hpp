@@ -1,11 +1,18 @@
+#pragma once
 #include <QProcess>
 #include <qapplication.h>
 #include <qmimedata.h>
 #include <qobject.h>
 #include <QClipboard>
 #include "snippet/snippet.hpp"
+#include "utils.hpp"
 
 class SnippetServer : public QObject {
+  Q_OBJECT
+
+signals:
+  void keywordTriggered(std::string trigger) const;
+
 public:
   SnippetServer() {
     connect(&m_process, &QProcess::readyReadStandardOutput, this, &SnippetServer::handleOutput);
@@ -13,18 +20,7 @@ public:
     connect(&m_process, &QProcess::started, this, &SnippetServer::handleStarted);
 
     m_server.route<snippet::ipc::TriggerSnippet>([this](const snippet::ipc::TriggerSnippet::Request &snip) {
-      auto clip = QApplication::clipboard();
-      auto expansionData = new QMimeData;
-
-      expansionData->setData("text/plain;charset=utf-8", "there");
-      expansionData->setData("vicinae/concealed", "1");
-
-      clip->setMimeData(expansionData);
-
-      qDebug() << "snippet needs expanding" << snip.trigger.c_str();
-
-      request(m_client.request<snippet::ipc::InjectClipboardExpansion>({.trigger = snip.trigger}));
-
+      emit keywordTriggered(snip.trigger);
       return snippet::ipc::TriggerSnippet::Response();
     });
   }
@@ -33,6 +29,25 @@ public:
     m_process.setProgram("/proc/self/exe");
     m_process.setArguments({"snippet-server"});
     m_process.start();
+  }
+
+  void registerSnippet(snippet::ipc::CreateSnippet::Request payload) {
+    request(m_client.request<snippet::ipc::CreateSnippet>(payload));
+  }
+
+  void injectClipboardText(std::string_view trigger, std::string text) {
+    auto clip = QApplication::clipboard();
+    auto expansionData = new QMimeData;
+
+    expansionData->setData("text/plain;charset=utf-8", text.c_str());
+    expansionData->setData("vicinae/concealed", "1");
+    clip->setMimeData(expansionData);
+
+    request(m_client.request<snippet::ipc::InjectClipboardExpansion>({.trigger = std::string{trigger}}));
+  }
+
+  void unregisterSnippet(std::string_view keyword) {
+    request(m_client.request<snippet::ipc::RemoveSnippet>({.trigger = std::string{keyword}}));
   }
 
   bool isRunning() const { return m_process.state() == QProcess::ProcessState::Running; }
@@ -68,7 +83,7 @@ protected:
     using Req = decltype(m_server)::SchemaType::Request;
     using Res = decltype(m_client)::Schema::Response;
 
-    std::variant<Req> v;
+    std::variant<Req, Res> v;
 
     if (const auto error = glz::read_json(v, message)) {
       std::println(std::cerr, "Failed to parse message: {}", glz::format_error(error));
@@ -94,12 +109,10 @@ protected:
       return;
     }
 
-    /*
-if (auto it = std::get_if<Res>(&v)) {
-  auto _ = m_client.call(*it);
-  return;
-}
-    */
+    if (auto it = std::get_if<Res>(&v)) {
+      auto _ = m_client.call(*it);
+      return;
+    }
   }
 
   void handleError() {
@@ -114,11 +127,7 @@ if (auto it = std::get_if<Res>(&v)) {
     m_process.write(message.data(), message.size());
   }
 
-  void handleStarted() {
-    request(m_client.request<snippet::ipc::CreateSnippet>({.trigger = ":vibin:"}));
-    request(m_client.request<snippet::ipc::CreateSnippet>({.trigger = ":ez:"}));
-    request(m_client.request<snippet::ipc::CreateSnippet>({.trigger = "thre"}));
-  }
+  void handleStarted() {}
 
 private:
   QProcess m_process;

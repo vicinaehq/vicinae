@@ -47,11 +47,17 @@ std::expected<void, std::string> SnippetDatabase::updateSnippet(std::string_view
   return std::unexpected("No snippet with that ID");
 }
 
-std::expected<void, std::string> SnippetDatabase::removeSnippet(std::string_view id) {
+std::expected<SnippetDatabase::SerializedSnippet, std::string>
+SnippetDatabase::removeSnippet(std::string_view id) {
   if (auto it = std::ranges::find_if(m_snippets, [&](auto &&item) { return item.id == id; });
       it != m_snippets.end()) {
+    auto snip = *it;
+
     m_snippets.erase(it);
-    return setSnippets(m_snippets);
+
+    if (const auto result = setSnippets(m_snippets); !result) { return std::unexpected(result.error()); }
+
+    return snip;
   }
 
   return std::unexpected("No such snippet");
