@@ -193,7 +193,7 @@ public:
 
   void setModel(VListModel *model);
   void setMargins(const QMargins &margins);
-  void setSelected(VListModel::Index idx);
+  void setSelected(std::optional<VListModel::Index> idx);
 
   std::span<const ViewportItem> visibleItems() const;
 
