@@ -43,6 +43,4 @@ private:
   void handleSearchPop();
   bool filterInputEvents(QEvent *event);
   void handleTextEdited(const QString &text);
-
-  QString m_textPlaceholder;
 };
