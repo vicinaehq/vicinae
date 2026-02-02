@@ -1,7 +1,7 @@
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(LIBS)
-set(TARGET vicinae)
+set(TARGET vicinae-server)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets Sql Network Svg DBus Concurrent)
 find_package(OpenSSL REQUIRED)
@@ -58,9 +58,7 @@ include_directories(
     ${CMAKE_BINARY_DIR}/generated  # For version.h
 )
 
-set(PROTO_SRC_DIR ${CMAKE_SOURCE_DIR}/proto)
-
-file(GLOB PROTO_FILES "${PROTO_SRC_DIR}/*.proto")
+file(GLOB PROTO_FILES "${PROTO_DIR}/*.proto")
 
 set(SRCS
 	src/main.cpp
@@ -382,7 +380,7 @@ set(SRCS
 	src/vicinae.cpp
 
 
-	../extra/extension-boilerplate/boilerplate.qrc
+	${EXTRA_PATH}/extension-boilerplate/boilerplate.qrc
 
 	./icons/icons.qrc
 
@@ -787,7 +785,7 @@ endif()
 
 target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_26)
+target_compile_features(${TARGET} PUBLIC cxx_std_26)
 
 if (USE_PRECOMPILED_HEADERS)
 	message(STATUS "Precompiled headers are enabled")
@@ -799,7 +797,7 @@ endif()
 
 make_directory(${CMAKE_CURRENT_BINARY_DIR}/proto)
 
-set(PROTO_IMPORT_DIRS ${PROTO_SRC_DIR} ${COMMON_PROTO_DIR})
+set(PROTO_IMPORT_DIRS ${PROTO_DIR} ${COMMON_PROTO_DIR})
 
 if (NOT USE_SYSTEM_PROTOBUF)
 	list(APPEND PROTO_IMPORT_DIRS ${protobuf_SOURCE_DIR}/src)

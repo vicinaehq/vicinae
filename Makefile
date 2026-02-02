@@ -104,14 +104,14 @@ gh-release:
 
 clean:
 	rm -rf $(BUILD_DIR)
-	$(RM) -rf ./typescript/api/node_modules
-	$(RM) -rf ./typescript/api/dist
-	$(RM) -rf ./typescript/api/src/proto
-	$(RM) -rf ./typescript/extension-manager/dist/
-	$(RM) -rf ./typescript/extension-manager/node_modules
-	$(RM) -rf ./typescript/extension-manager/src/proto
+	$(RM) -rf ./src/typescript/api/node_modules
+	$(RM) -rf ./src/typescript/api/dist
+	$(RM) -rf ./src/typescript/api/src/proto
+	$(RM) -rf ./src/typescript/extension-manager/dist/
+	$(RM) -rf ./src/typescript/extension-manager/node_modules
+	$(RM) -rf ./src/typescript/extension-manager/src/proto
 	$(RM) -rf ./scripts/.tmp
-	$(RM) -rf lib/*/build
+	$(RM) -rf ./src/lib/*/build
 .PHONY: clean
 
 re: clean release

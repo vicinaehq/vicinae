@@ -7,7 +7,6 @@ unset(CMAKE_FIND_PACKAGE_PREFER_CONFIG)
 
 set(EXT_MGR_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/extension-manager")
 set(EXT_MGR_OUT "${CMAKE_BINARY_DIR}/extension-runtime.js")
-set(EXT_PROTO_PATH "${CMAKE_SOURCE_DIR}/proto")
 set(EXT_PROTO_OUT "${EXT_MGR_SRC_DIR}/src/proto")
 set(EXT_MGR_NODE_MODULES "${EXT_MGR_SRC_DIR}/node_modules")
 
@@ -16,7 +15,7 @@ file(GLOB_RECURSE EXT_MGR_TS_FILES
 )
 
 file(GLOB_RECURSE EXT_PROTO_FILES
-	"${EXT_PROTO_PATH}/*.proto"
+	"${PROTO_DIR}/*.proto"
 )
 
 list(APPEND EXT_MGR_TS_FILES
@@ -45,7 +44,7 @@ endif()
 
 add_custom_command(
     OUTPUT ${EXT_MGR_OUT}
-	COMMAND protobuf::protoc --plugin=${EXT_MGR_SRC_DIR}/node_modules/.bin/protoc-gen-ts_proto -I ${protobuf_SOURCE_DIR}/src -I ${EXT_PROTO_PATH} ${EXT_PROTO_FILES} --ts_proto_out ${EXT_PROTO_OUT}
+	COMMAND protobuf::protoc --plugin=${EXT_MGR_SRC_DIR}/node_modules/.bin/protoc-gen-ts_proto -I ${protobuf_SOURCE_DIR}/src -I ${PROTO_DIR} ${EXT_PROTO_FILES} --ts_proto_out ${EXT_PROTO_OUT}
     COMMAND npm run build
     COMMAND ${CMAKE_COMMAND} -E copy
             ${EXT_MGR_SRC_DIR}/dist/runtime.js

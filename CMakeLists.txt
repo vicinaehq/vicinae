@@ -46,7 +46,7 @@ option(ENABLE_PREVIEW_FEATURES "Enable preview features that are not yet ready f
 # disabled for now, as it seems to be incompatible with ccache, and as such slows us down more than anything
 option(USE_PRECOMPILED_HEADERS "Use precompiled headers to speed up compilation" OFF)
 
-set(LIB_DIR "${CMAKE_SOURCE_DIR}/lib")
+set(LIB_DIR "${CMAKE_SOURCE_DIR}/src/lib")
 
 include(Glaze)
 
@@ -65,6 +65,8 @@ add_subdirectory(${LIB_DIR}/xdgpp)
 add_subdirectory(${LIB_DIR}/vicinae-ipc)
 add_subdirectory(${LIB_DIR}/browser-extension)
 add_subdirectory(${LIB_DIR}/snippet)
+
+set(PROTO_DIR ${CMAKE_SOURCE_DIR}/src/proto)
 
 if (USE_SYSTEM_PROTOBUF)
 	set(USE_SYSTEM_ABSEIL ON)
@@ -148,7 +150,7 @@ find_package(Protobuf)
 unset(CMAKE_FIND_PACKAGE_PREFER_CONFIG)
 
 if (TYPESCRIPT_EXTENSIONS)
-	add_subdirectory(typescript)
+	add_subdirectory(src/typescript)
 	add_compile_definitions(HAS_TYPESCRIPT_EXTENSIONS=1)
 endif()
 
@@ -210,7 +212,7 @@ if (CCACHE AND NOT IGNORE_CCACHE)
 endif()
 
 add_compile_definitions(BUILD_INFO="${BUILD_INFO}")
-add_subdirectory(vicinae)
+add_subdirectory(src/server)
 
 set(INSTALL_SHARE ${CMAKE_INSTALL_PREFIX}/share)
 set(VICINAE_INSTALL_SHARE ${INSTALL_SHARE}/vicinae)
