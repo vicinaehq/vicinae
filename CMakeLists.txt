@@ -52,7 +52,7 @@ if (NOT USE_SYSTEM_GLAZE)
 	FetchContent_Declare(
 	  glaze
 	  GIT_REPOSITORY https://github.com/stephenberry/glaze.git
-	  GIT_TAG 7fccd73a5e1d9723a4a26d77979ecaa554c45a14
+	  GIT_TAG b64f4a68d3a08e6515a9322a9740cf652ade0bb7
 	  GIT_SHALLOW FALSE
 	  EXCLUDE_FROM_ALL
 	)
