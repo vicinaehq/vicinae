@@ -1,3 +1,4 @@
+#include <filesystem>
 #include <glaze/core/reflect.hpp>
 #include <glaze/json/read.hpp>
 #include <glaze/json/write.hpp>
@@ -6,8 +7,11 @@
 #include "snippet-db.hpp"
 #include "utils.hpp"
 
+namespace fs = std::filesystem;
+
 SnippetDatabase::SnippetDatabase(std::filesystem::path path) : m_path(path) {
-  if (!std::filesystem::is_regular_file(m_path)) {
+  if (!fs::is_regular_file(m_path)) {
+    fs::create_directories(path.parent_path());
     if (const auto result = setSnippets({}); !result) {
       qCritical() << "Unable to create default snippet file at" << m_path.c_str() << result.error().c_str();
     }

@@ -1,23 +1,27 @@
 #pragma once
 #include <QProcess>
 #include <qapplication.h>
-#include <qmimedata.h>
-#include <qobject.h>
+#include <qlogging.h>
+#include <QMimeData>
+#include <QObject>
 #include <QClipboard>
 #include "snippet/snippet.hpp"
-#include "utils.hpp"
 
 class SnippetServer : public QObject {
   Q_OBJECT
 
 signals:
   void keywordTriggered(std::string trigger) const;
+  void serverStopped();
 
 public:
   SnippetServer() {
     connect(&m_process, &QProcess::readyReadStandardOutput, this, &SnippetServer::handleOutput);
     connect(&m_process, &QProcess::readyReadStandardError, this, &SnippetServer::handleError);
     connect(&m_process, &QProcess::started, this, &SnippetServer::handleStarted);
+    connect(&m_process, &QProcess::errorOccurred, this, [this](QProcess::ProcessError) {
+      qCritical() << "snippet server process error occured" << m_process.errorString();
+    });
 
     m_server.route<snippet::ipc::TriggerSnippet>([this](const snippet::ipc::TriggerSnippet::Request &snip) {
       emit keywordTriggered(snip.trigger);
@@ -29,13 +33,16 @@ public:
     m_process.setProgram("/proc/self/exe");
     m_process.setArguments({"snippet-server"});
     m_process.start();
+    if (!m_process.waitForStarted()) { qCritical() << "Failed to start snippet server" << m_process.error(); }
   }
+
+  void stop() { m_process.close(); }
 
   void registerSnippet(snippet::ipc::CreateSnippet::Request payload) {
     request(m_client.request<snippet::ipc::CreateSnippet>(payload));
   }
 
-  void injectClipboardText(std::string_view trigger, QString text) {
+  void injectClipboardText(std::string_view trigger, QString text, bool terminal = false) {
     auto clip = QApplication::clipboard();
     auto expansionData = new QMimeData;
 
@@ -43,7 +50,8 @@ public:
     expansionData->setData("vicinae/concealed", "1");
     clip->setMimeData(expansionData);
 
-    request(m_client.request<snippet::ipc::InjectClipboardExpansion>({.trigger = std::string{trigger}}));
+    request(m_client.request<snippet::ipc::InjectClipboardExpansion>(
+        {.trigger = std::string{trigger}, .terminal = terminal}));
   }
 
   void unregisterSnippet(std::string_view keyword) {

@@ -1,4 +1,5 @@
 #pragma once
+#include "services/app-service/app-service.hpp"
 #include "services/snippet/snippet-expander.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "snippet-server.hpp"
@@ -15,7 +16,8 @@ signals:
   void snippetsChanged(); // add/updated/remove
 
 public:
-  SnippetService(std::filesystem::path path, WindowManager &wm) : m_db(path), m_wm(wm) {
+  SnippetService(std::filesystem::path path, WindowManager &wm, const AppService &appDb)
+      : m_db(path), m_wm(wm), m_appDb(appDb) {
     connect(&m_server, &SnippetServer::keywordTriggered, this, &SnippetService::handleKeywordTrigger);
   }
 
@@ -76,14 +78,24 @@ private:
     const auto snippet = m_db.findByKeyword(keyword);
     if (!snippet || !snippet->expansion) return;
 
+    bool terminal = false;
+
+    if (const auto focusedWindow = m_wm.getFocusedWindow()) {
+      if (const auto app = m_appDb.findByClass(focusedWindow->wmClass())) {
+        qDebug() << "snippet service detected that current app is a terminal";
+        terminal = app->isTerminalEmulator() || app->isTerminalApp();
+      }
+    }
+
     if (const auto text = std::get_if<SnippetDatabase::TextSnippet>(&snippet->data)) {
       SnippetExpander expander;
-
-      m_server.injectClipboardText(keyword, expander.expandToString(text->text.c_str(), {}));
+      const auto expanded = expander.expandToString(text->text.c_str(), {});
+      m_server.injectClipboardText(keyword, expanded);
     }
   }
 
   SnippetServer m_server;
   SnippetDatabase m_db;
+  const AppService &m_appDb;
   WindowManager &m_wm;
 };

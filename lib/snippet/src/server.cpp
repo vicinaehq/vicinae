@@ -138,14 +138,17 @@ void Server::setupIPC() {
 
   m_server.route<snippet::ipc::InjectClipboardExpansion>(
       [this](const snippet::ipc::InjectClipboardExpansion::Request &req) {
+        int mods = UInputKeyboard::Modifier::MOD_CTRL;
         std::println(std::cerr, "Received expansion request for snippet {} (took {}ms)", req.trigger,
                      std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() -
                                                                            lastExpansionTime)
                          .count());
+
+        if (req.terminal) mods |= UInputKeyboard::Modifier::MOD_SHIFT;
+
         m_kb.repeatKey(KEY_BACKSPACE, req.trigger.size());
         usleep(2000);
-
-        m_kb.sendKey(KEY_V, UInputKeyboard::Modifier::MOD_CTRL);
+        m_kb.sendKey(KEY_V, mods);
 
         return snippet::ipc::InjectClipboardExpansion::Response();
       });
@@ -405,7 +408,7 @@ void Server::listen() {
           if (ev.code == KEY_SPACE) { m_text.clear(); }
         }
 
-        std::println(std::cerr, "text='{}'", m_text);
+        // std::println(std::cerr, "text='{}'", m_text);
       }
     }
   }

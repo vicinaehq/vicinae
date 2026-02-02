@@ -107,9 +107,9 @@ void CliServerCommand::run(CLI::App *app) {
     auto localStorage = std::make_unique<LocalStorageService>(*omniDb);
     auto extensionManager = std::make_unique<ExtensionManager>();
     auto windowManager = std::make_unique<WindowManager>();
-    auto snippetService =
-        std::make_unique<SnippetService>(Omnicast::dataDir() / "snippets.json", *windowManager);
     auto appService = std::make_unique<AppService>(*omniDb.get());
+    auto snippetService = std::make_unique<SnippetService>(Omnicast::dataDir() / "snippets" / "snippets.json",
+                                                           *windowManager, *appService);
     auto clipboardManager =
         std::make_unique<ClipboardService>(Omnicast::dataDir() / "clipboard.db", *windowManager, *appService);
     auto fontService = std::make_unique<FontService>();
