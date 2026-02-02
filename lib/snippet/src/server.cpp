@@ -127,7 +127,7 @@ void Server::setupIPC() {
 
   m_server.route<snippet::ipc::CreateSnippet>([this](const snippet::ipc::CreateSnippet::Request &req) {
     std::println(std::cerr, "Created new snippet with trigger {}", req.trigger);
-    m_snippetMap[req.trigger] = {req.trigger};
+    m_snippetMap[req.trigger] = Snippet(req.trigger, req.mode);
     return snippet::ipc::CreateSnippet::Response();
   });
 
@@ -137,7 +137,15 @@ void Server::setupIPC() {
   });
 
   m_server.route<snippet::ipc::InjectClipboardExpansion>(
-      [this](const snippet::ipc::InjectClipboardExpansion::Request &req) {
+      [this](const snippet::ipc::InjectClipboardExpansion::Request &req)
+          -> std::expected<snippet::ipc::InjectClipboardExpansion::Response, std::string> {
+        const auto it = m_snippetMap.find(req.trigger);
+
+        if (it == m_snippetMap.end()) {
+          std::println(std::cerr, "Could not find snippet with trigger {}", req.trigger);
+          return std::unexpected("No such snippet");
+        }
+
         int mods = UInputKeyboard::Modifier::MOD_CTRL;
         std::println(std::cerr, "Received expansion request for snippet {} (took {}ms)", req.trigger,
                      std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() -
@@ -149,6 +157,11 @@ void Server::setupIPC() {
         m_kb.repeatKey(KEY_BACKSPACE, req.trigger.size());
         usleep(2000);
         m_kb.sendKey(KEY_V, mods);
+
+        if (it->second.mode == ipc::ExpansionMode::Word) {
+          usleep(2000);
+          m_kb.sendKey(KEY_SPACE, 0);
+        }
 
         return snippet::ipc::InjectClipboardExpansion::Response();
       });
@@ -373,6 +386,13 @@ void Server::listen() {
       if (ev.value == 0) {
         xkb_state_update_key(m_kbState, keycode, XKB_KEY_UP);
       } else if (ev.value <= 2) {
+        const auto now = std::chrono::steady_clock::now();
+        const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastKeyTime).count();
+
+        if (elapsed > 1000) { m_text.clear(); }
+
+        lastKeyTime = now;
+
         std::array<char, 32> key;
         int len = xkb_state_key_get_utf8(m_kbState, keycode, key.data(), key.size());
         std::string_view keyStr{key.data(), static_cast<size_t>(len)};
@@ -380,35 +400,33 @@ void Server::listen() {
         if (ev.value == 1) { xkb_state_update_key(m_kbState, keycode, XKB_KEY_DOWN); }
 
         if (!keyStr.empty()) {
-          const auto now = std::chrono::steady_clock::now();
-          const auto elapsed =
-              std::chrono::duration_cast<std::chrono::milliseconds>(now - lastKeyTime).count();
-
-          // if (elapsed > 1000) { m_text.clear(); }
 
           if (ev.code == KEY_BACKSPACE) {
             if (!m_text.empty()) { m_text.erase(m_text.end() - 1); }
-          } else if (std::isprint(keyStr.at(0))) {
+          } else if (std::isprint(keyStr.at(0)) && !std::isspace(keyStr.at(0))) {
             m_text.append(keyStr);
           }
-
-          const auto it = m_snippetMap.find(m_text);
-
-          if (it != m_snippetMap.end()) {
-            switch (it->second.mode) {
-            case ipc::ExpansionMode::Keydown:
-              emitExpansion(it->second);
-              break;
-            case ipc::ExpansionMode::Word:
-              if (ev.code == KEY_SPACE || ev.code == KEY_ENTER) { emitExpansion(it->second); }
-              break;
-            }
-          }
-
-          if (ev.code == KEY_SPACE) { m_text.clear(); }
         }
 
-        // std::println(std::cerr, "text='{}'", m_text);
+        std::println(std::cerr, "text='{}'", m_text);
+
+        const auto it = m_snippetMap.find(m_text);
+
+        if (it != m_snippetMap.end()) {
+          switch (it->second.mode) {
+          case ipc::ExpansionMode::Keydown:
+            emitExpansion(it->second);
+            break;
+          case ipc::ExpansionMode::Word:
+            if (ev.code == KEY_SPACE || ev.code == KEY_ENTER) {
+              m_kb.sendKey(KEY_BACKSPACE, 0);
+              emitExpansion(it->second);
+            }
+            break;
+          }
+        }
+
+        if (ev.code == KEY_SPACE) { m_text.clear(); }
       }
     }
   }

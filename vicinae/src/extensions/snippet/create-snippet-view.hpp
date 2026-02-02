@@ -28,7 +28,8 @@ public:
 
     auto contentField = form()->addField();
     contentField->setName("Content");
-    contentField->setInfo("You can enrich the content with {dynamic placeholder}");
+    contentField->setInfo("You can use {dynamic placeholders} to make the content dynamic. No autocomplete "
+                          "is available for now.");
     contentField->setWidget(m_content);
 
     form()->addSeparator();
@@ -36,7 +37,7 @@ public:
     auto keywordField = form()->addField();
     keywordField->setName("Keyword");
     keywordField->setInfo(
-        "When typing this text anywhere, it will be automatically expanded to this snippet's content.");
+        "Typing this keyword anywhere will result in it being replaced by the content of the snippet.");
     keywordField->setWidget(m_keyword);
 
     auto wordCheckbox = form()->addField();

@@ -4,6 +4,7 @@
 #include "services/window-manager/window-manager.hpp"
 #include "snippet-server.hpp"
 #include "snippet-db.hpp"
+#include "snippet/snippet.hpp"
 #include <qtmetamacros.h>
 
 class SnippetService : public QObject {
@@ -25,7 +26,11 @@ public:
     m_server.start();
 
     for (const auto &snippet : m_db.snippets()) {
-      if (const auto e = snippet.expansion) { m_server.registerSnippet({.trigger = e->keyword}); }
+      if (const auto e = snippet.expansion) {
+        m_server.registerSnippet(
+            {.trigger = e->keyword,
+             .mode = e->word ? snippet::ipc::ExpansionMode::Word : snippet::ipc::ExpansionMode::Keydown});
+      }
     }
 
     return true;
@@ -35,7 +40,11 @@ public:
     auto res = m_db.addSnippet(payload);
     if (!res) return res;
 
-    if (payload.expansion) { m_server.registerSnippet({.trigger = payload.expansion->keyword}); }
+    if (const auto e = payload.expansion) {
+      m_server.registerSnippet(
+          {.trigger = e->keyword,
+           .mode = e->word ? snippet::ipc::ExpansionMode::Word : snippet::ipc::ExpansionMode::Keydown});
+    }
     emit snippetAdded();
     emit snippetsChanged();
 
