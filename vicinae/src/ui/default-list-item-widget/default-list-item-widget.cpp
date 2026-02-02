@@ -53,13 +53,7 @@ void DefaultListItemWidget::setActive(bool active) {
 }
 
 void DefaultListItemWidget::setAlias(const QString &alias) {
-  if (!alias.isEmpty()) {
-    m_alias->setAccessory(ListAccessory{
-        .text = alias,
-        .color = SemanticColor::Foreground,
-        .fillBackground = true,
-    });
-  }
+  if (!alias.isEmpty()) { m_alias->setText(alias); }
   m_alias->setVisible(!alias.isEmpty());
 }
 
