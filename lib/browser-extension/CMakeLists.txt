@@ -25,5 +25,3 @@ if (INSTALL_BROWSER_NATIVE_HOST)
 	set(NATIVE_HOST_PATH "/usr/lib/mozilla/native-messaging-hosts")
 	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${NATIVE_MESSAGING_HOST}.firefox.json DESTINATION ${NATIVE_HOST_PATH} RENAME ${NATIVE_MESSAGING_HOST}.json)
 endif()
-
-install(TARGETS ${TARGET})

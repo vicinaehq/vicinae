@@ -28,6 +28,10 @@ genicon:
 	node scripts/generate-icons.js
 .PHONY: genicon
 
+install:
+	cmake --install $(BUILD_DIR)
+.PHONY: install
+
 strip:
 	strip -s ./build/vicinae/vicinae
 .PHONY: strip
