@@ -108,23 +108,9 @@ std::optional<VListModel::Index> VListWidget::lastSelectableIndex() const {
   return std::nullopt;
 }
 
-void VListWidget::selectFirst() {
-  if (auto idx = firstSelectableIndex()) {
-    setSelected(*idx);
-    return;
-  }
-  m_selected.reset();
-  emit itemSelected({});
-}
+void VListWidget::selectFirst() { setSelected(firstSelectableIndex()); }
 
-void VListWidget::selectLast() {
-  if (auto idx = lastSelectableIndex()) {
-    setSelected(*idx);
-    return;
-  }
-  m_selected.reset();
-  emit itemSelected({});
-}
+void VListWidget::selectLast() { setSelected(lastSelectableIndex()); }
 
 std::span<const VListWidget::ViewportItem> VListWidget::visibleItems() const { return m_visibleItems; }
 
@@ -287,23 +273,21 @@ void VListWidget::setMargins(const QMargins &margins) {
 
 void VListWidget::setMargins(int n) { setMargins(QMargins{n, n, n, n}); }
 
-void VListWidget::setSelected(VListModel::Index idx) {
-  if (!m_model) {
-    if (m_selected) {
-      m_selected.reset();
-      emit itemSelected(std::nullopt);
-    }
+void VListWidget::setSelected(std::optional<VListModel::Index> idx) {
+  if (!m_model || !idx) {
+    if (m_selected) { m_selected.reset(); }
+    emit itemSelected(std::nullopt);
     return;
   }
 
-  auto id = m_model->stableId(idx);
+  auto id = m_model->stableId(idx.value());
 
   if (!m_selected || m_selected->id != id) {
-    m_selected = Selection{.idx = idx, .id = id};
+    m_selected = Selection{.idx = idx.value(), .id = id};
     emit itemSelected(idx);
   }
 
-  scrollToIndex(idx);
+  scrollToIndex(idx.value());
   updateViewport();
 }
 
@@ -350,7 +334,8 @@ void VListWidget::scrollToIndex(VListModel::Index idx, ScrollAnchor anchor) {
       distance = endY - scrollHeight - height();
     } else {
       if (auto top = getTopItem(idx); top && m_model->isAnchor(top.value())) {
-        return scrollToIndex(top.value(), anchor);
+        scrollToIndex(top.value(), anchor);
+        return;
       }
       if (isFullyInViewport) return;
       distance = startY - scrollHeight;

@@ -145,6 +145,10 @@ protected:
     itemSelected(item.value());
   }
 
+  std::optional<ItemType> currentItem() const {
+    return m_list->currentSelection().and_then([&](auto idx) { return m_model->fromIndex(idx); });
+  }
+
   void refreshCurrent() { selectionChanged(m_list->currentSelection()); }
 
   virtual void itemActivated(typename ModelType::Index idx) { executePrimaryAction(); }
@@ -191,6 +195,7 @@ struct FilteredItemData {
   std::string title;
   std::optional<std::string> subtitle;
   std::optional<ImageURL> icon;
+  std::optional<std::string> alias;
   AccessoryList accessories;
   bool isActive = false;
 };
@@ -238,10 +243,13 @@ public:
 
 protected:
   virtual ItemData createItemData(const FilteredItemData &item) const override {
-    return ItemData{.title = item.title.c_str(),
-                    .subtitle = item.subtitle.value_or("").c_str(),
-                    .icon = item.icon,
-                    .accessories = item.accessories};
+    return ItemData{
+        .title = item.title.c_str(),
+        .subtitle = item.subtitle.value_or("").c_str(),
+        .icon = item.icon,
+        .alias = item.alias.value_or("").c_str(),
+        .accessories = item.accessories,
+    };
   }
 
   virtual int sectionCount() const override { return m_filteredSections.size(); }
@@ -271,6 +279,12 @@ public:
   virtual FilteredItemData mapFilteredData(const T &item) const = 0;
   virtual std::unique_ptr<ActionPanelState> createActionPanel(const T &item) const = 0;
   virtual QWidget *generateDetail(const T &item) const { return nullptr; }
+  virtual std::unique_ptr<CompleterData> createCompleter(const T &item) const { return nullptr; }
+
+  virtual std::unique_ptr<CompleterData> createCompleter(const ItemType &item) const override {
+    if (auto it = m_objectMap.find(item.id); it != m_objectMap.end()) { return createCompleter(*it->second); }
+    return nullptr;
+  }
 
   QWidget *generateDetail(const ItemType &item) const override {
     if (auto it = m_objectMap.find(item.id); it != m_objectMap.end()) { return generateDetail(*it->second); }
@@ -282,6 +296,15 @@ public:
       return createActionPanel(*it->second);
     }
     return {};
+  }
+
+  const T *currentItem() const {
+    return TypedListView::currentItem()
+        .transform([&](auto &&item) -> const T * {
+          if (auto it = m_objectMap.find(item.id); it != m_objectMap.end()) { return &*it->second; }
+          return nullptr;
+        })
+        .value_or(nullptr);
   }
 
   virtual DataSet initializeDataSet() = 0;

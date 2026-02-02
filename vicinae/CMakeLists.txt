@@ -22,6 +22,7 @@ list(APPEND LIBS
 	emoji
 	vicinae-ipc
 	browser
+	vicinae::snippet
 )
 
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)
@@ -81,6 +82,8 @@ set(SRCS
 	src/script/script-actions.cpp
 	src/services/script-command/script-command-service.hpp
 	src/services/script-command/script-command-service.cpp
+
+	src/placeholder.cpp
 
 
 	src/ui/spinner/spinner.hpp
@@ -674,6 +677,10 @@ set(SRCS
 	src/config/config.cpp
 
 	src/extensions/vicinae/local-storage/browse-local-storage.hpp
+
+	src/services/snippet/snippet-service.hpp
+	src/services/snippet/snippet-server.hpp
+	src/services/snippet/snippet-db.cpp
 
 ) 
 

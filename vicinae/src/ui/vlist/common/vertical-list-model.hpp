@@ -19,6 +19,7 @@ public:
     QString title;
     std::optional<QString> subtitle;
     std::optional<ImageURL> icon;
+    std::optional<QString> alias;
     AccessoryList accessories;
     bool isActive = false;
   };
@@ -46,7 +47,7 @@ public:
     w->setSubtitle(data.subtitle.value_or(""));
     w->setActive(data.isActive);
     w->setAccessories(data.accessories);
-    w->setAlias("");
+    w->setAlias(data.alias.value_or(""));
   }
 
   VListModel::WidgetTag widgetTag(const ItemType &item) const override {

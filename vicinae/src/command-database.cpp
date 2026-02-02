@@ -7,6 +7,7 @@
 #include "extensions/power-management/power-management-extension.hpp"
 #include "extensions/shortcut/shortcut-extension.hpp"
 #include "extensions/font/font-extension.hpp"
+#include "extensions/snippet/snippet-extension.hpp"
 #include "extensions/theme/theme-extension.hpp"
 #include "extensions/developer/developer-extension.hpp"
 #include "extensions/raycast/raycast-compat-extension.hpp"
@@ -43,6 +44,10 @@ CommandDatabase::CommandDatabase() {
   registerRepository<ThemeExtension>();
   registerRepository<FontExtension>();
   registerRepository<DeveloperExtension>();
+
+#ifdef ENABLE_PREVIEW_FEATURES
+  registerRepository<SnippetExtension>();
+#endif
 
 #ifdef QT_DEBUG
   registerRepository<InternalExtension>();

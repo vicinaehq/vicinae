@@ -32,6 +32,7 @@
 #include "services/shortcut/shortcut-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/window-manager/window-manager.hpp"
+#include "services/snippet/snippet-service.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "ui/launcher-window/launcher-window.hpp"
 #include "utils.hpp"
@@ -107,6 +108,8 @@ void CliServerCommand::run(CLI::App *app) {
     auto extensionManager = std::make_unique<ExtensionManager>();
     auto windowManager = std::make_unique<WindowManager>();
     auto appService = std::make_unique<AppService>(*omniDb.get());
+    auto snippetService = std::make_unique<SnippetService>(Omnicast::dataDir() / "snippets" / "snippets.json",
+                                                           *windowManager, *appService);
     auto clipboardManager =
         std::make_unique<ClipboardService>(Omnicast::dataDir() / "clipboard.db", *windowManager, *appService);
     auto fontService = std::make_unique<FontService>();
@@ -147,6 +150,7 @@ void CliServerCommand::run(CLI::App *app) {
     registry->setLocalStorage(std::move(localStorage));
     registry->setExtensionManager(std::move(extensionManager));
     registry->setClipman(std::move(clipboardManager));
+    registry->setSnippetService(std::move(snippetService));
     registry->setWindowManager(std::move(windowManager));
     registry->setFontService(std::move(fontService));
     registry->setEmojiService(std::move(emojiService));
@@ -228,6 +232,10 @@ void CliServerCommand::run(CLI::App *app) {
   IpcCommandServer commandServer(&ctx);
 
   commandServer.start(Omnicast::commandSocketPath());
+
+#ifdef ENABLE_PREVIEW_FEATURES
+  ctx.services->snippetService()->start();
+#endif
 
   auto configChanged = [&](const config::ConfigValue &next, const config::ConfigValue &prev) {
     auto &theme = ThemeService::instance();

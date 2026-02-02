@@ -9,6 +9,8 @@
 #include "ui/form/json-form-item-widget.hpp"
 
 class TextArea : public JsonFormItemWidget {
+  static constexpr const auto DEFAULT_MIN_ROWS = 3;
+
 public:
   TextArea(QWidget *m_parent = nullptr);
 
@@ -23,6 +25,7 @@ public:
   void setGrowAsRequired(bool value);
   void setRows(size_t rowCount);
   void setMargins(int margins);
+  void setMaxRows(size_t count);
 
   /**
    * The QPlainTextEdit instance used internally.
@@ -67,5 +70,6 @@ private:
   FocusNotifier *m_notifier = new FocusNotifier(this);
   bool m_growAsRequired = false;
   bool m_forwardShiftReturn = true;
-  int m_rows = 3;
+  int m_minRows = DEFAULT_MIN_ROWS;
+  int m_maxRows = 10;
 };

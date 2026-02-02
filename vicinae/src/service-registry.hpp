@@ -24,6 +24,7 @@ class OAuthService;
 class WindowManager;
 class PowerManager;
 class ScriptCommandService;
+class SnippetService;
 
 namespace config {
 class Manager;
@@ -54,6 +55,7 @@ public:
   PowerManager *powerManager() const;
   ScriptCommandService *scriptDb() const;
   BrowserExtensionService *browserExtension() const;
+  SnippetService *snippetService() const;
 
   void setPowerManager(std::unique_ptr<PowerManager> manager);
   void setWindowManager(std::unique_ptr<WindowManager> manager);
@@ -77,6 +79,7 @@ public:
   void setClipman(std::unique_ptr<ClipboardService> service);
   void setAppDb(std::unique_ptr<AppService> service);
   void setBrowserExtension(std::unique_ptr<BrowserExtensionService> service);
+  void setSnippetService(std::unique_ptr<SnippetService> service);
 
 private:
   std::unique_ptr<WindowManager> m_windowManager;
@@ -100,4 +103,5 @@ private:
   std::unique_ptr<PowerManager> m_powerManager;
   std::unique_ptr<ScriptCommandService> m_scriptCommandService;
   std::unique_ptr<BrowserExtensionService> m_browserExtensionService;
+  std::unique_ptr<SnippetService> m_snippetService;
 };

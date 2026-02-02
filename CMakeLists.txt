@@ -3,6 +3,8 @@ set(PROJECT_NAME vicinae)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 project(${PROJECT_NAME} VERSION 1.0.0 LANGUAGES C CXX)
 
+set(LIB_NAMESPACE "vicinae")
+
 if (QT_DIR)
 	set(CMAKE_PREFIX_PATH ${QT_DIR} ${CMAKE_PREFIX_PATH})
 	message(STATUS "Using QT installation at ${QT_DIR}")
@@ -39,6 +41,7 @@ option(USE_SYSTEM_GLAZE "Use system glaze instead of fetching it. This is a head
 option(USE_SYSTEM_QT_KEYCHAIN "Use system qt-keychain instead of building it from source. Note: still depends on system libsecret." ON)
 option(LIBQALCULATE_BACKEND "Compile in support for the Qalculate! calculator backend" ON)
 option(ENABLE_SANITIZERS "Enable ASan + UBSan for debug builds" OFF)
+option(ENABLE_PREVIEW_FEATURES "Enable preview features that are not yet ready for global release" OFF)
 
 # disabled for now, as it seems to be incompatible with ccache, and as such slows us down more than anything
 option(USE_PRECOMPILED_HEADERS "Use precompiled headers to speed up compilation" OFF)
@@ -66,6 +69,7 @@ add_subdirectory(${LIB_DIR}/emoji)
 add_subdirectory(${LIB_DIR}/xdgpp)
 add_subdirectory(${LIB_DIR}/vicinae-ipc)
 add_subdirectory(${LIB_DIR}/browser-extension)
+add_subdirectory(${LIB_DIR}/snippet)
 
 if (USE_SYSTEM_PROTOBUF)
 	set(USE_SYSTEM_ABSEIL ON)
@@ -153,6 +157,10 @@ if (TYPESCRIPT_EXTENSIONS)
 	add_compile_definitions(HAS_TYPESCRIPT_EXTENSIONS=1)
 endif()
 
+if (ENABLE_PREVIEW_FEATURES)
+	add_compile_definitions(ENABLE_PREVIEW_FEATURES=1)
+endif()
+
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()
@@ -164,8 +172,10 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_RELEASE} -g3 -O0")
 
 if (ENABLE_SANITIZERS AND CMAKE_BUILD_TYPE MATCHES "Debug")
 	message(STATUS "Sanitizers enabled (ASan + UBSan)")
-	add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer)
-	add_link_options(-fsanitize=address,undefined)
+	# glaze has issues with ubsan+variants
+	#add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer)
+	add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
+	add_link_options(-fsanitize=address)
 	add_compile_definitions(DEBUG=1)
 endif()
 

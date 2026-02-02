@@ -87,7 +87,7 @@ QString ThemeService::inputStyleSheet() {
   		QLineEdit, QTextEdit, QPlainTextEdit, QDateTimeEdit {
 			font-size: {FONT_SIZE}pt;
 			background-color: transparent;
-			border: 2px solid {INPUT_BORDER_COLOR};
+			border: 1px solid {INPUT_BORDER_COLOR};
 			border-radius: 5px;
 		}
 

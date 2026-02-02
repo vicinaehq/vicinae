@@ -3,6 +3,7 @@
 #include "cli/script.hpp"
 #include "cli/theme.hpp"
 #include "environment.hpp"
+#include "snippet/snippet.hpp"
 #include "utils.hpp"
 #include "browser/browser.hpp"
 #include "lib/CLI11.hpp"
@@ -330,6 +331,12 @@ int CommandLineApp::run(int ac, char **av) {
 
   if (ac == 1) {
     std::cout << app.help(av[0]);
+    return 0;
+  }
+
+  if (ac == 2 && std::string_view(av[1]) == "snippet-server") {
+    snippet::Server server;
+    server.listen();
     return 0;
   }
 

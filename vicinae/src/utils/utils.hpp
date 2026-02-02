@@ -86,6 +86,8 @@ QString formatSize(size_t bytes);
 
 QString slugify(const QString &input, const QString &separator = "-");
 
+std::string generatePrefixedId(std::string_view prefix, int length = 12);
+
 namespace Utils {
 inline std::vector<QString> toQStringVec(const std::vector<std::string> &strings) {
   std::vector<QString> list;

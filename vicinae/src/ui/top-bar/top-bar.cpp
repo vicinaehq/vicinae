@@ -18,6 +18,8 @@
 #include "ui/search-bar/search-bar.hpp"
 #include "utils/layout.hpp"
 
+static constexpr const auto COMPLETION_SEARCH_PLACEHOLDER_TEXT = "...";
+
 void GlobalHeader::showEvent(QShowEvent *event) {
   if (!m_input->text().isEmpty()) { m_input->selectAll(); }
   QWidget::showEvent(event);
@@ -61,6 +63,7 @@ void GlobalHeader::setupUI() {
   m_input->setFocus();
 
   connect(&m_navigation, &NavigationController::completionCreated, this, [this](const CompleterState &state) {
+    m_input->setPlaceholderText(COMPLETION_SEARCH_PLACEHOLDER_TEXT);
     m_input->setInline(true);
     m_completer->setIconUrl(state.icon);
     m_completer->setArguments(state.args);
@@ -69,6 +72,7 @@ void GlobalHeader::setupUI() {
   connect(&m_navigation, &NavigationController::completionDestroyed, this, [this]() {
     m_input->setInline(false);
     m_completer->clear();
+    m_input->setPlaceholderText(m_navigation.topState()->placeholderText);
   });
 
   connect(&m_navigation, &NavigationController::invalidCompletionFired, m_completer, &ArgCompleter::validate);

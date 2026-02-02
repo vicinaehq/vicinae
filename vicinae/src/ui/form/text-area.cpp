@@ -8,18 +8,21 @@
 #include <qevent.h>
 #include <qnamespace.h>
 #include <qplaintextedit.h>
+#include <qscrollbar.h>
 #include <qwidget.h>
 
 int TextArea::heightForRowCount(int rowCount) {
   int margin = m_textEdit->document()->documentMargin();
 
-  return margin * 2 + (rowCount * m_textEdit->fontMetrics().lineSpacing());
+  return (margin * 2) + (rowCount * m_textEdit->fontMetrics().lineSpacing());
 }
 
 void TextArea::setRows(size_t rowCount) {
-  m_rows = rowCount;
+  m_minRows = rowCount;
   setFixedHeight(heightForRowCount(rowCount));
 }
+
+void TextArea::setMaxRows(size_t count) { m_maxRows = count; }
 
 void TextArea::resizeEvent(QResizeEvent *event) {
   JsonFormItemWidget::resizeEvent(event);
@@ -36,6 +39,7 @@ void TextArea::setupUI() {
   m_textEdit = new QPlainTextEdit;
   m_textEdit->setFrameShape(QFrame::NoFrame);
   m_textEdit->setVerticalScrollBar(new OmniScrollBar);
+  m_textEdit->setVerticalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAsNeeded);
   m_textEdit->setProperty("form-input", true);
   m_textEdit->installEventFilter(this);
   m_notifier->track(m_textEdit);
@@ -74,15 +78,19 @@ void TextArea::setMargins(int margins) { m_textEdit->document()->setDocumentMarg
 
 void TextArea::resizeArea() {
   if (m_growAsRequired) {
-    QFontMetrics fm = m_textEdit->fontMetrics();
-    int minTextHeight = heightForRowCount(m_rows);
+    int minTextHeight = heightForRowCount(m_minRows);
     // document height is number of rows in QPlainTextDocument
     int rowCount = m_textEdit->document()->size().height();
-    int textHeight = heightForRowCount(rowCount);
+    bool overflows = rowCount > m_maxRows;
+    int textHeight = heightForRowCount(std::clamp(rowCount, m_minRows, m_maxRows));
     int height = std::max(minTextHeight, textHeight);
 
-    setFixedHeight(height);
-    m_textEdit->setFixedHeight(height);
+    m_textEdit->setVerticalScrollBarPolicy(overflows ? Qt::ScrollBarAsNeeded : Qt::ScrollBarAlwaysOff);
+
+    if (height == this->height()) return;
+
+    setFixedHeight(textHeight);
+    m_textEdit->setFixedHeight(textHeight);
   }
 }
 
