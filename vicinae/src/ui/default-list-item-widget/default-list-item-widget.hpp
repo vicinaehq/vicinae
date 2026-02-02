@@ -1,4 +1,5 @@
 #pragma once
+#include "ui/alias-badge.hpp"
 #include "ui/image/url.hpp"
 #include "ui/color-circle/color_circle.hpp"
 #include "ui/typography/typography.hpp"
@@ -69,6 +70,6 @@ private:
   TypographyWidget *m_name = new TypographyWidget(this);
   TypographyWidget *m_category = new TypographyWidget(this);
   AccessoryListWidget *m_accessoryList = new AccessoryListWidget(this);
-  ListAccessoryWidget *m_alias = new ListAccessoryWidget(this);
+  AliasBadge *m_alias = new AliasBadge;
   ColorCircle *m_activeIndicator = new ColorCircle(this);
 };
