@@ -8,19 +8,6 @@ OPTION(BUILD_TESTS "Build the test suite" OFF)
 
 find_package(glaze)
 
-if (!glaze_FOUND)
-	include(FetchContent)
-
-	FetchContent_Declare(
-	  glaze
-	  GIT_REPOSITORY https://github.com/stephenberry/glaze.git
-	  GIT_TAG b64f4a68d3a08e6515a9322a9740cf652ade0bb7
-	  GIT_SHALLOW FALSE
-	  EXCLUDE_FROM_ALL
-	)
-	FetchContent_MakeAvailable(glaze)
-endif()
-
 # static lib
 add_library(${PROJECT_NAME}  STATIC src/server.cpp src/keyboard.cpp)
 add_library(${LIB_NAMESPACE}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})

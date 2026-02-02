@@ -48,15 +48,10 @@ option(USE_PRECOMPILED_HEADERS "Use precompiled headers to speed up compilation"
 
 set(LIB_DIR "${CMAKE_SOURCE_DIR}/lib")
 
+include(Glaze)
+
 if (NOT USE_SYSTEM_GLAZE)
-	FetchContent_Declare(
-	  glaze
-	  GIT_REPOSITORY https://github.com/stephenberry/glaze.git
-	  GIT_TAG b64f4a68d3a08e6515a9322a9740cf652ade0bb7
-	  GIT_SHALLOW FALSE
-	  EXCLUDE_FROM_ALL
-	)
-	FetchContent_MakeAvailable(glaze)
+	checkout_glaze()
 endif()
 
 if (APPLE)
