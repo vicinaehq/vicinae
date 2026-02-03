@@ -5,6 +5,7 @@
 extension-manager/runtime/node_modules
 /cmake-build-debug
 /.idea
+/.vscode
 /vgcore*
 .env
 .direnv
