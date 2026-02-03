@@ -38,7 +38,7 @@ strip:
 .PHONY: strip
 
 test:
-	./$(BIN_DIR)/emoji-tests
+	./$(BIN_DIR)/vicinae-emoji-tests
 	./$(BIN_DIR)/xdgpp-tests
 	./$(BIN_DIR)/scriptcommand-tests
 .PHONY: test
