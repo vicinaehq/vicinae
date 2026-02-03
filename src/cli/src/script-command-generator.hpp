@@ -1,3 +1,4 @@
+#pragma once
 #include "script-command.hpp"
 #include <cstdint>
 #include <optional>
