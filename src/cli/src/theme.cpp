@@ -1,8 +1,6 @@
-#include "theme.hpp"
-#include "lib/rang.hpp"
-// #include "theme/theme-parser.hpp"
-#include "vicinae-ipc/client.hpp"
 #include <stdexcept>
+#include "theme.hpp"
+#include "vicinae-ipc/client.hpp"
 
 static const char *THEME_TEMPLATE = R"(# Example Theme Configuration
 # This file demonstrates all available theme configuration options for Vicinae.
@@ -211,8 +209,8 @@ class ThemeSearchPathsCommand : public AbstractCommandLineCommand {
 };
 
 ThemeCommand::ThemeCommand() {
-  registerCommand<CheckThemeCommand>();
-  registerCommand<ThemeSearchPathsCommand>();
+  // registerCommand<CheckThemeCommand>();
+  // registerCommand<ThemeSearchPathsCommand>();
   registerCommand<TemplateThemeCommand>();
   registerCommand<SetCliThemeCommand>();
 }

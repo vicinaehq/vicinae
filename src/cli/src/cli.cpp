@@ -8,7 +8,7 @@
 #include "vicinae-ipc/client.hpp"
 #include "server.hpp"
 
-constexpr const std::string headline = "HEADLINE TBF";
+constexpr const std::string_view HEADLINE = "A focused launcher for your desktop — native, fast, extensible";
 
 class Formatter : public CLI::Formatter {
 public:
@@ -24,7 +24,7 @@ public:
     if (app->get_parent() != nullptr && !app->get_description().empty()) {
       out << BOLD << app->get_description() << RESET << "\n\n";
     } else {
-      out << BOLD << headline << RESET << "\n\n";
+      out << BOLD << HEADLINE << RESET << "\n\n";
     }
 
     std::string bin_name = name.empty() ? app->get_name() : name;
@@ -333,17 +333,18 @@ int CommandLineApp::run(int ac, char **av) {
   // we still support direct deeplink usage
   // i.e vicinae vicinae://extensions/vicinae/clipboard/history
   if (ac == 2) {
+    std::string arg = av[1];
 
-    /*
-QString arg = av[1];
-// raycast:// or com.raycast:/
-auto pred = [&](const QString &scheme) { return arg.startsWith(scheme + ":/"); };
-bool hasScheme = std::ranges::any_of(Omnicast::APP_SCHEMES, pred);
-if (hasScheme) {
-char *subAv[] = {av[0], strdup("deeplink"), strdup(arg.toStdString().c_str()), nullptr};
-return run(3, subAv);
-}
-  */
+    // raycast:// or com.raycast:/
+    auto pred = [&](std::string_view scheme) { return arg.starts_with(std::string{scheme} + ":/"); };
+    bool hasScheme = std::ranges::any_of(std::initializer_list{"vicinae", "raycast", "com.raycast"}, pred);
+
+    if (hasScheme) {
+      if (auto res = ipc::CliClient::deeplink(arg, {}); !res) {
+        std::println(std::cerr, "Deeplink execution failed: {}", res.error());
+        return 1;
+      }
+    }
   }
 
   app.require_subcommand();
@@ -382,7 +383,7 @@ int CommandLineInterface::execute(int ac, char **av) {
   */
 
   std::vector<std::unique_ptr<AbstractCommandLineCommand>> commands;
-  CommandLineApp app(headline);
+  CommandLineApp app(std::string{HEADLINE});
 
   app.registerCommand<VersionCommand>();
   app.registerCommand<CliServerCommand>();

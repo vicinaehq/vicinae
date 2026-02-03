@@ -36,7 +36,7 @@ concept CliCommandType = std::is_base_of_v<AbstractCommandLineCommand, T>;
 
 class CommandLineApp {
 public:
-  CommandLineApp(const std::string &name) : m_name(name) {}
+  CommandLineApp(std::string name) : m_name(name) {}
   template <CliCommandType T> void registerCommand() { m_cmds.emplace_back(std::make_unique<T>()); }
   int run(int ac, char **av);
 
