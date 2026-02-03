@@ -14,10 +14,11 @@ class SetCliThemeCommand : public AbstractCommandLineCommand {
   std::string description() const override { return "Set theme command"; }
   void setup(CLI::App *app) override { app->add_option("theme_id", m_path)->required(); }
 
-  void run(CLI::App *app) override {
+  bool run(CLI::App *app) override {
     if (auto res = ipc::CliClient::deeplink(std::format("vicinae://theme/set/{}", m_path.c_str())); !res) {
       throw std::runtime_error("Failed to set theme: " + res.error());
     }
+    return true;
   }
 
 private:
@@ -29,7 +30,7 @@ class CheckThemeCommand : public AbstractCommandLineCommand {
   std::string description() const override { return "Check whether the target theme file is valid"; }
   void setup(CLI::App *app) override { app->add_option("file", m_path)->required(); }
 
-  void run(CLI::App *app) override {
+  bool run(CLI::App *app) override {
     /*
 ThemeParser parser;
 auto res = parser.parse(m_path);
@@ -41,6 +42,7 @@ std::cout << rang::fg::yellow << "Warning: " << rang::fg::reset << diag << "\n";
 }
 std::cout << rang::fg::green << "Theme file is valid" << rang::fg::reset << "\n";
   */
+    return true;
   }
 
 private:
@@ -52,7 +54,10 @@ class TemplateThemeCommand : public AbstractCommandLineCommand {
   std::string description() const override { return "Print out template"; }
   void setup(CLI::App *app) override { app->alias("tmpl"); }
 
-  void run(CLI::App *app) override { std::cout << THEME_TEMPLATE << std::endl; }
+  bool run(CLI::App *app) override {
+    std::cout << THEME_TEMPLATE << std::endl;
+    return true;
+  }
 
 private:
   std::optional<std::filesystem::path> m_path;
@@ -62,7 +67,7 @@ class ThemeSearchPathsCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "paths"; }
   std::string description() const override { return "Print the paths themes are searched at"; }
 
-  void run(CLI::App *app) override {}
+  bool run(CLI::App *app) override { return true; }
 };
 
 ThemeCommand::ThemeCommand() {

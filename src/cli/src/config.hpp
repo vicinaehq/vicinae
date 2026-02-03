@@ -8,7 +8,10 @@ class DefaultConfigCommand : public AbstractCommandLineCommand {
   std::string description() const override { return "Print out default config"; }
   void setup(CLI::App *app) override {}
 
-  void run(CLI::App *app) override { std::cout << DEFAULT_CONFIG; }
+  bool run(CLI::App *app) override {
+    std::cout << DEFAULT_CONFIG;
+    return true;
+  }
 };
 
 class ConfigCommand : public AbstractCommandLineCommand {

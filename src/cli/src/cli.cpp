@@ -135,19 +135,20 @@ public:
     app->add_flag("--new", m_newInstance, "Always launch a new instance");
   }
 
-  void run(CLI::App *app) override {
+  bool run(CLI::App *app) override {
     const auto res = ipc::CliClient::oneshot<ipc::LaunchApp>(
         {.appId = m_appId, .args = m_args, .newInstance = m_newInstance});
 
     if (!res) {
       std::println(std::cerr, "Failed to launch app: {}", res.error());
-      return;
+      return false;
     }
 
     if (auto title = res->focusedWindowTitle; !title.empty()) {
       std::println(std::cout,
                    "Focused existing window \"{}\"\nPass --new if you want to launch a new instance.", title);
     }
+    return true;
   }
 
 private:
@@ -169,15 +170,16 @@ class CliPing : public AbstractCommandLineCommand {
   std::string id() const override { return "ping"; }
   std::string description() const override { return "Ping the vicinae server"; }
 
-  void run(CLI::App *app) override {
+  bool run(CLI::App *app) override {
     const auto res = ipc::CliClient::oneshot<ipc::Ping>({});
 
     if (!res) {
       std::println(std::cerr, "Failed to ping: {}", res.error());
-      return;
+      return false;
     }
 
     std::cout << "Pinged successfully." << std::endl;
+    return true;
   }
 };
 
@@ -186,14 +188,16 @@ class ToggleCommand : public AbstractCommandLineCommand {
   std::string description() const override { return "Toggle the vicinae window"; }
   void setup(CLI::App *app) override { app->add_option("-q,--query", m_query, "Set search query"); }
 
-  void run(CLI::App *app) override {
+  bool run(CLI::App *app) override {
     ipc::CliClient::DeeplinkOptions opts;
 
     if (m_query) { opts.query = {{"fallbackText", m_query.value()}}; }
 
     if (auto res = ipc::CliClient::deeplink("vicinae://toggle", opts); !res) {
       std::println(std::cerr, "Failed to toggle: {}", res.error());
+      return false;
     }
+    return true;
   }
 
 private:
@@ -205,14 +209,16 @@ class OpenCommand : public AbstractCommandLineCommand {
   std::string description() const override { return "Open the vicinae window"; }
   void setup(CLI::App *app) override { app->add_option("-q,--query", m_query, "Set search query"); }
 
-  void run(CLI::App *app) override {
+  bool run(CLI::App *app) override {
     ipc::CliClient::DeeplinkOptions opts;
 
     if (m_query) { opts.query = {{"fallbackText", m_query.value()}}; }
 
     if (auto res = ipc::CliClient::deeplink("vicinae://open", opts); !res) {
-      std::println(std::cerr, "Failed to toggle: {}", res.error());
+      std::println(std::cerr, "Failed to open: {}", res.error());
+      return false;
     }
+    return true;
   }
 
 private:
@@ -223,10 +229,12 @@ class CloseCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "close"; }
   std::string description() const override { return "Close the vicinae window"; }
 
-  void run(CLI::App *app) override {
+  bool run(CLI::App *app) override {
     if (auto res = ipc::CliClient::deeplink(std::format("vicinae://close")); !res) {
       std::println(std::cerr, "Failed to close: {}", res.error());
+      return false;
     }
+    return true;
   }
 };
 
@@ -250,15 +258,19 @@ class DMenuCommand : public AbstractCommandLineCommand {
     app->add_flag("--no-footer", m_req.noFooter, "Hide the status bar footer");
   }
 
-  void run(CLI::App *app) override {
+  bool run(CLI::App *app) override {
     // m_req.rawContent = Utils::slurp(std::cin);
 
     const auto res = ipc::CliClient::oneshot<ipc::DMenu>(m_req);
 
-    if (!res) { std::println(std::cerr, "Failed to invoke dmenu: {}", res.error()); }
-    if (res->output.empty()) { exit(1); }
+    if (!res) {
+      std::println(std::cerr, "Failed to invoke dmenu: {}", res.error());
+      return false;
+    }
+    if (res->output.empty()) { return false; }
 
     std::println(std::cout, "{}", res->output);
+    return true;
   }
 
 private:
@@ -270,10 +282,11 @@ class VersionCommand : public AbstractCommandLineCommand {
   std::string description() const override { return "Show version and build information"; }
   void setup(CLI::App *app) override { app->alias("ver"); }
 
-  void run(CLI::App *app) override {
+  bool run(CLI::App *app) override {
     std::cout << "Version " << VICINAE_GIT_TAG << " (commit " << VICINAE_GIT_COMMIT_HASH << ")\n"
               << "Build: " << BUILD_INFO << "\n"
               << "Provenance: " << VICINAE_PROVENANCE << "\n";
+    return true;
   }
 };
 
@@ -288,10 +301,12 @@ public:
         ->required();
   }
 
-  void run(CLI::App *app) override {
+  bool run(CLI::App *app) override {
     if (const auto result = ipc::CliClient::deeplink(link); !result) {
       std::println(std::cerr, "Failed to execute deeplink: {}", result.error());
+      return false;
     }
+    return true;
   }
 
 private:
@@ -304,11 +319,16 @@ int CommandLineApp::run(int ac, char **av) {
   auto formatter = std::make_shared<Formatter>();
   app.formatter(formatter);
 
+  bool success = true;
+
   for (const auto &cmd : m_cmds) {
     auto sub = app.add_subcommand(cmd->id(), cmd->description());
-    cmd->prepare(sub);
+    cmd->prepare(sub, &success);
     cmd->setup(sub);
-    sub->callback([cmd = cmd.get(), sub]() { cmd->run(sub); });
+    sub->callback([cmd = cmd.get(), sub, &success]() {
+      bool r = cmd->run(sub);
+      success = r;
+    });
   }
 
   if (ac == 1) {
@@ -353,7 +373,7 @@ int CommandLineApp::run(int ac, char **av) {
 
   try {
     app.parse(ac, av);
-    return 0;
+    return success ? 0 : 1;
   } catch (const CLI::ParseError &e) {
     if (e.get_exit_code() != 0) { std::cerr << rang::fg::red; }
     return app.exit(e);

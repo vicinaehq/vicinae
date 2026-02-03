@@ -8,12 +8,15 @@ public:
 
   template <typename T> void registerCommand() { m_cmds.emplace_back(std::make_unique<T>()); }
 
-  void prepare(CLI::App *app) {
+  void prepare(CLI::App *app, bool *result = nullptr) {
     for (const auto &cmd : m_cmds) {
       auto sub = app->add_subcommand(cmd->id(), cmd->description());
-      cmd->prepare(sub);
+      cmd->prepare(sub, result);
       cmd->setup(sub);
-      sub->callback([cmd = cmd.get(), sub]() { cmd->run(sub); });
+      sub->callback([cmd = cmd.get(), sub, result]() {
+        bool r = cmd->run(sub);
+        if (result) *result = r;
+      });
     }
 
     //.if (!m_cmds.empty()) { app->require_subcommand(); }
@@ -21,8 +24,9 @@ public:
 
   virtual void setup(CLI::App *app) {}
 
-  virtual void run(CLI::App *app) {
+  virtual bool run(CLI::App *app) {
     if (!m_cmds.empty() && app->get_subcommands().empty()) { std::cout << app->help() << std::endl; }
+    return true;
   }
 
   virtual ~AbstractCommandLineCommand() = default;

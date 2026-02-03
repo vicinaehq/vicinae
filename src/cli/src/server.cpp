@@ -22,18 +22,20 @@ void CliServerCommand::setup(CLI::App *app) {
                 "Do not start the extension runtime node process. Typescript extensions will not run.");
 }
 
-void CliServerCommand::run(CLI::App *app) {
+bool CliServerCommand::run(CLI::App *app) {
   const auto path = vicinae::findHelperProgram("vicinae-server");
 
   if (!path) {
     std::println(std::cerr, "Could not find vicinae-server binary.");
-    return;
+    return false;
   }
 
   std::array<char *, 3> argv = {strdup("vicinae-server"), strdup("server"), nullptr};
 
   if (execv(path->c_str(), argv.data()) != 0) {
     std::println(std::cerr, "Failed to exec vicinae-server: {}", strerror(errno));
-    return;
+    return false;
   }
+
+  return true;
 }
