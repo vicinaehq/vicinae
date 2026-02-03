@@ -70,7 +70,7 @@ add_subdirectory(${LIB_DIR}/script-command)
 add_subdirectory(${LIB_DIR}/emoji)
 add_subdirectory(${LIB_DIR}/xdgpp)
 add_subdirectory(${LIB_DIR}/vicinae-ipc)
-add_subdirectory(${LIB_DIR}/browser-extension)
+add_subdirectory(src/browser-extension)
 add_subdirectory(${LIB_DIR}/snippet)
 add_subdirectory(${LIB_DIR}/common)
 
