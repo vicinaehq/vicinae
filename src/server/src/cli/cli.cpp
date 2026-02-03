@@ -12,10 +12,6 @@
 #include "lib/rang.hpp"
 #include <exception>
 #include "vicinae-ipc/client.hpp"
-#include "ext-clip/app.hpp"
-#include "services/clipboard/ext/ext-clipboard-server.hpp"
-#include "wlr-clip/app.hpp"
-#include "services/clipboard/wlr/wlr-clipboard-server.hpp"
 #include "version.h"
 #include <QJsonDocument>
 #include <QJsonArray>
@@ -326,16 +322,6 @@ int CommandLineApp::run(int ac, char **av) {
 
   if (ac == 1) {
     std::cout << app.help(av[0]);
-    return 0;
-  }
-
-  if (ac == 2 && strcmp(av[1], ExtDataControlClipboardServer::ENTRYPOINT) == 0) {
-    ExtClipman::instance()->start();
-    return 0;
-  }
-
-  if (ac == 2 && strcmp(av[1], WlrClipboardServer::ENTRYPOINT) == 0) {
-    Clipman::instance()->start();
     return 0;
   }
 

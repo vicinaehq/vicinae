@@ -8,7 +8,7 @@
 #include <wayland-client-protocol.h>
 #include <wayland-util.h>
 #include "data-control-client.hpp"
-#include "lib/wayland/display.hpp"
+#include "wayland/display.hpp"
 
 class ExtClipman : public WaylandDisplay, public WaylandRegistry::Listener, public ExtDataDevice::Listener {
 

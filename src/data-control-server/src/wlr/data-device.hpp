@@ -2,25 +2,25 @@
 #include "data-offer.hpp"
 #include "wlr-data-control-unstable-v1-client-protocol.h"
 
-class DataDevice {
+class WlrDataDevice {
 public:
   class Listener {
   public:
-    virtual void dataOffer(DataDevice &device, DataOffer &offer) {}
-    virtual void selection(DataDevice &device, DataOffer &offer) {}
-    virtual void finished(DataDevice &device) {}
-    virtual void primarySelection(DataDevice &device, DataOffer &offer) {}
+    virtual void dataOffer(WlrDataDevice &device, WlrDataOffer &offer) {}
+    virtual void selection(WlrDataDevice &device, WlrDataOffer &offer) {}
+    virtual void finished(WlrDataDevice &device) {}
+    virtual void primarySelection(WlrDataDevice &device, WlrDataOffer &offer) {}
   };
 
   void registerListener(Listener *listener) { _listeners.push_back(listener); }
 
-  DataDevice(zwlr_data_control_device_v1 *dev);
-  ~DataDevice();
+  WlrDataDevice(zwlr_data_control_device_v1 *dev);
+  ~WlrDataDevice();
 
 private:
   zwlr_data_control_device_v1 *_dev;
   std::vector<Listener *> _listeners;
-  std::unique_ptr<DataOffer> m_offer;
+  std::unique_ptr<WlrDataOffer> m_offer;
 
   static void dataOffer(void *data, zwlr_data_control_device_v1 *device, zwlr_data_control_offer_v1 *id);
   static void selection(void *data, zwlr_data_control_device_v1 *device, zwlr_data_control_offer_v1 *id);

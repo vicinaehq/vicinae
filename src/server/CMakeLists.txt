@@ -751,21 +751,7 @@ if (UNIX AND NOT APPLE)
 		src/services/clipboard/data-control/data-control-clipboard-server.cpp
 	)
 
-	# ext-data-control
-	list(APPEND SRCS
-		src/ext-clip/app.cpp
-		src/ext-clip/data-control-client.cpp
-		src/ext-clip/data-device.cpp
-		src/ext-clip/data-offer.cpp
-	)
-
-	# wlr-data-control
-	list(APPEND SRCS
-		src/wlr-clip/app.cpp
-		src/wlr-clip/data-control-client.cpp
-		src/wlr-clip/data-device.cpp
-		src/wlr-clip/data-offer.cpp
-	)
+	# wlr-data-control protocol header still needed for globals detection
 	wayland_generate_protocol("${CMAKE_CURRENT_SOURCE_DIR}/protocols/wlr-data-control-unstable-v1.xml")
 endif()
 	

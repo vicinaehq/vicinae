@@ -1,10 +1,11 @@
 #pragma once
-#include "lib/wayland/display.hpp"
+#include "wayland/display.hpp"
+#include "selection.hpp"
 #include "wlr-data-control-unstable-v1-client-protocol.h"
 #include <vector>
 #include <string>
 
-class DataOffer {
+class WlrDataOffer : public OfferReceiver {
   zwlr_data_control_offer_v1 *_offer;
   std::vector<std::string> _mimes;
   char _buf[1 << 16];
@@ -21,10 +22,10 @@ public:
    * The caller is responsible for the cleaning of this file after they are done
    * processing it.
    */
-  std::string receive(const std::string &mime);
-  const std::vector<std::string> &mimes() const;
+  std::string receive(const std::string &mime) override;
+  const std::vector<std::string> &mimes() const override;
   zwlr_data_control_offer_v1 *pointer() const { return _offer; }
 
-  DataOffer(zwlr_data_control_offer_v1 *offer);
-  ~DataOffer();
+  WlrDataOffer(zwlr_data_control_offer_v1 *offer);
+  ~WlrDataOffer();
 };

@@ -1,20 +1,20 @@
 #include "data-offer.hpp"
-#include "app.hpp"
+#include "clipman.hpp"
 #include <cstring>
 
-DataOffer::DataOffer(zwlr_data_control_offer_v1 *offer) : _offer(offer) {
+WlrDataOffer::WlrDataOffer(zwlr_data_control_offer_v1 *offer) : _offer(offer) {
   zwlr_data_control_offer_v1_add_listener(offer, &_listener, this);
 }
 
-const std::vector<std::string> &DataOffer::mimes() const { return _mimes; }
+const std::vector<std::string> &WlrDataOffer::mimes() const { return _mimes; }
 
-void DataOffer::offer(void *data, zwlr_data_control_offer_v1 *offer, const char *mime) {
-  auto self = static_cast<DataOffer *>(data);
+void WlrDataOffer::offer(void *data, zwlr_data_control_offer_v1 *offer, const char *mime) {
+  auto self = static_cast<WlrDataOffer *>(data);
 
   self->_mimes.push_back(mime);
 }
 
-std::string DataOffer::DataOffer::receive(const std::string &mime) {
+std::string WlrDataOffer::receive(const std::string &mime) {
   std::string data;
   int pipefd[2];
 
@@ -22,7 +22,7 @@ std::string DataOffer::DataOffer::receive(const std::string &mime) {
 
   zwlr_data_control_offer_v1_receive(_offer, mime.c_str(), pipefd[1]);
   // Important, otherwise we will block on read forever
-  Clipman::instance()->flush();
+  WlrClipman::instance()->flush();
   close(pipefd[1]);
 
   int rc = 0;
@@ -38,6 +38,6 @@ std::string DataOffer::DataOffer::receive(const std::string &mime) {
   return data;
 }
 
-DataOffer::~DataOffer() {
+WlrDataOffer::~WlrDataOffer() {
   if (_offer) { zwlr_data_control_offer_v1_destroy(_offer); }
 }

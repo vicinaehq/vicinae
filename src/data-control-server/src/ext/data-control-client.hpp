@@ -1,5 +1,5 @@
 #pragma once
-#include "lib/wayland/seat.hpp"
+#include "wayland/seat.hpp"
 #include "ext-data-control-v1-client-protocol.h"
 #include "data-device.hpp"
 

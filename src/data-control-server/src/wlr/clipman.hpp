@@ -8,21 +8,21 @@
 #include <wayland-client-protocol.h>
 #include <wayland-util.h>
 #include "data-control-client.hpp"
-#include "lib/wayland/display.hpp"
+#include "wayland/display.hpp"
 
-class Clipman : public WaylandDisplay, public WaylandRegistry::Listener, public DataDevice::Listener {
+class WlrClipman : public WaylandDisplay, public WaylandRegistry::Listener, public WlrDataDevice::Listener {
 
 public:
-  static Clipman *instance();
+  static WlrClipman *instance();
   void start();
-  Clipman();
+  WlrClipman();
 
 private:
   std::unique_ptr<WaylandRegistry> _registry;
-  std::unique_ptr<DataControlManager> _dcm;
+  std::unique_ptr<WlrDataControlManager> _dcm;
   std::unique_ptr<WaylandSeat> _seat;
 
   void global(WaylandRegistry &reg, uint32_t name, const char *interface, uint32_t version) override;
-  void selection(DataDevice &device, DataOffer &offer) override;
-  void primarySelection(DataDevice &device, DataOffer &offer) override;
+  void selection(WlrDataDevice &device, WlrDataOffer &offer) override;
+  void primarySelection(WlrDataDevice &device, WlrDataOffer &offer) override;
 };

@@ -11,6 +11,10 @@
 #include <qresource.h>
 #include <qstringview.h>
 #include "data-control-clipboard-server.hpp"
+#include "common/common.hpp"
+#include "wayland/globals.hpp"
+
+static constexpr const char *HELPER_PROGRAM = "vicinae-data-control-server";
 
 bool DataControlClipboardServer::isAlive() const { return m_process.isOpen(); }
 
@@ -28,13 +32,17 @@ void DataControlClipboardServer::handleMessage(const proto::ext::wlrclip::Select
 
 void DataControlClipboardServer::handleExit(int code, QProcess::ExitStatus status) {
   if (status == QProcess::ExitStatus::CrashExit) {
-    qCritical() << "wlr-clipboard process exited with status code" << code;
+    qCritical() << "data-control-server process exited with status code" << code;
   }
 }
 
-QString DataControlClipboardServer::id() const { return "wlr-clipboard"; }
+QString DataControlClipboardServer::id() const { return "data-control"; }
 
 int DataControlClipboardServer::activationPriority() const { return 1; }
+
+bool DataControlClipboardServer::isActivatable() const {
+  return Wayland::Globals::dataControlDeviceManager() || Wayland::Globals::wlrDataControlManager();
+}
 
 bool DataControlClipboardServer::stop() {
   m_process.terminate();
@@ -42,16 +50,22 @@ bool DataControlClipboardServer::stop() {
 }
 
 bool DataControlClipboardServer::start() {
-  PidFile pidFile(ENTRYPOINT);
+  PidFile pidFile(HELPER_PROGRAM);
   int maxWaitForStart = 5000;
   std::error_code ec;
 
-  if (pidFile.exists() && pidFile.kill()) { qInfo() << "Killed existing wlr-clip instance"; }
+  auto path = vicinae::findHelperProgram(HELPER_PROGRAM);
+  if (!path) {
+    qWarning() << "could not find" << HELPER_PROGRAM;
+    return false;
+  }
 
-  m_process.start("/proc/self/exe", {QString::fromStdString(m_entrypoint)});
+  if (pidFile.exists() && pidFile.kill()) { qInfo() << "Killed existing data-control-server instance"; }
+
+  m_process.start(path->c_str(), {});
 
   if (!m_process.waitForStarted(maxWaitForStart)) {
-    qCritical() << "Failed to start wlr-clipboard process" << m_process.errorString();
+    qCritical() << "Failed to start data-control-server process" << m_process.errorString();
     return false;
   }
 
@@ -92,8 +106,7 @@ void DataControlClipboardServer::handleRead() {
   }
 }
 
-DataControlClipboardServer::DataControlClipboardServer(const std::string &entrypoint)
-    : m_entrypoint(entrypoint) {
+DataControlClipboardServer::DataControlClipboardServer() {
   connect(&m_process, &QProcess::readyReadStandardOutput, this, &DataControlClipboardServer::handleRead);
   connect(&m_process, &QProcess::readyReadStandardError, this, &DataControlClipboardServer::handleReadError);
   connect(&m_process, &QProcess::finished, this, &DataControlClipboardServer::handleExit);

@@ -1,5 +1,5 @@
 #include "data-offer.hpp"
-#include "app.hpp"
+#include "clipman.hpp"
 #include <cstring>
 
 ExtDataOffer::ExtDataOffer(ext_data_control_offer_v1 *offer) : _offer(offer) {

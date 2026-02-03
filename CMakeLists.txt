@@ -222,6 +222,10 @@ add_compile_definitions(BUILD_INFO="${BUILD_INFO}")
 add_subdirectory(src/server)
 add_subdirectory(src/cli)
 
+if (UNIX AND NOT APPLE)
+	add_subdirectory(src/data-control-server)
+endif()
+
 set(INSTALL_SHARE ${CMAKE_INSTALL_PREFIX}/share)
 set(VICINAE_INSTALL_SHARE ${INSTALL_SHARE}/vicinae)
 set(VICINAE_THEME_DIR ${VICINAE_INSTALL_SHARE}/themes)
