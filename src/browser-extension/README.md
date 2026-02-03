@@ -27,7 +27,7 @@ The recommended way of installing the manifests is to use the provided CMake ins
 
 Copy the right manifest template from `./native-host/` and change the placeholder values.
 
-For firefox, you only need to replace `@NATIVE_HOST_BIN` with the absolute path to the vicinae executable (e.g: `/usr/bin/vicinae`). Then copy the manifest at `/usr/lib/mozilla/native-messaging-hosts/com.vicinae.vicinae.json`.
+For firefox, you only need to replace `@NATIVE_HOST_BIN` with the absolute path to the `vicinae-browser-link` executable (e.g: `/usr/local/libexec/vicinae/vicinae-browser-link`). Then copy the manifest at `/usr/lib/mozilla/native-messaging-hosts/com.vicinae.vicinae.json`.
 
 For chromium you will also need to change the allowed origins, more on that below. The manifest needs to be copied at `/etc/chromium/native-messaging-hosts/com.vicinae.vicinae.json`.
 
