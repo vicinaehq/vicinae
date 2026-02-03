@@ -19,7 +19,7 @@ Vicinae is designed for developers and power users who want fast, keyboard-first
 Check the [website](https://vicinae.com) ;)
 
 <p align="center">
-  <img  height="500" alt="image" src="https://github.com/user-attachments/assets/4aabc3fe-11a9-4902-b1ce-26db23b40d04" />
+  <video alt="demo video" src="https://private-user-images.githubusercontent.com/72200344/499625615-b5831ba7-dd16-407e-a05c-c2dbb468a0d6.mp4?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NzAxNDI4NjEsIm5iZiI6MTc3MDE0MjU2MSwicGF0aCI6Ii83MjIwMDM0NC80OTk2MjU2MTUtYjU4MzFiYTctZGQxNi00MDdlLWEwNWMtYzJkYmI0NjhhMGQ2Lm1wND9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNjAyMDMlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjYwMjAzVDE4MTYwMVomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPWFhYjI5ZTJiMDkyYjliMDFjYWYzZDkxMmI5YWRhYmFkYzI0MzkzNjFmNjQzMDRmNjc2ZGRiMGVlNTlkOTViNTUmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.ksY1Ik5XC5xCp1K7rTg2XRlL_8-qk9E2WqzkeLjHrMo" />
 </p>
 
 ## Features
