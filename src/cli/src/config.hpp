@@ -1,24 +1,14 @@
 #pragma once
 #include "cli.hpp"
-// #include "config/template.hpp"
-#include <stdexcept>
+#include "default-config.hpp"
+#include <iostream>
 
 class DefaultConfigCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "default"; }
   std::string description() const override { return "Print out default config"; }
   void setup(CLI::App *app) override {}
 
-  void run(CLI::App *app) override {
-    /*
-auto file = QFile(":config.jsonc");
-if (!file.open(QIODevice::ReadOnly)) { throw std::runtime_error("Failed to open default config file!"); }
-
-std::cout << file.readAll().toStdString();
-  */
-  }
-
-private:
-  std::optional<std::filesystem::path> m_path;
+  void run(CLI::App *app) override { std::cout << DEFAULT_CONFIG; }
 };
 
 class ConfigCommand : public AbstractCommandLineCommand {

@@ -48,6 +48,7 @@ option(ENABLE_PREVIEW_FEATURES "Enable preview features that are not yet ready f
 option(USE_PRECOMPILED_HEADERS "Use precompiled headers to speed up compilation" OFF)
 
 set(LIB_DIR "${CMAKE_SOURCE_DIR}/src/lib")
+set(EXTRA_DIR "${CMAKE_SOURCE_DIR}/extra")
 set(VICINAE_LIBEXEC_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBEXECDIR}/vicinae)
 
 include(Glaze)
