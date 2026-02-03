@@ -5,6 +5,7 @@
 #include <QMimeData>
 #include <QObject>
 #include <QClipboard>
+#include "common/common.hpp"
 #include "snippet/snippet.hpp"
 
 class SnippetServer : public QObject {
@@ -30,8 +31,14 @@ public:
   }
 
   void start() {
-    m_process.setProgram("/proc/self/exe");
-    m_process.setArguments({"snippet-server"});
+    const auto path = vicinae::findHelperProgram("vicinae-snippet-server");
+
+    if (!path) {
+      qWarning() << "could not find vicinae-snippet-server helper binary, snippet expansion will not work";
+      return;
+    }
+
+    m_process.setProgram(path->c_str());
     m_process.start();
     if (!m_process.waitForStarted()) { qCritical() << "Failed to start snippet server" << m_process.error(); }
   }

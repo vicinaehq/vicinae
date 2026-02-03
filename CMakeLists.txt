@@ -65,13 +65,12 @@ include_directories(
     ${CMAKE_BINARY_DIR}/generated  # For version.h
 )
 
-
+add_subdirectory(src/browser-extension)
+add_subdirectory(src/snippet)
 add_subdirectory(${LIB_DIR}/script-command)
 add_subdirectory(${LIB_DIR}/emoji)
 add_subdirectory(${LIB_DIR}/xdgpp)
 add_subdirectory(${LIB_DIR}/vicinae-ipc)
-add_subdirectory(src/browser-extension)
-add_subdirectory(${LIB_DIR}/snippet)
 add_subdirectory(${LIB_DIR}/common)
 
 set(PROTO_DIR ${CMAKE_SOURCE_DIR}/src/proto)
