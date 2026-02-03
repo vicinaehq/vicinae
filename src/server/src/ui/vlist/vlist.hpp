@@ -248,12 +248,6 @@ public:
   std::optional<VListModel::Index> currentSelection() const;
 
 protected:
-  /**
-   * Makes sure widgets that may have a specific appearance due to them having been hovered
-   * are updated if this is no longer the case.
-   */
-  void recalculateMousePosition();
-
   void updateFocusChain();
 
   std::optional<VListModel::Index> getTopItem(VListModel::Index idx) const;

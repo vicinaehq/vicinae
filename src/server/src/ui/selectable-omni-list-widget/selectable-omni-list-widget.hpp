@@ -18,6 +18,7 @@ protected:
   void setHovered(bool hovered);
   void enterEvent(QEnterEvent *event) override;
   void leaveEvent(QEvent *event) override;
+  void clearTransientState() override { isHovered = false; }
 
 private:
   bool isSelected;

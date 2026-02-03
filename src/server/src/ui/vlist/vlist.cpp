@@ -24,22 +24,6 @@ void VListWidget::setModel(VListModel *model) {
   });
 }
 
-void VListWidget::recalculateMousePosition() {
-  QPoint globalPos = QCursor::pos();
-
-  for (const auto &info : visibleItems()) {
-    QPoint localPos = info.widget->mapFromGlobal(globalPos);
-    bool isUnderCursor = info.widget->rect().contains(localPos);
-
-    if (!isUnderCursor) { info.widget->widget()->clearTransientState(); }
-
-    if (info.widget->underMouse()) {
-      info.widget->hide();
-      info.widget->show();
-    }
-  }
-}
-
 void VListWidget::updateFocusChain() {
   int lastIdx = std::max(0, static_cast<int>(m_visibleItems.size() - 1));
 
@@ -475,10 +459,11 @@ void VListWidget::updateViewport() {
       }
     }
 
-    m_model->refreshWidget(item.index, item.widget->widget());
+    item.widget->widget()->clearTransientState(); // get rid of hover
     item.widget->setIndex(item.index);
     item.widget->setSelected(m_selected && item.index == m_selected->idx);
     item.widget->setFixedSize(item.bounds.width(), item.bounds.height());
+    m_model->refreshWidget(item.index, item.widget->widget());
     item.widget->move(item.bounds.x(), item.bounds.y());
     item.widget->show();
 
@@ -491,7 +476,6 @@ void VListWidget::updateViewport() {
 
   m_widgetMap = newMap;
 
-  recalculateMousePosition();
   updateFocusChain();
   setUpdatesEnabled(true);
   update();
