@@ -34,12 +34,12 @@ gcc15Stdenv.mkDerivation (finalAttrs: {
   src = ../.;
 
   apiDeps = fetchNpmDeps {
-    src = "${finalAttrs.src}/typescript/api";
+    src = "${finalAttrs.src}/src/typescript/api";
     hash = "sha256-UsTpMR23UQBRseRo33nbT6z/UCjZByryWfn2AQSgm6U=";
   };
 
   extensionManagerDeps = fetchNpmDeps {
-    src = "${finalAttrs.src}/typescript/extension-manager";
+    src = "${finalAttrs.src}/src/typescript/extension-manager";
     hash = "sha256-wl8FDFB6Vl1zD0/s2EbU6l1KX4rwUW6dOZof4ebMMO8=";
   };
 
@@ -87,8 +87,8 @@ gcc15Stdenv.mkDerivation (finalAttrs: {
   postPatch = ''
     local postPatchHooks=()
     source ${npmHooks.npmConfigHook}/nix-support/setup-hook
-    npmRoot=typescript/api npmDeps=${finalAttrs.apiDeps} npmConfigHook
-    npmRoot=typescript/extension-manager npmDeps=${finalAttrs.extensionManagerDeps} npmConfigHook
+    npmRoot=src/typescript/api npmDeps=${finalAttrs.apiDeps} npmConfigHook
+    npmRoot=src/typescript/extension-manager npmDeps=${finalAttrs.extensionManagerDeps} npmConfigHook
   '';
 
   qtWrapperArgs = [

@@ -1,0 +1,11 @@
+cmake_minimum_required(VERSION 3.16)
+set(PROJECT_NAME vicinae-common)
+project(${PROJECT_NAME})
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+add_library(${PROJECT_NAME} STATIC src/common.cpp)
+add_library(vicinae::common ALIAS ${PROJECT_NAME})
+target_include_directories(${PROJECT_NAME} PUBLIC include PRIVATE src)
+target_compile_definitions(${PROJECT_NAME} PRIVATE VICINAE_LIBEXECDIR="${CMAKE_INSTALL_LIBEXECDIR}/vicinae")
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)

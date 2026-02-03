@@ -1,4 +1,5 @@
 BUILD_DIR						:= build
+BIN_DIR							:= build/bin
 RM								:= rm
 TAG 							:= $(shell git describe --tags --abbrev=0)
 APPIMAGE_BUILD_ENV_DIR			:= ./scripts/runners/appimage/
@@ -14,8 +15,13 @@ host-optimized:
 	cmake --build $(BUILD_DIR)
 .PHONY: optimized
 
+preview:
+	cmake -G Ninja -DENABLE_PREVIEW_FEATURES=ON -DCMAKE_BUILD_TYPE=Release -B $(BUILD_DIR)
+	cmake --build $(BUILD_DIR)
+.PHONY: preview
+
 debug:
-	cmake -G Ninja -DLTO=OFF -DENABLE_SANITIZERS=ON -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
+	cmake -G Ninja -DLTO=OFF -DENABLE_PREVIEW_FEATURES=ON -DENABLE_SANITIZERS=ON -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)
 .PHONY: debug
 
@@ -23,14 +29,18 @@ genicon:
 	node scripts/generate-icons.js
 .PHONY: genicon
 
+install:
+	cmake --install $(BUILD_DIR)
+.PHONY: install
+
 strip:
 	strip -s ./build/vicinae/vicinae
 .PHONY: strip
 
 test:
-	$(BUILD_DIR)/lib/xdgpp/xdgpp-tests
-	$(BUILD_DIR)/lib/script-command/scriptcommand-tests
-	$(BUILD_DIR)/lib/emoji/emoji-tests
+	./$(BIN_DIR)/vicinae-emoji-tests
+	./$(BIN_DIR)/xdgpp-tests
+	./$(BIN_DIR)/scriptcommand-tests
 .PHONY: test
 
 static:
@@ -66,6 +76,10 @@ appimage-build-gh-runner: appimage-build-env
 	docker build -f $(APPIMAGE_BUILD_ENV_DIR)/gh-runner.Dockerfile $(APPIMAGE_BUILD_ENV_DIR) -t vicinae/appimage-gh-runner
 .PHONY: appimage-build-gh-runner
 
+appimage-build-env-push:
+	docker push $(APPIMAGE_BUILD_ENV_IMAGE_TAG)
+.PHONY: appimage-build-env-push
+
 format:
 	@echo -e 'vicinae\nwlr-clip' | xargs -I{} find {} -type d -iname 'build' -prune -o -type f -iname '*.hpp' -o -type f -iname '*.cpp' | xargs -I{} bash -c '[ -f {} ] && clang-format -i {} && echo "Formatted {}" || echo "Failed to format {}"'
 .PHONY: format
@@ -95,14 +109,14 @@ gh-release:
 
 clean:
 	rm -rf $(BUILD_DIR)
-	$(RM) -rf ./typescript/api/node_modules
-	$(RM) -rf ./typescript/api/dist
-	$(RM) -rf ./typescript/api/src/proto
-	$(RM) -rf ./typescript/extension-manager/dist/
-	$(RM) -rf ./typescript/extension-manager/node_modules
-	$(RM) -rf ./typescript/extension-manager/src/proto
+	$(RM) -rf ./src/typescript/api/node_modules
+	$(RM) -rf ./src/typescript/api/dist
+	$(RM) -rf ./src/typescript/api/src/proto
+	$(RM) -rf ./src/typescript/extension-manager/dist/
+	$(RM) -rf ./src/typescript/extension-manager/node_modules
+	$(RM) -rf ./src/typescript/extension-manager/src/proto
 	$(RM) -rf ./scripts/.tmp
-	$(RM) -rf lib/*/build
+	$(RM) -rf ./src/lib/*/build
 .PHONY: clean
 
 re: clean release

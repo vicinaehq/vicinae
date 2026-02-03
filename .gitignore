@@ -1,6 +1,5 @@
 .cache
 /build
-/src
 .tmp
 extension-manager/runtime/node_modules
 /cmake-build-debug

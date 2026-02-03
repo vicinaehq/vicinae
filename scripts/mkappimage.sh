@@ -29,4 +29,4 @@ cp /usr/lib/x86_64-linux-gnu/libssl.so* ${APPDIR}/usr/lib/
 export EXTRA_PLATFORM_PLUGINS=libqwayland.so
 export EXTRA_QT_PLUGINS=waylandcompositor
 
-linuxdeploy --appdir $APPDIR --executable $APPDIR/usr/bin/vicinae --plugin qt --output appimage
+linuxdeploy --appdir $APPDIR --executable $APPDIR/usr/bin/vicinae --executable $APPDIR/usr/libexec/vicinae/vicinae-server --plugin qt --output appimage

@@ -11,7 +11,7 @@ jobs:
     runs-on: [self-hosted, Linux, X64, prod]
     defaults:
       run:
-        working-directory: ./typescript/api
+        working-directory: ./src/typescript/api
     steps:
       - name: Checkout
         uses: actions/checkout@v4

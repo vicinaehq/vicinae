@@ -205,7 +205,7 @@ RUN git clone https://github.com/fcitx/xcb-imdkit.git && cd xcb-imdkit && cmake 
 
 RUN apt-get install -y libdbus-1-dev libuv1-dev libcairo2-dev libxkbfile-dev iso-codes nlohmann-json3-dev libpango1.0-dev libgdk-pixbuf-2.0-dev
 
-RUN git clone https://github.com/fcitx/fcitx5 && cd fcitx5 && cmake \
+RUN git clone https://github.com/fcitx/fcitx5 && cd fcitx5 && git checkout 4c7e571a84908839af13e566bd2a8df36ab480b6 && cmake \
 	-DENABLE_WAYLAND=ON . \
 	-DEVENT_LOOP_BACKEND=none	\
 	-DENABLE_SERVER=OFF			\
@@ -290,6 +290,7 @@ RUN apt-get update \
 		libgmp3-dev			\
 		libmpfr-dev			\
 		vim					\
+		libudev-dev			\
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
