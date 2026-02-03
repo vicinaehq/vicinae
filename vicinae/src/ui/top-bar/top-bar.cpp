@@ -82,6 +82,11 @@ void GlobalHeader::setupUI() {
   connect(m_completer, &ArgCompleter::valueChanged, this,
           [this](auto &&values) { m_navigation.setCompletionValues(values); });
 
+  connect(m_completer, &ArgCompleter::escapePressed, this, [this]() {
+    m_completer->clearInputs();
+    m_input->setFocus();
+  });
+
   connect(ServiceRegistry::instance()->config(), &config::Manager::configChanged, this,
           [this](const config::ConfigValue &next, const config::ConfigValue &prev) {
             m_left->layout()->setContentsMargins(next.header.margins);
