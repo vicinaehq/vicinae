@@ -3,9 +3,4 @@
 #include <QString>
 #include "script-command.hpp"
 
-int main(int argc, char **argv) {
-
-  // std::cout << "final toml\n" << cfg.value().toToml() << std::endl;
-
-  return CommandLineInterface::execute(argc, argv);
-}
+int main(int argc, char **argv) { return CommandLineInterface::execute(argc, argv); }

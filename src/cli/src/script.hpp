@@ -3,8 +3,9 @@
 #include <filesystem>
 #include <iostream>
 #include <sstream>
+#include "script-command.hpp"
 #include <string>
-#include "script/script-command-generator.hpp"
+// #include "script/script-command-generator.hpp"
 
 class ScriptTemplateCommand : public AbstractCommandLineCommand {
 public:
@@ -19,28 +20,30 @@ public:
   }
 
   void run(CLI::App *app) override {
-    auto lang = ScriptCommandGenerator::parseLanguage(m_lang);
-    if (!lang) {
-      std::ostringstream oss;
-      oss << "Invalid language: " << m_lang << "\n\nSupported languages: ";
-      auto langs = ScriptCommandGenerator::supportedLanguages();
-      for (size_t i = 0; i < langs.size(); ++i) {
-        if (i > 0) oss << ", ";
-        oss << langs[i];
-      }
-      throw CLI::ValidationError("--lang", oss.str());
-    }
+    /*
+auto lang = ScriptCommandGenerator::parseLanguage(m_lang);
+if (!lang) {
+std::ostringstream oss;
+oss << "Invalid language: " << m_lang << "\n\nSupported languages: ";
+auto langs = ScriptCommandGenerator::supportedLanguages();
+for (size_t i = 0; i < langs.size(); ++i) {
+  if (i > 0) oss << ", ";
+  oss << langs[i];
+}
+throw CLI::ValidationError("--lang", oss.str());
+}
 
-    auto mode = script_command::parseOutputMode(m_mode);
-    if (!mode) {
-      throw CLI::ValidationError("--mode",
-                                 "Invalid output mode: " + m_mode +
-                                     "\n\nSupported modes: fullOutput, compact, inline, silent, terminal");
-    }
+auto mode = script_command::parseOutputMode(m_mode);
+if (!mode) {
+throw CLI::ValidationError("--mode",
+                           "Invalid output mode: " + m_mode +
+                               "\n\nSupported modes: fullOutput, compact, inline, silent, terminal");
+}
 
-    auto script = ScriptCommandGenerator::generate(m_title, *lang, *mode);
+auto script = ScriptCommandGenerator::generate(m_title, *lang, *mode);
 
-    std::cout << script << std::endl;
+std::cout << script << std::endl;
+  */
   }
 
 private:

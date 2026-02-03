@@ -23,6 +23,7 @@ list(APPEND LIBS
 	vicinae-ipc
 	browser
 	vicinae::snippet
+	common
 )
 
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)
@@ -55,7 +56,6 @@ include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/..
 	${Protobuf_INCLUDE_DIRS}
     ${CMAKE_CURRENT_BINARY_DIR}  # For generated headers
-    ${CMAKE_BINARY_DIR}/generated  # For version.h
 )
 
 file(GLOB PROTO_FILES "${PROTO_DIR}/*.proto")
@@ -65,13 +65,6 @@ set(SRCS
 
 	src/theme.hpp
 	src/theme.cpp
-
-	src/cli/cli.hpp
-	src/cli/cli.cpp
-	src/cli/theme.hpp
-	src/cli/theme.cpp
-	src/cli/server.hpp
-	src/cli/server.cpp
 
 	src/script/script-command-file.cpp
 	src/script/script-output-tokenizer.cpp
@@ -472,6 +465,9 @@ set(SRCS
 	src/ui/typography/typography.hpp
 	src/ui/typography/typography.cpp
 
+	src/cli/cli.cpp
+	src/cli/server.cpp
+
 
 	src/ui/preference-dropdown/preference-dropdown.hpp
 	src/ui/preference-dropdown/preference-dropdown.cpp
@@ -810,4 +806,6 @@ protobuf_generate(
 	PROTOC_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/proto
 )
 
-install(TARGETS ${TARGET})
+install(TARGETS ${TARGET}
+	RUNTIME DESTINATION ${VICINAE_LIBEXEC_DIR}
+)

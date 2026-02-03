@@ -1,5 +1,5 @@
 #pragma once
-#include "cli/cli.hpp"
+#include "cli.hpp"
 
 class ThemeCommand : public AbstractCommandLineCommand {
 public:

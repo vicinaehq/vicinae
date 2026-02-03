@@ -47,7 +47,7 @@
 #include <qpixmapcache.h>
 #include <qstylefactory.h>
 #include <system_error>
-#include "lib/CLI11.hpp"
+#include "common/CLI11.hpp"
 #include "server.hpp"
 
 namespace fs = std::filesystem;

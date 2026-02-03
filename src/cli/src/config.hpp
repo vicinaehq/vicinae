@@ -1,7 +1,6 @@
 #pragma once
-#include "cli/cli.hpp"
-#include "config/template.hpp"
-#include <qdir.h>
+#include "cli.hpp"
+// #include "config/template.hpp"
 #include <stdexcept>
 
 class DefaultConfigCommand : public AbstractCommandLineCommand {
@@ -10,11 +9,12 @@ class DefaultConfigCommand : public AbstractCommandLineCommand {
   void setup(CLI::App *app) override {}
 
   void run(CLI::App *app) override {
-    auto file = QFile(":config.jsonc");
+    /*
+auto file = QFile(":config.jsonc");
+if (!file.open(QIODevice::ReadOnly)) { throw std::runtime_error("Failed to open default config file!"); }
 
-    if (!file.open(QIODevice::ReadOnly)) { throw std::runtime_error("Failed to open default config file!"); }
-
-    std::cout << file.readAll().toStdString();
+std::cout << file.readAll().toStdString();
+  */
   }
 
 private:

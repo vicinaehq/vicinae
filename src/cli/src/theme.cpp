@@ -1,8 +1,6 @@
 #include "theme.hpp"
-#include "cli/theme.hpp"
-#include "theme/theme-db.hpp"
 #include "lib/rang.hpp"
-#include "theme/theme-parser.hpp"
+// #include "theme/theme-parser.hpp"
 #include "vicinae-ipc/client.hpp"
 #include <stdexcept>
 
@@ -177,15 +175,17 @@ class CheckThemeCommand : public AbstractCommandLineCommand {
   void setup(CLI::App *app) override { app->add_option("file", m_path)->required(); }
 
   void run(CLI::App *app) override {
-    ThemeParser parser;
-    auto res = parser.parse(m_path);
+    /*
+ThemeParser parser;
+auto res = parser.parse(m_path);
 
-    if (!res) { throw std::runtime_error("Theme is invalid: " + res.error()); }
+if (!res) { throw std::runtime_error("Theme is invalid: " + res.error()); }
 
-    for (const auto &diag : parser.diagnostics()) {
-      std::cout << rang::fg::yellow << "Warning: " << rang::fg::reset << diag << "\n";
-    }
-    std::cout << rang::fg::green << "Theme file is valid" << rang::fg::reset << "\n";
+for (const auto &diag : parser.diagnostics()) {
+std::cout << rang::fg::yellow << "Warning: " << rang::fg::reset << diag << "\n";
+}
+std::cout << rang::fg::green << "Theme file is valid" << rang::fg::reset << "\n";
+  */
   }
 
 private:
@@ -207,11 +207,7 @@ class ThemeSearchPathsCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "paths"; }
   std::string description() const override { return "Print the paths themes are searched at"; }
 
-  void run(CLI::App *app) override {
-    for (const auto &path : ThemeDatabase::defaultSearchPaths()) {
-      std::cout << path.c_str() << "\n";
-    }
-  }
+  void run(CLI::App *app) override {}
 };
 
 ThemeCommand::ThemeCommand() {

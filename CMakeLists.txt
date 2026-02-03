@@ -11,6 +11,7 @@ if (QT_DIR)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 include(FetchContent)
 include(Git)
@@ -47,6 +48,7 @@ option(ENABLE_PREVIEW_FEATURES "Enable preview features that are not yet ready f
 option(USE_PRECOMPILED_HEADERS "Use precompiled headers to speed up compilation" OFF)
 
 set(LIB_DIR "${CMAKE_SOURCE_DIR}/src/lib")
+set(VICINAE_LIBEXEC_DIR ${CMAKE_INSTALL_LIBEXECDIR}/vicinae)
 
 include(Glaze)
 
@@ -59,12 +61,18 @@ if (APPLE)
 	set(WLR_DATA_CONTROL OFF)
 endif()
 
+include_directories(
+    ${CMAKE_BINARY_DIR}/generated  # For version.h
+)
+
+
 add_subdirectory(${LIB_DIR}/script-command)
 add_subdirectory(${LIB_DIR}/emoji)
 add_subdirectory(${LIB_DIR}/xdgpp)
 add_subdirectory(${LIB_DIR}/vicinae-ipc)
 add_subdirectory(${LIB_DIR}/browser-extension)
 add_subdirectory(${LIB_DIR}/snippet)
+add_subdirectory(${LIB_DIR}/common)
 
 set(PROTO_DIR ${CMAKE_SOURCE_DIR}/src/proto)
 
@@ -213,6 +221,7 @@ endif()
 
 add_compile_definitions(BUILD_INFO="${BUILD_INFO}")
 add_subdirectory(src/server)
+add_subdirectory(src/cli)
 
 set(INSTALL_SHARE ${CMAKE_INSTALL_PREFIX}/share)
 set(VICINAE_INSTALL_SHARE ${INSTALL_SHARE}/vicinae)

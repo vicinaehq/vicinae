@@ -1,4 +1,5 @@
 BUILD_DIR						:= build
+BIN_DIR							:= build/bin
 RM								:= rm
 TAG 							:= $(shell git describe --tags --abbrev=0)
 APPIMAGE_BUILD_ENV_DIR			:= ./scripts/runners/appimage/
@@ -37,9 +38,9 @@ strip:
 .PHONY: strip
 
 test:
-	$(BUILD_DIR)/lib/xdgpp/xdgpp-tests
-	$(BUILD_DIR)/lib/script-command/scriptcommand-tests
-	$(BUILD_DIR)/lib/emoji/emoji-tests
+	./$(BIN_DIR)/emoji-tests
+	./$(BIN_DIR)/xdgpp-tests
+	./$(BIN_DIR)/scriptcommand-tests
 .PHONY: test
 
 static:

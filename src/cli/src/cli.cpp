@@ -1,28 +1,14 @@
 #include "cli.hpp"
-#include "snippet/snippet.hpp"
-#include "utils.hpp"
-#include "browser/browser.hpp"
-#include "common/CLI11.hpp"
-#include "vicinae-ipc/ipc.hpp"
-#include "vicinae.hpp"
-#include "server.hpp"
-#include <format>
-#include <iostream>
-#include <qdir.h>
-#include <qobjectdefs.h>
+#include "config.hpp"
 #include "lib/rang.hpp"
-#include <exception>
-#include "vicinae-ipc/client.hpp"
-#include "ext-clip/app.hpp"
-#include "services/clipboard/ext/ext-clipboard-server.hpp"
-#include "wlr-clip/app.hpp"
-#include "services/clipboard/wlr/wlr-clipboard-server.hpp"
+#include "script.hpp"
+#include "common/common.hpp"
 #include "version.h"
-#include <QJsonDocument>
-#include <QJsonArray>
-#include <QJsonObject>
-#include <sstream>
-#include <string_view>
+#include "theme.hpp"
+#include "vicinae-ipc/client.hpp"
+#include "server.hpp"
+
+constexpr const std::string headline = "HEADLINE TBF";
 
 class Formatter : public CLI::Formatter {
 public:
@@ -38,7 +24,7 @@ public:
     if (app->get_parent() != nullptr && !app->get_description().empty()) {
       out << BOLD << app->get_description() << RESET << "\n\n";
     } else {
-      out << BOLD << Omnicast::HEADLINE.toStdString() << RESET << "\n\n";
+      out << BOLD << headline << RESET << "\n\n";
     }
 
     std::string bin_name = name.empty() ? app->get_name() : name;
@@ -265,7 +251,7 @@ class DMenuCommand : public AbstractCommandLineCommand {
   }
 
   void run(CLI::App *app) override {
-    m_req.rawContent = Utils::slurp(std::cin);
+    // m_req.rawContent = Utils::slurp(std::cin);
 
     const auto res = ipc::CliClient::oneshot<ipc::DMenu>(m_req);
 
@@ -330,45 +316,34 @@ int CommandLineApp::run(int ac, char **av) {
     return 0;
   }
 
-  if (ac == 2 && std::string_view(av[1]) == "snippet-server") {
-    snippet::Server server;
-    server.listen();
-    return 0;
-  }
+  if (std::string_view{av[1]} == "server") {
+    const auto path = vicinae::findHelperProgram("vicinae-server");
 
-  // invoked as chrome extension native host
-  if (ac == 2 && std::string_view(av[1]).starts_with("chrome-extension://")) {
-    browser_extension::chromeEntrypoint(std::string_view(av[1]));
-    return 0;
-  }
+    if ((!path)) {
+      std::println(std::cerr, "Could not find vicinae-server binary");
+      return 1;
+    }
 
-  // invoked as firefox extension native host
-  if (ac == 3 && browser_extension::isNativeHostManifest(std::string_view(av[1]))) {
-    browser_extension::firefoxEntrypoint(std::string_view(av[2]));
-    return 0;
-  }
-
-  if (ac == 2 && strcmp(av[1], ExtDataControlClipboardServer::ENTRYPOINT) == 0) {
-    ExtClipman::instance()->start();
-    return 0;
-  }
-
-  if (ac == 2 && strcmp(av[1], WlrClipboardServer::ENTRYPOINT) == 0) {
-    Clipman::instance()->start();
-    return 0;
+    if (execv(path->c_str(), av) != 0) {
+      std::println(std::cerr, "Failed to exec vicinae-server: {}", strerror(errno));
+      return 1;
+    }
   }
 
   // we still support direct deeplink usage
   // i.e vicinae vicinae://extensions/vicinae/clipboard/history
   if (ac == 2) {
-    QString arg = av[1];
-    // raycast:// or com.raycast:/
-    auto pred = [&](const QString &scheme) { return arg.startsWith(scheme + ":/"); };
-    bool hasScheme = std::ranges::any_of(Omnicast::APP_SCHEMES, pred);
-    if (hasScheme) {
-      char *subAv[] = {av[0], strdup("deeplink"), strdup(arg.toStdString().c_str()), nullptr};
-      return run(3, subAv);
-    }
+
+    /*
+QString arg = av[1];
+// raycast:// or com.raycast:/
+auto pred = [&](const QString &scheme) { return arg.startsWith(scheme + ":/"); };
+bool hasScheme = std::ranges::any_of(Omnicast::APP_SCHEMES, pred);
+if (hasScheme) {
+char *subAv[] = {av[0], strdup("deeplink"), strdup(arg.toStdString().c_str()), nullptr};
+return run(3, subAv);
+}
+  */
   }
 
   app.require_subcommand();
@@ -389,9 +364,38 @@ int CommandLineApp::run(int ac, char **av) {
 }
 
 int CommandLineInterface::execute(int ac, char **av) {
-  CommandLineApp app(Omnicast::HEADLINE.toStdString());
+  bool ignoreAppImageWarning = false;
 
+  if (const char *p = getenv("IGNORE_APPIMAGE_WARNING"); p && std::string_view{p} == "1") {
+    ignoreAppImageWarning = true;
+  }
+
+  /*
+  if (Environment::isAppImage() && !ignoreAppImageWarning) {
+    std::cerr
+        << rang::fg::red
+        << "Running Vicinae directly as an AppImage is not officially supported.\nThe AppImage version is "
+           "intended to be installed using the script: https://docs.vicinae.com/install/script\nIf you "
+           "REALLY want to do this, relaunch with IGNORE_APPIMAGE_WARNING=1. Please do not file bug reports
+  " "if using it like this.\n"; return false;
+  }
+  */
+
+  std::vector<std::unique_ptr<AbstractCommandLineCommand>> commands;
+  CommandLineApp app(headline);
+
+  app.registerCommand<VersionCommand>();
   app.registerCommand<CliServerCommand>();
+  app.registerCommand<CliPing>();
+  app.registerCommand<ToggleCommand>();
+  app.registerCommand<OpenCommand>();
+  app.registerCommand<CloseCommand>();
+  app.registerCommand<DeeplinkCommand>();
+  app.registerCommand<DMenuCommand>();
+  app.registerCommand<ThemeCommand>();
+  app.registerCommand<AppCommand>();
+  app.registerCommand<ConfigCommand>();
+  app.registerCommand<ScriptCommand>();
 
   return app.run(ac, av);
 }
