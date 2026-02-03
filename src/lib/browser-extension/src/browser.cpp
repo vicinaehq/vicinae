@@ -1,8 +1,6 @@
 #include <cassert>
 #include <cstdint>
 #include <cstring>
-#include "browser/browser.hpp"
-#include <filesystem>
 #include <glaze/json.hpp>
 #include "poll.h"
 #include "vicinae-ipc/ipc.hpp"
@@ -233,11 +231,4 @@ static int entrypoint() {
   return 0;
 }
 
-namespace browser_extension {
-bool firefoxEntrypoint(std::string_view appId) { return entrypoint() == 0; }
-bool chromeEntrypoint(std::string_view id) { return entrypoint() == 0; }
-bool isNativeHostManifest(std::string_view path) {
-  return std::filesystem::path(path).filename() == (NATIVE_MESSAGING_HOST ".json");
-}
-
-}; // namespace browser_extension
+int main(int ac, char **av) { entrypoint(); }

@@ -1,7 +1,6 @@
 #include "cli.hpp"
 #include "snippet/snippet.hpp"
 #include "utils.hpp"
-#include "browser/browser.hpp"
 #include "common/CLI11.hpp"
 #include "vicinae-ipc/ipc.hpp"
 #include "vicinae.hpp"
@@ -333,18 +332,6 @@ int CommandLineApp::run(int ac, char **av) {
   if (ac == 2 && std::string_view(av[1]) == "snippet-server") {
     snippet::Server server;
     server.listen();
-    return 0;
-  }
-
-  // invoked as chrome extension native host
-  if (ac == 2 && std::string_view(av[1]).starts_with("chrome-extension://")) {
-    browser_extension::chromeEntrypoint(std::string_view(av[1]));
-    return 0;
-  }
-
-  // invoked as firefox extension native host
-  if (ac == 3 && browser_extension::isNativeHostManifest(std::string_view(av[1]))) {
-    browser_extension::firefoxEntrypoint(std::string_view(av[2]));
     return 0;
   }
 

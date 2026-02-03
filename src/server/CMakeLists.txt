@@ -21,7 +21,6 @@ list(APPEND LIBS
 	scriptcommand 
 	emoji
 	vicinae-ipc
-	browser
 	vicinae::snippet
 	common
 )
