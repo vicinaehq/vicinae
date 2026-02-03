@@ -11,8 +11,10 @@ if (QT_DIR)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 include(FetchContent)
+include(GNUInstallDirs)
 include(Git)
 include(Utils)
 
@@ -46,7 +48,9 @@ option(ENABLE_PREVIEW_FEATURES "Enable preview features that are not yet ready f
 # disabled for now, as it seems to be incompatible with ccache, and as such slows us down more than anything
 option(USE_PRECOMPILED_HEADERS "Use precompiled headers to speed up compilation" OFF)
 
-set(LIB_DIR "${CMAKE_SOURCE_DIR}/lib")
+set(LIB_DIR "${CMAKE_SOURCE_DIR}/src/lib")
+set(EXTRA_DIR "${CMAKE_SOURCE_DIR}/extra")
+set(VICINAE_LIBEXEC_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBEXECDIR}/vicinae)
 
 include(Glaze)
 
@@ -59,12 +63,19 @@ if (APPLE)
 	set(WLR_DATA_CONTROL OFF)
 endif()
 
+include_directories(
+    ${CMAKE_BINARY_DIR}/generated  # For version.h
+)
+
+add_subdirectory(src/browser-extension)
+add_subdirectory(src/snippet)
 add_subdirectory(${LIB_DIR}/script-command)
 add_subdirectory(${LIB_DIR}/emoji)
 add_subdirectory(${LIB_DIR}/xdgpp)
 add_subdirectory(${LIB_DIR}/vicinae-ipc)
-add_subdirectory(${LIB_DIR}/browser-extension)
-add_subdirectory(${LIB_DIR}/snippet)
+add_subdirectory(${LIB_DIR}/common)
+
+set(PROTO_DIR ${CMAKE_SOURCE_DIR}/src/proto)
 
 if (USE_SYSTEM_PROTOBUF)
 	set(USE_SYSTEM_ABSEIL ON)
@@ -148,7 +159,7 @@ find_package(Protobuf)
 unset(CMAKE_FIND_PACKAGE_PREFER_CONFIG)
 
 if (TYPESCRIPT_EXTENSIONS)
-	add_subdirectory(typescript)
+	add_subdirectory(src/typescript)
 	add_compile_definitions(HAS_TYPESCRIPT_EXTENSIONS=1)
 endif()
 
@@ -210,7 +221,12 @@ if (CCACHE AND NOT IGNORE_CCACHE)
 endif()
 
 add_compile_definitions(BUILD_INFO="${BUILD_INFO}")
-add_subdirectory(vicinae)
+add_subdirectory(src/server)
+add_subdirectory(src/cli)
+
+if (UNIX AND NOT APPLE)
+	add_subdirectory(src/data-control-server)
+endif()
 
 set(INSTALL_SHARE ${CMAKE_INSTALL_PREFIX}/share)
 set(VICINAE_INSTALL_SHARE ${INSTALL_SHARE}/vicinae)

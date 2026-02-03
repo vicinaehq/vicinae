@@ -1,6 +1,7 @@
 include(FetchContent)
 
 function(checkout_glaze)
+	set(FETCHCONTENT_QUIET OFF)
 	FetchContent_Declare(
 	  glaze
 	  GIT_REPOSITORY https://github.com/stephenberry/glaze.git
