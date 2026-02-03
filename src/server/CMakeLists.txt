@@ -14,15 +14,15 @@ list(APPEND LIBS
 	minizip 
 	OpenSSL::Crypto 
 	wayland-client 
-	xdgpp 
-	qt6keychain 
-	LibXml2::LibXml2 
-	glaze::glaze 
-	scriptcommand 
-	emoji
-	vicinae-ipc
-	vicinae::snippet
-	common
+	qt6keychain
+	LibXml2::LibXml2
+	glaze::glaze
+	vicinae::xdgpp
+	vicinae::scriptcommand
+	vicinae::emoji
+	vicinae::ipc
+	vicinae::snippet-types
+	vicinae::common
 )
 
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)

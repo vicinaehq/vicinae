@@ -6,7 +6,7 @@
 #include <QObject>
 #include <QClipboard>
 #include "common/common.hpp"
-#include "snippet/snippet.hpp"
+#include "snippet/types.hpp"
 
 class SnippetServer : public QObject {
   Q_OBJECT

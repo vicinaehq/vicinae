@@ -6,11 +6,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 OPTION(BUILD_TESTS "Build the test suite" OFF)
 
-# Find ICU
 find_package(ICU REQUIRED COMPONENTS uc)
 
-# static lib
-add_library(${PROJECT_NAME} STATIC src/emoji.cpp src/generated/db.cpp)
+add_library(vicinae-emoji STATIC src/emoji.cpp src/generated/db.cpp)
+add_library(vicinae::emoji ALIAS vicinae-emoji)
+set(PROJECT_NAME vicinae-emoji)
 target_include_directories(${PROJECT_NAME} PUBLIC include PRIVATE src)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)
 target_link_libraries(${PROJECT_NAME} PUBLIC ICU::uc)

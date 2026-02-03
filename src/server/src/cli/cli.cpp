@@ -1,5 +1,5 @@
 #include "cli.hpp"
-#include "snippet/snippet.hpp"
+#include "snippet/types.hpp"
 #include "utils.hpp"
 #include "common/CLI11.hpp"
 #include "vicinae-ipc/ipc.hpp"
@@ -326,12 +326,6 @@ int CommandLineApp::run(int ac, char **av) {
 
   if (ac == 1) {
     std::cout << app.help(av[0]);
-    return 0;
-  }
-
-  if (ac == 2 && std::string_view(av[1]) == "snippet-server") {
-    snippet::Server server;
-    server.listen();
     return 0;
   }
 

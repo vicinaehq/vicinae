@@ -4,7 +4,7 @@
 #include "services/window-manager/window-manager.hpp"
 #include "snippet-server.hpp"
 #include "snippet-db.hpp"
-#include "snippet/snippet.hpp"
+#include "snippet/types.hpp"
 #include <qtmetamacros.h>
 
 class SnippetService : public QObject {
