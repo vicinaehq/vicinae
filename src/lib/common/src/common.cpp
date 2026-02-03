@@ -3,7 +3,7 @@
 namespace fs = std::filesystem;
 
 namespace vicinae {
-fs::path selfPath() { return fs::read_symlink("/proc/self/exe"); }
+fs::path selfPath() { return fs::canonical("/proc/self/exe"); }
 
 /**
  * Vicinae relies on a lot of small programs in order to provide various pieces of functionnality
