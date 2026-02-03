@@ -34,8 +34,8 @@ private:
   void selectEntry(const QString &text);
   void initialize() override;
 
-  std::vector<std::string_view> m_entries;
-  std::vector<Scored<std::string_view>> m_filteredEntries;
+  std::vector<DMenuEntry> m_entries;
+  std::vector<Scored<DMenuEntry>> m_filteredEntries;
   std::string_view m_sectionNameTemplate;
   std::string m_sectionName;
   bool m_selected = false;

@@ -4,22 +4,33 @@
 #include "common/scored.hpp"
 #include "utils.hpp"
 
-class DMenuModel : public vicinae::ui::VerticalListModel<std::string_view> {
+struct DMenuEntry {
+  std::string_view label;
+  std::string_view quickLookPath;
+};
+
+class DMenuModel : public vicinae::ui::VerticalListModel<DMenuEntry> {
 public:
-  DMenuModel(QObject *parent = nullptr) { setParent(parent); }
+  DMenuModel(QObject *parent = nullptr, bool noIcon = false) : m_noIcon(noIcon) { setParent(parent); }
 
   void setSectionName(std::string_view name) { m_sectionName = name; }
 
-  ItemData createItemData(const std::string_view &item) const override {
-    if (isFile(item)) {
-      return ItemData{.title = getLastPathComponent(item).c_str(), .icon = ImageURL::fileIcon(item)};
+  ItemData createItemData(const DMenuEntry &item) const override {
+    if (!m_noIcon && isFile(item)) {
+      auto path = item.quickLookPath.empty() ? item.label : item.quickLookPath;
+      return ItemData{.title = QString::fromUtf8(item.label.data(), item.label.size()),
+                      .icon = ImageURL::fileIcon(path)};
     }
-    return ItemData{.title = QString::fromUtf8(item.data(), item.size())};
+    return ItemData{.title = QString::fromUtf8(item.label.data(), item.label.size())};
   }
 
   int sectionCount() const override { return 1; }
 
-  VListModel::StableID stableId(const std::string_view &item) const override { return hash(item); }
+  VListModel::StableID stableId(const DMenuEntry &item) const override {
+    auto h1 = hash(item.label);
+    auto h2 = hash(item.quickLookPath);
+    return h1 ^ (h2 << 1);
+  }
 
   int sectionIdFromIndex(int idx) const override { return idx; }
 
@@ -27,20 +38,22 @@ public:
 
   std::string_view sectionName(int id) const override { return m_sectionName; }
 
-  std::string_view sectionItemAt(int id, int itemIdx) const override { return m_entries[itemIdx].data; }
+  DMenuEntry sectionItemAt(int id, int itemIdx) const override { return m_entries[itemIdx].data; }
 
-  void setEntries(std::span<Scored<std::string_view>> entries) {
+  void setEntries(std::span<Scored<DMenuEntry>> entries) {
     m_entries = entries;
     emit dataChanged();
   }
 
 private:
-  static bool isFile(std::string_view entry) {
-    if (!entry.starts_with('/')) return false; // avoid unnecessary stat
+  static bool isFile(const DMenuEntry &entry) {
+    std::string_view path = entry.quickLookPath.empty() ? entry.label : entry.quickLookPath;
+    if (!path.starts_with('/')) return false; // avoid unnecessary stat
     std::error_code ec;
-    return std::filesystem::exists(entry, ec);
+    return std::filesystem::exists(path, ec);
   }
 
+  bool m_noIcon = false;
   std::string_view m_sectionName;
-  std::span<Scored<std::string_view>> m_entries;
+  std::span<Scored<DMenuEntry>> m_entries;
 };

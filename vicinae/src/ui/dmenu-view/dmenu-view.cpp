@@ -9,19 +9,39 @@
 #include <ranges>
 
 namespace DMenu {
-View::View(ipc::DMenu::Request data) : m_data(data), m_model(new DMenuModel(this)) {
-  m_entries = std::views::split(m_data.rawContent, std::string_view("\n")) |
-              std::views::transform([](auto &&s) { return std::string_view(s); }) |
-              std::views::filter([](auto &&s) { return !s.empty(); }) | std::ranges::to<std::vector>();
+View::View(ipc::DMenu::Request data)
+    : m_data(data), m_model(new DMenuModel(this, m_data.preview || m_data.noIcon)) {
+  auto lines = std::views::split(m_data.rawContent, std::string_view("\n")) |
+               std::views::transform([](auto &&s) { return std::string_view(s); }) |
+               std::views::filter([](auto &&s) { return !s.empty(); });
+
+  m_entries.reserve(std::ranges::distance(lines));
+
+  for (auto line : lines) {
+    if (m_data.preview) {
+      // Preview mode: parse as tab-separated (label<TAB>preview_path)
+      size_t tabPos = line.find('\t');
+      if (tabPos != std::string_view::npos) {
+        m_entries.emplace_back(DMenuEntry{line.substr(0, tabPos), line.substr(tabPos + 1)});
+      } else {
+        m_entries.emplace_back(DMenuEntry{line, ""});
+      }
+    } else {
+      // Default mode: use line as-is, no delimiter parsing
+      m_entries.emplace_back(DMenuEntry{line, ""});
+    }
+  }
 }
 
-QWidget *View::generateDetail(const std::string_view &text) const {
+QWidget *View::generateDetail(const DMenuEntry &item) const {
   if (m_data.noQuickLook) return nullptr;
+
+  std::string_view path = item.quickLookPath.empty() ? item.label : item.quickLookPath;
   std::error_code ec;
 
-  if (text.starts_with('/') && std::filesystem::exists(text, ec)) {
+  if (path.starts_with('/') && std::filesystem::exists(path, ec)) {
     auto detail = new FileDetail;
-    detail->setPath(text, !m_data.noMetadata);
+    detail->setPath(path, !m_data.noMetadata);
     return detail;
   }
 
@@ -70,9 +90,9 @@ void View::textChanged(const QString &text) {
 }
 
 void View::setFilter(std::string_view query) {
-  auto toScore = [&](std::string_view s) {
-    int score = fzf::defaultMatcher.fuzzy_match_v2_score_query(s, query);
-    return Scored<std::string_view>{.data = s, .score = score};
+  auto toScore = [&](const DMenuEntry &entry) {
+    int score = fzf::defaultMatcher.fuzzy_match_v2_score_query(entry.label, query);
+    return Scored<DMenuEntry>{.data = entry, .score = score};
   };
 
   auto filtered = m_entries | std::views::transform(toScore) |
@@ -98,8 +118,8 @@ void View::updateSectionName(std::string_view name) {
   m_model->setSectionName(m_sectionName);
 }
 
-void View::itemSelected(const std::string_view &view) {
-  auto text = QString::fromUtf8(view.data(), view.size());
+void View::itemSelected(const DMenuEntry &item) {
+  auto text = QString::fromUtf8(item.label.data(), item.label.size());
   auto panel = std::make_unique<ListActionPanelState>();
   auto main = panel->createSection();
   auto select = new StaticAction("Select entry", ImageURL::builtin("save-document"),

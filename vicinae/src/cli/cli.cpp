@@ -266,6 +266,8 @@ class DMenuCommand : public AbstractCommandLineCommand {
                   "Do not show quick look if available for a given entry");
     app->add_flag("--no-metadata", m_req.noMetadata, "Do not show metadata section in quick look");
     app->add_flag("--no-footer", m_req.noFooter, "Hide the status bar footer");
+    app->add_flag("--preview", m_req.preview,
+                  "Enable tab-separated preview mode (format: label<TAB>preview_path)");
   }
 
   void run(CLI::App *app) override {
