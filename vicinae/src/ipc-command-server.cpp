@@ -4,6 +4,7 @@
 #include "ui/dmenu-view/dmenu-view.hpp"
 #include "utils.hpp"
 #include "vicinae-ipc/ipc.hpp"
+#include <algorithm>
 #include <functional>
 #include <glaze/core/common.hpp>
 #include <glaze/core/reflect.hpp>
@@ -106,6 +107,11 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
   m_rpc.route<ipc::DMenu>([](ipc::DMenu::Request request, Ctx ctx) {
     using Watcher = QFutureWatcher<ipc::DMenu::Response>;
     static constexpr const int DMENU_SMALL_WIDTH_THRESHOLD = 500;
+    static constexpr const int ITEM_HEIGHT = 41;
+    static constexpr const int SECTION_HEADER_HEIGHT = 30;
+    static constexpr const int MIN_ITEMS_SHOWN = 1;
+    static constexpr const int MAX_ITEMS_SHOWN = 12;
+
     auto &m_ctx = *ctx.global->app;
 
     auto &nav = m_ctx.navigation;
@@ -137,11 +143,35 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
     nav->pushView(view);
     nav->setInstantDismiss(true);
 
-    if (request.width || request.height) {
-      int w = request.width.value_or(cfg.launcherWindow.size.width);
-      int h = request.height.value_or(cfg.launcherWindow.size.height);
-      nav->requestWindowSize(QSize(w, h));
+    int w = request.width.value_or(cfg.launcherWindow.size.width);
+    int h;
+
+    if (request.height.has_value()) {
+      h = request.height.value();
+    } else {
+      int itemCount = std::ranges::count(request.rawContent, '\n');
+      if (!request.rawContent.empty() && request.rawContent.back() != '\n') itemCount++;
+
+      int clampedItems = std::clamp(itemCount, MIN_ITEMS_SHOWN, MAX_ITEMS_SHOWN);
+      bool hasSection = !request.noSection;
+      bool hasFooter = !request.noFooter;
+
+      // Calculate total height:
+      // Content = Header + (SectionHeader) + Items + Footer
+      // Margins = Window Borders (top+bottom) + VList Margins (top+bottom)
+
+      int contentHeight = cfg.header.height + (hasSection ? SECTION_HEADER_HEIGHT : 0) +
+                          (clampedItems * ITEM_HEIGHT) + (hasFooter ? cfg.footer.height : 0);
+
+      int borderWidth = cfg.launcherWindow.clientSideDecorations.borderWidth;
+      int windowVerticalPadding = borderWidth * 2;
+      int listVerticalPadding = 10; // VListWidget::DEFAULT_MARGINS (5 top + 5 bottom)
+
+      h = contentHeight + windowVerticalPadding + listVerticalPadding +
+          1; // +1 to prevent scrollbar flickering
     }
+
+    nav->requestWindowSize(QSize(w, h));
 
     nav->showWindow();
 
