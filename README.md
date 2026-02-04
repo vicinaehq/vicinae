@@ -8,7 +8,7 @@
 
 [![Discord](https://discord.com/api/guilds/1407488619765174273/widget.png?style=shield&nonce=1756955967)](https://discord.gg/rP4ecD42p7)
 
-**Vicinae** (pronounced _"vih-SIN-ay"_) is a high-performance, native launcher for your desktop.
+**Vicinae** (pronounced _"vee-CHEE-nay"_) is a high-performance, native launcher for your desktop.
 
 It comes with a rich set of built-in modules and can be easily extended using the [Typescript SDK](https://docs.vicinae.com/extensions/introduction).
 
