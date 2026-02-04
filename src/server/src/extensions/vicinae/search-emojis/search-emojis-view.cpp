@@ -201,6 +201,7 @@ std::unique_ptr<ActionPanelState> EmojiView::createActionPanel(const ItemType &i
 EmojiView::EmojiView() {
   auto emojiService = ServiceRegistry::instance()->emojiService();
 
+  setHorizontalNavigation(true);
   connect(emojiService, &EmojiService::pinned, this, &EmojiView::handlePinned);
   connect(emojiService, &EmojiService::unpinned, this, &EmojiView::handleUnpinned);
   connect(emojiService, &EmojiService::visited, this, &EmojiView::handleVisited);

@@ -1,5 +1,6 @@
 #pragma once
 #include <algorithm>
+#include <qnamespace.h>
 #include <qwidget.h>
 #include "common/scored.hpp"
 #include "keyboard/keyboard.hpp"
@@ -31,6 +32,8 @@ public:
 
   ModelType *model() const { return m_model; }
 
+  void setHorizontalNavigation(bool value) { m_horizontalNavigation = value; }
+
 protected:
   virtual QWidget *generateDetail(const ItemType &item) const { return nullptr; }
   virtual std::unique_ptr<CompleterData> createCompleter(const ItemType &item) const { return nullptr; }
@@ -46,19 +49,6 @@ protected:
     auto config = ServiceRegistry::instance()->config();
     const std::string &keybinding = config->value().keybinding;
 
-    if (event->modifiers() == Qt::ControlModifier) {
-      if (KeyBindingService::isDownKey(event, keybinding)) { return m_list->selectDown(); }
-      if (KeyBindingService::isUpKey(event, keybinding)) { return m_list->selectUp(); }
-      if (KeyBindingService::isLeftKey(event, keybinding)) {
-        context()->navigation->popCurrentView();
-        return true;
-      }
-      if (KeyBindingService::isRightKey(event, keybinding)) {
-        m_list->activateCurrentSelection();
-        return true;
-      }
-    }
-
     if (Keyboard::Shortcut(Keybind::OpenSearchAccessorySelector) == event) {
       // FIXME: improve this so that we don't need dynamic cast
       if (auto accessory = dynamic_cast<SelectorInput *>(currentSearchAccessory())) {
@@ -66,16 +56,28 @@ protected:
       }
     }
 
-    if (event->modifiers().toInt() == 0) {
+    if (event->modifiers().testFlag(Qt::KeyboardModifier::ControlModifier)) {
+      if (KeyBindingService::isUpKey(event, keybinding)) {
+        return m_list->selectUp();
+      } else if (KeyBindingService::isDownKey(event, keybinding)) {
+        return m_list->selectDown();
+      } else if (m_horizontalNavigation && KeyBindingService::isLeftKey(event, keybinding)) {
+        return m_list->selectLeft();
+      } else if (m_horizontalNavigation && KeyBindingService::isRightKey(event, keybinding)) {
+        return m_list->selectRight();
+      }
+    } else if (event->modifiers().toInt() == 0) {
       switch (event->key()) {
       case Qt::Key_Up:
         return m_list->selectUp();
       case Qt::Key_Down:
         return m_list->selectDown();
       case Qt::Key_Left:
-        return m_list->selectLeft();
+        if (m_horizontalNavigation) return m_list->selectLeft();
+        break;
       case Qt::Key_Right:
-        return m_list->selectRight();
+        if (m_horizontalNavigation) return m_list->selectRight();
+        break;
       case Qt::Key_Tab: {
         if (!context()->navigation->hasCompleter()) {
           m_list->selectNext();
@@ -87,6 +89,8 @@ protected:
       case Qt::Key_Enter:
         m_list->activateCurrentSelection();
         return true;
+      default:
+        break;
       }
     }
 
@@ -188,6 +192,7 @@ protected:
   SplitDetailWidget *m_split = nullptr;
   QStackedWidget *m_content = nullptr;
   EmptyViewWidget *m_emptyView = nullptr;
+  bool m_horizontalNavigation = false;
 };
 
 struct FilteredItemData {
