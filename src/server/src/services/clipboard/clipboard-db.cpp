@@ -142,7 +142,6 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
 
     if (auto val = query.value(8); !val.isNull()) { dto.urlHost = val.toString(); }
 
-    // Get total count from the last column (index 10 for filtered, 10 for optimized)
     response.totalCount = query.value(10).toInt();
     response.data.push_back(dto);
   }
