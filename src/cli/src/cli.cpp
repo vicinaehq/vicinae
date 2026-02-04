@@ -375,6 +375,8 @@ int CommandLineApp::run(int ac, char **av) {
         return 1;
       }
     }
+
+    return 0;
   }
 
   app.require_subcommand();
