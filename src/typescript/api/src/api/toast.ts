@@ -1,6 +1,6 @@
-import { randomBytes } from "crypto";
+import { randomBytes } from "node:crypto";
 import { bus } from "./bus";
-import { Keyboard } from "./keyboard";
+import type { Keyboard } from "./keyboard";
 import * as ui from "./proto/ui";
 
 /**
@@ -28,8 +28,8 @@ export class Toast {
 		title: string;
 		style: Toast.Style;
 		message?: string;
-		primaryAction?: Toast.ActionOptions;
-		secondaryAction?: Toast.ActionOptions;
+		//primaryAction?: Toast.ActionOptions;
+		//secondaryAction?: Toast.ActionOptions;
 	};
 	private callbacks: {
 		primary?: string;
@@ -55,11 +55,12 @@ export class Toast {
 			message: props.message,
 		};
 
+		/*
 		if (props.primaryAction) {
 			const { onAction } = props.primaryAction;
 			const { id } = bus.addEventHandler(() => onAction(this));
 
-			this.options.primaryAction = props.primaryAction;
+			//this.options.primaryAction = props.primaryAction;
 			this.callbacks.primary = id;
 		}
 
@@ -67,9 +68,10 @@ export class Toast {
 			const { onAction } = props.secondaryAction;
 			const { id } = bus.addEventHandler(() => onAction(this));
 
-			this.options.secondaryAction = props.secondaryAction;
+			//this.options.secondaryAction = props.secondaryAction;
 			this.callbacks.secondary = id;
 		}
+		*/
 	}
 
 	/**
@@ -105,26 +107,26 @@ export class Toast {
 	/**
 	 * The primary Action the user can take when hovering on the Toast.
 	 */
+	/*
 	get primaryAction(): Toast.ActionOptions | undefined {
 		return this.options.primaryAction;
 	}
 	set primaryAction(action: Toast.ActionOptions | undefined) {
 		this.options.primaryAction = action;
 	}
-	/**
-	 * The secondary Action the user can take when hovering on the Toast.
-	 */
 	get secondaryAction(): Toast.ActionOptions | undefined {
 		return this.options.secondaryAction;
 	}
 	set secondaryAction(action: Toast.ActionOptions | undefined) {
 		this.options.secondaryAction = action;
 	}
+	*/
 
 	async update() {
 		await bus.request("ui.showToast", {
 			id: this.id,
 			title: this.title,
+			message: this.message ?? '',
 			style: this.styleMap[this.style],
 		});
 	}
@@ -141,6 +143,7 @@ export class Toast {
 			style: this.options.style,
 		};
 
+		/*
 		if (this.options.primaryAction && this.callbacks.primary) {
 			const { title, shortcut } = this.options.primaryAction;
 
@@ -160,10 +163,12 @@ export class Toast {
 				onAction: this.callbacks.secondary,
 			};
 		}
+		*/
 
 		await bus.request("ui.showToast", {
 			id: this.id,
 			title: payload.title,
+			message: payload.message ?? '',
 			style: this.styleMap[payload.style ?? Toast.Style.Success],
 		});
 	}
@@ -221,11 +226,6 @@ export namespace Toast {
 		/**
 		 * The primary Action the user can take when hovering on the Toast.
 		 */
-		primaryAction?: ActionOptions;
-		/**
-		 * The secondary Action the user can take when hovering on the Toast.
-		 */
-		secondaryAction?: ActionOptions;
 	}
 	/**
 	 * The options to create a {@link Toast} Action.
@@ -291,6 +291,25 @@ type SerializedShowToastPayload = {
 };
 
 /**
+ * Show a toast notification on the bottom left of the Vicinae window, briefly replacing the navigation title.
+ * Toast can have different style depending on the nature of the notification, and can even use `Toast.Style.Animated`
+ * to display a loading spinner and refresh the title in realtime.
+ *
+ * @example
+ * ```typescript
+ * import { showToast, Toast } from "@raycast/api";
+ * import { setTimeout } from "timers/promises";
+ *
+ * export default async () => {
+ *   const toast = await showToast({ style: Toast.Style.Animated, title: "Uploading image" });
+ *
+ *   await setTimeout(1000);
+ *
+ *   toast.style = Toast.Style.Success;
+ *   toast.title = "Uploaded image";
+ * };
+ * ```
+ *
  * @category Toast
  */
 export const showToast = async (

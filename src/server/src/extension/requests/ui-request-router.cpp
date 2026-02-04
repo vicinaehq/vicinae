@@ -88,8 +88,7 @@ proto::ext::ui::Response *UIRequestRouter::showToast(const proto::ext::ui::ShowT
   auto ack = new proto::ext::common::AckResponse;
   auto style = parseProtoToastStyle(req.style());
 
-  m_toast.setToast(req.title().c_str(), style);
-
+  m_toast.setToast(req.title().c_str(), style, req.message().c_str());
   res->set_allocated_show_toast(ack);
 
   return res;

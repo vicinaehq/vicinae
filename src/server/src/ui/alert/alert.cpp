@@ -1,6 +1,7 @@
 #include "alert.hpp"
 #include "theme.hpp"
 #include "theme/colors.hpp"
+#include "ui/omni-painter/omni-painter.hpp"
 #include "utils/layout.hpp"
 #include "service-registry.hpp"
 #include "services/keybinding/keybinding-service.hpp"
@@ -38,7 +39,7 @@ void AlertWidget::paintEvent(QPaintEvent *event) {
   int borderRadius = 6;
   OmniPainter painter(this);
   QPainterPath path;
-  QColor finalColor = painter.resolveColor(SemanticColor::SecondaryBackground);
+  QColor finalColor = OmniPainter::resolveColor(SemanticColor::SecondaryBackground);
 
   painter.setRenderHint(QPainter::Antialiasing, true);
   path.addRoundedRect(rect(), borderRadius, borderRadius);

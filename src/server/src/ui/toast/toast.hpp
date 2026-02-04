@@ -20,7 +20,7 @@ public:
   void setToast(const Toast *toast);
 
 private:
-  TypographyWidget *m_text = new TypographyWidget;
+  TypographyWidget *m_title = new TypographyWidget;
   ColorCircle *m_circle = new ColorCircle({10, 10}, this);
   LoadingSpinner *m_spinner = new LoadingSpinner(this);
 };

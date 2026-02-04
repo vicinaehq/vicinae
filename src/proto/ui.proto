@@ -15,7 +15,8 @@ enum ToastStyle {
 message ShowToastRequest {
   string id = 1;
   string title = 2;
-  ToastStyle style = 3;
+  string message = 3;
+  ToastStyle style = 4;
 };
 
 message HideToastRequest {

@@ -76,7 +76,7 @@
 		"lint": "vici lint"
 	},
 	"dependencies": {
-		"@vicinae/api": "file:../../typescript/api"
+		"@vicinae/api": "file:../../src/typescript/api"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.3.2",
