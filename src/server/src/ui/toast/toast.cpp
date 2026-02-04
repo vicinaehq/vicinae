@@ -25,7 +25,6 @@ ToastWidget::ToastWidget() {
   m_spinner->hide();
   m_circle->hide();
   m_spinner->setThickness(2);
-  m_title->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   m_title->setAutoEllide(false);
 
   auto layout = HStack().spacing(5).add(m_spinner).add(m_circle).add(m_title, 1).buildLayout();
@@ -39,13 +38,12 @@ void ToastWidget::setToast(const Toast *toast) {
 
   if (!toast->title().isEmpty()) { text.append(toast->title()); }
   if (!toast->message().isEmpty()) {
-    QString fmt = QString(R"(<span style="color: %1;">%2</span>)").arg(Utils::rgbaFromColor(secondary)).arg(toast->message());
-    // QString fmt = QString(toast->message());
+    QString fmt = QString(R"(<span style="color: %1;">%2</span>)")
+                      .arg(Utils::rgbaFromColor(secondary))
+                      .arg(toast->message());
     if (!text.isEmpty()) text.append(' ');
     text.append(fmt);
   }
-
-  qDebug() << "toast text=" << text;
 
   m_title->setText(text);
   m_title->setVisible(!text.isEmpty());

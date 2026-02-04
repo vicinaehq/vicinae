@@ -21,7 +21,6 @@ public:
 
 private:
   TypographyWidget *m_title = new TypographyWidget;
-  TypographyWidget *m_message = new TypographyWidget;
   ColorCircle *m_circle = new ColorCircle({10, 10}, this);
   LoadingSpinner *m_spinner = new LoadingSpinner(this);
 };

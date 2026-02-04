@@ -126,7 +126,6 @@ void TypographyWidget::clear() { setText(""); }
 TypographyWidget::TypographyWidget(QWidget *parent) : QWidget(parent), m_color(SemanticColor::TextPrimary) {
   m_label = new QLabel(this);
   m_label->setOpenExternalLinks(true);
-  m_label->setTextFormat(Qt::RichText);
   VStack().add(m_label).imbue(this);
   setSize(TextSize::TextRegular);
 
