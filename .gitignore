@@ -8,8 +8,6 @@ extension-manager/runtime/node_modules
 .env
 .direnv
 
-vicinae/assets/extension-runtime.js
-
 *.tar.gz
 !extra/icons/vicinae-icon-theme.tar.gz
 /dist
