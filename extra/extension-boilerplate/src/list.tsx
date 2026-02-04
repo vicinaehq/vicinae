@@ -18,8 +18,9 @@ export default function SimpleList() {
 								/>
 								<Action 
 									title="test toast" 
-									onAction={() => {
-										showToast(Toast.Style.Success, 'title', 'selected successfully');
+									onAction={async () => {
+										const toast = await showToast(Toast.Style.Success, 'title', 'selected successfully');
+										setTimeout(() => toast.hide(), 500);
 									}
 								} />
 								<Action

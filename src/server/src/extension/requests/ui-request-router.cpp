@@ -122,10 +122,10 @@ proto::ext::ui::Response *UIRequestRouter::showHud(const proto::ext::ui::ShowHud
 }
 
 proto::ext::ui::Response *UIRequestRouter::hideToast(const proto::ext::ui::HideToastRequest &req) {
-  // TODO: implementation needed
   auto res = new proto::ext::ui::Response;
   auto ack = new proto::ext::common::AckResponse;
 
+  m_toast.clear();
   res->set_allocated_hide_toast(ack);
 
   return res;
