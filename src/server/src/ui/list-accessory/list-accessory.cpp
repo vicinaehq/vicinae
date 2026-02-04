@@ -1,5 +1,5 @@
 #include "list-accessory.hpp"
-#include "theme.hpp"
+#include "theme/colors.hpp"
 #include "ui/image/image.hpp"
 #include "ui/image/url.hpp"
 #include "ui/typography/typography.hpp"
@@ -20,9 +20,8 @@ void ListAccessoryWidget::paintEvent(QPaintEvent *event) {
 
 void ListAccessoryWidget::resizeEvent(QResizeEvent *event) {
   QWidget::resizeEvent(event);
-  auto geo = rect().marginsRemoved(_layout->contentsMargins());
-  auto size = geo.size();
-
+  // auto geo = rect().marginsRemoved(_layout->contentsMargins());
+  // auto size = geo.size();
   //_icon->setFixedSize(size.height(), size.height());
 }
 
@@ -30,15 +29,15 @@ void ListAccessoryWidget::setAccessory(const ListAccessory &accessory) {
   if (accessory.icon) {
     auto url = *accessory.icon;
 
-    if (accessory.color && url.type() == ImageURLType::Builtin) { url.setFill(accessory.color.value()); }
+    if (accessory.color && url.type() == ImageURLType::Builtin) { url.setFill(accessory.color); }
 
     _icon->setUrl(url);
   }
 
   _icon->setVisible(accessory.icon.has_value());
   _text->setText(accessory.text);
+  _text->setColor(accessory.color.value_or(SemanticColor::TextPrimary));
   _text->setVisible(!accessory.text.isEmpty());
-  if (accessory.color) { _text->setColor(*accessory.color); }
   _accessory = accessory;
 }
 

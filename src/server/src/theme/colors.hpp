@@ -1,6 +1,7 @@
 #pragma once
+#include <cstdint>
 
-enum SemanticColor {
+enum SemanticColor : std::uint8_t {
 
   // Basic color palette
   Blue,
