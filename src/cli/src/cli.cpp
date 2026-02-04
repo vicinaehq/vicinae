@@ -374,9 +374,8 @@ int CommandLineApp::run(int ac, char **av) {
         std::println(std::cerr, "Deeplink execution failed: {}", res.error());
         return 1;
       }
+      return 0;
     }
-
-    return 0;
   }
 
   app.require_subcommand();
