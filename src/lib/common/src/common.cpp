@@ -1,9 +1,20 @@
 #include "common/common.hpp"
+#include <filesystem>
+#include <vector>
 
 namespace fs = std::filesystem;
 
 namespace vicinae {
 fs::path selfPath() { return fs::canonical("/proc/self/exe"); }
+
+std::vector<fs::path> helperProgramCandidates(std::string_view program) {
+  const auto self = selfPath().parent_path();
+  return {
+      self / program,
+      self.parent_path() / VICINAE_LIBEXECDIR / program,
+      fs::path{VICINAE_LIBEXEC_PATH} / program,
+  };
+}
 
 /**
  * Vicinae relies on a lot of small programs in order to provide various pieces of functionnality
@@ -12,12 +23,11 @@ fs::path selfPath() { return fs::canonical("/proc/self/exe"); }
  * the caller executable is located.
  */
 std::optional<fs::path> findHelperProgram(std::string_view program) {
-  const auto self = selfPath().parent_path();
-  fs::path path = self / program;
+  std::error_code ec;
 
-  if (fs::is_regular_file(path)) return path;
-  path = self.parent_path() / VICINAE_LIBEXECDIR / program;
-  if (fs::is_regular_file(path)) return path;
+  for (const auto &path : helperProgramCandidates(program)) {
+    if (fs::is_regular_file(path, ec)) return path;
+  }
 
   return {};
 }

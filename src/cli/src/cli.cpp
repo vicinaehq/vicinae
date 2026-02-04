@@ -7,6 +7,8 @@
 #include "theme.hpp"
 #include "vicinae-ipc/client.hpp"
 #include "server.hpp"
+#include <filesystem>
+#include <ranges>
 
 constexpr const std::string_view HEADLINE = "A focused launcher for your desktop — native, fast, extensible";
 
@@ -337,17 +339,25 @@ int CommandLineApp::run(int ac, char **av) {
   }
 
   if (std::string_view{av[1]} == "server") {
-    const auto path = vicinae::findHelperProgram("vicinae-server");
+    const auto paths = vicinae::helperProgramCandidates("vicinae-server");
+    std::error_code ec;
 
-    if ((!path)) {
-      std::println(std::cerr, "Could not find vicinae-server binary");
-      return 1;
+    for (const auto &path : paths) {
+      if (std::filesystem::is_regular_file(path, ec)) {
+        std::println(std::cerr, "Starting vicinae server executable at {}", path.c_str());
+        if (execv(path.c_str(), av) != 0) {
+          std::println(std::cerr, "Failed to exec vicinae-server: {}", strerror(errno));
+          return 1;
+        }
+      }
     }
 
-    if (execv(path->c_str(), av) != 0) {
-      std::println(std::cerr, "Failed to exec vicinae-server: {}", strerror(errno));
-      return 1;
-    }
+    const auto candidates = paths | std::views::transform([](auto &&t) { return t.string(); }) |
+                            std::views::join_with('\n') | std::ranges::to<std::string>();
+
+    std::println(std::cerr, "Could not find vicinae-server binary. Tried the following paths, in order:\n{}",
+                 candidates);
+    return 1;
   }
 
   // we still support direct deeplink usage
