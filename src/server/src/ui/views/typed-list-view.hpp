@@ -1,6 +1,5 @@
 #pragma once
 #include <algorithm>
-#include <qnamespace.h>
 #include <qwidget.h>
 #include "common/scored.hpp"
 #include "keyboard/keyboard.hpp"
@@ -56,7 +55,7 @@ protected:
       }
     }
 
-    if (event->modifiers().testFlag(Qt::KeyboardModifier::ControlModifier)) {
+    if (event->modifiers() == Qt::KeyboardModifier::ControlModifier) {
       if (KeyBindingService::isUpKey(event, keybinding)) {
         return m_list->selectUp();
       } else if (KeyBindingService::isDownKey(event, keybinding)) {
