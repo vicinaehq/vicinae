@@ -24,6 +24,7 @@ export default function SimpleList() {
 									}
 								} />
 								<Action
+									shortcut={{key: 'arrowUp', modifiers: ['shift']}}
 									title="Custom action"
 									icon={Icon.Cog}
 									onAction={() =>
