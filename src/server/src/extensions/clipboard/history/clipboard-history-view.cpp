@@ -380,6 +380,7 @@ void ClipboardHistoryView::initialize() {
   setModel(m_model);
   m_defaultAction = parseDefaultAction(preferences.value("defaultAction").toString());
   setSearchPlaceholderText("Browse clipboard history...");
+  m_statusToolbar->setLeftText("Loading...");
   textChanged("");
   m_filterInput->setValue(getSavedDropdownFilter().value_or("all"));
   handleFilterChange(*m_filterInput->value());

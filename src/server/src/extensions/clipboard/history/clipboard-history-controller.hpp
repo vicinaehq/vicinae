@@ -13,6 +13,8 @@ class ClipboardHistoryController : public QObject {
   using QueryWatcher = QFutureWatcher<PaginatedResponse<ClipboardHistoryEntry>>;
 
 public:
+  static constexpr int DEFAULT_PAGE_SIZE = 1000;
+
   ClipboardHistoryController(ClipboardService *clipboard, ClipboardHistoryModel *model,
                              QObject *parent = nullptr);
 

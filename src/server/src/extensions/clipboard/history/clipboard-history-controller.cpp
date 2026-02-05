@@ -25,7 +25,7 @@ void ClipboardHistoryController::setFilter(const QString &query) {
     m_watcher.waitForFinished();
   }
   emit dataLoadingChanged(true);
-  m_watcher.setFuture(m_clipboard->listAll(1000, 0, {.query = query, .kind = m_kind}));
+  m_watcher.setFuture(m_clipboard->listAll(DEFAULT_PAGE_SIZE, 0, {.query = query, .kind = m_kind}));
 }
 
 void ClipboardHistoryController::setKindFilter(std::optional<ClipboardOfferKind> kind) {
