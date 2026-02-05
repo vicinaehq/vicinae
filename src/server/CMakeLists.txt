@@ -3,7 +3,7 @@ set(CMAKE_AUTORCC ON)
 set(LIBS)
 set(TARGET vicinae-server)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets Sql Network Svg DBus Concurrent)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets Sql Network Svg DBus Concurrent GuiPrivate)
 find_package(OpenSSL REQUIRED)
 find_package(LibXml2 REQUIRED)
 
