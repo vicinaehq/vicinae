@@ -65,12 +65,12 @@ static const std::unordered_map<QString, Qt::Key> keyMap = {
 	{"delete", Qt::Key_Delete},
 	{"deleteForward", Qt::Key_Backspace},
 	{"tab", Qt::Key_Tab},
-	{"arrowUp", Qt::Key_Up},
-	{"arrowDown", Qt::Key_Down},
-	{"arrowLeft", Qt::Key_Left},
-	{"arrowRight", Qt::Key_Right},
-	{"pageUp", Qt::Key_PageUp},
-	{"pageDown", Qt::Key_PageDown},
+	{"arrowup", Qt::Key_Up},
+	{"arrowdown", Qt::Key_Down},
+	{"arrowleft", Qt::Key_Left},
+	{"arrowright", Qt::Key_Right},
+	{"pageup", Qt::Key_PageUp},
+	{"pagedown", Qt::Key_PageDown},
 	{"home", Qt::Key_Home},
 	{"end", Qt::Key_End},
 	{"space", Qt::Key_Space},
@@ -150,14 +150,14 @@ static const std::unordered_map<Qt::Key, QString> keyMapReverse{
 	{Qt::Key_Dollar, "$"},
 	{Qt::Key_Return, "return"},
 	{Qt::Key_Delete, "delete"},
-	{Qt::Key_Backspace, "deleteForward"},
+	{Qt::Key_Backspace, "deleteforward"},
 	{Qt::Key_Tab, "tab"},
-	{Qt::Key_Up, "arrowUp"},
-	{Qt::Key_Down, "arrowDown"},
-	{Qt::Key_Left, "arrowLeft"},
-	{Qt::Key_Right, "arrowRight"},
-	{Qt::Key_PageUp, "pageUp"},
-	{Qt::Key_PageDown, "pageDown"},
+	{Qt::Key_Up, "arrowup"},
+	{Qt::Key_Down, "arrowdown"},
+	{Qt::Key_Left, "arrowleft"},
+	{Qt::Key_Right, "arrowright"},
+	{Qt::Key_PageUp, "pageup"},
+	{Qt::Key_PageDown, "pagedown"},
 	{Qt::Key_Home, "home"},
 	{Qt::Key_End, "end"},
 	{Qt::Key_Space, "space"},
@@ -204,8 +204,6 @@ std::optional<QString> stringForKey(Qt::Key key) {
 Shortcut::Shortcut(Keybind bind) { *this = KeybindManager::instance()->resolve(bind); }
 
 Shortcut::Shortcut(const QString &str) {
-  auto sequence = QKeySequence::fromString(str);
-
   auto strs = str.split('+', Qt::SkipEmptyParts);
   bool gotKey = false;
 
