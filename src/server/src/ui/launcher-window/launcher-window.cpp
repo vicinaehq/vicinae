@@ -312,7 +312,7 @@ void LauncherWindow::handleConfigurationChange(const config::ConfigValue &value)
   m_header->setFixedHeight(value.header.height);
   m_bar->setFixedHeight(value.footer.height);
   applyWindowConfig(value.launcherWindow);
-  QPixmapCache::setCacheLimit(value.pixmapCacheMb * 1024 * 1024);
+  QPixmapCache::setCacheLimit(value.pixmapCacheMb * 1024);
 
   auto &size = value.launcherWindow.size;
   setFixedSize(QSize{size.width, size.height});
