@@ -121,6 +121,10 @@ void ImageWidget::setUrlImpl(ImageURL url) {
   auto type = url.type();
 
   m_token++; // to make sure we don't update from a previous loader
+  if (m_loader) {
+    disconnect(m_loader.get());
+    m_loader->abort();
+  }
   m_loader.reset();
   m_data = {};
 

@@ -133,11 +133,13 @@ private:
     auto watcher = QSharedPointer<Watcher>::create();
     watcher->setFuture(QtConcurrent::run([data = std::move(data), cfg]() { return loadStatic(data, cfg); }));
 
-    connect(watcher.get(), &Watcher::finished, this, [this, res, watcher]() {
-      m_tasks.erase(res->id());
-      if (watcher->isFinished() && !watcher->isCanceled()) {
-        emit res->dataDecoded(QPixmap::fromImage(watcher->future().takeResult()));
+    auto id = res->id();
+    auto *watcherPtr = watcher.get();
+    connect(watcherPtr, &Watcher::finished, this, [this, id, watcherPtr]() {
+      if (watcherPtr->isFinished() && !watcherPtr->isCanceled()) {
+        emit m_tasks[id].data->dataDecoded(QPixmap::fromImage(watcherPtr->future().takeResult()));
       }
+      m_tasks.erase(id);
       processNext();
     });
 
