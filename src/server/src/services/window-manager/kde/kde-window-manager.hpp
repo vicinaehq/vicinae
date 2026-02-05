@@ -46,6 +46,8 @@ public:
   QString id() const override { return "kde"; }
   QString displayName() const override { return "KDE"; }
 
+  bool setBlur(const BlurConfig &cfg) override;
+
   WindowList listWindowsSync() const override;
   void focusWindowSync(const AbstractWindow &window) const override;
 

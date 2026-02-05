@@ -1,8 +1,15 @@
+#include <qapplication.h>
 #include <qdbusargument.h>
+#include <qguiapplication_platform.h>
 #include <qlogging.h>
+#include <QWindow>
 #include <ranges>
+#include <QWidget>
 #include "kde-window-manager.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
+#include "kde-blur-client-protocol.h"
+#include <qpa/qplatformnativeinterface.h>
+#include "wayland/globals.hpp"
 
 namespace KDE {
 
@@ -46,6 +53,23 @@ WindowManager::WindowList WindowManager::listWindowsSync() const {
          std::views::transform(
              [](auto &&w) -> AbstractWindowManager::WindowPtr { return std::make_shared<Window>(w); }) |
          std::ranges::to<std::vector>();
+}
+
+bool WindowManager::setBlur(const BlurConfig &cfg) {
+  auto kwinBlur = Wayland::Globals::kwinBlur();
+  if (!kwinBlur) return false;
+
+  auto iface = qApp->platformNativeInterface();
+
+  auto surface = static_cast<wl_surface *>(
+
+      iface->nativeResourceForWindow("surface", qApp->activeWindow()->windowHandle()));
+
+  const auto blur = org_kde_kwin_blur_manager_create(kwinBlur, surface);
+
+  org_kde_kwin_blur_commit(blur);
+
+  return true;
 }
 
 void WindowManager::focusWindowSync(const AbstractWindow &window) const {
