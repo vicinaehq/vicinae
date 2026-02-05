@@ -425,21 +425,69 @@ void LauncherWindow::paintEvent(QPaintEvent *event) {
   auto &config = m_ctx.services->config()->value();
   OmniPainter painter(this);
   QColor finalBgColor = OmniPainter::resolveColor(SemanticColor::Background);
+  QColor statusColor = OmniPainter::resolveColor(SemanticColor::SecondaryBackground);
 
   finalBgColor.setAlphaF(config.launcherWindow.opacity);
+  statusColor.setAlphaF(config.launcherWindow.opacity);
   painter.setRenderHint(QPainter::Antialiasing, true);
 
   QRect contentRect = m_compacted ? QRect{0, 0, width(), config.header.height} : rect();
+  int border = config.launcherWindow.clientSideDecorations.borderWidth;
 
   if (config.launcherWindow.clientSideDecorations.enabled) {
     QPainterPath path;
-    path.addRoundedRect(contentRect, config.launcherWindow.clientSideDecorations.rounding,
+
+    // draw main rect
+    {
+
+      QRect rect{0, m_header->height() + 1, width(), height() - m_header->height() - m_bar->height() - 2};
+
+      rect.setY(m_header->height() + 1);
+      path.addRoundedRect(contentRect, config.launcherWindow.clientSideDecorations.rounding,
+                          config.launcherWindow.clientSideDecorations.rounding);
+
+      painter.setThemePen(SemanticColor::MainWindowBorder,
+                          config.launcherWindow.clientSideDecorations.borderWidth);
+      painter.setClipPath(path);
+      painter.fillPath(path, finalBgColor);
+      painter.drawPath(path);
+    }
+
+    QRect statusRect = contentRect;
+    statusRect.setY(height() - m_bar->height() - config.launcherWindow.clientSideDecorations.borderWidth -
+                    10);
+
+    path.clear();
+    painter.setCompositionMode(QPainter::CompositionMode_Source);
+    path.addRoundedRect(statusRect, config.launcherWindow.clientSideDecorations.rounding,
                         config.launcherWindow.clientSideDecorations.rounding);
     painter.setClipPath(path);
-    painter.fillPath(path, finalBgColor);
-    painter.setThemePen(SemanticColor::MainWindowBorder,
-                        config.launcherWindow.clientSideDecorations.borderWidth);
+    painter.setPen(Qt::NoPen);
+    painter.fillPath(path, statusColor);
     painter.drawPath(path);
+
+    path.clear();
+    painter.setCompositionMode(QPainter::CompositionMode_Source);
+    QRect missingFill{statusRect.x(), statusRect.y(), statusRect.width(), 10};
+    path.addRect(missingFill);
+    painter.setPen(Qt::NoPen);
+    painter.setClipPath(path);
+    painter.fillPath(path, finalBgColor);
+    painter.drawPath(path);
+
+    {
+
+      path.clear();
+      painter.setCompositionMode(QPainter::CompositionMode_Source);
+      path.addRoundedRect(contentRect, config.launcherWindow.clientSideDecorations.rounding,
+                          config.launcherWindow.clientSideDecorations.rounding);
+
+      painter.setThemePen(SemanticColor::MainWindowBorder,
+                          config.launcherWindow.clientSideDecorations.borderWidth);
+      painter.setClipPath(path);
+      painter.drawPath(path);
+    }
+
   } else {
     painter.fillRect(contentRect, finalBgColor);
   }
