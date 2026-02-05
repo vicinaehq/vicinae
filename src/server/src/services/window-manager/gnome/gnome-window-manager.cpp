@@ -54,13 +54,11 @@ GnomeWindowManager::GnomeWindowManager() {
                   for (auto &otherWin : windows) {
                     if (otherWin != win) {
                       if (auto otherGnomeWin = std::dynamic_pointer_cast<GnomeWindow>(otherWin)) {
-                        if (otherGnomeWin->focused()) {
-                          otherGnomeWin->setFocused(false);
-                        }
+                        if (otherGnomeWin->focused()) { otherGnomeWin->setFocused(false); }
                       }
                     }
                   }
-                  
+
                   emit windowFocused(addr);
                   return;
                 }
@@ -425,7 +423,7 @@ std::shared_ptr<AbstractWindowManager::AbstractWorkspace> GnomeWindowManager::ge
 }
 
 bool GnomeWindowManager::pasteToWindow(const AbstractWindow *window, const AbstractApplication *app) {
-  if (app->isTerminalEmulator()) {
+  if (app && app->isTerminalEmulator()) {
     return sendShortcutSync(*window, Keyboard::Shortcut::osPaste().shifted());
   }
   return sendShortcutSync(*window, Keyboard::Shortcut::osPaste());
