@@ -22,7 +22,7 @@ lib.extendMkDerivation {
           fetchFromGitHub {
             owner = "raycast";
             repo = "extensions";
-            rev = attrs.rev or throw "mkRayCastExtension: `rev` is required when src isn't suplied";
+            rev = attrs.rev or (throw "mkRayCastExtension: `rev` is required when src isn't suplied");
             hash =
               if hash != null then
                 hash
