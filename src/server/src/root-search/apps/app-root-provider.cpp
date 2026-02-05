@@ -160,7 +160,7 @@ PreferenceList AppRootProvider::preferences() const {
   auto defaultAction =
       Preference::makeDropdown("defaultAction", {{"Focus window", "focus"}, {"Launch app", "launch"}});
 
-  defaultAction.setDefaultValue("launch");
+  defaultAction.setDefaultValue("focus");
   defaultAction.setTitle("Default action");
   defaultAction.setDescription("Action to perform when the return key is pressed. Always default to 'launch' "
                                "if the app has no open window.");
