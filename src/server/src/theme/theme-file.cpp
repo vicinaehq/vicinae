@@ -216,6 +216,9 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
   }
   case SemanticColor::SettingsWindowBorder:
     return resolve(SemanticColor::MainWindowBorder);
+  case SemanticColor::StatusBarBackground:
+    return resolve(SemanticColor::SecondaryBackground);
+
   default:
     break;
   }
