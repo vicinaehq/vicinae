@@ -16,6 +16,12 @@ std::vector<fs::path> helperProgramCandidates(std::string_view program) {
   };
 }
 
+std::string slurp(std::istream &is) {
+  std::ostringstream oss;
+  oss << is.rdbuf();
+  return oss.str();
+}
+
 /**
  * Vicinae relies on a lot of small programs in order to provide various pieces of functionnality
  * such as snippet expansion, clipboard history, or simply launching the server from the CLI.

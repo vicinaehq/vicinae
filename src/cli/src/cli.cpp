@@ -261,7 +261,7 @@ class DMenuCommand : public AbstractCommandLineCommand {
   }
 
   bool run(CLI::App *app) override {
-    // m_req.rawContent = Utils::slurp(std::cin);
+    m_req.rawContent = vicinae::slurp(std::cin);
 
     const auto res = ipc::CliClient::oneshot<ipc::DMenu>(m_req);
 
