@@ -8,6 +8,7 @@
 #include <qscreen.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
+#include "services/background-effect/abstract-background-effect-manager.hpp"
 #include "ui/image/url.hpp"
 #include "config/config.hpp"
 #include "navigation-controller.hpp"
@@ -85,4 +86,5 @@ private:
   QWidget *m_focusWidget = nullptr;
   bool m_compacted = false;
   bool m_closeOnFocusLoss = false;
+  std::unique_ptr<AbstractBackgroundEffectManager> m_bgEffectManager;
 };

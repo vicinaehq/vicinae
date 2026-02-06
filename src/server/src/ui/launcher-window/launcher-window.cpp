@@ -1,7 +1,7 @@
 #include "launcher-window.hpp"
 #include "action-panel/action-panel.hpp"
-#include "common.hpp"
 #include "layout.hpp"
+#include "services/background-effect/background-effect-manager-factory.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "services/toast/toast-service.hpp"
 #include "config/config.hpp"
@@ -79,7 +79,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx)
       m_dialog(new DialogWidget(this)), m_currentView(new QStackedWidget(this)),
       m_currentViewWrapper(new QStackedWidget(this)), m_currentOverlayWrapper(new QStackedWidget(this)),
       m_mainWidget(new QWidget(this)), m_barDivider(new HDivider(this)), m_hudDismissTimer(new QTimer(this)),
-      m_actionVeil(new ActionVeilWidget(this)) {
+      m_actionVeil(new ActionVeilWidget(this)), m_bgEffectManager(BackgroundEffectManagerFactory::create()) {
   using namespace std::chrono_literals;
 
   setWindowTitle(Omnicast::MAIN_WINDOW_NAME);
@@ -280,7 +280,15 @@ bool LauncherWindow::isCompactable() const {
 
 void LauncherWindow::applyWindowConfig(const config::WindowConfig &cfg) {
   auto wm = m_ctx.services->windowManager();
-  wm->provider()->setBlur({.enabled = cfg.blur.enabled});
+  wm->provider()->setBlur({
+      .enabled = cfg.blur.enabled,
+      .rounding = cfg.clientSideDecorations.enabled ? cfg.clientSideDecorations.rounding : 0,
+  });
+
+  for (const auto &window : qApp->allWindows()) {
+    m_bgEffectManager->setBlur(window, {.radius = cfg.clientSideDecorations.rounding});
+  }
+
   wm->provider()->setDimAround(cfg.dimAround);
 }
 
