@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <qapplication.h>
 #include <qpa/qplatformnativeinterface.h>
-#include <wayland-client-core.h>
+#include <wayland-client-protocol.h>
 #include "kde-blur-client-protocol.h"
 #include "qt-wayland-utils.hpp"
 #include "services/background-effect/abstract-background-effect-manager.hpp"
@@ -69,8 +69,8 @@ private:
   void applyBlur(QWindow *win, const WindowEffect &effect, QRect rect, int radius) {
     auto *wayland = qApp->nativeInterface<QNativeInterface::QWaylandApplication>();
     const auto region = wl_compositor_create_region(wayland->compositor());
-    int w = win->width();
-    int h = win->height();
+    int w = rect.width();
+    int h = rect.height();
     int r = radius;
 
     wl_region_add(region, rect.x(), rect.y(), rect.width(), rect.height());
@@ -89,8 +89,8 @@ private:
 
     org_kde_kwin_blur_set_region(effect.effect(), region);
     org_kde_kwin_blur_commit(effect.effect());
-    wl_display_roundtrip(wayland->display());
     wl_region_destroy(region);
+    wl_surface_commit(QtWaylandUtils::getWindowSurface(win)); // makes sure the region is updated immediately
   }
 
   std::unordered_map<QWindow *, std::unique_ptr<WindowEffect>> m_state;
