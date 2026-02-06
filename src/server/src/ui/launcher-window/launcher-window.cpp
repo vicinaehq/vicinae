@@ -280,13 +280,14 @@ bool LauncherWindow::isCompactable() const {
 
 void LauncherWindow::applyWindowConfig(const config::WindowConfig &cfg) {
   auto wm = m_ctx.services->windowManager();
-  wm->provider()->setBlur({
-      .enabled = cfg.blur.enabled,
-      .rounding = cfg.clientSideDecorations.enabled ? cfg.clientSideDecorations.rounding : 0,
-  });
+  int rounding = cfg.clientSideDecorations.enabled ? cfg.clientSideDecorations.rounding : 0;
 
-  for (const auto &window : qApp->allWindows()) {
-    m_bgEffectManager->setBlur(window, {.radius = cfg.clientSideDecorations.rounding});
+  if (m_bgEffectManager->supportsBlur()) {
+    for (const auto &window : qApp->allWindows()) {
+      m_bgEffectManager->setBlur(window, {.radius = rounding});
+    }
+  } else {
+    wm->provider()->setBlur({.enabled = cfg.blur.enabled, .rounding = rounding});
   }
 
   wm->provider()->setDimAround(cfg.dimAround);
