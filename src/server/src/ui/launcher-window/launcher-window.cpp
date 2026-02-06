@@ -283,8 +283,10 @@ void LauncherWindow::applyWindowConfig(const config::WindowConfig &cfg) {
   int rounding = cfg.clientSideDecorations.enabled ? cfg.clientSideDecorations.rounding : 0;
 
   if (m_bgEffectManager->supportsBlur()) {
-    for (const auto &window : qApp->allWindows()) {
-      m_bgEffectManager->setBlur(window, {.radius = rounding});
+    if (cfg.blur.enabled) {
+      m_bgEffectManager->setBlur(windowHandle(), {.radius = rounding});
+    } else {
+      m_bgEffectManager->removeBlur(windowHandle());
     }
   } else {
     wm->provider()->setBlur({.enabled = cfg.blur.enabled, .rounding = rounding});

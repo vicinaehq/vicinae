@@ -1,4 +1,5 @@
 #pragma once
+#include <qlogging.h>
 #include <qwindow.h>
 #include <unordered_map>
 #include <qapplication.h>
@@ -13,7 +14,7 @@ class BackgroundEffectManager : public AbstractBackgroundEffectManager {
     using Effect = org_kde_kwin_blur;
 
   public:
-    WindowEffect(Effect *effect) : m_effect(effect) {}
+    explicit WindowEffect(Effect *effect) : m_effect(effect) {}
     ~WindowEffect() {
       if (m_effect) org_kde_kwin_blur_release(m_effect);
     }
@@ -37,12 +38,23 @@ public:
     }
 
     auto *surface = QtWaylandUtils::getWindowSurface(win);
+
+    if (!surface) {
+      qWarning() << "Failed to get wl_surface for window" << win;
+      return false;
+    }
+
     auto *blur = org_kde_kwin_blur_manager_create(m_manager, surface);
 
-    if (!blur) return false;
+    if (!blur) {
+      qWarning() << "Failed to create blur object";
+      return false;
+    }
 
-    m_state[win] = std::make_unique<WindowEffect>(blur);
-    applyBlur(win, blur, cfg.radius);
+    auto effect = std::make_unique<WindowEffect>(blur);
+
+    applyBlur(win, *effect, cfg.radius);
+    m_state[win] = std::move(effect);
 
     return true;
   }

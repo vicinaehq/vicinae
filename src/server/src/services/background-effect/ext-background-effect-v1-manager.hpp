@@ -53,9 +53,18 @@ public:
     }
 
     auto *surface = QtWaylandUtils::getWindowSurface(win);
+
+    if (!surface) {
+      qWarning() << "Failed to get wl_surface for window" << win;
+      return false;
+    }
+
     auto effect = ext_background_effect_manager_v1_get_background_effect(m_manager, surface);
 
-    if (!effect) return false;
+    if (!effect) {
+      qWarning() << "Failed to create background effect object";
+      return false;
+    }
 
     m_state[win] = std::make_unique<WindowEffect>(effect);
     applyBlur(win, effect, cfg.radius);
