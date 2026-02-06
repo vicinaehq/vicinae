@@ -239,8 +239,28 @@ void LauncherWindow::setCompacted(bool value) {
     m_header->setLoadingBarVisibility(true);
   }
 
+  if (cfg.launcherWindow.blur.enabled) { m_bgEffectManager->setBlur(windowHandle(), {}); }
+
   m_compacted = value;
+  updateBlur();
   update();
+}
+
+void LauncherWindow::updateBlur() {
+  auto &cfg = m_ctx.services->config()->value().launcherWindow;
+  auto wm = m_ctx.services->windowManager();
+  int rounding = cfg.clientSideDecorations.enabled ? cfg.clientSideDecorations.rounding : 0;
+  const QRect region = m_compacted ? m_header->rect() : rect();
+
+  if (m_bgEffectManager->supportsBlur()) {
+    if (cfg.blur.enabled) {
+      m_bgEffectManager->setBlur(windowHandle(), {.radius = rounding, .region = region});
+    } else {
+      m_bgEffectManager->removeBlur(windowHandle());
+    }
+  } else {
+    wm->provider()->setBlur({.enabled = cfg.blur.enabled, .rounding = rounding});
+  }
 }
 
 void LauncherWindow::tryCompaction() {
@@ -282,16 +302,7 @@ void LauncherWindow::applyWindowConfig(const config::WindowConfig &cfg) {
   auto wm = m_ctx.services->windowManager();
   int rounding = cfg.clientSideDecorations.enabled ? cfg.clientSideDecorations.rounding : 0;
 
-  if (m_bgEffectManager->supportsBlur()) {
-    if (cfg.blur.enabled) {
-      m_bgEffectManager->setBlur(windowHandle(), {.radius = rounding});
-    } else {
-      m_bgEffectManager->removeBlur(windowHandle());
-    }
-  } else {
-    wm->provider()->setBlur({.enabled = cfg.blur.enabled, .rounding = rounding});
-  }
-
+  updateBlur();
   wm->provider()->setDimAround(cfg.dimAround);
 }
 

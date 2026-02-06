@@ -6,6 +6,7 @@ class AbstractBackgroundEffectManager {
 public:
   struct BlurConfig {
     int radius = 0;
+    QRect region;
   };
 
   virtual ~AbstractBackgroundEffectManager() = default;

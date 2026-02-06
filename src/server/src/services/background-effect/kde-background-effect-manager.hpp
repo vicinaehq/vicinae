@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <qapplication.h>
 #include <qpa/qplatformnativeinterface.h>
+#include <wayland-client-core.h>
 #include "kde-blur-client-protocol.h"
 #include "qt-wayland-utils.hpp"
 #include "services/background-effect/abstract-background-effect-manager.hpp"
@@ -33,7 +34,7 @@ public:
   bool setBlur(QWindow *win, const BlurConfig &cfg) override {
     // just change region if we already have blur
     if (auto it = m_state.find(win); it != m_state.end()) {
-      applyBlur(win, *it->second, cfg.radius);
+      applyBlur(win, *it->second, cfg.region, cfg.radius);
       return true;
     }
 
@@ -53,7 +54,7 @@ public:
 
     auto effect = std::make_unique<WindowEffect>(blur);
 
-    applyBlur(win, *effect, cfg.radius);
+    applyBlur(win, *effect, cfg.region, cfg.radius);
     m_state[win] = std::move(effect);
 
     return true;
@@ -65,14 +66,14 @@ public:
   }
 
 private:
-  void applyBlur(QWindow *win, const WindowEffect &effect, int radius) {
+  void applyBlur(QWindow *win, const WindowEffect &effect, QRect rect, int radius) {
     auto *wayland = qApp->nativeInterface<QNativeInterface::QWaylandApplication>();
     const auto region = wl_compositor_create_region(wayland->compositor());
     int w = win->width();
     int h = win->height();
     int r = radius;
 
-    wl_region_add(region, 0, 0, w, h);
+    wl_region_add(region, rect.x(), rect.y(), rect.width(), rect.height());
 
     // account for client side rounding
     for (int i = 0; i < r; i++) {
@@ -88,6 +89,7 @@ private:
 
     org_kde_kwin_blur_set_region(effect.effect(), region);
     org_kde_kwin_blur_commit(effect.effect());
+    wl_display_roundtrip(wayland->display());
     wl_region_destroy(region);
   }
 

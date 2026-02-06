@@ -62,6 +62,7 @@ protected:
 protected:
   void mouseMoveEvent(QMouseEvent *event) override;
   void tryCenter();
+  void updateBlur();
   void centerOnScreen(const QScreen *screen);
   void handleShowHUD(const QString &text, const std::optional<ImageURL> &icon);
   void handleDialog(DialogContentWidget *alert);
