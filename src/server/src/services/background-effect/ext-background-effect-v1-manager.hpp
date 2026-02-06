@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 #include <qwindow.h>
 #include <unordered_map>
 #include <qapplication.h>
@@ -13,7 +14,7 @@ class ExtBackgroundEffectV1Manager : public AbstractBackgroundEffectManager {
     using Effect = ext_background_effect_surface_v1;
 
   public:
-    WindowEffect(Effect *effect) : m_effect(effect) {}
+    explicit WindowEffect(Effect *effect) : m_effect(effect) {}
     ~WindowEffect() {
       if (m_effect) ext_background_effect_surface_v1_destroy(m_effect);
     }
@@ -61,8 +62,10 @@ public:
       return false;
     }
 
-    m_state[win] = std::make_unique<WindowEffect>(effect);
-    applyBlur(win, effect, cfg.region, cfg.radius);
+    auto wef = std::make_unique<WindowEffect>(effect);
+
+    applyBlur(win, *wef, cfg.region, cfg.radius);
+    m_state[win] = std::move(wef);
 
     return true;
   }
