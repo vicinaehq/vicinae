@@ -1,3 +1,4 @@
+#pragma once
 #include <qapplication.h>
 #include <qwindow.h>
 #include <wayland-client-protocol.h>

@@ -10,6 +10,7 @@ public:
 
   virtual ~AbstractBackgroundEffectManager() = default;
 
+  virtual bool supportsBlur() const = 0;
   virtual bool setBlur(QWindow *win, const BlurConfig &cfg) = 0;
   virtual bool removeBlur(QWindow *win) = 0;
 };

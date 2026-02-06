@@ -737,6 +737,7 @@ if (UNIX AND NOT APPLE)
 	wayland_generate_protocol("virtual-keyboard-unstable-v1")
 	wayland_generate_protocol("ext-data-control-v1")
 	wayland_generate_protocol("kde-blur")
+	wayland_generate_protocol("ext-background-effect-v1")
 
 	list(APPEND LIBS xkbcommon)
 

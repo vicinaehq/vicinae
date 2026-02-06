@@ -1,19 +1,16 @@
 #include "globals.hpp"
+#include "ext-background-effect-v1-client-protocol.h"
 #include "virtual-keyboard-unstable-v1-client-protocol.h"
 #include <QApplication>
 
 namespace Wayland {
 
-zwlr_data_control_manager_v1 *Globals::wlrDataControlManager() {
-  return instance().m_zwlr_data_control_device;
-}
+zwlr_data_control_manager_v1 *Globals::wlrDataControlManager() { return instance().m_zwlrDataControlDevice; }
 
-ext_data_control_manager_v1 *Globals::dataControlDeviceManager() {
-  return instance().ext_data_control_device;
-}
+ext_data_control_manager_v1 *Globals::dataControlDeviceManager() { return instance().extDataControlDevice; }
 
 zwp_virtual_keyboard_manager_v1 *Globals::virtualKeyboardManager() {
-  return instance().m_virtual_keyboard_manager;
+  return instance().m_virtualKeyboardManager;
 }
 
 void Globals::handleGlobal(void *data, struct wl_registry *registry, uint32_t name, const char *interface,
@@ -21,23 +18,28 @@ void Globals::handleGlobal(void *data, struct wl_registry *registry, uint32_t na
   auto self = static_cast<Globals *>(data);
 
   if (strcmp(interface, zwlr_data_control_manager_v1_interface.name) == 0) {
-    self->m_zwlr_data_control_device = static_cast<zwlr_data_control_manager_v1 *>(
+    self->m_zwlrDataControlDevice = static_cast<zwlr_data_control_manager_v1 *>(
         wl_registry_bind(registry, name, &zwlr_data_control_manager_v1_interface, version));
   }
 
-  if (strcmp(interface, ext_data_control_manager_v1_interface.name) == 0) {
-    self->ext_data_control_device = static_cast<ext_data_control_manager_v1 *>(
+  else if (strcmp(interface, ext_data_control_manager_v1_interface.name) == 0) {
+    self->extDataControlDevice = static_cast<ext_data_control_manager_v1 *>(
         wl_registry_bind(registry, name, &ext_data_control_manager_v1_interface, version));
   }
 
-  if (strcmp(interface, zwp_virtual_keyboard_manager_v1_interface.name) == 0) {
-    self->m_virtual_keyboard_manager = static_cast<zwp_virtual_keyboard_manager_v1 *>(
+  else if (strcmp(interface, zwp_virtual_keyboard_manager_v1_interface.name) == 0) {
+    self->m_virtualKeyboardManager = static_cast<zwp_virtual_keyboard_manager_v1 *>(
         wl_registry_bind(registry, name, &zwp_virtual_keyboard_manager_v1_interface, version));
   }
 
-  if (strcmp(interface, org_kde_kwin_blur_manager_interface.name) == 0) {
-    self->m_kwin_blur = static_cast<decltype(self->m_kwin_blur)>(
+  else if (strcmp(interface, org_kde_kwin_blur_manager_interface.name) == 0) {
+    self->m_kwinBlur = static_cast<decltype(self->m_kwinBlur)>(
         wl_registry_bind(registry, name, &org_kde_kwin_blur_manager_interface, version));
+  }
+
+  else if (strcmp(interface, ext_background_effect_manager_v1_interface.name) == 0) {
+    self->m_backgroundEffect = static_cast<decltype(self->m_backgroundEffect)>(
+        wl_registry_bind(registry, name, &ext_background_effect_manager_v1_interface, version));
   }
 }
 
