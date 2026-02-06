@@ -2,6 +2,7 @@
 #include <qnamespace.h>
 #include <qwidget.h>
 #include "settings-window.hpp"
+#include "services/background-effect/background-effect-manager-factory.hpp"
 #include "common.hpp"
 #include "service-registry.hpp"
 #include "settings-controller/settings-controller.hpp"
@@ -78,7 +79,8 @@ void SettingsWindow::hideEvent(QHideEvent *event) {
   m_ctx->settings->closeWindow();
 };
 
-SettingsWindow::SettingsWindow(ApplicationContext *ctx) : m_ctx(ctx) {
+SettingsWindow::SettingsWindow(ApplicationContext *ctx)
+    : m_ctx(ctx), m_bgEffectManager(BackgroundEffectManagerFactory::create()) {
   setWindowFlags(Qt::FramelessWindowHint);
   setAttribute(Qt::WA_TranslucentBackground);
   setMinimumSize(windowSize);
@@ -108,5 +110,3 @@ SettingsWindow::SettingsWindow(ApplicationContext *ctx) : m_ctx(ctx) {
   m_navigation->setSelected("general");
   content->setCurrentIndex(0);
 }
-
-SettingsWindow::~SettingsWindow() {}

@@ -178,7 +178,6 @@ class SettingsWindow : public QMainWindow {
 
 public:
   SettingsWindow(ApplicationContext *ctx);
-  ~SettingsWindow();
 
 private:
   void showEvent(QShowEvent *event) override;
