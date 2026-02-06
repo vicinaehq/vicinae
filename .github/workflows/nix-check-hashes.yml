@@ -1,4 +1,4 @@
-name: Nix hash check
+name: Check Nix Hashes
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  update-tags:
+  check-hashes:
     runs-on: ubuntu-latest
 
     steps:
@@ -19,4 +19,4 @@ jobs:
       - uses: cachix/install-nix-action@v31
       - name: Check nix hashes
         run: |
-          nix run .#nix-update-script --extra-experimental-features nix-command flakes --accept-flake-config
+          nix run --accept-flake-config .#nix-update-script
