@@ -7,7 +7,6 @@
 #include "ext-background-effect-v1-client-protocol.h"
 #include "qt-wayland-utils.hpp"
 #include "services/background-effect/abstract-background-effect-manager.hpp"
-#include "wayland/globals.hpp"
 
 class ExtBackgroundEffectV1Manager : public AbstractBackgroundEffectManager {
   class WindowEffect {
@@ -46,11 +45,7 @@ public:
   bool setBlur(QWindow *win, const BlurConfig &cfg) override {
     if (!m_supportsBlur) { return false; }
 
-    // just change region if we already have blur
-    if (auto it = m_state.find(win); it != m_state.end()) {
-      applyBlur(win, *it->second, cfg.radius);
-      return true;
-    }
+    m_state.erase(win);
 
     auto *surface = QtWaylandUtils::getWindowSurface(win);
 
@@ -67,14 +62,13 @@ public:
     }
 
     m_state[win] = std::make_unique<WindowEffect>(effect);
-    applyBlur(win, effect, cfg.radius);
+    applyBlur(win, effect, cfg.region, cfg.radius);
 
     return true;
   }
 
   bool removeBlur(QWindow *win) override {
-    auto *manager = Wayland::Globals::kwinBlur();
-    if (!manager) return false;
+    if (!m_supportsBlur) { return false; }
 
     if (auto it = m_state.find(win); it != m_state.end()) {
       m_state.erase(it);
@@ -85,14 +79,14 @@ public:
   }
 
 private:
-  void applyBlur(QWindow *win, const WindowEffect &wef, int radius) {
+  void applyBlur(QWindow *win, const WindowEffect &wef, const QRect &rect, int radius) {
     const auto *wayland = qApp->nativeInterface<QNativeInterface::QWaylandApplication>();
     const auto region = wl_compositor_create_region(wayland->compositor());
-    int w = win->width();
-    int h = win->height();
+    int w = rect.width();
+    int h = rect.height();
     int r = radius;
 
-    wl_region_add(region, 0, 0, w, h);
+    wl_region_add(region, rect.x(), rect.y(), w, h);
 
     // account for client side rounding
     for (int i = 0; i < r; i++) {

@@ -32,7 +32,7 @@ void SettingsWindow::keyPressEvent(QKeyEvent *event) {
     return;
   }
 
-  return QWidget::keyPressEvent(event);
+  QWidget::keyPressEvent(event);
 }
 
 QWidget *SettingsWindow::createWidget() {
@@ -59,7 +59,19 @@ QWidget *SettingsWindow::createWidget() {
   return widget;
 }
 
-void SettingsWindow::showEvent(QShowEvent *event) { QMainWindow::showEvent(event); }
+void SettingsWindow::showEvent(QShowEvent *event) {
+  QMainWindow::showEvent(event);
+
+  auto &cfg = m_ctx->services->config()->value();
+
+  if (m_bgEffectManager->supportsBlur()) {
+    if (cfg.launcherWindow.blur.enabled) {
+      m_bgEffectManager->setBlur(windowHandle(), {.radius = 10, .region = rect()});
+    } else {
+      m_bgEffectManager->removeBlur(windowHandle());
+    }
+  }
+}
 
 void SettingsWindow::hideEvent(QHideEvent *event) {
   QWidget::hideEvent(event);

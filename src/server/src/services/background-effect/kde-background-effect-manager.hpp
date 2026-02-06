@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <qapplication.h>
 #include <qpa/qplatformnativeinterface.h>
+#include <wayland-client-core.h>
 #include <wayland-client-protocol.h>
 #include "kde-blur-client-protocol.h"
 #include "qt-wayland-utils.hpp"
@@ -32,11 +33,7 @@ public:
   bool supportsBlur() const override { return true; }
 
   bool setBlur(QWindow *win, const BlurConfig &cfg) override {
-    // just change region if we already have blur
-    if (auto it = m_state.find(win); it != m_state.end()) {
-      applyBlur(win, *it->second, cfg.region, cfg.radius);
-      return true;
-    }
+    m_state.erase(win); // always recreate a new blur object, otherwise it won't update properly
 
     auto *surface = QtWaylandUtils::getWindowSurface(win);
 
@@ -61,7 +58,9 @@ public:
   }
 
   bool removeBlur(QWindow *win) override {
+    auto *wayland = qApp->nativeInterface<QNativeInterface::QWaylandApplication>();
     m_state.erase(win);
+    wl_display_roundtrip(wayland->display());
     return false;
   }
 
@@ -90,7 +89,7 @@ private:
     org_kde_kwin_blur_set_region(effect.effect(), region);
     org_kde_kwin_blur_commit(effect.effect());
     wl_region_destroy(region);
-    wl_surface_commit(QtWaylandUtils::getWindowSurface(win)); // makes sure the region is updated immediately
+    wl_display_roundtrip(wayland->display());
   }
 
   std::unordered_map<QWindow *, std::unique_ptr<WindowEffect>> m_state;
