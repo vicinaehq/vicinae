@@ -249,11 +249,13 @@ void LauncherWindow::updateBlur() {
   auto wm = m_ctx.services->windowManager();
   auto bgEffectManager = m_ctx.services->backgroundEffectManager();
   int rounding = cfg.clientSideDecorations.enabled ? cfg.clientSideDecorations.rounding : 0;
-  const QRect region = m_compacted ? m_header->rect() : rect();
+  QRect blurRegion = rect();
+
+  if (m_compacted) { blurRegion.setHeight(m_header->height()); }
 
   if (bgEffectManager->supportsBlur()) {
     if (cfg.blur.enabled) {
-      bgEffectManager->setBlur(windowHandle(), {.radius = rounding, .region = region});
+      bgEffectManager->setBlur(windowHandle(), {.radius = rounding, .region = blurRegion});
     } else {
       bgEffectManager->clearBlur(windowHandle());
     }
