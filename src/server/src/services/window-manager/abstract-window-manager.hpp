@@ -103,12 +103,8 @@ public:
   virtual QString displayName() const { return id(); }
 
   /**
-   * Apply blur to the vicinae windows.
-   *
-   * Returns whether blur could be applied or not.
+   * Will eventually be moved elsewhere. For this trigger dim around for Hyprland only.
    */
-  virtual bool setBlur(const BlurConfig &cfg) { return false; }
-
   virtual bool setDimAround(bool value = true) { return false; }
 
   virtual WindowList listWindowsSync() const { return {}; };

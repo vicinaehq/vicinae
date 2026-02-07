@@ -45,7 +45,6 @@ public:
   WindowList listWindowsSync() const override;
   AbstractWindowManager::WindowPtr getFocusedWindowSync() const override;
 
-  bool setBlur(const BlurConfig &cfg) override;
   bool setDimAround(bool value = true) override;
 
   WorkspacePtr getActiveWorkspace() const override;
@@ -67,7 +66,6 @@ private:
   QString id() const override;
   QString displayName() const override;
 
-  bool m_blur = false;
   bool m_dimAround = false;
   Hyprland::EventListener m_ev;
 };

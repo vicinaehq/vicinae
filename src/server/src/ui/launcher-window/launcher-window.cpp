@@ -259,8 +259,6 @@ void LauncherWindow::updateBlur() {
     } else {
       bgEffectManager->clearBlur(windowHandle());
     }
-  } else {
-    wm->provider()->setBlur({.enabled = cfg.blur.enabled, .rounding = rounding});
   }
 }
 
