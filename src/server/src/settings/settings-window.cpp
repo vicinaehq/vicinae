@@ -2,6 +2,7 @@
 #include <qnamespace.h>
 #include <qwidget.h>
 #include "settings-window.hpp"
+#include "services/background-effect/background-effect-manager-factory.hpp"
 #include "common.hpp"
 #include "service-registry.hpp"
 #include "settings-controller/settings-controller.hpp"
@@ -32,7 +33,7 @@ void SettingsWindow::keyPressEvent(QKeyEvent *event) {
     return;
   }
 
-  return QWidget::keyPressEvent(event);
+  QWidget::keyPressEvent(event);
 }
 
 QWidget *SettingsWindow::createWidget() {
@@ -59,14 +60,27 @@ QWidget *SettingsWindow::createWidget() {
   return widget;
 }
 
-void SettingsWindow::showEvent(QShowEvent *event) { QMainWindow::showEvent(event); }
+void SettingsWindow::showEvent(QShowEvent *event) {
+  QMainWindow::showEvent(event);
+
+  auto &cfg = m_ctx->services->config()->value();
+
+  if (m_bgEffectManager->supportsBlur()) {
+    if (cfg.launcherWindow.blur.enabled) {
+      m_bgEffectManager->setBlur(windowHandle(), {.radius = 10, .region = rect()});
+    } else {
+      m_bgEffectManager->removeBlur(windowHandle());
+    }
+  }
+}
 
 void SettingsWindow::hideEvent(QHideEvent *event) {
   QWidget::hideEvent(event);
   m_ctx->settings->closeWindow();
 };
 
-SettingsWindow::SettingsWindow(ApplicationContext *ctx) : m_ctx(ctx) {
+SettingsWindow::SettingsWindow(ApplicationContext *ctx)
+    : m_ctx(ctx), m_bgEffectManager(BackgroundEffectManagerFactory::create()) {
   setWindowFlags(Qt::FramelessWindowHint);
   setAttribute(Qt::WA_TranslucentBackground);
   setMinimumSize(windowSize);
@@ -96,5 +110,3 @@ SettingsWindow::SettingsWindow(ApplicationContext *ctx) : m_ctx(ctx) {
   m_navigation->setSelected("general");
   content->setCurrentIndex(0);
 }
-
-SettingsWindow::~SettingsWindow() {}

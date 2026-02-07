@@ -1,7 +1,7 @@
 #include "launcher-window.hpp"
 #include "action-panel/action-panel.hpp"
-#include "common.hpp"
 #include "layout.hpp"
+#include "services/background-effect/background-effect-manager-factory.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "services/toast/toast-service.hpp"
 #include "config/config.hpp"
@@ -79,7 +79,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx)
       m_dialog(new DialogWidget(this)), m_currentView(new QStackedWidget(this)),
       m_currentViewWrapper(new QStackedWidget(this)), m_currentOverlayWrapper(new QStackedWidget(this)),
       m_mainWidget(new QWidget(this)), m_barDivider(new HDivider(this)), m_hudDismissTimer(new QTimer(this)),
-      m_actionVeil(new ActionVeilWidget(this)) {
+      m_actionVeil(new ActionVeilWidget(this)), m_bgEffectManager(BackgroundEffectManagerFactory::create()) {
   using namespace std::chrono_literals;
 
   setWindowTitle(Omnicast::MAIN_WINDOW_NAME);
@@ -239,8 +239,28 @@ void LauncherWindow::setCompacted(bool value) {
     m_header->setLoadingBarVisibility(true);
   }
 
+  if (cfg.launcherWindow.blur.enabled) { m_bgEffectManager->setBlur(windowHandle(), {}); }
+
   m_compacted = value;
+  updateBlur();
   update();
+}
+
+void LauncherWindow::updateBlur() {
+  auto &cfg = m_ctx.services->config()->value().launcherWindow;
+  auto wm = m_ctx.services->windowManager();
+  int rounding = cfg.clientSideDecorations.enabled ? cfg.clientSideDecorations.rounding : 0;
+  const QRect region = m_compacted ? m_header->rect() : rect();
+
+  if (m_bgEffectManager->supportsBlur()) {
+    if (cfg.blur.enabled) {
+      m_bgEffectManager->setBlur(windowHandle(), {.radius = rounding, .region = region});
+    } else {
+      m_bgEffectManager->removeBlur(windowHandle());
+    }
+  } else {
+    wm->provider()->setBlur({.enabled = cfg.blur.enabled, .rounding = rounding});
+  }
 }
 
 void LauncherWindow::tryCompaction() {
@@ -280,7 +300,9 @@ bool LauncherWindow::isCompactable() const {
 
 void LauncherWindow::applyWindowConfig(const config::WindowConfig &cfg) {
   auto wm = m_ctx.services->windowManager();
-  wm->provider()->setBlur({.enabled = cfg.blur.enabled});
+  int rounding = cfg.clientSideDecorations.enabled ? cfg.clientSideDecorations.rounding : 0;
+
+  updateBlur();
   wm->provider()->setDimAround(cfg.dimAround);
 }
 

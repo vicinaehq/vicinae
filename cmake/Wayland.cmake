@@ -1,7 +1,8 @@
 set(WAYLAND_SCANNER_EXECUTABLE "wayland-scanner")
 
-function(wayland_generate_protocol protocol_file)
-    get_filename_component(protocol_name ${protocol_file} NAME_WE)
+function(wayland_generate_protocol protocol)
+	set(protocol_file ${CMAKE_SOURCE_DIR}/src/wayland-protocols/${protocol}.xml)
+	get_filename_component(protocol_name ${protocol_file} NAME_WE)
     
     set(client_header "${CMAKE_CURRENT_BINARY_DIR}/${protocol_name}-client-protocol.h")
     set(private_code "${CMAKE_CURRENT_BINARY_DIR}/${protocol_name}-protocol.c")

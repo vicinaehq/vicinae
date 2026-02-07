@@ -46,6 +46,7 @@ public:
 
   struct BlurConfig {
     bool enabled = true;
+    int rounding = 0;
   };
 
   /**

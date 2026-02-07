@@ -8,9 +8,8 @@ set(DATA_CONTROL_SERVER_BIN vicinae-data-control-server)
 find_package(Protobuf REQUIRED)
 
 include("${CMAKE_SOURCE_DIR}/cmake/Wayland.cmake")
-set(PROTOCOLS_DIR "${CMAKE_SOURCE_DIR}/src/server/protocols")
-wayland_generate_protocol("${PROTOCOLS_DIR}/wlr-data-control-unstable-v1.xml")
-wayland_generate_protocol("${PROTOCOLS_DIR}/ext-data-control-v1.xml")
+wayland_generate_protocol("wlr-data-control-unstable-v1")
+wayland_generate_protocol("ext-data-control-v1")
 
 add_executable(${DATA_CONTROL_SERVER_BIN}
   src/main.cpp
