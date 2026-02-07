@@ -1,5 +1,6 @@
 #pragma once
-#include <memory>
+#include <qcoreevent.h>
+#include <qobject.h>
 #include <qwindow.h>
 #include <unordered_map>
 #include <qapplication.h>
@@ -10,21 +11,6 @@
 #include "services/background-effect/abstract-background-effect-manager.hpp"
 
 class ExtBackgroundEffectV1Manager : public AbstractBackgroundEffectManager {
-  class WindowEffect {
-    using Effect = ext_background_effect_surface_v1;
-
-  public:
-    explicit WindowEffect(Effect *effect) : m_effect(effect) {}
-    ~WindowEffect() {
-      if (m_effect) ext_background_effect_surface_v1_destroy(m_effect);
-    }
-
-    auto effect() const { return m_effect; }
-
-  private:
-    Effect *m_effect;
-  };
-
   static void capabilities(void *data,
                            struct ext_background_effect_manager_v1 *ext_background_effect_manager_v1,
                            uint32_t flags) {
@@ -41,6 +27,25 @@ public:
     wl_display_roundtrip(wayland->display());
   }
 
+  bool eventFilter(QObject *sender, QEvent *event) override {
+    // we want to make sure we destroy the effect object before
+    // the wl_surface gets destroyed in case the window is deleted.
+    // by the time the destructor is called, the surface is already gone, so we can't do
+    // it there.
+    if (event->type() == QEvent::DeferredDelete) {
+      for (auto it = m_state.begin(); it != m_state.end(); ++it) {
+        if (sender == it->first && it->second) {
+          qInfo() << "Deleting effect for to-be-deleted window" << it->first;
+          ext_background_effect_surface_v1_destroy(it->second);
+          m_state.erase(it);
+          return QObject::eventFilter(sender, event);
+        }
+      }
+    }
+
+    return QObject::eventFilter(sender, event);
+  }
+
   ~ExtBackgroundEffectV1Manager() {
     for (const auto &[k, effect] : m_state) {
       ext_background_effect_surface_v1_destroy(effect);
@@ -52,17 +57,11 @@ public:
   bool setBlur(QWindow *win, const BlurConfig &cfg) override {
     if (!m_supportsBlur) { return false; }
 
+    win->installEventFilter(this);
+
     if (auto it = m_state.find(win); it != m_state.end()) {
       ext_background_effect_surface_v1_destroy(it->second);
       it->second = nullptr;
-    } else {
-      connect(win, &QWindow::destroyed, this, [this, win]() {
-        if (auto it = m_state.find(win); it != m_state.end()) {
-          qInfo() << "delete effect after window got destroyed";
-          ext_background_effect_surface_v1_destroy(it->second);
-          m_state.erase(it);
-        }
-      });
     }
 
     auto *surface = QtWaylandUtils::getWindowSurface(win);
