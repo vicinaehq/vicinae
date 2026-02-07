@@ -158,6 +158,9 @@ set(SRCS
 	
 	src/service-registry.cpp
 
+	src/services/background-effect/ext-background-effect-v1-manager.cpp
+	src/services/background-effect/kde-background-effect-manager.cpp
+
 	src/color-formatter.hpp
 	src/color-formatter.cpp
 
