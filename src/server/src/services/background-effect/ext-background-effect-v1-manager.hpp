@@ -1,5 +1,6 @@
 #pragma once
 #include <qcoreevent.h>
+#include <qevent.h>
 #include <qobject.h>
 #include <qwindow.h>
 #include <unordered_map>
@@ -28,17 +29,19 @@ public:
   }
 
   bool eventFilter(QObject *sender, QEvent *event) override {
-    // we want to make sure we destroy the effect object before
-    // the wl_surface gets destroyed in case the window is deleted.
-    // by the time the destructor is called, the surface is already gone, so we can't do
-    // it there.
-    if (event->type() == QEvent::DeferredDelete) {
-      for (auto it = m_state.begin(); it != m_state.end(); ++it) {
-        if (sender == it->first && it->second) {
-          qInfo() << "Deleting effect for to-be-deleted window" << it->first;
-          ext_background_effect_surface_v1_destroy(it->second);
-          m_state.erase(it);
-          return QObject::eventFilter(sender, event);
+    // We must destroy the effect object before the wl_surface gets destroyed.
+    // PlatformSurface/SurfaceAboutToBeDestroyed fires right before the native
+    // surface is torn down, regardless of how the window is deleted.
+    if (event->type() == QEvent::PlatformSurface) {
+      auto *surfaceEvent = static_cast<QPlatformSurfaceEvent *>(event);
+      if (surfaceEvent->surfaceEventType() == QPlatformSurfaceEvent::SurfaceAboutToBeDestroyed) {
+        for (auto it = m_state.begin(); it != m_state.end(); ++it) {
+          if (sender == it->first && it->second) {
+            qInfo() << "Deleting effect for to-be-deleted window" << it->first;
+            ext_background_effect_surface_v1_destroy(it->second);
+            m_state.erase(it);
+            return QObject::eventFilter(sender, event);
+          }
         }
       }
     }
