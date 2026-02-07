@@ -1,9 +1,9 @@
 #include "launcher-window.hpp"
 #include "action-panel/action-panel.hpp"
-#include "common.hpp"
 #include "layout.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "services/toast/toast-service.hpp"
+#include "services/background-effect/background-effect-manager.hpp"
 #include "config/config.hpp"
 #include "environment.hpp"
 #include "keyboard/keybind-manager.hpp"
@@ -240,7 +240,26 @@ void LauncherWindow::setCompacted(bool value) {
   }
 
   m_compacted = value;
+  updateBlur();
   update();
+}
+
+void LauncherWindow::updateBlur() {
+  auto &cfg = m_ctx.services->config()->value().launcherWindow;
+  auto wm = m_ctx.services->windowManager();
+  auto bgEffectManager = m_ctx.services->backgroundEffectManager();
+  int rounding = cfg.clientSideDecorations.enabled ? cfg.clientSideDecorations.rounding : 0;
+  QRect blurRegion = rect();
+
+  if (m_compacted) { blurRegion.setHeight(m_header->height()); }
+
+  if (bgEffectManager->supportsBlur()) {
+    if (cfg.blur.enabled) {
+      bgEffectManager->setBlur(windowHandle(), {.radius = rounding, .region = blurRegion});
+    } else {
+      bgEffectManager->clearBlur(windowHandle());
+    }
+  }
 }
 
 void LauncherWindow::tryCompaction() {
@@ -280,7 +299,9 @@ bool LauncherWindow::isCompactable() const {
 
 void LauncherWindow::applyWindowConfig(const config::WindowConfig &cfg) {
   auto wm = m_ctx.services->windowManager();
-  wm->provider()->setBlur({.enabled = cfg.blur.enabled});
+  int rounding = cfg.clientSideDecorations.enabled ? cfg.clientSideDecorations.rounding : 0;
+
+  updateBlur();
   wm->provider()->setDimAround(cfg.dimAround);
 }
 
@@ -333,6 +354,11 @@ void LauncherWindow::handleViewChange(const NavigationController::ViewState &sta
   m_currentViewWrapper->addWidget(state.sender);
 
   if (state.supportsSearch) { m_header->input()->setFocus(); }
+}
+
+void LauncherWindow::resizeEvent(QResizeEvent *event) {
+  QMainWindow::resizeEvent(event);
+  updateBlur();
 }
 
 bool LauncherWindow::eventFilter(QObject *watched, QEvent *event) {

@@ -2,9 +2,9 @@
 #include <qnamespace.h>
 #include <qwidget.h>
 #include "settings-window.hpp"
-#include "common.hpp"
 #include "service-registry.hpp"
 #include "settings-controller/settings-controller.hpp"
+#include "services/background-effect/background-effect-manager.hpp"
 #include "theme.hpp"
 #include "vicinae.hpp"
 
@@ -32,7 +32,7 @@ void SettingsWindow::keyPressEvent(QKeyEvent *event) {
     return;
   }
 
-  return QWidget::keyPressEvent(event);
+  QWidget::keyPressEvent(event);
 }
 
 QWidget *SettingsWindow::createWidget() {
@@ -59,7 +59,35 @@ QWidget *SettingsWindow::createWidget() {
   return widget;
 }
 
-void SettingsWindow::showEvent(QShowEvent *event) { QMainWindow::showEvent(event); }
+void SettingsWindow::resizeEvent(QResizeEvent *event) {
+  QMainWindow::resizeEvent(event);
+
+  auto &cfg = m_ctx->services->config()->value();
+  auto bgEffectManager = m_ctx->services->backgroundEffectManager();
+
+  if (bgEffectManager->supportsBlur()) {
+    if (cfg.launcherWindow.blur.enabled) {
+      bgEffectManager->setBlur(windowHandle(), {.radius = 10, .region = rect()});
+    } else {
+      bgEffectManager->clearBlur(windowHandle());
+    }
+  }
+}
+
+void SettingsWindow::showEvent(QShowEvent *event) {
+  QMainWindow::showEvent(event);
+
+  auto &cfg = m_ctx->services->config()->value();
+  auto bgEffectManager = m_ctx->services->backgroundEffectManager();
+
+  if (bgEffectManager->supportsBlur()) {
+    if (cfg.launcherWindow.blur.enabled) {
+      bgEffectManager->setBlur(windowHandle(), {.radius = 10, .region = rect()});
+    } else {
+      bgEffectManager->clearBlur(windowHandle());
+    }
+  }
+}
 
 void SettingsWindow::hideEvent(QHideEvent *event) {
   QWidget::hideEvent(event);
@@ -96,5 +124,3 @@ SettingsWindow::SettingsWindow(ApplicationContext *ctx) : m_ctx(ctx) {
   m_navigation->setSelected("general");
   content->setCurrentIndex(0);
 }
-
-SettingsWindow::~SettingsWindow() {}

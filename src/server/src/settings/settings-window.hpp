@@ -1,6 +1,7 @@
 #pragma once
 #include "common.hpp"
 #include "../ui/image/url.hpp"
+#include "services/background-effect/abstract-background-effect-manager.hpp"
 #include "theme.hpp"
 #include "theme/colors.hpp"
 #include "ui/image/image.hpp"
@@ -174,18 +175,20 @@ struct PaneInfo {
 };
 
 class SettingsWindow : public QMainWindow {
-  ApplicationContext *m_ctx = nullptr;
-  std::vector<std::unique_ptr<SettingsCategory>> m_categories;
-  SettingsNavWidget *m_navigation = new SettingsNavWidget;
-  QStackedWidget *content = new QStackedWidget;
 
+public:
+  SettingsWindow(ApplicationContext *ctx);
+
+private:
+  void resizeEvent(QResizeEvent *event) override;
   void showEvent(QShowEvent *event) override;
   void hideEvent(QHideEvent *event) override;
   void paintEvent(QPaintEvent *event) override;
   QWidget *createWidget();
   void keyPressEvent(QKeyEvent *) override;
 
-public:
-  SettingsWindow(ApplicationContext *ctx);
-  ~SettingsWindow();
+  std::vector<std::unique_ptr<SettingsCategory>> m_categories;
+  SettingsNavWidget *m_navigation = new SettingsNavWidget;
+  QStackedWidget *content = new QStackedWidget;
+  ApplicationContext *m_ctx = nullptr;
 };

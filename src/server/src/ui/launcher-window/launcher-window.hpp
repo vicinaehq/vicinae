@@ -8,6 +8,7 @@
 #include <qscreen.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
+#include "services/background-effect/abstract-background-effect-manager.hpp"
 #include "ui/image/url.hpp"
 #include "config/config.hpp"
 #include "navigation-controller.hpp"
@@ -50,6 +51,7 @@ protected:
   void showEvent(QShowEvent *event) override;
   void changeEvent(QEvent *event) override;
   bool eventFilter(QObject *watched, QEvent *event) override;
+  void resizeEvent(QResizeEvent *event) override;
 
   void handleConfigurationChange(const config::ConfigValue &value);
   void applyWindowConfig(const config::WindowConfig &cfg);
@@ -61,6 +63,7 @@ protected:
 protected:
   void mouseMoveEvent(QMouseEvent *event) override;
   void tryCenter();
+  void updateBlur();
   void centerOnScreen(const QScreen *screen);
   void handleShowHUD(const QString &text, const std::optional<ImageURL> &icon);
   void handleDialog(DialogContentWidget *alert);

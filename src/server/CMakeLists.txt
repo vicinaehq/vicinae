@@ -3,12 +3,13 @@ set(CMAKE_AUTORCC ON)
 set(LIBS)
 set(TARGET vicinae-server)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets Sql Network Svg DBus Concurrent)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets Sql Network Svg DBus Concurrent GuiPrivate)
 find_package(OpenSSL REQUIRED)
 find_package(LibXml2 REQUIRED)
 
 list(APPEND LIBS  
 	Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus Qt6::Concurrent 
+	Qt6::GuiPrivate # for deeper integration with wayland protocols, we need wl_surface
 	${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY} 
 	protobuf::libprotobuf
 	minizip 
@@ -156,6 +157,9 @@ set(SRCS
 	src/actions/app/app-actions.cpp
 	
 	src/service-registry.cpp
+
+	src/services/background-effect/ext-background-effect-v1-manager.cpp
+	src/services/background-effect/kde-background-effect-manager.cpp
 
 	src/color-formatter.hpp
 	src/color-formatter.cpp
@@ -732,9 +736,11 @@ if (UNIX AND NOT APPLE)
 
     include("Wayland")
 
-    wayland_generate_protocol("${CMAKE_CURRENT_SOURCE_DIR}/protocols/wlr-foreign-toplevel-management-unstable-v1.xml")
-	wayland_generate_protocol("${CMAKE_CURRENT_SOURCE_DIR}/protocols/virtual-keyboard-unstable-v1.xml")
-		wayland_generate_protocol("${CMAKE_CURRENT_SOURCE_DIR}/protocols/ext-data-control-v1.xml")
+    wayland_generate_protocol("wlr-foreign-toplevel-management-unstable-v1")
+	wayland_generate_protocol("virtual-keyboard-unstable-v1")
+	wayland_generate_protocol("ext-data-control-v1")
+	wayland_generate_protocol("kde-blur")
+	wayland_generate_protocol("ext-background-effect-v1")
 
 	list(APPEND LIBS xkbcommon)
 
@@ -751,8 +757,7 @@ if (UNIX AND NOT APPLE)
 		src/services/clipboard/data-control/data-control-clipboard-server.cpp
 	)
 
-	# wlr-data-control protocol header still needed for globals detection
-	wayland_generate_protocol("${CMAKE_CURRENT_SOURCE_DIR}/protocols/wlr-data-control-unstable-v1.xml")
+	wayland_generate_protocol("wlr-data-control-unstable-v1")
 endif()
 	
 
