@@ -1,7 +1,8 @@
 #pragma once
+#include <qobject.h>
 #include <qwindow.h>
 
-class AbstractBackgroundEffectManager {
+class AbstractBackgroundEffectManager : public QObject {
 
 public:
   struct BlurConfig {

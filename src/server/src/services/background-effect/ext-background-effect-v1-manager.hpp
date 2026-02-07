@@ -41,12 +41,29 @@ public:
     wl_display_roundtrip(wayland->display());
   }
 
+  ~ExtBackgroundEffectV1Manager() {
+    for (const auto &[k, effect] : m_state) {
+      ext_background_effect_surface_v1_destroy(effect);
+    }
+  }
+
   bool supportsBlur() const override { return m_supportsBlur; }
 
   bool setBlur(QWindow *win, const BlurConfig &cfg) override {
     if (!m_supportsBlur) { return false; }
 
-    m_state.erase(win);
+    if (auto it = m_state.find(win); it != m_state.end()) {
+      ext_background_effect_surface_v1_destroy(it->second);
+      it->second = nullptr;
+    } else {
+      connect(win, &QWindow::destroyed, this, [this, win]() {
+        if (auto it = m_state.find(win); it != m_state.end()) {
+          qInfo() << "delete effect after window got destroyed";
+          ext_background_effect_surface_v1_destroy(it->second);
+          m_state.erase(it);
+        }
+      });
+    }
 
     auto *surface = QtWaylandUtils::getWindowSurface(win);
 
@@ -62,10 +79,8 @@ public:
       return false;
     }
 
-    auto wef = std::make_unique<WindowEffect>(effect);
-
-    applyBlur(win, *wef, cfg.region, cfg.radius);
-    m_state[win] = std::move(wef);
+    applyBlur(win, effect, cfg.region, cfg.radius);
+    m_state[win] = effect;
 
     return true;
   }
@@ -82,7 +97,7 @@ public:
   }
 
 private:
-  void applyBlur(QWindow *win, const WindowEffect &wef, const QRect &rect, int radius) {
+  void applyBlur(QWindow *win, ext_background_effect_surface_v1 *wef, const QRect &rect, int radius) {
     const auto *wayland = qApp->nativeInterface<QNativeInterface::QWaylandApplication>();
     const auto region = wl_compositor_create_region(wayland->compositor());
     int w = rect.width();
@@ -103,11 +118,11 @@ private:
       wl_region_subtract(region, w - cut, h - 1 - i, cut, 1);
     }
 
-    ext_background_effect_surface_v1_set_blur_region(wef.effect(), region);
+    ext_background_effect_surface_v1_set_blur_region(wef, region);
     wl_region_destroy(region);
   }
 
   ext_background_effect_manager_v1 *m_manager = nullptr;
-  std::unordered_map<QWindow *, std::unique_ptr<WindowEffect>> m_state;
+  std::unordered_map<QWindow *, ext_background_effect_surface_v1 *> m_state;
   bool m_supportsBlur = false;
 };
