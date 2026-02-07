@@ -2,10 +2,9 @@
 #include <qnamespace.h>
 #include <qwidget.h>
 #include "settings-window.hpp"
-#include "services/background-effect/background-effect-manager-factory.hpp"
-#include "common.hpp"
 #include "service-registry.hpp"
 #include "settings-controller/settings-controller.hpp"
+#include "services/background-effect/background-effect-manager.hpp"
 #include "theme.hpp"
 #include "vicinae.hpp"
 
@@ -60,16 +59,32 @@ QWidget *SettingsWindow::createWidget() {
   return widget;
 }
 
+void SettingsWindow::resizeEvent(QResizeEvent *event) {
+  QMainWindow::resizeEvent(event);
+
+  auto &cfg = m_ctx->services->config()->value();
+  auto bgEffectManager = m_ctx->services->backgroundEffectManager();
+
+  if (bgEffectManager->supportsBlur()) {
+    if (cfg.launcherWindow.blur.enabled) {
+      bgEffectManager->setBlur(windowHandle(), {.radius = 10, .region = rect()});
+    } else {
+      bgEffectManager->clearBlur(windowHandle());
+    }
+  }
+}
+
 void SettingsWindow::showEvent(QShowEvent *event) {
   QMainWindow::showEvent(event);
 
   auto &cfg = m_ctx->services->config()->value();
+  auto bgEffectManager = m_ctx->services->backgroundEffectManager();
 
-  if (m_bgEffectManager->supportsBlur()) {
+  if (bgEffectManager->supportsBlur()) {
     if (cfg.launcherWindow.blur.enabled) {
-      m_bgEffectManager->setBlur(windowHandle(), {.radius = 10, .region = rect()});
+      bgEffectManager->setBlur(windowHandle(), {.radius = 10, .region = rect()});
     } else {
-      m_bgEffectManager->removeBlur(windowHandle());
+      bgEffectManager->clearBlur(windowHandle());
     }
   }
 }
@@ -79,8 +94,7 @@ void SettingsWindow::hideEvent(QHideEvent *event) {
   m_ctx->settings->closeWindow();
 };
 
-SettingsWindow::SettingsWindow(ApplicationContext *ctx)
-    : m_ctx(ctx), m_bgEffectManager(BackgroundEffectManagerFactory::create()) {
+SettingsWindow::SettingsWindow(ApplicationContext *ctx) : m_ctx(ctx) {
   setWindowFlags(Qt::FramelessWindowHint);
   setAttribute(Qt::WA_TranslucentBackground);
   setMinimumSize(windowSize);

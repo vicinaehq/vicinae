@@ -1,9 +1,9 @@
 #include "launcher-window.hpp"
 #include "action-panel/action-panel.hpp"
 #include "layout.hpp"
-#include "services/background-effect/background-effect-manager-factory.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "services/toast/toast-service.hpp"
+#include "services/background-effect/background-effect-manager.hpp"
 #include "config/config.hpp"
 #include "environment.hpp"
 #include "keyboard/keybind-manager.hpp"
@@ -79,7 +79,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx)
       m_dialog(new DialogWidget(this)), m_currentView(new QStackedWidget(this)),
       m_currentViewWrapper(new QStackedWidget(this)), m_currentOverlayWrapper(new QStackedWidget(this)),
       m_mainWidget(new QWidget(this)), m_barDivider(new HDivider(this)), m_hudDismissTimer(new QTimer(this)),
-      m_actionVeil(new ActionVeilWidget(this)), m_bgEffectManager(BackgroundEffectManagerFactory::create()) {
+      m_actionVeil(new ActionVeilWidget(this)) {
   using namespace std::chrono_literals;
 
   setWindowTitle(Omnicast::MAIN_WINDOW_NAME);
@@ -239,8 +239,6 @@ void LauncherWindow::setCompacted(bool value) {
     m_header->setLoadingBarVisibility(true);
   }
 
-  if (cfg.launcherWindow.blur.enabled) { m_bgEffectManager->setBlur(windowHandle(), {}); }
-
   m_compacted = value;
   updateBlur();
   update();
@@ -249,14 +247,15 @@ void LauncherWindow::setCompacted(bool value) {
 void LauncherWindow::updateBlur() {
   auto &cfg = m_ctx.services->config()->value().launcherWindow;
   auto wm = m_ctx.services->windowManager();
+  auto bgEffectManager = m_ctx.services->backgroundEffectManager();
   int rounding = cfg.clientSideDecorations.enabled ? cfg.clientSideDecorations.rounding : 0;
   const QRect region = m_compacted ? m_header->rect() : rect();
 
-  if (m_bgEffectManager->supportsBlur()) {
+  if (bgEffectManager->supportsBlur()) {
     if (cfg.blur.enabled) {
-      m_bgEffectManager->setBlur(windowHandle(), {.radius = rounding, .region = region});
+      bgEffectManager->setBlur(windowHandle(), {.radius = rounding, .region = region});
     } else {
-      m_bgEffectManager->removeBlur(windowHandle());
+      bgEffectManager->clearBlur(windowHandle());
     }
   } else {
     wm->provider()->setBlur({.enabled = cfg.blur.enabled, .rounding = rounding});
@@ -355,6 +354,11 @@ void LauncherWindow::handleViewChange(const NavigationController::ViewState &sta
   m_currentViewWrapper->addWidget(state.sender);
 
   if (state.supportsSearch) { m_header->input()->setFocus(); }
+}
+
+void LauncherWindow::resizeEvent(QResizeEvent *event) {
+  QMainWindow::resizeEvent(event);
+  updateBlur();
 }
 
 bool LauncherWindow::eventFilter(QObject *watched, QEvent *event) {

@@ -17,6 +17,7 @@
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "root-search/shortcuts/shortcut-root-provider.hpp"
 #include "service-registry.hpp"
+#include "services/background-effect/background-effect-manager.hpp"
 #include "services/browser-extension-service.hpp"
 #include "services/calculator-service/calculator-service.hpp"
 #include "services/clipboard/clipboard-service.hpp"
@@ -161,6 +162,7 @@ void CliServerCommand::run(CLI::App *app) {
     registry->setPowerManager(std::make_unique<PowerManager>());
     registry->setScriptDb(std::make_unique<ScriptCommandService>());
     registry->setBrowserExtension(std::make_unique<BrowserExtensionService>());
+    registry->setBackgroundEffectManager(std::make_unique<BackgroundEffectManager>());
 
     auto root = registry->rootItemManager();
     auto builtinCommandDb = std::make_unique<CommandDatabase>();

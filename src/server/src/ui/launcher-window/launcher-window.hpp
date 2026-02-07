@@ -51,6 +51,7 @@ protected:
   void showEvent(QShowEvent *event) override;
   void changeEvent(QEvent *event) override;
   bool eventFilter(QObject *watched, QEvent *event) override;
+  void resizeEvent(QResizeEvent *event) override;
 
   void handleConfigurationChange(const config::ConfigValue &value);
   void applyWindowConfig(const config::WindowConfig &cfg);
@@ -87,5 +88,4 @@ private:
   QWidget *m_focusWidget = nullptr;
   bool m_compacted = false;
   bool m_closeOnFocusLoss = false;
-  std::unique_ptr<AbstractBackgroundEffectManager> m_bgEffectManager;
 };

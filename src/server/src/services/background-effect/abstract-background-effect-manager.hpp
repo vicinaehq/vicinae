@@ -3,11 +3,12 @@
 #include <qwindow.h>
 
 class AbstractBackgroundEffectManager : public QObject {
-
 public:
   struct BlurConfig {
     int radius = 0;
     QRect region;
+
+    bool operator==(const BlurConfig &rhs) const { return radius == rhs.radius && region == rhs.region; }
   };
 
   virtual ~AbstractBackgroundEffectManager() = default;

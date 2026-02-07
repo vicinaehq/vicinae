@@ -21,6 +21,11 @@ class ExtBackgroundEffectV1Manager : public AbstractBackgroundEffectManager {
 
   static constexpr ext_background_effect_manager_v1_listener listener = {.capabilities = capabilities};
 
+  struct BlurState {
+    ext_background_effect_surface_v1 *effect;
+    BlurConfig cfg;
+  };
+
 public:
   ExtBackgroundEffectV1Manager(ext_background_effect_manager_v1 *manager) : m_manager(manager) {
     const auto wayland = qApp->nativeInterface<QNativeInterface::QWaylandApplication>();
@@ -28,43 +33,19 @@ public:
     wl_display_roundtrip(wayland->display());
   }
 
-  bool eventFilter(QObject *sender, QEvent *event) override {
-    // We must destroy the effect object before the wl_surface gets destroyed.
-    // PlatformSurface/SurfaceAboutToBeDestroyed fires right before the native
-    // surface is torn down, regardless of how the window is deleted.
-    if (event->type() == QEvent::PlatformSurface) {
-      auto *surfaceEvent = static_cast<QPlatformSurfaceEvent *>(event);
-      if (surfaceEvent->surfaceEventType() == QPlatformSurfaceEvent::SurfaceAboutToBeDestroyed) {
-        for (auto it = m_state.begin(); it != m_state.end(); ++it) {
-          if (sender == it->first && it->second) {
-            qInfo() << "Deleting effect for to-be-deleted window" << it->first;
-            ext_background_effect_surface_v1_destroy(it->second);
-            m_state.erase(it);
-            return QObject::eventFilter(sender, event);
-          }
-        }
-      }
-    }
-
-    return QObject::eventFilter(sender, event);
-  }
-
-  ~ExtBackgroundEffectV1Manager() {
-    for (const auto &[k, effect] : m_state) {
-      ext_background_effect_surface_v1_destroy(effect);
-    }
-  }
-
   bool supportsBlur() const override { return m_supportsBlur; }
 
   bool setBlur(QWindow *win, const BlurConfig &cfg) override {
     if (!m_supportsBlur) { return false; }
 
-    win->installEventFilter(this);
-
     if (auto it = m_state.find(win); it != m_state.end()) {
-      ext_background_effect_surface_v1_destroy(it->second);
-      it->second = nullptr;
+      auto &state = it->second;
+
+      // do not reapply if config did not change
+      if (state.cfg != cfg) { applyBlur(win, state.effect, cfg); }
+
+      state.cfg = cfg;
+      return true;
     }
 
     auto *surface = QtWaylandUtils::getWindowSurface(win);
@@ -81,8 +62,10 @@ public:
       return false;
     }
 
-    applyBlur(win, effect, cfg.region, cfg.radius);
-    m_state[win] = effect;
+    applyBlur(win, effect, cfg);
+
+    if (m_state.find(win) == m_state.end()) { win->installEventFilter(this); }
+    m_state[win] = BlurState(effect, cfg);
 
     return true;
   }
@@ -98,15 +81,38 @@ public:
     return false;
   }
 
+protected:
+  bool eventFilter(QObject *sender, QEvent *event) override {
+    // We must destroy the effect object before the wl_surface gets destroyed.
+    // PlatformSurface/SurfaceAboutToBeDestroyed fires right before the native
+    // surface is torn down, regardless of how the window is deleted.
+    if (event->type() == QEvent::PlatformSurface) {
+      auto *surfaceEvent = static_cast<QPlatformSurfaceEvent *>(event);
+
+      if (surfaceEvent->surfaceEventType() == QPlatformSurfaceEvent::SurfaceAboutToBeDestroyed) {
+        for (auto it = m_state.begin(); it != m_state.end(); ++it) {
+          if (sender == it->first && it->second.effect) {
+            qInfo() << "Deleting effect for to-be-deleted window" << it->first;
+            ext_background_effect_surface_v1_destroy(it->second.effect);
+            m_state.erase(it);
+            return QObject::eventFilter(sender, event);
+          }
+        }
+      }
+    }
+
+    return QObject::eventFilter(sender, event);
+  }
+
 private:
-  void applyBlur(QWindow *win, ext_background_effect_surface_v1 *wef, const QRect &rect, int radius) {
+  void applyBlur(QWindow *win, ext_background_effect_surface_v1 *wef, const BlurConfig &cfg) {
     const auto *wayland = qApp->nativeInterface<QNativeInterface::QWaylandApplication>();
     const auto region = wl_compositor_create_region(wayland->compositor());
-    int w = rect.width();
-    int h = rect.height();
-    int r = radius;
+    int w = cfg.region.width();
+    int h = cfg.region.height();
+    int r = cfg.radius;
 
-    wl_region_add(region, rect.x(), rect.y(), w, h);
+    wl_region_add(region, cfg.region.x(), cfg.region.y(), w, h);
 
     // account for client side rounding
     for (int i = 0; i < r; i++) {
@@ -125,6 +131,6 @@ private:
   }
 
   ext_background_effect_manager_v1 *m_manager = nullptr;
-  std::unordered_map<QWindow *, ext_background_effect_surface_v1 *> m_state;
+  std::unordered_map<QWindow *, BlurState> m_state;
   bool m_supportsBlur = false;
 };

@@ -3,6 +3,7 @@
 #include "font-service.hpp"
 #include "omni-database.hpp"
 #include "services/app-service/app-service.hpp"
+#include "services/background-effect/background-effect-manager.hpp"
 #include "services/browser-extension-service.hpp"
 #include "services/power-manager/power-manager.hpp"
 #include "services/script-command/script-command-service.hpp"
@@ -48,6 +49,10 @@ ScriptCommandService *ServiceRegistry::scriptDb() const { return m_scriptCommand
 BrowserExtensionService *ServiceRegistry::browserExtension() const { return m_browserExtensionService.get(); }
 
 SnippetService *ServiceRegistry::snippetService() const { return m_snippetService.get(); }
+
+BackgroundEffectManager *ServiceRegistry::backgroundEffectManager() const {
+  return m_backgroundEffectManager.get();
+}
 
 void ServiceRegistry::setPowerManager(std::unique_ptr<PowerManager> powman) {
   m_powerManager = std::move(powman);
@@ -113,6 +118,10 @@ void ServiceRegistry::setBrowserExtension(std::unique_ptr<BrowserExtensionServic
 
 void ServiceRegistry::setSnippetService(std::unique_ptr<SnippetService> service) {
   m_snippetService = std::move(service);
+}
+
+void ServiceRegistry::setBackgroundEffectManager(std::unique_ptr<BackgroundEffectManager> service) {
+  m_backgroundEffectManager = std::move(service);
 }
 
 ServiceRegistry *ServiceRegistry::instance() {

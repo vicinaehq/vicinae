@@ -180,6 +180,7 @@ public:
   SettingsWindow(ApplicationContext *ctx);
 
 private:
+  void resizeEvent(QResizeEvent *event) override;
   void showEvent(QShowEvent *event) override;
   void hideEvent(QHideEvent *event) override;
   void paintEvent(QPaintEvent *event) override;
@@ -190,5 +191,4 @@ private:
   SettingsNavWidget *m_navigation = new SettingsNavWidget;
   QStackedWidget *content = new QStackedWidget;
   ApplicationContext *m_ctx = nullptr;
-  std::unique_ptr<AbstractBackgroundEffectManager> m_bgEffectManager;
 };
