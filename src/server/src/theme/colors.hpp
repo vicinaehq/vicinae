@@ -82,4 +82,6 @@ enum SemanticColor : std::uint8_t {
   LinkVisited,
 
   InvalidTint,
+
+  ShortcutIndicatorBorder,
 };

@@ -2,6 +2,7 @@
 #include "common/types.hpp"
 #include "keyboard/keyboard.hpp"
 #include "theme.hpp"
+#include "theme/colors.hpp"
 #include "ui/image/builtin-icon-loader.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
 #include <qnamespace.h>
@@ -36,21 +37,21 @@ static std::unordered_map<Qt::Key, KeySymbol> keyRepresentationOverloads = {
 };
 // clang-format on
 
-void KeyboardShortcutIndicatorWidget::setBackgroundColor(ColorLike color) { m_backgroundColor = color; }
+void KeyboardShortcutIndicatorWidget::setBorderColo(ColorLike color) { m_borderColor = color; }
 void KeyboardShortcutIndicatorWidget::setColor(ColorLike color) { m_color = color; }
 
 QSize KeyboardShortcutIndicatorWidget::sizeForKey(Qt::Key key) const {
   auto sizeForString = [&](const QString &text) {
     int advance = fontMetrics().horizontalAdvance(text);
-    int padding = _boxSize * 0.2;
-    int availableHorizontalWidth = _boxSize - padding * 2;
+    int padding = m_boxSize * 0.2;
+    int availableHorizontalWidth = m_boxSize - (padding * 2);
 
-    if (advance < availableHorizontalWidth) { return QSize(_boxSize, _boxSize); }
-    return QSize(advance + padding * 2, _boxSize);
+    if (advance < availableHorizontalWidth) { return QSize(m_boxSize, m_boxSize); }
+    return QSize(advance + (padding * 2), m_boxSize);
   };
 
   if (auto it = keyRepresentationOverloads.find(key); it != keyRepresentationOverloads.end()) {
-    const auto visitor = overloads{[&](const KeyIcon &icon) { return QSize(_boxSize, _boxSize); },
+    const auto visitor = overloads{[&](const KeyIcon &icon) { return QSize(m_boxSize, m_boxSize); },
                                    [&](const KeyText &sym) { return sizeForString(sym.text); }};
 
     return std::visit(visitor, it->second);
@@ -62,25 +63,25 @@ QSize KeyboardShortcutIndicatorWidget::sizeForKey(Qt::Key key) const {
 }
 
 void KeyboardShortcutIndicatorWidget::drawKey(Qt::Key key, QRect rect, OmniPainter &painter) {
-  int padding = _boxSize * 0.2;
+  int padding = m_boxSize * 0.2;
   auto &theme = ThemeService::instance().theme();
   QPainterPath path;
 
+  painter.setBrush(Qt::NoBrush);
+  painter.setThemePen(m_borderColor);
   path.addRoundedRect(rect, 6, 6);
-  painter.setThemeBrush(m_backgroundColor);
-  painter.setPen(Qt::NoPen);
   painter.setClipPath(path);
   painter.drawPath(path);
 
-  QRect contentRect(rect.x() + padding, rect.y() + padding, rect.width() - padding * 2,
-                    rect.height() - padding * 2);
+  QRect contentRect(rect.x() + padding, rect.y() + padding, rect.width() - (padding * 2),
+                    rect.height() - (padding * 2));
 
   painter.setThemePen(m_color);
 
   auto drawText = [&](const QString &text) { painter.drawText(contentRect, Qt::AlignCenter, text); };
 
   const auto visitor = overloads{
-      [&](const KeyText key) { return drawText(key.text); },
+      [&](const KeyText key) { drawText(key.text); },
       [&](const KeyIcon icon) {
         BuiltinIconLoader loader(QString(":icons/%1.svg").arg(icon.icon));
         QPixmap pix = loader.renderSync(
@@ -101,26 +102,23 @@ void KeyboardShortcutIndicatorWidget::paintEvent(QPaintEvent *event) {
   OmniPainter painter(this);
 
   painter.setRenderHint(QPainter::Antialiasing);
-  painter.setRenderHint(QPainter::TextAntialiasing);
   painter.setRenderHint(QPainter::SmoothPixmapTransform);
 
   for (const auto &key : m_shortcut.allKeys()) {
     auto size = sizeForKey(key);
     rect.setWidth(size.width());
     drawKey(key, rect, painter);
-    rect.moveLeft(rect.left() + height() + _hspacing);
+    rect.moveLeft(rect.left() + height() + m_hSpacing);
   }
-
-  // if (m_shortcut.isValidKey()) { drawKey(m_shortcut.key(), rect, painter); }
 }
 
 QSize KeyboardShortcutIndicatorWidget::sizeHint() const {
   int count = m_shortcut.modList().size();
-  int width = count * _boxSize + ((count - 1) * _hspacing);
+  int width = (count * m_boxSize) + ((count - 1) * m_hSpacing);
 
-  if (m_shortcut.isValidKey()) { width += sizeForKey(m_shortcut.key()).width() + _hspacing; }
+  if (m_shortcut.isValidKey()) { width += sizeForKey(m_shortcut.key()).width() + m_hSpacing; }
 
-  return {width, _boxSize};
+  return {width, m_boxSize};
 }
 
 void KeyboardShortcutIndicatorWidget::setShortcut(const Keyboard::Shortcut &model) {
@@ -130,5 +128,8 @@ void KeyboardShortcutIndicatorWidget::setShortcut(const Keyboard::Shortcut &mode
 }
 
 KeyboardShortcutIndicatorWidget::KeyboardShortcutIndicatorWidget(QWidget *parent) : QWidget(parent) {
+  QFont ft = font();
+  ft.setPointSize(9);
+  setFont(ft);
   setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 }

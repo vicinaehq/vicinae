@@ -16,7 +16,7 @@ public:
     m_button->setColor(ButtonBase::ButtonColor::Transparent);
     m_indicator->hide();
 
-    m_indicator->setBackgroundColor(Qt::transparent);
+    m_indicator->setBorderColo(Qt::transparent);
     connect(m_button, &ShortcutButton::clicked, this, [this]() { m_recorder->attach(this); });
     connect(m_recorder, &ShortcutRecorder::shortcutChanged, this, [this](auto shortcut) {
       m_indicator->setShortcut(shortcut);
