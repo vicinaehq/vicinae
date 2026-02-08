@@ -168,7 +168,7 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
     return resolve(SemanticColor::Foreground);
 
   case SemanticColor::GridItemBackground:
-    return withAlphaF(resolve(SemanticColor::SecondaryBackground), 0.7);
+    return withAlphaF(resolve(SemanticColor::SecondaryBackground));
   case SemanticColor::GridItemSelectionOutline:
     return resolve(SemanticColor::Foreground);
   case SemanticColor::GridItemHoverOutline:

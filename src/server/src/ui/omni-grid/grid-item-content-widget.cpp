@@ -1,10 +1,11 @@
 #include "grid-item-content-widget.hpp"
 #include "layout.hpp"
+#include "service-registry.hpp"
 #include "theme.hpp"
 #include "theme/colors.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
 #include "ui/tooltip/tooltip.hpp"
-#include <absl/strings/internal/str_format/extension.h>
+#include "config/config.hpp"
 #include <qnamespace.h>
 #include <qwidget.h>
 
@@ -20,6 +21,9 @@ void GridItemContentWidget::paintEvent(QPaintEvent *event) {
   OmniPainter painter(this);
   QPainterPath path;
   QColor backgroundColor = painter.resolveColor(SemanticColor::GridItemBackground);
+  const auto &cfg = ServiceRegistry::instance()->config()->value();
+
+  backgroundColor.setAlphaF(cfg.launcherWindow.opacity);
 
   painter.setRenderHint(QPainter::Antialiasing, true);
 
@@ -34,6 +38,7 @@ void GridItemContentWidget::paintEvent(QPaintEvent *event) {
 
   painter.setPen(Qt::NoPen);
   path.clear();
+  painter.setCompositionMode(QPainter::CompositionMode_Source);
   path.addRoundedRect(rect().adjusted(borderWidth(), borderWidth(), -borderWidth(), -borderWidth()),
                       borderRadius, borderRadius);
   painter.fillPath(path, backgroundColor);
