@@ -26,9 +26,6 @@ yellow = "#F9E2AF"
 cyan = "#94E2D5"
 
 [colors.list.item.selection]
-background = { name = "#313244", opacity = 0.45 }  # Surface0 (subtle)
-secondary_background = "#383A4A"  # Between Surface0 and Surface1
-
-[colors.list.item.hover]
-background = { name = "#313244", opacity = 0.3 }  # Surface0 (subtler than selection)
+background = "#292A3B"
+secondary_background = "#383A4A"
 

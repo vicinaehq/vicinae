@@ -26,11 +26,8 @@ yellow = "#EA9D34"            # gold
 cyan = "#56949F"              # foam
 
 [colors.list.item.selection]
-background = { name = "#CECACD", opacity = 0.5 }  # highlight_high (subtle selection)
-secondary_background = "#DFDAD9"  # highlight_med
-
-[colors.list.item.hover]
-background = { name = "#DFDAD9", opacity = 0.35 }  # highlight_med (subtler than selection)
+background = "#DFDAD9"
+secondary_background = "#DFDAD9"
 
 [colors.grid.item]
-background = { name = "#C4C0BF", opacity = 0.5 }  # Darker for grid visibility
+background = "#DFDAD9"

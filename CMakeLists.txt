@@ -50,6 +50,7 @@ option(USE_PRECOMPILED_HEADERS "Use precompiled headers to speed up compilation"
 
 set(LIB_DIR "${CMAKE_SOURCE_DIR}/src/lib")
 set(EXTRA_DIR "${CMAKE_SOURCE_DIR}/extra")
+set(THEME_DIR "${EXTRA_DIR}/themes")
 set(VICINAE_LIBEXEC_PATH ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBEXECDIR}/vicinae)
 set(VICINAE_LIBEXEC_DIR ${CMAKE_INSTALL_LIBEXECDIR}/vicinae)
 

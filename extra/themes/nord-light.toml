@@ -26,12 +26,9 @@ yellow = "#EBCB8B"            # nord13
 cyan = "#88C0D0"              # nord8
 
 [colors.list.item.selection]
-background = { name = "#C4CDD8", opacity = 0.5 }  # Between nord3 and nord4 (subtle selection)
-secondary_background = "#D8DEE9"  # nord4
-
-[colors.list.item.hover]
-background = { name = "#D8DEE9", opacity = 0.35 }  # nord4 (subtler than selection)
+background = "#D4DBE3"
+secondary_background = "#D8DEE9"
 
 [colors.grid.item]
-background = { name = "#B8C2CF", opacity = 0.5 }  # Darker for grid visibility
+background = "#D8DEE9"
 

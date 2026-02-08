@@ -30,6 +30,10 @@ set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)
 set(EXTRA_PATH ${CMAKE_SOURCE_DIR}/extra)
 configure_file(resources.qrc.in resources.qrc)
 
+if (CMAKE_BUILD_TYPE MATCHES "Debug")
+	add_compile_definitions(LOCAL_THEME_DIR="${THEME_DIR}")
+endif()
+
 if (WAYLAND_LAYER_SHELL)
 	message(STATUS "Compiling with wayland layer shell support (for wlroots-like compositors)")
 	#find_package(Qt6 REQUIRED COMPONENTS WaylandClient)

@@ -33,7 +33,14 @@ QColor ThemeFile::resolve(SemanticColor color) const {
                              [&](const ColorRef &ref) {
                                if (ref.color == color) { return inherit(ref.color); }
                                auto color = resolve(ref.color);
-                               if (ref.opacity) color.setAlphaF(std::clamp(*ref.opacity, 0.0, 1.0));
+                               if (ref.opacity) {
+                                 auto bg = resolve(SemanticColor::Background);
+                                 float a = std::clamp(static_cast<float>(*ref.opacity), 0.0f, 1.0f);
+                                 color = QColor(
+                                     qRound(color.red() * a + bg.red() * (1.0f - a)),
+                                     qRound(color.green() * a + bg.green() * (1.0f - a)),
+                                     qRound(color.blue() * a + bg.blue() * (1.0f - a)));
+                               }
                                if (ref.darker) color = color.darker(std::max(0, *ref.darker + 100));
                                if (ref.lighter) color = color.lighter(std::max(0, *ref.lighter + 100));
                                return color;
@@ -57,8 +64,7 @@ ThemeFile ThemeFile::vicinaeDark() {
   data.description = "Default Vicinae dark palette";
   data.semantics = {
       {SemanticColor::Background, QColor("#121212")},
-      {SemanticColor::ListItemSelectionBackground, withAlphaF("#2A2A2A", 0.45)},
-      {SemanticColor::ListItemHoverBackground, withAlphaF("#333333", 0.35)},
+      {SemanticColor::ListItemSelectionBackground, QColor("#202020")},
       {SemanticColor::Foreground, QColor("#E8E6E1")},
       {SemanticColor::BackgroundBorder, QColor("#2A2A2A")},
       {SemanticColor::SecondaryBackground, QColor("#1A1A1A")},
@@ -84,12 +90,11 @@ ThemeFile ThemeFile::vicinaeLight() {
   data.description = "Default Vicinae light palette";
   data.semantics = {
       {SemanticColor::Background, QColor("#F4F2EE")},
-      {SemanticColor::ListItemSelectionBackground, withAlphaF("#B8B5AE", 0.5)},
-      {SemanticColor::ListItemHoverBackground, withAlphaF("#C0BDB6", 0.35)},
+      {SemanticColor::ListItemSelectionBackground, QColor("#D0CDC8")},
       {SemanticColor::Foreground, QColor("#1A1A1A")},
       {SemanticColor::BackgroundBorder, QColor("#ABA8A1")},
       {SemanticColor::SecondaryBackground, QColor("#E0DDD6")},
-      {SemanticColor::GridItemBackground, withAlphaF("#C8C5BE", 0.6)},
+      {SemanticColor::GridItemBackground, QColor("#D5D2CC")},
 
       {SemanticColor::Red, QColor("#C25C49")},
       {SemanticColor::Orange, QColor("#DA8A48")},
@@ -128,7 +133,8 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
   case SemanticColor::ListItemSecondarySelectionBackground:
     return resolve(SemanticColor::ListItemSelectionBackground);
   case SemanticColor::ListItemSecondaryHoverBackground:
-    return withAlphaF(resolve(SemanticColor::ListItemSecondarySelectionBackground), 0.7);
+    return isDark() ? resolve(SemanticColor::ListItemSecondarySelectionBackground).darker(110)
+                    : resolve(SemanticColor::ListItemSecondarySelectionBackground).lighter(110);
 
   case ButtonPrimaryBackground:
     return withAlphaF(resolve(SemanticColor::ListItemSelectionBackground), 0.7);
@@ -161,18 +167,19 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
   case SemanticColor::SecondaryBackgroundBorder:
     return resolve(SemanticColor::BackgroundBorder).lighter();
   case SemanticColor::ListItemSelectionBackground:
-    return withAlphaF(resolve(SemanticColor::SecondaryBackground), 0.7);
+    return resolve(SemanticColor::SecondaryBackground);
   case SemanticColor::ListItemHoverBackground:
-    return withAlphaF(resolve(SemanticColor::ListItemSelectionBackground), 0.7);
+    return isDark() ? resolve(SemanticColor::ListItemSelectionBackground).darker(110)
+                    : resolve(SemanticColor::ListItemSelectionBackground).lighter(110);
   case SemanticColor::ListItemHoverForegroud:
     return resolve(SemanticColor::Foreground);
 
   case SemanticColor::GridItemBackground:
-    return withAlphaF(resolve(SemanticColor::SecondaryBackground));
+    return resolve(SemanticColor::SecondaryBackground);
   case SemanticColor::GridItemSelectionOutline:
     return resolve(SemanticColor::Foreground);
   case SemanticColor::GridItemHoverOutline:
-    return withAlphaF(resolve(SemanticColor::GridItemSelectionOutline));
+    return resolve(SemanticColor::GridItemSelectionOutline);
 
   case SemanticColor::AccentForeground:
     return QColor("#FFFFFF");
