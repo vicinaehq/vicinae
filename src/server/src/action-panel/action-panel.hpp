@@ -398,14 +398,13 @@ class ActionPanelV2Widget : public Popover {
     int x = parentGeo.width() - width() - 10;
     int y = parentGeo.height() - height() - 50;
 
-    move({x, y});
+    move(parent->mapToGlobal(QPoint(x, y)));
   }
 
   void showEvent(QShowEvent *event) override {
     emit opened();
     emit openChanged(true);
     resizeView();
-    raise();
     QWidget::showEvent(event);
   }
 
