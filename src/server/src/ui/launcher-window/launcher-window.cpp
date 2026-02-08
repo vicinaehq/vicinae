@@ -424,13 +424,19 @@ bool LauncherWindow::event(QEvent *event) {
 void LauncherWindow::paintEvent(QPaintEvent *event) {
   auto &config = m_ctx.services->config()->value();
   const auto &csd = config.launcherWindow.clientSideDecorations;
-  OmniPainter painter(this);
+  QPainter painter(this);
   QColor finalBgColor = OmniPainter::resolveColor(SemanticColor::Background);
   QColor statusColor = OmniPainter::resolveColor(SemanticColor::StatusBarBackground);
+  QColor borderColor = OmniPainter::resolveColor(SemanticColor::MainWindowBorder);
 
   finalBgColor.setAlphaF(config.launcherWindow.opacity);
   statusColor.setAlphaF(config.launcherWindow.opacity);
   painter.setRenderHint(QPainter::Antialiasing, true);
+
+  // helps getting rid of weird opacity artifacting on first launch
+  painter.setCompositionMode(QPainter::CompositionMode_Source);
+  painter.fillRect(rect(), Qt::transparent);
+  painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
 
   QRect contentRect = m_compacted ? QRect{0, 0, width(), config.header.height} : rect();
 
@@ -441,8 +447,7 @@ void LauncherWindow::paintEvent(QPaintEvent *event) {
     {
 
       path.addRoundedRect(contentRect, csd.rounding, csd.rounding);
-      painter.setThemePen(SemanticColor::MainWindowBorder,
-                          config.launcherWindow.clientSideDecorations.borderWidth);
+      painter.setPen(QPen(borderColor, csd.borderWidth));
       painter.setClipPath(path);
       painter.fillPath(path, finalBgColor);
       painter.drawPath(path);
@@ -474,7 +479,7 @@ void LauncherWindow::paintEvent(QPaintEvent *event) {
         path.clear();
         painter.setCompositionMode(QPainter::CompositionMode_Source);
         path.addRoundedRect(contentRect, csd.rounding, csd.rounding);
-        painter.setThemePen(SemanticColor::MainWindowBorder, csd.borderWidth);
+        painter.setPen(QPen(borderColor, csd.borderWidth));
         painter.setClipPath(path);
         painter.drawPath(path);
       }
