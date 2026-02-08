@@ -26,9 +26,6 @@ yellow = "#F6C177"            # gold
 cyan = "#9CCFD8"              # foam
 
 [colors.list.item.selection]
-background = { name = "#26233A", opacity = 0.45 }  # overlay (subtle)
-secondary_background = "#403D52"  # highlight_med
-
-[colors.list.item.hover]
-background = { name = "#26233A", opacity = 0.3 }  # overlay (subtler than selection)
+background = "#21202E"
+secondary_background = "#403D52"
 

@@ -110,10 +110,6 @@ focus = { outline = "colors.core.accent" }
 # ============================================================================
 # Colors for list items (horizontal list views)
 
-[colors.list.item.hover]
-background = "#2e2e2e"
-foreground = "#e8e6e1"
-
 [colors.list.item.selection]
 background = "#2e2e2e"          # Selected item on main background
 foreground = "#e8e6e1"

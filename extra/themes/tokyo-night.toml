@@ -26,9 +26,6 @@ yellow = "#E0AF68"
 cyan = "#7DCFFF"
 
 [colors.list.item.selection]
-background = { name = "#292E42", opacity = 0.45 }  # bg_highlight (subtle)
-secondary_background = "#3B4261"  # blue0
-
-[colors.list.item.hover]
-background = { name = "#292E42", opacity = 0.3 }  # bg_highlight (subtler than selection)
+background = "#232637"
+secondary_background = "#3B4261"
 

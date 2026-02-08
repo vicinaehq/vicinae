@@ -90,7 +90,12 @@ std::vector<std::filesystem::path> ThemeDatabase::defaultSearchPaths() {
   auto dd = xdgpp::dataDirs();
   auto suffix = fs::path("vicinae") / "themes";
 
-  paths.reserve(dd.size() + 1);
+  paths.reserve(dd.size() + 2);
+
+#ifdef LOCAL_THEME_DIR
+  paths.emplace_back(LOCAL_THEME_DIR);
+#endif
+
   paths.emplace_back(xdgpp::dataHome() / suffix);
 
   for (const auto &dir : dd) {

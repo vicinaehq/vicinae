@@ -26,8 +26,5 @@ yellow = "#DCA561"            # autumnYellow - golden yellow
 cyan = "#7FB4CA"              # springBlue - aqua blue
 
 [colors.list.item.selection]
-background = { name = "#2A2A37", opacity = 0.45 }  # sumiInk4 (subtle)
-secondary_background = "#363646"  # sumiInk5
-
-[colors.list.item.hover]
-background = { name = "#2A2A37", opacity = 0.3 }  # sumiInk4 (subtler than selection)
+background = "#262631"
+secondary_background = "#363646"
