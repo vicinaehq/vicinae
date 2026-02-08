@@ -1,10 +1,13 @@
 #pragma once
+#include "service-registry.hpp"
 #include "ui/image/url.hpp"
 #include "theme.hpp"
 #include "theme/colors.hpp"
+#include "config/config.hpp"
 #include "ui/divider/divider.hpp"
 #include "ui/image/image.hpp"
 #include "ui/omni-list/omni-list.hpp"
+#include "ui/omni-painter/omni-painter.hpp"
 #include "ui/typography/typography.hpp"
 #include <QtConcurrent/qtconcurrentiteratekernel.h>
 #include <memory>
@@ -35,6 +38,8 @@ public:
   virtual void attached(QWidget *widget, int column) {}
   virtual void detached(QWidget *widget, int column) {}
   virtual int colspan(int column) const { return 1; }
+
+  virtual ~VirtualTreeItemDelegate() = default;
 };
 
 class HeaderInfo {
@@ -90,11 +95,16 @@ class HeaderWidget : public QWidget {
   };
 
   void paintEvent(QPaintEvent *event) override {
+    const auto &value = ServiceRegistry::instance()->config()->value();
     int borderWidth = 1;
     OmniPainter painter(this);
 
+    auto bg = OmniPainter::resolveColor(SemanticColor::ListItemHoverBackground);
+
+    bg.setAlphaF(value.launcherWindow.opacity);
+    painter.setCompositionMode(QPainter::CompositionMode_Source);
     painter.setThemePen(SemanticColor::BackgroundBorder, borderWidth);
-    painter.setThemeBrush(SemanticColor::ListItemHoverBackground);
+    painter.setThemeBrush(bg);
     painter.setRenderHint(QPainter::Antialiasing, true);
     painter.drawRect(rect());
   }
@@ -190,16 +200,21 @@ class OmniTreeRowWidget : public OmniListItemWidget {
 
   void paintEvent(QPaintEvent *event) override {
     OmniPainter painter(this);
+    const auto &cfg = ServiceRegistry::instance()->config()->value();
 
     if (m_color || m_selected) {
       painter.setRenderHint(QPainter::Antialiasing);
 
       if (m_selected) {
-        QColor color = painter.resolveColor(SemanticColor::Accent);
+        QColor color = OmniPainter::resolveColor(SemanticColor::Accent);
+        painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
         color.setAlphaF(0.5);
         painter.setThemeBrush(color);
       } else {
-        painter.setBrush(painter.colorBrush(*m_color));
+        auto color = OmniPainter::resolveColor(m_color.value());
+        painter.setCompositionMode(QPainter::CompositionMode_Source);
+        color.setAlphaF(cfg.launcherWindow.opacity);
+        painter.setBrush(color);
       }
 
       painter.setPen(Qt::NoPen);
@@ -362,10 +377,8 @@ public:
 
   QString generateId() const override { return m_delegate->id(); }
 
-  VirtualTreeItemRow(VirtualTreeItemDelegate *delegate, HeaderInfo *header) {
-    m_delegate = delegate;
-    m_header = header;
-  }
+  VirtualTreeItemRow(VirtualTreeItemDelegate *delegate, HeaderInfo *header)
+      : m_delegate(delegate), m_header(header) {}
 };
 
 /**
