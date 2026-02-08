@@ -26,18 +26,6 @@ class DialogContentWidget;
 class HDivider;
 class ImageURL;
 
-class ActionVeilWidget : public QWidget {
-  Q_OBJECT
-
-public:
-  ActionVeilWidget(QWidget *parent) : QWidget(parent) {}
-
-  void mousePressEvent(QMouseEvent *event) override { emit mousePressed(); }
-
-signals:
-  void mousePressed() const;
-};
-
 class LauncherWindow : public QMainWindow {
 
 public:
@@ -46,7 +34,6 @@ public:
 protected:
   void paintEvent(QPaintEvent *event) override;
   bool event(QEvent *event) override;
-  void handleActionVisibilityChanged(bool visible);
   void hideEvent(QHideEvent *event) override;
   void showEvent(QShowEvent *event) override;
   void changeEvent(QEvent *event) override;
@@ -72,7 +59,6 @@ protected:
   QWidget *createWidget() const;
 
 private:
-  ActionVeilWidget *m_actionVeil;
   ApplicationContext &m_ctx;
   ActionPanelV2Widget *m_actionPanel = nullptr;
   GlobalHeader *m_header = nullptr;
@@ -85,7 +71,6 @@ private:
   QStackedWidget *m_currentViewWrapper = nullptr;
   QStackedWidget *m_currentOverlayWrapper = nullptr;
   DialogWidget *m_dialog = nullptr;
-  QWidget *m_focusWidget = nullptr;
   bool m_compacted = false;
   bool m_closeOnFocusLoss = false;
 };

@@ -78,14 +78,12 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx)
       m_bar(new GlobalBar(ctx)), m_actionPanel(new ActionPanelV2Widget(this)),
       m_dialog(new DialogWidget(this)), m_currentView(new QStackedWidget(this)),
       m_currentViewWrapper(new QStackedWidget(this)), m_currentOverlayWrapper(new QStackedWidget(this)),
-      m_mainWidget(new QWidget(this)), m_barDivider(new HDivider(this)), m_hudDismissTimer(new QTimer(this)),
-      m_actionVeil(new ActionVeilWidget(this)) {
+      m_mainWidget(new QWidget(this)), m_barDivider(new HDivider(this)), m_hudDismissTimer(new QTimer(this)) {
   using namespace std::chrono_literals;
 
   setWindowTitle(Omnicast::MAIN_WINDOW_NAME);
 
   m_hud->hide();
-  m_actionVeil->hide();
   m_hudDismissTimer->setInterval(1500ms);
   m_hudDismissTimer->setSingleShot(true);
   m_dialog->hide();
@@ -127,21 +125,9 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx)
   connect(m_ctx.navigation.get(), &NavigationController::actionPanelVisibilityChanged, this,
           [this](bool value) {
             if (value) {
-              m_focusWidget = QApplication::focusWidget();
-              m_actionVeil->setFixedSize(size());
-              m_actionVeil->move(0, 0);
-              m_actionVeil->raise();
-              m_actionVeil->show();
               m_actionPanel->show();
             } else {
-              m_actionVeil->close();
               m_actionPanel->close();
-              if (m_focusWidget) {
-                QTimer::singleShot(0, [this]() {
-                  m_focusWidget->setFocus();
-                  m_focusWidget = nullptr;
-                });
-              }
             }
           });
 
@@ -283,9 +269,6 @@ void LauncherWindow::setupUI() {
           &LauncherWindow::handleDialog);
 
   connect(m_header->input(), &QLineEdit::textChanged, this, [this](const QString &text) { tryCompaction(); });
-
-  connect(m_actionVeil, &ActionVeilWidget::mousePressed, this,
-          [this]() { m_ctx.navigation->closeActionPanel(); });
 
   connect(m_ctx.services->config(), &config::Manager::configChanged, this,
           [this](const config::ConfigValue &next, const config::ConfigValue &prev) {
@@ -436,15 +419,6 @@ bool LauncherWindow::event(QEvent *event) {
   }
 
   return QMainWindow::event(event);
-}
-
-void LauncherWindow::handleActionVisibilityChanged(bool visible) {
-  if (visible) {
-    m_actionPanel->show();
-    return;
-  }
-
-  m_actionPanel->hide();
 }
 
 void LauncherWindow::paintEvent(QPaintEvent *event) {
