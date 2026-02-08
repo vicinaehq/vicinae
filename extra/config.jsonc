@@ -113,7 +113,11 @@
 		// NOTE: layer shell support for the cosmic compositor is explicitly disabled as it is currently broken
 		"layer_shell": {
 			"enabled": true,
-			"keyboard_interactivity": "exclusive", // 'exclusive' | 'on_demand'
+
+			// 'exclusive' | 'on_demand'
+			// WARNING: 'exclusive' is known to break mouse stuff on popups (such as the action panel) on Hyprland
+			"keyboard_interactivity": "on_demand",
+
 			// either 'overlay' or 'top'.
 			// Other layers are not supported as they are unsuitable for a launcher.
 			// 'top' is recommended as using 'overlay' will make the vicinae window appear on top of IME popovers in some scenarios.
