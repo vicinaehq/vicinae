@@ -1,11 +1,18 @@
 set(WAYLAND_SCANNER_EXECUTABLE "wayland-scanner")
 
-function(wayland_generate_protocol protocol)
-	set(protocol_file ${CMAKE_SOURCE_DIR}/src/wayland-protocols/${protocol}.xml)
+pkg_get_variable(WAYLAND_PROTOCOLS_DIR wayland-protocols pkgdatadir)
+
+function(wayland_generate_protocol path protocol external)
+	if (external)
+		set(protocol_file ${WAYLAND_PROTOCOLS_DIR}/${path}/${protocol}.xml)
+	else()
+		set(protocol_file ${CMAKE_SOURCE_DIR}/${path}/${protocol}.xml)
+	endif()
+
 	get_filename_component(protocol_name ${protocol_file} NAME_WE)
     
-    set(client_header "${CMAKE_CURRENT_BINARY_DIR}/${protocol_name}-client-protocol.h")
-    set(private_code "${CMAKE_CURRENT_BINARY_DIR}/${protocol_name}-protocol.c")
+	set(client_header "${CMAKE_CURRENT_BINARY_DIR}/${protocol_name}-client-protocol.h")
+	set(private_code "${CMAKE_CURRENT_BINARY_DIR}/${protocol_name}-protocol.c")
     
     # Generate client header
     add_custom_command(
@@ -24,5 +31,5 @@ function(wayland_generate_protocol protocol)
     )
     
     # Add generated files to sources
-    set(SRCS ${SRCS} ${client_header} ${private_code} PARENT_SCOPE)
+	set(WAYLAND_PROTOCOLS_SOURCES ${WAYLAND_PROTOCOLS_SOURCES} ${client_header} ${private_code} PARENT_SCOPE)
 endfunction()

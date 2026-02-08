@@ -7,9 +7,10 @@ set(DATA_CONTROL_SERVER_BIN vicinae-data-control-server)
 
 find_package(Protobuf REQUIRED)
 
-include("${CMAKE_SOURCE_DIR}/cmake/Wayland.cmake")
-wayland_generate_protocol("wlr-data-control-unstable-v1")
-wayland_generate_protocol("ext-data-control-v1")
+include(Wayland)
+
+wayland_generate_protocol("staging/ext-data-control" "ext-data-control-v1" TRUE)
+wayland_generate_protocol("src/wayland-protocols" "wlr-data-control-unstable-v1" FALSE)
 
 add_executable(${DATA_CONTROL_SERVER_BIN}
   src/main.cpp
@@ -25,12 +26,13 @@ add_executable(${DATA_CONTROL_SERVER_BIN}
   src/ext/data-control-client.cpp
   src/ext/data-device.cpp
   src/ext/data-offer.cpp
-  ${SRCS}
+  ${WAYLAND_PROTOCOLS_SOURCES}
 )
 
 target_include_directories(${DATA_CONTROL_SERVER_BIN} PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/src
   ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_BINARY_DIR}
 )
 
 target_link_libraries(${DATA_CONTROL_SERVER_BIN} PRIVATE

@@ -60,9 +60,9 @@ include_directories(
 
 file(GLOB PROTO_FILES "${PROTO_DIR}/*.proto")
 
+
 set(SRCS
 	src/main.cpp
-
 	src/theme.hpp
 	src/theme.cpp
 
@@ -734,15 +734,15 @@ if (UNIX AND NOT APPLE)
 		message(STATUS "XCB library found for X11 window manager support")
 	endif()
 
-    include("Wayland")
+	include("Wayland")
 
-    wayland_generate_protocol("wlr-foreign-toplevel-management-unstable-v1")
-	wayland_generate_protocol("virtual-keyboard-unstable-v1")
-	wayland_generate_protocol("ext-data-control-v1")
-	wayland_generate_protocol("kde-blur")
-	wayland_generate_protocol("ext-background-effect-v1")
-
-	list(APPEND LIBS xkbcommon)
+	wayland_generate_protocol("staging/ext-data-control" "ext-data-control-v1" TRUE)
+	wayland_generate_protocol("staging/ext-background-effect" "ext-background-effect-v1" TRUE)
+	wayland_generate_protocol("staging/xdg-activation" "xdg-activation-v1" TRUE)
+	wayland_generate_protocol("src/wayland-protocols" "wlr-foreign-toplevel-management-unstable-v1" FALSE)
+	wayland_generate_protocol("src/wayland-protocols" "virtual-keyboard-unstable-v1" FALSE)
+	wayland_generate_protocol("src/wayland-protocols" "kde-blur" FALSE)
+	wayland_generate_protocol("src/wayland-protocols" "wlr-data-control-unstable-v1" FALSE)
 
 	# Common Wayland support files
 	list(APPEND SRCS
@@ -752,12 +752,11 @@ if (UNIX AND NOT APPLE)
 		src/lib/wayland/seat.cpp
 		src/lib/wayland/virtual-keyboard.hpp
 		src/lib/wayland/virtual-keyboard.cpp
-
 		src/services/clipboard/data-control/data-control-clipboard-server.hpp
-		src/services/clipboard/data-control/data-control-clipboard-server.cpp
+        src/services/clipboard/data-control/data-control-clipboard-server.cpp
+		${WAYLAND_PROTOCOLS_SOURCES}
 	)
 
-	wayland_generate_protocol("wlr-data-control-unstable-v1")
 endif()
 	
 

@@ -48,6 +48,8 @@ option(ENABLE_PREVIEW_FEATURES "Enable preview features that are not yet ready f
 # disabled for now, as it seems to be incompatible with ccache, and as such slows us down more than anything
 option(USE_PRECOMPILED_HEADERS "Use precompiled headers to speed up compilation" OFF)
 
+# End of Vicae build configuration options
+
 set(LIB_DIR "${CMAKE_SOURCE_DIR}/src/lib")
 set(EXTRA_DIR "${CMAKE_SOURCE_DIR}/extra")
 set(VICINAE_LIBEXEC_PATH ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBEXECDIR}/vicinae)
@@ -68,21 +70,11 @@ include_directories(
     ${CMAKE_BINARY_DIR}/generated  # For version.h
 )
 
-add_subdirectory(src/browser-extension)
-add_subdirectory(src/snippet)
-add_subdirectory(${LIB_DIR}/script-command)
-add_subdirectory(${LIB_DIR}/emoji)
-add_subdirectory(${LIB_DIR}/xdgpp)
-add_subdirectory(${LIB_DIR}/vicinae-ipc)
-add_subdirectory(${LIB_DIR}/common)
-
 set(PROTO_DIR ${CMAKE_SOURCE_DIR}/src/proto)
 
 if (USE_SYSTEM_PROTOBUF)
 	set(USE_SYSTEM_ABSEIL ON)
 endif()
-
-# End of Vicinae build configuration options
 
 if (PREFER_STATIC_LIBS)
 	set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".so" ".dylib")
@@ -94,7 +86,6 @@ if (PREFER_STATIC_LIBS)
 	set(USE_SYSTEM_QT_KEYCHAIN OFF)
 	set(LIBQALCULATE_BACKEND OFF)
 endif()
-
 
 if (NOT DEFINED VICINAE_GIT_TAG)
 	get_git_tag(VICINAE_GIT_TAG)
@@ -222,8 +213,16 @@ if (CCACHE AND NOT IGNORE_CCACHE)
 endif()
 
 add_compile_definitions(BUILD_INFO="${BUILD_INFO}")
+
 add_subdirectory(src/server)
 add_subdirectory(src/cli)
+add_subdirectory(src/browser-extension)
+add_subdirectory(src/snippet)
+add_subdirectory(${LIB_DIR}/script-command)
+add_subdirectory(${LIB_DIR}/emoji)
+add_subdirectory(${LIB_DIR}/xdgpp)
+add_subdirectory(${LIB_DIR}/vicinae-ipc)
+add_subdirectory(${LIB_DIR}/common)
 
 if (UNIX AND NOT APPLE)
 	add_subdirectory(src/data-control-server)
