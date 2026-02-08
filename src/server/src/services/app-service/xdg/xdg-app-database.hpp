@@ -1,5 +1,6 @@
 #pragma once
 #include "services/app-service/abstract-app-db.hpp"
+#include "lib/wayland/xdg-activation-token.hpp"
 #include <xdgpp/desktop-entry/file.hpp>
 #include "xdg-app.hpp"
 #include <qfileinfo.h>
@@ -53,4 +54,6 @@ private:
 
   // apps segmented by data dir (needed for association resolution)
   std::unordered_map<std::filesystem::path, std::vector<std::shared_ptr<XdgApplication>>> m_dataDirToApps;
+
+  std::unique_ptr<XdgActivationTokenService> m_xdgActivation;
 };

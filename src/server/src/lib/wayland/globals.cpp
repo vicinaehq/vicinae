@@ -1,6 +1,7 @@
 #include "globals.hpp"
 #include "ext-background-effect-v1-client-protocol.h"
 #include "virtual-keyboard-unstable-v1-client-protocol.h"
+#include "xdg-activation-v1-client-protocol.h"
 #include <QApplication>
 
 namespace Wayland {
@@ -40,6 +41,11 @@ void Globals::handleGlobal(void *data, struct wl_registry *registry, uint32_t na
   else if (strcmp(interface, ext_background_effect_manager_v1_interface.name) == 0) {
     self->m_backgroundEffect = static_cast<decltype(self->m_backgroundEffect)>(
         wl_registry_bind(registry, name, &ext_background_effect_manager_v1_interface, version));
+  }
+
+  else if (strcmp(interface, xdg_activation_v1_interface.name) == 0) {
+    self->m_xdgActivation = static_cast<decltype(self->m_xdgActivation)>(
+        wl_registry_bind(registry, name, &xdg_activation_v1_interface, version));
   }
 }
 

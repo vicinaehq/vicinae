@@ -5,6 +5,7 @@
 #include "virtual-keyboard-unstable-v1-client-protocol.h"
 #include "wlr-data-control-unstable-v1-client-protocol.h"
 #include "ext-background-effect-v1-client-protocol.h"
+#include "xdg-activation-v1-client-protocol.h"
 
 namespace Wayland {
 
@@ -14,6 +15,7 @@ public:
   static auto kwinBlur() { return instance().m_kwinBlur; }
   static zwlr_data_control_manager_v1 *wlrDataControlManager();
   static auto *extBackgroundEffectManager() { return instance().m_backgroundEffect; }
+  static auto *xdgActivation() { return instance().m_xdgActivation; }
 
   /**
    * The new data control device interface, basically a stable copy of the old wlr equivalent. Should be
@@ -34,6 +36,7 @@ private:
   constexpr static const struct wl_registry_listener m_listener = {.global = handleGlobal,
                                                                    .global_remove = globalRemove};
 
+  xdg_activation_v1 *m_xdgActivation = nullptr;
   zwlr_data_control_manager_v1 *m_zwlrDataControlDevice = nullptr;
   ext_data_control_manager_v1 *extDataControlDevice = nullptr;
   zwp_virtual_keyboard_manager_v1 *m_virtualKeyboardManager = nullptr;

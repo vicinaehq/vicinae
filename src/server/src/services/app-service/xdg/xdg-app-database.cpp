@@ -1,14 +1,14 @@
 #include "xdg-app-database.hpp"
 #include "environment.hpp"
 #include "services/app-service/xdg/xdg-app.hpp"
-#include "timer.hpp"
+#include "wayland/globals.hpp"
+#include <QWidget>
 #include "xdgpp/desktop-entry/entry.hpp"
 #include "xdgpp/desktop-entry/file.hpp"
 #include "xdgpp/mime/iterator.hpp"
 #include <algorithm>
 #include <qtenvironmentvariables.h>
 #include <ranges>
-#include "xdgpp/desktop-entry/exec.hpp"
 #include <filesystem>
 #include <memory>
 #include <qcontainerfwd.h>
@@ -312,6 +312,43 @@ bool XdgAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
 
 bool XdgAppDatabase::launchProcess(const QString &prog, const QStringList args,
                                    const std::optional<std::filesystem::path> &workingDirectory) const {
+
+  if (m_xdgActivation) {
+    m_xdgActivation->requestToken(qApp->activeWindow()->windowHandle(), prog.toStdString(),
+                                  [prog, args, workingDirectory](const char *token) {
+                                    qDebug() << "got activation token" << token;
+
+                                    QProcess process;
+                                    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+                                    process.setProgram(prog);
+                                    process.setArguments(args);
+                                    process.setStandardOutputFile(QProcess::nullDevice());
+                                    process.setStandardErrorFile(QProcess::nullDevice());
+
+                                    env.insert("XDG_ACTIVATION_TOKEN", token);
+                                    env.insert("DESKTOP_STARTUP_ID", token);
+
+                                    process.setProcessEnvironment(env);
+
+                                    if (auto dir = workingDirectory) {
+                                      process.setWorkingDirectory(workingDirectory->c_str());
+                                    }
+
+                                    QStringList cmdline;
+                                    cmdline << prog << args;
+                                    qInfo() << "App started with command line" << cmdline.join(' ')
+                                            << env.toStringList();
+
+                                    if (!process.startDetached()) {
+                                      qWarning() << "Failed to start app:" << process.errorString();
+                                      return false;
+                                    }
+
+                                    return true;
+                                  });
+    return true;
+  }
+
   QProcess process;
   process.setProgram(prog);
   process.setArguments(args);
@@ -397,4 +434,10 @@ AppPtr XdgAppDatabase::findByClass(const QString &name) const {
 
 std::vector<AppPtr> XdgAppDatabase::list() const { return {m_apps.begin(), m_apps.end()}; }
 
-XdgAppDatabase::XdgAppDatabase() { scan(defaultSearchPaths()); }
+XdgAppDatabase::XdgAppDatabase() {
+  if (auto activation = Wayland::Globals::xdgActivation()) {
+    m_xdgActivation = std::make_unique<XdgActivationTokenService>(activation);
+  }
+
+  scan(defaultSearchPaths());
+}
