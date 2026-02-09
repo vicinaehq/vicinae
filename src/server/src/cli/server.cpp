@@ -269,8 +269,11 @@ void CliServerCommand::run(CLI::App *app) {
     }
 
     if (next.font.normal.family != prev.font.normal.family) {
-      auto family = next.font.normal.family;
+      auto &family = next.font.normal.family;
       if (family == "auto") {
+        auto builtin = ServiceRegistry::instance()->fontService()->builtinFontFamily();
+        QApplication::setFont(builtin.isEmpty() ? QFont() : QFont(builtin));
+      } else if (family == "system") {
         QApplication::setFont(QFont());
       } else {
         QApplication::setFont(QFont(family.c_str()));

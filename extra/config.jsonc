@@ -42,6 +42,9 @@
 
 	"font": {
 		// The font family to use for the general vicinae UI.
+		// "auto" (recommended): uses the bundled Inter font
+		// "system": uses the system/platform default font
+		// Or specify any font family name (e.g. "Fira Sans")
 		"normal": {
 			"family": "auto",
 			// The point size of the font (unlike pixel size, the point size scales with resolution)
