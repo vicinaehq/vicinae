@@ -35,7 +35,7 @@ private:
 class KeybindField : public OmniTreeActivatableWidget {
 public:
   KeybindField() {
-    m_indicator->setBackgroundColor(Qt::transparent);
+    m_indicator->setBorderColor(Qt::transparent);
     m_indicator->hide();
 
     HStack().mx(10).add(m_indicator).justifyBetween().imbue(this);

@@ -17,6 +17,8 @@ enum SemanticColor : std::uint8_t {
   MainWindowBorder,
   SettingsWindowBorder,
 
+  StatusBarBackground,
+
   // Background colors
   Background,
   BackgroundBorder,
@@ -80,4 +82,6 @@ enum SemanticColor : std::uint8_t {
   LinkVisited,
 
   InvalidTint,
+
+  ShortcutIndicatorBorder,
 };

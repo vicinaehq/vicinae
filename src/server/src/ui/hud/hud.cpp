@@ -1,16 +1,24 @@
 #include "hud.hpp"
+#include "service-registry.hpp"
+#include "ui/omni-painter/omni-painter.hpp"
 #include "utils/environment.hpp"
 #include "utils/layout.hpp"
-#include <qnamespace.h>
+#include "config/config.hpp"
 #include "LayerShellQt/Window"
 #include "vicinae.hpp"
 
 void HudWidget::paintEvent(QPaintEvent *event) {
-  OmniPainter painter(this);
+  const auto &cfg = ServiceRegistry::instance()->config()->value();
+  QPainter painter(this);
   int radius = m_shouldDrawBorders ? (height() / 2) : 0;
-  auto color = painter.resolveColor(SemanticColor::Background);
+  auto color = OmniPainter::resolveColor(SemanticColor::Background);
 
-  color.setAlphaF(0.6);
+  color.setAlphaF(cfg.launcherWindow.opacity);
+  // helps getting rid of weird opacity artifacting on first launch
+  painter.setCompositionMode(QPainter::CompositionMode_Source);
+  painter.fillRect(rect(), Qt::transparent);
+  painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+
   painter.setRenderHint(QPainter::Antialiasing);
   painter.setBrush(color);
   painter.setPen(Qt::NoPen);

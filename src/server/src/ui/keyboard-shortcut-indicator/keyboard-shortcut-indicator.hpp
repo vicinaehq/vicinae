@@ -12,7 +12,7 @@ public:
 
   QSize sizeHint() const override;
   void setShortcut(const Keyboard::Shortcut &shortcut);
-  void setBackgroundColor(ColorLike color);
+  void setBorderColor(ColorLike color);
   void setColor(ColorLike color);
   Keyboard::Shortcut shortcut() const { return m_shortcut; }
 
@@ -25,8 +25,8 @@ protected:
 
 private:
   Keyboard::Shortcut m_shortcut;
-  int _hspacing = 5;
-  int _boxSize = 25;
-  ColorLike m_backgroundColor = SemanticColor::Background;
+  int m_hSpacing = 5;
+  int m_boxSize = 25;
+  ColorLike m_borderColor = SemanticColor::ShortcutIndicatorBorder;
   ColorLike m_color = SemanticColor::Foreground;
 };
