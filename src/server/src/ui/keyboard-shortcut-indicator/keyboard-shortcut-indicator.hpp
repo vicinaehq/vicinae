@@ -12,7 +12,7 @@ public:
 
   QSize sizeHint() const override;
   void setShortcut(const Keyboard::Shortcut &shortcut);
-  void setBorderColo(ColorLike color);
+  void setBorderColor(ColorLike color);
   void setColor(ColorLike color);
   Keyboard::Shortcut shortcut() const { return m_shortcut; }
 

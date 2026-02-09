@@ -25,7 +25,7 @@ void ShortcutRecorder::setupUI() {
   m_text->setSize(TextSize::TextSmaller);
   m_text->setWordWrap(true);
   m_text->setAlignment(Qt::AlignHCenter);
-  m_indicator->setBorderColo(SemanticColor::Background);
+  m_indicator->setBorderColor(SemanticColor::Background);
   m_indicator->hide();
   m_target->installEventFilter(this);
 
@@ -52,7 +52,7 @@ void ShortcutRecorder::setColor(const ColorLike &color) {
 
   bg.setAlphaF(0.2);
   m_indicator->setColor(color);
-  m_indicator->setBorderColo(bg);
+  m_indicator->setBorderColor(bg);
   m_text->setColor(color);
 }
 
@@ -88,7 +88,7 @@ void ShortcutRecorder::clear() {
   OmniPainter painter;
   m_text->setText("Recording...");
   m_text->setColor(SemanticColor::Foreground);
-  m_indicator->setBorderColo(SemanticColor::ListItemSelectionBackground);
+  m_indicator->setBorderColor(SemanticColor::ListItemSelectionBackground);
   m_indicator->setColor(SemanticColor::Foreground);
   m_indicator->hide();
 }

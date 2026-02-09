@@ -37,7 +37,7 @@ static std::unordered_map<Qt::Key, KeySymbol> keyRepresentationOverloads = {
 };
 // clang-format on
 
-void KeyboardShortcutIndicatorWidget::setBorderColo(ColorLike color) { m_borderColor = color; }
+void KeyboardShortcutIndicatorWidget::setBorderColor(ColorLike color) { m_borderColor = color; }
 void KeyboardShortcutIndicatorWidget::setColor(ColorLike color) { m_color = color; }
 
 QSize KeyboardShortcutIndicatorWidget::sizeForKey(Qt::Key key) const {
