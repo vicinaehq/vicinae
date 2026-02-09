@@ -121,6 +121,7 @@ SelectorInput::SelectorInput(QWidget *parent)
   inputField->setPlaceholderText("Select an item...");
   inputField->setReadOnly(true); // Read-only to behave like a combo box
   collapseIcon->setUrl(ImageURL::builtin("chevron-down"));
+  collapseIcon->setAttribute(Qt::WA_TransparentForMouseEvents);
   inputField->setLeftAccessory(selectionIcon);
   inputField->setRightAccessory(collapseIcon);
 
