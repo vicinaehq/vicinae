@@ -279,6 +279,8 @@ private:
   static QMargins constexpr const DEFAULT_MARGINS = {5, 5, 5, 5};
 
   void updateViewport();
+  void smoothScrollTick();
+  void scrollImmediate(int value);
 
   std::unordered_map<VListModel::StableID, WidgetData> m_widgetMap;
   std::unordered_set<size_t> m_idsSeen;
@@ -292,5 +294,7 @@ private:
   VListModel *m_model = nullptr;
   int m_count = 0;
   QTimer m_scrollTimer;
+  double m_targetScroll = 0;
+  QTimer m_smoothScrollTimer;
 };
 }; // namespace vicinae::ui

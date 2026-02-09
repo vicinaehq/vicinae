@@ -1,3 +1,4 @@
+#include <cmath>
 #include <qlogging.h>
 #include <ranges>
 #include <unordered_set>
@@ -47,6 +48,7 @@ void VListWidget::calculate() {
   m_scrollBar->setMaximum(std::max(0, m_height - size().height()));
   m_scrollBar->setSingleStep(DEFAULT_PAGE_STEP);
   m_scrollBar->setVisible(m_height > size().height());
+  m_targetScroll = std::clamp(m_targetScroll, 0.0, static_cast<double>(m_scrollBar->maximum()));
 
   if (m_selected) {
     if (m_selected->idx >= m_count) {
@@ -240,13 +242,12 @@ bool VListWidget::selectDown() {
 }
 
 void VListWidget::pageDown() {
-  m_scrollBar->setValue(
-      std::min(m_scrollBar->value() + m_scrollBar->pageStep(), m_scrollBar->maximumHeight()));
+  scrollImmediate(std::min(m_scrollBar->value() + m_scrollBar->pageStep(), m_scrollBar->maximumHeight()));
   if (!m_visibleItems.empty()) { setSelected(m_visibleItems.front().index); }
 }
 
 void VListWidget::pageUp() {
-  m_scrollBar->setValue(std::max(0, m_scrollBar->value() - m_scrollBar->pageStep()));
+  scrollImmediate(std::max(0, m_scrollBar->value() - m_scrollBar->pageStep()));
   if (!m_visibleItems.empty()) { setSelected(m_visibleItems.front().index); }
 }
 
@@ -291,7 +292,7 @@ std::optional<VListModel::Index> VListWidget::getTopItem(VListModel::Index idx) 
 
 void VListWidget::scrollToIndex(VListModel::Index idx, ScrollAnchor anchor) {
   if (idx == 0) {
-    m_scrollBar->setValue(0);
+    scrollImmediate(0);
     return;
   }
 
@@ -300,11 +301,11 @@ void VListWidget::scrollToIndex(VListModel::Index idx, ScrollAnchor anchor) {
 
   switch (anchor) {
   case ScrollAnchor::Top: {
-    m_scrollBar->setValue(startY - height());
+    scrollImmediate(startY - height());
     break;
   }
   case ScrollAnchor::Bottom: {
-    m_scrollBar->setValue(startY);
+    scrollImmediate(startY);
     break;
   }
   case ScrollAnchor::Relative: {
@@ -324,7 +325,7 @@ void VListWidget::scrollToIndex(VListModel::Index idx, ScrollAnchor anchor) {
       if (isFullyInViewport) return;
       distance = startY - scrollHeight;
     }
-    m_scrollBar->setValue(scrollHeight + distance);
+    scrollImmediate(scrollHeight + distance);
     break;
   }
   }
@@ -341,11 +342,45 @@ void VListWidget::setupUI() {
   connect(m_scrollBar, &QScrollBar::valueChanged, this, [this]() {
     if (!m_scrollTimer.isActive()) m_scrollTimer.start(SCROLL_FRAME_TIME);
   });
+
+  m_smoothScrollTimer.setInterval(SCROLL_FRAME_TIME);
+  connect(&m_smoothScrollTimer, &QTimer::timeout, this, &VListWidget::smoothScrollTick);
+}
+
+void VListWidget::scrollImmediate(int value) {
+  m_targetScroll = value;
+  m_smoothScrollTimer.stop();
+  m_scrollBar->setValue(value);
+}
+
+void VListWidget::smoothScrollTick() {
+  double current = m_scrollBar->value();
+  double diff = m_targetScroll - current;
+
+  if (std::abs(diff) < 0.5) {
+    m_scrollBar->setValue(static_cast<int>(std::round(m_targetScroll)));
+    m_smoothScrollTimer.stop();
+  } else {
+    m_scrollBar->setValue(static_cast<int>(std::round(current + diff * 0.25)));
+  }
 }
 
 bool VListWidget::event(QEvent *event) {
   if (event->type() == QEvent::Wheel) {
-    QApplication::sendEvent(m_scrollBar, event);
+    auto *wheel = static_cast<QWheelEvent *>(event);
+
+    if (!wheel->pixelDelta().isNull()) {
+      // Trackpad: use pixel-perfect deltas directly
+      m_targetScroll -= wheel->pixelDelta().y();
+    } else {
+      // Mouse wheel: angleDelta (120 units per notch)
+      m_targetScroll -= wheel->angleDelta().y() * 0.5;
+    }
+
+    m_targetScroll = std::clamp(m_targetScroll, 0.0, static_cast<double>(m_scrollBar->maximum()));
+
+    if (!m_smoothScrollTimer.isActive()) { m_smoothScrollTimer.start(); }
+
     return true;
   }
   return QWidget::event(event);
