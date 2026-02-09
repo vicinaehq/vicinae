@@ -9,7 +9,6 @@
 class GridItemWidget : public OmniListItemWidget {
   // actual inset depends on the size of the main widget
 
-  QVBoxLayout *layout;
   TypographyWidget *titleLabel = new TypographyWidget;
   TypographyWidget *subtitleLabel = new TypographyWidget;
   void resizeEvent(QResizeEvent *event) override;

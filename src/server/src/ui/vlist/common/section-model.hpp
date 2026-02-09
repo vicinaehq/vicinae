@@ -3,6 +3,7 @@
 #include "template-engine/template-engine.hpp"
 #include "ui/list-section-header.hpp"
 #include "ui/vlist/vlist.hpp"
+#include "utils.hpp"
 
 namespace vicinae::ui {
 
@@ -67,15 +68,17 @@ protected:
       auto id = sectionIdFromIndex(i);
       int itemCount = sectionItemCount(id);
       int itemHeight = sectionItemHeight(id);
-      bool withHeader = itemCount > 0 && !sectionName(id).empty();
+      auto sname = sectionName(id);
+      bool withHeader = itemCount > 0 && !sname.empty();
 
       if (withHeader) {
+        auto headerSize = sizeHeader(sname);
         auto &item = m_cache[currentIndex];
         item.y = y;
-        item.height = HEADER_HEIGHT;
+        item.height = headerSize;
         item.sectionIdx = i;
         item.isSection = true;
-        y += HEADER_HEIGHT;
+        y += headerSize;
         ++currentIndex;
       }
 
@@ -169,7 +172,7 @@ protected:
     int high = m_cache.size() - 1;
 
     while (low <= high) {
-      int mid = low + (high - low) / 2;
+      int mid = low + ((high - low) / 2);
       auto &item = m_cache[mid];
 
       if (targetHeight >= item.y && targetHeight <= item.y + item.height) { return mid; }
@@ -184,11 +187,18 @@ protected:
     return InvalidIndex;
   }
 
+  size_t sizeHeader(std::string_view header) const {
+    static OmniListSectionHeader ruler("", "", 0);
+    ruler.setTitle(qStringFromStdView(header));
+    return ruler.sizeHint().height();
+  }
+
   int height(Index idx) const final override {
-    const auto visitor = overloads{[&](const SectionHeader &header) -> int { return HEADER_HEIGHT; },
-                                   [&](const SectionItem &item) -> int {
-                                     return sectionItemHeight(sectionIdFromIndex(item.sectionIdx));
-                                   }};
+    const auto visitor =
+        overloads{[&](const SectionHeader &header) -> int { return sizeHeader(header.name); },
+                  [&](const SectionItem &item) -> int {
+                    return sectionItemHeight(sectionIdFromIndex(item.sectionIdx));
+                  }};
     return std::visit(visitor, fromFlatIndex(idx));
   }
 
@@ -201,7 +211,6 @@ private:
     int itemIdx = 0;
   };
 
-  static const constexpr int HEADER_HEIGHT = 30;
   int m_height = 0;
   std::vector<CachedItem> m_cache;
 };

@@ -1,5 +1,6 @@
 #include "grid-item-widget.hpp"
 #include "grid-item-content-widget.hpp"
+#include "layout.hpp"
 #include "ui/omni-list/omni-list-item-widget.hpp"
 #include <qwidget.h>
 
@@ -11,17 +12,10 @@ void GridItemWidget::resizeEvent(QResizeEvent *event) {
   OmniListItemWidget::resizeEvent(event);
 }
 
-GridItemWidget::GridItemWidget(QWidget *parent) : layout(new QVBoxLayout), main(new GridItemContentWidget) {
-  layout->setContentsMargins(0, 0, 0, 0);
-  layout->setSpacing(0);
-  layout->addWidget(main);
-  layout->addSpacing(10);
-  layout->addWidget(titleLabel);
-  layout->addWidget(subtitleLabel);
-
+GridItemWidget::GridItemWidget(QWidget *parent) : main(new GridItemContentWidget) {
   subtitleLabel->setColor(SemanticColor::TextMuted);
+  VStack().add(main).spacing(5).add(VStack().add(titleLabel).add(subtitleLabel).mx(5)).imbue(this);
 
-  setLayout(layout);
   connect(main, &GridItemContentWidget::clicked, this, &OmniListItemWidget::clicked);
   connect(main, &GridItemContentWidget::doubleClicked, this, &OmniListItemWidget::doubleClicked);
 }
@@ -43,6 +37,6 @@ void GridItemWidget::selectionChanged(bool selected) { main->setSelected(selecte
 void GridItemWidget::setWidget(QWidget *widget) { main->setWidget(widget); }
 QWidget *GridItemWidget::widget() const { return main->widget(); }
 
-size_t GridItemWidget::spacing() { return layout->spacing(); }
+size_t GridItemWidget::spacing() { return layout()->spacing(); }
 
 void GridItemWidget::clearTransientState() { update(); }

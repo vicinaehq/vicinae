@@ -1,5 +1,5 @@
 #pragma once
-#include "ui/alias-badge.hpp"
+#include "ui/alias-badge/alias-badge.hpp"
 #include "ui/image/url.hpp"
 #include "ui/color-circle/color_circle.hpp"
 #include "ui/typography/typography.hpp"

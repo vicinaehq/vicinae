@@ -11,7 +11,7 @@ OmniListSectionHeader::OmniListSectionHeader(const QString &title, const QString
 void OmniListSectionHeader::setupUI() {
   m_title = new TypographyWidget(this);
   m_title->setColor(SemanticColor::TextMuted);
-  m_title->setFontWeight(QFont::Bold);
+  m_title->setFontWeight(QFont::Weight::DemiBold);
   m_title->setSize(TextSize::TextSmaller);
   HStack().add(m_title).margins(8).imbue(this);
 }
