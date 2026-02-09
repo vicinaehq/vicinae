@@ -16,7 +16,10 @@ static const std::vector<std::pair<std::string, SemanticColor>> recognizedKeys =
     {"core.secondary_background", SemanticColor::SecondaryBackground},
     {"core.border", SemanticColor::BackgroundBorder},
 
+    {"shortcut.border", SemanticColor::ShortcutIndicatorBorder},
+
     {"main_window.border", SemanticColor::MainWindowBorder},
+    {"main_window.footer.background", SemanticColor::StatusBarBackground},
     {"settings_window.border", SemanticColor::SettingsWindowBorder},
 
     {"accents.blue", SemanticColor::Blue},
