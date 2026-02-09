@@ -8,7 +8,6 @@
 #include <qlogging.h>
 #include <qsqldatabase.h>
 #include <qsqlquery.h>
-#include <qtimer.h>
 #include <quuid.h>
 #include <qdebug.h>
 #include <QSqlError>
@@ -441,8 +440,7 @@ FileIndexerDatabase::FileIndexerDatabase() : m_connectionId(createRandomConnecti
 }
 
 FileIndexerDatabase::~FileIndexerDatabase() {
-  QString id = m_connectionId;
-  // we need this to prevent a warning, although weirdly enough we don't have
-  // any pending QSQLQuery by that point.
-  QTimer::singleShot(0, [id]() { QSqlDatabase::removeDatabase(id); });
+  m_db.close();
+  m_db = QSqlDatabase();
+  QSqlDatabase::removeDatabase(m_connectionId);
 }

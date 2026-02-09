@@ -6,7 +6,6 @@
 #include <qsqldatabase.h>
 #include <qsqlquery.h>
 #include <qsqlerror.h>
-#include <qtimer.h>
 
 static const std::vector<QString> DB_PRAGMAS = {"PRAGMA journal_mode = WAL", "PRAGMA synchronous = normal",
                                                 "PRAGMA journal_size_limit = 6144000",
@@ -388,5 +387,8 @@ ClipboardDatabase::ClipboardDatabase() {
 }
 
 ClipboardDatabase::~ClipboardDatabase() {
-  QTimer::singleShot(0, [conn = m_db.connectionName()]() { QSqlDatabase::removeDatabase(conn); });
+  QString conn = m_db.connectionName();
+  m_db.close();
+  m_db = QSqlDatabase();
+  QSqlDatabase::removeDatabase(conn);
 }
