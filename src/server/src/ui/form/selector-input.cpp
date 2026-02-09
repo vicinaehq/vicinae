@@ -1,4 +1,5 @@
 #include "ui/form/selector-input.hpp"
+#include "builtin_icon.hpp"
 #include "common.hpp"
 #include "../image/url.hpp"
 #include "theme.hpp"
@@ -46,10 +47,10 @@ void SelectorInput::listHeightChanged(int height) {
 bool SelectorInput::eventFilter(QObject *obj, QEvent *event) {
   if (obj == popover) {
     if (event->type() == QEvent::Close) {
-      collapseIcon->setUrl(ImageURL::builtin("chevron-down"));
+      collapseIcon->setUrl(BuiltinIcon::ChevronDown);
       m_searchField->clear();
     } else if (event->type() == QEvent::Show) {
-      collapseIcon->setUrl(ImageURL::builtin("chevron-up"));
+      collapseIcon->setUrl(BuiltinIcon::ChevronUp);
       m_searchField->setFocus();
     }
   }
@@ -120,7 +121,7 @@ SelectorInput::SelectorInput(QWidget *parent)
   // Main input field
   inputField->setPlaceholderText("Select an item...");
   inputField->setReadOnly(true); // Read-only to behave like a combo box
-  collapseIcon->setUrl(ImageURL::builtin("chevron-down"));
+  collapseIcon->setUrl(BuiltinIcon::ChevronDown);
   collapseIcon->setAttribute(Qt::WA_TransparentForMouseEvents);
   inputField->setLeftAccessory(selectionIcon);
   inputField->setRightAccessory(collapseIcon);
