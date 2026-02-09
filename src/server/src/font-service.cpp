@@ -40,4 +40,14 @@ QFont FontService::findEmojiFont() {
   return {};
 }
 
-FontService::FontService() { m_emojiFont = findEmojiFont(); }
+FontService::FontService() {
+  m_emojiFont = findEmojiFont();
+
+  int id = QFontDatabase::addApplicationFont(":/fonts/InterVariable.ttf");
+  if (id != -1) {
+    auto families = QFontDatabase::applicationFontFamilies(id);
+    if (!families.isEmpty()) m_builtinFamily = families.first();
+  } else {
+    qWarning() << "Failed to load bundled Inter font";
+  }
+}

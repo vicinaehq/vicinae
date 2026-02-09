@@ -6,4 +6,7 @@
   <qresource>
   	<file alias="config.jsonc">@EXTRA_DIR@/config.jsonc</file>
   </qresource>
+  <qresource prefix="/fonts">
+  	<file alias="InterVariable.ttf">@ASSET_PATH@/fonts/InterVariable.ttf</file>
+  </qresource>
 </RCC>
