@@ -2,12 +2,7 @@
 #include <string_view>
 #include "theme.hpp"
 #include "vicinae-ipc/client.hpp"
-
-static constexpr char THEME_TEMPLATE_DATA[] = {
-#embed THEME_TEMPLATE_PATH
-};
-
-static constexpr std::string_view THEME_TEMPLATE{THEME_TEMPLATE_DATA, sizeof(THEME_TEMPLATE_DATA)};
+#include "THEME_TEMPLATE.hpp"
 
 class SetCliThemeCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "set"; }

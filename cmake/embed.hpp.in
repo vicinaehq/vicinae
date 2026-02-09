@@ -1,0 +1,4 @@
+#pragma once
+#include <string_view>
+
+constexpr std::string_view @EMBED_VAR_NAME@ = R"VICINAE_EMBED(@EMBED_FILE_CONTENT@)VICINAE_EMBED";
