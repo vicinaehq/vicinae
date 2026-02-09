@@ -453,7 +453,7 @@ void LauncherWindow::paintEvent(QPaintEvent *event) {
       painter.drawPath(path);
     }
 
-    if (!m_compacted) {
+    if (m_bar->isVisible()) {
       QRect statusRect = contentRect;
       statusRect.setY(height() - m_bar->height() - config.launcherWindow.clientSideDecorations.borderWidth -
                       10);
