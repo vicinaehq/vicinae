@@ -5,6 +5,8 @@
 #include <qscrollbar.h>
 #include <qwidget.h>
 
+static constexpr const auto THUMB_THICKNESS = 6;
+
 OmniScrollBar::OmniScrollBar(QWidget *parent) : QScrollBar(parent) {
   setStyleSheet("background: transparent;");
   setAttribute(Qt::WA_Hover, true);
@@ -37,6 +39,10 @@ void OmniScrollBar::paintEvent(QPaintEvent *event) {
 
   QRect handleRect = style()->subControlRect(QStyle::CC_ScrollBar, &opt, QStyle::SC_ScrollBarSlider, this);
 
+  auto color = OmniPainter::resolveColor(SemanticColor::ScrollBarBackground);
+
+  color.setAlphaF(0.5);
+
   painter.setThemeBrush(SemanticColor::ScrollBarBackground);
   painter.setPen(Qt::NoPen);
 
@@ -45,9 +51,9 @@ void OmniScrollBar::paintEvent(QPaintEvent *event) {
   if (orientation() == Qt::Horizontal) {
     // handleRect.setHeight(8); // Ensure correct thickness
   } else {
-    handleRect.setWidth(8);
+    handleRect.setWidth(THUMB_THICKNESS);
 
-    auto xAdjust = round((width() - handleRect.width()) / (double)2);
+    auto xAdjust = round((width() - handleRect.width()) / 2.0);
 
     handleRect = handleRect.adjusted(xAdjust, 0, xAdjust, 0);
   }
