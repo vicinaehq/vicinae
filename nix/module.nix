@@ -136,7 +136,7 @@ in
           font = {
             normal = {
               size = 12;
-              normal = "Maple Nerd Font";
+              family = "Maple Nerd Font";
             };
           };
           theme = {
