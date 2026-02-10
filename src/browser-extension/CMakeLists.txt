@@ -2,7 +2,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(TARGET vicinae-browser-link)
 set(CHROME_EXTENSION_ID "com.vicinae.vicinae")
 set(NATIVE_MESSAGING_HOST "com.vicinae.vicinae")
-set(NATIVE_HOST_BIN ${VICINAE_LIBEXEC_DIR}/${TARGET})
+set(NATIVE_HOST_BIN ${VICINAE_LIBEXEC_PATH}/${TARGET})
 
 option(INSTALL_BROWSER_NATIVE_HOST "Install native host manifests for firefox and chromium" ON)
 
