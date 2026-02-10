@@ -1,0 +1,30 @@
+# Evergarden
+# cozy evergarden theme for vicinae
+
+[meta]
+version = 1
+name = "Evergarden Fall"
+description = "cozy evergarden theme for vicinae"
+variant = "dark"
+icon = "icons/evergarden.png"
+
+[colors.core]
+background = "#232a2e"
+foreground = "#f8f9e8"
+secondary_background = "#1c2225"
+border = "#58686d"
+accent = "#cbe3b3"
+
+[colors.accents]
+blue = "#b2caed"
+green = "#cbe3b3"
+magenta = "#f3c0e5"
+orange = "#f7a182"
+purple = "#d2bdf3"
+red = "#f57f82"
+yellow = "#f5d098"
+cyan = "#b3e3ca"
+
+[colors.list.item.selection]
+background = "#2b3337"
+secondary_background = "#374145"
