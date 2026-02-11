@@ -66,6 +66,35 @@
     .status-text.error {
       color: #ef4444;
     }
+
+    #toggleBtn {
+      display: block;
+      width: 100%;
+      margin-top: 12px;
+      padding: 6px 0;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      color: white;
+    }
+
+    #toggleBtn.disconnect {
+      background: #ef4444;
+    }
+
+    #toggleBtn.disconnect:hover {
+      background: #dc2626;
+    }
+
+    #toggleBtn.connect {
+      background: #22c55e;
+    }
+
+    #toggleBtn.connect:hover {
+      background: #16a34a;
+    }
   </style>
 </head>
 <body>
@@ -75,6 +104,7 @@
   </div>
   <h1 class="title">Vicinae</h1>
   <p id="statusText" class="status-text">Connecting...</p>
+  <button id="toggleBtn" class="connect">Connect</button>
 
   <script src="popup.js"></script>
 </body>
