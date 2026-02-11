@@ -1,0 +1,30 @@
+# Evergarden
+# cozy evergarden theme for vicinae
+
+[meta]
+version = 1
+name = "Evergarden Spring"
+description = "cozy evergarden theme for vicinae"
+variant = "dark"
+icon = "icons/evergarden.png"
+
+[colors.core]
+background = "#2b3438"
+foreground = "#f8f9e8"
+secondary_background = "#232a2e"
+border = "#58686d"
+accent = "#cbe3b3"
+
+[colors.accents]
+blue = "#b2caed"
+green = "#cbe3b3"
+magenta = "#f3c0e5"
+orange = "#f7a182"
+purple = "#d2bdf3"
+red = "#f57f82"
+yellow = "#f5d098"
+cyan = "#b3e3ca"
+
+[colors.list.item.selection]
+background = "#343e43"
+secondary_background = "#3e4a4f"
