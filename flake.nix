@@ -45,8 +45,9 @@
         default = pkgs.mkShell {
           # automatically pulls nativeBuildInputs + buildInputs
           inputsFrom = [ (pkgs.callPackage ./nix/vicinae.nix { gcc15Stdenv = pkgs.gcc15Stdenv; }) ];
-          buildInputs = [
-            pkgs.ccache
+          buildInputs = with pkgs; [
+            ccache
+            catch2_3
           ];
 
           packages = with pkgs; [
