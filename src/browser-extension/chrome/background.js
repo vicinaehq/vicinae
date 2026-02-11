@@ -10,6 +10,7 @@ let connectionState = "disconnected"; // disconnected, connecting, connected, er
 let retryId;
 let retryDelay = RETRY_INITIAL_MS;
 let serial = 0;
+let manuallyDisconnected = false;
 let tabDebounceTimer = null;
 
 function setConnectionState(state, error = null) {
@@ -30,6 +31,7 @@ function setConnectionState(state, error = null) {
 	chrome.runtime.sendMessage({
 		source: "connection_state",
 		state,
+		manuallyDisconnected,
 		...(error && { error })
 	}).catch(() => { });
 }
@@ -111,7 +113,7 @@ function processNativeMessage(message) {
 // Connect to native host on startup
 function connectToNativeHost() {
 	console.log("Connecting to native host:", HOST_NAME);
-	connectionState = "connecting";
+	setConnectionState("connecting");
 
 	clearTimeout(retryId);
 
@@ -142,10 +144,12 @@ function connectToNativeHost() {
 			console.log("Disconnected from native host");
 			const error = chrome.runtime.lastError;
 
-			retryId = setTimeout(() => {
-				connectToNativeHost();
-			}, retryDelay);
-			retryDelay = Math.min(retryDelay * 2, RETRY_MAX_MS);
+			if (!manuallyDisconnected) {
+				retryId = setTimeout(() => {
+					connectToNativeHost();
+				}, retryDelay);
+				retryDelay = Math.min(retryDelay * 2, RETRY_MAX_MS);
+			}
 
 			if (error) {
 				console.error("Disconnect error:", error.message);
@@ -171,12 +175,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 		sendToNativeHost(message.data);
 		sendResponse({ success: true });
 	} else if (message.type === "get_connection_state") {
-		sendResponse({ state: connectionState });
+		sendResponse({ state: connectionState, manuallyDisconnected });
 	} else if (message.type === "retry_connection") {
 		if (connectionState !== "connected") {
+			manuallyDisconnected = false;
 			retryDelay = RETRY_INITIAL_MS;
 			connectToNativeHost();
 		}
+	} else if (message.type === "disconnect_connection") {
+		manuallyDisconnected = true;
+		clearTimeout(retryId);
+		if (port) {
+			port.disconnect();
+			port = null;
+		}
+		setConnectionState("disconnected");
 	} else if (message.type === "get_extension_id") {
 		sendResponse({ extensionId: chrome.runtime.id });
 	}
