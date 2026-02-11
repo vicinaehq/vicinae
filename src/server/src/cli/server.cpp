@@ -280,6 +280,7 @@ void CliServerCommand::run(CLI::App *app) {
       }
 
       qApp->setStyleSheet(qApp->styleSheet());
+      theme.reloadCurrentTheme();
     }
   };
 
