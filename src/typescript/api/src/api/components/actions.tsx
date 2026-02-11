@@ -303,7 +303,7 @@ const RunInTerminal: React.FC<Action.RunInTerminal.Props> = ({
 			{...props}
 			icon={icon}
 			onAction={() => {
-				runInTerminal(args, options);
+				runInTerminal(args, options).then(() => closeMainWindow());
 			}}
 		/>
 	);
