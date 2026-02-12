@@ -19,25 +19,25 @@
 #include "services/snippet/snippet-service.hpp"
 #include "extensions/snippet/create-snippet-view.hpp"
 
-class ManageSnippetsView : public FilteredTypedListView<SerializedSnippet> {
+class ManageSnippetsView : public FilteredTypedListView<snippet::SerializedSnippet> {
 public:
-  ImageURL getIcon(const SerializedSnippet &item) const {
+  ImageURL getIcon(const snippet::SerializedSnippet &item) const {
     const auto visitor =
-        overloads{[](const TextSnippet &text) { return BuiltinIcon::TextInput; },
+        overloads{[](const snippet::TextSnippet &text) { return BuiltinIcon::TextInput; },
                   [](const auto &other) { return BuiltinIcon::BlankDocument; }};
 
     return std::visit(visitor, item.data);
   }
 
-  FilteredItemData mapFilteredData(const SerializedSnippet &item) const override {
+  FilteredItemData mapFilteredData(const snippet::SerializedSnippet &item) const override {
     auto alias = item.expansion.transform([](auto &&e) { return e.keyword; });
     return {.id = item.name, .title = item.name, .icon = getIcon(item), .alias = alias};
   }
 
   std::unique_ptr<CompleterData>
-  createCompleter(const SerializedSnippet &item) const override {
+  createCompleter(const snippet::SerializedSnippet &item) const override {
     const auto visitor =
-        overloads{[&](const TextSnippet &text) -> std::unique_ptr<CompleterData> {
+        overloads{[&](const snippet::TextSnippet &text) -> std::unique_ptr<CompleterData> {
                     const auto str = PlaceholderString::parseSnippetText(text.text.c_str());
                     const auto args = str.arguments();
                     if (args.empty()) return nullptr;
@@ -63,7 +63,7 @@ public:
     return std::visit(visitor, item.data);
   }
 
-  QWidget *generateDetail(const SerializedSnippet &item) const override {
+  QWidget *generateDetail(const snippet::SerializedSnippet &item) const override {
     auto detail = new DetailWidget;
     auto viewer = new TextFileViewer;
     std::vector<MetadataItem> metadata = {
@@ -87,13 +87,13 @@ public:
     detail->setMetadata(metadata);
 
     const auto visitor = overloads{
-        [this](const TextSnippet &snippet) {
+        [this](const snippet::TextSnippet &snippet) {
           const auto result = m_expander.expand(snippet.text.c_str(), {});
           const auto expanded = result.parts | std::views::transform([](auto &&r) { return r.text; }) |
                                 std::views::join | std::ranges::to<QString>();
           return expanded.toUtf8();
         },
-        [](const FileSnippet &file) { return QByteArray::fromStdString(file.file); }};
+        [](const snippet::FileSnippet &file) { return QByteArray::fromStdString(file.file); }};
 
     QByteArray buf = std::visit(visitor, item.data);
 
@@ -103,7 +103,7 @@ public:
   }
 
   std::unique_ptr<ActionPanelState>
-  createActionPanel(const SerializedSnippet &item) const override {
+  createActionPanel(const snippet::SerializedSnippet &item) const override {
     auto panel = std::make_unique<ListActionPanelState>();
     auto section = panel->createSection();
     auto toast = context()->services->toastService();
@@ -154,7 +154,7 @@ public:
 
               if (!snippet) return;
 
-              if (const auto text = std::get_if<TextSnippet>(&currentItem()->data)) {
+              if (const auto text = std::get_if<snippet::TextSnippet>(&currentItem()->data)) {
                 const auto result = m_expander.expand(text->text.c_str(), values);
                 const auto expanded = result.parts | std::views::transform([](auto &&r) { return r.text; }) |
                                       std::views::join | std::ranges::to<QString>();

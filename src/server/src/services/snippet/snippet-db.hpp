@@ -6,6 +6,8 @@
 #include <string>
 #include <expected>
 
+namespace snippet {
+
 struct FileSnippet {
   std::string file;
 };
@@ -39,6 +41,8 @@ struct SerializedSnippet {
   std::optional<Expansion> expansion;
 };
 
+} // namespace snippet
+
 // basic snippet CRUD
 class SnippetDatabase {
 public:
@@ -46,21 +50,21 @@ public:
 
   SnippetDatabase(std::filesystem::path path);
 
-  std::expected<SerializedSnippet, std::string> addSnippet(SnippetPayload snippet);
-  std::expected<void, std::string> setSnippets(std::span<SerializedSnippet> snippets);
-  std::expected<void, std::string> updateSnippet(std::string_view id, SnippetPayload payload);
-  std::expected<SerializedSnippet, std::string> removeSnippet(std::string_view id);
+  std::expected<snippet::SerializedSnippet, std::string> addSnippet(snippet::SnippetPayload snippet);
+  std::expected<void, std::string> setSnippets(std::span<snippet::SerializedSnippet> snippets);
+  std::expected<void, std::string> updateSnippet(std::string_view id, snippet::SnippetPayload payload);
+  std::expected<snippet::SerializedSnippet, std::string> removeSnippet(std::string_view id);
 
-  std::vector<SerializedSnippet> snippets() const;
+  std::vector<snippet::SerializedSnippet> snippets() const;
 
-  SerializedSnippet *findByKeyword(std::string_view keyword);
-  SerializedSnippet *findById(std::string_view id);
+  snippet::SerializedSnippet *findByKeyword(std::string_view keyword);
+  snippet::SerializedSnippet *findById(std::string_view id);
 
 protected:
-  std::expected<std::vector<SerializedSnippet>, std::string> loadSnippets();
+  std::expected<std::vector<snippet::SerializedSnippet>, std::string> loadSnippets();
 
 private:
   std::string m_buf;
   std::filesystem::path m_path;
-  std::vector<SerializedSnippet> m_snippets;
+  std::vector<snippet::SerializedSnippet> m_snippets;
 };
