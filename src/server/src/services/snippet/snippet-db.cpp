@@ -9,6 +9,8 @@
 
 namespace fs = std::filesystem;
 
+using namespace snippet;
+
 SnippetDatabase::SnippetDatabase(std::filesystem::path path) : m_path(path) {
   if (!fs::is_regular_file(m_path)) {
     fs::create_directories(path.parent_path());
@@ -20,8 +22,8 @@ SnippetDatabase::SnippetDatabase(std::filesystem::path path) : m_path(path) {
   m_snippets = loadSnippets().value_or({});
 }
 
-std::expected<std::vector<SnippetDatabase::SerializedSnippet>, std::string> SnippetDatabase::loadSnippets() {
-  std::vector<SnippetDatabase::SerializedSnippet> snippets;
+std::expected<std::vector<SerializedSnippet>, std::string> SnippetDatabase::loadSnippets() {
+  std::vector<SerializedSnippet> snippets;
 
   if (const auto error = glz::read_file_json(snippets, m_path.c_str(), m_buf)) {
     return std::unexpected(glz::format_error(error));
@@ -30,7 +32,7 @@ std::expected<std::vector<SnippetDatabase::SerializedSnippet>, std::string> Snip
   return snippets;
 }
 
-std::vector<SnippetDatabase::SerializedSnippet> SnippetDatabase::snippets() const { return m_snippets; }
+std::vector<SerializedSnippet> SnippetDatabase::snippets() const { return m_snippets; }
 
 std::expected<void, std::string> SnippetDatabase::updateSnippet(std::string_view id, SnippetPayload payload) {
   if (const auto e = payload.expansion) {
@@ -51,7 +53,7 @@ std::expected<void, std::string> SnippetDatabase::updateSnippet(std::string_view
   return std::unexpected("No snippet with that ID");
 }
 
-std::expected<SnippetDatabase::SerializedSnippet, std::string>
+std::expected<SerializedSnippet, std::string>
 SnippetDatabase::removeSnippet(std::string_view id) {
   if (auto it = std::ranges::find_if(m_snippets, [&](auto &&item) { return item.id == id; });
       it != m_snippets.end()) {
@@ -67,7 +69,7 @@ SnippetDatabase::removeSnippet(std::string_view id) {
   return std::unexpected("No such snippet");
 }
 
-SnippetDatabase::SerializedSnippet *SnippetDatabase::findById(std::string_view id) {
+SerializedSnippet *SnippetDatabase::findById(std::string_view id) {
   if (auto it = std::ranges::find_if(m_snippets, [&](auto &&item) { return item.id == id; });
       it != m_snippets.end()) {
     return &*it;
@@ -75,7 +77,7 @@ SnippetDatabase::SerializedSnippet *SnippetDatabase::findById(std::string_view i
   return nullptr;
 }
 
-SnippetDatabase::SerializedSnippet *SnippetDatabase::findByKeyword(std::string_view keyword) {
+SerializedSnippet *SnippetDatabase::findByKeyword(std::string_view keyword) {
   if (auto it = std::ranges::find_if(
           m_snippets, [&](auto &&item) { return item.expansion && item.expansion->keyword == keyword; });
       it != m_snippets.end()) {
@@ -84,8 +86,8 @@ SnippetDatabase::SerializedSnippet *SnippetDatabase::findByKeyword(std::string_v
   return nullptr;
 }
 
-std::expected<SnippetDatabase::SerializedSnippet, std::string>
-SnippetDatabase::addSnippet(SnippetDatabase::SnippetPayload snippet) {
+std::expected<SerializedSnippet, std::string>
+SnippetDatabase::addSnippet(SnippetPayload snippet) {
   if (m_snippets.size() >= MAX_SNIPPETS) {
     return std::unexpected(std::format("Snippet limit reached ({})", MAX_SNIPPETS));
   }
@@ -110,7 +112,7 @@ SnippetDatabase::addSnippet(SnippetDatabase::SnippetPayload snippet) {
 }
 
 std::expected<void, std::string>
-SnippetDatabase::setSnippets(std::span<SnippetDatabase::SerializedSnippet> snippets) {
+SnippetDatabase::setSnippets(std::span<SerializedSnippet> snippets) {
   if (const auto error = glz::write_file_json(snippets, m_path.c_str(), m_buf)) {
     return std::unexpected(std::format("Failed to save snippets on disk: {}", glz::format_error(error)));
   }
