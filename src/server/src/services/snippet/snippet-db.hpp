@@ -6,42 +6,42 @@
 #include <string>
 #include <expected>
 
+struct FileSnippet {
+  std::string file;
+};
+struct TextSnippet {
+  std::string text;
+};
+
+struct Expansion {
+  std::string keyword;
+  std::vector<std::string> apps;
+  bool word = true;
+};
+
+using SnippetData = std::variant<FileSnippet, TextSnippet>;
+
+struct SnippetPayload {
+  std::string name;
+  SnippetData data;
+  std::optional<Expansion> expansion;
+};
+
+struct SerializedSnippet {
+  std::string id;
+  std::string name;
+  SnippetData data;
+  std::uint64_t createdAt;
+  std::optional<std::uint64_t> updatedAt;
+
+  // snippet may not necessarily define an expansion trigger, just be used
+  // for paste.
+  std::optional<Expansion> expansion;
+};
+
 // basic snippet CRUD
 class SnippetDatabase {
 public:
-  struct FileSnippet {
-    std::string file;
-  };
-  struct TextSnippet {
-    std::string text;
-  };
-
-  struct Expansion {
-    std::string keyword;
-    std::vector<std::string> apps;
-    bool word = true;
-  };
-
-  using SnippetData = std::variant<FileSnippet, TextSnippet>;
-
-  struct SnippetPayload {
-    std::string name;
-    SnippetData data;
-    std::optional<Expansion> expansion;
-  };
-
-  struct SerializedSnippet {
-    std::string id;
-    std::string name;
-    SnippetData data;
-    std::uint64_t createdAt;
-    std::optional<std::uint64_t> updatedAt;
-
-    // snippet may not necessarily define an expansion trigger, just be used
-    // for paste.
-    std::optional<Expansion> expansion;
-  };
-
   static constexpr size_t MAX_SNIPPETS = 10000;
 
   SnippetDatabase(std::filesystem::path path);

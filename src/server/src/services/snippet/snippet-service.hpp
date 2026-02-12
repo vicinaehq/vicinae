@@ -36,7 +36,7 @@ public:
     return true;
   }
 
-  auto createSnippet(SnippetDatabase::SnippetPayload payload) {
+  auto createSnippet(SnippetPayload payload) {
     auto res = m_db.addSnippet(payload);
     if (!res) return res;
 
@@ -51,7 +51,7 @@ public:
     return res;
   }
 
-  auto updateSnippet(std::string_view id, SnippetDatabase::SnippetPayload payload) {
+  auto updateSnippet(std::string_view id, SnippetPayload payload) {
     auto res = m_db.updateSnippet(id, payload);
     if (res) {
       if (payload.expansion) { m_server.registerSnippet({.trigger = payload.expansion->keyword}); }
@@ -96,7 +96,7 @@ private:
       }
     }
 
-    if (const auto text = std::get_if<SnippetDatabase::TextSnippet>(&snippet->data)) {
+    if (const auto text = std::get_if<TextSnippet>(&snippet->data)) {
       SnippetExpander expander;
       const auto expanded = expander.expandToString(text->text.c_str(), {});
       m_server.injectClipboardText(keyword, expanded);

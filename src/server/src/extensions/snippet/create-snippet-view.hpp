@@ -55,11 +55,11 @@ public:
     initializeSnippetForm();
   }
 
-  virtual SnippetDatabase::SnippetPayload initialData() { return {}; }
+  virtual SnippetPayload initialData() { return {}; }
 
-  virtual bool handleSubmit(SnippetDatabase::SnippetPayload payload) = 0;
+  virtual bool handleSubmit(SnippetPayload payload) = 0;
 
-  void setSnippetData(SnippetDatabase::SnippetPayload snippet) {
+  void setSnippetData(SnippetPayload snippet) {
     m_name->setText(snippet.name.c_str());
 
     if (const auto exp = snippet.expansion) {
@@ -68,8 +68,8 @@ public:
     }
 
     const auto visitor =
-        overloads{[&](const SnippetDatabase::TextSnippet &text) { m_content->setText(text.text.c_str()); },
-                  [&](const SnippetDatabase::FileSnippet &file) { m_content->setText(file.file.c_str()); }};
+        overloads{[&](const TextSnippet &text) { m_content->setText(text.text.c_str()); },
+                  [&](const FileSnippet &file) { m_content->setText(file.file.c_str()); }};
 
     std::visit(visitor, snippet.data);
   }
@@ -96,12 +96,12 @@ public:
       return;
     }
 
-    SnippetDatabase::SnippetPayload payload;
+    SnippetPayload payload;
     payload.name = name.toStdString();
-    payload.data = SnippetDatabase::TextSnippet(content.toStdString());
+    payload.data = TextSnippet(content.toStdString());
 
     if (!keyword.isEmpty()) {
-      SnippetDatabase::Expansion expansion;
+      Expansion expansion;
       expansion.keyword = keyword.toStdString();
       expansion.word = m_word->value();
       payload.expansion = expansion;
@@ -120,7 +120,7 @@ protected:
 
 class CreateSnippetView : public BasicFormSnippetView {
 public:
-  bool handleSubmit(SnippetDatabase::SnippetPayload payload) override {
+  bool handleSubmit(SnippetPayload payload) override {
     const auto toast = context()->services->toastService();
     const auto result = m_service->createSnippet(payload);
 
@@ -136,10 +136,10 @@ public:
 
 class EditSnippetView : public BasicFormSnippetView {
 public:
-  EditSnippetView(SnippetDatabase::SerializedSnippet snippet) : m_snippet(snippet) {}
+  EditSnippetView(SerializedSnippet snippet) : m_snippet(snippet) {}
 
-  SnippetDatabase::SnippetPayload initialData() override {
-    return SnippetDatabase::SnippetPayload{
+  SnippetPayload initialData() override {
+    return SnippetPayload{
         .name = m_snippet.name,
         .data = m_snippet.data,
         .expansion = m_snippet.expansion,
@@ -148,7 +148,7 @@ public:
 
   void initializeSnippetForm() override { setNavigationTitle(QString("Edit \"%1\"").arg(m_snippet.name)); }
 
-  bool handleSubmit(SnippetDatabase::SnippetPayload payload) override {
+  bool handleSubmit(SnippetPayload payload) override {
     const auto toast = context()->services->toastService();
     const auto result = m_service->updateSnippet(m_snippet.id, payload);
 
@@ -162,15 +162,15 @@ public:
   }
 
 private:
-  SnippetDatabase::SerializedSnippet m_snippet;
+  SerializedSnippet m_snippet;
 };
 
 class DuplicateSnippetView : public CreateSnippetView {
 public:
-  DuplicateSnippetView(SnippetDatabase::SerializedSnippet snippet) : m_snippet(snippet) {}
+  DuplicateSnippetView(SerializedSnippet snippet) : m_snippet(snippet) {}
 
-  SnippetDatabase::SnippetPayload initialData() override {
-    return SnippetDatabase::SnippetPayload{
+  SnippetPayload initialData() override {
+    return SnippetPayload{
         .name = std::format("Copy of {}", m_snippet.name),
         .data = m_snippet.data,
     };
@@ -181,5 +181,5 @@ public:
   }
 
 private:
-  SnippetDatabase::SerializedSnippet m_snippet;
+  SerializedSnippet m_snippet;
 };

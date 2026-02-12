@@ -8,14 +8,14 @@
 
 class SnippetCopy {
 public:
-  static void copyToClipboard(const SnippetDatabase::SerializedSnippet &snippet,
+  static void copyToClipboard(const SerializedSnippet &snippet,
                               const std::vector<std::pair<QString, QString>> args, QClipboard *clipboard) {
     auto mimeData = new QMimeData;
 
     mimeData->setData("vicinae/concealed", "1");
 
     const auto visitor =
-        overloads{[&](const SnippetDatabase::TextSnippet &text) {
+        overloads{[&](const TextSnippet &text) {
                     SnippetExpander expander;
                     auto expanded = expander.expand(text.text.c_str(), args);
                     QString expandedText = expanded.parts |
@@ -24,7 +24,7 @@ public:
 
                     mimeData->setData("text/plain;charset=utf-8", expandedText.toUtf8());
                   },
-                  [&](const SnippetDatabase::FileSnippet &file) {
+                  [&](const FileSnippet &file) {
                     mimeData->setData("text/uri-list", QString("file://%1").arg(file.file).toUtf8());
                   }};
 
