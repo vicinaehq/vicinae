@@ -13,4 +13,5 @@ private:
   bool m_replace = false;
   bool m_noExtensionRuntime = false;
   std::filesystem::path m_config;
+  std::string m_frontend;
 };
