@@ -20,6 +20,7 @@ SelectableDelegate {
         spacing: 10
 
         Item {
+            visible: root.itemIconSource !== ""
             Layout.preferredWidth: 25
             Layout.preferredHeight: 25
             Layout.alignment: Qt.AlignVCenter

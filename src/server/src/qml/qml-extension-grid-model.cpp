@@ -46,6 +46,24 @@ void QmlExtensionGridModel::setExtensionData(const GridModel &model) {
     m_filteredSections.clear();
     rebuildFromModel();
   }
+
+  emit emptyViewChanged();
+}
+
+QString QmlExtensionGridModel::emptyTitle() const {
+  if (m_model.emptyView) return m_model.emptyView->title;
+  return QStringLiteral("No results");
+}
+
+QString QmlExtensionGridModel::emptyDescription() const {
+  if (m_model.emptyView) return m_model.emptyView->description;
+  return {};
+}
+
+QString QmlExtensionGridModel::emptyIcon() const {
+  if (m_model.emptyView && m_model.emptyView->icon)
+    return imageSourceFor(ImageURL(*m_model.emptyView->icon));
+  return {};
 }
 
 void QmlExtensionGridModel::rebuildFromModel() {

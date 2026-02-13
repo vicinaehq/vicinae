@@ -29,6 +29,14 @@ Item {
     property bool showCellTitle: false
     property bool showCellSubtitle: false
 
+    // Empty view — shown when the grid has no items.
+    property string emptyTitle: "No results"
+    property string emptyDescription: ""
+    property string emptyIcon: "image://vicinae/builtin:magnifying-glass?fg=" + Theme.foreground
+    property Component emptyViewComponent: null
+
+    readonly property bool _empty: listView.count === 0
+
     readonly property real cellSize:
         (root.width - horizontalPadding * 2 - cellSpacing * (columns - 1)) / columns
 
@@ -54,6 +62,7 @@ Item {
     ListView {
         id: listView
         anchors.fill: parent
+        visible: !root._empty
         model: root.cmdModel
         clip: true
         boundsBehavior: Flickable.StopAtBounds
@@ -217,6 +226,24 @@ Item {
         function onSelectionChanged() {
             var row = root.cmdModel ? root.cmdModel.flatRowForSelection() : -1
             if (row >= 0) listView.positionViewAtIndex(row, ListView.Contain)
+        }
+    }
+
+    Loader {
+        anchors.fill: parent
+        active: root._empty
+        visible: active
+        sourceComponent: root.emptyViewComponent
+                         ? root.emptyViewComponent
+                         : defaultEmptyView
+    }
+
+    Component {
+        id: defaultEmptyView
+        EmptyView {
+            title: root.emptyTitle
+            description: root.emptyDescription
+            icon: root.emptyIcon
         }
     }
 }

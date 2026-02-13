@@ -7,6 +7,14 @@ GenericListView {
     model: cmdModel
     listModel: cmdModel
 
+    emptyTitle: cmdModel && cmdModel.emptyTitle ? cmdModel.emptyTitle : "No results"
+    emptyDescription: cmdModel ? cmdModel.emptyDescription : ""
+    emptyIcon: {
+        var _ = Theme.foreground
+        var icon = cmdModel ? cmdModel.emptyIcon : ""
+        return icon !== "" ? icon : "image://vicinae/builtin:magnifying-glass?fg=" + Theme.foreground
+    }
+
     onItemSelected: function(index) { if (cmdModel) cmdModel.setSelectedIndex(index) }
     onItemActivated: function(index) { if (cmdModel) cmdModel.activateSelected() }
 
