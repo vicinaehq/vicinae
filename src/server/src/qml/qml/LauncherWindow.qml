@@ -5,75 +5,103 @@ import QtQuick.Controls
 
 Window {
     id: root
-    width: 770
-    height: 480
-    minimumWidth: 770
-    maximumWidth: 770
-    minimumHeight: 480
-    maximumHeight: 480
+    width: Config.windowWidth
+    height: Config.windowHeight
+    minimumWidth: Config.windowWidth
+    maximumWidth: Config.windowWidth
+    minimumHeight: Config.windowHeight
+    maximumHeight: Config.windowHeight
     title: "Vicinae Launcher"
     flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
     color: "transparent"
     visible: false
 
-    Rectangle {
-        id: frame
+    // Main background — clipped to the region above the footer
+    Item {
         anchors.fill: parent
-        color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.92)
-        radius: 10
+        anchors.bottomMargin: footer.height + Config.borderWidth
+        clip: true
+
+        Rectangle {
+            width: root.width
+            height: root.height
+            radius: Config.borderRounding
+            color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
+        }
+    }
+
+    // Footer background — clipped to the footer region at the bottom
+    Item {
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        height: footer.height + Config.borderWidth
+        clip: true
+
+        Rectangle {
+            width: root.width
+            height: root.height
+            anchors.bottom: parent.bottom
+            radius: Config.borderRounding
+            color: Qt.rgba(Theme.statusBarBackground.r, Theme.statusBarBackground.g, Theme.statusBarBackground.b, Config.windowOpacity)
+        }
+    }
+
+    // Border frame
+    Rectangle {
+        anchors.fill: parent
+        radius: Config.borderRounding
+        color: "transparent"
         border.color: Theme.mainWindowBorder
-        border.width: 1
+        border.width: Config.borderWidth
+    }
 
-        // Clip children to the rounded rectangle
-        layer.enabled: true
+    ColumnLayout {
+        anchors.fill: parent
+        anchors.margins: Config.borderWidth
+        spacing: 0
 
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: 1
-            spacing: 0
+        SearchBar {
+            id: searchBar
+            Layout.fillWidth: true
+            Layout.preferredHeight: 60
+        }
 
-            SearchBar {
-                id: searchBar
-                Layout.fillWidth: true
-                Layout.preferredHeight: 60
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: 1
+            color: Theme.divider
+        }
+
+        Item {
+            id: contentArea
+            objectName: "contentArea"
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+
+            RootSearchList {
+                id: searchList
+                anchors.fill: parent
+                visible: !launcher.hasCommandView
             }
 
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: 1
-                color: Theme.divider
+            StackView {
+                id: commandStack
+                anchors.fill: parent
+                visible: launcher.hasCommandView
             }
+        }
 
-            // Content area — holds QML root search list, QML command views, or embedded widget views
-            Item {
-                id: contentArea
-                objectName: "contentArea"
-                Layout.fillWidth: true
-                Layout.fillHeight: true
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: 1
+            color: Theme.divider
+        }
 
-                RootSearchList {
-                    id: searchList
-                    anchors.fill: parent
-                    visible: !launcher.hasCommandView
-                }
-
-                StackView {
-                    id: commandStack
-                    anchors.fill: parent
-                    visible: launcher.hasCommandView
-                }
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: 1
-                color: Theme.divider
-            }
-
-            Footer {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 40
-            }
+        Footer {
+            id: footer
+            Layout.fillWidth: true
+            Layout.preferredHeight: 40
         }
     }
 
@@ -115,7 +143,6 @@ Window {
         onActivated: launcher.popToRoot()
     }
 
-    // Center on screen
     Component.onCompleted: {
         root.x = (Screen.width - root.width) / 2
         root.y = (Screen.height - root.height) / 3

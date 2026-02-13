@@ -22,6 +22,9 @@ class QmlThemeBridge : public QObject {
   Q_PROPERTY(QColor secondaryBackground READ secondaryBackground NOTIFY changed)
   Q_PROPERTY(QColor listItemSelectionFg READ listItemSelectionFg NOTIFY changed)
   Q_PROPERTY(QColor scrollBarBackground READ scrollBarBackground NOTIFY changed)
+  Q_PROPERTY(QColor gridItemBackground READ gridItemBackground NOTIFY changed)
+  Q_PROPERTY(QColor gridItemSelectionOutline READ gridItemSelectionOutline NOTIFY changed)
+  Q_PROPERTY(QColor gridItemHoverOutline READ gridItemHoverOutline NOTIFY changed)
   Q_PROPERTY(qreal regularFontSize READ regularFontSize NOTIFY changed)
   Q_PROPERTY(qreal smallerFontSize READ smallerFontSize NOTIFY changed)
 
@@ -48,6 +51,9 @@ public:
   QColor divider() const { return resolve(SemanticColor::BackgroundBorder); }
   QColor secondaryBackground() const { return resolve(SemanticColor::SecondaryBackground); }
   QColor scrollBarBackground() const { return resolve(SemanticColor::ScrollBarBackground); }
+  QColor gridItemBackground() const { return resolve(SemanticColor::GridItemBackground); }
+  QColor gridItemSelectionOutline() const { return resolve(SemanticColor::GridItemSelectionOutline); }
+  QColor gridItemHoverOutline() const { return resolve(SemanticColor::GridItemHoverOutline); }
 
   qreal regularFontSize() const { return ThemeService::instance().pointSize(TextRegular); }
   qreal smallerFontSize() const { return ThemeService::instance().pointSize(TextSmaller); }

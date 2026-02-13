@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 
-Item {
+SelectableDelegate {
     id: root
     height: 41
 
@@ -10,39 +10,8 @@ Item {
     required property string itemIconSource
     required property string itemAlias
     required property bool itemIsActive
-    required property bool selected
     property string itemAccessory: ""
     property string itemAccessoryColor: ""
-
-    signal clicked()
-    signal doubleClicked()
-
-    MouseArea {
-        id: mouseArea
-        anchors.fill: parent
-        hoverEnabled: true
-        onClicked: root.clicked()
-        onDoubleClicked: root.doubleClicked()
-    }
-
-    // Selection / hover highlight with padding and rounding
-    Rectangle {
-        anchors.fill: parent
-        anchors.leftMargin: 6
-        anchors.rightMargin: 6
-        radius: 6
-        color: {
-            if (root.selected) {
-                var c = Theme.listItemSelectionBg
-                return Qt.rgba(c.r, c.g, c.b, 0.7)
-            }
-            if (mouseArea.containsMouse) {
-                var h = Theme.listItemHoverBg
-                return Qt.rgba(h.r, h.g, h.b, 0.5)
-            }
-            return "transparent"
-        }
-    }
 
     RowLayout {
         anchors.fill: parent
