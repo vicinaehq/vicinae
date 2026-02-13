@@ -51,6 +51,11 @@ QmlRootSearchModel::QmlRootSearchModel(ApplicationContext &ctx, QObject *parent)
   m_fallbackItems = m_manager->fallbackItems();
   m_favorites = m_manager->queryFavorites();
 
+  connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() {
+    if (rowCount() > 0)
+      emit dataChanged(index(0), index(rowCount() - 1), {IconSource, AccessoryColor});
+  });
+
   // Initial empty search to populate suggestions
   setFilter({});
 }

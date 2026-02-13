@@ -24,13 +24,11 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             opacity: backMouseArea.containsMouse ? 1.0 : 0.5
 
-            Image {
+            ViciImage {
                 anchors.centerIn: parent
                 width: 16
                 height: 16
-                source: "image://vicinae/builtin:chevron-left"
-                sourceSize.width: 16
-                sourceSize.height: 16
+                source: Img.builtin("chevron-left")
             }
 
             MouseArea {

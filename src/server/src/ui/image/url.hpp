@@ -69,8 +69,8 @@ public:
     return {};
   }
 
-  bool isValid() { return _isValid; }
-  operator bool() { return isValid(); }
+  bool isValid() const { return _isValid; }
+  operator bool() const { return isValid(); }
 
   QString toString() const { return url().toString(); }
 

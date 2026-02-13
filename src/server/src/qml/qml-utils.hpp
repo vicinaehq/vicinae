@@ -1,17 +1,23 @@
 #pragma once
+#include "theme.hpp"
+#include "theme/theme-file.hpp"
 #include "ui/image/url.hpp"
 #include <QString>
 
 namespace qml {
 
 inline QString imageSourceFor(const ImageURL &url) {
+  const auto &theme = ThemeService::instance().theme();
+
   switch (url.type()) {
   case ImageURLType::Builtin: {
-    QString base = QString("image://vicinae/builtin:%1").arg(url.name());
-    if (auto bg = url.backgroundTint())
-      base += QString("?bg=%1").arg(static_cast<int>(*bg));
-    if (auto fg = url.foregroundTint())
-      base += QString(base.contains('?') ? "&fg=%1" : "?fg=%1").arg(static_cast<int>(*fg));
+    QColor fg = theme.resolve(SemanticColor::Foreground);
+    QString base = QString("image://vicinae/builtin:%1?fg=%2")
+                       .arg(url.name(), fg.name(QColor::HexRgb));
+    if (auto bg = url.backgroundTint()) {
+      QColor bgColor = theme.resolve(*bg);
+      base += QString("&bg=%1").arg(bgColor.name(QColor::HexRgb));
+    }
     return base;
   }
   case ImageURLType::System:
@@ -22,9 +28,11 @@ inline QString imageSourceFor(const ImageURL &url) {
     return QString("image://vicinae/emoji:%1").arg(url.name());
   case ImageURLType::Http:
   case ImageURLType::Https:
-    return QStringLiteral("image://vicinae/builtin:globe-01");
+    return QString("image://vicinae/http:%1").arg(url.name());
   case ImageURLType::Favicon:
-    return QStringLiteral("image://vicinae/builtin:globe-01");
+    return QString("image://vicinae/favicon:%1").arg(url.name());
+  case ImageURLType::DataURI:
+    return QString("image://vicinae/datauri:%1").arg(url.name());
   default:
     return QStringLiteral("image://vicinae/builtin:question-mark-circle");
   }

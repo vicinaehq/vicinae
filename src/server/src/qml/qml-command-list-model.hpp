@@ -1,6 +1,7 @@
 #pragma once
 #include "common/context.hpp"
 #include "qml-utils.hpp"
+#include "theme.hpp"
 #include <QAbstractListModel>
 #include <QUrl>
 #include <memory>
@@ -22,7 +23,12 @@ public:
     Accessory,
   };
 
-  explicit QmlCommandListModel(QObject *parent = nullptr) : QAbstractListModel(parent) {}
+  explicit QmlCommandListModel(QObject *parent = nullptr) : QAbstractListModel(parent) {
+    connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() {
+      if (rowCount() > 0)
+        emit dataChanged(index(0), index(rowCount() - 1), {IconSource});
+    });
+  }
 
   virtual void initialize(ApplicationContext *ctx);
 

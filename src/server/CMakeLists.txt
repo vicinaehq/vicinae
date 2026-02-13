@@ -702,6 +702,11 @@ set(SRCS
 	src/qml/qml-source-blend-rect.hpp
 	src/qml/qml-image-provider.hpp
 	src/qml/qml-image-provider.cpp
+	src/qml/qml-image-url.hpp
+	src/qml/qml-image-url.cpp
+	src/qml/qml-image-source.hpp
+	src/qml/qml-async-image-provider.hpp
+	src/qml/qml-async-image-provider.cpp
 	src/qml/qml-config-bridge.hpp
 	src/qml/qml-theme-bridge.hpp
 	src/qml/qml.qrc
