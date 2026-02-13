@@ -36,6 +36,7 @@
 #include "services/snippet/snippet-service.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "ui/launcher-window/launcher-window.hpp"
+#include "qml/qml-launcher-window.hpp"
 #include "utils.hpp"
 #include "vicinae-ipc/client.hpp"
 #include "vicinae.hpp"
@@ -65,6 +66,8 @@ void CliServerCommand::setup(CLI::App *app) {
       });
   app->add_flag("--no-extension-runtime", m_noExtensionRuntime,
                 "Do not start the extension runtime node process. Typescript extensions will not run.");
+  app->add_option("--frontend", m_frontend, "Frontend to use (widgets or qml)")
+      ->default_val("widgets");
 }
 
 void CliServerCommand::run(CLI::App *app) {
@@ -319,25 +322,34 @@ void CliServerCommand::run(CLI::App *app) {
 
   configChanged(cfgService->value(), {});
 
-  LauncherWindow launcher(ctx);
+  if (m_frontend == "qml") {
+    // Launch the root command to establish the navigation stack.
+    // The widget-based RootSearchView is created but never rendered;
+    // the QML model provides its own search functionality.
+    ctx.navigation->launch(std::make_shared<RootCommand>());
 
-  /*
-  QTimer timer;
+    QmlLauncherWindow qmlWindow(ctx);
 
-  QObject::connect(&timer, &QTimer::timeout,
-                   [&]() { qDebug() << "widget count" << qt_utils::countQObjectChildren(&launcher); });
-  timer.start(1000);
-  */
+    if (m_open) {
+      ctx.navigation->showWindow();
+    } else {
+      qInfo() << "Vicinae server successfully started (QML). Call \"vicinae toggle\" to toggle the window";
+    }
 
-  ctx.navigation->launch(std::make_shared<RootCommand>());
-
-  if (m_open) {
-    ctx.navigation->showWindow();
+    qApp->exec();
   } else {
-    qInfo() << "Vicinae server successfully started. Call \"vicinae toggle\" to toggle the window";
-  }
+    LauncherWindow launcher(ctx);
 
-  qApp->exec();
+    ctx.navigation->launch(std::make_shared<RootCommand>());
+
+    if (m_open) {
+      ctx.navigation->showWindow();
+    } else {
+      qInfo() << "Vicinae server successfully started. Call \"vicinae toggle\" to toggle the window";
+    }
+
+    qApp->exec();
+  }
   // make sure child processes are terminated
   ctx.services->clipman()->clipboardServer()->stop();
   ctx.services->extensionManager()->stop();

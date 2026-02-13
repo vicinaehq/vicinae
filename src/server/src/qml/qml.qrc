@@ -1,0 +1,12 @@
+<RCC>
+  <qresource prefix="/qml">
+    <file alias="LauncherWindow.qml">qml/LauncherWindow.qml</file>
+    <file alias="SearchBar.qml">qml/SearchBar.qml</file>
+    <file alias="GenericListView.qml">qml/GenericListView.qml</file>
+    <file alias="RootSearchList.qml">qml/RootSearchList.qml</file>
+    <file alias="ListItemDelegate.qml">qml/ListItemDelegate.qml</file>
+    <file alias="SectionHeader.qml">qml/SectionHeader.qml</file>
+    <file alias="Footer.qml">qml/Footer.qml</file>
+    <file alias="CommandListView.qml">qml/CommandListView.qml</file>
+  </qresource>
+</RCC>
