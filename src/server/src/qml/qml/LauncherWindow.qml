@@ -77,15 +77,10 @@ Window {
         }
     }
 
-    Component {
-        id: commandListComponent
-        CommandListView {}
-    }
-
     Connections {
         target: launcher
-        function onCommandViewPushed(model) {
-            commandStack.push(commandListComponent, { "cmdModel": model }, StackView.Immediate)
+        function onCommandViewPushed(componentUrl, properties) {
+            commandStack.push(componentUrl, properties, StackView.Immediate)
         }
         function onCommandViewPopped() {
             if (commandStack.depth > 0)

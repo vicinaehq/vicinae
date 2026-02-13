@@ -29,6 +29,7 @@ public:
   Q_INVOKABLE void forwardKey(int key, int modifiers = 0);
   Q_INVOKABLE void goBack();
   Q_INVOKABLE void popToRoot();
+  Q_INVOKABLE bool tryAliasFastTrack();
 
 signals:
   void hasCommandViewChanged();
@@ -36,7 +37,7 @@ signals:
   void commandActionChanged();
   void searchTextUpdated(const QString &text);
   void viewNavigatedBack();
-  void commandViewPushed(QObject *model);
+  void commandViewPushed(const QUrl &componentUrl, const QVariantMap &properties);
   void commandViewPopped();
   void commandStackCleared();
 

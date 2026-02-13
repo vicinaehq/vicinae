@@ -8,5 +8,8 @@
     <file alias="SectionHeader.qml">qml/SectionHeader.qml</file>
     <file alias="Footer.qml">qml/Footer.qml</file>
     <file alias="CommandListView.qml">qml/CommandListView.qml</file>
+    <file alias="CalculatorResultDelegate.qml">qml/CalculatorResultDelegate.qml</file>
+    <file alias="ThemeListView.qml">qml/ThemeListView.qml</file>
+    <file alias="ThemeItemDelegate.qml">qml/ThemeItemDelegate.qml</file>
   </qresource>
 </RCC>

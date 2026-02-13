@@ -85,6 +85,10 @@ Item {
                 if (event.key === Qt.Key_Backspace && searchInput.text === "" && launcher.hasCommandView) {
                     launcher.goBack()
                     event.accepted = true
+                } else if (event.key === Qt.Key_Space && !launcher.hasCommandView && event.modifiers === Qt.NoModifier) {
+                    if (launcher.tryAliasFastTrack()) {
+                        event.accepted = true
+                    }
                 }
             }
         }

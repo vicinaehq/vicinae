@@ -29,8 +29,7 @@ signals:
   void changed();
 
 public:
-  explicit QmlThemeBridge(QObject *parent = nullptr)
-      : QObject(parent) {
+  explicit QmlThemeBridge(QObject *parent = nullptr) : QObject(parent) {
     connect(&ThemeService::instance(), &ThemeService::themeChanged, this, &QmlThemeBridge::changed);
   }
 
@@ -46,7 +45,7 @@ public:
   QColor mainWindowBorder() const { return resolve(SemanticColor::MainWindowBorder); }
   QColor inputBorder() const { return resolve(SemanticColor::InputBorder); }
   QColor inputBorderFocus() const { return resolve(SemanticColor::InputBorderFocus); }
-  QColor divider() const { return resolve(SemanticColor::SecondaryBackground); }
+  QColor divider() const { return resolve(SemanticColor::BackgroundBorder); }
   QColor secondaryBackground() const { return resolve(SemanticColor::SecondaryBackground); }
   QColor scrollBarBackground() const { return resolve(SemanticColor::ScrollBarBackground); }
 
@@ -54,7 +53,5 @@ public:
   qreal smallerFontSize() const { return ThemeService::instance().pointSize(TextSmaller); }
 
 private:
-  QColor resolve(SemanticColor color) const {
-    return ThemeService::instance().theme().resolve(color);
-  }
+  QColor resolve(SemanticColor color) const { return ThemeService::instance().theme().resolve(color); }
 };

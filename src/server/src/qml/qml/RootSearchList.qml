@@ -34,14 +34,40 @@ GenericListView {
         required property string iconSource
         required property string alias
         required property bool isActive
+        required property string accessoryText
+        required property string accessoryColor
+        required property bool isCalculator
+        required property string calcQuestion
+        required property string calcQuestionUnit
+        required property string calcAnswer
+        required property string calcAnswerUnit
+        required property bool isFile
 
-        sourceComponent: isSection ? sectionComponent : itemComponent
+        sourceComponent: {
+            if (isSection) return sectionComponent
+            if (isCalculator) return calculatorComponent
+            return itemComponent
+        }
 
         Component {
             id: sectionComponent
             SectionHeader {
                 width: delegateLoader.width
                 text: delegateLoader.sectionName
+            }
+        }
+
+        Component {
+            id: calculatorComponent
+            CalculatorResultDelegate {
+                width: delegateLoader.width
+                calcQuestion: delegateLoader.calcQuestion
+                calcQuestionUnit: delegateLoader.calcQuestionUnit
+                calcAnswer: delegateLoader.calcAnswer
+                calcAnswerUnit: delegateLoader.calcAnswerUnit
+                selected: searchListView.currentIndex === delegateLoader.index
+                onClicked: searchListView.currentIndex = delegateLoader.index
+                onDoubleClicked: searchListView.itemActivated(delegateLoader.index)
             }
         }
 
@@ -54,6 +80,8 @@ GenericListView {
                 itemIconSource: delegateLoader.iconSource
                 itemAlias: delegateLoader.alias
                 itemIsActive: delegateLoader.isActive
+                itemAccessory: delegateLoader.accessoryText
+                itemAccessoryColor: delegateLoader.accessoryColor
                 selected: searchListView.currentIndex === delegateLoader.index
                 onClicked: searchListView.currentIndex = delegateLoader.index
                 onDoubleClicked: searchListView.itemActivated(delegateLoader.index)

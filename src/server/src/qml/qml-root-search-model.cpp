@@ -1,12 +1,40 @@
 #include "qml-root-search-model.hpp"
 #include "actions/app/app-actions.hpp"
+#include "actions/calculator/calculator-actions.hpp"
+#include "config/config.hpp"
+#include "misc/file-list-item.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
+#include "theme.hpp"
+#include "theme/theme-file.hpp"
+#include <filesystem>
 #include <format>
 
 QmlRootSearchModel::QmlRootSearchModel(ApplicationContext &ctx, QObject *parent)
     : QAbstractListModel(parent), m_ctx(&ctx),
-      m_manager(ctx.services->rootItemManager()), m_appDb(ctx.services->appDb()) {
+      m_manager(ctx.services->rootItemManager()), m_appDb(ctx.services->appDb()),
+      m_calculator(ctx.services->calculatorService()),
+      m_fileService(ctx.services->fileService()),
+      m_config(ctx.services->config()) {
+
+  using namespace std::chrono_literals;
+
+  m_calculatorDebounce.setInterval(200ms);
+  m_calculatorDebounce.setSingleShot(true);
+  m_fileSearchDebounce.setInterval(200ms);
+  m_fileSearchDebounce.setSingleShot(true);
+
+  connect(&m_calculatorDebounce, &QTimer::timeout, this, &QmlRootSearchModel::startCalculator);
+  connect(&m_fileSearchDebounce, &QTimer::timeout, this, &QmlRootSearchModel::startFileSearch);
+  connect(&m_calcWatcher, &CalculatorWatcher::finished, this, &QmlRootSearchModel::handleCalculatorFinished);
+  connect(&m_fileWatcher, &FileSearchWatcher::finished, this, &QmlRootSearchModel::handleFileSearchFinished);
+
+  m_fileSearchEnabled = m_config->value().searchFilesInRoot;
+
+  connect(m_config, &config::Manager::configChanged, this,
+          [this](const config::ConfigValue &next, const config::ConfigValue &) {
+            m_fileSearchEnabled = next.searchFilesInRoot;
+          });
 
   connect(m_manager, &RootItemManager::metadataChanged, this, [this]() {
     m_fallbackItems = m_manager->fallbackItems();
@@ -45,10 +73,12 @@ QVariant QmlRootSearchModel::data(const QModelIndex &index, int role) const {
     case SectionName: {
       switch (flat.section) {
       case SectionType::Link: return QStringLiteral("Link");
+      case SectionType::Calculator: return QStringLiteral("Calculator");
       case SectionType::Results:
         return m_query.empty()
             ? QStringLiteral("Suggestions")
             : QString::fromStdString(std::format("Results ({})", m_results.size()));
+      case SectionType::Files: return QStringLiteral("Files");
       case SectionType::Fallback:
         return QString::fromStdString(std::format("Use \"{}\" with...", m_query));
       case SectionType::Favorites: return QStringLiteral("Favorites");
@@ -62,17 +92,82 @@ QVariant QmlRootSearchModel::data(const QModelIndex &index, int role) const {
     case IconSource: return QString();
     case Alias: return QString();
     case IsActive: return false;
+    case AccessoryText: return QString();
+    case AccessoryColor: return QString();
+    case IsCalculator: return false;
+    case CalcQuestion: return QString();
+    case CalcQuestionUnit: return QString();
+    case CalcAnswer: return QString();
+    case CalcAnswerUnit: return QString();
+    case IsFile: return false;
     default: return {};
     }
   }
 
-  // Item roles
+  // Item roles common to all kinds
   switch (role) {
   case IsSection: return false;
   case IsSelectable: return true;
   case SectionName: return QString();
   case ItemType: return itemTypeString(flat.kind);
+  case IsCalculator: return flat.kind == FlatItem::CalculatorItem;
+  case IsFile: return flat.kind == FlatItem::FileItem;
   }
+
+  // Calculator item
+  if (flat.kind == FlatItem::CalculatorItem) {
+    if (!m_calc) return {};
+    switch (role) {
+    case Title: return m_calc->question.text + QStringLiteral(" = ") + m_calc->answer.text;
+    case Subtitle: return {};
+    case IconSource: return imageSourceFor(ImageURL::builtin("calculator"));
+    case Alias: return {};
+    case IsActive: return false;
+    case AccessoryText: return {};
+    case AccessoryColor: return {};
+    case CalcQuestion: return m_calc->question.text;
+    case CalcQuestionUnit: return m_calc->question.unit ? m_calc->question.unit->displayName : QString();
+    case CalcAnswer: return m_calc->answer.text;
+    case CalcAnswerUnit: return m_calc->answer.unit ? m_calc->answer.unit->displayName : QString();
+    default: return {};
+    }
+  }
+
+  // File item
+  if (flat.kind == FlatItem::FileItem) {
+    if (flat.dataIndex < 0 || flat.dataIndex >= static_cast<int>(m_files.size()))
+      return {};
+    const auto &file = m_files[flat.dataIndex];
+    switch (role) {
+    case Title: return QString::fromStdString(file.path.filename().string());
+    case Subtitle: return QString::fromStdString(file.path.parent_path().string());
+    case IconSource: return imageSourceFor(ImageURL::fileIcon(file.path));
+    case Alias: return {};
+    case IsActive: return false;
+    case AccessoryText: return {};
+    case AccessoryColor: return {};
+    case CalcQuestion: return {};
+    case CalcQuestionUnit: return {};
+    case CalcAnswer: return {};
+    case CalcAnswerUnit: return {};
+    default: return {};
+    }
+  }
+
+  // Helper to get first accessory from a RootItem
+  const auto accessoryData = [&](const RootItem *item, int r) -> QVariant {
+    if (!item) return {};
+    if (r == AccessoryText) {
+      auto acc = item->accessories();
+      return acc.empty() ? QString() : acc.front().text;
+    }
+    if (r == AccessoryColor) {
+      auto acc = item->accessories();
+      if (acc.empty() || !acc.front().color) return QString();
+      return resolveAccessoryColor(acc.front().color);
+    }
+    return {};
+  };
 
   // Data roles that depend on the item kind
   switch (flat.kind) {
@@ -88,6 +183,12 @@ QVariant QmlRootSearchModel::data(const QModelIndex &index, int role) const {
     case IconSource: return imageSourceFor(item->iconUrl());
     case Alias: return QString::fromStdString(owned.meta.alias.value_or(""));
     case IsActive: return item->isActive();
+    case AccessoryText:
+    case AccessoryColor: return accessoryData(item.get(), role);
+    case CalcQuestion:
+    case CalcQuestionUnit:
+    case CalcAnswer:
+    case CalcAnswerUnit: return {};
     default: return {};
     }
   }
@@ -103,6 +204,12 @@ QVariant QmlRootSearchModel::data(const QModelIndex &index, int role) const {
     case IconSource: return imageSourceFor(item->iconUrl());
     case Alias: return {};
     case IsActive: return item->isActive();
+    case AccessoryText:
+    case AccessoryColor: return accessoryData(item.get(), role);
+    case CalcQuestion:
+    case CalcQuestionUnit:
+    case CalcAnswer:
+    case CalcAnswerUnit: return {};
     default: return {};
     }
   }
@@ -121,6 +228,12 @@ QVariant QmlRootSearchModel::data(const QModelIndex &index, int role) const {
       return QString::fromStdString(meta.alias.value_or(""));
     }
     case IsActive: return item->isActive();
+    case AccessoryText:
+    case AccessoryColor: return accessoryData(item.get(), role);
+    case CalcQuestion:
+    case CalcQuestionUnit:
+    case CalcAnswer:
+    case CalcAnswerUnit: return {};
     default: return {};
     }
   }
@@ -133,6 +246,12 @@ QVariant QmlRootSearchModel::data(const QModelIndex &index, int role) const {
     case IconSource: return imageSourceFor(m_defaultOpener->app->iconUrl());
     case Alias: return {};
     case IsActive: return false;
+    case AccessoryText: return {};
+    case AccessoryColor: return {};
+    case CalcQuestion:
+    case CalcQuestionUnit:
+    case CalcAnswer:
+    case CalcAnswerUnit: return {};
     default: return {};
     }
   }
@@ -152,6 +271,14 @@ QHash<int, QByteArray> QmlRootSearchModel::roleNames() const {
     {IconSource, "iconSource"},
     {Alias, "alias"},
     {IsActive, "isActive"},
+    {AccessoryText, "accessoryText"},
+    {AccessoryColor, "accessoryColor"},
+    {IsCalculator, "isCalculator"},
+    {CalcQuestion, "calcQuestion"},
+    {CalcQuestionUnit, "calcQuestionUnit"},
+    {CalcAnswer, "calcAnswer"},
+    {CalcAnswerUnit, "calcAnswerUnit"},
+    {IsFile, "isFile"},
   };
 }
 
@@ -159,6 +286,26 @@ void QmlRootSearchModel::setFilter(const QString &text) {
   m_query = text.toStdString();
   m_selectedIndex = -1;
   m_actionPanel.reset();
+  m_calc.reset();
+  m_files.clear();
+
+  // Stop pending debounce timers
+  m_calculatorDebounce.stop();
+  m_fileSearchDebounce.stop();
+
+  // Direct file path detection
+  if (!text.isEmpty() && text.startsWith('/')) {
+    std::error_code ec;
+    if (std::filesystem::exists(text.toStdString(), ec)) {
+      m_defaultOpener.reset();
+      m_results.clear();
+      m_files = {{std::filesystem::path(text.toStdString()), 1.0}};
+      beginResetModel();
+      rebuildFlatList();
+      endResetModel();
+      return;
+    }
+  }
 
   // Check for URL patterns
   if (!text.isEmpty()) {
@@ -196,6 +343,12 @@ void QmlRootSearchModel::setFilter(const QString &text) {
   beginResetModel();
   rebuildFlatList();
   endResetModel();
+
+  // Start debounced async searches for non-empty queries
+  if (!text.isEmpty()) {
+    m_calculatorDebounce.start();
+    m_fileSearchDebounce.start();
+  }
 }
 
 void QmlRootSearchModel::rebuildFlatList() {
@@ -206,11 +359,15 @@ void QmlRootSearchModel::rebuildFlatList() {
     addSection(SectionType::Favorites, "Favorites", static_cast<int>(m_favorites.size()));
     addSection(SectionType::Results, "Suggestions", static_cast<int>(m_results.size()));
   } else {
-    // Search sections: Link, Results, Fallback
+    // Search sections: Link, Calculator, Results, Files, Fallback
     if (m_defaultOpener) {
       addSection(SectionType::Link, "Link", 1);
     }
+    if (m_calc) {
+      addSection(SectionType::Calculator, "Calculator", 1);
+    }
     addSection(SectionType::Results, "", static_cast<int>(m_results.size()));
+    addSection(SectionType::Files, "Files", static_cast<int>(m_files.size()));
     addSection(SectionType::Fallback, "", static_cast<int>(m_fallbackItems.size()));
   }
 }
@@ -226,6 +383,8 @@ void QmlRootSearchModel::addSection(SectionType section, const std::string &name
   case SectionType::Fallback: itemKind = FlatItem::FallbackItem; break;
   case SectionType::Favorites: itemKind = FlatItem::FavoriteItem; break;
   case SectionType::Link: itemKind = FlatItem::LinkItem; break;
+  case SectionType::Calculator: itemKind = FlatItem::CalculatorItem; break;
+  case SectionType::Files: itemKind = FlatItem::FileItem; break;
   default: itemKind = FlatItem::ResultItem; break;
   }
 
@@ -246,41 +405,37 @@ int QmlRootSearchModel::nextSelectableIndex(int from, int direction) const {
   return from; // stay in place if nothing found
 }
 
-QString QmlRootSearchModel::imageSourceFor(const ImageURL &url) const {
-  switch (url.type()) {
-  case ImageURLType::Builtin: {
-    QString base = QString("image://vicinae/builtin:%1").arg(url.name());
-    if (auto bg = url.backgroundTint())
-      base += QString("?bg=%1").arg(static_cast<int>(*bg));
-    if (auto fg = url.foregroundTint())
-      base += QString(base.contains('?') ? "&fg=%1" : "?fg=%1").arg(static_cast<int>(*fg));
-    return base;
-  }
-  case ImageURLType::System:
-    return QString("image://vicinae/system:%1").arg(url.name());
-  case ImageURLType::Local:
-    return QString("image://vicinae/local:%1").arg(url.name());
-  case ImageURLType::Emoji:
-    return QString("image://vicinae/emoji:%1").arg(url.name());
-  case ImageURLType::Http:
-  case ImageURLType::Https:
-    // HTTP icons fall back to placeholder for POC
-    return QStringLiteral("image://vicinae/builtin:globe-01");
-  case ImageURLType::Favicon:
-    return QStringLiteral("image://vicinae/builtin:globe-01");
-  default:
-    return QStringLiteral("image://vicinae/builtin:question-mark-circle");
-  }
-}
-
 QString QmlRootSearchModel::itemTypeString(FlatItem::Kind kind) const {
   switch (kind) {
   case FlatItem::ResultItem: return QStringLiteral("result");
   case FlatItem::FallbackItem: return QStringLiteral("fallback");
   case FlatItem::FavoriteItem: return QStringLiteral("favorite");
   case FlatItem::LinkItem: return QStringLiteral("link");
+  case FlatItem::CalculatorItem: return QStringLiteral("calculator");
+  case FlatItem::FileItem: return QStringLiteral("file");
   default: return QStringLiteral("unknown");
   }
+}
+
+QString QmlRootSearchModel::resolveAccessoryColor(const std::optional<ColorLike> &color) const {
+  if (!color) return {};
+  const auto &theme = ThemeService::instance().theme();
+  const auto visitor = [&](auto &&c) -> QString {
+    using T = std::decay_t<decltype(c)>;
+    if constexpr (std::is_same_v<T, QColor>) {
+      return c.name(QColor::HexArgb);
+    } else if constexpr (std::is_same_v<T, QString>) {
+      return c;
+    } else if constexpr (std::is_same_v<T, SemanticColor>) {
+      return theme.resolve(c).name(QColor::HexArgb);
+    } else if constexpr (std::is_same_v<T, DynamicColor>) {
+      if (theme.isLight()) return c.light;
+      return c.dark;
+    } else {
+      return {};
+    }
+  };
+  return std::visit(visitor, *color);
 }
 
 void QmlRootSearchModel::setSelectedIndex(int index) {
@@ -330,6 +485,29 @@ void QmlRootSearchModel::setSelectedIndex(int index) {
     }
     break;
   }
+  case FlatItem::CalculatorItem: {
+    if (m_calc) {
+      auto panel = std::make_unique<ListActionPanelState>();
+      auto main = panel->createSection();
+      auto copyAnswer = new CopyCalculatorAnswerAction(*m_calc);
+      auto copyQA = new CopyCalculatorQuestionAndAnswerAction(*m_calc);
+      auto putInSearch = new PutCalculatorAnswerInSearchBar(*m_calc);
+      auto openHistory = new OpenCalculatorHistoryAction();
+      copyAnswer->setPrimary(true);
+      main->addAction(copyAnswer);
+      main->addAction(copyQA);
+      main->addAction(putInSearch);
+      main->addAction(openHistory);
+      m_actionPanel = std::move(panel);
+    }
+    break;
+  }
+  case FlatItem::FileItem: {
+    if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_files.size())) {
+      m_actionPanel = FileListItemBase::actionPanel(m_files[flat.dataIndex].path, m_appDb);
+    }
+    break;
+  }
   default:
     m_actionPanel.reset();
     break;
@@ -349,10 +527,46 @@ void QmlRootSearchModel::activateSelected() {
   if (!action) return;
 
   // Keep the panel alive: executeAction may re-enter setFilter (via
-  // activateView → searchTextTampered → QML handler) which resets
+  // activateView -> searchTextTampered -> QML handler) which resets
   // m_actionPanel, destroying the action we're still using.
   auto keepAlive = std::move(m_actionPanel);
   m_ctx->navigation->executeAction(action);
+}
+
+bool QmlRootSearchModel::tryAliasFastTrack() {
+  if (m_selectedIndex < 0 || m_selectedIndex >= static_cast<int>(m_flat.size()))
+    return false;
+
+  const auto &flat = m_flat[m_selectedIndex];
+
+  const auto check = [&](const RootItem *item) -> bool {
+    if (!item || !item->supportsAliasSpaceShortcut()) return false;
+    auto meta = m_manager->itemMetadata(item->uniqueId());
+    if (!meta.alias) return false;
+    return meta.alias->starts_with(m_query);
+  };
+
+  bool shouldFastTrack = false;
+
+  switch (flat.kind) {
+  case FlatItem::ResultItem:
+    if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_results.size()))
+      shouldFastTrack = check(m_results[flat.dataIndex].item.get());
+    break;
+  case FlatItem::FavoriteItem:
+    if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_favorites.size()))
+      shouldFastTrack = check(m_favorites[flat.dataIndex].get());
+    break;
+  default:
+    break;
+  }
+
+  if (shouldFastTrack) {
+    activateSelected();
+    return true;
+  }
+
+  return false;
 }
 
 QString QmlRootSearchModel::primaryActionTitle() const {
@@ -367,4 +581,55 @@ QString QmlRootSearchModel::primaryActionIcon() const {
   if (!action) return {};
   auto icon = action->icon();
   return icon ? imageSourceFor(*icon) : QString();
+}
+
+void QmlRootSearchModel::startCalculator() {
+  if (m_calcWatcher.isRunning()) { m_calcWatcher.cancel(); }
+
+  auto expression = QString::fromStdString(m_query);
+  m_calculatorSearchQuery = m_query;
+
+  if (expression.startsWith("=") && expression.size() > 1) {
+    auto stripped = expression.mid(1);
+    m_calcWatcher.setFuture(m_calculator->backend()->asyncCompute(stripped));
+    return;
+  }
+
+  bool containsNonAlnum = std::ranges::any_of(m_query, [](QChar ch) { return !ch.isLetterOrNumber(); }) ||
+                          m_query.starts_with("0x") || m_query.starts_with("0b") || m_query.starts_with("0o");
+  const auto isAllowedLeadingChar = [&](QChar c) {
+    return c == '-' || c == '(' || c == ')' || c.isLetterOrNumber() || c.category() == QChar::Symbol_Currency;
+  };
+  bool isComputable = expression.size() > 1 && isAllowedLeadingChar(expression.at(0)) && containsNonAlnum;
+
+  if (!isComputable || !m_calculator->backend()) { return; }
+
+  m_calcWatcher.setFuture(m_calculator->backend()->asyncCompute(expression));
+}
+
+void QmlRootSearchModel::handleCalculatorFinished() {
+  if (!m_calcWatcher.isFinished() || m_calculatorSearchQuery != m_query) return;
+  auto res = m_calcWatcher.result();
+  if (!res) return;
+
+  m_calc = res.value();
+  beginResetModel();
+  rebuildFlatList();
+  endResetModel();
+}
+
+void QmlRootSearchModel::startFileSearch() {
+  if (!m_fileSearchEnabled || m_query.size() < MIN_FS_TEXT_LENGTH) return;
+  if (m_fileWatcher.isRunning()) { m_fileWatcher.cancel(); }
+  m_fileSearchQuery = m_query;
+  m_fileWatcher.setFuture(m_fileService->queryAsync(m_query));
+}
+
+void QmlRootSearchModel::handleFileSearchFinished() {
+  if (!m_fileWatcher.isFinished() || m_fileSearchQuery != m_query) return;
+  m_files = m_fileWatcher.result();
+  m_fileSearchQuery.clear();
+  beginResetModel();
+  rebuildFlatList();
+  endResetModel();
 }
