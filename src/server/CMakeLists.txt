@@ -253,6 +253,9 @@ set(SRCS
 	src/extension/extension-grid.hpp
 	src/extension/extension-grid.cpp
 
+	src/extension/extension-action-panel-builder.hpp
+	src/extension/extension-action-panel-builder.cpp
+
 	include/extension/extension.hpp
 	src/extension/extension.cpp
 
@@ -699,6 +702,12 @@ set(SRCS
 	src/qml/qml-command-grid-model.cpp
 	src/qml/qml-emoji-grid-model.hpp
 	src/qml/qml-emoji-grid-model.cpp
+	src/qml/qml-extension-view-host.hpp
+	src/qml/qml-extension-view-host.cpp
+	src/qml/qml-extension-list-model.hpp
+	src/qml/qml-extension-list-model.cpp
+	src/qml/qml-extension-grid-model.hpp
+	src/qml/qml-extension-grid-model.cpp
 	src/qml/qml-source-blend-rect.hpp
 	src/qml/qml-image-provider.hpp
 	src/qml/qml-image-provider.cpp

@@ -3,12 +3,20 @@
 #include "extension/extension-command.hpp"
 #include "extension/extension-view-wrapper.hpp"
 #include "navigation-controller.hpp"
+#include "qml/qml-extension-view-host.hpp"
 #include "theme.hpp"
 #include "ui/image/url.hpp"
 #include <qobject.h>
 
 class ExtensionNavigationController : public QObject {
-  std::vector<ExtensionViewWrapper *> m_views;
+public:
+  struct ViewEntry {
+    BaseView *baseView;
+    std::function<void(const RenderModel &)> renderFn;
+  };
+
+private:
+  std::vector<ViewEntry> m_views;
   std::shared_ptr<ExtensionCommand> m_command;
   NavigationController *m_navigation;
   std::unique_ptr<ExtensionCommandController> m_controller;
@@ -17,28 +25,50 @@ class ExtensionNavigationController : public QObject {
 
   QString defaultNavigationTitle() { return m_command->name(); }
 
+  void handleFallback(QmlExtensionViewHost *host, const RenderModel &model) {
+    // The QML host can't handle this view type (form/detail).
+    // Replace with a classic ExtensionViewWrapper.
+    auto wrapper = new ExtensionViewWrapper(m_controller.get());
+
+    // Find the ViewEntry for this host and replace it
+    for (auto &entry : m_views) {
+      if (entry.baseView == host) {
+        entry.baseView = wrapper;
+        entry.renderFn = [wrapper](const RenderModel &m) { wrapper->render(m); };
+        break;
+      }
+    }
+
+    // replaceView() defers via QTimer::singleShot(0) to set up context.
+    // Defer render to the next iteration so wrapper has context when render() runs.
+    m_navigation->replaceView(wrapper);
+    QTimer::singleShot(0, wrapper, [wrapper, model]() { wrapper->render(model); });
+  }
+
 public:
   ExtensionCommandController *controller() const { return m_controller.get(); }
 
   NavigationController *handle() const { return m_navigation; }
 
   void pushView() {
-    auto view = new ExtensionViewWrapper(m_controller.get());
+    auto host = new QmlExtensionViewHost(m_controller.get());
 
-    m_navigation->pushView(view);
+    connect(host, &QmlExtensionViewHost::fallbackRequired, this,
+            [this, host](const RenderModel &model) { handleFallback(host, model); });
+
+    m_navigation->pushView(host);
     m_navigation->setNavigationTitle(defaultNavigationTitle());
     m_navigation->setNavigationIcon(m_command->iconUrl());
-    m_views.emplace_back(view);
+
+    m_views.push_back({host, [host](const RenderModel &m) { host->render(m); }});
   }
 
-  std::vector<ExtensionViewWrapper *> views() const { return m_views; }
+  const std::vector<ViewEntry> &views() const { return m_views; }
 
   void handleViewPoped(const BaseView *view) {
-    // Only handle pops for ExtensionViewWrapper views that are in our stack
-    auto wrapper = dynamic_cast<const ExtensionViewWrapper *>(view);
-    if (!wrapper) return;
-
-    auto it = std::find(m_views.begin(), m_views.end(), const_cast<ExtensionViewWrapper *>(wrapper));
+    // Check if the popped view is in our stack
+    auto it = std::find_if(m_views.begin(), m_views.end(),
+                           [view](const ViewEntry &entry) { return entry.baseView == view; });
     if (it == m_views.end()) return;
 
     if (m_views.size() > 1) { m_controller->notify("pop-view", {}); }

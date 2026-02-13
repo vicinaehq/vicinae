@@ -15,5 +15,7 @@
     <file alias="GenericGridView.qml">qml/GenericGridView.qml</file>
     <file alias="EmojiGridView.qml">qml/EmojiGridView.qml</file>
     <file alias="ViciImage.qml">qml/ViciImage.qml</file>
+    <file alias="ExtensionView.qml">qml/ExtensionView.qml</file>
+    <file alias="ExtensionGridView.qml">qml/ExtensionGridView.qml</file>
   </qresource>
 </RCC>

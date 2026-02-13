@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import Vicinae 1.0
 
 Item {
@@ -22,13 +23,33 @@ Item {
     property real horizontalPadding: 20
     property real cellInset: 0.10  // ratio of cell size (None≈0.05, Small=0.10, Medium=0.15, Large=0.25)
 
+    // Optional title/subtitle below each cell.
+    // When enabled, the model must provide Q_INVOKABLE cellTitle(section, item)
+    // and/or cellSubtitle(section, item).
+    property bool showCellTitle: false
+    property bool showCellSubtitle: false
+
     readonly property real cellSize:
         (root.width - horizontalPadding * 2 - cellSpacing * (columns - 1)) / columns
+
+    // Hidden TextMetrics to measure actual line heights from the font
+    TextMetrics { id: _titleMetrics;    font.pointSize: Theme.smallerFontSize }
+    TextMetrics { id: _subtitleMetrics; font.pointSize: Theme.smallerFontSize - 1 }
+
+    readonly property real _textGap: 4
+    readonly property real cellTextHeight: {
+        if (!showCellTitle && !showCellSubtitle) return 0
+        var h = _textGap
+        if (showCellTitle) h += _titleMetrics.font.pixelSize
+        if (showCellSubtitle) h += _subtitleMetrics.font.pixelSize
+        return h
+    }
+    readonly property real rowHeight: cellSize + cellTextHeight
 
     function moveUp() { if (cmdModel) cmdModel.navigateUp() }
     function moveDown() { if (cmdModel) cmdModel.navigateDown() }
     function moveLeft() { if (cmdModel) cmdModel.navigateLeft() }
-    function moveRight() { if (cmdModel) cmdModel.navigateRight() }
+	function moveRight() { if (cmdModel) cmdModel.navigateRight() }
 
     ListView {
         id: listView
@@ -39,6 +60,11 @@ Item {
         spacing: root.cellSpacing
         reuseItems: true
         cacheBuffer: 200
+
+        ScrollBar.vertical: ScrollBar {
+            policy: listView.contentHeight > listView.height
+                    ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+        }
 
         delegate: Loader {
             id: delegateLoader
@@ -59,13 +85,20 @@ Item {
                     width: delegateLoader.width
                     text: delegateLoader.sectionName
                 }
-            }
+			}
+
+			function computeItemHeight() {
+				let height = root.cellSize;
+				if (root.showCellTitle) height = height + _titleMetrics.font.pixelSize + root._textGap;
+				if (root.showCellSubtitle) height = height + _subtitleMetrics.font.pixelSize + root._textGap;
+				return height;
+			}
 
             Component {
                 id: rowComponent
                 Item {
                     width: delegateLoader.width
-                    height: root.cellSize
+					height: computeItemHeight()
 
                     Row {
                         x: root.horizontalPadding
@@ -87,10 +120,13 @@ Item {
                                     && root.cmdModel.selectedItem === cellItem
 
                                 width: root.cellSize
-                                height: root.cellSize
+                                height: root.rowHeight
 
+                                // Square background
                                 SourceBlendRect {
-                                    anchors.fill: parent
+                                    id: cellBackground
+                                    width: root.cellSize
+                                    height: root.cellSize
                                     radius: 10
                                     backgroundColor: {
                                         var bg = Theme.background
@@ -106,9 +142,12 @@ Item {
                                                  : Theme.gridItemHoverOutline
                                 }
 
+                                // Delegate content — inside the square with inset margins
                                 Loader {
-                                    anchors.fill: parent
-                                    anchors.margins: root.cellSize * root.cellInset
+                                    x: root.cellSize * root.cellInset
+                                    y: root.cellSize * root.cellInset
+                                    width: root.cellSize * (1 - 2 * root.cellInset)
+                                    height: root.cellSize * (1 - 2 * root.cellInset)
                                     sourceComponent: root.cellDelegate
                                     property int cellSection: cellWrapper.cellSection
                                     property int cellItem: cellWrapper.cellItem
@@ -116,6 +155,38 @@ Item {
                                     property bool cellHovered: cellMouseArea.containsMouse
                                     property real cellSize: root.cellSize
                                     property var cmdModel: root.cmdModel
+                                }
+
+                                // Title below the square
+                                Text {
+                                    visible: root.showCellTitle
+                                    y: root.cellSize + root._textGap
+                                    width: root.cellSize
+                                    height: _titleMetrics.font.pixelSize
+                                    text: (root.cmdModel && typeof root.cmdModel.cellTitle === "function")
+                                          ? root.cmdModel.cellTitle(cellWrapper.cellSection, cellWrapper.cellItem) : ""
+                                    color: Theme.textMuted
+                                    font: _titleMetrics.font
+                                    elide: Text.ElideRight
+                                    maximumLineCount: 1
+                                    horizontalAlignment: Text.AlignHCenter
+                                }
+
+                                // Subtitle below title
+                                Text {
+                                    visible: root.showCellSubtitle
+                                    y: root.cellSize + root._textGap
+                                       + (root.showCellTitle ? _titleMetrics.font.pixelSize + root._textGap : 0)
+                                    width: root.cellSize
+                                    height: _subtitleMetrics.font.pixelSize
+                                    text: (root.cmdModel && typeof root.cmdModel.cellSubtitle === "function")
+                                          ? root.cmdModel.cellSubtitle(cellWrapper.cellSection, cellWrapper.cellItem) : ""
+                                    color: Theme.textMuted
+                                    font: _subtitleMetrics.font
+                                    elide: Text.ElideRight
+                                    maximumLineCount: 1
+                                    horizontalAlignment: Text.AlignHCenter
+                                    opacity: 0.7
                                 }
 
                                 MouseArea {
