@@ -23,7 +23,14 @@ Item {
     property real detailRatio: 0.45
     property bool detailVisible: false
 
+    // Empty view — shown when the list has no items.
+    property string emptyTitle: "No results"
+    property string emptyDescription: ""
+    property string emptyIcon: "image://vicinae/builtin:magnifying-glass?fg=" + Theme.foreground
+    property Component emptyViewComponent: null
+
     readonly property bool _showDetail: root.detailComponent !== null && root.detailVisible
+    readonly property bool _empty: listView.count === 0
 
     signal itemActivated(int index)
     signal itemSelected(int index)
@@ -45,6 +52,7 @@ Item {
     RowLayout {
         anchors.fill: parent
         spacing: 0
+        visible: !root._empty
 
         ListView {
             id: listView
@@ -80,6 +88,24 @@ Item {
             sourceComponent: root.detailComponent
             Layout.preferredWidth: root.width * root.detailRatio
             Layout.fillHeight: true
+        }
+    }
+
+    Loader {
+        anchors.fill: parent
+        active: root._empty
+        visible: active
+        sourceComponent: root.emptyViewComponent
+                         ? root.emptyViewComponent
+                         : defaultEmptyView
+    }
+
+    Component {
+        id: defaultEmptyView
+        EmptyView {
+            title: root.emptyTitle
+            description: root.emptyDescription
+            icon: root.emptyIcon
         }
     }
 }
