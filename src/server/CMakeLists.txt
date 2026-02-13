@@ -3,12 +3,12 @@ set(CMAKE_AUTORCC ON)
 set(LIBS)
 set(TARGET vicinae-server)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets Sql Network Svg DBus Concurrent GuiPrivate)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets Sql Network Svg DBus Concurrent Quick Qml GuiPrivate)
 find_package(OpenSSL REQUIRED)
 find_package(LibXml2 REQUIRED)
 
 list(APPEND LIBS  
-	Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus Qt6::Concurrent 
+	Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus Qt6::Concurrent Qt6::Quick Qt6::Qml
 	Qt6::GuiPrivate # for deeper integration with wayland protocols, we need wl_surface
 	${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY} 
 	protobuf::libprotobuf
@@ -682,6 +682,21 @@ set(SRCS
 	src/services/snippet/snippet-service.hpp
 	src/services/snippet/snippet-server.hpp
 	src/services/snippet/snippet-db.cpp
+
+	# QML frontend (POC)
+	src/qml/qml-launcher-window.hpp
+	src/qml/qml-launcher-window.cpp
+	src/qml/qml-root-search-model.hpp
+	src/qml/qml-root-search-model.cpp
+	src/qml/qml-command-list-model.hpp
+	src/qml/qml-command-list-model.cpp
+	src/qml/qml-bridge-view.hpp
+	src/qml/qml-calc-history-model.hpp
+	src/qml/qml-calc-history-model.cpp
+	src/qml/qml-image-provider.hpp
+	src/qml/qml-image-provider.cpp
+	src/qml/qml-theme-bridge.hpp
+	src/qml/qml.qrc
 
 ) 
 

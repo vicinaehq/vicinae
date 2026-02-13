@@ -259,10 +259,10 @@ signals:
   void windowActivationChanged(bool value) const;
 
 public:
-  void closeWindow(const CloseWindowOptions &settings = {});
+  Q_INVOKABLE void closeWindow(const CloseWindowOptions &settings = {});
   void closeWindow(const CloseWindowOptions &settings, std::chrono::milliseconds delay);
-  void showWindow();
-  void toggleWindow();
+  Q_INVOKABLE void showWindow();
+  Q_INVOKABLE void toggleWindow();
   bool isWindowOpened() const;
   void requestWindowSize(QSize size);
 
