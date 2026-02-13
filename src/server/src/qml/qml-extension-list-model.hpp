@@ -6,6 +6,9 @@
 
 class QmlExtensionListModel : public QmlCommandListModel {
   Q_OBJECT
+  Q_PROPERTY(QString emptyTitle READ emptyTitle NOTIFY emptyViewChanged)
+  Q_PROPERTY(QString emptyDescription READ emptyDescription NOTIFY emptyViewChanged)
+  Q_PROPERTY(QString emptyIcon READ emptyIcon NOTIFY emptyViewChanged)
 
 public:
   using NotifyFn = std::function<void(const QString &handler, const QJsonArray &args)>;
@@ -18,6 +21,13 @@ public:
   QString searchPlaceholder() const override;
   QUrl qmlComponentUrl() const override { return QUrl(QStringLiteral("qrc:/qml/CommandListView.qml")); }
   void onItemSelected(int section, int item) override;
+
+  QString emptyTitle() const;
+  QString emptyDescription() const;
+  QString emptyIcon() const;
+
+signals:
+  void emptyViewChanged();
 
 protected:
   QString itemTitle(int section, int item) const override;

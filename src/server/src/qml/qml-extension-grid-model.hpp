@@ -6,6 +6,9 @@
 
 class QmlExtensionGridModel : public QmlCommandGridModel {
   Q_OBJECT
+  Q_PROPERTY(QString emptyTitle READ emptyTitle NOTIFY emptyViewChanged)
+  Q_PROPERTY(QString emptyDescription READ emptyDescription NOTIFY emptyViewChanged)
+  Q_PROPERTY(QString emptyIcon READ emptyIcon NOTIFY emptyViewChanged)
 
 public:
   using NotifyFn = std::function<void(const QString &handler, const QJsonArray &args)>;
@@ -23,6 +26,13 @@ public:
   Q_INVOKABLE QString cellIcon(int section, int item) const;
   Q_INVOKABLE QString cellSubtitle(int section, int item) const;
   Q_INVOKABLE QString cellTooltip(int section, int item) const;
+
+  QString emptyTitle() const;
+  QString emptyDescription() const;
+  QString emptyIcon() const;
+
+signals:
+  void emptyViewChanged();
 
 protected:
   std::unique_ptr<ActionPanelState> createActionPanel(int section, int item) const override;
