@@ -105,7 +105,7 @@ void QalculateBackend::initializeCalculator() {
   m_evalOpts.parse_options.units_enabled = true;
   m_evalOpts.parse_options.unknowns_enabled = false;
 
-  m_printOpts.indicate_infinite_series = true;
+  m_printOpts.indicate_infinite_series = false;
   m_printOpts.interval_display = INTERVAL_DISPLAY_SIGNIFICANT_DIGITS;
   m_printOpts.use_unicode_signs = true;
   m_printOpts.base_display = BASE_DISPLAY_ALTERNATIVE;
