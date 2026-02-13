@@ -1,33 +1,50 @@
 #pragma once
 #include "qml-command-list-model.hpp"
 #include "ui/views/base-view.hpp"
+#include <QUrl>
+#include <QVariantMap>
 
+/// General-purpose bridge: any QML component can be pushed as a view.
 class QmlBridgeViewBase : public BaseView {
 public:
-  virtual QmlCommandListModel *qmlModel() const = 0;
+  /// The QML component to instantiate (e.g. "qrc:/qml/CommandListView.qml").
+  virtual QUrl qmlComponentUrl() const = 0;
 
-  // Called by QmlLauncherWindow after the QML context property is set,
-  // so that modelReset reaches the QML Connections handler.
-  virtual void loadInitialData() = 0;
+  /// Properties passed to the QML component at instantiation.
+  virtual QVariantMap qmlProperties() const { return {}; }
 
-  void textChanged(const QString &text) override {
-    if (auto *m = qmlModel()) m->setFilter(text);
-  }
+  /// Called after the QML component is pushed and properties set.
+  virtual void loadInitialData() {}
 
+  /// Called when popping back to this view (component preserved by StackView).
+  virtual void onReactivated() {}
+
+  void textChanged(const QString &) override {}
   bool inputFilter(QKeyEvent *) override { return false; }
 };
 
+/// Convenience bridge for views backed by a QmlCommandListModel.
 template <typename ModelType> class QmlBridgeView : public QmlBridgeViewBase {
   ModelType *m_model = nullptr;
 
 public:
-  QmlCommandListModel *qmlModel() const override { return m_model; }
+  QUrl qmlComponentUrl() const override { return m_model->qmlComponentUrl(); }
+
+  QVariantMap qmlProperties() const override {
+    return {{QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(m_model))}};
+  }
 
   void initialize() override {
     m_model = new ModelType(this);
     m_model->initialize(context());
     setSearchPlaceholderText(m_model->searchPlaceholder());
   }
+
+  void textChanged(const QString &text) override { m_model->setFilter(text); }
+
+  void beforePop() override { m_model->beforePop(); }
+
+  void onReactivated() override { m_model->refreshActionPanel(); }
 
   void loadInitialData() override { m_model->setFilter(searchText()); }
 };
