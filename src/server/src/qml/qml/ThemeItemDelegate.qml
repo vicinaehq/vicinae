@@ -1,14 +1,13 @@
 import QtQuick
 import QtQuick.Layouts
 
-Item {
+SelectableDelegate {
     id: root
     height: 60
 
     required property string itemTitle
     required property string itemSubtitle
     required property string itemIconSource
-    required property bool selected
 
     property color paletteColor0: "transparent"
     property color paletteColor1: "transparent"
@@ -18,35 +17,6 @@ Item {
     property color paletteColor5: "transparent"
     property color paletteColor6: "transparent"
     property color paletteColor7: "transparent"
-
-    signal clicked()
-    signal doubleClicked()
-
-    MouseArea {
-        id: mouseArea
-        anchors.fill: parent
-        hoverEnabled: true
-        onClicked: root.clicked()
-        onDoubleClicked: root.doubleClicked()
-    }
-
-    Rectangle {
-        anchors.fill: parent
-        anchors.leftMargin: 6
-        anchors.rightMargin: 6
-        radius: 6
-        color: {
-            if (root.selected) {
-                var c = Theme.listItemSelectionBg
-                return Qt.rgba(c.r, c.g, c.b, 0.7)
-            }
-            if (mouseArea.containsMouse) {
-                var h = Theme.listItemHoverBg
-                return Qt.rgba(h.r, h.g, h.b, 0.5)
-            }
-            return "transparent"
-        }
-    }
 
     RowLayout {
         anchors.fill: parent

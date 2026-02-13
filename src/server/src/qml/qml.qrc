@@ -5,11 +5,14 @@
     <file alias="GenericListView.qml">qml/GenericListView.qml</file>
     <file alias="RootSearchList.qml">qml/RootSearchList.qml</file>
     <file alias="ListItemDelegate.qml">qml/ListItemDelegate.qml</file>
+    <file alias="SelectableDelegate.qml">qml/SelectableDelegate.qml</file>
     <file alias="SectionHeader.qml">qml/SectionHeader.qml</file>
     <file alias="Footer.qml">qml/Footer.qml</file>
     <file alias="CommandListView.qml">qml/CommandListView.qml</file>
     <file alias="CalculatorResultDelegate.qml">qml/CalculatorResultDelegate.qml</file>
     <file alias="ThemeListView.qml">qml/ThemeListView.qml</file>
     <file alias="ThemeItemDelegate.qml">qml/ThemeItemDelegate.qml</file>
+    <file alias="GenericGridView.qml">qml/GenericGridView.qml</file>
+    <file alias="EmojiGridView.qml">qml/EmojiGridView.qml</file>
   </qresource>
 </RCC>
