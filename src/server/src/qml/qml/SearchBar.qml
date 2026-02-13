@@ -79,6 +79,22 @@ Item {
                 else if (launcher.hasCommandView) launcher.forwardKey(Qt.Key_Down)
                 else searchList.moveDown()
             }
+            Keys.onLeftPressed: (event) => {
+                if (commandStack.currentItem && typeof commandStack.currentItem.moveLeft === "function") {
+                    commandStack.currentItem.moveLeft()
+                    event.accepted = true
+                } else {
+                    event.accepted = false
+                }
+            }
+            Keys.onRightPressed: (event) => {
+                if (commandStack.currentItem && typeof commandStack.currentItem.moveRight === "function") {
+                    commandStack.currentItem.moveRight()
+                    event.accepted = true
+                } else {
+                    event.accepted = false
+                }
+            }
             Keys.onReturnPressed: launcher.handleReturn()
             Keys.onBacktabPressed: (event) => { event.accepted = false }
             Keys.onPressed: (event) => {

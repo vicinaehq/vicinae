@@ -29,14 +29,14 @@ GenericListView {
         required property string title
         required property string subtitle
         required property string iconSource
-        property color paletteColor0: "transparent"
-        property color paletteColor1: "transparent"
-        property color paletteColor2: "transparent"
-        property color paletteColor3: "transparent"
-        property color paletteColor4: "transparent"
-        property color paletteColor5: "transparent"
-        property color paletteColor6: "transparent"
-        property color paletteColor7: "transparent"
+        required property color paletteColor0
+        required property color paletteColor1
+        required property color paletteColor2
+        required property color paletteColor3
+        required property color paletteColor4
+        required property color paletteColor5
+        required property color paletteColor6
+        required property color paletteColor7
 
         sourceComponent: isSection ? sectionComponent : itemComponent
 

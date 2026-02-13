@@ -695,8 +695,14 @@ set(SRCS
 	src/qml/qml-calc-history-model.cpp
 	src/qml/qml-theme-list-model.hpp
 	src/qml/qml-theme-list-model.cpp
+	src/qml/qml-command-grid-model.hpp
+	src/qml/qml-command-grid-model.cpp
+	src/qml/qml-emoji-grid-model.hpp
+	src/qml/qml-emoji-grid-model.cpp
+	src/qml/qml-source-blend-rect.hpp
 	src/qml/qml-image-provider.hpp
 	src/qml/qml-image-provider.cpp
+	src/qml/qml-config-bridge.hpp
 	src/qml/qml-theme-bridge.hpp
 	src/qml/qml.qrc
 

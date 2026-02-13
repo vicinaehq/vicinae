@@ -2,21 +2,6 @@ import QtQuick
 import QtQuick.Layouts
 
 Item {
-    Rectangle {
-        anchors.fill: parent
-        color: Qt.rgba(Theme.statusBarBackground.r, Theme.statusBarBackground.g, Theme.statusBarBackground.b, 0.6)
-        radius: 10
-
-        // Mask out the top rounded corners by overlaying a rect on the top half
-        Rectangle {
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            height: parent.height / 2
-            color: parent.color
-        }
-    }
-
     RowLayout {
         anchors.fill: parent
         anchors.leftMargin: 16
