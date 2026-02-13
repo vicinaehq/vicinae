@@ -1,6 +1,8 @@
 #include "qml-launcher-window.hpp"
+#include "qml-async-image-provider.hpp"
 #include "qml-bridge-view.hpp"
-#include "qml-image-provider.hpp"
+#include "qml-image-source.hpp"
+#include "qml-image-url.hpp"
 #include "qml-root-search-model.hpp"
 #include "qml-source-blend-rect.hpp"
 #include "qml-config-bridge.hpp"
@@ -26,15 +28,19 @@ QmlLauncherWindow::QmlLauncherWindow(ApplicationContext &ctx, QObject *parent)
 
   // Register custom QML types
   qmlRegisterType<QmlSourceBlendRect>("Vicinae", 1, 0, "SourceBlendRect");
+  qRegisterMetaType<QmlImageUrl>("QmlImageUrl");
 
   // The engine takes ownership of the image provider
-  m_engine.addImageProvider(QStringLiteral("vicinae"), new QmlImageProvider());
+  m_engine.addImageProvider(QStringLiteral("vicinae"), new QmlAsyncImageProvider());
+
+  m_imgSource = new QmlImageSource(this);
 
   auto *rootCtx = m_engine.rootContext();
   rootCtx->setContextProperty(QStringLiteral("Nav"), ctx.navigation.get());
   rootCtx->setContextProperty(QStringLiteral("searchModel"), m_searchModel);
   rootCtx->setContextProperty(QStringLiteral("Theme"), m_themeBridge);
   rootCtx->setContextProperty(QStringLiteral("Config"), m_configBridge);
+  rootCtx->setContextProperty(QStringLiteral("Img"), m_imgSource);
   rootCtx->setContextProperty(QStringLiteral("launcher"), this);
 
   m_engine.load(QUrl(QStringLiteral("qrc:/qml/LauncherWindow.qml")));

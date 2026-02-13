@@ -4,6 +4,7 @@
 #include <QQmlApplicationEngine>
 
 class QmlConfigBridge;
+class QmlImageSource;
 class QmlRootSearchModel;
 class QmlThemeBridge;
 class QmlBridgeViewBase;
@@ -55,6 +56,7 @@ private:
   QmlRootSearchModel *m_searchModel;
   QmlThemeBridge *m_themeBridge;
   QmlConfigBridge *m_configBridge;
+  QmlImageSource *m_imgSource;
   QQuickWindow *m_window = nullptr;
   QQuickItem *m_contentArea = nullptr;
   BaseView *m_activeWidget = nullptr;
