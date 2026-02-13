@@ -144,12 +144,11 @@ void QmlLauncherWindow::handleCurrentViewChanged() {
 
     if (!wasPopped) {
       // New bridge view pushed — add to QML stack
-      emit commandViewPushed(bridge->qmlModel());
+      emit commandViewPushed(bridge->qmlComponentUrl(), bridge->qmlProperties());
       bridge->loadInitialData();
     } else {
-      // Popped back — QML StackView preserved the CommandListView's selection,
-      // but the action panel needs to be re-established for this ViewState.
-      bridge->qmlModel()->refreshActionPanel();
+      // Popped back — QML component preserved by StackView; let the view re-establish state.
+      bridge->onReactivated();
     }
   } else if (state->sender != m_activeWidget) {
     // Widget view — embed on top; command stack stays behind
@@ -247,6 +246,10 @@ void QmlLauncherWindow::goBack() {
 void QmlLauncherWindow::popToRoot() {
   m_ctx.navigation->popToRoot();
   emit viewNavigatedBack();
+}
+
+bool QmlLauncherWindow::tryAliasFastTrack() {
+  return m_searchModel->tryAliasFastTrack();
 }
 
 QString QmlLauncherWindow::commandActionTitle() const {

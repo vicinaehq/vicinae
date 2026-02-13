@@ -3,16 +3,21 @@ import QtQuick.Layouts
 
 Item {
     id: root
-    height: 41
+    height: 60
 
     required property string itemTitle
     required property string itemSubtitle
     required property string itemIconSource
-    required property string itemAlias
-    required property bool itemIsActive
     required property bool selected
-    property string itemAccessory: ""
-    property string itemAccessoryColor: ""
+
+    property color paletteColor0: "transparent"
+    property color paletteColor1: "transparent"
+    property color paletteColor2: "transparent"
+    property color paletteColor3: "transparent"
+    property color paletteColor4: "transparent"
+    property color paletteColor5: "transparent"
+    property color paletteColor6: "transparent"
+    property color paletteColor7: "transparent"
 
     signal clicked()
     signal doubleClicked()
@@ -25,7 +30,6 @@ Item {
         onDoubleClicked: root.doubleClicked()
     }
 
-    // Selection / hover highlight with padding and rounding
     Rectangle {
         anchors.fill: parent
         anchors.leftMargin: 6
@@ -50,38 +54,26 @@ Item {
         anchors.rightMargin: 16
         spacing: 10
 
+        // Icon
         Item {
-            Layout.preferredWidth: 25
-            Layout.preferredHeight: 25
+            Layout.preferredWidth: 30
+            Layout.preferredHeight: 30
             Layout.alignment: Qt.AlignVCenter
 
             Image {
                 anchors.fill: parent
                 source: root.itemIconSource
-                sourceSize.width: 25
-                sourceSize.height: 25
+                sourceSize.width: 30
+                sourceSize.height: 30
                 asynchronous: true
                 cache: true
             }
-
-            // Active indicator dot
-            Rectangle {
-                visible: root.itemIsActive
-                width: 6
-                height: 6
-                radius: 3
-                color: Theme.accent
-                anchors.bottom: parent.bottom
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.bottomMargin: -2
-            }
         }
 
-        // Title + subtitle + alias grouped together on the left
-        RowLayout {
-            id: textRow
+        // Title + description stacked
+        ColumnLayout {
             Layout.fillWidth: true
-            spacing: 6
+            spacing: 2
 
             Text {
                 text: root.itemTitle
@@ -89,7 +81,7 @@ Item {
                 font.pointSize: Theme.regularFontSize
                 elide: Text.ElideRight
                 maximumLineCount: 1
-                Layout.maximumWidth: Math.min(implicitWidth, root.width * 0.5)
+                Layout.fillWidth: true
             }
 
             Text {
@@ -99,30 +91,40 @@ Item {
                 font.pointSize: Theme.smallerFontSize
                 elide: Text.ElideRight
                 maximumLineCount: 1
-                Layout.maximumWidth: 200
+                Layout.fillWidth: true
             }
-
-            Text {
-                visible: root.itemAlias !== ""
-                text: root.itemAlias
-                color: Theme.textMuted
-                font.pointSize: Theme.smallerFontSize
-                font.italic: true
-                elide: Text.ElideRight
-                maximumLineCount: 1
-            }
-
-            Item { Layout.fillWidth: true }
         }
 
-        Text {
-            visible: root.itemAccessory !== ""
-            text: root.itemAccessory
-            color: root.itemAccessoryColor !== "" ? root.itemAccessoryColor : Theme.textMuted
-            font.pointSize: Theme.smallerFontSize
-            elide: Text.ElideRight
-            maximumLineCount: 1
-            Layout.maximumWidth: 200
+        // Color palette
+        Row {
+            spacing: 3
+            Layout.alignment: Qt.AlignVCenter
+
+            Repeater {
+                model: [
+                    root.paletteColor0, root.paletteColor1,
+                    root.paletteColor2, root.paletteColor3,
+                    root.paletteColor4, root.paletteColor5,
+                    root.paletteColor6, root.paletteColor7
+                ]
+                delegate: Item {
+                    width: 16
+                    height: 16
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: width / 2
+                        color: Theme.foreground
+                        antialiasing: true
+                    }
+                    Rectangle {
+                        anchors.fill: parent
+                        anchors.margins: 1
+                        radius: width / 2
+                        color: modelData
+                        antialiasing: true
+                    }
+                }
+            }
         }
     }
 }

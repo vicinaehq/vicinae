@@ -1,7 +1,8 @@
 #pragma once
 #include "common/context.hpp"
-#include "ui/image/url.hpp"
+#include "qml-utils.hpp"
 #include <QAbstractListModel>
+#include <QUrl>
 #include <memory>
 #include <vector>
 
@@ -23,7 +24,7 @@ public:
 
   explicit QmlCommandListModel(QObject *parent = nullptr) : QAbstractListModel(parent) {}
 
-  void initialize(ApplicationContext *ctx);
+  virtual void initialize(ApplicationContext *ctx);
 
   int rowCount(const QModelIndex &parent = {}) const override;
   QVariant data(const QModelIndex &index, int role) const override;
@@ -38,6 +39,9 @@ public:
 
   virtual void setFilter(const QString &text) = 0;
   virtual QString searchPlaceholder() const { return QStringLiteral("Search..."); }
+  virtual QUrl qmlComponentUrl() const { return QUrl(QStringLiteral("qrc:/qml/CommandListView.qml")); }
+  virtual void onItemSelected(int section, int item) {}
+  virtual void beforePop() {}
 
 protected:
   virtual QString itemTitle(int section, int item) const = 0;
@@ -53,7 +57,11 @@ protected:
   void setSections(const std::vector<SectionInfo> &sections);
 
   ApplicationContext *ctx() const { return m_ctx; }
-  QString imageSourceFor(const ImageURL &url) const;
+  QString imageSourceFor(const ImageURL &url) const { return qml::imageSourceFor(url); }
+
+  // Returns true if row is a data item, filling section and item indices.
+  // Returns false if row is invalid or a section header.
+  bool dataItemAt(int row, int &section, int &item) const;
 
 private:
   struct FlatItem {
