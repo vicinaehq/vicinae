@@ -14,5 +14,6 @@
     <file alias="ThemeItemDelegate.qml">qml/ThemeItemDelegate.qml</file>
     <file alias="GenericGridView.qml">qml/GenericGridView.qml</file>
     <file alias="EmojiGridView.qml">qml/EmojiGridView.qml</file>
+    <file alias="ViciImage.qml">qml/ViciImage.qml</file>
   </qresource>
 </RCC>
