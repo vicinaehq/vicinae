@@ -150,12 +150,16 @@ public:
   SubmitAction(const std::function<void(void)> &fn) : m_fn(fn) {}
 };
 
+class ActionPanelState;
+
 class SubmenuAction : public AbstractAction {
   std::function<ActionPanelView *()> m_createSubmenuFn;
   std::function<void()> m_onOpen;
   bool m_autoClose = false;
 
 public:
+  using SubmenuStateFactory = std::function<std::unique_ptr<ActionPanelState>()>;
+
   SubmenuAction(const QString &title, const std::optional<ImageURL> &icon,
                 std::function<ActionPanelView *()> createSubmenuFn, std::function<void()> onOpen = nullptr)
       : AbstractAction(title, icon), m_createSubmenuFn(createSubmenuFn), m_onOpen(onOpen) {
@@ -170,6 +174,7 @@ public:
     // They are handled by the action panel widget to push views
   }
 
+  // --- Widget path (legacy) ---
   ActionPanelView *createSubmenu() const override {
     if (m_onOpen) { m_onOpen(); }
     return createSubmenuStealthily();
@@ -179,4 +184,14 @@ public:
     if (m_createSubmenuFn) { return m_createSubmenuFn(); }
     return nullptr;
   }
+
+  // --- Data path (QML) ---
+  void setSubmenuStateFactory(SubmenuStateFactory fn) { m_stateFactory = std::move(fn); }
+
+  // Defined out-of-line because ActionPanelState is incomplete here
+  std::unique_ptr<ActionPanelState> createSubmenuState() const;
+  std::unique_ptr<ActionPanelState> createSubmenuStateStealthily() const;
+
+private:
+  SubmenuStateFactory m_stateFactory;
 };

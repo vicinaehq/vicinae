@@ -255,6 +255,43 @@ QString Shortcut::toString() const {
   return strs.join('+');
 }
 
+// clang-format off
+static const std::unordered_map<Qt::Key, QString> displayKeyMap{
+	{Qt::Key_Return, "Enter"},
+	{Qt::Key_Enter, "Enter"},
+	{Qt::Key_Delete, "Del"},
+	{Qt::Key_Backspace, "Backspace"},
+	{Qt::Key_Tab, "Tab"},
+	{Qt::Key_Up, "Up"},
+	{Qt::Key_Down, "Down"},
+	{Qt::Key_Left, "Left"},
+	{Qt::Key_Right, "Right"},
+	{Qt::Key_PageUp, "PageUp"},
+	{Qt::Key_PageDown, "PageDown"},
+	{Qt::Key_Home, "Home"},
+	{Qt::Key_End, "End"},
+	{Qt::Key_Space, "Space"},
+	{Qt::Key_Escape, "Esc"},
+};
+// clang-format on
+
+QString Shortcut::toDisplayString() const {
+  QStringList parts;
+
+  if (m_modifiers.testFlag(Qt::MetaModifier)) { parts << "Super"; }
+  if (m_modifiers.testFlag(Qt::ControlModifier)) { parts << "Ctrl"; }
+  if (m_modifiers.testFlag(Qt::AltModifier)) { parts << "Alt"; }
+  if (m_modifiers.testFlag(Qt::ShiftModifier)) { parts << "Shift"; }
+
+  if (auto it = displayKeyMap.find(m_key); it != displayKeyMap.end()) {
+    parts << it->second;
+  } else {
+    parts << stringForKey(m_key).value_or("?").toUpper();
+  }
+
+  return parts.join('+');
+}
+
 std::vector<Qt::KeyboardModifier> Shortcut::modList() const {
   std::vector<Qt::KeyboardModifier> modifiers;
 
