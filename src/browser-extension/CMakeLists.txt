@@ -1,6 +1,6 @@
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(TARGET vicinae-browser-link)
-set(CHROME_EXTENSION_ID "com.vicinae.vicinae")
+set(CHROME_EXTENSION_ID "kcmipingpfbohfjckomimmahknoddnke") # https://chromewebstore.google.com/detail/vicinae-integration/kcmipingpfbohfjckomimmahknoddnke
 set(NATIVE_MESSAGING_HOST "com.vicinae.vicinae")
 set(NATIVE_HOST_BIN ${VICINAE_LIBEXEC_PATH}/${TARGET})
 
