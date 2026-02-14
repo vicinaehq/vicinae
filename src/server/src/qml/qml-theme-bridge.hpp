@@ -25,6 +25,7 @@ class QmlThemeBridge : public QObject {
   Q_PROPERTY(QColor gridItemBackground READ gridItemBackground NOTIFY changed)
   Q_PROPERTY(QColor gridItemSelectionOutline READ gridItemSelectionOutline NOTIFY changed)
   Q_PROPERTY(QColor gridItemHoverOutline READ gridItemHoverOutline NOTIFY changed)
+  Q_PROPERTY(QColor danger READ danger NOTIFY changed)
   Q_PROPERTY(qreal regularFontSize READ regularFontSize NOTIFY changed)
   Q_PROPERTY(qreal smallerFontSize READ smallerFontSize NOTIFY changed)
 
@@ -54,6 +55,7 @@ public:
   QColor gridItemBackground() const { return resolve(SemanticColor::GridItemBackground); }
   QColor gridItemSelectionOutline() const { return resolve(SemanticColor::GridItemSelectionOutline); }
   QColor gridItemHoverOutline() const { return resolve(SemanticColor::GridItemHoverOutline); }
+  QColor danger() const { return resolve(SemanticColor::TextDanger); }
 
   qreal regularFontSize() const { return ThemeService::instance().pointSize(TextRegular); }
   qreal smallerFontSize() const { return ThemeService::instance().pointSize(TextSmaller); }
