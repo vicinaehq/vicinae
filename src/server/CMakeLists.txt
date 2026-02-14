@@ -706,6 +706,10 @@ set(SRCS
 	src/qml/qml-emoji-grid-model.cpp
 	src/qml/qml-extension-view-host.hpp
 	src/qml/qml-extension-view-host.cpp
+	src/qml/qml-clipboard-history-model.hpp
+	src/qml/qml-clipboard-history-model.cpp
+	src/qml/qml-clipboard-history-view-host.hpp
+	src/qml/qml-clipboard-history-view-host.cpp
 	src/qml/qml-extension-list-model.hpp
 	src/qml/qml-extension-list-model.cpp
 	src/qml/qml-extension-grid-model.hpp
