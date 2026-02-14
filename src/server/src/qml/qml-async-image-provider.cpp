@@ -15,6 +15,19 @@
 #include <QtMath>
 #include <QThreadPool>
 #include <QTimer>
+#include <atomic>
+#include <mutex>
+
+// Dedicated pool for raster image decoding.  Keeps at most 2 threads so we
+// never have many full-resolution images resident simultaneously (formats
+// like PNG ignore QImageReader::setScaledSize, so the full bitmap is read
+// before we can scale it down).
+static QThreadPool &imageDecodingPool() {
+  static QThreadPool pool;
+  static std::once_flag flag;
+  std::call_once(flag, []() { pool.setMaxThreadCount(2); });
+  return pool;
+}
 
 // ---------------------------------------------------------------------------
 // ViciImageResponse — QQuickImageResponse subclass
@@ -27,10 +40,24 @@ public:
   explicit ViciImageResponse(qreal dpr = 1.0) : m_dpr(dpr) {}
 
   QQuickTextureFactory *textureFactory() const override {
+    if (m_image.isNull())
+      return nullptr;
     return QQuickTextureFactory::textureFactoryForImage(m_image);
   }
 
+  void cancel() override {
+    m_cancelled.store(true, std::memory_order_release);
+  }
+
+  bool isCancelled() const {
+    return m_cancelled.load(std::memory_order_acquire);
+  }
+
   void finish(QImage image) {
+    if (m_cancelled.load(std::memory_order_acquire)) {
+      emit finished();
+      return;
+    }
     image.setDevicePixelRatio(m_dpr);
     m_image = std::move(image);
     emit finished();
@@ -39,6 +66,10 @@ public:
   // Schedule finish on next event-loop iteration (for sync producers
   // that complete immediately inside requestImageResponse).
   void finishDeferred(QImage image) {
+    if (m_cancelled.load(std::memory_order_acquire)) {
+      QTimer::singleShot(0, this, &QQuickImageResponse::finished);
+      return;
+    }
     image.setDevicePixelRatio(m_dpr);
     m_image = std::move(image);
     QTimer::singleShot(0, this, &QQuickImageResponse::finished);
@@ -47,6 +78,7 @@ public:
 private:
   qreal m_dpr;
   QImage m_image;
+  std::atomic<bool> m_cancelled{false};
 };
 
 // ---------------------------------------------------------------------------
@@ -155,7 +187,17 @@ static QImage renderLocalRaster(const QString &path, const QSize &size) {
       reader.setScaledSize(original.scaled(size, Qt::KeepAspectRatioByExpanding));
   }
 
-  return reader.read();
+  QImage img = reader.read();
+
+  // setScaledSize is silently ignored by most formats (PNG, WebP, …).
+  // If the decoded image is still much larger than requested, scale it
+  // down now so we don't keep a full-resolution bitmap alive.
+  if (!img.isNull() && size.isValid()
+      && (img.width() > size.width() || img.height() > size.height())) {
+    img = img.scaled(size, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+  }
+
+  return img;
 }
 
 static QImage decodeImageData(const QByteArray &data, const QSize &size) {
@@ -178,6 +220,13 @@ static QImage decodeImageData(const QByteArray &data, const QSize &size) {
 
   QImage result = reader.read();
   delete buf;
+
+  // Scale down if the format ignored setScaledSize (see renderLocalRaster).
+  if (!result.isNull() && size.isValid()
+      && (result.width() > size.width() || result.height() > size.height())) {
+    result = result.scaled(size, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+  }
+
   return result;
 }
 
@@ -260,6 +309,7 @@ QQuickImageResponse *QmlAsyncImageProvider::requestImageResponse(
   } else if (parsed.type == QStringLiteral("emoji")) {
     // FontService needs main thread
     QMetaObject::invokeMethod(qApp, [response, name = parsed.name, size]() {
+      if (response->isCancelled()) { response->finish({}); return; }
       QImage img = renderEmoji(name, size);
       response->finish(std::move(img));
     }, Qt::QueuedConnection);
@@ -267,6 +317,7 @@ QQuickImageResponse *QmlAsyncImageProvider::requestImageResponse(
   } else if (parsed.type == QStringLiteral("system")) {
     // QIcon::fromTheme needs main thread
     QMetaObject::invokeMethod(qApp, [response, name = parsed.name, size]() {
+      if (response->isCancelled()) { response->finish({}); return; }
       QImage img = renderSystemIcon(name, size);
       response->finish(std::move(img));
     }, Qt::QueuedConnection);
@@ -281,7 +332,8 @@ QQuickImageResponse *QmlAsyncImageProvider::requestImageResponse(
       response->finishDeferred(std::move(img));
     } else {
       // Raster: decode in background thread
-      QThreadPool::globalInstance()->start([response, path, size, circle]() {
+      imageDecodingPool().start([response, path, size, circle]() {
+        if (response->isCancelled()) { response->finish({}); return; }
         QImage img = renderLocalRaster(path, size);
         if (circle && !img.isNull()) applyCircleMask(img);
         response->finish(std::move(img));
@@ -293,22 +345,26 @@ QQuickImageResponse *QmlAsyncImageProvider::requestImageResponse(
     QString url = parsed.name;
     bool circle = parsed.circleMask;
     QMetaObject::invokeMethod(qApp, [response, url, size, circle]() {
+      if (response->isCancelled()) { response->finish({}); return; }
       auto *reply = NetworkFetcher::instance()->fetch(QUrl(url));
       QObject::connect(reply, &FetchReply::finished, qApp,
                        [response, reply, size, circle](const QByteArray &data) {
+        reply->deleteLater();
+        if (response->isCancelled()) { response->finish({}); return; }
         // Decode in background
-        QThreadPool::globalInstance()->start([response, data, size, circle]() {
+        imageDecodingPool().start([response, data, size, circle]() {
+          if (response->isCancelled()) { response->finish({}); return; }
           QImage img = decodeImageData(data, size);
           if (circle && !img.isNull()) applyCircleMask(img);
           response->finish(std::move(img));
         });
-        reply->deleteLater();
       });
     }, Qt::QueuedConnection);
 
   } else if (parsed.type == QStringLiteral("favicon")) {
     // FaviconService needs main thread
     QMetaObject::invokeMethod(qApp, [response, domain = parsed.name, size]() {
+      if (response->isCancelled()) { response->finish({}); return; }
       auto *svc = FaviconService::instance();
       if (!svc) {
         response->finish({});
@@ -320,7 +376,7 @@ QQuickImageResponse *QmlAsyncImageProvider::requestImageResponse(
       QObject::connect(watcher, &QFutureWatcherBase::finished, qApp,
                        [response, watcher, size]() {
         auto result = watcher->result();
-        if (result) {
+        if (!response->isCancelled() && result) {
           QImage img = result.value()
               .scaled(size, Qt::KeepAspectRatio, Qt::SmoothTransformation)
               .toImage();
@@ -337,7 +393,8 @@ QQuickImageResponse *QmlAsyncImageProvider::requestImageResponse(
     // Decode base64 data URI, then treat as local (SVG or raster)
     QString dataStr = parsed.name;
     bool circle = parsed.circleMask;
-    QThreadPool::globalInstance()->start([response, dataStr, size, circle]() {
+    imageDecodingPool().start([response, dataStr, size, circle]() {
+      if (response->isCancelled()) { response->finish({}); return; }
       // Parse "data:mime;base64,..."
       int commaIdx = dataStr.indexOf(',');
       if (commaIdx < 0) {
