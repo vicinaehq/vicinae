@@ -125,10 +125,21 @@ static QImage renderLocalSvg(const QString &path, const QSize &size) {
   QSvgRenderer renderer(path);
   if (!renderer.isValid()) return {};
 
-  QImage canvas(size, QImage::Format_ARGB32_Premultiplied);
+  // Respect the SVG's natural size — don't upscale beyond it.
+  // This keeps small SVGs (e.g. 45x45 viewBox) at their intended
+  // visual size rather than stretching them to fill the cell.
+  QSize renderSize = size;
+  QSize natural = renderer.defaultSize();
+  if (natural.isValid() && !natural.isEmpty()) {
+    renderSize.setWidth(qMin(size.width(), natural.width()));
+    renderSize.setHeight(qMin(size.height(), natural.height()));
+  }
+
+  QImage canvas(renderSize, QImage::Format_ARGB32_Premultiplied);
   canvas.fill(Qt::transparent);
   QPainter painter(&canvas);
   painter.setRenderHint(QPainter::Antialiasing, true);
+  painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
   renderer.setAspectRatioMode(Qt::KeepAspectRatio);
   renderer.render(&painter, canvas.rect());
   return canvas;
