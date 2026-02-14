@@ -26,8 +26,8 @@ GenericGridView {
 
             Image {
                 anchors.centerIn: parent
-                width: parent.width
-                height: parent.height
+                width: Math.min(implicitWidth, parent.width)
+                height: Math.min(implicitHeight, parent.height)
                 // ObjectFit enum: 0=Contain, 1=Fill, 2=Stretch
                 fillMode: {
                     var fit = cellRoot.model ? cellRoot.model.fit : 0
