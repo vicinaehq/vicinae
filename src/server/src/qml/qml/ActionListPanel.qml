@@ -29,15 +29,35 @@ Item {
 
     readonly property int listPadding: 6
 
-    implicitHeight: listView.contentHeight + listView.topMargin + listView.bottomMargin
+    readonly property bool _empty: listView.count === 0
+
+    readonly property int emptyPadding: 32
+
+    implicitHeight: (_empty ? emptyLabel.implicitHeight + 2 * emptyPadding : listView.contentHeight + listView.topMargin + listView.bottomMargin)
                     + filterBar.height + divider.height
 
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
 
+        // Empty state — shown when filter produces no results
+        Text {
+            id: emptyLabel
+            visible: root._empty
+            text: "No matching actions"
+            color: Theme.textMuted
+            font.pointSize: Theme.smallerFontSize
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.topMargin: root.emptyPadding
+            Layout.bottomMargin: root.emptyPadding
+        }
+
         ListView {
             id: listView
+            visible: !root._empty
             Layout.fillWidth: true
             Layout.fillHeight: true
             topMargin: root.listPadding

@@ -32,6 +32,13 @@ Item {
     readonly property bool _showDetail: root.detailComponent !== null && root.detailVisible
     readonly property bool _empty: listView.count === 0
 
+    // When true, GenericListView auto-wires common model signals:
+    //  - onModelReset → selectFirst + setSelectedIndex
+    //  - onItemSelected → setSelectedIndex
+    //  - onItemActivated → activateSelected
+    // Consumers only need to set listModel; no Connections block required.
+    property bool autoWireModel: false
+
     signal itemActivated(int index)
     signal itemSelected(int index)
 
@@ -47,6 +54,29 @@ Item {
 
     function selectFirst() {
         listView.currentIndex = root.listModel.nextSelectableIndex(-1, 1)
+    }
+
+    onListModelChanged: {
+        if (root.autoWireModel && root.listModel && listView.count > 0) {
+            root.selectFirst()
+            root.listModel.setSelectedIndex(listView.currentIndex)
+        }
+    }
+
+    Connections {
+        enabled: root.autoWireModel && root.listModel
+        target: root.listModel
+        function onModelReset() {
+            root.selectFirst()
+            if (root.listModel) root.listModel.setSelectedIndex(listView.currentIndex)
+        }
+    }
+
+    onItemSelected: function(index) {
+        if (root.autoWireModel && root.listModel) root.listModel.setSelectedIndex(index)
+    }
+    onItemActivated: function(index) {
+        if (root.autoWireModel && root.listModel) root.listModel.activateSelected()
     }
 
     RowLayout {

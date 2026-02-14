@@ -6,17 +6,7 @@ GenericListView {
     property var cmdModel: null
     model: cmdModel
     listModel: cmdModel
-
-    onItemSelected: function(index) { if (cmdModel) cmdModel.setSelectedIndex(index) }
-    onItemActivated: function(index) { if (cmdModel) cmdModel.activateSelected() }
-
-    Connections {
-        target: cmdModel
-        function onModelReset() {
-            themeListView.selectFirst()
-            if (cmdModel) cmdModel.setSelectedIndex(themeListView.currentIndex)
-        }
-    }
+    autoWireModel: true
 
     delegate: Loader {
         id: delegateLoader
