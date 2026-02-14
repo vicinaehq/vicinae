@@ -107,6 +107,10 @@ gh-release:
 	tar -czvf vicinae-linux-x86_64-$(TAG).tar.gz -C dist .
 .PHONY: gh-release
 
+run-limited:
+	systemd-run --user --scope -p MemoryMax=1G -p MemorySwapMax=0 ./$(BIN_DIR)/vicinae-server server --frontend=qml
+.PHONY: run-limited
+
 clean:
 	rm -rf $(BUILD_DIR)
 	$(RM) -rf ./src/typescript/api/node_modules
