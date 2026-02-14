@@ -693,6 +693,8 @@ set(SRCS
 	src/qml/qml-root-search-model.cpp
 	src/qml/qml-command-list-model.hpp
 	src/qml/qml-command-list-model.cpp
+	src/qml/qml-action-panel-model.hpp
+	src/qml/qml-action-panel-model.cpp
 	src/qml/qml-bridge-view.hpp
 	src/qml/qml-calc-history-model.hpp
 	src/qml/qml-calc-history-model.cpp

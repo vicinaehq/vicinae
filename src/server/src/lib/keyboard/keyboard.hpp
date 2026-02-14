@@ -55,6 +55,9 @@ public:
   // It can be parsed back using Shortcut::fromString
   // e.g meta+shift+A
   QString toString() const;
+
+  // Human-readable display form for UI badges (e.g. "Ctrl+B", "Shift+Enter")
+  QString toDisplayString() const;
   Shortcut &modded(Qt::KeyboardModifier mod);
 
   bool equals(const Shortcut &other, bool ignoreNumpadMod = true) const;

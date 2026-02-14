@@ -26,4 +26,8 @@ std::unique_ptr<ActionPanelState> build(const ActionPannelModel &model, NotifyFn
                                             ActionPanelState::ShortcutPreset::None,
                                         SubmitFn submit = nullptr);
 
+/// Build an ActionPanelState for a submenu (data path, for QML).
+std::unique_ptr<ActionPanelState> buildSubmenuState(const ActionPannelSubmenuPtr &submenu, NotifyFn notify,
+                                                    SubmenuCache *submenuCache, SubmitFn submit = nullptr);
+
 } // namespace ExtensionActionPanelBuilder

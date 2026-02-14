@@ -1,4 +1,5 @@
 #include "qml-launcher-window.hpp"
+#include "qml-action-panel-model.hpp"
 #include "qml-async-image-provider.hpp"
 #include "qml-bridge-view.hpp"
 #include "qml-image-source.hpp"
@@ -99,7 +100,12 @@ QmlLauncherWindow::QmlLauncherWindow(ApplicationContext &ctx, QObject *parent)
   connect(nav, &NavigationController::actionsChanged,
           this, [this](const ActionPanelState &) {
             emit commandActionChanged();
+            updateActionPanelModel();
           });
+
+  // Close action panel on view push/pop
+  connect(nav, &NavigationController::viewPushed,
+          this, [this](const BaseView *) { closeActionPanel(); });
 }
 
 void QmlLauncherWindow::handleVisibilityChanged(bool visible) {
@@ -115,6 +121,8 @@ void QmlLauncherWindow::handleVisibilityChanged(bool visible) {
 }
 
 void QmlLauncherWindow::handleViewPoped(const BaseView *view) {
+  closeActionPanel();
+
   // Clean up BEFORE the ViewState is destroyed (which calls deleteLater on the view)
   if (m_activeWidget == view) {
     m_activeWidget->hide();
@@ -245,9 +253,16 @@ void QmlLauncherWindow::handleReturn() {
 }
 
 void QmlLauncherWindow::forwardKey(int key, int modifiers) {
-  if (!m_activeWidget) return;
   auto mods = static_cast<Qt::KeyboardModifiers>(modifiers);
   QKeyEvent event(QEvent::KeyPress, key, mods);
+
+  // Check for action shortcuts first
+  if (auto *action = m_ctx.navigation->findBoundAction(&event)) {
+    m_ctx.navigation->executeAction(action);
+    return;
+  }
+
+  if (!m_activeWidget) return;
   m_activeWidget->inputFilter(&event);
 }
 
@@ -270,4 +285,65 @@ QString QmlLauncherWindow::commandActionTitle() const {
   if (!state || !state->actionPanelState) return {};
   auto *action = state->actionPanelState->primaryAction();
   return action ? action->title() : QString();
+}
+
+void QmlLauncherWindow::toggleActionPanel() {
+  if (m_actionPanelOpen) {
+    closeActionPanel();
+  } else {
+    if (!m_actionPanelModel) return;
+    m_actionPanelOpen = true;
+    emit actionPanelOpenChanged();
+  }
+}
+
+void QmlLauncherWindow::closeActionPanel() {
+  if (!m_actionPanelOpen) return;
+  m_actionPanelOpen = false;
+  emit actionPanelOpenChanged();
+}
+
+void QmlLauncherWindow::updateActionPanelModel() {
+  auto *state = m_ctx.navigation->topState();
+  bool newHasActions = state && state->actionPanelState && state->actionPanelState->actionCount() > 0;
+
+  if (newHasActions != m_hasActions) {
+    m_hasActions = newHasActions;
+    emit hasActionsChanged();
+  }
+
+  if (!state || !state->actionPanelState) {
+    if (m_actionPanelModel) {
+      m_actionPanelModel->deleteLater();
+      m_actionPanelModel = nullptr;
+      emit actionPanelModelChanged();
+      closeActionPanel();
+    }
+    return;
+  }
+
+  auto *newModel = new QmlActionPanelModel(state->actionPanelState.get(), this);
+  connectActionPanelModel(newModel);
+
+  if (m_actionPanelModel) {
+    m_actionPanelModel->deleteLater();
+  }
+  m_actionPanelModel = newModel;
+  emit actionPanelModelChanged();
+}
+
+void QmlLauncherWindow::connectActionPanelModel(QmlActionPanelModel *model) {
+  connect(model, &QmlActionPanelModel::actionExecuted, this, [this](AbstractAction *action) {
+    m_ctx.navigation->executeAction(action);
+    closeActionPanel();
+  });
+
+  connect(model, &QmlActionPanelModel::submenuRequested, this, [this](QmlActionPanelModel *subModel) {
+    connectActionPanelModel(subModel);
+    emit actionPanelSubmenuPushed(subModel);
+  });
+
+  connect(model, &QmlActionPanelModel::closeRequested, this, [this]() {
+    closeActionPanel();
+  });
 }

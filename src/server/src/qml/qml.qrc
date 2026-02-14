@@ -18,5 +18,8 @@
     <file alias="ViciImage.qml">qml/ViciImage.qml</file>
     <file alias="ExtensionView.qml">qml/ExtensionView.qml</file>
     <file alias="ExtensionGridView.qml">qml/ExtensionGridView.qml</file>
+    <file alias="ActionPanelPopover.qml">qml/ActionPanelPopover.qml</file>
+    <file alias="ActionListPanel.qml">qml/ActionListPanel.qml</file>
+    <file alias="ActionItemDelegate.qml">qml/ActionItemDelegate.qml</file>
   </qresource>
 </RCC>

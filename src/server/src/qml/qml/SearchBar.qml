@@ -93,7 +93,15 @@ Item {
                     event.accepted = false
                 }
             }
-            Keys.onReturnPressed: launcher.handleReturn()
+            Keys.onReturnPressed: (event) => {
+                // Forward Shift+Enter and other modified returns for action shortcuts
+                if (event.modifiers !== Qt.NoModifier) {
+                    launcher.forwardKey(event.key, event.modifiers)
+                    event.accepted = true
+                } else {
+                    launcher.handleReturn()
+                }
+            }
             Keys.onBacktabPressed: (event) => { event.accepted = false }
             Keys.onPressed: (event) => {
                 if (event.key === Qt.Key_Backspace && searchInput.text === "" && launcher.hasCommandView) {
@@ -103,6 +111,12 @@ Item {
                     if (launcher.tryAliasFastTrack()) {
                         event.accepted = true
                     }
+                } else if (event.modifiers !== Qt.NoModifier && event.modifiers !== Qt.ShiftModifier
+                           && event.key !== Qt.Key_Shift && event.key !== Qt.Key_Control
+                           && event.key !== Qt.Key_Alt && event.key !== Qt.Key_Meta) {
+                    // Forward modifier key combos for action shortcut matching
+                    launcher.forwardKey(event.key, event.modifiers)
+                    event.accepted = true
                 }
             }
         }

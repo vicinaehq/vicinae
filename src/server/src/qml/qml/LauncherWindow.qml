@@ -105,6 +105,14 @@ Window {
         }
     }
 
+    // Action panel popover overlay — anchored above the footer
+    ActionPanelPopover {
+        id: actionPanelPopover
+        z: 100
+        anchors.fill: parent
+        anchors.bottomMargin: footer.height + 1 + Config.borderWidth
+    }
+
     Connections {
         target: launcher
         function onCommandViewPushed(componentUrl, properties) {
@@ -135,12 +143,32 @@ Window {
 
     Shortcut {
         sequence: "Escape"
-        onActivated: launcher.goBack()
+        onActivated: {
+            if (launcher.actionPanelOpen) {
+                launcher.closeActionPanel()
+            } else {
+                launcher.goBack()
+            }
+        }
     }
 
     Shortcut {
         sequence: "Shift+Escape"
         onActivated: launcher.popToRoot()
+    }
+
+    Shortcut {
+        sequence: "Ctrl+B"
+        onActivated: launcher.toggleActionPanel()
+    }
+
+    Connections {
+        target: launcher
+        function onActionPanelOpenChanged() {
+            if (!launcher.actionPanelOpen) {
+                searchBar.focusInput()
+            }
+        }
     }
 
     Component.onCompleted: {
