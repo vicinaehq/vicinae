@@ -30,5 +30,6 @@
     <file alias="DetailPanel.qml">qml/DetailPanel.qml</file>
 
     <file alias="MetadataBar.qml">qml/MetadataBar.qml</file>
+    <file alias="AlertDialog.qml">qml/AlertDialog.qml</file>
   </qresource>
 </RCC>

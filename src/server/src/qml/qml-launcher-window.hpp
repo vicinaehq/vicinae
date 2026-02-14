@@ -5,6 +5,7 @@
 #include <QQmlApplicationEngine>
 
 class QmlActionPanelModel;
+class QmlAlertModel;
 class QmlConfigBridge;
 class QmlImageSource;
 class QmlRootSearchModel;
@@ -14,6 +15,7 @@ class QmlCommandListModel;
 class QQuickWindow;
 class QQuickItem;
 class BaseView;
+class DialogContentWidget;
 
 class QmlLauncherWindow : public QObject {
   Q_OBJECT
@@ -33,6 +35,7 @@ class QmlLauncherWindow : public QObject {
   Q_PROPERTY(int toastStyle READ toastStyle NOTIFY toastChanged)
   Q_PROPERTY(bool hasMultipleActions READ hasMultipleActions NOTIFY hasMultipleActionsChanged)
   Q_PROPERTY(QString commandActionShortcut READ commandActionShortcut NOTIFY commandActionChanged)
+  Q_PROPERTY(QmlAlertModel *alertModel READ alertModel CONSTANT)
 
 public:
   explicit QmlLauncherWindow(ApplicationContext &ctx, QObject *parent = nullptr);
@@ -55,6 +58,7 @@ public:
   int toastStyle() const { return m_toastStyle; }
   bool hasMultipleActions() const { return m_hasMultipleActions; }
   QString commandActionShortcut() const;
+  QmlAlertModel *alertModel() const { return m_alertModel; }
 
   Q_INVOKABLE void forwardSearchText(const QString &text);
   Q_INVOKABLE void handleReturn();
@@ -127,4 +131,7 @@ private:
   bool m_hasActions = false;
   bool m_hasMultipleActions = false;
   QmlActionPanelModel *m_actionPanelModel = nullptr;
+
+  // Alert
+  QmlAlertModel *m_alertModel = nullptr;
 };

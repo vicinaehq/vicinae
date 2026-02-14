@@ -50,6 +50,9 @@ void AlertWidget::paintEvent(QPaintEvent *event) {
   painter.drawPath(path);
 }
 
+void AlertWidget::triggerConfirm() { handleConfirm(); }
+void AlertWidget::triggerCancel() { handleCancel(); }
+
 void AlertWidget::handleConfirm() {
   confirm();
   m_finished = true;
@@ -63,16 +66,20 @@ void AlertWidget::handleCancel() {
 }
 
 void AlertWidget::setMessage(const QString &message) {
+  m_messageText = message;
   _message->setText(message);
   _message->setVisible(!message.isEmpty());
 }
 
 void AlertWidget::setCancelText(const QString &text, const ColorLike &color) {
+  m_cancelText = text;
+  m_cancelColor = color;
   _cancelBtn->setText(text);
   _cancelBtn->setTextColor(color);
 }
 
 void AlertWidget::setIcon(const std::optional<ImageURL> &url) {
+  m_iconUrl = url;
   if (!url) {
     _icon->hide();
     return;
@@ -86,6 +93,8 @@ void AlertWidget::confirm() const {}
 void AlertWidget::canceled() const {}
 
 void AlertWidget::setConfirmText(const QString &text, const ColorLike &color) {
+  m_confirmText = text;
+  m_confirmColor = color;
   _actionBtn->setText(text);
   _actionBtn->setTextColor(color);
 }
@@ -111,7 +120,10 @@ void AlertWidget::keyPressEvent(QKeyEvent *event) {
   DialogContentWidget::keyPressEvent(event);
 }
 
-void AlertWidget::setTitle(const QString &title) { _title->setText(title); }
+void AlertWidget::setTitle(const QString &title) {
+  m_titleText = title;
+  _title->setText(title);
+}
 
 AlertWidget::AlertWidget(QWidget *parent)
     : DialogContentWidget(parent), _icon(new ImageWidget), _title(new TypographyWidget),
