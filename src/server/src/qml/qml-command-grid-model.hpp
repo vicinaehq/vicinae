@@ -5,6 +5,7 @@
 #include <QUrl>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <vector>
 
 class ActionPanelState;
@@ -14,6 +15,7 @@ class QmlCommandGridModel : public QAbstractListModel {
   Q_PROPERTY(int selectedSection READ selectedSection NOTIFY selectionChanged)
   Q_PROPERTY(int selectedItem READ selectedItem NOTIFY selectionChanged)
   Q_PROPERTY(int columns READ columns WRITE setColumns NOTIFY columnsChanged)
+  Q_PROPERTY(double aspectRatio READ aspectRatio WRITE setAspectRatio NOTIFY aspectRatioChanged)
 
 public:
   enum Role : std::uint16_t {
@@ -22,6 +24,8 @@ public:
     RowSectionIdx,
     RowStartItem,
     RowItemCount,
+    RowColumnsRole,
+    RowAspectRatioRole,
   };
 
   explicit QmlCommandGridModel(QObject *parent = nullptr);
@@ -53,14 +57,20 @@ public:
   int columns() const { return m_columns; }
   void setColumns(int cols);
 
+  double aspectRatio() const { return m_aspectRatio; }
+  void setAspectRatio(double ratio);
+
 signals:
   void selectionChanged();
   void columnsChanged();
+  void aspectRatioChanged();
 
 protected:
   struct SectionInfo {
     QString name;
     int count;
+    std::optional<int> columns;
+    std::optional<double> aspectRatio;
   };
 
   void setSections(const std::vector<SectionInfo> &sections);
@@ -81,9 +91,12 @@ private:
     QString sectionName;
     int startItem = 0;
     int itemCount = 0;
+    int columns = 0;
+    double aspectRatio = 1.0;
   };
 
   void rebuildRows();
+  int sectionColumns(int sectionIdx) const;
   int totalItemCount() const;
   int toGlobal(int section, int item) const;
   void fromGlobal(int globalIdx, int &section, int &item) const;
@@ -94,4 +107,5 @@ private:
   int m_selSection = -1;
   int m_selItem = -1;
   int m_columns = 8;
+  double m_aspectRatio = 1.0;
 };

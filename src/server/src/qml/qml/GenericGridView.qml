@@ -15,10 +15,12 @@ Item {
     // Cell delegate component — instantiated per cell.
     // The Loader parent exposes context properties:
     //   cellSection (int), cellItem (int), cellSelected (bool),
-    //   cellHovered (bool), cellSize (real), cmdModel (var)
+    //   cellHovered (bool), cellSize (real), cellWidth (real),
+    //   cellHeight (real), cmdModel (var)
     property Component cellDelegate: null
 
     property int columns: 8
+    property real aspectRatio: 1.0
     property real cellSpacing: 10
     property real horizontalPadding: 20
     property real cellInset: 0.10  // ratio of cell size (None≈0.05, Small=0.10, Medium=0.15, Large=0.25)
@@ -38,7 +40,7 @@ Item {
     readonly property bool _empty: listView.count === 0
 
     readonly property real cellSize:
-        (root.width - horizontalPadding * 2 - cellSpacing * (columns - 1)) / columns
+        Math.floor((root.width - horizontalPadding * 2 - cellSpacing * (columns - 1)) / columns)
 
     // Hidden TextMetrics to measure actual line heights from the font
     TextMetrics { id: _titleMetrics;    font.pointSize: Theme.smallerFontSize }
@@ -85,6 +87,8 @@ Item {
             required property int rowSectionIdx
             required property int rowStartItem
             required property int rowItemCount
+            required property int rowColumns
+            required property double rowAspectRatio
 
             sourceComponent: isSection ? sectionComponent : rowComponent
 
@@ -96,18 +100,28 @@ Item {
                 }
 			}
 
-			function computeItemHeight() {
-				let height = root.cellSize;
-				if (root.showCellTitle) height = height + _titleMetrics.font.pixelSize + root._textGap;
-				if (root.showCellSubtitle) height = height + _subtitleMetrics.font.pixelSize + root._textGap;
-				return height;
-			}
-
             Component {
                 id: rowComponent
                 Item {
+                    id: rowItem
                     width: delegateLoader.width
-					height: computeItemHeight()
+
+                    readonly property int effectiveCols: delegateLoader.rowColumns
+                    readonly property real effectiveAspectRatio: delegateLoader.rowAspectRatio
+                    readonly property real cellWidth:
+                        Math.floor((root.width - root.horizontalPadding * 2
+                         - root.cellSpacing * (effectiveCols - 1)) / effectiveCols)
+                    readonly property real cellHeight: Math.floor(cellWidth / effectiveAspectRatio)
+
+                    readonly property real cellTextHeight: {
+                        if (!root.showCellTitle && !root.showCellSubtitle) return 0
+                        var h = root._textGap
+                        if (root.showCellTitle) h += _titleMetrics.font.pixelSize
+                        if (root.showCellSubtitle) h += _subtitleMetrics.font.pixelSize
+                        return h
+                    }
+
+                    height: cellHeight + cellTextHeight
 
                     Row {
                         x: root.horizontalPadding
@@ -128,14 +142,14 @@ Item {
                                     && root.cmdModel.selectedSection === cellSection
                                     && root.cmdModel.selectedItem === cellItem
 
-                                width: root.cellSize
-                                height: root.rowHeight
+                                width: rowItem.cellWidth
+                                height: rowItem.cellHeight + rowItem.cellTextHeight
 
-                                // Square background
+                                // Cell background (no border — overlay handles it)
                                 SourceBlendRect {
                                     id: cellBackground
-                                    width: root.cellSize
-                                    height: root.cellSize
+                                    width: rowItem.cellWidth
+                                    height: rowItem.cellHeight
                                     radius: 10
                                     backgroundColor: {
                                         var bg = Theme.background
@@ -145,32 +159,46 @@ Item {
                                         var bg = Theme.gridItemBackground
                                         return Qt.rgba(bg.r, bg.g, bg.b, Config.windowOpacity)
                                     }
-                                    borderWidth: (cellWrapper.cellSelected || cellMouseArea.containsMouse) ? 3 : 0
-                                    borderColor: cellWrapper.cellSelected
-                                                 ? Theme.gridItemSelectionOutline
-                                                 : Theme.gridItemHoverOutline
                                 }
 
-                                // Delegate content — inside the square with inset margins
+                                // Delegate content — inside the cell with inset margins
                                 Loader {
-                                    x: root.cellSize * root.cellInset
-                                    y: root.cellSize * root.cellInset
-                                    width: root.cellSize * (1 - 2 * root.cellInset)
-                                    height: root.cellSize * (1 - 2 * root.cellInset)
+                                    x: rowItem.cellWidth * root.cellInset
+                                    y: rowItem.cellHeight * root.cellInset
+                                    width: rowItem.cellWidth * (1 - 2 * root.cellInset)
+                                    height: rowItem.cellHeight * (1 - 2 * root.cellInset)
                                     sourceComponent: root.cellDelegate
                                     property int cellSection: cellWrapper.cellSection
                                     property int cellItem: cellWrapper.cellItem
                                     property bool cellSelected: cellWrapper.cellSelected
                                     property bool cellHovered: cellMouseArea.containsMouse
-                                    property real cellSize: root.cellSize
+                                    property real cellSize: rowItem.cellWidth
+                                    property real cellWidth: rowItem.cellWidth
+                                    property real cellHeight: rowItem.cellHeight
                                     property var cmdModel: root.cmdModel
                                 }
 
-                                // Title below the square
+                                // Overlay — draws selection/hover border on top of content.
+                                // Expanded by 2px so the stroke's outer half fits.
+                                SourceBlendRect {
+                                    readonly property real pad: 2
+                                    x: -pad
+                                    y: -pad
+                                    width: rowItem.cellWidth + pad * 2
+                                    height: rowItem.cellHeight + pad * 2
+                                    radius: 10
+                                    overlay: true
+                                    borderWidth: (cellWrapper.cellSelected || cellMouseArea.containsMouse) ? 2 : 0
+                                    borderColor: cellWrapper.cellSelected
+                                                 ? Theme.gridItemSelectionOutline
+                                                 : Theme.gridItemHoverOutline
+                                }
+
+                                // Title below the cell
                                 Text {
                                     visible: root.showCellTitle
-                                    y: root.cellSize + root._textGap
-                                    width: root.cellSize
+                                    y: rowItem.cellHeight + root._textGap
+                                    width: rowItem.cellWidth
                                     height: _titleMetrics.font.pixelSize
                                     text: (root.cmdModel && typeof root.cmdModel.cellTitle === "function")
                                           ? root.cmdModel.cellTitle(cellWrapper.cellSection, cellWrapper.cellItem) : ""
@@ -184,9 +212,9 @@ Item {
                                 // Subtitle below title
                                 Text {
                                     visible: root.showCellSubtitle
-                                    y: root.cellSize + root._textGap
+                                    y: rowItem.cellHeight + root._textGap
                                        + (root.showCellTitle ? _titleMetrics.font.pixelSize + root._textGap : 0)
-                                    width: root.cellSize
+                                    width: rowItem.cellWidth
                                     height: _subtitleMetrics.font.pixelSize
                                     text: (root.cmdModel && typeof root.cmdModel.cellSubtitle === "function")
                                           ? root.cmdModel.cellSubtitle(cellWrapper.cellSection, cellWrapper.cellItem) : ""

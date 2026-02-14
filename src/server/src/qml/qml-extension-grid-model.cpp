@@ -10,8 +10,27 @@ void QmlExtensionGridModel::setExtensionData(const GridModel &model) {
   m_model = model;
   m_placeholder = QString::fromStdString(model.searchPlaceholderText);
 
-  // Set columns from the model
+  // Set grid-level defaults from the model
   if (model.columns) { setColumns(*model.columns); }
+  if (model.aspectRatio > 0.0) { setAspectRatio(model.aspectRatio); }
+  if (m_fit != model.fit) {
+    m_fit = model.fit;
+    emit fitChanged();
+  }
+
+  // Map Inset enum to ratio: None≈0.05, Small=0.10, Medium=0.15, Large=0.25
+  double newInset;
+  switch (model.inset) {
+  case GridItemContentWidget::Inset::None: newInset = 0.05; break;
+  case GridItemContentWidget::Inset::Small: newInset = 0.10; break;
+  case GridItemContentWidget::Inset::Medium: newInset = 0.15; break;
+  case GridItemContentWidget::Inset::Large: newInset = 0.25; break;
+  default: newInset = 0.10; break;
+  }
+  if (!qFuzzyCompare(m_inset, newInset)) {
+    m_inset = newInset;
+    emit insetChanged();
+  }
 
   // Convert GridModel::items (flat items + section items) into sections
   m_sections.clear();
@@ -72,7 +91,7 @@ void QmlExtensionGridModel::rebuildFromModel() {
   std::vector<SectionInfo> infos;
   infos.reserve(sections.size());
   for (const auto &sec : sections) {
-    infos.push_back({QString::fromStdString(sec.name), static_cast<int>(sec.items.size())});
+    infos.push_back({QString::fromStdString(sec.name), static_cast<int>(sec.items.size()), sec.columns, sec.aspectRatio});
   }
   setSections(infos);
   selectFirst();

@@ -7,7 +7,9 @@
 #include "ui/image/qicon-image-loader.hpp"
 #include <QCoreApplication>
 #include <QEventLoop>
+#include <QGuiApplication>
 #include <QPixmapCache>
+#include <QtMath>
 #include <QThread>
 #include <QTimer>
 
@@ -15,7 +17,7 @@ QmlImageProvider::QmlImageProvider() : QQuickImageProvider(QQuickImageProvider::
 
 // Synchronously render via a loader that communicates results through signals.
 // Must be called on the main/GUI thread.
-static QPixmap renderViaSignal(AbstractImageLoader &loader, const QSize &targetSize) {
+static QPixmap renderViaSignal(AbstractImageLoader &loader, const QSize &targetSize, qreal dpr = 1.0) {
   QEventLoop loop;
   QPixmap captured;
   bool gotResult = false;
@@ -31,7 +33,7 @@ static QPixmap renderViaSignal(AbstractImageLoader &loader, const QSize &targetS
                      loop.quit();
                    });
 
-  loader.render({.size = targetSize, .devicePixelRatio = 1});
+  loader.render({.size = targetSize, .devicePixelRatio = dpr});
 
   if (!gotResult) {
     QTimer::singleShot(100, &loop, &QEventLoop::quit);
@@ -53,7 +55,9 @@ static QPixmap doRequestPixmap(const QString &id, QSize *size, const QSize &requ
   QString type = id.left(colonIdx);
   QString name = id.mid(colonIdx + 1);
 
-  QSize targetSize = requestedSize.isValid() ? requestedSize : QSize(32, 32);
+  qreal dpr = qGuiApp->devicePixelRatio();
+  QSize logical = requestedSize.isValid() ? requestedSize : QSize(32, 32);
+  QSize targetSize(qCeil(logical.width() * dpr), qCeil(logical.height() * dpr));
 
   // Check pixmap cache first
   QString cacheKey = QString("qml_%1_%2_%3x%4").arg(type, name).arg(targetSize.width()).arg(targetSize.height());
@@ -94,27 +98,28 @@ static QPixmap doRequestPixmap(const QString &id, QSize *size, const QSize &requ
       loader.setBackgroundColor(*bgTint);
     if (fgTint)
       loader.setFillColor(*fgTint);
-    result = loader.renderSync({.size = targetSize, .devicePixelRatio = 1, .fill = fgColor});
+    result = loader.renderSync({.size = targetSize, .devicePixelRatio = dpr, .fill = fgColor});
   } else if (type == "system") {
     QIconImageLoader loader(name);
-    result = renderViaSignal(loader, targetSize);
+    result = renderViaSignal(loader, targetSize, dpr);
   } else if (type == "local") {
     std::filesystem::path path = name.toStdString();
     LocalImageLoader loader(path);
-    result = renderViaSignal(loader, targetSize);
+    result = renderViaSignal(loader, targetSize, dpr);
   } else if (type == "emoji") {
     EmojiImageLoader loader(name);
-    result = renderViaSignal(loader, targetSize);
+    result = renderViaSignal(loader, targetSize, dpr);
   }
 
   // Fallback: return a placeholder for unknown/unsupported types
   if (result.isNull()) {
     QString fallbackIcon = QString(":icons/question-mark-circle.svg");
     BuiltinIconLoader loader(fallbackIcon);
-    result = loader.renderSync({.size = targetSize, .devicePixelRatio = 1, .fill = fgColor});
+    result = loader.renderSync({.size = targetSize, .devicePixelRatio = dpr, .fill = fgColor});
   }
 
   if (!result.isNull()) {
+    result.setDevicePixelRatio(dpr);
     QPixmapCache::insert(cacheKey, result);
   }
 
