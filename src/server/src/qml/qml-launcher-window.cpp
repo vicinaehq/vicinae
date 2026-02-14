@@ -1,5 +1,6 @@
 #include "qml-launcher-window.hpp"
 #include "qml-action-panel-model.hpp"
+#include "qml-alert-model.hpp"
 #include "qml-async-image-provider.hpp"
 #include "qml-bridge-view.hpp"
 #include "qml-image-source.hpp"
@@ -29,6 +30,7 @@ QmlLauncherWindow::QmlLauncherWindow(ApplicationContext &ctx, QObject *parent)
   m_searchModel = new QmlRootSearchModel(ctx, this);
   m_themeBridge = new QmlThemeBridge(this);
   m_configBridge = new QmlConfigBridge(this);
+  m_alertModel = new QmlAlertModel(*ctx.navigation, this);
 
   // Register custom QML types
   qmlRegisterType<QmlSourceBlendRect>("Vicinae", 1, 0, "SourceBlendRect");

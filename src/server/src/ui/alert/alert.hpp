@@ -20,6 +20,15 @@ class AlertWidget : public DialogContentWidget {
   std::function<void(void)> m_cancelCallback;
   bool m_finished = false;
 
+  // Shadow data for extraction by QML bridge
+  QString m_titleText = "Are you sure?";
+  QString m_messageText = "This action cannot be undone";
+  std::optional<ImageURL> m_iconUrl = ImageURL::builtin("warning").setFill(SemanticColor::Red);
+  QString m_confirmText = "Confirm";
+  QString m_cancelText = "Cancel";
+  ColorLike m_confirmColor = SemanticColor::Red;
+  ColorLike m_cancelColor = SemanticColor::Foreground;
+
   void focusInEvent(QFocusEvent *event) override;
   void paintEvent(QPaintEvent *event) override;
   void handleConfirm();
@@ -38,6 +47,17 @@ public:
   void setCancelText(const QString &text, const ColorLike &color);
   void setIcon(const std::optional<ImageURL> &url);
   void setConfirmText(const QString &text, const ColorLike &color);
+
+  QString titleText() const { return m_titleText; }
+  QString messageText() const { return m_messageText; }
+  std::optional<ImageURL> iconUrl() const { return m_iconUrl; }
+  QString confirmButtonText() const { return m_confirmText; }
+  QString cancelButtonText() const { return m_cancelText; }
+  ColorLike confirmColor() const { return m_confirmColor; }
+  ColorLike cancelColor() const { return m_cancelColor; }
+
+  void triggerConfirm();
+  void triggerCancel();
 
   AlertWidget(QWidget *parent = nullptr);
 

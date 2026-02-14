@@ -65,6 +65,7 @@ Window {
             id: searchBar
             Layout.fillWidth: true
             Layout.preferredHeight: 60
+            enabled: !launcher.alertModel.visible
         }
 
         Rectangle {
@@ -113,6 +114,24 @@ Window {
         anchors.bottomMargin: footer.height + 1 + Config.borderWidth
     }
 
+    // Alert dialog
+    AlertDialog {
+        id: alertDialog
+    }
+
+    Connections {
+        target: launcher.alertModel
+        function onVisibleChanged() {
+            if (launcher.alertModel.visible) {
+                alertDialog.open()
+            } else {
+                if (alertDialog.visible)
+                    alertDialog.close()
+                searchBar.focusInput()
+            }
+        }
+    }
+
     Connections {
         target: launcher
         function onCommandViewPushed(componentUrl, properties) {
@@ -143,6 +162,7 @@ Window {
 
     Shortcut {
         sequence: "Escape"
+        enabled: !launcher.alertModel.visible
         onActivated: {
             if (launcher.actionPanelOpen) {
                 launcher.closeActionPanel()
@@ -154,11 +174,13 @@ Window {
 
     Shortcut {
         sequence: "Shift+Escape"
+        enabled: !launcher.alertModel.visible
         onActivated: launcher.popToRoot()
     }
 
     Shortcut {
         sequence: "Ctrl+B"
+        enabled: !launcher.alertModel.visible
         onActivated: launcher.toggleActionPanel()
     }
 
