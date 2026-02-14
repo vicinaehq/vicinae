@@ -9,6 +9,9 @@
 #include "qml-config-bridge.hpp"
 #include "qml-theme-bridge.hpp"
 #include "navigation-controller.hpp"
+#include "services/toast/toast-service.hpp"
+#include "service-registry.hpp"
+#include "lib/keyboard/keyboard.hpp"
 #include "ui/views/base-view.hpp"
 #include <QGuiApplication>
 #include <QQmlContext>
@@ -106,6 +109,29 @@ QmlLauncherWindow::QmlLauncherWindow(ApplicationContext &ctx, QObject *parent)
   // Close action panel on view push/pop
   connect(nav, &NavigationController::viewPushed,
           this, [this](const BaseView *) { closeActionPanel(); });
+
+  // Navigation status (left side of footer)
+  connect(nav, &NavigationController::navigationStatusChanged, this,
+          [this](const QString &title, const ImageURL &icon) {
+            m_navigationTitle = title;
+            m_navigationIcon = QmlImageUrl(icon);
+            emit navigationStatusChanged();
+          });
+
+  // Toast service
+  auto *toast = m_ctx.services->toastService();
+  connect(toast, &ToastService::toastActivated, this, [this](const Toast *t) {
+    m_toastActive = true;
+    m_toastTitle = t->title();
+    m_toastMessage = t->message();
+    m_toastStyle = static_cast<int>(t->priority());
+    emit toastChanged();
+    emit toastActiveChanged();
+  });
+  connect(toast, &ToastService::toastHidden, this, [this]() {
+    m_toastActive = false;
+    emit toastActiveChanged();
+  });
 }
 
 void QmlLauncherWindow::handleVisibilityChanged(bool visible) {
@@ -287,6 +313,15 @@ QString QmlLauncherWindow::commandActionTitle() const {
   return action ? action->title() : QString();
 }
 
+QString QmlLauncherWindow::commandActionShortcut() const {
+  auto *state = m_ctx.navigation->topState();
+  if (!state || !state->actionPanelState) return {};
+  auto *action = state->actionPanelState->primaryAction();
+  if (!action) return {};
+  auto shortcut = action->shortcut().value_or(Keyboard::Shortcut::enter());
+  return shortcut.toDisplayString();
+}
+
 void QmlLauncherWindow::toggleActionPanel() {
   if (m_actionPanelOpen) {
     closeActionPanel();
@@ -306,10 +341,16 @@ void QmlLauncherWindow::closeActionPanel() {
 void QmlLauncherWindow::updateActionPanelModel() {
   auto *state = m_ctx.navigation->topState();
   bool newHasActions = state && state->actionPanelState && state->actionPanelState->actionCount() > 0;
+  bool newHasMultiple = state && state->actionPanelState && state->actionPanelState->actionCount() > 1;
 
   if (newHasActions != m_hasActions) {
     m_hasActions = newHasActions;
     emit hasActionsChanged();
+  }
+
+  if (newHasMultiple != m_hasMultipleActions) {
+    m_hasMultipleActions = newHasMultiple;
+    emit hasMultipleActionsChanged();
   }
 
   if (!state || !state->actionPanelState) {

@@ -8,6 +8,9 @@
     <file alias="SelectableDelegate.qml">qml/SelectableDelegate.qml</file>
     <file alias="SectionHeader.qml">qml/SectionHeader.qml</file>
     <file alias="Footer.qml">qml/Footer.qml</file>
+    <file alias="FooterNavStatus.qml">qml/FooterNavStatus.qml</file>
+    <file alias="FooterToast.qml">qml/FooterToast.qml</file>
+    <file alias="ShortcutBadge.qml">qml/ShortcutBadge.qml</file>
     <file alias="CommandListView.qml">qml/CommandListView.qml</file>
     <file alias="CalculatorResultDelegate.qml">qml/CalculatorResultDelegate.qml</file>
     <file alias="ThemeListView.qml">qml/ThemeListView.qml</file>
