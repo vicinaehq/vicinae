@@ -26,6 +26,10 @@ class QmlThemeBridge : public QObject {
   Q_PROPERTY(QColor gridItemSelectionOutline READ gridItemSelectionOutline NOTIFY changed)
   Q_PROPERTY(QColor gridItemHoverOutline READ gridItemHoverOutline NOTIFY changed)
   Q_PROPERTY(QColor danger READ danger NOTIFY changed)
+  Q_PROPERTY(QColor toastSuccess READ toastSuccess NOTIFY changed)
+  Q_PROPERTY(QColor toastInfo READ toastInfo NOTIFY changed)
+  Q_PROPERTY(QColor toastWarning READ toastWarning NOTIFY changed)
+  Q_PROPERTY(QColor toastDanger READ toastDanger NOTIFY changed)
   Q_PROPERTY(qreal regularFontSize READ regularFontSize NOTIFY changed)
   Q_PROPERTY(qreal smallerFontSize READ smallerFontSize NOTIFY changed)
 
@@ -56,6 +60,10 @@ public:
   QColor gridItemSelectionOutline() const { return resolve(SemanticColor::GridItemSelectionOutline); }
   QColor gridItemHoverOutline() const { return resolve(SemanticColor::GridItemHoverOutline); }
   QColor danger() const { return resolve(SemanticColor::TextDanger); }
+  QColor toastSuccess() const { return resolve(SemanticColor::Green); }
+  QColor toastInfo() const { return resolve(SemanticColor::Blue); }
+  QColor toastWarning() const { return resolve(SemanticColor::Orange); }
+  QColor toastDanger() const { return resolve(SemanticColor::Red); }
 
   qreal regularFontSize() const { return ThemeService::instance().pointSize(TextRegular); }
   qreal smallerFontSize() const { return ThemeService::instance().pointSize(TextSmaller); }
