@@ -94,6 +94,8 @@ Item {
             boundsBehavior: Flickable.StopAtBounds
             highlightMoveDuration: 0
             currentIndex: -1
+            topMargin: 4
+            bottomMargin: 4
 
             onCurrentIndexChanged: root.itemSelected(currentIndex)
 
