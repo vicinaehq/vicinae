@@ -30,6 +30,7 @@ class QmlSourceBlendRect : public QQuickPaintedItem {
   Q_PROPERTY(QColor backgroundColor READ backgroundColor WRITE setBackgroundColor NOTIFY backgroundColorChanged)
   Q_PROPERTY(QColor secondaryColor READ secondaryColor WRITE setSecondaryColor NOTIFY secondaryColorChanged)
   Q_PROPERTY(qreal secondaryHeight READ secondaryHeight WRITE setSecondaryHeight NOTIFY secondaryHeightChanged)
+  Q_PROPERTY(bool overlay READ overlay WRITE setOverlay NOTIFY overlayChanged)
 
 public:
   explicit QmlSourceBlendRect(QQuickItem *parent = nullptr) : QQuickPaintedItem(parent) {
@@ -72,8 +73,18 @@ public:
     if (m_secondaryHeight != h) { m_secondaryHeight = h; emit secondaryHeightChanged(); update(); }
   }
 
+  bool overlay() const { return m_overlay; }
+  void setOverlay(bool v) {
+    if (m_overlay != v) { m_overlay = v; emit overlayChanged(); update(); }
+  }
+
   void paint(QPainter *painter) override {
     painter->setRenderHint(QPainter::Antialiasing, true);
+
+    if (m_overlay) {
+      paintOverlay(painter);
+      return;
+    }
 
     const bool hasBackground = m_backgroundColor.alpha() > 0;
 
@@ -126,12 +137,36 @@ public:
 
   QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *data) override {
     auto *node = QQuickPaintedItem::updatePaintNode(oldNode, data);
-    if (node)
+    if (node && !m_overlay)
       disableBlending(node);
     return node;
   }
 
 private:
+  /// Overlay mode: paints only corner mask + border with normal alpha blending.
+  /// Content behind the interior shows through; corners are opaque-filled to
+  /// give a rounded-clip appearance.
+  ///
+  /// The item should be sized with `overlayPadding` px extra on each side
+  /// so the border ring (1px outside the cell) fits in the texture.
+  static constexpr qreal overlayPadding = 2;
+
+  void paintOverlay(QPainter *painter) {
+    // Overlay mode: draw only the selection/hover border on top of content.
+    if (m_borderWidth <= 0 || m_borderColor.alpha() <= 0)
+      return;
+
+    QRectF cellRect = boundingRect().adjusted(overlayPadding, overlayPadding,
+                                              -overlayPadding, -overlayPadding);
+
+    painter->setRenderHint(QPainter::Antialiasing, true);
+    QPainterPath borderPath;
+    borderPath.addRoundedRect(cellRect, m_radius, m_radius);
+    painter->setPen(QPen(m_borderColor, m_borderWidth));
+    painter->setBrush(Qt::NoBrush);
+    painter->drawPath(borderPath);
+  }
+
   static void disableBlending(QSGNode *node) {
     if (node->type() == QSGNode::GeometryNodeType) {
       auto *geo = static_cast<QSGGeometryNode *>(node);
@@ -152,6 +187,7 @@ signals:
   void backgroundColorChanged();
   void secondaryColorChanged();
   void secondaryHeightChanged();
+  void overlayChanged();
 
 private:
   QColor m_color = Qt::transparent;
@@ -161,4 +197,5 @@ private:
   QColor m_backgroundColor = Qt::transparent;
   QColor m_secondaryColor = Qt::transparent;
   qreal m_secondaryHeight = 0;
+  bool m_overlay = false;
 };
