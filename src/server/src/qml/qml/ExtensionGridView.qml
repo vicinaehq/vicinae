@@ -3,6 +3,8 @@ import QtQuick.Controls
 
 GenericGridView {
     columns: cmdModel ? cmdModel.columns : 8
+    aspectRatio: cmdModel ? cmdModel.aspectRatio : 1.0
+    cellInset: cmdModel ? cmdModel.inset : 0.10
     showCellTitle: true
     showCellSubtitle: true
 
@@ -26,13 +28,20 @@ GenericGridView {
                 anchors.centerIn: parent
                 width: parent.width
                 height: parent.height
+                // ObjectFit enum: 0=Contain, 1=Fill, 2=Stretch
+                fillMode: {
+                    var fit = cellRoot.model ? cellRoot.model.fit : 0
+                    if (fit === 1) return Image.PreserveAspectCrop
+                    if (fit === 2) return Image.Stretch
+                    return Image.PreserveAspectFit
+                }
                 source: {
                     // Re-evaluate when theme changes (icon URLs embed tint color)
                     var _ = Theme.foreground
                     return cellRoot.model ? cellRoot.model.cellIcon(cellRoot.sec, cellRoot.itm) : ""
                 }
-                sourceSize.width: width
-                sourceSize.height: height
+                sourceSize.width: cellRoot.parent ? cellRoot.parent.cellWidth : width
+                sourceSize.height: cellRoot.parent ? cellRoot.parent.cellHeight : height
                 asynchronous: true
                 cache: true
             }

@@ -12,6 +12,7 @@
 #include <QQuickTextureFactory>
 #include <QSvgRenderer>
 #include <QFutureWatcher>
+#include <QtMath>
 #include <QThreadPool>
 #include <QTimer>
 
@@ -23,13 +24,14 @@ class ViciImageResponse : public QQuickImageResponse {
   Q_OBJECT
 
 public:
-  explicit ViciImageResponse() = default;
+  explicit ViciImageResponse(qreal dpr = 1.0) : m_dpr(dpr) {}
 
   QQuickTextureFactory *textureFactory() const override {
     return QQuickTextureFactory::textureFactoryForImage(m_image);
   }
 
   void finish(QImage image) {
+    image.setDevicePixelRatio(m_dpr);
     m_image = std::move(image);
     emit finished();
   }
@@ -37,11 +39,13 @@ public:
   // Schedule finish on next event-loop iteration (for sync producers
   // that complete immediately inside requestImageResponse).
   void finishDeferred(QImage image) {
+    image.setDevicePixelRatio(m_dpr);
     m_image = std::move(image);
     QTimer::singleShot(0, this, &QQuickImageResponse::finished);
   }
 
 private:
+  qreal m_dpr;
   QImage m_image;
 };
 
@@ -134,8 +138,11 @@ static QImage renderLocalRaster(const QString &path, const QSize &size) {
   QImageReader reader(path);
   if (!reader.canRead()) return {};
 
-  if (size.isValid())
-    reader.setScaledSize(reader.size().scaled(size, Qt::KeepAspectRatio));
+  if (size.isValid()) {
+    QSize original = reader.size();
+    if (original.isValid() && (original.width() > size.width() || original.height() > size.height()))
+      reader.setScaledSize(original.scaled(size, Qt::KeepAspectRatioByExpanding));
+  }
 
   return reader.read();
 }
@@ -154,8 +161,8 @@ static QImage decodeImageData(const QByteArray &data, const QSize &size) {
 
   if (size.isValid()) {
     auto original = reader.size();
-    if (original.isValid())
-      reader.setScaledSize(original.scaled(size, Qt::KeepAspectRatio));
+    if (original.isValid() && (original.width() > size.width() || original.height() > size.height()))
+      reader.setScaledSize(original.scaled(size, Qt::KeepAspectRatioByExpanding));
   }
 
   QImage result = reader.read();
@@ -227,8 +234,10 @@ static ParsedId parseId(const QString &id) {
 QQuickImageResponse *QmlAsyncImageProvider::requestImageResponse(
     const QString &id, const QSize &requestedSize) {
 
-  auto *response = new ViciImageResponse;
-  QSize size = requestedSize.isValid() ? requestedSize : QSize(32, 32);
+  qreal dpr = qGuiApp->devicePixelRatio();
+  auto *response = new ViciImageResponse(dpr);
+  QSize logical = requestedSize.isValid() ? requestedSize : QSize(32, 32);
+  QSize size(qCeil(logical.width() * dpr), qCeil(logical.height() * dpr));
   auto parsed = parseId(id);
 
   if (parsed.type == QStringLiteral("builtin")) {

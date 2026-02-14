@@ -22,6 +22,8 @@ QVariant QmlCommandGridModel::data(const QModelIndex &index, int role) const {
   case RowSectionIdx: return r.sectionIdx;
   case RowStartItem: return r.startItem;
   case RowItemCount: return r.itemCount;
+  case RowColumnsRole: return r.columns;
+  case RowAspectRatioRole: return r.aspectRatio;
   default: return {};
   }
 }
@@ -33,6 +35,8 @@ QHash<int, QByteArray> QmlCommandGridModel::roleNames() const {
       {RowSectionIdx, "rowSectionIdx"},
       {RowStartItem, "rowStartItem"},
       {RowItemCount, "rowItemCount"},
+      {RowColumnsRole, "rowColumns"},
+      {RowAspectRatioRole, "rowAspectRatio"},
   };
 }
 
@@ -45,11 +49,14 @@ void QmlCommandGridModel::setSections(const std::vector<SectionInfo> &sections) 
     const auto &sec = m_sections[s];
     if (sec.count == 0) continue;
 
-    m_rows.push_back({FlatRow::SectionHeader, s, sec.name, 0, 0});
+    int cols = sec.columns.value_or(m_columns);
+    double ar = sec.aspectRatio.value_or(m_aspectRatio);
 
-    for (int i = 0; i < sec.count; i += m_columns) {
-      int count = std::min(m_columns, sec.count - i);
-      m_rows.push_back({FlatRow::ItemRow, s, {}, i, count});
+    m_rows.push_back({FlatRow::SectionHeader, s, sec.name, 0, 0, cols, ar});
+
+    for (int i = 0; i < sec.count; i += cols) {
+      int count = std::min(cols, sec.count - i);
+      m_rows.push_back({FlatRow::ItemRow, s, {}, i, count, cols, ar});
     }
   }
 
@@ -68,6 +75,19 @@ void QmlCommandGridModel::setColumns(int cols) {
     m_selItem = -1;
     select(s, i);
   }
+}
+
+void QmlCommandGridModel::setAspectRatio(double ratio) {
+  if (ratio <= 0.0) ratio = 1.0;
+  if (qFuzzyCompare(ratio, m_aspectRatio)) return;
+  m_aspectRatio = ratio;
+  emit aspectRatioChanged();
+  rebuildRows();
+}
+
+int QmlCommandGridModel::sectionColumns(int sectionIdx) const {
+  if (sectionIdx < 0 || sectionIdx >= static_cast<int>(m_sections.size())) return m_columns;
+  return m_sections[sectionIdx].columns.value_or(m_columns);
 }
 
 void QmlCommandGridModel::rebuildRows() { setSections(m_sections); }
@@ -165,12 +185,13 @@ void QmlCommandGridModel::navigateLeft() {
 void QmlCommandGridModel::navigateDown() {
   if (m_selSection < 0) return;
 
-  int col = m_selItem % m_columns;
-  int nextRow = (m_selItem / m_columns) + 1;
-  int maxRowInSection = (m_sections[m_selSection].count - 1) / m_columns;
+  int cols = sectionColumns(m_selSection);
+  int col = m_selItem % cols;
+  int nextRow = (m_selItem / cols) + 1;
+  int maxRowInSection = (m_sections[m_selSection].count - 1) / cols;
 
   if (nextRow <= maxRowInSection) {
-    int targetItem = nextRow * m_columns + col;
+    int targetItem = nextRow * cols + col;
     if (targetItem >= m_sections[m_selSection].count) targetItem = m_sections[m_selSection].count - 1;
     select(m_selSection, targetItem);
     return;
@@ -178,7 +199,8 @@ void QmlCommandGridModel::navigateDown() {
 
   for (int s = m_selSection + 1; s < static_cast<int>(m_sections.size()); ++s) {
     if (m_sections[s].count > 0) {
-      int targetItem = std::min(col, m_sections[s].count - 1);
+      int targetCols = sectionColumns(s);
+      int targetItem = std::min(col, std::min(targetCols, m_sections[s].count) - 1);
       select(s, targetItem);
       return;
     }
@@ -186,7 +208,8 @@ void QmlCommandGridModel::navigateDown() {
 
   for (int s = 0; s < static_cast<int>(m_sections.size()); ++s) {
     if (m_sections[s].count > 0) {
-      int targetItem = std::min(col, m_sections[s].count - 1);
+      int targetCols = sectionColumns(s);
+      int targetItem = std::min(col, std::min(targetCols, m_sections[s].count) - 1);
       select(s, targetItem);
       return;
     }
@@ -196,18 +219,21 @@ void QmlCommandGridModel::navigateDown() {
 void QmlCommandGridModel::navigateUp() {
   if (m_selSection < 0) return;
 
-  int col = m_selItem % m_columns;
-  int currentRow = m_selItem / m_columns;
+  int cols = sectionColumns(m_selSection);
+  int col = m_selItem % cols;
+  int currentRow = m_selItem / cols;
 
   if (currentRow > 0) {
-    select(m_selSection, (currentRow - 1) * m_columns + col);
+    select(m_selSection, (currentRow - 1) * cols + col);
     return;
   }
 
   for (int s = m_selSection - 1; s >= 0; --s) {
     if (m_sections[s].count > 0) {
-      int lastRow = (m_sections[s].count - 1) / m_columns;
-      int targetItem = lastRow * m_columns + col;
+      int targetCols = sectionColumns(s);
+      int lastRow = (m_sections[s].count - 1) / targetCols;
+      int targetCol = std::min(col, targetCols - 1);
+      int targetItem = lastRow * targetCols + targetCol;
       if (targetItem >= m_sections[s].count) targetItem = m_sections[s].count - 1;
       select(s, targetItem);
       return;
@@ -216,8 +242,10 @@ void QmlCommandGridModel::navigateUp() {
 
   for (int s = static_cast<int>(m_sections.size()) - 1; s >= 0; --s) {
     if (m_sections[s].count > 0) {
-      int lastRow = (m_sections[s].count - 1) / m_columns;
-      int targetItem = lastRow * m_columns + col;
+      int targetCols = sectionColumns(s);
+      int lastRow = (m_sections[s].count - 1) / targetCols;
+      int targetCol = std::min(col, targetCols - 1);
+      int targetItem = lastRow * targetCols + targetCol;
       if (targetItem >= m_sections[s].count) targetItem = m_sections[s].count - 1;
       select(s, targetItem);
       return;

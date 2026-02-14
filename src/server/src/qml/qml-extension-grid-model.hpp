@@ -9,6 +9,8 @@ class QmlExtensionGridModel : public QmlCommandGridModel {
   Q_PROPERTY(QString emptyTitle READ emptyTitle NOTIFY emptyViewChanged)
   Q_PROPERTY(QString emptyDescription READ emptyDescription NOTIFY emptyViewChanged)
   Q_PROPERTY(QString emptyIcon READ emptyIcon NOTIFY emptyViewChanged)
+  Q_PROPERTY(int fit READ fit NOTIFY fitChanged)
+  Q_PROPERTY(double inset READ inset NOTIFY insetChanged)
 
 public:
   using NotifyFn = std::function<void(const QString &handler, const QJsonArray &args)>;
@@ -30,9 +32,13 @@ public:
   QString emptyTitle() const;
   QString emptyDescription() const;
   QString emptyIcon() const;
+  int fit() const { return static_cast<int>(m_fit); }
+  double inset() const { return m_inset; }
 
 signals:
   void emptyViewChanged();
+  void fitChanged();
+  void insetChanged();
 
 protected:
   std::unique_ptr<ActionPanelState> createActionPanel(int section, int item) const override;
@@ -55,6 +61,8 @@ private:
   std::vector<Section> m_sections;
   std::vector<Section> m_filteredSections;
   GridModel m_model;
+  ObjectFit m_fit = ObjectFit::Contain;
+  double m_inset = 0.10;
   QString m_filter;
   QString m_placeholder;
 
