@@ -173,6 +173,14 @@ void QmlLauncherWindow::handleCurrentViewChanged() {
   if (nav->viewStackSize() == 1) {
     // Back to root search
     removeWidget();
+    if (!m_searchAccessoryUrl.isEmpty()) {
+      m_searchAccessoryUrl.clear();
+      emit searchAccessoryChanged();
+    }
+    if (m_commandViewHost) {
+      m_commandViewHost = nullptr;
+      emit commandViewHostChanged();
+    }
     emit commandStackCleared();
     return;
   }
@@ -187,6 +195,17 @@ void QmlLauncherWindow::handleCurrentViewChanged() {
       m_activeWidget->hide();
       if (auto *wh = m_activeWidget->windowHandle()) wh->setParent(nullptr);
       m_activeWidget = nullptr;
+    }
+
+    // Update search accessory and host for this bridge view
+    auto newAccessoryUrl = bridge->qmlSearchAccessoryUrl();
+    if (m_searchAccessoryUrl != newAccessoryUrl) {
+      m_searchAccessoryUrl = newAccessoryUrl;
+      emit searchAccessoryChanged();
+    }
+    if (m_commandViewHost != bridge) {
+      m_commandViewHost = bridge;
+      emit commandViewHostChanged();
     }
 
     if (!wasPopped) {
@@ -285,6 +304,13 @@ void QmlLauncherWindow::forwardKey(int key, int modifiers) {
   // Check for action shortcuts first
   if (auto *action = m_ctx.navigation->findBoundAction(&event)) {
     m_ctx.navigation->executeAction(action);
+    return;
+  }
+
+  // Open search accessory selector (e.g. clipboard kind filter dropdown)
+  if (Keyboard::Shortcut(Keybind::OpenSearchAccessorySelector) == &event
+      && !m_searchAccessoryUrl.isEmpty()) {
+    emit openSearchAccessoryRequested();
     return;
   }
 

@@ -10,6 +10,9 @@ public:
   /// The QML component to instantiate (e.g. "qrc:/qml/CommandListView.qml").
   virtual QUrl qmlComponentUrl() const = 0;
 
+  /// Optional QML component to load in the SearchBar as an accessory (e.g. filter dropdown).
+  virtual QUrl qmlSearchAccessoryUrl() const { return {}; }
+
   /// Properties passed to the QML component at instantiation.
   virtual QVariantMap qmlProperties() const { return {}; }
 

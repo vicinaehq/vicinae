@@ -20,6 +20,8 @@ class QmlLauncherWindow : public QObject {
   Q_PROPERTY(bool hasCommandView READ hasCommandView NOTIFY hasCommandViewChanged)
   Q_PROPERTY(QString searchPlaceholder READ searchPlaceholder NOTIFY searchPlaceholderChanged)
   Q_PROPERTY(QString commandActionTitle READ commandActionTitle NOTIFY commandActionChanged)
+  Q_PROPERTY(QUrl searchAccessoryUrl READ searchAccessoryUrl NOTIFY searchAccessoryChanged)
+  Q_PROPERTY(QObject *commandViewHost READ commandViewHost NOTIFY commandViewHostChanged)
   Q_PROPERTY(bool actionPanelOpen READ actionPanelOpen NOTIFY actionPanelOpenChanged)
   Q_PROPERTY(QmlActionPanelModel *actionPanelModel READ actionPanelModel NOTIFY actionPanelModelChanged)
   Q_PROPERTY(bool hasActions READ hasActions NOTIFY hasActionsChanged)
@@ -38,6 +40,8 @@ public:
   bool hasCommandView() const { return m_hasCommandView; }
   QString searchPlaceholder() const { return m_searchPlaceholder; }
   QString commandActionTitle() const;
+  QUrl searchAccessoryUrl() const { return m_searchAccessoryUrl; }
+  QObject *commandViewHost() const { return m_commandViewHost; }
 
   bool actionPanelOpen() const { return m_actionPanelOpen; }
   QmlActionPanelModel *actionPanelModel() const { return m_actionPanelModel; }
@@ -64,6 +68,8 @@ public:
 signals:
   void hasCommandViewChanged();
   void searchPlaceholderChanged();
+  void searchAccessoryChanged();
+  void commandViewHostChanged();
   void commandActionChanged();
   void searchTextUpdated(const QString &text);
   void viewNavigatedBack();
@@ -78,6 +84,7 @@ signals:
   void toastChanged();
   void hasMultipleActionsChanged();
   void actionPanelSubmenuPushed(QmlActionPanelModel *subModel);
+  void openSearchAccessoryRequested();
 
 private:
   void handleVisibilityChanged(bool visible);
@@ -99,6 +106,8 @@ private:
   bool m_hasCommandView = false;
   bool m_viewWasPopped = false;
   QString m_searchPlaceholder;
+  QUrl m_searchAccessoryUrl;
+  QObject *m_commandViewHost = nullptr;
 
   // Navigation status
   QString m_navigationTitle;

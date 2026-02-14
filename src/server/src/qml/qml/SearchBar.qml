@@ -120,6 +120,14 @@ Item {
                 }
             }
         }
+
+        Loader {
+            id: accessoryLoader
+            active: launcher.searchAccessoryUrl.toString() !== ""
+            source: launcher.searchAccessoryUrl
+            visible: active
+            Layout.alignment: Qt.AlignVCenter
+        }
     }
 
     Connections {
@@ -134,6 +142,10 @@ Item {
         }
         function onViewNavigatedBack() {
             searchInput.selectAll()
+        }
+        function onOpenSearchAccessoryRequested() {
+            if (accessoryLoader.item && typeof accessoryLoader.item.open === "function")
+                accessoryLoader.item.open()
         }
     }
 }
