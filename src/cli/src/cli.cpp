@@ -299,7 +299,7 @@ public:
 
   void setup(CLI::App *app) override {
     app->alias("link");
-    app->add_option("link", link, "The deeplink to open (see https://docs.vicinae.com/deeplinks)")
+    app->add_option("link", link, "The deeplink to open (see https://docs.vicinae.com/deeplinks )")
         ->required();
   }
 
