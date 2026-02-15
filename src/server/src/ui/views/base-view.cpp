@@ -34,6 +34,8 @@ void BaseView::setActions(std::unique_ptr<ActionPanelState> actions) {
 
 bool BaseView::supportsSearch() const { return true; }
 
+bool BaseView::searchInteractive() const { return true; }
+
 void BaseView::executePrimaryAction() { m_ctx->navigation->executePrimaryAction(); }
 
 bool BaseView::needsGlobalStatusBar() const { return true; }

@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Controls
-import Vicinae 1.0
 
 Item {
     id: root

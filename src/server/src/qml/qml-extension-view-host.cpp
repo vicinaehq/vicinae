@@ -11,7 +11,7 @@ QmlExtensionViewHost::QmlExtensionViewHost(ExtensionCommandController *controlle
 }
 
 QUrl QmlExtensionViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/qml/ExtensionView.qml"));
+  return QUrl(QStringLiteral("qrc:/Vicinae/ExtensionView.qml"));
 }
 
 QVariantMap QmlExtensionViewHost::qmlProperties() const {

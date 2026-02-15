@@ -53,11 +53,11 @@ static const char *filterIndexToSavedValue[] = {"all", "text", "image", "link", 
 QmlClipboardHistoryViewHost::QmlClipboardHistoryViewHost(QWidget *parent) : QmlBridgeViewBase() {}
 
 QUrl QmlClipboardHistoryViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/qml/ClipboardHistoryView.qml"));
+  return QUrl(QStringLiteral("qrc:/Vicinae/ClipboardHistoryView.qml"));
 }
 
 QUrl QmlClipboardHistoryViewHost::qmlSearchAccessoryUrl() const {
-  return QUrl(QStringLiteral("qrc:/qml/ClipboardFilterAccessory.qml"));
+  return QUrl(QStringLiteral("qrc:/Vicinae/ClipboardFilterAccessory.qml"));
 }
 
 QVariantMap QmlClipboardHistoryViewHost::qmlProperties() const {

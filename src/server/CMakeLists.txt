@@ -712,6 +712,8 @@ set(SRCS
 	src/qml/qml-clipboard-history-model.cpp
 	src/qml/qml-clipboard-history-view-host.hpp
 	src/qml/qml-clipboard-history-view-host.cpp
+	src/qml/qml-snippet-form-view-host.hpp
+	src/qml/qml-snippet-form-view-host.cpp
 	src/qml/qml-extension-list-model.hpp
 	src/qml/qml-extension-list-model.cpp
 	src/qml/qml-extension-grid-model.hpp
@@ -726,7 +728,6 @@ set(SRCS
 	src/qml/qml-async-image-provider.cpp
 	src/qml/qml-config-bridge.hpp
 	src/qml/qml-theme-bridge.hpp
-	src/qml/qml.qrc
 
 ) 
 
@@ -812,13 +813,71 @@ endif()
 
 qt_add_executable(${TARGET} ${SRCS})
 
+set(VICINAE_QML_FILES
+	src/qml/qml/LauncherWindow.qml
+	src/qml/qml/SearchBar.qml
+	src/qml/qml/GenericListView.qml
+	src/qml/qml/RootSearchList.qml
+	src/qml/qml/ListItemDelegate.qml
+	src/qml/qml/SelectableDelegate.qml
+	src/qml/qml/SectionHeader.qml
+	src/qml/qml/Footer.qml
+	src/qml/qml/FooterNavStatus.qml
+	src/qml/qml/FooterToast.qml
+	src/qml/qml/ShortcutBadge.qml
+	src/qml/qml/CommandListView.qml
+	src/qml/qml/CalculatorResultDelegate.qml
+	src/qml/qml/ThemeListView.qml
+	src/qml/qml/ThemeItemDelegate.qml
+	src/qml/qml/GenericGridView.qml
+	src/qml/qml/EmptyView.qml
+	src/qml/qml/EmojiGridView.qml
+	src/qml/qml/ViciImage.qml
+	src/qml/qml/ExtensionView.qml
+	src/qml/qml/ExtensionGridView.qml
+	src/qml/qml/ActionPanelPopover.qml
+	src/qml/qml/ActionListPanel.qml
+	src/qml/qml/ActionItemDelegate.qml
+	src/qml/qml/SearchableDropdown.qml
+	src/qml/qml/ClipboardHistoryView.qml
+	src/qml/qml/ClipboardFilterAccessory.qml
+	src/qml/qml/DetailPanel.qml
+	src/qml/qml/MetadataBar.qml
+	src/qml/qml/AlertDialog.qml
+	src/qml/qml/FormView.qml
+	src/qml/qml/FormField.qml
+	src/qml/qml/FormTextInput.qml
+	src/qml/qml/FormTextArea.qml
+	src/qml/qml/FormCheckbox.qml
+	src/qml/qml/FormSelectorDropdown.qml
+	src/qml/qml/FormSeparator.qml
+	src/qml/qml/SnippetFormView.qml
+)
+
+# Strip directory prefix so resources are qrc:/Vicinae/Foo.qml
+foreach(qml_file IN LISTS VICINAE_QML_FILES)
+	get_filename_component(alias ${qml_file} NAME)
+	set_source_files_properties(${qml_file} PROPERTIES QT_RESOURCE_ALIAS ${alias})
+endforeach()
+
+qt_add_qml_module(${TARGET}
+	URI Vicinae
+	VERSION 1.0
+	RESOURCE_PREFIX /
+	QML_FILES ${VICINAE_QML_FILES}
+	SOURCES
+		src/qml/qml-source-blend-rect.hpp
+	DEPENDENCIES QtQuick
+	NO_PLUGIN
+)
+
 if(Qt6_FOUND)
 	qt_import_plugins(${TARGET}
         INCLUDE Qt6::QWaylandIntegrationPlugin
     )
 endif()
 
-target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/qml)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
 target_compile_features(${TARGET} PUBLIC cxx_std_26)
 

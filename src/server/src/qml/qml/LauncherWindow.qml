@@ -64,13 +64,15 @@ Window {
         SearchBar {
             id: searchBar
             Layout.fillWidth: true
-            Layout.preferredHeight: 60
+            Layout.preferredHeight: launcher.searchVisible ? 60 : 0
+            visible: launcher.searchVisible
             enabled: !launcher.alertModel.visible
         }
 
         Rectangle {
             Layout.fillWidth: true
-            implicitHeight: 1
+            implicitHeight: launcher.searchVisible ? 1 : 0
+            visible: launcher.searchVisible
             color: Theme.divider
         }
 

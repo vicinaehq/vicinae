@@ -17,7 +17,7 @@
 #include "ui/text-file-viewer/text-file-viewer.hpp"
 #include "ui/views/typed-list-view.hpp"
 #include "services/snippet/snippet-service.hpp"
-#include "extensions/snippet/create-snippet-view.hpp"
+#include "qml/qml-snippet-form-view-host.hpp"
 
 class ManageSnippetsView : public FilteredTypedListView<snippet::SerializedSnippet> {
 public:
@@ -116,11 +116,11 @@ public:
         });
 
     const auto edit = new StaticAction("Edit snippet", BuiltinIcon::Pencil, [item](ApplicationContext *ctx) {
-      ctx->navigation->pushView(new EditSnippetView(item));
+      ctx->navigation->pushView(new QmlSnippetFormViewHost(item, QmlSnippetFormViewHost::Mode::Edit));
     });
     const auto duplicate =
         new StaticAction("Duplicate snippet", BuiltinIcon::Pencil, [item](ApplicationContext *ctx) {
-          ctx->navigation->pushView(new DuplicateSnippetView(item));
+          ctx->navigation->pushView(new QmlSnippetFormViewHost(item, QmlSnippetFormViewHost::Mode::Duplicate));
         });
     const auto remove =
         new StaticAction("Remove snippet", BuiltinIcon::Trash, [item, toast](ApplicationContext *ctx) {

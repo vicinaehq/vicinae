@@ -1,9 +1,9 @@
 #include "builtin_icon.hpp"
 #include "ui/image/url.hpp"
 #include "single-view-command-context.hpp"
-#include "create-snippet-view.hpp"
+#include "qml/qml-snippet-form-view-host.hpp"
 
-class CreateSnippetCommand : public BuiltinViewCommand<CreateSnippetView> {
+class CreateSnippetCommand : public BuiltinViewCommand<QmlSnippetFormViewHost> {
   QString id() const override { return "create"; }
   QString name() const override { return "Create Snippet"; }
   ImageURL iconUrl() const override {

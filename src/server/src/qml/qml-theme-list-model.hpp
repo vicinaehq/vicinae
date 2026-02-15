@@ -24,7 +24,7 @@ public:
   void initialize(ApplicationContext *ctx) override;
   void setFilter(const QString &text) override;
   QString searchPlaceholder() const override { return QStringLiteral("Search for a theme..."); }
-  QUrl qmlComponentUrl() const override { return QUrl(QStringLiteral("qrc:/qml/ThemeListView.qml")); }
+  QUrl qmlComponentUrl() const override { return QUrl(QStringLiteral("qrc:/Vicinae/ThemeListView.qml")); }
 
   QVariant data(const QModelIndex &index, int role) const override;
   QHash<int, QByteArray> roleNames() const override;

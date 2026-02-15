@@ -216,6 +216,7 @@ public:
 
     bool isLoading = false;
     bool supportsSearch = true;
+    bool searchInteractive = true;
     bool needsTopBar = true;
     bool needsStatusBar = true;
     bool panelOpened = false;
@@ -255,6 +256,7 @@ signals:
 
   void headerVisiblityChanged(bool value);
   void searchVisibilityChanged(bool value);
+  void searchInteractiveChanged(bool value);
   void statusBarVisiblityChanged(bool value);
   void windowActivationChanged(bool value) const;
 

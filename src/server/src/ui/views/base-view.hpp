@@ -32,6 +32,7 @@ public:
    * valid but will always return the empty string.
    */
   virtual bool supportsSearch() const;
+  virtual bool searchInteractive() const;
   void executePrimaryAction();
   virtual bool needsGlobalStatusBar() const;
   virtual bool needsGlobalTopBar() const;
