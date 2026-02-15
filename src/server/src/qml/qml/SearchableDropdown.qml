@@ -4,49 +4,133 @@ import QtQuick.Layouts
 
 Item {
     id: root
-    width: Math.max(triggerButton.implicitWidth, minimumWidth)
-    height: 28
-    activeFocusOnTab: false
+    implicitHeight: compact ? 28 : 36
+    Layout.fillWidth: !compact
+    activeFocusOnTab: !compact
 
-    property var options: []
-    property int currentIndex: 0
+    // --- Structured items API ---
+    // items: [{ title: "Section", items: [{ id, displayName, iconSource }, ...] }, ...]
+    property var items: []
+    // currentItem: { id, displayName, iconSource } or null
+    property var currentItem: null
+    signal activated(var item)
+
+    // --- Compact mode (toolbar-style) ---
+    property bool compact: false
     property real minimumWidth: 0
-    signal activated(int index)
+
+    property string placeholder: ""
+
+    width: compact ? Math.max(triggerButton.implicitWidth, minimumWidth) : undefined
+
+    onItemsChanged: _rebuildFlat("")
 
     property int _highlightedIndex: -1
     property real _closedTime: 0
+    property var _flatItems: []
+
+    on_HighlightedIndexChanged: {
+        if (_highlightedIndex >= 0)
+            itemList.positionViewAtIndex(_highlightedIndex, ListView.Contain)
+    }
 
     function open() {
         if (dropdownPopup.visible) return
-        searchField.text = ""
-        root._highlightedIndex = root.currentIndex
+        if (searchField.text !== "") {
+            searchField.text = ""
+            _rebuildFlat("")
+        }
+        _highlightedIndex = _flatIndexOfCurrent()
         dropdownPopup.open()
     }
 
-    function _isVisible(idx) {
-        var query = searchField.text.toLowerCase()
-        if (query === "") return true
-        return root.options[idx].toLowerCase().indexOf(query) >= 0
+    function _flatIndexOfCurrent() {
+        if (!currentItem) return _nextNavigable(-1, 1)
+        for (var i = 0; i < _flatItems.length; i++) {
+            var entry = _flatItems[i]
+            if (!entry.isSection && entry.item && entry.item.id === currentItem.id)
+                return i
+        }
+        return _nextNavigable(-1, 1)
     }
 
-    function _nextVisible(from, direction) {
+    function _rebuildFlat(query) {
+        var result = []
+        var q = query.toLowerCase()
+        for (var s = 0; s < items.length; s++) {
+            var section = items[s]
+            var sectionItems = []
+            for (var i = 0; i < section.items.length; i++) {
+                var item = section.items[i]
+                if (q === "" || _fuzzyMatch(item.displayName, q)) {
+                    sectionItems.push({ isSection: false, item: item })
+                }
+            }
+            if (sectionItems.length > 0) {
+                // Only show section header if there are multiple sections
+                if (items.length > 1 && section.title) {
+                    result.push({ isSection: true, title: section.title })
+                }
+                result = result.concat(sectionItems)
+            }
+        }
+        _flatItems = result
+    }
+
+    function _fuzzyMatch(text, query) {
+        var lower = text.toLowerCase()
+        // Substring match first
+        if (lower.indexOf(query) >= 0) return true
+        // Character-by-character fuzzy match
+        var qi = 0
+        for (var ti = 0; ti < lower.length && qi < query.length; ti++) {
+            if (lower[ti] === query[qi]) qi++
+        }
+        return qi === query.length
+    }
+
+    function _nextNavigable(from, direction) {
         var idx = from + direction
-        while (idx >= 0 && idx < root.options.length) {
-            if (_isVisible(idx)) return idx
+        while (idx >= 0 && idx < _flatItems.length) {
+            if (!_flatItems[idx].isSection) return idx
             idx += direction
         }
         return from
     }
 
+    Keys.onReturnPressed: (event) => {
+        if (event.modifiers !== Qt.NoModifier) {
+            event.accepted = launcher.forwardKey(event.key, event.modifiers)
+        } else if (!dropdownPopup.visible) {
+            open()
+        }
+    }
+    Keys.onSpacePressed: {
+        if (!dropdownPopup.visible) open()
+    }
+    Keys.onPressed: (event) => {
+        if (event.modifiers !== Qt.NoModifier && event.modifiers !== Qt.ShiftModifier
+            && event.key !== Qt.Key_Shift && event.key !== Qt.Key_Control
+            && event.key !== Qt.Key_Alt && event.key !== Qt.Key_Meta
+            && event.key !== Qt.Key_Return && event.key !== Qt.Key_Space) {
+            event.accepted = launcher.forwardKey(event.key, event.modifiers)
+        } else {
+            event.accepted = false
+        }
+    }
+
     // Trigger button
     Rectangle {
         id: triggerButton
-        implicitWidth: buttonRow.implicitWidth + 20
-        width: root.width
-        height: 28
-        radius: 6
+        implicitWidth: compact ? buttonRow.implicitWidth + 20 : undefined
+        anchors.fill: compact ? undefined : parent
+        width: compact ? root.width : undefined
+        height: compact ? 28 : undefined
+        radius: compact ? 6 : 8
         color: buttonMouseArea.containsMouse ? Theme.listItemHoverBg : Theme.secondaryBackground
-        border.color: Theme.divider
+        border.color: compact ? Theme.divider
+                      : (root.activeFocus || dropdownPopup.visible
+                         ? Theme.inputBorderFocus : Theme.inputBorder)
         border.width: 1
 
         RowLayout {
@@ -54,12 +138,23 @@ Item {
             anchors.fill: parent
             anchors.leftMargin: 10
             anchors.rightMargin: 10
-            spacing: 4
+            spacing: 6
+
+            Image {
+                visible: !compact && root.currentItem && root.currentItem.iconSource
+                         ? true : false
+                source: visible ? root.currentItem.iconSource : ""
+                sourceSize.width: 16
+                sourceSize.height: 16
+                Layout.preferredWidth: 16
+                Layout.preferredHeight: 16
+            }
 
             Text {
-                text: root.options[root.currentIndex] || ""
-                color: Theme.foreground
-                font.pointSize: Theme.smallerFontSize
+                text: root.currentItem ? root.currentItem.displayName : root.placeholder
+                color: !compact && !root.currentItem ? Theme.textPlaceholder : Theme.foreground
+                font.pointSize: compact ? Theme.smallerFontSize : Theme.regularFontSize
+                elide: Text.ElideRight
                 Layout.fillWidth: true
             }
 
@@ -86,9 +181,10 @@ Item {
     Popup {
         id: dropdownPopup
         parent: triggerButton
-        x: triggerButton.width - width
+        popupType: Popup.Window
+        x: compact ? triggerButton.width - width : 0
         y: triggerButton.height + 4
-        width: Math.max(200, root.width)
+        width: Math.max(compact ? 200 : 250, root.width)
         padding: 4
         focus: true
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
@@ -96,6 +192,7 @@ Item {
         onOpened: searchField.forceActiveFocus()
         onClosed: {
             root._closedTime = Date.now()
+            root.forceActiveFocus()
         }
 
         background: Rectangle {
@@ -151,20 +248,24 @@ Item {
                         }
 
                         onTextEdited: {
-                            // Reset highlight to first visible option when filter changes
-                            root._highlightedIndex = root._nextVisible(-1, 1)
+                            root._rebuildFlat(text)
+                            root._highlightedIndex = root._nextNavigable(-1, 1)
                         }
 
                         Keys.onUpPressed: {
-                            root._highlightedIndex = root._nextVisible(root._highlightedIndex, -1)
+                            root._highlightedIndex = root._nextNavigable(root._highlightedIndex, -1)
                         }
                         Keys.onDownPressed: {
-                            root._highlightedIndex = root._nextVisible(root._highlightedIndex, 1)
+                            root._highlightedIndex = root._nextNavigable(root._highlightedIndex, 1)
                         }
                         Keys.onReturnPressed: {
-                            if (root._highlightedIndex >= 0) {
-                                root.activated(root._highlightedIndex)
-                                dropdownPopup.close()
+                            if (root._highlightedIndex >= 0
+                                    && root._highlightedIndex < root._flatItems.length) {
+                                var entry = root._flatItems[root._highlightedIndex]
+                                if (!entry.isSection) {
+                                    root.activated(entry.item)
+                                    dropdownPopup.close()
+                                }
                             }
                         }
                         Keys.onEscapePressed: dropdownPopup.close()
@@ -174,60 +275,116 @@ Item {
                 }
             }
 
-            // Options
-            Repeater {
-                model: root.options
+            // Items list in a scrollable area
+            ListView {
+                id: itemList
+                Layout.fillWidth: true
+                Layout.preferredHeight: Math.min(contentHeight, 300)
+                model: root._flatItems.length
+                clip: true
+                reuseItems: true
+                boundsBehavior: Flickable.StopAtBounds
+
+                ScrollBar.vertical: ScrollBar {
+                    policy: itemList.contentHeight > itemList.height
+                            ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+                }
 
                 delegate: Item {
-                    id: optionDelegate
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: optionVisible ? 30 : 0
-                    visible: optionVisible
+                    id: del
+                    width: itemList.width
+                    height: !_entry ? 0 : _entry.isSection ? sectionRow.height : itemRow.height
 
-                    readonly property bool optionVisible: root._isVisible(index)
-                    readonly property bool isHighlighted: index === root._highlightedIndex
-                    readonly property bool isSelected: index === root.currentIndex
-                    readonly property bool isHovered: optionMouseArea.containsMouse
+                    required property int index
+                    readonly property var _entry: index < root._flatItems.length
+                                                  ? root._flatItems[index] : null
+                    readonly property bool _isHighlighted: index === root._highlightedIndex
+                    readonly property bool _isSelected: _entry && !_entry.isSection && root.currentItem
+                                                        && _entry.item.id === root.currentItem.id
 
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: 6
-                        color: optionDelegate.isHighlighted ? Theme.listItemSelectionBg
-                               : optionDelegate.isHovered ? Theme.listItemHoverBg
-                               : "transparent"
-                    }
-
+                    // Section header
                     RowLayout {
-                        anchors.fill: parent
+                        id: sectionRow
+                        visible: del._entry && del._entry.isSection
+                        anchors.left: parent.left
+                        anchors.right: parent.right
                         anchors.leftMargin: 8
                         anchors.rightMargin: 8
-                        spacing: 6
+                        height: visible ? 24 : 0
 
                         Text {
-                            text: modelData
-                            color: optionDelegate.isHighlighted
-                                   ? Theme.listItemSelectionFg : Theme.foreground
+                            text: del._entry && del._entry.isSection ? del._entry.title : ""
+                            color: Theme.textMuted
                             font.pointSize: Theme.smallerFontSize
-                            Layout.fillWidth: true
-                        }
-
-                        Text {
-                            visible: optionDelegate.isSelected
-                            text: "\u2713"
-                            color: optionDelegate.isHighlighted
-                                   ? Theme.listItemSelectionFg : Theme.foreground
-                            font.pointSize: Theme.smallerFontSize
+                            font.bold: true
                         }
                     }
 
-                    MouseArea {
-                        id: optionMouseArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            root.activated(index)
-                            dropdownPopup.close()
+                    // Item row
+                    Item {
+                        id: itemRow
+                        visible: del._entry && !del._entry.isSection
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        height: visible ? 30 : 0
+
+                        Rectangle {
+                            anchors.fill: parent
+                            anchors.leftMargin: 2
+                            anchors.rightMargin: 2
+                            radius: 6
+                            color: del._isHighlighted ? Theme.listItemSelectionBg
+                                   : itemHover.hovered ? Theme.listItemHoverBg
+                                   : "transparent"
+                        }
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 8
+                            anchors.rightMargin: 8
+                            spacing: 6
+
+                            Image {
+                                visible: del._entry && del._entry.item && del._entry.item.iconSource
+                                         ? true : false
+                                source: visible ? del._entry.item.iconSource : ""
+                                asynchronous: true
+                                sourceSize.width: 16
+                                sourceSize.height: 16
+                                Layout.preferredWidth: 16
+                                Layout.preferredHeight: 16
+                            }
+
+                            Text {
+                                text: del._entry && !del._entry.isSection
+                                      ? del._entry.item.displayName : ""
+                                color: del._isHighlighted ? Theme.listItemSelectionFg
+                                       : Theme.foreground
+                                font.pointSize: Theme.smallerFontSize
+                                elide: Text.ElideRight
+                                Layout.fillWidth: true
+                            }
+
+                            Text {
+                                visible: del._isSelected
+                                text: "\u2713"
+                                color: del._isHighlighted ? Theme.listItemSelectionFg
+                                       : Theme.foreground
+                                font.pointSize: Theme.smallerFontSize
+                            }
+                        }
+
+                        HoverHandler {
+                            id: itemHover
+                            cursorShape: Qt.PointingHandCursor
+                        }
+
+                        TapHandler {
+                            gesturePolicy: TapHandler.ReleaseWithinBounds
+                            onTapped: {
+                                root.activated(del._entry.item)
+                                dropdownPopup.close()
+                            }
                         }
                     }
                 }
