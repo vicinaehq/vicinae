@@ -3,6 +3,7 @@
 #include <libqalculate/Calculator.h>
 #include <libqalculate/MathStructure.h>
 #include <libqalculate/includes.h>
+#include <qcontainerfwd.h>
 
 class QalculateBackend : public AbstractCalculatorBackend {
 
@@ -22,6 +23,8 @@ public:
 
 private:
   static std::optional<std::string> getUnitDisplayName(const MathStructure &s, std::string_view prefix = "");
+  static std::optional<QString> drainMessages();
+  static bool isIndefiniteIntegral(const QString &expr);
 
   void initializeCalculator();
   QString preprocessQuestion(const QString &question) const;
