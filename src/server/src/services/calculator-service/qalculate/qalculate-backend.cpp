@@ -118,7 +118,7 @@ bool QalculateBackend::isIndefiniteIntegral(const QString &expr) {
         else if (c == ',' && depth == 0) ++argCount;
     }
 
-    return argCount < 3;
+    return argCount <= 3;
 }
 
 QString QalculateBackend::preprocessQuestion(const QString &query) const { return query.simplified(); }
