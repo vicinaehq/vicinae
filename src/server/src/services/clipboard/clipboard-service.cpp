@@ -399,15 +399,15 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
     return;
   }
 
-  cdb.transaction([&](ClipboardDatabase &db) {
-    if (db.tryBubbleUpSelection(selectionHash)) {
+  cdb.transaction([&](ClipboardDatabase *db) {
+    if (db->tryBubbleUpSelection(selectionHash)) {
       qInfo() << "A similar clipboard selection is already indexed: moving it on top of the history";
       return true;
     }
 
     QString selectionId = Crypto::UUID::v4();
 
-    if (!db.insertSelection({.id = selectionId,
+    if (!db->insertSelection({.id = selectionId,
                              .offerCount = static_cast<int>(selection.offers.size()),
                              .hash = selectionHash,
                              .preferredMimeType = preferredMimeType,
@@ -424,7 +424,7 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
       QString textPreview = getOfferTextPreview(offer);
 
       if (isIndexableText && !offer.data.isEmpty()) {
-        if (!db.indexSelectionContent(selectionId, offer.data)) {
+        if (!db->indexSelectionContent(selectionId, offer.data)) {
           qWarning() << "Failed to index selection content for offer" << offer.mimeType;
           return false;
         }
@@ -451,7 +451,7 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
         if (url.scheme().startsWith("http")) { dto.urlHost = url.host(); }
       }
 
-      if (!db.insertOffer(dto)) {
+      if (!db->insertOffer(dto)) {
         qWarning() << "Failed to insert offer" << offer.mimeType;
         return false;
       }
