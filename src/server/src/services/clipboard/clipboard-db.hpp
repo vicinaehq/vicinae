@@ -81,7 +81,7 @@ struct ClipboardSelectionRecord {
 class ClipboardDatabase {
 
 public:
-  using TxHandle = std::function<bool(ClipboardDatabase &db)>;
+  using TxHandle = std::function<bool(ClipboardDatabase *db)>;
 
   bool transaction(const TxHandle &handle);
 
