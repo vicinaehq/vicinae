@@ -100,7 +100,7 @@ Item {
         FormField {
             label: "Template"
 
-            FormSelectorDropdown {
+            SearchableDropdown {
                 items: root.host.templateItems
                 currentItem: root.host.selectedTemplate
                 onActivated: (item) => root.host.selectTemplate(item)

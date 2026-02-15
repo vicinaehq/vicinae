@@ -855,7 +855,6 @@ set(VICINAE_QML_FILES
 	src/qml/qml/FormTextInput.qml
 	src/qml/qml/FormTextArea.qml
 	src/qml/qml/FormCheckbox.qml
-	src/qml/qml/FormSelectorDropdown.qml
 	src/qml/qml/FormSeparator.qml
 	src/qml/qml/SnippetFormView.qml
 	src/qml/qml/ShortcutFormView.qml

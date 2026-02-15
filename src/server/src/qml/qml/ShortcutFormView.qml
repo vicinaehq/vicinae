@@ -47,7 +47,7 @@ Item {
             label: "Open with"
             error: root.host.appError
 
-            FormSelectorDropdown {
+            SearchableDropdown {
                 items: root.host.appSelectorModel.items
                 currentItem: root.host.selectedApp
                 onActivated: (item) => root.host.selectApp(item)
@@ -58,7 +58,7 @@ Item {
             label: "Icon"
             error: root.host.iconError
 
-            FormSelectorDropdown {
+            SearchableDropdown {
                 items: root.host.iconItems
                 currentItem: root.host.selectedIcon
                 onActivated: (item) => root.host.selectIcon(item)
