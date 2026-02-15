@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import "TextUtils.js" as TextUtils
 
 Item {
     id: root
@@ -9,6 +10,7 @@ Item {
         searchInput.forceActiveFocus()
         searchInput.selectAll()
     }
+
 
     RowLayout {
         anchors.fill: parent
@@ -115,7 +117,8 @@ Item {
                     }
                 } else if (event.modifiers !== Qt.NoModifier && event.modifiers !== Qt.ShiftModifier
                            && event.key !== Qt.Key_Shift && event.key !== Qt.Key_Control
-                           && event.key !== Qt.Key_Alt && event.key !== Qt.Key_Meta) {
+                           && event.key !== Qt.Key_Alt && event.key !== Qt.Key_Meta
+                           && !TextUtils.isTextEditingKey(event.key)) {
                     // Forward modifier key combos for action shortcut matching
                     launcher.forwardKey(event.key, event.modifiers)
                     event.accepted = true

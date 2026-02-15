@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import "TextUtils.js" as TextUtils
 
 Item {
     id: root
@@ -19,6 +20,7 @@ Item {
 
     function forceActiveFocus() { input.forceActiveFocus() }
     function selectAll() { input.selectAll() }
+
 
     onActiveFocusChanged: {
         if (activeFocus) input.forceActiveFocus()
@@ -67,7 +69,8 @@ Item {
             Keys.onPressed: (event) => {
                 if (event.modifiers !== Qt.NoModifier && event.modifiers !== Qt.ShiftModifier
                     && event.key !== Qt.Key_Shift && event.key !== Qt.Key_Control
-                    && event.key !== Qt.Key_Alt && event.key !== Qt.Key_Meta) {
+                    && event.key !== Qt.Key_Alt && event.key !== Qt.Key_Meta
+                    && !TextUtils.isTextEditingKey(event.key)) {
                     launcher.forwardKey(event.key, event.modifiers)
                 } else {
                     event.accepted = false
