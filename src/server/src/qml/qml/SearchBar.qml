@@ -118,10 +118,12 @@ Item {
                 } else if (event.modifiers !== Qt.NoModifier && event.modifiers !== Qt.ShiftModifier
                            && event.key !== Qt.Key_Shift && event.key !== Qt.Key_Control
                            && event.key !== Qt.Key_Alt && event.key !== Qt.Key_Meta
-                           && !TextUtils.isTextEditingKey(event.key)) {
+                           && !TextUtils.isTextEditingShortcut(event.key, event.modifiers)) {
                     // Forward modifier key combos for action shortcut matching
                     launcher.forwardKey(event.key, event.modifiers)
                     event.accepted = true
+                } else {
+                    event.accepted = false
                 }
             }
         }
