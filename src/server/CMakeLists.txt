@@ -732,6 +732,8 @@ set(SRCS
 	src/qml/qml-async-image-provider.cpp
 	src/qml/qml-config-bridge.hpp
 	src/qml/qml-theme-bridge.hpp
+	src/qml/qml-create-extension-view-host.hpp
+	src/qml/qml-create-extension-view-host.cpp
 
 ) 
 
@@ -858,6 +860,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/SnippetFormView.qml
 	src/qml/qml/ShortcutFormView.qml
 	src/qml/qml/FormCompletedInput.qml
+	src/qml/qml/CreateExtensionFormView.qml
 )
 
 # Strip directory prefix so resources are qrc:/Vicinae/Foo.qml

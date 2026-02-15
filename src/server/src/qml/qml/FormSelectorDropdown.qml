@@ -19,7 +19,7 @@ Item {
     signal activated(var item)
 
     property int _highlightedIndex: -1
-    property bool _closedByClick: false
+    property real _closedTime: 0
     property var _flatItems: []
 
     on_HighlightedIndexChanged: {
@@ -91,11 +91,25 @@ Item {
         return from
     }
 
-    Keys.onReturnPressed: {
-        if (!dropdownPopup.visible) open()
+    Keys.onReturnPressed: (event) => {
+        if (event.modifiers !== Qt.NoModifier) {
+            event.accepted = launcher.forwardKey(event.key, event.modifiers)
+        } else if (!dropdownPopup.visible) {
+            open()
+        }
     }
     Keys.onSpacePressed: {
         if (!dropdownPopup.visible) open()
+    }
+    Keys.onPressed: (event) => {
+        if (event.modifiers !== Qt.NoModifier && event.modifiers !== Qt.ShiftModifier
+            && event.key !== Qt.Key_Shift && event.key !== Qt.Key_Control
+            && event.key !== Qt.Key_Alt && event.key !== Qt.Key_Meta
+            && event.key !== Qt.Key_Return && event.key !== Qt.Key_Space) {
+            event.accepted = launcher.forwardKey(event.key, event.modifiers)
+        } else {
+            event.accepted = false
+        }
     }
 
     // Trigger button
@@ -146,10 +160,7 @@ Item {
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: {
-                if (root._closedByClick) {
-                    root._closedByClick = false
-                    return
-                }
+                if (Date.now() - root._closedTime < 300) return
                 root.open()
             }
         }
@@ -168,8 +179,7 @@ Item {
 
         onOpened: searchField.forceActiveFocus()
         onClosed: {
-            if (buttonMouseArea.containsMouse)
-                root._closedByClick = true
+            root._closedTime = Date.now()
             root.forceActiveFocus()
         }
 
@@ -261,11 +271,22 @@ Item {
                 model: root._flatItems.length
                 clip: true
                 reuseItems: true
+                interactive: false
                 boundsBehavior: Flickable.StopAtBounds
 
                 ScrollBar.vertical: ScrollBar {
                     policy: itemList.contentHeight > itemList.height
                             ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.NoButton
+                    onWheel: (wheel) => {
+                        itemList.contentY = Math.max(0,
+                            Math.min(itemList.contentHeight - itemList.height,
+                                     itemList.contentY - wheel.angleDelta.y))
+                    }
                 }
 
                 delegate: Item {

@@ -112,6 +112,11 @@ Item {
             anchors.fill: flickable
             acceptedButtons: Qt.NoButton
             onWheel: (wheel) => {
+                // Pass through to parent when there's nothing to scroll
+                if (flickable.contentHeight <= flickable.height) {
+                    wheel.accepted = false
+                    return
+                }
                 flickable.contentY = Math.max(0,
                     Math.min(flickable.contentHeight - flickable.height,
                              flickable.contentY - wheel.angleDelta.y))
