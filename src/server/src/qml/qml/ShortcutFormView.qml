@@ -33,15 +33,10 @@ Item {
                 completions: root.host.linkCompletions
 
                 onTextEdited: root.host.link = text
-                onCompletionActivated: (item) => {
-                    var result = root.host.insertCompletion(text, cursorPosition, item)
-                    root.host.link = result
-                    text = result
-                }
                 onAccepted: launcher.handleReturn()
 
-                onActiveFocusChanged: {
-                    if (!activeFocus) root.host.handleLinkBlurred()
+                onEditingChanged: {
+                    if (!editing) root.host.handleLinkBlurred()
                 }
             }
         }

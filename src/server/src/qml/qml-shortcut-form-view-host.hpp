@@ -9,7 +9,7 @@
 class ShortcutService;
 class Shortcut;
 
-class QmlShortcutFormViewHost : public QmlBridgeViewBase {
+class QmlShortcutFormViewHost : public QmlFormViewBase {
   Q_OBJECT
 
 public:
@@ -25,7 +25,7 @@ public:
   Q_PROPERTY(QString iconError READ iconError NOTIFY errorsChanged)
 
   Q_PROPERTY(QmlAppSelectorModel *appSelectorModel READ appSelectorModel CONSTANT)
-  Q_PROPERTY(QVariantList iconItems READ iconItems CONSTANT)
+  Q_PROPERTY(QVariantList iconItems READ iconItems NOTIFY iconItemsChanged)
   Q_PROPERTY(QVariantList linkCompletions READ linkCompletions CONSTANT)
 
   QmlShortcutFormViewHost(QWidget *parent = nullptr);
@@ -68,15 +68,16 @@ public:
   Q_INVOKABLE void handleLinkBlurred();
   Q_INVOKABLE void selectApp(const QVariantMap &item);
   Q_INVOKABLE void selectIcon(const QVariantMap &item);
-  Q_INVOKABLE QString insertCompletion(const QString &text, int cursorPos, const QVariantMap &completion);
 
 signals:
   void formChanged();
   void errorsChanged();
+  void iconItemsChanged();
 
 private:
   void buildIconItems();
   void buildLinkCompletions();
+  void updateDefaultIconInItems();
 
   Mode m_mode = Mode::Create;
   std::shared_ptr<Shortcut> m_initialShortcut;

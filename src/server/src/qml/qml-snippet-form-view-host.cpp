@@ -7,11 +7,11 @@
 #include "utils.hpp"
 #include <QUrl>
 
-QmlSnippetFormViewHost::QmlSnippetFormViewHost(QWidget *parent) : QmlBridgeViewBase() {}
+QmlSnippetFormViewHost::QmlSnippetFormViewHost(QWidget *parent) : QmlFormViewBase() {}
 
 QmlSnippetFormViewHost::QmlSnippetFormViewHost(snippet::SerializedSnippet snippet, Mode mode,
                                                QWidget *parent)
-    : QmlBridgeViewBase(), m_mode(mode), m_initialSnippet(std::move(snippet)) {}
+    : QmlFormViewBase(), m_mode(mode), m_initialSnippet(std::move(snippet)) {}
 
 QUrl QmlSnippetFormViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/SnippetFormView.qml"));

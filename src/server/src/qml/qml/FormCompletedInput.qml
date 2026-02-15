@@ -11,6 +11,7 @@ Item {
     property alias text: innerInput.text
     property string placeholder: ""
     property bool readOnly: false
+    readonly property bool editing: innerInput.editing
 
     // [{iconSource, title, value}]
     property var completions: []
@@ -18,14 +19,11 @@ Item {
     // Character that triggers the completion popup
     property string triggerChar: "{"
 
-    signal completionActivated(var item)
     signal textEdited()
     signal accepted()
 
     function forceActiveFocus() { innerInput.forceActiveFocus() }
     function selectAll() { innerInput.selectAll() }
-
-    property int cursorPosition: innerInput.cursorPosition
 
     onActiveFocusChanged: {
         if (activeFocus) innerInput.forceActiveFocus()
@@ -79,11 +77,27 @@ Item {
     }
 
     function _acceptCompletion() {
-        if (_highlightedIndex >= 0 && _highlightedIndex < _filteredItems.length) {
-            var item = _filteredItems[_highlightedIndex]
-            root.completionActivated(item)
-            completionPopup.close()
-        }
+        if (_highlightedIndex < 0 || _highlightedIndex >= _filteredItems.length) return
+
+        var item = _filteredItems[_highlightedIndex]
+        var triggerIdx = _findTriggerStart()
+        if (triggerIdx < 0) return
+
+        var txt = innerInput.text
+        var before = txt.substring(0, triggerIdx)
+        var placeholder = triggerChar + item.value + "}"
+
+        // Find end of current partial placeholder
+        var endIdx = innerInput.cursorPosition
+        while (endIdx < txt.length && txt.charAt(endIdx) !== "}" && txt.charAt(endIdx) !== triggerChar)
+            endIdx++
+        if (endIdx < txt.length && txt.charAt(endIdx) === "}")
+            endIdx++
+
+        var after = txt.substring(endIdx)
+        innerInput.text = before + placeholder + after
+        completionPopup.close()
+        root.textEdited()
     }
 
     FormTextInput {
