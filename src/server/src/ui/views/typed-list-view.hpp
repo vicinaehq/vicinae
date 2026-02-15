@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <qwidget.h>
 #include "common/scored.hpp"
+#include "lib/fzf.hpp"
 #include "keyboard/keyboard.hpp"
 #include "navigation-controller.hpp"
 #include "config/config.hpp"
@@ -200,6 +201,7 @@ struct FilteredItemData {
   std::optional<std::string> subtitle;
   std::optional<ImageURL> icon;
   std::optional<std::string> alias;
+  std::vector<std::string> keywords;
   AccessoryList accessories;
   bool isActive = false;
 };
@@ -228,7 +230,18 @@ public:
       ScoredSection scoredSection{.name = section.name};
 
       for (const FilteredItemData &item : section.items) {
-        int score = query.empty() ? 1 : fzf::defaultMatcher.fuzzy_match_v2_score_query(item.title, query);
+        int score = query.empty() ? 1 : [&]() {
+          using WS = fzf::WeightedString;
+          std::vector<WS> fields;
+
+          fields.emplace_back(item.title, 1.0f);
+          
+          for (const auto &kw : item.keywords) {
+            if (!kw.empty()) fields.emplace_back(kw, 0.5f);
+          }
+
+          return fzf::defaultMatcher.fuzzy_match_v2_score_query(fields, query, false);
+        }();
         if (!score) continue;
         scoredSection.bestScore = std::max(scoredSection.bestScore, score);
         scoredSection.items.emplace_back(Scored<FilteredItemData>{.data = item, .score = score});

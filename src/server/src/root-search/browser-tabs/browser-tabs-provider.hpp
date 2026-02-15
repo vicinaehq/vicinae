@@ -39,7 +39,7 @@ class BrowserTabRootItem : public RootItem {
 
   QWidget *settingsDetail(const QJsonObject &preferences) const override { return nullptr; }
 
-  std::vector<QString> keywords() const override { return {}; }
+  std::vector<QString> keywords() const override { return {m_tab.url.c_str()}; }
 
   bool isActive() const override { return m_tab.active; }
 
