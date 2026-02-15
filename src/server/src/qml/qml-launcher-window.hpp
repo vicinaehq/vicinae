@@ -36,6 +36,8 @@ class QmlLauncherWindow : public QObject {
   Q_PROPERTY(bool hasMultipleActions READ hasMultipleActions NOTIFY hasMultipleActionsChanged)
   Q_PROPERTY(QString commandActionShortcut READ commandActionShortcut NOTIFY commandActionChanged)
   Q_PROPERTY(QmlAlertModel *alertModel READ alertModel CONSTANT)
+  Q_PROPERTY(bool searchVisible READ searchVisible NOTIFY searchVisibleChanged)
+  Q_PROPERTY(bool searchInteractive READ searchInteractive NOTIFY searchInteractiveChanged)
 
 public:
   explicit QmlLauncherWindow(ApplicationContext &ctx, QObject *parent = nullptr);
@@ -59,6 +61,8 @@ public:
   bool hasMultipleActions() const { return m_hasMultipleActions; }
   QString commandActionShortcut() const;
   QmlAlertModel *alertModel() const { return m_alertModel; }
+  bool searchVisible() const { return m_searchVisible; }
+  bool searchInteractive() const { return m_searchInteractive; }
 
   Q_INVOKABLE void forwardSearchText(const QString &text);
   Q_INVOKABLE void handleReturn();
@@ -89,6 +93,8 @@ signals:
   void hasMultipleActionsChanged();
   void actionPanelSubmenuPushed(QmlActionPanelModel *subModel);
   void openSearchAccessoryRequested();
+  void searchVisibleChanged();
+  void searchInteractiveChanged();
 
 private:
   void handleVisibilityChanged(bool visible);
@@ -108,6 +114,8 @@ private:
   QQuickItem *m_contentArea = nullptr;
   BaseView *m_activeWidget = nullptr;
   bool m_hasCommandView = false;
+  bool m_searchVisible = true;
+  bool m_searchInteractive = true;
   bool m_viewWasPopped = false;
   QString m_searchPlaceholder;
   QUrl m_searchAccessoryUrl;

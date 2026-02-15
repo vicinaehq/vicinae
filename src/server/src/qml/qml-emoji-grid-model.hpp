@@ -13,7 +13,7 @@ public:
   void initialize(ApplicationContext *ctx) override;
   void setFilter(const QString &text) override;
   QString searchPlaceholder() const override { return QStringLiteral("Search for emojis..."); }
-  QUrl qmlComponentUrl() const override { return QUrl(QStringLiteral("qrc:/qml/EmojiGridView.qml")); }
+  QUrl qmlComponentUrl() const override { return QUrl(QStringLiteral("qrc:/Vicinae/EmojiGridView.qml")); }
 
   // --- Per-cell data (called from QML delegates) ---
   Q_INVOKABLE QString emojiIcon(int section, int item) const;

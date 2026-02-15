@@ -21,7 +21,7 @@ public:
 
   void setFilter(const QString &text) override;
   QString searchPlaceholder() const override;
-  QUrl qmlComponentUrl() const override { return QUrl(QStringLiteral("qrc:/qml/ExtensionGridView.qml")); }
+  QUrl qmlComponentUrl() const override { return QUrl(QStringLiteral("qrc:/Vicinae/ExtensionGridView.qml")); }
 
   // Per-cell data for QML delegate
   Q_INVOKABLE QString cellTitle(int section, int item) const;

@@ -5,6 +5,7 @@ Item {
     id: root
 
     function focusInput() {
+        if (!launcher.searchInteractive) return
         searchInput.forceActiveFocus()
         searchInput.selectAll()
     }
@@ -49,6 +50,7 @@ Item {
             color: Theme.foreground
             selectionColor: Theme.accent
             clip: true
+            readOnly: !launcher.searchInteractive
 
             Text {
                 anchors.fill: parent
@@ -57,7 +59,7 @@ Item {
                       ? launcher.searchPlaceholder : "Search..."
                 color: Theme.textPlaceholder
                 font: searchInput.font
-                visible: !searchInput.text
+                visible: !searchInput.text && launcher.searchInteractive
             }
 
             onTextEdited: {
@@ -132,6 +134,14 @@ Item {
 
     Connections {
         target: launcher
+        function onSearchVisibleChanged() {
+            if (launcher.searchVisible && launcher.searchInteractive)
+                searchInput.forceActiveFocus()
+        }
+        function onSearchInteractiveChanged() {
+            if (launcher.searchInteractive && launcher.searchVisible)
+                searchInput.forceActiveFocus()
+        }
         function onSearchTextUpdated(text) {
             if (searchInput.text !== text) {
                 searchInput.text = text

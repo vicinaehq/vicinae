@@ -19,7 +19,7 @@ public:
 
   void setFilter(const QString &text) override;
   QString searchPlaceholder() const override;
-  QUrl qmlComponentUrl() const override { return QUrl(QStringLiteral("qrc:/qml/CommandListView.qml")); }
+  QUrl qmlComponentUrl() const override { return QUrl(QStringLiteral("qrc:/Vicinae/CommandListView.qml")); }
   void onItemSelected(int section, int item) override;
 
   QString emptyTitle() const;

@@ -32,8 +32,6 @@ QmlLauncherWindow::QmlLauncherWindow(ApplicationContext &ctx, QObject *parent)
   m_configBridge = new QmlConfigBridge(this);
   m_alertModel = new QmlAlertModel(*ctx.navigation, this);
 
-  // Register custom QML types
-  qmlRegisterType<QmlSourceBlendRect>("Vicinae", 1, 0, "SourceBlendRect");
   qRegisterMetaType<QmlImageUrl>("QmlImageUrl");
 
   // The engine takes ownership of the image provider
@@ -49,7 +47,7 @@ QmlLauncherWindow::QmlLauncherWindow(ApplicationContext &ctx, QObject *parent)
   rootCtx->setContextProperty(QStringLiteral("Img"), m_imgSource);
   rootCtx->setContextProperty(QStringLiteral("launcher"), this);
 
-  m_engine.load(QUrl(QStringLiteral("qrc:/qml/LauncherWindow.qml")));
+  m_engine.load(QUrl(QStringLiteral("qrc:/Vicinae/LauncherWindow.qml")));
 
   // Cache the QQuickWindow and content area item
   auto rootObjects = m_engine.rootObjects();
@@ -87,6 +85,24 @@ QmlLauncherWindow::QmlLauncherWindow(ApplicationContext &ctx, QObject *parent)
   connect(nav, &NavigationController::currentViewChanged,
           this, [this](const NavigationController::ViewState &) {
             handleCurrentViewChanged();
+          });
+
+  // Search visibility (for views that don't support search, e.g. form views)
+  connect(nav, &NavigationController::searchVisibilityChanged,
+          this, [this](bool visible) {
+            if (m_searchVisible != visible) {
+              m_searchVisible = visible;
+              emit searchVisibleChanged();
+            }
+          });
+
+  // Search interactivity (for form views: bar visible but input disabled)
+  connect(nav, &NavigationController::searchInteractiveChanged,
+          this, [this](bool interactive) {
+            if (m_searchInteractive != interactive) {
+              m_searchInteractive = interactive;
+              emit searchInteractiveChanged();
+            }
           });
 
   // Search state

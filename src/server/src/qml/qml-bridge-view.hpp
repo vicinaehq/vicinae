@@ -7,7 +7,7 @@
 /// General-purpose bridge: any QML component can be pushed as a view.
 class QmlBridgeViewBase : public BaseView {
 public:
-  /// The QML component to instantiate (e.g. "qrc:/qml/CommandListView.qml").
+  /// The QML component to instantiate (e.g. "qrc:/Vicinae/CommandListView.qml").
   virtual QUrl qmlComponentUrl() const = 0;
 
   /// Optional QML component to load in the SearchBar as an accessory (e.g. filter dropdown).

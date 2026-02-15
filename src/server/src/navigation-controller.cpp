@@ -230,6 +230,7 @@ void NavigationController::popCurrentView() {
   emit navigationStatusChanged(next->navigation.title, next->navigation.icon);
   emit headerVisiblityChanged(next->needsTopBar);
   emit searchVisibilityChanged(next->supportsSearch);
+  emit searchInteractiveChanged(next->searchInteractive);
   emit statusBarVisiblityChanged(next->needsStatusBar);
   emit searchAccessoryVisiblityChanged(next->accessoryVisibility);
   emit loadingChanged(next->isLoading);
@@ -454,6 +455,7 @@ void NavigationController::activateView(const ViewState &state) {
 
   emit headerVisiblityChanged(state.needsTopBar);
   emit searchVisibilityChanged(state.supportsSearch);
+  emit searchInteractiveChanged(state.searchInteractive);
   emit statusBarVisiblityChanged(state.needsStatusBar);
   emit loadingChanged(state.isLoading);
   emit navigationStatusChanged(state.navigation.title, state.navigation.icon);
@@ -660,6 +662,7 @@ std::unique_ptr<NavigationController::ViewState> NavigationController::createVie
   state->sender->setContext(&m_ctx);
   state->sender->setCommandController(m_frames.back()->controller.get());
   state->supportsSearch = view->supportsSearch();
+  state->searchInteractive = view->searchInteractive();
   state->needsTopBar = view->needsGlobalTopBar();
   state->needsStatusBar = view->needsGlobalStatusBar();
   state->placeholderText = view->initialSearchPlaceholderText();

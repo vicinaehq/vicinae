@@ -5,6 +5,7 @@
 #include <QSGNode>
 #include <QSGGeometryNode>
 #include <QSGMaterial>
+#include <QtQml/qqmlregistration.h>
 
 /// A rounded rectangle that composites with Source blend mode at the scene
 /// graph level, replicating QPainter-based backgrounds that punch through
@@ -23,6 +24,7 @@
 ///     a distinct bottom zone (e.g. status bar).
 class QmlSourceBlendRect : public QQuickPaintedItem {
   Q_OBJECT
+  QML_NAMED_ELEMENT(SourceBlendRect)
   Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY colorChanged)
   Q_PROPERTY(qreal radius READ radius WRITE setRadius NOTIFY radiusChanged)
   Q_PROPERTY(QColor borderColor READ borderColor WRITE setBorderColor NOTIFY borderColorChanged)
