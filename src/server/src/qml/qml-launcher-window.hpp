@@ -66,7 +66,7 @@ public:
 
   Q_INVOKABLE void forwardSearchText(const QString &text);
   Q_INVOKABLE void handleReturn();
-  Q_INVOKABLE void forwardKey(int key, int modifiers = 0);
+  Q_INVOKABLE bool forwardKey(int key, int modifiers = 0);
   Q_INVOKABLE void goBack();
   Q_INVOKABLE void popToRoot();
   Q_INVOKABLE bool tryAliasFastTrack();

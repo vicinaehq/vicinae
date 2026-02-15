@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import "TextUtils.js" as TextUtils
 
 Item {
     id: root
@@ -100,8 +99,7 @@ Item {
             Keys.onReturnPressed: (event) => {
                 // Forward Shift+Enter and other modified returns for action shortcuts
                 if (event.modifiers !== Qt.NoModifier) {
-                    launcher.forwardKey(event.key, event.modifiers)
-                    event.accepted = true
+                    event.accepted = launcher.forwardKey(event.key, event.modifiers)
                 } else {
                     launcher.handleReturn()
                 }
@@ -117,11 +115,9 @@ Item {
                     }
                 } else if (event.modifiers !== Qt.NoModifier && event.modifiers !== Qt.ShiftModifier
                            && event.key !== Qt.Key_Shift && event.key !== Qt.Key_Control
-                           && event.key !== Qt.Key_Alt && event.key !== Qt.Key_Meta
-                           && !TextUtils.isTextEditingShortcut(event.key, event.modifiers)) {
-                    // Forward modifier key combos for action shortcut matching
-                    launcher.forwardKey(event.key, event.modifiers)
-                    event.accepted = true
+                           && event.key !== Qt.Key_Alt && event.key !== Qt.Key_Meta) {
+                    // Forward modifier key combos — actions take precedence, fall back to input
+                    event.accepted = launcher.forwardKey(event.key, event.modifiers)
                 } else {
                     event.accepted = false
                 }
