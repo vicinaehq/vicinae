@@ -858,6 +858,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/SnippetFormView.qml
 	src/qml/qml/ShortcutFormView.qml
 	src/qml/qml/FormCompletedInput.qml
+	src/qml/qml/TextUtils.js
 )
 
 # Strip directory prefix so resources are qrc:/Vicinae/Foo.qml
