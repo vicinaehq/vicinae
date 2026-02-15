@@ -315,25 +315,25 @@ void QmlLauncherWindow::handleReturn() {
   }
 }
 
-void QmlLauncherWindow::forwardKey(int key, int modifiers) {
+bool QmlLauncherWindow::forwardKey(int key, int modifiers) {
   auto mods = static_cast<Qt::KeyboardModifiers>(modifiers);
   QKeyEvent event(QEvent::KeyPress, key, mods);
 
   // Check for action shortcuts first
   if (auto *action = m_ctx.navigation->findBoundAction(&event)) {
     m_ctx.navigation->executeAction(action);
-    return;
+    return true;
   }
 
   // Open search accessory selector (e.g. clipboard kind filter dropdown)
   if (Keyboard::Shortcut(Keybind::OpenSearchAccessorySelector) == &event
       && !m_searchAccessoryUrl.isEmpty()) {
     emit openSearchAccessoryRequested();
-    return;
+    return true;
   }
 
-  if (!m_activeWidget) return;
-  m_activeWidget->inputFilter(&event);
+  if (!m_activeWidget) return false;
+  return m_activeWidget->inputFilter(&event);
 }
 
 void QmlLauncherWindow::goBack() {

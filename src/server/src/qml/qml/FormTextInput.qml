@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import "TextUtils.js" as TextUtils
 
 Item {
     id: root
@@ -61,7 +60,7 @@ Item {
 
             Keys.onReturnPressed: (event) => {
                 if (event.modifiers !== Qt.NoModifier) {
-                    launcher.forwardKey(event.key, event.modifiers)
+                    event.accepted = launcher.forwardKey(event.key, event.modifiers)
                 } else {
                     event.accepted = false
                 }
@@ -69,9 +68,8 @@ Item {
             Keys.onPressed: (event) => {
                 if (event.modifiers !== Qt.NoModifier && event.modifiers !== Qt.ShiftModifier
                     && event.key !== Qt.Key_Shift && event.key !== Qt.Key_Control
-                    && event.key !== Qt.Key_Alt && event.key !== Qt.Key_Meta
-                    && !TextUtils.isTextEditingShortcut(event.key, event.modifiers)) {
-                    launcher.forwardKey(event.key, event.modifiers)
+                    && event.key !== Qt.Key_Alt && event.key !== Qt.Key_Meta) {
+                    event.accepted = launcher.forwardKey(event.key, event.modifiers)
                 } else {
                     event.accepted = false
                 }

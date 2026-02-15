@@ -90,8 +90,7 @@ Item {
                 }
                 Keys.onReturnPressed: (event) => {
                     if (event.modifiers !== Qt.NoModifier) {
-                        launcher.forwardKey(event.key, event.modifiers)
-                        event.accepted = true
+                        event.accepted = launcher.forwardKey(event.key, event.modifiers)
                     } else {
                         // Insert newline normally
                         edit.insert(edit.cursorPosition, "\n")
@@ -102,8 +101,7 @@ Item {
                         && event.key !== Qt.Key_Shift && event.key !== Qt.Key_Control
                         && event.key !== Qt.Key_Alt && event.key !== Qt.Key_Meta
                         && event.key !== Qt.Key_Tab && event.key !== Qt.Key_Backtab) {
-                        launcher.forwardKey(event.key, event.modifiers)
-                        event.accepted = true
+                        event.accepted = launcher.forwardKey(event.key, event.modifiers)
                     }
                 }
             }
