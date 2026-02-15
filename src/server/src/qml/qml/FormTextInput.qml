@@ -12,6 +12,7 @@ Item {
     property string placeholder: ""
     property bool readOnly: false
     property alias echoMode: input.echoMode
+    readonly property bool editing: input.activeFocus
 
     signal textEdited()
     signal accepted()

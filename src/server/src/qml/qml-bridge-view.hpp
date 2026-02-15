@@ -26,6 +26,12 @@ public:
   bool inputFilter(QKeyEvent *) override { return false; }
 };
 
+/// Bridge for form views — disables the search bar input.
+class QmlFormViewBase : public QmlBridgeViewBase {
+public:
+  bool searchInteractive() const override { return false; }
+};
+
 /// Convenience bridge for views backed by a QmlCommandListModel.
 template <typename ModelType> class QmlBridgeView : public QmlBridgeViewBase {
   ModelType *m_model = nullptr;

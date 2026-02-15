@@ -5,7 +5,7 @@
 
 class SnippetService;
 
-class QmlSnippetFormViewHost : public QmlBridgeViewBase {
+class QmlSnippetFormViewHost : public QmlFormViewBase {
   Q_OBJECT
 
   Q_PROPERTY(QString name READ name WRITE setName NOTIFY formChanged)
@@ -26,7 +26,6 @@ public:
   QUrl qmlComponentUrl() const override;
   QVariantMap qmlProperties() const override;
   void initialize() override;
-  bool searchInteractive() const override { return false; }
 
   Q_INVOKABLE void submit();
 

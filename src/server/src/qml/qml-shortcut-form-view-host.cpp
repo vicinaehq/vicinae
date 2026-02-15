@@ -12,10 +12,10 @@
 #include <QFutureWatcher>
 #include <QUrl>
 
-QmlShortcutFormViewHost::QmlShortcutFormViewHost(QWidget *parent) : QmlBridgeViewBase() {}
+QmlShortcutFormViewHost::QmlShortcutFormViewHost(QWidget *parent) : QmlFormViewBase() {}
 
 QmlShortcutFormViewHost::QmlShortcutFormViewHost(std::shared_ptr<Shortcut> shortcut, Mode mode, QWidget *parent)
-    : QmlBridgeViewBase(), m_mode(mode), m_initialShortcut(std::move(shortcut)) {}
+    : QmlFormViewBase(), m_mode(mode), m_initialShortcut(std::move(shortcut)) {}
 
 QUrl QmlShortcutFormViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/ShortcutFormView.qml"));
@@ -197,6 +197,18 @@ void QmlShortcutFormViewHost::buildLinkCompletions() {
   };
 }
 
+void QmlShortcutFormViewHost::updateDefaultIconInItems() {
+  if (m_iconItems.isEmpty()) return;
+  auto section = m_iconItems[0].toMap();
+  auto items = section[QStringLiteral("items")].toList();
+  if (!items.isEmpty()) {
+    items[0] = m_defaultIconEntry;
+    section[QStringLiteral("items")] = items;
+    m_iconItems[0] = section;
+    emit iconItemsChanged();
+  }
+}
+
 void QmlShortcutFormViewHost::submit() {
   auto toast = context()->services->toastService();
 
@@ -270,14 +282,17 @@ void QmlShortcutFormViewHost::handleLinkBlurred() {
 
   if (auto app = appDb->findDefaultOpener(m_link)) {
     m_appSelectorModel->updateDefaultApp(app);
+    m_selectedApp = m_appSelectorModel->currentItem();
 
     // Also update the default icon entry with the app icon
+    m_defaultIconEntry[QStringLiteral("iconSource")] = qml::imageSourceFor(app->iconUrl());
+    m_defaultIconEntry[QStringLiteral("displayName")] = QStringLiteral("Default");
+    updateDefaultIconInItems();
+
     if (m_selectedIcon[QStringLiteral("id")].toString() == QStringLiteral("default")) {
-      m_defaultIconEntry[QStringLiteral("iconSource")] = qml::imageSourceFor(app->iconUrl());
-      m_defaultIconEntry[QStringLiteral("displayName")] = QStringLiteral("Default");
       m_selectedIcon = m_defaultIconEntry;
-      emit formChanged();
     }
+    emit formChanged();
   }
 
   if (url.scheme().startsWith("http")) {
@@ -288,10 +303,12 @@ void QmlShortcutFormViewHost::handleLinkBlurred() {
 
     watcher->setFuture(FaviconService::instance()->makeRequest(url.host()));
     connect(ptr, &Watcher::finished, this, [this, url, watcher = std::move(watcher)]() {
+      auto icon = ImageURL::favicon(url.host()).withFallback(ImageURL::builtin("image"));
+      m_defaultIconEntry[QStringLiteral("iconSource")] = qml::imageSourceFor(icon);
+      m_defaultIconEntry[QStringLiteral("displayName")] = url.host();
+      updateDefaultIconInItems();
+
       if (m_selectedIcon[QStringLiteral("id")].toString() == QStringLiteral("default")) {
-        auto icon = ImageURL::favicon(url.host()).withFallback(ImageURL::builtin("image"));
-        m_defaultIconEntry[QStringLiteral("iconSource")] = qml::imageSourceFor(icon);
-        m_defaultIconEntry[QStringLiteral("displayName")] = url.host();
         m_selectedIcon = m_defaultIconEntry;
         emit formChanged();
       }
@@ -304,11 +321,15 @@ void QmlShortcutFormViewHost::selectApp(const QVariantMap &item) {
   m_selectedApp = item;
 
   // Update default icon when app changes
-  if (m_selectedIcon[QStringLiteral("id")].toString() == QStringLiteral("default") && !m_link.isEmpty()) {
+  if (!m_link.isEmpty()) {
     auto iconSource = item[QStringLiteral("iconSource")].toString();
     m_defaultIconEntry[QStringLiteral("iconSource")] = iconSource;
-    m_defaultIconEntry[QStringLiteral("displayName")] = item[QStringLiteral("displayName")].toString();
-    m_selectedIcon = m_defaultIconEntry;
+    m_defaultIconEntry[QStringLiteral("displayName")] = QStringLiteral("Default");
+    updateDefaultIconInItems();
+
+    if (m_selectedIcon[QStringLiteral("id")].toString() == QStringLiteral("default")) {
+      m_selectedIcon = m_defaultIconEntry;
+    }
   }
 
   emit formChanged();
@@ -319,34 +340,3 @@ void QmlShortcutFormViewHost::selectIcon(const QVariantMap &item) {
   emit formChanged();
 }
 
-QString QmlShortcutFormViewHost::insertCompletion(const QString &text, int cursorPos,
-                                                   const QVariantMap &completion) {
-  auto value = completion[QStringLiteral("value")].toString();
-
-  // Find the trigger char position before cursor
-  int triggerIdx = -1;
-  for (int i = cursorPos - 1; i >= 0; --i) {
-    QChar c = text.at(i);
-    if (c == '}') break;
-    if (c == '{') {
-      triggerIdx = i;
-      break;
-    }
-  }
-
-  if (triggerIdx < 0) return text;
-
-  QString before = text.left(triggerIdx);
-  QString placeholder = '{' + value + '}';
-
-  // Find end of current partial placeholder
-  int endIdx = triggerIdx + 1;
-  while (endIdx < text.size() && text.at(endIdx) != '}' && text.at(endIdx) != '{') {
-    ++endIdx;
-  }
-  if (endIdx < text.size() && text.at(endIdx) == '}') endIdx += 1;
-
-  QString after = text.mid(endIdx);
-
-  return before + placeholder + after;
-}
