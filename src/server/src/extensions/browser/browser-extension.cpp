@@ -2,7 +2,7 @@
 #include "actions/app/app-actions.hpp"
 #include "actions/browser-tab-actions.hpp"
 #include "builtin_icon.hpp"
-#include "create-quicklink-command.hpp"
+#include "qml/qml-shortcut-form-view-host.hpp"
 #include "navigation-controller.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/browser-extension-service.hpp"
@@ -100,7 +100,7 @@ class CreateShortcutFromActiveBrowserTabCommand : public GuardedBuiltinCallbackC
       return;
     }
 
-    auto view = new ShortcutFormView;
+    auto view = new QmlShortcutFormViewHost;
 
     view->setPrefilledValues(tab->url.c_str(), tab->title.c_str());
     controller->context()->navigation->pushView(view);

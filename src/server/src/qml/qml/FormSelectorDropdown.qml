@@ -14,16 +14,25 @@ Item {
     property var items: []
     property string placeholder: ""
 
+    onItemsChanged: _rebuildFlat("")
+
     signal activated(var item)
 
     property int _highlightedIndex: -1
     property bool _closedByClick: false
     property var _flatItems: []
 
+    on_HighlightedIndexChanged: {
+        if (_highlightedIndex >= 0)
+            itemList.positionViewAtIndex(_highlightedIndex, ListView.Contain)
+    }
+
     function open() {
         if (dropdownPopup.visible) return
-        _rebuildFlat("")
-        searchField.text = ""
+        if (searchField.text !== "") {
+            searchField.text = ""
+            _rebuildFlat("")
+        }
         _highlightedIndex = _flatIndexOfCurrent()
         dropdownPopup.open()
     }
@@ -82,8 +91,11 @@ Item {
         return from
     }
 
-    onActiveFocusChanged: {
-        if (activeFocus && !dropdownPopup.visible) open()
+    Keys.onReturnPressed: {
+        if (!dropdownPopup.visible) open()
+    }
+    Keys.onSpacePressed: {
+        if (!dropdownPopup.visible) open()
     }
 
     // Trigger button
@@ -102,10 +114,12 @@ Item {
             anchors.rightMargin: 10
             spacing: 6
 
-            ViciImage {
+            Image {
                 visible: root.currentItem && root.currentItem.iconSource
                          ? true : false
-                source: visible ? root.currentItem.iconSource : Img.builtin("chevron-down")
+                source: visible ? root.currentItem.iconSource : ""
+                sourceSize.width: 16
+                sourceSize.height: 16
                 Layout.preferredWidth: 16
                 Layout.preferredHeight: 16
             }
@@ -144,6 +158,7 @@ Item {
     Popup {
         id: dropdownPopup
         parent: triggerButton
+        popupType: Popup.Window
         x: 0
         y: triggerButton.height + 4
         width: Math.max(250, root.width)
@@ -155,6 +170,7 @@ Item {
         onClosed: {
             if (buttonMouseArea.containsMouse)
                 root._closedByClick = true
+            root.forceActiveFocus()
         }
 
         background: Rectangle {
@@ -244,6 +260,7 @@ Item {
                 Layout.preferredHeight: Math.min(contentHeight, 300)
                 model: root._flatItems.length
                 clip: true
+                reuseItems: true
                 boundsBehavior: Flickable.StopAtBounds
 
                 ScrollBar.vertical: ScrollBar {
@@ -254,7 +271,7 @@ Item {
                 delegate: Item {
                     id: del
                     width: itemList.width
-                    height: _entry.isSection ? sectionRow.implicitHeight : itemRow.implicitHeight
+                    height: _entry.isSection ? sectionRow.height : itemRow.height
 
                     required property int index
                     readonly property var _entry: root._flatItems[index]
@@ -304,11 +321,13 @@ Item {
                             anchors.rightMargin: 8
                             spacing: 6
 
-                            ViciImage {
+                            Image {
                                 visible: del._entry.item && del._entry.item.iconSource
                                          ? true : false
-                                source: visible ? del._entry.item.iconSource
-                                                : Img.builtin("chevron-down")
+                                source: visible ? del._entry.item.iconSource : ""
+                                asynchronous: true
+                                sourceSize.width: 16
+                                sourceSize.height: 16
                                 Layout.preferredWidth: 16
                                 Layout.preferredHeight: 16
                             }

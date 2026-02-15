@@ -1,7 +1,7 @@
 #pragma once
 #include "common.hpp"
 #include "services/shortcut/shortcut-service.hpp"
-#include "create-quicklink-command.hpp"
+#include "qml/qml-shortcut-form-view-host.hpp"
 #include "../../ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
@@ -112,7 +112,7 @@ public:
   std::shared_ptr<Shortcut> m_shortcut;
 
   void execute(ApplicationContext *ctx) override {
-    auto view = new EditShortcutView(m_shortcut);
+    auto view = new QmlShortcutFormViewHost(m_shortcut, QmlShortcutFormViewHost::Mode::Edit);
 
     ctx->navigation->pushView(view);
   }
@@ -149,9 +149,9 @@ public:
   std::shared_ptr<Shortcut> link;
 
   void execute(ApplicationContext *ctx) override {
-    auto view = new DuplicateShortcutView(link);
+    auto view = new QmlShortcutFormViewHost(link, QmlShortcutFormViewHost::Mode::Duplicate);
 
-    emit ctx->navigation->pushView(view);
+    ctx->navigation->pushView(view);
   }
 
   DuplicateShortcutAction(const std::shared_ptr<Shortcut> &link)
