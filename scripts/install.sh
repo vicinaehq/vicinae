@@ -325,6 +325,46 @@ install_desktop_files() {
 	fi
 }
 
+install_browser_manifests() {
+	echo "Installing browser native messaging manifests..." >&2
+
+	local templates_dir="$INSTALL_DIR/usr/share/vicinae/native-messaging-hosts"
+	local native_host_bin="$INSTALL_DIR/usr/libexec/vicinae/vicinae-browser-link"
+	local chrome_extension_id="com.vicinae.vicinae"
+
+	if [[ ! -d "$templates_dir" ]]; then
+		echo "Note: No browser manifest templates found" >&2
+		return
+	fi
+
+	if [[ $EUID -ne 0 ]]; then
+		echo "Note: Skipping browser native messaging manifest installation (not root)" >&2
+		echo "  See https://docs.vicinae.com for manual setup instructions." >&2
+		return
+	fi
+
+	# Chromium
+	local chromium_dest="/etc/chromium/native-messaging-hosts"
+	local chromium_template="$templates_dir/com.vicinae.vicinae.chromium.json.in"
+	if [[ -f "$chromium_template" ]]; then
+		mkdir -p "$chromium_dest"
+		sed -e "s|@NATIVE_HOST_BIN@|$native_host_bin|g" \
+			-e "s|@CHROME_EXTENSION_ID@|$chrome_extension_id|g" \
+			"$chromium_template" > "$chromium_dest/com.vicinae.vicinae.json"
+		echo "✓ Chromium native messaging manifest installed to $chromium_dest" >&2
+	fi
+
+	# Firefox
+	local firefox_dest="/usr/lib/mozilla/native-messaging-hosts"
+	local firefox_template="$templates_dir/com.vicinae.vicinae.firefox.json.in"
+	if [[ -f "$firefox_template" ]]; then
+		mkdir -p "$firefox_dest"
+		sed -e "s|@NATIVE_HOST_BIN@|$native_host_bin|g" \
+			"$firefox_template" > "$firefox_dest/com.vicinae.vicinae.json"
+		echo "✓ Firefox native messaging manifest installed to $firefox_dest" >&2
+	fi
+}
+
 install_systemd_service() {
 	echo "Installing systemd user service..." >&2
 
@@ -392,6 +432,7 @@ install_vicinae() {
 		install_themes
 		install_desktop_files
 		install_systemd_service
+		install_browser_manifests
 	else
 		echo "Error: Vicinae binary not found in extracted files" >&2
 		echo "Looking in: $extract_dir" >&2
@@ -447,6 +488,17 @@ uninstall_vicinae() {
 		# Reload systemd user daemon
 		if command -v systemctl >/dev/null 2>&1; then
 			systemctl --user daemon-reload 2>/dev/null || true
+		fi
+	fi
+
+	if [[ $EUID -eq 0 ]]; then
+		if [[ -f "/etc/chromium/native-messaging-hosts/com.vicinae.vicinae.json" ]]; then
+			rm -f "/etc/chromium/native-messaging-hosts/com.vicinae.vicinae.json"
+			echo "✓ Removed Chromium native messaging manifest"
+		fi
+		if [[ -f "/usr/lib/mozilla/native-messaging-hosts/com.vicinae.vicinae.json" ]]; then
+			rm -f "/usr/lib/mozilla/native-messaging-hosts/com.vicinae.vicinae.json"
+			echo "✓ Removed Firefox native messaging manifest"
 		fi
 	fi
 

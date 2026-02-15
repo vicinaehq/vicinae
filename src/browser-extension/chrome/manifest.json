@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Vicinae Browser Integration",
+  "name": "Vicinae Integration",
   "version": "1.0.0",
-  "description": "Connects to the Vicinae desktop app to search and switch browser tabs from the launcher.",
+  "description": "Search and manage your browser tabs directly from your vicinae launcher",
   "homepage_url": "https://vicinae.com",
   "permissions": [
     "nativeMessaging",
@@ -19,7 +19,7 @@
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Vicinae Browser Integration",
+    "default_title": "Vicinae Integration",
     "default_icon": {
 		"16": "icons/icon16.png",
 		"32": "icons/icon32.png"
