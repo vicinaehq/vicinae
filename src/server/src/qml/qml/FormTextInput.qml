@@ -8,6 +8,7 @@ Item {
     activeFocusOnTab: true
 
     property alias text: input.text
+    property alias cursorPosition: input.cursorPosition
     property string placeholder: ""
     property bool readOnly: false
     property alias echoMode: input.echoMode
@@ -58,16 +59,17 @@ Item {
             Keys.onReturnPressed: (event) => {
                 if (event.modifiers !== Qt.NoModifier) {
                     launcher.forwardKey(event.key, event.modifiers)
-                    event.accepted = true
+                } else {
+                    event.accepted = false
                 }
-                // Plain Return falls through to TextInput's default (fires accepted)
             }
             Keys.onPressed: (event) => {
                 if (event.modifiers !== Qt.NoModifier && event.modifiers !== Qt.ShiftModifier
                     && event.key !== Qt.Key_Shift && event.key !== Qt.Key_Control
                     && event.key !== Qt.Key_Alt && event.key !== Qt.Key_Meta) {
                     launcher.forwardKey(event.key, event.modifiers)
-                    event.accepted = true
+                } else {
+                    event.accepted = false
                 }
             }
         }

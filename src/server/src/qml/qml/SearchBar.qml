@@ -151,7 +151,7 @@ Item {
             }
         }
         function onViewNavigatedBack() {
-            searchInput.selectAll()
+            root.focusInput()
         }
         function onOpenSearchAccessoryRequested() {
             if (accessoryLoader.item && typeof accessoryLoader.item.open === "function")

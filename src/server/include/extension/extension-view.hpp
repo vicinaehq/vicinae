@@ -8,7 +8,7 @@
 #include "ui/action-pannel/action.hpp"
 #include "ui/views/simple-view.hpp"
 #include "common-actions.hpp"
-#include "create-quicklink-command.hpp"
+#include "qml/qml-shortcut-form-view-host.hpp"
 #include "action-panel/action-panel.hpp"
 #include <qboxlayout.h>
 #include <qevent.h>
@@ -43,7 +43,7 @@ class ExtensionSimpleView : public SimpleView {
         if (iconValue.isString()) { icon = iconValue.toString(); }
       }
 
-      auto view = new ShortcutFormView();
+      auto view = new QmlShortcutFormViewHost();
       view->setPrefilledValues(link, name, application, icon);
       ImageURL actionIcon;
 

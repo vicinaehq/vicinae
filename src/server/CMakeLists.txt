@@ -714,6 +714,10 @@ set(SRCS
 	src/qml/qml-clipboard-history-view-host.cpp
 	src/qml/qml-snippet-form-view-host.hpp
 	src/qml/qml-snippet-form-view-host.cpp
+	src/qml/qml-app-selector-model.hpp
+	src/qml/qml-app-selector-model.cpp
+	src/qml/qml-shortcut-form-view-host.hpp
+	src/qml/qml-shortcut-form-view-host.cpp
 	src/qml/qml-extension-list-model.hpp
 	src/qml/qml-extension-list-model.cpp
 	src/qml/qml-extension-grid-model.hpp
@@ -852,6 +856,8 @@ set(VICINAE_QML_FILES
 	src/qml/qml/FormSelectorDropdown.qml
 	src/qml/qml/FormSeparator.qml
 	src/qml/qml/SnippetFormView.qml
+	src/qml/qml/ShortcutFormView.qml
+	src/qml/qml/FormCompletedInput.qml
 )
 
 # Strip directory prefix so resources are qrc:/Vicinae/Foo.qml
