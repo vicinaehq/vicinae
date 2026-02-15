@@ -14,7 +14,7 @@ Item {
     signal activated(int index)
 
     property int _highlightedIndex: -1
-    property bool _closedByClick: false
+    property real _closedTime: 0
 
     function open() {
         if (dropdownPopup.visible) return
@@ -77,10 +77,7 @@ Item {
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: {
-                if (root._closedByClick) {
-                    root._closedByClick = false
-                    return
-                }
+                if (Date.now() - root._closedTime < 300) return
                 root.open()
             }
         }
@@ -98,8 +95,7 @@ Item {
 
         onOpened: searchField.forceActiveFocus()
         onClosed: {
-            if (buttonMouseArea.containsMouse)
-                root._closedByClick = true
+            root._closedTime = Date.now()
         }
 
         background: Rectangle {
