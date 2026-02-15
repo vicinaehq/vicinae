@@ -1,6 +1,6 @@
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(TARGET vicinae-browser-link)
-set(CHROME_EXTENSION_ID "com.vicinae.vicinae")
+set(CHROME_EXTENSION_ID "kcmipingpfbohfjckomimmahknoddnke") # https://chromewebstore.google.com/detail/vicinae-integration/kcmipingpfbohfjckomimmahknoddnke
 set(NATIVE_MESSAGING_HOST "com.vicinae.vicinae")
 set(NATIVE_HOST_BIN ${VICINAE_LIBEXEC_PATH}/${TARGET})
 
@@ -25,6 +25,12 @@ if (INSTALL_BROWSER_NATIVE_HOST)
 	set(NATIVE_HOST_PATH "/usr/lib/mozilla/native-messaging-hosts")
 	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${NATIVE_MESSAGING_HOST}.firefox.json DESTINATION ${NATIVE_HOST_PATH} RENAME ${NATIVE_MESSAGING_HOST}.json)
 endif()
+
+install(FILES
+	native-host/${NATIVE_MESSAGING_HOST}.chromium.json.in
+	native-host/${NATIVE_MESSAGING_HOST}.firefox.json.in
+	DESTINATION ${CMAKE_INSTALL_DATADIR}/vicinae/native-messaging-hosts
+)
 
 install(TARGETS ${TARGET}
 	RUNTIME DESTINATION ${VICINAE_LIBEXEC_DIR}
