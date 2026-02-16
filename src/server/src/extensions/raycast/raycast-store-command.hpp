@@ -1,6 +1,6 @@
 #include "extensions/raycast/store/intro-view.hpp"
+#include "qml/qml-raycast-store-view-host.hpp"
 #include "single-view-command-context.hpp"
-#include "store/store-listing-view.hpp"
 #include "theme.hpp"
 
 class RaycastStoreCommand : public BuiltinCallbackCommand {
@@ -29,6 +29,6 @@ class RaycastStoreCommand : public BuiltinCallbackCommand {
       return;
     }
 
-    ctx->navigation->pushView<RaycastStoreListingView>();
+    ctx->navigation->pushView<QmlRaycastStoreViewHost>();
   }
 };

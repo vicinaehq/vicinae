@@ -1,5 +1,5 @@
 #pragma once
-#include "extensions/raycast/store/store-listing-view.hpp"
+#include "qml/qml-raycast-store-view-host.hpp"
 #include "layout.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/image/url.hpp"
@@ -41,7 +41,7 @@ public:
     setupUI();
     auto next = new StaticAction("Continue to store", icon(), [this]() {
       command()->storage().setItem("introCompleted", true);
-      context()->navigation->replaceView<RaycastStoreListingView>();
+      context()->navigation->replaceView<QmlRaycastStoreViewHost>();
     });
     auto panel = std::make_unique<FormActionPanelState>();
     auto section = panel->createSection();

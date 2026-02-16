@@ -28,7 +28,16 @@ QString QmlImageUrl::toSource() const {
     // When the theme changes, QML re-evaluates the binding → toSource()
     // returns a different URL → cache miss → fresh render.
     auto &theme = ThemeService::instance().theme();
-    QColor fg = theme.resolve(SemanticColor::Foreground);
+    QColor fg;
+    if (auto fill = m_url.fillColor()) {
+      if (auto *sc = std::get_if<SemanticColor>(&*fill))
+        fg = theme.resolve(*sc);
+      else if (auto *qc = std::get_if<QColor>(&*fill))
+        fg = *qc;
+      else if (auto *str = std::get_if<QString>(&*fill))
+        fg = QColor(*str);
+    }
+    if (!fg.isValid()) fg = theme.resolve(SemanticColor::Foreground);
     QString params = QStringLiteral("?fg=") + fg.name(QColor::HexRgb);
 
     if (auto bgTint = m_url.backgroundTint()) {
@@ -81,6 +90,12 @@ QmlImageUrl QmlImageUrl::withBackgroundTint(const QString &tint) const {
   auto color = ImageURL::tintForName(tint);
   if (color != SemanticColor::InvalidTint)
     copy.setBackgroundTint(color);
+  return QmlImageUrl(std::move(copy));
+}
+
+QmlImageUrl QmlImageUrl::withFillColor(const QColor &color) const {
+  ImageURL copy = m_url;
+  copy.setFill(color);
   return QmlImageUrl(std::move(copy));
 }
 

@@ -1,7 +1,7 @@
 #pragma once
 #include "extensions/vicinae/store/intro-view.hpp"
+#include "qml/qml-vicinae-store-view-host.hpp"
 #include "single-view-command-context.hpp"
-#include "store/store-listing-view.hpp"
 #include "vicinae.hpp"
 
 class VicinaeStoreCommand : public BuiltinCallbackCommand {
@@ -30,6 +30,6 @@ class VicinaeStoreCommand : public BuiltinCallbackCommand {
       return;
     }
 
-    ctx->navigation->pushView(new VicinaeStoreListingView);
+    ctx->navigation->pushView(new QmlVicinaeStoreViewHost);
   }
 };
