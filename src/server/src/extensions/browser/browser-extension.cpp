@@ -47,7 +47,13 @@ class SearchBrowserTabsView : public FilteredTypedListView<BrowserExtensionServi
 
     if (item.audible) { accessories.emplace_back(item.muted ? "🔇" : "🔊"); }
 
-    return {.id = item.uniqueId(), .title = item.title, .icon = item.icon(), .accessories = accessories};
+    return {
+        .id = item.uniqueId(),
+        .title = item.title,
+        .icon = item.icon(),
+        .keywords = {item.url},
+        .accessories = accessories,
+    };
   }
 
   DataSet makeSet() {
