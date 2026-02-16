@@ -38,6 +38,10 @@ class QmlLauncherWindow : public QObject {
   Q_PROPERTY(QmlAlertModel *alertModel READ alertModel CONSTANT)
   Q_PROPERTY(bool searchVisible READ searchVisible NOTIFY searchVisibleChanged)
   Q_PROPERTY(bool searchInteractive READ searchInteractive NOTIFY searchInteractiveChanged)
+  Q_PROPERTY(bool hasCompleter READ hasCompleter NOTIFY completerChanged)
+  Q_PROPERTY(QVariantList completerArgs READ completerArgs NOTIFY completerChanged)
+  Q_PROPERTY(QString completerIcon READ completerIcon NOTIFY completerChanged)
+  Q_PROPERTY(QVariantList completerValues READ completerValues NOTIFY completerValuesChanged)
 
 public:
   explicit QmlLauncherWindow(ApplicationContext &ctx, QObject *parent = nullptr);
@@ -63,6 +67,10 @@ public:
   QmlAlertModel *alertModel() const { return m_alertModel; }
   bool searchVisible() const { return m_searchVisible; }
   bool searchInteractive() const { return m_searchInteractive; }
+  bool hasCompleter() const { return m_hasCompleter; }
+  QVariantList completerArgs() const { return m_completerArgs; }
+  QString completerIcon() const { return m_completerIcon; }
+  QVariantList completerValues() const { return m_completerValues; }
 
   Q_INVOKABLE void forwardSearchText(const QString &text);
   Q_INVOKABLE void handleReturn();
@@ -72,6 +80,7 @@ public:
   Q_INVOKABLE bool tryAliasFastTrack();
   Q_INVOKABLE void toggleActionPanel();
   Q_INVOKABLE void closeActionPanel();
+  Q_INVOKABLE void setCompleterValue(int index, const QString &value);
 
 signals:
   void hasCommandViewChanged();
@@ -95,6 +104,9 @@ signals:
   void openSearchAccessoryRequested();
   void searchVisibleChanged();
   void searchInteractiveChanged();
+  void completerChanged();
+  void completerValuesChanged();
+  void completerValidationFailed();
 
 private:
   void handleVisibilityChanged(bool visible);
@@ -142,4 +154,10 @@ private:
 
   // Alert
   QmlAlertModel *m_alertModel = nullptr;
+
+  // Completer
+  bool m_hasCompleter = false;
+  QVariantList m_completerArgs;
+  QString m_completerIcon;
+  QVariantList m_completerValues;
 };

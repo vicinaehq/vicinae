@@ -522,6 +522,35 @@ void QmlRootSearchModel::setSelectedIndex(int index) {
     m_actionPanel->finalize();
   }
 
+  // Completer: create/destroy argument completion based on the selected item
+  auto *nav = m_ctx->navigation.get();
+  bool createdCompleter = false;
+
+  auto tryCreateCompleter = [&](const RootItem *item) {
+    if (!item) return;
+    ArgumentList args = item->arguments();
+    if (args.empty()) return;
+    nav->createCompletion(args, item->iconUrl());
+    createdCompleter = true;
+  };
+
+  switch (flat.kind) {
+  case FlatItem::ResultItem:
+    if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_results.size()))
+      tryCreateCompleter(m_results[flat.dataIndex].item.get());
+    break;
+  case FlatItem::FavoriteItem:
+    if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_favorites.size()))
+      tryCreateCompleter(m_favorites[flat.dataIndex].get());
+    break;
+  default:
+    break;
+  }
+
+  if (!createdCompleter) {
+    nav->destroyCurrentCompletion();
+  }
+
   emit primaryActionChanged();
 }
 
