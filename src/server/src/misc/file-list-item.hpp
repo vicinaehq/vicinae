@@ -5,6 +5,7 @@
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
+#include "ui/views/list-view.hpp"
 #include "utils.hpp"
 #include <qmimedatabase.h>
 

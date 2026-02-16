@@ -3,7 +3,7 @@
 #include "command-controller.hpp"
 #include "services/script-command/script-command-service.hpp"
 #include "extensions/vicinae/list-installed-extensions-command.hpp"
-#include "extensions/vicinae/oauth-token-store/oauth-token-store-view.hpp"
+#include "qml/qml-oauth-token-store-view-host.hpp"
 #include "extensions/vicinae/report-bug-command.hpp"
 #include "extensions/vicinae/browse-icons/search-builtin-icons-view.hpp"
 
@@ -176,7 +176,7 @@ class OpenKeybindSettingsCommand : public BuiltinCallbackCommand {
   }
 };
 
-class OAuthTokenStoreCommand : public BuiltinViewCommand<OAuthTokenStoreView> {
+class OAuthTokenStoreCommand : public BuiltinViewCommand<QmlOAuthTokenStoreViewHost> {
   QString id() const override { return "oauth-token-store"; }
   QString name() const override { return "Manage OAuth Token Sets"; }
   QString description() const override {

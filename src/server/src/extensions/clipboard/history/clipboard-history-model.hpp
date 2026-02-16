@@ -3,6 +3,7 @@
 #include "layout.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include "services/clipboard/clipboard-service.hpp"
+#include "ui/selectable-omni-list-widget/selectable-omni-list-widget.hpp"
 #include "ui/vlist/common/section-model.hpp"
 #include "ui/vlist/vlist.hpp"
 #include "utils.hpp"

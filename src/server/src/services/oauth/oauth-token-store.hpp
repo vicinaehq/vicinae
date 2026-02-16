@@ -1,3 +1,4 @@
+#pragma once
 #include "omni-database.hpp"
 #include <cstdint>
 #include <qdatetime.h>

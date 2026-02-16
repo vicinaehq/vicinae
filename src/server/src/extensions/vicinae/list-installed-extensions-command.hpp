@@ -1,9 +1,9 @@
 #pragma once
 
-#include "list-installed-extensions-view.hpp"
+#include "qml/qml-installed-extensions-view-host.hpp"
 #include "single-view-command-context.hpp"
 
-class VicinaeListInstalledExtensionsCommand : public BuiltinViewCommand<ListInstalledExtensionsView> {
+class VicinaeListInstalledExtensionsCommand : public BuiltinViewCommand<QmlInstalledExtensionsViewHost> {
   QString id() const override { return "list-extensions"; }
   QString name() const override { return "Show Installed Extensions"; }
   QString description() const override {
