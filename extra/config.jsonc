@@ -119,7 +119,7 @@
 
 			// 'exclusive' | 'on_demand'
 			// WARNING: 'exclusive' is known to break mouse stuff on popups (such as the action panel) on Hyprland
-			"keyboard_interactivity": "on_demand",
+			"keyboard_interactivity": "exclusive",
 
 			// either 'overlay' or 'top'.
 			// Other layers are not supported as they are unsuitable for a launcher.
