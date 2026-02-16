@@ -1,4 +1,5 @@
 #include "qml-launcher-window.hpp"
+#include "qml-utils.hpp"
 #include "qml-action-panel-model.hpp"
 #include "qml-alert-model.hpp"
 #include "qml-async-image-provider.hpp"
@@ -135,6 +136,63 @@ QmlLauncherWindow::QmlLauncherWindow(ApplicationContext &ctx, QObject *parent)
             m_navigationIcon = QmlImageUrl(icon);
             emit navigationStatusChanged();
           });
+
+  // Completer (argument completion for root search items)
+  connect(nav, &NavigationController::completionCreated,
+          this, [this](const CompleterState &state) {
+            m_hasCompleter = true;
+            m_completerArgs.clear();
+            for (const auto &arg : state.args) {
+              QVariantMap map;
+              map[QStringLiteral("name")] = arg.name;
+              map[QStringLiteral("placeholder")] = arg.placeholder;
+              map[QStringLiteral("required")] = arg.required;
+              map[QStringLiteral("type")] = arg.type == CommandArgument::Password ? QStringLiteral("password")
+                                          : arg.type == CommandArgument::Dropdown ? QStringLiteral("dropdown")
+                                          : QStringLiteral("text");
+              if (arg.data) {
+                QVariantList items;
+                for (const auto &d : *arg.data) {
+                  items.append(QVariantMap{{QStringLiteral("title"), d.title},
+                                          {QStringLiteral("value"), d.value}});
+                }
+                map[QStringLiteral("data")] = items;
+              }
+              m_completerArgs.append(map);
+            }
+            m_completerIcon = qml::imageSourceFor(state.icon);
+            // Initialize values from state (may already have values from restore)
+            m_completerValues.clear();
+            for (const auto &arg : state.args) {
+              m_completerValues.append(QVariantMap{{QStringLiteral("name"), arg.name},
+                                                  {QStringLiteral("value"), QString()}});
+            }
+            emit completerChanged();
+            emit completerValuesChanged();
+          });
+
+  connect(nav, &NavigationController::completionDestroyed,
+          this, [this]() {
+            m_hasCompleter = false;
+            m_completerArgs.clear();
+            m_completerIcon.clear();
+            m_completerValues.clear();
+            emit completerChanged();
+            emit completerValuesChanged();
+          });
+
+  connect(nav, &NavigationController::completionValuesChanged,
+          this, [this](const ArgumentValues &values) {
+            m_completerValues.clear();
+            for (const auto &[name, value] : values) {
+              m_completerValues.append(QVariantMap{{QStringLiteral("name"), name},
+                                                  {QStringLiteral("value"), value}});
+            }
+            emit completerValuesChanged();
+          });
+
+  connect(nav, &NavigationController::invalidCompletionFired,
+          this, &QmlLauncherWindow::completerValidationFailed);
 
   // Toast service
   auto *toast = m_ctx.services->toastService();
@@ -415,6 +473,14 @@ void QmlLauncherWindow::updateActionPanelModel() {
   }
   m_actionPanelModel = newModel;
   emit actionPanelModelChanged();
+}
+
+void QmlLauncherWindow::setCompleterValue(int index, const QString &value) {
+  auto *nav = m_ctx.navigation.get();
+  auto values = nav->completionValues();
+  if (index < 0 || index >= static_cast<int>(values.size())) return;
+  values[index].second = value;
+  nav->setCompletionValues(values);
 }
 
 void QmlLauncherWindow::connectActionPanelModel(QmlActionPanelModel *model) {

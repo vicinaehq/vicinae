@@ -15,7 +15,7 @@ Item {
         anchors.fill: parent
         anchors.leftMargin: 16
         anchors.rightMargin: 16
-        spacing: 12
+        spacing: launcher.hasCompleter ? 0 : 12
 
         // Back button — visible when not on root search
         Item {
@@ -42,86 +42,113 @@ Item {
             }
         }
 
-        TextInput {
-            id: searchInput
-            Layout.fillWidth: true
+        Item {
+            id: searchInputContainer
+            Layout.fillWidth: !launcher.hasCompleter
+            Layout.preferredWidth: launcher.hasCompleter ? searchInputMetrics.advanceWidth : -1
             Layout.fillHeight: true
-            verticalAlignment: TextInput.AlignVCenter
-            font.pointSize: Theme.regularFontSize
-            color: Theme.foreground
-            selectionColor: Theme.accent
-            clip: true
-            readOnly: !launcher.searchInteractive
 
-            Text {
-                anchors.fill: parent
-                verticalAlignment: Text.AlignVCenter
-                text: launcher.hasCommandView && launcher.searchPlaceholder !== ""
-                      ? launcher.searchPlaceholder : "Search..."
-                color: Theme.textPlaceholder
+            TextMetrics {
+                id: searchInputMetrics
                 font: searchInput.font
-                visible: !searchInput.text && launcher.searchInteractive
+                text: searchInput.text || " "
             }
 
-            onTextEdited: {
-                launcher.forwardSearchText(text)
-                if (!launcher.hasCommandView) {
-                    searchModel.setFilter(text)
-                }
-            }
+            TextInput {
+                id: searchInput
+                anchors.fill: parent
+                verticalAlignment: TextInput.AlignVCenter
+                font.pointSize: Theme.regularFontSize
+                color: Theme.foreground
+                selectionColor: Theme.accent
+                clip: true
+                readOnly: !launcher.searchInteractive
 
-            Keys.onUpPressed: {
-                if (commandStack.currentItem) commandStack.currentItem.moveUp()
-                else if (launcher.hasCommandView) launcher.forwardKey(Qt.Key_Up)
-                else searchList.moveUp()
-            }
-            Keys.onDownPressed: {
-                if (commandStack.currentItem) commandStack.currentItem.moveDown()
-                else if (launcher.hasCommandView) launcher.forwardKey(Qt.Key_Down)
-                else searchList.moveDown()
-            }
-            Keys.onLeftPressed: (event) => {
-                if (commandStack.currentItem && typeof commandStack.currentItem.moveLeft === "function") {
-                    commandStack.currentItem.moveLeft()
-                    event.accepted = true
-                } else {
-                    event.accepted = false
+                Text {
+                    anchors.fill: parent
+                    verticalAlignment: Text.AlignVCenter
+                    text: launcher.hasCompleter ? "..."
+                        : launcher.hasCommandView && launcher.searchPlaceholder !== ""
+                          ? launcher.searchPlaceholder : "Search..."
+                    color: Theme.textPlaceholder
+                    font: searchInput.font
+                    visible: !searchInput.text && launcher.searchInteractive
                 }
-            }
-            Keys.onRightPressed: (event) => {
-                if (commandStack.currentItem && typeof commandStack.currentItem.moveRight === "function") {
-                    commandStack.currentItem.moveRight()
-                    event.accepted = true
-                } else {
-                    event.accepted = false
-                }
-            }
-            Keys.onReturnPressed: (event) => {
-                // Forward Shift+Enter and other modified returns for action shortcuts
-                if (event.modifiers !== Qt.NoModifier) {
-                    event.accepted = launcher.forwardKey(event.key, event.modifiers)
-                } else {
-                    launcher.handleReturn()
-                }
-            }
-            Keys.onBacktabPressed: (event) => { event.accepted = false }
-            Keys.onPressed: (event) => {
-                if (event.key === Qt.Key_Backspace && searchInput.text === "" && launcher.hasCommandView) {
-                    launcher.goBack()
-                    event.accepted = true
-                } else if (event.key === Qt.Key_Space && !launcher.hasCommandView && event.modifiers === Qt.NoModifier) {
-                    if (launcher.tryAliasFastTrack()) {
-                        event.accepted = true
+
+                onTextEdited: {
+                    launcher.forwardSearchText(text)
+                    if (!launcher.hasCommandView) {
+                        searchModel.setFilter(text)
                     }
-                } else if (event.modifiers !== Qt.NoModifier && event.modifiers !== Qt.ShiftModifier
-                           && event.key !== Qt.Key_Shift && event.key !== Qt.Key_Control
-                           && event.key !== Qt.Key_Alt && event.key !== Qt.Key_Meta) {
-                    // Forward modifier key combos — actions take precedence, fall back to input
-                    event.accepted = launcher.forwardKey(event.key, event.modifiers)
-                } else {
-                    event.accepted = false
+                }
+
+                Keys.onUpPressed: {
+                    if (commandStack.currentItem) commandStack.currentItem.moveUp()
+                    else if (launcher.hasCommandView) launcher.forwardKey(Qt.Key_Up)
+                    else searchList.moveUp()
+                }
+                Keys.onDownPressed: {
+                    if (commandStack.currentItem) commandStack.currentItem.moveDown()
+                    else if (launcher.hasCommandView) launcher.forwardKey(Qt.Key_Down)
+                    else searchList.moveDown()
+                }
+                Keys.onLeftPressed: (event) => {
+                    if (commandStack.currentItem && typeof commandStack.currentItem.moveLeft === "function") {
+                        commandStack.currentItem.moveLeft()
+                        event.accepted = true
+                    } else {
+                        event.accepted = false
+                    }
+                }
+                Keys.onRightPressed: (event) => {
+                    if (commandStack.currentItem && typeof commandStack.currentItem.moveRight === "function") {
+                        commandStack.currentItem.moveRight()
+                        event.accepted = true
+                    } else {
+                        event.accepted = false
+                    }
+                }
+                Keys.onReturnPressed: (event) => {
+                    // Forward Shift+Enter and other modified returns for action shortcuts
+                    if (event.modifiers !== Qt.NoModifier) {
+                        event.accepted = launcher.forwardKey(event.key, event.modifiers)
+                    } else {
+                        launcher.handleReturn()
+                    }
+                }
+                Keys.onBacktabPressed: (event) => { event.accepted = false }
+                Keys.onPressed: (event) => {
+                    if (event.key === Qt.Key_Backspace && searchInput.text === "" && launcher.hasCommandView) {
+                        launcher.goBack()
+                        event.accepted = true
+                    } else if (event.key === Qt.Key_Space && !launcher.hasCommandView && event.modifiers === Qt.NoModifier) {
+                        if (launcher.tryAliasFastTrack()) {
+                            event.accepted = true
+                        }
+                    } else if (event.modifiers !== Qt.NoModifier && event.modifiers !== Qt.ShiftModifier
+                               && event.key !== Qt.Key_Shift && event.key !== Qt.Key_Control
+                               && event.key !== Qt.Key_Alt && event.key !== Qt.Key_Meta) {
+                        // Forward modifier key combos — actions take precedence, fall back to input
+                        event.accepted = launcher.forwardKey(event.key, event.modifiers)
+                    } else {
+                        event.accepted = false
+                    }
                 }
             }
+        }
+
+        ArgCompleter {
+            id: argCompleter
+            visible: launcher.hasCompleter
+            args: launcher.completerArgs
+            icon: launcher.completerIcon
+            Layout.fillHeight: true
+            Layout.alignment: Qt.AlignVCenter
+
+            onValueChanged: (index, value) => {
+                launcher.setCompleterValue(index, value)
+            }
+            onFocusSearchInput: searchInput.forceActiveFocus()
         }
 
         Loader {
@@ -157,6 +184,13 @@ Item {
         function onOpenSearchAccessoryRequested() {
             if (accessoryLoader.item && typeof accessoryLoader.item.open === "function")
                 accessoryLoader.item.open()
+        }
+        function onCompleterValidationFailed() {
+            argCompleter.validate()
+        }
+        function onCompleterValuesChanged() {
+            if (launcher.hasCompleter)
+                argCompleter.setValues(launcher.completerValues)
         }
     }
 }
