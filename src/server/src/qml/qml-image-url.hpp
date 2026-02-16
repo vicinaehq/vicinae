@@ -15,6 +15,7 @@ public:
   Q_INVOKABLE QString toSource() const;
   Q_INVOKABLE QmlImageUrl withFallback(const QmlImageUrl &fb) const;
   Q_INVOKABLE QmlImageUrl withBackgroundTint(const QString &tint) const;
+  Q_INVOKABLE QmlImageUrl withFillColor(const QColor &color) const;
   Q_INVOKABLE QmlImageUrl withCircleMask() const;
 
   const ImageURL &imageUrl() const;

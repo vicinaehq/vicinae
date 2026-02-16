@@ -755,6 +755,18 @@ set(SRCS
 	src/qml/qml-manage-snippets-model.cpp
 	src/qml/qml-manage-snippets-view-host.hpp
 	src/qml/qml-manage-snippets-view-host.cpp
+	src/qml/qml-raycast-store-model.hpp
+	src/qml/qml-raycast-store-model.cpp
+	src/qml/qml-raycast-store-view-host.hpp
+	src/qml/qml-raycast-store-view-host.cpp
+	src/qml/qml-vicinae-store-model.hpp
+	src/qml/qml-vicinae-store-model.cpp
+	src/qml/qml-vicinae-store-view-host.hpp
+	src/qml/qml-vicinae-store-view-host.cpp
+	src/qml/qml-raycast-store-detail-host.hpp
+	src/qml/qml-raycast-store-detail-host.cpp
+	src/qml/qml-vicinae-store-detail-host.hpp
+	src/qml/qml-vicinae-store-detail-host.cpp
 
 )
 
@@ -883,6 +895,9 @@ set(VICINAE_QML_FILES
 	src/qml/qml/CreateExtensionFormView.qml
 	src/qml/qml/ArgCompleter.qml
 	src/qml/qml/DetailListView.qml
+	src/qml/qml/StoreListingView.qml
+	src/qml/qml/AlertBanner.qml
+	src/qml/qml/StoreDetailView.qml
 )
 
 # Strip directory prefix so resources are qrc:/Vicinae/Foo.qml

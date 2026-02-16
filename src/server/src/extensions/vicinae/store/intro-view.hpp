@@ -1,5 +1,5 @@
 #pragma once
-#include "extensions/vicinae/store/store-listing-view.hpp"
+#include "qml/qml-vicinae-store-view-host.hpp"
 #include "layout.hpp"
 #include "theme/colors.hpp"
 #include "ui/action-pannel/action.hpp"
@@ -38,7 +38,7 @@ public:
   void initialize() override {
     auto next = new StaticAction("Continue to store", ImageURL::builtin("cart"), [this]() {
       command()->storage().setItem("introCompleted", true);
-      context()->navigation->replaceView<VicinaeStoreListingView>();
+      context()->navigation->replaceView<QmlVicinaeStoreViewHost>();
     });
     auto panel = std::make_unique<FormActionPanelState>();
     auto section = panel->createSection();
