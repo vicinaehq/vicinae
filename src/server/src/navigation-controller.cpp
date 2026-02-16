@@ -143,8 +143,20 @@ void NavigationController::toggleActionPanel() {
 }
 
 void NavigationController::createCompletion(const ArgumentList &args, const ImageURL &icon) {
+  static constexpr int MAX_COMPLETER_ARGS = 3;
+
   if (auto state = topState()) {
-    CompleterState completer(args, icon);
+    // Limit arguments to what the UI can display
+    auto truncated = args;
+    if (static_cast<int>(truncated.size()) > MAX_COMPLETER_ARGS)
+      truncated.resize(MAX_COMPLETER_ARGS);
+
+    CompleterState completer(truncated, icon);
+
+    // Initialize values with empty entries so validation can check them
+    for (const auto &arg : truncated) {
+      completer.values.emplace_back(arg.name, QString());
+    }
 
     state->completer = completer;
     emit completionCreated(state->completer.value_or(completer));

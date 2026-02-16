@@ -448,12 +448,45 @@ void QmlRootSearchModel::setSelectedIndex(int index) {
   m_selectedIndex = index;
 
   if (index < 0 || index >= static_cast<int>(m_flat.size())) {
+    m_lastSelectedItemId.clear();
     m_actionPanel.reset();
     emit primaryActionChanged();
     return;
   }
 
   const auto &flat = m_flat[index];
+
+  // Compute a stable identity for the selected item
+  QString itemId;
+  switch (flat.kind) {
+  case FlatItem::ResultItem:
+    if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_results.size()))
+      itemId = QString::fromStdString(m_results[flat.dataIndex].item->uniqueId());
+    break;
+  case FlatItem::FallbackItem:
+    if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_fallbackItems.size()))
+      itemId = QString::fromStdString(m_fallbackItems[flat.dataIndex]->uniqueId());
+    break;
+  case FlatItem::FavoriteItem:
+    if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_favorites.size()))
+      itemId = QString::fromStdString(m_favorites[flat.dataIndex]->uniqueId());
+    break;
+  case FlatItem::LinkItem:
+    if (m_defaultOpener) itemId = m_defaultOpener->url;
+    break;
+  case FlatItem::CalculatorItem:
+    if (m_calc) itemId = QStringLiteral("calc:") + m_calc->question.text;
+    break;
+  case FlatItem::FileItem:
+    if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_files.size()))
+      itemId = QString::fromStdString(m_files[flat.dataIndex].path.string());
+    break;
+  default:
+    break;
+  }
+
+  bool sameItem = (!itemId.isEmpty() && itemId == m_lastSelectedItemId);
+  m_lastSelectedItemId = itemId;
 
   switch (flat.kind) {
   case FlatItem::ResultItem: {
@@ -522,33 +555,36 @@ void QmlRootSearchModel::setSelectedIndex(int index) {
     m_actionPanel->finalize();
   }
 
-  // Completer: create/destroy argument completion based on the selected item
-  auto *nav = m_ctx->navigation.get();
-  bool createdCompleter = false;
+  // Completer: create/destroy argument completion based on the selected item.
+  // Skip if the same logical item is still selected (e.g. after search filter update).
+  if (!sameItem) {
+    auto *nav = m_ctx->navigation.get();
+    bool createdCompleter = false;
 
-  auto tryCreateCompleter = [&](const RootItem *item) {
-    if (!item) return;
-    ArgumentList args = item->arguments();
-    if (args.empty()) return;
-    nav->createCompletion(args, item->iconUrl());
-    createdCompleter = true;
-  };
+    auto tryCreateCompleter = [&](const RootItem *item) {
+      if (!item) return;
+      ArgumentList args = item->arguments();
+      if (args.empty()) return;
+      nav->createCompletion(args, item->iconUrl());
+      createdCompleter = true;
+    };
 
-  switch (flat.kind) {
-  case FlatItem::ResultItem:
-    if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_results.size()))
-      tryCreateCompleter(m_results[flat.dataIndex].item.get());
-    break;
-  case FlatItem::FavoriteItem:
-    if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_favorites.size()))
-      tryCreateCompleter(m_favorites[flat.dataIndex].get());
-    break;
-  default:
-    break;
-  }
+    switch (flat.kind) {
+    case FlatItem::ResultItem:
+      if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_results.size()))
+        tryCreateCompleter(m_results[flat.dataIndex].item.get());
+      break;
+    case FlatItem::FavoriteItem:
+      if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_favorites.size()))
+        tryCreateCompleter(m_favorites[flat.dataIndex].get());
+      break;
+    default:
+      break;
+    }
 
-  if (!createdCompleter) {
-    nav->destroyCurrentCompletion();
+    if (!createdCompleter) {
+      nav->destroyCurrentCompletion();
+    }
   }
 
   emit primaryActionChanged();

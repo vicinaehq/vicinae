@@ -1,9 +1,9 @@
 #include "builtin_icon.hpp"
-#include "manage-snippets-view.hpp"
+#include "qml/qml-manage-snippets-view-host.hpp"
 #include "ui/image/url.hpp"
 #include "single-view-command-context.hpp"
 
-class ManageSnippetsCommand : public BuiltinViewCommand<ManageSnippetsView> {
+class ManageSnippetsCommand : public BuiltinViewCommand<QmlManageSnippetsViewHost> {
   QString id() const override { return "manage"; }
   QString name() const override { return "Manage Snippets"; }
   ImageURL iconUrl() const override {

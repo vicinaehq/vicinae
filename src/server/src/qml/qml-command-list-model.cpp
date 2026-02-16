@@ -64,21 +64,28 @@ QHash<int, QByteArray> QmlCommandListModel::roleNames() const {
 }
 
 void QmlCommandListModel::setSelectedIndex(int index) {
-  if (index == m_selectedIndex) return;
   m_selectedIndex = index;
 
   if (index < 0 || index >= static_cast<int>(m_flat.size())) {
+    m_lastSelectedItemId.clear();
     if (m_ctx) m_ctx->navigation->clearActions();
     return;
   }
 
   const auto &flat = m_flat[index];
   if (flat.kind == FlatItem::SectionHeader) {
+    m_lastSelectedItemId.clear();
     if (m_ctx) m_ctx->navigation->clearActions();
     return;
   }
 
-  onItemSelected(flat.sectionIdx, flat.itemIdx);
+  auto id = itemId(flat.sectionIdx, flat.itemIdx);
+  bool sameItem = (id == m_lastSelectedItemId);
+  m_lastSelectedItemId = id;
+
+  if (!sameItem) {
+    onItemSelected(flat.sectionIdx, flat.itemIdx);
+  }
 
   auto panel = createActionPanel(flat.sectionIdx, flat.itemIdx);
   if (panel) {
@@ -88,9 +95,7 @@ void QmlCommandListModel::setSelectedIndex(int index) {
 }
 
 void QmlCommandListModel::refreshActionPanel() {
-  int idx = m_selectedIndex;
-  m_selectedIndex = -1;
-  setSelectedIndex(idx);
+  setSelectedIndex(m_selectedIndex);
 }
 
 void QmlCommandListModel::activateSelected() {
