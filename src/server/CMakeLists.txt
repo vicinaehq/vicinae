@@ -734,8 +734,21 @@ set(SRCS
 	src/qml/qml-theme-bridge.hpp
 	src/qml/qml-create-extension-view-host.hpp
 	src/qml/qml-create-extension-view-host.cpp
+	src/qml/qml-fuzzy-list-model.hpp
+	src/qml/qml-installed-extensions-model.hpp
+	src/qml/qml-installed-extensions-model.cpp
+	src/qml/qml-installed-extensions-view-host.hpp
+	src/qml/qml-installed-extensions-view-host.cpp
+	src/qml/qml-oauth-token-store-model.hpp
+	src/qml/qml-oauth-token-store-model.cpp
+	src/qml/qml-oauth-token-store-view-host.hpp
+	src/qml/qml-oauth-token-store-view-host.cpp
+	src/qml/qml-switch-windows-model.hpp
+	src/qml/qml-switch-windows-model.cpp
+	src/qml/qml-switch-windows-view-host.hpp
+	src/qml/qml-switch-windows-view-host.cpp
 
-) 
+)
 
 if (UNIX)
 	list(APPEND SRCS

@@ -1,45 +1,13 @@
 #pragma once
-#include "ui/action-pannel/action.hpp"
+#include "actions/wm/window-actions.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include "../src/ui/image/url.hpp"
-#include "service-registry.hpp"
-#include "services/window-manager/window-manager.hpp"
 #include <chrono>
 #include <qfuturewatcher.h>
 #include <qnamespace.h>
 #include "ui/views/list-view.hpp"
 #include "services/app-service/app-service.hpp"
 #include <QTimer>
-
-class FocusWindowAction : public AbstractAction {
-  std::shared_ptr<AbstractWindowManager::AbstractWindow> _window;
-
-  void execute(ApplicationContext *ctx) override {
-    auto wm = ctx->services->windowManager();
-    wm->provider()->focusWindowSync(*_window.get());
-  }
-
-public:
-  FocusWindowAction(const std::shared_ptr<AbstractWindowManager::AbstractWindow> &window)
-      : AbstractAction("Focus window", ImageURL::builtin("app-window")), _window(window) {
-    setAutoClose();
-  }
-};
-
-class CloseWindowAction : public AbstractAction {
-  std::shared_ptr<AbstractWindowManager::AbstractWindow> _window;
-
-  void execute(ApplicationContext *ctx) override {
-    auto wm = ctx->services->windowManager();
-    bool success = wm->provider()->closeWindow(*_window.get());
-  }
-
-public:
-  CloseWindowAction(const std::shared_ptr<AbstractWindowManager::AbstractWindow> &window)
-      : AbstractAction("Close window", ImageURL::builtin("xmark")), _window(window) {
-    setStyle(AbstractAction::Style::Danger);
-  }
-};
 
 class WindowItem : public AbstractDefaultListItem, public ListView::Actionnable {
 protected:

@@ -1,5 +1,6 @@
 #include "browse-apps-view.hpp"
 #include "actions/app/app-actions.hpp"
+#include "actions/wm/window-actions.hpp"
 #include "clipboard-actions.hpp"
 #include "services/app-service/abstract-app-db.hpp"
 #include "ui/default-list-item-widget/default-list-item-widget.hpp"
