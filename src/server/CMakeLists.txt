@@ -747,6 +747,14 @@ set(SRCS
 	src/qml/qml-switch-windows-model.cpp
 	src/qml/qml-switch-windows-view-host.hpp
 	src/qml/qml-switch-windows-view-host.cpp
+	src/qml/qml-manage-shortcuts-model.hpp
+	src/qml/qml-manage-shortcuts-model.cpp
+	src/qml/qml-manage-shortcuts-view-host.hpp
+	src/qml/qml-manage-shortcuts-view-host.cpp
+	src/qml/qml-manage-snippets-model.hpp
+	src/qml/qml-manage-snippets-model.cpp
+	src/qml/qml-manage-snippets-view-host.hpp
+	src/qml/qml-manage-snippets-view-host.cpp
 
 )
 
@@ -874,6 +882,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/FormCompletedInput.qml
 	src/qml/qml/CreateExtensionFormView.qml
 	src/qml/qml/ArgCompleter.qml
+	src/qml/qml/DetailListView.qml
 )
 
 # Strip directory prefix so resources are qrc:/Vicinae/Foo.qml

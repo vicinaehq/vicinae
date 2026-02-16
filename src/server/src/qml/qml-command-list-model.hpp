@@ -54,6 +54,7 @@ protected:
   virtual QString itemSubtitle(int section, int item) const { return {}; }
   virtual QString itemIconSource(int section, int item) const = 0;
   virtual QString itemAccessory(int section, int item) const { return {}; }
+  virtual QString itemId(int section, int item) const { return itemTitle(section, item); }
   virtual std::unique_ptr<ActionPanelState> createActionPanel(int section, int item) const = 0;
 
   struct SectionInfo {
@@ -82,4 +83,5 @@ private:
   std::vector<SectionInfo> m_sectionInfos;
   std::vector<FlatItem> m_flat;
   int m_selectedIndex = -1;
+  QString m_lastSelectedItemId;
 };

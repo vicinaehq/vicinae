@@ -10,14 +10,17 @@ RowLayout {
     signal valueChanged(int index, string value)
     signal focusSearchInput()
 
-    spacing: 0
+    readonly property int maxArgs: 3
+    readonly property var visibleArgs: args ? args.slice(0, maxArgs) : []
+
+    spacing: 4
 
     function validate() {
         var firstRequired = -1
         for (var i = 0; i < argRepeater.count; i++) {
             var loader = argRepeater.itemAt(i)
             if (!loader || !loader.item) continue
-            var arg = root.args[i]
+            var arg = root.visibleArgs[i]
             if (arg.required && loader.item.currentValue === "") {
                 loader.item.showError = true
                 if (firstRequired === -1) {
@@ -45,21 +48,19 @@ RowLayout {
         Layout.preferredWidth: 20
         Layout.preferredHeight: 20
         Layout.alignment: Qt.AlignVCenter
-        Layout.leftMargin: 8
-        Layout.rightMargin: 4
         asynchronous: true
     }
 
     Repeater {
         id: argRepeater
-        model: root.args
+        model: root.visibleArgs
 
         delegate: Loader {
             id: argLoader
             required property int index
             required property var modelData
 
-            readonly property bool isLast: index === root.args.length - 1
+            readonly property bool isLast: index === root.visibleArgs.length - 1
 
             Layout.alignment: Qt.AlignVCenter
 
@@ -68,13 +69,19 @@ RowLayout {
             Component {
                 id: textDelegate
 
-                Item {
+                Rectangle {
                     id: textDel
                     property string currentValue: textField.text
                     property bool showError: false
 
-                    implicitWidth: textMetrics.advanceWidth + 4
-                    implicitHeight: 28
+                    implicitWidth: textMetrics.advanceWidth + 16
+                    implicitHeight: 26
+                    radius: 4
+                    color: "transparent"
+                    border.width: 1
+                    border.color: textDel.showError ? "#e53935"
+                                : textField.activeFocus ? Theme.accent
+                                : Theme.divider
 
                     function forceActiveFocus() { textField.forceActiveFocus() }
 
@@ -89,21 +96,11 @@ RowLayout {
                         text: textField.text || argLoader.modelData.placeholder || " "
                     }
 
-                    Rectangle {
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.bottom: parent.bottom
-                        height: 1
-                        color: textDel.showError ? "#e53935"
-                             : textField.activeFocus ? Theme.accent
-                             : Theme.divider
-                    }
-
                     TextInput {
                         id: textField
                         anchors.fill: parent
-                        anchors.leftMargin: 2
-                        anchors.rightMargin: 2
+                        anchors.leftMargin: 8
+                        anchors.rightMargin: 8
                         verticalAlignment: TextInput.AlignVCenter
                         font.pointSize: Theme.regularFontSize
                         color: Theme.foreground
@@ -126,13 +123,36 @@ RowLayout {
                             root.valueChanged(argLoader.index, text)
                         }
 
+                        Keys.onUpPressed: {
+                            if (commandStack.currentItem) commandStack.currentItem.moveUp()
+                            else if (launcher.hasCommandView) launcher.forwardKey(Qt.Key_Up)
+                            else searchList.moveUp()
+                        }
+                        Keys.onDownPressed: {
+                            if (commandStack.currentItem) commandStack.currentItem.moveDown()
+                            else if (launcher.hasCommandView) launcher.forwardKey(Qt.Key_Down)
+                            else searchList.moveDown()
+                        }
                         Keys.onReturnPressed: (event) => {
-                            event.accepted = false
+                            if (event.modifiers !== Qt.NoModifier) {
+                                event.accepted = launcher.forwardKey(event.key, event.modifiers)
+                            } else {
+                                launcher.handleReturn()
+                            }
                         }
                         Keys.onTabPressed: (event) => {
                             if (argLoader.isLast) {
                                 root.focusSearchInput()
                                 event.accepted = true
+                            } else {
+                                event.accepted = false
+                            }
+                        }
+                        Keys.onPressed: (event) => {
+                            if (event.modifiers !== Qt.NoModifier && event.modifiers !== Qt.ShiftModifier
+                                    && event.key !== Qt.Key_Shift && event.key !== Qt.Key_Control
+                                    && event.key !== Qt.Key_Alt && event.key !== Qt.Key_Meta) {
+                                event.accepted = launcher.forwardKey(event.key, event.modifiers)
                             } else {
                                 event.accepted = false
                             }
@@ -144,13 +164,19 @@ RowLayout {
             Component {
                 id: dropdownDelegate
 
-                Item {
+                Rectangle {
                     id: dropdownDel
                     property string currentValue: ""
                     property bool showError: false
 
                     implicitWidth: Math.max(dropdownMetrics.advanceWidth + 36, 80)
-                    implicitHeight: 28
+                    implicitHeight: 26
+                    radius: 4
+                    color: "transparent"
+                    border.width: 1
+                    border.color: dropdownDel.showError ? "#e53935"
+                                : dropdown.activeFocus ? Theme.accent
+                                : Theme.divider
 
                     function forceActiveFocus() { dropdown.forceActiveFocus() }
 
@@ -196,16 +222,11 @@ RowLayout {
                             root.valueChanged(argLoader.index, item.id)
                         }
                     }
-
-                    Rectangle {
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.bottom: parent.bottom
-                        height: 1
-                        color: dropdownDel.showError ? "#e53935" : "transparent"
-                    }
                 }
             }
         }
     }
+
+    // Absorb remaining space so inputs pack to the left and grow rightward
+    Item { Layout.fillWidth: true }
 }

@@ -15,7 +15,7 @@ Item {
         anchors.fill: parent
         anchors.leftMargin: 16
         anchors.rightMargin: 16
-        spacing: launcher.hasCompleter ? 0 : 12
+        spacing: launcher.hasCompleter ? 4 : 12
 
         // Back button — visible when not on root search
         Item {
@@ -142,6 +142,7 @@ Item {
             visible: launcher.hasCompleter
             args: launcher.completerArgs
             icon: launcher.completerIcon
+            Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.alignment: Qt.AlignVCenter
 
@@ -184,6 +185,11 @@ Item {
         function onOpenSearchAccessoryRequested() {
             if (accessoryLoader.item && typeof accessoryLoader.item.open === "function")
                 accessoryLoader.item.open()
+        }
+        function onCompleterChanged() {
+            if (!launcher.hasCompleter && !searchInput.activeFocus) {
+                searchInput.forceActiveFocus()
+            }
         }
         function onCompleterValidationFailed() {
             argCompleter.validate()
