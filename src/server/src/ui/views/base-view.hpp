@@ -128,6 +128,8 @@ public:
 
   void setSearchVisibility(bool visible);
 
+  void setSearchInteractive(bool interactive);
+
   void setStatusBarVisiblity(bool visible);
 
   void clearSearchText();

@@ -112,6 +112,11 @@ void BaseView::setSearchVisibility(bool visible) {
   m_ctx->navigation->setSearchVisibility(visible, m_navProxy);
 }
 
+void BaseView::setSearchInteractive(bool interactive) {
+  if (!m_ctx) return;
+  m_ctx->navigation->setSearchInteractive(interactive, m_navProxy);
+}
+
 void BaseView::setStatusBarVisiblity(bool visible) {
   if (!m_ctx) return;
   m_ctx->navigation->setStatusBarVisibility(visible, m_navProxy);
