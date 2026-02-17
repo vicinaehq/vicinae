@@ -9,6 +9,7 @@ Rectangle {
     property var mdModel: null
     property int blockIndex: -1
     property var selectionController: null
+    property string fontFamily: ""
 
     readonly property string calloutType: blockData.calloutType ?? "note"
     readonly property var paragraphs: blockData.paragraphs ?? []
@@ -73,6 +74,7 @@ Rectangle {
                 color: root._alertColor
                 font.pointSize: Theme.regularFontSize
                 font.bold: true
+                Binding on font.family { value: root.fontFamily; when: root.fontFamily !== "" }
             }
         }
 
@@ -90,6 +92,7 @@ Rectangle {
                 wrapMode: TextEdit.Wrap
                 color: Theme.foreground
                 font.pointSize: Theme.regularFontSize
+                Binding on font.family { value: root.fontFamily; when: root.fontFamily !== "" }
                 text: modelData ?? ""
 
                 required property var modelData

@@ -8,11 +8,14 @@ Item {
 
     required property var model
     property int contentPadding: 12
+    property string fontFamily: ""
     property alias contentHeight: flickable.contentHeight
     property var selectionController: null
     focus: true
 
     readonly property var _controller: selectionController ?? _internalController
+
+    onFontFamilyChanged: flickable.contentY = 0
 
     Keys.onUpPressed: flickable.flick(0, 800)
     Keys.onDownPressed: flickable.flick(0, -800)
@@ -105,6 +108,8 @@ Item {
                         item.selectionController = root._controller
                         item.mdModel = root.model
                         item.blockIndex = index
+                        if (blockType !== codeBlock && blockType !== image && blockType !== horizontalRule)
+                            item.fontFamily = Qt.binding(function() { return root.fontFamily })
                         if (blockType === orderedList)
                             item.ordered = true
                         else if (blockType === bulletList)

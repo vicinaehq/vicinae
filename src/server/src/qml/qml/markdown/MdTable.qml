@@ -9,6 +9,7 @@ Rectangle {
     property var mdModel: null
     property int blockIndex: -1
     property var selectionController: null
+    property string fontFamily: ""
 
     readonly property int columnCount: blockData.columnCount ?? 0
     readonly property var alignments: blockData.alignments ?? []
@@ -88,6 +89,7 @@ Rectangle {
                             color: Theme.foreground
                             font.pointSize: Theme.regularFontSize
                             font.bold: true
+                            Binding on font.family { value: root.fontFamily; when: root.fontFamily !== "" }
                             horizontalAlignment: root.textAlignment(index)
                             text: modelData.html ?? ""
 
@@ -154,6 +156,7 @@ Rectangle {
                                 wrapMode: TextEdit.Wrap
                                 color: Theme.foreground
                                 font.pointSize: Theme.regularFontSize
+                                Binding on font.family { value: root.fontFamily; when: root.fontFamily !== "" }
                                 horizontalAlignment: root.textAlignment(index)
                                 text: modelData.html ?? ""
 

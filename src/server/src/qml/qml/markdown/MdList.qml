@@ -9,6 +9,7 @@ ColumnLayout {
     property var mdModel: null
     property int blockIndex: -1
     property var selectionController: null
+    property string fontFamily: ""
     property bool ordered: false
     property int startNumber: blockData.startNumber ?? 1
     property int depth: 0
@@ -38,6 +39,7 @@ ColumnLayout {
                     text: root.ordered ? (root.startNumber + itemDelegate.index) + "." : "\u2022"
                     color: Theme.textMuted
                     font.pointSize: Theme.regularFontSize
+                    Binding on font.family { value: root.fontFamily; when: root.fontFamily !== "" }
                 }
 
                 TextEdit {
@@ -50,6 +52,7 @@ ColumnLayout {
                     wrapMode: TextEdit.Wrap
                     color: Theme.foreground
                     font.pointSize: Theme.regularFontSize
+                    Binding on font.family { value: root.fontFamily; when: root.fontFamily !== "" }
                     text: itemDelegate.modelData.html ?? ""
 
                     Component.onCompleted: if (root.selectionController) root.selectionController.registerSelectable(itemText, root.blockIndex * 10000 + itemDelegate.index, true)
@@ -68,6 +71,7 @@ ColumnLayout {
                         item.selectionController = root.selectionController
                         item.mdModel = root.mdModel
                         item.blockIndex = root.blockIndex
+                        item.fontFamily = Qt.binding(function() { return root.fontFamily })
                         item.ordered = modelData.ordered ?? false
                         item.startNumber = modelData.startNumber ?? 1
                         item.depth = root.depth + 1
