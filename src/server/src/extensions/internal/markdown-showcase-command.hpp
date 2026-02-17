@@ -60,6 +60,42 @@ for num in fibonacci(10):
     print(num)
 ```
 
+```javascript
+async function fetchUsers(endpoint) {
+  const response = await fetch(endpoint);
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const { data, meta } = await response.json();
+  return data.filter(user => user.active).map(({ id, name }) => ({ id, name }));
+}
+```
+
+```rust
+fn main() {
+    let numbers: Vec<i32> = (1..=10).collect();
+    let sum: i32 = numbers.iter()
+        .filter(|&&x| x % 2 == 0)
+        .sum();
+    println!("Sum of evens: {sum}");
+}
+```
+
+```bash
+#!/bin/bash
+for file in *.log; do
+    count=$(grep -c "ERROR" "$file" 2>/dev/null)
+    [[ $count -gt 0 ]] && echo "$file: $count errors"
+done
+```
+
+```json
+{
+  "name": "vicinae",
+  "version": "1.0.0",
+  "features": ["search", "clipboard", "extensions"],
+  "config": { "theme": "dark", "fontSize": 14, "enabled": true }
+}
+```
+
 ```
 Plain code block without a language tag.
 Just some preformatted text.

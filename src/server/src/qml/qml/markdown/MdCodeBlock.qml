@@ -12,6 +12,7 @@ Rectangle {
 
     readonly property string language: blockData.language ?? ""
     readonly property string code: blockData.code ?? ""
+    readonly property string highlightedHtml: blockData.highlightedHtml ?? ""
 
     readonly property string _langIcon: {
         var lang = language.toLowerCase()
@@ -140,12 +141,12 @@ Rectangle {
             readOnly: true
             selectionColor: Theme.textSelectionBg
             selectedTextColor: Theme.textSelectionFg
-            textFormat: TextEdit.PlainText
+            textFormat: TextEdit.RichText
             wrapMode: TextEdit.Wrap
             color: Theme.foreground
             font.family: "monospace"
             font.pointSize: Theme.regularFontSize * 0.95
-            text: root.code
+            text: root.highlightedHtml
         }
     }
 
