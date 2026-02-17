@@ -405,6 +405,13 @@ void NavigationController::setSearchVisibility(bool value, const BaseView *calle
   }
 }
 
+void NavigationController::setSearchInteractive(bool value, const BaseView *caller) {
+  if (auto state = findViewState(VALUE_OR(caller, topView()))) {
+    state->searchInteractive = value;
+    if (state->sender == topView()) { emit searchInteractiveChanged(value); }
+  }
+}
+
 void NavigationController::setStatusBarVisibility(bool value, const BaseView *caller) {
   if (auto state = findViewState(VALUE_OR(caller, topView()))) {
     state->needsStatusBar = value;

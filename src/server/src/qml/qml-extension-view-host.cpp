@@ -1,5 +1,6 @@
 #include "qml-extension-view-host.hpp"
 #include "navigation-controller.hpp"
+#include "qml-utils.hpp"
 #include <chrono>
 
 static const std::chrono::milliseconds THROTTLE_DEBOUNCE_DURATION(300);
@@ -27,6 +28,11 @@ void QmlExtensionViewHost::onReactivated() {
     m_listModel->refreshActionPanel();
   } else if (m_gridModel) {
     m_gridModel->refreshActionPanel();
+  } else if (m_viewType == "detail" && m_detailActions) {
+    auto notify = [this](const QString &handler, const QJsonArray &args) {
+      notifyExtension(handler, args);
+    };
+    setActions(ExtensionActionPanelBuilder::build(*m_detailActions, notify, &m_submenuCache));
   }
 }
 
@@ -50,8 +56,13 @@ void QmlExtensionViewHost::render(const RenderModel &model) {
     } else {
       emit fallbackRequired(model);
     }
+  } else if (auto *detailModel = std::get_if<RootDetailModel>(&model)) {
+    if (m_viewType == "detail") {
+      renderDetail(*detailModel);
+    } else {
+      emit fallbackRequired(model);
+    }
   } else {
-    // Form or detail — we can't handle these, request fallback
     emit fallbackRequired(model);
   }
 }
@@ -81,8 +92,12 @@ void QmlExtensionViewHost::handleFirstRender(const RenderModel &model) {
 
     emit viewTypeChanged();
     emit contentModelChanged();
+  } else if (auto *detailModel = std::get_if<RootDetailModel>(&model)) {
+    m_viewType = "detail";
+    setSearchInteractive(false);
+    renderDetail(*detailModel);
+    emit viewTypeChanged();
   } else {
-    // Form or detail — request fallback to widget
     emit fallbackRequired(model);
   }
 }
@@ -188,6 +203,32 @@ QObject *QmlExtensionViewHost::contentModel() const {
 }
 
 bool QmlExtensionViewHost::isExtLoading() const { return m_isLoading; }
+
+QString QmlExtensionViewHost::detailMarkdown() const { return m_detailMarkdown; }
+
+QVariantList QmlExtensionViewHost::detailMetadata() const { return m_detailMetadata; }
+
+void QmlExtensionViewHost::renderDetail(const RootDetailModel &model) {
+  bool wasLoading = m_isLoading;
+  m_isLoading = model.isLoading;
+  if (wasLoading != m_isLoading) { emit isLoadingChanged(); }
+  setLoading(model.isLoading);
+
+  if (model.navigationTitle) { setNavigationTitle(*model.navigationTitle); }
+
+  m_detailMarkdown = model.markdown;
+  m_detailMetadata =
+      model.metadata ? qml::metadataToVariantList(*model.metadata) : QVariantList{};
+  emit detailContentChanged();
+
+  m_detailActions = model.actions;
+  if (model.actions) {
+    auto notify = [this](const QString &handler, const QJsonArray &args) {
+      notifyExtension(handler, args);
+    };
+    setActions(ExtensionActionPanelBuilder::build(*model.actions, notify, &m_submenuCache));
+  }
+}
 
 void QmlExtensionViewHost::notifyExtension(const QString &handler, const QJsonArray &args) {
   m_controller->notify(handler, args);

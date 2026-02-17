@@ -1,10 +1,14 @@
 #pragma once
+#include "extend/metadata-model.hpp"
 #include "theme.hpp"
 #include "theme/theme-file.hpp"
 #include "ui/image/url.hpp"
 #include <QString>
+#include <QVariantList>
 
 namespace qml {
+
+QVariantList metadataToVariantList(const MetadataModel &metadata);
 
 inline QString imageSourceFor(const ImageURL &url) {
   const auto &theme = ThemeService::instance().theme();

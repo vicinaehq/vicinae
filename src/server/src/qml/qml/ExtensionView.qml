@@ -30,6 +30,7 @@ Item {
             switch (root.host.viewType) {
             case "list": return listComponent
             case "grid": return gridComponent
+            case "detail": return detailViewComponent
             default: return null
             }
         }
@@ -122,6 +123,15 @@ Item {
         ExtensionGridView {
             anchors.fill: parent
             cmdModel: root.host.contentModel
+        }
+    }
+
+    Component {
+        id: detailViewComponent
+        ExtensionDetailView {
+            anchors.fill: parent
+            markdown: root.host.detailMarkdown
+            metadata: root.host.detailMetadata
         }
     }
 }
