@@ -1,6 +1,6 @@
 include(FetchContent)
 
-function(checkout_glaze)
+function(import_glaze)
 	set(FETCHCONTENT_QUIET OFF)
 	FetchContent_Declare(
 	  glaze
@@ -10,5 +10,4 @@ function(checkout_glaze)
 	  EXCLUDE_FROM_ALL
 	)
 	FetchContent_MakeAvailable(glaze)
-
 endfunction()

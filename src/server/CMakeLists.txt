@@ -6,7 +6,9 @@ set(TARGET vicinae-server)
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets Sql Network Svg DBus Concurrent Quick Qml GuiPrivate)
 find_package(OpenSSL REQUIRED)
 find_package(LibXml2 REQUIRED)
-find_package(KF6SyntaxHighlighting REQUIRED)
+if (USE_SYSTEM_KF6)
+	find_package(KF6SyntaxHighlighting REQUIRED)
+endif()
 
 list(APPEND LIBS  
 	Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus Qt6::Concurrent Qt6::Quick Qt6::Qml
