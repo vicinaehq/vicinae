@@ -1,6 +1,8 @@
 #include "qml-extension-list-model.hpp"
 #include "navigation-controller.hpp"
+#include "qml-utils.hpp"
 #include "ui/image/url.hpp"
+#include "ui/omni-painter/omni-painter.hpp"
 #include <algorithm>
 
 QmlExtensionListModel::QmlExtensionListModel(NotifyFn notify, QObject *parent)
@@ -40,7 +42,9 @@ void QmlExtensionListModel::setExtensionData(const ListModel &model) {
     m_sections.push_back(std::move(freeSection));
   }
 
-  // Re-apply active filter against the new sections, or just rebuild
+  // Re-apply active filter against the new sections, or just rebuild.
+  // The caller (view host) controls selectFirstOnReset based on whether
+  // this update is a response to a search text change or just a data refresh.
   if (m_model.filtering && !m_filter.isEmpty()) {
     setFilter(m_filter);
   } else {
@@ -49,6 +53,7 @@ void QmlExtensionListModel::setExtensionData(const ListModel &model) {
   }
 
   emit emptyViewChanged();
+  emit detailChanged();
 }
 
 QString QmlExtensionListModel::emptyTitle() const {
@@ -65,6 +70,59 @@ QString QmlExtensionListModel::emptyIcon() const {
   if (m_model.emptyView && m_model.emptyView->icon)
     return imageSourceFor(ImageURL(*m_model.emptyView->icon));
   return {};
+}
+
+bool QmlExtensionListModel::isShowingDetail() const { return m_model.isShowingDetail; }
+
+bool QmlExtensionListModel::hasDetail() const { return m_currentDetail.has_value(); }
+
+QString QmlExtensionListModel::detailMarkdown() const {
+  if (m_currentDetail && m_currentDetail->markdown) return *m_currentDetail->markdown;
+  return {};
+}
+
+QVariantList QmlExtensionListModel::detailMetadata() const {
+  if (!m_currentDetail) return {};
+
+  QVariantList result;
+  for (const auto &child : m_currentDetail->metadata.children) {
+    if (auto *label = std::get_if<MetadataLabel>(&child)) {
+      QVariantMap entry;
+      entry[QStringLiteral("type")] = QStringLiteral("label");
+      entry[QStringLiteral("label")] = label->title;
+      entry[QStringLiteral("value")] = label->text;
+      if (label->icon) entry[QStringLiteral("icon")] = qml::imageSourceFor(ImageURL(*label->icon));
+      if (label->color)
+        entry[QStringLiteral("valueColor")] = OmniPainter::resolveColor(*label->color).name();
+      result.append(entry);
+    } else if (auto *link = std::get_if<MetadataLink>(&child)) {
+      QVariantMap entry;
+      entry[QStringLiteral("type")] = QStringLiteral("link");
+      entry[QStringLiteral("label")] = link->title;
+      entry[QStringLiteral("value")] = link->text;
+      entry[QStringLiteral("url")] = link->target;
+      result.append(entry);
+    } else if (std::get_if<MetadataSeparator>(&child)) {
+      QVariantMap entry;
+      entry[QStringLiteral("type")] = QStringLiteral("separator");
+      result.append(entry);
+    } else if (auto *tags = std::get_if<TagListModel>(&child)) {
+      QVariantMap entry;
+      entry[QStringLiteral("type")] = QStringLiteral("tags");
+      entry[QStringLiteral("label")] = tags->title;
+      QVariantList tagList;
+      for (const auto &tag : tags->items) {
+        QVariantMap t;
+        t[QStringLiteral("text")] = tag.text;
+        if (tag.color) t[QStringLiteral("color")] = OmniPainter::resolveColor(*tag.color).name();
+        if (tag.icon) t[QStringLiteral("icon")] = qml::imageSourceFor(ImageURL(*tag.icon));
+        tagList.append(t);
+      }
+      entry[QStringLiteral("tags")] = tagList;
+      result.append(entry);
+    }
+  }
+  return result;
 }
 
 void QmlExtensionListModel::rebuildFromModel() {
@@ -172,7 +230,11 @@ std::unique_ptr<ActionPanelState> QmlExtensionListModel::createActionPanel(int s
 }
 
 void QmlExtensionListModel::onItemSelected(int section, int item) {
+  auto *it = itemAt(section, item);
+  m_currentDetail = it ? it->detail : std::nullopt;
+  emit detailChanged();
+
   if (auto handler = m_model.onSelectionChanged) {
-    if (auto *it = itemAt(section, item)) { m_notify(handler->c_str(), {it->id.c_str()}); }
+    if (it) { m_notify(handler->c_str(), {it->id.c_str()}); }
   }
 }

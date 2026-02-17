@@ -11,6 +11,7 @@ class QmlExtensionViewHost : public QmlBridgeViewBase {
   Q_PROPERTY(QString viewType READ viewType NOTIFY viewTypeChanged)
   Q_PROPERTY(QObject *contentModel READ contentModel NOTIFY contentModelChanged)
   Q_PROPERTY(bool isExtLoading READ isExtLoading NOTIFY isLoadingChanged)
+  Q_PROPERTY(bool selectFirstOnReset READ selectFirstOnReset NOTIFY selectFirstOnResetChanged)
 
 public:
   explicit QmlExtensionViewHost(ExtensionCommandController *controller, QObject *parent = nullptr);
@@ -31,8 +32,10 @@ public:
   QString viewType() const;
   QObject *contentModel() const;
   bool isExtLoading() const;
+  bool selectFirstOnReset() const { return m_selectFirstOnReset; }
 
 signals:
+  void selectFirstOnResetChanged();
   void viewTypeChanged();
   void contentModelChanged();
   void isLoadingChanged();
@@ -59,4 +62,5 @@ private:
   bool m_filtering = false;
   std::optional<std::string> m_onSearchTextChange;
   bool m_shouldResetSelection = false;
+  bool m_selectFirstOnReset = true;
 };
