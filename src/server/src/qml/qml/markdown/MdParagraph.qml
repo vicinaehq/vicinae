@@ -7,10 +7,10 @@ TextEdit {
     property var blockData: ({})
     property var mdModel: null
     property int blockIndex: -1
+    property var selectionController: null
 
     width: parent?.width ?? 0
     readOnly: true
-    selectByMouse: true
     selectionColor: Theme.textSelectionBg
     selectedTextColor: Theme.textSelectionFg
     textFormat: TextEdit.RichText
@@ -20,5 +20,6 @@ TextEdit {
 
     text: blockData.html ?? ""
 
-    onLinkActivated: link => { if (mdModel) mdModel.openLink(link) }
+    onSelectionControllerChanged: if (selectionController) selectionController.registerSelectable(root, blockIndex * 10000, true)
+    Component.onDestruction: if (selectionController) selectionController.unregisterSelectable(root)
 }

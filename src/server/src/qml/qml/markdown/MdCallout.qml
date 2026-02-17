@@ -8,6 +8,7 @@ Rectangle {
     property var blockData: ({})
     property var mdModel: null
     property int blockIndex: -1
+    property var selectionController: null
 
     readonly property string calloutType: blockData.calloutType ?? "note"
     readonly property var paragraphs: blockData.paragraphs ?? []
@@ -79,10 +80,10 @@ Rectangle {
             model: root.paragraphs
 
             TextEdit {
+                id: calloutText
                 Layout.fillWidth: true
                 Layout.leftMargin: 22
                 readOnly: true
-                selectByMouse: true
                 selectionColor: Theme.textSelectionBg
                 selectedTextColor: Theme.textSelectionFg
                 textFormat: TextEdit.RichText
@@ -90,7 +91,12 @@ Rectangle {
                 color: Theme.foreground
                 font.pointSize: Theme.regularFontSize
                 text: modelData ?? ""
-                onLinkActivated: link => { if (root.mdModel) root.mdModel.openLink(link) }
+
+                required property var modelData
+                required property int index
+
+                Component.onCompleted: if (root.selectionController) root.selectionController.registerSelectable(calloutText, root.blockIndex * 10000 + index, true)
+                Component.onDestruction: if (root.selectionController) root.selectionController.unregisterSelectable(calloutText)
             }
         }
     }

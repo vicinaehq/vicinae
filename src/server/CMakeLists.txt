@@ -769,6 +769,8 @@ set(SRCS
 	src/qml/qml-vicinae-store-detail-host.cpp
 	src/qml/markdown/qml-markdown-model.hpp
 	src/qml/markdown/qml-markdown-model.cpp
+	src/qml/markdown/qml-text-selection-controller.hpp
+	src/qml/markdown/qml-text-selection-controller.cpp
 	src/qml/qml-store-intro-view-host.hpp
 	src/qml/qml-store-intro-view-host.cpp
 
@@ -933,6 +935,7 @@ qt_add_qml_module(${TARGET}
 	SOURCES
 		src/qml/qml-source-blend-rect.hpp
 		src/qml/markdown/qml-markdown-model.hpp
+		src/qml/markdown/qml-text-selection-controller.hpp
 	DEPENDENCIES QtQuick
 	NO_PLUGIN
 )

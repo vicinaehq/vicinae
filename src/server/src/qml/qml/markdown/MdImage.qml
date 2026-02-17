@@ -8,6 +8,8 @@ Item {
     property var blockData: ({})
     property var mdModel: null
     property int blockIndex: -1
+    property var selectionController: null
+    property bool selected: false
 
     readonly property int requestedWidth: blockData.width ?? 0
     readonly property int requestedHeight: blockData.height ?? 0
@@ -47,6 +49,12 @@ Item {
                 cache: true
             }
 
+            Rectangle {
+                anchors.fill: parent
+                color: Theme.textSelectionBg
+                opacity: 0.4
+                visible: root.selected
+            }
         }
 
         Text {
@@ -58,4 +66,7 @@ Item {
             font.italic: true
         }
     }
+
+    onSelectionControllerChanged: if (selectionController) selectionController.registerSelectable(root, blockIndex * 10000, false)
+    Component.onDestruction: if (selectionController) selectionController.unregisterSelectable(root)
 }

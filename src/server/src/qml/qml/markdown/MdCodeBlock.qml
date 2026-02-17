@@ -8,6 +8,7 @@ Rectangle {
     property var blockData: ({})
     property var mdModel: null
     property int blockIndex: -1
+    property var selectionController: null
 
     readonly property string language: blockData.language ?? ""
     readonly property string code: blockData.code ?? ""
@@ -133,10 +134,10 @@ Rectangle {
 
         // Code content
         TextEdit {
+            id: codeEdit
             Layout.fillWidth: true
             Layout.margins: 10
             readOnly: true
-            selectByMouse: true
             selectionColor: Theme.textSelectionBg
             selectedTextColor: Theme.textSelectionFg
             textFormat: TextEdit.PlainText
@@ -147,4 +148,7 @@ Rectangle {
             text: root.code
         }
     }
+
+    onSelectionControllerChanged: if (selectionController) selectionController.registerSelectable(codeEdit, blockIndex * 10000, true)
+    Component.onDestruction: if (selectionController) selectionController.unregisterSelectable(codeEdit)
 }

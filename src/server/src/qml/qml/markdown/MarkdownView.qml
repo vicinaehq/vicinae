@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Vicinae
 
 Item {
     id: root
@@ -8,19 +9,48 @@ Item {
     required property var model
     property int contentPadding: 12
     property alias contentHeight: flickable.contentHeight
+    property var selectionController: null
+    focus: true
 
+    readonly property var _controller: selectionController ?? _internalController
+
+    Keys.onUpPressed: flickable.flick(0, 800)
+    Keys.onDownPressed: flickable.flick(0, -800)
+    Keys.onPressed: event => {
+        if (event.key === Qt.Key_PageUp) { flickable.flick(0, 2400); event.accepted = true }
+        else if (event.key === Qt.Key_PageDown) { flickable.flick(0, -2400); event.accepted = true }
+    }
+
+    TextSelectionController {
+        id: _internalController
+        container: col
+        flickable: flickable
+        mdModel: root.model
+    }
+
+    // Cursor-only MouseArea below Flickable — sets I-beam for non-interactive gaps.
+    // Interactive children (copy button) override with their own cursor.
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.NoButton
+        cursorShape: Qt.IBeamCursor
+    }
+
+    // The Flickable handles wheel scrolling natively (interactive: true).
+    // Press/move/release are intercepted by the TextSelectionController's
+    // event filter for text selection — they never reach the Flickable's
+    // own flick handling. Interactive children (e.g. copy button) receive
+    // events directly from the scene graph, bypassing the filter.
     Flickable {
         id: flickable
         anchors.fill: parent
         contentWidth: width
         contentHeight: col.implicitHeight + root.contentPadding * 2
         clip: true
-        interactive: false
         boundsBehavior: Flickable.StopAtBounds
 
         ScrollBar.vertical: ScrollBar {
-            policy: flickable.contentHeight > flickable.height
-                    ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+            policy: ScrollBar.AsNeeded
         }
 
         ColumnLayout {
@@ -71,15 +101,18 @@ Item {
                         }
                     }
 
-                    // Pass data to loaded component via properties
                     onLoaded: {
-                        item.blockData = blockData
+                        item.selectionController = root._controller
                         item.mdModel = root.model
                         item.blockIndex = index
                         if (blockType === orderedList)
                             item.ordered = true
                         else if (blockType === bulletList)
                             item.ordered = false
+                        // Set blockData last — it triggers Repeater creation in
+                        // multi-TextEdit blocks, and children need selectionController
+                        // to already be set for registration in Component.onCompleted
+                        item.blockData = blockData
                     }
                 }
             }
@@ -97,14 +130,19 @@ Item {
         Component { id: calloutComp;    MdCallout {} }
     }
 
-    MouseArea {
-        anchors.fill: parent
-        acceptedButtons: Qt.NoButton
-        onWheel: wheel => {
-            var maxY = Math.max(0, flickable.contentHeight - flickable.height)
-            var dy = wheel.pixelDelta.y !== 0 ? -wheel.pixelDelta.y
-                                              : (wheel.angleDelta.y > 0 ? -40 : 40)
-            flickable.contentY = Math.max(0, Math.min(flickable.contentY + dy, maxY))
-        }
+    Shortcut {
+        sequence: StandardKey.Copy
+        enabled: root._controller.hasSelection
+        onActivated: root._controller.copy()
+    }
+
+    Shortcut {
+        sequence: StandardKey.SelectAll
+        onActivated: root._controller.selectAll()
+    }
+
+    Connections {
+        target: root.model
+        function onModelReset() { root._controller.clearSelection() }
     }
 }

@@ -8,6 +8,7 @@ ColumnLayout {
     property var blockData: ({})
     property var mdModel: null
     property int blockIndex: -1
+    property var selectionController: null
     property bool ordered: false
     property int startNumber: blockData.startNumber ?? 1
     property int depth: 0
@@ -40,9 +41,9 @@ ColumnLayout {
                 }
 
                 TextEdit {
+                    id: itemText
                     Layout.fillWidth: true
                     readOnly: true
-                    selectByMouse: true
                     selectionColor: Theme.textSelectionBg
                     selectedTextColor: Theme.textSelectionFg
                     textFormat: TextEdit.RichText
@@ -50,7 +51,9 @@ ColumnLayout {
                     color: Theme.foreground
                     font.pointSize: Theme.regularFontSize
                     text: itemDelegate.modelData.html ?? ""
-                    onLinkActivated: link => { if (root.mdModel) root.mdModel.openLink(link) }
+
+                    Component.onCompleted: if (root.selectionController) root.selectionController.registerSelectable(itemText, root.blockIndex * 10000 + itemDelegate.index, true)
+                    Component.onDestruction: if (root.selectionController) root.selectionController.unregisterSelectable(itemText)
                 }
             }
 
@@ -62,12 +65,13 @@ ColumnLayout {
                     Layout.fillWidth: true
                     source: "MdList.qml"
                     onLoaded: {
-                        item.blockData = {items: modelData.items ?? []}
+                        item.selectionController = root.selectionController
                         item.mdModel = root.mdModel
                         item.blockIndex = root.blockIndex
                         item.ordered = modelData.ordered ?? false
                         item.startNumber = modelData.startNumber ?? 1
                         item.depth = root.depth + 1
+                        item.blockData = {items: modelData.items ?? []}
                     }
                 }
             }
