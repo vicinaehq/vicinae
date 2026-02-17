@@ -3,6 +3,8 @@
 #include "font-service.hpp"
 #include "image-fetcher.hpp"
 #include "service-registry.hpp"
+#include "theme.hpp"
+#include "theme/theme-file.hpp"
 #include "ui/image/contrast-helper.hpp"
 #include <QCoreApplication>
 #include <QGuiApplication>
@@ -296,13 +298,16 @@ QQuickImageResponse *QmlAsyncImageProvider::requestImageResponse(
 
   qreal dpr = qGuiApp->devicePixelRatio();
   auto *response = new ViciImageResponse(dpr);
-  QSize logical = requestedSize.isValid() ? requestedSize : QSize(32, 32);
+  QSize logical = requestedSize.isValid() ? requestedSize : QSize(512, 512);
   QSize size(qCeil(logical.width() * dpr), qCeil(logical.height() * dpr));
   auto parsed = parseId(id);
 
   if (parsed.type == QStringLiteral("builtin")) {
-    // Builtin SVGs can be rendered on any thread (QSvgRenderer + QPainter on QImage is safe)
-    QImage img = renderBuiltinSvg(parsed.name, size, parsed.fg, parsed.bg);
+    // Auto-resolve foreground from theme when no explicit ?fg= param is provided
+    QColor fg = parsed.fg;
+    if (!fg.isValid())
+      fg = ThemeService::instance().theme().resolve(SemanticColor::Foreground);
+    QImage img = renderBuiltinSvg(parsed.name, size, fg, parsed.bg);
     if (parsed.circleMask && !img.isNull()) applyCircleMask(img);
     response->finishDeferred(std::move(img));
 

@@ -3,6 +3,7 @@
 #include "single-view-command-context.hpp"
 #include "vicinae.hpp"
 #include "playground/playground-view.hpp"
+#include "markdown-showcase-command.hpp"
 
 class UIPlayground : public BuiltinViewCommand<PlaygroundView> {
   QString id() const override { return "playground"; }
@@ -25,5 +26,8 @@ class InternalExtension : public BuiltinCommandRepository {
   }
 
 public:
-  InternalExtension() { registerCommand<UIPlayground>(); }
+  InternalExtension() {
+    registerCommand<UIPlayground>();
+    registerCommand<MarkdownShowcase>();
+  }
 };

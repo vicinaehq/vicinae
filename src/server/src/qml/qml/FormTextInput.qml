@@ -41,7 +41,8 @@ Item {
             verticalAlignment: TextInput.AlignVCenter
             font.pointSize: Theme.regularFontSize
             color: Theme.foreground
-            selectionColor: Theme.accent
+            selectionColor: Theme.textSelectionBg
+            selectedTextColor: Theme.textSelectionFg
             readOnly: root.readOnly
             clip: true
             activeFocusOnTab: false

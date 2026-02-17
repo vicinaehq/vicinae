@@ -767,6 +767,12 @@ set(SRCS
 	src/qml/qml-raycast-store-detail-host.cpp
 	src/qml/qml-vicinae-store-detail-host.hpp
 	src/qml/qml-vicinae-store-detail-host.cpp
+	src/qml/markdown/qml-markdown-model.hpp
+	src/qml/markdown/qml-markdown-model.cpp
+	src/qml/qml-store-intro-view-host.hpp
+	src/qml/qml-store-intro-view-host.cpp
+
+	src/extensions/internal/markdown-showcase-command.hpp
 
 )
 
@@ -898,6 +904,19 @@ set(VICINAE_QML_FILES
 	src/qml/qml/StoreListingView.qml
 	src/qml/qml/AlertBanner.qml
 	src/qml/qml/StoreDetailView.qml
+	src/qml/qml/StoreIntroView.qml
+	src/qml/qml/markdown/MarkdownView.qml
+	src/qml/qml/markdown/MarkdownText.qml
+	src/qml/qml/markdown/MdHeading.qml
+	src/qml/qml/markdown/MdParagraph.qml
+	src/qml/qml/markdown/MdCodeBlock.qml
+	src/qml/qml/markdown/MdList.qml
+	src/qml/qml/markdown/MdTable.qml
+	src/qml/qml/markdown/MdImage.qml
+	src/qml/qml/markdown/MdHorizontalRule.qml
+	src/qml/qml/markdown/MdHtmlBlock.qml
+	src/qml/qml/markdown/MdBlockquote.qml
+	src/qml/qml/markdown/MdCallout.qml
 )
 
 # Strip directory prefix so resources are qrc:/Vicinae/Foo.qml
@@ -913,6 +932,7 @@ qt_add_qml_module(${TARGET}
 	QML_FILES ${VICINAE_QML_FILES}
 	SOURCES
 		src/qml/qml-source-blend-rect.hpp
+		src/qml/markdown/qml-markdown-model.hpp
 	DEPENDENCIES QtQuick
 	NO_PLUGIN
 )
@@ -923,7 +943,7 @@ if(Qt6_FOUND)
     )
 endif()
 
-target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/qml)
+target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/qml ${CMAKE_CURRENT_SOURCE_DIR}/src/qml/markdown)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
 target_compile_features(${TARGET} PUBLIC cxx_std_26)
 
