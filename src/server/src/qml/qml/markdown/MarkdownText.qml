@@ -7,6 +7,7 @@ Item {
 
     property string markdown: ""
     property int contentPadding: 12
+    property string fontFamily: ""
 
     implicitHeight: view.contentHeight
 
@@ -19,6 +20,7 @@ Item {
         anchors.fill: parent
         model: mdModel
         contentPadding: root.contentPadding
+        fontFamily: root.fontFamily
     }
 
     onMarkdownChanged: mdModel.setMarkdown(markdown)

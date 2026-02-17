@@ -8,6 +8,7 @@ TextEdit {
     property var mdModel: null
     property int blockIndex: -1
     property var selectionController: null
+    property string fontFamily: ""
 
     width: parent?.width ?? 0
     readOnly: true
@@ -17,6 +18,8 @@ TextEdit {
     wrapMode: TextEdit.Wrap
     color: Theme.foreground
     font.pointSize: Theme.regularFontSize
+
+    Binding on font.family { value: root.fontFamily; when: root.fontFamily !== "" }
 
     text: blockData.html ?? ""
 

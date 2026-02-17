@@ -9,6 +9,7 @@ Item {
     property var mdModel: null
     property int blockIndex: -1
     property var selectionController: null
+    property string fontFamily: ""
 
     readonly property var paragraphs: blockData.paragraphs ?? []
 
@@ -46,6 +47,7 @@ Item {
                     color: Theme.textMuted
                     font.pointSize: Theme.regularFontSize
                     font.italic: true
+                    Binding on font.family { value: root.fontFamily; when: root.fontFamily !== "" }
                     text: modelData ?? ""
 
                     required property var modelData

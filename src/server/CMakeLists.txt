@@ -777,6 +777,9 @@ set(SRCS
 	src/qml/markdown/qml-text-selection-controller.cpp
 	src/qml/qml-store-intro-view-host.hpp
 	src/qml/qml-store-intro-view-host.cpp
+	src/qml/qml-font-browser-model.hpp
+	src/qml/qml-font-browser-view-host.hpp
+	src/qml/qml-font-browser-view-host.cpp
 
 	src/extensions/internal/markdown-showcase-command.hpp
 
@@ -923,6 +926,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/markdown/MdHtmlBlock.qml
 	src/qml/qml/markdown/MdBlockquote.qml
 	src/qml/qml/markdown/MdCallout.qml
+	src/qml/qml/BrowseFontsView.qml
 )
 
 # Strip directory prefix so resources are qrc:/Vicinae/Foo.qml
