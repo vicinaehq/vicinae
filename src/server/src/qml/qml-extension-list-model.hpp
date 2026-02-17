@@ -9,6 +9,10 @@ class QmlExtensionListModel : public QmlCommandListModel {
   Q_PROPERTY(QString emptyTitle READ emptyTitle NOTIFY emptyViewChanged)
   Q_PROPERTY(QString emptyDescription READ emptyDescription NOTIFY emptyViewChanged)
   Q_PROPERTY(QString emptyIcon READ emptyIcon NOTIFY emptyViewChanged)
+  Q_PROPERTY(bool isShowingDetail READ isShowingDetail NOTIFY detailChanged)
+  Q_PROPERTY(bool hasDetail READ hasDetail NOTIFY detailChanged)
+  Q_PROPERTY(QString detailMarkdown READ detailMarkdown NOTIFY detailChanged)
+  Q_PROPERTY(QVariantList detailMetadata READ detailMetadata NOTIFY detailChanged)
 
 public:
   using NotifyFn = std::function<void(const QString &handler, const QJsonArray &args)>;
@@ -26,7 +30,13 @@ public:
   QString emptyDescription() const;
   QString emptyIcon() const;
 
+  bool isShowingDetail() const;
+  bool hasDetail() const;
+  QString detailMarkdown() const;
+  QVariantList detailMetadata() const;
+
 signals:
+  void detailChanged();
   void emptyViewChanged();
 
 protected:
@@ -48,6 +58,7 @@ private:
 
   NotifyFn m_notify;
   mutable ExtensionActionPanelBuilder::SubmenuCache m_submenuCache;
+  std::optional<DetailModel> m_currentDetail;
   std::vector<Section> m_sections;
   std::vector<Section> m_filteredSections; // Used when client-side filtering is active
   ListModel m_model;

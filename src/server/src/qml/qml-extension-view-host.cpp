@@ -107,7 +107,14 @@ void QmlExtensionViewHost::renderList(const ListModel &model) {
   if (wasLoading != m_isLoading) { emit isLoadingChanged(); }
   setLoading(model.isLoading);
 
-  if (model.dirty) { m_listModel->setExtensionData(model); }
+  if (model.dirty) {
+    m_selectFirstOnReset = m_shouldResetSelection;
+    emit selectFirstOnResetChanged();
+    m_listModel->setExtensionData(model);
+    m_selectFirstOnReset = true;
+    emit selectFirstOnResetChanged();
+    m_shouldResetSelection = false;
+  }
 }
 
 void QmlExtensionViewHost::renderGrid(const GridModel &model) {

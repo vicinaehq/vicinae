@@ -18,7 +18,6 @@ Item {
         autoWireModel: true
         detailComponent: detailPanel
         detailVisible: root.host.selectedFont !== ""
-        detailRatio: 0.65
 
         delegate: Loader {
             id: delegateLoader

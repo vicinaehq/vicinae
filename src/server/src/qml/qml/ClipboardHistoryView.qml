@@ -78,7 +78,6 @@ Item {
             autoWireModel: true
             detailComponent: detailPanel
             detailVisible: root.host.hasDetail
-            detailRatio: 0.65
 
             delegate: Loader {
                 id: delegateLoader

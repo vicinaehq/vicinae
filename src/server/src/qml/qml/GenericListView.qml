@@ -20,7 +20,7 @@ Item {
     //  m_split->setDetailVisibility(generateDetail(item)) in TypedListView).
     property Component detailComponent: null
     property var detailProps: ({})
-    property real detailRatio: 0.45
+    property real detailRatio: 0.65
     property bool detailVisible: false
 
     // Empty view — shown when the list has no items.
@@ -38,6 +38,11 @@ Item {
     //  - onItemActivated → activateSelected
     // Consumers only need to set listModel; no Connections block required.
     property bool autoWireModel: false
+
+    // When false, onModelReset preserves the current selection index
+    // instead of jumping to the first item. Useful for data refreshes
+    // where the list content updates without the user changing the search text.
+    property bool selectFirstOnReset: true
 
     signal itemActivated(int index)
     signal itemSelected(int index)
@@ -67,7 +72,11 @@ Item {
         enabled: root.autoWireModel && root.listModel
         target: root.listModel
         function onModelReset() {
-            root.selectFirst()
+            if (root.selectFirstOnReset
+                    || listView.currentIndex < 0
+                    || listView.currentIndex >= listView.count) {
+                root.selectFirst()
+            }
             if (root.listModel) root.listModel.setSelectedIndex(listView.currentIndex)
         }
     }
