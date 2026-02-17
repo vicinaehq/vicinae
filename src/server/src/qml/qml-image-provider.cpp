@@ -56,7 +56,7 @@ static QPixmap doRequestPixmap(const QString &id, QSize *size, const QSize &requ
   QString name = id.mid(colonIdx + 1);
 
   qreal dpr = qGuiApp->devicePixelRatio();
-  QSize logical = requestedSize.isValid() ? requestedSize : QSize(32, 32);
+  QSize logical = requestedSize.isValid() && !requestedSize.isEmpty() ? requestedSize : QSize(32, 32);
   QSize targetSize(qCeil(logical.width() * dpr), qCeil(logical.height() * dpr));
 
   // Check pixmap cache first

@@ -8,6 +8,7 @@ Item {
     property var blockData: ({})
     property var mdModel: null
     property int blockIndex: -1
+    property var selectionController: null
 
     readonly property var paragraphs: blockData.paragraphs ?? []
 
@@ -35,9 +36,9 @@ Item {
                 model: root.paragraphs
 
                 TextEdit {
+                    id: bqText
                     Layout.fillWidth: true
                     readOnly: true
-                    selectByMouse: true
                     selectionColor: Theme.textSelectionBg
                     selectedTextColor: Theme.textSelectionFg
                     textFormat: TextEdit.RichText
@@ -46,7 +47,12 @@ Item {
                     font.pointSize: Theme.regularFontSize
                     font.italic: true
                     text: modelData ?? ""
-                    onLinkActivated: link => { if (root.mdModel) root.mdModel.openLink(link) }
+
+                    required property var modelData
+                    required property int index
+
+                    Component.onCompleted: if (root.selectionController) root.selectionController.registerSelectable(bqText, root.blockIndex * 10000 + index, true)
+                    Component.onDestruction: if (root.selectionController) root.selectionController.unregisterSelectable(bqText)
                 }
             }
         }

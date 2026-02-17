@@ -8,6 +8,7 @@ Rectangle {
     property var blockData: ({})
     property var mdModel: null
     property int blockIndex: -1
+    property var selectionController: null
 
     readonly property int columnCount: blockData.columnCount ?? 0
     readonly property var alignments: blockData.alignments ?? []
@@ -80,7 +81,6 @@ Rectangle {
                             anchors.fill: parent
                             anchors.margins: 8
                             readOnly: true
-                            selectByMouse: true
                             selectionColor: Theme.textSelectionBg
                             selectedTextColor: Theme.textSelectionFg
                             textFormat: TextEdit.RichText
@@ -90,7 +90,9 @@ Rectangle {
                             font.bold: true
                             horizontalAlignment: root.textAlignment(index)
                             text: modelData.html ?? ""
-                            onLinkActivated: link => { if (root.mdModel) root.mdModel.openLink(link) }
+
+                            Component.onCompleted: if (root.selectionController) root.selectionController.registerSelectable(headerText, root.blockIndex * 10000 + index, true)
+                            Component.onDestruction: if (root.selectionController) root.selectionController.unregisterSelectable(headerText)
                         }
                     }
                 }
@@ -114,6 +116,8 @@ Rectangle {
                 required property var modelData
                 required property int index
 
+                readonly property int rowIdx: index
+
                 RowLayout {
                     width: parent.width
                     spacing: 0
@@ -128,6 +132,9 @@ Rectangle {
                             color: "transparent"
                             implicitHeight: cellText.implicitHeight + 16
 
+                            required property int index
+                            required property var modelData
+
                             Rectangle {
                                 anchors.right: parent.right
                                 anchors.top: parent.top
@@ -141,7 +148,6 @@ Rectangle {
                                 anchors.fill: parent
                                 anchors.margins: 8
                                 readOnly: true
-                                selectByMouse: true
                                 selectionColor: Theme.textSelectionBg
                                 selectedTextColor: Theme.textSelectionFg
                                 textFormat: TextEdit.RichText
@@ -150,7 +156,9 @@ Rectangle {
                                 font.pointSize: Theme.regularFontSize
                                 horizontalAlignment: root.textAlignment(index)
                                 text: modelData.html ?? ""
-                                onLinkActivated: link => { if (root.mdModel) root.mdModel.openLink(link) }
+
+                                Component.onCompleted: if (root.selectionController) root.selectionController.registerSelectable(cellText, root.blockIndex * 10000 + 100 + rowIdx * root.columnCount + index, true)
+                                Component.onDestruction: if (root.selectionController) root.selectionController.unregisterSelectable(cellText)
                             }
                         }
                     }

@@ -138,6 +138,10 @@ public:
   }
 
   QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *data) override {
+    if (width() <= 0 || height() <= 0) {
+      delete oldNode;
+      return nullptr;
+    }
     auto *node = QQuickPaintedItem::updatePaintNode(oldNode, data);
     if (node && !m_overlay)
       disableBlending(node);

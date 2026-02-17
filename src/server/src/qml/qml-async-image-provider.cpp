@@ -298,7 +298,7 @@ QQuickImageResponse *QmlAsyncImageProvider::requestImageResponse(
 
   qreal dpr = qGuiApp->devicePixelRatio();
   auto *response = new ViciImageResponse(dpr);
-  QSize logical = requestedSize.isValid() ? requestedSize : QSize(512, 512);
+  QSize logical = requestedSize.isValid() && !requestedSize.isEmpty() ? requestedSize : QSize(512, 512);
   QSize size(qCeil(logical.width() * dpr), qCeil(logical.height() * dpr));
   auto parsed = parseId(id);
 
