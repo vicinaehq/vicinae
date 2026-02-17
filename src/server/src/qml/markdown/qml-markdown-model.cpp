@@ -1,4 +1,5 @@
 #include "qml-markdown-model.hpp"
+#include "qml-syntax-highlighter.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 #include "theme/theme-file.hpp"
@@ -30,18 +31,14 @@ GfmNodeType getGfmNodeType(cmark_node *node) {
 
 QString imageProviderUrl(const QString &rawUrl) {
   // Already a provider URL — pass through unchanged
-  if (rawUrl.startsWith(QStringLiteral("image://vicinae/")))
-    return rawUrl;
+  if (rawUrl.startsWith(QStringLiteral("image://vicinae/"))) return rawUrl;
 
   QUrl url(rawUrl);
   auto scheme = url.scheme();
-  if (scheme == "https" || scheme == "http")
-    return QStringLiteral("image://vicinae/http:") + rawUrl;
-  if (scheme == "data")
-    return QStringLiteral("image://vicinae/datauri:") + rawUrl;
+  if (scheme == "https" || scheme == "http") return QStringLiteral("image://vicinae/http:") + rawUrl;
+  if (scheme == "data") return QStringLiteral("image://vicinae/datauri:") + rawUrl;
   if (scheme == "file") {
-    auto path = url.host().isEmpty() ? url.path()
-                                     : url.host() + url.path();
+    auto path = url.host().isEmpty() ? url.path() : url.host() + url.path();
     return QStringLiteral("image://vicinae/local:") + path;
   }
   // Relative or other — treat as local
@@ -96,8 +93,7 @@ QString renderInlineHtml(cmark_node *node, const InlineContext &ctx) {
 
     case CMARK_NODE_LINK:
       result += QStringLiteral("<a href=\"%1\" style=\"color:%2;\">")
-                    .arg(QString::fromUtf8(cmark_node_get_url(cur)).toHtmlEscaped(),
-                         ctx.linkColor);
+                    .arg(QString::fromUtf8(cmark_node_get_url(cur)).toHtmlEscaped(), ctx.linkColor);
       result += renderInlineHtml(cmark_node_first_child(cur), ctx);
       result += QStringLiteral("</a>");
       break;
@@ -105,8 +101,7 @@ QString renderInlineHtml(cmark_node *node, const InlineContext &ctx) {
     case CMARK_NODE_IMAGE: {
       auto src = imageProviderUrl(QString::fromUtf8(cmark_node_get_url(cur)));
       auto alt = QString::fromUtf8(cmark_node_get_title(cur));
-      result += QStringLiteral("<img src=\"%1\" alt=\"%2\"/>")
-                    .arg(src.toHtmlEscaped(), alt.toHtmlEscaped());
+      result += QStringLiteral("<img src=\"%1\" alt=\"%2\"/>").arg(src.toHtmlEscaped(), alt.toHtmlEscaped());
       break;
     }
 
@@ -152,8 +147,7 @@ QVariantMap buildListItem(cmark_node *itemNode, const InlineContext &ctx);
 QVariantList buildListItems(cmark_node *listNode, const InlineContext &ctx) {
   QVariantList items;
   for (auto *item = cmark_node_first_child(listNode); item; item = cmark_node_next(item)) {
-    if (cmark_node_get_type(item) == CMARK_NODE_ITEM)
-      items.append(buildListItem(item, ctx));
+    if (cmark_node_get_type(item) == CMARK_NODE_ITEM) items.append(buildListItem(item, ctx));
   }
   return items;
 }
@@ -181,8 +175,7 @@ QVariantMap buildListItem(cmark_node *itemNode, const InlineContext &ctx) {
 
 // ── Table helpers ──
 
-void collectCellHtml(cmark_node *firstCell, int columnCount,
-                     QVariantList &out, const InlineContext &ctx) {
+void collectCellHtml(cmark_node *firstCell, int columnCount, QVariantList &out, const InlineContext &ctx) {
   int c = 0;
   for (auto *cell = firstCell; cell && c < columnCount; cell = cmark_node_next(cell)) {
     if (getGfmNodeType(cell) != GfmNodeType::TableCell) continue;
@@ -255,8 +248,10 @@ void processHtmlNodes(xmlNode *node, HtmlBlockResult &result) {
               QString prop = parts[0].trimmed().toLower();
               QString pval = parts[1].trimmed();
               if (pval.endsWith("px", Qt::CaseInsensitive)) pval.chop(2);
-              if (prop == "width") w = pval.trimmed().toInt();
-              else if (prop == "height") h = pval.trimmed().toInt();
+              if (prop == "width")
+                w = pval.trimmed().toInt();
+              else if (prop == "height")
+                h = pval.trimmed().toInt();
             }
           }
         }
@@ -275,8 +270,7 @@ void processHtmlNodes(xmlNode *node, HtmlBlockResult &result) {
       xmlChar *content = xmlNodeGetContent(cur);
       if (content) {
         QString text = QString::fromUtf8(reinterpret_cast<const char *>(content)).trimmed();
-        if (!text.isEmpty())
-          result.html += text.toHtmlEscaped();
+        if (!text.isEmpty()) result.html += text.toHtmlEscaped();
         xmlFree(content);
       }
     }
@@ -291,18 +285,14 @@ QmlMarkdownModel::QmlMarkdownModel(QObject *parent) : QAbstractListModel(parent)
   rebuildInlineStyles();
   connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() {
     rebuildInlineStyles();
-    if (!m_markdown.isEmpty())
-      setMarkdown(m_markdown);
+    if (!m_markdown.isEmpty()) setMarkdown(m_markdown);
   });
 }
 
-int QmlMarkdownModel::rowCount(const QModelIndex &) const {
-  return static_cast<int>(m_blocks.size());
-}
+int QmlMarkdownModel::rowCount(const QModelIndex &) const { return static_cast<int>(m_blocks.size()); }
 
 QVariant QmlMarkdownModel::data(const QModelIndex &index, int role) const {
-  if (!index.isValid() || index.row() < 0 || index.row() >= static_cast<int>(m_blocks.size()))
-    return {};
+  if (!index.isValid() || index.row() < 0 || index.row() >= static_cast<int>(m_blocks.size())) return {};
 
   const auto &block = m_blocks[index.row()];
   switch (role) {
@@ -328,6 +318,7 @@ void QmlMarkdownModel::rebuildInlineStyles() {
   m_inlineCodeBg = theme.resolve(SemanticColor::SecondaryBackground).name(QColor::HexRgb);
   m_linkColor = theme.resolve(SemanticColor::Blue).name(QColor::HexRgb);
   m_textColor = theme.resolve(SemanticColor::Foreground).name(QColor::HexRgb);
+  m_syntaxStyles = syntax::buildStyleMap(theme);
 }
 
 void QmlMarkdownModel::setMarkdown(const QString &markdown) {
@@ -371,11 +362,9 @@ void QmlMarkdownModel::setMarkdown(const QString &markdown) {
       } else if (onlyChild && cmark_node_get_type(first) == CMARK_NODE_LINK) {
         // Check for linked image: [![alt](img)](link)
         auto *linkChild = cmark_node_first_child(first);
-        if (linkChild && !cmark_node_next(linkChild) &&
-            cmark_node_get_type(linkChild) == CMARK_NODE_IMAGE) {
+        if (linkChild && !cmark_node_next(linkChild) && cmark_node_get_type(linkChild) == CMARK_NODE_IMAGE) {
           auto data = buildImageBlock(linkChild);
-          data[QStringLiteral("link")] =
-              QString::fromUtf8(cmark_node_get_url(first));
+          data[QStringLiteral("link")] = QString::fromUtf8(cmark_node_get_url(first));
           m_blocks.push_back({MdBlockType::Image, data});
         } else {
           QVariantMap data;
@@ -406,7 +395,10 @@ void QmlMarkdownModel::setMarkdown(const QString &markdown) {
         code.chop(1);
       data[QStringLiteral("code")] = code;
       auto *lang = cmark_node_get_fence_info(node);
-      data[QStringLiteral("language")] = lang ? QString::fromUtf8(lang) : QString();
+      QString language = lang ? QString::fromUtf8(lang) : QString();
+      data[QStringLiteral("language")] = language;
+      bool isDark = ThemeService::instance().theme().isDark();
+      data[QStringLiteral("highlightedHtml")] = syntax::highlight(code, language, m_syntaxStyles, isDark);
       m_blocks.push_back({MdBlockType::CodeBlock, data});
       break;
     }
@@ -432,8 +424,7 @@ void QmlMarkdownModel::setMarkdown(const QString &markdown) {
       QString html = QString::fromUtf8(cmark_node_get_literal(node));
       QByteArray wrapped = "<div>" + html.toUtf8() + "</div>";
 
-      htmlDocPtr doc = htmlReadMemory(wrapped.constData(), wrapped.size(),
-                                      nullptr, nullptr,
+      htmlDocPtr doc = htmlReadMemory(wrapped.constData(), wrapped.size(), nullptr, nullptr,
                                       HTML_PARSE_RECOVER | HTML_PARSE_NOERROR | HTML_PARSE_NOWARNING);
       if (doc) {
         xmlNode *xmlRoot = xmlDocGetRootElement(doc);
@@ -485,12 +476,10 @@ void QmlMarkdownModel::setMarkdown(const QString &markdown) {
 
       // Collect all child paragraphs as HTML
       QVariantList paragraphs;
-      for (auto *child = cmark_node_first_child(node); child;
-           child = cmark_node_next(child)) {
+      for (auto *child = cmark_node_first_child(node); child; child = cmark_node_next(child)) {
         if (cmark_node_get_type(child) == CMARK_NODE_PARAGRAPH) {
           QString html = renderInlineChildren(child, ctx);
-          if (!html.isEmpty())
-            paragraphs.append(html);
+          if (!html.isEmpty()) paragraphs.append(html);
         }
       }
 
@@ -520,9 +509,15 @@ void QmlMarkdownModel::setMarkdown(const QString &markdown) {
         if (auto *aligns = cmark_gfm_extensions_get_table_alignments(node)) {
           for (int c = 0; c < columnCount; ++c) {
             switch (aligns[c]) {
-            case 'c': alignments.append(1); break;
-            case 'r': alignments.append(2); break;
-            default:  alignments.append(0); break;
+            case 'c':
+              alignments.append(1);
+              break;
+            case 'r':
+              alignments.append(2);
+              break;
+            default:
+              alignments.append(0);
+              break;
             }
           }
         } else {
@@ -538,10 +533,17 @@ void QmlMarkdownModel::setMarkdown(const QString &markdown) {
 
         for (auto *child = cmark_node_first_child(node); child; child = cmark_node_next(child)) {
           switch (getGfmNodeType(child)) {
-          case GfmNodeType::TableHeader: header = child; break;
-          case GfmNodeType::TableBody: body = child; break;
-          case GfmNodeType::TableRow: extraRows.push_back(child); break;
-          default: break;
+          case GfmNodeType::TableHeader:
+            header = child;
+            break;
+          case GfmNodeType::TableBody:
+            body = child;
+            break;
+          case GfmNodeType::TableRow:
+            extraRows.push_back(child);
+            break;
+          default:
+            break;
           }
         }
 
@@ -603,16 +605,13 @@ void QmlMarkdownModel::clear() {
 
 void QmlMarkdownModel::openLink(const QString &url) {
   auto *appDb = ServiceRegistry::instance()->appDb();
-  if (!appDb->openTarget(url))
-    qWarning() << "QmlMarkdownModel: failed to open link" << url;
+  if (!appDb->openTarget(url)) qWarning() << "QmlMarkdownModel: failed to open link" << url;
 }
 
 QString QmlMarkdownModel::copyCodeBlock(int blockIndex) {
-  if (blockIndex < 0 || blockIndex >= static_cast<int>(m_blocks.size()))
-    return {};
+  if (blockIndex < 0 || blockIndex >= static_cast<int>(m_blocks.size())) return {};
   const auto &block = m_blocks[blockIndex];
-  if (block.type != MdBlockType::CodeBlock)
-    return {};
+  if (block.type != MdBlockType::CodeBlock) return {};
   auto code = block.data.value(QStringLiteral("code")).toString();
   QGuiApplication::clipboard()->setText(code);
   return code;

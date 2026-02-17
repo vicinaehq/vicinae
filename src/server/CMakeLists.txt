@@ -6,6 +6,7 @@ set(TARGET vicinae-server)
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets Sql Network Svg DBus Concurrent Quick Qml GuiPrivate)
 find_package(OpenSSL REQUIRED)
 find_package(LibXml2 REQUIRED)
+find_package(KF6SyntaxHighlighting REQUIRED)
 
 list(APPEND LIBS  
 	Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus Qt6::Concurrent Qt6::Quick Qt6::Qml
@@ -17,6 +18,7 @@ list(APPEND LIBS
 	wayland-client 
 	qt6keychain
 	LibXml2::LibXml2
+	KF6::SyntaxHighlighting
 	glaze::glaze
 	vicinae::xdgpp
 	vicinae::scriptcommand

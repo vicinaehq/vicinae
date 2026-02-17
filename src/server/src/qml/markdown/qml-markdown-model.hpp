@@ -1,4 +1,5 @@
 #pragma once
+#include "qml-syntax-highlighter.hpp"
 #include "theme.hpp"
 #include <QAbstractListModel>
 #include <QVariantList>
@@ -61,4 +62,6 @@ private:
   QString m_inlineCodeBg;
   QString m_linkColor;
   QString m_textColor;
+
+  syntax::StyleMap m_syntaxStyles;
 };
