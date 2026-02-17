@@ -60,7 +60,8 @@ Item {
                 verticalAlignment: TextInput.AlignVCenter
                 font.pointSize: Theme.regularFontSize
                 color: Theme.foreground
-                selectionColor: Theme.accent
+                selectionColor: Theme.textSelectionBg
+                selectedTextColor: Theme.textSelectionFg
                 clip: true
                 readOnly: !launcher.searchInteractive
 

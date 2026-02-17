@@ -169,7 +169,8 @@ Item {
                     verticalAlignment: TextInput.AlignVCenter
                     font.pointSize: Theme.smallerFontSize
                     color: Theme.foreground
-                    selectionColor: Theme.accent
+                    selectionColor: Theme.textSelectionBg
+                    selectedTextColor: Theme.textSelectionFg
                     clip: true
 
                     Text {

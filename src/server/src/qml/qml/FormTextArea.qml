@@ -64,7 +64,8 @@ Item {
                 height: Math.max(contentHeight, flickable.height)
                 font.pointSize: Theme.regularFontSize
                 color: Theme.foreground
-                selectionColor: Theme.accent
+                selectionColor: Theme.textSelectionBg
+                selectedTextColor: Theme.textSelectionFg
                 wrapMode: TextEdit.Wrap
                 activeFocusOnTab: false
 
