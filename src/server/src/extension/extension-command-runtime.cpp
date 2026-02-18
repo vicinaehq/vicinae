@@ -1,7 +1,7 @@
 #include "extension-command-runtime.hpp"
 #include "common.hpp"
 #include "extension/extension-navigation-controller.hpp"
-#include "extension-error-view.hpp"
+#include "qml/qml-extension-error-view-host.hpp"
 #include "extension/requests/app-request-router.hpp"
 #include "extension/requests/clipboard-request-router.hpp"
 #include "extension/requests/storage-request-router.hpp"
@@ -112,7 +112,7 @@ void ExtensionCommandRuntime::handleCrash(const proto::ext::extension::CrashEven
   auto &nav = context()->navigation;
 
   nav->popToRoot();
-  nav->pushView(new ExtensionErrorView(QString::fromStdString(crash.text())));
+  nav->pushView(new QmlExtensionErrorViewHost(QString::fromStdString(crash.text())));
   nav->setNavigationTitle(QString("%1 - Crash handler").arg(m_command->name()));
   nav->setNavigationIcon(m_command->iconUrl());
 }

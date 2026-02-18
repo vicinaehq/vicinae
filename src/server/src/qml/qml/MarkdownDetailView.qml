@@ -5,17 +5,19 @@ RowLayout {
     id: root
 
     required property string markdown
-    required property var metadata
+    property var metadata: []
+
+    function moveUp() { mdContent.scrollUp() }
+    function moveDown() { mdContent.scrollDown() }
 
     spacing: 0
 
     MarkdownText {
+        id: mdContent
         Layout.fillWidth: true
         Layout.fillHeight: true
         markdown: root.markdown
         contentPadding: 20
-        focus: true
-        Component.onCompleted: forceActiveFocus()
     }
 
     Rectangle {

@@ -8,8 +8,11 @@ Item {
     property string markdown: ""
     property int contentPadding: 12
     property string fontFamily: ""
-
     implicitHeight: view.contentHeight
+    property alias contentHeight: view.contentHeight
+
+    function scrollUp() { view.scrollUp() }
+    function scrollDown() { view.scrollDown() }
 
     MarkdownModel {
         id: mdModel

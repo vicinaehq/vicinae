@@ -714,6 +714,8 @@ set(SRCS
 	src/qml/qml-utils.cpp
 	src/qml/qml-extension-view-host.hpp
 	src/qml/qml-extension-view-host.cpp
+	src/qml/qml-extension-error-view-host.hpp
+	src/qml/qml-extension-error-view-host.cpp
 	src/qml/qml-extension-form-model.hpp
 	src/qml/qml-extension-form-model.cpp
 	src/qml/qml-clipboard-history-model.hpp
@@ -896,7 +898,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/EmojiGridView.qml
 	src/qml/qml/ViciImage.qml
 	src/qml/qml/ExtensionView.qml
-	src/qml/qml/ExtensionDetailView.qml
+	src/qml/qml/MarkdownDetailView.qml
 	src/qml/qml/ExtensionGridView.qml
 	src/qml/qml/ActionPanelPopover.qml
 	src/qml/qml/ActionListPanel.qml
