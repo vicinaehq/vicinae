@@ -25,13 +25,9 @@ SelectableDelegate {
             Layout.preferredHeight: 25
             Layout.alignment: Qt.AlignVCenter
 
-            Image {
+            ViciImage {
                 anchors.fill: parent
                 source: root.itemIconSource
-                sourceSize.width: 25
-                sourceSize.height: 25
-                asynchronous: true
-                cache: true
             }
 
             // Active indicator dot

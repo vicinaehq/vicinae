@@ -17,8 +17,9 @@
 #include <QtMath>
 #include <QThreadPool>
 #include <QTimer>
+#include <QUrl>
+#include "data-uri/data-uri.hpp"
 #include <atomic>
-#include <mutex>
 
 // Dedicated pool for raster image decoding.  Keeps at most 2 threads so we
 // never have many full-resolution images resident simultaneously (formats
@@ -232,6 +233,19 @@ static QImage decodeImageData(const QByteArray &data, const QSize &size) {
   return result;
 }
 
+static void applyFillColor(QImage &image, const QColor &fg) {
+  if (!fg.isValid()) return;
+  QImage tinted(image.size(), QImage::Format_ARGB32_Premultiplied);
+  tinted.fill(Qt::transparent);
+  QPainter painter(&tinted);
+  painter.setRenderHint(QPainter::Antialiasing, true);
+  painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+  painter.drawImage(0, 0, image);
+  painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
+  painter.fillRect(tinted.rect(), fg);
+  image = tinted;
+}
+
 static void applyCircleMask(QImage &image) {
   QImage masked(image.size(), QImage::Format_ARGB32_Premultiplied);
   masked.fill(Qt::transparent);
@@ -321,25 +335,29 @@ QQuickImageResponse *QmlAsyncImageProvider::requestImageResponse(
 
   } else if (parsed.type == QStringLiteral("system")) {
     // QIcon::fromTheme needs main thread
-    QMetaObject::invokeMethod(qApp, [response, name = parsed.name, size]() {
+    QColor fg = parsed.fg;
+    QMetaObject::invokeMethod(qApp, [response, name = parsed.name, size, fg]() {
       if (response->isCancelled()) { response->finish({}); return; }
       QImage img = renderSystemIcon(name, size);
+      if (!img.isNull()) applyFillColor(img, fg);
       response->finish(std::move(img));
     }, Qt::QueuedConnection);
 
   } else if (parsed.type == QStringLiteral("local")) {
     QString path = parsed.name;
     bool circle = parsed.circleMask;
+    QColor fg = parsed.fg;
 
     if (path.endsWith(QStringLiteral(".svg"), Qt::CaseInsensitive)) {
       QImage img = renderLocalSvg(path, size);
+      if (!img.isNull()) applyFillColor(img, fg);
       if (circle && !img.isNull()) applyCircleMask(img);
       response->finishDeferred(std::move(img));
     } else {
-      // Raster: decode in background thread
-      imageDecodingPool().start([response, path, size, circle]() {
+      imageDecodingPool().start([response, path, size, circle, fg]() {
         if (response->isCancelled()) { response->finish({}); return; }
         QImage img = renderLocalRaster(path, size);
+        if (!img.isNull()) applyFillColor(img, fg);
         if (circle && !img.isNull()) applyCircleMask(img);
         response->finish(std::move(img));
       });
@@ -349,17 +367,18 @@ QQuickImageResponse *QmlAsyncImageProvider::requestImageResponse(
     // Network fetch needs main thread for NetworkFetcher
     QString url = parsed.name;
     bool circle = parsed.circleMask;
-    QMetaObject::invokeMethod(qApp, [response, url, size, circle]() {
+    QColor fg = parsed.fg;
+    QMetaObject::invokeMethod(qApp, [response, url, size, circle, fg]() {
       if (response->isCancelled()) { response->finish({}); return; }
       auto *reply = NetworkFetcher::instance()->fetch(QUrl(url));
       QObject::connect(reply, &FetchReply::finished, qApp,
-                       [response, reply, size, circle](const QByteArray &data) {
+                       [response, reply, size, circle, fg](const QByteArray &data) {
         reply->deleteLater();
         if (response->isCancelled()) { response->finish({}); return; }
-        // Decode in background
-        imageDecodingPool().start([response, data, size, circle]() {
+        imageDecodingPool().start([response, data, size, circle, fg]() {
           if (response->isCancelled()) { response->finish({}); return; }
           QImage img = decodeImageData(data, size);
+          if (!img.isNull()) applyFillColor(img, fg);
           if (circle && !img.isNull()) applyCircleMask(img);
           response->finish(std::move(img));
         });
@@ -395,23 +414,20 @@ QQuickImageResponse *QmlAsyncImageProvider::requestImageResponse(
     }, Qt::QueuedConnection);
 
   } else if (parsed.type == QStringLiteral("datauri")) {
-    // Decode base64 data URI, then treat as local (SVG or raster)
     QString dataStr = parsed.name;
     bool circle = parsed.circleMask;
-    imageDecodingPool().start([response, dataStr, size, circle]() {
+    QColor fg = parsed.fg;
+    imageDecodingPool().start([response, dataStr, size, circle, fg]() {
       if (response->isCancelled()) { response->finish({}); return; }
-      // Parse "data:mime;base64,..."
-      int commaIdx = dataStr.indexOf(',');
-      if (commaIdx < 0) {
+
+      DataUri uri(dataStr);
+      QByteArray decoded = uri.decodeContent();
+      if (decoded.isEmpty()) {
         response->finish({});
         return;
       }
-      QByteArray encoded = dataStr.mid(commaIdx + 1).toUtf8();
-      QByteArray decoded = QByteArray::fromBase64(encoded);
 
-      // Check if SVG
-      QString header = dataStr.left(commaIdx);
-      bool isSvg = header.contains(QStringLiteral("svg"));
+      bool isSvg = uri.mediaType().contains(QStringLiteral("svg"));
 
       QImage img;
       if (isSvg) {
@@ -427,6 +443,7 @@ QQuickImageResponse *QmlAsyncImageProvider::requestImageResponse(
         img = decodeImageData(decoded, size);
       }
 
+      if (!img.isNull()) applyFillColor(img, fg);
       if (circle && !img.isNull()) applyCircleMask(img);
       response->finish(std::move(img));
     });

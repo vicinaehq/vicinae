@@ -41,14 +41,11 @@ RowLayout {
         }
     }
 
-    Image {
-        source: root.icon
-        sourceSize.width: 20
-        sourceSize.height: 20
+    ViciImage {
         Layout.preferredWidth: 20
         Layout.preferredHeight: 20
         Layout.alignment: Qt.AlignVCenter
-        asynchronous: true
+        source: root.icon
     }
 
     Repeater {

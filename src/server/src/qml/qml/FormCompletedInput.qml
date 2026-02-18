@@ -187,11 +187,9 @@ Item {
                     anchors.rightMargin: 8
                     spacing: 6
 
-                    Image {
+                    ViciImage {
                         visible: del._item && del._item.iconSource ? true : false
                         source: visible ? del._item.iconSource : ""
-                        sourceSize.width: 16
-                        sourceSize.height: 16
                         Layout.preferredWidth: 16
                         Layout.preferredHeight: 16
                     }

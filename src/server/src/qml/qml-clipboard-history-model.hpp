@@ -27,6 +27,7 @@ signals:
   void entrySelected(const ClipboardHistoryEntry &entry);
 
 protected:
+  QString itemId(int s, int i) const override;
   QString itemTitle(int s, int i) const override;
   QString itemSubtitle(int s, int i) const override;
   QString itemIconSource(int s, int i) const override;

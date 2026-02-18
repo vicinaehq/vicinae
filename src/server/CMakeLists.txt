@@ -740,6 +740,9 @@ set(SRCS
 	src/qml/qml-image-url.hpp
 	src/qml/qml-image-url.cpp
 	src/qml/qml-image-source.hpp
+	src/qml/qml-image-source.cpp
+	src/qml/qml-animated-image.hpp
+	src/qml/qml-animated-image.cpp
 	src/qml/qml-async-image-provider.hpp
 	src/qml/qml-async-image-provider.cpp
 	src/qml/qml-config-bridge.hpp
@@ -960,6 +963,7 @@ qt_add_qml_module(${TARGET}
 	QML_FILES ${VICINAE_QML_FILES}
 	SOURCES
 		src/qml/qml-source-blend-rect.hpp
+		src/qml/qml-animated-image.hpp
 		src/qml/markdown/qml-markdown-model.hpp
 		src/qml/markdown/qml-text-selection-controller.hpp
 	DEPENDENCIES QtQuick

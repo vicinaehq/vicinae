@@ -275,7 +275,7 @@ ImageURL ImageURL::rawData(const QByteArray &data, const QString &mimeType) {
   ImageURL url;
 
   url.setType(ImageURLType::DataURI);
-  url.setName(QString("data:%1;base64,%2").arg(mimeType).arg(data.toBase64(QByteArray::Base64UrlEncoding)));
+  url.setName(QString("data:%1;base64,%2").arg(mimeType).arg(data.toBase64()));
 
   return url;
 }

@@ -48,13 +48,9 @@ Item {
             Layout.preferredHeight: 18
             Layout.alignment: Qt.AlignVCenter
 
-            Image {
+            ViciImage {
                 anchors.fill: parent
                 source: root.iconSource
-                sourceSize.width: 18
-                sourceSize.height: 18
-                asynchronous: true
-                cache: true
             }
         }
 

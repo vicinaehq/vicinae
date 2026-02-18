@@ -41,12 +41,10 @@ Item {
                 return 200
             }
 
-            Image {
+            ViciImage {
                 anchors.fill: parent
                 fillMode: Image.PreserveAspectFit
                 source: root.blockData.src ?? ""
-                asynchronous: true
-                cache: true
             }
 
             Rectangle {
