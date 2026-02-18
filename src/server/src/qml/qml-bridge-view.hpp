@@ -6,6 +6,11 @@
 
 /// General-purpose bridge: any QML component can be pushed as a view.
 class QmlBridgeViewBase : public BaseView {
+  Q_OBJECT
+
+signals:
+  void searchAccessoryUrlChanged();
+
 public:
   /// The QML component to instantiate (e.g. "qrc:/Vicinae/CommandListView.qml").
   virtual QUrl qmlComponentUrl() const = 0;

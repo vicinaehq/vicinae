@@ -131,6 +131,7 @@ private:
   bool m_viewWasPopped = false;
   QString m_searchPlaceholder;
   QUrl m_searchAccessoryUrl;
+  QMetaObject::Connection m_searchAccessoryConnection;
   QObject *m_commandViewHost = nullptr;
 
   // Navigation status

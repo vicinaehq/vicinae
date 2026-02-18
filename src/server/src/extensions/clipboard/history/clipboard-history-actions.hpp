@@ -1,12 +1,11 @@
 #pragma once
 #include "builtin_icon.hpp"
 #include "clipboard-actions.hpp"
+#include "qml/qml-edit-keywords-view-host.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "ui/action-pannel/push-action.hpp"
 #include "ui/alert/alert.hpp"
-#include "ui/form/text-area.hpp"
-#include "ui/views/form-view.hpp"
 
 class PasteClipboardSelection : public PasteToFocusedWindowAction {
   QString m_id;
@@ -73,43 +72,23 @@ public:
       : AbstractAction(value ? "Pin" : "Unpin", ImageURL::builtin("pin")), m_id(id), m_value(value) {}
 };
 
-class EditClipboardSelectionKeywordsView : public ManagedFormView {
-  TextArea *m_keywords = new TextArea;
-  QString m_selectionId;
-
-  void onSubmit() override {
-    auto clipman = context()->services->clipman();
-    auto toast = context()->services->toastService();
-    if (clipman->setKeywords(m_selectionId, m_keywords->text())) {
-      toast->setToast("Keywords edited", ToastStyle::Success);
-      popSelf();
-    } else {
-      toast->setToast("Failed to edit keywords", ToastStyle::Danger);
-    }
-  }
-
-  void initializeForm() override {
-    auto clipman = context()->services->clipman();
-    m_keywords->setText(clipman->retrieveKeywords(m_selectionId).value_or(""));
-    m_keywords->textEdit()->selectAll();
+class EditClipboardKeywordsAction : public AbstractAction {
+  QString m_id;
+  void execute(ApplicationContext *ctx) override {
+    auto clipman = ctx->services->clipman();
+    auto id = m_id;
+    auto view = new QmlEditKeywordsViewHost(
+        [clipman, id]() { return clipman->retrieveKeywords(id).value_or(""); },
+        [clipman, id](const QString &kw) { return clipman->setKeywords(id, kw); },
+        "Additional keywords that will be used to index this selection.");
+    ctx->navigation->pushView(view);
+    ctx->navigation->setNavigationTitle(title());
   }
 
 public:
-  EditClipboardSelectionKeywordsView(const QString &id) : m_selectionId(id) {
-    auto inputField = new FormField();
-    inputField->setWidget(m_keywords);
-    inputField->setName("Keywords");
-    inputField->setInfo("Additional keywords that will be used to index this selection.");
-    form()->addField(inputField);
-  }
-};
-
-class EditClipboardKeywordsAction : public PushAction<EditClipboardSelectionKeywordsView, QString> {
   QString title() const override { return "Edit keywords"; }
   std::optional<ImageURL> icon() const override { return ImageURL::builtin("text"); }
-
-public:
-  EditClipboardKeywordsAction(const QString &id) : PushAction(id) {}
+  EditClipboardKeywordsAction(const QString &id) : m_id(id) {}
 };
 
 class RemoveAllSelectionsAction : public AbstractAction {

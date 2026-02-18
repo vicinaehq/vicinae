@@ -31,6 +31,7 @@ Item {
             case "list": return listComponent
             case "grid": return gridComponent
             case "detail": return detailViewComponent
+            case "form": return formComponent
             default: return null
             }
         }
@@ -132,6 +133,15 @@ Item {
             anchors.fill: parent
             markdown: root.host.detailMarkdown
             metadata: root.host.detailMetadata
+        }
+    }
+
+    Component {
+        id: formComponent
+        ExtensionFormView {
+            anchors.fill: parent
+            host: root.host
+            formModel: root.host.formModel
         }
     }
 }

@@ -3,6 +3,7 @@
 #include "extension/extension-action-panel-builder.hpp"
 #include "extension/extension-command-controller.hpp"
 #include "qml-bridge-view.hpp"
+#include "qml-extension-form-model.hpp"
 #include "qml-extension-grid-model.hpp"
 #include "qml-extension-list-model.hpp"
 #include <QTimer>
@@ -15,11 +16,15 @@ class QmlExtensionViewHost : public QmlBridgeViewBase {
   Q_PROPERTY(bool selectFirstOnReset READ selectFirstOnReset NOTIFY selectFirstOnResetChanged)
   Q_PROPERTY(QString detailMarkdown READ detailMarkdown NOTIFY detailContentChanged)
   Q_PROPERTY(QVariantList detailMetadata READ detailMetadata NOTIFY detailContentChanged)
+  Q_PROPERTY(QObject *formModel READ formModel NOTIFY formModelChanged)
+  Q_PROPERTY(QString linkAccessoryText READ linkAccessoryText NOTIFY linkAccessoryChanged)
+  Q_PROPERTY(QString linkAccessoryHref READ linkAccessoryHref NOTIFY linkAccessoryChanged)
 
 public:
   explicit QmlExtensionViewHost(ExtensionCommandController *controller, QObject *parent = nullptr);
 
   QUrl qmlComponentUrl() const override;
+  QUrl qmlSearchAccessoryUrl() const override;
   QVariantMap qmlProperties() const override;
   void loadInitialData() override;
   void onReactivated() override;
@@ -38,6 +43,9 @@ public:
   bool selectFirstOnReset() const { return m_selectFirstOnReset; }
   QString detailMarkdown() const;
   QVariantList detailMetadata() const;
+  QObject *formModel() const;
+  QString linkAccessoryText() const;
+  QString linkAccessoryHref() const;
 
 signals:
   void selectFirstOnResetChanged();
@@ -45,6 +53,8 @@ signals:
   void contentModelChanged();
   void isLoadingChanged();
   void detailContentChanged();
+  void formModelChanged();
+  void linkAccessoryChanged();
   void fallbackRequired(const RenderModel &model);
 
 private:
@@ -52,12 +62,14 @@ private:
   void renderList(const ListModel &model);
   void renderGrid(const GridModel &model);
   void renderDetail(const RootDetailModel &model);
+  void renderForm(const FormModel &model);
   void notifyExtension(const QString &handler, const QJsonArray &args);
   void handleDebouncedSearch();
 
   ExtensionCommandController *m_controller;
   QmlExtensionListModel *m_listModel = nullptr;
   QmlExtensionGridModel *m_gridModel = nullptr;
+  QmlExtensionFormModel *m_formModel = nullptr;
   QString m_viewType = "loading";
   int m_renderIndex = -1;
   QTimer *m_searchDebounce;
@@ -76,4 +88,9 @@ private:
   QVariantList m_detailMetadata;
   std::optional<ActionPannelModel> m_detailActions;
   mutable ExtensionActionPanelBuilder::SubmenuCache m_submenuCache;
+
+  // Form view state
+  std::optional<ActionPannelModel> m_formActions;
+  QString m_linkAccessoryText;
+  QString m_linkAccessoryHref;
 };

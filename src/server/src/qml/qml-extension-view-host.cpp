@@ -15,6 +15,11 @@ QUrl QmlExtensionViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/ExtensionView.qml"));
 }
 
+QUrl QmlExtensionViewHost::qmlSearchAccessoryUrl() const {
+  if (m_linkAccessoryText.isEmpty()) return {};
+  return QUrl(QStringLiteral("qrc:/Vicinae/FormLinkAccessory.qml"));
+}
+
 QVariantMap QmlExtensionViewHost::qmlProperties() const {
   return {{QStringLiteral("host"), QVariant::fromValue(const_cast<QmlExtensionViewHost *>(this))}};
 }
@@ -33,6 +38,13 @@ void QmlExtensionViewHost::onReactivated() {
       notifyExtension(handler, args);
     };
     setActions(ExtensionActionPanelBuilder::build(*m_detailActions, notify, &m_submenuCache));
+  } else if (m_viewType == "form" && m_formActions) {
+    auto notify = [this](const QString &handler, const QJsonArray &args) {
+      notifyExtension(handler, args);
+    };
+    auto submit = [this]() -> std::expected<QJsonObject, QString> { return m_formModel->submit(); };
+    setActions(ExtensionActionPanelBuilder::build(*m_formActions, notify, &m_submenuCache,
+                                                  ActionPanelState::ShortcutPreset::Form, submit));
   }
 }
 
@@ -59,6 +71,12 @@ void QmlExtensionViewHost::render(const RenderModel &model) {
   } else if (auto *detailModel = std::get_if<RootDetailModel>(&model)) {
     if (m_viewType == "detail") {
       renderDetail(*detailModel);
+    } else {
+      emit fallbackRequired(model);
+    }
+  } else if (auto *formModel = std::get_if<FormModel>(&model)) {
+    if (m_formModel) {
+      renderForm(*formModel);
     } else {
       emit fallbackRequired(model);
     }
@@ -97,6 +115,17 @@ void QmlExtensionViewHost::handleFirstRender(const RenderModel &model) {
     setSearchInteractive(false);
     renderDetail(*detailModel);
     emit viewTypeChanged();
+  } else if (auto *formModel = std::get_if<FormModel>(&model)) {
+    auto notify = [this](const QString &handler, const QJsonArray &args) {
+      notifyExtension(handler, args);
+    };
+    m_formModel = new QmlExtensionFormModel(notify, this);
+    m_viewType = "form";
+    setSearchInteractive(false);
+    renderForm(*formModel);
+
+    emit viewTypeChanged();
+    emit formModelChanged();
   } else {
     emit fallbackRequired(model);
   }
@@ -227,6 +256,52 @@ void QmlExtensionViewHost::renderDetail(const RootDetailModel &model) {
       notifyExtension(handler, args);
     };
     setActions(ExtensionActionPanelBuilder::build(*model.actions, notify, &m_submenuCache));
+  }
+}
+
+QObject *QmlExtensionViewHost::formModel() const { return m_formModel; }
+
+QString QmlExtensionViewHost::linkAccessoryText() const { return m_linkAccessoryText; }
+
+QString QmlExtensionViewHost::linkAccessoryHref() const { return m_linkAccessoryHref; }
+
+void QmlExtensionViewHost::renderForm(const FormModel &model) {
+  bool wasLoading = m_isLoading;
+  m_isLoading = model.isLoading;
+  if (wasLoading != m_isLoading) { emit isLoadingChanged(); }
+  setLoading(model.isLoading);
+
+  if (model.navigationTitle) { setNavigationTitle(*model.navigationTitle); }
+
+  m_formModel->setFormData(model);
+
+  // Link accessory
+  QString newLinkText, newLinkHref;
+  if (model.searchBarAccessory) {
+    if (auto *link = std::get_if<FormModel::LinkAccessoryModel>(&*model.searchBarAccessory)) {
+      newLinkText = link->text;
+      newLinkHref = link->target;
+    }
+  }
+  if (newLinkText != m_linkAccessoryText || newLinkHref != m_linkAccessoryHref) {
+    bool hadAccessory = !m_linkAccessoryText.isEmpty();
+    m_linkAccessoryText = newLinkText;
+    m_linkAccessoryHref = newLinkHref;
+    emit linkAccessoryChanged();
+    if (hadAccessory != !m_linkAccessoryText.isEmpty()) {
+      emit searchAccessoryUrlChanged();
+    }
+  }
+
+  // Action panel
+  m_formActions = model.actions;
+  if (model.actions) {
+    auto notify = [this](const QString &handler, const QJsonArray &args) {
+      notifyExtension(handler, args);
+    };
+    auto submit = [this]() -> std::expected<QJsonObject, QString> { return m_formModel->submit(); };
+    setActions(ExtensionActionPanelBuilder::build(*model.actions, notify, &m_submenuCache,
+                                                  ActionPanelState::ShortcutPreset::Form, submit));
   }
 }
 
