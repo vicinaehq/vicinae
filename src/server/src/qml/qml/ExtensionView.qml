@@ -50,6 +50,7 @@ Item {
                 model: root.host.contentModel
                 autoWireModel: true
                 selectFirstOnReset: root.host.selectFirstOnReset
+                suppressEmpty: root.host.suppressEmptyView
 
                 emptyTitle: root.host.contentModel.emptyTitle || "No results"
                 emptyDescription: root.host.contentModel.emptyDescription || ""
@@ -124,6 +125,7 @@ Item {
         ExtensionGridView {
             anchors.fill: parent
             cmdModel: root.host.contentModel
+            suppressEmpty: root.host.suppressEmptyView
         }
     }
 
