@@ -36,6 +36,8 @@ Item {
     property string emptyIcon: "image://vicinae/builtin:magnifying-glass?fg=" + Theme.foreground
     property Component emptyViewComponent: null
 
+    property bool suppressEmpty: false
+
     readonly property bool _empty: listView.count === 0
 
     readonly property real cellSize:
@@ -258,7 +260,7 @@ Item {
 
     Loader {
         anchors.fill: parent
-        active: root._empty
+        active: root._empty && !root.suppressEmpty
         visible: active
         sourceComponent: root.emptyViewComponent
                          ? root.emptyViewComponent

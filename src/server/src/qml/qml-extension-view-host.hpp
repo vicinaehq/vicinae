@@ -17,6 +17,7 @@ class QmlExtensionViewHost : public QmlBridgeViewBase {
   Q_PROPERTY(QString detailMarkdown READ detailMarkdown NOTIFY detailContentChanged)
   Q_PROPERTY(QVariantList detailMetadata READ detailMetadata NOTIFY detailContentChanged)
   Q_PROPERTY(QObject *formModel READ formModel NOTIFY formModelChanged)
+  Q_PROPERTY(bool suppressEmptyView READ suppressEmptyView NOTIFY suppressEmptyViewChanged)
   Q_PROPERTY(QString linkAccessoryText READ linkAccessoryText NOTIFY linkAccessoryChanged)
   Q_PROPERTY(QString linkAccessoryHref READ linkAccessoryHref NOTIFY linkAccessoryChanged)
 
@@ -44,6 +45,7 @@ public:
   QString detailMarkdown() const;
   QVariantList detailMetadata() const;
   QObject *formModel() const;
+  bool suppressEmptyView() const { return m_isLoading && !m_hasSearchText; }
   QString linkAccessoryText() const;
   QString linkAccessoryHref() const;
 
@@ -54,6 +56,7 @@ signals:
   void isLoadingChanged();
   void detailContentChanged();
   void formModelChanged();
+  void suppressEmptyViewChanged();
   void linkAccessoryChanged();
   void fallbackRequired(const RenderModel &model);
 
@@ -74,6 +77,7 @@ private:
   int m_renderIndex = -1;
   QTimer *m_searchDebounce;
   bool m_isLoading = true;
+  bool m_hasSearchText = false;
   bool m_firstRender = true;
 
   // State from model

@@ -151,7 +151,7 @@ void QmlExtensionViewHost::renderList(const ListModel &model) {
 
   bool wasLoading = m_isLoading;
   m_isLoading = model.isLoading;
-  if (wasLoading != m_isLoading) { emit isLoadingChanged(); }
+  if (wasLoading != m_isLoading) { emit isLoadingChanged(); emit suppressEmptyViewChanged(); }
   setLoading(model.isLoading);
 
   if (model.dirty) {
@@ -180,13 +180,17 @@ void QmlExtensionViewHost::renderGrid(const GridModel &model) {
 
   bool wasLoading = m_isLoading;
   m_isLoading = model.isLoading;
-  if (wasLoading != m_isLoading) { emit isLoadingChanged(); }
+  if (wasLoading != m_isLoading) { emit isLoadingChanged(); emit suppressEmptyViewChanged(); }
   setLoading(model.isLoading);
 
   if (model.dirty) { m_gridModel->setExtensionData(model); }
 }
 
 void QmlExtensionViewHost::textChanged(const QString &text) {
+  bool had = m_hasSearchText;
+  m_hasSearchText = !text.isEmpty();
+  if (had != m_hasSearchText) emit suppressEmptyViewChanged();
+
   if (m_throttle) {
     m_searchDebounce->start();
   } else {
@@ -243,7 +247,7 @@ QVariantList QmlExtensionViewHost::detailMetadata() const { return m_detailMetad
 void QmlExtensionViewHost::renderDetail(const RootDetailModel &model) {
   bool wasLoading = m_isLoading;
   m_isLoading = model.isLoading;
-  if (wasLoading != m_isLoading) { emit isLoadingChanged(); }
+  if (wasLoading != m_isLoading) { emit isLoadingChanged(); emit suppressEmptyViewChanged(); }
   setLoading(model.isLoading);
 
   if (model.navigationTitle) { setNavigationTitle(*model.navigationTitle); }
@@ -271,7 +275,7 @@ QString QmlExtensionViewHost::linkAccessoryHref() const { return m_linkAccessory
 void QmlExtensionViewHost::renderForm(const FormModel &model) {
   bool wasLoading = m_isLoading;
   m_isLoading = model.isLoading;
-  if (wasLoading != m_isLoading) { emit isLoadingChanged(); }
+  if (wasLoading != m_isLoading) { emit isLoadingChanged(); emit suppressEmptyViewChanged(); }
   setLoading(model.isLoading);
 
   if (model.navigationTitle) { setNavigationTitle(*model.navigationTitle); }
