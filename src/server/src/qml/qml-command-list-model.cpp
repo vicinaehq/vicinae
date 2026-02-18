@@ -68,14 +68,14 @@ void QmlCommandListModel::setSelectedIndex(int index) {
 
   if (index < 0 || index >= static_cast<int>(m_flat.size())) {
     m_lastSelectedItemId.clear();
-    if (m_ctx) m_ctx->navigation->clearActions();
+    onSelectionCleared();
     return;
   }
 
   const auto &flat = m_flat[index];
   if (flat.kind == FlatItem::SectionHeader) {
     m_lastSelectedItemId.clear();
-    if (m_ctx) m_ctx->navigation->clearActions();
+    onSelectionCleared();
     return;
   }
 
@@ -92,6 +92,10 @@ void QmlCommandListModel::setSelectedIndex(int index) {
     panel->finalize();
     if (m_ctx) m_ctx->navigation->setActions(std::move(panel));
   }
+}
+
+void QmlCommandListModel::onSelectionCleared() {
+  if (m_ctx) m_ctx->navigation->clearActions();
 }
 
 void QmlCommandListModel::refreshActionPanel() {

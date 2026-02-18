@@ -45,6 +45,7 @@ protected:
   QString itemIconSource(int section, int item) const override;
   QString itemAccessory(int section, int item) const override;
   std::unique_ptr<ActionPanelState> createActionPanel(int section, int item) const override;
+  void onSelectionCleared() override;
 
 private:
   struct Section {

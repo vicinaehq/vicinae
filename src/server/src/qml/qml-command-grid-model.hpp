@@ -78,6 +78,7 @@ protected:
 
   virtual std::unique_ptr<ActionPanelState> createActionPanel(int section, int item) const = 0;
   virtual void onItemSelected(int section, int item) {}
+  virtual void onSelectionCleared();
 
   ApplicationContext *ctx() const { return m_ctx; }
   const std::vector<SectionInfo> &sections() const { return m_sections; }

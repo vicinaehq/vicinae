@@ -43,6 +43,7 @@ signals:
 protected:
   std::unique_ptr<ActionPanelState> createActionPanel(int section, int item) const override;
   void onItemSelected(int section, int item) override;
+  void onSelectionCleared() override;
 
 private:
   struct Section {

@@ -206,6 +206,25 @@ std::unique_ptr<ActionPanelState> QmlExtensionGridModel::createActionPanel(int s
   return nullptr;
 }
 
+void QmlExtensionGridModel::onSelectionCleared() {
+  std::unique_ptr<ActionPanelState> panel;
+
+  if (m_model.emptyView && m_model.emptyView->actions) {
+    panel = ExtensionActionPanelBuilder::build(*m_model.emptyView->actions, m_notify, &m_submenuCache,
+                                               ActionPanelState::ShortcutPreset::List);
+  } else if (m_model.actions) {
+    panel = ExtensionActionPanelBuilder::build(*m_model.actions, m_notify, &m_submenuCache,
+                                               ActionPanelState::ShortcutPreset::List);
+  }
+
+  if (panel) {
+    panel->finalize();
+    ctx()->navigation->setActions(std::move(panel));
+  } else {
+    QmlCommandGridModel::onSelectionCleared();
+  }
+}
+
 void QmlExtensionGridModel::onItemSelected(int section, int item) {
   if (auto handler = m_model.onSelectionChanged) {
     if (auto *it = itemAt(section, item)) { m_notify(handler->c_str(), {it->id.c_str()}); }
