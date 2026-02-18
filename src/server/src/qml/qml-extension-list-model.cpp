@@ -90,10 +90,14 @@ void QmlExtensionListModel::rebuildFromModel() {
 
   std::vector<SectionInfo> infos;
   infos.reserve(sections.size());
+  bool hasItems = false;
   for (const auto &sec : sections) {
     infos.push_back({QString::fromStdString(sec.name), static_cast<int>(sec.items.size())});
+    if (!sec.items.empty()) hasItems = true;
   }
   setSections(infos);
+
+  if (!hasItems) { onSelectionCleared(); }
 }
 
 const std::vector<QmlExtensionListModel::Section> &QmlExtensionListModel::activeSections() const {
@@ -187,6 +191,25 @@ std::unique_ptr<ActionPanelState> QmlExtensionListModel::createActionPanel(int s
   }
 
   return nullptr;
+}
+
+void QmlExtensionListModel::onSelectionCleared() {
+  std::unique_ptr<ActionPanelState> panel;
+
+  if (m_model.emptyView && m_model.emptyView->actions) {
+    panel = ExtensionActionPanelBuilder::build(*m_model.emptyView->actions, m_notify, &m_submenuCache,
+                                               ActionPanelState::ShortcutPreset::List);
+  } else if (m_model.actions) {
+    panel = ExtensionActionPanelBuilder::build(*m_model.actions, m_notify, &m_submenuCache,
+                                               ActionPanelState::ShortcutPreset::List);
+  }
+
+  if (panel) {
+    panel->finalize();
+    ctx()->navigation->setActions(std::move(panel));
+  } else {
+    QmlCommandListModel::onSelectionCleared();
+  }
 }
 
 void QmlExtensionListModel::onItemSelected(int section, int item) {

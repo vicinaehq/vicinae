@@ -62,6 +62,7 @@ protected:
   virtual QString itemAccessory(int section, int item) const { return {}; }
   virtual QString itemId(int section, int item) const { return itemTitle(section, item); }
   virtual std::unique_ptr<ActionPanelState> createActionPanel(int section, int item) const = 0;
+  virtual void onSelectionCleared();
 
   void setSelectFirstOnReset(bool value) {
     if (m_selectFirstOnReset != value) {

@@ -117,6 +117,11 @@ void QmlCommandGridModel::selectFirst() {
   m_selSection = -1;
   m_selItem = -1;
   emit selectionChanged();
+  onSelectionCleared();
+}
+
+void QmlCommandGridModel::onSelectionCleared() {
+  if (m_ctx) m_ctx->navigation->clearActions();
 }
 
 void QmlCommandGridModel::activateSelected() {
