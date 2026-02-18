@@ -14,6 +14,7 @@ Item {
     // currentItem: { id, displayName, iconSource } or null
     property var currentItem: null
     signal activated(var item)
+    signal popupClosed()
 
     // --- Compact mode (toolbar-style) ---
     property bool compact: false
@@ -190,7 +191,7 @@ Item {
         onOpened: searchField.forceActiveFocus()
         onClosed: {
             root._closedTime = Date.now()
-            root.forceActiveFocus()
+            root.popupClosed()
         }
 
         background: Rectangle {

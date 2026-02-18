@@ -160,6 +160,12 @@ Item {
             visible: active
             Layout.alignment: Qt.AlignVCenter
         }
+
+        Connections {
+            target: accessoryLoader.item
+            ignoreUnknownSignals: true
+            function onPopupClosed() { searchInput.forceActiveFocus() }
+        }
     }
 
     Connections {
