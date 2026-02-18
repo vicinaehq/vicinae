@@ -942,6 +942,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/FormDateInput.qml
 	src/qml/qml/FormLinkAccessory.qml
 	src/qml/qml/EditKeywordsFormView.qml
+	src/qml/qml/HorizontalLoadingBar.qml
 )
 
 # Strip directory prefix so resources are qrc:/Vicinae/Foo.qml

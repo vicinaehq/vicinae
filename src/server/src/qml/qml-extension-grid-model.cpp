@@ -88,13 +88,30 @@ QString QmlExtensionGridModel::emptyIcon() const {
 void QmlExtensionGridModel::rebuildFromModel() {
   const auto &sections = activeSections();
 
+  int prevSection = selectedSection();
+  int prevItem = selectedItem();
+
   std::vector<SectionInfo> infos;
   infos.reserve(sections.size());
   for (const auto &sec : sections) {
     infos.push_back({QString::fromStdString(sec.name), static_cast<int>(sec.items.size()), sec.columns, sec.aspectRatio});
   }
   setSections(infos);
-  selectFirst();
+
+  bool prevValid = prevSection >= 0
+      && prevSection < static_cast<int>(sections.size())
+      && prevItem >= 0
+      && prevItem < static_cast<int>(sections[prevSection].items.size());
+
+  if (prevValid) {
+    if (prevSection == selectedSection() && prevItem == selectedItem()) {
+      emit selectionChanged();
+    } else {
+      select(prevSection, prevItem);
+    }
+  } else {
+    selectFirst();
+  }
 }
 
 const std::vector<QmlExtensionGridModel::Section> &QmlExtensionGridModel::activeSections() const {
