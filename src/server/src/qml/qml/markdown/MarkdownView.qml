@@ -15,10 +15,13 @@ Item {
 
     readonly property var _controller: selectionController ?? _internalController
 
+    function scrollUp() { flickable.flick(0, 800) }
+    function scrollDown() { flickable.flick(0, -800) }
+
     onFontFamilyChanged: flickable.contentY = 0
 
-    Keys.onUpPressed: flickable.flick(0, 800)
-    Keys.onDownPressed: flickable.flick(0, -800)
+    Keys.onUpPressed: scrollUp()
+    Keys.onDownPressed: scrollDown()
     Keys.onPressed: event => {
         if (event.key === Qt.Key_PageUp) { flickable.flick(0, 2400); event.accepted = true }
         else if (event.key === Qt.Key_PageDown) { flickable.flick(0, -2400); event.accepted = true }

@@ -131,7 +131,7 @@ Item {
 
     Component {
         id: detailViewComponent
-        ExtensionDetailView {
+        MarkdownDetailView {
             anchors.fill: parent
             markdown: root.host.detailMarkdown
             metadata: root.host.detailMetadata

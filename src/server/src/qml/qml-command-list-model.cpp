@@ -143,7 +143,8 @@ void QmlCommandListModel::rebuildFlatList() {
     const auto &sec = m_sectionInfos[s];
     if (sec.count == 0) continue;
 
-    m_flat.push_back({.kind = FlatItem::SectionHeader, .sectionIdx = s, .itemIdx = -1});
+    if (!sec.name.isEmpty())
+      m_flat.push_back({.kind = FlatItem::SectionHeader, .sectionIdx = s, .itemIdx = -1});
 
     for (int i = 0; i < sec.count; ++i) {
       m_flat.push_back({.kind = FlatItem::DataItem, .sectionIdx = s, .itemIdx = i});
