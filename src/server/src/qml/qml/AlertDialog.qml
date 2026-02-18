@@ -34,14 +34,12 @@ Popup {
     contentItem: ColumnLayout {
         spacing: 15
 
-        Image {
+        ViciImage {
             Layout.alignment: Qt.AlignHCenter
             width: 30
             height: 30
-            sourceSize.width: 30
-            sourceSize.height: 30
-            source: launcher.alertModel.iconSource
             visible: launcher.alertModel.iconSource !== ""
+            source: launcher.alertModel.iconSource
         }
 
         Text {

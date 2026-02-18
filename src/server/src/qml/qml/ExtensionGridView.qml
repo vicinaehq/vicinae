@@ -24,7 +24,7 @@ GenericGridView {
             readonly property int itm: parent ? parent.cellItem : 0
             readonly property bool hovered: parent ? parent.cellHovered : false
 
-            Image {
+            ViciImage {
                 anchors.centerIn: parent
                 width: Math.min(implicitWidth, parent.width)
                 height: Math.min(implicitHeight, parent.height)
@@ -36,14 +36,13 @@ GenericGridView {
                     return Image.PreserveAspectFit
                 }
                 source: {
-                    // Re-evaluate when theme changes (icon URLs embed tint color)
                     var _ = Theme.foreground
                     return cellRoot.model ? cellRoot.model.cellIcon(cellRoot.sec, cellRoot.itm) : ""
                 }
-                sourceSize.width: cellRoot.parent ? cellRoot.parent.cellWidth : width
-                sourceSize.height: cellRoot.parent ? cellRoot.parent.cellHeight : height
-                asynchronous: true
-                cache: true
+                sourceSize: Qt.size(
+                    cellRoot.parent ? cellRoot.parent.cellWidth : width,
+                    cellRoot.parent ? cellRoot.parent.cellHeight : height
+                )
             }
 
             ToolTip {

@@ -11,7 +11,44 @@ bool QmlImageUrl::isValid() const { return m_url.type() != ImageURLType::Invalid
 
 bool QmlImageUrl::isThemeSensitive() const {
   auto t = m_url.type();
-  return t == ImageURLType::Builtin || t == ImageURLType::Local;
+  if (t == ImageURLType::Builtin || t == ImageURLType::Local)
+    return true;
+  return m_url.fillColor().has_value();
+}
+
+static QColor resolveFillColor(const ImageURL &url) {
+  auto fill = url.fillColor();
+  if (!fill) return {};
+
+  auto &theme = ThemeService::instance().theme();
+  if (auto *sc = std::get_if<SemanticColor>(&*fill))
+    return theme.resolve(*sc);
+  if (auto *qc = std::get_if<QColor>(&*fill))
+    return *qc;
+  if (auto *str = std::get_if<QString>(&*fill))
+    return QColor(*str);
+  return {};
+}
+
+static QString buildParams(const ImageURL &url, bool builtinFgDefault = false) {
+  QStringList parts;
+
+  QColor fg = resolveFillColor(url);
+  if (builtinFgDefault && !fg.isValid())
+    fg = ThemeService::instance().theme().resolve(SemanticColor::Foreground);
+  if (fg.isValid())
+    parts << QStringLiteral("fg=") + fg.name(QColor::HexRgb);
+
+  if (auto bgTint = url.backgroundTint()) {
+    QColor bg = ThemeService::instance().theme().resolve(*bgTint);
+    parts << QStringLiteral("bg=") + bg.name(QColor::HexRgb);
+  }
+
+  if (url.mask() == OmniPainter::CircleMask)
+    parts << QStringLiteral("mask=circle");
+
+  if (parts.isEmpty()) return {};
+  return QStringLiteral("?") + parts.join(QStringLiteral("&"));
 }
 
 QString QmlImageUrl::toSource() const {
@@ -22,48 +59,18 @@ QString QmlImageUrl::toSource() const {
   const QString &name = m_url.name();
 
   switch (type) {
-  case ImageURLType::Builtin: {
-    // Eagerly resolve the current theme's foreground color so the provider
-    // receives a concrete hex color (no theme access needed on image thread).
-    // When the theme changes, QML re-evaluates the binding → toSource()
-    // returns a different URL → cache miss → fresh render.
-    auto &theme = ThemeService::instance().theme();
-    QColor fg;
-    if (auto fill = m_url.fillColor()) {
-      if (auto *sc = std::get_if<SemanticColor>(&*fill))
-        fg = theme.resolve(*sc);
-      else if (auto *qc = std::get_if<QColor>(&*fill))
-        fg = *qc;
-      else if (auto *str = std::get_if<QString>(&*fill))
-        fg = QColor(*str);
-    }
-    if (!fg.isValid()) fg = theme.resolve(SemanticColor::Foreground);
-    QString params = QStringLiteral("?fg=") + fg.name(QColor::HexRgb);
-
-    if (auto bgTint = m_url.backgroundTint()) {
-      QColor bg = theme.resolve(*bgTint);
-      params += QStringLiteral("&bg=") + bg.name(QColor::HexRgb);
-    }
-
-    if (m_url.mask() == OmniPainter::CircleMask)
-      params += QStringLiteral("&mask=circle");
-
-    return prefix + QStringLiteral("builtin:") + name + params;
-  }
+  case ImageURLType::Builtin:
+    return prefix + QStringLiteral("builtin:") + name + buildParams(m_url, true);
 
   case ImageURLType::System:
-    return prefix + QStringLiteral("system:") + name;
+    return prefix + QStringLiteral("system:") + name + buildParams(m_url);
 
-  case ImageURLType::Local: {
-    QString result = prefix + QStringLiteral("local:") + name;
-    if (m_url.mask() == OmniPainter::CircleMask)
-      result += QStringLiteral("?mask=circle");
-    return result;
-  }
+  case ImageURLType::Local:
+    return prefix + QStringLiteral("local:") + name + buildParams(m_url);
 
   case ImageURLType::Http:
   case ImageURLType::Https:
-    return prefix + QStringLiteral("http:") + name;
+    return prefix + QStringLiteral("http:") + name + buildParams(m_url);
 
   case ImageURLType::Emoji:
     return prefix + QStringLiteral("emoji:") + name;
@@ -72,7 +79,7 @@ QString QmlImageUrl::toSource() const {
     return prefix + QStringLiteral("favicon:") + name;
 
   case ImageURLType::DataURI:
-    return prefix + QStringLiteral("datauri:") + name;
+    return prefix + QStringLiteral("datauri:") + name + buildParams(m_url);
 
   default:
     return {};

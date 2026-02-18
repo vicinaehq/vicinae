@@ -140,12 +140,10 @@ Item {
             anchors.rightMargin: 10
             spacing: 6
 
-            Image {
+            ViciImage {
                 visible: !compact && root.currentItem && root.currentItem.iconSource
                          ? true : false
                 source: visible ? root.currentItem.iconSource : ""
-                sourceSize.width: 16
-                sourceSize.height: 16
                 Layout.preferredWidth: 16
                 Layout.preferredHeight: 16
             }
@@ -344,13 +342,10 @@ Item {
                             anchors.rightMargin: 8
                             spacing: 6
 
-                            Image {
+                            ViciImage {
                                 visible: del._entry && del._entry.item && del._entry.item.iconSource
                                          ? true : false
                                 source: visible ? del._entry.item.iconSource : ""
-                                asynchronous: true
-                                sourceSize.width: 16
-                                sourceSize.height: 16
                                 Layout.preferredWidth: 16
                                 Layout.preferredHeight: 16
                             }

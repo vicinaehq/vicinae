@@ -67,15 +67,11 @@ Item {
                 spacing: 20
 
                 // Extension icon
-                Image {
+                ViciImage {
                     Layout.preferredWidth: 64
                     Layout.preferredHeight: 64
                     Layout.alignment: Qt.AlignTop
                     source: root.host.iconSource
-                    sourceSize.width: 64
-                    sourceSize.height: 64
-                    asynchronous: true
-                    cache: true
                 }
 
                 // Title + metadata
@@ -99,14 +95,10 @@ Item {
                         RowLayout {
                             spacing: 6
 
-                            Image {
+                            ViciImage {
                                 Layout.preferredWidth: 16
                                 Layout.preferredHeight: 16
                                 source: root.host.authorAvatar
-                                sourceSize.width: 16
-                                sourceSize.height: 16
-                                asynchronous: true
-                                cache: true
                             }
 
                             Text {
@@ -242,15 +234,15 @@ Item {
                     Repeater {
                         model: root.host.screenshots
 
-                        Image {
+                        Item {
                             width: 240
                             height: 150
-                            source: modelData
-                            sourceSize.width: 240
-                            sourceSize.height: 150
-                            asynchronous: true
-                            cache: true
-                            fillMode: Image.PreserveAspectCrop
+
+                            ViciImage {
+                                anchors.fill: parent
+                                source: modelData
+                                fillMode: Image.PreserveAspectCrop
+                            }
 
                             Rectangle {
                                 anchors.fill: parent
@@ -344,14 +336,10 @@ Item {
                                     RowLayout {
                                         spacing: 10
 
-                                        Image {
+                                        ViciImage {
                                             Layout.preferredWidth: 20
                                             Layout.preferredHeight: 20
                                             source: modelData.iconSource
-                                            sourceSize.width: 20
-                                            sourceSize.height: 20
-                                            asynchronous: true
-                                            cache: true
                                         }
 
                                         Text {
@@ -435,14 +423,10 @@ Item {
                             RowLayout {
                                 spacing: 8
 
-                                Image {
+                                ViciImage {
                                     Layout.preferredWidth: 16
                                     Layout.preferredHeight: 16
                                     source: modelData.avatar
-                                    sourceSize.width: 16
-                                    sourceSize.height: 16
-                                    asynchronous: true
-                                    cache: true
                                 }
 
                                 Text {

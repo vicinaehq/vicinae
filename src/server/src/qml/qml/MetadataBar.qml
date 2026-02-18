@@ -58,11 +58,9 @@ Item {
 
             Item { Layout.fillWidth: true }
 
-            Image {
+            ViciImage {
                 visible: (entry.icon || "") !== ""
                 source: entry.icon || ""
-                sourceSize.width: 14
-                sourceSize.height: 14
                 Layout.preferredWidth: 14
                 Layout.preferredHeight: 14
             }
@@ -147,11 +145,9 @@ Item {
                             anchors.centerIn: parent
                             spacing: 4
 
-                            Image {
+                            ViciImage {
                                 visible: (modelData.icon || "") !== ""
                                 source: modelData.icon || ""
-                                sourceSize.width: 12
-                                sourceSize.height: 12
                                 Layout.preferredWidth: 12
                                 Layout.preferredHeight: 12
                             }

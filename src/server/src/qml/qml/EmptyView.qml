@@ -14,12 +14,9 @@ Item {
         width: Math.min(400, parent.width)
         spacing: 10
 
-        Image {
-            id: iconImage
+        ViciImage {
             visible: root.icon !== ""
             source: root.icon
-            sourceSize.width: 48
-            sourceSize.height: 48
             Layout.preferredWidth: 48
             Layout.preferredHeight: 48
             Layout.alignment: Qt.AlignHCenter

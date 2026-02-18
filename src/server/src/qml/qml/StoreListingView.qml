@@ -58,15 +58,11 @@ Item {
                         spacing: 15
 
                         // Extension icon
-                        Image {
+                        ViciImage {
                             Layout.preferredWidth: 30
                             Layout.preferredHeight: 30
                             Layout.alignment: Qt.AlignVCenter
                             source: delegateLoader.iconSource
-                            sourceSize.width: 30
-                            sourceSize.height: 30
-                            asynchronous: true
-                            cache: true
                         }
 
                         // Title + description
@@ -121,15 +117,11 @@ Item {
                         }
 
                         // Author avatar
-                        Image {
+                        ViciImage {
                             Layout.preferredWidth: 20
                             Layout.preferredHeight: 20
                             Layout.alignment: Qt.AlignVCenter
                             source: delegateLoader.authorAvatar
-                            sourceSize.width: 20
-                            sourceSize.height: 20
-                            asynchronous: true
-                            cache: true
                         }
                     }
                 }

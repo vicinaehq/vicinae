@@ -21,7 +21,6 @@ public:
   const ImageURL &imageUrl() const;
   bool isValid() const;
   bool isThemeSensitive() const;
-
 private:
   ImageURL m_url;
 };

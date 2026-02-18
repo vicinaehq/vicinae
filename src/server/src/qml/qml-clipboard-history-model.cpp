@@ -35,6 +35,8 @@ QVariant QmlClipboardHistoryModel::data(const QModelIndex &index, int role) cons
   return QmlCommandListModel::data(index, role);
 }
 
+QString QmlClipboardHistoryModel::itemId(int, int i) const { return m_entries[i].id; }
+
 QString QmlClipboardHistoryModel::itemTitle(int, int i) const { return m_entries[i].textPreview; }
 
 QString QmlClipboardHistoryModel::itemSubtitle(int, int i) const {

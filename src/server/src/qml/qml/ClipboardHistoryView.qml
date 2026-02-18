@@ -116,16 +116,12 @@ Item {
                             anchors.rightMargin: 16
                             spacing: 10
 
-                            Image {
+                            ViciImage {
                                 visible: delegateLoader.iconSource !== ""
                                 source: delegateLoader.iconSource
-                                sourceSize.width: 25
-                                sourceSize.height: 25
                                 Layout.preferredWidth: 25
                                 Layout.preferredHeight: 25
                                 Layout.alignment: Qt.AlignVCenter
-                                asynchronous: true
-                                cache: true
                             }
 
                             ColumnLayout {
@@ -199,14 +195,11 @@ Item {
                 active: !root.host.hasDetailError && root.host.detailImageSource !== ""
                 visible: active
                 sourceComponent: Item {
-                    Image {
+                    ViciImage {
                         anchors.fill: parent
                         anchors.margins: 10
                         source: root.host.detailImageSource
                         fillMode: Image.PreserveAspectFit
-                        sourceSize.width: width
-                        sourceSize.height: height
-                        asynchronous: true
                         cache: false
                     }
                 }
