@@ -69,11 +69,11 @@ Window {
             enabled: !launcher.alertModel.visible
         }
 
-        Rectangle {
+        HorizontalLoadingBar {
             Layout.fillWidth: true
             implicitHeight: launcher.searchVisible ? 1 : 0
             visible: launcher.searchVisible
-            color: Theme.divider
+            loading: launcher.isLoading
         }
 
         Item {
@@ -141,7 +141,7 @@ Window {
         }
         function onCommandViewPopped() {
             if (commandStack.depth > 0)
-                commandStack.pop(null, StackView.Immediate)
+                commandStack.pop(StackView.Immediate)
         }
         function onCommandStackCleared() {
             commandStack.clear(StackView.Immediate)

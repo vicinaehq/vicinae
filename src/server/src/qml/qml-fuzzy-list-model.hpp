@@ -16,7 +16,9 @@ public:
   /// Replace the full dataset and re-apply the current filter.
   void setItems(std::vector<T> items) {
     m_items = std::move(items);
+    setSelectFirstOnReset(false);
     applyFilter();
+    setSelectFirstOnReset(true);
   }
 
   void setFilter(const QString &text) override {

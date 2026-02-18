@@ -32,6 +32,7 @@ class QmlThemeBridge : public QObject {
   Q_PROPERTY(QColor toastDanger READ toastDanger NOTIFY changed)
   Q_PROPERTY(QColor textSelectionBg READ textSelectionBg NOTIFY changed)
   Q_PROPERTY(QColor textSelectionFg READ textSelectionFg NOTIFY changed)
+  Q_PROPERTY(QColor loadingBar READ loadingBar NOTIFY changed)
   Q_PROPERTY(qreal regularFontSize READ regularFontSize NOTIFY changed)
   Q_PROPERTY(qreal smallerFontSize READ smallerFontSize NOTIFY changed)
 
@@ -69,6 +70,7 @@ public:
 
   QColor textSelectionBg() const { return resolve(SemanticColor::TextSelectionBackground); }
   QColor textSelectionFg() const { return resolve(SemanticColor::TextSelectionForeground); }
+  QColor loadingBar() const { return resolve(SemanticColor::LoadingBar); }
 
   qreal regularFontSize() const { return ThemeService::instance().pointSize(TextRegular); }
   qreal smallerFontSize() const { return ThemeService::instance().pointSize(TextSmaller); }

@@ -88,6 +88,15 @@ QmlLauncherWindow::QmlLauncherWindow(ApplicationContext &ctx, QObject *parent)
             handleCurrentViewChanged();
           });
 
+  // Loading state
+  connect(nav, &NavigationController::loadingChanged,
+          this, [this](bool loading) {
+            if (m_isLoading != loading) {
+              m_isLoading = loading;
+              emit isLoadingChanged();
+            }
+          });
+
   // Search visibility (for views that don't support search, e.g. form views)
   connect(nav, &NavigationController::searchVisibilityChanged,
           this, [this](bool visible) {
@@ -363,12 +372,7 @@ void QmlLauncherWindow::repositionWidget() {
 
 void QmlLauncherWindow::forwardSearchText(const QString &text) {
   if (m_hasCommandView) {
-    // setSearchText stores text AND emits searchTextTampered
     m_ctx.navigation->setSearchText(text);
-    // Forward to the current view (handles both widget and QML bridge views)
-    if (auto *state = m_ctx.navigation->topState(); state && state->sender) {
-      state->sender->textChanged(text);
-    }
   } else {
     // broadcastSearchText stores text without emitting searchTextTampered
     // (avoids unnecessary signal round-trip for root search)

@@ -7,6 +7,7 @@ GenericListView {
     model: cmdModel
     listModel: cmdModel
     autoWireModel: true
+    selectFirstOnReset: cmdModel ? cmdModel.selectFirstOnReset : true
 
     emptyTitle: cmdModel && cmdModel.emptyTitle ? cmdModel.emptyTitle : "No results"
     emptyDescription: cmdModel ? cmdModel.emptyDescription : ""

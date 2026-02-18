@@ -25,7 +25,8 @@ QVariantMap QmlExtensionViewHost::qmlProperties() const {
 }
 
 void QmlExtensionViewHost::loadInitialData() {
-  // Search text will be forwarded when first render arrives
+  setLoading(true);
+  setSearchInteractive(false);
 }
 
 void QmlExtensionViewHost::onReactivated() {
@@ -94,6 +95,7 @@ void QmlExtensionViewHost::handleFirstRender(const RenderModel &model) {
     m_listModel = new QmlExtensionListModel(notify, this);
     m_listModel->initialize(context());
     m_viewType = "list";
+    setSearchInteractive(true);
     renderList(*listModel);
 
     emit viewTypeChanged();
@@ -106,6 +108,7 @@ void QmlExtensionViewHost::handleFirstRender(const RenderModel &model) {
     m_gridModel = new QmlExtensionGridModel(notify, this);
     m_gridModel->initialize(context());
     m_viewType = "grid";
+    setSearchInteractive(true);
     renderGrid(*gridModel);
 
     emit viewTypeChanged();

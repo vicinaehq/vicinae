@@ -50,7 +50,7 @@ void NavigationController::goBack(const GoBackOptions &opts) {
 void NavigationController::broadcastSearchText(const QString &text, const BaseView *caller) {
   if (auto state = findViewState(VALUE_OR(caller, topView()))) {
     state->searchText = text;
-    state->sender->textChanged(text);
+    if (state->sender == topView()) { state->sender->textChanged(text); }
   }
 }
 
