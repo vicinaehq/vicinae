@@ -3,7 +3,7 @@ set(CMAKE_AUTORCC ON)
 set(LIBS)
 set(TARGET vicinae-server)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets Sql Network Svg DBus Concurrent Quick Qml GuiPrivate)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets Sql Network Svg DBus Concurrent Quick Qml GuiPrivate QuickDialogs2)
 find_package(OpenSSL REQUIRED)
 find_package(LibXml2 REQUIRED)
 if (USE_SYSTEM_KF6)
@@ -13,6 +13,7 @@ endif()
 list(APPEND LIBS  
 	Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus Qt6::Concurrent Qt6::Quick Qt6::Qml
 	Qt6::GuiPrivate # for deeper integration with wayland protocols, we need wl_surface
+	Qt6::QuickDialogs2
 	${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY} 
 	protobuf::libprotobuf
 	minizip 
@@ -713,12 +714,16 @@ set(SRCS
 	src/qml/qml-utils.cpp
 	src/qml/qml-extension-view-host.hpp
 	src/qml/qml-extension-view-host.cpp
+	src/qml/qml-extension-form-model.hpp
+	src/qml/qml-extension-form-model.cpp
 	src/qml/qml-clipboard-history-model.hpp
 	src/qml/qml-clipboard-history-model.cpp
 	src/qml/qml-clipboard-history-view-host.hpp
 	src/qml/qml-clipboard-history-view-host.cpp
 	src/qml/qml-snippet-form-view-host.hpp
 	src/qml/qml-snippet-form-view-host.cpp
+	src/qml/qml-alias-form-view-host.hpp
+	src/qml/qml-alias-form-view-host.cpp
 	src/qml/qml-app-selector-model.hpp
 	src/qml/qml-app-selector-model.cpp
 	src/qml/qml-shortcut-form-view-host.hpp
@@ -781,6 +786,8 @@ set(SRCS
 	src/qml/qml-font-browser-model.hpp
 	src/qml/qml-font-browser-view-host.hpp
 	src/qml/qml-font-browser-view-host.cpp
+	src/qml/qml-edit-keywords-view-host.hpp
+	src/qml/qml-edit-keywords-view-host.cpp
 
 	src/extensions/internal/markdown-showcase-command.hpp
 
@@ -907,6 +914,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/FormCheckbox.qml
 	src/qml/qml/FormSeparator.qml
 	src/qml/qml/SnippetFormView.qml
+	src/qml/qml/AliasFormView.qml
 	src/qml/qml/ShortcutFormView.qml
 	src/qml/qml/FormCompletedInput.qml
 	src/qml/qml/CreateExtensionFormView.qml
@@ -929,6 +937,11 @@ set(VICINAE_QML_FILES
 	src/qml/qml/markdown/MdBlockquote.qml
 	src/qml/qml/markdown/MdCallout.qml
 	src/qml/qml/BrowseFontsView.qml
+	src/qml/qml/ExtensionFormView.qml
+	src/qml/qml/FormFilePicker.qml
+	src/qml/qml/FormDateInput.qml
+	src/qml/qml/FormLinkAccessory.qml
+	src/qml/qml/EditKeywordsFormView.qml
 )
 
 # Strip directory prefix so resources are qrc:/Vicinae/Foo.qml

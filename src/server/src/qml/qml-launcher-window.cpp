@@ -249,6 +249,7 @@ void QmlLauncherWindow::handleCurrentViewChanged() {
   if (nav->viewStackSize() == 1) {
     // Back to root search
     removeWidget();
+    disconnect(m_searchAccessoryConnection);
     if (!m_searchAccessoryUrl.isEmpty()) {
       m_searchAccessoryUrl.clear();
       emit searchAccessoryChanged();
@@ -274,6 +275,16 @@ void QmlLauncherWindow::handleCurrentViewChanged() {
     }
 
     // Update search accessory and host for this bridge view
+    disconnect(m_searchAccessoryConnection);
+    m_searchAccessoryConnection = connect(bridge, &QmlBridgeViewBase::searchAccessoryUrlChanged,
+                                          this, [this, bridge]() {
+      auto url = bridge->qmlSearchAccessoryUrl();
+      if (m_searchAccessoryUrl != url) {
+        m_searchAccessoryUrl = url;
+        emit searchAccessoryChanged();
+      }
+    });
+
     auto newAccessoryUrl = bridge->qmlSearchAccessoryUrl();
     if (m_searchAccessoryUrl != newAccessoryUrl) {
       m_searchAccessoryUrl = newAccessoryUrl;

@@ -4,50 +4,13 @@
 #include "emoji/emoji.hpp"
 #include "extensions/vicinae/search-emojis/emoji-browser-model.hpp"
 #include "navigation-controller.hpp"
+#include "qml/qml-edit-keywords-view-host.hpp"
 #include "service-registry.hpp"
 #include "services/emoji-service/emoji-service.hpp"
-#include "ui/action-pannel/action.hpp"
-#include "ui/action-pannel/push-action.hpp"
-#include "ui/form/text-area.hpp"
-#include "ui/views/form-view.hpp"
 #include "services/toast/toast-service.hpp"
+#include "ui/action-pannel/action.hpp"
 #include "ui/views/typed-list-view.hpp"
 #include "utils.hpp"
-
-class EditEmojiKeywordsView : public ManagedFormView {
-  TextArea *m_keywords = new TextArea;
-  std::string_view m_emoji;
-
-  void onSubmit() override {
-    auto emojiService = context()->services->emojiService();
-    auto toast = context()->services->toastService();
-
-    if (emojiService->setCustomKeywords(m_emoji, m_keywords->text())) {
-      toast->setToast("Keywords edited", ToastStyle::Success);
-      popSelf();
-    } else {
-      toast->setToast("Failed to edit keywords", ToastStyle::Danger);
-    }
-  }
-
-  void initializeForm() override {
-    auto emojiService = context()->services->emojiService();
-    auto metadata = emojiService->mapMetadata(m_emoji);
-
-    m_keywords->setText(metadata.keywords);
-    m_keywords->textEdit()->selectAll();
-  }
-
-public:
-  EditEmojiKeywordsView(std::string_view emoji) : m_emoji(emoji) {
-    auto inputField = new FormField();
-
-    inputField->setWidget(m_keywords);
-    inputField->setName("Keywords");
-    inputField->setInfo("Additional keywords that will be used to index this emoji.");
-    form()->addField(inputField);
-  }
-};
 
 class ResetEmojiRankingAction : public AbstractAction {
   std::string_view m_emoji;
@@ -103,12 +66,23 @@ public:
   PinEmojiAction(std::string_view emoji) : m_emoji(emoji) {}
 };
 
-class EditEmojiKeywordsAction : public PushAction<EditEmojiKeywordsView, std::string_view> {
-  QString title() const override { return "Edit custom keywords"; }
-  std::optional<ImageURL> icon() const override { return ImageURL::builtin("text"); }
+class EditEmojiKeywordsAction : public AbstractAction {
+  std::string m_emoji;
+  void execute(ApplicationContext *ctx) override {
+    auto emojiService = ctx->services->emojiService();
+    auto emoji = m_emoji;
+    auto view = new QmlEditKeywordsViewHost(
+        [emojiService, emoji]() { return emojiService->mapMetadata(emoji).keywords; },
+        [emojiService, emoji](const QString &kw) { return emojiService->setCustomKeywords(emoji, kw); },
+        "Additional keywords that will be used to index this emoji.");
+    ctx->navigation->pushView(view);
+    ctx->navigation->setNavigationTitle(title());
+  }
 
 public:
-  EditEmojiKeywordsAction(std::string_view emoji) : PushAction(emoji) {}
+  QString title() const override { return "Edit custom keywords"; }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin("text"); }
+  EditEmojiKeywordsAction(std::string_view emoji) : m_emoji(emoji) {}
 };
 
 class UnpinEmojiAction : public AbstractAction {

@@ -15,6 +15,7 @@ Item {
     signal textEdited()
 
     function forceActiveFocus() { edit.forceActiveFocus() }
+    function selectAll() { edit.selectAll() }
 
     onActiveFocusChanged: {
         if (activeFocus) edit.forceActiveFocus()
