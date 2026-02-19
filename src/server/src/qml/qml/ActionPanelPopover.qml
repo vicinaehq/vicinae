@@ -4,33 +4,17 @@ import QtQuick.Effects
 
 Item {
     id: root
-    visible: launcher.actionPanelOpen || panel.opacity > 0
-    enabled: launcher.actionPanelOpen
+    visible: actionPanel.open || panel.opacity > 0
+    enabled: actionPanel.open
     onVisibleChanged: {
-        if (!visible) {
-            if (launcher.actionPanelModel)
-                launcher.actionPanelModel.setFilter("")
+        if (!visible)
             stack.clear(StackView.Immediate)
-        }
-    }
-
-    // Expose StackView so ActionListPanel can push submenus
-    property alias stackView: stack
-
-    function popSubmenu() {
-        if (stack.depth > 1) {
-            stack.pop(null, StackView.Immediate)
-            if (stack.currentItem && typeof stack.currentItem.focusFilter === "function")
-                stack.currentItem.focusFilter()
-        } else {
-            launcher.closeActionPanel()
-        }
     }
 
     // Backdrop for click-away dismissal
     MouseArea {
         anchors.fill: parent
-        onClicked: launcher.closeActionPanel()
+        onClicked: actionPanel.close()
     }
 
     // Panel container
@@ -49,8 +33,8 @@ Item {
         border.color: Theme.mainWindowBorder
         border.width: Config.borderWidth
 
-        opacity: launcher.actionPanelOpen ? 1 : 0
-        scale: launcher.actionPanelOpen ? 1.0 : 0.95
+        opacity: actionPanel.open ? 1 : 0
+        scale: actionPanel.open ? 1.0 : 0.95
         transformOrigin: Item.BottomRight
 
         Behavior on opacity {
@@ -86,10 +70,6 @@ Item {
                 popExit: null
                 replaceEnter: null
                 replaceExit: null
-
-                initialItem: ActionListPanel {
-                    model: launcher.actionPanelModel
-                }
             }
         }
     }
@@ -98,17 +78,39 @@ Item {
     Connections {
         target: stack.currentItem
         ignoreUnknownSignals: true
-        function onNavigateBack() { root.popSubmenu() }
+        function onNavigateBack() {
+            actionPanel.pop()
+        }
+    }
+
+    // Controller-driven stack management
+    Connections {
+        target: actionPanel
+        function onPanelPushRequested(componentUrl, properties) {
+            stack.push(componentUrl, properties, StackView.Immediate)
+            actionPanel.onPanelPushed(stack.currentItem)
+            if (typeof stack.currentItem.focusFilter === "function")
+                stack.currentItem.focusFilter()
+        }
+        function onPanelPopRequested() {
+            stack.pop(null, StackView.Immediate)
+            actionPanel.onPanelPopped(stack.currentItem)
+            if (stack.currentItem && typeof stack.currentItem.focusFilter === "function")
+                stack.currentItem.focusFilter()
+        }
+        function onStackClearRequested() {
+            stack.clear(StackView.Immediate)
+        }
     }
 
     // Keyboard handling
     Keys.onPressed: (event) => {
         if (event.key === Qt.Key_Escape) {
-            root.popSubmenu()
+            actionPanel.pop()
             event.accepted = true
         } else if (event.key === Qt.Key_Left || event.key === Qt.Key_Backspace) {
-            if (stack.depth > 1) {
-                root.popSubmenu()
+            if (actionPanel.depth > 1) {
+                actionPanel.pop()
                 event.accepted = true
             }
         } else if (event.key === Qt.Key_Up) {
@@ -124,40 +126,5 @@ Item {
                 stack.currentItem.activateCurrent()
             event.accepted = true
         }
-    }
-
-    Connections {
-        target: launcher
-        function onActionPanelOpenChanged() {
-            if (launcher.actionPanelOpen) {
-                // Always rebuild from current model on open
-                stack.clear(StackView.Immediate)
-                if (launcher.actionPanelModel)
-                    stack.push(rootPanelComponent, { "model": launcher.actionPanelModel },
-                               StackView.Immediate)
-                if (stack.currentItem && typeof stack.currentItem.focusFilter === "function")
-                    stack.currentItem.focusFilter()
-            }
-        }
-        function onActionPanelModelChanged() {
-            if (!launcher.actionPanelOpen) return
-            stack.clear(StackView.Immediate)
-            if (launcher.actionPanelModel) {
-                stack.push(rootPanelComponent, { "model": launcher.actionPanelModel },
-                           StackView.Immediate)
-            }
-            if (stack.currentItem && typeof stack.currentItem.focusFilter === "function")
-                stack.currentItem.focusFilter()
-        }
-        function onActionPanelSubmenuPushed(subModel) {
-            stack.push(rootPanelComponent, { "model": subModel }, StackView.Immediate)
-            if (stack.currentItem && typeof stack.currentItem.focusFilter === "function")
-                stack.currentItem.focusFilter()
-        }
-    }
-
-    Component {
-        id: rootPanelComponent
-        ActionListPanel {}
     }
 }

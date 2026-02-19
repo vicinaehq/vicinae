@@ -1,6 +1,6 @@
 #include "qml-launcher-window.hpp"
 #include "qml-utils.hpp"
-#include "qml-action-panel-model.hpp"
+#include "qml-action-panel-controller.hpp"
 #include "qml-alert-model.hpp"
 #include "qml-async-image-provider.hpp"
 #include "qml-bridge-view.hpp"
@@ -32,6 +32,7 @@ QmlLauncherWindow::QmlLauncherWindow(ApplicationContext &ctx, QObject *parent)
   m_themeBridge = new QmlThemeBridge(this);
   m_configBridge = new QmlConfigBridge(this);
   m_alertModel = new QmlAlertModel(*ctx.navigation, this);
+  m_actionPanel = new ActionPanelController(ctx, this);
 
   qRegisterMetaType<QmlImageUrl>("QmlImageUrl");
 
@@ -47,6 +48,7 @@ QmlLauncherWindow::QmlLauncherWindow(ApplicationContext &ctx, QObject *parent)
   rootCtx->setContextProperty(QStringLiteral("Config"), m_configBridge);
   rootCtx->setContextProperty(QStringLiteral("Img"), m_imgSource);
   rootCtx->setContextProperty(QStringLiteral("launcher"), this);
+  rootCtx->setContextProperty(QStringLiteral("actionPanel"), m_actionPanel);
 
   m_engine.load(QUrl(QStringLiteral("qrc:/Vicinae/LauncherWindow.qml")));
 
@@ -127,16 +129,15 @@ QmlLauncherWindow::QmlLauncherWindow(ApplicationContext &ctx, QObject *parent)
             }
           });
 
-  // Action panel changes (for footer in command views)
+  // Action panel changes — delegate to controller
   connect(nav, &NavigationController::actionsChanged,
-          this, [this](const ActionPanelState &) {
-            emit commandActionChanged();
-            updateActionPanelModel();
+          this, [this](const ActionPanelState &state) {
+            m_actionPanel->setStateFrom(state);
           });
 
-  // Close action panel on view push/pop
+  // Close action panel on view push
   connect(nav, &NavigationController::viewPushed,
-          this, [this](const BaseView *) { closeActionPanel(); });
+          this, [this](const BaseView *) { m_actionPanel->close(); });
 
   // Navigation status (left side of footer)
   connect(nav, &NavigationController::navigationStatusChanged, this,
@@ -232,7 +233,7 @@ void QmlLauncherWindow::handleVisibilityChanged(bool visible) {
 }
 
 void QmlLauncherWindow::handleViewPoped(const BaseView *view) {
-  closeActionPanel();
+  m_actionPanel->close();
 
   // Clean up BEFORE the ViewState is destroyed (which calls deleteLater on the view)
   if (m_activeWidget == view) {
@@ -321,8 +322,6 @@ void QmlLauncherWindow::handleCurrentViewChanged() {
     m_hasCommandView = true;
     emit hasCommandViewChanged();
   }
-
-  emit commandActionChanged();
 }
 
 void QmlLauncherWindow::embedWidget(BaseView *view) {
@@ -382,7 +381,7 @@ void QmlLauncherWindow::forwardSearchText(const QString &text) {
 
 void QmlLauncherWindow::handleReturn() {
   if (m_hasCommandView) {
-    m_ctx.navigation->executePrimaryAction();
+    m_actionPanel->executePrimaryAction();
   } else {
     m_searchModel->activateSelected();
   }
@@ -393,8 +392,8 @@ bool QmlLauncherWindow::forwardKey(int key, int modifiers) {
   QKeyEvent event(QEvent::KeyPress, key, mods);
 
   // Check for action shortcuts first
-  if (auto *action = m_ctx.navigation->findBoundAction(&event)) {
-    m_ctx.navigation->executeAction(action);
+  if (auto *action = m_actionPanel->findBoundAction(&event)) {
+    m_actionPanel->executeAction(action);
     return true;
   }
 
@@ -423,73 +422,6 @@ bool QmlLauncherWindow::tryAliasFastTrack() {
   return m_searchModel->tryAliasFastTrack();
 }
 
-QString QmlLauncherWindow::commandActionTitle() const {
-  auto *state = m_ctx.navigation->topState();
-  if (!state || !state->actionPanelState) return {};
-  auto *action = state->actionPanelState->primaryAction();
-  return action ? action->title() : QString();
-}
-
-QString QmlLauncherWindow::commandActionShortcut() const {
-  auto *state = m_ctx.navigation->topState();
-  if (!state || !state->actionPanelState) return {};
-  auto *action = state->actionPanelState->primaryAction();
-  if (!action) return {};
-  auto shortcut = action->shortcut().value_or(Keyboard::Shortcut::enter());
-  return shortcut.toDisplayString();
-}
-
-void QmlLauncherWindow::toggleActionPanel() {
-  if (m_actionPanelOpen) {
-    closeActionPanel();
-  } else {
-    if (!m_actionPanelModel) return;
-    m_actionPanelOpen = true;
-    emit actionPanelOpenChanged();
-  }
-}
-
-void QmlLauncherWindow::closeActionPanel() {
-  if (!m_actionPanelOpen) return;
-  m_actionPanelOpen = false;
-  emit actionPanelOpenChanged();
-}
-
-void QmlLauncherWindow::updateActionPanelModel() {
-  auto *state = m_ctx.navigation->topState();
-  bool newHasActions = state && state->actionPanelState && state->actionPanelState->actionCount() > 0;
-  bool newHasMultiple = state && state->actionPanelState && state->actionPanelState->actionCount() > 1;
-
-  if (newHasActions != m_hasActions) {
-    m_hasActions = newHasActions;
-    emit hasActionsChanged();
-  }
-
-  if (newHasMultiple != m_hasMultipleActions) {
-    m_hasMultipleActions = newHasMultiple;
-    emit hasMultipleActionsChanged();
-  }
-
-  if (!state || !state->actionPanelState) {
-    if (m_actionPanelModel) {
-      m_actionPanelModel->deleteLater();
-      m_actionPanelModel = nullptr;
-      emit actionPanelModelChanged();
-      closeActionPanel();
-    }
-    return;
-  }
-
-  auto *newModel = new QmlActionPanelModel(state->actionPanelState.get(), this);
-  connectActionPanelModel(newModel);
-
-  if (m_actionPanelModel) {
-    m_actionPanelModel->deleteLater();
-  }
-  m_actionPanelModel = newModel;
-  emit actionPanelModelChanged();
-}
-
 void QmlLauncherWindow::setCompleterValue(int index, const QString &value) {
   auto *nav = m_ctx.navigation.get();
   auto values = nav->completionValues();
@@ -498,18 +430,3 @@ void QmlLauncherWindow::setCompleterValue(int index, const QString &value) {
   nav->setCompletionValues(values);
 }
 
-void QmlLauncherWindow::connectActionPanelModel(QmlActionPanelModel *model) {
-  connect(model, &QmlActionPanelModel::actionExecuted, this, [this](AbstractAction *action) {
-    m_ctx.navigation->executeAction(action);
-    closeActionPanel();
-  });
-
-  connect(model, &QmlActionPanelModel::submenuRequested, this, [this](QmlActionPanelModel *subModel) {
-    connectActionPanelModel(subModel);
-    emit actionPanelSubmenuPushed(subModel);
-  });
-
-  connect(model, &QmlActionPanelModel::closeRequested, this, [this]() {
-    closeActionPanel();
-  });
-}

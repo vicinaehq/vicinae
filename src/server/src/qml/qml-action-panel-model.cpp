@@ -1,5 +1,6 @@
 #include "qml-action-panel-model.hpp"
 #include "theme.hpp"
+#include <QKeyEvent>
 
 QmlActionPanelModel::QmlActionPanelModel(QObject *parent) : QAbstractListModel(parent) {
   connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() {
@@ -208,6 +209,22 @@ void QmlActionPanelModel::rebuildFlatList() {
 
     needsDivider = true;
   }
+}
+
+bool QmlActionPanelModel::activateByShortcut(int key, int modifiers) {
+  auto mods = static_cast<Qt::KeyboardModifiers>(modifiers);
+  QKeyEvent event(QEvent::KeyPress, key, mods);
+
+  for (int i = 0; i < static_cast<int>(m_flat.size()); ++i) {
+    const auto &item = m_flat[i];
+    if (item.kind != FlatItem::ActionItem) continue;
+    auto &action = m_sections[item.sectionIdx].actions[item.actionIdx];
+    if (action->isBoundTo(&event)) {
+      activate(i);
+      return true;
+    }
+  }
+  return false;
 }
 
 bool QmlActionPanelModel::matchesFilter(const QString &title) const {

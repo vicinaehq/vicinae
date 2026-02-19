@@ -27,28 +27,28 @@ Item {
         // Primary action label + shortcut badge
         Row {
             visible: {
-                if (launcher.hasCommandView) return launcher.commandActionTitle !== ""
+                if (launcher.hasCommandView) return actionPanel.primaryActionTitle !== ""
                 return searchModel.primaryActionTitle !== ""
             }
             spacing: 6
             Layout.alignment: Qt.AlignVCenter
 
             Text {
-                text: launcher.hasCommandView ? launcher.commandActionTitle : searchModel.primaryActionTitle
+                text: launcher.hasCommandView ? actionPanel.primaryActionTitle : searchModel.primaryActionTitle
                 color: Theme.textMuted
                 font.pointSize: Theme.smallerFontSize
                 anchors.verticalCenter: parent.verticalCenter
             }
 
             ShortcutBadge {
-                text: launcher.hasCommandView ? launcher.commandActionShortcut : "Enter"
+                text: launcher.hasCommandView ? actionPanel.primaryActionShortcut : "Enter"
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
 
         // Actions button + Ctrl+B badge
         Item {
-            visible: launcher.hasMultipleActions
+            visible: actionPanel.hasMultipleActions
             Layout.alignment: Qt.AlignVCenter
             implicitWidth: actionsRow.implicitWidth
             implicitHeight: actionsRow.implicitHeight
@@ -75,7 +75,7 @@ Item {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: launcher.toggleActionPanel()
+                onClicked: actionPanel.toggle()
             }
         }
     }

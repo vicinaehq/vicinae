@@ -36,6 +36,8 @@ public:
   Q_INVOKABLE void setFilter(const QString &text);
   Q_INVOKABLE int nextSelectableIndex(int from, int direction) const;
 
+  bool activateByShortcut(int key, int modifiers);
+
 signals:
   void titleChanged();
   void actionExecuted(AbstractAction *action);

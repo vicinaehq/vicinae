@@ -164,7 +164,7 @@ Window {
 
     Shortcut {
         sequence: "Escape"
-        enabled: !launcher.alertModel.visible && !launcher.actionPanelOpen
+        enabled: !launcher.alertModel.visible && !actionPanel.open
         onActivated: launcher.goBack()
     }
 
@@ -177,13 +177,13 @@ Window {
     Shortcut {
         sequence: "Ctrl+B"
         enabled: !launcher.alertModel.visible
-        onActivated: launcher.toggleActionPanel()
+        onActivated: actionPanel.toggle()
     }
 
     Connections {
-        target: launcher
-        function onActionPanelOpenChanged() {
-            if (!launcher.actionPanelOpen) {
+        target: actionPanel
+        function onOpenChanged() {
+            if (!actionPanel.open) {
                 searchBar.focusInput()
             }
         }
