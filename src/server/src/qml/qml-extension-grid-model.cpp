@@ -118,6 +118,9 @@ void QmlExtensionGridModel::rebuildFromModel(bool resetSelection) {
   } else {
     selectFirst();
   }
+
+  ++m_dataRevision;
+  emit dataRevisionChanged();
 }
 
 const std::vector<QmlExtensionGridModel::Section> &QmlExtensionGridModel::activeSections() const {

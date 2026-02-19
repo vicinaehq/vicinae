@@ -37,6 +37,7 @@ GenericGridView {
                 }
                 source: {
                     var _ = Theme.foreground
+                    var _rev = cellRoot.model ? cellRoot.model.dataRevision : 0
                     return cellRoot.model ? cellRoot.model.cellIcon(cellRoot.sec, cellRoot.itm) : ""
                 }
                 sourceSize: Qt.size(
@@ -47,7 +48,10 @@ GenericGridView {
 
             ToolTip {
                 visible: cellRoot.hovered && tooltipText !== ""
-                readonly property string tooltipText: cellRoot.model ? cellRoot.model.cellTooltip(cellRoot.sec, cellRoot.itm) : ""
+                readonly property string tooltipText: {
+                    var _rev = cellRoot.model ? cellRoot.model.dataRevision : 0
+                    return cellRoot.model ? cellRoot.model.cellTooltip(cellRoot.sec, cellRoot.itm) : ""
+                }
                 text: tooltipText
                 delay: 500
             }

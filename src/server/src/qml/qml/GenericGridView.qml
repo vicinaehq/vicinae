@@ -201,8 +201,11 @@ Item {
                                     y: rowItem.cellHeight + root._textGap
                                     width: rowItem.cellWidth
                                     height: _titleMetrics.font.pixelSize
-                                    text: (root.cmdModel && typeof root.cmdModel.cellTitle === "function")
-                                          ? root.cmdModel.cellTitle(cellWrapper.cellSection, cellWrapper.cellItem) : ""
+                                    text: {
+                                        var _rev = root.cmdModel ? root.cmdModel.dataRevision : 0
+                                        return (root.cmdModel && typeof root.cmdModel.cellTitle === "function")
+                                              ? root.cmdModel.cellTitle(cellWrapper.cellSection, cellWrapper.cellItem) : ""
+                                    }
                                     color: Theme.textMuted
                                     font: _titleMetrics.font
                                     elide: Text.ElideRight
@@ -217,8 +220,11 @@ Item {
                                        + (root.showCellTitle ? _titleMetrics.font.pixelSize + root._textGap : 0)
                                     width: rowItem.cellWidth
                                     height: _subtitleMetrics.font.pixelSize
-                                    text: (root.cmdModel && typeof root.cmdModel.cellSubtitle === "function")
-                                          ? root.cmdModel.cellSubtitle(cellWrapper.cellSection, cellWrapper.cellItem) : ""
+                                    text: {
+                                        var _rev = root.cmdModel ? root.cmdModel.dataRevision : 0
+                                        return (root.cmdModel && typeof root.cmdModel.cellSubtitle === "function")
+                                              ? root.cmdModel.cellSubtitle(cellWrapper.cellSection, cellWrapper.cellItem) : ""
+                                    }
                                     color: Theme.textMuted
                                     font: _subtitleMetrics.font
                                     elide: Text.ElideRight

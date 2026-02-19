@@ -11,6 +11,7 @@ class QmlExtensionGridModel : public QmlCommandGridModel {
   Q_PROPERTY(QString emptyIcon READ emptyIcon NOTIFY emptyViewChanged)
   Q_PROPERTY(int fit READ fit NOTIFY fitChanged)
   Q_PROPERTY(double inset READ inset NOTIFY insetChanged)
+  Q_PROPERTY(int dataRevision READ dataRevision NOTIFY dataRevisionChanged)
 
 public:
   using NotifyFn = std::function<void(const QString &handler, const QJsonArray &args)>;
@@ -34,11 +35,13 @@ public:
   QString emptyIcon() const;
   int fit() const { return static_cast<int>(m_fit); }
   double inset() const { return m_inset; }
+  int dataRevision() const { return m_dataRevision; }
 
 signals:
   void emptyViewChanged();
   void fitChanged();
   void insetChanged();
+  void dataRevisionChanged();
 
 protected:
   std::unique_ptr<ActionPanelState> createActionPanel(int section, int item) const override;
@@ -67,6 +70,7 @@ private:
   double m_inset = 0.10;
   QString m_filter;
   QString m_placeholder;
+  int m_dataRevision = 0;
 
   const std::vector<Section> &activeSections() const;
 };
