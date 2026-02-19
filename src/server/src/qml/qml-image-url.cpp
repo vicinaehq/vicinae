@@ -30,6 +30,8 @@ static QColor resolveFillColor(const ImageURL &url) {
   return {};
 }
 
+static QString buildProviderIdForFallback(const ImageURL &url);
+
 static QString buildParams(const ImageURL &url, bool builtinFgDefault = false) {
   QStringList parts;
 
@@ -47,8 +49,23 @@ static QString buildParams(const ImageURL &url, bool builtinFgDefault = false) {
   if (url.mask() == OmniPainter::CircleMask)
     parts << QStringLiteral("mask=circle");
 
+  if (auto fb = url.fallback()) {
+    ImageURL fbUrl(*fb);
+    QString fbId = buildProviderIdForFallback(fbUrl);
+    if (!fbId.isEmpty())
+      parts << QStringLiteral("fallback=") + QString::fromUtf8(QUrl::toPercentEncoding(fbId));
+  }
+
   if (parts.isEmpty()) return {};
   return QStringLiteral("?") + parts.join(QStringLiteral("&"));
+}
+
+static QString buildProviderIdForFallback(const ImageURL &url) {
+  QString source = QmlImageUrl(url).toSource();
+  static const QString prefix = QStringLiteral("image://vicinae/");
+  if (source.startsWith(prefix))
+    return source.mid(prefix.length());
+  return {};
 }
 
 QString QmlImageUrl::toSource() const {

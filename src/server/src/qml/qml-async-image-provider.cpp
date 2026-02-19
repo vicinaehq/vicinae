@@ -42,10 +42,21 @@ class ViciImageResponse : public QQuickImageResponse {
 public:
   explicit ViciImageResponse(qreal dpr = 1.0) : m_dpr(dpr) {}
 
+  void setFallback(const QString &fallback, const QSize &size) {
+    m_fallback = fallback;
+    m_size = size;
+  }
+
   QQuickTextureFactory *textureFactory() const override {
     if (m_image.isNull())
       return nullptr;
     return QQuickTextureFactory::textureFactoryForImage(m_image);
+  }
+
+  QString errorString() const override {
+    if (m_image.isNull() && !m_cancelled.load(std::memory_order_acquire))
+      return QStringLiteral("Image load failed");
+    return {};
   }
 
   void cancel() override {
@@ -61,6 +72,7 @@ public:
       emit finished();
       return;
     }
+    tryFallback(image);
     image.setDevicePixelRatio(m_dpr);
     m_image = std::move(image);
     emit finished();
@@ -73,14 +85,19 @@ public:
       QTimer::singleShot(0, this, &QQuickImageResponse::finished);
       return;
     }
+    tryFallback(image);
     image.setDevicePixelRatio(m_dpr);
     m_image = std::move(image);
     QTimer::singleShot(0, this, &QQuickImageResponse::finished);
   }
 
 private:
+  void tryFallback(QImage &image);
+
   qreal m_dpr;
   QImage m_image;
+  QSize m_size;
+  QString m_fallback;
   std::atomic<bool> m_cancelled{false};
 };
 
@@ -271,6 +288,7 @@ struct ParsedId {
   QColor fg;
   QColor bg;
   bool circleMask = false;
+  QString fallback;
 };
 
 static ParsedId parseId(const QString &id) {
@@ -299,10 +317,31 @@ static ParsedId parseId(const QString &id) {
         result.bg = QColor(val);
       else if (key == QStringLiteral("mask") && val == QStringLiteral("circle"))
         result.circleMask = true;
+      else if (key == QStringLiteral("fallback"))
+        result.fallback = QUrl::fromPercentEncoding(val.toUtf8());
     }
   }
 
   return result;
+}
+
+void ViciImageResponse::tryFallback(QImage &image) {
+  if (!image.isNull() || m_fallback.isEmpty()) return;
+
+  QString fallback = m_fallback;
+  m_fallback.clear();
+  auto fb = parseId(fallback);
+
+  if (fb.type == QStringLiteral("builtin")) {
+    QColor fg = fb.fg.isValid()
+        ? fb.fg
+        : ThemeService::instance().theme().resolve(SemanticColor::Foreground);
+    image = renderBuiltinSvg(fb.name, m_size, fg, fb.bg);
+    if (fb.circleMask && !image.isNull()) applyCircleMask(image);
+  } else if (fb.type == QStringLiteral("system")) {
+    image = renderSystemIcon(fb.name, m_size);
+    if (!image.isNull()) applyFillColor(image, fb.fg);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -317,6 +356,9 @@ QQuickImageResponse *QmlAsyncImageProvider::requestImageResponse(
   QSize logical = requestedSize.isValid() && !requestedSize.isEmpty() ? requestedSize : QSize(512, 512);
   QSize size(qCeil(logical.width() * dpr), qCeil(logical.height() * dpr));
   auto parsed = parseId(id);
+
+  if (!parsed.fallback.isEmpty())
+    response->setFallback(parsed.fallback, size);
 
   if (parsed.type == QStringLiteral("builtin")) {
     // Auto-resolve foreground from theme when no explicit ?fg= param is provided
