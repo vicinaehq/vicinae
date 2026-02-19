@@ -29,8 +29,7 @@ public:
 
   explicit QmlCommandListModel(QObject *parent = nullptr) : QAbstractListModel(parent) {
     connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() {
-      if (rowCount() > 0)
-        emit dataChanged(index(0), index(rowCount() - 1), {IconSource});
+      if (rowCount() > 0) emit dataChanged(index(0), index(rowCount() - 1), {IconSource});
     });
   }
 
@@ -46,7 +45,6 @@ public:
   Q_INVOKABLE void activateSelected();
   Q_INVOKABLE int nextSelectableIndex(int from, int direction) const;
 
-  // Re-create action panel for current selection (e.g. after StackView pop)
   void refreshActionPanel();
 
   virtual void setFilter(const QString &text) = 0;
@@ -91,7 +89,7 @@ private:
     int itemIdx;
   };
 
-  void rebuildFlatList();
+  static std::vector<FlatItem> buildFlatList(const std::vector<SectionInfo> &sections);
 
   ApplicationContext *m_ctx = nullptr;
   std::vector<SectionInfo> m_sectionInfos;

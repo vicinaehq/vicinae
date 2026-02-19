@@ -290,7 +290,7 @@ QHash<int, QByteArray> QmlRootSearchModel::roleNames() const {
 void QmlRootSearchModel::setFilter(const QString &text) {
   m_query = text.toStdString();
   m_selectedIndex = -1;
-  m_actionPanel.reset();
+  m_ctx->navigation->clearActions();
   m_calc.reset();
   m_files.clear();
 
@@ -449,7 +449,7 @@ void QmlRootSearchModel::setSelectedIndex(int index) {
 
   if (index < 0 || index >= static_cast<int>(m_flat.size())) {
     m_lastSelectedItemId.clear();
-    m_actionPanel.reset();
+    m_ctx->navigation->clearActions();
     emit primaryActionChanged();
     return;
   }
@@ -488,38 +488,39 @@ void QmlRootSearchModel::setSelectedIndex(int index) {
   bool sameItem = (!itemId.isEmpty() && itemId == m_lastSelectedItemId);
   m_lastSelectedItemId = itemId;
 
+  std::unique_ptr<ActionPanelState> actionPanel;
+
   switch (flat.kind) {
   case FlatItem::ResultItem: {
     if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_results.size())) {
-      m_actionPanel = m_results[flat.dataIndex].item->newActionPanel(m_ctx, m_results[flat.dataIndex].meta);
+      actionPanel = m_results[flat.dataIndex].item->newActionPanel(m_ctx, m_results[flat.dataIndex].meta);
     }
     break;
   }
   case FlatItem::FallbackItem: {
     if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_fallbackItems.size())) {
       auto &item = m_fallbackItems[flat.dataIndex];
-      m_actionPanel = item->fallbackActionPanel(m_ctx, m_manager->itemMetadata(item->uniqueId()));
+      actionPanel = item->fallbackActionPanel(m_ctx, m_manager->itemMetadata(item->uniqueId()));
     }
     break;
   }
   case FlatItem::FavoriteItem: {
     if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_favorites.size())) {
       auto &item = m_favorites[flat.dataIndex];
-      m_actionPanel = item->newActionPanel(m_ctx, m_manager->itemMetadata(item->uniqueId()));
+      actionPanel = item->newActionPanel(m_ctx, m_manager->itemMetadata(item->uniqueId()));
     }
     break;
   }
   case FlatItem::LinkItem: {
     if (m_defaultOpener) {
-      auto panel = std::make_unique<ActionPanelState>();
-      auto section = panel->createSection();
+      actionPanel = std::make_unique<ActionPanelState>();
+      auto section = actionPanel->createSection();
       auto open = new OpenAppAction(
           m_defaultOpener->app,
           QString("Open in %1").arg(m_defaultOpener->app->displayName()),
           {m_defaultOpener->url});
       open->setClearSearch(true);
       section->addAction(open);
-      m_actionPanel = std::move(panel);
     }
     break;
   }
@@ -536,23 +537,25 @@ void QmlRootSearchModel::setSelectedIndex(int index) {
       main->addAction(copyQA);
       main->addAction(putInSearch);
       main->addAction(openHistory);
-      m_actionPanel = std::move(panel);
+      actionPanel = std::move(panel);
     }
     break;
   }
   case FlatItem::FileItem: {
     if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_files.size())) {
-      m_actionPanel = FileListItemBase::actionPanel(m_files[flat.dataIndex].path, m_appDb);
+      actionPanel = FileListItemBase::actionPanel(m_files[flat.dataIndex].path, m_appDb);
     }
     break;
   }
   default:
-    m_actionPanel.reset();
     break;
   }
 
-  if (m_actionPanel) {
-    m_actionPanel->finalize();
+  if (actionPanel) {
+    actionPanel->finalize();
+    m_ctx->navigation->setActions(std::move(actionPanel));
+  } else {
+    m_ctx->navigation->clearActions();
   }
 
   // Completer: create/destroy argument completion based on the selected item.
@@ -591,16 +594,7 @@ void QmlRootSearchModel::setSelectedIndex(int index) {
 }
 
 void QmlRootSearchModel::activateSelected() {
-  if (!m_actionPanel) return;
-
-  auto *action = m_actionPanel->primaryAction();
-  if (!action) return;
-
-  // Keep the panel alive: executeAction may re-enter setFilter (via
-  // activateView -> searchTextTampered -> QML handler) which resets
-  // m_actionPanel, destroying the action we're still using.
-  auto keepAlive = std::move(m_actionPanel);
-  m_ctx->navigation->executeAction(action);
+  m_ctx->navigation->executePrimaryAction();
 }
 
 bool QmlRootSearchModel::tryAliasFastTrack() {
@@ -640,14 +634,16 @@ bool QmlRootSearchModel::tryAliasFastTrack() {
 }
 
 QString QmlRootSearchModel::primaryActionTitle() const {
-  if (!m_actionPanel) return {};
-  auto *action = m_actionPanel->primaryAction();
+  auto *state = m_ctx->navigation->topState();
+  if (!state || !state->actionPanelState) return {};
+  auto *action = state->actionPanelState->primaryAction();
   return action ? action->title() : QString();
 }
 
 QString QmlRootSearchModel::primaryActionIcon() const {
-  if (!m_actionPanel) return {};
-  auto *action = m_actionPanel->primaryAction();
+  auto *state = m_ctx->navigation->topState();
+  if (!state || !state->actionPanelState) return {};
+  auto *action = state->actionPanelState->primaryAction();
   if (!action) return {};
   auto icon = action->icon();
   return icon ? imageSourceFor(*icon) : QString();

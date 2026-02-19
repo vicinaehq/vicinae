@@ -120,11 +120,41 @@ int QmlCommandListModel::nextSelectableIndex(int from, int direction) const {
 }
 
 void QmlCommandListModel::setSections(const std::vector<SectionInfo> &sections) {
-  beginResetModel();
-  m_sectionInfos = sections;
-  m_selectedIndex = -1;
-  rebuildFlatList();
-  endResetModel();
+  auto newFlat = buildFlatList(sections);
+  int oldCount = static_cast<int>(m_flat.size());
+  int newCount = static_cast<int>(newFlat.size());
+
+  if (m_selectFirstOnReset) {
+    beginResetModel();
+    m_sectionInfos = sections;
+    m_flat = std::move(newFlat);
+    m_selectedIndex = -1;
+    endResetModel();
+    return;
+  }
+
+  // Incremental update — preserves ListView scroll position and selection
+  if (newCount < oldCount) {
+    beginRemoveRows({}, newCount, oldCount - 1);
+    m_sectionInfos = sections;
+    m_flat = std::move(newFlat);
+    endRemoveRows();
+  } else if (newCount > oldCount) {
+    beginInsertRows({}, oldCount, newCount - 1);
+    m_sectionInfos = sections;
+    m_flat = std::move(newFlat);
+    endInsertRows();
+  } else {
+    m_sectionInfos = sections;
+    m_flat = std::move(newFlat);
+  }
+
+  int overlap = std::min(oldCount, newCount);
+  if (overlap > 0)
+    emit dataChanged(index(0), index(overlap - 1));
+
+  if (m_selectedIndex >= newCount)
+    m_selectedIndex = -1;
 }
 
 bool QmlCommandListModel::dataItemAt(int row, int &section, int &item) const {
@@ -136,18 +166,21 @@ bool QmlCommandListModel::dataItemAt(int row, int &section, int &item) const {
   return true;
 }
 
-void QmlCommandListModel::rebuildFlatList() {
-  m_flat.clear();
+std::vector<QmlCommandListModel::FlatItem>
+QmlCommandListModel::buildFlatList(const std::vector<SectionInfo> &sections) {
+  std::vector<FlatItem> flat;
 
-  for (int s = 0; s < static_cast<int>(m_sectionInfos.size()); ++s) {
-    const auto &sec = m_sectionInfos[s];
+  for (int s = 0; s < static_cast<int>(sections.size()); ++s) {
+    const auto &sec = sections[s];
     if (sec.count == 0) continue;
 
     if (!sec.name.isEmpty())
-      m_flat.push_back({.kind = FlatItem::SectionHeader, .sectionIdx = s, .itemIdx = -1});
+      flat.push_back({.kind = FlatItem::SectionHeader, .sectionIdx = s, .itemIdx = -1});
 
     for (int i = 0; i < sec.count; ++i) {
-      m_flat.push_back({.kind = FlatItem::DataItem, .sectionIdx = s, .itemIdx = i});
+      flat.push_back({.kind = FlatItem::DataItem, .sectionIdx = s, .itemIdx = i});
     }
   }
+
+  return flat;
 }

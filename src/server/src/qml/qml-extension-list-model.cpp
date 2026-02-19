@@ -7,7 +7,7 @@
 QmlExtensionListModel::QmlExtensionListModel(NotifyFn notify, QObject *parent)
     : QmlCommandListModel(parent), m_notify(std::move(notify)) {}
 
-void QmlExtensionListModel::setExtensionData(const ListModel &model) {
+void QmlExtensionListModel::setExtensionData(const ListModel &model, bool resetSelection) {
   m_model = model;
   m_placeholder = QString::fromStdString(model.searchPlaceholderText);
 
@@ -36,19 +36,21 @@ void QmlExtensionListModel::setExtensionData(const ListModel &model) {
 
   // Flush remaining free items
   if (!freeSection.items.empty()) {
-    // If there are no named sections, use an empty section name
-    // If there are named sections, create a section with empty name
     m_sections.push_back(std::move(freeSection));
   }
 
-  // Re-apply active filter against the new sections, or just rebuild.
-  // The caller (view host) controls selectFirstOnReset based on whether
-  // this update is a response to a search text change or just a data refresh.
+  if (!resetSelection) setSelectFirstOnReset(false);
+
   if (m_model.filtering && !m_filter.isEmpty()) {
     setFilter(m_filter);
   } else {
     m_filteredSections.clear();
     rebuildFromModel();
+  }
+
+  if (!resetSelection) {
+    setSelectFirstOnReset(true);
+    refreshActionPanel();
   }
 
   emit emptyViewChanged();

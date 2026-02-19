@@ -19,7 +19,7 @@ public:
 
   explicit QmlExtensionListModel(NotifyFn notify, QObject *parent = nullptr);
 
-  void setExtensionData(const ListModel &model);
+  void setExtensionData(const ListModel &model, bool resetSelection = true);
 
   void setFilter(const QString &text) override;
   QString searchPlaceholder() const override;

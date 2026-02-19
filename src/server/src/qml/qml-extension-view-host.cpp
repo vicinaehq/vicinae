@@ -157,7 +157,7 @@ void QmlExtensionViewHost::renderList(const ListModel &model) {
   if (model.dirty) {
     m_selectFirstOnReset = m_shouldResetSelection;
     emit selectFirstOnResetChanged();
-    m_listModel->setExtensionData(model);
+    m_listModel->setExtensionData(model, m_shouldResetSelection);
     m_selectFirstOnReset = true;
     emit selectFirstOnResetChanged();
     m_shouldResetSelection = false;

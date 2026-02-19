@@ -1,12 +1,31 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Effects
 
 Item {
     id: root
-    visible: launcher.actionPanelOpen
+    visible: launcher.actionPanelOpen || panel.opacity > 0
+    enabled: launcher.actionPanelOpen
+    onVisibleChanged: {
+        if (!visible) {
+            if (launcher.actionPanelModel)
+                launcher.actionPanelModel.setFilter("")
+            stack.clear(StackView.Immediate)
+        }
+    }
 
     // Expose StackView so ActionListPanel can push submenus
     property alias stackView: stack
+
+    function popSubmenu() {
+        if (stack.depth > 1) {
+            stack.pop(null, StackView.Immediate)
+            if (stack.currentItem && typeof stack.currentItem.focusFilter === "function")
+                stack.currentItem.focusFilter()
+        } else {
+            launcher.closeActionPanel()
+        }
+    }
 
     // Backdrop for click-away dismissal
     MouseArea {
@@ -14,7 +33,7 @@ Item {
         onClicked: launcher.closeActionPanel()
     }
 
-    // Panel container — semi-transparent overlay showing window content through
+    // Panel container
     Rectangle {
         id: panel
         anchors.right: parent.right
@@ -25,18 +44,29 @@ Item {
         height: Math.min(stack.currentItem ? stack.currentItem.implicitHeight + 2 * Config.borderWidth : 300,
                          root.height * 0.6)
         radius: Config.borderRounding
-        color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b,
-                       Config.windowOpacity)
+        color: Qt.rgba(Theme.statusBarBackground.r, Theme.statusBarBackground.g,
+                       Theme.statusBarBackground.b, Config.windowOpacity)
         border.color: Theme.mainWindowBorder
         border.width: Config.borderWidth
-        clip: true
 
-        // Enter/exit animations
-        opacity: root.visible ? 1 : 0
-        transform: Translate { y: root.visible ? 0 : 8 }
+        opacity: launcher.actionPanelOpen ? 1 : 0
+        scale: launcher.actionPanelOpen ? 1.0 : 0.95
+        transformOrigin: Item.BottomRight
 
         Behavior on opacity {
-            NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+            NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
+        }
+        Behavior on scale {
+            NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
+        }
+
+        layer.enabled: true
+        layer.effect: MultiEffect {
+            autoPaddingEnabled: true
+            shadowEnabled: true
+            shadowBlur: 0.4
+            shadowColor: Qt.rgba(0, 0, 0, 0.25)
+            shadowVerticalOffset: 4
         }
 
         // Block wheel events from propagating to the main list
@@ -50,6 +80,12 @@ Item {
                 id: stack
                 anchors.fill: parent
                 clip: true
+                pushEnter: null
+                pushExit: null
+                popEnter: null
+                popExit: null
+                replaceEnter: null
+                replaceExit: null
 
                 initialItem: ActionListPanel {
                     model: launcher.actionPanelModel
@@ -58,18 +94,21 @@ Item {
         }
     }
 
+    // Navigate back from submenu via ActionListPanel signal
+    Connections {
+        target: stack.currentItem
+        ignoreUnknownSignals: true
+        function onNavigateBack() { root.popSubmenu() }
+    }
+
     // Keyboard handling
     Keys.onPressed: (event) => {
         if (event.key === Qt.Key_Escape) {
-            if (stack.depth > 1) {
-                stack.pop()
-            } else {
-                launcher.closeActionPanel()
-            }
+            root.popSubmenu()
             event.accepted = true
-        } else if (event.key === Qt.Key_Left) {
+        } else if (event.key === Qt.Key_Left || event.key === Qt.Key_Backspace) {
             if (stack.depth > 1) {
-                stack.pop()
+                root.popSubmenu()
                 event.accepted = true
             }
         } else if (event.key === Qt.Key_Up) {
@@ -87,28 +126,33 @@ Item {
         }
     }
 
-    // Reset stack when panel opens or model changes
     Connections {
         target: launcher
         function onActionPanelOpenChanged() {
             if (launcher.actionPanelOpen) {
-                // Reset stack and focus filter
-                while (stack.depth > 1) stack.pop(null, StackView.Immediate)
-                if (stack.currentItem && typeof stack.currentItem.focusFilter === "function") {
+                // Always rebuild from current model on open
+                stack.clear(StackView.Immediate)
+                if (launcher.actionPanelModel)
+                    stack.push(rootPanelComponent, { "model": launcher.actionPanelModel },
+                               StackView.Immediate)
+                if (stack.currentItem && typeof stack.currentItem.focusFilter === "function")
                     stack.currentItem.focusFilter()
-                }
             }
         }
         function onActionPanelModelChanged() {
-            // Replace the root item when model changes
+            if (!launcher.actionPanelOpen) return
             stack.clear(StackView.Immediate)
             if (launcher.actionPanelModel) {
                 stack.push(rootPanelComponent, { "model": launcher.actionPanelModel },
                            StackView.Immediate)
             }
+            if (stack.currentItem && typeof stack.currentItem.focusFilter === "function")
+                stack.currentItem.focusFilter()
         }
         function onActionPanelSubmenuPushed(subModel) {
-            stack.push(rootPanelComponent, { "model": subModel })
+            stack.push(rootPanelComponent, { "model": subModel }, StackView.Immediate)
+            if (stack.currentItem && typeof stack.currentItem.focusFilter === "function")
+                stack.currentItem.focusFilter()
         }
     }
 

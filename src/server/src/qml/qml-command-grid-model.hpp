@@ -76,6 +76,8 @@ protected:
   void setSections(const std::vector<SectionInfo> &sections);
   void selectFirst();
 
+  void setSelectFirstOnReset(bool value) { m_selectFirstOnReset = value; }
+
   virtual std::unique_ptr<ActionPanelState> createActionPanel(int section, int item) const = 0;
   virtual void onItemSelected(int section, int item) {}
   virtual void onSelectionCleared();
@@ -83,6 +85,7 @@ protected:
   ApplicationContext *ctx() const { return m_ctx; }
   const std::vector<SectionInfo> &sections() const { return m_sections; }
   QString imageSourceFor(const ImageURL &url) const { return qml::imageSourceFor(url); }
+  void setSelectedIndex(int index);
 
 private:
   struct FlatRow {
@@ -96,6 +99,7 @@ private:
     double aspectRatio = 1.0;
   };
 
+  std::vector<FlatRow> buildFlatList(const std::vector<SectionInfo> &sections);
   void rebuildRows();
   int sectionColumns(int sectionIdx) const;
   int totalItemCount() const;
@@ -109,4 +113,6 @@ private:
   int m_selItem = -1;
   int m_columns = 8;
   double m_aspectRatio = 1.0;
+  bool m_selectFirstOnReset = false;
+  int m_selectedIndex = -1;
 };

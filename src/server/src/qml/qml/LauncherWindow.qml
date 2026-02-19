@@ -164,14 +164,8 @@ Window {
 
     Shortcut {
         sequence: "Escape"
-        enabled: !launcher.alertModel.visible
-        onActivated: {
-            if (launcher.actionPanelOpen) {
-                launcher.closeActionPanel()
-            } else {
-                launcher.goBack()
-            }
-        }
+        enabled: !launcher.alertModel.visible && !launcher.actionPanelOpen
+        onActivated: launcher.goBack()
     }
 
     Shortcut {
