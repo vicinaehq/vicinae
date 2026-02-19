@@ -1,10 +1,10 @@
 # Zenwritten Light - Zero Hue and Saturation
-# A zenbones variant with zero hue and saturation for a minimalist monochrome look
+# A contrast-based colorscheme with zero hue and saturation
 
 [meta]
 version = 1
 name = "Zenwritten Light"
-description = "A zenbones variant with zero hue and saturation for a minimalist monochrome look"
+description = "A Zenbones colorscheme with zero hue and saturation"
 variant = "light"
 icon = "icons/zenbones.png"
 
