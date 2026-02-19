@@ -9,11 +9,11 @@ GenericListView {
     autoWireModel: true
     selectFirstOnReset: cmdModel ? cmdModel.selectFirstOnReset : true
 
-    emptyTitle: cmdModel && cmdModel.emptyTitle ? cmdModel.emptyTitle : "No results"
-    emptyDescription: cmdModel ? cmdModel.emptyDescription : ""
+    emptyTitle: cmdModel && cmdModel.emptyTitle || "No results"
+    emptyDescription: (cmdModel && cmdModel.emptyDescription) || ""
     emptyIcon: {
         var _ = Theme.foreground
-        var icon = cmdModel ? cmdModel.emptyIcon : ""
+        var icon = cmdModel ? (cmdModel.emptyIcon || "") : ""
         return icon !== "" ? icon : "image://vicinae/builtin:magnifying-glass?fg=" + Theme.foreground
     }
 

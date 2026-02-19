@@ -28,10 +28,12 @@ public:
 
 protected:
   void itemChange(ItemChange change, const ItemChangeData &value) override;
+  void geometryChange(const QRectF &newGeo, const QRectF &oldGeo) override;
 
 private:
   void reset();
   void loadData(const QByteArray &data);
+  void updateScaledSize();
 
   QString m_source;
   bool m_animated = false;

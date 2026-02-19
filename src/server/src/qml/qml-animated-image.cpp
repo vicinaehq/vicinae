@@ -4,6 +4,8 @@
 #include <QFile>
 #include <QPainter>
 
+static constexpr int kMaxAnimDataSize = 512 * 1024; // 512KB
+
 ViciAnimatedImage::ViciAnimatedImage(QQuickItem *parent)
     : QQuickPaintedItem(parent) {}
 
@@ -79,6 +81,7 @@ void ViciAnimatedImage::setSource(const QString &src) {
 void ViciAnimatedImage::loadData(const QByteArray &data) {
   if (data.size() < 6) return;
   if (!data.startsWith("GIF87a") && !data.startsWith("GIF89a")) return;
+  if (data.size() > kMaxAnimDataSize) return;
 
   m_data = data;
   m_buffer = new QBuffer(&m_data, this);
@@ -97,6 +100,7 @@ void ViciAnimatedImage::loadData(const QByteArray &data) {
     return;
   }
 
+  updateScaledSize();
   connect(m_movie, &QMovie::updated, this, [this]() { update(); });
   m_movie->start();
 
@@ -130,4 +134,19 @@ void ViciAnimatedImage::itemChange(ItemChange change,
     else
       m_movie->setPaused(true);
   }
+}
+
+void ViciAnimatedImage::geometryChange(const QRectF &newGeo,
+                                       const QRectF &oldGeo) {
+  QQuickPaintedItem::geometryChange(newGeo, oldGeo);
+  if (newGeo.size() != oldGeo.size())
+    updateScaledSize();
+}
+
+void ViciAnimatedImage::updateScaledSize() {
+  if (!m_movie) return;
+  int w = static_cast<int>(width());
+  int h = static_cast<int>(height());
+  if (w > 0 && h > 0)
+    m_movie->setScaledSize(QSize(w, h));
 }

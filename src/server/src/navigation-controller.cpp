@@ -1,4 +1,5 @@
 #include "navigation-controller.hpp"
+#include <QTimer>
 #include "command-controller.hpp"
 #include "extension/extension-command.hpp"
 #include "service-registry.hpp"
@@ -121,7 +122,14 @@ void NavigationController::confirmAlert(const QString &title, const QString &des
 
 void NavigationController::clearSearchText() { setSearchText(""); }
 
-NavigationController::ViewState::~ViewState() { sender->deleteLater(); }
+NavigationController::ViewState::~ViewState() {
+  // Defer deletion so the C++ host outlives StackView's QML item cleanup.
+  // StackView items have JavaScriptOwnership and are GC'd non-deterministically;
+  // a plain deleteLater() can destroy the host first, causing QML bindings to
+  // re-evaluate with a null reference.
+  auto *s = sender;
+  QTimer::singleShot(0, s, [s]() { s->deleteLater(); });
+}
 
 void NavigationController::openActionPanel() {
   if (m_isPanelOpened) return;
