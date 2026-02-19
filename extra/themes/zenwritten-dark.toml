@@ -1,0 +1,33 @@
+# Zenwritten Dark - Zero Hue and Saturation
+# A zenbones variant with zero hue and saturation for a minimalist monochrome look
+
+[meta]
+version = 1
+name = "Zenwritten Dark"
+description = "A zenbones variant with zero hue and saturation for a minimalist monochrome look"
+variant = "dark"
+icon = "icons/zenbones.png"
+
+[colors.core]
+background = "#191919"        # bg (dark sand)
+foreground = "#BBBBBB"        # fg (light stone)
+secondary_background = "#303030"  # bg1 (slightly lighter for surfaces)
+border = "#404040"            # selection bg (subtle border)
+accent = "#6099C0"            # blue (neutral accent)
+
+[colors.accents]
+blue = "#6099C0"              # blue
+green = "#819B69"             # green
+magenta = "#B279A7"           # magenta
+orange = "#B77E64"            # orange/yellow
+purple = "#B279A7"            # purple
+red = "#DE6E7C"               # red
+yellow = "#B77E64"            # yellow
+cyan = "#66A5AD"              # cyan
+
+[colors.list.item.selection]
+background = "#404040"
+secondary_background = "#404040"
+
+[colors.grid.item]
+background = "#404040"
