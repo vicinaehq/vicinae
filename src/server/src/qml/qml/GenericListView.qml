@@ -109,6 +109,13 @@ Item {
             bottomMargin: 4
 
             onCurrentIndexChanged: root.itemSelected(currentIndex)
+            onCountChanged: {
+                if (root.autoWireModel && root.listModel
+                        && currentIndex < 0 && count > 0) {
+                    root.selectFirst()
+                    root.listModel.setSelectedIndex(currentIndex)
+                }
+            }
 
             ScrollBar.vertical: ScrollBar {
                 policy: listView.contentHeight > listView.height

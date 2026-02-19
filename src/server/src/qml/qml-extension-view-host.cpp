@@ -183,7 +183,10 @@ void QmlExtensionViewHost::renderGrid(const GridModel &model) {
   if (wasLoading != m_isLoading) { emit isLoadingChanged(); emit suppressEmptyViewChanged(); }
   setLoading(model.isLoading);
 
-  if (model.dirty) { m_gridModel->setExtensionData(model); }
+  if (model.dirty) {
+    m_gridModel->setExtensionData(model, m_shouldResetSelection);
+    m_shouldResetSelection = false;
+  }
 }
 
 void QmlExtensionViewHost::textChanged(const QString &text) {

@@ -17,7 +17,7 @@ public:
 
   explicit QmlExtensionGridModel(NotifyFn notify, QObject *parent = nullptr);
 
-  void setExtensionData(const GridModel &model);
+  void setExtensionData(const GridModel &model, bool resetSelection = true);
 
   void setFilter(const QString &text) override;
   QString searchPlaceholder() const override;
@@ -53,7 +53,8 @@ private:
     std::vector<GridItemViewModel> items;
   };
 
-  void rebuildFromModel();
+  void rebuildFromModel(bool resetSelection);
+  void reapplyFilter();
   bool matchesFilter(const GridItemViewModel &item, const QString &filter) const;
   const GridItemViewModel *itemAt(int section, int item) const;
 

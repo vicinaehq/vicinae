@@ -80,12 +80,16 @@ void QmlEmojiGridModel::initialize(ApplicationContext *ctx) {
 
   connect(m_emojiService, &EmojiService::pinned, this, [this](auto) {
     regenerateMetaSections();
+    setSelectFirstOnReset(true);
     rebuildSections();
+    setSelectFirstOnReset(false);
     selectFirst();
   });
   connect(m_emojiService, &EmojiService::unpinned, this, [this](auto) {
     regenerateMetaSections();
+    setSelectFirstOnReset(true);
     rebuildSections();
+    setSelectFirstOnReset(false);
     selectFirst();
   });
   connect(m_emojiService, &EmojiService::visited, this, [this](auto) {
@@ -129,7 +133,9 @@ void QmlEmojiGridModel::setFilter(const QString &text) {
 
   if (!text.isEmpty()) { m_searchResults = m_emojiService->search(text.toStdString()); }
 
+  setSelectFirstOnReset(true);
   rebuildSections();
+  setSelectFirstOnReset(false);
   selectFirst();
 }
 
