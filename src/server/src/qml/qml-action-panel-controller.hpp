@@ -64,12 +64,15 @@ private:
   void openRootPanel();
   void connectModel(QmlActionPanelModel *model);
 
+  void destroyPanelModels();
+
   ApplicationContext &m_ctx;
   bool m_open = false;
   bool m_hasActions = false;
   bool m_hasMultipleActions = false;
   int m_depth = 0;
   QObject *m_currentPanel = nullptr;
+  QmlActionPanelModel *m_rootModel = nullptr;
 
   // Snapshot of the top-level state's actions (shared_ptrs keep them alive)
   std::vector<std::shared_ptr<AbstractAction>> m_allActions;
