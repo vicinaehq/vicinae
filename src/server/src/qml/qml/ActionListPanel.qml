@@ -6,6 +6,9 @@ Item {
     id: root
 
     required property var model
+    property var boundActions: root.model
+
+    signal navigateBack()
 
     // Expose navigation functions for parent popover
     function moveUp() {
@@ -184,6 +187,14 @@ Item {
 
                     onTextEdited: root.model.setFilter(text)
 
+                    Keys.onPressed: function(event) {
+                        if (event.key === Qt.Key_Backspace && filterInput.text === "") {
+                            root.navigateBack()
+                            event.accepted = true
+                        } else if (actionPanel.tryShortcut(event.key, event.modifiers)) {
+                            event.accepted = true
+                        }
+                    }
                     Keys.onUpPressed: root.moveUp()
                     Keys.onDownPressed: root.moveDown()
                     Keys.onReturnPressed: root.activateCurrent()

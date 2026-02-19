@@ -89,7 +89,6 @@ void QmlCommandListModel::setSelectedIndex(int index) {
 
   auto panel = createActionPanel(flat.sectionIdx, flat.itemIdx);
   if (panel) {
-    panel->finalize();
     if (m_ctx) m_ctx->navigation->setActions(std::move(panel));
   }
 }
