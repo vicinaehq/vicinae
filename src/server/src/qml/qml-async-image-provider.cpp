@@ -145,6 +145,8 @@ static QImage renderEmoji(const QString &emoji, const QSize &size) {
   font.setPixelSize(static_cast<int>(size.height() * 0.8));
 
   QPainter painter(&canvas);
+  painter.setRenderHint(QPainter::Antialiasing, true);
+  painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
   painter.setFont(font);
   painter.drawText(canvas.rect(), Qt::AlignCenter, emoji);
   return canvas;

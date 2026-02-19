@@ -13,15 +13,11 @@ GenericGridView {
             readonly property int item: parent ? parent.cellItem : 0
             readonly property bool hovered: parent ? parent.cellHovered : false
 
-            Image {
-                anchors.centerIn: parent
-                width: parent.width
-                height: parent.height
+            ViciImage {
+                anchors.fill: parent
                 source: cellRoot.model ? cellRoot.model.emojiIcon(cellRoot.sec, cellRoot.item) : ""
-                sourceSize.width: width
-                sourceSize.height: height
-                asynchronous: true
-                cache: true
+                fillMode: Image.PreserveAspectFit
+                sourceSize: Qt.size(64, 64)
             }
 
             ToolTip {

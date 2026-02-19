@@ -737,8 +737,6 @@ set(SRCS
 	src/qml/qml-extension-grid-model.hpp
 	src/qml/qml-extension-grid-model.cpp
 	src/qml/qml-source-blend-rect.hpp
-	src/qml/qml-image-provider.hpp
-	src/qml/qml-image-provider.cpp
 	src/qml/qml-image-url.hpp
 	src/qml/qml-image-url.cpp
 	src/qml/qml-image-source.hpp

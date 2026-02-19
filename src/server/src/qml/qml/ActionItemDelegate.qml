@@ -87,11 +87,9 @@ Item {
         }
 
         // Submenu chevron
-        Image {
+        ViciImage {
             visible: root.isSubmenu
             source: Img.builtin("chevron-right")
-            sourceSize.width: 12
-            sourceSize.height: 12
             Layout.preferredWidth: 12
             Layout.preferredHeight: 12
             Layout.alignment: Qt.AlignVCenter
