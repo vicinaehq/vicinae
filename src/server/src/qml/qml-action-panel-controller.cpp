@@ -40,6 +40,7 @@ void ActionPanelController::setStateFrom(const ActionPanelState &state) {
   if (newHasActions != m_hasActions) {
     m_hasActions = newHasActions;
     emit hasActionsChanged();
+    if (!m_hasActions) close();
   }
   if (newHasMultiple != m_hasMultipleActions) {
     m_hasMultipleActions = newHasMultiple;
@@ -93,9 +94,19 @@ void ActionPanelController::close() {
   m_depth = 0;
   m_currentPanel = nullptr;
   emit depthChanged();
+  destroyPanelModels();
+}
+
+void ActionPanelController::destroyPanelModels() {
+  if (m_rootModel) {
+    m_rootModel->deleteLater();
+    m_rootModel = nullptr;
+  }
 }
 
 void ActionPanelController::openRootPanel() {
+  destroyPanelModels();
+
   auto state = std::make_unique<ActionPanelState>();
   for (const auto &snap : m_sections) {
     auto *section = state->createSection(snap.name);
@@ -106,11 +117,11 @@ void ActionPanelController::openRootPanel() {
   }
   state->finalize();
 
-  auto *model = new QmlActionPanelModel(std::move(state), this);
-  connectModel(model);
+  m_rootModel = new QmlActionPanelModel(std::move(state), this);
+  connectModel(m_rootModel);
 
   QVariantMap props;
-  props[QStringLiteral("model")] = QVariant::fromValue(static_cast<QObject *>(model));
+  props[QStringLiteral("model")] = QVariant::fromValue(static_cast<QObject *>(m_rootModel));
   emit panelPushRequested(QUrl(QStringLiteral("qrc:/Vicinae/ActionListPanel.qml")), props);
 }
 
@@ -118,7 +129,8 @@ void ActionPanelController::pushActionList(std::unique_ptr<ActionPanelState> sta
   if (!state) return;
 
   state->finalize();
-  auto *model = new QmlActionPanelModel(std::move(state), this);
+  // Submenu models are parented to the root model so they're cleaned up together
+  auto *model = new QmlActionPanelModel(std::move(state), m_rootModel);
   connectModel(model);
 
   QVariantMap props;
@@ -189,6 +201,7 @@ void ActionPanelController::connectModel(QmlActionPanelModel *model) {
   });
 
   connect(model, &QmlActionPanelModel::submenuRequested, this, [this](QmlActionPanelModel *subModel) {
+    connectModel(subModel);
     QVariantMap props;
     props[QStringLiteral("model")] = QVariant::fromValue(static_cast<QObject *>(subModel));
     emit panelPushRequested(QUrl(QStringLiteral("qrc:/Vicinae/ActionListPanel.qml")), props);

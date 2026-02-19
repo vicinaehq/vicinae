@@ -191,7 +191,8 @@ Item {
                         if (event.key === Qt.Key_Backspace && filterInput.text === "" && actionPanel.depth > 1) {
                             root.navigateBack()
                             event.accepted = true
-                        } else if (actionPanel.tryShortcut(event.key, event.modifiers)) {
+                        } else if ((event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))
+                                   && actionPanel.tryShortcut(event.key, event.modifiers)) {
                             event.accepted = true
                         }
                     }
