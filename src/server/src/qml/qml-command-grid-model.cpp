@@ -312,6 +312,13 @@ int QmlCommandGridModel::flatRowForSelection() const {
     const auto &row = m_rows[r];
     if (row.kind == FlatRow::ItemRow && row.sectionIdx == m_selSection && m_selItem >= row.startItem &&
         m_selItem < row.startItem + row.itemCount) {
+      // When the selected cell is in the first item row of a section that has
+      // a header, return the header row so positionViewAtIndex also keeps
+      // the section title visible.
+      if (row.startItem == 0 && r > 0 && m_rows[r - 1].kind == FlatRow::SectionHeader &&
+          m_rows[r - 1].sectionIdx == m_selSection) {
+        return r - 1;
+      }
       return r;
     }
   }

@@ -6,7 +6,7 @@
 QmlExtensionGridModel::QmlExtensionGridModel(NotifyFn notify, QObject *parent)
     : QmlCommandGridModel(parent), m_notify(std::move(notify)) {}
 
-void QmlExtensionGridModel::setExtensionData(const GridModel &model) {
+void QmlExtensionGridModel::setExtensionData(const GridModel &model, bool resetSelection) {
   m_model = model;
   m_placeholder = QString::fromStdString(model.searchPlaceholderText);
 
@@ -58,13 +58,12 @@ void QmlExtensionGridModel::setExtensionData(const GridModel &model) {
 
   if (!freeSection.items.empty()) { m_sections.push_back(std::move(freeSection)); }
 
-  // Re-apply active filter against the new sections, or just rebuild
   if (m_model.filtering && !m_filter.isEmpty()) {
-    setFilter(m_filter);
+    reapplyFilter();
   } else {
     m_filteredSections.clear();
-    rebuildFromModel();
   }
+  rebuildFromModel(resetSelection);
 
   emit emptyViewChanged();
 }
@@ -85,7 +84,7 @@ QString QmlExtensionGridModel::emptyIcon() const {
   return {};
 }
 
-void QmlExtensionGridModel::rebuildFromModel() {
+void QmlExtensionGridModel::rebuildFromModel(bool resetSelection) {
   const auto &sections = activeSections();
 
   int prevSection = selectedSection();
@@ -96,18 +95,25 @@ void QmlExtensionGridModel::rebuildFromModel() {
   for (const auto &sec : sections) {
     infos.push_back({QString::fromStdString(sec.name), static_cast<int>(sec.items.size()), sec.columns, sec.aspectRatio});
   }
+
+  setSelectFirstOnReset(resetSelection);
   setSections(infos);
+  setSelectFirstOnReset(false);
 
-  bool prevValid = prevSection >= 0
-      && prevSection < static_cast<int>(sections.size())
-      && prevItem >= 0
-      && prevItem < static_cast<int>(sections[prevSection].items.size());
+  if (!resetSelection) {
+    bool prevValid = prevSection >= 0
+        && prevSection < static_cast<int>(sections.size())
+        && prevItem >= 0
+        && prevItem < static_cast<int>(sections[prevSection].items.size());
 
-  if (prevValid) {
-    if (prevSection == selectedSection() && prevItem == selectedItem()) {
-      emit selectionChanged();
+    if (prevValid) {
+      if (prevSection == selectedSection() && prevItem == selectedItem()) {
+        emit selectionChanged();
+      } else {
+        select(prevSection, prevItem);
+      }
     } else {
-      select(prevSection, prevItem);
+      selectFirst();
     }
   } else {
     selectFirst();
@@ -132,22 +138,26 @@ bool QmlExtensionGridModel::matchesFilter(const GridItemViewModel &item, const Q
   return false;
 }
 
+void QmlExtensionGridModel::reapplyFilter() {
+  m_filteredSections.clear();
+  for (const auto &sec : m_sections) {
+    Section filtered;
+    filtered.name = sec.name;
+    filtered.aspectRatio = sec.aspectRatio;
+    filtered.columns = sec.columns;
+    for (const auto &item : sec.items) {
+      if (matchesFilter(item, m_filter)) { filtered.items.push_back(item); }
+    }
+    m_filteredSections.push_back(std::move(filtered));
+  }
+}
+
 void QmlExtensionGridModel::setFilter(const QString &text) {
   m_filter = text;
 
   if (m_model.filtering) {
-    m_filteredSections.clear();
-    for (const auto &sec : m_sections) {
-      Section filtered;
-      filtered.name = sec.name;
-      filtered.aspectRatio = sec.aspectRatio;
-      filtered.columns = sec.columns;
-      for (const auto &item : sec.items) {
-        if (matchesFilter(item, text)) { filtered.items.push_back(item); }
-      }
-      m_filteredSections.push_back(std::move(filtered));
-    }
-    rebuildFromModel();
+    reapplyFilter();
+    rebuildFromModel(true);
   }
 }
 
