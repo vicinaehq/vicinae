@@ -188,7 +188,7 @@ Item {
                     onTextEdited: root.model.setFilter(text)
 
                     Keys.onPressed: function(event) {
-                        if (event.key === Qt.Key_Backspace && filterInput.text === "") {
+                        if (event.key === Qt.Key_Backspace && filterInput.text === "" && actionPanel.depth > 1) {
                             root.navigateBack()
                             event.accepted = true
                         } else if (actionPanel.tryShortcut(event.key, event.modifiers)) {

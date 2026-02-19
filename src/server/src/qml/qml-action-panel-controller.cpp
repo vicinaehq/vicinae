@@ -47,13 +47,6 @@ void ActionPanelController::setStateFrom(const ActionPanelState &state) {
   }
 
   emit primaryActionChanged();
-
-  if (m_open) {
-    emit stackClearRequested();
-    m_depth = 0;
-    m_currentPanel = nullptr;
-    openRootPanel();
-  }
 }
 
 void ActionPanelController::clearState() {
