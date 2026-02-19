@@ -17,7 +17,9 @@ class VisitEmojiActionWrapper : public ProxyAction {
 public:
   VisitEmojiActionWrapper(std::string_view emoji, AbstractAction *action)
       : ProxyAction(action), m_emoji(emoji) {}
-  void executeAfter(ApplicationContext *ctx) override { ctx->services->emojiService()->registerVisit(m_emoji); }
+  void executeAfter(ApplicationContext *ctx) override {
+    ctx->services->emojiService()->registerVisit(m_emoji);
+  }
 };
 
 class PinEmojiAction : public AbstractAction {
@@ -125,9 +127,7 @@ void QmlEmojiGridModel::rebuildSections() {
 void QmlEmojiGridModel::setFilter(const QString &text) {
   m_displayMode = text.isEmpty() ? DisplayMode::Root : DisplayMode::Search;
 
-  if (!text.isEmpty()) {
-    m_searchResults = m_emojiService->search(text.toStdString());
-  }
+  if (!text.isEmpty()) { m_searchResults = m_emojiService->search(text.toStdString()); }
 
   rebuildSections();
   selectFirst();

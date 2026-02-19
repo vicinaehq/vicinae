@@ -11,20 +11,30 @@ int QmlCommandGridModel::rowCount(const QModelIndex &parent) const {
   return static_cast<int>(m_rows.size());
 }
 
+void QmlCommandGridModel::setSelectedIndex(int index) { (void)index; }
+
 QVariant QmlCommandGridModel::data(const QModelIndex &index, int role) const {
   int row = index.row();
   if (row < 0 || row >= static_cast<int>(m_rows.size())) return {};
   const auto &r = m_rows[row];
 
   switch (role) {
-  case IsSection: return r.kind == FlatRow::SectionHeader;
-  case SectionNameRole: return r.sectionName;
-  case RowSectionIdx: return r.sectionIdx;
-  case RowStartItem: return r.startItem;
-  case RowItemCount: return r.itemCount;
-  case RowColumnsRole: return r.columns;
-  case RowAspectRatioRole: return r.aspectRatio;
-  default: return {};
+  case IsSection:
+    return r.kind == FlatRow::SectionHeader;
+  case SectionNameRole:
+    return r.sectionName;
+  case RowSectionIdx:
+    return r.sectionIdx;
+  case RowStartItem:
+    return r.startItem;
+  case RowItemCount:
+    return r.itemCount;
+  case RowColumnsRole:
+    return r.columns;
+  case RowAspectRatioRole:
+    return r.aspectRatio;
+  default:
+    return {};
   }
 }
 
@@ -40,27 +50,63 @@ QHash<int, QByteArray> QmlCommandGridModel::roleNames() const {
   };
 }
 
-void QmlCommandGridModel::setSections(const std::vector<SectionInfo> &sections) {
-  beginResetModel();
-  m_sections = sections;
-  m_rows.clear();
+std::vector<QmlCommandGridModel::FlatRow>
+QmlCommandGridModel::buildFlatList(const std::vector<SectionInfo> &sections) {
+  std::vector<FlatRow> rows;
 
-  for (int s = 0; s < static_cast<int>(m_sections.size()); ++s) {
-    const auto &sec = m_sections[s];
+  for (int s = 0; s < static_cast<int>(sections.size()); ++s) {
+    const auto &sec = sections[s];
     if (sec.count == 0) continue;
 
     int cols = sec.columns.value_or(m_columns);
     double ar = sec.aspectRatio.value_or(m_aspectRatio);
 
-    m_rows.push_back({FlatRow::SectionHeader, s, sec.name, 0, 0, cols, ar});
+    if (!sec.name.isEmpty()) {
+      rows.push_back({FlatRow::SectionHeader, s, sec.name, 0, 0, cols, ar});
+    }
 
     for (int i = 0; i < sec.count; i += cols) {
       int count = std::min(cols, sec.count - i);
-      m_rows.push_back({FlatRow::ItemRow, s, {}, i, count, cols, ar});
+      rows.push_back({FlatRow::ItemRow, s, {}, i, count, cols, ar});
     }
   }
 
-  endResetModel();
+  return rows;
+}
+
+void QmlCommandGridModel::setSections(const std::vector<SectionInfo> &sections) {
+  auto newFlat = buildFlatList(sections);
+  int oldCount = static_cast<int>(m_rows.size());
+  int newCount = static_cast<int>(newFlat.size());
+
+  if (m_selectFirstOnReset) {
+    beginResetModel();
+    m_sections = sections;
+    m_rows = std::move(newFlat);
+    m_selectedIndex = -1;
+    endResetModel();
+    return;
+  }
+
+  if (newCount < oldCount) {
+    beginRemoveRows({}, newCount, oldCount - 1);
+    m_sections = sections;
+    m_rows = std::move(newFlat);
+    endRemoveRows();
+  } else if (newCount > oldCount) {
+    beginInsertRows({}, oldCount, newCount - 1);
+    m_sections = sections;
+    m_rows = std::move(newFlat);
+    endInsertRows();
+  } else {
+    m_sections = sections;
+    m_rows = std::move(newFlat);
+  }
+
+  int overlap = std::min(oldCount, newCount);
+  if (overlap > 0) emit dataChanged(index(0), index(overlap - 1));
+
+  if (m_selectedIndex >= newCount) m_selectedIndex = -1;
 }
 
 void QmlCommandGridModel::setColumns(int cols) {
@@ -143,13 +189,15 @@ void QmlCommandGridModel::refreshActionPanel() {
 
 int QmlCommandGridModel::totalItemCount() const {
   int total = 0;
-  for (const auto &s : m_sections) total += s.count;
+  for (const auto &s : m_sections)
+    total += s.count;
   return total;
 }
 
 int QmlCommandGridModel::toGlobal(int section, int item) const {
   int idx = 0;
-  for (int s = 0; s < section; ++s) idx += m_sections[s].count;
+  for (int s = 0; s < section; ++s)
+    idx += m_sections[s].count;
   return idx + item;
 }
 

@@ -19,6 +19,7 @@ public:
     setSelectFirstOnReset(false);
     applyFilter();
     setSelectFirstOnReset(true);
+    refreshActionPanel();
   }
 
   void setFilter(const QString &text) override {

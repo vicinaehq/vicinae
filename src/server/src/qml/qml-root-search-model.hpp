@@ -124,7 +124,6 @@ private:
   std::string m_fileSearchQuery;
   bool m_fileSearchEnabled = false;
 
-  std::unique_ptr<ActionPanelState> m_actionPanel;
   int m_selectedIndex = -1;
   QString m_lastSelectedItemId;
 };
