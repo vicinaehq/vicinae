@@ -1,0 +1,19 @@
+name: Nix Flake Check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  flake-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: cachix/install-nix-action@v31
+      - run: nix flake check --accept-flake-config
+  build-vicinae:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: cachix/install-nix-action@v31
+      - run: nix build --accept-flake-config
