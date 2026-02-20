@@ -64,6 +64,8 @@ Item {
                 required property bool multiple
                 required property bool directoriesOnly
 
+                onLoaded: if (index === 0) Qt.callLater(formView.focusFirst)
+
                 sourceComponent: {
                     switch (type) {
                     case "text": return textComp
