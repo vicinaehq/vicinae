@@ -28,7 +28,7 @@ Flickable {
         return false
     }
 
-    ScrollBar.vertical: ScrollBar {
+    ScrollBar.vertical: ViciScrollBar {
         policy: root.contentHeight > root.height
                 ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
     }
