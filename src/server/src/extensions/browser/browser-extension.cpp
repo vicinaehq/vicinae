@@ -3,36 +3,31 @@
 #include "actions/browser-tab-actions.hpp"
 #include "builtin_icon.hpp"
 #include "qml/qml-browser-tabs-view-host.hpp"
+#include "qml/qml-empty-view-host.hpp"
 #include "qml/qml-shortcut-form-view-host.hpp"
 #include "navigation-controller.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/browser-extension-service.hpp"
 #include "single-view-command-context.hpp"
 #include "theme/colors.hpp"
-#include "ui/views/empty-view.hpp"
 
 static bool guard(CommandController *ctrl) {
   const auto browserService = ctrl->context()->services->browserExtension();
 
   if (browserService->browsers().empty()) {
-    auto empty = new EmptyView;
-
-    empty->setData({.title = "No browser connected",
-                    .description =
-                        "You need to connect at least one browser to vicinae using the browser extension in "
-                        "order to use this command.",
-                    .icon = ImageURL(BuiltinIcon::Link).setFill(SemanticColor::Red)});
+    auto empty = new QmlEmptyViewHost(
+        "No browser connected",
+        "You need to connect at least one browser to vicinae using the browser extension in "
+        "order to use this command.",
+        ImageURL(BuiltinIcon::Link).setFill(SemanticColor::Red));
 
     ctrl->context()->navigation->pushView(empty);
 
-    {
-      auto panel = std::make_unique<ListActionPanelState>();
-      auto main = panel->createSection();
-
-      main->addAction(
-          new OpenInBrowserAction(QUrl("https://docs.vicinae.com/browser-extension"), "Open documentation"));
-      empty->setActions(std::move(panel));
-    }
+    auto panel = std::make_unique<ListActionPanelState>();
+    auto main = panel->createSection();
+    main->addAction(
+        new OpenInBrowserAction(QUrl("https://docs.vicinae.com/browser-extension"), "Open documentation"));
+    empty->setActions(std::move(panel));
 
     return true;
   }
