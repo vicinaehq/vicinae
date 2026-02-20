@@ -33,13 +33,13 @@ SelectableDelegate {
             // Active indicator dot
             Rectangle {
                 visible: root.itemIsActive
-                width: 6
-                height: 6
-                radius: 3
-                color: Theme.accent
-                anchors.bottom: parent.bottom
+                width: 4
+                height: 4
+                radius: 2
+                color: Theme.textMuted
+                anchors.top: parent.bottom
+                anchors.topMargin: 3
                 anchors.horizontalCenter: parent.horizontalCenter
-                anchors.bottomMargin: -2
             }
         }
 
@@ -68,14 +68,24 @@ SelectableDelegate {
                 Layout.maximumWidth: 200
             }
 
-            Text {
+            Rectangle {
                 visible: root.itemAlias !== ""
-                text: root.itemAlias
-                color: Theme.textMuted
-                font.pointSize: Theme.smallerFontSize
-                font.italic: true
-                elide: Text.ElideRight
-                maximumLineCount: 1
+                implicitWidth: aliasText.implicitWidth + 20
+                implicitHeight: aliasText.implicitHeight + 4
+                radius: 4
+                color: "transparent"
+                border.width: 1
+                border.color: Theme.divider
+
+                Text {
+                    id: aliasText
+                    anchors.centerIn: parent
+                    text: root.itemAlias
+                    color: Theme.textMuted
+                    font.pointSize: Theme.smallerFontSize
+                    elide: Text.ElideRight
+                    maximumLineCount: 1
+                }
             }
 
             Item { Layout.fillWidth: true }
