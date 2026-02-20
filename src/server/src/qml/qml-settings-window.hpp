@@ -52,6 +52,7 @@ signals:
 
 private:
   void ensureInitialized();
+  void updateBlur();
 
   ApplicationContext &m_ctx;
   QQmlApplicationEngine m_engine;

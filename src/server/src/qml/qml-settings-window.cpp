@@ -6,7 +6,9 @@
 #include "qml-image-source.hpp"
 #include "qml-keybind-settings-model.hpp"
 #include "qml-theme-bridge.hpp"
+#include "config/config.hpp"
 #include "service-registry.hpp"
+#include "services/background-effects/background-effect-manager.hpp"
 #include "services/app-service/app-service.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "vicinae.hpp"
@@ -47,7 +49,11 @@ void QmlSettingsWindow::ensureInitialized() {
     connect(m_window, &QQuickWindow::visibleChanged, this, [this](bool visible) {
       if (!visible) m_ctx.settings->closeWindow();
     });
+    connect(m_window, &QQuickWindow::widthChanged, this, &QmlSettingsWindow::updateBlur);
+    connect(m_window, &QQuickWindow::heightChanged, this, &QmlSettingsWindow::updateBlur);
   }
+
+  connect(m_ctx.services->config(), &config::Manager::configChanged, this, &QmlSettingsWindow::updateBlur);
 }
 
 void QmlSettingsWindow::setCurrentTab(int tab) {
@@ -76,6 +82,7 @@ void QmlSettingsWindow::show() {
   m_window->show();
   m_window->raise();
   m_window->requestActivate();
+  updateBlur();
 }
 
 void QmlSettingsWindow::hide() {
@@ -101,4 +108,18 @@ void QmlSettingsWindow::openTab(const QString &tabId) {
 void QmlSettingsWindow::selectExtension(const QString &entrypointId) {
   ensureInitialized();
   m_extensionModel->selectByEntrypointId(entrypointId);
+}
+
+void QmlSettingsWindow::updateBlur() {
+  if (!m_window) return;
+  auto &cfg = m_ctx.services->config()->value();
+  auto *bgEffect = m_ctx.services->backgroundEffectManager();
+  if (!bgEffect->supportsBlur()) return;
+
+  if (cfg.launcherWindow.blur.enabled) {
+    QRect region(0, 0, m_window->width(), m_window->height());
+    bgEffect->setBlur(m_window, {.radius = 10, .region = region});
+  } else {
+    bgEffect->clearBlur(m_window);
+  }
 }
