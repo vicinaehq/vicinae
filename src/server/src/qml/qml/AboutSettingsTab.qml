@@ -61,21 +61,21 @@ Item {
                 icon: "github"
                 label: "GitHub"
                 onClicked: settings.openUrl("https://github.com/vicinaehq/vicinae")
-                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignHCenter
             }
 
             SettingsLinkButton {
                 icon: "book"
                 label: "Documentation"
                 onClicked: settings.openUrl("https://docs.vicinae.com")
-                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignHCenter
             }
 
             SettingsLinkButton {
                 icon: "bug"
                 label: "Report a Bug"
                 onClicked: settings.openUrl("https://github.com/vicinaehq/vicinae/issues/new")
-                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignHCenter
             }
 
             Item { Layout.fillHeight: true }
