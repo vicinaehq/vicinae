@@ -200,6 +200,7 @@ Item {
                         anchors.margins: 10
                         source: root.host.detailImageSource
                         fillMode: Image.PreserveAspectFit
+                        sourceSize: Qt.size(width, height)
                         cache: false
                     }
                 }

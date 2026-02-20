@@ -3,13 +3,13 @@ import QtQuick
 Item {
     id: root
     property var source
-    property int fillMode: Image.Stretch
+    property int fillMode: Image.PreserveAspectFit
     property bool cache: true
     property size sourceSize: Qt.size(-1, -1)
 
     readonly property int status: staticImg.status
-    implicitWidth: staticImg.implicitWidth
-    implicitHeight: staticImg.implicitHeight
+    implicitWidth: animImg.animated ? animImg.implicitWidth : staticImg.implicitWidth
+    implicitHeight: animImg.animated ? animImg.implicitHeight : staticImg.implicitHeight
 
     property bool _errored: false
     onSourceChanged: _errored = false

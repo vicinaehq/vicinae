@@ -33,10 +33,10 @@ protected:
 private:
   void reset();
   void loadData(const QByteArray &data);
-  void updateScaledSize();
 
   QString m_source;
   bool m_animated = false;
+  QSize m_nativeSize;
   QByteArray m_data;
   QBuffer *m_buffer = nullptr;
   QMovie *m_movie = nullptr;

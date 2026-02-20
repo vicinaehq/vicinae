@@ -100,7 +100,11 @@ void ViciAnimatedImage::loadData(const QByteArray &data) {
     return;
   }
 
-  updateScaledSize();
+  m_movie->jumpToFrame(0);
+  m_nativeSize = m_movie->currentPixmap().size();
+  setImplicitWidth(m_nativeSize.width());
+  setImplicitHeight(m_nativeSize.height());
+
   connect(m_movie, &QMovie::updated, this, [this]() { update(); });
   m_movie->start();
 
@@ -117,7 +121,7 @@ void ViciAnimatedImage::paint(QPainter *painter) {
   painter->setRenderHint(QPainter::SmoothPixmapTransform, true);
 
   QSizeF itemSize(width(), height());
-  QSizeF scaled = QSizeF(frame.size()).scaled(itemSize, Qt::KeepAspectRatio);
+  QSizeF scaled = QSizeF(m_nativeSize).scaled(itemSize, Qt::KeepAspectRatio);
   QRectF target((itemSize.width() - scaled.width()) / 2.0,
                 (itemSize.height() - scaled.height()) / 2.0,
                 scaled.width(), scaled.height());
@@ -140,13 +144,5 @@ void ViciAnimatedImage::geometryChange(const QRectF &newGeo,
                                        const QRectF &oldGeo) {
   QQuickPaintedItem::geometryChange(newGeo, oldGeo);
   if (newGeo.size() != oldGeo.size())
-    updateScaledSize();
-}
-
-void ViciAnimatedImage::updateScaledSize() {
-  if (!m_movie) return;
-  int w = static_cast<int>(width());
-  int h = static_cast<int>(height());
-  if (w > 0 && h > 0)
-    m_movie->setScaledSize(QSize(w, h));
+    update();
 }
