@@ -37,6 +37,9 @@ class QmlLauncherWindow : public QObject {
   Q_PROPERTY(QVariantList completerArgs READ completerArgs NOTIFY completerChanged)
   Q_PROPERTY(QString completerIcon READ completerIcon NOTIFY completerChanged)
   Q_PROPERTY(QVariantList completerValues READ completerValues NOTIFY completerValuesChanged)
+  Q_PROPERTY(bool hasOverlay READ hasOverlay NOTIFY overlayChanged)
+  Q_PROPERTY(QUrl overlayUrl READ overlayUrl NOTIFY overlayChanged)
+  Q_PROPERTY(QObject *overlayHost READ overlayHost NOTIFY overlayChanged)
 
 public:
   explicit QmlLauncherWindow(ApplicationContext &ctx, QObject *parent = nullptr);
@@ -61,6 +64,9 @@ public:
   QVariantList completerArgs() const { return m_completerArgs; }
   QString completerIcon() const { return m_completerIcon; }
   QVariantList completerValues() const { return m_completerValues; }
+  bool hasOverlay() const { return m_hasOverlay; }
+  QUrl overlayUrl() const { return m_overlayUrl; }
+  QObject *overlayHost() const { return m_overlayHost; }
 
   Q_INVOKABLE void expand();
   Q_INVOKABLE void forwardSearchText(const QString &text);
@@ -92,6 +98,7 @@ signals:
   void completerChanged();
   void completerValuesChanged();
   void completerValidationFailed();
+  void overlayChanged();
 
 private:
   void handleVisibilityChanged(bool visible);
@@ -135,6 +142,11 @@ private:
 
   // Alert
   QmlAlertModel *m_alertModel = nullptr;
+
+  // Overlay
+  bool m_hasOverlay = false;
+  QUrl m_overlayUrl;
+  QObject *m_overlayHost = nullptr;
 
   // Completer
   bool m_hasCompleter = false;
