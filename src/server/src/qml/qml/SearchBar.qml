@@ -18,19 +18,21 @@ Item {
         spacing: launcher.hasCompleter ? 4 : 12
 
         // Back button — visible when not on root search
-        Item {
+        Rectangle {
             id: backButton
             visible: launcher.hasCommandView
-            Layout.preferredWidth: 24
-            Layout.preferredHeight: 24
+            Layout.preferredWidth: 28
+            Layout.preferredHeight: 28
             Layout.alignment: Qt.AlignVCenter
-            opacity: backMouseArea.containsMouse ? 1.0 : 0.5
+            radius: 6
+            color: backMouseArea.containsMouse ? Qt.lighter(Theme.buttonPrimaryBg, 1.3) : Theme.buttonPrimaryBg
+            Behavior on color { ColorAnimation { duration: 100 } }
 
             ViciImage {
                 anchors.centerIn: parent
-                width: 16
-                height: 16
-                source: Img.builtin("chevron-left")
+                width: 14
+                height: 14
+                source: Img.builtin("arrow-left")
             }
 
             MouseArea {
