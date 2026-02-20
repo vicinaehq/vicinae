@@ -88,9 +88,6 @@ set(SRCS
 
 	src/ui/spinner/spinner.hpp
 
-	src/ui/dmenu-view/dmenu-view.hpp
-	src/ui/dmenu-view/dmenu-view.cpp
-
 	include/font-service.hpp
 	src/font-service.cpp
 
@@ -352,8 +349,6 @@ set(SRCS
 	src/ui/keyboard-shortcut-indicator/keyboard-shortcut-indicator.cpp
 
 
-	src/manage-quicklinks-command.hpp
-
 	include/ui/horizontal-metadata.hpp
 	src/ui/horizontal-metadata.cpp
 
@@ -408,19 +403,6 @@ set(SRCS
 	src/lib/keyboard/keybind-manager.cpp
 	src/lib/keyboard/keyboard.cpp
 
-	src/ui/shortcut-recorder/shortcut-recorder.hpp
-	src/ui/shortcut-recorder/shortcut-recorder.cpp
-
-	# settings
-	src/settings/settings-window.hpp
-	src/settings/settings-window.cpp
-
-	src/settings/extension-settings.hpp
-	src/settings/command-metadata-settings-detail.cpp
-	src/settings/extension-settings-detail.cpp
-	src/settings/provider-settings-detail.cpp
-	src/settings/keybind-settings.cpp
-
 	src/ui/omni-tree/omni-tree.hpp
 	src/ui/omni-tree/omni-tree.cpp
 
@@ -431,41 +413,51 @@ set(SRCS
 	src/theme/theme-db.hpp
 	src/theme/theme-db.cpp
 
-	src/extensions/vicinae/search-emojis/search-emojis-view.hpp
-	src/extensions/vicinae/search-emojis/search-emojis-view.cpp
 	src/extensions/clipboard/clipboard-history-command.cpp
-	src/extensions/clipboard/history/clipboard-history-view.hpp
-	src/extensions/clipboard/history/clipboard-history-view.cpp
 	src/extensions/clipboard/history/clipboard-history-model.hpp
 	src/extensions/clipboard/history/clipboard-history-controller.hpp
 	src/extensions/clipboard/history/clipboard-history-controller.cpp
 	src/extensions/browser/browser-extension.cpp
 
-	src/extensions/calculator/history/calculator-history-view.hpp
-	src/extensions/calculator/history/calculator-history-view.cpp
-	src/extensions/theme/manage/manage-themes-view.hpp
-	src/extensions/theme/manage/manage-themes-view.cpp
-	src/extensions/theme/manage/theme-list-model.hpp
-	src/extensions/theme/manage/theme-list-controller.hpp
-	src/extensions/theme/manage/theme-list-controller.cpp
-	
 	src/extensions/clipboard/clipboard-extension.hpp
 	src/extensions/clipboard/clipboard-extension.cpp
 
-	src/extensions/raycast/store/store-detail-view.cpp
-	src/extensions/raycast/store/store-listing-view.cpp
-
 	src/extensions/vicinae/refresh-apps-command.hpp
 	src/extensions/vicinae/refresh-apps-command.cpp
-	src/extensions/vicinae/oauth-token-store/oauth-token-store-view.hpp
-	src/extensions/vicinae/oauth-token-store/oauth-token-store-view.cpp
 	src/extensions/power-management/power-management-extension.cpp
 	src/extensions/root/root-search-model.hpp
 	src/extensions/root/root-search-model.cpp
 	src/extensions/root/root-search-controller.hpp
 	src/extensions/root/root-search-controller.cpp
 
-	src/extensions/system/browse-apps/browse-apps-view.cpp
+	src/qml/qml-browse-apps-model.hpp
+	src/qml/qml-browse-apps-model.cpp
+	src/qml/qml-browse-apps-view-host.hpp
+	src/qml/qml-browse-apps-view-host.cpp
+	src/qml/qml-browser-tabs-model.hpp
+	src/qml/qml-browser-tabs-model.cpp
+	src/qml/qml-browser-tabs-view-host.hpp
+	src/qml/qml-browser-tabs-view-host.cpp
+	src/qml/qml-builtin-icons-model.hpp
+	src/qml/qml-builtin-icons-model.cpp
+	src/qml/qml-builtin-icons-view-host.hpp
+	src/qml/qml-builtin-icons-view-host.cpp
+	src/qml/qml-manage-fallback-model.hpp
+	src/qml/qml-manage-fallback-model.cpp
+	src/qml/qml-manage-fallback-view-host.hpp
+	src/qml/qml-manage-fallback-view-host.cpp
+	src/qml/qml-system-run-model.hpp
+	src/qml/qml-system-run-model.cpp
+	src/qml/qml-system-run-view-host.hpp
+	src/qml/qml-system-run-view-host.cpp
+	src/qml/qml-create-extension-success-view-host.hpp
+	src/qml/qml-create-extension-success-view-host.cpp
+	src/qml/qml-script-executor-view-host.hpp
+	src/qml/qml-script-executor-view-host.cpp
+	src/qml/qml-provider-search-model.hpp
+	src/qml/qml-provider-search-model.cpp
+	src/qml/qml-provider-search-view-host.hpp
+	src/qml/qml-provider-search-view-host.cpp
 
 	src/ui/screenshot-list/screenshot-list.hpp
 	src/ui/switch/switch.hpp
@@ -560,8 +552,6 @@ set(SRCS
 	src/ui/views/list-view.cpp
 	#src/ui/views/form-view.cpp
 	
-	src/ui/launcher-window/launcher-window.cpp
-
 	src/ui/status-bar/status-bar.hpp
 	src/ui/status-bar/status-bar.cpp
 
@@ -585,19 +575,12 @@ set(SRCS
 	src/extension/requests/wm-router.cpp
 	src/extension/extension-command-runtime.cpp
 
-	src/extensions/raycast/store/store-listing-view.hpp
-	src/extensions/raycast/store/store-detail-view.hpp
-
 	src/extensions/vicinae/vicinae-extension.cpp
-	src/extensions/vicinae/store/store-listing-view.hpp
-	src/extensions/vicinae/store/store-listing-view.cpp
-	src/extensions/vicinae/store/store-detail-view.hpp
-	src/extensions/vicinae/store/store-detail-view.cpp
-	src/extensions/vicinae/list-installed-extensions-view.hpp
-	src/extensions/vicinae/list-installed-extensions-view.cpp
 
-	src/extensions/file/search/search-files-view.hpp
-	src/extensions/file/search/search-files-view.cpp
+	src/qml/qml-search-files-model.hpp
+	src/qml/qml-search-files-model.cpp
+	src/qml/qml-search-files-view-host.hpp
+	src/qml/qml-search-files-view-host.cpp
 
 	src/services/raycast/raycast-store.cpp
 	src/services/extension-store/vicinae-store.cpp
@@ -645,15 +628,6 @@ set(SRCS
 
 	src/ui/tag/tag.cpp
 
-	src/ui/theme-selector/theme-selector.cpp
-	src/ui/qtheme-selector/qtheme-selector.cpp
-	src/ui/font-selector/font-selector.cpp
-	src/ui/favicon-service-selector/favicon-service-selector.cpp
-	src/ui/keybinding-selector/keybinding-selector.cpp
-
-	src/settings/general-settings.cpp
-	src/settings/settings-about.cpp
-
 	src/lib/os-release.cpp
 
 	src/ui/arg-completer/arg-completer.hpp
@@ -685,7 +659,15 @@ set(SRCS
 	src/config/config.hpp
 	src/config/config.cpp
 
-	src/extensions/vicinae/local-storage/browse-local-storage.hpp
+	src/qml/qml-local-storage-model.hpp
+	src/qml/qml-local-storage-model.cpp
+	src/qml/qml-local-storage-view-host.hpp
+	src/qml/qml-local-storage-view-host.cpp
+
+	src/qml/qml-dmenu-model.hpp
+	src/qml/qml-dmenu-model.cpp
+	src/qml/qml-dmenu-view-host.hpp
+	src/qml/qml-dmenu-view-host.cpp
 
 	src/services/snippet/snippet-service.hpp
 	src/services/snippet/snippet-server.hpp
@@ -793,6 +775,17 @@ set(SRCS
 	src/qml/qml-font-browser-view-host.cpp
 	src/qml/qml-edit-keywords-view-host.hpp
 	src/qml/qml-edit-keywords-view-host.cpp
+
+	src/qml/qml-settings-window.hpp
+	src/qml/qml-settings-window.cpp
+	src/qml/qml-general-settings-model.hpp
+	src/qml/qml-general-settings-model.cpp
+	src/qml/qml-keybind-settings-model.hpp
+	src/qml/qml-keybind-settings-model.cpp
+	src/qml/qml-extension-settings-model.hpp
+	src/qml/qml-extension-settings-model.cpp
+	src/qml/qml-preference-form-model.hpp
+	src/qml/qml-preference-form-model.cpp
 
 	src/extensions/internal/markdown-showcase-command.hpp
 
@@ -948,6 +941,18 @@ set(VICINAE_QML_FILES
 	src/qml/qml/FormLinkAccessory.qml
 	src/qml/qml/EditKeywordsFormView.qml
 	src/qml/qml/HorizontalLoadingBar.qml
+	src/qml/qml/SearchFilesView.qml
+	src/qml/qml/DMenuView.qml
+	src/qml/qml/ScriptExecutorView.qml
+	src/qml/qml/SettingsWindow.qml
+	src/qml/qml/SettingsNavBar.qml
+	src/qml/qml/SettingsLinkButton.qml
+	src/qml/qml/AboutSettingsTab.qml
+	src/qml/qml/GeneralSettingsTab.qml
+	src/qml/qml/ExtensionSettingsTab.qml
+	src/qml/qml/KeybindSettingsTab.qml
+	src/qml/qml/ShortcutRecorderField.qml
+	src/qml/qml/PreferenceFormView.qml
 )
 
 # Strip directory prefix so resources are qrc:/Vicinae/Foo.qml

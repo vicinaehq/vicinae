@@ -1,6 +1,6 @@
 #include "ui/vertical-metadata/vertical-metadata.hpp"
 #include "extend/tag-model.hpp"
-#include "extensions/raycast/store/store-detail-view.hpp"
+#include "ui/text-link/text-link.hpp"
 #include "theme.hpp"
 #include "ui/divider/hdivider.hpp"
 #include "utils/layout.hpp"

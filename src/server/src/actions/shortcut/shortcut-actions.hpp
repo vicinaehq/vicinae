@@ -1,4 +1,5 @@
 #pragma once
+#include <QApplication>
 #include "common.hpp"
 #include "services/shortcut/shortcut-service.hpp"
 #include "qml/qml-shortcut-form-view-host.hpp"

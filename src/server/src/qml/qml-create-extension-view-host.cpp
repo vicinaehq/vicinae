@@ -1,5 +1,5 @@
 #include "qml-create-extension-view-host.hpp"
-#include "extensions/developer/create/create-extension-success-view.hpp"
+#include "qml-create-extension-success-view-host.hpp"
 #include "navigation-controller.hpp"
 #include "qml-utils.hpp"
 #include "service-registry.hpp"
@@ -132,7 +132,7 @@ void QmlCreateExtensionViewHost::submit() {
     return;
   }
 
-  auto successView = new CreateExtensionSuccessView(cfg, v.value());
+  auto successView = new QmlCreateExtensionSuccessViewHost(cfg, v.value());
 
   popSelf();
   context()->navigation->pushView(successView);

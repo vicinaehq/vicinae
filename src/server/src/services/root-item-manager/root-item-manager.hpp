@@ -9,7 +9,7 @@
 #include "services/root-item-manager/visit-tracker.hpp"
 #include "ui/image/url.hpp"
 #include "preference.hpp"
-#include "settings/provider-settings-detail.hpp"
+#include "ui/default-list-item-widget/default-list-item-widget.hpp"
 #include <cstdint>
 #include <qdnslookup.h>
 #include <qjsonobject.h>
@@ -57,7 +57,7 @@ public:
 
   virtual ImageURL iconUrl() const = 0;
 
-  virtual QWidget *settingsDetail(const QJsonObject &preferences) const { return new QWidget(); }
+  virtual QWidget *settingsDetail(const QJsonObject &) const { return nullptr; }
 
   /**
    * Whether the item can be selected as a fallback command or not
@@ -190,7 +190,7 @@ public:
 
   virtual void itemPreferencesChanged(const QString &itemId, const QJsonObject &preferences) {}
 
-  virtual QWidget *settingsDetail() const { return new ProviderSettingsDetail(*this); }
+  virtual QWidget *settingsDetail() const { return nullptr; }
 
   // Called the first time the root provider is loaded by the root item manager, right after the first
   // `preferencesChanged` call.

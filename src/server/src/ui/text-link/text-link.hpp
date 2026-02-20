@@ -5,6 +5,8 @@
 #include "ui/image/image.hpp"
 #include "ui/typography/typography.hpp"
 #include "utils/layout.hpp"
+#include <QEvent>
+#include <QMouseEvent>
 #include <google/protobuf/descriptor.h>
 #include <qnamespace.h>
 #include <qurl.h>

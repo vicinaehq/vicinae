@@ -5,10 +5,11 @@
 #include "extensions/vicinae/list-installed-extensions-command.hpp"
 #include "qml/qml-oauth-token-store-view-host.hpp"
 #include "extensions/vicinae/report-bug-command.hpp"
-#include "extensions/vicinae/browse-icons/search-builtin-icons-view.hpp"
+#include "qml/qml-builtin-icons-view-host.hpp"
 
 #include "navigation-controller.hpp"
-#include "local-storage/browse-local-storage.hpp"
+#include "config/config.hpp"
+#include "qml/qml-local-storage-view-host.hpp"
 #include "open-about-command.hpp"
 #include "refresh-apps-command.hpp"
 #include "configure-fallback-command.hpp"
@@ -189,7 +190,7 @@ class OAuthTokenStoreCommand : public BuiltinViewCommand<QmlOAuthTokenStoreViewH
   }
 };
 
-class IconBrowserCommand : public BuiltinViewCommand<SearchBuiltinIconView> {
+class IconBrowserCommand : public BuiltinViewCommand<QmlBuiltinIconsViewHost> {
   QString id() const override { return "search-builtin-icons"; }
   QString name() const override { return "Search Builtin Icons"; }
   QString description() const override { return "Search Vicinae builtin set of icons"; }
@@ -200,7 +201,7 @@ class IconBrowserCommand : public BuiltinViewCommand<SearchBuiltinIconView> {
   }
 };
 
-class InspectLocalStorage : public BuiltinViewCommand<BrowseLocalStorageView> {
+class InspectLocalStorage : public BuiltinViewCommand<QmlLocalStorageViewHost> {
   QString id() const override { return "inspect-local-storage"; }
   QString name() const override { return "Inspect Local Storage"; }
   bool isDefaultDisabled() const override { return true; }

@@ -2,10 +2,11 @@
 #include "command-database.hpp"
 #include "single-view-command-context.hpp"
 #include "vicinae.hpp"
-#include "playground/playground-view.hpp"
+#include "qml/qml-bridge-view.hpp"
+#include "qml/qml-emoji-grid-model.hpp"
 #include "markdown-showcase-command.hpp"
 
-class UIPlayground : public BuiltinViewCommand<PlaygroundView> {
+class UIPlayground : public BuiltinViewCommand<QmlBridgeView<QmlEmojiGridModel>> {
   QString id() const override { return "playground"; }
   QString name() const override { return "UI Playground"; }
   QString description() const override { return "Playground description"; }

@@ -3,6 +3,7 @@
 #include "navigation-controller.hpp"
 #include "qml-command-list-model.hpp"
 #include <memory>
+#include <numeric>
 #include <string>
 #include <vector>
 
@@ -37,25 +38,10 @@ protected:
   virtual void itemSelected(const T &) {}
   virtual QString sectionLabel() const { return {}; }
 
-  /// Access item at a filtered index.
-  const T &itemAt(int filteredIdx) const { return m_items[m_filtered[filteredIdx].data]; }
-
-  const std::vector<T> &allItems() const { return m_items; }
-
-private:
-  // --- Sealed QmlCommandListModel overrides dispatching to typed virtuals ---
-  QString itemTitle(int, int i) const final { return displayTitle(itemAt(i)); }
-  QString itemSubtitle(int, int i) const final { return displaySubtitle(itemAt(i)); }
-  QString itemIconSource(int, int i) const final { return displayIconSource(itemAt(i)); }
-  QString itemAccessory(int, int i) const final { return displayAccessory(itemAt(i)); }
-
-  std::unique_ptr<ActionPanelState> createActionPanel(int, int i) const final {
-    return buildActionPanel(itemAt(i));
-  }
-
-  void onItemSelected(int, int i) final { itemSelected(itemAt(i)); }
-
-  void applyFilter() {
+  /// Override to group filtered results into multiple sections.
+  /// Default produces a single section. Subclasses can rearrange m_filtered
+  /// and return custom sections (the sum of all section counts must equal m_filtered.size()).
+  virtual void applyFilter() {
     fuzzy::fuzzyFilter<T>(std::span<const T>(m_items), m_query, m_filtered);
 
     QString label = sectionLabel();
@@ -67,10 +53,47 @@ private:
     if (!m_filtered.empty()) {
       sections.push_back({.name = label, .count = static_cast<int>(m_filtered.size())});
     }
+    commitSections(sections);
+  }
+
+  /// Access the underlying item for a filtered index.
+  const T &filteredItem(int idx) const { return m_items[m_filtered[idx].data]; }
+
+  /// Commit section layout after (re)arranging m_filtered.
+  /// Builds the section-start offsets used by the dispatch methods.
+  void commitSections(const std::vector<SectionInfo> &sections) {
+    m_sectionStarts.clear();
+    m_sectionStarts.reserve(sections.size());
+    int offset = 0;
+    for (const auto &s : sections) {
+      m_sectionStarts.push_back(offset);
+      offset += s.count;
+    }
     setSections(sections);
   }
 
   std::vector<T> m_items;
   std::vector<Scored<int>> m_filtered;
   std::string m_query;
+
+private:
+  /// Resolve (section, itemWithinSection) to a global index in m_filtered.
+  const T &resolveItem(int s, int i) const {
+    int globalIdx = (s < static_cast<int>(m_sectionStarts.size()) ? m_sectionStarts[s] : 0) + i;
+    return m_items[m_filtered[globalIdx].data];
+  }
+
+  // --- Sealed QmlCommandListModel overrides dispatching to typed virtuals ---
+  QString itemTitle(int s, int i) const final { return displayTitle(resolveItem(s, i)); }
+  QString itemSubtitle(int s, int i) const final { return displaySubtitle(resolveItem(s, i)); }
+  QString itemIconSource(int s, int i) const final { return displayIconSource(resolveItem(s, i)); }
+  QString itemAccessory(int s, int i) const final { return displayAccessory(resolveItem(s, i)); }
+
+  std::unique_ptr<ActionPanelState> createActionPanel(int s, int i) const final {
+    return buildActionPanel(resolveItem(s, i));
+  }
+
+  void onItemSelected(int s, int i) final { itemSelected(resolveItem(s, i)); }
+
+  std::vector<int> m_sectionStarts;
 };

@@ -60,7 +60,7 @@ Item {
             onAccepted: root.accepted()
 
             Keys.onReturnPressed: (event) => {
-                if (event.modifiers !== Qt.NoModifier) {
+                if (event.modifiers !== Qt.NoModifier && typeof launcher !== "undefined") {
                     event.accepted = launcher.forwardKey(event.key, event.modifiers)
                 } else {
                     event.accepted = false
@@ -69,7 +69,8 @@ Item {
             Keys.onPressed: (event) => {
                 if (event.modifiers !== Qt.NoModifier && event.modifiers !== Qt.ShiftModifier
                     && event.key !== Qt.Key_Shift && event.key !== Qt.Key_Control
-                    && event.key !== Qt.Key_Alt && event.key !== Qt.Key_Meta) {
+                    && event.key !== Qt.Key_Alt && event.key !== Qt.Key_Meta
+                    && typeof launcher !== "undefined") {
                     event.accepted = launcher.forwardKey(event.key, event.modifiers)
                 } else {
                     event.accepted = false

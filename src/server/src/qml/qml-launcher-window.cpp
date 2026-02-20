@@ -18,7 +18,6 @@
 #include <QGuiApplication>
 #include <QQmlContext>
 #include <QQuickWindow>
-#include <QQuickItem>
 #include <QWindow>
 #include <QKeyEvent>
 
@@ -52,19 +51,9 @@ QmlLauncherWindow::QmlLauncherWindow(ApplicationContext &ctx, QObject *parent)
 
   m_engine.load(QUrl(QStringLiteral("qrc:/Vicinae/LauncherWindow.qml")));
 
-  // Cache the QQuickWindow and content area item
   auto rootObjects = m_engine.rootObjects();
   if (!rootObjects.isEmpty()) {
     m_window = qobject_cast<QQuickWindow *>(rootObjects.first());
-    if (m_window) {
-      m_contentArea = m_window->findChild<QQuickItem *>(QStringLiteral("contentArea"));
-      if (m_contentArea) {
-        connect(m_contentArea, &QQuickItem::widthChanged, this, &QmlLauncherWindow::repositionWidget);
-        connect(m_contentArea, &QQuickItem::heightChanged, this, &QmlLauncherWindow::repositionWidget);
-        connect(m_contentArea, &QQuickItem::xChanged, this, &QmlLauncherWindow::repositionWidget);
-        connect(m_contentArea, &QQuickItem::yChanged, this, &QmlLauncherWindow::repositionWidget);
-      }
-    }
   }
 
   auto *nav = ctx.navigation.get();
@@ -234,20 +223,7 @@ void QmlLauncherWindow::handleVisibilityChanged(bool visible) {
 
 void QmlLauncherWindow::handleViewPoped(const BaseView *view) {
   m_actionPanel->close();
-
-  // Clean up BEFORE the ViewState is destroyed (which calls deleteLater on the view)
-  if (m_activeWidget == view) {
-    m_activeWidget->hide();
-    if (auto *wh = m_activeWidget->windowHandle()) {
-      wh->setParent(nullptr);
-    }
-    m_activeWidget = nullptr;
-  }
-
-  if (dynamic_cast<const QmlBridgeViewBase *>(view)) {
-    emit commandViewPopped();
-  }
-
+  emit commandViewPopped();
   m_viewWasPopped = true;
 }
 
@@ -258,7 +234,6 @@ void QmlLauncherWindow::handleCurrentViewChanged() {
 
   if (nav->viewStackSize() == 1) {
     // Back to root search
-    removeWidget();
     disconnect(m_searchAccessoryConnection);
     if (!m_searchAccessoryUrl.isEmpty()) {
       m_searchAccessoryUrl.clear();
@@ -268,105 +243,51 @@ void QmlLauncherWindow::handleCurrentViewChanged() {
       m_commandViewHost = nullptr;
       emit commandViewHostChanged();
     }
+    if (m_hasCommandView) {
+      m_hasCommandView = false;
+      emit hasCommandViewChanged();
+    }
     emit commandStackCleared();
     return;
   }
 
-  // Command view — check if it's a QML bridge or a widget
   auto *state = nav->topState();
   if (!state || !state->sender) return;
 
-  if (auto *bridge = dynamic_cast<QmlBridgeViewBase *>(state->sender)) {
-    // Detach any previous widget without changing hasCommandView
-    if (m_activeWidget) {
-      m_activeWidget->hide();
-      if (auto *wh = m_activeWidget->windowHandle()) wh->setParent(nullptr);
-      m_activeWidget = nullptr;
-    }
+  auto *bridge = dynamic_cast<QmlBridgeViewBase *>(state->sender);
+  if (!bridge) return;
 
-    // Update search accessory and host for this bridge view
-    disconnect(m_searchAccessoryConnection);
-    m_searchAccessoryConnection = connect(bridge, &QmlBridgeViewBase::searchAccessoryUrlChanged,
-                                          this, [this, bridge]() {
-      auto url = bridge->qmlSearchAccessoryUrl();
-      if (m_searchAccessoryUrl != url) {
-        m_searchAccessoryUrl = url;
-        emit searchAccessoryChanged();
-      }
-    });
-
-    auto newAccessoryUrl = bridge->qmlSearchAccessoryUrl();
-    if (m_searchAccessoryUrl != newAccessoryUrl) {
-      m_searchAccessoryUrl = newAccessoryUrl;
+  disconnect(m_searchAccessoryConnection);
+  m_searchAccessoryConnection = connect(bridge, &QmlBridgeViewBase::searchAccessoryUrlChanged,
+                                        this, [this, bridge]() {
+    auto url = bridge->qmlSearchAccessoryUrl();
+    if (m_searchAccessoryUrl != url) {
+      m_searchAccessoryUrl = url;
       emit searchAccessoryChanged();
     }
-    if (m_commandViewHost != bridge) {
-      m_commandViewHost = bridge;
-      emit commandViewHostChanged();
-    }
+  });
 
-    if (!wasPopped) {
-      // New bridge view pushed — add to QML stack
-      emit commandViewPushed(bridge->qmlComponentUrl(), bridge->qmlProperties());
-      bridge->loadInitialData();
-    } else {
-      // Popped back — QML component preserved by StackView; let the view re-establish state.
-      bridge->onReactivated();
-    }
-  } else if (state->sender != m_activeWidget) {
-    // Widget view — embed on top; command stack stays behind
-    embedWidget(state->sender);
+  auto newAccessoryUrl = bridge->qmlSearchAccessoryUrl();
+  if (m_searchAccessoryUrl != newAccessoryUrl) {
+    m_searchAccessoryUrl = newAccessoryUrl;
+    emit searchAccessoryChanged();
+  }
+  if (m_commandViewHost != bridge) {
+    m_commandViewHost = bridge;
+    emit commandViewHostChanged();
+  }
+
+  if (!wasPopped) {
+    emit commandViewPushed(bridge->qmlComponentUrl(), bridge->qmlProperties());
+    bridge->loadInitialData();
+  } else {
+    bridge->onReactivated();
   }
 
   if (!m_hasCommandView) {
     m_hasCommandView = true;
     emit hasCommandViewChanged();
   }
-}
-
-void QmlLauncherWindow::embedWidget(BaseView *view) {
-  if (m_activeWidget && m_activeWidget != view) {
-    m_activeWidget->hide();
-    if (auto *wh = m_activeWidget->windowHandle()) {
-      wh->setParent(nullptr);
-    }
-  }
-
-  m_activeWidget = view;
-  if (!m_window) return;
-
-  // Force native window creation and reparent as child of the QQuickWindow
-  view->winId();
-  if (auto *wh = view->windowHandle()) {
-    wh->setParent(m_window);
-  }
-
-  repositionWidget();
-  view->show();
-}
-
-void QmlLauncherWindow::removeWidget() {
-  if (m_activeWidget) {
-    m_activeWidget->hide();
-    if (auto *wh = m_activeWidget->windowHandle()) {
-      wh->setParent(nullptr);
-    }
-    m_activeWidget = nullptr;
-  }
-
-  if (m_hasCommandView) {
-    m_hasCommandView = false;
-    emit hasCommandViewChanged();
-  }
-}
-
-void QmlLauncherWindow::repositionWidget() {
-  if (!m_activeWidget || !m_contentArea || !m_window) return;
-
-  QPointF scenePos = m_contentArea->mapToScene(QPointF(0, 0));
-  m_activeWidget->setGeometry(
-      qRound(scenePos.x()), qRound(scenePos.y()),
-      qRound(m_contentArea->width()), qRound(m_contentArea->height()));
 }
 
 void QmlLauncherWindow::forwardSearchText(const QString &text) {
@@ -404,8 +325,7 @@ bool QmlLauncherWindow::forwardKey(int key, int modifiers) {
     return true;
   }
 
-  if (!m_activeWidget) return false;
-  return m_activeWidget->inputFilter(&event);
+  return false;
 }
 
 void QmlLauncherWindow::goBack() {
