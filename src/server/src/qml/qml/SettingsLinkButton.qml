@@ -3,6 +3,7 @@ import QtQuick.Layouts
 
 Rectangle {
     id: root
+    implicitWidth: 200
     implicitHeight: 36
     radius: 8
     color: hoverHandler.hovered ? Theme.listItemHoverBg : Theme.secondaryBackground
@@ -13,23 +14,22 @@ Rectangle {
     property string label: ""
     signal clicked()
 
-    RowLayout {
-        anchors.fill: parent
-        anchors.leftMargin: 12
-        anchors.rightMargin: 12
+    Row {
+        id: innerRow
+        anchors.centerIn: parent
         spacing: 8
 
         ViciImage {
             source: Img.builtin(root.icon)
-            Layout.preferredWidth: 16
-            Layout.preferredHeight: 16
+            width: 16; height: 16
+            anchors.verticalCenter: parent.verticalCenter
         }
 
         Text {
             text: root.label
             color: Theme.foreground
             font.pointSize: Theme.regularFontSize
-            Layout.fillWidth: true
+            anchors.verticalCenter: parent.verticalCenter
         }
     }
 
