@@ -33,6 +33,7 @@ void GeneralSettings::setConfig(const config::ConfigValue &value) {
   m_popToRootOnClose->stealthySetValueAsJson(value.popToRootOnClose);
   m_closeOnFocusLoss->stealthySetValueAsJson(value.closeOnFocusLoss);
   m_considerPreedit->stealthySetValueAsJson(value.considerPreedit);
+  m_exitOnBackspace->stealthySetValueAsJson(value.exitOnBackspace);
   m_fontSize->setText(QString::number(value.font.normal.size));
 }
 
@@ -86,6 +87,10 @@ void GeneralSettings::handleConsiderPreeditChange(bool value) {
   m_cfg.mergeWithUser({.considerPreedit = value});
 }
 
+void GeneralSettings::handleExitOnBackspaceChange(bool value) {
+  m_cfg.mergeWithUser({.exitOnBackspace = value});
+}
+
 void GeneralSettings::setupUI() {
   auto config = ServiceRegistry::instance()->config();
   auto appFont = QApplication::font().family();
@@ -102,6 +107,7 @@ void GeneralSettings::setupUI() {
   m_popToRootOnClose = new CheckboxInput;
   m_closeOnFocusLoss = new CheckboxInput;
   m_considerPreedit = new CheckboxInput;
+  m_exitOnBackspace = new CheckboxInput;
   m_fontSize = new BaseInput;
 
   m_popToRootOnClose->setLabel("Pop to root on window close");
@@ -129,6 +135,12 @@ void GeneralSettings::setupUI() {
 
   connect(m_considerPreedit, &CheckboxInput::valueChanged, this,
           &GeneralSettings::handleConsiderPreeditChange);
+
+  auto exitOnBackspaceField = form->addField("Exit on backspace", m_exitOnBackspace);
+  m_exitOnBackspace->setLabel("Exit command on backspace");
+  exitOnBackspaceField->setInfo("Whether to exit command on backspace when there is nothing in the search query.");
+  connect(m_exitOnBackspace, &CheckboxInput::valueChanged, this,
+          &GeneralSettings::handleExitOnBackspaceChange);
 
   auto fontField = form->addField("Font", m_fontSelector);
 
