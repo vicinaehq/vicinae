@@ -82,7 +82,11 @@ SoulverCoreCalculator::asyncCompute(const QString &question) const {
 
 std::expected<SoulverCoreCalculator::SoulverResult, QString>
 SoulverCoreCalculator::calculate(const QString &expression) const {
-  char *answer = m_abi.soulver_evaluate(expression.toStdString().c_str());
+  static const QRegularExpression operatorSpacing(R"(\s*([+\-*/%^])\s*)");
+  QString normalized = expression;
+  normalized.replace(operatorSpacing, " \\1 ");
+  normalized = normalized.simplified();
+  char *answer = m_abi.soulver_evaluate(normalized.toStdString().c_str());
 
   if (!answer) {
     qWarning() << "soulver_evaluate returned a null pointer. This suggests soulver crashed or wasn't "
