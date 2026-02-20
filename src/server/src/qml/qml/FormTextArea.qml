@@ -54,7 +54,7 @@ Item {
             boundsBehavior: Flickable.StopAtBounds
             interactive: false
 
-            ScrollBar.vertical: ScrollBar {
+            ScrollBar.vertical: ViciScrollBar {
                 policy: flickable.contentHeight > flickable.height
                         ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
             }

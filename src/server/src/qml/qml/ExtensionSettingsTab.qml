@@ -128,7 +128,7 @@ Item {
                 boundsBehavior: Flickable.StopAtBounds
                 activeFocusOnTab: false
 
-                ScrollBar.vertical: ScrollBar {
+                ScrollBar.vertical: ViciScrollBar {
                     policy: extList.contentHeight > extList.height
                             ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
                 }
@@ -409,7 +409,7 @@ Item {
                     clip: true
                     boundsBehavior: Flickable.StopAtBounds
 
-                    ScrollBar.vertical: ScrollBar {
+                    ScrollBar.vertical: ViciScrollBar {
                         policy: parent.contentHeight > parent.height
                                 ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
                     }

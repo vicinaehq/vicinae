@@ -55,7 +55,7 @@ Item {
         clip: true
         boundsBehavior: Flickable.StopAtBounds
 
-        ScrollBar.vertical: ScrollBar {
+        ScrollBar.vertical: ViciScrollBar {
             policy: ScrollBar.AsNeeded
         }
 

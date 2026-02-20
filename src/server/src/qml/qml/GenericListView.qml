@@ -117,7 +117,7 @@ Item {
                 }
             }
 
-            ScrollBar.vertical: ScrollBar {
+            ScrollBar.vertical: ViciScrollBar {
                 policy: listView.contentHeight > listView.height
                         ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
             }

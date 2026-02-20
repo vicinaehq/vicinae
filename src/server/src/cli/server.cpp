@@ -47,6 +47,7 @@
 #include <qlogging.h>
 #include <qpixmapcache.h>
 #include <qstylefactory.h>
+#include <QtQuickControls2/QQuickStyle>
 #include <system_error>
 #include "common/CLI11.hpp"
 #include "server.hpp"
@@ -99,6 +100,7 @@ void CliServerCommand::run(CLI::App *app) {
 
   // discard system specific qt theming
   QApplication::setStyle(QStyleFactory::create("fusion"));
+  QQuickStyle::setStyle(QStringLiteral("Basic"));
 
   std::filesystem::create_directories(Omnicast::runtimeDir());
 

@@ -288,7 +288,7 @@ Item {
                 reuseItems: true
                 boundsBehavior: Flickable.StopAtBounds
 
-                ScrollBar.vertical: ScrollBar {
+                ScrollBar.vertical: ViciScrollBar {
                     policy: itemList.contentHeight > itemList.height
                             ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
                 }

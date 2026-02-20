@@ -17,7 +17,7 @@ Flickable {
     contentHeight: outputText.implicitHeight
     boundsBehavior: Flickable.StopAtBounds
 
-    ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+    ScrollBar.vertical: ViciScrollBar { policy: ScrollBar.AsNeeded }
 
     onContentHeightChanged: {
         // Auto-scroll to bottom when new output arrives
