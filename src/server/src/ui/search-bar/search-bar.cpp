@@ -58,16 +58,16 @@ bool SearchBar::event(QEvent *event) {
   if (event->type() == QEvent::KeyPress) {
     auto keyEvent = static_cast<QKeyEvent *>(event);
     QString txt = text();
+    auto config = ServiceRegistry::instance()->config();
 
     if (keyEvent->key() == Qt::Key_Space && txt.isEmpty()) { return true; }
 
-    if (keyEvent->key() == Qt::Key_Backspace && txt.isEmpty()) {
+    if (keyEvent->key() == Qt::Key_Backspace && txt.isEmpty() && config->value().exitOnBackspace) {
       emit pop();
       return true;
     }
 
     // Emacs-style editing bindings for the search bar
-    auto config = ServiceRegistry::instance()->config();
     const bool emacsMode = (config && config->value().keybinding == "emacs");
 
     if (emacsMode) {
