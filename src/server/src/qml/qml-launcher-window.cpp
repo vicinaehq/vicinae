@@ -11,6 +11,7 @@
 #include "qml-config-bridge.hpp"
 #include "qml-theme-bridge.hpp"
 #include "navigation-controller.hpp"
+#include "overlay-controller/overlay-controller.hpp"
 #include "services/toast/toast-service.hpp"
 #include "config/config.hpp"
 #include "service-registry.hpp"
@@ -227,6 +228,21 @@ QmlLauncherWindow::QmlLauncherWindow(ApplicationContext &ctx, QObject *parent)
             applyWindowConfig();
             tryCompaction();
           });
+
+  // Overlay
+  connect(ctx.overlay.get(), &OverlayController::overlayChanged, this, [this]() {
+    m_hasOverlay = m_ctx.overlay->hasOverlay();
+    m_overlayHost = m_ctx.overlay->current();
+
+    if (m_overlayHost) {
+      auto url = m_overlayHost->property("qmlComponentUrl");
+      m_overlayUrl = url.isValid() ? url.toUrl() : QUrl();
+    } else {
+      m_overlayUrl.clear();
+    }
+
+    emit overlayChanged();
+  });
 }
 
 void QmlLauncherWindow::handleVisibilityChanged(bool visible) {

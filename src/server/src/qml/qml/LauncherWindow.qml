@@ -31,7 +31,7 @@ Window {
     Item {
         visible: !launcher.compacted
         anchors.fill: parent
-        anchors.bottomMargin: footer.height + Config.borderWidth
+        anchors.bottomMargin: launcher.hasOverlay ? 0 : footer.height + Config.borderWidth
         clip: true
 
         Rectangle {
@@ -44,7 +44,7 @@ Window {
 
     // Footer background — clipped to the footer region at the bottom
     Item {
-        visible: !launcher.compacted
+        visible: !launcher.compacted && !launcher.hasOverlay
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
@@ -74,6 +74,7 @@ Window {
         anchors.fill: parent
         anchors.margins: Config.borderWidth
         spacing: 0
+        visible: !launcher.hasOverlay
 
         SearchBar {
             id: searchBar
@@ -124,6 +125,15 @@ Window {
         }
     }
 
+    Loader {
+        id: overlayLoader
+        anchors.fill: parent
+        anchors.margins: Config.borderWidth
+        visible: launcher.hasOverlay
+
+        onLoaded: if (item) item.forceActiveFocus()
+    }
+
     // Action panel popover overlay — anchored above the footer
     ActionPanelPopover {
         id: actionPanelPopover
@@ -163,6 +173,14 @@ Window {
         function onCommandStackCleared() {
             commandStack.clear(StackView.Immediate)
         }
+        function onOverlayChanged() {
+            if (launcher.hasOverlay) {
+                overlayLoader.setSource(launcher.overlayUrl, { host: launcher.overlayHost })
+            } else {
+                overlayLoader.source = ""
+                searchBar.focusInput()
+            }
+        }
     }
 
     Connections {
@@ -182,7 +200,7 @@ Window {
 
     Shortcut {
         sequence: "Escape"
-        enabled: !launcher.alertModel.visible && !actionPanel.open
+        enabled: !launcher.alertModel.visible && !actionPanel.open && !launcher.hasOverlay
         onActivated: launcher.goBack()
     }
 

@@ -530,8 +530,8 @@ set(SRCS
 	src/services/oauth/oauth-token-store.hpp
 	src/services/oauth/oauth-token-store.cpp
 
-	src/ui/oauth-view/oauth-view.hpp
-	src/ui/oauth-view/oauth-view.cpp
+	src/qml/qml-oauth-overlay-host.hpp
+	src/qml/qml-oauth-overlay-host.cpp
 
 
 
@@ -590,8 +590,6 @@ set(SRCS
 
 	src/overlay-controller/overlay-controller.hpp
 
-	src/ui/overlay/overlay.hpp
-	src/ui/overlay/overlay.cpp
 
 	src/lib/zip/unzip.cpp
 	src/lib/data-uri/data-uri.cpp
@@ -960,6 +958,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/PreferenceFormView.qml
 	src/qml/qml/SettingsPreferenceForm.qml
 	src/qml/qml/MissingPreferenceView.qml
+	src/qml/qml/OAuthOverlayView.qml
 )
 
 # Strip directory prefix so resources are qrc:/Vicinae/Foo.qml
