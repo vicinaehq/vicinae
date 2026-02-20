@@ -51,14 +51,17 @@ signals:
   void currentTabChanged();
 
 private:
+  void ensureInitialized();
+
   ApplicationContext &m_ctx;
   QQmlApplicationEngine m_engine;
-  QmlThemeBridge *m_themeBridge;
-  QmlConfigBridge *m_configBridge;
-  QmlImageSource *m_imgSource;
-  QmlGeneralSettingsModel *m_generalModel;
-  QmlKeybindSettingsModel *m_keybindModel;
-  QmlExtensionSettingsModel *m_extensionModel;
+  QmlThemeBridge *m_themeBridge = nullptr;
+  QmlConfigBridge *m_configBridge = nullptr;
+  QmlImageSource *m_imgSource = nullptr;
+  QmlGeneralSettingsModel *m_generalModel = nullptr;
+  QmlKeybindSettingsModel *m_keybindModel = nullptr;
+  QmlExtensionSettingsModel *m_extensionModel = nullptr;
   QQuickWindow *m_window = nullptr;
   int m_currentTab = 0;
+  bool m_initialized = false;
 };

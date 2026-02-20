@@ -4,6 +4,7 @@ import QtQuick.Layouts
 Item {
     id: root
     required property var prefModel
+    implicitHeight: formView.contentHeight
 
     FormView {
         id: formView

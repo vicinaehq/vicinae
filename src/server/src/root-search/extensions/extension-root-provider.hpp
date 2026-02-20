@@ -28,6 +28,7 @@ public:
   AccessoryList accessories() const override;
   PreferenceList preferences() const override { return m_command->preferences(); }
   bool isDefaultDisabled() const override { return m_command->isDefaultDisabled(); }
+  QString settingsDescription() const override { return m_command->description(); }
   QWidget *settingsDetail(const QJsonObject &) const override { return nullptr; }
 
   void preferenceValuesChanged(const QJsonObject &values) const override {

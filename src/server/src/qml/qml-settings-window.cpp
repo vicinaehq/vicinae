@@ -15,7 +15,11 @@
 #include <QQuickWindow>
 
 QmlSettingsWindow::QmlSettingsWindow(ApplicationContext &ctx, QObject *parent)
-    : QObject(parent), m_ctx(ctx) {
+    : QObject(parent), m_ctx(ctx) {}
+
+void QmlSettingsWindow::ensureInitialized() {
+  if (m_initialized) return;
+  m_initialized = true;
 
   m_themeBridge = new QmlThemeBridge(this);
   m_configBridge = new QmlConfigBridge(this);
@@ -67,6 +71,7 @@ void QmlSettingsWindow::close() {
 }
 
 void QmlSettingsWindow::show() {
+  ensureInitialized();
   if (!m_window) return;
   m_window->show();
   m_window->raise();
@@ -78,6 +83,7 @@ void QmlSettingsWindow::hide() {
 }
 
 void QmlSettingsWindow::openTab(const QString &tabId) {
+  ensureInitialized();
   static const std::array<std::pair<const char *, int>, 4> tabs = {{
       {"general", 0},
       {"extensions", 1},
@@ -93,5 +99,6 @@ void QmlSettingsWindow::openTab(const QString &tabId) {
 }
 
 void QmlSettingsWindow::selectExtension(const QString &entrypointId) {
+  ensureInitialized();
   m_extensionModel->selectByEntrypointId(entrypointId);
 }

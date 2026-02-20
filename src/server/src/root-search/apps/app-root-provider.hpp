@@ -18,6 +18,8 @@ class AppRootItem : public RootItem {
   EntrypointId uniqueId() const override;
   ImageURL iconUrl() const override;
   QWidget *settingsDetail(const QJsonObject &preferences) const override;
+  QString settingsDescription() const override;
+  std::vector<std::pair<QString, QString>> settingsMetadata() const override;
   std::vector<QString> keywords() const override;
   bool isActive() const override;
 

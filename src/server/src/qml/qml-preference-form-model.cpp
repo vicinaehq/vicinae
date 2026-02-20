@@ -76,6 +76,13 @@ static void applyPickerFlags(const Preference &p, bool &multiple, bool &director
   }
 }
 
+static QString resolveLabel(const Preference &p) {
+  auto d = p.data();
+  if (auto *cb = std::get_if<Preference::CheckboxData>(&d))
+    return cb->label.value_or(p.title());
+  return p.title();
+}
+
 void QmlPreferenceFormModel::load(const EntrypointId &id, const std::vector<Preference> &preferences) {
   beginResetModel();
   m_itemId = id;
@@ -89,7 +96,7 @@ void QmlPreferenceFormModel::load(const EntrypointId &id, const std::vector<Pref
     Field f;
     f.type = preferenceType(pref);
     f.id = pref.name();
-    f.label = pref.title();
+    f.label = resolveLabel(pref);
     f.description = pref.description();
     f.placeholder = pref.placeholder();
     f.readOnly = pref.isReadOnly();
@@ -118,7 +125,7 @@ void QmlPreferenceFormModel::loadProvider(const QString &providerId, const std::
     Field f;
     f.type = preferenceType(pref);
     f.id = pref.name();
-    f.label = pref.title();
+    f.label = resolveLabel(pref);
     f.description = pref.description();
     f.placeholder = pref.placeholder();
     f.readOnly = pref.isReadOnly();

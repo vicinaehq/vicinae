@@ -30,7 +30,8 @@ FocusScope {
     Rectangle {
         anchors.fill: parent
         radius: 8
-        color: Theme.secondaryBackground
+        color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g,
+                       Theme.secondaryBackground.b, Config.windowOpacity)
         border.color: focusItem.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
         border.width: 1
 

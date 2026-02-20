@@ -56,19 +56,24 @@ class ScriptRootItem : public RootItem {
   }
 
   QWidget *settingsDetail(const QJsonObject &preferences) const override {
-    std::vector<std::pair<QString, QString>> args;
+    return new SettingsItemInfo(settingsMetadata(),
+        m_file->data().description.transform([](auto &&s) { return QString::fromStdString(s); }));
+  }
 
-    args.reserve(6);
-    args.emplace_back(
-        std::pair{"Mode", qStringFromStdView(script_command::outputModeToString(m_file->data().mode))});
-    args.emplace_back(std::pair{"Path", compressPath(m_file->path()).c_str()});
+  QString settingsDescription() const override {
+    return m_file->data().description
+        .transform([](auto &&s) { return QString::fromStdString(s); })
+        .value_or(QString{});
+  }
 
-    if (const auto author = m_file->data().author) {
-      args.emplace_back(std::pair{"Author", author.value().c_str()});
-    }
-
-    return new SettingsItemInfo(
-        args, m_file->data().description.transform([](auto &&s) { return QString::fromStdString(s); }));
+  std::vector<std::pair<QString, QString>> settingsMetadata() const override {
+    std::vector<std::pair<QString, QString>> meta;
+    meta.reserve(4);
+    meta.emplace_back("Mode", qStringFromStdView(script_command::outputModeToString(m_file->data().mode)));
+    meta.emplace_back("Path", compressPath(m_file->path()).c_str());
+    if (const auto author = m_file->data().author)
+      meta.emplace_back("Author", author.value().c_str());
+    return meta;
   }
 
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx,
