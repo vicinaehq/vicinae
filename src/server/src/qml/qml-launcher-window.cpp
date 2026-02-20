@@ -12,6 +12,7 @@
 #include "qml-theme-bridge.hpp"
 #include "navigation-controller.hpp"
 #include "services/toast/toast-service.hpp"
+#include "config/config.hpp"
 #include "service-registry.hpp"
 #include "lib/keyboard/keyboard.hpp"
 #include "ui/views/base-view.hpp"
@@ -106,9 +107,12 @@ QmlLauncherWindow::QmlLauncherWindow(ApplicationContext &ctx, QObject *parent)
             }
           });
 
-  // Search state
+  // Search state — programmatic text changes (e.g. from extensions)
   connect(nav, &NavigationController::searchTextTampered,
-          this, &QmlLauncherWindow::searchTextUpdated);
+          this, [this](const QString &text) {
+            emit searchTextUpdated(text);
+            tryCompaction();
+          });
 
   connect(nav, &NavigationController::searchPlaceholderTextChanged,
           this, [this](const QString &text) {
@@ -207,12 +211,17 @@ QmlLauncherWindow::QmlLauncherWindow(ApplicationContext &ctx, QObject *parent)
     m_toastActive = false;
     emit toastActiveChanged();
   });
+
+  // Config changes — compact mode toggle
+  connect(m_ctx.services->config(), &config::Manager::configChanged,
+          this, [this](const auto &, const auto &) { tryCompaction(); });
 }
 
 void QmlLauncherWindow::handleVisibilityChanged(bool visible) {
   if (!m_window) return;
 
   if (visible) {
+    tryCompaction();
     m_window->show();
     m_window->raise();
     m_window->requestActivate();
@@ -248,6 +257,7 @@ void QmlLauncherWindow::handleCurrentViewChanged() {
       emit hasCommandViewChanged();
     }
     emit commandStackCleared();
+    tryCompaction();
     return;
   }
 
@@ -288,6 +298,7 @@ void QmlLauncherWindow::handleCurrentViewChanged() {
     m_hasCommandView = true;
     emit hasCommandViewChanged();
   }
+  tryCompaction();
 }
 
 void QmlLauncherWindow::forwardSearchText(const QString &text) {
@@ -298,6 +309,7 @@ void QmlLauncherWindow::forwardSearchText(const QString &text) {
     // (avoids unnecessary signal round-trip for root search)
     m_ctx.navigation->broadcastSearchText(text);
   }
+  tryCompaction();
 }
 
 void QmlLauncherWindow::handleReturn() {
@@ -348,5 +360,20 @@ void QmlLauncherWindow::setCompleterValue(int index, const QString &value) {
   if (index < 0 || index >= static_cast<int>(values.size())) return;
   values[index].second = value;
   nav->setCompletionValues(values);
+}
+
+void QmlLauncherWindow::expand() { setCompacted(false); }
+
+void QmlLauncherWindow::setCompacted(bool value) {
+  if (m_compacted == value) return;
+  m_compacted = value;
+  emit compactedChanged();
+}
+
+void QmlLauncherWindow::tryCompaction() {
+  auto &cfg = m_ctx.services->config()->value().launcherWindow.compactMode;
+  setCompacted(cfg.enabled &&
+               m_ctx.navigation->searchText().isEmpty() &&
+               m_ctx.navigation->viewStackSize() == 1);
 }
 

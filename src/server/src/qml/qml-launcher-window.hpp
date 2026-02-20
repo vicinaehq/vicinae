@@ -32,6 +32,7 @@ class QmlLauncherWindow : public QObject {
   Q_PROPERTY(bool isLoading READ isLoading NOTIFY isLoadingChanged)
   Q_PROPERTY(bool searchVisible READ searchVisible NOTIFY searchVisibleChanged)
   Q_PROPERTY(bool searchInteractive READ searchInteractive NOTIFY searchInteractiveChanged)
+  Q_PROPERTY(bool compacted READ compacted NOTIFY compactedChanged)
   Q_PROPERTY(bool hasCompleter READ hasCompleter NOTIFY completerChanged)
   Q_PROPERTY(QVariantList completerArgs READ completerArgs NOTIFY completerChanged)
   Q_PROPERTY(QString completerIcon READ completerIcon NOTIFY completerChanged)
@@ -55,11 +56,13 @@ public:
   bool isLoading() const { return m_isLoading; }
   bool searchVisible() const { return m_searchVisible; }
   bool searchInteractive() const { return m_searchInteractive; }
+  bool compacted() const { return m_compacted; }
   bool hasCompleter() const { return m_hasCompleter; }
   QVariantList completerArgs() const { return m_completerArgs; }
   QString completerIcon() const { return m_completerIcon; }
   QVariantList completerValues() const { return m_completerValues; }
 
+  Q_INVOKABLE void expand();
   Q_INVOKABLE void forwardSearchText(const QString &text);
   Q_INVOKABLE void handleReturn();
   Q_INVOKABLE bool forwardKey(int key, int modifiers = 0);
@@ -69,6 +72,7 @@ public:
   Q_INVOKABLE void setCompleterValue(int index, const QString &value);
 
 signals:
+  void compactedChanged();
   void hasCommandViewChanged();
   void searchPlaceholderChanged();
   void searchAccessoryChanged();
@@ -93,6 +97,8 @@ private:
   void handleVisibilityChanged(bool visible);
   void handleCurrentViewChanged();
   void handleViewPoped(const BaseView *view);
+  void setCompacted(bool value);
+  void tryCompaction();
 
   ApplicationContext &m_ctx;
   QQmlApplicationEngine m_engine;
@@ -101,6 +107,7 @@ private:
   QmlConfigBridge *m_configBridge;
   QmlImageSource *m_imgSource;
   QQuickWindow *m_window = nullptr;
+  bool m_compacted = false;
   bool m_hasCommandView = false;
   bool m_isLoading = false;
   bool m_searchVisible = true;

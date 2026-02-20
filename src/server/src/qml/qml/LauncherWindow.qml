@@ -16,8 +16,20 @@ Window {
     color: "transparent"
     visible: false
 
+    // Compact mode background — only covers search bar area
+    Rectangle {
+        visible: launcher.compacted
+        width: root.width
+        height: 60 + 2 * Config.borderWidth
+        radius: Config.borderRounding
+        color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
+        border.color: Theme.mainWindowBorder
+        border.width: Config.borderWidth
+    }
+
     // Main background — clipped to the region above the footer
     Item {
+        visible: !launcher.compacted
         anchors.fill: parent
         anchors.bottomMargin: footer.height + Config.borderWidth
         clip: true
@@ -32,6 +44,7 @@ Window {
 
     // Footer background — clipped to the footer region at the bottom
     Item {
+        visible: !launcher.compacted
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
@@ -49,6 +62,7 @@ Window {
 
     // Border frame
     Rectangle {
+        visible: !launcher.compacted
         anchors.fill: parent
         radius: Config.borderRounding
         color: "transparent"
@@ -72,7 +86,7 @@ Window {
         HorizontalLoadingBar {
             Layout.fillWidth: true
             implicitHeight: launcher.searchVisible ? 1 : 0
-            visible: launcher.searchVisible
+            visible: launcher.searchVisible && !launcher.compacted
             loading: launcher.isLoading
         }
 
@@ -85,17 +99,18 @@ Window {
             RootSearchList {
                 id: searchList
                 anchors.fill: parent
-                visible: !launcher.hasCommandView
+                visible: !launcher.hasCommandView && !launcher.compacted
             }
 
             StackView {
                 id: commandStack
                 anchors.fill: parent
-                visible: launcher.hasCommandView
+                visible: launcher.hasCommandView && !launcher.compacted
             }
         }
 
         Rectangle {
+            visible: !launcher.compacted
             Layout.fillWidth: true
             implicitHeight: 1
             color: Theme.divider
@@ -103,14 +118,16 @@ Window {
 
         Footer {
             id: footer
+            visible: !launcher.compacted
             Layout.fillWidth: true
-            Layout.preferredHeight: 40
+            Layout.preferredHeight: launcher.compacted ? 0 : 40
         }
     }
 
     // Action panel popover overlay — anchored above the footer
     ActionPanelPopover {
         id: actionPanelPopover
+        visible: !launcher.compacted
         z: 100
         anchors.fill: parent
         anchors.bottomMargin: footer.height + 1 + Config.borderWidth
@@ -162,6 +179,7 @@ Window {
         }
     }
 
+
     Shortcut {
         sequence: "Escape"
         enabled: !launcher.alertModel.visible && !actionPanel.open
@@ -177,7 +195,10 @@ Window {
     Shortcut {
         sequence: "Ctrl+B"
         enabled: !launcher.alertModel.visible
-        onActivated: actionPanel.toggle()
+        onActivated: {
+            if (launcher.compacted) launcher.expand()
+            actionPanel.toggle()
+        }
     }
 
     Connections {
