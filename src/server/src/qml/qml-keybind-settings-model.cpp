@@ -1,6 +1,7 @@
 #include "qml-keybind-settings-model.hpp"
 #include "keyboard/keybind-manager.hpp"
 #include "keyboard/keyboard.hpp"
+#include <unordered_map>
 
 QmlKeybindSettingsModel::QmlKeybindSettingsModel(QObject *parent) : QAbstractListModel(parent) {
   rebuild({});
@@ -62,6 +63,14 @@ void QmlKeybindSettingsModel::select(int row) {
   emit selectedChanged();
 }
 
+void QmlKeybindSettingsModel::moveUp() {
+  if (m_selectedRow > 0) select(m_selectedRow - 1);
+}
+
+void QmlKeybindSettingsModel::moveDown() {
+  if (m_selectedRow < rowCount() - 1) select(m_selectedRow + 1);
+}
+
 static QString shortcutString(const Keyboard::Shortcut &s) {
   QKeySequence seq(static_cast<int>(s.key()) | static_cast<int>(s.mods()));
   return seq.toString(QKeySequence::NativeText);
@@ -89,6 +98,43 @@ void QmlKeybindSettingsModel::setShortcut(int row, int key, int modifiers) {
   emit dataChanged(idx, idx, {ShortcutRole});
 }
 
+// clang-format off
+static const std::unordered_map<Qt::Key, std::pair<QString, QString>> keyDisplayOverloads = {
+    {Qt::Key_Meta,      {"icon", "command-symbol"}},
+    {Qt::Key_Alt,       {"icon", "option-symbol"}},
+    {Qt::Key_Control,   {"icon", "chevron-up"}},
+    {Qt::Key_Shift,     {"icon", "keyboard-shift"}},
+    {Qt::Key_Return,    {"icon", "enter-key"}},
+    {Qt::Key_Left,      {"icon", "arrow-left"}},
+    {Qt::Key_Right,     {"icon", "arrow-right"}},
+    {Qt::Key_Up,        {"icon", "arrow-up"}},
+    {Qt::Key_Down,      {"icon", "arrow-down"}},
+    {Qt::Key_Backspace, {"icon", "arrow-counter-clockwise"}},
+    {Qt::Key_Tab,       {"icon", "tab-key"}},
+    {Qt::Key_Space,     {"icon", "space-key"}},
+};
+// clang-format on
+
+QVariantList QmlKeybindSettingsModel::shortcutKeys(int key, int modifiers) const {
+  Keyboard::Shortcut shortcut(static_cast<Qt::Key>(key),
+                              static_cast<Qt::KeyboardModifiers>(modifiers));
+  QVariantList result;
+  for (const auto &k : shortcut.allKeys()) {
+    QVariantMap entry;
+    if (auto it = keyDisplayOverloads.find(k); it != keyDisplayOverloads.end()) {
+      entry[QStringLiteral("type")] = it->second.first;
+      entry[QStringLiteral("value")] = it->second.second;
+    } else if (auto str = Keyboard::stringForKey(k)) {
+      entry[QStringLiteral("type")] = QStringLiteral("text");
+      entry[QStringLiteral("value")] = str->toUpper();
+    } else {
+      continue;
+    }
+    result.append(entry);
+  }
+  return result;
+}
+
 void QmlKeybindSettingsModel::rebuild(const QString &filter) {
   beginResetModel();
   m_entries.clear();
@@ -106,7 +152,6 @@ void QmlKeybindSettingsModel::rebuild(const QString &filter) {
     m_entries.push_back(std::move(e));
   }
   endResetModel();
-  if (m_selectedRow >= static_cast<int>(m_entries.size()))
-    m_selectedRow = m_entries.empty() ? -1 : 0;
-  emit selectedChanged();
+  m_selectedRow = -1;
+  select(m_entries.empty() ? -1 : 0);
 }

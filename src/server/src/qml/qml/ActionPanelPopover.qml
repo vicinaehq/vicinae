@@ -2,13 +2,18 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Effects
 
-Item {
+FocusScope {
     id: root
+    focus: actionPanel.open
     visible: actionPanel.open || panel.opacity > 0
     enabled: actionPanel.open
     onVisibleChanged: {
         if (!visible)
             stack.clear(StackView.Immediate)
+    }
+    onActiveFocusChanged: {
+        if (!activeFocus && actionPanel.open)
+            actionPanel.close()
     }
 
     // Backdrop for click-away dismissal
