@@ -1,5 +1,6 @@
 #pragma once
 #include <QAbstractListModel>
+#include <QVariantList>
 
 class QmlKeybindSettingsModel : public QAbstractListModel {
   Q_OBJECT
@@ -30,8 +31,11 @@ public:
 
   Q_INVOKABLE void setFilter(const QString &text);
   Q_INVOKABLE void select(int row);
+  Q_INVOKABLE void moveUp();
+  Q_INVOKABLE void moveDown();
   Q_INVOKABLE QString validateShortcut(int key, int modifiers) const;
   Q_INVOKABLE void setShortcut(int row, int key, int modifiers);
+  Q_INVOKABLE QVariantList shortcutKeys(int key, int modifiers) const;
 
 private:
   struct Entry {

@@ -6,34 +6,50 @@ Item {
     id: root
     readonly property var model: settings.keybindModel
 
+    onVisibleChanged: if (visible) searchInput.forceActiveFocus()
+
+    function activateSelected() {
+        if (!root.model.hasSelection) return
+        var item = keybindList.itemAtIndex(root.model.selectedRow)
+        if (!item) return
+        // Position over the shortcut cell (right 180px of the row)
+        var pos = item.mapToItem(root, item.width - 180, 0)
+        shortcutRecorder.x = pos.x + 90 - shortcutRecorder.width / 2
+        shortcutRecorder.y = pos.y - shortcutRecorder.height - 10
+        shortcutRecorder._currentKeys = []
+        shortcutRecorder._statusText = "Recording..."
+        shortcutRecorder._statusColor = Theme.foreground
+        shortcutRecorder.open()
+    }
+
     RowLayout {
         anchors.fill: parent
         spacing: 0
 
-        // Left pane: search + column headers + list
+        // Left pane: search + column headers + list (60%)
         ColumnLayout {
             Layout.fillHeight: true
-            Layout.preferredWidth: root.width * 0.55
+            Layout.preferredWidth: root.width * 0.60
+            Layout.maximumWidth: root.width * 0.60
             spacing: 0
 
             // Search bar
             Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 44
+                Layout.preferredHeight: 48
                 color: "transparent"
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.margins: 8
-                    spacing: 6
+                    anchors.margins: 10
+                    spacing: 10
 
                     Image {
                         source: "image://vicinae/builtin:magnifying-glass?fg=" + Theme.textMuted
-                        sourceSize.width: 14
-                        sourceSize.height: 14
-                        Layout.preferredWidth: 14
-                        Layout.preferredHeight: 14
-                        opacity: 0.7
+                        sourceSize.width: 16
+                        sourceSize.height: 16
+                        Layout.preferredWidth: 16
+                        Layout.preferredHeight: 16
                     }
 
                     TextInput {
@@ -57,6 +73,10 @@ Item {
 
                         onTextEdited: root.model.setFilter(text)
 
+                        Keys.onUpPressed: root.model.moveUp()
+                        Keys.onDownPressed: root.model.moveDown()
+                        Keys.onReturnPressed: root.activateSelected()
+                        Keys.onEnterPressed: root.activateSelected()
                         Keys.onEscapePressed: {
                             if (text !== "") { text = ""; root.model.setFilter("") }
                         }
@@ -69,7 +89,7 @@ Item {
             // Column headers
             Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 28
+                Layout.preferredHeight: 30
                 color: Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.04)
 
                 RowLayout {
@@ -104,10 +124,19 @@ Item {
                 clip: true
                 model: root.model
                 boundsBehavior: Flickable.StopAtBounds
+                activeFocusOnTab: false
 
                 ScrollBar.vertical: ScrollBar {
                     policy: keybindList.contentHeight > keybindList.height
                             ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+                }
+
+                Connections {
+                    target: root.model
+                    function onSelectedChanged() {
+                        if (root.model.selectedRow >= 0)
+                            keybindList.positionViewAtIndex(root.model.selectedRow, ListView.Contain)
+                    }
                 }
 
                 delegate: Item {
@@ -139,6 +168,20 @@ Item {
                         visible: rowItem.isSelected || rowHover.hovered
                     }
 
+                    HoverHandler { id: rowHover }
+                    MouseArea {
+                        anchors.fill: parent
+                        acceptedButtons: Qt.LeftButton
+                        onClicked: {
+                            root.model.select(rowItem.index)
+                            searchInput.forceActiveFocus()
+                        }
+                        onDoubleClicked: {
+                            root.model.select(rowItem.index)
+                            shortcutRecorder.show(shortcutCell)
+                        }
+                    }
+
                     RowLayout {
                         anchors.fill: parent
                         spacing: 0
@@ -149,12 +192,14 @@ Item {
                             Layout.fillHeight: true
                             Layout.leftMargin: 12
                             Layout.rightMargin: 8
-                            spacing: 8
+                            spacing: 10
 
                             ViciImage {
-                                source: rowItem.icon ? Img.builtin(rowItem.icon) : ""
-                                Layout.preferredWidth: 18
-                                Layout.preferredHeight: 18
+                                source: rowItem.icon
+                                    ? Img.builtin(rowItem.icon).withBackgroundTint("orange")
+                                    : ""
+                                Layout.preferredWidth: 20
+                                Layout.preferredHeight: 20
                             }
 
                             Text {
@@ -168,6 +213,7 @@ Item {
 
                         // Shortcut column
                         Item {
+                            id: shortcutCell
                             Layout.preferredWidth: 180
                             Layout.fillHeight: true
 
@@ -180,7 +226,10 @@ Item {
                                 height: 24
                                 radius: 4
                                 color: rowItem.isSelected ? Qt.rgba(1, 1, 1, 0.15)
-                                                         : Theme.secondaryBackground
+                                       : Qt.rgba(Theme.secondaryBackground.r,
+                                                  Theme.secondaryBackground.g,
+                                                  Theme.secondaryBackground.b,
+                                                  Config.windowOpacity)
                                 border.color: rowItem.isSelected ? Qt.rgba(1, 1, 1, 0.2)
                                                                  : Theme.divider
                                 border.width: 1
@@ -192,6 +241,15 @@ Item {
                                     color: rowItem.isSelected ? Theme.listItemSelectionFg : Theme.foreground
                                     font.pointSize: Theme.smallerFontSize
                                 }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        root.model.select(rowItem.index)
+                                        shortcutRecorder.show(shortcutCell)
+                                    }
+                                }
                             }
 
                             Text {
@@ -199,25 +257,29 @@ Item {
                                 anchors.left: parent.left
                                 anchors.leftMargin: 4
                                 anchors.verticalCenter: parent.verticalCenter
-                                text: "\u2014"
+                                text: "Record shortcut"
                                 color: Theme.textMuted
                                 font.pointSize: Theme.smallerFontSize
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        root.model.select(rowItem.index)
+                                        shortcutRecorder.show(shortcutCell)
+                                    }
+                                }
                             }
                         }
                     }
-
-                    HoverHandler { id: rowHover }
-                    TapHandler {
-                        gesturePolicy: TapHandler.ReleaseWithinBounds
-                        onTapped: root.model.select(rowItem.index)
-                    }
                 }
             }
+
         }
 
         Rectangle { Layout.fillHeight: true; width: 1; color: Theme.divider }
 
-        // Right pane: detail
+        // Right pane: detail (40%)
         Item {
             Layout.fillHeight: true
             Layout.fillWidth: true
@@ -238,15 +300,17 @@ Item {
                 // Header
                 RowLayout {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 52
-                    Layout.leftMargin: 16
-                    Layout.rightMargin: 16
+                    Layout.preferredHeight: 80
+                    Layout.leftMargin: 20
+                    Layout.rightMargin: 20
                     spacing: 10
 
                     ViciImage {
-                        source: root.model.selectedIcon ? Img.builtin(root.model.selectedIcon) : ""
-                        Layout.preferredWidth: 28
-                        Layout.preferredHeight: 28
+                        source: root.model.selectedIcon
+                            ? Img.builtin(root.model.selectedIcon).withBackgroundTint("orange")
+                            : ""
+                        Layout.preferredWidth: 30
+                        Layout.preferredHeight: 30
                     }
 
                     Text {
@@ -261,7 +325,7 @@ Item {
 
                 Rectangle { Layout.fillWidth: true; height: 1; color: Theme.divider }
 
-                // Description + shortcut recorder
+                // Description
                 Flickable {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
@@ -278,20 +342,21 @@ Item {
                     ColumnLayout {
                         id: detailCol
                         width: parent.width
-                        spacing: 16
-
-                        Item { implicitHeight: 4 }
+                        spacing: 0
 
                         ColumnLayout {
+                            visible: root.model.selectedDescription !== ""
                             Layout.fillWidth: true
-                            Layout.leftMargin: 16
-                            Layout.rightMargin: 16
+                            Layout.leftMargin: 20
+                            Layout.rightMargin: 20
+                            Layout.topMargin: 12
                             spacing: 4
 
                             Text {
                                 text: "Description"
                                 color: Theme.textMuted
                                 font.pointSize: Theme.smallerFontSize
+                                font.bold: true
                             }
 
                             Text {
@@ -303,38 +368,21 @@ Item {
                             }
                         }
 
-                        Rectangle {
-                            Layout.fillWidth: true
-                            height: 1
-                            color: Theme.divider
-                        }
-
-                        ColumnLayout {
-                            Layout.fillWidth: true
-                            Layout.leftMargin: 16
-                            Layout.rightMargin: 16
-                            spacing: 4
-
-                            Text {
-                                text: "Shortcut"
-                                color: Theme.textMuted
-                                font.pointSize: Theme.smallerFontSize
-                            }
-
-                            ShortcutRecorderField {
-                                Layout.fillWidth: true
-                                Layout.maximumWidth: 300
-                                onShortcutCaptured: (key, modifiers) => {
-                                    root.model.setShortcut(root.model.selectedRow, key, modifiers)
-                                }
-                                validateShortcut: (key, modifiers) => root.model.validateShortcut(key, modifiers)
-                            }
-                        }
-
                         Item { implicitHeight: 16 }
                     }
                 }
             }
         }
+    }
+
+    ShortcutRecorderField {
+        id: shortcutRecorder
+        parent: root
+        validateShortcut: (key, modifiers) => root.model.validateShortcut(key, modifiers)
+        shortcutKeysProvider: (key, modifiers) => root.model.shortcutKeys(key, modifiers)
+        onShortcutCaptured: (key, modifiers) => {
+            root.model.setShortcut(root.model.selectedRow, key, modifiers)
+        }
+        onClosed: searchInput.forceActiveFocus()
     }
 }

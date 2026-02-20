@@ -192,6 +192,7 @@ Item {
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
         onOpened: searchField.forceActiveFocus()
+        onActiveFocusChanged: if (!activeFocus && visible) close()
         onClosed: {
             root._closedTime = Date.now()
             root.popupClosed()
