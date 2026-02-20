@@ -70,7 +70,7 @@ Item {
                     verticalAlignment: Text.AlignVCenter
                     text: launcher.hasCompleter ? "..."
                         : launcher.hasCommandView && launcher.searchPlaceholder !== ""
-                          ? launcher.searchPlaceholder : "Search..."
+                          ? launcher.searchPlaceholder : "Search for anything..."
                     color: Theme.textPlaceholder
                     font: searchInput.font
                     visible: !searchInput.text && launcher.searchInteractive

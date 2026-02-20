@@ -48,7 +48,7 @@ public:
   void refreshActionPanel();
 
   virtual void setFilter(const QString &text) = 0;
-  virtual QString searchPlaceholder() const { return QStringLiteral("Search..."); }
+  virtual QString searchPlaceholder() const { return QStringLiteral("Search for anything..."); }
   virtual QUrl qmlComponentUrl() const { return QUrl(QStringLiteral("qrc:/Vicinae/CommandListView.qml")); }
   virtual void onItemSelected(int section, int item) {}
   virtual void beforePop() {}
