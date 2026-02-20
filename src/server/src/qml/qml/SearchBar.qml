@@ -60,7 +60,7 @@ Item {
                 id: searchInput
                 anchors.fill: parent
                 verticalAlignment: TextInput.AlignVCenter
-                font.pointSize: Theme.regularFontSize
+                font.pointSize: Theme.regularFontSize * 1.1
                 color: Theme.foreground
                 selectionColor: Theme.textSelectionBg
                 selectedTextColor: Theme.textSelectionFg
