@@ -700,6 +700,10 @@ set(SRCS
 	src/qml/qml-extension-view-host.cpp
 	src/qml/qml-extension-error-view-host.hpp
 	src/qml/qml-extension-error-view-host.cpp
+	src/qml/qml-empty-view-host.hpp
+	src/qml/qml-empty-view-host.cpp
+	src/qml/qml-missing-preference-view-host.hpp
+	src/qml/qml-missing-preference-view-host.cpp
 	src/qml/qml-extension-form-model.hpp
 	src/qml/qml-extension-form-model.cpp
 	src/qml/qml-clipboard-history-model.hpp
@@ -954,6 +958,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/ShortcutRecorderField.qml
 	src/qml/qml/PreferenceFormView.qml
 	src/qml/qml/SettingsPreferenceForm.qml
+	src/qml/qml/MissingPreferenceView.qml
 )
 
 # Strip directory prefix so resources are qrc:/Vicinae/Foo.qml
