@@ -1,6 +1,7 @@
 #include "settings-controller/settings-controller.hpp"
 #include "common.hpp"
-#include "settings/settings-window.hpp"
+#include "qml/qml-settings-window.hpp"
+#include <QTimer>
 
 SettingsController::SettingsController(ApplicationContext &ctx) : m_ctx(ctx) {}
 
@@ -9,7 +10,6 @@ SettingsController::~SettingsController() {
 }
 
 void SettingsController::openWindow() {
-  // if window is already shown, hide/show again to force it to reposition itself
   closeWindow(false);
   createSettingsWindow();
   m_window->show();
@@ -26,17 +26,21 @@ bool SettingsController::closeWindow(bool destroy) {
 
 void SettingsController::openTab(const QString &tabId) {
   openWindow();
-  QTimer::singleShot(0, [this, tabId]() { emit tabIdOpened(tabId); });
+  QTimer::singleShot(0, [this, tabId]() {
+    if (m_window) m_window->openTab(tabId);
+  });
 }
 
 void SettingsController::openExtensionPreferences(const EntrypointId &id) {
   openTab("extensions");
-  QTimer::singleShot(0, [this, id]() { emit openExtensionPreferencesRequested(id); });
+  QTimer::singleShot(0, [this, id]() {
+    if (m_window) m_window->selectExtension(QString::fromStdString(id));
+  });
 }
 
 void SettingsController::createSettingsWindow() {
   if (m_window) return;
-  m_window = new SettingsWindow(&m_ctx);
+  m_window = new QmlSettingsWindow(m_ctx);
 }
 
 void SettingsController::destroySettingsWindow() {

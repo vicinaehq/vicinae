@@ -3,7 +3,6 @@
 #include "services/root-item-manager/root-item-manager.hpp"
 #include <qjsonobject.h>
 #include <qwidget.h>
-#include "settings/extension-settings-detail.hpp"
 #include "common/entrypoint.hpp"
 
 class CommandRootItem : public RootItem {
@@ -29,9 +28,7 @@ public:
   AccessoryList accessories() const override;
   PreferenceList preferences() const override { return m_command->preferences(); }
   bool isDefaultDisabled() const override { return m_command->isDefaultDisabled(); }
-  QWidget *settingsDetail(const QJsonObject &preferences) const override {
-    return new CommandMetadataSettingsDetailWidget(m_command);
-  }
+  QWidget *settingsDetail(const QJsonObject &) const override { return nullptr; }
 
   void preferenceValuesChanged(const QJsonObject &values) const override {
     m_command->preferenceValuesChanged(values);
@@ -53,7 +50,7 @@ public:
   ImageURL icon() const override { return m_repo->iconUrl(); };
   Type type() const override { return RootProvider::Type::ExtensionProvider; }
   std::vector<std::shared_ptr<RootItem>> loadItems() const override;
-  QWidget *settingsDetail() const override { return new ExtensionSettingsDetail(uniqueId(), m_repo); }
+  QWidget *settingsDetail() const override { return nullptr; }
 
   void preferencesChanged(const QJsonObject &preferences) override {
     return m_repo->preferenceValuesChanged(preferences);

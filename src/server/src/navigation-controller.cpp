@@ -432,6 +432,19 @@ void NavigationController::executeAction(AbstractAction *action) {
 
   if (!state) return;
 
+  // Keep the action alive during execution. Side effects of execute()
+  // (e.g. launch() triggering a root search refresh via itemsChanged)
+  // can clear the action panel, dropping the last shared_ptr to this action.
+  std::shared_ptr<AbstractAction> guard;
+  if (auto &panel = state->actionPanelState) {
+    for (const auto &sec : panel->sections()) {
+      for (const auto &a : sec->m_actions) {
+        if (a.get() == action) { guard = a; break; }
+      }
+      if (guard) break;
+    }
+  }
+
   if (action->isSubmenu()) {
     if (auto view = action->createSubmenu()) {
       openActionPanel();

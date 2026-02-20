@@ -13,7 +13,6 @@ class QmlThemeBridge;
 class QmlBridgeViewBase;
 class QmlCommandListModel;
 class QQuickWindow;
-class QQuickItem;
 class BaseView;
 class DialogContentWidget;
 
@@ -94,9 +93,6 @@ private:
   void handleVisibilityChanged(bool visible);
   void handleCurrentViewChanged();
   void handleViewPoped(const BaseView *view);
-  void embedWidget(BaseView *view);
-  void removeWidget();
-  void repositionWidget();
 
   ApplicationContext &m_ctx;
   QQmlApplicationEngine m_engine;
@@ -105,8 +101,6 @@ private:
   QmlConfigBridge *m_configBridge;
   QmlImageSource *m_imgSource;
   QQuickWindow *m_window = nullptr;
-  QQuickItem *m_contentArea = nullptr;
-  BaseView *m_activeWidget = nullptr;
   bool m_hasCommandView = false;
   bool m_isLoading = false;
   bool m_searchVisible = true;

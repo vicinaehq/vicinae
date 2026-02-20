@@ -1,0 +1,23 @@
+#pragma once
+#include "qml-command-list-model.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
+
+class QmlProviderSearchModel : public QmlCommandListModel {
+  Q_OBJECT
+
+public:
+  using QmlCommandListModel::QmlCommandListModel;
+
+  void setItems(std::vector<RootItemManager::ScoredItem> items);
+  void setFilter(const QString &) override {}
+
+protected:
+  QString itemTitle(int section, int item) const override;
+  QString itemSubtitle(int section, int item) const override;
+  QString itemIconSource(int section, int item) const override;
+  std::unique_ptr<ActionPanelState> createActionPanel(int section, int item) const override;
+
+private:
+  const RootItem *itemAt(int item) const;
+  std::vector<RootItemManager::ScoredItem> m_items;
+};

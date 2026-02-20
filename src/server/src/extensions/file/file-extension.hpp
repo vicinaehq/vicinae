@@ -2,14 +2,14 @@
 #include "command-database.hpp"
 #include "preference.hpp"
 #include "services/files-service/file-service.hpp"
-#include "search/search-files-view.hpp"
+#include "qml/qml-search-files-view-host.hpp"
 #include "single-view-command-context.hpp"
 #include "ui/alert/alert.hpp"
 #include "utils.hpp"
 #include "vicinae.hpp"
 #include "services/toast/toast-service.hpp"
 
-class SearchFilesCommand : public BuiltinViewCommand<SearchFilesView> {
+class SearchFilesCommand : public BuiltinViewCommand<QmlSearchFilesViewHost> {
   QString id() const override { return "search"; }
   QString name() const override { return "Search Files"; }
   QString description() const override { return "Search files on your system"; }

@@ -1,9 +1,11 @@
 #pragma once
 #include "command-database.hpp"
-#include "browse-apps/browse-apps-view.hpp"
+#include "qml/qml-browse-apps-view-host.hpp"
 #include "single-view-command-context.hpp"
-#include "run/system-run-view.hpp"
+#include "qml/qml-system-run-model.hpp"
+#include "qml/qml-system-run-view-host.hpp"
 #include "utils.hpp"
+#include "services/app-service/app-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "xdgpp/desktop-entry/exec.hpp"
 
@@ -40,7 +42,7 @@ class SystemRunCommand : public BuiltinCallbackCommand {
     auto args = ctrl->launchProps().arguments;
 
     if (args.empty() || args.front().second.isEmpty()) {
-      ctrl->context()->navigation->pushView(new SystemRunView);
+      ctrl->context()->navigation->pushView(new QmlSystemRunViewHost);
       return;
     }
 
@@ -55,9 +57,9 @@ class SystemRunCommand : public BuiltinCallbackCommand {
     auto appDb = ctx->services->appDb();
     auto argv = Utils::toQStringVec(parsedArgs);
 
-    using DA = SystemRunView::DefaultAction;
+    using DA = QmlSystemRunModel::DefaultAction;
 
-    switch (SystemRunView::parseDefaultAction(ctrl->preferenceValues().value("default-action").toString())) {
+    switch (QmlSystemRunModel::parseDefaultAction(ctrl->preferenceValues().value("default-action").toString())) {
     case DA::Run:
       appDb->launchRaw(argv);
       break;
@@ -73,7 +75,7 @@ class SystemRunCommand : public BuiltinCallbackCommand {
   }
 };
 
-class SystemBrowseApps : public BuiltinViewCommand<BrowseAppsView> {
+class SystemBrowseApps : public BuiltinViewCommand<QmlBrowseAppsViewHost> {
   QString id() const override { return "browse-apps"; }
   QString name() const override { return "Browse Apps"; }
   QString description() const override { return "Browse all applications that are installed on the system"; }

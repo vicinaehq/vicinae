@@ -5,8 +5,10 @@
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/app-service/app-service.hpp"
 #include "service-registry.hpp"
+#include "services/script-command/script-command-service.hpp"
+#include "services/toast/toast-service.hpp"
 #include "navigation-controller.hpp"
-#include "ui/script-output/script-executor-view.hpp"
+#include "qml/qml-script-executor-view-host.hpp"
 
 ScriptExecutorAction::ScriptExecutorAction(const std::shared_ptr<ScriptCommandFile> &file,
                                            std::optional<script_command::OutputMode> mode)
@@ -59,7 +61,7 @@ void ScriptExecutorAction::execute(ApplicationContext *ctx) {
 
     switch (outputMode) {
     case Mode::Full:
-      ctx->navigation->pushView(new ScriptExecutorView(new ScriptProcess(*script, args)));
+      ctx->navigation->pushView(new QmlScriptExecutorViewHost(new ScriptProcess(*script, args)));
       ctx->navigation->setNavigationIcon(script->icon());
       break;
     case Mode::Silent:
