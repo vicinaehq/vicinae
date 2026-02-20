@@ -24,7 +24,20 @@ GenericGridView {
             readonly property int itm: parent ? parent.cellItem : 0
             readonly property bool hovered: parent ? parent.cellHovered : false
 
+            readonly property string _cellColor: {
+                var _rev = cellRoot.model ? cellRoot.model.dataRevision : 0
+                return cellRoot.model ? cellRoot.model.cellColor(cellRoot.sec, cellRoot.itm) : ""
+            }
+
+            Rectangle {
+                visible: cellRoot._cellColor !== ""
+                anchors.fill: parent
+                radius: 6
+                color: cellRoot._cellColor
+            }
+
             ViciImage {
+                visible: cellRoot._cellColor === ""
                 anchors.centerIn: parent
                 width: Math.min(implicitWidth, parent.width)
                 height: Math.min(implicitHeight, parent.height)

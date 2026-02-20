@@ -1,5 +1,8 @@
 #include "qml-extension-grid-model.hpp"
+#include "common/types.hpp"
 #include "navigation-controller.hpp"
+#include "theme.hpp"
+#include "theme/theme-file.hpp"
 #include "ui/image/url.hpp"
 #include <algorithm>
 
@@ -199,6 +202,21 @@ QString QmlExtensionGridModel::cellSubtitle(int section, int item) const {
 QString QmlExtensionGridModel::cellTooltip(int section, int item) const {
   if (auto *it = itemAt(section, item)) {
     if (it->tooltip) return QString::fromStdString(*it->tooltip);
+  }
+  return {};
+}
+
+QString QmlExtensionGridModel::cellColor(int section, int item) const {
+  if (auto *it = itemAt(section, item)) {
+    if (auto *color = std::get_if<ColorLike>(&it->content)) {
+      const auto &theme = ThemeService::instance().theme();
+      return std::visit(overloads{
+        [](const QColor &c) -> QString { return c.name(QColor::HexArgb); },
+        [](const QString &c) -> QString { return c; },
+        [&](const SemanticColor &c) -> QString { return theme.resolve(c).name(QColor::HexArgb); },
+        [&](const DynamicColor &c) -> QString { return theme.isLight() ? c.light : c.dark; },
+      }, *color);
+    }
   }
   return {};
 }
