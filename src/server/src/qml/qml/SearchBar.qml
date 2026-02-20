@@ -84,11 +84,13 @@ Item {
                 }
 
                 Keys.onUpPressed: {
+                    if (launcher.compacted) { launcher.expand(); return }
                     if (commandStack.currentItem) commandStack.currentItem.moveUp()
                     else if (launcher.hasCommandView) launcher.forwardKey(Qt.Key_Up)
                     else searchList.moveUp()
                 }
                 Keys.onDownPressed: {
+                    if (launcher.compacted) { launcher.expand(); return }
                     if (commandStack.currentItem) commandStack.currentItem.moveDown()
                     else if (launcher.hasCommandView) launcher.forwardKey(Qt.Key_Down)
                     else searchList.moveDown()
@@ -110,6 +112,7 @@ Item {
                     }
                 }
                 Keys.onReturnPressed: (event) => {
+                    if (launcher.compacted) { launcher.expand(); event.accepted = true; return }
                     // Forward Shift+Enter and other modified returns for action shortcuts
                     if (event.modifiers !== Qt.NoModifier) {
                         event.accepted = launcher.forwardKey(event.key, event.modifiers)
@@ -129,6 +132,7 @@ Item {
                     } else if (event.modifiers !== Qt.NoModifier && event.modifiers !== Qt.ShiftModifier
                                && event.key !== Qt.Key_Shift && event.key !== Qt.Key_Control
                                && event.key !== Qt.Key_Alt && event.key !== Qt.Key_Meta) {
+                        if (launcher.compacted) launcher.expand()
                         // Forward modifier key combos — actions take precedence, fall back to input
                         event.accepted = launcher.forwardKey(event.key, event.modifiers)
                     } else {
