@@ -1,5 +1,6 @@
 #include "qml-extension-settings-model.hpp"
 #include "qml-utils.hpp"
+#include "root-search/extensions/extension-root-provider.hpp"
 #include "service-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include <algorithm>
@@ -58,6 +59,16 @@ QString QmlExtensionSettingsModel::selectedIconSource() const {
   return m_allEntries[m_visibleIndices[m_selectedRow]].iconSource;
 }
 
+QString QmlExtensionSettingsModel::selectedDescription() const {
+  if (!hasSelection()) return {};
+  return m_allEntries[m_visibleIndices[m_selectedRow]].description;
+}
+
+QVariantList QmlExtensionSettingsModel::selectedMetadata() const {
+  if (!hasSelection()) return {};
+  return m_allEntries[m_visibleIndices[m_selectedRow]].metadata;
+}
+
 bool QmlExtensionSettingsModel::hasSelection() const {
   return m_selectedRow >= 0 && m_selectedRow < static_cast<int>(m_visibleIndices.size());
 }
@@ -96,8 +107,8 @@ void QmlExtensionSettingsModel::select(int row) {
       if (provider) m_prefModel->loadProvider(e.providerId, provider->preferences());
       else m_prefModel->loadProvider(e.providerId, {});
     } else {
-      auto prefs = manager->getMergedItemPreferences(e.entrypointId);
-      m_prefModel->load(e.entrypointId, prefs);
+      auto *item = manager->findItemById(e.entrypointId);
+      m_prefModel->load(e.entrypointId, item ? item->preferences() : std::vector<Preference>{});
     }
   }
 
@@ -115,13 +126,11 @@ void QmlExtensionSettingsModel::setEnabled(int row, bool value) {
     auto idx = index(row);
     emit dataChanged(idx, idx, {EnabledRole});
 
-    // Cascade to all children in m_allEntries
     int allIdx = m_visibleIndices[row];
     for (int i = allIdx + 1; i < static_cast<int>(m_allEntries.size()) && !m_allEntries[i].isProvider;
          ++i) {
       m_allEntries[i].enabled = value;
     }
-    // Update visible children
     for (int i = row + 1; i < static_cast<int>(m_visibleIndices.size()); ++i) {
       auto &child = m_allEntries[m_visibleIndices[i]];
       if (child.isProvider) break;
@@ -154,7 +163,6 @@ void QmlExtensionSettingsModel::selectByEntrypointId(const QString &id) {
   for (int i = 0; i < static_cast<int>(m_visibleIndices.size()); ++i) {
     auto &e = m_allEntries[m_visibleIndices[i]];
     if (!e.isProvider && QString::fromStdString(e.entrypointId) == id) {
-      // Expand the parent provider if collapsed
       for (int j = i - 1; j >= 0; --j) {
         auto &parent = m_allEntries[m_visibleIndices[j]];
         if (parent.isProvider) {
@@ -162,7 +170,6 @@ void QmlExtensionSettingsModel::selectByEntrypointId(const QString &id) {
           break;
         }
       }
-      // Re-find after potential expand
       for (int k = 0; k < static_cast<int>(m_visibleIndices.size()); ++k) {
         auto &e2 = m_allEntries[m_visibleIndices[k]];
         if (!e2.isProvider && QString::fromStdString(e2.entrypointId) == id) {
@@ -173,14 +180,11 @@ void QmlExtensionSettingsModel::selectByEntrypointId(const QString &id) {
       return;
     }
   }
-  // Item not in visible list; search m_allEntries and expand parent
   for (int i = 0; i < static_cast<int>(m_allEntries.size()); ++i) {
     auto &e = m_allEntries[i];
     if (!e.isProvider && QString::fromStdString(e.entrypointId) == id) {
-      // Find parent provider in visible indices and expand
       for (int j = i - 1; j >= 0; --j) {
         if (m_allEntries[j].isProvider) {
-          // Find this provider in visible indices
           for (int k = 0; k < static_cast<int>(m_visibleIndices.size()); ++k) {
             if (m_visibleIndices[k] == j && !m_allEntries[j].expanded) {
               toggleExpanded(k);
@@ -190,7 +194,6 @@ void QmlExtensionSettingsModel::selectByEntrypointId(const QString &id) {
           break;
         }
       }
-      // Now find the item in visible list
       for (int k = 0; k < static_cast<int>(m_visibleIndices.size()); ++k) {
         if (m_visibleIndices[k] == i) {
           select(k);
@@ -216,7 +219,6 @@ void QmlExtensionSettingsModel::toggleExpanded(int row) {
     m_expandedProviders.erase(e.providerId);
   }
 
-  // Count how many children are currently visible after this provider
   int childrenVisible = 0;
   for (int i = row + 1; i < static_cast<int>(m_visibleIndices.size()); ++i) {
     if (m_allEntries[m_visibleIndices[i]].isProvider) break;
@@ -224,7 +226,6 @@ void QmlExtensionSettingsModel::toggleExpanded(int row) {
   }
 
   if (e.expanded) {
-    // Insert children
     std::vector<int> toInsert;
     for (int i = allIdx + 1; i < static_cast<int>(m_allEntries.size()) && !m_allEntries[i].isProvider;
          ++i) {
@@ -236,9 +237,7 @@ void QmlExtensionSettingsModel::toggleExpanded(int row) {
       endInsertRows();
     }
   } else {
-    // Remove children
     if (childrenVisible > 0) {
-      // Adjust selection if it's on a child being hidden
       if (m_selectedRow > row && m_selectedRow <= row + childrenVisible) {
         m_selectedRow = row;
         emit selectedChanged();
@@ -252,9 +251,21 @@ void QmlExtensionSettingsModel::toggleExpanded(int row) {
     }
   }
 
-  // Update the provider row to reflect expanded state
   auto idx = index(row);
   emit dataChanged(idx, idx, {ExpandedRole});
+}
+
+void QmlExtensionSettingsModel::moveUp() {
+  if (m_selectedRow > 0) select(m_selectedRow - 1);
+}
+
+void QmlExtensionSettingsModel::moveDown() {
+  if (m_selectedRow < rowCount() - 1) select(m_selectedRow + 1);
+}
+
+void QmlExtensionSettingsModel::activate() {
+  if (hasSelection() && m_allEntries[m_visibleIndices[m_selectedRow]].isProvider)
+    toggleExpanded(m_selectedRow);
 }
 
 void QmlExtensionSettingsModel::rebuild(const QString &filter) {
@@ -294,9 +305,11 @@ void QmlExtensionSettingsModel::rebuild(const QString &filter) {
     pe.enabled = true;
     pe.providerId = provider->uniqueId();
     pe.childCount = static_cast<int>(items.size());
-    // Auto-expand when filtering; otherwise use tracked state (default expanded)
-    pe.expanded = isFiltering || m_expandedProviders.count(pe.providerId) > 0 ||
-                  m_expandedProviders.empty();
+    pe.expanded = isFiltering || m_expandedProviders.count(pe.providerId) > 0;
+
+    if (auto *ext = dynamic_cast<ExtensionRootProvider *>(provider))
+      pe.description = ext->repository()->description();
+
     m_allEntries.push_back(std::move(pe));
 
     for (const auto &item : items) {
@@ -311,17 +324,22 @@ void QmlExtensionSettingsModel::rebuild(const QString &filter) {
       ie.alias = QString::fromStdString(metadata.alias.value_or(""));
       ie.entrypointId = item->uniqueId();
       ie.providerId = provider->uniqueId();
+      ie.description = item->settingsDescription();
+      for (const auto &[key, value] : item->settingsMetadata())
+        ie.metadata.append(QVariantMap{{QStringLiteral("key"), key}, {QStringLiteral("value"), value}});
       m_allEntries.push_back(std::move(ie));
     }
   }
 
-  // Build visible indices
   rebuildVisible();
 
   endResetModel();
-  if (m_selectedRow >= static_cast<int>(m_visibleIndices.size()))
-    m_selectedRow = m_visibleIndices.empty() ? -1 : 0;
-  emit selectedChanged();
+
+  int newRow = !filter.isEmpty() ? 0 : m_selectedRow;
+  if (newRow >= static_cast<int>(m_visibleIndices.size()))
+    newRow = m_visibleIndices.empty() ? -1 : 0;
+  m_selectedRow = -1;
+  select(newRow);
 }
 
 void QmlExtensionSettingsModel::rebuildVisible() {
@@ -336,12 +354,4 @@ void QmlExtensionSettingsModel::rebuildVisible() {
       if (!skipChildren) m_visibleIndices.push_back(i);
     }
   }
-}
-
-int QmlExtensionSettingsModel::childCountForProvider(int allIdx) const {
-  int count = 0;
-  for (int i = allIdx + 1; i < static_cast<int>(m_allEntries.size()) && !m_allEntries[i].isProvider;
-       ++i)
-    ++count;
-  return count;
 }

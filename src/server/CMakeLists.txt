@@ -953,6 +953,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/KeybindSettingsTab.qml
 	src/qml/qml/ShortcutRecorderField.qml
 	src/qml/qml/PreferenceFormView.qml
+	src/qml/qml/SettingsPreferenceForm.qml
 )
 
 # Strip directory prefix so resources are qrc:/Vicinae/Foo.qml

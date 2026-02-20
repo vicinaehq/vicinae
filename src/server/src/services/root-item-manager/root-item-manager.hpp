@@ -126,6 +126,9 @@ public:
 
   virtual void preferenceValuesChanged(const QJsonObject &values) const {}
 
+  virtual QString settingsDescription() const { return {}; }
+  virtual std::vector<std::pair<QString, QString>> settingsMetadata() const { return {}; }
+
   /**
    * Whether the itme should be marked as currently active. All this does is add a small dot as an
    * right below the icon.

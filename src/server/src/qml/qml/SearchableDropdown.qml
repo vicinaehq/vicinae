@@ -129,7 +129,9 @@ Item {
         width: compact ? root.width : undefined
         height: compact ? 28 : undefined
         radius: compact ? 6 : 8
-        color: buttonMouseArea.containsMouse ? Theme.listItemHoverBg : Theme.secondaryBackground
+        color: buttonMouseArea.containsMouse ? Theme.listItemHoverBg
+               : Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g,
+                          Theme.secondaryBackground.b, Config.windowOpacity)
         border.color: compact ? Theme.divider
                       : (root.activeFocus || dropdownPopup.visible
                          ? Theme.inputBorderFocus : Theme.inputBorder)

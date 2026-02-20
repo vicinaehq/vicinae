@@ -41,6 +41,15 @@ QWidget *AppRootItem::settingsDetail(const QJsonObject &preferences) const {
   return new SettingsItemInfo(args, m_app->description());
 }
 
+QString AppRootItem::settingsDescription() const { return m_app->description(); }
+
+std::vector<std::pair<QString, QString>> AppRootItem::settingsMetadata() const {
+  return {{"ID", m_app->id()},
+          {"Name", m_app->displayName()},
+          {"Where", m_app->path().c_str()},
+          {"Opens in terminal", m_app->isTerminalApp() ? "Yes" : "No"}};
+}
+
 bool AppRootItem::isActive() const {
   auto wm = ServiceRegistry::instance()->windowManager();
   return !wm->findAppWindows(*m_app).empty();
