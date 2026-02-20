@@ -8,7 +8,7 @@
 #include "qml-theme-bridge.hpp"
 #include "config/config.hpp"
 #include "service-registry.hpp"
-#include "services/background-effects/background-effect-manager.hpp"
+#include "services/background-effect/background-effect-manager.hpp"
 #include "services/app-service/app-service.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "vicinae.hpp"
@@ -41,9 +41,7 @@ void QmlSettingsWindow::ensureInitialized() {
   m_engine.load(QUrl(QStringLiteral("qrc:/Vicinae/SettingsWindow.qml")));
 
   auto rootObjects = m_engine.rootObjects();
-  if (!rootObjects.isEmpty()) {
-    m_window = qobject_cast<QQuickWindow *>(rootObjects.first());
-  }
+  if (!rootObjects.isEmpty()) { m_window = qobject_cast<QQuickWindow *>(rootObjects.first()); }
 
   if (m_window) {
     connect(m_window, &QQuickWindow::visibleChanged, this, [this](bool visible) {
@@ -68,9 +66,7 @@ QString QmlSettingsWindow::commitHash() const { return QStringLiteral(VICINAE_GI
 QString QmlSettingsWindow::buildInfo() const { return QStringLiteral(BUILD_INFO); }
 QString QmlSettingsWindow::headline() const { return Omnicast::HEADLINE; }
 
-void QmlSettingsWindow::openUrl(const QString &url) {
-  m_ctx.services->appDb()->openTarget(url);
-}
+void QmlSettingsWindow::openUrl(const QString &url) { m_ctx.services->appDb()->openTarget(url); }
 
 void QmlSettingsWindow::close() {
   if (m_window) m_window->hide();
