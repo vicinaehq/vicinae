@@ -38,15 +38,17 @@ FocusScope {
         border.color: Theme.mainWindowBorder
         border.width: Config.borderWidth
 
-        opacity: actionPanel.open ? 1 : 0
-        scale: actionPanel.open ? 1.0 : 0.95
+        opacity: 0
+        scale: 0.95
         transformOrigin: Item.BottomRight
 
-        Behavior on opacity {
-            NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
+        states: State {
+            name: "open"; when: actionPanel.open
+            PropertyChanges { target: panel; opacity: 1; scale: 1.0 }
         }
-        Behavior on scale {
-            NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
+        transitions: Transition {
+            to: "open"
+            NumberAnimation { properties: "opacity,scale"; duration: 150; easing.type: Easing.OutCubic }
         }
 
         layer.enabled: true
