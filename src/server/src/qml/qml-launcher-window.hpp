@@ -99,6 +99,8 @@ private:
   void handleViewPoped(const BaseView *view);
   void setCompacted(bool value);
   void tryCompaction();
+  void updateBlur();
+  void applyWindowConfig();
 
   ApplicationContext &m_ctx;
   QQmlApplicationEngine m_engine;

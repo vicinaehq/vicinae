@@ -14,6 +14,10 @@
 #include "services/toast/toast-service.hpp"
 #include "config/config.hpp"
 #include "service-registry.hpp"
+#include "services/background-effect/background-effect-manager.hpp"
+#include "services/window-manager/window-manager.hpp"
+#include "environment.hpp"
+#include "vicinae.hpp"
 #include "lib/keyboard/keyboard.hpp"
 #include "ui/views/base-view.hpp"
 #include <QGuiApplication>
@@ -21,6 +25,9 @@
 #include <QQuickWindow>
 #include <QWindow>
 #include <QKeyEvent>
+#ifdef WAYLAND_LAYER_SHELL
+#include <LayerShellQt/Window>
+#endif
 
 QmlLauncherWindow::QmlLauncherWindow(ApplicationContext &ctx, QObject *parent)
     : QObject(parent), m_ctx(ctx) {
@@ -56,6 +63,8 @@ QmlLauncherWindow::QmlLauncherWindow(ApplicationContext &ctx, QObject *parent)
   if (!rootObjects.isEmpty()) {
     m_window = qobject_cast<QQuickWindow *>(rootObjects.first());
   }
+
+  applyWindowConfig();
 
   auto *nav = ctx.navigation.get();
 
@@ -212,15 +221,19 @@ QmlLauncherWindow::QmlLauncherWindow(ApplicationContext &ctx, QObject *parent)
     emit toastActiveChanged();
   });
 
-  // Config changes — compact mode toggle
+  // Config changes
   connect(m_ctx.services->config(), &config::Manager::configChanged,
-          this, [this](const auto &, const auto &) { tryCompaction(); });
+          this, [this](const auto &, const auto &) {
+            applyWindowConfig();
+            tryCompaction();
+          });
 }
 
 void QmlLauncherWindow::handleVisibilityChanged(bool visible) {
   if (!m_window) return;
 
   if (visible) {
+    applyWindowConfig();
     tryCompaction();
     m_window->show();
     m_window->raise();
@@ -368,6 +381,7 @@ void QmlLauncherWindow::setCompacted(bool value) {
   if (m_compacted == value) return;
   m_compacted = value;
   emit compactedChanged();
+  updateBlur();
 }
 
 void QmlLauncherWindow::tryCompaction() {
@@ -375,5 +389,46 @@ void QmlLauncherWindow::tryCompaction() {
   setCompacted(cfg.enabled &&
                m_ctx.navigation->searchText().isEmpty() &&
                m_ctx.navigation->viewStackSize() == 1);
+}
+
+void QmlLauncherWindow::updateBlur() {
+  if (!m_window) return;
+  auto &cfg = m_ctx.services->config()->value().launcherWindow;
+  auto *bgEffect = m_ctx.services->backgroundEffectManager();
+  int rounding = cfg.clientSideDecorations.enabled ? cfg.clientSideDecorations.rounding : 0;
+
+  if (!bgEffect->supportsBlur()) return;
+
+  if (cfg.blur.enabled) {
+    QRect region(0, 0, m_window->width(), m_window->height());
+    if (m_compacted) region.setHeight(60 + 2 * cfg.clientSideDecorations.borderWidth);
+    bgEffect->setBlur(m_window, {.radius = rounding, .region = region});
+  } else {
+    bgEffect->clearBlur(m_window);
+  }
+}
+
+void QmlLauncherWindow::applyWindowConfig() {
+  if (!m_window) return;
+  auto &cfg = m_ctx.services->config()->value().launcherWindow;
+
+  updateBlur();
+  m_ctx.services->windowManager()->provider()->setDimAround(cfg.dimAround);
+
+#ifdef WAYLAND_LAYER_SHELL
+  const auto &lc = cfg.layerShell;
+  if (Environment::isLayerShellSupported() && lc.enabled) {
+    namespace Shell = LayerShellQt;
+    if (auto *lshell = Shell::Window::get(m_window)) {
+      lshell->setLayer(lc.layer == "overlay" ? Shell::Window::LayerOverlay : Shell::Window::LayerTop);
+      lshell->setScope(Omnicast::LAYER_SCOPE);
+      lshell->setScreenConfiguration(Shell::Window::ScreenFromCompositor);
+      lshell->setAnchors(Shell::Window::AnchorNone);
+      lshell->setKeyboardInteractivity(lc.keyboardInteractivity == "exclusive"
+                                           ? Shell::Window::KeyboardInteractivityExclusive
+                                           : Shell::Window::KeyboardInteractivityOnDemand);
+    }
+  }
+#endif
 }
 
