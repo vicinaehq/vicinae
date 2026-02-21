@@ -166,8 +166,19 @@ QString EmojiGridModel::emojiName(int section, int item) const {
   return qStringFromStdView(data->name);
 }
 
-QString EmojiGridModel::cellTooltip(int section, int item) const {
-  return emojiName(section, item);
+QString EmojiGridModel::cellTooltip(int section, int item) const { return emojiName(section, item); }
+
+void EmojiGridModel::onItemSelected(int section, int item) { updateNavigationTitle(); }
+
+void EmojiGridModel::onSelectionCleared() {
+  CommandGridModel::onSelectionCleared();
+  updateNavigationTitle();
+}
+
+void EmojiGridModel::updateNavigationTitle() {
+  auto name = emojiName(selectedSection(), selectedItem());
+  ctx()->navigation->setNavigationTitle(name.isEmpty() ? QStringLiteral("Search Emojis")
+                                                       : QStringLiteral("Search Emojis - %1").arg(name));
 }
 
 std::unique_ptr<ActionPanelState> EmojiGridModel::createActionPanel(int section, int item) const {

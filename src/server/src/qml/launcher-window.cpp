@@ -30,8 +30,7 @@
 #include <LayerShellQt/Window>
 #endif
 
-LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
-    : QObject(parent), m_ctx(ctx) {
+LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent) : QObject(parent), m_ctx(ctx) {
 
   // Ensure Wayland app_id / X11 WM_CLASS is "vicinae"
   QGuiApplication::setDesktopFileName(QStringLiteral("vicinae"));
@@ -61,9 +60,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   m_engine.load(QUrl(QStringLiteral("qrc:/Vicinae/LauncherWindow.qml")));
 
   auto rootObjects = m_engine.rootObjects();
-  if (!rootObjects.isEmpty()) {
-    m_window = qobject_cast<QQuickWindow *>(rootObjects.first());
-  }
+  if (!rootObjects.isEmpty()) { m_window = qobject_cast<QQuickWindow *>(rootObjects.first()); }
 
   applyWindowConfig();
 
@@ -71,135 +68,118 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
 
   // Track window activation so toggleWindow() and closeOnFocusLoss work correctly
   if (m_window) {
-    connect(m_window, &QQuickWindow::activeChanged, this, [this]() {
-      m_ctx.navigation->setWindowActivated(m_window->isActive());
-    });
+    connect(m_window, &QQuickWindow::activeChanged, this,
+            [this]() { m_ctx.navigation->setWindowActivated(m_window->isActive()); });
   }
 
-  connect(nav, &NavigationController::windowVisiblityChanged,
-          this, &LauncherWindow::handleVisibilityChanged);
+  connect(nav, &NavigationController::windowVisiblityChanged, this, &LauncherWindow::handleVisibilityChanged);
 
   // View lifecycle — viewPoped fires BEFORE ViewState is destroyed
-  connect(nav, &NavigationController::viewPoped,
-          this, &LauncherWindow::handleViewPoped);
+  connect(nav, &NavigationController::viewPoped, this, &LauncherWindow::handleViewPoped);
 
   // currentViewChanged fires after view push/pop to indicate the new active view
-  connect(nav, &NavigationController::currentViewChanged,
-          this, [this](const NavigationController::ViewState &) {
-            handleCurrentViewChanged();
-          });
+  connect(nav, &NavigationController::currentViewChanged, this,
+          [this](const NavigationController::ViewState &) { handleCurrentViewChanged(); });
 
-  connect(nav, &NavigationController::loadingChanged,
-          this, [this](bool loading) {
-            if (m_isLoading != loading) {
-              m_isLoading = loading;
-              emit isLoadingChanged();
-            }
-          });
+  connect(nav, &NavigationController::loadingChanged, this, [this](bool loading) {
+    if (m_isLoading != loading) {
+      m_isLoading = loading;
+      emit isLoadingChanged();
+    }
+  });
 
   // Search visibility (for views that don't support search, e.g. form views)
-  connect(nav, &NavigationController::searchVisibilityChanged,
-          this, [this](bool visible) {
-            if (m_searchVisible != visible) {
-              m_searchVisible = visible;
-              emit searchVisibleChanged();
-            }
-          });
+  connect(nav, &NavigationController::searchVisibilityChanged, this, [this](bool visible) {
+    if (m_searchVisible != visible) {
+      m_searchVisible = visible;
+      emit searchVisibleChanged();
+    }
+  });
 
   // Search interactivity (for form views: bar visible but input disabled)
-  connect(nav, &NavigationController::searchInteractiveChanged,
-          this, [this](bool interactive) {
-            if (m_searchInteractive != interactive) {
-              m_searchInteractive = interactive;
-              emit searchInteractiveChanged();
-            }
-          });
+  connect(nav, &NavigationController::searchInteractiveChanged, this, [this](bool interactive) {
+    if (m_searchInteractive != interactive) {
+      m_searchInteractive = interactive;
+      emit searchInteractiveChanged();
+    }
+  });
 
   // Search state — programmatic text changes (e.g. from extensions)
-  connect(nav, &NavigationController::searchTextTampered,
-          this, [this](const QString &text) {
-            emit searchTextUpdated(text);
-            tryCompaction();
-          });
+  connect(nav, &NavigationController::searchTextTampered, this, [this](const QString &text) {
+    emit searchTextUpdated(text);
+    tryCompaction();
+  });
 
-  connect(nav, &NavigationController::searchPlaceholderTextChanged,
-          this, [this](const QString &text) {
-            if (m_searchPlaceholder != text) {
-              m_searchPlaceholder = text;
-              emit searchPlaceholderChanged();
-            }
-          });
+  connect(nav, &NavigationController::searchPlaceholderTextChanged, this, [this](const QString &text) {
+    if (m_searchPlaceholder != text) {
+      m_searchPlaceholder = text;
+      emit searchPlaceholderChanged();
+    }
+  });
 
-  connect(nav, &NavigationController::actionsChanged,
-          this, [this](const ActionPanelState &state) {
-            m_actionPanel->setStateFrom(state);
-          });
+  connect(nav, &NavigationController::actionsChanged, this,
+          [this](const ActionPanelState &state) { m_actionPanel->setStateFrom(state); });
 
-  connect(nav, &NavigationController::viewPushed,
-          this, [this](const BaseView *) { m_actionPanel->close(); });
+  connect(nav, &NavigationController::viewPushed, this, [this](const BaseView *) { m_actionPanel->close(); });
 
   connect(nav, &NavigationController::navigationStatusChanged, this,
           [this](const QString &title, const ImageURL &icon) {
+            qDebug() << "[NAV] title changed" << title;
             m_navigationTitle = title;
             m_navigationIcon = ImageUrl(icon);
             emit navigationStatusChanged();
           });
 
-  connect(nav, &NavigationController::completionCreated,
-          this, [this](const CompleterState &state) {
-            m_hasCompleter = true;
-            m_completerArgs.clear();
-            for (const auto &arg : state.args) {
-              QVariantMap map;
-              map[QStringLiteral("name")] = arg.name;
-              map[QStringLiteral("placeholder")] = arg.placeholder;
-              map[QStringLiteral("required")] = arg.required;
-              map[QStringLiteral("type")] = arg.type == CommandArgument::Password ? QStringLiteral("password")
-                                          : arg.type == CommandArgument::Dropdown ? QStringLiteral("dropdown")
-                                          : QStringLiteral("text");
-              if (arg.data) {
-                QVariantList items;
-                for (const auto &d : *arg.data) {
-                  items.append(QVariantMap{{QStringLiteral("title"), d.title},
-                                          {QStringLiteral("value"), d.value}});
-                }
-                map[QStringLiteral("data")] = items;
-              }
-              m_completerArgs.append(map);
-            }
-            m_completerIcon = qml::imageSourceFor(state.icon);
-            // Initialize values from state (may already have values from restore)
-            m_completerValues.clear();
-            for (const auto &arg : state.args) {
-              m_completerValues.append(QVariantMap{{QStringLiteral("name"), arg.name},
-                                                  {QStringLiteral("value"), QString()}});
-            }
-            emit completerChanged();
-            emit completerValuesChanged();
-          });
+  connect(nav, &NavigationController::completionCreated, this, [this](const CompleterState &state) {
+    m_hasCompleter = true;
+    m_completerArgs.clear();
+    for (const auto &arg : state.args) {
+      QVariantMap map;
+      map[QStringLiteral("name")] = arg.name;
+      map[QStringLiteral("placeholder")] = arg.placeholder;
+      map[QStringLiteral("required")] = arg.required;
+      map[QStringLiteral("type")] = arg.type == CommandArgument::Password   ? QStringLiteral("password")
+                                    : arg.type == CommandArgument::Dropdown ? QStringLiteral("dropdown")
+                                                                            : QStringLiteral("text");
+      if (arg.data) {
+        QVariantList items;
+        for (const auto &d : *arg.data) {
+          items.append(QVariantMap{{QStringLiteral("title"), d.title}, {QStringLiteral("value"), d.value}});
+        }
+        map[QStringLiteral("data")] = items;
+      }
+      m_completerArgs.append(map);
+    }
+    m_completerIcon = qml::imageSourceFor(state.icon);
+    // Initialize values from state (may already have values from restore)
+    m_completerValues.clear();
+    for (const auto &arg : state.args) {
+      m_completerValues.append(
+          QVariantMap{{QStringLiteral("name"), arg.name}, {QStringLiteral("value"), QString()}});
+    }
+    emit completerChanged();
+    emit completerValuesChanged();
+  });
 
-  connect(nav, &NavigationController::completionDestroyed,
-          this, [this]() {
-            m_hasCompleter = false;
-            m_completerArgs.clear();
-            m_completerIcon.clear();
-            m_completerValues.clear();
-            emit completerChanged();
-            emit completerValuesChanged();
-          });
+  connect(nav, &NavigationController::completionDestroyed, this, [this]() {
+    m_hasCompleter = false;
+    m_completerArgs.clear();
+    m_completerIcon.clear();
+    m_completerValues.clear();
+    emit completerChanged();
+    emit completerValuesChanged();
+  });
 
-  connect(nav, &NavigationController::completionValuesChanged,
-          this, [this](const ArgumentValues &values) {
-            m_completerValues.clear();
-            for (const auto &[name, value] : values) {
-              m_completerValues.append(QVariantMap{{QStringLiteral("name"), name},
-                                                  {QStringLiteral("value"), value}});
-            }
-            emit completerValuesChanged();
-          });
+  connect(nav, &NavigationController::completionValuesChanged, this, [this](const ArgumentValues &values) {
+    m_completerValues.clear();
+    for (const auto &[name, value] : values) {
+      m_completerValues.append(QVariantMap{{QStringLiteral("name"), name}, {QStringLiteral("value"), value}});
+    }
+    emit completerValuesChanged();
+  });
 
-  connect(nav, &NavigationController::invalidCompletionFired,
-          this, &LauncherWindow::completerValidationFailed);
+  connect(nav, &NavigationController::invalidCompletionFired, this,
+          &LauncherWindow::completerValidationFailed);
 
   auto *toast = m_ctx.services->toastService();
   connect(toast, &ToastService::toastActivated, this, [this](const Toast *t) {
@@ -215,8 +195,8 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
     emit toastActiveChanged();
   });
 
-  connect(m_ctx.services->config(), &config::Manager::configChanged,
-          this, [this](const auto &, const auto &) {
+  connect(m_ctx.services->config(), &config::Manager::configChanged, this,
+          [this](const auto &, const auto &) {
             applyWindowConfig();
             tryCompaction();
           });
@@ -287,14 +267,14 @@ void LauncherWindow::handleCurrentViewChanged() {
   if (!bridge) return;
 
   disconnect(m_searchAccessoryConnection);
-  m_searchAccessoryConnection = connect(bridge, &ViewHostBase::searchAccessoryUrlChanged,
-                                        this, [this, bridge]() {
-    auto url = bridge->qmlSearchAccessoryUrl();
-    if (m_searchAccessoryUrl != url) {
-      m_searchAccessoryUrl = url;
-      emit searchAccessoryChanged();
-    }
-  });
+  m_searchAccessoryConnection =
+      connect(bridge, &ViewHostBase::searchAccessoryUrlChanged, this, [this, bridge]() {
+        auto url = bridge->qmlSearchAccessoryUrl();
+        if (m_searchAccessoryUrl != url) {
+          m_searchAccessoryUrl = url;
+          emit searchAccessoryChanged();
+        }
+      });
 
   auto newAccessoryUrl = bridge->qmlSearchAccessoryUrl();
   if (m_searchAccessoryUrl != newAccessoryUrl) {
@@ -350,8 +330,7 @@ bool LauncherWindow::forwardKey(int key, int modifiers) {
   }
 
   // Open search accessory selector (e.g. clipboard kind filter dropdown)
-  if (Keyboard::Shortcut(Keybind::OpenSearchAccessorySelector) == &event
-      && !m_searchAccessoryUrl.isEmpty()) {
+  if (Keyboard::Shortcut(Keybind::OpenSearchAccessorySelector) == &event && !m_searchAccessoryUrl.isEmpty()) {
     emit openSearchAccessoryRequested();
     return true;
   }
@@ -369,9 +348,7 @@ void LauncherWindow::popToRoot() {
   emit viewNavigatedBack();
 }
 
-bool LauncherWindow::tryAliasFastTrack() {
-  return m_searchModel->tryAliasFastTrack();
-}
+bool LauncherWindow::tryAliasFastTrack() { return m_searchModel->tryAliasFastTrack(); }
 
 void LauncherWindow::setCompleterValue(int index, const QString &value) {
   auto *nav = m_ctx.navigation.get();
@@ -392,8 +369,7 @@ void LauncherWindow::setCompacted(bool value) {
 
 void LauncherWindow::tryCompaction() {
   auto &cfg = m_ctx.services->config()->value().launcherWindow.compactMode;
-  setCompacted(cfg.enabled &&
-               m_ctx.navigation->searchText().isEmpty() &&
+  setCompacted(cfg.enabled && m_ctx.navigation->searchText().isEmpty() &&
                m_ctx.navigation->viewStackSize() == 1);
 }
 
@@ -437,4 +413,3 @@ void LauncherWindow::applyWindowConfig() {
   }
 #endif
 }
-

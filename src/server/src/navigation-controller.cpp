@@ -155,8 +155,7 @@ void NavigationController::createCompletion(const ArgumentList &args, const Imag
   if (auto state = topState()) {
     // Limit arguments to what the UI can display
     auto truncated = args;
-    if (static_cast<int>(truncated.size()) > MAX_COMPLETER_ARGS)
-      truncated.resize(MAX_COMPLETER_ARGS);
+    if (static_cast<int>(truncated.size()) > MAX_COMPLETER_ARGS) truncated.resize(MAX_COMPLETER_ARGS);
 
     CompleterState completer(truncated, icon);
 
@@ -417,7 +416,10 @@ void NavigationController::executeAction(AbstractAction *action) {
   if (auto &panel = state->actionPanelState) {
     for (const auto &sec : panel->sections()) {
       for (const auto &a : sec->m_actions) {
-        if (a.get() == action) { guard = a; break; }
+        if (a.get() == action) {
+          guard = a;
+          break;
+        }
       }
       if (guard) break;
     }
@@ -467,7 +469,6 @@ void NavigationController::activateView(const ViewState &state) {
   emit searchInteractiveChanged(state.searchInteractive);
   emit statusBarVisiblityChanged(state.needsStatusBar);
   emit loadingChanged(state.isLoading);
-  emit navigationStatusChanged(state.navigation.title, state.navigation.icon);
   emit actionsChanged({});
   emit searchTextTampered(state.searchText);
   emit searchPlaceholderTextChanged(state.placeholderText);
@@ -477,6 +478,8 @@ void NavigationController::activateView(const ViewState &state) {
   state.sender->activate();
 
   emit currentViewChanged(state);
+  qDebug() << "set nav title" << state.navigation.title;
+  emit navigationStatusChanged(state.navigation.title, state.navigation.icon);
 }
 
 void NavigationController::replaceView(BaseView *view) {

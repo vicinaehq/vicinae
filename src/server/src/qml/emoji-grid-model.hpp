@@ -20,12 +20,15 @@ public:
 
 protected:
   std::unique_ptr<ActionPanelState> createActionPanel(int section, int item) const override;
+  void onItemSelected(int section, int item) override;
+  void onSelectionCleared() override;
 
 private:
   enum class DisplayMode { Root, Search };
 
   void regenerateMetaSections();
   void rebuildSections();
+  void updateNavigationTitle();
   const EmojiData *emojiAt(int section, int item) const;
 
   EmojiService *m_emojiService = nullptr;

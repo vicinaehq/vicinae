@@ -15,11 +15,7 @@ public:
   SingleViewCommand(const std::shared_ptr<AbstractCmd> &command) : CommandContext(command) {}
 
   void load(const LaunchProps &props) override {
-    auto &nav = context()->navigation;
-
-    nav->pushView(new T());
-    nav->setNavigationTitle(command()->navigationTitle());
-    nav->setNavigationIcon(command()->navigationIcon());
+    context()->navigation->pushView(new T());
   }
 };
 
