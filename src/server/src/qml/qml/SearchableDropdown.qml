@@ -140,7 +140,7 @@ Item {
             spacing: 6
 
             ViciImage {
-                visible: !compact && root.currentItem && root.currentItem.iconSource
+                visible: root.currentItem && root.currentItem.iconSource
                          ? true : false
                 source: visible ? root.currentItem.iconSource : ""
                 Layout.preferredWidth: 16

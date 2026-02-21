@@ -724,6 +724,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/FormFilePicker.qml
 	src/qml/qml/FormDateInput.qml
 	src/qml/qml/FormLinkAccessory.qml
+	src/qml/qml/ExtensionDropdownAccessory.qml
 	src/qml/qml/EditKeywordsFormView.qml
 	src/qml/qml/HorizontalLoadingBar.qml
 	src/qml/qml/SearchFilesView.qml

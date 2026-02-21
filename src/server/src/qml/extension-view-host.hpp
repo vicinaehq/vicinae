@@ -20,6 +20,9 @@ class ExtensionViewHost : public ViewHostBase {
   Q_PROPERTY(bool suppressEmptyView READ suppressEmptyView NOTIFY suppressEmptyViewChanged)
   Q_PROPERTY(QString linkAccessoryText READ linkAccessoryText NOTIFY linkAccessoryChanged)
   Q_PROPERTY(QString linkAccessoryHref READ linkAccessoryHref NOTIFY linkAccessoryChanged)
+  Q_PROPERTY(QVariantList dropdownItems READ dropdownItems NOTIFY dropdownChanged)
+  Q_PROPERTY(QVariant dropdownCurrentItem READ dropdownCurrentItem NOTIFY dropdownChanged)
+  Q_PROPERTY(QString dropdownPlaceholder READ dropdownPlaceholder NOTIFY dropdownChanged)
 
 public:
   explicit ExtensionViewHost(ExtensionCommandController *controller, QObject *parent = nullptr);
@@ -46,6 +49,11 @@ public:
   bool suppressEmptyView() const { return m_isLoading && !m_hasSearchText; }
   QString linkAccessoryText() const;
   QString linkAccessoryHref() const;
+  QVariantList dropdownItems() const { return m_dropdownItems; }
+  QVariant dropdownCurrentItem() const { return m_dropdownCurrentItem; }
+  QString dropdownPlaceholder() const { return m_dropdownPlaceholder; }
+
+  Q_INVOKABLE void setDropdownValue(const QString &value);
 
 signals:
   void selectFirstOnResetChanged();
@@ -56,6 +64,7 @@ signals:
   void formModelChanged();
   void suppressEmptyViewChanged();
   void linkAccessoryChanged();
+  void dropdownChanged();
 
 private:
   void handleFirstRender(const RenderModel &model);
@@ -65,6 +74,7 @@ private:
   void renderForm(const FormModel &model);
   void notifyExtension(const QString &handler, const QJsonArray &args);
   void handleDebouncedSearch();
+  void updateDropdown(const DropdownModel *dropdown);
 
   ExtensionCommandController *m_controller;
   ExtensionListModel *m_listModel = nullptr;
@@ -91,4 +101,10 @@ private:
   std::optional<ActionPannelModel> m_formActions;
   QString m_linkAccessoryText;
   QString m_linkAccessoryHref;
+
+  QVariantList m_dropdownItems;
+  QVariant m_dropdownCurrentItem;
+  QString m_dropdownValue;
+  QString m_dropdownPlaceholder;
+  std::optional<QString> m_dropdownOnChange;
 };
