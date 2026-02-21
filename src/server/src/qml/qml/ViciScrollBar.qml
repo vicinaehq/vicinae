@@ -6,6 +6,7 @@ ScrollBar {
 
     contentItem: Rectangle {
         implicitWidth: 6
+        implicitHeight: 6
         radius: 3
         color: Theme.scrollBarBackground
         opacity: control.active ? 1.0 : 0.0

@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import Vicinae
 
@@ -133,20 +134,35 @@ Rectangle {
             }
         }
 
-        // Code content
-        TextEdit {
-            id: codeEdit
+        Flickable {
+            id: codeFlickable
             Layout.fillWidth: true
             Layout.margins: 10
-            readOnly: true
-            selectionColor: Theme.textSelectionBg
-            selectedTextColor: Theme.textSelectionFg
-            textFormat: TextEdit.RichText
-            wrapMode: TextEdit.Wrap
-            color: Theme.foreground
-            font.family: "monospace"
-            font.pointSize: Theme.regularFontSize * 0.95
-            text: root.highlightedHtml
+            implicitHeight: codeEdit.contentHeight
+            contentWidth: Math.max(width, codeEdit.contentWidth)
+            contentHeight: codeEdit.contentHeight
+            clip: true
+            interactive: false
+            boundsBehavior: Flickable.StopAtBounds
+
+            ScrollBar.horizontal: ViciScrollBar {
+                policy: codeFlickable.contentWidth > codeFlickable.width
+                        ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+            }
+
+            TextEdit {
+                id: codeEdit
+                width: Math.max(codeFlickable.width, contentWidth)
+                readOnly: true
+                selectionColor: Theme.textSelectionBg
+                selectedTextColor: Theme.textSelectionFg
+                textFormat: TextEdit.RichText
+                wrapMode: TextEdit.NoWrap
+                color: Theme.foreground
+                font.family: "monospace"
+                font.pointSize: Theme.regularFontSize * 0.95
+                text: root.highlightedHtml
+            }
         }
     }
 
