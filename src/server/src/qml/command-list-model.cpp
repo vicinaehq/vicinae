@@ -128,6 +128,7 @@ void CommandListModel::setSections(const std::vector<SectionInfo> &sections) {
     m_sectionInfos = sections;
     m_flat = std::move(newFlat);
     m_selectedIndex = -1;
+    m_lastSelectedItemId.clear();
     endResetModel();
     return;
   }
