@@ -91,6 +91,7 @@ Item {
             Text {
                 text: "<a href=\"" + (entry.url || "") + "\">" + (entry.value || "") + "</a>"
                 color: Theme.accent
+                linkColor: Theme.accent
                 font.pointSize: Theme.smallerFontSize
                 textFormat: Text.RichText
                 elide: Text.ElideMiddle

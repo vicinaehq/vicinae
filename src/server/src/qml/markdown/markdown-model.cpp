@@ -53,75 +53,82 @@ struct InlineContext {
   const QString &textColor;
 };
 
-QString renderInlineHtml(cmark_node *node, const InlineContext &ctx) {
+QString renderInlineHtml(cmark_node *node, const InlineContext &ctx);
+
+QString renderOneInline(cmark_node *cur, const InlineContext &ctx) {
   QString result;
 
-  for (auto *cur = node; cur; cur = cmark_node_next(cur)) {
-    switch (cmark_node_get_type(cur)) {
-    case CMARK_NODE_TEXT:
-      result += QString::fromUtf8(cmark_node_get_literal(cur)).toHtmlEscaped();
-      break;
+  switch (cmark_node_get_type(cur)) {
+  case CMARK_NODE_TEXT:
+    result += QString::fromUtf8(cmark_node_get_literal(cur)).toHtmlEscaped();
+    break;
 
-    case CMARK_NODE_SOFTBREAK:
-      result += ' ';
-      break;
+  case CMARK_NODE_SOFTBREAK:
+    result += ' ';
+    break;
 
-    case CMARK_NODE_LINEBREAK:
-      result += QStringLiteral("<br/>");
-      break;
+  case CMARK_NODE_LINEBREAK:
+    result += QStringLiteral("<br/>");
+    break;
 
-    case CMARK_NODE_CODE:
-      result += QStringLiteral("<code style=\"color:%1;background:%2;"
-                               "padding:1px 4px;border-radius:3px;"
-                               "font-family:monospace;\">")
-                    .arg(ctx.inlineCodeFg, ctx.inlineCodeBg);
-      result += QString::fromUtf8(cmark_node_get_literal(cur)).toHtmlEscaped();
-      result += QStringLiteral("</code>");
-      break;
+  case CMARK_NODE_CODE:
+    result += QStringLiteral("<code style=\"color:%1;background:%2;"
+                             "padding:1px 4px;border-radius:3px;"
+                             "font-family:monospace;\">")
+                  .arg(ctx.inlineCodeFg, ctx.inlineCodeBg);
+    result += QString::fromUtf8(cmark_node_get_literal(cur)).toHtmlEscaped();
+    result += QStringLiteral("</code>");
+    break;
 
-    case CMARK_NODE_STRONG:
-      result += QStringLiteral("<b>");
-      result += renderInlineHtml(cmark_node_first_child(cur), ctx);
-      result += QStringLiteral("</b>");
-      break;
+  case CMARK_NODE_STRONG:
+    result += QStringLiteral("<b>");
+    result += renderInlineHtml(cmark_node_first_child(cur), ctx);
+    result += QStringLiteral("</b>");
+    break;
 
-    case CMARK_NODE_EMPH:
-      result += QStringLiteral("<i>");
-      result += renderInlineHtml(cmark_node_first_child(cur), ctx);
-      result += QStringLiteral("</i>");
-      break;
+  case CMARK_NODE_EMPH:
+    result += QStringLiteral("<i>");
+    result += renderInlineHtml(cmark_node_first_child(cur), ctx);
+    result += QStringLiteral("</i>");
+    break;
 
-    case CMARK_NODE_LINK:
-      result += QStringLiteral("<a href=\"%1\" style=\"color:%2;\">")
-                    .arg(QString::fromUtf8(cmark_node_get_url(cur)).toHtmlEscaped(), ctx.linkColor);
-      result += renderInlineHtml(cmark_node_first_child(cur), ctx);
-      result += QStringLiteral("</a>");
-      break;
+  case CMARK_NODE_LINK:
+    result += QStringLiteral("<a href=\"%1\" style=\"color:%2;\">")
+                  .arg(QString::fromUtf8(cmark_node_get_url(cur)).toHtmlEscaped(), ctx.linkColor);
+    result += renderInlineHtml(cmark_node_first_child(cur), ctx);
+    result += QStringLiteral("</a>");
+    break;
 
-    case CMARK_NODE_IMAGE: {
-      auto src = imageProviderUrl(QString::fromUtf8(cmark_node_get_url(cur)));
-      auto alt = QString::fromUtf8(cmark_node_get_title(cur));
-      result += QStringLiteral("<img src=\"%1\" alt=\"%2\"/>").arg(src.toHtmlEscaped(), alt.toHtmlEscaped());
-      break;
-    }
-
-    case CMARK_NODE_HTML_INLINE:
-      result += QString::fromUtf8(cmark_node_get_literal(cur));
-      break;
-
-    default:
-      // GFM strikethrough extension
-      if (std::strcmp(cmark_node_get_type_string(cur), "strikethrough") == 0) {
-        result += QStringLiteral("<s>");
-        result += renderInlineHtml(cmark_node_first_child(cur), ctx);
-        result += QStringLiteral("</s>");
-      } else {
-        result += renderInlineHtml(cmark_node_first_child(cur), ctx);
-      }
-      break;
-    }
+  case CMARK_NODE_IMAGE: {
+    auto src = imageProviderUrl(QString::fromUtf8(cmark_node_get_url(cur)));
+    auto alt = QString::fromUtf8(cmark_node_get_title(cur));
+    result += QStringLiteral("<img src=\"%1\" alt=\"%2\"/>").arg(src.toHtmlEscaped(), alt.toHtmlEscaped());
+    break;
   }
 
+  case CMARK_NODE_HTML_INLINE:
+    result += QString::fromUtf8(cmark_node_get_literal(cur));
+    break;
+
+  default:
+    // GFM strikethrough extension
+    if (std::strcmp(cmark_node_get_type_string(cur), "strikethrough") == 0) {
+      result += QStringLiteral("<s>");
+      result += renderInlineHtml(cmark_node_first_child(cur), ctx);
+      result += QStringLiteral("</s>");
+    } else {
+      result += renderInlineHtml(cmark_node_first_child(cur), ctx);
+    }
+    break;
+  }
+
+  return result;
+}
+
+QString renderInlineHtml(cmark_node *node, const InlineContext &ctx) {
+  QString result;
+  for (auto *cur = node; cur; cur = cmark_node_next(cur))
+    result += renderOneInline(cur, ctx);
   return result;
 }
 
@@ -353,29 +360,61 @@ void MarkdownModel::setMarkdown(const QString &markdown) {
 
     switch (type) {
     case CMARK_NODE_PARAGRAPH: {
-      auto *first = cmark_node_first_child(node);
-      bool onlyChild = first && !cmark_node_next(first);
-
-      if (onlyChild && cmark_node_get_type(first) == CMARK_NODE_IMAGE) {
-        // Paragraph contains only an image → block image
-        m_blocks.push_back({MdBlockType::Image, buildImageBlock(first)});
-      } else if (onlyChild && cmark_node_get_type(first) == CMARK_NODE_LINK) {
-        // Check for linked image: [![alt](img)](link)
-        auto *linkChild = cmark_node_first_child(first);
-        if (linkChild && !cmark_node_next(linkChild) && cmark_node_get_type(linkChild) == CMARK_NODE_IMAGE) {
-          auto data = buildImageBlock(linkChild);
-          data[QStringLiteral("link")] = QString::fromUtf8(cmark_node_get_url(first));
-          m_blocks.push_back({MdBlockType::Image, data});
-        } else {
-          QVariantMap data;
-          data[QStringLiteral("html")] = renderInlineChildren(node, ctx);
-          m_blocks.push_back({MdBlockType::Paragraph, data});
+      // Check if paragraph contains any images
+      bool hasImage = false;
+      for (auto *c = cmark_node_first_child(node); c; c = cmark_node_next(c)) {
+        auto ct = cmark_node_get_type(c);
+        if (ct == CMARK_NODE_IMAGE) { hasImage = true; break; }
+        if (ct == CMARK_NODE_LINK) {
+          auto *lc = cmark_node_first_child(c);
+          if (lc && !cmark_node_next(lc) && cmark_node_get_type(lc) == CMARK_NODE_IMAGE) {
+            hasImage = true; break;
+          }
         }
-      } else {
+      }
+
+      if (!hasImage) {
         QVariantMap data;
         data[QStringLiteral("html")] = renderInlineChildren(node, ctx);
         m_blocks.push_back({MdBlockType::Paragraph, data});
+        break;
       }
+
+      // Split paragraph around images — each image becomes a block,
+      // surrounding text becomes separate paragraph blocks.
+      auto flushRun = [this](QString &run) {
+        if (run.trimmed().isEmpty()) { run.clear(); return; }
+        QVariantMap data;
+        data[QStringLiteral("html")] = run;
+        m_blocks.push_back({MdBlockType::Paragraph, data});
+        run.clear();
+      };
+
+      QString run;
+      for (auto *c = cmark_node_first_child(node); c; c = cmark_node_next(c)) {
+        auto ct = cmark_node_get_type(c);
+
+        if (ct == CMARK_NODE_IMAGE) {
+          flushRun(run);
+          m_blocks.push_back({MdBlockType::Image, buildImageBlock(c)});
+          continue;
+        }
+
+        // Linked image: [![alt](img)](link)
+        if (ct == CMARK_NODE_LINK) {
+          auto *lc = cmark_node_first_child(c);
+          if (lc && !cmark_node_next(lc) && cmark_node_get_type(lc) == CMARK_NODE_IMAGE) {
+            flushRun(run);
+            auto data = buildImageBlock(lc);
+            data[QStringLiteral("link")] = QString::fromUtf8(cmark_node_get_url(c));
+            m_blocks.push_back({MdBlockType::Image, data});
+            continue;
+          }
+        }
+
+        run += renderOneInline(c, ctx);
+      }
+      flushRun(run);
       break;
     }
 
