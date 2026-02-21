@@ -10,6 +10,7 @@ Item {
     property int blockIndex: -1
     property var selectionController: null
     property bool selected: false
+    property real maxImageHeight: 0
 
     readonly property int requestedWidth: blockData.width ?? 0
     readonly property int requestedHeight: blockData.height ?? 0
@@ -35,11 +36,12 @@ Item {
                 if (root.requestedHeight > 0) return root.requestedHeight
                 return root.width
             }
-            readonly property int imgH: {
+            readonly property int _rawH: {
                 if (root.requestedHeight > 0) return root.requestedHeight
                 if (root.requestedWidth > 0) return root.requestedWidth
                 return 200
             }
+            readonly property int imgH: root.maxImageHeight > 0 ? Math.min(_rawH, 200, root.maxImageHeight) : Math.min(_rawH, 200)
 
             ViciImage {
                 anchors.fill: parent

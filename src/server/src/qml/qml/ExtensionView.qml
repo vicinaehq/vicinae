@@ -107,11 +107,11 @@ Item {
             Component {
                 id: detailPanel
                 DetailPanel {
+                    hasContent: root.host.contentModel.detailMarkdown !== ""
                     metadata: root.host.contentModel.detailMetadata
 
                     MarkdownText {
                         anchors.fill: parent
-                        visible: root.host.contentModel.detailMarkdown !== ""
                         markdown: root.host.contentModel.detailMarkdown
                     }
                 }

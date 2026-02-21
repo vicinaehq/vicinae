@@ -117,6 +117,8 @@ Item {
                             item.ordered = true
                         else if (blockType === bulletList)
                             item.ordered = false
+                        if (blockType === image)
+                            item.maxImageHeight = Qt.binding(function() { return root.height * 0.7 })
                         // Set blockData last — it triggers Repeater creation in
                         // multi-TextEdit blocks, and children need selectionController
                         // to already be set for registration in Component.onCompleted
