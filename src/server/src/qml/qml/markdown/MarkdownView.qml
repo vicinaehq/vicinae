@@ -8,6 +8,7 @@ Item {
 
     required property var model
     property int contentPadding: 12
+    property int topPadding: contentPadding
     property string fontFamily: ""
     property alias contentHeight: flickable.contentHeight
     property var selectionController: null
@@ -51,7 +52,7 @@ Item {
         id: flickable
         anchors.fill: parent
         contentWidth: width
-        contentHeight: col.implicitHeight + root.contentPadding * 2
+        contentHeight: col.implicitHeight + root.topPadding + root.contentPadding
         clip: true
         boundsBehavior: Flickable.StopAtBounds
 
@@ -62,7 +63,7 @@ Item {
         ColumnLayout {
             id: col
             x: root.contentPadding
-            y: root.contentPadding
+            y: root.topPadding
             width: flickable.width - root.contentPadding * 2
             spacing: 8
 

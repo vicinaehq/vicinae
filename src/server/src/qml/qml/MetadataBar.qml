@@ -15,14 +15,15 @@ Item {
 
     Flickable {
         anchors.fill: parent
-        anchors.margins: 10
-        contentHeight: column.implicitHeight
+        contentHeight: column.implicitHeight + 20
         clip: true
         boundsBehavior: Flickable.StopAtBounds
 
         ColumnLayout {
             id: column
-            width: parent.width
+            x: 10
+            y: 10
+            width: parent.width - 20
             spacing: 10
 
             Repeater {

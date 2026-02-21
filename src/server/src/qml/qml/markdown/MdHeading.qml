@@ -26,7 +26,7 @@ TextEdit {
     Binding on font.family { value: root.fontFamily; when: root.fontFamily !== "" }
     font.bold: true
 
-    topPadding: level <= 2 ? 12 : 8
+    topPadding: blockIndex === 0 ? 0 : (level <= 2 ? 12 : 8)
     bottomPadding: level <= 2 ? 8 : 4
 
     text: blockData.html ?? ""

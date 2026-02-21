@@ -112,6 +112,7 @@ Item {
 
                     MarkdownText {
                         anchors.fill: parent
+                        topPadding: 6
                         markdown: root.host.contentModel.detailMarkdown
                     }
                 }

@@ -7,6 +7,7 @@ Item {
 
     property string markdown: ""
     property int contentPadding: 12
+    property int topPadding: contentPadding
     property string fontFamily: ""
     implicitHeight: view.contentHeight
     property alias contentHeight: view.contentHeight
@@ -23,6 +24,7 @@ Item {
         anchors.fill: parent
         model: mdModel
         contentPadding: root.contentPadding
+        topPadding: root.topPadding
         fontFamily: root.fontFamily
     }
 
