@@ -20,6 +20,7 @@ Item {
             FooterToast {
                 visible: launcher.toastActive
                 anchors.verticalCenter: parent.verticalCenter
+                width: parent.width
             }
         }
 
