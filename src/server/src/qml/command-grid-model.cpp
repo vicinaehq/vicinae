@@ -6,6 +6,8 @@ CommandGridModel::CommandGridModel(QObject *parent) : QAbstractListModel(parent)
 
 void CommandGridModel::initialize(ApplicationContext *ctx) { m_ctx = ctx; }
 
+QString CommandGridModel::cellTooltip(int, int) const { return {}; }
+
 int CommandGridModel::rowCount(const QModelIndex &parent) const {
   if (parent.isValid()) return 0;
   return static_cast<int>(m_rows.size());
