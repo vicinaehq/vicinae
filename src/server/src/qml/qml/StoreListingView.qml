@@ -57,7 +57,6 @@ Item {
                         anchors.rightMargin: 16
                         spacing: 15
 
-                        // Extension icon
                         ViciImage {
                             Layout.preferredWidth: 30
                             Layout.preferredHeight: 30
@@ -65,7 +64,6 @@ Item {
                             source: delegateLoader.iconSource
                         }
 
-                        // Title + description
                         ColumnLayout {
                             Layout.fillWidth: true
                             spacing: 2
@@ -89,7 +87,6 @@ Item {
                             }
                         }
 
-                        // Installed badge
                         ViciImage {
                             visible: delegateLoader.isInstalled
                             Layout.preferredWidth: 20
@@ -98,7 +95,6 @@ Item {
                             source: Img.builtin("check-circle").withFillColor(Theme.toastSuccess)
                         }
 
-                        // Download count
                         RowLayout {
                             spacing: 4
                             Layout.alignment: Qt.AlignVCenter
@@ -116,7 +112,6 @@ Item {
                             }
                         }
 
-                        // Author avatar
                         ViciImage {
                             Layout.preferredWidth: 20
                             Layout.preferredHeight: 20

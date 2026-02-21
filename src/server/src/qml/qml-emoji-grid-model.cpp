@@ -7,8 +7,6 @@
 #include "utils.hpp"
 #include <algorithm>
 
-// --- Action classes (local to this TU, mirroring search-emojis-view.cpp) ---
-
 namespace {
 
 class VisitEmojiActionWrapper : public ProxyAction {
@@ -53,8 +51,6 @@ public:
 };
 
 } // namespace
-
-// --- QmlEmojiGridModel ---
 
 QmlEmojiGridModel::QmlEmojiGridModel(QObject *parent) : QmlCommandGridModel(parent) {}
 
@@ -169,8 +165,6 @@ QString QmlEmojiGridModel::emojiName(int section, int item) const {
   return qStringFromStdView(data->name);
 }
 
-// --- Action panel ---
-
 std::unique_ptr<ActionPanelState> QmlEmojiGridModel::createActionPanel(int section, int item) const {
   auto *data = emojiAt(section, item);
   if (!data) return nullptr;
@@ -191,7 +185,6 @@ std::unique_ptr<ActionPanelState> QmlEmojiGridModel::createActionPanel(int secti
 
   auto *mainSection = panel->createSection();
 
-  // Default action preference
   QString defaultAction;
   if (auto *state = ctx()->navigation->topState(); state && state->sender) {
     if (auto *cmd = state->sender->command())

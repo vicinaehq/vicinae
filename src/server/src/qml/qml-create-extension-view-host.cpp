@@ -23,7 +23,6 @@ QVariantMap QmlCreateExtensionViewHost::qmlProperties() const {
 void QmlCreateExtensionViewHost::initialize() {
   BaseView::initialize();
 
-  // Build template items from boilerplate generator
   ExtensionBoilerplateGenerator gen;
   QVariantList items;
   for (const auto &tmpl : gen.commandBoilerplates()) {
@@ -38,12 +37,10 @@ void QmlCreateExtensionViewHost::initialize() {
   section[QStringLiteral("items")] = items;
   m_templateItems.append(section);
 
-  // Select first template as default
   if (!items.isEmpty()) {
     m_selectedTemplate = items.first().toMap();
   }
 
-  // Set up action panel with submit action
   auto panel = std::make_unique<FormActionPanelState>();
   auto actionSection = panel->createSection();
   auto submitAction =
@@ -55,7 +52,6 @@ void QmlCreateExtensionViewHost::initialize() {
 void QmlCreateExtensionViewHost::submit() {
   auto toast = context()->services->toastService();
 
-  // Clear previous errors
   m_authorError.clear();
   m_titleError.clear();
   m_descriptionError.clear();

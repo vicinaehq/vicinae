@@ -36,7 +36,6 @@ Rectangle {
         anchors.fill: parent
         spacing: 0
 
-        // Header row
         Rectangle {
             Layout.fillWidth: true
             implicitHeight: headerRow.implicitHeight
@@ -44,7 +43,6 @@ Rectangle {
             radius: root.radius
             visible: root.headers.length > 0
 
-            // Mask the bottom corners so only top corners are rounded
             Rectangle {
                 anchors.left: parent.left
                 anchors.right: parent.right
@@ -68,7 +66,6 @@ Rectangle {
                         color: "transparent"
                         implicitHeight: headerText.implicitHeight + 16
 
-                        // Right border between columns
                         Rectangle {
                             anchors.right: parent.right
                             anchors.top: parent.top
@@ -101,7 +98,6 @@ Rectangle {
             }
         }
 
-        // Divider between header and body
         Rectangle {
             Layout.fillWidth: true
             height: 1
@@ -109,7 +105,6 @@ Rectangle {
             visible: root.headers.length > 0
         }
 
-        // Body rows
         Repeater {
             model: root.rows
 
@@ -167,7 +162,6 @@ Rectangle {
                     }
                 }
 
-                // Row divider
                 Rectangle {
                     width: parent.width
                     height: 1

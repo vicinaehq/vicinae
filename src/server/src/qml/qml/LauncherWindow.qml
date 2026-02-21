@@ -16,7 +16,6 @@ Window {
     color: "transparent"
     visible: false
 
-    // Compact mode background — only covers search bar area
     Rectangle {
         visible: launcher.compacted
         width: root.width
@@ -27,7 +26,6 @@ Window {
         border.width: Config.borderWidth
     }
 
-    // Main background — clipped to the region above the footer
     Item {
         visible: !launcher.compacted
         anchors.fill: parent
@@ -42,7 +40,6 @@ Window {
         }
     }
 
-    // Footer background — clipped to the footer region at the bottom
     Item {
         visible: !launcher.compacted && !launcher.hasOverlay
         anchors.left: parent.left
@@ -60,7 +57,6 @@ Window {
         }
     }
 
-    // Border frame
     Rectangle {
         visible: !launcher.compacted
         anchors.fill: parent
@@ -134,7 +130,6 @@ Window {
         onLoaded: if (item) item.forceActiveFocus()
     }
 
-    // Action panel popover overlay — anchored above the footer
     ActionPanelPopover {
         id: actionPanelPopover
         visible: !launcher.compacted
@@ -143,7 +138,6 @@ Window {
         anchors.bottomMargin: footer.height + 1 + Config.borderWidth
     }
 
-    // Alert dialog
     AlertDialog {
         id: alertDialog
     }

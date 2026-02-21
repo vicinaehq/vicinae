@@ -30,12 +30,10 @@ public:
 
   explicit QmlCommandGridModel(QObject *parent = nullptr);
 
-  // --- QAbstractListModel ---
   int rowCount(const QModelIndex &parent = {}) const override;
   QVariant data(const QModelIndex &index, int role) const override;
   QHash<int, QByteArray> roleNames() const override;
 
-  // --- QmlBridgeView interface ---
   virtual void initialize(ApplicationContext *ctx);
   virtual void setFilter(const QString &text) = 0;
   virtual QString searchPlaceholder() const { return QStringLiteral("Search..."); }
@@ -43,7 +41,6 @@ public:
   virtual void beforePop() {}
   void refreshActionPanel();
 
-  // --- Selection & navigation ---
   int selectedSection() const { return m_selSection; }
   int selectedItem() const { return m_selItem; }
   Q_INVOKABLE void select(int section, int item);

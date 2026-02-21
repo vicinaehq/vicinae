@@ -41,7 +41,6 @@ Item {
         anchors.rightMargin: 16
         spacing: 10
 
-        // Action icon
         Item {
             visible: root.iconSource !== ""
             Layout.preferredWidth: 18
@@ -54,7 +53,6 @@ Item {
             }
         }
 
-        // Title
         Text {
             text: root.title
             color: {
@@ -68,7 +66,6 @@ Item {
             Layout.fillWidth: true
         }
 
-        // Shortcut badge
         Rectangle {
             visible: root.shortcutLabel !== ""
             width: shortcutText.implicitWidth + 10
@@ -86,7 +83,6 @@ Item {
             }
         }
 
-        // Submenu chevron
         ViciImage {
             visible: root.isSubmenu
             source: Img.builtin("chevron-right")

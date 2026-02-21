@@ -15,7 +15,6 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing: 20
 
-        // Label — right-aligned, 2/9 of width
         Text {
             Layout.preferredWidth: 2
             Layout.fillWidth: true
@@ -27,7 +26,6 @@ ColumnLayout {
             Layout.alignment: Qt.AlignVCenter
         }
 
-        // Input slot — 5/9 of width
         Item {
             id: contentSlot
             Layout.preferredWidth: 5
@@ -41,7 +39,6 @@ ColumnLayout {
             }
         }
 
-        // Error — left-aligned, 2/9 of width
         Text {
             Layout.preferredWidth: 2
             Layout.fillWidth: true
@@ -53,7 +50,6 @@ ColumnLayout {
         }
     }
 
-    // Info text — below, aligned under the input column
     RowLayout {
         visible: root.info !== ""
         Layout.fillWidth: true

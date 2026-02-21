@@ -30,7 +30,6 @@ SelectableDelegate {
                 source: root.itemIconSource
             }
 
-            // Active indicator dot
             Rectangle {
                 visible: root.itemIsActive
                 width: 4
@@ -43,7 +42,6 @@ SelectableDelegate {
             }
         }
 
-        // Title + subtitle + alias grouped together on the left
         RowLayout {
             id: textRow
             Layout.fillWidth: true

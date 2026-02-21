@@ -42,7 +42,6 @@ void QmlShortcutFormViewHost::initialize() {
   buildIconItems();
   buildLinkCompletions();
 
-  // Set up action panel with submit action
   auto panel = std::make_unique<FormActionPanelState>();
   auto section = panel->createSection();
   auto submitAction =
@@ -50,14 +49,11 @@ void QmlShortcutFormViewHost::initialize() {
   section->addAction(submitAction);
   setActions(std::move(panel));
 
-  // Select defaults
   m_appSelectorModel->selectById(QStringLiteral("default"));
   m_selectedApp = m_appSelectorModel->currentItem();
 
-  // Default icon
   m_selectedIcon = m_defaultIconEntry;
 
-  // Populate fields from initial data if editing/duplicating
   if (m_initialShortcut) {
     auto appDb = context()->services->appDb();
 
@@ -69,14 +65,12 @@ void QmlShortcutFormViewHost::initialize() {
 
     m_link = m_initialShortcut->url();
 
-    // Set app
     auto appId = m_initialShortcut->app();
     if (appDb->findById(appId)) {
       m_appSelectorModel->selectById(appId);
       m_selectedApp = m_appSelectorModel->currentItem();
     }
 
-    // Set icon - try to find it in the icon items
     auto iconStr = m_initialShortcut->icon();
     bool iconFound = false;
     for (const auto &sectionVar : m_iconItems) {
@@ -133,7 +127,6 @@ void QmlShortcutFormViewHost::initialize() {
     emit formChanged();
   }
 
-  // Set navigation title based on mode
   switch (m_mode) {
   case Mode::Create:
     break; // uses default from command
@@ -149,7 +142,6 @@ void QmlShortcutFormViewHost::initialize() {
 void QmlShortcutFormViewHost::buildIconItems() {
   QVariantList allIcons;
 
-  // Default icon entry
   m_defaultIconEntry = QVariantMap{
       {QStringLiteral("id"), QStringLiteral("default")},
       {QStringLiteral("displayName"), QStringLiteral("Default")},
@@ -212,7 +204,6 @@ void QmlShortcutFormViewHost::updateDefaultIconInItems() {
 void QmlShortcutFormViewHost::submit() {
   auto toast = context()->services->toastService();
 
-  // Clear previous errors
   m_linkError.clear();
   m_appError.clear();
   m_iconError.clear();
@@ -244,7 +235,6 @@ void QmlShortcutFormViewHost::submit() {
   auto appId = m_selectedApp[QStringLiteral("id")].toString();
   auto iconId = m_selectedIcon[QStringLiteral("id")].toString();
 
-  // Resolve "default" app to actual app id
   if (appId == QStringLiteral("default")) {
     auto appDb = context()->services->appDb();
     if (auto browser = appDb->webBrowser()) {
@@ -252,7 +242,6 @@ void QmlShortcutFormViewHost::submit() {
     }
   }
 
-  // Resolve "default" icon
   if (iconId == QStringLiteral("default")) {
     iconId = ImageURL::builtin("link").toString();
   }
@@ -284,7 +273,6 @@ void QmlShortcutFormViewHost::handleLinkBlurred() {
     m_appSelectorModel->updateDefaultApp(app);
     m_selectedApp = m_appSelectorModel->currentItem();
 
-    // Also update the default icon entry with the app icon
     m_defaultIconEntry[QStringLiteral("iconSource")] = qml::imageSourceFor(app->iconUrl());
     m_defaultIconEntry[QStringLiteral("displayName")] = QStringLiteral("Default");
     updateDefaultIconInItems();
@@ -320,7 +308,6 @@ void QmlShortcutFormViewHost::selectApp(const QVariantMap &item) {
   m_appSelectorModel->select(item);
   m_selectedApp = item;
 
-  // Update default icon when app changes
   if (!m_link.isEmpty()) {
     auto iconSource = item[QStringLiteral("iconSource")].toString();
     m_defaultIconEntry[QStringLiteral("iconSource")] = iconSource;

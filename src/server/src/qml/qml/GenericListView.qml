@@ -8,7 +8,6 @@ Item {
     // The backing model — must have Q_INVOKABLE nextSelectableIndex(int, int)
     required property var listModel
 
-    // Forwarded to the internal ListView
     property alias model: listView.model
     property alias delegate: listView.delegate
     property alias currentIndex: listView.currentIndex
@@ -23,7 +22,6 @@ Item {
     property real detailRatio: 0.65
     property bool detailVisible: false
 
-    // Empty view — shown when the list has no items.
     property string emptyTitle: "No results"
     property string emptyDescription: ""
     property string emptyIcon: "image://vicinae/builtin:magnifying-glass?fg=" + Theme.foreground
@@ -123,7 +121,6 @@ Item {
             }
         }
 
-        // Vertical divider — only when detail is visible
         Rectangle {
             visible: root._showDetail
             Layout.fillHeight: true

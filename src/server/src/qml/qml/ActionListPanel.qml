@@ -43,7 +43,6 @@ Item {
         anchors.fill: parent
         spacing: 0
 
-        // Empty state — shown when filter produces no results
         Text {
             id: emptyLabel
             visible: root._empty
@@ -135,7 +134,6 @@ Item {
             }
         }
 
-        // Divider above filter
         Rectangle {
             id: divider
             Layout.fillWidth: true
@@ -143,7 +141,6 @@ Item {
             color: Theme.divider
         }
 
-        // Filter input bar
         Item {
             id: filterBar
             Layout.fillWidth: true

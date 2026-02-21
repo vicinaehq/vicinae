@@ -8,15 +8,11 @@ Item {
     Layout.fillWidth: !compact
     activeFocusOnTab: !compact
 
-    // --- Structured items API ---
-    // items: [{ title: "Section", items: [{ id, displayName, iconSource }, ...] }, ...]
     property var items: []
-    // currentItem: { id, displayName, iconSource } or null
     property var currentItem: null
     signal activated(var item)
     signal popupClosed()
 
-    // --- Compact mode (toolbar-style) ---
     property bool compact: false
     property real minimumWidth: 0
 
@@ -121,7 +117,6 @@ Item {
         }
     }
 
-    // Trigger button
     Rectangle {
         id: triggerButton
         implicitWidth: compact ? buttonRow.implicitWidth + 20 : undefined
@@ -208,7 +203,6 @@ Item {
         contentItem: ColumnLayout {
             spacing: 0
 
-            // Search field
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 28
@@ -278,7 +272,6 @@ Item {
                 }
             }
 
-            // Items list in a scrollable area
             ListView {
                 id: itemList
                 Layout.fillWidth: true
@@ -305,7 +298,6 @@ Item {
                     readonly property bool _isSelected: _entry && !_entry.isSection && root.currentItem
                                                         && _entry.item.id === root.currentItem.id
 
-                    // Section header
                     RowLayout {
                         id: sectionRow
                         visible: del._entry && del._entry.isSection
@@ -323,7 +315,6 @@ Item {
                         }
                     }
 
-                    // Item row
                     Item {
                         id: itemRow
                         visible: del._entry && !del._entry.isSection

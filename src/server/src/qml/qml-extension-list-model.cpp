@@ -11,7 +11,6 @@ void QmlExtensionListModel::setExtensionData(const ListModel &model, bool resetS
   m_model = model;
   m_placeholder = QString::fromStdString(model.searchPlaceholderText);
 
-  // Convert ListModel::items (flat items + section items) into sections
   m_sections.clear();
 
   Section freeSection;
@@ -21,7 +20,6 @@ void QmlExtensionListModel::setExtensionData(const ListModel &model, bool resetS
     if (auto item = std::get_if<ListItemViewModel>(&child)) {
       freeSection.items.push_back(*item);
     } else if (auto section = std::get_if<ListSectionModel>(&child)) {
-      // Flush any free items into their own section first
       if (!freeSection.items.empty()) {
         m_sections.push_back(std::move(freeSection));
         freeSection = Section{.name = "", .items = {}};
@@ -34,7 +32,6 @@ void QmlExtensionListModel::setExtensionData(const ListModel &model, bool resetS
     }
   }
 
-  // Flush remaining free items
   if (!freeSection.items.empty()) {
     m_sections.push_back(std::move(freeSection));
   }
@@ -124,7 +121,6 @@ void QmlExtensionListModel::setFilter(const QString &text) {
   m_filter = text;
 
   if (m_model.filtering) {
-    // Client-side filtering
     m_filteredSections.clear();
     for (const auto &sec : m_sections) {
       Section filtered;
@@ -186,7 +182,6 @@ std::unique_ptr<ActionPanelState> QmlExtensionListModel::createActionPanel(int s
     }
   }
 
-  // Fall back to view-level actions
   if (m_model.actions) {
     return ExtensionActionPanelBuilder::build(*m_model.actions, m_notify, &m_submenuCache,
                                               ActionPanelState::ShortcutPreset::List);

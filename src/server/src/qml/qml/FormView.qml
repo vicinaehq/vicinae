@@ -39,7 +39,6 @@ Flickable {
         x: root.padding
         spacing: 12
 
-        // Top spacer
         Item { implicitHeight: 12 }
     }
 

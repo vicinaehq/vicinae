@@ -60,13 +60,11 @@ Item {
             width: parent.width
             spacing: 0
 
-            // Header
             RowLayout {
                 Layout.fillWidth: true
                 Layout.margins: 25
                 spacing: 20
 
-                // Extension icon
                 ViciImage {
                     Layout.preferredWidth: 64
                     Layout.preferredHeight: 64
@@ -74,7 +72,6 @@ Item {
                     source: root.host.iconSource
                 }
 
-                // Title + metadata
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 4
@@ -91,7 +88,6 @@ Item {
                     RowLayout {
                         spacing: 10
 
-                        // Author
                         RowLayout {
                             spacing: 6
 
@@ -108,14 +104,12 @@ Item {
                             }
                         }
 
-                        // Divider
                         Rectangle {
                             width: 1
                             height: 14
                             color: Theme.divider
                         }
 
-                        // Download count
                         RowLayout {
                             spacing: 4
 
@@ -132,7 +126,6 @@ Item {
                             }
                         }
 
-                        // Platform icons
                         Repeater {
                             model: root.host.platforms
 
@@ -140,7 +133,6 @@ Item {
                                 spacing: 0
                                 visible: (root.platformIcons[modelData] || "") !== ""
 
-                                // Show divider before first platform icon
                                 Rectangle {
                                     visible: index === 0
                                     width: 1
@@ -168,7 +160,6 @@ Item {
                     }
                 }
 
-                // Installed badge
                 Rectangle {
                     visible: root.host.isInstalled
                     Layout.alignment: Qt.AlignTop
@@ -198,7 +189,6 @@ Item {
                 }
             }
 
-            // Alert banner (below header)
             AlertBanner {
                 visible: (root.host.alert.message || "") !== ""
                 alertType: root.host.alert.type || "info"
@@ -209,14 +199,12 @@ Item {
                 Layout.bottomMargin: 5
             }
 
-            // Divider after header
             Rectangle {
                 Layout.fillWidth: true
                 height: 1
                 color: Theme.divider
             }
 
-            // Screenshots row (Raycast only)
             Flickable {
                 visible: root.host.hasScreenshots
                 Layout.fillWidth: true
@@ -262,7 +250,6 @@ Item {
                 }
             }
 
-            // Divider after screenshots
             Rectangle {
                 visible: root.host.hasScreenshots
                 Layout.fillWidth: true
@@ -270,12 +257,10 @@ Item {
                 color: Theme.divider
             }
 
-            // Content: 2-column layout (main + sidebar)
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 0
 
-                // Main content (flex 2)
                 ColumnLayout {
                     Layout.fillWidth: true
                     Layout.preferredWidth: 2
@@ -283,7 +268,6 @@ Item {
                     Layout.margins: 20
                     spacing: 20
 
-                    // Description
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: 10
@@ -304,14 +288,12 @@ Item {
                         }
                     }
 
-                    // Divider
                     Rectangle {
                         Layout.fillWidth: true
                         height: 1
                         color: Theme.divider
                     }
 
-                    // Commands
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: 15
@@ -359,7 +341,6 @@ Item {
                                     }
                                 }
 
-                                // Divider between commands (not after last)
                                 Rectangle {
                                     visible: index < root.host.commands.length - 1
                                     Layout.fillWidth: true
@@ -372,21 +353,18 @@ Item {
                     }
                 }
 
-                // Vertical divider
                 Rectangle {
                     Layout.fillHeight: true
                     width: 1
                     color: Theme.divider
                 }
 
-                // Sidebar (flex 1)
                 ColumnLayout {
                     Layout.preferredWidth: 1
                     Layout.alignment: Qt.AlignTop
                     Layout.margins: 15
                     spacing: 15
 
-                    // README link
                     ColumnLayout {
                         visible: (root.host.readmeUrl || "") !== ""
                         spacing: 5
@@ -398,7 +376,6 @@ Item {
                         }
                     }
 
-                    // Last update
                     ColumnLayout {
                         spacing: 5
 
@@ -410,7 +387,6 @@ Item {
                         }
                     }
 
-                    // Contributors (Raycast only)
                     ColumnLayout {
                         visible: root.host.contributors.length > 0
                         spacing: 10
@@ -438,7 +414,6 @@ Item {
                         }
                     }
 
-                    // Categories (Vicinae only)
                     ColumnLayout {
                         visible: root.host.categories.length > 0
                         spacing: 5
@@ -456,7 +431,6 @@ Item {
                         }
                     }
 
-                    // Source Code link
                     ColumnLayout {
                         visible: (root.host.sourceUrl || "") !== ""
                         spacing: 5

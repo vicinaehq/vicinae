@@ -76,7 +76,6 @@ FocusScope {
             }
         }
 
-        // Invisible focus target + click/key handler
         Item {
             id: focusItem
             anchors.fill: parent

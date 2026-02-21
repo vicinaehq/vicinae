@@ -12,14 +12,12 @@ Item {
         anchors.fill: parent
         spacing: 0
 
-        // Left pane: search + column headers + list (60%)
         ColumnLayout {
             Layout.fillHeight: true
             Layout.preferredWidth: root.width * 0.60
             Layout.maximumWidth: root.width * 0.60
             spacing: 0
 
-            // Search bar
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 48
@@ -72,7 +70,6 @@ Item {
 
             Rectangle { Layout.fillWidth: true; height: 1; color: Theme.divider }
 
-            // Column headers
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 30
@@ -118,7 +115,6 @@ Item {
 
             Rectangle { Layout.fillWidth: true; height: 1; color: Theme.divider }
 
-            // List view
             ListView {
                 id: extList
                 Layout.fillWidth: true
@@ -159,7 +155,6 @@ Item {
 
                     readonly property bool isSelected: index === root.extModel.selectedRow
 
-                    // Alternating row stripe
                     Rectangle {
                         anchors.fill: parent
                         color: Qt.rgba(Theme.foreground.r, Theme.foreground.g,
@@ -167,7 +162,6 @@ Item {
                         visible: rowItem.index % 2 === 1 && !rowItem.isSelected && !rowHover.hovered
                     }
 
-                    // Selection / hover highlight
                     Rectangle {
                         anchors.fill: parent
                         color: rowItem.isSelected ? Theme.listItemSelectionBg
@@ -194,7 +188,6 @@ Item {
                         anchors.fill: parent
                         spacing: 0
 
-                        // Name column
                         RowLayout {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
@@ -203,7 +196,6 @@ Item {
                             Layout.rightMargin: 4
                             spacing: 10
 
-                            // Expand indicator for providers
                             Item {
                                 Layout.preferredWidth: 20
                                 Layout.preferredHeight: 20
@@ -227,7 +219,6 @@ Item {
                                 }
                             }
 
-                            // Spacer for non-expandable items at indent > 0
                             Item {
                                 Layout.preferredWidth: 20
                                 visible: !rowItem.expandable && rowItem.indent > 0
@@ -250,7 +241,6 @@ Item {
                             }
                         }
 
-                        // Type column
                         Text {
                             Layout.preferredWidth: 100
                             Layout.fillHeight: true
@@ -262,7 +252,6 @@ Item {
                             elide: Text.ElideRight
                         }
 
-                        // Alias column
                         Item {
                             Layout.preferredWidth: 100
                             Layout.fillHeight: true
@@ -305,14 +294,12 @@ Item {
                             }
                         }
 
-                        // Empty spacer for providers (no alias)
                         Item {
                             Layout.preferredWidth: 100
                             Layout.fillHeight: true
                             visible: rowItem.isProvider
                         }
 
-                        // Enabled checkbox column
                         Item {
                             Layout.preferredWidth: 60
                             Layout.fillHeight: true
@@ -350,7 +337,6 @@ Item {
 
         Rectangle { Layout.fillHeight: true; width: 1; color: Theme.divider }
 
-        // Right pane: detail (40%)
         Item {
             Layout.fillHeight: true
             Layout.fillWidth: true
@@ -368,7 +354,6 @@ Item {
                 spacing: 0
                 visible: root.extModel.hasSelection
 
-                // Header — height matches left pane header (search 48 + divider 1 + columns 30 + divider 1 = 80)
                 RowLayout {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 80
@@ -400,7 +385,6 @@ Item {
 
                 Rectangle { Layout.fillWidth: true; height: 1; color: Theme.divider }
 
-                // Scrollable detail content
                 Flickable {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
@@ -419,7 +403,6 @@ Item {
                         width: parent.width
                         spacing: 0
 
-                        // Description (when non-empty)
                         ColumnLayout {
                             visible: root.extModel.selectedDescription !== ""
                             Layout.fillWidth: true
@@ -446,7 +429,6 @@ Item {
                             Item { implicitHeight: 8 }
                         }
 
-                        // Metadata rows (for items like apps, scripts)
                         ColumnLayout {
                             visible: root.extModel.selectedMetadata.length > 0
                             Layout.fillWidth: true
@@ -503,7 +485,6 @@ Item {
                             Item { implicitHeight: 8 }
                         }
 
-                        // Preferences
                         ColumnLayout {
                             visible: root.extModel.hasPreferences
                             Layout.fillWidth: true

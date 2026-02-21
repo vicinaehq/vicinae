@@ -8,7 +8,6 @@ Item {
     property string description: ""
     property string icon: "image://vicinae/builtin:magnifying-glass?fg=" + Theme.foreground
 
-    // Centered container
     ColumnLayout {
         anchors.centerIn: parent
         width: Math.min(400, parent.width)

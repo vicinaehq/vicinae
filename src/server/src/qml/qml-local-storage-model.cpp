@@ -4,8 +4,6 @@
 #include "services/toast/toast-service.hpp"
 #include "ui/action-pannel/action.hpp"
 
-// --- Namespace model ---
-
 QString QmlLocalStorageNamespaceModel::displayIconSource(const QString &) const {
   return imageSourceFor(ImageURL::builtin("coin"));
 }
@@ -22,8 +20,6 @@ std::unique_ptr<ActionPanelState> QmlLocalStorageNamespaceModel::buildActionPane
       }));
   return panel;
 }
-
-// --- Item model ---
 
 QString QmlLocalStorageItemModel::displayIconSource(const QString &) const {
   return imageSourceFor(ImageURL::builtin("coin"));

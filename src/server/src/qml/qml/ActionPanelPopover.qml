@@ -16,13 +16,11 @@ FocusScope {
             actionPanel.close()
     }
 
-    // Backdrop for click-away dismissal
     MouseArea {
         anchors.fill: parent
         onClicked: actionPanel.close()
     }
 
-    // Panel container
     Rectangle {
         id: panel
         anchors.right: parent.right
@@ -81,7 +79,6 @@ FocusScope {
         }
     }
 
-    // Navigate back from submenu via ActionListPanel signal
     Connections {
         target: stack.currentItem
         ignoreUnknownSignals: true
@@ -90,7 +87,6 @@ FocusScope {
         }
     }
 
-    // Controller-driven stack management
     Connections {
         target: actionPanel
         function onPanelPushRequested(componentUrl, properties) {
@@ -110,7 +106,6 @@ FocusScope {
         }
     }
 
-    // Keyboard handling
     Keys.onPressed: (event) => {
         if (event.key === Qt.Key_Escape) {
             actionPanel.pop()

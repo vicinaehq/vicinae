@@ -26,7 +26,6 @@ void QmlAlertModel::handleAlertRequested(DialogContentWidget *widget) {
   auto *alert = dynamic_cast<AlertWidget *>(widget);
   if (!alert) return;
 
-  // If a previous alert was pending, cancel it
   if (m_widget) {
     m_widget->triggerCancel();
     m_widget->deleteLater();

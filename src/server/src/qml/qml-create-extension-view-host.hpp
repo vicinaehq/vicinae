@@ -6,22 +6,18 @@
 class QmlCreateExtensionViewHost : public QmlFormViewBase {
   Q_OBJECT
 
-  // Extension metadata
   Q_PROPERTY(QString author READ author WRITE setAuthor NOTIFY formChanged)
   Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY formChanged)
   Q_PROPERTY(QString description READ description WRITE setDescription NOTIFY formChanged)
   Q_PROPERTY(QString location READ location WRITE setLocation NOTIFY formChanged)
 
-  // Command fields
   Q_PROPERTY(QString commandTitle READ commandTitle WRITE setCommandTitle NOTIFY formChanged)
   Q_PROPERTY(QString commandSubtitle READ commandSubtitle WRITE setCommandSubtitle NOTIFY formChanged)
   Q_PROPERTY(QString commandDescription READ commandDescription WRITE setCommandDescription NOTIFY formChanged)
   Q_PROPERTY(QVariantMap selectedTemplate READ selectedTemplate NOTIFY formChanged)
 
-  // Dropdown data
   Q_PROPERTY(QVariantList templateItems READ templateItems CONSTANT)
 
-  // Validation errors
   Q_PROPERTY(QString authorError READ authorError NOTIFY errorsChanged)
   Q_PROPERTY(QString titleError READ titleError NOTIFY errorsChanged)
   Q_PROPERTY(QString descriptionError READ descriptionError NOTIFY errorsChanged)
@@ -37,7 +33,6 @@ public:
   QVariantMap qmlProperties() const override;
   void initialize() override;
 
-  // Property getters
   QString author() const { return m_author; }
   QString title() const { return m_title; }
   QString description() const { return m_description; }
@@ -58,7 +53,6 @@ public:
   QString commandSubtitleError() const { return m_commandSubtitleError; }
   QString commandDescriptionError() const { return m_commandDescriptionError; }
 
-  // Property setters
   void setAuthor(const QString &v) { if (m_author != v) { m_author = v; emit formChanged(); } }
   void setTitle(const QString &v) { if (m_title != v) { m_title = v; emit formChanged(); } }
   void setDescription(const QString &v) { if (m_description != v) { m_description = v; emit formChanged(); } }

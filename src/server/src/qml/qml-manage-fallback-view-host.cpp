@@ -36,10 +36,8 @@ QObject *QmlManageFallbackViewHost::listModel() const { return m_model; }
 void QmlManageFallbackViewHost::reload() {
   auto manager = context()->services->rootItemManager();
 
-  // Update the fallback order for the model's partitioning
   m_model->setFallbackItems(manager->fallbackItems());
 
-  // Load all fallback-suitable items
   auto results = manager->search("");
   std::vector<RootItemPtr> items;
   for (const auto &scored : results) {

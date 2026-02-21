@@ -43,7 +43,6 @@ public:
   Q_INVOKABLE void toggleMonitoring();
   Q_INVOKABLE void setKindFilter(int kind);
 
-  // Property getters
   QObject *listModel() const;
   QString itemCountText() const { return m_itemCountText; }
   QString clipboardStatusText() const { return m_clipboardStatusText; }
@@ -86,7 +85,6 @@ private:
   bool m_canToggleMonitoring = false;
   int m_currentKindFilter = 0;
 
-  // Detail state
   bool m_hasDetail = false;
   bool m_hasDetailError = false;
   QString m_detailMimeType;

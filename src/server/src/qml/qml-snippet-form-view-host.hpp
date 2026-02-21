@@ -29,7 +29,6 @@ public:
 
   Q_INVOKABLE void submit();
 
-  // Property getters
   QString name() const { return m_name; }
   QString content() const { return m_content; }
   QString keyword() const { return m_keyword; }
@@ -39,7 +38,6 @@ public:
   QString contentError() const { return m_contentError; }
   QString keywordError() const { return m_keywordError; }
 
-  // Property setters
   void setName(const QString &v) { if (m_name != v) { m_name = v; emit formChanged(); } }
   void setContent(const QString &v) { if (m_content != v) { m_content = v; emit formChanged(); } }
   void setKeyword(const QString &v) { if (m_keyword != v) { m_keyword = v; emit formChanged(); } }

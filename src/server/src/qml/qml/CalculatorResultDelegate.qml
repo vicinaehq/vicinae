@@ -16,7 +16,6 @@ SelectableDelegate {
         anchors.rightMargin: 16
         spacing: 0
 
-        // Question side
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -46,7 +45,6 @@ SelectableDelegate {
             }
         }
 
-        // Vertical divider
         Rectangle {
             Layout.preferredWidth: 1
             Layout.preferredHeight: 50
@@ -54,7 +52,6 @@ SelectableDelegate {
             color: Theme.divider
         }
 
-        // Answer side
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true

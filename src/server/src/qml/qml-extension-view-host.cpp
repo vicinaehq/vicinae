@@ -134,7 +134,6 @@ void QmlExtensionViewHost::handleFirstRender(const RenderModel &model) {
 }
 
 void QmlExtensionViewHost::renderList(const ListModel &model) {
-  // Update search-related state
   m_onSearchTextChange = model.onSearchTextChange;
   m_filtering = model.filtering;
 
@@ -203,14 +202,12 @@ void QmlExtensionViewHost::textChanged(const QString &text) {
 void QmlExtensionViewHost::handleDebouncedSearch() {
   auto text = searchText();
 
-  // Client-side filtering
   if (m_listModel) {
     m_listModel->setFilter(text);
   } else if (m_gridModel) {
     m_gridModel->setFilter(text);
   }
 
-  // Notify extension of search text change
   if (m_onSearchTextChange) {
     m_shouldResetSelection = !m_filtering;
     notifyExtension(m_onSearchTextChange->c_str(), {text});
@@ -284,7 +281,6 @@ void QmlExtensionViewHost::renderForm(const FormModel &model) {
 
   m_formModel->setFormData(model);
 
-  // Link accessory
   QString newLinkText, newLinkHref;
   if (model.searchBarAccessory) {
     if (auto *link = std::get_if<FormModel::LinkAccessoryModel>(&*model.searchBarAccessory)) {
@@ -302,7 +298,6 @@ void QmlExtensionViewHost::renderForm(const FormModel &model) {
     }
   }
 
-  // Action panel
   m_formActions = model.actions;
   if (model.actions) {
     auto notify = [this](const QString &handler, const QJsonArray &args) {

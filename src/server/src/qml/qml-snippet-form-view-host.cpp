@@ -26,7 +26,6 @@ void QmlSnippetFormViewHost::initialize() {
 
   m_service = context()->services->snippetService();
 
-  // Set up action panel with submit action
   auto panel = std::make_unique<FormActionPanelState>();
   auto section = panel->createSection();
   auto submitAction =
@@ -34,7 +33,6 @@ void QmlSnippetFormViewHost::initialize() {
   section->addAction(submitAction);
   setActions(std::move(panel));
 
-  // Populate fields from initial data
   if (m_initialSnippet) {
     const auto &snippet = *m_initialSnippet;
 
@@ -57,7 +55,6 @@ void QmlSnippetFormViewHost::initialize() {
     emit formChanged();
   }
 
-  // Set navigation title based on mode
   switch (m_mode) {
   case Mode::Create:
     break; // uses default from command
@@ -73,7 +70,6 @@ void QmlSnippetFormViewHost::initialize() {
 void QmlSnippetFormViewHost::submit() {
   const auto toast = context()->services->toastService();
 
-  // Clear previous errors
   m_nameError.clear();
   m_contentError.clear();
   m_keywordError.clear();

@@ -65,7 +65,6 @@ Rectangle {
         anchors.fill: parent
         spacing: 0
 
-        // Header bar with language icon + label + copy button
         Rectangle {
             Layout.fillWidth: true
             implicitHeight: headerRow.implicitHeight + 16
@@ -124,7 +123,6 @@ Rectangle {
                 }
             }
 
-            // Divider below header
             Rectangle {
                 anchors.left: parent.left
                 anchors.right: parent.right

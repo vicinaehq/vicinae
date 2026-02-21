@@ -35,7 +35,6 @@ void QmlExtensionGridModel::setExtensionData(const GridModel &model, bool resetS
     emit insetChanged();
   }
 
-  // Convert GridModel::items (flat items + section items) into sections
   m_sections.clear();
 
   Section freeSection;

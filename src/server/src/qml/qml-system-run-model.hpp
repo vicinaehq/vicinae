@@ -38,7 +38,6 @@ private:
   bool m_hasProgram = false;
   DefaultAction m_defaultAction = DefaultAction::RunInTerminal;
 
-  // Cached flat items for section dispatch
   std::vector<RunProgramItem> m_flatItems;
   int m_cmdCount = 0;
   int m_progCount = 0;

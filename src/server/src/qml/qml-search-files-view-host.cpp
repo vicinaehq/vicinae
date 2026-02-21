@@ -43,7 +43,6 @@ void QmlSearchFilesViewHost::textChanged(const QString &text) {
     return;
   }
 
-  // Direct file path detection
   std::error_code ec;
   auto path = expandPath(text.trimmed().toStdString());
   if (path != "/" && fs::exists(path, ec)) {

@@ -30,7 +30,6 @@ Item {
     property bool showCellTitle: false
     property bool showCellSubtitle: false
 
-    // Empty view — shown when the grid has no items.
     property string emptyTitle: "No results"
     property string emptyDescription: ""
     property string emptyIcon: "image://vicinae/builtin:magnifying-glass?fg=" + Theme.foreground
@@ -146,7 +145,6 @@ Item {
                                 width: rowItem.cellWidth
                                 height: rowItem.cellHeight + rowItem.cellTextHeight
 
-                                // Cell background (no border — overlay handles it)
                                 SourceBlendRect {
                                     id: cellBackground
                                     width: rowItem.cellWidth
@@ -162,7 +160,6 @@ Item {
                                     }
                                 }
 
-                                // Delegate content — inside the cell with inset margins
                                 Loader {
                                     x: rowItem.cellWidth * root.cellInset
                                     y: rowItem.cellHeight * root.cellInset
@@ -179,8 +176,6 @@ Item {
                                     property var cmdModel: root.cmdModel
                                 }
 
-                                // Overlay — draws selection/hover border on top of content.
-                                // Expanded by 2px so the stroke's outer half fits.
                                 SourceBlendRect {
                                     readonly property real pad: 2
                                     x: -pad
@@ -195,7 +190,6 @@ Item {
                                                  : Theme.gridItemHoverOutline
                                 }
 
-                                // Title below the cell
                                 Text {
                                     visible: root.showCellTitle
                                     y: rowItem.cellHeight + root._textGap
@@ -213,7 +207,6 @@ Item {
                                     horizontalAlignment: Text.AlignHCenter
                                 }
 
-                                // Subtitle below title
                                 Text {
                                     visible: root.showCellSubtitle
                                     y: rowItem.cellHeight + root._textGap
