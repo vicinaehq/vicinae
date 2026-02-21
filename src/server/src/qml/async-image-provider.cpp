@@ -20,6 +20,11 @@
 #include <QUrl>
 #include "data-uri/data-uri.hpp"
 #include <atomic>
+#include <mutex>
+#include <set>
+
+static std::mutex s_failedCacheMutex;
+static std::set<QString> s_failedImageIds;
 
 // Dedicated pool for raster image decoding.  Keeps at most 2 threads so we
 // never have many full-resolution images resident simultaneously (formats
@@ -37,6 +42,8 @@ class ViciImageResponse : public QQuickImageResponse {
 
 public:
   explicit ViciImageResponse(qreal dpr = 1.0) : m_dpr(dpr) {}
+
+  void setId(const QString &id) { m_id = id; }
 
   void setFallback(const QString &fallback, const QSize &size) {
     m_fallback = fallback;
@@ -69,6 +76,7 @@ public:
       return;
     }
     tryFallback(image);
+    cacheIfFailed(image);
     image.setDevicePixelRatio(m_dpr);
     m_image = std::move(image);
     emit finished();
@@ -82,6 +90,7 @@ public:
       return;
     }
     tryFallback(image);
+    cacheIfFailed(image);
     image.setDevicePixelRatio(m_dpr);
     m_image = std::move(image);
     QTimer::singleShot(0, this, &QQuickImageResponse::finished);
@@ -90,6 +99,13 @@ public:
 private:
   void tryFallback(QImage &image);
 
+  void cacheIfFailed(const QImage &image) {
+    if (!image.isNull() || m_id.isEmpty()) return;
+    std::lock_guard lock(s_failedCacheMutex);
+    s_failedImageIds.insert(m_id);
+  }
+
+  QString m_id;
   qreal m_dpr;
   QImage m_image;
   QSize m_size;
@@ -335,8 +351,18 @@ void ViciImageResponse::tryFallback(QImage &image) {
 QQuickImageResponse *AsyncImageProvider::requestImageResponse(
     const QString &id, const QSize &requestedSize) {
 
+  {
+    std::lock_guard lock(s_failedCacheMutex);
+    if (s_failedImageIds.count(id)) {
+      auto *response = new ViciImageResponse(qGuiApp->devicePixelRatio());
+      response->finishDeferred({});
+      return response;
+    }
+  }
+
   qreal dpr = qGuiApp->devicePixelRatio();
   auto *response = new ViciImageResponse(dpr);
+  response->setId(id);
   QSize logical = requestedSize.isValid() && !requestedSize.isEmpty() ? requestedSize : QSize(512, 512);
   QSize size(qCeil(logical.width() * dpr), qCeil(logical.height() * dpr));
   auto parsed = parseId(id);
