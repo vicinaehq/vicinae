@@ -30,7 +30,7 @@ Item {
             required property string title
             required property string subtitle
             required property string iconSource
-            required property string itemAccessory
+            required property var itemAccessory
 
             sourceComponent: isSection ? sectionComponent : itemComponent
 

@@ -15,7 +15,7 @@ QString BrowseAppsModel::displayIconSource(const AppPtr &app) const {
   return imageSourceFor(app->iconUrl());
 }
 
-QString BrowseAppsModel::displayAccessory(const AppPtr &app) const {
+QVariant BrowseAppsModel::displayAccessory(const AppPtr &app) const {
   if (!app->displayable()) return QStringLiteral("Hidden");
   return {};
 }

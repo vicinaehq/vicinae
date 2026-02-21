@@ -1,14 +1,17 @@
 #pragma once
+#include "extend/accessory-model.hpp"
 #include "extend/dropdown-model.hpp"
 #include "extend/metadata-model.hpp"
 #include "image-url.hpp"
 #include "ui/image/url.hpp"
 #include <QString>
 #include <QVariantList>
+#include <vector>
 
 namespace qml {
 
 QVariantList metadataToVariantList(const MetadataModel &metadata);
+QVariantList accessoriesToVariantList(const std::vector<AccessoryModel> &accessories);
 
 inline QString imageSourceFor(const ImageURL &url) {
   return ImageUrl(url).toSource();

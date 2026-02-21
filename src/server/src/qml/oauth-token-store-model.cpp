@@ -18,7 +18,7 @@ QString OAuthTokenStoreModel::displayIconSource(const OAuth::TokenSet &set) cons
   return imageSourceFor(ImageURL::builtin("key"));
 }
 
-QString OAuthTokenStoreModel::displayAccessory(const OAuth::TokenSet &set) const {
+QVariant OAuthTokenStoreModel::displayAccessory(const OAuth::TokenSet &set) const {
   if (set.isExpired()) return QStringLiteral("Expired");
   return {};
 }

@@ -22,7 +22,7 @@ QString InstalledExtensionsModel::displayIconSource(const ExtensionManifest &m) 
   return imageSourceFor(ImageURL::builtin("plug"));
 }
 
-QString InstalledExtensionsModel::displayAccessory(const ExtensionManifest &m) const {
+QVariant InstalledExtensionsModel::displayAccessory(const ExtensionManifest &m) const {
   if (m.isFromRaycastStore()) return QStringLiteral("Raycast");
   if (m.isFromVicinaeStore()) return QStringLiteral("Vicinae");
   if (m.isLocal()) return QStringLiteral("Local");

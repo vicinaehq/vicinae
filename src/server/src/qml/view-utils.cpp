@@ -45,4 +45,33 @@ QVariantList metadataToVariantList(const MetadataModel &metadata) {
   return result;
 }
 
+QVariantList accessoriesToVariantList(const std::vector<AccessoryModel> &accessories) {
+  QVariantList result;
+  for (const auto &acc : accessories) {
+    QVariantMap m;
+
+    bool fill = false;
+    if (auto *tag = std::get_if<AccessoryModel::Tag>(&acc.data)) {
+      m[QStringLiteral("text")] = tag->value;
+      if (tag->color) m[QStringLiteral("color")] = OmniPainter::resolveColor(*tag->color).name();
+      fill = true;
+    } else if (auto *text = std::get_if<AccessoryModel::Text>(&acc.data)) {
+      m[QStringLiteral("text")] = text->value;
+      if (text->color) m[QStringLiteral("color")] = OmniPainter::resolveColor(*text->color).name();
+    }
+
+    m[QStringLiteral("fill")] = fill;
+    if (acc.icon) {
+      auto url = ImageURL(*acc.icon);
+      auto color = std::visit([](const auto &v) { return v.color; }, acc.data);
+      if (color && url.type() == ImageURLType::Builtin) url.setFill(color);
+      m[QStringLiteral("icon")] = imageSourceFor(url);
+    }
+    if (acc.tooltip) m[QStringLiteral("tooltip")] = *acc.tooltip;
+
+    result.append(m);
+  }
+  return result;
+}
+
 } // namespace qml

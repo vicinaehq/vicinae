@@ -30,7 +30,7 @@ protected:
   QString displayTitle(const WindowEntry &e) const override;
   QString displaySubtitle(const WindowEntry &e) const override;
   QString displayIconSource(const WindowEntry &e) const override;
-  QString displayAccessory(const WindowEntry &e) const override;
+  QVariant displayAccessory(const WindowEntry &e) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const WindowEntry &e) const override;
   QString sectionLabel() const override;
 };

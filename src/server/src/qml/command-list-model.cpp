@@ -28,7 +28,7 @@ QVariant CommandListModel::data(const QModelIndex &index, int role) const {
     case IconSource:
       return QString();
     case Accessory:
-      return QString();
+      return {};
     default:
       return {};
     }

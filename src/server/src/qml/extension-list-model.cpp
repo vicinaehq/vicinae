@@ -163,13 +163,9 @@ QString ExtensionListModel::itemIconSource(int section, int item) const {
   return {};
 }
 
-QString ExtensionListModel::itemAccessory(int section, int item) const {
+QVariant ExtensionListModel::itemAccessory(int section, int item) const {
   if (auto *it = itemAt(section, item)) {
-    if (!it->accessories.empty()) {
-      const auto &acc = it->accessories.front();
-      if (auto tag = std::get_if<AccessoryModel::Tag>(&acc.data)) { return tag->value; }
-      if (auto text = std::get_if<AccessoryModel::Text>(&acc.data)) { return text->value; }
-    }
+    if (!it->accessories.empty()) { return qml::accessoriesToVariantList(it->accessories); }
   }
   return {};
 }
