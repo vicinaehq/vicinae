@@ -65,7 +65,6 @@ QObject *QmlManageShortcutsViewHost::listModel() const { return m_model; }
 void QmlManageShortcutsViewHost::loadDetail(const std::shared_ptr<Shortcut> &shortcut) {
   m_currentShortcut = shortcut;
 
-  // Build metadata
   auto appDb = ServiceRegistry::instance()->appDb();
   QVariantList meta;
 
@@ -100,7 +99,6 @@ void QmlManageShortcutsViewHost::loadDetail(const std::shared_ptr<Shortcut> &sho
 
   m_detailMetadata = meta;
 
-  // Create completer from shortcut arguments
   ArgumentList args;
   for (const auto &arg : shortcut->arguments()) {
     args.emplace_back(CommandArgument{
@@ -123,13 +121,11 @@ void QmlManageShortcutsViewHost::loadDetail(const std::shared_ptr<Shortcut> &sho
 void QmlManageShortcutsViewHost::updateExpandedUrl() {
   if (!m_currentShortcut) return;
 
-  // Gather argument values from completer
   std::vector<QString> values;
   for (const auto &val : context()->navigation->completionValues()) {
     values.emplace_back(val.second);
   }
 
-  // Expand the URL with placeholder substitution
   QString expanded;
   size_t argumentIndex = 0;
   for (const auto &part : m_currentShortcut->parts()) {

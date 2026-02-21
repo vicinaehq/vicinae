@@ -157,14 +157,12 @@ void QmlExtensionFormModel::setFormData(const FormModel &model) {
   int oldCount = static_cast<int>(m_items.size());
   int newCount = static_cast<int>(model.items.size());
 
-  // Remove excess tail rows
   if (oldCount > newCount) {
     beginRemoveRows({}, newCount, oldCount - 1);
     m_items.resize(newCount);
     endRemoveRows();
   }
 
-  // Update rows that exist in both old and new
   int updateCount = std::min(oldCount, newCount);
   for (int i = 0; i < updateCount; ++i) {
     updateItem(m_items[i], model.items[i]);
@@ -187,7 +185,6 @@ void QmlExtensionFormModel::setFormData(const FormModel &model) {
     emit dataChanged(createIndex(0, 0), createIndex(updateCount - 1, 0));
   }
 
-  // Append new tail rows
   if (newCount > oldCount) {
     beginInsertRows({}, oldCount, newCount - 1);
     for (int i = oldCount; i < newCount; ++i) {

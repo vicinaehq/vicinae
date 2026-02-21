@@ -90,16 +90,12 @@ public:
 
     const bool hasBackground = m_backgroundColor.alpha() > 0;
 
-    // 1. Fill entire bounds with the background colour.
     painter->setCompositionMode(QPainter::CompositionMode_Source);
     painter->fillRect(boundingRect(), m_backgroundColor);
 
-    // The single shape path — fill and border both use the full rounded rect,
-    // just like the widget paints the full path then strokes on top.
     QPainterPath shapePath;
     shapePath.addRoundedRect(boundingRect(), m_radius, m_radius);
 
-    // 2. Main fill — covers the entire rounded rect including border area.
     painter->setPen(Qt::NoPen);
     if (hasBackground) {
       painter->setCompositionMode(QPainter::CompositionMode_SourceAtop);
@@ -110,7 +106,6 @@ public:
       painter->fillPath(shapePath, m_color);
     }
 
-    // 3. Optional secondary zone at the bottom (e.g. status bar).
     if (m_secondaryHeight > 0 && m_secondaryColor.alpha() > 0) {
       painter->setCompositionMode(QPainter::CompositionMode_Source);
       QRectF secRect(boundingRect().x(),
@@ -121,7 +116,6 @@ public:
       painter->setClipping(false);
     }
 
-    // 4. Border outline — clipped to the rounded rect, drawn on top.
     if (m_borderWidth > 0 && m_borderColor.alpha() > 0) {
       painter->setClipPath(shapePath);
       if (hasBackground) {
@@ -158,7 +152,6 @@ private:
   static constexpr qreal overlayPadding = 2;
 
   void paintOverlay(QPainter *painter) {
-    // Overlay mode: draw only the selection/hover border on top of content.
     if (m_borderWidth <= 0 || m_borderColor.alpha() <= 0)
       return;
 

@@ -13,7 +13,6 @@ void QmlAppSelectorModel::buildItems() {
 
   QVariantList allApps;
 
-  // Default entry: web browser
   if (auto browser = m_appDb->webBrowser()) {
     m_defaultEntry = QVariantMap{
         {QStringLiteral("id"), QStringLiteral("default")},
@@ -63,7 +62,6 @@ void QmlAppSelectorModel::selectById(const QString &id) {
     return;
   }
 
-  // Search through all sections for matching id
   for (const auto &sectionVar : m_items) {
     auto section = sectionVar.toMap();
     auto items = section[QStringLiteral("items")].toList();
@@ -87,7 +85,6 @@ void QmlAppSelectorModel::updateDefaultApp(const std::shared_ptr<AbstractApplica
       {QStringLiteral("iconSource"), qml::imageSourceFor(app->iconUrl())},
   };
 
-  // Update the default entry in the items list
   if (!m_items.isEmpty()) {
     auto section = m_items[0].toMap();
     auto items = section[QStringLiteral("items")].toList();
@@ -102,7 +99,6 @@ void QmlAppSelectorModel::updateDefaultApp(const std::shared_ptr<AbstractApplica
     }
   }
 
-  // If current selection is default, update it too
   if (m_currentItem[QStringLiteral("id")].toString() == QStringLiteral("default")) {
     m_currentItem = m_defaultEntry;
     emit currentItemChanged();

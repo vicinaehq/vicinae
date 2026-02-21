@@ -127,28 +127,22 @@ private:
   QMetaObject::Connection m_searchAccessoryConnection;
   QObject *m_commandViewHost = nullptr;
 
-  // Navigation status
   QString m_navigationTitle;
   QmlImageUrl m_navigationIcon;
 
-  // Toast
   bool m_toastActive = false;
   QString m_toastTitle;
   QString m_toastMessage;
   int m_toastStyle = 0;
 
-  // Action panel
   ActionPanelController *m_actionPanel;
 
-  // Alert
   QmlAlertModel *m_alertModel = nullptr;
 
-  // Overlay
   bool m_hasOverlay = false;
   QUrl m_overlayUrl;
   QObject *m_overlayHost = nullptr;
 
-  // Completer
   bool m_hasCompleter = false;
   QVariantList m_completerArgs;
   QString m_completerIcon;

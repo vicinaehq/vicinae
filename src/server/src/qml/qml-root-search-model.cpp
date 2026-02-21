@@ -109,7 +109,6 @@ QVariant QmlRootSearchModel::data(const QModelIndex &index, int role) const {
     }
   }
 
-  // Item roles common to all kinds
   switch (role) {
   case IsSection: return false;
   case IsSelectable: return true;
@@ -174,7 +173,6 @@ QVariant QmlRootSearchModel::data(const QModelIndex &index, int role) const {
     return {};
   };
 
-  // Data roles that depend on the item kind
   switch (flat.kind) {
   case FlatItem::ResultItem: {
     if (flat.dataIndex < 0 || flat.dataIndex >= static_cast<int>(m_results.size()))
@@ -294,11 +292,9 @@ void QmlRootSearchModel::setFilter(const QString &text) {
   m_calc.reset();
   m_files.clear();
 
-  // Stop pending debounce timers
   m_calculatorDebounce.stop();
   m_fileSearchDebounce.stop();
 
-  // Direct file path detection
   if (!text.isEmpty() && text.startsWith('/')) {
     std::error_code ec;
     if (std::filesystem::exists(text.toStdString(), ec)) {
@@ -312,7 +308,6 @@ void QmlRootSearchModel::setFilter(const QString &text) {
     }
   }
 
-  // Check for URL patterns
   if (!text.isEmpty()) {
     if (auto url = QUrl(text); url.isValid() && !url.scheme().isEmpty()) {
       if (auto app = m_appDb->findDefaultOpener(text)) {
@@ -349,7 +344,6 @@ void QmlRootSearchModel::setFilter(const QString &text) {
   rebuildFlatList();
   endResetModel();
 
-  // Start debounced async searches for non-empty queries
   if (!text.isEmpty()) {
     m_calculatorDebounce.start();
     m_fileSearchDebounce.start();
@@ -360,11 +354,9 @@ void QmlRootSearchModel::rebuildFlatList() {
   m_flat.clear();
 
   if (m_query.empty()) {
-    // Root sections: Favorites, then Results (suggestions)
     addSection(SectionType::Favorites, "Favorites", static_cast<int>(m_favorites.size()));
     addSection(SectionType::Results, "Suggestions", static_cast<int>(m_results.size()));
   } else {
-    // Search sections: Link, Calculator, Results, Files, Fallback
     if (m_defaultOpener) {
       addSection(SectionType::Link, "Link", 1);
     }

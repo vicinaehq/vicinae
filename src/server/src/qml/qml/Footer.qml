@@ -8,7 +8,6 @@ Item {
         anchors.rightMargin: 16
         spacing: 8
 
-        // Left side: Navigation status OR Toast
         Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -24,7 +23,6 @@ Item {
             }
         }
 
-        // Primary action label + shortcut badge
         Row {
             visible: {
                 if (launcher.hasCommandView) return actionPanel.primaryActionTitle !== ""
@@ -46,7 +44,6 @@ Item {
             }
         }
 
-        // Actions button + Ctrl+B badge
         Item {
             visible: actionPanel.hasMultipleActions
             Layout.alignment: Qt.AlignVCenter

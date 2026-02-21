@@ -7,8 +7,6 @@
 #include "services/toast/toast-service.hpp"
 #include "ui/action-pannel/action.hpp"
 
-// --- QmlMissingPreferenceFormModel ---
-
 static QString preferenceType(const Preference &p) {
   return std::visit(
       [](const auto &d) -> QString {
@@ -136,8 +134,6 @@ QmlMissingPreferenceFormModel::ValidateResult QmlMissingPreferenceFormModel::val
   }
   return {true, -1};
 }
-
-// --- QmlMissingPreferenceViewHost ---
 
 QmlMissingPreferenceViewHost::QmlMissingPreferenceViewHost(std::shared_ptr<ExtensionCommand> command,
                                                            const std::vector<Preference> &preferences,

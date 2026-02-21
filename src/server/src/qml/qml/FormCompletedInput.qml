@@ -57,7 +57,6 @@ Item {
 
         var txt = innerInput.text
         var afterTrigger = txt.substring(triggerIdx + 1, innerInput.cursorPosition)
-        // Filter completions
         var query = afterTrigger.toLowerCase().trim()
         var filtered = []
         for (var i = 0; i < completions.length; i++) {

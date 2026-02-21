@@ -9,7 +9,6 @@ Item {
     focus: true
     Keys.onEscapePressed: root.host.abort()
 
-    // Header with back button
     RowLayout {
         id: header
         anchors.top: parent.top
@@ -55,14 +54,12 @@ Item {
         color: Theme.divider
     }
 
-    // Content area below header — centering happens here
     Item {
         anchors.top: divider.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
 
-        // Init state — provider info + continue button
         ColumnLayout {
             anchors.centerIn: parent
             width: Math.min(350, parent.width - 80)
@@ -127,7 +124,6 @@ Item {
             }
         }
 
-        // Success state
         ColumnLayout {
             anchors.centerIn: parent
             width: Math.min(350, parent.width - 80)

@@ -32,7 +32,6 @@ Item {
                 {label: "Last modified", value: root.host.detailLastModified}
             ]
 
-            // Image preview
             Loader {
                 anchors.fill: parent
                 active: root.host.detailImageSource !== ""
@@ -49,7 +48,6 @@ Item {
                 }
             }
 
-            // Text preview
             Loader {
                 anchors.fill: parent
                 active: root.host.detailImageSource === ""
@@ -69,7 +67,6 @@ Item {
                 }
             }
 
-            // Fallback — no preview
             Loader {
                 anchors.fill: parent
                 active: root.host.detailImageSource === ""

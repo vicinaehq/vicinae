@@ -76,7 +76,6 @@ QmlLauncherWindow::QmlLauncherWindow(ApplicationContext &ctx, QObject *parent)
     });
   }
 
-  // Connect navigation visibility
   connect(nav, &NavigationController::windowVisiblityChanged,
           this, &QmlLauncherWindow::handleVisibilityChanged);
 
@@ -90,7 +89,6 @@ QmlLauncherWindow::QmlLauncherWindow(ApplicationContext &ctx, QObject *parent)
             handleCurrentViewChanged();
           });
 
-  // Loading state
   connect(nav, &NavigationController::loadingChanged,
           this, [this](bool loading) {
             if (m_isLoading != loading) {
@@ -132,17 +130,14 @@ QmlLauncherWindow::QmlLauncherWindow(ApplicationContext &ctx, QObject *parent)
             }
           });
 
-  // Action panel changes — delegate to controller
   connect(nav, &NavigationController::actionsChanged,
           this, [this](const ActionPanelState &state) {
             m_actionPanel->setStateFrom(state);
           });
 
-  // Close action panel on view push
   connect(nav, &NavigationController::viewPushed,
           this, [this](const BaseView *) { m_actionPanel->close(); });
 
-  // Navigation status (left side of footer)
   connect(nav, &NavigationController::navigationStatusChanged, this,
           [this](const QString &title, const ImageURL &icon) {
             m_navigationTitle = title;
@@ -150,7 +145,6 @@ QmlLauncherWindow::QmlLauncherWindow(ApplicationContext &ctx, QObject *parent)
             emit navigationStatusChanged();
           });
 
-  // Completer (argument completion for root search items)
   connect(nav, &NavigationController::completionCreated,
           this, [this](const CompleterState &state) {
             m_hasCompleter = true;
@@ -207,7 +201,6 @@ QmlLauncherWindow::QmlLauncherWindow(ApplicationContext &ctx, QObject *parent)
   connect(nav, &NavigationController::invalidCompletionFired,
           this, &QmlLauncherWindow::completerValidationFailed);
 
-  // Toast service
   auto *toast = m_ctx.services->toastService();
   connect(toast, &ToastService::toastActivated, this, [this](const Toast *t) {
     m_toastActive = true;
@@ -222,14 +215,12 @@ QmlLauncherWindow::QmlLauncherWindow(ApplicationContext &ctx, QObject *parent)
     emit toastActiveChanged();
   });
 
-  // Config changes
   connect(m_ctx.services->config(), &config::Manager::configChanged,
           this, [this](const auto &, const auto &) {
             applyWindowConfig();
             tryCompaction();
           });
 
-  // Overlay
   connect(ctx.overlay.get(), &OverlayController::overlayChanged, this, [this]() {
     m_hasOverlay = m_ctx.overlay->hasOverlay();
     m_overlayHost = m_ctx.overlay->current();
@@ -271,7 +262,6 @@ void QmlLauncherWindow::handleCurrentViewChanged() {
   m_viewWasPopped = false;
 
   if (nav->viewStackSize() == 1) {
-    // Back to root search
     disconnect(m_searchAccessoryConnection);
     if (!m_searchAccessoryUrl.isEmpty()) {
       m_searchAccessoryUrl.clear();

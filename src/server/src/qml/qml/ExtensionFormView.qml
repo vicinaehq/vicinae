@@ -26,7 +26,6 @@ Item {
                 return
             }
         }
-        // No autoFocus field — focus first focusable
         for (var j = 0; j < repeater.count; j++) {
             var item2 = repeater.itemAt(j)
             if (item2 && item2.isField) {
@@ -60,7 +59,6 @@ Item {
                     required property bool autoFocus
                     required property var fieldData
 
-                    // Expose for parent iteration
                     readonly property bool isField: type !== "separator" && type !== "description"
 
                     function focusField() {
@@ -85,9 +83,6 @@ Item {
                 }
             }
         }
-
-    // --- Field type components ---
-    // Each uses parent (the Loader) to access delegate properties.
 
     Component {
         id: textFieldComp

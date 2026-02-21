@@ -13,7 +13,6 @@ Item {
         anchors.fill: parent
         spacing: 0
 
-        // Toolbar row
         RowLayout {
             Layout.fillWidth: true
             Layout.preferredHeight: 41
@@ -60,14 +59,12 @@ Item {
             }
         }
 
-        // Divider
         Rectangle {
             Layout.fillWidth: true
             implicitHeight: 1
             color: Theme.divider
         }
 
-        // List + detail
         GenericListView {
             id: listView
             Layout.fillWidth: true
@@ -177,7 +174,6 @@ Item {
                 {label: "MD5", value: root.host.detailMd5}
             ]
 
-            // Error state
             Loader {
                 anchors.fill: parent
                 active: root.host.hasDetailError
@@ -189,7 +185,6 @@ Item {
                 }
             }
 
-            // Image detail
             Loader {
                 anchors.fill: parent
                 active: !root.host.hasDetailError && root.host.detailImageSource !== ""
@@ -206,7 +201,6 @@ Item {
                 }
             }
 
-            // Text detail
             Loader {
                 anchors.fill: parent
                 active: !root.host.hasDetailError
@@ -227,7 +221,6 @@ Item {
                 }
             }
 
-            // Fallback — no content preview available
             Loader {
                 anchors.fill: parent
                 active: !root.host.hasDetailError

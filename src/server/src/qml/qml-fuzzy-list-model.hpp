@@ -29,7 +29,6 @@ public:
   }
 
 protected:
-  // --- Typed interface: override in concrete models ---
   virtual QString displayTitle(const T &item) const = 0;
   virtual QString displaySubtitle(const T &) const { return {}; }
   virtual QString displayIconSource(const T &item) const = 0;
@@ -83,7 +82,6 @@ private:
     return m_items[m_filtered[globalIdx].data];
   }
 
-  // --- Sealed QmlCommandListModel overrides dispatching to typed virtuals ---
   QString itemTitle(int s, int i) const final { return displayTitle(resolveItem(s, i)); }
   QString itemSubtitle(int s, int i) const final { return displaySubtitle(resolveItem(s, i)); }
   QString itemIconSource(int s, int i) const final { return displayIconSource(resolveItem(s, i)); }

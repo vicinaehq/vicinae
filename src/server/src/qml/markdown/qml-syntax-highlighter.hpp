@@ -34,7 +34,6 @@ inline StyleMap buildStyleMap(const ThemeFile &theme) {
   };
 
   StyleMap map{};
-  // Normal: no overrides (uses default foreground)
 
   auto set = [&](TextStyle ts, SemanticColor c, bool bold = false, bool italic = false) {
     auto i = static_cast<int>(ts);
@@ -70,7 +69,6 @@ inline StyleMap buildStyleMap(const ThemeFile &theme) {
   set(TextStyle::Warning,        SemanticColor::Orange);
   set(TextStyle::Alert,          SemanticColor::Red);
   set(TextStyle::Error,          SemanticColor::Red);
-  // Others: no overrides
 
   return map;
 }

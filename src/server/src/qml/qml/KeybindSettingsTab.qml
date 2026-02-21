@@ -26,14 +26,12 @@ Item {
         anchors.fill: parent
         spacing: 0
 
-        // Left pane: search + column headers + list (60%)
         ColumnLayout {
             Layout.fillHeight: true
             Layout.preferredWidth: root.width * 0.60
             Layout.maximumWidth: root.width * 0.60
             spacing: 0
 
-            // Search bar
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 48
@@ -86,7 +84,6 @@ Item {
 
             Rectangle { Layout.fillWidth: true; height: 1; color: Theme.divider }
 
-            // Column headers
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 30
@@ -116,7 +113,6 @@ Item {
 
             Rectangle { Layout.fillWidth: true; height: 1; color: Theme.divider }
 
-            // List view
             ListView {
                 id: keybindList
                 Layout.fillWidth: true
@@ -151,7 +147,6 @@ Item {
 
                     readonly property bool isSelected: index === root.model.selectedRow
 
-                    // Alternating row stripe
                     Rectangle {
                         anchors.fill: parent
                         color: Qt.rgba(Theme.foreground.r, Theme.foreground.g,
@@ -159,7 +154,6 @@ Item {
                         visible: rowItem.index % 2 === 1 && !rowItem.isSelected && !rowHover.hovered
                     }
 
-                    // Selection / hover highlight
                     Rectangle {
                         anchors.fill: parent
                         color: rowItem.isSelected ? Theme.listItemSelectionBg
@@ -186,7 +180,6 @@ Item {
                         anchors.fill: parent
                         spacing: 0
 
-                        // Name column
                         RowLayout {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
@@ -211,7 +204,6 @@ Item {
                             }
                         }
 
-                        // Shortcut column
                         Item {
                             id: shortcutCell
                             Layout.preferredWidth: 180
@@ -279,7 +271,6 @@ Item {
 
         Rectangle { Layout.fillHeight: true; width: 1; color: Theme.divider }
 
-        // Right pane: detail (40%)
         Item {
             Layout.fillHeight: true
             Layout.fillWidth: true
@@ -297,7 +288,6 @@ Item {
                 spacing: 0
                 visible: root.model.hasSelection
 
-                // Header
                 RowLayout {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 80
@@ -325,7 +315,6 @@ Item {
 
                 Rectangle { Layout.fillWidth: true; height: 1; color: Theme.divider }
 
-                // Description
                 Flickable {
                     Layout.fillWidth: true
                     Layout.fillHeight: true

@@ -3,13 +3,11 @@ import QtQuick
 Row {
     spacing: 6
 
-    // Toast indicator: color circle or spinning ring
     Item {
         width: 12
         height: 12
         anchors.verticalCenter: parent.verticalCenter
 
-        // Static color circle (Success/Info/Warning/Danger)
         Rectangle {
             visible: launcher.toastStyle !== 4
             width: 10
@@ -27,7 +25,6 @@ Row {
             }
         }
 
-        // Spinning ring (Dynamic, style=4)
         Rectangle {
             id: spinner
             visible: launcher.toastStyle === 4

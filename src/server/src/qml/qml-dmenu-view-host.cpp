@@ -34,7 +34,6 @@ void QmlDMenuViewHost::initialize() {
 
   setSearchPlaceholderText(m_data.placeholder.value_or("Search entries...").c_str());
 
-  // Parse entries from raw content
   auto entries = std::views::split(m_data.rawContent, std::string_view("\n")) |
                  std::views::transform([](auto &&s) { return std::string_view(s); }) |
                  std::views::filter([](auto &&s) { return !s.empty(); }) |

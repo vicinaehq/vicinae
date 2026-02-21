@@ -24,7 +24,6 @@ public:
   QString searchPlaceholder() const override;
   QUrl qmlComponentUrl() const override { return QUrl(QStringLiteral("qrc:/Vicinae/ExtensionGridView.qml")); }
 
-  // Per-cell data for QML delegate
   Q_INVOKABLE QString cellTitle(int section, int item) const;
   Q_INVOKABLE QString cellIcon(int section, int item) const;
   Q_INVOKABLE QString cellSubtitle(int section, int item) const;

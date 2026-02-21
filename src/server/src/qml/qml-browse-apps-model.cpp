@@ -29,7 +29,6 @@ std::unique_ptr<ActionPanelState> QmlBrowseAppsModel::buildActionPanel(const App
   auto *mainSection = panel->createSection();
   auto *utils = panel->createSection();
 
-  // Focus window if the app has active windows, then add Open
   auto activeWindows = ctx()->services->windowManager()->findAppWindows(*app);
   if (!activeWindows.empty()) {
     mainSection->addAction(new FocusWindowAction(activeWindows.front()));
@@ -39,7 +38,6 @@ std::unique_ptr<ActionPanelState> QmlBrowseAppsModel::buildActionPanel(const App
   open->setClearSearch(true);
   mainSection->addAction(open);
 
-  // App-specific actions
   auto actions = app->actions();
   for (int i = 0; i < static_cast<int>(actions.size()); ++i) {
     auto *action = new OpenAppAction(actions[i], actions[i]->displayName(), {});
@@ -48,7 +46,6 @@ std::unique_ptr<ActionPanelState> QmlBrowseAppsModel::buildActionPanel(const App
     mainSection->addAction(action);
   }
 
-  // Utility section
   if (auto opener = appDb->findDefaultOpener(app->path().c_str())) {
     auto *openLocation = new OpenAppAction(opener, "Open Location", {app->path().c_str()});
     openLocation->setShortcut(Keybind::OpenAction);

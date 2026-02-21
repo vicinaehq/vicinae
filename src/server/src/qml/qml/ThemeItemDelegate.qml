@@ -24,7 +24,6 @@ SelectableDelegate {
         anchors.rightMargin: 16
         spacing: 10
 
-        // Icon
         Item {
             Layout.preferredWidth: 30
             Layout.preferredHeight: 30
@@ -36,7 +35,6 @@ SelectableDelegate {
             }
         }
 
-        // Title + description stacked
         ColumnLayout {
             Layout.fillWidth: true
             spacing: 2
@@ -61,7 +59,6 @@ SelectableDelegate {
             }
         }
 
-        // Color palette
         Row {
             spacing: 3
             Layout.alignment: Qt.AlignVCenter

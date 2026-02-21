@@ -32,10 +32,6 @@ static QThreadPool &imageDecodingPool() {
   return pool;
 }
 
-// ---------------------------------------------------------------------------
-// ViciImageResponse — QQuickImageResponse subclass
-// ---------------------------------------------------------------------------
-
 class ViciImageResponse : public QQuickImageResponse {
   Q_OBJECT
 
@@ -100,10 +96,6 @@ private:
   QString m_fallback;
   std::atomic<bool> m_cancelled{false};
 };
-
-// ---------------------------------------------------------------------------
-// Helpers — all produce QImage, no QPixmap
-// ---------------------------------------------------------------------------
 
 static QImage renderBuiltinSvg(const QString &iconName, const QSize &size,
                                 const QColor &fg, const QColor &bg) {
@@ -278,10 +270,6 @@ static void applyCircleMask(QImage &image) {
   image = masked;
 }
 
-// ---------------------------------------------------------------------------
-// Param parsing
-// ---------------------------------------------------------------------------
-
 struct ParsedId {
   QString type;
   QString name;
@@ -343,10 +331,6 @@ void ViciImageResponse::tryFallback(QImage &image) {
     if (!image.isNull()) applyFillColor(image, fb.fg);
   }
 }
-
-// ---------------------------------------------------------------------------
-// QmlAsyncImageProvider
-// ---------------------------------------------------------------------------
 
 QQuickImageResponse *QmlAsyncImageProvider::requestImageResponse(
     const QString &id, const QSize &requestedSize) {
@@ -493,7 +477,6 @@ QQuickImageResponse *QmlAsyncImageProvider::requestImageResponse(
     });
 
   } else {
-    // Unknown type — return empty
     response->finishDeferred({});
   }
 

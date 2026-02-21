@@ -185,8 +185,6 @@ void QmlCommandGridModel::refreshActionPanel() {
   }
 }
 
-// --- Grid navigation ---
-
 int QmlCommandGridModel::totalItemCount() const {
   int total = 0;
   for (const auto &s : m_sections)

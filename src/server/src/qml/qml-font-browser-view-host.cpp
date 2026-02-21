@@ -89,8 +89,6 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas tempus, tellus
 
 } // namespace
 
-// --- QmlFontBrowserModel method definitions ---
-
 QString QmlFontBrowserModel::displayTitle(const QString &item) const { return item; }
 
 QString QmlFontBrowserModel::displayIconSource(const QString &item) const {
@@ -109,8 +107,6 @@ std::unique_ptr<ActionPanelState> QmlFontBrowserModel::buildActionPanel(const QS
 
   return panel;
 }
-
-// --- QmlFontBrowserViewHost ---
 
 QUrl QmlFontBrowserViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/BrowseFontsView.qml"));

@@ -2,8 +2,6 @@
 #include "qml-local-storage-model.hpp"
 #include "service-registry.hpp"
 
-// --- Namespace view host ---
-
 QUrl QmlLocalStorageViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/CommandListView.qml"));
 }
@@ -28,8 +26,6 @@ void QmlLocalStorageViewHost::textChanged(const QString &text) { m_model->setFil
 void QmlLocalStorageViewHost::onReactivated() { m_model->refreshActionPanel(); }
 
 QObject *QmlLocalStorageViewHost::listModel() const { return m_model; }
-
-// --- Item view host ---
 
 QmlLocalStorageItemViewHost::QmlLocalStorageItemViewHost(const QString &ns, std::vector<QString> keys)
     : m_ns(ns), m_keys(std::move(keys)) {}

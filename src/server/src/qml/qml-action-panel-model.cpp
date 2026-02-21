@@ -83,7 +83,6 @@ QVariant QmlActionPanelModel::data(const QModelIndex &index, int role) const {
     }
   }
 
-  // ActionItem
   if (item.sectionIdx < 0 || item.sectionIdx >= static_cast<int>(m_sections.size()))
     return {};
   const auto &section = m_sections[item.sectionIdx];
@@ -141,12 +140,10 @@ void QmlActionPanelModel::activate(int index) {
   }
 
   if (action->isPushView()) {
-    // PushView actions execute via the normal action path
     emit actionExecuted(action.get());
     return;
   }
 
-  // Regular action
   emit actionExecuted(action.get());
   if (action->autoClose()) {
     emit closeRequested();

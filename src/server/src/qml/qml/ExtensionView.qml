@@ -5,7 +5,6 @@ Item {
     id: root
     required property var host // QmlExtensionViewHost*
 
-    // Navigation functions called by SearchBar via commandStack.currentItem
     function moveUp() {
         if (contentLoader.item && typeof contentLoader.item.moveUp === "function")
             contentLoader.item.moveUp()

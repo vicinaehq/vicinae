@@ -9,7 +9,6 @@ Item {
         id: formView
         anchors.fill: parent
 
-        // Centered header block
         ColumnLayout {
             Layout.fillWidth: true
             Layout.margins: 20
@@ -44,7 +43,6 @@ Item {
             }
         }
 
-        // Form fields
         Repeater {
             model: root.host.prefModel
 

@@ -61,7 +61,6 @@ private:
 
   // Owns all actions so they outlive the state
   std::vector<std::shared_ptr<AbstractAction>> m_allActions;
-  // Section info from the state
   struct SectionInfo {
     QString name;
     std::vector<std::shared_ptr<AbstractAction>> actions;

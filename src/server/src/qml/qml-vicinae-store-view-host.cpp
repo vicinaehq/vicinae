@@ -68,7 +68,6 @@ void QmlVicinaeStoreViewHost::handleFinishedPage() {
 
   setLoading(false);
 
-  // Convert QList to std::vector
   std::vector<VicinaeStore::Extension> extensions(result->extensions.begin(),
                                                   result->extensions.end());
   m_model->setEntries(extensions, context()->services->extensionRegistry(),

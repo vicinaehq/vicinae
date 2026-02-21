@@ -72,7 +72,6 @@ void QmlClipboardHistoryViewHost::initialize() {
   m_model->initialize(context());
   m_controller = new ClipboardHistoryController(m_clipman, this);
 
-  // Parse default action preference
   auto preferences = command()->preferenceValues();
   auto defaultActionStr = preferences.value("defaultAction").toString();
   m_model->setDefaultAction(defaultActionStr == "paste"
@@ -81,7 +80,6 @@ void QmlClipboardHistoryViewHost::initialize() {
 
   setSearchPlaceholderText("Browse clipboard history...");
 
-  // Monitoring status
   m_canToggleMonitoring = m_clipman->supportsMonitoring();
   if (!m_canToggleMonitoring) {
     m_clipboardStatusText = QStringLiteral("Clipboard monitoring unavailable");
@@ -91,11 +89,9 @@ void QmlClipboardHistoryViewHost::initialize() {
     handleMonitoringChanged(m_clipman->monitoring());
   }
 
-  // Connect clipboard service signals
   connect(m_clipman, &ClipboardService::monitoringChanged, this,
           &QmlClipboardHistoryViewHost::handleMonitoringChanged);
 
-  // Forward controller data to QML model
   connect(m_controller, &ClipboardHistoryController::dataRetrieved, this,
           [this](const PaginatedResponse<ClipboardHistoryEntry> &page) {
             m_model->setEntries(page);
@@ -105,11 +101,9 @@ void QmlClipboardHistoryViewHost::initialize() {
   connect(m_controller, &ClipboardHistoryController::dataLoadingChanged, this,
           &BaseView::setLoading);
 
-  // Selection → detail
   connect(m_model, &QmlClipboardHistoryModel::entrySelected, this,
           &QmlClipboardHistoryViewHost::loadDetail);
 
-  // Restore saved filter
   auto savedFilter = getSavedDropdownFilter().value_or("all");
   if (auto it = savedFilterToKind.find(savedFilter); it != savedFilterToKind.end()) {
     m_currentKindFilter = filterIndexFromKind(it->second);
@@ -181,14 +175,12 @@ void QmlClipboardHistoryViewHost::handleDataRetrieved(int totalCount) {
 }
 
 void QmlClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
-  // Clear previous detail
   m_detailTextContent.clear();
   m_detailImageSource.clear();
   m_hasDetailError = false;
   m_detailErrorTitle.clear();
   m_detailErrorDescription.clear();
 
-  // Metadata
   m_detailMimeType = entry.mimeType;
   m_detailSize = formatSize(entry.size);
   m_detailCopiedAt = QDateTime::fromSecsSinceEpoch(entry.updatedAt).toString();
@@ -201,7 +193,6 @@ void QmlClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry)
     m_detailEncryptionIcon.clear();
   }
 
-  // Load offer data
   auto data = m_clipman->getMainOfferData(entry.id);
   if (!data) {
     m_hasDetailError = true;
@@ -262,7 +253,6 @@ void QmlClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry)
     }
   }
 
-  // Image content
   if (mime.startsWith("image/")) {
     // Create a fresh temp file each time so the URL changes and QML does not
     // serve a stale cached image from a previous selection.
@@ -280,7 +270,6 @@ void QmlClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry)
     return;
   }
 
-  // Text content
   if (Utils::isTextMimeType(mime) || mime == "text/uri-list") {
     m_detailTextContent = QString::fromUtf8(rawData);
     m_hasDetail = true;
@@ -288,7 +277,6 @@ void QmlClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry)
     return;
   }
 
-  // Fallback — show mime type info only
   m_hasDetail = true;
   emit detailChanged();
 }

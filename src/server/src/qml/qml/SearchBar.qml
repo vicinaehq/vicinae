@@ -17,7 +17,6 @@ Item {
         anchors.rightMargin: 16
         spacing: launcher.hasCompleter ? 4 : 12
 
-        // Back button — visible when not on root search
         Rectangle {
             id: backButton
             visible: launcher.hasCommandView

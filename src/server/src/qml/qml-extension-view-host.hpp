@@ -32,12 +32,10 @@ public:
 
   void render(const RenderModel &model);
 
-  // BaseView overrides
   void textChanged(const QString &text) override;
   bool inputFilter(QKeyEvent *event) override;
   void beforePop() override;
 
-  // Properties for QML
   QString viewType() const;
   QObject *contentModel() const;
   bool isExtLoading() const;
@@ -79,20 +77,17 @@ private:
   bool m_hasSearchText = false;
   bool m_firstRender = true;
 
-  // State from model
   bool m_throttle = false;
   bool m_filtering = false;
   std::optional<std::string> m_onSearchTextChange;
   bool m_shouldResetSelection = false;
   bool m_selectFirstOnReset = true;
 
-  // Detail view state
   QString m_detailMarkdown;
   QVariantList m_detailMetadata;
   std::optional<ActionPannelModel> m_detailActions;
   mutable ExtensionActionPanelBuilder::SubmenuCache m_submenuCache;
 
-  // Form view state
   std::optional<ActionPannelModel> m_formActions;
   QString m_linkAccessoryText;
   QString m_linkAccessoryHref;

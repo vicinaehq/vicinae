@@ -58,7 +58,6 @@ QObject *QmlManageSnippetsViewHost::listModel() const { return m_model; }
 void QmlManageSnippetsViewHost::loadDetail(const snippet::SerializedSnippet &snippet) {
   m_currentSnippet = snippet;
 
-  // Build metadata
   QVariantList meta;
 
   const auto typeStr = std::visit(
