@@ -141,10 +141,10 @@ int CommandGridModel::sectionColumns(int sectionIdx) const {
 void CommandGridModel::rebuildRows() { setSections(m_sections); }
 
 void CommandGridModel::select(int section, int item) {
-  if (section == m_selSection && item == m_selItem) return;
+  bool changed = section != m_selSection || item != m_selItem;
   m_selSection = section;
   m_selItem = item;
-  emit selectionChanged();
+  if (changed) emit selectionChanged();
 
   onItemSelected(section, item);
 
