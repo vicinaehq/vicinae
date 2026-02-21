@@ -1,26 +1,17 @@
 #pragma once
 
 #include "ui/dialog/dialog.hpp"
-#include "ui/image/image.hpp"
+#include "ui/image/url.hpp"
+#include "theme.hpp"
 #include <functional>
-#include <qevent.h>
-
-class TypographyWidget;
-class ButtonWidget;
 
 class AlertWidget : public DialogContentWidget {
   Q_OBJECT
 
-  ImageWidget *_icon;
-  TypographyWidget *_title;
-  TypographyWidget *_message;
-  ButtonWidget *_cancelBtn;
-  ButtonWidget *_actionBtn;
   std::function<void(void)> m_confirmCallback;
   std::function<void(void)> m_cancelCallback;
   bool m_finished = false;
 
-  // Shadow data for extraction by QML bridge
   QString m_titleText = "Are you sure?";
   QString m_messageText = "This action cannot be undone";
   std::optional<ImageURL> m_iconUrl = ImageURL::builtin("warning").setFill(SemanticColor::Red);
@@ -29,8 +20,6 @@ class AlertWidget : public DialogContentWidget {
   ColorLike m_confirmColor = SemanticColor::Red;
   ColorLike m_cancelColor = SemanticColor::Foreground;
 
-  void focusInEvent(QFocusEvent *event) override;
-  void paintEvent(QPaintEvent *event) override;
   void handleConfirm();
   void handleCancel();
 
@@ -38,8 +27,6 @@ protected:
   virtual void confirm() const;
   virtual void canceled() const;
   void interrupted() override;
-
-  void keyPressEvent(QKeyEvent *event) override;
 
 public:
   void setTitle(const QString &title);
@@ -59,7 +46,7 @@ public:
   void triggerConfirm();
   void triggerCancel();
 
-  AlertWidget(QWidget *parent = nullptr);
+  AlertWidget(QObject *parent = nullptr);
 
 signals:
   void confirmed() const;
@@ -74,12 +61,6 @@ class CallbackAlertWidget : public AlertWidget {
   void canceled() const override;
 
 public:
-  /**
-   * Careful when using this inside the execute() method of an action.
-   * There are rare scenarios in which the alert widget may live longer than the action it's triggered
-   * in. To be on the safe side, make sure you do not capture reference to action members and do all the
-   * capturing by value only.
-   */
   void setCallback(const std::function<void(bool confirmed)> &fn);
   void setConfirmCallback(const std::function<void()> &fn);
   void setCancelCallback(const std::function<void()> &fn);

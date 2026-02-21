@@ -4,7 +4,6 @@
 #include "qml/qml-edit-keywords-view-host.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/toast/toast-service.hpp"
-#include "ui/action-pannel/push-action.hpp"
 #include "ui/alert/alert.hpp"
 
 class PasteClipboardSelection : public PasteToFocusedWindowAction {

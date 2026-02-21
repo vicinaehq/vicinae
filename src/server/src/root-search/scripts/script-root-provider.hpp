@@ -10,7 +10,6 @@
 #include "services/app-service/app-service.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
-#include "ui/settings-item-info/settings-item-info.hpp"
 #include "utils.hpp"
 #include <QProcess>
 #include <qjsonobject.h>
@@ -53,11 +52,6 @@ class ScriptRootItem : public RootItem {
     }
 
     return args;
-  }
-
-  QWidget *settingsDetail(const QJsonObject &preferences) const override {
-    return new SettingsItemInfo(settingsMetadata(),
-        m_file->data().description.transform([](auto &&s) { return QString::fromStdString(s); }));
   }
 
   QString settingsDescription() const override {

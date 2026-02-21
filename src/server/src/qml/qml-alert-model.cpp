@@ -2,7 +2,7 @@
 #include "qml-utils.hpp"
 #include "navigation-controller.hpp"
 #include "ui/alert/alert.hpp"
-#include "theme.hpp"
+#include "theme/theme-file.hpp"
 
 static QColor resolveColorLike(const ColorLike &color) {
   auto &theme = ThemeService::instance().theme();

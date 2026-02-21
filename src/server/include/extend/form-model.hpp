@@ -3,7 +3,6 @@
 #include "extend/list-model.hpp"
 #include "extend/model.hpp"
 #include <memory>
-#include <qboxlayout.h>
 #include <qcoreevent.h>
 #include <qjsonobject.h>
 #include <qjsonvalue.h>
@@ -13,7 +12,6 @@
 #include <qstring.h>
 #include <optional>
 #include <qtmetamacros.h>
-#include <qwidget.h>
 
 struct FormModel {
   struct FieldBase {

@@ -8,12 +8,10 @@
 #include "service-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/window-manager/window-manager.hpp"
-#include "switch-windows-view.hpp"
-#include "ui/settings-item-info/settings-item-info.hpp"
+#include "actions/wm/window-actions.hpp"
 #include "utils/environment.hpp"
 #include <qjsonobject.h>
 #include <qkeysequence.h>
-#include <qwidget.h>
 
 double AppRootItem::baseScoreWeight() const { return 1; }
 
@@ -28,18 +26,6 @@ std::vector<QString> AppRootItem::keywords() const {
 QString AppRootItem::subtitle() const { return QString(); }
 
 QString AppRootItem::displayName() const { return m_app->displayName(); }
-
-QWidget *AppRootItem::settingsDetail(const QJsonObject &preferences) const {
-  std::vector<std::pair<QString, QString>> args;
-
-  args.reserve(4);
-  args.emplace_back(std::pair{"ID", m_app->id()});
-  args.emplace_back(std::pair{"Name", m_app->displayName()});
-  args.emplace_back(std::pair{"Where", m_app->path().c_str()});
-  args.emplace_back(std::pair{"Opens in terminal", m_app->isTerminalApp() ? "Yes" : "No"});
-
-  return new SettingsItemInfo(args, m_app->description());
-}
 
 QString AppRootItem::settingsDescription() const { return m_app->description(); }
 

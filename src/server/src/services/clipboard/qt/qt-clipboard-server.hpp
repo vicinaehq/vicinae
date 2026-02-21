@@ -1,6 +1,6 @@
 #pragma once
 #include "services/clipboard/clipboard-server.hpp"
-#include <qapplication.h>
+#include <QGuiApplication>
 #include <qbuffer.h>
 #include <qclipboard.h>
 #include <QUrl>

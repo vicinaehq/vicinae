@@ -1,5 +1,5 @@
 #pragma once
-#include <qapplication.h>
+#include <QGuiApplication>
 #include <qwindow.h>
 #include <wayland-client-protocol.h>
 #include <qpa/qplatformnativeinterface.h>
@@ -17,7 +17,7 @@ struct ScopedRegion {
 };
 
 inline wl_surface *getWindowSurface(QWindow *win) {
-  if (QApplication::platformName() != "wayland") return nullptr;
+  if (QGuiApplication::platformName() != "wayland") return nullptr;
   auto wayland = qApp->nativeInterface<QNativeInterface::QWaylandApplication>();
   auto iface = qApp->platformNativeInterface();
   return static_cast<wl_surface *>(iface->nativeResourceForWindow("surface", win));

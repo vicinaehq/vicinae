@@ -1,7 +1,7 @@
 #include "globals.hpp"
 #include "ext-background-effect-v1-client-protocol.h"
 #include "virtual-keyboard-unstable-v1-client-protocol.h"
-#include <QApplication>
+#include <QGuiApplication>
 
 namespace Wayland {
 

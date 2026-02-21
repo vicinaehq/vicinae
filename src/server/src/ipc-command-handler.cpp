@@ -10,7 +10,7 @@
 #include "settings-controller/settings-controller.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include <algorithm>
-#include <qapplication.h>
+#include <QGuiApplication>
 #include <qfuturewatcher.h>
 #include <qobjectdefs.h>
 #include "extension/manager/extension-manager.hpp"
@@ -48,7 +48,7 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
   // TODO: add a "quit" command to handle graceful shutdown (requires more work than you would expect)
   if (command == "kill") {
     qInfo() << "Killing vicinae server because a new instance was started";
-    QApplication::exit(1);
+    QCoreApplication::exit(1);
     return {};
   }
 

@@ -1,6 +1,5 @@
 #include "qml-clipboard-history-view-host.hpp"
 #include "extensions/clipboard/history/clipboard-history-controller.hpp"
-#include "extensions/clipboard/history/clipboard-history-model.hpp"
 #include "qml-clipboard-history-model.hpp"
 #include "qml-utils.hpp"
 #include "service-registry.hpp"
@@ -50,7 +49,7 @@ static const std::unordered_map<QString, ClipboardOfferKind> savedFilterToKind{
 
 static const char *filterIndexToSavedValue[] = {"all", "text", "image", "link", "file"};
 
-QmlClipboardHistoryViewHost::QmlClipboardHistoryViewHost(QWidget *parent) : QmlBridgeViewBase() {}
+QmlClipboardHistoryViewHost::QmlClipboardHistoryViewHost() : QmlBridgeViewBase() {}
 
 QUrl QmlClipboardHistoryViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/ClipboardHistoryView.qml"));
@@ -71,8 +70,7 @@ void QmlClipboardHistoryViewHost::initialize() {
   m_clipman = context()->services->clipman();
   m_model = new QmlClipboardHistoryModel(this);
   m_model->initialize(context());
-  m_legacyModel = new ClipboardHistoryModel(this);
-  m_controller = new ClipboardHistoryController(m_clipman, m_legacyModel, this);
+  m_controller = new ClipboardHistoryController(m_clipman, this);
 
   // Parse default action preference
   auto preferences = command()->preferenceValues();

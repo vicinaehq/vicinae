@@ -8,7 +8,7 @@
 #include "font-service.hpp"
 #include "lib/icon-theme-db/icon-theme-db.hpp"
 #include "services/keybinding/keybinding-service.hpp"
-#include <QApplication>
+#include <QGuiApplication>
 #include <QIcon>
 
 QmlGeneralSettingsModel::QmlGeneralSettingsModel(QObject *parent) : QObject(parent) {
@@ -97,7 +97,7 @@ QVariantList QmlGeneralSettingsModel::fontItems() const {
 
 QVariant QmlGeneralSettingsModel::currentFont() const {
   auto &family = cfg().font.normal.family;
-  auto name = family == "auto" ? QApplication::font().family() : QString::fromStdString(family);
+  auto name = family == "auto" ? QGuiApplication::font().family() : QString::fromStdString(family);
   return makeDropdownItem(name, name);
 }
 

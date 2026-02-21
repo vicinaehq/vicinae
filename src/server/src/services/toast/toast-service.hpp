@@ -1,6 +1,7 @@
 #pragma once
 #include "ui/toast/toast.hpp"
 #include <qstring.h>
+#include <qtimer.h>
 #include "common/qt.hpp"
 
 class Toast : public QObject {

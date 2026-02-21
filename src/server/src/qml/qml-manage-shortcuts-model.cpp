@@ -1,5 +1,5 @@
 #include "qml-manage-shortcuts-model.hpp"
-#include <qapplication.h>
+#include <QGuiApplication>
 #include "actions/shortcut/shortcut-actions.hpp"
 #include "keyboard/keybind.hpp"
 

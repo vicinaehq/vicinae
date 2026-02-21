@@ -1,6 +1,6 @@
 #pragma once
 #include <optional>
-#include <qapplication.h>
+#include <QGuiApplication>
 #include <qclipboard.h>
 #include <qcontainerfwd.h>
 #include <quuid.h>
@@ -31,7 +31,7 @@ public:
   }
 
   Result expand(const QString &text, const std::vector<std::pair<QString, QString>> &arguments) const {
-    const auto clip = QApplication::clipboard();
+    const auto clip = QGuiApplication::clipboard();
     const auto parsed = PlaceholderString::parseSnippetText(text);
     Result result;
 

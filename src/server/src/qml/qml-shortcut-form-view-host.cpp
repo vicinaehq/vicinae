@@ -12,9 +12,9 @@
 #include <QFutureWatcher>
 #include <QUrl>
 
-QmlShortcutFormViewHost::QmlShortcutFormViewHost(QWidget *parent) : QmlFormViewBase() {}
+QmlShortcutFormViewHost::QmlShortcutFormViewHost() : QmlFormViewBase() {}
 
-QmlShortcutFormViewHost::QmlShortcutFormViewHost(std::shared_ptr<Shortcut> shortcut, Mode mode, QWidget *parent)
+QmlShortcutFormViewHost::QmlShortcutFormViewHost(std::shared_ptr<Shortcut> shortcut, Mode mode)
     : QmlFormViewBase(), m_mode(mode), m_initialShortcut(std::move(shortcut)) {}
 
 QUrl QmlShortcutFormViewHost::qmlComponentUrl() const {

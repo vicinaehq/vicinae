@@ -60,29 +60,28 @@ void QmlExtensionViewHost::render(const RenderModel &model) {
     if (m_listModel) {
       renderList(*listModel);
     } else {
-      // View type changed or unexpected — fallback
-      emit fallbackRequired(model);
+      qWarning() << "Extension sent list model but view was initialized with a different type";
     }
   } else if (auto *gridModel = std::get_if<GridModel>(&model)) {
     if (m_gridModel) {
       renderGrid(*gridModel);
     } else {
-      emit fallbackRequired(model);
+      qWarning() << "Extension sent grid model but view was initialized with a different type";
     }
   } else if (auto *detailModel = std::get_if<RootDetailModel>(&model)) {
     if (m_viewType == "detail") {
       renderDetail(*detailModel);
     } else {
-      emit fallbackRequired(model);
+      qWarning() << "Extension sent detail model but view was initialized with a different type";
     }
   } else if (auto *formModel = std::get_if<FormModel>(&model)) {
     if (m_formModel) {
       renderForm(*formModel);
     } else {
-      emit fallbackRequired(model);
+      qWarning() << "Extension sent form model but view was initialized with a different type";
     }
   } else {
-    emit fallbackRequired(model);
+    qWarning() << "Extension sent unrecognized model type";
   }
 }
 
@@ -130,7 +129,7 @@ void QmlExtensionViewHost::handleFirstRender(const RenderModel &model) {
     emit viewTypeChanged();
     emit formModelChanged();
   } else {
-    emit fallbackRequired(model);
+    qWarning() << "Extension sent unrecognized model type on first render";
   }
 }
 

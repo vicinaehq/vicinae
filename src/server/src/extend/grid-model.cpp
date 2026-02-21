@@ -87,15 +87,13 @@ GridSectionModel GridModelParser::parseSection(const QJsonObject &instance) {
   return model;
 }
 
-GridItemContentWidget::Inset GridModelParser::parseInset(const std::string &s) {
-  using Inset = GridItemContentWidget::Inset;
+GridInset GridModelParser::parseInset(const std::string &s) {
+  if (s == "zero") return GridInset::None;
+  if (s == "small") return GridInset::Small;
+  if (s == "medium") return GridInset::Medium;
+  if (s == "large") return GridInset::Large;
 
-  if (s == "zero") return Inset::None;
-  if (s == "small") return Inset::Small;
-  if (s == "medium") return Inset::Medium;
-  if (s == "large") return Inset::Large;
-
-  return Inset::Small;
+  return GridInset::Small;
 }
 
 ObjectFit GridModelParser::parseFit(const std::string &fit) {

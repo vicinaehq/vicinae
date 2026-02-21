@@ -9,6 +9,7 @@
 #include "ui/toast/toast.hpp"
 #include <QtConcurrent/QtConcurrent>
 #include <QClipboard>
+#include <QGuiApplication>
 #include <qfuturewatcher.h>
 #include <unordered_map>
 
@@ -171,7 +172,7 @@ UIRequestRouter::handleCloseWindow(const proto::ext::ui::CloseMainWindowRequest 
 
 proto::ext::ui::Response *
 UIRequestRouter::getSelectedText(const proto::ext::ui::GetSelectedTextRequest &req) {
-  auto text = QApplication::clipboard()->text(QClipboard::Mode::Selection);
+  auto text = QGuiApplication::clipboard()->text(QClipboard::Mode::Selection);
   auto res = new proto::ext::ui::Response;
   auto selectedTextRes = new proto::ext::ui::GetSelectedTextResponse;
 

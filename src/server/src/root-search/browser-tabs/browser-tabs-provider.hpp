@@ -5,10 +5,9 @@
 #include "navigation-controller.hpp"
 #include "services/browser-extension-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
-#include "ui/default-list-item-widget/default-list-item-widget.hpp"
+#include "ui/list-accessory/list-accessory.hpp"
 #include <qjsonobject.h>
 #include <qstringliteral.h>
-#include <qwidget.h>
 #include <ranges>
 
 class BrowserTabRootItem : public RootItem {
@@ -36,8 +35,6 @@ class BrowserTabRootItem : public RootItem {
   EntrypointId uniqueId() const override { return EntrypointId("browser-tabs", m_tab.uniqueId()); }
 
   ImageURL iconUrl() const override { return m_tab.icon(); }
-
-  QWidget *settingsDetail(const QJsonObject &preferences) const override { return nullptr; }
 
   std::vector<QString> keywords() const override { return {m_tab.url.c_str()}; }
 

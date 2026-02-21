@@ -4,7 +4,7 @@
 #include <qtmetamacros.h>
 #include <QMimeData>
 #include <QClipboard>
-#include <QApplication>
+#include <QGuiApplication>
 #include <vector>
 
 struct ClipboardDataOffer {
@@ -79,7 +79,7 @@ public:
    * Default implementation uses Qt's clipboard.
    */
   virtual bool setClipboardContent(QMimeData *data) {
-    QApplication::clipboard()->setMimeData(data);
+    QGuiApplication::clipboard()->setMimeData(data);
     return true;
   }
 

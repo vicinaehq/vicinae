@@ -1,6 +1,6 @@
 #pragma once
 #include <QProcess>
-#include <qapplication.h>
+#include <QGuiApplication>
 #include <qlogging.h>
 #include <QMimeData>
 #include <QObject>
@@ -50,7 +50,7 @@ public:
   }
 
   void injectClipboardText(std::string_view trigger, QString text, bool terminal = false) {
-    auto clip = QApplication::clipboard();
+    auto clip = QGuiApplication::clipboard();
     auto expansionData = new QMimeData;
 
     expansionData->setData("text/plain;charset=utf-8", text.toUtf8());

@@ -1,10 +1,9 @@
-#include <qapplication.h>
+#include <QGuiApplication>
 #include <qdbusargument.h>
 #include <qguiapplication_platform.h>
 #include <qlogging.h>
 #include <QWindow>
 #include <ranges>
-#include <QWidget>
 #include "utils/qt-wayland-utils.hpp"
 #include "kde-window-manager.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
