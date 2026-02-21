@@ -35,7 +35,7 @@
 #include "services/window-manager/window-manager.hpp"
 #include "services/snippet/snippet-service.hpp"
 #include "settings-controller/settings-controller.hpp"
-#include "qml/qml-launcher-window.hpp"
+#include "qml/launcher-window.hpp"
 #include "utils.hpp"
 #include "vicinae-ipc/client.hpp"
 #include "vicinae.hpp"
@@ -316,7 +316,7 @@ void CliServerCommand::run(CLI::App *app) {
 
   ctx.navigation->launch(std::make_shared<RootCommand>());
 
-  QmlLauncherWindow qmlWindow(ctx);
+  LauncherWindow qmlWindow(ctx);
 
   if (m_open) {
     ctx.navigation->showWindow();

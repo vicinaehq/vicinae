@@ -1,6 +1,6 @@
 #pragma once
-#include "qml/qml-store-intro-view-host.hpp"
-#include "qml/qml-vicinae-store-view-host.hpp"
+#include "qml/store-intro-view-host.hpp"
+#include "qml/vicinae-store-view-host.hpp"
 #include "single-view-command-context.hpp"
 #include "vicinae.hpp"
 
@@ -37,13 +37,13 @@ If you're looking to build your own extension, take a look at the [documentation
 )");
       auto icon = ImageURL::builtin("cart");
       icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
-      ctx->navigation->pushView(new QmlStoreIntroViewHost(INTRO, icon, "Continue to store", [ctrl]() {
+      ctx->navigation->pushView(new StoreIntroViewHost(INTRO, icon, "Continue to store", [ctrl]() {
         ctrl->storage().setItem("introCompleted", true);
-        ctrl->context()->navigation->replaceView<QmlVicinaeStoreViewHost>();
+        ctrl->context()->navigation->replaceView<VicinaeStoreViewHost>();
       }));
       return;
     }
 
-    ctx->navigation->pushView(new QmlVicinaeStoreViewHost);
+    ctx->navigation->pushView(new VicinaeStoreViewHost);
   }
 };

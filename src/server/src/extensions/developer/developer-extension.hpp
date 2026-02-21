@@ -1,9 +1,9 @@
 #include "command-database.hpp"
 #include "single-view-command-context.hpp"
-#include "qml/qml-create-extension-view-host.hpp"
+#include "qml/create-extension-view-host.hpp"
 #include "theme.hpp"
 
-class CreateExtensionCommand : public BuiltinViewCommand<QmlCreateExtensionViewHost> {
+class CreateExtensionCommand : public BuiltinViewCommand<CreateExtensionViewHost> {
   QString id() const override { return "create"; }
   QString name() const override { return "Create Extension"; }
   ImageURL iconUrl() const override {

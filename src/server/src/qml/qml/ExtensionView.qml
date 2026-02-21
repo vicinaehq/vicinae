@@ -3,7 +3,7 @@ import Vicinae
 
 Item {
     id: root
-    required property var host // QmlExtensionViewHost*
+    required property var host // ExtensionViewHost*
 
     function moveUp() {
         if (contentLoader.item && typeof contentLoader.item.moveUp === "function")

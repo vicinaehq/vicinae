@@ -1,7 +1,7 @@
 #pragma once
 #include "builtin_icon.hpp"
 #include "clipboard-actions.hpp"
-#include "qml/qml-edit-keywords-view-host.hpp"
+#include "qml/edit-keywords-view-host.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "ui/alert/alert.hpp"
@@ -76,7 +76,7 @@ class EditClipboardKeywordsAction : public AbstractAction {
   void execute(ApplicationContext *ctx) override {
     auto clipman = ctx->services->clipman();
     auto id = m_id;
-    auto view = new QmlEditKeywordsViewHost(
+    auto view = new EditKeywordsViewHost(
         [clipman, id]() { return clipman->retrieveKeywords(id).value_or(""); },
         [clipman, id](const QString &kw) { return clipman->setKeywords(id, kw); },
         "Additional keywords that will be used to index this selection.");

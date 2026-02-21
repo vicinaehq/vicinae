@@ -1,9 +1,9 @@
 #pragma once
 #include "ui/image/url.hpp"
 #include "single-view-command-context.hpp"
-#include "qml/qml-manage-fallback-view-host.hpp"
+#include "qml/manage-fallback-view-host.hpp"
 
-class ManageFallbackCommand : public BuiltinViewCommand<QmlManageFallbackViewHost> {
+class ManageFallbackCommand : public BuiltinViewCommand<ManageFallbackViewHost> {
   QString id() const override { return "manage-fallback"; }
   QString name() const override { return "Configure Fallback Commands"; }
   ImageURL iconUrl() const override {

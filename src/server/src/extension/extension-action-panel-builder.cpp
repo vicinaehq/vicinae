@@ -1,6 +1,6 @@
 #include "extension-action-panel-builder.hpp"
 #include "common-actions.hpp"
-#include "qml/qml-shortcut-form-view-host.hpp"
+#include "qml/shortcut-form-view-host.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/image/url.hpp"
 #include <qjsonobject.h>
@@ -26,7 +26,7 @@ static AbstractAction *createActionFromModel(const ActionModel &model, NotifyFn 
       if (iconValue.isString()) { icon = iconValue.toString(); }
     }
 
-    auto view = new QmlShortcutFormViewHost();
+    auto view = new ShortcutFormViewHost();
     view->setPrefilledValues(link, name, application, icon);
     ImageURL actionIcon;
 

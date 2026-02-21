@@ -5,7 +5,7 @@
 #include "services/oauth/oauth-service.hpp"
 #include "service-registry.hpp"
 #include "overlay-controller/overlay-controller.hpp"
-#include "qml/qml-oauth-overlay-host.hpp"
+#include "qml/oauth-overlay-host.hpp"
 #include <stdexcept>
 
 namespace oauth = proto::ext::oauth;
@@ -112,7 +112,7 @@ OAuthRouter::authorize(const proto::ext::oauth::AuthorizeRequest &req) {
 
   std::cout << url.toString().toStdString() << std::endl;
 
-  auto host = new QmlOAuthOverlayHost(&m_ctx, req);
+  auto host = new OAuthOverlayHost(&m_ctx, req);
 
   m_ctx.overlay->setCurrent(host);
 

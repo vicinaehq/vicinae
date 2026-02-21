@@ -1,9 +1,9 @@
 #pragma once
-#include "qml/qml-bridge-view.hpp"
+#include "qml/bridge-view.hpp"
 #include "single-view-command-context.hpp"
 #include "vicinae.hpp"
 
-class MarkdownShowcaseView : public QmlFormViewBase {
+class MarkdownShowcaseView : public FormViewBase {
   Q_OBJECT
 
   Q_PROPERTY(QString introMarkdown READ introMarkdown CONSTANT)

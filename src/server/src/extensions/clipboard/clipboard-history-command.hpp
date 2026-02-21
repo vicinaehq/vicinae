@@ -1,10 +1,10 @@
 #pragma once
-#include "qml/qml-clipboard-history-view-host.hpp"
+#include "qml/clipboard-history-view-host.hpp"
 #include "single-view-command-context.hpp"
 #include "vicinae.hpp"
 #include <qjsonobject.h>
 
-class ClipboardHistoryCommand : public BuiltinViewCommand<QmlClipboardHistoryViewHost> {
+class ClipboardHistoryCommand : public BuiltinViewCommand<ClipboardHistoryViewHost> {
   QString id() const override { return "history"; }
   QString name() const override { return "Clipboard History"; }
   QString description() const override {

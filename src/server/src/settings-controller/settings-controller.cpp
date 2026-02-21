@@ -1,6 +1,6 @@
 #include "settings-controller/settings-controller.hpp"
 #include "common.hpp"
-#include "qml/qml-settings-window.hpp"
+#include "qml/settings-window.hpp"
 #include <QTimer>
 
 SettingsController::SettingsController(ApplicationContext &ctx) : m_ctx(ctx) {}
@@ -40,7 +40,7 @@ void SettingsController::openExtensionPreferences(const EntrypointId &id) {
 
 void SettingsController::createSettingsWindow() {
   if (m_window) return;
-  m_window = new QmlSettingsWindow(m_ctx);
+  m_window = new SettingsWindow(m_ctx);
 }
 
 void SettingsController::destroySettingsWindow() {

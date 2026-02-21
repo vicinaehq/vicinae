@@ -2,7 +2,7 @@
 #include <QGuiApplication>
 #include "common.hpp"
 #include "services/shortcut/shortcut-service.hpp"
-#include "qml/qml-shortcut-form-view-host.hpp"
+#include "qml/shortcut-form-view-host.hpp"
 #include "../../ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
@@ -113,7 +113,7 @@ public:
   std::shared_ptr<Shortcut> m_shortcut;
 
   void execute(ApplicationContext *ctx) override {
-    auto view = new QmlShortcutFormViewHost(m_shortcut, QmlShortcutFormViewHost::Mode::Edit);
+    auto view = new ShortcutFormViewHost(m_shortcut, ShortcutFormViewHost::Mode::Edit);
 
     ctx->navigation->pushView(view);
   }
@@ -150,7 +150,7 @@ public:
   std::shared_ptr<Shortcut> link;
 
   void execute(ApplicationContext *ctx) override {
-    auto view = new QmlShortcutFormViewHost(link, QmlShortcutFormViewHost::Mode::Duplicate);
+    auto view = new ShortcutFormViewHost(link, ShortcutFormViewHost::Mode::Duplicate);
 
     ctx->navigation->pushView(view);
   }

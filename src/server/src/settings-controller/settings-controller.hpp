@@ -3,7 +3,7 @@
 #include "common/entrypoint.hpp"
 #include "common/context.hpp"
 
-class QmlSettingsWindow;
+class SettingsWindow;
 
 class SettingsController : public QObject {
   Q_OBJECT
@@ -22,6 +22,6 @@ private:
   void destroySettingsWindow();
 
   ApplicationContext &m_ctx;
-  QmlSettingsWindow *m_window = nullptr;
+  SettingsWindow *m_window = nullptr;
   bool m_isClosing = false;
 };
