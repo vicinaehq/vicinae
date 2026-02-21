@@ -86,6 +86,8 @@ void CommandGridModel::setSections(const std::vector<SectionInfo> &sections) {
     m_sections = sections;
     m_rows = std::move(newFlat);
     m_selectedIndex = -1;
+    m_selSection = -1;
+    m_selItem = -1;
     endResetModel();
     return;
   }
