@@ -2,7 +2,7 @@
 #include "extension/extension-command-controller.hpp"
 #include "extension/extension-command.hpp"
 #include "navigation-controller.hpp"
-#include "qml/qml-extension-view-host.hpp"
+#include "qml/extension-view-host.hpp"
 #include "theme.hpp"
 #include "ui/image/url.hpp"
 #include <qobject.h>
@@ -30,7 +30,7 @@ public:
   NavigationController *handle() const { return m_navigation; }
 
   void pushView() {
-    auto host = new QmlExtensionViewHost(m_controller.get());
+    auto host = new ExtensionViewHost(m_controller.get());
 
     m_navigation->pushView(host);
     m_navigation->setNavigationTitle(defaultNavigationTitle());

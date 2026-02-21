@@ -1,14 +1,14 @@
 #pragma once
 #include "emoji/emoji.hpp"
 #include "preference.hpp"
-#include "qml/qml-bridge-view.hpp"
-#include "qml/qml-emoji-grid-model.hpp"
+#include "qml/bridge-view.hpp"
+#include "qml/emoji-grid-model.hpp"
 #include "ui/image/url.hpp"
 #include "single-view-command-context.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "utils.hpp"
 
-class SearchEmojiCommand : public BuiltinViewCommand<QmlBridgeView<QmlEmojiGridModel>> {
+class SearchEmojiCommand : public BuiltinViewCommand<BridgeView<EmojiGridModel>> {
   QString id() const override { return "search-emojis"; }
   QString name() const override { return "Search Emojis"; }
   QString description() const override {

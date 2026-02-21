@@ -1,5 +1,5 @@
-#include "qml/qml-raycast-store-view-host.hpp"
-#include "qml/qml-store-intro-view-host.hpp"
+#include "qml/raycast-store-view-host.hpp"
+#include "qml/store-intro-view-host.hpp"
 #include "single-view-command-context.hpp"
 #include "theme.hpp"
 
@@ -35,13 +35,13 @@ Please note that many extensions may not fully work at this time. This is either
 Vicinae also has its own [extension store](vicinae://extensions/vicinae/vicinae/store), which does not suffer from these limitations.
 )");
       auto icon = iconUrl();
-      ctx->navigation->pushView(new QmlStoreIntroViewHost(INTRO, icon, "Continue to store", [ctrl]() {
+      ctx->navigation->pushView(new StoreIntroViewHost(INTRO, icon, "Continue to store", [ctrl]() {
         ctrl->storage().setItem("introCompleted", true);
-        ctrl->context()->navigation->replaceView<QmlRaycastStoreViewHost>();
+        ctrl->context()->navigation->replaceView<RaycastStoreViewHost>();
       }));
       return;
     }
 
-    ctx->navigation->pushView<QmlRaycastStoreViewHost>();
+    ctx->navigation->pushView<RaycastStoreViewHost>();
   }
 };

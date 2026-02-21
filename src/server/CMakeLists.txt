@@ -285,34 +285,34 @@ set(SRCS
 	src/extensions/vicinae/refresh-apps-command.cpp
 	src/extensions/power-management/power-management-extension.cpp
 
-	src/qml/qml-browse-apps-model.hpp
-	src/qml/qml-browse-apps-model.cpp
-	src/qml/qml-browse-apps-view-host.hpp
-	src/qml/qml-browse-apps-view-host.cpp
-	src/qml/qml-browser-tabs-model.hpp
-	src/qml/qml-browser-tabs-model.cpp
-	src/qml/qml-browser-tabs-view-host.hpp
-	src/qml/qml-browser-tabs-view-host.cpp
-	src/qml/qml-builtin-icons-model.hpp
-	src/qml/qml-builtin-icons-model.cpp
-	src/qml/qml-builtin-icons-view-host.hpp
-	src/qml/qml-builtin-icons-view-host.cpp
-	src/qml/qml-manage-fallback-model.hpp
-	src/qml/qml-manage-fallback-model.cpp
-	src/qml/qml-manage-fallback-view-host.hpp
-	src/qml/qml-manage-fallback-view-host.cpp
-	src/qml/qml-system-run-model.hpp
-	src/qml/qml-system-run-model.cpp
-	src/qml/qml-system-run-view-host.hpp
-	src/qml/qml-system-run-view-host.cpp
-	src/qml/qml-create-extension-success-view-host.hpp
-	src/qml/qml-create-extension-success-view-host.cpp
-	src/qml/qml-script-executor-view-host.hpp
-	src/qml/qml-script-executor-view-host.cpp
-	src/qml/qml-provider-search-model.hpp
-	src/qml/qml-provider-search-model.cpp
-	src/qml/qml-provider-search-view-host.hpp
-	src/qml/qml-provider-search-view-host.cpp
+	src/qml/browse-apps-model.hpp
+	src/qml/browse-apps-model.cpp
+	src/qml/browse-apps-view-host.hpp
+	src/qml/browse-apps-view-host.cpp
+	src/qml/browser-tabs-model.hpp
+	src/qml/browser-tabs-model.cpp
+	src/qml/browser-tabs-view-host.hpp
+	src/qml/browser-tabs-view-host.cpp
+	src/qml/builtin-icons-model.hpp
+	src/qml/builtin-icons-model.cpp
+	src/qml/builtin-icons-view-host.hpp
+	src/qml/builtin-icons-view-host.cpp
+	src/qml/manage-fallback-model.hpp
+	src/qml/manage-fallback-model.cpp
+	src/qml/manage-fallback-view-host.hpp
+	src/qml/manage-fallback-view-host.cpp
+	src/qml/system-run-model.hpp
+	src/qml/system-run-model.cpp
+	src/qml/system-run-view-host.hpp
+	src/qml/system-run-view-host.cpp
+	src/qml/create-extension-success-view-host.hpp
+	src/qml/create-extension-success-view-host.cpp
+	src/qml/script-executor-view-host.hpp
+	src/qml/script-executor-view-host.cpp
+	src/qml/provider-search-model.hpp
+	src/qml/provider-search-model.cpp
+	src/qml/provider-search-view-host.hpp
+	src/qml/provider-search-view-host.cpp
 
 	src/cli/cli.cpp
 	src/cli/server.cpp
@@ -365,8 +365,8 @@ set(SRCS
 	src/services/oauth/oauth-token-store.hpp
 	src/services/oauth/oauth-token-store.cpp
 
-	src/qml/qml-oauth-overlay-host.hpp
-	src/qml/qml-oauth-overlay-host.cpp
+	src/qml/oauth-overlay-host.hpp
+	src/qml/oauth-overlay-host.cpp
 
 
 
@@ -401,10 +401,10 @@ set(SRCS
 
 	src/extensions/vicinae/vicinae-extension.cpp
 
-	src/qml/qml-search-files-model.hpp
-	src/qml/qml-search-files-model.cpp
-	src/qml/qml-search-files-view-host.hpp
-	src/qml/qml-search-files-view-host.cpp
+	src/qml/search-files-model.hpp
+	src/qml/search-files-model.cpp
+	src/qml/search-files-view-host.hpp
+	src/qml/search-files-view-host.cpp
 
 	src/services/raycast/raycast-store.cpp
 	src/services/extension-store/vicinae-store.cpp
@@ -439,137 +439,137 @@ set(SRCS
 	src/config/config.hpp
 	src/config/config.cpp
 
-	src/qml/qml-local-storage-model.hpp
-	src/qml/qml-local-storage-model.cpp
-	src/qml/qml-local-storage-view-host.hpp
-	src/qml/qml-local-storage-view-host.cpp
+	src/qml/local-storage-model.hpp
+	src/qml/local-storage-model.cpp
+	src/qml/local-storage-view-host.hpp
+	src/qml/local-storage-view-host.cpp
 
-	src/qml/qml-dmenu-model.hpp
-	src/qml/qml-dmenu-model.cpp
-	src/qml/qml-dmenu-view-host.hpp
-	src/qml/qml-dmenu-view-host.cpp
+	src/qml/dmenu-model.hpp
+	src/qml/dmenu-model.cpp
+	src/qml/dmenu-view-host.hpp
+	src/qml/dmenu-view-host.cpp
 
 	src/services/snippet/snippet-service.hpp
 	src/services/snippet/snippet-server.hpp
 	src/services/snippet/snippet-db.cpp
 
 	# QML frontend (POC)
-	src/qml/qml-launcher-window.hpp
-	src/qml/qml-launcher-window.cpp
-	src/qml/qml-root-search-model.hpp
-	src/qml/qml-root-search-model.cpp
-	src/qml/qml-command-list-model.hpp
-	src/qml/qml-command-list-model.cpp
-	src/qml/qml-action-panel-model.hpp
-	src/qml/qml-action-panel-model.cpp
-	src/qml/qml-action-panel-controller.hpp
-	src/qml/qml-action-panel-controller.cpp
-	src/qml/qml-alert-model.hpp
-	src/qml/qml-alert-model.cpp
-	src/qml/qml-bridge-view.hpp
-	src/qml/qml-calc-history-model.hpp
-	src/qml/qml-calc-history-model.cpp
-	src/qml/qml-theme-list-model.hpp
-	src/qml/qml-theme-list-model.cpp
-	src/qml/qml-command-grid-model.hpp
-	src/qml/qml-command-grid-model.cpp
-	src/qml/qml-emoji-grid-model.hpp
-	src/qml/qml-emoji-grid-model.cpp
-	src/qml/qml-utils.cpp
-	src/qml/qml-extension-view-host.hpp
-	src/qml/qml-extension-view-host.cpp
-	src/qml/qml-extension-error-view-host.hpp
-	src/qml/qml-extension-error-view-host.cpp
-	src/qml/qml-empty-view-host.hpp
-	src/qml/qml-empty-view-host.cpp
-	src/qml/qml-missing-preference-view-host.hpp
-	src/qml/qml-missing-preference-view-host.cpp
-	src/qml/qml-extension-form-model.hpp
-	src/qml/qml-extension-form-model.cpp
-	src/qml/qml-clipboard-history-model.hpp
-	src/qml/qml-clipboard-history-model.cpp
-	src/qml/qml-clipboard-history-view-host.hpp
-	src/qml/qml-clipboard-history-view-host.cpp
-	src/qml/qml-snippet-form-view-host.hpp
-	src/qml/qml-snippet-form-view-host.cpp
-	src/qml/qml-alias-form-view-host.hpp
-	src/qml/qml-alias-form-view-host.cpp
-	src/qml/qml-app-selector-model.hpp
-	src/qml/qml-app-selector-model.cpp
-	src/qml/qml-shortcut-form-view-host.hpp
-	src/qml/qml-shortcut-form-view-host.cpp
-	src/qml/qml-extension-list-model.hpp
-	src/qml/qml-extension-list-model.cpp
-	src/qml/qml-extension-grid-model.hpp
-	src/qml/qml-extension-grid-model.cpp
-	src/qml/qml-source-blend-rect.hpp
-	src/qml/qml-image-url.hpp
-	src/qml/qml-image-url.cpp
-	src/qml/qml-image-source.hpp
-	src/qml/qml-image-source.cpp
-	src/qml/qml-animated-image.hpp
-	src/qml/qml-animated-image.cpp
-	src/qml/qml-async-image-provider.hpp
-	src/qml/qml-async-image-provider.cpp
-	src/qml/qml-config-bridge.hpp
-	src/qml/qml-theme-bridge.hpp
-	src/qml/qml-create-extension-view-host.hpp
-	src/qml/qml-create-extension-view-host.cpp
-	src/qml/qml-fuzzy-list-model.hpp
-	src/qml/qml-installed-extensions-model.hpp
-	src/qml/qml-installed-extensions-model.cpp
-	src/qml/qml-installed-extensions-view-host.hpp
-	src/qml/qml-installed-extensions-view-host.cpp
-	src/qml/qml-oauth-token-store-model.hpp
-	src/qml/qml-oauth-token-store-model.cpp
-	src/qml/qml-oauth-token-store-view-host.hpp
-	src/qml/qml-oauth-token-store-view-host.cpp
-	src/qml/qml-switch-windows-model.hpp
-	src/qml/qml-switch-windows-model.cpp
-	src/qml/qml-switch-windows-view-host.hpp
-	src/qml/qml-switch-windows-view-host.cpp
-	src/qml/qml-manage-shortcuts-model.hpp
-	src/qml/qml-manage-shortcuts-model.cpp
-	src/qml/qml-manage-shortcuts-view-host.hpp
-	src/qml/qml-manage-shortcuts-view-host.cpp
-	src/qml/qml-manage-snippets-model.hpp
-	src/qml/qml-manage-snippets-model.cpp
-	src/qml/qml-manage-snippets-view-host.hpp
-	src/qml/qml-manage-snippets-view-host.cpp
-	src/qml/qml-raycast-store-model.hpp
-	src/qml/qml-raycast-store-model.cpp
-	src/qml/qml-raycast-store-view-host.hpp
-	src/qml/qml-raycast-store-view-host.cpp
-	src/qml/qml-vicinae-store-model.hpp
-	src/qml/qml-vicinae-store-model.cpp
-	src/qml/qml-vicinae-store-view-host.hpp
-	src/qml/qml-vicinae-store-view-host.cpp
-	src/qml/qml-raycast-store-detail-host.hpp
-	src/qml/qml-raycast-store-detail-host.cpp
-	src/qml/qml-vicinae-store-detail-host.hpp
-	src/qml/qml-vicinae-store-detail-host.cpp
-	src/qml/markdown/qml-markdown-model.hpp
-	src/qml/markdown/qml-markdown-model.cpp
-	src/qml/markdown/qml-text-selection-controller.hpp
-	src/qml/markdown/qml-text-selection-controller.cpp
-	src/qml/qml-store-intro-view-host.hpp
-	src/qml/qml-store-intro-view-host.cpp
-	src/qml/qml-font-browser-model.hpp
-	src/qml/qml-font-browser-view-host.hpp
-	src/qml/qml-font-browser-view-host.cpp
-	src/qml/qml-edit-keywords-view-host.hpp
-	src/qml/qml-edit-keywords-view-host.cpp
+	src/qml/launcher-window.hpp
+	src/qml/launcher-window.cpp
+	src/qml/root-search-model.hpp
+	src/qml/root-search-model.cpp
+	src/qml/command-list-model.hpp
+	src/qml/command-list-model.cpp
+	src/qml/action-panel-model.hpp
+	src/qml/action-panel-model.cpp
+	src/qml/action-panel-controller.hpp
+	src/qml/action-panel-controller.cpp
+	src/qml/alert-model.hpp
+	src/qml/alert-model.cpp
+	src/qml/bridge-view.hpp
+	src/qml/calc-history-model.hpp
+	src/qml/calc-history-model.cpp
+	src/qml/theme-list-model.hpp
+	src/qml/theme-list-model.cpp
+	src/qml/command-grid-model.hpp
+	src/qml/command-grid-model.cpp
+	src/qml/emoji-grid-model.hpp
+	src/qml/emoji-grid-model.cpp
+	src/qml/view-utils.cpp
+	src/qml/extension-view-host.hpp
+	src/qml/extension-view-host.cpp
+	src/qml/extension-error-view-host.hpp
+	src/qml/extension-error-view-host.cpp
+	src/qml/empty-view-host.hpp
+	src/qml/empty-view-host.cpp
+	src/qml/missing-preference-view-host.hpp
+	src/qml/missing-preference-view-host.cpp
+	src/qml/extension-form-model.hpp
+	src/qml/extension-form-model.cpp
+	src/qml/clipboard-history-model.hpp
+	src/qml/clipboard-history-model.cpp
+	src/qml/clipboard-history-view-host.hpp
+	src/qml/clipboard-history-view-host.cpp
+	src/qml/snippet-form-view-host.hpp
+	src/qml/snippet-form-view-host.cpp
+	src/qml/alias-form-view-host.hpp
+	src/qml/alias-form-view-host.cpp
+	src/qml/app-selector-model.hpp
+	src/qml/app-selector-model.cpp
+	src/qml/shortcut-form-view-host.hpp
+	src/qml/shortcut-form-view-host.cpp
+	src/qml/extension-list-model.hpp
+	src/qml/extension-list-model.cpp
+	src/qml/extension-grid-model.hpp
+	src/qml/extension-grid-model.cpp
+	src/qml/source-blend-rect.hpp
+	src/qml/image-url.hpp
+	src/qml/image-url.cpp
+	src/qml/image-source.hpp
+	src/qml/image-source.cpp
+	src/qml/animated-image.hpp
+	src/qml/animated-image.cpp
+	src/qml/async-image-provider.hpp
+	src/qml/async-image-provider.cpp
+	src/qml/config-bridge.hpp
+	src/qml/theme-bridge.hpp
+	src/qml/create-extension-view-host.hpp
+	src/qml/create-extension-view-host.cpp
+	src/qml/fuzzy-list-model.hpp
+	src/qml/installed-extensions-model.hpp
+	src/qml/installed-extensions-model.cpp
+	src/qml/installed-extensions-view-host.hpp
+	src/qml/installed-extensions-view-host.cpp
+	src/qml/oauth-token-store-model.hpp
+	src/qml/oauth-token-store-model.cpp
+	src/qml/oauth-token-store-view-host.hpp
+	src/qml/oauth-token-store-view-host.cpp
+	src/qml/switch-windows-model.hpp
+	src/qml/switch-windows-model.cpp
+	src/qml/switch-windows-view-host.hpp
+	src/qml/switch-windows-view-host.cpp
+	src/qml/manage-shortcuts-model.hpp
+	src/qml/manage-shortcuts-model.cpp
+	src/qml/manage-shortcuts-view-host.hpp
+	src/qml/manage-shortcuts-view-host.cpp
+	src/qml/manage-snippets-model.hpp
+	src/qml/manage-snippets-model.cpp
+	src/qml/manage-snippets-view-host.hpp
+	src/qml/manage-snippets-view-host.cpp
+	src/qml/raycast-store-model.hpp
+	src/qml/raycast-store-model.cpp
+	src/qml/raycast-store-view-host.hpp
+	src/qml/raycast-store-view-host.cpp
+	src/qml/vicinae-store-model.hpp
+	src/qml/vicinae-store-model.cpp
+	src/qml/vicinae-store-view-host.hpp
+	src/qml/vicinae-store-view-host.cpp
+	src/qml/raycast-store-detail-host.hpp
+	src/qml/raycast-store-detail-host.cpp
+	src/qml/vicinae-store-detail-host.hpp
+	src/qml/vicinae-store-detail-host.cpp
+	src/qml/markdown/markdown-model.hpp
+	src/qml/markdown/markdown-model.cpp
+	src/qml/markdown/text-selection-controller.hpp
+	src/qml/markdown/text-selection-controller.cpp
+	src/qml/store-intro-view-host.hpp
+	src/qml/store-intro-view-host.cpp
+	src/qml/font-browser-model.hpp
+	src/qml/font-browser-view-host.hpp
+	src/qml/font-browser-view-host.cpp
+	src/qml/edit-keywords-view-host.hpp
+	src/qml/edit-keywords-view-host.cpp
 
-	src/qml/qml-settings-window.hpp
-	src/qml/qml-settings-window.cpp
-	src/qml/qml-general-settings-model.hpp
-	src/qml/qml-general-settings-model.cpp
-	src/qml/qml-keybind-settings-model.hpp
-	src/qml/qml-keybind-settings-model.cpp
-	src/qml/qml-extension-settings-model.hpp
-	src/qml/qml-extension-settings-model.cpp
-	src/qml/qml-preference-form-model.hpp
-	src/qml/qml-preference-form-model.cpp
+	src/qml/settings-window.hpp
+	src/qml/settings-window.cpp
+	src/qml/general-settings-model.hpp
+	src/qml/general-settings-model.cpp
+	src/qml/keybind-settings-model.hpp
+	src/qml/keybind-settings-model.cpp
+	src/qml/extension-settings-model.hpp
+	src/qml/extension-settings-model.cpp
+	src/qml/preference-form-model.hpp
+	src/qml/preference-form-model.cpp
 
 	src/extensions/internal/markdown-showcase-command.hpp
 
@@ -755,10 +755,10 @@ qt_add_qml_module(${TARGET}
 	RESOURCE_PREFIX /
 	QML_FILES ${VICINAE_QML_FILES}
 	SOURCES
-		src/qml/qml-source-blend-rect.hpp
-		src/qml/qml-animated-image.hpp
-		src/qml/markdown/qml-markdown-model.hpp
-		src/qml/markdown/qml-text-selection-controller.hpp
+		src/qml/source-blend-rect.hpp
+		src/qml/animated-image.hpp
+		src/qml/markdown/markdown-model.hpp
+		src/qml/markdown/text-selection-controller.hpp
 	DEPENDENCIES QtQuick
 	NO_PLUGIN
 )

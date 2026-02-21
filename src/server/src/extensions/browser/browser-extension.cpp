@@ -2,9 +2,9 @@
 #include "actions/app/app-actions.hpp"
 #include "actions/browser-tab-actions.hpp"
 #include "builtin_icon.hpp"
-#include "qml/qml-browser-tabs-view-host.hpp"
-#include "qml/qml-empty-view-host.hpp"
-#include "qml/qml-shortcut-form-view-host.hpp"
+#include "qml/browser-tabs-view-host.hpp"
+#include "qml/empty-view-host.hpp"
+#include "qml/shortcut-form-view-host.hpp"
 #include "navigation-controller.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/browser-extension-service.hpp"
@@ -15,7 +15,7 @@ static bool guard(CommandController *ctrl) {
   const auto browserService = ctrl->context()->services->browserExtension();
 
   if (browserService->browsers().empty()) {
-    auto empty = new QmlEmptyViewHost(
+    auto empty = new EmptyViewHost(
         "No browser connected",
         "You need to connect at least one browser to vicinae using the browser extension in "
         "order to use this command.",
@@ -58,7 +58,7 @@ class CreateShortcutFromActiveBrowserTabCommand : public GuardedBuiltinCallbackC
       return;
     }
 
-    auto view = new QmlShortcutFormViewHost;
+    auto view = new ShortcutFormViewHost;
 
     view->setPrefilledValues(tab->url.c_str(), tab->title.c_str());
     controller->context()->navigation->pushView(view);
@@ -75,7 +75,7 @@ class SearchBrowserTabsCommand : public GuardedBuiltinCallbackCommand {
 
   void execute(CommandController *controller) const override {
     if (guard(controller)) { return; }
-    controller->context()->navigation->pushView(new QmlBrowserTabsViewHost);
+    controller->context()->navigation->pushView(new BrowserTabsViewHost);
   }
 };
 

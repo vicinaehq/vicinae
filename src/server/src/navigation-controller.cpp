@@ -4,7 +4,7 @@
 #include "extension/extension-command.hpp"
 #include "service-registry.hpp"
 #include "overlay-controller/overlay-controller.hpp"
-#include "qml/qml-missing-preference-view-host.hpp"
+#include "qml/missing-preference-view-host.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "services/toast/toast-service.hpp"
@@ -636,7 +636,7 @@ void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd, const
         auto extensionCommand = std::static_pointer_cast<ExtensionCommand>(cmd);
 
         m_ctx.navigation->pushView(
-            new QmlMissingPreferenceViewHost(extensionCommand, preferences, preferenceValues));
+            new MissingPreferenceViewHost(extensionCommand, preferences, preferenceValues));
         m_ctx.navigation->setNavigationTitle(cmd->name());
         m_ctx.navigation->setNavigationIcon(cmd->iconUrl());
         return;
