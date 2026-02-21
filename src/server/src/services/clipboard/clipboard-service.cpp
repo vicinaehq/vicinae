@@ -2,7 +2,7 @@
 #include "clipboard-service.hpp"
 #include <filesystem>
 #include <numeric>
-#include <qapplication.h>
+#include <QGuiApplication>
 #include "environment.hpp"
 #include "services/app-service/abstract-app-db.hpp"
 #include "x11/x11-clipboard-server.hpp"
@@ -52,7 +52,7 @@ bool ClipboardService::setPinned(const QString id, bool pinned) {
 }
 
 bool ClipboardService::clear() {
-  QApplication::clipboard()->clear();
+  QGuiApplication::clipboard()->clear();
   return true;
 }
 
@@ -577,11 +577,11 @@ bool ClipboardService::copySelectionRecord(const QString &id, const Clipboard::C
   return copySelection(*selection, options);
 }
 
-QString ClipboardService::readText() { return QApplication::clipboard()->text(); }
+QString ClipboardService::readText() { return QGuiApplication::clipboard()->text(); }
 
 Clipboard::ReadContent ClipboardService::readContent() {
   Clipboard::ReadContent content;
-  const QMimeData *mimeData = QApplication::clipboard()->mimeData();
+  const QMimeData *mimeData = QGuiApplication::clipboard()->mimeData();
 
   if (!mimeData) return content;
 
@@ -621,7 +621,7 @@ AbstractClipboardServer *ClipboardService::clipboardServer() const { return m_cl
 ClipboardService::ClipboardService(const std::filesystem::path &path, WindowManager &wm, AppService &appDb)
     : m_wm(wm), m_appDb(appDb) {
   m_dataDir = path.parent_path() / "clipboard-data";
-  auto clip = QApplication::clipboard();
+  auto clip = QGuiApplication::clipboard();
 
   {
     ClipboardServerFactory factory;

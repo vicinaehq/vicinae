@@ -1,13 +1,10 @@
 #pragma once
 
-#include <QApplication>
-#include <QWidget>
+#include <QGuiApplication>
 #include <QObject>
 #include <QString>
 #include <QDebug>
 #include <QTimer>
-#include <QHBoxLayout>
-#include <QLabel>
 #include <QVariant>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -19,10 +16,8 @@
 #include <QDBusConnection>
 #include <QDBusInterface>
 #include <QEvent>
-#include <QPainter>
 #include <QSqlQuery>
 #include <QFutureWatcher>
-#include <QStackedWidget>
 
 #include <memory>
 #include <vector>

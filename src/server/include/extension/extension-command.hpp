@@ -7,18 +7,14 @@
 #include "services/extension-registry/extension-registry.hpp"
 #include "common/entrypoint.hpp"
 #include <qstring.h>
-#include <qboxlayout.h>
 #include <qfuturewatcher.h>
 #include <qjsonarray.h>
 #include <qjsonobject.h>
-#include <qlabel.h>
-#include <qlistwidget.h>
 #include <qlogging.h>
 #include <qnamespace.h>
 #include <qobject.h>
 #include <qthread.h>
 #include <qtmetamacros.h>
-#include <qwidget.h>
 #include <optional>
 
 class ExtensionCommand : public AbstractCmd {

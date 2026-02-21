@@ -69,7 +69,6 @@ public:
   virtual std::vector<std::shared_ptr<AbstractCmd>> commands() const = 0;
   virtual ImageURL iconUrl() const = 0;
   virtual std::vector<Preference> preferences() const { return {}; }
-  virtual QWidget *settingsDetail() const { return new QWidget; }
 
   /**
    * Triggered the first time the provider is registered

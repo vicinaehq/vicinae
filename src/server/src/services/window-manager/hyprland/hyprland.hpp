@@ -2,7 +2,7 @@
 #include "services/window-manager/abstract-window-manager.hpp"
 #include "services/window-manager/hyprland/hypr-listener.hpp"
 #include <QtConcurrent/qtconcurrentrun.h>
-#include <qapplication.h>
+#include <QGuiApplication>
 #include <qfuture.h>
 #include <qjsondocument.h>
 #include <qjsonobject.h>

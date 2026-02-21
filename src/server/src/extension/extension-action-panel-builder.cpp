@@ -1,5 +1,4 @@
 #include "extension-action-panel-builder.hpp"
-#include "action-panel/action-panel.hpp"
 #include "common-actions.hpp"
 #include "qml/qml-shortcut-form-view-host.hpp"
 #include "ui/action-pannel/action.hpp"
@@ -12,8 +11,6 @@ namespace ExtensionActionPanelBuilder {
 static AbstractAction *createActionFromModel(const ActionModel &model, NotifyFn notify, SubmitFn submit);
 static AbstractAction *createSubmenuAction(const ActionPannelSubmenuPtr &submenuModel, NotifyFn notify,
                                            SubmenuCache *submenuCache, SubmitFn submit);
-static ActionPanelView *createSubmenuView(const ActionPannelSubmenuPtr &submenuModel, NotifyFn notify,
-                                          SubmenuCache *submenuCache, SubmitFn submit);
 static void updateSubmenuCache(SubmenuCache *cache, const ActionPannelModel &model);
 
 static AbstractAction *createActionFromModel(const ActionModel &model, NotifyFn notify, SubmitFn submit) {
@@ -79,18 +76,9 @@ static AbstractAction *createSubmenuAction(const ActionPannelSubmenuPtr &submenu
     };
   }
 
-  // Capture the pointer (not reference) so the lambda safely outlives this function
   QString stableId = submenuModel->stableId.value_or(QString());
-  auto createSubmenuFn = [notify, submenuCache, submit, stableId]() -> ActionPanelView * {
-    if (!stableId.isEmpty()) {
-      auto it = submenuCache->find(stableId);
-      if (it != submenuCache->end()) { return createSubmenuView(it->second, notify, submenuCache, submit); }
-    }
-    qWarning() << "Submenu model not found in map for stableId:" << stableId;
-    return nullptr;
-  };
 
-  auto action = new SubmenuAction(submenuModel->title, icon, createSubmenuFn, onOpen);
+  auto action = new SubmenuAction(submenuModel->title, icon, onOpen);
   if (submenuModel->stableId) { action->setId(*submenuModel->stableId); }
   if (submenuModel->shortcut) { action->addShortcut(submenuModel->shortcut.value()); }
 
@@ -106,42 +94,6 @@ static AbstractAction *createSubmenuAction(const ActionPannelSubmenuPtr &submenu
   action->setSubmenuStateFactory(stateFactory);
 
   return action;
-}
-
-static ActionPanelView *createSubmenuView(const ActionPannelSubmenuPtr &submenuModel, NotifyFn notify,
-                                          SubmenuCache *submenuCache, SubmitFn submit) {
-  if (!submenuModel) return nullptr;
-  auto panel = new ActionPanelStaticListView;
-  panel->setTitle(submenuModel->title);
-  if (submenuModel->stableId) { panel->setId(*submenuModel->stableId); }
-
-  for (const auto &child : submenuModel->children) {
-    if (auto sectionPtr = std::get_if<ActionPannelSectionPtr>(&child)) {
-      auto section = sectionPtr ? *sectionPtr : nullptr;
-      if (!section) continue;
-      panel->addSection(section->title);
-
-      for (const auto &item : section->items) {
-        if (auto actionModel = std::get_if<ActionModel>(&item)) {
-          auto action = createActionFromModel(*actionModel, notify, submit);
-          if (actionModel->shortcut) { action->addShortcut(actionModel->shortcut.value()); }
-          panel->addAction(action);
-        } else if (auto submenuPtr = std::get_if<ActionPannelSubmenuPtr>(&item)) {
-          auto action = createSubmenuAction(*submenuPtr, notify, submenuCache, submit);
-          if (action) { panel->addAction(action); }
-        }
-      }
-    } else if (auto actionModel = std::get_if<ActionModel>(&child)) {
-      auto action = createActionFromModel(*actionModel, notify, submit);
-      if (actionModel->shortcut) { action->addShortcut(actionModel->shortcut.value()); }
-      panel->addAction(action);
-    } else if (auto submenuPtr = std::get_if<ActionPannelSubmenuPtr>(&child)) {
-      auto action = createSubmenuAction(*submenuPtr, notify, submenuCache, submit);
-      if (action) { panel->addAction(action); }
-    }
-  }
-
-  return panel;
 }
 
 static void updateSubmenuCache(SubmenuCache *cache, const ActionPannelModel &model) {

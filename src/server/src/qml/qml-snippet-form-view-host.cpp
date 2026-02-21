@@ -7,10 +7,9 @@
 #include "utils.hpp"
 #include <QUrl>
 
-QmlSnippetFormViewHost::QmlSnippetFormViewHost(QWidget *parent) : QmlFormViewBase() {}
+QmlSnippetFormViewHost::QmlSnippetFormViewHost() : QmlFormViewBase() {}
 
-QmlSnippetFormViewHost::QmlSnippetFormViewHost(snippet::SerializedSnippet snippet, Mode mode,
-                                               QWidget *parent)
+QmlSnippetFormViewHost::QmlSnippetFormViewHost(snippet::SerializedSnippet snippet, Mode mode)
     : QmlFormViewBase(), m_mode(mode), m_initialSnippet(std::move(snippet)) {}
 
 QUrl QmlSnippetFormViewHost::qmlComponentUrl() const {

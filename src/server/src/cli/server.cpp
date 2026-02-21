@@ -40,13 +40,11 @@
 #include "vicinae-ipc/client.hpp"
 #include "vicinae.hpp"
 #include <filesystem>
-#include <qapplication.h>
+#include <QGuiApplication>
 #include <signal.h>
 #include <QString>
 #include <qlockfile.h>
 #include <qlogging.h>
-#include <qpixmapcache.h>
-#include <qstylefactory.h>
 #include <QtQuickControls2/QQuickStyle>
 #include <system_error>
 #include "common/CLI11.hpp"
@@ -92,14 +90,12 @@ void CliServerCommand::run(CLI::App *app) {
 
   int argc = 1;
   static char *argv[] = {strdup("command"), nullptr};
-  QApplication qapp(argc, argv);
+  QGuiApplication qapp(argc, argv);
 
   if (const auto launcher = Environment::detectAppLauncher()) {
     qInfo() << "Detected launch prefix:" << *launcher;
   }
 
-  // discard system specific qt theming
-  QApplication::setStyle(QStyleFactory::create("fusion"));
   QQuickStyle::setStyle(QStringLiteral("Basic"));
 
   std::filesystem::create_directories(Omnicast::runtimeDir());
@@ -224,8 +220,8 @@ void CliServerCommand::run(CLI::App *app) {
   }
 
   FaviconService::initialize(new FaviconService(Omnicast::dataDir() / "favicon"));
-  QApplication::setApplicationName("vicinae");
-  QApplication::setQuitOnLastWindowClosed(false);
+  QGuiApplication::setApplicationName("vicinae");
+  QGuiApplication::setQuitOnLastWindowClosed(false);
   ApplicationContext ctx;
 
   ctx.navigation = std::make_unique<NavigationController>(ctx);
@@ -274,14 +270,13 @@ void CliServerCommand::run(CLI::App *app) {
       auto &family = next.font.normal.family;
       if (family == "auto") {
         auto builtin = ServiceRegistry::instance()->fontService()->builtinFontFamily();
-        QApplication::setFont(builtin.isEmpty() ? QFont() : QFont(builtin));
+        QGuiApplication::setFont(builtin.isEmpty() ? QFont() : QFont(builtin));
       } else if (family == "system") {
-        QApplication::setFont(QFont());
+        QGuiApplication::setFont(QFont());
       } else {
-        QApplication::setFont(QFont(family.c_str()));
+        QGuiApplication::setFont(QFont(family.c_str()));
       }
 
-      qApp->setStyleSheet(qApp->styleSheet());
       theme.reloadCurrentTheme();
     }
   };
@@ -292,7 +287,7 @@ void CliServerCommand::run(CLI::App *app) {
     ctx.navigation->confirmAlert("Failed to load config", qStringFromStdView(message), []() {});
   });
 
-  QObject::connect(QApplication::styleHints(), &QStyleHints::colorSchemeChanged, [&]() {
+  QObject::connect(QGuiApplication::styleHints(), &QStyleHints::colorSchemeChanged, [&]() {
     IconThemeDatabase iconThemeDb;
     auto &value = cfgService->value();
     auto &theme = value.systemTheme();
@@ -304,8 +299,6 @@ void CliServerCommand::run(CLI::App *app) {
     }
 
     ThemeService::instance().setTheme(theme.name.c_str());
-    qApp->setStyle(QStyleFactory::create("fusion"));
-    qApp->setStyleSheet(qApp->styleSheet());
   });
 
   QObject::connect(

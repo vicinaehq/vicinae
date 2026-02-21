@@ -28,8 +28,8 @@ public:
   Q_PROPERTY(QVariantList iconItems READ iconItems NOTIFY iconItemsChanged)
   Q_PROPERTY(QVariantList linkCompletions READ linkCompletions CONSTANT)
 
-  QmlShortcutFormViewHost(QWidget *parent = nullptr);
-  QmlShortcutFormViewHost(std::shared_ptr<Shortcut> shortcut, Mode mode, QWidget *parent = nullptr);
+  QmlShortcutFormViewHost();
+  QmlShortcutFormViewHost(std::shared_ptr<Shortcut> shortcut, Mode mode);
 
   QUrl qmlComponentUrl() const override;
   QVariantMap qmlProperties() const override;

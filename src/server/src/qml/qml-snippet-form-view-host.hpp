@@ -20,8 +20,8 @@ class QmlSnippetFormViewHost : public QmlFormViewBase {
 public:
   enum class Mode { Create, Edit, Duplicate };
 
-  explicit QmlSnippetFormViewHost(QWidget *parent = nullptr);
-  QmlSnippetFormViewHost(snippet::SerializedSnippet snippet, Mode mode, QWidget *parent = nullptr);
+  explicit QmlSnippetFormViewHost();
+  QmlSnippetFormViewHost(snippet::SerializedSnippet snippet, Mode mode);
 
   QUrl qmlComponentUrl() const override;
   QVariantMap qmlProperties() const override;

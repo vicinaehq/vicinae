@@ -6,7 +6,6 @@
 
 class QmlClipboardHistoryModel;
 class ClipboardHistoryController;
-class ClipboardHistoryModel;
 class ClipboardService;
 
 class QmlClipboardHistoryViewHost : public QmlBridgeViewBase {
@@ -30,7 +29,7 @@ class QmlClipboardHistoryViewHost : public QmlBridgeViewBase {
   Q_PROPERTY(QString detailErrorDescription READ detailErrorDescription NOTIFY detailChanged)
 
 public:
-  explicit QmlClipboardHistoryViewHost(QWidget *parent = nullptr);
+  explicit QmlClipboardHistoryViewHost();
 
   QUrl qmlComponentUrl() const override;
   QUrl qmlSearchAccessoryUrl() const override;
@@ -78,7 +77,6 @@ private:
   std::optional<QString> getSavedDropdownFilter();
 
   QmlClipboardHistoryModel *m_model = nullptr;
-  ClipboardHistoryModel *m_legacyModel = nullptr;
   ClipboardHistoryController *m_controller = nullptr;
   ClipboardService *m_clipman = nullptr;
 

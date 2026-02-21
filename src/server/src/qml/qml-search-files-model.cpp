@@ -27,7 +27,7 @@ QString QmlSearchFilesModel::itemIconSource(int s, int i) const {
 }
 
 std::unique_ptr<ActionPanelState> QmlSearchFilesModel::createActionPanel(int s, int i) const {
-  return FileListItemBase::actionPanel(fileAt(s, i), ctx()->services->appDb());
+  return FileActions::actionPanel(fileAt(s, i), ctx()->services->appDb());
 }
 
 void QmlSearchFilesModel::onItemSelected(int s, int i) { emit fileSelected(fileAt(s, i)); }

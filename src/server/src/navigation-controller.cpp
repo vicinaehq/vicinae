@@ -14,7 +14,6 @@
 #include "utils/environment.hpp"
 #include <chrono>
 #include <qlogging.h>
-#include <qwidget.h>
 #include <QProcessEnvironment>
 #include <ranges>
 
@@ -237,12 +236,6 @@ void NavigationController::popCurrentView() {
 
   auto &next = m_views.back();
 
-  if (auto &accessory = next->searchAccessory) {
-    emit searchAccessoryChanged(accessory.get());
-  } else {
-    emit searchAccessoryCleared();
-  }
-
   emit currentViewChanged(*next.get());
 
   emit searchTextTampered(next->searchText);
@@ -252,7 +245,6 @@ void NavigationController::popCurrentView() {
   emit searchVisibilityChanged(next->supportsSearch);
   emit searchInteractiveChanged(next->searchInteractive);
   emit statusBarVisiblityChanged(next->needsStatusBar);
-  emit searchAccessoryVisiblityChanged(next->accessoryVisibility);
   emit loadingChanged(next->isLoading);
 
   if (auto cmpl = next->completer) {
@@ -284,20 +276,6 @@ void NavigationController::popToRoot(const PopToRootOptions &opts) {
   }
 
   if (opts.clearSearch) clearSearchText();
-}
-
-void NavigationController::clearSearchAccessory(const BaseView *caller) {
-  if (auto state = findViewState(VALUE_OR(caller, topView()))) {
-    state->searchAccessory.reset();
-    if (state->sender == topView()) { emit searchAccessoryCleared(); }
-  }
-}
-
-void NavigationController::setSearchAccessoryVisibility(bool value, const BaseView *caller) {
-  if (auto state = findViewState(VALUE_OR(caller, topView()))) {
-    state->accessoryVisibility = value;
-    if (state->sender == topView()) { emit searchAccessoryVisiblityChanged(value); }
-  }
 }
 
 void NavigationController::selectSearchText() const { emit searchTextSelected(); }
@@ -446,10 +424,7 @@ void NavigationController::executeAction(AbstractAction *action) {
   }
 
   if (action->isSubmenu()) {
-    if (auto view = action->createSubmenu()) {
-      openActionPanel();
-      emit submenuRequested(view);
-    }
+    openActionPanel();
     return;
   }
 
@@ -487,12 +462,6 @@ AbstractAction *NavigationController::findBoundAction(const QKeyEvent *event) co
 }
 
 void NavigationController::activateView(const ViewState &state) {
-  if (auto &accessory = state.searchAccessory) {
-    emit searchAccessoryChanged(accessory.get());
-  } else {
-    emit searchAccessoryCleared();
-  }
-
   emit headerVisiblityChanged(state.needsTopBar);
   emit searchVisibilityChanged(state.supportsSearch);
   emit searchInteractiveChanged(state.searchInteractive);
@@ -522,14 +491,6 @@ void NavigationController::pushView(BaseView *view) {
   m_views.emplace_back(createViewState(view));
   activateView(*topState());
   emit viewPushed(view);
-}
-
-void NavigationController::setSearchAccessory(QWidget *accessory, const BaseView *caller) {
-  if (auto state = findViewState(VALUE_OR(caller, topView()))) {
-    state->searchAccessory.reset(accessory);
-
-    if (state->sender == topView()) { emit searchAccessoryChanged(accessory); }
-  }
 }
 
 void NavigationController::setActions(std::unique_ptr<ActionPanelState> panel, const BaseView *caller) {
@@ -708,6 +669,5 @@ std::unique_ptr<NavigationController::ViewState> NavigationController::createVie
   state->placeholderText = view->initialSearchPlaceholderText();
   state->navigation.title = view->initialNavigationTitle();
   state->navigation.icon = view->initialNavigationIcon();
-  state->searchAccessory.reset(view->searchBarAccessory());
   return state;
 }

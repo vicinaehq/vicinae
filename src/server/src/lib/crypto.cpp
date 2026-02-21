@@ -2,7 +2,6 @@
 #include <expected>
 #include <openssl/rand.h>
 #include <QDebug>
-#include <qlcdnumber.h>
 #include <quuid.h>
 
 namespace Crypto::AES256GCM {

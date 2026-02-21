@@ -1,6 +1,6 @@
 #include "gnome-clipboard-server.hpp"
 #include "utils/environment.hpp"
-#include <QApplication>
+#include <QGuiApplication>
 #include <QDBusConnection>
 #include <QDBusInterface>
 #include <QDBusReply>

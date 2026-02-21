@@ -5,14 +5,10 @@
 #include <QKeyEvent>
 #include <QString>
 #include <memory>
-#include <qapplication.h>
-#include <qboxlayout.h>
 #include <qdir.h>
 #include <qicon.h>
-#include <qlabel.h>
 #include <qlist.h>
 #include <qlogging.h>
-#include <qwidget.h>
 #include "common.hpp"
 #include "vicinae.hpp"
 

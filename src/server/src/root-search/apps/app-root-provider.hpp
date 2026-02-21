@@ -3,7 +3,6 @@
 #include "services/app-service/app-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include <qjsonobject.h>
-#include <qwidget.h>
 
 class AppRootItem : public RootItem {
   std::shared_ptr<AbstractApplication> m_app;
@@ -17,7 +16,6 @@ class AppRootItem : public RootItem {
   AccessoryList accessories() const override;
   EntrypointId uniqueId() const override;
   ImageURL iconUrl() const override;
-  QWidget *settingsDetail(const QJsonObject &preferences) const override;
   QString settingsDescription() const override;
   std::vector<std::pair<QString, QString>> settingsMetadata() const override;
   std::vector<QString> keywords() const override;

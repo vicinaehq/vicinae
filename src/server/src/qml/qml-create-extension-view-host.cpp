@@ -10,7 +10,7 @@
 #include <QUrl>
 #include <filesystem>
 
-QmlCreateExtensionViewHost::QmlCreateExtensionViewHost(QWidget *parent) : QmlFormViewBase() {}
+QmlCreateExtensionViewHost::QmlCreateExtensionViewHost() : QmlFormViewBase() {}
 
 QUrl QmlCreateExtensionViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/CreateExtensionFormView.qml"));

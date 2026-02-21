@@ -58,7 +58,6 @@ signals:
   void formModelChanged();
   void suppressEmptyViewChanged();
   void linkAccessoryChanged();
-  void fallbackRequired(const RenderModel &model);
 
 private:
   void handleFirstRender(const RenderModel &model);

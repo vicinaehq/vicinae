@@ -6,7 +6,7 @@
 #include "services/snippet/snippet-copy.hpp"
 #include "services/snippet/snippet-service.hpp"
 #include "services/toast/toast-service.hpp"
-#include <qapplication.h>
+#include <QGuiApplication>
 
 QString QmlManageSnippetsModel::displayTitle(const snippet::SerializedSnippet &item) const {
   return QString::fromStdString(item.name);
@@ -31,7 +31,7 @@ QmlManageSnippetsModel::buildActionPanel(const snippet::SerializedSnippet &item)
 
   auto copy =
       new StaticAction("Copy to clipboard", BuiltinIcon::CopyClipboard, [item](ApplicationContext *ctx) {
-        auto clip = QApplication::clipboard();
+        auto clip = QGuiApplication::clipboard();
         SnippetCopy::copyToClipboard(item, ctx->navigation->completionValues(), clip);
         ctx->navigation->showHud("Copied to clipboard");
       });

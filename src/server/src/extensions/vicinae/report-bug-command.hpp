@@ -1,6 +1,6 @@
 #pragma once
 #include "builtin-url-command.hpp"
-#include <qapplication.h>
+#include <QGuiApplication>
 #include <qurlquery.h>
 #include "environment.hpp"
 #include "lib/os-release.hpp"
@@ -65,7 +65,7 @@ class ReportVicinaeBugCommand : public BuiltinUrlCommand {
                           .arg(BUILD_INFO)
                           .arg(VICINAE_PROVENANCE)
                           .arg(osString)
-                          .arg(QApplication::platformName())
+                          .arg(QGuiApplication::platformName())
                           .arg(Environment::getEnvironmentDescription());
     QUrl url(Omnicast::GH_REPO_CREATE_ISSUE);
     QUrlQuery query;

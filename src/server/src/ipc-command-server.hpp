@@ -125,7 +125,7 @@ private:
  */
 class IpcCommandServer : public QObject {
 public:
-  IpcCommandServer(ApplicationContext *ctx, QWidget *parent = nullptr);
+  IpcCommandServer(ApplicationContext *ctx, QObject *parent = nullptr);
   bool start(const std::filesystem::path &localPath);
 
 private:

@@ -4,7 +4,7 @@
 #include "service-registry.hpp"
 #include "services/shortcut/shortcut-service.hpp"
 #include "services/app-service/app-service.hpp"
-#include <QApplication>
+#include <QGuiApplication>
 #include <QClipboard>
 #include <QDateTime>
 #include <QUuid>
@@ -137,7 +137,7 @@ void QmlManageShortcutsViewHost::updateExpandedUrl() {
       expanded += *s;
     } else if (auto placeholder = std::get_if<Shortcut::ParsedPlaceholder>(&part)) {
       if (placeholder->id == "clipboard") {
-        expanded += QApplication::clipboard()->text();
+        expanded += QGuiApplication::clipboard()->text();
       } else if (placeholder->id == "selected") {
         // TODO: selected text
       } else if (placeholder->id == "uuid") {

@@ -1,7 +1,7 @@
 #pragma once
 #include "xdgpp/env/env.hpp"
 #include <QString>
-#include <QApplication>
+#include <QGuiApplication>
 #include <QProcess>
 #include <QProcessEnvironment>
 #include <QStandardPaths>
@@ -19,7 +19,7 @@ inline bool isGnomeEnvironment() {
   return desktop.contains("GNOME", Qt::CaseInsensitive) || session.contains("gnome", Qt::CaseInsensitive);
 }
 
-inline bool isWaylandSession() { return QApplication::platformName() == "wayland"; }
+inline bool isWaylandSession() { return QGuiApplication::platformName() == "wayland"; }
 
 inline bool supportsArbitraryWindowPlacement() { return !isWaylandSession(); }
 

@@ -1,10 +1,8 @@
 #pragma once
-#include <qboxlayout.h>
 #include <qjsonarray.h>
 #include <qjsonvalue.h>
 #include <qnamespace.h>
 #include <qstring.h>
-#include <qwidget.h>
 #include <variant>
 
 class Preference {

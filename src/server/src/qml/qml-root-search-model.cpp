@@ -543,7 +543,7 @@ void QmlRootSearchModel::setSelectedIndex(int index) {
   }
   case FlatItem::FileItem: {
     if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_files.size())) {
-      actionPanel = FileListItemBase::actionPanel(m_files[flat.dataIndex].path, m_appDb);
+      actionPanel = FileActions::actionPanel(m_files[flat.dataIndex].path, m_appDb);
     }
     break;
   }

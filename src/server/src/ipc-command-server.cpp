@@ -19,7 +19,7 @@
 #include "navigation-controller.hpp"
 #include "version.h"
 
-IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
+IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QObject *parent)
     : QObject(parent), m_ctx(*ctx), m_rpc(IpcContext::GlobalContext{.app = ctx}) {
   using Ctx = decltype(m_rpc)::ContextHandle;
 
@@ -62,7 +62,7 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
   });
 
   m_rpc.route<ipc::Ping>([&](const ipc::Ping::Request &req, Ctx ctx) {
-    return ipc::Ping::Response(VICINAE_GIT_TAG, QApplication::applicationPid());
+    return ipc::Ping::Response(VICINAE_GIT_TAG, QCoreApplication::applicationPid());
   });
 
   m_rpc.route<ipc::BrowserInit>([this](const ipc::BrowserInit::Request &init, Ctx context) {

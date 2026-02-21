@@ -6,7 +6,6 @@
 #include "services/app-service/app-service.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include "services/toast/toast-service.hpp"
-#include "ui/thumbnail/thumbnail.hpp"
 #include "utils/utils.hpp"
 #include <QFutureWatcher>
 
@@ -128,9 +127,7 @@ void QmlRaycastStoreDetailHost::openScreenshot(int index) {
   auto urls = m_ext.screenshots();
   if (index < 0 || index >= static_cast<int>(urls.size())) return;
 
-  auto dialog = new ImagePreviewDialogWidget(ImageURL::http(urls[index].toString()));
-  dialog->setAspectRatio(16 / 10.f);
-  context()->navigation->setDialog(dialog);
+  ServiceRegistry::instance()->appDb()->openTarget(urls[index].toString());
 }
 
 QString QmlRaycastStoreDetailHost::initialNavigationTitle() const {

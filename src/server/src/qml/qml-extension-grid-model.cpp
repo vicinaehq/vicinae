@@ -24,10 +24,10 @@ void QmlExtensionGridModel::setExtensionData(const GridModel &model, bool resetS
   // Map Inset enum to ratio: None≈0.05, Small=0.10, Medium=0.15, Large=0.25
   double newInset;
   switch (model.inset) {
-  case GridItemContentWidget::Inset::None: newInset = 0.05; break;
-  case GridItemContentWidget::Inset::Small: newInset = 0.10; break;
-  case GridItemContentWidget::Inset::Medium: newInset = 0.15; break;
-  case GridItemContentWidget::Inset::Large: newInset = 0.25; break;
+  case GridInset::None: newInset = 0.05; break;
+  case GridInset::Small: newInset = 0.10; break;
+  case GridInset::Medium: newInset = 0.15; break;
+  case GridInset::Large: newInset = 0.25; break;
   default: newInset = 0.10; break;
   }
   if (!qFuzzyCompare(m_inset, newInset)) {

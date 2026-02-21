@@ -5,7 +5,7 @@
 #include <glaze/util/key_transformers.hpp>
 #include <qstylehints.h>
 #include <string_view>
-#include <QApplication>
+#include <QGuiApplication>
 #include "utils.hpp"
 #include "config.hpp"
 
@@ -57,7 +57,7 @@ template <typename T> T static merge(const auto &v1, const auto &v2) {
 }
 
 const SystemThemeConfig &ConfigValue::systemTheme() const {
-  switch (QApplication::styleHints()->colorScheme()) {
+  switch (QGuiApplication::styleHints()->colorScheme()) {
   case Qt::ColorScheme::Light:
     return theme.light;
   default:
@@ -119,7 +119,7 @@ bool Manager::mergeEntrypointWithUser(const EntrypointId &id, const ProviderItem
 }
 
 bool Manager::mergeThemeConfig(const config::Partial<config::SystemThemeConfig> &cfg) {
-  switch (QApplication::styleHints()->colorScheme()) {
+  switch (QGuiApplication::styleHints()->colorScheme()) {
   case Qt::ColorScheme::Light:
     return mergeWithUser({.theme = config::Partial<config::ThemeConfig>{.light = cfg}});
   default:

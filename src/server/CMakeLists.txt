@@ -3,7 +3,7 @@ set(CMAKE_AUTORCC ON)
 set(LIBS)
 set(TARGET vicinae-server)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets Sql Network Svg DBus Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2)
+find_package(Qt6 REQUIRED COMPONENTS Core Sql Network Svg DBus Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2)
 find_package(OpenSSL REQUIRED)
 find_package(LibXml2 REQUIRED)
 if (USE_SYSTEM_KF6)
@@ -11,7 +11,7 @@ if (USE_SYSTEM_KF6)
 endif()
 
 list(APPEND LIBS  
-	Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus Qt6::Concurrent Qt6::Quick Qt6::Qml
+	Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus Qt6::Concurrent Qt6::Quick Qt6::Qml
 	Qt6::GuiPrivate # for deeper integration with wayland protocols, we need wl_surface
 	Qt6::QuickDialogs2 Qt6::QuickControls2
 	${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY} 
@@ -86,8 +86,6 @@ set(SRCS
 	src/placeholder.cpp
 
 
-	src/ui/spinner/spinner.hpp
-
 	include/font-service.hpp
 	src/font-service.cpp
 
@@ -107,28 +105,6 @@ set(SRCS
 	include/favicon/cached-favicon-request.hpp
 	src/favicon/cached-favicon-request.cpp
 
-	include/ui/form/base-input.hpp
-	src/ui/form/base-input.cpp
-	include/ui/form/selector-input.hpp
-	src/ui/form/selector-input.cpp
-	include/ui/form/completed-input.hpp
-	src/ui/form/completed-input.cpp
-	include/ui/form/form.hpp
-	src/ui/form/form.cpp
-	include/ui/form/form-field.hpp
-	src/ui/form/form-field.cpp
-	include/ui/form/checkbox.hpp
-	src/ui/form/checkbox.cpp
-	include/ui/form/checkbox-input.hpp
-	include/ui/form/app-picker-input.hpp
-	src/ui/form/app-picker-input.cpp
-
-	src/ui/detail/detail-widget.hpp
-	src/ui/detail/detail-widget.cpp
-	src/ui/file-detail/file-detail.hpp
-	src/ui/file-detail/file-detail.cpp
-
-	src/ui/form/text-area.cpp
 
 	src/command-actions.cpp
 
@@ -170,14 +146,6 @@ set(SRCS
 	src/color-formatter.hpp
 	src/color-formatter.cpp
 
-	src/ui/popover/popover.hpp
-	src/ui/popover/popover.cpp
-
-	src/action-panel/action-panel.hpp
-
-	src/ui/split-detail/split-detail.hpp
-	src/ui/split-detail/split-detail.cpp
-
 	src/services/clipboard/clipboard-server.hpp
 	src/services/clipboard/clipboard-db.hpp
 	src/services/clipboard/clipboard-db.cpp
@@ -212,48 +180,13 @@ set(SRCS
 
 	# end app-database
 
-	# begin action-pannel-widget
 	include/ui/action-pannel/action.hpp
 	src/ui/action-pannel/action.cpp
 
-	include/ui/action-pannel/action-list-widget.hpp
-	src/ui/action-pannel/action-list-widget.cpp
-
-	include/ui/action-pannel/action-list-item.hpp
-	src/ui/action-pannel/action-list-item.cpp
-
-	# end action-pannel-widget
-
-	src/ui/loading-bar/horizontal-loading-bar.hpp
-	src/ui/loading-bar/horizontal-loading-bar.cpp
-
-	# start markdown renderer
-	src/ui/markdown/markdown-renderer.hpp
-	src/ui/markdown/markdown-renderer.cpp
-	# end markdown renderer
-
 	src/lib/crypto.cpp
-
-
-	src/ui/omni-painter/omni-painter.hpp
-	src/ui/omni-painter/omni-painter.cpp
 
 	
 	include/extension/extension-command.hpp
-	include/extension/extension-view.hpp
-	include/extension/extension-view-wrapper.hpp
-
-	include/extension/extension-form-component.hpp
-
-	include/extension/extension-list-component.hpp
-	src/extension/extension-list-component.cpp
-	src/extension/extension-list.hpp
-	src/extension/extension-list.cpp
-
-	include/extension/extension-grid-component.hpp
-	src/extension/extension-grid-component.cpp
-	src/extension/extension-grid.hpp
-	src/extension/extension-grid.cpp
 
 	src/extension/extension-action-panel-builder.hpp
 	src/extension/extension-action-panel-builder.cpp
@@ -264,19 +197,13 @@ set(SRCS
 	include/extension/extension-command.hpp
 	src/extension/extension-command.cpp
 
-	include/extension/form/extension-form-input.hpp
-	include/extension/form/extension-text-field.hpp
-	include/extension/form/extension-password-field.hpp
-	include/extension/form/extension-checkbox-field.hpp
-	include/extension/form/extension-dropdown.hpp
-	include/extension/form/extension-date-picker.hpp
 
-	include/extend/extension-detail-view.hpp
 
+	src/ui/omni-painter/omni-painter.hpp
+	src/ui/omni-painter/omni-painter.cpp
 
 	src/ui/image/url.cpp
 	src/ui/image/image.hpp
-	src/ui/image/image.cpp
 	src/ui/image/static-image-loader.cpp
 	src/ui/image/animated-image-loader.cpp
 	src/ui/image/io-image-loader.cpp
@@ -290,41 +217,8 @@ set(SRCS
 	src/ui/image/emoji-image-loader.cpp
 	src/ui/image/image-decoder.hpp
 
-	src/ui/spinner/spinner.hpp
-	src/ui/spinner/spinner.cpp
-
-	src/ui/icon-button/icon-button.hpp
-	src/ui/icon-button/icon-button.cpp
-
 	include/command-database.hpp
 	src/command-database.cpp
-
-	# omni list 
-	src/ui/omni-list/omni-list.hpp
-	src/ui/omni-list/omni-list.cpp
-
-	src/ui/omni-list/omni-list-item-widget-wrapper.hpp
-	src/ui/omni-list/omni-list-item-widget-wrapper.cpp
-
-	src/ui/selectable-omni-list-widget/selectable-omni-list-widget.hpp
-	src/ui/selectable-omni-list-widget/selectable-omni-list-widget.cpp
-
-	include/ui/list-section-header.hpp
-	src/ui/list-section-header.cpp
-
-	src/ui/default-list-item-widget/default-list-item-widget.hpp
-	src/ui/default-list-item-widget/default-list-item-widget.cpp
-
-	src/ui/omni-grid/grid-item-content-widget.hpp
-	src/ui/omni-grid/grid-item-content-widget.cpp
-
-	src/ui/tooltip/tooltip.hpp
-	src/ui/tooltip/tooltip.cpp
-
-	src/ui/omni-grid/grid-item-widget.hpp
-	src/ui/omni-grid/grid-item-widget.cpp
-
-	src/ui/omni-list/omni-list-item-widget.hpp
 
 		src/ui/image/url.hpp
 
@@ -333,27 +227,6 @@ set(SRCS
 
 	src/builtin_icon.cpp
 
-	src/ui/transform-result/transform-result.hpp
-	src/ui/transform-result/transform-result.cpp
-
-	src/ui/color-transform/color-transform-widget.hpp
-	src/ui/color-transform/color-transform-widget.cpp
-
-	src/ui/emoji-viewer/emoji-viewer.hpp
-	src/ui/emoji-viewer/emoji-viewer.cpp
-
-	src/ui/empty-view/empty-view.hpp
-	src/ui/empty-view/empty-view.cpp
-
-	src/ui/keyboard-shortcut-indicator/keyboard-shortcut-indicator.hpp
-	src/ui/keyboard-shortcut-indicator/keyboard-shortcut-indicator.cpp
-
-
-	include/ui/horizontal-metadata.hpp
-	src/ui/horizontal-metadata.cpp
-
-	src/ui/vertical-metadata/vertical-metadata.hpp
-	src/ui/vertical-metadata/vertical-metadata.cpp
 
 	src/extend/accessory-model.cpp
 	src/extend/action-model.cpp
@@ -369,9 +242,6 @@ set(SRCS
 	src/extend/empty-view-model.cpp
 	include/extend/form-model.hpp
 	src/extend/form-model.cpp
-
-	include/ui/focus-notifier.hpp
-
 
 	src/image-fetcher.hpp
 
@@ -391,20 +261,10 @@ set(SRCS
 	./database/clipboard/migrations.qrc
 	./database/file-indexer//migrations.qrc
 
-	src/ui/inline-input/inline_qline_edit.hpp
-	src/ui/inline-input/inline_qline_edit.cpp
-	src/ui/color-circle/color_circle.hpp
-	src/ui/color-circle/color_circle.cpp
-	src/ui/toast/toast.hpp
-	src/ui/toast/toast.cpp
-	src/ui/color-box/color-box.cpp
 
 	src/lib/keyboard/keybind-manager.hpp
 	src/lib/keyboard/keybind-manager.cpp
 	src/lib/keyboard/keyboard.cpp
-
-	src/ui/omni-tree/omni-tree.hpp
-	src/ui/omni-tree/omni-tree.cpp
 
 	src/theme/theme-file.hpp
 	src/theme/theme-file.cpp
@@ -414,7 +274,6 @@ set(SRCS
 	src/theme/theme-db.cpp
 
 	src/extensions/clipboard/clipboard-history-command.cpp
-	src/extensions/clipboard/history/clipboard-history-model.hpp
 	src/extensions/clipboard/history/clipboard-history-controller.hpp
 	src/extensions/clipboard/history/clipboard-history-controller.cpp
 	src/extensions/browser/browser-extension.cpp
@@ -425,10 +284,6 @@ set(SRCS
 	src/extensions/vicinae/refresh-apps-command.hpp
 	src/extensions/vicinae/refresh-apps-command.cpp
 	src/extensions/power-management/power-management-extension.cpp
-	src/extensions/root/root-search-model.hpp
-	src/extensions/root/root-search-model.cpp
-	src/extensions/root/root-search-controller.hpp
-	src/extensions/root/root-search-controller.cpp
 
 	src/qml/qml-browse-apps-model.hpp
 	src/qml/qml-browse-apps-model.cpp
@@ -459,35 +314,15 @@ set(SRCS
 	src/qml/qml-provider-search-view-host.hpp
 	src/qml/qml-provider-search-view-host.cpp
 
-	src/ui/screenshot-list/screenshot-list.hpp
-	src/ui/switch/switch.hpp
-	src/ui/switch/switch.cpp
-	src/ui/file-picker/file-picker.hpp
-	src/ui/file-picker/file-picker.cpp
-	src/ui/file-picker/file-picker-default-item-delegate.hpp
-	src/ui/file-picker/file-picker-default-item-delegate.cpp
-
-	src/ui/text-file-viewer/text-file-viewer.cpp
-
-	src/ui/typography/typography.hpp
-	src/ui/typography/typography.cpp
-
 	src/cli/cli.cpp
 	src/cli/server.cpp
 
-
-	src/ui/preference-dropdown/preference-dropdown.hpp
-	src/ui/preference-dropdown/preference-dropdown.cpp
-	src/ui/app-selector/app-selector.hpp
-	src/ui/app-selector/app-selector.cpp
 
 	src/utils/utils.cpp
 
 	src/services/file-chooser/abstract-file-chooser.hpp
 	src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.hpp
 	src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.cpp
-	src/services/file-chooser/native/native-file-chooser.hpp
-	src/services/file-chooser/native/native-file-chooser.cpp
 	src/services/root-item-manager/root-item-manager.hpp
 	src/services/root-item-manager/root-item-manager.cpp
 	src/services/root-item-manager/visit-tracker.cpp
@@ -538,22 +373,11 @@ set(SRCS
 	src/utils/migration-manager/migration-manager.hpp
 	src/utils/migration-manager/migration-manager.cpp
 
-	src/utils/layout.hpp
-	src/utils/layout.cpp
-
-	src/ui/top-bar/top-bar.hpp
-	src/ui/top-bar/top-bar.cpp
-
 	src/navigation-controller.hpp
 	src/navigation-controller.cpp
 
 	src/ui/views/base-view.cpp
-	src/ui/views/simple-view.cpp
-	src/ui/views/list-view.cpp
 	#src/ui/views/form-view.cpp
-	
-	src/ui/status-bar/status-bar.hpp
-	src/ui/status-bar/status-bar.cpp
 
 	src/command-controller.hpp
 	src/command-controller.cpp
@@ -585,9 +409,6 @@ set(SRCS
 	src/services/raycast/raycast-store.cpp
 	src/services/extension-store/vicinae-store.cpp
 
-	src/ui/thumbnail/thumbnail.hpp
-	src/ui/thumbnail/thumbnail.cpp
-
 	src/overlay-controller/overlay-controller.hpp
 
 
@@ -595,50 +416,17 @@ set(SRCS
 	src/lib/data-uri/data-uri.cpp
 	src/lib/pid-file/pid-file.cpp
 
-	src/ui/hud/hud.hpp
-	src/ui/hud/hud.cpp
-
-	src/ui/button/button.hpp
-	src/ui/button/button.cpp
-
-	src/ui/shortcut-button/shortcut-button.hpp
-	src/ui/shortcut-button/shortcut-button.cpp
-
-	src/ui/search-bar/search-bar.hpp
-	src/ui/search-bar/search-bar.cpp
-
-	src/ui/vertical-scroll-area/vertical-scroll-area.cpp
-
 	src/ui/alert/alert.hpp
 	src/ui/alert/alert.cpp
 
 	src/ui/dialog/dialog.hpp
 	src/ui/dialog/dialog.cpp
 
-	src/ui/list-accessory/list-accessory.hpp
-	src/ui/list-accessory/list-accessory.cpp
-
-	src/ui/scroll-bar/scroll-bar.hpp
-	src/ui/scroll-bar/scroll-bar.cpp
-
-	src/ui/flow-layout/flow-layout.hpp
-	src/ui/flow-layout/flow-layout.cpp
-
-	src/ui/tag/tag.cpp
-
 	src/lib/os-release.cpp
-
-	src/ui/arg-completer/arg-completer.hpp
-	src/ui/arg-completer/arg-completer.cpp
 
 	src/services/window-manager/window-manager.cpp
 
 	src/services/extension-boilerplate-generator/extension-boilerplate-generator.cpp
-
-	src/ui/file-picker-button/file-picker-button.hpp
-	src/ui/file-picker-button/file-picker-button.cpp
-
-	src/ui/form/directory-input.cpp
 
 	src/services/window-manager/abstract-window-manager.hpp
 	src/services/browser-extension-service.hpp
@@ -646,13 +434,7 @@ set(SRCS
 	src/lib/program-db/program-db.hpp
 	src/lib/program-db/program-db.cpp
 
-	src/ui/button-base/button-base.hpp
-	src/ui/button-base/button-base.cpp
-
 	src/services/power-manager/systemd/systemd-power-manager.cpp
-
-	src/ui/vlist/vlist.hpp
-	src/ui/vlist/vlist.cpp
 
 	src/config/config.hpp
 	src/config/config.cpp

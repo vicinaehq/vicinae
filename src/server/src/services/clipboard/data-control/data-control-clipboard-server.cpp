@@ -2,7 +2,7 @@
 #include "proto/wlr-clipboard.pb.h"
 #include "services/clipboard/clipboard-server.hpp"
 #include <QtCore>
-#include <QApplication>
+#include <QGuiApplication>
 #include <cstdint>
 #include <netinet/in.h>
 #include <qlogging.h>

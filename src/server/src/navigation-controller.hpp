@@ -209,8 +209,6 @@ public:
     } navigation;
     QString placeholderText;
     QString searchText;
-    QObjectUniquePtr<QWidget> searchAccessory;
-    bool accessoryVisibility = true;
     std::optional<CompleterState> completer;
     std::unique_ptr<ActionPanelState> actionPanelState;
 
@@ -231,7 +229,6 @@ signals:
   void viewPoped(const BaseView *view);
   void actionPanelVisibilityChanged(bool visible);
   void actionsChanged(const ActionPanelState &actions) const;
-  void submenuRequested(ActionPanelView *view);
   void windowVisiblityChanged(bool visible);
   void windowSizeRequested(QSize size);
   void searchTextSelected() const;
@@ -246,10 +243,6 @@ signals:
   void completionValuesChanged(const ArgumentValues &values) const;
 
   void invalidCompletionFired();
-
-  void searchAccessoryChanged(QWidget *widget) const;
-  void searchAccessoryCleared() const;
-  void searchAccessoryVisiblityChanged(bool visible) const;
 
   void completionCreated(const CompleterState &completer) const;
   void completionDestroyed() const;
@@ -319,8 +312,6 @@ public:
   void setActions(std::unique_ptr<ActionPanelState> state, const BaseView *caller = nullptr);
   void clearActions(const BaseView *caller = nullptr);
 
-  void setSearchAccessory(QWidget *accessory, const BaseView *sender = nullptr);
-  void clearSearchAccessory(const BaseView *sender = nullptr);
 
   void clearSearchText();
   void setNavigationTitle(const QString &navigationTitle, const BaseView *caller = nullptr);
@@ -340,8 +331,6 @@ public:
    * We need to rework the search accessory system anyways, as the ownership rules
    * are beyond confusing.
    */
-  void setSearchAccessoryVisibility(bool value, const BaseView *caller = nullptr);
-
   void showHud(const QString &title, const std::optional<ImageURL> &icon = std::nullopt);
 
   void launch(const std::shared_ptr<AbstractCmd> &cmd);

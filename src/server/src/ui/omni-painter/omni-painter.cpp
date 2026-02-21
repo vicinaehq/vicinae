@@ -3,11 +3,9 @@
 #include "theme/theme-file.hpp"
 #include "ui/image/url.hpp"
 #include "utils.hpp"
-#include <qgraphicseffect.h>
-#include <qgraphicsitem.h>
-#include <qgraphicsscene.h>
 #include <qlogging.h>
 #include <qnamespace.h>
+#include <qpainterpath.h>
 #include <qsvgrenderer.h>
 
 class ColorResolver {

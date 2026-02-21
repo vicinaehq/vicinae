@@ -1,5 +1,5 @@
 #include "kde-background-effect-manager.hpp"
-#include <qapplication.h>
+#include <QGuiApplication>
 #include <qevent.h>
 #include <qlogging.h>
 #include <wayland-client-core.h>

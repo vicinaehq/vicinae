@@ -2,19 +2,19 @@
 #include <ranges>
 
 bool AbstractQtClipboardServer::start() {
-  auto clip = QApplication::clipboard();
+  auto clip = QGuiApplication::clipboard();
   connect(clip, &QClipboard::dataChanged, this, &AbstractQtClipboardServer::dataChanged);
   return true;
 }
 
 bool AbstractQtClipboardServer::stop() {
-  disconnect(QApplication::clipboard());
+  disconnect(QGuiApplication::clipboard());
   return true;
 }
 
 void AbstractQtClipboardServer::dataChanged() {
   ClipboardSelection selection;
-  auto clip = QApplication::clipboard();
+  auto clip = QGuiApplication::clipboard();
   auto mimeData = clip->mimeData();
 
   if (mimeData->hasImage()) {

@@ -31,7 +31,7 @@ class QmlCreateExtensionViewHost : public QmlFormViewBase {
   Q_PROPERTY(QString commandDescriptionError READ commandDescriptionError NOTIFY errorsChanged)
 
 public:
-  explicit QmlCreateExtensionViewHost(QWidget *parent = nullptr);
+  explicit QmlCreateExtensionViewHost();
 
   QUrl qmlComponentUrl() const override;
   QVariantMap qmlProperties() const override;
