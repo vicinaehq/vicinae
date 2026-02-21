@@ -132,7 +132,6 @@ Window {
 
     ActionPanelPopover {
         id: actionPanelPopover
-        visible: !launcher.compacted
         z: 100
         anchors.fill: parent
         anchors.bottomMargin: footer.height + 1 + Config.borderWidth
