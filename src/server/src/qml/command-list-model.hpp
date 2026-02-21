@@ -75,6 +75,8 @@ protected:
   };
   void setSections(const std::vector<SectionInfo> &sections);
 
+  void invalidateSelection() { m_lastSelectedItemId.clear(); }
+
   ApplicationContext *ctx() const { return m_ctx; }
   QString imageSourceFor(const ImageURL &url) const { return qml::imageSourceFor(url); }
 

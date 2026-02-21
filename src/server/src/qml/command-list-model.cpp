@@ -83,9 +83,7 @@ void CommandListModel::setSelectedIndex(int index) {
   bool sameItem = (id == m_lastSelectedItemId);
   m_lastSelectedItemId = id;
 
-  if (!sameItem) {
-    onItemSelected(flat.sectionIdx, flat.itemIdx);
-  }
+  if (!sameItem) { onItemSelected(flat.sectionIdx, flat.itemIdx); }
 
   auto panel = createActionPanel(flat.sectionIdx, flat.itemIdx);
   if (panel) {
@@ -97,9 +95,7 @@ void CommandListModel::onSelectionCleared() {
   if (m_ctx) m_ctx->navigation->clearActions();
 }
 
-void CommandListModel::refreshActionPanel() {
-  setSelectedIndex(m_selectedIndex);
-}
+void CommandListModel::refreshActionPanel() { setSelectedIndex(m_selectedIndex); }
 
 void CommandListModel::activateSelected() {
   if (!m_ctx) return;
@@ -150,11 +146,9 @@ void CommandListModel::setSections(const std::vector<SectionInfo> &sections) {
   }
 
   int overlap = std::min(oldCount, newCount);
-  if (overlap > 0)
-    emit dataChanged(index(0), index(overlap - 1));
+  if (overlap > 0) emit dataChanged(index(0), index(overlap - 1));
 
-  if (m_selectedIndex >= newCount)
-    m_selectedIndex = -1;
+  if (m_selectedIndex >= newCount) m_selectedIndex = -1;
 }
 
 bool CommandListModel::dataItemAt(int row, int &section, int &item) const {
