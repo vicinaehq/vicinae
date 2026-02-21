@@ -7,16 +7,16 @@
 #include "extension-grid-model.hpp"
 #include "extension-list-model.hpp"
 #include <QTimer>
+#include <variant>
 
 class ExtensionViewHost : public ViewHostBase {
   Q_OBJECT
   Q_PROPERTY(QString viewType READ viewType NOTIFY viewTypeChanged)
-  Q_PROPERTY(QObject *contentModel READ contentModel NOTIFY contentModelChanged)
+  Q_PROPERTY(QObject *contentModel READ contentModel NOTIFY viewTypeChanged)
   Q_PROPERTY(bool isExtLoading READ isExtLoading NOTIFY isLoadingChanged)
   Q_PROPERTY(bool selectFirstOnReset READ selectFirstOnReset NOTIFY selectFirstOnResetChanged)
   Q_PROPERTY(QString detailMarkdown READ detailMarkdown NOTIFY detailContentChanged)
   Q_PROPERTY(QVariantList detailMetadata READ detailMetadata NOTIFY detailContentChanged)
-  Q_PROPERTY(QObject *formModel READ formModel NOTIFY formModelChanged)
   Q_PROPERTY(bool suppressEmptyView READ suppressEmptyView NOTIFY suppressEmptyViewChanged)
   Q_PROPERTY(QString linkAccessoryText READ linkAccessoryText NOTIFY linkAccessoryChanged)
   Q_PROPERTY(QString linkAccessoryHref READ linkAccessoryHref NOTIFY linkAccessoryChanged)
@@ -45,7 +45,6 @@ public:
   bool selectFirstOnReset() const { return m_selectFirstOnReset; }
   QString detailMarkdown() const;
   QVariantList detailMetadata() const;
-  QObject *formModel() const;
   bool suppressEmptyView() const { return m_isLoading && !m_hasSearchText; }
   QString linkAccessoryText() const;
   QString linkAccessoryHref() const;
@@ -58,16 +57,23 @@ public:
 signals:
   void selectFirstOnResetChanged();
   void viewTypeChanged();
-  void contentModelChanged();
   void isLoadingChanged();
   void detailContentChanged();
-  void formModelChanged();
   void suppressEmptyViewChanged();
   void linkAccessoryChanged();
   void dropdownChanged();
 
 private:
-  void handleFirstRender(const RenderModel &model);
+  struct DetailState {
+    QString markdown;
+    QVariantList metadata;
+    std::optional<ActionPannelModel> actions;
+  };
+
+  using ViewModel = std::variant<std::monostate, ExtensionListModel *, ExtensionGridModel *,
+                                 ExtensionFormModel *, DetailState>;
+
+  void switchViewType(const RenderModel &model);
   void renderList(const ListModel &model);
   void renderGrid(const GridModel &model);
   void renderDetail(const RootDetailModel &model);
@@ -76,11 +82,13 @@ private:
   void handleDebouncedSearch();
   void updateDropdown(const DropdownModel *dropdown);
 
+  template <typename T> T *activeModel() const {
+    auto p = std::get_if<T *>(&m_model);
+    return p ? *p : nullptr;
+  }
+
   ExtensionCommandController *m_controller;
-  ExtensionListModel *m_listModel = nullptr;
-  ExtensionGridModel *m_gridModel = nullptr;
-  ExtensionFormModel *m_formModel = nullptr;
-  QString m_viewType = "loading";
+  ViewModel m_model;
   int m_renderIndex = -1;
   QTimer *m_searchDebounce;
   bool m_isLoading = true;
@@ -93,9 +101,6 @@ private:
   bool m_shouldResetSelection = false;
   bool m_selectFirstOnReset = true;
 
-  QString m_detailMarkdown;
-  QVariantList m_detailMetadata;
-  std::optional<ActionPannelModel> m_detailActions;
   mutable ExtensionActionPanelBuilder::SubmenuCache m_submenuCache;
 
   std::optional<ActionPannelModel> m_formActions;

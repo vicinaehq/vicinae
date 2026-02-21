@@ -142,7 +142,7 @@ Item {
         ExtensionFormView {
             anchors.fill: parent
             host: root.host
-            formModel: root.host.formModel
+            formModel: root.host.contentModel
         }
     }
 }

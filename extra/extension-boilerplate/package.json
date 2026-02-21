@@ -66,6 +66,12 @@
 			"title": "Window Switcher",
 			"description": "Test window management APIs",
 			"mode": "view"
+		},
+		{
+			"name": "torture",
+			"title": "Torture Test",
+			"description": "Stress-test view hot-swaps, dynamic reactivity, and background mutations",
+			"mode": "view"
 		}
 	],
 	"preferences": [],
