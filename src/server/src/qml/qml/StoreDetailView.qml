@@ -189,16 +189,6 @@ Item {
                 }
             }
 
-            AlertBanner {
-                visible: (root.host.alert.message || "") !== ""
-                alertType: root.host.alert.type || "info"
-                message: root.host.alert.message || ""
-                Layout.fillWidth: true
-                Layout.leftMargin: 25
-                Layout.rightMargin: 25
-                Layout.bottomMargin: 5
-            }
-
             Rectangle {
                 Layout.fillWidth: true
                 height: 1

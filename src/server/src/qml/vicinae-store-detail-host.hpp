@@ -27,7 +27,6 @@ public:
   Q_PROPERTY(QString lastUpdate READ lastUpdate NOTIFY extensionChanged)
   Q_PROPERTY(QVariantList contributors READ contributors NOTIFY extensionChanged)
   Q_PROPERTY(QStringList categories READ categories NOTIFY extensionChanged)
-  Q_PROPERTY(QVariantMap alert READ alert NOTIFY extensionChanged)
 
   explicit VicinaeStoreDetailHost(const VicinaeStore::Extension &extension);
 
@@ -51,7 +50,6 @@ public:
   QString lastUpdate() const;
   QVariantList contributors() const;
   QStringList categories() const;
-  QVariantMap alert() const;
 
   Q_INVOKABLE void openUrl(const QString &url);
 

@@ -9,8 +9,7 @@
 #include "utils/utils.hpp"
 #include <QFutureWatcher>
 
-VicinaeStoreDetailHost::VicinaeStoreDetailHost(const VicinaeStore::Extension &extension)
-    : m_ext(extension) {}
+VicinaeStoreDetailHost::VicinaeStoreDetailHost(const VicinaeStore::Extension &extension) : m_ext(extension) {}
 
 QUrl VicinaeStoreDetailHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/StoreDetailView.qml"));
@@ -57,13 +56,12 @@ QString VicinaeStoreDetailHost::authorAvatar() const {
   return QStringLiteral("image://vicinae/http:%1?mask=circle").arg(m_ext.author.avatarUrl);
 }
 
-QString VicinaeStoreDetailHost::downloadCount() const {
-  return formatCount(m_ext.downloadCount);
-}
+QString VicinaeStoreDetailHost::downloadCount() const { return formatCount(m_ext.downloadCount); }
 
 QStringList VicinaeStoreDetailHost::platforms() const {
   QStringList list;
-  for (const auto &p : m_ext.platforms) list.append(p);
+  for (const auto &p : m_ext.platforms)
+    list.append(p);
   return list;
 }
 
@@ -89,25 +87,15 @@ QVariantList VicinaeStoreDetailHost::commands() const {
 QString VicinaeStoreDetailHost::readmeUrl() const { return m_ext.readmeUrl; }
 QString VicinaeStoreDetailHost::sourceUrl() const { return m_ext.sourceUrl; }
 
-QString VicinaeStoreDetailHost::lastUpdate() const {
-  return getRelativeTimeString(m_ext.updatedAt);
-}
+QString VicinaeStoreDetailHost::lastUpdate() const { return getRelativeTimeString(m_ext.updatedAt); }
 
 QVariantList VicinaeStoreDetailHost::contributors() const { return {}; }
 
 QStringList VicinaeStoreDetailHost::categories() const {
   QStringList list;
-  for (const auto &cat : m_ext.categories) list.append(cat.name);
+  for (const auto &cat : m_ext.categories)
+    list.append(cat.name);
   return list;
-}
-
-// TODO: remove test alert — temporarily enabled on all extensions for visual testing
-QVariantMap VicinaeStoreDetailHost::alert() const {
-  return {
-      {QStringLiteral("type"), QStringLiteral("warning")},
-      {QStringLiteral("message"),
-       QStringLiteral("This extension targets macOS-only platforms and may not work correctly on Linux.")},
-  };
 }
 
 void VicinaeStoreDetailHost::openUrl(const QString &url) {
