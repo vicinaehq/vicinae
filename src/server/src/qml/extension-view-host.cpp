@@ -33,110 +33,90 @@ void ExtensionViewHost::loadInitialData() {
 }
 
 void ExtensionViewHost::onReactivated() {
-  if (m_listModel) {
-    m_listModel->refreshActionPanel();
-  } else if (m_gridModel) {
-    m_gridModel->refreshActionPanel();
-  } else if (m_viewType == "detail" && m_detailActions) {
+  if (auto *list = activeModel<ExtensionListModel>()) {
+    list->refreshActionPanel();
+  } else if (auto *grid = activeModel<ExtensionGridModel>()) {
+    grid->refreshActionPanel();
+  } else if (auto *detail = std::get_if<DetailState>(&m_model)) {
+    if (detail->actions) {
+      auto notify = [this](const QString &handler, const QJsonArray &args) {
+        notifyExtension(handler, args);
+      };
+      setActions(ExtensionActionPanelBuilder::build(*detail->actions, notify, &m_submenuCache));
+    }
+  } else if (activeModel<ExtensionFormModel>() && m_formActions) {
+    auto *form = activeModel<ExtensionFormModel>();
     auto notify = [this](const QString &handler, const QJsonArray &args) {
       notifyExtension(handler, args);
     };
-    setActions(ExtensionActionPanelBuilder::build(*m_detailActions, notify, &m_submenuCache));
-  } else if (m_viewType == "form" && m_formActions) {
-    auto notify = [this](const QString &handler, const QJsonArray &args) {
-      notifyExtension(handler, args);
-    };
-    auto submit = [this]() -> std::expected<QJsonObject, QString> { return m_formModel->submit(); };
+    auto submit = [this, form]() -> std::expected<QJsonObject, QString> { return form->submit(); };
     setActions(ExtensionActionPanelBuilder::build(*m_formActions, notify, &m_submenuCache,
                                                   ActionPanelState::ShortcutPreset::Form, submit));
   }
 }
 
 void ExtensionViewHost::render(const RenderModel &model) {
-  if (m_firstRender) {
+  auto needsSwitch = [&]() -> bool {
+    if (m_firstRender) return true;
+    if (std::holds_alternative<ListModel>(model)) return !activeModel<ExtensionListModel>();
+    if (std::holds_alternative<GridModel>(model)) return !activeModel<ExtensionGridModel>();
+    if (std::holds_alternative<RootDetailModel>(model)) return !std::holds_alternative<DetailState>(m_model);
+    if (std::holds_alternative<FormModel>(model)) return !activeModel<ExtensionFormModel>();
+    return false;
+  };
+
+  if (needsSwitch()) {
     m_firstRender = false;
-    handleFirstRender(model);
-    return;
+    switchViewType(model);
   }
 
   if (auto *listModel = std::get_if<ListModel>(&model)) {
-    if (m_listModel) {
-      renderList(*listModel);
-    } else {
-      qWarning() << "Extension sent list model but view was initialized with a different type";
-    }
+    renderList(*listModel);
   } else if (auto *gridModel = std::get_if<GridModel>(&model)) {
-    if (m_gridModel) {
-      renderGrid(*gridModel);
-    } else {
-      qWarning() << "Extension sent grid model but view was initialized with a different type";
-    }
+    renderGrid(*gridModel);
   } else if (auto *detailModel = std::get_if<RootDetailModel>(&model)) {
-    if (m_viewType == "detail") {
-      renderDetail(*detailModel);
-    } else {
-      qWarning() << "Extension sent detail model but view was initialized with a different type";
-    }
+    renderDetail(*detailModel);
   } else if (auto *formModel = std::get_if<FormModel>(&model)) {
-    if (m_formModel) {
-      renderForm(*formModel);
-    } else {
-      qWarning() << "Extension sent form model but view was initialized with a different type";
-    }
+    renderForm(*formModel);
   } else {
     qWarning() << "Extension sent unrecognized model type";
   }
 }
 
-void ExtensionViewHost::handleFirstRender(const RenderModel &model) {
-  if (auto *listModel = std::get_if<ListModel>(&model)) {
-    auto notify = [this](const QString &handler, const QJsonArray &args) {
-      notifyExtension(handler, args);
-    };
+void ExtensionViewHost::switchViewType(const RenderModel &model) {
+  // Delete any QObject model owned by the previous variant
+  std::visit([](auto &v) {
+    using T = std::decay_t<decltype(v)>;
+    if constexpr (std::is_pointer_v<T>) delete v;
+  }, m_model);
 
-    m_listModel = new ExtensionListModel(notify, this);
-    m_listModel->initialize(context());
-    m_viewType = "list";
+  auto notify = [this](const QString &handler, const QJsonArray &args) {
+    notifyExtension(handler, args);
+  };
+
+  if (std::holds_alternative<ListModel>(model)) {
+    auto *m = new ExtensionListModel(notify, this);
+    m->initialize(context());
+    m_model = m;
     setSearchInteractive(true);
-    renderList(*listModel);
-
-    emit viewTypeChanged();
-    emit contentModelChanged();
-  } else if (auto *gridModel = std::get_if<GridModel>(&model)) {
-    auto notify = [this](const QString &handler, const QJsonArray &args) {
-      notifyExtension(handler, args);
-    };
-
-    m_gridModel = new ExtensionGridModel(notify, this);
-    m_gridModel->initialize(context());
-    m_viewType = "grid";
+  } else if (std::holds_alternative<GridModel>(model)) {
+    auto *m = new ExtensionGridModel(notify, this);
+    m->initialize(context());
+    m_model = m;
     setSearchInteractive(true);
-    renderGrid(*gridModel);
-
-    emit viewTypeChanged();
-    emit contentModelChanged();
-  } else if (auto *detailModel = std::get_if<RootDetailModel>(&model)) {
-    m_viewType = "detail";
+  } else if (std::holds_alternative<RootDetailModel>(model)) {
+    m_model = DetailState{};
     setSearchInteractive(false);
-    renderDetail(*detailModel);
-    emit viewTypeChanged();
-  } else if (auto *formModel = std::get_if<FormModel>(&model)) {
-    auto notify = [this](const QString &handler, const QJsonArray &args) {
-      notifyExtension(handler, args);
-    };
-    m_formModel = new ExtensionFormModel(notify, this);
-    m_viewType = "form";
+  } else if (std::holds_alternative<FormModel>(model)) {
+    m_model = new ExtensionFormModel(notify, this);
     setSearchInteractive(false);
-    renderForm(*formModel);
-
-    emit viewTypeChanged();
-    emit formModelChanged();
-  } else {
-    qWarning() << "Extension sent unrecognized model type on first render";
   }
+
+  emit viewTypeChanged();
 }
 
 void ExtensionViewHost::renderList(const ListModel &model) {
+  auto *list = activeModel<ExtensionListModel>();
   m_onSearchTextChange = model.onSearchTextChange;
   m_filtering = model.filtering;
 
@@ -165,7 +145,7 @@ void ExtensionViewHost::renderList(const ListModel &model) {
   if (model.dirty) {
     m_selectFirstOnReset = m_shouldResetSelection;
     emit selectFirstOnResetChanged();
-    m_listModel->setExtensionData(model, m_shouldResetSelection);
+    list->setExtensionData(model, m_shouldResetSelection);
     m_selectFirstOnReset = true;
     emit selectFirstOnResetChanged();
     m_shouldResetSelection = false;
@@ -173,6 +153,7 @@ void ExtensionViewHost::renderList(const ListModel &model) {
 }
 
 void ExtensionViewHost::renderGrid(const GridModel &model) {
+  auto *grid = activeModel<ExtensionGridModel>();
   m_onSearchTextChange = model.onSearchTextChange;
   m_filtering = model.filtering;
 
@@ -199,7 +180,7 @@ void ExtensionViewHost::renderGrid(const GridModel &model) {
   }
 
   if (model.dirty) {
-    m_gridModel->setExtensionData(model, m_shouldResetSelection);
+    grid->setExtensionData(model, m_shouldResetSelection);
     m_shouldResetSelection = false;
   }
 }
@@ -219,10 +200,10 @@ void ExtensionViewHost::textChanged(const QString &text) {
 void ExtensionViewHost::handleDebouncedSearch() {
   auto text = searchText();
 
-  if (m_listModel) {
-    m_listModel->setFilter(text);
-  } else if (m_gridModel) {
-    m_gridModel->setFilter(text);
+  if (auto *list = activeModel<ExtensionListModel>()) {
+    list->setFilter(text);
+  } else if (auto *grid = activeModel<ExtensionGridModel>()) {
+    grid->setFilter(text);
   }
 
   if (m_onSearchTextChange) {
@@ -232,35 +213,47 @@ void ExtensionViewHost::handleDebouncedSearch() {
 }
 
 bool ExtensionViewHost::inputFilter(QKeyEvent *event) {
-  // Grid views need arrow key handling — the QML side handles this via
-  // GenericGridView's focus handling, so we don't need to intercept here.
-  // List views are handled by GenericListView's focus handling.
   return false;
 }
 
 void ExtensionViewHost::beforePop() {
-  if (m_listModel) {
-    m_listModel->beforePop();
-  } else if (m_gridModel) {
-    m_gridModel->beforePop();
+  if (auto *list = activeModel<ExtensionListModel>()) {
+    list->beforePop();
+  } else if (auto *grid = activeModel<ExtensionGridModel>()) {
+    grid->beforePop();
   }
 }
 
-QString ExtensionViewHost::viewType() const { return m_viewType; }
+QString ExtensionViewHost::viewType() const {
+  if (activeModel<ExtensionListModel>()) return QStringLiteral("list");
+  if (activeModel<ExtensionGridModel>()) return QStringLiteral("grid");
+  if (activeModel<ExtensionFormModel>()) return QStringLiteral("form");
+  if (std::holds_alternative<DetailState>(m_model)) return QStringLiteral("detail");
+  return QStringLiteral("loading");
+}
 
 QObject *ExtensionViewHost::contentModel() const {
-  if (m_listModel) return m_listModel;
-  if (m_gridModel) return m_gridModel;
+  if (auto *list = activeModel<ExtensionListModel>()) return list;
+  if (auto *grid = activeModel<ExtensionGridModel>()) return grid;
+  if (auto *form = activeModel<ExtensionFormModel>()) return form;
   return nullptr;
 }
 
 bool ExtensionViewHost::isExtLoading() const { return m_isLoading; }
 
-QString ExtensionViewHost::detailMarkdown() const { return m_detailMarkdown; }
+QString ExtensionViewHost::detailMarkdown() const {
+  auto *detail = std::get_if<DetailState>(&m_model);
+  return detail ? detail->markdown : QString();
+}
 
-QVariantList ExtensionViewHost::detailMetadata() const { return m_detailMetadata; }
+QVariantList ExtensionViewHost::detailMetadata() const {
+  auto *detail = std::get_if<DetailState>(&m_model);
+  return detail ? detail->metadata : QVariantList{};
+}
 
 void ExtensionViewHost::renderDetail(const RootDetailModel &model) {
+  auto *detail = std::get_if<DetailState>(&m_model);
+
   bool wasLoading = m_isLoading;
   m_isLoading = model.isLoading;
   if (wasLoading != m_isLoading) { emit isLoadingChanged(); emit suppressEmptyViewChanged(); }
@@ -268,12 +261,11 @@ void ExtensionViewHost::renderDetail(const RootDetailModel &model) {
 
   if (model.navigationTitle) { setNavigationTitle(*model.navigationTitle); }
 
-  m_detailMarkdown = model.markdown;
-  m_detailMetadata =
-      model.metadata ? qml::metadataToVariantList(*model.metadata) : QVariantList{};
+  detail->markdown = model.markdown;
+  detail->metadata = model.metadata ? qml::metadataToVariantList(*model.metadata) : QVariantList{};
   emit detailContentChanged();
 
-  m_detailActions = model.actions;
+  detail->actions = model.actions;
   if (model.actions) {
     auto notify = [this](const QString &handler, const QJsonArray &args) {
       notifyExtension(handler, args);
@@ -282,13 +274,13 @@ void ExtensionViewHost::renderDetail(const RootDetailModel &model) {
   }
 }
 
-QObject *ExtensionViewHost::formModel() const { return m_formModel; }
-
 QString ExtensionViewHost::linkAccessoryText() const { return m_linkAccessoryText; }
 
 QString ExtensionViewHost::linkAccessoryHref() const { return m_linkAccessoryHref; }
 
 void ExtensionViewHost::renderForm(const FormModel &model) {
+  auto *form = activeModel<ExtensionFormModel>();
+
   bool wasLoading = m_isLoading;
   m_isLoading = model.isLoading;
   if (wasLoading != m_isLoading) { emit isLoadingChanged(); emit suppressEmptyViewChanged(); }
@@ -296,7 +288,7 @@ void ExtensionViewHost::renderForm(const FormModel &model) {
 
   if (model.navigationTitle) { setNavigationTitle(*model.navigationTitle); }
 
-  m_formModel->setFormData(model);
+  form->setFormData(model);
 
   QString newLinkText, newLinkHref;
   if (model.searchBarAccessory) {
@@ -320,7 +312,7 @@ void ExtensionViewHost::renderForm(const FormModel &model) {
     auto notify = [this](const QString &handler, const QJsonArray &args) {
       notifyExtension(handler, args);
     };
-    auto submit = [this]() -> std::expected<QJsonObject, QString> { return m_formModel->submit(); };
+    auto submit = [this, form]() -> std::expected<QJsonObject, QString> { return form->submit(); };
     setActions(ExtensionActionPanelBuilder::build(*model.actions, notify, &m_submenuCache,
                                                   ActionPanelState::ShortcutPreset::Form, submit));
   }
