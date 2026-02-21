@@ -1,12 +1,12 @@
 import QtQuick
+import QtQuick.Layouts
 
-Row {
+RowLayout {
     spacing: 6
 
     Item {
-        width: 12
-        height: 12
-        anchors.verticalCenter: parent.verticalCenter
+        Layout.preferredWidth: 12
+        Layout.preferredHeight: 12
 
         Rectangle {
             visible: launcher.toastStyle !== 4
@@ -60,14 +60,15 @@ Row {
         text: launcher.toastTitle
         color: Theme.foreground
         font.pointSize: Theme.smallerFontSize
-        anchors.verticalCenter: parent.verticalCenter
     }
 
     Text {
         text: launcher.toastMessage
         color: Theme.textMuted
         font.pointSize: Theme.smallerFontSize
-        anchors.verticalCenter: parent.verticalCenter
         visible: launcher.toastMessage !== ""
+        maximumLineCount: 1
+        elide: Text.ElideRight
+        Layout.fillWidth: true
     }
 }
