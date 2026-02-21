@@ -9,16 +9,14 @@ Item {
     function moveUp() { listView.moveUp() }
     function moveDown() { listView.moveDown() }
 
-    GenericListView {
+    CommandListView {
         id: listView
         anchors.fill: parent
 
-        listModel: root.host.listModel
-        model: root.host.listModel
-        autoWireModel: true
+        cmdModel: root.host.listModel
         detailComponent: detailPanel
         detailVisible: root.host.hasDetail
-        detailRatio: 0.55
+        detailRatio: 0.65
     }
 
     Component {

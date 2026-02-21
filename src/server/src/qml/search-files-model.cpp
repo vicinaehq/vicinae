@@ -7,12 +7,10 @@
 void SearchFilesModel::setFiles(std::vector<std::filesystem::path> files, const QString &sectionName) {
   m_files = std::move(files);
 
-  setSelectFirstOnReset(false);
   std::vector<SectionInfo> sections;
   if (!m_files.empty())
     sections.push_back({.name = sectionName, .count = static_cast<int>(m_files.size())});
   setSections(sections);
-  setSelectFirstOnReset(true);
   refreshActionPanel();
 }
 
