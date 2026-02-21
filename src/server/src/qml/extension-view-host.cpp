@@ -16,8 +16,11 @@ QUrl ExtensionViewHost::qmlComponentUrl() const {
 }
 
 QUrl ExtensionViewHost::qmlSearchAccessoryUrl() const {
-  if (m_linkAccessoryText.isEmpty()) return {};
-  return QUrl(QStringLiteral("qrc:/Vicinae/FormLinkAccessory.qml"));
+  if (!m_dropdownItems.isEmpty())
+    return QUrl(QStringLiteral("qrc:/Vicinae/ExtensionDropdownAccessory.qml"));
+  if (!m_linkAccessoryText.isEmpty())
+    return QUrl(QStringLiteral("qrc:/Vicinae/FormLinkAccessory.qml"));
+  return {};
 }
 
 QVariantMap ExtensionViewHost::qmlProperties() const {
@@ -152,6 +155,13 @@ void ExtensionViewHost::renderList(const ListModel &model) {
   if (wasLoading != m_isLoading) { emit isLoadingChanged(); emit suppressEmptyViewChanged(); }
   setLoading(model.isLoading);
 
+  if (model.searchBarAccessory) {
+    auto *dropdown = std::get_if<DropdownModel>(&*model.searchBarAccessory);
+    updateDropdown(dropdown);
+  } else {
+    updateDropdown(nullptr);
+  }
+
   if (model.dirty) {
     m_selectFirstOnReset = m_shouldResetSelection;
     emit selectFirstOnResetChanged();
@@ -180,6 +190,13 @@ void ExtensionViewHost::renderGrid(const GridModel &model) {
   m_isLoading = model.isLoading;
   if (wasLoading != m_isLoading) { emit isLoadingChanged(); emit suppressEmptyViewChanged(); }
   setLoading(model.isLoading);
+
+  if (model.searchBarAccessory) {
+    auto *dropdown = std::get_if<DropdownModel>(&*model.searchBarAccessory);
+    updateDropdown(dropdown);
+  } else {
+    updateDropdown(nullptr);
+  }
 
   if (model.dirty) {
     m_gridModel->setExtensionData(model, m_shouldResetSelection);
@@ -306,6 +323,86 @@ void ExtensionViewHost::renderForm(const FormModel &model) {
     auto submit = [this]() -> std::expected<QJsonObject, QString> { return m_formModel->submit(); };
     setActions(ExtensionActionPanelBuilder::build(*model.actions, notify, &m_submenuCache,
                                                   ActionPanelState::ShortcutPreset::Form, submit));
+  }
+}
+
+void ExtensionViewHost::updateDropdown(const DropdownModel *dropdown) {
+  bool hadDropdown = !m_dropdownItems.isEmpty();
+
+  if (!dropdown) {
+    if (hadDropdown) {
+      m_dropdownItems.clear();
+      m_dropdownCurrentItem.clear();
+      m_dropdownPlaceholder.clear();
+      m_dropdownOnChange.reset();
+      emit dropdownChanged();
+      emit searchAccessoryUrlChanged();
+    }
+    return;
+  }
+
+  m_dropdownOnChange = dropdown->onChange;
+  m_dropdownPlaceholder = dropdown->placeholder.value_or(QString());
+
+  if (dropdown->dirty) {
+    m_dropdownItems = qml::convertDropdownChildren(dropdown->children);
+  }
+
+  // Resolve current value: explicit value > stored value > defaultValue > first item
+  QString resolvedValue;
+  if (dropdown->value) {
+    resolvedValue = *dropdown->value;
+  } else if (!m_dropdownValue.isEmpty()) {
+    resolvedValue = m_dropdownValue;
+  } else if (dropdown->defaultValue) {
+    resolvedValue = *dropdown->defaultValue;
+  } else {
+    auto first = qml::firstDropdownItemValue(dropdown->children);
+    if (first) resolvedValue = *first;
+  }
+
+  m_dropdownValue = resolvedValue;
+
+  // Find the matching item to set as currentItem
+  QVariant newCurrentItem;
+  for (const auto &section : m_dropdownItems) {
+    auto sectionMap = section.toMap();
+    auto items = sectionMap["items"].toList();
+    for (const auto &item : items) {
+      auto itemMap = item.toMap();
+      if (itemMap["id"].toString() == resolvedValue) {
+        newCurrentItem = item;
+        break;
+      }
+    }
+    if (newCurrentItem.isValid()) break;
+  }
+  m_dropdownCurrentItem = newCurrentItem;
+
+  emit dropdownChanged();
+  if (hadDropdown != !m_dropdownItems.isEmpty()) {
+    emit searchAccessoryUrlChanged();
+  }
+}
+
+void ExtensionViewHost::setDropdownValue(const QString &value) {
+  m_dropdownValue = value;
+
+  // Find the matching item
+  for (const auto &section : m_dropdownItems) {
+    auto sectionMap = section.toMap();
+    auto items = sectionMap["items"].toList();
+    for (const auto &item : items) {
+      auto itemMap = item.toMap();
+      if (itemMap["id"].toString() == value) {
+        m_dropdownCurrentItem = item;
+        emit dropdownChanged();
+        if (m_dropdownOnChange) {
+          notifyExtension(*m_dropdownOnChange, {value});
+        }
+        return;
+      }
+    }
   }
 }
 
