@@ -20,7 +20,7 @@ protected:
   QString displayTitle(const BrowserTab &tab) const override;
   QString displaySubtitle(const BrowserTab &tab) const override;
   QString displayIconSource(const BrowserTab &tab) const override;
-  QString displayAccessory(const BrowserTab &tab) const override;
+  QVariant displayAccessory(const BrowserTab &tab) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const BrowserTab &tab) const override;
   QString sectionLabel() const override;
 };

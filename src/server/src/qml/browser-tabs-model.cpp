@@ -13,7 +13,7 @@ QString BrowserTabsModel::displayIconSource(const BrowserTab &tab) const {
   return imageSourceFor(tab.icon());
 }
 
-QString BrowserTabsModel::displayAccessory(const BrowserTab &tab) const {
+QVariant BrowserTabsModel::displayAccessory(const BrowserTab &tab) const {
   if (tab.audible) return tab.muted ? QStringLiteral("Muted") : QStringLiteral("Playing");
   return {};
 }

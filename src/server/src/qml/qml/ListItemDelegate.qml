@@ -10,7 +10,7 @@ SelectableDelegate {
     required property string itemIconSource
     required property string itemAlias
     required property bool itemIsActive
-    property string itemAccessory: ""
+    property var itemAccessory
     property string itemAccessoryColor: ""
 
     RowLayout {
@@ -89,14 +89,10 @@ SelectableDelegate {
             Item { Layout.fillWidth: true }
         }
 
-        Text {
-            visible: root.itemAccessory !== ""
-            text: root.itemAccessory
-            color: root.itemAccessoryColor !== "" ? root.itemAccessoryColor : Theme.textMuted
-            font.pointSize: Theme.smallerFontSize
-            elide: Text.ElideRight
-            maximumLineCount: 1
-            Layout.maximumWidth: 200
+        ListAccessoryRow {
+            accessories: root.itemAccessory
+            fallbackColor: root.itemAccessoryColor
+            Layout.alignment: Qt.AlignVCenter
         }
     }
 }

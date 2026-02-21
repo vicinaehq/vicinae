@@ -32,7 +32,7 @@ protected:
   virtual QString displayTitle(const T &item) const = 0;
   virtual QString displaySubtitle(const T &) const { return {}; }
   virtual QString displayIconSource(const T &item) const = 0;
-  virtual QString displayAccessory(const T &) const { return {}; }
+  virtual QVariant displayAccessory(const T &) const { return {}; }
   virtual std::unique_ptr<ActionPanelState> buildActionPanel(const T &item) const = 0;
   virtual void itemSelected(const T &) {}
   virtual QString sectionLabel() const { return {}; }
@@ -85,7 +85,7 @@ private:
   QString itemTitle(int s, int i) const final { return displayTitle(resolveItem(s, i)); }
   QString itemSubtitle(int s, int i) const final { return displaySubtitle(resolveItem(s, i)); }
   QString itemIconSource(int s, int i) const final { return displayIconSource(resolveItem(s, i)); }
-  QString itemAccessory(int s, int i) const final { return displayAccessory(resolveItem(s, i)); }
+  QVariant itemAccessory(int s, int i) const final { return displayAccessory(resolveItem(s, i)); }
 
   std::unique_ptr<ActionPanelState> createActionPanel(int s, int i) const final {
     return buildActionPanel(resolveItem(s, i));

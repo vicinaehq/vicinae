@@ -23,7 +23,7 @@ public:
 protected:
   QString displayTitle(const snippet::SerializedSnippet &item) const override;
   QString displayIconSource(const snippet::SerializedSnippet &item) const override;
-  QString displayAccessory(const snippet::SerializedSnippet &item) const override;
+  QVariant displayAccessory(const snippet::SerializedSnippet &item) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const snippet::SerializedSnippet &item) const override;
   void itemSelected(const snippet::SerializedSnippet &item) override;
   QString sectionLabel() const override;

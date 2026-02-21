@@ -663,6 +663,8 @@ set(VICINAE_QML_FILES
 	src/qml/qml/GenericListView.qml
 	src/qml/qml/RootSearchList.qml
 	src/qml/qml/ListItemDelegate.qml
+	src/qml/qml/ListAccessory.qml
+	src/qml/qml/ListAccessoryRow.qml
 	src/qml/qml/SelectableDelegate.qml
 	src/qml/qml/SectionHeader.qml
 	src/qml/qml/Footer.qml
