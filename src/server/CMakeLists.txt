@@ -678,6 +678,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/EmojiGridView.qml
 	src/qml/qml/ViciImage.qml
 	src/qml/qml/ViciScrollBar.qml
+	src/qml/qml/ViciToolTip.qml
 	src/qml/qml/ExtensionView.qml
 	src/qml/qml/MarkdownDetailView.qml
 	src/qml/qml/ExtensionGridView.qml

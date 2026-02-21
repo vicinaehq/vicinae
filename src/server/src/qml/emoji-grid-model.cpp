@@ -166,6 +166,10 @@ QString EmojiGridModel::emojiName(int section, int item) const {
   return qStringFromStdView(data->name);
 }
 
+QString EmojiGridModel::cellTooltip(int section, int item) const {
+  return emojiName(section, item);
+}
+
 std::unique_ptr<ActionPanelState> EmojiGridModel::createActionPanel(int section, int item) const {
   auto *data = emojiAt(section, item);
   if (!data) return nullptr;

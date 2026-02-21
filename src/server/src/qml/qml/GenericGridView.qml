@@ -241,6 +241,13 @@ Item {
                                         }
                                     }
                                 }
+
+                                ViciToolTip {
+                                    readonly property string tooltipText:
+                                        root.cmdModel ? root.cmdModel.cellTooltip(cellWrapper.cellSection, cellWrapper.cellItem) : ""
+                                    visible: cellMouseArea.containsMouse && tooltipText !== ""
+                                    text: tooltipText
+                                }
                             }
                         }
                     }

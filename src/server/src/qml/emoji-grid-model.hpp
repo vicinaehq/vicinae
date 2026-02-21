@@ -16,6 +16,7 @@ public:
 
   Q_INVOKABLE QString emojiIcon(int section, int item) const;
   Q_INVOKABLE QString emojiName(int section, int item) const;
+  QString cellTooltip(int section, int item) const override;
 
 protected:
   std::unique_ptr<ActionPanelState> createActionPanel(int section, int item) const override;

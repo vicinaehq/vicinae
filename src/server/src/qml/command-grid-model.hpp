@@ -43,6 +43,7 @@ public:
 
   int selectedSection() const { return m_selSection; }
   int selectedItem() const { return m_selItem; }
+  Q_INVOKABLE virtual QString cellTooltip(int section, int item) const;
   Q_INVOKABLE void select(int section, int item);
   Q_INVOKABLE void activateSelected();
   Q_INVOKABLE void navigateUp();

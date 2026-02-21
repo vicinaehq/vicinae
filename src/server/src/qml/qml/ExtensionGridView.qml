@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls
 
 GenericGridView {
     columns: cmdModel ? cmdModel.columns : 8
@@ -22,7 +21,6 @@ GenericGridView {
             readonly property var model: parent ? parent.cmdModel : null
             readonly property int sec: parent ? parent.cellSection : 0
             readonly property int itm: parent ? parent.cellItem : 0
-            readonly property bool hovered: parent ? parent.cellHovered : false
 
             readonly property string _cellColor: {
                 var _rev = cellRoot.model ? cellRoot.model.dataRevision : 0
@@ -57,16 +55,6 @@ GenericGridView {
                     cellRoot.parent ? cellRoot.parent.cellWidth : width,
                     cellRoot.parent ? cellRoot.parent.cellHeight : height
                 )
-            }
-
-            ToolTip {
-                visible: cellRoot.hovered && tooltipText !== ""
-                readonly property string tooltipText: {
-                    var _rev = cellRoot.model ? cellRoot.model.dataRevision : 0
-                    return cellRoot.model ? cellRoot.model.cellTooltip(cellRoot.sec, cellRoot.itm) : ""
-                }
-                text: tooltipText
-                delay: 500
             }
         }
     }
