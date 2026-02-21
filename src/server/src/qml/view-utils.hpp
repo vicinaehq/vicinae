@@ -12,13 +12,15 @@ namespace qml {
 
 QVariantList metadataToVariantList(const MetadataModel &metadata);
 QVariantList accessoriesToVariantList(const std::vector<AccessoryModel> &accessories);
+QVariantMap accessoryToVariant(const AccessoryModel &acc);
 
-inline QString imageSourceFor(const ImageURL &url) {
-  return ImageUrl(url).toSource();
+inline QVariantList textAccessory(const QString &text) {
+  return accessoriesToVariantList({{.data = AccessoryModel::Text{{}, text}}});
 }
 
-inline std::optional<QString>
-firstDropdownItemValue(const std::vector<DropdownModel::Child> &children) {
+inline QString imageSourceFor(const ImageURL &url) { return ImageUrl(url).toSource(); }
+
+inline std::optional<QString> firstDropdownItemValue(const std::vector<DropdownModel::Child> &children) {
   for (const auto &child : children) {
     if (auto *item = std::get_if<DropdownModel::Item>(&child)) {
       return item->value;

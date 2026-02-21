@@ -28,7 +28,7 @@ protected:
   QString displayTitle(const AppPtr &app) const override;
   QString displaySubtitle(const AppPtr &app) const override;
   QString displayIconSource(const AppPtr &app) const override;
-  QVariant displayAccessory(const AppPtr &app) const override;
+  QVariantList displayAccessory(const AppPtr &app) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const AppPtr &app) const override;
   QString sectionLabel() const override;
 };

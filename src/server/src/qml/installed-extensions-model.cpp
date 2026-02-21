@@ -1,18 +1,17 @@
 #include "installed-extensions-model.hpp"
 #include "actions/extension/extension-actions.hpp"
+#include "builtin_icon.hpp"
 #include "clipboard-actions.hpp"
+#include "extend/accessory-model.hpp"
 #include "keyboard/keybind.hpp"
 #include "navigation-controller.hpp"
+#include "theme/colors.hpp"
 #include "ui/image/url.hpp"
+#include "view-utils.hpp"
 
+QString InstalledExtensionsModel::displayTitle(const ExtensionManifest &m) const { return m.title; }
 
-QString InstalledExtensionsModel::displayTitle(const ExtensionManifest &m) const {
-  return m.title;
-}
-
-QString InstalledExtensionsModel::displaySubtitle(const ExtensionManifest &m) const {
-  return m.description;
-}
+QString InstalledExtensionsModel::displaySubtitle(const ExtensionManifest &m) const { return m.description; }
 
 QString InstalledExtensionsModel::displayIconSource(const ExtensionManifest &m) const {
   if (!m.icon.isEmpty()) {
@@ -22,10 +21,18 @@ QString InstalledExtensionsModel::displayIconSource(const ExtensionManifest &m) 
   return imageSourceFor(ImageURL::builtin("plug"));
 }
 
-QVariant InstalledExtensionsModel::displayAccessory(const ExtensionManifest &m) const {
-  if (m.isFromRaycastStore()) return QStringLiteral("Raycast");
-  if (m.isFromVicinaeStore()) return QStringLiteral("Vicinae");
-  if (m.isLocal()) return QStringLiteral("Local");
+QVariantList InstalledExtensionsModel::displayAccessory(const ExtensionManifest &m) const {
+  if (m.isFromRaycastStore()) {
+    return qml::accessoriesToVariantList({{.data = AccessoryModel::Tag(SemanticColor::Red, "Raycast"),
+                                           .icon = ExtensionImageModel{.source = QString("raycast")}}});
+  }
+  if (m.isFromVicinaeStore()) {
+    return qml::accessoriesToVariantList({{.data = AccessoryModel::Tag(SemanticColor::Orange, "Vicinae"),
+                                           .icon = ExtensionImageModel{.source = QString("vicinae")}}});
+  }
+  if (m.isLocal()) {
+    return qml::accessoriesToVariantList({{.data = AccessoryModel::Tag(SemanticColor::Blue, "Local")}});
+  }
   return {};
 }
 

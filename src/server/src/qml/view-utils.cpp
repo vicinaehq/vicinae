@@ -1,5 +1,8 @@
 #include "view-utils.hpp"
+#include "extend/accessory-model.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
+#include <qcontainerfwd.h>
+#include <ranges>
 
 namespace qml {
 
@@ -12,8 +15,7 @@ QVariantList metadataToVariantList(const MetadataModel &metadata) {
       entry[QStringLiteral("label")] = label->title;
       entry[QStringLiteral("value")] = label->text;
       if (label->icon) entry[QStringLiteral("icon")] = imageSourceFor(ImageURL(*label->icon));
-      if (label->color)
-        entry[QStringLiteral("valueColor")] = OmniPainter::resolveColor(*label->color).name();
+      if (label->color) entry[QStringLiteral("valueColor")] = OmniPainter::resolveColor(*label->color).name();
       result.append(entry);
     } else if (auto *link = std::get_if<MetadataLink>(&child)) {
       QVariantMap entry;
@@ -45,33 +47,33 @@ QVariantList metadataToVariantList(const MetadataModel &metadata) {
   return result;
 }
 
-QVariantList accessoriesToVariantList(const std::vector<AccessoryModel> &accessories) {
-  QVariantList result;
-  for (const auto &acc : accessories) {
-    QVariantMap m;
+QVariantMap accessoryToVariant(const AccessoryModel &acc) {
+  QVariantMap m;
+  bool fill = false;
 
-    bool fill = false;
-    if (auto *tag = std::get_if<AccessoryModel::Tag>(&acc.data)) {
-      m[QStringLiteral("text")] = tag->value;
-      if (tag->color) m[QStringLiteral("color")] = OmniPainter::resolveColor(*tag->color).name();
-      fill = true;
-    } else if (auto *text = std::get_if<AccessoryModel::Text>(&acc.data)) {
-      m[QStringLiteral("text")] = text->value;
-      if (text->color) m[QStringLiteral("color")] = OmniPainter::resolveColor(*text->color).name();
-    }
-
-    m[QStringLiteral("fill")] = fill;
-    if (acc.icon) {
-      auto url = ImageURL(*acc.icon);
-      auto color = std::visit([](const auto &v) { return v.color; }, acc.data);
-      if (color && url.type() == ImageURLType::Builtin) url.setFill(color);
-      m[QStringLiteral("icon")] = imageSourceFor(url);
-    }
-    if (acc.tooltip) m[QStringLiteral("tooltip")] = *acc.tooltip;
-
-    result.append(m);
+  if (auto *tag = std::get_if<AccessoryModel::Tag>(&acc.data)) {
+    m[QStringLiteral("text")] = tag->value;
+    if (tag->color) m[QStringLiteral("color")] = OmniPainter::resolveColor(*tag->color).name();
+    fill = true;
+  } else if (auto *text = std::get_if<AccessoryModel::Text>(&acc.data)) {
+    m[QStringLiteral("text")] = text->value;
+    if (text->color) m[QStringLiteral("color")] = OmniPainter::resolveColor(*text->color).name();
   }
-  return result;
+
+  m[QStringLiteral("fill")] = fill;
+  if (acc.icon) {
+    auto url = ImageURL(*acc.icon);
+    auto color = std::visit([](const auto &v) { return v.color; }, acc.data);
+    if (color && url.type() == ImageURLType::Builtin) url.setFill(color);
+    m[QStringLiteral("icon")] = imageSourceFor(url);
+  }
+  if (acc.tooltip) m[QStringLiteral("tooltip")] = *acc.tooltip;
+
+  return m;
+}
+
+QVariantList accessoriesToVariantList(const std::vector<AccessoryModel> &accessories) {
+  return accessories | std::views::transform(accessoryToVariant) | std::ranges::to<QVariantList>();
 }
 
 } // namespace qml

@@ -3,26 +3,13 @@ import QtQuick.Layouts
 
 RowLayout {
     id: root
-    property var accessories
-    property string fallbackColor: ""
+    property var accessories: []
 
-    readonly property bool _isString: typeof accessories === "string"
-    readonly property var _list: accessories instanceof Array ? accessories : []
-    visible: (_isString && accessories !== "") || _list.length > 0
+    visible: accessories instanceof Array && accessories.length > 0
     spacing: 6
 
-    Text {
-        visible: root._isString && root.accessories !== ""
-        text: root._isString ? root.accessories : ""
-        color: root.fallbackColor !== "" ? root.fallbackColor : Theme.textMuted
-        font.pointSize: Theme.smallerFontSize
-        elide: Text.ElideRight
-        maximumLineCount: 1
-        Layout.maximumWidth: 200
-    }
-
     Repeater {
-        model: root._list
+        model: root.accessories
 
         ListAccessory {
             required property var modelData

@@ -42,7 +42,9 @@ QString CalcHistoryModel::itemIconSource(int s, int i) const {
   }
 }
 
-QVariant CalcHistoryModel::itemAccessory(int s, int i) const { return m_data[s].second[i].answer; }
+QVariantList CalcHistoryModel::itemAccessory(int s, int i) const {
+  return qml::textAccessory(m_data[s].second[i].answer);
+}
 
 std::unique_ptr<ActionPanelState> CalcHistoryModel::createActionPanel(int s, int i) const {
   const auto &record = m_data[s].second[i];

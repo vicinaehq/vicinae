@@ -164,7 +164,7 @@ QString ExtensionListModel::itemIconSource(int section, int item) const {
   return {};
 }
 
-QVariant ExtensionListModel::itemAccessory(int section, int item) const {
+QVariantList ExtensionListModel::itemAccessory(int section, int item) const {
   if (auto *it = itemAt(section, item)) {
     if (!it->accessories.empty()) { return qml::accessoriesToVariantList(it->accessories); }
   }

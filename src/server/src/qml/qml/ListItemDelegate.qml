@@ -10,7 +10,7 @@ SelectableDelegate {
     required property string itemIconSource
     required property string itemAlias
     required property bool itemIsActive
-    property var itemAccessory
+    property var itemAccessory: []
     property string itemAccessoryColor: ""
 
     RowLayout {
@@ -90,8 +90,12 @@ SelectableDelegate {
         }
 
         ListAccessoryRow {
-            accessories: root.itemAccessory
-            fallbackColor: root.itemAccessoryColor
+            accessories: {
+                if (root.itemAccessory instanceof Array) return root.itemAccessory
+                if (typeof root.itemAccessory === "string" && root.itemAccessory !== "")
+                    return [{text: root.itemAccessory, color: root.itemAccessoryColor, fill: false}]
+                return []
+            }
             Layout.alignment: Qt.AlignVCenter
         }
     }

@@ -15,7 +15,7 @@ public:
 protected:
   QString itemTitle(int s, int i) const override;
   QString itemIconSource(int s, int i) const override;
-  QVariant itemAccessory(int s, int i) const override;
+  QVariantList itemAccessory(int s, int i) const override;
   std::unique_ptr<ActionPanelState> createActionPanel(int s, int i) const override;
 
 private:

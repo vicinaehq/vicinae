@@ -20,7 +20,7 @@ protected:
   QString displayTitle(const OAuth::TokenSet &set) const override;
   QString displaySubtitle(const OAuth::TokenSet &set) const override;
   QString displayIconSource(const OAuth::TokenSet &set) const override;
-  QVariant displayAccessory(const OAuth::TokenSet &set) const override;
+  QVariantList displayAccessory(const OAuth::TokenSet &set) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const OAuth::TokenSet &set) const override;
   QString sectionLabel() const override;
 };

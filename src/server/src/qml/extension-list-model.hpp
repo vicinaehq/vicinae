@@ -43,7 +43,7 @@ protected:
   QString itemTitle(int section, int item) const override;
   QString itemSubtitle(int section, int item) const override;
   QString itemIconSource(int section, int item) const override;
-  QVariant itemAccessory(int section, int item) const override;
+  QVariantList itemAccessory(int section, int item) const override;
   std::unique_ptr<ActionPanelState> createActionPanel(int section, int item) const override;
   void onSelectionCleared() override;
 

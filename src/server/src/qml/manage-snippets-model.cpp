@@ -19,8 +19,8 @@ QString ManageSnippetsModel::displayIconSource(const snippet::SerializedSnippet 
   return std::visit(visitor, item.data);
 }
 
-QVariant ManageSnippetsModel::displayAccessory(const snippet::SerializedSnippet &item) const {
-  if (item.expansion) return QString::fromStdString(item.expansion->keyword);
+QVariantList ManageSnippetsModel::displayAccessory(const snippet::SerializedSnippet &item) const {
+  if (item.expansion) return qml::textAccessory(QString::fromStdString(item.expansion->keyword));
   return {};
 }
 

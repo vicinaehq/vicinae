@@ -16,10 +16,8 @@ QString SwitchWindowsModel::displayIconSource(const WindowEntry &e) const {
   return imageSourceFor(ImageURL::builtin("app-window"));
 }
 
-QVariant SwitchWindowsModel::displayAccessory(const WindowEntry &e) const {
-  if (auto ws = e.window->workspace()) {
-    return QString("WS %1").arg(*ws);
-  }
+QVariantList SwitchWindowsModel::displayAccessory(const WindowEntry &e) const {
+  if (auto ws = e.window->workspace()) { return qml::textAccessory(QString("WS %1").arg(*ws)); }
   return {};
 }
 
