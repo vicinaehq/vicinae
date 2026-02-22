@@ -27,7 +27,7 @@ class MarkdownModel : public QAbstractListModel {
   QML_NAMED_ELEMENT(MarkdownModel)
 
 signals:
-  void modelReset();
+  void blocksAppended();
 
 public:
   enum Role {
@@ -53,6 +53,7 @@ private:
   };
 
   void rebuildInlineStyles();
+  std::vector<Block> parseBlocks(const QString &markdown) const;
 
   std::vector<Block> m_blocks;
   QString m_markdown;

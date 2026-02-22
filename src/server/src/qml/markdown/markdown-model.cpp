@@ -328,16 +328,9 @@ void MarkdownModel::rebuildInlineStyles() {
   m_syntaxStyles = syntax::buildStyleMap(theme);
 }
 
-void MarkdownModel::setMarkdown(const QString &markdown) {
-  m_markdown = markdown;
-
-  beginResetModel();
-  m_blocks.clear();
-
-  if (markdown.isEmpty()) {
-    endResetModel();
-    return;
-  }
+std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &markdown) const {
+  std::vector<Block> blocks;
+  blocks.reserve(m_blocks.size() + 4);
 
   auto buf = markdown.toUtf8();
 
@@ -360,7 +353,6 @@ void MarkdownModel::setMarkdown(const QString &markdown) {
 
     switch (type) {
     case CMARK_NODE_PARAGRAPH: {
-      // Check if paragraph contains any images
       bool hasImage = false;
       for (auto *c = cmark_node_first_child(node); c; c = cmark_node_next(c)) {
         auto ct = cmark_node_get_type(c);
@@ -376,17 +368,15 @@ void MarkdownModel::setMarkdown(const QString &markdown) {
       if (!hasImage) {
         QVariantMap data;
         data[QStringLiteral("html")] = renderInlineChildren(node, ctx);
-        m_blocks.push_back({MdBlockType::Paragraph, data});
+        blocks.push_back({MdBlockType::Paragraph, data});
         break;
       }
 
-      // Split paragraph around images — each image becomes a block,
-      // surrounding text becomes separate paragraph blocks.
-      auto flushRun = [this](QString &run) {
+      auto flushRun = [&blocks](QString &run) {
         if (run.trimmed().isEmpty()) { run.clear(); return; }
         QVariantMap data;
         data[QStringLiteral("html")] = run;
-        m_blocks.push_back({MdBlockType::Paragraph, data});
+        blocks.push_back({MdBlockType::Paragraph, data});
         run.clear();
       };
 
@@ -396,18 +386,17 @@ void MarkdownModel::setMarkdown(const QString &markdown) {
 
         if (ct == CMARK_NODE_IMAGE) {
           flushRun(run);
-          m_blocks.push_back({MdBlockType::Image, buildImageBlock(c)});
+          blocks.push_back({MdBlockType::Image, buildImageBlock(c)});
           continue;
         }
 
-        // Linked image: [![alt](img)](link)
         if (ct == CMARK_NODE_LINK) {
           auto *lc = cmark_node_first_child(c);
           if (lc && !cmark_node_next(lc) && cmark_node_get_type(lc) == CMARK_NODE_IMAGE) {
             flushRun(run);
             auto data = buildImageBlock(lc);
             data[QStringLiteral("link")] = QString::fromUtf8(cmark_node_get_url(c));
-            m_blocks.push_back({MdBlockType::Image, data});
+            blocks.push_back({MdBlockType::Image, data});
             continue;
           }
         }
@@ -422,14 +411,13 @@ void MarkdownModel::setMarkdown(const QString &markdown) {
       QVariantMap data;
       data[QStringLiteral("level")] = cmark_node_get_heading_level(node);
       data[QStringLiteral("html")] = renderInlineChildren(node, ctx);
-      m_blocks.push_back({MdBlockType::Heading, data});
+      blocks.push_back({MdBlockType::Heading, data});
       break;
     }
 
     case CMARK_NODE_CODE_BLOCK: {
       QVariantMap data;
       QString code = QString::fromUtf8(cmark_node_get_literal(node));
-      // Trim trailing whitespace like the old renderer
       while (!code.isEmpty() && code.back().isSpace())
         code.chop(1);
       data[QStringLiteral("code")] = code;
@@ -438,7 +426,7 @@ void MarkdownModel::setMarkdown(const QString &markdown) {
       data[QStringLiteral("language")] = language;
       bool isDark = ThemeService::instance().theme().isDark();
       data[QStringLiteral("highlightedHtml")] = syntax::highlight(code, language, m_syntaxStyles, isDark);
-      m_blocks.push_back({MdBlockType::CodeBlock, data});
+      blocks.push_back({MdBlockType::CodeBlock, data});
       break;
     }
 
@@ -448,15 +436,15 @@ void MarkdownModel::setMarkdown(const QString &markdown) {
       data[QStringLiteral("items")] = buildListItems(node, ctx);
       if (ordered) {
         data[QStringLiteral("startNumber")] = cmark_node_get_list_start(node);
-        m_blocks.push_back({MdBlockType::OrderedList, data});
+        blocks.push_back({MdBlockType::OrderedList, data});
       } else {
-        m_blocks.push_back({MdBlockType::BulletList, data});
+        blocks.push_back({MdBlockType::BulletList, data});
       }
       break;
     }
 
     case CMARK_NODE_THEMATIC_BREAK:
-      m_blocks.push_back({MdBlockType::HorizontalRule, {}});
+      blocks.push_back({MdBlockType::HorizontalRule, {}});
       break;
 
     case CMARK_NODE_HTML_BLOCK: {
@@ -471,29 +459,25 @@ void MarkdownModel::setMarkdown(const QString &markdown) {
           HtmlBlockResult result;
           processHtmlNodes(xmlRoot->children, result);
 
-          // Emit extracted images as Image blocks
           for (auto &img : result.extractedImages)
-            m_blocks.push_back({MdBlockType::Image, img});
+            blocks.push_back({MdBlockType::Image, img});
 
-          // Emit remaining HTML text if any
           if (!result.html.isEmpty()) {
             QVariantMap data;
             data[QStringLiteral("html")] = result.html;
-            m_blocks.push_back({MdBlockType::HtmlBlock, data});
+            blocks.push_back({MdBlockType::HtmlBlock, data});
           }
         }
         xmlFreeDoc(doc);
       } else {
-        // Fallback: pass raw HTML through
         QVariantMap data;
         data[QStringLiteral("html")] = html;
-        m_blocks.push_back({MdBlockType::HtmlBlock, data});
+        blocks.push_back({MdBlockType::HtmlBlock, data});
       }
       break;
     }
 
     case CMARK_NODE_BLOCK_QUOTE: {
-      // Check if first paragraph starts with [!TYPE] (GitHub-style callout)
       auto *firstChild = cmark_node_first_child(node);
       QString calloutType;
 
@@ -506,14 +490,12 @@ void MarkdownModel::setMarkdown(const QString &markdown) {
           auto match = calloutRe.match(text);
           if (match.hasMatch()) {
             calloutType = match.captured(1).toLower();
-            // Remove the [!TYPE] prefix from the text node
             QString remaining = text.mid(match.capturedLength());
             cmark_node_set_literal(textNode, remaining.toUtf8().constData());
           }
         }
       }
 
-      // Collect all child paragraphs as HTML
       QVariantList paragraphs;
       for (auto *child = cmark_node_first_child(node); child; child = cmark_node_next(child)) {
         if (cmark_node_get_type(child) == CMARK_NODE_PARAGRAPH) {
@@ -527,15 +509,14 @@ void MarkdownModel::setMarkdown(const QString &markdown) {
 
       if (!calloutType.isEmpty()) {
         data[QStringLiteral("calloutType")] = calloutType;
-        m_blocks.push_back({MdBlockType::Callout, data});
+        blocks.push_back({MdBlockType::Callout, data});
       } else {
-        m_blocks.push_back({MdBlockType::Blockquote, data});
+        blocks.push_back({MdBlockType::Blockquote, data});
       }
       break;
     }
 
     default:
-      // GFM table extension
       if (getGfmNodeType(node) == GfmNodeType::Table) {
         int columnCount = cmark_gfm_extensions_get_table_columns(node);
         if (columnCount <= 0) break;
@@ -543,7 +524,6 @@ void MarkdownModel::setMarkdown(const QString &markdown) {
         QVariantMap data;
         data[QStringLiteral("columnCount")] = columnCount;
 
-        // Column alignments
         QVariantList alignments;
         if (auto *aligns = cmark_gfm_extensions_get_table_alignments(node)) {
           for (int c = 0; c < columnCount; ++c) {
@@ -565,7 +545,6 @@ void MarkdownModel::setMarkdown(const QString &markdown) {
         }
         data[QStringLiteral("alignments")] = alignments;
 
-        // Find header and body sections
         cmark_node *header = nullptr;
         cmark_node *body = nullptr;
         std::vector<cmark_node *> extraRows;
@@ -586,7 +565,6 @@ void MarkdownModel::setMarkdown(const QString &markdown) {
           }
         }
 
-        // Headers
         QVariantList headers;
         if (header) {
           auto *first = cmark_node_first_child(header);
@@ -598,7 +576,6 @@ void MarkdownModel::setMarkdown(const QString &markdown) {
         }
         data[QStringLiteral("headers")] = headers;
 
-        // Rows
         QVariantList rows;
         auto addRowsFromSection = [&](cmark_node *section) {
           if (!section) return;
@@ -625,13 +602,62 @@ void MarkdownModel::setMarkdown(const QString &markdown) {
         }
         data[QStringLiteral("rows")] = rows;
 
-        m_blocks.push_back({MdBlockType::Table, data});
+        blocks.push_back({MdBlockType::Table, data});
       }
       break;
     }
   }
 
   cmark_node_free(root);
+  return blocks;
+}
+
+void MarkdownModel::setMarkdown(const QString &markdown) {
+  // Incremental append: new content is a strict prefix-extension of old
+  if (!m_blocks.empty() && !m_markdown.isEmpty() && markdown.size() > m_markdown.size() &&
+      markdown.startsWith(m_markdown)) {
+    m_markdown = markdown;
+    auto newBlocks = parseBlocks(m_markdown);
+    auto oldCount = static_cast<int>(m_blocks.size());
+    auto newCount = static_cast<int>(newBlocks.size());
+
+    if (newCount >= oldCount) {
+      // Last old block may have changed (e.g. paragraph got more text appended)
+      int divergeAt = oldCount;
+      if (oldCount > 0) {
+        auto &lastOld = m_blocks[oldCount - 1];
+        auto &lastNew = newBlocks[oldCount - 1];
+        if (lastOld.type != lastNew.type || lastOld.data != lastNew.data)
+          divergeAt = oldCount - 1;
+      }
+
+      if (divergeAt < oldCount) {
+        beginRemoveRows({}, divergeAt, oldCount - 1);
+        m_blocks.erase(m_blocks.begin() + divergeAt, m_blocks.end());
+        endRemoveRows();
+      }
+
+      if (divergeAt < newCount) {
+        beginInsertRows({}, divergeAt, newCount - 1);
+        m_blocks.insert(m_blocks.end(), std::make_move_iterator(newBlocks.begin() + divergeAt),
+                        std::make_move_iterator(newBlocks.end()));
+        endInsertRows();
+      }
+
+      emit blocksAppended();
+      return;
+    }
+    // Fewer blocks than before — fall through to full reset
+  }
+
+  // Full reset
+  m_markdown = markdown;
+  beginResetModel();
+  m_blocks.clear();
+
+  if (!markdown.isEmpty())
+    m_blocks = parseBlocks(markdown);
+
   endResetModel();
 }
 

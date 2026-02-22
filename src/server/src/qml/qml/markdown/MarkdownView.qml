@@ -12,6 +12,7 @@ Item {
     property string fontFamily: ""
     property alias contentHeight: flickable.contentHeight
     property var selectionController: null
+    property bool _autoScroll: false
     focus: true
 
     readonly property var _controller: selectionController ?? _internalController
@@ -55,6 +56,13 @@ Item {
         contentHeight: col.implicitHeight + root.topPadding + root.contentPadding
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+
+        onContentHeightChanged: {
+            if (root._autoScroll) {
+                root._autoScroll = false
+                contentY = Math.max(0, contentHeight - height)
+            }
+        }
 
         ScrollBar.vertical: ViciScrollBar {
             policy: ScrollBar.AsNeeded
@@ -154,6 +162,15 @@ Item {
 
     Connections {
         target: root.model
-        function onModelReset() { root._controller.clearSelection() }
+        function onBlocksAppended() {
+            let atBottom = flickable.contentHeight <= flickable.height
+                || flickable.contentY + flickable.height >= flickable.contentHeight - 2
+            root._autoScroll = atBottom
+        }
+        function onModelReset() {
+            root._controller.clearSelection()
+            flickable.contentY = 0
+            root._autoScroll = false
+        }
     }
 }
