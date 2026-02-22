@@ -106,6 +106,9 @@ void ScriptExecutorAction::execute(ApplicationContext *ctx) {
         emit ctx->services->rootItemManager()->subtitleChanged();
       });
       break;
+    default:
+      qWarning() << "script command has invalid mode" << static_cast<int>(outputMode);
+      break;
     }
   };
 

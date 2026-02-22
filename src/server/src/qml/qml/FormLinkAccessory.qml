@@ -9,7 +9,7 @@ Item {
         id: linkText
         anchors.centerIn: parent
         text: launcher.commandViewHost ? launcher.commandViewHost.linkAccessoryText : ""
-        color: Theme.accent
+        color: Theme.linkColor
         font.pointSize: Theme.smallerFontSize
 
         MouseArea {

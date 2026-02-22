@@ -323,7 +323,7 @@ void MarkdownModel::rebuildInlineStyles() {
   auto &theme = ThemeService::instance().theme();
   m_inlineCodeFg = theme.resolve(SemanticColor::Foreground).name(QColor::HexRgb);
   m_inlineCodeBg = theme.resolve(SemanticColor::SecondaryBackground).name(QColor::HexRgb);
-  m_linkColor = theme.resolve(SemanticColor::Blue).name(QColor::HexRgb);
+  m_linkColor = theme.resolve(SemanticColor::LinkDefault).name(QColor::HexRgb);
   m_textColor = theme.resolve(SemanticColor::Foreground).name(QColor::HexRgb);
   m_syntaxStyles = syntax::buildStyleMap(theme);
 }

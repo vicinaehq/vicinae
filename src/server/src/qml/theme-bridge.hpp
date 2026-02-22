@@ -32,6 +32,7 @@ class ThemeBridge : public QObject {
   Q_PROPERTY(QColor toastDanger READ toastDanger NOTIFY changed)
   Q_PROPERTY(QColor textSelectionBg READ textSelectionBg NOTIFY changed)
   Q_PROPERTY(QColor textSelectionFg READ textSelectionFg NOTIFY changed)
+  Q_PROPERTY(QColor linkColor READ linkColor NOTIFY changed)
   Q_PROPERTY(QColor loadingBar READ loadingBar NOTIFY changed)
   Q_PROPERTY(QColor buttonPrimaryBg READ buttonPrimaryBg NOTIFY changed)
   Q_PROPERTY(QColor buttonPrimaryHoverBg READ buttonPrimaryHoverBg NOTIFY changed)
@@ -70,6 +71,7 @@ public:
   QColor toastWarning() const { return resolve(SemanticColor::Orange); }
   QColor toastDanger() const { return resolve(SemanticColor::Red); }
 
+  QColor linkColor() const { return resolve(SemanticColor::LinkDefault); }
   QColor textSelectionBg() const { return resolve(SemanticColor::TextSelectionBackground); }
   QColor textSelectionFg() const { return resolve(SemanticColor::TextSelectionForeground); }
   QColor loadingBar() const { return resolve(SemanticColor::LoadingBar); }

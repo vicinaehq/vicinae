@@ -735,6 +735,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/TextViewer.qml
 	src/qml/qml/FilePreview.qml
 	src/qml/qml/DMenuView.qml
+	src/qml/qml/ScriptOutputText.qml
 	src/qml/qml/ScriptExecutorView.qml
 	src/qml/qml/SettingsWindow.qml
 	src/qml/qml/SettingsNavBar.qml

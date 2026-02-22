@@ -90,9 +90,9 @@ Item {
             Item { Layout.fillWidth: true }
 
             Text {
-                text: "<a href=\"" + (entry.url || "") + "\">" + (entry.value || "") + "</a>"
-                color: Theme.accent
-                linkColor: Theme.accent
+                text: "<a href=\"" + (entry.url || "") + "\" style=\"color:" + Theme.linkColor + ";\">" + (entry.value || "") + "</a>"
+                color: Theme.linkColor
+                linkColor: Theme.linkColor
                 font.pointSize: Theme.smallerFontSize
                 textFormat: Text.RichText
                 elide: Text.ElideMiddle

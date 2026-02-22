@@ -41,7 +41,7 @@ struct ScriptCommand {
   std::vector<std::string> exec;
   std::string schemaVersion;
   std::string title;
-  OutputMode mode;
+  OutputMode mode = OutputMode::Full;
   std::optional<std::string> packageName;
   std::optional<std::string> icon;
   std::optional<std::string> iconDark;

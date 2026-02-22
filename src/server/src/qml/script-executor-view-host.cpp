@@ -11,7 +11,7 @@ static QString tokenToHtml(const QString &rawOutput) {
   ScriptOutputTokenizer tokenizer(rawOutput);
   QString html;
   html.reserve(rawOutput.size() * 2);
-  html += QStringLiteral("<pre style=\"font-size:10.5pt; white-space:pre-wrap; margin:15px;\">");
+  html += QStringLiteral("<pre style=\"font-size:10.5pt; white-space:pre-wrap; margin:0;\">");
 
   bool inSpan = false;
 
