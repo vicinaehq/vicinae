@@ -35,7 +35,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent) : QObje
   // Ensure Wayland app_id / X11 WM_CLASS is "vicinae"
   QGuiApplication::setDesktopFileName(QStringLiteral("vicinae"));
 
-  m_searchModel = new RootSearchModel(ctx, this);
+  m_searchModel = new RootSearchModel(ViewScope(&ctx, ctx.navigation->topState()->sender), this);
   m_themeBridge = new ThemeBridge(this);
   m_configBridge = new ConfigBridge(this);
   m_alertModel = new AlertModel(*ctx.navigation, this);
@@ -101,6 +101,21 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent) : QObje
     if (m_searchInteractive != interactive) {
       m_searchInteractive = interactive;
       emit searchInteractiveChanged();
+    }
+  });
+
+  // Window size override (e.g. dmenu --width/--height)
+  connect(nav, &NavigationController::windowSizeRequested, this, [this](QSize size) {
+    m_overrideWidth = size.width();
+    m_overrideHeight = size.height();
+    emit windowSizeOverrideChanged();
+  });
+
+  // Status bar / footer visibility (e.g. dmenu --no-footer)
+  connect(nav, &NavigationController::statusBarVisiblityChanged, this, [this](bool visible) {
+    if (m_statusBarVisible != visible) {
+      m_statusBarVisible = visible;
+      emit statusBarVisibleChanged();
     }
   });
 
@@ -254,6 +269,11 @@ void LauncherWindow::handleCurrentViewChanged() {
     if (m_hasCommandView) {
       m_hasCommandView = false;
       emit hasCommandViewChanged();
+    }
+    if (m_overrideWidth != 0 || m_overrideHeight != 0) {
+      m_overrideWidth = 0;
+      m_overrideHeight = 0;
+      emit windowSizeOverrideChanged();
     }
     emit commandStackCleared();
     tryCompaction();

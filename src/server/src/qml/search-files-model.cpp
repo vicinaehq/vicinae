@@ -25,7 +25,7 @@ QString SearchFilesModel::itemIconSource(int s, int i) const {
 }
 
 std::unique_ptr<ActionPanelState> SearchFilesModel::createActionPanel(int s, int i) const {
-  return FileActions::actionPanel(fileAt(s, i), ctx()->services->appDb());
+  return FileActions::actionPanel(fileAt(s, i), scope().services()->appDb());
 }
 
 void SearchFilesModel::onItemSelected(int s, int i) { emit fileSelected(fileAt(s, i)); }

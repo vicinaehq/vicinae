@@ -22,14 +22,14 @@ QVariantList BrowseAppsModel::displayAccessory(const AppPtr &app) const {
 
 std::unique_ptr<ActionPanelState> BrowseAppsModel::buildActionPanel(const AppPtr &app) const {
   auto panel = std::make_unique<ListActionPanelState>();
-  auto appDb = ctx()->services->appDb();
+  auto appDb = scope().services()->appDb();
 
   panel->setTitle(app->displayName());
 
   auto *mainSection = panel->createSection();
   auto *utils = panel->createSection();
 
-  auto activeWindows = ctx()->services->windowManager()->findAppWindows(*app);
+  auto activeWindows = scope().services()->windowManager()->findAppWindows(*app);
   if (!activeWindows.empty()) {
     mainSection->addAction(new FocusWindowAction(activeWindows.front()));
   }

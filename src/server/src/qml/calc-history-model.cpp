@@ -6,9 +6,8 @@
 
 CalcHistoryModel::CalcHistoryModel(QObject *parent) : CommandListModel(parent) {}
 
-void CalcHistoryModel::initialize(ApplicationContext *ctx) {
-  CommandListModel::initialize(ctx);
-  m_calc = ctx->services->calculatorService();
+void CalcHistoryModel::initialize() {
+  m_calc = scope().services()->calculatorService();
 
   connect(m_calc, &CalculatorService::recordPinned, this, &CalcHistoryModel::refresh);
   connect(m_calc, &CalculatorService::recordUnpinned, this, &CalcHistoryModel::refresh);

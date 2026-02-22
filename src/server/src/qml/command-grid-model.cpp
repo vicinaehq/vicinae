@@ -1,10 +1,7 @@
 #include "command-grid-model.hpp"
-#include "navigation-controller.hpp"
 #include <algorithm>
 
 CommandGridModel::CommandGridModel(QObject *parent) : QAbstractListModel(parent) {}
-
-void CommandGridModel::initialize(ApplicationContext *ctx) { m_ctx = ctx; }
 
 QString CommandGridModel::cellTooltip(int, int) const { return {}; }
 
@@ -153,7 +150,7 @@ void CommandGridModel::select(int section, int item) {
   auto panel = createActionPanel(section, item);
   if (panel) {
     panel->finalize();
-    m_ctx->navigation->setActions(std::move(panel));
+    m_scope.setActions(std::move(panel));
   }
 }
 
@@ -171,12 +168,11 @@ void CommandGridModel::selectFirst() {
 }
 
 void CommandGridModel::onSelectionCleared() {
-  if (m_ctx) m_ctx->navigation->clearActions();
+  m_scope.clearActions();
 }
 
 void CommandGridModel::activateSelected() {
-  if (!m_ctx) return;
-  m_ctx->navigation->executePrimaryAction();
+  m_scope.executePrimaryAction();
 }
 
 void CommandGridModel::refreshActionPanel() {
@@ -184,7 +180,7 @@ void CommandGridModel::refreshActionPanel() {
     auto panel = createActionPanel(m_selSection, m_selItem);
     if (panel) {
       panel->finalize();
-      m_ctx->navigation->setActions(std::move(panel));
+      m_scope.setActions(std::move(panel));
     }
   }
 }

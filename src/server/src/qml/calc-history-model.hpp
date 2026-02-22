@@ -8,7 +8,7 @@ class CalcHistoryModel : public CommandListModel {
 public:
   explicit CalcHistoryModel(QObject *parent = nullptr);
 
-  void initialize(ApplicationContext *ctx);
+  void initialize() override;
   void setFilter(const QString &text) override;
   QString searchPlaceholder() const override { return QStringLiteral("Search past calculations..."); }
 

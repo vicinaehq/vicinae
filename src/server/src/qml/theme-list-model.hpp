@@ -21,7 +21,7 @@ public:
 
   explicit ThemeListModel(QObject *parent = nullptr);
 
-  void initialize(ApplicationContext *ctx) override;
+  void initialize() override;
   void setFilter(const QString &text) override;
   QString searchPlaceholder() const override { return QStringLiteral("Search for a theme..."); }
   QUrl qmlComponentUrl() const override { return QUrl(QStringLiteral("qrc:/Vicinae/ThemeListView.qml")); }

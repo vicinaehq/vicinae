@@ -13,7 +13,8 @@ QVariantMap LocalStorageViewHost::qmlProperties() const {
 void LocalStorageViewHost::initialize() {
   BaseView::initialize();
   m_model = new LocalStorageNamespaceModel(this);
-  m_model->initialize(context());
+  m_model->setScope(ViewScope(context(), this));
+  m_model->initialize();
   setSearchPlaceholderText("Search namespaces...");
 }
 
@@ -41,7 +42,8 @@ QVariantMap LocalStorageItemViewHost::qmlProperties() const {
 void LocalStorageItemViewHost::initialize() {
   BaseView::initialize();
   m_model = new LocalStorageItemModel(this);
-  m_model->initialize(context());
+  m_model->setScope(ViewScope(context(), this));
+  m_model->initialize();
   m_model->setNamespace(m_ns);
   setSearchPlaceholderText("Search items...");
 }

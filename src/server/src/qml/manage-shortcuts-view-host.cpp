@@ -23,7 +23,8 @@ void ManageShortcutsViewHost::initialize() {
 
   m_shortcutService = ServiceRegistry::instance()->shortcuts();
   m_model = new ManageShortcutsModel(this);
-  m_model->initialize(context());
+  m_model->setScope(ViewScope(context(), this));
+  m_model->initialize();
 
   setSearchPlaceholderText("Search shortcuts...");
 

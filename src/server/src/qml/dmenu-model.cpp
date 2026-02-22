@@ -79,7 +79,7 @@ QString DMenuModel::itemIconSource(int section, int item) const {
 
 void DMenuModel::selectEntry(const QString &text) const {
   emit const_cast<DMenuModel *>(this)->entryChosen(text);
-  ctx()->navigation->closeWindow();
+  scope().closeWindow();
 }
 
 std::unique_ptr<ActionPanelState> DMenuModel::createActionPanel(int section, int item) const {
@@ -126,5 +126,5 @@ void DMenuModel::onSelectionCleared() {
   main->addAction(
       new StaticAction("Pass search text", ImageURL::builtin("save-document"),
                        [this](ApplicationContext *) { selectEntry(m_currentSearchText); }));
-  ctx()->navigation->setActions(std::move(panel));
+  scope().setActions(std::move(panel));
 }

@@ -29,7 +29,8 @@ void RaycastStoreViewHost::initialize() {
   BaseView::initialize();
 
   m_model = new RaycastStoreModel(this);
-  m_model->initialize(context());
+  m_model->setScope(ViewScope(context(), this));
+  m_model->initialize();
   m_store = context()->services->raycastStore();
 
   setSearchPlaceholderText("Browse Raycast extensions");

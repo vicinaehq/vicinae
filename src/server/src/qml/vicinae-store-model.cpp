@@ -68,8 +68,8 @@ std::unique_ptr<ActionPanelState> VicinaeStoreModel::createActionPanel(int, int 
 
   auto showDetails = new StaticAction(
       "Show details", ImageURL::builtin("computer-chip"),
-      [ext = entry.extension, ctx = this->ctx()]() {
-        ctx->navigation->pushView(new VicinaeStoreDetailHost(ext));
+      [ext = entry.extension, scope = this->scope()]() {
+        scope.pushView(new VicinaeStoreDetailHost(ext));
       });
   auto uninstall = new UninstallExtensionAction(entry.extension.id);
 

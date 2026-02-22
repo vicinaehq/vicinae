@@ -74,7 +74,7 @@ void ClipboardHistoryModel::onItemSelected(int, int i) {
 std::unique_ptr<ActionPanelState> ClipboardHistoryModel::createActionPanel(int, int i) const {
   const auto &entry = m_entries[i];
   auto panel = std::make_unique<ListActionPanelState>();
-  auto clipman = ctx()->services->clipman();
+  auto clipman = scope().services()->clipman();
   auto mainSection = panel->createSection();
   bool isCopyable = entry.encryption == ClipboardEncryptionType::None || clipman->isEncryptionReady();
 
@@ -82,7 +82,7 @@ std::unique_ptr<ActionPanelState> ClipboardHistoryModel::createActionPanel(int, 
     mainSection->addAction(new OpenItemPreferencesAction(EntrypointId{"clipboard", ""}));
   }
 
-  auto wm = ctx()->services->windowManager();
+  auto wm = scope().services()->windowManager();
   auto pin = new PinClipboardAction(entry.id, !entry.pinnedAt);
   auto editKeywords = new EditClipboardKeywordsAction(entry.id);
   auto remove = new RemoveSelectionAction(entry.id);

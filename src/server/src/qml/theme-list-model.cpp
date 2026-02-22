@@ -8,10 +8,9 @@
 
 ThemeListModel::ThemeListModel(QObject *parent) : CommandListModel(parent) {}
 
-void ThemeListModel::initialize(ApplicationContext *ctx) {
-  CommandListModel::initialize(ctx);
+void ThemeListModel::initialize() {
   m_themeService = &ThemeService::instance();
-  m_config = ctx->services->config();
+  m_config = scope().services()->config();
   m_previousThemeId = QString::fromStdString(m_config->value().systemTheme().name);
 
   connect(m_config, &config::Manager::configChanged, this,
@@ -118,7 +117,7 @@ std::unique_ptr<ActionPanelState> ThemeListModel::createActionPanel(int s, int i
   auto panel = std::make_unique<ListActionPanelState>();
   auto *section = panel->createSection();
   auto *setTheme = new SetThemeAction(theme->id());
-  auto textEditor = ctx()->services->appDb()->textEditor();
+  auto textEditor = scope().services()->appDb()->textEditor();
 
   panel->setTitle(theme->name());
   section->addAction(setTheme);

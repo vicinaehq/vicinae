@@ -249,7 +249,7 @@ void ExtensionGridModel::onSelectionCleared() {
 
   if (panel) {
     panel->finalize();
-    ctx()->navigation->setActions(std::move(panel));
+    scope().setActions(std::move(panel));
   } else {
     CommandGridModel::onSelectionCleared();
   }

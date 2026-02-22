@@ -69,7 +69,8 @@ void ClipboardHistoryViewHost::initialize() {
 
   m_clipman = context()->services->clipman();
   m_model = new ClipboardHistoryModel(this);
-  m_model->initialize(context());
+  m_model->setScope(ViewScope(context(), this));
+  m_model->initialize();
   m_controller = new ClipboardHistoryController(m_clipman, this);
 
   auto preferences = command()->preferenceValues();

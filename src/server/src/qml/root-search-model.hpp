@@ -1,5 +1,5 @@
 #pragma once
-#include "common/context.hpp"
+#include "view-scope.hpp"
 #include "extensions/root/root-search-model.hpp"
 #include "view-utils.hpp"
 #include "services/app-service/app-service.hpp"
@@ -13,6 +13,7 @@
 #include <QTimer>
 
 class ActionPanelState;
+class BaseView;
 
 namespace config {
 class Manager;
@@ -44,7 +45,7 @@ public:
     IsFile,
   };
 
-  explicit RootSearchModel(ApplicationContext &ctx, QObject *parent = nullptr);
+  explicit RootSearchModel(const ViewScope &scope, QObject *parent = nullptr);
 
   int rowCount(const QModelIndex &parent = {}) const override;
   QVariant data(const QModelIndex &index, int role) const override;
@@ -55,6 +56,7 @@ public:
   Q_INVOKABLE void setSelectedIndex(int index);
   Q_INVOKABLE void activateSelected();
   Q_INVOKABLE bool tryAliasFastTrack();
+
 
   QString primaryActionTitle() const;
   QString primaryActionIcon() const;
@@ -100,7 +102,7 @@ private:
 
   static constexpr int MIN_FS_TEXT_LENGTH = 3;
 
-  ApplicationContext *m_ctx;
+  ViewScope m_scope;
   RootItemManager *m_manager;
   AppService *m_appDb;
   CalculatorService *m_calculator;

@@ -1,7 +1,4 @@
 #include "command-list-model.hpp"
-#include "navigation-controller.hpp"
-
-void CommandListModel::initialize(ApplicationContext *ctx) { m_ctx = ctx; }
 
 int CommandListModel::rowCount(const QModelIndex &parent) const {
   if (parent.isValid()) return 0;
@@ -87,19 +84,18 @@ void CommandListModel::setSelectedIndex(int index) {
 
   auto panel = createActionPanel(flat.sectionIdx, flat.itemIdx);
   if (panel) {
-    if (m_ctx) m_ctx->navigation->setActions(std::move(panel));
+    m_scope.setActions(std::move(panel));
   }
 }
 
 void CommandListModel::onSelectionCleared() {
-  if (m_ctx) m_ctx->navigation->clearActions();
+  m_scope.clearActions();
 }
 
 void CommandListModel::refreshActionPanel() { setSelectedIndex(m_selectedIndex); }
 
 void CommandListModel::activateSelected() {
-  if (!m_ctx) return;
-  m_ctx->navigation->executePrimaryAction();
+  m_scope.executePrimaryAction();
 }
 
 int CommandListModel::nextSelectableIndex(int from, int direction) const {

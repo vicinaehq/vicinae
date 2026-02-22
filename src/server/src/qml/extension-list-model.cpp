@@ -200,7 +200,7 @@ void ExtensionListModel::onSelectionCleared() {
 
   if (panel) {
     panel->finalize();
-    ctx()->navigation->setActions(std::move(panel));
+    scope().setActions(std::move(panel));
   } else {
     CommandListModel::onSelectionCleared();
   }

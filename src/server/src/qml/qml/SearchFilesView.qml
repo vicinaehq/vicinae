@@ -16,7 +16,7 @@ Item {
         cmdModel: root.host.listModel
         detailComponent: detailPanel
         detailVisible: root.host.hasDetail
-        detailRatio: 0.65
+
     }
 
     Component {

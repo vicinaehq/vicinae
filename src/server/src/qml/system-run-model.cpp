@@ -78,7 +78,7 @@ std::unique_ptr<ActionPanelState> SystemRunModel::createActionPanel(int section,
   auto panel = std::make_unique<ListActionPanelState>();
   auto *sec = panel->createSection();
 
-  auto appDb = ctx()->services->appDb();
+  auto appDb = scope().services()->appDb();
   auto terminal = appDb->terminalEmulator();
 
   auto createTerminalActions = [&](std::vector<QString> args) {

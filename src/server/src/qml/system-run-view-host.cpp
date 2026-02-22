@@ -14,7 +14,8 @@ void SystemRunViewHost::initialize() {
   BaseView::initialize();
 
   m_model = new SystemRunModel(this);
-  m_model->initialize(context());
+  m_model->setScope(ViewScope(context(), this));
+  m_model->initialize();
   m_model->setDefaultAction(
       SystemRunModel::parseDefaultAction(command()->preferenceValues().value("default-action").toString()));
 

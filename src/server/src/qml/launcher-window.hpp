@@ -32,11 +32,14 @@ class LauncherWindow : public QObject {
   Q_PROPERTY(bool isLoading READ isLoading NOTIFY isLoadingChanged)
   Q_PROPERTY(bool searchVisible READ searchVisible NOTIFY searchVisibleChanged)
   Q_PROPERTY(bool searchInteractive READ searchInteractive NOTIFY searchInteractiveChanged)
+  Q_PROPERTY(bool statusBarVisible READ statusBarVisible NOTIFY statusBarVisibleChanged)
   Q_PROPERTY(bool compacted READ compacted NOTIFY compactedChanged)
   Q_PROPERTY(bool hasCompleter READ hasCompleter NOTIFY completerChanged)
   Q_PROPERTY(QVariantList completerArgs READ completerArgs NOTIFY completerChanged)
   Q_PROPERTY(QString completerIcon READ completerIcon NOTIFY completerChanged)
   Q_PROPERTY(QVariantList completerValues READ completerValues NOTIFY completerValuesChanged)
+  Q_PROPERTY(int overrideWidth READ overrideWidth NOTIFY windowSizeOverrideChanged)
+  Q_PROPERTY(int overrideHeight READ overrideHeight NOTIFY windowSizeOverrideChanged)
   Q_PROPERTY(bool hasOverlay READ hasOverlay NOTIFY overlayChanged)
   Q_PROPERTY(QUrl overlayUrl READ overlayUrl NOTIFY overlayChanged)
   Q_PROPERTY(QObject *overlayHost READ overlayHost NOTIFY overlayChanged)
@@ -59,11 +62,14 @@ public:
   bool isLoading() const { return m_isLoading; }
   bool searchVisible() const { return m_searchVisible; }
   bool searchInteractive() const { return m_searchInteractive; }
+  bool statusBarVisible() const { return m_statusBarVisible; }
   bool compacted() const { return m_compacted; }
   bool hasCompleter() const { return m_hasCompleter; }
   QVariantList completerArgs() const { return m_completerArgs; }
   QString completerIcon() const { return m_completerIcon; }
   QVariantList completerValues() const { return m_completerValues; }
+  int overrideWidth() const { return m_overrideWidth; }
+  int overrideHeight() const { return m_overrideHeight; }
   bool hasOverlay() const { return m_hasOverlay; }
   QUrl overlayUrl() const { return m_overlayUrl; }
   QObject *overlayHost() const { return m_overlayHost; }
@@ -95,9 +101,11 @@ signals:
   void isLoadingChanged();
   void searchVisibleChanged();
   void searchInteractiveChanged();
+  void statusBarVisibleChanged();
   void completerChanged();
   void completerValuesChanged();
   void completerValidationFailed();
+  void windowSizeOverrideChanged();
   void overlayChanged();
 
 private:
@@ -121,6 +129,7 @@ private:
   bool m_isLoading = false;
   bool m_searchVisible = true;
   bool m_searchInteractive = true;
+  bool m_statusBarVisible = true;
   bool m_viewWasPopped = false;
   QString m_searchPlaceholder;
   QUrl m_searchAccessoryUrl;
@@ -139,6 +148,8 @@ private:
 
   AlertModel *m_alertModel = nullptr;
 
+  int m_overrideWidth = 0;
+  int m_overrideHeight = 0;
   bool m_hasOverlay = false;
   QUrl m_overlayUrl;
   QObject *m_overlayHost = nullptr;

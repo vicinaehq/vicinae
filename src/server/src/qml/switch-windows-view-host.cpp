@@ -17,7 +17,8 @@ void SwitchWindowsViewHost::initialize() {
   BaseView::initialize();
 
   m_model = new SwitchWindowsModel(this);
-  m_model->initialize(context());
+  m_model->setScope(ViewScope(context(), this));
+  m_model->initialize();
 
   setSearchPlaceholderText("Search open window...");
 

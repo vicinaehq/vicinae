@@ -121,7 +121,8 @@ void FontBrowserViewHost::initialize() {
   BaseView::initialize();
 
   m_model = new FontBrowserModel(this);
-  m_model->initialize(context());
+  m_model->setScope(ViewScope(context(), this));
+  m_model->initialize();
 
   setSearchPlaceholderText("Browse fonts to preview...");
 

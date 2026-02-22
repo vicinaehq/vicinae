@@ -50,7 +50,8 @@ public:
 
   void initialize() override {
     m_model = new ModelType(this);
-    m_model->initialize(context());
+    m_model->setScope(ViewScope(context(), this));
+    m_model->initialize();
     setSearchPlaceholderText(m_model->searchPlaceholder());
   }
 

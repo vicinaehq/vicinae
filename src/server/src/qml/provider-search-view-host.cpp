@@ -18,7 +18,8 @@ void ProviderSearchViewHost::initialize() {
   BaseView::initialize();
 
   m_model = new ProviderSearchModel(this);
-  m_model->initialize(context());
+  m_model->setScope(ViewScope(context(), this));
+  m_model->initialize();
 
   setSearchPlaceholderText(QString("Search %1").arg(m_displayName));
   setNavigationTitle(m_displayName);

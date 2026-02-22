@@ -21,7 +21,8 @@ void SearchFilesViewHost::initialize() {
   BaseView::initialize();
 
   m_model = new SearchFilesModel(this);
-  m_model->initialize(context());
+  m_model->setScope(ViewScope(context(), this));
+  m_model->initialize();
 
   setSearchPlaceholderText("Search for files...");
 

@@ -26,6 +26,6 @@ QString ProviderSearchModel::itemIconSource(int, int i) const {
 
 std::unique_ptr<ActionPanelState> ProviderSearchModel::createActionPanel(int, int i) const {
   auto *item = itemAt(i);
-  auto *manager = ctx()->services->rootItemManager();
-  return item->newActionPanel(ctx(), manager->itemMetadata(item->uniqueId()));
+  auto *manager = scope().services()->rootItemManager();
+  return item->newActionPanel(scope().appContext(), manager->itemMetadata(item->uniqueId()));
 }

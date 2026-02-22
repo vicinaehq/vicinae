@@ -1,5 +1,5 @@
 #pragma once
-#include "common/context.hpp"
+#include "view-scope.hpp"
 #include "view-utils.hpp"
 #include <QAbstractListModel>
 #include <QUrl>
@@ -34,7 +34,8 @@ public:
   QVariant data(const QModelIndex &index, int role) const override;
   QHash<int, QByteArray> roleNames() const override;
 
-  virtual void initialize(ApplicationContext *ctx);
+  void setScope(const ViewScope &scope) { m_scope = scope; }
+  virtual void initialize() {}
   virtual void setFilter(const QString &text) = 0;
   virtual QString searchPlaceholder() const { return QStringLiteral("Search..."); }
   virtual QUrl qmlComponentUrl() const = 0;
@@ -80,7 +81,7 @@ protected:
   virtual void onItemSelected(int section, int item) {}
   virtual void onSelectionCleared();
 
-  ApplicationContext *ctx() const { return m_ctx; }
+  const ViewScope &scope() const { return m_scope; }
   const std::vector<SectionInfo> &sections() const { return m_sections; }
   QString imageSourceFor(const ImageURL &url) const { return qml::imageSourceFor(url); }
   void setSelectedIndex(int index);
@@ -104,7 +105,7 @@ private:
   int toGlobal(int section, int item) const;
   void fromGlobal(int globalIdx, int &section, int &item) const;
 
-  ApplicationContext *m_ctx = nullptr;
+  ViewScope m_scope;
   std::vector<SectionInfo> m_sections;
   std::vector<FlatRow> m_rows;
   int m_selSection = -1;

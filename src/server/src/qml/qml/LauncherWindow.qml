@@ -5,12 +5,14 @@ import QtQuick.Controls
 
 Window {
     id: root
-    width: Config.windowWidth
-    height: Config.windowHeight
-    minimumWidth: Config.windowWidth
-    maximumWidth: Config.windowWidth
-    minimumHeight: Config.windowHeight
-    maximumHeight: Config.windowHeight
+    readonly property int _w: launcher.overrideWidth || Config.windowWidth
+    readonly property int _h: launcher.overrideHeight || Config.windowHeight
+    width: _w
+    height: _h
+    minimumWidth: _w
+    maximumWidth: _w
+    minimumHeight: _h
+    maximumHeight: _h
     title: "Vicinae Launcher"
     flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
     color: "transparent"
@@ -41,7 +43,7 @@ Window {
     }
 
     Item {
-        visible: !launcher.compacted && !launcher.hasOverlay
+        visible: !launcher.compacted && !launcher.hasOverlay && launcher.statusBarVisible
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
@@ -107,7 +109,7 @@ Window {
         }
 
         Rectangle {
-            visible: !launcher.compacted
+            visible: !launcher.compacted && launcher.statusBarVisible
             Layout.fillWidth: true
             implicitHeight: 1
             color: Theme.divider
@@ -115,9 +117,9 @@ Window {
 
         Footer {
             id: footer
-            visible: !launcher.compacted
+            visible: !launcher.compacted && launcher.statusBarVisible
             Layout.fillWidth: true
-            Layout.preferredHeight: launcher.compacted ? 0 : 40
+            Layout.preferredHeight: visible ? 40 : 0
         }
     }
 
@@ -220,6 +222,9 @@ Window {
             }
         }
     }
+
+    onWidthChanged: root.x = (Screen.width - root.width) / 2
+    onHeightChanged: root.y = (Screen.height - root.height) / 3
 
     Component.onCompleted: {
         root.x = (Screen.width - root.width) / 2

@@ -9,7 +9,7 @@ class EmojiGridModel : public CommandGridModel {
 public:
   explicit EmojiGridModel(QObject *parent = nullptr);
 
-  void initialize(ApplicationContext *ctx) override;
+  void initialize() override;
   void setFilter(const QString &text) override;
   QString searchPlaceholder() const override { return QStringLiteral("Search for emojis..."); }
   QUrl qmlComponentUrl() const override { return QUrl(QStringLiteral("qrc:/Vicinae/EmojiGridView.qml")); }

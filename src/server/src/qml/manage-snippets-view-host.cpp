@@ -20,7 +20,8 @@ void ManageSnippetsViewHost::initialize() {
 
   m_snippetService = context()->services->snippetService();
   m_model = new ManageSnippetsModel(this);
-  m_model->initialize(context());
+  m_model->setScope(ViewScope(context(), this));
+  m_model->initialize();
 
   setSearchPlaceholderText("Search by snippet name, contents or keyword...");
 

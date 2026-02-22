@@ -18,7 +18,47 @@ Item {
         autoWireModel: true
         detailComponent: detailPanel
         detailVisible: root.host.hasDetail
-        detailRatio: 0.55
+
+
+        delegate: Loader {
+            id: delegateLoader
+            width: ListView.view.width
+
+            required property int index
+            required property bool isSection
+            required property bool isSelectable
+            required property string sectionName
+            required property string title
+            required property string subtitle
+            required property string iconSource
+            required property var itemAccessory
+
+            sourceComponent: isSection ? sectionComponent : itemComponent
+
+            Component {
+                id: sectionComponent
+                SectionHeader {
+                    width: delegateLoader.width
+                    text: delegateLoader.sectionName
+                }
+            }
+
+            Component {
+                id: itemComponent
+                ListItemDelegate {
+                    width: delegateLoader.width
+                    itemTitle: delegateLoader.title
+                    itemSubtitle: delegateLoader.subtitle
+                    itemIconSource: delegateLoader.iconSource
+                    itemAlias: ""
+                    itemIsActive: false
+                    itemAccessory: delegateLoader.itemAccessory
+                    selected: listView.currentIndex === delegateLoader.index
+                    onClicked: listView.currentIndex = delegateLoader.index
+                    onDoubleClicked: listView.itemActivated(delegateLoader.index)
+                }
+            }
+        }
     }
 
     Component {

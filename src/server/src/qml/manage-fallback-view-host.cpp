@@ -14,7 +14,8 @@ void ManageFallbackViewHost::initialize() {
   BaseView::initialize();
 
   m_model = new ManageFallbackModel(this);
-  m_model->initialize(context());
+  m_model->setScope(ViewScope(context(), this));
+  m_model->initialize();
 
   setSearchPlaceholderText("Search commands...");
 

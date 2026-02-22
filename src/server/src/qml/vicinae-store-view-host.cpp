@@ -29,7 +29,8 @@ void VicinaeStoreViewHost::initialize() {
   BaseView::initialize();
 
   m_model = new VicinaeStoreModel(this);
-  m_model->initialize(context());
+  m_model->setScope(ViewScope(context(), this));
+  m_model->initialize();
   m_store = context()->services->vicinaeStore();
 
   setSearchPlaceholderText("Browse Vicinae extensions");

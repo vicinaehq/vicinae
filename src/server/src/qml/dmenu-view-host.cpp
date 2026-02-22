@@ -26,7 +26,8 @@ void DMenuViewHost::initialize() {
   BaseView::initialize();
 
   m_model = new DMenuModel(this);
-  m_model->initialize(context());
+  m_model->setScope(ViewScope(context(), this));
+  m_model->initialize();
 
   if (m_data.noSection) m_model->setNoSection(true);
   if (m_data.sectionTitle) m_model->setSectionTemplate(*m_data.sectionTitle);

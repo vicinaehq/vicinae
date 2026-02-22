@@ -10,12 +10,12 @@
 #include <filesystem>
 #include <format>
 
-RootSearchModel::RootSearchModel(ApplicationContext &ctx, QObject *parent)
-    : QAbstractListModel(parent), m_ctx(&ctx),
-      m_manager(ctx.services->rootItemManager()), m_appDb(ctx.services->appDb()),
-      m_calculator(ctx.services->calculatorService()),
-      m_fileService(ctx.services->fileService()),
-      m_config(ctx.services->config()) {
+RootSearchModel::RootSearchModel(const ViewScope &scope, QObject *parent)
+    : QAbstractListModel(parent), m_scope(scope),
+      m_manager(scope.services()->rootItemManager()), m_appDb(scope.services()->appDb()),
+      m_calculator(scope.services()->calculatorService()),
+      m_fileService(scope.services()->fileService()),
+      m_config(scope.services()->config()) {
 
   using namespace std::chrono_literals;
 
@@ -288,7 +288,7 @@ QHash<int, QByteArray> RootSearchModel::roleNames() const {
 void RootSearchModel::setFilter(const QString &text) {
   m_query = text.toStdString();
   m_selectedIndex = -1;
-  m_ctx->navigation->clearActions();
+  m_scope.clearActions();
   m_calc.reset();
   m_files.clear();
 
@@ -441,7 +441,7 @@ void RootSearchModel::setSelectedIndex(int index) {
 
   if (index < 0 || index >= static_cast<int>(m_flat.size())) {
     m_lastSelectedItemId.clear();
-    m_ctx->navigation->clearActions();
+    m_scope.clearActions();
     emit primaryActionChanged();
     return;
   }
@@ -485,21 +485,21 @@ void RootSearchModel::setSelectedIndex(int index) {
   switch (flat.kind) {
   case FlatItem::ResultItem: {
     if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_results.size())) {
-      actionPanel = m_results[flat.dataIndex].item->newActionPanel(m_ctx, m_results[flat.dataIndex].meta);
+      actionPanel = m_results[flat.dataIndex].item->newActionPanel(m_scope.appContext(), m_results[flat.dataIndex].meta);
     }
     break;
   }
   case FlatItem::FallbackItem: {
     if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_fallbackItems.size())) {
       auto &item = m_fallbackItems[flat.dataIndex];
-      actionPanel = item->fallbackActionPanel(m_ctx, m_manager->itemMetadata(item->uniqueId()));
+      actionPanel = item->fallbackActionPanel(m_scope.appContext(), m_manager->itemMetadata(item->uniqueId()));
     }
     break;
   }
   case FlatItem::FavoriteItem: {
     if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_favorites.size())) {
       auto &item = m_favorites[flat.dataIndex];
-      actionPanel = item->newActionPanel(m_ctx, m_manager->itemMetadata(item->uniqueId()));
+      actionPanel = item->newActionPanel(m_scope.appContext(), m_manager->itemMetadata(item->uniqueId()));
     }
     break;
   }
@@ -545,22 +545,21 @@ void RootSearchModel::setSelectedIndex(int index) {
 
   if (actionPanel) {
     actionPanel->finalize();
-    m_ctx->navigation->setActions(std::move(actionPanel));
+    m_scope.setActions(std::move(actionPanel));
   } else {
-    m_ctx->navigation->clearActions();
+    m_scope.clearActions();
   }
 
   // Completer: create/destroy argument completion based on the selected item.
   // Skip if the same logical item is still selected (e.g. after search filter update).
   if (!sameItem) {
-    auto *nav = m_ctx->navigation.get();
     bool createdCompleter = false;
 
     auto tryCreateCompleter = [&](const RootItem *item) {
       if (!item) return;
       ArgumentList args = item->arguments();
       if (args.empty()) return;
-      nav->createCompletion(args, item->iconUrl());
+      m_scope.createCompletion(args, item->iconUrl());
       createdCompleter = true;
     };
 
@@ -578,7 +577,7 @@ void RootSearchModel::setSelectedIndex(int index) {
     }
 
     if (!createdCompleter) {
-      nav->destroyCurrentCompletion();
+      m_scope.destroyCurrentCompletion();
     }
   }
 
@@ -586,7 +585,7 @@ void RootSearchModel::setSelectedIndex(int index) {
 }
 
 void RootSearchModel::activateSelected() {
-  m_ctx->navigation->executePrimaryAction();
+  m_scope.executePrimaryAction();
 }
 
 bool RootSearchModel::tryAliasFastTrack() {
@@ -626,14 +625,14 @@ bool RootSearchModel::tryAliasFastTrack() {
 }
 
 QString RootSearchModel::primaryActionTitle() const {
-  auto *state = m_ctx->navigation->topState();
+  auto *state = m_scope.topState();
   if (!state || !state->actionPanelState) return {};
   auto *action = state->actionPanelState->primaryAction();
   return action ? action->title() : QString();
 }
 
 QString RootSearchModel::primaryActionIcon() const {
-  auto *state = m_ctx->navigation->topState();
+  auto *state = m_scope.topState();
   if (!state || !state->actionPanelState) return {};
   auto *action = state->actionPanelState->primaryAction();
   if (!action) return {};

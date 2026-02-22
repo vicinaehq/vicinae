@@ -55,14 +55,12 @@ public:
 
 EmojiGridModel::EmojiGridModel(QObject *parent) : CommandGridModel(parent) {}
 
-void EmojiGridModel::initialize(ApplicationContext *ctx) {
-  CommandGridModel::initialize(ctx);
-  m_emojiService = ctx->services->emojiService();
+void EmojiGridModel::initialize() {
+  m_emojiService = scope().services()->emojiService();
   m_grouped = m_emojiService->grouped();
 
   // Read skin tone preference from the command
-  auto *nav = ctx->navigation.get();
-  if (auto *state = nav->topState(); state && state->sender) {
+  if (auto *state = scope().topState(); state && state->sender) {
     if (auto *cmd = state->sender->command()) {
       auto skinToneId = cmd->preferenceValues().value("skinTone").toString().toStdString();
       if (auto it = std::ranges::find_if(
@@ -177,8 +175,8 @@ void EmojiGridModel::onSelectionCleared() {
 
 void EmojiGridModel::updateNavigationTitle() {
   auto name = emojiName(selectedSection(), selectedItem());
-  ctx()->navigation->setNavigationTitle(name.isEmpty() ? QStringLiteral("Search Emojis")
-                                                       : QStringLiteral("Search Emojis - %1").arg(name));
+  scope().setNavigationTitle(name.isEmpty() ? QStringLiteral("Search Emojis")
+                                           : QStringLiteral("Search Emojis - %1").arg(name));
 }
 
 std::unique_ptr<ActionPanelState> EmojiGridModel::createActionPanel(int section, int item) const {
@@ -190,7 +188,7 @@ std::unique_ptr<ActionPanelState> EmojiGridModel::createActionPanel(int section,
                             ? emoji::applySkinTone(data->emoji, m_skinTone.value()).c_str()
                             : QString::fromUtf8(data->emoji);
 
-  auto wm = ctx()->services->windowManager();
+  auto wm = scope().services()->windowManager();
   auto panel = std::make_unique<ListActionPanelState>();
   auto *copyEmoji = new CopyToClipboardAction(Clipboard::Text(copiedEmoji), "Copy emoji");
   auto *copyName = new CopyToClipboardAction(
@@ -202,7 +200,7 @@ std::unique_ptr<ActionPanelState> EmojiGridModel::createActionPanel(int section,
   auto *mainSection = panel->createSection();
 
   QString defaultAction;
-  if (auto *state = ctx()->navigation->topState(); state && state->sender) {
+  if (auto *state = scope().topState(); state && state->sender) {
     if (auto *cmd = state->sender->command())
       defaultAction = cmd->preferenceValues().value("defaultAction").toString();
   }

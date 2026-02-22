@@ -1,5 +1,5 @@
 #pragma once
-#include "common/context.hpp"
+#include "view-scope.hpp"
 #include "view-utils.hpp"
 #include "theme.hpp"
 #include <QAbstractListModel>
@@ -33,7 +33,8 @@ public:
     });
   }
 
-  virtual void initialize(ApplicationContext *ctx);
+  void setScope(const ViewScope &scope) { m_scope = scope; }
+  virtual void initialize() {}
 
   int rowCount(const QModelIndex &parent = {}) const override;
   QVariant data(const QModelIndex &index, int role) const override;
@@ -77,7 +78,7 @@ protected:
 
   void invalidateSelection() { m_lastSelectedItemId.clear(); }
 
-  ApplicationContext *ctx() const { return m_ctx; }
+  const ViewScope &scope() const { return m_scope; }
   QString imageSourceFor(const ImageURL &url) const { return qml::imageSourceFor(url); }
 
   // Returns true if row is a data item, filling section and item indices.
@@ -93,7 +94,7 @@ private:
 
   static std::vector<FlatItem> buildFlatList(const std::vector<SectionInfo> &sections);
 
-  ApplicationContext *m_ctx = nullptr;
+  ViewScope m_scope;
   std::vector<SectionInfo> m_sectionInfos;
   std::vector<FlatItem> m_flat;
   int m_selectedIndex = -1;
