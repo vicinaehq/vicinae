@@ -19,6 +19,24 @@ Popup {
         if (!_confirmed)
             launcher.alertModel.cancel()
     }
+    onActiveFocusChanged: {
+        if (!activeFocus && opened)
+            close()
+    }
+
+    enter: Transition {
+        ParallelAnimation {
+            NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 150; easing.type: Easing.OutCubic }
+            NumberAnimation { property: "scale"; from: 0.95; to: 1; duration: 150; easing.type: Easing.OutCubic }
+        }
+    }
+
+    exit: Transition {
+        ParallelAnimation {
+            NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 100; easing.type: Easing.InCubic }
+            NumberAnimation { property: "scale"; from: 1; to: 0.95; duration: 100; easing.type: Easing.InCubic }
+        }
+    }
 
     background: Rectangle {
         radius: 6
