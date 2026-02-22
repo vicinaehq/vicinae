@@ -1,7 +1,6 @@
 #include "keybind-settings-model.hpp"
 #include "keyboard/keybind-manager.hpp"
 #include "keyboard/keyboard.hpp"
-#include <unordered_map>
 
 KeybindSettingsModel::KeybindSettingsModel(QObject *parent) : QAbstractListModel(parent) {
   rebuild({});
@@ -71,10 +70,7 @@ void KeybindSettingsModel::moveDown() {
   if (m_selectedRow < rowCount() - 1) select(m_selectedRow + 1);
 }
 
-static QString shortcutString(const Keyboard::Shortcut &s) {
-  QKeySequence seq(static_cast<int>(s.key()) | static_cast<int>(s.mods()));
-  return seq.toString(QKeySequence::NativeText);
-}
+static QString shortcutString(const Keyboard::Shortcut &s) { return s.toDisplayString(); }
 
 QString KeybindSettingsModel::validateShortcut(int key, int modifiers) const {
   Keyboard::Shortcut shortcut(static_cast<Qt::Key>(key),
@@ -98,41 +94,10 @@ void KeybindSettingsModel::setShortcut(int row, int key, int modifiers) {
   emit dataChanged(idx, idx, {ShortcutRole});
 }
 
-// clang-format off
-static const std::unordered_map<Qt::Key, std::pair<QString, QString>> keyDisplayOverloads = {
-    {Qt::Key_Meta,      {"icon", "command-symbol"}},
-    {Qt::Key_Alt,       {"icon", "option-symbol"}},
-    {Qt::Key_Control,   {"icon", "chevron-up"}},
-    {Qt::Key_Shift,     {"icon", "keyboard-shift"}},
-    {Qt::Key_Return,    {"icon", "enter-key"}},
-    {Qt::Key_Left,      {"icon", "arrow-left"}},
-    {Qt::Key_Right,     {"icon", "arrow-right"}},
-    {Qt::Key_Up,        {"icon", "arrow-up"}},
-    {Qt::Key_Down,      {"icon", "arrow-down"}},
-    {Qt::Key_Backspace, {"icon", "arrow-counter-clockwise"}},
-    {Qt::Key_Tab,       {"icon", "tab-key"}},
-    {Qt::Key_Space,     {"icon", "space-key"}},
-};
-// clang-format on
-
-QVariantList KeybindSettingsModel::shortcutKeys(int key, int modifiers) const {
+QString KeybindSettingsModel::shortcutDisplayString(int key, int modifiers) const {
   Keyboard::Shortcut shortcut(static_cast<Qt::Key>(key),
                               static_cast<Qt::KeyboardModifiers>(modifiers));
-  QVariantList result;
-  for (const auto &k : shortcut.allKeys()) {
-    QVariantMap entry;
-    if (auto it = keyDisplayOverloads.find(k); it != keyDisplayOverloads.end()) {
-      entry[QStringLiteral("type")] = it->second.first;
-      entry[QStringLiteral("value")] = it->second.second;
-    } else if (auto str = Keyboard::stringForKey(k)) {
-      entry[QStringLiteral("type")] = QStringLiteral("text");
-      entry[QStringLiteral("value")] = str->toUpper();
-    } else {
-      continue;
-    }
-    result.append(entry);
-  }
-  return result;
+  return shortcut.toDisplayString();
 }
 
 void KeybindSettingsModel::rebuild(const QString &filter) {

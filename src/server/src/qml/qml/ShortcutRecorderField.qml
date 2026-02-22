@@ -6,7 +6,7 @@ Popup {
     id: recorder
 
     property var validateShortcut: null
-    property var shortcutKeysProvider: null
+    property var shortcutDisplayProvider: null
 
     signal shortcutCaptured(int key, int modifiers)
 
@@ -16,7 +16,7 @@ Popup {
     closePolicy: Popup.CloseOnPressOutside
     padding: 10
 
-    property var _currentKeys: []
+    property string _currentShortcut: ""
     property string _statusText: "Recording..."
     property color _statusColor: Theme.foreground
 
@@ -27,7 +27,7 @@ Popup {
     }
 
     function show(targetItem) {
-        _currentKeys = []
+        _currentShortcut = ""
         _statusText = "Recording..."
         _statusColor = Theme.foreground
         closeTimer.stop()
@@ -68,8 +68,8 @@ Popup {
                 return
             }
 
-            if (recorder.shortcutKeysProvider)
-                recorder._currentKeys = recorder.shortcutKeysProvider(key, mods)
+            if (recorder.shortcutDisplayProvider)
+                recorder._currentShortcut = recorder.shortcutDisplayProvider(key, mods)
 
             if (isModKey) {
                 recorder._statusText = "Recording..."
@@ -101,49 +101,15 @@ Popup {
             anchors.fill: parent
             spacing: 5
 
-            Row {
+            Item {
                 Layout.alignment: Qt.AlignHCenter
-                spacing: 5
-                visible: recorder._currentKeys.length > 0
+                Layout.preferredWidth: badge.width
+                Layout.preferredHeight: badge.height
+                visible: recorder._currentShortcut !== ""
 
-                Repeater {
-                    model: recorder._currentKeys
-
-                    delegate: Rectangle {
-                        width: Math.max(25, badgeContent.implicitWidth + 10)
-                        height: 25
-                        radius: 6
-                        color: "transparent"
-                        border.color: Theme.listItemSelectionBg
-                        border.width: 1
-
-                        Loader {
-                            id: badgeContent
-                            anchors.centerIn: parent
-
-                            sourceComponent: modelData.type === "icon" ? iconBadge : textBadge
-
-                            Component {
-                                id: iconBadge
-                                ViciImage {
-                                    source: Img.builtin(modelData.value)
-                                        .withFillColor(recorder._statusColor)
-                                    width: 15; height: 15
-                                    sourceSize.width: 15; sourceSize.height: 15
-                                }
-                            }
-
-                            Component {
-                                id: textBadge
-                                Text {
-                                    text: modelData.value
-                                    color: recorder._statusColor
-                                    font.pointSize: Theme.smallerFontSize
-                                    horizontalAlignment: Text.AlignHCenter
-                                }
-                            }
-                        }
-                    }
+                ShortcutBadge {
+                    id: badge
+                    text: recorder._currentShortcut
                 }
             }
 

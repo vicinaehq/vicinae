@@ -40,7 +40,7 @@ Item {
             }
 
             ShortcutBadge {
-                text: launcher.hasCommandView ? actionPanel.primaryActionShortcut : "Enter"
+                text: launcher.hasCommandView ? actionPanel.primaryActionShortcut : "↵"
                 anchors.verticalCenter: parent.verticalCenter
             }
         }

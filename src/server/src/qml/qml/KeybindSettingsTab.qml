@@ -16,7 +16,7 @@ Item {
         var pos = item.mapToItem(root, item.width - 180, 0)
         shortcutRecorder.x = pos.x + 90 - shortcutRecorder.width / 2
         shortcutRecorder.y = pos.y - shortcutRecorder.height - 10
-        shortcutRecorder._currentKeys = []
+        shortcutRecorder._currentShortcut = ""
         shortcutRecorder._statusText = "Recording..."
         shortcutRecorder._statusColor = Theme.foreground
         shortcutRecorder.open()
@@ -368,7 +368,7 @@ Item {
         id: shortcutRecorder
         parent: root
         validateShortcut: (key, modifiers) => root.model.validateShortcut(key, modifiers)
-        shortcutKeysProvider: (key, modifiers) => root.model.shortcutKeys(key, modifiers)
+        shortcutDisplayProvider: (key, modifiers) => root.model.shortcutDisplayString(key, modifiers)
         onShortcutCaptured: (key, modifiers) => {
             root.model.setShortcut(root.model.selectedRow, key, modifiers)
         }

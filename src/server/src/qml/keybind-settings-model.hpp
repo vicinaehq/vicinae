@@ -1,6 +1,5 @@
 #pragma once
 #include <QAbstractListModel>
-#include <QVariantList>
 
 class KeybindSettingsModel : public QAbstractListModel {
   Q_OBJECT
@@ -35,7 +34,7 @@ public:
   Q_INVOKABLE void moveDown();
   Q_INVOKABLE QString validateShortcut(int key, int modifiers) const;
   Q_INVOKABLE void setShortcut(int row, int key, int modifiers);
-  Q_INVOKABLE QVariantList shortcutKeys(int key, int modifiers) const;
+  Q_INVOKABLE QString shortcutDisplayString(int key, int modifiers) const;
 
 private:
   struct Entry {

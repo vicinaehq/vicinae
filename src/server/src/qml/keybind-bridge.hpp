@@ -1,6 +1,5 @@
 #pragma once
 #include "lib/keyboard/keybind-manager.hpp"
-#include <QKeySequence>
 #include <QObject>
 #include <qtmetamacros.h>
 
@@ -24,6 +23,6 @@ private:
   static QString resolve(Keybind bind) {
     auto s = KeybindManager::instance()->resolve(bind);
     if (!s.isValid()) return {};
-    return QKeySequence(s.key() | s.mods()).toString(QKeySequence::PortableText);
+    return s.toDisplayString();
   }
 };
