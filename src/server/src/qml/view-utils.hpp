@@ -5,10 +5,20 @@
 #include "image-url.hpp"
 #include "ui/image/url.hpp"
 #include <QString>
+#include <QMimeDatabase>
 #include <QVariantList>
+#include <filesystem>
 #include <vector>
 
 namespace qml {
+
+struct FilePreviewContent {
+  QString mimeType;
+  QString imageSource;
+  QString textContent;
+};
+
+FilePreviewContent resolveFilePreview(const std::filesystem::path &path, QMimeDatabase &mimeDb);
 
 QVariantList metadataToVariantList(const MetadataModel &metadata);
 QVariantList accessoriesToVariantList(const std::vector<AccessoryModel> &accessories);

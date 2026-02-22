@@ -71,50 +71,11 @@ Item {
                 {label: "Type", value: root.host.detailMimeType}
             ]
 
-            Loader {
+            FilePreview {
                 anchors.fill: parent
-                active: root.host.detailImageSource !== ""
-                visible: active
-                sourceComponent: Item {
-                    ViciImage {
-                        anchors.fill: parent
-                        anchors.margins: 10
-                        source: root.host.detailImageSource
-                        fillMode: Image.PreserveAspectFit
-                        sourceSize.width: width
-                        sourceSize.height: height
-                    }
-                }
-            }
-
-            Loader {
-                anchors.fill: parent
-                active: root.host.detailImageSource === ""
-                        && root.host.detailTextContent !== ""
-                visible: active
-                sourceComponent: ScrollView {
-                    clip: true
-                    Text {
-                        width: parent.width
-                        text: root.host.detailTextContent
-                        color: Theme.foreground
-                        font.pointSize: Theme.smallerFontSize
-                        font.family: "monospace"
-                        wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                        padding: 12
-                    }
-                }
-            }
-
-            Loader {
-                anchors.fill: parent
-                active: root.host.detailImageSource === ""
-                        && root.host.detailTextContent === ""
-                visible: active
-                sourceComponent: EmptyView {
-                    title: root.host.detailMimeType
-                    description: "Preview not available for this file type"
-                }
+                imageSource: root.host.detailImageSource
+                textContent: root.host.detailTextContent
+                mimeType: root.host.detailMimeType
             }
         }
     }

@@ -731,6 +731,8 @@ set(VICINAE_QML_FILES
 	src/qml/qml/EditKeywordsFormView.qml
 	src/qml/qml/HorizontalLoadingBar.qml
 	src/qml/qml/SearchFilesView.qml
+	src/qml/qml/TextViewer.qml
+	src/qml/qml/FilePreview.qml
 	src/qml/qml/DMenuView.qml
 	src/qml/qml/ScriptExecutorView.qml
 	src/qml/qml/SettingsWindow.qml

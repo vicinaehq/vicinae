@@ -207,17 +207,9 @@ Item {
                         && root.host.detailImageSource === ""
                         && root.host.detailTextContent !== ""
                 visible: active
-                sourceComponent: ScrollView {
-                    clip: true
-                    Text {
-                        width: parent.width
-                        text: root.host.detailTextContent
-                        color: Theme.foreground
-                        font.pointSize: Theme.smallerFontSize
-                        font.family: "monospace"
-                        wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                        padding: 12
-                    }
+                sourceComponent: TextViewer {
+                    text: root.host.detailTextContent
+                    monospace: true
                 }
             }
 

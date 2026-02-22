@@ -79,16 +79,8 @@ Item {
 
     Component {
         id: defaultTextContent
-        ScrollView {
-            clip: true
-            Text {
-                width: parent.width
-                text: root.host.detailContent
-                color: Theme.foreground
-                font.pointSize: Theme.smallerFontSize
-                wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                padding: 12
-            }
+        TextViewer {
+            text: root.host.detailContent
         }
     }
 }

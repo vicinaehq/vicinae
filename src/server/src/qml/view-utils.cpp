@@ -1,10 +1,34 @@
 #include "view-utils.hpp"
 #include "extend/accessory-model.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
+#include "utils/utils.hpp"
+#include <QFile>
 #include <qcontainerfwd.h>
 #include <ranges>
 
 namespace qml {
+
+FilePreviewContent resolveFilePreview(const std::filesystem::path &path, QMimeDatabase &mimeDb) {
+  FilePreviewContent result;
+  auto qpath = QString::fromStdString(path.string());
+  auto mime = mimeDb.mimeTypeForFile(qpath);
+  result.mimeType = mime.name();
+
+  if (mime.name().startsWith("image/")) {
+    result.imageSource = imageSourceFor(ImageURL::local(path));
+  } else if (Utils::isTextMimeType(mime)) {
+    QFile file(qpath);
+    if (file.open(QIODevice::ReadOnly)) {
+      static constexpr qint64 MAX_PREVIEW = 32 * 1024;
+      result.textContent = QString::fromUtf8(file.read(MAX_PREVIEW));
+    }
+  } else {
+    result.imageSource = imageSourceFor(
+        ImageURL::system(mime.iconName()).withFallback(ImageURL::system(mime.genericIconName())));
+  }
+
+  return result;
+}
 
 QVariantList metadataToVariantList(const MetadataModel &metadata) {
   QVariantList result;

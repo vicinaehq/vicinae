@@ -3,6 +3,7 @@
 #include "service-registry.hpp"
 #include "services/files-service/file-service.hpp"
 #include "utils/utils.hpp"
+#include "view-utils.hpp"
 #include <QFileInfo>
 #include <ranges>
 
@@ -65,8 +66,7 @@ void SearchFilesViewHost::renderRecentFiles() {
 
   setLoading(false);
   auto recentFiles = fileService->getRecentlyAccessed() |
-                     std::views::transform([](auto &&f) { return f.path; }) |
-                     std::ranges::to<std::vector>();
+                     std::views::transform([](auto &&f) { return f.path; }) | std::ranges::to<std::vector>();
   m_model->setFiles(std::move(recentFiles), QStringLiteral("Recently Accessed"));
 }
 
@@ -92,8 +92,8 @@ void SearchFilesViewHost::handleSearchResults() {
   if (searchText() != m_lastSearchText) return;
 
   auto results = m_pendingResults.result();
-  auto paths = results | std::views::transform([](auto &&f) { return f.path; }) |
-               std::ranges::to<std::vector>();
+  auto paths =
+      results | std::views::transform([](auto &&f) { return f.path; }) | std::ranges::to<std::vector>();
   m_model->setFiles(std::move(paths), QStringLiteral("Results"));
 }
 
@@ -102,27 +102,13 @@ void SearchFilesViewHost::loadDetail(const fs::path &path) {
   m_detailName = QString::fromStdString(getLastPathComponent(path));
   m_detailPath = QString::fromStdString(compressPath(path).string());
 
-  auto mime = m_mimeDb.mimeTypeForFile(QString::fromStdString(path.string()));
-  m_detailMimeType = mime.name();
-
   QFileInfo info(QString::fromStdString(path.string()));
   m_detailLastModified = info.lastModified().toString();
 
-  m_detailImageSource.clear();
-  m_detailTextContent.clear();
-
-  if (mime.name().startsWith("image/")) {
-    m_detailImageSource = qml::imageSourceFor(ImageURL::local(path));
-  } else if (Utils::isTextMimeType(mime)) {
-    QFile file(QString::fromStdString(path.string()));
-    if (file.open(QIODevice::ReadOnly)) {
-      static constexpr qint64 MAX_PREVIEW = 32 * 1024;
-      m_detailTextContent = QString::fromUtf8(file.read(MAX_PREVIEW));
-    }
-  } else {
-    m_detailImageSource =
-        qml::imageSourceFor(ImageURL::system(mime.iconName()).withFallback(ImageURL::system(mime.genericIconName())));
-  }
+  auto preview = qml::resolveFilePreview(path, m_mimeDb);
+  m_detailMimeType = preview.mimeType;
+  m_detailImageSource = preview.imageSource;
+  m_detailTextContent = preview.textContent;
 
   emit detailChanged();
 }

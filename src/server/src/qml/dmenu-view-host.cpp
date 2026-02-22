@@ -1,7 +1,7 @@
 #include "dmenu-view-host.hpp"
 #include "dmenu-model.hpp"
 #include "utils/utils.hpp"
-#include <QFile>
+#include "view-utils.hpp"
 #include <ranges>
 
 namespace fs = std::filesystem;
@@ -80,24 +80,10 @@ void DMenuViewHost::loadDetail(std::string_view path) {
   m_detailName = QString::fromStdString(getLastPathComponent(fspath));
   m_detailPath = qpath;
 
-  auto mime = m_mimeDb.mimeTypeForFile(qpath);
-  m_detailMimeType = mime.name();
-
-  m_detailImageSource.clear();
-  m_detailTextContent.clear();
-
-  if (mime.name().startsWith("image/")) {
-    m_detailImageSource = qml::imageSourceFor(ImageURL::local(fspath));
-  } else if (Utils::isTextMimeType(mime)) {
-    QFile file(qpath);
-    if (file.open(QIODevice::ReadOnly)) {
-      static constexpr qint64 MAX_PREVIEW = 32 * 1024;
-      m_detailTextContent = QString::fromUtf8(file.read(MAX_PREVIEW));
-    }
-  } else {
-    m_detailImageSource =
-        qml::imageSourceFor(ImageURL::system(mime.iconName()).withFallback(ImageURL::system(mime.genericIconName())));
-  }
+  auto preview = qml::resolveFilePreview(fspath, m_mimeDb);
+  m_detailMimeType = preview.mimeType;
+  m_detailImageSource = preview.imageSource;
+  m_detailTextContent = preview.textContent;
 
   emit detailChanged();
 }
