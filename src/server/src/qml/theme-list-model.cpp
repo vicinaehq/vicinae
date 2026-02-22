@@ -11,8 +11,6 @@ ThemeListModel::ThemeListModel(QObject *parent) : CommandListModel(parent) {}
 void ThemeListModel::initialize() {
   m_themeService = &ThemeService::instance();
   m_config = scope().services()->config();
-  m_previousThemeId = QString::fromStdString(m_config->value().systemTheme().name);
-
   connect(m_config, &config::Manager::configChanged, this,
           [this](const config::ConfigValue &next, const config::ConfigValue &prev) {
             if (next.systemTheme().name != prev.systemTheme().name) {
@@ -148,6 +146,6 @@ void ThemeListModel::onItemSelected(int s, int i) {
 }
 
 void ThemeListModel::beforePop() {
-  // Restore the configured theme when leaving the view
-  m_themeService->setTheme(m_previousThemeId);
+  auto configuredTheme = QString::fromStdString(m_config->value().systemTheme().name);
+  m_themeService->setTheme(configuredTheme);
 }

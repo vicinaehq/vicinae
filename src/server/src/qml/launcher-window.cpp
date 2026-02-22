@@ -363,6 +363,15 @@ void LauncherWindow::goBack() {
   emit viewNavigatedBack();
 }
 
+void LauncherWindow::handleEscape() {
+  if (m_ctx.services->config()->value().escapeKeyBehavior == "close_window") {
+    m_ctx.navigation->closeWindow();
+    return;
+  }
+
+  goBack();
+}
+
 void LauncherWindow::popToRoot() {
   m_ctx.navigation->popToRoot();
   emit viewNavigatedBack();

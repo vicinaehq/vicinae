@@ -196,7 +196,7 @@ Window {
     Shortcut {
         sequence: "Escape"
         enabled: !launcher.alertModel.visible && !actionPanel.open && !launcher.hasOverlay
-        onActivated: launcher.goBack()
+		onActivated: launcher.handleEscape()
     }
 
     Shortcut {

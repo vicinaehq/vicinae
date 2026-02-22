@@ -17,8 +17,8 @@ signals:
 
 public:
   explicit ConfigBridge(QObject *parent = nullptr) : QObject(parent) {
-    connect(ServiceRegistry::instance()->config(), &config::Manager::configChanged,
-            this, [this] { emit changed(); });
+    connect(ServiceRegistry::instance()->config(), &config::Manager::configChanged, this,
+            [this] { emit changed(); });
   }
 
   qreal windowOpacity() const { return cfg().launcherWindow.opacity; }

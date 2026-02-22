@@ -48,5 +48,4 @@ private:
 
   std::optional<std::shared_ptr<ThemeFile>> m_selectedTheme;
   std::vector<std::shared_ptr<ThemeFile>> m_availableThemes;
-  QString m_previousThemeId;
 };
