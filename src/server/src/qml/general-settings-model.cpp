@@ -77,14 +77,18 @@ QVariantList GeneralSettingsModel::themeItems() const {
     auto iconUrl = theme->icon()
                        ? ImageURL::local(QString::fromStdString(theme->icon()->string()))
                        : ImageURL::builtin("vicinae");
-    items.append(makeDropdownItem(theme->name(), theme->name(), qml::imageSourceFor(iconUrl)));
+    items.append(makeDropdownItem(theme->id(), theme->name(), qml::imageSourceFor(iconUrl)));
   }
   return wrapSection(QStringLiteral("Themes"), items);
 }
 
 QVariant GeneralSettingsModel::currentTheme() const {
-  auto name = QString::fromStdString(cfg().systemTheme().name);
-  return makeDropdownItem(name, name);
+  auto id = QString::fromStdString(cfg().systemTheme().name);
+  auto *theme = ThemeService::instance().findTheme(id);
+  if (!theme) return makeDropdownItem(id, id);
+  auto iconUrl = theme->icon() ? ImageURL::local(QString::fromStdString(theme->icon()->string()))
+                                : ImageURL::builtin("vicinae");
+  return makeDropdownItem(id, theme->name(), qml::imageSourceFor(iconUrl));
 }
 
 QVariantList GeneralSettingsModel::fontItems() const {

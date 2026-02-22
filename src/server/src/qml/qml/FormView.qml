@@ -11,6 +11,7 @@ Flickable {
 
     default property alias contentData: layout.data
     property real padding: 16
+    property real maxContentWidth: Infinity
 
     function focusFirst() {
         _focusFirstIn(layout)
@@ -35,8 +36,8 @@ Flickable {
 
     ColumnLayout {
         id: layout
-        width: root.width - root.padding * 2
-        x: root.padding
+        width: Math.min(root.width - root.padding * 2, root.maxContentWidth)
+        x: (root.width - width) / 2
         spacing: 12
 
         Item { implicitHeight: 12 }

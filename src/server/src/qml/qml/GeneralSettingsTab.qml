@@ -7,6 +7,7 @@ Item {
 
     FormView {
         anchors.fill: parent
+        maxContentWidth: 650
 
         FormField {
             label: "Theme"
