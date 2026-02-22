@@ -1,5 +1,5 @@
-#include "command-grid-model.hpp"
 #include <algorithm>
+#include "command-grid-model.hpp"
 
 CommandGridModel::CommandGridModel(QObject *parent) : QAbstractListModel(parent) {}
 
@@ -60,9 +60,7 @@ CommandGridModel::buildFlatList(const std::vector<SectionInfo> &sections) {
     int cols = sec.columns.value_or(m_columns);
     double ar = sec.aspectRatio.value_or(m_aspectRatio);
 
-    if (!sec.name.isEmpty()) {
-      rows.push_back({FlatRow::SectionHeader, s, sec.name, 0, 0, cols, ar});
-    }
+    if (!sec.name.isEmpty()) { rows.push_back({FlatRow::SectionHeader, s, sec.name, 0, 0, cols, ar}); }
 
     for (int i = 0; i < sec.count; i += cols) {
       int count = std::min(cols, sec.count - i);
@@ -172,13 +170,9 @@ void CommandGridModel::selectFirst() {
   onSelectionCleared();
 }
 
-void CommandGridModel::onSelectionCleared() {
-  m_scope.clearActions();
-}
+void CommandGridModel::onSelectionCleared() { m_scope.clearActions(); }
 
-void CommandGridModel::activateSelected() {
-  m_scope.executePrimaryAction();
-}
+void CommandGridModel::activateSelected() { m_scope.executePrimaryAction(); }
 
 void CommandGridModel::refreshActionPanel() {
   if (m_selSection >= 0 && m_selItem >= 0) {
@@ -219,6 +213,7 @@ void CommandGridModel::fromGlobal(int globalIdx, int &section, int &item) const 
 }
 
 void CommandGridModel::navigateRight() {
+  m_lastNavDirection = 1;
   int g = toGlobal(m_selSection, m_selItem) + 1;
   int total = totalItemCount();
   if (total == 0) return;
@@ -229,6 +224,7 @@ void CommandGridModel::navigateRight() {
 }
 
 void CommandGridModel::navigateLeft() {
+  m_lastNavDirection = -1;
   int g = toGlobal(m_selSection, m_selItem) - 1;
   int total = totalItemCount();
   if (total == 0) return;
@@ -239,6 +235,7 @@ void CommandGridModel::navigateLeft() {
 }
 
 void CommandGridModel::navigateDown() {
+  m_lastNavDirection = 1;
   if (m_selSection < 0) return;
 
   int cols = sectionColumns(m_selSection);
@@ -273,6 +270,7 @@ void CommandGridModel::navigateDown() {
 }
 
 void CommandGridModel::navigateUp() {
+  m_lastNavDirection = -1;
   if (m_selSection < 0) return;
 
   int cols = sectionColumns(m_selSection);
@@ -315,11 +313,12 @@ int CommandGridModel::flatRowForSelection() const {
     const auto &row = m_rows[r];
     if (row.kind == FlatRow::ItemRow && row.sectionIdx == m_selSection && m_selItem >= row.startItem &&
         m_selItem < row.startItem + row.itemCount) {
-      // When the selected cell is in the first item row of a section that has
+      // When navigating up into the first item row of a section that has
       // a header, return the header row so positionViewAtIndex also keeps
-      // the section title visible.
-      if (row.startItem == 0 && r > 0 && m_rows[r - 1].kind == FlatRow::SectionHeader &&
-          m_rows[r - 1].sectionIdx == m_selSection) {
+      // the section title visible. When navigating down, return the item
+      // row directly so the viewport doesn't jump back to the header.
+      if (m_lastNavDirection < 0 && row.startItem == 0 && r > 0 &&
+          m_rows[r - 1].kind == FlatRow::SectionHeader && m_rows[r - 1].sectionIdx == m_selSection) {
         return r - 1;
       }
       return r;

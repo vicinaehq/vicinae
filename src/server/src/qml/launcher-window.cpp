@@ -347,8 +347,6 @@ bool LauncherWindow::forwardKey(int key, int modifiers) {
   auto mods = static_cast<Qt::KeyboardModifiers>(modifiers);
   QKeyEvent event(QEvent::KeyPress, key, mods);
 
-  // Check for action shortcuts first — actions may bind OpenSettings to scroll
-  // to a specific config section, so they take priority over the global fallback
   if (auto *action = m_actionPanel->findBoundAction(&event)) {
     m_actionPanel->executeAction(action);
     return true;

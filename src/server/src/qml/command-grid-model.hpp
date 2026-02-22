@@ -119,4 +119,5 @@ private:
   bool m_selectFirstOnReset = false;
   bool m_awaitingData = true;
   int m_selectedIndex = -1;
+  int m_lastNavDirection = 0;
 };

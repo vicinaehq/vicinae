@@ -110,6 +110,13 @@ int CommandListModel::nextSelectableIndex(int from, int direction) const {
   return from;
 }
 
+int CommandListModel::scrollTargetIndex(int index, int direction) const {
+  if (direction < 0 && index > 0 && index < static_cast<int>(m_flat.size())) {
+    if (m_flat[index - 1].kind == FlatItem::SectionHeader) return index - 1;
+  }
+  return index;
+}
+
 void CommandListModel::setSections(const std::vector<SectionInfo> &sections) {
   if (m_awaitingData) {
     m_awaitingData = false;

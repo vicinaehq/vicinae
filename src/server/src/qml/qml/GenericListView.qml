@@ -50,12 +50,19 @@ Item {
 
     function moveDown() {
         var next = root.listModel.nextSelectableIndex(listView.currentIndex, 1)
-        if (next !== listView.currentIndex) listView.currentIndex = next
+        if (next !== listView.currentIndex) {
+            listView.currentIndex = next
+            listView.positionViewAtIndex(next, ListView.Contain)
+        }
     }
 
     function moveUp() {
         var next = root.listModel.nextSelectableIndex(listView.currentIndex, -1)
-        if (next !== listView.currentIndex) listView.currentIndex = next
+        if (next !== listView.currentIndex) {
+            listView.currentIndex = next
+            var scrollTarget = root.listModel.scrollTargetIndex(next, -1)
+            listView.positionViewAtIndex(scrollTarget, ListView.Contain)
+        }
     }
 
     function selectFirst() {
