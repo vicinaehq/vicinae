@@ -454,6 +454,7 @@ set(SRCS
 	src/services/snippet/snippet-db.cpp
 
 	# QML frontend (POC)
+	src/qml/keybind-bridge.hpp
 	src/qml/launcher-window.hpp
 	src/qml/launcher-window.cpp
 	src/qml/root-search-model.hpp

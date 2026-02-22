@@ -206,7 +206,7 @@ Window {
     }
 
     Shortcut {
-        sequence: "Ctrl+B"
+        sequence: Keybinds.toggleActionPanel
         enabled: !launcher.alertModel.visible
         onActivated: {
             if (launcher.compacted) launcher.expand()

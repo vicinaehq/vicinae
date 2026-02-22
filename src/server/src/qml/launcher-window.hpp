@@ -9,6 +9,7 @@ class ActionPanelController;
 class AlertModel;
 class ConfigBridge;
 class ImageSource;
+class KeybindBridge;
 class RootSearchModel;
 class ThemeBridge;
 class ViewHostBase;
@@ -99,7 +100,6 @@ signals:
   void navigationStatusChanged();
   void toastActiveChanged();
   void toastChanged();
-  void openSearchAccessoryRequested();
   void isLoadingChanged();
   void searchVisibleChanged();
   void searchInteractiveChanged();
@@ -147,6 +147,7 @@ private:
   int m_toastStyle = 0;
 
   ActionPanelController *m_actionPanel;
+  KeybindBridge *m_keybindProxy;
 
   AlertModel *m_alertModel = nullptr;
 

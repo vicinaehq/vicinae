@@ -166,6 +166,15 @@ Item {
             Layout.alignment: Qt.AlignVCenter
         }
 
+        Shortcut {
+            sequence: Keybinds.openSearchAccessory
+            enabled: !!accessoryLoader.item
+            onActivated: {
+                if (typeof accessoryLoader.item.open === "function")
+                    accessoryLoader.item.open()
+            }
+        }
+
         Connections {
             target: accessoryLoader.item
             ignoreUnknownSignals: true
@@ -193,10 +202,6 @@ Item {
         }
         function onViewNavigatedBack() {
             root.focusInput()
-        }
-        function onOpenSearchAccessoryRequested() {
-            if (accessoryLoader.item && typeof accessoryLoader.item.open === "function")
-                accessoryLoader.item.open()
         }
         function onCompleterChanged() {
             if (!launcher.hasCompleter && !searchInput.activeFocus) {

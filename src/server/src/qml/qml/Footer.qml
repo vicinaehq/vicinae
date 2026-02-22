@@ -63,7 +63,7 @@ Item {
                 }
 
                 ShortcutBadge {
-                    text: "Ctrl+B"
+                    text: Keybinds.toggleActionPanel
                     anchors.verticalCenter: parent.verticalCenter
                 }
             }

@@ -32,7 +32,7 @@ FocusScope {
                          root.height * 0.6)
         radius: Config.borderRounding
         color: Qt.rgba(Theme.statusBarBackground.r, Theme.statusBarBackground.g,
-                       Theme.statusBarBackground.b, Config.windowOpacity)
+                       Theme.statusBarBackground.b, 1)
         border.color: Theme.mainWindowBorder
         border.width: Config.borderWidth
 

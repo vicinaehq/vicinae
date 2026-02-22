@@ -1,4 +1,5 @@
 #include "launcher-window.hpp"
+#include "keybind-bridge.hpp"
 #include "view-utils.hpp"
 #include "action-panel-controller.hpp"
 #include "alert-model.hpp"
@@ -12,6 +13,7 @@
 #include "theme-bridge.hpp"
 #include "navigation-controller.hpp"
 #include "overlay-controller/overlay-controller.hpp"
+#include "settings-controller/settings-controller.hpp"
 #include "services/toast/toast-service.hpp"
 #include "config/config.hpp"
 #include "service-registry.hpp"
@@ -54,8 +56,10 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent) : QObje
   rootCtx->setContextProperty(QStringLiteral("Theme"), m_themeBridge);
   rootCtx->setContextProperty(QStringLiteral("Config"), m_configBridge);
   rootCtx->setContextProperty(QStringLiteral("Img"), m_imgSource);
+  m_keybindProxy = new KeybindBridge(this);
   rootCtx->setContextProperty(QStringLiteral("launcher"), this);
   rootCtx->setContextProperty(QStringLiteral("actionPanel"), m_actionPanel);
+  rootCtx->setContextProperty(QStringLiteral("Keybinds"), m_keybindProxy);
 
   m_engine.load(QUrl(QStringLiteral("qrc:/Vicinae/LauncherWindow.qml")));
 
@@ -343,15 +347,16 @@ bool LauncherWindow::forwardKey(int key, int modifiers) {
   auto mods = static_cast<Qt::KeyboardModifiers>(modifiers);
   QKeyEvent event(QEvent::KeyPress, key, mods);
 
-  // Check for action shortcuts first
+  // Check for action shortcuts first — actions may bind OpenSettings to scroll
+  // to a specific config section, so they take priority over the global fallback
   if (auto *action = m_actionPanel->findBoundAction(&event)) {
     m_actionPanel->executeAction(action);
     return true;
   }
 
-  // Open search accessory selector (e.g. clipboard kind filter dropdown)
-  if (Keyboard::Shortcut(Keybind::OpenSearchAccessorySelector) == &event && !m_searchAccessoryUrl.isEmpty()) {
-    emit openSearchAccessoryRequested();
+  if (Keyboard::Shortcut(Keybind::OpenSettings) == &event) {
+    m_ctx.navigation->closeWindow();
+    m_ctx.settings->openWindow();
     return true;
   }
 
