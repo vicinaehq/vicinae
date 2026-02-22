@@ -110,6 +110,7 @@ void ExtensionGridModel::rebuildFromModel(bool resetSelection) {
 
     if (prevValid) {
       if (prevSection == selectedSection() && prevItem == selectedItem()) {
+        refreshActionPanel();
         emit selectionChanged();
       } else {
         select(prevSection, prevItem);
