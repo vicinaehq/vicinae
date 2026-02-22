@@ -8,6 +8,7 @@ ScrollView {
     property bool monospace: false
 
     clip: true
+    contentWidth: availableWidth
 
     Text {
         width: root.availableWidth
