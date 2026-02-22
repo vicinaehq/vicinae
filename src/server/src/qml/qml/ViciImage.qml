@@ -8,8 +8,10 @@ Item {
     property size sourceSize: Qt.size(-1, -1)
 
     readonly property int status: staticImg.status
-    implicitWidth: animImg.animated ? animImg.implicitWidth : staticImg.implicitWidth
-    implicitHeight: animImg.animated ? animImg.implicitHeight : staticImg.implicitHeight
+    implicitWidth: root.sourceSize.width >= 0
+        ? (animImg.animated ? animImg.implicitWidth : staticImg.implicitWidth) : 0
+    implicitHeight: root.sourceSize.height >= 0
+        ? (animImg.animated ? animImg.implicitHeight : staticImg.implicitHeight) : 0
 
     property bool _errored: false
     onSourceChanged: _errored = false
@@ -37,9 +39,10 @@ Item {
         sourceSize.width: root.sourceSize.width >= 0 ? root.sourceSize.width : root.width
         sourceSize.height: root.sourceSize.height >= 0 ? root.sourceSize.height : root.height
         onStatusChanged: {
-            if (status === Image.Error && !root._errored)
+            if (status === Image.Error && !root._errored) {
+                console.warn("ViciImage: failed to load", root._resolvedSource)
                 root._errored = true
-            else if (status === Image.Ready && !root._errored)
+            } else if (status === Image.Ready && !root._errored)
                 animImg.source = staticImg.source
         }
     }

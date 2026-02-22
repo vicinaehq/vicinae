@@ -86,8 +86,14 @@ QString ImageUrl::toSource() const {
     return prefix + QStringLiteral("local:") + name + buildParams(m_url);
 
   case ImageURLType::Http:
-  case ImageURLType::Https:
-    return prefix + QStringLiteral("http:") + name + buildParams(m_url);
+  case ImageURLType::Https: {
+    QString params = buildParams(m_url);
+    if (!params.isEmpty()) {
+      params[0] = ';';
+      params.replace('&', ';');
+    }
+    return prefix + QStringLiteral("http") + params + QStringLiteral(":") + name;
+  }
 
   case ImageURLType::Emoji:
     return prefix + QStringLiteral("emoji:") + name;
@@ -95,8 +101,14 @@ QString ImageUrl::toSource() const {
   case ImageURLType::Favicon:
     return prefix + QStringLiteral("favicon:") + name;
 
-  case ImageURLType::DataURI:
-    return prefix + QStringLiteral("datauri:") + name + buildParams(m_url);
+  case ImageURLType::DataURI: {
+    QString params = buildParams(m_url);
+    if (!params.isEmpty()) {
+      params[0] = ';';
+      params.replace('&', ';');
+    }
+    return prefix + QStringLiteral("datauri") + params + QStringLiteral(":") + name;
+  }
 
   default:
     return {};

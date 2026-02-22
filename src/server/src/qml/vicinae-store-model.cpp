@@ -41,7 +41,7 @@ QVariant VicinaeStoreModel::data(const QModelIndex &index, int role) const {
   case AuthorAvatar: {
     const auto &avatar = m_entries[i].extension.author.avatarUrl;
     if (avatar.isEmpty()) return imageSourceFor(ImageURL::builtin("person"));
-    return QStringLiteral("image://vicinae/http:%1?mask=circle").arg(avatar);
+    return imageSourceFor(ImageURL::http(QUrl(avatar)).circle());
   }
   case IsInstalled:
     return m_entries[i].installed;

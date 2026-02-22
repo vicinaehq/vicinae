@@ -61,7 +61,7 @@ QString RaycastStoreDetailHost::authorName() const { return m_ext.author.name; }
 
 QString RaycastStoreDetailHost::authorAvatar() const {
   if (m_ext.author.avatar.isEmpty()) return qml::imageSourceFor(ImageURL::builtin("person"));
-  return QStringLiteral("image://vicinae/http:%1?mask=circle").arg(m_ext.author.avatar);
+  return qml::imageSourceFor(ImageURL::http(QUrl(m_ext.author.avatar)).circle());
 }
 
 QString RaycastStoreDetailHost::downloadCount() const {
@@ -75,7 +75,7 @@ bool RaycastStoreDetailHost::hasScreenshots() const { return m_ext.metadata_coun
 QStringList RaycastStoreDetailHost::screenshots() const {
   QStringList urls;
   for (const auto &url : m_ext.screenshots()) {
-    urls.append(QStringLiteral("image://vicinae/http:%1").arg(url.toString()));
+    urls.append(qml::imageSourceFor(ImageURL::http(url)));
   }
   return urls;
 }
@@ -106,7 +106,7 @@ QVariantList RaycastStoreDetailHost::contributors() const {
     if (user.avatar.isEmpty())
       avatar = qml::imageSourceFor(ImageURL::builtin("person"));
     else
-      avatar = QStringLiteral("image://vicinae/http:%1?mask=circle").arg(user.avatar);
+      avatar = qml::imageSourceFor(ImageURL::http(QUrl(user.avatar)).circle());
 
     list.append(QVariantMap{
         {QStringLiteral("name"), user.name},

@@ -295,34 +295,49 @@ struct ParsedId {
   QString fallback;
 };
 
+static void parseParams(const QString &str, QChar sep, ParsedId &result) {
+  for (const auto &param : str.split(sep)) {
+    int eq = param.indexOf('=');
+    if (eq < 0) continue;
+    QString key = param.left(eq);
+    QString val = param.mid(eq + 1);
+    if (key == QStringLiteral("fg"))
+      result.fg = QColor(val);
+    else if (key == QStringLiteral("bg"))
+      result.bg = QColor(val);
+    else if (key == QStringLiteral("mask") && val == QStringLiteral("circle"))
+      result.circleMask = true;
+    else if (key == QStringLiteral("fallback"))
+      result.fallback = QUrl::fromPercentEncoding(val.toUtf8());
+  }
+}
+
 static ParsedId parseId(const QString &id) {
   ParsedId result;
 
   int colonIdx = id.indexOf(':');
   if (colonIdx < 0) return result;
 
-  result.type = id.left(colonIdx);
+  QString typeStr = id.left(colonIdx);
   QString rest = id.mid(colonIdx + 1);
 
-  int qmark = rest.indexOf('?');
-  if (qmark < 0) {
+  int semiIdx = typeStr.indexOf(';');
+  if (semiIdx >= 0) {
+    result.type = typeStr.left(semiIdx);
+    parseParams(typeStr.mid(semiIdx + 1), ';', result);
+  } else {
+    result.type = typeStr;
+  }
+
+  if (result.type == QStringLiteral("http") || result.type == QStringLiteral("datauri")) {
     result.name = rest;
   } else {
-    result.name = rest.left(qmark);
-    QString params = rest.mid(qmark + 1);
-    for (const auto &param : params.split('&')) {
-      int eq = param.indexOf('=');
-      if (eq < 0) continue;
-      QString key = param.left(eq);
-      QString val = param.mid(eq + 1);
-      if (key == QStringLiteral("fg"))
-        result.fg = QColor(val);
-      else if (key == QStringLiteral("bg"))
-        result.bg = QColor(val);
-      else if (key == QStringLiteral("mask") && val == QStringLiteral("circle"))
-        result.circleMask = true;
-      else if (key == QStringLiteral("fallback"))
-        result.fallback = QUrl::fromPercentEncoding(val.toUtf8());
+    int qmark = rest.indexOf('?');
+    if (qmark < 0) {
+      result.name = rest;
+    } else {
+      result.name = rest.left(qmark);
+      parseParams(rest.mid(qmark + 1), '&', result);
     }
   }
 
@@ -418,8 +433,11 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(
     }
 
   } else if (parsed.type == QStringLiteral("http")) {
-    // Network fetch needs main thread for NetworkFetcher
     QString url = parsed.name;
+    if (url.startsWith(QStringLiteral("https:/")) && !url.startsWith(QStringLiteral("https://")))
+      url.insert(6, '/');
+    else if (url.startsWith(QStringLiteral("http:/")) && !url.startsWith(QStringLiteral("http://")))
+      url.insert(5, '/');
     bool circle = parsed.circleMask;
     QColor fg = parsed.fg;
     QMetaObject::invokeMethod(qApp, [response, url, size, circle, fg]() {

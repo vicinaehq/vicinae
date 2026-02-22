@@ -53,7 +53,7 @@ QString VicinaeStoreDetailHost::authorName() const { return m_ext.author.name; }
 
 QString VicinaeStoreDetailHost::authorAvatar() const {
   if (m_ext.author.avatarUrl.isEmpty()) return qml::imageSourceFor(ImageURL::builtin("person"));
-  return QStringLiteral("image://vicinae/http:%1?mask=circle").arg(m_ext.author.avatarUrl);
+  return qml::imageSourceFor(ImageURL::http(QUrl(m_ext.author.avatarUrl)).circle());
 }
 
 QString VicinaeStoreDetailHost::downloadCount() const { return formatCount(m_ext.downloadCount); }

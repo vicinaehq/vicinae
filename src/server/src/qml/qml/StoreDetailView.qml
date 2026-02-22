@@ -28,7 +28,7 @@ Item {
         ViciImage {
             Layout.preferredWidth: 14
             Layout.preferredHeight: 14
-            source: Img.builtin("arrow-up-right").withFillColor(
+            source: Img.builtin("arrow-ne").withFillColor(
                 _linkArea.containsMouse ? Theme.accent : Theme.textMuted
             )
         }
