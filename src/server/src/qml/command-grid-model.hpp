@@ -16,6 +16,7 @@ class CommandGridModel : public QAbstractListModel {
   Q_PROPERTY(int selectedItem READ selectedItem NOTIFY selectionChanged)
   Q_PROPERTY(int columns READ columns WRITE setColumns NOTIFY columnsChanged)
   Q_PROPERTY(double aspectRatio READ aspectRatio WRITE setAspectRatio NOTIFY aspectRatioChanged)
+  Q_PROPERTY(bool awaitingData READ awaitingData NOTIFY awaitingDataChanged)
 
 public:
   enum Role : std::uint16_t {
@@ -59,10 +60,13 @@ public:
   double aspectRatio() const { return m_aspectRatio; }
   void setAspectRatio(double ratio);
 
+  bool awaitingData() const { return m_awaitingData; }
+
 signals:
   void selectionChanged();
   void columnsChanged();
   void aspectRatioChanged();
+  void awaitingDataChanged();
 
 protected:
   struct SectionInfo {
@@ -113,5 +117,6 @@ private:
   int m_columns = 8;
   double m_aspectRatio = 1.0;
   bool m_selectFirstOnReset = false;
+  bool m_awaitingData = true;
   int m_selectedIndex = -1;
 };

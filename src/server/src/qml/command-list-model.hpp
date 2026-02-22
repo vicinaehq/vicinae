@@ -12,9 +12,11 @@ class ActionPanelState;
 class CommandListModel : public QAbstractListModel {
   Q_OBJECT
   Q_PROPERTY(bool selectFirstOnReset READ selectFirstOnReset NOTIFY selectFirstOnResetChanged)
+  Q_PROPERTY(bool awaitingData READ awaitingData NOTIFY awaitingDataChanged)
 
 signals:
   void selectFirstOnResetChanged();
+  void awaitingDataChanged();
 
 public:
   enum Role {
@@ -41,6 +43,7 @@ public:
   QHash<int, QByteArray> roleNames() const override;
 
   bool selectFirstOnReset() const { return m_selectFirstOnReset; }
+  bool awaitingData() const { return m_awaitingData; }
 
   Q_INVOKABLE void setSelectedIndex(int index);
   Q_INVOKABLE void activateSelected();
@@ -100,4 +103,5 @@ private:
   int m_selectedIndex = -1;
   QString m_lastSelectedItemId;
   bool m_selectFirstOnReset = true;
+  bool m_awaitingData = true;
 };

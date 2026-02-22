@@ -38,6 +38,7 @@ Item {
     property bool suppressEmpty: false
 
     readonly property bool _empty: listView.count === 0
+    readonly property bool _awaitingData: root.cmdModel && root.cmdModel.awaitingData === true
 
     readonly property real cellSize:
         Math.floor((root.width - horizontalPadding * 2 - cellSpacing * (columns - 1)) / columns)
@@ -266,7 +267,7 @@ Item {
 
     Loader {
         anchors.fill: parent
-        active: root._empty && !root.suppressEmpty
+        active: root._empty && !root.suppressEmpty && !root._awaitingData
         visible: active
         sourceComponent: root.emptyViewComponent
                          ? root.emptyViewComponent

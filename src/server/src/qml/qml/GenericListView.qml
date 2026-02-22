@@ -31,6 +31,7 @@ Item {
 
     readonly property bool _showDetail: root.detailComponent !== null && root.detailVisible
     readonly property bool _empty: listView.count === 0
+    readonly property bool _awaitingData: root.listModel && root.listModel.awaitingData === true
 
     // When true, GenericListView auto-wires common model signals:
     //  - onModelReset → selectFirst + setSelectedIndex
@@ -140,7 +141,7 @@ Item {
 
     Loader {
         anchors.fill: parent
-        active: root._empty && !root.suppressEmpty
+        active: root._empty && !root.suppressEmpty && !root._awaitingData
         visible: active
         sourceComponent: root.emptyViewComponent
                          ? root.emptyViewComponent

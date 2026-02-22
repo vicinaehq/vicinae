@@ -74,6 +74,11 @@ CommandGridModel::buildFlatList(const std::vector<SectionInfo> &sections) {
 }
 
 void CommandGridModel::setSections(const std::vector<SectionInfo> &sections) {
+  if (m_awaitingData) {
+    m_awaitingData = false;
+    emit awaitingDataChanged();
+  }
+
   auto newFlat = buildFlatList(sections);
   int oldCount = static_cast<int>(m_rows.size());
   int newCount = static_cast<int>(newFlat.size());
