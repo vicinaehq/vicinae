@@ -15,6 +15,7 @@ std::unique_ptr<ActionPanelState>
 ManageShortcutsModel::buildActionPanel(const std::shared_ptr<Shortcut> &item) const {
   auto panel = std::make_unique<ListActionPanelState>();
   auto mainSection = panel->createSection();
+  auto manageSection = panel->createSection();
   auto itemSection = panel->createSection();
   auto dangerSection = panel->createSection();
 
@@ -29,8 +30,8 @@ ManageShortcutsModel::buildActionPanel(const std::shared_ptr<Shortcut> &item) co
 
   panel->setTitle(item->name());
   mainSection->addAction(open);
-  mainSection->addAction(edit);
-  mainSection->addAction(duplicate);
+  manageSection->addAction(edit);
+  manageSection->addAction(duplicate);
   dangerSection->addAction(remove);
 
   return panel;
@@ -40,6 +41,4 @@ void ManageShortcutsModel::itemSelected(const std::shared_ptr<Shortcut> &item) {
   emit shortcutSelected(item);
 }
 
-QString ManageShortcutsModel::sectionLabel() const {
-  return QStringLiteral("Shortcuts ({count})");
-}
+QString ManageShortcutsModel::sectionLabel() const { return QStringLiteral("Shortcuts ({count})"); }

@@ -16,6 +16,7 @@ std::unique_ptr<ActionPanelState> RootShortcutItem::newActionPanel(ApplicationCo
                                                                    const RootItemMetadata &metadata) const {
   auto panel = std::make_unique<ListActionPanelState>();
   auto mainSection = panel->createSection();
+  auto manageSection = panel->createSection();
   auto itemSection = panel->createSection();
   auto dangerSection = panel->createSection();
 
@@ -31,8 +32,9 @@ std::unique_ptr<ActionPanelState> RootShortcutItem::newActionPanel(ApplicationCo
 
   panel->setTitle(m_link->name());
   mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
-  mainSection->addAction(edit);
-  mainSection->addAction(duplicate);
+
+  manageSection->addAction(edit);
+  manageSection->addAction(duplicate);
 
   for (const auto action : RootSearchActionGenerator::generateActions(*this, metadata)) {
     itemSection->addAction(action);
