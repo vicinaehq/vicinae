@@ -26,21 +26,21 @@ Item {
 
         Row {
             visible: {
-                if (launcher.hasCommandView) return actionPanel.primaryActionTitle !== ""
+                if (!launcher.isRootSearch) return actionPanel.primaryActionTitle !== ""
                 return searchModel.primaryActionTitle !== ""
             }
             spacing: 6
             Layout.alignment: Qt.AlignVCenter
 
             Text {
-                text: launcher.hasCommandView ? actionPanel.primaryActionTitle : searchModel.primaryActionTitle
+                text: !launcher.isRootSearch ? actionPanel.primaryActionTitle : searchModel.primaryActionTitle
                 color: Theme.textMuted
                 font.pointSize: Theme.smallerFontSize
                 anchors.verticalCenter: parent.verticalCenter
             }
 
             ShortcutBadge {
-                text: launcher.hasCommandView ? actionPanel.primaryActionShortcut : "↵"
+                text: !launcher.isRootSearch ? actionPanel.primaryActionShortcut : "↵"
                 anchors.verticalCenter: parent.verticalCenter
             }
         }

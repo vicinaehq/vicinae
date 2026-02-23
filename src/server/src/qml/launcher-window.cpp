@@ -270,9 +270,9 @@ void LauncherWindow::handleCurrentViewChanged() {
       m_commandViewHost = nullptr;
       emit commandViewHostChanged();
     }
-    if (m_hasCommandView) {
-      m_hasCommandView = false;
-      emit hasCommandViewChanged();
+    if (!m_isRootSearch) {
+      m_isRootSearch = true;
+      emit isRootSearchChanged();
     }
     if (m_overrideWidth != 0 || m_overrideHeight != 0) {
       m_overrideWidth = 0;
@@ -317,15 +317,15 @@ void LauncherWindow::handleCurrentViewChanged() {
     bridge->onReactivated();
   }
 
-  if (!m_hasCommandView) {
-    m_hasCommandView = true;
-    emit hasCommandViewChanged();
+  if (m_isRootSearch) {
+    m_isRootSearch = false;
+    emit isRootSearchChanged();
   }
   tryCompaction();
 }
 
 void LauncherWindow::forwardSearchText(const QString &text) {
-  if (m_hasCommandView) {
+  if (!m_isRootSearch) {
     m_ctx.navigation->setSearchText(text);
   } else {
     // broadcastSearchText stores text without emitting searchTextTampered
@@ -336,7 +336,7 @@ void LauncherWindow::forwardSearchText(const QString &text) {
 }
 
 void LauncherWindow::handleReturn() {
-  if (m_hasCommandView) {
+  if (!m_isRootSearch) {
     m_actionPanel->executePrimaryAction();
   } else {
     m_searchModel->activateSelected();

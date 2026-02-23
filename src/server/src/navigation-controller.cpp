@@ -470,7 +470,6 @@ void NavigationController::activateView(const ViewState &state) {
   emit statusBarVisiblityChanged(state.needsStatusBar);
   emit loadingChanged(state.isLoading);
   emit actionsChanged({});
-  emit searchTextTampered(state.searchText);
   emit searchPlaceholderTextChanged(state.placeholderText);
   destroyCurrentCompletion();
 
@@ -478,7 +477,7 @@ void NavigationController::activateView(const ViewState &state) {
   state.sender->activate();
 
   emit currentViewChanged(state);
-  qDebug() << "set nav title" << state.navigation.title;
+  emit searchTextTampered(state.searchText);
   emit navigationStatusChanged(state.navigation.title, state.navigation.icon);
 }
 

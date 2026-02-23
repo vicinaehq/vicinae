@@ -19,7 +19,7 @@ Item {
 
         Rectangle {
             id: backButton
-            visible: launcher.hasCommandView
+            visible: !launcher.isRootSearch
             Layout.preferredWidth: 28
             Layout.preferredHeight: 28
             Layout.alignment: Qt.AlignVCenter
@@ -70,7 +70,7 @@ Item {
                     anchors.fill: parent
                     verticalAlignment: Text.AlignVCenter
                     text: launcher.hasCompleter ? "..."
-                        : launcher.hasCommandView && launcher.searchPlaceholder !== ""
+                        : !launcher.isRootSearch && launcher.searchPlaceholder !== ""
                           ? launcher.searchPlaceholder : "Search for anything..."
                     color: Theme.textPlaceholder
                     font: searchInput.font
@@ -79,7 +79,7 @@ Item {
 
                 onTextEdited: {
                     launcher.forwardSearchText(text)
-                    if (!launcher.hasCommandView) {
+                    if (launcher.isRootSearch) {
                         searchModel.setFilter(text)
                     }
                 }
@@ -87,13 +87,13 @@ Item {
                 Keys.onUpPressed: {
                     if (launcher.compacted) { launcher.expand(); return }
                     if (commandStack.currentItem) commandStack.currentItem.moveUp()
-                    else if (launcher.hasCommandView) launcher.forwardKey(Qt.Key_Up)
+                    else if (!launcher.isRootSearch) launcher.forwardKey(Qt.Key_Up)
                     else searchList.moveUp()
                 }
                 Keys.onDownPressed: {
                     if (launcher.compacted) { launcher.expand(); return }
                     if (commandStack.currentItem) commandStack.currentItem.moveDown()
-                    else if (launcher.hasCommandView) launcher.forwardKey(Qt.Key_Down)
+                    else if (!launcher.isRootSearch) launcher.forwardKey(Qt.Key_Down)
                     else searchList.moveDown()
                 }
                 Keys.onLeftPressed: (event) => {
@@ -123,10 +123,10 @@ Item {
                 }
                 Keys.onBacktabPressed: (event) => { event.accepted = false }
                 Keys.onPressed: (event) => {
-                    if (event.key === Qt.Key_Backspace && searchInput.text === "" && launcher.hasCommandView) {
+                    if (event.key === Qt.Key_Backspace && searchInput.text === "" && !launcher.isRootSearch) {
                         launcher.goBack()
                         event.accepted = true
-                    } else if (event.key === Qt.Key_Space && !launcher.hasCommandView && event.modifiers === Qt.NoModifier) {
+                    } else if (event.key === Qt.Key_Space && launcher.isRootSearch && event.modifiers === Qt.NoModifier) {
                         if (launcher.tryAliasFastTrack()) {
                             event.accepted = true
                         }
@@ -195,7 +195,7 @@ Item {
         function onSearchTextUpdated(text) {
             if (searchInput.text !== text) {
                 searchInput.text = text
-                if (!launcher.hasCommandView) {
+                if (launcher.isRootSearch) {
                     searchModel.setFilter(text)
                 }
             }

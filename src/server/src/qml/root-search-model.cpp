@@ -36,17 +36,8 @@ RootSearchModel::RootSearchModel(const ViewScope &scope, QObject *parent)
             m_fileSearchEnabled = next.searchFilesInRoot;
           });
 
-  connect(m_manager, &RootItemManager::metadataChanged, this, [this]() {
-    m_fallbackItems = m_manager->fallbackItems();
-    m_favorites = m_manager->queryFavorites();
-    setFilter(QString::fromStdString(m_query));
-  });
-
-  connect(m_manager, &RootItemManager::itemsChanged, this, [this]() {
-    m_fallbackItems = m_manager->fallbackItems();
-    m_favorites = m_manager->queryFavorites();
-    setFilter(QString::fromStdString(m_query));
-  });
+  connect(m_manager, &RootItemManager::metadataChanged, this, &RootSearchModel::refresh);
+  connect(m_manager, &RootItemManager::itemsChanged, this, &RootSearchModel::refresh);
 
   m_fallbackItems = m_manager->fallbackItems();
   m_favorites = m_manager->queryFavorites();
@@ -286,7 +277,9 @@ QHash<int, QByteArray> RootSearchModel::roleNames() const {
 }
 
 void RootSearchModel::setFilter(const QString &text) {
-  m_query = text.toStdString();
+  auto query = text.toStdString();
+  if (query == m_query) return;
+  m_query = std::move(query);
   m_selectedIndex = -1;
   m_scope.clearActions();
   m_calc.reset();
@@ -295,12 +288,36 @@ void RootSearchModel::setFilter(const QString &text) {
   m_calculatorDebounce.stop();
   m_fileSearchDebounce.stop();
 
+  rerunSearch();
+
+  if (!text.isEmpty()) {
+    m_calculatorDebounce.start();
+    m_fileSearchDebounce.start();
+  }
+}
+
+void RootSearchModel::refresh() {
+  m_fallbackItems = m_manager->fallbackItems();
+  m_favorites = m_manager->queryFavorites();
+
+  m_selectFirstOnReset = false;
+  emit selectFirstOnResetChanged();
+
+  rerunSearch();
+
+  m_selectFirstOnReset = true;
+  emit selectFirstOnResetChanged();
+}
+
+void RootSearchModel::rerunSearch() {
+  auto text = QString::fromStdString(m_query);
+
   if (!text.isEmpty() && text.startsWith('/')) {
     std::error_code ec;
-    if (std::filesystem::exists(text.toStdString(), ec)) {
+    if (std::filesystem::exists(m_query, ec)) {
       m_defaultOpener.reset();
       m_results.clear();
-      m_files = {{std::filesystem::path(text.toStdString()), 1.0}};
+      m_files = {{std::filesystem::path(m_query), 1.0}};
       beginResetModel();
       rebuildFlatList();
       endResetModel();
@@ -324,13 +341,12 @@ void RootSearchModel::setFilter(const QString &text) {
   m_defaultOpener.reset();
 
   std::vector<RootItemManager::ScoredItem> scored;
-  if (text.isEmpty()) {
+  if (m_query.empty()) {
     m_manager->search("", scored, {.includeFavorites = false, .prioritizeAliased = false});
   } else {
     m_manager->search(text, scored);
   }
 
-  // Snapshot results: copy shared_ptr and metadata so we don't hold dangling reference_wrappers
   m_results.clear();
   m_results.reserve(scored.size());
   for (const auto &s : scored) {
@@ -343,11 +359,6 @@ void RootSearchModel::setFilter(const QString &text) {
   beginResetModel();
   rebuildFlatList();
   endResetModel();
-
-  if (!text.isEmpty()) {
-    m_calculatorDebounce.start();
-    m_fileSearchDebounce.start();
-  }
 }
 
 void RootSearchModel::rebuildFlatList() {

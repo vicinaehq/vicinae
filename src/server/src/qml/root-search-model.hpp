@@ -23,6 +23,7 @@ class RootSearchModel : public QAbstractListModel {
   Q_OBJECT
   Q_PROPERTY(QString primaryActionTitle READ primaryActionTitle NOTIFY primaryActionChanged)
   Q_PROPERTY(QString primaryActionIcon READ primaryActionIcon NOTIFY primaryActionChanged)
+  Q_PROPERTY(bool selectFirstOnReset READ selectFirstOnReset NOTIFY selectFirstOnResetChanged)
 
 public:
   enum Role {
@@ -60,9 +61,11 @@ public:
 
   QString primaryActionTitle() const;
   QString primaryActionIcon() const;
+  bool selectFirstOnReset() const { return m_selectFirstOnReset; }
 
 signals:
   void primaryActionChanged();
+  void selectFirstOnResetChanged();
 
 private:
   using CalculatorWatcher = QFutureWatcher<AbstractCalculatorBackend::ComputeResult>;
@@ -89,6 +92,8 @@ private:
     SectionType section;
   };
 
+  void refresh();
+  void rerunSearch();
   void rebuildFlatList();
   void addSection(SectionType section, const std::string &name, int count);
   QString imageSourceFor(const ImageURL &url) const { return qml::imageSourceFor(url); }
@@ -128,4 +133,5 @@ private:
 
   int m_selectedIndex = -1;
   QString m_lastSelectedItemId;
+  bool m_selectFirstOnReset = true;
 };

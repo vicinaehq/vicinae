@@ -98,13 +98,13 @@ Window {
             RootSearchList {
                 id: searchList
                 anchors.fill: parent
-                visible: !launcher.hasCommandView && !launcher.compacted
+                visible: launcher.isRootSearch && !launcher.compacted
             }
 
             StackView {
                 id: commandStack
                 anchors.fill: parent
-                visible: launcher.hasCommandView && !launcher.compacted
+                visible: !launcher.isRootSearch && !launcher.compacted
             }
         }
 

@@ -122,12 +122,12 @@ RowLayout {
 
                         Keys.onUpPressed: {
                             if (commandStack.currentItem) commandStack.currentItem.moveUp()
-                            else if (launcher.hasCommandView) launcher.forwardKey(Qt.Key_Up)
+                            else if (!launcher.isRootSearch) launcher.forwardKey(Qt.Key_Up)
                             else searchList.moveUp()
                         }
                         Keys.onDownPressed: {
                             if (commandStack.currentItem) commandStack.currentItem.moveDown()
-                            else if (launcher.hasCommandView) launcher.forwardKey(Qt.Key_Down)
+                            else if (!launcher.isRootSearch) launcher.forwardKey(Qt.Key_Down)
                             else searchList.moveDown()
                         }
                         Keys.onReturnPressed: (event) => {

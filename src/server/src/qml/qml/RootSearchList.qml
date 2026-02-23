@@ -6,6 +6,7 @@ GenericListView {
     model: searchModel
     listModel: searchModel
     autoWireModel: true
+    selectFirstOnReset: searchModel.selectFirstOnReset
 
     delegate: Loader {
         id: delegateLoader
