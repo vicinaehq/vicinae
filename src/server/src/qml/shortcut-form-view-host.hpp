@@ -96,6 +96,7 @@ private:
   QVariantList m_iconItems;
   QVariantList m_linkCompletions;
   QVariantMap m_defaultIconEntry;
+  QString m_resolvedDefaultIcon;
 
   QString m_prefilledLink;
   QString m_prefilledName;

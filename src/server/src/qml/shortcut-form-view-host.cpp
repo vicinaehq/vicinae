@@ -142,6 +142,7 @@ void ShortcutFormViewHost::initialize() {
 void ShortcutFormViewHost::buildIconItems() {
   QVariantList allIcons;
 
+  m_resolvedDefaultIcon = ImageURL::builtin("link").toString();
   m_defaultIconEntry = QVariantMap{
       {QStringLiteral("id"), QStringLiteral("default")},
       {QStringLiteral("displayName"), QStringLiteral("Default")},
@@ -243,7 +244,7 @@ void ShortcutFormViewHost::submit() {
   }
 
   if (iconId == QStringLiteral("default")) {
-    iconId = ImageURL::builtin("link").toString();
+    iconId = m_resolvedDefaultIcon;
   }
 
   if (m_mode == Mode::Edit) {
@@ -273,6 +274,7 @@ void ShortcutFormViewHost::handleLinkBlurred() {
     m_appSelectorModel->updateDefaultApp(app);
     m_selectedApp = m_appSelectorModel->currentItem();
 
+    m_resolvedDefaultIcon = app->iconUrl().toString();
     m_defaultIconEntry[QStringLiteral("iconSource")] = qml::imageSourceFor(app->iconUrl());
     m_defaultIconEntry[QStringLiteral("displayName")] = QStringLiteral("Default");
     updateDefaultIconInItems();
@@ -292,6 +294,7 @@ void ShortcutFormViewHost::handleLinkBlurred() {
     watcher->setFuture(FaviconService::instance()->makeRequest(url.host()));
     connect(ptr, &Watcher::finished, this, [this, url, watcher = std::move(watcher)]() {
       auto icon = ImageURL::favicon(url.host()).withFallback(ImageURL::builtin("image"));
+      m_resolvedDefaultIcon = icon.toString();
       m_defaultIconEntry[QStringLiteral("iconSource")] = qml::imageSourceFor(icon);
       m_defaultIconEntry[QStringLiteral("displayName")] = url.host();
       updateDefaultIconInItems();
@@ -309,6 +312,17 @@ void ShortcutFormViewHost::selectApp(const QVariantMap &item) {
   m_selectedApp = item;
 
   if (!m_link.isEmpty()) {
+    auto appId = item[QStringLiteral("id")].toString();
+    auto appDb = context()->services->appDb();
+    std::shared_ptr<AbstractApplication> resolvedApp;
+    if (appId == QStringLiteral("default"))
+      resolvedApp = appDb->webBrowser();
+    else
+      resolvedApp = appDb->findById(appId);
+
+    if (resolvedApp)
+      m_resolvedDefaultIcon = resolvedApp->iconUrl().toString();
+
     auto iconSource = item[QStringLiteral("iconSource")].toString();
     m_defaultIconEntry[QStringLiteral("iconSource")] = iconSource;
     m_defaultIconEntry[QStringLiteral("displayName")] = QStringLiteral("Default");
