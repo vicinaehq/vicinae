@@ -30,7 +30,9 @@ RUN pacman -Syu --needed --noconfirm \
     extra-cmake-modules	\
     wayland-protocols	\
 	clang				\
-    catch2
+    catch2				\
+	qt6-declarative		\
+	syntax-highlighting
 
 WORKDIR /home/runner
 

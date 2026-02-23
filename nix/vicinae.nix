@@ -72,11 +72,13 @@ gcc15Stdenv.mkDerivation (finalAttrs: {
     cmark-gfm
     kdePackages.layer-shell-qt
     kdePackages.qtkeychain
+    kdePackages.syntax-highlighting
     libqalculate
     minizip
     nodejs
     protobuf
     qt6.qtbase
+    qt6.qtdeclarative
     qt6.qtsvg
     qt6.qtwayland
     wayland
