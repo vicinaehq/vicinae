@@ -115,6 +115,7 @@ ColumnLayout {
                 Item {
                     id: toggle
                     property bool checked: field.parent.value === true
+                    opacity: field.parent.readOnly ? 0.5 : 1.0
                     width: 36
                     height: 20
 
@@ -139,8 +140,9 @@ ColumnLayout {
 
                     MouseArea {
                         anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
+                        cursorShape: field.parent.readOnly ? Qt.ArrowCursor : Qt.PointingHandCursor
                         onClicked: {
+                            if (field.parent.readOnly) return
                             toggle.checked = !toggle.checked
                             root.prefModel.setFieldValue(field.parent.index, toggle.checked)
                         }
@@ -184,6 +186,7 @@ ColumnLayout {
             SearchableDropdown {
                 Layout.fillWidth: true
                 items: field.parent.options || []
+                readOnly: field.parent.readOnly
                 currentItem: field._findCurrentItem(
                     field.parent.options || [], field.parent.value)
                 onActivated: (item) => root.prefModel.setFieldValue(field.parent.index, item.id)
@@ -213,6 +216,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 multiple: field.parent.multiple
                 directoriesOnly: field.parent.directoriesOnly
+                readOnly: field.parent.readOnly
                 selectedPaths: {
                     var v = field.parent.value
                     if (Array.isArray(v)) return v

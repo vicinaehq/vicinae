@@ -84,6 +84,7 @@ Item {
             info: parent.description
             FormCheckbox {
                 checked: field.parent.value === true
+                readOnly: field.parent.readOnly
                 onToggled: root.prefModel.setFieldValue(field.parent.index, checked)
             }
         }
@@ -109,6 +110,7 @@ Item {
 
             SearchableDropdown {
                 items: field.parent.options || []
+                readOnly: field.parent.readOnly
                 currentItem: field._findCurrentItem(field.parent.options || [], field.parent.value)
                 onActivated: (item) => root.prefModel.setFieldValue(field.parent.index, item.id)
             }
@@ -124,6 +126,7 @@ Item {
             FormFilePicker {
                 multiple: field.parent.multiple
                 directoriesOnly: field.parent.directoriesOnly
+                readOnly: field.parent.readOnly
                 selectedPaths: {
                     var v = field.parent.value
                     if (Array.isArray(v)) return v

@@ -6,10 +6,11 @@ FocusScope {
     id: root
     implicitHeight: 36
     Layout.fillWidth: true
-    activeFocusOnTab: true
+    activeFocusOnTab: !readOnly
 
     property bool multiple: false
     property bool directoriesOnly: false
+    property bool readOnly: false
     property var selectedPaths: []
 
     signal pathsChanged(var paths)
@@ -17,6 +18,7 @@ FocusScope {
     function forceActiveFocus() { focusItem.forceActiveFocus() }
 
     function _openDialog() {
+        if (root.readOnly) return
         if (directoriesOnly) folderDialog.open()
         else fileDialog.open()
     }
@@ -30,6 +32,7 @@ FocusScope {
     Rectangle {
         anchors.fill: parent
         radius: 8
+        opacity: root.readOnly ? 0.5 : 1.0
         color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g,
                        Theme.secondaryBackground.b, Config.windowOpacity)
         border.color: focusItem.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
@@ -52,7 +55,7 @@ FocusScope {
             }
 
             Rectangle {
-                visible: root.selectedPaths && root.selectedPaths.length > 0
+                visible: !root.readOnly && root.selectedPaths && root.selectedPaths.length > 0
                 Layout.preferredWidth: 20
                 Layout.preferredHeight: 20
                 Layout.alignment: Qt.AlignVCenter

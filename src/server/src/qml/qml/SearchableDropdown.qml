@@ -6,7 +6,7 @@ Item {
     id: root
     implicitHeight: compact ? 28 : 36
     Layout.fillWidth: !compact
-    activeFocusOnTab: !compact
+    activeFocusOnTab: !compact && !readOnly
 
     property var items: []
     property var currentItem: null
@@ -17,6 +17,7 @@ Item {
     property real minimumWidth: 0
 
     property string placeholder: ""
+    property bool readOnly: false
 
     width: compact ? Math.max(triggerButton.implicitWidth, minimumWidth) : implicitWidth
 
@@ -32,6 +33,7 @@ Item {
     }
 
     function open() {
+        if (root.readOnly) return
         if (dropdownPopup.visible) return
         if (searchField.text !== "") {
             searchField.text = ""
@@ -119,6 +121,7 @@ Item {
 
     Rectangle {
         id: triggerButton
+        opacity: root.readOnly ? 0.5 : 1.0
         implicitWidth: buttonRow.implicitWidth + 20
         anchors.fill: compact ? null : parent
         width: compact ? root.width : implicitWidth
@@ -167,7 +170,7 @@ Item {
             id: buttonMouseArea
             anchors.fill: parent
             hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
+            cursorShape: root.readOnly ? Qt.ArrowCursor : Qt.PointingHandCursor
             onClicked: {
                 if (Date.now() - root._closedTime < 300) return
                 root.open()

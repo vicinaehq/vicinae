@@ -5,14 +5,16 @@ Item {
     id: root
     implicitHeight: 28
     Layout.fillWidth: true
-    activeFocusOnTab: true
+    activeFocusOnTab: !readOnly
 
     property bool checked: false
     property string label: ""
+    property bool readOnly: false
 
     signal toggled()
 
     function toggle() {
+        if (root.readOnly) return
         root.checked = !root.checked
         root.toggled()
     }
@@ -36,13 +38,14 @@ Item {
 
     MouseArea {
         anchors.fill: parent
-        cursorShape: Qt.PointingHandCursor
+        cursorShape: root.readOnly ? Qt.ArrowCursor : Qt.PointingHandCursor
         onClicked: root.toggle()
     }
 
     RowLayout {
         anchors.fill: parent
         spacing: 8
+        opacity: root.readOnly ? 0.5 : 1.0
 
         Rectangle {
             id: box
