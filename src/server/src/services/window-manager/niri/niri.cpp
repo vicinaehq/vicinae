@@ -239,18 +239,10 @@ bool WindowManager::closeWindow(const AbstractWindow &window) const {
   return true;
 }
 
-bool WindowManager::supportsPaste() const { return m_keyboard.isAvailable(); }
+bool WindowManager::supportsPaste() const { return false; }
 
 bool WindowManager::pasteToWindow(const AbstractWindow *window, const AbstractApplication *app) {
-  using VK = Wayland::VirtualKeyboard;
-
-  if (!m_keyboard.isAvailable()) { return false; }
-
-  if (app && app->isTerminalEmulator()) {
-    return m_keyboard.sendKeySequence(XKB_KEY_v, VK::MOD_CTRL | VK::MOD_SHIFT);
-  }
-
-  return m_keyboard.sendKeySequence(XKB_KEY_v, VK::MOD_CTRL);
+  return false;
 }
 
 bool WindowManager::ping() const { return sendUnitRequest("Version").has_value(); }

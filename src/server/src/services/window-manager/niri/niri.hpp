@@ -1,6 +1,5 @@
 #pragma once
 #include "services/window-manager/abstract-window-manager.hpp"
-#include "wayland/virtual-keyboard.hpp"
 #include <qsocketnotifier.h>
 #include <xkbcommon/xkbcommon-keysyms.h>
 
@@ -108,7 +107,6 @@ private:
   QSocketNotifier *m_eventNotifier = nullptr;
   int m_eventFd = -1;
   QString m_eventBuffer;
-  Wayland::VirtualKeyboard m_keyboard;
 };
 
 } // namespace Niri
