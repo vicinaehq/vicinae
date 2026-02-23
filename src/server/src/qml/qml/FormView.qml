@@ -18,8 +18,8 @@ Flickable {
     }
 
     function _focusFirstIn(item) {
-        for (var i = 0; i < item.children.length; i++) {
-            var child = item.children[i]
+        for (let i = 0; i < item.children.length; i++) {
+            let child = item.children[i]
             if (child.activeFocusOnTab) {
                 child.forceActiveFocus()
                 return true
@@ -47,19 +47,25 @@ Flickable {
     Connections {
         target: root.Window.window
         function onActiveFocusItemChanged() {
-            var focused = root.Window.window ? root.Window.window.activeFocusItem : null
+            let focused = root.Window.window ? root.Window.window.activeFocusItem : null
             if (!focused) return
             _ensureVisible(focused)
         }
     }
 
+    function _isDescendantOf(item, ancestor) {
+        for (let p = item; p; p = p.parent)
+            if (p === ancestor) return true
+        return false
+    }
+
     function _ensureVisible(item) {
-        // Map item position to Flickable content coordinates
-        var mapped = item.mapToItem(root.contentItem, 0, 0)
-        var itemTop = mapped.y
-        var itemBottom = itemTop + item.height
-        var viewTop = root.contentY
-        var viewBottom = viewTop + root.height
+        if (!_isDescendantOf(item, root.contentItem)) return
+        let mapped = item.mapToItem(root.contentItem, 0, 0)
+        let itemTop = mapped.y
+        let itemBottom = itemTop + item.height
+        let viewTop = root.contentY
+        let viewBottom = viewTop + root.height
 
         if (itemTop < viewTop) {
             root.contentY = Math.max(0, itemTop - 8)
