@@ -15,43 +15,6 @@ Rectangle {
     readonly property string code: blockData.code ?? ""
     readonly property string highlightedHtml: blockData.highlightedHtml ?? ""
 
-    readonly property string _langIcon: {
-        var lang = language.toLowerCase()
-        var map = {
-            "python": "python", "py": "python",
-            "javascript": "javascript", "js": "javascript",
-            "typescript": "typescript", "ts": "typescript",
-            "rust": "rust", "rs": "rust",
-            "go": "go", "golang": "go",
-            "java": "java",
-            "kotlin": "kotlin", "kt": "kotlin",
-            "swift": "swift",
-            "ruby": "ruby", "rb": "ruby",
-            "php": "php",
-            "csharp": "csharp", "cs": "csharp", "c#": "csharp",
-            "dart": "dart",
-            "lua": "lua",
-            "perl": "perl", "pl": "perl",
-            "r": "r",
-            "scala": "scala",
-            "haskell": "haskell", "hs": "haskell",
-            "elixir": "elixir", "ex": "elixir",
-            "bash": "bash", "sh": "bash", "shell": "bash", "zsh": "bash",
-            "json": "json",
-            "yaml": "yaml", "yml": "yaml",
-            "xml": "xml",
-            "html": "html5",
-            "css": "css3",
-            "graphql": "graphql", "gql": "graphql",
-            "markdown": "markdown", "md": "markdown",
-            "docker": "docker", "dockerfile": "docker",
-            "react": "react", "jsx": "react", "tsx": "react",
-            "svelte": "svelte",
-            "angular": "angular",
-        }
-        return map[lang] ?? ""
-    }
-
     width: parent?.width ?? 0
     implicitHeight: col.implicitHeight
     radius: 6
@@ -79,15 +42,6 @@ Rectangle {
                 anchors.topMargin: 8
                 anchors.bottomMargin: 8
                 spacing: 5
-
-                ViciImage {
-                    Layout.preferredWidth: 14
-                    Layout.preferredHeight: 14
-                    visible: root._langIcon.length > 0
-                    source: root._langIcon.length > 0
-                            ? Img.builtin(root._langIcon).withFillColor(Theme.textMuted)
-                            : Img.builtin("code")
-                }
 
                 Text {
                     text: root.language
