@@ -436,7 +436,7 @@ void LauncherWindow::applyWindowConfig() {
     if (auto *lshell = Shell::Window::get(m_window)) {
       lshell->setLayer(lc.layer == "overlay" ? Shell::Window::LayerOverlay : Shell::Window::LayerTop);
       lshell->setScope(Omnicast::LAYER_SCOPE);
-      lshell->setScreenConfiguration(Shell::Window::ScreenFromCompositor);
+      lshell->setWantsToBeOnActiveScreen(true);
       lshell->setAnchors(Shell::Window::AnchorNone);
       lshell->setKeyboardInteractivity(lc.keyboardInteractivity == "exclusive"
                                            ? Shell::Window::KeyboardInteractivityExclusive
