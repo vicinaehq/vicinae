@@ -18,7 +18,7 @@ Item {
 
     property string placeholder: ""
 
-    width: compact ? Math.max(triggerButton.implicitWidth, minimumWidth) : undefined
+    width: compact ? Math.max(triggerButton.implicitWidth, minimumWidth) : implicitWidth
 
     onItemsChanged: _rebuildFlat("")
 
@@ -119,10 +119,10 @@ Item {
 
     Rectangle {
         id: triggerButton
-        implicitWidth: compact ? buttonRow.implicitWidth + 20 : undefined
-        anchors.fill: compact ? undefined : parent
-        width: compact ? root.width : undefined
-        height: compact ? 28 : undefined
+        implicitWidth: buttonRow.implicitWidth + 20
+        anchors.fill: compact ? null : parent
+        width: compact ? root.width : implicitWidth
+        height: compact ? 28 : implicitHeight
         radius: compact ? 6 : 8
         color: buttonMouseArea.containsMouse ? Theme.listItemHoverBg
                : Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g,
