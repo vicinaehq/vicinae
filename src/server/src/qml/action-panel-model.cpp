@@ -1,6 +1,15 @@
 #include "action-panel-model.hpp"
+#include "lib/fuzzy/fuzzy-searchable.hpp"
 #include "theme.hpp"
 #include <QKeyEvent>
+
+template <> struct fuzzy::FuzzySearchable<std::shared_ptr<AbstractAction>> {
+  static int score(const std::shared_ptr<AbstractAction> &action, std::string_view query) {
+    auto title = action->title().toStdString();
+    int s = 0;
+    return fts::fuzzy_match(query, title, s) ? s : 0;
+  }
+};
 
 ActionPanelModel::ActionPanelModel(QObject *parent) : QAbstractListModel(parent) {
   connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() {
@@ -31,8 +40,7 @@ void ActionPanelModel::setStateFrom(const ActionPanelState *state) {
   m_allActions.clear();
   m_sections.clear();
   m_flat.clear();
-  m_filter.clear();
-  m_filterWords.clear();
+  m_filterQuery.clear();
 
   if (state) {
     for (const auto &section : state->sections()) {
@@ -151,9 +159,9 @@ void ActionPanelModel::activate(int index) {
 }
 
 void ActionPanelModel::setFilter(const QString &text) {
-  if (m_filter == text) return;
-  m_filter = text;
-  m_filterWords = text.split(' ', Qt::SkipEmptyParts);
+  auto query = text.toStdString();
+  if (m_filterQuery == query) return;
+  m_filterQuery = std::move(query);
 
   beginResetModel();
   rebuildFlatList();
@@ -174,34 +182,27 @@ int ActionPanelModel::nextSelectableIndex(int from, int direction) const {
 
 void ActionPanelModel::rebuildFlatList() {
   m_flat.clear();
+  m_flat.reserve(m_allActions.size() + m_sections.size() * 2);
 
   bool needsDivider = false;
+  std::vector<Scored<int>> scored;
 
   for (int s = 0; s < static_cast<int>(m_sections.size()); ++s) {
     const auto &section = m_sections[s];
+    fuzzy::fuzzyFilter<std::shared_ptr<AbstractAction>>(section.actions, m_filterQuery, scored);
 
-    // Collect matching actions for this section
-    std::vector<int> matchingActions;
-    for (int a = 0; a < static_cast<int>(section.actions.size()); ++a) {
-      if (m_filterWords.isEmpty() || matchesFilter(section.actions[a]->title())) {
-        matchingActions.push_back(a);
-      }
-    }
+    if (scored.empty()) continue;
 
-    if (matchingActions.empty()) continue;
-
-    // Add divider between sections (except before the first)
     if (needsDivider) {
-      m_flat.push_back({.kind = FlatItem::Divider});
+      m_flat.emplace_back(FlatItem::Divider);
     }
 
-    // Add section header if it has a name
     if (!section.name.isEmpty()) {
-      m_flat.push_back({.kind = FlatItem::SectionHeader, .sectionIdx = s});
+      m_flat.emplace_back(FlatItem::SectionHeader, s);
     }
 
-    for (int a : matchingActions) {
-      m_flat.push_back({.kind = FlatItem::ActionItem, .sectionIdx = s, .actionIdx = a});
+    for (const auto &entry : scored) {
+      m_flat.emplace_back(FlatItem::ActionItem, s, entry.data);
     }
 
     needsDivider = true;
@@ -224,16 +225,3 @@ bool ActionPanelModel::activateByShortcut(int key, int modifiers) {
   return false;
 }
 
-bool ActionPanelModel::matchesFilter(const QString &title) const {
-  for (const auto &word : m_filterWords) {
-    bool found = false;
-    for (const auto &titleWord : title.split(' ', Qt::SkipEmptyParts)) {
-      if (titleWord.startsWith(word, Qt::CaseInsensitive)) {
-        found = true;
-        break;
-      }
-    }
-    if (!found) return false;
-  }
-  return true;
-}

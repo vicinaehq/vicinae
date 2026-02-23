@@ -2,9 +2,12 @@
 #include "actions/app/app-actions.hpp"
 #include "actions/theme/theme-actions.hpp"
 #include "clipboard-actions.hpp"
+#include "common/scored.hpp"
 #include "keyboard/keybind.hpp"
+#include "lib/fts_fuzzy.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
+#include <algorithm>
 
 ThemeListModel::ThemeListModel(QObject *parent) : CommandListModel(parent) {}
 
@@ -22,25 +25,39 @@ void ThemeListModel::initialize() {
 void ThemeListModel::setFilter(const QString &text) {
   m_query = text;
   auto themes = m_themeService->themes();
+  auto query = text.toStdString();
 
   m_selectedTheme.reset();
   m_availableThemes.clear();
-  m_availableThemes.reserve(themes.size());
 
   auto currentId = QString::fromStdString(m_config->value().systemTheme().name);
+  std::vector<Scored<std::shared_ptr<ThemeFile>>> scoredAvailable;
 
   for (auto &theme : themes) {
-    if (!theme->name().contains(text, Qt::CaseInsensitive)) continue;
+    int score = 0;
+    if (!query.empty()) {
+      auto name = theme->name().toStdString();
+      if (!fts::fuzzy_match(query, name, score))
+        continue;
+    }
+
     if (theme->id() == currentId) {
       m_selectedTheme = std::move(theme);
     } else {
-      m_availableThemes.emplace_back(std::move(theme));
+      scoredAvailable.emplace_back(std::move(theme), score);
     }
   }
 
+  if (!query.empty())
+    std::stable_sort(scoredAvailable.begin(), scoredAvailable.end(), std::greater{});
+
+  m_availableThemes.reserve(scoredAvailable.size());
+  for (auto &s : scoredAvailable)
+    m_availableThemes.emplace_back(std::move(s.data));
+
   std::vector<SectionInfo> sections;
-  sections.push_back({QStringLiteral("Current Theme"), m_selectedTheme.has_value() ? 1 : 0});
-  sections.push_back({QStringLiteral("Available Themes"), static_cast<int>(m_availableThemes.size())});
+  sections.emplace_back(QStringLiteral("Current Theme"), m_selectedTheme.has_value() ? 1 : 0);
+  sections.emplace_back(QStringLiteral("Available Themes"), static_cast<int>(m_availableThemes.size()));
   setSections(sections);
 }
 

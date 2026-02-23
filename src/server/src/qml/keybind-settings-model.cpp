@@ -1,6 +1,8 @@
 #include "keybind-settings-model.hpp"
 #include "keyboard/keybind-manager.hpp"
 #include "keyboard/keyboard.hpp"
+#include "lib/fuzzy/fuzzy-searchable.hpp"
+#include <algorithm>
 
 KeybindSettingsModel::KeybindSettingsModel(QObject *parent) : QAbstractListModel(parent) {
   rebuild({});
@@ -103,10 +105,19 @@ QString KeybindSettingsModel::shortcutDisplayString(int key, int modifiers) cons
 void KeybindSettingsModel::rebuild(const QString &filter) {
   beginResetModel();
   m_entries.clear();
+
+  auto query = filter.toStdString();
+  std::vector<Scored<Entry>> scored;
+
   for (const auto &[id, info] : KeybindManager::instance()->orderedInfoList()) {
-    auto matches = filter.isEmpty() || info->name.contains(filter, Qt::CaseInsensitive) ||
-                   info->description.contains(filter, Qt::CaseInsensitive);
-    if (!matches) continue;
+    int sc = 0;
+    if (!query.empty()) {
+      auto name = info->name.toStdString();
+      auto desc = info->description.toStdString();
+      sc = fuzzy::scoreWeighted({{name, 1.0}, {desc, 0.5}}, query);
+      if (sc <= 0) continue;
+    }
+
     Entry e;
     e.keybindId = static_cast<int>(id);
     e.name = info->name;
@@ -114,8 +125,16 @@ void KeybindSettingsModel::rebuild(const QString &filter) {
     e.description = info->description;
     if (auto s = KeybindManager::instance()->resolve(id); s.isValid())
       e.shortcut = shortcutString(s);
-    m_entries.push_back(std::move(e));
+    scored.push_back({.data = std::move(e), .score = sc});
   }
+
+  if (!query.empty())
+    std::stable_sort(scored.begin(), scored.end(), std::greater{});
+
+  m_entries.reserve(scored.size());
+  for (auto &s : scored)
+    m_entries.emplace_back(std::move(s.data));
+
   endResetModel();
   m_selectedRow = -1;
   select(m_entries.empty() ? -1 : 0);

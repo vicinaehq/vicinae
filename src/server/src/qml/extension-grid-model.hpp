@@ -58,7 +58,6 @@ private:
 
   void rebuildFromModel(bool resetSelection);
   void reapplyFilter();
-  bool matchesFilter(const GridItemViewModel &item, const QString &filter) const;
   const GridItemViewModel *itemAt(int section, int item) const;
 
   NotifyFn m_notify;

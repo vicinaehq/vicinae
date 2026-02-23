@@ -1,10 +1,31 @@
 #include "extension-grid-model.hpp"
 #include "common/types.hpp"
+#include "lib/fuzzy/fuzzy-searchable.hpp"
 #include "navigation-controller.hpp"
 #include "theme.hpp"
 #include "theme/theme-file.hpp"
 #include "ui/image/url.hpp"
-#include <algorithm>
+
+template <> struct fuzzy::FuzzySearchable<GridItemViewModel> {
+  static int score(const GridItemViewModel &item, std::string_view query) {
+    std::vector<fuzzy::WeightedField> fields;
+    fields.reserve(2 + item.keywords.size());
+    fields.push_back({item.title, 1.0});
+    fields.push_back({item.subtitle, 0.5});
+    for (const auto &kw : item.keywords)
+      fields.push_back({kw, 0.7});
+
+    int best = 0;
+    for (const auto &f : fields) {
+      int s = 0;
+      if (fts::fuzzy_match(query, f.text, s)) {
+        int weighted = static_cast<int>(s * f.weight);
+        if (weighted > best) best = weighted;
+      }
+    }
+    return best;
+  }
+};
 
 ExtensionGridModel::ExtensionGridModel(NotifyFn notify, QObject *parent)
     : CommandGridModel(parent), m_notify(std::move(notify)) {}
@@ -131,29 +152,22 @@ const std::vector<ExtensionGridModel::Section> &ExtensionGridModel::activeSectio
   return m_sections;
 }
 
-bool ExtensionGridModel::matchesFilter(const GridItemViewModel &item, const QString &filter) const {
-  if (filter.isEmpty()) return true;
-
-  if (QString::fromStdString(item.title).contains(filter, Qt::CaseInsensitive)) return true;
-  if (QString::fromStdString(item.subtitle).contains(filter, Qt::CaseInsensitive)) return true;
-
-  for (const auto &kw : item.keywords) {
-    if (QString::fromStdString(kw).contains(filter, Qt::CaseInsensitive)) return true;
-  }
-
-  return false;
-}
 
 void ExtensionGridModel::reapplyFilter() {
+  auto query = m_filter.toStdString();
+  std::vector<Scored<int>> scored;
+
   m_filteredSections.clear();
   for (const auto &sec : m_sections) {
+    fuzzy::fuzzyFilter<GridItemViewModel>(sec.items, query, scored);
+
     Section filtered;
     filtered.name = sec.name;
     filtered.aspectRatio = sec.aspectRatio;
     filtered.columns = sec.columns;
-    for (const auto &item : sec.items) {
-      if (matchesFilter(item, m_filter)) { filtered.items.push_back(item); }
-    }
+    filtered.items.reserve(scored.size());
+    for (const auto &s : scored)
+      filtered.items.emplace_back(sec.items[s.data]);
     m_filteredSections.push_back(std::move(filtered));
   }
 }

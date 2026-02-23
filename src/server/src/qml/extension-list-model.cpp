@@ -1,8 +1,29 @@
 #include "extension-list-model.hpp"
+#include "lib/fuzzy/fuzzy-searchable.hpp"
 #include "navigation-controller.hpp"
 #include "view-utils.hpp"
 #include "ui/image/url.hpp"
-#include <algorithm>
+
+template <> struct fuzzy::FuzzySearchable<ListItemViewModel> {
+  static int score(const ListItemViewModel &item, std::string_view query) {
+    std::vector<fuzzy::WeightedField> fields;
+    fields.reserve(2 + item.keywords.size());
+    fields.push_back({item.title, 1.0});
+    fields.push_back({item.subtitle, 0.5});
+    for (const auto &kw : item.keywords)
+      fields.push_back({kw, 0.7});
+
+    int best = 0;
+    for (const auto &f : fields) {
+      int s = 0;
+      if (fts::fuzzy_match(query, f.text, s)) {
+        int weighted = static_cast<int>(s * f.weight);
+        if (weighted > best) best = weighted;
+      }
+    }
+    return best;
+  }
+};
 
 ExtensionListModel::ExtensionListModel(NotifyFn notify, QObject *parent)
     : CommandListModel(parent), m_notify(std::move(notify)) {}
@@ -105,30 +126,23 @@ const std::vector<ExtensionListModel::Section> &ExtensionListModel::activeSectio
   return m_sections;
 }
 
-bool ExtensionListModel::matchesFilter(const ListItemViewModel &item, const QString &filter) const {
-  if (filter.isEmpty()) return true;
-
-  if (QString::fromStdString(item.title).contains(filter, Qt::CaseInsensitive)) return true;
-  if (QString::fromStdString(item.subtitle).contains(filter, Qt::CaseInsensitive)) return true;
-
-  for (const auto &kw : item.keywords) {
-    if (QString::fromStdString(kw).contains(filter, Qt::CaseInsensitive)) return true;
-  }
-
-  return false;
-}
 
 void ExtensionListModel::setFilter(const QString &text) {
   m_filter = text;
 
   if (m_model.filtering) {
+    auto query = text.toStdString();
+    std::vector<Scored<int>> scored;
+
     m_filteredSections.clear();
     for (const auto &sec : m_sections) {
+      fuzzy::fuzzyFilter<ListItemViewModel>(sec.items, query, scored);
+
       Section filtered;
       filtered.name = sec.name;
-      for (const auto &item : sec.items) {
-        if (matchesFilter(item, text)) { filtered.items.push_back(item); }
-      }
+      filtered.items.reserve(scored.size());
+      for (const auto &s : scored)
+        filtered.items.emplace_back(sec.items[s.data]);
       m_filteredSections.push_back(std::move(filtered));
     }
     rebuildFromModel();

@@ -54,7 +54,6 @@ private:
   };
 
   void rebuildFromModel();
-  bool matchesFilter(const ListItemViewModel &item, const QString &filter) const;
   const ListItemViewModel *itemAt(int section, int item) const;
 
   NotifyFn m_notify;

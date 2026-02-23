@@ -3,6 +3,7 @@
 #include "navigation-controller.hpp"
 #include <QAbstractListModel>
 #include <memory>
+#include <string>
 #include <vector>
 
 class ActionPanelModel : public QAbstractListModel {
@@ -53,11 +54,9 @@ private:
   };
 
   void rebuildFlatList();
-  bool matchesFilter(const QString &title) const;
 
   QString m_title;
-  QString m_filter;
-  QStringList m_filterWords;
+  std::string m_filterQuery;
 
   // Owns all actions so they outlive the state
   std::vector<std::shared_ptr<AbstractAction>> m_allActions;
