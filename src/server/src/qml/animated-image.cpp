@@ -1,8 +1,12 @@
 #include "animated-image.hpp"
 #include "data-uri/data-uri.hpp"
+#include "image-data-cache.hpp"
 #include "image-fetcher.hpp"
 #include <QFile>
+#include <QGuiApplication>
 #include <QPainter>
+#include <QQuickWindow>
+#include <QtMath>
 
 static constexpr int kMaxAnimDataSize = 512 * 1024; // 512KB
 
@@ -33,6 +37,7 @@ void ViciAnimatedImage::reset() {
   delete m_buffer;
   m_buffer = nullptr;
   m_data.clear();
+  m_scaledSizeApplied = false;
 
   if (m_animated) {
     m_animated = false;
@@ -51,6 +56,14 @@ void ViciAnimatedImage::setSource(const QString &src) {
 
   static const QString prefix = QStringLiteral("image://vicinae/");
   QString id = src.startsWith(prefix) ? src.mid(prefix.length()) : src;
+
+  auto cached = ImageDataCache::instance().take(id);
+  if (cached.result == ImageDataCache::Result::NotAnimated)
+    return;
+  if (cached.result == ImageDataCache::Result::Animated) {
+    loadData(cached.data);
+    return;
+  }
 
   int colonIdx = id.indexOf(':');
   if (colonIdx < 0) return;
@@ -75,6 +88,26 @@ void ViciAnimatedImage::setSource(const QString &src) {
   } else if (type == QStringLiteral("datauri")) {
     DataUri uri(name);
     loadData(uri.decodeContent());
+  }
+}
+
+void ViciAnimatedImage::applyScaledSize() {
+  if (!m_movie || m_nativeSize.isEmpty()) return;
+
+  int w = qCeil(width());
+  int h = qCeil(height());
+  if (w <= 0 || h <= 0) return;
+
+  qreal dpr = window() ? window()->devicePixelRatio()
+                        : qGuiApp->devicePixelRatio();
+  QSize physicalSize(qCeil(w * dpr), qCeil(h * dpr));
+  QSize target = QSizeF(m_nativeSize)
+      .scaled(QSizeF(physicalSize), Qt::KeepAspectRatio)
+      .toSize();
+
+  if (!target.isEmpty() && target != m_nativeSize) {
+    m_movie->setScaledSize(target);
+    m_scaledSizeApplied = true;
   }
 }
 
@@ -104,6 +137,8 @@ void ViciAnimatedImage::loadData(const QByteArray &data) {
   m_nativeSize = m_movie->currentPixmap().size();
   setImplicitWidth(m_nativeSize.width());
   setImplicitHeight(m_nativeSize.height());
+
+  applyScaledSize();
 
   connect(m_movie, &QMovie::updated, this, [this]() { update(); });
   m_movie->start();
@@ -143,6 +178,9 @@ void ViciAnimatedImage::itemChange(ItemChange change,
 void ViciAnimatedImage::geometryChange(const QRectF &newGeo,
                                        const QRectF &oldGeo) {
   QQuickPaintedItem::geometryChange(newGeo, oldGeo);
-  if (newGeo.size() != oldGeo.size())
+  if (newGeo.size() != oldGeo.size()) {
+    if (m_movie && !m_scaledSizeApplied)
+      applyScaledSize();
     update();
+  }
 }

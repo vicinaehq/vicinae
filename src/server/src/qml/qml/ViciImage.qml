@@ -16,6 +16,10 @@ Item {
     property bool _errored: false
     onSourceChanged: _errored = false
 
+    readonly property int _effectiveW: root.sourceSize.width >= 0 ? root.sourceSize.width : root.width
+    readonly property int _effectiveH: root.sourceSize.height >= 0 ? root.sourceSize.height : root.height
+    readonly property bool _hasValidSize: _effectiveW > 0 && _effectiveH > 0
+
     readonly property string _resolvedSource: {
         var s = root.source
         if (!s) return ""
@@ -34,10 +38,13 @@ Item {
         visible: !animImg.animated
         fillMode: root.fillMode
         cache: root.cache
-        source: root._errored ? root._fallbackSource : root._resolvedSource
+        source: root._hasValidSize
+            ? (root._errored ? root._fallbackSource : root._resolvedSource)
+            : ""
         asynchronous: true
-        sourceSize.width: root.sourceSize.width >= 0 ? root.sourceSize.width : root.width
-        sourceSize.height: root.sourceSize.height >= 0 ? root.sourceSize.height : root.height
+        mipmap: true
+        sourceSize.width: root._effectiveW
+        sourceSize.height: root._effectiveH
         onStatusChanged: {
             if (status === Image.Error && !root._errored) {
                 console.warn("ViciImage: failed to load", root._resolvedSource)

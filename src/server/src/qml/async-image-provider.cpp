@@ -19,17 +19,19 @@
 #include <QTimer>
 #include <QUrl>
 #include "data-uri/data-uri.hpp"
+#include "image-data-cache.hpp"
 #include <atomic>
 #include <mutex>
 #include <set>
 
+static bool isGif(const QByteArray &data) {
+  return data.size() >= 6 && (data.startsWith("GIF87a") || data.startsWith("GIF89a"));
+}
+
 static std::mutex s_failedCacheMutex;
 static std::set<QString> s_failedImageIds;
 
-// Dedicated pool for raster image decoding.  Keeps at most 2 threads so we
-// never have many full-resolution images resident simultaneously (formats
-// like PNG ignore QImageReader::setScaledSize, so the full bitmap is read
-// before we can scale it down).
+// we limit concurrent image decodes for performance reasons
 static QThreadPool &imageDecodingPool() {
   static QThreadPool pool;
   static std::once_flag flag;
@@ -51,8 +53,7 @@ public:
   }
 
   QQuickTextureFactory *textureFactory() const override {
-    if (m_image.isNull())
-      return nullptr;
+    if (m_image.isNull()) return nullptr;
     return QQuickTextureFactory::textureFactoryForImage(m_image);
   }
 
@@ -62,13 +63,9 @@ public:
     return {};
   }
 
-  void cancel() override {
-    m_cancelled.store(true, std::memory_order_release);
-  }
+  void cancel() override { m_cancelled.store(true, std::memory_order_release); }
 
-  bool isCancelled() const {
-    return m_cancelled.load(std::memory_order_acquire);
-  }
+  bool isCancelled() const { return m_cancelled.load(std::memory_order_acquire); }
 
   void finish(QImage image) {
     if (m_cancelled.load(std::memory_order_acquire)) {
@@ -113,8 +110,8 @@ private:
   std::atomic<bool> m_cancelled{false};
 };
 
-static QImage renderBuiltinSvg(const QString &iconName, const QSize &size,
-                                const QColor &fg, const QColor &bg) {
+static QImage renderBuiltinSvg(const QString &iconName, const QSize &size, const QColor &fg,
+                               const QColor &bg) {
   QString iconPath = QStringLiteral(":icons/%1.svg").arg(iconName);
   QSvgRenderer renderer(iconPath);
   if (!renderer.isValid()) return {};
@@ -147,8 +144,7 @@ static QImage renderBuiltinSvg(const QString &iconName, const QSize &size,
     renderer.render(&svgPainter, svgImage.rect());
 
     QColor fillColor = fg;
-    if (bg.isValid() && bg.alpha() > 0)
-      fillColor = ContrastHelper::getTonalContrastColor(bg, 3);
+    if (bg.isValid() && bg.alpha() > 0) fillColor = ContrastHelper::getTonalContrastColor(bg, 3);
 
     svgPainter.setCompositionMode(QPainter::CompositionMode_SourceIn);
     svgPainter.fillRect(svgImage.rect(), fillColor);
@@ -222,8 +218,7 @@ static QImage renderLocalRaster(const QString &path, const QSize &size) {
   // setScaledSize is silently ignored by most formats (PNG, WebP, …).
   // If the decoded image is still much larger than requested, scale it
   // down now so we don't keep a full-resolution bitmap alive.
-  if (!img.isNull() && size.isValid()
-      && (img.width() > size.width() || img.height() > size.height())) {
+  if (!img.isNull() && size.isValid() && (img.width() > size.width() || img.height() > size.height())) {
     img = img.scaled(size, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
   }
 
@@ -252,8 +247,8 @@ static QImage decodeImageData(const QByteArray &data, const QSize &size) {
   delete buf;
 
   // Scale down if the format ignored setScaledSize (see renderLocalRaster).
-  if (!result.isNull() && size.isValid()
-      && (result.width() > size.width() || result.height() > size.height())) {
+  if (!result.isNull() && size.isValid() &&
+      (result.width() > size.width() || result.height() > size.height())) {
     result = result.scaled(size, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
   }
 
@@ -352,9 +347,7 @@ void ViciImageResponse::tryFallback(QImage &image) {
   auto fb = parseId(fallback);
 
   if (fb.type == QStringLiteral("builtin")) {
-    QColor fg = fb.fg.isValid()
-        ? fb.fg
-        : ThemeService::instance().theme().resolve(SemanticColor::Foreground);
+    QColor fg = fb.fg.isValid() ? fb.fg : ThemeService::instance().theme().resolve(SemanticColor::Foreground);
     image = renderBuiltinSvg(fb.name, m_size, fg, fb.bg);
     if (fb.circleMask && !image.isNull()) applyCircleMask(image);
   } else if (fb.type == QStringLiteral("system")) {
@@ -363,12 +356,11 @@ void ViciImageResponse::tryFallback(QImage &image) {
   }
 }
 
-QQuickImageResponse *AsyncImageProvider::requestImageResponse(
-    const QString &id, const QSize &requestedSize) {
+QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id, const QSize &requestedSize) {
 
   {
     std::lock_guard lock(s_failedCacheMutex);
-    if (s_failedImageIds.count(id)) {
+    if (s_failedImageIds.contains(id)) {
       auto *response = new ViciImageResponse(qGuiApp->devicePixelRatio());
       response->finishDeferred({});
       return response;
@@ -378,39 +370,49 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(
   qreal dpr = qGuiApp->devicePixelRatio();
   auto *response = new ViciImageResponse(dpr);
   response->setId(id);
-  QSize logical = requestedSize.isValid() && !requestedSize.isEmpty() ? requestedSize : QSize(512, 512);
+  QSize logical = requestedSize.isValid() && !requestedSize.isEmpty() ? requestedSize : QSize(64, 64);
   QSize size(qCeil(logical.width() * dpr), qCeil(logical.height() * dpr));
   auto parsed = parseId(id);
 
-  if (!parsed.fallback.isEmpty())
-    response->setFallback(parsed.fallback, size);
+  if (!parsed.fallback.isEmpty()) response->setFallback(parsed.fallback, size);
 
   if (parsed.type == QStringLiteral("builtin")) {
     // Auto-resolve foreground from theme when no explicit ?fg= param is provided
     QColor fg = parsed.fg;
-    if (!fg.isValid())
-      fg = ThemeService::instance().theme().resolve(SemanticColor::Foreground);
+    if (!fg.isValid()) fg = ThemeService::instance().theme().resolve(SemanticColor::Foreground);
     QImage img = renderBuiltinSvg(parsed.name, size, fg, parsed.bg);
     if (parsed.circleMask && !img.isNull()) applyCircleMask(img);
     response->finishDeferred(std::move(img));
 
   } else if (parsed.type == QStringLiteral("emoji")) {
     // FontService needs main thread
-    QMetaObject::invokeMethod(qApp, [response, name = parsed.name, size]() {
-      if (response->isCancelled()) { response->finish({}); return; }
-      QImage img = renderEmoji(name, size);
-      response->finish(std::move(img));
-    }, Qt::QueuedConnection);
+    QMetaObject::invokeMethod(
+        qApp,
+        [response, name = parsed.name, size]() {
+          if (response->isCancelled()) {
+            response->finish({});
+            return;
+          }
+          QImage img = renderEmoji(name, size);
+          response->finish(std::move(img));
+        },
+        Qt::QueuedConnection);
 
   } else if (parsed.type == QStringLiteral("system")) {
     // QIcon::fromTheme needs main thread
     QColor fg = parsed.fg;
-    QMetaObject::invokeMethod(qApp, [response, name = parsed.name, size, fg]() {
-      if (response->isCancelled()) { response->finish({}); return; }
-      QImage img = renderSystemIcon(name, size);
-      if (!img.isNull()) applyFillColor(img, fg);
-      response->finish(std::move(img));
-    }, Qt::QueuedConnection);
+    QMetaObject::invokeMethod(
+        qApp,
+        [response, name = parsed.name, size, fg]() {
+          if (response->isCancelled()) {
+            response->finish({});
+            return;
+          }
+          QImage img = renderSystemIcon(name, size);
+          if (!img.isNull()) applyFillColor(img, fg);
+          response->finish(std::move(img));
+        },
+        Qt::QueuedConnection);
 
   } else if (parsed.type == QStringLiteral("local")) {
     QString path = parsed.name;
@@ -424,7 +426,10 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(
       response->finishDeferred(std::move(img));
     } else {
       imageDecodingPool().start([response, path, size, circle, fg]() {
-        if (response->isCancelled()) { response->finish({}); return; }
+        if (response->isCancelled()) {
+          response->finish({});
+          return;
+        }
         QImage img = renderLocalRaster(path, size);
         if (!img.isNull()) applyFillColor(img, fg);
         if (circle && !img.isNull()) applyCircleMask(img);
@@ -440,57 +445,80 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(
       url.insert(5, '/');
     bool circle = parsed.circleMask;
     QColor fg = parsed.fg;
-    QMetaObject::invokeMethod(qApp, [response, url, size, circle, fg]() {
-      if (response->isCancelled()) { response->finish({}); return; }
-      auto *reply = NetworkFetcher::instance()->fetch(QUrl(url));
-      QObject::connect(reply, &FetchReply::finished, qApp,
-                       [response, reply, size, circle, fg](const QByteArray &data) {
-        reply->deleteLater();
-        if (response->isCancelled()) { response->finish({}); return; }
-        imageDecodingPool().start([response, data, size, circle, fg]() {
-          if (response->isCancelled()) { response->finish({}); return; }
-          QImage img = decodeImageData(data, size);
-          if (!img.isNull()) applyFillColor(img, fg);
-          if (circle && !img.isNull()) applyCircleMask(img);
-          response->finish(std::move(img));
-        });
-      });
-    }, Qt::QueuedConnection);
+    QMetaObject::invokeMethod(
+        qApp,
+        [response, url, size, circle, fg, id]() {
+          if (response->isCancelled()) {
+            response->finish({});
+            return;
+          }
+          auto *reply = NetworkFetcher::instance()->fetch(QUrl(url));
+          QObject::connect(reply, &FetchReply::finished, qApp,
+                           [response, reply, size, circle, fg, id](const QByteArray &data) {
+                             reply->deleteLater();
+                             if (response->isCancelled()) {
+                               response->finish({});
+                               return;
+                             }
+                             if (isGif(data))
+                               ImageDataCache::instance().storeAnimated(id, data);
+                             else
+                               ImageDataCache::instance().storeNotAnimated(id);
+                             imageDecodingPool().start([response, data, size, circle, fg]() {
+                               if (response->isCancelled()) {
+                                 response->finish({});
+                                 return;
+                               }
+                               QImage img = decodeImageData(data, size);
+                               if (!img.isNull()) applyFillColor(img, fg);
+                               if (circle && !img.isNull()) applyCircleMask(img);
+                               response->finish(std::move(img));
+                             });
+                           });
+        },
+        Qt::QueuedConnection);
 
   } else if (parsed.type == QStringLiteral("favicon")) {
     // FaviconService needs main thread
-    QMetaObject::invokeMethod(qApp, [response, domain = parsed.name, size]() {
-      if (response->isCancelled()) { response->finish({}); return; }
-      auto *svc = FaviconService::instance();
-      if (!svc) {
-        response->finish({});
-        return;
-      }
-      auto future = svc->makeRequest(domain);
-      // No parent — watcher must live on main thread, response lives on reader thread
-      auto *watcher = new QFutureWatcher<FaviconService::FaviconResponse>;
-      QObject::connect(watcher, &QFutureWatcherBase::finished, qApp,
-                       [response, watcher, size]() {
-        auto result = watcher->result();
-        if (!response->isCancelled() && result) {
-          QImage img = result.value()
-              .scaled(size, Qt::KeepAspectRatio, Qt::SmoothTransformation)
-              .toImage();
-          response->finish(std::move(img));
-        } else {
-          response->finish({});
-        }
-        watcher->deleteLater();
-      });
-      watcher->setFuture(future);
-    }, Qt::QueuedConnection);
+    QMetaObject::invokeMethod(
+        qApp,
+        [response, domain = parsed.name, size]() {
+          if (response->isCancelled()) {
+            response->finish({});
+            return;
+          }
+          auto *svc = FaviconService::instance();
+          if (!svc) {
+            response->finish({});
+            return;
+          }
+          auto future = svc->makeRequest(domain);
+          // No parent — watcher must live on main thread, response lives on reader thread
+          auto *watcher = new QFutureWatcher<FaviconService::FaviconResponse>;
+          QObject::connect(watcher, &QFutureWatcherBase::finished, qApp, [response, watcher, size]() {
+            auto result = watcher->result();
+            if (!response->isCancelled() && result) {
+              QImage img =
+                  result.value().scaled(size, Qt::KeepAspectRatio, Qt::SmoothTransformation).toImage();
+              response->finish(std::move(img));
+            } else {
+              response->finish({});
+            }
+            watcher->deleteLater();
+          });
+          watcher->setFuture(future);
+        },
+        Qt::QueuedConnection);
 
   } else if (parsed.type == QStringLiteral("datauri")) {
     QString dataStr = parsed.name;
     bool circle = parsed.circleMask;
     QColor fg = parsed.fg;
-    imageDecodingPool().start([response, dataStr, size, circle, fg]() {
-      if (response->isCancelled()) { response->finish({}); return; }
+    imageDecodingPool().start([response, dataStr, size, circle, fg, id]() {
+      if (response->isCancelled()) {
+        response->finish({});
+        return;
+      }
 
       DataUri uri(dataStr);
       QByteArray decoded = uri.decodeContent();
@@ -500,6 +528,13 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(
       }
 
       bool isSvg = uri.mediaType().contains(QStringLiteral("svg"));
+
+      if (!isSvg) {
+        if (isGif(decoded))
+          ImageDataCache::instance().storeAnimated(id, decoded);
+        else
+          ImageDataCache::instance().storeNotAnimated(id);
+      }
 
       QImage img;
       if (isSvg) {
