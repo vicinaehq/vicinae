@@ -132,7 +132,7 @@ bool WaylandWindowManager::closeWindow(const AbstractWindow &window) const {
 }
 
 bool WaylandWindowManager::supportsPaste() const {
-  return !Environment::isNiriCompositor() && Wayland::Globals::virtualKeyboardManager();
+  return Wayland::Globals::virtualKeyboardManager();
 }
 
 // cosmic needs its own top level management protocol integration
