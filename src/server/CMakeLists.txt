@@ -669,6 +669,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/SelectableDelegate.qml
 	src/qml/qml/SectionHeader.qml
 	src/qml/qml/Footer.qml
+	src/qml/qml/FooterButton.qml
 	src/qml/qml/FooterNavStatus.qml
 	src/qml/qml/FooterToast.qml
 	src/qml/qml/ShortcutBadge.qml

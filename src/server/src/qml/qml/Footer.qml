@@ -24,57 +24,24 @@ Item {
             }
         }
 
-        Row {
+        FooterButton {
             visible: {
                 if (!launcher.isRootSearch) return actionPanel.primaryActionTitle !== ""
                 return searchModel.primaryActionTitle !== ""
             }
-            spacing: 6
             Layout.alignment: Qt.AlignVCenter
-
-            Text {
-                text: !launcher.isRootSearch ? actionPanel.primaryActionTitle : searchModel.primaryActionTitle
-                color: Theme.textMuted
-                font.pointSize: Theme.smallerFontSize
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
-            ShortcutBadge {
-                text: !launcher.isRootSearch ? actionPanel.primaryActionShortcut : "↵"
-                anchors.verticalCenter: parent.verticalCenter
-            }
+            label: !launcher.isRootSearch ? actionPanel.primaryActionTitle : searchModel.primaryActionTitle
+            shortcut: !launcher.isRootSearch ? actionPanel.primaryActionShortcut : "↵"
+            onClicked: launcher.handleReturn()
         }
 
-        Item {
+        FooterButton {
             visible: actionPanel.hasMultipleActions
             Layout.alignment: Qt.AlignVCenter
-            implicitWidth: actionsRow.implicitWidth
-            implicitHeight: actionsRow.implicitHeight
-
-            Row {
-                id: actionsRow
-                spacing: 6
-
-                Text {
-                    text: "Actions"
-                    color: actionsMouseArea.containsMouse ? Theme.foreground : Theme.textMuted
-                    font.pointSize: Theme.smallerFontSize
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-
-                ShortcutBadge {
-                    text: Keybinds.toggleActionPanel
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-            }
-
-            MouseArea {
-                id: actionsMouseArea
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: actionPanel.toggle()
-            }
+            label: "Actions"
+            shortcut: Keybinds.toggleActionPanel
+            highlighted: actionPanel.open
+            onClicked: actionPanel.toggle()
         }
     }
 }
