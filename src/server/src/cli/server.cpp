@@ -312,6 +312,9 @@ void CliServerCommand::run(CLI::App *app) {
   QObject::connect(cfgService, &config::Manager::configChanged, configChanged);
   QIcon::setFallbackSearchPaths(Environment::fallbackIconSearchPaths());
 
+  auto builtinFont = ServiceRegistry::instance()->fontService()->builtinFontFamily();
+  if (!builtinFont.isEmpty()) QGuiApplication::setFont(QFont(builtinFont));
+
   configChanged(cfgService->value(), {});
 
   ctx.navigation->launch(std::make_shared<RootCommand>());
