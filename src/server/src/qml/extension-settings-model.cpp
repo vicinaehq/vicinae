@@ -339,7 +339,10 @@ void ExtensionSettingsModel::rebuild(const QString &filter) {
   if (newRow >= static_cast<int>(m_visibleIndices.size()))
     newRow = m_visibleIndices.empty() ? -1 : 0;
   m_selectedRow = -1;
-  select(newRow);
+  if (newRow == -1)
+    emit selectedChanged();
+  else
+    select(newRow);
 }
 
 void ExtensionSettingsModel::rebuildVisible() {
