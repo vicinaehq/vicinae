@@ -81,8 +81,12 @@ appimage-build-env-push:
 .PHONY: appimage-build-env-push
 
 format:
-	@echo -e 'vicinae\nwlr-clip' | xargs -I{} find {} -type d -iname 'build' -prune -o -type f -iname '*.hpp' -o -type f -iname '*.cpp' | xargs -I{} bash -c '[ -f {} ] && clang-format -i {} && echo "Formatted {}" || echo "Failed to format {}"'
+	find ./src -type f \( -name '*.cpp' -o -name '*.hpp' \) -print0 | xargs -0 -n 10 -P $(shell nproc) clang-format -i
 .PHONY: format
+
+check-format:
+	find ./src -type f \( -name '*.cpp' -o -name '*.hpp' \) -print0 | xargs -0 -n 10 -P $(shell nproc) clang-format --dry-run -Werror
+.PHONY: check-format
 
 bump-patch:
 	./scripts/bump_version.sh patch
