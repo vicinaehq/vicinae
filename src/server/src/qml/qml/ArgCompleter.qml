@@ -4,8 +4,8 @@ import QtQuick.Layouts
 RowLayout {
     id: root
 
-    required property var args        // launcher.completerArgs
-    required property string icon     // launcher.completerIcon
+    required property var args
+    required property string icon
 
     signal valueChanged(int index, string value)
     signal focusSearchInput()
@@ -218,6 +218,5 @@ RowLayout {
         }
     }
 
-    // Absorb remaining space so inputs pack to the left and grow rightward
     Item { Layout.fillWidth: true }
 }

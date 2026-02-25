@@ -47,7 +47,6 @@ RootSearchModel::RootSearchModel(const ViewScope &scope, QObject *parent)
       emit dataChanged(index(0), index(rowCount() - 1), {IconSource, AccessoryColor});
   });
 
-  // Initial empty search to populate suggestions
   setFilter({});
 }
 
@@ -81,7 +80,6 @@ QVariant RootSearchModel::data(const QModelIndex &index, int role) const {
       default: return {};
       }
     }
-    // Return defaults for item roles so QML required properties are satisfied
     case ItemType: return QString();
     case Title: return QString();
     case Subtitle: return QString();
@@ -109,7 +107,6 @@ QVariant RootSearchModel::data(const QModelIndex &index, int role) const {
   case IsFile: return flat.kind == FlatItem::FileItem;
   }
 
-  // Calculator item
   if (flat.kind == FlatItem::CalculatorItem) {
     if (!m_calc) return {};
     switch (role) {
@@ -128,7 +125,6 @@ QVariant RootSearchModel::data(const QModelIndex &index, int role) const {
     }
   }
 
-  // File item
   if (flat.kind == FlatItem::FileItem) {
     if (flat.dataIndex < 0 || flat.dataIndex >= static_cast<int>(m_files.size()))
       return {};
@@ -149,7 +145,6 @@ QVariant RootSearchModel::data(const QModelIndex &index, int role) const {
     }
   }
 
-  // Helper to get first accessory from a RootItem
   const auto accessoryData = [&](const RootItem *item, int r) -> QVariant {
     if (!item) return {};
     if (r == AccessoryText) {

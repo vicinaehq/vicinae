@@ -74,7 +74,6 @@ private:
   QObject *m_currentPanel = nullptr;
   ActionPanelModel *m_rootModel = nullptr;
 
-  // Snapshot of the top-level state's actions (shared_ptrs keep them alive)
   std::vector<std::shared_ptr<AbstractAction>> m_allActions;
   struct SectionSnapshot {
     QString name;

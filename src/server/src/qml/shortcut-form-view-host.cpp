@@ -88,13 +88,11 @@ void ShortcutFormViewHost::initialize() {
     }
 
     if (!iconFound) {
-      // Trigger link blur to detect the icon
       handleLinkBlurred();
     }
 
     emit formChanged();
   } else if (!m_prefilledLink.isEmpty() || !m_prefilledName.isEmpty()) {
-    // Apply prefilled values (from external sources like browser extension)
     m_name = m_prefilledName;
     m_link = m_prefilledLink;
 
@@ -129,7 +127,7 @@ void ShortcutFormViewHost::initialize() {
 
   switch (m_mode) {
   case Mode::Create:
-    break; // uses default from command
+    break;
   case Mode::Edit:
     setNavigationTitle(QString("Edit \"%1\"").arg(m_initialShortcut->name()));
     break;

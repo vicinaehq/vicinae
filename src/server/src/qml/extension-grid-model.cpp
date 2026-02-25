@@ -34,7 +34,6 @@ void ExtensionGridModel::setExtensionData(const GridModel &model, bool resetSele
   m_model = model;
   m_placeholder = QString::fromStdString(model.searchPlaceholderText);
 
-  // Set grid-level defaults from the model
   if (model.columns) { setColumns(*model.columns); }
   if (model.aspectRatio > 0.0) { setAspectRatio(model.aspectRatio); }
   if (m_fit != model.fit) {
@@ -42,7 +41,6 @@ void ExtensionGridModel::setExtensionData(const GridModel &model, bool resetSele
     emit fitChanged();
   }
 
-  // Map Inset enum to ratio: None≈0.05, Small=0.10, Medium=0.15, Large=0.25
   double newInset;
   switch (model.inset) {
   case GridInset::None: newInset = 0.05; break;
@@ -203,7 +201,6 @@ QString ExtensionGridModel::cellIcon(int section, int item) const {
     if (auto img = std::get_if<ImageLikeModel>(&it->content)) {
       return imageSourceFor(ImageURL(*img));
     }
-    // ColorLike content — no icon URL
   }
   return {};
 }

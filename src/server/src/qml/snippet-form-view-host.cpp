@@ -57,7 +57,7 @@ void SnippetFormViewHost::initialize() {
 
   switch (m_mode) {
   case Mode::Create:
-    break; // uses default from command
+    break;
   case Mode::Edit:
     setNavigationTitle(QString("Edit \"%1\"").arg(QString::fromStdString(m_initialSnippet->name)));
     break;

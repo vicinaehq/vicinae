@@ -10,7 +10,6 @@ Item {
 
     signal navigateBack()
 
-    // Expose navigation functions for parent popover
     function moveUp() {
         var next = root.model.nextSelectableIndex(listView.currentIndex, -1)
         if (next !== listView.currentIndex) listView.currentIndex = next

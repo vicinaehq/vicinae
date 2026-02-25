@@ -5,7 +5,6 @@
 void ManageFallbackModel::applyFilter() {
   fuzzy::fuzzyFilter<RootItemPtr>(std::span<const RootItemPtr>(m_items), m_query, m_filtered);
 
-  // Partition into enabled (fallback) and available, keeping fuzzy sort within each group
   std::vector<Scored<int>> enabled, available;
   for (const auto &entry : m_filtered) {
     if (isFallbackEnabled(m_items[entry.data]))
@@ -14,7 +13,6 @@ void ManageFallbackModel::applyFilter() {
       available.push_back(entry);
   }
 
-  // Stable sort enabled items by their position in the configured fallback order
   std::ranges::stable_sort(enabled, [&](const auto &a, const auto &b) {
     auto posA = std::distance(m_fallbacks.begin(), std::ranges::find(m_fallbacks, m_items[a.data]));
     auto posB = std::distance(m_fallbacks.begin(), std::ranges::find(m_fallbacks, m_items[b.data]));

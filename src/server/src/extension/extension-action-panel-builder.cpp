@@ -7,7 +7,6 @@
 
 namespace ExtensionActionPanelBuilder {
 
-// Forward declarations
 static AbstractAction *createActionFromModel(const ActionModel &model, NotifyFn notify, SubmitFn submit);
 static AbstractAction *createSubmenuAction(const ActionPannelSubmenuPtr &submenuModel, NotifyFn notify,
                                            SubmenuCache *submenuCache, SubmitFn submit);
@@ -82,7 +81,6 @@ static AbstractAction *createSubmenuAction(const ActionPannelSubmenuPtr &submenu
   if (submenuModel->stableId) { action->setId(*submenuModel->stableId); }
   if (submenuModel->shortcut) { action->addShortcut(submenuModel->shortcut.value()); }
 
-  // Data path: state factory for QML consumption
   auto stateFactory = [notify, submenuCache, submit, stableId]() -> std::unique_ptr<ActionPanelState> {
     if (!stableId.isEmpty()) {
       auto it = submenuCache->find(stableId);

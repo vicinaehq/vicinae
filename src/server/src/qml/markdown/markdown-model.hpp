@@ -58,7 +58,6 @@ private:
   std::vector<Block> m_blocks;
   QString m_markdown;
 
-  // Cached theme color hex strings for inline HTML
   QString m_inlineCodeFg;
   QString m_inlineCodeBg;
   QString m_linkColor;

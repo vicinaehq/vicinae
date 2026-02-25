@@ -221,7 +221,6 @@ void ClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
   const auto &rawData = data.value();
   const auto &mime = entry.mimeType;
 
-  // text/uri-list → check for single file path
   if (mime == "text/uri-list") {
     QString text(rawData);
     auto paths = text.split("\r\n", Qt::SkipEmptyParts);
@@ -240,7 +239,6 @@ void ClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
             return;
           }
           if (Utils::isTextMimeType(fileMime)) {
-            // Read file contents for text preview
             QFile file(path.c_str());
             if (file.open(QIODevice::ReadOnly)) {
               m_detailTextContent = QString::fromUtf8(file.readAll());

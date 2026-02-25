@@ -73,7 +73,6 @@ Item {
         if (input.text === "") return
         var date = new Date(input.text)
         if (isNaN(date.getTime())) return
-        // Format to ISO
         if (root.includeTime) {
             var pad = (n) => n < 10 ? "0" + n : "" + n
             input.text = date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate())

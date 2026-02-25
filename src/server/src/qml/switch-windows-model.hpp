@@ -5,7 +5,7 @@
 
 struct WindowEntry {
   AbstractWindowManager::WindowPtr window;
-  std::shared_ptr<AbstractApplication> app; // may be null
+  std::shared_ptr<AbstractApplication> app;
 };
 
 template <> struct fuzzy::FuzzySearchable<WindowEntry> {

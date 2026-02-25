@@ -20,7 +20,7 @@ inline KSyntaxHighlighting::Repository &repository() {
 }
 
 struct StyleInfo {
-  QString color; // hex string, empty = default foreground
+  QString color;
   bool bold = false;
   bool italic = false;
 };

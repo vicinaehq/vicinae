@@ -92,7 +92,6 @@ void ManageSnippetsViewHost::loadDetail(const snippet::SerializedSnippet &snippe
 
   m_detailMetadata = meta;
 
-  // Create completer from parsed placeholders if it's a text snippet
   if (const auto text = std::get_if<snippet::TextSnippet>(&snippet.data)) {
     const auto parsed = PlaceholderString::parseSnippetText(text->text.c_str());
     const auto args = parsed.arguments();

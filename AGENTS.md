@@ -19,7 +19,7 @@ Remain pragmatic about this, we don't want to go back and forth between QML and 
 We use C++23 so we have access to most modern C++ features. 
 Here are a few rules to keep in mind:
 
-- Lack of value: use `std::optional` instead of arbitrary value discriminants such as `-1` or the empty string. 
+- Lack of value: use `std::optional` instead of arbitrary value discriminants such as the empty string. If this is not possible or goes against a commonly used convention, respect the convention first, no shoehorning.
 If we are dealing with raw pointers, the nullable component is already part of it so no need to add a layer of indirection.
 - Avoid raw pointers: unless we are dealing with QT's ownership model. For QT classes that are not QObjects, you should probably use standard smart pointers as recommended in modern QT.
 - Watch for implicit copies: avoid copies as much as possible, use non owning containers when you can (`std::span`, `std::string_view`, `QStringView`) and just `std::move` the data when applicable. When copy is the safest option, use copy: don't go out of your way to respect this rule.
@@ -29,7 +29,7 @@ If we are dealing with raw pointers, the nullable component is already part of i
 
 ## Coding style
 
-- For QObject classes always put `Q_OBJECT` macro on top and signals on top as well to make it clear at very first glance what is happening.
+- For QObject classes: always put `Q_OBJECT`, `Q_PROPERTY`, `Q_INVOKABLE`, and `signals` on top of the class, in this order.
 - Do not add unnecessary comments. Use them sparingly when something really needs to be made explicit.
 - Include order: system headers before local headers.
 - Header guards: use `#pragma once`.

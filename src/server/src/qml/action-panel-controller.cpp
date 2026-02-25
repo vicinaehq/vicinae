@@ -111,7 +111,6 @@ void ActionPanelController::openRootPanel() {
   for (const auto &snap : m_sections) {
     auto *section = state->createSection(snap.name);
     for (const auto &action : snap.actions) {
-      // Push shared_ptr directly to avoid double-ownership (addAction wraps raw ptrs)
       section->m_actions.push_back(action);
     }
   }
@@ -129,7 +128,6 @@ void ActionPanelController::pushActionList(std::unique_ptr<ActionPanelState> sta
   if (!state) return;
 
   state->finalize();
-  // Submenu models are parented to the root model so they're cleaned up together
   auto *model = new ActionPanelModel(std::move(state), m_rootModel);
   connectModel(model);
 
@@ -163,7 +161,6 @@ void ActionPanelController::onPanelPopped(QObject *currentPanel) {
 }
 
 AbstractAction *ActionPanelController::findBoundAction(const QKeyEvent *event) const {
-  // Scan top-level state actions (shortcuts like Enter, Cmd+Enter work panel open or closed)
   for (const auto &action : m_allActions) {
     if (action->isBoundTo(event)) return action.get();
   }

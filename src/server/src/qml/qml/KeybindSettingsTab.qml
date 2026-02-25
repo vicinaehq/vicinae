@@ -12,7 +12,6 @@ Item {
         if (!root.model.hasSelection) return
         var item = keybindList.itemAtIndex(root.model.selectedRow)
         if (!item) return
-        // Position over the shortcut cell (right 180px of the row)
         var pos = item.mapToItem(root, item.width - 180, 0)
         shortcutRecorder.x = pos.x + 90 - shortcutRecorder.width / 2
         shortcutRecorder.y = pos.y - shortcutRecorder.height - 10

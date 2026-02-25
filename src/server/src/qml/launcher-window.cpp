@@ -45,7 +45,6 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent) : QObje
 
   qRegisterMetaType<ImageUrl>("ImageUrl");
 
-  // The engine takes ownership of the image provider
   m_engine.addImageProvider(QStringLiteral("vicinae"), new AsyncImageProvider());
 
   m_imgSource = new ImageSource(this);
@@ -81,7 +80,6 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent) : QObje
   // View lifecycle — viewPoped fires BEFORE ViewState is destroyed
   connect(nav, &NavigationController::viewPoped, this, &LauncherWindow::handleViewPoped);
 
-  // currentViewChanged fires after view push/pop to indicate the new active view
   connect(nav, &NavigationController::currentViewChanged, this,
           [this](const NavigationController::ViewState &) { handleCurrentViewChanged(); });
 
@@ -92,7 +90,6 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent) : QObje
     }
   });
 
-  // Search visibility (for views that don't support search, e.g. form views)
   connect(nav, &NavigationController::searchVisibilityChanged, this, [this](bool visible) {
     if (m_searchVisible != visible) {
       m_searchVisible = visible;
@@ -122,7 +119,6 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent) : QObje
     }
   });
 
-  // Status bar / footer visibility (e.g. dmenu --no-footer)
   connect(nav, &NavigationController::statusBarVisiblityChanged, this, [this](bool visible) {
     if (m_statusBarVisible != visible) {
       m_statusBarVisible = visible;

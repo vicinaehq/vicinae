@@ -8,12 +8,10 @@ public:
   ViewScope() = default;
   ViewScope(ApplicationContext *ctx, const BaseView *owner) : m_ctx(ctx), m_owner(owner) {}
 
-  // --- Scoped navigation (auto-provides owner) ---
   void setActions(std::unique_ptr<ActionPanelState> panel) const { nav()->setActions(std::move(panel), m_owner); }
   void clearActions() const { nav()->clearActions(m_owner); }
   void setNavigationTitle(const QString &title) const { nav()->setNavigationTitle(title, m_owner); }
 
-  // --- Unscoped navigation ---
   bool executePrimaryAction() const { return nav()->executePrimaryAction(); }
   void closeWindow(const CloseWindowOptions &opts = {}) const { nav()->closeWindow(opts); }
   void pushView(BaseView *view) const { nav()->pushView(view); }
@@ -31,7 +29,6 @@ public:
   }
   void destroyCurrentCompletion() const { nav()->destroyCurrentCompletion(); }
 
-  // --- Non-navigation access ---
   ServiceRegistry *services() const { return m_ctx->services; }
   ApplicationContext *appContext() const { return m_ctx; }
 

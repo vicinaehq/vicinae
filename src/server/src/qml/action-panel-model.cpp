@@ -30,7 +30,6 @@ ActionPanelModel::ActionPanelModel(const ActionPanelState *state, QObject *paren
 
 void ActionPanelModel::setState(std::unique_ptr<ActionPanelState> state) {
   setStateFrom(state.get());
-  // The unique_ptr is released here — actions are kept alive by shared_ptrs in m_allActions
 }
 
 void ActionPanelModel::setStateFrom(const ActionPanelState *state) {

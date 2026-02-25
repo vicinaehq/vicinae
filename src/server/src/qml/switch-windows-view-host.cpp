@@ -31,11 +31,10 @@ void SwitchWindowsViewHost::initialize() {
 void SwitchWindowsViewHost::loadInitialData() { refreshWindows(); }
 
 void SwitchWindowsViewHost::textChanged(const QString &text) {
-  // Re-fetch windows if stale (>1s)
   auto now = std::chrono::steady_clock::now();
   if (std::chrono::duration_cast<std::chrono::seconds>(now - m_lastFetch).count() > 1) {
     refreshWindows();
-    return; // refreshWindows calls setItems which re-applies the current filter
+    return;
   }
   m_model->setFilter(text);
 }
@@ -63,7 +62,6 @@ void SwitchWindowsViewHost::refreshWindows() {
   m_lastFetch = std::chrono::steady_clock::now();
   m_model->setItems(std::move(entries));
 
-  // Re-apply current search text
   if (!searchText().isEmpty()) {
     m_model->setFilter(searchText());
   }

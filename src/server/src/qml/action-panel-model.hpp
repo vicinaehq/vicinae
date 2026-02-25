@@ -12,7 +12,7 @@ class ActionPanelModel : public QAbstractListModel {
 
 public:
   enum Role {
-    ItemType = Qt::UserRole + 1, // "section", "action", "divider"
+    ItemType = Qt::UserRole + 1,
     Title,
     IconSource,
     ShortcutLabel,
@@ -58,7 +58,6 @@ private:
   QString m_title;
   std::string m_filterQuery;
 
-  // Owns all actions so they outlive the state
   std::vector<std::shared_ptr<AbstractAction>> m_allActions;
   struct SectionInfo {
     QString name;

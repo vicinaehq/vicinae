@@ -109,8 +109,6 @@ int TextSelectionController::entryAt(qreal containerX,
 
   int n = static_cast<int>(m_entries.size());
 
-  // Forward scan: find the first entry whose bottom edge is at or below
-  // the mouse Y. Gaps naturally resolve to the entry below them.
   int hit = -1;
   for (int i = 0; i < n; ++i) {
     if (containerY <= m_entries[i].cachedY + m_entries[i].cachedHeight) {
@@ -121,8 +119,6 @@ int TextSelectionController::entryAt(qreal containerX,
   if (hit < 0)
     hit = n - 1;
 
-  // X-awareness: among entries at the same Y (table cells in one row),
-  // pick the one whose horizontal center is closest to containerX.
   qreal hitY = m_entries[hit].cachedY;
   int bestIdx = hit;
   qreal bestDist = std::abs(
@@ -196,7 +192,6 @@ void TextSelectionController::handlePress(qreal x, qreal y) {
   clearSelection();
   refreshGeometry();
 
-  // Store viewport coordinates for drag threshold check
   m_pressPos = {x, y};
   m_dragging = false;
   m_mouseX = x;
@@ -224,7 +219,6 @@ void TextSelectionController::handleMove(qreal x, qreal y) {
   if (m_anchor.entryIndex < 0)
     return;
 
-  // Drag threshold uses viewport coordinates (consistent with m_pressPos)
   auto dist = std::hypot(x - m_pressPos.x(), y - m_pressPos.y());
   if (!m_dragging) {
     if (dist < DRAG_THRESHOLD)
@@ -528,7 +522,6 @@ void TextSelectionController::autoScrollTick() {
   m_flickable->setProperty("contentY", newContentY);
   refreshGeometry();
 
-  // Re-apply selection using current viewport mouse position
   auto cp = toContainerCoords(m_mouseX, m_mouseY);
   int idx = entryAt(cp.x(), cp.y());
   if (idx >= 0) {

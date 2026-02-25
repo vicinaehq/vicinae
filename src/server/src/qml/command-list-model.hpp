@@ -85,8 +85,6 @@ protected:
   const ViewScope &scope() const { return m_scope; }
   QString imageSourceFor(const ImageURL &url) const { return qml::imageSourceFor(url); }
 
-  // Returns true if row is a data item, filling section and item indices.
-  // Returns false if row is invalid or a section header.
   bool dataItemAt(int row, int &section, int &item) const;
 
 private:

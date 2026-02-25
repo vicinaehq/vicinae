@@ -43,7 +43,6 @@ Flickable {
         Item { implicitHeight: 12 }
     }
 
-    // Auto-scroll to focused child
     Connections {
         target: root.Window.window
         function onActiveFocusItemChanged() {

@@ -16,7 +16,6 @@ Item {
     // [{iconSource, title, value}]
     property var completions: []
 
-    // Character that triggers the completion popup
     property string triggerChar: "{"
 
     signal textEdited()
@@ -86,7 +85,6 @@ Item {
         var before = txt.substring(0, triggerIdx)
         var placeholder = triggerChar + item.value + "}"
 
-        // Find end of current partial placeholder
         var endIdx = innerInput.cursorPosition
         while (endIdx < txt.length && txt.charAt(endIdx) !== "}" && txt.charAt(endIdx) !== triggerChar)
             endIdx++

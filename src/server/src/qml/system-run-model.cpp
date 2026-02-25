@@ -30,8 +30,6 @@ void SystemRunModel::setData(std::vector<std::string> cmdline, bool hasProgram,
 }
 
 const RunProgramItem &SystemRunModel::itemAt(int section, int item) const {
-  // Section 0 is cmdline if present, otherwise programs
-  // Section 1 is always programs (only exists if cmdline section exists)
   static thread_local RunProgramItem cached;
 
   bool isCmdSection = (m_cmdCount > 0 && section == 0);

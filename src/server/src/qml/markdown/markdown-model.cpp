@@ -30,7 +30,6 @@ GfmNodeType getGfmNodeType(cmark_node *node) {
 }
 
 QString imageProviderUrl(const QString &rawUrl) {
-  // Already a provider URL — pass through unchanged
   if (rawUrl.startsWith(QStringLiteral("image://vicinae/"))) return rawUrl;
 
   QUrl url(rawUrl);
@@ -41,7 +40,6 @@ QString imageProviderUrl(const QString &rawUrl) {
     auto path = url.host().isEmpty() ? url.path() : url.host() + url.path();
     return QStringLiteral("image://vicinae/local:") + path;
   }
-  // Relative or other — treat as local
   auto path = url.host() + url.path();
   return QStringLiteral("image://vicinae/local:") + path;
 }
@@ -111,7 +109,6 @@ QString renderOneInline(cmark_node *cur, const InlineContext &ctx) {
     break;
 
   default:
-    // GFM strikethrough extension
     if (std::strcmp(cmark_node_get_type_string(cur), "strikethrough") == 0) {
       result += QStringLiteral("<s>");
       result += renderInlineHtml(cmark_node_first_child(cur), ctx);
@@ -147,8 +144,6 @@ QString imageAltText(cmark_node *imageNode) {
   return alt;
 }
 
-// ── List helpers ──
-
 QVariantMap buildListItem(cmark_node *itemNode, const InlineContext &ctx);
 
 QVariantList buildListItems(cmark_node *listNode, const InlineContext &ctx) {
@@ -180,8 +175,6 @@ QVariantMap buildListItem(cmark_node *itemNode, const InlineContext &ctx) {
   return entry;
 }
 
-// ── Table helpers ──
-
 void collectCellHtml(cmark_node *firstCell, int columnCount, QVariantList &out, const InlineContext &ctx) {
   int c = 0;
   for (auto *cell = firstCell; cell && c < columnCount; cell = cmark_node_next(cell)) {
@@ -192,8 +185,6 @@ void collectCellHtml(cmark_node *firstCell, int columnCount, QVariantList &out, 
     ++c;
   }
 }
-
-// ── Image size from URL query params ──
 
 QVariantMap parseImageSize(const QUrl &url) {
   QVariantMap data;
@@ -221,8 +212,6 @@ QVariantMap buildImageBlock(cmark_node *imageNode) {
   data[QStringLiteral("alt")] = imageAltText(imageNode);
   return data;
 }
-
-// ── HTML block image extraction ──
 
 struct HtmlBlockResult {
   QString html;
@@ -285,8 +274,6 @@ void processHtmlNodes(xmlNode *node, HtmlBlockResult &result) {
 }
 
 } // anonymous namespace
-
-// ── MarkdownModel ──
 
 MarkdownModel::MarkdownModel(QObject *parent) : QAbstractListModel(parent) {
   rebuildInlineStyles();
@@ -622,7 +609,6 @@ void MarkdownModel::setMarkdown(const QString &markdown) {
     auto newCount = static_cast<int>(newBlocks.size());
 
     if (newCount >= oldCount) {
-      // Last old block may have changed (e.g. paragraph got more text appended)
       int divergeAt = oldCount;
       if (oldCount > 0) {
         auto &lastOld = m_blocks[oldCount - 1];
@@ -647,10 +633,8 @@ void MarkdownModel::setMarkdown(const QString &markdown) {
       emit blocksAppended();
       return;
     }
-    // Fewer blocks than before — fall through to full reset
   }
 
-  // Full reset
   m_markdown = markdown;
   beginResetModel();
   m_blocks.clear();

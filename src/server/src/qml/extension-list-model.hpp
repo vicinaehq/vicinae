@@ -60,7 +60,7 @@ private:
   mutable ExtensionActionPanelBuilder::SubmenuCache m_submenuCache;
   std::optional<DetailModel> m_currentDetail;
   std::vector<Section> m_sections;
-  std::vector<Section> m_filteredSections; // Used when client-side filtering is active
+  std::vector<Section> m_filteredSections;
   ListModel m_model;
   QString m_filter;
   QString m_placeholder;

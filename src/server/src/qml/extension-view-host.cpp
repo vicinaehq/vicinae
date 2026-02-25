@@ -84,7 +84,6 @@ void ExtensionViewHost::render(const RenderModel &model) {
 }
 
 void ExtensionViewHost::switchViewType(const RenderModel &model) {
-  // Delete any QObject model owned by the previous variant
   std::visit([](auto &v) {
     using T = std::decay_t<decltype(v)>;
     if constexpr (std::is_pointer_v<T>) delete v;
@@ -342,7 +341,6 @@ void ExtensionViewHost::updateDropdown(const DropdownModel *dropdown) {
     m_dropdownItems = qml::convertDropdownChildren(dropdown->children);
   }
 
-  // Resolve current value: explicit value > stored value > defaultValue > first item
   QString resolvedValue;
   if (dropdown->value) {
     resolvedValue = *dropdown->value;
@@ -357,7 +355,6 @@ void ExtensionViewHost::updateDropdown(const DropdownModel *dropdown) {
 
   m_dropdownValue = resolvedValue;
 
-  // Find the matching item to set as currentItem
   QVariant newCurrentItem;
   for (const auto &section : m_dropdownItems) {
     auto sectionMap = section.toMap();
@@ -386,7 +383,6 @@ void ExtensionViewHost::updateDropdown(const DropdownModel *dropdown) {
 void ExtensionViewHost::setDropdownValue(const QString &value) {
   m_dropdownValue = value;
 
-  // Find the matching item
   for (const auto &section : m_dropdownItems) {
     auto sectionMap = section.toMap();
     auto items = sectionMap["items"].toList();

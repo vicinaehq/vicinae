@@ -31,7 +31,6 @@ static bool isGif(const QByteArray &data) {
 static std::mutex s_failedCacheMutex;
 static std::set<QString> s_failedImageIds;
 
-// we limit concurrent image decodes for performance reasons
 static QThreadPool &imageDecodingPool() {
   static QThreadPool pool;
   static std::once_flag flag;
@@ -135,7 +134,6 @@ static QImage renderBuiltinSvg(const QString &iconName, const QSize &size, const
 
   QRect iconRect = canvas.rect().marginsRemoved({margin, margin, margin, margin});
 
-  // Render SVG to a temporary image so we can apply fill via CompositionMode_SourceIn
   QImage svgImage(iconRect.size(), QImage::Format_ARGB32_Premultiplied);
   svgImage.fill(Qt::transparent);
   {
@@ -377,7 +375,6 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id,
   if (!parsed.fallback.isEmpty()) response->setFallback(parsed.fallback, size);
 
   if (parsed.type == QStringLiteral("builtin")) {
-    // Auto-resolve foreground from theme when no explicit ?fg= param is provided
     QColor fg = parsed.fg;
     if (!fg.isValid()) fg = ThemeService::instance().theme().resolve(SemanticColor::Foreground);
     QImage img = renderBuiltinSvg(parsed.name, size, fg, parsed.bg);
@@ -385,7 +382,6 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id,
     response->finishDeferred(std::move(img));
 
   } else if (parsed.type == QStringLiteral("emoji")) {
-    // FontService needs main thread
     QMetaObject::invokeMethod(
         qApp,
         [response, name = parsed.name, size]() {
@@ -399,7 +395,6 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id,
         Qt::QueuedConnection);
 
   } else if (parsed.type == QStringLiteral("system")) {
-    // QIcon::fromTheme needs main thread
     QColor fg = parsed.fg;
     QMetaObject::invokeMethod(
         qApp,
@@ -479,7 +474,6 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id,
         Qt::QueuedConnection);
 
   } else if (parsed.type == QStringLiteral("favicon")) {
-    // FaviconService needs main thread
     QMetaObject::invokeMethod(
         qApp,
         [response, domain = parsed.name, size]() {

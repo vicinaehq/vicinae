@@ -4,7 +4,6 @@
 #include <QUrl>
 #include <QVariantMap>
 
-/// General-purpose bridge: any QML component can be pushed as a view.
 class ViewHostBase : public BaseView {
   Q_OBJECT
 
@@ -12,32 +11,21 @@ signals:
   void searchAccessoryUrlChanged();
 
 public:
-  /// The QML component to instantiate (e.g. "qrc:/Vicinae/CommandListView.qml").
   virtual QUrl qmlComponentUrl() const = 0;
-
-  /// Optional QML component to load in the SearchBar as an accessory (e.g. filter dropdown).
   virtual QUrl qmlSearchAccessoryUrl() const { return {}; }
-
-  /// Properties passed to the QML component at instantiation.
   virtual QVariantMap qmlProperties() const { return {}; }
-
-  /// Called after the QML component is pushed and properties set.
   virtual void loadInitialData() {}
-
-  /// Called when popping back to this view (component preserved by StackView).
   virtual void onReactivated() {}
 
   void textChanged(const QString &) override {}
   bool inputFilter(QKeyEvent *) override { return false; }
 };
 
-/// Bridge for form views — disables the search bar input.
 class FormViewBase : public ViewHostBase {
 public:
   bool searchInteractive() const override { return false; }
 };
 
-/// Convenience bridge for views backed by a CommandListModel.
 template <typename ModelType> class BridgeView : public ViewHostBase {
   ModelType *m_model = nullptr;
 

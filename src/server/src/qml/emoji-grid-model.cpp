@@ -59,7 +59,6 @@ void EmojiGridModel::initialize() {
   m_emojiService = scope().services()->emojiService();
   m_grouped = m_emojiService->grouped();
 
-  // Read skin tone preference from the command
   if (auto *state = scope().topState(); state && state->sender) {
     if (auto *cmd = state->sender->command()) {
       auto skinToneId = cmd->preferenceValues().value("skinTone").toString().toStdString();

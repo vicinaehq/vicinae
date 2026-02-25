@@ -111,10 +111,8 @@ void ExtensionFormModel::setFormData(const FormModel &model) {
   for (int i = 0; i < updateCount; ++i) {
     updateItem(m_items[i], model.items[i]);
 
-    // If the type/id changed at this position, fully replace the item data
     auto newData = createItem(model.items[i]);
     if (m_items[i].type != newData.type || m_items[i].fieldId != newData.fieldId) {
-      // Restore user value if possible
       if (newData.isField() && !newData.hasUserValue) {
         auto it = savedValues.find(newData.fieldId);
         if (it != savedValues.end()) {
@@ -145,7 +143,6 @@ void ExtensionFormModel::setFormData(const FormModel &model) {
     endInsertRows();
   }
 
-  // Auto-focus only on the very first render
   if (m_firstLoad) {
     m_firstLoad = false;
     for (int i = 0; i < static_cast<int>(m_items.size()); ++i) {
@@ -187,7 +184,6 @@ ExtensionFormModel::createItem(const FormModel::Item &item) const {
     data.onFocus = field->onFocus;
     data.fieldData = buildFieldData(*field);
 
-    // Value: use explicit value if set, otherwise defaultValue, otherwise first item for dropdowns
     if (field->value) {
       data.modelValue = *field->value;
     } else if (field->defaultValue) {
@@ -222,7 +218,6 @@ void ExtensionFormModel::updateItem(FormItemData &existing, const FormModel::Ite
     existing.onFocus = field->onFocus;
     existing.fieldData = buildFieldData(*field);
 
-    // Only override value if the extension explicitly sets it
     if (field->value) {
       existing.modelValue = *field->value;
       existing.hasUserValue = false;
@@ -242,7 +237,7 @@ ExtensionFormModel::fieldType(const FormModel::IField &field) {
   if (dynamic_cast<const FormModel::TextAreaField *>(&field)) return FormItemData::Type::TextArea;
   if (dynamic_cast<const FormModel::FilePickerField *>(&field)) return FormItemData::Type::FilePicker;
   if (dynamic_cast<const FormModel::DatePickerField *>(&field)) return FormItemData::Type::DatePicker;
-  return FormItemData::Type::Text; // fallback
+  return FormItemData::Type::Text;
 }
 
 QVariantMap ExtensionFormModel::buildFieldData(const FormModel::IField &field) {

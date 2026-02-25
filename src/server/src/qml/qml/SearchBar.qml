@@ -114,7 +114,6 @@ Item {
                 }
                 Keys.onReturnPressed: (event) => {
                     if (launcher.compacted) { launcher.expand(); event.accepted = true; return }
-                    // Forward Shift+Enter and other modified returns for action shortcuts
                     if (event.modifiers !== Qt.NoModifier) {
                         event.accepted = launcher.forwardKey(event.key, event.modifiers)
                     } else {

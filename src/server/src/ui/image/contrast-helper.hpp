@@ -5,7 +5,6 @@
 
 class ContrastHelper {
 public:
-  // Calculate relative luminance according to WCAG
   static double getRelativeLuminance(const QColor &color) {
     auto linearize = [](double val) {
       val = val / 255.0;
@@ -19,7 +18,6 @@ public:
     return 0.2126 * r + 0.7152 * g + 0.0722 * b;
   }
 
-  // Calculate contrast ratio between two colors
   static double getContrastRatio(const QColor &color1, const QColor &color2) {
     double lum1 = getRelativeLuminance(color1);
     double lum2 = getRelativeLuminance(color2);
@@ -30,41 +28,33 @@ public:
     return (lighter + 0.05) / (darker + 0.05);
   }
 
-  // Get a lighter/darker version of the same color with sufficient contrast
-  // This creates the "light blue on blue" or "dark cyan on cyan" effect
   static QColor getTonalContrastColor(const QColor &background, double minRatio = 4.5) {
     double bgLuminance = getRelativeLuminance(background);
     bool needsLighter = bgLuminance < 0.5;
 
-    // Convert to HSL (better for lightness manipulation)
     int h, s, l;
     background.getHsl(&h, &s, &l);
 
-    int newH = h; // Keep the same hue
-    int newS = s; // Keep similar saturation
+    int newH = h;
+    int newS = s;
     int newL = l;
 
     if (needsLighter) {
-      // Background is dark, make icon much lighter (almost white but tinted)
-      // Keep high saturation to maintain strong visible color tint
-      newS = std::max(150, s); // Keep high saturation for visible tint
-      newL = 200;              // Light but not too light
+      newS = std::max(150, s);
+      newL = 200;
     } else {
-      // Background is light, make icon much darker (almost black but tinted)
-      newS = std::max(150, s); // Keep saturation high
-      newL = 50;               // Very dark, but not pure black (0)
+      newS = std::max(150, s);
+      newL = 50;
     }
 
     QColor derived = QColor::fromHsl(newH, newS, newL);
 
-    // Fine-tune lightness to meet contrast requirement
     double ratio = getContrastRatio(background, derived);
     int iterations = 0;
 
     while (ratio < minRatio && iterations < 30) {
       if (needsLighter) {
         newL = std::min(255, newL + 5);
-        // Keep saturation more stable as we adjust
         if (newL > 240) { newS = std::max(50, newS - 2); }
       } else {
         newL = std::max(0, newL - 5);
@@ -77,9 +67,7 @@ public:
     return derived;
   }
 
-  // Alternative: Specify how "pure" the contrast should be (0.0 = pure white/black, 1.0 = full color)
   static QColor getTonalContrastColor(const QColor &background, double minRatio, double colorAmount) {
-    // Clamp colorAmount between 0 and 1
     colorAmount = std::max(0.0, std::min(1.0, colorAmount));
 
     double bgLuminance = getRelativeLuminance(background);
@@ -93,16 +81,13 @@ public:
     int newL;
 
     if (needsLighter) {
-      // Start very light
       newL = 245;
     } else {
-      // Start very dark
       newL = 20;
     }
 
     QColor derived = QColor::fromHsl(newH, newS, newL);
 
-    // Adjust to meet contrast requirement
     double ratio = getContrastRatio(background, derived);
     int iterations = 0;
 

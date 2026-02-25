@@ -21,7 +21,6 @@ Item {
         if (activeFocus) edit.forceActiveFocus()
     }
 
-    // Compute line height from font metrics
     readonly property real _lineHeight: Math.ceil(fontMetrics.height)
     readonly property real _verticalPadding: 8
     readonly property real _minHeight: _lineHeight * minRows + _verticalPadding * 2

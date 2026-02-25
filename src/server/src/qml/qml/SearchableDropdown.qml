@@ -66,7 +66,6 @@ Item {
                 }
             }
             if (sectionItems.length > 0) {
-                // Only show section header if there are multiple sections
                 if (items.length > 1 && section.title) {
                     result.push({ isSection: true, title: section.title })
                 }
@@ -78,9 +77,7 @@ Item {
 
     function _fuzzyMatch(text, query) {
         var lower = text.toLowerCase()
-        // Substring match first
         if (lower.indexOf(query) >= 0) return true
-        // Character-by-character fuzzy match
         var qi = 0
         for (var ti = 0; ti < lower.length && qi < query.length; ti++) {
             if (lower[ti] === query[qi]) qi++
