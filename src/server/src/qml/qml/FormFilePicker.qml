@@ -93,22 +93,15 @@ FocusScope {
             }
 
             Keys.onReturnPressed: (event) => {
-                if (event.modifiers !== Qt.NoModifier && typeof launcher !== "undefined") {
+                if (typeof launcher !== "undefined")
                     event.accepted = launcher.forwardKey(event.key, event.modifiers)
-                } else {
+                if (!event.accepted)
                     root._openDialog()
-                }
             }
             Keys.onSpacePressed: root._openDialog()
             Keys.onPressed: (event) => {
-                if (event.modifiers !== Qt.NoModifier && event.modifiers !== Qt.ShiftModifier
-                    && event.key !== Qt.Key_Shift && event.key !== Qt.Key_Control
-                    && event.key !== Qt.Key_Alt && event.key !== Qt.Key_Meta
-                    && typeof launcher !== "undefined") {
+                if (typeof launcher !== "undefined")
                     event.accepted = launcher.forwardKey(event.key, event.modifiers)
-                } else {
-                    event.accepted = false
-                }
             }
         }
     }

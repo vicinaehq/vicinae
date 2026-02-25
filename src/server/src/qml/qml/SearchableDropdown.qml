@@ -108,15 +108,8 @@ Item {
         if (!dropdownPopup.visible) open()
     }
     Keys.onPressed: (event) => {
-        if (event.modifiers !== Qt.NoModifier && event.modifiers !== Qt.ShiftModifier
-            && event.key !== Qt.Key_Shift && event.key !== Qt.Key_Control
-            && event.key !== Qt.Key_Alt && event.key !== Qt.Key_Meta
-            && event.key !== Qt.Key_Return && event.key !== Qt.Key_Space
-            && typeof launcher !== "undefined") {
+        if (typeof launcher !== "undefined")
             event.accepted = launcher.forwardKey(event.key, event.modifiers)
-        } else {
-            event.accepted = false
-        }
     }
 
     Rectangle {

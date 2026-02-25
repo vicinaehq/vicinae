@@ -345,6 +345,34 @@ void LauncherWindow::handleReturn() {
 
 bool LauncherWindow::forwardKey(int key, int modifiers) {
   auto mods = static_cast<Qt::KeyboardModifiers>(modifiers);
+
+  if (mods == Qt::NoModifier)
+    return false;
+
+  switch (key) {
+  case Qt::Key_Shift:
+  case Qt::Key_Control:
+  case Qt::Key_Alt:
+  case Qt::Key_Meta:
+    return false;
+  default:
+    break;
+  }
+
+  if (mods == Qt::ControlModifier) {
+    switch (key) {
+    case Qt::Key_A:
+    case Qt::Key_C:
+    case Qt::Key_V:
+    case Qt::Key_X:
+    case Qt::Key_Z:
+    case Qt::Key_Y:
+      return false;
+    default:
+      break;
+    }
+  }
+
   QKeyEvent event(QEvent::KeyPress, key, mods);
 
   if (auto *action = m_actionPanel->findBoundAction(&event)) {

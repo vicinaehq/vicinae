@@ -130,14 +130,9 @@ Item {
                         if (launcher.tryAliasFastTrack()) {
                             event.accepted = true
                         }
-                    } else if (event.modifiers !== Qt.NoModifier && event.modifiers !== Qt.ShiftModifier
-                               && event.key !== Qt.Key_Shift && event.key !== Qt.Key_Control
-                               && event.key !== Qt.Key_Alt && event.key !== Qt.Key_Meta) {
+                    } else if (launcher.forwardKey(event.key, event.modifiers)) {
                         if (launcher.compacted) launcher.expand()
-                        // Forward modifier key combos — actions take precedence, fall back to input
-                        event.accepted = launcher.forwardKey(event.key, event.modifiers)
-                    } else {
-                        event.accepted = false
+                        event.accepted = true
                     }
                 }
             }

@@ -27,7 +27,7 @@ Item {
     readonly property real _minHeight: _lineHeight * minRows + _verticalPadding * 2
     readonly property real _maxHeight: _lineHeight * maxRows + _verticalPadding * 2
 
-    implicitHeight: Math.max(_minHeight, Math.min(flickable.contentHeight + _verticalPadding * 2, _maxHeight))
+    implicitHeight: Math.max(_minHeight, Math.min(edit.contentHeight + _verticalPadding * 2, _maxHeight))
 
     FontMetrics {
         id: fontMetrics
@@ -42,87 +42,77 @@ Item {
         border.color: edit.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
         border.width: 1
 
-        Flickable {
-            id: flickable
+        MouseArea {
             anchors.fill: parent
             anchors.margins: root._verticalPadding
             anchors.leftMargin: 10
             anchors.rightMargin: 10
-            contentWidth: width
-            contentHeight: edit.height
-            clip: true
-            boundsBehavior: Flickable.StopAtBounds
-            interactive: false
-
-            ScrollBar.vertical: ViciScrollBar {
-                policy: flickable.contentHeight > flickable.height
-                        ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
-            }
-
-            TextEdit {
-                id: edit
-                width: flickable.width
-                height: Math.max(contentHeight, flickable.height)
-                font.pointSize: Theme.regularFontSize
-                color: Theme.foreground
-                selectionColor: Theme.textSelectionBg
-                selectedTextColor: Theme.textSelectionFg
-                wrapMode: TextEdit.Wrap
-                activeFocusOnTab: false
-
-                Text {
-                    anchors.top: parent.top
-                    width: parent.width
-                    text: root.placeholder
-                    color: Theme.textPlaceholder
-                    font: edit.font
-                    wrapMode: Text.Wrap
-                    visible: !edit.text && !edit.preeditText
-                }
-
-                onTextChanged: root.textEdited()
-
-                Keys.onTabPressed: (event) => {
-                    event.accepted = true
-                    nextItemInFocusChain()?.forceActiveFocus(Qt.TabFocusReason)
-                }
-                Keys.onBacktabPressed: (event) => {
-                    event.accepted = true
-                    nextItemInFocusChain(false)?.forceActiveFocus(Qt.BacktabFocusReason)
-                }
-                Keys.onReturnPressed: (event) => {
-                    if (event.modifiers !== Qt.NoModifier && typeof launcher !== "undefined") {
-                        event.accepted = launcher.forwardKey(event.key, event.modifiers)
-                    } else {
-                        // Insert newline normally
-                        edit.insert(edit.cursorPosition, "\n")
-                    }
-                }
-                Keys.onPressed: (event) => {
-                    if (event.modifiers !== Qt.NoModifier && event.modifiers !== Qt.ShiftModifier
-                        && event.key !== Qt.Key_Shift && event.key !== Qt.Key_Control
-                        && event.key !== Qt.Key_Alt && event.key !== Qt.Key_Meta
-                        && event.key !== Qt.Key_Tab && event.key !== Qt.Key_Backtab
-                        && typeof launcher !== "undefined") {
-                        event.accepted = launcher.forwardKey(event.key, event.modifiers)
-                    }
-                }
-            }
-        }
-
-        // Scroll via mouse wheel instead of Flickable.interactive (which steals clicks)
-        MouseArea {
-            anchors.fill: flickable
             acceptedButtons: Qt.NoButton
-            onWheel: (wheel) => {
-                // Pass through to parent when there's nothing to scroll
-                if (flickable.contentHeight <= flickable.height) {
-                    wheel.accepted = false
-                    return
+            onWheel: (wheel) => {}
+
+            Flickable {
+                id: flickable
+                anchors.fill: parent
+                contentWidth: width
+                contentHeight: edit.height
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+
+                ScrollBar.vertical: ViciScrollBar {
+                    policy: flickable.contentHeight > flickable.height
+                            ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
                 }
-                flickable.contentY = Math.max(0,
-                    Math.min(flickable.contentHeight - flickable.height,
-                             flickable.contentY - wheel.angleDelta.y))
+
+                TextEdit {
+                    id: edit
+                    width: flickable.width
+                    height: Math.max(contentHeight, flickable.height)
+                    font.pointSize: Theme.regularFontSize
+                    color: Theme.foreground
+                    selectionColor: Theme.textSelectionBg
+                    selectedTextColor: Theme.textSelectionFg
+                    wrapMode: TextEdit.Wrap
+                    activeFocusOnTab: false
+
+                    Text {
+                        anchors.top: parent.top
+                        width: parent.width
+                        text: root.placeholder
+                        color: Theme.textPlaceholder
+                        font: edit.font
+                        wrapMode: Text.Wrap
+                        visible: !edit.text && !edit.preeditText
+                    }
+
+                    onTextChanged: root.textEdited()
+
+                    onCursorRectangleChanged: {
+                        const rect = cursorRectangle
+                        if (rect.y < flickable.contentY)
+                            flickable.contentY = rect.y
+                        else if (rect.y + rect.height > flickable.contentY + flickable.height)
+                            flickable.contentY = rect.y + rect.height - flickable.height
+                    }
+
+                    Keys.onTabPressed: (event) => {
+                        event.accepted = true
+                        nextItemInFocusChain()?.forceActiveFocus(Qt.TabFocusReason)
+                    }
+                    Keys.onBacktabPressed: (event) => {
+                        event.accepted = true
+                        nextItemInFocusChain(false)?.forceActiveFocus(Qt.BacktabFocusReason)
+                    }
+                    Keys.onReturnPressed: (event) => {
+                        if (typeof launcher !== "undefined")
+                            event.accepted = launcher.forwardKey(event.key, event.modifiers)
+                        if (!event.accepted)
+                            edit.insert(edit.cursorPosition, "\n")
+                    }
+                    Keys.onPressed: (event) => {
+                        if (typeof launcher !== "undefined")
+                            event.accepted = launcher.forwardKey(event.key, event.modifiers)
+                    }
+                }
             }
         }
     }
