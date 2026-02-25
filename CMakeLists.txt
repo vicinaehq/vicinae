@@ -45,6 +45,11 @@ option(USE_SYSTEM_QT_KEYCHAIN "Use system qt-keychain instead of building it fro
 option(LIBQALCULATE_BACKEND "Compile in support for the Qalculate! calculator backend" ON)
 option(ENABLE_SANITIZERS "Enable ASan + UBSan for debug builds" OFF)
 option(ENABLE_PREVIEW_FEATURES "Enable preview features that are not yet ready for global release" OFF)
+option(ENABLE_CLANG_TIDY "Run clang-tidy during compilation" OFF)
+
+if (ENABLE_CLANG_TIDY)
+	set(CMAKE_CXX_CLANG_TIDY clang-tidy)
+endif()
 
 # disabled for now, as it seems to be incompatible with ccache, and as such slows us down more than anything
 option(USE_PRECOMPILED_HEADERS "Use precompiled headers to speed up compilation" OFF)
