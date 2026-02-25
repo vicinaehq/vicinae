@@ -19,7 +19,7 @@ Item {
 
         Rectangle {
             id: backButton
-            visible: !launcher.isRootSearch
+            visible: !launcher.isRootSearch && launcher.showBackButton
             Layout.preferredWidth: 28
             Layout.preferredHeight: 28
             Layout.alignment: Qt.AlignVCenter
@@ -123,7 +123,7 @@ Item {
                 }
                 Keys.onBacktabPressed: (event) => { event.accepted = false }
                 Keys.onPressed: (event) => {
-                    if (event.key === Qt.Key_Backspace && searchInput.text === "" && !launcher.isRootSearch) {
+                    if (event.key === Qt.Key_Backspace && searchInput.text === "" && !launcher.isRootSearch && launcher.showBackButton) {
                         launcher.goBack()
                         event.accepted = true
                     } else if (event.key === Qt.Key_Space && launcher.isRootSearch && event.modifiers === Qt.NoModifier) {

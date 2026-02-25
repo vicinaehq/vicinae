@@ -468,6 +468,7 @@ void NavigationController::activateView(const ViewState &state) {
   emit searchVisibilityChanged(state.supportsSearch);
   emit searchInteractiveChanged(state.searchInteractive);
   emit statusBarVisiblityChanged(state.needsStatusBar);
+  emit backButtonVisibilityChanged(state.showBackButton);
   emit loadingChanged(state.isLoading);
   emit actionsChanged({});
   emit searchPlaceholderTextChanged(state.placeholderText);
@@ -668,6 +669,7 @@ std::unique_ptr<NavigationController::ViewState> NavigationController::createVie
   state->searchInteractive = view->searchInteractive();
   state->needsTopBar = view->needsGlobalTopBar();
   state->needsStatusBar = view->needsGlobalStatusBar();
+  state->showBackButton = view->showBackButton();
   state->placeholderText = view->initialSearchPlaceholderText();
   state->navigation.title = view->initialNavigationTitle();
   state->navigation.icon = view->initialNavigationIcon();

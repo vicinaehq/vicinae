@@ -115,6 +115,13 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent) : QObje
     emit windowSizeOverrideChanged();
   });
 
+  connect(nav, &NavigationController::backButtonVisibilityChanged, this, [this](bool visible) {
+    if (m_showBackButton != visible) {
+      m_showBackButton = visible;
+      emit showBackButtonChanged();
+    }
+  });
+
   // Status bar / footer visibility (e.g. dmenu --no-footer)
   connect(nav, &NavigationController::statusBarVisiblityChanged, this, [this](bool visible) {
     if (m_statusBarVisible != visible) {
@@ -273,6 +280,10 @@ void LauncherWindow::handleCurrentViewChanged() {
     if (!m_isRootSearch) {
       m_isRootSearch = true;
       emit isRootSearchChanged();
+    }
+    if (!m_showBackButton) {
+      m_showBackButton = true;
+      emit showBackButtonChanged();
     }
     if (m_overrideWidth != 0 || m_overrideHeight != 0) {
       m_overrideWidth = 0;

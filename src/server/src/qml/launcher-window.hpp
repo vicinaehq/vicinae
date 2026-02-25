@@ -21,6 +21,7 @@ class DialogContentWidget;
 class LauncherWindow : public QObject {
   Q_OBJECT
   Q_PROPERTY(bool isRootSearch READ isRootSearch NOTIFY isRootSearchChanged)
+  Q_PROPERTY(bool showBackButton READ showBackButton NOTIFY showBackButtonChanged)
   Q_PROPERTY(QString searchPlaceholder READ searchPlaceholder NOTIFY searchPlaceholderChanged)
   Q_PROPERTY(QUrl searchAccessoryUrl READ searchAccessoryUrl NOTIFY searchAccessoryChanged)
   Q_PROPERTY(QObject *commandViewHost READ commandViewHost NOTIFY commandViewHostChanged)
@@ -50,6 +51,7 @@ public:
   explicit LauncherWindow(ApplicationContext &ctx, QObject *parent = nullptr);
 
   bool isRootSearch() const { return m_isRootSearch; }
+  bool showBackButton() const { return m_showBackButton; }
   QString searchPlaceholder() const { return m_searchPlaceholder; }
   QUrl searchAccessoryUrl() const { return m_searchAccessoryUrl; }
   QObject *commandViewHost() const { return m_commandViewHost; }
@@ -89,6 +91,7 @@ public:
 signals:
   void compactedChanged();
   void isRootSearchChanged();
+  void showBackButtonChanged();
   void searchPlaceholderChanged();
   void searchAccessoryChanged();
   void commandViewHostChanged();
@@ -128,6 +131,7 @@ private:
   QQuickWindow *m_window = nullptr;
   bool m_compacted = false;
   bool m_isRootSearch = true;
+  bool m_showBackButton = true;
   bool m_isLoading = false;
   bool m_searchVisible = true;
   bool m_searchInteractive = true;

@@ -217,6 +217,7 @@ public:
     bool searchInteractive = true;
     bool needsTopBar = true;
     bool needsStatusBar = true;
+    bool showBackButton = true;
     bool panelOpened = false;
 
     ~ViewState();
@@ -251,6 +252,7 @@ signals:
   void searchVisibilityChanged(bool value);
   void searchInteractiveChanged(bool value);
   void statusBarVisiblityChanged(bool value);
+  void backButtonVisibilityChanged(bool visible);
   void windowActivationChanged(bool value) const;
 
 public:
