@@ -10,9 +10,6 @@ function die() {
 
 [ $# -ne 2 ] && die "Usage: $0 <install_dir> <app_dir>"
 
-command -v linuxdeploy || die "linuxdeployqt needs to be in PATH"
-command -v linuxdeploy-plugin-qt || die "linuxdeploy-plugin-qt needs to be in PATH"
-
 APPDIR=$2
 
 rm -rf $APPDIR
