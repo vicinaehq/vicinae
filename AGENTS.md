@@ -42,3 +42,7 @@ When writing JavaScript inside QML files, use ES6 syntax to the largest extent p
 Try to keep the amount of logic in these files small. Logic in QML is only for presentation concerns: metrics computation, hover on signal, etc...
 
 Some configuration and theming options may need to be accessed directly in QML. We expose a global config and theme bridges for this use case.
+
+## React/TypeScript extensions
+
+Everything related to the Typescript SDK can be found under `src/typescript`. More information can be obtained by reading `README.md` files under this directory if you need to work on this part. 
