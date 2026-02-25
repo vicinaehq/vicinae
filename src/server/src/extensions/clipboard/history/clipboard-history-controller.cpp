@@ -1,9 +1,7 @@
 #include "clipboard-history-controller.hpp"
-#include "clipboard-history-model.hpp"
 
-ClipboardHistoryController::ClipboardHistoryController(ClipboardService *clipboard,
-                                                       ClipboardHistoryModel *model, QObject *parent)
-    : QObject(parent), m_model(model), m_clipboard(clipboard) {
+ClipboardHistoryController::ClipboardHistoryController(ClipboardService *clipboard, QObject *parent)
+    : QObject(parent), m_clipboard(clipboard) {
 
   connect(&m_watcher, &QueryWatcher::finished, this, &ClipboardHistoryController::handleResults);
   connect(clipboard, &ClipboardService::selectionPinStatusChanged, this,
@@ -39,7 +37,6 @@ void ClipboardHistoryController::handleResults() {
   if (!m_watcher.isFinished()) return;
   emit dataLoadingChanged(false);
   auto res = m_watcher.result();
-  m_model->setData(res);
   emit dataRetrieved(res);
 }
 

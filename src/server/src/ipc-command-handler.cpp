@@ -10,7 +10,7 @@
 #include "settings-controller/settings-controller.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include <algorithm>
-#include <qapplication.h>
+#include <QGuiApplication>
 #include <qfuturewatcher.h>
 #include <qobjectdefs.h>
 #include "extension/manager/extension-manager.hpp"
@@ -23,7 +23,7 @@
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "theme.hpp"
-#include "ui/provider-view/provider-view.hpp"
+#include "qml/provider-search-view-host.hpp"
 #include "ui/toast/toast.hpp"
 #include "vicinae.hpp"
 
@@ -48,7 +48,7 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
   // TODO: add a "quit" command to handle graceful shutdown (requires more work than you would expect)
   if (command == "kill") {
     qInfo() << "Killing vicinae server because a new instance was started";
-    QApplication::exit(1);
+    QCoreApplication::exit(1);
     return {};
   }
 
@@ -146,7 +146,7 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
 
       if (auto it = std::ranges::find_if(extensions, pred); it != extensions.end()) {
         m_ctx.navigation->popToRoot({.clearSearch = false});
-        m_ctx.navigation->pushView(new ProviderSearchView(**it));
+        m_ctx.navigation->pushView(new ProviderSearchViewHost(**it));
 
         if (auto text = query.queryItemValue("fallbackText"); !text.isEmpty()) {
           m_ctx.navigation->setSearchText(text);

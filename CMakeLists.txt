@@ -39,6 +39,7 @@ option(USE_SYSTEM_PROTOBUF "Use system protobuf instead of building it from sour
 option(USE_SYSTEM_ABSEIL "Use system abseil (libabsl) instead of building it from source" ON)
 option(USE_SYSTEM_CMARK_GFM "Use system cmark-gfm (github's fork of cmark) instead of building it from source" ON)
 option(USE_SYSTEM_LAYER_SHELL "Use system qt layer shell instead of building it from source" ON)
+option(USE_SYSTEM_KF6 "Use system KDE syntax highlighting library for markdown code block highlight support" ON)
 option(USE_SYSTEM_GLAZE "Use system glaze instead of fetching it. This is a header only library so only required at build time" OFF)
 option(USE_SYSTEM_QT_KEYCHAIN "Use system qt-keychain instead of building it from source. Note: still depends on system libsecret." ON)
 option(LIBQALCULATE_BACKEND "Compile in support for the Qalculate! calculator backend" ON)
@@ -54,10 +55,15 @@ set(THEME_DIR "${EXTRA_DIR}/themes")
 set(VICINAE_LIBEXEC_PATH ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBEXECDIR}/vicinae)
 set(VICINAE_LIBEXEC_DIR ${CMAKE_INSTALL_LIBEXECDIR}/vicinae)
 
-include(Glaze)
 
 if (NOT USE_SYSTEM_GLAZE)
-	checkout_glaze()
+	include(Glaze)
+	import_glaze()
+endif()
+
+if (NOT USE_SYSTEM_KF6)
+	include(KF6)
+	import_kf6()
 endif()
 
 if (APPLE)

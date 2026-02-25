@@ -11,8 +11,6 @@
 #include <memory>
 
 class AppWindow;
-class ActionPanelView;
-class ExtensionSimpleView;
 
 /**
  * The base class any action shown in the action panel inherits from.
@@ -60,10 +58,7 @@ public:
     return std::ranges::any_of(m_shortcuts, [&](auto &&model) { return model == shortcut; });
   }
 
-  // Note: submenu are currently not implemented and a good implementation will require
-  // good thinking on how to handle state (especially regarding extensions).
   virtual bool isSubmenu() const { return false; }
-  virtual ActionPanelView *createSubmenu() const { return nullptr; }
 
   bool isPrimary() const { return m_primary; }
 
@@ -150,33 +145,28 @@ public:
   SubmitAction(const std::function<void(void)> &fn) : m_fn(fn) {}
 };
 
+class ActionPanelState;
+
 class SubmenuAction : public AbstractAction {
-  std::function<ActionPanelView *()> m_createSubmenuFn;
   std::function<void()> m_onOpen;
-  bool m_autoClose = false;
 
 public:
+  using SubmenuStateFactory = std::function<std::unique_ptr<ActionPanelState>()>;
+
   SubmenuAction(const QString &title, const std::optional<ImageURL> &icon,
-                std::function<ActionPanelView *()> createSubmenuFn, std::function<void()> onOpen = nullptr)
-      : AbstractAction(title, icon), m_createSubmenuFn(createSubmenuFn), m_onOpen(onOpen) {
-    // Submenu actions should not auto-close the panel
+                std::function<void()> onOpen = nullptr)
+      : AbstractAction(title, icon), m_onOpen(onOpen) {
     setAutoClose(false);
   }
 
   bool isSubmenu() const override { return true; }
 
-  void execute(ApplicationContext *context) override {
-    // Submenu actions should not execute like regular actions
-    // They are handled by the action panel widget to push views
-  }
+  void setSubmenuStateFactory(SubmenuStateFactory fn) { m_stateFactory = std::move(fn); }
 
-  ActionPanelView *createSubmenu() const override {
-    if (m_onOpen) { m_onOpen(); }
-    return createSubmenuStealthily();
-  }
+  // Defined out-of-line because ActionPanelState is incomplete here
+  std::unique_ptr<ActionPanelState> createSubmenuState() const;
+  std::unique_ptr<ActionPanelState> createSubmenuStateStealthily() const;
 
-  ActionPanelView *createSubmenuStealthily() const {
-    if (m_createSubmenuFn) { return m_createSubmenuFn(); }
-    return nullptr;
-  }
+private:
+  SubmenuStateFactory m_stateFactory;
 };

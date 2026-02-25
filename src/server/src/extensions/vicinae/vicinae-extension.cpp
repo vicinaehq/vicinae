@@ -3,12 +3,13 @@
 #include "command-controller.hpp"
 #include "services/script-command/script-command-service.hpp"
 #include "extensions/vicinae/list-installed-extensions-command.hpp"
-#include "extensions/vicinae/oauth-token-store/oauth-token-store-view.hpp"
+#include "qml/oauth-token-store-view-host.hpp"
 #include "extensions/vicinae/report-bug-command.hpp"
-#include "extensions/vicinae/browse-icons/search-builtin-icons-view.hpp"
+#include "qml/builtin-icons-view-host.hpp"
 
 #include "navigation-controller.hpp"
-#include "local-storage/browse-local-storage.hpp"
+#include "config/config.hpp"
+#include "qml/local-storage-view-host.hpp"
 #include "open-about-command.hpp"
 #include "refresh-apps-command.hpp"
 #include "configure-fallback-command.hpp"
@@ -176,7 +177,7 @@ class OpenKeybindSettingsCommand : public BuiltinCallbackCommand {
   }
 };
 
-class OAuthTokenStoreCommand : public BuiltinViewCommand<OAuthTokenStoreView> {
+class OAuthTokenStoreCommand : public BuiltinViewCommand<OAuthTokenStoreViewHost> {
   QString id() const override { return "oauth-token-store"; }
   QString name() const override { return "Manage OAuth Token Sets"; }
   QString description() const override {
@@ -189,7 +190,7 @@ class OAuthTokenStoreCommand : public BuiltinViewCommand<OAuthTokenStoreView> {
   }
 };
 
-class IconBrowserCommand : public BuiltinViewCommand<SearchBuiltinIconView> {
+class IconBrowserCommand : public BuiltinViewCommand<BuiltinIconsViewHost> {
   QString id() const override { return "search-builtin-icons"; }
   QString name() const override { return "Search Builtin Icons"; }
   QString description() const override { return "Search Vicinae builtin set of icons"; }
@@ -200,7 +201,7 @@ class IconBrowserCommand : public BuiltinViewCommand<SearchBuiltinIconView> {
   }
 };
 
-class InspectLocalStorage : public BuiltinViewCommand<BrowseLocalStorageView> {
+class InspectLocalStorage : public BuiltinViewCommand<LocalStorageViewHost> {
   QString id() const override { return "inspect-local-storage"; }
   QString name() const override { return "Inspect Local Storage"; }
   bool isDefaultDisabled() const override { return true; }

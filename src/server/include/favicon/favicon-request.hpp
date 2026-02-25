@@ -1,5 +1,6 @@
-#include <qobject.h>
 #pragma once
+#include <qobject.h>
+#include <qpixmap.h>
 
 class AbstractFaviconRequest : public QObject {
   Q_OBJECT

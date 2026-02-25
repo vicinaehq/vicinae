@@ -1,9 +1,9 @@
 #include "../../ui/image/url.hpp"
 #include "single-view-command-context.hpp"
-#include "create-quicklink-command.hpp"
+#include "qml/shortcut-form-view-host.hpp"
 #include "theme.hpp"
 
-class CreateShortcutCommand : public BuiltinViewCommand<ShortcutFormView> {
+class CreateShortcutCommand : public BuiltinViewCommand<ShortcutFormViewHost> {
   QString id() const override { return "create"; }
   QString name() const override { return "Create Shortcut"; }
   ImageURL iconUrl() const override {

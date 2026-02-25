@@ -22,6 +22,7 @@ __cmake*
 
 /result
 
-CLAUDE.md
-
 heaptrack*
+
+.claude/*
+!.claude/CLAUDE.md

@@ -1,7 +1,9 @@
 #include "ipc-command-server.hpp"
 #include "ipc-command-handler.hpp"
+#include "config/config.hpp"
+#include "service-registry.hpp"
 #include "services/browser-extension-service.hpp"
-#include "ui/dmenu-view/dmenu-view.hpp"
+#include "qml/dmenu-view-host.hpp"
 #include "utils.hpp"
 #include "vicinae-ipc/ipc.hpp"
 #include <functional>
@@ -17,7 +19,7 @@
 #include "navigation-controller.hpp"
 #include "version.h"
 
-IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
+IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QObject *parent)
     : QObject(parent), m_ctx(*ctx), m_rpc(IpcContext::GlobalContext{.app = ctx}) {
   using Ctx = decltype(m_rpc)::ContextHandle;
 
@@ -60,7 +62,7 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
   });
 
   m_rpc.route<ipc::Ping>([&](const ipc::Ping::Request &req, Ctx ctx) {
-    return ipc::Ping::Response(VICINAE_GIT_TAG, QApplication::applicationPid());
+    return ipc::Ping::Response(VICINAE_GIT_TAG, QCoreApplication::applicationPid());
   });
 
   m_rpc.route<ipc::BrowserInit>([this](const ipc::BrowserInit::Request &init, Ctx context) {
@@ -120,14 +122,14 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
       request.noQuickLook = true;
     }
 
-    auto view = new DMenu::View(request);
+    auto view = new DMenuViewHost(request);
     auto watcher = new Watcher;
 
     watcher->setFuture(future);
 
     QObject::connect(watcher, &Watcher::canceled, [nav = nav.get()]() { nav->closeWindow(); });
     QObject::connect(watcher, &Watcher::finished, [watcher]() { watcher->deleteLater(); });
-    QObject::connect(view, &DMenu::View::selected,
+    QObject::connect(view, &DMenuViewHost::selected,
                      [promise = std::move(promise)](const QString &text) mutable {
                        promise.addResult(ipc::DMenu::Response(text.toStdString()));
                        promise.finish();

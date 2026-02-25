@@ -88,7 +88,7 @@
 		"client_side_decorations": {
 			"enabled": true,
 			"rounding": 10,
-			"border_width": 2
+			"border_width": 1
 		},
 
 		// In compact mode, vicinae only shows a search bar in the root search if no query is entered, only expanding to its full size when searching.

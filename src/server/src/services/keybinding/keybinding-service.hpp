@@ -57,6 +57,16 @@ public:
     return false;
   }
 
+  // Returns 0=none, 1=up, 2=down, 3=left, 4=right
+  static int matchNavigation(int key, int modifiers, const std::string &keybinding) {
+    QKeyEvent ev(QEvent::KeyPress, key, static_cast<Qt::KeyboardModifiers>(modifiers));
+    if (isUpKey(&ev, keybinding)) return 1;
+    if (isDownKey(&ev, keybinding)) return 2;
+    if (isLeftKey(&ev, keybinding)) return 3;
+    if (isRightKey(&ev, keybinding)) return 4;
+    return 0;
+  }
+
   static bool isRightKey(QKeyEvent *event, const std::string &keybinding) {
     KeyBindingMode mode = getMode(keybinding);
     switch (mode) {

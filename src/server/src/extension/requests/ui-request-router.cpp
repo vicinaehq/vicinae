@@ -9,6 +9,7 @@
 #include "ui/toast/toast.hpp"
 #include <QtConcurrent/QtConcurrent>
 #include <QClipboard>
+#include <QGuiApplication>
 #include <qfuturewatcher.h>
 #include <unordered_map>
 
@@ -71,15 +72,15 @@ ToastStyle UIRequestRouter::parseProtoToastStyle(ui::ToastStyle style) {
 void UIRequestRouter::modelCreated() {
   if (m_modelWatcher.isCanceled()) return;
 
-  auto views = m_navigation->views();
+  const auto &views = m_navigation->views();
   auto models = m_modelWatcher.result();
 
-  for (int i = 0; i < models.items.size() && i < views.size(); ++i) {
+  for (int i = 0; i < models.items.size() && i < static_cast<int>(views.size()); ++i) {
     auto &model = models.items[i];
-    auto &view = views[i];
+    const auto &entry = views[i];
     bool shouldSkipRender = !model.dirty && !model.propsDirty;
 
-    if (!shouldSkipRender) view->render(model.root);
+    if (!shouldSkipRender) entry.renderFn(model.root);
   }
 }
 
@@ -171,7 +172,7 @@ UIRequestRouter::handleCloseWindow(const proto::ext::ui::CloseMainWindowRequest 
 
 proto::ext::ui::Response *
 UIRequestRouter::getSelectedText(const proto::ext::ui::GetSelectedTextRequest &req) {
-  auto text = QApplication::clipboard()->text(QClipboard::Mode::Selection);
+  auto text = QGuiApplication::clipboard()->text(QClipboard::Mode::Selection);
   auto res = new proto::ext::ui::Response;
   auto selectedTextRes = new proto::ext::ui::GetSelectedTextResponse;
 

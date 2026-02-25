@@ -6,7 +6,7 @@
 #include <qpromise.h>
 #include <qstringview.h>
 #include "services/app-service/abstract-app-db.hpp"
-#include <QApplication>
+#include <QGuiApplication>
 #include <QScreen>
 #include <ranges>
 #include <vector>
@@ -118,7 +118,7 @@ public:
       if (auto serial = qtScreen->serialNumber(); !serial.isEmpty()) { sc.serial = serial; }
       return sc;
     };
-    return QApplication::screens() | std::views::transform(tr) | std::ranges::to<std::vector>();
+    return QGuiApplication::screens() | std::views::transform(tr) | std::ranges::to<std::vector>();
   }
 
   /**

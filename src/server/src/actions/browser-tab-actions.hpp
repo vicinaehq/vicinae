@@ -2,7 +2,7 @@
 #include "builtin_icon.hpp"
 #include "clipboard-actions.hpp"
 #include "common/context.hpp"
-#include "create-quicklink-command.hpp"
+#include "qml/shortcut-form-view-host.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/browser-extension-service.hpp"
@@ -25,7 +25,7 @@ struct BrowserTabActionGenerator {
 
     auto convertToShortcut =
         new StaticAction("Convert to shortcut", BuiltinIcon::ArrowsContract, [tab](ApplicationContext *ctx) {
-          auto view = new ShortcutFormView;
+          auto view = new ShortcutFormViewHost;
           view->setPrefilledValues(tab.url.c_str(), tab.title.c_str());
           ctx->navigation->pushView(view);
           ctx->navigation->setNavigationTitle("Convert tab to shortcut");

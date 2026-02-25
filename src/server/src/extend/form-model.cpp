@@ -14,7 +14,7 @@ FormModel FormModel::fromJson(const QJsonObject &json) {
   model.enableDrafts = props.value("enableDrafts").toBool(false);
 
   if (props.contains("navigationTitle")) {
-    model.navigationTitle = props.value("navigationTtile").toString();
+    model.navigationTitle = props.value("navigationTitle").toString();
   }
 
   model.items.reserve(children.size());

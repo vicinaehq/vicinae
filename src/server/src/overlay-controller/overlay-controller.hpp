@@ -1,32 +1,31 @@
 #pragma once
 #include "common.hpp"
 #include "common/qt.hpp"
-#include "ui/overlay/overlay.hpp"
 #include <qobject.h>
 
 class OverlayController : public QObject, NonCopyable {
   Q_OBJECT
 
-  ApplicationContext *m_ctx = nullptr;
-  QObjectUniquePtr<OverlayView> m_current = nullptr;
+signals:
+  void overlayChanged();
 
 public:
-  bool hasOverlay() const { return m_current.get(); }
+  OverlayController(ApplicationContext *ctx) : m_ctx(ctx) {}
 
-  void setCurrent(OverlayView *view) {
-    view->setContext(m_ctx);
-    emit currentOverlayChanged(view);
-    m_current.reset(view);
+  bool hasOverlay() const { return m_current.get(); }
+  QObject *current() const { return m_current.get(); }
+
+  void setCurrent(QObject *host) {
+    m_current.reset(host);
+    emit overlayChanged();
   }
 
   void dismissCurrent() {
-    emit currentOverlayDismissed();
     m_current.reset();
+    emit overlayChanged();
   }
 
-  OverlayController(ApplicationContext *ctx) : m_ctx(ctx) {}
-
-signals:
-  void currentOverlayChanged(OverlayView *view) const;
-  void currentOverlayDismissed() const;
+private:
+  ApplicationContext *m_ctx = nullptr;
+  QObjectUniquePtr<QObject> m_current = nullptr;
 };

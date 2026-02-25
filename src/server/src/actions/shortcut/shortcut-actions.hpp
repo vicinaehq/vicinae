@@ -1,7 +1,8 @@
 #pragma once
+#include <QGuiApplication>
 #include "common.hpp"
 #include "services/shortcut/shortcut-service.hpp"
-#include "create-quicklink-command.hpp"
+#include "qml/shortcut-form-view-host.hpp"
 #include "../../ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
@@ -31,7 +32,7 @@ public:
         expanded += *s;
       } else if (auto placeholder = std::get_if<Shortcut::ParsedPlaceholder>(&part)) {
         if (placeholder->id == "clipboard") {
-          expanded += QApplication::clipboard()->text();
+          expanded += QGuiApplication::clipboard()->text();
         } else if (placeholder->id == "selected") {
           // TODO: selected text
         } else if (placeholder->id == "uuid") {
@@ -112,7 +113,7 @@ public:
   std::shared_ptr<Shortcut> m_shortcut;
 
   void execute(ApplicationContext *ctx) override {
-    auto view = new EditShortcutView(m_shortcut);
+    auto view = new ShortcutFormViewHost(m_shortcut, ShortcutFormViewHost::Mode::Edit);
 
     ctx->navigation->pushView(view);
   }
@@ -149,9 +150,9 @@ public:
   std::shared_ptr<Shortcut> link;
 
   void execute(ApplicationContext *ctx) override {
-    auto view = new DuplicateShortcutView(link);
+    auto view = new ShortcutFormViewHost(link, ShortcutFormViewHost::Mode::Duplicate);
 
-    emit ctx->navigation->pushView(view);
+    ctx->navigation->pushView(view);
   }
 
   DuplicateShortcutAction(const std::shared_ptr<Shortcut> &link)
@@ -181,29 +182,6 @@ class OpenCompletedShortcutWithAction : public AbstractAction {
   std::shared_ptr<Shortcut> m_shortcut;
 
   bool isSubmenu() const override { return true; }
-
-  ActionPanelView *createSubmenu() const override {
-    /*
-auto appDb = ServiceRegistry::instance()->appDb();
-auto apps = appDb->findOpeners(m_shortcut->url());
-auto mapAction = [&](auto &&app) { return new OpenAction(m_shortcut, app); };
-auto panel = new ActionPanelStaticListView();
-bool hasShortcutAction =
-  std::ranges::any_of(apps, [&](auto &&app) { return m_shortcut->app() == app->id(); });
-
-panel->setTitle("Open with...");
-
-if (!hasShortcutAction) {
-if (auto app = appDb->findById(m_shortcut->app())) { panel->addAction(mapAction(app)); }
-}
-
-std::ranges::for_each(apps | std::views::transform(mapAction),
-                    [&](auto &&action) { panel->addAction(action); });
-
-return panel;
-  */
-    return nullptr;
-  }
 
 public:
   OpenCompletedShortcutWithAction(const std::shared_ptr<Shortcut> &shortcut)
