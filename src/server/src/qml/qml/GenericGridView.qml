@@ -69,6 +69,8 @@ Item {
         model: root.cmdModel
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+        topMargin: root.cellSpacing
+        bottomMargin: root.cellSpacing
         spacing: root.cellSpacing
         reuseItems: true
         cacheBuffer: 200
