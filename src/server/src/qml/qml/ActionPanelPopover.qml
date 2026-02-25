@@ -107,19 +107,20 @@ FocusScope {
     }
 
     Keys.onPressed: (event) => {
+        const nav = launcher.matchNavigationKey(event.key, event.modifiers)
         if (event.key === Qt.Key_Escape) {
             actionPanel.pop()
             event.accepted = true
-        } else if (event.key === Qt.Key_Left || event.key === Qt.Key_Backspace) {
+        } else if (event.key === Qt.Key_Left || event.key === Qt.Key_Backspace || nav === 3) {
             if (actionPanel.depth > 1) {
                 actionPanel.pop()
                 event.accepted = true
             }
-        } else if (event.key === Qt.Key_Up) {
+        } else if (event.key === Qt.Key_Up || nav === 1) {
             if (stack.currentItem && typeof stack.currentItem.moveUp === "function")
                 stack.currentItem.moveUp()
             event.accepted = true
-        } else if (event.key === Qt.Key_Down) {
+        } else if (event.key === Qt.Key_Down || nav === 2) {
             if (stack.currentItem && typeof stack.currentItem.moveDown === "function")
                 stack.currentItem.moveDown()
             event.accepted = true

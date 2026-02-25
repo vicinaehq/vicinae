@@ -111,6 +111,10 @@ Popup {
                 onClicked: root.close()
                 Keys.onReturnPressed: root.close()
                 Keys.onRightPressed: confirmBtn.forceActiveFocus()
+                Keys.onPressed: (event) => {
+                    const nav = launcher.matchNavigationKey(event.key, event.modifiers)
+                    if (nav === 4) { confirmBtn.forceActiveFocus(); event.accepted = true }
+                }
             }
 
             Button {
@@ -147,6 +151,10 @@ Popup {
                     root.close()
                 }
                 Keys.onLeftPressed: cancelBtn.forceActiveFocus()
+                Keys.onPressed: (event) => {
+                    const nav = launcher.matchNavigationKey(event.key, event.modifiers)
+                    if (nav === 3) { cancelBtn.forceActiveFocus(); event.accepted = true }
+                }
             }
         }
     }

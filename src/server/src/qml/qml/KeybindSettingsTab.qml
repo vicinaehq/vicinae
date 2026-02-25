@@ -72,6 +72,21 @@ Item {
 
                         Keys.onUpPressed: root.model.moveUp()
                         Keys.onDownPressed: root.model.moveDown()
+                        Keys.onPressed: (event) => {
+                            const ctrl = event.modifiers & Qt.ControlModifier
+                            const noOther = !(event.modifiers & ~(Qt.ControlModifier | Qt.KeypadModifier | Qt.GroupSwitchModifier))
+                            if (!ctrl || !noOther) return
+
+                            if ((Config.emacsMode && event.key === Qt.Key_P)
+                                || (!Config.emacsMode && event.key === Qt.Key_K)) {
+                                root.model.moveUp()
+                                event.accepted = true
+                            } else if ((Config.emacsMode && event.key === Qt.Key_N)
+                                       || (!Config.emacsMode && event.key === Qt.Key_J)) {
+                                root.model.moveDown()
+                                event.accepted = true
+                            }
+                        }
                         Keys.onReturnPressed: root.activateSelected()
                         Keys.onEnterPressed: root.activateSelected()
                         Keys.onEscapePressed: {

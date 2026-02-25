@@ -86,6 +86,7 @@ public:
   Q_INVOKABLE void goBack();
   Q_INVOKABLE void popToRoot();
   Q_INVOKABLE bool tryAliasFastTrack();
+  Q_INVOKABLE int matchNavigationKey(int key, int modifiers);
   Q_INVOKABLE void setCompleterValue(int index, const QString &value);
 
 signals:

@@ -34,6 +34,7 @@ If we are dealing with raw pointers, the nullable component is already part of i
 - Include order: system headers before local headers.
 - Header guards: use `#pragma once`.
 - String types: use `std::string` internally, `QString` only at the Qt boundary.
+- Do not overuse comments, only add them when they provide actual value
 
 ## QML rules
 

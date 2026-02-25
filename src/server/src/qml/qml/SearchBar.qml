@@ -84,6 +84,120 @@ Item {
                     }
                 }
 
+                function _wordBoundaryBackward(text, pos) {
+                    let i = pos - 1
+                    while (i > 0 && /\s/.test(text[i])) i--
+                    while (i > 0 && !/\s/.test(text[i - 1])) i--
+                    return Math.max(0, i)
+                }
+
+                function _wordBoundaryForward(text, pos) {
+                    let i = pos
+                    while (i < text.length && !/\s/.test(text[i])) i++
+                    while (i < text.length && /\s/.test(text[i])) i++
+                    return i
+                }
+
+                function _syncSearchText() {
+                    launcher.forwardSearchText(searchInput.text)
+                    if (launcher.isRootSearch)
+                        searchModel.setFilter(searchInput.text)
+                }
+
+                function _handleEmacsEditing(event) {
+                    if (!Config.emacsMode) return false
+
+                    const ctrl = (event.modifiers & Qt.ControlModifier)
+                    const alt = (event.modifiers & Qt.AltModifier)
+                    const noOther = !(event.modifiers & ~(Qt.ControlModifier | Qt.AltModifier | Qt.KeypadModifier | Qt.GroupSwitchModifier))
+
+                    if (ctrl && !alt && noOther) {
+                        switch (event.key) {
+                        case Qt.Key_A:
+                            searchInput.cursorPosition = 0
+                            return true
+                        case Qt.Key_E:
+                            searchInput.cursorPosition = searchInput.text.length
+                            return true
+                        case Qt.Key_B:
+                            if (searchInput.cursorPosition > 0)
+                                searchInput.cursorPosition--
+                            return true
+                        case Qt.Key_F:
+                            if (searchInput.cursorPosition < searchInput.text.length)
+                                searchInput.cursorPosition++
+                            return true
+                        case Qt.Key_K: {
+                            searchInput.text = searchInput.text.substring(0, searchInput.cursorPosition)
+                            _syncSearchText()
+                            return true
+                        }
+                        case Qt.Key_U: {
+                            const pos = searchInput.cursorPosition
+                            searchInput.text = searchInput.text.substring(pos)
+                            searchInput.cursorPosition = 0
+                            _syncSearchText()
+                            return true
+                        }
+                        }
+                    }
+
+                    if (alt && !ctrl && noOther) {
+                        switch (event.key) {
+                        case Qt.Key_B: {
+                            searchInput.cursorPosition = _wordBoundaryBackward(searchInput.text, searchInput.cursorPosition)
+                            return true
+                        }
+                        case Qt.Key_F: {
+                            searchInput.cursorPosition = _wordBoundaryForward(searchInput.text, searchInput.cursorPosition)
+                            return true
+                        }
+                        case Qt.Key_Backspace: {
+                            const pos = searchInput.cursorPosition
+                            const boundary = _wordBoundaryBackward(searchInput.text, pos)
+                            searchInput.text = searchInput.text.substring(0, boundary) + searchInput.text.substring(pos)
+                            searchInput.cursorPosition = boundary
+                            _syncSearchText()
+                            return true
+                        }
+                        case Qt.Key_D: {
+                            const pos = searchInput.cursorPosition
+                            const boundary = _wordBoundaryForward(searchInput.text, pos)
+                            searchInput.text = searchInput.text.substring(0, pos) + searchInput.text.substring(boundary)
+                            searchInput.cursorPosition = pos
+                            _syncSearchText()
+                            return true
+                        }
+                        }
+                    }
+
+                    return false
+                }
+
+                function _handleNavigation(event) {
+                    const nav = launcher.matchNavigationKey(event.key, event.modifiers)
+                    if (nav === 0) return false
+
+                    if (launcher.compacted) { launcher.expand(); return true }
+
+                    if (nav === 1) {
+                        if (commandStack.currentItem) commandStack.currentItem.moveUp()
+                        else if (!launcher.isRootSearch) launcher.forwardKey(Qt.Key_Up)
+                        else searchList.moveUp()
+                    } else if (nav === 2) {
+                        if (commandStack.currentItem) commandStack.currentItem.moveDown()
+                        else if (!launcher.isRootSearch) launcher.forwardKey(Qt.Key_Down)
+                        else searchList.moveDown()
+                    } else if (nav === 3) {
+                        if (commandStack.currentItem && typeof commandStack.currentItem.moveLeft === "function")
+                            commandStack.currentItem.moveLeft()
+                    } else if (nav === 4) {
+                        if (commandStack.currentItem && typeof commandStack.currentItem.moveRight === "function")
+                            commandStack.currentItem.moveRight()
+                    }
+                    return true
+                }
+
                 Keys.onUpPressed: {
                     if (launcher.compacted) { launcher.expand(); return }
                     if (commandStack.currentItem) commandStack.currentItem.moveUp()
@@ -122,7 +236,11 @@ Item {
                 }
                 Keys.onBacktabPressed: (event) => { event.accepted = false }
                 Keys.onPressed: (event) => {
-                    if (event.key === Qt.Key_Backspace && searchInput.text === "" && !launcher.isRootSearch && launcher.showBackButton) {
+                    if (_handleEmacsEditing(event)) {
+                        event.accepted = true
+                    } else if (_handleNavigation(event)) {
+                        event.accepted = true
+                    } else if (event.key === Qt.Key_Backspace && searchInput.text === "" && !launcher.isRootSearch && launcher.showBackButton) {
                         launcher.goBack()
                         event.accepted = true
                     } else if (event.key === Qt.Key_Space && launcher.isRootSearch && event.modifiers === Qt.NoModifier) {

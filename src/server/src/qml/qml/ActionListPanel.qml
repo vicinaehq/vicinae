@@ -184,7 +184,17 @@ Item {
                     onTextEdited: root.model.setFilter(text)
 
                     Keys.onPressed: function(event) {
-                        if (event.key === Qt.Key_Backspace && filterInput.text === "" && actionPanel.depth > 1) {
+                        const nav = launcher.matchNavigationKey(event.key, event.modifiers)
+                        if (nav === 1) {
+                            root.moveUp()
+                            event.accepted = true
+                        } else if (nav === 2) {
+                            root.moveDown()
+                            event.accepted = true
+                        } else if (nav === 3) {
+                            if (actionPanel.depth > 1) root.navigateBack()
+                            event.accepted = true
+                        } else if (event.key === Qt.Key_Backspace && filterInput.text === "" && actionPanel.depth > 1) {
                             root.navigateBack()
                             event.accepted = true
                         } else if ((event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))

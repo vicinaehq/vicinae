@@ -11,6 +11,7 @@ class ConfigBridge : public QObject {
   Q_PROPERTY(int borderRounding READ borderRounding NOTIFY changed)
   Q_PROPERTY(int windowWidth READ windowWidth NOTIFY changed)
   Q_PROPERTY(int windowHeight READ windowHeight NOTIFY changed)
+  Q_PROPERTY(bool emacsMode READ emacsMode NOTIFY changed)
 
 signals:
   void changed();
@@ -35,6 +36,7 @@ public:
 
   int windowWidth() const { return cfg().launcherWindow.size.width; }
   int windowHeight() const { return cfg().launcherWindow.size.height; }
+  bool emacsMode() const { return cfg().keybinding == "emacs"; }
 
 private:
   static const config::ConfigValue &cfg() { return ServiceRegistry::instance()->config()->value(); }

@@ -14,6 +14,7 @@
 #include "navigation-controller.hpp"
 #include "overlay-controller/overlay-controller.hpp"
 #include "settings-controller/settings-controller.hpp"
+#include "services/keybinding/keybinding-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "config/config.hpp"
 #include "service-registry.hpp"
@@ -416,6 +417,11 @@ void LauncherWindow::popToRoot() {
 }
 
 bool LauncherWindow::tryAliasFastTrack() { return m_searchModel->tryAliasFastTrack(); }
+
+int LauncherWindow::matchNavigationKey(int key, int modifiers) {
+  return KeyBindingService::matchNavigation(key, modifiers,
+                                            m_ctx.services->config()->value().keybinding);
+}
 
 void LauncherWindow::setCompleterValue(int index, const QString &value) {
   auto *nav = m_ctx.navigation.get();
