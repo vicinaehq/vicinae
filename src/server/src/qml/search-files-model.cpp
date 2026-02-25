@@ -8,8 +8,7 @@ void SearchFilesModel::setFiles(std::vector<std::filesystem::path> files, const 
   m_files = std::move(files);
 
   std::vector<SectionInfo> sections;
-  if (!m_files.empty())
-    sections.push_back({.name = sectionName, .count = static_cast<int>(m_files.size())});
+  if (!m_files.empty()) sections.push_back({.name = sectionName, .count = static_cast<int>(m_files.size())});
   setSections(sections);
   refreshActionPanel();
 }

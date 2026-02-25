@@ -76,10 +76,10 @@ class EditClipboardKeywordsAction : public AbstractAction {
   void execute(ApplicationContext *ctx) override {
     auto clipman = ctx->services->clipman();
     auto id = m_id;
-    auto view = new EditKeywordsViewHost(
-        [clipman, id]() { return clipman->retrieveKeywords(id).value_or(""); },
-        [clipman, id](const QString &kw) { return clipman->setKeywords(id, kw); },
-        "Additional keywords that will be used to index this selection.");
+    auto view =
+        new EditKeywordsViewHost([clipman, id]() { return clipman->retrieveKeywords(id).value_or(""); },
+                                 [clipman, id](const QString &kw) { return clipman->setKeywords(id, kw); },
+                                 "Additional keywords that will be used to index this selection.");
     ctx->navigation->pushView(view);
     ctx->navigation->setNavigationTitle(title());
   }

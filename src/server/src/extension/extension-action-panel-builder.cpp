@@ -128,8 +128,9 @@ static void updateSubmenuCache(SubmenuCache *cache, const ActionPannelModel &mod
   }
 }
 
-std::unique_ptr<ActionPanelState> buildSubmenuState(const ActionPannelSubmenuPtr &submenuModel, NotifyFn notify,
-                                                    SubmenuCache *submenuCache, SubmitFn submit) {
+std::unique_ptr<ActionPanelState> buildSubmenuState(const ActionPannelSubmenuPtr &submenuModel,
+                                                    NotifyFn notify, SubmenuCache *submenuCache,
+                                                    SubmitFn submit) {
   if (!submenuModel) return nullptr;
 
   auto state = std::make_unique<ActionPanelState>();

@@ -9,9 +9,7 @@ namespace fs = std::filesystem;
 DMenuViewHost::DMenuViewHost(ipc::DMenu::Request data) : m_data(std::move(data)) {}
 
 QUrl DMenuViewHost::qmlComponentUrl() const {
-  if (m_data.noQuickLook) {
-    return QUrl(QStringLiteral("qrc:/Vicinae/CommandListView.qml"));
-  }
+  if (m_data.noQuickLook) { return QUrl(QStringLiteral("qrc:/Vicinae/CommandListView.qml")); }
   return QUrl(QStringLiteral("qrc:/Vicinae/DMenuView.qml"));
 }
 
@@ -37,8 +35,7 @@ void DMenuViewHost::initialize() {
 
   auto entries = std::views::split(m_data.rawContent, std::string_view("\n")) |
                  std::views::transform([](auto &&s) { return std::string_view(s); }) |
-                 std::views::filter([](auto &&s) { return !s.empty(); }) |
-                 std::ranges::to<std::vector>();
+                 std::views::filter([](auto &&s) { return !s.empty(); }) | std::ranges::to<std::vector>();
   m_model->setRawEntries(std::move(entries));
 
   connect(m_model, &DMenuModel::entryChosen, this, [this](const QString &text) {
@@ -65,9 +62,7 @@ void DMenuViewHost::textChanged(const QString &text) {
 }
 
 void DMenuViewHost::beforePop() {
-  if (!m_selected) {
-    emit selected("");
-  }
+  if (!m_selected) { emit selected(""); }
 }
 
 QObject *DMenuViewHost::listModel() const { return m_model; }

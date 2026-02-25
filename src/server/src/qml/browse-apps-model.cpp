@@ -11,9 +11,7 @@ QString BrowseAppsModel::displayTitle(const AppPtr &app) const { return app->dis
 
 QString BrowseAppsModel::displaySubtitle(const AppPtr &app) const { return app->description(); }
 
-QString BrowseAppsModel::displayIconSource(const AppPtr &app) const {
-  return imageSourceFor(app->iconUrl());
-}
+QString BrowseAppsModel::displayIconSource(const AppPtr &app) const { return imageSourceFor(app->iconUrl()); }
 
 QVariantList BrowseAppsModel::displayAccessory(const AppPtr &app) const {
   if (!app->displayable()) return qml::textAccessory(QStringLiteral("Hidden"));
@@ -30,9 +28,7 @@ std::unique_ptr<ActionPanelState> BrowseAppsModel::buildActionPanel(const AppPtr
   auto *utils = panel->createSection();
 
   auto activeWindows = scope().services()->windowManager()->findAppWindows(*app);
-  if (!activeWindows.empty()) {
-    mainSection->addAction(new FocusWindowAction(activeWindows.front()));
-  }
+  if (!activeWindows.empty()) { mainSection->addAction(new FocusWindowAction(activeWindows.front())); }
 
   auto *open = new OpenAppAction(app, "Open Application", {});
   open->setClearSearch(true);
@@ -41,8 +37,7 @@ std::unique_ptr<ActionPanelState> BrowseAppsModel::buildActionPanel(const AppPtr
   auto actions = app->actions();
   for (int i = 0; i < static_cast<int>(actions.size()); ++i) {
     auto *action = new OpenAppAction(actions[i], actions[i]->displayName(), {});
-    if (i < 9)
-      action->setShortcut(QString("control+shift+%1").arg(i + 1));
+    if (i < 9) action->setShortcut(QString("control+shift+%1").arg(i + 1));
     mainSection->addAction(action);
   }
 
@@ -61,6 +56,4 @@ std::unique_ptr<ActionPanelState> BrowseAppsModel::buildActionPanel(const AppPtr
   return panel;
 }
 
-QString BrowseAppsModel::sectionLabel() const {
-  return QStringLiteral("Applications ({count})");
-}
+QString BrowseAppsModel::sectionLabel() const { return QStringLiteral("Applications ({count})"); }

@@ -11,8 +11,7 @@ QUrl ManageSnippetsViewHost::qmlComponentUrl() const {
 }
 
 QVariantMap ManageSnippetsViewHost::qmlProperties() const {
-  return {{QStringLiteral("host"),
-           QVariant::fromValue(const_cast<ManageSnippetsViewHost *>(this))}};
+  return {{QStringLiteral("host"), QVariant::fromValue(const_cast<ManageSnippetsViewHost *>(this))}};
 }
 
 void ManageSnippetsViewHost::initialize() {
@@ -25,11 +24,9 @@ void ManageSnippetsViewHost::initialize() {
 
   setSearchPlaceholderText("Search by snippet name, contents or keyword...");
 
-  connect(m_snippetService, &SnippetService::snippetsChanged, this,
-          &ManageSnippetsViewHost::reload);
+  connect(m_snippetService, &SnippetService::snippetsChanged, this, &ManageSnippetsViewHost::reload);
 
-  connect(m_model, &ManageSnippetsModel::snippetSelected, this,
-          &ManageSnippetsViewHost::loadDetail);
+  connect(m_model, &ManageSnippetsModel::snippetSelected, this, &ManageSnippetsViewHost::loadDetail);
 
   connect(context()->navigation.get(), &NavigationController::completionValuesChanged, this,
           [this](const ArgumentValues &) { updateExpandedText(); });
@@ -41,13 +38,9 @@ void ManageSnippetsViewHost::initialize() {
 
 void ManageSnippetsViewHost::loadInitialData() { reload(); }
 
-void ManageSnippetsViewHost::textChanged(const QString &text) {
-  m_model->setFilter(text);
-}
+void ManageSnippetsViewHost::textChanged(const QString &text) { m_model->setFilter(text); }
 
-void ManageSnippetsViewHost::onReactivated() {
-  m_model->refreshActionPanel();
-}
+void ManageSnippetsViewHost::onReactivated() { m_model->refreshActionPanel(); }
 
 void ManageSnippetsViewHost::beforePop() {
   clearDetail();
@@ -61,10 +54,10 @@ void ManageSnippetsViewHost::loadDetail(const snippet::SerializedSnippet &snippe
 
   QVariantList meta;
 
-  const auto typeStr = std::visit(
-      overloads{[](const snippet::TextSnippet &) -> QString { return QStringLiteral("Text"); },
-                [](const snippet::FileSnippet &) -> QString { return QStringLiteral("File"); }},
-      snippet.data);
+  const auto typeStr =
+      std::visit(overloads{[](const snippet::TextSnippet &) -> QString { return QStringLiteral("Text"); },
+                           [](const snippet::FileSnippet &) -> QString { return QStringLiteral("File"); }},
+                 snippet.data);
 
   meta.append(QVariantMap{
       {QStringLiteral("label"), QStringLiteral("Type")},
@@ -106,10 +99,10 @@ void ManageSnippetsViewHost::loadDetail(const snippet::SerializedSnippet &snippe
             .required = arg.defaultValue.isEmpty(),
         });
       }
-      auto icon = std::visit(
-          overloads{[](const snippet::TextSnippet &) { return ImageURL(BuiltinIcon::TextInput); },
-                    [](const auto &) { return ImageURL(BuiltinIcon::BlankDocument); }},
-          snippet.data);
+      auto icon =
+          std::visit(overloads{[](const snippet::TextSnippet &) { return ImageURL(BuiltinIcon::TextInput); },
+                               [](const auto &) { return ImageURL(BuiltinIcon::BlankDocument); }},
+                     snippet.data);
       context()->navigation->createCompletion(completerArgs, icon);
     } else {
       context()->navigation->destroyCurrentCompletion();
@@ -128,13 +121,10 @@ void ManageSnippetsViewHost::updateExpandedText() {
       [this](const snippet::TextSnippet &text) {
         const auto values = context()->navigation->completionValues();
         const auto result = m_expander.expand(text.text.c_str(), values);
-        m_detailContent = result.parts |
-                          std::views::transform([](auto &&r) { return r.text; }) |
+        m_detailContent = result.parts | std::views::transform([](auto &&r) { return r.text; }) |
                           std::views::join | std::ranges::to<QString>();
       },
-      [this](const snippet::FileSnippet &file) {
-        m_detailContent = QString::fromStdString(file.file);
-      }};
+      [this](const snippet::FileSnippet &file) { m_detailContent = QString::fromStdString(file.file); }};
 
   std::visit(visitor, m_currentSnippet->data);
   m_hasDetail = true;
@@ -151,6 +141,4 @@ void ManageSnippetsViewHost::clearDetail() {
   emit detailChanged();
 }
 
-void ManageSnippetsViewHost::reload() {
-  m_model->setItems(m_snippetService->database()->snippets());
-}
+void ManageSnippetsViewHost::reload() { m_model->setItems(m_snippetService->database()->snippets()); }

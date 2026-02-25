@@ -16,8 +16,7 @@
 #include <QQmlContext>
 #include <QQuickWindow>
 
-SettingsWindow::SettingsWindow(ApplicationContext &ctx, QObject *parent)
-    : QObject(parent), m_ctx(ctx) {}
+SettingsWindow::SettingsWindow(ApplicationContext &ctx, QObject *parent) : QObject(parent), m_ctx(ctx) {}
 
 void SettingsWindow::ensureInitialized() {
   if (m_initialized) return;

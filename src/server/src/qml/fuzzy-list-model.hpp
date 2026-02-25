@@ -44,9 +44,7 @@ protected:
     fuzzy::fuzzyFilter<T>(std::span<const T>(m_items), m_query, m_filtered);
 
     QString label = sectionLabel();
-    if (!label.isEmpty()) {
-      label = label.replace("{count}", QString::number(m_filtered.size()));
-    }
+    if (!label.isEmpty()) { label = label.replace("{count}", QString::number(m_filtered.size())); }
 
     std::vector<SectionInfo> sections;
     if (!m_filtered.empty()) {

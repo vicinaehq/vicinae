@@ -4,8 +4,7 @@
 #include "services/toast/toast-service.hpp"
 #include "ui/action-pannel/action.hpp"
 
-EditKeywordsViewHost::EditKeywordsViewHost(LoadFn loadKeywords, SaveFn saveKeywords,
-                                                 const QString &infoText)
+EditKeywordsViewHost::EditKeywordsViewHost(LoadFn loadKeywords, SaveFn saveKeywords, const QString &infoText)
     : FormViewBase(), m_loadKeywords(std::move(loadKeywords)), m_saveKeywords(std::move(saveKeywords)),
       m_infoText(infoText) {}
 

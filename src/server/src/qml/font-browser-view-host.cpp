@@ -113,8 +113,7 @@ QUrl FontBrowserViewHost::qmlComponentUrl() const {
 }
 
 QVariantMap FontBrowserViewHost::qmlProperties() const {
-  return {{QStringLiteral("host"),
-           QVariant::fromValue(const_cast<FontBrowserViewHost *>(this))}};
+  return {{QStringLiteral("host"), QVariant::fromValue(const_cast<FontBrowserViewHost *>(this))}};
 }
 
 void FontBrowserViewHost::initialize() {

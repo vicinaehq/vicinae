@@ -58,7 +58,6 @@ public:
   Q_INVOKABLE void activateSelected();
   Q_INVOKABLE bool tryAliasFastTrack();
 
-
   QString primaryActionTitle() const;
   QString primaryActionIcon() const;
   bool selectFirstOnReset() const { return m_selectFirstOnReset; }

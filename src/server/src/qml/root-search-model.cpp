@@ -11,11 +11,9 @@
 #include <format>
 
 RootSearchModel::RootSearchModel(const ViewScope &scope, QObject *parent)
-    : QAbstractListModel(parent), m_scope(scope),
-      m_manager(scope.services()->rootItemManager()), m_appDb(scope.services()->appDb()),
-      m_calculator(scope.services()->calculatorService()),
-      m_fileService(scope.services()->fileService()),
-      m_config(scope.services()->config()) {
+    : QAbstractListModel(parent), m_scope(scope), m_manager(scope.services()->rootItemManager()),
+      m_appDb(scope.services()->appDb()), m_calculator(scope.services()->calculatorService()),
+      m_fileService(scope.services()->fileService()), m_config(scope.services()->config()) {
 
   using namespace std::chrono_literals;
 
@@ -43,8 +41,7 @@ RootSearchModel::RootSearchModel(const ViewScope &scope, QObject *parent)
   m_favorites = m_manager->queryFavorites();
 
   connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() {
-    if (rowCount() > 0)
-      emit dataChanged(index(0), index(rowCount() - 1), {IconSource, AccessoryColor});
+    if (rowCount() > 0) emit dataChanged(index(0), index(rowCount() - 1), {IconSource, AccessoryColor});
   });
 
   setFilter({});
@@ -56,92 +53,141 @@ int RootSearchModel::rowCount(const QModelIndex &parent) const {
 }
 
 QVariant RootSearchModel::data(const QModelIndex &index, int role) const {
-  if (!index.isValid() || index.row() < 0 || index.row() >= static_cast<int>(m_flat.size()))
-    return {};
+  if (!index.isValid() || index.row() < 0 || index.row() >= static_cast<int>(m_flat.size())) return {};
 
   const auto &flat = m_flat[index.row()];
 
   if (flat.kind == FlatItem::SectionHeader) {
     switch (role) {
-    case IsSection: return true;
-    case IsSelectable: return false;
+    case IsSection:
+      return true;
+    case IsSelectable:
+      return false;
     case SectionName: {
       switch (flat.section) {
-      case SectionType::Link: return QStringLiteral("Link");
-      case SectionType::Calculator: return QStringLiteral("Calculator");
+      case SectionType::Link:
+        return QStringLiteral("Link");
+      case SectionType::Calculator:
+        return QStringLiteral("Calculator");
       case SectionType::Results:
-        return m_query.empty()
-            ? QStringLiteral("Suggestions")
-            : QString::fromStdString(std::format("Results ({})", m_results.size()));
-      case SectionType::Files: return QStringLiteral("Files");
+        return m_query.empty() ? QStringLiteral("Suggestions")
+                               : QString::fromStdString(std::format("Results ({})", m_results.size()));
+      case SectionType::Files:
+        return QStringLiteral("Files");
       case SectionType::Fallback:
         return QString::fromStdString(std::format("Use \"{}\" with...", m_query));
-      case SectionType::Favorites: return QStringLiteral("Favorites");
-      default: return {};
+      case SectionType::Favorites:
+        return QStringLiteral("Favorites");
+      default:
+        return {};
       }
     }
-    case ItemType: return QString();
-    case Title: return QString();
-    case Subtitle: return QString();
-    case IconSource: return QString();
-    case Alias: return QString();
-    case IsActive: return false;
-    case AccessoryText: return QString();
-    case AccessoryColor: return QString();
-    case IsCalculator: return false;
-    case CalcQuestion: return QString();
-    case CalcQuestionUnit: return QString();
-    case CalcAnswer: return QString();
-    case CalcAnswerUnit: return QString();
-    case IsFile: return false;
-    default: return {};
+    case ItemType:
+      return QString();
+    case Title:
+      return QString();
+    case Subtitle:
+      return QString();
+    case IconSource:
+      return QString();
+    case Alias:
+      return QString();
+    case IsActive:
+      return false;
+    case AccessoryText:
+      return QString();
+    case AccessoryColor:
+      return QString();
+    case IsCalculator:
+      return false;
+    case CalcQuestion:
+      return QString();
+    case CalcQuestionUnit:
+      return QString();
+    case CalcAnswer:
+      return QString();
+    case CalcAnswerUnit:
+      return QString();
+    case IsFile:
+      return false;
+    default:
+      return {};
     }
   }
 
   switch (role) {
-  case IsSection: return false;
-  case IsSelectable: return true;
-  case SectionName: return QString();
-  case ItemType: return itemTypeString(flat.kind);
-  case IsCalculator: return flat.kind == FlatItem::CalculatorItem;
-  case IsFile: return flat.kind == FlatItem::FileItem;
+  case IsSection:
+    return false;
+  case IsSelectable:
+    return true;
+  case SectionName:
+    return QString();
+  case ItemType:
+    return itemTypeString(flat.kind);
+  case IsCalculator:
+    return flat.kind == FlatItem::CalculatorItem;
+  case IsFile:
+    return flat.kind == FlatItem::FileItem;
   }
 
   if (flat.kind == FlatItem::CalculatorItem) {
     if (!m_calc) return {};
     switch (role) {
-    case Title: return m_calc->question.text + QStringLiteral(" = ") + m_calc->answer.text;
-    case Subtitle: return {};
-    case IconSource: return imageSourceFor(ImageURL::builtin("calculator"));
-    case Alias: return {};
-    case IsActive: return false;
-    case AccessoryText: return {};
-    case AccessoryColor: return {};
-    case CalcQuestion: return m_calc->question.text;
-    case CalcQuestionUnit: return m_calc->question.unit ? m_calc->question.unit->displayName : QString();
-    case CalcAnswer: return m_calc->answer.text;
-    case CalcAnswerUnit: return m_calc->answer.unit ? m_calc->answer.unit->displayName : QString();
-    default: return {};
+    case Title:
+      return m_calc->question.text + QStringLiteral(" = ") + m_calc->answer.text;
+    case Subtitle:
+      return {};
+    case IconSource:
+      return imageSourceFor(ImageURL::builtin("calculator"));
+    case Alias:
+      return {};
+    case IsActive:
+      return false;
+    case AccessoryText:
+      return {};
+    case AccessoryColor:
+      return {};
+    case CalcQuestion:
+      return m_calc->question.text;
+    case CalcQuestionUnit:
+      return m_calc->question.unit ? m_calc->question.unit->displayName : QString();
+    case CalcAnswer:
+      return m_calc->answer.text;
+    case CalcAnswerUnit:
+      return m_calc->answer.unit ? m_calc->answer.unit->displayName : QString();
+    default:
+      return {};
     }
   }
 
   if (flat.kind == FlatItem::FileItem) {
-    if (flat.dataIndex < 0 || flat.dataIndex >= static_cast<int>(m_files.size()))
-      return {};
+    if (flat.dataIndex < 0 || flat.dataIndex >= static_cast<int>(m_files.size())) return {};
     const auto &file = m_files[flat.dataIndex];
     switch (role) {
-    case Title: return QString::fromStdString(file.path.filename().string());
-    case Subtitle: return QString::fromStdString(file.path.parent_path().string());
-    case IconSource: return imageSourceFor(ImageURL::fileIcon(file.path));
-    case Alias: return {};
-    case IsActive: return false;
-    case AccessoryText: return {};
-    case AccessoryColor: return {};
-    case CalcQuestion: return {};
-    case CalcQuestionUnit: return {};
-    case CalcAnswer: return {};
-    case CalcAnswerUnit: return {};
-    default: return {};
+    case Title:
+      return QString::fromStdString(file.path.filename().string());
+    case Subtitle:
+      return QString::fromStdString(file.path.parent_path().string());
+    case IconSource:
+      return imageSourceFor(ImageURL::fileIcon(file.path));
+    case Alias:
+      return {};
+    case IsActive:
+      return false;
+    case AccessoryText:
+      return {};
+    case AccessoryColor:
+      return {};
+    case CalcQuestion:
+      return {};
+    case CalcQuestionUnit:
+      return {};
+    case CalcAnswer:
+      return {};
+    case CalcAnswerUnit:
+      return {};
+    default:
+      return {};
     }
   }
 
@@ -161,113 +207,143 @@ QVariant RootSearchModel::data(const QModelIndex &index, int role) const {
 
   switch (flat.kind) {
   case FlatItem::ResultItem: {
-    if (flat.dataIndex < 0 || flat.dataIndex >= static_cast<int>(m_results.size()))
-      return {};
+    if (flat.dataIndex < 0 || flat.dataIndex >= static_cast<int>(m_results.size())) return {};
     const auto &owned = m_results[flat.dataIndex];
     const auto &item = owned.item;
     if (!item) return {};
     switch (role) {
-    case Title: return item->displayName();
-    case Subtitle: return item->subtitle();
-    case IconSource: return imageSourceFor(item->iconUrl());
-    case Alias: return QString::fromStdString(owned.meta.alias.value_or(""));
-    case IsActive: return item->isActive();
+    case Title:
+      return item->displayName();
+    case Subtitle:
+      return item->subtitle();
+    case IconSource:
+      return imageSourceFor(item->iconUrl());
+    case Alias:
+      return QString::fromStdString(owned.meta.alias.value_or(""));
+    case IsActive:
+      return item->isActive();
     case AccessoryText:
-    case AccessoryColor: return accessoryData(item.get(), role);
+    case AccessoryColor:
+      return accessoryData(item.get(), role);
     case CalcQuestion:
     case CalcQuestionUnit:
     case CalcAnswer:
-    case CalcAnswerUnit: return {};
-    default: return {};
+    case CalcAnswerUnit:
+      return {};
+    default:
+      return {};
     }
   }
 
   case FlatItem::FallbackItem: {
-    if (flat.dataIndex < 0 || flat.dataIndex >= static_cast<int>(m_fallbackItems.size()))
-      return {};
+    if (flat.dataIndex < 0 || flat.dataIndex >= static_cast<int>(m_fallbackItems.size())) return {};
     const auto &item = m_fallbackItems[flat.dataIndex];
     if (!item) return {};
     switch (role) {
-    case Title: return item->displayName();
-    case Subtitle: return item->subtitle();
-    case IconSource: return imageSourceFor(item->iconUrl());
-    case Alias: return {};
-    case IsActive: return item->isActive();
+    case Title:
+      return item->displayName();
+    case Subtitle:
+      return item->subtitle();
+    case IconSource:
+      return imageSourceFor(item->iconUrl());
+    case Alias:
+      return {};
+    case IsActive:
+      return item->isActive();
     case AccessoryText:
-    case AccessoryColor: return accessoryData(item.get(), role);
+    case AccessoryColor:
+      return accessoryData(item.get(), role);
     case CalcQuestion:
     case CalcQuestionUnit:
     case CalcAnswer:
-    case CalcAnswerUnit: return {};
-    default: return {};
+    case CalcAnswerUnit:
+      return {};
+    default:
+      return {};
     }
   }
 
   case FlatItem::FavoriteItem: {
-    if (flat.dataIndex < 0 || flat.dataIndex >= static_cast<int>(m_favorites.size()))
-      return {};
+    if (flat.dataIndex < 0 || flat.dataIndex >= static_cast<int>(m_favorites.size())) return {};
     const auto &item = m_favorites[flat.dataIndex];
     if (!item) return {};
     switch (role) {
-    case Title: return item->displayName();
-    case Subtitle: return item->subtitle();
-    case IconSource: return imageSourceFor(item->iconUrl());
+    case Title:
+      return item->displayName();
+    case Subtitle:
+      return item->subtitle();
+    case IconSource:
+      return imageSourceFor(item->iconUrl());
     case Alias: {
       auto meta = m_manager->itemMetadata(item->uniqueId());
       return QString::fromStdString(meta.alias.value_or(""));
     }
-    case IsActive: return item->isActive();
+    case IsActive:
+      return item->isActive();
     case AccessoryText:
-    case AccessoryColor: return accessoryData(item.get(), role);
+    case AccessoryColor:
+      return accessoryData(item.get(), role);
     case CalcQuestion:
     case CalcQuestionUnit:
     case CalcAnswer:
-    case CalcAnswerUnit: return {};
-    default: return {};
+    case CalcAnswerUnit:
+      return {};
+    default:
+      return {};
     }
   }
 
   case FlatItem::LinkItem: {
     if (!m_defaultOpener) return {};
     switch (role) {
-    case Title: return m_defaultOpener->url;
-    case Subtitle: return {};
-    case IconSource: return imageSourceFor(m_defaultOpener->app->iconUrl());
-    case Alias: return {};
-    case IsActive: return false;
-    case AccessoryText: return {};
-    case AccessoryColor: return {};
+    case Title:
+      return m_defaultOpener->url;
+    case Subtitle:
+      return {};
+    case IconSource:
+      return imageSourceFor(m_defaultOpener->app->iconUrl());
+    case Alias:
+      return {};
+    case IsActive:
+      return false;
+    case AccessoryText:
+      return {};
+    case AccessoryColor:
+      return {};
     case CalcQuestion:
     case CalcQuestionUnit:
     case CalcAnswer:
-    case CalcAnswerUnit: return {};
-    default: return {};
+    case CalcAnswerUnit:
+      return {};
+    default:
+      return {};
     }
   }
 
-  default: return {};
+  default:
+    return {};
   }
 }
 
 QHash<int, QByteArray> RootSearchModel::roleNames() const {
   return {
-    {IsSection, "isSection"},
-    {IsSelectable, "isSelectable"},
-    {SectionName, "sectionName"},
-    {ItemType, "itemType"},
-    {Title, "title"},
-    {Subtitle, "subtitle"},
-    {IconSource, "iconSource"},
-    {Alias, "alias"},
-    {IsActive, "isActive"},
-    {AccessoryText, "accessoryText"},
-    {AccessoryColor, "accessoryColor"},
-    {IsCalculator, "isCalculator"},
-    {CalcQuestion, "calcQuestion"},
-    {CalcQuestionUnit, "calcQuestionUnit"},
-    {CalcAnswer, "calcAnswer"},
-    {CalcAnswerUnit, "calcAnswerUnit"},
-    {IsFile, "isFile"},
+      {IsSection, "isSection"},
+      {IsSelectable, "isSelectable"},
+      {SectionName, "sectionName"},
+      {ItemType, "itemType"},
+      {Title, "title"},
+      {Subtitle, "subtitle"},
+      {IconSource, "iconSource"},
+      {Alias, "alias"},
+      {IsActive, "isActive"},
+      {AccessoryText, "accessoryText"},
+      {AccessoryColor, "accessoryColor"},
+      {IsCalculator, "isCalculator"},
+      {CalcQuestion, "calcQuestion"},
+      {CalcQuestionUnit, "calcQuestionUnit"},
+      {CalcAnswer, "calcAnswer"},
+      {CalcAnswerUnit, "calcAnswerUnit"},
+      {IsFile, "isFile"},
   };
 }
 
@@ -346,8 +422,8 @@ void RootSearchModel::rerunSearch() {
   m_results.reserve(scored.size());
   for (const auto &s : scored) {
     m_results.push_back({
-      .item = s.item.get(),
-      .meta = s.meta ? *s.meta : RootItemMetadata{},
+        .item = s.item.get(),
+        .meta = s.meta ? *s.meta : RootItemMetadata{},
     });
   }
 
@@ -363,12 +439,8 @@ void RootSearchModel::rebuildFlatList() {
     addSection(SectionType::Favorites, "Favorites", static_cast<int>(m_favorites.size()));
     addSection(SectionType::Results, "Suggestions", static_cast<int>(m_results.size()));
   } else {
-    if (m_defaultOpener) {
-      addSection(SectionType::Link, "Link", 1);
-    }
-    if (m_calc) {
-      addSection(SectionType::Calculator, "Calculator", 1);
-    }
+    if (m_defaultOpener) { addSection(SectionType::Link, "Link", 1); }
+    if (m_calc) { addSection(SectionType::Calculator, "Calculator", 1); }
     addSection(SectionType::Results, "", static_cast<int>(m_results.size()));
     addSection(SectionType::Files, "Files", static_cast<int>(m_files.size()));
     addSection(SectionType::Fallback, "", static_cast<int>(m_fallbackItems.size()));
@@ -382,13 +454,27 @@ void RootSearchModel::addSection(SectionType section, const std::string &name, i
 
   FlatItem::Kind itemKind;
   switch (section) {
-  case SectionType::Results: itemKind = FlatItem::ResultItem; break;
-  case SectionType::Fallback: itemKind = FlatItem::FallbackItem; break;
-  case SectionType::Favorites: itemKind = FlatItem::FavoriteItem; break;
-  case SectionType::Link: itemKind = FlatItem::LinkItem; break;
-  case SectionType::Calculator: itemKind = FlatItem::CalculatorItem; break;
-  case SectionType::Files: itemKind = FlatItem::FileItem; break;
-  default: itemKind = FlatItem::ResultItem; break;
+  case SectionType::Results:
+    itemKind = FlatItem::ResultItem;
+    break;
+  case SectionType::Fallback:
+    itemKind = FlatItem::FallbackItem;
+    break;
+  case SectionType::Favorites:
+    itemKind = FlatItem::FavoriteItem;
+    break;
+  case SectionType::Link:
+    itemKind = FlatItem::LinkItem;
+    break;
+  case SectionType::Calculator:
+    itemKind = FlatItem::CalculatorItem;
+    break;
+  case SectionType::Files:
+    itemKind = FlatItem::FileItem;
+    break;
+  default:
+    itemKind = FlatItem::ResultItem;
+    break;
   }
 
   for (int i = 0; i < count; ++i) {
@@ -410,13 +496,20 @@ int RootSearchModel::nextSelectableIndex(int from, int direction) const {
 
 QString RootSearchModel::itemTypeString(FlatItem::Kind kind) const {
   switch (kind) {
-  case FlatItem::ResultItem: return QStringLiteral("result");
-  case FlatItem::FallbackItem: return QStringLiteral("fallback");
-  case FlatItem::FavoriteItem: return QStringLiteral("favorite");
-  case FlatItem::LinkItem: return QStringLiteral("link");
-  case FlatItem::CalculatorItem: return QStringLiteral("calculator");
-  case FlatItem::FileItem: return QStringLiteral("file");
-  default: return QStringLiteral("unknown");
+  case FlatItem::ResultItem:
+    return QStringLiteral("result");
+  case FlatItem::FallbackItem:
+    return QStringLiteral("fallback");
+  case FlatItem::FavoriteItem:
+    return QStringLiteral("favorite");
+  case FlatItem::LinkItem:
+    return QStringLiteral("link");
+  case FlatItem::CalculatorItem:
+    return QStringLiteral("calculator");
+  case FlatItem::FileItem:
+    return QStringLiteral("file");
+  default:
+    return QStringLiteral("unknown");
   }
 }
 
@@ -491,14 +584,16 @@ void RootSearchModel::setSelectedIndex(int index) {
   switch (flat.kind) {
   case FlatItem::ResultItem: {
     if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_results.size())) {
-      actionPanel = m_results[flat.dataIndex].item->newActionPanel(m_scope.appContext(), m_results[flat.dataIndex].meta);
+      actionPanel = m_results[flat.dataIndex].item->newActionPanel(m_scope.appContext(),
+                                                                   m_results[flat.dataIndex].meta);
     }
     break;
   }
   case FlatItem::FallbackItem: {
     if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_fallbackItems.size())) {
       auto &item = m_fallbackItems[flat.dataIndex];
-      actionPanel = item->fallbackActionPanel(m_scope.appContext(), m_manager->itemMetadata(item->uniqueId()));
+      actionPanel =
+          item->fallbackActionPanel(m_scope.appContext(), m_manager->itemMetadata(item->uniqueId()));
     }
     break;
   }
@@ -513,10 +608,9 @@ void RootSearchModel::setSelectedIndex(int index) {
     if (m_defaultOpener) {
       actionPanel = std::make_unique<ActionPanelState>();
       auto section = actionPanel->createSection();
-      auto open = new OpenAppAction(
-          m_defaultOpener->app,
-          QString("Open in %1").arg(m_defaultOpener->app->displayName()),
-          {m_defaultOpener->url});
+      auto open = new OpenAppAction(m_defaultOpener->app,
+                                    QString("Open in %1").arg(m_defaultOpener->app->displayName()),
+                                    {m_defaultOpener->url});
       open->setClearSearch(true);
       section->addAction(open);
     }
@@ -582,21 +676,16 @@ void RootSearchModel::setSelectedIndex(int index) {
       break;
     }
 
-    if (!createdCompleter) {
-      m_scope.destroyCurrentCompletion();
-    }
+    if (!createdCompleter) { m_scope.destroyCurrentCompletion(); }
   }
 
   emit primaryActionChanged();
 }
 
-void RootSearchModel::activateSelected() {
-  m_scope.executePrimaryAction();
-}
+void RootSearchModel::activateSelected() { m_scope.executePrimaryAction(); }
 
 bool RootSearchModel::tryAliasFastTrack() {
-  if (m_selectedIndex < 0 || m_selectedIndex >= static_cast<int>(m_flat.size()))
-    return false;
+  if (m_selectedIndex < 0 || m_selectedIndex >= static_cast<int>(m_flat.size())) return false;
 
   const auto &flat = m_flat[m_selectedIndex];
 

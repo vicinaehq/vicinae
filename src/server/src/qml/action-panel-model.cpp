@@ -13,8 +13,7 @@ template <> struct fuzzy::FuzzySearchable<std::shared_ptr<AbstractAction>> {
 
 ActionPanelModel::ActionPanelModel(QObject *parent) : QAbstractListModel(parent) {
   connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() {
-    if (rowCount() > 0)
-      emit dataChanged(index(0), index(rowCount() - 1), {IconSource});
+    if (rowCount() > 0) emit dataChanged(index(0), index(rowCount() - 1), {IconSource});
   });
 }
 
@@ -28,9 +27,7 @@ ActionPanelModel::ActionPanelModel(const ActionPanelState *state, QObject *paren
   setStateFrom(state);
 }
 
-void ActionPanelModel::setState(std::unique_ptr<ActionPanelState> state) {
-  setStateFrom(state.get());
-}
+void ActionPanelModel::setState(std::unique_ptr<ActionPanelState> state) { setStateFrom(state.get()); }
 
 void ActionPanelModel::setStateFrom(const ActionPanelState *state) {
   beginResetModel();
@@ -64,42 +61,52 @@ int ActionPanelModel::rowCount(const QModelIndex &parent) const {
 }
 
 QVariant ActionPanelModel::data(const QModelIndex &index, int role) const {
-  if (!index.isValid() || index.row() < 0 || index.row() >= static_cast<int>(m_flat.size()))
-    return {};
+  if (!index.isValid() || index.row() < 0 || index.row() >= static_cast<int>(m_flat.size())) return {};
 
   const auto &item = m_flat[index.row()];
 
   if (item.kind == FlatItem::SectionHeader) {
     switch (role) {
-    case ItemType: return QStringLiteral("section");
-    case Title: return (item.sectionIdx >= 0 && item.sectionIdx < static_cast<int>(m_sections.size()))
-                           ? m_sections[item.sectionIdx].name : QString();
-    case IconSource: return QString();
-    case ShortcutLabel: return QString();
-    case IsSubmenu: return false;
-    case IsPrimary: return false;
-    case IsDanger: return false;
-    default: return {};
+    case ItemType:
+      return QStringLiteral("section");
+    case Title:
+      return (item.sectionIdx >= 0 && item.sectionIdx < static_cast<int>(m_sections.size()))
+                 ? m_sections[item.sectionIdx].name
+                 : QString();
+    case IconSource:
+      return QString();
+    case ShortcutLabel:
+      return QString();
+    case IsSubmenu:
+      return false;
+    case IsPrimary:
+      return false;
+    case IsDanger:
+      return false;
+    default:
+      return {};
     }
   }
 
   if (item.kind == FlatItem::Divider) {
     switch (role) {
-    case ItemType: return QStringLiteral("divider");
-    default: return {};
+    case ItemType:
+      return QStringLiteral("divider");
+    default:
+      return {};
     }
   }
 
-  if (item.sectionIdx < 0 || item.sectionIdx >= static_cast<int>(m_sections.size()))
-    return {};
+  if (item.sectionIdx < 0 || item.sectionIdx >= static_cast<int>(m_sections.size())) return {};
   const auto &section = m_sections[item.sectionIdx];
-  if (item.actionIdx < 0 || item.actionIdx >= static_cast<int>(section.actions.size()))
-    return {};
+  if (item.actionIdx < 0 || item.actionIdx >= static_cast<int>(section.actions.size())) return {};
   const auto &action = section.actions[item.actionIdx];
 
   switch (role) {
-  case ItemType: return QStringLiteral("action");
-  case Title: return action->title();
+  case ItemType:
+    return QStringLiteral("action");
+  case Title:
+    return action->title();
   case IconSource: {
     auto icon = action->icon();
     return icon ? qml::imageSourceFor(*icon) : QString();
@@ -108,21 +115,21 @@ QVariant ActionPanelModel::data(const QModelIndex &index, int role) const {
     auto shortcut = action->shortcut();
     return shortcut ? shortcut->toDisplayString() : QString();
   }
-  case IsSubmenu: return action->isSubmenu();
-  case IsPrimary: return action->isPrimary();
-  case IsDanger: return action->style() == AbstractAction::Style::Danger;
-  default: return {};
+  case IsSubmenu:
+    return action->isSubmenu();
+  case IsPrimary:
+    return action->isPrimary();
+  case IsDanger:
+    return action->style() == AbstractAction::Style::Danger;
+  default:
+    return {};
   }
 }
 
 QHash<int, QByteArray> ActionPanelModel::roleNames() const {
   return {
-      {ItemType, "itemType"},
-      {Title, "title"},
-      {IconSource, "iconSource"},
-      {ShortcutLabel, "shortcutLabel"},
-      {IsSubmenu, "isSubmenu"},
-      {IsPrimary, "isPrimary"},
+      {ItemType, "itemType"},           {Title, "title"},         {IconSource, "iconSource"},
+      {ShortcutLabel, "shortcutLabel"}, {IsSubmenu, "isSubmenu"}, {IsPrimary, "isPrimary"},
       {IsDanger, "isDanger"},
   };
 }
@@ -152,9 +159,7 @@ void ActionPanelModel::activate(int index) {
   }
 
   emit actionExecuted(action.get());
-  if (action->autoClose()) {
-    emit closeRequested();
-  }
+  if (action->autoClose()) { emit closeRequested(); }
 }
 
 void ActionPanelModel::setFilter(const QString &text) {
@@ -192,13 +197,9 @@ void ActionPanelModel::rebuildFlatList() {
 
     if (scored.empty()) continue;
 
-    if (needsDivider) {
-      m_flat.emplace_back(FlatItem::Divider);
-    }
+    if (needsDivider) { m_flat.emplace_back(FlatItem::Divider); }
 
-    if (!section.name.isEmpty()) {
-      m_flat.emplace_back(FlatItem::SectionHeader, s);
-    }
+    if (!section.name.isEmpty()) { m_flat.emplace_back(FlatItem::SectionHeader, s); }
 
     for (const auto &entry : scored) {
       m_flat.emplace_back(FlatItem::ActionItem, s, entry.data);
@@ -223,4 +224,3 @@ bool ActionPanelModel::activateByShortcut(int key, int modifiers) {
   }
   return false;
 }
-

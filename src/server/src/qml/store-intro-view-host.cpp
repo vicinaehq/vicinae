@@ -4,8 +4,7 @@
 #include "ui/action-pannel/action.hpp"
 
 StoreIntroViewHost::StoreIntroViewHost(const QString &markdown, const ImageURL &icon,
-                                             const QString &actionLabel,
-                                             std::function<void()> continueAction)
+                                       const QString &actionLabel, std::function<void()> continueAction)
     : m_icon(icon), m_actionLabel(actionLabel), m_continueAction(std::move(continueAction)) {
   auto iconUrl = qml::imageSourceFor(icon);
   iconUrl += QStringLiteral("&raycast-width=32&raycast-height=32");

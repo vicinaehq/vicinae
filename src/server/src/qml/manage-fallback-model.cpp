@@ -35,13 +35,9 @@ bool ManageFallbackModel::isFallbackEnabled(const RootItemPtr &item) const {
   return std::ranges::find(m_fallbacks, item) != m_fallbacks.end();
 }
 
-QString ManageFallbackModel::displayTitle(const RootItemPtr &item) const {
-  return item->displayName();
-}
+QString ManageFallbackModel::displayTitle(const RootItemPtr &item) const { return item->displayName(); }
 
-QString ManageFallbackModel::displaySubtitle(const RootItemPtr &item) const {
-  return item->subtitle();
-}
+QString ManageFallbackModel::displaySubtitle(const RootItemPtr &item) const { return item->subtitle(); }
 
 QString ManageFallbackModel::displayIconSource(const RootItemPtr &item) const {
   return imageSourceFor(item->iconUrl());

@@ -16,9 +16,7 @@ void ThemeListModel::initialize() {
   m_config = scope().services()->config();
   connect(m_config, &config::Manager::configChanged, this,
           [this](const config::ConfigValue &next, const config::ConfigValue &prev) {
-            if (next.systemTheme().name != prev.systemTheme().name) {
-              regenerateThemes();
-            }
+            if (next.systemTheme().name != prev.systemTheme().name) { regenerateThemes(); }
           });
 }
 
@@ -37,8 +35,7 @@ void ThemeListModel::setFilter(const QString &text) {
     int score = 0;
     if (!query.empty()) {
       auto name = theme->name().toStdString();
-      if (!fts::fuzzy_match(query, name, score))
-        continue;
+      if (!fts::fuzzy_match(query, name, score)) continue;
     }
 
     if (theme->id() == currentId) {
@@ -48,8 +45,7 @@ void ThemeListModel::setFilter(const QString &text) {
     }
   }
 
-  if (!query.empty())
-    std::stable_sort(scoredAvailable.begin(), scoredAvailable.end(), std::greater{});
+  if (!query.empty()) std::stable_sort(scoredAvailable.begin(), scoredAvailable.end(), std::greater{});
 
   m_availableThemes.reserve(scoredAvailable.size());
   for (auto &s : scoredAvailable)

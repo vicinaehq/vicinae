@@ -4,25 +4,26 @@
 #include "lib/fuzzy/fuzzy-searchable.hpp"
 #include <algorithm>
 
-KeybindSettingsModel::KeybindSettingsModel(QObject *parent) : QAbstractListModel(parent) {
-  rebuild({});
-}
+KeybindSettingsModel::KeybindSettingsModel(QObject *parent) : QAbstractListModel(parent) { rebuild({}); }
 
-int KeybindSettingsModel::rowCount(const QModelIndex &) const {
-  return static_cast<int>(m_entries.size());
-}
+int KeybindSettingsModel::rowCount(const QModelIndex &) const { return static_cast<int>(m_entries.size()); }
 
 QVariant KeybindSettingsModel::data(const QModelIndex &index, int role) const {
-  if (!index.isValid() || index.row() < 0 || index.row() >= static_cast<int>(m_entries.size()))
-    return {};
+  if (!index.isValid() || index.row() < 0 || index.row() >= static_cast<int>(m_entries.size())) return {};
   const auto &e = m_entries[index.row()];
   switch (role) {
-  case NameRole: return e.name;
-  case IconRole: return e.icon;
-  case DescriptionRole: return e.description;
-  case ShortcutRole: return e.shortcut;
-  case KeybindIdRole: return e.keybindId;
-  default: return {};
+  case NameRole:
+    return e.name;
+  case IconRole:
+    return e.icon;
+  case DescriptionRole:
+    return e.description;
+  case ShortcutRole:
+    return e.shortcut;
+  case KeybindIdRole:
+    return e.keybindId;
+  default:
+    return {};
   }
 }
 
@@ -75,10 +76,8 @@ void KeybindSettingsModel::moveDown() {
 static QString shortcutString(const Keyboard::Shortcut &s) { return s.toDisplayString(); }
 
 QString KeybindSettingsModel::validateShortcut(int key, int modifiers) const {
-  Keyboard::Shortcut shortcut(static_cast<Qt::Key>(key),
-                              static_cast<Qt::KeyboardModifiers>(modifiers));
-  if (!shortcut.hasMods() && !shortcut.isFunctionKey())
-    return QStringLiteral("Modifier required");
+  Keyboard::Shortcut shortcut(static_cast<Qt::Key>(key), static_cast<Qt::KeyboardModifiers>(modifiers));
+  if (!shortcut.hasMods() && !shortcut.isFunctionKey()) return QStringLiteral("Modifier required");
   if (auto existing = KeybindManager::instance()->findBoundInfo(shortcut)) {
     return QStringLiteral("Already bound to \"%1\"").arg(existing->name);
   }
@@ -88,8 +87,7 @@ QString KeybindSettingsModel::validateShortcut(int key, int modifiers) const {
 void KeybindSettingsModel::setShortcut(int row, int key, int modifiers) {
   if (row < 0 || row >= static_cast<int>(m_entries.size())) return;
   auto &e = m_entries[row];
-  Keyboard::Shortcut shortcut(static_cast<Qt::Key>(key),
-                              static_cast<Qt::KeyboardModifiers>(modifiers));
+  Keyboard::Shortcut shortcut(static_cast<Qt::Key>(key), static_cast<Qt::KeyboardModifiers>(modifiers));
   KeybindManager::instance()->setKeybind(static_cast<Keybind>(e.keybindId), shortcut);
   e.shortcut = shortcutString(shortcut);
   auto idx = index(row);
@@ -97,8 +95,7 @@ void KeybindSettingsModel::setShortcut(int row, int key, int modifiers) {
 }
 
 QString KeybindSettingsModel::shortcutDisplayString(int key, int modifiers) const {
-  Keyboard::Shortcut shortcut(static_cast<Qt::Key>(key),
-                              static_cast<Qt::KeyboardModifiers>(modifiers));
+  Keyboard::Shortcut shortcut(static_cast<Qt::Key>(key), static_cast<Qt::KeyboardModifiers>(modifiers));
   return shortcut.toDisplayString();
 }
 
@@ -123,13 +120,11 @@ void KeybindSettingsModel::rebuild(const QString &filter) {
     e.name = info->name;
     e.icon = info->icon;
     e.description = info->description;
-    if (auto s = KeybindManager::instance()->resolve(id); s.isValid())
-      e.shortcut = shortcutString(s);
+    if (auto s = KeybindManager::instance()->resolve(id); s.isValid()) e.shortcut = shortcutString(s);
     scored.push_back({.data = std::move(e), .score = sc});
   }
 
-  if (!query.empty())
-    std::stable_sort(scored.begin(), scored.end(), std::greater{});
+  if (!query.empty()) std::stable_sort(scored.begin(), scored.end(), std::greater{});
 
   m_entries.reserve(scored.size());
   for (auto &s : scored)

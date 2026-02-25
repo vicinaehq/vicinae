@@ -8,8 +8,7 @@
 
 namespace KDE {
 
-BackgroundEffectManager::BackgroundEffectManager(org_kde_kwin_blur_manager *manager)
-    : m_manager(manager) {}
+BackgroundEffectManager::BackgroundEffectManager(org_kde_kwin_blur_manager *manager) : m_manager(manager) {}
 
 bool BackgroundEffectManager::supportsBlur() const { return true; }
 

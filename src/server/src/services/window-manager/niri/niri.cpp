@@ -168,8 +168,7 @@ void Workspace::updateFromJson(const QJsonObject &json) {
   if (json.contains("is_focused")) { m_focused = json.value("is_focused").toBool(); }
 }
 
-WindowManager::WindowManager()
-    : m_eventNotifier(new QSocketNotifier(QSocketNotifier::Type::Read, this)) {
+WindowManager::WindowManager() : m_eventNotifier(new QSocketNotifier(QSocketNotifier::Type::Read, this)) {
   m_eventNotifier->setEnabled(false);
   connect(m_eventNotifier, &QSocketNotifier::activated, this,
           [this](QSocketDescriptor, QSocketNotifier::Type) { handleEventSocketReadable(); });
@@ -521,7 +520,7 @@ std::optional<QJsonValue> WindowManager::sendRequest(const QString &rawRequest) 
 }
 
 std::optional<QJsonValue> WindowManager::sendActionRequest(const QString &actionName,
-                                                               const QJsonObject &payload) const {
+                                                           const QJsonObject &payload) const {
   QJsonObject actionObj;
   actionObj.insert(actionName, payload);
 

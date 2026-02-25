@@ -12,36 +12,39 @@ int ExtensionFormModel::rowCount(const QModelIndex &parent) const {
 }
 
 QVariant ExtensionFormModel::data(const QModelIndex &index, int role) const {
-  if (!index.isValid() || index.row() < 0 || index.row() >= static_cast<int>(m_items.size()))
-    return {};
+  if (!index.isValid() || index.row() < 0 || index.row() >= static_cast<int>(m_items.size())) return {};
 
   const auto &item = m_items[index.row()];
 
   switch (role) {
-  case TypeRole: return item.typeString();
-  case FieldIdRole: return item.fieldId;
-  case LabelRole: return item.label;
-  case ErrorRole: return item.error;
-  case InfoRole: return item.info;
-  case PlaceholderRole: return item.placeholder;
-  case ValueRole: return item.effectiveValue().toVariant();
-  case AutoFocusRole: return item.autoFocus;
-  case FieldDataRole: return item.fieldData;
-  default: return {};
+  case TypeRole:
+    return item.typeString();
+  case FieldIdRole:
+    return item.fieldId;
+  case LabelRole:
+    return item.label;
+  case ErrorRole:
+    return item.error;
+  case InfoRole:
+    return item.info;
+  case PlaceholderRole:
+    return item.placeholder;
+  case ValueRole:
+    return item.effectiveValue().toVariant();
+  case AutoFocusRole:
+    return item.autoFocus;
+  case FieldDataRole:
+    return item.fieldData;
+  default:
+    return {};
   }
 }
 
 QHash<int, QByteArray> ExtensionFormModel::roleNames() const {
   return {
-      {TypeRole, "type"},
-      {FieldIdRole, "fieldId"},
-      {LabelRole, "label"},
-      {ErrorRole, "error"},
-      {InfoRole, "info"},
-      {PlaceholderRole, "placeholder"},
-      {ValueRole, "value"},
-      {AutoFocusRole, "autoFocus"},
-      {FieldDataRole, "fieldData"},
+      {TypeRole, "type"},   {FieldIdRole, "fieldId"},     {LabelRole, "label"},
+      {ErrorRole, "error"}, {InfoRole, "info"},           {PlaceholderRole, "placeholder"},
+      {ValueRole, "value"}, {AutoFocusRole, "autoFocus"}, {FieldDataRole, "fieldData"},
   };
 }
 
@@ -75,7 +78,9 @@ void ExtensionFormModel::setFilePaths(int index, const QVariantList &paths) {
   if (item.type != FormItemData::Type::FilePicker) return;
 
   QJsonArray arr;
-  for (const auto &p : paths) { arr.append(p.toString()); }
+  for (const auto &p : paths) {
+    arr.append(p.toString());
+  }
 
   item.userValue = arr;
   item.hasUserValue = true;
@@ -123,9 +128,7 @@ void ExtensionFormModel::setFormData(const FormModel &model) {
       m_items[i] = std::move(newData);
     }
   }
-  if (updateCount > 0) {
-    emit dataChanged(createIndex(0, 0), createIndex(updateCount - 1, 0));
-  }
+  if (updateCount > 0) { emit dataChanged(createIndex(0, 0), createIndex(updateCount - 1, 0)); }
 
   if (newCount > oldCount) {
     beginInsertRows({}, oldCount, newCount - 1);
@@ -165,8 +168,7 @@ std::expected<QJsonObject, QString> ExtensionFormModel::submit() const {
   return payload;
 }
 
-ExtensionFormModel::FormItemData
-ExtensionFormModel::createItem(const FormModel::Item &item) const {
+ExtensionFormModel::FormItemData ExtensionFormModel::createItem(const FormModel::Item &item) const {
   FormItemData data{};
 
   if (auto *fieldPtr = std::get_if<std::shared_ptr<FormModel::IField>>(&item)) {
@@ -190,9 +192,7 @@ ExtensionFormModel::createItem(const FormModel::Item &item) const {
       data.modelValue = *field->defaultValue;
     } else if (data.type == FormItemData::Type::Dropdown) {
       if (auto *df = dynamic_cast<const FormModel::DropdownField *>(field.get())) {
-        if (auto first = qml::firstDropdownItemValue(df->m_items)) {
-          data.modelValue = *first;
-        }
+        if (auto first = qml::firstDropdownItemValue(df->m_items)) { data.modelValue = *first; }
       }
     }
   } else if (auto *desc = std::get_if<FormModel::Description>(&item)) {
@@ -228,8 +228,7 @@ void ExtensionFormModel::updateItem(FormItemData &existing, const FormModel::Ite
   }
 }
 
-ExtensionFormModel::FormItemData::Type
-ExtensionFormModel::fieldType(const FormModel::IField &field) {
+ExtensionFormModel::FormItemData::Type ExtensionFormModel::fieldType(const FormModel::IField &field) {
   if (dynamic_cast<const FormModel::TextField *>(&field)) return FormItemData::Type::Text;
   if (dynamic_cast<const FormModel::PasswordField *>(&field)) return FormItemData::Type::Password;
   if (dynamic_cast<const FormModel::CheckboxField *>(&field)) return FormItemData::Type::Checkbox;
@@ -268,15 +267,24 @@ QVariantMap ExtensionFormModel::buildFieldData(const FormModel::IField &field) {
 
 QString ExtensionFormModel::FormItemData::typeString() const {
   switch (type) {
-  case Type::Text: return QStringLiteral("text");
-  case Type::Password: return QStringLiteral("password");
-  case Type::Checkbox: return QStringLiteral("checkbox");
-  case Type::Dropdown: return QStringLiteral("dropdown");
-  case Type::TextArea: return QStringLiteral("textarea");
-  case Type::FilePicker: return QStringLiteral("filepicker");
-  case Type::DatePicker: return QStringLiteral("datepicker");
-  case Type::Description: return QStringLiteral("description");
-  case Type::Separator: return QStringLiteral("separator");
+  case Type::Text:
+    return QStringLiteral("text");
+  case Type::Password:
+    return QStringLiteral("password");
+  case Type::Checkbox:
+    return QStringLiteral("checkbox");
+  case Type::Dropdown:
+    return QStringLiteral("dropdown");
+  case Type::TextArea:
+    return QStringLiteral("textarea");
+  case Type::FilePicker:
+    return QStringLiteral("filepicker");
+  case Type::DatePicker:
+    return QStringLiteral("datepicker");
+  case Type::Description:
+    return QStringLiteral("description");
+  case Type::Separator:
+    return QStringLiteral("separator");
   }
   return QStringLiteral("text");
 }

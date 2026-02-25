@@ -9,7 +9,7 @@
 RaycastStoreModel::RaycastStoreModel(QObject *parent) : CommandListModel(parent) {}
 
 void RaycastStoreModel::setEntries(const std::vector<Raycast::Extension> &extensions,
-                                      ExtensionRegistry *registry, const QString &sectionName) {
+                                   ExtensionRegistry *registry, const QString &sectionName) {
   m_entries.clear();
   m_entries.reserve(extensions.size());
   for (const auto &ext : extensions) {
@@ -52,9 +52,7 @@ QVariant RaycastStoreModel::data(const QModelIndex &index, int role) const {
 
 QString RaycastStoreModel::itemTitle(int, int i) const { return m_entries[i].extension.title; }
 
-QString RaycastStoreModel::itemSubtitle(int, int i) const {
-  return m_entries[i].extension.description;
-}
+QString RaycastStoreModel::itemSubtitle(int, int i) const { return m_entries[i].extension.description; }
 
 QString RaycastStoreModel::itemIconSource(int, int i) const {
   return imageSourceFor(m_entries[i].extension.themedIcon());
@@ -68,9 +66,7 @@ std::unique_ptr<ActionPanelState> RaycastStoreModel::createActionPanel(int, int 
 
   auto showDetails = new StaticAction(
       "Show details", ImageURL::builtin("computer-chip"),
-      [ext = entry.extension, scope = this->scope()]() {
-        scope.pushView(new RaycastStoreDetailHost(ext));
-      });
+      [ext = entry.extension, scope = this->scope()]() { scope.pushView(new RaycastStoreDetailHost(ext)); });
   auto uninstall = new UninstallExtensionAction(entry.extension.id);
 
   showDetails->setShortcut(Keyboard::Shortcut::enter());

@@ -29,9 +29,11 @@ class SourceBlendRect : public QQuickPaintedItem {
   Q_PROPERTY(qreal radius READ radius WRITE setRadius NOTIFY radiusChanged)
   Q_PROPERTY(QColor borderColor READ borderColor WRITE setBorderColor NOTIFY borderColorChanged)
   Q_PROPERTY(int borderWidth READ borderWidth WRITE setBorderWidth NOTIFY borderWidthChanged)
-  Q_PROPERTY(QColor backgroundColor READ backgroundColor WRITE setBackgroundColor NOTIFY backgroundColorChanged)
+  Q_PROPERTY(
+      QColor backgroundColor READ backgroundColor WRITE setBackgroundColor NOTIFY backgroundColorChanged)
   Q_PROPERTY(QColor secondaryColor READ secondaryColor WRITE setSecondaryColor NOTIFY secondaryColorChanged)
-  Q_PROPERTY(qreal secondaryHeight READ secondaryHeight WRITE setSecondaryHeight NOTIFY secondaryHeightChanged)
+  Q_PROPERTY(
+      qreal secondaryHeight READ secondaryHeight WRITE setSecondaryHeight NOTIFY secondaryHeightChanged)
   Q_PROPERTY(bool overlay READ overlay WRITE setOverlay NOTIFY overlayChanged)
 
 public:
@@ -42,42 +44,74 @@ public:
 
   QColor color() const { return m_color; }
   void setColor(const QColor &c) {
-    if (m_color != c) { m_color = c; emit colorChanged(); update(); }
+    if (m_color != c) {
+      m_color = c;
+      emit colorChanged();
+      update();
+    }
   }
 
   qreal radius() const { return m_radius; }
   void setRadius(qreal r) {
-    if (m_radius != r) { m_radius = r; emit radiusChanged(); update(); }
+    if (m_radius != r) {
+      m_radius = r;
+      emit radiusChanged();
+      update();
+    }
   }
 
   QColor borderColor() const { return m_borderColor; }
   void setBorderColor(const QColor &c) {
-    if (m_borderColor != c) { m_borderColor = c; emit borderColorChanged(); update(); }
+    if (m_borderColor != c) {
+      m_borderColor = c;
+      emit borderColorChanged();
+      update();
+    }
   }
 
   int borderWidth() const { return m_borderWidth; }
   void setBorderWidth(int w) {
-    if (m_borderWidth != w) { m_borderWidth = w; emit borderWidthChanged(); update(); }
+    if (m_borderWidth != w) {
+      m_borderWidth = w;
+      emit borderWidthChanged();
+      update();
+    }
   }
 
   QColor backgroundColor() const { return m_backgroundColor; }
   void setBackgroundColor(const QColor &c) {
-    if (m_backgroundColor != c) { m_backgroundColor = c; emit backgroundColorChanged(); update(); }
+    if (m_backgroundColor != c) {
+      m_backgroundColor = c;
+      emit backgroundColorChanged();
+      update();
+    }
   }
 
   QColor secondaryColor() const { return m_secondaryColor; }
   void setSecondaryColor(const QColor &c) {
-    if (m_secondaryColor != c) { m_secondaryColor = c; emit secondaryColorChanged(); update(); }
+    if (m_secondaryColor != c) {
+      m_secondaryColor = c;
+      emit secondaryColorChanged();
+      update();
+    }
   }
 
   qreal secondaryHeight() const { return m_secondaryHeight; }
   void setSecondaryHeight(qreal h) {
-    if (m_secondaryHeight != h) { m_secondaryHeight = h; emit secondaryHeightChanged(); update(); }
+    if (m_secondaryHeight != h) {
+      m_secondaryHeight = h;
+      emit secondaryHeightChanged();
+      update();
+    }
   }
 
   bool overlay() const { return m_overlay; }
   void setOverlay(bool v) {
-    if (m_overlay != v) { m_overlay = v; emit overlayChanged(); update(); }
+    if (m_overlay != v) {
+      m_overlay = v;
+      emit overlayChanged();
+      update();
+    }
   }
 
   void paint(QPainter *painter) override {
@@ -99,8 +133,7 @@ public:
     painter->setPen(Qt::NoPen);
     if (hasBackground) {
       painter->setCompositionMode(QPainter::CompositionMode_SourceAtop);
-      painter->fillPath(shapePath, QColor(m_color.red(), m_color.green(),
-                                          m_color.blue(), 255));
+      painter->fillPath(shapePath, QColor(m_color.red(), m_color.green(), m_color.blue(), 255));
     } else {
       painter->setCompositionMode(QPainter::CompositionMode_Source);
       painter->fillPath(shapePath, m_color);
@@ -108,9 +141,8 @@ public:
 
     if (m_secondaryHeight > 0 && m_secondaryColor.alpha() > 0) {
       painter->setCompositionMode(QPainter::CompositionMode_Source);
-      QRectF secRect(boundingRect().x(),
-                     boundingRect().bottom() - m_secondaryHeight,
-                     boundingRect().width(), m_secondaryHeight);
+      QRectF secRect(boundingRect().x(), boundingRect().bottom() - m_secondaryHeight, boundingRect().width(),
+                     m_secondaryHeight);
       painter->setClipPath(shapePath);
       painter->fillRect(secRect, m_secondaryColor);
       painter->setClipping(false);
@@ -120,8 +152,8 @@ public:
       painter->setClipPath(shapePath);
       if (hasBackground) {
         painter->setCompositionMode(QPainter::CompositionMode_SourceAtop);
-        painter->setPen(QPen(QColor(m_borderColor.red(), m_borderColor.green(),
-                                    m_borderColor.blue(), 255), m_borderWidth));
+        painter->setPen(QPen(QColor(m_borderColor.red(), m_borderColor.green(), m_borderColor.blue(), 255),
+                             m_borderWidth));
       } else {
         painter->setCompositionMode(QPainter::CompositionMode_Source);
         painter->setPen(QPen(m_borderColor, m_borderWidth));
@@ -137,8 +169,7 @@ public:
       return nullptr;
     }
     auto *node = QQuickPaintedItem::updatePaintNode(oldNode, data);
-    if (node && !m_overlay)
-      disableBlending(node);
+    if (node && !m_overlay) disableBlending(node);
     return node;
   }
 
@@ -152,11 +183,10 @@ private:
   static constexpr qreal overlayPadding = 2;
 
   void paintOverlay(QPainter *painter) {
-    if (m_borderWidth <= 0 || m_borderColor.alpha() <= 0)
-      return;
+    if (m_borderWidth <= 0 || m_borderColor.alpha() <= 0) return;
 
-    QRectF cellRect = boundingRect().adjusted(overlayPadding, overlayPadding,
-                                              -overlayPadding, -overlayPadding);
+    QRectF cellRect =
+        boundingRect().adjusted(overlayPadding, overlayPadding, -overlayPadding, -overlayPadding);
 
     painter->setRenderHint(QPainter::Antialiasing, true);
     QPainterPath borderPath;
@@ -169,10 +199,8 @@ private:
   static void disableBlending(QSGNode *node) {
     if (node->type() == QSGNode::GeometryNodeType) {
       auto *geo = static_cast<QSGGeometryNode *>(node);
-      if (auto *mat = geo->material())
-        mat->setFlag(QSGMaterial::Blending, false);
-      if (auto *mat = geo->opaqueMaterial())
-        mat->setFlag(QSGMaterial::Blending, false);
+      if (auto *mat = geo->material()) mat->setFlag(QSGMaterial::Blending, false);
+      if (auto *mat = geo->opaqueMaterial()) mat->setFlag(QSGMaterial::Blending, false);
     }
     for (auto *child = node->firstChild(); child; child = child->nextSibling())
       disableBlending(child);

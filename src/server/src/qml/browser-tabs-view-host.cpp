@@ -33,6 +33,4 @@ void BrowserTabsViewHost::beforePop() { m_model->beforePop(); }
 
 QObject *BrowserTabsViewHost::listModel() const { return m_model; }
 
-void BrowserTabsViewHost::reload() {
-  m_model->setItems(context()->services->browserExtension()->tabs());
-}
+void BrowserTabsViewHost::reload() { m_model->setItems(context()->services->browserExtension()->tabs()); }

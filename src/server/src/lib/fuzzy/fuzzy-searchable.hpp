@@ -55,9 +55,7 @@ void fuzzyFilter(std::span<const T> items, std::string_view query, std::vector<S
 
   for (int i = 0; i < static_cast<int>(items.size()); ++i) {
     int s = FuzzySearchable<T>::score(items[i], query);
-    if (s > 0) {
-      out.push_back({.data = i, .score = s});
-    }
+    if (s > 0) { out.push_back({.data = i, .score = s}); }
   }
 
   std::stable_sort(out.begin(), out.end(), std::greater{});

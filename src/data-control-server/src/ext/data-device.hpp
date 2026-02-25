@@ -25,12 +25,11 @@ private:
   static void dataOffer(void *data, ext_data_control_device_v1 *device, ext_data_control_offer_v1 *id);
   static void selection(void *data, ext_data_control_device_v1 *device, ext_data_control_offer_v1 *id);
   static void finished(void *data, ext_data_control_device_v1 *device);
-  static void primarySelection(void *data, ext_data_control_device_v1 *device,
-                               ext_data_control_offer_v1 *id);
+  static void primarySelection(void *data, ext_data_control_device_v1 *device, ext_data_control_offer_v1 *id);
 
   constexpr static const struct ext_data_control_device_v1_listener _listener = {.data_offer = dataOffer,
-                                                                                  .selection = selection,
-                                                                                  .finished = finished,
-                                                                                  .primary_selection =
-                                                                                      primarySelection};
+                                                                                 .selection = selection,
+                                                                                 .finished = finished,
+                                                                                 .primary_selection =
+                                                                                     primarySelection};
 };

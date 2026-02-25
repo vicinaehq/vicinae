@@ -43,11 +43,21 @@ void ExtensionGridModel::setExtensionData(const GridModel &model, bool resetSele
 
   double newInset;
   switch (model.inset) {
-  case GridInset::None: newInset = 0.05; break;
-  case GridInset::Small: newInset = 0.10; break;
-  case GridInset::Medium: newInset = 0.15; break;
-  case GridInset::Large: newInset = 0.25; break;
-  default: newInset = 0.10; break;
+  case GridInset::None:
+    newInset = 0.05;
+    break;
+  case GridInset::Small:
+    newInset = 0.10;
+    break;
+  case GridInset::Medium:
+    newInset = 0.15;
+    break;
+  case GridInset::Large:
+    newInset = 0.25;
+    break;
+  default:
+    newInset = 0.10;
+    break;
   }
   if (!qFuzzyCompare(m_inset, newInset)) {
     m_inset = newInset;
@@ -100,8 +110,7 @@ QString ExtensionGridModel::emptyDescription() const {
 }
 
 QString ExtensionGridModel::emptyIcon() const {
-  if (m_model.emptyView && m_model.emptyView->icon)
-    return imageSourceFor(ImageURL(*m_model.emptyView->icon));
+  if (m_model.emptyView && m_model.emptyView->icon) return imageSourceFor(ImageURL(*m_model.emptyView->icon));
   return {};
 }
 
@@ -114,7 +123,8 @@ void ExtensionGridModel::rebuildFromModel(bool resetSelection) {
   std::vector<SectionInfo> infos;
   infos.reserve(sections.size());
   for (const auto &sec : sections) {
-    infos.push_back({QString::fromStdString(sec.name), static_cast<int>(sec.items.size()), sec.columns, sec.aspectRatio});
+    infos.push_back(
+        {QString::fromStdString(sec.name), static_cast<int>(sec.items.size()), sec.columns, sec.aspectRatio});
   }
 
   setSelectFirstOnReset(resetSelection);
@@ -122,10 +132,8 @@ void ExtensionGridModel::rebuildFromModel(bool resetSelection) {
   setSelectFirstOnReset(false);
 
   if (!resetSelection) {
-    bool prevValid = prevSection >= 0
-        && prevSection < static_cast<int>(sections.size())
-        && prevItem >= 0
-        && prevItem < static_cast<int>(sections[prevSection].items.size());
+    bool prevValid = prevSection >= 0 && prevSection < static_cast<int>(sections.size()) && prevItem >= 0 &&
+                     prevItem < static_cast<int>(sections[prevSection].items.size());
 
     if (prevValid) {
       if (prevSection == selectedSection() && prevItem == selectedItem()) {
@@ -149,7 +157,6 @@ const std::vector<ExtensionGridModel::Section> &ExtensionGridModel::activeSectio
   if (m_model.filtering && !m_filter.isEmpty()) { return m_filteredSections; }
   return m_sections;
 }
-
 
 void ExtensionGridModel::reapplyFilter() {
   auto query = m_filter.toStdString();
@@ -198,9 +205,7 @@ QString ExtensionGridModel::cellTitle(int section, int item) const {
 
 QString ExtensionGridModel::cellIcon(int section, int item) const {
   if (auto *it = itemAt(section, item)) {
-    if (auto img = std::get_if<ImageLikeModel>(&it->content)) {
-      return imageSourceFor(ImageURL(*img));
-    }
+    if (auto img = std::get_if<ImageLikeModel>(&it->content)) { return imageSourceFor(ImageURL(*img)); }
   }
   return {};
 }
@@ -221,12 +226,14 @@ QString ExtensionGridModel::cellColor(int section, int item) const {
   if (auto *it = itemAt(section, item)) {
     if (auto *color = std::get_if<ColorLike>(&it->content)) {
       const auto &theme = ThemeService::instance().theme();
-      return std::visit(overloads{
-        [](const QColor &c) -> QString { return c.name(QColor::HexArgb); },
-        [](const QString &c) -> QString { return c; },
-        [&](const SemanticColor &c) -> QString { return theme.resolve(c).name(QColor::HexArgb); },
-        [&](const DynamicColor &c) -> QString { return theme.isLight() ? c.light : c.dark; },
-      }, *color);
+      return std::visit(
+          overloads{
+              [](const QColor &c) -> QString { return c.name(QColor::HexArgb); },
+              [](const QString &c) -> QString { return c; },
+              [&](const SemanticColor &c) -> QString { return theme.resolve(c).name(QColor::HexArgb); },
+              [&](const DynamicColor &c) -> QString { return theme.isLight() ? c.light : c.dark; },
+          },
+          *color);
     }
   }
   return {};

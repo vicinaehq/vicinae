@@ -25,9 +25,7 @@ void DMenuModel::setFilter(const QString &text) {
   m_filtered.clear();
   for (auto e : m_entries) {
     int score = fzf::defaultMatcher.fuzzy_match_v2_score_query(e, query);
-    if (query.empty() || score > 0) {
-      m_filtered.push_back({e, score});
-    }
+    if (query.empty() || score > 0) { m_filtered.push_back({e, score}); }
   }
   std::ranges::stable_sort(m_filtered, std::greater{});
 
@@ -70,9 +68,7 @@ QString DMenuModel::itemIconSource(int section, int item) const {
   auto entry = entryAt(section, item);
   if (entry.starts_with('/')) {
     std::error_code ec;
-    if (std::filesystem::exists(entry, ec)) {
-      return imageSourceFor(ImageURL::fileIcon(entry));
-    }
+    if (std::filesystem::exists(entry, ec)) { return imageSourceFor(ImageURL::fileIcon(entry)); }
   }
   return {};
 }
@@ -90,20 +86,17 @@ std::unique_ptr<ActionPanelState> DMenuModel::createActionPanel(int section, int
   auto panel = std::make_unique<ListActionPanelState>();
   auto *main = panel->createSection();
 
-  main->addAction(
-      new StaticAction("Select entry", ImageURL::builtin("save-document"),
-                       [this, text](ApplicationContext *) { selectEntry(text); }));
+  main->addAction(new StaticAction("Select entry", ImageURL::builtin("save-document"),
+                                   [this, text](ApplicationContext *) { selectEntry(text); }));
 
-  main->addAction(
-      new StaticAction("Pass search text", ImageURL::builtin("save-document"),
-                       [this](ApplicationContext *) { selectEntry(m_currentSearchText); }));
+  main->addAction(new StaticAction("Pass search text", ImageURL::builtin("save-document"),
+                                   [this](ApplicationContext *) { selectEntry(m_currentSearchText); }));
 
-  auto *selectAndCopy = new StaticAction(
-      "Select and copy entry", ImageURL::builtin("copy-clipboard"),
-      [this, text](ApplicationContext *ctx) {
-        ctx->services->clipman()->copyText(text);
-        selectEntry(text);
-      });
+  auto *selectAndCopy = new StaticAction("Select and copy entry", ImageURL::builtin("copy-clipboard"),
+                                         [this, text](ApplicationContext *ctx) {
+                                           ctx->services->clipman()->copyText(text);
+                                           selectEntry(text);
+                                         });
   selectAndCopy->setShortcut(Keybind::CopyAction);
   main->addAction(selectAndCopy);
 
@@ -114,17 +107,14 @@ void DMenuModel::onItemSelected(int section, int item) {
   auto entry = entryAt(section, item);
   if (!entry.empty()) {
     std::error_code ec;
-    if (entry.starts_with('/') && std::filesystem::exists(entry, ec)) {
-      emit fileHighlighted(entry);
-    }
+    if (entry.starts_with('/') && std::filesystem::exists(entry, ec)) { emit fileHighlighted(entry); }
   }
 }
 
 void DMenuModel::onSelectionCleared() {
   auto panel = std::make_unique<ListActionPanelState>();
   auto *main = panel->createSection();
-  main->addAction(
-      new StaticAction("Pass search text", ImageURL::builtin("save-document"),
-                       [this](ApplicationContext *) { selectEntry(m_currentSearchText); }));
+  main->addAction(new StaticAction("Pass search text", ImageURL::builtin("save-document"),
+                                   [this](ApplicationContext *) { selectEntry(m_currentSearchText); }));
   scope().setActions(std::move(panel));
 }

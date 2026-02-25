@@ -21,8 +21,7 @@ QUrl VicinaeStoreViewHost::qmlComponentUrl() const {
 }
 
 QVariantMap VicinaeStoreViewHost::qmlProperties() const {
-  return {{QStringLiteral("host"),
-           QVariant::fromValue(const_cast<VicinaeStoreViewHost *>(this))}};
+  return {{QStringLiteral("host"), QVariant::fromValue(const_cast<VicinaeStoreViewHost *>(this))}};
 }
 
 void VicinaeStoreViewHost::initialize() {
@@ -69,10 +68,8 @@ void VicinaeStoreViewHost::handleFinishedPage() {
 
   setLoading(false);
 
-  std::vector<VicinaeStore::Extension> extensions(result->extensions.begin(),
-                                                  result->extensions.end());
-  m_model->setEntries(extensions, context()->services->extensionRegistry(),
-                      QStringLiteral("Extensions"));
+  std::vector<VicinaeStore::Extension> extensions(result->extensions.begin(), result->extensions.end());
+  m_model->setEntries(extensions, context()->services->extensionRegistry(), QStringLiteral("Extensions"));
 }
 
 void VicinaeStoreViewHost::handleFinishedQuery() {
@@ -86,10 +83,8 @@ void VicinaeStoreViewHost::handleFinishedQuery() {
 
   setLoading(false);
 
-  std::vector<VicinaeStore::Extension> extensions(result->extensions.begin(),
-                                                  result->extensions.end());
-  m_model->setEntries(extensions, context()->services->extensionRegistry(),
-                      QStringLiteral("Results"));
+  std::vector<VicinaeStore::Extension> extensions(result->extensions.begin(), result->extensions.end());
+  m_model->setEntries(extensions, context()->services->extensionRegistry(), QStringLiteral("Results"));
 }
 
 void VicinaeStoreViewHost::handleDebounce() {

@@ -10,8 +10,7 @@
 #include <QTimer>
 
 OAuthOverlayHost::OAuthOverlayHost(const ApplicationContext *ctx,
-                                         const proto::ext::oauth::AuthorizeRequest &req,
-                                         QObject *parent)
+                                   const proto::ext::oauth::AuthorizeRequest &req, QObject *parent)
     : QObject(parent), m_ctx(ctx) {
 
   const auto &client = req.client();
@@ -20,9 +19,7 @@ OAuthOverlayHost::OAuthOverlayHost(const ApplicationContext *ctx,
   m_providerDescription = client.description().c_str();
   m_authorizeUrl = req.url().c_str();
 
-  if (client.has_icon()) {
-    m_providerIconSource = qml::imageSourceFor(ProtoUrl::parse(client.icon()));
-  }
+  if (client.has_icon()) { m_providerIconSource = qml::imageSourceFor(ProtoUrl::parse(client.icon())); }
 }
 
 QUrl OAuthOverlayHost::qmlComponentUrl() const {
@@ -61,7 +58,5 @@ void OAuthOverlayHost::showSuccess() {
 
   m_ctx->navigation->showWindow();
 
-  QTimer::singleShot(2s, this, [this]() {
-    m_ctx->overlay->dismissCurrent();
-  });
+  QTimer::singleShot(2s, this, [this]() { m_ctx->overlay->dismissCurrent(); });
 }

@@ -2,9 +2,7 @@
 #include "actions/wm/window-actions.hpp"
 #include "navigation-controller.hpp"
 
-QString SwitchWindowsModel::displayTitle(const WindowEntry &e) const {
-  return e.window->title();
-}
+QString SwitchWindowsModel::displayTitle(const WindowEntry &e) const { return e.window->title(); }
 
 QString SwitchWindowsModel::displaySubtitle(const WindowEntry &e) const {
   if (e.app) return e.app->displayName();
@@ -21,8 +19,7 @@ QVariantList SwitchWindowsModel::displayAccessory(const WindowEntry &e) const {
   return {};
 }
 
-std::unique_ptr<ActionPanelState>
-SwitchWindowsModel::buildActionPanel(const WindowEntry &e) const {
+std::unique_ptr<ActionPanelState> SwitchWindowsModel::buildActionPanel(const WindowEntry &e) const {
   auto panel = std::make_unique<ListActionPanelState>();
 
   auto section = panel->createSection("Window Actions");
@@ -35,6 +32,4 @@ SwitchWindowsModel::buildActionPanel(const WindowEntry &e) const {
   return panel;
 }
 
-QString SwitchWindowsModel::sectionLabel() const {
-  return QStringLiteral("Open Windows");
-}
+QString SwitchWindowsModel::sectionLabel() const { return QStringLiteral("Open Windows"); }

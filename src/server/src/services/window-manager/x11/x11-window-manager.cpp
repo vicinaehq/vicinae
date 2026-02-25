@@ -46,18 +46,19 @@ void X11WindowManager::start() {
   if (!m_eventListener) {
     m_eventListener = std::make_unique<X11EventListener>();
 
-    connect(m_eventListener.get(), &X11EventListener::windowListChanged, this,
-            [this]() {
-            qDebug() << "X11WindowManager: Window list changed, emitting windowsChanged";
-            emit windowsChanged(); });
-    connect(m_eventListener.get(), &X11EventListener::activeWindowChanged, this,
-            [this]() {
-            qDebug() << "X11WindowManager: Active window changed, emitting windowsChanged";
-            emit windowsChanged(); });
-    connect(m_eventListener.get(), &X11EventListener::windowTitleChanged, this,
-            [this](xcb_window_t window) {
-            qDebug() << "X11WindowManager: Window title changed for window" << window << ", emitting windowsChanged";
-            emit windowsChanged(); });
+    connect(m_eventListener.get(), &X11EventListener::windowListChanged, this, [this]() {
+      qDebug() << "X11WindowManager: Window list changed, emitting windowsChanged";
+      emit windowsChanged();
+    });
+    connect(m_eventListener.get(), &X11EventListener::activeWindowChanged, this, [this]() {
+      qDebug() << "X11WindowManager: Active window changed, emitting windowsChanged";
+      emit windowsChanged();
+    });
+    connect(m_eventListener.get(), &X11EventListener::windowTitleChanged, this, [this](xcb_window_t window) {
+      qDebug() << "X11WindowManager: Window title changed for window" << window
+               << ", emitting windowsChanged";
+      emit windowsChanged();
+    });
 
     if (!m_eventListener->start()) {
       qWarning() << "X11WindowManager: Failed to start X11 event listener";
@@ -162,7 +163,8 @@ std::vector<xcb_window_t> X11WindowManager::getClientList() const {
   xcb_atom_t net_client_list = internAtom("_NET_CLIENT_LIST");
   if (net_client_list == XCB_ATOM_NONE) { return windows; }
 
-  xcb_get_property_cookie_t cookie = xcb_get_property(conn, 0, root, net_client_list, XCB_ATOM_WINDOW, 0, 1024);
+  xcb_get_property_cookie_t cookie =
+      xcb_get_property(conn, 0, root, net_client_list, XCB_ATOM_WINDOW, 0, 1024);
   xcb_get_property_reply_t *reply = xcb_get_property_reply(conn, cookie, nullptr);
 
   if (!reply) { return windows; }
@@ -188,7 +190,8 @@ xcb_window_t X11WindowManager::getActiveWindow() const {
   xcb_atom_t net_active_window = internAtom("_NET_ACTIVE_WINDOW");
   if (net_active_window == XCB_ATOM_NONE) { return XCB_WINDOW_NONE; }
 
-  xcb_get_property_cookie_t cookie = xcb_get_property(conn, 0, root, net_active_window, XCB_ATOM_WINDOW, 0, 1);
+  xcb_get_property_cookie_t cookie =
+      xcb_get_property(conn, 0, root, net_active_window, XCB_ATOM_WINDOW, 0, 1);
   xcb_get_property_reply_t *reply = xcb_get_property_reply(conn, cookie, nullptr);
 
   if (!reply || xcb_get_property_value_length(reply) < 4) {
@@ -279,8 +282,8 @@ void X11WindowManager::focusWindowSync(const AbstractWindow &window) const {
           switch_event.data.data32[1] = XCB_CURRENT_TIME;
 
           xcb_send_event(conn, 0, root,
-                        XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY,
-                        reinterpret_cast<const char *>(&switch_event));
+                         XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY,
+                         reinterpret_cast<const char *>(&switch_event));
         }
 
         free(cur_desk_reply);

@@ -146,8 +146,8 @@ void ScriptExecutorViewHost::generateActions() {
   auto *section = panel->createSection();
 
   if (!m_exited) {
-    section->addAction(
-        new StaticAction("Kill process", BuiltinIcon::Droplets, [this](ApplicationContext *) { killProcess(); }));
+    section->addAction(new StaticAction("Kill process", BuiltinIcon::Droplets,
+                                        [this](ApplicationContext *) { killProcess(); }));
   } else {
     section->addAction(
         new StaticAction("Run script again", BuiltinIcon::Undo, [this](ApplicationContext *) { rerun(); }));

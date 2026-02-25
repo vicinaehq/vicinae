@@ -175,7 +175,7 @@ void EmojiGridModel::onSelectionCleared() {
 void EmojiGridModel::updateNavigationTitle() {
   auto name = emojiName(selectedSection(), selectedItem());
   scope().setNavigationTitle(name.isEmpty() ? QStringLiteral("Search Emojis")
-                                           : QStringLiteral("Search Emojis - %1").arg(name));
+                                            : QStringLiteral("Search Emojis - %1").arg(name));
 }
 
 std::unique_ptr<ActionPanelState> EmojiGridModel::createActionPanel(int section, int item) const {

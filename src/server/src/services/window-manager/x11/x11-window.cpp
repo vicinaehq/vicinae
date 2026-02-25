@@ -18,7 +18,7 @@ static xcb_atom_t intern_atom(xcb_connection_t *conn, const char *name, bool onl
 
 // Helper function to get a string property
 static QString get_string_property(xcb_connection_t *conn, xcb_window_t window, xcb_atom_t property,
-                                    xcb_atom_t type = XCB_ATOM_STRING) {
+                                   xcb_atom_t type = XCB_ATOM_STRING) {
   xcb_get_property_cookie_t cookie =
       xcb_get_property(conn, 0, window, property, type, 0, 1024); // Max 1024 bytes
   xcb_get_property_reply_t *reply = xcb_get_property_reply(conn, cookie, nullptr);
@@ -38,7 +38,7 @@ static QString get_string_property(xcb_connection_t *conn, xcb_window_t window, 
 
 // Helper function to get a cardinal (uint32_t) property
 static std::optional<uint32_t> get_cardinal_property(xcb_connection_t *conn, xcb_window_t window,
-                                                      xcb_atom_t property) {
+                                                     xcb_atom_t property) {
   xcb_get_property_cookie_t cookie = xcb_get_property(conn, 0, window, property, XCB_ATOM_CARDINAL, 0, 1);
   xcb_get_property_reply_t *reply = xcb_get_property_reply(conn, cookie, nullptr);
 
@@ -54,7 +54,7 @@ static std::optional<uint32_t> get_cardinal_property(xcb_connection_t *conn, xcb
 
 // Helper function to check if atom is in list
 static bool has_atom_in_list(xcb_connection_t *conn, xcb_window_t window, xcb_atom_t property,
-                              xcb_atom_t target_atom) {
+                             xcb_atom_t target_atom) {
   xcb_get_property_cookie_t cookie = xcb_get_property(conn, 0, window, property, XCB_ATOM_ATOM, 0, 64);
   xcb_get_property_reply_t *reply = xcb_get_property_reply(conn, cookie, nullptr);
 

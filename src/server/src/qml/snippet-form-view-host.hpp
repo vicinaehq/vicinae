@@ -38,10 +38,30 @@ public:
   QString contentError() const { return m_contentError; }
   QString keywordError() const { return m_keywordError; }
 
-  void setName(const QString &v) { if (m_name != v) { m_name = v; emit formChanged(); } }
-  void setContent(const QString &v) { if (m_content != v) { m_content = v; emit formChanged(); } }
-  void setKeyword(const QString &v) { if (m_keyword != v) { m_keyword = v; emit formChanged(); } }
-  void setExpandAsWord(bool v) { if (m_expandAsWord != v) { m_expandAsWord = v; emit formChanged(); } }
+  void setName(const QString &v) {
+    if (m_name != v) {
+      m_name = v;
+      emit formChanged();
+    }
+  }
+  void setContent(const QString &v) {
+    if (m_content != v) {
+      m_content = v;
+      emit formChanged();
+    }
+  }
+  void setKeyword(const QString &v) {
+    if (m_keyword != v) {
+      m_keyword = v;
+      emit formChanged();
+    }
+  }
+  void setExpandAsWord(bool v) {
+    if (m_expandAsWord != v) {
+      m_expandAsWord = v;
+      emit formChanged();
+    }
+  }
 
 signals:
   void formChanged();

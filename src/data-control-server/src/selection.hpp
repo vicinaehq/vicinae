@@ -20,7 +20,7 @@ public:
 namespace Selection {
 
 inline const std::vector<std::string_view> preferredImageTypes = {"image/gif", "image/png", "image/jpeg",
-                                                                   "image/jpg", "image/webp"};
+                                                                  "image/jpg", "image/webp"};
 
 std::set<std::string> filterMimes(const std::vector<std::string> &offerMimes);
 void serializeAndWrite(const std::set<std::string> &filteredMimes, OfferReceiver &offer);

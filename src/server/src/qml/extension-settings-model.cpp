@@ -21,18 +21,28 @@ QVariant ExtensionSettingsModel::data(const QModelIndex &index, int role) const 
     return {};
   const auto &e = m_allEntries[m_visibleIndices[index.row()]];
   switch (role) {
-  case NameRole: return e.name;
-  case TypeRole: return e.type;
-  case IconSourceRole: return e.iconSource;
-  case IsProviderRole: return e.isProvider;
-  case IndentRole: return e.indent;
-  case EnabledRole: return e.enabled;
-  case AliasRole: return e.alias;
+  case NameRole:
+    return e.name;
+  case TypeRole:
+    return e.type;
+  case IconSourceRole:
+    return e.iconSource;
+  case IsProviderRole:
+    return e.isProvider;
+  case IndentRole:
+    return e.indent;
+  case EnabledRole:
+    return e.enabled;
+  case AliasRole:
+    return e.alias;
   case EntrypointIdRole:
     return e.isProvider ? e.providerId : QString::fromStdString(e.entrypointId);
-  case ExpandedRole: return e.expanded;
-  case ExpandableRole: return e.isProvider && e.childCount > 0;
-  default: return {};
+  case ExpandedRole:
+    return e.expanded;
+  case ExpandableRole:
+    return e.isProvider && e.childCount > 0;
+  default:
+    return {};
   }
 }
 
@@ -73,9 +83,7 @@ bool ExtensionSettingsModel::hasSelection() const {
   return m_selectedRow >= 0 && m_selectedRow < static_cast<int>(m_visibleIndices.size());
 }
 
-bool ExtensionSettingsModel::hasPreferences() const {
-  return hasSelection() && m_prefModel->rowCount() > 0;
-}
+bool ExtensionSettingsModel::hasPreferences() const { return hasSelection() && m_prefModel->rowCount() > 0; }
 
 bool ExtensionSettingsModel::selectedIsProvider() const {
   return hasSelection() && m_allEntries[m_visibleIndices[m_selectedRow]].isProvider;
@@ -104,8 +112,10 @@ void ExtensionSettingsModel::select(int row) {
     auto *manager = ServiceRegistry::instance()->rootItemManager();
     if (e.isProvider) {
       auto *provider = manager->provider(e.providerId.toStdString());
-      if (provider) m_prefModel->loadProvider(e.providerId, provider->preferences());
-      else m_prefModel->loadProvider(e.providerId, {});
+      if (provider)
+        m_prefModel->loadProvider(e.providerId, provider->preferences());
+      else
+        m_prefModel->loadProvider(e.providerId, {});
     } else {
       auto *item = manager->findItemById(e.entrypointId);
       m_prefModel->load(e.entrypointId, item ? item->preferences() : std::vector<Preference>{});
@@ -127,8 +137,7 @@ void ExtensionSettingsModel::setEnabled(int row, bool value) {
     emit dataChanged(idx, idx, {EnabledRole});
 
     int allIdx = m_visibleIndices[row];
-    for (int i = allIdx + 1; i < static_cast<int>(m_allEntries.size()) && !m_allEntries[i].isProvider;
-         ++i) {
+    for (int i = allIdx + 1; i < static_cast<int>(m_allEntries.size()) && !m_allEntries[i].isProvider; ++i) {
       m_allEntries[i].enabled = value;
     }
     for (int i = row + 1; i < static_cast<int>(m_visibleIndices.size()); ++i) {
@@ -227,8 +236,7 @@ void ExtensionSettingsModel::toggleExpanded(int row) {
 
   if (e.expanded) {
     std::vector<int> toInsert;
-    for (int i = allIdx + 1; i < static_cast<int>(m_allEntries.size()) && !m_allEntries[i].isProvider;
-         ++i) {
+    for (int i = allIdx + 1; i < static_cast<int>(m_allEntries.size()) && !m_allEntries[i].isProvider; ++i) {
       toInsert.push_back(i);
     }
     if (!toInsert.empty()) {
@@ -336,8 +344,7 @@ void ExtensionSettingsModel::rebuild(const QString &filter) {
   endResetModel();
 
   int newRow = !filter.isEmpty() ? 0 : m_selectedRow;
-  if (newRow >= static_cast<int>(m_visibleIndices.size()))
-    newRow = m_visibleIndices.empty() ? -1 : 0;
+  if (newRow >= static_cast<int>(m_visibleIndices.size())) newRow = m_visibleIndices.empty() ? -1 : 0;
   m_selectedRow = -1;
   if (newRow == -1)
     emit selectedChanged();

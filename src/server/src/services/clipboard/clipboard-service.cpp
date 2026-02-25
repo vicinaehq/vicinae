@@ -408,11 +408,11 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
     QString selectionId = Crypto::UUID::v4();
 
     if (!db->insertSelection({.id = selectionId,
-                             .offerCount = static_cast<int>(selection.offers.size()),
-                             .hash = selectionHash,
-                             .preferredMimeType = preferredMimeType,
-                             .kind = preferredKind,
-                             .source = selection.sourceApp})) {
+                              .offerCount = static_cast<int>(selection.offers.size()),
+                              .hash = selectionHash,
+                              .preferredMimeType = preferredMimeType,
+                              .kind = preferredKind,
+                              .source = selection.sourceApp})) {
       qWarning() << "failed to insert selection";
       return false;
     }

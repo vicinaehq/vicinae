@@ -13,7 +13,8 @@ public:
   Q_PROPERTY(QString toggleActionPanel READ toggleActionPanel NOTIFY keybindsChanged)
   Q_PROPERTY(QString openSearchAccessory READ openSearchAccessory NOTIFY keybindsChanged)
   explicit KeybindBridge(QObject *parent = nullptr) : QObject(parent) {
-    connect(KeybindManager::instance(), &KeybindManager::keybindChanged, this, &KeybindBridge::keybindsChanged);
+    connect(KeybindManager::instance(), &KeybindManager::keybindChanged, this,
+            &KeybindBridge::keybindsChanged);
   }
 
   QString toggleActionPanel() const { return resolve(Keybind::ToggleActionPanel); }

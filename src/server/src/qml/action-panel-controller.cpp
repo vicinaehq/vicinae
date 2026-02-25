@@ -204,7 +204,5 @@ void ActionPanelController::connectModel(ActionPanelModel *model) {
     emit panelPushRequested(QUrl(QStringLiteral("qrc:/Vicinae/ActionListPanel.qml")), props);
   });
 
-  connect(model, &ActionPanelModel::closeRequested, this, [this]() {
-    close();
-  });
+  connect(model, &ActionPanelModel::closeRequested, this, [this]() { close(); });
 }

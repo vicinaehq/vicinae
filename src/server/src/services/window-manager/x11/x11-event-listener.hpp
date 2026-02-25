@@ -57,4 +57,3 @@ private:
   bool m_pendingActiveWindowChanged = false;
   std::unordered_set<xcb_window_t> m_pendingTitlesChanged;
 };
-

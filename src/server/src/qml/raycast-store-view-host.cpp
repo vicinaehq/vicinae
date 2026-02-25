@@ -21,8 +21,7 @@ QUrl RaycastStoreViewHost::qmlComponentUrl() const {
 }
 
 QVariantMap RaycastStoreViewHost::qmlProperties() const {
-  return {{QStringLiteral("host"),
-           QVariant::fromValue(const_cast<RaycastStoreViewHost *>(this))}};
+  return {{QStringLiteral("host"), QVariant::fromValue(const_cast<RaycastStoreViewHost *>(this))}};
 }
 
 void RaycastStoreViewHost::initialize() {

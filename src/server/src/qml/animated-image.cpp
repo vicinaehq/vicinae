@@ -10,8 +10,7 @@
 
 static constexpr int kMaxAnimDataSize = 512 * 1024; // 512KB
 
-ViciAnimatedImage::ViciAnimatedImage(QQuickItem *parent)
-    : QQuickPaintedItem(parent) {}
+ViciAnimatedImage::ViciAnimatedImage(QQuickItem *parent) : QQuickPaintedItem(parent) {}
 
 ViciAnimatedImage::~ViciAnimatedImage() {
   if (m_pendingReply) {
@@ -58,8 +57,7 @@ void ViciAnimatedImage::setSource(const QString &src) {
   QString id = src.startsWith(prefix) ? src.mid(prefix.length()) : src;
 
   auto cached = ImageDataCache::instance().take(id);
-  if (cached.result == ImageDataCache::Result::NotAnimated)
-    return;
+  if (cached.result == ImageDataCache::Result::NotAnimated) return;
   if (cached.result == ImageDataCache::Result::Animated) {
     loadData(cached.data);
     return;
@@ -75,16 +73,14 @@ void ViciAnimatedImage::setSource(const QString &src) {
 
   if (type == QStringLiteral("http")) {
     m_pendingReply = NetworkFetcher::instance()->fetch(QUrl(name));
-    connect(m_pendingReply, &FetchReply::finished, this,
-            [this](const QByteArray &data) {
-              m_pendingReply->deleteLater();
-              m_pendingReply = nullptr;
-              loadData(data);
-            });
+    connect(m_pendingReply, &FetchReply::finished, this, [this](const QByteArray &data) {
+      m_pendingReply->deleteLater();
+      m_pendingReply = nullptr;
+      loadData(data);
+    });
   } else if (type == QStringLiteral("local")) {
     QFile f(name);
-    if (f.open(QIODevice::ReadOnly))
-      loadData(f.readAll());
+    if (f.open(QIODevice::ReadOnly)) loadData(f.readAll());
   } else if (type == QStringLiteral("datauri")) {
     DataUri uri(name);
     loadData(uri.decodeContent());
@@ -98,12 +94,9 @@ void ViciAnimatedImage::applyScaledSize() {
   int h = qCeil(height());
   if (w <= 0 || h <= 0) return;
 
-  qreal dpr = window() ? window()->devicePixelRatio()
-                        : qGuiApp->devicePixelRatio();
+  qreal dpr = window() ? window()->devicePixelRatio() : qGuiApp->devicePixelRatio();
   QSize physicalSize(qCeil(w * dpr), qCeil(h * dpr));
-  QSize target = QSizeF(m_nativeSize)
-      .scaled(QSizeF(physicalSize), Qt::KeepAspectRatio)
-      .toSize();
+  QSize target = QSizeF(m_nativeSize).scaled(QSizeF(physicalSize), Qt::KeepAspectRatio).toSize();
 
   if (!target.isEmpty() && target != m_nativeSize) {
     m_movie->setScaledSize(target);
@@ -157,15 +150,13 @@ void ViciAnimatedImage::paint(QPainter *painter) {
 
   QSizeF itemSize(width(), height());
   QSizeF scaled = QSizeF(m_nativeSize).scaled(itemSize, Qt::KeepAspectRatio);
-  QRectF target((itemSize.width() - scaled.width()) / 2.0,
-                (itemSize.height() - scaled.height()) / 2.0,
+  QRectF target((itemSize.width() - scaled.width()) / 2.0, (itemSize.height() - scaled.height()) / 2.0,
                 scaled.width(), scaled.height());
 
   painter->drawPixmap(target, frame, QRectF(frame.rect()));
 }
 
-void ViciAnimatedImage::itemChange(ItemChange change,
-                                   const ItemChangeData &value) {
+void ViciAnimatedImage::itemChange(ItemChange change, const ItemChangeData &value) {
   QQuickPaintedItem::itemChange(change, value);
   if (change == ItemVisibleHasChanged && m_movie) {
     if (value.boolValue)
@@ -175,12 +166,10 @@ void ViciAnimatedImage::itemChange(ItemChange change,
   }
 }
 
-void ViciAnimatedImage::geometryChange(const QRectF &newGeo,
-                                       const QRectF &oldGeo) {
+void ViciAnimatedImage::geometryChange(const QRectF &newGeo, const QRectF &oldGeo) {
   QQuickPaintedItem::geometryChange(newGeo, oldGeo);
   if (newGeo.size() != oldGeo.size()) {
-    if (m_movie && !m_scaledSizeApplied)
-      applyScaledSize();
+    if (m_movie && !m_scaledSizeApplied) applyScaledSize();
     update();
   }
 }

@@ -17,9 +17,8 @@ signals:
   void stateChanged();
 
 public:
-  OAuthOverlayHost(const ApplicationContext *ctx,
-                      const proto::ext::oauth::AuthorizeRequest &req,
-                      QObject *parent = nullptr);
+  OAuthOverlayHost(const ApplicationContext *ctx, const proto::ext::oauth::AuthorizeRequest &req,
+                   QObject *parent = nullptr);
 
   QUrl qmlComponentUrl() const;
   QString providerName() const;

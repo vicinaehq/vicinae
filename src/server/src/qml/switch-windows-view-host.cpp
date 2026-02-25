@@ -23,9 +23,8 @@ void SwitchWindowsViewHost::initialize() {
   setSearchPlaceholderText("Search open window...");
 
   auto wm = context()->services->windowManager();
-  connect(wm->provider(), &AbstractWindowManager::windowsChanged, this, [this]() {
-    QTimer::singleShot(100, this, &SwitchWindowsViewHost::refreshWindows);
-  });
+  connect(wm->provider(), &AbstractWindowManager::windowsChanged, this,
+          [this]() { QTimer::singleShot(100, this, &SwitchWindowsViewHost::refreshWindows); });
 }
 
 void SwitchWindowsViewHost::loadInitialData() { refreshWindows(); }
@@ -62,7 +61,5 @@ void SwitchWindowsViewHost::refreshWindows() {
   m_lastFetch = std::chrono::steady_clock::now();
   m_model->setItems(std::move(entries));
 
-  if (!searchText().isEmpty()) {
-    m_model->setFilter(searchText());
-  }
+  if (!searchText().isEmpty()) { m_model->setFilter(searchText()); }
 }

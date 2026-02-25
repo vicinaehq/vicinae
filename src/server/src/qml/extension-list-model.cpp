@@ -53,9 +53,7 @@ void ExtensionListModel::setExtensionData(const ListModel &model, bool resetSele
     }
   }
 
-  if (!freeSection.items.empty()) {
-    m_sections.push_back(std::move(freeSection));
-  }
+  if (!freeSection.items.empty()) { m_sections.push_back(std::move(freeSection)); }
 
   if (!resetSelection) setSelectFirstOnReset(false);
 
@@ -87,8 +85,7 @@ QString ExtensionListModel::emptyDescription() const {
 }
 
 QString ExtensionListModel::emptyIcon() const {
-  if (m_model.emptyView && m_model.emptyView->icon)
-    return imageSourceFor(ImageURL(*m_model.emptyView->icon));
+  if (m_model.emptyView && m_model.emptyView->icon) return imageSourceFor(ImageURL(*m_model.emptyView->icon));
   return {};
 }
 
@@ -125,7 +122,6 @@ const std::vector<ExtensionListModel::Section> &ExtensionListModel::activeSectio
   if (m_model.filtering && !m_filter.isEmpty()) { return m_filteredSections; }
   return m_sections;
 }
-
 
 void ExtensionListModel::setFilter(const QString &text) {
   m_filter = text;

@@ -63,10 +63,6 @@ ManageSnippetsModel::buildActionPanel(const snippet::SerializedSnippet &item) co
   return panel;
 }
 
-void ManageSnippetsModel::itemSelected(const snippet::SerializedSnippet &item) {
-  emit snippetSelected(item);
-}
+void ManageSnippetsModel::itemSelected(const snippet::SerializedSnippet &item) { emit snippetSelected(item); }
 
-QString ManageSnippetsModel::sectionLabel() const {
-  return QStringLiteral("Snippets ({count})");
-}
+QString ManageSnippetsModel::sectionLabel() const { return QStringLiteral("Snippets ({count})"); }

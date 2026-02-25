@@ -8,7 +8,9 @@ public:
   ViewScope() = default;
   ViewScope(ApplicationContext *ctx, const BaseView *owner) : m_ctx(ctx), m_owner(owner) {}
 
-  void setActions(std::unique_ptr<ActionPanelState> panel) const { nav()->setActions(std::move(panel), m_owner); }
+  void setActions(std::unique_ptr<ActionPanelState> panel) const {
+    nav()->setActions(std::move(panel), m_owner);
+  }
   void clearActions() const { nav()->clearActions(m_owner); }
   void setNavigationTitle(const QString &title) const { nav()->setNavigationTitle(title, m_owner); }
 

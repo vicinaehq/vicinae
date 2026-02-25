@@ -9,8 +9,8 @@ class StoreIntroViewHost : public FormViewBase {
   Q_PROPERTY(QString introMarkdown READ introMarkdown CONSTANT)
 
 public:
-  StoreIntroViewHost(const QString &markdown, const ImageURL &icon,
-                        const QString &actionLabel, std::function<void()> continueAction);
+  StoreIntroViewHost(const QString &markdown, const ImageURL &icon, const QString &actionLabel,
+                     std::function<void()> continueAction);
 
   QUrl qmlComponentUrl() const override;
   QVariantMap qmlProperties() const override;

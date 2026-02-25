@@ -43,8 +43,7 @@ void ManageFallbackViewHost::reload() {
   std::vector<RootItemPtr> items;
   for (const auto &scored : results) {
     auto item = scored.item.get().get();
-    if (item->isSuitableForFallback())
-      items.emplace_back(scored.item.get());
+    if (item->isSuitableForFallback()) items.emplace_back(scored.item.get());
   }
 
   m_model->setItems(std::move(items));

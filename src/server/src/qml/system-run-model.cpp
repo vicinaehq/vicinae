@@ -11,7 +11,7 @@ SystemRunModel::DefaultAction SystemRunModel::parseDefaultAction(QStringView s) 
 }
 
 void SystemRunModel::setData(std::vector<std::string> cmdline, bool hasProgram,
-                                std::vector<Scored<std::filesystem::path>> programs) {
+                             std::vector<Scored<std::filesystem::path>> programs) {
   m_cmdline = std::move(cmdline);
   m_hasProgram = hasProgram;
   m_programs = std::move(programs);
@@ -20,11 +20,9 @@ void SystemRunModel::setData(std::vector<std::string> cmdline, bool hasProgram,
   m_progCount = static_cast<int>(m_programs.size());
 
   std::vector<SectionInfo> sections;
-  if (m_cmdCount > 0)
-    sections.push_back({.name = QStringLiteral("Execute query"), .count = m_cmdCount});
+  if (m_cmdCount > 0) sections.push_back({.name = QStringLiteral("Execute query"), .count = m_cmdCount});
   if (m_progCount > 0)
-    sections.push_back(
-        {.name = QStringLiteral("Programs (%1)").arg(m_progCount), .count = m_progCount});
+    sections.push_back({.name = QStringLiteral("Programs (%1)").arg(m_progCount), .count = m_progCount});
 
   setSections(sections);
 }
@@ -44,23 +42,24 @@ const RunProgramItem &SystemRunModel::itemAt(int section, int item) const {
 
 QString SystemRunModel::itemTitle(int section, int item) const {
   const auto &entry = itemAt(section, item);
-  return std::visit(
-      overloads{[](const std::filesystem::path &path) { return QString::fromStdString(path.filename().string()); },
-                [](const CommandLine &cmdline) {
-                  auto query = cmdline | std::views::join_with(' ') | std::ranges::to<std::string>();
-                  return QString::fromStdString(query);
-                }},
-      entry);
+  return std::visit(overloads{[](const std::filesystem::path &path) {
+                                return QString::fromStdString(path.filename().string());
+                              },
+                              [](const CommandLine &cmdline) {
+                                auto query =
+                                    cmdline | std::views::join_with(' ') | std::ranges::to<std::string>();
+                                return QString::fromStdString(query);
+                              }},
+                    entry);
 }
 
 QString SystemRunModel::itemSubtitle(int section, int item) const {
   const auto &entry = itemAt(section, item);
-  return std::visit(
-      overloads{[](const std::filesystem::path &path) {
-                  return QString::fromStdString(compressPath(path).string());
-                },
-                [](const CommandLine &) { return QString(); }},
-      entry);
+  return std::visit(overloads{[](const std::filesystem::path &path) {
+                                return QString::fromStdString(compressPath(path).string());
+                              },
+                              [](const CommandLine &) { return QString(); }},
+                    entry);
 }
 
 QString SystemRunModel::itemIconSource(int section, int item) const {
@@ -102,7 +101,8 @@ std::unique_ptr<ActionPanelState> SystemRunModel::createActionPanel(int section,
       break;
     }
 
-    for (auto action : actions) sec->addAction(action);
+    for (auto action : actions)
+      sec->addAction(action);
   };
 
   std::visit(

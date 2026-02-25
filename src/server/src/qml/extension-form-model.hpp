@@ -45,7 +45,17 @@ public:
 
 private:
   struct FormItemData {
-    enum class Type { Text, Password, Checkbox, Dropdown, TextArea, FilePicker, DatePicker, Description, Separator };
+    enum class Type {
+      Text,
+      Password,
+      Checkbox,
+      Dropdown,
+      TextArea,
+      FilePicker,
+      DatePicker,
+      Description,
+      Separator
+    };
 
     Type type;
     QString fieldId;

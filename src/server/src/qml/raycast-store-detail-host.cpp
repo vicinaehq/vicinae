@@ -9,8 +9,7 @@
 #include "utils/utils.hpp"
 #include <QFutureWatcher>
 
-RaycastStoreDetailHost::RaycastStoreDetailHost(const Raycast::Extension &extension)
-    : m_ext(extension) {}
+RaycastStoreDetailHost::RaycastStoreDetailHost(const Raycast::Extension &extension) : m_ext(extension) {}
 
 QUrl RaycastStoreDetailHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/StoreDetailView.qml"));
@@ -53,9 +52,7 @@ void RaycastStoreDetailHost::initialize() {
 QString RaycastStoreDetailHost::title() const { return m_ext.title; }
 QString RaycastStoreDetailHost::description() const { return m_ext.description; }
 
-QString RaycastStoreDetailHost::iconSource() const {
-  return qml::imageSourceFor(m_ext.themedIcon());
-}
+QString RaycastStoreDetailHost::iconSource() const { return qml::imageSourceFor(m_ext.themedIcon()); }
 
 QString RaycastStoreDetailHost::authorName() const { return m_ext.author.name; }
 
@@ -64,9 +61,7 @@ QString RaycastStoreDetailHost::authorAvatar() const {
   return qml::imageSourceFor(ImageURL::http(QUrl(m_ext.author.avatar)).circle());
 }
 
-QString RaycastStoreDetailHost::downloadCount() const {
-  return formatCount(m_ext.download_count);
-}
+QString RaycastStoreDetailHost::downloadCount() const { return formatCount(m_ext.download_count); }
 
 QStringList RaycastStoreDetailHost::platforms() const { return m_ext.platforms; }
 bool RaycastStoreDetailHost::isInstalled() const { return m_isInstalled; }

@@ -15,11 +15,9 @@ static QColor resolveColorLike(const ColorLike &color) {
 }
 
 AlertModel::AlertModel(NavigationController &nav, QObject *parent) : QObject(parent) {
-  connect(&nav, &NavigationController::confirmAlertRequested,
-          this, &AlertModel::handleAlertRequested);
+  connect(&nav, &NavigationController::confirmAlertRequested, this, &AlertModel::handleAlertRequested);
 
-  connect(&nav, &NavigationController::currentViewChanged,
-          this, [this]() { dismiss(); });
+  connect(&nav, &NavigationController::currentViewChanged, this, [this]() { dismiss(); });
 }
 
 void AlertModel::handleAlertRequested(DialogContentWidget *widget) {

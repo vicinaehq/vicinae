@@ -21,15 +21,12 @@ void OAuthTokenStoreViewHost::initialize() {
   setSearchPlaceholderText("Search token sets...");
 
   auto oauth = ServiceRegistry::instance()->oauthService();
-  connect(&oauth->store(), &OAuth::TokenStore::setRemoved, this,
-          &OAuthTokenStoreViewHost::reload);
+  connect(&oauth->store(), &OAuth::TokenStore::setRemoved, this, &OAuthTokenStoreViewHost::reload);
 }
 
 void OAuthTokenStoreViewHost::loadInitialData() { reload(); }
 
-void OAuthTokenStoreViewHost::textChanged(const QString &text) {
-  m_model->setFilter(text);
-}
+void OAuthTokenStoreViewHost::textChanged(const QString &text) { m_model->setFilter(text); }
 
 void OAuthTokenStoreViewHost::onReactivated() { m_model->refreshActionPanel(); }
 

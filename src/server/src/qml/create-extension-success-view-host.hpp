@@ -9,7 +9,7 @@ class CreateExtensionSuccessViewHost : public FormViewBase {
 
 public:
   CreateExtensionSuccessViewHost(const ExtensionBoilerplateConfig &cfg,
-                                    const std::filesystem::path &location);
+                                 const std::filesystem::path &location);
 
   QUrl qmlComponentUrl() const override;
   QVariantMap qmlProperties() const override;

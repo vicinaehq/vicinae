@@ -83,20 +83,14 @@ void CommandListModel::setSelectedIndex(int index) {
   if (!sameItem) { onItemSelected(flat.sectionIdx, flat.itemIdx); }
 
   auto panel = createActionPanel(flat.sectionIdx, flat.itemIdx);
-  if (panel) {
-    m_scope.setActions(std::move(panel));
-  }
+  if (panel) { m_scope.setActions(std::move(panel)); }
 }
 
-void CommandListModel::onSelectionCleared() {
-  m_scope.clearActions();
-}
+void CommandListModel::onSelectionCleared() { m_scope.clearActions(); }
 
 void CommandListModel::refreshActionPanel() { setSelectedIndex(m_selectedIndex); }
 
-void CommandListModel::activateSelected() {
-  m_scope.executePrimaryAction();
-}
+void CommandListModel::activateSelected() { m_scope.executePrimaryAction(); }
 
 int CommandListModel::nextSelectableIndex(int from, int direction) const {
   int idx = from + direction;

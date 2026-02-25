@@ -20,10 +20,9 @@ npm run dev
 You can learn more about extension development in the [Vicinae documentation](https://docs.vicinae.com/).
 )";
 
-CreateExtensionSuccessViewHost::CreateExtensionSuccessViewHost(
-    const ExtensionBoilerplateConfig &cfg, const std::filesystem::path &location)
-    : m_markdown(MARKDOWN.arg(cfg.title).arg(QString::fromStdString(location.string()))),
-      m_path(location) {}
+CreateExtensionSuccessViewHost::CreateExtensionSuccessViewHost(const ExtensionBoilerplateConfig &cfg,
+                                                               const std::filesystem::path &location)
+    : m_markdown(MARKDOWN.arg(cfg.title).arg(QString::fromStdString(location.string()))), m_path(location) {}
 
 QUrl CreateExtensionSuccessViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/MarkdownDetailView.qml"));

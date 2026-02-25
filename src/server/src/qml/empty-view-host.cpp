@@ -6,9 +6,7 @@ EmptyViewHost::EmptyViewHost(const QString &title, const QString &description, c
   if (icon.isValid()) m_iconSource = qml::imageSourceFor(icon);
 }
 
-QUrl EmptyViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/Vicinae/EmptyView.qml"));
-}
+QUrl EmptyViewHost::qmlComponentUrl() const { return QUrl(QStringLiteral("qrc:/Vicinae/EmptyView.qml")); }
 
 QVariantMap EmptyViewHost::qmlProperties() const {
   QVariantMap props;

@@ -314,7 +314,6 @@ public:
   void setActions(std::unique_ptr<ActionPanelState> state, const BaseView *caller = nullptr);
   void clearActions(const BaseView *caller = nullptr);
 
-
   void clearSearchText();
   void setNavigationTitle(const QString &navigationTitle, const BaseView *caller = nullptr);
   void setNavigationIcon(const ImageURL &icon);

@@ -17,8 +17,7 @@ QUrl SnippetFormViewHost::qmlComponentUrl() const {
 }
 
 QVariantMap SnippetFormViewHost::qmlProperties() const {
-  return {{QStringLiteral("host"),
-           QVariant::fromValue(const_cast<SnippetFormViewHost *>(this))}};
+  return {{QStringLiteral("host"), QVariant::fromValue(const_cast<SnippetFormViewHost *>(this))}};
 }
 
 void SnippetFormViewHost::initialize() {
@@ -42,9 +41,9 @@ void SnippetFormViewHost::initialize() {
       m_name = QString::fromStdString(snippet.name);
     }
 
-    const auto visitor =
-        overloads{[this](const snippet::TextSnippet &text) { m_content = QString::fromStdString(text.text); },
-                  [this](const snippet::FileSnippet &file) { m_content = QString::fromStdString(file.file); }};
+    const auto visitor = overloads{
+        [this](const snippet::TextSnippet &text) { m_content = QString::fromStdString(text.text); },
+        [this](const snippet::FileSnippet &file) { m_content = QString::fromStdString(file.file); }};
     std::visit(visitor, snippet.data);
 
     if (snippet.expansion) {

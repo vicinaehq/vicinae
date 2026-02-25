@@ -60,8 +60,7 @@ QUrl ClipboardHistoryViewHost::qmlSearchAccessoryUrl() const {
 }
 
 QVariantMap ClipboardHistoryViewHost::qmlProperties() const {
-  return {{QStringLiteral("host"),
-           QVariant::fromValue(const_cast<ClipboardHistoryViewHost *>(this))}};
+  return {{QStringLiteral("host"), QVariant::fromValue(const_cast<ClipboardHistoryViewHost *>(this))}};
 }
 
 void ClipboardHistoryViewHost::initialize() {
@@ -75,17 +74,15 @@ void ClipboardHistoryViewHost::initialize() {
 
   auto preferences = command()->preferenceValues();
   auto defaultActionStr = preferences.value("defaultAction").toString();
-  m_model->setDefaultAction(defaultActionStr == "paste"
-                                ? ClipboardHistoryModel::DefaultAction::Paste
-                                : ClipboardHistoryModel::DefaultAction::Copy);
+  m_model->setDefaultAction(defaultActionStr == "paste" ? ClipboardHistoryModel::DefaultAction::Paste
+                                                        : ClipboardHistoryModel::DefaultAction::Copy);
 
   setSearchPlaceholderText("Browse clipboard history...");
 
   m_canToggleMonitoring = m_clipman->supportsMonitoring();
   if (!m_canToggleMonitoring) {
     m_clipboardStatusText = QStringLiteral("Clipboard monitoring unavailable");
-    m_clipboardStatusIcon =
-        qml::imageSourceFor(ImageURL::builtin("warning").setFill(SemanticColor::Red));
+    m_clipboardStatusIcon = qml::imageSourceFor(ImageURL::builtin("warning").setFill(SemanticColor::Red));
   } else {
     handleMonitoringChanged(m_clipman->monitoring());
   }
@@ -99,11 +96,9 @@ void ClipboardHistoryViewHost::initialize() {
             handleDataRetrieved(page.totalCount);
           });
 
-  connect(m_controller, &ClipboardHistoryController::dataLoadingChanged, this,
-          &BaseView::setLoading);
+  connect(m_controller, &ClipboardHistoryController::dataLoadingChanged, this, &BaseView::setLoading);
 
-  connect(m_model, &ClipboardHistoryModel::entrySelected, this,
-          &ClipboardHistoryViewHost::loadDetail);
+  connect(m_model, &ClipboardHistoryModel::entrySelected, this, &ClipboardHistoryViewHost::loadDetail);
 
   auto savedFilter = getSavedDropdownFilter().value_or("all");
   if (auto it = savedFilterToKind.find(savedFilter); it != savedFilterToKind.end()) {
@@ -112,21 +107,13 @@ void ClipboardHistoryViewHost::initialize() {
   }
 }
 
-void ClipboardHistoryViewHost::loadInitialData() {
-  m_controller->setFilter(searchText());
-}
+void ClipboardHistoryViewHost::loadInitialData() { m_controller->setFilter(searchText()); }
 
-void ClipboardHistoryViewHost::textChanged(const QString &text) {
-  m_controller->setFilter(text);
-}
+void ClipboardHistoryViewHost::textChanged(const QString &text) { m_controller->setFilter(text); }
 
-void ClipboardHistoryViewHost::onReactivated() {
-  m_model->refreshActionPanel();
-}
+void ClipboardHistoryViewHost::onReactivated() { m_model->refreshActionPanel(); }
 
-void ClipboardHistoryViewHost::beforePop() {
-  m_model->beforePop();
-}
+void ClipboardHistoryViewHost::beforePop() { m_model->beforePop(); }
 
 QObject *ClipboardHistoryViewHost::listModel() const { return m_model; }
 
@@ -148,13 +135,9 @@ void ClipboardHistoryViewHost::setKindFilter(int kind) {
   auto offerKind = kindFromFilterIndex(kind);
   m_controller->setKindFilter(offerKind);
 
-  if (kind >= 0 && kind <= 4) {
-    saveDropdownFilter(filterIndexToSavedValue[kind]);
-  }
+  if (kind >= 0 && kind <= 4) { saveDropdownFilter(filterIndexToSavedValue[kind]); }
 
-  if (!searchText().isEmpty()) {
-    clearSearchText();
-  }
+  if (!searchText().isEmpty()) { clearSearchText(); }
 }
 
 void ClipboardHistoryViewHost::handleMonitoringChanged(bool monitoring) {
@@ -188,8 +171,7 @@ void ClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
   m_detailMd5 = entry.md5sum;
 
   if (entry.encryption != ClipboardEncryptionType::None) {
-    m_detailEncryptionIcon =
-        qml::imageSourceFor(ImageURL::builtin("key").setFill(SemanticColor::Green));
+    m_detailEncryptionIcon = qml::imageSourceFor(ImageURL::builtin("key").setFill(SemanticColor::Green));
   } else {
     m_detailEncryptionIcon.clear();
   }
@@ -232,17 +214,14 @@ void ClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
         if (std::filesystem::is_regular_file(path, ec)) {
           auto fileMime = QMimeDatabase().mimeTypeForFile(path.c_str());
           if (fileMime.name().startsWith("image/")) {
-            m_detailImageSource =
-                qml::imageSourceFor(ImageURL::local(path));
+            m_detailImageSource = qml::imageSourceFor(ImageURL::local(path));
             m_hasDetail = true;
             emit detailChanged();
             return;
           }
           if (Utils::isTextMimeType(fileMime)) {
             QFile file(path.c_str());
-            if (file.open(QIODevice::ReadOnly)) {
-              m_detailTextContent = QString::fromUtf8(file.readAll());
-            }
+            if (file.open(QIODevice::ReadOnly)) { m_detailTextContent = QString::fromUtf8(file.readAll()); }
             m_hasDetail = true;
             emit detailChanged();
             return;
@@ -260,8 +239,7 @@ void ClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
     if (m_tmpFile->open()) {
       m_tmpFile->write(rawData);
       m_tmpFile->flush();
-      m_detailImageSource =
-          qml::imageSourceFor(ImageURL::local(m_tmpFile->filesystemFileName()));
+      m_detailImageSource = qml::imageSourceFor(ImageURL::local(m_tmpFile->filesystemFileName()));
       m_tmpFile->close();
     }
     m_hasDetail = true;

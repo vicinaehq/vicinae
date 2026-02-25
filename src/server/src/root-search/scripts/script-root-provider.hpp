@@ -55,8 +55,8 @@ class ScriptRootItem : public RootItem {
   }
 
   QString settingsDescription() const override {
-    return m_file->data().description
-        .transform([](auto &&s) { return QString::fromStdString(s); })
+    return m_file->data()
+        .description.transform([](auto &&s) { return QString::fromStdString(s); })
         .value_or(QString{});
   }
 
@@ -65,8 +65,7 @@ class ScriptRootItem : public RootItem {
     meta.reserve(4);
     meta.emplace_back("Mode", qStringFromStdView(script_command::outputModeToString(m_file->data().mode)));
     meta.emplace_back("Path", compressPath(m_file->path()).c_str());
-    if (const auto author = m_file->data().author)
-      meta.emplace_back("Author", author.value().c_str());
+    if (const auto author = m_file->data().author) meta.emplace_back("Author", author.value().c_str());
     return meta;
   }
 

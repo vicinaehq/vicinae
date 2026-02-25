@@ -13,7 +13,8 @@ class CreateExtensionViewHost : public FormViewBase {
 
   Q_PROPERTY(QString commandTitle READ commandTitle WRITE setCommandTitle NOTIFY formChanged)
   Q_PROPERTY(QString commandSubtitle READ commandSubtitle WRITE setCommandSubtitle NOTIFY formChanged)
-  Q_PROPERTY(QString commandDescription READ commandDescription WRITE setCommandDescription NOTIFY formChanged)
+  Q_PROPERTY(
+      QString commandDescription READ commandDescription WRITE setCommandDescription NOTIFY formChanged)
   Q_PROPERTY(QVariantMap selectedTemplate READ selectedTemplate NOTIFY formChanged)
 
   Q_PROPERTY(QVariantList templateItems READ templateItems CONSTANT)
@@ -53,14 +54,49 @@ public:
   QString commandSubtitleError() const { return m_commandSubtitleError; }
   QString commandDescriptionError() const { return m_commandDescriptionError; }
 
-  void setAuthor(const QString &v) { if (m_author != v) { m_author = v; emit formChanged(); } }
-  void setTitle(const QString &v) { if (m_title != v) { m_title = v; emit formChanged(); } }
-  void setDescription(const QString &v) { if (m_description != v) { m_description = v; emit formChanged(); } }
-  void setLocation(const QString &v) { if (m_location != v) { m_location = v; emit formChanged(); } }
+  void setAuthor(const QString &v) {
+    if (m_author != v) {
+      m_author = v;
+      emit formChanged();
+    }
+  }
+  void setTitle(const QString &v) {
+    if (m_title != v) {
+      m_title = v;
+      emit formChanged();
+    }
+  }
+  void setDescription(const QString &v) {
+    if (m_description != v) {
+      m_description = v;
+      emit formChanged();
+    }
+  }
+  void setLocation(const QString &v) {
+    if (m_location != v) {
+      m_location = v;
+      emit formChanged();
+    }
+  }
 
-  void setCommandTitle(const QString &v) { if (m_commandTitle != v) { m_commandTitle = v; emit formChanged(); } }
-  void setCommandSubtitle(const QString &v) { if (m_commandSubtitle != v) { m_commandSubtitle = v; emit formChanged(); } }
-  void setCommandDescription(const QString &v) { if (m_commandDescription != v) { m_commandDescription = v; emit formChanged(); } }
+  void setCommandTitle(const QString &v) {
+    if (m_commandTitle != v) {
+      m_commandTitle = v;
+      emit formChanged();
+    }
+  }
+  void setCommandSubtitle(const QString &v) {
+    if (m_commandSubtitle != v) {
+      m_commandSubtitle = v;
+      emit formChanged();
+    }
+  }
+  void setCommandDescription(const QString &v) {
+    if (m_commandDescription != v) {
+      m_commandDescription = v;
+      emit formChanged();
+    }
+  }
 
   Q_INVOKABLE void submit();
   Q_INVOKABLE void selectTemplate(const QVariantMap &item);

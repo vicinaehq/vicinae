@@ -343,11 +343,15 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
       bool hasImage = false;
       for (auto *c = cmark_node_first_child(node); c; c = cmark_node_next(c)) {
         auto ct = cmark_node_get_type(c);
-        if (ct == CMARK_NODE_IMAGE) { hasImage = true; break; }
+        if (ct == CMARK_NODE_IMAGE) {
+          hasImage = true;
+          break;
+        }
         if (ct == CMARK_NODE_LINK) {
           auto *lc = cmark_node_first_child(c);
           if (lc && !cmark_node_next(lc) && cmark_node_get_type(lc) == CMARK_NODE_IMAGE) {
-            hasImage = true; break;
+            hasImage = true;
+            break;
           }
         }
       }
@@ -360,7 +364,10 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
       }
 
       auto flushRun = [&blocks](QString &run) {
-        if (run.trimmed().isEmpty()) { run.clear(); return; }
+        if (run.trimmed().isEmpty()) {
+          run.clear();
+          return;
+        }
         QVariantMap data;
         data[QStringLiteral("html")] = run;
         blocks.push_back({MdBlockType::Paragraph, data});
@@ -613,8 +620,7 @@ void MarkdownModel::setMarkdown(const QString &markdown) {
       if (oldCount > 0) {
         auto &lastOld = m_blocks[oldCount - 1];
         auto &lastNew = newBlocks[oldCount - 1];
-        if (lastOld.type != lastNew.type || lastOld.data != lastNew.data)
-          divergeAt = oldCount - 1;
+        if (lastOld.type != lastNew.type || lastOld.data != lastNew.data) divergeAt = oldCount - 1;
       }
 
       if (divergeAt < oldCount) {
@@ -639,8 +645,7 @@ void MarkdownModel::setMarkdown(const QString &markdown) {
   beginResetModel();
   m_blocks.clear();
 
-  if (!markdown.isEmpty())
-    m_blocks = parseBlocks(markdown);
+  if (!markdown.isEmpty()) m_blocks = parseBlocks(markdown);
 
   endResetModel();
 }

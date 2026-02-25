@@ -22,6 +22,4 @@ std::unique_ptr<ActionPanelState> BrowserTabsModel::buildActionPanel(const Brows
   return BrowserTabActionGenerator::generate(scope().appContext(), tab);
 }
 
-QString BrowserTabsModel::sectionLabel() const {
-  return QStringLiteral("Tabs ({count})");
-}
+QString BrowserTabsModel::sectionLabel() const { return QStringLiteral("Tabs ({count})"); }

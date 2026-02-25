@@ -46,8 +46,8 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
 
   if (!fs::is_directory(targetDir, ec)) {
     return std::unexpected(QString("%1 is not a directory. The boilerplate generator will not create the "
-                                  "containing directory for you")
-                              .arg(targetDir.c_str()));
+                                   "containing directory for you")
+                               .arg(targetDir.c_str()));
   }
 
   fs::path extDir = targetDir / extName.toStdString();

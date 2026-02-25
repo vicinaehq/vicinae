@@ -53,8 +53,7 @@ ImageURL ClipboardHistoryModel::iconForEntry(const ClipboardHistoryEntry &entry)
   case ClipboardOfferKind::Image:
     return ImageURL::builtin("image");
   case ClipboardOfferKind::Link:
-    if (entry.urlHost)
-      return ImageURL::favicon(*entry.urlHost).withFallback(ImageURL::builtin("link"));
+    if (entry.urlHost) return ImageURL::favicon(*entry.urlHost).withFallback(ImageURL::builtin("link"));
     return ImageURL::builtin("link");
   case ClipboardOfferKind::Text:
     return ImageURL::builtin("text");
@@ -66,9 +65,7 @@ ImageURL ClipboardHistoryModel::iconForEntry(const ClipboardHistoryEntry &entry)
 }
 
 void ClipboardHistoryModel::onItemSelected(int, int i) {
-  if (i >= 0 && i < static_cast<int>(m_entries.size())) {
-    emit entrySelected(m_entries[i]);
-  }
+  if (i >= 0 && i < static_cast<int>(m_entries.size())) { emit entrySelected(m_entries[i]); }
 }
 
 std::unique_ptr<ActionPanelState> ClipboardHistoryModel::createActionPanel(int, int i) const {
@@ -78,9 +75,7 @@ std::unique_ptr<ActionPanelState> ClipboardHistoryModel::createActionPanel(int, 
   auto mainSection = panel->createSection();
   bool isCopyable = entry.encryption == ClipboardEncryptionType::None || clipman->isEncryptionReady();
 
-  if (!isCopyable) {
-    mainSection->addAction(new OpenItemPreferencesAction(EntrypointId{"clipboard", ""}));
-  }
+  if (!isCopyable) { mainSection->addAction(new OpenItemPreferencesAction(EntrypointId{"clipboard", ""})); }
 
   auto wm = scope().services()->windowManager();
   auto pin = new PinClipboardAction(entry.id, !entry.pinnedAt);

@@ -20,7 +20,12 @@ public:
   QString alias() const { return m_alias; }
   QString aliasError() const { return m_aliasError; }
 
-  void setAlias(const QString &v) { if (m_alias != v) { m_alias = v; emit formChanged(); } }
+  void setAlias(const QString &v) {
+    if (m_alias != v) {
+      m_alias = v;
+      emit formChanged();
+    }
+  }
 
 signals:
   void formChanged();

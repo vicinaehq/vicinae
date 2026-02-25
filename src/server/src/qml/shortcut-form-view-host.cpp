@@ -26,7 +26,7 @@ QVariantMap ShortcutFormViewHost::qmlProperties() const {
 }
 
 void ShortcutFormViewHost::setPrefilledValues(const QString &link, const QString &name,
-                                                  const QString &application, const QString &icon) {
+                                              const QString &application, const QString &icon) {
   m_prefilledLink = link;
   m_prefilledName = name;
   m_prefilledApp = application;
@@ -87,9 +87,7 @@ void ShortcutFormViewHost::initialize() {
       if (iconFound) break;
     }
 
-    if (!iconFound) {
-      handleLinkBlurred();
-    }
+    if (!iconFound) { handleLinkBlurred(); }
 
     emit formChanged();
   } else if (!m_prefilledLink.isEmpty() || !m_prefilledName.isEmpty()) {
@@ -118,9 +116,7 @@ void ShortcutFormViewHost::initialize() {
       }
     }
 
-    if (!m_prefilledLink.isEmpty()) {
-      handleLinkBlurred();
-    }
+    if (!m_prefilledLink.isEmpty()) { handleLinkBlurred(); }
 
     emit formChanged();
   }
@@ -236,14 +232,10 @@ void ShortcutFormViewHost::submit() {
 
   if (appId == QStringLiteral("default")) {
     auto appDb = context()->services->appDb();
-    if (auto browser = appDb->webBrowser()) {
-      appId = browser->id();
-    }
+    if (auto browser = appDb->webBrowser()) { appId = browser->id(); }
   }
 
-  if (iconId == QStringLiteral("default")) {
-    iconId = m_resolvedDefaultIcon;
-  }
+  if (iconId == QStringLiteral("default")) { iconId = m_resolvedDefaultIcon; }
 
   if (m_mode == Mode::Edit) {
     bool updated = m_service->updateShortcut(m_initialShortcut->id(), m_name, iconId, m_link, appId);
@@ -318,8 +310,7 @@ void ShortcutFormViewHost::selectApp(const QVariantMap &item) {
     else
       resolvedApp = appDb->findById(appId);
 
-    if (resolvedApp)
-      m_resolvedDefaultIcon = resolvedApp->iconUrl().toString();
+    if (resolvedApp) m_resolvedDefaultIcon = resolvedApp->iconUrl().toString();
 
     auto iconSource = item[QStringLiteral("iconSource")].toString();
     m_defaultIconEntry[QStringLiteral("iconSource")] = iconSource;
@@ -338,4 +329,3 @@ void ShortcutFormViewHost::selectIcon(const QVariantMap &item) {
   m_selectedIcon = item;
   emit formChanged();
 }
-

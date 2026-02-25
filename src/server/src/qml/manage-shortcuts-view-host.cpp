@@ -14,8 +14,7 @@ QUrl ManageShortcutsViewHost::qmlComponentUrl() const {
 }
 
 QVariantMap ManageShortcutsViewHost::qmlProperties() const {
-  return {{QStringLiteral("host"),
-           QVariant::fromValue(const_cast<ManageShortcutsViewHost *>(this))}};
+  return {{QStringLiteral("host"), QVariant::fromValue(const_cast<ManageShortcutsViewHost *>(this))}};
 }
 
 void ManageShortcutsViewHost::initialize() {
@@ -28,15 +27,11 @@ void ManageShortcutsViewHost::initialize() {
 
   setSearchPlaceholderText("Search shortcuts...");
 
-  connect(m_shortcutService, &ShortcutService::shortcutSaved, this,
-          &ManageShortcutsViewHost::reload);
-  connect(m_shortcutService, &ShortcutService::shortcutUpdated, this,
-          &ManageShortcutsViewHost::reload);
-  connect(m_shortcutService, &ShortcutService::shortcutRemoved, this,
-          &ManageShortcutsViewHost::reload);
+  connect(m_shortcutService, &ShortcutService::shortcutSaved, this, &ManageShortcutsViewHost::reload);
+  connect(m_shortcutService, &ShortcutService::shortcutUpdated, this, &ManageShortcutsViewHost::reload);
+  connect(m_shortcutService, &ShortcutService::shortcutRemoved, this, &ManageShortcutsViewHost::reload);
 
-  connect(m_model, &ManageShortcutsModel::shortcutSelected, this,
-          &ManageShortcutsViewHost::loadDetail);
+  connect(m_model, &ManageShortcutsModel::shortcutSelected, this, &ManageShortcutsViewHost::loadDetail);
 
   connect(context()->navigation.get(), &NavigationController::completionValuesChanged, this,
           [this](const ArgumentValues &) { updateExpandedUrl(); });
@@ -48,13 +43,9 @@ void ManageShortcutsViewHost::initialize() {
 
 void ManageShortcutsViewHost::loadInitialData() { reload(); }
 
-void ManageShortcutsViewHost::textChanged(const QString &text) {
-  m_model->setFilter(text);
-}
+void ManageShortcutsViewHost::textChanged(const QString &text) { m_model->setFilter(text); }
 
-void ManageShortcutsViewHost::onReactivated() {
-  m_model->refreshActionPanel();
-}
+void ManageShortcutsViewHost::onReactivated() { m_model->refreshActionPanel(); }
 
 void ManageShortcutsViewHost::beforePop() {
   clearDetail();
@@ -140,9 +131,7 @@ void ManageShortcutsViewHost::updateExpandedUrl() {
       } else if (placeholder->id == "uuid") {
         expanded += QUuid::createUuid().toString(QUuid::StringFormat::WithoutBraces);
       } else {
-        if (argumentIndex < values.size()) {
-          expanded += values.at(argumentIndex++);
-        }
+        if (argumentIndex < values.size()) { expanded += values.at(argumentIndex++); }
       }
     }
   }
@@ -162,6 +151,4 @@ void ManageShortcutsViewHost::clearDetail() {
   emit detailChanged();
 }
 
-void ManageShortcutsViewHost::reload() {
-  m_model->setItems(m_shortcutService->shortcuts());
-}
+void ManageShortcutsViewHost::reload() { m_model->setItems(m_shortcutService->shortcuts()); }

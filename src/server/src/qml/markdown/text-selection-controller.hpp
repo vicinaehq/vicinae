@@ -26,8 +26,7 @@ public:
   void setFlickable(QQuickItem *item);
   bool eventFilter(QObject *obj, QEvent *event) override;
 
-  Q_INVOKABLE void registerSelectable(QQuickItem *item, int order,
-                                      bool isTextEdit);
+  Q_INVOKABLE void registerSelectable(QQuickItem *item, int order, bool isTextEdit);
   Q_INVOKABLE void unregisterSelectable(QQuickItem *item);
   Q_INVOKABLE void handlePress(qreal x, qreal y);
   Q_INVOKABLE void handleMove(qreal x, qreal y);
@@ -56,10 +55,8 @@ private:
   QPointF toContainerCoords(qreal viewportX, qreal viewportY) const;
   void refreshGeometry();
   int entryAt(qreal containerX, qreal containerY) const;
-  int positionAt(QQuickItem *textEdit, qreal containerX,
-                 qreal containerY) const;
-  QString linkAt(QQuickItem *textEdit, qreal containerX,
-                 qreal containerY) const;
+  int positionAt(QQuickItem *textEdit, qreal containerX, qreal containerY) const;
+  QString linkAt(QQuickItem *textEdit, qreal containerX, qreal containerY) const;
   void applySelection(int fromEntry, int fromChar, int toEntry, int toChar);
   void selectTextEdit(QQuickItem *item, int start, int end);
   void selectAllTextEdit(QQuickItem *item);

@@ -11,8 +11,7 @@ bool ImageUrl::isValid() const { return m_url.type() != ImageURLType::Invalid; }
 
 bool ImageUrl::isThemeSensitive() const {
   auto t = m_url.type();
-  if (t == ImageURLType::Builtin || t == ImageURLType::Local)
-    return true;
+  if (t == ImageURLType::Builtin || t == ImageURLType::Local) return true;
   return m_url.fillColor().has_value();
 }
 
@@ -21,12 +20,9 @@ static QColor resolveFillColor(const ImageURL &url) {
   if (!fill) return {};
 
   auto &theme = ThemeService::instance().theme();
-  if (auto *sc = std::get_if<SemanticColor>(&*fill))
-    return theme.resolve(*sc);
-  if (auto *qc = std::get_if<QColor>(&*fill))
-    return *qc;
-  if (auto *str = std::get_if<QString>(&*fill))
-    return QColor(*str);
+  if (auto *sc = std::get_if<SemanticColor>(&*fill)) return theme.resolve(*sc);
+  if (auto *qc = std::get_if<QColor>(&*fill)) return *qc;
+  if (auto *str = std::get_if<QString>(&*fill)) return QColor(*str);
   return {};
 }
 
@@ -38,16 +34,14 @@ static QString buildParams(const ImageURL &url, bool builtinFgDefault = false) {
   QColor fg = resolveFillColor(url);
   if (builtinFgDefault && !fg.isValid())
     fg = ThemeService::instance().theme().resolve(SemanticColor::Foreground);
-  if (fg.isValid())
-    parts << QStringLiteral("fg=") + fg.name(QColor::HexRgb);
+  if (fg.isValid()) parts << QStringLiteral("fg=") + fg.name(QColor::HexRgb);
 
   if (auto bgTint = url.backgroundTint()) {
     QColor bg = ThemeService::instance().theme().resolve(*bgTint);
     parts << QStringLiteral("bg=") + bg.name(QColor::HexRgb);
   }
 
-  if (url.mask() == OmniPainter::CircleMask)
-    parts << QStringLiteral("mask=circle");
+  if (url.mask() == OmniPainter::CircleMask) parts << QStringLiteral("mask=circle");
 
   if (auto fb = url.fallback()) {
     ImageURL fbUrl(*fb);
@@ -63,8 +57,7 @@ static QString buildParams(const ImageURL &url, bool builtinFgDefault = false) {
 static QString buildProviderIdForFallback(const ImageURL &url) {
   QString source = ImageUrl(url).toSource();
   static const QString prefix = QStringLiteral("image://vicinae/");
-  if (source.startsWith(prefix))
-    return source.mid(prefix.length());
+  if (source.startsWith(prefix)) return source.mid(prefix.length());
   return {};
 }
 
@@ -124,8 +117,7 @@ ImageUrl ImageUrl::withFallback(const ImageUrl &fb) const {
 ImageUrl ImageUrl::withBackgroundTint(const QString &tint) const {
   ImageURL copy = m_url;
   auto color = ImageURL::tintForName(tint);
-  if (color != SemanticColor::InvalidTint)
-    copy.setBackgroundTint(color);
+  if (color != SemanticColor::InvalidTint) copy.setBackgroundTint(color);
   return ImageUrl(std::move(copy));
 }
 

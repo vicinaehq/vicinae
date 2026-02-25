@@ -12,41 +12,49 @@
 #include <QIcon>
 
 GeneralSettingsModel::GeneralSettingsModel(QObject *parent) : QObject(parent) {
-  connect(ServiceRegistry::instance()->config(), &config::Manager::configChanged,
-          this, &GeneralSettingsModel::configChanged);
+  connect(ServiceRegistry::instance()->config(), &config::Manager::configChanged, this,
+          &GeneralSettingsModel::configChanged);
 }
 
 const config::ConfigValue &GeneralSettingsModel::cfg() const {
   return ServiceRegistry::instance()->config()->value();
 }
 
-config::Manager &GeneralSettingsModel::cfgManager() const {
-  return *ServiceRegistry::instance()->config();
-}
+config::Manager &GeneralSettingsModel::cfgManager() const { return *ServiceRegistry::instance()->config(); }
 
 bool GeneralSettingsModel::searchFilesInRoot() const { return cfg().searchFilesInRoot; }
-void GeneralSettingsModel::setSearchFilesInRoot(bool v) { cfgManager().mergeWithUser({.searchFilesInRoot = v}); }
+void GeneralSettingsModel::setSearchFilesInRoot(bool v) {
+  cfgManager().mergeWithUser({.searchFilesInRoot = v});
+}
 
 bool GeneralSettingsModel::closeOnFocusLoss() const { return cfg().closeOnFocusLoss; }
-void GeneralSettingsModel::setCloseOnFocusLoss(bool v) { cfgManager().mergeWithUser({.closeOnFocusLoss = v}); }
+void GeneralSettingsModel::setCloseOnFocusLoss(bool v) {
+  cfgManager().mergeWithUser({.closeOnFocusLoss = v});
+}
 
 bool GeneralSettingsModel::considerPreedit() const { return cfg().considerPreedit; }
 void GeneralSettingsModel::setConsiderPreedit(bool v) { cfgManager().mergeWithUser({.considerPreedit = v}); }
 
 bool GeneralSettingsModel::popToRootOnClose() const { return cfg().popToRootOnClose; }
-void GeneralSettingsModel::setPopToRootOnClose(bool v) { cfgManager().mergeWithUser({.popToRootOnClose = v}); }
+void GeneralSettingsModel::setPopToRootOnClose(bool v) {
+  cfgManager().mergeWithUser({.popToRootOnClose = v});
+}
 
-bool GeneralSettingsModel::clientSideDecorations() const { return cfg().launcherWindow.clientSideDecorations.enabled; }
+bool GeneralSettingsModel::clientSideDecorations() const {
+  return cfg().launcherWindow.clientSideDecorations.enabled;
+}
 void GeneralSettingsModel::setClientSideDecorations(bool v) {
-  cfgManager().mergeWithUser({.launcherWindow = config::Partial<config::WindowConfig>{
-                                  .clientSideDecorations = config::Partial<config::WindowCSD>{.enabled = v}}});
+  cfgManager().mergeWithUser(
+      {.launcherWindow = config::Partial<config::WindowConfig>{
+           .clientSideDecorations = config::Partial<config::WindowCSD>{.enabled = v}}});
 }
 
 QString GeneralSettingsModel::windowOpacity() const { return QString::number(cfg().launcherWindow.opacity); }
 void GeneralSettingsModel::setWindowOpacity(const QString &v) {
   bool ok = false;
   float val = v.toFloat(&ok);
-  if (ok) cfgManager().mergeWithUser({.launcherWindow = config::Partial<config::WindowConfig>{.opacity = val}});
+  if (ok)
+    cfgManager().mergeWithUser({.launcherWindow = config::Partial<config::WindowConfig>{.opacity = val}});
 }
 
 QString GeneralSettingsModel::fontSize() const { return QString::number(cfg().font.normal.size); }
@@ -56,7 +64,8 @@ void GeneralSettingsModel::setFontSize(const QString &v) {
   if (ok) cfgManager().mergeWithUser({.font = config::Partial<config::FontConfig>{.normal{.size = val}}});
 }
 
-static QVariantMap makeDropdownItem(const QString &id, const QString &displayName, const QString &iconSource = {}) {
+static QVariantMap makeDropdownItem(const QString &id, const QString &displayName,
+                                    const QString &iconSource = {}) {
   QVariantMap m;
   m[QStringLiteral("id")] = id;
   m[QStringLiteral("displayName")] = displayName;
@@ -74,9 +83,8 @@ static QVariantList wrapSection(const QString &title, const QVariantList &items)
 QVariantList GeneralSettingsModel::themeItems() const {
   QVariantList items;
   for (const auto &theme : ThemeService::instance().themes()) {
-    auto iconUrl = theme->icon()
-                       ? ImageURL::local(QString::fromStdString(theme->icon()->string()))
-                       : ImageURL::builtin("vicinae");
+    auto iconUrl = theme->icon() ? ImageURL::local(QString::fromStdString(theme->icon()->string()))
+                                 : ImageURL::builtin("vicinae");
     items.append(makeDropdownItem(theme->id(), theme->name(), qml::imageSourceFor(iconUrl)));
   }
   return wrapSection(QStringLiteral("Themes"), items);
@@ -87,7 +95,7 @@ QVariant GeneralSettingsModel::currentTheme() const {
   auto *theme = ThemeService::instance().findTheme(id);
   if (!theme) return makeDropdownItem(id, id);
   auto iconUrl = theme->icon() ? ImageURL::local(QString::fromStdString(theme->icon()->string()))
-                                : ImageURL::builtin("vicinae");
+                               : ImageURL::builtin("vicinae");
   return makeDropdownItem(id, theme->name(), qml::imageSourceFor(iconUrl));
 }
 
@@ -155,7 +163,8 @@ void GeneralSettingsModel::selectTheme(const QString &id) {
 }
 
 void GeneralSettingsModel::selectFont(const QString &id) {
-  cfgManager().mergeWithUser({.font = config::Partial<config::FontConfig>{.normal = {.family = id.toStdString()}}});
+  cfgManager().mergeWithUser(
+      {.font = config::Partial<config::FontConfig>{.normal = {.family = id.toStdString()}}});
 }
 
 void GeneralSettingsModel::selectIconTheme(const QString &id) {

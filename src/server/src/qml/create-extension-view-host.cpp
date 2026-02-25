@@ -37,14 +37,12 @@ void CreateExtensionViewHost::initialize() {
   section[QStringLiteral("items")] = items;
   m_templateItems.append(section);
 
-  if (!items.isEmpty()) {
-    m_selectedTemplate = items.first().toMap();
-  }
+  if (!items.isEmpty()) { m_selectedTemplate = items.first().toMap(); }
 
   auto panel = std::make_unique<FormActionPanelState>();
   auto actionSection = panel->createSection();
-  auto submitAction =
-      new StaticAction(QStringLiteral("Create extension"), ImageURL::builtin("enter-key"), [this]() { submit(); });
+  auto submitAction = new StaticAction(QStringLiteral("Create extension"), ImageURL::builtin("enter-key"),
+                                       [this]() { submit(); });
   actionSection->addAction(submitAction);
   setActions(std::move(panel));
 }

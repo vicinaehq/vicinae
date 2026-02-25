@@ -37,7 +37,7 @@ void ExtDataDevice::finished(void *data, ext_data_control_device_v1 *device) {
 }
 
 void ExtDataDevice::primarySelection(void *data, ext_data_control_device_v1 *device,
-                                  ext_data_control_offer_v1 *id) {
+                                     ext_data_control_offer_v1 *id) {
   auto self = static_cast<ExtDataDevice *>(data);
 
   if (!self->m_offer) return;

@@ -11,14 +11,20 @@ static QString preferenceType(const Preference &p) {
   return std::visit(
       [](const auto &d) -> QString {
         using T = std::decay_t<decltype(d)>;
-        if constexpr (std::is_same_v<T, Preference::TextData>) return QStringLiteral("text");
-        else if constexpr (std::is_same_v<T, Preference::PasswordData>) return QStringLiteral("password");
-        else if constexpr (std::is_same_v<T, Preference::CheckboxData>) return QStringLiteral("checkbox");
-        else if constexpr (std::is_same_v<T, Preference::DropdownData>) return QStringLiteral("dropdown");
-        else if constexpr (std::is_same_v<T, Preference::FilePickerData>) return QStringLiteral("filepicker");
+        if constexpr (std::is_same_v<T, Preference::TextData>)
+          return QStringLiteral("text");
+        else if constexpr (std::is_same_v<T, Preference::PasswordData>)
+          return QStringLiteral("password");
+        else if constexpr (std::is_same_v<T, Preference::CheckboxData>)
+          return QStringLiteral("checkbox");
+        else if constexpr (std::is_same_v<T, Preference::DropdownData>)
+          return QStringLiteral("dropdown");
+        else if constexpr (std::is_same_v<T, Preference::FilePickerData>)
+          return QStringLiteral("filepicker");
         else if constexpr (std::is_same_v<T, Preference::DirectoryPickerData>)
           return QStringLiteral("directorypicker");
-        else return QStringLiteral("text");
+        else
+          return QStringLiteral("text");
       },
       p.data());
 }
@@ -51,8 +57,7 @@ static QString resolveLabel(const Preference &p) {
   return p.title();
 }
 
-MissingPreferenceFormModel::MissingPreferenceFormModel(QObject *parent)
-    : QAbstractListModel(parent) {}
+MissingPreferenceFormModel::MissingPreferenceFormModel(QObject *parent) : QAbstractListModel(parent) {}
 
 int MissingPreferenceFormModel::rowCount(const QModelIndex &) const {
   return static_cast<int>(m_fields.size());
@@ -62,17 +67,28 @@ QVariant MissingPreferenceFormModel::data(const QModelIndex &index, int role) co
   if (!index.isValid() || index.row() < 0 || index.row() >= static_cast<int>(m_fields.size())) return {};
   const auto &f = m_fields[index.row()];
   switch (role) {
-  case TypeRole: return f.type;
-  case FieldIdRole: return f.id;
-  case LabelRole: return f.label;
-  case DescriptionRole: return f.description;
-  case PlaceholderRole: return f.placeholder;
-  case ValueRole: return f.value;
-  case OptionsRole: return f.options;
-  case ReadOnlyRole: return false;
-  case MultipleRole: return f.multiple;
-  case DirectoriesOnlyRole: return f.directoriesOnly;
-  default: return {};
+  case TypeRole:
+    return f.type;
+  case FieldIdRole:
+    return f.id;
+  case LabelRole:
+    return f.label;
+  case DescriptionRole:
+    return f.description;
+  case PlaceholderRole:
+    return f.placeholder;
+  case ValueRole:
+    return f.value;
+  case OptionsRole:
+    return f.options;
+  case ReadOnlyRole:
+    return false;
+  case MultipleRole:
+    return f.multiple;
+  case DirectoriesOnlyRole:
+    return f.directoriesOnly;
+  default:
+    return {};
   }
 }
 
@@ -90,7 +106,7 @@ QHash<int, QByteArray> MissingPreferenceFormModel::roleNames() const {
 }
 
 void MissingPreferenceFormModel::load(const std::vector<Preference> &preferences,
-                                         const QJsonObject &existingValues) {
+                                      const QJsonObject &existingValues) {
   beginResetModel();
   m_fields.clear();
   m_values = QJsonObject{};
@@ -129,15 +145,14 @@ MissingPreferenceFormModel::ValidateResult MissingPreferenceFormModel::validate(
   for (int i = 0; i < static_cast<int>(m_fields.size()); ++i) {
     const auto &f = m_fields[i];
     auto jsonVal = m_values.value(f.id);
-    if (jsonVal.isNull() || jsonVal.isUndefined() || jsonVal.toString().isEmpty())
-      return {false, i};
+    if (jsonVal.isNull() || jsonVal.isUndefined() || jsonVal.toString().isEmpty()) return {false, i};
   }
   return {true, -1};
 }
 
 MissingPreferenceViewHost::MissingPreferenceViewHost(std::shared_ptr<ExtensionCommand> command,
-                                                           const std::vector<Preference> &preferences,
-                                                           const QJsonObject &preferenceValues)
+                                                     const std::vector<Preference> &preferences,
+                                                     const QJsonObject &preferenceValues)
     : m_command(std::move(command)), m_prefModel(new MissingPreferenceFormModel(this)) {
   m_commandIconSource = qml::imageSourceFor(m_command->iconUrl());
   m_prefModel->load(preferences, preferenceValues);
@@ -148,8 +163,7 @@ QUrl MissingPreferenceViewHost::qmlComponentUrl() const {
 }
 
 QVariantMap MissingPreferenceViewHost::qmlProperties() const {
-  return {{QStringLiteral("host"),
-           QVariant::fromValue(const_cast<MissingPreferenceViewHost *>(this))}};
+  return {{QStringLiteral("host"), QVariant::fromValue(const_cast<MissingPreferenceViewHost *>(this))}};
 }
 
 void MissingPreferenceViewHost::initialize() {
@@ -157,8 +171,8 @@ void MissingPreferenceViewHost::initialize() {
 
   auto panel = std::make_unique<FormActionPanelState>();
   auto section = panel->createSection();
-  auto submitAction = new StaticAction(QStringLiteral("Save preferences"),
-                                       ImageURL::builtin("enter-key"), [this]() { submit(); });
+  auto submitAction = new StaticAction(QStringLiteral("Save preferences"), ImageURL::builtin("enter-key"),
+                                       [this]() { submit(); });
   section->addAction(submitAction);
   setActions(std::move(panel));
 }
@@ -178,10 +192,6 @@ void MissingPreferenceViewHost::submit() {
   context()->navigation->launch(m_command);
 }
 
-QString MissingPreferenceViewHost::commandName() const {
-  return m_command->repositoryDisplayName();
-}
+QString MissingPreferenceViewHost::commandName() const { return m_command->repositoryDisplayName(); }
 
-QString MissingPreferenceViewHost::commandIconSource() const {
-  return m_commandIconSource;
-}
+QString MissingPreferenceViewHost::commandIconSource() const { return m_commandIconSource; }

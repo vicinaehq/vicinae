@@ -21,19 +21,14 @@ void InstalledExtensionsViewHost::initialize() {
   setSearchPlaceholderText("Search extensions...");
 
   auto registry = ServiceRegistry::instance()->extensionRegistry();
-  connect(registry, &ExtensionRegistry::extensionsChanged, this,
-          &InstalledExtensionsViewHost::reload);
+  connect(registry, &ExtensionRegistry::extensionsChanged, this, &InstalledExtensionsViewHost::reload);
 }
 
 void InstalledExtensionsViewHost::loadInitialData() { reload(); }
 
-void InstalledExtensionsViewHost::textChanged(const QString &text) {
-  m_model->setFilter(text);
-}
+void InstalledExtensionsViewHost::textChanged(const QString &text) { m_model->setFilter(text); }
 
-void InstalledExtensionsViewHost::onReactivated() {
-  m_model->refreshActionPanel();
-}
+void InstalledExtensionsViewHost::onReactivated() { m_model->refreshActionPanel(); }
 
 void InstalledExtensionsViewHost::beforePop() { m_model->beforePop(); }
 

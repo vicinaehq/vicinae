@@ -73,8 +73,7 @@ class MissingPreferenceViewHost : public FormViewBase {
 
 public:
   MissingPreferenceViewHost(std::shared_ptr<ExtensionCommand> command,
-                               const std::vector<Preference> &preferences,
-                               const QJsonObject &preferenceValues);
+                            const std::vector<Preference> &preferences, const QJsonObject &preferenceValues);
 
   QUrl qmlComponentUrl() const override;
   QVariantMap qmlProperties() const override;

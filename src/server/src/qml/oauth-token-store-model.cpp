@@ -6,9 +6,7 @@
 #include "services/toast/toast-service.hpp"
 #include "ui/image/url.hpp"
 
-QString OAuthTokenStoreModel::displayTitle(const OAuth::TokenSet &set) const {
-  return set.extensionId;
-}
+QString OAuthTokenStoreModel::displayTitle(const OAuth::TokenSet &set) const { return set.extensionId; }
 
 QString OAuthTokenStoreModel::displaySubtitle(const OAuth::TokenSet &set) const {
   return set.providerId.value_or("");
@@ -23,39 +21,36 @@ QVariantList OAuthTokenStoreModel::displayAccessory(const OAuth::TokenSet &set) 
   return {};
 }
 
-std::unique_ptr<ActionPanelState>
-OAuthTokenStoreModel::buildActionPanel(const OAuth::TokenSet &set) const {
+std::unique_ptr<ActionPanelState> OAuthTokenStoreModel::buildActionPanel(const OAuth::TokenSet &set) const {
   auto panel = std::make_unique<ActionPanelState>();
   panel->setTitle(set.extensionId);
 
   auto primary = panel->createSection();
 
-  auto removeToken = new StaticAction(
-      "Remove token set", ImageURL::builtin("trash"),
-      [id = set.extensionId, pid = set.providerId](ApplicationContext *ctx) {
-        auto oauth = ctx->services->oauthService();
-        auto toast = ctx->services->toastService();
+  auto removeToken =
+      new StaticAction("Remove token set", ImageURL::builtin("trash"),
+                       [id = set.extensionId, pid = set.providerId](ApplicationContext *ctx) {
+                         auto oauth = ctx->services->oauthService();
+                         auto toast = ctx->services->toastService();
 
-        ctx->navigation->confirmAlert(
-            "Are you sure?",
-            "You will need to go through the OAuth login flow "
-            "again the next time you want to use this service",
-            [oauth, toast, id, pid]() {
-              if (!oauth->store().removeTokenSet(id, pid)) {
-                toast->failure("Failed to remove token set");
-                return;
-              }
-              toast->success("Token set removed");
-            });
-      });
+                         ctx->navigation->confirmAlert("Are you sure?",
+                                                       "You will need to go through the OAuth login flow "
+                                                       "again the next time you want to use this service",
+                                                       [oauth, toast, id, pid]() {
+                                                         if (!oauth->store().removeTokenSet(id, pid)) {
+                                                           toast->failure("Failed to remove token set");
+                                                           return;
+                                                         }
+                                                         toast->success("Token set removed");
+                                                       });
+                       });
 
   removeToken->setStyle(AbstractAction::Style::Danger);
   primary->addAction(removeToken);
 
   auto utils = panel->createSection("Copy");
 
-  auto copyAccessToken =
-      new CopyToClipboardAction(Clipboard::Text(set.accessToken), "Copy Access Token");
+  auto copyAccessToken = new CopyToClipboardAction(Clipboard::Text(set.accessToken), "Copy Access Token");
   copyAccessToken->setShortcut(Keybind::CopyAction);
   utils->addAction(copyAccessToken);
 
@@ -66,14 +61,12 @@ OAuthTokenStoreModel::buildActionPanel(const OAuth::TokenSet &set) const {
   }
 
   if (set.idToken) {
-    auto copyIdToken =
-        new CopyToClipboardAction(Clipboard::Text(*set.idToken), "Copy ID Token");
+    auto copyIdToken = new CopyToClipboardAction(Clipboard::Text(*set.idToken), "Copy ID Token");
     utils->addAction(copyIdToken);
   }
 
   if (set.scope) {
-    auto copyScopes =
-        new CopyToClipboardAction(Clipboard::Text(*set.scope), "Copy Scopes");
+    auto copyScopes = new CopyToClipboardAction(Clipboard::Text(*set.scope), "Copy Scopes");
     utils->addAction(copyScopes);
   }
 
@@ -86,6 +79,4 @@ OAuthTokenStoreModel::buildActionPanel(const OAuth::TokenSet &set) const {
   return panel;
 }
 
-QString OAuthTokenStoreModel::sectionLabel() const {
-  return QStringLiteral("OAuth Token Sets ({count})");
-}
+QString OAuthTokenStoreModel::sectionLabel() const { return QStringLiteral("OAuth Token Sets ({count})"); }

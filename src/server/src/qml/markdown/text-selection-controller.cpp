@@ -11,31 +11,24 @@ static constexpr int AUTO_SCROLL_INTERVAL_MS = 16;
 static constexpr qreal AUTO_SCROLL_MARGIN = 60.0;
 static constexpr qreal AUTO_SCROLL_MAX_SPEED = 12.0;
 
-TextSelectionController::TextSelectionController(QObject *parent)
-    : QObject(parent) {
+TextSelectionController::TextSelectionController(QObject *parent) : QObject(parent) {
   m_autoScrollTimer.setInterval(AUTO_SCROLL_INTERVAL_MS);
-  connect(&m_autoScrollTimer, &QTimer::timeout, this,
-          &TextSelectionController::autoScrollTick);
+  connect(&m_autoScrollTimer, &QTimer::timeout, this, &TextSelectionController::autoScrollTick);
 }
 
 void TextSelectionController::setFlickable(QQuickItem *item) {
-  if (m_flickable == item)
-    return;
-  if (m_flickable)
-    m_flickable->removeEventFilter(this);
+  if (m_flickable == item) return;
+  if (m_flickable) m_flickable->removeEventFilter(this);
   m_flickable = item;
-  if (m_flickable)
-    m_flickable->installEventFilter(this);
+  if (m_flickable) m_flickable->installEventFilter(this);
 }
 
 bool TextSelectionController::eventFilter(QObject *obj, QEvent *event) {
-  if (obj != m_flickable)
-    return false;
+  if (obj != m_flickable) return false;
   switch (event->type()) {
   case QEvent::MouseButtonPress: {
     auto *me = static_cast<QMouseEvent *>(event);
-    if (me->button() != Qt::LeftButton)
-      return false;
+    if (me->button() != Qt::LeftButton) return false;
     handlePress(me->position().x(), me->position().y());
     return true;
   }
@@ -46,15 +39,13 @@ bool TextSelectionController::eventFilter(QObject *obj, QEvent *event) {
   }
   case QEvent::MouseButtonRelease: {
     auto *me = static_cast<QMouseEvent *>(event);
-    if (me->button() != Qt::LeftButton)
-      return false;
+    if (me->button() != Qt::LeftButton) return false;
     handleRelease(me->position().x(), me->position().y());
     return true;
   }
   case QEvent::MouseButtonDblClick: {
     auto *me = static_cast<QMouseEvent *>(event);
-    if (me->button() != Qt::LeftButton)
-      return false;
+    if (me->button() != Qt::LeftButton) return false;
     handleDoubleClick(me->position().x(), me->position().y());
     return true;
   }
@@ -63,14 +54,10 @@ bool TextSelectionController::eventFilter(QObject *obj, QEvent *event) {
   }
 }
 
-void TextSelectionController::registerSelectable(QQuickItem *item, int order,
-                                                    bool isTextEdit) {
-  if (!item)
-    return;
-  if (isTextEdit)
-    item->setAcceptedMouseButtons(Qt::NoButton);
-  auto it = std::ranges::lower_bound(m_entries, order,
-                                     {}, &SelectableEntry::order);
+void TextSelectionController::registerSelectable(QQuickItem *item, int order, bool isTextEdit) {
+  if (!item) return;
+  if (isTextEdit) item->setAcceptedMouseButtons(Qt::NoButton);
+  auto it = std::ranges::lower_bound(m_entries, order, {}, &SelectableEntry::order);
   m_entries.insert(it, {item, isTextEdit, order, 0.0, 0.0, 0.0, 0.0});
 }
 
@@ -78,16 +65,13 @@ void TextSelectionController::unregisterSelectable(QQuickItem *item) {
   std::erase_if(m_entries, [item](const auto &e) { return e.item == item; });
 }
 
-QPointF TextSelectionController::toContainerCoords(qreal viewportX,
-                                                      qreal viewportY) const {
-  if (m_container && m_flickable)
-    return m_container->mapFromItem(m_flickable, QPointF(viewportX, viewportY));
+QPointF TextSelectionController::toContainerCoords(qreal viewportX, qreal viewportY) const {
+  if (m_container && m_flickable) return m_container->mapFromItem(m_flickable, QPointF(viewportX, viewportY));
   return {viewportX, viewportY};
 }
 
 void TextSelectionController::refreshGeometry() {
-  if (!m_container)
-    return;
+  if (!m_container) return;
   for (auto &entry : m_entries) {
     auto mapped = entry.item->mapToItem(m_container, QPointF(0, 0));
     entry.cachedY = mapped.y();
@@ -96,16 +80,13 @@ void TextSelectionController::refreshGeometry() {
     entry.cachedWidth = entry.item->width();
   }
   std::ranges::sort(m_entries, [](const auto &a, const auto &b) {
-    if (a.cachedY != b.cachedY)
-      return a.cachedY < b.cachedY;
+    if (a.cachedY != b.cachedY) return a.cachedY < b.cachedY;
     return a.order < b.order;
   });
 }
 
-int TextSelectionController::entryAt(qreal containerX,
-                                        qreal containerY) const {
-  if (m_entries.empty())
-    return -1;
+int TextSelectionController::entryAt(qreal containerX, qreal containerY) const {
+  if (m_entries.empty()) return -1;
 
   int n = static_cast<int>(m_entries.size());
 
@@ -116,27 +97,21 @@ int TextSelectionController::entryAt(qreal containerX,
       break;
     }
   }
-  if (hit < 0)
-    hit = n - 1;
+  if (hit < 0) hit = n - 1;
 
   qreal hitY = m_entries[hit].cachedY;
   int bestIdx = hit;
-  qreal bestDist = std::abs(
-      containerX - (m_entries[hit].cachedX + m_entries[hit].cachedWidth * 0.5));
+  qreal bestDist = std::abs(containerX - (m_entries[hit].cachedX + m_entries[hit].cachedWidth * 0.5));
 
-  for (int i = hit - 1; i >= 0 && std::abs(m_entries[i].cachedY - hitY) < 1.0;
-       --i) {
-    qreal dist = std::abs(containerX - (m_entries[i].cachedX +
-                                        m_entries[i].cachedWidth * 0.5));
+  for (int i = hit - 1; i >= 0 && std::abs(m_entries[i].cachedY - hitY) < 1.0; --i) {
+    qreal dist = std::abs(containerX - (m_entries[i].cachedX + m_entries[i].cachedWidth * 0.5));
     if (dist < bestDist) {
       bestDist = dist;
       bestIdx = i;
     }
   }
-  for (int i = hit + 1;
-       i < n && std::abs(m_entries[i].cachedY - hitY) < 1.0; ++i) {
-    qreal dist = std::abs(containerX - (m_entries[i].cachedX +
-                                        m_entries[i].cachedWidth * 0.5));
+  for (int i = hit + 1; i < n && std::abs(m_entries[i].cachedY - hitY) < 1.0; ++i) {
+    qreal dist = std::abs(containerX - (m_entries[i].cachedX + m_entries[i].cachedWidth * 0.5));
     if (dist < bestDist) {
       bestDist = dist;
       bestIdx = i;
@@ -146,26 +121,18 @@ int TextSelectionController::entryAt(qreal containerX,
   return bestIdx;
 }
 
-int TextSelectionController::positionAt(QQuickItem *textEdit,
-                                           qreal containerX,
-                                           qreal containerY) const {
+int TextSelectionController::positionAt(QQuickItem *textEdit, qreal containerX, qreal containerY) const {
   int result = 0;
   auto localPos = textEdit->mapFromItem(m_container, QPointF(containerX, containerY));
-  QMetaObject::invokeMethod(textEdit, "positionAt",
-                            Q_RETURN_ARG(int, result),
-                            Q_ARG(double, localPos.x()),
+  QMetaObject::invokeMethod(textEdit, "positionAt", Q_RETURN_ARG(int, result), Q_ARG(double, localPos.x()),
                             Q_ARG(double, localPos.y()));
   return result;
 }
 
-QString TextSelectionController::linkAt(QQuickItem *textEdit,
-                                           qreal containerX,
-                                           qreal containerY) const {
+QString TextSelectionController::linkAt(QQuickItem *textEdit, qreal containerX, qreal containerY) const {
   QString result;
   auto localPos = textEdit->mapFromItem(m_container, QPointF(containerX, containerY));
-  QMetaObject::invokeMethod(textEdit, "linkAt",
-                            Q_RETURN_ARG(QString, result),
-                            Q_ARG(double, localPos.x()),
+  QMetaObject::invokeMethod(textEdit, "linkAt", Q_RETURN_ARG(QString, result), Q_ARG(double, localPos.x()),
                             Q_ARG(double, localPos.y()));
   return result;
 }
@@ -173,8 +140,7 @@ QString TextSelectionController::linkAt(QQuickItem *textEdit,
 void TextSelectionController::handlePress(qreal x, qreal y) {
   // Triple-click: press shortly after double-click at same spot → select all
   if (m_doubleClickTimer.isValid() && m_doubleClickTimer.elapsed() < 400 &&
-      std::hypot(x - m_doubleClickPos.x(), y - m_doubleClickPos.y()) <
-          DRAG_THRESHOLD) {
+      std::hypot(x - m_doubleClickPos.x(), y - m_doubleClickPos.y()) < DRAG_THRESHOLD) {
     m_doubleClickTimer.invalidate();
     refreshGeometry();
     auto cp = toContainerCoords(x, y);
@@ -199,8 +165,7 @@ void TextSelectionController::handlePress(qreal x, qreal y) {
 
   auto cp = toContainerCoords(x, y);
   int idx = entryAt(cp.x(), cp.y());
-  if (idx < 0)
-    return;
+  if (idx < 0) return;
 
   const auto &entry = m_entries[idx];
   int charPos = 0;
@@ -216,13 +181,11 @@ void TextSelectionController::handlePress(qreal x, qreal y) {
 }
 
 void TextSelectionController::handleMove(qreal x, qreal y) {
-  if (m_anchor.entryIndex < 0)
-    return;
+  if (m_anchor.entryIndex < 0) return;
 
   auto dist = std::hypot(x - m_pressPos.x(), y - m_pressPos.y());
   if (!m_dragging) {
-    if (dist < DRAG_THRESHOLD)
-      return;
+    if (dist < DRAG_THRESHOLD) return;
     m_dragging = true;
     m_pressLink.clear();
   }
@@ -232,15 +195,13 @@ void TextSelectionController::handleMove(qreal x, qreal y) {
 
   auto cp = toContainerCoords(x, y);
   int idx = entryAt(cp.x(), cp.y());
-  if (idx < 0)
-    return;
+  if (idx < 0) return;
 
   int charPos = 0;
   {
     const auto &entry = m_entries[idx];
     if (entry.isTextEdit) {
-      if (cp.y() >= entry.cachedY &&
-          cp.y() <= entry.cachedY + entry.cachedHeight)
+      if (cp.y() >= entry.cachedY && cp.y() <= entry.cachedY + entry.cachedHeight)
         charPos = positionAt(entry.item, cp.x(), cp.y());
       else if (cp.y() > entry.cachedY + entry.cachedHeight)
         charPos = entry.item->property("length").toInt();
@@ -256,21 +217,18 @@ void TextSelectionController::handleMove(qreal x, qreal y) {
     const auto &entry = m_entries[idx];
     int len = entry.item->property("length").toInt();
     int n = static_cast<int>(m_entries.size());
-    if (charPos >= len && cp.y() > entry.cachedY + entry.cachedHeight &&
-        idx + 1 < n) {
+    if (charPos >= len && cp.y() > entry.cachedY + entry.cachedHeight && idx + 1 < n) {
       idx = idx + 1;
       charPos = 0;
       const auto &ne = m_entries[idx];
-      if (ne.isTextEdit && cp.y() >= ne.cachedY &&
-          cp.y() <= ne.cachedY + ne.cachedHeight)
+      if (ne.isTextEdit && cp.y() >= ne.cachedY && cp.y() <= ne.cachedY + ne.cachedHeight)
         charPos = positionAt(ne.item, cp.x(), cp.y());
     } else if (charPos <= 0 && cp.y() < entry.cachedY && idx > 0) {
       idx = idx - 1;
       charPos = 0;
       const auto &pe = m_entries[idx];
       if (pe.isTextEdit) {
-        if (cp.y() >= pe.cachedY &&
-            cp.y() <= pe.cachedY + pe.cachedHeight)
+        if (cp.y() >= pe.cachedY && cp.y() <= pe.cachedY + pe.cachedHeight)
           charPos = positionAt(pe.item, cp.x(), cp.y());
         else
           charPos = pe.item->property("length").toInt();
@@ -279,8 +237,7 @@ void TextSelectionController::handleMove(qreal x, qreal y) {
   }
 
   m_current = {idx, charPos};
-  applySelection(m_anchor.entryIndex, m_anchor.charPos, m_current.entryIndex,
-                 m_current.charPos);
+  applySelection(m_anchor.entryIndex, m_anchor.charPos, m_current.entryIndex, m_current.charPos);
 
   if (m_flickable) {
     qreal flickH = m_flickable->height();
@@ -295,8 +252,7 @@ void TextSelectionController::handleRelease(qreal x, qreal y) {
   stopAutoScroll();
 
   if (!m_dragging && !m_pressLink.isEmpty() && m_mdModel) {
-    QMetaObject::invokeMethod(m_mdModel, "openLink",
-                              Q_ARG(QString, m_pressLink));
+    QMetaObject::invokeMethod(m_mdModel, "openLink", Q_ARG(QString, m_pressLink));
   }
 
   m_pressLink.clear();
@@ -308,12 +264,10 @@ void TextSelectionController::handleDoubleClick(qreal x, qreal y) {
 
   auto cp = toContainerCoords(x, y);
   int idx = entryAt(cp.x(), cp.y());
-  if (idx < 0)
-    return;
+  if (idx < 0) return;
 
   const auto &entry = m_entries[idx];
-  if (!entry.isTextEdit)
-    return;
+  if (!entry.isTextEdit) return;
 
   int pos = positionAt(entry.item, cp.x(), cp.y());
   entry.item->setProperty("cursorPosition", pos);
@@ -328,8 +282,7 @@ void TextSelectionController::handleDoubleClick(qreal x, qreal y) {
 }
 
 void TextSelectionController::selectAll() {
-  if (m_entries.empty())
-    return;
+  if (m_entries.empty()) return;
 
   for (auto &entry : m_entries) {
     if (entry.isTextEdit)
@@ -342,8 +295,7 @@ void TextSelectionController::selectAll() {
   int lastIdx = static_cast<int>(m_entries.size()) - 1;
   const auto &last = m_entries[lastIdx];
   int lastLen = 0;
-  if (last.isTextEdit)
-    lastLen = last.item->property("length").toInt();
+  if (last.isTextEdit) lastLen = last.item->property("length").toInt();
   m_current = {lastIdx, lastLen};
   setHasSelection(true);
 }
@@ -361,8 +313,7 @@ void TextSelectionController::clearSelection() {
 }
 
 void TextSelectionController::copy() {
-  if (!m_hasSelection)
-    return;
+  if (!m_hasSelection) return;
 
   int fromIdx = m_anchor.entryIndex;
   int fromChar = m_anchor.charPos;
@@ -375,13 +326,11 @@ void TextSelectionController::copy() {
   }
 
   QStringList parts;
-  for (int i = fromIdx; i <= toIdx && i < static_cast<int>(m_entries.size());
-       ++i) {
+  for (int i = fromIdx; i <= toIdx && i < static_cast<int>(m_entries.size()); ++i) {
     const auto &entry = m_entries[i];
     if (entry.isTextEdit) {
       auto text = entry.item->property("selectedText").toString();
-      if (!text.isEmpty())
-        parts.append(text);
+      if (!text.isEmpty()) parts.append(text);
     } else {
       bool selected = entry.item->property("selected").toBool();
       if (selected) {
@@ -395,14 +344,11 @@ void TextSelectionController::copy() {
   }
 
   auto text = parts.join(QStringLiteral("\n\n"));
-  if (!text.isEmpty())
-    QGuiApplication::clipboard()->setText(text);
+  if (!text.isEmpty()) QGuiApplication::clipboard()->setText(text);
 }
 
-void TextSelectionController::applySelection(int fromEntry, int fromChar,
-                                                int toEntry, int toChar) {
-  if (fromEntry < 0 || toEntry < 0)
-    return;
+void TextSelectionController::applySelection(int fromEntry, int fromChar, int toEntry, int toChar) {
+  if (fromEntry < 0 || toEntry < 0) return;
 
   if (fromEntry > toEntry || (fromEntry == toEntry && fromChar > toChar)) {
     std::swap(fromEntry, toEntry);
@@ -460,8 +406,7 @@ void TextSelectionController::applySelection(int fromEntry, int fromChar,
   setHasSelection(anySelected);
 }
 
-void TextSelectionController::selectTextEdit(QQuickItem *item, int start,
-                                                int end) {
+void TextSelectionController::selectTextEdit(QQuickItem *item, int start, int end) {
   QMetaObject::invokeMethod(item, "select", Q_ARG(int, start), Q_ARG(int, end));
 }
 
@@ -473,8 +418,7 @@ void TextSelectionController::deselectTextEdit(QQuickItem *item) {
   QMetaObject::invokeMethod(item, "deselect");
 }
 
-void TextSelectionController::setNonTextSelected(QQuickItem *item,
-                                                    bool selected) {
+void TextSelectionController::setNonTextSelected(QQuickItem *item, bool selected) {
   item->setProperty("selected", selected);
 }
 
@@ -486,17 +430,13 @@ void TextSelectionController::setHasSelection(bool has) {
 }
 
 void TextSelectionController::startAutoScroll() {
-  if (!m_autoScrollTimer.isActive())
-    m_autoScrollTimer.start();
+  if (!m_autoScrollTimer.isActive()) m_autoScrollTimer.start();
 }
 
-void TextSelectionController::stopAutoScroll() {
-  m_autoScrollTimer.stop();
-}
+void TextSelectionController::stopAutoScroll() { m_autoScrollTimer.stop(); }
 
 void TextSelectionController::autoScrollTick() {
-  if (!m_flickable || m_anchor.entryIndex < 0)
-    return;
+  if (!m_flickable || m_anchor.entryIndex < 0) return;
 
   qreal flickH = m_flickable->height();
   qreal contentY = m_flickable->property("contentY").toReal();
@@ -516,8 +456,7 @@ void TextSelectionController::autoScrollTick() {
   }
 
   qreal newContentY = std::clamp(contentY + delta, 0.0, maxY);
-  if (newContentY == contentY)
-    return;
+  if (newContentY == contentY) return;
 
   m_flickable->setProperty("contentY", newContentY);
   refreshGeometry();
@@ -529,8 +468,7 @@ void TextSelectionController::autoScrollTick() {
     {
       const auto &entry = m_entries[idx];
       if (entry.isTextEdit) {
-        if (cp.y() >= entry.cachedY &&
-            cp.y() <= entry.cachedY + entry.cachedHeight)
+        if (cp.y() >= entry.cachedY && cp.y() <= entry.cachedY + entry.cachedHeight)
           charPos = positionAt(entry.item, cp.x(), cp.y());
         else if (cp.y() > entry.cachedY + entry.cachedHeight)
           charPos = entry.item->property("length").toInt();
@@ -541,21 +479,18 @@ void TextSelectionController::autoScrollTick() {
       const auto &entry = m_entries[idx];
       int len = entry.item->property("length").toInt();
       int n = static_cast<int>(m_entries.size());
-      if (charPos >= len &&
-          cp.y() > entry.cachedY + entry.cachedHeight && idx + 1 < n) {
+      if (charPos >= len && cp.y() > entry.cachedY + entry.cachedHeight && idx + 1 < n) {
         idx = idx + 1;
         charPos = 0;
         const auto &ne = m_entries[idx];
-        if (ne.isTextEdit && cp.y() >= ne.cachedY &&
-            cp.y() <= ne.cachedY + ne.cachedHeight)
+        if (ne.isTextEdit && cp.y() >= ne.cachedY && cp.y() <= ne.cachedY + ne.cachedHeight)
           charPos = positionAt(ne.item, cp.x(), cp.y());
       } else if (charPos <= 0 && cp.y() < entry.cachedY && idx > 0) {
         idx = idx - 1;
         charPos = 0;
         const auto &pe = m_entries[idx];
         if (pe.isTextEdit) {
-          if (cp.y() >= pe.cachedY &&
-              cp.y() <= pe.cachedY + pe.cachedHeight)
+          if (cp.y() >= pe.cachedY && cp.y() <= pe.cachedY + pe.cachedHeight)
             charPos = positionAt(pe.item, cp.x(), cp.y());
           else
             charPos = pe.item->property("length").toInt();
@@ -564,7 +499,6 @@ void TextSelectionController::autoScrollTick() {
     }
 
     m_current = {idx, charPos};
-    applySelection(m_anchor.entryIndex, m_anchor.charPos, m_current.entryIndex,
-                   m_current.charPos);
+    applySelection(m_anchor.entryIndex, m_anchor.charPos, m_current.entryIndex, m_current.charPos);
   }
 }

@@ -45,8 +45,8 @@ void DbWriter::updateScanStatus(int scanId, ScanStatus status) {
   submit([scanId, status](FileIndexerDatabase &db) { db.updateScanStatus(scanId, status); });
 }
 
-std::expected<FileIndexerDatabase::ScanRecord, QString> DbWriter::createScan(const std::filesystem::path &path,
-                                                                            ScanType type) {
+std::expected<FileIndexerDatabase::ScanRecord, QString>
+DbWriter::createScan(const std::filesystem::path &path, ScanType type) {
   // TODO: Fragile lifetime issues
   // TODO: Proritize record creation over normal writes
 
