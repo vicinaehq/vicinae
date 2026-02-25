@@ -377,6 +377,10 @@ void ExtensionViewHost::updateDropdown(const DropdownModel *dropdown) {
   if (hadDropdown != !m_dropdownItems.isEmpty()) {
     emit searchAccessoryUrlChanged();
   }
+
+  if (!hadDropdown && !resolvedValue.isEmpty() && m_dropdownOnChange) {
+    notifyExtension(*m_dropdownOnChange, {resolvedValue});
+  }
 }
 
 void ExtensionViewHost::setDropdownValue(const QString &value) {
