@@ -354,8 +354,7 @@ void LauncherWindow::handleReturn() {
 bool LauncherWindow::forwardKey(int key, int modifiers) {
   auto mods = static_cast<Qt::KeyboardModifiers>(modifiers);
 
-  if (mods == Qt::NoModifier)
-    return false;
+  if (mods == Qt::NoModifier) return false;
 
   switch (key) {
   case Qt::Key_Shift:
@@ -419,8 +418,7 @@ void LauncherWindow::popToRoot() {
 bool LauncherWindow::tryAliasFastTrack() { return m_searchModel->tryAliasFastTrack(); }
 
 int LauncherWindow::matchNavigationKey(int key, int modifiers) {
-  return KeyBindingService::matchNavigation(key, modifiers,
-                                            m_ctx.services->config()->value().keybinding);
+  return KeyBindingService::matchNavigation(key, modifiers, m_ctx.services->config()->value().keybinding);
 }
 
 void LauncherWindow::setCompleterValue(int index, const QString &value) {
@@ -477,7 +475,9 @@ void LauncherWindow::applyWindowConfig() {
     if (auto *lshell = Shell::Window::get(m_window)) {
       lshell->setLayer(lc.layer == "overlay" ? Shell::Window::LayerOverlay : Shell::Window::LayerTop);
       lshell->setScope(Omnicast::LAYER_SCOPE);
-      lshell->setWantsToBeOnActiveScreen(true);
+      // TODO: migrate to this when newer version is widely available
+      // lshell->setWantsToBeOnActiveScreen(true);
+      lshell->setScreenConfiguration(Shell::Window::ScreenConfiguration::ScreenFromCompositor);
       lshell->setAnchors(Shell::Window::AnchorNone);
       lshell->setKeyboardInteractivity(lc.keyboardInteractivity == "exclusive"
                                            ? Shell::Window::KeyboardInteractivityExclusive
