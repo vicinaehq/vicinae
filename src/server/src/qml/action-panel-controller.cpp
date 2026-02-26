@@ -34,8 +34,8 @@ void ActionPanelController::setStateFrom(const ActionPanelState &state) {
 
   m_primary = state.primaryAction();
 
-  bool newHasActions = state.actionCount() > 0;
-  bool newHasMultiple = state.actionCount() > 1;
+  bool const newHasActions = state.actionCount() > 0;
+  bool const newHasMultiple = state.actionCount() > 1;
 
   if (newHasActions != m_hasActions) {
     m_hasActions = newHasActions;

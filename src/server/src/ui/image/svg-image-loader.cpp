@@ -4,8 +4,6 @@
 #include "svg-image-loader.hpp"
 
 void SvgImageLoader::render(QPixmap &pixmap, const QRect &bounds, const std::optional<ColorLike> &fill) {
-  auto svgSize = m_renderer.defaultSize();
-  // QRect targetRect = QRect(QPoint(0, 0), svgSize.scaled(bounds.size(), Qt::KeepAspectRatio));
   QPixmap filledSvg(bounds.size());
 
   filledSvg.fill(Qt::transparent);

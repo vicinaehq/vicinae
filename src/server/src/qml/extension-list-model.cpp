@@ -1,4 +1,6 @@
 #include "extension-list-model.hpp"
+
+#include <utility>
 #include "lib/fuzzy/fuzzy-searchable.hpp"
 #include "navigation-controller.hpp"
 #include "view-utils.hpp"
@@ -17,7 +19,7 @@ template <> struct fuzzy::FuzzySearchable<ListItemViewModel> {
     for (const auto &f : fields) {
       int s = 0;
       if (fts::fuzzy_match(query, f.text, s)) {
-        int weighted = static_cast<int>(s * f.weight);
+        int const weighted = static_cast<int>(s * f.weight);
         if (weighted > best) best = weighted;
       }
     }
@@ -151,9 +153,9 @@ QString ExtensionListModel::searchPlaceholder() const {
 
 const ListItemViewModel *ExtensionListModel::itemAt(int section, int item) const {
   const auto &sections = activeSections();
-  if (section < 0 || section >= static_cast<int>(sections.size())) return nullptr;
+  if (section < 0 || std::cmp_greater_equal(section, sections.size())) return nullptr;
   const auto &sec = sections[section];
-  if (item < 0 || item >= static_cast<int>(sec.items.size())) return nullptr;
+  if (item < 0 || std::cmp_greater_equal(item, sec.items.size())) return nullptr;
   return &sec.items[item];
 }
 

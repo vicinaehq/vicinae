@@ -2,10 +2,11 @@
 #include "utils.hpp"
 #include <qlogging.h>
 
-namespace fs = std::filesystem;
+#include <utility>
+
 
 bool UnzipHandle::positionToIndex(int idx) {
-  if (info.number_entry <= idx) {
+  if (std::cmp_less_equal(info.number_entry , idx)) {
     qCritical() << "Invalid idx" << idx;
     return false;
   }
@@ -42,10 +43,10 @@ std::string ZipedFile::readAll() {
 }
 
 void Unzipper::extract(const std::filesystem::path &target, const Unzipper::ExtractOptions &opts) {
-  int sc = opts.stripComponents.value_or(0);
+  int const sc = opts.stripComponents.value_or(0);
 
   for (auto &file : listFiles()) {
-    std::filesystem::path path = target / stripPathComponents(file.path(), sc);
+    std::filesystem::path const path = target / stripPathComponents(file.path(), sc);
     std::filesystem::create_directories(path.parent_path());
     std::ofstream ofs(path);
     auto data = file.readAll();
@@ -62,7 +63,7 @@ std::vector<ZipedFile> Unzipper::listFiles() {
   files.reserve(m_handle.info.number_entry);
   unzGoToFirstFile(m_handle.file);
 
-  for (int i = 0; i != m_handle.info.number_entry; ++i) {
+  for (int i = 0; std::cmp_not_equal(i , m_handle.info.number_entry); ++i) {
     unz_file_info fileInfo;
     char filename[256];
 
@@ -71,7 +72,7 @@ std::vector<ZipedFile> Unzipper::listFiles() {
       continue;
     }
 
-    files.emplace_back(ZipedFile(m_handle, filename, i));
+    files.emplace_back(m_handle, filename, i);
     unzGoToNextFile(m_handle.file);
   }
 

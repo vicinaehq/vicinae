@@ -4,12 +4,13 @@
 #include <QDebug>
 #include <memory>
 #include <unordered_set>
+#include <utility>
 
 namespace fs = std::filesystem;
 
 void IncrementalScanner::processDirectory(const std::filesystem::path &root) {
   auto indexedFiles = m_read_db->listIndexedDirectoryFiles(root);
-  std::unordered_set<fs::path> existingFiles(indexedFiles.begin(), indexedFiles.end());
+  std::unordered_set<fs::path> const existingFiles(indexedFiles.begin(), indexedFiles.end());
   std::unordered_set<fs::path> currentFiles;
   std::vector<fs::path> deletedFiles;
   std::error_code ec;
@@ -25,7 +26,7 @@ void IncrementalScanner::processDirectory(const std::filesystem::path &root) {
   }
 
   for (const auto &path : indexedFiles) {
-    if (currentFiles.find(path) == currentFiles.end()) { deletedFiles.emplace_back(path); }
+    if (!currentFiles.contains(path)) { deletedFiles.emplace_back(path); }
   }
 
   m_writer->deleteIndexedFiles(deletedFiles);
@@ -59,7 +60,7 @@ IncrementalScanner::getScannableDirectories(const fs::path &path, std::optional<
   walker.setExcludedPaths(excludedPaths);
   walker.walk(path, [&](const fs::directory_entry &entry) {
     if (!entry.is_directory(ec)) return;
-    bool shouldProcess = shouldProcessEntry(entry, lastSuccessfulScan->createdAt);
+    bool const shouldProcess = shouldProcessEntry(entry, lastSuccessfulScan->createdAt);
     if (shouldProcess) { scannableDirs.emplace_back(entry.path()); }
   });
 
@@ -69,7 +70,6 @@ IncrementalScanner::getScannableDirectories(const fs::path &path, std::optional<
 bool IncrementalScanner::shouldProcessEntry(const fs::directory_entry &entry,
                                             const QDateTime &cutOffDateTime) const {
   std::error_code ec;
-  bool shouldProcess = false;
 
   if (auto lastModified = fs::last_write_time(entry, ec); !ec) {
     using namespace std::chrono;
@@ -93,7 +93,7 @@ void IncrementalScanner::scan(const Scan &scan) {
 
 IncrementalScanner::IncrementalScanner(std::shared_ptr<DbWriter> writer, const Scan &sc,
                                        FinishCallback callback)
-    : AbstractScanner(writer, sc, callback) {
+    : AbstractScanner(std::move(writer), sc, std::move(callback)) {
   m_scanThread = std::thread([this, sc]() {
     m_read_db = std::make_unique<FileIndexerDatabase>();
     start(sc);

@@ -13,7 +13,7 @@ QUrl SearchFilesViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/SearchFilesView.qml"));
 }
 
-QVariantMap SearchFilesViewHost::qmlProperties() const {
+QVariantMap SearchFilesViewHost::qmlProperties() {
   return {{QStringLiteral("host"), QVariant::fromValue(this)}};
 }
 
@@ -72,7 +72,7 @@ void SearchFilesViewHost::renderRecentFiles() {
 
 void SearchFilesViewHost::handleDebounce() {
   auto fileService = context()->services->fileService();
-  QString query = searchText();
+  QString const query = searchText();
 
   if (m_pendingResults.isRunning()) m_pendingResults.cancel();
 
@@ -102,7 +102,7 @@ void SearchFilesViewHost::loadDetail(const fs::path &path) {
   m_detailName = QString::fromStdString(getLastPathComponent(path));
   m_detailPath = QString::fromStdString(compressPath(path).string());
 
-  QFileInfo info(QString::fromStdString(path.string()));
+  QFileInfo const info(QString::fromStdString(path.string()));
   m_detailLastModified = info.lastModified().toString();
 
   auto preview = qml::resolveFilePreview(path, m_mimeDb);

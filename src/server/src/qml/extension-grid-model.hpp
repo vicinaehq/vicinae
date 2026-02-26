@@ -27,7 +27,7 @@ public:
   Q_INVOKABLE QString cellTitle(int section, int item) const;
   Q_INVOKABLE QString cellIcon(int section, int item) const;
   Q_INVOKABLE QString cellSubtitle(int section, int item) const;
-  Q_INVOKABLE QString cellTooltip(int section, int item) const;
+  Q_INVOKABLE QString cellTooltip(int section, int item) const override;
   Q_INVOKABLE QString cellColor(int section, int item) const;
 
   QString emptyTitle() const;

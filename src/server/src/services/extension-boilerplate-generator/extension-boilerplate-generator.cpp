@@ -37,7 +37,7 @@ const std::vector<CommandBoilerplate> &ExtensionBoilerplateGenerator::commandBoi
 std::expected<fs::path, QString>
 ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const ExtensionBoilerplateConfig &config) {
   std::error_code ec;
-  QString extName = slugify(config.title);
+  QString const extName = slugify(config.title);
 
   auto userCopy = [](const QString &src, const QString &dst) {
     QFile::copy(src, dst);
@@ -56,8 +56,8 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
     return std::unexpected(QString("%1 already exists. Won't override.").arg(extDir.c_str()));
   }
 
-  fs::path srcDir = extDir / "src";
-  fs::path assetsDir = extDir / "assets";
+  fs::path const srcDir = extDir / "src";
+  fs::path const assetsDir = extDir / "assets";
   fs::create_directories(srcDir);
   fs::create_directories(assetsDir);
 
@@ -72,7 +72,7 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
 
   for (const auto &cmd : config.commands) {
 
-    QString name = slugify(cmd.title);
+    QString const name = slugify(cmd.title);
 
     auto pred = [&](auto &&tmpl) { return tmpl.resource == cmd.templateId; };
     auto it = std::ranges::find_if(CMD_TEMPLATE_LIST, pred);
@@ -81,23 +81,23 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
       return std::unexpected(QString("Unknown template with id %1").arg(cmd.templateId));
     }
 
-    QString mode = it->mode == CommandModeView ? "view" : "no-view";
-    QString cmdString = QString(COMMAND_JSON_TEMPLATE)
+    QString const mode = it->mode == CommandModeView ? "view" : "no-view";
+    QString const cmdString = QString(COMMAND_JSON_TEMPLATE)
                             .replace(PLACEHOLDER("NAME"), name.simplified())
                             .replace(PLACEHOLDER("TITLE"), cmd.title.simplified())
                             .replace(PLACEHOLDER("SUBTITLE"), cmd.subtitle.simplified())
                             .replace(PLACEHOLDER("DESCRIPTION"), cmd.description.simplified())
                             .replace(PLACEHOLDER("MODE"), mode);
 
-    QString ext = it->mode == CommandModeView ? "tsx" : "ts";
-    QString filename = QString("%1.%2").arg(name).arg(ext);
+    QString const ext = it->mode == CommandModeView ? "tsx" : "ts";
+    QString const filename = QString("%1.%2").arg(name).arg(ext);
 
     userCopy(it->resource, QString::fromStdString(srcDir / filename.toStdString()));
     cmdStrings << cmdString;
   }
 
   QString version = VICINAE_GIT_TAG;
-  bool isValidVersion = version.startsWith('v') && version.sliced(1).split('.').size() == 3;
+  bool const isValidVersion = version.startsWith('v') && version.sliced(1).split('.').size() == 3;
 
   if (isValidVersion) {
     version[0] = '^';
@@ -133,4 +133,4 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
   return extDir;
 }
 
-ExtensionBoilerplateGenerator::ExtensionBoilerplateGenerator() {}
+ExtensionBoilerplateGenerator::ExtensionBoilerplateGenerator() = default;

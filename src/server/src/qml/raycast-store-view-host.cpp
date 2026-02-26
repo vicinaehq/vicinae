@@ -20,8 +20,8 @@ QUrl RaycastStoreViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/StoreListingView.qml"));
 }
 
-QVariantMap RaycastStoreViewHost::qmlProperties() const {
-  return {{QStringLiteral("host"), QVariant::fromValue(const_cast<RaycastStoreViewHost *>(this))}};
+QVariantMap RaycastStoreViewHost::qmlProperties() {
+  return {{QStringLiteral("host"), QVariant::fromValue(this)}};
 }
 
 void RaycastStoreViewHost::initialize() {

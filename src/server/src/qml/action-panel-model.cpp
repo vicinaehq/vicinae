@@ -2,6 +2,7 @@
 #include "lib/fuzzy/fuzzy-searchable.hpp"
 #include "theme.hpp"
 #include <QKeyEvent>
+#include <utility>
 
 template <> struct fuzzy::FuzzySearchable<std::shared_ptr<AbstractAction>> {
   static int score(const std::shared_ptr<AbstractAction> &action, std::string_view query) {
@@ -70,7 +71,7 @@ QVariant ActionPanelModel::data(const QModelIndex &index, int role) const {
     case ItemType:
       return QStringLiteral("section");
     case Title:
-      return (item.sectionIdx >= 0 && item.sectionIdx < static_cast<int>(m_sections.size()))
+      return (item.sectionIdx >= 0 && std::cmp_less(item.sectionIdx, m_sections.size()))
                  ? m_sections[item.sectionIdx].name
                  : QString();
     case IconSource:
@@ -97,9 +98,9 @@ QVariant ActionPanelModel::data(const QModelIndex &index, int role) const {
     }
   }
 
-  if (item.sectionIdx < 0 || item.sectionIdx >= static_cast<int>(m_sections.size())) return {};
+  if (item.sectionIdx < 0 || std::cmp_greater_equal(item.sectionIdx, m_sections.size())) return {};
   const auto &section = m_sections[item.sectionIdx];
-  if (item.actionIdx < 0 || item.actionIdx >= static_cast<int>(section.actions.size())) return {};
+  if (item.actionIdx < 0 || std::cmp_greater_equal(item.actionIdx, section.actions.size())) return {};
   const auto &action = section.actions[item.actionIdx];
 
   switch (role) {
@@ -135,7 +136,7 @@ QHash<int, QByteArray> ActionPanelModel::roleNames() const {
 }
 
 void ActionPanelModel::activate(int index) {
-  if (index < 0 || index >= static_cast<int>(m_flat.size())) return;
+  if (index < 0 || std::cmp_greater_equal(index, m_flat.size())) return;
   const auto &item = m_flat[index];
   if (item.kind != FlatItem::ActionItem) return;
 
@@ -174,7 +175,7 @@ void ActionPanelModel::setFilter(const QString &text) {
 
 int ActionPanelModel::nextSelectableIndex(int from, int direction) const {
   int idx = from + direction;
-  int count = static_cast<int>(m_flat.size());
+  int const count = static_cast<int>(m_flat.size());
 
   while (idx >= 0 && idx < count) {
     if (m_flat[idx].kind == FlatItem::ActionItem) return idx;
@@ -191,7 +192,7 @@ void ActionPanelModel::rebuildFlatList() {
   bool needsDivider = false;
   std::vector<Scored<int>> scored;
 
-  for (int s = 0; s < static_cast<int>(m_sections.size()); ++s) {
+  for (int s = 0; std::cmp_less(s, m_sections.size()); ++s) {
     const auto &section = m_sections[s];
     fuzzy::fuzzyFilter<std::shared_ptr<AbstractAction>>(section.actions, m_filterQuery, scored);
 
@@ -211,9 +212,9 @@ void ActionPanelModel::rebuildFlatList() {
 
 bool ActionPanelModel::activateByShortcut(int key, int modifiers) {
   auto mods = static_cast<Qt::KeyboardModifiers>(modifiers);
-  QKeyEvent event(QEvent::KeyPress, key, mods);
+  QKeyEvent const event(QEvent::KeyPress, key, mods);
 
-  for (int i = 0; i < static_cast<int>(m_flat.size()); ++i) {
+  for (int i = 0; std::cmp_less(i, m_flat.size()); ++i) {
     const auto &item = m_flat[i];
     if (item.kind != FlatItem::ActionItem) continue;
     auto &action = m_sections[item.sectionIdx].actions[item.actionIdx];

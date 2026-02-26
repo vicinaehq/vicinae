@@ -37,7 +37,7 @@ bool XdpFileChooser::openFile() {
     qWarning() << "XdpFileChooser: openFile called during file choosing";
     return false;
   }
-  QString windowHandle = "";
+  QString const windowHandle = "";
 
   if (!m_interface->isValid()) {
     qWarning() << "FileChooser portal interface is not valid";
@@ -68,17 +68,17 @@ bool XdpFileChooser::openFile() {
 
   if (!filter.items.empty()) { payload["filters"] = QVariant::fromValue(QList<Filter>{filter}); }
 
-  QDBusReply<QDBusObjectPath> message = m_interface->call("OpenFile", windowHandle, "Open File", payload);
+  QDBusReply<QDBusObjectPath> const message = m_interface->call("OpenFile", windowHandle, "Open File", payload);
 
   if (message.error().isValid()) {
     qCritical() << "Failed to OpenFile" << message.error();
     return false;
   }
 
-  QString requestPath = message.value().path();
+  QString const requestPath = message.value().path();
 
   // clang-format off
-    bool connected =
+    bool const connected =
         m_bus.connect("", requestPath, "org.freedesktop.portal.Request",
                       "Response", this, SLOT(handleResponse(uint,QVariantMap)));
   // clang-format on
@@ -102,10 +102,10 @@ void XdpFileChooser::handleResponse(uint response, const QVariantMap &results) {
   }
 
   if (results.contains("uris")) {
-    QStringList uris = results["uris"].toStringList();
+    QStringList const uris = results["uris"].toStringList();
     std::vector<std::filesystem::path> filePaths;
     for (const QString &uri : uris) {
-      QUrl url(uri);
+      QUrl const url(uri);
       if (url.isLocalFile()) { filePaths.emplace_back(url.toLocalFile().toStdString()); }
     }
     if (!filePaths.empty()) { emit filesChosen(filePaths); }
@@ -133,6 +133,7 @@ QDBusArgument &operator<<(QDBusArgument &argument, const XdpFileChooser::Filter 
   return argument;
 }
 
+// NOLINTBEGIN(bugprone-return-const-ref-from-parameter)
 const QDBusArgument &operator>>(const QDBusArgument &argument, XdpFileChooser::FilterItem &myStruct) {
   argument.beginStructure();
   argument >> myStruct.type >> myStruct.value;
@@ -220,3 +221,4 @@ const QDBusArgument &operator>>(const QDBusArgument &argument, XdpFileChooser::F
   return argument;
   return argument;
 }
+// NOLINTEND(bugprone-return-const-ref-from-parameter)

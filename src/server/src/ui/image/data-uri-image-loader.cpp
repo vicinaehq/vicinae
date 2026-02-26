@@ -2,7 +2,7 @@
 #include "data-uri/data-uri.hpp"
 
 DataUriImageLoader::DataUriImageLoader(const QString &url) {
-  DataUri uri(url);
+  DataUri const uri(url);
 
   if (!m_tmp.open()) {
     qCritical() << "Failed to open temp file for data URI image";

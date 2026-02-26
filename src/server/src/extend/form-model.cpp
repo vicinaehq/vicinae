@@ -1,6 +1,8 @@
 #include "extend/form-model.hpp"
 #include <qjsonobject.h>
 
+#include <algorithm>
+
 const static std::vector<QString> fieldTypes = {"dropdown-field",   "password-field",    "text-field",
                                                 "checkbox-field",   "date-picker-field", "text-area-field",
                                                 "file-picker-field"};
@@ -28,14 +30,14 @@ FormModel FormModel::fromJson(const QJsonObject &json) {
     if (type == "action-panel") {
       model.actions = ActionPannelParser().parse(obj);
     } else if (type == "separator") {
-      model.items.push_back(Separator{});
+      model.items.emplace_back(Separator{});
     } else if (type == "form-description") {
       Description desc;
 
       desc.text = props.value("text").toString();
       if (props.contains("title")) desc.title = props.value("title").toString();
 
-      model.items.push_back(desc);
+      model.items.emplace_back(desc);
 
     } else if (type == "link-accessory") {
       FormModel::LinkAccessoryModel link;
@@ -43,7 +45,7 @@ FormModel FormModel::fromJson(const QJsonObject &json) {
       link.target = props.value("target").toString();
       model.searchBarAccessory = link;
 
-    } else if (auto it = std::find(fieldTypes.begin(), fieldTypes.end(), type); it != fieldTypes.end()) {
+    } else if (auto it = std::ranges::find(fieldTypes, type); it != fieldTypes.end()) {
       FieldBase base;
 
       if (!props.contains("id")) {

@@ -3,7 +3,7 @@
 #include "ui/omni-painter/omni-painter.hpp"
 #include <qjsonobject.h>
 
-ImageModelParser::ImageModelParser() {}
+ImageModelParser::ImageModelParser() = default;
 
 ImageLikeModel ImageModelParser::parse(const QJsonValue &imageLike) {
   if (imageLike.isString()) { return ExtensionImageModel{.source = imageLike.toString()}; }

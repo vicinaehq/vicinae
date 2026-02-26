@@ -37,15 +37,15 @@ static QString buildParams(const ImageURL &url, bool builtinFgDefault = false) {
   if (fg.isValid()) parts << QStringLiteral("fg=") + fg.name(QColor::HexRgb);
 
   if (auto bgTint = url.backgroundTint()) {
-    QColor bg = ThemeService::instance().theme().resolve(*bgTint);
+    QColor const bg = ThemeService::instance().theme().resolve(*bgTint);
     parts << QStringLiteral("bg=") + bg.name(QColor::HexRgb);
   }
 
   if (url.mask() == OmniPainter::CircleMask) parts << QStringLiteral("mask=circle");
 
   if (auto fb = url.fallback()) {
-    ImageURL fbUrl(*fb);
-    QString fbId = buildProviderIdForFallback(fbUrl);
+    ImageURL const fbUrl(*fb);
+    QString const fbId = buildProviderIdForFallback(fbUrl);
     if (!fbId.isEmpty())
       parts << QStringLiteral("fallback=") + QString::fromUtf8(QUrl::toPercentEncoding(fbId));
   }
@@ -55,7 +55,7 @@ static QString buildParams(const ImageURL &url, bool builtinFgDefault = false) {
 }
 
 static QString buildProviderIdForFallback(const ImageURL &url) {
-  QString source = ImageUrl(url).toSource();
+  QString const source = ImageUrl(url).toSource();
   static const QString prefix = QStringLiteral("image://vicinae/");
   if (source.startsWith(prefix)) return source.mid(prefix.length());
   return {};
@@ -64,7 +64,7 @@ static QString buildProviderIdForFallback(const ImageURL &url) {
 QString ImageUrl::toSource() const {
   if (!isValid()) return {};
 
-  QString prefix = QStringLiteral("image://vicinae/");
+  QString const prefix = QStringLiteral("image://vicinae/");
   auto type = m_url.type();
   const QString &name = m_url.name();
 

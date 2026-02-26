@@ -79,7 +79,7 @@ bool HyprlandWindowManager::closeWindow(const AbstractWindow &window) const {
 }
 
 bool HyprlandWindowManager::isActivatable() const {
-  bool isWayland = QGuiApplication::platformName() == "wayland";
+  bool const isWayland = QGuiApplication::platformName() == "wayland";
 
   return QProcessEnvironment::systemEnvironment().contains("HYPRLAND_INSTANCE_SIGNATURE");
 }

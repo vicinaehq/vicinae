@@ -13,7 +13,7 @@ struct ProtocolState {
 
 static void registryGlobal(void *data, wl_registry *registry, uint32_t name, const char *interface,
                            uint32_t version) {
-  auto state = static_cast<ProtocolState *>(data);
+  auto state = static_cast<ProtocolState *>(data); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
 
   if (strcmp(interface, ext_data_control_manager_v1_interface.name) == 0) {
     state->hasExtDataControl = true;
@@ -61,7 +61,7 @@ static int detectProtocol() {
 }
 
 int main(int argc, char **argv) {
-  int protocol = detectProtocol();
+  const int protocol = detectProtocol();
 
   if (protocol == -1) {
     std::cerr

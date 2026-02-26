@@ -23,12 +23,10 @@ public:
     return {confirm};
   }
 
-  void execute(CommandController *controller) const override final {
+  void execute(CommandController *controller) const final {
     auto ctx = controller->context();
-    auto pm = controller->context()->services->powerManager();
-    auto toast = controller->context()->services->toastService();
     auto &nav = controller->context()->navigation;
-    bool shouldConfirm = controller->preferenceValues().value("confirm").toBool();
+    bool const shouldConfirm = controller->preferenceValues().value("confirm").toBool();
 
     if (shouldConfirm) {
       nav->confirmAlert("Are you sure", "High-impact operation, please confirm", [this, ctx, &nav]() {
@@ -82,8 +80,8 @@ class LockCommand : public BuiltinCallbackCommand {
       process.start(program);
       if (!process.waitForFinished()) { toast->failure("Failed to lock using custom program " + program); }
     } else {
-      if (!pm->provider()->canLock()) { return toast->failure("System can't lock"); }
-      if (!pm->provider()->lock()) { return toast->failure("Failed to lock"); }
+      if (!pm->provider()->canLock()) { toast->failure("System can't lock"); return; }
+      if (!pm->provider()->lock()) { toast->failure("Failed to lock"); return; }
     }
 
     ctx->navigation->closeWindow({.clearRootSearch = true});
@@ -107,8 +105,8 @@ class HibernateCommand : public PowerManagementCommand {
     auto pm = ctx->services->powerManager();
     auto toast = ctx->services->toastService();
 
-    if (!pm->provider()->canHibernate()) { return toast->failure("System can't hibernate"); }
-    if (!pm->provider()->hibernate()) { return toast->failure("Failed to hibernate"); }
+    if (!pm->provider()->canHibernate()) { toast->failure("System can't hibernate"); return; }
+    if (!pm->provider()->hibernate()) { toast->failure("Failed to hibernate"); return; }
   }
 };
 
@@ -126,8 +124,8 @@ class RebootCommand : public PowerManagementCommand {
     auto pm = ctx->services->powerManager();
     auto toast = ctx->services->toastService();
 
-    if (!pm->provider()->canReboot()) { return toast->failure("System can't reboot"); }
-    if (!pm->provider()->reboot()) { return toast->failure("Failed to reboot"); }
+    if (!pm->provider()->canReboot()) { toast->failure("System can't reboot"); return; }
+    if (!pm->provider()->reboot()) { toast->failure("Failed to reboot"); return; }
   }
 };
 
@@ -147,8 +145,8 @@ class SoftRebootCommand : public PowerManagementCommand {
     auto pm = ctx->services->powerManager();
     auto toast = ctx->services->toastService();
 
-    if (!pm->provider()->canSoftReboot()) { return toast->failure("System can't soft reboot"); }
-    if (!pm->provider()->softReboot()) { return toast->failure("Failed to soft reboot"); }
+    if (!pm->provider()->canSoftReboot()) { toast->failure("System can't soft reboot"); return; }
+    if (!pm->provider()->softReboot()) { toast->failure("Failed to soft reboot"); return; }
   }
 };
 
@@ -165,8 +163,8 @@ class PowerOffCommand : public PowerManagementCommand {
     auto pm = ctx->services->powerManager();
     auto toast = ctx->services->toastService();
 
-    if (!pm->provider()->canPowerOff()) { return toast->failure("System cannot power off"); }
-    if (!pm->provider()->powerOff()) { return toast->failure("Failed to power off"); }
+    if (!pm->provider()->canPowerOff()) { toast->failure("System cannot power off"); return; }
+    if (!pm->provider()->powerOff()) { toast->failure("Failed to power off"); return; }
   }
 };
 
@@ -186,8 +184,8 @@ class SuspendCommand : public PowerManagementCommand {
     auto pm = ctx->services->powerManager();
     auto toast = ctx->services->toastService();
 
-    if (!pm->provider()->canSuspend()) { return toast->failure("System cannot suspend"); }
-    if (!pm->provider()->suspend()) { return toast->failure("Failed to suspend"); }
+    if (!pm->provider()->canSuspend()) { toast->failure("System cannot suspend"); return; }
+    if (!pm->provider()->suspend()) { toast->failure("Failed to suspend"); return; }
   }
 };
 
@@ -203,8 +201,8 @@ class SleepCommand : public PowerManagementCommand {
     auto pm = ctx->services->powerManager();
     auto toast = ctx->services->toastService();
 
-    if (!pm->provider()->canSleep()) { return toast->failure("System can't sleep"); }
-    if (!pm->provider()->sleep()) { return toast->failure("Failed to sleep"); }
+    if (!pm->provider()->canSleep()) { toast->failure("System can't sleep"); return; }
+    if (!pm->provider()->sleep()) { toast->failure("Failed to sleep"); return; }
   }
 };
 
@@ -224,8 +222,8 @@ class LogOutCommand : public PowerManagementCommand {
     auto pm = ctx->services->powerManager();
     auto toast = ctx->services->toastService();
 
-    if (!pm->provider()->canLogOut()) { return toast->failure("System can't logout"); }
-    if (!pm->provider()->logout()) { return toast->failure("Failed to log out"); }
+    if (!pm->provider()->canLogOut()) { toast->failure("System can't logout"); return; }
+    if (!pm->provider()->logout()) { toast->failure("Failed to log out"); return; }
   }
 };
 

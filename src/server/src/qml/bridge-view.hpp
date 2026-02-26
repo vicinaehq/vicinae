@@ -13,7 +13,7 @@ signals:
 public:
   virtual QUrl qmlComponentUrl() const = 0;
   virtual QUrl qmlSearchAccessoryUrl() const { return {}; }
-  virtual QVariantMap qmlProperties() const { return {}; }
+  virtual QVariantMap qmlProperties() { return {}; }
   virtual void loadInitialData() {}
   virtual void onReactivated() {}
 
@@ -32,7 +32,7 @@ template <typename ModelType> class BridgeView : public ViewHostBase {
 public:
   QUrl qmlComponentUrl() const override { return m_model->qmlComponentUrl(); }
 
-  QVariantMap qmlProperties() const override {
+  QVariantMap qmlProperties() override {
     return {{QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(m_model))}};
   }
 

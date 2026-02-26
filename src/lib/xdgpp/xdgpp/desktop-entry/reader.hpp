@@ -49,6 +49,7 @@ public:
 
   std::vector<std::string> groupNames() const {
     std::vector<std::string> names;
+    names.reserve(m_groups.size());
     for (const auto &[k, v] : m_groups) {
       names.emplace_back(v->name());
     }

@@ -7,7 +7,7 @@ QUrl InstalledExtensionsViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/CommandListView.qml"));
 }
 
-QVariantMap InstalledExtensionsViewHost::qmlProperties() const {
+QVariantMap InstalledExtensionsViewHost::qmlProperties() {
   return {{QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(m_model))}};
 }
 

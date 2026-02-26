@@ -5,7 +5,7 @@
 
 void MigrationManager::initialize() {
   QSqlQuery query(m_db);
-  bool created = query.exec(R"(
+  bool const created = query.exec(R"(
 	  	CREATE TABLE IF NOT EXISTS schema_migrations (
 			id TEXT PRIMARY KEY,
 			applied_at INTEGER NOT NULL,
@@ -48,9 +48,9 @@ MigrationManager::loadMigrationFile(const std::filesystem::path &path) {
   migration.id = path.filename().c_str();
 
   {
-    std::regex filenameRegex(R"((\d+)_.*\.sql)");
+    std::regex const filenameRegex(R"((\d+)_.*\.sql)");
     std::smatch filenameMatch;
-    std::string filename = path.filename();
+    std::string const filename = path.filename();
 
     if (!std::regex_search(filename, filenameMatch, filenameRegex)) {
       MigrationLoadingError error;
@@ -76,10 +76,10 @@ MigrationManager::loadMigrationFile(const std::filesystem::path &path) {
 void MigrationManager::executeMigration(const Migration &migration) {
   // The sqlite driver does not support executing multiple statements at once
   // so we need this manual splitting.
-  QStringList statements = splitSqlStatements(migration.content);
+  QStringList const statements = splitSqlStatements(migration.content);
 
   for (const QString &statement : statements) {
-    QString trimmed = statement.trimmed();
+    QString const trimmed = statement.trimmed();
     if (trimmed.isEmpty() || trimmed.startsWith("--")) { continue; }
 
     qDebug() << "executing" << statement;
@@ -97,10 +97,10 @@ void MigrationManager::executeMigration(const Migration &migration) {
 QStringList MigrationManager::splitSqlStatements(const QString &content) {
   QStringList statements;
   QString current;
-  QStringList lines = content.split('\n');
+  QStringList const lines = content.split('\n');
 
   for (const QString &line : lines) {
-    QString trimmed = line.trimmed();
+    QString const trimmed = line.trimmed();
 
     // Skip comment lines
     if (trimmed.startsWith("--") || trimmed.isEmpty()) { continue; }
@@ -143,13 +143,13 @@ void MigrationManager::insertMigration(const Migration &migration) {
 }
 
 std::vector<MigrationManager::Migration> MigrationManager::loadMigrations() {
-  std::filesystem::path migrationDirPath =
+  std::filesystem::path const migrationDirPath =
       std::filesystem::path(":database") / m_migrationNamespace.toStdString() / "migrations";
-  QDir migrationDir(migrationDirPath);
+  QDir const migrationDir(migrationDirPath);
   std::vector<Migration> migrations;
 
   for (const auto &entry : migrationDir.entryList()) {
-    std::filesystem::path migrationPath = migrationDirPath / entry.toStdString();
+    std::filesystem::path const migrationPath = migrationDirPath / entry.toStdString();
     auto result = loadMigrationFile(migrationPath);
 
     if (result) { migrations.emplace_back(*result); }
@@ -169,13 +169,11 @@ void MigrationManager::runMigrations() {
     return;
   }
 
-  size_t newExecCount = 0;
-
   try {
     for (size_t idx = 0; idx != fsMigrations.size(); ++idx) {
       const auto &migration = fsMigrations[idx];
       if (idx < dbMigrations.size()) {
-        auto dbMigration = dbMigrations.at(idx);
+        const auto& dbMigration = dbMigrations.at(idx);
 
         if (dbMigration.version != migration.version) {
           throw std::runtime_error("Migration version mismatch");
@@ -192,7 +190,6 @@ void MigrationManager::runMigrations() {
       qInfo() << "Applying migration" << migration.id;
       executeMigration(migration);
       insertMigration(migration);
-      ++newExecCount;
     }
 
     if (!m_db.commit()) { throw std::runtime_error("Failed to commit transaction"); }

@@ -4,7 +4,7 @@
 #include <qjsonarray.h>
 #include <qjsonobject.h>
 
-TagListParser::TagListParser() {}
+TagListParser::TagListParser() = default;
 
 TagItemModel TagListParser::parseTagItem(const QJsonObject &instance) {
   TagItemModel model;

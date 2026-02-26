@@ -13,8 +13,8 @@ QUrl ManageShortcutsViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/DetailListView.qml"));
 }
 
-QVariantMap ManageShortcutsViewHost::qmlProperties() const {
-  return {{QStringLiteral("host"), QVariant::fromValue(const_cast<ManageShortcutsViewHost *>(this))}};
+QVariantMap ManageShortcutsViewHost::qmlProperties() {
+  return {{QStringLiteral("host"), QVariant::fromValue(this)}};
 }
 
 void ManageShortcutsViewHost::initialize() {
@@ -81,7 +81,7 @@ void ManageShortcutsViewHost::loadDetail(const std::shared_ptr<Shortcut> &shortc
   meta.append(QVariantMap{
       {QStringLiteral("label"), QStringLiteral("Last Opened")},
       {QStringLiteral("value"),
-       shortcut->lastOpenedAt() ? shortcut->lastOpenedAt()->toString() : QStringLiteral("Never")},
+       shortcut->lastOpenedAt().transform([](const QDateTime &dt) { return dt.toString(); }).value_or(QStringLiteral("Never"))},
   });
 
   meta.append(QVariantMap{

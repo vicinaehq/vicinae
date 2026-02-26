@@ -9,7 +9,7 @@ QUrl SwitchWindowsViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/CommandListView.qml"));
 }
 
-QVariantMap SwitchWindowsViewHost::qmlProperties() const {
+QVariantMap SwitchWindowsViewHost::qmlProperties() {
   return {{QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(m_model))}};
 }
 

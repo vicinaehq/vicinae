@@ -16,8 +16,8 @@ QPixmap BuiltinIconLoader::renderSync(const RenderConfig &config) {
 
   if (m_backgroundColor) {
     OmniPainter painter(&canva);
-    int side = qMin(config.size.width(), config.size.height());
-    qreal radius = side * 0.25 * config.devicePixelRatio;
+    int const side = qMin(config.size.width(), config.size.height());
+    qreal const radius = side * 0.25 * config.devicePixelRatio;
     margin = qRound(side * 0.15 * config.devicePixelRatio);
     painter.setRenderHint(QPainter::Antialiasing, true);
     painter.setBrush(painter.colorBrush(*m_backgroundColor));
@@ -25,12 +25,12 @@ QPixmap BuiltinIconLoader::renderSync(const RenderConfig &config) {
     painter.drawRoundedRect(canva.rect(), radius, radius);
   }
 
-  QMargins margins{margin, margin, margin, margin};
-  QRect iconRect = canva.rect().marginsRemoved(margins);
+  QMargins const margins{margin, margin, margin, margin};
+  QRect const iconRect = canva.rect().marginsRemoved(margins);
   SvgImageLoader loader(m_iconName);
 
   if (m_backgroundColor) {
-    QColor color = OmniPainter::resolveColor(*m_backgroundColor);
+    QColor const color = OmniPainter::resolveColor(*m_backgroundColor);
     loader.render(canva, iconRect, ContrastHelper::getTonalContrastColor(color, 3));
   } else {
     loader.render(canva, iconRect, config.fill.value_or(SemanticColor::Foreground));

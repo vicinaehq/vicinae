@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <utility>
 #include "command-grid-model.hpp"
 
 CommandGridModel::CommandGridModel(QObject *parent) : QAbstractListModel(parent) {}
@@ -13,8 +14,8 @@ int CommandGridModel::rowCount(const QModelIndex &parent) const {
 void CommandGridModel::setSelectedIndex(int index) { (void)index; }
 
 QVariant CommandGridModel::data(const QModelIndex &index, int role) const {
-  int row = index.row();
-  if (row < 0 || row >= static_cast<int>(m_rows.size())) return {};
+  int const row = index.row();
+  if (row < 0 || std::cmp_greater_equal(row, m_rows.size())) return {};
   const auto &r = m_rows[row];
 
   switch (role) {
@@ -53,17 +54,17 @@ std::vector<CommandGridModel::FlatRow>
 CommandGridModel::buildFlatList(const std::vector<SectionInfo> &sections) {
   std::vector<FlatRow> rows;
 
-  for (int s = 0; s < static_cast<int>(sections.size()); ++s) {
+  for (int s = 0; std::cmp_less(s, sections.size()); ++s) {
     const auto &sec = sections[s];
     if (sec.count == 0) continue;
 
-    int cols = sec.columns.value_or(m_columns);
-    double ar = sec.aspectRatio.value_or(m_aspectRatio);
+    int const cols = sec.columns.value_or(m_columns);
+    double const ar = sec.aspectRatio.value_or(m_aspectRatio);
 
     if (!sec.name.isEmpty()) { rows.push_back({FlatRow::SectionHeader, s, sec.name, 0, 0, cols, ar}); }
 
     for (int i = 0; i < sec.count; i += cols) {
-      int count = std::min(cols, sec.count - i);
+      int const count = std::min(cols, sec.count - i);
       rows.push_back({FlatRow::ItemRow, s, {}, i, count, cols, ar});
     }
   }
@@ -78,8 +79,8 @@ void CommandGridModel::setSections(const std::vector<SectionInfo> &sections) {
   }
 
   auto newFlat = buildFlatList(sections);
-  int oldCount = static_cast<int>(m_rows.size());
-  int newCount = static_cast<int>(newFlat.size());
+  int const oldCount = static_cast<int>(m_rows.size());
+  int const newCount = static_cast<int>(newFlat.size());
 
   if (m_selectFirstOnReset) {
     beginResetModel();
@@ -107,7 +108,7 @@ void CommandGridModel::setSections(const std::vector<SectionInfo> &sections) {
     m_rows = std::move(newFlat);
   }
 
-  int overlap = std::min(oldCount, newCount);
+  int const overlap = std::min(oldCount, newCount);
   if (overlap > 0) emit dataChanged(index(0), index(overlap - 1));
 
   if (m_selectedIndex >= newCount) m_selectedIndex = -1;
@@ -120,7 +121,8 @@ void CommandGridModel::setColumns(int cols) {
   emit columnsChanged();
   rebuildRows();
   if (m_selSection >= 0 && m_selItem >= 0) {
-    int s = m_selSection, i = m_selItem;
+    int const s = m_selSection;
+    int const i = m_selItem;
     m_selSection = -1;
     m_selItem = -1;
     select(s, i);
@@ -136,14 +138,14 @@ void CommandGridModel::setAspectRatio(double ratio) {
 }
 
 int CommandGridModel::sectionColumns(int sectionIdx) const {
-  if (sectionIdx < 0 || sectionIdx >= static_cast<int>(m_sections.size())) return m_columns;
+  if (sectionIdx < 0 || std::cmp_greater_equal(sectionIdx, m_sections.size())) return m_columns;
   return m_sections[sectionIdx].columns.value_or(m_columns);
 }
 
 void CommandGridModel::rebuildRows() { setSections(m_sections); }
 
 void CommandGridModel::select(int section, int item) {
-  bool changed = section != m_selSection || item != m_selItem;
+  bool const changed = section != m_selSection || item != m_selItem;
   m_selSection = section;
   m_selItem = item;
   if (changed) emit selectionChanged();
@@ -158,7 +160,7 @@ void CommandGridModel::select(int section, int item) {
 }
 
 void CommandGridModel::selectFirst() {
-  for (int s = 0; s < static_cast<int>(m_sections.size()); ++s) {
+  for (int s = 0; std::cmp_less(s, m_sections.size()); ++s) {
     if (m_sections[s].count > 0) {
       select(s, 0);
       return;
@@ -200,7 +202,7 @@ int CommandGridModel::toGlobal(int section, int item) const {
 
 void CommandGridModel::fromGlobal(int globalIdx, int &section, int &item) const {
   int offset = 0;
-  for (int s = 0; s < static_cast<int>(m_sections.size()); ++s) {
+  for (int s = 0; std::cmp_less(s, m_sections.size()); ++s) {
     if (globalIdx < offset + m_sections[s].count) {
       section = s;
       item = globalIdx - offset;
@@ -215,7 +217,7 @@ void CommandGridModel::fromGlobal(int globalIdx, int &section, int &item) const 
 void CommandGridModel::navigateRight() {
   m_lastNavDirection = 1;
   int g = toGlobal(m_selSection, m_selItem) + 1;
-  int total = totalItemCount();
+  int const total = totalItemCount();
   if (total == 0) return;
   if (g >= total) g = 0;
   int s, i;
@@ -226,7 +228,7 @@ void CommandGridModel::navigateRight() {
 void CommandGridModel::navigateLeft() {
   m_lastNavDirection = -1;
   int g = toGlobal(m_selSection, m_selItem) - 1;
-  int total = totalItemCount();
+  int const total = totalItemCount();
   if (total == 0) return;
   if (g < 0) g = total - 1;
   int s, i;
@@ -238,10 +240,10 @@ void CommandGridModel::navigateDown() {
   m_lastNavDirection = 1;
   if (m_selSection < 0) return;
 
-  int cols = sectionColumns(m_selSection);
-  int col = m_selItem % cols;
-  int nextRow = (m_selItem / cols) + 1;
-  int maxRowInSection = (m_sections[m_selSection].count - 1) / cols;
+  int const cols = sectionColumns(m_selSection);
+  int const col = m_selItem % cols;
+  int const nextRow = (m_selItem / cols) + 1;
+  int const maxRowInSection = (m_sections[m_selSection].count - 1) / cols;
 
   if (nextRow <= maxRowInSection) {
     int targetItem = nextRow * cols + col;
@@ -250,19 +252,19 @@ void CommandGridModel::navigateDown() {
     return;
   }
 
-  for (int s = m_selSection + 1; s < static_cast<int>(m_sections.size()); ++s) {
+  for (int s = m_selSection + 1; std::cmp_less(s, m_sections.size()); ++s) {
     if (m_sections[s].count > 0) {
-      int targetCols = sectionColumns(s);
-      int targetItem = std::min(col, std::min(targetCols, m_sections[s].count) - 1);
+      int const targetCols = sectionColumns(s);
+      int const targetItem = std::min(col, std::min(targetCols, m_sections[s].count) - 1);
       select(s, targetItem);
       return;
     }
   }
 
-  for (int s = 0; s < static_cast<int>(m_sections.size()); ++s) {
+  for (int s = 0; std::cmp_less(s, m_sections.size()); ++s) {
     if (m_sections[s].count > 0) {
-      int targetCols = sectionColumns(s);
-      int targetItem = std::min(col, std::min(targetCols, m_sections[s].count) - 1);
+      int const targetCols = sectionColumns(s);
+      int const targetItem = std::min(col, std::min(targetCols, m_sections[s].count) - 1);
       select(s, targetItem);
       return;
     }
@@ -273,9 +275,9 @@ void CommandGridModel::navigateUp() {
   m_lastNavDirection = -1;
   if (m_selSection < 0) return;
 
-  int cols = sectionColumns(m_selSection);
-  int col = m_selItem % cols;
-  int currentRow = m_selItem / cols;
+  int const cols = sectionColumns(m_selSection);
+  int const col = m_selItem % cols;
+  int const currentRow = m_selItem / cols;
 
   if (currentRow > 0) {
     select(m_selSection, (currentRow - 1) * cols + col);
@@ -284,9 +286,9 @@ void CommandGridModel::navigateUp() {
 
   for (int s = m_selSection - 1; s >= 0; --s) {
     if (m_sections[s].count > 0) {
-      int targetCols = sectionColumns(s);
-      int lastRow = (m_sections[s].count - 1) / targetCols;
-      int targetCol = std::min(col, targetCols - 1);
+      int const targetCols = sectionColumns(s);
+      int const lastRow = (m_sections[s].count - 1) / targetCols;
+      int const targetCol = std::min(col, targetCols - 1);
       int targetItem = lastRow * targetCols + targetCol;
       if (targetItem >= m_sections[s].count) targetItem = m_sections[s].count - 1;
       select(s, targetItem);
@@ -296,9 +298,9 @@ void CommandGridModel::navigateUp() {
 
   for (int s = static_cast<int>(m_sections.size()) - 1; s >= 0; --s) {
     if (m_sections[s].count > 0) {
-      int targetCols = sectionColumns(s);
-      int lastRow = (m_sections[s].count - 1) / targetCols;
-      int targetCol = std::min(col, targetCols - 1);
+      int const targetCols = sectionColumns(s);
+      int const lastRow = (m_sections[s].count - 1) / targetCols;
+      int const targetCol = std::min(col, targetCols - 1);
       int targetItem = lastRow * targetCols + targetCol;
       if (targetItem >= m_sections[s].count) targetItem = m_sections[s].count - 1;
       select(s, targetItem);
@@ -309,7 +311,7 @@ void CommandGridModel::navigateUp() {
 
 int CommandGridModel::flatRowForSelection() const {
   if (m_selSection < 0 || m_selItem < 0) return -1;
-  for (int r = 0; r < static_cast<int>(m_rows.size()); ++r) {
+  for (int r = 0; std::cmp_less(r, m_rows.size()); ++r) {
     const auto &row = m_rows[r];
     if (row.kind == FlatRow::ItemRow && row.sectionIdx == m_selSection && m_selItem >= row.startItem &&
         m_selItem < row.startItem + row.itemCount) {

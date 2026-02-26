@@ -6,6 +6,7 @@ class WlrDataDevice {
 public:
   class Listener {
   public:
+    virtual ~Listener() = default;
     virtual void dataOffer(WlrDataDevice &device, WlrDataOffer &offer) {}
     virtual void selection(WlrDataDevice &device, WlrDataOffer &offer) {}
     virtual void finished(WlrDataDevice &device) {}

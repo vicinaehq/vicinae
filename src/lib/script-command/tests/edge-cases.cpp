@@ -267,7 +267,7 @@ TEST_CASE("Title with special characters") {
 
 TEST_CASE("Very long title") {
   std::string longTitle(1000, 'a');
-  std::string source = "#!/bin/bash\n"
+  const std::string source = "#!/bin/bash\n"
                        "# @vicinae.schemaVersion 1\n"
                        "# @vicinae.title " +
                        longTitle + "\n";

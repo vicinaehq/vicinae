@@ -45,7 +45,7 @@ void ThemeListModel::setFilter(const QString &text) {
     }
   }
 
-  if (!query.empty()) std::stable_sort(scoredAvailable.begin(), scoredAvailable.end(), std::greater{});
+  if (!query.empty()) std::ranges::stable_sort(scoredAvailable, std::greater{});
 
   m_availableThemes.reserve(scoredAvailable.size());
   for (auto &s : scoredAvailable)
@@ -60,7 +60,7 @@ void ThemeListModel::setFilter(const QString &text) {
 void ThemeListModel::regenerateThemes() { setFilter(m_query); }
 
 const std::shared_ptr<ThemeFile> &ThemeListModel::themeAt(int s, int i) const {
-  if (s == 0) return *m_selectedTheme;
+  if (s == 0 && m_selectedTheme.has_value()) return *m_selectedTheme;
   return m_availableThemes[i];
 }
 

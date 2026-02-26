@@ -69,7 +69,7 @@ FileIndexerDatabase::listIndexedDirectoryFiles(const std::filesystem::path &path
 }
 
 void FileIndexerDatabase::runMigrations() {
-  QSqlQuery query(m_db);
+  QSqlQuery const query(m_db);
   MigrationManager manager(m_db, "file-indexer");
 
   manager.runMigrations();
@@ -271,7 +271,7 @@ std::vector<fs::path> FileIndexerDatabase::search(std::string_view searchQuery,
   results.reserve(params.pagination.limit);
 
   while (query.next()) {
-    fs::path path = query.value(0).toString().toStdString();
+    fs::path const path = query.value(0).toString().toStdString();
 
     if (fs::exists(path, ec)) { results.emplace_back(path); }
   }
@@ -337,7 +337,7 @@ void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
       switch (event.type) {
       case FileEventType::Modify: {
         using namespace std::chrono;
-        long long secondsSinceEpoch = duration_cast<seconds>(event.eventTime.time_since_epoch()).count();
+        long long const secondsSinceEpoch = duration_cast<seconds>(event.eventTime.time_since_epoch()).count();
         modifyQuery.bindValue(":last_modified_at", secondsSinceEpoch);
 
         modifyQuery.bindValue(":path", event.path.c_str());
@@ -398,7 +398,7 @@ void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &p
       if (auto lastModified = fs::last_write_time(path, ec); !ec) {
         using namespace std::chrono;
         auto sctp = clock_cast<system_clock>(lastModified);
-        long long epoch = duration_cast<seconds>(sctp.time_since_epoch()).count();
+        long long const epoch = duration_cast<seconds>(sctp.time_since_epoch()).count();
 
         query.bindValue(":last_modified_at", epoch);
         score = scorer.computeScore(path, lastModified);

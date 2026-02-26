@@ -141,7 +141,7 @@ ActionPannelSectionPtr ActionPannelParser::parseActionPannelSection(const QJsonO
   return model;
 }
 
-ActionPannelParser::ActionPannelParser() {}
+ActionPannelParser::ActionPannelParser() = default;
 
 ActionPannelModel ActionPannelParser::parse(const QJsonObject &instance) {
   ActionPannelModel pannel;
@@ -157,15 +157,15 @@ ActionPannelModel ActionPannelParser::parse(const QJsonObject &instance) {
     auto type = obj.value("type").toString();
 
     if (type == "action") {
-      pannel.children.push_back(parseAction(obj));
+      pannel.children.emplace_back(parseAction(obj));
     }
 
     else if (type == "action-panel-section") {
-      pannel.children.push_back(parseActionPannelSection(obj));
+      pannel.children.emplace_back(parseActionPannelSection(obj));
     }
 
     else if (type == "action-panel-submenu") {
-      pannel.children.push_back(parseActionPannelSubmenu(obj));
+      pannel.children.emplace_back(parseActionPannelSubmenu(obj));
     }
   }
 

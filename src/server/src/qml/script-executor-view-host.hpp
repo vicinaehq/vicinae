@@ -18,7 +18,7 @@ public:
   explicit ScriptExecutorViewHost(ScriptProcess *process);
 
   QUrl qmlComponentUrl() const override;
-  QVariantMap qmlProperties() const override;
+  QVariantMap qmlProperties() override;
   void initialize() override;
   void beforePop() override;
 

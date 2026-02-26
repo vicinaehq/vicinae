@@ -1,32 +1,35 @@
 #include "placeholder.hpp"
 #include <cstdint>
+#include <utility>
 
-PlaceholderString PlaceholderString::parseSnippetText(QString link) {
+PlaceholderString PlaceholderString::parseSnippetText(const QString &link) {
   return parse(link, std::vector<QString>{"uuid", "clipboard", "date", "cursor"});
 }
 
-PlaceholderString PlaceholderString::parseShortcutText(QString link) {
+PlaceholderString PlaceholderString::parseShortcutText(const QString &link) {
   return parse(link, std::vector<QString>{"uuid", "clipboard", "selected", "date"});
 }
 
-PlaceholderString PlaceholderString::parse(QString link, std::span<const QString> reserved) {
+PlaceholderString PlaceholderString::parse(const QString& link, std::span<const QString> reserved) {
   PlaceholderString pstr;
-  enum : std::uint8_t {
-    BK_NORMAL,
-    PH_ID,
-    PH_KEY_START,
-    PH_KEY,
-    PH_VALUE_START,
-    PH_VALUE,
-    PH_VALUE_QUOTED
-  } state = BK_NORMAL;
+  enum class State : std::uint8_t {
+    BkNormal,
+    PhId,
+    PhKeyStart,
+    PhKey,
+    PhValueStart,
+    PhValue,
+    PhValueQuoted
+  };
+  using enum State;
+  State state = BkNormal;
   size_t i = 0;
   size_t startPos = 0;
   ParsedPlaceholder parsed;
   std::pair<QString, QString> arg;
 
   const auto insertPlaceholder = [&](const ParsedPlaceholder &placeholder) {
-    bool isReserved = std::ranges::any_of(reserved, [&](const QString &s) { return s == placeholder.id; });
+    bool const isReserved = std::ranges::any_of(reserved, [&](const QString &s) { return s == placeholder.id; });
 
     if (placeholder.id == "argument") {
       Argument arg;
@@ -48,78 +51,78 @@ PlaceholderString PlaceholderString::parse(QString link, std::span<const QString
   pstr.m_args.clear();
   pstr.m_raw = link;
 
-  while (i < link.size()) {
-    QChar ch = link.at(i);
+  while (std::cmp_less(i,  link.size())) {
+    QChar const ch = link.at(i);
 
     switch (state) {
-    case BK_NORMAL:
+    case BkNormal:
       if (ch == '{') {
         pstr.m_parts.emplace_back(link.sliced(startPos, i - startPos));
-        state = PH_ID;
+        state = PhId;
         startPos = i + 1;
       }
       break;
-    case PH_ID:
+    case PhId:
       if (!ch.isLetterOrNumber()) {
         parsed.id = link.sliced(startPos, i - startPos);
         startPos = i--;
-        state = PH_KEY_START;
+        state = PhKeyStart;
       }
       break;
-    case PH_KEY_START:
+    case PhKeyStart:
       if (ch == '}') {
         pstr.m_parts.emplace_back(parsed);
         insertPlaceholder(parsed);
         parsed = {};
         startPos = i + 1;
-        state = BK_NORMAL;
+        state = BkNormal;
         break;
       }
       if (!ch.isSpace()) {
         startPos = i--;
         arg.first.clear();
         arg.second.clear();
-        state = PH_KEY;
+        state = PhKey;
       }
       break;
-    case PH_KEY:
+    case PhKey:
       if (ch == '=') {
         arg.first = link.sliced(startPos, i - startPos);
-        state = PH_VALUE_START;
+        state = PhValueStart;
       }
       break;
-    case PH_VALUE_START:
+    case PhValueStart:
       if (!ch.isSpace()) {
         startPos = i--;
-        state = PH_VALUE;
+        state = PhValue;
       }
       break;
-    case PH_VALUE:
+    case PhValue:
       if (ch == '"') {
         arg.second += link.sliced(startPos, i - startPos);
         startPos = i + 1;
-        state = PH_VALUE_QUOTED;
+        state = PhValueQuoted;
         break;
       }
       if (!ch.isLetterOrNumber()) {
         arg.second += link.sliced(startPos, i - startPos);
         parsed.args.insert(arg);
         --i;
-        state = PH_KEY_START;
+        state = PhKeyStart;
       }
       break;
-    case PH_VALUE_QUOTED:
+    case PhValueQuoted:
       if (ch == '"') {
         arg.second += link.sliced(startPos, i - startPos);
         startPos = i + 1;
-        state = PH_VALUE;
+        state = PhValue;
       }
     }
 
     ++i;
   }
 
-  if (state == BK_NORMAL && i - startPos > 0) {
+  if (state == BkNormal && i - startPos > 0) {
     pstr.m_parts.emplace_back(link.sliced(startPos, i - startPos));
   }
 

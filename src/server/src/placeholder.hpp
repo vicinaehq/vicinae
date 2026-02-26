@@ -25,17 +25,17 @@ public:
    * required. Positional arguments can be explicitly argument placeholders such as "{argument name="XXX"}"
    * but can also be any placeholder that is not reserved "{my_query}".
    */
-  static PlaceholderString parse(QString link, std::span<const QString> reserved);
+  static PlaceholderString parse(const QString& link, std::span<const QString> reserved);
 
   /**
    * Parse placeholder with placeholder names that are reserved in a snippet context.
    */
-  static PlaceholderString parseSnippetText(QString link);
+  static PlaceholderString parseSnippetText(const QString &link);
 
   /**
    * Parse placeholder with placeholder names that are reserved in a shortcut context.
    */
-  static PlaceholderString parseShortcutText(QString link);
+  static PlaceholderString parseShortcutText(const QString &link);
 
   std::span<const Argument> arguments() const { return m_args; }
   std::span<const ParsedPlaceholder> placeholders() const { return m_placeholders; }

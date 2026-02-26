@@ -45,7 +45,7 @@ std::unique_ptr<ActionPanelState> CommandRootItem::newActionPanel(ApplicationCon
   }
 
   if (m_command->type() == CommandType::CommandTypeExtension) {
-    auto cmd = static_cast<ExtensionCommand *>(m_command.get());
+    auto cmd = static_cast<ExtensionCommand *>(m_command.get()); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     auto copyLocation =
         new CopyToClipboardAction(Clipboard::Text(cmd->path().c_str()), "Copy extension path");
 

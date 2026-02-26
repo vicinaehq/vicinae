@@ -7,7 +7,7 @@ QUrl OAuthTokenStoreViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/CommandListView.qml"));
 }
 
-QVariantMap OAuthTokenStoreViewHost::qmlProperties() const {
+QVariantMap OAuthTokenStoreViewHost::qmlProperties() {
   return {{QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(m_model))}};
 }
 

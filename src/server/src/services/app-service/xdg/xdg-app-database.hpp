@@ -35,7 +35,7 @@ public:
   XdgAppDatabase();
 
 private:
-  bool launchProcess(const QString &prog, const QStringList args,
+  bool launchProcess(const QString &prog, const QStringList& args,
                      const std::optional<std::filesystem::path> &workingDirectory) const;
 
   xdgpp::DesktopEntry::TerminalExec getTermExec(const XdgApplication &app) const;

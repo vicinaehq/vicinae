@@ -6,7 +6,7 @@ QUrl SystemRunViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/CommandListView.qml"));
 }
 
-QVariantMap SystemRunViewHost::qmlProperties() const {
+QVariantMap SystemRunViewHost::qmlProperties() {
   return {{QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(m_model))}};
 }
 

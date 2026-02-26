@@ -197,7 +197,7 @@ std::vector<std::pair<Keybind, const KeybindInfo *>> KeybindManager::orderedInfo
 
   for (uint8_t i = 0; i != static_cast<uint8_t>(Keybind::KeybindEnd); ++i) {
     auto bind = static_cast<Keybind>(i);
-    if (auto it = infos.find(bind); it != infos.end()) { list.push_back({bind, &it->second}); }
+    if (auto it = infos.find(bind); it != infos.end()) { list.emplace_back(bind, &it->second); }
   }
 
   return list;

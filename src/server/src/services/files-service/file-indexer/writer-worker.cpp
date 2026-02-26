@@ -1,6 +1,7 @@
 #include "writer-worker.hpp"
 
-namespace fs = std::filesystem;
+#include <utility>
+
 
 void WriterWorker::stop() {
   m_alive = false;
@@ -34,4 +35,4 @@ void WriterWorker::batchWrite(std::vector<FileEvent> paths) {
 
 WriterWorker::WriterWorker(std::shared_ptr<DbWriter> writer, std::mutex &batchMutex,
                            std::deque<std::vector<FileEvent>> &batchQueue, std::condition_variable &batchCv)
-    : m_writer(writer), batchMutex(batchMutex), batchQueue(batchQueue), m_batchCv(batchCv) {}
+    : m_writer(std::move(writer)), batchMutex(batchMutex), batchQueue(batchQueue), m_batchCv(batchCv) {}

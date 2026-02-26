@@ -67,7 +67,7 @@ GnomeWindowManager::GnomeWindowManager() {
           });
 }
 
-GnomeWindowManager::~GnomeWindowManager() {}
+GnomeWindowManager::~GnomeWindowManager() = default;
 
 QDBusInterface *GnomeWindowManager::getDBusInterface() const {
   if (!m_dbusInterface) {
@@ -92,7 +92,7 @@ QString GnomeWindowManager::callDBusMethod(const QString &method, const QVariant
     return QString();
   }
 
-  QDBusReply<QString> reply = interface->callWithArgumentList(QDBus::Block, method, args);
+  QDBusReply<QString> const reply = interface->callWithArgumentList(QDBus::Block, method, args);
 
   if (!reply.isValid()) {
     qWarning() << "GnomeWindowManager: D-Bus call failed for method:" << method
@@ -110,7 +110,7 @@ bool GnomeWindowManager::callDBusMethodVoid(const QString &method, const QVarian
     return false;
   }
 
-  QDBusReply<void> reply = interface->callWithArgumentList(QDBus::Block, method, args);
+  QDBusReply<void> const reply = interface->callWithArgumentList(QDBus::Block, method, args);
 
   if (!reply.isValid()) {
     qWarning() << "GnomeWindowManager: D-Bus call failed for method:" << method
@@ -128,7 +128,7 @@ QJsonObject GnomeWindowManager::parseJsonResponse(const QString &response) const
   }
 
   QJsonParseError parseError;
-  QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8(), &parseError);
+  QJsonDocument const doc = QJsonDocument::fromJson(response.toUtf8(), &parseError);
 
   if (parseError.error != QJsonParseError::NoError) {
     qWarning() << "GnomeWindowManager: JSON parse error:" << parseError.errorString()
@@ -146,7 +146,7 @@ QJsonArray GnomeWindowManager::parseJsonArrayResponse(const QString &response) c
   }
 
   QJsonParseError parseError;
-  QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8(), &parseError);
+  QJsonDocument const doc = QJsonDocument::fromJson(response.toUtf8(), &parseError);
 
   if (parseError.error != QJsonParseError::NoError) {
     qWarning() << "GnomeWindowManager: JSON parse error:" << parseError.errorString()
@@ -160,13 +160,13 @@ QJsonArray GnomeWindowManager::parseJsonArrayResponse(const QString &response) c
 AbstractWindowManager::WindowList GnomeWindowManager::listWindowsSync() const {
   qDebug() << "GnomeWindowManager: Listing windows";
 
-  QString response = callDBusMethod("List");
+  QString const response = callDBusMethod("List");
   if (response.isEmpty()) {
     qWarning() << "GnomeWindowManager: No response from List method";
     return {};
   }
 
-  QJsonArray windowsArray = parseJsonArrayResponse(response);
+  QJsonArray const windowsArray = parseJsonArrayResponse(response);
   if (windowsArray.isEmpty()) {
     qDebug() << "GnomeWindowManager: No windows found";
     return {};
@@ -175,18 +175,18 @@ AbstractWindowManager::WindowList GnomeWindowManager::listWindowsSync() const {
   WindowList windows;
   windows.reserve(windowsArray.size());
 
-  for (const QJsonValue &windowValue : windowsArray) {
+  for (const auto &windowValue : windowsArray) {
     if (!windowValue.isObject()) {
       qWarning() << "GnomeWindowManager: Invalid window object in response";
       continue;
     }
 
-    QJsonObject windowObj = windowValue.toObject();
+    QJsonObject const windowObj = windowValue.toObject();
     auto window = std::make_shared<GnomeWindow>(windowObj);
 
     // Map simple Flatpak IDs to complex path-based IDs for app database matching
-    QString originalWmClass = windowObj.value("wm_class").toString();
-    QString mappedWmClass = mapToComplexId(originalWmClass);
+    QString const originalWmClass = windowObj.value("wm_class").toString();
+    QString const mappedWmClass = mapToComplexId(originalWmClass);
     if (mappedWmClass != originalWmClass) { window->setMappedWmClass(mappedWmClass); }
 
     windows.push_back(window);
@@ -200,20 +200,20 @@ std::shared_ptr<AbstractWindowManager::AbstractWindow> GnomeWindowManager::getFo
   qDebug() << "GnomeWindowManager: Getting focused window via D-Bus";
 
   // Use the D-Bus method that handles Vicinae window filtering
-  QString response = callDBusMethod("GetFocusedWindowSync");
+  QString const response = callDBusMethod("GetFocusedWindowSync");
   if (response.isEmpty()) {
     qWarning() << "GnomeWindowManager: No response from GetFocusedWindowSync method";
     return nullptr;
   }
 
-  QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
+  QJsonDocument const doc = QJsonDocument::fromJson(response.toUtf8());
   if (doc.isNull() || !doc.isObject()) {
     qWarning() << "GnomeWindowMinto clipboard and window managementanager: Invalid JSON response from "
                   "GetFocusedWindowSync";
     return nullptr;
   }
 
-  QJsonObject windowObj = doc.object();
+  QJsonObject const windowObj = doc.object();
   if (windowObj.isEmpty()) {
     qDebug() << "GnomeWindowManager: No focused window (null response)";
     return nullptr;
@@ -235,7 +235,7 @@ void GnomeWindowManager::focusWindowSync(const AbstractWindow &window) const {
     return;
   }
 
-  uint32_t windowId = gnomeWindow->numericId();
+  uint32_t const windowId = gnomeWindow->numericId();
   if (windowId == 0) {
     qWarning() << "GnomeWindowManager: Invalid window ID";
     return;
@@ -246,7 +246,7 @@ void GnomeWindowManager::focusWindowSync(const AbstractWindow &window) const {
   QVariantList args;
   args << windowId;
 
-  bool success = callDBusMethodVoid("Activate", args);
+  bool const success = callDBusMethodVoid("Activate", args);
   if (success) {
     qDebug() << "GnomeWindowManager: Successfully sent activate request for window ID:" << windowId;
   } else {
@@ -265,8 +265,8 @@ bool GnomeWindowManager::isActivatable() const {
   }
 
   // Try a simple ping by calling List method
-  QString response = callDBusMethod("List");
-  bool available = !response.isEmpty();
+  QString const response = callDBusMethod("List");
+  bool const available = !response.isEmpty();
 
   qDebug() << "GnomeWindowManager: Activation check result:" << available;
   return available;
@@ -274,7 +274,7 @@ bool GnomeWindowManager::isActivatable() const {
 
 bool GnomeWindowManager::ping() const {
   // Simple health check by calling List method
-  QString response = callDBusMethod("List");
+  QString const response = callDBusMethod("List");
   return !response.isEmpty();
 }
 
@@ -309,10 +309,10 @@ std::shared_ptr<GnomeWindow> GnomeWindowManager::getWindowDetails(uint32_t windo
   QVariantList args;
   args << windowId;
 
-  QString response = callDBusMethod("Details", args);
+  QString const response = callDBusMethod("Details", args);
   if (response.isEmpty()) { return nullptr; }
 
-  QJsonObject detailsObj = parseJsonResponse(response);
+  QJsonObject const detailsObj = parseJsonResponse(response);
   if (detailsObj.isEmpty()) { return nullptr; }
 
   // Create a basic window from the details and then update it
@@ -343,13 +343,13 @@ QString GnomeWindowManager::mapToComplexId(const QString &simpleId) const {
 AbstractWindowManager::WorkspaceList GnomeWindowManager::listWorkspaces() const {
   qDebug() << "GnomeWindowManager: Listing workspaces";
 
-  QString response = callDBusMethod("ListWorkspaces");
+  QString const response = callDBusMethod("ListWorkspaces");
   if (response.isEmpty()) {
     qWarning() << "GnomeWindowManager: No response from ListWorkspaces method";
     return {};
   }
 
-  QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
+  QJsonDocument const doc = QJsonDocument::fromJson(response.toUtf8());
   if (doc.isNull()) {
     qWarning() << "GnomeWindowManager: Failed to parse JSON response from ListWorkspaces";
     return {};
@@ -360,7 +360,7 @@ AbstractWindowManager::WorkspaceList GnomeWindowManager::listWorkspaces() const 
     workspacesArray = doc.array();
   } else if (doc.isObject()) {
     // Handle case where response is wrapped in an object
-    QJsonObject wrapper = doc.object();
+    QJsonObject const wrapper = doc.object();
     if (wrapper.contains("workspaces") && wrapper.value("workspaces").isArray()) {
       workspacesArray = wrapper.value("workspaces").toArray();
     }
@@ -374,13 +374,13 @@ AbstractWindowManager::WorkspaceList GnomeWindowManager::listWorkspaces() const 
   WorkspaceList workspaces;
   workspaces.reserve(workspacesArray.size());
 
-  for (const QJsonValue &workspaceValue : workspacesArray) {
+  for (const auto &workspaceValue : workspacesArray) {
     if (!workspaceValue.isObject()) {
       qWarning() << "GnomeWindowManager: Invalid workspace object in response";
       continue;
     }
 
-    QJsonObject workspaceObj = workspaceValue.toObject();
+    QJsonObject const workspaceObj = workspaceValue.toObject();
     auto workspace = std::make_shared<Gnome::Workspace>(workspaceObj);
     workspaces.push_back(workspace);
   }
@@ -392,13 +392,13 @@ AbstractWindowManager::WorkspaceList GnomeWindowManager::listWorkspaces() const 
 std::shared_ptr<AbstractWindowManager::AbstractWorkspace> GnomeWindowManager::getActiveWorkspace() const {
   qDebug() << "GnomeWindowManager: Getting active workspace";
 
-  QString response = callDBusMethod("GetActiveWorkspace");
+  QString const response = callDBusMethod("GetActiveWorkspace");
   if (response.isEmpty()) {
     qWarning() << "GnomeWindowManager: No response from GetActiveWorkspace method";
     return nullptr;
   }
 
-  QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
+  QJsonDocument const doc = QJsonDocument::fromJson(response.toUtf8());
   if (doc.isNull()) {
     qWarning() << "GnomeWindowManager: Failed to parse JSON response from GetActiveWorkspace";
     return nullptr;
@@ -439,7 +439,7 @@ bool GnomeWindowManager::sendShortcutSync(const AbstractWindow &window, const Ke
     return false;
   }
 
-  uint32_t windowId = gnomeWindow->numericId();
+  uint32_t const windowId = gnomeWindow->numericId();
   if (windowId == 0) {
     qWarning() << "GnomeWindowManager: Invalid window ID";
     return false;
@@ -456,7 +456,7 @@ bool GnomeWindowManager::sendShortcutSync(const AbstractWindow &window, const Ke
   if (modifiersStr.isEmpty()) { modifiersStr = "NONE"; }
 
   // Convert Qt key to string
-  QString keyStr = QKeySequence(shortcut.key()).toString().toLower();
+  QString const keyStr = QKeySequence(shortcut.key()).toString().toLower();
 
   qDebug() << "GnomeWindowManager: Sending shortcut - key:" << keyStr << "modifiers:" << modifiersStr
            << "to window ID:" << windowId;
@@ -464,7 +464,7 @@ bool GnomeWindowManager::sendShortcutSync(const AbstractWindow &window, const Ke
   QVariantList args;
   args << windowId << keyStr << modifiersStr;
 
-  bool success = callDBusMethodVoid("SendShortcut", args);
+  bool const success = callDBusMethodVoid("SendShortcut", args);
   if (success) {
     qDebug() << "GnomeWindowManager: Successfully sent shortcut to window ID:" << windowId;
   } else {

@@ -4,9 +4,10 @@
 #include "service-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include <algorithm>
+#include <utility>
 
-ExtensionSettingsModel::ExtensionSettingsModel(QObject *parent) : QAbstractListModel(parent) {
-  m_prefModel = new PreferenceFormModel(this);
+ExtensionSettingsModel::ExtensionSettingsModel(QObject *parent) : QAbstractListModel(parent), m_prefModel(new PreferenceFormModel(this)) {
+  
   auto *manager = ServiceRegistry::instance()->rootItemManager();
   connect(manager, &RootItemManager::itemsChanged, this, [this]() { rebuild(m_filter); });
   rebuild({});
@@ -80,7 +81,7 @@ QVariantList ExtensionSettingsModel::selectedMetadata() const {
 }
 
 bool ExtensionSettingsModel::hasSelection() const {
-  return m_selectedRow >= 0 && m_selectedRow < static_cast<int>(m_visibleIndices.size());
+  return m_selectedRow >= 0 && std::cmp_less(m_selectedRow, m_visibleIndices.size());
 }
 
 bool ExtensionSettingsModel::hasPreferences() const { return hasSelection() && m_prefModel->rowCount() > 0; }
@@ -126,7 +127,7 @@ void ExtensionSettingsModel::select(int row) {
 }
 
 void ExtensionSettingsModel::setEnabled(int row, bool value) {
-  if (row < 0 || row >= static_cast<int>(m_visibleIndices.size())) return;
+  if (row < 0 || std::cmp_greater_equal(row, m_visibleIndices.size())) return;
   auto &e = m_allEntries[m_visibleIndices[row]];
   auto *manager = ServiceRegistry::instance()->rootItemManager();
 
@@ -136,11 +137,11 @@ void ExtensionSettingsModel::setEnabled(int row, bool value) {
     auto idx = index(row);
     emit dataChanged(idx, idx, {EnabledRole});
 
-    int allIdx = m_visibleIndices[row];
-    for (int i = allIdx + 1; i < static_cast<int>(m_allEntries.size()) && !m_allEntries[i].isProvider; ++i) {
+    int const allIdx = m_visibleIndices[row];
+    for (int i = allIdx + 1; std::cmp_less(i, m_allEntries.size()) && !m_allEntries[i].isProvider; ++i) {
       m_allEntries[i].enabled = value;
     }
-    for (int i = row + 1; i < static_cast<int>(m_visibleIndices.size()); ++i) {
+    for (int i = row + 1; std::cmp_less(i, m_visibleIndices.size()); ++i) {
       auto &child = m_allEntries[m_visibleIndices[i]];
       if (child.isProvider) break;
       auto childIdx = index(i);
@@ -157,7 +158,7 @@ void ExtensionSettingsModel::setEnabled(int row, bool value) {
 }
 
 void ExtensionSettingsModel::setAlias(int row, const QString &alias) {
-  if (row < 0 || row >= static_cast<int>(m_visibleIndices.size())) return;
+  if (row < 0 || std::cmp_greater_equal(row, m_visibleIndices.size())) return;
   auto &e = m_allEntries[m_visibleIndices[row]];
   if (e.isProvider) return;
   auto *manager = ServiceRegistry::instance()->rootItemManager();
@@ -169,7 +170,7 @@ void ExtensionSettingsModel::setAlias(int row, const QString &alias) {
 }
 
 void ExtensionSettingsModel::selectByEntrypointId(const QString &id) {
-  for (int i = 0; i < static_cast<int>(m_visibleIndices.size()); ++i) {
+  for (int i = 0; std::cmp_less(i, m_visibleIndices.size()); ++i) {
     auto &e = m_allEntries[m_visibleIndices[i]];
     if (!e.isProvider && QString::fromStdString(e.entrypointId) == id) {
       for (int j = i - 1; j >= 0; --j) {
@@ -179,7 +180,7 @@ void ExtensionSettingsModel::selectByEntrypointId(const QString &id) {
           break;
         }
       }
-      for (int k = 0; k < static_cast<int>(m_visibleIndices.size()); ++k) {
+      for (int k = 0; std::cmp_less(k, m_visibleIndices.size()); ++k) {
         auto &e2 = m_allEntries[m_visibleIndices[k]];
         if (!e2.isProvider && QString::fromStdString(e2.entrypointId) == id) {
           select(k);
@@ -189,12 +190,12 @@ void ExtensionSettingsModel::selectByEntrypointId(const QString &id) {
       return;
     }
   }
-  for (int i = 0; i < static_cast<int>(m_allEntries.size()); ++i) {
+  for (int i = 0; std::cmp_less(i, m_allEntries.size()); ++i) {
     auto &e = m_allEntries[i];
     if (!e.isProvider && QString::fromStdString(e.entrypointId) == id) {
       for (int j = i - 1; j >= 0; --j) {
         if (m_allEntries[j].isProvider) {
-          for (int k = 0; k < static_cast<int>(m_visibleIndices.size()); ++k) {
+          for (int k = 0; std::cmp_less(k, m_visibleIndices.size()); ++k) {
             if (m_visibleIndices[k] == j && !m_allEntries[j].expanded) {
               toggleExpanded(k);
               break;
@@ -203,7 +204,7 @@ void ExtensionSettingsModel::selectByEntrypointId(const QString &id) {
           break;
         }
       }
-      for (int k = 0; k < static_cast<int>(m_visibleIndices.size()); ++k) {
+      for (int k = 0; std::cmp_less(k, m_visibleIndices.size()); ++k) {
         if (m_visibleIndices[k] == i) {
           select(k);
           return;
@@ -215,8 +216,8 @@ void ExtensionSettingsModel::selectByEntrypointId(const QString &id) {
 }
 
 void ExtensionSettingsModel::toggleExpanded(int row) {
-  if (row < 0 || row >= static_cast<int>(m_visibleIndices.size())) return;
-  int allIdx = m_visibleIndices[row];
+  if (row < 0 || std::cmp_greater_equal(row, m_visibleIndices.size())) return;
+  int const allIdx = m_visibleIndices[row];
   auto &e = m_allEntries[allIdx];
   if (!e.isProvider) return;
 
@@ -229,14 +230,14 @@ void ExtensionSettingsModel::toggleExpanded(int row) {
   }
 
   int childrenVisible = 0;
-  for (int i = row + 1; i < static_cast<int>(m_visibleIndices.size()); ++i) {
+  for (int i = row + 1; std::cmp_less(i, m_visibleIndices.size()); ++i) {
     if (m_allEntries[m_visibleIndices[i]].isProvider) break;
     ++childrenVisible;
   }
 
   if (e.expanded) {
     std::vector<int> toInsert;
-    for (int i = allIdx + 1; i < static_cast<int>(m_allEntries.size()) && !m_allEntries[i].isProvider; ++i) {
+    for (int i = allIdx + 1; std::cmp_less(i, m_allEntries.size()) && !m_allEntries[i].isProvider; ++i) {
       toInsert.push_back(i);
     }
     if (!toInsert.empty()) {
@@ -298,7 +299,7 @@ void ExtensionSettingsModel::rebuild(const QString &filter) {
     }
   }
 
-  bool isFiltering = !filter.isEmpty();
+  bool const isFiltering = !filter.isEmpty();
 
   for (const auto &[providerId, items] : providerMap) {
     auto *provider = manager->provider(providerId);
@@ -313,7 +314,7 @@ void ExtensionSettingsModel::rebuild(const QString &filter) {
     pe.enabled = true;
     pe.providerId = provider->uniqueId();
     pe.childCount = static_cast<int>(items.size());
-    pe.expanded = isFiltering || m_expandedProviders.count(pe.providerId) > 0;
+    pe.expanded = isFiltering || m_expandedProviders.contains(pe.providerId);
 
     if (auto *ext = dynamic_cast<ExtensionRootProvider *>(provider))
       pe.description = ext->repository()->description();
@@ -344,7 +345,7 @@ void ExtensionSettingsModel::rebuild(const QString &filter) {
   endResetModel();
 
   int newRow = !filter.isEmpty() ? 0 : m_selectedRow;
-  if (newRow >= static_cast<int>(m_visibleIndices.size())) newRow = m_visibleIndices.empty() ? -1 : 0;
+  if (std::cmp_greater_equal(newRow, m_visibleIndices.size())) newRow = m_visibleIndices.empty() ? -1 : 0;
   m_selectedRow = -1;
   if (newRow == -1)
     emit selectedChanged();
@@ -355,7 +356,7 @@ void ExtensionSettingsModel::rebuild(const QString &filter) {
 void ExtensionSettingsModel::rebuildVisible() {
   m_visibleIndices.clear();
   bool skipChildren = false;
-  for (int i = 0; i < static_cast<int>(m_allEntries.size()); ++i) {
+  for (int i = 0; std::cmp_less(i, m_allEntries.size()); ++i) {
     auto &e = m_allEntries[i];
     if (e.isProvider) {
       m_visibleIndices.push_back(i);

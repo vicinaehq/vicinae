@@ -1,4 +1,6 @@
 #include "extension-grid-model.hpp"
+
+#include <utility>
 #include "common/types.hpp"
 #include "lib/fuzzy/fuzzy-searchable.hpp"
 #include "navigation-controller.hpp"
@@ -19,7 +21,7 @@ template <> struct fuzzy::FuzzySearchable<GridItemViewModel> {
     for (const auto &f : fields) {
       int s = 0;
       if (fts::fuzzy_match(query, f.text, s)) {
-        int weighted = static_cast<int>(s * f.weight);
+        int const weighted = static_cast<int>(s * f.weight);
         if (weighted > best) best = weighted;
       }
     }
@@ -117,8 +119,8 @@ QString ExtensionGridModel::emptyIcon() const {
 void ExtensionGridModel::rebuildFromModel(bool resetSelection) {
   const auto &sections = activeSections();
 
-  int prevSection = selectedSection();
-  int prevItem = selectedItem();
+  int const prevSection = selectedSection();
+  int const prevItem = selectedItem();
 
   std::vector<SectionInfo> infos;
   infos.reserve(sections.size());
@@ -132,8 +134,8 @@ void ExtensionGridModel::rebuildFromModel(bool resetSelection) {
   setSelectFirstOnReset(false);
 
   if (!resetSelection) {
-    bool prevValid = prevSection >= 0 && prevSection < static_cast<int>(sections.size()) && prevItem >= 0 &&
-                     prevItem < static_cast<int>(sections[prevSection].items.size());
+    bool const prevValid = prevSection >= 0 && std::cmp_less(prevSection, sections.size()) && prevItem >= 0 &&
+                     std::cmp_less(prevItem, sections[prevSection].items.size());
 
     if (prevValid) {
       if (prevSection == selectedSection() && prevItem == selectedItem()) {
@@ -192,9 +194,9 @@ QString ExtensionGridModel::searchPlaceholder() const {
 
 const GridItemViewModel *ExtensionGridModel::itemAt(int section, int item) const {
   const auto &sections = activeSections();
-  if (section < 0 || section >= static_cast<int>(sections.size())) return nullptr;
+  if (section < 0 || std::cmp_greater_equal(section, sections.size())) return nullptr;
   const auto &sec = sections[section];
-  if (item < 0 || item >= static_cast<int>(sec.items.size())) return nullptr;
+  if (item < 0 || std::cmp_greater_equal(item, sec.items.size())) return nullptr;
   return &sec.items[item];
 }
 

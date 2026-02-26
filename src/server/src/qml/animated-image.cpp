@@ -54,7 +54,7 @@ void ViciAnimatedImage::setSource(const QString &src) {
   if (src.isEmpty()) return;
 
   static const QString prefix = QStringLiteral("image://vicinae/");
-  QString id = src.startsWith(prefix) ? src.mid(prefix.length()) : src;
+  QString const id = src.startsWith(prefix) ? src.mid(prefix.length()) : src;
 
   auto cached = ImageDataCache::instance().take(id);
   if (cached.result == ImageDataCache::Result::NotAnimated) return;
@@ -63,13 +63,13 @@ void ViciAnimatedImage::setSource(const QString &src) {
     return;
   }
 
-  int colonIdx = id.indexOf(':');
+  int const colonIdx = id.indexOf(':');
   if (colonIdx < 0) return;
 
-  QString type = id.left(colonIdx);
-  QString rest = id.mid(colonIdx + 1);
-  int qmark = rest.indexOf('?');
-  QString name = qmark >= 0 ? rest.left(qmark) : rest;
+  QString const type = id.left(colonIdx);
+  QString const rest = id.mid(colonIdx + 1);
+  int const qmark = rest.indexOf('?');
+  QString const name = qmark >= 0 ? rest.left(qmark) : rest;
 
   if (type == QStringLiteral("http")) {
     m_pendingReply = NetworkFetcher::instance()->fetch(QUrl(name));
@@ -82,7 +82,7 @@ void ViciAnimatedImage::setSource(const QString &src) {
     QFile f(name);
     if (f.open(QIODevice::ReadOnly)) loadData(f.readAll());
   } else if (type == QStringLiteral("datauri")) {
-    DataUri uri(name);
+    DataUri const uri(name);
     loadData(uri.decodeContent());
   }
 }
@@ -90,13 +90,13 @@ void ViciAnimatedImage::setSource(const QString &src) {
 void ViciAnimatedImage::applyScaledSize() {
   if (!m_movie || m_nativeSize.isEmpty()) return;
 
-  int w = qCeil(width());
-  int h = qCeil(height());
+  int const w = qCeil(width());
+  int const h = qCeil(height());
   if (w <= 0 || h <= 0) return;
 
-  qreal dpr = window() ? window()->devicePixelRatio() : qGuiApp->devicePixelRatio();
-  QSize physicalSize(qCeil(w * dpr), qCeil(h * dpr));
-  QSize target = QSizeF(m_nativeSize).scaled(QSizeF(physicalSize), Qt::KeepAspectRatio).toSize();
+  qreal const dpr = window() ? window()->devicePixelRatio() : qGuiApp->devicePixelRatio();
+  QSize const physicalSize(qCeil(w * dpr), qCeil(h * dpr));
+  QSize const target = QSizeF(m_nativeSize).scaled(QSizeF(physicalSize), Qt::KeepAspectRatio).toSize();
 
   if (!target.isEmpty() && target != m_nativeSize) {
     m_movie->setScaledSize(target);
@@ -143,14 +143,14 @@ void ViciAnimatedImage::loadData(const QByteArray &data) {
 void ViciAnimatedImage::paint(QPainter *painter) {
   if (!m_movie || m_movie->state() != QMovie::Running) return;
 
-  QPixmap frame = m_movie->currentPixmap();
+  QPixmap const frame = m_movie->currentPixmap();
   if (frame.isNull()) return;
 
   painter->setRenderHint(QPainter::SmoothPixmapTransform, true);
 
-  QSizeF itemSize(width(), height());
-  QSizeF scaled = QSizeF(m_nativeSize).scaled(itemSize, Qt::KeepAspectRatio);
-  QRectF target((itemSize.width() - scaled.width()) / 2.0, (itemSize.height() - scaled.height()) / 2.0,
+  QSizeF const itemSize(width(), height());
+  QSizeF const scaled = QSizeF(m_nativeSize).scaled(itemSize, Qt::KeepAspectRatio);
+  QRectF const target((itemSize.width() - scaled.width()) / 2.0, (itemSize.height() - scaled.height()) / 2.0,
                 scaled.width(), scaled.height());
 
   painter->drawPixmap(target, frame, QRectF(frame.rect()));

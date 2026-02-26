@@ -10,7 +10,7 @@ class LocalStorageViewHost : public ViewHostBase {
 
 public:
   QUrl qmlComponentUrl() const override;
-  QVariantMap qmlProperties() const override;
+  QVariantMap qmlProperties() override;
   void initialize() override;
   void loadInitialData() override;
   void textChanged(const QString &text) override;
@@ -30,7 +30,7 @@ public:
   LocalStorageItemViewHost(const QString &ns, std::vector<QString> keys);
 
   QUrl qmlComponentUrl() const override;
-  QVariantMap qmlProperties() const override;
+  QVariantMap qmlProperties() override;
   void initialize() override;
   void loadInitialData() override;
   void textChanged(const QString &text) override;

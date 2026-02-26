@@ -8,6 +8,7 @@
 #include "services/window-manager/window-manager.hpp"
 #include "utils/utils.hpp"
 #include <QDateTime>
+#include <utility>
 
 ClipboardHistoryModel::ClipboardHistoryModel(QObject *parent) : CommandListModel(parent) {}
 
@@ -65,7 +66,7 @@ ImageURL ClipboardHistoryModel::iconForEntry(const ClipboardHistoryEntry &entry)
 }
 
 void ClipboardHistoryModel::onItemSelected(int, int i) {
-  if (i >= 0 && i < static_cast<int>(m_entries.size())) { emit entrySelected(m_entries[i]); }
+  if (i >= 0 && std::cmp_less(i, m_entries.size())) { emit entrySelected(m_entries[i]); }
 }
 
 std::unique_ptr<ActionPanelState> ClipboardHistoryModel::createActionPanel(int, int i) const {
@@ -73,7 +74,7 @@ std::unique_ptr<ActionPanelState> ClipboardHistoryModel::createActionPanel(int, 
   auto panel = std::make_unique<ListActionPanelState>();
   auto clipman = scope().services()->clipman();
   auto mainSection = panel->createSection();
-  bool isCopyable = entry.encryption == ClipboardEncryptionType::None || clipman->isEncryptionReady();
+  bool const isCopyable = entry.encryption == ClipboardEncryptionType::None || clipman->isEncryptionReady();
 
   if (!isCopyable) { mainSection->addAction(new OpenItemPreferencesAction(EntrypointId{"clipboard", ""})); }
 

@@ -16,6 +16,7 @@
 #include <qlogging.h>
 #include <QProcessEnvironment>
 #include <ranges>
+#include <utility>
 
 NavigationController::NavigationController(ApplicationContext &ctx) : m_ctx(ctx) {}
 
@@ -88,7 +89,7 @@ void NavigationController::applyPopToRoot(const PendingPopToRoot &settings) {
     return settings.type;
   };
 
-  PopToRootType popToRootType = resolveApplicablePopToRoot();
+  PopToRootType const popToRootType = resolveApplicablePopToRoot();
 
   switch (popToRootType) {
   case PopToRootType::Immediate:
@@ -537,7 +538,7 @@ const NavigationController::ViewState *NavigationController::topState() const {
 }
 
 NavigationController::ViewState *NavigationController::findViewState(const BaseView *view) {
-  return const_cast<ViewState *>(std::as_const(*this).findViewState(view));
+  return const_cast<ViewState *>(std::as_const(*this).findViewState(view)); // NOLINT(cppcoreguidelines-pro-type-const-cast)
 }
 
 bool NavigationController::isRootSearch() const { return m_views.size() == 1; }
@@ -563,7 +564,7 @@ bool NavigationController::reloadActiveCommand() {
 
   // we only store the id, as the pointer will likely become invalid
   // after unloading.
-  EntrypointId id = cmd->uniqueId();
+  EntrypointId const id = cmd->uniqueId();
 
   unloadActiveCommand();
   launch(id);
@@ -585,7 +586,7 @@ void NavigationController::unloadActiveCommand() {
 
   auto size = m_frames.back()->viewCount;
 
-  for (int i = 0; i < size; ++i) {
+  for (int i = 0; std::cmp_less(i,  size); ++i) {
     popCurrentView();
   }
 }
@@ -593,7 +594,7 @@ void NavigationController::unloadActiveCommand() {
 void NavigationController::launch(const EntrypointId &id) {
   auto root = m_ctx.services->rootItemManager();
 
-  for (ExtensionRootProvider *extension : root->extensions()) {
+  for (ExtensionRootProvider  const*extension : root->extensions()) {
     for (const auto &cmd : extension->repository()->commands()) {
       if (cmd->uniqueId() == id) {
         launch(cmd);
@@ -616,7 +617,7 @@ void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd, const
     return;
   }
 
-  bool shouldCheckPreferences = cmd->type() == CommandType::CommandTypeExtension;
+  bool const shouldCheckPreferences = cmd->type() == CommandType::CommandTypeExtension;
   LaunchProps props;
 
   props.arguments = arguments;
@@ -628,10 +629,10 @@ void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd, const
     auto preferenceValues = manager->getPreferenceValues(itemId);
 
     for (const auto &preference : preferences) {
-      QJsonValue value = preferenceValues.value(preference.name());
-      bool hasValue = !(value.isUndefined() || value.isNull());
-      bool hasDefault = !preference.defaultValue().isUndefined();
-      bool isMissing = preference.required() && !hasValue && !hasDefault;
+      QJsonValue const value = preferenceValues.value(preference.name());
+      bool const hasValue = !(value.isUndefined() || value.isNull());
+      bool const hasDefault = !preference.defaultValue().isUndefined();
+      bool const isMissing = preference.required() && !hasValue && !hasDefault;
 
       if (!isMissing) continue;
 

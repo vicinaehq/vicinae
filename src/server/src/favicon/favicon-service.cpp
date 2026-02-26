@@ -138,7 +138,7 @@ FaviconService::FaviconService(const std::filesystem::path &path, QObject *paren
 
   QSqlQuery query(_db);
 
-  bool ok = query.exec(R"(
+  bool const ok = query.exec(R"(
 		CREATE TABLE IF NOT EXISTS favicon (
 			id TEXT PRIMARY KEY,
 			size INTEGER,

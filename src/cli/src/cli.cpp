@@ -29,7 +29,7 @@ public:
       out << BOLD << HEADLINE << RESET << "\n\n";
     }
 
-    std::string bin_name = name.empty() ? app->get_name() : name;
+    const std::string bin_name = name.empty() ? app->get_name() : name;
     out << BOLD << "Usage: " << RESET;
 
     if (app->get_parent() != nullptr) {
@@ -75,7 +75,7 @@ public:
         out << RESET;
 
         // Pad to align descriptions
-        int padding = 28 - printed_length;
+        const int padding = 28 - printed_length;
         if (padding > 0) {
           out << std::string(padding, ' ');
         } else {
@@ -105,7 +105,7 @@ public:
         out << "  " << BLUE << sub->get_name() << RESET;
 
         // Pad to align descriptions
-        int padding = max_name_len - sub->get_name().length() + 8;
+        const int padding = max_name_len - sub->get_name().length() + 8;
         if (padding > 0) {
           out << std::string(padding, ' ');
         } else {
@@ -327,7 +327,7 @@ int CommandLineApp::run(int ac, char **av) {
     cmd->prepare(sub, &success);
     cmd->setup(sub);
     sub->callback([cmd = cmd.get(), sub, &success]() {
-      bool r = cmd->run(sub);
+      const bool r = cmd->run(sub);
       success = r;
     });
   }
@@ -366,7 +366,7 @@ int CommandLineApp::run(int ac, char **av) {
 
     // raycast:// or com.raycast:/
     auto pred = [&](std::string_view scheme) { return arg.starts_with(std::string{scheme} + ":/"); };
-    bool hasScheme = std::ranges::any_of(std::initializer_list{"vicinae", "raycast", "com.raycast"}, pred);
+    const bool hasScheme = std::ranges::any_of(std::initializer_list{"vicinae", "raycast", "com.raycast"}, pred);
 
     if (hasScheme) {
       if (auto res = ipc::CliClient::deeplink(arg, {}); !res) {
@@ -395,13 +395,13 @@ int CommandLineApp::run(int ac, char **av) {
 }
 
 int CommandLineInterface::execute(int ac, char **av) {
+  /*
   bool ignoreAppImageWarning = false;
 
   if (const char *p = getenv("IGNORE_APPIMAGE_WARNING"); p && std::string_view{p} == "1") {
     ignoreAppImageWarning = true;
   }
 
-  /*
   if (Environment::isAppImage() && !ignoreAppImageWarning) {
     std::cerr
         << rang::fg::red
@@ -412,7 +412,7 @@ int CommandLineInterface::execute(int ac, char **av) {
   }
   */
 
-  std::vector<std::unique_ptr<AbstractCommandLineCommand>> commands;
+  const std::vector<std::unique_ptr<AbstractCommandLineCommand>> commands;
   CommandLineApp app(std::string{HEADLINE});
 
   app.registerCommand<VersionCommand>();

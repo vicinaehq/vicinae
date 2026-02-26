@@ -65,7 +65,7 @@ clip_proto::Response *ClipboardRequestRouter::paste(const clip_proto::PasteToCli
 
 clip_proto::Response *ClipboardRequestRouter::copy(const clip_proto::CopyToClipboardRequest &req) {
   auto content = parseProtoClipboardContent(req.content());
-  bool concealed = req.options().concealed();
+  bool const concealed = req.options().concealed();
 
   m_clipboard.copyContent(content, {.concealed = concealed});
 

@@ -8,7 +8,9 @@
 
 typedef const char *emoji_text_iter_t;
 
+// NOLINTBEGIN(bugprone-suspicious-include)
 #include "segmenter/emoji-presentation-scanner.c"
+// NOLINTEND(bugprone-suspicious-include)
 
 namespace emoji {
 
@@ -57,7 +59,7 @@ std::string applySkinTone(std::string_view emoji, SkinTone tone) {
   int32_t const length = static_cast<int32_t>(emoji.size());
   UChar32 c;
 
-  U8_NEXT(emoji, i, length, c);
+  U8_NEXT(emoji, i, length, c); // NOLINT(bugprone-inc-dec-in-conditions)
 
   if (c < 0) { return std::string(emoji); }
 
@@ -112,7 +114,7 @@ static inline bool isEmojiTextDefault(char32_t cp) {
 static inline bool isEmoji(char32_t cp) { return u_hasBinaryProperty(cp, UCHAR_EMOJI); }
 } // namespace Character
 
-enum EmojiCategory : std::uint8_t {
+enum class EmojiCategory : std::uint8_t {
   Emoji = 0,
   EmojiTextPresentation = 1,
   EmojiEmojiPresentation = 2,
@@ -132,23 +134,25 @@ enum EmojiCategory : std::uint8_t {
 };
 
 static char emojiSegmentationCategory(char32_t codepoint) {
-  if (codepoint == kCombiningEnclosingKeycapCharacter) return CombiningEnclosingKeycap;
-  if (codepoint == kCombiningEnclosingCircleBackslashCharacter) return CombiningEnclosingCircleBackslash;
-  if (codepoint == kZeroWidthJoinerCharacter) return ZWJ;
-  if (codepoint == kVariationSelector15Character) return VS15;
-  if (codepoint == kVariationSelector16Character) return VS16;
-  if (codepoint == 0x1F3F4) return TagBase;
+  using enum EmojiCategory;
+  auto cat = [](EmojiCategory c) { return static_cast<char>(c); };
+  if (codepoint == kCombiningEnclosingKeycapCharacter) return cat(CombiningEnclosingKeycap);
+  if (codepoint == kCombiningEnclosingCircleBackslashCharacter) return cat(CombiningEnclosingCircleBackslash);
+  if (codepoint == kZeroWidthJoinerCharacter) return cat(ZWJ);
+  if (codepoint == kVariationSelector15Character) return cat(VS15);
+  if (codepoint == kVariationSelector16Character) return cat(VS16);
+  if (codepoint == 0x1F3F4) return cat(TagBase);
   if ((codepoint >= 0xE0030 && codepoint <= 0xE0039) || (codepoint >= 0xE0061 && codepoint <= 0xE007A))
-    return TagSequence;
-  if (codepoint == 0xE007F) return TagTerm;
-  if (Character::isEmojiModifierBase(codepoint)) return EmojiModifierBase;
-  if (Character::isModifier(codepoint)) return EmojiModifier;
-  if (Character::isRegionalIndicator(codepoint)) return RegionalIndicator;
-  if (Character::isEmojiKeycapBase(codepoint)) return KeycapBase;
+    return cat(TagSequence);
+  if (codepoint == 0xE007F) return cat(TagTerm);
+  if (Character::isEmojiModifierBase(codepoint)) return cat(EmojiModifierBase);
+  if (Character::isModifier(codepoint)) return cat(EmojiModifier);
+  if (Character::isRegionalIndicator(codepoint)) return cat(RegionalIndicator);
+  if (Character::isEmojiKeycapBase(codepoint)) return cat(KeycapBase);
 
-  if (Character::isEmojiEmojiDefault(codepoint)) return EmojiEmojiPresentation;
-  if (Character::isEmojiTextDefault(codepoint)) return EmojiTextPresentation;
-  if (Character::isEmoji(codepoint)) return Emoji;
+  if (Character::isEmojiEmojiDefault(codepoint)) return cat(EmojiEmojiPresentation);
+  if (Character::isEmojiTextDefault(codepoint)) return cat(EmojiTextPresentation);
+  if (Character::isEmoji(codepoint)) return cat(Emoji);
 
   // Ragel state machine will interpret unknown category as "any".
   return kMaxEmojiScannerCategory;
@@ -163,7 +167,7 @@ static std::string segment(std::string_view str) {
 
   while (i < length) {
     UChar32 c;
-    U8_NEXT(str, i, length, c);
+    U8_NEXT(str, i, length, c); // NOLINT(bugprone-inc-dec-in-conditions)
 
     if (c < 0) { continue; }
 

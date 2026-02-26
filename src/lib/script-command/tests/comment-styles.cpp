@@ -54,8 +54,11 @@ print("Hello World")
   REQUIRE(result.has_value());
   REQUIRE(result->title == "Full Lua Test");
   REQUIRE(result->mode == script_command::OutputMode::Inline);
+  REQUIRE(result->refreshTime.has_value());
   REQUIRE(result->refreshTime.value() == 30);
+  REQUIRE(result->author.has_value());
   REQUIRE(result->author.value() == "Test Author");
+  REQUIRE(result->description.has_value());
   REQUIRE(result->description.value() == "A test Lua script");
 }
 

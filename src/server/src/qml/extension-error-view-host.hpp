@@ -10,7 +10,7 @@ public:
   explicit ExtensionErrorViewHost(const QString &errorText);
 
   QUrl qmlComponentUrl() const override;
-  QVariantMap qmlProperties() const override;
+  QVariantMap qmlProperties() override;
   void initialize() override;
 
   QString markdown() const;

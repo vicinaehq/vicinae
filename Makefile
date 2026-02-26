@@ -21,9 +21,15 @@ preview:
 .PHONY: preview
 
 debug:
-	cmake -G Ninja -DLTO=OFF -DENABLE_PREVIEW_FEATURES=ON -DENABLE_SANITIZERS=ON -DENABLE_CLANG_TIDY=ON -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
+	cmake -G Ninja -DLTO=OFF -DENABLE_PREVIEW_FEATURES=ON -DENABLE_SANITIZERS=ON -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)
 .PHONY: debug
+
+debug-tidy:
+	# we need to run tidy with clang to avoid false positives
+	CC=clang CXX=clang++ cmake -G Ninja -DLTO=OFF -DENABLE_PREVIEW_FEATURES=ON -DENABLE_SANITIZERS=ON -DENABLE_CLANG_TIDY=ON -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
+	cmake --build $(BUILD_DIR)
+.PHONY: debug-tidy
 
 genicon:
 	node scripts/generate-icons.js

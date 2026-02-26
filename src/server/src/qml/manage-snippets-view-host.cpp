@@ -10,8 +10,8 @@ QUrl ManageSnippetsViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/DetailListView.qml"));
 }
 
-QVariantMap ManageSnippetsViewHost::qmlProperties() const {
-  return {{QStringLiteral("host"), QVariant::fromValue(const_cast<ManageSnippetsViewHost *>(this))}};
+QVariantMap ManageSnippetsViewHost::qmlProperties() {
+  return {{QStringLiteral("host"), QVariant::fromValue(this)}};
 }
 
 void ManageSnippetsViewHost::initialize() {

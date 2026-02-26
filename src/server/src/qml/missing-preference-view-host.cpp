@@ -1,4 +1,6 @@
 #include "missing-preference-view-host.hpp"
+
+#include <utility>
 #include "extension/extension-command.hpp"
 #include "navigation-controller.hpp"
 #include "view-utils.hpp"
@@ -112,10 +114,10 @@ void MissingPreferenceFormModel::load(const std::vector<Preference> &preferences
   m_values = QJsonObject{};
 
   for (const auto &pref : preferences) {
-    QJsonValue value = existingValues.value(pref.name());
-    bool hasValue = !(value.isUndefined() || value.isNull());
-    bool hasDefault = !pref.defaultValue().isUndefined();
-    bool isMissing = pref.required() && !hasValue && !hasDefault;
+    QJsonValue const value = existingValues.value(pref.name());
+    bool const hasValue = !(value.isUndefined() || value.isNull());
+    bool const hasDefault = !pref.defaultValue().isUndefined();
+    bool const isMissing = pref.required() && !hasValue && !hasDefault;
 
     if (!isMissing) continue;
 
@@ -134,7 +136,7 @@ void MissingPreferenceFormModel::load(const std::vector<Preference> &preferences
 }
 
 void MissingPreferenceFormModel::setFieldValue(int row, const QVariant &value) {
-  if (row < 0 || row >= static_cast<int>(m_fields.size())) return;
+  if (row < 0 || std::cmp_greater_equal(row, m_fields.size())) return;
   m_fields[row].value = value;
   m_values[m_fields[row].id] = QJsonValue::fromVariant(value);
   auto idx = index(row);
@@ -142,7 +144,7 @@ void MissingPreferenceFormModel::setFieldValue(int row, const QVariant &value) {
 }
 
 MissingPreferenceFormModel::ValidateResult MissingPreferenceFormModel::validate() const {
-  for (int i = 0; i < static_cast<int>(m_fields.size()); ++i) {
+  for (int i = 0; std::cmp_less(i, m_fields.size()); ++i) {
     const auto &f = m_fields[i];
     auto jsonVal = m_values.value(f.id);
     if (jsonVal.isNull() || jsonVal.isUndefined() || jsonVal.toString().isEmpty()) return {false, i};
@@ -162,8 +164,8 @@ QUrl MissingPreferenceViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/MissingPreferenceView.qml"));
 }
 
-QVariantMap MissingPreferenceViewHost::qmlProperties() const {
-  return {{QStringLiteral("host"), QVariant::fromValue(const_cast<MissingPreferenceViewHost *>(this))}};
+QVariantMap MissingPreferenceViewHost::qmlProperties() {
+  return {{QStringLiteral("host"), QVariant::fromValue(this)}};
 }
 
 void MissingPreferenceViewHost::initialize() {

@@ -7,7 +7,7 @@ QUrl BrowseAppsViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/CommandListView.qml"));
 }
 
-QVariantMap BrowseAppsViewHost::qmlProperties() const {
+QVariantMap BrowseAppsViewHost::qmlProperties() {
   return {{QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(m_model))}};
 }
 
@@ -34,8 +34,8 @@ QObject *BrowseAppsViewHost::listModel() const { return m_model; }
 void BrowseAppsViewHost::reload() {
   auto appDb = context()->services->appDb();
   auto preferences = command()->preferenceValues();
-  AppListOptions opts{.sortAlphabetically = preferences.value("sortAlphabetically").toBool()};
-  bool showHidden = preferences.value("showHidden").toBool();
+  AppListOptions const opts{.sortAlphabetically = preferences.value("sortAlphabetically").toBool()};
+  bool const showHidden = preferences.value("showHidden").toBool();
 
   auto apps = appDb->list(opts);
   std::vector<AppPtr> filtered;

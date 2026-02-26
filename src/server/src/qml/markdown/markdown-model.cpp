@@ -13,6 +13,7 @@
 #include <libxml/HTMLparser.h>
 #include <libxml/tree.h>
 #include <cstring>
+#include <utility>
 
 namespace {
 
@@ -32,7 +33,7 @@ GfmNodeType getGfmNodeType(cmark_node *node) {
 QString imageProviderUrl(const QString &rawUrl) {
   if (rawUrl.startsWith(QStringLiteral("image://vicinae/"))) return rawUrl;
 
-  QUrl url(rawUrl);
+  QUrl const url(rawUrl);
   auto scheme = url.scheme();
   if (scheme == "https" || scheme == "http") return QStringLiteral("image://vicinae/http:") + rawUrl;
   if (scheme == "data") return QStringLiteral("image://vicinae/datauri:") + rawUrl;
@@ -198,15 +199,15 @@ QVariantMap parseImageSize(const QUrl &url) {
     return 0;
   };
 
-  int w = tryParam({"raycast-width", "omnicast-width"});
-  int h = tryParam({"raycast-height", "omnicast-height"});
+  int const w = tryParam({"raycast-width", "omnicast-width"});
+  int const h = tryParam({"raycast-height", "omnicast-height"});
   if (w > 0) data[QStringLiteral("width")] = w;
   if (h > 0) data[QStringLiteral("height")] = h;
   return data;
 }
 
 QVariantMap buildImageBlock(cmark_node *imageNode) {
-  QUrl imgUrl(QString::fromUtf8(cmark_node_get_url(imageNode)));
+  QUrl const imgUrl(QString::fromUtf8(cmark_node_get_url(imageNode)));
   QVariantMap data = parseImageSize(imgUrl);
   data[QStringLiteral("src")] = imageProviderUrl(imgUrl.toString());
   data[QStringLiteral("alt")] = imageAltText(imageNode);
@@ -219,7 +220,7 @@ struct HtmlBlockResult {
 };
 
 void processHtmlNodes(xmlNode *node, HtmlBlockResult &result) {
-  for (xmlNode *cur = node; cur; cur = cur->next) {
+  for (xmlNode  const*cur = node; cur; cur = cur->next) {
     if (cur->type == XML_ELEMENT_NODE) {
       if (xmlStrcmp(cur->name, BAD_CAST "img") == 0) {
         QString src;
@@ -227,8 +228,8 @@ void processHtmlNodes(xmlNode *node, HtmlBlockResult &result) {
         for (xmlAttrPtr attr = cur->properties; attr; attr = attr->next) {
           xmlChar *val = xmlNodeListGetString(cur->doc, attr->children, 1);
           if (!val) continue;
-          QString name = QString::fromUtf8(reinterpret_cast<const char *>(attr->name)).toLower();
-          QString value = QString::fromUtf8(reinterpret_cast<const char *>(val));
+          QString const name = QString::fromUtf8(reinterpret_cast<const char *>(attr->name)).toLower();
+          QString const value = QString::fromUtf8(reinterpret_cast<const char *>(val));
           xmlFree(val);
 
           if (name == "src") {
@@ -241,7 +242,7 @@ void processHtmlNodes(xmlNode *node, HtmlBlockResult &result) {
             for (const auto &decl : value.split(';', Qt::SkipEmptyParts)) {
               auto parts = decl.split(':', Qt::SkipEmptyParts);
               if (parts.size() != 2) continue;
-              QString prop = parts[0].trimmed().toLower();
+              QString const prop = parts[0].trimmed().toLower();
               QString pval = parts[1].trimmed();
               if (pval.endsWith("px", Qt::CaseInsensitive)) pval.chop(2);
               if (prop == "width")
@@ -265,7 +266,7 @@ void processHtmlNodes(xmlNode *node, HtmlBlockResult &result) {
     } else if (cur->type == XML_TEXT_NODE) {
       xmlChar *content = xmlNodeGetContent(cur);
       if (content) {
-        QString text = QString::fromUtf8(reinterpret_cast<const char *>(content)).trimmed();
+        QString const text = QString::fromUtf8(reinterpret_cast<const char *>(content)).trimmed();
         if (!text.isEmpty()) result.html += text.toHtmlEscaped();
         xmlFree(content);
       }
@@ -416,16 +417,16 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
         code.chop(1);
       data[QStringLiteral("code")] = code;
       auto *lang = cmark_node_get_fence_info(node);
-      QString language = lang ? QString::fromUtf8(lang) : QString();
+      QString const language = lang ? QString::fromUtf8(lang) : QString();
       data[QStringLiteral("language")] = language;
-      bool isDark = ThemeService::instance().theme().isDark();
+      bool const isDark = ThemeService::instance().theme().isDark();
       data[QStringLiteral("highlightedHtml")] = syntax::highlight(code, language, m_syntaxStyles, isDark);
       blocks.push_back({MdBlockType::CodeBlock, data});
       break;
     }
 
     case CMARK_NODE_LIST: {
-      bool ordered = (cmark_node_get_list_type(node) == CMARK_ORDERED_LIST);
+      bool const ordered = (cmark_node_get_list_type(node) == CMARK_ORDERED_LIST);
       QVariantMap data;
       data[QStringLiteral("items")] = buildListItems(node, ctx);
       if (ordered) {
@@ -442,13 +443,13 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
       break;
 
     case CMARK_NODE_HTML_BLOCK: {
-      QString html = QString::fromUtf8(cmark_node_get_literal(node));
-      QByteArray wrapped = "<div>" + html.toUtf8() + "</div>";
+      QString const html = QString::fromUtf8(cmark_node_get_literal(node));
+      QByteArray const wrapped = "<div>" + html.toUtf8() + "</div>";
 
       htmlDocPtr doc = htmlReadMemory(wrapped.constData(), wrapped.size(), nullptr, nullptr,
                                       HTML_PARSE_RECOVER | HTML_PARSE_NOERROR | HTML_PARSE_NOWARNING);
       if (doc) {
-        xmlNode *xmlRoot = xmlDocGetRootElement(doc);
+        xmlNode  const*xmlRoot = xmlDocGetRootElement(doc);
         if (xmlRoot) {
           HtmlBlockResult result;
           processHtmlNodes(xmlRoot->children, result);
@@ -478,13 +479,13 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
       if (firstChild && cmark_node_get_type(firstChild) == CMARK_NODE_PARAGRAPH) {
         auto *textNode = cmark_node_first_child(firstChild);
         if (textNode && cmark_node_get_type(textNode) == CMARK_NODE_TEXT) {
-          QString text = QString::fromUtf8(cmark_node_get_literal(textNode));
+          QString const text = QString::fromUtf8(cmark_node_get_literal(textNode));
           static const QRegularExpression calloutRe(
               QStringLiteral("^\\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\\]\\s*"));
           auto match = calloutRe.match(text);
           if (match.hasMatch()) {
             calloutType = match.captured(1).toLower();
-            QString remaining = text.mid(match.capturedLength());
+            QString const remaining = text.mid(match.capturedLength());
             cmark_node_set_literal(textNode, remaining.toUtf8().constData());
           }
         }
@@ -493,7 +494,7 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
       QVariantList paragraphs;
       for (auto *child = cmark_node_first_child(node); child; child = cmark_node_next(child)) {
         if (cmark_node_get_type(child) == CMARK_NODE_PARAGRAPH) {
-          QString html = renderInlineChildren(child, ctx);
+          QString const html = renderInlineChildren(child, ctx);
           if (!html.isEmpty()) paragraphs.append(html);
         }
       }
@@ -663,7 +664,7 @@ void MarkdownModel::openLink(const QString &url) {
 }
 
 QString MarkdownModel::copyCodeBlock(int blockIndex) {
-  if (blockIndex < 0 || blockIndex >= static_cast<int>(m_blocks.size())) return {};
+  if (blockIndex < 0 || std::cmp_greater_equal(blockIndex, m_blocks.size())) return {};
   const auto &block = m_blocks[blockIndex];
   if (block.type != MdBlockType::CodeBlock) return {};
   auto code = block.data.value(QStringLiteral("code")).toString();

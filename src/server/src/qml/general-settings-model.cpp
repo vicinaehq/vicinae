@@ -115,7 +115,7 @@ QVariant GeneralSettingsModel::currentFont() const {
 
 QVariantList GeneralSettingsModel::iconThemeItems() const {
   QVariantList items;
-  IconThemeDatabase db;
+  IconThemeDatabase const db;
   for (const auto &theme : db.themes()) {
     items.append(makeDropdownItem(theme.name, theme.name));
   }

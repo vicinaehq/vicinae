@@ -11,7 +11,6 @@
 #include "extension/requests/oauth-router.hpp"
 #include "extension/requests/command-request-router.hpp"
 #include "proto/manager.pb.h"
-#include "common.hpp"
 #include "service-registry.hpp"
 #include "services/asset-resolver/asset-resolver.hpp"
 #include <QString>
@@ -122,9 +121,11 @@ void ExtensionCommandRuntime::handleEvent(const ExtensionEvent &event) {
 
   switch (event.data()->payload_case()) {
   case Event::kCrash:
-    return handleCrash(event.data()->crash());
+     { handleCrash(event.data()->crash()); return;
+}
   case Event::kGeneric:
-    return handleGenericEvent(event.data()->generic());
+     { handleGenericEvent(event.data()->generic()); return;
+}
   default:
     break;
   }
@@ -144,7 +145,7 @@ void ExtensionCommandRuntime::initialize() {
       std::make_unique<CommandRequestRouter>(m_navigation.get(), context()->services->rootItemManager());
   m_fileSearchRouter = std::make_unique<FileSearchRequestRouter>(*context()->services->fileService());
 
-  QString storageNamespace = QString("%1:data").arg(m_command->uniqueId().provider.c_str());
+  QString const storageNamespace = QString("%1:data").arg(m_command->uniqueId().provider.c_str());
 
   m_storageRouter =
       std::make_unique<StorageRequestRouter>(context()->services->localStorage(), storageNamespace);

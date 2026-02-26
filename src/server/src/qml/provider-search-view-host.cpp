@@ -10,7 +10,7 @@ QUrl ProviderSearchViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/CommandListView.qml"));
 }
 
-QVariantMap ProviderSearchViewHost::qmlProperties() const {
+QVariantMap ProviderSearchViewHost::qmlProperties() {
   return {{QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(m_model))}};
 }
 

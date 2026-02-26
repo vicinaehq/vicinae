@@ -30,7 +30,7 @@ void SystemRunModel::setData(std::vector<std::string> cmdline, bool hasProgram,
 const RunProgramItem &SystemRunModel::itemAt(int section, int item) const {
   static thread_local RunProgramItem cached;
 
-  bool isCmdSection = (m_cmdCount > 0 && section == 0);
+  bool const isCmdSection = (m_cmdCount > 0 && section == 0);
   if (isCmdSection) {
     cached = m_cmdline;
     return cached;
@@ -78,7 +78,7 @@ std::unique_ptr<ActionPanelState> SystemRunModel::createActionPanel(int section,
   auto appDb = scope().services()->appDb();
   auto terminal = appDb->terminalEmulator();
 
-  auto createTerminalActions = [&](std::vector<QString> args) {
+  auto createTerminalActions = [&](const std::vector<QString>& args) {
     if (!terminal) return;
 
     auto hold = new OpenInTerminalAction(terminal, args);

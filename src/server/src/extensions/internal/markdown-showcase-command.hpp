@@ -11,7 +11,7 @@ class MarkdownShowcaseView : public FormViewBase {
 public:
   QUrl qmlComponentUrl() const override { return QUrl(QStringLiteral("qrc:/Vicinae/StoreIntroView.qml")); }
 
-  QVariantMap qmlProperties() const override { return {{QStringLiteral("host"), QVariant::fromValue(this)}}; }
+  QVariantMap qmlProperties() override { return {{QStringLiteral("host"), QVariant::fromValue(this)}}; }
 
   QString introMarkdown() const {
     return QStringLiteral(R"(# Heading 1

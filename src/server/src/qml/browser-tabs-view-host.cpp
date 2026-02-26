@@ -6,7 +6,7 @@ QUrl BrowserTabsViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/CommandListView.qml"));
 }
 
-QVariantMap BrowserTabsViewHost::qmlProperties() const {
+QVariantMap BrowserTabsViewHost::qmlProperties() {
   return {{QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(m_model))}};
 }
 

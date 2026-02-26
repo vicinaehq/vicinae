@@ -23,7 +23,7 @@ QFuture<files::Response *> FileSearchRequestRouter::search(const files::SearchRe
   auto query = m_indexer.queryAsync(req.query());
 
   return query.then([](const std::vector<IndexerFileResult> &results) {
-    QMimeDatabase mimeDb; // TODO: get rid of this when we have the mime type included in the results
+    QMimeDatabase const mimeDb; // TODO: get rid of this when we have the mime type included in the results
     auto res = new files::Response;
     auto searchRes = new proto::ext::file_search::SearchResponse;
 

@@ -7,7 +7,7 @@ namespace storage = proto::ext::storage;
 proto::ext::storage::GetResponse *
 StorageRequestRouter::handleGetStorage(const proto::ext::storage::GetRequest &req) {
   auto res = new proto::ext::storage::GetResponse;
-  QJsonValue value = m_storage->getItem(m_namespaceId, QString::fromStdString(req.key()));
+  QJsonValue const value = m_storage->getItem(m_namespaceId, QString::fromStdString(req.key()));
 
   res->set_allocated_value(new google::protobuf::Value(transformJsonValueToProto(value)));
 

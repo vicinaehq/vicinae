@@ -32,7 +32,7 @@ public:
   ShortcutFormViewHost(std::shared_ptr<Shortcut> shortcut, Mode mode);
 
   QUrl qmlComponentUrl() const override;
-  QVariantMap qmlProperties() const override;
+  QVariantMap qmlProperties() override;
   void initialize() override;
 
   QString name() const { return m_name; }

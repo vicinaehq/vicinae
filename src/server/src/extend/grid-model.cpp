@@ -105,7 +105,7 @@ GridModel GridModelParser::parse(const QJsonObject &instance) {
   GridModel model;
   auto props = instance.value("props").toObject();
   // no builtin filtering by default if onSearchTextChange handler is specified
-  bool defaultFiltering = !props.contains("onSearchTextChange");
+  bool const defaultFiltering = !props.contains("onSearchTextChange");
 
   model.dirty = instance.value("dirty").toBool(true);
   model.isLoading = props["isLoading"].toBool(false);
@@ -151,13 +151,13 @@ GridModel GridModelParser::parse(const QJsonObject &instance) {
     if (type == "grid-item") {
       auto item = parseListItem(childObj, index);
 
-      model.items.push_back(item);
+      model.items.emplace_back(item);
     }
 
     if (type == "grid-section") {
       auto section = parseSection(childObj);
 
-      model.items.push_back(section);
+      model.items.emplace_back(section);
     }
 
     if (type == "dropdown") { model.searchBarAccessory = DropdownModel::fromJson(childObj); }
@@ -170,4 +170,4 @@ GridModel GridModelParser::parse(const QJsonObject &instance) {
   return model;
 }
 
-GridModelParser::GridModelParser() {}
+GridModelParser::GridModelParser() = default;

@@ -12,6 +12,7 @@
 #include <QGuiApplication>
 #include <qfuturewatcher.h>
 #include <unordered_map>
+#include <utility>
 
 namespace ui = proto::ext::ui;
 
@@ -75,10 +76,10 @@ void UIRequestRouter::modelCreated() {
   const auto &views = m_navigation->views();
   auto models = m_modelWatcher.result();
 
-  for (int i = 0; i < models.items.size() && i < static_cast<int>(views.size()); ++i) {
+  for (int i = 0; i < models.items.size() && std::cmp_less(i, views.size()); ++i) {
     auto &model = models.items[i];
     const auto &entry = views[i];
-    bool shouldSkipRender = !model.dirty && !model.propsDirty;
+    bool const shouldSkipRender = !model.dirty && !model.propsDirty;
 
     if (!shouldSkipRender) entry.renderFn(model.root);
   }
@@ -272,7 +273,7 @@ proto::ext::ui::Response *UIRequestRouter::handleRender(const proto::ext::ui::Re
   }
 
   m_modelWatcher.setFuture(QtConcurrent::run([views]() {
-    Timer timer;
+    Timer const timer;
     auto model = ModelParser().parse(views);
 
     // timer.time("Model parsed");

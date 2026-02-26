@@ -16,8 +16,8 @@ QUrl SnippetFormViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/SnippetFormView.qml"));
 }
 
-QVariantMap SnippetFormViewHost::qmlProperties() const {
-  return {{QStringLiteral("host"), QVariant::fromValue(const_cast<SnippetFormViewHost *>(this))}};
+QVariantMap SnippetFormViewHost::qmlProperties() {
+  return {{QStringLiteral("host"), QVariant::fromValue(this)}};
 }
 
 void SnippetFormViewHost::initialize() {
@@ -54,15 +54,12 @@ void SnippetFormViewHost::initialize() {
     emit formChanged();
   }
 
-  switch (m_mode) {
-  case Mode::Create:
-    break;
-  case Mode::Edit:
-    setNavigationTitle(QString("Edit \"%1\"").arg(QString::fromStdString(m_initialSnippet->name)));
-    break;
-  case Mode::Duplicate:
-    setNavigationTitle(QString("Duplicate \"%1\"").arg(QString::fromStdString(m_initialSnippet->name)));
-    break;
+  if (m_initialSnippet) {
+    if (m_mode == Mode::Edit) {
+      setNavigationTitle(QString("Edit \"%1\"").arg(QString::fromStdString(m_initialSnippet->name)));
+    } else if (m_mode == Mode::Duplicate) {
+      setNavigationTitle(QString("Duplicate \"%1\"").arg(QString::fromStdString(m_initialSnippet->name)));
+    }
   }
 }
 
@@ -109,7 +106,7 @@ void SnippetFormViewHost::submit() {
     payload.expansion = expansion;
   }
 
-  if (m_mode == Mode::Edit) {
+  if (m_mode == Mode::Edit && m_initialSnippet) {
     const auto result = m_service->updateSnippet(m_initialSnippet->id, payload);
     if (!result) {
       toast->failure(result.error().c_str());

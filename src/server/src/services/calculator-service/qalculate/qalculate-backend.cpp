@@ -14,7 +14,7 @@
 using CalculatorResult = QalculateBackend::CalculatorResult;
 using CalculatorError = QalculateBackend::CalculatorError;
 
-QalculateBackend::QalculateBackend() {}
+QalculateBackend::QalculateBackend() = default;
 
 bool QalculateBackend::isActivatable() const {
   /**
@@ -34,13 +34,13 @@ bool QalculateBackend::start() {
 }
 
 std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const QString &question) const {
-  QString expression = preprocessQuestion(question);
-  std::string localizedExpression = CALCULATOR->unlocalizeExpression(expression.toStdString());
+  QString const expression = preprocessQuestion(question);
+  std::string const localizedExpression = CALCULATOR->unlocalizeExpression(expression.toStdString());
   std::string res;
   res = CALCULATOR->calculateAndPrint(localizedExpression, 10000, m_evalOpts, m_printOpts);
 
-  MathStructure in = CALCULATOR->parse(localizedExpression);
-  MathStructure result = CALCULATOR->parse(res);
+  MathStructure const in = CALCULATOR->parse(localizedExpression);
+  MathStructure const result = CALCULATOR->parse(res);
   if (result.containsUnknowns()) { return std::unexpected(CalculatorError("Unknown component in question")); }
 
   bool error = false;
@@ -123,7 +123,7 @@ void QalculateBackend::initializeCalculator() {
 std::optional<std::string> QalculateBackend::getUnitDisplayName(const MathStructure &s,
                                                                 std::string_view prefix) {
   if (prefix.empty() && s.prefix()) {
-    std::string_view prefix = s.prefix()->preferredDisplayName().name;
+    std::string_view const prefix = s.prefix()->preferredDisplayName().name;
     if (!prefix.empty()) { return getUnitDisplayName(s, prefix); }
   }
 

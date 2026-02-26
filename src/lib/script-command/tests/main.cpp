@@ -30,6 +30,7 @@ open "https://www.google.com/search?q=flights%20from%20$1%20to%20$2"
   REQUIRE(result->schemaVersion == "1");
   REQUIRE(result->mode == script_command::OutputMode::Silent);
   REQUIRE(result->packageName == "Web Searches");
+  REQUIRE(result->icon.has_value());
   REQUIRE(result->icon.value() == "🛩");
 
   auto &args = result->arguments;
@@ -76,6 +77,7 @@ open "https://www.google.com/search?q=flights%20from%20$1%20to%20$2"
   REQUIRE(result->schemaVersion == "1");
   REQUIRE(result->mode == script_command::OutputMode::Silent);
   REQUIRE(result->packageName == "Web Searches");
+  REQUIRE(result->icon.has_value());
   REQUIRE(result->icon.value() == "🛩");
 
   auto &args = result->arguments;

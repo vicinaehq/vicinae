@@ -8,7 +8,7 @@
 namespace fs = std::filesystem;
 
 fs::path Omnicast::runtimeDir() {
-  fs::path osRundir(QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation).toStdString());
+  fs::path const osRundir(QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation).toStdString());
 
   return osRundir / "vicinae";
 }
@@ -29,7 +29,7 @@ std::vector<fs::path> Omnicast::systemPaths() {
   std::vector<fs::path> paths;
 
   for (const auto &part : std::views::split(std::string_view(path), std::string_view(":"))) {
-    fs::path path = std::string_view(part.begin(), part.end());
+    fs::path const path = std::string_view(part.begin(), part.end());
 
     if (seen.contains(path)) continue;
 

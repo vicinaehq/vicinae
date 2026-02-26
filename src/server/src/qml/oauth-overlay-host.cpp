@@ -11,13 +11,13 @@
 
 OAuthOverlayHost::OAuthOverlayHost(const ApplicationContext *ctx,
                                    const proto::ext::oauth::AuthorizeRequest &req, QObject *parent)
-    : QObject(parent), m_ctx(ctx) {
+    : QObject(parent), m_ctx(ctx), m_authorizeUrl(req.url().c_str()) {
 
   const auto &client = req.client();
 
   m_providerName = client.name().c_str();
   m_providerDescription = client.description().c_str();
-  m_authorizeUrl = req.url().c_str();
+  
 
   if (client.has_icon()) { m_providerIconSource = qml::imageSourceFor(ProtoUrl::parse(client.icon())); }
 }

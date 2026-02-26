@@ -26,7 +26,7 @@ public:
   }
 
   static std::expected<Client, std::string> make() {
-    int fd = socket(AF_UNIX, SOCK_STREAM, 0);
+    const int fd = socket(AF_UNIX, SOCK_STREAM, 0);
 
     if (fd == -1) { return std::unexpected(std::format("Failed to create socket: {}", strerror(errno))); }
 
@@ -36,7 +36,7 @@ public:
   ~Client() { close(m_sock); }
 
   std::expected<void, std::string> connect() {
-    int fd = socket(AF_UNIX, SOCK_STREAM, 0);
+    const int fd = socket(AF_UNIX, SOCK_STREAM, 0);
 
     if (fd == -1) { return std::unexpected(std::format("Failed to create socket: {}", strerror(errno))); }
 
@@ -80,11 +80,10 @@ public:
    * Make a request and block until we get a response.
    */
   template <InSchema<Schema> T> std::expected<typename T::Response, std::string> request(T::Request payload) {
-    int id = 0;
     std::string data;
     uint32_t size;
 
-    sendRaw(m_rpc.template request<T>(payload));
+    sendRaw(m_rpc.template request<T>(std::move(payload)));
 
     {
       if (::recv(m_sock, reinterpret_cast<char *>(&size), sizeof(size), 0) < sizeof(size)) {
@@ -104,6 +103,7 @@ public:
       }
 
       if (res.error) { return std::unexpected(res.error->message); }
+      if (!res.result) { return std::unexpected("Response has no result data"); }
 
       typename T::Response resData;
 

@@ -7,12 +7,14 @@ TEST_CASE("handle file without ending linefeed", XDGPP_GROUP) {
 Name=My Application
 Description=My Description)";
 
-  xdgpp::DesktopEntryReader reader(ENTRY);
+  const xdgpp::DesktopEntryReader reader(ENTRY);
   auto grp = reader.group("Desktop Entry");
+
+  REQUIRE(grp);
+
   auto name = grp->key("Name");
   auto desc = grp->key("Description");
 
-  REQUIRE(grp);
   REQUIRE(name.has_value());
   REQUIRE(name->asString() == "My Application");
   REQUIRE(desc.has_value());
@@ -30,7 +32,7 @@ Name=My Application
     #    another comment
 Description=My Description)";
 
-  xdgpp::DesktopEntryReader reader(ENTRY);
+  const xdgpp::DesktopEntryReader reader(ENTRY);
 };
 
 TEST_CASE("handles simple kv without extra spacing", XDGPP_GROUP) {
@@ -40,7 +42,7 @@ Name=My Application
 Description=My Description
 )";
 
-  xdgpp::DesktopEntryReader reader(ENTRY);
+  const xdgpp::DesktopEntryReader reader(ENTRY);
   auto grp = reader.group("Desktop Entry");
 
   REQUIRE(grp);
@@ -65,7 +67,7 @@ Description=My Description
 
 )";
 
-  xdgpp::DesktopEntryReader reader(ENTRY);
+  const xdgpp::DesktopEntryReader reader(ENTRY);
   auto grp = reader.group("Desktop Entry");
 
   REQUIRE(grp);
@@ -89,7 +91,7 @@ Description=      My Description
 Comment     =Test
 )";
 
-  xdgpp::DesktopEntryReader reader(ENTRY);
+  const xdgpp::DesktopEntryReader reader(ENTRY);
   auto grp = reader.group("Desktop Entry");
 
   REQUIRE(grp);
@@ -108,7 +110,7 @@ Name=My\sApplication
 Description=My\tDescription
 )";
 
-  xdgpp::DesktopEntryReader reader(ENTRY);
+  const xdgpp::DesktopEntryReader reader(ENTRY);
   auto grp = reader.group("Desktop Entry");
 
   REQUIRE(grp);
@@ -128,7 +130,7 @@ Name=\sMy\sApplication\s
 Description=\sMy\tDescription\s
 )";
 
-  xdgpp::DesktopEntryReader reader(ENTRY);
+  const xdgpp::DesktopEntryReader reader(ENTRY);
   auto grp = reader.group("Desktop Entry");
 
   REQUIRE(grp);
@@ -146,7 +148,7 @@ TEST_CASE("handles string list values", XDGPP_GROUP) {
 Keywords=Keyword1;Keyword2
 )";
 
-  xdgpp::DesktopEntryReader reader(ENTRY);
+  const xdgpp::DesktopEntryReader reader(ENTRY);
   auto grp = reader.group("Desktop Entry");
 
   REQUIRE(grp);
@@ -166,7 +168,7 @@ TEST_CASE("handle escaped sequences in string list value", XDGPP_GROUP) {
 Keywords=K\se\sy\;word1;Keyword2\;
 )";
 
-  xdgpp::DesktopEntryReader reader(ENTRY);
+  const xdgpp::DesktopEntryReader reader(ENTRY);
   auto grp = reader.group("Desktop Entry");
 
   REQUIRE(grp);
@@ -187,7 +189,7 @@ Hidden=true
 NoDisplay=false
 )";
 
-  xdgpp::DesktopEntryReader reader(ENTRY);
+  const xdgpp::DesktopEntryReader reader(ENTRY);
   auto grp = reader.group("Desktop Entry");
 
   REQUIRE(grp);
@@ -210,7 +212,7 @@ Answer=42
 Invalid=0qwoiikqw
 )";
 
-  xdgpp::DesktopEntryReader reader(ENTRY);
+  const xdgpp::DesktopEntryReader reader(ENTRY);
   auto grp = reader.group("Desktop Entry");
 
   REQUIRE(grp);
@@ -219,9 +221,12 @@ Invalid=0qwoiikqw
   auto answer = grp->key("Answer");
   auto invalid = grp->key("Invalid");
 
-  REQUIRE((wrongAnswer.has_value() && wrongAnswer->asNumber() == 21));
-  REQUIRE((answer.has_value() && answer->asNumber() == 42));
-  REQUIRE((invalid.has_value() && invalid->asNumber() == 0));
+  REQUIRE(wrongAnswer.has_value());
+  REQUIRE(wrongAnswer->asNumber() == 21);
+  REQUIRE(answer.has_value());
+  REQUIRE(answer->asNumber() == 42);
+  REQUIRE(invalid.has_value());
+  REQUIRE(invalid->asNumber() == 0);
 }
 
 TEST_CASE("handle localized keys", XDGPP_GROUP) {
@@ -231,7 +236,7 @@ Name[en_US]=American Name
 Name[en_GB@utf8]=British Name
 )";
 
-  xdgpp::DesktopEntryReader reader(ENTRY, {.locale = xdgpp::Locale("en_US")});
+  const xdgpp::DesktopEntryReader reader(ENTRY, {.locale = xdgpp::Locale("en_US")});
   auto grp = reader.group("Desktop Entry");
 
   REQUIRE(grp);

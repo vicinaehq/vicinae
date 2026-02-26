@@ -9,11 +9,12 @@
 #include "theme/theme-file.hpp"
 #include <filesystem>
 #include <format>
+#include <utility>
 
 RootSearchModel::RootSearchModel(const ViewScope &scope, QObject *parent)
     : QAbstractListModel(parent), m_scope(scope), m_manager(scope.services()->rootItemManager()),
       m_appDb(scope.services()->appDb()), m_calculator(scope.services()->calculatorService()),
-      m_fileService(scope.services()->fileService()), m_config(scope.services()->config()) {
+      m_fileService(scope.services()->fileService()), m_config(scope.services()->config()), m_fileSearchEnabled(m_config->value().searchFilesInRoot) {
 
   using namespace std::chrono_literals;
 
@@ -27,7 +28,7 @@ RootSearchModel::RootSearchModel(const ViewScope &scope, QObject *parent)
   connect(&m_calcWatcher, &CalculatorWatcher::finished, this, &RootSearchModel::handleCalculatorFinished);
   connect(&m_fileWatcher, &FileSearchWatcher::finished, this, &RootSearchModel::handleFileSearchFinished);
 
-  m_fileSearchEnabled = m_config->value().searchFilesInRoot;
+  
 
   connect(m_config, &config::Manager::configChanged, this,
           [this](const config::ConfigValue &next, const config::ConfigValue &) {
@@ -128,6 +129,8 @@ QVariant RootSearchModel::data(const QModelIndex &index, int role) const {
     return flat.kind == FlatItem::CalculatorItem;
   case IsFile:
     return flat.kind == FlatItem::FileItem;
+  default:
+    break;
   }
 
   if (flat.kind == FlatItem::CalculatorItem) {
@@ -161,7 +164,7 @@ QVariant RootSearchModel::data(const QModelIndex &index, int role) const {
   }
 
   if (flat.kind == FlatItem::FileItem) {
-    if (flat.dataIndex < 0 || flat.dataIndex >= static_cast<int>(m_files.size())) return {};
+    if (flat.dataIndex < 0 || std::cmp_greater_equal(flat.dataIndex, m_files.size())) return {};
     const auto &file = m_files[flat.dataIndex];
     switch (role) {
     case Title:
@@ -207,7 +210,7 @@ QVariant RootSearchModel::data(const QModelIndex &index, int role) const {
 
   switch (flat.kind) {
   case FlatItem::ResultItem: {
-    if (flat.dataIndex < 0 || flat.dataIndex >= static_cast<int>(m_results.size())) return {};
+    if (flat.dataIndex < 0 || std::cmp_greater_equal(flat.dataIndex, m_results.size())) return {};
     const auto &owned = m_results[flat.dataIndex];
     const auto &item = owned.item;
     if (!item) return {};
@@ -236,7 +239,7 @@ QVariant RootSearchModel::data(const QModelIndex &index, int role) const {
   }
 
   case FlatItem::FallbackItem: {
-    if (flat.dataIndex < 0 || flat.dataIndex >= static_cast<int>(m_fallbackItems.size())) return {};
+    if (flat.dataIndex < 0 || std::cmp_greater_equal(flat.dataIndex, m_fallbackItems.size())) return {};
     const auto &item = m_fallbackItems[flat.dataIndex];
     if (!item) return {};
     switch (role) {
@@ -264,7 +267,7 @@ QVariant RootSearchModel::data(const QModelIndex &index, int role) const {
   }
 
   case FlatItem::FavoriteItem: {
-    if (flat.dataIndex < 0 || flat.dataIndex >= static_cast<int>(m_favorites.size())) return {};
+    if (flat.dataIndex < 0 || std::cmp_greater_equal(flat.dataIndex, m_favorites.size())) return {};
     const auto &item = m_favorites[flat.dataIndex];
     if (!item) return {};
     switch (role) {
@@ -484,7 +487,7 @@ void RootSearchModel::addSection(SectionType section, const std::string &name, i
 
 int RootSearchModel::nextSelectableIndex(int from, int direction) const {
   int idx = from + direction;
-  int count = static_cast<int>(m_flat.size());
+  int const count = static_cast<int>(m_flat.size());
 
   while (idx >= 0 && idx < count) {
     if (m_flat[idx].kind != FlatItem::SectionHeader) return idx;
@@ -538,7 +541,7 @@ void RootSearchModel::setSelectedIndex(int index) {
   if (index == m_selectedIndex) return;
   m_selectedIndex = index;
 
-  if (index < 0 || index >= static_cast<int>(m_flat.size())) {
+  if (index < 0 || std::cmp_greater_equal(index, m_flat.size())) {
     m_lastSelectedItemId.clear();
     m_scope.clearActions();
     emit primaryActionChanged();
@@ -551,15 +554,15 @@ void RootSearchModel::setSelectedIndex(int index) {
   QString itemId;
   switch (flat.kind) {
   case FlatItem::ResultItem:
-    if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_results.size()))
+    if (flat.dataIndex >= 0 && std::cmp_less(flat.dataIndex, m_results.size()))
       itemId = QString::fromStdString(m_results[flat.dataIndex].item->uniqueId());
     break;
   case FlatItem::FallbackItem:
-    if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_fallbackItems.size()))
+    if (flat.dataIndex >= 0 && std::cmp_less(flat.dataIndex, m_fallbackItems.size()))
       itemId = QString::fromStdString(m_fallbackItems[flat.dataIndex]->uniqueId());
     break;
   case FlatItem::FavoriteItem:
-    if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_favorites.size()))
+    if (flat.dataIndex >= 0 && std::cmp_less(flat.dataIndex, m_favorites.size()))
       itemId = QString::fromStdString(m_favorites[flat.dataIndex]->uniqueId());
     break;
   case FlatItem::LinkItem:
@@ -569,28 +572,28 @@ void RootSearchModel::setSelectedIndex(int index) {
     if (m_calc) itemId = QStringLiteral("calc:") + m_calc->question.text;
     break;
   case FlatItem::FileItem:
-    if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_files.size()))
+    if (flat.dataIndex >= 0 && std::cmp_less(flat.dataIndex, m_files.size()))
       itemId = QString::fromStdString(m_files[flat.dataIndex].path.string());
     break;
   default:
     break;
   }
 
-  bool sameItem = (!itemId.isEmpty() && itemId == m_lastSelectedItemId);
+  bool const sameItem = (!itemId.isEmpty() && itemId == m_lastSelectedItemId);
   m_lastSelectedItemId = itemId;
 
   std::unique_ptr<ActionPanelState> actionPanel;
 
   switch (flat.kind) {
   case FlatItem::ResultItem: {
-    if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_results.size())) {
+    if (flat.dataIndex >= 0 && std::cmp_less(flat.dataIndex, m_results.size())) {
       actionPanel = m_results[flat.dataIndex].item->newActionPanel(m_scope.appContext(),
                                                                    m_results[flat.dataIndex].meta);
     }
     break;
   }
   case FlatItem::FallbackItem: {
-    if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_fallbackItems.size())) {
+    if (flat.dataIndex >= 0 && std::cmp_less(flat.dataIndex, m_fallbackItems.size())) {
       auto &item = m_fallbackItems[flat.dataIndex];
       actionPanel =
           item->fallbackActionPanel(m_scope.appContext(), m_manager->itemMetadata(item->uniqueId()));
@@ -598,7 +601,7 @@ void RootSearchModel::setSelectedIndex(int index) {
     break;
   }
   case FlatItem::FavoriteItem: {
-    if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_favorites.size())) {
+    if (flat.dataIndex >= 0 && std::cmp_less(flat.dataIndex, m_favorites.size())) {
       auto &item = m_favorites[flat.dataIndex];
       actionPanel = item->newActionPanel(m_scope.appContext(), m_manager->itemMetadata(item->uniqueId()));
     }
@@ -634,7 +637,7 @@ void RootSearchModel::setSelectedIndex(int index) {
     break;
   }
   case FlatItem::FileItem: {
-    if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_files.size())) {
+    if (flat.dataIndex >= 0 && std::cmp_less(flat.dataIndex, m_files.size())) {
       actionPanel = FileActions::actionPanel(m_files[flat.dataIndex].path, m_appDb);
     }
     break;
@@ -657,7 +660,7 @@ void RootSearchModel::setSelectedIndex(int index) {
 
     auto tryCreateCompleter = [&](const RootItem *item) {
       if (!item) return;
-      ArgumentList args = item->arguments();
+      ArgumentList const args = item->arguments();
       if (args.empty()) return;
       m_scope.createCompletion(args, item->iconUrl());
       createdCompleter = true;
@@ -665,11 +668,11 @@ void RootSearchModel::setSelectedIndex(int index) {
 
     switch (flat.kind) {
     case FlatItem::ResultItem:
-      if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_results.size()))
+      if (flat.dataIndex >= 0 && std::cmp_less(flat.dataIndex, m_results.size()))
         tryCreateCompleter(m_results[flat.dataIndex].item.get());
       break;
     case FlatItem::FavoriteItem:
-      if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_favorites.size()))
+      if (flat.dataIndex >= 0 && std::cmp_less(flat.dataIndex, m_favorites.size()))
         tryCreateCompleter(m_favorites[flat.dataIndex].get());
       break;
     default:
@@ -685,7 +688,7 @@ void RootSearchModel::setSelectedIndex(int index) {
 void RootSearchModel::activateSelected() { m_scope.executePrimaryAction(); }
 
 bool RootSearchModel::tryAliasFastTrack() {
-  if (m_selectedIndex < 0 || m_selectedIndex >= static_cast<int>(m_flat.size())) return false;
+  if (m_selectedIndex < 0 || std::cmp_greater_equal(m_selectedIndex, m_flat.size())) return false;
 
   const auto &flat = m_flat[m_selectedIndex];
 
@@ -700,11 +703,11 @@ bool RootSearchModel::tryAliasFastTrack() {
 
   switch (flat.kind) {
   case FlatItem::ResultItem:
-    if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_results.size()))
+    if (flat.dataIndex >= 0 && std::cmp_less(flat.dataIndex, m_results.size()))
       shouldFastTrack = check(m_results[flat.dataIndex].item.get());
     break;
   case FlatItem::FavoriteItem:
-    if (flat.dataIndex >= 0 && flat.dataIndex < static_cast<int>(m_favorites.size()))
+    if (flat.dataIndex >= 0 && std::cmp_less(flat.dataIndex, m_favorites.size()))
       shouldFastTrack = check(m_favorites[flat.dataIndex].get());
     break;
   default:
@@ -747,12 +750,12 @@ void RootSearchModel::startCalculator() {
     return;
   }
 
-  bool containsNonAlnum = std::ranges::any_of(m_query, [](QChar ch) { return !ch.isLetterOrNumber(); }) ||
+  bool const containsNonAlnum = std::ranges::any_of(m_query, [](QChar ch) { return !ch.isLetterOrNumber(); }) ||
                           m_query.starts_with("0x") || m_query.starts_with("0b") || m_query.starts_with("0o");
   const auto isAllowedLeadingChar = [&](QChar c) {
     return c == '-' || c == '(' || c == ')' || c.isLetterOrNumber() || c.category() == QChar::Symbol_Currency;
   };
-  bool isComputable = expression.size() > 1 && isAllowedLeadingChar(expression.at(0)) && containsNonAlnum;
+  bool const isComputable = expression.size() > 1 && isAllowedLeadingChar(expression.at(0)) && containsNonAlnum;
 
   if (!isComputable || !m_calculator->backend()) { return; }
 

@@ -137,7 +137,7 @@ DesktopEntry::DesktopEntry(const fs::path &path, const ParseOptions &opts) {
 }
 
 DesktopEntry::DesktopEntry(std::string_view data, const ParseOptions &opts) {
-  DesktopEntryReader entry(data, {.locale = opts.locale});
+  const DesktopEntryReader entry(data, {.locale = opts.locale});
   auto group = entry.group("Desktop Entry");
 
   if (!group) {
@@ -200,7 +200,7 @@ DesktopEntry::DesktopEntry(std::string_view data, const ParseOptions &opts) {
     }
   }
 
-  bool isTerminalEmulator = std::ranges::contains(m_categories, std::string("TerminalEmulator"));
+  const bool isTerminalEmulator = std::ranges::contains(m_categories, std::string("TerminalEmulator"));
 
   if (isTerminalEmulator) {
     auto terminalExec = group->key("X-TerminalArgExec");

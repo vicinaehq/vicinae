@@ -5,7 +5,7 @@ QUrl BuiltinIconsViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/CommandListView.qml"));
 }
 
-QVariantMap BuiltinIconsViewHost::qmlProperties() const {
+QVariantMap BuiltinIconsViewHost::qmlProperties() {
   return {{QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(m_model))}};
 }
 

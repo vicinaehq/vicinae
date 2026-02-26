@@ -48,8 +48,8 @@ void FileIndexer::startFullScan() {
   }).detach();
 }
 
-void FileIndexer::startSingleScan(std::filesystem::path entrypoint, ScanType type,
-                                  std::vector<std::string> excludedFilenames) {
+void FileIndexer::startSingleScan(const std::filesystem::path& entrypoint, ScanType type,
+                                  const std::vector<std::string>& excludedFilenames) {
   for (auto const &[id, scan] : m_dispatcher.scans()) {
     if (scan.type == type && scan.path == entrypoint) { m_dispatcher.interrupt(id); }
   }
@@ -116,7 +116,7 @@ void FileIndexer::preferenceValuesChanged(const QJsonObject &preferences) {
       preferences.value("watcherPaths").toString().split(';', Qt::SkipEmptyParts) |
       std::views::transform([](const QStringView &v) { return fs::path(v.toString().toStdString()); }));
 
-  std::string databaseFilename = FileIndexerDatabase::getDatabasePath().filename().string();
+  std::string const databaseFilename = FileIndexerDatabase::getDatabasePath().filename().string();
   m_excludedFilenames = {databaseFilename, databaseFilename + "-wal"};
 }
 

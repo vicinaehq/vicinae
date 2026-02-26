@@ -41,7 +41,7 @@
 #include "vicinae.hpp"
 #include <filesystem>
 #include <QGuiApplication>
-#include <signal.h>
+#include <csignal>
 #include <QString>
 #include <qlockfile.h>
 #include <qlogging.h>
@@ -90,7 +90,7 @@ void CliServerCommand::run(CLI::App *app) {
 
   int argc = 1;
   static char *argv[] = {strdup("command"), nullptr};
-  QGuiApplication qapp(argc, argv);
+  QGuiApplication const qapp(argc, argv);
 
   if (const auto launcher = Environment::detectAppLauncher()) {
     qInfo() << "Detected launch prefix:" << *launcher;
@@ -188,7 +188,7 @@ void CliServerCommand::run(CLI::App *app) {
       for (const auto &provider : root->providers()) {
         if (!provider->isExtension()) continue;
 
-        auto extp = static_cast<ExtensionRootProvider *>(provider);
+        auto extp = static_cast<ExtensionRootProvider *>(provider); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
 
         if (!extp->isBuiltin() && !scanned.contains(extp->uniqueId())) {
           removed.emplace_back(extp->uniqueId());
@@ -241,10 +241,9 @@ void CliServerCommand::run(CLI::App *app) {
     auto &theme = ThemeService::instance();
     auto &nextTheme = next.systemTheme();
     auto &prevTheme = prev.systemTheme();
-    bool themeChangeRequired = nextTheme.name != prevTheme.name;
+    bool const themeChangeRequired = nextTheme.name != prevTheme.name;
 
-    bool iconThemeChangeRequired = nextTheme.iconTheme != prevTheme.iconTheme;
-    IconThemeDatabase iconThemeDb;
+    IconThemeDatabase const iconThemeDb;
 
     theme.setFontBasePointSize(next.font.normal.size);
 
@@ -288,7 +287,7 @@ void CliServerCommand::run(CLI::App *app) {
   });
 
   QObject::connect(QGuiApplication::styleHints(), &QStyleHints::colorSchemeChanged, [&]() {
-    IconThemeDatabase iconThemeDb;
+    IconThemeDatabase const iconThemeDb;
     auto &value = cfgService->value();
     auto &theme = value.systemTheme();
 
@@ -319,7 +318,7 @@ void CliServerCommand::run(CLI::App *app) {
 
   ctx.navigation->launch(std::make_shared<RootCommand>());
 
-  LauncherWindow qmlWindow(ctx);
+  LauncherWindow const qmlWindow(ctx);
 
   if (m_open) {
     ctx.navigation->showWindow();

@@ -12,7 +12,7 @@ public:
   explicit AliasFormViewHost(EntrypointId id);
 
   QUrl qmlComponentUrl() const override;
-  QVariantMap qmlProperties() const override;
+  QVariantMap qmlProperties() override;
   void initialize() override;
 
   Q_INVOKABLE void submit();

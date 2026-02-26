@@ -18,7 +18,6 @@ struct ScopedRegion {
 
 inline wl_surface *getWindowSurface(QWindow *win) {
   if (QGuiApplication::platformName() != "wayland") return nullptr;
-  auto wayland = qApp->nativeInterface<QNativeInterface::QWaylandApplication>();
   auto iface = qApp->platformNativeInterface();
   return static_cast<wl_surface *>(iface->nativeResourceForWindow("surface", win));
 }

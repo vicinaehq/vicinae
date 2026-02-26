@@ -51,22 +51,6 @@ struct ReadContent {
   std::optional<QString> file;
 };
 
-static Content fromJson(const QJsonObject &obj) {
-  if (obj.contains("path")) { return File{.path = obj.value("path").toString().toStdString()}; }
-  if (obj.contains("html")) {
-    Html html;
-
-    html.html = obj.value("html").toString();
-
-    if (obj.contains("text")) { html.text = obj.value("text").toString(); }
-
-    return html;
-  }
-  if (obj.contains("text")) { return Text{obj.value("text").toString()}; }
-
-  return Text{};
-}
-
 }; // namespace Clipboard
 
 class ClipboardService : public QObject, public NonCopyable {
@@ -104,7 +88,7 @@ public:
   std::expected<QByteArray, OfferDecryptionError> getMainOfferData(const QString &selectionId) const;
   AbstractClipboardServer *clipboardServer() const;
   bool removeSelection(const QString &id);
-  bool setPinned(const QString id, bool pinned);
+  bool setPinned(const QString& id, bool pinned);
   QFuture<PaginatedResponse<ClipboardHistoryEntry>> listAll(int limit = 100, int offset = 0,
                                                             const ClipboardListSettings &opts = {}) const;
   bool copyText(const QString &text, const Clipboard::CopyOptions &options = {.concealed = true});

@@ -76,7 +76,7 @@ public:
                             const std::vector<Preference> &preferences, const QJsonObject &preferenceValues);
 
   QUrl qmlComponentUrl() const override;
-  QVariantMap qmlProperties() const override;
+  QVariantMap qmlProperties() override;
   void initialize() override;
 
   Q_INVOKABLE void submit();

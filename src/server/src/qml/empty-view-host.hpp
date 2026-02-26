@@ -9,7 +9,7 @@ public:
   EmptyViewHost(const QString &title, const QString &description, const ImageURL &icon = {});
 
   QUrl qmlComponentUrl() const override;
-  QVariantMap qmlProperties() const override;
+  QVariantMap qmlProperties() override;
 
 private:
   QString m_title;

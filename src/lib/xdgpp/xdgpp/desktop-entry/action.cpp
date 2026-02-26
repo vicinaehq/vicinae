@@ -31,7 +31,7 @@ DesktopEntryAction xdgpp::DesktopEntryAction::fromGroup(const DesktopEntryGroup 
 }
 
 DesktopEntryAction::DesktopEntryAction(const DesktopEntryGroup &group) {
-  std::string prefix = "Desktop Action ";
+  const std::string prefix = "Desktop Action ";
 
   if (group.name().starts_with(prefix)) { m_id = group.name().substr(prefix.size()); }
   if (auto name = group.key("Name")) { m_name = name->asString(); }

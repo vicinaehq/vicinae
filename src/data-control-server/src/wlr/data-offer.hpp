@@ -27,5 +27,5 @@ public:
   zwlr_data_control_offer_v1 *pointer() const { return _offer; }
 
   WlrDataOffer(zwlr_data_control_offer_v1 *offer);
-  ~WlrDataOffer();
+  ~WlrDataOffer() override;
 };

@@ -12,8 +12,8 @@ QUrl AliasFormViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/AliasFormView.qml"));
 }
 
-QVariantMap AliasFormViewHost::qmlProperties() const {
-  return {{QStringLiteral("host"), QVariant::fromValue(const_cast<AliasFormViewHost *>(this))}};
+QVariantMap AliasFormViewHost::qmlProperties() {
+  return {{QStringLiteral("host"), QVariant::fromValue(this)}};
 }
 
 void AliasFormViewHost::initialize() {

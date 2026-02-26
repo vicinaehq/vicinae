@@ -51,8 +51,8 @@ bool DataControlClipboardServer::stop() {
 
 bool DataControlClipboardServer::start() {
   PidFile pidFile(HELPER_PROGRAM);
-  int maxWaitForStart = 5000;
-  std::error_code ec;
+  int const maxWaitForStart = 5000;
+  std::error_code const ec;
 
   auto path = vicinae::findHelperProgram(HELPER_PROGRAM);
   if (!path) {
@@ -87,8 +87,8 @@ void DataControlClipboardServer::handleRead() {
     m_message.insert(m_message.end(), data.begin(), data.end());
 
     while (m_message.size() >= sizeof(SizeType)) {
-      uint32_t length = ntohl(*reinterpret_cast<SizeType *>(m_message.data()));
-      size_t size = m_message.size() - sizeof(SizeType);
+      uint32_t const length = ntohl(*reinterpret_cast<SizeType *>(m_message.data()));
+      size_t const size = m_message.size() - sizeof(SizeType);
 
       // we need to read more before we can process this
       if (size < length) break;

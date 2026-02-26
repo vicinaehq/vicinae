@@ -60,7 +60,7 @@ QString ToggleItemAsFavorite::title() const {
 void ToggleItemAsFavorite::execute(ApplicationContext *ctx) {
   auto manager = ctx->services->rootItemManager();
   auto toast = ctx->services->toastService();
-  bool targetValue = !m_value;
+  bool const targetValue = !m_value;
 
   if (manager->setItemAsFavorite(m_id, targetValue)) {
     if (targetValue) {

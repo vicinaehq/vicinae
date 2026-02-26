@@ -1,7 +1,7 @@
 #include "qicon-image-loader.hpp"
 
 void QIconImageLoader::render(const RenderConfig &config) {
-  QString savedTheme = QIcon::themeName();
+  QString const savedTheme = QIcon::themeName();
 
   if (m_theme) { QIcon::setThemeName(*m_theme); }
 
@@ -46,7 +46,7 @@ QIcon QIconImageLoader::loadIconFromFileSystem(const QString &iconName) {
   // Try each search path with each extension
   for (const QString &path : searchPaths) {
     for (const QString &ext : extensions) {
-      QString iconPath = QString("%1/%2%3").arg(path, iconName, ext);
+      QString const iconPath = QString("%1/%2%3").arg(path, iconName, ext);
       if (QFile::exists(iconPath)) { return QIcon(iconPath); }
     }
   }

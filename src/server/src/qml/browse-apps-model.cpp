@@ -1,4 +1,6 @@
 #include "browse-apps-model.hpp"
+
+#include <utility>
 #include "actions/app/app-actions.hpp"
 #include "actions/wm/window-actions.hpp"
 #include "clipboard-actions.hpp"
@@ -35,7 +37,7 @@ std::unique_ptr<ActionPanelState> BrowseAppsModel::buildActionPanel(const AppPtr
   mainSection->addAction(open);
 
   auto actions = app->actions();
-  for (int i = 0; i < static_cast<int>(actions.size()); ++i) {
+  for (int i = 0; std::cmp_less(i, actions.size()); ++i) {
     auto *action = new OpenAppAction(actions[i], actions[i]->displayName(), {});
     if (i < 9) action->setShortcut(QString("control+shift+%1").arg(i + 1));
     mainSection->addAction(action);

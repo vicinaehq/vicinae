@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <ranges>
+#include <utility>
 
 void DMenuModel::setRawEntries(std::vector<std::string_view> entries) {
   m_entries = std::move(entries);
@@ -20,11 +21,11 @@ void DMenuModel::setRawEntries(std::vector<std::string_view> entries) {
 
 void DMenuModel::setFilter(const QString &text) {
   m_currentSearchText = text;
-  std::string query = text.toStdString();
+  std::string const query = text.toStdString();
 
   m_filtered.clear();
   for (auto e : m_entries) {
-    int score = fzf::defaultMatcher.fuzzy_match_v2_score_query(e, query);
+    int const score = fzf::defaultMatcher.fuzzy_match_v2_score_query(e, query);
     if (query.empty() || score > 0) { m_filtered.push_back({e, score}); }
   }
   std::ranges::stable_sort(m_filtered, std::greater{});
@@ -49,7 +50,7 @@ QString DMenuModel::expandSectionName(size_t count) const {
 }
 
 std::string_view DMenuModel::entryAt(int section, int item) const {
-  if (item < 0 || item >= static_cast<int>(m_filtered.size())) return {};
+  if (item < 0 || std::cmp_greater_equal(item, m_filtered.size())) return {};
   return m_filtered[item].data;
 }
 
@@ -74,7 +75,7 @@ QString DMenuModel::itemIconSource(int section, int item) const {
 }
 
 void DMenuModel::selectEntry(const QString &text) const {
-  emit const_cast<DMenuModel *>(this)->entryChosen(text);
+  emit const_cast<DMenuModel *>(this)->entryChosen(text); // NOLINT(cppcoreguidelines-pro-type-const-cast)
   scope().closeWindow();
 }
 

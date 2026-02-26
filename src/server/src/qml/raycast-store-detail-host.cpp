@@ -8,6 +8,7 @@
 #include "services/toast/toast-service.hpp"
 #include "utils/utils.hpp"
 #include <QFutureWatcher>
+#include <utility>
 
 RaycastStoreDetailHost::RaycastStoreDetailHost(const Raycast::Extension &extension) : m_ext(extension) {}
 
@@ -15,8 +16,8 @@ QUrl RaycastStoreDetailHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/StoreDetailView.qml"));
 }
 
-QVariantMap RaycastStoreDetailHost::qmlProperties() const {
-  return {{QStringLiteral("host"), QVariant::fromValue(const_cast<RaycastStoreDetailHost *>(this))}};
+QVariantMap RaycastStoreDetailHost::qmlProperties() {
+  return {{QStringLiteral("host"), QVariant::fromValue(this)}};
 }
 
 void RaycastStoreDetailHost::initialize() {
@@ -120,7 +121,7 @@ void RaycastStoreDetailHost::openUrl(const QString &url) {
 
 void RaycastStoreDetailHost::openScreenshot(int index) {
   auto urls = m_ext.screenshots();
-  if (index < 0 || index >= static_cast<int>(urls.size())) return;
+  if (index < 0 || std::cmp_greater_equal(index, urls.size())) return;
 
   ServiceRegistry::instance()->appDb()->openTarget(urls[index].toString());
 }

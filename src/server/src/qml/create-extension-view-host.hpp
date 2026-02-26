@@ -31,7 +31,7 @@ public:
   explicit CreateExtensionViewHost();
 
   QUrl qmlComponentUrl() const override;
-  QVariantMap qmlProperties() const override;
+  QVariantMap qmlProperties() override;
   void initialize() override;
 
   QString author() const { return m_author; }

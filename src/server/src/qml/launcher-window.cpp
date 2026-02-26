@@ -31,24 +31,25 @@
 #include <QKeyEvent>
 #ifdef WAYLAND_LAYER_SHELL
 #include <LayerShellQt/Window>
+#include <utility>
 #endif
 
-LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent) : QObject(parent), m_ctx(ctx) {
+LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent) : QObject(parent), m_ctx(ctx), m_actionPanel(new ActionPanelController(ctx, this)), m_alertModel(new AlertModel(*ctx.navigation, this)), m_configBridge(new ConfigBridge(this)), m_imgSource(new ImageSource(this)), m_keybindProxy(new KeybindBridge(this)), m_themeBridge(new ThemeBridge(this)) {
 
   // Ensure Wayland app_id / X11 WM_CLASS is "vicinae"
   QGuiApplication::setDesktopFileName(QStringLiteral("vicinae"));
 
   m_searchModel = new RootSearchModel(ViewScope(&ctx, ctx.navigation->topState()->sender), this);
-  m_themeBridge = new ThemeBridge(this);
-  m_configBridge = new ConfigBridge(this);
-  m_alertModel = new AlertModel(*ctx.navigation, this);
-  m_actionPanel = new ActionPanelController(ctx, this);
+  
+  
+  
+  
 
   qRegisterMetaType<ImageUrl>("ImageUrl");
 
   m_engine.addImageProvider(QStringLiteral("vicinae"), new AsyncImageProvider());
 
-  m_imgSource = new ImageSource(this);
+  
 
   auto *rootCtx = m_engine.rootContext();
   rootCtx->setContextProperty(QStringLiteral("Nav"), ctx.navigation.get());
@@ -56,7 +57,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent) : QObje
   rootCtx->setContextProperty(QStringLiteral("Theme"), m_themeBridge);
   rootCtx->setContextProperty(QStringLiteral("Config"), m_configBridge);
   rootCtx->setContextProperty(QStringLiteral("Img"), m_imgSource);
-  m_keybindProxy = new KeybindBridge(this);
+  
   rootCtx->setContextProperty(QStringLiteral("launcher"), this);
   rootCtx->setContextProperty(QStringLiteral("actionPanel"), m_actionPanel);
   rootCtx->setContextProperty(QStringLiteral("Keybinds"), m_keybindProxy);
@@ -261,7 +262,7 @@ void LauncherWindow::handleViewPoped(const BaseView *view) {
 
 void LauncherWindow::handleCurrentViewChanged() {
   auto *nav = m_ctx.navigation.get();
-  bool wasPopped = m_viewWasPopped;
+  bool const wasPopped = m_viewWasPopped;
   m_viewWasPopped = false;
 
   if (nav->viewStackSize() == 1) {
@@ -380,7 +381,7 @@ bool LauncherWindow::forwardKey(int key, int modifiers) {
     }
   }
 
-  QKeyEvent event(QEvent::KeyPress, key, mods);
+  QKeyEvent const event(QEvent::KeyPress, key, mods);
 
   if (auto *action = m_actionPanel->findBoundAction(&event)) {
     m_actionPanel->executeAction(action);
@@ -424,7 +425,7 @@ int LauncherWindow::matchNavigationKey(int key, int modifiers) {
 void LauncherWindow::setCompleterValue(int index, const QString &value) {
   auto *nav = m_ctx.navigation.get();
   auto values = nav->completionValues();
-  if (index < 0 || index >= static_cast<int>(values.size())) return;
+  if (index < 0 || std::cmp_greater_equal(index, values.size())) return;
   values[index].second = value;
   nav->setCompletionValues(values);
 }
@@ -448,7 +449,7 @@ void LauncherWindow::updateBlur() {
   if (!m_window) return;
   auto &cfg = m_ctx.services->config()->value().launcherWindow;
   auto *bgEffect = m_ctx.services->backgroundEffectManager();
-  int rounding = cfg.clientSideDecorations.enabled ? cfg.clientSideDecorations.rounding : 0;
+  int const rounding = cfg.clientSideDecorations.enabled ? cfg.clientSideDecorations.rounding : 0;
 
   if (!bgEffect->supportsBlur()) return;
 

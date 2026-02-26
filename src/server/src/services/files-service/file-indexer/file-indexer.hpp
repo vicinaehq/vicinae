@@ -38,8 +38,8 @@ public:
 
 public:
   void startFullScan();
-  void startSingleScan(std::filesystem::path entrypoint, ScanType type,
-                       std::vector<std::string> excludedFilenames = {});
+  void startSingleScan(const std::filesystem::path& entrypoint, ScanType type,
+                       const std::vector<std::string>& excludedFilenames = {});
   void markScanAsInterrupted(std::optional<FileIndexerDatabase::ScanRecord> scan);
   void rebuildIndex() override;
   void preferenceValuesChanged(const QJsonObject &preferences) override;

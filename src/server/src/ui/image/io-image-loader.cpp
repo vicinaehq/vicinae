@@ -5,13 +5,15 @@
 #include <qmimedatabase.h>
 #include <qstringview.h>
 
+#include <utility>
+
 bool IODeviceImageLoader::isAnimatableMimeType(const QMimeType &type) const {
   return type.name() == "image/gif";
 }
 
 void IODeviceImageLoader::render(const RenderConfig &cfg) {
-  QMimeDatabase mimeDb;
-  QMimeType mime = mimeDb.mimeTypeForData(m_data);
+  QMimeDatabase const mimeDb;
+  QMimeType const mime = mimeDb.mimeTypeForData(m_data);
 
   if (isAnimatableMimeType(mime)) {
     m_loader = std::make_unique<AnimatedIODeviceImageLoader>(std::move(m_data));
@@ -23,4 +25,4 @@ void IODeviceImageLoader::render(const RenderConfig &cfg) {
   m_loader->render(cfg);
 }
 
-IODeviceImageLoader::IODeviceImageLoader(QByteArray bytes) : m_data(bytes) {}
+IODeviceImageLoader::IODeviceImageLoader(QByteArray bytes) : m_data(std::move(bytes)) {}

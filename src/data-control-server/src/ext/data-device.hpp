@@ -6,6 +6,7 @@ class ExtDataDevice {
 public:
   class Listener {
   public:
+    virtual ~Listener() = default;
     virtual void dataOffer(ExtDataDevice &device, ExtDataOffer &offer) {}
     virtual void selection(ExtDataDevice &device, ExtDataOffer &offer) {}
     virtual void finished(ExtDataDevice &device) {}

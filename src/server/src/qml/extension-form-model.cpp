@@ -2,6 +2,7 @@
 #include "view-utils.hpp"
 #include <QJsonArray>
 #include <QJsonObject>
+#include <utility>
 
 ExtensionFormModel::ExtensionFormModel(NotifyFn notify, QObject *parent)
     : QAbstractListModel(parent), m_notify(std::move(notify)) {}
@@ -49,7 +50,7 @@ QHash<int, QByteArray> ExtensionFormModel::roleNames() const {
 }
 
 void ExtensionFormModel::setFieldValue(int index, const QVariant &value) {
-  if (index < 0 || index >= static_cast<int>(m_items.size())) return;
+  if (index < 0 || std::cmp_greater_equal(index, m_items.size())) return;
   auto &item = m_items[index];
   if (!item.isField()) return;
 
@@ -61,19 +62,19 @@ void ExtensionFormModel::setFieldValue(int index, const QVariant &value) {
 }
 
 void ExtensionFormModel::fieldFocused(int index) {
-  if (index < 0 || index >= static_cast<int>(m_items.size())) return;
+  if (index < 0 || std::cmp_greater_equal(index, m_items.size())) return;
   const auto &item = m_items[index];
   if (item.onFocus) { m_notify(*item.onFocus, {}); }
 }
 
 void ExtensionFormModel::fieldBlurred(int index) {
-  if (index < 0 || index >= static_cast<int>(m_items.size())) return;
+  if (index < 0 || std::cmp_greater_equal(index, m_items.size())) return;
   const auto &item = m_items[index];
   if (item.onBlur) { m_notify(*item.onBlur, {}); }
 }
 
 void ExtensionFormModel::setFilePaths(int index, const QVariantList &paths) {
-  if (index < 0 || index >= static_cast<int>(m_items.size())) return;
+  if (index < 0 || std::cmp_greater_equal(index, m_items.size())) return;
   auto &item = m_items[index];
   if (item.type != FormItemData::Type::FilePicker) return;
 
@@ -90,7 +91,7 @@ void ExtensionFormModel::setFilePaths(int index, const QVariantList &paths) {
 }
 
 void ExtensionFormModel::dropdownSearchTextChanged(int index, const QString &text) {
-  if (index < 0 || index >= static_cast<int>(m_items.size())) return;
+  if (index < 0 || std::cmp_greater_equal(index, m_items.size())) return;
   const auto &item = m_items[index];
   auto handler = item.fieldData.value("onSearchTextChange").toString();
   if (!handler.isEmpty()) { m_notify(handler, QJsonArray{text}); }
@@ -103,8 +104,8 @@ void ExtensionFormModel::setFormData(const FormModel &model) {
     if (item.isField() && item.hasUserValue) { savedValues[item.fieldId] = item.userValue; }
   }
 
-  int oldCount = static_cast<int>(m_items.size());
-  int newCount = static_cast<int>(model.items.size());
+  int const oldCount = static_cast<int>(m_items.size());
+  int const newCount = static_cast<int>(model.items.size());
 
   if (oldCount > newCount) {
     beginRemoveRows({}, newCount, oldCount - 1);
@@ -112,7 +113,7 @@ void ExtensionFormModel::setFormData(const FormModel &model) {
     endRemoveRows();
   }
 
-  int updateCount = std::min(oldCount, newCount);
+  int const updateCount = std::min(oldCount, newCount);
   for (int i = 0; i < updateCount; ++i) {
     updateItem(m_items[i], model.items[i]);
 
@@ -148,7 +149,7 @@ void ExtensionFormModel::setFormData(const FormModel &model) {
 
   if (m_firstLoad) {
     m_firstLoad = false;
-    for (int i = 0; i < static_cast<int>(m_items.size()); ++i) {
+    for (int i = 0; std::cmp_less(i, m_items.size()); ++i) {
       if (m_items[i].autoFocus) {
         emit autoFocusRequested(i);
         break;

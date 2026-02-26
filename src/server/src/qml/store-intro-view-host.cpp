@@ -15,8 +15,8 @@ QUrl StoreIntroViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/StoreIntroView.qml"));
 }
 
-QVariantMap StoreIntroViewHost::qmlProperties() const {
-  return {{QStringLiteral("host"), QVariant::fromValue(const_cast<StoreIntroViewHost *>(this))}};
+QVariantMap StoreIntroViewHost::qmlProperties() {
+  return {{QStringLiteral("host"), QVariant::fromValue(this)}};
 }
 
 void StoreIntroViewHost::initialize() {

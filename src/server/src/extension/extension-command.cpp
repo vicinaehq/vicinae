@@ -21,7 +21,7 @@ CommandType ExtensionCommand::type() const { return CommandType::CommandTypeExte
 CommandMode ExtensionCommand::mode() const { return m_command.mode; }
 
 EntrypointId ExtensionCommand::uniqueId() const {
-  std::string provider = std::format("@{}/{}", m_author.toStdString(), _extensionId.toStdString());
+  std::string const provider = std::format("@{}/{}", m_author.toStdString(), _extensionId.toStdString());
   return EntrypointId{provider, m_command.name.toStdString()};
 }
 

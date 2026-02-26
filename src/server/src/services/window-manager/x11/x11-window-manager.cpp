@@ -9,6 +9,8 @@
 #include <xcb/xcb.h>
 #include <xcb/xproto.h>
 #include <cstring>
+#include <utility>
+#include "common/c-ptr.hpp"
 
 X11WindowManager::X11WindowManager() : m_connection(nullptr), m_screen(nullptr), m_ewmhSupported(false) {}
 
@@ -95,7 +97,7 @@ xcb_screen_t *X11WindowManager::getScreen() const {
   if (!conn) { return nullptr; }
 
   // Get the first screen
-  xcb_screen_iterator_t iter = xcb_setup_roots_iterator(xcb_get_setup(conn));
+  xcb_screen_iterator_t const iter = xcb_setup_roots_iterator(xcb_get_setup(conn));
   m_screen = iter.data;
 
   return m_screen;
@@ -107,7 +109,7 @@ xcb_window_t X11WindowManager::getRootWindow() const {
 }
 
 xcb_atom_t X11WindowManager::internAtom(const char *name, bool only_if_exists) const {
-  QString atomName(name);
+  QString const atomName(name);
 
   // Check cache first
   if (m_atomCache.contains(atomName)) { return m_atomCache[atomName]; }
@@ -115,13 +117,12 @@ xcb_atom_t X11WindowManager::internAtom(const char *name, bool only_if_exists) c
   auto *conn = getConnection();
   if (!conn) { return XCB_ATOM_NONE; }
 
-  xcb_intern_atom_cookie_t cookie = xcb_intern_atom(conn, only_if_exists ? 1 : 0, strlen(name), name);
-  xcb_intern_atom_reply_t *reply = xcb_intern_atom_reply(conn, cookie, nullptr);
+  xcb_intern_atom_cookie_t const cookie = xcb_intern_atom(conn, only_if_exists ? 1 : 0, strlen(name), name);
+  const CPtr<xcb_intern_atom_reply_t> reply(xcb_intern_atom_reply(conn, cookie, nullptr));
 
   if (!reply) { return XCB_ATOM_NONE; }
 
-  xcb_atom_t atom = reply->atom;
-  free(reply);
+  xcb_atom_t const atom = reply->atom;
 
   // Cache the atom
   m_atomCache[atomName] = atom;
@@ -136,20 +137,14 @@ bool X11WindowManager::checkEWMHSupport() const {
   if (!conn || root == XCB_WINDOW_NONE) { return false; }
 
   // Check for _NET_SUPPORTING_WM_CHECK
-  xcb_atom_t net_supporting_wm_check = internAtom("_NET_SUPPORTING_WM_CHECK");
+  xcb_atom_t const net_supporting_wm_check = internAtom("_NET_SUPPORTING_WM_CHECK");
   if (net_supporting_wm_check == XCB_ATOM_NONE) { return false; }
 
-  xcb_get_property_cookie_t cookie =
+  xcb_get_property_cookie_t const cookie =
       xcb_get_property(conn, 0, root, net_supporting_wm_check, XCB_ATOM_WINDOW, 0, 1);
-  xcb_get_property_reply_t *reply = xcb_get_property_reply(conn, cookie, nullptr);
+  const CPtr<xcb_get_property_reply_t> reply(xcb_get_property_reply(conn, cookie, nullptr));
 
-  if (!reply || xcb_get_property_value_length(reply) < 4) {
-    if (reply) free(reply);
-    return false;
-  }
-
-  free(reply);
-  return true;
+  return reply && xcb_get_property_value_length(reply.get()) >= 4;
 }
 
 std::vector<xcb_window_t> X11WindowManager::getClientList() const {
@@ -160,24 +155,23 @@ std::vector<xcb_window_t> X11WindowManager::getClientList() const {
 
   if (!conn || root == XCB_WINDOW_NONE) { return windows; }
 
-  xcb_atom_t net_client_list = internAtom("_NET_CLIENT_LIST");
+  xcb_atom_t const net_client_list = internAtom("_NET_CLIENT_LIST");
   if (net_client_list == XCB_ATOM_NONE) { return windows; }
 
-  xcb_get_property_cookie_t cookie =
+  xcb_get_property_cookie_t const cookie =
       xcb_get_property(conn, 0, root, net_client_list, XCB_ATOM_WINDOW, 0, 1024);
-  xcb_get_property_reply_t *reply = xcb_get_property_reply(conn, cookie, nullptr);
+  const CPtr<xcb_get_property_reply_t> reply(xcb_get_property_reply(conn, cookie, nullptr));
 
   if (!reply) { return windows; }
 
-  xcb_window_t *window_list = static_cast<xcb_window_t *>(xcb_get_property_value(reply));
-  int count = xcb_get_property_value_length(reply) / sizeof(xcb_window_t);
+  xcb_window_t const *window_list = static_cast<xcb_window_t *>(xcb_get_property_value(reply.get()));
+  int const count = xcb_get_property_value_length(reply.get()) / sizeof(xcb_window_t);
 
   windows.reserve(count);
   for (int i = 0; i < count; i++) {
     windows.push_back(window_list[i]);
   }
 
-  free(reply);
   return windows;
 }
 
@@ -187,21 +181,16 @@ xcb_window_t X11WindowManager::getActiveWindow() const {
 
   if (!conn || root == XCB_WINDOW_NONE) { return XCB_WINDOW_NONE; }
 
-  xcb_atom_t net_active_window = internAtom("_NET_ACTIVE_WINDOW");
+  xcb_atom_t const net_active_window = internAtom("_NET_ACTIVE_WINDOW");
   if (net_active_window == XCB_ATOM_NONE) { return XCB_WINDOW_NONE; }
 
-  xcb_get_property_cookie_t cookie =
-      xcb_get_property(conn, 0, root, net_active_window, XCB_ATOM_WINDOW, 0, 1);
-  xcb_get_property_reply_t *reply = xcb_get_property_reply(conn, cookie, nullptr);
+  xcb_get_property_cookie_t const cookie =
+      xcb_get_property(conn, 0, root, net_active_window, XCB_ATOM_WINDOW, 0, 1); // NOLINT(readability-suspicious-call-argument)
+  const CPtr<xcb_get_property_reply_t> reply(xcb_get_property_reply(conn, cookie, nullptr));
 
-  if (!reply || xcb_get_property_value_length(reply) < 4) {
-    if (reply) free(reply);
-    return XCB_WINDOW_NONE;
-  }
+  if (!reply || xcb_get_property_value_length(reply.get()) < 4) { return XCB_WINDOW_NONE; }
 
-  xcb_window_t active = *static_cast<xcb_window_t *>(xcb_get_property_value(reply));
-  free(reply);
-  return active;
+  return *static_cast<xcb_window_t *>(xcb_get_property_value(reply.get()));
 }
 
 AbstractWindowManager::WindowList X11WindowManager::listWindowsSync() const {
@@ -213,7 +202,7 @@ AbstractWindowManager::WindowList X11WindowManager::listWindowsSync() const {
   auto client_list = getClientList();
 
   windows.reserve(client_list.size());
-  for (xcb_window_t window : client_list) {
+  for (xcb_window_t const window : client_list) {
     try {
       auto x11_window = std::make_shared<X11Window>(conn, window);
       windows.push_back(x11_window);
@@ -229,7 +218,7 @@ std::shared_ptr<AbstractWindowManager::AbstractWindow> X11WindowManager::getFocu
   auto *conn = getConnection();
   if (!conn) { return nullptr; }
 
-  xcb_window_t active = getActiveWindow();
+  xcb_window_t const active = getActiveWindow();
   if (active == XCB_WINDOW_NONE) { return nullptr; }
 
   try {
@@ -246,31 +235,28 @@ void X11WindowManager::focusWindowSync(const AbstractWindow &window) const {
 
   if (!conn || root == XCB_WINDOW_NONE) { return; }
 
-  const X11Window &x11_window = static_cast<const X11Window &>(window);
-  xcb_window_t window_id = x11_window.windowId();
+  const X11Window &x11_window = static_cast<const X11Window &>(window); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+  xcb_window_t const window_id = x11_window.windowId();
 
   // Method 1: Check if window is on a different desktop and switch to it first
-  xcb_atom_t net_wm_desktop = internAtom("_NET_WM_DESKTOP");
-  xcb_atom_t net_current_desktop = internAtom("_NET_CURRENT_DESKTOP");
+  xcb_atom_t const net_wm_desktop = internAtom("_NET_WM_DESKTOP");
+  xcb_atom_t const net_current_desktop = internAtom("_NET_CURRENT_DESKTOP");
 
   if (net_wm_desktop != XCB_ATOM_NONE && net_current_desktop != XCB_ATOM_NONE) {
-    // Get window's desktop
-    xcb_get_property_cookie_t win_desk_cookie =
+    xcb_get_property_cookie_t const win_desk_cookie =
         xcb_get_property(conn, 0, window_id, net_wm_desktop, XCB_ATOM_CARDINAL, 0, 1);
-    xcb_get_property_reply_t *win_desk_reply = xcb_get_property_reply(conn, win_desk_cookie, nullptr);
+    const CPtr<xcb_get_property_reply_t> win_desk_reply(xcb_get_property_reply(conn, win_desk_cookie, nullptr));
 
-    if (win_desk_reply && xcb_get_property_value_length(win_desk_reply) >= 4) {
-      uint32_t window_desktop = *static_cast<uint32_t *>(xcb_get_property_value(win_desk_reply));
+    if (win_desk_reply && xcb_get_property_value_length(win_desk_reply.get()) >= 4) {
+      uint32_t const window_desktop = *static_cast<uint32_t *>(xcb_get_property_value(win_desk_reply.get()));
 
-      // Get current desktop
-      xcb_get_property_cookie_t cur_desk_cookie =
+      xcb_get_property_cookie_t const cur_desk_cookie =
           xcb_get_property(conn, 0, root, net_current_desktop, XCB_ATOM_CARDINAL, 0, 1);
-      xcb_get_property_reply_t *cur_desk_reply = xcb_get_property_reply(conn, cur_desk_cookie, nullptr);
+      const CPtr<xcb_get_property_reply_t> cur_desk_reply(xcb_get_property_reply(conn, cur_desk_cookie, nullptr));
 
-      if (cur_desk_reply && xcb_get_property_value_length(cur_desk_reply) >= 4) {
-        uint32_t current_desktop = *static_cast<uint32_t *>(xcb_get_property_value(cur_desk_reply));
+      if (cur_desk_reply && xcb_get_property_value_length(cur_desk_reply.get()) >= 4) {
+        uint32_t const current_desktop = *static_cast<uint32_t *>(xcb_get_property_value(cur_desk_reply.get()));
 
-        // If window is on a different desktop, switch to it
         if (window_desktop != current_desktop && window_desktop != 0xFFFFFFFF) {
           xcb_client_message_event_t switch_event;
           memset(&switch_event, 0, sizeof(switch_event));
@@ -285,11 +271,7 @@ void X11WindowManager::focusWindowSync(const AbstractWindow &window) const {
                          XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY,
                          reinterpret_cast<const char *>(&switch_event));
         }
-
-        free(cur_desk_reply);
       }
-
-      free(win_desk_reply);
     }
   }
 
@@ -301,7 +283,7 @@ void X11WindowManager::focusWindowSync(const AbstractWindow &window) const {
   xcb_configure_window(conn, window_id, XCB_CONFIG_WINDOW_STACK_MODE, values);
 
   // Method 4: Send _NET_ACTIVE_WINDOW (EWMH way)
-  xcb_atom_t net_active_window = internAtom("_NET_ACTIVE_WINDOW");
+  xcb_atom_t const net_active_window = internAtom("_NET_ACTIVE_WINDOW");
   if (net_active_window != XCB_ATOM_NONE) {
     xcb_client_message_event_t event;
     memset(&event, 0, sizeof(event));
@@ -328,16 +310,16 @@ bool X11WindowManager::closeWindow(const AbstractWindow &window) const {
   auto *conn = getConnection();
   if (!conn) { return false; }
 
-  const X11Window &x11_window = static_cast<const X11Window &>(window);
-  xcb_window_t window_id = x11_window.windowId();
+  const X11Window &x11_window = static_cast<const X11Window &>(window); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+  xcb_window_t const window_id = x11_window.windowId();
 
   if (!x11_window.canClose()) {
     qWarning() << "X11WindowManager: Window" << window_id << "does not support WM_DELETE_WINDOW";
     return false;
   }
 
-  xcb_atom_t wm_protocols = internAtom("WM_PROTOCOLS");
-  xcb_atom_t wm_delete_window = internAtom("WM_DELETE_WINDOW");
+  xcb_atom_t const wm_protocols = internAtom("WM_PROTOCOLS");
+  xcb_atom_t const wm_delete_window = internAtom("WM_DELETE_WINDOW");
 
   if (wm_protocols == XCB_ATOM_NONE || wm_delete_window == XCB_ATOM_NONE) { return false; }
 
@@ -366,21 +348,16 @@ std::optional<uint32_t> X11WindowManager::getNumberOfDesktops() const {
 
   if (!conn || root == XCB_WINDOW_NONE) { return std::nullopt; }
 
-  xcb_atom_t net_number_of_desktops = internAtom("_NET_NUMBER_OF_DESKTOPS");
+  xcb_atom_t const net_number_of_desktops = internAtom("_NET_NUMBER_OF_DESKTOPS");
   if (net_number_of_desktops == XCB_ATOM_NONE) { return std::nullopt; }
 
-  xcb_get_property_cookie_t cookie =
+  xcb_get_property_cookie_t const cookie =
       xcb_get_property(conn, 0, root, net_number_of_desktops, XCB_ATOM_CARDINAL, 0, 1);
-  xcb_get_property_reply_t *reply = xcb_get_property_reply(conn, cookie, nullptr);
+  const CPtr<xcb_get_property_reply_t> reply(xcb_get_property_reply(conn, cookie, nullptr));
 
-  if (!reply || xcb_get_property_value_length(reply) < 4) {
-    if (reply) free(reply);
-    return std::nullopt;
-  }
+  if (!reply || xcb_get_property_value_length(reply.get()) < 4) { return std::nullopt; }
 
-  uint32_t count = *static_cast<uint32_t *>(xcb_get_property_value(reply));
-  free(reply);
-  return count;
+  return *static_cast<uint32_t *>(xcb_get_property_value(reply.get()));
 }
 
 std::optional<uint32_t> X11WindowManager::getCurrentDesktop() const {
@@ -389,21 +366,16 @@ std::optional<uint32_t> X11WindowManager::getCurrentDesktop() const {
 
   if (!conn || root == XCB_WINDOW_NONE) { return std::nullopt; }
 
-  xcb_atom_t net_current_desktop = internAtom("_NET_CURRENT_DESKTOP");
+  xcb_atom_t const net_current_desktop = internAtom("_NET_CURRENT_DESKTOP");
   if (net_current_desktop == XCB_ATOM_NONE) { return std::nullopt; }
 
-  xcb_get_property_cookie_t cookie =
+  xcb_get_property_cookie_t const cookie =
       xcb_get_property(conn, 0, root, net_current_desktop, XCB_ATOM_CARDINAL, 0, 1);
-  xcb_get_property_reply_t *reply = xcb_get_property_reply(conn, cookie, nullptr);
+  const CPtr<xcb_get_property_reply_t> reply(xcb_get_property_reply(conn, cookie, nullptr));
 
-  if (!reply || xcb_get_property_value_length(reply) < 4) {
-    if (reply) free(reply);
-    return std::nullopt;
-  }
+  if (!reply || xcb_get_property_value_length(reply.get()) < 4) { return std::nullopt; }
 
-  uint32_t desktop = *static_cast<uint32_t *>(xcb_get_property_value(reply));
-  free(reply);
-  return desktop;
+  return *static_cast<uint32_t *>(xcb_get_property_value(reply.get()));
 }
 
 QStringList X11WindowManager::getDesktopNames() const {
@@ -414,24 +386,22 @@ QStringList X11WindowManager::getDesktopNames() const {
 
   if (!conn || root == XCB_WINDOW_NONE) { return names; }
 
-  xcb_atom_t net_desktop_names = internAtom("_NET_DESKTOP_NAMES");
-  xcb_atom_t utf8_string = internAtom("UTF8_STRING");
+  xcb_atom_t const net_desktop_names = internAtom("_NET_DESKTOP_NAMES");
+  xcb_atom_t const utf8_string = internAtom("UTF8_STRING");
 
   if (net_desktop_names == XCB_ATOM_NONE || utf8_string == XCB_ATOM_NONE) { return names; }
 
-  xcb_get_property_cookie_t cookie = xcb_get_property(conn, 0, root, net_desktop_names, utf8_string, 0, 1024);
-  xcb_get_property_reply_t *reply = xcb_get_property_reply(conn, cookie, nullptr);
+  xcb_get_property_cookie_t const cookie = xcb_get_property(conn, 0, root, net_desktop_names, utf8_string, 0, 1024);
+  const CPtr<xcb_get_property_reply_t> reply(xcb_get_property_reply(conn, cookie, nullptr));
 
   if (!reply) { return names; }
 
-  // Desktop names are null-separated UTF-8 strings
-  const char *value = static_cast<const char *>(xcb_get_property_value(reply));
-  int length = xcb_get_property_value_length(reply);
+  const char *value = static_cast<const char *>(xcb_get_property_value(reply.get()));
+  int const length = xcb_get_property_value_length(reply.get());
 
-  QString allNames = QString::fromUtf8(value, length);
+  QString const allNames = QString::fromUtf8(value, length);
   names = allNames.split('\0', Qt::SkipEmptyParts);
 
-  free(reply);
   return names;
 }
 
@@ -462,7 +432,7 @@ AbstractWindowManager::WorkspaceList X11WindowManager::listWorkspaces() const {
 
   workspaces.reserve(*desktop_count);
   for (uint32_t i = 0; i < *desktop_count; i++) {
-    QString name = (i < static_cast<uint32_t>(desktop_names.size())) ? desktop_names[i] : QString();
+    QString const name = (std::cmp_less(i, desktop_names.size())) ? desktop_names[i] : QString();
     workspaces.push_back(std::make_shared<X11Workspace>(i, name));
   }
 
@@ -476,8 +446,8 @@ std::shared_ptr<AbstractWindowManager::AbstractWorkspace> X11WindowManager::getA
   if (!current.has_value()) { return nullptr; }
 
   auto desktop_names = getDesktopNames();
-  QString name =
-      (*current < static_cast<uint32_t>(desktop_names.size())) ? desktop_names[*current] : QString();
+  QString const name =
+      (std::cmp_less(*current, desktop_names.size())) ? desktop_names[*current] : QString();
 
   return std::make_shared<X11Workspace>(*current, name);
 }

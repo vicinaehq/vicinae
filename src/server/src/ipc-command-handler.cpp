@@ -34,13 +34,13 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
 
   qDebug() << "got deeplink" << url.toString();
 
-  QUrlQuery query(url.query(QUrl::FullyDecoded));
+  QUrlQuery const query(url.query(QUrl::FullyDecoded));
 
   // Command may be in host (raycast://) or as first part of path (com.raycast:/)
   QString command = url.host();
   QString path = url.path();
   if (command.isEmpty() && !path.isEmpty()) {
-    QStringList pathParts = path.split('/', Qt::SkipEmptyParts);
+    QStringList const pathParts = path.split('/', Qt::SkipEmptyParts);
     command = pathParts.at(0);
     path = "/" + pathParts.mid(1).join('/');
   }
@@ -126,7 +126,7 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
   }
 
   if (command == "toast") {
-    QString title = query.hasQueryItem("title") ? query.queryItemValue("title") : "Toast";
+    QString const title = query.hasQueryItem("title") ? query.queryItemValue("title") : "Toast";
     m_ctx.services->toastService()->setToast(title, ToastStyle::Info);
     return {};
   }
@@ -168,11 +168,11 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
       return {};
     }
 
-    QString author = components[0];
-    QString extName = components[1];
-    QString cmdName = components[2];
+    QString const& author = components[0];
+    QString const& extName = components[1];
+    QString const& cmdName = components[2];
 
-    for (ExtensionRootProvider *ext : root->extensions()) {
+    for (ExtensionRootProvider  const*ext : root->extensions()) {
       for (const auto &cmd : ext->repository()->commands()) {
         // Author is suffixed, check author with suffix
         if (author.contains("@")) {
@@ -188,9 +188,9 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
           // Read `arguments` query parameter
           ArgumentValues arguments;
           if (query.hasQueryItem("arguments")) {
-            QString argsText = query.queryItemValue("arguments");
+            QString const argsText = query.queryItemValue("arguments");
             QJsonParseError parseError;
-            QJsonDocument doc = QJsonDocument::fromJson(argsText.toUtf8(), &parseError);
+            QJsonDocument const doc = QJsonDocument::fromJson(argsText.toUtf8(), &parseError);
             if (parseError.error == QJsonParseError::NoError && doc.isObject()) {
               QJsonObject obj = doc.object();
               for (auto it = obj.begin(); it != obj.end(); ++it) {
@@ -222,14 +222,14 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
 
   if (command == "theme") {
     auto components = path.sliced(1).split('/');
-    auto verb = components.at(0);
+    const auto& verb = components.at(0);
 
     if (verb == "set") {
       if (components.size() != 2) {
         return std::unexpected("Correct usage is vicinae://theme/set/<theme_id>");
       }
 
-      QString id = components.at(1);
+      QString const& id = components.at(1);
       auto &service = ThemeService::instance();
       auto cfg = m_ctx.services->config();
 
@@ -257,8 +257,8 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
 
   if (command == "oauth") {
     auto oauth = m_ctx.services->oauthService();
-    QString code = query.queryItemValue("code");
-    QString state = query.queryItemValue("state");
+    QString const code = query.queryItemValue("code");
+    QString const state = query.queryItemValue("state");
     oauth->fullfillRequest(state, code);
     return {};
   }

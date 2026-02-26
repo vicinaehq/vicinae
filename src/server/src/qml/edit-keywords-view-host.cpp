@@ -12,8 +12,8 @@ QUrl EditKeywordsViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/EditKeywordsFormView.qml"));
 }
 
-QVariantMap EditKeywordsViewHost::qmlProperties() const {
-  return {{QStringLiteral("host"), QVariant::fromValue(const_cast<EditKeywordsViewHost *>(this))}};
+QVariantMap EditKeywordsViewHost::qmlProperties() {
+  return {{QStringLiteral("host"), QVariant::fromValue(this)}};
 }
 
 void EditKeywordsViewHost::initialize() {

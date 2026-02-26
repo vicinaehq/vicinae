@@ -112,7 +112,7 @@ bool BaseView::isLoading() const {
 
 void BaseView::setSearchText(const QString &value) {
   if (!m_ctx) return;
-  return m_ctx->navigation->setSearchText(value, m_navProxy);
+  m_ctx->navigation->setSearchText(value, m_navProxy);
 }
 
 bool BaseView::inputFilter(QKeyEvent *event) { return false; }
@@ -126,12 +126,12 @@ void BaseView::setNavigation(const QString &title, const ImageURL &icon) { setNa
 
 void BaseView::setNavigationTitle(const QString &title) {
   if (!m_ctx) return;
-  return m_ctx->navigation->setNavigationTitle(title, m_navProxy);
+  m_ctx->navigation->setNavigationTitle(title, m_navProxy);
 }
 
 void BaseView::setLoading(bool value) {
   if (!m_ctx) return;
-  return m_ctx->navigation->setLoading(value, m_navProxy);
+  m_ctx->navigation->setLoading(value, m_navProxy);
 }
 
 std::vector<QString> BaseView::argumentValues() const { return {}; }

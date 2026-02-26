@@ -38,7 +38,7 @@ void WlrClipman::start() {
   if (!_dcm) { throw std::runtime_error("zwlr data control is not available"); }
   if (!_seat) { throw std::runtime_error("seat is not available"); }
 
-  auto dev = _dcm->getDataDevice(*_seat.get());
+  auto dev = _dcm->getDataDevice(*_seat);
   dev->registerListener(this);
 
   for (;;) {

@@ -19,7 +19,7 @@ ThemeDatabase::ThemeDatabase() : m_watcher(new QFileSystemWatcher) {
 
   {
     std::error_code ec;
-    fs::path localThemes = Omnicast::dataDir() / "themes";
+    fs::path const localThemes = Omnicast::dataDir() / "themes";
     if (!fs::exists(localThemes, ec)) { fs::create_directories(localThemes, ec); }
   }
 
@@ -63,7 +63,7 @@ void ThemeDatabase::scan() {
     }
   }
 
-  for (const auto theme : themes) {
+  for (const auto& theme : themes) {
     if (theme->id() == defaultDark->id() || theme->id() == defaultLight->id()) continue;
     if (auto it = mapping.find(theme->inherits()); it != mapping.end()) {
       theme->setParent(it->second);
@@ -99,7 +99,7 @@ std::vector<std::filesystem::path> ThemeDatabase::defaultSearchPaths() {
   paths.emplace_back(xdgpp::dataHome() / suffix);
 
   for (const auto &dir : dd) {
-    fs::path path = dir / suffix;
+    fs::path const path = dir / suffix;
     if (std::ranges::find(paths, path) == paths.end()) { paths.emplace_back(path); }
   }
 

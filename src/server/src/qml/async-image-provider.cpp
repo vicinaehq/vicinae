@@ -97,7 +97,7 @@ private:
 
   void cacheIfFailed(const QImage &image) {
     if (!image.isNull() || m_id.isEmpty()) return;
-    std::lock_guard lock(s_failedCacheMutex);
+    std::scoped_lock const lock(s_failedCacheMutex);
     s_failedImageIds.insert(m_id);
   }
 
@@ -111,7 +111,7 @@ private:
 
 static QImage renderBuiltinSvg(const QString &iconName, const QSize &size, const QColor &fg,
                                const QColor &bg) {
-  QString iconPath = QStringLiteral(":icons/%1.svg").arg(iconName);
+  QString const iconPath = QStringLiteral(":icons/%1.svg").arg(iconName);
   QSvgRenderer renderer(iconPath);
   if (!renderer.isValid()) return {};
 
@@ -124,15 +124,15 @@ static QImage renderBuiltinSvg(const QString &iconName, const QSize &size, const
   int margin = 0;
 
   if (bg.isValid() && bg.alpha() > 0) {
-    int side = qMin(size.width(), size.height());
-    qreal radius = side * 0.25;
+    int const side = qMin(size.width(), size.height());
+    qreal const radius = side * 0.25;
     margin = qRound(side * 0.15);
     painter.setBrush(bg);
     painter.setPen(Qt::NoPen);
     painter.drawRoundedRect(canvas.rect(), radius, radius);
   }
 
-  QRect iconRect = canvas.rect().marginsRemoved({margin, margin, margin, margin});
+  QRect const iconRect = canvas.rect().marginsRemoved({margin, margin, margin, margin});
 
   QImage svgImage(iconRect.size(), QImage::Format_ARGB32_Premultiplied);
   svgImage.fill(Qt::transparent);
@@ -172,7 +172,7 @@ static QImage renderEmoji(const QString &emoji, const QSize &size) {
 }
 
 static QImage renderSystemIcon(const QString &name, const QSize &size) {
-  QIcon icon = QIcon::fromTheme(name);
+  QIcon const icon = QIcon::fromTheme(name);
   if (icon.isNull()) return {};
   return icon.pixmap(size).toImage();
 }
@@ -185,7 +185,7 @@ static QImage renderLocalSvg(const QString &path, const QSize &size) {
   // This keeps small SVGs (e.g. 45x45 viewBox) at their intended
   // visual size rather than stretching them to fill the cell.
   QSize renderSize = size;
-  QSize natural = renderer.defaultSize();
+  QSize const natural = renderer.defaultSize();
   if (natural.isValid() && !natural.isEmpty()) {
     renderSize.setWidth(qMin(size.width(), natural.width()));
     renderSize.setHeight(qMin(size.height(), natural.height()));
@@ -206,7 +206,7 @@ static QImage renderLocalRaster(const QString &path, const QSize &size) {
   if (!reader.canRead()) return {};
 
   if (size.isValid()) {
-    QSize original = reader.size();
+    QSize const original = reader.size();
     if (original.isValid() && (original.width() > size.width() || original.height() > size.height()))
       reader.setScaledSize(original.scaled(size, Qt::KeepAspectRatioByExpanding));
   }
@@ -290,10 +290,10 @@ struct ParsedId {
 
 static void parseParams(const QString &str, QChar sep, ParsedId &result) {
   for (const auto &param : str.split(sep)) {
-    int eq = param.indexOf('=');
+    int const eq = param.indexOf('=');
     if (eq < 0) continue;
-    QString key = param.left(eq);
-    QString val = param.mid(eq + 1);
+    QString const key = param.left(eq);
+    QString const val = param.mid(eq + 1);
     if (key == QStringLiteral("fg"))
       result.fg = QColor(val);
     else if (key == QStringLiteral("bg"))
@@ -308,13 +308,13 @@ static void parseParams(const QString &str, QChar sep, ParsedId &result) {
 static ParsedId parseId(const QString &id) {
   ParsedId result;
 
-  int colonIdx = id.indexOf(':');
+  int const colonIdx = id.indexOf(':');
   if (colonIdx < 0) return result;
 
-  QString typeStr = id.left(colonIdx);
-  QString rest = id.mid(colonIdx + 1);
+  QString const typeStr = id.left(colonIdx);
+  QString const rest = id.mid(colonIdx + 1);
 
-  int semiIdx = typeStr.indexOf(';');
+  int const semiIdx = typeStr.indexOf(';');
   if (semiIdx >= 0) {
     result.type = typeStr.left(semiIdx);
     parseParams(typeStr.mid(semiIdx + 1), ';', result);
@@ -325,7 +325,7 @@ static ParsedId parseId(const QString &id) {
   if (result.type == QStringLiteral("http") || result.type == QStringLiteral("datauri")) {
     result.name = rest;
   } else {
-    int qmark = rest.indexOf('?');
+    int const qmark = rest.indexOf('?');
     if (qmark < 0) {
       result.name = rest;
     } else {
@@ -340,12 +340,12 @@ static ParsedId parseId(const QString &id) {
 void ViciImageResponse::tryFallback(QImage &image) {
   if (!image.isNull() || m_fallback.isEmpty()) return;
 
-  QString fallback = m_fallback;
+  QString const fallback = m_fallback;
   m_fallback.clear();
   auto fb = parseId(fallback);
 
   if (fb.type == QStringLiteral("builtin")) {
-    QColor fg = fb.fg.isValid() ? fb.fg : ThemeService::instance().theme().resolve(SemanticColor::Foreground);
+    QColor const fg = fb.fg.isValid() ? fb.fg : ThemeService::instance().theme().resolve(SemanticColor::Foreground);
     image = renderBuiltinSvg(fb.name, m_size, fg, fb.bg);
     if (fb.circleMask && !image.isNull()) applyCircleMask(image);
   } else if (fb.type == QStringLiteral("system")) {
@@ -357,7 +357,7 @@ void ViciImageResponse::tryFallback(QImage &image) {
 QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id, const QSize &requestedSize) {
 
   {
-    std::lock_guard lock(s_failedCacheMutex);
+    std::scoped_lock const lock(s_failedCacheMutex);
     if (s_failedImageIds.contains(id)) {
       auto *response = new ViciImageResponse(qGuiApp->devicePixelRatio());
       response->finishDeferred({});
@@ -365,11 +365,11 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id,
     }
   }
 
-  qreal dpr = qGuiApp->devicePixelRatio();
+  qreal const dpr = qGuiApp->devicePixelRatio();
   auto *response = new ViciImageResponse(dpr);
   response->setId(id);
-  QSize logical = requestedSize.isValid() && !requestedSize.isEmpty() ? requestedSize : QSize(64, 64);
-  QSize size(qCeil(logical.width() * dpr), qCeil(logical.height() * dpr));
+  QSize const logical = requestedSize.isValid() && !requestedSize.isEmpty() ? requestedSize : QSize(64, 64);
+  QSize const size(qCeil(logical.width() * dpr), qCeil(logical.height() * dpr));
   auto parsed = parseId(id);
 
   if (!parsed.fallback.isEmpty()) response->setFallback(parsed.fallback, size);
@@ -395,7 +395,7 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id,
         Qt::QueuedConnection);
 
   } else if (parsed.type == QStringLiteral("system")) {
-    QColor fg = parsed.fg;
+    QColor const fg = parsed.fg;
     QMetaObject::invokeMethod(
         qApp,
         [response, name = parsed.name, size, fg]() {
@@ -410,9 +410,9 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id,
         Qt::QueuedConnection);
 
   } else if (parsed.type == QStringLiteral("local")) {
-    QString path = parsed.name;
-    bool circle = parsed.circleMask;
-    QColor fg = parsed.fg;
+    QString const path = parsed.name;
+    bool const circle = parsed.circleMask;
+    QColor const fg = parsed.fg;
 
     if (path.endsWith(QStringLiteral(".svg"), Qt::CaseInsensitive)) {
       QImage img = renderLocalSvg(path, size);
@@ -438,8 +438,8 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id,
       url.insert(6, '/');
     else if (url.startsWith(QStringLiteral("http:/")) && !url.startsWith(QStringLiteral("http://")))
       url.insert(5, '/');
-    bool circle = parsed.circleMask;
-    QColor fg = parsed.fg;
+    bool const circle = parsed.circleMask;
+    QColor const fg = parsed.fg;
     QMetaObject::invokeMethod(
         qApp,
         [response, url, size, circle, fg, id]() {
@@ -505,23 +505,23 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id,
         Qt::QueuedConnection);
 
   } else if (parsed.type == QStringLiteral("datauri")) {
-    QString dataStr = parsed.name;
-    bool circle = parsed.circleMask;
-    QColor fg = parsed.fg;
+    QString const dataStr = parsed.name;
+    bool const circle = parsed.circleMask;
+    QColor const fg = parsed.fg;
     imageDecodingPool().start([response, dataStr, size, circle, fg, id]() {
       if (response->isCancelled()) {
         response->finish({});
         return;
       }
 
-      DataUri uri(dataStr);
-      QByteArray decoded = uri.decodeContent();
+      DataUri const uri(dataStr);
+      QByteArray const decoded = uri.decodeContent();
       if (decoded.isEmpty()) {
         response->finish({});
         return;
       }
 
-      bool isSvg = uri.mediaType().contains(QStringLiteral("svg"));
+      bool const isSvg = uri.mediaType().contains(QStringLiteral("svg"));
 
       if (!isSvg) {
         if (isGif(decoded))

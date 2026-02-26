@@ -112,7 +112,7 @@ void SettingsWindow::updateBlur() {
   if (!bgEffect->supportsBlur()) return;
 
   if (cfg.launcherWindow.blur.enabled) {
-    QRect region(0, 0, m_window->width(), m_window->height());
+    QRect const region(0, 0, m_window->width(), m_window->height());
     bgEffect->setBlur(m_window, {.radius = 10, .region = region});
   } else {
     bgEffect->clearBlur(m_window);

@@ -6,7 +6,7 @@ QUrl LocalStorageViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/CommandListView.qml"));
 }
 
-QVariantMap LocalStorageViewHost::qmlProperties() const {
+QVariantMap LocalStorageViewHost::qmlProperties() {
   return {{QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(m_model))}};
 }
 
@@ -35,7 +35,7 @@ QUrl LocalStorageItemViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/CommandListView.qml"));
 }
 
-QVariantMap LocalStorageItemViewHost::qmlProperties() const {
+QVariantMap LocalStorageItemViewHost::qmlProperties() {
   return {{QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(m_model))}};
 }
 

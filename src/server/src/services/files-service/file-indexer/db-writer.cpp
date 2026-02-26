@@ -11,7 +11,7 @@ void DbWriter::listen() {
 
     if (m_queue.empty() && !m_active) break;
 
-    Work work = std::move(m_queue.front());
+    Work const work = std::move(m_queue.front());
     m_queue.pop();
     lock.unlock();
 
@@ -21,7 +21,7 @@ void DbWriter::listen() {
 
 void DbWriter::submit(Work work) {
   {
-    std::scoped_lock l(m_queueMtx);
+    std::scoped_lock const l(m_queueMtx);
     m_queue.push(std::move(work));
   }
   m_updateSignal.notify_one();

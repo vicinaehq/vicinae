@@ -21,8 +21,8 @@ QUrl ExtensionViewHost::qmlSearchAccessoryUrl() const {
   return {};
 }
 
-QVariantMap ExtensionViewHost::qmlProperties() const {
-  return {{QStringLiteral("host"), QVariant::fromValue(const_cast<ExtensionViewHost *>(this))}};
+QVariantMap ExtensionViewHost::qmlProperties() {
+  return {{QStringLiteral("host"), QVariant::fromValue(this)}};
 }
 
 void ExtensionViewHost::loadInitialData() {
@@ -127,7 +127,7 @@ void ExtensionViewHost::renderList(const ListModel &model) {
   if (!model.searchPlaceholderText.empty()) { setSearchPlaceholderText(model.searchPlaceholderText.c_str()); }
   if (auto text = model.searchText) { setSearchText(text->c_str()); }
 
-  bool wasLoading = m_isLoading;
+  bool const wasLoading = m_isLoading;
   m_isLoading = model.isLoading;
   if (wasLoading != m_isLoading) {
     emit isLoadingChanged();
@@ -167,7 +167,7 @@ void ExtensionViewHost::renderGrid(const GridModel &model) {
   if (!model.searchPlaceholderText.empty()) { setSearchPlaceholderText(model.searchPlaceholderText.c_str()); }
   if (auto text = model.searchText) { setSearchText(text->c_str()); }
 
-  bool wasLoading = m_isLoading;
+  bool const wasLoading = m_isLoading;
   m_isLoading = model.isLoading;
   if (wasLoading != m_isLoading) {
     emit isLoadingChanged();
@@ -189,7 +189,7 @@ void ExtensionViewHost::renderGrid(const GridModel &model) {
 }
 
 void ExtensionViewHost::textChanged(const QString &text) {
-  bool had = m_hasSearchText;
+  bool const had = m_hasSearchText;
   m_hasSearchText = !text.isEmpty();
   if (had != m_hasSearchText) emit suppressEmptyViewChanged();
 
@@ -255,7 +255,7 @@ QVariantList ExtensionViewHost::detailMetadata() const {
 void ExtensionViewHost::renderDetail(const RootDetailModel &model) {
   auto *detail = std::get_if<DetailState>(&m_model);
 
-  bool wasLoading = m_isLoading;
+  bool const wasLoading = m_isLoading;
   m_isLoading = model.isLoading;
   if (wasLoading != m_isLoading) {
     emit isLoadingChanged();
@@ -283,7 +283,7 @@ QString ExtensionViewHost::linkAccessoryHref() const { return m_linkAccessoryHre
 void ExtensionViewHost::renderForm(const FormModel &model) {
   auto *form = activeModel<ExtensionFormModel>();
 
-  bool wasLoading = m_isLoading;
+  bool const wasLoading = m_isLoading;
   m_isLoading = model.isLoading;
   if (wasLoading != m_isLoading) {
     emit isLoadingChanged();
@@ -303,7 +303,7 @@ void ExtensionViewHost::renderForm(const FormModel &model) {
     }
   }
   if (newLinkText != m_linkAccessoryText || newLinkHref != m_linkAccessoryHref) {
-    bool hadAccessory = !m_linkAccessoryText.isEmpty();
+    bool const hadAccessory = !m_linkAccessoryText.isEmpty();
     m_linkAccessoryText = newLinkText;
     m_linkAccessoryHref = newLinkHref;
     emit linkAccessoryChanged();
@@ -320,7 +320,7 @@ void ExtensionViewHost::renderForm(const FormModel &model) {
 }
 
 void ExtensionViewHost::updateDropdown(const DropdownModel *dropdown) {
-  bool hadDropdown = !m_dropdownItems.isEmpty();
+  bool const hadDropdown = !m_dropdownItems.isEmpty();
 
   if (!dropdown) {
     if (hadDropdown) {

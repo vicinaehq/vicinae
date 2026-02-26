@@ -112,8 +112,8 @@ QUrl FontBrowserViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/BrowseFontsView.qml"));
 }
 
-QVariantMap FontBrowserViewHost::qmlProperties() const {
-  return {{QStringLiteral("host"), QVariant::fromValue(const_cast<FontBrowserViewHost *>(this))}};
+QVariantMap FontBrowserViewHost::qmlProperties() {
+  return {{QStringLiteral("host"), QVariant::fromValue(this)}};
 }
 
 void FontBrowserViewHost::initialize() {

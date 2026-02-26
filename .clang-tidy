@@ -1,6 +1,8 @@
-WarningsAsErrors: '*'
+WarningsAsErrors: >
+  *,
+  -bugprone-unchecked-optional-access
 
-HeaderFilterRegex: '.*\.hpp'
+HeaderFilterRegex: '(?!.*(CLI11|toml|rang)\.hpp).*\.hpp'
 FormatStyle: file
 
 Checks: >

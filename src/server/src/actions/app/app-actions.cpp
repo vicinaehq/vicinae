@@ -40,7 +40,7 @@ void OpenAppAction::execute(ApplicationContext *ctx) {
 }
 
 OpenAppAction::OpenAppAction(const std::shared_ptr<AbstractApplication> &app, const QString &title,
-                             const std::vector<QString> args)
+                             const std::vector<QString>& args)
     : AbstractAction(title, app->iconUrl()), application(app), args(args) {}
 
 void OpenRawProgramAction::execute(ApplicationContext *ctx) {
@@ -56,7 +56,7 @@ void OpenRawProgramAction::execute(ApplicationContext *ctx) {
   if (m_clearSearch) ctx->navigation->clearSearchText();
 }
 
-OpenRawProgramAction::OpenRawProgramAction(const std::vector<QString> args) : m_args(args) {}
+OpenRawProgramAction::OpenRawProgramAction(const std::vector<QString>& args) : m_args(args) {}
 
 void OpenInBrowserAction::execute(ApplicationContext *ctx) {
   const auto toast = ctx->services->toastService();

@@ -28,7 +28,7 @@ QUrl CreateExtensionSuccessViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/MarkdownDetailView.qml"));
 }
 
-QVariantMap CreateExtensionSuccessViewHost::qmlProperties() const {
+QVariantMap CreateExtensionSuccessViewHost::qmlProperties() {
   return {{QStringLiteral("markdown"), m_markdown}};
 }
 

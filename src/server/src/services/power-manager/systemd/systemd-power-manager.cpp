@@ -79,6 +79,7 @@ bool SystemdPowerManager::can(const QString &method) const {
   return true;
 }
 
+// NOLINTBEGIN(bugprone-return-const-ref-from-parameter)
 const QDBusArgument &operator>>(const QDBusArgument &arg, SystemdPowerManager::SessionList &sessions) {
   sessions.clear();
   arg.beginArray();
@@ -101,3 +102,4 @@ const QDBusArgument &operator>>(const QDBusArgument &arg, SystemdPowerManager::S
 
   return arg;
 }
+// NOLINTEND(bugprone-return-const-ref-from-parameter)

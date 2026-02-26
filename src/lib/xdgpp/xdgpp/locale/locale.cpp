@@ -5,28 +5,28 @@ namespace xdgpp {
 
 Locale Locale::system() {
   setlocale(LC_MESSAGES, "");
-  char *messagesLocale = setlocale(LC_MESSAGES, nullptr);
+  const char *messagesLocale = setlocale(LC_MESSAGES, nullptr);
 
   return Locale::parse(messagesLocale);
 }
 
 bool Locale::matchesOnly(const Locale &rhs, int components) {
   if (rhs.flags() != components) return false;
-  if (components & LANG && m_lang != rhs.lang()) return false;
-  if (components & COUNTRY && m_country != rhs.country()) return false;
-  if (components & MODIFIER && m_modifier != rhs.modifier()) return false;
+  if (components & Component::LANG && m_lang != rhs.lang()) return false;
+  if (components & Component::COUNTRY && m_country != rhs.country()) return false;
+  if (components & Component::MODIFIER && m_modifier != rhs.modifier()) return false;
   return true;
 }
 
 int Locale::flags() const {
-  int value = LANG;
-  if (m_country) value |= COUNTRY;
-  if (m_modifier) value |= MODIFIER;
+  int value = static_cast<int>(Component::LANG);
+  if (m_country) value |= Component::COUNTRY;
+  if (m_modifier) value |= Component::MODIFIER;
   return value;
 }
 
 Locale Locale::parse(std::string_view data) {
-  enum State { Lang, Country, Encoding, Mod } state = Lang;
+  enum class State { Lang, Country, Encoding, Mod } state = State::Lang;
   size_t i = 0;
   std::string lang;
   std::string country;
@@ -34,44 +34,44 @@ Locale Locale::parse(std::string_view data) {
   std::string mod;
 
   while (i < data.size() && data[i] != ']') {
-    char c = data[i];
+    const char c = data[i];
 
     switch (state) {
-    case Lang: {
+    case State::Lang: {
       if (std::isalpha(c)) {
         lang += c;
       } else {
         if (c == '_') {
-          state = Country;
+          state = State::Country;
         } else if (c == '.') {
-          state = Encoding;
+          state = State::Encoding;
         } else if (c == '@') {
-          state = Mod;
+          state = State::Mod;
         }
       }
       break;
     }
-    case Country: {
+    case State::Country: {
       if (std::isalpha(c)) {
         country += c;
       } else {
         if (c == '.') {
-          state = Encoding;
+          state = State::Encoding;
         } else if (c == '@') {
-          state = Mod;
+          state = State::Mod;
         }
       }
       break;
     }
-    case Encoding: {
+    case State::Encoding: {
       if (std::isalnum(c)) {
         encoding += c;
       } else {
-        if (c == '@') { state = Mod; }
+        if (c == '@') { state = State::Mod; }
       }
       break;
     }
-    case Mod: {
+    case State::Mod: {
       if (std::isalpha(c)) {
         mod += c;
       } else {
@@ -92,18 +92,18 @@ Locale Locale::parse(std::string_view data) {
   return locale;
 }
 
-Locale::Locale() {}
+Locale::Locale() = default;
 
 Locale::Locale(std::string_view data) { *this = Locale::parse(data); }
 
 std::string Locale::toString() const {
   std::string s = lang();
 
-  if (country()) s = s + '_' + *country();
+  if (country()) { s += '_'; s.append(*country()); }
 
-  if (encoding()) s = s + '.' + *encoding();
+  if (encoding()) { s += '.'; s.append(*encoding()); }
 
-  if (modifier()) s = s + '@' + *modifier();
+  if (modifier()) { s += '@'; s.append(*modifier()); }
 
   return s;
 }

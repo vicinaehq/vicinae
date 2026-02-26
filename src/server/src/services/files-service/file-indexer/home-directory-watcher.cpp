@@ -9,7 +9,7 @@
 namespace fs = std::filesystem;
 
 void HomeDirectoryWatcher::directoryChanged(const QString &pathStr) {
-  fs::path path(pathStr.toStdString());
+  fs::path const path(pathStr.toStdString());
 
   m_dispatcher.enqueue({.type = ScanType::Incremental, .path = path, .maxDepth = 1});
 

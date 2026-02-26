@@ -34,7 +34,7 @@ std::optional<int> connectSocket(const QString &path) {
   memset(&addr, 0, sizeof(addr));
   addr.sun_family = AF_UNIX;
 
-  QByteArray utf8Path = path.toUtf8();
+  QByteArray const utf8Path = path.toUtf8();
   if (utf8Path.size() >= static_cast<int>(sizeof(addr.sun_path))) {
     qWarning() << "Niri::WindowManager: NIRI_SOCKET path is too long";
     close(fd);
@@ -55,7 +55,7 @@ std::optional<int> connectSocket(const QString &path) {
 bool sendAll(int fd, const QByteArray &payload) {
   ssize_t sent = 0;
   while (sent < payload.size()) {
-    ssize_t rc = send(fd, payload.constData() + sent, payload.size() - sent, MSG_NOSIGNAL);
+    ssize_t const rc = send(fd, payload.constData() + sent, payload.size() - sent, MSG_NOSIGNAL);
     if (rc <= 0) {
       qWarning() << "Niri::WindowManager: send() failed:" << strerror(errno);
       return false;
@@ -68,7 +68,7 @@ bool sendAll(int fd, const QByteArray &payload) {
 
 std::optional<QString> recvLineBlocking(int fd, QString &buffer) {
   while (true) {
-    int idx = buffer.indexOf('\n');
+    int const idx = buffer.indexOf('\n');
     if (idx >= 0) {
       QString line = buffer.left(idx);
       buffer.remove(0, idx + 1);
@@ -76,7 +76,7 @@ std::optional<QString> recvLineBlocking(int fd, QString &buffer) {
     }
 
     std::array<char, 1 << 12> tmp{};
-    ssize_t rc = recv(fd, tmp.data(), tmp.size(), 0);
+    ssize_t const rc = recv(fd, tmp.data(), tmp.size(), 0);
     if (rc <= 0) {
       if (rc < 0) { qWarning() << "Niri::WindowManager: recv() failed:" << strerror(errno); }
       return std::nullopt;
@@ -291,9 +291,9 @@ bool WindowManager::connectEventStream() {
 
   // Process any event lines that may have already arrived with the subscription reply.
   while (true) {
-    int idx = m_eventBuffer.indexOf('\n');
+    int const idx = m_eventBuffer.indexOf('\n');
     if (idx < 0) { break; }
-    QString eventLine = m_eventBuffer.left(idx);
+    QString const eventLine = m_eventBuffer.left(idx);
     m_eventBuffer.remove(0, idx + 1);
     processEventLine(eventLine);
   }
@@ -306,7 +306,7 @@ void WindowManager::handleEventSocketReadable() {
 
   std::array<char, 1 << 14> tmp{};
   while (true) {
-    ssize_t rc = recv(m_eventFd, tmp.data(), tmp.size(), MSG_NOSIGNAL | MSG_DONTWAIT);
+    ssize_t const rc = recv(m_eventFd, tmp.data(), tmp.size(), MSG_NOSIGNAL | MSG_DONTWAIT);
     if (rc <= 0) {
       if (rc < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
         qWarning() << "Niri::WindowManager: event socket recv failed:" << strerror(errno);
@@ -318,9 +318,9 @@ void WindowManager::handleEventSocketReadable() {
   }
 
   while (true) {
-    int idx = m_eventBuffer.indexOf('\n');
+    int const idx = m_eventBuffer.indexOf('\n');
     if (idx < 0) { break; }
-    QString line = m_eventBuffer.left(idx);
+    QString const line = m_eventBuffer.left(idx);
     m_eventBuffer.remove(0, idx + 1);
     processEventLine(line);
   }
@@ -355,7 +355,7 @@ void WindowManager::processEventLine(const QString &line) {
     changed = true;
   } else if (event.contains("WindowFocusTimestampChanged")) {
     auto payload = event.value("WindowFocusTimestampChanged").toObject();
-    QString id = QString::number(static_cast<qulonglong>(payload.value("id").toInteger()));
+    QString const id = QString::number(static_cast<qulonglong>(payload.value("id").toInteger()));
     setWindowFocusTimestamp(id, payload.value("focus_timestamp"));
     changed = true;
   } else if (event.contains("WorkspacesChanged")) {
@@ -388,7 +388,7 @@ void WindowManager::updateWindowsFromArray(const QJsonArray &windows) {
 }
 
 void WindowManager::upsertWindow(const QJsonObject &windowJson) {
-  QString id = QString::number(static_cast<qulonglong>(windowJson.value("id").toInteger()));
+  QString const id = QString::number(static_cast<qulonglong>(windowJson.value("id").toInteger()));
   for (auto &window : m_windows) {
     auto niriWindow = std::static_pointer_cast<Window>(window);
     if (niriWindow->id() == id) {
@@ -440,8 +440,8 @@ void WindowManager::sortWindowsByFocusTimestamp() {
     auto rts = rw->focusTimestamp();
     bool lok = false;
     bool rok = false;
-    qulonglong lid = lw->id().toULongLong(&lok);
-    qulonglong rid = rw->id().toULongLong(&rok);
+    qulonglong const lid = lw->id().toULongLong(&lok);
+    qulonglong const rid = rw->id().toULongLong(&rok);
 
     if (lts.has_value() != rts.has_value()) { return lts.has_value(); }
     if (!lts.has_value()) {
@@ -527,7 +527,7 @@ std::optional<QJsonValue> WindowManager::sendActionRequest(const QString &action
   QJsonObject reqObj;
   reqObj.insert("Action", actionObj);
 
-  QString req = QString::fromUtf8(QJsonDocument(reqObj).toJson(QJsonDocument::Compact));
+  QString const req = QString::fromUtf8(QJsonDocument(reqObj).toJson(QJsonDocument::Compact));
   auto reply = sendRequest(req);
   if (!reply.has_value()) { return std::nullopt; }
 
@@ -535,7 +535,7 @@ std::optional<QJsonValue> WindowManager::sendActionRequest(const QString &action
 }
 
 std::optional<QJsonValue> WindowManager::sendUnitRequest(const char *name) const {
-  QString req = QString("\"%1\"").arg(name);
+  QString const req = QString("\"%1\"").arg(name);
   return sendRequest(req);
 }
 

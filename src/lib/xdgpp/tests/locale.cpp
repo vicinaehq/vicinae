@@ -22,5 +22,5 @@ TEST_CASE("should parse LANG@MODIFIER") {
 
 TEST_CASE("lang_COUNTRY.ENCODING == should match lang_COUNTRY") {
   REQUIRE(xdgpp::Locale("en_US.utf8")
-              .matchesOnly(xdgpp::Locale("en_US"), xdgpp::Locale::COUNTRY | xdgpp::Locale::LANG));
+              .matchesOnly(xdgpp::Locale("en_US"), xdgpp::Locale::Component::COUNTRY | xdgpp::Locale::Component::LANG));
 }

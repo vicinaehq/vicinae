@@ -65,6 +65,7 @@ void WindowManager::start() {
 
 }; // namespace KDE
 
+// NOLINTBEGIN(bugprone-return-const-ref-from-parameter)
 const QDBusArgument &operator>>(const QDBusArgument &arg, KDE::KRunnerWindowList &lst) {
   arg.beginArray();
   while (!arg.atEnd()) {
@@ -87,3 +88,4 @@ const QDBusArgument &operator>>(const QDBusArgument &arg, KDE::KRunnerWindowData
 
   return arg;
 }
+// NOLINTEND(bugprone-return-const-ref-from-parameter)

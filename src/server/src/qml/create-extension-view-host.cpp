@@ -16,14 +16,14 @@ QUrl CreateExtensionViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/CreateExtensionFormView.qml"));
 }
 
-QVariantMap CreateExtensionViewHost::qmlProperties() const {
-  return {{QStringLiteral("host"), QVariant::fromValue(const_cast<CreateExtensionViewHost *>(this))}};
+QVariantMap CreateExtensionViewHost::qmlProperties() {
+  return {{QStringLiteral("host"), QVariant::fromValue(this)}};
 }
 
 void CreateExtensionViewHost::initialize() {
   BaseView::initialize();
 
-  ExtensionBoilerplateGenerator gen;
+  ExtensionBoilerplateGenerator const gen;
   QVariantList items;
   for (const auto &tmpl : gen.commandBoilerplates()) {
     items.append(QVariantMap{
@@ -76,7 +76,7 @@ void CreateExtensionViewHost::submit() {
   {
     namespace fs = std::filesystem;
     std::error_code ec;
-    fs::path path = expandPath(m_location.toStdString());
+    fs::path const path = expandPath(m_location.toStdString());
     if (!fs::is_directory(path, ec)) {
       m_locationError = QStringLiteral("Must exist");
       valid = false;
@@ -116,7 +116,7 @@ void CreateExtensionViewHost::submit() {
   cfg.commands.emplace_back(std::move(cmdCfg));
 
   ExtensionBoilerplateGenerator gen;
-  std::filesystem::path targetDir = expandPath(m_location.toStdString());
+  std::filesystem::path const targetDir = expandPath(m_location.toStdString());
 
   auto v = gen.generate(targetDir, cfg);
 

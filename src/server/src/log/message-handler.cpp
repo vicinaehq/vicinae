@@ -12,11 +12,11 @@ void coloredMessageHandler(QtMsgType type, const QMessageLogContext &context, co
   const char *WHITE = "\033[37m";
   const char *RESET = "\033[0m";
 
-  QString timestamp = QDateTime::currentDateTime().toString("hh:mm:ss.zzz");
+  QString const timestamp = QDateTime::currentDateTime().toString("hh:mm:ss.zzz");
   QString contextInfo = "";
 
   if (context.file) {
-    std::filesystem::path file(context.file);
+    std::filesystem::path const file(context.file);
 
     contextInfo = QString("(%1%2:%3%4)").arg(BLUE).arg(file.filename().c_str()).arg(context.line).arg(RESET);
   }
@@ -48,7 +48,7 @@ void coloredMessageHandler(QtMsgType type, const QMessageLogContext &context, co
   }
 
   // Format: [time] LEVEL message (file:line)
-  QString formattedMessage = QString("%1[%2] %3%4%5  -  %6 %7%8\n")
+  QString const formattedMessage = QString("%1[%2] %3%4%5  -  %6 %7%8\n")
                                  .arg(WHITE)
                                  .arg(timestamp)
                                  .arg(color)

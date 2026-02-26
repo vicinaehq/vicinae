@@ -59,8 +59,8 @@ QUrl ClipboardHistoryViewHost::qmlSearchAccessoryUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/ClipboardFilterAccessory.qml"));
 }
 
-QVariantMap ClipboardHistoryViewHost::qmlProperties() const {
-  return {{QStringLiteral("host"), QVariant::fromValue(const_cast<ClipboardHistoryViewHost *>(this))}};
+QVariantMap ClipboardHistoryViewHost::qmlProperties() {
+  return {{QStringLiteral("host"), QVariant::fromValue(this)}};
 }
 
 void ClipboardHistoryViewHost::initialize() {
@@ -204,13 +204,13 @@ void ClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
   const auto &mime = entry.mimeType;
 
   if (mime == "text/uri-list") {
-    QString text(rawData);
+    QString const text(rawData);
     auto paths = text.split("\r\n", Qt::SkipEmptyParts);
     if (paths.size() == 1) {
-      QUrl url(paths.at(0));
+      QUrl const url(paths.at(0));
       if (url.scheme() == "file") {
         std::error_code ec;
-        std::filesystem::path path = url.path().toStdString();
+        std::filesystem::path const path = url.path().toStdString();
         if (std::filesystem::is_regular_file(path, ec)) {
           auto fileMime = QMimeDatabase().mimeTypeForFile(path.c_str());
           if (fileMime.name().startsWith("image/")) {

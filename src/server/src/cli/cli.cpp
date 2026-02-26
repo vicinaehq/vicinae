@@ -36,7 +36,7 @@ public:
       out << BOLD << Omnicast::HEADLINE.toStdString() << RESET << "\n\n";
     }
 
-    std::string bin_name = name.empty() ? app->get_name() : name;
+    std::string const bin_name = name.empty() ? app->get_name() : name;
     out << BOLD << "Usage: " << RESET;
 
     if (app->get_parent() != nullptr) {
@@ -82,7 +82,7 @@ public:
         out << RESET;
 
         // Pad to align descriptions
-        int padding = 28 - printed_length;
+        int const padding = 28 - printed_length;
         if (padding > 0) {
           out << std::string(padding, ' ');
         } else {
@@ -112,7 +112,7 @@ public:
         out << "  " << BLUE << sub->get_name() << RESET;
 
         // Pad to align descriptions
-        int padding = max_name_len - sub->get_name().length() + 8;
+        int const padding = max_name_len - sub->get_name().length() + 8;
         if (padding > 0) {
           out << std::string(padding, ' ');
         } else {
@@ -331,7 +331,7 @@ int CommandLineApp::run(int ac, char **av) {
     QString arg = av[1];
     // raycast:// or com.raycast:/
     auto pred = [&](const QString &scheme) { return arg.startsWith(scheme + ":/"); };
-    bool hasScheme = std::ranges::any_of(Omnicast::APP_SCHEMES, pred);
+    bool const hasScheme = std::ranges::any_of(Omnicast::APP_SCHEMES, pred);
     if (hasScheme) {
       char *subAv[] = {av[0], strdup("deeplink"), strdup(arg.toStdString().c_str()), nullptr};
       return run(3, subAv);

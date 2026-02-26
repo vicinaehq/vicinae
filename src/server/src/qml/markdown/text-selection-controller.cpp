@@ -5,6 +5,7 @@
 #include <QMouseEvent>
 #include <algorithm>
 #include <cmath>
+#include <utility>
 
 static constexpr qreal DRAG_THRESHOLD = 5.0;
 static constexpr int AUTO_SCROLL_INTERVAL_MS = 16;
@@ -26,6 +27,7 @@ void TextSelectionController::setFlickable(QQuickItem *item) {
 bool TextSelectionController::eventFilter(QObject *obj, QEvent *event) {
   if (obj != m_flickable) return false;
   switch (event->type()) {
+  // NOLINTBEGIN(cppcoreguidelines-pro-type-static-cast-downcast)
   case QEvent::MouseButtonPress: {
     auto *me = static_cast<QMouseEvent *>(event);
     if (me->button() != Qt::LeftButton) return false;
@@ -49,6 +51,7 @@ bool TextSelectionController::eventFilter(QObject *obj, QEvent *event) {
     handleDoubleClick(me->position().x(), me->position().y());
     return true;
   }
+  // NOLINTEND(cppcoreguidelines-pro-type-static-cast-downcast)
   default:
     return false;
   }
@@ -88,7 +91,7 @@ void TextSelectionController::refreshGeometry() {
 int TextSelectionController::entryAt(qreal containerX, qreal containerY) const {
   if (m_entries.empty()) return -1;
 
-  int n = static_cast<int>(m_entries.size());
+  int const n = static_cast<int>(m_entries.size());
 
   int hit = -1;
   for (int i = 0; i < n; ++i) {
@@ -99,19 +102,19 @@ int TextSelectionController::entryAt(qreal containerX, qreal containerY) const {
   }
   if (hit < 0) hit = n - 1;
 
-  qreal hitY = m_entries[hit].cachedY;
+  qreal const hitY = m_entries[hit].cachedY;
   int bestIdx = hit;
   qreal bestDist = std::abs(containerX - (m_entries[hit].cachedX + m_entries[hit].cachedWidth * 0.5));
 
   for (int i = hit - 1; i >= 0 && std::abs(m_entries[i].cachedY - hitY) < 1.0; --i) {
-    qreal dist = std::abs(containerX - (m_entries[i].cachedX + m_entries[i].cachedWidth * 0.5));
+    qreal const dist = std::abs(containerX - (m_entries[i].cachedX + m_entries[i].cachedWidth * 0.5));
     if (dist < bestDist) {
       bestDist = dist;
       bestIdx = i;
     }
   }
   for (int i = hit + 1; i < n && std::abs(m_entries[i].cachedY - hitY) < 1.0; ++i) {
-    qreal dist = std::abs(containerX - (m_entries[i].cachedX + m_entries[i].cachedWidth * 0.5));
+    qreal const dist = std::abs(containerX - (m_entries[i].cachedX + m_entries[i].cachedWidth * 0.5));
     if (dist < bestDist) {
       bestDist = dist;
       bestIdx = i;
@@ -144,10 +147,10 @@ void TextSelectionController::handlePress(qreal x, qreal y) {
     m_doubleClickTimer.invalidate();
     refreshGeometry();
     auto cp = toContainerCoords(x, y);
-    int idx = entryAt(cp.x(), cp.y());
+    int const idx = entryAt(cp.x(), cp.y());
     if (idx >= 0 && m_entries[idx].isTextEdit) {
       selectAllTextEdit(m_entries[idx].item);
-      int len = m_entries[idx].item->property("length").toInt();
+      int const len = m_entries[idx].item->property("length").toInt();
       m_anchor = {idx, 0};
       m_current = {idx, len};
       setHasSelection(true);
@@ -164,7 +167,7 @@ void TextSelectionController::handlePress(qreal x, qreal y) {
   m_mouseY = y;
 
   auto cp = toContainerCoords(x, y);
-  int idx = entryAt(cp.x(), cp.y());
+  int const idx = entryAt(cp.x(), cp.y());
   if (idx < 0) return;
 
   const auto &entry = m_entries[idx];
@@ -215,8 +218,8 @@ void TextSelectionController::handleMove(qreal x, qreal y) {
   // selection.
   if (idx == m_anchor.entryIndex && m_entries[idx].isTextEdit) {
     const auto &entry = m_entries[idx];
-    int len = entry.item->property("length").toInt();
-    int n = static_cast<int>(m_entries.size());
+    int const len = entry.item->property("length").toInt();
+    int const n = static_cast<int>(m_entries.size());
     if (charPos >= len && cp.y() > entry.cachedY + entry.cachedHeight && idx + 1 < n) {
       idx = idx + 1;
       charPos = 0;
@@ -240,7 +243,7 @@ void TextSelectionController::handleMove(qreal x, qreal y) {
   applySelection(m_anchor.entryIndex, m_anchor.charPos, m_current.entryIndex, m_current.charPos);
 
   if (m_flickable) {
-    qreal flickH = m_flickable->height();
+    qreal const flickH = m_flickable->height();
     if (y < AUTO_SCROLL_MARGIN || y > flickH - AUTO_SCROLL_MARGIN)
       startAutoScroll();
     else
@@ -263,13 +266,13 @@ void TextSelectionController::handleDoubleClick(qreal x, qreal y) {
   refreshGeometry();
 
   auto cp = toContainerCoords(x, y);
-  int idx = entryAt(cp.x(), cp.y());
+  int const idx = entryAt(cp.x(), cp.y());
   if (idx < 0) return;
 
   const auto &entry = m_entries[idx];
   if (!entry.isTextEdit) return;
 
-  int pos = positionAt(entry.item, cp.x(), cp.y());
+  int const pos = positionAt(entry.item, cp.x(), cp.y());
   entry.item->setProperty("cursorPosition", pos);
   QMetaObject::invokeMethod(entry.item, "selectWord");
 
@@ -292,7 +295,7 @@ void TextSelectionController::selectAll() {
   }
 
   m_anchor = {0, 0};
-  int lastIdx = static_cast<int>(m_entries.size()) - 1;
+  int const lastIdx = static_cast<int>(m_entries.size()) - 1;
   const auto &last = m_entries[lastIdx];
   int lastLen = 0;
   if (last.isTextEdit) lastLen = last.item->property("length").toInt();
@@ -326,13 +329,13 @@ void TextSelectionController::copy() {
   }
 
   QStringList parts;
-  for (int i = fromIdx; i <= toIdx && i < static_cast<int>(m_entries.size()); ++i) {
+  for (int i = fromIdx; i <= toIdx && std::cmp_less(i, m_entries.size()); ++i) {
     const auto &entry = m_entries[i];
     if (entry.isTextEdit) {
       auto text = entry.item->property("selectedText").toString();
       if (!text.isEmpty()) parts.append(text);
     } else {
-      bool selected = entry.item->property("selected").toBool();
+      bool const selected = entry.item->property("selected").toBool();
       if (selected) {
         auto alt = entry.item->property("alt").toString();
         if (!alt.isEmpty())
@@ -356,7 +359,7 @@ void TextSelectionController::applySelection(int fromEntry, int fromChar, int to
   }
 
   bool anySelected = false;
-  int n = static_cast<int>(m_entries.size());
+  int const n = static_cast<int>(m_entries.size());
 
   for (int i = 0; i < n; ++i) {
     auto &entry = m_entries[i];
@@ -376,7 +379,7 @@ void TextSelectionController::applySelection(int fromEntry, int fromChar, int to
       }
     } else if (i == fromEntry) {
       if (entry.isTextEdit) {
-        int len = entry.item->property("length").toInt();
+        int const len = entry.item->property("length").toInt();
         if (fromChar >= len)
           selectAllTextEdit(entry.item);
         else
@@ -438,24 +441,24 @@ void TextSelectionController::stopAutoScroll() { m_autoScrollTimer.stop(); }
 void TextSelectionController::autoScrollTick() {
   if (!m_flickable || m_anchor.entryIndex < 0) return;
 
-  qreal flickH = m_flickable->height();
-  qreal contentY = m_flickable->property("contentY").toReal();
-  qreal contentH = m_flickable->property("contentHeight").toReal();
-  qreal maxY = std::max(0.0, contentH - flickH);
+  qreal const flickH = m_flickable->height();
+  qreal const contentY = m_flickable->property("contentY").toReal();
+  qreal const contentH = m_flickable->property("contentHeight").toReal();
+  qreal const maxY = std::max(0.0, contentH - flickH);
 
   qreal delta = 0.0;
   if (m_mouseY < AUTO_SCROLL_MARGIN) {
-    qreal t = (AUTO_SCROLL_MARGIN - m_mouseY) / AUTO_SCROLL_MARGIN;
+    qreal const t = (AUTO_SCROLL_MARGIN - m_mouseY) / AUTO_SCROLL_MARGIN;
     delta = -AUTO_SCROLL_MAX_SPEED * t * t;
   } else if (m_mouseY > flickH - AUTO_SCROLL_MARGIN) {
-    qreal t = (m_mouseY - (flickH - AUTO_SCROLL_MARGIN)) / AUTO_SCROLL_MARGIN;
+    qreal const t = (m_mouseY - (flickH - AUTO_SCROLL_MARGIN)) / AUTO_SCROLL_MARGIN;
     delta = AUTO_SCROLL_MAX_SPEED * t * t;
   } else {
     stopAutoScroll();
     return;
   }
 
-  qreal newContentY = std::clamp(contentY + delta, 0.0, maxY);
+  qreal const newContentY = std::clamp(contentY + delta, 0.0, maxY);
   if (newContentY == contentY) return;
 
   m_flickable->setProperty("contentY", newContentY);
@@ -477,8 +480,8 @@ void TextSelectionController::autoScrollTick() {
 
     if (idx == m_anchor.entryIndex && m_entries[idx].isTextEdit) {
       const auto &entry = m_entries[idx];
-      int len = entry.item->property("length").toInt();
-      int n = static_cast<int>(m_entries.size());
+      int const len = entry.item->property("length").toInt();
+      int const n = static_cast<int>(m_entries.size());
       if (charPos >= len && cp.y() > entry.cachedY + entry.cachedHeight && idx + 1 < n) {
         idx = idx + 1;
         charPos = 0;

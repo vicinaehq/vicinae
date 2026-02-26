@@ -7,6 +7,7 @@
 #include "utils.hpp"
 #include "view-utils.hpp"
 #include <algorithm>
+#include <utility>
 
 namespace {
 
@@ -134,7 +135,7 @@ void EmojiGridModel::setFilter(const QString &text) {
 }
 
 const EmojiData *EmojiGridModel::emojiAt(int section, int item) const {
-  if (section < 0 || section >= static_cast<int>(sections().size())) return nullptr;
+  if (section < 0 || std::cmp_greater_equal(section, sections().size())) return nullptr;
   if (item < 0 || item >= sections()[section].count) return nullptr;
 
   if (m_displayMode == DisplayMode::Root) {
@@ -183,7 +184,7 @@ std::unique_ptr<ActionPanelState> EmojiGridModel::createActionPanel(int section,
   if (!data) return nullptr;
 
   auto metadata = m_emojiService->mapMetadata(data->emoji);
-  QString copiedEmoji = data->skinToneSupport && m_skinTone
+  QString const copiedEmoji = data->skinToneSupport && m_skinTone
                             ? emoji::applySkinTone(data->emoji, m_skinTone.value()).c_str()
                             : QString::fromUtf8(data->emoji);
 

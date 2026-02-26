@@ -14,7 +14,7 @@ std::string DesktopEntryValueType::asString() const {
 
   for (const auto &c : m_value) {
     if (escaped) {
-      char ch = getEscapeChar(c);
+      const char ch = getEscapeChar(c);
       if (ch) { str += ch; }
       escaped = false;
       continue;
@@ -36,7 +36,7 @@ std::vector<std::string> DesktopEntryValueType::asStringList() {
   std::string part;
   bool escaped = false;
 
-  for (char c : m_value) {
+  for (const char c : m_value) {
     if (escaped) {
       if (c == ';')
         part += ';';
@@ -77,6 +77,7 @@ char DesktopEntryValueType::getEscapeChar(char c) {
     return '\r';
   case '\\':
     return '\\';
+  default: break;
   }
 
   return 0;

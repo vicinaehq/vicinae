@@ -2,6 +2,7 @@
 #include "scan.hpp"
 #include <QtLogging>
 #include <filesystem>
+#include <utility>
 
 void WatcherScanner::handleMessage(const wtr::event &ev) {
   auto err_case = [ev](const char *str) { return ev.path_name.native().starts_with(str); };
@@ -40,6 +41,8 @@ void WatcherScanner::handleMessage(const wtr::event &ev) {
       qWarning() << "Fatal Watcher error:" << ev.path_name.c_str();
     }
     fail();
+    break;
+  default:
     break;
   }
 }
@@ -90,7 +93,7 @@ void WatcherScanner::handleEvent(const wtr::event &ev) {
 }
 
 WatcherScanner::WatcherScanner(std::shared_ptr<DbWriter> writer, const Scan &scan, FinishCallback callback)
-    : AbstractScanner(writer, scan, callback), scan(scan) {
+    : AbstractScanner(std::move(writer), scan, std::move(callback)), scan(scan) {
   m_watch = std::make_unique<wtr::watch>(scan.path, [this](const wtr::event &ev) { handleEvent(ev); });
 }
 

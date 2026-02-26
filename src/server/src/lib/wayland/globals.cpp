@@ -13,6 +13,7 @@ zwp_virtual_keyboard_manager_v1 *Globals::virtualKeyboardManager() {
   return instance().m_virtualKeyboardManager;
 }
 
+// NOLINTBEGIN(cppcoreguidelines-pro-type-static-cast-downcast)
 void Globals::handleGlobal(void *data, struct wl_registry *registry, uint32_t name, const char *interface,
                            uint32_t version) {
   auto self = static_cast<Globals *>(data);
@@ -42,6 +43,7 @@ void Globals::handleGlobal(void *data, struct wl_registry *registry, uint32_t na
         wl_registry_bind(registry, name, &ext_background_effect_manager_v1_interface, version));
   }
 }
+// NOLINTEND(cppcoreguidelines-pro-type-static-cast-downcast)
 
 Globals &Globals::instance() {
   static Globals instance;

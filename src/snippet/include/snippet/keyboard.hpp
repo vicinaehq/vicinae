@@ -21,15 +21,28 @@
 class UInputKeyboard {
 
 public:
-  enum Modifier : std::uint8_t {
-    MOD_NONE = 0,
-    MOD_SHIFT = 1,
-    MOD_CAPSLOCK = 1 << 1,
-    MOD_CTRL = 1 << 2,
-    MOD_ALT = 1 << 3,
-    MOD_LOGO = 1 << 4,
-    MOD_ALTGR = 1 << 5
+  enum class Modifier : std::uint8_t {
+    None = 0,
+    Shift = 1,
+    Capslock = 1 << 1,
+    Ctrl = 1 << 2,
+    Alt = 1 << 3,
+    Logo = 1 << 4,
+    Altgr = 1 << 5
   };
+
+  friend constexpr Modifier operator|(Modifier a, Modifier b) {
+    return static_cast<Modifier>(static_cast<std::uint8_t>(a) | static_cast<std::uint8_t>(b));
+  }
+
+  friend constexpr Modifier operator&(Modifier a, Modifier b) {
+    return static_cast<Modifier>(static_cast<std::uint8_t>(a) & static_cast<std::uint8_t>(b));
+  }
+
+  friend constexpr Modifier &operator|=(Modifier &a, Modifier b) {
+    a = a | b;
+    return a;
+  }
 
 public:
   UInputKeyboard();

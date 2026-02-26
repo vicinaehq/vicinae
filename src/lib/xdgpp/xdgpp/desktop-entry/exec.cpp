@@ -8,25 +8,25 @@ std::vector<std::string> ExecParser::parse(std::string_view data,
                                            const std::vector<std::string> &uris) const {
 
   std::vector<std::string> args;
-  enum State { Reset, FieldCode, Escaped, Quote, QuotedEscaped } state = Reset;
+  enum class State { Reset, FieldCode, Escaped, Quote, QuotedEscaped } state = State::Reset;
   size_t i = 0;
-  size_t uriIdx = 0;
+  const size_t uriIdx = 0;
   std::string part;
   bool uriExpanded = false;
   char quoteChar = 0; // the current quotation char
 
   while (i < data.size()) {
-    char ch = data[i];
+    const char ch = data[i];
 
     switch (state) {
-    case Reset: {
+    case State::Reset: {
       if (isQuoteChar(ch)) {
-        state = Quote;
+        state = State::Quote;
         quoteChar = ch;
       } else if (ch == '%') {
-        state = FieldCode;
+        state = State::FieldCode;
       } else if (ch == '\\') {
-        state = Escaped;
+        state = State::Escaped;
       } else if (std::isspace(ch)) {
         if (!part.empty()) {
           args.emplace_back(part);
@@ -37,10 +37,10 @@ std::vector<std::string> ExecParser::parse(std::string_view data,
       }
       break;
     }
-    case FieldCode:
+    case State::FieldCode:
       if (ch == '%') {
         part += '%';
-        state = Reset;
+        state = State::Reset;
         break;
       }
 
@@ -64,28 +64,29 @@ std::vector<std::string> ExecParser::parse(std::string_view data,
       case 'c':
         args.emplace_back(m_name);
         break;
+      default: break;
       }
 
-      state = Reset;
+      state = State::Reset;
       break;
 
-    case Escaped:
+    case State::Escaped:
       part += ch;
-      state = Reset;
+      state = State::Reset;
       break;
-    case Quote: {
+    case State::Quote: {
       if (ch == '\\') {
-        state = QuotedEscaped;
+        state = State::QuotedEscaped;
       } else if (ch == quoteChar) {
-        state = Reset;
+        state = State::Reset;
       } else {
         part += ch;
       }
       break;
     }
-    case QuotedEscaped:
+    case State::QuotedEscaped:
       part += ch;
-      state = Quote;
+      state = State::Quote;
       break;
     }
 

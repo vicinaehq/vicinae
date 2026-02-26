@@ -23,7 +23,7 @@ std::span<Scored<const EmojiData *>> EmojiService::search(std::string_view query
                  return WS{s, 1.0f};
                }); // keywords are manually set by the user, they have high relevance
     auto ss = std::views::concat(fields, kws);
-    int score = fzf::defaultMatcher.fuzzy_match_v2_score_query(ss, query);
+    int const score = fzf::defaultMatcher.fuzzy_match_v2_score_query(ss, query);
 
     return {&data, score};
   };
@@ -48,7 +48,7 @@ void EmojiService::createDbEntry(std::string_view emoji) {
 
 bool EmojiService::registerVisit(std::string_view emoji) {
   QSqlQuery query = m_db.createQuery();
-  qint64 epoch = QDateTime::currentSecsSinceEpoch();
+  qint64 const epoch = QDateTime::currentSecsSinceEpoch();
 
   query.prepare(R"(
   	INSERT INTO visited_emoji (emoji, visit_count, last_visited_at)
@@ -84,7 +84,7 @@ std::vector<std::pair<std::string_view, std::vector<const EmojiData *>>> EmojiSe
   grouped.reserve(groups.size());
 
   for (auto group : groups) {
-    grouped.push_back({group, std::move(map[group])});
+    grouped.emplace_back(group, std::move(map[group]));
   }
 
   return grouped;
@@ -93,7 +93,7 @@ std::vector<std::pair<std::string_view, std::vector<const EmojiData *>>> EmojiSe
 std::vector<EmojiWithMetadata> EmojiService::getVisited() const {
   QSqlQuery query = m_db.createQuery();
 
-  bool ok = query.exec(R"(
+  bool const ok = query.exec(R"(
 	SELECT emoji, visit_count, pinned_at, custom_keywords FROM visited_emoji ORDER BY pinned_at DESC, visit_count DESC, last_visited_at DESC
   )");
 

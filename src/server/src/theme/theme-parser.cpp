@@ -120,7 +120,7 @@ static std::optional<SemanticColor> semanticFromKey(const std::string &key) {
 
 static std::expected<ThemeFile::MappedColor, std::string> parseColorName(const QString &colorName) {
   if (colorName.startsWith("colors.")) {
-    std::string name = colorName.sliced(7).toStdString();
+    std::string const name = colorName.sliced(7).toStdString();
     if (auto semantic = semanticFromKey(name)) { return ThemeFile::ColorRef{.color = *semantic}; }
   }
 
@@ -187,7 +187,7 @@ std::expected<ThemeFile, std::string> ThemeParser::parse(const fs::path &path) {
 
     if (!name) return std::unexpected("meta.name must be a string");
     if (!description) return std::unexpected("meta.description must be a string");
-    if (!variant) return std::unexpected("meta.variant must be a string (\"light\" | \"dark\")");
+    if (!variant) return std::unexpected(R"(meta.variant must be a string ("light" | "dark"))");
 
     data.name = QString::fromStdString(name->value_or(""));
     data.description = QString::fromStdString(description->value_or(""));
@@ -201,9 +201,9 @@ std::expected<ThemeFile, std::string> ThemeParser::parse(const fs::path &path) {
     }
 
     if (auto ptr = meta["icon"].as_string()) {
-      std::string icon = ptr->value_or("");
+      std::string const icon = ptr->value_or("");
       fs::path iconPath = icon;
-      std::error_code ec;
+      std::error_code const ec;
 
       if (!icon.starts_with('/')) { iconPath = path.parent_path() / icon; }
 
@@ -211,19 +211,19 @@ std::expected<ThemeFile, std::string> ThemeParser::parse(const fs::path &path) {
     }
 
     using Traverser = std::function<void(toml::table & table, const std::string &root)>;
-    std::vector<std::string> diagnostics;
+    std::vector<std::string> const diagnostics;
 
     Traverser traverse = [&](toml::table &table, const std::string &root = "") {
       for (const auto &[k, v] : table) {
         if (k == "meta") continue;
 
         std::string path = root;
-        std::string key(k.str());
+        std::string const key(k.str());
         if (!path.empty()) path += '.';
         path += key;
 
         if (path.starts_with("colors.")) {
-          std::string colorPath = path.substr(7);
+          std::string const colorPath = path.substr(7);
           if (auto semantic = semanticFromKey(colorPath)) {
             auto color = parseColor(toml::node_view(v));
             if (!color) {
@@ -247,7 +247,7 @@ std::expected<ThemeFile, std::string> ThemeParser::parse(const fs::path &path) {
     traverse(*file.as_table(), "");
 
     std::set<SemanticColor> refCallStack;
-    std::function<bool(void)> fn;
+    std::function<bool(void)> const fn;
 
     std::function<bool(const ThemeFile::ColorRef &)> checkRef = [&](const ThemeFile::ColorRef &ref) {
       if (refCallStack.contains(ref.color)) return false;
@@ -291,8 +291,8 @@ std::string ThemeSerializer::toToml(const ThemeFile &file) const {
 
   for (const auto &[k, v] : recognizedKeys) {
     auto pos = k.find_last_of('.');
-    std::string tableName = k.substr(0, pos);
-    std::string key = k.substr(pos + 1);
+    std::string const tableName = k.substr(0, pos);
+    std::string const key = k.substr(pos + 1);
     if (!mapped.contains(tableName)) { tableNames.emplace_back(tableName); }
     mapped[tableName].emplace_back(std::pair<std::string, SemanticColor>({key, v}));
   }
@@ -301,9 +301,8 @@ std::string ThemeSerializer::toToml(const ThemeFile &file) const {
     doc << "\n";
     doc << "[colors." << tableName << "]\n";
     for (const auto &[k, v] : mapped[tableName]) {
-      std::string full = "colors." + tableName + "." + k;
-      QColor color = file.resolve(v);
-      QString colorName = color.name(color.alpha() == 0xFF ? QColor::NameFormat::HexRgb : QColor::HexArgb);
+      QColor const color = file.resolve(v);
+      QString const colorName = color.name(color.alpha() == 0xFF ? QColor::NameFormat::HexRgb : QColor::HexArgb);
       doc << k << " = " << std::quoted(colorName.toStdString()) << "\n";
     }
   }

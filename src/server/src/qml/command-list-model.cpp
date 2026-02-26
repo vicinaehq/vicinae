@@ -1,5 +1,7 @@
 #include "command-list-model.hpp"
 
+#include <utility>
+
 int CommandListModel::rowCount(const QModelIndex &parent) const {
   if (parent.isValid()) return 0;
   return static_cast<int>(m_flat.size());
@@ -63,7 +65,7 @@ QHash<int, QByteArray> CommandListModel::roleNames() const {
 void CommandListModel::setSelectedIndex(int index) {
   m_selectedIndex = index;
 
-  if (index < 0 || index >= static_cast<int>(m_flat.size())) {
+  if (index < 0 || std::cmp_greater_equal(index, m_flat.size())) {
     m_lastSelectedItemId.clear();
     onSelectionCleared();
     return;
@@ -77,7 +79,7 @@ void CommandListModel::setSelectedIndex(int index) {
   }
 
   auto id = itemId(flat.sectionIdx, flat.itemIdx);
-  bool sameItem = (id == m_lastSelectedItemId);
+  bool const sameItem = (id == m_lastSelectedItemId);
   m_lastSelectedItemId = id;
 
   if (!sameItem) { onItemSelected(flat.sectionIdx, flat.itemIdx); }
@@ -94,7 +96,7 @@ void CommandListModel::activateSelected() { m_scope.executePrimaryAction(); }
 
 int CommandListModel::nextSelectableIndex(int from, int direction) const {
   int idx = from + direction;
-  int count = static_cast<int>(m_flat.size());
+  int const count = static_cast<int>(m_flat.size());
 
   while (idx >= 0 && idx < count) {
     if (m_flat[idx].kind != FlatItem::SectionHeader) return idx;
@@ -105,7 +107,7 @@ int CommandListModel::nextSelectableIndex(int from, int direction) const {
 }
 
 int CommandListModel::scrollTargetIndex(int index, int direction) const {
-  if (direction < 0 && index > 0 && index < static_cast<int>(m_flat.size())) {
+  if (direction < 0 && index > 0 && std::cmp_less(index, m_flat.size())) {
     if (m_flat[index - 1].kind == FlatItem::SectionHeader) return index - 1;
   }
   return index;
@@ -118,8 +120,8 @@ void CommandListModel::setSections(const std::vector<SectionInfo> &sections) {
   }
 
   auto newFlat = buildFlatList(sections);
-  int oldCount = static_cast<int>(m_flat.size());
-  int newCount = static_cast<int>(newFlat.size());
+  int const oldCount = static_cast<int>(m_flat.size());
+  int const newCount = static_cast<int>(newFlat.size());
 
   if (m_selectFirstOnReset) {
     beginResetModel();
@@ -147,14 +149,14 @@ void CommandListModel::setSections(const std::vector<SectionInfo> &sections) {
     m_flat = std::move(newFlat);
   }
 
-  int overlap = std::min(oldCount, newCount);
+  int const overlap = std::min(oldCount, newCount);
   if (overlap > 0) emit dataChanged(index(0), index(overlap - 1));
 
   if (m_selectedIndex >= newCount) m_selectedIndex = -1;
 }
 
 bool CommandListModel::dataItemAt(int row, int &section, int &item) const {
-  if (row < 0 || row >= static_cast<int>(m_flat.size())) return false;
+  if (row < 0 || std::cmp_greater_equal(row, m_flat.size())) return false;
   const auto &flat = m_flat[row];
   if (flat.kind == FlatItem::SectionHeader) return false;
   section = flat.sectionIdx;
@@ -166,7 +168,7 @@ std::vector<CommandListModel::FlatItem>
 CommandListModel::buildFlatList(const std::vector<SectionInfo> &sections) {
   std::vector<FlatItem> flat;
 
-  for (int s = 0; s < static_cast<int>(sections.size()); ++s) {
+  for (int s = 0; std::cmp_less(s, sections.size()); ++s) {
     const auto &sec = sections[s];
     if (sec.count == 0) continue;
 

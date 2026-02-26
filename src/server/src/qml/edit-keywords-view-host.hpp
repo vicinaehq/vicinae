@@ -18,7 +18,7 @@ public:
   EditKeywordsViewHost(LoadFn loadKeywords, SaveFn saveKeywords, const QString &infoText);
 
   QUrl qmlComponentUrl() const override;
-  QVariantMap qmlProperties() const override;
+  QVariantMap qmlProperties() override;
   void initialize() override;
 
   QString keywords() const { return m_keywords; }

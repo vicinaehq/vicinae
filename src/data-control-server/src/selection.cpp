@@ -14,10 +14,10 @@ std::set<std::string> filterMimes(const std::vector<std::string> &offerMimes) {
   for (const auto &mime : offerMimes | std::views::filter(filter)) {
     if (mime.starts_with("image/")) {
       if (savedImageType) {
-        int currentPriority =
+        const int currentPriority =
             -std::distance(preferredImageTypes.begin(), std::ranges::find(preferredImageTypes, mime));
-        int savedPriority = -std::distance(preferredImageTypes.begin(),
-                                           std::ranges::find(preferredImageTypes, *savedImageType));
+        const int savedPriority = -std::distance(preferredImageTypes.begin(),
+                                                  std::ranges::find(preferredImageTypes, *savedImageType));
 
         if (currentPriority <= savedPriority) continue;
 

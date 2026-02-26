@@ -33,7 +33,7 @@ static QString tokenToHtml(const QString &rawOutput) {
       }
     }
 
-    QString escaped = tok->text.toHtmlEscaped();
+    QString const escaped = tok->text.toHtmlEscaped();
 
     if (tok->url && QUrl(tok->text).isValid()) {
       html += QStringLiteral("<a href=\"%1\">%2</a>").arg(tok->text.toHtmlEscaped(), escaped);
@@ -55,7 +55,7 @@ QUrl ScriptExecutorViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/ScriptExecutorView.qml"));
 }
 
-QVariantMap ScriptExecutorViewHost::qmlProperties() const {
+QVariantMap ScriptExecutorViewHost::qmlProperties() {
   return {{QStringLiteral("host"), QVariant::fromValue(this)}};
 }
 

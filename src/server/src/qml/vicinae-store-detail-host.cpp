@@ -15,8 +15,8 @@ QUrl VicinaeStoreDetailHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/StoreDetailView.qml"));
 }
 
-QVariantMap VicinaeStoreDetailHost::qmlProperties() const {
-  return {{QStringLiteral("host"), QVariant::fromValue(const_cast<VicinaeStoreDetailHost *>(this))}};
+QVariantMap VicinaeStoreDetailHost::qmlProperties() {
+  return {{QStringLiteral("host"), QVariant::fromValue(this)}};
 }
 
 void VicinaeStoreDetailHost::initialize() {

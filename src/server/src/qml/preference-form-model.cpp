@@ -1,4 +1,6 @@
 #include "preference-form-model.hpp"
+
+#include <utility>
 #include "service-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 
@@ -172,7 +174,7 @@ void PreferenceFormModel::loadProvider(const QString &providerId,
 }
 
 void PreferenceFormModel::setFieldValue(int row, const QVariant &value) {
-  if (row < 0 || row >= static_cast<int>(m_fields.size())) return;
+  if (row < 0 || std::cmp_greater_equal(row, m_fields.size())) return;
   m_fields[row].value = value;
   m_values[m_fields[row].id] = QJsonValue::fromVariant(value);
   auto idx = index(row);

@@ -25,8 +25,8 @@ bool EventListener::start() {
 
   if (auto p = getenv("XDG_RUNTIME_DIR")) rundir = p;
 
-  fs::path sockPath = rundir / "hypr" / his / ".socket2.sock";
-  int sock = socket(AF_UNIX, SOCK_STREAM, 0);
+  fs::path const sockPath = rundir / "hypr" / his / ".socket2.sock";
+  int const sock = socket(AF_UNIX, SOCK_STREAM, 0);
 
   if (sock < 0) {
     qWarning() << "Hyprctl::execute() failed: socket() =>" << strerror(errno);
@@ -72,7 +72,7 @@ void EventListener::processEvent(const std::string &event) {
 }
 
 void EventListener::handleRead() {
-  int fd = m_notifier->socket();
+  int const fd = m_notifier->socket();
   int rc = 0;
 
   while ((rc = recv(fd, &m_buf, m_buf.size(), MSG_NOSIGNAL | MSG_DONTWAIT)) > 0) {

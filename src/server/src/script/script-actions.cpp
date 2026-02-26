@@ -34,7 +34,7 @@ void ScriptExecutorAction::executeOneLine(const ScriptCommandFile &script, const
     process->deleteLater();
   });
   QObject::connect(process, &QProcess::finished, [process, callback](int exit, QProcess::ExitStatus status) {
-    QString line = process->readAllStandardOutput().split('\n').first();
+    QString const line = process->readAllStandardOutput().split('\n').first();
     callback(exit == 0, line);
     process->deleteLater();
   });
@@ -78,7 +78,7 @@ void ScriptExecutorAction::execute(ApplicationContext *ctx) {
     case Mode::Compact:
       executeOneLine(*script, args, [ctx](bool ok, const QString &line) {
         const auto toastService = ctx->services->toastService();
-        ToastStyle style = ok ? ToastStyle::Success : ToastStyle::Danger;
+        ToastStyle const style = ok ? ToastStyle::Success : ToastStyle::Danger;
 
         if (line.isEmpty()) {
           toastService->setToast(ok ? "Script executed" : "Script execution failed", style);

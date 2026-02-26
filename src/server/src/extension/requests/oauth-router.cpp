@@ -104,9 +104,9 @@ QString OAuthRouter::computeTokenSetId(const QString &providerId) const {
 QFuture<proto::ext::extension::Response *>
 OAuthRouter::authorize(const proto::ext::oauth::AuthorizeRequest &req) {
   auto oauth = m_ctx.services->oauthService();
-  QUrl url(req.url().c_str());
-  QUrlQuery query(url.query());
-  QString state = query.queryItemValue("state");
+  QUrl const url(req.url().c_str());
+  QUrlQuery const query(url.query());
+  QString const state = query.queryItemValue("state");
 
   if (state.isEmpty()) { throw std::runtime_error("OAuth authorize request url should have a state param"); }
 

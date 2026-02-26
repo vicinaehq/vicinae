@@ -32,7 +32,7 @@ public:
   explicit RaycastStoreDetailHost(const Raycast::Extension &extension);
 
   QUrl qmlComponentUrl() const override;
-  QVariantMap qmlProperties() const override;
+  QVariantMap qmlProperties() override;
   void initialize() override;
 
   QString title() const;

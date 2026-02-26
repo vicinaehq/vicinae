@@ -21,8 +21,8 @@ QUrl ShortcutFormViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/ShortcutFormView.qml"));
 }
 
-QVariantMap ShortcutFormViewHost::qmlProperties() const {
-  return {{QStringLiteral("host"), QVariant::fromValue(const_cast<ShortcutFormViewHost *>(this))}};
+QVariantMap ShortcutFormViewHost::qmlProperties() {
+  return {{QStringLiteral("host"), QVariant::fromValue(this)}};
 }
 
 void ShortcutFormViewHost::setPrefilledValues(const QString &link, const QString &name,
@@ -238,14 +238,14 @@ void ShortcutFormViewHost::submit() {
   if (iconId == QStringLiteral("default")) { iconId = m_resolvedDefaultIcon; }
 
   if (m_mode == Mode::Edit) {
-    bool updated = m_service->updateShortcut(m_initialShortcut->id(), m_name, iconId, m_link, appId);
+    bool const updated = m_service->updateShortcut(m_initialShortcut->id(), m_name, iconId, m_link, appId);
     if (!updated) {
       toast->failure("Failed to update shortcut");
       return;
     }
     toast->success("Shortcut updated");
   } else {
-    bool created = m_service->createShortcut(m_name, iconId, m_link, appId);
+    bool const created = m_service->createShortcut(m_name, iconId, m_link, appId);
     if (!created) {
       toast->failure("Failed to create shortcut");
       return;
@@ -258,7 +258,7 @@ void ShortcutFormViewHost::submit() {
 
 void ShortcutFormViewHost::handleLinkBlurred() {
   auto appDb = context()->services->appDb();
-  QUrl url(m_link);
+  QUrl const url(m_link);
 
   if (auto app = appDb->findDefaultOpener(m_link)) {
     m_appSelectorModel->updateDefaultApp(app);

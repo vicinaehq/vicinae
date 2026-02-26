@@ -27,5 +27,5 @@ public:
   ext_data_control_offer_v1 *pointer() const { return _offer; }
 
   ExtDataOffer(ext_data_control_offer_v1 *offer);
-  ~ExtDataOffer();
+  ~ExtDataOffer() override;
 };

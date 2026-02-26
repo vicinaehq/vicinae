@@ -3,7 +3,7 @@
 #include <qjsonarray.h>
 #include <qjsonobject.h>
 
-DetailModelParser::DetailModelParser() {}
+DetailModelParser::DetailModelParser() = default;
 
 DetailModel DetailModelParser::parse(const QJsonObject &instance) {
   DetailModel detail;

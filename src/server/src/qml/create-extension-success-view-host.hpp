@@ -12,7 +12,7 @@ public:
                                  const std::filesystem::path &location);
 
   QUrl qmlComponentUrl() const override;
-  QVariantMap qmlProperties() const override;
+  QVariantMap qmlProperties() override;
   void initialize() override;
 
   QString markdown() const { return m_markdown; }

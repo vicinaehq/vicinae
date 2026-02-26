@@ -28,7 +28,7 @@ const MimeAppsList::EntryMap &MimeAppsList::removedAssociations() const { return
 const MimeAppsList::EntryMap &MimeAppsList::defaultApplications() const { return m_default; }
 
 MimeAppsList::MimeAppsList(std::string_view data) {
-  DesktopEntryReader reader(data);
+  const DesktopEntryReader reader(data);
 
   if (auto added = reader.group("Added Associations")) {
     for (const auto &[k, entry] : added->entries()) {

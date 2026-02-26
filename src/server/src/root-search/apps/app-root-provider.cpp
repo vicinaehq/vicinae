@@ -59,7 +59,7 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
   auto copyId = new CopyToClipboardAction(Clipboard::Text(m_app->id()), "Copy App ID");
   auto copyLocation = new CopyToClipboardAction(Clipboard::Text(m_app->path().c_str()), "Copy App Location");
   auto preferences = ctx->services->rootItemManager()->getPreferenceValues(uniqueId());
-  QString defaultAction = preferences.value("defaultAction").toString();
+  QString const defaultAction = preferences.value("defaultAction").toString();
 
   auto mainSection = panel->createSection();
   auto utils = panel->createSection();

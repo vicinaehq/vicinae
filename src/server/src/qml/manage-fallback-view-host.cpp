@@ -6,7 +6,7 @@ QUrl ManageFallbackViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/CommandListView.qml"));
 }
 
-QVariantMap ManageFallbackViewHost::qmlProperties() const {
+QVariantMap ManageFallbackViewHost::qmlProperties() {
   return {{QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(m_model))}};
 }
 

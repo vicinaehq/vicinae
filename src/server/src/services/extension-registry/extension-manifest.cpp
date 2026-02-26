@@ -8,7 +8,7 @@ namespace fs = std::filesystem;
 
 std::expected<ExtensionManifest, ManifestError> ExtensionManifest::fromPackageJson(const fs::path &path) {
   static const std::set<CommandMode> supportedModes{CommandMode::CommandModeView, CommandModeNoView};
-  fs::path manifestPath = path / "package.json";
+  fs::path const manifestPath = path / "package.json";
 
   if (!fs::exists(manifestPath)) {
     return std::unexpected<ManifestError>(
@@ -110,11 +110,11 @@ Preference ExtensionManifest::parsePreferenceFromObject(const QJsonObject &obj) 
 
     // For dropdown, validate default value: use provided value if valid, otherwise use first option
     if (!options.empty()) {
-      QJsonValue providedDefault = obj.value("default");
+      QJsonValue const providedDefault = obj.value("default");
       QString defaultValue = options.front().value; // Default to first option
 
       if (providedDefault.isString()) {
-        QString providedValue = providedDefault.toString();
+        QString const providedValue = providedDefault.toString();
         for (const auto &option : options) {
           if (option.value == providedValue) {
             defaultValue = providedValue;
@@ -134,7 +134,7 @@ Preference ExtensionManifest::parsePreferenceFromObject(const QJsonObject &obj) 
 
 CommandArgument ExtensionManifest::parseArgumentFromObject(const QJsonObject &obj) {
   CommandArgument arg;
-  QString type = obj.value("type").toString();
+  QString const type = obj.value("type").toString();
 
   if (type == "text") arg.type = CommandArgument::Text;
   if (type == "password") arg.type = CommandArgument::Password;

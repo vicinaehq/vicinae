@@ -29,7 +29,7 @@ public:
 
   QUrl qmlComponentUrl() const override;
   QUrl qmlSearchAccessoryUrl() const override;
-  QVariantMap qmlProperties() const override;
+  QVariantMap qmlProperties() override;
   void loadInitialData() override;
   void onReactivated() override;
 

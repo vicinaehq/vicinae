@@ -806,6 +806,11 @@ protobuf_generate(
 	PROTOC_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/proto
 )
 
+foreach(PROTO_FILE ${PROTO_FILES})
+	get_filename_component(PROTO_NAME ${PROTO_FILE} NAME_WE)
+	set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/proto/${PROTO_NAME}.pb.cc PROPERTIES SKIP_LINTING ON)
+endforeach()
+
 install(TARGETS ${TARGET}
 	RUNTIME DESTINATION ${VICINAE_LIBEXEC_DIR}
 )

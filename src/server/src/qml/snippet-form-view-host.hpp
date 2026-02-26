@@ -24,7 +24,7 @@ public:
   SnippetFormViewHost(snippet::SerializedSnippet snippet, Mode mode);
 
   QUrl qmlComponentUrl() const override;
-  QVariantMap qmlProperties() const override;
+  QVariantMap qmlProperties() override;
   void initialize() override;
 
   Q_INVOKABLE void submit();

@@ -22,7 +22,7 @@ protected:
   void setLayout(const LayoutInfo &info);
 
   template <typename T> void notify(typename T::Request req) {
-    const auto json = m_client.notify<T>(req);
+    const auto json = m_client.notify<T>(std::move(req));
     uint32_t size = json.size();
     std::cout.write(reinterpret_cast<const char *>(&size), sizeof(size));
     std::cout.write(json.data(), json.size());

@@ -21,12 +21,12 @@ using SubmenuCache = std::unordered_map<QString, ActionPannelSubmenuPtr>;
 /// @param preset       Shortcut preset to apply.
 /// @param submit       Optional submit callback for form actions.
 std::unique_ptr<ActionPanelState>
-build(const ActionPannelModel &model, NotifyFn notify, SubmenuCache *submenuCache,
+build(const ActionPannelModel &model, const NotifyFn& notify, SubmenuCache *submenuCache,
       ActionPanelState::ShortcutPreset preset = ActionPanelState::ShortcutPreset::None,
-      SubmitFn submit = nullptr);
+      const SubmitFn& submit = nullptr);
 
 /// Build an ActionPanelState for a submenu (data path, for QML).
-std::unique_ptr<ActionPanelState> buildSubmenuState(const ActionPannelSubmenuPtr &submenu, NotifyFn notify,
-                                                    SubmenuCache *submenuCache, SubmitFn submit = nullptr);
+std::unique_ptr<ActionPanelState> buildSubmenuState(const ActionPannelSubmenuPtr &submenu, const NotifyFn& notify,
+                                                    SubmenuCache *submenuCache, const SubmitFn& submit = nullptr);
 
 } // namespace ExtensionActionPanelBuilder

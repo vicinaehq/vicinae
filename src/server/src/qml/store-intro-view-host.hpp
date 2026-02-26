@@ -13,7 +13,7 @@ public:
                      std::function<void()> continueAction);
 
   QUrl qmlComponentUrl() const override;
-  QVariantMap qmlProperties() const override;
+  QVariantMap qmlProperties() override;
   void initialize() override;
 
   QString introMarkdown() const { return m_markdown; }

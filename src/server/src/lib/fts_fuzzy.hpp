@@ -35,7 +35,6 @@
 
 // Public interface
 namespace fts {
-static bool fuzzy_match_simple(char const *pattern, char const *str);
 static bool fuzzy_match(std::string_view pattern, std::string_view str, int &outScore);
 static bool fuzzy_match(char const *pattern, size_t patternSize, char const *str, size_t strSize,
                         int &outScore);
@@ -55,16 +54,6 @@ static bool fuzzy_match_recursive(const char *pattern, size_t patternSize, const
 
 static bool fuzzy_match(std::string_view pattern, std::string_view str, int &outScore) {
   return fuzzy_match(pattern.data(), pattern.size(), str.data(), str.size(), outScore);
-}
-
-// Public interface
-static bool fuzzy_match_simple(char const *pattern, char const *str) {
-  while (*pattern != '\0' && *str != '\0') {
-    if (tolower(*pattern) == tolower(*str)) ++pattern;
-    ++str;
-  }
-
-  return *pattern == '\0' ? true : false;
 }
 
 static bool fuzzy_match(char const *pattern, size_t patternSize, char const *str, size_t strSize,

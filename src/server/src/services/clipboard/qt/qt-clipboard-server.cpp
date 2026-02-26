@@ -75,7 +75,7 @@ void AbstractQtClipboardServer::dataChanged() {
   };
 
   for (const auto &format : mimeData->formats() | std::views::filter(isIndexableFormat)) {
-    QByteArray data = mimeData->data(format);
+    QByteArray const data = mimeData->data(format);
     selection.offers.emplace_back(ClipboardDataOffer{format, data});
   }
 

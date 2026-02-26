@@ -36,6 +36,12 @@ If we are dealing with raw pointers, the nullable component is already part of i
 - String types: use `std::string` internally, `QString` only at the Qt boundary.
 - Do not overuse comments, only add them when they provide actual value
 
+## Linting and formatting
+
+We format all our code using `clang-format`. We have a `make format` rule that will automatically format the entire codebase if necessary.
+
+All our code is also linted with `clang-tidy` in order to make detecting common mistakes easier. `clang-tidy` violations may be acceptable under some circumstances, and should be implemented using `//NOLINT` comments. If a nolint directive does not work (e.g this is an internal STL false positive) then you can do a local override of the `clang-tidy` configuration to explicitly disable the faulty check.
+
 ## QML rules
 
 When writing JavaScript inside QML files, use ES6 syntax to the largest extent possible.

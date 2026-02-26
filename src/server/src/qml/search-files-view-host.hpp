@@ -23,7 +23,7 @@ signals:
 
 public:
   QUrl qmlComponentUrl() const override;
-  QVariantMap qmlProperties() const override;
+  QVariantMap qmlProperties() override;
   void initialize() override;
   void loadInitialData() override;
   void textChanged(const QString &text) override;

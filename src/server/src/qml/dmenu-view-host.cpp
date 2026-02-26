@@ -13,7 +13,7 @@ QUrl DMenuViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/DMenuView.qml"));
 }
 
-QVariantMap DMenuViewHost::qmlProperties() const {
+QVariantMap DMenuViewHost::qmlProperties() {
   if (m_data.noQuickLook) {
     return {{QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(m_model))}};
   }

@@ -234,6 +234,7 @@ template <typename SchemaT> struct RpcClient {
 
   std::expected<void, std::string> call(const typename Schema::Response &res) {
     if (auto it = m_requestMap.find(res.id); it != m_requestMap.end()) {
+      if (!res.result) { return std::unexpected("Response has no result data"); }
       it->second(res.result.value());
       m_requestMap.erase(it);
     }
@@ -258,9 +259,9 @@ public:
   void
   route(std::function<std::expected<typename T::Response, std::string>(const typename T::Request &reqData)>
             fn) {
-    std::string method = T::key;
+    const std::string method = T::key;
 
-    m_handlers[method] = [fn](const glz::raw_json &raw) -> HRet {
+    m_handlers[method] = [fn = std::move(fn)](const glz::raw_json &raw) -> HRet {
       typename T::Request req;
 
       if (const auto error = glz::read_json(req, raw.str)) {
@@ -277,7 +278,7 @@ public:
     };
   }
 
-  void middleware(MiddlewareHandler fn) { m_middlewares.emplace_back(fn); }
+  void middleware(MiddlewareHandler fn) { m_middlewares.emplace_back(std::move(fn)); }
 
   std::expected<std::string, std::string> call(const typename Schema::Request &req) {
     if (auto it = m_handlers.find(req.method); it != m_handlers.end()) {
