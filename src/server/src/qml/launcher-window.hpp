@@ -8,6 +8,7 @@
 class ActionPanelController;
 class AlertModel;
 class ConfigBridge;
+class HudBridge;
 class ImageSource;
 class KeybindBridge;
 class RootSearchModel;
@@ -155,6 +156,7 @@ private:
   KeybindBridge *m_keybindProxy;
 
   AlertModel *m_alertModel = nullptr;
+  HudBridge *m_hudBridge = nullptr;
 
   int m_overrideWidth = 0;
   int m_overrideHeight = 0;

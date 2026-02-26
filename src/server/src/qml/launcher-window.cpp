@@ -1,4 +1,5 @@
 #include "launcher-window.hpp"
+#include "hud-bridge.hpp"
 #include "keybind-bridge.hpp"
 #include "view-utils.hpp"
 #include "action-panel-controller.hpp"
@@ -66,6 +67,12 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   if (!rootObjects.isEmpty()) { m_window = qobject_cast<QQuickWindow *>(rootObjects.first()); }
 
   applyWindowConfig();
+
+  if (!Environment::isHudDisabled()) {
+    m_hudBridge = new HudBridge(this);
+    rootCtx->setContextProperty(QStringLiteral("hud"), m_hudBridge);
+    m_engine.load(QUrl(QStringLiteral("qrc:/Vicinae/HudWindow.qml")));
+  }
 
   auto *nav = ctx.navigation.get();
 
@@ -202,6 +209,8 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
 
   connect(nav, &NavigationController::invalidCompletionFired, this,
           &LauncherWindow::completerValidationFailed);
+
+  if (m_hudBridge) { connect(nav, &NavigationController::showHudRequested, m_hudBridge, &HudBridge::show); }
 
   auto *toast = m_ctx.services->toastService();
   connect(toast, &ToastService::toastActivated, this, [this](const Toast *t) {

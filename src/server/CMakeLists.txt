@@ -560,6 +560,8 @@ set(SRCS
 	src/qml/font-browser-view-host.cpp
 	src/qml/edit-keywords-view-host.hpp
 	src/qml/edit-keywords-view-host.cpp
+	src/qml/hud-bridge.hpp
+	src/qml/hud-bridge.cpp
 
 	src/qml/settings-window.hpp
 	src/qml/settings-window.cpp
@@ -751,6 +753,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/SettingsPreferenceForm.qml
 	src/qml/qml/MissingPreferenceView.qml
 	src/qml/qml/OAuthOverlayView.qml
+	src/qml/qml/HudWindow.qml
 )
 
 # Strip directory prefix so resources are qrc:/Vicinae/Foo.qml
