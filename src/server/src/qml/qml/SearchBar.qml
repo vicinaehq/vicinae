@@ -59,6 +59,7 @@ Item {
                 id: searchInput
                 anchors.fill: parent
                 verticalAlignment: TextInput.AlignVCenter
+                font.family: Theme.fontFamily
                 font.pointSize: Theme.regularFontSize * 1.1
                 color: Theme.foreground
                 selectionColor: Theme.textSelectionBg

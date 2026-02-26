@@ -19,6 +19,7 @@ Item {
         Text {
             text: root.label
             color: mouseArea.containsMouse || root.highlighted ? Theme.foreground : Theme.textMuted
+            font.family: Theme.fontFamily
             font.pointSize: Theme.smallerFontSize
             anchors.verticalCenter: parent.verticalCenter
         }

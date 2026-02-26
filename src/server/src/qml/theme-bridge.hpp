@@ -2,6 +2,7 @@
 #include "theme.hpp"
 #include "theme/theme-file.hpp"
 #include <QColor>
+#include <QGuiApplication>
 #include <QObject>
 
 class ThemeBridge : public QObject {
@@ -38,6 +39,7 @@ class ThemeBridge : public QObject {
   Q_PROPERTY(QColor buttonPrimaryHoverBg READ buttonPrimaryHoverBg NOTIFY changed)
   Q_PROPERTY(qreal regularFontSize READ regularFontSize NOTIFY changed)
   Q_PROPERTY(qreal smallerFontSize READ smallerFontSize NOTIFY changed)
+  Q_PROPERTY(QString fontFamily READ fontFamily NOTIFY changed)
 
 signals:
   void changed();
@@ -80,6 +82,7 @@ public:
 
   qreal regularFontSize() const { return ThemeService::instance().pointSize(TextRegular); }
   qreal smallerFontSize() const { return ThemeService::instance().pointSize(TextSmaller); }
+  QString fontFamily() const { return QGuiApplication::font().family(); }
 
 private:
   QColor resolve(SemanticColor color) const { return ThemeService::instance().theme().resolve(color); }

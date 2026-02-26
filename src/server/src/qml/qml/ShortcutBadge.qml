@@ -11,6 +11,7 @@ Rectangle {
     Text {
         id: label
         color: Theme.textMuted
+        font.family: Theme.fontFamily
         font.pointSize: Theme.smallerFontSize - 1
         anchors.centerIn: parent
     }

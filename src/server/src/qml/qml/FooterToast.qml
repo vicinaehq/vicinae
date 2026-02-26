@@ -54,12 +54,14 @@ RowLayout {
     Text {
         text: launcher.toastTitle
         color: Theme.foreground
+        font.family: Theme.fontFamily
         font.pointSize: Theme.smallerFontSize
     }
 
     Text {
         text: launcher.toastMessage
         color: Theme.textMuted
+        font.family: Theme.fontFamily
         font.pointSize: Theme.smallerFontSize
         visible: launcher.toastMessage !== ""
         maximumLineCount: 1

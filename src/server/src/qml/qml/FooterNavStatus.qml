@@ -14,6 +14,7 @@ Row {
     Text {
         text: launcher.navigationTitle
         color: Theme.textMuted
+        font.family: Theme.fontFamily
         font.pointSize: Theme.smallerFontSize
         anchors.verticalCenter: parent.verticalCenter
         visible: launcher.navigationTitle !== ""

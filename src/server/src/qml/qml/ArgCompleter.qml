@@ -99,6 +99,7 @@ RowLayout {
                         anchors.leftMargin: 8
                         anchors.rightMargin: 8
                         verticalAlignment: TextInput.AlignVCenter
+                        font.family: Theme.fontFamily
                         font.pointSize: Theme.regularFontSize
                         color: Theme.foreground
                         clip: true
@@ -186,6 +187,7 @@ RowLayout {
 
                     TextMetrics {
                         id: dropdownMetrics
+                        font.family: Theme.fontFamily
                         font.pointSize: Theme.regularFontSize
                         text: dropdown.currentItem
                               ? dropdown.currentItem.displayName
