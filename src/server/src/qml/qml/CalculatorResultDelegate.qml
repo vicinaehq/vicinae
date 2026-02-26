@@ -10,23 +10,25 @@ SelectableDelegate {
     required property string calcAnswer
     required property string calcAnswerUnit
 
-    RowLayout {
+    Item {
         anchors.fill: parent
         anchors.leftMargin: 16
         anchors.rightMargin: 16
-        spacing: 0
 
-        ColumnLayout {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.alignment: Qt.AlignVCenter
+        Column {
+            id: leftColumn
+            anchors.left: parent.left
+            anchors.right: arrowIcon.left
+            anchors.rightMargin: 12
+            anchors.verticalCenter: parent.verticalCenter
             spacing: 4
 
             Text {
-                Layout.fillWidth: true
+                id: questionText
+                width: parent.width
                 text: root.calcQuestion
                 color: root.selected ? Theme.listItemSelectionFg : Theme.foreground
-                font.pointSize: Theme.regularFontSize
+                font.pointSize: Theme.regularFontSize * 1.5
                 font.weight: Font.Medium
                 elide: Text.ElideRight
                 maximumLineCount: 1
@@ -34,9 +36,8 @@ SelectableDelegate {
             }
 
             Text {
-                Layout.fillWidth: true
-                visible: root.calcQuestionUnit !== ""
-                text: root.calcQuestionUnit
+                width: parent.width
+                text: root.calcQuestionUnit || "Question"
                 color: Theme.textMuted
                 font.pointSize: Theme.smallerFontSize
                 elide: Text.ElideRight
@@ -46,23 +47,43 @@ SelectableDelegate {
         }
 
         Rectangle {
-            Layout.preferredWidth: 1
-            Layout.preferredHeight: 50
-            Layout.alignment: Qt.AlignVCenter
+            width: 1
+            anchors.top: parent.top
+            anchors.bottom: arrowIcon.top
+            anchors.bottomMargin: 4
+            anchors.horizontalCenter: parent.horizontalCenter
             color: Theme.divider
         }
 
-        ColumnLayout {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.alignment: Qt.AlignVCenter
+        ViciImage {
+            id: arrowIcon
+            width: 20
+            height: 20
+            anchors.centerIn: parent
+            source: Img.builtin("arrow-right").withFillColor(Theme.textMuted)
+        }
+
+        Rectangle {
+            width: 1
+            anchors.top: arrowIcon.bottom
+            anchors.topMargin: 4
+            anchors.bottom: parent.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            color: Theme.divider
+        }
+
+        Column {
+            anchors.left: arrowIcon.right
+            anchors.leftMargin: 12
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
             spacing: 4
 
             Text {
-                Layout.fillWidth: true
+                width: parent.width
                 text: root.calcAnswer
                 color: root.selected ? Theme.listItemSelectionFg : Theme.accent
-                font.pointSize: Theme.regularFontSize
+                font.pointSize: Theme.regularFontSize * 1.5
                 font.weight: Font.DemiBold
                 elide: Text.ElideRight
                 maximumLineCount: 1
@@ -70,9 +91,8 @@ SelectableDelegate {
             }
 
             Text {
-                Layout.fillWidth: true
-                visible: root.calcAnswerUnit !== ""
-                text: root.calcAnswerUnit
+                width: parent.width
+                text: root.calcAnswerUnit || "Answer"
                 color: Theme.textMuted
                 font.pointSize: Theme.smallerFontSize
                 elide: Text.ElideRight
