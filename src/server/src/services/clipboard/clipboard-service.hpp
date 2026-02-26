@@ -22,7 +22,7 @@
 #include <qt6keychain/keychain.h>
 
 namespace Clipboard {
-static const char *CONCEALED_MIME_TYPE = "vicinae/concealed";
+[[maybe_unused]] static const char *CONCEALED_MIME_TYPE = "vicinae/concealed";
 using NoData = std::monostate;
 struct File {
   std::filesystem::path path;

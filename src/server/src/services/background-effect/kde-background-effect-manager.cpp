@@ -79,7 +79,7 @@ void BackgroundEffectManager::roundtrip() {
   wl_display_roundtrip(qApp->nativeInterface<QNativeInterface::QWaylandApplication>()->display());
 }
 
-void BackgroundEffectManager::applyBlur(QWindow *win, const BlurState &state) {
+void BackgroundEffectManager::applyBlur(QWindow *, const BlurState &state) {
   auto region = QtWaylandUtils::createRoundedRegion(state.cfg.region, state.cfg.radius);
   org_kde_kwin_blur_set_region(state.blur, region);
   org_kde_kwin_blur_commit(state.blur);

@@ -30,7 +30,7 @@ void IncrementalScanner::processDirectory(const std::filesystem::path &root) {
   }
 
   m_writer->deleteIndexedFiles(deletedFiles);
-  m_writer->indexFiles(std::move(ranges_to<std::vector>(currentFiles)));
+  m_writer->indexFiles(ranges_to<std::vector>(currentFiles));
 }
 
 std::vector<fs::path>

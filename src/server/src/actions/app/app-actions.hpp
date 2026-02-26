@@ -68,6 +68,6 @@ public:
   void execute(ApplicationContext *ctx) override;
 
 private:
-  QString m_title;
   QUrl m_url;
+  QString m_title;
 };

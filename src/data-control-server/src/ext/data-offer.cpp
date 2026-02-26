@@ -8,7 +8,7 @@ ExtDataOffer::ExtDataOffer(ext_data_control_offer_v1 *offer) : _offer(offer) {
 
 const std::vector<std::string> &ExtDataOffer::mimes() const { return _mimes; }
 
-void ExtDataOffer::offer(void *data, ext_data_control_offer_v1 *offer, const char *mime) {
+void ExtDataOffer::offer(void *data, ext_data_control_offer_v1 *, const char *mime) {
   auto self = static_cast<ExtDataOffer *>(data); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
 
   self->_mimes.emplace_back(mime);

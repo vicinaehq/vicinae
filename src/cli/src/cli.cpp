@@ -137,7 +137,7 @@ public:
     app->add_flag("--new", m_newInstance, "Always launch a new instance");
   }
 
-  bool run(CLI::App *app) override {
+  bool run(CLI::App *) override {
     const auto res = ipc::CliClient::oneshot<ipc::LaunchApp>(
         {.appId = m_appId, .args = m_args, .newInstance = m_newInstance});
 
@@ -162,7 +162,7 @@ private:
 class AppCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "app"; }
   std::string description() const override { return "System application commands"; }
-  void setup(CLI::App *app) override {}
+  void setup(CLI::App *) override {}
 
 public:
   AppCommand() { registerCommand<LaunchAppCommand>(); }
@@ -172,7 +172,7 @@ class CliPing : public AbstractCommandLineCommand {
   std::string id() const override { return "ping"; }
   std::string description() const override { return "Ping the vicinae server"; }
 
-  bool run(CLI::App *app) override {
+  bool run(CLI::App *) override {
     const auto res = ipc::CliClient::oneshot<ipc::Ping>({});
 
     if (!res) {
@@ -190,7 +190,7 @@ class ToggleCommand : public AbstractCommandLineCommand {
   std::string description() const override { return "Toggle the vicinae window"; }
   void setup(CLI::App *app) override { app->add_option("-q,--query", m_query, "Set search query"); }
 
-  bool run(CLI::App *app) override {
+  bool run(CLI::App *) override {
     ipc::CliClient::DeeplinkOptions opts;
 
     if (m_query) { opts.query = {{"fallbackText", m_query.value()}}; }
@@ -211,7 +211,7 @@ class OpenCommand : public AbstractCommandLineCommand {
   std::string description() const override { return "Open the vicinae window"; }
   void setup(CLI::App *app) override { app->add_option("-q,--query", m_query, "Set search query"); }
 
-  bool run(CLI::App *app) override {
+  bool run(CLI::App *) override {
     ipc::CliClient::DeeplinkOptions opts;
 
     if (m_query) { opts.query = {{"fallbackText", m_query.value()}}; }
@@ -231,7 +231,7 @@ class CloseCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "close"; }
   std::string description() const override { return "Close the vicinae window"; }
 
-  bool run(CLI::App *app) override {
+  bool run(CLI::App *) override {
     if (auto res = ipc::CliClient::deeplink(std::format("vicinae://close")); !res) {
       std::println(std::cerr, "Failed to close: {}", res.error());
       return false;
@@ -260,7 +260,7 @@ class DMenuCommand : public AbstractCommandLineCommand {
     app->add_flag("--no-footer", m_req.noFooter, "Hide the status bar footer");
   }
 
-  bool run(CLI::App *app) override {
+  bool run(CLI::App *) override {
     m_req.rawContent = vicinae::slurp(std::cin);
 
     const auto res = ipc::CliClient::oneshot<ipc::DMenu>(m_req);
@@ -284,7 +284,7 @@ class VersionCommand : public AbstractCommandLineCommand {
   std::string description() const override { return "Show version and build information"; }
   void setup(CLI::App *app) override { app->alias("ver"); }
 
-  bool run(CLI::App *app) override {
+  bool run(CLI::App *) override {
     std::cout << "Version " << VICINAE_GIT_TAG << " (commit " << VICINAE_GIT_COMMIT_HASH << ")\n"
               << "Build: " << BUILD_INFO << "\n"
               << "Provenance: " << VICINAE_PROVENANCE << "\n";
@@ -302,7 +302,7 @@ public:
     app->add_option("link", link, "The deeplink to open. See https://docs.vicinae.com/deeplinks")->required();
   }
 
-  bool run(CLI::App *app) override {
+  bool run(CLI::App *) override {
     if (const auto result = ipc::CliClient::deeplink(link); !result) {
       std::println(std::cerr, "Failed to execute deeplink: {}", result.error());
       return false;

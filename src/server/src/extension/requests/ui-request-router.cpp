@@ -76,7 +76,7 @@ void UIRequestRouter::modelCreated() {
   const auto &views = m_navigation->views();
   auto models = m_modelWatcher.result();
 
-  for (int i = 0; i < models.items.size() && std::cmp_less(i, views.size()); ++i) {
+  for (size_t i = 0; i < models.items.size() && i < views.size(); ++i) {
     auto &model = models.items[i];
     const auto &entry = views[i];
     bool const shouldSkipRender = !model.dirty && !model.propsDirty;
@@ -191,7 +191,6 @@ class ExtensionAlert : public AlertWidget {
 
 QFuture<proto::ext::extension::Response *> UIRequestRouter::confirmAlert(const ui::ConfirmAlertRequest &req) {
   auto alert = new CallbackAlertWidget;
-  auto controller = m_navigation->controller();
   auto promise = std::make_shared<QPromise<proto::ext::extension::Response *>>();
   auto future = promise->future();
 

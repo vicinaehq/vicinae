@@ -86,7 +86,7 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
 
   auto actions = m_app->actions();
 
-  for (int i = 0; i != appActions.size(); ++i) {
+  for (size_t i = 0; i != appActions.size(); ++i) {
     const auto &action = actions[i];
     auto openAction = new OpenAppAction(action, action->displayName(), {});
 

@@ -77,7 +77,7 @@ public:
   virtual QString title() const { return m_title; }
   virtual std::optional<ImageURL> icon() const { return m_icon; }
 
-  virtual void execute(ApplicationContext *context) {}
+  virtual void execute(ApplicationContext *) {}
 
   void setAutoClose(bool value = true) { m_autoClose = value; }
   bool autoClose() const { return m_autoClose; }
@@ -109,7 +109,7 @@ public:
     executeAfter(context);
   }
 
-  virtual void executeAfter(ApplicationContext *ctx) {}
+  virtual void executeAfter(ApplicationContext *) {}
 
   QString title() const override { return m_proxy->title(); }
   std::optional<ImageURL> icon() const override { return m_proxy->icon(); }
@@ -127,7 +127,7 @@ struct StaticAction : public AbstractAction {
 
 public:
   StaticAction(const QString &title, const std::optional<ImageURL> &url, const std::function<void()> &fn)
-      : AbstractAction(title, url), m_fn([fn](ApplicationContext *ctx) { fn(); }) {}
+      : AbstractAction(title, url), m_fn([fn](ApplicationContext *) { fn(); }) {}
 
   StaticAction(const QString &title, const std::optional<ImageURL> &url,
                const std::function<void(ApplicationContext *ctx)> &fn)
@@ -137,7 +137,7 @@ public:
 class SubmitAction : public AbstractAction {
   std::function<void(void)> m_fn;
 
-  void execute(ApplicationContext *ctx) override {
+  void execute(ApplicationContext *) override {
     if (m_fn) m_fn();
   }
 

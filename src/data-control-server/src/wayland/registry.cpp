@@ -1,12 +1,11 @@
 #include "registry.hpp"
 
-void WaylandRegistry::Listener::global(WaylandRegistry &registry, uint32_t name, const char *interface,
-                                       uint32_t version) {}
-void WaylandRegistry::Listener::globalRemove(struct wl_registry *registry, uint32_t name) {}
+void WaylandRegistry::Listener::global(WaylandRegistry &, uint32_t, const char *, uint32_t) {}
+void WaylandRegistry::Listener::globalRemove(struct wl_registry *, uint32_t) {}
 
 // NOLINTBEGIN(cppcoreguidelines-pro-type-static-cast-downcast)
-void WaylandRegistry::handleGlobal(void *data, struct wl_registry *registry, uint32_t name,
-                                   const char *interface, uint32_t version) {
+void WaylandRegistry::handleGlobal(void *data, struct wl_registry *, uint32_t name, const char *interface,
+                                   uint32_t version) {
   auto self = static_cast<WaylandRegistry *>(data);
 
   for (auto lstn : self->listeners) {

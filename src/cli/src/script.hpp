@@ -19,7 +19,7 @@ public:
         ->default_val("fullOutput");
   }
 
-  bool run(CLI::App *app) override {
+  bool run(CLI::App *) override {
     auto lang = ScriptCommandGenerator::parseLanguage(m_lang);
     if (!lang) {
       std::ostringstream oss;
@@ -60,7 +60,7 @@ public:
     app->add_option("file", m_filePath, "Path to the script file to validate")->required();
   }
 
-  bool run(CLI::App *app) override {
+  bool run(CLI::App *) override {
     if (!std::filesystem::exists(m_filePath)) {
       std::cerr << "Error: File not found: " << m_filePath << std::endl;
       return false;

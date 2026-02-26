@@ -168,7 +168,7 @@ std::optional<QString> ClipboardDatabase::retrieveKeywords(const QString &id) {
 }
 
 bool ClipboardDatabase::setKeywords(const QString &id, const QString &keywords) {
-  return transaction([&](auto *db) {
+  return transaction([&](auto *) {
     QSqlQuery query(m_db);
 
     query.prepare("UPDATE selection SET keywords = :keywords WHERE id = :id");

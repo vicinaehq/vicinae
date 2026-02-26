@@ -55,10 +55,11 @@ public:
 
   bool sendRaw(std::string_view data) {
     uint32_t size = data.size();
-    if (::send(m_sock, reinterpret_cast<const char *>(&size), sizeof(size), 0) < sizeof(size)) {
+    if (::send(m_sock, reinterpret_cast<const char *>(&size), sizeof(size), 0) <
+        static_cast<ssize_t>(sizeof(size))) {
       return false;
     }
-    if (::send(m_sock, data.data(), data.size(), 0) < data.size()) { return false; }
+    if (::send(m_sock, data.data(), data.size(), 0) < static_cast<ssize_t>(data.size())) { return false; }
     return true;
   }
 
@@ -86,13 +87,14 @@ public:
     sendRaw(m_rpc.template request<T>(std::move(payload)));
 
     {
-      if (::recv(m_sock, reinterpret_cast<char *>(&size), sizeof(size), 0) < sizeof(size)) {
+      if (::recv(m_sock, reinterpret_cast<char *>(&size), sizeof(size), 0) <
+          static_cast<ssize_t>(sizeof(size))) {
         return std::unexpected("Failed to read response size");
       }
 
       data.resize(size);
 
-      if (::recv(m_sock, data.data(), data.size(), 0) < data.size()) {
+      if (::recv(m_sock, data.data(), data.size(), 0) < static_cast<ssize_t>(data.size())) {
         return std::unexpected("Failed to read response data");
       }
 

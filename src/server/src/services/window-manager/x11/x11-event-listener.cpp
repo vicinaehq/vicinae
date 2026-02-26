@@ -54,7 +54,7 @@ bool X11EventListener::start() {
   }
 
   m_screen = it.data;
-  m_root = m_screen ? m_screen->root : XCB_WINDOW_NONE;
+  m_root = m_screen ? m_screen->root : static_cast<xcb_window_t>(XCB_WINDOW_NONE);
   if (m_root == XCB_WINDOW_NONE) {
     qWarning() << "X11EventListener: failed to determine root window";
     xcb_disconnect(m_connection);

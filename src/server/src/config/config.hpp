@@ -289,7 +289,7 @@ public:
 
   static void print(const ConfigValue &value) {
     std::string buf;
-    auto res = glz::write_json(value, buf);
+    [[maybe_unused]] auto res = glz::write_json(value, buf);
     std::cout << glz::prettify_json(buf) << std::endl;
   }
 

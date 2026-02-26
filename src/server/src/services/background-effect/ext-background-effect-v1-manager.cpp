@@ -88,7 +88,7 @@ bool ExtBackgroundEffectV1Manager::eventFilter(QObject *sender, QEvent *event) {
   return QObject::eventFilter(sender, event);
 }
 
-void ExtBackgroundEffectV1Manager::applyBlur(QWindow *win, const BlurState &state) {
+void ExtBackgroundEffectV1Manager::applyBlur(QWindow *, const BlurState &state) {
   const auto region = QtWaylandUtils::createRoundedRegion(state.cfg.region, state.cfg.radius);
   ext_background_effect_surface_v1_set_blur_region(state.effect, region);
 }

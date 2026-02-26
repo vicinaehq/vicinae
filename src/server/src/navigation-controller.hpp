@@ -126,7 +126,7 @@ private:
 
     auto actions = m_primarySection->actions();
 
-    for (int i = 0; i != actions.size() && i != m_defaultShortcuts.size(); ++i) {
+    for (size_t i = 0; i != actions.size() && i != m_defaultShortcuts.size(); ++i) {
       auto &action = actions[i];
       auto &shortcut = m_defaultShortcuts[i];
       auto existing = action->shortcut();

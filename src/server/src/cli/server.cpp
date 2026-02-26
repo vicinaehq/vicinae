@@ -66,7 +66,7 @@ void CliServerCommand::setup(CLI::App *app) {
                 "Do not start the extension runtime node process. Typescript extensions will not run.");
 }
 
-void CliServerCommand::run(CLI::App *app) {
+void CliServerCommand::run(CLI::App *) {
   using namespace std::chrono_literals;
 
   qInstallMessageHandler(coloredMessageHandler);
@@ -300,7 +300,7 @@ void CliServerCommand::run(CLI::App *app) {
 
   QObject::connect(
       KeybindManager::instance(), &KeybindManager::keybindChanged,
-      [cfgService](Keybind bind, const Keyboard::Shortcut &shortcut) {
+      [cfgService](Keybind, const Keyboard::Shortcut &shortcut) {
         auto info = KeybindManager::instance()->findBoundInfo(shortcut);
         cfgService->mergeWithUser(
             {.keybinds = config::KeybindMap{{info->id.toStdString(), shortcut.toString().toStdString()}}});

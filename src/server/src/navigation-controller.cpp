@@ -432,7 +432,7 @@ void NavigationController::executeAction(AbstractAction *action) {
   }
 
   if (auto cmpl = state->completer; cmpl && action->isPrimary()) {
-    for (int i = 0; i != cmpl->args.size() && i != cmpl->values.size(); ++i) {
+    for (size_t i = 0; i != cmpl->args.size() && i != cmpl->values.size(); ++i) {
       const auto &arg = cmpl->args[i];
       const auto &value = cmpl->values[i];
 

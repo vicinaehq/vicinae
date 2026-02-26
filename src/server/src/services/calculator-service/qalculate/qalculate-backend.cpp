@@ -131,7 +131,7 @@ std::optional<std::string> QalculateBackend::getUnitDisplayName(const MathStruct
     return std::format("{}{}", prefix, unit->preferredDisplayName(false, false, true, false).name);
   }
 
-  for (int i = 0; i != s.size(); ++i) {
+  for (size_t i = 0; i != s.size(); ++i) {
     if (auto unit = getUnitDisplayName(s[i], prefix)) { return unit; }
   }
 

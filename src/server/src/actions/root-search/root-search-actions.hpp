@@ -65,8 +65,8 @@ public:
  * Wrapper for the main action of a root item, automatically recording execution.
  */
 class DefaultActionWrapper : public AbstractAction {
-  std::unique_ptr<AbstractAction> m_action;
   EntrypointId m_id;
+  std::unique_ptr<AbstractAction> m_action;
 
   void execute(ApplicationContext *context) override;
 

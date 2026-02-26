@@ -29,7 +29,7 @@ public:
   virtual QString repositoryDisplayName() const { return ""; }
   virtual QString repositoryName() const { return ""; }
   virtual bool isFallback() const { return false; }
-  virtual void preferenceValuesChanged(const QJsonObject &value) const {}
+  virtual void preferenceValuesChanged(const QJsonObject &) const {}
   virtual bool isInternal() const { return false; }
 
   /**
@@ -56,7 +56,7 @@ public:
   bool isView() const { return mode() == CommandModeView; }
   bool isNoView() const { return mode() == CommandModeNoView; }
 
-  virtual CommandContext *createContext(const std::shared_ptr<AbstractCmd> &command) const { return nullptr; }
+  virtual CommandContext *createContext(const std::shared_ptr<AbstractCmd> &) const { return nullptr; }
 };
 
 class AbstractCommandRepository {
@@ -73,9 +73,9 @@ public:
   /**
    * Triggered the first time the provider is registered
    */
-  virtual void initialized(const QJsonObject &preferences) const {}
+  virtual void initialized(const QJsonObject &) const {}
 
-  virtual void preferenceValuesChanged(const QJsonObject &value) const {}
+  virtual void preferenceValuesChanged(const QJsonObject &) const {}
 
   virtual ~AbstractCommandRepository() = default;
 };
@@ -88,12 +88,12 @@ class CommandContext : public QObject {
 
 public:
   const AbstractCmd *command() const { return _cmd.get(); }
-  virtual void onActionExecuted(AbstractAction *action) {}
+  virtual void onActionExecuted(AbstractAction *) {}
 
   void setContext(ApplicationContext *ctx) { m_ctx = ctx; }
   ApplicationContext *context() const { return m_ctx; }
 
-  virtual void load(const LaunchProps &props) {}
+  virtual void load(const LaunchProps &) {}
   virtual void unload() {};
 
   CommandContext(const std::shared_ptr<AbstractCmd> &command) : _cmd(command) {}

@@ -16,7 +16,6 @@ ManageShortcutsModel::buildActionPanel(const std::shared_ptr<Shortcut> &item) co
   auto panel = std::make_unique<ListActionPanelState>();
   auto mainSection = panel->createSection();
   auto manageSection = panel->createSection();
-  auto itemSection = panel->createSection();
   auto dangerSection = panel->createSection();
 
   auto open = new OpenCompletedShortcutAction(item);

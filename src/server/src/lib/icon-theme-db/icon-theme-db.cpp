@@ -8,7 +8,6 @@
 namespace fs = std::filesystem;
 
 static bool m_scanned = false;
-static IconThemeDatabase::IconThemeList scan();
 static IconThemeDatabase::IconThemeList m_themes;
 
 IconThemeDatabase::IconThemeDatabase() {

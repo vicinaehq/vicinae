@@ -267,7 +267,6 @@ xdgpp::DesktopEntry::TerminalExec XdgAppDatabase::inferTermExec(const XdgApplica
 }
 
 xdgpp::DesktopEntry::TerminalExec XdgAppDatabase::getTermExec(const XdgApplication &app) const {
-  using TExec = xdgpp::DesktopEntry::TerminalExec;
   return app.data().terminalExec().value_or(inferTermExec(app));
 }
 
@@ -319,7 +318,7 @@ bool XdgAppDatabase::launchProcess(const QString &prog, const QStringList &args,
   process.setStandardOutputFile(QProcess::nullDevice());
   process.setStandardErrorFile(QProcess::nullDevice());
 
-  if (const auto &dir = workingDirectory) { process.setWorkingDirectory(workingDirectory->c_str()); }
+  if (workingDirectory) { process.setWorkingDirectory(workingDirectory->c_str()); }
 
   QStringList cmdline;
   cmdline << prog << args;

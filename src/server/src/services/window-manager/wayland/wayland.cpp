@@ -163,8 +163,7 @@ static void handle_global(void *data, struct wl_registry *registry, uint32_t nam
   WaylandWindowManager *wm = static_cast<WaylandWindowManager *>(data);
 
   if (strcmp(interface, wl_output_interface.name) == 0) {
-    wl_output const *output =
-        static_cast<wl_output *>(wl_registry_bind(registry, name, &wl_output_interface, version));
+    wl_registry_bind(registry, name, &wl_output_interface, version);
   }
 
   if (strcmp(interface, zwlr_foreign_toplevel_manager_v1_interface.name) == 0) {

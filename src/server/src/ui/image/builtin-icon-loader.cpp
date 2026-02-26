@@ -47,4 +47,4 @@ void BuiltinIconLoader::setBackgroundColor(const std::optional<ColorLike> &color
 }
 
 BuiltinIconLoader::BuiltinIconLoader(const QString &iconName)
-    : m_iconName(iconName), m_fillColor(SemanticColor::Foreground) {}
+    : m_fillColor(SemanticColor::Foreground), m_iconName(iconName) {}

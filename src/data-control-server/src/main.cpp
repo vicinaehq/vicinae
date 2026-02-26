@@ -11,8 +11,7 @@ struct ProtocolState {
   bool hasWlrDataControl = false;
 };
 
-static void registryGlobal(void *data, wl_registry *registry, uint32_t name, const char *interface,
-                           uint32_t version) {
+static void registryGlobal(void *data, wl_registry *, uint32_t, const char *interface, uint32_t) {
   auto state = static_cast<ProtocolState *>(data); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
 
   if (strcmp(interface, ext_data_control_manager_v1_interface.name) == 0) {
@@ -22,7 +21,7 @@ static void registryGlobal(void *data, wl_registry *registry, uint32_t name, con
   }
 }
 
-static void registryGlobalRemove(void *data, wl_registry *registry, uint32_t name) {}
+static void registryGlobalRemove(void *, wl_registry *, uint32_t) {}
 
 static const wl_registry_listener registryListener = {
     .global = registryGlobal,
@@ -60,7 +59,7 @@ static int detectProtocol() {
   return -1;
 }
 
-int main(int argc, char **argv) {
+int main(int, char **) {
   const int protocol = detectProtocol();
 
   if (protocol == -1) {

@@ -132,7 +132,6 @@ QString RaycastStoreDetailHost::initialNavigationTitle() const {
 
 void RaycastStoreDetailHost::createActions() {
   auto panel = std::make_unique<FormActionPanelState>();
-  auto registry = context()->services->extensionRegistry();
   auto main = panel->createSection();
 
   if (!m_isInstalled) {

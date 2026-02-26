@@ -20,7 +20,7 @@ FilePreviewContent resolveFilePreview(const std::filesystem::path &path, QMimeDa
   } else if (Utils::isTextMimeType(mime)) {
     QFile file(qpath);
     if (file.open(QIODevice::ReadOnly)) {
-      static constexpr qint64 MAX_PREVIEW = static_cast<const qint64>(32 * 1024);
+      static constexpr qint64 MAX_PREVIEW = static_cast<qint64>(32 * 1024);
       result.textContent = QString::fromUtf8(file.read(MAX_PREVIEW));
     }
   } else {

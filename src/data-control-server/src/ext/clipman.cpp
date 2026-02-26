@@ -18,7 +18,7 @@ void ExtClipman::global(WaylandRegistry &reg, uint32_t name, const char *interfa
   }
 }
 
-void ExtClipman::primarySelection(ExtDataDevice &device, ExtDataOffer &offer) {
+void ExtClipman::primarySelection(ExtDataDevice &, ExtDataOffer &offer) {
   if (isatty(STDOUT_FILENO)) {
     Selection::printPrimarySelectionDebug(offer);
     return;
@@ -27,7 +27,7 @@ void ExtClipman::primarySelection(ExtDataDevice &device, ExtDataOffer &offer) {
   // we don't do anything with the primary selection
 }
 
-void ExtClipman::selection(ExtDataDevice &device, ExtDataOffer &offer) {
+void ExtClipman::selection(ExtDataDevice &, ExtDataOffer &offer) {
   auto filteredMimes = Selection::filterMimes(offer.mimes());
   Selection::serializeAndWrite(filteredMimes, offer);
 }

@@ -2,7 +2,6 @@
 
 void coloredMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
   // ANSI color codes
-  const char *BLACK = "\033[30m";
   const char *RED = "\033[31m";
   const char *GREEN = "\033[32m";
   const char *YELLOW = "\033[33m";

@@ -21,7 +21,7 @@ void WriterWorker::run() {
 
     m_isWorking = true;
     for (const auto &paths : batch) {
-      batchWrite(std::move(paths));
+      batchWrite(paths);
     }
     m_isWorking = false;
   }

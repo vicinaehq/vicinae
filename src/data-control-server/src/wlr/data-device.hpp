@@ -7,10 +7,10 @@ public:
   class Listener {
   public:
     virtual ~Listener() = default;
-    virtual void dataOffer(WlrDataDevice &device, WlrDataOffer &offer) {}
-    virtual void selection(WlrDataDevice &device, WlrDataOffer &offer) {}
-    virtual void finished(WlrDataDevice &device) {}
-    virtual void primarySelection(WlrDataDevice &device, WlrDataOffer &offer) {}
+    virtual void dataOffer(WlrDataDevice &, WlrDataOffer &) {}
+    virtual void selection(WlrDataDevice &, WlrDataOffer &) {}
+    virtual void finished(WlrDataDevice &) {}
+    virtual void primarySelection(WlrDataDevice &, WlrDataOffer &) {}
   };
 
   void registerListener(Listener *listener) { _listeners.push_back(listener); }

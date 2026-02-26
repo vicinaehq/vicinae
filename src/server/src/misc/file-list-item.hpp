@@ -42,7 +42,7 @@ inline std::unique_ptr<ActionPanelState> actionPanel(const std::filesystem::path
 
   auto suggested = panel->createSection("Suggested apps");
 
-  for (int i = 1; i < openers.size(); ++i) {
+  for (size_t i = 1; i < openers.size(); ++i) {
     auto &opener = openers[i];
     if (fileBrowser && fileBrowser->id() == opener->id()) continue;
     auto open = new OpenFileAction(path, opener);

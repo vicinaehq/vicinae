@@ -105,7 +105,7 @@ xcb_screen_t *X11WindowManager::getScreen() const {
 
 xcb_window_t X11WindowManager::getRootWindow() const {
   auto *screen = getScreen();
-  return screen ? screen->root : XCB_WINDOW_NONE;
+  return screen ? screen->root : static_cast<xcb_window_t>(XCB_WINDOW_NONE);
 }
 
 xcb_atom_t X11WindowManager::internAtom(const char *name, bool only_if_exists) const {

@@ -100,15 +100,8 @@ void RootItemManager::updateIndex() {
   m_items.clear();
   m_metadata.clear();
 
-  auto &cfg = m_cfg.value();
-
   for (const auto &provider : m_providers) {
     auto items = provider->loadItems();
-    const config::ProviderData *providerConfig = nullptr;
-
-    if (auto it = cfg.providers.find(provider->uniqueId().toStdString()); it != cfg.providers.end()) {
-      providerConfig = &it->second;
-    }
 
     for (const auto &item : items) {
       SearchableRootItem sitem;
@@ -479,7 +472,7 @@ std::vector<RootItemManager::SearchableRootItem> RootItemManager::querySuggestio
     return ascore > bscore;
   });
 
-  if (suggestions.size() > limit) { suggestions.resize(limit); }
+  if (std::cmp_greater(suggestions.size(), limit)) { suggestions.resize(limit); }
 
   return suggestions;
 }

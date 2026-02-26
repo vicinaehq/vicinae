@@ -64,7 +64,7 @@ std::optional<SystemdPowerManager::Session> SystemdPowerManager::getUserSession(
   arg >> sessions;
 
   for (const auto &session : sessions) {
-    if (session.uid == getuid() && !session.seatId.isEmpty()) { return session; }
+    if (static_cast<uid_t>(session.uid) == getuid() && !session.seatId.isEmpty()) { return session; }
   }
 
   return {};

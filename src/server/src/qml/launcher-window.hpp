@@ -125,11 +125,15 @@ private:
   void applyWindowConfig();
 
   ApplicationContext &m_ctx;
-  QQmlApplicationEngine m_engine;
-  RootSearchModel *m_searchModel;
-  ThemeBridge *m_themeBridge;
+  ActionPanelController *m_actionPanel;
+  AlertModel *m_alertModel = nullptr;
   ConfigBridge *m_configBridge;
   ImageSource *m_imgSource;
+  KeybindBridge *m_keybindProxy;
+  ThemeBridge *m_themeBridge;
+
+  QQmlApplicationEngine m_engine;
+  RootSearchModel *m_searchModel;
   QQuickWindow *m_window = nullptr;
   bool m_compacted = false;
   bool m_isRootSearch = true;
@@ -152,10 +156,6 @@ private:
   QString m_toastMessage;
   int m_toastStyle = 0;
 
-  ActionPanelController *m_actionPanel;
-  KeybindBridge *m_keybindProxy;
-
-  AlertModel *m_alertModel = nullptr;
   HudBridge *m_hudBridge = nullptr;
 
   int m_overrideWidth = 0;

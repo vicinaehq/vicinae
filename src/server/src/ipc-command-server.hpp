@@ -138,6 +138,6 @@ private:
   QLocalServer m_server;
   std::vector<ClientInfo> m_clients;
 
-  RpcServer<ServerSchema, IpcContext> m_rpc;
   ApplicationContext &m_ctx;
+  RpcServer<ServerSchema, IpcContext> m_rpc;
 };
