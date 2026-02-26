@@ -365,14 +365,13 @@ bool LauncherWindow::forwardKey(int key, int modifiers) {
     break;
   }
 
+  // shortcuts that actions cannot override
   if (mods == Qt::ControlModifier) {
     switch (key) {
     case Qt::Key_A:
     case Qt::Key_C:
     case Qt::Key_V:
-    case Qt::Key_X:
     case Qt::Key_Z:
-    case Qt::Key_Y:
       return false;
     default:
       break;
