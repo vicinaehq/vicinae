@@ -188,7 +188,8 @@ void CliServerCommand::run(CLI::App *app) {
       for (const auto &provider : root->providers()) {
         if (!provider->isExtension()) continue;
 
-        auto extp = static_cast<ExtensionRootProvider *>(provider); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+        auto extp = static_cast<ExtensionRootProvider *>(
+            provider); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
 
         if (!extp->isBuiltin() && !scanned.contains(extp->uniqueId())) {
           removed.emplace_back(extp->uniqueId());

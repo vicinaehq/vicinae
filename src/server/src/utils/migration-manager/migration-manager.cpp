@@ -173,7 +173,7 @@ void MigrationManager::runMigrations() {
     for (size_t idx = 0; idx != fsMigrations.size(); ++idx) {
       const auto &migration = fsMigrations[idx];
       if (idx < dbMigrations.size()) {
-        const auto& dbMigration = dbMigrations.at(idx);
+        const auto &dbMigration = dbMigrations.at(idx);
 
         if (dbMigration.version != migration.version) {
           throw std::runtime_error("Migration version mismatch");

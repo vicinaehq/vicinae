@@ -77,7 +77,8 @@ char DesktopEntryValueType::getEscapeChar(char c) {
     return '\r';
   case '\\':
     return '\\';
-  default: break;
+  default:
+    break;
   }
 
   return 0;

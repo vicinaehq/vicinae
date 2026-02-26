@@ -220,7 +220,7 @@ struct HtmlBlockResult {
 };
 
 void processHtmlNodes(xmlNode *node, HtmlBlockResult &result) {
-  for (xmlNode  const*cur = node; cur; cur = cur->next) {
+  for (xmlNode const *cur = node; cur; cur = cur->next) {
     if (cur->type == XML_ELEMENT_NODE) {
       if (xmlStrcmp(cur->name, BAD_CAST "img") == 0) {
         QString src;
@@ -449,7 +449,7 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
       htmlDocPtr doc = htmlReadMemory(wrapped.constData(), wrapped.size(), nullptr, nullptr,
                                       HTML_PARSE_RECOVER | HTML_PARSE_NOERROR | HTML_PARSE_NOWARNING);
       if (doc) {
-        xmlNode  const*xmlRoot = xmlDocGetRootElement(doc);
+        xmlNode const *xmlRoot = xmlDocGetRootElement(doc);
         if (xmlRoot) {
           HtmlBlockResult result;
           processHtmlNodes(xmlRoot->children, result);

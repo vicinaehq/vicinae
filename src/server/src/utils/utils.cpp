@@ -252,7 +252,7 @@ QColor colorFromString(const QString &str) {
   if (QColor color("#" + trimmed); color.isValid()) return color;
 
   QRegularExpression const rgbRegex(R"(rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+)\s*)?\))",
-                              QRegularExpression::CaseInsensitiveOption);
+                                    QRegularExpression::CaseInsensitiveOption);
   QRegularExpressionMatch const rgbMatch = rgbRegex.match(trimmed);
 
   if (rgbMatch.hasMatch()) {

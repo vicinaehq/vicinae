@@ -80,8 +80,9 @@ void ManageShortcutsViewHost::loadDetail(const std::shared_ptr<Shortcut> &shortc
 
   meta.append(QVariantMap{
       {QStringLiteral("label"), QStringLiteral("Last Opened")},
-      {QStringLiteral("value"),
-       shortcut->lastOpenedAt().transform([](const QDateTime &dt) { return dt.toString(); }).value_or(QStringLiteral("Never"))},
+      {QStringLiteral("value"), shortcut->lastOpenedAt()
+                                    .transform([](const QDateTime &dt) { return dt.toString(); })
+                                    .value_or(QStringLiteral("Never"))},
   });
 
   meta.append(QVariantMap{

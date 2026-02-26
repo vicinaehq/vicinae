@@ -83,7 +83,8 @@ std::expected<QByteArray, DecryptError> decrypt(const QByteArray &encrypted, con
 
   // Set expected tag
   if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16,
-                          const_cast<void *>(reinterpret_cast<const void *>(tag.constData()))) != 1) { // NOLINT(cppcoreguidelines-pro-type-const-cast)
+                          const_cast<void *>(reinterpret_cast<const void *>(tag.constData()))) !=
+      1) { // NOLINT(cppcoreguidelines-pro-type-const-cast)
     EVP_CIPHER_CTX_free(ctx);
     return std::unexpected(DecryptError::OpenSslError);
   }

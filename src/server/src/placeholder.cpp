@@ -10,17 +10,9 @@ PlaceholderString PlaceholderString::parseShortcutText(const QString &link) {
   return parse(link, std::vector<QString>{"uuid", "clipboard", "selected", "date"});
 }
 
-PlaceholderString PlaceholderString::parse(const QString& link, std::span<const QString> reserved) {
+PlaceholderString PlaceholderString::parse(const QString &link, std::span<const QString> reserved) {
   PlaceholderString pstr;
-  enum class State : std::uint8_t {
-    BkNormal,
-    PhId,
-    PhKeyStart,
-    PhKey,
-    PhValueStart,
-    PhValue,
-    PhValueQuoted
-  };
+  enum class State : std::uint8_t { BkNormal, PhId, PhKeyStart, PhKey, PhValueStart, PhValue, PhValueQuoted };
   using enum State;
   State state = BkNormal;
   size_t i = 0;
@@ -29,7 +21,8 @@ PlaceholderString PlaceholderString::parse(const QString& link, std::span<const 
   std::pair<QString, QString> arg;
 
   const auto insertPlaceholder = [&](const ParsedPlaceholder &placeholder) {
-    bool const isReserved = std::ranges::any_of(reserved, [&](const QString &s) { return s == placeholder.id; });
+    bool const isReserved =
+        std::ranges::any_of(reserved, [&](const QString &s) { return s == placeholder.id; });
 
     if (placeholder.id == "argument") {
       Argument arg;
@@ -51,7 +44,7 @@ PlaceholderString PlaceholderString::parse(const QString& link, std::span<const 
   pstr.m_args.clear();
   pstr.m_raw = link;
 
-  while (std::cmp_less(i,  link.size())) {
+  while (std::cmp_less(i, link.size())) {
     QChar const ch = link.at(i);
 
     switch (state) {

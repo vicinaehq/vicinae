@@ -134,7 +134,7 @@ void FileSystemWalker::walk(const fs::path &root, const WalkCallback &callback) 
       }
       if (entry.is_symlink(ec)) { continue; }
 
-      const auto& path = entry.path();
+      const auto &path = entry.path();
 
       if (m_ignoreHiddenFiles && isHiddenPath(path)) {
         if (m_verbose) { qInfo() << "FileSystemWalker: ignoring hidden path" << path.c_str(); }

@@ -99,11 +99,20 @@ Locale::Locale(std::string_view data) { *this = Locale::parse(data); }
 std::string Locale::toString() const {
   std::string s = lang();
 
-  if (country()) { s += '_'; s.append(*country()); }
+  if (country()) {
+    s += '_';
+    s.append(*country());
+  }
 
-  if (encoding()) { s += '.'; s.append(*encoding()); }
+  if (encoding()) {
+    s += '.';
+    s.append(*encoding());
+  }
 
-  if (modifier()) { s += '@'; s.append(*modifier()); }
+  if (modifier()) {
+    s += '@';
+    s.append(*modifier());
+  }
 
   return s;
 }

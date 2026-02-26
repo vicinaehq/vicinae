@@ -135,7 +135,7 @@ void ExtensionGridModel::rebuildFromModel(bool resetSelection) {
 
   if (!resetSelection) {
     bool const prevValid = prevSection >= 0 && std::cmp_less(prevSection, sections.size()) && prevItem >= 0 &&
-                     std::cmp_less(prevItem, sections[prevSection].items.size());
+                           std::cmp_less(prevItem, sections[prevSection].items.size());
 
     if (prevValid) {
       if (prevSection == selectedSection() && prevItem == selectedItem()) {

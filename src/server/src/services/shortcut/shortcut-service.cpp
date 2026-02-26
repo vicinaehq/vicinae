@@ -40,7 +40,7 @@ std::vector<std::shared_ptr<Shortcut>> ShortcutService::loadAll() {
 }
 
 Shortcut *ShortcutService::findById(const QString &id) {
-  if (auto it = std::ranges::find_if(m_shortcuts, [&](const auto& bk) { return id == bk->id(); });
+  if (auto it = std::ranges::find_if(m_shortcuts, [&](const auto &bk) { return id == bk->id(); });
       it != m_shortcuts.end()) {
     return it->get();
   }

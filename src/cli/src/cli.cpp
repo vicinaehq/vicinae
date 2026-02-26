@@ -366,7 +366,8 @@ int CommandLineApp::run(int ac, char **av) {
 
     // raycast:// or com.raycast:/
     auto pred = [&](std::string_view scheme) { return arg.starts_with(std::string{scheme} + ":/"); };
-    const bool hasScheme = std::ranges::any_of(std::initializer_list{"vicinae", "raycast", "com.raycast"}, pred);
+    const bool hasScheme =
+        std::ranges::any_of(std::initializer_list{"vicinae", "raycast", "com.raycast"}, pred);
 
     if (hasScheme) {
       if (auto res = ipc::CliClient::deeplink(arg, {}); !res) {

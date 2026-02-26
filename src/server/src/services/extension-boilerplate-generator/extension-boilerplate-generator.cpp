@@ -83,11 +83,11 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
 
     QString const mode = it->mode == CommandModeView ? "view" : "no-view";
     QString const cmdString = QString(COMMAND_JSON_TEMPLATE)
-                            .replace(PLACEHOLDER("NAME"), name.simplified())
-                            .replace(PLACEHOLDER("TITLE"), cmd.title.simplified())
-                            .replace(PLACEHOLDER("SUBTITLE"), cmd.subtitle.simplified())
-                            .replace(PLACEHOLDER("DESCRIPTION"), cmd.description.simplified())
-                            .replace(PLACEHOLDER("MODE"), mode);
+                                  .replace(PLACEHOLDER("NAME"), name.simplified())
+                                  .replace(PLACEHOLDER("TITLE"), cmd.title.simplified())
+                                  .replace(PLACEHOLDER("SUBTITLE"), cmd.subtitle.simplified())
+                                  .replace(PLACEHOLDER("DESCRIPTION"), cmd.description.simplified())
+                                  .replace(PLACEHOLDER("MODE"), mode);
 
     QString const ext = it->mode == CommandModeView ? "tsx" : "ts";
     QString const filename = QString("%1.%2").arg(name).arg(ext);

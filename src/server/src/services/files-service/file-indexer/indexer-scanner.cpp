@@ -49,7 +49,8 @@ void IndexerScanner::scan(const Scan &scan) {
   enqueueBatch(batchedIndex);
 }
 
-IndexerScanner::IndexerScanner(const std::shared_ptr<DbWriter>& writer, const Scan &sc, FinishCallback callback)
+IndexerScanner::IndexerScanner(const std::shared_ptr<DbWriter> &writer, const Scan &sc,
+                               FinishCallback callback)
     : AbstractScanner(writer, sc, std::move(callback)) {
   m_writerWorker = std::make_unique<WriterWorker>(writer, m_batchMutex, m_writeBatches, m_batchCv);
   m_writerThread = std::thread([&]() { m_writerWorker->run(); });

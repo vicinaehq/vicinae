@@ -14,7 +14,8 @@
 RootSearchModel::RootSearchModel(const ViewScope &scope, QObject *parent)
     : QAbstractListModel(parent), m_scope(scope), m_manager(scope.services()->rootItemManager()),
       m_appDb(scope.services()->appDb()), m_calculator(scope.services()->calculatorService()),
-      m_fileService(scope.services()->fileService()), m_config(scope.services()->config()), m_fileSearchEnabled(m_config->value().searchFilesInRoot) {
+      m_fileService(scope.services()->fileService()), m_config(scope.services()->config()),
+      m_fileSearchEnabled(m_config->value().searchFilesInRoot) {
 
   using namespace std::chrono_literals;
 
@@ -27,8 +28,6 @@ RootSearchModel::RootSearchModel(const ViewScope &scope, QObject *parent)
   connect(&m_fileSearchDebounce, &QTimer::timeout, this, &RootSearchModel::startFileSearch);
   connect(&m_calcWatcher, &CalculatorWatcher::finished, this, &RootSearchModel::handleCalculatorFinished);
   connect(&m_fileWatcher, &FileSearchWatcher::finished, this, &RootSearchModel::handleFileSearchFinished);
-
-  
 
   connect(m_config, &config::Manager::configChanged, this,
           [this](const config::ConfigValue &next, const config::ConfigValue &) {
@@ -750,12 +749,14 @@ void RootSearchModel::startCalculator() {
     return;
   }
 
-  bool const containsNonAlnum = std::ranges::any_of(m_query, [](QChar ch) { return !ch.isLetterOrNumber(); }) ||
-                          m_query.starts_with("0x") || m_query.starts_with("0b") || m_query.starts_with("0o");
+  bool const containsNonAlnum =
+      std::ranges::any_of(m_query, [](QChar ch) { return !ch.isLetterOrNumber(); }) ||
+      m_query.starts_with("0x") || m_query.starts_with("0b") || m_query.starts_with("0o");
   const auto isAllowedLeadingChar = [&](QChar c) {
     return c == '-' || c == '(' || c == ')' || c.isLetterOrNumber() || c.category() == QChar::Symbol_Currency;
   };
-  bool const isComputable = expression.size() > 1 && isAllowedLeadingChar(expression.at(0)) && containsNonAlnum;
+  bool const isComputable =
+      expression.size() > 1 && isAllowedLeadingChar(expression.at(0)) && containsNonAlnum;
 
   if (!isComputable || !m_calculator->backend()) { return; }
 

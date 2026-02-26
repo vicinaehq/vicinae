@@ -4,9 +4,8 @@
 
 #include <utility>
 
-
 bool UnzipHandle::positionToIndex(int idx) {
-  if (std::cmp_less_equal(info.number_entry , idx)) {
+  if (std::cmp_less_equal(info.number_entry, idx)) {
     qCritical() << "Invalid idx" << idx;
     return false;
   }
@@ -63,7 +62,7 @@ std::vector<ZipedFile> Unzipper::listFiles() {
   files.reserve(m_handle.info.number_entry);
   unzGoToFirstFile(m_handle.file);
 
-  for (int i = 0; std::cmp_not_equal(i , m_handle.info.number_entry); ++i) {
+  for (int i = 0; std::cmp_not_equal(i, m_handle.info.number_entry); ++i) {
     unz_file_info fileInfo;
     char filename[256];
 

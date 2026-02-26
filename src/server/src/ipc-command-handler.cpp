@@ -168,11 +168,11 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
       return {};
     }
 
-    QString const& author = components[0];
-    QString const& extName = components[1];
-    QString const& cmdName = components[2];
+    QString const &author = components[0];
+    QString const &extName = components[1];
+    QString const &cmdName = components[2];
 
-    for (ExtensionRootProvider  const*ext : root->extensions()) {
+    for (ExtensionRootProvider const *ext : root->extensions()) {
       for (const auto &cmd : ext->repository()->commands()) {
         // Author is suffixed, check author with suffix
         if (author.contains("@")) {
@@ -222,14 +222,14 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
 
   if (command == "theme") {
     auto components = path.sliced(1).split('/');
-    const auto& verb = components.at(0);
+    const auto &verb = components.at(0);
 
     if (verb == "set") {
       if (components.size() != 2) {
         return std::unexpected("Correct usage is vicinae://theme/set/<theme_id>");
       }
 
-      QString const& id = components.at(1);
+      QString const &id = components.at(1);
       auto &service = ThemeService::instance();
       auto cfg = m_ctx.services->config();
 

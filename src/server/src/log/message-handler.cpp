@@ -49,14 +49,14 @@ void coloredMessageHandler(QtMsgType type, const QMessageLogContext &context, co
 
   // Format: [time] LEVEL message (file:line)
   QString const formattedMessage = QString("%1[%2] %3%4%5  -  %6 %7%8\n")
-                                 .arg(WHITE)
-                                 .arg(timestamp)
-                                 .arg(color)
-                                 .arg(levelName)
-                                 .arg(RESET)
-                                 .arg(msg)
-                                 .arg(contextInfo)
-                                 .arg(RESET);
+                                       .arg(WHITE)
+                                       .arg(timestamp)
+                                       .arg(color)
+                                       .arg(levelName)
+                                       .arg(RESET)
+                                       .arg(msg)
+                                       .arg(contextInfo)
+                                       .arg(RESET);
 
   std::cerr << formattedMessage.toStdString();
 

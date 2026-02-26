@@ -8,5 +8,4 @@ struct CFree {
   }
 };
 
-template <typename T>
-using CPtr = std::unique_ptr<T, CFree>;
+template <typename T> using CPtr = std::unique_ptr<T, CFree>;

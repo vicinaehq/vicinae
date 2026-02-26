@@ -40,18 +40,18 @@ static void foreign_toplevel_handle_state(void *data, struct zwlr_foreign_toplev
   self->m_active = false;
   size_t const n = value->size / sizeof(uint32_t);
   for (size_t i = 0; i < n; ++i) {
-    uint32_t  const*elem = (uint32_t *)value->data + i;
+    uint32_t const *elem = (uint32_t *)value->data + i;
     if (*elem == ZWLR_FOREIGN_TOPLEVEL_HANDLE_V1_STATE_ACTIVATED) { self->m_active = true; }
   }
 }
 
 static void foreign_toplevel_handle_done(void *data, struct zwlr_foreign_toplevel_handle_v1 *handle) {
-  WaylandWindow  const*self = static_cast<WaylandWindow *>(data);
+  WaylandWindow const *self = static_cast<WaylandWindow *>(data);
   emit self->m_manager->windowsChanged();
 }
 
 static void foreign_toplevel_handle_closed(void *data, struct zwlr_foreign_toplevel_handle_v1 *handle) {
-  WaylandWindow  const*self = static_cast<WaylandWindow *>(data);
+  WaylandWindow const *self = static_cast<WaylandWindow *>(data);
   for (auto iter = self->m_manager->m_toplevels.begin(); iter != self->m_manager->m_toplevels.end(); ++iter) {
     if (iter->get() == self) {
       self->m_manager->m_toplevels.erase(iter);
@@ -78,11 +78,9 @@ static struct zwlr_foreign_toplevel_handle_v1_listener foreign_toplevel_handle_l
     .closed = &foreign_toplevel_handle_closed,
     .parent = &foreign_toplevel_handle_parent};
 
-WaylandWindow::WaylandWindow(WaylandWindowManager *wm, struct zwlr_foreign_toplevel_handle_v1 *handle) : m_manager(wm), m_active(false), m_handle(handle), m_pid(0) {
-  
-  
-  
-  
+WaylandWindow::WaylandWindow(WaylandWindowManager *wm, struct zwlr_foreign_toplevel_handle_v1 *handle)
+    : m_manager(wm), m_active(false), m_handle(handle), m_pid(0) {
+
   zwlr_foreign_toplevel_handle_v1_add_listener(handle, &foreign_toplevel_handle_listener, this);
 }
 
@@ -99,8 +97,8 @@ QString WaylandWindowManager::displayName() const { return "Wayland"; }
 AbstractWindowManager::WindowList WaylandWindowManager::listWindowsSync() const { return m_toplevels; }
 
 AbstractWindowManager::WindowPtr WaylandWindowManager::getFocusedWindowSync() const {
-  for (const auto& window : m_toplevels) {
-    WaylandWindow  const*ww = static_cast<WaylandWindow *>(window.get());
+  for (const auto &window : m_toplevels) {
+    WaylandWindow const *ww = static_cast<WaylandWindow *>(window.get());
     if (ww->m_active) { return window; }
   }
   return nullptr;
@@ -165,7 +163,7 @@ static void handle_global(void *data, struct wl_registry *registry, uint32_t nam
   WaylandWindowManager *wm = static_cast<WaylandWindowManager *>(data);
 
   if (strcmp(interface, wl_output_interface.name) == 0) {
-    wl_output  const*output =
+    wl_output const *output =
         static_cast<wl_output *>(wl_registry_bind(registry, name, &wl_output_interface, version));
   }
 

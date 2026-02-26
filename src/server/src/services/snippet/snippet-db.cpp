@@ -11,7 +11,7 @@ namespace fs = std::filesystem;
 
 using namespace snippet;
 
-SnippetDatabase::SnippetDatabase(const std::filesystem::path& path) : m_path(path) {
+SnippetDatabase::SnippetDatabase(const std::filesystem::path &path) : m_path(path) {
   if (!fs::is_regular_file(m_path)) {
     fs::create_directories(path.parent_path());
     if (const auto result = setSnippets({}); !result) {
@@ -34,7 +34,8 @@ std::expected<std::vector<SerializedSnippet>, std::string> SnippetDatabase::load
 
 std::vector<SerializedSnippet> SnippetDatabase::snippets() const { return m_snippets; }
 
-std::expected<void, std::string> SnippetDatabase::updateSnippet(std::string_view id, const SnippetPayload& payload) {
+std::expected<void, std::string> SnippetDatabase::updateSnippet(std::string_view id,
+                                                                const SnippetPayload &payload) {
   if (const auto e = payload.expansion) {
     if (const auto existing = findByKeyword(e->keyword); existing && existing->id != id) {
       return std::unexpected(std::format("keyword already assigned to \"{}\"", existing->name));
@@ -85,7 +86,7 @@ SerializedSnippet *SnippetDatabase::findByKeyword(std::string_view keyword) {
   return nullptr;
 }
 
-std::expected<SerializedSnippet, std::string> SnippetDatabase::addSnippet(const SnippetPayload& snippet) {
+std::expected<SerializedSnippet, std::string> SnippetDatabase::addSnippet(const SnippetPayload &snippet) {
   if (m_snippets.size() >= MAX_SNIPPETS) {
     return std::unexpected(std::format("Snippet limit reached ({})", MAX_SNIPPETS));
   }

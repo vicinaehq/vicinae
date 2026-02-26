@@ -15,7 +15,7 @@ static xcb_atom_t internAtom(xcb_connection_t *conn, const char *name, bool only
 }
 
 static QString getStringProperty(xcb_connection_t *conn, xcb_window_t window, xcb_atom_t property,
-                                   xcb_atom_t type = XCB_ATOM_STRING) {
+                                 xcb_atom_t type = XCB_ATOM_STRING) {
   xcb_get_property_cookie_t const cookie = xcb_get_property(conn, 0, window, property, type, 0, 1024);
   const CPtr<xcb_get_property_reply_t> reply(xcb_get_property_reply(conn, cookie, nullptr));
 
@@ -28,8 +28,9 @@ static QString getStringProperty(xcb_connection_t *conn, xcb_window_t window, xc
 }
 
 static std::optional<uint32_t> getCardinalProperty(xcb_connection_t *conn, xcb_window_t window,
-                                                     xcb_atom_t property) {
-  xcb_get_property_cookie_t const cookie = xcb_get_property(conn, 0, window, property, XCB_ATOM_CARDINAL, 0, 1);
+                                                   xcb_atom_t property) {
+  xcb_get_property_cookie_t const cookie =
+      xcb_get_property(conn, 0, window, property, XCB_ATOM_CARDINAL, 0, 1);
   const CPtr<xcb_get_property_reply_t> reply(xcb_get_property_reply(conn, cookie, nullptr));
 
   if (!reply || xcb_get_property_value_length(reply.get()) < 4) { return std::nullopt; }
@@ -38,7 +39,7 @@ static std::optional<uint32_t> getCardinalProperty(xcb_connection_t *conn, xcb_w
 }
 
 static bool hasAtomInList(xcb_connection_t *conn, xcb_window_t window, xcb_atom_t property,
-                             xcb_atom_t target_atom) {
+                          xcb_atom_t target_atom) {
   xcb_get_property_cookie_t const cookie = xcb_get_property(conn, 0, window, property, XCB_ATOM_ATOM, 0, 64);
   const CPtr<xcb_get_property_reply_t> reply(xcb_get_property_reply(conn, cookie, nullptr));
 

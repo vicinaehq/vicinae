@@ -141,7 +141,8 @@ float RootItemManager::SearchableRootItem::fuzzyScore(std::string_view pattern) 
   std::initializer_list<WS> ss = {{title, 1.0f}, {subtitle, 0.6f}, {alias, 1.0f}};
   auto kws = keywords | std::views::transform([](auto &&kw) { return WS{kw, 0.3f}; });
   auto strs = std::views::concat(ss, kws);
-  float const score = pattern.empty() ? 1 : fzf::defaultMatcher.fuzzy_match_v2_score_query(strs, pattern, false);
+  float const score =
+      pattern.empty() ? 1 : fzf::defaultMatcher.fuzzy_match_v2_score_query(strs, pattern, false);
   double const frequencyScore = std::log(1 + meta->visitCount * 0.1);
   float const frequencyWeight = 0.2;
 
@@ -262,7 +263,7 @@ glz::generic::object_t RootItemManager::transformPreferenceValues(const QJsonObj
 }
 
 bool RootItemManager::setItemPreferenceValues(const EntrypointId &id, const QJsonObject &preferences) {
-  RootItem  const*item = findItemById(id);
+  RootItem const *item = findItemById(id);
 
   if (!item) return false;
 
@@ -508,7 +509,7 @@ std::vector<RootProvider *> RootItemManager::providers() const {
   std::vector<RootProvider *> providers;
 
   providers.reserve(m_providers.size());
-for (const auto &provider : m_providers) {
+  for (const auto &provider : m_providers) {
     providers.emplace_back(provider.get());
   }
 
@@ -523,7 +524,9 @@ std::vector<ExtensionRootProvider *> RootItemManager::extensions() const {
   std::vector<ExtensionRootProvider *> providers;
 
   for (const auto &provider : m_providers) {
-    if (provider->isExtension()) providers.emplace_back(static_cast<ExtensionRootProvider *>(provider.get())); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+    if (provider->isExtension())
+      providers.emplace_back(static_cast<ExtensionRootProvider *>(
+          provider.get())); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
   }
 
   return providers;

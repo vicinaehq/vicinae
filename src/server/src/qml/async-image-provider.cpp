@@ -345,7 +345,8 @@ void ViciImageResponse::tryFallback(QImage &image) {
   auto fb = parseId(fallback);
 
   if (fb.type == QStringLiteral("builtin")) {
-    QColor const fg = fb.fg.isValid() ? fb.fg : ThemeService::instance().theme().resolve(SemanticColor::Foreground);
+    QColor const fg =
+        fb.fg.isValid() ? fb.fg : ThemeService::instance().theme().resolve(SemanticColor::Foreground);
     image = renderBuiltinSvg(fb.name, m_size, fg, fb.bg);
     if (fb.circleMask && !image.isNull()) applyCircleMask(image);
   } else if (fb.type == QStringLiteral("system")) {

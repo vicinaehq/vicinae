@@ -48,8 +48,8 @@ void FileIndexer::startFullScan() {
   }).detach();
 }
 
-void FileIndexer::startSingleScan(const std::filesystem::path& entrypoint, ScanType type,
-                                  const std::vector<std::string>& excludedFilenames) {
+void FileIndexer::startSingleScan(const std::filesystem::path &entrypoint, ScanType type,
+                                  const std::vector<std::string> &excludedFilenames) {
   for (auto const &[id, scan] : m_dispatcher.scans()) {
     if (scan.type == type && scan.path == entrypoint) { m_dispatcher.interrupt(id); }
   }

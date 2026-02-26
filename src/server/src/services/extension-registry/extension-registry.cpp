@@ -34,8 +34,8 @@ ExtensionRegistry::ExtensionRegistry(LocalStorageService &storage) : m_storage(s
   connect(&m_rescanDebounce, &QTimer::timeout, this, [this]() { requestScan(); });
 }
 
-QFuture<bool> ExtensionRegistry::installFromZip(const QString &id, const std::string& data,
-                                                const std::function<void(bool)>& cb) {
+QFuture<bool> ExtensionRegistry::installFromZip(const QString &id, const std::string &data,
+                                                const std::function<void(bool)> &cb) {
   fs::path const extractDir = localExtensionDirectory() / id.toStdString();
   auto future = QtConcurrent::run([id, data, extractDir]() {
     Unzipper unzip = std::string_view(data);
@@ -128,7 +128,7 @@ std::vector<ExtensionManifest> ExtensionRegistry::scanAll() {
     for (const auto &entry : fs::directory_iterator(path, ec)) {
       if (!entry.is_directory(ec)) continue;
 
-      fs::path const& path = entry.path();
+      fs::path const &path = entry.path();
       std::string const filename = path.filename();
 
       if (filename.starts_with('.')) continue;

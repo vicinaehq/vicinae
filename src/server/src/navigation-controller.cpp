@@ -538,7 +538,8 @@ const NavigationController::ViewState *NavigationController::topState() const {
 }
 
 NavigationController::ViewState *NavigationController::findViewState(const BaseView *view) {
-  return const_cast<ViewState *>(std::as_const(*this).findViewState(view)); // NOLINT(cppcoreguidelines-pro-type-const-cast)
+  return const_cast<ViewState *>(
+      std::as_const(*this).findViewState(view)); // NOLINT(cppcoreguidelines-pro-type-const-cast)
 }
 
 bool NavigationController::isRootSearch() const { return m_views.size() == 1; }
@@ -586,7 +587,7 @@ void NavigationController::unloadActiveCommand() {
 
   auto size = m_frames.back()->viewCount;
 
-  for (int i = 0; std::cmp_less(i,  size); ++i) {
+  for (int i = 0; std::cmp_less(i, size); ++i) {
     popCurrentView();
   }
 }
@@ -594,7 +595,7 @@ void NavigationController::unloadActiveCommand() {
 void NavigationController::launch(const EntrypointId &id) {
   auto root = m_ctx.services->rootItemManager();
 
-  for (ExtensionRootProvider  const*extension : root->extensions()) {
+  for (ExtensionRootProvider const *extension : root->extensions()) {
     for (const auto &cmd : extension->repository()->commands()) {
       if (cmd->uniqueId() == id) {
         launch(cmd);

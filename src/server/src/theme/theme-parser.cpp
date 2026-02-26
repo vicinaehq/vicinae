@@ -302,7 +302,8 @@ std::string ThemeSerializer::toToml(const ThemeFile &file) const {
     doc << "[colors." << tableName << "]\n";
     for (const auto &[k, v] : mapped[tableName]) {
       QColor const color = file.resolve(v);
-      QString const colorName = color.name(color.alpha() == 0xFF ? QColor::NameFormat::HexRgb : QColor::HexArgb);
+      QString const colorName =
+          color.name(color.alpha() == 0xFF ? QColor::NameFormat::HexRgb : QColor::HexArgb);
       doc << k << " = " << std::quoted(colorName.toStdString()) << "\n";
     }
   }

@@ -78,7 +78,7 @@ std::unique_ptr<ActionPanelState> SystemRunModel::createActionPanel(int section,
   auto appDb = scope().services()->appDb();
   auto terminal = appDb->terminalEmulator();
 
-  auto createTerminalActions = [&](const std::vector<QString>& args) {
+  auto createTerminalActions = [&](const std::vector<QString> &args) {
     if (!terminal) return;
 
     auto hold = new OpenInTerminalAction(terminal, args);

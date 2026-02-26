@@ -185,7 +185,8 @@ xcb_window_t X11WindowManager::getActiveWindow() const {
   if (net_active_window == XCB_ATOM_NONE) { return XCB_WINDOW_NONE; }
 
   xcb_get_property_cookie_t const cookie =
-      xcb_get_property(conn, 0, root, net_active_window, XCB_ATOM_WINDOW, 0, 1); // NOLINT(readability-suspicious-call-argument)
+      xcb_get_property(conn, 0, root, net_active_window, XCB_ATOM_WINDOW, 0,
+                       1); // NOLINT(readability-suspicious-call-argument)
   const CPtr<xcb_get_property_reply_t> reply(xcb_get_property_reply(conn, cookie, nullptr));
 
   if (!reply || xcb_get_property_value_length(reply.get()) < 4) { return XCB_WINDOW_NONE; }
@@ -235,7 +236,8 @@ void X11WindowManager::focusWindowSync(const AbstractWindow &window) const {
 
   if (!conn || root == XCB_WINDOW_NONE) { return; }
 
-  const X11Window &x11_window = static_cast<const X11Window &>(window); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+  const X11Window &x11_window =
+      static_cast<const X11Window &>(window); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
   xcb_window_t const window_id = x11_window.windowId();
 
   // Method 1: Check if window is on a different desktop and switch to it first
@@ -245,17 +247,20 @@ void X11WindowManager::focusWindowSync(const AbstractWindow &window) const {
   if (net_wm_desktop != XCB_ATOM_NONE && net_current_desktop != XCB_ATOM_NONE) {
     xcb_get_property_cookie_t const win_desk_cookie =
         xcb_get_property(conn, 0, window_id, net_wm_desktop, XCB_ATOM_CARDINAL, 0, 1);
-    const CPtr<xcb_get_property_reply_t> win_desk_reply(xcb_get_property_reply(conn, win_desk_cookie, nullptr));
+    const CPtr<xcb_get_property_reply_t> win_desk_reply(
+        xcb_get_property_reply(conn, win_desk_cookie, nullptr));
 
     if (win_desk_reply && xcb_get_property_value_length(win_desk_reply.get()) >= 4) {
       uint32_t const window_desktop = *static_cast<uint32_t *>(xcb_get_property_value(win_desk_reply.get()));
 
       xcb_get_property_cookie_t const cur_desk_cookie =
           xcb_get_property(conn, 0, root, net_current_desktop, XCB_ATOM_CARDINAL, 0, 1);
-      const CPtr<xcb_get_property_reply_t> cur_desk_reply(xcb_get_property_reply(conn, cur_desk_cookie, nullptr));
+      const CPtr<xcb_get_property_reply_t> cur_desk_reply(
+          xcb_get_property_reply(conn, cur_desk_cookie, nullptr));
 
       if (cur_desk_reply && xcb_get_property_value_length(cur_desk_reply.get()) >= 4) {
-        uint32_t const current_desktop = *static_cast<uint32_t *>(xcb_get_property_value(cur_desk_reply.get()));
+        uint32_t const current_desktop =
+            *static_cast<uint32_t *>(xcb_get_property_value(cur_desk_reply.get()));
 
         if (window_desktop != current_desktop && window_desktop != 0xFFFFFFFF) {
           xcb_client_message_event_t switch_event;
@@ -310,7 +315,8 @@ bool X11WindowManager::closeWindow(const AbstractWindow &window) const {
   auto *conn = getConnection();
   if (!conn) { return false; }
 
-  const X11Window &x11_window = static_cast<const X11Window &>(window); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+  const X11Window &x11_window =
+      static_cast<const X11Window &>(window); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
   xcb_window_t const window_id = x11_window.windowId();
 
   if (!x11_window.canClose()) {
@@ -391,7 +397,8 @@ QStringList X11WindowManager::getDesktopNames() const {
 
   if (net_desktop_names == XCB_ATOM_NONE || utf8_string == XCB_ATOM_NONE) { return names; }
 
-  xcb_get_property_cookie_t const cookie = xcb_get_property(conn, 0, root, net_desktop_names, utf8_string, 0, 1024);
+  xcb_get_property_cookie_t const cookie =
+      xcb_get_property(conn, 0, root, net_desktop_names, utf8_string, 0, 1024);
   const CPtr<xcb_get_property_reply_t> reply(xcb_get_property_reply(conn, cookie, nullptr));
 
   if (!reply) { return names; }
@@ -446,8 +453,7 @@ std::shared_ptr<AbstractWindowManager::AbstractWorkspace> X11WindowManager::getA
   if (!current.has_value()) { return nullptr; }
 
   auto desktop_names = getDesktopNames();
-  QString const name =
-      (std::cmp_less(*current, desktop_names.size())) ? desktop_names[*current] : QString();
+  QString const name = (std::cmp_less(*current, desktop_names.size())) ? desktop_names[*current] : QString();
 
   return std::make_shared<X11Workspace>(*current, name);
 }

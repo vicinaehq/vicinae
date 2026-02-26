@@ -43,8 +43,8 @@ int ScanDispatcher::enqueue(const Scan &scan) {
   return scanId;
 }
 
-ScanDispatcher::ScanDispatcher(std::shared_ptr<DbWriter> writer) : m_writer(std::move(writer)), m_running(true) {
-  
+ScanDispatcher::ScanDispatcher(std::shared_ptr<DbWriter> writer)
+    : m_writer(std::move(writer)), m_running(true) {
 
   m_collectorThread = std::thread([this]() {
     while (true) {

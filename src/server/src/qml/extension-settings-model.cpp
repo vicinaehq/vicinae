@@ -6,8 +6,9 @@
 #include <algorithm>
 #include <utility>
 
-ExtensionSettingsModel::ExtensionSettingsModel(QObject *parent) : QAbstractListModel(parent), m_prefModel(new PreferenceFormModel(this)) {
-  
+ExtensionSettingsModel::ExtensionSettingsModel(QObject *parent)
+    : QAbstractListModel(parent), m_prefModel(new PreferenceFormModel(this)) {
+
   auto *manager = ServiceRegistry::instance()->rootItemManager();
   connect(manager, &RootItemManager::itemsChanged, this, [this]() { rebuild(m_filter); });
   rebuild({});

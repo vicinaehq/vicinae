@@ -80,8 +80,7 @@ struct Input {
 };
 
 Server::Server()
-    : m_udev(udev_new()), m_xkb(xkb_context_new(XKB_CONTEXT_NO_FLAGS)),
-      m_keymap([this] {
+    : m_udev(udev_new()), m_xkb(xkb_context_new(XKB_CONTEXT_NO_FLAGS)), m_keymap([this] {
         static constexpr const xkb_rule_names rules{.rules = nullptr,   // defaults to "evdev"
                                                     .model = nullptr,   // defaults to "pc105"
                                                     .layout = "us",     // or "fr", "de", etc.

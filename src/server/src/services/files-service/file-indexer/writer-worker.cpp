@@ -2,7 +2,6 @@
 
 #include <utility>
 
-
 void WriterWorker::stop() {
   m_alive = false;
   m_batchCv.notify_one();

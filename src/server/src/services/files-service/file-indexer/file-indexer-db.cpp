@@ -337,7 +337,8 @@ void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
       switch (event.type) {
       case FileEventType::Modify: {
         using namespace std::chrono;
-        long long const secondsSinceEpoch = duration_cast<seconds>(event.eventTime.time_since_epoch()).count();
+        long long const secondsSinceEpoch =
+            duration_cast<seconds>(event.eventTime.time_since_epoch()).count();
         modifyQuery.bindValue(":last_modified_at", secondsSinceEpoch);
 
         modifyQuery.bindValue(":path", event.path.c_str());

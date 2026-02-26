@@ -185,8 +185,8 @@ std::unique_ptr<ActionPanelState> EmojiGridModel::createActionPanel(int section,
 
   auto metadata = m_emojiService->mapMetadata(data->emoji);
   QString const copiedEmoji = data->skinToneSupport && m_skinTone
-                            ? emoji::applySkinTone(data->emoji, m_skinTone.value()).c_str()
-                            : QString::fromUtf8(data->emoji);
+                                  ? emoji::applySkinTone(data->emoji, m_skinTone.value()).c_str()
+                                  : QString::fromUtf8(data->emoji);
 
   auto wm = scope().services()->windowManager();
   auto panel = std::make_unique<ListActionPanelState>();

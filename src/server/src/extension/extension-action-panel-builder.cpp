@@ -7,12 +7,14 @@
 
 namespace ExtensionActionPanelBuilder {
 
-static AbstractAction *createActionFromModel(const ActionModel &model, const NotifyFn& notify, const SubmitFn& submit);
-static AbstractAction *createSubmenuAction(const ActionPannelSubmenuPtr &submenuModel, const NotifyFn& notify,
-                                           SubmenuCache *submenuCache, const SubmitFn& submit);
+static AbstractAction *createActionFromModel(const ActionModel &model, const NotifyFn &notify,
+                                             const SubmitFn &submit);
+static AbstractAction *createSubmenuAction(const ActionPannelSubmenuPtr &submenuModel, const NotifyFn &notify,
+                                           SubmenuCache *submenuCache, const SubmitFn &submit);
 static void updateSubmenuCache(SubmenuCache *cache, const ActionPannelModel &model);
 
-static AbstractAction *createActionFromModel(const ActionModel &model, const NotifyFn& notify, const SubmitFn& submit) {
+static AbstractAction *createActionFromModel(const ActionModel &model, const NotifyFn &notify,
+                                             const SubmitFn &submit) {
   if (model.type == "create-quicklink") {
     auto quicklinkObj = model.quicklink;
     QString const name = quicklinkObj.value("name").toString();
@@ -59,8 +61,8 @@ static AbstractAction *createActionFromModel(const ActionModel &model, const Not
   return action;
 }
 
-static AbstractAction *createSubmenuAction(const ActionPannelSubmenuPtr &submenuModel, const NotifyFn& notify,
-                                           SubmenuCache *submenuCache, const SubmitFn& submit) {
+static AbstractAction *createSubmenuAction(const ActionPannelSubmenuPtr &submenuModel, const NotifyFn &notify,
+                                           SubmenuCache *submenuCache, const SubmitFn &submit) {
   if (!submenuModel) return nullptr;
 
   if (submenuModel->stableId) { (*submenuCache)[*submenuModel->stableId] = submenuModel; }
@@ -129,8 +131,8 @@ static void updateSubmenuCache(SubmenuCache *cache, const ActionPannelModel &mod
 }
 
 std::unique_ptr<ActionPanelState> buildSubmenuState(const ActionPannelSubmenuPtr &submenuModel,
-                                                    const NotifyFn& notify, SubmenuCache *submenuCache,
-                                                    const SubmitFn& submit) {
+                                                    const NotifyFn &notify, SubmenuCache *submenuCache,
+                                                    const SubmitFn &submit) {
   if (!submenuModel) return nullptr;
 
   auto state = std::make_unique<ActionPanelState>();
@@ -172,9 +174,9 @@ std::unique_ptr<ActionPanelState> buildSubmenuState(const ActionPannelSubmenuPtr
   return state;
 }
 
-std::unique_ptr<ActionPanelState> build(const ActionPannelModel &model, const NotifyFn& notify,
+std::unique_ptr<ActionPanelState> build(const ActionPannelModel &model, const NotifyFn &notify,
                                         SubmenuCache *submenuCache, ActionPanelState::ShortcutPreset preset,
-                                        const SubmitFn& submit) {
+                                        const SubmitFn &submit) {
   updateSubmenuCache(submenuCache, model);
 
   auto panel = std::make_unique<ActionPanelState>();

@@ -52,7 +52,7 @@ void Bus::readyRead() {
 
     _message.data.append(read);
 
-    while (std::cmp_greater_equal(_message.data.size(),  sizeof(uint32_t))) {
+    while (std::cmp_greater_equal(_message.data.size(), sizeof(uint32_t))) {
       uint32_t const length = ntohl(*reinterpret_cast<uint32_t *>(_message.data.data()));
       bool const isComplete = _message.data.size() - sizeof(uint32_t) >= length;
 

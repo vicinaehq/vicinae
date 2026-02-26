@@ -15,7 +15,6 @@ namespace fs = std::filesystem;
 constexpr const char *SHARED_LIB = "libSoulverWrapper.so";
 
 SoulverCoreCalculator::SoulverCoreCalculator() : m_dlHandle(dlopen(SHARED_LIB, RTLD_LAZY)) {
-  
 
   if (!m_dlHandle) {
     qDebug() << "unable to load libSoulverWrapper" << dlerror();

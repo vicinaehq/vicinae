@@ -17,7 +17,7 @@ std::set<std::string> filterMimes(const std::vector<std::string> &offerMimes) {
         const int currentPriority =
             -std::distance(preferredImageTypes.begin(), std::ranges::find(preferredImageTypes, mime));
         const int savedPriority = -std::distance(preferredImageTypes.begin(),
-                                                  std::ranges::find(preferredImageTypes, *savedImageType));
+                                                 std::ranges::find(preferredImageTypes, *savedImageType));
 
         if (currentPriority <= savedPriority) continue;
 

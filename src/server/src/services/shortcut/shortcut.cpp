@@ -48,15 +48,7 @@ void Shortcut::setLastOpenedAt(const std::optional<QDateTime> &date) { m_lastOpe
 void Shortcut::setOpenCount(int openCount) { m_openCount = openCount; }
 
 void Shortcut::parseLink(const QString &link) {
-  enum class State {
-    BkNormal,
-    PhId,
-    PhKeyStart,
-    PhKey,
-    PhValueStart,
-    PhValue,
-    PhValueQuoted
-  };
+  enum class State { BkNormal, PhId, PhKeyStart, PhKey, PhValueStart, PhValue, PhValueQuoted };
   using enum State;
   State state = BkNormal;
   size_t i = 0;
@@ -69,7 +61,7 @@ void Shortcut::parseLink(const QString &link) {
   m_args.clear();
   m_raw = link;
 
-  while (std::cmp_less(i,  link.size())) {
+  while (std::cmp_less(i, link.size())) {
     QChar const ch = link.at(i);
 
     switch (state) {

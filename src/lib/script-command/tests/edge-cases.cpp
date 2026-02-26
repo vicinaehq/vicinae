@@ -268,9 +268,9 @@ TEST_CASE("Title with special characters") {
 TEST_CASE("Very long title") {
   std::string longTitle(1000, 'a');
   const std::string source = "#!/bin/bash\n"
-                       "# @vicinae.schemaVersion 1\n"
-                       "# @vicinae.title " +
-                       longTitle + "\n";
+                             "# @vicinae.schemaVersion 1\n"
+                             "# @vicinae.title " +
+                             longTitle + "\n";
   auto result = script_command::ScriptCommand::parse(source);
   REQUIRE(result.has_value());
   REQUIRE(result->title == longTitle);

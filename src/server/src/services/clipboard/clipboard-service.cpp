@@ -43,7 +43,7 @@ static const std::set<QString> PASSWORD_MIME_TYPES = {
     "x-kde-passwordManagerHint",
 };
 
-bool ClipboardService::setPinned(const QString& id, bool pinned) {
+bool ClipboardService::setPinned(const QString &id, bool pinned) {
   if (!ClipboardDatabase().setPinned(id, pinned)) { return false; }
 
   emit selectionPinStatusChanged(id, pinned);

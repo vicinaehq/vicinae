@@ -63,7 +63,7 @@ void ThemeDatabase::scan() {
     }
   }
 
-  for (const auto& theme : themes) {
+  for (const auto &theme : themes) {
     if (theme->id() == defaultDark->id() || theme->id() == defaultLight->id()) continue;
     if (auto it = mapping.find(theme->inherits()); it != mapping.end()) {
       theme->setParent(it->second);

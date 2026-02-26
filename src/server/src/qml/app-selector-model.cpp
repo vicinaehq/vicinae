@@ -3,8 +3,9 @@
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 
-AppSelectorModel::AppSelectorModel(QObject *parent) : QObject(parent), m_appDb(ServiceRegistry::instance()->appDb()) {
-  
+AppSelectorModel::AppSelectorModel(QObject *parent)
+    : QObject(parent), m_appDb(ServiceRegistry::instance()->appDb()) {
+
   buildItems();
 }
 

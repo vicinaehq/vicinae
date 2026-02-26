@@ -234,7 +234,5 @@ static int entrypoint() {
 int main(int ac, char **av) {
   try {
     return entrypoint();
-  } catch (...) {
-    return 1;
-  }
+  } catch (...) { return 1; }
 }

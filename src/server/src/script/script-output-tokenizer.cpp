@@ -8,13 +8,13 @@ ScriptOutputTokenizer::ScriptOutputTokenizer(QStringView str) : m_data(str) {}
 std::optional<ScriptOutputTokenizer::Token> ScriptOutputTokenizer::next() {
   static const auto urlSchemes = {QStringLiteral("http://"), QStringLiteral("https://")};
 
-  if (std::cmp_greater_equal(m_cursor,  m_data.size())) return {};
+  if (std::cmp_greater_equal(m_cursor, m_data.size())) return {};
 
   Token tok;
 
   std::vector<uint8_t> colorCodes;
 
-  while (std::cmp_less(m_cursor,  m_data.size())) {
+  while (std::cmp_less(m_cursor, m_data.size())) {
     QChar const ch = m_data.at(m_cursor);
     QStringView rem = m_data.sliced(m_cursor);
 
@@ -24,7 +24,8 @@ std::optional<ScriptOutputTokenizer::Token> ScriptOutputTokenizer::next() {
         if (tok.fmt) return tok;
         m_state = State::Escape;
       } else {
-        bool const maybeUrl = std::ranges::any_of(urlSchemes, [&](const auto& s) { return rem.startsWith(s); });
+        bool const maybeUrl =
+            std::ranges::any_of(urlSchemes, [&](const auto &s) { return rem.startsWith(s); });
 
         if (maybeUrl) {
           m_state = Url;

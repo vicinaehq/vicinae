@@ -120,12 +120,14 @@ void ExtensionCommandRuntime::handleEvent(const ExtensionEvent &event) {
   using Event = proto::ext::extension::Event;
 
   switch (event.data()->payload_case()) {
-  case Event::kCrash:
-     { handleCrash(event.data()->crash()); return;
-}
-  case Event::kGeneric:
-     { handleGenericEvent(event.data()->generic()); return;
-}
+  case Event::kCrash: {
+    handleCrash(event.data()->crash());
+    return;
+  }
+  case Event::kGeneric: {
+    handleGenericEvent(event.data()->generic());
+    return;
+  }
   default:
     break;
   }

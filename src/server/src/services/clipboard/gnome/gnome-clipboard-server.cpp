@@ -8,10 +8,10 @@
 #include <QTimer>
 #include <QMetaObject>
 
-GnomeClipboardServer::GnomeClipboardServer() : m_bus(QDBusConnection::sessionBus()), m_reconnectTimer(new QTimer(this)) {
+GnomeClipboardServer::GnomeClipboardServer()
+    : m_bus(QDBusConnection::sessionBus()), m_reconnectTimer(new QTimer(this)) {
   using namespace std::chrono_literals;
 
-  
   m_reconnectTimer->setSingleShot(false);
   m_reconnectTimer->setInterval(5s);
   connect(m_reconnectTimer, &QTimer::timeout, this, &GnomeClipboardServer::onReconnectTimer);
@@ -108,7 +108,7 @@ bool GnomeClipboardServer::setupDBusConnection() {
   // Connect to ClipboardChanged signal
   // Signal signature: (ayss) = array of bytes, string, string
   bool const connected = m_bus.connect(DBUS_SERVICE, DBUS_PATH, DBUS_INTERFACE, "ClipboardChanged", this,
-                                 SLOT(handleClipboardChanged(QByteArray, QString, QString)));
+                                       SLOT(handleClipboardChanged(QByteArray, QString, QString)));
 
   if (!connected) {
     qWarning() << "GnomeClipboardServer: Failed to connect to ClipboardChanged signal";

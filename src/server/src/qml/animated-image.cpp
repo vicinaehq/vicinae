@@ -151,7 +151,7 @@ void ViciAnimatedImage::paint(QPainter *painter) {
   QSizeF const itemSize(width(), height());
   QSizeF const scaled = QSizeF(m_nativeSize).scaled(itemSize, Qt::KeepAspectRatio);
   QRectF const target((itemSize.width() - scaled.width()) / 2.0, (itemSize.height() - scaled.height()) / 2.0,
-                scaled.width(), scaled.height());
+                      scaled.width(), scaled.height());
 
   painter->drawPixmap(target, frame, QRectF(frame.rect()));
 }

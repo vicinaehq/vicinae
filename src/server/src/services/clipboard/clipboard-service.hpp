@@ -88,7 +88,7 @@ public:
   std::expected<QByteArray, OfferDecryptionError> getMainOfferData(const QString &selectionId) const;
   AbstractClipboardServer *clipboardServer() const;
   bool removeSelection(const QString &id);
-  bool setPinned(const QString& id, bool pinned);
+  bool setPinned(const QString &id, bool pinned);
   QFuture<PaginatedResponse<ClipboardHistoryEntry>> listAll(int limit = 100, int offset = 0,
                                                             const ClipboardListSettings &opts = {}) const;
   bool copyText(const QString &text, const Clipboard::CopyOptions &options = {.concealed = true});

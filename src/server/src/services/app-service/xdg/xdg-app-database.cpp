@@ -287,7 +287,8 @@ bool XdgAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
     return false;
   }
 
-  auto xdgApp = static_cast<XdgApplication *>(terminal); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+  auto xdgApp =
+      static_cast<XdgApplication *>(terminal); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
 
   auto exec = xdgApp->parseExec({}, prefix);
 
@@ -310,7 +311,7 @@ bool XdgAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
   return launchProcess(exec.front(), argv, xdgApp->data().workingDirectory());
 }
 
-bool XdgAppDatabase::launchProcess(const QString &prog, const QStringList& args,
+bool XdgAppDatabase::launchProcess(const QString &prog, const QStringList &args,
                                    const std::optional<std::filesystem::path> &workingDirectory) const {
   QProcess process;
   process.setProgram(prog);
@@ -318,7 +319,7 @@ bool XdgAppDatabase::launchProcess(const QString &prog, const QStringList& args,
   process.setStandardOutputFile(QProcess::nullDevice());
   process.setStandardErrorFile(QProcess::nullDevice());
 
-  if (const auto& dir = workingDirectory) { process.setWorkingDirectory(workingDirectory->c_str()); }
+  if (const auto &dir = workingDirectory) { process.setWorkingDirectory(workingDirectory->c_str()); }
 
   QStringList cmdline;
   cmdline << prog << args;
@@ -334,7 +335,8 @@ bool XdgAppDatabase::launchProcess(const QString &prog, const QStringList& args,
 
 bool XdgAppDatabase::launch(const AbstractApplication &app, const std::vector<QString> &args,
                             const std::optional<QString> &launchPrefix) const {
-  auto &xdgApp = static_cast<const XdgApplication &>(app); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+  auto &xdgApp =
+      static_cast<const XdgApplication &>(app); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
 
   if (auto url = xdgApp.data().url().transform(QString::fromStdString)) {
     auto opener = findDefaultOpener(*url);

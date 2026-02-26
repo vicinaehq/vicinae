@@ -34,22 +34,20 @@
 #include <utility>
 #endif
 
-LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent) : QObject(parent), m_ctx(ctx), m_actionPanel(new ActionPanelController(ctx, this)), m_alertModel(new AlertModel(*ctx.navigation, this)), m_configBridge(new ConfigBridge(this)), m_imgSource(new ImageSource(this)), m_keybindProxy(new KeybindBridge(this)), m_themeBridge(new ThemeBridge(this)) {
+LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
+    : QObject(parent), m_ctx(ctx), m_actionPanel(new ActionPanelController(ctx, this)),
+      m_alertModel(new AlertModel(*ctx.navigation, this)), m_configBridge(new ConfigBridge(this)),
+      m_imgSource(new ImageSource(this)), m_keybindProxy(new KeybindBridge(this)),
+      m_themeBridge(new ThemeBridge(this)) {
 
   // Ensure Wayland app_id / X11 WM_CLASS is "vicinae"
   QGuiApplication::setDesktopFileName(QStringLiteral("vicinae"));
 
   m_searchModel = new RootSearchModel(ViewScope(&ctx, ctx.navigation->topState()->sender), this);
-  
-  
-  
-  
 
   qRegisterMetaType<ImageUrl>("ImageUrl");
 
   m_engine.addImageProvider(QStringLiteral("vicinae"), new AsyncImageProvider());
-
-  
 
   auto *rootCtx = m_engine.rootContext();
   rootCtx->setContextProperty(QStringLiteral("Nav"), ctx.navigation.get());
@@ -57,7 +55,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent) : QObje
   rootCtx->setContextProperty(QStringLiteral("Theme"), m_themeBridge);
   rootCtx->setContextProperty(QStringLiteral("Config"), m_configBridge);
   rootCtx->setContextProperty(QStringLiteral("Img"), m_imgSource);
-  
+
   rootCtx->setContextProperty(QStringLiteral("launcher"), this);
   rootCtx->setContextProperty(QStringLiteral("actionPanel"), m_actionPanel);
   rootCtx->setContextProperty(QStringLiteral("Keybinds"), m_keybindProxy);

@@ -12,15 +12,9 @@ public:
   friend constexpr int operator|(Component lhs, Component rhs) {
     return static_cast<int>(lhs) | static_cast<int>(rhs);
   }
-  friend constexpr int operator|(int lhs, Component rhs) {
-    return lhs | static_cast<int>(rhs);
-  }
-  friend constexpr int operator|(Component lhs, int rhs) {
-    return static_cast<int>(lhs) | rhs;
-  }
-  friend constexpr int operator&(int lhs, Component rhs) {
-    return lhs & static_cast<int>(rhs);
-  }
+  friend constexpr int operator|(int lhs, Component rhs) { return lhs | static_cast<int>(rhs); }
+  friend constexpr int operator|(Component lhs, int rhs) { return static_cast<int>(lhs) | rhs; }
+  friend constexpr int operator&(int lhs, Component rhs) { return lhs & static_cast<int>(rhs); }
   friend constexpr int &operator|=(int &lhs, Component rhs) {
     lhs |= static_cast<int>(rhs);
     return lhs;

@@ -68,7 +68,8 @@ bool XdpFileChooser::openFile() {
 
   if (!filter.items.empty()) { payload["filters"] = QVariant::fromValue(QList<Filter>{filter}); }
 
-  QDBusReply<QDBusObjectPath> const message = m_interface->call("OpenFile", windowHandle, "Open File", payload);
+  QDBusReply<QDBusObjectPath> const message =
+      m_interface->call("OpenFile", windowHandle, "Open File", payload);
 
   if (message.error().isValid()) {
     qCritical() << "Failed to OpenFile" << message.error();

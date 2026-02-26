@@ -64,7 +64,8 @@ std::vector<std::string> ExecParser::parse(std::string_view data,
       case 'c':
         args.emplace_back(m_name);
         break;
-      default: break;
+      default:
+        break;
       }
 
       state = State::Reset;

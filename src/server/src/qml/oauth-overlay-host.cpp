@@ -17,7 +17,6 @@ OAuthOverlayHost::OAuthOverlayHost(const ApplicationContext *ctx,
 
   m_providerName = client.name().c_str();
   m_providerDescription = client.description().c_str();
-  
 
   if (client.has_icon()) { m_providerIconSource = qml::imageSourceFor(ProtoUrl::parse(client.icon())); }
 }
