@@ -21,11 +21,12 @@ Here are a few rules to keep in mind:
 
 - Lack of value: use `std::optional` instead of arbitrary value discriminants such as the empty string. If this is not possible or goes against a commonly used convention, respect the convention first, no shoehorning.
 If we are dealing with raw pointers, the nullable component is already part of it so no need to add a layer of indirection.
-- Avoid raw pointers: unless we are dealing with QT's ownership model. For QT classes that are not QObjects, you should probably use standard smart pointers as recommended in modern QT.
+- Avoidpreferrableraw pointers: unless we are dealing with QT's ownership model. For QT classes that are not QObjects, you should probably use standard smart pointers as recommended in modern QT.
 - Watch for implicit copies: avoid copies as much as possible, use non owning containers when you can (`std::span`, `std::string_view`, `QStringView`) and just `std::move` the data when applicable. When copy is the safest option, use copy: don't go out of your way to respect this rule.
 - QT vs STL classes: prefer STL containers over QT counterparts.
 - vectors: always reserve `std::vector`s and use `emplace_back` to push new elements.
 - STL ranges: we like to use `<ranges>` where it works well. If you need to use a `for` loop, prioritize ranged ones or use `std::views::enumerate` if you need to deal with indexes and data.
+- casts: as you may notice from the clang-tidy rules, using `static_cast` is generally discouraged for classes that are related by inheritance, as it is very easy to make mistakes. Unless the logic is in a hot path (e.g a QT event filter), it's preferrable to use `dynamic_cast` as a safety net when there is no safer option. Note however that `dynamic_cast` is STILL a code smell and should generally be avoided in favor of better polymorphism.
 
 ## Coding style
 
@@ -40,7 +41,7 @@ If we are dealing with raw pointers, the nullable component is already part of i
 
 We format all our code using `clang-format`. We have a `make format` rule that will automatically format the entire codebase if necessary.
 
-All our code is also linted with `clang-tidy` in order to make detecting common mistakes easier. `clang-tidy` violations may be acceptable under some circumstances, and should be implemented using `//NOLINT` comments. If a nolint directive does not work (e.g this is an internal STL false positive) then you can do a local override of the `clang-tidy` configuration to explicitly disable the faulty check.
+All our code is also linted with `clang-tidy` in order to make detecting common mistakes easier. `clang-tidy` violations may be acceptable under some circumstances, and should be implemented using `//NOLINTBEGIN(<rule>)` and `NOLINTEND(<rule>)`. comments. Inline `//NOLINT` comments are generally discouraged because they can break after formatting. If a nolint directive does not work (e.g we're dealing with an internal STL false positive) then you can do a local override of the `clang-tidy` configuration to explicitly disable the faulty check.
 
 ## QML rules
 

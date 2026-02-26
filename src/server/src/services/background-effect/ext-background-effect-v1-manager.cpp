@@ -7,9 +7,8 @@
 
 void ExtBackgroundEffectV1Manager::capabilities(void *data, ext_background_effect_manager_v1 *,
                                                 uint32_t flags) {
-  static_cast<ExtBackgroundEffectV1Manager *>(data)
-      ->m_supportsBlur = // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
-      flags & EXT_BACKGROUND_EFFECT_MANAGER_V1_CAPABILITY_BLUR;
+  static_cast<ExtBackgroundEffectV1Manager *>(data) // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+      ->m_supportsBlur = flags & EXT_BACKGROUND_EFFECT_MANAGER_V1_CAPABILITY_BLUR;
 }
 
 ExtBackgroundEffectV1Manager::ExtBackgroundEffectV1Manager(ext_background_effect_manager_v1 *manager)
@@ -71,8 +70,9 @@ bool ExtBackgroundEffectV1Manager::removeBlur(QWindow *win) {
 
 bool ExtBackgroundEffectV1Manager::eventFilter(QObject *sender, QEvent *event) {
   if (event->type() == QEvent::PlatformSurface) {
-    auto *surfaceEvent = static_cast<QPlatformSurfaceEvent *>(
-        event); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+    auto *surfaceEvent =
+        static_cast<QPlatformSurfaceEvent *>( // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+            event);
 
     if (surfaceEvent->surfaceEventType() == QPlatformSurfaceEvent::SurfaceAboutToBeDestroyed) {
       for (auto it = m_state.begin(); it != m_state.end(); ++it) {

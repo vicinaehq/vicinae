@@ -57,8 +57,9 @@ bool BackgroundEffectManager::removeBlur(QWindow *win) {
 
 bool BackgroundEffectManager::eventFilter(QObject *sender, QEvent *event) {
   if (event->type() == QEvent::PlatformSurface) {
-    auto *surfaceEvent = static_cast<QPlatformSurfaceEvent *>(
-        event); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+    auto *surfaceEvent =
+        static_cast<QPlatformSurfaceEvent *>( // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+            event);
 
     if (surfaceEvent->surfaceEventType() == QPlatformSurfaceEvent::SurfaceAboutToBeDestroyed) {
       for (auto it = m_state.begin(); it != m_state.end(); ++it) {

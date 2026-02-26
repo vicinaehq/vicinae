@@ -524,9 +524,7 @@ std::vector<ExtensionRootProvider *> RootItemManager::extensions() const {
   std::vector<ExtensionRootProvider *> providers;
 
   for (const auto &provider : m_providers) {
-    if (provider->isExtension())
-      providers.emplace_back(static_cast<ExtensionRootProvider *>(
-          provider.get())); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+    if (auto p = dynamic_cast<ExtensionRootProvider *>(provider.get())) { providers.emplace_back(p); }
   }
 
   return providers;

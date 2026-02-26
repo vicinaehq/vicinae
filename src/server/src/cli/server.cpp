@@ -186,13 +186,10 @@ void CliServerCommand::run(CLI::App *app) {
       std::vector<QString> removed;
 
       for (const auto &provider : root->providers()) {
-        if (!provider->isExtension()) continue;
-
-        auto extp = static_cast<ExtensionRootProvider *>(
-            provider); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
-
-        if (!extp->isBuiltin() && !scanned.contains(extp->uniqueId())) {
-          removed.emplace_back(extp->uniqueId());
+        if (auto extp = dynamic_cast<ExtensionRootProvider *>(provider)) {
+          if (!extp->isBuiltin() && !scanned.contains(extp->uniqueId())) {
+            removed.emplace_back(extp->uniqueId());
+          }
         }
       }
 

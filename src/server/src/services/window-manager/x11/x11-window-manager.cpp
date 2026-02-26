@@ -184,9 +184,11 @@ xcb_window_t X11WindowManager::getActiveWindow() const {
   xcb_atom_t const net_active_window = internAtom("_NET_ACTIVE_WINDOW");
   if (net_active_window == XCB_ATOM_NONE) { return XCB_WINDOW_NONE; }
 
+  // NOLINTBEGIN(readability-suspicious-call-argument)
   xcb_get_property_cookie_t const cookie =
-      xcb_get_property(conn, 0, root, net_active_window, XCB_ATOM_WINDOW, 0,
-                       1); // NOLINT(readability-suspicious-call-argument)
+      xcb_get_property(conn, 0, root, net_active_window, XCB_ATOM_WINDOW, 0, 1);
+  // NOLINTEND(readability-suspicious-call-argument)
+
   const CPtr<xcb_get_property_reply_t> reply(xcb_get_property_reply(conn, cookie, nullptr));
 
   if (!reply || xcb_get_property_value_length(reply.get()) < 4) { return XCB_WINDOW_NONE; }

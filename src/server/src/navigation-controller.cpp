@@ -538,8 +538,9 @@ const NavigationController::ViewState *NavigationController::topState() const {
 }
 
 NavigationController::ViewState *NavigationController::findViewState(const BaseView *view) {
-  return const_cast<ViewState *>(
-      std::as_const(*this).findViewState(view)); // NOLINT(cppcoreguidelines-pro-type-const-cast)
+  // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
+  return const_cast<ViewState *>(std::as_const(*this).findViewState(view));
+  // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 }
 
 bool NavigationController::isRootSearch() const { return m_views.size() == 1; }
