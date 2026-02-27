@@ -60,11 +60,11 @@ Item {
             onTextEdited: root.textEdited()
             onAccepted: root.accepted()
 
-            Keys.onReturnPressed: (event) => {
-                if (typeof launcher !== "undefined")
-                    event.accepted = launcher.forwardKey(event.key, event.modifiers)
-            }
             Keys.onPressed: (event) => {
+                if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                    event.accepted = false
+                    return
+                }
                 if (typeof launcher !== "undefined")
                     event.accepted = launcher.forwardKey(event.key, event.modifiers)
             }
