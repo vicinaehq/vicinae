@@ -1,3 +1,6 @@
+CompileFlags:
+  CompilationDatabase: build
+
 Diagnostics:
   ClangTidy:
-    FastCheckFilter: None
+    FastCheckFilter: Strict

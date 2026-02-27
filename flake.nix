@@ -51,6 +51,7 @@
           ];
 
           packages = with pkgs; [
+            clang-tools
             nixd
             nixfmt-rfc-style
           ];
