@@ -106,6 +106,35 @@ int CommandListModel::nextSelectableIndex(int from, int direction) const {
   return from;
 }
 
+int CommandListModel::nextSectionIndex(int from, int direction) const {
+  int const count = static_cast<int>(m_flat.size());
+  if (count == 0) return from;
+
+  int currentSection = -1;
+  if (from >= 0 && from < count) { currentSection = m_flat[from].sectionIdx; }
+
+  int idx = from + direction;
+  while (idx >= 0 && idx < count) {
+    if (m_flat[idx].kind == FlatItem::SectionHeader && m_flat[idx].sectionIdx != currentSection) {
+      int next = idx + 1;
+      if (next < count && m_flat[next].kind != FlatItem::SectionHeader) return next;
+      return from;
+    }
+    idx += direction;
+  }
+
+  // Wrap around
+  if (direction > 0) { return nextSelectableIndex(-1, 1); }
+  for (int i = count - 1; i >= 0; --i) {
+    if (m_flat[i].kind == FlatItem::SectionHeader) {
+      int next = i + 1;
+      if (next < count && m_flat[next].kind != FlatItem::SectionHeader) return next;
+      break;
+    }
+  }
+  return from;
+}
+
 int CommandListModel::scrollTargetIndex(int index, int direction) const {
   if (direction < 0 && index > 0 && std::cmp_less(index, m_flat.size())) {
     if (m_flat[index - 1].kind == FlatItem::SectionHeader) return index - 1;

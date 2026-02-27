@@ -13,6 +13,16 @@ Item {
         if (contentLoader.item && typeof contentLoader.item.moveDown === "function")
             contentLoader.item.moveDown()
     }
+    function moveSectionUp() {
+        if (contentLoader.item && typeof contentLoader.item.moveSectionUp === "function")
+            contentLoader.item.moveSectionUp()
+        else moveUp()
+    }
+    function moveSectionDown() {
+        if (contentLoader.item && typeof contentLoader.item.moveSectionDown === "function")
+            contentLoader.item.moveSectionDown()
+        else moveDown()
+    }
     function moveLeft() {
         if (contentLoader.item && typeof contentLoader.item.moveLeft === "function")
             contentLoader.item.moveLeft()
@@ -41,6 +51,8 @@ Item {
         Item {
             function moveUp() { listView.moveUp() }
             function moveDown() { listView.moveDown() }
+            function moveSectionUp() { listView.moveSectionUp() }
+            function moveSectionDown() { listView.moveSectionDown() }
 
             GenericListView {
                 id: listView

@@ -496,6 +496,45 @@ int RootSearchModel::nextSelectableIndex(int from, int direction) const {
   return from; // stay in place if nothing found
 }
 
+int RootSearchModel::nextSectionIndex(int from, int direction) const {
+  int const count = static_cast<int>(m_flat.size());
+  if (count == 0) return from;
+
+  // Find which section the current item belongs to
+  SectionType currentSection{};
+  if (from >= 0 && from < count) { currentSection = m_flat[from].section; }
+
+  int idx = from + direction;
+  while (idx >= 0 && idx < count) {
+    if (m_flat[idx].kind == FlatItem::SectionHeader && m_flat[idx].section != currentSection) {
+      // Found a different section header — return first selectable item after it
+      int next = idx + 1;
+      if (next < count && m_flat[next].kind != FlatItem::SectionHeader) return next;
+      return from;
+    }
+    idx += direction;
+  }
+
+  // Wrap around
+  if (direction > 0) { return nextSelectableIndex(-1, 1); }
+  // Going up: find the last section header, return first item after it
+  for (int i = count - 1; i >= 0; --i) {
+    if (m_flat[i].kind == FlatItem::SectionHeader) {
+      int next = i + 1;
+      if (next < count && m_flat[next].kind != FlatItem::SectionHeader) return next;
+      break;
+    }
+  }
+  return from;
+}
+
+int RootSearchModel::scrollTargetIndex(int index, int direction) const {
+  if (direction < 0 && index > 0 && std::cmp_less(index, m_flat.size())) {
+    if (m_flat[index - 1].kind == FlatItem::SectionHeader) return index - 1;
+  }
+  return index;
+}
+
 QString RootSearchModel::itemTypeString(FlatItem::Kind kind) const {
   switch (kind) {
   case FlatItem::ResultItem:

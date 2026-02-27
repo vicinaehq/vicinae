@@ -65,6 +65,25 @@ Item {
         }
     }
 
+    function moveSectionDown() {
+        if (typeof root.listModel.nextSectionIndex !== "function") { moveDown(); return }
+        var next = root.listModel.nextSectionIndex(listView.currentIndex, 1)
+        if (next !== listView.currentIndex) {
+            listView.currentIndex = next
+            listView.positionViewAtIndex(next, ListView.Contain)
+        }
+    }
+
+    function moveSectionUp() {
+        if (typeof root.listModel.nextSectionIndex !== "function") { moveUp(); return }
+        var next = root.listModel.nextSectionIndex(listView.currentIndex, -1)
+        if (next !== listView.currentIndex) {
+            listView.currentIndex = next
+            var scrollTarget = root.listModel.scrollTargetIndex(next, -1)
+            listView.positionViewAtIndex(scrollTarget, ListView.Contain)
+        }
+    }
+
     function selectFirst() {
         listView.currentIndex = root.listModel.nextSelectableIndex(-1, 1)
     }
