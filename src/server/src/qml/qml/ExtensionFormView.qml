@@ -1,4 +1,6 @@
+pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 
 Item {
@@ -80,6 +82,7 @@ Item {
                         case "dropdown": return dropdownFieldComp
                         case "filepicker": return filepickerFieldComp
                         case "datepicker": return datepickerFieldComp
+                        case "tagpicker": return tagpickerFieldComp
                         case "description": return descriptionFieldComp
                         case "separator": return separatorFieldComp
                         default: return null
@@ -257,6 +260,30 @@ Item {
                     root.formModel.setFilePaths(field.parent.index, paths)
                 }
             }
+        }
+    }
+
+
+    Component {
+        id: tagpickerFieldComp
+        FormField {
+          id: field
+          label: parent.label
+          error: parent.error
+          info: parent.info
+
+          function focusField() { tagInput.forceActiveFocus() }
+
+          readonly property var _fd: parent.fieldData || ({})
+
+          FormTagPicker {
+            id: tagInput
+            items: field._fd.items || []
+            pickedItems: field.parent.value
+            onPickedItemsEdited: (items) => {
+              root.formModel.setPickedItems(field.parent.index, items)
+            }
+          }
         }
     }
 
