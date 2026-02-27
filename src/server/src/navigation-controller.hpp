@@ -228,6 +228,7 @@ signals:
   void currentViewChanged(const ViewState &state) const;
   void viewPushed(const BaseView *view);
   void viewPoped(const BaseView *view);
+  void viewReplaced();
   void actionPanelVisibilityChanged(bool visible);
   void actionsChanged(const ActionPanelState &actions) const;
   void windowVisiblityChanged(bool visible);

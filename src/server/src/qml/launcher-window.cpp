@@ -86,6 +86,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
 
   // View lifecycle — viewPoped fires BEFORE ViewState is destroyed
   connect(nav, &NavigationController::viewPoped, this, &LauncherWindow::handleViewPoped);
+  connect(nav, &NavigationController::viewReplaced, this, [this]() { m_viewWasReplaced = true; });
 
   connect(nav, &NavigationController::currentViewChanged, this,
           [this](const NavigationController::ViewState &) { handleCurrentViewChanged(); });
@@ -270,7 +271,9 @@ void LauncherWindow::handleViewPoped(const BaseView *view) {
 void LauncherWindow::handleCurrentViewChanged() {
   auto *nav = m_ctx.navigation.get();
   bool const wasPopped = m_viewWasPopped;
+  bool const wasReplaced = m_viewWasReplaced;
   m_viewWasPopped = false;
+  m_viewWasReplaced = false;
 
   if (nav->viewStackSize() == 1) {
     disconnect(m_searchAccessoryConnection);
@@ -327,7 +330,11 @@ void LauncherWindow::handleCurrentViewChanged() {
   }
 
   if (!wasPopped) {
-    emit commandViewPushed(bridge->qmlComponentUrl(), bridge->qmlProperties());
+    if (wasReplaced) {
+      emit commandViewReplaced(bridge->qmlComponentUrl(), bridge->qmlProperties());
+    } else {
+      emit commandViewPushed(bridge->qmlComponentUrl(), bridge->qmlProperties());
+    }
     bridge->loadInitialData();
   } else {
     bridge->onReactivated();

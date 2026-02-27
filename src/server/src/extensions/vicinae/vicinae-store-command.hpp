@@ -37,9 +37,10 @@ If you're looking to build your own extension, take a look at the [documentation
 )");
       auto icon = ImageURL::builtin("cart");
       icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
-      ctx->navigation->pushView(new StoreIntroViewHost(INTRO, icon, "Continue to store", [ctrl]() {
-        ctrl->storage().setItem("introCompleted", true);
-        ctrl->context()->navigation->replaceView<VicinaeStoreViewHost>();
+      auto storage = ctrl->storage();
+      ctx->navigation->pushView(new StoreIntroViewHost(INTRO, icon, "Continue to store", [storage, ctx]() mutable {
+        storage.setItem("introCompleted", true);
+        ctx->navigation->replaceView<VicinaeStoreViewHost>();
       }));
       return;
     }

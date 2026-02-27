@@ -34,11 +34,11 @@ static QString buildParams(const ImageURL &url, bool builtinFgDefault = false) {
   QColor fg = resolveFillColor(url);
   if (builtinFgDefault && !fg.isValid())
     fg = ThemeService::instance().theme().resolve(SemanticColor::Foreground);
-  if (fg.isValid()) parts << QStringLiteral("fg=") + fg.name(QColor::HexRgb);
+  if (fg.isValid()) parts << QStringLiteral("fg=%23") + fg.name(QColor::HexRgb).mid(1);
 
   if (auto bgTint = url.backgroundTint()) {
     QColor const bg = ThemeService::instance().theme().resolve(*bgTint);
-    parts << QStringLiteral("bg=") + bg.name(QColor::HexRgb);
+    parts << QStringLiteral("bg=%23") + bg.name(QColor::HexRgb).mid(1);
   }
 
   if (url.mask() == OmniPainter::CircleMask) parts << QStringLiteral("mask=circle");
