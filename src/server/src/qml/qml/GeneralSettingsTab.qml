@@ -34,8 +34,8 @@ Item {
                 text: root.model.fontSize
                 placeholder: "e.g. 11"
                 onAccepted: root.model.fontSize = text
-                onActiveFocusChanged: {
-                    if (!activeFocus) root.model.fontSize = text
+                onEditingChanged: {
+                    if (!editing) root.model.fontSize = text
                 }
             }
         }
@@ -58,8 +58,8 @@ Item {
                 text: root.model.windowOpacity
                 placeholder: "e.g. 1.0"
                 onAccepted: root.model.windowOpacity = text
-                onActiveFocusChanged: {
-                    if (!activeFocus) root.model.windowOpacity = text
+                onEditingChanged: {
+                    if (!editing) root.model.windowOpacity = text
                 }
             }
         }
