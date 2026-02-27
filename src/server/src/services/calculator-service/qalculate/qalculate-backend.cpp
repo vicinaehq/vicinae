@@ -109,7 +109,7 @@ void QalculateBackend::initializeCalculator() {
   m_printOpts.interval_display = INTERVAL_DISPLAY_SIGNIFICANT_DIGITS;
   m_printOpts.use_unicode_signs = true;
   m_printOpts.base_display = BASE_DISPLAY_ALTERNATIVE;
-  m_printOpts.number_fraction_format = FRACTION_DECIMAL_EXACT;
+  m_printOpts.number_fraction_format = FRACTION_DECIMAL;
 
   m_calc.reset();
   m_calc.loadGlobalDefinitions();
