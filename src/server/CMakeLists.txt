@@ -500,6 +500,8 @@ set(SRCS
 	src/qml/missing-preference-view-host.cpp
 	src/qml/extension-form-model.hpp
 	src/qml/extension-form-model.cpp
+	src/qml/form-tag-picker-suggestions-model.hpp
+	src/qml/form-tag-picker-suggestions-model.cpp
 	src/qml/clipboard-history-model.hpp
 	src/qml/clipboard-history-model.cpp
 	src/qml/clipboard-history-view-host.hpp
@@ -719,6 +721,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/FormTextArea.qml
 	src/qml/qml/FormCheckbox.qml
 	src/qml/qml/FormSeparator.qml
+	src/qml/qml/FormTagPicker.qml
 	src/qml/qml/SnippetFormView.qml
 	src/qml/qml/AliasFormView.qml
 	src/qml/qml/ShortcutFormView.qml
@@ -772,6 +775,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/MissingPreferenceView.qml
 	src/qml/qml/OAuthOverlayView.qml
 	src/qml/qml/HudWindow.qml
+	src/qml/qml/TagPickerTag.qml
 )
 
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
