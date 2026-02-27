@@ -100,6 +100,7 @@ signals:
   void searchTextUpdated(const QString &text);
   void viewNavigatedBack();
   void commandViewPushed(const QUrl &componentUrl, const QVariantMap &properties);
+  void commandViewReplaced(const QUrl &componentUrl, const QVariantMap &properties);
   void commandViewPopped();
   void commandStackCleared();
   void navigationStatusChanged();
@@ -144,6 +145,7 @@ private:
   bool m_searchInteractive = true;
   bool m_statusBarVisible = true;
   bool m_viewWasPopped = false;
+  bool m_viewWasReplaced = false;
   QString m_searchPlaceholder;
   QUrl m_searchAccessoryUrl;
   QMetaObject::Connection m_searchAccessoryConnection;

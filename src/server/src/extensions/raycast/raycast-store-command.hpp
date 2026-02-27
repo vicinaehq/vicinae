@@ -35,10 +35,12 @@ Please note that many extensions may not fully work at this time. This is either
 Vicinae also has its own [extension store](vicinae://extensions/vicinae/vicinae/store), which does not suffer from these limitations.
 )");
       auto icon = iconUrl();
-      ctx->navigation->pushView(new StoreIntroViewHost(INTRO, icon, "Continue to store", [ctrl]() {
-        ctrl->storage().setItem("introCompleted", true);
-        ctrl->context()->navigation->replaceView<RaycastStoreViewHost>();
-      }));
+      auto storage = ctrl->storage();
+      ctx->navigation->pushView(
+          new StoreIntroViewHost(INTRO, icon, "Continue to store", [storage, ctx]() mutable {
+            storage.setItem("introCompleted", true);
+            ctx->navigation->replaceView<RaycastStoreViewHost>();
+          }));
       return;
     }
 
