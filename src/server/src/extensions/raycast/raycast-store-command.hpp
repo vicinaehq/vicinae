@@ -36,10 +36,11 @@ Vicinae also has its own [extension store](vicinae://extensions/vicinae/vicinae/
 )");
       auto icon = iconUrl();
       auto storage = ctrl->storage();
-      ctx->navigation->pushView(new StoreIntroViewHost(INTRO, icon, "Continue to store", [storage, ctx]() mutable {
-        storage.setItem("introCompleted", true);
-        ctx->navigation->replaceView<RaycastStoreViewHost>();
-      }));
+      ctx->navigation->pushView(
+          new StoreIntroViewHost(INTRO, icon, "Continue to store", [storage, ctx]() mutable {
+            storage.setItem("introCompleted", true);
+            ctx->navigation->replaceView<RaycastStoreViewHost>();
+          }));
       return;
     }
 
