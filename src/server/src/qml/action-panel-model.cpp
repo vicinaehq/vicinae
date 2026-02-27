@@ -178,14 +178,18 @@ int ActionPanelModel::nextSelectableIndex(int from, int direction) const {
   if (count == 0) return from;
 
   int idx = from + direction;
-  if (idx < 0) idx = count - 1;
-  else if (idx >= count) idx = 0;
+  if (idx < 0)
+    idx = count - 1;
+  else if (idx >= count)
+    idx = 0;
 
   while (idx != from) {
     if (m_flat[idx].kind == FlatItem::ActionItem) return idx;
     idx += direction;
-    if (idx < 0) idx = count - 1;
-    else if (idx >= count) idx = 0;
+    if (idx < 0)
+      idx = count - 1;
+    else if (idx >= count)
+      idx = 0;
   }
 
   return from;
