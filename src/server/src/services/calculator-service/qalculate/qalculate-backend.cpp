@@ -46,7 +46,7 @@ std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const
   bool error = false;
 
   for (auto msg = CALCULATOR->message(); msg; msg = CALCULATOR->nextMessage()) {
-    error = true;
+    if (msg->type() == MESSAGE_ERROR) { error = true; }
   }
 
   if (error) return std::unexpected(CalculatorError("Calculation error"));
@@ -109,6 +109,7 @@ void QalculateBackend::initializeCalculator() {
   m_printOpts.interval_display = INTERVAL_DISPLAY_SIGNIFICANT_DIGITS;
   m_printOpts.use_unicode_signs = true;
   m_printOpts.base_display = BASE_DISPLAY_ALTERNATIVE;
+  m_printOpts.number_fraction_format = FRACTION_DECIMAL_EXACT;
 
   m_calc.reset();
   m_calc.loadGlobalDefinitions();
