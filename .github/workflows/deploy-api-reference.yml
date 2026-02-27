@@ -6,6 +6,8 @@ on:
       - "v*"
   workflow_dispatch:
 
+concurrency: self-hosted
+
 jobs:
   deploy-api-reference:
     runs-on: [self-hosted, Linux, X64, prod]

@@ -10,6 +10,8 @@ on:
         description: 'Release tag (e.g. v1.2.3)'
         required: false
 
+concurrency: self-hosted
+
 jobs:
   publish:
     runs-on: [self-hosted, Linux, X64, prod]
