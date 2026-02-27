@@ -116,6 +116,7 @@ signals:
   void overlayChanged();
 
 private:
+  bool eventFilter(QObject *obj, QEvent *event) override;
   void handleVisibilityChanged(bool visible);
   void handleCurrentViewChanged();
   void handleViewPoped(const BaseView *view);
@@ -164,6 +165,7 @@ private:
   QUrl m_overlayUrl;
   QObject *m_overlayHost = nullptr;
 
+  bool m_closeOnFocusLoss = false;
   bool m_hasCompleter = false;
   QVariantList m_completerArgs;
   QString m_completerIcon;
