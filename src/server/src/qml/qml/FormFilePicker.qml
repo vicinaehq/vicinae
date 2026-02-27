@@ -4,7 +4,7 @@ import QtQuick.Dialogs
 
 FocusScope {
     id: root
-    implicitHeight: 36
+    implicitHeight: multiple ? multiLayout.implicitHeight : 36
     Layout.fillWidth: true
     activeFocusOnTab: !readOnly
 
@@ -23,67 +23,67 @@ FocusScope {
         else fileDialog.open()
     }
 
-    readonly property string _displayText: {
-        if (!selectedPaths || selectedPaths.length === 0) return ""
-        if (selectedPaths.length === 1) return selectedPaths[0]
-        return selectedPaths.length + " files selected"
-    }
+    // --- Single mode ---
 
-    Rectangle {
+    Item {
+        id: singleMode
+        visible: !root.multiple
         anchors.fill: parent
-        radius: 8
-        opacity: root.readOnly ? 0.5 : 1.0
-        color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g,
-                       Theme.secondaryBackground.b, Config.windowOpacity)
-        border.color: focusItem.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
-        border.width: 1
 
-        RowLayout {
+        readonly property string _displayText: {
+            if (!root.selectedPaths || root.selectedPaths.length === 0) return ""
+            return root.selectedPaths[0] || ""
+        }
+
+        Rectangle {
             anchors.fill: parent
-            anchors.leftMargin: 10
-            anchors.rightMargin: 10
-            spacing: 6
+            radius: 8
+            opacity: root.readOnly ? 0.5 : 1.0
+            color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g,
+                           Theme.secondaryBackground.b, Config.windowOpacity)
+            border.color: focusItem.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
+            border.width: 1
 
-            Text {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                verticalAlignment: Text.AlignVCenter
-                text: root._displayText || (root.directoriesOnly ? "No directory selected" : "No file selected")
-                color: root._displayText ? Theme.foreground : Theme.textPlaceholder
-                font.pointSize: Theme.regularFontSize
-                elide: Text.ElideMiddle
-            }
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 10
+                anchors.rightMargin: 10
+                spacing: 6
 
-            Rectangle {
-                visible: !root.readOnly && root.selectedPaths && root.selectedPaths.length > 0
-                Layout.preferredWidth: 20
-                Layout.preferredHeight: 20
-                Layout.alignment: Qt.AlignVCenter
-                radius: 4
-                color: clearHover.hovered ? Theme.listItemHoverBg : "transparent"
-
-                ViciImage {
-                    anchors.centerIn: parent
-                    width: 10
-                    height: 10
-                    source: Img.builtin("xmark")
+                Text {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    verticalAlignment: Text.AlignVCenter
+                    text: singleMode._displayText || (root.directoriesOnly ? "No directory selected" : "No file selected")
+                    color: singleMode._displayText ? Theme.foreground : Theme.textPlaceholder
+                    font.pointSize: Theme.regularFontSize
+                    elide: Text.ElideMiddle
                 }
 
-                HoverHandler { id: clearHover }
-                TapHandler {
-                    onTapped: {
-                        root.selectedPaths = []
-                        root.pathsChanged([])
+                Rectangle {
+                    visible: !root.readOnly && root.selectedPaths && root.selectedPaths.length > 0
+                    Layout.preferredWidth: 20
+                    Layout.preferredHeight: 20
+                    Layout.alignment: Qt.AlignVCenter
+                    radius: 4
+                    color: clearHover.hovered ? Theme.listItemHoverBg : "transparent"
+
+                    ViciImage {
+                        anchors.centerIn: parent
+                        width: 10
+                        height: 10
+                        source: Img.builtin("xmark")
+                    }
+
+                    HoverHandler { id: clearHover }
+                    TapHandler {
+                        onTapped: {
+                            root.pathsChanged([])
+                            root.selectedPaths = []
+                        }
                     }
                 }
             }
-        }
-
-        Item {
-            id: focusItem
-            anchors.fill: parent
-            focus: true
-            activeFocusOnTab: false
 
             TapHandler {
                 onTapped: {
@@ -91,19 +91,137 @@ FocusScope {
                     root._openDialog()
                 }
             }
+        }
+    }
 
-            Keys.onReturnPressed: (event) => {
-                if (typeof launcher !== "undefined")
-                    event.accepted = launcher.forwardKey(event.key, event.modifiers)
-                if (!event.accepted)
-                    root._openDialog()
-            }
-            Keys.onSpacePressed: root._openDialog()
-            Keys.onPressed: (event) => {
-                if (typeof launcher !== "undefined")
-                    event.accepted = launcher.forwardKey(event.key, event.modifiers)
+    // --- Multi mode ---
+
+    ColumnLayout {
+        id: multiLayout
+        visible: root.multiple
+        anchors.left: parent.left
+        anchors.right: parent.right
+        spacing: 6
+        opacity: root.readOnly ? 0.5 : 1.0
+
+        Repeater {
+            model: root.multiple ? root.selectedPaths : []
+
+            Rectangle {
+                required property int index
+                required property var modelData
+
+                Layout.fillWidth: true
+                implicitHeight: 32
+                radius: 6
+                color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g,
+                               Theme.secondaryBackground.b, Config.windowOpacity)
+                border.color: Theme.inputBorder
+                border.width: 1
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 10
+                    anchors.rightMargin: 6
+                    spacing: 6
+
+                    Text {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        verticalAlignment: Text.AlignVCenter
+                        text: modelData
+                        color: Theme.foreground
+                        font.pointSize: Theme.regularFontSize
+                        elide: Text.ElideMiddle
+                    }
+
+                    Rectangle {
+                        visible: !root.readOnly
+                        Layout.preferredWidth: 20
+                        Layout.preferredHeight: 20
+                        Layout.alignment: Qt.AlignVCenter
+                        radius: 4
+                        color: removeHover.hovered ? Theme.listItemHoverBg : "transparent"
+
+                        ViciImage {
+                            anchors.centerIn: parent
+                            width: 10
+                            height: 10
+                            source: Img.builtin("xmark")
+                        }
+
+                        HoverHandler { id: removeHover }
+                        TapHandler {
+                            onTapped: {
+                                const idx = index
+                                let copy = []
+                                for (let i = 0; i < root.selectedPaths.length; i++) {
+                                    if (i !== idx) copy.push(root.selectedPaths[i])
+                                }
+                                root.pathsChanged(copy)
+                                root.selectedPaths = copy
+                            }
+                        }
+                    }
+                }
             }
         }
+
+        Rectangle {
+            visible: !root.readOnly
+            Layout.fillWidth: true
+            implicitHeight: 32
+            radius: 6
+            color: addHover.hovered ? Theme.listItemHoverBg : "transparent"
+            border.color: Theme.inputBorder
+            border.width: 1
+
+            Text {
+                anchors.centerIn: parent
+                text: root.directoriesOnly ? "+ Add folder…" : "+ Add file…"
+                color: Theme.textMuted
+                font.pointSize: Theme.regularFontSize
+            }
+
+            HoverHandler { id: addHover }
+            TapHandler {
+                onTapped: {
+                    focusItem.forceActiveFocus()
+                    root._openDialog()
+                }
+            }
+        }
+    }
+
+    Item {
+        id: focusItem
+        width: 0
+        height: 0
+        focus: true
+        activeFocusOnTab: false
+
+        Keys.onReturnPressed: (event) => {
+            if (typeof launcher !== "undefined")
+                event.accepted = launcher.forwardKey(event.key, event.modifiers)
+            if (!event.accepted)
+                root._openDialog()
+        }
+        Keys.onSpacePressed: root._openDialog()
+        Keys.onPressed: (event) => {
+            if (typeof launcher !== "undefined")
+                event.accepted = launcher.forwardKey(event.key, event.modifiers)
+        }
+    }
+
+    function _appendUnique(existing, newPaths) {
+        let merged = []
+        for (let i = 0; i < existing.length; i++)
+            merged.push(existing[i])
+        for (let i = 0; i < newPaths.length; i++) {
+            if (merged.indexOf(newPaths[i]) === -1)
+                merged.push(newPaths[i])
+        }
+        return merged
     }
 
     FileDialog {
@@ -111,10 +229,13 @@ FocusScope {
         title: root.multiple ? "Select files" : "Select a file"
         fileMode: root.multiple ? FileDialog.OpenFiles : FileDialog.OpenFile
         onAccepted: {
-            var paths = []
-            for (var i = 0; i < selectedFiles.length; i++) {
+            let paths = []
+            for (let i = 0; i < selectedFiles.length; i++)
                 paths.push(selectedFiles[i].toString().replace("file://", ""))
-            }
+
+            if (root.multiple)
+                paths = root._appendUnique(root.selectedPaths || [], paths)
+
             root.selectedPaths = paths
             root.pathsChanged(paths)
         }
@@ -124,9 +245,16 @@ FocusScope {
         id: folderDialog
         title: "Select a directory"
         onAccepted: {
-            var path = selectedFolder.toString().replace("file://", "")
-            root.selectedPaths = [path]
-            root.pathsChanged([path])
+            const path = selectedFolder.toString().replace("file://", "")
+
+            if (root.multiple) {
+                const merged = root._appendUnique(root.selectedPaths || [], [path])
+                root.selectedPaths = merged
+                root.pathsChanged(merged)
+            } else {
+                root.selectedPaths = [path]
+                root.pathsChanged([path])
+            }
         }
     }
 }
