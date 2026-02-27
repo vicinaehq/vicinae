@@ -13,6 +13,7 @@ class ImageSource;
 class KeybindBridge;
 class RootSearchModel;
 class ThemeBridge;
+class TagSearch;
 class ViewHostBase;
 class CommandListModel;
 class QQuickWindow;
@@ -135,6 +136,7 @@ private:
   ImageSource *m_imgSource;
   KeybindBridge *m_keybindProxy;
   ThemeBridge *m_themeBridge;
+  TagSearch *m_tagSearch;
 
   QQmlApplicationEngine m_engine;
   RootSearchModel *m_searchModel;

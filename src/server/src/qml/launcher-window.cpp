@@ -8,6 +8,7 @@
 #include "bridge-view.hpp"
 #include "image-source.hpp"
 #include "image-url.hpp"
+#include "tag-search.hpp"
 #include "root-search-model.hpp"
 #include "config-bridge.hpp"
 #include "theme-bridge.hpp"
@@ -38,7 +39,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
     : QObject(parent), m_ctx(ctx), m_actionPanel(new ActionPanelController(ctx, this)),
       m_alertModel(new AlertModel(*ctx.navigation, this)), m_configBridge(new ConfigBridge(this)),
       m_imgSource(new ImageSource(this)), m_keybindProxy(new KeybindBridge(this)),
-      m_themeBridge(new ThemeBridge(this)) {
+      m_themeBridge(new ThemeBridge(this)), m_tagSearch(new TagSearch(this)) {
 
   // Ensure Wayland app_id / X11 WM_CLASS is "vicinae"
   QGuiApplication::setDesktopFileName(QStringLiteral("vicinae"));
@@ -59,6 +60,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   rootCtx->setContextProperty(QStringLiteral("launcher"), this);
   rootCtx->setContextProperty(QStringLiteral("actionPanel"), m_actionPanel);
   rootCtx->setContextProperty(QStringLiteral("Keybinds"), m_keybindProxy);
+  rootCtx->setContextProperty(QStringLiteral("TagSearch"), m_tagSearch);
 
   m_engine.load(QUrl(QStringLiteral("qrc:/Vicinae/LauncherWindow.qml")));
 

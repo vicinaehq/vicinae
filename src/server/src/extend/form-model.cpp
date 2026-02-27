@@ -3,9 +3,9 @@
 
 #include <algorithm>
 
-const static std::vector<QString> fieldTypes = {"dropdown-field",   "password-field",    "text-field",
-                                                "checkbox-field",   "date-picker-field", "text-area-field",
-                                                "file-picker-field"};
+const static std::vector<QString> fieldTypes = {"dropdown-field",    "password-field",    "text-field",
+                                                "checkbox-field",    "date-picker-field", "text-area-field",
+                                                "file-picker-field", "tag-picker-field"};
 
 FormModel FormModel::fromJson(const QJsonObject &json) {
   FormModel model;
@@ -123,6 +123,15 @@ FormModel FormModel::fromJson(const QJsonObject &json) {
           filePicker->showHiddenFiles = props.value("showHiddenFiles").toBool();
 
         model.items.emplace_back(filePicker);
+      } else if (*it == "tag-picker-field") {
+        auto tagPicker = std::make_shared<TagPickerField>(base);
+        tagPicker->m_items.reserve(children.size());
+
+        for (const auto &child : children) {
+          tagPicker->m_items.emplace_back(TagPickerItemModel::fromJson(child.toObject()));
+        }
+
+        model.items.emplace_back(tagPicker);
       }
     } else {
       qWarning() << "Unknown form children of type" << type;
