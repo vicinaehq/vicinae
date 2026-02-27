@@ -174,12 +174,18 @@ void ActionPanelModel::setFilter(const QString &text) {
 }
 
 int ActionPanelModel::nextSelectableIndex(int from, int direction) const {
-  int idx = from + direction;
   int const count = static_cast<int>(m_flat.size());
+  if (count == 0) return from;
 
-  while (idx >= 0 && idx < count) {
+  int idx = from + direction;
+  if (idx < 0) idx = count - 1;
+  else if (idx >= count) idx = 0;
+
+  while (idx != from) {
     if (m_flat[idx].kind == FlatItem::ActionItem) return idx;
     idx += direction;
+    if (idx < 0) idx = count - 1;
+    else if (idx >= count) idx = 0;
   }
 
   return from;
