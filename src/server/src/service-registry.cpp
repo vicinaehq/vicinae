@@ -25,6 +25,7 @@
 #include "services/paste/paste-service.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
 #include "services/news/news-service.hpp"
+#include "services/ai/ai-service.hpp"
 #include "config/config.hpp"
 
 RootItemManager *ServiceRegistry::rootItemManager() const { return m_rootItemManager.get(); }
@@ -65,6 +66,9 @@ BackgroundEffectManager *ServiceRegistry::backgroundEffectManager() const {
 }
 
 TelemetryService *ServiceRegistry::telemetry() const { return m_telemetry.get(); }
+AI::Service *ServiceRegistry::ai() const { return m_ai.get(); }
+
+void ServiceRegistry::setAI(std::unique_ptr<AI::Service> service) { m_ai = std::move(service); }
 
 void ServiceRegistry::setPowerManager(std::unique_ptr<PowerManager> powman) {
   m_powerManager = std::move(powman);
