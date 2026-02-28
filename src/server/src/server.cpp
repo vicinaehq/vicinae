@@ -33,6 +33,9 @@
 #include "service-registry.hpp"
 #include "services/window-material/window-material-manager.hpp"
 #include "qml/window-material-attached.hpp"
+#include "services/ai/ai-provider.hpp"
+#include "services/background-effect/background-effect-manager.hpp"
+#include "qml/background-effect-attached.hpp"
 #include "services/shortcut-inhibit/shortcut-inhibit-manager.hpp"
 #include "qml/shortcut-inhibitor-attached.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
@@ -48,6 +51,7 @@
 #include "services/files-service/file-service.hpp"
 #include "services/local-storage/local-storage-service.hpp"
 #include "services/oauth/oauth-service.hpp"
+#include "services/ai/ollama/ollama-ai-provider.hpp"
 #include "services/power-manager/power-manager.hpp"
 #include "services/tray-host/tray-host.hpp"
 #include "services/raycast/raycast-store.hpp"
@@ -94,6 +98,7 @@
 #include "services/paste/windows-paste-service.hpp"
 #include "services/selection/windows-selection-service.hpp"
 #endif
+#include "services/ai/ai-service.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "services/tray/tray-service.hpp"
 #include "qml/launcher-window.hpp"
@@ -107,6 +112,7 @@
 #include <QQuickWindow>
 #include <QString>
 #include <QTranslator>
+#include <iostream>
 #include <qlockfile.h>
 #include <qlogging.h>
 #include <QtQuickControls2/QQuickStyle>
@@ -373,6 +379,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setUpdateService(
         std::make_unique<UpdateService>(*registry->toastService(), std::move(updateInstaller)));
     registry->setWallpaperManager(std::make_unique<WallpaperManager>());
+    registry->setAI(std::make_unique<AI::Service>());
 
     auto root = registry->rootItemManager();
     auto builtinCommandDb = std::make_unique<CommandDatabase>(*registry);
