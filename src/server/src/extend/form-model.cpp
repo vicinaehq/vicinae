@@ -54,7 +54,7 @@ FormModel FormModel::fromJson(const QJsonObject &json) {
       }
 
       base.id = props.value("id").toString();
-      base.storeValue = props.value("storeValue").toBool();
+      base.storeValue = props.value("storeValue").toBool(true);
       base.autoFocus = props.value("autoFocus").toBool();
 
       if (props.contains("title")) base.title = props.value("title").toString();

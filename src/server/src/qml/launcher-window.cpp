@@ -9,7 +9,6 @@
 #include "image-source.hpp"
 #include "image-url.hpp"
 #include "root-search-model.hpp"
-#include "source-blend-rect.hpp"
 #include "config-bridge.hpp"
 #include "theme-bridge.hpp"
 #include "navigation-controller.hpp"
@@ -80,12 +79,16 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   if (m_window) {
     connect(m_window, &QQuickWindow::activeChanged, this,
             [this]() { m_ctx.navigation->setWindowActivated(m_window->isActive()); });
+    m_window->installEventFilter(this);
   }
+
+  m_closeOnFocusLoss = ctx.services->config()->value().closeOnFocusLoss;
 
   connect(nav, &NavigationController::windowVisiblityChanged, this, &LauncherWindow::handleVisibilityChanged);
 
-  // View lifecycle — viewPoped fires BEFORE ViewState is destroyed
+  // View lifecycle - viewPoped fires BEFORE ViewState is destroyed
   connect(nav, &NavigationController::viewPoped, this, &LauncherWindow::handleViewPoped);
+  connect(nav, &NavigationController::viewReplaced, this, [this]() { m_viewWasReplaced = true; });
 
   connect(nav, &NavigationController::currentViewChanged, this,
           [this](const NavigationController::ViewState &) { handleCurrentViewChanged(); });
@@ -228,6 +231,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
 
   connect(m_ctx.services->config(), &config::Manager::configChanged, this,
           [this](const auto &, const auto &) {
+            m_closeOnFocusLoss = m_ctx.services->config()->value().closeOnFocusLoss;
             applyWindowConfig();
             tryCompaction();
           });
@@ -245,6 +249,17 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
 
     emit overlayChanged();
   });
+}
+
+bool LauncherWindow::eventFilter(QObject *obj, QEvent *event) {
+  // only works on some compositors.
+  // we could probably make it work everywhere layer shell is supported by adding a layer behind ours.
+  if (obj == m_window && event->type() == QEvent::MouseMove && m_closeOnFocusLoss) {
+    auto *me = static_cast<QMouseEvent *>(event); // NOLINT
+    QRect const contentRect(0, 0, m_window->width(), m_window->height());
+    if (!contentRect.contains(me->position().toPoint())) { m_ctx.navigation->closeWindow(); }
+  }
+  return QObject::eventFilter(obj, event);
 }
 
 void LauncherWindow::handleVisibilityChanged(bool visible) {
@@ -270,7 +285,9 @@ void LauncherWindow::handleViewPoped(const BaseView *view) {
 void LauncherWindow::handleCurrentViewChanged() {
   auto *nav = m_ctx.navigation.get();
   bool const wasPopped = m_viewWasPopped;
+  bool const wasReplaced = m_viewWasReplaced;
   m_viewWasPopped = false;
+  m_viewWasReplaced = false;
 
   if (nav->viewStackSize() == 1) {
     disconnect(m_searchAccessoryConnection);
@@ -327,7 +344,11 @@ void LauncherWindow::handleCurrentViewChanged() {
   }
 
   if (!wasPopped) {
-    emit commandViewPushed(bridge->qmlComponentUrl(), bridge->qmlProperties());
+    if (wasReplaced) {
+      emit commandViewReplaced(bridge->qmlComponentUrl(), bridge->qmlProperties());
+    } else {
+      emit commandViewPushed(bridge->qmlComponentUrl(), bridge->qmlProperties());
+    }
     bridge->loadInitialData();
   } else {
     bridge->onReactivated();

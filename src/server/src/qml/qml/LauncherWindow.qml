@@ -161,6 +161,9 @@ Window {
         function onCommandViewPushed(componentUrl, properties) {
             commandStack.push(componentUrl, properties, StackView.Immediate)
         }
+        function onCommandViewReplaced(componentUrl, properties) {
+            commandStack.replace(commandStack.currentItem, componentUrl, properties, StackView.Immediate)
+        }
         function onCommandViewPopped() {
             if (commandStack.depth > 0)
                 commandStack.pop(StackView.Immediate)

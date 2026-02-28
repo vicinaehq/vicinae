@@ -6,6 +6,8 @@ on:
   pull_request:
     branches: [main]
 
+concurrency: self-hosted
+
 jobs:
   format:
     runs-on: [self-hosted, Linux, X64, prod]

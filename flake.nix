@@ -43,6 +43,8 @@
       });
       devShells = forEachPkgs (pkgs: {
         default = pkgs.mkShell {
+          stdenv = pkgs.gcc15Stdenv;
+
           # automatically pulls nativeBuildInputs + buildInputs
           inputsFrom = [ (pkgs.callPackage ./nix/vicinae.nix { gcc15Stdenv = pkgs.gcc15Stdenv; }) ];
           buildInputs = with pkgs; [
@@ -51,9 +53,17 @@
           ];
 
           packages = with pkgs; [
+            clang-tools
             nixd
             nixfmt-rfc-style
           ];
+
+          shellHook = ''
+            export CC=${pkgs.gcc15}/bin/gcc
+            export CXX=${pkgs.gcc15}/bin/g++
+            export CMAKE_C_COMPILER=$CC
+            export CMAKE_CXX_COMPILER=$CXX
+          '';
         };
       });
       overlays.default = final: prev: {
