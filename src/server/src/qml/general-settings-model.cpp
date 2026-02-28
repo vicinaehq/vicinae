@@ -40,6 +40,11 @@ void GeneralSettingsModel::setPopToRootOnClose(bool v) {
   cfgManager().mergeWithUser({.popToRootOnClose = v});
 }
 
+bool GeneralSettingsModel::popOnBackspace() const { return cfg().popOnBackspace; }
+void GeneralSettingsModel::setPopOnBackspace(bool v) {
+  cfgManager().mergeWithUser({.popOnBackspace = v});
+}
+
 bool GeneralSettingsModel::clientSideDecorations() const {
   return cfg().launcherWindow.clientSideDecorations.enabled;
 }

@@ -437,6 +437,10 @@ void LauncherWindow::popToRoot() {
   emit viewNavigatedBack();
 }
 
+bool LauncherWindow::popOnBackspace() {
+  return m_ctx.services->config()->value().popOnBackspace;
+}
+
 bool LauncherWindow::tryAliasFastTrack() { return m_searchModel->tryAliasFastTrack(); }
 
 int LauncherWindow::matchNavigationKey(int key, int modifiers) {

@@ -39,6 +39,7 @@ class LauncherWindow : public QObject {
   Q_PROPERTY(bool statusBarVisible READ statusBarVisible NOTIFY statusBarVisibleChanged)
   Q_PROPERTY(bool compacted READ compacted NOTIFY compactedChanged)
   Q_PROPERTY(bool hasCompleter READ hasCompleter NOTIFY completerChanged)
+  Q_PROPERTY(bool popOnBackspace READ popOnBackspace)
   Q_PROPERTY(QVariantList completerArgs READ completerArgs NOTIFY completerChanged)
   Q_PROPERTY(QString completerIcon READ completerIcon NOTIFY completerChanged)
   Q_PROPERTY(QVariantList completerValues READ completerValues NOTIFY completerValuesChanged)
@@ -70,6 +71,7 @@ public:
   bool statusBarVisible() const { return m_statusBarVisible; }
   bool compacted() const { return m_compacted; }
   bool hasCompleter() const { return m_hasCompleter; }
+  bool popOnBackspace();
   QVariantList completerArgs() const { return m_completerArgs; }
   QString completerIcon() const { return m_completerIcon; }
   QVariantList completerValues() const { return m_completerValues; }

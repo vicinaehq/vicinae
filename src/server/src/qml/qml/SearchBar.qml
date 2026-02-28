@@ -252,7 +252,7 @@ Item {
                         event.accepted = true
                     } else if (_handleNavigation(event)) {
                         event.accepted = true
-                    } else if (event.key === Qt.Key_Backspace && searchInput.text === "" && !launcher.isRootSearch && launcher.showBackButton) {
+                    } else if (event.key === Qt.Key_Backspace && searchInput.text === "" && !launcher.isRootSearch && launcher.showBackButton && launcher.popOnBackspace) {
                         launcher.goBack()
                         event.accepted = true
                     } else if (event.key === Qt.Key_Space && launcher.isRootSearch && event.modifiers === Qt.NoModifier) {
