@@ -191,10 +191,6 @@ ExtensionFormModel::FormItemData ExtensionFormModel::createItem(const FormModel:
       data.modelValue = *field->value;
     } else if (field->defaultValue) {
       data.modelValue = *field->defaultValue;
-    } else if (data.type == FormItemData::Type::Dropdown) {
-      if (auto *df = dynamic_cast<const FormModel::DropdownField *>(field.get())) {
-        if (auto first = qml::firstDropdownItemValue(df->m_items)) { data.modelValue = *first; }
-      }
     }
   } else if (auto *desc = std::get_if<FormModel::Description>(&item)) {
     data.type = FormItemData::Type::Description;

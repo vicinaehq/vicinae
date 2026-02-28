@@ -88,6 +88,23 @@ export default function FormElements() {
 				/>
 			</Form.Dropdown>
 
+			<Form.Dropdown
+				id="emoji"
+				title="Dropdown"
+				placeholder="No default value"
+				onChange={(value) =>
+					showToast(Toast.Style.Success, `Selected ${value}`)
+				}
+			>
+				<Form.Dropdown.Item value="poop" title="Pile of poop" icon="💩" />
+				<Form.Dropdown.Item value="rocket" title="Rocket" icon="🚀" />
+				<Form.Dropdown.Item
+					value="lol"
+					title="Rolling on the floor laughing face"
+					icon="🤣"
+				/>
+			</Form.Dropdown>
+
 			{/* Dropdown with sections */}
 			<Form.Dropdown id="food" title="Dropdown with sections">
 				<Form.Dropdown.Section title="Fruits">
