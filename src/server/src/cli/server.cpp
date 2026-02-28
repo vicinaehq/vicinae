@@ -17,6 +17,7 @@
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "root-search/shortcuts/shortcut-root-provider.hpp"
 #include "service-registry.hpp"
+#include "services/ai/ai-provider.hpp"
 #include "services/background-effect/background-effect-manager.hpp"
 #include "services/browser-extension-service.hpp"
 #include "services/calculator-service/calculator-service.hpp"
@@ -26,6 +27,7 @@
 #include "services/files-service/file-service.hpp"
 #include "services/local-storage/local-storage-service.hpp"
 #include "services/oauth/oauth-service.hpp"
+#include "services/ai/ollama/ollama-ai-provider.hpp"
 #include "services/power-manager/power-manager.hpp"
 #include "services/raycast/raycast-store.hpp"
 #include "services/extension-store/vicinae-store.hpp"
@@ -34,6 +36,7 @@
 #include "services/toast/toast-service.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "services/snippet/snippet-service.hpp"
+#include "services/ai/ai-service.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "qml/launcher-window.hpp"
 #include "utils.hpp"
@@ -43,9 +46,11 @@
 #include <QGuiApplication>
 #include <csignal>
 #include <QString>
+#include <iostream>
 #include <qlockfile.h>
 #include <qlogging.h>
 #include <QtQuickControls2/QQuickStyle>
+#include <qtimer.h>
 #include <system_error>
 #include "common/CLI11.hpp"
 #include "server.hpp"
@@ -161,6 +166,9 @@ void CliServerCommand::run(CLI::App *) {
     registry->setScriptDb(std::make_unique<ScriptCommandService>());
     registry->setBrowserExtension(std::make_unique<BrowserExtensionService>());
     registry->setBackgroundEffectManager(std::make_unique<BackgroundEffectManager>());
+    registry->setAI(std::make_unique<AI::Service>());
+
+    registry->ai()->registerProvider(std::make_unique<AI::OllamaProvider>());
 
     auto root = registry->rootItemManager();
     auto builtinCommandDb = std::make_unique<CommandDatabase>();
@@ -325,6 +333,17 @@ void CliServerCommand::run(CLI::App *) {
   } else {
     qInfo() << "Vicinae server successfully started. Call \"vicinae toggle\" to toggle the window";
   }
+
+  QTimer::singleShot(0, [&]() {
+    auto completion = ServiceRegistry::instance()->ai()->createChatCompletion(
+        {.modelId = "gemma3", .messages = {AI::ChatMessage(AI::ChatRole::User, "Who are you?")}});
+    QObject::connect(completion.get(), &AI::AbstractChatCompletionStream::dataAdded,
+                     [completion](const std::string &text) { std::cout << text; });
+    QObject::connect(
+        completion.get(), &AI::AbstractChatCompletionStream::errorOccured,
+        [completion](const std::string &reason) { qWarning() << "Failed to stream" << reason.c_str(); });
+    completion->start();
+  });
 
   qApp->exec();
   // make sure child processes are terminated

@@ -21,6 +21,7 @@
 #include "services/toast/toast-service.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "services/snippet/snippet-service.hpp"
+#include "services/ai/ai-service.hpp"
 #include "config/config.hpp"
 
 RootItemManager *ServiceRegistry::rootItemManager() const { return m_rootItemManager.get(); }
@@ -53,6 +54,10 @@ SnippetService *ServiceRegistry::snippetService() const { return m_snippetServic
 BackgroundEffectManager *ServiceRegistry::backgroundEffectManager() const {
   return m_backgroundEffectManager.get();
 }
+
+AI::Service *ServiceRegistry::ai() const { return m_ai.get(); }
+
+void ServiceRegistry::setAI(std::unique_ptr<AI::Service> service) { m_ai = std::move(service); }
 
 void ServiceRegistry::setPowerManager(std::unique_ptr<PowerManager> powman) {
   m_powerManager = std::move(powman);

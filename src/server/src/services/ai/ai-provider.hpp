@@ -1,7 +1,9 @@
+#pragma once
 #include <cstdint>
 #include <glaze/core/common.hpp>
 #include <optional>
 #include <qfuture.h>
+#include <qobject.h>
 #include <qtmetamacros.h>
 #include <string>
 #include <vector>
@@ -39,7 +41,7 @@ struct ListModelFilters {
   std::optional<int> limit;
 };
 
-class AbstractChatCompletionStream {
+class AbstractChatCompletionStream : public QObject {
   Q_OBJECT
 
 signals:
@@ -48,7 +50,7 @@ signals:
   void finished() const;
 
 public:
-  virtual ~AbstractChatCompletionStream() = default;
+  ~AbstractChatCompletionStream() override = default;
   virtual bool start() = 0;
   virtual bool abort() = 0;
 };
@@ -60,9 +62,11 @@ struct ChatMessage {
   std::string value;
 };
 
+using ChatHistory = std::vector<ChatMessage>;
+
 struct ChatCompletionPayload {
   std::string modelId;
-  std::vector<ChatMessage> messages;
+  ChatHistory messages;
 };
 
 struct TranscriptionResult {

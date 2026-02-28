@@ -452,6 +452,8 @@ set(SRCS
 	src/services/snippet/snippet-service.hpp
 	src/services/snippet/snippet-server.hpp
 	src/services/snippet/snippet-db.cpp
+	src/services/ai/ai-provider.hpp
+	src/services/ai/ai-service.hpp
 
 	# QML frontend (POC)
 	src/qml/keybind-bridge.hpp
