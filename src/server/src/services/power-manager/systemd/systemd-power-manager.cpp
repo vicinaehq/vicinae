@@ -27,9 +27,6 @@ bool SystemdPowerManager::lock() {
 }
 
 bool SystemdPowerManager::logout() {
-  // Request a graceful logout via the DE's session manager instead of logind's
-  // TerminateUser, which force-kills all processes and can freeze the GPU on
-  // Wayland compositors that don't get a clean teardown (notably KDE + Nvidia).
   if (Environment::isPlasmaDesktop()) {
     QDBusInterface ksmserver("org.kde.Shutdown", "/Shutdown", "org.kde.Shutdown",
                              QDBusConnection::sessionBus());
