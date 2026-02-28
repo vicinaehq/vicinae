@@ -54,6 +54,7 @@ public:
 
   Q_INVOKABLE void setFilter(const QString &text);
   Q_INVOKABLE int nextSelectableIndex(int from, int direction) const;
+  Q_INVOKABLE int scrollTargetIndex(int index, int /*direction*/) const { return index; }
   Q_INVOKABLE void setSelectedIndex(int index);
   Q_INVOKABLE void activateSelected();
   Q_INVOKABLE bool tryAliasFastTrack();
