@@ -109,7 +109,10 @@ void ClipboardHistoryViewHost::initialize() {
 
 void ClipboardHistoryViewHost::loadInitialData() { m_controller->setFilter(searchText()); }
 
-void ClipboardHistoryViewHost::textChanged(const QString &text) { m_controller->setFilter(text); }
+void ClipboardHistoryViewHost::textChanged(const QString &text) {
+  m_model->resetSelectionOnNextUpdate();
+  m_controller->setFilter(text);
+}
 
 void ClipboardHistoryViewHost::onReactivated() { m_model->refreshActionPanel(); }
 
@@ -133,6 +136,7 @@ void ClipboardHistoryViewHost::setKindFilter(int kind) {
   emit currentKindFilterChanged();
 
   auto offerKind = kindFromFilterIndex(kind);
+  m_model->resetSelectionOnNextUpdate();
   m_controller->setKindFilter(offerKind);
 
   if (kind >= 0 && kind <= 4) { saveDropdownFilter(filterIndexToSavedValue[kind]); }
