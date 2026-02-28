@@ -26,7 +26,7 @@ public:
   }
 
   static std::expected<Client, std::string> make() {
-    int fd = socket(AF_UNIX, SOCK_STREAM, 0);
+    const int fd = socket(AF_UNIX, SOCK_STREAM, 0);
 
     if (fd == -1) { return std::unexpected(std::format("Failed to create socket: {}", strerror(errno))); }
 
@@ -36,7 +36,7 @@ public:
   ~Client() { close(m_sock); }
 
   std::expected<void, std::string> connect() {
-    int fd = socket(AF_UNIX, SOCK_STREAM, 0);
+    const int fd = socket(AF_UNIX, SOCK_STREAM, 0);
 
     if (fd == -1) { return std::unexpected(std::format("Failed to create socket: {}", strerror(errno))); }
 
@@ -55,10 +55,11 @@ public:
 
   bool sendRaw(std::string_view data) {
     uint32_t size = data.size();
-    if (::send(m_sock, reinterpret_cast<const char *>(&size), sizeof(size), 0) < sizeof(size)) {
+    if (::send(m_sock, reinterpret_cast<const char *>(&size), sizeof(size), 0) <
+        static_cast<ssize_t>(sizeof(size))) {
       return false;
     }
-    if (::send(m_sock, data.data(), data.size(), 0) < data.size()) { return false; }
+    if (::send(m_sock, data.data(), data.size(), 0) < static_cast<ssize_t>(data.size())) { return false; }
     return true;
   }
 
@@ -80,20 +81,20 @@ public:
    * Make a request and block until we get a response.
    */
   template <InSchema<Schema> T> std::expected<typename T::Response, std::string> request(T::Request payload) {
-    int id = 0;
     std::string data;
     uint32_t size;
 
-    sendRaw(m_rpc.template request<T>(payload));
+    sendRaw(m_rpc.template request<T>(std::move(payload)));
 
     {
-      if (::recv(m_sock, reinterpret_cast<char *>(&size), sizeof(size), 0) < sizeof(size)) {
+      if (::recv(m_sock, reinterpret_cast<char *>(&size), sizeof(size), 0) <
+          static_cast<ssize_t>(sizeof(size))) {
         return std::unexpected("Failed to read response size");
       }
 
       data.resize(size);
 
-      if (::recv(m_sock, data.data(), data.size(), 0) < data.size()) {
+      if (::recv(m_sock, data.data(), data.size(), 0) < static_cast<ssize_t>(data.size())) {
         return std::unexpected("Failed to read response data");
       }
 
@@ -104,6 +105,7 @@ public:
       }
 
       if (res.error) { return std::unexpected(res.error->message); }
+      if (!res.result) { return std::unexpected("Response has no result data"); }
 
       typename T::Response resData;
 

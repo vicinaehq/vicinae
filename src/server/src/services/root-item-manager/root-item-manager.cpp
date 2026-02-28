@@ -48,7 +48,7 @@ bool RootItemManager::moveFallbackUp(const EntrypointId &id) {
 
 bool RootItemManager::enableFallback(const EntrypointId &id) {
   auto fbs = m_cfg.value().fallbacks;
-  std::string sid = id;
+  std::string const sid = id;
 
   if (std::ranges::contains(fbs, sid)) return false;
 
@@ -62,7 +62,7 @@ bool RootItemManager::enableFallback(const EntrypointId &id) {
 
 bool RootItemManager::disableFallback(const EntrypointId &id) {
   auto fbs = m_cfg.value().fallbacks;
-  std::string sid = id;
+  std::string const sid = id;
 
   fbs.erase(std::ranges::find(fbs, sid));
   m_cfg.mergeWithUser({.fallbacks = fbs});
@@ -100,26 +100,10 @@ void RootItemManager::updateIndex() {
   m_items.clear();
   m_metadata.clear();
 
-  auto &cfg = m_cfg.value();
-
   for (const auto &provider : m_providers) {
     auto items = provider->loadItems();
-    const config::ProviderData *providerConfig = nullptr;
-
-    if (auto it = cfg.providers.find(provider->uniqueId().toStdString()); it != cfg.providers.end()) {
-      providerConfig = &it->second;
-    }
 
     for (const auto &item : items) {
-      const config::ProviderItemData *itemConfig = nullptr;
-
-      if (providerConfig) {
-        if (auto it = providerConfig->entrypoints.find(item->uniqueId().entrypoint);
-            it != providerConfig->entrypoints.end()) {
-          itemConfig = &it->second;
-        }
-      }
-
       SearchableRootItem sitem;
       auto id = item->uniqueId();
 
@@ -150,9 +134,10 @@ float RootItemManager::SearchableRootItem::fuzzyScore(std::string_view pattern) 
   std::initializer_list<WS> ss = {{title, 1.0f}, {subtitle, 0.6f}, {alias, 1.0f}};
   auto kws = keywords | std::views::transform([](auto &&kw) { return WS{kw, 0.3f}; });
   auto strs = std::views::concat(ss, kws);
-  float score = pattern.empty() ? 1 : fzf::defaultMatcher.fuzzy_match_v2_score_query(strs, pattern, false);
-  double frequencyScore = std::log(1 + meta->visitCount * 0.1);
-  float frequencyWeight = 0.2;
+  float const score =
+      pattern.empty() ? 1 : fzf::defaultMatcher.fuzzy_match_v2_score_query(strs, pattern, false);
+  double const frequencyScore = std::log(1 + meta->visitCount * 0.1);
+  float const frequencyWeight = 0.2;
 
   // TODO: add recency support
 
@@ -169,7 +154,7 @@ std::vector<RootItemManager::ScoredItem> RootItemManager::search(const QString &
 void RootItemManager::search(const QString &query, std::vector<ScoredItem> &results,
                              const RootItemPrefixSearchOptions &opts) {
   std::string pattern = query.toStdString();
-  std::string_view patternView = pattern;
+  std::string_view const patternView = pattern;
 
   results.clear();
   results.reserve(m_items.size());
@@ -178,7 +163,7 @@ void RootItemManager::search(const QString &query, std::vector<ScoredItem> &resu
     if (!item.meta->enabled && !opts.includeDisabled) continue;
     if (opts.providerId && opts.providerId != item.meta->providerId) continue;
     if (item.meta->favorite && !opts.includeFavorites) continue;
-    double fuzzyScore = item.fuzzyScore(patternView);
+    double const fuzzyScore = item.fuzzyScore(patternView);
 
     if (!fuzzyScore) { continue; }
 
@@ -188,8 +173,8 @@ void RootItemManager::search(const QString &query, std::vector<ScoredItem> &resu
   // we need stable sort to avoid flickering when updating quickly
   std::ranges::stable_sort(results, [&](const auto &a, const auto &b) {
     if (opts.prioritizeAliased) {
-      bool aa = !a.meta->alias.value_or("").empty() && a.meta->alias->starts_with(pattern);
-      bool ab = !b.meta->alias.value_or("").empty() && b.meta->alias->starts_with(pattern);
+      bool const aa = !a.meta->alias.value_or("").empty() && a.meta->alias->starts_with(pattern);
+      bool const ab = !b.meta->alias.value_or("").empty() && b.meta->alias->starts_with(pattern);
       // always prioritize matching aliases over score
       if (aa - ab) { return aa > ab; }
     }
@@ -199,7 +184,7 @@ void RootItemManager::search(const QString &query, std::vector<ScoredItem> &resu
 }
 
 bool RootItemManager::setItemEnabled(const EntrypointId &id, bool value) {
-  auto merged = m_cfg.mergeEntrypointWithUser(id, {.enabled = value});
+  m_cfg.mergeEntrypointWithUser(id, {.enabled = value});
   return true;
 }
 
@@ -212,7 +197,7 @@ bool RootItemManager::setProviderPreferenceValues(const QString &id, const QJson
   auto storage = getProviderSecretStorage(id);
 
   for (const Preference &pref : provider->preferences()) {
-    QJsonValue v = preferences.value(pref.name());
+    QJsonValue const v = preferences.value(pref.name());
     if (!v.isUndefined()) {
       if (pref.isSecret()) {
         setProviderSecretPreference(id, pref.name(), v);
@@ -271,14 +256,14 @@ glz::generic::object_t RootItemManager::transformPreferenceValues(const QJsonObj
 }
 
 bool RootItemManager::setItemPreferenceValues(const EntrypointId &id, const QJsonObject &preferences) {
-  RootItem *item = findItemById(id);
+  RootItem const *item = findItemById(id);
 
   if (!item) return false;
 
   QJsonObject itemPreferences;
 
   for (const Preference &pref : item->preferences()) {
-    QJsonValue v = preferences.value(pref.name());
+    QJsonValue const v = preferences.value(pref.name());
 
     if (!v.isUndefined()) {
       if (pref.isSecret()) {
@@ -312,7 +297,7 @@ void RootItemManager::setPreferenceValues(const EntrypointId &id, const QJsonObj
   }
 
   for (const auto &pref : prvd->preferences()) {
-    QJsonValue val = preferences.value(pref.name());
+    QJsonValue const val = preferences.value(pref.name());
     if (!val.isUndefined()) {
       if (pref.isSecret()) {
         setProviderSecretPreference(id.provider.c_str(), pref.name(), val);
@@ -323,7 +308,7 @@ void RootItemManager::setPreferenceValues(const EntrypointId &id, const QJsonObj
   }
 
   for (const auto &pref : item->preferences()) {
-    QJsonValue val = preferences.value(pref.name());
+    QJsonValue const val = preferences.value(pref.name());
 
     if (!val.isUndefined()) {
       if (pref.isSecret()) {
@@ -350,8 +335,6 @@ void RootItemManager::setPreferenceValues(const EntrypointId &id, const QJsonObj
 }
 
 bool RootItemManager::setAlias(const EntrypointId &id, std::string_view alias) {
-  auto &meta = m_metadata[id];
-
   m_metadata[id].alias = alias;
   m_cfg.mergeEntrypointWithUser(id, {.alias = std::string{alias}});
 
@@ -365,7 +348,7 @@ QJsonObject RootItemManager::getProviderPreferenceValues(const QString &id) cons
   for (const Preference &pref : provider->preferences()) {
     if (!json.contains(pref.name())) {
       if (pref.isSecret()) {
-        QJsonValue value = getProviderSecretPreference(id, pref.name());
+        QJsonValue const value = getProviderSecretPreference(id, pref.name());
         json[pref.name()] = value.isNull() ? pref.defaultValue() : value;
       } else {
         json[pref.name()] = pref.defaultValue();
@@ -397,7 +380,7 @@ QJsonObject RootItemManager::getItemPreferenceValues(const EntrypointId &id) con
   for (const auto &pref : item->preferences()) {
     if (!json.contains(pref.name())) {
       if (pref.isSecret()) {
-        QJsonValue value = getEntrypointSecretPreference(id, pref.name());
+        QJsonValue const value = getEntrypointSecretPreference(id, pref.name());
         json[pref.name()] = value.isNull() ? pref.defaultValue() : value;
       } else {
         json[pref.name()] = pref.defaultValue();
@@ -439,7 +422,7 @@ bool RootItemManager::isFallback(const EntrypointId &id) const {
 
 bool RootItemManager::setItemAsFavorite(const EntrypointId &itemId, bool value) {
   auto favorites = m_cfg.value().favorites; // we take the merged config to account for default favorites
-  std::string id{itemId};
+  std::string const id{itemId};
 
   if (value) {
     favorites.insert(favorites.begin(), id);
@@ -458,7 +441,6 @@ double RootItemManager::computeRecencyScore(const RootItemMetadata &meta) const 
   if (!meta.lastVisitedAt) return 0.1;
 
   auto now = std::chrono::high_resolution_clock::now();
-  auto duration = std::chrono::duration_cast<std::chrono::days>(now - *meta.lastVisitedAt).count();
   auto hoursSince = std::chrono::duration_cast<std::chrono::hours>(now - *meta.lastVisitedAt).count() / 24.0;
 
   if (hoursSince < 1) return 2.0;
@@ -468,8 +450,8 @@ double RootItemManager::computeRecencyScore(const RootItemMetadata &meta) const 
 }
 
 double RootItemManager::computeScore(const RootItemMetadata &meta, int weight) const {
-  double frequencyScore = std::log(meta.visitCount + 1);
-  double recencyScore = computeRecencyScore(meta);
+  double const frequencyScore = std::log(meta.visitCount + 1);
+  double const recencyScore = computeRecencyScore(meta);
 
   return (frequencyScore + recencyScore) * weight;
 }
@@ -490,7 +472,7 @@ std::vector<RootItemManager::SearchableRootItem> RootItemManager::querySuggestio
     return ascore > bscore;
   });
 
-  if (suggestions.size() > limit) { suggestions.resize(limit); }
+  if (std::cmp_greater(suggestions.size(), limit)) { suggestions.resize(limit); }
 
   return suggestions;
 }
@@ -519,6 +501,7 @@ bool RootItemManager::enableItem(const EntrypointId &id) { return setItemEnabled
 std::vector<RootProvider *> RootItemManager::providers() const {
   std::vector<RootProvider *> providers;
 
+  providers.reserve(m_providers.size());
   for (const auto &provider : m_providers) {
     providers.emplace_back(provider.get());
   }
@@ -534,7 +517,7 @@ std::vector<ExtensionRootProvider *> RootItemManager::extensions() const {
   std::vector<ExtensionRootProvider *> providers;
 
   for (const auto &provider : m_providers) {
-    if (provider->isExtension()) providers.emplace_back(static_cast<ExtensionRootProvider *>(provider.get()));
+    if (auto p = dynamic_cast<ExtensionRootProvider *>(provider.get())) { providers.emplace_back(p); }
   }
 
   return providers;
@@ -581,13 +564,13 @@ QString RootItemManager::getEntrypointSecretPreferenceKey(const EntrypointId &id
 
 QJsonValue RootItemManager::getEntrypointSecretPreference(const EntrypointId &id,
                                                           const QString &prefName) const {
-  QString key = getEntrypointSecretPreferenceKey(id, prefName);
+  QString const key = getEntrypointSecretPreferenceKey(id, prefName);
   return getProviderSecretStorage(id.provider.c_str()).getItem(key);
 }
 
 void RootItemManager::setEntrypointSecretPreference(const EntrypointId &id, const QString &prefName,
                                                     const QJsonValue &value) {
-  QString key = getEntrypointSecretPreferenceKey(id, prefName);
+  QString const key = getEntrypointSecretPreferenceKey(id, prefName);
   getProviderSecretStorage(id.provider.c_str()).setItem(key, value);
 }
 

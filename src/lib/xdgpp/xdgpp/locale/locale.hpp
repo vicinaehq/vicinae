@@ -7,8 +7,18 @@
 namespace xdgpp {
 class Locale {
 public:
-  enum Component { LANG = 1, COUNTRY = 1 << 1, MODIFIER = 1 << 2 };
-  ;
+  enum class Component { LANG = 1, COUNTRY = 1 << 1, MODIFIER = 1 << 2 };
+
+  friend constexpr int operator|(Component lhs, Component rhs) {
+    return static_cast<int>(lhs) | static_cast<int>(rhs);
+  }
+  friend constexpr int operator|(int lhs, Component rhs) { return lhs | static_cast<int>(rhs); }
+  friend constexpr int operator|(Component lhs, int rhs) { return static_cast<int>(lhs) | rhs; }
+  friend constexpr int operator&(int lhs, Component rhs) { return lhs & static_cast<int>(rhs); }
+  friend constexpr int &operator|=(int &lhs, Component rhs) {
+    lhs |= static_cast<int>(rhs);
+    return lhs;
+  }
 
   /**
    * Returns a suitable system locale.

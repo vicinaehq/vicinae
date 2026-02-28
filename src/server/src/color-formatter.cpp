@@ -59,7 +59,7 @@ QString ColorFormatter::formatName(ColorFormat format) const {
 
 std::expected<ColorFormatter::ParsedColor, ColorFormatter::GenericError>
 ColorFormatter::parse(const QString &text) {
-  QString cleanText = text.trimmed().toLower();
+  QString const cleanText = text.trimmed().toLower();
 
   if (cleanText.isEmpty()) {
     return std::unexpected(GenericError(GenericError::NotAColorFormat, "Empty string"));
@@ -147,8 +147,8 @@ QString ColorFormatter::formatHsvAlpha(const QColor &color) {
 // Private parsing functions
 std::optional<ColorFormatter::ParsedColor> ColorFormatter::tryParseHex(const QString &text) {
   // Regex for hex colors: #RGB, #RRGGBB, #RGBA, #RRGGBBAA
-  QRegularExpression hexRegex("^#([0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$");
-  QRegularExpressionMatch match = hexRegex.match(text);
+  QRegularExpression const hexRegex("^#([0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$");
+  QRegularExpressionMatch const match = hexRegex.match(text);
 
   if (!match.hasMatch()) { return std::nullopt; }
 
@@ -157,30 +157,30 @@ std::optional<ColorFormatter::ParsedColor> ColorFormatter::tryParseHex(const QSt
   try {
     if (hexValue.length() == 3) {
       // #RGB -> #RRGGBB
-      QString expanded = QString("%1%1%2%2%3%3").arg(hexValue[0]).arg(hexValue[1]).arg(hexValue[2]);
-      QColor color("#" + expanded);
+      QString const expanded = QString("%1%1%2%2%3%3").arg(hexValue[0]).arg(hexValue[1]).arg(hexValue[2]);
+      QColor const color("#" + expanded);
 
       return ParsedColor{HEX, color};
     }
 
     if (hexValue.length() == 4) {
       // #RGBA -> #RRGGBBAA
-      QString expanded =
+      QString const expanded =
           QString("%1%1%2%2%3%3%4%4").arg(hexValue[0]).arg(hexValue[1]).arg(hexValue[2]).arg(hexValue[3]);
       QColor color("#" + expanded.left(6));
-      int alpha = hexValue.right(1).toInt(nullptr, 16) * 17;
+      int const alpha = hexValue.right(1).toInt(nullptr, 16) * 17;
       color.setAlpha(alpha);
       return ParsedColor{HEX_ALPHA, color};
     }
 
     if (hexValue.length() == 6) {
-      QColor color("#" + hexValue);
+      QColor const color("#" + hexValue);
       return ParsedColor{HEX, color};
     }
 
     if (hexValue.length() == 8) {
       QColor color("#" + hexValue.left(6));
-      int alpha = hexValue.right(2).toInt(nullptr, 16);
+      int const alpha = hexValue.right(2).toInt(nullptr, 16);
 
       color.setAlpha(alpha);
       return ParsedColor{HEX_ALPHA, color};
@@ -196,16 +196,16 @@ std::vector<ColorFormatter::ColorFormat> ColorFormatter::formats() const {
 
 std::optional<ColorFormatter::ParsedColor> ColorFormatter::tryParseRgb(const QString &text) {
   // RGB patterns
-  QRegularExpression rgbRegex("^rgba?\\s*\\(\\s*([^)]+)\\s*\\)$");
-  QRegularExpressionMatch match = rgbRegex.match(text);
+  QRegularExpression const rgbRegex(R"(^rgba?\s*\(\s*([^)]+)\s*\)$)");
+  QRegularExpressionMatch const match = rgbRegex.match(text);
 
   if (!match.hasMatch()) { return std::nullopt; }
 
-  QString values = match.captured(1);
+  QString const values = match.captured(1);
   QStringList parts = values.split(',');
 
-  bool isRgba = text.startsWith("rgba");
-  bool isPercentage = values.contains('%');
+  bool const isRgba = text.startsWith("rgba");
+  bool const isPercentage = values.contains('%');
 
   if ((!isRgba && parts.size() != 3) || (isRgba && parts.size() != 4)) { return std::nullopt; }
 
@@ -214,16 +214,16 @@ std::optional<ColorFormatter::ParsedColor> ColorFormatter::tryParseRgb(const QSt
 
     if (isPercentage) {
       // Parse percentage values
-      double r = parsePercentage(parts[0].trimmed());
-      double g = parsePercentage(parts[1].trimmed());
-      double b = parsePercentage(parts[2].trimmed());
+      double const r = parsePercentage(parts[0].trimmed());
+      double const g = parsePercentage(parts[1].trimmed());
+      double const b = parsePercentage(parts[2].trimmed());
 
       if (r < 0 || r > 100 || g < 0 || g > 100 || b < 0 || b > 100) { return std::nullopt; }
 
       color.setRgb(std::round(r * 2.55), std::round(g * 2.55), std::round(b * 2.55));
 
       if (isRgba) {
-        double alpha = parts[3].trimmed().toDouble();
+        double const alpha = parts[3].trimmed().toDouble();
         if (alpha < 0 || alpha > 1) return std::nullopt;
         color.setAlphaF(alpha);
         return ParsedColor{RGBA_PERCENTAGE, color};
@@ -232,16 +232,16 @@ std::optional<ColorFormatter::ParsedColor> ColorFormatter::tryParseRgb(const QSt
       return ParsedColor{RGBA_PERCENTAGE, color};
     } else {
       // Parse integer values
-      int r = parts[0].trimmed().toInt();
-      int g = parts[1].trimmed().toInt();
-      int b = parts[2].trimmed().toInt();
+      int const r = parts[0].trimmed().toInt();
+      int const g = parts[1].trimmed().toInt();
+      int const b = parts[2].trimmed().toInt();
 
       if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) { return std::nullopt; }
 
       color.setRgb(r, g, b);
 
       if (isRgba) {
-        double alpha = parts[3].trimmed().toDouble();
+        double const alpha = parts[3].trimmed().toDouble();
         if (alpha < 0 || alpha > 1) return std::nullopt;
         color.setAlphaF(alpha);
         return ParsedColor{RGBA, color};
@@ -253,22 +253,22 @@ std::optional<ColorFormatter::ParsedColor> ColorFormatter::tryParseRgb(const QSt
 }
 
 std::optional<ColorFormatter::ParsedColor> ColorFormatter::tryParseHsl(const QString &text) {
-  QRegularExpression hslRegex("^hsla?\\s*\\(\\s*([^)]+)\\s*\\)$");
-  QRegularExpressionMatch match = hslRegex.match(text);
+  QRegularExpression const hslRegex(R"(^hsla?\s*\(\s*([^)]+)\s*\)$)");
+  QRegularExpressionMatch const match = hslRegex.match(text);
 
   if (!match.hasMatch()) { return std::nullopt; }
 
-  QString values = match.captured(1);
+  QString const values = match.captured(1);
   QStringList parts = values.split(',');
 
-  bool isHsla = text.startsWith("hsla");
+  bool const isHsla = text.startsWith("hsla");
 
   if ((!isHsla && parts.size() != 3) || (isHsla && parts.size() != 4)) { return std::nullopt; }
 
   try {
-    int h = parts[0].trimmed().toInt();
-    double s = parsePercentage(parts[1].trimmed());
-    double l = parsePercentage(parts[2].trimmed());
+    int const h = parts[0].trimmed().toInt();
+    double const s = parsePercentage(parts[1].trimmed());
+    double const l = parsePercentage(parts[2].trimmed());
 
     if (h < 0 || h >= 360 || s < 0 || s > 100 || l < 0 || l > 100) { return std::nullopt; }
 
@@ -276,7 +276,7 @@ std::optional<ColorFormatter::ParsedColor> ColorFormatter::tryParseHsl(const QSt
     color.setHsl(h, std::round(s * 2.55), std::round(l * 2.55));
 
     if (isHsla) {
-      double alpha = parts[3].trimmed().toDouble();
+      double const alpha = parts[3].trimmed().toDouble();
       if (alpha < 0 || alpha > 1) return std::nullopt;
       color.setAlphaF(alpha);
       return ParsedColor{HSL_ALPHA, color};
@@ -287,22 +287,22 @@ std::optional<ColorFormatter::ParsedColor> ColorFormatter::tryParseHsl(const QSt
 }
 
 std::optional<ColorFormatter::ParsedColor> ColorFormatter::tryParseHsv(const QString &text) {
-  QRegularExpression hsvRegex("^hsva?\\s*\\(\\s*([^)]+)\\s*\\)$");
-  QRegularExpressionMatch match = hsvRegex.match(text);
+  QRegularExpression const hsvRegex(R"(^hsva?\s*\(\s*([^)]+)\s*\)$)");
+  QRegularExpressionMatch const match = hsvRegex.match(text);
 
   if (!match.hasMatch()) { return std::nullopt; }
 
-  QString values = match.captured(1);
+  QString const values = match.captured(1);
   QStringList parts = values.split(',');
 
-  bool isHsva = text.startsWith("hsva");
+  bool const isHsva = text.startsWith("hsva");
 
   if ((!isHsva && parts.size() != 3) || (isHsva && parts.size() != 4)) { return std::nullopt; }
 
   try {
-    int h = parts[0].trimmed().toInt();
-    double s = parsePercentage(parts[1].trimmed());
-    double v = parsePercentage(parts[2].trimmed());
+    int const h = parts[0].trimmed().toInt();
+    double const s = parsePercentage(parts[1].trimmed());
+    double const v = parsePercentage(parts[2].trimmed());
 
     if (h < 0 || h >= 360 || s < 0 || s > 100 || v < 0 || v > 100) { return std::nullopt; }
 
@@ -310,7 +310,7 @@ std::optional<ColorFormatter::ParsedColor> ColorFormatter::tryParseHsv(const QSt
     color.setHsv(h, std::round(s * 2.55), std::round(v * 2.55));
 
     if (isHsva) {
-      double alpha = parts[3].trimmed().toDouble();
+      double const alpha = parts[3].trimmed().toDouble();
       if (alpha < 0 || alpha > 1) return std::nullopt;
       color.setAlphaF(alpha);
       return ParsedColor{HSV_ALPHA, color};

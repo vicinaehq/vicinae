@@ -6,10 +6,11 @@ class ExtDataDevice {
 public:
   class Listener {
   public:
-    virtual void dataOffer(ExtDataDevice &device, ExtDataOffer &offer) {}
-    virtual void selection(ExtDataDevice &device, ExtDataOffer &offer) {}
-    virtual void finished(ExtDataDevice &device) {}
-    virtual void primarySelection(ExtDataDevice &device, ExtDataOffer &offer) {}
+    virtual ~Listener() = default;
+    virtual void dataOffer(ExtDataDevice &, ExtDataOffer &) {}
+    virtual void selection(ExtDataDevice &, ExtDataOffer &) {}
+    virtual void finished(ExtDataDevice &) {}
+    virtual void primarySelection(ExtDataDevice &, ExtDataOffer &) {}
   };
 
   void registerListener(Listener *listener) { _listeners.push_back(listener); }
@@ -25,12 +26,11 @@ private:
   static void dataOffer(void *data, ext_data_control_device_v1 *device, ext_data_control_offer_v1 *id);
   static void selection(void *data, ext_data_control_device_v1 *device, ext_data_control_offer_v1 *id);
   static void finished(void *data, ext_data_control_device_v1 *device);
-  static void primarySelection(void *data, ext_data_control_device_v1 *device,
-                               ext_data_control_offer_v1 *id);
+  static void primarySelection(void *data, ext_data_control_device_v1 *device, ext_data_control_offer_v1 *id);
 
   constexpr static const struct ext_data_control_device_v1_listener _listener = {.data_offer = dataOffer,
-                                                                                  .selection = selection,
-                                                                                  .finished = finished,
-                                                                                  .primary_selection =
-                                                                                      primarySelection};
+                                                                                 .selection = selection,
+                                                                                 .finished = finished,
+                                                                                 .primary_selection =
+                                                                                     primarySelection};
 };

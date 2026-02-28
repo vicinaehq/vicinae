@@ -8,7 +8,6 @@
 namespace fs = std::filesystem;
 
 static bool m_scanned = false;
-static IconThemeDatabase::IconThemeList scan();
 static IconThemeDatabase::IconThemeList m_themes;
 
 IconThemeDatabase::IconThemeDatabase() {
@@ -33,7 +32,7 @@ IconThemeDatabase::IconThemeList IconThemeDatabase::themes(bool includeHidden) c
 }
 
 QString IconThemeDatabase::guessBestTheme() const {
-  std::vector<QString> wellKnown = {"Adwaita Dark", "Adwaita", "Breeze", "Breeze Dark"};
+  std::vector<QString> const wellKnown = {"Adwaita Dark", "Adwaita", "Breeze", "Breeze Dark"};
 
   for (const auto &theme : wellKnown) {
     if (hasTheme(theme)) { return theme; }
@@ -60,13 +59,13 @@ IconThemeDatabase::IconThemeList IconThemeDatabase::scan() {
   std::set<QString> seen;
 
   for (const auto &s : QIcon::themeSearchPaths()) {
-    fs::path path = s.toStdString();
+    fs::path const path = s.toStdString();
     std::error_code ec;
 
     for (const auto &entry : fs::directory_iterator(path, ec)) {
       if (!entry.is_directory(ec)) continue;
 
-      fs::path manifest = entry.path() / "index.theme";
+      fs::path const manifest = entry.path() / "index.theme";
 
       if (!fs::is_regular_file(manifest, ec)) {
         qWarning() << "Ignoring icon theme directory with no index.theme at" << manifest.c_str();

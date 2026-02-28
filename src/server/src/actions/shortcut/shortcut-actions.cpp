@@ -14,7 +14,7 @@ void OpenShortcutAction::execute() {
       expanded += *s;
     } else if (auto placeholder = std::get_if<Shortcut::ParsedPlaceholder>(&part)) {
       if (placeholder->id == "clipboard") {
-        expanded += QApplication::clipboard()->text();
+        expanded += QGuiApplication::clipboard()->text();
       } else if (placeholder->id == "selected") {
         // TODO: selected text
       } else if (placeholder->id == "uuid") {

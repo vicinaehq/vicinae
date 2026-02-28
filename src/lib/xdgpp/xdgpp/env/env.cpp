@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <filesystem>
+#include <ranges>
 #include <set>
 
 namespace fs = std::filesystem;
@@ -13,7 +14,7 @@ static fs::path homeDir() {
 }
 
 static std::string &toLowerCase(std::string &s) {
-  std::transform(s.begin(), s.end(), s.begin(), [](char c) { return std::tolower(c); });
+  std::ranges::transform(s, s.begin(), [](char c) { return std::tolower(c); });
   return s;
 }
 
@@ -118,17 +119,17 @@ std::optional<std::filesystem::path> xdgpp::runtimeDir() {
 
 std::vector<std::filesystem::path> xdgpp::mimeAppsListPaths() {
   std::vector<std::string> desktops = xdgpp::currentDesktop();
-  std::transform(desktops.begin(), desktops.end(), desktops.begin(), toLowerCase);
+  std::ranges::transform(desktops, desktops.begin(), toLowerCase);
 
   std::vector<fs::path> paths;
-  std::string fileName = "mimeapps.list";
+  const std::string fileName = "mimeapps.list";
   auto configDirs = xdgpp::configDirs();
   auto dataDirs = xdgpp::dataDirs();
 
   paths.reserve(configDirs.size() + dataDirs.size() + desktops.size() * 4);
 
   for (const auto &desktop : desktops) {
-    std::string desktopFileName = desktop + "-" + fileName;
+    const std::string desktopFileName = std::string(desktop).append("-").append(fileName);
     paths.emplace_back(xdgpp::configHome() / desktopFileName);
   }
 
@@ -136,7 +137,7 @@ std::vector<std::filesystem::path> xdgpp::mimeAppsListPaths() {
 
   for (const auto &dir : configDirs) {
     for (const auto &desktop : desktops) {
-      std::string desktopFileName = desktop + "-" + fileName;
+      const std::string desktopFileName = std::string(desktop).append("-").append(fileName);
       paths.emplace_back(dir / desktopFileName);
     }
 
@@ -144,7 +145,7 @@ std::vector<std::filesystem::path> xdgpp::mimeAppsListPaths() {
   }
 
   for (const auto &desktop : desktops) {
-    std::string desktopFileName = desktop + "-" + fileName;
+    const std::string desktopFileName = std::string(desktop).append("-").append(fileName);
     paths.emplace_back(xdgpp::dataHome() / "applications" / desktopFileName);
   }
 
@@ -152,7 +153,7 @@ std::vector<std::filesystem::path> xdgpp::mimeAppsListPaths() {
 
   for (const auto &dir : dataDirs) {
     for (const auto &desktop : desktops) {
-      std::string desktopFileName = desktop + "-" + fileName;
+      const std::string desktopFileName = std::string(desktop).append("-").append(fileName);
       paths.emplace_back(dir / "applications" / desktopFileName);
     }
 

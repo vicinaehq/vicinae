@@ -1,7 +1,8 @@
 #include "data-device.hpp"
 #include "data-offer.hpp"
 
-void ExtDataDevice::dataOffer(void *data, ext_data_control_device_v1 *device, ext_data_control_offer_v1 *id) {
+// NOLINTBEGIN(cppcoreguidelines-pro-type-static-cast-downcast)
+void ExtDataDevice::dataOffer(void *data, ext_data_control_device_v1 *, ext_data_control_offer_v1 *id) {
   auto self = static_cast<ExtDataDevice *>(data);
 
   if (!id) {
@@ -18,7 +19,7 @@ void ExtDataDevice::dataOffer(void *data, ext_data_control_device_v1 *device, ex
   self->m_offer = std::move(offer);
 }
 
-void ExtDataDevice::selection(void *data, ext_data_control_device_v1 *device, ext_data_control_offer_v1 *id) {
+void ExtDataDevice::selection(void *data, ext_data_control_device_v1 *, ext_data_control_offer_v1 *) {
   auto self = static_cast<ExtDataDevice *>(data);
 
   if (!self->m_offer) return;
@@ -28,7 +29,7 @@ void ExtDataDevice::selection(void *data, ext_data_control_device_v1 *device, ex
   }
 }
 
-void ExtDataDevice::finished(void *data, ext_data_control_device_v1 *device) {
+void ExtDataDevice::finished(void *data, ext_data_control_device_v1 *) {
   auto self = static_cast<ExtDataDevice *>(data);
 
   for (auto lstn : self->_listeners) {
@@ -36,8 +37,7 @@ void ExtDataDevice::finished(void *data, ext_data_control_device_v1 *device) {
   }
 }
 
-void ExtDataDevice::primarySelection(void *data, ext_data_control_device_v1 *device,
-                                  ext_data_control_offer_v1 *id) {
+void ExtDataDevice::primarySelection(void *data, ext_data_control_device_v1 *, ext_data_control_offer_v1 *) {
   auto self = static_cast<ExtDataDevice *>(data);
 
   if (!self->m_offer) return;
@@ -46,6 +46,7 @@ void ExtDataDevice::primarySelection(void *data, ext_data_control_device_v1 *dev
     lstn->primarySelection(*self, *self->m_offer);
   }
 }
+// NOLINTEND(cppcoreguidelines-pro-type-static-cast-downcast)
 
 ExtDataDevice::ExtDataDevice(ext_data_control_device_v1 *dev) : _dev(dev) {
   ext_data_control_device_v1_add_listener(_dev, &_listener, this);

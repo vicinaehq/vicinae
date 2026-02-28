@@ -70,8 +70,8 @@ signals:
 };
 
 class ExtensionRequest : NonCopyable {
-  proto::ext::QualifiedExtensionRequest m_request;
   Bus &m_bus;
+  proto::ext::QualifiedExtensionRequest m_request;
   bool m_responded = false;
 
 public:

@@ -4,7 +4,7 @@
 #include <qjsonarray.h>
 #include <qjsonobject.h>
 
-MetadataModelParser::MetadataModelParser() {}
+MetadataModelParser::MetadataModelParser() = default;
 
 MetadataModel MetadataModelParser::parse(const QJsonObject &instance) {
   auto children = instance["children"].toArray();
@@ -46,9 +46,9 @@ MetadataModel MetadataModelParser::parse(const QJsonObject &instance) {
       });
     }
 
-    if (type == "metadata-separator") { items.push_back(MetadataSeparator{}); }
+    if (type == "metadata-separator") { items.emplace_back(MetadataSeparator{}); }
 
-    if (type == "tag-list") { items.push_back(TagListParser().parse(child)); }
+    if (type == "tag-list") { items.emplace_back(TagListParser().parse(child)); }
   }
 
   return {items};

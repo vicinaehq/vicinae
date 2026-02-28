@@ -87,7 +87,7 @@ private:
     const auto snippet = m_db.findByKeyword(keyword);
     if (!snippet || !snippet->expansion) return;
 
-    bool terminal = false;
+    [[maybe_unused]] bool terminal = false;
 
     if (const auto focusedWindow = m_wm.getFocusedWindow()) {
       if (const auto app = m_appDb.findByClass(focusedWindow->wmClass())) {
@@ -105,6 +105,6 @@ private:
 
   SnippetServer m_server;
   SnippetDatabase m_db;
-  const AppService &m_appDb;
   WindowManager &m_wm;
+  const AppService &m_appDb;
 };

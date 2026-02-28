@@ -22,7 +22,7 @@ TEST_CASE("skin toned emoji should identify as emoji") { REQUIRE(emoji::isUtf8En
 TEST_CASE("all emojis in database pass isEmoji test") {
   const auto &emojis = emoji::emojis();
   for (const auto &emojiData : emojis) {
-    bool ok = emoji::isUtf8EncodedEmoji(emojiData.emoji);
+    const bool ok = emoji::isUtf8EncodedEmoji(emojiData.emoji);
     if (!ok) { std::cout << emojiData.emoji << std::endl; }
     REQUIRE(ok);
   }

@@ -30,7 +30,7 @@ QJsonValue LocalStorageService::deserializeValue(const QString &value, ValueType
 }
 
 QJsonDocument LocalStorageService::getItemAsJson(const QString &namespaceId, const QString &key) {
-  QJsonValue json = getItem(namespaceId, key);
+  QJsonValue const json = getItem(namespaceId, key);
 
   if (!json.isString()) return {};
 
@@ -65,8 +65,8 @@ QJsonValue LocalStorageService::getItem(const QString &namespaceId, const QStrin
 
   if (!m_getQuery.next()) return {};
 
-  QString value = m_getQuery.value(0).toString();
-  ValueType valueType = static_cast<ValueType>(m_getQuery.value(1).toUInt());
+  QString const value = m_getQuery.value(0).toString();
+  ValueType const valueType = static_cast<ValueType>(m_getQuery.value(1).toUInt());
 
   return deserializeValue(value, valueType);
 }

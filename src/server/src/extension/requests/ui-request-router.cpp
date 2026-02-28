@@ -9,8 +9,10 @@
 #include "ui/toast/toast.hpp"
 #include <QtConcurrent/QtConcurrent>
 #include <QClipboard>
+#include <QGuiApplication>
 #include <qfuturewatcher.h>
 #include <unordered_map>
+#include <utility>
 
 namespace ui = proto::ext::ui;
 
@@ -71,15 +73,15 @@ ToastStyle UIRequestRouter::parseProtoToastStyle(ui::ToastStyle style) {
 void UIRequestRouter::modelCreated() {
   if (m_modelWatcher.isCanceled()) return;
 
-  auto views = m_navigation->views();
+  const auto &views = m_navigation->views();
   auto models = m_modelWatcher.result();
 
-  for (int i = 0; i < models.items.size() && i < views.size(); ++i) {
+  for (size_t i = 0; i < models.items.size() && i < views.size(); ++i) {
     auto &model = models.items[i];
-    auto &view = views[i];
-    bool shouldSkipRender = !model.dirty && !model.propsDirty;
+    const auto &entry = views[i];
+    bool const shouldSkipRender = !model.dirty && !model.propsDirty;
 
-    if (!shouldSkipRender) view->render(model.root);
+    if (!shouldSkipRender) entry.renderFn(model.root);
   }
 }
 
@@ -171,7 +173,7 @@ UIRequestRouter::handleCloseWindow(const proto::ext::ui::CloseMainWindowRequest 
 
 proto::ext::ui::Response *
 UIRequestRouter::getSelectedText(const proto::ext::ui::GetSelectedTextRequest &req) {
-  auto text = QApplication::clipboard()->text(QClipboard::Mode::Selection);
+  auto text = QGuiApplication::clipboard()->text(QClipboard::Mode::Selection);
   auto res = new proto::ext::ui::Response;
   auto selectedTextRes = new proto::ext::ui::GetSelectedTextResponse;
 
@@ -189,7 +191,6 @@ class ExtensionAlert : public AlertWidget {
 
 QFuture<proto::ext::extension::Response *> UIRequestRouter::confirmAlert(const ui::ConfirmAlertRequest &req) {
   auto alert = new CallbackAlertWidget;
-  auto controller = m_navigation->controller();
   auto promise = std::make_shared<QPromise<proto::ext::extension::Response *>>();
   auto future = promise->future();
 
@@ -271,7 +272,7 @@ proto::ext::ui::Response *UIRequestRouter::handleRender(const proto::ext::ui::Re
   }
 
   m_modelWatcher.setFuture(QtConcurrent::run([views]() {
-    Timer timer;
+    Timer const timer;
     auto model = ModelParser().parse(views);
 
     // timer.time("Model parsed");

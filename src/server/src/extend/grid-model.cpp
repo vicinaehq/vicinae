@@ -87,15 +87,13 @@ GridSectionModel GridModelParser::parseSection(const QJsonObject &instance) {
   return model;
 }
 
-GridItemContentWidget::Inset GridModelParser::parseInset(const std::string &s) {
-  using Inset = GridItemContentWidget::Inset;
+GridInset GridModelParser::parseInset(const std::string &s) {
+  if (s == "zero") return GridInset::None;
+  if (s == "small") return GridInset::Small;
+  if (s == "medium") return GridInset::Medium;
+  if (s == "large") return GridInset::Large;
 
-  if (s == "zero") return Inset::None;
-  if (s == "small") return Inset::Small;
-  if (s == "medium") return Inset::Medium;
-  if (s == "large") return Inset::Large;
-
-  return Inset::Small;
+  return GridInset::Small;
 }
 
 ObjectFit GridModelParser::parseFit(const std::string &fit) {
@@ -107,7 +105,7 @@ GridModel GridModelParser::parse(const QJsonObject &instance) {
   GridModel model;
   auto props = instance.value("props").toObject();
   // no builtin filtering by default if onSearchTextChange handler is specified
-  bool defaultFiltering = !props.contains("onSearchTextChange");
+  bool const defaultFiltering = !props.contains("onSearchTextChange");
 
   model.dirty = instance.value("dirty").toBool(true);
   model.isLoading = props["isLoading"].toBool(false);
@@ -153,13 +151,13 @@ GridModel GridModelParser::parse(const QJsonObject &instance) {
     if (type == "grid-item") {
       auto item = parseListItem(childObj, index);
 
-      model.items.push_back(item);
+      model.items.emplace_back(item);
     }
 
     if (type == "grid-section") {
       auto section = parseSection(childObj);
 
-      model.items.push_back(section);
+      model.items.emplace_back(section);
     }
 
     if (type == "dropdown") { model.searchBarAccessory = DropdownModel::fromJson(childObj); }
@@ -172,4 +170,4 @@ GridModel GridModelParser::parse(const QJsonObject &instance) {
   return model;
 }
 
-GridModelParser::GridModelParser() {}
+GridModelParser::GridModelParser() = default;

@@ -1,27 +1,25 @@
 #pragma once
 
 #include "ui/dialog/dialog.hpp"
-#include "ui/image/image.hpp"
+#include "ui/image/url.hpp"
+#include "theme.hpp"
 #include <functional>
-#include <qevent.h>
-
-class TypographyWidget;
-class ButtonWidget;
 
 class AlertWidget : public DialogContentWidget {
   Q_OBJECT
 
-  ImageWidget *_icon;
-  TypographyWidget *_title;
-  TypographyWidget *_message;
-  ButtonWidget *_cancelBtn;
-  ButtonWidget *_actionBtn;
   std::function<void(void)> m_confirmCallback;
   std::function<void(void)> m_cancelCallback;
   bool m_finished = false;
 
-  void focusInEvent(QFocusEvent *event) override;
-  void paintEvent(QPaintEvent *event) override;
+  QString m_titleText = "Are you sure?";
+  QString m_messageText = "This action cannot be undone";
+  std::optional<ImageURL> m_iconUrl = ImageURL::builtin("warning").setFill(SemanticColor::Red);
+  QString m_confirmText = "Confirm";
+  QString m_cancelText = "Cancel";
+  ColorLike m_confirmColor = SemanticColor::Red;
+  ColorLike m_cancelColor = SemanticColor::Foreground;
+
   void handleConfirm();
   void handleCancel();
 
@@ -30,8 +28,6 @@ protected:
   virtual void canceled() const;
   void interrupted() override;
 
-  void keyPressEvent(QKeyEvent *event) override;
-
 public:
   void setTitle(const QString &title);
   void setMessage(const QString &message);
@@ -39,7 +35,18 @@ public:
   void setIcon(const std::optional<ImageURL> &url);
   void setConfirmText(const QString &text, const ColorLike &color);
 
-  AlertWidget(QWidget *parent = nullptr);
+  QString titleText() const { return m_titleText; }
+  QString messageText() const { return m_messageText; }
+  std::optional<ImageURL> iconUrl() const { return m_iconUrl; }
+  QString confirmButtonText() const { return m_confirmText; }
+  QString cancelButtonText() const { return m_cancelText; }
+  ColorLike confirmColor() const { return m_confirmColor; }
+  ColorLike cancelColor() const { return m_cancelColor; }
+
+  void triggerConfirm();
+  void triggerCancel();
+
+  AlertWidget(QObject *parent = nullptr);
 
 signals:
   void confirmed() const;
@@ -54,12 +61,6 @@ class CallbackAlertWidget : public AlertWidget {
   void canceled() const override;
 
 public:
-  /**
-   * Careful when using this inside the execute() method of an action.
-   * There are rare scenarios in which the alert widget may live longer than the action it's triggered
-   * in. To be on the safe side, make sure you do not capture reference to action members and do all the
-   * capturing by value only.
-   */
   void setCallback(const std::function<void(bool confirmed)> &fn);
   void setConfirmCallback(const std::function<void()> &fn);
   void setCancelCallback(const std::function<void()> &fn);

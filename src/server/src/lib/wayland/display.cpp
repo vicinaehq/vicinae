@@ -1,6 +1,6 @@
 #include "display.hpp"
 
-WaylandDisplay::WaylandDisplay() { _display = wl_display_connect(nullptr); }
+WaylandDisplay::WaylandDisplay() : _display(wl_display_connect(nullptr)) {}
 WaylandDisplay::~WaylandDisplay() {
   if (_display) { wl_display_disconnect(_display); }
 };

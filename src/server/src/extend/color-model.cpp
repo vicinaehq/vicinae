@@ -3,7 +3,7 @@
 #include "theme.hpp"
 #include <qjsonobject.h>
 
-ColorLikeModelParser::ColorLikeModelParser() {}
+ColorLikeModelParser::ColorLikeModelParser() = default;
 
 ColorLike ColorLikeModelParser::parse(const QJsonValue &colorLike) {
   auto colorLikeObj = colorLike.toObject();

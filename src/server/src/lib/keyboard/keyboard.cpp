@@ -222,26 +222,6 @@ Shortcut::Shortcut(const QString &str) {
   m_isValid = gotKey;
 }
 
-std::vector<Qt::Key> Shortcut::modKeys() const {
-  std::vector<Qt::Key> keys;
-  keys.reserve(4);
-
-  if (m_modifiers.testFlag(Qt::MetaModifier)) { keys.emplace_back(Qt::Key_Meta); }
-  if (m_modifiers.testFlag(Qt::ControlModifier)) { keys.emplace_back(Qt::Key_Control); }
-  if (m_modifiers.testFlag(Qt::AltModifier)) { keys.emplace_back(Qt::Key_Alt); }
-  if (m_modifiers.testFlag(Qt::ShiftModifier)) { keys.emplace_back(Qt::Key_Shift); }
-
-  return keys;
-}
-
-std::vector<Qt::Key> Shortcut::allKeys() const {
-  auto mods = modKeys();
-
-  if (std::ranges::find(mods, m_key) == mods.end()) { mods.emplace_back(m_key); }
-
-  return mods;
-}
-
 QString Shortcut::toString() const {
   QStringList strs;
 
@@ -253,6 +233,43 @@ QString Shortcut::toString() const {
   strs << stringForKey(m_key).value_or("?").toUpper();
 
   return strs.join('+');
+}
+
+// clang-format off
+static const std::unordered_map<Qt::Key, QString> displayKeyMap{
+	{Qt::Key_Return,   QStringLiteral("↵")},
+	{Qt::Key_Enter,    QStringLiteral("↵")},
+	{Qt::Key_Delete,   QStringLiteral("⌦")},
+	{Qt::Key_Backspace,QStringLiteral("⌫")},
+	{Qt::Key_Tab,      QStringLiteral("⇥")},
+	{Qt::Key_Up,       QStringLiteral("↑")},
+	{Qt::Key_Down,     QStringLiteral("↓")},
+	{Qt::Key_Left,     QStringLiteral("←")},
+	{Qt::Key_Right,    QStringLiteral("→")},
+	{Qt::Key_PageUp,   QStringLiteral("PgUp")},
+	{Qt::Key_PageDown, QStringLiteral("PgDn")},
+	{Qt::Key_Home,     QStringLiteral("Home")},
+	{Qt::Key_End,      QStringLiteral("End")},
+	{Qt::Key_Space,    QStringLiteral("␣")},
+	{Qt::Key_Escape,   QStringLiteral("Esc")},
+};
+// clang-format on
+
+QString Shortcut::toDisplayString() const {
+  QStringList parts;
+
+  if (m_modifiers.testFlag(Qt::MetaModifier)) { parts << "Super"; }
+  if (m_modifiers.testFlag(Qt::ControlModifier)) { parts << "Ctrl"; }
+  if (m_modifiers.testFlag(Qt::AltModifier)) { parts << "Alt"; }
+  if (m_modifiers.testFlag(Qt::ShiftModifier)) { parts << "Shift"; }
+
+  if (auto it = displayKeyMap.find(m_key); it != displayKeyMap.end()) {
+    parts << it->second;
+  } else {
+    parts << stringForKey(m_key).value_or("?").toUpper();
+  }
+
+  return parts.join('+');
 }
 
 std::vector<Qt::KeyboardModifier> Shortcut::modList() const {

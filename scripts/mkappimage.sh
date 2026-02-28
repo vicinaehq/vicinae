@@ -10,9 +10,6 @@ function die() {
 
 [ $# -ne 2 ] && die "Usage: $0 <install_dir> <app_dir>"
 
-command -v linuxdeploy || die "linuxdeployqt needs to be in PATH"
-command -v linuxdeploy-plugin-qt || die "linuxdeploy-plugin-qt needs to be in PATH"
-
 APPDIR=$2
 
 rm -rf $APPDIR
@@ -26,6 +23,7 @@ cp extra/vicinae.desktop ${APPDIR}
 # https://github.com/linuxdeploy/linuxdeploy-plugin-qt/issues/57
 cp /usr/lib/x86_64-linux-gnu/libssl.so* ${APPDIR}/usr/lib/
 
+export QML_SOURCES_PATHS=$PWD/src/server/src/qml/qml
 export EXTRA_PLATFORM_PLUGINS=libqwayland.so
 export EXTRA_QT_PLUGINS=waylandcompositor
 

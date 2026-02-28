@@ -5,8 +5,6 @@
 #include <qobject.h>
 #include <optional>
 
-class ClipboardHistoryModel;
-
 class ClipboardHistoryController : public QObject {
   Q_OBJECT
 
@@ -15,8 +13,7 @@ class ClipboardHistoryController : public QObject {
 public:
   static constexpr int DEFAULT_PAGE_SIZE = 1000;
 
-  ClipboardHistoryController(ClipboardService *clipboard, ClipboardHistoryModel *model,
-                             QObject *parent = nullptr);
+  ClipboardHistoryController(ClipboardService *clipboard, QObject *parent = nullptr);
 
   void setFilter(const QString &query);
   void setKindFilter(std::optional<ClipboardOfferKind> kind);
@@ -31,7 +28,6 @@ private slots:
   void handleClipboardChanged();
 
 private:
-  ClipboardHistoryModel *m_model = nullptr;
   ClipboardService *m_clipboard = nullptr;
 
   QueryWatcher m_watcher;

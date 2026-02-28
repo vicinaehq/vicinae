@@ -11,7 +11,7 @@ ScriptScanner::scan(std::span<const std::filesystem::path> dirs) {
   std::error_code ec;
   std::stack<ScannedDirectory> dirStack;
   std::unordered_set<std::string> idsSeen;
-  QMimeDatabase mimeDb;
+  QMimeDatabase const mimeDb;
 
   static const auto forbiddenExtensions = {".md", ".svg", ".txt"};
 
@@ -24,7 +24,7 @@ ScriptScanner::scan(std::span<const std::filesystem::path> dirs) {
     dirStack.pop();
 
     for (const auto &ent : std::filesystem::directory_iterator(dir.path, ec)) {
-      std::string filename = getLastPathComponent(ent.path());
+      std::string const filename = getLastPathComponent(ent.path());
 
       if (filename.starts_with('.') || filename.contains(".template")) continue;
 
@@ -45,8 +45,8 @@ ScriptScanner::scan(std::span<const std::filesystem::path> dirs) {
 
       if (std::ranges::contains(forbiddenExtensions, ext)) { continue; }
 
-      QMimeType mime = mimeDb.mimeTypeForFile(ent.path().c_str());
-      bool plainText = mime.inherits("text/plain");
+      QMimeType const mime = mimeDb.mimeTypeForFile(ent.path().c_str());
+      bool const plainText = mime.inherits("text/plain");
 
       if (!plainText) continue;
 

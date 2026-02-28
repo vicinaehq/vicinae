@@ -93,6 +93,6 @@ TEST_CASE("parse mimeapps.list from file", GROUP) {
   auto jpegAssociations = file.addedAssociations("image/jpeg");
 
   REQUIRE(file.path() == FIXTURES / "mimeapps.list");
-  REQUIRE(jpegAssociations.size() > 0);
+  REQUIRE(!jpegAssociations.empty());
   REQUIRE(jpegAssociations.at(0) == "swayimg.desktop");
 }

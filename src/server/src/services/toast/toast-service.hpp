@@ -1,6 +1,7 @@
 #pragma once
 #include "ui/toast/toast.hpp"
 #include <qstring.h>
+#include <qtimer.h>
 #include "common/qt.hpp"
 
 class Toast : public QObject {
@@ -12,7 +13,7 @@ signals:
 
 public:
   Toast(const QString &title, ToastStyle priority, const QString &message)
-      : m_title(title), m_priority(priority), m_message(message) {}
+      : m_title(title), m_message(message), m_priority(priority) {}
 
   const QString &title() const { return m_title; }
   const QString &message() const { return m_message; }

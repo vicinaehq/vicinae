@@ -125,7 +125,7 @@ private:
  */
 class IpcCommandServer : public QObject {
 public:
-  IpcCommandServer(ApplicationContext *ctx, QWidget *parent = nullptr);
+  IpcCommandServer(ApplicationContext *ctx, QObject *parent = nullptr);
   bool start(const std::filesystem::path &localPath);
 
 private:
@@ -138,6 +138,6 @@ private:
   QLocalServer m_server;
   std::vector<ClientInfo> m_clients;
 
-  RpcServer<ServerSchema, IpcContext> m_rpc;
   ApplicationContext &m_ctx;
+  RpcServer<ServerSchema, IpcContext> m_rpc;
 };

@@ -1,6 +1,6 @@
 #include "gnome-clipboard-server.hpp"
 #include "utils/environment.hpp"
-#include <QApplication>
+#include <QGuiApplication>
 #include <QDBusConnection>
 #include <QDBusInterface>
 #include <QDBusReply>
@@ -8,10 +8,10 @@
 #include <QTimer>
 #include <QMetaObject>
 
-GnomeClipboardServer::GnomeClipboardServer() : m_bus(QDBusConnection::sessionBus()) {
+GnomeClipboardServer::GnomeClipboardServer()
+    : m_bus(QDBusConnection::sessionBus()), m_reconnectTimer(new QTimer(this)) {
   using namespace std::chrono_literals;
 
-  m_reconnectTimer = new QTimer(this);
   m_reconnectTimer->setSingleShot(false);
   m_reconnectTimer->setInterval(5s);
   connect(m_reconnectTimer, &QTimer::timeout, this, &GnomeClipboardServer::onReconnectTimer);
@@ -76,7 +76,7 @@ bool GnomeClipboardServer::testExtensionAvailability() const {
   }
 
   // Try to call a simple method to verify the interface is working
-  QDBusReply<QStringList> reply = testInterface.call("GetClipboardMimeTypes");
+  QDBusReply<QStringList> const reply = testInterface.call("GetClipboardMimeTypes");
   if (!reply.isValid()) {
     qDebug() << "GnomeClipboardServer: Extension method call test failed:" << reply.error().message();
     return false;
@@ -107,8 +107,8 @@ bool GnomeClipboardServer::setupDBusConnection() {
 
   // Connect to ClipboardChanged signal
   // Signal signature: (ayss) = array of bytes, string, string
-  bool connected = m_bus.connect(DBUS_SERVICE, DBUS_PATH, DBUS_INTERFACE, "ClipboardChanged", this,
-                                 SLOT(handleClipboardChanged(QByteArray, QString, QString)));
+  bool const connected = m_bus.connect(DBUS_SERVICE, DBUS_PATH, DBUS_INTERFACE, "ClipboardChanged", this,
+                                       SLOT(handleClipboardChanged(QByteArray, QString, QString)));
 
   if (!connected) {
     qWarning() << "GnomeClipboardServer: Failed to connect to ClipboardChanged signal";
@@ -118,7 +118,7 @@ bool GnomeClipboardServer::setupDBusConnection() {
   }
 
   // Start listening to clipboard changes via the extension
-  QDBusReply<void> reply = m_interface->call("ListenToClipboardChanges");
+  QDBusReply<void> const reply = m_interface->call("ListenToClipboardChanges");
   if (!reply.isValid()) {
     qWarning() << "GnomeClipboardServer: Failed to start listening to clipboard changes:"
                << reply.error().message();
@@ -210,15 +210,15 @@ bool GnomeClipboardServer::setClipboardContent(QMimeData *data) {
     return false;
   }
 
-  QStringList formats = data->formats();
-  QString preferredFormat = selectPreferredFormat(formats);
+  QStringList const formats = data->formats();
+  QString const preferredFormat = selectPreferredFormat(formats);
 
   if (preferredFormat.isEmpty()) {
     qWarning() << "GnomeClipboardServer: No supported formats in QMimeData";
     return false;
   }
 
-  QByteArray contentData = data->data(preferredFormat);
+  QByteArray const contentData = data->data(preferredFormat);
   if (contentData.isEmpty()) {
     qWarning() << "GnomeClipboardServer: Empty data for format" << preferredFormat;
     return false;
@@ -243,7 +243,7 @@ QString GnomeClipboardServer::selectPreferredFormat(const QStringList &formats) 
 }
 
 bool GnomeClipboardServer::setTextContent(const QString &text) {
-  QDBusReply<void> reply = m_interface->call("SetContent", text);
+  QDBusReply<void> const reply = m_interface->call("SetContent", text);
   if (!reply.isValid()) {
     qWarning() << "GnomeClipboardServer: Failed to set text content:" << reply.error().message();
     return false;
@@ -252,7 +252,7 @@ bool GnomeClipboardServer::setTextContent(const QString &text) {
 }
 
 bool GnomeClipboardServer::setBinaryContent(const QByteArray &data, const QString &mimeType) {
-  QDBusReply<void> reply = m_interface->call("SetContentBinary", data, mimeType);
+  QDBusReply<void> const reply = m_interface->call("SetContentBinary", data, mimeType);
   if (!reply.isValid()) {
     qWarning() << "GnomeClipboardServer: Failed to set binary content:" << reply.error().message();
     return false;

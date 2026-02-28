@@ -59,7 +59,7 @@ void DesktopEntryReader::consume(char c) {
 }
 
 char DesktopEntryReader::consume() {
-  char c = peek();
+  const char c = peek();
   ++m_cursor;
   return c;
 }
@@ -84,30 +84,30 @@ std::string DesktopEntryReader::parseRawLocale() {
 }
 
 size_t DesktopEntryReader::computeLocalScore(const Locale &locale) {
-  using F = Locale::Component;
+  using enum Locale::Component;
 
-  if (m_locale.exactFlags(F::LANG | F::COUNTRY | F::MODIFIER)) {
-    if (m_locale.matchesOnly(locale, F::LANG | F::COUNTRY | F::MODIFIER)) return 4;
-    if (m_locale.matchesOnly(locale, F::LANG || Locale::COUNTRY)) return 3;
-    if (m_locale.matchesOnly(locale, F::LANG | Locale::MODIFIER)) return 2;
-    if (m_locale.matchesOnly(locale, F::LANG)) return 1;
+  if (m_locale.exactFlags(LANG | COUNTRY | MODIFIER)) {
+    if (m_locale.matchesOnly(locale, LANG | COUNTRY | MODIFIER)) return 4;
+    if (m_locale.matchesOnly(locale, LANG | COUNTRY)) return 3;
+    if (m_locale.matchesOnly(locale, LANG | MODIFIER)) return 2;
+    if (m_locale.matchesOnly(locale, static_cast<int>(LANG))) return 1;
     return 0;
   }
 
-  if (m_locale.exactFlags(F::LANG | F::COUNTRY)) {
-    if (m_locale.matchesOnly(locale, F::LANG | F::COUNTRY)) return 2;
-    if (m_locale.matchesOnly(locale, F::LANG)) return 1;
+  if (m_locale.exactFlags(LANG | COUNTRY)) {
+    if (m_locale.matchesOnly(locale, LANG | COUNTRY)) return 2;
+    if (m_locale.matchesOnly(locale, static_cast<int>(LANG))) return 1;
     return 0;
   }
 
-  if (m_locale.exactFlags(F::LANG | F::MODIFIER)) {
-    if (m_locale.matchesOnly(locale, F::LANG | F::MODIFIER)) return 2;
-    if (m_locale.matchesOnly(locale, F::LANG)) return 1;
+  if (m_locale.exactFlags(LANG | MODIFIER)) {
+    if (m_locale.matchesOnly(locale, LANG | MODIFIER)) return 2;
+    if (m_locale.matchesOnly(locale, static_cast<int>(LANG))) return 1;
     return 0;
   }
 
-  if (m_locale.exactFlags(F::LANG)) {
-    if (m_locale.matchesOnly(locale, F::LANG)) return 1;
+  if (m_locale.exactFlags(static_cast<int>(LANG))) {
+    if (m_locale.matchesOnly(locale, static_cast<int>(LANG))) return 1;
     return 0;
   }
 
@@ -115,27 +115,27 @@ size_t DesktopEntryReader::computeLocalScore(const Locale &locale) {
 }
 
 void DesktopEntryReader::parse() {
-  enum State { Reset, Comment } state = Reset;
+  enum class State { Reset, Comment } state = State::Reset;
 
   while (peek()) {
-    char c = peek();
+    const char c = peek();
 
     switch (state) {
-    case Reset: {
+    case State::Reset: {
       if (c == '#') {
-        state = Comment;
+        state = State::Comment;
       } else if (c == '[') {
         parseGroupHeader();
-        state = Reset;
+        state = State::Reset;
         continue;
       } else if (isKeyChar(c)) {
         parseEntry();
-        state = Reset;
+        state = State::Reset;
         continue;
       }
     }
-    case Comment: {
-      if (c == LF) { state = Reset; }
+    case State::Comment: {
+      if (c == LF) { state = State::Reset; }
     }
     }
     consume();
@@ -143,7 +143,7 @@ void DesktopEntryReader::parse() {
 }
 
 void DesktopEntryReader::parseEntry() {
-  std::string key = parseKey();
+  const std::string key = parseKey();
   std::optional<Locale> locale;
 
   skipSpace();
@@ -158,12 +158,12 @@ void DesktopEntryReader::parseEntry() {
   }
 
   skipSpace();
-  std::string value = parseRawValue();
+  const std::string value = parseRawValue();
 
   if (!m_currentGroup) return;
 
   if (locale) {
-    size_t score = computeLocalScore(locale.value());
+    const size_t score = computeLocalScore(locale.value());
 
     if (!score) return;
 

@@ -59,7 +59,7 @@ ClipboardExtension::ClipboardExtension() {
 
 void ClipboardExtension::initialized(const QJsonObject &preferences) const {
   auto clipman = ServiceRegistry::instance()->clipman();
-  bool eraseOnStartup = preferences.value("eraseOnStartup").toBool();
+  bool const eraseOnStartup = preferences.value("eraseOnStartup").toBool();
 
   if (eraseOnStartup) { clipman->removeAllSelections(); }
 }

@@ -14,4 +14,4 @@ QString DummyClipboardServer::id() const { return "dummy"; }
 
 bool DummyClipboardServer::isAlive() const { return false; }
 
-DummyClipboardServer::DummyClipboardServer() {}
+DummyClipboardServer::DummyClipboardServer() = default;

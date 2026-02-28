@@ -1,7 +1,7 @@
 #pragma once
-#include "extensions/vicinae/store/intro-view.hpp"
+#include "qml/store-intro-view-host.hpp"
+#include "qml/vicinae-store-view-host.hpp"
 #include "single-view-command-context.hpp"
-#include "store/store-listing-view.hpp"
 #include "vicinae.hpp"
 
 class VicinaeStoreCommand : public BuiltinCallbackCommand {
@@ -26,10 +26,24 @@ class VicinaeStoreCommand : public BuiltinCallbackCommand {
     auto alwaysShowIntro = ctrl->preferenceValues().value("alwaysShowIntro").toBool(false);
 
     if (alwaysShowIntro || !ctrl->storage().getItem("introCompleted").toBool()) {
-      ctx->navigation->pushView(new VicinaeStoreIntroView);
+      static const QString INTRO = QStringLiteral(R"(
+# Welcome to the Vicinae Extension Store
+
+The Vicinae extension store features community-built extensions that have been approved by the core contributors of the Vicinae project.
+
+Every extension listed here has its source code available in the [vicinaehq/extensions](https://github.com/vicinaehq/extensions) repository.
+
+If you're looking to build your own extension, take a look at the [documentation](https://docs.vicinae.com/extensions/introduction). If you think your extension would be a good fit for the store, feel free to submit it!
+)");
+      auto icon = ImageURL::builtin("cart");
+      icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
+      ctx->navigation->pushView(new StoreIntroViewHost(INTRO, icon, "Continue to store", [ctrl]() {
+        ctrl->storage().setItem("introCompleted", true);
+        ctrl->context()->navigation->replaceView<VicinaeStoreViewHost>();
+      }));
       return;
     }
 
-    ctx->navigation->pushView(new VicinaeStoreListingView);
+    ctx->navigation->pushView(new VicinaeStoreViewHost);
   }
 };

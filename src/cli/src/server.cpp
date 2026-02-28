@@ -22,7 +22,7 @@ void CliServerCommand::setup(CLI::App *app) {
                 "Do not start the extension runtime node process. Typescript extensions will not run.");
 }
 
-bool CliServerCommand::run(CLI::App *app) {
+bool CliServerCommand::run(CLI::App *) {
   const auto path = vicinae::findHelperProgram("vicinae-server");
 
   if (!path) {

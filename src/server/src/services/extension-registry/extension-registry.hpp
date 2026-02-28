@@ -56,7 +56,8 @@ public:
    * You can pass a callback if you want to do something (such as displaying a confirmation toast)
    * right after the unzipping was done.
    */
-  QFuture<bool> installFromZip(const QString &id, std::string data, std::function<void(bool)> cb = {});
+  QFuture<bool> installFromZip(const QString &id, const std::string &data,
+                               const std::function<void(bool)> &cb = {});
 
   bool isInstalled(const QString &id) const;
   bool uninstall(const QString &id);

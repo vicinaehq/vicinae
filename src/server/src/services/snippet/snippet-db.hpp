@@ -48,11 +48,11 @@ class SnippetDatabase {
 public:
   static constexpr size_t MAX_SNIPPETS = 10000;
 
-  SnippetDatabase(std::filesystem::path path);
+  SnippetDatabase(const std::filesystem::path &path);
 
-  std::expected<snippet::SerializedSnippet, std::string> addSnippet(snippet::SnippetPayload snippet);
+  std::expected<snippet::SerializedSnippet, std::string> addSnippet(const snippet::SnippetPayload &snippet);
   std::expected<void, std::string> setSnippets(std::span<snippet::SerializedSnippet> snippets);
-  std::expected<void, std::string> updateSnippet(std::string_view id, snippet::SnippetPayload payload);
+  std::expected<void, std::string> updateSnippet(std::string_view id, const snippet::SnippetPayload &payload);
   std::expected<snippet::SerializedSnippet, std::string> removeSnippet(std::string_view id);
 
   std::vector<snippet::SerializedSnippet> snippets() const;

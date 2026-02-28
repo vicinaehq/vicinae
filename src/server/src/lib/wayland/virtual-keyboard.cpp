@@ -50,7 +50,7 @@ bool VirtualKeyboard::isAvailable() const { return m_iface && m_keyboard; }
 bool VirtualKeyboard::sendKeySequence(xkb_keysym_t key, uint32_t mods) {
   if (!isAvailable()) return false;
 
-  uint32_t keyCode = mappedKeyCode(key);
+  uint32_t const keyCode = mappedKeyCode(key);
 
   if (mods) { applyMods(mods); }
   usleep(delayMs);
@@ -113,7 +113,7 @@ std::string VirtualKeyboard::generateKeymap(const std::vector<xkb_keysym_t> &key
 }
 
 bool VirtualKeyboard::uploadKeymap(const std::vector<xkb_keysym_t> &keysyms) {
-  int fd = memfd_create("vicinae-virtual-keymap", MFD_CLOEXEC);
+  int const fd = memfd_create("vicinae-virtual-keymap", MFD_CLOEXEC);
 
   if (fd < 0) {
     qWarning() << "VirtualKeyboard::uploadKeymap: memfd_create failed" << strerror(errno);
@@ -137,7 +137,7 @@ bool VirtualKeyboard::uploadKeymap(const std::vector<xkb_keysym_t> &keysyms) {
 
 uint32_t VirtualKeyboard::mappedKeyCode(xkb_keysym_t sym) {
   if (auto idx = indexOfKey(sym)) return idx.value() + 1;
-  uint32_t code = m_map.size() + 1;
+  uint32_t const code = m_map.size() + 1;
   m_map.emplace_back(sym);
   uploadKeymap(m_map);
   return code;

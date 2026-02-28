@@ -29,7 +29,7 @@ public:
       out << BOLD << HEADLINE << RESET << "\n\n";
     }
 
-    std::string bin_name = name.empty() ? app->get_name() : name;
+    const std::string bin_name = name.empty() ? app->get_name() : name;
     out << BOLD << "Usage: " << RESET;
 
     if (app->get_parent() != nullptr) {
@@ -75,7 +75,7 @@ public:
         out << RESET;
 
         // Pad to align descriptions
-        int padding = 28 - printed_length;
+        const int padding = 28 - printed_length;
         if (padding > 0) {
           out << std::string(padding, ' ');
         } else {
@@ -105,7 +105,7 @@ public:
         out << "  " << BLUE << sub->get_name() << RESET;
 
         // Pad to align descriptions
-        int padding = max_name_len - sub->get_name().length() + 8;
+        const int padding = max_name_len - sub->get_name().length() + 8;
         if (padding > 0) {
           out << std::string(padding, ' ');
         } else {
@@ -137,7 +137,7 @@ public:
     app->add_flag("--new", m_newInstance, "Always launch a new instance");
   }
 
-  bool run(CLI::App *app) override {
+  bool run(CLI::App *) override {
     const auto res = ipc::CliClient::oneshot<ipc::LaunchApp>(
         {.appId = m_appId, .args = m_args, .newInstance = m_newInstance});
 
@@ -162,7 +162,7 @@ private:
 class AppCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "app"; }
   std::string description() const override { return "System application commands"; }
-  void setup(CLI::App *app) override {}
+  void setup(CLI::App *) override {}
 
 public:
   AppCommand() { registerCommand<LaunchAppCommand>(); }
@@ -172,7 +172,7 @@ class CliPing : public AbstractCommandLineCommand {
   std::string id() const override { return "ping"; }
   std::string description() const override { return "Ping the vicinae server"; }
 
-  bool run(CLI::App *app) override {
+  bool run(CLI::App *) override {
     const auto res = ipc::CliClient::oneshot<ipc::Ping>({});
 
     if (!res) {
@@ -190,7 +190,7 @@ class ToggleCommand : public AbstractCommandLineCommand {
   std::string description() const override { return "Toggle the vicinae window"; }
   void setup(CLI::App *app) override { app->add_option("-q,--query", m_query, "Set search query"); }
 
-  bool run(CLI::App *app) override {
+  bool run(CLI::App *) override {
     ipc::CliClient::DeeplinkOptions opts;
 
     if (m_query) { opts.query = {{"fallbackText", m_query.value()}}; }
@@ -211,7 +211,7 @@ class OpenCommand : public AbstractCommandLineCommand {
   std::string description() const override { return "Open the vicinae window"; }
   void setup(CLI::App *app) override { app->add_option("-q,--query", m_query, "Set search query"); }
 
-  bool run(CLI::App *app) override {
+  bool run(CLI::App *) override {
     ipc::CliClient::DeeplinkOptions opts;
 
     if (m_query) { opts.query = {{"fallbackText", m_query.value()}}; }
@@ -231,7 +231,7 @@ class CloseCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "close"; }
   std::string description() const override { return "Close the vicinae window"; }
 
-  bool run(CLI::App *app) override {
+  bool run(CLI::App *) override {
     if (auto res = ipc::CliClient::deeplink(std::format("vicinae://close")); !res) {
       std::println(std::cerr, "Failed to close: {}", res.error());
       return false;
@@ -260,7 +260,7 @@ class DMenuCommand : public AbstractCommandLineCommand {
     app->add_flag("--no-footer", m_req.noFooter, "Hide the status bar footer");
   }
 
-  bool run(CLI::App *app) override {
+  bool run(CLI::App *) override {
     m_req.rawContent = vicinae::slurp(std::cin);
 
     const auto res = ipc::CliClient::oneshot<ipc::DMenu>(m_req);
@@ -284,7 +284,7 @@ class VersionCommand : public AbstractCommandLineCommand {
   std::string description() const override { return "Show version and build information"; }
   void setup(CLI::App *app) override { app->alias("ver"); }
 
-  bool run(CLI::App *app) override {
+  bool run(CLI::App *) override {
     std::cout << "Version " << VICINAE_GIT_TAG << " (commit " << VICINAE_GIT_COMMIT_HASH << ")\n"
               << "Build: " << BUILD_INFO << "\n"
               << "Provenance: " << VICINAE_PROVENANCE << "\n";
@@ -302,7 +302,7 @@ public:
     app->add_option("link", link, "The deeplink to open. See https://docs.vicinae.com/deeplinks")->required();
   }
 
-  bool run(CLI::App *app) override {
+  bool run(CLI::App *) override {
     if (const auto result = ipc::CliClient::deeplink(link); !result) {
       std::println(std::cerr, "Failed to execute deeplink: {}", result.error());
       return false;
@@ -327,7 +327,7 @@ int CommandLineApp::run(int ac, char **av) {
     cmd->prepare(sub, &success);
     cmd->setup(sub);
     sub->callback([cmd = cmd.get(), sub, &success]() {
-      bool r = cmd->run(sub);
+      const bool r = cmd->run(sub);
       success = r;
     });
   }
@@ -366,7 +366,8 @@ int CommandLineApp::run(int ac, char **av) {
 
     // raycast:// or com.raycast:/
     auto pred = [&](std::string_view scheme) { return arg.starts_with(std::string{scheme} + ":/"); };
-    bool hasScheme = std::ranges::any_of(std::initializer_list{"vicinae", "raycast", "com.raycast"}, pred);
+    const bool hasScheme =
+        std::ranges::any_of(std::initializer_list{"vicinae", "raycast", "com.raycast"}, pred);
 
     if (hasScheme) {
       if (auto res = ipc::CliClient::deeplink(arg, {}); !res) {
@@ -395,13 +396,13 @@ int CommandLineApp::run(int ac, char **av) {
 }
 
 int CommandLineInterface::execute(int ac, char **av) {
+  /*
   bool ignoreAppImageWarning = false;
 
   if (const char *p = getenv("IGNORE_APPIMAGE_WARNING"); p && std::string_view{p} == "1") {
     ignoreAppImageWarning = true;
   }
 
-  /*
   if (Environment::isAppImage() && !ignoreAppImageWarning) {
     std::cerr
         << rang::fg::red
@@ -412,7 +413,7 @@ int CommandLineInterface::execute(int ac, char **av) {
   }
   */
 
-  std::vector<std::unique_ptr<AbstractCommandLineCommand>> commands;
+  const std::vector<std::unique_ptr<AbstractCommandLineCommand>> commands;
   CommandLineApp app(std::string{HEADLINE});
 
   app.registerCommand<VersionCommand>();

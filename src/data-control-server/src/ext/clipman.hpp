@@ -13,6 +13,7 @@
 class ExtClipman : public WaylandDisplay, public WaylandRegistry::Listener, public ExtDataDevice::Listener {
 
 public:
+  virtual ~ExtClipman() = default;
   static ExtClipman *instance();
   void start();
   ExtClipman();

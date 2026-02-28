@@ -1,10 +1,9 @@
-#include <qapplication.h>
+#include <QGuiApplication>
 #include <qdbusargument.h>
 #include <qguiapplication_platform.h>
 #include <qlogging.h>
 #include <QWindow>
 #include <ranges>
-#include <QWidget>
 #include "utils/qt-wayland-utils.hpp"
 #include "kde-window-manager.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
@@ -66,6 +65,7 @@ void WindowManager::start() {
 
 }; // namespace KDE
 
+// NOLINTBEGIN(bugprone-return-const-ref-from-parameter)
 const QDBusArgument &operator>>(const QDBusArgument &arg, KDE::KRunnerWindowList &lst) {
   arg.beginArray();
   while (!arg.atEnd()) {
@@ -88,3 +88,4 @@ const QDBusArgument &operator>>(const QDBusArgument &arg, KDE::KRunnerWindowData
 
   return arg;
 }
+// NOLINTEND(bugprone-return-const-ref-from-parameter)

@@ -2,7 +2,6 @@
 #include "file.hpp"
 #include <filesystem>
 #include "../env/env.hpp"
-#include <filesystem>
 #include <system_error>
 #include <set>
 
@@ -19,9 +18,9 @@ std::vector<xdgpp::DesktopFile> getAllDesktopEntries(const std::vector<std::file
   for (const auto &dir : paths) {
     std::error_code ec;
     for (const auto &entry : fs::recursive_directory_iterator(dir, ec)) {
-      auto path = entry.path();
+      const auto &path = entry.path();
       auto filename = path.filename();
-      fs::path id = DesktopFile::relativeId(path, dir);
+      const fs::path id = DesktopFile::relativeId(path, dir);
 
       if (!filename.string().ends_with(".desktop")) continue;
       if (seen.contains(id)) continue;

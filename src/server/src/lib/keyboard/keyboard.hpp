@@ -39,12 +39,6 @@ public:
   bool isValid() const { return m_isValid; }
   operator bool() const { return isValid(); }
 
-  /**
-   * All unique keys in the shortcut, including modifiers.
-   * For instance, ctrl+shift+a returns {Qt::Key_Control, Qt::Key_Shift, Qt::Key_A}
-   */
-  std::vector<Qt::Key> allKeys() const;
-  std::vector<Qt::Key> modKeys() const;
   std::vector<Qt::KeyboardModifier> modList() const;
 
   bool isValidKey() const { return stringForKey(m_key).has_value(); }
@@ -55,6 +49,9 @@ public:
   // It can be parsed back using Shortcut::fromString
   // e.g meta+shift+A
   QString toString() const;
+
+  // Human-readable display form for UI badges (e.g. "Ctrl+B", "Shift+Enter")
+  QString toDisplayString() const;
   Shortcut &modded(Qt::KeyboardModifier mod);
 
   bool equals(const Shortcut &other, bool ignoreNumpadMod = true) const;

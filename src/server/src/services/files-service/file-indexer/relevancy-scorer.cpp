@@ -1,4 +1,5 @@
 #include "utils/utils.hpp"
+#include <algorithm>
 #include <filesystem>
 #include <qlocale.h>
 #include <unordered_map>
@@ -52,7 +53,7 @@ double RelevancyScorer::computeLocationMultiplier(const std::filesystem::path &p
 
 double RelevancyScorer::computeFileTypeMultiplier(const std::filesystem::path &path) {
   std::string extension = path.extension().string();
-  std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
+  std::ranges::transform(extension, extension.begin(), ::tolower);
   auto it = FILE_TYPE_WEIGHTS.find(extension);
 
   if (it != FILE_TYPE_WEIGHTS.end()) { return it->second; }
@@ -70,7 +71,7 @@ double RelevancyScorer::computeHiddenFileMultiplier(const std::filesystem::path 
 }
 
 double RelevancyScorer::computePathDepthMultiplier(const std::filesystem::path &path) {
-  size_t depth = std::distance(path.begin(), path.end());
+  size_t const depth = std::distance(path.begin(), path.end());
 
   if (depth <= 3) return 1.0;
   if (depth <= 6) return 1.0 - (depth - 3) * 0.05; // small penalty for moderately long paths

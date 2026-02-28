@@ -45,6 +45,11 @@ protobuf_generate(
   PROTOC_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/proto
 )
 
+set_source_files_properties(
+  ${CMAKE_CURRENT_BINARY_DIR}/proto/wlr-clipboard.pb.cc
+  PROPERTIES SKIP_LINTING ON
+)
+
 target_include_directories(${DATA_CONTROL_SERVER_BIN} PRIVATE
   ${CMAKE_CURRENT_BINARY_DIR}/proto
 )

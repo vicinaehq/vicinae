@@ -95,13 +95,13 @@ ListSectionModel ListModelParser::parseSection(const QJsonObject &instance) {
   return model;
 }
 
-ListModelParser::ListModelParser() {}
+ListModelParser::ListModelParser() = default;
 
 ListModel ListModelParser::parse(const QJsonObject &instance) {
   ListModel model;
   auto props = instance.value("props").toObject();
   // no builtin filtering by default if onSearchTextChange handler is specified
-  bool defaultFiltering = !props.contains("onSearchTextChange");
+  bool const defaultFiltering = !props.contains("onSearchTextChange");
 
   model.dirty = instance.value("dirty").toBool(false);
   model.propsDirty = instance.value("propsDirty").toBool(false);
@@ -139,13 +139,13 @@ ListModel ListModelParser::parse(const QJsonObject &instance) {
     if (type == "list-item") {
       auto item = parseListItem(childObj, index);
 
-      model.items.push_back(item);
+      model.items.emplace_back(item);
     }
 
     if (type == "list-section") {
       auto section = parseSection(childObj);
 
-      model.items.push_back(section);
+      model.items.emplace_back(section);
     }
 
     if (type == "dropdown") { model.searchBarAccessory = DropdownModel::fromJson(childObj); }

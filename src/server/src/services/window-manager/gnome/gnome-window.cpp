@@ -47,7 +47,7 @@ void GnomeWindow::updateWithDetails(const QJsonObject &detailsJson) {
 
 uint32_t GnomeWindow::numericId() const {
   bool ok;
-  uint32_t numId = m_id.toUInt(&ok);
+  uint32_t const numId = m_id.toUInt(&ok);
   if (!ok) {
     qWarning() << "Failed to convert window ID to numeric:" << m_id;
     return 0;

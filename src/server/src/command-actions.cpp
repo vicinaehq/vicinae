@@ -2,7 +2,7 @@
 #include "navigation-controller.hpp"
 
 void OpenBuiltinCommandAction::execute(ApplicationContext *context) {
-  QString searchText = context->navigation->searchText();
+  QString const searchText = context->navigation->searchText();
 
   context->navigation->launch(cmd);
 

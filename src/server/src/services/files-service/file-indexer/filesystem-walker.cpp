@@ -8,7 +8,6 @@
 #include <qlogging.h>
 #include <qobjectdefs.h>
 #include <stack>
-#include <qlogging.h>
 #include <string>
 
 namespace fs = std::filesystem;
@@ -37,7 +36,7 @@ static const std::vector<std::string_view> EXCLUDED_FILENAMES = {
 
 bool GitIgnoreReader::matches(const fs::path &path) const {
   for (const auto &pattern : m_patterns) {
-    std::string filename = getLastPathComponent(path);
+    std::string const filename = getLastPathComponent(path);
     std::string processedPattern = pattern;
 
     if (pattern.starts_with('/')) {
@@ -87,7 +86,7 @@ bool FileSystemWalker::isIgnored(const std::filesystem::path &path) const {
 
   while (p != p.root_directory()) {
     for (const auto &name : m_ignoreFiles) {
-      fs::path ignorePath = p / name;
+      fs::path const ignorePath = p / name;
 
       if (!fs::is_regular_file(ignorePath, ec)) continue;
       if (GitIgnoreReader(ignorePath).matches(path)) { return true; }
@@ -108,7 +107,7 @@ void FileSystemWalker::walk(const fs::path &root, const WalkCallback &callback) 
 
   auto start = high_resolution_clock::now();
   std::stack<fs::path> dirStack;
-  size_t rootDepth = std::distance(root.begin(), root.end());
+  size_t const rootDepth = std::distance(root.begin(), root.end());
   size_t dirCount = 0;
   size_t fileCount = 0;
   std::error_code ec;
@@ -135,7 +134,7 @@ void FileSystemWalker::walk(const fs::path &root, const WalkCallback &callback) 
       }
       if (entry.is_symlink(ec)) { continue; }
 
-      auto path = entry.path();
+      const auto &path = entry.path();
 
       if (m_ignoreHiddenFiles && isHiddenPath(path)) {
         if (m_verbose) { qInfo() << "FileSystemWalker: ignoring hidden path" << path.c_str(); }
@@ -154,7 +153,7 @@ void FileSystemWalker::walk(const fs::path &root, const WalkCallback &callback) 
         continue;
       }
 
-      bool isDir = entry.is_directory(ec);
+      bool const isDir = entry.is_directory(ec);
 
       if (isDir) {
         ++dirCount;
@@ -163,8 +162,8 @@ void FileSystemWalker::walk(const fs::path &root, const WalkCallback &callback) 
       }
 
       if (m_recursive && isDir) {
-        size_t depth = std::distance(path.begin(), path.end()) - rootDepth;
-        bool shouldDescend = !m_maxDepth || depth <= *m_maxDepth;
+        size_t const depth = std::distance(path.begin(), path.end()) - rootDepth;
+        bool const shouldDescend = !m_maxDepth || depth <= *m_maxDepth;
         if (shouldDescend) dirStack.push(entry);
       }
 
@@ -172,7 +171,7 @@ void FileSystemWalker::walk(const fs::path &root, const WalkCallback &callback) 
     }
   }
 
-  double duration = duration_cast<seconds>(high_resolution_clock::now() - start).count();
+  double const duration = duration_cast<seconds>(high_resolution_clock::now() - start).count();
 
   qInfo().noquote()
       << QString("Done walking file tree at %1. Processed %2 directories and %3 files in %4 seconds.")

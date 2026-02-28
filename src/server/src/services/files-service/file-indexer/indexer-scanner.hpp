@@ -22,7 +22,7 @@ private:
   void enqueueBatch(const std::vector<FileEvent> &paths);
 
 public:
-  IndexerScanner(std::shared_ptr<DbWriter> writer, const Scan &scan, FinishCallback callback);
+  IndexerScanner(const std::shared_ptr<DbWriter> &writer, const Scan &scan, FinishCallback callback);
   ~IndexerScanner() = default;
 
   void interrupt() override;

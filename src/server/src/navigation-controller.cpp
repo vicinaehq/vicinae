@@ -1,9 +1,10 @@
 #include "navigation-controller.hpp"
+#include <QTimer>
 #include "command-controller.hpp"
 #include "extension/extension-command.hpp"
 #include "service-registry.hpp"
 #include "overlay-controller/overlay-controller.hpp"
-#include "extension/missing-extension-preference-view.hpp"
+#include "qml/missing-preference-view-host.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "services/toast/toast-service.hpp"
@@ -13,9 +14,9 @@
 #include "utils/environment.hpp"
 #include <chrono>
 #include <qlogging.h>
-#include <qwidget.h>
 #include <QProcessEnvironment>
 #include <ranges>
+#include <utility>
 
 NavigationController::NavigationController(ApplicationContext &ctx) : m_ctx(ctx) {}
 
@@ -50,7 +51,7 @@ void NavigationController::goBack(const GoBackOptions &opts) {
 void NavigationController::broadcastSearchText(const QString &text, const BaseView *caller) {
   if (auto state = findViewState(VALUE_OR(caller, topView()))) {
     state->searchText = text;
-    state->sender->textChanged(text);
+    if (state->sender == topView()) { state->sender->textChanged(text); }
   }
 }
 
@@ -88,7 +89,7 @@ void NavigationController::applyPopToRoot(const PendingPopToRoot &settings) {
     return settings.type;
   };
 
-  PopToRootType popToRootType = resolveApplicablePopToRoot();
+  PopToRootType const popToRootType = resolveApplicablePopToRoot();
 
   switch (popToRootType) {
   case PopToRootType::Immediate:
@@ -121,7 +122,14 @@ void NavigationController::confirmAlert(const QString &title, const QString &des
 
 void NavigationController::clearSearchText() { setSearchText(""); }
 
-NavigationController::ViewState::~ViewState() { sender->deleteLater(); }
+NavigationController::ViewState::~ViewState() {
+  // Defer deletion so the C++ host outlives StackView's QML item cleanup.
+  // StackView items have JavaScriptOwnership and are GC'd non-deterministically;
+  // a plain deleteLater() can destroy the host first, causing QML bindings to
+  // re-evaluate with a null reference.
+  auto *s = sender;
+  QTimer::singleShot(0, s, [s]() { s->deleteLater(); });
+}
 
 void NavigationController::openActionPanel() {
   if (m_isPanelOpened) return;
@@ -143,8 +151,19 @@ void NavigationController::toggleActionPanel() {
 }
 
 void NavigationController::createCompletion(const ArgumentList &args, const ImageURL &icon) {
+  static constexpr int MAX_COMPLETER_ARGS = 3;
+
   if (auto state = topState()) {
-    CompleterState completer(args, icon);
+    // Limit arguments to what the UI can display
+    auto truncated = args;
+    if (static_cast<int>(truncated.size()) > MAX_COMPLETER_ARGS) truncated.resize(MAX_COMPLETER_ARGS);
+
+    CompleterState completer(truncated, icon);
+
+    // Initialize values with empty entries so validation can check them
+    for (const auto &arg : truncated) {
+      completer.values.emplace_back(arg.name, QString());
+    }
 
     state->completer = completer;
     emit completionCreated(state->completer.value_or(completer));
@@ -217,12 +236,6 @@ void NavigationController::popCurrentView() {
 
   auto &next = m_views.back();
 
-  if (auto &accessory = next->searchAccessory) {
-    emit searchAccessoryChanged(accessory.get());
-  } else {
-    emit searchAccessoryCleared();
-  }
-
   emit currentViewChanged(*next.get());
 
   emit searchTextTampered(next->searchText);
@@ -230,8 +243,8 @@ void NavigationController::popCurrentView() {
   emit navigationStatusChanged(next->navigation.title, next->navigation.icon);
   emit headerVisiblityChanged(next->needsTopBar);
   emit searchVisibilityChanged(next->supportsSearch);
+  emit searchInteractiveChanged(next->searchInteractive);
   emit statusBarVisiblityChanged(next->needsStatusBar);
-  emit searchAccessoryVisiblityChanged(next->accessoryVisibility);
   emit loadingChanged(next->isLoading);
 
   if (auto cmpl = next->completer) {
@@ -263,20 +276,6 @@ void NavigationController::popToRoot(const PopToRootOptions &opts) {
   }
 
   if (opts.clearSearch) clearSearchText();
-}
-
-void NavigationController::clearSearchAccessory(const BaseView *caller) {
-  if (auto state = findViewState(VALUE_OR(caller, topView()))) {
-    state->searchAccessory.reset();
-    if (state->sender == topView()) { emit searchAccessoryCleared(); }
-  }
-}
-
-void NavigationController::setSearchAccessoryVisibility(bool value, const BaseView *caller) {
-  if (auto state = findViewState(VALUE_OR(caller, topView()))) {
-    state->accessoryVisibility = value;
-    if (state->sender == topView()) { emit searchAccessoryVisiblityChanged(value); }
-  }
 }
 
 void NavigationController::selectSearchText() const { emit searchTextSelected(); }
@@ -392,6 +391,13 @@ void NavigationController::setSearchVisibility(bool value, const BaseView *calle
   }
 }
 
+void NavigationController::setSearchInteractive(bool value, const BaseView *caller) {
+  if (auto state = findViewState(VALUE_OR(caller, topView()))) {
+    state->searchInteractive = value;
+    if (state->sender == topView()) { emit searchInteractiveChanged(value); }
+  }
+}
+
 void NavigationController::setStatusBarVisibility(bool value, const BaseView *caller) {
   if (auto state = findViewState(VALUE_OR(caller, topView()))) {
     state->needsStatusBar = value;
@@ -404,16 +410,29 @@ void NavigationController::executeAction(AbstractAction *action) {
 
   if (!state) return;
 
-  if (action->isSubmenu()) {
-    if (auto view = action->createSubmenu()) {
-      openActionPanel();
-      emit submenuRequested(view);
+  // Keep the action alive during execution. Side effects of execute()
+  // (e.g. launch() triggering a root search refresh via itemsChanged)
+  // can clear the action panel, dropping the last shared_ptr to this action.
+  std::shared_ptr<AbstractAction> guard;
+  if (auto &panel = state->actionPanelState) {
+    for (const auto &sec : panel->sections()) {
+      for (const auto &a : sec->m_actions) {
+        if (a.get() == action) {
+          guard = a;
+          break;
+        }
+      }
+      if (guard) break;
     }
+  }
+
+  if (action->isSubmenu()) {
+    openActionPanel();
     return;
   }
 
   if (auto cmpl = state->completer; cmpl && action->isPrimary()) {
-    for (int i = 0; i != cmpl->args.size() && i != cmpl->values.size(); ++i) {
+    for (size_t i = 0; i != cmpl->args.size() && i != cmpl->values.size(); ++i) {
       const auto &arg = cmpl->args[i];
       const auto &value = cmpl->values[i];
 
@@ -446,19 +465,13 @@ AbstractAction *NavigationController::findBoundAction(const QKeyEvent *event) co
 }
 
 void NavigationController::activateView(const ViewState &state) {
-  if (auto &accessory = state.searchAccessory) {
-    emit searchAccessoryChanged(accessory.get());
-  } else {
-    emit searchAccessoryCleared();
-  }
-
   emit headerVisiblityChanged(state.needsTopBar);
   emit searchVisibilityChanged(state.supportsSearch);
+  emit searchInteractiveChanged(state.searchInteractive);
   emit statusBarVisiblityChanged(state.needsStatusBar);
+  emit backButtonVisibilityChanged(state.showBackButton);
   emit loadingChanged(state.isLoading);
-  emit navigationStatusChanged(state.navigation.title, state.navigation.icon);
   emit actionsChanged({});
-  emit searchTextTampered(state.searchText);
   emit searchPlaceholderTextChanged(state.placeholderText);
   destroyCurrentCompletion();
 
@@ -466,6 +479,8 @@ void NavigationController::activateView(const ViewState &state) {
   state.sender->activate();
 
   emit currentViewChanged(state);
+  emit searchTextTampered(state.searchText);
+  emit navigationStatusChanged(state.navigation.title, state.navigation.icon);
 }
 
 void NavigationController::replaceView(BaseView *view) {
@@ -480,14 +495,6 @@ void NavigationController::pushView(BaseView *view) {
   m_views.emplace_back(createViewState(view));
   activateView(*topState());
   emit viewPushed(view);
-}
-
-void NavigationController::setSearchAccessory(QWidget *accessory, const BaseView *caller) {
-  if (auto state = findViewState(VALUE_OR(caller, topView()))) {
-    state->searchAccessory.reset(accessory);
-
-    if (state->sender == topView()) { emit searchAccessoryChanged(accessory); }
-  }
 }
 
 void NavigationController::setActions(std::unique_ptr<ActionPanelState> panel, const BaseView *caller) {
@@ -531,7 +538,9 @@ const NavigationController::ViewState *NavigationController::topState() const {
 }
 
 NavigationController::ViewState *NavigationController::findViewState(const BaseView *view) {
+  // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
   return const_cast<ViewState *>(std::as_const(*this).findViewState(view));
+  // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 }
 
 bool NavigationController::isRootSearch() const { return m_views.size() == 1; }
@@ -557,7 +566,7 @@ bool NavigationController::reloadActiveCommand() {
 
   // we only store the id, as the pointer will likely become invalid
   // after unloading.
-  EntrypointId id = cmd->uniqueId();
+  EntrypointId const id = cmd->uniqueId();
 
   unloadActiveCommand();
   launch(id);
@@ -579,7 +588,7 @@ void NavigationController::unloadActiveCommand() {
 
   auto size = m_frames.back()->viewCount;
 
-  for (int i = 0; i < size; ++i) {
+  for (int i = 0; std::cmp_less(i, size); ++i) {
     popCurrentView();
   }
 }
@@ -587,7 +596,7 @@ void NavigationController::unloadActiveCommand() {
 void NavigationController::launch(const EntrypointId &id) {
   auto root = m_ctx.services->rootItemManager();
 
-  for (ExtensionRootProvider *extension : root->extensions()) {
+  for (ExtensionRootProvider const *extension : root->extensions()) {
     for (const auto &cmd : extension->repository()->commands()) {
       if (cmd->uniqueId() == id) {
         launch(cmd);
@@ -610,7 +619,7 @@ void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd, const
     return;
   }
 
-  bool shouldCheckPreferences = cmd->type() == CommandType::CommandTypeExtension;
+  bool const shouldCheckPreferences = cmd->type() == CommandType::CommandTypeExtension;
   LaunchProps props;
 
   props.arguments = arguments;
@@ -622,10 +631,10 @@ void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd, const
     auto preferenceValues = manager->getPreferenceValues(itemId);
 
     for (const auto &preference : preferences) {
-      QJsonValue value = preferenceValues.value(preference.name());
-      bool hasValue = !(value.isUndefined() || value.isNull());
-      bool hasDefault = !preference.defaultValue().isUndefined();
-      bool isMissing = preference.required() && !hasValue && !hasDefault;
+      QJsonValue const value = preferenceValues.value(preference.name());
+      bool const hasValue = !(value.isUndefined() || value.isNull());
+      bool const hasDefault = !preference.defaultValue().isUndefined();
+      bool const isMissing = preference.required() && !hasValue && !hasDefault;
 
       if (!isMissing) continue;
 
@@ -633,7 +642,7 @@ void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd, const
         auto extensionCommand = std::static_pointer_cast<ExtensionCommand>(cmd);
 
         m_ctx.navigation->pushView(
-            new MissingExtensionPreferenceView(extensionCommand, preferences, preferenceValues));
+            new MissingPreferenceViewHost(extensionCommand, preferences, preferenceValues));
         m_ctx.navigation->setNavigationTitle(cmd->name());
         m_ctx.navigation->setNavigationIcon(cmd->iconUrl());
         return;
@@ -660,11 +669,12 @@ std::unique_ptr<NavigationController::ViewState> NavigationController::createVie
   state->sender->setContext(&m_ctx);
   state->sender->setCommandController(m_frames.back()->controller.get());
   state->supportsSearch = view->supportsSearch();
+  state->searchInteractive = view->searchInteractive();
   state->needsTopBar = view->needsGlobalTopBar();
   state->needsStatusBar = view->needsGlobalStatusBar();
+  state->showBackButton = view->showBackButton();
   state->placeholderText = view->initialSearchPlaceholderText();
   state->navigation.title = view->initialNavigationTitle();
   state->navigation.icon = view->initialNavigationIcon();
-  state->searchAccessory.reset(view->searchBarAccessory());
   return state;
 }

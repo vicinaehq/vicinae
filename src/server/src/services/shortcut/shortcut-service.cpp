@@ -40,7 +40,7 @@ std::vector<std::shared_ptr<Shortcut>> ShortcutService::loadAll() {
 }
 
 Shortcut *ShortcutService::findById(const QString &id) {
-  if (auto it = std::ranges::find_if(m_shortcuts, [&](auto bk) { return id == bk->id(); });
+  if (auto it = std::ranges::find_if(m_shortcuts, [&](const auto &bk) { return id == bk->id(); });
       it != m_shortcuts.end()) {
     return it->get();
   }
@@ -75,7 +75,7 @@ bool ShortcutService::registerVisit(const QString &id) {
     }
 
     auto lastOpenedAtEpoch = query.value(0).toULongLong();
-    int count = query.value(1).toInt();
+    int const count = query.value(1).toInt();
 
     shortcut->setLastOpenedAt(QDateTime::fromSecsSinceEpoch(lastOpenedAtEpoch));
     shortcut->setOpenCount(count);
@@ -157,7 +157,7 @@ bool ShortcutService::createShortcut(const QString &name, const QString &icon, c
 
   {
     QSqlQuery query = m_db.createQuery();
-    QString id = Crypto::UUID::v4();
+    QString const id = Crypto::UUID::v4();
     auto now = QDateTime::currentDateTime();
 
     query.prepare(R"(

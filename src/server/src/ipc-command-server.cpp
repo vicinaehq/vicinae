@@ -1,7 +1,9 @@
 #include "ipc-command-server.hpp"
 #include "ipc-command-handler.hpp"
+#include "config/config.hpp"
+#include "service-registry.hpp"
 #include "services/browser-extension-service.hpp"
-#include "ui/dmenu-view/dmenu-view.hpp"
+#include "qml/dmenu-view-host.hpp"
 #include "utils.hpp"
 #include "vicinae-ipc/ipc.hpp"
 #include <functional>
@@ -10,6 +12,7 @@
 #include <glaze/json/write.hpp>
 #include <netinet/in.h>
 #include <qlogging.h>
+#include <utility>
 #include <variant>
 #include <glaze/rpc/registry.hpp>
 #include "services/app-service/app-service.hpp"
@@ -17,7 +20,7 @@
 #include "navigation-controller.hpp"
 #include "version.h"
 
-IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
+IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QObject *parent)
     : QObject(parent), m_ctx(*ctx), m_rpc(IpcContext::GlobalContext{.app = ctx}) {
   using Ctx = decltype(m_rpc)::ContextHandle;
 
@@ -32,7 +35,7 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
           return;
         }
 
-        ipc::RpcClient<ipc::RpcSchema<ipc::FocusTab, ipc::CloseBrowserTab>> client;
+        ipc::RpcClient<ipc::RpcSchema<ipc::FocusTab, ipc::CloseBrowserTab>> const client;
         std::string json;
 
         switch (action) {
@@ -49,28 +52,29 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
         it->sendMessage(json);
       });
 
-  m_rpc.middleware([](const decltype(m_rpc)::Schema::Request &req, Ctx info) -> std::optional<std::string> {
-    constexpr static const auto BROWSER_METHODS = std::array{ipc::BrowserTabsChanged::key};
+  m_rpc.middleware(
+      [](const decltype(m_rpc)::Schema::Request &req, const Ctx &info) -> std::optional<std::string> {
+        constexpr static const auto BROWSER_METHODS = std::array{ipc::BrowserTabsChanged::key};
 
-    if (std::ranges::contains(BROWSER_METHODS, req.method) && !info.caller->browser) {
-      return "Only browser extensions can do this";
-    }
+        if (std::ranges::contains(BROWSER_METHODS, req.method) && !info.caller->browser) {
+          return "Only browser extensions can do this";
+        }
 
-    return {};
+        return {};
+      });
+
+  m_rpc.route<ipc::Ping>([&](const ipc::Ping::Request &req, const Ctx &ctx) {
+    return ipc::Ping::Response(VICINAE_GIT_TAG, QCoreApplication::applicationPid());
   });
 
-  m_rpc.route<ipc::Ping>([&](const ipc::Ping::Request &req, Ctx ctx) {
-    return ipc::Ping::Response(VICINAE_GIT_TAG, QApplication::applicationPid());
-  });
-
-  m_rpc.route<ipc::BrowserInit>([this](const ipc::BrowserInit::Request &init, Ctx context) {
+  m_rpc.route<ipc::BrowserInit>([this](const ipc::BrowserInit::Request &init, const Ctx &context) {
     context.caller->browser = init;
     m_ctx.services->browserExtension()->registerBrowser({.id = init.id, .name = init.name});
     return ipc::BrowserInit::Response();
   });
 
   m_rpc.route<ipc::LaunchApp>([](const ipc::LaunchApp::Request &req,
-                                 Ctx ctx) -> std::expected<ipc::LaunchApp::Response, std::string> {
+                                 const Ctx &ctx) -> std::expected<ipc::LaunchApp::Response, std::string> {
     auto appDb = ctx.global->app->services->appDb();
     auto wm = ctx.global->app->services->windowManager();
     auto app = appDb->findById(req.appId.c_str());
@@ -85,7 +89,7 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
       }
     }
 
-    std::vector<QString> args = Utils::toQStringVec(req.args);
+    std::vector<QString> const args = Utils::toQStringVec(req.args);
 
     if (!appDb->launch(*app, args)) {
       return std::unexpected(std::format("Failed to launch app with id {}", req.appId));
@@ -96,14 +100,14 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
 
   m_rpc.route<ipc::BrowserTabsChanged>(
       [](const ipc::BrowserTabsChanged::Request &req,
-         Ctx ctx) -> std::expected<ipc::BrowserTabsChanged::Response, std::string> {
+         const Ctx &ctx) -> std::expected<ipc::BrowserTabsChanged::Response, std::string> {
         qDebug() << "set" << req.size() << "browser tabs";
         if (!ctx.caller->browser) return std::unexpected("setTabs only permitted for browsers");
         ctx.global->app->services->browserExtension()->setTabs(ctx.caller->browser->id, req);
         return ipc::BrowserTabsChanged::Response();
       });
 
-  m_rpc.route<ipc::DMenu>([](ipc::DMenu::Request request, Ctx ctx) {
+  m_rpc.route<ipc::DMenu>([](ipc::DMenu::Request request, const Ctx &ctx) {
     using Watcher = QFutureWatcher<ipc::DMenu::Response>;
     static constexpr const int DMENU_SMALL_WIDTH_THRESHOLD = 500;
     auto &m_ctx = *ctx.global->app;
@@ -120,14 +124,14 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
       request.noQuickLook = true;
     }
 
-    auto view = new DMenu::View(request);
+    auto view = new DMenuViewHost(request);
     auto watcher = new Watcher;
 
     watcher->setFuture(future);
 
     QObject::connect(watcher, &Watcher::canceled, [nav = nav.get()]() { nav->closeWindow(); });
     QObject::connect(watcher, &Watcher::finished, [watcher]() { watcher->deleteLater(); });
-    QObject::connect(view, &DMenu::View::selected,
+    QObject::connect(view, &DMenuViewHost::selected,
                      [promise = std::move(promise)](const QString &text) mutable {
                        promise.addResult(ipc::DMenu::Response(text.toStdString()));
                        promise.finish();
@@ -138,8 +142,8 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
     nav->setInstantDismiss(true);
 
     if (request.width || request.height) {
-      int w = request.width.value_or(cfg.launcherWindow.size.width);
-      int h = request.height.value_or(cfg.launcherWindow.size.height);
+      int const w = request.width.value_or(cfg.launcherWindow.size.width);
+      int const h = request.height.value_or(cfg.launcherWindow.size.height);
       nav->requestWindowSize(QSize(w, h));
     }
 
@@ -148,19 +152,19 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QWidget *parent)
     return future;
   });
 
-  m_rpc.route<ipc::Deeplink>(
-      [](const ipc::Deeplink::Request &req, Ctx ctx) -> std::expected<ipc::Deeplink::Response, std::string> {
-        IpcCommandHandler handler(*ctx.global->app);
-        QUrl url(req.url.c_str());
+  m_rpc.route<ipc::Deeplink>([](const ipc::Deeplink::Request &req,
+                                const Ctx &ctx) -> std::expected<ipc::Deeplink::Response, std::string> {
+    IpcCommandHandler handler(*ctx.global->app);
+    QUrl const url(req.url.c_str());
 
-        if (!url.isValid()) { return std::unexpected("Not a valid URL"); }
+    if (!url.isValid()) { return std::unexpected("Not a valid URL"); }
 
-        const auto res = handler.handleUrl(QUrl(req.url.c_str()));
+    const auto res = handler.handleUrl(QUrl(req.url.c_str()));
 
-        if (!res) return std::unexpected(res.error());
+    if (!res) return std::unexpected(res.error());
 
-        return ipc::Deeplink::Response();
-      });
+    return ipc::Deeplink::Response();
+  });
 }
 
 void IpcCommandServer::processFrame(QLocalSocket *conn, QByteArrayView frame) {
@@ -244,9 +248,9 @@ void IpcCommandServer::handleRead(QLocalSocket *conn) {
   while (conn->bytesAvailable() > 0) {
     it->frame.data.append(conn->readAll());
 
-    while (it->frame.data.size() >= sizeof(uint32_t)) {
-      uint32_t length = *reinterpret_cast<uint32_t *>(it->frame.data.data());
-      bool isComplete = it->frame.data.size() - sizeof(uint32_t) >= length;
+    while (std::cmp_greater_equal(it->frame.data.size(), sizeof(uint32_t))) {
+      uint32_t const length = *reinterpret_cast<uint32_t *>(it->frame.data.data());
+      bool const isComplete = it->frame.data.size() - sizeof(uint32_t) >= length;
 
       if (!isComplete) break;
 

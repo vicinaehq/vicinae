@@ -1,14 +1,21 @@
 #pragma once
 #include "extension/extension-command-controller.hpp"
 #include "extension/extension-command.hpp"
-#include "extension/extension-view-wrapper.hpp"
 #include "navigation-controller.hpp"
+#include "qml/extension-view-host.hpp"
 #include "theme.hpp"
 #include "ui/image/url.hpp"
 #include <qobject.h>
 
 class ExtensionNavigationController : public QObject {
-  std::vector<ExtensionViewWrapper *> m_views;
+public:
+  struct ViewEntry {
+    BaseView *baseView;
+    std::function<void(const RenderModel &)> renderFn;
+  };
+
+private:
+  std::vector<ViewEntry> m_views;
   std::shared_ptr<ExtensionCommand> m_command;
   NavigationController *m_navigation;
   std::unique_ptr<ExtensionCommandController> m_controller;
@@ -23,22 +30,21 @@ public:
   NavigationController *handle() const { return m_navigation; }
 
   void pushView() {
-    auto view = new ExtensionViewWrapper(m_controller.get());
+    auto host = new ExtensionViewHost(m_controller.get());
 
-    m_navigation->pushView(view);
+    m_navigation->pushView(host);
     m_navigation->setNavigationTitle(defaultNavigationTitle());
     m_navigation->setNavigationIcon(m_command->iconUrl());
-    m_views.emplace_back(view);
+
+    m_views.push_back({host, [host](const RenderModel &m) { host->render(m); }});
   }
 
-  std::vector<ExtensionViewWrapper *> views() const { return m_views; }
+  const std::vector<ViewEntry> &views() const { return m_views; }
 
   void handleViewPoped(const BaseView *view) {
-    // Only handle pops for ExtensionViewWrapper views that are in our stack
-    auto wrapper = dynamic_cast<const ExtensionViewWrapper *>(view);
-    if (!wrapper) return;
-
-    auto it = std::find(m_views.begin(), m_views.end(), const_cast<ExtensionViewWrapper *>(wrapper));
+    // Check if the popped view is in our stack
+    auto it = std::find_if(m_views.begin(), m_views.end(),
+                           [view](const ViewEntry &entry) { return entry.baseView == view; });
     if (it == m_views.end()) return;
 
     if (m_views.size() > 1) { m_controller->notify("pop-view", {}); }

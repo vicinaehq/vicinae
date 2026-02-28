@@ -1,5 +1,5 @@
 #include "ext-background-effect-v1-manager.hpp"
-#include <qapplication.h>
+#include <QGuiApplication>
 #include <qevent.h>
 #include <qlogging.h>
 #include <wayland-client-core.h>
@@ -7,8 +7,8 @@
 
 void ExtBackgroundEffectV1Manager::capabilities(void *data, ext_background_effect_manager_v1 *,
                                                 uint32_t flags) {
-  static_cast<ExtBackgroundEffectV1Manager *>(data)->m_supportsBlur =
-      flags & EXT_BACKGROUND_EFFECT_MANAGER_V1_CAPABILITY_BLUR;
+  static_cast<ExtBackgroundEffectV1Manager *>(data) // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+      ->m_supportsBlur = flags & EXT_BACKGROUND_EFFECT_MANAGER_V1_CAPABILITY_BLUR;
 }
 
 ExtBackgroundEffectV1Manager::ExtBackgroundEffectV1Manager(ext_background_effect_manager_v1 *manager)
@@ -70,7 +70,9 @@ bool ExtBackgroundEffectV1Manager::removeBlur(QWindow *win) {
 
 bool ExtBackgroundEffectV1Manager::eventFilter(QObject *sender, QEvent *event) {
   if (event->type() == QEvent::PlatformSurface) {
-    auto *surfaceEvent = static_cast<QPlatformSurfaceEvent *>(event);
+    auto *surfaceEvent =
+        static_cast<QPlatformSurfaceEvent *>( // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+            event);
 
     if (surfaceEvent->surfaceEventType() == QPlatformSurfaceEvent::SurfaceAboutToBeDestroyed) {
       for (auto it = m_state.begin(); it != m_state.end(); ++it) {
@@ -86,7 +88,7 @@ bool ExtBackgroundEffectV1Manager::eventFilter(QObject *sender, QEvent *event) {
   return QObject::eventFilter(sender, event);
 }
 
-void ExtBackgroundEffectV1Manager::applyBlur(QWindow *win, const BlurState &state) {
+void ExtBackgroundEffectV1Manager::applyBlur(QWindow *, const BlurState &state) {
   const auto region = QtWaylandUtils::createRoundedRegion(state.cfg.region, state.cfg.radius);
   ext_background_effect_surface_v1_set_blur_region(state.effect, region);
 }

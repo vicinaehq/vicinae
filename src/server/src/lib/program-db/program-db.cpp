@@ -24,7 +24,7 @@ std::optional<fs::path> ProgramDb::programPath(std::string_view name) {
 
   auto candidates =
       Omnicast::systemPaths() | std::views::transform([&](const fs::path &path) { return path / name; });
-  std::error_code ec;
+  std::error_code const ec;
 
   if (auto it = std::ranges::find_if(candidates, isRegularFile); it != candidates.end()) { return *it; }
 

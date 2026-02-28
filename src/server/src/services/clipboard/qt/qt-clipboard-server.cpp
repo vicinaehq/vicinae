@@ -2,19 +2,19 @@
 #include <ranges>
 
 bool AbstractQtClipboardServer::start() {
-  auto clip = QApplication::clipboard();
+  auto clip = QGuiApplication::clipboard();
   connect(clip, &QClipboard::dataChanged, this, &AbstractQtClipboardServer::dataChanged);
   return true;
 }
 
 bool AbstractQtClipboardServer::stop() {
-  disconnect(QApplication::clipboard());
+  disconnect(QGuiApplication::clipboard());
   return true;
 }
 
 void AbstractQtClipboardServer::dataChanged() {
   ClipboardSelection selection;
-  auto clip = QApplication::clipboard();
+  auto clip = QGuiApplication::clipboard();
   auto mimeData = clip->mimeData();
 
   if (mimeData->hasImage()) {
@@ -75,7 +75,7 @@ void AbstractQtClipboardServer::dataChanged() {
   };
 
   for (const auto &format : mimeData->formats() | std::views::filter(isIndexableFormat)) {
-    QByteArray data = mimeData->data(format);
+    QByteArray const data = mimeData->data(format);
     selection.offers.emplace_back(ClipboardDataOffer{format, data});
   }
 

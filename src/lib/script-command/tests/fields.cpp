@@ -14,10 +14,15 @@ TEST_CASE("Optional fields are parsed correctly") {
 )";
   auto result = script_command::ScriptCommand::parse(source);
   REQUIRE(result.has_value());
+  REQUIRE(result->author.has_value());
   REQUIRE(result->author.value() == "John Doe");
+  REQUIRE(result->authorUrl.has_value());
   REQUIRE(result->authorUrl.value() == "https://example.com");
+  REQUIRE(result->description.has_value());
   REQUIRE(result->description.value() == "This is a test script");
+  REQUIRE(result->refreshTime.has_value());
   REQUIRE(result->refreshTime.value() == 300);
+  REQUIRE(result->currentDirectoryPath.has_value());
   REQUIRE(result->currentDirectoryPath.value() == "/tmp/test");
 }
 

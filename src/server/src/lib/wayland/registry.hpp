@@ -24,7 +24,8 @@ public:
   std::vector<Listener *> listeners;
 
   template <typename T> T *bind(uint32_t name, const struct wl_interface *iface, uint32_t version) {
-    return static_cast<T *>(wl_registry_bind(_registry, name, iface, version));
+    return static_cast<T *>(wl_registry_bind(
+        _registry, name, iface, version)); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
   }
 
   WaylandRegistry(wl_registry *registry);

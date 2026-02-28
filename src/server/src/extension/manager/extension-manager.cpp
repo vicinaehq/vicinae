@@ -8,6 +8,7 @@
 #include <string>
 #include <system_error>
 #include <unordered_map>
+#include <utility>
 #include "environment.hpp"
 #include "pid-file/pid-file.hpp"
 #include "proto/extension.pb.h"
@@ -51,14 +52,14 @@ void Bus::readyRead() {
 
     _message.data.append(read);
 
-    while (_message.data.size() >= sizeof(uint32_t)) {
-      uint32_t length = ntohl(*reinterpret_cast<uint32_t *>(_message.data.data()));
-      bool isComplete = _message.data.size() - sizeof(uint32_t) >= length;
+    while (std::cmp_greater_equal(_message.data.size(), sizeof(uint32_t))) {
+      uint32_t const length = ntohl(*reinterpret_cast<uint32_t *>(_message.data.data()));
+      bool const isComplete = _message.data.size() - sizeof(uint32_t) >= length;
 
       if (!isComplete) break;
 
       auto packet = _message.data.sliced(sizeof(uint32_t), length);
-      std::string stringData = packet.toStdString();
+      std::string const stringData = packet.toStdString();
 
       proto::ext::IpcMessage msg;
 
@@ -193,7 +194,7 @@ bool ExtensionManager::start() {
   return false;
 #endif
 
-  int maxWaitForStart = 5000;
+  int const maxWaitForStart = 5000;
 
   if (m_process.state() == QProcess::Running) { m_process.close(); }
 
@@ -204,7 +205,7 @@ bool ExtensionManager::start() {
     return false;
   }
 
-  fs::path managerPath = Omnicast::runtimeDir() / "extension-manager.js";
+  fs::path const managerPath = Omnicast::runtimeDir() / "extension-manager.js";
 
   QFile::remove(managerPath);
   QFile::copy(":bin/extension-manager", managerPath.c_str());
@@ -230,7 +231,7 @@ ManagerRequest *ExtensionManager::requestManager(proto::ext::manager::RequestDat
 }
 
 void ExtensionManager::emitExtensionEvent(proto::ext::QualifiedExtensionEvent *event) {
-  return m_bus.emitExtensionEvent(event);
+  m_bus.emitExtensionEvent(event);
 }
 
 void ExtensionManager::addDevelopmentSession(const QString &id) { m_developmentSessions.insert(id); }

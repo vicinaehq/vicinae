@@ -25,6 +25,12 @@ debug:
 	cmake --build $(BUILD_DIR)
 .PHONY: debug
 
+debug-tidy:
+	# we need to run tidy with clang to avoid false positives
+	CC=clang CXX=clang++ cmake -G Ninja -DLTO=OFF -DENABLE_PREVIEW_FEATURES=ON -DENABLE_SANITIZERS=ON -DENABLE_CLANG_TIDY=ON -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
+	cmake --build $(BUILD_DIR)
+.PHONY: debug-tidy
+
 genicon:
 	node scripts/generate-icons.js
 .PHONY: genicon
@@ -81,8 +87,12 @@ appimage-build-env-push:
 .PHONY: appimage-build-env-push
 
 format:
-	@echo -e 'vicinae\nwlr-clip' | xargs -I{} find {} -type d -iname 'build' -prune -o -type f -iname '*.hpp' -o -type f -iname '*.cpp' | xargs -I{} bash -c '[ -f {} ] && clang-format -i {} && echo "Formatted {}" || echo "Failed to format {}"'
+	find ./src -type f \( -name '*.cpp' -o -name '*.hpp' \) -print0 | xargs -0 -n 10 -P $(shell nproc) clang-format -i
 .PHONY: format
+
+check-format:
+	find ./src -type f \( -name '*.cpp' -o -name '*.hpp' \) -print0 | xargs -0 -n 10 -P $(shell nproc) clang-format --dry-run -Werror
+.PHONY: check-format
 
 bump-patch:
 	./scripts/bump_version.sh patch
@@ -106,6 +116,10 @@ gh-release:
 	cmake --install build
 	tar -czvf vicinae-linux-x86_64-$(TAG).tar.gz -C dist .
 .PHONY: gh-release
+
+run-limited:
+	systemd-run --user --scope -p MemoryMax=1G -p MemorySwapMax=0 ./$(BIN_DIR)/vicinae-server server --frontend=qml
+.PHONY: run-limited
 
 clean:
 	rm -rf $(BUILD_DIR)

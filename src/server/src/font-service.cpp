@@ -43,7 +43,7 @@ QFont FontService::findEmojiFont() {
 FontService::FontService() {
   m_emojiFont = findEmojiFont();
 
-  int id = QFontDatabase::addApplicationFont(":/fonts/InterVariable.ttf");
+  int const id = QFontDatabase::addApplicationFont(":/fonts/InterVariable.ttf");
   if (id != -1) {
     auto families = QFontDatabase::applicationFontFamilies(id);
     if (!families.isEmpty()) m_builtinFamily = families.first();

@@ -14,7 +14,7 @@ void ClipboardEncrypter::loadKey() {
   readJob->setKey(KEYCHAIN_ENCRYPTION_KEY_NAME);
   readJob->start();
 
-  connect(readJob, &ReadPasswordJob::finished, this, [this, readJob](Job *job) {
+  connect(readJob, &ReadPasswordJob::finished, this, [this, readJob](Job *) {
     if (readJob->error() == QKeychain::NoError) {
       m_key = readJob->binaryData();
       return;

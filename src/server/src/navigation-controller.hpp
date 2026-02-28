@@ -126,7 +126,7 @@ private:
 
     auto actions = m_primarySection->actions();
 
-    for (int i = 0; i != actions.size() && i != m_defaultShortcuts.size(); ++i) {
+    for (size_t i = 0; i != actions.size() && i != m_defaultShortcuts.size(); ++i) {
       auto &action = actions[i];
       auto &shortcut = m_defaultShortcuts[i];
       auto existing = action->shortcut();
@@ -209,15 +209,15 @@ public:
     } navigation;
     QString placeholderText;
     QString searchText;
-    QObjectUniquePtr<QWidget> searchAccessory;
-    bool accessoryVisibility = true;
     std::optional<CompleterState> completer;
     std::unique_ptr<ActionPanelState> actionPanelState;
 
     bool isLoading = false;
     bool supportsSearch = true;
+    bool searchInteractive = true;
     bool needsTopBar = true;
     bool needsStatusBar = true;
+    bool showBackButton = true;
     bool panelOpened = false;
 
     ~ViewState();
@@ -230,7 +230,6 @@ signals:
   void viewPoped(const BaseView *view);
   void actionPanelVisibilityChanged(bool visible);
   void actionsChanged(const ActionPanelState &actions) const;
-  void submenuRequested(ActionPanelView *view);
   void windowVisiblityChanged(bool visible);
   void windowSizeRequested(QSize size);
   void searchTextSelected() const;
@@ -246,23 +245,21 @@ signals:
 
   void invalidCompletionFired();
 
-  void searchAccessoryChanged(QWidget *widget) const;
-  void searchAccessoryCleared() const;
-  void searchAccessoryVisiblityChanged(bool visible) const;
-
   void completionCreated(const CompleterState &completer) const;
   void completionDestroyed() const;
 
   void headerVisiblityChanged(bool value);
   void searchVisibilityChanged(bool value);
+  void searchInteractiveChanged(bool value);
   void statusBarVisiblityChanged(bool value);
+  void backButtonVisibilityChanged(bool visible);
   void windowActivationChanged(bool value) const;
 
 public:
-  void closeWindow(const CloseWindowOptions &settings = {});
+  Q_INVOKABLE void closeWindow(const CloseWindowOptions &settings = {});
   void closeWindow(const CloseWindowOptions &settings, std::chrono::milliseconds delay);
-  void showWindow();
-  void toggleWindow();
+  Q_INVOKABLE void showWindow();
+  Q_INVOKABLE void toggleWindow();
   bool isWindowOpened() const;
   void requestWindowSize(QSize size);
 
@@ -317,9 +314,6 @@ public:
   void setActions(std::unique_ptr<ActionPanelState> state, const BaseView *caller = nullptr);
   void clearActions(const BaseView *caller = nullptr);
 
-  void setSearchAccessory(QWidget *accessory, const BaseView *sender = nullptr);
-  void clearSearchAccessory(const BaseView *sender = nullptr);
-
   void clearSearchText();
   void setNavigationTitle(const QString &navigationTitle, const BaseView *caller = nullptr);
   void setNavigationIcon(const ImageURL &icon);
@@ -330,6 +324,7 @@ public:
 
   void setHeaderVisiblity(bool value, const BaseView *caller = nullptr);
   void setSearchVisibility(bool value, const BaseView *caller = nullptr);
+  void setSearchInteractive(bool value, const BaseView *caller = nullptr);
   void setStatusBarVisibility(bool value, const BaseView *caller = nullptr);
 
   /**
@@ -337,8 +332,6 @@ public:
    * We need to rework the search accessory system anyways, as the ownership rules
    * are beyond confusing.
    */
-  void setSearchAccessoryVisibility(bool value, const BaseView *caller = nullptr);
-
   void showHud(const QString &title, const std::optional<ImageURL> &icon = std::nullopt);
 
   void launch(const std::shared_ptr<AbstractCmd> &cmd);

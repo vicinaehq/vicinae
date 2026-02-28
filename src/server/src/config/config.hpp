@@ -183,6 +183,7 @@ struct ConfigValue {
   bool exitOnBackspace = true;
   bool considerPreedit = false;
   bool popToRootOnClose = false;
+  bool popOnBackspace = true;
   std::string escapeKeyBehavior;
   std::string faviconService = "twenty";
   std::string keybinding = "default";
@@ -230,6 +231,7 @@ template <> struct Partial<ConfigValue> {
   std::optional<bool> considerPreedit;
   std::optional<bool> exitOnBackspace;
   std::optional<bool> popToRootOnClose;
+  std::optional<bool> popOnBackspace;
   std::optional<std::string> escapeKeyBehavior;
   std::optional<std::string> faviconService;
   std::optional<std::string> keybinding;
@@ -291,7 +293,7 @@ public:
 
   static void print(const ConfigValue &value) {
     std::string buf;
-    auto res = glz::write_json(value, buf);
+    [[maybe_unused]] auto res = glz::write_json(value, buf);
     std::cout << glz::prettify_json(buf) << std::endl;
   }
 

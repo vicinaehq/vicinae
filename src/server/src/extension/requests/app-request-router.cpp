@@ -53,7 +53,7 @@ AppRequestRouter::runInTerminal(const proto::ext::application::RunInTerminalRequ
 
 proto::ext::application::Response *
 AppRequestRouter::openApplication(const proto::ext::application::OpenApplicationRequest &req) const {
-  QString target = req.target().c_str();
+  QString const target = req.target().c_str();
 
   if (req.has_app_id()) {
     if (auto app = m_appDb.findById(req.app_id().c_str())) {

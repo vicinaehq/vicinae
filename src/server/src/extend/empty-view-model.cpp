@@ -4,7 +4,7 @@
 #include <qjsonarray.h>
 #include <qjsonobject.h>
 
-EmptyViewModelParser::EmptyViewModelParser() {}
+EmptyViewModelParser::EmptyViewModelParser() = default;
 
 EmptyViewModel EmptyViewModelParser::parse(const QJsonObject &instance) {
   EmptyViewModel model;

@@ -20,10 +20,10 @@ QNetworkRequest RaycastStoreService::createJsonApiRequest(const QUrl &url) {
 
 QFuture<Raycast::ListResult> RaycastStoreService::search(const QString &query) {
 
-  QUrl endpoint = QString("%1/store_listings/search?q=%2").arg(BASE_URL).arg(query);
+  QUrl const endpoint = QString("%1/store_listings/search?q=%2").arg(BASE_URL).arg(query);
   QPromise<Raycast::ListResult> promise;
   auto future = promise.future();
-  QNetworkRequest request = createJsonApiRequest(endpoint);
+  QNetworkRequest const request = createJsonApiRequest(endpoint);
 
   auto reply = m_net->get(request);
 
@@ -34,7 +34,7 @@ QFuture<Raycast::ListResult> RaycastStoreService::search(const QString &query) {
       std::vector<Raycast::Extension> extensions;
       auto data = reply->readAll();
       QJsonParseError error;
-      QJsonDocument doc = QJsonDocument::fromJson(data, &error);
+      QJsonDocument const doc = QJsonDocument::fromJson(data, &error);
 
       if (error.error != QJsonParseError::NoError) {
         qWarning() << "JSON parse error:" << error.errorString();
@@ -88,7 +88,7 @@ QFuture<Raycast::DownloadExtensionResult> RaycastStoreService::downloadExtension
 QFuture<Raycast::ListResult>
 RaycastStoreService::fetchExtensions(const Raycast::ListPaginationOptions &opts) {
 
-  QUrl endpoint =
+  QUrl const endpoint =
       QString("%1/store_listings?page=%2&per_page=%3").arg(BASE_URL).arg(opts.page).arg(opts.perPage);
   QPromise<Raycast::ListResult> promise;
   auto future = promise.future();
@@ -109,7 +109,7 @@ RaycastStoreService::fetchExtensions(const Raycast::ListPaginationOptions &opts)
       std::vector<Raycast::Extension> extensions;
       auto data = reply->readAll();
       QJsonParseError error;
-      QJsonDocument doc = QJsonDocument::fromJson(data, &error);
+      QJsonDocument const doc = QJsonDocument::fromJson(data, &error);
 
       if (error.error != QJsonParseError::NoError) {
         qWarning() << "JSON parse error:" << error.errorString();

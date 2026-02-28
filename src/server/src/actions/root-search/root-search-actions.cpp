@@ -1,5 +1,5 @@
 #include "actions/root-search/root-search-actions.hpp"
-#include "ui/alias-view/alias-view.hpp"
+#include "qml/alias-form-view-host.hpp"
 #include "ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
@@ -60,7 +60,7 @@ QString ToggleItemAsFavorite::title() const {
 void ToggleItemAsFavorite::execute(ApplicationContext *ctx) {
   auto manager = ctx->services->rootItemManager();
   auto toast = ctx->services->toastService();
-  bool targetValue = !m_value;
+  bool const targetValue = !m_value;
 
   if (manager->setItemAsFavorite(m_id, targetValue)) {
     if (targetValue) {
@@ -131,5 +131,5 @@ void OpenItemPreferencesAction::execute(ApplicationContext *ctx) {
 }
 
 void SetRootItemAliasAction::execute(ApplicationContext *ctx) {
-  ctx->navigation->pushView(new RootItemAliasView(m_id));
+  ctx->navigation->pushView(new AliasFormViewHost(m_id));
 }

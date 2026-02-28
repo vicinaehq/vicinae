@@ -5,7 +5,7 @@ DesktopEntryGroup::DesktopEntryGroup(const std::string &name) : m_name(name) {}
 
 std::optional<DesktopEntryGroup::LocalizedValue> DesktopEntryGroup::localizedKey(std::string_view name) {
   if (auto it = m_entries.find(std::string(name)); it != m_entries.end()) {
-    if (auto &loc = it->second.localized) { return loc.value(); }
+    if (auto &loc = it->second.localized) { return loc; }
   }
 
   return {};

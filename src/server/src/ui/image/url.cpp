@@ -97,9 +97,9 @@ bool ImageURL::operator==(const ImageURL &rhs) const { return toString() == rhs.
 
 ImageURL::ImageURL(const QString &s) noexcept { *this = std::move(QUrl(s)); }
 
-ImageURL::ImageURL() {}
+ImageURL::ImageURL() = default;
 
-ImageURL::ImageURL(const QUrl &url) : _mask(OmniPainter::NoMask) {
+ImageURL::ImageURL(const QUrl &url) {
   if (url.scheme() != "icon") { return; }
 
   _type = typeForName(url.host());
@@ -128,7 +128,7 @@ ImageURL::ImageURL(const QUrl &url) : _mask(OmniPainter::NoMask) {
   _isValid = true;
 }
 
-ImageURL::ImageURL(const ImageLikeModel &imageLike) : _mask(OmniPainter::NoMask) {
+ImageURL::ImageURL(const ImageLikeModel &imageLike) {
   if (auto image = std::get_if<ExtensionImageModel>(&imageLike)) {
     struct {
       QString operator()(const ThemedIconSource &icon) {
@@ -140,13 +140,13 @@ ImageURL::ImageURL(const ImageLikeModel &imageLike) : _mask(OmniPainter::NoMask)
 
     auto source = std::visit(visitor, image->source);
 
-    QUrl url(source);
+    QUrl const url(source);
 
     if (auto fallback = image->fallback) {
       withFallback(ImageLikeModel(ExtensionImageModel{.source = *fallback}));
     }
 
-    if (auto tintColor = image->tintColor) { setFill(*tintColor); }
+    if (auto tintColor = image->tintColor) { setFill(tintColor); }
     if (auto mask = image->mask) { setMask(*mask); }
 
     if (url.isValid()) {
@@ -275,13 +275,13 @@ ImageURL ImageURL::rawData(const QByteArray &data, const QString &mimeType) {
   ImageURL url;
 
   url.setType(ImageURLType::DataURI);
-  url.setName(QString("data:%1;base64,%2").arg(mimeType).arg(data.toBase64(QByteArray::Base64UrlEncoding)));
+  url.setName(QString("data:%1;base64,%2").arg(mimeType).arg(data.toBase64()));
 
   return url;
 }
 
 ImageURL ImageURL::fileIcon(const fs::path &path) {
-  QMimeDatabase db;
+  QMimeDatabase const db;
   auto mime = db.mimeTypeForFile(path.c_str());
   if (auto icon = QIcon::fromTheme(mime.iconName()); !icon.isNull()) {
     return ImageURL::system(mime.iconName());

@@ -28,6 +28,20 @@ export declare namespace Cache {
 		 * The default capacity is 10 MB.
 		 */
 		capacity?: number;
+		/**
+		 * Default time-to-live in milliseconds for all keys.
+		 * Individual keys can override this via the `ttl` option in {@link Cache.set}.
+		 * If not set, keys do not expire, but are still subject to LRU eviction when the cache exceeds its capacity.
+		 */
+		ttl?: number;
+	}
+	export interface SetOptions {
+		/**
+		 * Time-to-live in milliseconds for this key.
+		 * Overrides the cache-level {@link Cache.Options.ttl}.
+		 * If not set, the cache-level default is used. In both cases, keys are still subject to LRU eviction when the cache exceeds its capacity.
+		 */
+		ttl?: number;
 	}
 	export type Subscriber = (
 		key: string | undefined,
@@ -38,6 +52,7 @@ export declare namespace Cache {
 
 type CacheKeyInfo = {
 	size: number;
+	expiresAt?: number;
 };
 
 type CacheIndex = {
@@ -64,6 +79,7 @@ export class Cache {
 	constructor(options?: Cache.Options) {
 		this.storageDir = path.join(environment.supportPath, Cache.CACHE_DIR_NAME);
 		this.capacity = options?.capacity ?? Cache.DEFAULT_CACHE_SIZE;
+		this.defaultTtl = options?.ttl;
 
 		if (options?.namespace) {
 			this.storageDir = path.join(this.storageDir, options.namespace);
@@ -75,6 +91,8 @@ export class Cache {
 		if (this.index.revision !== this.revision) {
 			this.clear();
 		}
+
+		this.sweepExpired();
 	}
 
 	/**
@@ -96,6 +114,11 @@ export class Cache {
 
 		if (!info) return undefined;
 
+		if (this.isExpired(info)) {
+			this.remove(key);
+			return undefined;
+		}
+
 		this.updateLRU(key);
 		this.syncIndex();
 
@@ -107,7 +130,16 @@ export class Cache {
 	 * @remarks You can use this method to check for entries without affecting the LRU access.
 	 */
 	has = (key: string): boolean => {
-		return typeof this.index.keys[key] !== "undefined";
+		const info = this.index.keys[key];
+
+		if (!info) return false;
+
+		if (this.isExpired(info)) {
+			this.remove(key);
+			return false;
+		}
+
+		return true;
 	};
 
 	/**
@@ -123,7 +155,7 @@ export class Cache {
 	 * This also notifies registered subscribers (see {@link subscribe}).
 	 * @remarks An individual cache entry cannot be bigger than the configured capacity. If this happens, an error will be thrown.
 	 */
-	set = (key: string, data: string): void => {
+	set = (key: string, data: string, options?: Cache.SetOptions): void => {
 		if (data.length > this.capacity) {
 			throw new Error(
 				`A single cache entry cannot be bigger than the total capacity of the cache. The data for key ${key} is ${data.length} bytes long while the capacity is set to ${this.capacity}. You should either reduce the amount of data stored or increase the cache's capacity.`,
@@ -135,12 +167,15 @@ export class Cache {
 
 		if (newTotalSize > this.capacity) {
 			this.popLRU();
-			this.set(key, data); // FIXME: get rid of recursion
+			this.set(key, data, options); // FIXME: get rid of recursion
 			return;
 		}
 
+		const ttl = options?.ttl ?? this.defaultTtl;
+		const expiresAt = ttl !== undefined ? Date.now() + ttl : undefined;
+
 		this.index.size = newTotalSize;
-		this.index.keys[key] = { size: data.length };
+		this.index.keys[key] = { size: data.length, expiresAt };
 		this.updateLRU(key);
 		this.writeKeyData(key, data);
 		this.syncIndex();
@@ -279,6 +314,27 @@ export class Cache {
 		writeFileSync(this.indexPath, JSON.stringify(this.index, null, 2));
 	}
 
+	private isExpired(info: CacheKeyInfo): boolean {
+		return info.expiresAt !== undefined && Date.now() > info.expiresAt;
+	}
+
+	private sweepExpired() {
+		const expiredKeys = Object.entries(this.index.keys)
+			.filter(([, info]) => this.isExpired(info))
+			.map(([key]) => key);
+
+		for (const key of expiredKeys) {
+			this.removeImpl(key);
+		}
+
+		if (expiredKeys.length > 0) {
+			this.index.lru = this.index.lru.filter(
+				(entry) => !expiredKeys.includes(entry.key),
+			);
+			this.syncIndex();
+		}
+	}
+
 	private emptyIndex() {
 		return { revision: this.revision, keys: {}, lru: [], size: 0 };
 	}
@@ -291,6 +347,7 @@ export class Cache {
 	 */
 	private revision = "1";
 	private capacity: number;
+	private defaultTtl?: number;
 	private subscribers: Cache.Subscriber[] = [];
 	private storageDir: string;
 	private index: CacheIndex;

@@ -2,7 +2,6 @@
 
 void coloredMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
   // ANSI color codes
-  const char *BLACK = "\033[30m";
   const char *RED = "\033[31m";
   const char *GREEN = "\033[32m";
   const char *YELLOW = "\033[33m";
@@ -12,11 +11,11 @@ void coloredMessageHandler(QtMsgType type, const QMessageLogContext &context, co
   const char *WHITE = "\033[37m";
   const char *RESET = "\033[0m";
 
-  QString timestamp = QDateTime::currentDateTime().toString("hh:mm:ss.zzz");
+  QString const timestamp = QDateTime::currentDateTime().toString("hh:mm:ss.zzz");
   QString contextInfo = "";
 
   if (context.file) {
-    std::filesystem::path file(context.file);
+    std::filesystem::path const file(context.file);
 
     contextInfo = QString("(%1%2:%3%4)").arg(BLUE).arg(file.filename().c_str()).arg(context.line).arg(RESET);
   }
@@ -48,15 +47,15 @@ void coloredMessageHandler(QtMsgType type, const QMessageLogContext &context, co
   }
 
   // Format: [time] LEVEL message (file:line)
-  QString formattedMessage = QString("%1[%2] %3%4%5  -  %6 %7%8\n")
-                                 .arg(WHITE)
-                                 .arg(timestamp)
-                                 .arg(color)
-                                 .arg(levelName)
-                                 .arg(RESET)
-                                 .arg(msg)
-                                 .arg(contextInfo)
-                                 .arg(RESET);
+  QString const formattedMessage = QString("%1[%2] %3%4%5  -  %6 %7%8\n")
+                                       .arg(WHITE)
+                                       .arg(timestamp)
+                                       .arg(color)
+                                       .arg(levelName)
+                                       .arg(RESET)
+                                       .arg(msg)
+                                       .arg(contextInfo)
+                                       .arg(RESET);
 
   std::cerr << formattedMessage.toStdString();
 

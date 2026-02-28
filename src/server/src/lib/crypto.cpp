@@ -2,7 +2,6 @@
 #include <expected>
 #include <openssl/rand.h>
 #include <QDebug>
-#include <qlcdnumber.h>
 #include <quuid.h>
 
 namespace Crypto::AES256GCM {
@@ -55,9 +54,9 @@ std::expected<QByteArray, DecryptError> decrypt(const QByteArray &encrypted, con
   }
 
   // Extract components
-  QByteArray iv = encrypted.left(12);
-  QByteArray tag = encrypted.right(16);
-  QByteArray ciphertext = encrypted.mid(12, encrypted.size() - 28);
+  QByteArray const iv = encrypted.left(12);
+  QByteArray const tag = encrypted.right(16);
+  QByteArray const ciphertext = encrypted.mid(12, encrypted.size() - 28);
 
   // Create cipher context
   EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
@@ -82,9 +81,11 @@ std::expected<QByteArray, DecryptError> decrypt(const QByteArray &encrypted, con
     return std::unexpected(DecryptError::OpenSslError);
   }
 
+  auto ptr = const_cast<void *>( // NOLINT(cppcoreguidelines-pro-type-const-cast)
+      reinterpret_cast<const void *>(tag.constData()));
+
   // Set expected tag
-  if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16,
-                          const_cast<void *>(reinterpret_cast<const void *>(tag.constData()))) != 1) {
+  if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16, ptr) != 1) {
     EVP_CIPHER_CTX_free(ctx);
     return std::unexpected(DecryptError::OpenSslError);
   }

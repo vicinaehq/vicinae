@@ -30,10 +30,10 @@ class Frame {
 public:
   using Handler = std::function<void(std::string_view message)>;
 
-  void setHandler(Handler fn) { m_fn = fn; }
+  void setHandler(Handler fn) { m_fn = std::move(fn); }
 
   bool readPart(int fd) {
-    int rc = read(fd, m_buf.data(), m_buf.size());
+    const int rc = read(fd, m_buf.data(), m_buf.size());
 
     if (rc == -1) {
       std::println(std::cerr, "Failed to read fd {}: {}", fd, strerror(errno));
@@ -52,7 +52,7 @@ public:
       }
 
       if (size && size <= data.size()) {
-        std::string_view view(data);
+        const std::string_view view(data);
         if (m_fn) m_fn(view.substr(0, size));
         data = view.substr(size);
         size = 0;
@@ -110,13 +110,13 @@ static int entrypoint() {
       extensionReceiver; // listen to browser extension requests
 
   vicinaeReceiver.route<ipc::FocusTab>([](const ipc::FocusTab::Request &req) {
-    ipc::RpcClient<decltype(vicinaeReceiver)::SchemaType> client;
+    const ipc::RpcClient<decltype(vicinaeReceiver)::SchemaType> client;
     sendExtensionCommand(STDOUT_FILENO, client.notify<ipc::FocusTab>(req));
     return ipc::FocusTab::Response();
   });
 
   vicinaeReceiver.route<ipc::CloseBrowserTab>([](const ipc::CloseBrowserTab::Request &req) {
-    ipc::RpcClient<decltype(vicinaeReceiver)::SchemaType> client;
+    const ipc::RpcClient<decltype(vicinaeReceiver)::SchemaType> client;
     std::println(std::cerr, "close tab event gotten");
     sendExtensionCommand(STDOUT_FILENO, client.notify<ipc::CloseBrowserTab>(req));
     return ipc::CloseBrowserTab::Response();
@@ -152,7 +152,7 @@ static int entrypoint() {
       return;
     }
 
-    if (Req *req = std::get_if<Req>(&msg)) {
+    if (const Req *req = std::get_if<Req>(&msg)) {
       const auto callRes = extensionReceiver.call(*req);
 
       if (!callRes) {
@@ -202,7 +202,7 @@ static int entrypoint() {
   std::println(std::cerr, "Listening for messages...");
 
   while (true) {
-    int ready = poll(fds.data(), fds.size(), -1);
+    const int ready = poll(fds.data(), fds.size(), -1);
 
     if (ready == -1) {
       std::println(std::cerr, "poll() failed: {} (exiting)", strerror(errno));
@@ -231,4 +231,8 @@ static int entrypoint() {
   return 0;
 }
 
-int main(int ac, char **av) { entrypoint(); }
+int main(int ac, char **av) {
+  try {
+    return entrypoint();
+  } catch (...) { return 1; }
+}

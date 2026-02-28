@@ -7,7 +7,7 @@
 #include <qjsonobject.h>
 #include <qlogging.h>
 
-ModelParser::ModelParser() {}
+ModelParser::ModelParser() = default;
 
 ParsedRenderData ModelParser::parse(const QJsonArray &views) {
   ParsedRenderData render;

@@ -5,8 +5,10 @@
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/app-service/app-service.hpp"
 #include "service-registry.hpp"
+#include "services/script-command/script-command-service.hpp"
+#include "services/toast/toast-service.hpp"
 #include "navigation-controller.hpp"
-#include "ui/script-output/script-executor-view.hpp"
+#include "qml/script-executor-view-host.hpp"
 
 ScriptExecutorAction::ScriptExecutorAction(const std::shared_ptr<ScriptCommandFile> &file,
                                            std::optional<script_command::OutputMode> mode)
@@ -32,7 +34,7 @@ void ScriptExecutorAction::executeOneLine(const ScriptCommandFile &script, const
     process->deleteLater();
   });
   QObject::connect(process, &QProcess::finished, [process, callback](int exit, QProcess::ExitStatus status) {
-    QString line = process->readAllStandardOutput().split('\n').first();
+    QString const line = process->readAllStandardOutput().split('\n').first();
     callback(exit == 0, line);
     process->deleteLater();
   });
@@ -59,7 +61,7 @@ void ScriptExecutorAction::execute(ApplicationContext *ctx) {
 
     switch (outputMode) {
     case Mode::Full:
-      ctx->navigation->pushView(new ScriptExecutorView(new ScriptProcess(*script, args)));
+      ctx->navigation->pushView(new ScriptExecutorViewHost(new ScriptProcess(*script, args)));
       ctx->navigation->setNavigationIcon(script->icon());
       break;
     case Mode::Silent:
@@ -76,7 +78,7 @@ void ScriptExecutorAction::execute(ApplicationContext *ctx) {
     case Mode::Compact:
       executeOneLine(*script, args, [ctx](bool ok, const QString &line) {
         const auto toastService = ctx->services->toastService();
-        ToastStyle style = ok ? ToastStyle::Success : ToastStyle::Danger;
+        ToastStyle const style = ok ? ToastStyle::Success : ToastStyle::Danger;
 
         if (line.isEmpty()) {
           toastService->setToast(ok ? "Script executed" : "Script execution failed", style);
@@ -103,6 +105,9 @@ void ScriptExecutorAction::execute(ApplicationContext *ctx) {
         ctx->services->scriptDb()->metadata()->saveRun(id, line.toStdString());
         emit ctx->services->rootItemManager()->subtitleChanged();
       });
+      break;
+    default:
+      qWarning() << "script command has invalid mode" << static_cast<int>(outputMode);
       break;
     }
   };

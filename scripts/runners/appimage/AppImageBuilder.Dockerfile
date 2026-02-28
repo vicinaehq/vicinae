@@ -87,7 +87,7 @@ ARG INSTALL_DIR=/usr/local
 RUN git clone --branch v${QT_VERSION} https://code.qt.io/qt/qt5.git /qt6
 WORKDIR /qt6
 
-RUN perl init-repository --module-subset=qtbase,qtsvg,qtwayland
+RUN perl init-repository --module-subset=qtbase,qtsvg,qtwayland,qtdeclarative,qttools
 
 RUN ./configure					\
     -release					\
@@ -102,10 +102,7 @@ RUN ./configure					\
     -no-sql-mysql				\
     -no-sql-psql				\
     -no-sql-odbc				\
-    -skip qtdeclarative			\
-    -skip qtlanguageserver		\
-    --							\
-    -DBUILD_qtdeclarative=OFF
+    -skip qtlanguageserver
 
 RUN cmake --build . --parallel $(nproc) \
     && cmake --install . \
@@ -124,7 +121,7 @@ RUN git clone https://gitlab.freedesktop.org/wayland/wayland && cd wayland && me
 
 RUN git clone https://gitlab.freedesktop.org/wayland/wayland-protocols && cd wayland-protocols && meson build/ --prefix=/usr/local && ninja -C build/ install
 
-RUN git clone --branch v6.18.0 https://github.com/KDE/extra-cmake-modules ecm &&	\
+RUN git clone --branch v6.22.0 https://github.com/KDE/extra-cmake-modules ecm &&	\
 	cd ecm			\
 	&& mkdir build	\
 	&& cmake 		\
@@ -146,7 +143,7 @@ RUN git clone https://github.com/Kitware/CMake --branch v4.1.2 &&	\
 	cmake --install build &&					\
 	rm -rf /CMake
 
-RUN git clone https://github.com/vicinaehq/layer-shell-qt &&	\
+RUN git clone https://github.com/KDE/layer-shell-qt --branch v6.6.0 &&	\
 	cd layer-shell-qt &&						\
 	mkdir build &&								\
 	cmake										\
@@ -226,6 +223,9 @@ RUN cd fcitx5-qt && mkdir build && \
 	-DENABLE_QT6=ON 	&& \
 	/usr/bin/cmake --build build --parallel $(nproc) && \
 	/usr/bin/cmake --install build
+
+RUN git clone --recursive https://github.com/KDE/syntax-highlighting --branch v6.18.0
+RUN cd syntax-highlighting && /usr/bin/cmake -B build -DKSYNTAXHIGHLIGHTING_USE_GUI=OFF && /usr/bin/cmake --build build --parallel $(nproc) && /usr/bin/cmake --install build
 
 # install node 22 (used to build the main vicinae binary and bundled in the app image)
 RUN wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz

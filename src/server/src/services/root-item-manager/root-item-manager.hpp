@@ -9,7 +9,7 @@
 #include "services/root-item-manager/visit-tracker.hpp"
 #include "ui/image/url.hpp"
 #include "preference.hpp"
-#include "settings/provider-settings-detail.hpp"
+#include "ui/list-accessory/list-accessory.hpp"
 #include <cstdint>
 #include <qdnslookup.h>
 #include <qjsonobject.h>
@@ -22,7 +22,6 @@
 #include <qstring.h>
 #include <qhash.h>
 #include <qtmetamacros.h>
-#include <qwidget.h>
 
 class RootItemMetadata;
 class ExtensionRootProvider;
@@ -56,8 +55,6 @@ public:
   virtual QString displayName() const = 0;
 
   virtual ImageURL iconUrl() const = 0;
-
-  virtual QWidget *settingsDetail(const QJsonObject &preferences) const { return new QWidget(); }
 
   /**
    * Whether the item can be selected as a fallback command or not
@@ -126,6 +123,9 @@ public:
 
   virtual void preferenceValuesChanged(const QJsonObject &values) const {}
 
+  virtual QString settingsDescription() const { return {}; }
+  virtual std::vector<std::pair<QString, QString>> settingsMetadata() const { return {}; }
+
   /**
    * Whether the itme should be marked as currently active. All this does is add a small dot as an
    * right below the icon.
@@ -189,8 +189,6 @@ public:
   virtual void preferencesChanged(const QJsonObject &preferences) {}
 
   virtual void itemPreferencesChanged(const QString &itemId, const QJsonObject &preferences) {}
-
-  virtual QWidget *settingsDetail() const { return new ProviderSettingsDetail(*this); }
 
   // Called the first time the root provider is loaded by the root item manager, right after the first
   // `preferencesChanged` call.

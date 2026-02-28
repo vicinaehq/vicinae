@@ -29,10 +29,10 @@ class Frame {
 public:
   using Handler = std::function<void(std::string_view message)>;
 
-  void setHandler(Handler fn) { m_fn = fn; }
+  void setHandler(Handler fn) { m_fn = std::move(fn); }
 
   bool readPart(int fd) {
-    int rc = read(fd, m_buf.data(), m_buf.size());
+    const int rc = read(fd, m_buf.data(), m_buf.size());
 
     if (rc == -1) {
       std::println(std::cerr, "Failed to read fd {}: {}", fd, strerror(errno));
@@ -51,7 +51,7 @@ public:
       }
 
       if (size && size <= data.size()) {
-        std::string_view view(data);
+        const std::string_view view(data);
         if (m_fn) m_fn(view.substr(0, size));
         data = view.substr(size);
         size = 0;
@@ -79,15 +79,16 @@ struct Input {
   epoll_event ev;
 };
 
-Server::Server() : m_udev(udev_new()), m_xkb(xkb_context_new(XKB_CONTEXT_NO_FLAGS)) {
-  static constexpr const xkb_rule_names rules{.rules = nullptr,   // defaults to "evdev"
-                                              .model = nullptr,   // defaults to "pc105"
-                                              .layout = "us",     // or "fr", "de", etc.
-                                              .variant = nullptr, // e.g. "azerty" for French
-                                              .options = nullptr};
-
-  m_keymap = xkb_keymap_new_from_names(m_xkb, &rules, XKB_KEYMAP_COMPILE_NO_FLAGS);
-  m_kbState = xkb_state_new(m_keymap);
+Server::Server()
+    : m_udev(udev_new()), m_xkb(xkb_context_new(XKB_CONTEXT_NO_FLAGS)), m_keymap([this] {
+        static constexpr const xkb_rule_names rules{.rules = nullptr,   // defaults to "evdev"
+                                                    .model = nullptr,   // defaults to "pc105"
+                                                    .layout = "us",     // or "fr", "de", etc.
+                                                    .variant = nullptr, // e.g. "azerty" for French
+                                                    .options = nullptr};
+        return xkb_keymap_new_from_names(m_xkb, &rules, XKB_KEYMAP_COMPILE_NO_FLAGS);
+      }()),
+      m_kbState(xkb_state_new(m_keymap)) {
   setupIPC();
 }
 
@@ -146,17 +147,17 @@ void Server::setupIPC() {
           return std::unexpected("No such snippet");
         }
 
-        int mods = UInputKeyboard::Modifier::MOD_CTRL;
+        auto mods = UInputKeyboard::Modifier::Ctrl;
         std::println(std::cerr, "Received expansion request for snippet {} (took {}ms)", req.trigger,
                      std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() -
                                                                            lastExpansionTime)
                          .count());
 
-        if (req.terminal) mods |= UInputKeyboard::Modifier::MOD_SHIFT;
+        if (req.terminal) mods |= UInputKeyboard::Modifier::Shift;
 
         m_kb.repeatKey(KEY_BACKSPACE, req.trigger.size());
         usleep(2000);
-        m_kb.sendKey(KEY_V, mods);
+        m_kb.sendKey(KEY_V, static_cast<int>(mods));
 
         if (it->second.mode == ipc::ExpansionMode::Word) {
           usleep(2000);
@@ -187,7 +188,7 @@ void Server::setLayout(const LayoutInfo &info) {
 }
 
 void Server::listen() {
-  std::error_code ec;
+  const std::error_code ec;
 
   std::unordered_map<int, Input> inputs;
 
@@ -213,7 +214,7 @@ void Server::listen() {
   udev_monitor_filter_add_match_subsystem_devtype(mon, "input", nullptr);
   udev_monitor_enable_receiving(mon);
 
-  int udevFd = udev_monitor_get_fd(mon);
+  const int udevFd = udev_monitor_get_fd(mon);
 
   if (udevFd == -1) {
     std::println(std::cerr, "Failed to create inotify file descriptor", strerror(errno));
@@ -300,7 +301,7 @@ void Server::listen() {
   setLayout({.layout = "us"});
 
   for (;;) {
-    int nfds = epoll_wait(epollfd, events.data(), events.size(), -1);
+    const int nfds = epoll_wait(epollfd, events.data(), events.size(), -1);
 
     if (nfds == -1) {
       std::println(std::cerr, "Failed to epoll_wait: {}", strerror(errno));
@@ -318,7 +319,7 @@ void Server::listen() {
       // hot plug/unplug
       if (fd == udevFd) {
         udev_device *dev = udev_monitor_receive_device(mon);
-        std::string_view action = udev_device_get_action(dev);
+        const std::string_view action = udev_device_get_action(dev);
         const char *node = udev_device_get_devnode(dev);
 
         if (!node) continue;
@@ -381,7 +382,7 @@ void Server::listen() {
         continue;
       }
 
-      xkb_keycode_t keycode = ev.code + 8;
+      const xkb_keycode_t keycode = ev.code + 8;
 
       if (ev.value == 0) {
         xkb_state_update_key(m_kbState, keycode, XKB_KEY_UP);
@@ -394,8 +395,8 @@ void Server::listen() {
         lastKeyTime = now;
 
         std::array<char, 32> key;
-        int len = xkb_state_key_get_utf8(m_kbState, keycode, key.data(), key.size());
-        std::string_view keyStr{key.data(), static_cast<size_t>(len)};
+        const int len = xkb_state_key_get_utf8(m_kbState, keycode, key.data(), key.size());
+        const std::string_view keyStr{key.data(), static_cast<size_t>(len)};
 
         if (ev.value == 1) { xkb_state_update_key(m_kbState, keycode, XKB_KEY_DOWN); }
 

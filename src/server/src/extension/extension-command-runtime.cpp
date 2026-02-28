@@ -1,7 +1,7 @@
 #include "extension-command-runtime.hpp"
 #include "common.hpp"
 #include "extension/extension-navigation-controller.hpp"
-#include "extension-error-view.hpp"
+#include "qml/extension-error-view-host.hpp"
 #include "extension/requests/app-request-router.hpp"
 #include "extension/requests/clipboard-request-router.hpp"
 #include "extension/requests/storage-request-router.hpp"
@@ -11,7 +11,6 @@
 #include "extension/requests/oauth-router.hpp"
 #include "extension/requests/command-request-router.hpp"
 #include "proto/manager.pb.h"
-#include "common.hpp"
 #include "service-registry.hpp"
 #include "services/asset-resolver/asset-resolver.hpp"
 #include <QString>
@@ -112,7 +111,7 @@ void ExtensionCommandRuntime::handleCrash(const proto::ext::extension::CrashEven
   auto &nav = context()->navigation;
 
   nav->popToRoot();
-  nav->pushView(new ExtensionErrorView(QString::fromStdString(crash.text())));
+  nav->pushView(new ExtensionErrorViewHost(QString::fromStdString(crash.text())));
   nav->setNavigationTitle(QString("%1 - Crash handler").arg(m_command->name()));
   nav->setNavigationIcon(m_command->iconUrl());
 }
@@ -121,10 +120,14 @@ void ExtensionCommandRuntime::handleEvent(const ExtensionEvent &event) {
   using Event = proto::ext::extension::Event;
 
   switch (event.data()->payload_case()) {
-  case Event::kCrash:
-    return handleCrash(event.data()->crash());
-  case Event::kGeneric:
-    return handleGenericEvent(event.data()->generic());
+  case Event::kCrash: {
+    handleCrash(event.data()->crash());
+    return;
+  }
+  case Event::kGeneric: {
+    handleGenericEvent(event.data()->generic());
+    return;
+  }
   default:
     break;
   }
@@ -144,7 +147,7 @@ void ExtensionCommandRuntime::initialize() {
       std::make_unique<CommandRequestRouter>(m_navigation.get(), context()->services->rootItemManager());
   m_fileSearchRouter = std::make_unique<FileSearchRequestRouter>(*context()->services->fileService());
 
-  QString storageNamespace = QString("%1:data").arg(m_command->uniqueId().provider.c_str());
+  QString const storageNamespace = QString("%1:data").arg(m_command->uniqueId().provider.c_str());
 
   m_storageRouter =
       std::make_unique<StorageRequestRouter>(context()->services->localStorage(), storageNamespace);

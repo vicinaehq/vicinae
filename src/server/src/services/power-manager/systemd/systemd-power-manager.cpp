@@ -9,7 +9,9 @@ static const constexpr uint64_t SD_LOGIND_SOFT_REBOOT = 1 << 2;
 
 bool SystemdPowerManager::powerOff() { return m_iface->call("PowerOff", false).errorMessage().isEmpty(); }
 bool SystemdPowerManager::reboot() { return m_iface->call("Reboot", false).errorMessage().isEmpty(); }
-bool SystemdPowerManager::sleep() const { return m_iface->call("Sleep", static_cast<quint64>(0)).errorMessage().isEmpty(); }
+bool SystemdPowerManager::sleep() const {
+  return m_iface->call("Sleep", static_cast<quint64>(0)).errorMessage().isEmpty();
+}
 bool SystemdPowerManager::suspend() { return m_iface->call("Suspend", false).errorMessage().isEmpty(); }
 bool SystemdPowerManager::hibernate() { return m_iface->call("Hibernate", false).errorMessage().isEmpty(); }
 bool SystemdPowerManager::lock() {
@@ -62,7 +64,7 @@ std::optional<SystemdPowerManager::Session> SystemdPowerManager::getUserSession(
   arg >> sessions;
 
   for (const auto &session : sessions) {
-    if (session.uid == getuid() && !session.seatId.isEmpty()) { return session; }
+    if (static_cast<uid_t>(session.uid) == getuid() && !session.seatId.isEmpty()) { return session; }
   }
 
   return {};
@@ -77,6 +79,7 @@ bool SystemdPowerManager::can(const QString &method) const {
   return true;
 }
 
+// NOLINTBEGIN(bugprone-return-const-ref-from-parameter)
 const QDBusArgument &operator>>(const QDBusArgument &arg, SystemdPowerManager::SessionList &sessions) {
   sessions.clear();
   arg.beginArray();
@@ -99,3 +102,4 @@ const QDBusArgument &operator>>(const QDBusArgument &arg, SystemdPowerManager::S
 
   return arg;
 }
+// NOLINTEND(bugprone-return-const-ref-from-parameter)

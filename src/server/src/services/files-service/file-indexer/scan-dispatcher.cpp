@@ -7,10 +7,11 @@
 #include <mutex>
 #include <ranges>
 #include <stdexcept>
+#include <utility>
 
 void ScanDispatcher::handleFinishedScan(int id, ScanStatus status) {
   {
-    std::scoped_lock l(m_collectorQueueMtx);
+    std::scoped_lock const l(m_collectorQueueMtx);
     m_collectorQueue.push(id);
   }
   m_collectorCv.notify_one();
@@ -19,13 +20,13 @@ void ScanDispatcher::handleFinishedScan(int id, ScanStatus status) {
 int ScanDispatcher::enqueue(const Scan &scan) {
   static int idCounter;
 
-  int scanId = idCounter;
+  int const scanId = idCounter;
   idCounter++;
 
   auto handler = [this, scanId](ScanStatus status) { handleFinishedScan(scanId, status); };
 
   {
-    std::scoped_lock l(m_scannerMapMtx);
+    std::scoped_lock const l(m_scannerMapMtx);
 
     switch (scan.type) {
     case ScanType::Full:
@@ -42,8 +43,8 @@ int ScanDispatcher::enqueue(const Scan &scan) {
   return scanId;
 }
 
-ScanDispatcher::ScanDispatcher(std::shared_ptr<DbWriter> writer) : m_writer(writer) {
-  m_running = true;
+ScanDispatcher::ScanDispatcher(std::shared_ptr<DbWriter> writer)
+    : m_writer(std::move(writer)), m_running(true) {
 
   m_collectorThread = std::thread([this]() {
     while (true) {
@@ -55,12 +56,12 @@ ScanDispatcher::ScanDispatcher(std::shared_ptr<DbWriter> writer) : m_writer(writ
 
       int id;
       {
-        std::scoped_lock l(m_collectorQueueMtx);
+        std::scoped_lock const l(m_collectorQueueMtx);
         id = m_collectorQueue.front();
         m_collectorQueue.pop();
       }
       {
-        std::scoped_lock l(m_scannerMapMtx);
+        std::scoped_lock const l(m_scannerMapMtx);
         auto it = m_scannerMap.find(id);
         if (it == m_scannerMap.end()) {
           // Attempted to close the same scanner twice
@@ -75,7 +76,7 @@ ScanDispatcher::ScanDispatcher(std::shared_ptr<DbWriter> writer) : m_writer(writ
 
 bool ScanDispatcher::interrupt(int id) {
   {
-    std::scoped_lock l(m_scannerMapMtx);
+    std::scoped_lock const l(m_scannerMapMtx);
     auto element = m_scannerMap.find(id);
     if (element == m_scannerMap.end()) return false;
 
@@ -86,7 +87,7 @@ bool ScanDispatcher::interrupt(int id) {
 
 void ScanDispatcher::interruptAll() {
   {
-    std::scoped_lock l(m_scannerMapMtx);
+    std::scoped_lock const l(m_scannerMapMtx);
 
     for (auto &[id, element] : m_scannerMap) {
       element.scanner->interrupt();
@@ -96,7 +97,7 @@ void ScanDispatcher::interruptAll() {
 
 std::vector<std::pair<int, Scan>> ScanDispatcher::scans() {
   {
-    std::scoped_lock l(m_scannerMapMtx);
+    std::scoped_lock const l(m_scannerMapMtx);
 
     return ranges_to<std::vector>(m_scannerMap |
                                   std::views::transform([](auto const &it) -> std::pair<int, Scan> {

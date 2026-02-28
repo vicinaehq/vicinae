@@ -5,7 +5,8 @@
 #include <glaze/util/key_transformers.hpp>
 #include <qstylehints.h>
 #include <string_view>
-#include <QApplication>
+#include <QGuiApplication>
+#include <utility>
 #include "utils.hpp"
 #include "config.hpp"
 
@@ -57,7 +58,7 @@ template <typename T> T static merge(const auto &v1, const auto &v2) {
 }
 
 const SystemThemeConfig &ConfigValue::systemTheme() const {
-  switch (QApplication::styleHints()->colorScheme()) {
+  switch (QGuiApplication::styleHints()->colorScheme()) {
   case Qt::ColorScheme::Light:
     return theme.light;
   default:
@@ -65,7 +66,7 @@ const SystemThemeConfig &ConfigValue::systemTheme() const {
   }
 }
 
-Manager::Manager(fs::path path) : m_userPath(path) {
+Manager::Manager(fs::path path) : m_userPath(std::move(path)) {
   auto file = QFile(":config.jsonc");
 
   if (!file.open(QIODevice::ReadOnly)) { throw std::runtime_error("Failed to open default config"); }
@@ -119,7 +120,7 @@ bool Manager::mergeEntrypointWithUser(const EntrypointId &id, const ProviderItem
 }
 
 bool Manager::mergeThemeConfig(const config::Partial<config::SystemThemeConfig> &cfg) {
-  switch (QApplication::styleHints()->colorScheme()) {
+  switch (QGuiApplication::styleHints()->colorScheme()) {
   case Qt::ColorScheme::Light:
     return mergeWithUser({.theme = config::Partial<config::ThemeConfig>{.light = cfg}});
   default:
@@ -187,7 +188,7 @@ void Manager::reloadConfig() {
     return;
   }
 
-  ConfigValue prev = std::move(m_user);
+  ConfigValue const prev = std::move(m_user);
   m_user = std::move(res.value());
   emit configChanged(m_user, prev);
 }
@@ -257,7 +258,8 @@ void Manager::prunePartial(Partial<ConfigValue> &user) {
       }
 
       if (v.entrypoints) {
-        for (auto it2 = v.entrypoints->begin(); it2 != v.entrypoints->end();) {
+        auto &entrypoints = *v.entrypoints;
+        for (auto it2 = entrypoints.begin(); it2 != entrypoints.end();) {
           auto currentIt = it2++;
           ProviderItemData &vi = currentIt->second;
 
@@ -268,11 +270,11 @@ void Manager::prunePartial(Partial<ConfigValue> &user) {
 
           if (vi.alias && vi.alias->empty()) { vi.alias.reset(); }
           if (!vi.enabled.has_value() && vi.preferences.value_or({}).empty() && !vi.alias) {
-            v.entrypoints->erase(currentIt);
+            entrypoints.erase(currentIt);
           }
         }
 
-        if (v.entrypoints->empty()) { v.entrypoints.reset(); }
+        if (entrypoints.empty()) { v.entrypoints.reset(); }
       }
 
       if (!v.enabled && v.preferences.value_or({}).empty() && !v.entrypoints) { pvd.erase(currentIt); }

@@ -14,7 +14,7 @@ public:
       cmd->prepare(sub, result);
       cmd->setup(sub);
       sub->callback([cmd = cmd.get(), sub, result]() {
-        bool r = cmd->run(sub);
+        const bool r = cmd->run(sub);
         if (result) *result = r;
       });
     }
@@ -22,7 +22,7 @@ public:
     //.if (!m_cmds.empty()) { app->require_subcommand(); }
   }
 
-  virtual void setup(CLI::App *app) {}
+  virtual void setup(CLI::App *) {}
 
   virtual bool run(CLI::App *app) {
     if (!m_cmds.empty() && app->get_subcommands().empty()) { std::cout << app->help() << std::endl; }
@@ -40,7 +40,7 @@ concept CliCommandType = std::is_base_of_v<AbstractCommandLineCommand, T>;
 
 class CommandLineApp {
 public:
-  CommandLineApp(std::string name) : m_name(name) {}
+  CommandLineApp(std::string name) : m_name(std::move(name)) {}
   template <CliCommandType T> void registerCommand() { m_cmds.emplace_back(std::make_unique<T>()); }
   int run(int ac, char **av);
 

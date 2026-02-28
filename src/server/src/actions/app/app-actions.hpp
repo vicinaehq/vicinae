@@ -10,7 +10,7 @@ public:
   void execute(ApplicationContext *context) override;
 
   OpenAppAction(const std::shared_ptr<AbstractApplication> &app, const QString &title,
-                const std::vector<QString> args);
+                const std::vector<QString> &args);
 
 private:
   std::shared_ptr<AbstractApplication> application;
@@ -44,7 +44,7 @@ private:
 
 class OpenRawProgramAction : public AbstractAction {
 public:
-  OpenRawProgramAction(const std::vector<QString> args);
+  OpenRawProgramAction(const std::vector<QString> &args);
 
   void execute(ApplicationContext *context) override;
   void setClearSearch(bool value) { m_clearSearch = value; }
@@ -68,6 +68,6 @@ public:
   void execute(ApplicationContext *ctx) override;
 
 private:
-  QString m_title;
   QUrl m_url;
+  QString m_title;
 };

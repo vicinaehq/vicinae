@@ -1,3 +1,4 @@
+// NOLINTBEGIN
 // clang-format off
 
 #line 1 "emoji_presentation_scanner.rl"
@@ -250,3 +251,4 @@ _again:
   *has_vs = false;
   return p;
 }
+// NOLINTEND

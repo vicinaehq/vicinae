@@ -1,8 +1,8 @@
 #pragma once
-#include "browse/browse-fonts-view.hpp"
+#include "qml/font-browser-view-host.hpp"
 #include "single-view-command-context.hpp"
 
-class BrowseFontsCommand : public BuiltinViewCommand<BrowseFontsView> {
+class BrowseFontsCommand : public BuiltinViewCommand<FontBrowserViewHost> {
   QString id() const override { return "browse"; }
   QString name() const override { return "Search Fonts"; };
   std::vector<QString> keywords() const override { return {"browse fonts"}; }

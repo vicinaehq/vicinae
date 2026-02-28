@@ -4,7 +4,7 @@
 namespace xdgpp {
 std::vector<MimeAppsListFile> getAllMimeAppsLists() {
   std::vector<MimeAppsListFile> files;
-  std::error_code ec;
+  const std::error_code ec;
   auto paths = xdgpp::mimeAppsListPaths();
 
   files.reserve(paths.size());

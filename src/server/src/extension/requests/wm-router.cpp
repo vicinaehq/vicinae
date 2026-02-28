@@ -86,7 +86,7 @@ proto::ext::wm::Response *WindowManagementRouter::getWindows(const proto::ext::w
   for (const auto &win : m_wm.provider()->listWindowsSync()) {
     if (req.has_workspace_id() && win->workspace().value_or("") != req.workspace_id().c_str()) { continue; }
 
-    bool isActive = activeWin && activeWin->id() == win->id();
+    bool const isActive = activeWin && activeWin->id() == win->id();
     auto serializedWin = winRes->add_windows();
 
     initWindow(*win, *serializedWin);
@@ -113,7 +113,7 @@ WindowManagementRouter::getWorkspaces(const proto::ext::wm::GetWorkspacesRequest
   res->set_allocated_get_workspaces(winRes);
 
   for (const auto &workspace : m_wm.provider()->listWorkspaces()) {
-    bool isActive = activeWorkspace && activeWorkspace->id() == workspace->id();
+    bool const isActive = activeWorkspace && activeWorkspace->id() == workspace->id();
     auto serializedWorkspace = winRes->add_workspaces();
 
     initWorkspace(*workspace, *serializedWorkspace);
@@ -176,7 +176,7 @@ void WindowManagementRouter::initWindow(AbstractWindowManager::AbstractWindow &w
                                         proto::ext::wm::Window &obj) {
   obj.set_id(win.id().toStdString());
   obj.set_title(win.title().toStdString());
-  obj.set_workspace_id(win.workspace()->toStdString());
+  if (auto ws = win.workspace()) { obj.set_workspace_id(ws->toStdString()); }
   obj.set_fullscreen(win.fullScreen());
 
   if (auto bounds = win.bounds()) {

@@ -9,7 +9,6 @@
 #include <qnamespace.h>
 #include <qobjectdefs.h>
 #include <qsqlquery.h>
-#include <ranges>
 
 #ifdef HAS_QALCULATE
 #include "qalculate/qalculate-backend.hpp"
@@ -145,8 +144,8 @@ CalculatorService::groupRecordsByTime(const std::vector<CalculatorRecord> &recor
   }
 
   {
-    QDate startOfWeek(now.date().addDays(-(now.date().dayOfWeek() - 1)));
-    QDate endOfWeek(startOfWeek.addDays(7));
+    QDate const startOfWeek(now.date().addDays(-(now.date().dayOfWeek() - 1)));
+    QDate const endOfWeek(startOfWeek.addDays(7));
 
     groups.push_back({"This week", {}});
 
@@ -158,8 +157,8 @@ CalculatorService::groupRecordsByTime(const std::vector<CalculatorRecord> &recor
   }
 
   {
-    QDate startOfMonth(QDate(now.date().year(), now.date().month(), 1));
-    QDateTime endOfMonth = startOfMonth.addMonths(1).startOfDay();
+    QDate const startOfMonth(QDate(now.date().year(), now.date().month(), 1));
+    QDateTime const endOfMonth = startOfMonth.addMonths(1).startOfDay();
 
     groups.push_back({"This month", {}});
 
@@ -171,8 +170,8 @@ CalculatorService::groupRecordsByTime(const std::vector<CalculatorRecord> &recor
 
   {
 
-    QDate startOfYear(now.date().year(), 1, 1);
-    QDate endOfYear(startOfYear.addYears(1));
+    QDate const startOfYear(now.date().year(), 1, 1);
+    QDate const endOfYear(startOfYear.addYears(1));
 
     groups.push_back({"This year", {}});
 

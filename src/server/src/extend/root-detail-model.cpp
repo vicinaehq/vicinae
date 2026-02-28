@@ -4,7 +4,7 @@
 #include <qjsonarray.h>
 #include <qjsonobject.h>
 
-RootDetailModelParser::RootDetailModelParser() {}
+RootDetailModelParser::RootDetailModelParser() = default;
 
 RootDetailModel RootDetailModelParser::parse(const QJsonObject &instance) {
   RootDetailModel model;

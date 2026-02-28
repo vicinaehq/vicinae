@@ -45,7 +45,7 @@ clip_proto::Response *ClipboardRequestRouter::readContent(const clip_proto::Read
 clip_proto::Response *ClipboardRequestRouter::clear(const clip_proto::ClearRequest &req) {
   auto res = new clip_proto::Response;
 
-  QApplication::clipboard()->clear();
+  QGuiApplication::clipboard()->clear();
   res->set_allocated_clear(new clip_proto::ClearResponse());
 
   return res;
@@ -65,7 +65,7 @@ clip_proto::Response *ClipboardRequestRouter::paste(const clip_proto::PasteToCli
 
 clip_proto::Response *ClipboardRequestRouter::copy(const clip_proto::CopyToClipboardRequest &req) {
   auto content = parseProtoClipboardContent(req.content());
-  bool concealed = req.options().concealed();
+  bool const concealed = req.options().concealed();
 
   m_clipboard.copyContent(content, {.concealed = concealed});
 

@@ -8,10 +8,10 @@ WlrDataOffer::WlrDataOffer(zwlr_data_control_offer_v1 *offer) : _offer(offer) {
 
 const std::vector<std::string> &WlrDataOffer::mimes() const { return _mimes; }
 
-void WlrDataOffer::offer(void *data, zwlr_data_control_offer_v1 *offer, const char *mime) {
-  auto self = static_cast<WlrDataOffer *>(data);
+void WlrDataOffer::offer(void *data, zwlr_data_control_offer_v1 *, const char *mime) {
+  auto self = static_cast<WlrDataOffer *>(data); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
 
-  self->_mimes.push_back(mime);
+  self->_mimes.emplace_back(mime);
 }
 
 std::string WlrDataOffer::receive(const std::string &mime) {

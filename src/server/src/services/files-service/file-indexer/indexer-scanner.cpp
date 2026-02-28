@@ -2,6 +2,7 @@
 #include "abstract-scanner.hpp"
 #include "services/files-service/file-indexer/filesystem-walker.hpp"
 #include <QDebug>
+#include <utility>
 
 namespace fs = std::filesystem;
 
@@ -10,7 +11,7 @@ void IndexerScanner::enqueueBatch(const std::vector<FileEvent> &paths) {
 
   while (shouldWait) {
     {
-      std::lock_guard lock(m_batchMutex);
+      std::scoped_lock const lock(m_batchMutex);
 
       /**
        * handle backpressure by waiting if too many batches are queued
@@ -48,8 +49,9 @@ void IndexerScanner::scan(const Scan &scan) {
   enqueueBatch(batchedIndex);
 }
 
-IndexerScanner::IndexerScanner(std::shared_ptr<DbWriter> writer, const Scan &sc, FinishCallback callback)
-    : AbstractScanner(writer, sc, callback) {
+IndexerScanner::IndexerScanner(const std::shared_ptr<DbWriter> &writer, const Scan &sc,
+                               FinishCallback callback)
+    : AbstractScanner(writer, sc, std::move(callback)) {
   m_writerWorker = std::make_unique<WriterWorker>(writer, m_batchMutex, m_writeBatches, m_batchCv);
   m_writerThread = std::thread([&]() { m_writerWorker->run(); });
 

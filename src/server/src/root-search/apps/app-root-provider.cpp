@@ -8,12 +8,10 @@
 #include "service-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/window-manager/window-manager.hpp"
-#include "switch-windows-view.hpp"
-#include "ui/settings-item-info/settings-item-info.hpp"
+#include "actions/wm/window-actions.hpp"
 #include "utils/environment.hpp"
 #include <qjsonobject.h>
 #include <qkeysequence.h>
-#include <qwidget.h>
 
 double AppRootItem::baseScoreWeight() const { return 1; }
 
@@ -29,16 +27,13 @@ QString AppRootItem::subtitle() const { return QString(); }
 
 QString AppRootItem::displayName() const { return m_app->displayName(); }
 
-QWidget *AppRootItem::settingsDetail(const QJsonObject &preferences) const {
-  std::vector<std::pair<QString, QString>> args;
+QString AppRootItem::settingsDescription() const { return m_app->description(); }
 
-  args.reserve(4);
-  args.emplace_back(std::pair{"ID", m_app->id()});
-  args.emplace_back(std::pair{"Name", m_app->displayName()});
-  args.emplace_back(std::pair{"Where", m_app->path().c_str()});
-  args.emplace_back(std::pair{"Opens in terminal", m_app->isTerminalApp() ? "Yes" : "No"});
-
-  return new SettingsItemInfo(args, m_app->description());
+std::vector<std::pair<QString, QString>> AppRootItem::settingsMetadata() const {
+  return {{"ID", m_app->id()},
+          {"Name", m_app->displayName()},
+          {"Where", m_app->path().c_str()},
+          {"Opens in terminal", m_app->isTerminalApp() ? "Yes" : "No"}};
 }
 
 bool AppRootItem::isActive() const {
@@ -64,7 +59,7 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
   auto copyId = new CopyToClipboardAction(Clipboard::Text(m_app->id()), "Copy App ID");
   auto copyLocation = new CopyToClipboardAction(Clipboard::Text(m_app->path().c_str()), "Copy App Location");
   auto preferences = ctx->services->rootItemManager()->getPreferenceValues(uniqueId());
-  QString defaultAction = preferences.value("defaultAction").toString();
+  QString const defaultAction = preferences.value("defaultAction").toString();
 
   auto mainSection = panel->createSection();
   auto utils = panel->createSection();
@@ -91,7 +86,7 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
 
   auto actions = m_app->actions();
 
-  for (int i = 0; i != appActions.size(); ++i) {
+  for (size_t i = 0; i != appActions.size(); ++i) {
     const auto &action = actions[i];
     auto openAction = new OpenAppAction(action, action->displayName(), {});
 

@@ -6,11 +6,11 @@
 
 namespace Gnome {
 
-EventListener::EventListener() : m_bus(QDBusConnection::sessionBus()) {
+EventListener::EventListener() : m_bus(QDBusConnection::sessionBus()), m_reconnectTimer(new QTimer(this)) {
   using namespace std::chrono_literals;
 
   // Initialize reconnection timer (same pattern as GnomeClipboardServer)
-  m_reconnectTimer = new QTimer(this);
+
   m_reconnectTimer->setSingleShot(false);
   m_reconnectTimer->setInterval(5s); // 5 seconds like clipboard server
   connect(m_reconnectTimer, &QTimer::timeout, this, &EventListener::onReconnectTimer);
@@ -46,20 +46,20 @@ bool EventListener::setupDBusConnection() {
   }
 
   // Connect to all window signals
-  bool openConnected = m_bus.connect(m_service, m_path, m_interface, "openwindow", this,
-                                     SLOT(onOpenWindowSignal(QString, QString, QString, QString)));
-  bool closeConnected =
+  bool const openConnected = m_bus.connect(m_service, m_path, m_interface, "openwindow", this,
+                                           SLOT(onOpenWindowSignal(QString, QString, QString, QString)));
+  bool const closeConnected =
       m_bus.connect(m_service, m_path, m_interface, "closewindow", this, SLOT(onCloseWindowSignal(QString)));
-  bool focusConnected =
+  bool const focusConnected =
       m_bus.connect(m_service, m_path, m_interface, "focuswindow", this, SLOT(onFocusWindowSignal(QString)));
-  bool moveConnected = m_bus.connect(m_service, m_path, m_interface, "movewindow", this,
-                                     SLOT(onMoveWindowSignal(QString, int, int, uint, uint)));
-  bool stateConnected = m_bus.connect(m_service, m_path, m_interface, "statewindow", this,
-                                      SLOT(onStateWindowSignal(QString, QString)));
-  bool workspaceConnected = m_bus.connect(m_service, m_path, m_interface, "workspacechanged", this,
-                                          SLOT(onWorkspaceChangedSignal(QString)));
-  bool monitorConnected = m_bus.connect(m_service, m_path, m_interface, "monitorlayoutchanged", this,
-                                        SLOT(onMonitorLayoutChangedSignal()));
+  bool const moveConnected = m_bus.connect(m_service, m_path, m_interface, "movewindow", this,
+                                           SLOT(onMoveWindowSignal(QString, int, int, uint, uint)));
+  bool const stateConnected = m_bus.connect(m_service, m_path, m_interface, "statewindow", this,
+                                            SLOT(onStateWindowSignal(QString, QString)));
+  bool const workspaceConnected = m_bus.connect(m_service, m_path, m_interface, "workspacechanged", this,
+                                                SLOT(onWorkspaceChangedSignal(QString)));
+  bool const monitorConnected = m_bus.connect(m_service, m_path, m_interface, "monitorlayoutchanged", this,
+                                              SLOT(onMonitorLayoutChangedSignal()));
 
   if (!openConnected || !closeConnected || !focusConnected || !moveConnected || !stateConnected ||
       !workspaceConnected || !monitorConnected) {
@@ -104,7 +104,7 @@ bool EventListener::testExtensionAvailability() const {
   }
 
   // Try to call a simple method to verify the interface is working
-  QDBusReply<QString> reply = testInterface.call("List");
+  QDBusReply<QString> const reply = testInterface.call("List");
   if (!reply.isValid()) {
     qDebug() << "GnomeEventListener: Extension method call test failed:" << reply.error().message();
     return false;

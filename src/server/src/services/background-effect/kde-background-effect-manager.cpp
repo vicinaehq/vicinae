@@ -1,5 +1,5 @@
 #include "kde-background-effect-manager.hpp"
-#include <qapplication.h>
+#include <QGuiApplication>
 #include <qevent.h>
 #include <qlogging.h>
 #include <wayland-client-core.h>
@@ -8,8 +8,7 @@
 
 namespace KDE {
 
-BackgroundEffectManager::BackgroundEffectManager(org_kde_kwin_blur_manager *manager)
-    : m_manager(manager) {}
+BackgroundEffectManager::BackgroundEffectManager(org_kde_kwin_blur_manager *manager) : m_manager(manager) {}
 
 bool BackgroundEffectManager::supportsBlur() const { return true; }
 
@@ -58,7 +57,9 @@ bool BackgroundEffectManager::removeBlur(QWindow *win) {
 
 bool BackgroundEffectManager::eventFilter(QObject *sender, QEvent *event) {
   if (event->type() == QEvent::PlatformSurface) {
-    auto *surfaceEvent = static_cast<QPlatformSurfaceEvent *>(event);
+    auto *surfaceEvent =
+        static_cast<QPlatformSurfaceEvent *>( // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+            event);
 
     if (surfaceEvent->surfaceEventType() == QPlatformSurfaceEvent::SurfaceAboutToBeDestroyed) {
       for (auto it = m_state.begin(); it != m_state.end(); ++it) {
@@ -78,7 +79,7 @@ void BackgroundEffectManager::roundtrip() {
   wl_display_roundtrip(qApp->nativeInterface<QNativeInterface::QWaylandApplication>()->display());
 }
 
-void BackgroundEffectManager::applyBlur(QWindow *win, const BlurState &state) {
+void BackgroundEffectManager::applyBlur(QWindow *, const BlurState &state) {
   auto region = QtWaylandUtils::createRoundedRegion(state.cfg.region, state.cfg.radius);
   org_kde_kwin_blur_set_region(state.blur, region);
   org_kde_kwin_blur_commit(state.blur);

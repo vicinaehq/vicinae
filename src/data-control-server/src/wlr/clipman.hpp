@@ -13,6 +13,7 @@
 class WlrClipman : public WaylandDisplay, public WaylandRegistry::Listener, public WlrDataDevice::Listener {
 
 public:
+  virtual ~WlrClipman() = default;
   static WlrClipman *instance();
   void start();
   WlrClipman();

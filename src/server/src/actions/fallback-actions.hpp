@@ -1,10 +1,10 @@
 #pragma once
-#include "extensions/vicinae/manage-fallback/manage-fallback-view.hpp"
+#include "qml/manage-fallback-view-host.hpp"
 #include "ui/action-pannel/action.hpp"
 
 class ManageFallbackActions : public AbstractAction {
   void execute(ApplicationContext *ctx) override {
-    auto view = new ManageFallbackView();
+    auto view = new ManageFallbackViewHost();
 
     ctx->navigation->pushView(view);
   }

@@ -19,7 +19,7 @@ public:
   ListAccessory toAccessory() const;
   static AccessoryModel fromJson(const QJsonValue &value);
 
-  Data data;
+  Data data = Text{};
   std::optional<ImageLikeModel> icon;
   std::optional<QString> tooltip;
 };

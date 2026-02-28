@@ -5,10 +5,11 @@
 #include "extend/pagination-model.hpp"
 #include "extend/dropdown-model.hpp"
 #include "ui/image/url.hpp"
-#include "ui/omni-grid/grid-item-content-widget.hpp"
 #include <qjsonobject.h>
 
 enum GridFit { GridContain, GridFill };
+
+enum class GridInset { None, Small, Medium, Large };
 
 struct ImageContentWithTooltip {
   ImageLikeModel value;
@@ -35,7 +36,7 @@ struct GridSectionModel {
   std::optional<int> columns;
   std::optional<ObjectFit> fit;
 
-  std::optional<GridItemContentWidget::Inset> inset;
+  std::optional<GridInset> inset;
   std::vector<GridItemViewModel> children;
 };
 
@@ -50,7 +51,7 @@ struct GridModel {
   double aspectRatio;
   bool dirty;
   std::optional<int> columns;
-  GridItemContentWidget::Inset inset = GridItemContentWidget::Inset::None;
+  GridInset inset = GridInset::None;
   ObjectFit fit = ObjectFit::Contain;
 
   std::string navigationTitle;
@@ -67,7 +68,7 @@ struct GridModel {
 };
 
 class GridModelParser {
-  GridItemContentWidget::Inset parseInset(const std::string &s);
+  GridInset parseInset(const std::string &s);
   GridItemViewModel parseListItem(const QJsonObject &instance, size_t index);
   GridSectionModel parseSection(const QJsonObject &instance);
   ObjectFit parseFit(const std::string &fit);

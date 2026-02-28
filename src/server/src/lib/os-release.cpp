@@ -18,7 +18,7 @@ OsRelease::OsRelease() {
 
     if (parts.size() != 2) continue;
 
-    QString k = parts[0];
+    QString const k = parts[0];
     QString v = parts[1];
 
     if (v.startsWith('"')) { v = v.sliced(1); }

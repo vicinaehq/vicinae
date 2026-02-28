@@ -21,14 +21,15 @@ class AbstractScanner {
 public:
   using FinishCallback = std::function<void(ScanStatus)>;
 
-private:
-  int m_recordId;
-  FinishCallback m_finishCallback;
-  std::atomic<bool> m_interrupted = false;
-
 protected:
   std::shared_ptr<DbWriter> m_writer;
 
+private:
+  FinishCallback m_finishCallback;
+  int m_recordId;
+  std::atomic<bool> m_interrupted = false;
+
+protected:
   void start(const Scan &scan) {
     auto result = m_writer->createScan(scan.path, scan.type);
 

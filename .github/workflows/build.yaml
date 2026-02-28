@@ -33,7 +33,7 @@ jobs:
           cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON -DCMAKE_PREFIX_PATH=$Qt6_DIR -DCMAKE_C_COMPILER=${{ matrix.compiler.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }}
 
       - name: Build
-        run: cmake --build build --parallel ${nproc}
+        run: cmake --build build --parallel $(nproc)
 
       - name: Run Tests
-        run: make test 
+        run: make test

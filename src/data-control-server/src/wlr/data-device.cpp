@@ -1,7 +1,8 @@
 #include "data-device.hpp"
 #include "data-offer.hpp"
 
-void WlrDataDevice::dataOffer(void *data, zwlr_data_control_device_v1 *device, zwlr_data_control_offer_v1 *id) {
+// NOLINTBEGIN(cppcoreguidelines-pro-type-static-cast-downcast)
+void WlrDataDevice::dataOffer(void *data, zwlr_data_control_device_v1 *, zwlr_data_control_offer_v1 *id) {
   auto self = static_cast<WlrDataDevice *>(data);
 
   if (!id) {
@@ -18,7 +19,7 @@ void WlrDataDevice::dataOffer(void *data, zwlr_data_control_device_v1 *device, z
   self->m_offer = std::move(offer);
 }
 
-void WlrDataDevice::selection(void *data, zwlr_data_control_device_v1 *device, zwlr_data_control_offer_v1 *id) {
+void WlrDataDevice::selection(void *data, zwlr_data_control_device_v1 *, zwlr_data_control_offer_v1 *) {
   auto self = static_cast<WlrDataDevice *>(data);
 
   if (!self->m_offer) return;
@@ -28,7 +29,7 @@ void WlrDataDevice::selection(void *data, zwlr_data_control_device_v1 *device, z
   }
 }
 
-void WlrDataDevice::finished(void *data, zwlr_data_control_device_v1 *device) {
+void WlrDataDevice::finished(void *data, zwlr_data_control_device_v1 *) {
   auto self = static_cast<WlrDataDevice *>(data);
 
   for (auto lstn : self->_listeners) {
@@ -36,8 +37,8 @@ void WlrDataDevice::finished(void *data, zwlr_data_control_device_v1 *device) {
   }
 }
 
-void WlrDataDevice::primarySelection(void *data, zwlr_data_control_device_v1 *device,
-                                  zwlr_data_control_offer_v1 *id) {
+void WlrDataDevice::primarySelection(void *data, zwlr_data_control_device_v1 *,
+                                     zwlr_data_control_offer_v1 *) {
   auto self = static_cast<WlrDataDevice *>(data);
 
   if (!self->m_offer) return;
@@ -46,6 +47,7 @@ void WlrDataDevice::primarySelection(void *data, zwlr_data_control_device_v1 *de
     lstn->primarySelection(*self, *self->m_offer);
   }
 }
+// NOLINTEND(cppcoreguidelines-pro-type-static-cast-downcast)
 
 WlrDataDevice::WlrDataDevice(zwlr_data_control_device_v1 *dev) : _dev(dev) {
   zwlr_data_control_device_v1_add_listener(_dev, &_listener, this);

@@ -2,12 +2,13 @@
 #include "ui/image/image.hpp"
 #include "ui/image/url.hpp"
 #include <QMovie>
+#include <utility>
 #include <qbuffer.h>
 #include <qnamespace.h>
 #include <qstringview.h>
 
 void AnimatedIODeviceImageLoader::render(const RenderConfig &cfg) {
-  QSize deviceSize = cfg.size * cfg.devicePixelRatio;
+  QSize const deviceSize = cfg.size * cfg.devicePixelRatio;
 
   m_movie = std::make_unique<QMovie>();
   m_movie->setDevice(&m_buf);
@@ -16,7 +17,7 @@ void AnimatedIODeviceImageLoader::render(const RenderConfig &cfg) {
 
   connect(m_movie.get(), &QMovie::updated, this, [this, deviceSize, cfg]() {
     auto pix = m_movie->currentPixmap();
-    QSize frameSize = pix.size();
+    QSize const frameSize = pix.size();
     pix.setDevicePixelRatio(cfg.devicePixelRatio);
     auto ar = ImageURL::fitToAspectRatio(cfg.fit);
     auto size = frameSize.scaled(deviceSize, ar);
@@ -25,7 +26,7 @@ void AnimatedIODeviceImageLoader::render(const RenderConfig &cfg) {
   m_movie->start();
 }
 
-AnimatedIODeviceImageLoader::AnimatedIODeviceImageLoader(QByteArray data) : m_data(data) {
+AnimatedIODeviceImageLoader::AnimatedIODeviceImageLoader(QByteArray data) : m_data(std::move(data)) {
   m_buf.setData(m_data);
   m_buf.open(QIODevice::ReadOnly);
 }

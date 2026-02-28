@@ -34,9 +34,9 @@ ExtensionRegistry::ExtensionRegistry(LocalStorageService &storage) : m_storage(s
   connect(&m_rescanDebounce, &QTimer::timeout, this, [this]() { requestScan(); });
 }
 
-QFuture<bool> ExtensionRegistry::installFromZip(const QString &id, std::string data,
-                                                std::function<void(bool)> cb) {
-  fs::path extractDir = localExtensionDirectory() / id.toStdString();
+QFuture<bool> ExtensionRegistry::installFromZip(const QString &id, const std::string &data,
+                                                const std::function<void(bool)> &cb) {
+  fs::path const extractDir = localExtensionDirectory() / id.toStdString();
   auto future = QtConcurrent::run([id, data, extractDir]() {
     Unzipper unzip = std::string_view(data);
 
@@ -68,7 +68,7 @@ QFuture<bool> ExtensionRegistry::installFromZip(const QString &id, std::string d
 }
 
 bool ExtensionRegistry::uninstall(const QString &id) {
-  std::string sid = id.toStdString();
+  std::string const sid = id.toStdString();
   auto it = m_installed.find(sid);
 
   if (it == m_installed.end()) {
@@ -110,7 +110,7 @@ std::vector<fs::path> ExtensionRegistry::extensionDirectories() {
                           // in XDG_DATA_DIRS
 
   for (const auto &dir : dd) {
-    fs::path extDir = dir / "vicinae" / "extensions";
+    fs::path const extDir = dir / "vicinae" / "extensions";
     if (extDir != local) paths.emplace_back(extDir);
   }
 
@@ -128,8 +128,8 @@ std::vector<ExtensionManifest> ExtensionRegistry::scanAll() {
     for (const auto &entry : fs::directory_iterator(path, ec)) {
       if (!entry.is_directory(ec)) continue;
 
-      fs::path path = entry.path();
-      std::string filename = path.filename();
+      fs::path const &path = entry.path();
+      std::string const filename = path.filename();
 
       if (filename.starts_with('.')) continue;
 

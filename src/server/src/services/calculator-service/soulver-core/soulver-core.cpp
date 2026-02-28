@@ -8,13 +8,13 @@
 #include <QDebug>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include "common/c-ptr.hpp"
 
 namespace fs = std::filesystem;
 
 constexpr const char *SHARED_LIB = "libSoulverWrapper.so";
 
-SoulverCoreCalculator::SoulverCoreCalculator() {
-  m_dlHandle = dlopen(SHARED_LIB, RTLD_LAZY);
+SoulverCoreCalculator::SoulverCoreCalculator() : m_dlHandle(dlopen(SHARED_LIB, RTLD_LAZY)) {
 
   if (!m_dlHandle) {
     qDebug() << "unable to load libSoulverWrapper" << dlerror();
@@ -31,7 +31,7 @@ bool SoulverCoreCalculator::start() {
   }
 
   auto test = calculate("2+2");
-  bool canCompute = test.has_value() && test.value().result == "4";
+  bool const canCompute = test.has_value() && test.value().result == "4";
 
   return canCompute;
 }
@@ -49,7 +49,7 @@ std::vector<fs::path> SoulverCoreCalculator::availableResourcePaths() const {
   std::vector<fs::path> paths;
 
   for (const auto &dir : xdgpp::dataDirs()) {
-    fs::path resource = dir / "soulver-core" / "resources";
+    fs::path const resource = dir / "soulver-core" / "resources";
     if (fs::is_directory(resource, ec)) { paths.emplace_back(resource); }
   }
 
@@ -82,7 +82,11 @@ SoulverCoreCalculator::asyncCompute(const QString &question) const {
 
 std::expected<SoulverCoreCalculator::SoulverResult, QString>
 SoulverCoreCalculator::calculate(const QString &expression) const {
-  char *answer = m_abi.soulver_evaluate(expression.toStdString().c_str());
+  static const QRegularExpression operatorSpacing(R"(\s*([+\-*/%^])\s*)");
+  QString normalized = expression;
+  normalized.replace(operatorSpacing, " \\1 ");
+  normalized = normalized.simplified();
+  const CPtr<char> answer(m_abi.soulver_evaluate(normalized.toStdString().c_str()));
 
   if (!answer) {
     qWarning() << "soulver_evaluate returned a null pointer. This suggests soulver crashed or wasn't "
@@ -91,15 +95,13 @@ SoulverCoreCalculator::calculate(const QString &expression) const {
   }
 
   QJsonParseError parseError;
-  auto doc = QJsonDocument::fromJson(answer, &parseError);
-
-  free(answer);
+  auto doc = QJsonDocument::fromJson(answer.get(), &parseError);
 
   if (parseError.error != QJsonParseError::NoError) { return std::unexpected("Failed to parse json"); }
 
   auto json = doc.object();
-  QString value = json.value("value").toString();
-  QString type = json.value("type").toString();
+  QString const value = json.value("value").toString();
+  QString const type = json.value("type").toString();
 
   SoulverResult result;
 

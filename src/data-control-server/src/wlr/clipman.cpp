@@ -18,7 +18,7 @@ void WlrClipman::global(WaylandRegistry &reg, uint32_t name, const char *interfa
   }
 }
 
-void WlrClipman::primarySelection(WlrDataDevice &device, WlrDataOffer &offer) {
+void WlrClipman::primarySelection(WlrDataDevice &, WlrDataOffer &offer) {
   if (isatty(STDOUT_FILENO)) {
     Selection::printPrimarySelectionDebug(offer);
     return;
@@ -27,7 +27,7 @@ void WlrClipman::primarySelection(WlrDataDevice &device, WlrDataOffer &offer) {
   // we don't do anything with the primary selection
 }
 
-void WlrClipman::selection(WlrDataDevice &device, WlrDataOffer &offer) {
+void WlrClipman::selection(WlrDataDevice &, WlrDataOffer &offer) {
   auto filteredMimes = Selection::filterMimes(offer.mimes());
   Selection::serializeAndWrite(filteredMimes, offer);
 }
@@ -38,7 +38,7 @@ void WlrClipman::start() {
   if (!_dcm) { throw std::runtime_error("zwlr data control is not available"); }
   if (!_seat) { throw std::runtime_error("seat is not available"); }
 
-  auto dev = _dcm->getDataDevice(*_seat.get());
+  auto dev = _dcm->getDataDevice(*_seat);
   dev->registerListener(this);
 
   for (;;) {

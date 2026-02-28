@@ -11,7 +11,7 @@ static constexpr const uinput_setup KB_ID = {
 static constexpr const auto KEY_DELAY_US = 2000;
 
 UInputKeyboard::UInputKeyboard() {
-  int fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
+  const int fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
 
   if (fd < 0) {
     m_error = std::format("Failed to open /dev/uinput: {}", strerror(errno));
@@ -85,11 +85,13 @@ void UInputKeyboard::sendKey(int code) {
 }
 
 void UInputKeyboard::applyMods(int mods) {
-  if (mods & MOD_CTRL) { keydown(KEY_LEFTCTRL); }
-  if (mods & MOD_SHIFT) { keydown(KEY_LEFTSHIFT); }
+  const auto m = static_cast<Modifier>(mods);
+  if ((m & Modifier::Ctrl) != Modifier::None) { keydown(KEY_LEFTCTRL); }
+  if ((m & Modifier::Shift) != Modifier::None) { keydown(KEY_LEFTSHIFT); }
 }
 
 void UInputKeyboard::clearMods(int mods) {
-  if (mods & MOD_CTRL) { keyup(KEY_LEFTCTRL); }
-  if (mods & MOD_SHIFT) { keyup(KEY_LEFTSHIFT); }
+  const auto m = static_cast<Modifier>(mods);
+  if ((m & Modifier::Ctrl) != Modifier::None) { keyup(KEY_LEFTCTRL); }
+  if ((m & Modifier::Shift) != Modifier::None) { keyup(KEY_LEFTSHIFT); }
 }

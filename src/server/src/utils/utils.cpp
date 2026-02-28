@@ -1,5 +1,6 @@
 #include "utils.hpp"
 #include <cmath>
+#include <cstddef>
 #include <random>
 #include <cstdlib>
 #include <filesystem>
@@ -40,20 +41,20 @@ std::filesystem::path expandPath(const std::filesystem::path &path) {
 }
 
 QString getRelativeTimeString(const QDateTime &pastTime) {
-  QDateTime now = QDateTime::currentDateTime();
-  qint64 secondsDiff = pastTime.secsTo(now);
+  QDateTime const now = QDateTime::currentDateTime();
+  qint64 const secondsDiff = pastTime.secsTo(now);
 
   if (secondsDiff < 0) { return QObject::tr("in the future"); }
 
-  qint64 days = secondsDiff / (24 * 3600);
-  qint64 hours = secondsDiff / 3600;
-  qint64 minutes = secondsDiff / 60;
+  qint64 const days = secondsDiff / (static_cast<qint64>(24 * 3600));
+  qint64 const hours = secondsDiff / 3600;
+  qint64 const minutes = secondsDiff / 60;
 
   if (days >= 365) {
-    int years = days / 365;
+    int const years = days / 365;
     return QString("%1 year%2 ago").arg(years).arg(years > 1 ? "s" : "");
   } else if (days >= 30) {
-    int months = days / 30;
+    int const months = days / 30;
     return QString("%1 month%2 ago").arg(months).arg(months > 1 ? "s" : "");
   } else if (days >= 1) {
     return QString("%1 day%2 ago").arg(days).arg(days > 1 ? "s" : "");
@@ -155,10 +156,10 @@ QString slugify(const QString &input, const QString &separator) {
   result = result.normalized(QString::NormalizationForm_D);
   result.replace(QRegularExpression("[\\s_]+"), separator);
 
-  QString pattern = QString("[^a-z0-9%1]+").arg(QRegularExpression::escape(separator));
+  QString const pattern = QString("[^a-z0-9%1]+").arg(QRegularExpression::escape(separator));
   result.remove(QRegularExpression(pattern));
 
-  QString escapedSep = QRegularExpression::escape(separator);
+  QString const escapedSep = QRegularExpression::escape(separator);
   result.remove(QRegularExpression(QString("^%1+|%1+$").arg(escapedSep)));
   result.replace(QRegularExpression(QString("%1{2,}").arg(escapedSep)), separator);
 
@@ -192,7 +193,7 @@ QString formatSize(size_t bytes) {
   // Clamp to available units
   unitIndex = std::min(unitIndex, static_cast<int>(units.size() - 1));
 
-  double size = bytes / std::pow(base, unitIndex);
+  double const size = bytes / std::pow(base, unitIndex);
 
   // Format with appropriate precision
   QString formattedSize;
@@ -214,7 +215,7 @@ QString formatSize(size_t bytes) {
 }
 
 QString formatCount(int count) {
-  if (count > 1000) { return QString("%1K").arg(round(count / 1000.f)); }
+  if (count > 1000) { return QString("%1K").arg(std::round(count / 1000.f)); }
 
   return QString::number(count);
 }
@@ -235,33 +236,33 @@ bool isX11TextTarget(const QString &text) {
 bool isTextMimeType(const QString &mimeName) {
   if (isX11TextTarget(mimeName)) return true;
 
-  QMimeDatabase db;
+  QMimeDatabase const db;
   return isTextMimeType(db.mimeTypeForName(normalizeMimeName(mimeName)));
 }
 
 QString rgbaFromColor(const QColor &color) {
-  QColor rgb = color.toRgb();
+  QColor const rgb = color.toRgb();
   return QString("rgba(%1, %2, %3, %4)").arg(rgb.red()).arg(rgb.green()).arg(rgb.blue()).arg(rgb.alphaF());
 }
 
 QColor colorFromString(const QString &str) {
-  QString trimmed = str.trimmed();
+  QString const trimmed = str.trimmed();
 
   if (QColor color(trimmed); color.isValid()) return color;
   if (QColor color("#" + trimmed); color.isValid()) return color;
 
-  QRegularExpression rgbRegex(R"(rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+)\s*)?\))",
-                              QRegularExpression::CaseInsensitiveOption);
-  QRegularExpressionMatch rgbMatch = rgbRegex.match(trimmed);
+  QRegularExpression const rgbRegex(R"(rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+)\s*)?\))",
+                                    QRegularExpression::CaseInsensitiveOption);
+  QRegularExpressionMatch const rgbMatch = rgbRegex.match(trimmed);
 
   if (rgbMatch.hasMatch()) {
-    int r = rgbMatch.captured(1).toInt();
-    int g = rgbMatch.captured(2).toInt();
-    int b = rgbMatch.captured(3).toInt();
+    int const r = rgbMatch.captured(1).toInt();
+    int const g = rgbMatch.captured(2).toInt();
+    int const b = rgbMatch.captured(3).toInt();
     int a = 255;
 
     if (!rgbMatch.captured(4).isEmpty()) {
-      double alphaFloat = rgbMatch.captured(4).toDouble();
+      double const alphaFloat = rgbMatch.captured(4).toDouble();
       a = qBound(0, static_cast<int>(alphaFloat * 255), 255);
     }
 
@@ -269,19 +270,19 @@ QColor colorFromString(const QString &str) {
   }
 
   // Handle rgb/rgba percentage format: rgb(100%, 0%, 0%, 1.0)
-  QRegularExpression rgbPercentRegex(
+  QRegularExpression const rgbPercentRegex(
       R"(rgba?\s*\(\s*([\d.]+)%\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%\s*(?:,\s*([\d.]+)\s*)?\))",
       QRegularExpression::CaseInsensitiveOption);
-  QRegularExpressionMatch rgbPercentMatch = rgbPercentRegex.match(trimmed);
+  QRegularExpressionMatch const rgbPercentMatch = rgbPercentRegex.match(trimmed);
 
   if (rgbPercentMatch.hasMatch()) {
-    int r = qBound(0, static_cast<int>(rgbPercentMatch.captured(1).toDouble() * 2.55), 255);
-    int g = qBound(0, static_cast<int>(rgbPercentMatch.captured(2).toDouble() * 2.55), 255);
-    int b = qBound(0, static_cast<int>(rgbPercentMatch.captured(3).toDouble() * 2.55), 255);
+    int const r = qBound(0, static_cast<int>(rgbPercentMatch.captured(1).toDouble() * 2.55), 255);
+    int const g = qBound(0, static_cast<int>(rgbPercentMatch.captured(2).toDouble() * 2.55), 255);
+    int const b = qBound(0, static_cast<int>(rgbPercentMatch.captured(3).toDouble() * 2.55), 255);
     int a = 255;
 
     if (!rgbPercentMatch.captured(4).isEmpty()) {
-      double alphaFloat = rgbPercentMatch.captured(4).toDouble();
+      double const alphaFloat = rgbPercentMatch.captured(4).toDouble();
       a = qBound(0, static_cast<int>(alphaFloat * 255), 255);
     }
 
@@ -289,19 +290,19 @@ QColor colorFromString(const QString &str) {
   }
 
   // Handle hsl/hsla format: hsl(200, 20%, 33%) or hsla(200, 20%, 33%, 0.2)
-  QRegularExpression hslRegex(
+  QRegularExpression const hslRegex(
       R"(hsla?\s*\(\s*([\d.]+)\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%\s*(?:,\s*([\d.]+)\s*)?\))",
       QRegularExpression::CaseInsensitiveOption);
-  QRegularExpressionMatch hslMatch = hslRegex.match(trimmed);
+  QRegularExpressionMatch const hslMatch = hslRegex.match(trimmed);
 
   if (hslMatch.hasMatch()) {
-    int h = hslMatch.captured(1).toInt() % 360;
-    int s = qBound(0, hslMatch.captured(2).toInt(), 100) * 255 / 100;
-    int l = qBound(0, hslMatch.captured(3).toInt(), 100) * 255 / 100;
+    int const h = hslMatch.captured(1).toInt() % 360;
+    int const s = qBound(0, hslMatch.captured(2).toInt(), 100) * 255 / 100;
+    int const l = qBound(0, hslMatch.captured(3).toInt(), 100) * 255 / 100;
     int a = 255;
 
     if (!hslMatch.captured(4).isEmpty()) {
-      double alphaFloat = hslMatch.captured(4).toDouble();
+      double const alphaFloat = hslMatch.captured(4).toDouble();
       a = qBound(0, static_cast<int>(alphaFloat * 255), 255);
     }
 

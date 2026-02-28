@@ -1,0 +1,140 @@
+#include "create-extension-view-host.hpp"
+#include "create-extension-success-view-host.hpp"
+#include "navigation-controller.hpp"
+#include "view-utils.hpp"
+#include "service-registry.hpp"
+#include "services/extension-boilerplate-generator/extension-boilerplate-generator.hpp"
+#include "services/toast/toast-service.hpp"
+#include "ui/action-pannel/action.hpp"
+#include "utils/utils.hpp"
+#include <QUrl>
+#include <filesystem>
+
+CreateExtensionViewHost::CreateExtensionViewHost() : FormViewBase() {}
+
+QUrl CreateExtensionViewHost::qmlComponentUrl() const {
+  return QUrl(QStringLiteral("qrc:/Vicinae/CreateExtensionFormView.qml"));
+}
+
+QVariantMap CreateExtensionViewHost::qmlProperties() {
+  return {{QStringLiteral("host"), QVariant::fromValue(this)}};
+}
+
+void CreateExtensionViewHost::initialize() {
+  BaseView::initialize();
+
+  ExtensionBoilerplateGenerator const gen;
+  QVariantList items;
+  for (const auto &tmpl : gen.commandBoilerplates()) {
+    items.append(QVariantMap{
+        {QStringLiteral("id"), tmpl.resource},
+        {QStringLiteral("displayName"), tmpl.name},
+    });
+  }
+
+  QVariantMap section;
+  section[QStringLiteral("title")] = QString();
+  section[QStringLiteral("items")] = items;
+  m_templateItems.append(section);
+
+  if (!items.isEmpty()) { m_selectedTemplate = items.first().toMap(); }
+
+  auto panel = std::make_unique<FormActionPanelState>();
+  auto actionSection = panel->createSection();
+  auto submitAction = new StaticAction(QStringLiteral("Create extension"), ImageURL::builtin("enter-key"),
+                                       [this]() { submit(); });
+  actionSection->addAction(submitAction);
+  setActions(std::move(panel));
+}
+
+void CreateExtensionViewHost::submit() {
+  auto toast = context()->services->toastService();
+
+  m_authorError.clear();
+  m_titleError.clear();
+  m_descriptionError.clear();
+  m_locationError.clear();
+  m_commandTitleError.clear();
+  m_commandSubtitleError.clear();
+  m_commandDescriptionError.clear();
+
+  bool valid = true;
+
+  if (m_author.size() < 3) {
+    m_authorError = QStringLiteral("Min. 3 chars");
+    valid = false;
+  }
+  if (m_title.size() < 3) {
+    m_titleError = QStringLiteral("Min. 3 chars");
+    valid = false;
+  }
+  if (m_description.size() < 16) {
+    m_descriptionError = QStringLiteral("Min. 16 chars");
+    valid = false;
+  }
+
+  {
+    namespace fs = std::filesystem;
+    std::error_code ec;
+    fs::path const path = expandPath(m_location.toStdString());
+    if (!fs::is_directory(path, ec)) {
+      m_locationError = QStringLiteral("Must exist");
+      valid = false;
+    }
+  }
+
+  if (m_commandTitle.size() < 3) {
+    m_commandTitleError = QStringLiteral("Min. 3 chars");
+    valid = false;
+  }
+  if (m_commandSubtitle.size() < 3) {
+    m_commandSubtitleError = QStringLiteral("Min. 3 chars");
+    valid = false;
+  }
+  if (m_commandDescription.size() < 3) {
+    m_commandDescriptionError = QStringLiteral("Min. 3 chars");
+    valid = false;
+  }
+
+  emit errorsChanged();
+
+  if (!valid) {
+    toast->failure("Form has errors");
+    return;
+  }
+
+  ExtensionBoilerplateConfig cfg;
+  cfg.author = m_author;
+  cfg.title = m_title;
+  cfg.description = m_description;
+
+  ExtensionBoilerplateConfig::CommandConfig cmdCfg;
+  cmdCfg.title = m_commandTitle;
+  cmdCfg.subtitle = m_commandSubtitle;
+  cmdCfg.description = m_commandDescription;
+  cmdCfg.templateId = m_selectedTemplate[QStringLiteral("id")].toString();
+  cfg.commands.emplace_back(std::move(cmdCfg));
+
+  ExtensionBoilerplateGenerator gen;
+  std::filesystem::path const targetDir = expandPath(m_location.toStdString());
+
+  auto v = gen.generate(targetDir, cfg);
+
+  if (!v) {
+    toast->failure("Failed to create extension");
+    qCritical() << "Failed to create extension with error" << v.error();
+    return;
+  }
+
+  auto successView = new CreateExtensionSuccessViewHost(cfg, v.value());
+
+  popSelf();
+  context()->navigation->pushView(successView);
+  context()->navigation->setNavigationIcon(ImageURL::emoji("🥳"));
+  context()->navigation->setNavigationTitle("Extension created!");
+}
+
+void CreateExtensionViewHost::selectTemplate(const QVariantMap &item) {
+  m_selectedTemplate = item;
+  emit formChanged();
+}
