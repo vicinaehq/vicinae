@@ -73,6 +73,7 @@ Item {
             listModel: root.host.listModel
             model: root.host.listModel
             autoWireModel: true
+            selectFirstOnReset: root.host.listModel.selectFirstOnReset
             detailComponent: detailPanel
             detailVisible: root.host.hasDetail
 

@@ -19,6 +19,7 @@ void ClipboardHistoryModel::setEntries(const PaginatedResponse<ClipboardHistoryE
     sections.push_back({.name = QString(), .count = static_cast<int>(m_entries.size())});
   }
   setSections(sections);
+  setSelectFirstOnReset(false);
 }
 
 QHash<int, QByteArray> ClipboardHistoryModel::roleNames() const {
