@@ -7,6 +7,8 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency: self-hosted
+
 jobs:
   build:
     runs-on: [self-hosted, Linux, X64, prod]

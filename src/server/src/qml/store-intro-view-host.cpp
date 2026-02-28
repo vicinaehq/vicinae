@@ -7,8 +7,8 @@ StoreIntroViewHost::StoreIntroViewHost(const QString &markdown, const ImageURL &
                                        const QString &actionLabel, std::function<void()> continueAction)
     : m_icon(icon), m_actionLabel(actionLabel), m_continueAction(std::move(continueAction)) {
   auto iconUrl = qml::imageSourceFor(icon);
-  iconUrl += QStringLiteral("&raycast-width=32&raycast-height=32");
-  m_markdown = QStringLiteral("![icon](%1)\n\n").arg(iconUrl) + markdown;
+  iconUrl += QStringLiteral("&raycast-width=50&raycast-height=50");
+  m_markdown = QStringLiteral("![](%1)\n\n").arg(iconUrl) + markdown;
 }
 
 QUrl StoreIntroViewHost::qmlComponentUrl() const {

@@ -293,7 +293,7 @@ static void parseParams(const QString &str, QChar sep, ParsedId &result) {
     int const eq = param.indexOf('=');
     if (eq < 0) continue;
     QString const key = param.left(eq);
-    QString const val = param.mid(eq + 1);
+    QString const val = QUrl::fromPercentEncoding(param.mid(eq + 1).toUtf8());
     if (key == QStringLiteral("fg"))
       result.fg = QColor(val);
     else if (key == QStringLiteral("bg"))
@@ -301,7 +301,7 @@ static void parseParams(const QString &str, QChar sep, ParsedId &result) {
     else if (key == QStringLiteral("mask") && val == QStringLiteral("circle"))
       result.circleMask = true;
     else if (key == QStringLiteral("fallback"))
-      result.fallback = QUrl::fromPercentEncoding(val.toUtf8());
+      result.fallback = val;
   }
 }
 

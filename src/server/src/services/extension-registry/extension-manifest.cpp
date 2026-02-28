@@ -91,9 +91,9 @@ Preference ExtensionManifest::parsePreferenceFromObject(const QJsonObject &obj) 
   } else if (type == "appPicker") {
     base.setData(Preference::AppPickerData());
   } else if (type == "file") {
-    base.setData(Preference::FilePickerData());
+    base.setData(Preference::FilePickerData{.multiple = obj["multiple"].toBool()});
   } else if (type == "directory") {
-    base.setData(Preference::DirectoryPickerData());
+    base.setData(Preference::DirectoryPickerData{.multiple = obj["multiple"].toBool()});
   } else if (type == "dropdown") {
     auto data = obj["data"].toArray();
     std::vector<Preference::DropdownData::Option> options;

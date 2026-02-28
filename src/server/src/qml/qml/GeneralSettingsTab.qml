@@ -14,7 +14,7 @@ Item {
             SearchableDropdown {
                 items: root.model.themeItems
                 currentItem: root.model.currentTheme
-                onActivated: item => root.model.selectTheme(item.id)
+                onActivated: (item) => root.model.selectTheme(item.id)
             }
         }
 
@@ -23,7 +23,7 @@ Item {
             SearchableDropdown {
                 items: root.model.fontItems
                 currentItem: root.model.currentFont
-                onActivated: item => root.model.selectFont(item.id)
+                onActivated: (item) => root.model.selectFont(item.id)
             }
         }
 
@@ -34,9 +34,8 @@ Item {
                 text: root.model.fontSize
                 placeholder: "e.g. 11"
                 onAccepted: root.model.fontSize = text
-                onActiveFocusChanged: {
-                    if (!activeFocus)
-                        root.model.fontSize = text;
+                onEditingChanged: {
+                    if (!editing) root.model.fontSize = text
                 }
             }
         }
@@ -47,7 +46,7 @@ Item {
             SearchableDropdown {
                 items: root.model.iconThemeItems
                 currentItem: root.model.currentIconTheme
-                onActivated: item => root.model.selectIconTheme(item.id)
+                onActivated: (item) => root.model.selectIconTheme(item.id)
             }
         }
 
@@ -59,9 +58,8 @@ Item {
                 text: root.model.windowOpacity
                 placeholder: "e.g. 1.0"
                 onAccepted: root.model.windowOpacity = text
-                onActiveFocusChanged: {
-                    if (!activeFocus)
-                        root.model.windowOpacity = text;
+                onEditingChanged: {
+                    if (!editing) root.model.windowOpacity = text
                 }
             }
         }
@@ -135,7 +133,7 @@ Item {
             SearchableDropdown {
                 items: root.model.faviconServiceItems
                 currentItem: root.model.currentFaviconService
-                onActivated: item => root.model.selectFaviconService(item.id)
+                onActivated: (item) => root.model.selectFaviconService(item.id)
             }
         }
 
@@ -145,7 +143,7 @@ Item {
             SearchableDropdown {
                 items: root.model.keybindingSchemeItems
                 currentItem: root.model.currentKeybindingScheme
-                onActivated: item => root.model.selectKeybindingScheme(item.id)
+                onActivated: (item) => root.model.selectKeybindingScheme(item.id)
             }
         }
     }

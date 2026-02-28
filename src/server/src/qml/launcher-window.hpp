@@ -102,6 +102,7 @@ signals:
   void searchTextUpdated(const QString &text);
   void viewNavigatedBack();
   void commandViewPushed(const QUrl &componentUrl, const QVariantMap &properties);
+  void commandViewReplaced(const QUrl &componentUrl, const QVariantMap &properties);
   void commandViewPopped();
   void commandStackCleared();
   void navigationStatusChanged();
@@ -118,6 +119,7 @@ signals:
   void overlayChanged();
 
 private:
+  bool eventFilter(QObject *obj, QEvent *event) override;
   void handleVisibilityChanged(bool visible);
   void handleCurrentViewChanged();
   void handleViewPoped(const BaseView *view);
@@ -145,6 +147,7 @@ private:
   bool m_searchInteractive = true;
   bool m_statusBarVisible = true;
   bool m_viewWasPopped = false;
+  bool m_viewWasReplaced = false;
   QString m_searchPlaceholder;
   QUrl m_searchAccessoryUrl;
   QMetaObject::Connection m_searchAccessoryConnection;
@@ -166,6 +169,7 @@ private:
   QUrl m_overlayUrl;
   QObject *m_overlayHost = nullptr;
 
+  bool m_closeOnFocusLoss = false;
   bool m_hasCompleter = false;
   QVariantList m_completerArgs;
   QString m_completerIcon;

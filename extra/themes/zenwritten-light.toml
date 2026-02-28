@@ -1,0 +1,33 @@
+# Zenwritten Light - Zero Hue and Saturation
+# A contrast-based colorscheme with zero hue and saturation
+
+[meta]
+version = 1
+name = "Zenwritten Light"
+description = "A Zenbones colorscheme with zero hue and saturation"
+variant = "light"
+icon = "icons/zenbones.png"
+
+[colors.core]
+background = "#EEEEEE"        # bg (light sand)
+foreground = "#353535"        # fg (dark stone)
+secondary_background = "#CFCFCF"  # bg1 (slightly darker for surfaces)
+border = "#D7D7D7"            # selection bg (subtle border)
+accent = "#286486"            # blue (neutral accent)
+
+[colors.accents]
+blue = "#286486"              # blue
+green = "#4F6C31"             # green
+magenta = "#88507D"           # magenta
+orange = "#944927"            # orange/yellow
+purple = "#88507D"            # purple
+red = "#A8334C"               # red
+yellow = "#944927"            # yellow
+cyan = "#3B8992"              # cyan
+
+[colors.list.item.selection]
+background = "#D7D7D7"
+secondary_background = "#D7D7D7"
+
+[colors.grid.item]
+background = "#D7D7D7"

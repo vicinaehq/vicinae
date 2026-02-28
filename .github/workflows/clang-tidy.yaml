@@ -7,6 +7,8 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency: self-hosted
+
 jobs:
   clang-tidy:
     runs-on: [self-hosted, Linux, X64, prod]

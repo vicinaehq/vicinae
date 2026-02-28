@@ -245,11 +245,27 @@ void CliServerCommand::run(CLI::App *) {
 
     theme.setFontBasePointSize(next.font.normal.size);
 
-    if (next.font.normal.size != prev.font.normal.size) {
-      if (!themeChangeRequired) { theme.reloadCurrentTheme(); }
+    bool const fontChanged =
+        next.font.normal.size != prev.font.normal.size || next.font.normal.family != prev.font.normal.family;
+
+    if (fontChanged) {
+      auto &family = next.font.normal.family;
+      QFont font;
+      if (family == "auto") {
+        auto builtin = ServiceRegistry::instance()->fontService()->builtinFontFamily();
+        if (!builtin.isEmpty()) font.setFamily(builtin);
+      } else if (family != "system") {
+        font.setFamily(QString::fromStdString(family));
+      }
+      font.setPointSizeF(next.font.normal.size);
+      QGuiApplication::setFont(font);
     }
 
-    if (themeChangeRequired) { theme.setTheme(nextTheme.name.c_str()); }
+    if (themeChangeRequired) {
+      theme.setTheme(nextTheme.name.c_str());
+    } else if (fontChanged) {
+      theme.reloadCurrentTheme();
+    }
 
     ctx.navigation->setPopToRootOnClose(next.popToRootOnClose);
     ctx.navigation->setCloseOnFocusLoss(next.closeOnFocusLoss);
@@ -261,20 +277,6 @@ void CliServerCommand::run(CLI::App *) {
       QIcon::setThemeName(nextTheme.iconTheme.c_str());
     } else if (QIcon::themeName() == "hicolor") {
       QIcon::setThemeName(iconThemeDb.guessBestTheme());
-    }
-
-    if (next.font.normal.family != prev.font.normal.family) {
-      auto &family = next.font.normal.family;
-      if (family == "auto") {
-        auto builtin = ServiceRegistry::instance()->fontService()->builtinFontFamily();
-        QGuiApplication::setFont(builtin.isEmpty() ? QFont() : QFont(builtin));
-      } else if (family == "system") {
-        QGuiApplication::setFont(QFont());
-      } else {
-        QGuiApplication::setFont(QFont(family.c_str()));
-      }
-
-      theme.reloadCurrentTheme();
     }
   };
 
