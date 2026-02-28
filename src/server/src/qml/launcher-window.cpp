@@ -362,13 +362,7 @@ void LauncherWindow::handleCurrentViewChanged() {
 }
 
 void LauncherWindow::forwardSearchText(const QString &text) {
-  if (!m_isRootSearch) {
-    m_ctx.navigation->setSearchText(text);
-  } else {
-    // broadcastSearchText stores text without emitting searchTextTampered
-    // (avoids unnecessary signal round-trip for root search)
-    m_ctx.navigation->broadcastSearchText(text);
-  }
+  m_ctx.navigation->broadcastSearchText(text);
   tryCompaction();
 }
 

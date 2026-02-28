@@ -75,14 +75,25 @@ Item {
                           ? launcher.searchPlaceholder : "Search for anything..."
                     color: Theme.textPlaceholder
                     font: searchInput.font
-                    visible: !searchInput.text && launcher.searchInteractive
+                    visible: !searchInput.displayText && launcher.searchInteractive
                 }
 
                 onTextEdited: {
+                    if (Config.considerPreedit) return false
+
                     launcher.forwardSearchText(text)
                     if (launcher.isRootSearch) {
                         searchModel.setFilter(text)
                     }
+                }
+
+                onDisplayTextChanged: {
+                  if (!Config.considerPreedit) return false
+
+                  launcher.forwardSearchText(displayText)
+                  if (launcher.isRootSearch) {
+                      searchModel.setFilter(displayText)
+                  }
                 }
 
                 function _wordBoundaryBackward(text, pos) {
