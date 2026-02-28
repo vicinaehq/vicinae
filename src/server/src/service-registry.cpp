@@ -37,6 +37,7 @@
 #include "services/paste/paste-service.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
 #include "services/news/news-service.hpp"
+#include "services/ai/ai-service.hpp"
 #include "config/config.hpp"
 
 ServiceRegistry::~ServiceRegistry() = default;
@@ -91,6 +92,9 @@ ShortcutInhibitManager *ServiceRegistry::shortcutInhibitManager() const {
 }
 
 TelemetryService *ServiceRegistry::telemetry() const { return m_telemetry.get(); }
+AI::Service *ServiceRegistry::ai() const { return m_ai.get(); }
+
+void ServiceRegistry::setAI(std::unique_ptr<AI::Service> service) { m_ai = std::move(service); }
 
 UpdateService *ServiceRegistry::updateService() const { return m_updateService.get(); }
 

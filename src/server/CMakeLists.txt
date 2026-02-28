@@ -511,6 +511,9 @@ set(SRCS
 	src/services/snippet/null-snippet-server.hpp
 	src/services/snippet/snippet-db.cpp
 
+	src/services/ai/ai-provider.hpp
+	src/services/ai/ai-service.hpp
+
 	# UI
 	src/ui/bridges/keybind-bridge.hpp
 	src/ui/windows/launcher-window.hpp
