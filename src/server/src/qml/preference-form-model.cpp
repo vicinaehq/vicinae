@@ -1,5 +1,6 @@
 #include "preference-form-model.hpp"
 
+#include <QJSValue>
 #include <utility>
 #include "service-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
@@ -111,6 +112,7 @@ static QString resolveLabel(const Preference &p) {
 }
 
 void PreferenceFormModel::load(const EntrypointId &id, const std::vector<Preference> &preferences) {
+  if (m_saveTimer.isActive()) save();
   beginResetModel();
   m_itemId = id;
   m_isProvider = false;
@@ -143,6 +145,7 @@ void PreferenceFormModel::load(const EntrypointId &id, const std::vector<Prefere
 
 void PreferenceFormModel::loadProvider(const QString &providerId,
                                        const std::vector<Preference> &preferences) {
+  if (m_saveTimer.isActive()) save();
   beginResetModel();
   m_providerId = providerId;
   m_isProvider = true;
@@ -175,8 +178,10 @@ void PreferenceFormModel::loadProvider(const QString &providerId,
 
 void PreferenceFormModel::setFieldValue(int row, const QVariant &value) {
   if (row < 0 || std::cmp_greater_equal(row, m_fields.size())) return;
-  m_fields[row].value = value;
-  m_values[m_fields[row].id] = QJsonValue::fromVariant(value);
+  auto resolved = value;
+  if (resolved.canConvert<QJSValue>()) resolved = resolved.value<QJSValue>().toVariant();
+  m_fields[row].value = resolved;
+  m_values[m_fields[row].id] = QJsonValue::fromVariant(resolved);
   auto idx = index(row);
   emit dataChanged(idx, idx, {ValueRole});
   m_saveTimer.start();

@@ -86,10 +86,15 @@ Item {
     }
 
     function _nextNavigable(from, direction) {
-        var idx = from + direction
-        while (idx >= 0 && idx < _flatItems.length) {
+        if (_flatItems.length === 0) return from
+        let idx = from + direction
+        if (idx < 0) idx = _flatItems.length - 1
+        else if (idx >= _flatItems.length) idx = 0
+        while (idx !== from) {
             if (!_flatItems[idx].isSection) return idx
             idx += direction
+            if (idx < 0) idx = _flatItems.length - 1
+            else if (idx >= _flatItems.length) idx = 0
         }
         return from
     }

@@ -128,10 +128,12 @@ Item {
                 directoriesOnly: field.parent.directoriesOnly
                 readOnly: field.parent.readOnly
                 selectedPaths: {
-                    var v = field.parent.value
-                    if (Array.isArray(v)) return v
-                    if (typeof v === "string" && v !== "") return [v]
-                    return []
+                    const v = field.parent.value
+                    if (!v) return []
+                    if (typeof v === "string") return v !== "" ? [v] : []
+                    let arr = []
+                    for (let i = 0; i < v.length; i++) arr.push(v[i])
+                    return arr
                 }
                 onPathsChanged: (paths) => {
                     if (field.parent.multiple) root.prefModel.setFieldValue(field.parent.index, paths)
