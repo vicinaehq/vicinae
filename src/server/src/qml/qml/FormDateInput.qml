@@ -12,6 +12,8 @@ Item {
     property string minDate: ""
     property string maxDate: ""
 
+    property bool hasError: false
+
     signal textEdited()
 
     function forceActiveFocus() { input.forceActiveFocus() }
@@ -27,7 +29,8 @@ Item {
         anchors.fill: parent
         radius: 8
         color: Theme.secondaryBackground
-        border.color: input.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
+        border.color: root.hasError ? Theme.inputBorderError
+                      : input.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
         border.width: 1
 
         TextInput {

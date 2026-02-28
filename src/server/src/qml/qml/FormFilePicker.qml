@@ -11,6 +11,7 @@ FocusScope {
     property bool multiple: false
     property bool directoriesOnly: false
     property bool readOnly: false
+    property bool hasError: false
     property var selectedPaths: []
 
     signal pathsChanged(var paths)
@@ -41,7 +42,8 @@ FocusScope {
             opacity: root.readOnly ? 0.5 : 1.0
             color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g,
                            Theme.secondaryBackground.b, Config.windowOpacity)
-            border.color: focusItem.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
+            border.color: root.hasError ? Theme.inputBorderError
+                          : focusItem.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
             border.width: 1
 
             RowLayout {

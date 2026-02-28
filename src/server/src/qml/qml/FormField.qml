@@ -39,15 +39,26 @@ ColumnLayout {
             }
         }
 
+        Item { Layout.preferredWidth: 2; Layout.fillWidth: true }
+    }
+
+    RowLayout {
+        visible: root.error !== ""
+        Layout.fillWidth: true
+        spacing: 20
+
+        Item { Layout.preferredWidth: 2; Layout.fillWidth: true }
+
         Text {
-            Layout.preferredWidth: 2
+            Layout.preferredWidth: 5
             Layout.fillWidth: true
             text: root.error
             color: Theme.danger
             font.pointSize: Theme.smallerFontSize
-            verticalAlignment: Text.AlignVCenter
-            Layout.alignment: Qt.AlignVCenter
+            wrapMode: Text.Wrap
         }
+
+        Item { Layout.preferredWidth: 2; Layout.fillWidth: true }
     }
 
     RowLayout {

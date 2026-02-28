@@ -98,6 +98,7 @@ Item {
                 id: textInput
                 text: field.parent.value != null ? String(field.parent.value) : ""
                 placeholder: field.parent.placeholder
+                hasError: field.error !== ""
                 onTextEdited: root.formModel.setFieldValue(field.parent.index, text)
                 onActiveFocusChanged: {
                     if (activeFocus) root.formModel.fieldFocused(field.parent.index)
@@ -121,6 +122,7 @@ Item {
                 id: passwordInput
                 text: field.parent.value != null ? String(field.parent.value) : ""
                 placeholder: field.parent.placeholder
+                hasError: field.error !== ""
                 echoMode: TextInput.Password
                 onTextEdited: root.formModel.setFieldValue(field.parent.index, text)
                 onActiveFocusChanged: {
@@ -145,6 +147,7 @@ Item {
                 id: textArea
                 text: field.parent.value != null ? String(field.parent.value) : ""
                 placeholder: field.parent.placeholder
+                hasError: field.error !== ""
                 onTextEdited: root.formModel.setFieldValue(field.parent.index, text)
                 // FormTextArea doesn't expose activeFocusChanged directly on the TextEdit,
                 // so we track focus on the wrapper
@@ -169,6 +172,7 @@ Item {
             FormCheckbox {
                 id: checkbox
                 checked: field.parent.value === true
+                hasError: field.error !== ""
                 label: field.parent.fieldData && field.parent.fieldData.label
                        ? field.parent.fieldData.label : ""
                 onToggled: root.formModel.setFieldValue(field.parent.index, checked)
@@ -207,6 +211,7 @@ Item {
             SearchableDropdown {
                 id: dropdown
                 items: field._items
+                hasError: field.error !== ""
                 currentItem: field._findCurrentItem(field._items, field.parent.value)
                 placeholder: field._fd.placeholder || field.parent.placeholder || ""
                 onActivated: (item) => {
@@ -234,6 +239,7 @@ Item {
 
             FormFilePicker {
                 id: filePicker
+                hasError: field.error !== ""
                 multiple: field._fd.multiple || false
                 directoriesOnly: field._fd.directoriesOnly || false
                 selectedPaths: {
@@ -264,6 +270,7 @@ Item {
             FormDateInput {
                 id: dateInput
                 text: field.parent.value != null ? String(field.parent.value) : ""
+                hasError: field.error !== ""
                 includeTime: field._fd.includeTime || false
                 minDate: field._fd.min || ""
                 maxDate: field._fd.max || ""
