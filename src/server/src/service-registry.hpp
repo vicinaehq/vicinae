@@ -32,6 +32,10 @@ namespace config {
 class Manager;
 };
 
+namespace AI {
+class Service;
+};
+
 class ServiceRegistry : public QObject {
 
 public:
@@ -60,6 +64,7 @@ public:
   SnippetService *snippetService() const;
   PasteService *pasteService() const;
   BackgroundEffectManager *backgroundEffectManager() const;
+  AI::Service *ai() const;
 
   void setPowerManager(std::unique_ptr<PowerManager> manager);
   void setWindowManager(std::unique_ptr<WindowManager> manager);
@@ -86,6 +91,7 @@ public:
   void setSnippetService(std::unique_ptr<SnippetService> service);
   void setPasteService(std::unique_ptr<PasteService> service);
   void setBackgroundEffectManager(std::unique_ptr<BackgroundEffectManager> manager);
+  void setAI(std::unique_ptr<AI::Service>);
 
 private:
   std::unique_ptr<WindowManager> m_windowManager;
@@ -112,4 +118,5 @@ private:
   std::unique_ptr<SnippetService> m_snippetService;
   std::unique_ptr<PasteService> m_pasteService;
   std::unique_ptr<BackgroundEffectManager> m_backgroundEffectManager;
+  std::unique_ptr<AI::Service> m_ai;
 };

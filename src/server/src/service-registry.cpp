@@ -22,6 +22,7 @@
 #include "services/window-manager/window-manager.hpp"
 #include "services/snippet/snippet-service.hpp"
 #include "services/paste/paste-service.hpp"
+#include "services/ai/ai-service.hpp"
 #include "config/config.hpp"
 
 RootItemManager *ServiceRegistry::rootItemManager() const { return m_rootItemManager.get(); }
@@ -56,6 +57,10 @@ PasteService *ServiceRegistry::pasteService() const { return m_pasteService.get(
 BackgroundEffectManager *ServiceRegistry::backgroundEffectManager() const {
   return m_backgroundEffectManager.get();
 }
+
+AI::Service *ServiceRegistry::ai() const { return m_ai.get(); }
+
+void ServiceRegistry::setAI(std::unique_ptr<AI::Service> service) { m_ai = std::move(service); }
 
 void ServiceRegistry::setPowerManager(std::unique_ptr<PowerManager> powman) {
   m_powerManager = std::move(powman);
