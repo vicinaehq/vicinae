@@ -171,8 +171,7 @@ public:
       return nullptr;
     }
     auto *node = QQuickPaintedItem::updatePaintNode(oldNode, data);
-    if (node && !m_overlay &&
-        window()->rendererInterface()->graphicsApi() != QSGRendererInterface::Software)
+    if (node && !m_overlay && window()->rendererInterface()->graphicsApi() != QSGRendererInterface::Software)
       disableBlending(node);
     return node;
   }
