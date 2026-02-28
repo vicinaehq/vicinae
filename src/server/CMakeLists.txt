@@ -460,6 +460,10 @@ set(SRCS
 	src/services/snippet/null-snippet-server.hpp
 	src/services/snippet/snippet-db.cpp
 
+	src/services/snippet/snippet-server.cpp
+	src/services/ai/ai-provider.hpp
+	src/services/ai/ai-service.hpp
+
 	# QML frontend
 	src/qml/keybind-bridge.hpp
 	src/qml/launcher-window.hpp
