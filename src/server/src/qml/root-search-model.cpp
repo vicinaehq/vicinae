@@ -506,6 +506,87 @@ int RootSearchModel::nextSelectableIndex(int from, int direction) const {
   return from;
 }
 
+int RootSearchModel::nextSectionIndex(int from, int direction) const {
+  int const count = static_cast<int>(m_flat.size());
+  if (count == 0) return from;
+
+  SectionType currentSection{};
+  if (from >= 0 && from < count) { currentSection = m_flat[from].section; }
+
+  auto isSelectable = [&](int idx) { return m_flat[idx].kind != FlatItem::SectionHeader; };
+
+  if (direction > 0) {
+    // Find the last item of the current section.
+    int currentEnd = from;
+    for (int idx = from + 1; idx < count; ++idx) {
+      if (isSelectable(idx) && m_flat[idx].section == currentSection)
+        currentEnd = idx;
+      else if (m_flat[idx].section != currentSection)
+        break;
+    }
+    // If not already at the last item, jump there first.
+    if (currentEnd > from) { return currentEnd; }
+    // Otherwise jump to first item of next section.
+    for (int idx = from + 1; idx < count; ++idx) {
+      if (isSelectable(idx) && m_flat[idx].section != currentSection) return idx;
+    }
+    return nextSelectableIndex(-1, 1);
+  }
+
+  // Going up: find start of current section.
+  int currentStart = from;
+  for (int idx = from - 1; idx >= 0; --idx) {
+    if (isSelectable(idx) && m_flat[idx].section == currentSection) {
+      currentStart = idx;
+    } else if (m_flat[idx].section != currentSection) {
+      break;
+    }
+  }
+
+  // If not already at the first item, jump there.
+  if (currentStart < from) { return currentStart; }
+
+  // Find the previous section's first selectable item.
+  SectionType prevSection{};
+  bool foundPrev = false;
+  for (int idx = currentStart - 1; idx >= 0; --idx) {
+    if (isSelectable(idx)) {
+      prevSection = m_flat[idx].section;
+      foundPrev = true;
+      break;
+    }
+  }
+  if (foundPrev) {
+    for (int i = 0; i < count; ++i) {
+      if (isSelectable(i) && m_flat[i].section == prevSection) return i;
+    }
+  }
+
+  // Wrap: last section's first item.
+  SectionType lastSection{};
+  bool foundLast = false;
+  for (int i = count - 1; i >= 0; --i) {
+    if (isSelectable(i)) {
+      lastSection = m_flat[i].section;
+      foundLast = true;
+      break;
+    }
+  }
+  if (foundLast) {
+    for (int i = 0; i < count; ++i) {
+      if (isSelectable(i) && m_flat[i].section == lastSection) return i;
+    }
+  }
+  return from;
+}
+
+int RootSearchModel::scrollTargetIndex(int index, int direction) const {
+  if (direction < 0 && index > 0 && std::cmp_less(index, m_flat.size())) {
+    if (m_flat[index - 1].kind == FlatItem::SectionHeader) return index - 1;
+  }
+  return index;
+}
+
 QString RootSearchModel::itemTypeString(FlatItem::Kind kind) const {
   switch (kind) {
   case FlatItem::ResultItem:

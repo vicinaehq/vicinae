@@ -199,17 +199,27 @@ Item {
                     return true
                 }
 
-                Keys.onUpPressed: {
+                Keys.onUpPressed: (event) => {
                     if (launcher.compacted) { launcher.expand(); return }
-                    if (commandStack.currentItem) commandStack.currentItem.moveUp()
-                    else if (!launcher.isRootSearch) launcher.forwardKey(Qt.Key_Up)
-                    else searchList.moveUp()
+                    const ctrl = (event.modifiers & Qt.ControlModifier)
+                    if (commandStack.currentItem) {
+                        ctrl ? commandStack.currentItem.moveSectionUp() : commandStack.currentItem.moveUp()
+                    } else if (!launcher.isRootSearch) {
+                        launcher.forwardKey(Qt.Key_Up)
+                    } else {
+                        ctrl ? searchList.moveSectionUp() : searchList.moveUp()
+                    }
                 }
-                Keys.onDownPressed: {
+                Keys.onDownPressed: (event) => {
                     if (launcher.compacted) { launcher.expand(); return }
-                    if (commandStack.currentItem) commandStack.currentItem.moveDown()
-                    else if (!launcher.isRootSearch) launcher.forwardKey(Qt.Key_Down)
-                    else searchList.moveDown()
+                    const ctrl = (event.modifiers & Qt.ControlModifier)
+                    if (commandStack.currentItem) {
+                        ctrl ? commandStack.currentItem.moveSectionDown() : commandStack.currentItem.moveDown()
+                    } else if (!launcher.isRootSearch) {
+                        launcher.forwardKey(Qt.Key_Down)
+                    } else {
+                        ctrl ? searchList.moveSectionDown() : searchList.moveDown()
+                    }
                 }
                 Keys.onLeftPressed: (event) => {
                     if (commandStack.currentItem && typeof commandStack.currentItem.moveLeft === "function") {

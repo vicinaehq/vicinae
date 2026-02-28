@@ -12,6 +12,8 @@ RowLayout {
 
     function moveUp() { mdContent.scrollUp() }
     function moveDown() { mdContent.scrollDown() }
+    function moveSectionUp() { moveUp() }
+    function moveSectionDown() { moveDown() }
 
     spacing: 0
 
