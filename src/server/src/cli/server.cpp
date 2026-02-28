@@ -17,6 +17,7 @@
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "root-search/shortcuts/shortcut-root-provider.hpp"
 #include "service-registry.hpp"
+#include "services/ai/ai-provider.hpp"
 #include "services/background-effect/background-effect-manager.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
 #include "services/browser-extension-service.hpp"
@@ -27,6 +28,7 @@
 #include "services/files-service/file-service.hpp"
 #include "services/local-storage/local-storage-service.hpp"
 #include "services/oauth/oauth-service.hpp"
+#include "services/ai/ollama/ollama-ai-provider.hpp"
 #include "services/power-manager/power-manager.hpp"
 #include "services/raycast/raycast-store.hpp"
 #include "services/extension-store/vicinae-store.hpp"
@@ -39,6 +41,7 @@
 #include "services/snippet/snippet-service.hpp"
 #include "services/paste/paste-service.hpp"
 #include "services/paste/linux-paste-service.hpp"
+#include "services/ai/ai-service.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "qml/launcher-window.hpp"
 #include "utils.hpp"
@@ -49,9 +52,11 @@
 #include <QQuickWindow>
 #include <csignal>
 #include <QString>
+#include <iostream>
 #include <qlockfile.h>
 #include <qlogging.h>
 #include <QtQuickControls2/QQuickStyle>
+#include <qtimer.h>
 #include <system_error>
 #include "common/CLI11.hpp"
 #include "server.hpp"
@@ -185,6 +190,7 @@ void CliServerCommand::run(CLI::App *) {
     registry->setFileChooserService(std::make_unique<FileChooserService>());
     registry->setNewsService(std::make_unique<NewsService>(*registry->config()));
     registry->setTelemetry(std::make_unique<TelemetryService>(*registry->config()));
+    registry->setAI(std::make_unique<AI::Service>());
 
     auto root = registry->rootItemManager();
     auto builtinCommandDb = std::make_unique<CommandDatabase>();
