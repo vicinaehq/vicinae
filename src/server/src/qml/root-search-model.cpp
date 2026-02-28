@@ -779,6 +779,7 @@ void RootSearchModel::handleCalculatorFinished() {
   if (!res) return;
 
   m_calc = res.value();
+  m_selectedIndex = -1;
   beginResetModel();
   rebuildFlatList();
   endResetModel();
@@ -795,6 +796,7 @@ void RootSearchModel::handleFileSearchFinished() {
   if (!m_fileWatcher.isFinished() || m_fileSearchQuery != m_query) return;
   m_files = m_fileWatcher.result();
   m_fileSearchQuery.clear();
+  m_selectedIndex = -1;
   beginResetModel();
   rebuildFlatList();
   endResetModel();
