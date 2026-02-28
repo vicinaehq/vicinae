@@ -23,6 +23,7 @@
 #include "root-search/macos-settings/macos-settings-root-provider.hpp"
 #endif
 #include "service-registry.hpp"
+#include "services/ai/ai-provider.hpp"
 #include "services/background-effect/background-effect-manager.hpp"
 #include "qml/background-effect-attached.hpp"
 #include "services/shortcut-inhibit/shortcut-inhibit-manager.hpp"
@@ -36,6 +37,7 @@
 #include "services/files-service/file-service.hpp"
 #include "services/local-storage/local-storage-service.hpp"
 #include "services/oauth/oauth-service.hpp"
+#include "services/ai/ollama/ollama-ai-provider.hpp"
 #include "services/power-manager/power-manager.hpp"
 #include "services/raycast/raycast-store.hpp"
 #include "services/extension-store/vicinae-store.hpp"
@@ -61,6 +63,7 @@
 #ifdef Q_OS_LINUX
 #include "services/paste/linux-paste-service.hpp"
 #endif
+#include "services/ai/ai-service.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "qml/launcher-window.hpp"
 #include "utils.hpp"
@@ -69,6 +72,7 @@
 #include <QGuiApplication>
 #include <QQuickWindow>
 #include <QString>
+#include <iostream>
 #include <qlockfile.h>
 #include <qlogging.h>
 #include <QtQuickControls2/QQuickStyle>
@@ -221,6 +225,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setFileChooserService(std::make_unique<FileChooserService>());
     registry->setNewsService(std::make_unique<NewsService>(*registry->config()));
     registry->setTelemetry(std::make_unique<TelemetryService>(*registry->config()));
+    registry->setAI(std::make_unique<AI::Service>());
 
     auto root = registry->rootItemManager();
     auto builtinCommandDb = std::make_unique<CommandDatabase>();
