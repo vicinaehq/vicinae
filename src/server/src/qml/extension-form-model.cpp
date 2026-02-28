@@ -179,7 +179,7 @@ ExtensionFormModel::FormItemData ExtensionFormModel::createItem(const FormModel:
     data.label = field->title.value_or(QString());
     data.error = field->error.value_or(QString());
     data.info = field->info.value_or(QString());
-    data.placeholder = field->placeholder.value_or(QString());
+    data.placeholder = field->placeholder().value_or(QString());
     data.autoFocus = field->autoFocus;
     data.storeValue = field->storeValue;
     data.onChange = field->onChange;
@@ -191,10 +191,6 @@ ExtensionFormModel::FormItemData ExtensionFormModel::createItem(const FormModel:
       data.modelValue = *field->value;
     } else if (field->defaultValue) {
       data.modelValue = *field->defaultValue;
-    } else if (data.type == FormItemData::Type::Dropdown) {
-      if (auto *df = dynamic_cast<const FormModel::DropdownField *>(field.get())) {
-        if (auto first = qml::firstDropdownItemValue(df->m_items)) { data.modelValue = *first; }
-      }
     }
   } else if (auto *desc = std::get_if<FormModel::Description>(&item)) {
     data.type = FormItemData::Type::Description;
@@ -213,7 +209,7 @@ void ExtensionFormModel::updateItem(FormItemData &existing, const FormModel::Ite
     existing.label = field->title.value_or(QString());
     existing.error = field->error.value_or(QString());
     existing.info = field->info.value_or(QString());
-    existing.placeholder = field->placeholder.value_or(QString());
+    existing.placeholder = field->placeholder().value_or(QString());
     existing.onChange = field->onChange;
     existing.onBlur = field->onBlur;
     existing.onFocus = field->onFocus;
@@ -251,7 +247,7 @@ QVariantMap ExtensionFormModel::buildFieldData(const FormModel::IField &field) {
     data["filtering"] = f->filtering;
     data["hasRemoteSearch"] = f->onSearchTextChange.has_value();
     if (f->onSearchTextChange) data["onSearchTextChange"] = *f->onSearchTextChange;
-    if (f->placeholder) data["placeholder"] = *f->placeholder;
+    if (f->m_placeholder) data["placeholder"] = *f->m_placeholder;
     if (f->tooltip) data["tooltip"] = *f->tooltip;
   } else if (auto *f = dynamic_cast<const FormModel::FilePickerField *>(&field)) {
     data["multiple"] = f->allowMultipleSelection;

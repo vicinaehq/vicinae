@@ -23,7 +23,6 @@ struct FormModel {
     std::optional<EventHandler> onBlur;
     std::optional<EventHandler> onChange;
     std::optional<EventHandler> onFocus;
-    std::optional<QString> placeholder;
     std::optional<QString> title;
     std::optional<QJsonValue> value;
     bool storeValue;
@@ -32,6 +31,7 @@ struct FormModel {
   class IField : public FieldBase {
   public:
     size_t fieldTypeId() const { return typeid(*this).hash_code(); }
+    virtual std::optional<QString> placeholder() const { return std::nullopt; }
 
     virtual ~IField() {}
 
@@ -41,14 +41,14 @@ struct FormModel {
   struct TextField : public IField {
     std::optional<QString> m_placeholder;
 
-  public:
+    std::optional<QString> placeholder() const override { return m_placeholder; }
     TextField(const FieldBase &base) : IField(base) {}
   };
 
   struct PasswordField : public IField {
     std::optional<QString> m_placeholder;
 
-  public:
+    std::optional<QString> placeholder() const override { return m_placeholder; }
     PasswordField(const FieldBase &base) : IField(base) {}
   };
 
@@ -62,19 +62,20 @@ struct FormModel {
   struct DropdownField : public IField {
     std::vector<DropdownModel::Child> m_items;
     std::optional<QString> onSearchTextChange;
-    std::optional<QString> placeholder;
+    std::optional<QString> m_placeholder;
     bool isLoading;
     bool throttle;
     std::optional<QString> tooltip;
     bool filtering;
 
+    std::optional<QString> placeholder() const override { return m_placeholder; }
     DropdownField(const FieldBase &base) : IField(base) {}
   };
 
   struct TextAreaField : public IField {
-    std::optional<QString> placeholder;
+    std::optional<QString> m_placeholder;
 
-  public:
+    std::optional<QString> placeholder() const override { return m_placeholder; }
     TextAreaField(const FieldBase &base) : IField(base) {}
   };
 
