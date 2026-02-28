@@ -48,6 +48,10 @@ namespace config {
 class Manager;
 };
 
+namespace AI {
+class Service;
+};
+
 class ServiceRegistry : public QObject {
 
 public:
@@ -92,6 +96,7 @@ public:
   MediaControlService *mediaControl() const;
   AppRuntime *appRuntime() const;
   GlobalShortcutService *globalShortcuts() const;
+  AI::Service *ai() const;
 
   void setPowerManager(std::unique_ptr<PowerManager> manager);
   void setTrayHost(std::unique_ptr<AbstractTrayHost> service);
@@ -134,6 +139,7 @@ public:
   void setMediaControl(std::unique_ptr<MediaControlService> service);
   void setAppRuntime(std::unique_ptr<AppRuntime> service);
   void setGlobalShortcuts(std::unique_ptr<GlobalShortcutService> service);
+  void setAI(std::unique_ptr<AI::Service>);
 
 private:
   std::unique_ptr<WindowManager> m_windowManager;
@@ -176,4 +182,5 @@ private:
   std::unique_ptr<MediaControlService> m_mediaControl;
   std::unique_ptr<AppRuntime> m_appRuntime;
   std::unique_ptr<GlobalShortcutService> m_globalShortcuts;
+  std::unique_ptr<AI::Service> m_ai;
 };
