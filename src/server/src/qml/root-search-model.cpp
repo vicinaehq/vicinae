@@ -510,29 +510,71 @@ int RootSearchModel::nextSectionIndex(int from, int direction) const {
   int const count = static_cast<int>(m_flat.size());
   if (count == 0) return from;
 
-  // Find which section the current item belongs to
   SectionType currentSection{};
   if (from >= 0 && from < count) { currentSection = m_flat[from].section; }
 
-  int idx = from + direction;
-  while (idx >= 0 && idx < count) {
-    if (m_flat[idx].kind == FlatItem::SectionHeader && m_flat[idx].section != currentSection) {
-      // Found a different section header — return first selectable item after it
-      int next = idx + 1;
-      if (next < count && m_flat[next].kind != FlatItem::SectionHeader) return next;
-      return from;
+  auto isSelectable = [&](int idx) { return m_flat[idx].kind != FlatItem::SectionHeader; };
+
+  if (direction > 0) {
+    // Find the last item of the current section.
+    int currentEnd = from;
+    for (int idx = from + 1; idx < count; ++idx) {
+      if (isSelectable(idx) && m_flat[idx].section == currentSection)
+        currentEnd = idx;
+      else if (m_flat[idx].section != currentSection)
+        break;
     }
-    idx += direction;
+    // If not already at the last item, jump there first.
+    if (currentEnd > from) { return currentEnd; }
+    // Otherwise jump to first item of next section.
+    for (int idx = from + 1; idx < count; ++idx) {
+      if (isSelectable(idx) && m_flat[idx].section != currentSection) return idx;
+    }
+    return nextSelectableIndex(-1, 1);
   }
 
-  // Wrap around
-  if (direction > 0) { return nextSelectableIndex(-1, 1); }
-  // Going up: find the last section header, return first item after it
-  for (int i = count - 1; i >= 0; --i) {
-    if (m_flat[i].kind == FlatItem::SectionHeader) {
-      int next = i + 1;
-      if (next < count && m_flat[next].kind != FlatItem::SectionHeader) return next;
+  // Going up: find start of current section.
+  int currentStart = from;
+  for (int idx = from - 1; idx >= 0; --idx) {
+    if (isSelectable(idx) && m_flat[idx].section == currentSection) {
+      currentStart = idx;
+    } else if (m_flat[idx].section != currentSection) {
       break;
+    }
+  }
+
+  // If not already at the first item, jump there.
+  if (currentStart < from) { return currentStart; }
+
+  // Find the previous section's first selectable item.
+  SectionType prevSection{};
+  bool foundPrev = false;
+  for (int idx = currentStart - 1; idx >= 0; --idx) {
+    if (isSelectable(idx)) {
+      prevSection = m_flat[idx].section;
+      foundPrev = true;
+      break;
+    }
+  }
+  if (foundPrev) {
+    for (int i = 0; i < count; ++i) {
+      if (isSelectable(i) && m_flat[i].section == prevSection) return i;
+    }
+  }
+
+  // Wrap: last section's first item.
+  SectionType lastSection{};
+  bool foundLast = false;
+  for (int i = count - 1; i >= 0; --i) {
+    if (isSelectable(i)) {
+      lastSection = m_flat[i].section;
+      foundLast = true;
+      break;
+    }
+  }
+  if (foundLast) {
+    for (int i = 0; i < count; ++i) {
+      if (isSelectable(i) && m_flat[i].section == lastSection) return i;
     }
   }
   return from;

@@ -195,6 +195,73 @@ int ActionPanelModel::nextSelectableIndex(int from, int direction) const {
   return from;
 }
 
+int ActionPanelModel::nextSectionIndex(int from, int direction) const {
+  int const count = static_cast<int>(m_flat.size());
+  if (count == 0) return from;
+
+  int currentSection = -1;
+  if (from >= 0 && from < count) { currentSection = m_flat[from].sectionIdx; }
+
+  if (direction > 0) {
+    // Find the last item of the current section.
+    int currentEnd = from;
+    for (int idx = from + 1; idx < count; ++idx) {
+      if (m_flat[idx].kind == FlatItem::ActionItem && m_flat[idx].sectionIdx == currentSection)
+        currentEnd = idx;
+      else if (m_flat[idx].kind == FlatItem::ActionItem)
+        break;
+    }
+    if (currentEnd > from) { return currentEnd; }
+    // Otherwise jump to first item of next section.
+    for (int idx = from + 1; idx < count; ++idx) {
+      if (m_flat[idx].kind == FlatItem::ActionItem && m_flat[idx].sectionIdx != currentSection) {
+        return idx;
+      }
+    }
+    return nextSelectableIndex(-1, 1);
+  }
+
+  // Going up: find start of current section, then go to previous.
+  int currentStart = from;
+  for (int idx = from - 1; idx >= 0; --idx) {
+    if (m_flat[idx].kind == FlatItem::ActionItem && m_flat[idx].sectionIdx == currentSection) {
+      currentStart = idx;
+    } else if (m_flat[idx].kind == FlatItem::ActionItem) {
+      break;
+    }
+  }
+
+  if (currentStart < from) { return currentStart; }
+
+  // Find the previous section's first ActionItem.
+  int prevSection = -1;
+  for (int idx = currentStart - 1; idx >= 0; --idx) {
+    if (m_flat[idx].kind == FlatItem::ActionItem) {
+      prevSection = m_flat[idx].sectionIdx;
+      break;
+    }
+  }
+  if (prevSection >= 0) {
+    for (int i = 0; i < count; ++i) {
+      if (m_flat[i].kind == FlatItem::ActionItem && m_flat[i].sectionIdx == prevSection) return i;
+    }
+  }
+
+  // Wrap: last section.
+  for (int i = count - 1; i >= 0; --i) {
+    if (m_flat[i].kind == FlatItem::ActionItem) {
+      prevSection = m_flat[i].sectionIdx;
+      break;
+    }
+  }
+  if (prevSection >= 0) {
+    for (int i = 0; i < count; ++i) {
+      if (m_flat[i].kind == FlatItem::ActionItem && m_flat[i].sectionIdx == prevSection) return i;
+    }
+  }
+  return from;
+}
+
 void ActionPanelModel::rebuildFlatList() {
   m_flat.clear();
   m_flat.reserve(m_allActions.size() + m_sections.size() * 2);

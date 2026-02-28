@@ -123,23 +123,78 @@ int CommandListModel::nextSectionIndex(int from, int direction) const {
   int currentSection = -1;
   if (from >= 0 && from < count) { currentSection = m_flat[from].sectionIdx; }
 
-  int idx = from + direction;
-  while (idx >= 0 && idx < count) {
-    if (m_flat[idx].kind == FlatItem::SectionHeader && m_flat[idx].sectionIdx != currentSection) {
-      int next = idx + 1;
-      if (next < count && m_flat[next].kind != FlatItem::SectionHeader) return next;
-      return from;
+  // Helper: return the first DataItem at or after `idx`.
+  auto firstDataItemFrom = [&](int idx) -> int {
+    while (idx < count && m_flat[idx].kind != FlatItem::DataItem) ++idx;
+    return (idx < count) ? idx : from;
+  };
+
+  if (direction > 0) {
+    // Find the last item of the current section.
+    int currentEnd = from;
+    for (int idx = from + 1; idx < count; ++idx) {
+      if (m_flat[idx].kind == FlatItem::DataItem && m_flat[idx].sectionIdx == currentSection)
+        currentEnd = idx;
+      else if (m_flat[idx].sectionIdx != currentSection)
+        break;
     }
-    idx += direction;
+    if (currentEnd > from) { return currentEnd; }
+    // Otherwise jump to first item of next section.
+    for (int idx = from + 1; idx < count; ++idx) {
+      if (m_flat[idx].kind == FlatItem::DataItem && m_flat[idx].sectionIdx != currentSection) {
+        return idx;
+      }
+      if (m_flat[idx].kind == FlatItem::SectionHeader && m_flat[idx].sectionIdx != currentSection) {
+        return firstDataItemFrom(idx + 1);
+      }
+    }
+    return nextSelectableIndex(-1, 1);
   }
 
-  // Wrap around
-  if (direction > 0) { return nextSelectableIndex(-1, 1); }
-  for (int i = count - 1; i >= 0; --i) {
-    if (m_flat[i].kind == FlatItem::SectionHeader) {
-      int next = i + 1;
-      if (next < count && m_flat[next].kind != FlatItem::SectionHeader) return next;
+  // Going up: find start of current section, then go to previous.
+  int currentStart = from;
+  for (int idx = from - 1; idx >= 0; --idx) {
+    if (m_flat[idx].kind == FlatItem::DataItem && m_flat[idx].sectionIdx == currentSection) {
+      currentStart = idx;
+    } else if (m_flat[idx].sectionIdx != currentSection || m_flat[idx].kind == FlatItem::SectionHeader) {
       break;
+    }
+  }
+
+  // If not already at the first item of current section, jump there.
+  if (currentStart < from) { return currentStart; }
+
+  // Find the previous section's first item.
+  for (int idx = currentStart - 1; idx >= 0; --idx) {
+    if (m_flat[idx].kind == FlatItem::SectionHeader || m_flat[idx].sectionIdx != currentSection) {
+      // Walk backward to find the start of that section.
+      int prevSection = -1;
+      for (int j = idx; j >= 0; --j) {
+        if (m_flat[j].kind == FlatItem::DataItem) {
+          prevSection = m_flat[j].sectionIdx;
+          break;
+        }
+      }
+      if (prevSection < 0) break;
+      // Find the first DataItem of prevSection.
+      for (int j = 0; j < count; ++j) {
+        if (m_flat[j].kind == FlatItem::DataItem && m_flat[j].sectionIdx == prevSection) return j;
+      }
+      break;
+    }
+  }
+
+  // Wrap: go to last section's first item.
+  int lastSection = -1;
+  for (int i = count - 1; i >= 0; --i) {
+    if (m_flat[i].kind == FlatItem::DataItem) {
+      lastSection = m_flat[i].sectionIdx;
+      break;
+    }
+  }
+  if (lastSection >= 0) {
+    for (int i = 0; i < count; ++i) {
+      if (m_flat[i].kind == FlatItem::DataItem && m_flat[i].sectionIdx == lastSection) return i;
     }
   }
   return from;
