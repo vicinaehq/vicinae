@@ -27,18 +27,20 @@ export default function FormElements() {
 			<Form.TextField
 				id="name"
 				title="TextField"
+				placeholder="Name here..."
 				defaultValue="Steve"
 				value={text}
 				onChange={setText}
 			/>
 
 			{/* PasswordField */}
-			<Form.PasswordField id="password" title="PasswordField" />
+			<Form.PasswordField id="password" title="PasswordField" placeholder="Password here..." />
 
 			{/* TextArea */}
 			<Form.TextArea
 				id="description"
 				title="TextArea"
+				placeholder="Description here..."
 				value={text}
 				onChange={setText}
 			/>
