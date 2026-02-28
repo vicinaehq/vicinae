@@ -180,7 +180,6 @@ struct ConfigValue {
   std::vector<std::string> imports;
   bool searchFilesInRoot = false;
   bool closeOnFocusLoss = false;
-  bool exitOnBackspace = true;
   bool considerPreedit = false;
   bool popToRootOnClose = false;
   bool popOnBackspace = true;
@@ -229,7 +228,6 @@ template <> struct Partial<ConfigValue> {
   std::optional<std::vector<std::string>> imports;
   std::optional<bool> closeOnFocusLoss;
   std::optional<bool> considerPreedit;
-  std::optional<bool> exitOnBackspace;
   std::optional<bool> popToRootOnClose;
   std::optional<bool> popOnBackspace;
   std::optional<std::string> escapeKeyBehavior;
