@@ -203,7 +203,16 @@ int ActionPanelModel::nextSectionIndex(int from, int direction) const {
   if (from >= 0 && from < count) { currentSection = m_flat[from].sectionIdx; }
 
   if (direction > 0) {
-    // Jump directly to first item of next section.
+    // Find the last item of the current section.
+    int currentEnd = from;
+    for (int idx = from + 1; idx < count; ++idx) {
+      if (m_flat[idx].kind == FlatItem::ActionItem && m_flat[idx].sectionIdx == currentSection)
+        currentEnd = idx;
+      else if (m_flat[idx].kind == FlatItem::ActionItem)
+        break;
+    }
+    if (currentEnd > from) { return currentEnd; }
+    // Otherwise jump to first item of next section.
     for (int idx = from + 1; idx < count; ++idx) {
       if (m_flat[idx].kind == FlatItem::ActionItem && m_flat[idx].sectionIdx != currentSection) {
         return idx;
@@ -251,13 +260,6 @@ int ActionPanelModel::nextSectionIndex(int from, int direction) const {
     }
   }
   return from;
-}
-
-int ActionPanelModel::scrollTargetIndex(int index, int direction) const {
-  if (direction < 0 && index > 0 && std::cmp_less(index, m_flat.size())) {
-    if (m_flat[index - 1].kind == FlatItem::SectionHeader) return index - 1;
-  }
-  return index;
 }
 
 void ActionPanelModel::rebuildFlatList() {

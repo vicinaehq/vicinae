@@ -69,6 +69,18 @@ Item {
         }
     }
 
+    function moveSectionUp() {
+        if (typeof root.model.nextSectionIndex !== "function") { moveUp(); return }
+        var next = root.model.nextSectionIndex(listView.currentIndex, -1)
+        if (next !== listView.currentIndex) listView.currentIndex = next
+    }
+
+    function moveSectionDown() {
+        if (typeof root.model.nextSectionIndex !== "function") { moveDown(); return }
+        var next = root.model.nextSectionIndex(listView.currentIndex, 1)
+        if (next !== listView.currentIndex) listView.currentIndex = next
+    }
+
     function activateCurrent() {
         if (listView.currentIndex >= 0)
             root.model.activate(listView.currentIndex)

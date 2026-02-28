@@ -130,7 +130,16 @@ int CommandListModel::nextSectionIndex(int from, int direction) const {
   };
 
   if (direction > 0) {
-    // Jump directly to first item of next section.
+    // Find the last item of the current section.
+    int currentEnd = from;
+    for (int idx = from + 1; idx < count; ++idx) {
+      if (m_flat[idx].kind == FlatItem::DataItem && m_flat[idx].sectionIdx == currentSection)
+        currentEnd = idx;
+      else if (m_flat[idx].sectionIdx != currentSection)
+        break;
+    }
+    if (currentEnd > from) { return currentEnd; }
+    // Otherwise jump to first item of next section.
     for (int idx = from + 1; idx < count; ++idx) {
       if (m_flat[idx].kind == FlatItem::DataItem && m_flat[idx].sectionIdx != currentSection) {
         return idx;
