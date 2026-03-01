@@ -32,7 +32,7 @@ void SettingsController::openTab(const QString &tabId) {
 }
 
 void SettingsController::openExtensionPreferences(const EntrypointId &id) {
-  openTab("extensions");
+  openWindow();
   QTimer::singleShot(0, [this, id]() {
     if (m_window) m_window->selectExtension(QString::fromStdString(id));
   });

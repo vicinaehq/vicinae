@@ -6,10 +6,12 @@
 #include "image-source.hpp"
 #include "keybind-settings-model.hpp"
 #include "theme-bridge.hpp"
+#include "view-utils.hpp"
 #include "config/config.hpp"
 #include "service-registry.hpp"
 #include "services/background-effect/background-effect-manager.hpp"
 #include "services/app-service/app-service.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "vicinae.hpp"
 #include "version.h"
@@ -37,6 +39,10 @@ void SettingsWindow::ensureInitialized() {
   rootCtx->setContextProperty(QStringLiteral("Img"), m_imgSource);
   rootCtx->setContextProperty(QStringLiteral("settings"), this);
 
+  auto *manager = ServiceRegistry::instance()->rootItemManager();
+  connect(manager, &RootItemManager::itemsChanged, this, &SettingsWindow::rebuildSidebarExtensions);
+  rebuildSidebarExtensions();
+
   m_engine.load(QUrl(QStringLiteral("qrc:/Vicinae/SettingsWindow.qml")));
 
   auto rootObjects = m_engine.rootObjects();
@@ -53,11 +59,27 @@ void SettingsWindow::ensureInitialized() {
   connect(m_ctx.services->config(), &config::Manager::configChanged, this, &SettingsWindow::updateBlur);
 }
 
-void SettingsWindow::setCurrentTab(int tab) {
-  if (m_currentTab != tab) {
-    m_currentTab = tab;
-    emit currentTabChanged();
+void SettingsWindow::setCurrentPage(const QString &page) {
+  if (m_currentPage != page) {
+    m_currentPage = page;
+    emit currentPageChanged();
   }
+}
+
+QVariantList SettingsWindow::sidebarExtensions() const { return m_sidebarExtensions; }
+
+void SettingsWindow::rebuildSidebarExtensions() {
+  m_sidebarExtensions.clear();
+  auto *manager = ServiceRegistry::instance()->rootItemManager();
+  for (auto *provider : manager->providers()) {
+    if (provider->isTransient()) continue;
+    QVariantMap entry;
+    entry[QStringLiteral("name")] = provider->displayName();
+    entry[QStringLiteral("iconSource")] = qml::imageSourceFor(provider->icon());
+    entry[QStringLiteral("providerId")] = provider->uniqueId();
+    m_sidebarExtensions.append(entry);
+  }
+  emit sidebarExtensionsChanged();
 }
 
 QString SettingsWindow::version() const { return QStringLiteral(VICINAE_GIT_TAG); }
@@ -86,23 +108,20 @@ void SettingsWindow::hide() {
 
 void SettingsWindow::openTab(const QString &tabId) {
   ensureInitialized();
-  static const std::array<std::pair<const char *, int>, 4> tabs = {{
-      {"general", 0},
-      {"extensions", 1},
-      {"keybinds", 2},
-      {"about", 3},
-  }};
-  for (const auto &[id, idx] : tabs) {
-    if (tabId == id) {
-      setCurrentTab(idx);
-      return;
-    }
+  if (tabId == "keybinds") {
+    setCurrentPage(QStringLiteral("shortcuts"));
+  } else if (tabId == "extensions") {
+    setCurrentPage(QStringLiteral("general"));
+  } else {
+    setCurrentPage(tabId);
   }
 }
 
 void SettingsWindow::selectExtension(const QString &entrypointId) {
   ensureInitialized();
   m_extensionModel->selectByEntrypointId(entrypointId);
+  auto providerId = m_extensionModel->selectedProviderId();
+  if (!providerId.isEmpty()) { setCurrentPage(providerId); }
 }
 
 void SettingsWindow::updateBlur() {

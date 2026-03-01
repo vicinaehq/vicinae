@@ -23,33 +23,60 @@ Window {
         border.width: 1
         clip: true
 
-        ColumnLayout {
+        RowLayout {
             anchors.fill: parent
             spacing: 0
 
-            SettingsNavBar {
-                Layout.fillWidth: true
-                currentIndex: settings.currentTab
-                onTabClicked: (index) => settings.currentTab = index
+            SettingsSidebar {
+                Layout.fillHeight: true
+                Layout.preferredWidth: 220
             }
 
             Rectangle {
-                Layout.fillWidth: true
-                height: 1
+                Layout.fillHeight: true
+                width: 1
                 color: Theme.divider
             }
 
-            StackLayout {
+            Loader {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                currentIndex: settings.currentTab
-
-                GeneralSettingsTab {}
-                ExtensionSettingsTab {}
-                KeybindSettingsTab {}
-                AboutSettingsTab {}
+                sourceComponent: {
+                    switch (settings.currentPage) {
+                    case "general": return generalPage
+                    case "shortcuts": return shortcutsPage
+                    case "advanced": return advancedPage
+                    case "about": return aboutPage
+                    default: return extensionPage
+                    }
+                }
             }
         }
+    }
+
+    Component {
+        id: generalPage
+        GeneralSettingsPage {}
+    }
+
+    Component {
+        id: shortcutsPage
+        ShortcutsSettingsPage {}
+    }
+
+    Component {
+        id: advancedPage
+        AdvancedSettingsPage {}
+    }
+
+    Component {
+        id: aboutPage
+        AboutSettingsPage {}
+    }
+
+    Component {
+        id: extensionPage
+        ExtensionSettingsPage {}
     }
 
     Shortcut {

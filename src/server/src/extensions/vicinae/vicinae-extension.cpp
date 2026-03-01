@@ -173,7 +173,7 @@ class OpenKeybindSettingsCommand : public BuiltinCallbackCommand {
     auto ctx = controller->context();
 
     ctx->navigation->closeWindow();
-    ctx->settings->openTab("keybinds");
+    ctx->settings->openTab("shortcuts");
   }
 };
 

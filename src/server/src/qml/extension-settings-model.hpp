@@ -19,7 +19,10 @@ class ExtensionSettingsModel : public QAbstractListModel {
   Q_PROPERTY(bool selectedEnabled READ selectedEnabled NOTIFY selectedChanged)
   Q_PROPERTY(QString selectedAlias READ selectedAlias NOTIFY selectedChanged)
   Q_PROPERTY(PreferenceFormModel *preferenceModel READ preferenceModel CONSTANT)
+  Q_PROPERTY(PreferenceFormModel *commandPreferenceModel READ commandPreferenceModel CONSTANT)
   Q_PROPERTY(int selectedRow READ selectedRow NOTIFY selectedChanged)
+  Q_PROPERTY(QString selectedProviderId READ selectedProviderId NOTIFY selectedChanged)
+  Q_PROPERTY(QVariantList currentProviderCommands READ currentProviderCommands NOTIFY selectedChanged)
 
 signals:
   void selectedChanged();
@@ -35,7 +38,8 @@ public:
     AliasRole,
     EntrypointIdRole,
     ExpandedRole,
-    ExpandableRole
+    ExpandableRole,
+    DescriptionRole
   };
 
   explicit ExtensionSettingsModel(QObject *parent = nullptr);
@@ -55,6 +59,9 @@ public:
   QString selectedAlias() const;
   int selectedRow() const { return m_selectedRow; }
   PreferenceFormModel *preferenceModel() const { return m_prefModel; }
+  PreferenceFormModel *commandPreferenceModel() const { return m_cmdPrefModel; }
+  QString selectedProviderId() const;
+  QVariantList currentProviderCommands() const;
 
   Q_INVOKABLE void setFilter(const QString &text);
   Q_INVOKABLE void select(int row);
@@ -65,6 +72,10 @@ public:
   Q_INVOKABLE void moveUp();
   Q_INVOKABLE void moveDown();
   Q_INVOKABLE void activate();
+  Q_INVOKABLE void selectProviderById(const QString &providerId);
+  Q_INVOKABLE void setEnabledByEntrypointId(const QString &id, bool value);
+  Q_INVOKABLE void setAliasByEntrypointId(const QString &id, const QString &alias);
+  Q_INVOKABLE void loadCommandPreferences(const QString &entrypointId);
 
 private:
   struct Entry {
@@ -91,5 +102,6 @@ private:
   int m_selectedRow = -1;
   QString m_filter;
   PreferenceFormModel *m_prefModel;
+  PreferenceFormModel *m_cmdPrefModel;
   std::set<QString> m_expandedProviders;
 };
