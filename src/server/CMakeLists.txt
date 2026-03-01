@@ -573,6 +573,8 @@ set(SRCS
 	src/qml/extension-settings-model.cpp
 	src/qml/preference-form-model.hpp
 	src/qml/preference-form-model.cpp
+	src/qml/provider-command-model.hpp
+	src/qml/provider-command-model.cpp
 
 	src/extensions/internal/markdown-showcase-command.hpp
 

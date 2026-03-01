@@ -1,4 +1,5 @@
 #include "extension-settings-model.hpp"
+#include "provider-command-model.hpp"
 #include "view-utils.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "service-registry.hpp"
@@ -8,7 +9,7 @@
 
 ExtensionSettingsModel::ExtensionSettingsModel(QObject *parent)
     : QAbstractListModel(parent), m_prefModel(new PreferenceFormModel(this)),
-      m_cmdPrefModel(new PreferenceFormModel(this)) {
+      m_cmdPrefModel(new PreferenceFormModel(this)), m_commandModel(new ProviderCommandModel(this)) {
 
   auto *manager = ServiceRegistry::instance()->rootItemManager();
   connect(manager, &RootItemManager::itemsChanged, this, [this]() { rebuild(m_filter); });
@@ -122,6 +123,7 @@ void ExtensionSettingsModel::select(int row) {
         m_prefModel->loadProvider(e.providerId, provider->preferences());
       else
         m_prefModel->loadProvider(e.providerId, {});
+      loadCommandsForProvider(e.providerId);
     } else {
       auto *item = manager->findItemById(e.entrypointId);
       m_prefModel->load(e.entrypointId, item ? item->preferences() : std::vector<Preference>{});
@@ -159,8 +161,7 @@ void ExtensionSettingsModel::setEnabled(int row, bool value) {
     emit dataChanged(idx, idx, {EnabledRole});
   }
 
-  if (row == m_selectedRow)
-    emit selectedChanged();
+  if (row == m_selectedRow) emit selectedChanged();
 }
 
 void ExtensionSettingsModel::setAlias(int row, const QString &alias) {
@@ -172,8 +173,7 @@ void ExtensionSettingsModel::setAlias(int row, const QString &alias) {
   e.alias = alias;
   auto idx = index(row);
   emit dataChanged(idx, idx, {AliasRole});
-  if (row == m_selectedRow)
-    emit selectedChanged();
+  if (row == m_selectedRow) emit selectedChanged();
 }
 
 void ExtensionSettingsModel::selectByEntrypointId(const QString &id) {
@@ -379,36 +379,21 @@ QString ExtensionSettingsModel::selectedProviderId() const {
   return m_allEntries[m_visibleIndices[m_selectedRow]].providerId;
 }
 
-QVariantList ExtensionSettingsModel::currentProviderCommands() const {
-  if (!hasSelection()) return {};
-  const auto &sel = m_allEntries[m_visibleIndices[m_selectedRow]];
-  QString provId = sel.isProvider ? sel.providerId : sel.providerId;
-  if (provId.isEmpty()) return {};
+void ExtensionSettingsModel::loadCommandsForProvider(const QString &providerId) {
+  std::vector<ProviderCommandModel::Command> commands;
 
-  int providerAllIdx = -1;
   for (int i = 0; std::cmp_less(i, m_allEntries.size()); ++i) {
-    if (m_allEntries[i].isProvider && m_allEntries[i].providerId == provId) {
-      providerAllIdx = i;
+    if (m_allEntries[i].isProvider && m_allEntries[i].providerId == providerId) {
+      for (int j = i + 1; std::cmp_less(j, m_allEntries.size()) && !m_allEntries[j].isProvider; ++j) {
+        const auto &e = m_allEntries[j];
+        commands.push_back({e.name, e.type, e.iconSource, e.description, e.enabled, e.alias,
+                            QString::fromStdString(e.entrypointId)});
+      }
       break;
     }
   }
-  if (providerAllIdx < 0) return {};
 
-  QVariantList result;
-  for (int i = providerAllIdx + 1; std::cmp_less(i, m_allEntries.size()) && !m_allEntries[i].isProvider;
-       ++i) {
-    const auto &e = m_allEntries[i];
-    QVariantMap cmd;
-    cmd[QStringLiteral("name")] = e.name;
-    cmd[QStringLiteral("iconSource")] = e.iconSource;
-    cmd[QStringLiteral("alias")] = e.alias;
-    cmd[QStringLiteral("enabled")] = e.enabled;
-    cmd[QStringLiteral("entrypointId")] = QString::fromStdString(e.entrypointId);
-    cmd[QStringLiteral("type")] = e.type;
-    cmd[QStringLiteral("description")] = e.description;
-    result.append(cmd);
-  }
-  return result;
+  m_commandModel->load(std::move(commands));
 }
 
 void ExtensionSettingsModel::selectProviderById(const QString &providerId) {
@@ -440,6 +425,7 @@ void ExtensionSettingsModel::setEnabledByEntrypointId(const QString &id, bool va
     auto &e = m_allEntries[m_visibleIndices[i]];
     if (!e.isProvider && QString::fromStdString(e.entrypointId) == id) {
       setEnabled(i, value);
+      m_commandModel->setEnabled(id, value);
       return;
     }
   }
@@ -450,6 +436,7 @@ void ExtensionSettingsModel::setAliasByEntrypointId(const QString &id, const QSt
     auto &e = m_allEntries[m_visibleIndices[i]];
     if (!e.isProvider && QString::fromStdString(e.entrypointId) == id) {
       setAlias(i, alias);
+      m_commandModel->setAlias(id, alias);
       return;
     }
   }

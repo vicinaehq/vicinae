@@ -94,6 +94,13 @@ Window {
                         target: settings
                         function onCurrentPageChanged() {
                             pageLoader.active = false
+                            // Pre-select extension data so the page renders
+                            // at full size immediately (no async header growth)
+                            const page = settings.currentPage
+                            if (page !== "general" && page !== "keybindings"
+                                && page !== "advanced" && page !== "about") {
+                                settings.extensionModel.selectProviderById(page)
+                            }
                             pageLoader.active = true
                         }
                     }

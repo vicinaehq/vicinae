@@ -148,14 +148,22 @@ QVariantList SettingsWindow::filterSidebarItems(const QString &query) const {
   };
 
   static const std::array corePages = {
-      SidebarEntry{.id = QStringLiteral("general"), .label = QStringLiteral("General"),
-                   .icon = QStringLiteral("cog"), .kind = kCore},
-      SidebarEntry{.id = QStringLiteral("keybindings"), .label = QStringLiteral("Keybindings"),
-                   .icon = QStringLiteral("keyboard"), .kind = kCore},
-      SidebarEntry{.id = QStringLiteral("advanced"), .label = QStringLiteral("Advanced"),
-                   .icon = QStringLiteral("wrench-screwdriver"), .kind = kCore},
-      SidebarEntry{.id = QStringLiteral("about"), .label = QStringLiteral("About"),
-                   .icon = QStringLiteral("vicinae"), .kind = kCore},
+      SidebarEntry{.id = QStringLiteral("general"),
+                   .label = QStringLiteral("General"),
+                   .icon = QStringLiteral("cog"),
+                   .kind = kCore},
+      SidebarEntry{.id = QStringLiteral("keybindings"),
+                   .label = QStringLiteral("Keybindings"),
+                   .icon = QStringLiteral("keyboard"),
+                   .kind = kCore},
+      SidebarEntry{.id = QStringLiteral("advanced"),
+                   .label = QStringLiteral("Advanced"),
+                   .icon = QStringLiteral("wrench-screwdriver"),
+                   .kind = kCore},
+      SidebarEntry{.id = QStringLiteral("about"),
+                   .label = QStringLiteral("About"),
+                   .icon = QStringLiteral("vicinae"),
+                   .kind = kCore},
   };
 
   std::vector<SidebarEntry> all;
@@ -221,9 +229,12 @@ QVariantList SettingsWindow::filterSidebarItems(const QString &query) const {
     bool hasExts = false;
 
     for (const auto &s : scored) {
-      if (s.entry->kind == kCore) hasCore = true;
-      else if (s.entry->isGroup) hasGroups = true;
-      else hasExts = true;
+      if (s.entry->kind == kCore)
+        hasCore = true;
+      else if (s.entry->isGroup)
+        hasGroups = true;
+      else
+        hasExts = true;
     }
 
     for (const auto &s : scored) {

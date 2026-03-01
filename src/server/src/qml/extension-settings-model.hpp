@@ -1,6 +1,7 @@
 #pragma once
 #include "common/entrypoint.hpp"
 #include "preference-form-model.hpp"
+#include "provider-command-model.hpp"
 #include <QAbstractListModel>
 #include <set>
 
@@ -22,7 +23,7 @@ class ExtensionSettingsModel : public QAbstractListModel {
   Q_PROPERTY(PreferenceFormModel *commandPreferenceModel READ commandPreferenceModel CONSTANT)
   Q_PROPERTY(int selectedRow READ selectedRow NOTIFY selectedChanged)
   Q_PROPERTY(QString selectedProviderId READ selectedProviderId NOTIFY selectedChanged)
-  Q_PROPERTY(QVariantList currentProviderCommands READ currentProviderCommands NOTIFY selectedChanged)
+  Q_PROPERTY(ProviderCommandModel *commandModel READ commandModel CONSTANT)
 
 signals:
   void selectedChanged();
@@ -61,7 +62,7 @@ public:
   PreferenceFormModel *preferenceModel() const { return m_prefModel; }
   PreferenceFormModel *commandPreferenceModel() const { return m_cmdPrefModel; }
   QString selectedProviderId() const;
-  QVariantList currentProviderCommands() const;
+  ProviderCommandModel *commandModel() const { return m_commandModel; }
 
   Q_INVOKABLE void setFilter(const QString &text);
   Q_INVOKABLE void select(int row);
@@ -96,6 +97,7 @@ private:
 
   void rebuild(const QString &filter);
   void rebuildVisible();
+  void loadCommandsForProvider(const QString &providerId);
 
   std::vector<Entry> m_allEntries;
   std::vector<int> m_visibleIndices;
@@ -103,5 +105,6 @@ private:
   QString m_filter;
   PreferenceFormModel *m_prefModel;
   PreferenceFormModel *m_cmdPrefModel;
+  ProviderCommandModel *m_commandModel;
   std::set<QString> m_expandedProviders;
 };

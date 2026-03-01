@@ -35,7 +35,7 @@ Item {
             clip: true
             currentIndex: -1
             boundsBehavior: Flickable.StopAtBounds
-            model: root.extModel.currentProviderCommands
+            model: root.extModel.commandModel
 
             property bool _settling: true
             onContentHeightChanged: {
@@ -188,7 +188,7 @@ Item {
 
                 // Commands section title + search
                 RowLayout {
-                    visible: root.extModel.currentProviderCommands.length > 0
+                    visible: root.extModel.commandModel.count > 0
                     Layout.fillWidth: true
                     Layout.leftMargin: parent.sideMargin + 20
                     Layout.rightMargin: parent.sideMargin + 20
@@ -251,16 +251,19 @@ Item {
                 id: cmdDelegate
                 width: cmdListView.width
 
-                required property var modelData
                 required property int index
+                required property string name
+                required property string type
+                required property string iconSource
+                required property string description
+                required property bool enabled
+                required property string alias
+                required property string entrypointId
 
                 readonly property real contentWidth: Math.min(width, 680)
                 readonly property real sideMargin: (width - contentWidth) / 2
-                readonly property bool isExpanded: root.expandedCommandId === modelData.entrypointId
-                readonly property bool matches: root._matchesFilter(modelData.name)
-
-                property bool _enabled: modelData.enabled
-                property string _alias: modelData.alias
+                readonly property bool isExpanded: root.expandedCommandId === entrypointId
+                readonly property bool matches: root._matchesFilter(name)
 
                 visible: matches
                 height: matches ? implicitHeight : 0
@@ -276,8 +279,8 @@ Item {
                             if (cmdDelegate.isExpanded) {
                                 root.expandedCommandId = ""
                             } else {
-                                root.expandedCommandId = cmdDelegate.modelData.entrypointId
-                                root.extModel.loadCommandPreferences(cmdDelegate.modelData.entrypointId)
+                                root.expandedCommandId = cmdDelegate.entrypointId
+                                root.extModel.loadCommandPreferences(cmdDelegate.entrypointId)
                             }
                         }
                     }
@@ -299,7 +302,7 @@ Item {
                         }
 
                         ViciImage {
-                            source: cmdDelegate.modelData.iconSource
+                            source: cmdDelegate.iconSource
                             Layout.preferredWidth: 20
                             Layout.preferredHeight: 20
                         }
@@ -309,16 +312,16 @@ Item {
                             spacing: 1
 
                             Text {
-                                text: cmdDelegate.modelData.name
-                                color: !cmdDelegate._enabled ? Theme.textMuted : Theme.foreground
+                                text: cmdDelegate.name
+                                color: !cmdDelegate.enabled ? Theme.textMuted : Theme.foreground
                                 font.pointSize: Theme.regularFontSize
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
                             }
 
                             Text {
-                                visible: cmdDelegate.modelData.type !== ""
-                                text: cmdDelegate.modelData.type
+                                visible: cmdDelegate.type !== ""
+                                text: cmdDelegate.type
                                 color: Theme.textMuted
                                 font.pointSize: Theme.smallerFontSize
                             }
@@ -328,8 +331,8 @@ Item {
                             Layout.preferredWidth: 20
                             Layout.preferredHeight: 20
                             radius: 4
-                            color: cmdDelegate._enabled ? Theme.accent : "transparent"
-                            border.color: cmdDelegate._enabled ? Theme.accent : Theme.inputBorder
+                            color: cmdDelegate.enabled ? Theme.accent : "transparent"
+                            border.color: cmdDelegate.enabled ? Theme.accent : Theme.inputBorder
                             border.width: 1
 
                             Text {
@@ -338,17 +341,14 @@ Item {
                                 color: "#ffffff"
                                 font.pixelSize: 13
                                 font.bold: true
-                                visible: cmdDelegate._enabled
+                                visible: cmdDelegate.enabled
                             }
 
                             MouseArea {
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    cmdDelegate._enabled = !cmdDelegate._enabled
-                                    root.extModel.setEnabledByEntrypointId(
-                                        cmdDelegate.modelData.entrypointId, cmdDelegate._enabled)
-                                }
+                                onClicked: root.extModel.setEnabledByEntrypointId(
+                                    cmdDelegate.entrypointId, !cmdDelegate.enabled)
                             }
                         }
                     }
@@ -382,8 +382,8 @@ Item {
                         spacing: 8
 
                         Text {
-                            visible: cmdDelegate.modelData.description !== ""
-                            text: cmdDelegate.modelData.description
+                            visible: cmdDelegate.description !== ""
+                            text: cmdDelegate.description
                             color: Theme.textMuted
                             font.pointSize: Theme.smallerFontSize
                             wrapMode: Text.Wrap
@@ -413,7 +413,7 @@ Item {
                                 padding: 0
                                 leftPadding: 6
                                 rightPadding: 6
-                                text: cmdDelegate._alias
+                                text: cmdDelegate.alias
 
                                 background: Rectangle {
                                     radius: 4
@@ -423,17 +423,12 @@ Item {
                                 }
 
                                 onActiveFocusChanged: {
-                                    if (!activeFocus) {
-                                        cmdDelegate._alias = text
+                                    if (!activeFocus)
                                         root.extModel.setAliasByEntrypointId(
-                                            cmdDelegate.modelData.entrypointId, text)
-                                    }
+                                            cmdDelegate.entrypointId, text)
                                 }
-                                onAccepted: {
-                                    cmdDelegate._alias = text
-                                    root.extModel.setAliasByEntrypointId(
-                                        cmdDelegate.modelData.entrypointId, text)
-                                }
+                                onAccepted: root.extModel.setAliasByEntrypointId(
+                                    cmdDelegate.entrypointId, text)
                             }
                         }
 
