@@ -19,6 +19,7 @@ class ThemeBridge : public QObject {
   Q_PROPERTY(QColor mainWindowBorder READ mainWindowBorder NOTIFY changed)
   Q_PROPERTY(QColor inputBorder READ inputBorder NOTIFY changed)
   Q_PROPERTY(QColor inputBorderFocus READ inputBorderFocus NOTIFY changed)
+  Q_PROPERTY(QColor inputBorderError READ inputBorderError NOTIFY changed)
   Q_PROPERTY(QColor divider READ divider NOTIFY changed)
   Q_PROPERTY(QColor secondaryBackground READ secondaryBackground NOTIFY changed)
   Q_PROPERTY(QColor listItemSelectionFg READ listItemSelectionFg NOTIFY changed)
@@ -61,6 +62,7 @@ public:
   QColor mainWindowBorder() const { return resolve(SemanticColor::MainWindowBorder); }
   QColor inputBorder() const { return resolve(SemanticColor::InputBorder); }
   QColor inputBorderFocus() const { return resolve(SemanticColor::InputBorderFocus); }
+  QColor inputBorderError() const { return resolve(SemanticColor::InputBorderError); }
   QColor divider() const { return resolve(SemanticColor::BackgroundBorder); }
   QColor secondaryBackground() const { return resolve(SemanticColor::SecondaryBackground); }
   QColor scrollBarBackground() const { return resolve(SemanticColor::ScrollBarBackground); }

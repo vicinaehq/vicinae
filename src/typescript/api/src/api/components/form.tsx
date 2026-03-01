@@ -120,7 +120,9 @@ interface WithFormRef<T> {
 
 interface TextFieldProps
 	extends FormItemProps<string>,
-	WithFormRef<Form.TextField> { }
+	WithFormRef<Form.TextField> {
+	placeholder?: string;
+}
 
 const TextField: React.FC<TextFieldProps> = ({ ref, ...props }) => {
 	useImperativeFormHandle(ref);
@@ -130,7 +132,9 @@ const TextField: React.FC<TextFieldProps> = ({ ref, ...props }) => {
 
 interface PasswordFieldProps
 	extends FormItemProps<string>,
-	WithFormRef<Form.PasswordField> { }
+	WithFormRef<Form.PasswordField> {
+	placeholder?: string;
+}
 
 const PasswordField: React.FC<PasswordFieldProps> = ({ ref, ...props }) => {
 	useImperativeFormHandle(ref);
@@ -252,7 +256,9 @@ const TagPicker = Object.assign(TagPickerRoot, {
 
 interface TextAreaProps
 	extends FormItemProps<string>,
-	WithFormRef<Form.TextArea> { }
+	WithFormRef<Form.TextArea> {
+	placeholder?: string;
+}
 
 const TextArea: React.FC<TextAreaProps> = ({ ref, ...props }) => {
 	useImperativeFormHandle(ref);

@@ -18,6 +18,7 @@ Item {
 
     property string placeholder: ""
     property bool readOnly: false
+    property bool hasError: false
 
     width: compact ? Math.max(triggerButton.implicitWidth, minimumWidth) : implicitWidth
 
@@ -126,6 +127,7 @@ Item {
                : Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g,
                           Theme.secondaryBackground.b, Config.windowOpacity)
         border.color: compact ? Theme.divider
+                      : root.hasError ? Theme.inputBorderError
                       : (root.activeFocus || dropdownPopup.visible
                          ? Theme.inputBorderFocus : Theme.inputBorder)
         border.width: 1

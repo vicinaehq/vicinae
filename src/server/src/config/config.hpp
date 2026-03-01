@@ -182,6 +182,7 @@ struct ConfigValue {
   bool closeOnFocusLoss = false;
   bool considerPreedit = false;
   bool popToRootOnClose = false;
+  bool popOnBackspace = true;
   std::string escapeKeyBehavior;
   std::string faviconService = "twenty";
   std::string keybinding = "default";
@@ -228,6 +229,7 @@ template <> struct Partial<ConfigValue> {
   std::optional<bool> closeOnFocusLoss;
   std::optional<bool> considerPreedit;
   std::optional<bool> popToRootOnClose;
+  std::optional<bool> popOnBackspace;
   std::optional<std::string> escapeKeyBehavior;
   std::optional<std::string> faviconService;
   std::optional<std::string> keybinding;

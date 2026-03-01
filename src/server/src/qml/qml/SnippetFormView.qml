@@ -11,18 +11,21 @@ Item {
         Component.onCompleted: Qt.callLater(formView.focusFirst)
 
         FormField {
+            id: titleField
             label: "Title"
             error: root.host.nameError
 
             FormTextInput {
                 text: root.host.name
                 placeholder: "Euro symbol"
+                hasError: titleField.error !== ""
                 onTextEdited: root.host.name = text
                 onAccepted: launcher.handleReturn()
             }
         }
 
         FormField {
+            id: contentField
             label: "Content"
             error: root.host.contentError
             info: "You can use {dynamic placeholders} to make the content dynamic. No autocomplete is available for now."
@@ -30,6 +33,7 @@ Item {
             FormTextArea {
                 text: root.host.content
                 placeholder: "€"
+                hasError: contentField.error !== ""
                 onTextEdited: root.host.content = text
             }
         }
@@ -37,6 +41,7 @@ Item {
         FormSeparator {}
 
         FormField {
+            id: keywordField
             label: "Keyword"
             error: root.host.keywordError
             info: "Typing this keyword anywhere will result in it being replaced by the content of the snippet."
@@ -44,6 +49,7 @@ Item {
             FormTextInput {
                 text: root.host.keyword
                 placeholder: ":!euro"
+                hasError: keywordField.error !== ""
                 onTextEdited: root.host.keyword = text
                 onAccepted: launcher.handleReturn()
             }

@@ -11,6 +11,7 @@ Item {
     property alias text: innerInput.text
     property string placeholder: ""
     property bool readOnly: false
+    property bool hasError: false
     readonly property bool editing: innerInput.editing
 
     // [{iconSource, title, value}]
@@ -102,6 +103,7 @@ Item {
         anchors.fill: parent
         placeholder: root.placeholder
         readOnly: root.readOnly
+        hasError: root.hasError
 
         onTextEdited: {
             root.textEdited()

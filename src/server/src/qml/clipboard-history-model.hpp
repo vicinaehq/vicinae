@@ -17,6 +17,7 @@ public:
 
   void setEntries(const PaginatedResponse<ClipboardHistoryEntry> &page);
   void setDefaultAction(DefaultAction action) { m_defaultAction = action; }
+  void resetSelectionOnNextUpdate() { setSelectFirstOnReset(true); }
   void setFilter(const QString &text) override {}
   QString searchPlaceholder() const override { return QStringLiteral("Browse clipboard history..."); }
 

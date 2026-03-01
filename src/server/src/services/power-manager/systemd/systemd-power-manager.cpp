@@ -1,9 +1,13 @@
 #include "systemd-power-manager.hpp"
 #include <cstdint>
 #include <qdbusargument.h>
+#include <qdbusconnection.h>
 #include <qdbusmetatype.h>
+#include <qguiapplication.h>
 #include <qtdbusglobal.h>
+#include <qtimer.h>
 #include <unistd.h>
+#include "utils/environment.hpp"
 
 static const constexpr uint64_t SD_LOGIND_SOFT_REBOOT = 1 << 2;
 
@@ -23,7 +27,34 @@ bool SystemdPowerManager::lock() {
 }
 
 bool SystemdPowerManager::logout() {
-  return m_iface->call("TerminateUser", getuid()).errorMessage().isEmpty();
+  if (Environment::isPlasmaDesktop()) {
+    QDBusInterface ksmserver("org.kde.Shutdown", "/Shutdown", "org.kde.Shutdown",
+                             QDBusConnection::sessionBus());
+    if (ksmserver.isValid()) {
+      ksmserver.asyncCall("logout");
+      QTimer::singleShot(0, qApp, &QGuiApplication::quit);
+      return true;
+    }
+  }
+
+  if (Environment::isGnomeDesktop()) {
+    QDBusInterface gnomeSession("org.gnome.SessionManager", "/org/gnome/SessionManager",
+                                "org.gnome.SessionManager", QDBusConnection::sessionBus());
+    if (gnomeSession.isValid()) {
+      gnomeSession.asyncCall("Logout", static_cast<uint>(1)); // 1 = no confirmation
+      QTimer::singleShot(0, qApp, &QGuiApplication::quit);
+      return true;
+    }
+  }
+
+  qDebug() << "No DE-specific session manager available, falling back to TerminateSession";
+
+  auto session = getUserSession();
+  if (!session) { return false; }
+
+  m_iface->asyncCall("TerminateSession", session->id);
+  QTimer::singleShot(0, qApp, &QGuiApplication::quit);
+  return true;
 }
 
 bool SystemdPowerManager::softReboot() {

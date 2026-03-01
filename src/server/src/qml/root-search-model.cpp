@@ -354,6 +354,8 @@ void RootSearchModel::setFilter(const QString &text) {
   if (query == m_query) return;
   m_query = std::move(query);
   m_selectedIndex = -1;
+  m_selectFirstOnReset = true;
+  emit selectFirstOnResetChanged();
   m_scope.clearActions();
   m_calc.reset();
   m_files.clear();
@@ -860,6 +862,7 @@ void RootSearchModel::handleCalculatorFinished() {
   if (!res) return;
 
   m_calc = res.value();
+  m_selectedIndex = -1;
   beginResetModel();
   rebuildFlatList();
   endResetModel();
@@ -876,6 +879,10 @@ void RootSearchModel::handleFileSearchFinished() {
   if (!m_fileWatcher.isFinished() || m_fileSearchQuery != m_query) return;
   m_files = m_fileWatcher.result();
   m_fileSearchQuery.clear();
+
+  m_selectFirstOnReset = false;
+  emit selectFirstOnResetChanged();
+
   beginResetModel();
   rebuildFlatList();
   endResetModel();

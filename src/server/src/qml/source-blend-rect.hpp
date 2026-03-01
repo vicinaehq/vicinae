@@ -1,10 +1,12 @@
 #pragma once
 #include <QQuickPaintedItem>
+#include <QQuickWindow>
 #include <QPainter>
 #include <QPainterPath>
 #include <QSGNode>
 #include <QSGGeometryNode>
 #include <QSGMaterial>
+#include <QSGRendererInterface>
 #include <QtQml/qqmlregistration.h>
 
 /// A rounded rectangle that composites with Source blend mode at the scene
@@ -169,7 +171,8 @@ public:
       return nullptr;
     }
     auto *node = QQuickPaintedItem::updatePaintNode(oldNode, data);
-    if (node && !m_overlay) disableBlending(node);
+    if (node && !m_overlay && window()->rendererInterface()->graphicsApi() != QSGRendererInterface::Software)
+      disableBlending(node);
     return node;
   }
 

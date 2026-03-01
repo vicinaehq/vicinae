@@ -6,7 +6,9 @@ on:
       - "v*"
   workflow_dispatch:
 
-concurrency: self-hosted
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   deploy-api-reference:

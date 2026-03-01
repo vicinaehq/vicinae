@@ -85,6 +85,16 @@ Item {
         }
 
         FormField {
+            label: "Pop on backspace"
+            info: "Whether to pop back in navigation on backspace when no input is present"
+            FormCheckbox {
+                label: "Pop back on backspace"
+                checked: root.model.popOnBackspace
+                onToggled: root.model.popOnBackspace = checked
+            }
+        }
+
+        FormField {
             label: "Focus handling"
             FormCheckbox {
                 label: "Close on focus loss"

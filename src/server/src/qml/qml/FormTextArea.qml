@@ -12,6 +12,8 @@ Item {
     property int minRows: 3
     property int maxRows: 10
 
+    property bool hasError: false
+
     signal textEdited()
 
     function forceActiveFocus() { edit.forceActiveFocus() }
@@ -38,7 +40,8 @@ Item {
         anchors.fill: parent
         radius: 8
         color: Theme.secondaryBackground
-        border.color: edit.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
+        border.color: root.hasError ? Theme.inputBorderError
+                      : edit.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
         border.width: 1
 
         MouseArea {

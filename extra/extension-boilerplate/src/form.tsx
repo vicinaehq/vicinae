@@ -27,18 +27,20 @@ export default function FormElements() {
 			<Form.TextField
 				id="name"
 				title="TextField"
+				placeholder="Name here..."
 				defaultValue="Steve"
 				value={text}
 				onChange={setText}
 			/>
 
 			{/* PasswordField */}
-			<Form.PasswordField id="password" title="PasswordField" />
+			<Form.PasswordField id="password" title="PasswordField" placeholder="Password here..." />
 
 			{/* TextArea */}
 			<Form.TextArea
 				id="description"
 				title="TextArea"
+				placeholder="Description here..."
 				value={text}
 				onChange={setText}
 			/>
@@ -73,6 +75,23 @@ export default function FormElements() {
 				id="emoji"
 				title="Dropdown"
 				defaultValue="lol"
+				onChange={(value) =>
+					showToast(Toast.Style.Success, `Selected ${value}`)
+				}
+			>
+				<Form.Dropdown.Item value="poop" title="Pile of poop" icon="💩" />
+				<Form.Dropdown.Item value="rocket" title="Rocket" icon="🚀" />
+				<Form.Dropdown.Item
+					value="lol"
+					title="Rolling on the floor laughing face"
+					icon="🤣"
+				/>
+			</Form.Dropdown>
+
+			<Form.Dropdown
+				id="emoji"
+				title="Dropdown"
+				placeholder="No default value"
 				onChange={(value) =>
 					showToast(Toast.Style.Success, `Selected ${value}`)
 				}

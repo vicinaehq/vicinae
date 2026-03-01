@@ -10,6 +10,7 @@ Item {
     property bool checked: false
     property string label: ""
     property bool readOnly: false
+    property bool hasError: false
 
     signal toggled()
 
@@ -49,7 +50,8 @@ Item {
             radius: 4
             Layout.alignment: Qt.AlignVCenter
             color: root.checked ? Theme.accent : "transparent"
-            border.color: root.activeFocus ? Theme.inputBorderFocus
+            border.color: root.hasError ? Theme.inputBorderError
+                          : root.activeFocus ? Theme.inputBorderFocus
                           : root.checked ? Theme.accent : Theme.inputBorder
             border.width: 1
 

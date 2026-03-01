@@ -10,7 +10,9 @@ on:
         description: 'Release tag (e.g. v1.2.3)'
         required: false
 
-concurrency: self-hosted
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   publish:

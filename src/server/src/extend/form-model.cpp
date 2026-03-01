@@ -69,9 +69,13 @@ FormModel FormModel::fromJson(const QJsonObject &json) {
       qDebug() << "registered" << base.id << base.onChange;
 
       if (*it == "text-field") {
-        model.items.emplace_back(std::make_shared<TextField>(base));
+        auto tf = std::make_shared<TextField>(base);
+        if (props.contains("placeholder")) tf->m_placeholder = props.value("placeholder").toString();
+        model.items.emplace_back(tf);
       } else if (*it == "password-field") {
-        model.items.emplace_back(std::make_shared<PasswordField>(base));
+        auto pf = std::make_shared<PasswordField>(base);
+        if (props.contains("placeholder")) pf->m_placeholder = props.value("placeholder").toString();
+        model.items.emplace_back(pf);
       } else if (*it == "checkbox-field") {
         auto checkbox = std::make_shared<CheckboxField>(base);
         if (props.contains("label")) checkbox->m_label = props.value("label").toString();
@@ -84,7 +88,7 @@ FormModel FormModel::fromJson(const QJsonObject &json) {
         model.items.emplace_back(dp);
       } else if (*it == "text-area-field") {
         auto ta = std::make_shared<TextAreaField>(base);
-        if (props.contains("placeholder")) ta->placeholder = props.value("placeholder").toString();
+        if (props.contains("placeholder")) ta->m_placeholder = props.value("placeholder").toString();
         model.items.emplace_back(ta);
       } else if (*it == "dropdown-field") {
         auto dropdown = std::make_shared<DropdownField>(base);
@@ -93,6 +97,7 @@ FormModel FormModel::fromJson(const QJsonObject &json) {
         dropdown->throttle = props.value("throttle").toBool(false);
         dropdown->isLoading = props.value("isLoading").toBool(false);
 
+        if (props.contains("placeholder")) dropdown->m_placeholder = props.value("placeholder").toString();
         if (props.contains("tooltip")) { dropdown->tooltip = props.value("tooltip").toString(); }
 
         if (props.contains("onSearchTextChange"))

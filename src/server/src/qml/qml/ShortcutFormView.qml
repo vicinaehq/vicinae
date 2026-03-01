@@ -22,6 +22,7 @@ Item {
         }
 
         FormField {
+            id: urlField
             label: "URL"
             error: root.host.linkError
             info: "The URL that will be opened by the specified app. You can make it dynamic by using placeholders such as {argument}."
@@ -31,6 +32,7 @@ Item {
                 text: root.host.link
                 placeholder: "https://google.com/search?q={argument}"
                 completions: root.host.linkCompletions
+                hasError: urlField.error !== ""
 
                 onTextEdited: root.host.link = text
                 onAccepted: launcher.handleReturn()
@@ -44,23 +46,27 @@ Item {
         FormSeparator {}
 
         FormField {
+            id: appField
             label: "Open with"
             error: root.host.appError
 
             SearchableDropdown {
                 items: root.host.appSelectorModel.items
                 currentItem: root.host.selectedApp
+                hasError: appField.error !== ""
                 onActivated: (item) => root.host.selectApp(item)
             }
         }
 
         FormField {
+            id: iconField
             label: "Icon"
             error: root.host.iconError
 
             SearchableDropdown {
                 items: root.host.iconItems
                 currentItem: root.host.selectedIcon
+                hasError: iconField.error !== ""
                 onActivated: (item) => root.host.selectIcon(item)
             }
         }

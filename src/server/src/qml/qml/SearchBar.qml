@@ -75,14 +75,25 @@ Item {
                           ? launcher.searchPlaceholder : "Search for anything..."
                     color: Theme.textPlaceholder
                     font: searchInput.font
-                    visible: !searchInput.text && launcher.searchInteractive
+                    visible: !searchInput.displayText && launcher.searchInteractive
                 }
 
                 onTextEdited: {
+                    if (Config.considerPreedit) return false
+
                     launcher.forwardSearchText(text)
                     if (launcher.isRootSearch) {
                         searchModel.setFilter(text)
                     }
+                }
+
+                onDisplayTextChanged: {
+                  if (!Config.considerPreedit) return false
+
+                  launcher.forwardSearchText(displayText)
+                  if (launcher.isRootSearch) {
+                      searchModel.setFilter(displayText)
+                  }
                 }
 
                 function _wordBoundaryBackward(text, pos) {
@@ -251,7 +262,7 @@ Item {
                         event.accepted = true
                     } else if (_handleNavigation(event)) {
                         event.accepted = true
-                    } else if (event.key === Qt.Key_Backspace && searchInput.text === "" && !launcher.isRootSearch && launcher.showBackButton) {
+                    } else if (event.key === Qt.Key_Backspace && searchInput.text === "" && !launcher.isRootSearch && launcher.showBackButton && launcher.popOnBackspace) {
                         launcher.goBack()
                         event.accepted = true
                     } else if (event.key === Qt.Key_Space && launcher.isRootSearch && event.modifiers === Qt.NoModifier) {

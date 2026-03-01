@@ -11,6 +11,7 @@ Item {
     property alias cursorPosition: input.cursorPosition
     property string placeholder: ""
     property bool readOnly: false
+    property bool hasError: false
     property alias echoMode: input.echoMode
     readonly property bool editing: input.activeFocus
 
@@ -31,7 +32,8 @@ Item {
         radius: 8
         color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g,
                        Theme.secondaryBackground.b, Config.windowOpacity)
-        border.color: input.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
+        border.color: root.hasError ? Theme.inputBorderError
+                      : input.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
         border.width: 1
 
         TextInput {
