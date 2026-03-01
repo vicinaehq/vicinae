@@ -7,6 +7,7 @@
 #include "service-registry.hpp"
 #include "theme.hpp"
 #include "theme/theme-file.hpp"
+#include "utils.hpp"
 #include <filesystem>
 #include <format>
 #include <utility>
@@ -169,7 +170,7 @@ QVariant RootSearchModel::data(const QModelIndex &index, int role) const {
     case Title:
       return QString::fromStdString(file.path.filename().string());
     case Subtitle:
-      return QString::fromStdString(file.path.parent_path().string());
+      return QString::fromStdString(compressPath(file.path.parent_path()));
     case IconSource:
       return imageSourceFor(ImageURL::fileIcon(file.path));
     case Alias:
