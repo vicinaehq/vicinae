@@ -15,8 +15,8 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.leftMargin: 20
         Layout.rightMargin: 20
-        Layout.topMargin: 12
-        Layout.bottomMargin: 12
+        Layout.topMargin: root.description !== "" ? 12 : 8
+        Layout.bottomMargin: root.description !== "" ? 12 : 8
         spacing: 20
 
         ColumnLayout {
@@ -42,15 +42,9 @@ ColumnLayout {
 
         Item {
             id: controlSlot
-            Layout.preferredWidth: 250
-            Layout.minimumWidth: 200
+            Layout.preferredWidth: 180
+            Layout.alignment: Qt.AlignVCenter
             implicitHeight: children.length > 0 ? children[0].implicitHeight : 0
-            onChildrenChanged: _bindChildrenWidth()
-            onWidthChanged: _bindChildrenWidth()
-            function _bindChildrenWidth() {
-                for (let i = 0; i < children.length; i++)
-                    children[i].width = Qt.binding(() => controlSlot.width)
-            }
         }
     }
 

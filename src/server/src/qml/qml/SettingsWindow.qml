@@ -3,12 +3,12 @@ import QtQuick.Layouts
 
 Window {
     id: root
-    width: 1000
-    height: 600
-    minimumWidth: 1000
-    minimumHeight: 600
-    maximumWidth: 1000
-    maximumHeight: 600
+    width: 860
+    height: 540
+    minimumWidth: 860
+    minimumHeight: 540
+    maximumWidth: 860
+    maximumHeight: 540
     visible: true
     color: "transparent"
     flags: Qt.FramelessWindowHint | Qt.Window
@@ -38,16 +38,64 @@ Window {
                 color: Theme.divider
             }
 
-            Loader {
+            ColumnLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                sourceComponent: {
-                    switch (settings.currentPage) {
-                    case "general": return generalPage
-                    case "shortcuts": return shortcutsPage
-                    case "advanced": return advancedPage
-                    case "about": return aboutPage
-                    default: return extensionPage
+                spacing: 0
+
+                // Header with close button
+                Item {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 40
+
+                    Rectangle {
+                        id: closeBtn
+                        anchors.right: parent.right
+                        anchors.rightMargin: 12
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 24
+                        height: 24
+                        radius: 12
+                        color: closeHover.hovered ? Theme.listItemHoverBg : "transparent"
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "\u2715"
+                            color: closeHover.hovered ? Theme.foreground : Theme.textMuted
+                            font.pixelSize: 12
+                        }
+
+                        HoverHandler { id: closeHover }
+                        TapHandler { onTapped: settings.close() }
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 1
+                    color: Theme.divider
+                }
+
+                Loader {
+                    id: pageLoader
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    sourceComponent: {
+                        switch (settings.currentPage) {
+                        case "general": return generalPage
+                        case "keybindings": return shortcutsPage
+                        case "advanced": return advancedPage
+                        case "about": return aboutPage
+                        default: return extensionPage
+                        }
+                    }
+
+                    Connections {
+                        target: settings
+                        function onCurrentPageChanged() {
+                            pageLoader.active = false
+                            pageLoader.active = true
+                        }
                     }
                 }
             }
@@ -79,8 +127,4 @@ Window {
         ExtensionSettingsPage {}
     }
 
-    Shortcut {
-        sequence: "Escape"
-        onActivated: settings.close()
-    }
 }

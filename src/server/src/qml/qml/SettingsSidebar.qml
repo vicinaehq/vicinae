@@ -6,87 +6,49 @@ Item {
     id: root
     implicitWidth: 220
 
-    readonly property var _corePages: [
-        { id: "general", icon: "cog", label: "General" },
-        { id: "shortcuts", icon: "keyboard", label: "Shortcuts" },
-        { id: "advanced", icon: "sliders", label: "Advanced" },
-        { id: "about", icon: "vicinae", label: "About" }
-    ]
+    property int _highlightedIndex: -1
+
+    readonly property var _allItems: settings.filterSidebarItems(extSearchField.text)
+
+    readonly property var _navItems: {
+        let nav = []
+        for (let i = 0; i < _allItems.length; i++) {
+            if (_allItems[i]._kind !== "divider")
+                nav.push({ listIndex: i, pageId: _allItems[i].id })
+        }
+        return nav
+    }
+
+    function _navigateHighlight(delta) {
+        if (_navItems.length === 0) return
+        if (_highlightedIndex < 0) {
+            _highlightedIndex = delta > 0 ? 0 : _navItems.length - 1
+        } else {
+            _highlightedIndex = Math.max(0, Math.min(_navItems.length - 1, _highlightedIndex + delta))
+        }
+    }
+
+    function _activateHighlighted() {
+        if (_highlightedIndex >= 0 && _highlightedIndex < _navItems.length)
+            settings.currentPage = _navItems[_highlightedIndex].pageId
+    }
+
+    function _highlightedListIndex() {
+        if (_highlightedIndex < 0 || _highlightedIndex >= _navItems.length) return -1
+        return _navItems[_highlightedIndex].listIndex
+    }
 
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
 
-        Text {
-            text: "Settings"
-            color: Theme.foreground
-            font.pointSize: Theme.regularFontSize + 2
-            font.bold: true
-            Layout.leftMargin: 16
-            Layout.topMargin: 16
-            Layout.bottomMargin: 12
-        }
-
-        Repeater {
-            model: root._corePages
-
-            delegate: Rectangle {
-                id: coreItem
-                required property var modelData
-                Layout.fillWidth: true
-                Layout.leftMargin: 8
-                Layout.rightMargin: 8
-                height: 32
-                radius: 6
-                color: settings.currentPage === modelData.id ? Theme.listItemSelectionBg
-                       : coreHover.hovered ? Theme.listItemHoverBg
-                       : "transparent"
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 8
-                    anchors.rightMargin: 8
-                    spacing: 8
-
-                    ViciImage {
-                        source: Img.builtin(coreItem.modelData.icon).withFillColor(
-                            settings.currentPage === coreItem.modelData.id ? Theme.listItemSelectionFg : Theme.textMuted)
-                        Layout.preferredWidth: 16
-                        Layout.preferredHeight: 16
-                    }
-
-                    Text {
-                        text: coreItem.modelData.label
-                        color: settings.currentPage === coreItem.modelData.id ? Theme.listItemSelectionFg : Theme.foreground
-                        font.pointSize: Theme.regularFontSize
-                        elide: Text.ElideRight
-                        Layout.fillWidth: true
-                    }
-                }
-
-                HoverHandler { id: coreHover }
-                TapHandler {
-                    onTapped: settings.currentPage = coreItem.modelData.id
-                }
-            }
-        }
-
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.leftMargin: 16
-            Layout.rightMargin: 16
-            Layout.topMargin: 8
-            Layout.bottomMargin: 8
-            height: 1
-            color: Theme.divider
-        }
-
         Rectangle {
             Layout.fillWidth: true
             Layout.leftMargin: 8
             Layout.rightMargin: 8
-            Layout.bottomMargin: 4
-            height: 26
+            Layout.topMargin: 12
+            Layout.bottomMargin: 8
+            height: 28
             radius: 4
             color: "transparent"
             border.color: extSearchField.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
@@ -114,58 +76,74 @@ Item {
                     font.pointSize: Theme.smallerFontSize
                     color: Theme.foreground
                     clip: true
+                    focus: true
+                    activeFocusOnTab: true
 
                     Text {
                         anchors.fill: parent
                         verticalAlignment: Text.AlignVCenter
-                        text: "Search extensions..."
+                        text: "Search..."
                         color: Theme.textPlaceholder
                         font: extSearchField.font
                         visible: !extSearchField.text
                     }
 
-                    Keys.onEscapePressed: text = ""
+                    onTextChanged: root._highlightedIndex = root._navItems.length > 0 ? 0 : -1
+
+                    Keys.onUpPressed: root._navigateHighlight(-1)
+                    Keys.onDownPressed: root._navigateHighlight(1)
+                    Keys.onReturnPressed: root._activateHighlighted()
+                    Keys.onEnterPressed: root._activateHighlighted()
+                    Keys.onEscapePressed: {
+                        if (text) text = ""
+                        else root._highlightedIndex = -1
+                    }
                 }
             }
         }
 
         ListView {
-            id: extList
+            id: navList
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
-            model: {
-                const filter = extSearchField.text.toLowerCase()
-                if (!filter) return settings.sidebarExtensions
-                let result = []
-                for (let i = 0; i < settings.sidebarExtensions.length; i++) {
-                    const ext = settings.sidebarExtensions[i]
-                    if (ext.name.toLowerCase().indexOf(filter) !== -1)
-                        result.push(ext)
-                }
-                return result
-            }
             boundsBehavior: Flickable.StopAtBounds
+            model: root._allItems
 
             ScrollBar.vertical: ViciScrollBar {
-                policy: extList.contentHeight > extList.height
+                policy: navList.contentHeight > navList.height
                         ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
             }
 
             delegate: Item {
-                id: extItem
+                id: navItem
                 required property var modelData
                 required property int index
-                width: extList.width
-                height: 32
+                width: navList.width
+                height: modelData._kind === "divider" ? 9 : 32
+
+                readonly property bool _isHighlighted: index === root._highlightedListIndex()
+                readonly property string _pageId: modelData.id ?? ""
 
                 Rectangle {
+                    visible: navItem.modelData._kind === "divider"
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.leftMargin: 16
+                    anchors.rightMargin: 16
+                    anchors.verticalCenter: parent.verticalCenter
+                    height: 1
+                    color: Theme.divider
+                }
+
+                Rectangle {
+                    visible: navItem.modelData._kind !== "divider"
                     anchors.fill: parent
                     anchors.leftMargin: 8
                     anchors.rightMargin: 8
                     radius: 6
-                    color: settings.currentPage === extItem.modelData.providerId ? Theme.listItemSelectionBg
-                           : extHover.hovered ? Theme.listItemHoverBg
+                    color: settings.currentPage === navItem._pageId ? Theme.listItemSelectionBg
+                           : navItem._isHighlighted || itemHover.hovered ? Theme.listItemHoverBg
                            : "transparent"
 
                     RowLayout {
@@ -175,14 +153,17 @@ Item {
                         spacing: 8
 
                         ViciImage {
-                            source: extItem.modelData.iconSource
+                            source: navItem.modelData._kind === "core"
+                                ? Img.builtin(navItem.modelData.icon).withFillColor(
+                                    settings.currentPage === navItem._pageId ? Theme.listItemSelectionFg : Theme.textMuted)
+                                : (navItem.modelData.iconSource ?? "")
                             Layout.preferredWidth: 16
                             Layout.preferredHeight: 16
                         }
 
                         Text {
-                            text: extItem.modelData.name
-                            color: settings.currentPage === extItem.modelData.providerId
+                            text: navItem.modelData.label ?? ""
+                            color: settings.currentPage === navItem._pageId
                                    ? Theme.listItemSelectionFg : Theme.foreground
                             font.pointSize: Theme.regularFontSize
                             elide: Text.ElideRight
@@ -190,9 +171,9 @@ Item {
                         }
                     }
 
-                    HoverHandler { id: extHover }
+                    HoverHandler { id: itemHover }
                     TapHandler {
-                        onTapped: settings.currentPage = extItem.modelData.providerId
+                        onTapped: settings.currentPage = navItem._pageId
                     }
                 }
             }

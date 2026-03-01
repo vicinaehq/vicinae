@@ -24,6 +24,7 @@ Flickable {
         SettingsRow {
             label: "Theme"
             SearchableDropdown {
+                width: parent.width
                 items: root.model.themeItems
                 currentItem: root.model.currentTheme
                 onActivated: (item) => root.model.selectTheme(item.id)
@@ -33,6 +34,7 @@ Flickable {
         SettingsRow {
             label: "Font"
             SearchableDropdown {
+                width: parent.width
                 items: root.model.fontItems
                 currentItem: root.model.currentFont
                 onActivated: (item) => root.model.selectFont(item.id)
@@ -43,6 +45,7 @@ Flickable {
             label: "Font size"
             description: "The base point size used to compute font sizes. Fractional values are accepted. Recommended range is [10.0;12.0]."
             FormTextInput {
+                width: parent.width
                 text: root.model.fontSize
                 placeholder: "e.g. 11"
                 onAccepted: root.model.fontSize = text
@@ -54,19 +57,17 @@ Flickable {
 
         SettingsRow {
             label: "Close on focus loss"
-            FormCheckbox {
-                label: "Close on focus loss"
+            SettingsToggle {
                 checked: root.model.closeOnFocusLoss
                 onToggled: root.model.closeOnFocusLoss = checked
             }
         }
 
         SettingsRow {
-            label: "Pop on close"
-            description: "Whether to reset the navigation state when the launcher window is closed."
+            label: "Pop to root on close"
+            description: "Reset the navigation state when the launcher window is closed."
             showSeparator: false
-            FormCheckbox {
-                label: "Pop to root on window close"
+            SettingsToggle {
                 checked: root.model.popToRootOnClose
                 onToggled: root.model.popToRootOnClose = checked
             }

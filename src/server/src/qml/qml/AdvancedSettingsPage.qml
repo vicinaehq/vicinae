@@ -25,6 +25,7 @@ Flickable {
             label: "Icon Theme"
             description: "The icon theme used for system icons (applications, mime types, folder icons...). Does not affect builtin Vicinae icons."
             SearchableDropdown {
+                width: parent.width
                 items: root.model.iconThemeItems
                 currentItem: root.model.currentIconTheme
                 onActivated: (item) => root.model.selectIconTheme(item.id)
@@ -34,6 +35,7 @@ Flickable {
         SettingsRow {
             label: "Window opacity"
             FormTextInput {
+                width: parent.width
                 text: root.model.windowOpacity
                 placeholder: "e.g. 1.0"
                 onAccepted: root.model.windowOpacity = text
@@ -44,10 +46,9 @@ Flickable {
         }
 
         SettingsRow {
-            label: "CSD"
+            label: "Client-side decorations"
             description: "Let Vicinae draw its own rounded borders instead of relying on the windowing system."
-            FormCheckbox {
-                label: "Use client-side decorations"
+            SettingsToggle {
                 checked: root.model.clientSideDecorations
                 onToggled: root.model.clientSideDecorations = checked
             }
@@ -55,9 +56,8 @@ Flickable {
 
         SettingsRow {
             label: "Pop on backspace"
-            description: "Whether to pop back in navigation on backspace when no input is present."
-            FormCheckbox {
-                label: "Pop back on backspace"
+            description: "Pop back in navigation on backspace when no input is present."
+            SettingsToggle {
                 checked: root.model.popOnBackspace
                 onToggled: root.model.popOnBackspace = checked
             }
@@ -66,8 +66,7 @@ Flickable {
         SettingsRow {
             label: "Root file search"
             description: "Files are searched asynchronously, so if enabled you should expect a slight delay for file search results to show up."
-            FormCheckbox {
-                label: "Show files in root search"
+            SettingsToggle {
                 checked: root.model.searchFilesInRoot
                 onToggled: root.model.searchFilesInRoot = checked
             }
@@ -75,9 +74,8 @@ Flickable {
 
         SettingsRow {
             label: "IME handling"
-            description: "Whether to include IME Preedit strings as part of search queries."
-            FormCheckbox {
-                label: "Include Preedit strings in search"
+            description: "Include IME Preedit strings as part of search queries."
+            SettingsToggle {
                 checked: root.model.considerPreedit
                 onToggled: root.model.considerPreedit = checked
             }
@@ -87,6 +85,7 @@ Flickable {
             label: "Favicon Fetching"
             description: "The favicon provider used to load favicons where needed. Select 'None' to turn off favicon loading."
             SearchableDropdown {
+                width: parent.width
                 items: root.model.faviconServiceItems
                 currentItem: root.model.currentFaviconService
                 onActivated: (item) => root.model.selectFaviconService(item.id)
@@ -98,6 +97,7 @@ Flickable {
             description: "Default uses Vim-style Ctrl+J/K and Ctrl+H/L; Emacs uses Ctrl+N/P and Ctrl+Opt+B/F for navigation, plus Emacs editing in the search bar."
             showSeparator: false
             SearchableDropdown {
+                width: parent.width
                 items: root.model.keybindingSchemeItems
                 currentItem: root.model.currentKeybindingScheme
                 onActivated: (item) => root.model.selectKeybindingScheme(item.id)

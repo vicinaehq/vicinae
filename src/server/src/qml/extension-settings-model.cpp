@@ -159,7 +159,8 @@ void ExtensionSettingsModel::setEnabled(int row, bool value) {
     emit dataChanged(idx, idx, {EnabledRole});
   }
 
-  if (row == m_selectedRow) emit selectedChanged();
+  if (row == m_selectedRow)
+    emit selectedChanged();
 }
 
 void ExtensionSettingsModel::setAlias(int row, const QString &alias) {
@@ -171,7 +172,8 @@ void ExtensionSettingsModel::setAlias(int row, const QString &alias) {
   e.alias = alias;
   auto idx = index(row);
   emit dataChanged(idx, idx, {AliasRole});
-  if (row == m_selectedRow) emit selectedChanged();
+  if (row == m_selectedRow)
+    emit selectedChanged();
 }
 
 void ExtensionSettingsModel::selectByEntrypointId(const QString &id) {

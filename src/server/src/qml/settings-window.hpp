@@ -44,6 +44,7 @@ public:
 
   Q_INVOKABLE void openUrl(const QString &url);
   Q_INVOKABLE void close();
+  Q_INVOKABLE QVariantList filterSidebarItems(const QString &query) const;
 
   void show();
   void hide();
