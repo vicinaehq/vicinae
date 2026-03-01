@@ -803,6 +803,7 @@ void RootSearchModel::handleFileSearchFinished() {
   m_selectFirstOnReset = false;
   emit selectFirstOnResetChanged();
 
+  m_selectedIndex = -1;
   beginResetModel();
   rebuildFlatList();
   endResetModel();
