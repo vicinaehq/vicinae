@@ -10,26 +10,63 @@ Item {
 
     signal navigateBack()
 
+    function sectionScrollTarget(index, direction) {
+        if (!root.model || typeof root.model.scrollTargetIndex !== "function")
+            return index
+        return root.model.scrollTargetIndex(index, direction)
+    }
+
+    function revealCurrentSectionHeaderIfHidden() {
+        if (listView.currentIndex < 0) return false
+
+        var scrollTarget = sectionScrollTarget(listView.currentIndex, -1)
+        if (scrollTarget === listView.currentIndex) return false
+
+        var previousContentY = listView.contentY
+        listView.positionViewAtIndex(scrollTarget, ListView.Contain)
+        return Math.abs(listView.contentY - previousContentY) > 0.5
+    }
+
     function moveUp() {
+        if (revealCurrentSectionHeaderIfHidden()) return
+
         var next = root.model.nextSelectableIndex(listView.currentIndex, -1)
-        if (next !== listView.currentIndex) listView.currentIndex = next
+        if (next !== listView.currentIndex) {
+            listView.currentIndex = next
+            var scrollTarget = sectionScrollTarget(next, -1)
+            listView.positionViewAtIndex(scrollTarget, ListView.Contain)
+        }
     }
 
     function moveDown() {
         var next = root.model.nextSelectableIndex(listView.currentIndex, 1)
-        if (next !== listView.currentIndex) listView.currentIndex = next
+        if (next !== listView.currentIndex) {
+            listView.currentIndex = next
+            var scrollTarget = sectionScrollTarget(next, -1)
+            listView.positionViewAtIndex(scrollTarget, ListView.Contain)
+        }
     }
 
     function moveSectionUp() {
         if (typeof root.model.nextSectionIndex !== "function") { moveUp(); return }
+        if (revealCurrentSectionHeaderIfHidden()) return
+
         var next = root.model.nextSectionIndex(listView.currentIndex, -1)
-        if (next !== listView.currentIndex) listView.currentIndex = next
+        if (next !== listView.currentIndex) {
+            listView.currentIndex = next
+            var scrollTarget = sectionScrollTarget(next, -1)
+            listView.positionViewAtIndex(scrollTarget, ListView.Contain)
+        }
     }
 
     function moveSectionDown() {
         if (typeof root.model.nextSectionIndex !== "function") { moveDown(); return }
         var next = root.model.nextSectionIndex(listView.currentIndex, 1)
-        if (next !== listView.currentIndex) listView.currentIndex = next
+        if (next !== listView.currentIndex) {
+            listView.currentIndex = next
+            var scrollTarget = sectionScrollTarget(next, -1)
+            listView.positionViewAtIndex(scrollTarget, ListView.Contain)
+        }
     }
 
     function activateCurrent() {

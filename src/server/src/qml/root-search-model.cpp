@@ -519,17 +519,7 @@ int RootSearchModel::nextSectionIndex(int from, int direction) const {
   auto isSelectable = [&](int idx) { return m_flat[idx].kind != FlatItem::SectionHeader; };
 
   if (direction > 0) {
-    // Find the last item of the current section.
-    int currentEnd = from;
-    for (int idx = from + 1; idx < count; ++idx) {
-      if (isSelectable(idx) && m_flat[idx].section == currentSection)
-        currentEnd = idx;
-      else if (m_flat[idx].section != currentSection)
-        break;
-    }
-    // If not already at the last item, jump there first.
-    if (currentEnd > from) { return currentEnd; }
-    // Otherwise jump to first item of next section.
+    // Jump directly to first item of next section.
     for (int idx = from + 1; idx < count; ++idx) {
       if (isSelectable(idx) && m_flat[idx].section != currentSection) return idx;
     }
