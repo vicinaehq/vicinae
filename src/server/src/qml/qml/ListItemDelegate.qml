@@ -42,34 +42,49 @@ SelectableDelegate {
             }
         }
 
-        RowLayout {
+        Item {
             id: textRow
             Layout.fillWidth: true
-            spacing: 6
+            implicitHeight: titleText.implicitHeight
+
+            readonly property real spacing: 6
+            readonly property real aliasSpace: aliasRect.visible ? aliasRect.width + spacing : 0
+            readonly property real availableForText: width - aliasSpace
 
             Text {
+                id: titleText
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                width: Math.min(implicitWidth, textRow.availableForText)
                 text: root.itemTitle
                 color: root.selected ? Theme.listItemSelectionFg : Theme.foreground
                 font.pointSize: Theme.regularFontSize
                 elide: Text.ElideRight
                 maximumLineCount: 1
-                Layout.maximumWidth: Math.min(implicitWidth, root.width * 0.5)
             }
 
             Text {
+                id: subtitleText
                 visible: root.itemSubtitle !== ""
+                anchors.left: titleText.right
+                anchors.leftMargin: visible ? textRow.spacing : 0
+                anchors.verticalCenter: parent.verticalCenter
+                width: Math.min(implicitWidth, Math.max(0, textRow.availableForText - titleText.width - textRow.spacing))
                 text: root.itemSubtitle
                 color: Theme.textMuted
                 font.pointSize: Theme.smallerFontSize
                 elide: Text.ElideRight
                 maximumLineCount: 1
-                Layout.maximumWidth: 200
             }
 
             Rectangle {
+                id: aliasRect
                 visible: root.itemAlias !== ""
-                implicitWidth: aliasText.implicitWidth + 20
-                implicitHeight: aliasText.implicitHeight + 4
+                anchors.left: subtitleText.visible ? subtitleText.right : titleText.right
+                anchors.leftMargin: visible ? textRow.spacing : 0
+                anchors.verticalCenter: parent.verticalCenter
+                width: aliasText.implicitWidth + 20
+                height: aliasText.implicitHeight + 4
                 radius: 4
                 color: "transparent"
                 border.width: 1
@@ -81,12 +96,9 @@ SelectableDelegate {
                     text: root.itemAlias
                     color: Theme.textMuted
                     font.pointSize: Theme.smallerFontSize
-                    elide: Text.ElideRight
                     maximumLineCount: 1
                 }
             }
-
-            Item { Layout.fillWidth: true }
         }
 
         ListAccessoryRow {
