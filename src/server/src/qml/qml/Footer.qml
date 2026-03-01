@@ -25,6 +25,7 @@ Item {
         }
 
         FooterButton {
+            id: primaryButton
             visible: {
                 if (!launcher.isRootSearch) return actionPanel.primaryActionTitle !== ""
                 return searchModel.primaryActionTitle !== ""
@@ -35,7 +36,16 @@ Item {
             onClicked: launcher.handleReturn()
         }
 
+        Rectangle {
+            visible: primaryButton.visible && actionsButton.visible
+            Layout.alignment: Qt.AlignVCenter
+            width: 1
+            height: 14
+            color: Theme.divider
+        }
+
         FooterButton {
+            id: actionsButton
             visible: actionPanel.hasMultipleActions
             Layout.alignment: Qt.AlignVCenter
             label: "Actions"

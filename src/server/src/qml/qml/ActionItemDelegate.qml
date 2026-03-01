@@ -66,30 +66,11 @@ Item {
             Layout.fillWidth: true
         }
 
-        Rectangle {
+        ShortcutBadge {
             visible: root.shortcutLabel !== ""
-            width: shortcutText.implicitWidth + 10
-            height: shortcutText.implicitHeight + 4
-            radius: 4
-            color: Theme.divider
+            text: root.shortcutLabel
             Layout.alignment: Qt.AlignVCenter
-
-            Text {
-                id: shortcutText
-                text: root.shortcutLabel
-                color: Theme.textMuted
-                font.pointSize: Theme.smallerFontSize - 1
-                anchors.centerIn: parent
-            }
         }
 
-        ViciImage {
-            visible: root.isSubmenu
-            source: Img.builtin("chevron-right")
-            Layout.preferredWidth: 12
-            Layout.preferredHeight: 12
-            Layout.alignment: Qt.AlignVCenter
-            opacity: 0.5
-        }
     }
 }

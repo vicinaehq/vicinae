@@ -34,7 +34,10 @@ static QString buildParams(const ImageURL &url, bool builtinFgDefault = false) {
   QColor fg = resolveFillColor(url);
   if (builtinFgDefault && !fg.isValid())
     fg = ThemeService::instance().theme().resolve(SemanticColor::Foreground);
-  if (fg.isValid()) parts << QStringLiteral("fg=%23") + fg.name(QColor::HexRgb).mid(1);
+  if (fg.isValid()) {
+    auto fmt = fg.alphaF() < 1.0 ? QColor::HexArgb : QColor::HexRgb;
+    parts << QStringLiteral("fg=%23") + fg.name(fmt).mid(1);
+  }
 
   if (auto bgTint = url.backgroundTint()) {
     QColor const bg = ThemeService::instance().theme().resolve(*bgTint);
