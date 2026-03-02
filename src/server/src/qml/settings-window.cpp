@@ -67,6 +67,13 @@ void SettingsWindow::setCurrentPage(const QString &page) {
   }
 }
 
+void SettingsWindow::setPendingCommandId(const QString &id) {
+  if (m_pendingCommandId != id) {
+    m_pendingCommandId = id;
+    emit pendingCommandIdChanged();
+  }
+}
+
 QVariantList SettingsWindow::sidebarExtensions() const { return m_sidebarExtensions; }
 
 void SettingsWindow::rebuildSidebarExtensions() {
@@ -95,6 +102,8 @@ void SettingsWindow::close() {
   if (m_window) m_window->hide();
 }
 
+void SettingsWindow::requestDefaultFocus() { emit defaultFocusRequested(); }
+
 void SettingsWindow::show() {
   ensureInitialized();
   if (!m_window) return;
@@ -121,8 +130,12 @@ void SettingsWindow::openTab(const QString &tabId) {
 
 void SettingsWindow::selectExtension(const QString &entrypointId) {
   ensureInitialized();
+  qDebug() << "[SettingsWindow::selectExtension] entrypointId:" << entrypointId;
+  setPendingCommandId(entrypointId);
   m_extensionModel->selectByEntrypointId(entrypointId);
   auto providerId = m_extensionModel->selectedProviderId();
+  qDebug() << "[SettingsWindow::selectExtension] providerId:" << providerId
+           << "pendingCommandId:" << m_pendingCommandId;
   if (!providerId.isEmpty()) { setCurrentPage(providerId); }
 }
 

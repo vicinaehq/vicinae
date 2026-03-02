@@ -95,6 +95,15 @@ void KeybindSettingsModel::setShortcut(int row, int key, int modifiers) {
   emit dataChanged(idx, idx, {ShortcutRole});
 }
 
+void KeybindSettingsModel::clearShortcut(int row) {
+  if (row < 0 || std::cmp_greater_equal(row, m_entries.size())) return;
+  auto &e = m_entries[row];
+  KeybindManager::instance()->setKeybind(static_cast<Keybind>(e.keybindId), Keyboard::Shortcut());
+  e.shortcut.clear();
+  auto idx = index(row);
+  emit dataChanged(idx, idx, {ShortcutRole});
+}
+
 QString KeybindSettingsModel::shortcutDisplayString(int key, int modifiers) const {
   Keyboard::Shortcut const shortcut(static_cast<Qt::Key>(key), static_cast<Qt::KeyboardModifiers>(modifiers));
   return shortcut.toDisplayString();

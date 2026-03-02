@@ -79,6 +79,11 @@ Item {
                     focus: true
                     activeFocusOnTab: true
 
+                    Connections {
+                        target: settings
+                        function onDefaultFocusRequested() { extSearchField.forceActiveFocus() }
+                    }
+
                     Text {
                         anchors.fill: parent
                         verticalAlignment: Text.AlignVCenter
@@ -94,9 +99,16 @@ Item {
                     Keys.onDownPressed: root._navigateHighlight(1)
                     Keys.onReturnPressed: root._activateHighlighted()
                     Keys.onEnterPressed: root._activateHighlighted()
-                    Keys.onEscapePressed: {
-                        if (text) text = ""
-                        else root._highlightedIndex = -1
+                    Keys.onPressed: (event) => {
+                        if (event.key === Qt.Key_Escape) {
+                            if (text) {
+                                text = ""
+                                event.accepted = true
+                            } else if (root._highlightedIndex >= 0) {
+                                root._highlightedIndex = -1
+                                event.accepted = true
+                            }
+                        }
                     }
                 }
             }

@@ -18,6 +18,7 @@ Window {
         id: background
         anchors.fill: parent
         radius: 10
+        Keys.onEscapePressed: settings.close()
         color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
         border.color: Theme.divider
         border.width: 1
@@ -80,28 +81,29 @@ Window {
                     id: pageLoader
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    sourceComponent: {
-                        switch (settings.currentPage) {
-                        case "general": return generalPage
-                        case "keybindings": return shortcutsPage
-                        case "advanced": return advancedPage
-                        case "about": return aboutPage
-                        default: return extensionPage
+
+                    Component.onCompleted: _loadPage(settings.currentPage)
+
+                    function _loadPage(page) {
+                        active = false;
+                        if (page !== "general" && page !== "keybindings"
+                            && page !== "advanced" && page !== "about") {
+                            settings.extensionModel.selectProviderById(page)
                         }
+                        switch (page) {
+                        case "general": sourceComponent = generalPage; break;
+                        case "keybindings": sourceComponent = shortcutsPage; break;
+                        case "advanced": sourceComponent = advancedPage; break;
+                        case "about": sourceComponent = aboutPage; break;
+                        default: sourceComponent = extensionPage; break;
+                        }
+                        active = true;
                     }
 
                     Connections {
                         target: settings
                         function onCurrentPageChanged() {
-                            pageLoader.active = false
-                            // Pre-select extension data so the page renders
-                            // at full size immediately (no async header growth)
-                            const page = settings.currentPage
-                            if (page !== "general" && page !== "keybindings"
-                                && page !== "advanced" && page !== "about") {
-                                settings.extensionModel.selectProviderById(page)
-                            }
-                            pageLoader.active = true
+                            pageLoader._loadPage(settings.currentPage)
                         }
                     }
                 }

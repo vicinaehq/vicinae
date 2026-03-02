@@ -7,7 +7,23 @@ Item {
     readonly property var extModel: settings.extensionModel
     readonly property string providerId: settings.currentPage
 
-    Component.onCompleted: root.extModel.selectProviderById(root.providerId)
+    Component.onCompleted: {
+        root.extModel.selectProviderById(root.providerId);
+        const pending = settings.pendingCommandId;
+        if (!pending) return;
+        settings.pendingCommandId = "";
+        const row = root.extModel.commandModel.findByEntrypointId(pending);
+        console.log("[ExtensionSettingsPage] pending:", pending,
+                    "count:", root.extModel.commandModel.count, "row:", row);
+        if (row < 0) return;
+        root.expandedCommandId = pending;
+        root.extModel.loadCommandPreferences(pending);
+        const lv = pageLoader.item;
+        if (lv) {
+            lv.forceLayout();
+            lv.positionViewAtIndex(row, ListView.Center);
+        }
+    }
 
     property string expandedCommandId: ""
     property string _cmdFilter: ""
@@ -36,17 +52,6 @@ Item {
             currentIndex: -1
             boundsBehavior: Flickable.StopAtBounds
             model: root.extModel.commandModel
-
-            property bool _settling: true
-            onContentHeightChanged: {
-                if (_settling)
-                    positionViewAtBeginning()
-            }
-            Timer {
-                interval: 300
-                running: true
-                onTriggered: cmdListView._settling = false
-            }
 
             ScrollBar.vertical: ViciScrollBar {
                 policy: cmdListView.contentHeight > cmdListView.height
@@ -240,7 +245,12 @@ Item {
                                 activeFocusOnTab: true
 
                                 onTextChanged: root._cmdFilter = text
-                                Keys.onEscapePressed: { text = ""; focus = false }
+                                Keys.onPressed: (event) => {
+                                    if (event.key === Qt.Key_Escape && text !== "") {
+                                        text = ""
+                                        event.accepted = true
+                                    }
+                                }
                             }
                         }
                     }

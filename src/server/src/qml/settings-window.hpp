@@ -16,6 +16,7 @@ class SettingsWindow : public QObject {
   Q_OBJECT
 
   Q_PROPERTY(QString currentPage READ currentPage WRITE setCurrentPage NOTIFY currentPageChanged)
+  Q_PROPERTY(QString pendingCommandId READ pendingCommandId WRITE setPendingCommandId NOTIFY pendingCommandIdChanged)
   Q_PROPERTY(QVariantList sidebarExtensions READ sidebarExtensions NOTIFY sidebarExtensionsChanged)
   Q_PROPERTY(QString version READ version CONSTANT)
   Q_PROPERTY(QString commitHash READ commitHash CONSTANT)
@@ -31,6 +32,9 @@ public:
   QString currentPage() const { return m_currentPage; }
   void setCurrentPage(const QString &page);
 
+  QString pendingCommandId() const { return m_pendingCommandId; }
+  void setPendingCommandId(const QString &id);
+
   QVariantList sidebarExtensions() const;
 
   QString version() const;
@@ -44,6 +48,7 @@ public:
 
   Q_INVOKABLE void openUrl(const QString &url);
   Q_INVOKABLE void close();
+  Q_INVOKABLE void requestDefaultFocus();
   Q_INVOKABLE QVariantList filterSidebarItems(const QString &query) const;
 
   void show();
@@ -54,7 +59,9 @@ public:
 
 signals:
   void currentPageChanged();
+  void pendingCommandIdChanged();
   void sidebarExtensionsChanged();
+  void defaultFocusRequested();
 
 private:
   void ensureInitialized();
@@ -71,6 +78,7 @@ private:
   ExtensionSettingsModel *m_extensionModel = nullptr;
   QQuickWindow *m_window = nullptr;
   QString m_currentPage = QStringLiteral("general");
+  QString m_pendingCommandId;
   QVariantList m_sidebarExtensions;
   bool m_initialized = false;
 };

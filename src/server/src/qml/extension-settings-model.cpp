@@ -167,7 +167,7 @@ void ExtensionSettingsModel::setEnabled(int row, bool value) {
 void ExtensionSettingsModel::setAlias(int row, const QString &alias) {
   if (row < 0 || std::cmp_greater_equal(row, m_visibleIndices.size())) return;
   auto &e = m_allEntries[m_visibleIndices[row]];
-  if (e.isProvider) return;
+  if (e.isProvider || e.alias == alias) return;
   auto *manager = ServiceRegistry::instance()->rootItemManager();
   manager->setAlias(e.entrypointId, alias.toStdString());
   e.alias = alias;

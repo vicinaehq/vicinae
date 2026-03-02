@@ -45,7 +45,8 @@ public:
   bool setEnabled(const QString &entrypointId, bool value);
   bool setAlias(const QString &entrypointId, const QString &alias);
 
+  Q_INVOKABLE int findByEntrypointId(const QString &id) const;
+
 private:
-  int findByEntrypointId(const QString &id) const;
   std::vector<Command> m_commands;
 };
