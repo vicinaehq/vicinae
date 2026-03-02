@@ -107,7 +107,6 @@ public:
   static QString provenanceForProvider(RootProvider *provider);
 
 private:
-
   std::vector<Entry> m_allEntries;
   std::vector<int> m_visibleIndices;
   int m_selectedRow = -1;
