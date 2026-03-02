@@ -13,13 +13,12 @@ Item {
         if (!pending) return;
         settings.pendingCommandId = "";
         const row = root.extModel.commandModel.findByEntrypointId(pending);
-        console.log("[ExtensionSettingsPage] pending:", pending,
-                    "count:", root.extModel.commandModel.count, "row:", row);
         if (row < 0) return;
         root.expandedCommandId = pending;
         root.extModel.loadCommandPreferences(pending);
         const lv = pageLoader.item;
         if (lv) {
+            lv._scrollTarget = row;
             lv.forceLayout();
             lv.positionViewAtIndex(row, ListView.Center);
         }
@@ -52,6 +51,16 @@ Item {
             currentIndex: -1
             boundsBehavior: Flickable.StopAtBounds
             model: root.extModel.commandModel
+
+            // -1 = lock to beginning, >= 0 = lock to index, -2 = unlocked
+            property int _scrollTarget: -1
+            onContentHeightChanged: {
+                if (_scrollTarget === -1)
+                    positionViewAtBeginning()
+                else if (_scrollTarget >= 0)
+                    positionViewAtIndex(_scrollTarget, ListView.Center)
+            }
+            onMovementStarted: _scrollTarget = -2
 
             ScrollBar.vertical: ViciScrollBar {
                 policy: cmdListView.contentHeight > cmdListView.height
