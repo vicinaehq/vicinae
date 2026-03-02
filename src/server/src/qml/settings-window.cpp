@@ -43,6 +43,8 @@ void SettingsWindow::ensureInitialized() {
 
   auto *manager = ServiceRegistry::instance()->rootItemManager();
   connect(manager, &RootItemManager::itemsChanged, this, &SettingsWindow::rebuildSidebarExtensions);
+  connect(m_extensionModel, &ExtensionSettingsModel::providerEnabledChanged, this,
+          &SettingsWindow::rebuildSidebarExtensions);
   rebuildSidebarExtensions();
 
   m_engine.load(QUrl(QStringLiteral("qrc:/Vicinae/SettingsWindow.qml")));
@@ -80,13 +82,20 @@ QVariantList SettingsWindow::sidebarExtensions() const { return m_sidebarExtensi
 void SettingsWindow::rebuildSidebarExtensions() {
   m_sidebarExtensions.clear();
   auto *manager = ServiceRegistry::instance()->rootItemManager();
+  auto &cfg = m_ctx.services->config()->value();
   for (auto *provider : manager->providers()) {
     if (provider->isTransient()) continue;
+    auto id = provider->uniqueId().toStdString();
+    bool enabled = true;
+    if (auto it = cfg.providers.find(id); it != cfg.providers.end()) {
+      enabled = it->second.enabled.value_or(true);
+    }
     QVariantMap entry;
     entry[QStringLiteral("name")] = provider->displayName();
     entry[QStringLiteral("iconSource")] = qml::imageSourceFor(provider->icon());
     entry[QStringLiteral("providerId")] = provider->uniqueId();
     entry[QStringLiteral("isGroup")] = provider->isGroup();
+    entry[QStringLiteral("enabled")] = enabled;
     m_sidebarExtensions.append(entry);
   }
   emit sidebarExtensionsChanged();
@@ -157,6 +166,7 @@ QVariantList SettingsWindow::filterSidebarItems(const QString &query) const {
     QString iconSource;
     QString kind;
     bool isGroup = false;
+    bool enabled = true;
   };
 
   static const std::array corePages = {
@@ -193,6 +203,7 @@ QVariantList SettingsWindow::filterSidebarItems(const QString &query) const {
         .iconSource = map[kIconSource].toString(),
         .kind = isGroup ? kGroup : kExt,
         .isGroup = isGroup,
+        .enabled = map[QStringLiteral("enabled")].toBool(),
     });
   }
 
@@ -221,11 +232,14 @@ QVariantList SettingsWindow::filterSidebarItems(const QString &query) const {
                      [](const auto &a, const auto &b) { return a.score > b.score; });
   }
 
+  static const auto kEnabled = QStringLiteral("enabled");
+
   auto makeEntry = [&](const SidebarEntry &e) {
     QVariantMap m;
     m[kId] = e.id;
     m[kLabel] = e.label;
     m[kKind] = e.kind;
+    m[kEnabled] = e.enabled;
     if (e.kind == kCore) {
       m[kIcon] = e.icon;
     } else {

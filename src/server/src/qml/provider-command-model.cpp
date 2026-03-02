@@ -77,12 +77,12 @@ void ProviderCommandModel::setFilter(const QString &text) {
 }
 
 void ProviderCommandModel::rebuildVisible() {
+  auto query = m_filter.toStdString();
+  fuzzy::fuzzyFilter<Command>(m_allCommands, query, m_scored);
   m_visibleIndices.clear();
-  m_visibleIndices.reserve(m_allCommands.size());
-  for (int i = 0; std::cmp_less(i, m_allCommands.size()); ++i) {
-    if (m_filter.isEmpty() || m_allCommands[i].name.contains(m_filter, Qt::CaseInsensitive)) {
-      m_visibleIndices.push_back(i);
-    }
+  m_visibleIndices.reserve(m_scored.size());
+  for (const auto &s : m_scored) {
+    m_visibleIndices.push_back(s.data);
   }
 }
 
@@ -98,6 +98,15 @@ bool ProviderCommandModel::setEnabled(const QString &entrypointId, bool value) {
     return true;
   }
   return false;
+}
+
+void ProviderCommandModel::setAllEnabled(bool value) {
+  for (auto &cmd : m_allCommands) {
+    cmd.enabled = value;
+  }
+  if (!m_visibleIndices.empty()) {
+    emit dataChanged(index(0), index(static_cast<int>(m_visibleIndices.size()) - 1), {EnabledRole});
+  }
 }
 
 bool ProviderCommandModel::setAlias(const QString &entrypointId, const QString &alias) {

@@ -25,6 +25,10 @@ Item {
         _recordingStatus = ""
     }
 
+    onActiveFocusChanged: {
+        if (!activeFocus && _recordingRow >= 0) _cancelRecording()
+    }
+
     Keys.onPressed: (event) => {
         if (root._recordingRow < 0) return
 

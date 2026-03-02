@@ -40,7 +40,8 @@ Item {
         anchors.fill: parent
         clip: true
         boundsBehavior: Flickable.StopAtBounds
-        contentHeight: contentColumn.implicitHeight
+        property real _minContentHeight: 0
+        contentHeight: Math.max(contentColumn.implicitHeight, _minContentHeight)
         contentWidth: width
 
         function scrollToIndex(row) {
@@ -97,6 +98,47 @@ Item {
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.Wrap
                     Layout.fillWidth: true
+                }
+
+                Item {
+                    visible: root.extModel.selectedIsProvider
+                    Layout.fillWidth: true
+                    Layout.topMargin: 4
+                    implicitHeight: enableToggle.height
+
+                    Item {
+                        id: enableToggle
+                        property bool checked: root.extModel.selectedEnabled
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: 36
+                        height: 20
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: 10
+                            color: enableToggle.checked ? Theme.accent
+                                   : Qt.rgba(Theme.foreground.r, Theme.foreground.g,
+                                             Theme.foreground.b, 0.2)
+                            Behavior on color { ColorAnimation { duration: 120 } }
+
+                            Rectangle {
+                                width: 16
+                                height: 16
+                                radius: 8
+                                x: enableToggle.checked ? parent.width - width - 2 : 2
+                                anchors.verticalCenter: parent.verticalCenter
+                                color: "#ffffff"
+                                Behavior on x { NumberAnimation { duration: 120 } }
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.extModel.setEnabled(
+                                root.extModel.selectedRow, !enableToggle.checked)
+                        }
+                    }
                 }
             }
 
@@ -198,7 +240,13 @@ Item {
                             padding: 0
                             activeFocusOnTab: true
 
-                            onTextChanged: root.extModel.commandModel.setFilter(text)
+                            onTextChanged: {
+                                cmdFlickable._minContentHeight = cmdFlickable.contentHeight
+                                root.extModel.commandModel.setFilter(text)
+                            }
+                            onActiveFocusChanged: {
+                                if (!activeFocus) cmdFlickable._minContentHeight = 0
+                            }
                             Keys.onPressed: (event) => {
                                 if (event.key === Qt.Key_Escape && text !== "") {
                                     text = ""

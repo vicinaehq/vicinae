@@ -26,6 +26,7 @@ class ExtensionSettingsModel : public QAbstractListModel {
 
 signals:
   void selectedChanged();
+  void providerEnabledChanged(const QString &providerId, bool enabled);
 
 public:
   enum Role {

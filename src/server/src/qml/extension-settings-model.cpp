@@ -1,6 +1,7 @@
 #include "extension-settings-model.hpp"
 #include "provider-command-model.hpp"
 #include "view-utils.hpp"
+#include "config/config.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "service-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
@@ -150,6 +151,8 @@ void ExtensionSettingsModel::setEnabled(int row, bool value) {
       auto childIdx = index(i);
       emit dataChanged(childIdx, childIdx, {EnabledRole});
     }
+    m_commandModel->setAllEnabled(value);
+    emit providerEnabledChanged(e.providerId, value);
   } else {
     manager->setItemEnabled(e.entrypointId, value);
     e.enabled = value;
@@ -258,14 +261,22 @@ void ExtensionSettingsModel::rebuild(const QString &filter) {
 
   bool const isFiltering = !filter.isEmpty();
 
+  auto &cfg = ServiceRegistry::instance()->config()->value();
+
   auto makeProviderEntry = [&](auto *provider, int childCount) {
+    auto id = provider->uniqueId().toStdString();
+    bool enabled = true;
+    if (auto it = cfg.providers.find(id); it != cfg.providers.end()) {
+      enabled = it->second.enabled.value_or(true);
+    }
+
     Entry pe;
     pe.name = provider->displayName();
     pe.type = provider->typeAsString();
     pe.iconSource = qml::imageSourceFor(provider->icon());
     pe.isProvider = true;
     pe.indent = 0;
-    pe.enabled = true;
+    pe.enabled = enabled;
     pe.providerId = provider->uniqueId();
     pe.childCount = childCount;
     pe.expanded = isFiltering || m_expandedProviders.contains(pe.providerId);

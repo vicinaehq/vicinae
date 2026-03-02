@@ -8,7 +8,10 @@ Item {
 
     property int _highlightedIndex: -1
 
-    readonly property var _allItems: settings.filterSidebarItems(extSearchField.text)
+    readonly property var _allItems: {
+        settings.sidebarExtensions; // re-evaluate when extensions change
+        return settings.filterSidebarItems(extSearchField.text);
+    }
 
     readonly property var _navItems: {
         let nav = []
@@ -136,6 +139,7 @@ Item {
 
                 readonly property bool _isHighlighted: index === root._highlightedListIndex()
                 readonly property string _pageId: modelData.id ?? ""
+                readonly property bool _isEnabled: modelData.enabled !== false
 
                 Rectangle {
                     visible: navItem.modelData._kind === "divider"
@@ -171,12 +175,14 @@ Item {
                                 : (navItem.modelData.iconSource ?? "")
                             Layout.preferredWidth: 16
                             Layout.preferredHeight: 16
+                            opacity: navItem._isEnabled ? 1.0 : 0.4
                         }
 
                         Text {
                             text: navItem.modelData.label ?? ""
                             color: settings.currentPage === navItem._pageId
-                                   ? Theme.listItemSelectionFg : Theme.foreground
+                                   ? Theme.listItemSelectionFg
+                                   : navItem._isEnabled ? Theme.foreground : Theme.textMuted
                             font.pointSize: Theme.regularFontSize
                             elide: Text.ElideRight
                             Layout.fillWidth: true
