@@ -152,15 +152,24 @@ Item {
                     color: Theme.divider
                 }
 
-                Rectangle {
+                SourceBlendRect {
                     visible: navItem.modelData._kind !== "divider"
                     anchors.fill: parent
                     anchors.leftMargin: 8
                     anchors.rightMargin: 8
                     radius: 6
-                    color: settings.currentPage === navItem._pageId ? Theme.listItemSelectionBg
-                           : navItem._isHighlighted || itemHover.hovered ? Theme.listItemHoverBg
-                           : "transparent"
+                    backgroundColor: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
+                    color: {
+                        if (settings.currentPage === navItem._pageId) {
+                            const c = Theme.listItemSelectionBg
+                            return Qt.rgba(c.r, c.g, c.b, Config.windowOpacity)
+                        }
+                        if (navItem._isHighlighted || itemHover.hovered) {
+                            const h = Theme.listItemHoverBg
+                            return Qt.rgba(h.r, h.g, h.b, Config.windowOpacity)
+                        }
+                        return Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
+                    }
 
                     RowLayout {
                         anchors.fill: parent
