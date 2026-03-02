@@ -113,6 +113,7 @@ void ExtensionSettingsModel::setFilter(const QString &text) {
 
 void ExtensionSettingsModel::select(int row) {
   if (row == m_selectedRow) return;
+  if (row < 0 || std::cmp_greater_equal(row, m_visibleIndices.size())) row = -1;
   m_selectedRow = row;
 
   if (hasSelection()) {
@@ -422,25 +423,27 @@ void ExtensionSettingsModel::selectProviderById(const QString &providerId) {
 }
 
 void ExtensionSettingsModel::setEnabledByEntrypointId(const QString &id, bool value) {
-  for (int i = 0; std::cmp_less(i, m_visibleIndices.size()); ++i) {
-    auto &e = m_allEntries[m_visibleIndices[i]];
-    if (!e.isProvider && QString::fromStdString(e.entrypointId) == id) {
-      setEnabled(i, value);
-      m_commandModel->setEnabled(id, value);
-      return;
-    }
+  int const row = findVisibleEntryByEntrypointId(id);
+  if (row >= 0) {
+    setEnabled(row, value);
+    m_commandModel->setEnabled(id, value);
   }
 }
 
 void ExtensionSettingsModel::setAliasByEntrypointId(const QString &id, const QString &alias) {
+  int const row = findVisibleEntryByEntrypointId(id);
+  if (row >= 0) {
+    setAlias(row, alias);
+    m_commandModel->setAlias(id, alias);
+  }
+}
+
+int ExtensionSettingsModel::findVisibleEntryByEntrypointId(const QString &id) const {
   for (int i = 0; std::cmp_less(i, m_visibleIndices.size()); ++i) {
     auto &e = m_allEntries[m_visibleIndices[i]];
-    if (!e.isProvider && QString::fromStdString(e.entrypointId) == id) {
-      setAlias(i, alias);
-      m_commandModel->setAlias(id, alias);
-      return;
-    }
+    if (!e.isProvider && QString::fromStdString(e.entrypointId) == id) return i;
   }
+  return -1;
 }
 
 void ExtensionSettingsModel::loadCommandPreferences(const QString &entrypointId) {

@@ -101,6 +101,7 @@ private:
   void rebuild(const QString &filter);
   void rebuildVisible();
   void loadCommandsForProvider(const QString &providerId);
+  int findVisibleEntryByEntrypointId(const QString &id) const;
 
 public:
   static QString provenanceForProvider(RootProvider *provider);

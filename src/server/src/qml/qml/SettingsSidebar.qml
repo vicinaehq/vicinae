@@ -103,14 +103,9 @@ Item {
                     Keys.onReturnPressed: root._activateHighlighted()
                     Keys.onEnterPressed: root._activateHighlighted()
                     Keys.onPressed: (event) => {
-                        if (event.key === Qt.Key_Escape) {
-                            if (text) {
-                                text = ""
-                                event.accepted = true
-                            } else if (root._highlightedIndex >= 0) {
-                                root._highlightedIndex = -1
-                                event.accepted = true
-                            }
+                        if (event.key === Qt.Key_Escape && text) {
+                            text = ""
+                            event.accepted = true
                         }
                     }
                 }

@@ -61,6 +61,7 @@ void ProviderCommandModel::clear() {
   beginResetModel();
   m_allCommands.clear();
   m_visibleIndices.clear();
+  m_scored.clear();
   endResetModel();
   emit countChanged();
   emit totalCountChanged();
