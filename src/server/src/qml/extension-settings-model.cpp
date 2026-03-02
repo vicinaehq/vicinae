@@ -81,11 +81,6 @@ QString ExtensionSettingsModel::selectedDescription() const {
   return m_allEntries[m_visibleIndices[m_selectedRow]].description;
 }
 
-QVariantList ExtensionSettingsModel::selectedMetadata() const {
-  if (!hasSelection()) return {};
-  return m_allEntries[m_visibleIndices[m_selectedRow]].metadata;
-}
-
 bool ExtensionSettingsModel::hasSelection() const {
   return m_selectedRow >= 0 && std::cmp_less(m_selectedRow, m_visibleIndices.size());
 }
@@ -174,52 +169,6 @@ void ExtensionSettingsModel::setAlias(int row, const QString &alias) {
   auto idx = index(row);
   emit dataChanged(idx, idx, {AliasRole});
   if (row == m_selectedRow) emit selectedChanged();
-}
-
-void ExtensionSettingsModel::selectByEntrypointId(const QString &id) {
-  for (int i = 0; std::cmp_less(i, m_visibleIndices.size()); ++i) {
-    auto &e = m_allEntries[m_visibleIndices[i]];
-    if (!e.isProvider && QString::fromStdString(e.entrypointId) == id) {
-      for (int j = i - 1; j >= 0; --j) {
-        auto &parent = m_allEntries[m_visibleIndices[j]];
-        if (parent.isProvider) {
-          if (!parent.expanded) toggleExpanded(j);
-          break;
-        }
-      }
-      for (int k = 0; std::cmp_less(k, m_visibleIndices.size()); ++k) {
-        auto &e2 = m_allEntries[m_visibleIndices[k]];
-        if (!e2.isProvider && QString::fromStdString(e2.entrypointId) == id) {
-          select(k);
-          return;
-        }
-      }
-      return;
-    }
-  }
-  for (int i = 0; std::cmp_less(i, m_allEntries.size()); ++i) {
-    auto &e = m_allEntries[i];
-    if (!e.isProvider && QString::fromStdString(e.entrypointId) == id) {
-      for (int j = i - 1; j >= 0; --j) {
-        if (m_allEntries[j].isProvider) {
-          for (int k = 0; std::cmp_less(k, m_visibleIndices.size()); ++k) {
-            if (m_visibleIndices[k] == j && !m_allEntries[j].expanded) {
-              toggleExpanded(k);
-              break;
-            }
-          }
-          break;
-        }
-      }
-      for (int k = 0; std::cmp_less(k, m_visibleIndices.size()); ++k) {
-        if (m_visibleIndices[k] == i) {
-          select(k);
-          return;
-        }
-      }
-      return;
-    }
-  }
 }
 
 void ExtensionSettingsModel::toggleExpanded(int row) {
@@ -341,8 +290,6 @@ void ExtensionSettingsModel::rebuild(const QString &filter) {
       ie.entrypointId = item->uniqueId();
       ie.providerId = provider->uniqueId();
       ie.description = item->settingsDescription();
-      for (const auto &[key, value] : item->settingsMetadata())
-        ie.metadata.append(QVariantMap{{QStringLiteral("key"), key}, {QStringLiteral("value"), value}});
       m_allEntries.push_back(std::move(ie));
     }
   }

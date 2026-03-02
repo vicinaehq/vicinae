@@ -13,7 +13,6 @@ class ExtensionSettingsModel : public QAbstractListModel {
   Q_PROPERTY(QString selectedTitle READ selectedTitle NOTIFY selectedChanged)
   Q_PROPERTY(QString selectedIconSource READ selectedIconSource NOTIFY selectedChanged)
   Q_PROPERTY(QString selectedDescription READ selectedDescription NOTIFY selectedChanged)
-  Q_PROPERTY(QVariantList selectedMetadata READ selectedMetadata NOTIFY selectedChanged)
   Q_PROPERTY(bool hasSelection READ hasSelection NOTIFY selectedChanged)
   Q_PROPERTY(bool hasPreferences READ hasPreferences NOTIFY selectedChanged)
   Q_PROPERTY(bool selectedIsProvider READ selectedIsProvider NOTIFY selectedChanged)
@@ -52,7 +51,6 @@ public:
   QString selectedTitle() const;
   QString selectedIconSource() const;
   QString selectedDescription() const;
-  QVariantList selectedMetadata() const;
   bool hasSelection() const;
   bool hasPreferences() const;
   bool selectedIsProvider() const;
@@ -68,7 +66,6 @@ public:
   Q_INVOKABLE void select(int row);
   Q_INVOKABLE void setEnabled(int row, bool value);
   Q_INVOKABLE void setAlias(int row, const QString &alias);
-  Q_INVOKABLE void selectByEntrypointId(const QString &id);
   Q_INVOKABLE void toggleExpanded(int row);
   Q_INVOKABLE void moveUp();
   Q_INVOKABLE void moveDown();
@@ -84,7 +81,6 @@ private:
     QString type;
     QString iconSource;
     QString description;
-    QVariantList metadata;
     bool isProvider;
     bool enabled;
     QString alias;

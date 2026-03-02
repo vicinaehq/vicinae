@@ -1,4 +1,5 @@
 #include "settings-window.hpp"
+#include "common/entrypoint.hpp"
 #include "async-image-provider.hpp"
 #include "config-bridge.hpp"
 #include "extension-settings-model.hpp"
@@ -130,13 +131,12 @@ void SettingsWindow::openTab(const QString &tabId) {
 
 void SettingsWindow::selectExtension(const QString &entrypointId) {
   ensureInitialized();
-  qDebug() << "[SettingsWindow::selectExtension] entrypointId:" << entrypointId;
+  auto providerId = QString::fromStdString(
+      EntrypointId::fromSerialized(entrypointId.toStdString()).provider);
+  if (providerId.isEmpty()) return;
+  m_extensionModel->selectProviderById(providerId);
+  setCurrentPage(providerId);
   setPendingCommandId(entrypointId);
-  m_extensionModel->selectByEntrypointId(entrypointId);
-  auto providerId = m_extensionModel->selectedProviderId();
-  qDebug() << "[SettingsWindow::selectExtension] providerId:" << providerId
-           << "pendingCommandId:" << m_pendingCommandId;
-  if (!providerId.isEmpty()) { setCurrentPage(providerId); }
 }
 
 // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)

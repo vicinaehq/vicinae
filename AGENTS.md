@@ -50,6 +50,10 @@ Try to keep the amount of logic in these files small. Logic in QML is only for p
 
 Some configuration and theming options may need to be accessed directly in QML. We expose a global config and theme bridges for this use case.
 
+## General guidelines
+
+- Search should always be fuzzy, unless it has a good reason not to. We have fuzzy utilities already, and we like to use our fuzzy trait system by specializing the `FuzzySearchable` template
+
 ## React/TypeScript extensions
 
 Everything related to the Typescript SDK can be found under `src/typescript`. More information can be obtained by reading `README.md` files under this directory if you need to work on this part. 
