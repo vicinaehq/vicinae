@@ -5,6 +5,7 @@
 #include "service-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include <algorithm>
+#include <unordered_set>
 #include <utility>
 
 ExtensionSettingsModel::ExtensionSettingsModel(QObject *parent)
@@ -257,10 +258,7 @@ void ExtensionSettingsModel::rebuild(const QString &filter) {
 
   bool const isFiltering = !filter.isEmpty();
 
-  for (const auto &[providerId, items] : providerMap) {
-    auto *provider = manager->provider(providerId);
-    if (!provider || provider->isTransient()) continue;
-
+  auto makeProviderEntry = [&](auto *provider, int childCount) {
     Entry pe;
     pe.name = provider->displayName();
     pe.type = provider->typeAsString();
@@ -269,13 +267,23 @@ void ExtensionSettingsModel::rebuild(const QString &filter) {
     pe.indent = 0;
     pe.enabled = true;
     pe.providerId = provider->uniqueId();
-    pe.childCount = static_cast<int>(items.size());
+    pe.childCount = childCount;
     pe.expanded = isFiltering || m_expandedProviders.contains(pe.providerId);
 
     if (auto *ext = dynamic_cast<ExtensionRootProvider *>(provider))
       pe.description = ext->repository()->description();
 
-    m_allEntries.push_back(std::move(pe));
+    return pe;
+  };
+
+  std::unordered_set<std::string> seenProviders;
+
+  for (const auto &[providerId, items] : providerMap) {
+    auto *provider = manager->provider(providerId);
+    if (!provider || provider->isTransient()) continue;
+
+    seenProviders.insert(providerId);
+    m_allEntries.push_back(makeProviderEntry(provider, static_cast<int>(items.size())));
 
     for (const auto &item : items) {
       auto metadata = manager->itemMetadata(item->uniqueId());
@@ -291,6 +299,15 @@ void ExtensionSettingsModel::rebuild(const QString &filter) {
       ie.providerId = provider->uniqueId();
       ie.description = item->settingsDescription();
       m_allEntries.push_back(std::move(ie));
+    }
+  }
+
+  // Include providers with zero items
+  if (!isFiltering) {
+    for (auto *provider : manager->providers()) {
+      if (provider->isTransient()) continue;
+      if (seenProviders.contains(provider->uniqueId().toStdString())) continue;
+      m_allEntries.push_back(makeProviderEntry(provider, 0));
     }
   }
 

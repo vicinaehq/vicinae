@@ -100,9 +100,13 @@ Item {
                 }
             }
 
-            Item { implicitHeight: 16 }
+            Item {
+                visible: root.extModel.hasPreferences || root.extModel.commandModel.totalCount > 0
+                implicitHeight: 16
+            }
 
             Rectangle {
+                visible: root.extModel.hasPreferences || root.extModel.commandModel.totalCount > 0
                 Layout.fillWidth: true
                 Layout.leftMargin: contentColumn.sideMargin + 20
                 Layout.rightMargin: contentColumn.sideMargin + 20
