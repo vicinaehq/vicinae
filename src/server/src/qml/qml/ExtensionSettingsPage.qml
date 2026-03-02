@@ -337,7 +337,7 @@ Item {
                                 horizontalAlignment: TextInput.AlignHCenter
                                 placeholderText: "Add Alias"
                                 placeholderTextColor: Theme.textPlaceholder
-                                activeFocusOnTab: true
+                                activeFocusOnTab: false
                                 padding: 0
                                 leftPadding: 6
                                 rightPadding: 6

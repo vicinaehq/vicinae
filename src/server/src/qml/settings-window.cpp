@@ -9,6 +9,8 @@
 #include "theme-bridge.hpp"
 #include "view-utils.hpp"
 #include "config/config.hpp"
+#include "extension/extension.hpp"
+#include "root-search/extensions/extension-root-provider.hpp"
 #include "service-registry.hpp"
 #include "services/background-effect/background-effect-manager.hpp"
 #include "services/app-service/app-service.hpp"
@@ -96,6 +98,7 @@ void SettingsWindow::rebuildSidebarExtensions() {
     entry[QStringLiteral("providerId")] = provider->uniqueId();
     entry[QStringLiteral("isGroup")] = provider->isGroup();
     entry[QStringLiteral("enabled")] = enabled;
+    entry[QStringLiteral("provenance")] = ExtensionSettingsModel::provenanceForProvider(provider);
     m_sidebarExtensions.append(entry);
   }
   emit sidebarExtensionsChanged();
@@ -165,6 +168,7 @@ QVariantList SettingsWindow::filterSidebarItems(const QString &query) const {
     QString icon;
     QString iconSource;
     QString kind;
+    QString provenance;
     bool isGroup = false;
     bool enabled = true;
   };
@@ -202,6 +206,7 @@ QVariantList SettingsWindow::filterSidebarItems(const QString &query) const {
         .label = map[QStringLiteral("name")].toString(),
         .iconSource = map[kIconSource].toString(),
         .kind = isGroup ? kGroup : kExt,
+        .provenance = map[QStringLiteral("provenance")].toString(),
         .isGroup = isGroup,
         .enabled = map[QStringLiteral("enabled")].toBool(),
     });
@@ -244,6 +249,7 @@ QVariantList SettingsWindow::filterSidebarItems(const QString &query) const {
       m[kIcon] = e.icon;
     } else {
       m[kIconSource] = e.iconSource;
+      m[QStringLiteral("provenance")] = e.provenance;
     }
     return m;
   };

@@ -5,6 +5,8 @@
 #include <QAbstractListModel>
 #include <set>
 
+class RootProvider;
+
 class RootItemManager;
 
 class ExtensionSettingsModel : public QAbstractListModel {
@@ -22,6 +24,7 @@ class ExtensionSettingsModel : public QAbstractListModel {
   Q_PROPERTY(PreferenceFormModel *commandPreferenceModel READ commandPreferenceModel CONSTANT)
   Q_PROPERTY(int selectedRow READ selectedRow NOTIFY selectedChanged)
   Q_PROPERTY(QString selectedProviderId READ selectedProviderId NOTIFY selectedChanged)
+  Q_PROPERTY(QString selectedProvenance READ selectedProvenance NOTIFY selectedChanged)
   Q_PROPERTY(ProviderCommandModel *commandModel READ commandModel CONSTANT)
 
 signals:
@@ -40,7 +43,8 @@ public:
     EntrypointIdRole,
     ExpandedRole,
     ExpandableRole,
-    DescriptionRole
+    DescriptionRole,
+    ProvenanceRole
   };
 
   explicit ExtensionSettingsModel(QObject *parent = nullptr);
@@ -61,6 +65,7 @@ public:
   PreferenceFormModel *preferenceModel() const { return m_prefModel; }
   PreferenceFormModel *commandPreferenceModel() const { return m_cmdPrefModel; }
   QString selectedProviderId() const;
+  QString selectedProvenance() const;
   ProviderCommandModel *commandModel() const { return m_commandModel; }
 
   Q_INVOKABLE void setFilter(const QString &text);
@@ -88,6 +93,7 @@ private:
     EntrypointId entrypointId;
     QString providerId;
     int indent;
+    QString provenance;
     bool expanded = true;
     int childCount = 0;
   };
@@ -95,6 +101,11 @@ private:
   void rebuild(const QString &filter);
   void rebuildVisible();
   void loadCommandsForProvider(const QString &providerId);
+
+public:
+  static QString provenanceForProvider(RootProvider *provider);
+
+private:
 
   std::vector<Entry> m_allEntries;
   std::vector<int> m_visibleIndices;

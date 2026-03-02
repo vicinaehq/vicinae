@@ -8,6 +8,7 @@
 #include "service-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/window-manager/window-manager.hpp"
+#include "vicinae.hpp"
 #include "actions/wm/window-actions.hpp"
 #include "utils/environment.hpp"
 #include <qjsonobject.h>
@@ -112,7 +113,9 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
 
 RootProvider::Type AppRootProvider::type() const { return RootProvider::Type::GroupProvider; }
 
-ImageURL AppRootProvider::icon() const { return ImageURL::builtin("folder"); }
+ImageURL AppRootProvider::icon() const {
+  return ImageURL::builtin("app-window-grid-2x2").setBackgroundTint(Omnicast::ACCENT_COLOR);
+}
 
 QString AppRootProvider::displayName() const { return "Applications"; }
 

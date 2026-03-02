@@ -2,6 +2,7 @@
 #include "provider-command-model.hpp"
 #include "view-utils.hpp"
 #include "config/config.hpp"
+#include "extension/extension.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "service-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
@@ -49,6 +50,8 @@ QVariant ExtensionSettingsModel::data(const QModelIndex &index, int role) const 
     return e.isProvider && e.childCount > 0;
   case DescriptionRole:
     return e.description;
+  case ProvenanceRole:
+    return e.provenance;
   default:
     return {};
   }
@@ -65,7 +68,8 @@ QHash<int, QByteArray> ExtensionSettingsModel::roleNames() const {
           {EntrypointIdRole, "entrypointId"},
           {ExpandedRole, "expanded"},
           {ExpandableRole, "expandable"},
-          {DescriptionRole, "description"}};
+          {DescriptionRole, "description"},
+          {ProvenanceRole, "provenance"}};
 }
 
 QString ExtensionSettingsModel::selectedTitle() const {
@@ -280,6 +284,7 @@ void ExtensionSettingsModel::rebuild(const QString &filter) {
     pe.providerId = provider->uniqueId();
     pe.childCount = childCount;
     pe.expanded = isFiltering || m_expandedProviders.contains(pe.providerId);
+    pe.provenance = provenanceForProvider(provider);
 
     if (auto *ext = dynamic_cast<ExtensionRootProvider *>(provider))
       pe.description = ext->repository()->description();
@@ -352,6 +357,24 @@ void ExtensionSettingsModel::rebuildVisible() {
 QString ExtensionSettingsModel::selectedProviderId() const {
   if (!hasSelection()) return {};
   return m_allEntries[m_visibleIndices[m_selectedRow]].providerId;
+}
+
+QString ExtensionSettingsModel::selectedProvenance() const {
+  if (!hasSelection()) return {};
+  return m_allEntries[m_visibleIndices[m_selectedRow]].provenance;
+}
+
+QString ExtensionSettingsModel::provenanceForProvider(RootProvider *provider) {
+  auto *ext = dynamic_cast<ExtensionRootProvider *>(provider);
+  if (!ext) return QStringLiteral("Built-in");
+  if (ext->isBuiltin()) return QStringLiteral("Built-in");
+
+  auto *extension = dynamic_cast<const Extension *>(ext->repository().get());
+  if (!extension) return QStringLiteral("Built-in");
+
+  if (extension->manifest().isFromRaycastStore()) return QStringLiteral("Raycast");
+  if (extension->manifest().isFromVicinaeStore()) return QStringLiteral("Vicinae");
+  return QStringLiteral("Local");
 }
 
 void ExtensionSettingsModel::loadCommandsForProvider(const QString &providerId) {

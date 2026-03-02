@@ -114,7 +114,7 @@ std::vector<std::shared_ptr<RootItem>> ShortcutRootProvider::loadItems() const {
 QString ShortcutRootProvider::displayName() const { return "Shortcuts"; }
 
 ImageURL ShortcutRootProvider::icon() const {
-  auto icon = ImageURL::builtin("link");
+  auto icon = ImageURL::builtin("bolt");
 
   icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
 

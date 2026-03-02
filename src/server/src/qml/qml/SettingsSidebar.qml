@@ -187,6 +187,21 @@ Item {
                             elide: Text.ElideRight
                             Layout.fillWidth: true
                         }
+
+                        ViciImage {
+                            visible: {
+                                const p = navItem.modelData.provenance ?? ""
+                                return p === "Raycast" || p === "Vicinae"
+                            }
+                            source: {
+                                const p = navItem.modelData.provenance ?? ""
+                                if (p === "Raycast") return Img.builtin("raycast").withFillColor(Theme.toastDanger)
+                                if (p === "Vicinae") return Img.builtin("vicinae").withFillColor(Theme.toastWarning)
+                                return ""
+                            }
+                            Layout.preferredWidth: 16
+                            Layout.preferredHeight: 16
+                        }
                     }
 
                     HoverHandler { id: itemHover }
