@@ -259,10 +259,11 @@ Item {
                 required property bool enabled
                 required property string alias
                 required property string entrypointId
+                required property bool hasPreferences
 
                 readonly property real contentWidth: Math.min(width, 680)
                 readonly property real sideMargin: (width - contentWidth) / 2
-                readonly property bool isExpanded: root.expandedCommandId === entrypointId
+                readonly property bool isExpanded: hasPreferences && root.expandedCommandId === entrypointId
                 readonly property bool matches: root._matchesFilter(name)
 
                 visible: matches
@@ -275,6 +276,7 @@ Item {
 
                     HoverHandler { id: cmdHover }
                     TapHandler {
+                        enabled: cmdDelegate.hasPreferences
                         onTapped: {
                             if (cmdDelegate.isExpanded) {
                                 root.expandedCommandId = ""
@@ -297,6 +299,7 @@ Item {
                         ViciImage {
                             source: Img.builtin(cmdDelegate.isExpanded ? "chevron-down-small" : "chevron-right-small")
                                 .withFillColor(Theme.textMuted)
+                            opacity: cmdDelegate.hasPreferences ? 1.0 : 0.25
                             Layout.preferredWidth: 16
                             Layout.preferredHeight: 16
                         }
@@ -307,24 +310,45 @@ Item {
                             Layout.preferredHeight: 20
                         }
 
-                        ColumnLayout {
+                        Text {
+                            text: cmdDelegate.name
+                            color: !cmdDelegate.enabled ? Theme.textMuted : Theme.foreground
+                            font.pointSize: Theme.regularFontSize
+                            elide: Text.ElideRight
                             Layout.fillWidth: true
-                            spacing: 1
+                        }
 
-                            Text {
-                                text: cmdDelegate.name
-                                color: !cmdDelegate.enabled ? Theme.textMuted : Theme.foreground
-                                font.pointSize: Theme.regularFontSize
-                                elide: Text.ElideRight
-                                Layout.fillWidth: true
+                        TextField {
+                            id: cmdAliasInput
+                            Layout.preferredWidth: 120
+                            implicitHeight: 24
+                            font.pointSize: Theme.smallerFontSize
+                            color: Theme.foreground
+                            horizontalAlignment: TextInput.AlignHCenter
+                            placeholderText: "Add Alias"
+                            placeholderTextColor: Theme.textPlaceholder
+                            activeFocusOnTab: true
+                            padding: 0
+                            leftPadding: 6
+                            rightPadding: 6
+                            text: cmdDelegate.alias
+
+                            background: Rectangle {
+                                radius: 4
+                                color: "transparent"
+                                border.color: cmdAliasInput.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
+                                border.width: cmdAliasInput.activeFocus || cmdAliasInput.hovered ? 1 : 0
                             }
 
-                            Text {
-                                visible: cmdDelegate.type !== ""
-                                text: cmdDelegate.type
-                                color: Theme.textMuted
-                                font.pointSize: Theme.smallerFontSize
+                            HoverHandler { id: aliasHover }
+
+                            onActiveFocusChanged: {
+                                if (!activeFocus)
+                                    root.extModel.setAliasByEntrypointId(
+                                        cmdDelegate.entrypointId, text)
                             }
+                            onAccepted: root.extModel.setAliasByEntrypointId(
+                                cmdDelegate.entrypointId, text)
                         }
 
                         Rectangle {
@@ -354,7 +378,7 @@ Item {
                     }
                 }
 
-                // Expanded command details
+                // Expanded: per-command preferences only
                 Rectangle {
                     visible: cmdDelegate.isExpanded
                     width: parent.width
@@ -381,60 +405,7 @@ Item {
                         anchors.topMargin: 12
                         spacing: 8
 
-                        Text {
-                            visible: cmdDelegate.description !== ""
-                            text: cmdDelegate.description
-                            color: Theme.textMuted
-                            font.pointSize: Theme.smallerFontSize
-                            wrapMode: Text.Wrap
-                            Layout.fillWidth: true
-                        }
-
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 8
-
-                            Text {
-                                text: "Alias"
-                                color: Theme.textMuted
-                                font.pointSize: Theme.smallerFontSize
-                                Layout.alignment: Qt.AlignVCenter
-                            }
-
-                            TextField {
-                                id: cmdAliasInput
-                                Layout.preferredWidth: 180
-                                implicitHeight: 28
-                                font.pointSize: Theme.smallerFontSize
-                                color: Theme.foreground
-                                placeholderText: "Add alias"
-                                placeholderTextColor: Theme.textPlaceholder
-                                activeFocusOnTab: true
-                                padding: 0
-                                leftPadding: 6
-                                rightPadding: 6
-                                text: cmdDelegate.alias
-
-                                background: Rectangle {
-                                    radius: 4
-                                    color: "transparent"
-                                    border.color: cmdAliasInput.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
-                                    border.width: 1
-                                }
-
-                                onActiveFocusChanged: {
-                                    if (!activeFocus)
-                                        root.extModel.setAliasByEntrypointId(
-                                            cmdDelegate.entrypointId, text)
-                                }
-                                onAccepted: root.extModel.setAliasByEntrypointId(
-                                    cmdDelegate.entrypointId, text)
-                            }
-                        }
-
-                        // Per-command preferences
                         SettingsPreferenceForm {
-                            visible: cmdDelegate.isExpanded && root.extModel.commandPreferenceModel.rowCount() > 0
                             Layout.fillWidth: true
                             prefModel: root.extModel.commandPreferenceModel
                         }

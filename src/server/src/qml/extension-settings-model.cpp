@@ -381,12 +381,15 @@ QString ExtensionSettingsModel::selectedProviderId() const {
 
 void ExtensionSettingsModel::loadCommandsForProvider(const QString &providerId) {
   std::vector<ProviderCommandModel::Command> commands;
+  auto *manager = ServiceRegistry::instance()->rootItemManager();
 
   for (int i = 0; std::cmp_less(i, m_allEntries.size()); ++i) {
     if (m_allEntries[i].isProvider && m_allEntries[i].providerId == providerId) {
       for (int j = i + 1; std::cmp_less(j, m_allEntries.size()) && !m_allEntries[j].isProvider; ++j) {
         const auto &e = m_allEntries[j];
-        commands.push_back({e.name, e.type, e.iconSource, e.description, e.enabled, e.alias,
+        auto *item = manager->findItemById(e.entrypointId);
+        bool const hasPrefs = item && !item->preferences().empty();
+        commands.push_back({e.name, e.type, e.iconSource, e.description, e.enabled, hasPrefs, e.alias,
                             QString::fromStdString(e.entrypointId)});
       }
       break;

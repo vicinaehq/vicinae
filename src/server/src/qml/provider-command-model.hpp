@@ -18,7 +18,8 @@ public:
     EnabledRole,
     AliasRole,
     EntrypointIdRole,
-    DescriptionRole
+    DescriptionRole,
+    HasPreferencesRole
   };
 
   struct Command {
@@ -27,6 +28,7 @@ public:
     QString iconSource;
     QString description;
     bool enabled;
+    bool hasPreferences;
     QString alias;
     QString entrypointId;
   };

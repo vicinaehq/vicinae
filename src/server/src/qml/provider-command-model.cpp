@@ -23,6 +23,8 @@ QVariant ProviderCommandModel::data(const QModelIndex &index, int role) const {
     return cmd.entrypointId;
   case DescriptionRole:
     return cmd.description;
+  case HasPreferencesRole:
+    return cmd.hasPreferences;
   default:
     return {};
   }
@@ -35,7 +37,8 @@ QHash<int, QByteArray> ProviderCommandModel::roleNames() const {
           {EnabledRole, "enabled"},
           {AliasRole, "alias"},
           {EntrypointIdRole, "entrypointId"},
-          {DescriptionRole, "description"}};
+          {DescriptionRole, "description"},
+          {HasPreferencesRole, "hasPreferences"}};
 }
 
 void ProviderCommandModel::load(std::vector<Command> commands) {
