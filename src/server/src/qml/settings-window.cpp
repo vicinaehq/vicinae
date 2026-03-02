@@ -131,8 +131,7 @@ void SettingsWindow::openTab(const QString &tabId) {
 
 void SettingsWindow::selectExtension(const QString &entrypointId) {
   ensureInitialized();
-  auto providerId = QString::fromStdString(
-      EntrypointId::fromSerialized(entrypointId.toStdString()).provider);
+  auto providerId = QString::fromStdString(EntrypointId::fromSerialized(entrypointId.toStdString()).provider);
   if (providerId.isEmpty()) return;
   m_extensionModel->selectProviderById(providerId);
   setCurrentPage(providerId);

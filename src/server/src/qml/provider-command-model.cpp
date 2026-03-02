@@ -3,11 +3,14 @@
 
 ProviderCommandModel::ProviderCommandModel(QObject *parent) : QAbstractListModel(parent) {}
 
-int ProviderCommandModel::rowCount(const QModelIndex &) const { return static_cast<int>(m_commands.size()); }
+int ProviderCommandModel::rowCount(const QModelIndex &) const {
+  return static_cast<int>(m_visibleIndices.size());
+}
 
 QVariant ProviderCommandModel::data(const QModelIndex &index, int role) const {
-  if (!index.isValid() || index.row() < 0 || index.row() >= static_cast<int>(m_commands.size())) return {};
-  const auto &cmd = m_commands[index.row()];
+  if (!index.isValid() || index.row() < 0 || index.row() >= static_cast<int>(m_visibleIndices.size()))
+    return {};
+  const auto &cmd = m_allCommands[m_visibleIndices[index.row()]];
   switch (role) {
   case NameRole:
     return cmd.name;
@@ -42,50 +45,85 @@ QHash<int, QByteArray> ProviderCommandModel::roleNames() const {
 }
 
 void ProviderCommandModel::load(std::vector<Command> commands) {
-  int oldCount = rowCount();
-  if (!m_commands.empty()) {
-    beginRemoveRows({}, 0, static_cast<int>(m_commands.size()) - 1);
-    m_commands.clear();
-    endRemoveRows();
-  }
-  if (!commands.empty()) {
-    beginInsertRows({}, 0, static_cast<int>(commands.size()) - 1);
-    m_commands = std::move(commands);
-    endInsertRows();
-  }
-  if (rowCount() != oldCount)
-    emit countChanged();
+  int const oldCount = rowCount();
+  int const oldTotal = totalCount();
+  m_filter.clear();
+  beginResetModel();
+  m_allCommands = std::move(commands);
+  rebuildVisible();
+  endResetModel();
+  if (rowCount() != oldCount) emit countChanged();
+  if (totalCount() != oldTotal) emit totalCountChanged();
 }
 
 void ProviderCommandModel::clear() {
-  if (m_commands.empty()) return;
-  beginRemoveRows({}, 0, static_cast<int>(m_commands.size()) - 1);
-  m_commands.clear();
-  endRemoveRows();
+  if (m_allCommands.empty()) return;
+  beginResetModel();
+  m_allCommands.clear();
+  m_visibleIndices.clear();
+  endResetModel();
   emit countChanged();
+  emit totalCountChanged();
+}
+
+void ProviderCommandModel::setFilter(const QString &text) {
+  if (m_filter == text) return;
+  m_filter = text;
+  int const oldCount = rowCount();
+  beginResetModel();
+  rebuildVisible();
+  endResetModel();
+  if (rowCount() != oldCount) emit countChanged();
+}
+
+void ProviderCommandModel::rebuildVisible() {
+  m_visibleIndices.clear();
+  m_visibleIndices.reserve(m_allCommands.size());
+  for (int i = 0; std::cmp_less(i, m_allCommands.size()); ++i) {
+    if (m_filter.isEmpty() || m_allCommands[i].name.contains(m_filter, Qt::CaseInsensitive)) {
+      m_visibleIndices.push_back(i);
+    }
+  }
 }
 
 bool ProviderCommandModel::setEnabled(const QString &entrypointId, bool value) {
-  int row = findByEntrypointId(entrypointId);
-  if (row < 0) return false;
-  m_commands[row].enabled = value;
-  auto idx = index(row);
-  emit dataChanged(idx, idx, {EnabledRole});
-  return true;
+  for (int i = 0; std::cmp_less(i, m_allCommands.size()); ++i) {
+    if (m_allCommands[i].entrypointId != entrypointId) continue;
+    m_allCommands[i].enabled = value;
+    int const row = visibleRowFor(i);
+    if (row >= 0) {
+      auto idx = index(row);
+      emit dataChanged(idx, idx, {EnabledRole});
+    }
+    return true;
+  }
+  return false;
 }
 
 bool ProviderCommandModel::setAlias(const QString &entrypointId, const QString &alias) {
-  int row = findByEntrypointId(entrypointId);
-  if (row < 0) return false;
-  m_commands[row].alias = alias;
-  auto idx = index(row);
-  emit dataChanged(idx, idx, {AliasRole});
-  return true;
+  for (int i = 0; std::cmp_less(i, m_allCommands.size()); ++i) {
+    if (m_allCommands[i].entrypointId != entrypointId) continue;
+    m_allCommands[i].alias = alias;
+    int const row = visibleRowFor(i);
+    if (row >= 0) {
+      auto idx = index(row);
+      emit dataChanged(idx, idx, {AliasRole});
+    }
+    return true;
+  }
+  return false;
 }
 
 int ProviderCommandModel::findByEntrypointId(const QString &id) const {
-  for (int i = 0; i < static_cast<int>(m_commands.size()); ++i) {
-    if (m_commands[i].entrypointId == id) return i;
+  for (int i = 0; std::cmp_less(i, m_visibleIndices.size()); ++i) {
+    if (m_allCommands[m_visibleIndices[i]].entrypointId == id) return i;
+  }
+  return -1;
+}
+
+int ProviderCommandModel::visibleRowFor(int allIdx) const {
+  for (int i = 0; std::cmp_less(i, m_visibleIndices.size()); ++i) {
+    if (m_visibleIndices[i] == allIdx) return i;
   }
   return -1;
 }

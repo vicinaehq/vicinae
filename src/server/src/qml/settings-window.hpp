@@ -16,7 +16,8 @@ class SettingsWindow : public QObject {
   Q_OBJECT
 
   Q_PROPERTY(QString currentPage READ currentPage WRITE setCurrentPage NOTIFY currentPageChanged)
-  Q_PROPERTY(QString pendingCommandId READ pendingCommandId WRITE setPendingCommandId NOTIFY pendingCommandIdChanged)
+  Q_PROPERTY(
+      QString pendingCommandId READ pendingCommandId WRITE setPendingCommandId NOTIFY pendingCommandIdChanged)
   Q_PROPERTY(QVariantList sidebarExtensions READ sidebarExtensions NOTIFY sidebarExtensionsChanged)
   Q_PROPERTY(QString version READ version CONSTANT)
   Q_PROPERTY(QString commitHash READ commitHash CONSTANT)

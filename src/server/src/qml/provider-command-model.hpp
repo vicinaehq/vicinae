@@ -6,9 +6,11 @@
 class ProviderCommandModel : public QAbstractListModel {
   Q_OBJECT
   Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
+  Q_PROPERTY(int totalCount READ totalCount NOTIFY totalCountChanged)
 
 signals:
   void countChanged();
+  void totalCountChanged();
 
 public:
   enum Role {
@@ -36,6 +38,7 @@ public:
   explicit ProviderCommandModel(QObject *parent = nullptr);
 
   int rowCount(const QModelIndex &parent = {}) const override;
+  int totalCount() const { return static_cast<int>(m_allCommands.size()); }
   QVariant data(const QModelIndex &index, int role) const override;
   QHash<int, QByteArray> roleNames() const override;
 
@@ -46,7 +49,13 @@ public:
   bool setAlias(const QString &entrypointId, const QString &alias);
 
   Q_INVOKABLE int findByEntrypointId(const QString &id) const;
+  Q_INVOKABLE void setFilter(const QString &text);
 
 private:
-  std::vector<Command> m_commands;
+  void rebuildVisible();
+  int visibleRowFor(int allIdx) const;
+
+  std::vector<Command> m_allCommands;
+  std::vector<int> m_visibleIndices;
+  QString m_filter;
 };
