@@ -125,16 +125,15 @@ int CommandListModel::nextSectionIndex(int from, int direction) const {
 
   // Helper: return the first DataItem at or after `idx`.
   auto firstDataItemFrom = [&](int idx) -> int {
-    while (idx < count && m_flat[idx].kind != FlatItem::DataItem) ++idx;
+    while (idx < count && m_flat[idx].kind != FlatItem::DataItem)
+      ++idx;
     return (idx < count) ? idx : from;
   };
 
   if (direction > 0) {
     // Jump directly to first item of next section.
     for (int idx = from + 1; idx < count; ++idx) {
-      if (m_flat[idx].kind == FlatItem::DataItem && m_flat[idx].sectionIdx != currentSection) {
-        return idx;
-      }
+      if (m_flat[idx].kind == FlatItem::DataItem && m_flat[idx].sectionIdx != currentSection) { return idx; }
       if (m_flat[idx].kind == FlatItem::SectionHeader && m_flat[idx].sectionIdx != currentSection) {
         return firstDataItemFrom(idx + 1);
       }
