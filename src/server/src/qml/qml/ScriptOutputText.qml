@@ -15,6 +15,8 @@ ScrollView {
             contentItem.contentY + 40
         )
     }
+    function moveSectionUp() { moveUp() }
+    function moveSectionDown() { moveDown() }
     function focusText() { textArea.forceActiveFocus() }
     function scrollToBottom() {
         let flick = contentItem

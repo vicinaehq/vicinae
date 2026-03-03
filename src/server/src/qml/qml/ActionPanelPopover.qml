@@ -117,12 +117,22 @@ FocusScope {
                 event.accepted = true
             }
         } else if (event.key === Qt.Key_Up || nav === 1) {
-            if (stack.currentItem && typeof stack.currentItem.moveUp === "function")
-                stack.currentItem.moveUp()
+            if (stack.currentItem) {
+                const ctrl = (event.modifiers & Qt.ControlModifier)
+                if (ctrl && typeof stack.currentItem.moveSectionUp === "function")
+                    stack.currentItem.moveSectionUp()
+                else if (typeof stack.currentItem.moveUp === "function")
+                    stack.currentItem.moveUp()
+            }
             event.accepted = true
         } else if (event.key === Qt.Key_Down || nav === 2) {
-            if (stack.currentItem && typeof stack.currentItem.moveDown === "function")
-                stack.currentItem.moveDown()
+            if (stack.currentItem) {
+                const ctrl = (event.modifiers & Qt.ControlModifier)
+                if (ctrl && typeof stack.currentItem.moveSectionDown === "function")
+                    stack.currentItem.moveSectionDown()
+                else if (typeof stack.currentItem.moveDown === "function")
+                    stack.currentItem.moveDown()
+            }
             event.accepted = true
         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
             if (stack.currentItem && typeof stack.currentItem.activateCurrent === "function")
