@@ -89,7 +89,7 @@ public:
   using WorkspaceList = std::vector<WorkspacePtr>;
 
 public:
-  virtual ~AbstractWindowManager() = default;
+  ~AbstractWindowManager() override = default;
 
   /**
    * Unique identifier for this window manager.
@@ -122,10 +122,23 @@ public:
   }
 
   /**
-   * Should return nullptr if there is no focused window (practically very rare).
+   * Should return nullptr if there is no focused window. In particular, some wayland compositors may return
+   * no focused window if focus was given to a layer shell surface, which is not a 'window' in wayland terms.
+   *
+   * If the window manager is unable to track the currently focused window, `supportsFocusTracking` must
+   * return false.
    */
   virtual std::shared_ptr<AbstractWindow> getFocusedWindowSync() const { return nullptr; }
 
+  /**
+   * Whether the window manager is able to track what window is currently focused.
+   * Note that a WM implementation can still implement `focusWindowSync` even if it
+   * can't track the currently focused window.
+   *
+   * Most window managers should implement this, but there are a few exceptions, such as:
+   * - KDE Plasma (WM implementation relies on an obscure dbus API)
+   * - Gnome, if the vicinae gnome extension is not installed
+   */
   virtual bool supportsFocusTracking() const { return false; }
 
   virtual void focusWindowSync(const AbstractWindow &window) const {}
