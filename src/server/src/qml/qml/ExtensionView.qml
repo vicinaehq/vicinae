@@ -24,12 +24,18 @@ Item {
         else moveDown()
     }
     function moveLeft() {
-        if (contentLoader.item && typeof contentLoader.item.moveLeft === "function")
+        if (contentLoader.item && typeof contentLoader.item.moveLeft === "function") {
             contentLoader.item.moveLeft()
+            return true
+        }
+        return false
     }
     function moveRight() {
-        if (contentLoader.item && typeof contentLoader.item.moveRight === "function")
+        if (contentLoader.item && typeof contentLoader.item.moveRight === "function") {
             contentLoader.item.moveRight()
+            return true
+        }
+        return false
     }
 
     Loader {

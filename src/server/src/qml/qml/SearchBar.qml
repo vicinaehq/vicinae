@@ -233,16 +233,20 @@ Item {
                     }
                 }
                 Keys.onLeftPressed: (event) => {
-                    if (commandStack.currentItem && typeof commandStack.currentItem.moveLeft === "function") {
-                        commandStack.currentItem.moveLeft()
+                    if (event.modifiers === Qt.NoModifier
+                            && commandStack.currentItem
+                            && typeof commandStack.currentItem.moveLeft === "function"
+                            && commandStack.currentItem.moveLeft()) {
                         event.accepted = true
                     } else {
                         event.accepted = false
                     }
                 }
                 Keys.onRightPressed: (event) => {
-                    if (commandStack.currentItem && typeof commandStack.currentItem.moveRight === "function") {
-                        commandStack.currentItem.moveRight()
+                    if (event.modifiers === Qt.NoModifier
+                            && commandStack.currentItem
+                            && typeof commandStack.currentItem.moveRight === "function"
+                            && commandStack.currentItem.moveRight()) {
                         event.accepted = true
                     } else {
                         event.accepted = false

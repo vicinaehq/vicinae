@@ -48,38 +48,61 @@ Item {
     signal itemActivated(int index)
     signal itemSelected(int index)
 
+    function sectionScrollTarget(index, direction) {
+        if (!root.listModel || typeof root.listModel.scrollTargetIndex !== "function")
+            return index
+        return root.listModel.scrollTargetIndex(index, direction)
+    }
+
+    function revealCurrentSectionHeaderIfHidden() {
+        if (listView.currentIndex < 0) return false
+
+        const scrollTarget = sectionScrollTarget(listView.currentIndex, -1)
+        if (scrollTarget === listView.currentIndex) return false
+
+        const previousContentY = listView.contentY
+        listView.positionViewAtIndex(scrollTarget, ListView.Contain)
+        return Math.abs(listView.contentY - previousContentY) > 0.5
+    }
+
     function moveDown() {
-        var next = root.listModel.nextSelectableIndex(listView.currentIndex, 1)
+        const next = root.listModel.nextSelectableIndex(listView.currentIndex, 1)
         if (next !== listView.currentIndex) {
             listView.currentIndex = next
-            listView.positionViewAtIndex(next, ListView.Contain)
+            const scrollTarget = sectionScrollTarget(next, -1)
+            listView.positionViewAtIndex(scrollTarget, ListView.Contain)
         }
     }
 
     function moveUp() {
-        var next = root.listModel.nextSelectableIndex(listView.currentIndex, -1)
+        if (revealCurrentSectionHeaderIfHidden()) return
+
+        const next = root.listModel.nextSelectableIndex(listView.currentIndex, -1)
         if (next !== listView.currentIndex) {
             listView.currentIndex = next
-            var scrollTarget = root.listModel.scrollTargetIndex(next, -1)
+            const scrollTarget = sectionScrollTarget(next, -1)
             listView.positionViewAtIndex(scrollTarget, ListView.Contain)
         }
     }
 
     function moveSectionDown() {
         if (typeof root.listModel.nextSectionIndex !== "function") { moveDown(); return }
-        var next = root.listModel.nextSectionIndex(listView.currentIndex, 1)
+        const next = root.listModel.nextSectionIndex(listView.currentIndex, 1)
         if (next !== listView.currentIndex) {
             listView.currentIndex = next
-            listView.positionViewAtIndex(next, ListView.Contain)
+            const scrollTarget = sectionScrollTarget(next, -1)
+            listView.positionViewAtIndex(scrollTarget, ListView.Contain)
         }
     }
 
     function moveSectionUp() {
         if (typeof root.listModel.nextSectionIndex !== "function") { moveUp(); return }
-        var next = root.listModel.nextSectionIndex(listView.currentIndex, -1)
+        if (revealCurrentSectionHeaderIfHidden()) return
+
+        const next = root.listModel.nextSectionIndex(listView.currentIndex, -1)
         if (next !== listView.currentIndex) {
             listView.currentIndex = next
-            var scrollTarget = root.listModel.scrollTargetIndex(next, -1)
+            const scrollTarget = sectionScrollTarget(next, -1)
             listView.positionViewAtIndex(scrollTarget, ListView.Contain)
         }
     }
