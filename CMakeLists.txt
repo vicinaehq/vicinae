@@ -87,6 +87,7 @@ add_subdirectory(${LIB_DIR}/emoji)
 add_subdirectory(${LIB_DIR}/xdgpp)
 add_subdirectory(${LIB_DIR}/vicinae-ipc)
 add_subdirectory(${LIB_DIR}/common)
+add_subdirectory(${LIB_DIR}/linux-utils)
 
 set(PROTO_DIR ${CMAKE_SOURCE_DIR}/src/proto)
 

@@ -1,7 +1,7 @@
 #include <cstring>
 #include <format>
 #include <unistd.h>
-#include "snippet/keyboard.hpp"
+#include "linuxutils/keyboard.hpp"
 #include "linux/uinput.h"
 
 static constexpr const uinput_setup KB_ID = {
