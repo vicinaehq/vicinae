@@ -57,19 +57,19 @@ Item {
     function revealCurrentSectionHeaderIfHidden() {
         if (listView.currentIndex < 0) return false
 
-        var scrollTarget = sectionScrollTarget(listView.currentIndex, -1)
+        const scrollTarget = sectionScrollTarget(listView.currentIndex, -1)
         if (scrollTarget === listView.currentIndex) return false
 
-        var previousContentY = listView.contentY
+        const previousContentY = listView.contentY
         listView.positionViewAtIndex(scrollTarget, ListView.Contain)
         return Math.abs(listView.contentY - previousContentY) > 0.5
     }
 
     function moveDown() {
-        var next = root.listModel.nextSelectableIndex(listView.currentIndex, 1)
+        const next = root.listModel.nextSelectableIndex(listView.currentIndex, 1)
         if (next !== listView.currentIndex) {
             listView.currentIndex = next
-            var scrollTarget = sectionScrollTarget(next, -1)
+            const scrollTarget = sectionScrollTarget(next, -1)
             listView.positionViewAtIndex(scrollTarget, ListView.Contain)
         }
     }
@@ -77,20 +77,20 @@ Item {
     function moveUp() {
         if (revealCurrentSectionHeaderIfHidden()) return
 
-        var next = root.listModel.nextSelectableIndex(listView.currentIndex, -1)
+        const next = root.listModel.nextSelectableIndex(listView.currentIndex, -1)
         if (next !== listView.currentIndex) {
             listView.currentIndex = next
-            var scrollTarget = sectionScrollTarget(next, -1)
+            const scrollTarget = sectionScrollTarget(next, -1)
             listView.positionViewAtIndex(scrollTarget, ListView.Contain)
         }
     }
 
     function moveSectionDown() {
         if (typeof root.listModel.nextSectionIndex !== "function") { moveDown(); return }
-        var next = root.listModel.nextSectionIndex(listView.currentIndex, 1)
+        const next = root.listModel.nextSectionIndex(listView.currentIndex, 1)
         if (next !== listView.currentIndex) {
             listView.currentIndex = next
-            var scrollTarget = sectionScrollTarget(next, -1)
+            const scrollTarget = sectionScrollTarget(next, -1)
             listView.positionViewAtIndex(scrollTarget, ListView.Contain)
         }
     }
@@ -99,10 +99,10 @@ Item {
         if (typeof root.listModel.nextSectionIndex !== "function") { moveUp(); return }
         if (revealCurrentSectionHeaderIfHidden()) return
 
-        var next = root.listModel.nextSectionIndex(listView.currentIndex, -1)
+        const next = root.listModel.nextSectionIndex(listView.currentIndex, -1)
         if (next !== listView.currentIndex) {
             listView.currentIndex = next
-            var scrollTarget = sectionScrollTarget(next, -1)
+            const scrollTarget = sectionScrollTarget(next, -1)
             listView.positionViewAtIndex(scrollTarget, ListView.Contain)
         }
     }
