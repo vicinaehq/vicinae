@@ -1,2 +1,2 @@
 # Allows vicinae to create a virtual keyboard: required for paste support (the current user needs to be in the 'input' group)
-KERNEL=="uinput", GROUP="input", MODE="0660"
+KERNEL=="uinput", GROUP="input", MODE="0660" RUN+="/usr/bin/setfacl -m g:input:rw /dev/$name"
