@@ -6,7 +6,7 @@
 
 class ShortcutExtension : public BuiltinCommandRepository {
   QString id() const override { return "manage-shortcuts"; }
-  QString displayName() const override { return "Shortcuts"; }
+  QString displayName() const override { return "Manage Shortcuts"; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("link").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }

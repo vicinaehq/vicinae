@@ -2,6 +2,7 @@
 #include "common/context.hpp"
 #include <QObject>
 #include <QQmlApplicationEngine>
+#include <QVariantList>
 
 class ConfigBridge;
 class ImageSource;
@@ -14,7 +15,10 @@ class QQuickWindow;
 class SettingsWindow : public QObject {
   Q_OBJECT
 
-  Q_PROPERTY(int currentTab READ currentTab WRITE setCurrentTab NOTIFY currentTabChanged)
+  Q_PROPERTY(QString currentPage READ currentPage WRITE setCurrentPage NOTIFY currentPageChanged)
+  Q_PROPERTY(
+      QString pendingCommandId READ pendingCommandId WRITE setPendingCommandId NOTIFY pendingCommandIdChanged)
+  Q_PROPERTY(QVariantList sidebarExtensions READ sidebarExtensions NOTIFY sidebarExtensionsChanged)
   Q_PROPERTY(QString version READ version CONSTANT)
   Q_PROPERTY(QString commitHash READ commitHash CONSTANT)
   Q_PROPERTY(QString buildInfo READ buildInfo CONSTANT)
@@ -26,8 +30,13 @@ class SettingsWindow : public QObject {
 public:
   explicit SettingsWindow(ApplicationContext &ctx, QObject *parent = nullptr);
 
-  int currentTab() const { return m_currentTab; }
-  void setCurrentTab(int tab);
+  QString currentPage() const { return m_currentPage; }
+  void setCurrentPage(const QString &page);
+
+  QString pendingCommandId() const { return m_pendingCommandId; }
+  void setPendingCommandId(const QString &id);
+
+  QVariantList sidebarExtensions() const;
 
   QString version() const;
   QString commitHash() const;
@@ -40,6 +49,8 @@ public:
 
   Q_INVOKABLE void openUrl(const QString &url);
   Q_INVOKABLE void close();
+  Q_INVOKABLE void requestDefaultFocus();
+  Q_INVOKABLE QVariantList filterSidebarItems(const QString &query) const;
 
   void show();
   void hide();
@@ -48,11 +59,15 @@ public:
   void selectExtension(const QString &entrypointId);
 
 signals:
-  void currentTabChanged();
+  void currentPageChanged();
+  void pendingCommandIdChanged();
+  void sidebarExtensionsChanged();
+  void defaultFocusRequested();
 
 private:
   void ensureInitialized();
   void updateBlur();
+  void rebuildSidebarExtensions();
 
   ApplicationContext &m_ctx;
   QQmlApplicationEngine m_engine;
@@ -63,6 +78,8 @@ private:
   KeybindSettingsModel *m_keybindModel = nullptr;
   ExtensionSettingsModel *m_extensionModel = nullptr;
   QQuickWindow *m_window = nullptr;
-  int m_currentTab = 0;
+  QString m_currentPage = QStringLiteral("general");
+  QString m_pendingCommandId;
+  QVariantList m_sidebarExtensions;
   bool m_initialized = false;
 };

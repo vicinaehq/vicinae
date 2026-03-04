@@ -573,6 +573,8 @@ set(SRCS
 	src/qml/extension-settings-model.cpp
 	src/qml/preference-form-model.hpp
 	src/qml/preference-form-model.cpp
+	src/qml/provider-command-model.hpp
+	src/qml/provider-command-model.cpp
 
 	src/extensions/internal/markdown-showcase-command.hpp
 
@@ -742,12 +744,15 @@ set(VICINAE_QML_FILES
 	src/qml/qml/ScriptOutputText.qml
 	src/qml/qml/ScriptExecutorView.qml
 	src/qml/qml/SettingsWindow.qml
-	src/qml/qml/SettingsNavBar.qml
+	src/qml/qml/SettingsSidebar.qml
+	src/qml/qml/SettingsRow.qml
+	src/qml/qml/SettingsToggle.qml
 	src/qml/qml/SettingsLinkButton.qml
-	src/qml/qml/AboutSettingsTab.qml
-	src/qml/qml/GeneralSettingsTab.qml
-	src/qml/qml/ExtensionSettingsTab.qml
-	src/qml/qml/KeybindSettingsTab.qml
+	src/qml/qml/GeneralSettingsPage.qml
+	src/qml/qml/AdvancedSettingsPage.qml
+	src/qml/qml/ShortcutsSettingsPage.qml
+	src/qml/qml/ExtensionSettingsPage.qml
+	src/qml/qml/AboutSettingsPage.qml
 	src/qml/qml/ShortcutRecorderField.qml
 	src/qml/qml/PreferenceFormView.qml
 	src/qml/qml/SettingsPreferenceForm.qml

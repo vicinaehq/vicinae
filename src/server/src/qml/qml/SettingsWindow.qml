@@ -3,12 +3,12 @@ import QtQuick.Layouts
 
 Window {
     id: root
-    width: 1000
-    height: 600
-    minimumWidth: 1000
-    minimumHeight: 600
-    maximumWidth: 1000
-    maximumHeight: 600
+    width: 860
+    height: 540
+    minimumWidth: 860
+    minimumHeight: 540
+    maximumWidth: 860
+    maximumHeight: 540
     visible: true
     color: "transparent"
     flags: Qt.FramelessWindowHint | Qt.Window
@@ -18,42 +18,122 @@ Window {
         id: background
         anchors.fill: parent
         radius: 10
+        Keys.onEscapePressed: settings.close()
         color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
         border.color: Theme.divider
         border.width: 1
         clip: true
 
-        ColumnLayout {
+        RowLayout {
             anchors.fill: parent
             spacing: 0
 
-            SettingsNavBar {
-                Layout.fillWidth: true
-                currentIndex: settings.currentTab
-                onTabClicked: (index) => settings.currentTab = index
+            SettingsSidebar {
+                Layout.fillHeight: true
+                Layout.preferredWidth: 220
             }
 
             Rectangle {
-                Layout.fillWidth: true
-                height: 1
+                Layout.fillHeight: true
+                width: 1
                 color: Theme.divider
             }
 
-            StackLayout {
+            ColumnLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                currentIndex: settings.currentTab
+                spacing: 0
 
-                GeneralSettingsTab {}
-                ExtensionSettingsTab {}
-                KeybindSettingsTab {}
-                AboutSettingsTab {}
+                // Header with close button
+                Item {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 40
+
+                    Rectangle {
+                        id: closeBtn
+                        anchors.right: parent.right
+                        anchors.rightMargin: 12
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 24
+                        height: 24
+                        radius: 12
+                        color: closeHover.hovered ? Theme.listItemHoverBg : "transparent"
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "\u2715"
+                            color: closeHover.hovered ? Theme.foreground : Theme.textMuted
+                            font.pixelSize: 12
+                        }
+
+                        HoverHandler { id: closeHover }
+                        TapHandler { onTapped: settings.close() }
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 1
+                    color: Theme.divider
+                }
+
+                Loader {
+                    id: pageLoader
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+
+                    Component.onCompleted: _loadPage(settings.currentPage)
+
+                    function _loadPage(page) {
+                        active = false;
+                        if (page !== "general" && page !== "keybindings"
+                            && page !== "advanced" && page !== "about") {
+                            settings.extensionModel.selectProviderById(page)
+                        }
+                        switch (page) {
+                        case "general": sourceComponent = generalPage; break;
+                        case "keybindings": sourceComponent = shortcutsPage; break;
+                        case "advanced": sourceComponent = advancedPage; break;
+                        case "about": sourceComponent = aboutPage; break;
+                        default: sourceComponent = extensionPage; break;
+                        }
+                        active = true;
+                    }
+
+                    Connections {
+                        target: settings
+                        function onCurrentPageChanged() {
+                            pageLoader._loadPage(settings.currentPage)
+                        }
+                    }
+                }
             }
         }
     }
 
-    Shortcut {
-        sequence: "Escape"
-        onActivated: settings.close()
+    Component {
+        id: generalPage
+        GeneralSettingsPage {}
     }
+
+    Component {
+        id: shortcutsPage
+        ShortcutsSettingsPage {}
+    }
+
+    Component {
+        id: advancedPage
+        AdvancedSettingsPage {}
+    }
+
+    Component {
+        id: aboutPage
+        AboutSettingsPage {}
+    }
+
+    Component {
+        id: extensionPage
+        ExtensionSettingsPage {}
+    }
+
 }
