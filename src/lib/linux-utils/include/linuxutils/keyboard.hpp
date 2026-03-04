@@ -9,6 +9,8 @@
 #include <linux/input.h>
 #include <unistd.h>
 
+namespace linuxutils {
+
 /**
  * Virtual keyboard device using /dev/uinput.
  * This is a very low level keyboard device that operates at the scan code level,
@@ -65,3 +67,4 @@ private:
   std::optional<std::string> m_error;
   int m_fd = -1;
 };
+} // namespace linuxutils

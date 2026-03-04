@@ -4,6 +4,8 @@
 #include "linuxutils/keyboard.hpp"
 #include "linux/uinput.h"
 
+namespace linuxutils {
+
 static constexpr const uinput_setup KB_ID = {
     .id = {.bustype = BUS_VIRTUAL, .vendor = 0x1234, .product = 0x5678, .version = 1},
     .name = "vicinae-snippet-virtual-keyboard",
@@ -95,3 +97,4 @@ void UInputKeyboard::clearMods(int mods) {
   if ((m & Modifier::Ctrl) != Modifier::None) { keyup(KEY_LEFTCTRL); }
   if ((m & Modifier::Shift) != Modifier::None) { keyup(KEY_LEFTSHIFT); }
 }
+}; // namespace linuxutils

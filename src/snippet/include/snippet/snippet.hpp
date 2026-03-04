@@ -37,7 +37,7 @@ protected:
   void emitExpansion(const Snippet &snipet);
 
 private:
-  UInputKeyboard m_kb;
+  linuxutils::UInputKeyboard m_kb;
   std::string m_text;
   udev *m_udev = nullptr;
   xkb_context *m_xkb = nullptr;
