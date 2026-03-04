@@ -64,6 +64,7 @@ public:
 
   WindowList listWindowsSync() const override;
   std::shared_ptr<AbstractWindow> getFocusedWindowSync() const override;
+  bool supportsFocusTracking() const override { return true; }
   void focusWindowSync(const AbstractWindow &window) const override;
   bool closeWindow(const AbstractWindow &window) const override;
 

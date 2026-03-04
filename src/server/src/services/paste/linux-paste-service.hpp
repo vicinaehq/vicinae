@@ -1,5 +1,4 @@
 #pragma once
-#include <memory>
 #include "linuxutils/keyboard.hpp"
 #include "services/paste/abstract-paste-service.hpp"
 
@@ -12,5 +11,5 @@ public:
                   const AbstractApplication *app) override;
 
 private:
-  std::unique_ptr<linuxutils::UInputKeyboard> m_keyboard;
+  linuxutils::UInputKeyboard m_keyboard;
 };

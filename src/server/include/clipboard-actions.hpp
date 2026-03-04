@@ -60,8 +60,8 @@ public:
 protected:
   void execute(ApplicationContext *ctx) override {
     auto paste = ctx->services->pasteService();
-    ctx->navigation->closeWindow();
     paste->pasteContent(m_content, {.concealed = m_concealed});
+    ctx->navigation->closeWindow();
   }
 
   void loadClipboardData(const Clipboard::Content &content) { m_content = content; }

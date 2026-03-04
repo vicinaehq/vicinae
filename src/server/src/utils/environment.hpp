@@ -76,14 +76,6 @@ inline std::optional<std::filesystem::path> nodeBinaryOverride() {
   return std::nullopt;
 }
 
-inline std::chrono::milliseconds pasteDelay() {
-  using namespace std::chrono_literals;
-  if (const char *delay = getenv("VICINAE_PASTE_DELAY")) {
-    return std::chrono::milliseconds(std::stoi(delay));
-  }
-  return 100ms;
-}
-
 inline bool isAppImage() { return appImageDir().has_value(); }
 
 inline QStringList fallbackIconSearchPaths() {

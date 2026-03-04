@@ -44,6 +44,7 @@ public:
 
   WindowList listWindowsSync() const override;
   AbstractWindowManager::WindowPtr getFocusedWindowSync() const override;
+  bool supportsFocusTracking() const override { return true; }
 
   bool setDimAround(bool value = true) override;
 

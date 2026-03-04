@@ -126,6 +126,8 @@ public:
    */
   virtual std::shared_ptr<AbstractWindow> getFocusedWindowSync() const { return nullptr; }
 
+  virtual bool supportsFocusTracking() const { return false; }
+
   virtual void focusWindowSync(const AbstractWindow &window) const {}
 
   /**
