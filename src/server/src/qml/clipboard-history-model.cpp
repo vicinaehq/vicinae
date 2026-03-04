@@ -5,7 +5,7 @@
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/clipboard/clipboard-service.hpp"
-#include "services/window-manager/window-manager.hpp"
+#include "services/paste/paste-service.hpp"
 #include "utils/utils.hpp"
 #include <QDateTime>
 #include <utility>
@@ -81,7 +81,7 @@ std::unique_ptr<ActionPanelState> ClipboardHistoryModel::createActionPanel(int, 
 
   if (!isCopyable) { mainSection->addAction(new OpenItemPreferencesAction(EntrypointId{"clipboard", ""})); }
 
-  auto wm = scope().services()->windowManager();
+  auto pasteService = scope().services()->pasteService();
   auto pin = new PinClipboardAction(entry.id, !entry.pinnedAt);
   auto editKeywords = new EditClipboardKeywordsAction(entry.id);
   auto remove = new RemoveSelectionAction(entry.id);
@@ -97,7 +97,7 @@ std::unique_ptr<ActionPanelState> ClipboardHistoryModel::createActionPanel(int, 
     auto copy = new CopyClipboardSelection(entry.id);
     copy->addShortcut(Keybind::CopyAction);
 
-    if (wm->canPaste()) {
+    if (pasteService->supportsPaste()) {
       auto paste = new PasteClipboardSelection(entry.id);
       paste->addShortcut(Keybind::PasteAction);
       if (m_defaultAction == DefaultAction::Copy) {

@@ -1,7 +1,6 @@
 #pragma once
 #include "services/window-manager/abstract-window-manager.hpp"
 #include <qsocketnotifier.h>
-#include <xkbcommon/xkbcommon-keysyms.h>
 
 namespace Niri {
 
@@ -72,9 +71,6 @@ public:
   bool hasWorkspaces() const override { return true; }
   WorkspaceList listWorkspaces() const override;
   WorkspacePtr getActiveWorkspace() const override;
-
-  bool supportsPaste() const override;
-  bool pasteToWindow(const AbstractWindow *window, const AbstractApplication *app) override;
 
   bool ping() const override;
   bool isActivatable() const override;

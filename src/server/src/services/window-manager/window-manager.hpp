@@ -12,7 +12,6 @@ public:
   AbstractWindowManager *provider() const;
   AbstractWindowManager::WindowList listWindowsSync();
   AbstractWindowManager::WindowPtr getFocusedWindow();
-  bool canPaste() const;
   bool focusApp(const AbstractApplication &app) const;
 
   AbstractWindowManager::WindowList findAppWindows(const AbstractApplication &app) const;

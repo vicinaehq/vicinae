@@ -49,10 +49,6 @@ public:
   WindowList listWindowsSync() const override;
   void focusWindowSync(const AbstractWindow &window) const override;
 
-  // I don't know if there is a reliable way to do it on kde, it doesn't have the
-  // virtual keyboard protocol
-  bool supportsPaste() const override { return false; }
-
   bool isActivatable() const override { return Environment::isWaylandPlasmaDesktop(); }
 
   bool ping() const override { return true; }

@@ -1,6 +1,7 @@
 #pragma once
 #include "builtin_icon.hpp"
 #include "services/clipboard/clipboard-service.hpp"
+#include "services/paste/paste-service.hpp"
 #include "ui/image/url.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "navigation-controller.hpp"
@@ -58,9 +59,9 @@ public:
 
 protected:
   void execute(ApplicationContext *ctx) override {
-    auto clipman = ctx->services->clipman();
+    auto paste = ctx->services->pasteService();
     ctx->navigation->closeWindow();
-    clipman->pasteContent(m_content, {.concealed = m_concealed});
+    paste->pasteContent(m_content, {.concealed = m_concealed});
   }
 
   void loadClipboardData(const Clipboard::Content &content) { m_content = content; }

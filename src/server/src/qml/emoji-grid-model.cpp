@@ -188,7 +188,7 @@ std::unique_ptr<ActionPanelState> EmojiGridModel::createActionPanel(int section,
                                   ? emoji::applySkinTone(data->emoji, m_skinTone.value()).c_str()
                                   : QString::fromUtf8(data->emoji);
 
-  auto wm = scope().services()->windowManager();
+  auto pasteService = scope().services()->pasteService();
   auto panel = std::make_unique<ListActionPanelState>();
   auto *copyEmoji = new CopyToClipboardAction(Clipboard::Text(copiedEmoji), "Copy emoji");
   auto *copyName = new CopyToClipboardAction(
@@ -205,7 +205,7 @@ std::unique_ptr<ActionPanelState> EmojiGridModel::createActionPanel(int section,
       defaultAction = cmd->preferenceValues().value("defaultAction").toString();
   }
 
-  if (wm->canPaste()) {
+  if (pasteService->supportsPaste()) {
     auto *paste = new PasteToFocusedWindowAction(Clipboard::Text(copiedEmoji));
     if (defaultAction == "paste") {
       mainSection->addAction(new VisitEmojiActionWrapper(data->emoji, paste));

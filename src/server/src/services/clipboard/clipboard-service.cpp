@@ -3,7 +3,6 @@
 #include <filesystem>
 #include <numeric>
 #include <QGuiApplication>
-#include "environment.hpp"
 #include "services/app-service/abstract-app-db.hpp"
 #include "x11/x11-clipboard-server.hpp"
 #include <qclipboard.h>
@@ -27,8 +26,6 @@
 #include "services/clipboard/gnome/gnome-clipboard-server.hpp"
 #include "utils.hpp"
 #include "data-control/data-control-clipboard-server.hpp"
-#include "services/window-manager/abstract-window-manager.hpp"
-#include "services/window-manager/window-manager.hpp"
 
 namespace fs = std::filesystem;
 
@@ -84,24 +81,6 @@ bool ClipboardService::copyContent(const Clipboard::Content &content, const Clip
   ContentVisitor visitor(*this, options);
 
   return std::visit(visitor, content);
-}
-
-bool ClipboardService::pasteContent(const Clipboard::Content &content, const Clipboard::CopyOptions options) {
-  if (!copyContent(content, options)) return false;
-
-  if (!m_wm.provider()->supportsPaste()) {
-    qWarning() << "pasteContent called but the current window manager cannot paste, ignoring...";
-    return false;
-  }
-
-  QTimer::singleShot(Environment::pasteDelay(), [wm = &m_wm, appDb = &m_appDb]() {
-    auto window = wm->getFocusedWindow();
-    std::shared_ptr<AbstractApplication> app;
-    if (window) { app = appDb->find(window->wmClass()); }
-    wm->provider()->pasteToWindow(window.get(), app.get());
-  });
-
-  return true;
 }
 
 bool ClipboardService::copyFile(const std::filesystem::path &path, const Clipboard::CopyOptions &options) {
@@ -618,8 +597,7 @@ bool ClipboardService::removeAllSelections() {
 
 AbstractClipboardServer *ClipboardService::clipboardServer() const { return m_clipboardServer.get(); }
 
-ClipboardService::ClipboardService(const std::filesystem::path &path, WindowManager &wm, AppService &appDb)
-    : m_wm(wm), m_appDb(appDb) {
+ClipboardService::ClipboardService(const std::filesystem::path &path) {
   m_dataDir = path.parent_path() / "clipboard-data";
 
   {

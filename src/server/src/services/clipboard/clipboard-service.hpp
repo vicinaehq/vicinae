@@ -1,12 +1,9 @@
 #pragma once
 #include "common.hpp"
 #include "extensions/wm/wm-extension.hpp"
-#include "services/app-service/app-service.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include "services/clipboard/clipboard-encrypter.hpp"
 #include "services/clipboard/clipboard-server.hpp"
-#include "services/window-manager/abstract-window-manager.hpp"
-#include "services/window-manager/window-manager.hpp"
 #include <QString>
 #include <expected>
 #include <filesystem>
@@ -76,7 +73,7 @@ public:
     DecryptionFailed,
   };
 
-  ClipboardService(const std::filesystem::path &path, WindowManager &wm, AppService &appDb);
+  ClipboardService(const std::filesystem::path &path);
 
   static QString readText();
   static Clipboard::ReadContent readContent();
@@ -98,8 +95,6 @@ public:
                 const Clipboard::CopyOptions &options = {.concealed = false});
   bool copyContent(const Clipboard::Content &content,
                    const Clipboard::CopyOptions options = {.concealed = false});
-  bool pasteContent(const Clipboard::Content &content,
-                    const Clipboard::CopyOptions options = {.concealed = false});
   void setRecordAllOffers(bool value);
   bool clear();
   void saveSelection(ClipboardSelection selection);
@@ -150,9 +145,6 @@ private:
   decryptOffer(const QByteArray &data, ClipboardEncryptionType type) const;
 
   static ClipboardOfferKind getKind(const ClipboardDataOffer &offer);
-
-  WindowManager &m_wm;
-  AppService &m_appDb;
 
   bool m_recordAllOffers = true;
   bool m_monitoring = false;

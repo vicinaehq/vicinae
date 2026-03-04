@@ -1,18 +1,18 @@
 #include "clipboard-history-command.hpp"
 #include "service-registry.hpp"
 #include <qjsonobject.h>
-#include "services/window-manager/window-manager.hpp"
+#include "services/paste/paste-service.hpp"
 
 void ClipboardHistoryCommand::preferenceValuesChanged(const QJsonObject &value) const {}
 
 std::vector<Preference> ClipboardHistoryCommand::preferences() const {
-  auto wm = ServiceRegistry::instance()->windowManager();
+  auto paste = ServiceRegistry::instance()->pasteService();
   std::vector<Preference> preferences;
 
   std::vector<Preference::DropdownData::Option> defaultActionOptions;
   QString dflt = "copy";
 
-  if (wm->canPaste()) {
+  if (paste->supportsPaste()) {
     defaultActionOptions.emplace_back(Preference::DropdownData::Option{"Paste", "paste"});
     dflt = "paste";
   }

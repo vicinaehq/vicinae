@@ -429,6 +429,7 @@ set(SRCS
 	src/services/extension-boilerplate-generator/extension-boilerplate-generator.cpp
 
 	src/services/window-manager/abstract-window-manager.hpp
+	src/services/paste/abstract-paste-service.hpp
 	src/services/browser-extension-service.hpp
 
 	src/lib/program-db/program-db.hpp
@@ -603,6 +604,9 @@ if (UNIX AND NOT APPLE)
 	list(APPEND SRCS
 		#src/lib/xkbcommon-utils.cpp
 
+		src/services/paste/linux-paste-service.cpp
+		src/services/paste/paste-service.cpp
+
 		src/lib/icon-theme-db/icon-theme-db.cpp
 
 		src/services/window-manager/hyprland/hyprland.cpp
@@ -642,7 +646,7 @@ if (UNIX AND NOT APPLE)
 	wayland_generate_protocol("kde-blur")
 	wayland_generate_protocol("ext-background-effect-v1")
 
-	list(APPEND LIBS xkbcommon)
+	list(APPEND LIBS xkbcommon vicinae::linuxutils)
 
 	# Common Wayland support files
 	list(APPEND SRCS
