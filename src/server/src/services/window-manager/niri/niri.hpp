@@ -66,6 +66,7 @@ public:
   WindowList listWindowsSync() const override;
   AbstractWindowManager::WindowPtr getFocusedWindowSync() const override;
   bool supportsFocusTracking() const override { return true; }
+  bool focusNullsOnLayerGrab() const override { return true; }
   void focusWindowSync(const AbstractWindow &window) const override;
   bool closeWindow(const AbstractWindow &window) const override;
 

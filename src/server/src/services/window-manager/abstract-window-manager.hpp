@@ -141,6 +141,14 @@ public:
    */
   virtual bool supportsFocusTracking() const { return false; }
 
+  /**
+   * Whether `getFocusedWindowSync` returns nullptr when a layer shell surface grabs keyboard focus.
+   * Some compositors (niri, gnome) null out the focused window when a layer has focus, making it
+   * possible to detect focus transitions. Others (hyprland) keep reporting the previously focused
+   * window, in which case we cannot reliably detect when focus has returned to the target app.
+   */
+  virtual bool focusNullsOnLayerGrab() const { return false; }
+
   virtual void focusWindowSync(const AbstractWindow &window) const {}
 
   /**

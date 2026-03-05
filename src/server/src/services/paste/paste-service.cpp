@@ -28,7 +28,7 @@ bool PasteService::pasteContent(const Clipboard::Content &content, const Clipboa
   m_focusPollTimer.stop();
   m_hasPendingPaste = true;
 
-  if (m_wm.provider()->supportsFocusTracking()) {
+  if (m_wm.provider()->focusNullsOnLayerGrab()) {
     m_focusPollCount = 0;
     m_focusPollTimer.start();
   } else {

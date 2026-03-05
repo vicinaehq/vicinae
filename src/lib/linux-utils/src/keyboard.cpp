@@ -1,5 +1,6 @@
 #include <cstring>
 #include <format>
+#include <print>
 #include <unistd.h>
 #include "linuxutils/keyboard.hpp"
 #include "linux/uinput.h"
@@ -11,6 +12,12 @@ static constexpr const uinput_setup KB_ID = {
     .name = "vicinae-snippet-virtual-keyboard",
 };
 static constexpr const auto KEY_DELAY_US = 2000;
+
+static void emit(int fd, const input_event &ev) {
+  if (write(fd, &ev, sizeof(ev)) < 0) {
+    std::println(stderr, "UInputKeyboard: write failed: {}", strerror(errno));
+  }
+}
 
 UInputKeyboard::UInputKeyboard() {
   const int fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
@@ -56,27 +63,27 @@ void UInputKeyboard::repeatKey(int code, int n) {
 }
 
 void UInputKeyboard::sync() {
-  struct input_event ev{};
+  struct input_event ev {};
   ev.type = EV_SYN;
   ev.code = SYN_REPORT;
   ev.value = 0;
-  write(m_fd, &ev, sizeof(ev));
+  emit(m_fd, ev);
 }
 
 void UInputKeyboard::keyup(int code) {
-  struct input_event ev{};
+  struct input_event ev {};
   ev.type = EV_KEY;
   ev.code = code;
   ev.value = 0;
-  write(m_fd, &ev, sizeof(ev));
+  emit(m_fd, ev);
 }
 
 void UInputKeyboard::keydown(int code) {
-  struct input_event ev{};
+  struct input_event ev {};
   ev.type = EV_KEY;
   ev.code = code;
   ev.value = 1;
-  write(m_fd, &ev, sizeof(ev));
+  emit(m_fd, ev);
 }
 
 void UInputKeyboard::sendKey(int code) {
