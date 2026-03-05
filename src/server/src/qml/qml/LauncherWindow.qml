@@ -217,14 +217,6 @@ Window {
         }
     }
 
-    Connections {
-        target: actionPanel
-        function onOpenChanged() {
-            if (!actionPanel.open && launcher.searchInteractive)
-                searchBar.focusInput()
-        }
-    }
-
     onWidthChanged: root.x = (Screen.width - root.width) / 2
     onHeightChanged: root.y = (Screen.height - root.height) / 3
 
