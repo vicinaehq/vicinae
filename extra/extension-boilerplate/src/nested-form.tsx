@@ -1,14 +1,23 @@
 import {
 	Action,
 	ActionPanel,
+	Detail,
 	Form,
+	Keyboard,
 	List,
 	showToast,
 	Toast,
 	useNavigation,
 } from "@vicinae/api";
 
+function SubmitResult({ values }: { values: Record<string, unknown> }) {
+	const json = JSON.stringify(values, null, 2);
+	return <Detail markdown={`# Submitted values\n\n\`\`\`json\n${json}\n\`\`\``} />;
+}
+
 function NestedForm({ item }: { item: string }) {
+	const { push } = useNavigation();
+
 	return (
 		<Form
 			navigationTitle={`Edit ${item}`}
@@ -16,11 +25,20 @@ function NestedForm({ item }: { item: string }) {
 				<ActionPanel>
 					<Action.SubmitForm
 						title="Submit"
-						onSubmit={(values) =>
-							showToast(
-								Toast.Style.Success,
-								`Submitted: ${JSON.stringify(values)}`,
-							)
+						onSubmit={(values) => push(<SubmitResult values={values} />)}
+					/>
+					<Action
+						title="Save Draft"
+						shortcut={{ key: "s", modifiers: ["ctrl"] }}
+						onAction={() =>
+							showToast(Toast.Style.Success, "Draft saved (Ctrl+S)")
+						}
+					/>
+					<Action
+						title="Reset"
+						shortcut={{ key: "r", modifiers: ["ctrl", "shift"] }}
+						onAction={() =>
+							showToast(Toast.Style.Success, "Reset (Ctrl+Shift+R)")
 						}
 					/>
 				</ActionPanel>
@@ -54,7 +72,6 @@ function NestedForm({ item }: { item: string }) {
 }
 
 export default function NestedFormTest() {
-	const { push } = useNavigation();
 	const items = ["Alpha", "Bravo", "Charlie", "Delta", "Echo"];
 
 	return (

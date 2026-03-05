@@ -8,6 +8,11 @@ Item {
 
     property bool _autoFocusDone: false
 
+    function restoreFocus() {
+        _autoFocusDone = false
+        Qt.callLater(_tryAutoFocus)
+    }
+
     Connections {
         target: root.formModel
         function onAutoFocusRequested(index) {

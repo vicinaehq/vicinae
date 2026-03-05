@@ -220,9 +220,8 @@ Window {
     Connections {
         target: actionPanel
         function onOpenChanged() {
-            if (!actionPanel.open) {
+            if (!actionPanel.open && launcher.searchInteractive)
                 searchBar.focusInput()
-            }
         }
     }
 
