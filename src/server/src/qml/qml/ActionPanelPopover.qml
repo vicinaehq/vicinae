@@ -2,11 +2,12 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Effects
 
-FocusScope {
+FocusRestoringScope {
     id: root
-    focus: actionPanel.open
+    active: actionPanel.open
     visible: actionPanel.open || panel.opacity > 0
     enabled: actionPanel.open
+
     onVisibleChanged: {
         if (!visible)
             stack.clear(StackView.Immediate)
