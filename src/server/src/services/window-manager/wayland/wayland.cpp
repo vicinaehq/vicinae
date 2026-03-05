@@ -4,8 +4,6 @@
 
 #include <qscreen.h>
 #include <wayland-client-protocol.h>
-#include "wayland/globals.hpp"
-#include "wayland/virtual-keyboard.hpp"
 #include "wlr-foreign-toplevel-management-unstable-v1-client-protocol.h"
 
 // Events — wayland protocol callback names must follow C naming conventions
@@ -104,20 +102,6 @@ AbstractWindowManager::WindowPtr WaylandWindowManager::getFocusedWindowSync() co
   return nullptr;
 }
 
-bool WaylandWindowManager::pasteToWindow(const AbstractWindow *window, const AbstractApplication *app) {
-  using VK = Wayland::VirtualKeyboard;
-
-  VK kb;
-
-  if (!kb.isAvailable()) { return false; }
-
-  if (app && app->isTerminalEmulator()) {
-    return kb.sendKeySequence(XKB_KEY_v, VK::MOD_CTRL | VK::MOD_SHIFT);
-  }
-
-  return kb.sendKeySequence(XKB_KEY_v, VK::MOD_CTRL);
-}
-
 void WaylandWindowManager::focusWindowSync(const AbstractWindow &window) const {
   const WaylandWindow &ww = static_cast<const WaylandWindow &>(window);
   zwlr_foreign_toplevel_handle_v1_activate(ww.m_handle, m_seat);
@@ -129,8 +113,6 @@ bool WaylandWindowManager::closeWindow(const AbstractWindow &window) const {
 
   return true;
 }
-
-bool WaylandWindowManager::supportsPaste() const { return Wayland::Globals::virtualKeyboardManager(); }
 
 // cosmic needs its own top level management protocol integration
 bool WaylandWindowManager::isActivatable() const {

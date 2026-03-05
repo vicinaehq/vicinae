@@ -34,6 +34,8 @@
 #include "services/toast/toast-service.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "services/snippet/snippet-service.hpp"
+#include "services/paste/paste-service.hpp"
+#include "services/paste/linux-paste-service.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "qml/launcher-window.hpp"
 #include "utils.hpp"
@@ -109,8 +111,10 @@ void CliServerCommand::run(CLI::App *) {
     auto appService = std::make_unique<AppService>(*omniDb.get());
     auto snippetService = std::make_unique<SnippetService>(Omnicast::dataDir() / "snippets" / "snippets.json",
                                                            *windowManager, *appService);
-    auto clipboardManager =
-        std::make_unique<ClipboardService>(Omnicast::dataDir() / "clipboard.db", *windowManager, *appService);
+    auto clipboardManager = std::make_unique<ClipboardService>(Omnicast::dataDir() / "clipboard.db");
+    auto linuxPaste = std::make_unique<LinuxPasteService>();
+    auto pasteService =
+        std::make_unique<PasteService>(*clipboardManager, *windowManager, *appService, std::move(linuxPaste));
     auto fontService = std::make_unique<FontService>();
     auto configService = std::make_unique<config::Manager>(m_config);
     auto rootItemManager = std::make_unique<RootItemManager>(*configService, *localStorage);
@@ -149,6 +153,7 @@ void CliServerCommand::run(CLI::App *) {
     registry->setLocalStorage(std::move(localStorage));
     registry->setExtensionManager(std::move(extensionManager));
     registry->setClipman(std::move(clipboardManager));
+    registry->setPasteService(std::move(pasteService));
     registry->setSnippetService(std::move(snippetService));
     registry->setWindowManager(std::move(windowManager));
     registry->setFontService(std::move(fontService));

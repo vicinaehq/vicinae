@@ -89,7 +89,7 @@ public:
   using WorkspaceList = std::vector<WorkspacePtr>;
 
 public:
-  virtual ~AbstractWindowManager() = default;
+  ~AbstractWindowManager() override = default;
 
   /**
    * Unique identifier for this window manager.
@@ -122,9 +122,32 @@ public:
   }
 
   /**
-   * Should return nullptr if there is no focused window (practically very rare).
+   * Should return nullptr if there is no focused window. In particular, some wayland compositors may return
+   * no focused window if focus was given to a layer shell surface, which is not a 'window' in wayland terms.
+   *
+   * If the window manager is unable to track the currently focused window, `supportsFocusTracking` must
+   * return false.
    */
   virtual std::shared_ptr<AbstractWindow> getFocusedWindowSync() const { return nullptr; }
+
+  /**
+   * Whether the window manager is able to track what window is currently focused.
+   * Note that a WM implementation can still implement `focusWindowSync` even if it
+   * can't track the currently focused window.
+   *
+   * Most window managers should implement this, but there are a few exceptions, such as:
+   * - KDE Plasma (WM implementation relies on an obscure dbus API)
+   * - Gnome, if the vicinae gnome extension is not installed
+   */
+  virtual bool supportsFocusTracking() const { return false; }
+
+  /**
+   * Whether `getFocusedWindowSync` returns nullptr when a layer shell surface grabs keyboard focus.
+   * Some compositors (niri, gnome) null out the focused window when a layer has focus, making it
+   * possible to detect focus transitions. Others (hyprland) keep reporting the previously focused
+   * window, in which case we cannot reliably detect when focus has returned to the target app.
+   */
+  virtual bool focusNullsOnLayerGrab() const { return false; }
 
   virtual void focusWindowSync(const AbstractWindow &window) const {}
 
@@ -162,26 +185,6 @@ public:
    * This is a common operation that should be supported by all window managers.
    */
   virtual bool closeWindow(const AbstractWindow &window) const { return false; }
-
-  /**
-   * Whether pasting the content of the clipboard to a window is supported.
-   * If it is the window manager should implement `pasteToWindow`.
-   */
-  virtual bool supportsPaste() const { return false; }
-
-  /**
-   * Paste the current content of the clipboard to the specified window.
-   *
-   * The `window` object is the currently focused window, if this information is available. Some environments
-   * may be paste-capable but not have a way to get the currently focused window.
-   *
-   * `app` refers to the application `window` refers to, if such an information is known. It is null
-   * otherwise. This is typically used to figure out whether the window is a terminal emulator so that a
-   * different shortcut can be sent (ctrl+shift+V for most UNIX terminals).
-   *
-   *
-   */
-  virtual bool pasteToWindow(const AbstractWindow *window, const AbstractApplication *app) { return false; }
 
   /**
    * To make sure the window manager IPC link is healthy.

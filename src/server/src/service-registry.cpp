@@ -21,6 +21,7 @@
 #include "services/toast/toast-service.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "services/snippet/snippet-service.hpp"
+#include "services/paste/paste-service.hpp"
 #include "config/config.hpp"
 
 RootItemManager *ServiceRegistry::rootItemManager() const { return m_rootItemManager.get(); }
@@ -49,6 +50,8 @@ ScriptCommandService *ServiceRegistry::scriptDb() const { return m_scriptCommand
 BrowserExtensionService *ServiceRegistry::browserExtension() const { return m_browserExtensionService.get(); }
 
 SnippetService *ServiceRegistry::snippetService() const { return m_snippetService.get(); }
+
+PasteService *ServiceRegistry::pasteService() const { return m_pasteService.get(); }
 
 BackgroundEffectManager *ServiceRegistry::backgroundEffectManager() const {
   return m_backgroundEffectManager.get();
@@ -118,6 +121,10 @@ void ServiceRegistry::setBrowserExtension(std::unique_ptr<BrowserExtensionServic
 
 void ServiceRegistry::setSnippetService(std::unique_ptr<SnippetService> service) {
   m_snippetService = std::move(service);
+}
+
+void ServiceRegistry::setPasteService(std::unique_ptr<PasteService> service) {
+  m_pasteService = std::move(service);
 }
 
 void ServiceRegistry::setBackgroundEffectManager(std::unique_ptr<BackgroundEffectManager> service) {

@@ -1,14 +1,23 @@
 #include <cstring>
 #include <format>
+#include <print>
 #include <unistd.h>
-#include "snippet/keyboard.hpp"
+#include "linuxutils/keyboard.hpp"
 #include "linux/uinput.h"
+
+namespace linuxutils {
 
 static constexpr const uinput_setup KB_ID = {
     .id = {.bustype = BUS_VIRTUAL, .vendor = 0x1234, .product = 0x5678, .version = 1},
     .name = "vicinae-snippet-virtual-keyboard",
 };
 static constexpr const auto KEY_DELAY_US = 2000;
+
+static void emit(int fd, const input_event &ev) {
+  if (write(fd, &ev, sizeof(ev)) < 0) {
+    std::println(stderr, "UInputKeyboard: write failed: {}", strerror(errno));
+  }
+}
 
 UInputKeyboard::UInputKeyboard() {
   const int fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
@@ -58,7 +67,7 @@ void UInputKeyboard::sync() {
   ev.type = EV_SYN;
   ev.code = SYN_REPORT;
   ev.value = 0;
-  write(m_fd, &ev, sizeof(ev));
+  emit(m_fd, ev);
 }
 
 void UInputKeyboard::keyup(int code) {
@@ -66,7 +75,7 @@ void UInputKeyboard::keyup(int code) {
   ev.type = EV_KEY;
   ev.code = code;
   ev.value = 0;
-  write(m_fd, &ev, sizeof(ev));
+  emit(m_fd, ev);
 }
 
 void UInputKeyboard::keydown(int code) {
@@ -74,7 +83,7 @@ void UInputKeyboard::keydown(int code) {
   ev.type = EV_KEY;
   ev.code = code;
   ev.value = 1;
-  write(m_fd, &ev, sizeof(ev));
+  emit(m_fd, ev);
 }
 
 void UInputKeyboard::sendKey(int code) {
@@ -95,3 +104,4 @@ void UInputKeyboard::clearMods(int mods) {
   if ((m & Modifier::Ctrl) != Modifier::None) { keyup(KEY_LEFTCTRL); }
   if ((m & Modifier::Shift) != Modifier::None) { keyup(KEY_LEFTSHIFT); }
 }
+}; // namespace linuxutils

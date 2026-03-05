@@ -72,6 +72,12 @@
 			"title": "Torture Test",
 			"description": "Stress-test view hot-swaps, dynamic reactivity, and background mutations",
 			"mode": "view"
+		},
+		{
+			"name": "nested-form",
+			"title": "Nested Form",
+			"description": "Test form views pushed from a list (nested navigation)",
+			"mode": "view"
 		}
 	],
 	"preferences": [],

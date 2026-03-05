@@ -1,8 +1,6 @@
 #pragma once
 #include "gnome-listener.hpp"
 #include "gnome-window.hpp"
-#include "lib/keyboard/keyboard.hpp"
-#include "services/app-service/abstract-app-db.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
 #include <QDBusInterface>
 #include <QJsonArray>
@@ -66,10 +64,10 @@ public:
 
   WindowList listWindowsSync() const override;
   std::shared_ptr<AbstractWindow> getFocusedWindowSync() const override;
+  bool supportsFocusTracking() const override { return true; }
+  bool focusNullsOnLayerGrab() const override { return true; }
   void focusWindowSync(const AbstractWindow &window) const override;
   bool closeWindow(const AbstractWindow &window) const override;
-
-  bool pasteToWindow(const AbstractWindow *window, const AbstractApplication *app) override;
 
   bool hasWorkspaces() const override { return true; }
   WorkspaceList listWorkspaces() const override;
@@ -78,14 +76,6 @@ public:
   bool isActivatable() const override;
   bool ping() const override;
   void start() override;
-
-  // GNOME-specific capabilities
-  bool supportsPaste() const override { return true; } // Now implemented
-
-  /**
-   * Send a keyboard shortcut to a specific window
-   */
-  bool sendShortcutSync(const AbstractWindow &window, const Keyboard::Shortcut &shortcut);
 
   /**
    * Get detailed information for a specific window

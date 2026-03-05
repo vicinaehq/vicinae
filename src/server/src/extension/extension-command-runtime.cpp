@@ -152,7 +152,8 @@ void ExtensionCommandRuntime::initialize() {
   m_storageRouter =
       std::make_unique<StorageRequestRouter>(context()->services->localStorage(), storageNamespace);
   m_appRouter = std::make_unique<AppRequestRouter>(*context()->services->appDb());
-  m_clipboardRouter = std::make_unique<ClipboardRequestRouter>(*context()->services->clipman());
+  m_clipboardRouter = std::make_unique<ClipboardRequestRouter>(*context()->services->clipman(),
+                                                               *context()->services->pasteService());
   m_wmRouter = std::make_unique<WindowManagementRouter>(*context()->services->windowManager(),
                                                         *context()->services->appDb());
   m_oauthRouter = std::make_unique<OAuthRouter>(m_command->extensionId(), *context());

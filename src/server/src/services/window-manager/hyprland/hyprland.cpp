@@ -3,9 +3,7 @@
 #include "services/window-manager/abstract-window-manager.hpp"
 #include "services/window-manager/hyprland/hypr-workspace.hpp"
 #include "services/window-manager/hyprland/hyprctl.hpp"
-#include "lib/wayland/virtual-keyboard.hpp"
 #include "vicinae.hpp"
-#include "wayland/globals.hpp"
 
 using Hyprctl = Hyprland::Controller;
 
@@ -43,19 +41,6 @@ bool HyprlandWindowManager::setDimAround(bool value) {
   return false;
 }
 
-bool HyprlandWindowManager::pasteToWindow(const AbstractWindow *window, const AbstractApplication *app) {
-  using VK = Wayland::VirtualKeyboard;
-  Wayland::VirtualKeyboard kb;
-
-  if (!kb.isAvailable()) { return false; }
-
-  if (app && app->isTerminalEmulator()) {
-    return kb.sendKeySequence(XKB_KEY_v, VK::MOD_CTRL | VK::MOD_SHIFT);
-  }
-
-  return kb.sendKeySequence(XKB_KEY_v, VK::MOD_CTRL);
-}
-
 AbstractWindowManager::WindowPtr HyprlandWindowManager::getFocusedWindowSync() const {
   auto response = Hyprctl::oneshot("-j/activewindow");
   auto json = QJsonDocument::fromJson(response);
@@ -64,8 +49,6 @@ AbstractWindowManager::WindowPtr HyprlandWindowManager::getFocusedWindowSync() c
 
   return std::make_shared<HyprlandWindow>(json.object());
 }
-
-bool HyprlandWindowManager::supportsPaste() const { return Wayland::Globals::virtualKeyboardManager(); }
 
 void HyprlandWindowManager::focusWindowSync(const AbstractWindow &window) const {
   Hyprctl::oneshot(std::format("dispatch focuswindow address:{}", window.id().toStdString()));

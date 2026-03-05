@@ -1,6 +1,6 @@
 #pragma once
 #include "types.hpp"
-#include "keyboard.hpp"
+#include "linuxutils/keyboard.hpp"
 #include <sys/epoll.h>
 #include <libudev.h>
 #include <unistd.h>
@@ -37,7 +37,7 @@ protected:
   void emitExpansion(const Snippet &snipet);
 
 private:
-  UInputKeyboard m_kb;
+  linuxutils::UInputKeyboard m_kb;
   std::string m_text;
   udev *m_udev = nullptr;
   xkb_context *m_xkb = nullptr;

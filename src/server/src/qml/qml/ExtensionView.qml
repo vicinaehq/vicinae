@@ -1,9 +1,15 @@
 import QtQuick
+import QtQuick.Controls
 import Vicinae
 
 Item {
     id: root
     required property var host // ExtensionViewHost*
+
+    StackView.onActivated: {
+        if (contentLoader.item && typeof contentLoader.item.restoreFocus === "function")
+            contentLoader.item.restoreFocus()
+    }
 
     function moveUp() {
         if (contentLoader.item && typeof contentLoader.item.moveUp === "function")

@@ -5,7 +5,7 @@
 #include "qml/emoji-grid-model.hpp"
 #include "ui/image/url.hpp"
 #include "single-view-command-context.hpp"
-#include "services/window-manager/window-manager.hpp"
+#include "services/paste/paste-service.hpp"
 #include "utils.hpp"
 
 class SearchEmojiCommand : public BuiltinViewCommand<BridgeView<EmojiGridModel>> {
@@ -21,12 +21,12 @@ class SearchEmojiCommand : public BuiltinViewCommand<BridgeView<EmojiGridModel>>
 
   std::vector<Preference> preferences() const override {
     using Opt = Preference::DropdownData::Option;
-    auto wm = ServiceRegistry::instance()->windowManager();
+    auto paste = ServiceRegistry::instance()->pasteService();
     std::vector<Preference> preferences;
     std::vector<Preference::DropdownData::Option> defaultActionOptions;
     QString dflt = "copy";
 
-    if (wm->canPaste()) {
+    if (paste->supportsPaste()) {
       defaultActionOptions.emplace_back(Opt("Paste", "paste"));
       dflt = "paste";
     }

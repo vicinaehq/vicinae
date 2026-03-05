@@ -135,7 +135,7 @@ class OpenSettingsCommand : public BuiltinCallbackCommand {
   ImageURL iconUrl() const override {
     return ImageURL::builtin("cog").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
-  bool isDefaultDisabled() const override { return true; }
+  std::vector<QString> keywords() const override { return {"preferences"}; }
 
   void execute(CommandController *controller) const override {
     auto ctx = controller->context();
