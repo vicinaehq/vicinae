@@ -1,11 +1,15 @@
 #include <linux/input-event-codes.h>
+#include <qlogging.h>
 #include "linux-paste-service.hpp"
+#include "vicinae.hpp"
 
 LinuxPasteService::LinuxPasteService() {
-  if (auto err = m_keyboard.error()) {
-    qWarning() << "Paste support disabled:" << err->c_str()
-               << "- ensure your user has write access to /dev/uinput."
-               << "You may need to add your user to the 'input' group.";
+  if (const auto err = m_keyboard.error()) {
+    const auto docUrl = QString("%1/paste").arg(Omnicast::DOC_URL);
+    qWarning().noquote() << "Paste support disabled:" << err->c_str()
+                         << "- ensure your user has write access to /dev/uinput."
+                         << "You may need to add your user to the 'input' group. More information at"
+                         << docUrl;
   }
 }
 

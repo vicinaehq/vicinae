@@ -68,8 +68,8 @@ void PasteService::executePaste() {
   if (window) { app = m_appDb.find(window->wmClass()); }
 
   if (window) {
-    qInfo() << "Pasting to" << window->title() << "(" << window->wmClass() << ")"
-            << (app ? QString("app: %1").arg(app->displayName()) : "");
+    qInfo().nospace() << "Pasting to " << window->title() << " (class=" << window->wmClass()
+                      << ",app=" << (app ? app->id() : "<none>") << ")";
   } else {
     qInfo() << "Pasting to unknown window";
   }
