@@ -29,6 +29,7 @@ list(APPEND LIBS
 	vicinae::ipc
 	vicinae::snippet-types
 	vicinae::common
+	vicinae::linuxutils
 )
 
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)
