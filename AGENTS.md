@@ -40,6 +40,8 @@ Here are a few rules to keep in mind:
 
 We format all our code using `clang-format`. We have a `make format` rule that will automatically format the entire codebase if necessary.
 
+ALWAYS run `make format` at the end of a development session to make sure formatting is properly applied to all files.
+
 All our code is also linted with `clang-tidy` in order to make detecting common mistakes easier. `clang-tidy` violations may be acceptable under some circumstances, and should be implemented using `//NOLINTBEGIN(<rule>)` and `NOLINTEND(<rule>)`. comments. Inline `//NOLINT` comments are generally discouraged because they can break after formatting. If a nolint directive does not work (e.g we're dealing with an internal STL false positive) then you can do a local override of the `clang-tidy` configuration to explicitly disable the faulty check.
 
 ## QML rules

@@ -73,8 +73,6 @@ AbstractWindowManager::WindowList WindowManager::findAppWindows(const AbstractAp
 
 void WindowManager::updateWindowCache() { m_windows = m_provider->listWindowsSync(); }
 
-bool WindowManager::canPaste() const { return m_provider->supportsPaste(); }
-
 WindowManager::WindowManager() {
   m_provider = createProvider();
   updateWindowCache();

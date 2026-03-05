@@ -44,13 +44,12 @@ public:
 
   WindowList listWindowsSync() const override;
   AbstractWindowManager::WindowPtr getFocusedWindowSync() const override;
+  bool supportsFocusTracking() const override { return true; }
 
   bool setDimAround(bool value = true) override;
 
   WorkspacePtr getActiveWorkspace() const override;
 
-  bool supportsPaste() const override;
-  bool pasteToWindow(const AbstractWindow *window, const AbstractApplication *app) override;
   void focusWindowSync(const AbstractWindow &window) const override;
   bool closeWindow(const AbstractWindow &window) const override;
   bool isActivatable() const override;

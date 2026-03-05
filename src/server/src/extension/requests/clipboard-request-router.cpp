@@ -53,7 +53,7 @@ clip_proto::Response *ClipboardRequestRouter::clear(const clip_proto::ClearReque
 
 clip_proto::Response *ClipboardRequestRouter::paste(const clip_proto::PasteToClipboardRequest &req) {
   auto content = parseProtoClipboardContent(req.content());
-  m_clipboard.pasteContent(content);
+  m_paste.pasteContent(content);
 
   auto resData = new clip_proto::PasteToClipboardResponse;
   auto res = new clip_proto::Response;
@@ -105,4 +105,5 @@ proto::ext::extension::Response *ClipboardRequestRouter::route(const clip_proto:
   return nullptr;
 }
 
-ClipboardRequestRouter::ClipboardRequestRouter(ClipboardService &clipboard) : m_clipboard(clipboard) {}
+ClipboardRequestRouter::ClipboardRequestRouter(ClipboardService &clipboard, PasteService &paste)
+    : m_clipboard(clipboard), m_paste(paste) {}

@@ -2,10 +2,12 @@
 #include "proto/clipboard.pb.h"
 #include "proto/extension.pb.h"
 #include "services/clipboard/clipboard-service.hpp"
+#include "services/paste/paste-service.hpp"
 #include <qobject.h>
 
 class ClipboardRequestRouter : public QObject {
   ClipboardService &m_clipboard;
+  PasteService &m_paste;
 
   Clipboard::Content parseProtoClipboardContent(const proto::ext::clipboard::ClipboardContent &content);
 
@@ -16,5 +18,5 @@ class ClipboardRequestRouter : public QObject {
 
 public:
   proto::ext::extension::Response *route(const proto::ext::clipboard::Request &req);
-  ClipboardRequestRouter(ClipboardService &clipboard);
+  ClipboardRequestRouter(ClipboardService &clipboard, PasteService &paste);
 };

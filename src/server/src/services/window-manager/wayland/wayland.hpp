@@ -33,11 +33,11 @@ public:
   WindowList listWindowsSync() const override;
 
   AbstractWindowManager::WindowPtr getFocusedWindowSync() const override;
+  bool supportsFocusTracking() const override { return true; }
+  bool focusNullsOnLayerGrab() const override { return true; }
   void focusWindowSync(const AbstractWindow &window) const override;
   bool closeWindow(const AbstractWindow &window) const override;
 
-  bool supportsPaste() const override;
-  bool pasteToWindow(const AbstractWindow *window, const AbstractApplication *app) override;
   bool ping() const override;
   bool isActivatable() const override;
 

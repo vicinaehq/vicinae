@@ -29,6 +29,7 @@ public:
 
   WindowList listWindowsSync() const override;
   std::shared_ptr<AbstractWindow> getFocusedWindowSync() const override;
+  bool supportsFocusTracking() const override { return true; }
   void focusWindowSync(const AbstractWindow &window) const override;
   bool closeWindow(const AbstractWindow &window) const override;
 
@@ -36,8 +37,6 @@ public:
   WorkspaceList listWorkspaces() const override;
   std::shared_ptr<AbstractWorkspace> getActiveWorkspace() const override;
 
-  bool supportsPaste() const override { return false; }
-  bool pasteToWindow(const AbstractWindow *window, const AbstractApplication *app) override { return false; }
   bool ping() const override;
   bool isActivatable() const override;
   void start() override;

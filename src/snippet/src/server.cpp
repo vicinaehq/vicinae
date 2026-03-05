@@ -147,13 +147,13 @@ void Server::setupIPC() {
           return std::unexpected("No such snippet");
         }
 
-        auto mods = UInputKeyboard::Modifier::Ctrl;
+        auto mods = linuxutils::UInputKeyboard::Modifier::Ctrl;
         std::println(std::cerr, "Received expansion request for snippet {} (took {}ms)", req.trigger,
                      std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() -
                                                                            lastExpansionTime)
                          .count());
 
-        if (req.terminal) mods |= UInputKeyboard::Modifier::Shift;
+        if (req.terminal) mods |= linuxutils::UInputKeyboard::Modifier::Shift;
 
         m_kb.repeatKey(KEY_BACKSPACE, req.trigger.size());
         usleep(2000);

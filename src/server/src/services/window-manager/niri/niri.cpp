@@ -238,12 +238,6 @@ bool WindowManager::closeWindow(const AbstractWindow &window) const {
   return true;
 }
 
-bool WindowManager::supportsPaste() const { return false; }
-
-bool WindowManager::pasteToWindow(const AbstractWindow *window, const AbstractApplication *app) {
-  return false;
-}
-
 bool WindowManager::ping() const { return sendUnitRequest("Version").has_value(); }
 
 bool WindowManager::isActivatable() const {
