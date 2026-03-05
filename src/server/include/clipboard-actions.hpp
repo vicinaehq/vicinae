@@ -1,15 +1,12 @@
 #pragma once
+#include <QTimer>
 #include "builtin_icon.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/paste/paste-service.hpp"
 #include "ui/image/url.hpp"
-#include "services/window-manager/window-manager.hpp"
 #include "navigation-controller.hpp"
-#include "services/app-service/app-service.hpp"
-#include <QTimer>
 #include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
-#include <qdnslookup.h>
 
 class CopyToClipboardAction : public AbstractAction {
   Clipboard::Content m_content;
@@ -36,23 +33,7 @@ class PasteToFocusedWindowAction : public AbstractAction {
 public:
   void setConcealed(bool value = true) { m_concealed = value; }
 
-  QString title() const override {
-    auto wm = ServiceRegistry::instance()->windowManager();
-
-    if (!wm->provider()->ping()) return m_title;
-
-    auto appDb = ServiceRegistry::instance()->appDb();
-    auto window = wm->getFocusedWindow();
-
-    if (window) {
-      if (auto app = appDb->find(window->wmClass())) {
-        return QString("Paste to %1").arg(app->displayName());
-      }
-      return QString("Paste to %1").arg(window->title());
-    }
-
-    return "Paste entry";
-  }
+  QString title() const override { return "Paste to active window"; }
 
   PasteToFocusedWindowAction(const Clipboard::Content &content = Clipboard::NoData{})
       : AbstractAction("Copy to focused window", ImageURL::builtin("copy-clipboard")), m_content(content) {}
