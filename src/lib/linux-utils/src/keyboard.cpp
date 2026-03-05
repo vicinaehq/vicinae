@@ -63,7 +63,7 @@ void UInputKeyboard::repeatKey(int code, int n) {
 }
 
 void UInputKeyboard::sync() {
-  struct input_event ev {};
+  struct input_event ev{};
   ev.type = EV_SYN;
   ev.code = SYN_REPORT;
   ev.value = 0;
@@ -71,7 +71,7 @@ void UInputKeyboard::sync() {
 }
 
 void UInputKeyboard::keyup(int code) {
-  struct input_event ev {};
+  struct input_event ev{};
   ev.type = EV_KEY;
   ev.code = code;
   ev.value = 0;
@@ -79,7 +79,7 @@ void UInputKeyboard::keyup(int code) {
 }
 
 void UInputKeyboard::keydown(int code) {
-  struct input_event ev {};
+  struct input_event ev{};
   ev.type = EV_KEY;
   ev.code = code;
   ev.value = 1;
