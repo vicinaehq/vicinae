@@ -54,15 +54,15 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
   //   so the standard join approach is acceptable.
   if (!hasFilters) {
     queryString = QString(R"(
-      SELECT 
+      SELECT
         s.id,
-        o.mime_type, 
-        o.text_preview, 
-        s.pinned_at, 
-        o.content_hash_md5, 
-        s.updated_at, 
-        o.size, 
-        s.kind, 
+        o.mime_type,
+        o.text_preview,
+        s.pinned_at,
+        o.content_hash_md5,
+        s.updated_at,
+        o.size,
+        s.kind,
         o.url_host,
         o.encryption_type,
         s.total_count
@@ -83,15 +83,15 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
     queryString = R"(
       SELECT
         selection.id,
-        o.mime_type, 
-        o.text_preview, 
-        pinned_at, 
-        o.content_hash_md5, 
-        updated_at, 
-        o.size, 
-        selection.kind, 
+        o.mime_type,
+        o.text_preview,
+        pinned_at,
+        o.content_hash_md5,
+        updated_at,
+        o.size,
+        selection.kind,
         o.url_host,
-        o.encryption_type, 
+        o.encryption_type,
         COUNT(*) OVER() as count
       FROM selection
       JOIN data_offer o
@@ -187,7 +187,8 @@ bool ClipboardDatabase::setKeywords(const QString &id, const QString &keywords) 
 bool ClipboardDatabase::removeAll() {
   QSqlQuery query(m_db);
 
-  return query.exec("DELETE FROM selection");
+  return query.exec("DELETE FROM selection_fts") && query.exec("DELETE FROM data_offer") &&
+         query.exec("DELETE FROM selection");
 }
 
 std::vector<QString> ClipboardDatabase::removeSelection(const QString &selectionId) {
@@ -196,9 +197,9 @@ std::vector<QString> ClipboardDatabase::removeSelection(const QString &selection
   QSqlQuery query(m_db);
 
   query.prepare(R"(
-  	DELETE FROM 
+  	DELETE FROM
 		data_offer
-	WHERE 
+	WHERE
 		selection_id = :selection_id
 	RETURNING id
   )");
