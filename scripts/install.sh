@@ -365,6 +365,45 @@ install_browser_manifests() {
 	fi
 }
 
+install_udev_rules() {
+	echo "Installing udev rules and modules-load config (for paste support)..." >&2
+
+	if [[ $EUID -ne 0 ]]; then
+		echo "Note: Skipping udev rules installation (not root)" >&2
+		echo "  Paste support requires /dev/uinput access. See https://docs.vicinae.com for manual setup." >&2
+		return
+	fi
+
+	local udev_source="$INSTALL_DIR/usr/lib/udev/rules.d"
+	local udev_dest="$PREFIX/lib/udev/rules.d"
+	local modules_source="$INSTALL_DIR/usr/lib/modules-load.d"
+	local modules_dest="$PREFIX/lib/modules-load.d"
+
+	if [[ -d "$udev_source" ]]; then
+		mkdir -p "$udev_dest"
+		cp "$udev_source"/* "$udev_dest/" 2>/dev/null || true
+		echo "✓ udev rules installed to $udev_dest" >&2
+
+		if command -v udevadm >/dev/null 2>&1; then
+			udevadm control --reload-rules 2>/dev/null || true
+			udevadm trigger 2>/dev/null || true
+			echo "✓ udev rules reloaded" >&2
+		fi
+	fi
+
+	if [[ -d "$modules_source" ]]; then
+		mkdir -p "$modules_dest"
+		cp "$modules_source"/* "$modules_dest/" 2>/dev/null || true
+		echo "✓ modules-load config installed to $modules_dest" >&2
+
+		# Load uinput module immediately if not already loaded
+		if ! lsmod | grep -q "^uinput"; then
+			modprobe uinput 2>/dev/null || true
+			echo "✓ uinput module loaded" >&2
+		fi
+	fi
+}
+
 install_systemd_service() {
 	echo "Installing systemd user service..." >&2
 
@@ -428,11 +467,12 @@ install_vicinae() {
 
 		echo "✓ Installation completed" >&2
 
-		# Install themes, desktop files, and systemd service
+		# Install themes, desktop files, systemd service, and system configs
 		install_themes
 		install_desktop_files
 		install_systemd_service
 		install_browser_manifests
+		install_udev_rules
 	else
 		echo "Error: Vicinae binary not found in extracted files" >&2
 		echo "Looking in: $extract_dir" >&2
@@ -489,6 +529,18 @@ uninstall_vicinae() {
 		if command -v systemctl >/dev/null 2>&1; then
 			systemctl --user daemon-reload 2>/dev/null || true
 		fi
+	fi
+
+	if [[ -f "$PREFIX/lib/udev/rules.d/70-vicinae.rules" ]]; then
+		rm -f "$PREFIX/lib/udev/rules.d/70-vicinae.rules"
+		echo "✓ Removed udev rules"
+		if command -v udevadm >/dev/null 2>&1; then
+			udevadm control --reload-rules 2>/dev/null || true
+		fi
+	fi
+	if [[ -f "$PREFIX/lib/modules-load.d/vicinae.conf" ]]; then
+		rm -f "$PREFIX/lib/modules-load.d/vicinae.conf"
+		echo "✓ Removed modules-load config"
 	fi
 
 	if [[ $EUID -eq 0 ]]; then
