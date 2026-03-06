@@ -2,6 +2,9 @@
 #include "view-utils.hpp"
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QJSValue>
+#include <qcontainerfwd.h>
+#include <qstringliteral.h>
 #include <utility>
 
 ExtensionFormModel::ExtensionFormModel(NotifyFn notify, QObject *parent)
@@ -54,7 +57,14 @@ void ExtensionFormModel::setFieldValue(int index, const QVariant &value) {
   auto &item = m_items[index];
   if (!item.isField()) return;
 
-  item.userValue = QJsonValue::fromVariant(value);
+  // TODO: find out why Form.TagPicker tags would break without that
+  QVariant normalizedValue = value;
+
+  if (value.metaType().id() == qMetaTypeId<QJSValue>()) {
+    normalizedValue = value.value<QJSValue>().toVariant();
+  }
+
+  item.userValue = QJsonValue::fromVariant(normalizedValue);
   item.hasUserValue = true;
   emit dataChanged(createIndex(index, 0), createIndex(index, 0), {ValueRole});
 
@@ -81,6 +91,23 @@ void ExtensionFormModel::setFilePaths(int index, const QVariantList &paths) {
   QJsonArray arr;
   for (const auto &p : paths) {
     arr.append(p.toString());
+  }
+
+  item.userValue = arr;
+  item.hasUserValue = true;
+  emit dataChanged(createIndex(index, 0), createIndex(index, 0), {ValueRole});
+
+  if (item.onChange) { m_notify(*item.onChange, QJsonArray{arr}); }
+}
+
+void ExtensionFormModel::setPickedItems(int index, const QVariantList &pickedItems) {
+  if (index < 0 || std::cmp_greater_equal(index, m_items.size())) return;
+  auto &item = m_items[index];
+  if (item.type != FormItemData::Type::TagPicker) return;
+
+  QJsonArray arr;
+  for (const auto &t : pickedItems) {
+    arr.append(t.toString());
   }
 
   item.userValue = arr;
@@ -187,10 +214,16 @@ ExtensionFormModel::FormItemData ExtensionFormModel::createItem(const FormModel:
     data.onFocus = field->onFocus;
     data.fieldData = buildFieldData(*field);
 
-    if (field->value) {
+    if (field->value && !(data.type == FormItemData::Type::TagPicker && field->value->isNull())) {
       data.modelValue = *field->value;
     } else if (field->defaultValue) {
       data.modelValue = *field->defaultValue;
+    } else if (data.type == FormItemData::Type::Dropdown) {
+      if (auto *df = dynamic_cast<const FormModel::DropdownField *>(field.get())) {
+        if (auto first = qml::firstDropdownItemValue(df->m_items)) { data.modelValue = *first; }
+      }
+    } else if (data.type == FormItemData::Type::TagPicker) {
+      data.modelValue = QJsonArray{};
     }
   } else if (auto *desc = std::get_if<FormModel::Description>(&item)) {
     data.type = FormItemData::Type::Description;
@@ -216,8 +249,11 @@ void ExtensionFormModel::updateItem(FormItemData &existing, const FormModel::Ite
     existing.fieldData = buildFieldData(*field);
 
     if (field->value) {
-      existing.modelValue = *field->value;
-      existing.hasUserValue = false;
+      bool const isNullTagValue = existing.type == FormItemData::Type::TagPicker && field->value->isNull();
+      if (!isNullTagValue) {
+        existing.modelValue = *field->value;
+        existing.hasUserValue = false;
+      }
     }
   } else if (auto *desc = std::get_if<FormModel::Description>(&newItem)) {
     existing.label = desc->title.value_or(QString());
@@ -233,6 +269,7 @@ ExtensionFormModel::FormItemData::Type ExtensionFormModel::fieldType(const FormM
   if (dynamic_cast<const FormModel::TextAreaField *>(&field)) return FormItemData::Type::TextArea;
   if (dynamic_cast<const FormModel::FilePickerField *>(&field)) return FormItemData::Type::FilePicker;
   if (dynamic_cast<const FormModel::DatePickerField *>(&field)) return FormItemData::Type::DatePicker;
+  if (dynamic_cast<const FormModel::TagPickerField *>(&field)) return FormItemData::Type::TagPicker;
   return FormItemData::Type::Text;
 }
 
@@ -257,6 +294,8 @@ QVariantMap ExtensionFormModel::buildFieldData(const FormModel::IField &field) {
     if (f->min) data["min"] = *f->min;
     if (f->max) data["max"] = *f->max;
     data["includeTime"] = f->type.value_or("date") == "dateTime";
+  } else if (auto *f = dynamic_cast<const FormModel::TagPickerField *>(&field)) {
+    data["items"] = qml::convertTagPickerItems(f->m_items);
   }
 
   return data;
@@ -282,6 +321,8 @@ QString ExtensionFormModel::FormItemData::typeString() const {
     return QStringLiteral("description");
   case Type::Separator:
     return QStringLiteral("separator");
+  case Type::TagPicker:
+    return QStringLiteral("tagpicker");
   }
   return QStringLiteral("text");
 }

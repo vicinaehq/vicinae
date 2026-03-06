@@ -506,6 +506,7 @@ set(SRCS
 	src/qml/extension-grid-model.hpp
 	src/qml/extension-grid-model.cpp
 	src/qml/source-blend-rect.hpp
+	src/qml/tag-search.hpp
 	src/qml/image-url.hpp
 	src/qml/image-url.cpp
 	src/qml/image-source.hpp
@@ -712,6 +713,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/FormTextArea.qml
 	src/qml/qml/FormCheckbox.qml
 	src/qml/qml/FormSeparator.qml
+	src/qml/qml/FormTagPicker.qml
 	src/qml/qml/SnippetFormView.qml
 	src/qml/qml/AliasFormView.qml
 	src/qml/qml/ShortcutFormView.qml
@@ -765,6 +767,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/MissingPreferenceView.qml
 	src/qml/qml/OAuthOverlayView.qml
 	src/qml/qml/HudWindow.qml
+	src/qml/qml/TagPickerTag.qml
 )
 
 # Strip directory prefix so resources are qrc:/Vicinae/Foo.qml
