@@ -108,6 +108,8 @@ SelectableDelegate {
                     return [{text: root.itemAccessory, color: root.itemAccessoryColor, fill: false}]
                 return []
             }
+            Layout.fillWidth: false
+            Layout.minimumWidth: implicitWidth
             Layout.alignment: Qt.AlignVCenter
         }
     }
