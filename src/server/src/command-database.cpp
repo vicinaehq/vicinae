@@ -14,6 +14,7 @@
 #include "extensions/raycast/raycast-compat-extension.hpp"
 #include "extensions/wm/wm-extension.hpp"
 #include "extensions/vicinae/vicinae-extension.hpp"
+#include "extensions/ai/intelligence-extension.hpp"
 #include "extensions/system/system-extension.hpp"
 #include "service-registry.hpp"
 #include <memory>
@@ -50,6 +51,8 @@ CommandDatabase::CommandDatabase(const ServiceRegistry &services) {
   registerRepository<DeveloperExtension>();
 
   registerRepository<SnippetExtension>();
+
+  registerRepository<IntelligenceExtension>();
 
 #ifdef QT_DEBUG
   registerRepository<InternalExtension>();
