@@ -173,7 +173,10 @@ void CliServerCommand::run(CLI::App *) {
     registry->setBackgroundEffectManager(std::make_unique<BackgroundEffectManager>());
     registry->setAI(std::make_unique<AI::Service>());
 
-    registry->ai()->registerProvider(std::make_unique<AI::OllamaProvider>());
+    auto ollama = std::make_unique<AI::OllamaProvider>();
+
+    ollama->initalize({});
+    registry->ai()->registerProvider(std::move(ollama));
 
     auto root = registry->rootItemManager();
     auto builtinCommandDb = std::make_unique<CommandDatabase>();
@@ -339,9 +342,15 @@ void CliServerCommand::run(CLI::App *) {
     qInfo() << "Vicinae server successfully started. Call \"vicinae toggle\" to toggle the window";
   }
 
-  QTimer::singleShot(0, [&]() {
+  auto aiService = ServiceRegistry::instance()->ai();
+
+  QObject::connect(aiService, &AI::Service::modelsChanged, [aiService]() {
+    for (const auto &model : aiService->listModels()) {
+      qDebug() << model.name << AI::stringifyCapabilities(model.caps);
+    }
+
     auto completion = ServiceRegistry::instance()->ai()->createChatCompletion(
-        {.modelId = "gemma3", .messages = {AI::ChatMessage(AI::ChatRole::User, "Who are you?")}});
+        {.messages = {AI::ChatMessage(AI::ChatRole::User, "Who are you?")}});
     QObject::connect(completion.get(), &AI::AbstractChatCompletionStream::dataAdded,
                      [completion](const std::string &text) { std::cout << text; });
     QObject::connect(

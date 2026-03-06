@@ -70,10 +70,11 @@ Item {
 
         DetailPanel {
             metadata: root.host.detailMetadata
+            hasContent: root._hasCustomDetail || (root.host.detailContent !== undefined && root.host.detailContent !== "")
 
             Loader {
                 anchors.fill: parent
-                sourceComponent: root._hasCustomDetail ? null : defaultTextContent
+                sourceComponent: root._hasCustomDetail ? null : (parent.hasContent ? defaultTextContent : null)
                 source: root._hasCustomDetail ? root.host.detailContentUrl : ""
             }
         }

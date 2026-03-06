@@ -457,6 +457,11 @@ set(SRCS
 	src/services/ai/ai-provider.hpp
 	src/services/ai/ai-service.hpp
 
+	src/qml/manage-models-model.hpp
+	src/qml/manage-models-model.cpp
+	src/qml/manage-models-view-host.hpp
+	src/qml/manage-models-view-host.cpp
+
 	# QML frontend (POC)
 	src/qml/keybind-bridge.hpp
 	src/qml/launcher-window.hpp
@@ -697,6 +702,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/ViciToolTip.qml
 	src/qml/qml/ExtensionView.qml
 	src/qml/qml/MarkdownDetailView.qml
+	src/qml/qml/MarkdownDetailContent.qml
 	src/qml/qml/ExtensionGridView.qml
 	src/qml/qml/FocusRestoringScope.qml
 	src/qml/qml/ActionPanelPopover.qml
