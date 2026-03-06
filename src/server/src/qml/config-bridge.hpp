@@ -13,6 +13,7 @@ class ConfigBridge : public QObject {
   Q_PROPERTY(int windowHeight READ windowHeight NOTIFY changed)
   Q_PROPERTY(bool emacsMode READ emacsMode NOTIFY changed)
   Q_PROPERTY(bool considerPreedit READ considerPreedit NOTIFY changed)
+  Q_PROPERTY(bool debugBuild READ debugBuild CONSTANT)
 
 signals:
   void changed();
@@ -39,6 +40,7 @@ public:
   int windowHeight() const { return cfg().launcherWindow.size.height; }
   bool emacsMode() const { return cfg().keybinding == "emacs"; }
   bool considerPreedit() const { return cfg().considerPreedit; }
+  bool debugBuild() const { return DEBUG; }
 
 private:
   static const config::ConfigValue &cfg() { return ServiceRegistry::instance()->config()->value(); }

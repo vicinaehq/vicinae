@@ -143,6 +143,27 @@ Window {
         id: alertDialog
     }
 
+    Rectangle {
+        visible: Config.debugBuild
+        z: 200
+        width: 80
+        height: 20
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.topMargin: Config.borderWidth + 4
+        anchors.rightMargin: Config.borderWidth + 4
+        radius: 4
+        color: "#E0CC00"
+
+        Text {
+            anchors.centerIn: parent
+            text: "DEV"
+            font.pixelSize: 11
+            font.bold: true
+            color: "#000000"
+        }
+    }
+
     Connections {
         target: launcher.alertModel
         function onVisibleChanged() {
