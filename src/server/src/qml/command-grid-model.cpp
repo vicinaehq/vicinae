@@ -142,6 +142,35 @@ int CommandGridModel::sectionColumns(int sectionIdx) const {
   return m_sections[sectionIdx].columns.value_or(m_columns);
 }
 
+int CommandGridModel::nextNonEmptySection(int sectionIdx, int direction) const {
+  if (m_sections.empty()) return -1;
+
+  int idx = sectionIdx;
+  for (size_t attempts = 0; attempts < m_sections.size(); ++attempts) {
+    idx += direction;
+    if (idx < 0) {
+      idx = static_cast<int>(m_sections.size()) - 1;
+    } else if (std::cmp_greater_equal(idx, m_sections.size())) {
+      idx = 0;
+    }
+
+    if (m_sections[idx].count > 0) return idx;
+  }
+
+  return -1;
+}
+
+void CommandGridModel::selectSectionBoundary(int sectionIdx, bool endOfSection, bool revealHeader) {
+  if (sectionIdx < 0 || std::cmp_greater_equal(sectionIdx, m_sections.size()) ||
+      m_sections[sectionIdx].count <= 0) {
+    return;
+  }
+
+  m_preferSectionHeaderForSelection = revealHeader;
+  m_alignSelectionScrollToTop = revealHeader && !endOfSection;
+  select(sectionIdx, endOfSection ? m_sections[sectionIdx].count - 1 : 0);
+}
+
 void CommandGridModel::rebuildRows() { setSections(m_sections); }
 
 void CommandGridModel::select(int section, int item) {
@@ -216,6 +245,8 @@ void CommandGridModel::fromGlobal(int globalIdx, int &section, int &item) const 
 
 void CommandGridModel::navigateRight() {
   m_lastNavDirection = 1;
+  m_preferSectionHeaderForSelection = false;
+  m_alignSelectionScrollToTop = false;
   int g = toGlobal(m_selSection, m_selItem) + 1;
   int const total = totalItemCount();
   if (total == 0) return;
@@ -227,6 +258,8 @@ void CommandGridModel::navigateRight() {
 
 void CommandGridModel::navigateLeft() {
   m_lastNavDirection = -1;
+  m_preferSectionHeaderForSelection = false;
+  m_alignSelectionScrollToTop = false;
   int g = toGlobal(m_selSection, m_selItem) - 1;
   int const total = totalItemCount();
   if (total == 0) return;
@@ -238,6 +271,8 @@ void CommandGridModel::navigateLeft() {
 
 void CommandGridModel::navigateDown() {
   m_lastNavDirection = 1;
+  m_preferSectionHeaderForSelection = false;
+  m_alignSelectionScrollToTop = false;
   if (m_selSection < 0) return;
 
   int const cols = sectionColumns(m_selSection);
@@ -273,6 +308,8 @@ void CommandGridModel::navigateDown() {
 
 void CommandGridModel::navigateUp() {
   m_lastNavDirection = -1;
+  m_preferSectionHeaderForSelection = false;
+  m_alignSelectionScrollToTop = false;
   if (m_selSection < 0) return;
 
   int const cols = sectionColumns(m_selSection);
@@ -309,17 +346,41 @@ void CommandGridModel::navigateUp() {
   }
 }
 
+void CommandGridModel::navigateSectionUp() {
+  m_lastNavDirection = -1;
+  m_alignSelectionScrollToTop = false;
+  if (m_selSection < 0 || std::cmp_greater_equal(m_selSection, m_sections.size())) return;
+
+  if (m_selItem > 0) {
+    selectSectionBoundary(m_selSection, false);
+    return;
+  }
+
+  int const prevSection = nextNonEmptySection(m_selSection, -1);
+  if (prevSection >= 0) selectSectionBoundary(prevSection, false);
+}
+
+void CommandGridModel::navigateSectionDown() {
+  m_lastNavDirection = 1;
+  m_alignSelectionScrollToTop = false;
+  if (m_selSection < 0 || std::cmp_greater_equal(m_selSection, m_sections.size())) return;
+
+  int const nextSection = nextNonEmptySection(m_selSection, 1);
+  if (nextSection >= 0) selectSectionBoundary(nextSection, false);
+}
+
+bool CommandGridModel::alignSelectionScrollToTop() const { return m_alignSelectionScrollToTop; }
+
 int CommandGridModel::flatRowForSelection() const {
   if (m_selSection < 0 || m_selItem < 0) return -1;
   for (int r = 0; std::cmp_less(r, m_rows.size()); ++r) {
     const auto &row = m_rows[r];
     if (row.kind == FlatRow::ItemRow && row.sectionIdx == m_selSection && m_selItem >= row.startItem &&
         m_selItem < row.startItem + row.itemCount) {
-      // When navigating up into the first item row of a section that has
-      // a header, return the header row so positionViewAtIndex also keeps
-      // the section title visible. When navigating down, return the item
-      // row directly so the viewport doesn't jump back to the header.
-      if (m_lastNavDirection < 0 && row.startItem == 0 && r > 0 &&
+      // When section navigation lands on the first row of a section that has
+      // a header, return the header row so positionViewAtIndex keeps the
+      // section title visible.
+      if (m_preferSectionHeaderForSelection && row.startItem == 0 && r > 0 &&
           m_rows[r - 1].kind == FlatRow::SectionHeader && m_rows[r - 1].sectionIdx == m_selSection) {
         return r - 1;
       }

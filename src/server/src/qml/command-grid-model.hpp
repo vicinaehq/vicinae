@@ -52,7 +52,10 @@ public:
   Q_INVOKABLE void navigateDown();
   Q_INVOKABLE void navigateLeft();
   Q_INVOKABLE void navigateRight();
+  Q_INVOKABLE void navigateSectionUp();
+  Q_INVOKABLE void navigateSectionDown();
   Q_INVOKABLE int flatRowForSelection() const;
+  Q_INVOKABLE bool alignSelectionScrollToTop() const;
 
   int columns() const { return m_columns; }
   void setColumns(int cols);
@@ -105,6 +108,8 @@ private:
   std::vector<FlatRow> buildFlatList(const std::vector<SectionInfo> &sections);
   void rebuildRows();
   int sectionColumns(int sectionIdx) const;
+  int nextNonEmptySection(int sectionIdx, int direction) const;
+  void selectSectionBoundary(int sectionIdx, bool endOfSection, bool revealHeader = true);
   int totalItemCount() const;
   int toGlobal(int section, int item) const;
   void fromGlobal(int globalIdx, int &section, int &item) const;
@@ -120,4 +125,6 @@ private:
   bool m_awaitingData = true;
   int m_selectedIndex = -1;
   int m_lastNavDirection = 0;
+  bool m_preferSectionHeaderForSelection = false;
+  bool m_alignSelectionScrollToTop = false;
 };
