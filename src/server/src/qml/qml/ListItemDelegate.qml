@@ -50,15 +50,12 @@ SelectableDelegate {
             readonly property real spacing: 6
             readonly property real aliasSpace: aliasRect.visible ? aliasRect.width + spacing : 0
             readonly property real availableForText: width - aliasSpace
-            readonly property real subtitleReserved: subtitleText.visible
-                ? Math.min(subtitleText.implicitWidth + spacing, availableForText * 0.5)
-                : 0
 
             Text {
                 id: titleText
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.min(implicitWidth, textRow.availableForText - textRow.subtitleReserved)
+                width: Math.min(implicitWidth, textRow.availableForText)
                 text: root.itemTitle
                 color: root.selected ? Theme.listItemSelectionFg : Theme.foreground
                 font.pointSize: Theme.regularFontSize
@@ -111,6 +108,8 @@ SelectableDelegate {
                     return [{text: root.itemAccessory, color: root.itemAccessoryColor, fill: false}]
                 return []
             }
+            Layout.fillWidth: false
+            Layout.minimumWidth: implicitWidth
             Layout.alignment: Qt.AlignVCenter
         }
     }
