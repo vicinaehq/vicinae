@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <expected>
 #include <glaze/core/common.hpp>
 #include <optional>
 #include <qfuture.h>
@@ -11,11 +12,20 @@
 
 namespace AI {
 
+template <typename T> using Result = std::expected<T, std::string>;
+
 /**
  * What a model is capable of.
- * Some models can often do many things at once.
+ * Some models can do many 2026-03-05T21things at once.
  */
-enum Capability : std::uint8_t { Chat, Vision, Transcription };
+enum Capability : std::uint8_t {
+  Chat = 1 << 0,
+  Vision = 1 << 1,
+  Thinking = 1 << 2,
+  ToolCalling = 1 << 3,
+  Embedding = 1 << 4,
+  Transcription = 1 << 5
+};
 
 using Capabilities = std::uint32_t;
 
@@ -26,6 +36,26 @@ struct Model {
   std::optional<ImageUrl> icon;
   Capabilities caps;
 };
+
+struct ProviderModel : public Model {
+  std::string providerId;
+
+  ProviderModel(std::string providerId, Model &&model)
+      : Model(std::move(model)), providerId(std::move(providerId)) {}
+};
+
+inline std::vector<std::string> stringifyCapabilities(Capabilities caps) {
+  std::vector<std::string> strs;
+
+  if (caps & Chat) strs.emplace_back("completion");
+  if (caps & Vision) strs.emplace_back("vision");
+  if (caps & Thinking) strs.emplace_back("thinking");
+  if (caps & ToolCalling) strs.emplace_back("tools");
+  if (caps & Embedding) strs.emplace_back("embedding");
+  if (caps & Transcription) strs.emplace_back("transcription");
+
+  return strs;
+}
 
 /**
  * Indicates what kind of model is preferred for the current task at hand.
@@ -73,10 +103,15 @@ struct TranscriptionResult {
   std::string text;
 };
 
-class AbstractProvider {
+class AbstractProvider : public QObject {
+  Q_OBJECT
+
+signals:
+  void modelsUpdated() const;
+
 public:
   AbstractProvider() = default;
-  virtual ~AbstractProvider() = default;
+  ~AbstractProvider() override = default;
 
   /**
    * Unique identifier for this provider.

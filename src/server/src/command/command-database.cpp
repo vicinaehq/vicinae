@@ -15,6 +15,7 @@
 #include "builtins/wm/wm-extension.hpp"
 #include "builtins/vicinae/vicinae-extension.hpp"
 #include "builtins/system/system-extension.hpp"
+#include "builtins/ai/intelligence-extension.hpp"
 #include "service-registry.hpp"
 #include <memory>
 
@@ -50,6 +51,8 @@ CommandDatabase::CommandDatabase(const ServiceRegistry &services) {
   registerRepository<DeveloperExtension>();
 
   registerRepository<SnippetExtension>();
+
+  registerRepository<IntelligenceExtension>();
 
 #ifdef QT_DEBUG
   registerRepository<InternalExtension>();
