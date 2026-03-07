@@ -376,6 +376,8 @@ void RootSearchModel::refresh() {
   m_fallbackItems = m_manager->fallbackItems();
   m_favorites = m_manager->queryFavorites();
 
+  m_selectedIndex = -1;
+
   m_selectFirstOnReset = false;
   emit selectFirstOnResetChanged();
 
