@@ -31,7 +31,9 @@ public:
   QObject *listModel() const;
   bool hasDetail() const { return m_hasDetail; }
   QString detailContent() const { return m_detailContent; }
-  QUrl detailContentUrl() const { return m_hasDescription ? QUrl(QStringLiteral("qrc:/Vicinae/MarkdownDetailContent.qml")) : QUrl(); }
+  QUrl detailContentUrl() const {
+    return m_hasDescription ? QUrl(QStringLiteral("qrc:/Vicinae/MarkdownDetailContent.qml")) : QUrl();
+  }
   QVariantList detailMetadata() const { return m_detailMetadata; }
 
 private:

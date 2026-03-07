@@ -346,6 +346,9 @@ void CliServerCommand::run(CLI::App *) {
 
     auto completion = ServiceRegistry::instance()->ai()->createChatCompletion(
         {.messages = {AI::ChatMessage(AI::ChatRole::User, "Who are you?")}});
+
+    qDebug() << "sent completion";
+
     QObject::connect(completion.get(), &AI::AbstractChatCompletionStream::dataAdded,
                      [completion](const std::string &text) { std::cout << text; });
     QObject::connect(

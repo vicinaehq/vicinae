@@ -64,7 +64,10 @@ public:
   createChatCompletion(const ChatCompletionPayload &payload) const {
     for (const auto &provider : m_providers) {
       if (const auto model = provider->findBestModel(AI::Capability::Completion)) {
-        return provider->createChatCompletion({.messages = payload.messages});
+        return provider->createChatCompletion({
+            .modelId = "gemma3:latest",
+            .messages = payload.messages,
+        });
       }
     }
 
