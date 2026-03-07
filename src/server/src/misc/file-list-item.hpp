@@ -15,7 +15,7 @@ namespace FileActions {
 class RevealFileInFolderAction : public AbstractAction {
 public:
   RevealFileInFolderAction(std::filesystem::path path)
-      : AbstractAction("Open in folder", ImageURL::builtin("folder")), m_path(std::move(path)) {
+      : AbstractAction("Show in file browser", ImageURL::builtin("folder")), m_path(std::move(path)) {
     setShortcut(Keyboard::Shortcut::submit());
   }
 
