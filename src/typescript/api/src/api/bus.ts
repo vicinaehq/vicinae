@@ -72,6 +72,7 @@ type EndpointMapping = {
 	"ui.setSearchText": "ui.setSearchText";
 	"ui.confirmAlert": "ui.confirmAlert";
 	"ui.getSelectedText": "ui.getSelectedText";
+	"ui.showInFileBrowser": "ui.showInFileBrowser";
 
 	"wm.ping": "wm.ping";
 	"wm.getActiveWindow": "wm.getActiveWindow";
