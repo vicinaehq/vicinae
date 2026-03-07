@@ -213,7 +213,7 @@ const OpenInBrowser: React.FC<Action.OpenInBrowser.Props> = ({
 const ShowInFinder: React.FC<Action.ShowInFinderProps.Props> = ({
 	path,
 	select = true,
-	title = "Show in Finder",
+	title = "Show in file browser",
 	...props
 }) => {
 	return (
