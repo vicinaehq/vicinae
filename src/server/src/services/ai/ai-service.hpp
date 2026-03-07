@@ -3,26 +3,67 @@
 #include <qobject.h>
 #include <qtmetamacros.h>
 #include "ai-provider.hpp"
+#include "common/types.hpp"
+#include "services/ai/ai-config.hpp"
+#include "services/ai/ollama/ollama-ai-provider.hpp"
+#include "vicinae.hpp"
 
 namespace AI {
 class Service : public QObject {
   Q_OBJECT
 
 signals:
-  void modelsChanged();
+  void modelsChanged() const;
 
 public:
+  Service() : m_configManager(Omnicast::configDir() / "ai.json") {
+    connect(&m_configManager, &ConfigManager::configChanged, this,
+            [this]() { applyConfig(m_configManager.value()); });
+    m_configManager.load();
+  }
+
   ~Service() override = default;
 
-  void registerProvider(std::unique_ptr<AI::AbstractProvider> provider) {
-    connect(provider.get(), &AI::AbstractProvider::modelsUpdated, this, &Service::modelsChanged);
-    m_providers.emplace_back(std::move(provider));
+  // for now, we reinstantiate all providers on config change
+  // this happens rarely enough so that this isn't a problem.
+  // this greately simplifies thing: we can directly pass the config to the provider's constructor and we do
+  // not have to handle reconfiguration. All ongoing generation tasks will be aborted.
+  void applyConfig(const ConfigValue &value) {
+
+    for (auto &provider : m_providers) {
+      disconnect(provider.get());
+    }
+
+    m_providers.clear();
+
+    for (auto const &[id, config] : value.providers) {
+      auto provider = createProvider(config);
+      connect(provider.get(), &AI::AbstractProvider::modelsUpdated, this, &Service::modelsChanged);
+      m_providers.emplace_back(provider);
+    }
+
+    for (auto &provider : m_providers) {
+      provider->start();
+    }
+  }
+
+  std::shared_ptr<AI::AbstractProvider> createProvider(const ConfigValue::ProviderConfig &config) {
+    auto const visitor =
+        overloads{[](AI::ConfigValue::OllamaConfig ollama) -> std::shared_ptr<AI::AbstractProvider> {
+                    return std::make_shared<OllamaProvider>(std::move(ollama));
+                  },
+                  [](const AI::ConfigValue::OpenAIConfig &openai) -> std::shared_ptr<AI::AbstractProvider> {
+                    return nullptr;
+                  },
+                  [](const auto &p) { return nullptr; }};
+
+    return std::visit(visitor, config);
   }
 
   std::shared_ptr<AbstractChatCompletionStream>
   createChatCompletion(const ChatCompletionPayload &payload) const {
     for (const auto &provider : m_providers) {
-      if (const auto model = provider->findBestModel(AI::Capability::Chat)) {
+      if (const auto model = provider->findBestModel(AI::Capability::Completion)) {
         return provider->createChatCompletion({.messages = payload.messages});
       }
     }
@@ -57,6 +98,7 @@ public:
   }
 
 private:
-  std::vector<std::unique_ptr<AI::AbstractProvider>> m_providers;
+  std::vector<std::shared_ptr<AI::AbstractProvider>> m_providers;
+  ConfigManager m_configManager;
 };
 }; // namespace AI

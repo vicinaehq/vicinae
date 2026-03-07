@@ -19,7 +19,7 @@ template <typename T> using Result = std::expected<T, std::string>;
  * Some models can do many 2026-03-05T21things at once.
  */
 enum Capability : std::uint8_t {
-  Chat = 1 << 0,
+  Completion = 1 << 0,
   Vision = 1 << 1,
   Thinking = 1 << 2,
   ToolCalling = 1 << 3,
@@ -47,7 +47,7 @@ struct ProviderModel : public Model {
 inline std::vector<std::string> stringifyCapabilities(Capabilities caps) {
   std::vector<std::string> strs;
 
-  if (caps & Chat) strs.emplace_back("completion");
+  if (caps & Completion) strs.emplace_back("completion");
   if (caps & Vision) strs.emplace_back("vision");
   if (caps & Thinking) strs.emplace_back("thinking");
   if (caps & ToolCalling) strs.emplace_back("tools");
@@ -123,15 +123,7 @@ public:
    */
   virtual std::optional<ImageUrl> icon() const = 0;
 
-  /**
-   * TODO: maybe don't use initialize pattern, but it is quite convenient.
-   *
-   * Initialize provider from generic json used for configuration.
-   * The shape of the object is arbitrary and will be different from provider to provider.
-   * If this method returns false, it is assumed that the provider failed to initialize, and the AI service
-   * will not consider it.
-   */
-  virtual bool initalize(const glz::raw_json &json) = 0;
+  virtual void start() = 0;
 
   /**
    * List all models that match the filter's criterias.
