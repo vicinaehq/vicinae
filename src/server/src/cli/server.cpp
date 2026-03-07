@@ -155,14 +155,6 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setTelemetry(std::make_unique<TelemetryService>(*registry->config()));
     registry->setAI(std::make_unique<AI::Service>());
 
-<<<<<<< HEAD
-=======
-    auto ollama = std::make_unique<AI::OllamaProvider>();
-
-    ollama->initalize({});
-    registry->ai()->registerProvider(std::move(ollama));
-
->>>>>>> 374be10e2 (feat: basic ollama integration)
     auto root = registry->rootItemManager();
     auto builtinCommandDb = std::make_unique<CommandDatabase>();
 
