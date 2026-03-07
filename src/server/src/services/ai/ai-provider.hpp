@@ -104,6 +104,7 @@ using ChatHistory = std::vector<ChatMessage>;
 
 struct ChatCompletionPayload {
   std::string modelId;
+  std::optional<std::string> providerId;
   ChatHistory messages;
 };
 
