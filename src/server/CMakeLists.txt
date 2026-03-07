@@ -456,6 +456,7 @@ set(SRCS
 	src/services/snippet/snippet-db.cpp
 	src/services/ai/ai-provider.hpp
 	src/services/ai/ai-service.hpp
+	src/services/ai/ai-config.hpp
 
 	src/qml/manage-models-model.hpp
 	src/qml/manage-models-model.cpp
