@@ -386,11 +386,6 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setWallpaperManager(std::make_unique<WallpaperManager>());
     registry->setAI(std::make_unique<AI::Service>());
 
-    auto ollama = std::make_unique<AI::OllamaProvider>();
-
-    ollama->initalize({});
-    registry->ai()->registerProvider(std::move(ollama));
-
     auto root = registry->rootItemManager();
     auto builtinCommandDb = std::make_unique<CommandDatabase>(*registry);
 
