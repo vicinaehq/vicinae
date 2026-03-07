@@ -3,6 +3,7 @@
 #include <fstream>
 #include <QStyleHints>
 #include <glaze/util/key_transformers.hpp>
+#include <qlogging.h>
 #include <qstylehints.h>
 #include <string_view>
 #include <QGuiApplication>
@@ -181,7 +182,8 @@ void Manager::reloadConfig() {
   std::error_code ec;
   if (!std::filesystem::is_regular_file(m_userPath, ec)) return;
 
-  auto res = loadUser({.resolveImports = true});
+  std::unordered_set<std::filesystem::path> visited;
+  auto res = loadUser({.resolveImports = true, .visited = visited});
 
   if (!res) {
     emit configLoadingError(res.error());
@@ -202,6 +204,15 @@ void Manager::initConfig() {
   }
 }
 
+std::filesystem::path Manager::resolvePath(const std::filesystem::path &path,
+                                           const std::filesystem::path &cwd) {
+  std::string importPath = expandPath(path);
+
+  if (!importPath.starts_with('/')) { importPath = cwd.parent_path() / importPath; }
+
+  return std::filesystem::weakly_canonical(importPath);
+}
+
 Manager::PartialConfigResult Manager::load(const std::filesystem::path &path, const LoadingOptions &opts) {
   m_watcher.addPath(path.c_str());
 
@@ -214,23 +225,41 @@ Manager::PartialConfigResult Manager::load(const std::filesystem::path &path, co
     return std::unexpected(std::format("Failed to read JSONC file at {}: {}", path.c_str(), glzErrMsg));
   }
 
+  auto importFile = [this, &opts](const Partial<ConfigValue> &cfg, const std::string &importPath,
+                                  bool override) -> std::expected<Partial<ConfigValue>, std::string> {
+    if (opts.visited.contains(importPath)) {
+      qWarning().nospace() << "Circular import detected for " << importPath << ", ignoring...";
+      return cfg;
+    }
+
+    opts.visited.insert(importPath);
+
+    if (std::filesystem::exists(importPath)) {
+      PartialConfigResult imported = load(importPath, opts);
+
+      if (!imported) {
+        return std::unexpected(std::format("Failed to import file \"{}\": {}", importPath, imported.error()));
+      }
+
+      if (override) return merge<Partial<ConfigValue>>(cfg, imported);
+      return merge<Partial<ConfigValue>>(imported, cfg);
+    } else {
+      qWarning().nospace() << "Imported config file not found: " << importPath;
+      return cfg;
+    }
+  };
+
   if (opts.resolveImports) {
     for (const auto &imp : cfg.imports.value_or({})) {
-      std::string importPath = expandPath(imp);
+      auto result = importFile(cfg, resolvePath(imp, path), false);
+      if (!result) return result;
+      cfg = std::move(result).value();
+    }
 
-      if (!importPath.starts_with('/')) { importPath = path.parent_path() / importPath; }
-      if (std::filesystem::exists(importPath)) {
-        PartialConfigResult imported = load(importPath, opts);
-
-        if (!imported) {
-          return std::unexpected(
-              std::format("Failed to import file \"{}\": {}", importPath, imported.error()));
-        }
-
-        cfg = merge<Partial<ConfigValue>>(imported, cfg);
-      } else {
-        qWarning() << "config file at" << importPath << "could not be found";
-      }
+    for (const auto &imp : cfg.overrides.value_or({})) {
+      auto result = importFile(cfg, resolvePath(imp, path), true);
+      if (!result) return result;
+      cfg = std::move(result).value();
     }
   }
 
