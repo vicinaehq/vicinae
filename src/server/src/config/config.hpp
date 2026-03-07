@@ -177,6 +177,7 @@ static constexpr const char *SCHEMA = "https://vicinae.com/schemas/config.json";
 
 struct ConfigValue {
   std::string schema = SCHEMA;
+  std::vector<std::string> overrides;
   std::vector<std::string> imports;
   bool searchFilesInRoot = false;
   bool closeOnFocusLoss = false;
@@ -225,6 +226,7 @@ using PartialValue = Partial<ConfigValue>;
 
 template <> struct Partial<ConfigValue> {
   std::string schema = SCHEMA;
+  std::optional<std::vector<std::string>> overrides;
   std::optional<std::vector<std::string>> imports;
   std::optional<bool> closeOnFocusLoss;
   std::optional<bool> considerPreedit;
@@ -261,6 +263,7 @@ signals:
 private:
   struct LoadingOptions {
     bool resolveImports;
+    std::unordered_set<std::filesystem::path> &visited;
   };
 
   using ConfigResult = std::expected<ConfigValue, std::string>;
@@ -300,8 +303,10 @@ public:
 private:
   static void prunePartial(Partial<ConfigValue> &user);
 
-  PartialConfigResult load(const std::filesystem::path &path,
-                           const LoadingOptions &opts = {.resolveImports = true});
+  PartialConfigResult load(const std::filesystem::path &path, const LoadingOptions &opts);
+
+  static std::filesystem::path resolvePath(const std::filesystem::path &path,
+                                           const std::filesystem::path &cwd);
 
   void reloadConfig();
   ConfigResult loadUser(const LoadingOptions &opts);
