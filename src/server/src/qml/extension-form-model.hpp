@@ -5,6 +5,8 @@
 #include <QVariantMap>
 #include <expected>
 #include <functional>
+#include <qcontainerfwd.h>
+#include <qtmetamacros.h>
 #include <vector>
 
 class ExtensionFormModel : public QAbstractListModel {
@@ -38,6 +40,7 @@ public:
   Q_INVOKABLE void fieldFocused(int index);
   Q_INVOKABLE void fieldBlurred(int index);
   Q_INVOKABLE void setFilePaths(int index, const QVariantList &paths);
+  Q_INVOKABLE void setPickedItems(int index, const QVariantList &pickedItems);
   Q_INVOKABLE void dropdownSearchTextChanged(int index, const QString &text);
 
   void setFormData(const FormModel &model);
@@ -53,6 +56,7 @@ private:
       TextArea,
       FilePicker,
       DatePicker,
+      TagPicker,
       Description,
       Separator
     };
