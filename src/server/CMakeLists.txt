@@ -326,6 +326,8 @@ set(SRCS
 	src/builtins/ai/manage-models-model.cpp
 	src/builtins/ai/manage-models-view-host.hpp
 	src/builtins/ai/manage-models-view-host.cpp
+	src/builtins/ai/quick-ai-view-host.hpp
+	src/builtins/ai/quick-ai-view-host.cpp
 	src/builtins/system/system-run-model.hpp
 	src/builtins/system/system-run-model.cpp
 	src/builtins/system/system-run-view-host.hpp
@@ -1149,6 +1151,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/views/ExtensionView.qml
 	src/ui/qml/views/MarkdownDetailView.qml
 	src/ui/qml/views/MarkdownDetailContent.qml
+	src/ui/qml/views/QuickAIView.qml
 	src/ui/qml/views/ExtensionGridView.qml
 	src/ui/qml/actions/ActionPanelPopover.qml
 	src/ui/qml/actions/ActionListPanel.qml

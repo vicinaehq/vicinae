@@ -25,6 +25,7 @@
 #include "ui/windows/overlay-controller.hpp"
 #include "builtins/vicinae/bug-report-url.hpp"
 #include "builtins/vicinae/vicinae-store-view-host.hpp"
+#include "builtins/ai/quick-ai-view-host.hpp"
 #include "ui/settings/settings-controller.hpp"
 #include "services/toast/toast-service.hpp"
 #include "config/config.hpp"
@@ -563,6 +564,16 @@ void LauncherWindow::applyPendingWindowTitle(int framesRemaining) {
 void LauncherWindow::forwardSearchText(const QString &text) {
   m_ctx.navigation->broadcastSearchText(text);
   tryCompaction();
+}
+
+void LauncherWindow::handleTab() {
+  if (!m_ctx.navigation->isRootSearch()) return;
+
+  auto text = m_ctx.navigation->searchText();
+  if (text.length() <= 5) return;
+
+  auto *view = new QuickAIViewHost(text);
+  m_ctx.navigation->pushView(view);
 }
 
 bool LauncherWindow::forwardKey(int rawKey, int modifiers, int scanCode) {
