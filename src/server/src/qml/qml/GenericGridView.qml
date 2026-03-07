@@ -8,7 +8,8 @@ Item {
     //   isSection, sectionName, rowSectionIdx, rowStartItem, rowItemCount
     // AND expose Q_INVOKABLEs for selection/navigation:
     //   selectedSection, selectedItem, select(), activateSelected(),
-    //   navigateUp/Down/Left/Right(), flatRowForSelection()
+    //   navigateUp/Down/Left/Right(), navigateSectionUp/Down(),
+    //   flatRowForSelection()
     property var cmdModel: null
 
     // Cell delegate component — instantiated per cell.
@@ -60,7 +61,23 @@ Item {
     function moveUp() { if (cmdModel) cmdModel.navigateUp() }
     function moveDown() { if (cmdModel) cmdModel.navigateDown() }
     function moveLeft() { if (cmdModel) cmdModel.navigateLeft() }
-	function moveRight() { if (cmdModel) cmdModel.navigateRight() }
+    function moveRight() { if (cmdModel) cmdModel.navigateRight() }
+    function moveSectionUp() { if (cmdModel) cmdModel.navigateSectionUp() }
+    function moveSectionDown() { if (cmdModel) cmdModel.navigateSectionDown() }
+
+    function _isRowVisible(row) {
+        if (row < 0) return false
+
+        const item = listView.itemAtIndex(row)
+        if (!item) return false
+
+        const viewportTop = listView.contentY
+        const viewportBottom = viewportTop + listView.height
+        const itemTop = item.y
+        const itemBottom = item.y + item.height
+
+        return itemBottom > viewportTop && itemTop < viewportBottom
+    }
 
     ListView {
         id: listView
@@ -263,7 +280,15 @@ Item {
         target: root.cmdModel
         function onSelectionChanged() {
             var row = root.cmdModel ? root.cmdModel.flatRowForSelection() : -1
-            if (row >= 0) listView.positionViewAtIndex(row, ListView.Contain)
+            if (row >= 0) {
+                var mode = ListView.Contain
+                if (root.cmdModel && typeof root.cmdModel.alignSelectionScrollToTop === "function"
+                        && root.cmdModel.alignSelectionScrollToTop()
+                        && !root._isRowVisible(row)) {
+                    mode = ListView.Beginning
+                }
+                listView.positionViewAtIndex(row, mode)
+            }
         }
     }
 
