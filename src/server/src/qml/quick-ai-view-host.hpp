@@ -5,7 +5,10 @@
 #include "ui/image/url.hpp"
 #include "vicinae.hpp"
 #include <QVariantList>
+#include <QVariantMap>
 #include <memory>
+#include <optional>
+#include <string>
 #include <vector>
 
 namespace AI {
@@ -21,17 +24,23 @@ class QuickAIViewHost : public ViewHostBase {
   Q_PROPERTY(QString streamingContent READ streamingContent NOTIFY streamingContentChanged)
   Q_PROPERTY(QString modelLabel READ modelLabel NOTIFY modelChanged)
   Q_PROPERTY(ImageUrl modelIcon READ modelIcon NOTIFY modelChanged)
+  Q_PROPERTY(QVariantList modelSelectorItems READ modelSelectorItems NOTIFY modelSelectorItemsChanged)
+  Q_PROPERTY(QVariantMap modelSelectorCurrentItem READ modelSelectorCurrentItem NOTIFY
+                 modelSelectorCurrentItemChanged)
 
 signals:
   void exchangesChanged();
   void streamingChanged();
   void streamingContentChanged();
   void modelChanged();
+  void modelSelectorItemsChanged();
+  void modelSelectorCurrentItemChanged();
 
 public:
   explicit QuickAIViewHost(QString initialQuery);
 
   QUrl qmlComponentUrl() const override;
+  QUrl qmlSearchAccessoryUrl() const override;
   QVariantMap qmlProperties() override;
   void initialize() override;
   void loadInitialData() override;
@@ -48,11 +57,16 @@ public:
   QString streamingContent() const { return m_streamingContent; }
   QString modelLabel() const { return m_modelLabel; }
   ImageUrl modelIcon() const { return m_modelIcon; }
+  QVariantList modelSelectorItems() const { return m_modelSelectorItems; }
+  QVariantMap modelSelectorCurrentItem() const { return m_modelSelectorCurrentItem; }
+
+  Q_INVOKABLE void selectModel(const QString &compositeId);
 
 private:
   void sendQuery(const std::string &query);
   void updateActions();
   void pasteLastResponse();
+  void rebuildModelSelectorItems();
 
   AI::Service *m_aiService = nullptr;
   std::shared_ptr<AI::AbstractChatCompletionStream> m_stream;
@@ -67,4 +81,9 @@ private:
   QString m_modelLabel;
   ImageUrl m_modelIcon;
   bool m_streaming = false;
+
+  std::optional<std::string> m_selectedProviderId;
+  std::optional<std::string> m_selectedModelId;
+  QVariantList m_modelSelectorItems;
+  QVariantMap m_modelSelectorCurrentItem;
 };

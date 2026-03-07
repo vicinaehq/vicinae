@@ -56,14 +56,11 @@ Item {
                             font.pointSize: Theme.regularFontSize
                         }
 
-                        Text {
+                        MarkdownInline {
                             width: parent.width
-                            text: modelData.response
-                            wrapMode: Text.Wrap
-                            color: Theme.foreground
-                            font.family: Theme.fontFamily
-                            font.pointSize: Theme.regularFontSize
-                            lineHeight: 1.4
+                            height: implicitHeight
+                            markdown: modelData.response
+                            activeFocusOnTab: false
                         }
                     }
                 }
@@ -95,22 +92,30 @@ Item {
                         font.pointSize: Theme.regularFontSize
                     }
 
-                    Text {
+                    Item {
                         width: parent.width
-                        text: host.streamingContent
-                        wrapMode: Text.Wrap
-                        color: Theme.foreground
-                        font.family: Theme.fontFamily
-                        font.pointSize: Theme.regularFontSize
-                        lineHeight: 1.4
+                        height: visible ? 24 : 0
+                        visible: host.streaming && host.streamingContent.length === 0
+
+                        PulsingDots {
+                            active: parent.visible
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+
+                    MarkdownInline {
+                        width: parent.width
+                        height: implicitHeight
+                        markdown: host.streamingContent
                         visible: host.streamingContent.length > 0
+                        enabled: false
                     }
                 }
             }
 
-            // model label
+            // model label (only shown after generation completes)
             Row {
-                visible: host.modelLabel.length > 0
+                visible: !host.streaming && host.modelLabel.length > 0
                 spacing: 6
 
                 ViciImage {
@@ -134,6 +139,10 @@ Item {
 
     Connections {
         target: host
+        function onStreamingChanged() {
+            if (host.streaming)
+                Qt.callLater(flickable.scrollToBottom)
+        }
         function onStreamingContentChanged() {
             flickable.scrollToBottom()
         }
