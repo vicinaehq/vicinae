@@ -331,34 +331,20 @@ Item {
         Row {
             id: tabHint
             visible: launcher.isRootSearch && searchInput.text.length > 5 && !launcher.hasCompleter
-            spacing: 4
+            spacing: 6
             Layout.alignment: Qt.AlignVCenter
-            opacity: 0.5
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "Ask AI"
                 font.family: Theme.fontFamily
-                font.pointSize: Theme.smallFontSize
-                color: Theme.foreground
+                font.pointSize: Theme.smallerFontSize
+                color: Theme.textMuted
             }
 
-            Rectangle {
+            ShortcutBadge {
                 anchors.verticalCenter: parent.verticalCenter
-                width: tabLabel.implicitWidth + 8
-                height: tabLabel.implicitHeight + 4
-                radius: 4
-                color: Theme.buttonSecondaryBg
-
-                Text {
-                    id: tabLabel
-                    anchors.centerIn: parent
-                    text: "Tab"
-                    font.family: Theme.fontFamily
-                    font.pointSize: Theme.smallFontSize
-                    font.bold: true
-                    color: Theme.foreground
-                }
+                text: "Tab"
             }
         }
 

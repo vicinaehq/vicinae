@@ -1,4 +1,5 @@
 #include "quick-ai-view-host.hpp"
+#include "ai-model-selector-utils.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/ai/ai-service.hpp"
@@ -10,6 +11,10 @@
 QuickAIViewHost::QuickAIViewHost(QString initialQuery) : m_initialQuery(std::move(initialQuery)) {}
 
 QUrl QuickAIViewHost::qmlComponentUrl() const { return QUrl(QStringLiteral("qrc:/Vicinae/QuickAIView.qml")); }
+
+QUrl QuickAIViewHost::qmlSearchAccessoryUrl() const {
+  return QUrl(QStringLiteral("qrc:/Vicinae/QuickAIModelAccessory.qml"));
+}
 
 QVariantMap QuickAIViewHost::qmlProperties() { return {{QStringLiteral("host"), QVariant::fromValue(this)}}; }
 
@@ -26,6 +31,9 @@ void QuickAIViewHost::initialize() {
       .value = "You are a concise assistant integrated into a desktop launcher. "
                "Give direct, helpful answers. Prefer short responses unless detail is asked for.",
   });
+
+  connect(m_aiService, &AI::Service::modelsChanged, this, &QuickAIViewHost::rebuildModelSelectorItems);
+  rebuildModelSelectorItems();
 
   updateActions();
 }
@@ -52,6 +60,8 @@ void QuickAIViewHost::sendQuery(const std::string &query) {
 
   AI::ChatCompletionPayload payload;
   payload.messages = m_history;
+  if (m_selectedModelId) payload.modelId = *m_selectedModelId;
+  if (m_selectedProviderId) payload.providerId = *m_selectedProviderId;
 
   m_stream = m_aiService->createChatCompletion(payload);
 
@@ -61,11 +71,6 @@ void QuickAIViewHost::sendQuery(const std::string &query) {
     return;
   }
 
-  const auto &model = m_stream->model();
-  m_modelLabel = QString::fromStdString(model.name);
-  m_modelIcon = model.icon.value_or(ImageUrl{});
-  emit modelChanged();
-
   connect(m_stream.get(), &AI::AbstractChatCompletionStream::dataAdded, this,
           [this](const std::string &text) {
             m_currentResponse += text;
@@ -74,6 +79,11 @@ void QuickAIViewHost::sendQuery(const std::string &query) {
           });
 
   connect(m_stream.get(), &AI::AbstractChatCompletionStream::finished, this, [this]() {
+    const auto &model = m_stream->model();
+    m_modelLabel = QString::fromStdString(model.name);
+    m_modelIcon = model.icon.value_or(ImageUrl{});
+    emit modelChanged();
+
     m_streaming = false;
     emit streamingChanged();
 
@@ -149,4 +159,68 @@ void QuickAIViewHost::pasteLastResponse() {
   auto *paste = ServiceRegistry::instance()->pasteService();
   paste->pasteContent(Clipboard::Text{QString::fromStdString(last.value)});
   context()->navigation->closeWindow();
+}
+
+void QuickAIViewHost::selectModel(const QString &compositeId) {
+  auto parts = compositeId.toStdString();
+  auto sep = parts.find('|');
+  if (sep == std::string::npos) return;
+
+  m_selectedProviderId = parts.substr(0, sep);
+  m_selectedModelId = parts.substr(sep + 1);
+
+  for (const auto &section : m_modelSelectorItems) {
+    auto sectionMap = section.toMap();
+    auto items = sectionMap[QStringLiteral("items")].toList();
+    for (const auto &item : items) {
+      auto itemMap = item.toMap();
+      if (itemMap[QStringLiteral("id")].toString() == compositeId) {
+        m_modelSelectorCurrentItem = itemMap;
+        emit modelSelectorCurrentItemChanged();
+        return;
+      }
+    }
+  }
+}
+
+void QuickAIViewHost::rebuildModelSelectorItems() {
+  m_modelSelectorItems = buildGroupedModelList(m_aiService, AI::Capability::Completion);
+  emit modelSelectorItemsChanged();
+
+  bool selectionStillValid = false;
+  if (m_selectedModelId) {
+    auto compositeId = QString::fromStdString(*m_selectedProviderId + "|" + *m_selectedModelId);
+    for (const auto &section : m_modelSelectorItems) {
+      auto sectionMap = section.toMap();
+      auto items = sectionMap[QStringLiteral("items")].toList();
+      for (const auto &item : items) {
+        auto itemMap = item.toMap();
+        if (itemMap[QStringLiteral("id")].toString() == compositeId) {
+          selectionStillValid = true;
+          m_modelSelectorCurrentItem = itemMap;
+          emit modelSelectorCurrentItemChanged();
+          break;
+        }
+      }
+      if (selectionStillValid) break;
+    }
+  }
+
+  if (!selectionStillValid) {
+    for (const auto &provider : m_aiService->providers()) {
+      if (auto model = provider->findBestModel(AI::Capability::Completion)) {
+        m_selectedProviderId = provider->id();
+        m_selectedModelId = model->id;
+        auto compositeId = QString::fromStdString(*m_selectedProviderId + "|" + *m_selectedModelId);
+
+        QVariantMap item;
+        item[QStringLiteral("id")] = compositeId;
+        item[QStringLiteral("displayName")] = QString::fromStdString(model->name);
+        if (model->icon) { item[QStringLiteral("iconSource")] = model->icon->toSource(); }
+        m_modelSelectorCurrentItem = item;
+        emit modelSelectorCurrentItemChanged();
+        break;
+      }
+    }
+  }
 }
