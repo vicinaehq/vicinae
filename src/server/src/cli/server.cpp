@@ -173,11 +173,6 @@ void CliServerCommand::run(CLI::App *) {
     registry->setBackgroundEffectManager(std::make_unique<BackgroundEffectManager>());
     registry->setAI(std::make_unique<AI::Service>());
 
-    auto ollama = std::make_unique<AI::OllamaProvider>();
-
-    ollama->initalize({});
-    registry->ai()->registerProvider(std::move(ollama));
-
     auto root = registry->rootItemManager();
     auto builtinCommandDb = std::make_unique<CommandDatabase>();
 
