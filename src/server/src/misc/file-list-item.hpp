@@ -2,7 +2,13 @@
 #include "actions/files/file-actions.hpp"
 #include "clipboard-actions.hpp"
 #include "navigation-controller.hpp"
+#include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
+#include "services/toast/toast-service.hpp"
+#include <QDBusConnection>
+#include <QDBusInterface>
+#include <QDBusReply>
+#include <QUrl>
 #include <qmimedatabase.h>
 #include <filesystem>
 #include <memory>
@@ -10,18 +16,61 @@
 
 namespace FileActions {
 
-inline OpenFileInAppAction *createOpenInFolderAction(const std::filesystem::path &path,
-                                                     const std::shared_ptr<AbstractApplication> &browser) {
+inline bool revealInFileManager(const std::filesystem::path &path) {
+  auto const fileUrl = QUrl::fromLocalFile(path.c_str()).toString();
+  QDBusInterface iface("org.freedesktop.FileManager1", "/org/freedesktop/FileManager1",
+                       "org.freedesktop.FileManager1", QDBusConnection::sessionBus());
+
+  if (!iface.isValid()) { return false; }
+
+  QDBusReply<void> const reply = iface.call("ShowItems", QStringList{fileUrl}, QString{});
+  return reply.isValid();
+}
+
+inline bool openInFolderFallback(const std::filesystem::path &path, AppService *appDb) {
+  auto const browser = appDb->fileBrowser();
+  if (!browser) { return false; }
+
   // These file managers don't work correctly when they're passed a file path
   // We work around this by passing the parent folder path instead
   static const std::set<QString> exceptions = {"org.kde.dolphin.desktop", "ranger.desktop"};
 
-  if (exceptions.contains(browser->id())) {
-    return new OpenFileInAppAction(path, browser, "Open in folder", {path.parent_path().c_str()});
+  if (!std::filesystem::exists(path)) {
+    auto const parentPath = path.parent_path();
+    return std::filesystem::exists(parentPath) && appDb->launch(*browser, {parentPath.c_str()});
   }
 
-  return new OpenFileInAppAction(path, browser, "Open in folder");
+  if (exceptions.contains(browser->id())) { return appDb->launch(*browser, {path.parent_path().c_str()}); }
+
+  return appDb->launch(*browser, {path.c_str()});
 }
+
+class RevealFileInFolderAction : public AbstractAction {
+public:
+  RevealFileInFolderAction(std::filesystem::path path)
+      : AbstractAction("Open in folder", ImageURL::builtin("folder")), m_path(std::move(path)) {}
+
+  void execute(ApplicationContext *ctx) override {
+    auto const appDb = ctx->services->appDb();
+    auto const files = ctx->services->fileService();
+    auto const toast = ctx->services->toastService();
+
+    bool const success = std::filesystem::exists(m_path)
+                             ? revealInFileManager(m_path) || openInFolderFallback(m_path, appDb)
+                             : openInFolderFallback(m_path, appDb);
+
+    if (!success) {
+      toast->failure("Failed to open folder");
+      return;
+    }
+
+    files->saveAccess(m_path);
+    ctx->navigation->closeWindow();
+  }
+
+private:
+  std::filesystem::path m_path;
+};
 
 inline std::unique_ptr<ActionPanelState> actionPanel(const std::filesystem::path &path, AppService *appDb) {
   QMimeDatabase mimeDb;
@@ -37,7 +86,7 @@ inline std::unique_ptr<ActionPanelState> actionPanel(const std::filesystem::path
   }
 
   if (fileBrowser && (!openers.empty() && openers.front()->id() != fileBrowser->id())) {
-    section->addAction(createOpenInFolderAction(path, fileBrowser));
+    section->addAction(new RevealFileInFolderAction(path));
   }
 
   auto suggested = panel->createSection("Suggested apps");
