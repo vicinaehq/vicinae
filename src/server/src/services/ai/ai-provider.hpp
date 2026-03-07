@@ -83,6 +83,14 @@ public:
   ~AbstractChatCompletionStream() override = default;
   virtual bool start() = 0;
   virtual bool abort() = 0;
+
+  const Model &model() const { return m_model; }
+
+protected:
+  void setModel(Model model) { m_model = std::move(model); }
+
+private:
+  Model m_model;
 };
 
 enum class ChatRole { System, User, Assistant };

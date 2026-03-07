@@ -194,7 +194,7 @@ class OllamaProvider : public AbstractProvider {
     if (model.name.contains("mistral")) return ImageUrl{BuiltinIcon::Mistral};
     if (model.name.contains("llava")) return ImageUrl{BuiltinIcon::Llava};
     if (model.name.contains("deepseek")) return ImageUrl{BuiltinIcon::Deepseek};
-    if (model.name.contains("gemma")) return ImageUrl{BuiltinIcon::Gemma};
+    if (model.name.contains("gemma")) return ImageUrl{BuiltinIcon::Google};
     if (model.family.starts_with("qwen")) return ImageUrl{BuiltinIcon::Qwen};
 
     return ImageUrl{BuiltinIcon::Ollama};
@@ -291,7 +291,16 @@ class OllamaProvider : public AbstractProvider {
 
     qDebug() << url << serializedData;
 
-    return std::make_shared<HttpCompletion>(req, QByteArray::fromStdString(serializedData));
+    AI::Model resolvedModel;
+    for (const auto &m : m_models) {
+      if (m.model == payload.modelId) {
+        resolvedModel = toModel(m);
+        break;
+      }
+    }
+
+    return std::make_shared<HttpCompletion>(req, QByteArray::fromStdString(serializedData),
+                                            std::move(resolvedModel));
   }
 
   QFuture<TranscriptionResult> transcribe() const override { return {}; }
