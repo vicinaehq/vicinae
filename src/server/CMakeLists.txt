@@ -465,6 +465,9 @@ set(SRCS
 	src/services/ai/ai-service.hpp
 	src/services/ai/ai-config.hpp
 
+	src/qml/quick-ai-view-host.hpp
+	src/qml/quick-ai-view-host.cpp
+
 	src/qml/keybind-bridge.hpp
 	src/qml/launcher-window.hpp
 	src/qml/launcher-window.cpp
@@ -941,6 +944,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/ExtensionView.qml
 	src/qml/qml/MarkdownDetailView.qml
 	src/qml/qml/MarkdownDetailContent.qml
+	src/qml/qml/QuickAIView.qml
 	src/qml/qml/ExtensionGridView.qml
 	src/qml/qml/ActionPanelPopover.qml
 	src/qml/qml/ActionListPanel.qml
