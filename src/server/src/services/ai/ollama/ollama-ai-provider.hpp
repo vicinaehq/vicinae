@@ -1,5 +1,7 @@
+#pragma once
 #include "builtin_icon.hpp"
 #include "image-url.hpp"
+#include "services/ai/ai-config.hpp"
 #include "services/ai/ai-provider.hpp"
 #include <cstdint>
 #include <expected>
@@ -8,23 +10,22 @@
 #include <glaze/json/read.hpp>
 #include "services/ai/http-completion.hpp"
 #include <glaze/json/write.hpp>
+#include <memory>
 #include <qcontainerfwd.h>
 #include <qfuture.h>
 #include <qfuturewatcher.h>
 #include <qlogging.h>
 #include <qnetworkreply.h>
 #include <qnetworkrequest.h>
+#include <qtimer.h>
 #include <ranges>
 
 namespace AI {
 
-struct OllamaConfig {
-  std::string url = "http://localhost:11434";
-  std::optional<std::string> pwd;
-};
-
 class JsonClient {
 public:
+  template <typename T> using Watcher = QFutureWatcher<T>;
+
   template <typename T>
   static QFuture<AI::Result<T>> waitForRequest(QPromise<AI::Result<T>> promise, QNetworkReply *reply) {
     auto future = promise.future();
@@ -101,6 +102,10 @@ class OllamaProvider : public AbstractProvider {
     std::string family;
   };
 
+  struct VersionResponse {
+    std::string version;
+  };
+
   struct ListModelsResponse {
     struct Model {
       struct Details {
@@ -133,7 +138,7 @@ class OllamaProvider : public AbstractProvider {
   };
 
   static std::optional<Capability> parseCapability(std::string_view str) {
-    if (str == "completion") { return Capability::Chat; }
+    if (str == "completion") { return Capability::Completion; }
     if (str == "tools") { return Capability::ToolCalling; }
     if (str == "vision") { return Capability::Vision; }
     if (str == "thinking") { return Capability::Thinking; }
@@ -198,7 +203,7 @@ class OllamaProvider : public AbstractProvider {
   QFuture<Result<std::vector<FullModelResponse>>> listModelsFull() {
     auto promise = std::make_shared<QPromise<Result<std::vector<FullModelResponse>>>>();
 
-    fetchModels().then([this, promise](Result<ListModelsResponse> result) mutable {
+    fetchModels().then([promise, showUrl = makeUrl("/api/show")](Result<ListModelsResponse> result) mutable {
       if (!result) {
         promise->addResult(std::unexpected(result.error()));
         promise->finish();
@@ -210,7 +215,8 @@ class OllamaProvider : public AbstractProvider {
       futures.reserve(modelList.models.size());
 
       for (const auto &model : modelList.models) {
-        futures.emplace_back(modelShow(model.model));
+        auto future = JsonClient{}.post<ModelShowResponse, ModelShowRequest>(showUrl, {.model = model.model});
+        futures.emplace_back(future);
       }
 
       QtFuture::whenAll(futures.begin(), futures.end())
@@ -243,10 +249,6 @@ class OllamaProvider : public AbstractProvider {
 
   QFuture<Result<ListModelsResponse>> fetchModels() {
     return JsonClient{}.get<ListModelsResponse>(makeUrl("/api/tags"));
-  }
-
-  QFuture<Result<ModelShowResponse>> modelShow(const std::string &model) {
-    return JsonClient{}.post<ModelShowResponse, ModelShowRequest>(makeUrl("/api/show"), {.model = model});
   }
 
   std::shared_ptr<AbstractChatCompletionStream>
@@ -296,13 +298,26 @@ class OllamaProvider : public AbstractProvider {
 
   using Watcher = QFutureWatcher<Result<std::vector<FullModelResponse>>>;
 
-public:
-  bool initalize(const glz::raw_json &json) override {
-    /*
-if (const auto error = glz::read_json(m_cfg, json.str)) {
-          return false;
+  void start() override { m_handshakeWatcher.setFuture(fetchVersion()); }
+
+  QFuture<AI::Result<VersionResponse>> fetchVersion() {
+    return JsonClient{}.get<VersionResponse>(makeUrl("/api/version"));
   }
-  */
+
+public:
+  OllamaProvider(AI::ConfigValue::OllamaConfig cfg) : m_cfg(std::move(cfg)) {
+    connect(&m_handshakeWatcher, &decltype(m_handshakeWatcher)::finished, this, [this]() {
+      auto const res = m_handshakeWatcher.result();
+
+      if (!res) {
+        qWarning() << "handshake with ollama failed" << res.error();
+        return;
+      }
+
+      qInfo().nospace() << "Connected to ollama instance " << m_cfg.url << " (version=" << res->version
+                        << ")";
+      m_listWatcher.setFuture(listModelsFull());
+    });
 
     connect(&m_listWatcher, &Watcher::finished, this, [this]() {
       if (m_listWatcher.isCanceled() || !m_listWatcher.isFinished()) return;
@@ -316,15 +331,16 @@ if (const auto error = glz::read_json(m_cfg, json.str)) {
       m_models = std::move(*result);
       emit modelsUpdated();
     });
-
-    m_listWatcher.setFuture(listModelsFull());
-
-    return true;
   }
 
+  ~OllamaProvider() override { m_listWatcher.cancel(); }
+
 private:
+  JsonClient::Watcher<AI::Result<VersionResponse>> m_handshakeWatcher;
+
   Watcher m_listWatcher;
-  OllamaConfig m_cfg;
+
+  ConfigValue::OllamaConfig m_cfg;
   std::vector<FullModelResponse> m_models;
 };
 
