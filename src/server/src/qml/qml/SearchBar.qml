@@ -281,11 +281,18 @@ Item {
                     } else {
                         launcher.handleReturn();
                     }
+				}
+
+                Keys.onTabPressed: (event) => {
+                    if (launcher.isRootSearch && searchInput.text.length > 5) {
+                        launcher.handleTab()
+                        event.accepted = true
+                    } else {
+                        event.accepted = false
+                    }
                 }
-                Keys.onBacktabPressed: event => {
-                    event.accepted = false;
-                }
-                Keys.onPressed: event => {
+                Keys.onBacktabPressed: (event) => { event.accepted = false }
+                Keys.onPressed: (event) => {
                     if (_handleEmacsEditing(event)) {
                         event.accepted = true;
                     } else if (_handleNavigation(event)) {
@@ -319,6 +326,40 @@ Item {
                 launcher.setCompleterValue(index, value);
             }
             onFocusSearchInput: searchInput.forceActiveFocus()
+        }
+
+        Row {
+            id: tabHint
+            visible: launcher.isRootSearch && searchInput.text.length > 5 && !launcher.hasCompleter
+            spacing: 4
+            Layout.alignment: Qt.AlignVCenter
+            opacity: 0.5
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: "Ask AI"
+                font.family: Theme.fontFamily
+                font.pointSize: Theme.smallFontSize
+                color: Theme.foreground
+            }
+
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                width: tabLabel.implicitWidth + 8
+                height: tabLabel.implicitHeight + 4
+                radius: 4
+                color: Theme.buttonSecondaryBg
+
+                Text {
+                    id: tabLabel
+                    anchors.centerIn: parent
+                    text: "Tab"
+                    font.family: Theme.fontFamily
+                    font.pointSize: Theme.smallFontSize
+                    font.bold: true
+                    color: Theme.foreground
+                }
+            }
         }
 
         Loader {

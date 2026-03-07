@@ -13,6 +13,7 @@
 #include "theme-bridge.hpp"
 #include "navigation-controller.hpp"
 #include "overlay-controller/overlay-controller.hpp"
+#include "quick-ai-view-host.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "services/keybinding/keybinding-service.hpp"
 #include "services/toast/toast-service.hpp"
@@ -379,6 +380,16 @@ void LauncherWindow::handleReturn() {
   } else {
     m_searchModel->activateSelected();
   }
+}
+
+void LauncherWindow::handleTab() {
+  if (!m_isRootSearch) return;
+
+  auto text = m_ctx.navigation->searchText();
+  if (text.length() <= 5) return;
+
+  auto *view = new QuickAIViewHost(text);
+  m_ctx.navigation->pushView(view);
 }
 
 bool LauncherWindow::forwardKey(int key, int modifiers) {
