@@ -1,3 +1,4 @@
+#pragma once
 #include <algorithm>
 #include <memory>
 #include <qobject.h>
@@ -62,12 +63,25 @@ public:
 
   std::shared_ptr<AbstractChatCompletionStream>
   createChatCompletion(const ChatCompletionPayload &payload) const {
+    if (!payload.modelId.empty()) {
+      if (payload.providerId) {
+        if (auto it =
+                std::ranges::find_if(m_providers, [&](auto &&p) { return p->id() == *payload.providerId; });
+            it != m_providers.end()) {
+          return (*it)->createChatCompletion(payload);
+        }
+      }
+
+      for (const auto &provider : m_providers) {
+        for (const auto &model : provider->listModels()) {
+          if (model.id == payload.modelId) { return provider->createChatCompletion(payload); }
+        }
+      }
+    }
+
     for (const auto &provider : m_providers) {
       if (const auto model = provider->findBestModel(AI::Capability::Completion)) {
-        return provider->createChatCompletion({
-            .modelId = "gemma3:latest",
-            .messages = payload.messages,
-        });
+        return provider->createChatCompletion({.modelId = model->id, .messages = payload.messages});
       }
     }
 
@@ -85,13 +99,14 @@ public:
 
   const auto &providers() const { return m_providers; }
 
-  std::vector<AI::ProviderModel> listModels() {
+  std::vector<AI::ProviderModel> listModels(std::optional<Capabilities> caps = std::nullopt) {
     std::vector<AI::ProviderModel> models;
 
     models.reserve(m_providers.size() * 50);
 
     for (const auto &provider : m_providers) {
       for (auto &model : provider->listModels()) {
+        if (caps && !(model.caps & *caps)) continue;
         ProviderModel pmodel(provider->id(), std::move(model));
         models.emplace_back(pmodel);
       }

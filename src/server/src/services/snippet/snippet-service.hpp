@@ -23,7 +23,7 @@ public:
   }
 
   bool start() {
-    m_server.start();
+    // m_server.start();
 
     for (const auto &snippet : m_db.snippets()) {
       if (const auto e = snippet.expansion) {

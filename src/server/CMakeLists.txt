@@ -716,6 +716,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/SearchableDropdown.qml
 	src/qml/qml/ClipboardHistoryView.qml
 	src/qml/qml/ClipboardFilterAccessory.qml
+	src/qml/qml/QuickAIModelAccessory.qml
 	src/qml/qml/DetailPanel.qml
 	src/qml/qml/MetadataBar.qml
 	src/qml/qml/AlertDialog.qml
@@ -738,6 +739,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/StoreIntroView.qml
 	src/qml/qml/markdown/MarkdownView.qml
 	src/qml/qml/markdown/MarkdownText.qml
+	src/qml/qml/markdown/MarkdownInline.qml
 	src/qml/qml/markdown/MdHeading.qml
 	src/qml/qml/markdown/MdParagraph.qml
 	src/qml/qml/markdown/MdCodeBlock.qml
@@ -755,6 +757,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/FormLinkAccessory.qml
 	src/qml/qml/ExtensionDropdownAccessory.qml
 	src/qml/qml/EditKeywordsFormView.qml
+	src/qml/qml/PulsingDots.qml
 	src/qml/qml/HorizontalLoadingBar.qml
 	src/qml/qml/SearchFilesView.qml
 	src/qml/qml/TextViewer.qml
