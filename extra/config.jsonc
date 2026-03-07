@@ -2,8 +2,7 @@
 	"$schema": "https://vicinae.com/schemas/config.json",
 
 	// Additional configuration files to load. Unlike regular imports specified in the 'imports' array,
-	// these files always take precedence over the main `settings.json` file, making them suitable to load
-	// declaratively generated configuration files, as typically done with home manager on NixOS.
+	// values in these files always take precedence over values defined in this current file.
 	"overrides": [
 		// "~/path/to/home-manager/config.json"
 	],
