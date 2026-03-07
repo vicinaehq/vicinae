@@ -6,6 +6,7 @@
 #include "navigation-controller.hpp"
 #include "proto/extension.pb.h"
 #include "proto/ui.pb.h"
+#include "services/app-service/app-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "types.hpp"
 #include "ui/toast/toast.hpp"
@@ -13,7 +14,7 @@
 class UIRequestRouter : public QObject {
 public:
   PromiseLike<proto::ext::extension::Response *> route(const proto::ext::ui::Request &req);
-  UIRequestRouter(ExtensionNavigationController *navigation, ToastService &toast);
+  UIRequestRouter(ExtensionNavigationController *navigation, ToastService &toast, AppService &appDb);
 
 private:
   ToastStyle parseProtoToastStyle(proto::ext::ui::ToastStyle style);
@@ -31,6 +32,7 @@ private:
   QFuture<proto::ext::extension::Response *> confirmAlert(const proto::ext::ui::ConfirmAlertRequest &req);
   proto::ext::ui::Response *showHud(const proto::ext::ui::ShowHudRequest &req);
   proto::ext::ui::Response *getSelectedText(const proto::ext::ui::GetSelectedTextRequest &req);
+  proto::ext::ui::Response *showInFileBrowser(const proto::ext::ui::ShowInFileBrowserRequest &req);
   void modelCreated();
 
   static proto::ext::extension::Response *wrapUI(proto::ext::ui::Response *uiRes);
@@ -38,4 +40,5 @@ private:
   QFutureWatcher<ParsedRenderData> m_modelWatcher;
   ExtensionNavigationController *m_navigation = nullptr;
   ToastService &m_toast;
+  AppService &m_appDb;
 };

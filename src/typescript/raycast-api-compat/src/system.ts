@@ -39,9 +39,9 @@ export const captureException = (exception: unknown): void => {
   console.error("captureException called on", exception);
 };
 
-export const showInFinder = (path: PathLike) => vicinae.showInFileBrowser(path);
+export const showInFinder = (path: PathLike) =>
+	vicinae.showInFileBrowser(path, { select: true });
 
 export const getSelectedFinderItems = async (): Promise<{ path: string }[]> => {
 	throw new Error('getSelectedFinderItems is not implemented');
 }
-

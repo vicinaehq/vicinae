@@ -3,6 +3,7 @@
 #include "navigation-controller.hpp"
 #include "proto/extension.pb.h"
 #include "proto/ui.pb.h"
+#include "utils/file-browser-utils.hpp"
 #include "theme.hpp"
 #include "timer.hpp"
 #include "ui/alert/alert.hpp"
@@ -22,8 +23,9 @@ static const std::unordered_map<ui::ToastStyle, ToastStyle> toastMap = {
     {ui::ToastStyle::Dynamic, ToastStyle::Dynamic},
 };
 
-UIRequestRouter::UIRequestRouter(ExtensionNavigationController *navigation, ToastService &toast)
-    : m_navigation(navigation), m_toast(toast) {
+UIRequestRouter::UIRequestRouter(ExtensionNavigationController *navigation, ToastService &toast,
+                                 AppService &appDb)
+    : m_navigation(navigation), m_toast(toast), m_appDb(appDb) {
   connect(&m_modelWatcher, &QFutureWatcher<RenderModel>::finished, this, &UIRequestRouter::modelCreated);
 }
 
@@ -55,6 +57,9 @@ PromiseLike<proto::ext::extension::Response *> UIRequestRouter::route(const prot
     return wrapUI(popToRoot(req.pop_to_root()));
   case Request::kShowHud:
     return wrapUI(showHud(req.show_hud()));
+  case Request::kShowInFileBrowser:
+    if (auto res = showInFileBrowser(req.show_in_file_browser())) { return wrapUI(res); }
+    return nullptr;
 
   default:
     break;
@@ -180,6 +185,17 @@ UIRequestRouter::getSelectedText(const proto::ext::ui::GetSelectedTextRequest &r
   selectedTextRes->set_text(text.toStdString());
   res->set_allocated_get_selected_text(selectedTextRes);
 
+  return res;
+}
+
+proto::ext::ui::Response *
+UIRequestRouter::showInFileBrowser(const proto::ext::ui::ShowInFileBrowserRequest &req) {
+  auto res = new proto::ext::ui::Response;
+  auto ack = new proto::ext::common::AckResponse;
+
+  if (!FileBrowser::showInFileBrowser(req.path(), &m_appDb, req.select())) { return nullptr; }
+
+  res->set_allocated_show_in_file_browser(ack);
   return res;
 }
 

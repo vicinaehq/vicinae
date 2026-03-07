@@ -47,6 +47,11 @@ message GetSelectedTextResponse {
   string text = 1;
 }
 
+message ShowInFileBrowserRequest {
+  string path = 1;
+  bool select = 2;
+}
+
 enum PopToRootType {
   PopToRootDefault = 0;
   PopToRootImmediate = 1;
@@ -108,6 +113,7 @@ message Request {
     ConfirmAlertRequest confirm_alert = 11;
     GetSelectedTextRequest get_selected_text = 12;
     PopToRootRequest pop_to_root = 13;
+    ShowInFileBrowserRequest show_in_file_browser = 14;
   };
 };
 
@@ -127,6 +133,7 @@ message Response {
     ConfirmAlertResponse confirm_alert = 11;
     GetSelectedTextResponse get_selected_text = 12;
     common.AckResponse pop_to_root = 13;
+    common.AckResponse show_in_file_browser = 14;
   };
 };
 

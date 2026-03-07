@@ -81,6 +81,7 @@ export namespace Action {
 			path: PathLike;
 			icon?: ImageLike;
 			onShow?: (path: PathLike) => void;
+			select?: boolean;
 			shortcut?: Keyboard.Shortcut;
 			title?: string;
 		};
@@ -211,6 +212,7 @@ const OpenInBrowser: React.FC<Action.OpenInBrowser.Props> = ({
 
 const ShowInFinder: React.FC<Action.ShowInFinderProps.Props> = ({
 	path,
+	select = true,
 	title = "Show in Finder",
 	...props
 }) => {
@@ -219,7 +221,7 @@ const ShowInFinder: React.FC<Action.ShowInFinderProps.Props> = ({
 			{...props}
 			title={title}
 			onAction={() => {
-				showInFileBrowser(path);
+				showInFileBrowser(path, { select });
 			}}
 		/>
 	);
