@@ -36,6 +36,15 @@ struct Deeplink {
   };
 };
 
+struct Describe {
+  static constexpr const auto key = "describe";
+  struct Request {};
+  struct Response {
+    bool open;
+    std::string entrypoint;
+  };
+};
+
 struct LaunchApp {
   static constexpr const auto key = "launch-app";
 

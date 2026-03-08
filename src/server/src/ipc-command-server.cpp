@@ -63,6 +63,15 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QObject *parent)
         return {};
       });
 
+  m_rpc.route<ipc::Describe>([&](const ipc::Describe::Request &req, const Ctx &ctx) {
+    ipc::Describe::Response res;
+
+    res.entrypoint = ctx.global->app->navigation->activeCommand()->uniqueId();
+    res.open = ctx.global->app->navigation->isWindowOpened();
+
+    return res;
+  });
+
   m_rpc.route<ipc::Ping>([&](const ipc::Ping::Request &req, const Ctx &ctx) {
     return ipc::Ping::Response(VICINAE_GIT_TAG, QCoreApplication::applicationPid());
   });

@@ -15,8 +15,8 @@
 #include "common/qt.hpp"
 #include "types.hpp"
 
-using ServerSchema = ipc::RpcSchema<ipc::DMenu, ipc::Deeplink, ipc::Ping, ipc::LaunchApp, ipc::BrowserInit,
-                                    ipc::BrowserTabsChanged>;
+using ServerSchema = ipc::RpcSchema<ipc::DMenu, ipc::Deeplink, ipc::Ping, ipc::LaunchApp, ipc::Describe,
+                                    ipc::BrowserInit, ipc::BrowserTabsChanged>;
 
 using Watcher = QFutureWatcher<glz::raw_json>;
 

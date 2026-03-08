@@ -1,3 +1,4 @@
+#pragma once
 #include <cstring>
 #include <filesystem>
 #include <expected>
@@ -14,7 +15,7 @@
 
 namespace ipc {
 
-using CliSchema = RpcSchema<ipc::Ping, ipc::DMenu, ipc::Deeplink, ipc::LaunchApp>;
+using CliSchema = RpcSchema<ipc::Ping, ipc::DMenu, ipc::Deeplink, ipc::LaunchApp, ipc::Describe>;
 using BrowserExtensionSchema = RpcSchema<ipc::Ping, ipc::BrowserInit, ipc::BrowserTabsChanged>;
 
 template <IsRpcSchema SchemaType = CliSchema> class Client {
