@@ -155,7 +155,7 @@ public:
   virtual std::shared_ptr<AbstractChatCompletionStream>
   createChatCompletion(const ChatCompletionPayload &payload) const = 0;
 
-  virtual QFuture<TranscriptionResult> transcribe() const = 0;
+  virtual QFuture<TranscriptionResult> transcribe(const std::filesystem::path &path) const = 0;
 };
 
 }; // namespace AI
