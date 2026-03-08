@@ -34,6 +34,8 @@ std::optional<std::string> DesktopEntry::version() const { return m_version; }
 
 std::string DesktopEntry::name() const { return m_name; }
 
+std::optional<std::string> DesktopEntry::unlocalizedName() const { return m_unlocalizedName; }
+
 std::optional<std::string> DesktopEntry::url() const { return m_url; }
 
 std::optional<std::string> DesktopEntry::genericName() const { return m_genericName; }
@@ -172,6 +174,7 @@ DesktopEntry::DesktopEntry(std::string_view data, const ParseOptions &opts) {
     m_error = "Name key is always required";
   }
 
+  if (auto name = group->key("Name", false)) { m_unlocalizedName = name->asString(); }
   if (auto icon = group->key("Icon")) { m_icon = icon->asString(); }
   if (auto genericName = group->key("GenericName")) { m_genericName = genericName->asString(); }
   if (auto comment = group->key("Comment")) { m_comment = comment->asString(); }

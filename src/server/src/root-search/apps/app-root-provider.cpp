@@ -21,6 +21,9 @@ QString AppRootItem::typeDisplayName() const { return "Application"; }
 std::vector<QString> AppRootItem::keywords() const {
   auto keywords = m_app->keywords();
   keywords.emplace_back(m_app->description());
+
+  if (auto name = m_app->unlocalizedName()) { keywords.emplace_back(name.value()); }
+
   return keywords;
 }
 

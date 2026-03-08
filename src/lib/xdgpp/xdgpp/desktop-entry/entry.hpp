@@ -62,6 +62,8 @@ public:
    */
   std::string name() const;
 
+  std::optional<std::string> unlocalizedName() const;
+
   /**
    * Generic name of the application, for example "Web Browser".
    */
@@ -187,6 +189,7 @@ private:
   Type m_type = Type::Application;
   std::string m_version;
   std::string m_name;
+  std::optional<std::string> m_unlocalizedName;
   std::string m_genericName;
   bool m_noDisplay = false;
   std::optional<std::string> m_comment;
