@@ -7,6 +7,7 @@
 #include "common/types.hpp"
 #include "services/ai/ai-config.hpp"
 #include "services/ai/ollama/ollama-ai-provider.hpp"
+#include "services/ai/mistral/mistral-provider.hpp"
 #include "vicinae.hpp"
 
 namespace AI {
@@ -53,8 +54,8 @@ public:
         overloads{[](AI::ConfigValue::OllamaConfig ollama) -> std::shared_ptr<AI::AbstractProvider> {
                     return std::make_shared<OllamaProvider>(std::move(ollama));
                   },
-                  [](const AI::ConfigValue::OpenAIConfig &openai) -> std::shared_ptr<AI::AbstractProvider> {
-                    return nullptr;
+                  [](const AI::ConfigValue::MistralConfig &mistral) -> std::shared_ptr<AI::AbstractProvider> {
+                    return std::make_shared<MistralProvider>(mistral.apiKey.c_str());
                   },
                   [](const auto &p) { return nullptr; }};
 
@@ -86,6 +87,16 @@ public:
     }
 
     return nullptr;
+  }
+
+  QFuture<TranscriptionResult> transcribe(const std::filesystem::path &path) {
+    for (const auto &provider : m_providers) {
+      if (const auto model = provider->findBestModel(Capability::Transcription)) {
+        return provider->transcribe(path);
+      }
+    }
+
+    return {};
   }
 
   AbstractProvider *getProviderById(std::string_view id) {
