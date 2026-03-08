@@ -142,8 +142,7 @@ void ExtensionCommandRuntime::initialize() {
                                                                  context()->services->extensionManager());
   m_isDevMode = manager->hasDevelopmentSession(m_command->extensionId());
   m_navigation->setDevMode(m_isDevMode);
-  m_uiRouter = std::make_unique<UIRequestRouter>(m_navigation.get(), *context()->services->toastService(),
-                                                 *context()->services->appDb());
+  m_uiRouter = std::make_unique<UIRequestRouter>(m_navigation.get(), *context()->services->toastService());
   m_commandRouter =
       std::make_unique<CommandRequestRouter>(m_navigation.get(), context()->services->rootItemManager());
   m_fileSearchRouter = std::make_unique<FileSearchRequestRouter>(*context()->services->fileService());

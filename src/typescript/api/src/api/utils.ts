@@ -153,8 +153,8 @@ export const showInFileBrowser = async (
 	options: ShowInFileBrowserOptions = {},
 ): Promise<void> => {
 	if (options.select) {
-		await bus.request("ui.showInFileBrowser", {
-			path: path.toString(),
+		await bus.request("app.showInFileBrowser", {
+			target: path.toString(),
 			select: true,
 		});
 		return;
