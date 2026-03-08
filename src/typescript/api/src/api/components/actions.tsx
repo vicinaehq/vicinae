@@ -222,6 +222,7 @@ const ShowInFinder: React.FC<Action.ShowInFinderProps.Props> = ({
 			title={title}
 			onAction={() => {
 				showInFileBrowser(path, { select });
+				closeMainWindow();
 			}}
 		/>
 	);

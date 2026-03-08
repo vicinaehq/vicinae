@@ -13,7 +13,9 @@ public:
   }
 
   OpenFileAction(const std::filesystem::path &path, const std::shared_ptr<AbstractApplication> &app)
-      : OpenAppAction(app, "Open with " + app->displayName(), {path.c_str()}), m_path(path) {}
+      : OpenAppAction(app, "Open with " + app->displayName(), {path.c_str()}), m_path(path) {
+    setAutoClose();
+  }
 
 private:
   std::filesystem::path m_path;
