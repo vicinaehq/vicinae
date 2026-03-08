@@ -2,7 +2,6 @@
 #include <xdgpp/xdgpp.hpp>
 #include "services/app-service/abstract-app-db.hpp"
 #include "utils.hpp"
-#include "xdgpp/desktop-entry/exec.hpp"
 
 class XdgApplication : public AbstractApplication {
   xdgpp::DesktopFile m_entry;
@@ -25,6 +24,12 @@ public:
   QString program() const override {
     auto ss = parseExec({});
     return ss.empty() ? QString() : ss.at(0);
+  }
+
+  std::optional<QString> unlocalizedName() const override {
+    return m_entry.unlocalizedName()
+        .or_else([&]() { return m_entry.genericName(); })
+        .transform([](auto &&str) { return QString::fromStdString(str); });
   }
 
   bool matchesWindowClass(const QString &target) const override {

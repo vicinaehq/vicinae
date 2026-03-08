@@ -6,11 +6,12 @@
 #include <qobject.h>
 #include <qtmetamacros.h>
 #include <qurl.h>
-#include <quuid.h>
 #include "proto/application.pb.h"
 
 class AbstractApplication {
 public:
+  virtual ~AbstractApplication() = default;
+
   /**
    * Unique identifier for this app.
    */
@@ -39,6 +40,11 @@ public:
   virtual QString fullyQualifiedName() const { return displayName(); }
 
   virtual ImageURL iconUrl() const = 0;
+
+  /**
+   * Unlocalized name for the app, if available.
+   */
+  virtual std::optional<QString> unlocalizedName() const { return std::nullopt; }
 
   /**
    * Whether this application is an alternative action for an existing
