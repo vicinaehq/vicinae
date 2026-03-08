@@ -15,14 +15,17 @@ Item {
 
     function _handlePendingCommand() {
         const pending = settings.pendingCommandId;
-        if (!pending) return;
+        if (!pending)
+            return;
         const row = root.extModel.commandModel.findByEntrypointId(pending);
-        if (row < 0) return;
+        if (row < 0)
+            return;
         settings.pendingCommandId = "";
         root.expandedCommandId = pending;
         root.extModel.loadCommandPreferences(pending);
         Qt.callLater(() => {
-            if (cmdFlickable) cmdFlickable.scrollToIndex(row);
+            if (cmdFlickable)
+                cmdFlickable.scrollToIndex(row);
         });
     }
 
@@ -46,15 +49,13 @@ Item {
 
         function scrollToIndex(row) {
             const item = cmdRepeater.itemAt(row);
-            if (!item) return;
-            contentY = Math.max(0, Math.min(
-                item.y - (height - item.height) / 2,
-                contentHeight - height));
+            if (!item)
+                return;
+            contentY = Math.max(0, Math.min(item.y - (height - item.height) / 2, contentHeight - height));
         }
 
         ScrollBar.vertical: ViciScrollBar {
-            policy: cmdFlickable.contentHeight > cmdFlickable.height
-                    ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+            policy: cmdFlickable.contentHeight > cmdFlickable.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
         }
 
         ColumnLayout {
@@ -65,7 +66,9 @@ Item {
             readonly property real contentWidth: Math.min(width, 680)
             readonly property real sideMargin: (width - contentWidth) / 2
 
-            Item { implicitHeight: 24 }
+            Item {
+                implicitHeight: 24
+            }
 
             ColumnLayout {
                 Layout.alignment: Qt.AlignHCenter
@@ -116,10 +119,12 @@ Item {
                         Rectangle {
                             anchors.fill: parent
                             radius: 10
-                            color: enableToggle.checked ? Theme.accent
-                                   : Qt.rgba(Theme.foreground.r, Theme.foreground.g,
-                                             Theme.foreground.b, 0.2)
-                            Behavior on color { ColorAnimation { duration: 120 } }
+                            color: enableToggle.checked ? Theme.accent : Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.2)
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: 120
+                                }
+                            }
 
                             Rectangle {
                                 width: 16
@@ -128,15 +133,18 @@ Item {
                                 x: enableToggle.checked ? parent.width - width - 2 : 2
                                 anchors.verticalCenter: parent.verticalCenter
                                 color: "#ffffff"
-                                Behavior on x { NumberAnimation { duration: 120 } }
+                                Behavior on x {
+                                    NumberAnimation {
+                                        duration: 120
+                                    }
+                                }
                             }
                         }
 
                         MouseArea {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: root.extModel.setEnabled(
-                                root.extModel.selectedRow, !enableToggle.checked)
+                            onClicked: root.extModel.setEnabled(root.extModel.selectedRow, !enableToggle.checked)
                         }
                     }
                 }
@@ -178,7 +186,9 @@ Item {
                     prefModel: root.extModel.preferenceModel
                 }
 
-                Item { implicitHeight: 16 }
+                Item {
+                    implicitHeight: 16
+                }
 
                 Rectangle {
                     Layout.fillWidth: true
@@ -241,16 +251,17 @@ Item {
                             activeFocusOnTab: true
 
                             onTextChanged: {
-                                cmdFlickable._minContentHeight = cmdFlickable.contentHeight
-                                root.extModel.commandModel.setFilter(text)
+                                cmdFlickable._minContentHeight = cmdFlickable.contentHeight;
+                                root.extModel.commandModel.setFilter(text);
                             }
                             onActiveFocusChanged: {
-                                if (!activeFocus) cmdFlickable._minContentHeight = 0
+                                if (!activeFocus)
+                                    cmdFlickable._minContentHeight = 0;
                             }
-                            Keys.onPressed: (event) => {
+                            Keys.onPressed: event => {
                                 if (event.key === Qt.Key_Escape && text !== "") {
-                                    text = ""
-                                    event.accepted = true
+                                    text = "";
+                                    event.accepted = true;
                                 }
                             }
                         }
@@ -284,15 +295,17 @@ Item {
                         height: cmdRow.implicitHeight + 16
                         color: cmdHover.hovered ? Theme.listItemHoverBg : "transparent"
 
-                        HoverHandler { id: cmdHover }
+                        HoverHandler {
+                            id: cmdHover
+                        }
                         TapHandler {
                             onTapped: {
                                 if (cmdDelegate.isExpanded) {
-                                    root.expandedCommandId = ""
+                                    root.expandedCommandId = "";
                                 } else {
-                                    root.expandedCommandId = cmdDelegate.entrypointId
+                                    root.expandedCommandId = cmdDelegate.entrypointId;
                                     if (cmdDelegate.hasPreferences)
-                                        root.extModel.loadCommandPreferences(cmdDelegate.entrypointId)
+                                        root.extModel.loadCommandPreferences(cmdDelegate.entrypointId);
                                 }
                             }
                         }
@@ -307,8 +320,7 @@ Item {
                             spacing: 10
 
                             ViciImage {
-                                source: Img.builtin(cmdDelegate.isExpanded ? "chevron-down-small" : "chevron-right-small")
-                                    .withFillColor(Theme.textMuted)
+                                source: Img.builtin(cmdDelegate.isExpanded ? "chevron-down-small" : "chevron-right-small").withFillColor(Theme.textMuted)
                                 opacity: cmdDelegate.hasPreferences ? 1.0 : 0.25
                                 Layout.preferredWidth: 16
                                 Layout.preferredHeight: 16
@@ -350,15 +362,15 @@ Item {
                                     border.width: cmdAliasInput.activeFocus || cmdAliasInput.hovered ? 1 : 0
                                 }
 
-                                HoverHandler { id: aliasHover }
+                                HoverHandler {
+                                    id: aliasHover
+                                }
 
                                 onActiveFocusChanged: {
                                     if (!activeFocus)
-                                        root.extModel.setAliasByEntrypointId(
-                                            cmdDelegate.entrypointId, text)
+                                        root.extModel.setAliasByEntrypointId(cmdDelegate.entrypointId, text);
                                 }
-                                onAccepted: root.extModel.setAliasByEntrypointId(
-                                    cmdDelegate.entrypointId, text)
+                                onAccepted: root.extModel.setAliasByEntrypointId(cmdDelegate.entrypointId, text)
                             }
 
                             Rectangle {
@@ -381,8 +393,7 @@ Item {
                                 MouseArea {
                                     anchors.fill: parent
                                     cursorShape: Qt.PointingHandCursor
-                                    onClicked: root.extModel.setEnabledByEntrypointId(
-                                        cmdDelegate.entrypointId, !cmdDelegate.enabled)
+                                    onClicked: root.extModel.setEnabledByEntrypointId(cmdDelegate.entrypointId, !cmdDelegate.enabled)
                                 }
                             }
                         }
@@ -444,7 +455,9 @@ Item {
                 }
             }
 
-            Item { implicitHeight: 24 }
+            Item {
+                implicitHeight: 24
+            }
         }
     }
 }

@@ -16,12 +16,17 @@ FocusScope {
 
     signal pathsChanged(var paths)
 
-    function forceActiveFocus() { focusItem.forceActiveFocus() }
+    function forceActiveFocus() {
+        focusItem.forceActiveFocus();
+    }
 
     function _openDialog() {
-        if (root.readOnly) return
-        if (directoriesOnly) folderDialog.open()
-        else fileDialog.open()
+        if (root.readOnly)
+            return;
+        if (directoriesOnly)
+            folderDialog.open();
+        else
+            fileDialog.open();
     }
 
     // --- Single mode ---
@@ -32,18 +37,17 @@ FocusScope {
         anchors.fill: parent
 
         readonly property string _displayText: {
-            if (!root.selectedPaths || root.selectedPaths.length === 0) return ""
-            return root.selectedPaths[0] || ""
+            if (!root.selectedPaths || root.selectedPaths.length === 0)
+                return "";
+            return root.selectedPaths[0] || "";
         }
 
         Rectangle {
             anchors.fill: parent
             radius: 8
             opacity: root.readOnly ? 0.5 : 1.0
-            color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g,
-                           Theme.secondaryBackground.b, Config.windowOpacity)
-            border.color: root.hasError ? Theme.inputBorderError
-                          : focusItem.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
+            color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, Config.windowOpacity)
+            border.color: root.hasError ? Theme.inputBorderError : focusItem.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
             border.width: 1
 
             RowLayout {
@@ -77,11 +81,13 @@ FocusScope {
                         source: Img.builtin("xmark")
                     }
 
-                    HoverHandler { id: clearHover }
+                    HoverHandler {
+                        id: clearHover
+                    }
                     TapHandler {
                         onTapped: {
-                            root.pathsChanged([])
-                            root.selectedPaths = []
+                            root.pathsChanged([]);
+                            root.selectedPaths = [];
                         }
                     }
                 }
@@ -89,8 +95,8 @@ FocusScope {
 
             TapHandler {
                 onTapped: {
-                    focusItem.forceActiveFocus()
-                    root._openDialog()
+                    focusItem.forceActiveFocus();
+                    root._openDialog();
                 }
             }
         }
@@ -116,8 +122,7 @@ FocusScope {
                 Layout.fillWidth: true
                 implicitHeight: 32
                 radius: 6
-                color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g,
-                               Theme.secondaryBackground.b, Config.windowOpacity)
+                color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, Config.windowOpacity)
                 border.color: Theme.inputBorder
                 border.width: 1
 
@@ -152,16 +157,19 @@ FocusScope {
                             source: Img.builtin("xmark")
                         }
 
-                        HoverHandler { id: removeHover }
+                        HoverHandler {
+                            id: removeHover
+                        }
                         TapHandler {
                             onTapped: {
-                                const idx = index
-                                let copy = []
+                                const idx = index;
+                                let copy = [];
                                 for (let i = 0; i < root.selectedPaths.length; i++) {
-                                    if (i !== idx) copy.push(root.selectedPaths[i])
+                                    if (i !== idx)
+                                        copy.push(root.selectedPaths[i]);
                                 }
-                                root.pathsChanged(copy)
-                                root.selectedPaths = copy
+                                root.pathsChanged(copy);
+                                root.selectedPaths = copy;
                             }
                         }
                     }
@@ -185,11 +193,13 @@ FocusScope {
                 font.pointSize: Theme.regularFontSize
             }
 
-            HoverHandler { id: addHover }
+            HoverHandler {
+                id: addHover
+            }
             TapHandler {
                 onTapped: {
-                    focusItem.forceActiveFocus()
-                    root._openDialog()
+                    focusItem.forceActiveFocus();
+                    root._openDialog();
                 }
             }
         }
@@ -202,28 +212,28 @@ FocusScope {
         focus: true
         activeFocusOnTab: false
 
-        Keys.onReturnPressed: (event) => {
+        Keys.onReturnPressed: event => {
             if (typeof launcher !== "undefined")
-                event.accepted = launcher.forwardKey(event.key, event.modifiers)
+                event.accepted = launcher.forwardKey(event.key, event.modifiers);
             if (!event.accepted)
-                root._openDialog()
+                root._openDialog();
         }
         Keys.onSpacePressed: root._openDialog()
-        Keys.onPressed: (event) => {
+        Keys.onPressed: event => {
             if (typeof launcher !== "undefined")
-                event.accepted = launcher.forwardKey(event.key, event.modifiers)
+                event.accepted = launcher.forwardKey(event.key, event.modifiers);
         }
     }
 
     function _appendUnique(existing, newPaths) {
-        let merged = []
+        let merged = [];
         for (let i = 0; i < existing.length; i++)
-            merged.push(existing[i])
+            merged.push(existing[i]);
         for (let i = 0; i < newPaths.length; i++) {
             if (merged.indexOf(newPaths[i]) === -1)
-                merged.push(newPaths[i])
+                merged.push(newPaths[i]);
         }
-        return merged
+        return merged;
     }
 
     FileDialog {
@@ -231,15 +241,15 @@ FocusScope {
         title: root.multiple ? "Select files" : "Select a file"
         fileMode: root.multiple ? FileDialog.OpenFiles : FileDialog.OpenFile
         onAccepted: {
-            let paths = []
+            let paths = [];
             for (let i = 0; i < selectedFiles.length; i++)
-                paths.push(selectedFiles[i].toString().replace("file://", ""))
+                paths.push(selectedFiles[i].toString().replace("file://", ""));
 
             if (root.multiple)
-                paths = root._appendUnique(root.selectedPaths || [], paths)
+                paths = root._appendUnique(root.selectedPaths || [], paths);
 
-            root.selectedPaths = paths
-            root.pathsChanged(paths)
+            root.selectedPaths = paths;
+            root.pathsChanged(paths);
         }
     }
 
@@ -247,15 +257,15 @@ FocusScope {
         id: folderDialog
         title: "Select a directory"
         onAccepted: {
-            const path = selectedFolder.toString().replace("file://", "")
+            const path = selectedFolder.toString().replace("file://", "");
 
             if (root.multiple) {
-                const merged = root._appendUnique(root.selectedPaths || [], [path])
-                root.selectedPaths = merged
-                root.pathsChanged(merged)
+                const merged = root._appendUnique(root.selectedPaths || [], [path]);
+                root.selectedPaths = merged;
+                root.pathsChanged(merged);
             } else {
-                root.selectedPaths = [path]
-                root.pathsChanged([path])
+                root.selectedPaths = [path];
+                root.pathsChanged([path]);
             }
         }
     }

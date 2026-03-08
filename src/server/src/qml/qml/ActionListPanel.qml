@@ -8,74 +8,82 @@ Item {
     required property var model
     property var boundActions: root.model
 
-    signal navigateBack()
+    signal navigateBack
 
     function sectionScrollTarget(index, direction) {
         if (!root.model || typeof root.model.scrollTargetIndex !== "function")
-            return index
-        return root.model.scrollTargetIndex(index, direction)
+            return index;
+        return root.model.scrollTargetIndex(index, direction);
     }
 
     function revealCurrentSectionHeaderIfHidden() {
-        if (listView.currentIndex < 0) return false
+        if (listView.currentIndex < 0)
+            return false;
 
-        const scrollTarget = sectionScrollTarget(listView.currentIndex, -1)
-        if (scrollTarget === listView.currentIndex) return false
+        const scrollTarget = sectionScrollTarget(listView.currentIndex, -1);
+        if (scrollTarget === listView.currentIndex)
+            return false;
 
-        const previousContentY = listView.contentY
-        listView.positionViewAtIndex(scrollTarget, ListView.Contain)
-        return Math.abs(listView.contentY - previousContentY) > 0.5
+        const previousContentY = listView.contentY;
+        listView.positionViewAtIndex(scrollTarget, ListView.Contain);
+        return Math.abs(listView.contentY - previousContentY) > 0.5;
     }
 
     function moveUp() {
-        if (revealCurrentSectionHeaderIfHidden()) return
-
-        const next = root.model.nextSelectableIndex(listView.currentIndex, -1)
+        if (revealCurrentSectionHeaderIfHidden())
+            return;
+        const next = root.model.nextSelectableIndex(listView.currentIndex, -1);
         if (next !== listView.currentIndex) {
-            listView.currentIndex = next
-            const scrollTarget = sectionScrollTarget(next, -1)
-            listView.positionViewAtIndex(scrollTarget, ListView.Contain)
+            listView.currentIndex = next;
+            const scrollTarget = sectionScrollTarget(next, -1);
+            listView.positionViewAtIndex(scrollTarget, ListView.Contain);
         }
     }
 
     function moveDown() {
-        const next = root.model.nextSelectableIndex(listView.currentIndex, 1)
+        const next = root.model.nextSelectableIndex(listView.currentIndex, 1);
         if (next !== listView.currentIndex) {
-            listView.currentIndex = next
-            const scrollTarget = sectionScrollTarget(next, -1)
-            listView.positionViewAtIndex(scrollTarget, ListView.Contain)
+            listView.currentIndex = next;
+            const scrollTarget = sectionScrollTarget(next, -1);
+            listView.positionViewAtIndex(scrollTarget, ListView.Contain);
         }
     }
 
     function moveSectionUp() {
-        if (typeof root.model.nextSectionIndex !== "function") { moveUp(); return }
-        if (revealCurrentSectionHeaderIfHidden()) return
-
-        const next = root.model.nextSectionIndex(listView.currentIndex, -1)
+        if (typeof root.model.nextSectionIndex !== "function") {
+            moveUp();
+            return;
+        }
+        if (revealCurrentSectionHeaderIfHidden())
+            return;
+        const next = root.model.nextSectionIndex(listView.currentIndex, -1);
         if (next !== listView.currentIndex) {
-            listView.currentIndex = next
-            const scrollTarget = sectionScrollTarget(next, -1)
-            listView.positionViewAtIndex(scrollTarget, ListView.Contain)
+            listView.currentIndex = next;
+            const scrollTarget = sectionScrollTarget(next, -1);
+            listView.positionViewAtIndex(scrollTarget, ListView.Contain);
         }
     }
 
     function moveSectionDown() {
-        if (typeof root.model.nextSectionIndex !== "function") { moveDown(); return }
-        const next = root.model.nextSectionIndex(listView.currentIndex, 1)
+        if (typeof root.model.nextSectionIndex !== "function") {
+            moveDown();
+            return;
+        }
+        const next = root.model.nextSectionIndex(listView.currentIndex, 1);
         if (next !== listView.currentIndex) {
-            listView.currentIndex = next
-            const scrollTarget = sectionScrollTarget(next, -1)
-            listView.positionViewAtIndex(scrollTarget, ListView.Contain)
+            listView.currentIndex = next;
+            const scrollTarget = sectionScrollTarget(next, -1);
+            listView.positionViewAtIndex(scrollTarget, ListView.Contain);
         }
     }
 
     function activateCurrent() {
         if (listView.currentIndex >= 0)
-            root.model.activate(listView.currentIndex)
+            root.model.activate(listView.currentIndex);
     }
 
     function focusFilter() {
-        filterInput.forceActiveFocus()
+        filterInput.forceActiveFocus();
     }
 
     readonly property int listPadding: 6
@@ -84,8 +92,7 @@ Item {
 
     readonly property int emptyPadding: 32
 
-    implicitHeight: (_empty ? emptyLabel.implicitHeight + 2 * emptyPadding : listView.contentHeight + listView.topMargin + listView.bottomMargin)
-                    + filterBar.height + divider.height
+    implicitHeight: (_empty ? emptyLabel.implicitHeight + 2 * emptyPadding : listView.contentHeight + listView.topMargin + listView.bottomMargin) + filterBar.height + divider.height
 
     ColumnLayout {
         anchors.fill: parent
@@ -130,9 +137,11 @@ Item {
                 required property bool isDanger
 
                 sourceComponent: {
-                    if (itemType === "section") return sectionComponent
-                    if (itemType === "divider") return dividerComponent
-                    return actionComponent
+                    if (itemType === "section")
+                        return sectionComponent;
+                    if (itemType === "divider")
+                        return dividerComponent;
+                    return actionComponent;
                 }
 
                 Component {
@@ -169,16 +178,15 @@ Item {
                         selected: listView.currentIndex === delegateLoader.index
 
                         onClicked: {
-                            listView.currentIndex = delegateLoader.index
-                            root.model.activate(delegateLoader.index)
+                            listView.currentIndex = delegateLoader.index;
+                            root.model.activate(delegateLoader.index);
                         }
                     }
                 }
             }
 
             ScrollBar.vertical: ViciScrollBar {
-                policy: listView.contentHeight > listView.height
-                        ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+                policy: listView.contentHeight > listView.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
             }
         }
 
@@ -232,30 +240,30 @@ Item {
 
                     onTextEdited: root.model.setFilter(text)
 
-                    Keys.onPressed: function(event) {
-                        const nav = launcher.matchNavigationKey(event.key, event.modifiers)
+                    Keys.onPressed: function (event) {
+                        const nav = launcher.matchNavigationKey(event.key, event.modifiers);
                         if (nav === 1) {
-                            root.moveUp()
-                            event.accepted = true
+                            root.moveUp();
+                            event.accepted = true;
                         } else if (nav === 2) {
-                            root.moveDown()
-                            event.accepted = true
+                            root.moveDown();
+                            event.accepted = true;
                         } else if (nav === 3) {
-                            if (actionPanel.depth > 1) root.navigateBack()
-                            event.accepted = true
+                            if (actionPanel.depth > 1)
+                                root.navigateBack();
+                            event.accepted = true;
                         } else if (event.key === Qt.Key_Backspace && filterInput.text === "" && actionPanel.depth > 1) {
-                            root.navigateBack()
-                            event.accepted = true
-                        } else if ((event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))
-                                   && actionPanel.tryShortcut(event.key, event.modifiers)) {
-                            event.accepted = true
+                            root.navigateBack();
+                            event.accepted = true;
+                        } else if ((event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)) && actionPanel.tryShortcut(event.key, event.modifiers)) {
+                            event.accepted = true;
                         }
                     }
-                    Keys.onUpPressed: (event) => {
-                        (event.modifiers & Qt.ControlModifier) ? root.moveSectionUp() : root.moveUp()
+                    Keys.onUpPressed: event => {
+                        (event.modifiers & Qt.ControlModifier) ? root.moveSectionUp() : root.moveUp();
                     }
-                    Keys.onDownPressed: (event) => {
-                        (event.modifiers & Qt.ControlModifier) ? root.moveSectionDown() : root.moveDown()
+                    Keys.onDownPressed: event => {
+                        (event.modifiers & Qt.ControlModifier) ? root.moveSectionDown() : root.moveDown();
                     }
                     Keys.onReturnPressed: root.activateCurrent()
                 }
@@ -267,15 +275,16 @@ Item {
     Connections {
         target: root.model
         function onModelReset() {
-            var first = root.model.nextSelectableIndex(-1, 1)
-            listView.currentIndex = first >= 0 ? first : -1
+            var first = root.model.nextSelectableIndex(-1, 1);
+            listView.currentIndex = first >= 0 ? first : -1;
         }
     }
 
     Component.onCompleted: {
         if (root.model) {
-            var first = root.model.nextSelectableIndex(-1, 1)
-            if (first >= 0) listView.currentIndex = first
+            var first = root.model.nextSelectableIndex(-1, 1);
+            if (first >= 0)
+                listView.currentIndex = first;
         }
     }
 }

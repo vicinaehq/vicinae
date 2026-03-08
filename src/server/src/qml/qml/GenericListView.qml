@@ -50,75 +50,83 @@ Item {
 
     function sectionScrollTarget(index, direction) {
         if (!root.listModel || typeof root.listModel.scrollTargetIndex !== "function")
-            return index
-        return root.listModel.scrollTargetIndex(index, direction)
+            return index;
+        return root.listModel.scrollTargetIndex(index, direction);
     }
 
     function revealCurrentSectionHeaderIfHidden() {
-        if (listView.currentIndex < 0) return false
+        if (listView.currentIndex < 0)
+            return false;
 
-        const scrollTarget = sectionScrollTarget(listView.currentIndex, -1)
-        if (scrollTarget === listView.currentIndex) return false
+        const scrollTarget = sectionScrollTarget(listView.currentIndex, -1);
+        if (scrollTarget === listView.currentIndex)
+            return false;
 
-        const previousContentY = listView.contentY
-        listView.positionViewAtIndex(scrollTarget, ListView.Contain)
-        return Math.abs(listView.contentY - previousContentY) > 0.5
+        const previousContentY = listView.contentY;
+        listView.positionViewAtIndex(scrollTarget, ListView.Contain);
+        return Math.abs(listView.contentY - previousContentY) > 0.5;
     }
 
     function moveDown() {
-        const next = root.listModel.nextSelectableIndex(listView.currentIndex, 1)
+        const next = root.listModel.nextSelectableIndex(listView.currentIndex, 1);
         if (next !== listView.currentIndex) {
-            listView.currentIndex = next
-            const scrollTarget = sectionScrollTarget(next, -1)
-            listView.positionViewAtIndex(scrollTarget, ListView.Contain)
-		}
-		return true;
+            listView.currentIndex = next;
+            const scrollTarget = sectionScrollTarget(next, -1);
+            listView.positionViewAtIndex(scrollTarget, ListView.Contain);
+        }
+        return true;
     }
 
     function moveUp() {
-        if (revealCurrentSectionHeaderIfHidden()) return true
+        if (revealCurrentSectionHeaderIfHidden())
+            return true;
 
-        const next = root.listModel.nextSelectableIndex(listView.currentIndex, -1)
+        const next = root.listModel.nextSelectableIndex(listView.currentIndex, -1);
         if (next !== listView.currentIndex) {
-            listView.currentIndex = next
-            const scrollTarget = sectionScrollTarget(next, -1)
-            listView.positionViewAtIndex(scrollTarget, ListView.Contain)
-		}
-		return true;
+            listView.currentIndex = next;
+            const scrollTarget = sectionScrollTarget(next, -1);
+            listView.positionViewAtIndex(scrollTarget, ListView.Contain);
+        }
+        return true;
     }
 
     function moveSectionDown() {
-        if (typeof root.listModel.nextSectionIndex !== "function") { return moveDown() }
-        const next = root.listModel.nextSectionIndex(listView.currentIndex, 1)
+        if (typeof root.listModel.nextSectionIndex !== "function") {
+            return moveDown();
+        }
+        const next = root.listModel.nextSectionIndex(listView.currentIndex, 1);
         if (next !== listView.currentIndex) {
-            listView.currentIndex = next
-            const scrollTarget = sectionScrollTarget(next, -1)
-            listView.positionViewAtIndex(scrollTarget, ListView.Contain)
-		}
-		return true;
+            listView.currentIndex = next;
+            const scrollTarget = sectionScrollTarget(next, -1);
+            listView.positionViewAtIndex(scrollTarget, ListView.Contain);
+        }
+        return true;
     }
 
     function moveSectionUp() {
-        if (typeof root.listModel.nextSectionIndex !== "function") { return moveUp() }
-        if (revealCurrentSectionHeaderIfHidden()) return true
+        if (typeof root.listModel.nextSectionIndex !== "function") {
+            return moveUp();
+        }
+        if (revealCurrentSectionHeaderIfHidden())
+            return true;
 
-        const next = root.listModel.nextSectionIndex(listView.currentIndex, -1)
+        const next = root.listModel.nextSectionIndex(listView.currentIndex, -1);
         if (next !== listView.currentIndex) {
-            listView.currentIndex = next
-            const scrollTarget = sectionScrollTarget(next, -1)
-            listView.positionViewAtIndex(scrollTarget, ListView.Contain)
-		}
-		return true;
+            listView.currentIndex = next;
+            const scrollTarget = sectionScrollTarget(next, -1);
+            listView.positionViewAtIndex(scrollTarget, ListView.Contain);
+        }
+        return true;
     }
 
     function selectFirst() {
-        listView.currentIndex = root.listModel.nextSelectableIndex(-1, 1)
+        listView.currentIndex = root.listModel.nextSelectableIndex(-1, 1);
     }
 
     onListModelChanged: {
         if (root.autoWireModel && root.listModel && listView.count > 0) {
-            root.selectFirst()
-            root.listModel.setSelectedIndex(listView.currentIndex)
+            root.selectFirst();
+            root.listModel.setSelectedIndex(listView.currentIndex);
         }
     }
 
@@ -126,20 +134,21 @@ Item {
         enabled: root.autoWireModel && root.listModel
         target: root.listModel
         function onModelReset() {
-            if (root.selectFirstOnReset
-                    || listView.currentIndex < 0
-                    || listView.currentIndex >= listView.count) {
-                root.selectFirst()
+            if (root.selectFirstOnReset || listView.currentIndex < 0 || listView.currentIndex >= listView.count) {
+                root.selectFirst();
             }
-            if (root.listModel) root.listModel.setSelectedIndex(listView.currentIndex)
+            if (root.listModel)
+                root.listModel.setSelectedIndex(listView.currentIndex);
         }
     }
 
-    onItemSelected: function(index) {
-        if (root.autoWireModel && root.listModel) root.listModel.setSelectedIndex(index)
+    onItemSelected: function (index) {
+        if (root.autoWireModel && root.listModel)
+            root.listModel.setSelectedIndex(index);
     }
-    onItemActivated: function(index) {
-        if (root.autoWireModel && root.listModel) root.listModel.activateSelected()
+    onItemActivated: function (index) {
+        if (root.autoWireModel && root.listModel)
+            root.listModel.activateSelected();
     }
 
     RowLayout {
@@ -162,16 +171,14 @@ Item {
 
             onCurrentIndexChanged: root.itemSelected(currentIndex)
             onCountChanged: {
-                if (root.autoWireModel && root.listModel
-                        && currentIndex < 0 && count > 0) {
-                    root.selectFirst()
-                    root.listModel.setSelectedIndex(currentIndex)
+                if (root.autoWireModel && root.listModel && currentIndex < 0 && count > 0) {
+                    root.selectFirst();
+                    root.listModel.setSelectedIndex(currentIndex);
                 }
             }
 
             ScrollBar.vertical: ViciScrollBar {
-                policy: listView.contentHeight > listView.height
-                        ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+                policy: listView.contentHeight > listView.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
             }
         }
 
@@ -196,9 +203,7 @@ Item {
         anchors.fill: parent
         active: root._empty && !root.suppressEmpty && !root._awaitingData
         visible: active
-        sourceComponent: root.emptyViewComponent
-                         ? root.emptyViewComponent
-                         : defaultEmptyView
+        sourceComponent: root.emptyViewComponent ? root.emptyViewComponent : defaultEmptyView
     }
 
     Component {

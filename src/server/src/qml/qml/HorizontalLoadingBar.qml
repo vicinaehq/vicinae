@@ -32,10 +32,10 @@ Rectangle {
         interval: 100
         onTriggered: {
             if (root.loading) {
-                bar.x = -bar.width
-                root._active = true
+                bar.x = -bar.width;
+                root._active = true;
             } else {
-                root._active = false
+                root._active = false;
             }
         }
     }

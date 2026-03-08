@@ -11,8 +11,8 @@ Item {
 
     default property alias contentData: contentItem.data
 
-    signal clicked()
-    signal doubleClicked()
+    signal clicked
+    signal doubleClicked
 
     MouseArea {
         id: mouseArea
@@ -28,20 +28,20 @@ Item {
         anchors.rightMargin: 6
         radius: 10
         backgroundColor: {
-            var bg = Theme.background
-            return Qt.rgba(bg.r, bg.g, bg.b, Config.windowOpacity)
+            var bg = Theme.background;
+            return Qt.rgba(bg.r, bg.g, bg.b, Config.windowOpacity);
         }
         color: {
             if (root.selected) {
-                var c = Theme.listItemSelectionBg
-                return Qt.rgba(c.r, c.g, c.b, Config.windowOpacity)
+                var c = Theme.listItemSelectionBg;
+                return Qt.rgba(c.r, c.g, c.b, Config.windowOpacity);
             }
             if (root.hovered) {
-                var h = Theme.listItemHoverBg
-                return Qt.rgba(h.r, h.g, h.b, Config.windowOpacity)
+                var h = Theme.listItemHoverBg;
+                return Qt.rgba(h.r, h.g, h.b, Config.windowOpacity);
             }
-            var bg = Theme.background
-            return Qt.rgba(bg.r, bg.g, bg.b, Config.windowOpacity)
+            var bg = Theme.background;
+            return Qt.rgba(bg.r, bg.g, bg.b, Config.windowOpacity);
         }
     }
 

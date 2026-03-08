@@ -86,7 +86,11 @@ appimage-build-env-push:
 	docker push $(APPIMAGE_BUILD_ENV_IMAGE_TAG)
 .PHONY: appimage-build-env-push
 
-format:
+qmlformat:
+	find ./src -type f -name '*.qml' -print0 | xargs -0 -n 10 -P $(shell nproc) qmlformat -i
+.PHONY: qmlformat
+
+format: qmlformat
 	find ./src -type f \( -name '*.cpp' -o -name '*.hpp' \) -print0 | xargs -0 -n 10 -P $(shell nproc) clang-format -i
 .PHONY: format
 

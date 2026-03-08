@@ -38,7 +38,8 @@ Item {
                 onAccepted: launcher.handleReturn()
 
                 onEditingChanged: {
-                    if (!editing) root.host.handleLinkBlurred()
+                    if (!editing)
+                        root.host.handleLinkBlurred();
                 }
             }
         }
@@ -54,7 +55,7 @@ Item {
                 items: root.host.appSelectorModel.items
                 currentItem: root.host.selectedApp
                 hasError: appField.error !== ""
-                onActivated: (item) => root.host.selectApp(item)
+                onActivated: item => root.host.selectApp(item)
             }
         }
 
@@ -67,7 +68,7 @@ Item {
                 items: root.host.iconItems
                 currentItem: root.host.selectedIcon
                 hasError: iconField.error !== ""
-                onActivated: (item) => root.host.selectIcon(item)
+                onActivated: item => root.host.selectIcon(item)
             }
         }
     }

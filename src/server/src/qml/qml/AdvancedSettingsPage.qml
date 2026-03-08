@@ -12,8 +12,7 @@ Flickable {
     readonly property var model: settings.generalModel
 
     ScrollBar.vertical: ViciScrollBar {
-        policy: root.contentHeight > root.height
-                ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+        policy: root.contentHeight > root.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
     }
 
     ColumnLayout {
@@ -28,7 +27,7 @@ Flickable {
                 width: parent.width
                 items: root.model.iconThemeItems
                 currentItem: root.model.currentIconTheme
-                onActivated: (item) => root.model.selectIconTheme(item.id)
+                onActivated: item => root.model.selectIconTheme(item.id)
             }
         }
 
@@ -40,7 +39,8 @@ Flickable {
                 placeholder: "e.g. 1.0"
                 onAccepted: root.model.windowOpacity = text
                 onEditingChanged: {
-                    if (!editing) root.model.windowOpacity = text
+                    if (!editing)
+                        root.model.windowOpacity = text;
                 }
             }
         }
@@ -88,7 +88,7 @@ Flickable {
                 width: parent.width
                 items: root.model.faviconServiceItems
                 currentItem: root.model.currentFaviconService
-                onActivated: (item) => root.model.selectFaviconService(item.id)
+                onActivated: item => root.model.selectFaviconService(item.id)
             }
         }
 
@@ -100,7 +100,7 @@ Flickable {
                 width: parent.width
                 items: root.model.keybindingSchemeItems
                 currentItem: root.model.currentKeybindingScheme
-                onActivated: (item) => root.model.selectKeybindingScheme(item.id)
+                onActivated: item => root.model.selectKeybindingScheme(item.id)
             }
         }
     }

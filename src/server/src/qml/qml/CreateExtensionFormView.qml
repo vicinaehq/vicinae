@@ -117,7 +117,7 @@ Item {
             SearchableDropdown {
                 items: root.host.templateItems
                 currentItem: root.host.selectedTemplate
-                onActivated: (item) => root.host.selectTemplate(item)
+                onActivated: item => root.host.selectTemplate(item)
             }
         }
     }

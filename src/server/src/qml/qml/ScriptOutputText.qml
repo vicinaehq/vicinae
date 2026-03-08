@@ -7,20 +7,23 @@ ScrollView {
     property alias text: textArea.text
 
     function moveUp() {
-        contentItem.contentY = Math.max(0, contentItem.contentY - 40)
+        contentItem.contentY = Math.max(0, contentItem.contentY - 40);
     }
     function moveDown() {
-        contentItem.contentY = Math.min(
-            contentItem.contentHeight - height,
-            contentItem.contentY + 40
-        )
+        contentItem.contentY = Math.min(contentItem.contentHeight - height, contentItem.contentY + 40);
     }
-    function moveSectionUp() { moveUp() }
-    function moveSectionDown() { moveDown() }
-    function focusText() { textArea.forceActiveFocus() }
+    function moveSectionUp() {
+        moveUp();
+    }
+    function moveSectionDown() {
+        moveDown();
+    }
+    function focusText() {
+        textArea.forceActiveFocus();
+    }
     function scrollToBottom() {
-        let flick = contentItem
-        flick.contentY = Math.max(0, flick.contentHeight - root.height)
+        let flick = contentItem;
+        flick.contentY = Math.max(0, flick.contentHeight - root.height);
     }
 
     TextArea {
@@ -37,6 +40,6 @@ ScrollView {
         bottomPadding: 12
         leftPadding: 15
         rightPadding: 15
-        onLinkActivated: (link) => Qt.openUrlExternally(link)
+        onLinkActivated: link => Qt.openUrlExternally(link)
     }
 }

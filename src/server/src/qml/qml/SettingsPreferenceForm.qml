@@ -27,13 +27,19 @@ ColumnLayout {
 
             sourceComponent: {
                 switch (type) {
-                case "text": return textComp
-                case "password": return passwordComp
-                case "checkbox": return switchComp
-                case "dropdown": return dropdownComp
+                case "text":
+                    return textComp;
+                case "password":
+                    return passwordComp;
+                case "checkbox":
+                    return switchComp;
+                case "dropdown":
+                    return dropdownComp;
                 case "filepicker":
-                case "directorypicker": return filepickerComp
-                default: return null
+                case "directorypicker":
+                    return filepickerComp;
+                default:
+                    return null;
                 }
             }
         }
@@ -99,14 +105,17 @@ ColumnLayout {
 
                     ViciImage {
                         anchors.centerIn: parent
-                        source: Img.builtin(field.revealed ? "eye-disabled" : "eye")
-                            .withFillColor(Theme.textMuted)
+                        source: Img.builtin(field.revealed ? "eye-disabled" : "eye").withFillColor(Theme.textMuted)
                         width: 16
                         height: 16
                     }
 
-                    HoverHandler { id: revealHover }
-                    TapHandler { onTapped: field.revealed = !field.revealed }
+                    HoverHandler {
+                        id: revealHover
+                    }
+                    TapHandler {
+                        onTapped: field.revealed = !field.revealed
+                    }
                 }
             }
             Text {
@@ -146,10 +155,12 @@ ColumnLayout {
                     Rectangle {
                         anchors.fill: parent
                         radius: 10
-                        color: toggle.checked ? Theme.accent
-                               : Qt.rgba(Theme.foreground.r, Theme.foreground.g,
-                                         Theme.foreground.b, 0.2)
-                        Behavior on color { ColorAnimation { duration: 120 } }
+                        color: toggle.checked ? Theme.accent : Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.2)
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: 120
+                            }
+                        }
 
                         Rectangle {
                             width: 16
@@ -158,7 +169,11 @@ ColumnLayout {
                             x: toggle.checked ? parent.width - width - 2 : 2
                             anchors.verticalCenter: parent.verticalCenter
                             color: "#ffffff"
-                            Behavior on x { NumberAnimation { duration: 120 } }
+                            Behavior on x {
+                                NumberAnimation {
+                                    duration: 120
+                                }
+                            }
                         }
                     }
 
@@ -166,9 +181,10 @@ ColumnLayout {
                         anchors.fill: parent
                         cursorShape: field.parent.readOnly ? Qt.ArrowCursor : Qt.PointingHandCursor
                         onClicked: {
-                            if (field.parent.readOnly) return
-                            toggle.checked = !toggle.checked
-                            root.prefModel.setFieldValue(field.parent.index, toggle.checked)
+                            if (field.parent.readOnly)
+                                return;
+                            toggle.checked = !toggle.checked;
+                            root.prefModel.setFieldValue(field.parent.index, toggle.checked);
                         }
                     }
                 }
@@ -193,13 +209,15 @@ ColumnLayout {
 
             function _findCurrentItem(items, val) {
                 for (var s = 0; s < items.length; s++) {
-                    var section = items[s]
-                    if (!section || !section.items) continue
+                    var section = items[s];
+                    if (!section || !section.items)
+                        continue;
                     for (var i = 0; i < section.items.length; i++) {
-                        if (section.items[i].id === val) return section.items[i]
+                        if (section.items[i].id === val)
+                            return section.items[i];
                     }
                 }
-                return null
+                return null;
             }
 
             Text {
@@ -211,9 +229,8 @@ ColumnLayout {
                 Layout.fillWidth: true
                 items: field.parent.options || []
                 readOnly: field.parent.readOnly
-                currentItem: field._findCurrentItem(
-                    field.parent.options || [], field.parent.value)
-                onActivated: (item) => root.prefModel.setFieldValue(field.parent.index, item.id)
+                currentItem: field._findCurrentItem(field.parent.options || [], field.parent.value)
+                onActivated: item => root.prefModel.setFieldValue(field.parent.index, item.id)
             }
             Text {
                 visible: field.parent.description !== ""
@@ -242,16 +259,21 @@ ColumnLayout {
                 directoriesOnly: field.parent.directoriesOnly
                 readOnly: field.parent.readOnly
                 selectedPaths: {
-                    const v = field.parent.value
-                    if (!v) return []
-                    if (typeof v === "string") return v !== "" ? [v] : []
-                    let arr = []
-                    for (let i = 0; i < v.length; i++) arr.push(v[i])
-                    return arr
+                    const v = field.parent.value;
+                    if (!v)
+                        return [];
+                    if (typeof v === "string")
+                        return v !== "" ? [v] : [];
+                    let arr = [];
+                    for (let i = 0; i < v.length; i++)
+                        arr.push(v[i]);
+                    return arr;
                 }
-                onPathsChanged: (paths) => {
-                    if (field.parent.multiple) root.prefModel.setFieldValue(field.parent.index, paths)
-                    else root.prefModel.setFieldValue(field.parent.index, paths.length > 0 ? paths[0] : "")
+                onPathsChanged: paths => {
+                    if (field.parent.multiple)
+                        root.prefModel.setFieldValue(field.parent.index, paths);
+                    else
+                        root.prefModel.setFieldValue(field.parent.index, paths.length > 0 ? paths[0] : "");
                 }
             }
             Text {

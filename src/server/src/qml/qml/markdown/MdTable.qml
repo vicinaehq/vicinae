@@ -25,10 +25,12 @@ Rectangle {
     clip: true
 
     function textAlignment(colIdx) {
-        var a = alignments[colIdx] ?? 0
-        if (a === 1) return Text.AlignHCenter
-        if (a === 2) return Text.AlignRight
-        return Text.AlignLeft
+        var a = alignments[colIdx] ?? 0;
+        if (a === 1)
+            return Text.AlignHCenter;
+        if (a === 2)
+            return Text.AlignRight;
+        return Text.AlignLeft;
     }
 
     ColumnLayout {
@@ -86,12 +88,17 @@ Rectangle {
                             color: Theme.foreground
                             font.pointSize: Theme.regularFontSize
                             font.bold: true
-                            Binding on font.family { value: root.fontFamily; when: root.fontFamily !== "" }
+                            Binding on font.family {
+                                value: root.fontFamily
+                                when: root.fontFamily !== ""
+                            }
                             horizontalAlignment: root.textAlignment(index)
                             text: modelData.html ?? ""
 
-                            Component.onCompleted: if (root.selectionController) root.selectionController.registerSelectable(headerText, root.blockIndex * 10000 + index, true)
-                            Component.onDestruction: if (root.selectionController) root.selectionController.unregisterSelectable(headerText)
+                            Component.onCompleted: if (root.selectionController)
+                                root.selectionController.registerSelectable(headerText, root.blockIndex * 10000 + index, true)
+                            Component.onDestruction: if (root.selectionController)
+                                root.selectionController.unregisterSelectable(headerText)
                         }
                     }
                 }
@@ -151,12 +158,17 @@ Rectangle {
                                 wrapMode: TextEdit.Wrap
                                 color: Theme.foreground
                                 font.pointSize: Theme.regularFontSize
-                                Binding on font.family { value: root.fontFamily; when: root.fontFamily !== "" }
+                                Binding on font.family {
+                                    value: root.fontFamily
+                                    when: root.fontFamily !== ""
+                                }
                                 horizontalAlignment: root.textAlignment(index)
                                 text: modelData.html ?? ""
 
-                                Component.onCompleted: if (root.selectionController) root.selectionController.registerSelectable(cellText, root.blockIndex * 10000 + 100 + rowIdx * root.columnCount + index, true)
-                                Component.onDestruction: if (root.selectionController) root.selectionController.unregisterSelectable(cellText)
+                                Component.onCompleted: if (root.selectionController)
+                                    root.selectionController.registerSelectable(cellText, root.blockIndex * 10000 + 100 + rowIdx * root.columnCount + index, true)
+                                Component.onDestruction: if (root.selectionController)
+                                    root.selectionController.unregisterSelectable(cellText)
                             }
                         }
                     }

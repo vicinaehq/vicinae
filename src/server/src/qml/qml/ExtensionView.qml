@@ -8,45 +8,45 @@ Item {
 
     StackView.onActivated: {
         if (contentLoader.item && typeof contentLoader.item.restoreFocus === "function")
-            contentLoader.item.restoreFocus()
-	}
+            contentLoader.item.restoreFocus();
+    }
 
     function moveUp() {
         if (contentLoader.item && typeof contentLoader.item.moveUp === "function") {
-			return contentLoader.item.moveUp()
-		}
-		return false;
+            return contentLoader.item.moveUp();
+        }
+        return false;
     }
     function moveDown() {
         if (contentLoader.item && typeof contentLoader.item.moveDown === "function") {
-			return contentLoader.item.moveDown()
-		}
-		return false;
+            return contentLoader.item.moveDown();
+        }
+        return false;
     }
     function moveSectionUp() {
         if (contentLoader.item && typeof contentLoader.item.moveSectionUp === "function") {
-			return contentLoader.item.moveSectionUp()
-		}
-		else {
-			return moveUp()
-		}
+            return contentLoader.item.moveSectionUp();
+        } else {
+            return moveUp();
+        }
     }
     function moveSectionDown() {
         if (contentLoader.item && typeof contentLoader.item.moveSectionDown === "function")
-            return contentLoader.item.moveSectionDown()
-        else return moveDown()
+            return contentLoader.item.moveSectionDown();
+        else
+            return moveDown();
     }
     function moveLeft() {
         if (contentLoader.item && typeof contentLoader.item.moveLeft === "function") {
-            return contentLoader.item.moveLeft()
+            return contentLoader.item.moveLeft();
         }
-        return false
+        return false;
     }
     function moveRight() {
         if (contentLoader.item && typeof contentLoader.item.moveRight === "function") {
-            return contentLoader.item.moveRight()
+            return contentLoader.item.moveRight();
         }
-        return false
+        return false;
     }
 
     Loader {
@@ -54,11 +54,16 @@ Item {
         anchors.fill: parent
         sourceComponent: {
             switch (root.host.viewType) {
-            case "list": return listComponent
-            case "grid": return gridComponent
-            case "detail": return detailViewComponent
-            case "form": return formComponent
-            default: return null
+            case "list":
+                return listComponent;
+            case "grid":
+                return gridComponent;
+            case "detail":
+                return detailViewComponent;
+            case "form":
+                return formComponent;
+            default:
+                return null;
             }
         }
     }
@@ -66,10 +71,18 @@ Item {
     Component {
         id: listComponent
         Item {
-            function moveUp() { return listView.moveUp() }
-            function moveDown() { return listView.moveDown() }
-            function moveSectionUp() { return listView.moveSectionUp() }
-            function moveSectionDown() { return listView.moveSectionDown() }
+            function moveUp() {
+                return listView.moveUp();
+            }
+            function moveDown() {
+                return listView.moveDown();
+            }
+            function moveSectionUp() {
+                return listView.moveSectionUp();
+            }
+            function moveSectionDown() {
+                return listView.moveSectionDown();
+            }
 
             GenericListView {
                 id: listView
@@ -83,14 +96,13 @@ Item {
                 emptyTitle: root.host.contentModel.emptyTitle || "No results"
                 emptyDescription: root.host.contentModel.emptyDescription || ""
                 emptyIcon: {
-                    var _ = Theme.foreground
-                    var icon = root.host.contentModel.emptyIcon || ""
-                    return icon !== "" ? icon : "image://vicinae/builtin:magnifying-glass?fg=" + Theme.foreground
+                    var _ = Theme.foreground;
+                    var icon = root.host.contentModel.emptyIcon || "";
+                    return icon !== "" ? icon : "image://vicinae/builtin:magnifying-glass?fg=" + Theme.foreground;
                 }
 
                 detailComponent: detailPanel
-                detailVisible: root.host.contentModel.isShowingDetail
-                               && root.host.contentModel.hasDetail
+                detailVisible: root.host.contentModel.isShowingDetail && root.host.contentModel.hasDetail
 
                 delegate: Loader {
                     id: delegateLoader

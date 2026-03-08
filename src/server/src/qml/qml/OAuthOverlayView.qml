@@ -42,7 +42,9 @@ Item {
             }
         }
 
-        Item { Layout.fillWidth: true }
+        Item {
+            Layout.fillWidth: true
+        }
     }
 
     Rectangle {
@@ -104,16 +106,14 @@ Item {
 
                 background: Rectangle {
                     radius: 4
-                    color: continueBtn.hovered || continueBtn.activeFocus
-                           ? Theme.accent : Theme.listItemSelectionBg
+                    color: continueBtn.hovered || continueBtn.activeFocus ? Theme.accent : Theme.listItemSelectionBg
                     border.color: Theme.accent
                     border.width: 1
                 }
 
                 contentItem: Text {
                     text: "Continue with " + root.host.providerName
-                    color: continueBtn.hovered || continueBtn.activeFocus
-                           ? Theme.listItemSelectionFg : Theme.foreground
+                    color: continueBtn.hovered || continueBtn.activeFocus ? Theme.listItemSelectionFg : Theme.foreground
                     font.pointSize: Theme.regularFontSize
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
