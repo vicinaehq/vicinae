@@ -60,6 +60,7 @@ type EndpointMapping = {
 	"app.open": "app.open";
 	"app.getDefault": "app.getDefault";
 	"app.runInTerminal": "app.runInTerminal";
+	"app.showInFileBrowser": "app.showInFileBrowser";
 
 	"ui.render": "ui.render";
 	"ui.showToast": "ui.showToast";
@@ -72,7 +73,6 @@ type EndpointMapping = {
 	"ui.setSearchText": "ui.setSearchText";
 	"ui.confirmAlert": "ui.confirmAlert";
 	"ui.getSelectedText": "ui.getSelectedText";
-
 	"wm.ping": "wm.ping";
 	"wm.getActiveWindow": "wm.getActiveWindow";
 	"wm.getActiveWorkspace": "wm.getActiveWorkspace";

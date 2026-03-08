@@ -190,4 +190,11 @@ public:
    * The preferred terminal emulator to use on this system.
    */
   virtual AppPtr terminalEmulator() const = 0;
+
+  /**
+   * Open the system file browser for the provided path.
+   * If `select` is true, implementations should try to reveal/select the item and
+   * gracefully fall back to opening the containing folder when that is not supported.
+   */
+  virtual bool showInFileBrowser(const std::filesystem::path &path, bool select) const = 0;
 };

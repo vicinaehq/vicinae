@@ -49,6 +49,16 @@ export type RunInTerminalOptions = {
 };
 
 /**
+ * @category System
+ */
+export type ShowInFileBrowserOptions = {
+	/**
+	 * Reveal the item selected in its containing folder instead of just opening the target path.
+	 */
+	select?: boolean;
+};
+
+/**
  * Run a command in a new terminal emulator window.
  *
  * @param args - the command line to execute. This is *not* getting interpreted by a shell.
@@ -138,7 +148,18 @@ export const getDefaultApplication = async (
 /**
  * @category System
  */
-export const showInFileBrowser = async (path: PathLike): Promise<void> => {
+export const showInFileBrowser = async (
+	path: PathLike,
+	options: ShowInFileBrowserOptions = {},
+): Promise<void> => {
+	if (options.select) {
+		await bus.request("app.showInFileBrowser", {
+			target: path.toString(),
+			select: true,
+		});
+		return;
+	}
+
 	const fileBrowser = await getDefaultApplication("inode/directory"); // FIXME: we may want something more robust
 	await open(path.toString(), fileBrowser);
 };

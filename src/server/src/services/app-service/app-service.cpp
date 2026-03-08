@@ -110,6 +110,10 @@ std::shared_ptr<AbstractApplication> AppService::find(const QString &target) con
   return nullptr;
 }
 
+bool AppService::showInFileBrowser(const std::filesystem::path &path, bool select) const {
+  return m_provider->showInFileBrowser(path, select);
+}
+
 void AppService::handleDirectoryChanged(const QString &path) {
   // This event can fire multiple times for a single change.
   // Since scanning apps is fast we don't really need to batch events, at least for now.

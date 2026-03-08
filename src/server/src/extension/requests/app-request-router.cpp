@@ -52,6 +52,17 @@ AppRequestRouter::runInTerminal(const proto::ext::application::RunInTerminalRequ
 }
 
 proto::ext::application::Response *
+AppRequestRouter::showInFileBrowser(const proto::ext::application::ShowInFileBrowserRequest &req) const {
+  auto res = new proto::ext::application::Response;
+  auto ack = new proto::ext::common::AckResponse;
+
+  if (!m_appDb.showInFileBrowser(req.target(), req.select())) { return nullptr; }
+
+  res->set_allocated_show_in_file_browser(ack);
+  return res;
+}
+
+proto::ext::application::Response *
 AppRequestRouter::openApplication(const proto::ext::application::OpenApplicationRequest &req) const {
   QString const target = req.target().c_str();
 
@@ -88,6 +99,8 @@ proto::ext::extension::Response *AppRequestRouter::route(const proto::ext::appli
     return wrap(getDefault(req.get_default()));
   case app::Request::kRunInTerminal:
     return wrap(runInTerminal(req.run_in_terminal()));
+  case app::Request::kShowInFileBrowser:
+    return wrap(showInFileBrowser(req.show_in_file_browser()));
   default:
     break;
   }

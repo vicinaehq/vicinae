@@ -19,6 +19,9 @@ class AppRequestRouter {
   proto::ext::application::Response *
   runInTerminal(const proto::ext::application::RunInTerminalRequest &) const;
 
+  proto::ext::application::Response *
+  showInFileBrowser(const proto::ext::application::ShowInFileBrowserRequest &) const;
+
 public:
   proto::ext::extension::Response *route(const proto::ext::application::Request &);
 

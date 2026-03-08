@@ -32,12 +32,18 @@ message GetDefaultApplicationResponse {
   Application app = 1;
 };
 
+message ShowInFileBrowserRequest {
+  string target = 1;
+  bool select = 2;
+};
+
 message Request {
   oneof payload {
     ListApplicationRequest list = 1;
     OpenApplicationRequest open = 2;
     GetDefaultApplicationRequest get_default = 3;
     RunInTerminalRequest run_in_terminal = 4;
+    ShowInFileBrowserRequest show_in_file_browser = 5;
   };
 };
 
@@ -47,6 +53,7 @@ message Response {
     common.AckResponse open = 2;
     GetDefaultApplicationResponse get_default = 3;
     common.AckResponse run_in_terminal = 4;
+    common.AckResponse show_in_file_browser = 5;
   };
 };
 

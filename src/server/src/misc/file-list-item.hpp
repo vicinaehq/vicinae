@@ -2,26 +2,41 @@
 #include "actions/files/file-actions.hpp"
 #include "clipboard-actions.hpp"
 #include "navigation-controller.hpp"
+#include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
+#include "services/toast/toast-service.hpp"
 #include <qmimedatabase.h>
 #include <filesystem>
 #include <memory>
-#include <set>
 
 namespace FileActions {
 
-inline OpenFileInAppAction *createOpenInFolderAction(const std::filesystem::path &path,
-                                                     const std::shared_ptr<AbstractApplication> &browser) {
-  // These file managers don't work correctly when they're passed a file path
-  // We work around this by passing the parent folder path instead
-  static const std::set<QString> exceptions = {"org.kde.dolphin.desktop", "ranger.desktop"};
-
-  if (exceptions.contains(browser->id())) {
-    return new OpenFileInAppAction(path, browser, "Open in folder", {path.parent_path().c_str()});
+class RevealFileInFolderAction : public AbstractAction {
+public:
+  RevealFileInFolderAction(std::filesystem::path path)
+      : AbstractAction("Show in file browser", ImageURL::builtin("folder")), m_path(std::move(path)) {
+    setShortcut(Keyboard::Shortcut::submit());
   }
 
-  return new OpenFileInAppAction(path, browser, "Open in folder");
-}
+  void execute(ApplicationContext *ctx) override {
+    auto const appDb = ctx->services->appDb();
+    auto const files = ctx->services->fileService();
+    auto const toast = ctx->services->toastService();
+
+    bool const success = appDb->showInFileBrowser(m_path, true);
+
+    if (!success) {
+      toast->failure("Failed to open folder");
+      return;
+    }
+
+    files->saveAccess(m_path);
+    ctx->navigation->closeWindow();
+  }
+
+private:
+  std::filesystem::path m_path;
+};
 
 inline std::unique_ptr<ActionPanelState> actionPanel(const std::filesystem::path &path, AppService *appDb) {
   QMimeDatabase mimeDb;
@@ -36,9 +51,7 @@ inline std::unique_ptr<ActionPanelState> actionPanel(const std::filesystem::path
     section->addAction(open);
   }
 
-  if (fileBrowser && (!openers.empty() && openers.front()->id() != fileBrowser->id())) {
-    section->addAction(createOpenInFolderAction(path, fileBrowser));
-  }
+  if (fileBrowser) { section->addAction(new RevealFileInFolderAction(path)); }
 
   auto suggested = panel->createSection("Suggested apps");
 
