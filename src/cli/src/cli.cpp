@@ -3,6 +3,7 @@
 #include "lib/rang.hpp"
 #include "script.hpp"
 #include "common/common.hpp"
+#include "state.hpp"
 #include "version.h"
 #include "theme.hpp"
 #include "vicinae-ipc/client.hpp"
@@ -428,6 +429,7 @@ int CommandLineInterface::execute(int ac, char **av) {
   app.registerCommand<AppCommand>();
   app.registerCommand<ConfigCommand>();
   app.registerCommand<ScriptCommand>();
+  app.registerCommand<StateCommand>();
 
   return app.run(ac, av);
 }
