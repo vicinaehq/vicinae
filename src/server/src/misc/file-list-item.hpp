@@ -5,7 +5,6 @@
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/toast/toast-service.hpp"
-#include "utils/file-browser-utils.hpp"
 #include <qmimedatabase.h>
 #include <filesystem>
 #include <memory>
@@ -24,7 +23,7 @@ public:
     auto const files = ctx->services->fileService();
     auto const toast = ctx->services->toastService();
 
-    bool const success = FileBrowser::showInFileBrowser(m_path, appDb, true);
+    bool const success = appDb->showInFileBrowser(m_path, true);
 
     if (!success) {
       toast->failure("Failed to open folder");

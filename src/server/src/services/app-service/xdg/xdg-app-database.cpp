@@ -9,6 +9,9 @@
 #include <qtenvironmentvariables.h>
 #include <ranges>
 #include "xdgpp/desktop-entry/exec.hpp"
+#include <QDBusConnection>
+#include <QDBusInterface>
+#include <QDBusReply>
 #include <filesystem>
 #include <memory>
 #include <qcontainerfwd.h>
@@ -26,6 +29,38 @@
 namespace fs = std::filesystem;
 
 using AppPtr = XdgAppDatabase::AppPtr;
+
+namespace {
+
+bool revealInFileManager(const std::filesystem::path &path) {
+  auto const fileUrl = QUrl::fromLocalFile(path.c_str()).toString();
+  QDBusInterface iface("org.freedesktop.FileManager1", "/org/freedesktop/FileManager1",
+                       "org.freedesktop.FileManager1", QDBusConnection::sessionBus());
+
+  if (!iface.isValid()) { return false; }
+
+  QDBusReply<void> const reply = iface.call("ShowItems", QStringList{fileUrl}, QString{});
+  return reply.isValid();
+}
+
+std::optional<fs::path> containingFolderTarget(const fs::path &path) {
+  std::error_code ec;
+
+  if (!fs::exists(path, ec)) {
+    auto parentPath = path.parent_path();
+    if (parentPath.empty()) { return std::nullopt; }
+    return parentPath;
+  }
+
+  if (fs::is_directory(path, ec)) {
+    auto parentPath = path.parent_path();
+    return parentPath.empty() ? std::optional(path) : std::optional(parentPath);
+  }
+
+  return path;
+}
+
+} // namespace
 
 std::shared_ptr<AbstractApplication> XdgAppDatabase::defaultForMime(const QString &mime) const {
   for (const auto &list : m_mimeAppsLists) {
@@ -153,6 +188,31 @@ AppPtr XdgAppDatabase::webBrowser() const {
   }
 
   return nullptr;
+}
+
+bool XdgAppDatabase::showInFileBrowser(const fs::path &path, bool select) const {
+  auto const browser = fileBrowser();
+  if (!browser) { return false; }
+
+  if (!select) { return launch(*browser, {path.c_str()}); }
+
+  std::error_code ec;
+  if (fs::exists(path, ec) && revealInFileManager(path)) { return true; }
+
+  auto target = containingFolderTarget(path);
+  if (!target) { return false; }
+
+  // These file managers don't work correctly when they're passed a file path.
+  // We work around this by passing the parent folder path instead.
+  static const std::set<QString> exceptions = {"org.kde.dolphin.desktop", "ranger.desktop"};
+
+  if (exceptions.contains(browser->id())) {
+    if (auto parentPath = target->parent_path(); !parentPath.empty() && *target == path) {
+      return launch(*browser, {parentPath.c_str()});
+    }
+  }
+
+  return launch(*browser, {target->c_str()});
 }
 
 std::vector<fs::path> XdgAppDatabase::defaultSearchPaths() const { return xdgpp::appDirs(); }

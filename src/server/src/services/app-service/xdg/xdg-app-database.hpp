@@ -31,6 +31,7 @@ public:
   AppPtr fileBrowser() const override;
   AppPtr genericTextEditor() const override;
   AppPtr webBrowser() const override;
+  bool showInFileBrowser(const std::filesystem::path &path, bool select) const override;
 
   XdgAppDatabase();
 
