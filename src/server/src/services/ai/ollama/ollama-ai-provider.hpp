@@ -188,7 +188,7 @@ class OllamaProvider : public AbstractProvider {
   }
 
   std::shared_ptr<AbstractChatCompletionStream>
-  createChatCompletion(const ChatCompletionPayload &payload) const override {
+  createChatCompletion(const ChatCompletionPayload &payload) override {
     QNetworkRequest req;
     QUrl url = QString::fromStdString(m_cfg.url);
 
@@ -239,7 +239,7 @@ class OllamaProvider : public AbstractProvider {
         QObjectDeleter{});
   }
 
-  QFuture<TranscriptionResult> transcribe(const std::filesystem::path &path) const override { return {}; }
+  QFuture<TranscriptionResult> transcribe(const std::filesystem::path &path) override { return {}; }
 
   using Watcher = QFutureWatcher<Result<std::vector<FullModelResponse>>>;
 
