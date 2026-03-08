@@ -1,6 +1,6 @@
 #pragma once
 #include "command-database.hpp"
-#include "../../ui/image/url.hpp"
+#include "ui/image/url.hpp"
 #include "manage-models-command.hpp"
 
 class IntelligenceExtension : public BuiltinCommandRepository {
@@ -11,5 +11,8 @@ class IntelligenceExtension : public BuiltinCommandRepository {
   }
 
 public:
-  IntelligenceExtension() { registerCommand<ManageModelsCommand>(); }
+  IntelligenceExtension() {
+    registerCommand<ManageModelsCommand>();
+    registerCommand<TranscribeCommand>();
+  }
 };
