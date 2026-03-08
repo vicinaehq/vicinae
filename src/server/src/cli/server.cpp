@@ -90,6 +90,9 @@ void CliServerCommand::run(CLI::App *) {
     }
   }
 
+  if (!qEnvironmentVariableIsSet("QT_QUICK_FLICKABLE_WHEEL_DECELERATION"))
+    qputenv("QT_QUICK_FLICKABLE_WHEEL_DECELERATION", "10000");
+
   int argc = 1;
   static char *argv[] = {strdup("command"), nullptr};
   QGuiApplication const qapp(argc, argv);
