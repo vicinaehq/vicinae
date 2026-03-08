@@ -39,10 +39,7 @@ ColumnLayout {
                     text: root.ordered ? (root.startNumber + itemDelegate.index) + "." : "\u2022"
                     color: Theme.textMuted
                     font.pointSize: Theme.regularFontSize
-                    Binding on font.family {
-                        value: root.fontFamily
-                        when: root.fontFamily !== ""
-                    }
+                    Binding on font.family { value: root.fontFamily; when: root.fontFamily !== "" }
                 }
 
                 TextEdit {
@@ -55,16 +52,11 @@ ColumnLayout {
                     wrapMode: TextEdit.Wrap
                     color: Theme.foreground
                     font.pointSize: Theme.regularFontSize
-                    Binding on font.family {
-                        value: root.fontFamily
-                        when: root.fontFamily !== ""
-                    }
+                    Binding on font.family { value: root.fontFamily; when: root.fontFamily !== "" }
                     text: itemDelegate.modelData.html ?? ""
 
-                    Component.onCompleted: if (root.selectionController)
-                        root.selectionController.registerSelectable(itemText, root.blockIndex * 10000 + itemDelegate.index, true)
-                    Component.onDestruction: if (root.selectionController)
-                        root.selectionController.unregisterSelectable(itemText)
+                    Component.onCompleted: if (root.selectionController) root.selectionController.registerSelectable(itemText, root.blockIndex * 10000 + itemDelegate.index, true)
+                    Component.onDestruction: if (root.selectionController) root.selectionController.unregisterSelectable(itemText)
                 }
             }
 
@@ -76,18 +68,14 @@ ColumnLayout {
                     Layout.fillWidth: true
                     source: "MdList.qml"
                     onLoaded: {
-                        item.selectionController = root.selectionController;
-                        item.mdModel = root.mdModel;
-                        item.blockIndex = root.blockIndex;
-                        item.fontFamily = Qt.binding(function () {
-                            return root.fontFamily;
-                        });
-                        item.ordered = modelData.ordered ?? false;
-                        item.startNumber = modelData.startNumber ?? 1;
-                        item.depth = root.depth + 1;
-                        item.blockData = {
-                            items: modelData.items ?? []
-                        };
+                        item.selectionController = root.selectionController
+                        item.mdModel = root.mdModel
+                        item.blockIndex = root.blockIndex
+                        item.fontFamily = Qt.binding(function() { return root.fontFamily })
+                        item.ordered = modelData.ordered ?? false
+                        item.startNumber = modelData.startNumber ?? 1
+                        item.depth = root.depth + 1
+                        item.blockData = {items: modelData.items ?? []}
                     }
                 }
             }

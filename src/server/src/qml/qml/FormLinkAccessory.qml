@@ -17,7 +17,7 @@ Item {
             cursorShape: Qt.PointingHandCursor
             onClicked: {
                 if (launcher.commandViewHost)
-                    Qt.openUrlExternally(launcher.commandViewHost.linkAccessoryHref);
+                    Qt.openUrlExternally(launcher.commandViewHost.linkAccessoryHref)
             }
         }
     }

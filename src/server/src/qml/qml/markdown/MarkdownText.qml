@@ -12,12 +12,8 @@ Item {
     implicitHeight: view.contentHeight
     property alias contentHeight: view.contentHeight
 
-    function scrollUp() {
-        view.scrollUp();
-    }
-    function scrollDown() {
-        view.scrollDown();
-    }
+    function scrollUp() { view.scrollUp() }
+    function scrollDown() { view.scrollDown() }
 
     MarkdownModel {
         id: mdModel
@@ -35,6 +31,6 @@ Item {
     onMarkdownChanged: mdModel.setMarkdown(markdown)
     Component.onCompleted: {
         if (markdown.length > 0)
-            mdModel.setMarkdown(markdown);
+            mdModel.setMarkdown(markdown)
     }
 }

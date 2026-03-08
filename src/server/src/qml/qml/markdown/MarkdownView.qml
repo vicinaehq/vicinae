@@ -17,25 +17,16 @@ Item {
 
     readonly property var _controller: selectionController ?? _internalController
 
-    function scrollUp() {
-        flickable.flick(0, 800);
-    }
-    function scrollDown() {
-        flickable.flick(0, -800);
-    }
+    function scrollUp() { flickable.flick(0, 800) }
+    function scrollDown() { flickable.flick(0, -800) }
 
     onFontFamilyChanged: flickable.contentY = 0
 
     Keys.onUpPressed: scrollUp()
     Keys.onDownPressed: scrollDown()
     Keys.onPressed: event => {
-        if (event.key === Qt.Key_PageUp) {
-            flickable.flick(0, 2400);
-            event.accepted = true;
-        } else if (event.key === Qt.Key_PageDown) {
-            flickable.flick(0, -2400);
-            event.accepted = true;
-        }
+        if (event.key === Qt.Key_PageUp) { flickable.flick(0, 2400); event.accepted = true }
+        else if (event.key === Qt.Key_PageDown) { flickable.flick(0, -2400); event.accepted = true }
     }
 
     TextSelectionController {
@@ -68,8 +59,8 @@ Item {
 
         onContentHeightChanged: {
             if (root._autoScroll) {
-                root._autoScroll = false;
-                contentY = Math.max(0, contentHeight - height);
+                root._autoScroll = false
+                contentY = Math.max(0, contentHeight - height)
             }
         }
 
@@ -110,98 +101,52 @@ Item {
 
                     sourceComponent: {
                         switch (blockType) {
-                        case heading:
-                            return headingComp;
-                        case paragraph:
-                            return paragraphComp;
-                        case codeBlock:
-                            return codeBlockComp;
-                        case bulletList:
-                            return listComp;
-                        case orderedList:
-                            return listComp;
-                        case table:
-                            return tableComp;
-                        case image:
-                            return imageComp;
-                        case horizontalRule:
-                            return hrComp;
-                        case htmlBlock:
-                            return htmlBlockComp;
-                        case blockquote:
-                            return blockquoteComp;
-                        case callout:
-                            return calloutComp;
-                        default:
-                            return null;
+                        case heading:        return headingComp
+                        case paragraph:      return paragraphComp
+                        case codeBlock:      return codeBlockComp
+                        case bulletList:     return listComp
+                        case orderedList:    return listComp
+                        case table:          return tableComp
+                        case image:          return imageComp
+                        case horizontalRule: return hrComp
+                        case htmlBlock:      return htmlBlockComp
+                        case blockquote:     return blockquoteComp
+                        case callout:        return calloutComp
+                        default:             return null
                         }
                     }
 
                     onLoaded: {
-                        item.selectionController = root._controller;
-                        item.mdModel = root.model;
-                        item.blockIndex = index;
+                        item.selectionController = root._controller
+                        item.mdModel = root.model
+                        item.blockIndex = index
                         if (blockType !== codeBlock && blockType !== image && blockType !== horizontalRule)
-                            item.fontFamily = Qt.binding(function () {
-                                return root.fontFamily;
-                            });
+                            item.fontFamily = Qt.binding(function() { return root.fontFamily })
                         if (blockType === orderedList)
-                            item.ordered = true;
+                            item.ordered = true
                         else if (blockType === bulletList)
-                            item.ordered = false;
+                            item.ordered = false
                         if (blockType === image)
-                            item.maxImageHeight = Qt.binding(function () {
-                                return root.height * 0.7;
-                            });
+                            item.maxImageHeight = Qt.binding(function() { return root.height * 0.7 })
                         // Set blockData last — it triggers Repeater creation in
                         // multi-TextEdit blocks, and children need selectionController
                         // to already be set for registration in Component.onCompleted
-                        item.blockData = blockData;
+                        item.blockData = blockData
                     }
                 }
             }
         }
 
-        Component {
-            id: headingComp
-            MdHeading {}
-        }
-        Component {
-            id: paragraphComp
-            MdParagraph {}
-        }
-        Component {
-            id: codeBlockComp
-            MdCodeBlock {}
-        }
-        Component {
-            id: listComp
-            MdList {}
-        }
-        Component {
-            id: tableComp
-            MdTable {}
-        }
-        Component {
-            id: imageComp
-            MdImage {}
-        }
-        Component {
-            id: hrComp
-            MdHorizontalRule {}
-        }
-        Component {
-            id: htmlBlockComp
-            MdHtmlBlock {}
-        }
-        Component {
-            id: blockquoteComp
-            MdBlockquote {}
-        }
-        Component {
-            id: calloutComp
-            MdCallout {}
-        }
+        Component { id: headingComp;    MdHeading {} }
+        Component { id: paragraphComp;  MdParagraph {} }
+        Component { id: codeBlockComp;  MdCodeBlock {} }
+        Component { id: listComp;       MdList {} }
+        Component { id: tableComp;      MdTable {} }
+        Component { id: imageComp;      MdImage {} }
+        Component { id: hrComp;         MdHorizontalRule {} }
+        Component { id: htmlBlockComp;  MdHtmlBlock {} }
+        Component { id: blockquoteComp; MdBlockquote {} }
+        Component { id: calloutComp;    MdCallout {} }
     }
 
     Shortcut {
@@ -218,13 +163,14 @@ Item {
     Connections {
         target: root.model
         function onBlocksAppended() {
-            let atBottom = flickable.contentHeight <= flickable.height || flickable.contentY + flickable.height >= flickable.contentHeight - 2;
-            root._autoScroll = atBottom;
+            let atBottom = flickable.contentHeight <= flickable.height
+                || flickable.contentY + flickable.height >= flickable.contentHeight - 2
+            root._autoScroll = atBottom
         }
         function onModelReset() {
-            root._controller.clearSelection();
-            flickable.contentY = 0;
-            root._autoScroll = false;
+            root._controller.clearSelection()
+            flickable.contentY = 0
+            root._autoScroll = false
         }
     }
 }

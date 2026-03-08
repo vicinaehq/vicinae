@@ -35,16 +35,11 @@ ColumnLayout {
             onWidthChanged: _bindChildrenWidth()
             function _bindChildrenWidth() {
                 for (var i = 0; i < children.length; i++)
-                    children[i].width = Qt.binding(function () {
-                        return contentSlot.width;
-                    });
+                    children[i].width = Qt.binding(function() { return contentSlot.width })
             }
         }
 
-        Item {
-            Layout.preferredWidth: 2
-            Layout.fillWidth: true
-        }
+        Item { Layout.preferredWidth: 2; Layout.fillWidth: true }
     }
 
     RowLayout {
@@ -52,10 +47,7 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing: 20
 
-        Item {
-            Layout.preferredWidth: 2
-            Layout.fillWidth: true
-        }
+        Item { Layout.preferredWidth: 2; Layout.fillWidth: true }
 
         Text {
             Layout.preferredWidth: 5
@@ -66,10 +58,7 @@ ColumnLayout {
             wrapMode: Text.Wrap
         }
 
-        Item {
-            Layout.preferredWidth: 2
-            Layout.fillWidth: true
-        }
+        Item { Layout.preferredWidth: 2; Layout.fillWidth: true }
     }
 
     RowLayout {
@@ -77,10 +66,7 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing: 20
 
-        Item {
-            Layout.preferredWidth: 2
-            Layout.fillWidth: true
-        }
+        Item { Layout.preferredWidth: 2; Layout.fillWidth: true }
 
         Text {
             Layout.preferredWidth: 5
@@ -91,9 +77,6 @@ ColumnLayout {
             wrapMode: Text.Wrap
         }
 
-        Item {
-            Layout.preferredWidth: 2
-            Layout.fillWidth: true
-        }
+        Item { Layout.preferredWidth: 2; Layout.fillWidth: true }
     }
 }

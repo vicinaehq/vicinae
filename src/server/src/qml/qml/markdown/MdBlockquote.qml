@@ -47,19 +47,14 @@ Item {
                     color: Theme.textMuted
                     font.pointSize: Theme.regularFontSize
                     font.italic: true
-                    Binding on font.family {
-                        value: root.fontFamily
-                        when: root.fontFamily !== ""
-                    }
+                    Binding on font.family { value: root.fontFamily; when: root.fontFamily !== "" }
                     text: modelData ?? ""
 
                     required property var modelData
                     required property int index
 
-                    Component.onCompleted: if (root.selectionController)
-                        root.selectionController.registerSelectable(bqText, root.blockIndex * 10000 + index, true)
-                    Component.onDestruction: if (root.selectionController)
-                        root.selectionController.unregisterSelectable(bqText)
+                    Component.onCompleted: if (root.selectionController) root.selectionController.registerSelectable(bqText, root.blockIndex * 10000 + index, true)
+                    Component.onDestruction: if (root.selectionController) root.selectionController.unregisterSelectable(bqText)
                 }
             }
         }

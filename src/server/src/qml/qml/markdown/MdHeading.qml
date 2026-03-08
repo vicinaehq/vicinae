@@ -23,10 +23,7 @@ TextEdit {
 
     font.pointSize: Theme.regularFontSize * scaleFactors[level - 1]
 
-    Binding on font.family {
-        value: root.fontFamily
-        when: root.fontFamily !== ""
-    }
+    Binding on font.family { value: root.fontFamily; when: root.fontFamily !== "" }
     font.bold: true
 
     topPadding: blockIndex === 0 ? 0 : (level <= 2 ? 12 : 8)
@@ -34,8 +31,6 @@ TextEdit {
 
     text: blockData.html ?? ""
 
-    onSelectionControllerChanged: if (selectionController)
-        selectionController.registerSelectable(root, blockIndex * 10000, true)
-    Component.onDestruction: if (selectionController)
-        selectionController.unregisterSelectable(root)
+    onSelectionControllerChanged: if (selectionController) selectionController.registerSelectable(root, blockIndex * 10000, true)
+    Component.onDestruction: if (selectionController) selectionController.unregisterSelectable(root)
 }

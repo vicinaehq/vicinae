@@ -9,23 +9,17 @@ Rectangle {
 
     readonly property color _alertColor: {
         switch (alertType) {
-        case "danger":
-            return Theme.toastDanger;
-        case "warning":
-            return Theme.toastWarning;
-        default:
-            return Theme.toastInfo;
+        case "danger": return Theme.toastDanger
+        case "warning": return Theme.toastWarning
+        default: return Theme.toastInfo
         }
     }
 
     readonly property var _iconSource: {
         switch (alertType) {
-        case "danger":
-            return Img.builtin("warning").withFillColor(root._alertColor);
-        case "warning":
-            return Img.builtin("warning").withFillColor(root._alertColor);
-        default:
-            return Img.builtin("info-01").withFillColor(root._alertColor);
+        case "danger": return Img.builtin("warning").withFillColor(root._alertColor)
+        case "warning": return Img.builtin("warning").withFillColor(root._alertColor)
+        default: return Img.builtin("info-01").withFillColor(root._alertColor)
         }
     }
 

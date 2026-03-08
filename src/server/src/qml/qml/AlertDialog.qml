@@ -17,48 +17,24 @@ Popup {
     onOpened: Qt.callLater(cancelBtn.forceActiveFocus)
     onClosed: {
         if (!_confirmed)
-            launcher.alertModel.cancel();
+            launcher.alertModel.cancel()
     }
     onActiveFocusChanged: {
         if (!activeFocus && opened)
-            close();
+            close()
     }
 
     enter: Transition {
         ParallelAnimation {
-            NumberAnimation {
-                property: "opacity"
-                from: 0
-                to: 1
-                duration: 150
-                easing.type: Easing.OutCubic
-            }
-            NumberAnimation {
-                property: "scale"
-                from: 0.95
-                to: 1
-                duration: 150
-                easing.type: Easing.OutCubic
-            }
+            NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 150; easing.type: Easing.OutCubic }
+            NumberAnimation { property: "scale"; from: 0.95; to: 1; duration: 150; easing.type: Easing.OutCubic }
         }
     }
 
     exit: Transition {
         ParallelAnimation {
-            NumberAnimation {
-                property: "opacity"
-                from: 1
-                to: 0
-                duration: 100
-                easing.type: Easing.InCubic
-            }
-            NumberAnimation {
-                property: "scale"
-                from: 1
-                to: 0.95
-                duration: 100
-                easing.type: Easing.InCubic
-            }
+            NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 100; easing.type: Easing.InCubic }
+            NumberAnimation { property: "scale"; from: 1; to: 0.95; duration: 100; easing.type: Easing.InCubic }
         }
     }
 
@@ -118,7 +94,8 @@ Popup {
 
                 background: Rectangle {
                     radius: 4
-                    color: cancelBtn.hovered || cancelBtn.activeFocus ? Theme.listItemHoverBg : "transparent"
+                    color: cancelBtn.hovered || cancelBtn.activeFocus
+                           ? Theme.listItemHoverBg : "transparent"
                     border.color: cancelBtn.activeFocus ? Theme.accent : Theme.divider
                     border.width: 1
                 }
@@ -134,12 +111,9 @@ Popup {
                 onClicked: root.close()
                 Keys.onReturnPressed: root.close()
                 Keys.onRightPressed: confirmBtn.forceActiveFocus()
-                Keys.onPressed: event => {
-                    const nav = launcher.matchNavigationKey(event.key, event.modifiers);
-                    if (nav === 4) {
-                        confirmBtn.forceActiveFocus();
-                        event.accepted = true;
-                    }
+                Keys.onPressed: (event) => {
+                    const nav = launcher.matchNavigationKey(event.key, event.modifiers)
+                    if (nav === 4) { confirmBtn.forceActiveFocus(); event.accepted = true }
                 }
             }
 
@@ -152,7 +126,8 @@ Popup {
 
                 background: Rectangle {
                     radius: 4
-                    color: confirmBtn.hovered || confirmBtn.activeFocus ? Theme.listItemHoverBg : "transparent"
+                    color: confirmBtn.hovered || confirmBtn.activeFocus
+                           ? Theme.listItemHoverBg : "transparent"
                     border.color: confirmBtn.activeFocus ? Theme.accent : Theme.divider
                     border.width: 1
                 }
@@ -166,22 +141,19 @@ Popup {
                 }
 
                 onClicked: {
-                    root._confirmed = true;
-                    launcher.alertModel.confirm();
-                    root.close();
+                    root._confirmed = true
+                    launcher.alertModel.confirm()
+                    root.close()
                 }
                 Keys.onReturnPressed: {
-                    root._confirmed = true;
-                    launcher.alertModel.confirm();
-                    root.close();
+                    root._confirmed = true
+                    launcher.alertModel.confirm()
+                    root.close()
                 }
                 Keys.onLeftPressed: cancelBtn.forceActiveFocus()
-                Keys.onPressed: event => {
-                    const nav = launcher.matchNavigationKey(event.key, event.modifiers);
-                    if (nav === 3) {
-                        cancelBtn.forceActiveFocus();
-                        event.accepted = true;
-                    }
+                Keys.onPressed: (event) => {
+                    const nav = launcher.matchNavigationKey(event.key, event.modifiers)
+                    if (nav === 3) { cancelBtn.forceActiveFocus(); event.accepted = true }
                 }
             }
         }

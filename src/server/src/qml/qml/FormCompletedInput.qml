@@ -19,19 +19,14 @@ Item {
 
     property string triggerChar: "{"
 
-    signal textEdited
-    signal accepted
+    signal textEdited()
+    signal accepted()
 
-    function forceActiveFocus() {
-        innerInput.forceActiveFocus();
-    }
-    function selectAll() {
-        innerInput.selectAll();
-    }
+    function forceActiveFocus() { innerInput.forceActiveFocus() }
+    function selectAll() { innerInput.selectAll() }
 
     onActiveFocusChanged: {
-        if (activeFocus)
-            innerInput.forceActiveFocus();
+        if (activeFocus) innerInput.forceActiveFocus()
     }
 
     property int _highlightedIndex: -1
@@ -39,70 +34,68 @@ Item {
 
     on_HighlightedIndexChanged: {
         if (_highlightedIndex >= 0)
-            completionList.positionViewAtIndex(_highlightedIndex, ListView.Contain);
+            completionList.positionViewAtIndex(_highlightedIndex, ListView.Contain)
     }
 
     function _findTriggerStart() {
-        var pos = innerInput.cursorPosition - 1;
-        var txt = innerInput.text;
+        var pos = innerInput.cursorPosition - 1
+        var txt = innerInput.text
         for (var i = pos; i >= 0; i--) {
-            var c = txt.charAt(i);
-            if (c === '}')
-                return -1;
-            if (c === root.triggerChar)
-                return i;
+            var c = txt.charAt(i)
+            if (c === '}') return -1
+            if (c === root.triggerChar) return i
         }
-        return -1;
+        return -1
     }
 
     function _updatePopup() {
-        var triggerIdx = _findTriggerStart();
+        var triggerIdx = _findTriggerStart()
         if (triggerIdx < 0) {
-            completionPopup.close();
-            return;
+            completionPopup.close()
+            return
         }
 
-        var txt = innerInput.text;
-        var afterTrigger = txt.substring(triggerIdx + 1, innerInput.cursorPosition);
-        var query = afterTrigger.toLowerCase().trim();
-        var filtered = [];
+        var txt = innerInput.text
+        var afterTrigger = txt.substring(triggerIdx + 1, innerInput.cursorPosition)
+        var query = afterTrigger.toLowerCase().trim()
+        var filtered = []
         for (var i = 0; i < completions.length; i++) {
-            var item = completions[i];
+            var item = completions[i]
             if (query === "" || item.title.toLowerCase().indexOf(query) >= 0) {
-                filtered.push(item);
+                filtered.push(item)
             }
         }
-        _filteredItems = filtered;
-        _highlightedIndex = filtered.length > 0 ? 0 : -1;
+        _filteredItems = filtered
+        _highlightedIndex = filtered.length > 0 ? 0 : -1
 
         if (filtered.length > 0) {
-            completionPopup.open();
+            completionPopup.open()
         } else {
-            completionPopup.close();
+            completionPopup.close()
         }
     }
 
     function _acceptCompletion() {
-        if (_highlightedIndex < 0 || _highlightedIndex >= _filteredItems.length)
-            return;
-        var item = _filteredItems[_highlightedIndex];
-        var triggerIdx = _findTriggerStart();
-        if (triggerIdx < 0)
-            return;
-        var txt = innerInput.text;
-        var before = txt.substring(0, triggerIdx);
-        var placeholder = triggerChar + item.value + "}";
+        if (_highlightedIndex < 0 || _highlightedIndex >= _filteredItems.length) return
 
-        var endIdx = innerInput.cursorPosition;
+        var item = _filteredItems[_highlightedIndex]
+        var triggerIdx = _findTriggerStart()
+        if (triggerIdx < 0) return
+
+        var txt = innerInput.text
+        var before = txt.substring(0, triggerIdx)
+        var placeholder = triggerChar + item.value + "}"
+
+        var endIdx = innerInput.cursorPosition
         while (endIdx < txt.length && txt.charAt(endIdx) !== "}" && txt.charAt(endIdx) !== triggerChar)
-            endIdx++;
+            endIdx++
         if (endIdx < txt.length && txt.charAt(endIdx) === "}")
-            endIdx++;
+            endIdx++
 
-        var after = txt.substring(endIdx);
-        innerInput.text = before + placeholder + after;
-        completionPopup.close();
-        root.textEdited();
+        var after = txt.substring(endIdx)
+        innerInput.text = before + placeholder + after
+        completionPopup.close()
+        root.textEdited()
     }
 
     FormTextInput {
@@ -113,35 +106,34 @@ Item {
         hasError: root.hasError
 
         onTextEdited: {
-            root.textEdited();
-            root._updatePopup();
+            root.textEdited()
+            root._updatePopup()
         }
         onAccepted: {
             if (completionPopup.visible) {
-                root._acceptCompletion();
+                root._acceptCompletion()
             } else {
-                root.accepted();
+                root.accepted()
             }
         }
 
-        Keys.onUpPressed: event => {
+        Keys.onUpPressed: (event) => {
             if (completionPopup.visible) {
-                event.accepted = true;
-                if (root._highlightedIndex > 0)
-                    root._highlightedIndex--;
+                event.accepted = true
+                if (root._highlightedIndex > 0) root._highlightedIndex--
             }
         }
-        Keys.onDownPressed: event => {
+        Keys.onDownPressed: (event) => {
             if (completionPopup.visible) {
-                event.accepted = true;
+                event.accepted = true
                 if (root._highlightedIndex < root._filteredItems.length - 1)
-                    root._highlightedIndex++;
+                    root._highlightedIndex++
             }
         }
-        Keys.onEscapePressed: event => {
+        Keys.onEscapePressed: (event) => {
             if (completionPopup.visible) {
-                event.accepted = true;
-                completionPopup.close();
+                event.accepted = true
+                completionPopup.close()
             }
         }
     }
@@ -183,7 +175,9 @@ Item {
                     anchors.leftMargin: 2
                     anchors.rightMargin: 2
                     radius: 6
-                    color: del._isHighlighted ? Theme.listItemSelectionBg : itemMouse.containsMouse ? Theme.listItemHoverBg : "transparent"
+                    color: del._isHighlighted ? Theme.listItemSelectionBg
+                           : itemMouse.containsMouse ? Theme.listItemHoverBg
+                           : "transparent"
                 }
 
                 RowLayout {
@@ -214,8 +208,8 @@ Item {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
-                        root._highlightedIndex = del.index;
-                        root._acceptCompletion();
+                        root._highlightedIndex = del.index
+                        root._acceptCompletion()
                     }
                 }
             }

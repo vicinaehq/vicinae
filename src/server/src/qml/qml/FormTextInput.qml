@@ -15,27 +15,25 @@ Item {
     property alias echoMode: input.echoMode
     readonly property bool editing: input.activeFocus
 
-    signal textEdited
-    signal accepted
+    signal textEdited()
+    signal accepted()
 
-    function forceActiveFocus() {
-        input.forceActiveFocus();
-    }
-    function selectAll() {
-        input.selectAll();
-    }
+    function forceActiveFocus() { input.forceActiveFocus() }
+    function selectAll() { input.selectAll() }
+
 
     onActiveFocusChanged: {
-        if (activeFocus)
-            input.forceActiveFocus();
+        if (activeFocus) input.forceActiveFocus()
     }
 
     Rectangle {
         id: border
         anchors.fill: parent
         radius: 8
-        color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, Config.windowOpacity)
-        border.color: root.hasError ? Theme.inputBorderError : input.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
+        color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g,
+                       Theme.secondaryBackground.b, Config.windowOpacity)
+        border.color: root.hasError ? Theme.inputBorderError
+                      : input.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
         border.width: 1
 
         TextInput {
@@ -64,13 +62,13 @@ Item {
             onTextEdited: root.textEdited()
             onAccepted: root.accepted()
 
-            Keys.onReturnPressed: event => {
+            Keys.onReturnPressed: (event) => {
                 if (typeof launcher !== "undefined")
-                    event.accepted = launcher.forwardKey(event.key, event.modifiers);
+                    event.accepted = launcher.forwardKey(event.key, event.modifiers)
             }
-            Keys.onPressed: event => {
+            Keys.onPressed: (event) => {
                 if (typeof launcher !== "undefined")
-                    event.accepted = launcher.forwardKey(event.key, event.modifiers);
+                    event.accepted = launcher.forwardKey(event.key, event.modifiers)
             }
         }
     }

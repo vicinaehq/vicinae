@@ -8,7 +8,8 @@ Rectangle {
     property string icon: ""
     property string tooltip: ""
 
-    color: fill ? Qt.rgba(_resolvedColor.r, _resolvedColor.g, _resolvedColor.b, 0.2) : "transparent"
+    color: fill ? Qt.rgba(_resolvedColor.r, _resolvedColor.g, _resolvedColor.b, 0.2)
+                : "transparent"
     radius: fill ? 4 : 0
     implicitWidth: contentRow.implicitWidth + (fill ? 12 : 0)
     implicitHeight: contentRow.implicitHeight + (fill ? 6 : 0)

@@ -8,7 +8,7 @@ RowLayout {
     required property string icon
 
     signal valueChanged(int index, string value)
-    signal focusSearchInput
+    signal focusSearchInput()
 
     readonly property int maxArgs: 3
     readonly property var visibleArgs: args ? args.slice(0, maxArgs) : []
@@ -16,17 +16,16 @@ RowLayout {
     spacing: 4
 
     function validate() {
-        var firstRequired = -1;
+        var firstRequired = -1
         for (var i = 0; i < argRepeater.count; i++) {
-            var loader = argRepeater.itemAt(i);
-            if (!loader || !loader.item)
-                continue;
-            var arg = root.visibleArgs[i];
+            var loader = argRepeater.itemAt(i)
+            if (!loader || !loader.item) continue
+            var arg = root.visibleArgs[i]
             if (arg.required && loader.item.currentValue === "") {
-                loader.item.showError = true;
+                loader.item.showError = true
                 if (firstRequired === -1) {
-                    firstRequired = i;
-                    loader.item.forceActiveFocus();
+                    firstRequired = i
+                    loader.item.forceActiveFocus()
                 }
             }
         }
@@ -34,12 +33,11 @@ RowLayout {
 
     function setValues(values) {
         for (var i = 0; i < argRepeater.count && i < values.length; i++) {
-            var loader = argRepeater.itemAt(i);
-            if (!loader || !loader.item)
-                continue;
-            var val = values[i].value;
+            var loader = argRepeater.itemAt(i)
+            if (!loader || !loader.item) continue
+            var val = values[i].value
             if (loader.item.currentValue !== val)
-                loader.item.currentValue = val;
+                loader.item.currentValue = val
         }
     }
 
@@ -78,15 +76,15 @@ RowLayout {
                     radius: 4
                     color: "transparent"
                     border.width: 1
-                    border.color: textDel.showError ? "#e53935" : textField.activeFocus ? Theme.accent : Theme.divider
+                    border.color: textDel.showError ? "#e53935"
+                                : textField.activeFocus ? Theme.accent
+                                : Theme.divider
 
-                    function forceActiveFocus() {
-                        textField.forceActiveFocus();
-                    }
+                    function forceActiveFocus() { textField.forceActiveFocus() }
 
                     onCurrentValueChanged: {
                         if (textField.text !== currentValue)
-                            textField.text = currentValue;
+                            textField.text = currentValue
                     }
 
                     TextMetrics {
@@ -106,7 +104,8 @@ RowLayout {
                         color: Theme.foreground
                         clip: true
                         activeFocusOnTab: true
-                        echoMode: argLoader.modelData.type === "password" ? TextInput.Password : TextInput.Normal
+                        echoMode: argLoader.modelData.type === "password"
+                                  ? TextInput.Password : TextInput.Normal
 
                         Text {
                             anchors.fill: parent
@@ -118,43 +117,37 @@ RowLayout {
                         }
 
                         onTextEdited: {
-                            textDel.showError = false;
-                            root.valueChanged(argLoader.index, text);
+                            textDel.showError = false
+                            root.valueChanged(argLoader.index, text)
                         }
 
                         Keys.onUpPressed: {
-                            if (commandStack.currentItem)
-                                commandStack.currentItem.moveUp();
-                            else if (!launcher.isRootSearch)
-                                launcher.forwardKey(Qt.Key_Up);
-                            else
-                                searchList.moveUp();
+                            if (commandStack.currentItem) commandStack.currentItem.moveUp()
+                            else if (!launcher.isRootSearch) launcher.forwardKey(Qt.Key_Up)
+                            else searchList.moveUp()
                         }
                         Keys.onDownPressed: {
-                            if (commandStack.currentItem)
-                                commandStack.currentItem.moveDown();
-                            else if (!launcher.isRootSearch)
-                                launcher.forwardKey(Qt.Key_Down);
-                            else
-                                searchList.moveDown();
+                            if (commandStack.currentItem) commandStack.currentItem.moveDown()
+                            else if (!launcher.isRootSearch) launcher.forwardKey(Qt.Key_Down)
+                            else searchList.moveDown()
                         }
-                        Keys.onReturnPressed: event => {
+                        Keys.onReturnPressed: (event) => {
                             if (event.modifiers !== Qt.NoModifier) {
-                                event.accepted = launcher.forwardKey(event.key, event.modifiers);
+                                event.accepted = launcher.forwardKey(event.key, event.modifiers)
                             } else {
-                                launcher.handleReturn();
+                                launcher.handleReturn()
                             }
                         }
-                        Keys.onTabPressed: event => {
+                        Keys.onTabPressed: (event) => {
                             if (argLoader.isLast) {
-                                root.focusSearchInput();
-                                event.accepted = true;
+                                root.focusSearchInput()
+                                event.accepted = true
                             } else {
-                                event.accepted = false;
+                                event.accepted = false
                             }
                         }
-                        Keys.onPressed: event => {
-                            event.accepted = launcher.forwardKey(event.key, event.modifiers);
+                        Keys.onPressed: (event) => {
+                            event.accepted = launcher.forwardKey(event.key, event.modifiers)
                         }
                     }
                 }
@@ -173,22 +166,21 @@ RowLayout {
                     radius: 4
                     color: "transparent"
                     border.width: 1
-                    border.color: dropdownDel.showError ? "#e53935" : dropdown.activeFocus ? Theme.accent : Theme.divider
+                    border.color: dropdownDel.showError ? "#e53935"
+                                : dropdown.activeFocus ? Theme.accent
+                                : Theme.divider
 
-                    function forceActiveFocus() {
-                        dropdown.forceActiveFocus();
-                    }
+                    function forceActiveFocus() { dropdown.forceActiveFocus() }
 
                     onCurrentValueChanged: {
-                        if (!argLoader.modelData.data)
-                            return;
+                        if (!argLoader.modelData.data) return
                         for (var i = 0; i < argLoader.modelData.data.length; i++) {
                             if (argLoader.modelData.data[i].value === currentValue) {
                                 dropdown.currentItem = {
                                     id: argLoader.modelData.data[i].value,
                                     displayName: argLoader.modelData.data[i].title
-                                };
-                                return;
+                                }
+                                return
                             }
                         }
                     }
@@ -197,7 +189,9 @@ RowLayout {
                         id: dropdownMetrics
                         font.family: Theme.fontFamily
                         font.pointSize: Theme.regularFontSize
-                        text: dropdown.currentItem ? dropdown.currentItem.displayName : (argLoader.modelData.placeholder || " ")
+                        text: dropdown.currentItem
+                              ? dropdown.currentItem.displayName
+                              : (argLoader.modelData.placeholder || " ")
                     }
 
                     SearchableDropdown {
@@ -206,29 +200,19 @@ RowLayout {
                         compact: true
                         placeholder: argLoader.modelData.placeholder || ""
                         items: {
-                            if (!argLoader.modelData.data)
-                                return [];
-                            var entries = [];
+                            if (!argLoader.modelData.data) return []
+                            var entries = []
                             for (var i = 0; i < argLoader.modelData.data.length; i++) {
-                                var d = argLoader.modelData.data[i];
-                                entries.push({
-                                    id: d.value,
-                                    displayName: d.title,
-                                    iconSource: ""
-                                });
+                                var d = argLoader.modelData.data[i]
+                                entries.push({ id: d.value, displayName: d.title, iconSource: "" })
                             }
-                            return [
-                                {
-                                    title: "",
-                                    items: entries
-                                }
-                            ];
+                            return [{ title: "", items: entries }]
                         }
-                        onActivated: item => {
-                            dropdown.currentItem = item;
-                            dropdownDel.showError = false;
-                            dropdownDel.currentValue = item.id;
-                            root.valueChanged(argLoader.index, item.id);
+                        onActivated: (item) => {
+                            dropdown.currentItem = item
+                            dropdownDel.showError = false
+                            dropdownDel.currentValue = item.id
+                            root.valueChanged(argLoader.index, item.id)
                         }
                     }
                 }
@@ -236,7 +220,5 @@ RowLayout {
         }
     }
 
-    Item {
-        Layout.fillWidth: true
-    }
+    Item { Layout.fillWidth: true }
 }

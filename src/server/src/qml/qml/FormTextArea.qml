@@ -14,18 +14,13 @@ Item {
 
     property bool hasError: false
 
-    signal textEdited
+    signal textEdited()
 
-    function forceActiveFocus() {
-        edit.forceActiveFocus();
-    }
-    function selectAll() {
-        edit.selectAll();
-    }
+    function forceActiveFocus() { edit.forceActiveFocus() }
+    function selectAll() { edit.selectAll() }
 
     onActiveFocusChanged: {
-        if (activeFocus)
-            edit.forceActiveFocus();
+        if (activeFocus) edit.forceActiveFocus()
     }
 
     readonly property real _lineHeight: Math.ceil(fontMetrics.height)
@@ -45,7 +40,8 @@ Item {
         anchors.fill: parent
         radius: 8
         color: Theme.secondaryBackground
-        border.color: root.hasError ? Theme.inputBorderError : edit.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
+        border.color: root.hasError ? Theme.inputBorderError
+                      : edit.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
         border.width: 1
 
         MouseArea {
@@ -54,7 +50,7 @@ Item {
             anchors.leftMargin: 10
             anchors.rightMargin: 10
             acceptedButtons: Qt.NoButton
-            onWheel: wheel => {}
+            onWheel: (wheel) => {}
 
             Flickable {
                 id: flickable
@@ -65,7 +61,8 @@ Item {
                 boundsBehavior: Flickable.StopAtBounds
 
                 ScrollBar.vertical: ViciScrollBar {
-                    policy: flickable.contentHeight > flickable.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+                    policy: flickable.contentHeight > flickable.height
+                            ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
                 }
 
                 TextEdit {
@@ -92,30 +89,30 @@ Item {
                     onTextChanged: root.textEdited()
 
                     onCursorRectangleChanged: {
-                        const rect = cursorRectangle;
+                        const rect = cursorRectangle
                         if (rect.y < flickable.contentY)
-                            flickable.contentY = rect.y;
+                            flickable.contentY = rect.y
                         else if (rect.y + rect.height > flickable.contentY + flickable.height)
-                            flickable.contentY = rect.y + rect.height - flickable.height;
+                            flickable.contentY = rect.y + rect.height - flickable.height
                     }
 
-                    Keys.onTabPressed: event => {
-                        event.accepted = true;
-                        nextItemInFocusChain()?.forceActiveFocus(Qt.TabFocusReason);
+                    Keys.onTabPressed: (event) => {
+                        event.accepted = true
+                        nextItemInFocusChain()?.forceActiveFocus(Qt.TabFocusReason)
                     }
-                    Keys.onBacktabPressed: event => {
-                        event.accepted = true;
-                        nextItemInFocusChain(false)?.forceActiveFocus(Qt.BacktabFocusReason);
+                    Keys.onBacktabPressed: (event) => {
+                        event.accepted = true
+                        nextItemInFocusChain(false)?.forceActiveFocus(Qt.BacktabFocusReason)
                     }
-                    Keys.onReturnPressed: event => {
+                    Keys.onReturnPressed: (event) => {
                         if (typeof launcher !== "undefined")
-                            event.accepted = launcher.forwardKey(event.key, event.modifiers);
+                            event.accepted = launcher.forwardKey(event.key, event.modifiers)
                         if (!event.accepted)
-                            edit.insert(edit.cursorPosition, "\n");
+                            edit.insert(edit.cursorPosition, "\n")
                     }
-                    Keys.onPressed: event => {
+                    Keys.onPressed: (event) => {
                         if (typeof launcher !== "undefined")
-                            event.accepted = launcher.forwardKey(event.key, event.modifiers);
+                            event.accepted = launcher.forwardKey(event.key, event.modifiers)
                     }
                 }
             }

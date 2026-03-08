@@ -10,11 +10,11 @@ FocusRestoringScope {
 
     onVisibleChanged: {
         if (!visible)
-            stack.clear(StackView.Immediate);
+            stack.clear(StackView.Immediate)
     }
     onActiveFocusChanged: {
         if (!activeFocus && actionPanel.open)
-            actionPanel.close();
+            actionPanel.close()
     }
 
     MouseArea {
@@ -29,9 +29,11 @@ FocusRestoringScope {
         anchors.rightMargin: 10
         anchors.bottomMargin: 10
         width: 400
-        height: Math.min(stack.currentItem ? stack.currentItem.implicitHeight + 2 * Config.borderWidth : 300, root.height * 0.6)
+        height: Math.min(stack.currentItem ? stack.currentItem.implicitHeight + 2 * Config.borderWidth : 300,
+                         root.height * 0.6)
         radius: Config.borderRounding
-        color: Qt.rgba(Theme.statusBarBackground.r, Theme.statusBarBackground.g, Theme.statusBarBackground.b, 1)
+        color: Qt.rgba(Theme.statusBarBackground.r, Theme.statusBarBackground.g,
+                       Theme.statusBarBackground.b, 1)
         border.color: Theme.mainWindowBorder
         border.width: Config.borderWidth
 
@@ -40,21 +42,12 @@ FocusRestoringScope {
         transformOrigin: Item.BottomRight
 
         states: State {
-            name: "open"
-            when: actionPanel.open
-            PropertyChanges {
-                target: panel
-                opacity: 1
-                scale: 1.0
-            }
+            name: "open"; when: actionPanel.open
+            PropertyChanges { target: panel; opacity: 1; scale: 1.0 }
         }
         transitions: Transition {
             to: "open"
-            NumberAnimation {
-                properties: "opacity,scale"
-                duration: 150
-                easing.type: Easing.OutCubic
-            }
+            NumberAnimation { properties: "opacity,scale"; duration: 150; easing.type: Easing.OutCubic }
         }
 
         layer.enabled: true
@@ -71,9 +64,7 @@ FocusRestoringScope {
             anchors.fill: parent
             anchors.margins: Config.borderWidth
             acceptedButtons: Qt.NoButton
-            onWheel: function (wheel) {
-                wheel.accepted = true;
-            }
+            onWheel: function(wheel) { wheel.accepted = true }
 
             StackView {
                 id: stack
@@ -93,61 +84,61 @@ FocusRestoringScope {
         target: stack.currentItem
         ignoreUnknownSignals: true
         function onNavigateBack() {
-            actionPanel.pop();
+            actionPanel.pop()
         }
     }
 
     Connections {
         target: actionPanel
         function onPanelPushRequested(componentUrl, properties) {
-            stack.push(componentUrl, properties, StackView.Immediate);
-            actionPanel.onPanelPushed(stack.currentItem);
+            stack.push(componentUrl, properties, StackView.Immediate)
+            actionPanel.onPanelPushed(stack.currentItem)
             if (typeof stack.currentItem.focusFilter === "function")
-                stack.currentItem.focusFilter();
+                stack.currentItem.focusFilter()
         }
         function onPanelPopRequested() {
-            stack.pop(null, StackView.Immediate);
-            actionPanel.onPanelPopped(stack.currentItem);
+            stack.pop(null, StackView.Immediate)
+            actionPanel.onPanelPopped(stack.currentItem)
             if (stack.currentItem && typeof stack.currentItem.focusFilter === "function")
-                stack.currentItem.focusFilter();
+                stack.currentItem.focusFilter()
         }
         function onStackClearRequested() {
-            stack.clear(StackView.Immediate);
+            stack.clear(StackView.Immediate)
         }
     }
 
-    Keys.onPressed: event => {
-        const nav = launcher.matchNavigationKey(event.key, event.modifiers);
+    Keys.onPressed: (event) => {
+        const nav = launcher.matchNavigationKey(event.key, event.modifiers)
         if (event.key === Qt.Key_Escape) {
-            actionPanel.pop();
-            event.accepted = true;
+            actionPanel.pop()
+            event.accepted = true
         } else if (event.key === Qt.Key_Left || event.key === Qt.Key_Backspace || nav === 3) {
             if (actionPanel.depth > 1) {
-                actionPanel.pop();
-                event.accepted = true;
+                actionPanel.pop()
+                event.accepted = true
             }
         } else if (event.key === Qt.Key_Up || nav === 1) {
             if (stack.currentItem) {
-                const ctrl = (event.modifiers & Qt.ControlModifier);
+                const ctrl = (event.modifiers & Qt.ControlModifier)
                 if (ctrl && typeof stack.currentItem.moveSectionUp === "function")
-                    stack.currentItem.moveSectionUp();
+                    stack.currentItem.moveSectionUp()
                 else if (typeof stack.currentItem.moveUp === "function")
-                    stack.currentItem.moveUp();
+                    stack.currentItem.moveUp()
             }
-            event.accepted = true;
+            event.accepted = true
         } else if (event.key === Qt.Key_Down || nav === 2) {
             if (stack.currentItem) {
-                const ctrl = (event.modifiers & Qt.ControlModifier);
+                const ctrl = (event.modifiers & Qt.ControlModifier)
                 if (ctrl && typeof stack.currentItem.moveSectionDown === "function")
-                    stack.currentItem.moveSectionDown();
+                    stack.currentItem.moveSectionDown()
                 else if (typeof stack.currentItem.moveDown === "function")
-                    stack.currentItem.moveDown();
+                    stack.currentItem.moveDown()
             }
-            event.accepted = true;
+            event.accepted = true
         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
             if (stack.currentItem && typeof stack.currentItem.activateCurrent === "function")
-                stack.currentItem.activateCurrent();
-            event.accepted = true;
+                stack.currentItem.activateCurrent()
+            event.accepted = true
         }
     }
 }

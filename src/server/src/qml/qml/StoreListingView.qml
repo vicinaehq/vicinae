@@ -5,18 +5,10 @@ Item {
     id: root
     required property var host
 
-    function moveUp() {
-        listView.moveUp();
-    }
-    function moveDown() {
-        listView.moveDown();
-    }
-    function moveSectionUp() {
-        listView.moveSectionUp();
-    }
-    function moveSectionDown() {
-        listView.moveSectionDown();
-    }
+    function moveUp() { listView.moveUp() }
+    function moveDown() { listView.moveDown() }
+    function moveSectionUp() { listView.moveSectionUp() }
+    function moveSectionDown() { listView.moveSectionDown() }
 
     GenericListView {
         id: listView

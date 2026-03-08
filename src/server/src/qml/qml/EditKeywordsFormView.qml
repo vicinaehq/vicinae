@@ -10,9 +10,9 @@ Item {
         anchors.fill: parent
         Component.onCompleted: {
             Qt.callLater(() => {
-                formView.focusFirst();
-                textArea.selectAll();
-            });
+                formView.focusFirst()
+                textArea.selectAll()
+            })
         }
 
         FormField {

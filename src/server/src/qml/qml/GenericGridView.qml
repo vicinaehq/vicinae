@@ -41,70 +41,42 @@ Item {
     readonly property bool _empty: listView.count === 0
     readonly property bool _awaitingData: root.cmdModel && root.cmdModel.awaitingData === true
 
-    readonly property real cellSize: Math.floor((root.width - horizontalPadding * 2 - cellSpacing * (columns - 1)) / columns)
+    readonly property real cellSize:
+        Math.floor((root.width - horizontalPadding * 2 - cellSpacing * (columns - 1)) / columns)
 
     // Hidden TextMetrics to measure actual line heights from the font
-    TextMetrics {
-        id: _titleMetrics
-        font.pointSize: Theme.smallerFontSize
-    }
-    TextMetrics {
-        id: _subtitleMetrics
-        font.pointSize: Theme.smallerFontSize - 1
-    }
+    TextMetrics { id: _titleMetrics;    font.pointSize: Theme.smallerFontSize }
+    TextMetrics { id: _subtitleMetrics; font.pointSize: Theme.smallerFontSize - 1 }
 
     readonly property real _textGap: 4
     readonly property real cellTextHeight: {
-        if (!showCellTitle && !showCellSubtitle)
-            return 0;
-        var h = _textGap;
-        if (showCellTitle)
-            h += _titleMetrics.font.pixelSize;
-        if (showCellSubtitle)
-            h += _subtitleMetrics.font.pixelSize;
-        return h;
+        if (!showCellTitle && !showCellSubtitle) return 0
+        var h = _textGap
+        if (showCellTitle) h += _titleMetrics.font.pixelSize
+        if (showCellSubtitle) h += _subtitleMetrics.font.pixelSize
+        return h
     }
     readonly property real rowHeight: cellSize + cellTextHeight
 
-    function moveUp() {
-        if (cmdModel)
-            cmdModel.navigateUp();
-    }
-    function moveDown() {
-        if (cmdModel)
-            cmdModel.navigateDown();
-    }
-    function moveLeft() {
-        if (cmdModel)
-            cmdModel.navigateLeft();
-    }
-    function moveRight() {
-        if (cmdModel)
-            cmdModel.navigateRight();
-    }
-    function moveSectionUp() {
-        if (cmdModel)
-            cmdModel.navigateSectionUp();
-    }
-    function moveSectionDown() {
-        if (cmdModel)
-            cmdModel.navigateSectionDown();
-    }
+    function moveUp() { if (cmdModel) cmdModel.navigateUp() }
+    function moveDown() { if (cmdModel) cmdModel.navigateDown() }
+    function moveLeft() { if (cmdModel) cmdModel.navigateLeft() }
+    function moveRight() { if (cmdModel) cmdModel.navigateRight() }
+    function moveSectionUp() { if (cmdModel) cmdModel.navigateSectionUp() }
+    function moveSectionDown() { if (cmdModel) cmdModel.navigateSectionDown() }
 
     function _isRowVisible(row) {
-        if (row < 0)
-            return false;
+        if (row < 0) return false
 
-        const item = listView.itemAtIndex(row);
-        if (!item)
-            return false;
+        const item = listView.itemAtIndex(row)
+        if (!item) return false
 
-        const viewportTop = listView.contentY;
-        const viewportBottom = viewportTop + listView.height;
-        const itemTop = item.y;
-        const itemBottom = item.y + item.height;
+        const viewportTop = listView.contentY
+        const viewportBottom = viewportTop + listView.height
+        const itemTop = item.y
+        const itemBottom = item.y + item.height
 
-        return itemBottom > viewportTop && itemTop < viewportBottom;
+        return itemBottom > viewportTop && itemTop < viewportBottom
     }
 
     ListView {
@@ -121,7 +93,8 @@ Item {
         cacheBuffer: 200
 
         ScrollBar.vertical: ViciScrollBar {
-            policy: listView.contentHeight > listView.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+            policy: listView.contentHeight > listView.height
+                    ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
         }
 
         delegate: Loader {
@@ -145,7 +118,7 @@ Item {
                     width: delegateLoader.width
                     text: delegateLoader.sectionName
                 }
-            }
+			}
 
             Component {
                 id: rowComponent
@@ -155,18 +128,17 @@ Item {
 
                     readonly property int effectiveCols: delegateLoader.rowColumns
                     readonly property real effectiveAspectRatio: delegateLoader.rowAspectRatio
-                    readonly property real cellWidth: Math.floor((root.width - root.horizontalPadding * 2 - root.cellSpacing * (effectiveCols - 1)) / effectiveCols)
+                    readonly property real cellWidth:
+                        Math.floor((root.width - root.horizontalPadding * 2
+                         - root.cellSpacing * (effectiveCols - 1)) / effectiveCols)
                     readonly property real cellHeight: Math.floor(cellWidth / effectiveAspectRatio)
 
                     readonly property real cellTextHeight: {
-                        if (!root.showCellTitle && !root.showCellSubtitle)
-                            return 0;
-                        var h = root._textGap;
-                        if (root.showCellTitle)
-                            h += _titleMetrics.font.pixelSize;
-                        if (root.showCellSubtitle)
-                            h += _subtitleMetrics.font.pixelSize;
-                        return h;
+                        if (!root.showCellTitle && !root.showCellSubtitle) return 0
+                        var h = root._textGap
+                        if (root.showCellTitle) h += _titleMetrics.font.pixelSize
+                        if (root.showCellSubtitle) h += _subtitleMetrics.font.pixelSize
+                        return h
                     }
 
                     height: cellHeight + cellTextHeight
@@ -185,7 +157,10 @@ Item {
 
                                 readonly property int cellSection: delegateLoader.rowSectionIdx
                                 readonly property int cellItem: delegateLoader.rowStartItem + index
-                                readonly property bool cellSelected: root.cmdModel && root.cmdModel.selectedSection === cellSection && root.cmdModel.selectedItem === cellItem
+                                readonly property bool cellSelected:
+                                    root.cmdModel
+                                    && root.cmdModel.selectedSection === cellSection
+                                    && root.cmdModel.selectedItem === cellItem
 
                                 width: rowItem.cellWidth
                                 height: rowItem.cellHeight + rowItem.cellTextHeight
@@ -196,12 +171,12 @@ Item {
                                     height: rowItem.cellHeight
                                     radius: 10
                                     backgroundColor: {
-                                        var bg = Theme.background;
-                                        return Qt.rgba(bg.r, bg.g, bg.b, Config.windowOpacity);
+                                        var bg = Theme.background
+                                        return Qt.rgba(bg.r, bg.g, bg.b, Config.windowOpacity)
                                     }
                                     color: {
-                                        var bg = Theme.gridItemBackground;
-                                        return Qt.rgba(bg.r, bg.g, bg.b, Config.windowOpacity);
+                                        var bg = Theme.gridItemBackground
+                                        return Qt.rgba(bg.r, bg.g, bg.b, Config.windowOpacity)
                                     }
                                 }
 
@@ -230,7 +205,9 @@ Item {
                                     radius: 10
                                     overlay: true
                                     borderWidth: (cellWrapper.cellSelected || cellMouseArea.containsMouse) ? 2 : 0
-                                    borderColor: cellWrapper.cellSelected ? Theme.gridItemSelectionOutline : Theme.gridItemHoverOutline
+                                    borderColor: cellWrapper.cellSelected
+                                                 ? Theme.gridItemSelectionOutline
+                                                 : Theme.gridItemHoverOutline
                                 }
 
                                 Text {
@@ -239,8 +216,9 @@ Item {
                                     width: rowItem.cellWidth
                                     height: _titleMetrics.font.pixelSize
                                     text: {
-                                        var _rev = root.cmdModel ? root.cmdModel.dataRevision : 0;
-                                        return (root.cmdModel && typeof root.cmdModel.cellTitle === "function") ? root.cmdModel.cellTitle(cellWrapper.cellSection, cellWrapper.cellItem) : "";
+                                        var _rev = root.cmdModel ? root.cmdModel.dataRevision : 0
+                                        return (root.cmdModel && typeof root.cmdModel.cellTitle === "function")
+                                              ? root.cmdModel.cellTitle(cellWrapper.cellSection, cellWrapper.cellItem) : ""
                                     }
                                     color: Theme.textMuted
                                     font: _titleMetrics.font
@@ -251,12 +229,14 @@ Item {
 
                                 Text {
                                     visible: root.showCellSubtitle
-                                    y: rowItem.cellHeight + root._textGap + (root.showCellTitle ? _titleMetrics.font.pixelSize + root._textGap : 0)
+                                    y: rowItem.cellHeight + root._textGap
+                                       + (root.showCellTitle ? _titleMetrics.font.pixelSize + root._textGap : 0)
                                     width: rowItem.cellWidth
                                     height: _subtitleMetrics.font.pixelSize
                                     text: {
-                                        var _rev = root.cmdModel ? root.cmdModel.dataRevision : 0;
-                                        return (root.cmdModel && typeof root.cmdModel.cellSubtitle === "function") ? root.cmdModel.cellSubtitle(cellWrapper.cellSection, cellWrapper.cellItem) : "";
+                                        var _rev = root.cmdModel ? root.cmdModel.dataRevision : 0
+                                        return (root.cmdModel && typeof root.cmdModel.cellSubtitle === "function")
+                                              ? root.cmdModel.cellSubtitle(cellWrapper.cellSection, cellWrapper.cellItem) : ""
                                     }
                                     color: Theme.textMuted
                                     font: _subtitleMetrics.font
@@ -272,18 +252,19 @@ Item {
                                     hoverEnabled: true
                                     onClicked: {
                                         if (root.cmdModel)
-                                            root.cmdModel.select(cellWrapper.cellSection, cellWrapper.cellItem);
+                                            root.cmdModel.select(cellWrapper.cellSection, cellWrapper.cellItem)
                                     }
                                     onDoubleClicked: {
                                         if (root.cmdModel) {
-                                            root.cmdModel.select(cellWrapper.cellSection, cellWrapper.cellItem);
-                                            root.cmdModel.activateSelected();
+                                            root.cmdModel.select(cellWrapper.cellSection, cellWrapper.cellItem)
+                                            root.cmdModel.activateSelected()
                                         }
                                     }
                                 }
 
                                 ViciToolTip {
-                                    readonly property string tooltipText: root.cmdModel ? root.cmdModel.cellTooltip(cellWrapper.cellSection, cellWrapper.cellItem) : ""
+                                    readonly property string tooltipText:
+                                        root.cmdModel ? root.cmdModel.cellTooltip(cellWrapper.cellSection, cellWrapper.cellItem) : ""
                                     visible: cellMouseArea.containsMouse && tooltipText !== ""
                                     text: tooltipText
                                 }
@@ -298,13 +279,15 @@ Item {
     Connections {
         target: root.cmdModel
         function onSelectionChanged() {
-            var row = root.cmdModel ? root.cmdModel.flatRowForSelection() : -1;
+            var row = root.cmdModel ? root.cmdModel.flatRowForSelection() : -1
             if (row >= 0) {
-                var mode = ListView.Contain;
-                if (root.cmdModel && typeof root.cmdModel.alignSelectionScrollToTop === "function" && root.cmdModel.alignSelectionScrollToTop() && !root._isRowVisible(row)) {
-                    mode = ListView.Beginning;
+                var mode = ListView.Contain
+                if (root.cmdModel && typeof root.cmdModel.alignSelectionScrollToTop === "function"
+                        && root.cmdModel.alignSelectionScrollToTop()
+                        && !root._isRowVisible(row)) {
+                    mode = ListView.Beginning
                 }
-                listView.positionViewAtIndex(row, mode);
+                listView.positionViewAtIndex(row, mode)
             }
         }
     }
@@ -313,7 +296,9 @@ Item {
         anchors.fill: parent
         active: root._empty && !root.suppressEmpty && !root._awaitingData
         visible: active
-        sourceComponent: root.emptyViewComponent ? root.emptyViewComponent : defaultEmptyView
+        sourceComponent: root.emptyViewComponent
+                         ? root.emptyViewComponent
+                         : defaultEmptyView
     }
 
     Component {

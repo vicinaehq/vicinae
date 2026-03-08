@@ -9,8 +9,8 @@ SearchableDropdown {
     currentItem: launcher.commandViewHost ? launcher.commandViewHost.dropdownCurrentItem : null
     placeholder: launcher.commandViewHost ? launcher.commandViewHost.dropdownPlaceholder : ""
 
-    onActivated: item => {
+    onActivated: (item) => {
         if (launcher.commandViewHost)
-            launcher.commandViewHost.setDropdownValue(item.id);
+            launcher.commandViewHost.setDropdownValue(item.id)
     }
 }

@@ -10,7 +10,7 @@ Row {
             "Super": "command-symbol",
             "Ctrl": "chevron-up",
             "Alt": "option-symbol",
-            "Shift": "keyboard-shift"
+            "Shift": "keyboard-shift",
         };
         return map[key] ?? "";
     }
@@ -23,7 +23,9 @@ Row {
             readonly property string iconName: root.iconForKey(modelData)
             readonly property int iconSize: Math.round(keyLabel.implicitHeight * 0.85)
 
-            width: Math.max(height, iconName ? iconSize + 14 : keyLabel.implicitWidth + 14)
+            width: Math.max(height, iconName
+                ? iconSize + 14
+                : keyLabel.implicitWidth + 14)
             height: keyLabel.implicitHeight + 8
             radius: 4
             color: "transparent"
@@ -33,7 +35,9 @@ Row {
             ViciImage {
                 id: icon
                 visible: parent.iconName !== ""
-                source: parent.iconName !== "" ? Img.builtin(parent.iconName).withFillColor(Theme.textMuted) : ""
+                source: parent.iconName !== ""
+                    ? Img.builtin(parent.iconName).withFillColor(Theme.textMuted)
+                    : ""
                 width: parent.iconSize
                 height: parent.iconSize
                 anchors.centerIn: parent

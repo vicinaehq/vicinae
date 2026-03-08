@@ -14,7 +14,7 @@ Item {
     required property bool isSubmenu
     required property bool isDanger
 
-    signal clicked
+    signal clicked()
 
     MouseArea {
         id: mouseArea
@@ -29,11 +29,9 @@ Item {
         anchors.rightMargin: 6
         radius: 10
         color: {
-            if (root.selected)
-                return Theme.listItemSelectionBg;
-            if (root.hovered)
-                return Theme.listItemHoverBg;
-            return "transparent";
+            if (root.selected) return Theme.listItemSelectionBg
+            if (root.hovered) return Theme.listItemHoverBg
+            return "transparent"
         }
     }
 
@@ -58,11 +56,9 @@ Item {
         Text {
             text: root.title
             color: {
-                if (root.isDanger)
-                    return Theme.danger;
-                if (root.selected)
-                    return Theme.listItemSelectionFg;
-                return Theme.foreground;
+                if (root.isDanger) return Theme.danger
+                if (root.selected) return Theme.listItemSelectionFg
+                return Theme.foreground
             }
             font.pointSize: Theme.regularFontSize
             elide: Text.ElideRight
@@ -75,5 +71,6 @@ Item {
             text: root.shortcutLabel
             Layout.alignment: Qt.AlignVCenter
         }
+
     }
 }

@@ -14,36 +14,31 @@ Item {
     }
 
     readonly property var _navItems: {
-        let nav = [];
+        let nav = []
         for (let i = 0; i < _allItems.length; i++) {
             if (_allItems[i]._kind !== "divider")
-                nav.push({
-                    listIndex: i,
-                    pageId: _allItems[i].id
-                });
+                nav.push({ listIndex: i, pageId: _allItems[i].id })
         }
-        return nav;
+        return nav
     }
 
     function _navigateHighlight(delta) {
-        if (_navItems.length === 0)
-            return;
+        if (_navItems.length === 0) return
         if (_highlightedIndex < 0) {
-            _highlightedIndex = delta > 0 ? 0 : _navItems.length - 1;
+            _highlightedIndex = delta > 0 ? 0 : _navItems.length - 1
         } else {
-            _highlightedIndex = Math.max(0, Math.min(_navItems.length - 1, _highlightedIndex + delta));
+            _highlightedIndex = Math.max(0, Math.min(_navItems.length - 1, _highlightedIndex + delta))
         }
     }
 
     function _activateHighlighted() {
         if (_highlightedIndex >= 0 && _highlightedIndex < _navItems.length)
-            settings.currentPage = _navItems[_highlightedIndex].pageId;
+            settings.currentPage = _navItems[_highlightedIndex].pageId
     }
 
     function _highlightedListIndex() {
-        if (_highlightedIndex < 0 || _highlightedIndex >= _navItems.length)
-            return -1;
-        return _navItems[_highlightedIndex].listIndex;
+        if (_highlightedIndex < 0 || _highlightedIndex >= _navItems.length) return -1
+        return _navItems[_highlightedIndex].listIndex
     }
 
     ColumnLayout {
@@ -89,9 +84,7 @@ Item {
 
                     Connections {
                         target: settings
-                        function onDefaultFocusRequested() {
-                            extSearchField.forceActiveFocus();
-                        }
+                        function onDefaultFocusRequested() { extSearchField.forceActiveFocus() }
                     }
 
                     Text {
@@ -109,10 +102,10 @@ Item {
                     Keys.onDownPressed: root._navigateHighlight(1)
                     Keys.onReturnPressed: root._activateHighlighted()
                     Keys.onEnterPressed: root._activateHighlighted()
-                    Keys.onPressed: event => {
+                    Keys.onPressed: (event) => {
                         if (event.key === Qt.Key_Escape && text) {
-                            text = "";
-                            event.accepted = true;
+                            text = ""
+                            event.accepted = true
                         }
                     }
                 }
@@ -128,7 +121,8 @@ Item {
             model: root._allItems
 
             ScrollBar.vertical: ViciScrollBar {
-                policy: navList.contentHeight > navList.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+                policy: navList.contentHeight > navList.height
+                        ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
             }
 
             delegate: Item {
@@ -162,14 +156,14 @@ Item {
                     backgroundColor: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
                     color: {
                         if (settings.currentPage === navItem._pageId) {
-                            const c = Theme.listItemSelectionBg;
-                            return Qt.rgba(c.r, c.g, c.b, Config.windowOpacity);
+                            const c = Theme.listItemSelectionBg
+                            return Qt.rgba(c.r, c.g, c.b, Config.windowOpacity)
                         }
                         if (navItem._isHighlighted || itemHover.hovered) {
-                            const h = Theme.listItemHoverBg;
-                            return Qt.rgba(h.r, h.g, h.b, Config.windowOpacity);
+                            const h = Theme.listItemHoverBg
+                            return Qt.rgba(h.r, h.g, h.b, Config.windowOpacity)
                         }
-                        return Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity);
+                        return Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
                     }
 
                     RowLayout {
@@ -179,7 +173,10 @@ Item {
                         spacing: 8
 
                         ViciImage {
-                            source: navItem.modelData._kind === "core" ? Img.builtin(navItem.modelData.icon).withFillColor(settings.currentPage === navItem._pageId ? Theme.listItemSelectionFg : Theme.textMuted) : (navItem.modelData.iconSource ?? "")
+                            source: navItem.modelData._kind === "core"
+                                ? Img.builtin(navItem.modelData.icon).withFillColor(
+                                    settings.currentPage === navItem._pageId ? Theme.listItemSelectionFg : Theme.textMuted)
+                                : (navItem.modelData.iconSource ?? "")
                             Layout.preferredWidth: 16
                             Layout.preferredHeight: 16
                             opacity: navItem._isEnabled ? 1.0 : 0.4
@@ -187,7 +184,9 @@ Item {
 
                         Text {
                             text: navItem.modelData.label ?? ""
-                            color: settings.currentPage === navItem._pageId ? Theme.listItemSelectionFg : navItem._isEnabled ? Theme.foreground : Theme.textMuted
+                            color: settings.currentPage === navItem._pageId
+                                   ? Theme.listItemSelectionFg
+                                   : navItem._isEnabled ? Theme.foreground : Theme.textMuted
                             font.pointSize: Theme.regularFontSize
                             elide: Text.ElideRight
                             Layout.fillWidth: true
@@ -195,25 +194,21 @@ Item {
 
                         ViciImage {
                             visible: {
-                                const p = navItem.modelData.provenance ?? "";
-                                return p === "Raycast" || p === "Vicinae";
+                                const p = navItem.modelData.provenance ?? ""
+                                return p === "Raycast" || p === "Vicinae"
                             }
                             source: {
-                                const p = navItem.modelData.provenance ?? "";
-                                if (p === "Raycast")
-                                    return Img.builtin("raycast").withFillColor(Theme.toastDanger);
-                                if (p === "Vicinae")
-                                    return Img.builtin("vicinae").withFillColor(Theme.toastWarning);
-                                return "";
+                                const p = navItem.modelData.provenance ?? ""
+                                if (p === "Raycast") return Img.builtin("raycast").withFillColor(Theme.toastDanger)
+                                if (p === "Vicinae") return Img.builtin("vicinae").withFillColor(Theme.toastWarning)
+                                return ""
                             }
                             Layout.preferredWidth: 16
                             Layout.preferredHeight: 16
                         }
                     }
 
-                    HoverHandler {
-                        id: itemHover
-                    }
+                    HoverHandler { id: itemHover }
                     TapHandler {
                         onTapped: settings.currentPage = navItem._pageId
                     }

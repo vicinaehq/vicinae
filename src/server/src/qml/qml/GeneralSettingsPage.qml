@@ -12,7 +12,8 @@ Flickable {
     readonly property var model: settings.generalModel
 
     ScrollBar.vertical: ViciScrollBar {
-        policy: root.contentHeight > root.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+        policy: root.contentHeight > root.height
+                ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
     }
 
     ColumnLayout {
@@ -26,7 +27,7 @@ Flickable {
                 width: parent.width
                 items: root.model.themeItems
                 currentItem: root.model.currentTheme
-                onActivated: item => root.model.selectTheme(item.id)
+                onActivated: (item) => root.model.selectTheme(item.id)
             }
         }
 
@@ -36,7 +37,7 @@ Flickable {
                 width: parent.width
                 items: root.model.fontItems
                 currentItem: root.model.currentFont
-                onActivated: item => root.model.selectFont(item.id)
+                onActivated: (item) => root.model.selectFont(item.id)
             }
         }
 
@@ -49,8 +50,7 @@ Flickable {
                 placeholder: "e.g. 11"
                 onAccepted: root.model.fontSize = text
                 onEditingChanged: {
-                    if (!editing)
-                        root.model.fontSize = text;
+                    if (!editing) root.model.fontSize = text
                 }
             }
         }

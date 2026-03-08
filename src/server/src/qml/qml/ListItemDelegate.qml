@@ -103,17 +103,10 @@ SelectableDelegate {
 
         ListAccessoryRow {
             accessories: {
-                if (root.itemAccessory instanceof Array)
-                    return root.itemAccessory;
+                if (root.itemAccessory instanceof Array) return root.itemAccessory
                 if (typeof root.itemAccessory === "string" && root.itemAccessory !== "")
-                    return [
-                        {
-                            text: root.itemAccessory,
-                            color: root.itemAccessoryColor,
-                            fill: false
-                        }
-                    ];
-                return [];
+                    return [{text: root.itemAccessory, color: root.itemAccessoryColor, fill: false}]
+                return []
             }
             Layout.fillWidth: false
             Layout.minimumWidth: implicitWidth

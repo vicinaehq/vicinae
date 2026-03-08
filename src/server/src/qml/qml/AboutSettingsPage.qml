@@ -17,9 +17,7 @@ Item {
             width: Math.min(parent.width - 32, 500)
             spacing: 12
 
-            Item {
-                implicitHeight: 24
-            }
+            Item { implicitHeight: 24 }
 
             ViciImage {
                 source: Img.builtin("vicinae")
@@ -57,9 +55,7 @@ Item {
                 Layout.fillWidth: true
             }
 
-            Item {
-                implicitHeight: 10
-            }
+            Item { implicitHeight: 10 }
 
             SettingsLinkButton {
                 icon: "github"
@@ -82,9 +78,7 @@ Item {
                 Layout.alignment: Qt.AlignHCenter
             }
 
-            Item {
-                Layout.fillHeight: true
-            }
+            Item { Layout.fillHeight: true }
         }
     }
 }

@@ -8,13 +8,13 @@ FocusScope {
 
     onActiveChanged: {
         if (active) {
-            _savedFocusItem = Window.window ? Window.window.activeFocusItem : null;
-            focus = true;
+            _savedFocusItem = Window.window ? Window.window.activeFocusItem : null
+            focus = true
         } else {
-            focus = false;
+            focus = false
             if (_savedFocusItem) {
-                _savedFocusItem.forceActiveFocus();
-                _savedFocusItem = null;
+                _savedFocusItem.forceActiveFocus()
+                _savedFocusItem = null
             }
         }
     }

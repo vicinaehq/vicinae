@@ -6,18 +6,10 @@ Item {
     id: root
     required property var host
 
-    function moveUp() {
-        listView.moveUp();
-    }
-    function moveDown() {
-        listView.moveDown();
-    }
-    function moveSectionUp() {
-        listView.moveSectionUp();
-    }
-    function moveSectionDown() {
-        listView.moveSectionDown();
-    }
+    function moveUp() { listView.moveUp() }
+    function moveDown() { listView.moveDown() }
+    function moveSectionUp() { listView.moveSectionUp() }
+    function moveSectionDown() { listView.moveSectionDown() }
 
     CommandListView {
         id: listView
@@ -26,6 +18,7 @@ Item {
         cmdModel: root.host.listModel
         detailComponent: detailPanel
         detailVisible: root.host.hasDetail
+
     }
 
     Component {
@@ -33,22 +26,10 @@ Item {
 
         DetailPanel {
             metadata: [
-                {
-                    label: "Name",
-                    value: root.host.detailName
-                },
-                {
-                    label: "Where",
-                    value: root.host.detailPath
-                },
-                {
-                    label: "Type",
-                    value: root.host.detailMimeType
-                },
-                {
-                    label: "Last modified",
-                    value: root.host.detailLastModified
-                }
+                {label: "Name", value: root.host.detailName},
+                {label: "Where", value: root.host.detailPath},
+                {label: "Type", value: root.host.detailMimeType},
+                {label: "Last modified", value: root.host.detailLastModified}
             ]
 
             FilePreview {

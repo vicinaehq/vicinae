@@ -129,8 +129,7 @@ Window {
         anchors.margins: Config.borderWidth
         visible: launcher.hasOverlay
 
-        onLoaded: if (item)
-            item.forceActiveFocus()
+        onLoaded: if (item) item.forceActiveFocus()
     }
 
     ActionPanelPopover {
@@ -148,11 +147,11 @@ Window {
         target: launcher.alertModel
         function onVisibleChanged() {
             if (launcher.alertModel.visible) {
-                alertDialog.open();
+                alertDialog.open()
             } else {
                 if (alertDialog.visible)
-                    alertDialog.close();
-                searchBar.focusInput();
+                    alertDialog.close()
+                searchBar.focusInput()
             }
         }
     }
@@ -160,26 +159,24 @@ Window {
     Connections {
         target: launcher
         function onCommandViewPushed(componentUrl, properties) {
-            commandStack.push(componentUrl, properties, StackView.Immediate);
+            commandStack.push(componentUrl, properties, StackView.Immediate)
         }
         function onCommandViewReplaced(componentUrl, properties) {
-            commandStack.replace(commandStack.currentItem, componentUrl, properties, StackView.Immediate);
+            commandStack.replace(commandStack.currentItem, componentUrl, properties, StackView.Immediate)
         }
         function onCommandViewPopped() {
             if (commandStack.depth > 0)
-                commandStack.pop(StackView.Immediate);
+                commandStack.pop(StackView.Immediate)
         }
         function onCommandStackCleared() {
-            commandStack.clear(StackView.Immediate);
+            commandStack.clear(StackView.Immediate)
         }
         function onOverlayChanged() {
             if (launcher.hasOverlay) {
-                overlayLoader.setSource(launcher.overlayUrl, {
-                    host: launcher.overlayHost
-                });
+                overlayLoader.setSource(launcher.overlayUrl, { host: launcher.overlayHost })
             } else {
-                overlayLoader.source = "";
-                searchBar.focusInput();
+                overlayLoader.source = ""
+                searchBar.focusInput()
             }
         }
     }
@@ -188,20 +185,21 @@ Window {
         target: Nav
         function onWindowVisiblityChanged(visible) {
             if (visible) {
-                root.visible = true;
-                root.raise();
-                root.requestActivate();
-                searchBar.focusInput();
+                root.visible = true
+                root.raise()
+                root.requestActivate()
+                searchBar.focusInput()
             } else {
-                root.visible = false;
+                root.visible = false
             }
         }
     }
 
+
     Shortcut {
         sequence: "Escape"
         enabled: !launcher.alertModel.visible && !actionPanel.open && !launcher.hasOverlay
-        onActivated: launcher.handleEscape()
+		onActivated: launcher.handleEscape()
     }
 
     Shortcut {
@@ -214,9 +212,8 @@ Window {
         sequence: Keybinds.toggleActionPanel
         enabled: !launcher.alertModel.visible
         onActivated: {
-            if (launcher.compacted)
-                launcher.expand();
-            actionPanel.toggle();
+            if (launcher.compacted) launcher.expand()
+            actionPanel.toggle()
         }
     }
 
@@ -224,7 +221,7 @@ Window {
     onHeightChanged: root.y = (Screen.height - root.height) / 3
 
     Component.onCompleted: {
-        root.x = (Screen.width - root.width) / 2;
-        root.y = (Screen.height - root.height) / 3;
+        root.x = (Screen.width - root.width) / 2
+        root.y = (Screen.height - root.height) / 3
     }
 }

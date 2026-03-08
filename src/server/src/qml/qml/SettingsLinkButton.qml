@@ -12,7 +12,7 @@ Rectangle {
 
     property string icon: ""
     property string label: ""
-    signal clicked
+    signal clicked()
 
     Row {
         id: innerRow
@@ -21,8 +21,7 @@ Rectangle {
 
         ViciImage {
             source: Img.builtin(root.icon)
-            width: 16
-            height: 16
+            width: 16; height: 16
             anchors.verticalCenter: parent.verticalCenter
         }
 
@@ -34,9 +33,7 @@ Rectangle {
         }
     }
 
-    HoverHandler {
-        id: hoverHandler
-    }
+    HoverHandler { id: hoverHandler }
     TapHandler {
         onTapped: root.clicked()
     }

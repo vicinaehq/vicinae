@@ -32,11 +32,9 @@ GenericListView {
         required property bool isFile
 
         sourceComponent: {
-            if (isSection)
-                return sectionComponent;
-            if (isCalculator)
-                return calculatorComponent;
-            return itemComponent;
+            if (isSection) return sectionComponent
+            if (isCalculator) return calculatorComponent
+            return itemComponent
         }
 
         Component {

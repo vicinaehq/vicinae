@@ -16,31 +16,21 @@ Rectangle {
 
     readonly property color _alertColor: {
         switch (calloutType) {
-        case "caution":
-            return Theme.toastDanger;
-        case "warning":
-            return Theme.toastWarning;
-        case "important":
-            return Theme.toastWarning;
-        case "tip":
-            return Theme.toastSuccess;
-        default:
-            return Theme.toastInfo;
+        case "caution": return Theme.toastDanger
+        case "warning": return Theme.toastWarning
+        case "important": return Theme.toastWarning
+        case "tip": return Theme.toastSuccess
+        default: return Theme.toastInfo
         }
     }
 
     readonly property string _label: {
         switch (calloutType) {
-        case "caution":
-            return "Caution";
-        case "warning":
-            return "Warning";
-        case "important":
-            return "Important";
-        case "tip":
-            return "Tip";
-        default:
-            return "Note";
+        case "caution": return "Caution"
+        case "warning": return "Warning"
+        case "important": return "Important"
+        case "tip": return "Tip"
+        default: return "Note"
         }
     }
 
@@ -48,13 +38,13 @@ Rectangle {
         switch (calloutType) {
         case "caution":
         case "warning":
-            return Img.builtin("warning").withFillColor(root._alertColor);
+            return Img.builtin("warning").withFillColor(root._alertColor)
         case "important":
-            return Img.builtin("important-01").withFillColor(root._alertColor);
+            return Img.builtin("important-01").withFillColor(root._alertColor)
         case "tip":
-            return Img.builtin("light-bulb").withFillColor(root._alertColor);
+            return Img.builtin("light-bulb").withFillColor(root._alertColor)
         default:
-            return Img.builtin("info-01").withFillColor(root._alertColor);
+            return Img.builtin("info-01").withFillColor(root._alertColor)
         }
     }
 
@@ -84,10 +74,7 @@ Rectangle {
                 color: root._alertColor
                 font.pointSize: Theme.regularFontSize
                 font.bold: true
-                Binding on font.family {
-                    value: root.fontFamily
-                    when: root.fontFamily !== ""
-                }
+                Binding on font.family { value: root.fontFamily; when: root.fontFamily !== "" }
             }
         }
 
@@ -105,19 +92,14 @@ Rectangle {
                 wrapMode: TextEdit.Wrap
                 color: Theme.foreground
                 font.pointSize: Theme.regularFontSize
-                Binding on font.family {
-                    value: root.fontFamily
-                    when: root.fontFamily !== ""
-                }
+                Binding on font.family { value: root.fontFamily; when: root.fontFamily !== "" }
                 text: modelData ?? ""
 
                 required property var modelData
                 required property int index
 
-                Component.onCompleted: if (root.selectionController)
-                    root.selectionController.registerSelectable(calloutText, root.blockIndex * 10000 + index, true)
-                Component.onDestruction: if (root.selectionController)
-                    root.selectionController.unregisterSelectable(calloutText)
+                Component.onCompleted: if (root.selectionController) root.selectionController.registerSelectable(calloutText, root.blockIndex * 10000 + index, true)
+                Component.onDestruction: if (root.selectionController) root.selectionController.unregisterSelectable(calloutText)
             }
         }
     }

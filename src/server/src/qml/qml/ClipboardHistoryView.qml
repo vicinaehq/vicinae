@@ -6,18 +6,10 @@ Item {
     id: root
     required property var host
 
-    function moveUp() {
-        listView.moveUp();
-    }
-    function moveDown() {
-        listView.moveDown();
-    }
-    function moveSectionUp() {
-        listView.moveSectionUp();
-    }
-    function moveSectionDown() {
-        listView.moveSectionDown();
-    }
+    function moveUp() { listView.moveUp() }
+    function moveDown() { listView.moveDown() }
+    function moveSectionUp() { listView.moveSectionUp() }
+    function moveSectionDown() { listView.moveSectionDown() }
 
     ColumnLayout {
         anchors.fill: parent
@@ -36,9 +28,7 @@ Item {
                 font.pointSize: Theme.regularFontSize
             }
 
-            Item {
-                Layout.fillWidth: true
-            }
+            Item { Layout.fillWidth: true }
 
             Text {
                 text: root.host.clipboardStatusText
@@ -107,10 +97,7 @@ Item {
 
                 Component {
                     id: sectionComponent
-                    Item {
-                        width: 1
-                        height: 0
-                    }
+                    Item { width: 1; height: 0 }
                 }
 
                 Component {
@@ -143,7 +130,8 @@ Item {
 
                                 Text {
                                     text: delegateLoader.title
-                                    color: itemDelegate.selected ? Theme.listItemSelectionFg : Theme.foreground
+                                    color: itemDelegate.selected
+                                           ? Theme.listItemSelectionFg : Theme.foreground
                                     font.pointSize: Theme.regularFontSize
                                     elide: Text.ElideRight
                                     maximumLineCount: 1
@@ -182,23 +170,11 @@ Item {
 
         DetailPanel {
             metadata: [
-                {
-                    label: "Mime",
-                    value: root.host.detailMimeType,
-                    icon: root.host.detailEncryptionIcon
-                },
-                {
-                    label: "Size",
-                    value: root.host.detailSize
-                },
-                {
-                    label: "Copied at",
-                    value: root.host.detailCopiedAt
-                },
-                {
-                    label: "MD5",
-                    value: root.host.detailMd5
-                }
+                {label: "Mime", value: root.host.detailMimeType,
+                 icon: root.host.detailEncryptionIcon},
+                {label: "Size", value: root.host.detailSize},
+                {label: "Copied at", value: root.host.detailCopiedAt},
+                {label: "MD5", value: root.host.detailMd5}
             ]
 
             Loader {
@@ -230,7 +206,9 @@ Item {
 
             Loader {
                 anchors.fill: parent
-                active: !root.host.hasDetailError && root.host.detailImageSource === "" && root.host.detailTextContent !== ""
+                active: !root.host.hasDetailError
+                        && root.host.detailImageSource === ""
+                        && root.host.detailTextContent !== ""
                 visible: active
                 sourceComponent: TextViewer {
                     text: root.host.detailTextContent
@@ -240,7 +218,9 @@ Item {
 
             Loader {
                 anchors.fill: parent
-                active: !root.host.hasDetailError && root.host.detailImageSource === "" && root.host.detailTextContent === ""
+                active: !root.host.hasDetailError
+                        && root.host.detailImageSource === ""
+                        && root.host.detailTextContent === ""
                 visible: active
                 sourceComponent: EmptyView {
                     title: root.host.detailMimeType

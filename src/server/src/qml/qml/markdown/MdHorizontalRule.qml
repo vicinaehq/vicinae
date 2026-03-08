@@ -28,8 +28,6 @@ Item {
         visible: root.selected
     }
 
-    onSelectionControllerChanged: if (selectionController)
-        selectionController.registerSelectable(root, blockIndex * 10000, false)
-    Component.onDestruction: if (selectionController)
-        selectionController.unregisterSelectable(root)
+    onSelectionControllerChanged: if (selectionController) selectionController.registerSelectable(root, blockIndex * 10000, false)
+    Component.onDestruction: if (selectionController) selectionController.unregisterSelectable(root)
 }
