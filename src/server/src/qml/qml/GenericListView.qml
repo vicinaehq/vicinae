@@ -71,7 +71,8 @@ Item {
             listView.currentIndex = next
             const scrollTarget = sectionScrollTarget(next, -1)
             listView.positionViewAtIndex(scrollTarget, ListView.Contain)
-        }
+		}
+		return true;
     }
 
     function moveUp() {
@@ -82,7 +83,8 @@ Item {
             listView.currentIndex = next
             const scrollTarget = sectionScrollTarget(next, -1)
             listView.positionViewAtIndex(scrollTarget, ListView.Contain)
-        }
+		}
+		return true;
     }
 
     function moveSectionDown() {
@@ -92,7 +94,8 @@ Item {
             listView.currentIndex = next
             const scrollTarget = sectionScrollTarget(next, -1)
             listView.positionViewAtIndex(scrollTarget, ListView.Contain)
-        }
+		}
+		return true;
     }
 
     function moveSectionUp() {
@@ -104,7 +107,8 @@ Item {
             listView.currentIndex = next
             const scrollTarget = sectionScrollTarget(next, -1)
             listView.positionViewAtIndex(scrollTarget, ListView.Contain)
-        }
+		}
+		return true;
     }
 
     function selectFirst() {

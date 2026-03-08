@@ -213,8 +213,7 @@ Item {
 					const navigatable = typeof commandStack.currentItem.moveUp === "function";
 
 					if (navigatable && (ctrl || event.modifiers == Qt.NoModifier)) {
-						ctrl ? commandStack.currentItem.moveSectionUp() : commandStack.currentItem.moveUp()
-						event.accepted = true
+						event.accepted = ctrl ? commandStack.currentItem.moveSectionUp() : commandStack.currentItem.moveUp()
 					} else {
 						event.accepted = launcher.forwardKey(event.key, event.modifiers)
 					}
@@ -226,8 +225,7 @@ Item {
 					const ctrl = event.modifiers == Qt.ControlModifier
 
 					if (navigatable && (ctrl || event.modifiers == Qt.NoModifier)) {
-						ctrl ? commandStack.currentItem.moveSectionDown() : commandStack.currentItem.moveDown()
-						event.accepted = true
+						event.accepted = ctrl ? commandStack.currentItem.moveSectionDown() : commandStack.currentItem.moveDown()
 					} else {
 						event.accepted = launcher.forwardKey(event.key, event.modifiers)
 					}
@@ -238,17 +236,15 @@ Item {
 					const navigatable = typeof commandStack.currentItem.moveLeft === "function";
 
 					if (navigatable && event.modifiers == Qt.NoModifier) {
-						commandStack.currentItem.moveLeft()
-						event.accepted = true
+						event.accepted = commandStack.currentItem.moveLeft()
 					} else {
 						event.accepted = launcher.forwardKey(event.key, event.modifiers)
 					}
                 }
                 Keys.onRightPressed: (event) => {
                     if (event.modifiers === Qt.NoModifier
-                            && typeof commandStack.currentItem.moveRight === "function"
-                            && commandStack.currentItem.moveRight()) {
-                        event.accepted = true
+                            && typeof commandStack.currentItem.moveRight === "function") {
+                        event.accepted = commandStack.currentItem.moveRight();
                     } else {
                         event.accepted = false
                     }
