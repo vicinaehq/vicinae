@@ -7,18 +7,26 @@ SearchableDropdown {
 
     readonly property var _options: ["All", "Text", "Images", "Links", "Files"]
 
-    items: [{
-        title: "",
-        items: _options.map((name, i) => ({ id: i.toString(), displayName: name }))
-    }]
+    items: [
+        {
+            title: "",
+            items: _options.map((name, i) => ({
+                        id: i.toString(),
+                        displayName: name
+                    }))
+        }
+    ]
 
     currentItem: {
-        var idx = launcher.commandViewHost ? launcher.commandViewHost.currentKindFilter : 0
-        return { id: idx.toString(), displayName: _options[idx] }
+        var idx = launcher.commandViewHost ? launcher.commandViewHost.currentKindFilter : 0;
+        return {
+            id: idx.toString(),
+            displayName: _options[idx]
+        };
     }
 
-    onActivated: (item) => {
+    onActivated: item => {
         if (launcher.commandViewHost)
-            launcher.commandViewHost.setKindFilter(parseInt(item.id))
+            launcher.commandViewHost.setKindFilter(parseInt(item.id));
     }
 }

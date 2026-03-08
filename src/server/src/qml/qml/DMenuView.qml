@@ -6,10 +6,18 @@ Item {
     id: root
     required property var host
 
-    function moveUp() { listView.moveUp() }
-    function moveDown() { listView.moveDown() }
-    function moveSectionUp() { listView.moveSectionUp() }
-    function moveSectionDown() { listView.moveSectionDown() }
+    function moveUp() {
+        listView.moveUp();
+    }
+    function moveDown() {
+        listView.moveDown();
+    }
+    function moveSectionUp() {
+        listView.moveSectionUp();
+    }
+    function moveSectionDown() {
+        listView.moveSectionDown();
+    }
 
     GenericListView {
         id: listView
@@ -20,7 +28,6 @@ Item {
         autoWireModel: true
         detailComponent: detailPanel
         detailVisible: root.host.hasDetail
-
 
         delegate: Loader {
             id: delegateLoader
@@ -68,9 +75,18 @@ Item {
 
         DetailPanel {
             metadata: [
-                {label: "Name", value: root.host.detailName},
-                {label: "Path", value: root.host.detailPath},
-                {label: "Type", value: root.host.detailMimeType}
+                {
+                    label: "Name",
+                    value: root.host.detailName
+                },
+                {
+                    label: "Path",
+                    value: root.host.detailPath
+                },
+                {
+                    label: "Type",
+                    value: root.host.detailMimeType
+                }
             ]
 
             FilePreview {

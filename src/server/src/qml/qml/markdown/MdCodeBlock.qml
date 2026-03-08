@@ -18,8 +18,7 @@ Rectangle {
     width: parent?.width ?? 0
     implicitHeight: col.implicitHeight
     radius: 6
-    color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g,
-                   Theme.secondaryBackground.b, 0.6)
+    color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, 0.6)
     border.width: 1
     border.color: Theme.divider
 
@@ -50,7 +49,9 @@ Rectangle {
                     visible: root.language.length > 0
                 }
 
-                Item { Layout.fillWidth: true }
+                Item {
+                    Layout.fillWidth: true
+                }
 
                 Text {
                     id: copyBtn
@@ -65,8 +66,8 @@ Rectangle {
                         hoverEnabled: true
                         onClicked: {
                             if (root.mdModel)
-                                root.mdModel.copyCodeBlock(root.blockIndex)
-                            copyTimer.restart()
+                                root.mdModel.copyCodeBlock(root.blockIndex);
+                            copyTimer.restart();
                         }
                     }
 
@@ -98,8 +99,7 @@ Rectangle {
             boundsBehavior: Flickable.StopAtBounds
 
             ScrollBar.horizontal: ViciScrollBar {
-                policy: codeFlickable.contentWidth > codeFlickable.width
-                        ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+                policy: codeFlickable.contentWidth > codeFlickable.width ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
             }
 
             TextEdit {
@@ -118,6 +118,8 @@ Rectangle {
         }
     }
 
-    onSelectionControllerChanged: if (selectionController) selectionController.registerSelectable(codeEdit, blockIndex * 10000, true)
-    Component.onDestruction: if (selectionController) selectionController.unregisterSelectable(codeEdit)
+    onSelectionControllerChanged: if (selectionController)
+        selectionController.registerSelectable(codeEdit, blockIndex * 10000, true)
+    Component.onDestruction: if (selectionController)
+        selectionController.unregisterSelectable(codeEdit)
 }

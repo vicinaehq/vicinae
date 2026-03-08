@@ -64,12 +64,7 @@ SelectableDelegate {
             Layout.alignment: Qt.AlignVCenter
 
             Repeater {
-                model: [
-                    root.paletteColor0, root.paletteColor1,
-                    root.paletteColor2, root.paletteColor3,
-                    root.paletteColor4, root.paletteColor5,
-                    root.paletteColor6, root.paletteColor7
-                ]
+                model: [root.paletteColor0, root.paletteColor1, root.paletteColor2, root.paletteColor3, root.paletteColor4, root.paletteColor5, root.paletteColor6, root.paletteColor7]
                 delegate: Item {
                     width: 16
                     height: 16

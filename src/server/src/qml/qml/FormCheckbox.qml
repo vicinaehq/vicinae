@@ -12,24 +12,25 @@ Item {
     property bool readOnly: false
     property bool hasError: false
 
-    signal toggled()
+    signal toggled
 
     function toggle() {
-        if (root.readOnly) return
-        root.checked = !root.checked
-        root.toggled()
+        if (root.readOnly)
+            return;
+        root.checked = !root.checked;
+        root.toggled();
     }
 
     Keys.onSpacePressed: toggle()
-    Keys.onReturnPressed: (event) => {
+    Keys.onReturnPressed: event => {
         if (typeof launcher !== "undefined")
-            event.accepted = launcher.forwardKey(event.key, event.modifiers)
+            event.accepted = launcher.forwardKey(event.key, event.modifiers);
         if (!event.accepted)
-            toggle()
+            toggle();
     }
-    Keys.onPressed: (event) => {
+    Keys.onPressed: event => {
         if (typeof launcher !== "undefined")
-            event.accepted = launcher.forwardKey(event.key, event.modifiers)
+            event.accepted = launcher.forwardKey(event.key, event.modifiers);
     }
 
     MouseArea {
@@ -50,9 +51,7 @@ Item {
             radius: 4
             Layout.alignment: Qt.AlignVCenter
             color: root.checked ? Theme.accent : "transparent"
-            border.color: root.hasError ? Theme.inputBorderError
-                          : root.activeFocus ? Theme.inputBorderFocus
-                          : root.checked ? Theme.accent : Theme.inputBorder
+            border.color: root.hasError ? Theme.inputBorderError : root.activeFocus ? Theme.inputBorderFocus : root.checked ? Theme.accent : Theme.inputBorder
             border.width: 1
 
             Text {

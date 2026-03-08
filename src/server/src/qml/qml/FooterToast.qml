@@ -12,11 +12,16 @@ RowLayout {
         radius: 5
         color: {
             switch (launcher.toastStyle) {
-                case 0: return Theme.toastSuccess
-                case 1: return Theme.toastInfo
-                case 2: return Theme.toastWarning
-                case 3: return Theme.toastDanger
-                default: return Theme.toastInfo
+            case 0:
+                return Theme.toastSuccess;
+            case 1:
+                return Theme.toastInfo;
+            case 2:
+                return Theme.toastWarning;
+            case 3:
+                return Theme.toastDanger;
+            default:
+                return Theme.toastInfo;
             }
         }
     }
@@ -69,5 +74,7 @@ RowLayout {
         Layout.fillWidth: true
     }
 
-    Item { Layout.fillWidth: true }
+    Item {
+        Layout.fillWidth: true
+    }
 }

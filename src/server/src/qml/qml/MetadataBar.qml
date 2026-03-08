@@ -33,12 +33,16 @@ Item {
                     Layout.fillWidth: true
                     property var entry: modelData
                     sourceComponent: {
-                        var t = (entry && entry.type) || "label"
+                        var t = (entry && entry.type) || "label";
                         switch (t) {
-                        case "separator": return separatorComponent
-                        case "link": return linkComponent
-                        case "tags": return tagsComponent
-                        default: return labelComponent
+                        case "separator":
+                            return separatorComponent;
+                        case "link":
+                            return linkComponent;
+                        case "tags":
+                            return tagsComponent;
+                        default:
+                            return labelComponent;
                         }
                     }
                 }
@@ -57,7 +61,9 @@ Item {
                 font.pointSize: Theme.smallerFontSize
             }
 
-            Item { Layout.fillWidth: true }
+            Item {
+                Layout.fillWidth: true
+            }
 
             ViciImage {
                 visible: (entry.icon || "") !== ""
@@ -87,7 +93,9 @@ Item {
                 font.pointSize: Theme.smallerFontSize
             }
 
-            Item { Layout.fillWidth: true }
+            Item {
+                Layout.fillWidth: true
+            }
 
             Text {
                 text: "<a href=\"" + (entry.url || "") + "\" style=\"color:" + Theme.linkColor + ";\">" + (entry.value || "") + "</a>"
@@ -97,7 +105,9 @@ Item {
                 textFormat: Text.RichText
                 elide: Text.ElideMiddle
                 Layout.maximumWidth: root.width * 0.65
-                onLinkActivated: function(link) { Qt.openUrlExternally(link) }
+                onLinkActivated: function (link) {
+                    Qt.openUrlExternally(link);
+                }
 
                 MouseArea {
                     anchors.fill: parent
@@ -120,7 +130,9 @@ Item {
                 Layout.alignment: Qt.AlignTop
             }
 
-            Item { Layout.fillWidth: true }
+            Item {
+                Layout.fillWidth: true
+            }
 
             Flow {
                 Layout.maximumWidth: root.width * 0.65
@@ -135,12 +147,7 @@ Item {
                         width: tagRow.implicitWidth + 12
                         height: tagRow.implicitHeight + 6
                         radius: 4
-                        color: modelData.color ? Qt.rgba(
-                            Qt.color(modelData.color).r,
-                            Qt.color(modelData.color).g,
-                            Qt.color(modelData.color).b,
-                            0.2
-                        ) : Theme.secondaryBackground
+                        color: modelData.color ? Qt.rgba(Qt.color(modelData.color).r, Qt.color(modelData.color).g, Qt.color(modelData.color).b, 0.2) : Theme.secondaryBackground
 
                         RowLayout {
                             id: tagRow

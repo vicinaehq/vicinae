@@ -6,10 +6,18 @@ Item {
     id: root
     required property var host
 
-    function moveUp() { listView.moveUp() }
-    function moveDown() { listView.moveDown() }
-    function moveSectionUp() { listView.moveSectionUp() }
-    function moveSectionDown() { listView.moveSectionDown() }
+    function moveUp() {
+        listView.moveUp();
+    }
+    function moveDown() {
+        listView.moveDown();
+    }
+    function moveSectionUp() {
+        listView.moveSectionUp();
+    }
+    function moveSectionDown() {
+        listView.moveSectionDown();
+    }
 
     GenericListView {
         id: listView
@@ -62,8 +70,7 @@ Item {
         }
     }
 
-    readonly property bool _hasCustomDetail: root.host.detailContentUrl !== undefined
-                                              && root.host.detailContentUrl.toString() !== ""
+    readonly property bool _hasCustomDetail: root.host.detailContentUrl !== undefined && root.host.detailContentUrl.toString() !== ""
 
     Component {
         id: detailPanel

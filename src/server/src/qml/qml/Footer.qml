@@ -27,8 +27,9 @@ Item {
         FooterButton {
             id: primaryButton
             visible: {
-                if (!launcher.isRootSearch) return actionPanel.primaryActionTitle !== ""
-                return searchModel.primaryActionTitle !== ""
+                if (!launcher.isRootSearch)
+                    return actionPanel.primaryActionTitle !== "";
+                return searchModel.primaryActionTitle !== "";
             }
             Layout.alignment: Qt.AlignVCenter
             label: !launcher.isRootSearch ? actionPanel.primaryActionTitle : searchModel.primaryActionTitle

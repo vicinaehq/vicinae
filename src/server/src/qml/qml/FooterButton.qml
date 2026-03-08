@@ -7,7 +7,7 @@ Item {
     required property string shortcut
     property bool highlighted: false
 
-    signal clicked()
+    signal clicked
 
     implicitWidth: row.implicitWidth
     implicitHeight: row.implicitHeight

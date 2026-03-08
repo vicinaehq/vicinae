@@ -6,14 +6,14 @@ Item {
     required property var host
 
     readonly property var platformIcons: ({
-        "linux": "linux",
-        "macOS": "apple",
-        "macOS ": "apple",
-        "Windows": "windows11",
-        "windows": "windows11"
-    })
+            "linux": "linux",
+            "macOS": "apple",
+            "macOS ": "apple",
+            "Windows": "windows11",
+            "windows": "windows11"
+        })
 
-    component TextLink : RowLayout {
+    component TextLink: RowLayout {
         property string label: ""
         property string url: ""
 
@@ -28,9 +28,7 @@ Item {
         ViciImage {
             Layout.preferredWidth: 14
             Layout.preferredHeight: 14
-            source: Img.builtin("arrow-ne").withFillColor(
-                _linkArea.containsMouse ? Theme.accent : Theme.textMuted
-            )
+            source: Img.builtin("arrow-ne").withFillColor(_linkArea.containsMouse ? Theme.accent : Theme.textMuted)
         }
 
         MouseArea {
@@ -42,7 +40,7 @@ Item {
         }
     }
 
-    component SidebarLabel : Text {
+    component SidebarLabel: Text {
         color: Theme.textMuted
         font.pointSize: Theme.smallerFontSize
     }
@@ -141,22 +139,28 @@ Item {
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
 
-                                Item { width: index === 0 ? 10 : 5; height: 1 }
+                                Item {
+                                    width: index === 0 ? 10 : 5
+                                    height: 1
+                                }
 
                                 ViciImage {
                                     width: 14
                                     height: 14
                                     anchors.verticalCenter: parent.verticalCenter
                                     source: {
-                                        var iconName = root.platformIcons[modelData] || ""
-                                        if (iconName === "") return null
-                                        return Img.builtin(iconName).withFillColor(Theme.textMuted)
+                                        var iconName = root.platformIcons[modelData] || "";
+                                        if (iconName === "")
+                                            return null;
+                                        return Img.builtin(iconName).withFillColor(Theme.textMuted);
                                     }
                                 }
                             }
                         }
 
-                        Item { Layout.fillWidth: true }
+                        Item {
+                            Layout.fillWidth: true
+                        }
                     }
                 }
 
@@ -359,7 +363,9 @@ Item {
                         visible: (root.host.readmeUrl || "") !== ""
                         spacing: 5
 
-                        SidebarLabel { text: "README" }
+                        SidebarLabel {
+                            text: "README"
+                        }
                         TextLink {
                             label: "Open README"
                             url: root.host.readmeUrl || ""
@@ -369,7 +375,9 @@ Item {
                     ColumnLayout {
                         spacing: 5
 
-                        SidebarLabel { text: "Last update" }
+                        SidebarLabel {
+                            text: "Last update"
+                        }
                         Text {
                             text: root.host.lastUpdate
                             color: Theme.foreground
@@ -381,7 +389,9 @@ Item {
                         visible: root.host.contributors.length > 0
                         spacing: 10
 
-                        SidebarLabel { text: "Contributors" }
+                        SidebarLabel {
+                            text: "Contributors"
+                        }
 
                         Repeater {
                             model: root.host.contributors
@@ -408,7 +418,9 @@ Item {
                         visible: root.host.categories.length > 0
                         spacing: 5
 
-                        SidebarLabel { text: "Categories" }
+                        SidebarLabel {
+                            text: "Categories"
+                        }
 
                         Repeater {
                             model: root.host.categories
@@ -425,7 +437,9 @@ Item {
                         visible: (root.host.sourceUrl || "") !== ""
                         spacing: 5
 
-                        SidebarLabel { text: "Source Code" }
+                        SidebarLabel {
+                            text: "Source Code"
+                        }
                         TextLink {
                             label: "View Code"
                             url: root.host.sourceUrl || ""

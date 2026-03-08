@@ -12,9 +12,9 @@ GenericListView {
     emptyTitle: cmdModel && cmdModel.emptyTitle || "No results"
     emptyDescription: (cmdModel && cmdModel.emptyDescription) || ""
     emptyIcon: {
-        var _ = Theme.foreground
-        var icon = cmdModel ? (cmdModel.emptyIcon || "") : ""
-        return icon !== "" ? icon : "image://vicinae/builtin:magnifying-glass?fg=" + Theme.foreground
+        var _ = Theme.foreground;
+        var icon = cmdModel ? (cmdModel.emptyIcon || "") : "";
+        return icon !== "" ? icon : "image://vicinae/builtin:magnifying-glass?fg=" + Theme.foreground;
     }
 
     delegate: Loader {
