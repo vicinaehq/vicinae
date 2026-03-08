@@ -1,23 +1,15 @@
 #pragma once
 #include "ai-provider.hpp"
-#include "common/types.hpp"
 #include <glaze/core/opts.hpp>
 #include <glaze/json/read.hpp>
 #include <qcontainerfwd.h>
+#include <qlogging.h>
 #include <qnetworkaccessmanager.h>
 #include <qnetworkreply.h>
 #include <qnetworkrequest.h>
-
-class NetworkManager : NonCopyable {
-public:
-  static QNetworkAccessManager *manager() {
-    static QNetworkAccessManager mgr;
-    return &mgr;
-  }
-};
+#include "services/ai/json-client.hpp"
 
 namespace AI {
-
 struct StreamChunk {
   struct Message {
     std::string content;
@@ -54,7 +46,10 @@ public:
 
   ~HttpCompletion() override {
     if (m_reply) {
-      m_reply->abort();
+      if (!m_finished) {
+        qInfo() << "Aborted streaming completion from" << model().id;
+        m_reply->abort();
+      }
       m_reply->deleteLater();
     }
   }
@@ -92,11 +87,15 @@ private:
     emit errorOccured(m_reply->errorString().toStdString());
   }
 
-  void handleFinished() { emit finished(); }
+  void handleFinished() {
+    m_finished = true;
+    emit finished();
+  }
 
   QNetworkRequest m_req;
   QByteArray m_data;
   QNetworkReply *m_reply = nullptr;
   QByteArray m_buffer;
+  bool m_finished = false;
 };
 }; // namespace AI
