@@ -12,7 +12,12 @@ export default function FormElements() {
 		<Form
 			actions={
 				<ActionPanel>
-					<Action title="Submit" onAction={console.log} />
+					<Action.SubmitForm
+						onSubmit={(values) => {
+							console.log(values);
+							showToast(Toast.Style.Success, "submitted!");
+						}}
+					/>
 				</ActionPanel>
 			}
 			navigationTitle="Form Elements"
@@ -34,7 +39,11 @@ export default function FormElements() {
 			/>
 
 			{/* PasswordField */}
-			<Form.PasswordField id="password" title="PasswordField" placeholder="Password here..." />
+			<Form.PasswordField
+				id="password"
+				title="PasswordField"
+				placeholder="Password here..."
+			/>
 
 			{/* TextArea */}
 			<Form.TextArea

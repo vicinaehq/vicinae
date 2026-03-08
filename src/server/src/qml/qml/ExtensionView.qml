@@ -9,37 +9,42 @@ Item {
     StackView.onActivated: {
         if (contentLoader.item && typeof contentLoader.item.restoreFocus === "function")
             contentLoader.item.restoreFocus()
-    }
+	}
 
     function moveUp() {
-        if (contentLoader.item && typeof contentLoader.item.moveUp === "function")
-            contentLoader.item.moveUp()
+        if (contentLoader.item && typeof contentLoader.item.moveUp === "function") {
+			return contentLoader.item.moveUp()
+		}
+		return false;
     }
     function moveDown() {
-        if (contentLoader.item && typeof contentLoader.item.moveDown === "function")
-            contentLoader.item.moveDown()
+        if (contentLoader.item && typeof contentLoader.item.moveDown === "function") {
+			return contentLoader.item.moveDown()
+		}
+		return false;
     }
     function moveSectionUp() {
-        if (contentLoader.item && typeof contentLoader.item.moveSectionUp === "function")
-            contentLoader.item.moveSectionUp()
-        else moveUp()
+        if (contentLoader.item && typeof contentLoader.item.moveSectionUp === "function") {
+			return contentLoader.item.moveSectionUp()
+		}
+		else {
+			return moveUp()
+		}
     }
     function moveSectionDown() {
         if (contentLoader.item && typeof contentLoader.item.moveSectionDown === "function")
-            contentLoader.item.moveSectionDown()
-        else moveDown()
+            return contentLoader.item.moveSectionDown()
+        else return moveDown()
     }
     function moveLeft() {
         if (contentLoader.item && typeof contentLoader.item.moveLeft === "function") {
-            contentLoader.item.moveLeft()
-            return true
+            return contentLoader.item.moveLeft()
         }
         return false
     }
     function moveRight() {
         if (contentLoader.item && typeof contentLoader.item.moveRight === "function") {
-            contentLoader.item.moveRight()
-            return true
+            return contentLoader.item.moveRight()
         }
         return false
     }
@@ -61,10 +66,10 @@ Item {
     Component {
         id: listComponent
         Item {
-            function moveUp() { listView.moveUp() }
-            function moveDown() { listView.moveDown() }
-            function moveSectionUp() { listView.moveSectionUp() }
-            function moveSectionDown() { listView.moveSectionDown() }
+            function moveUp() { return listView.moveUp() }
+            function moveDown() { return listView.moveDown() }
+            function moveSectionUp() { return listView.moveSectionUp() }
+            function moveSectionDown() { return listView.moveSectionDown() }
 
             GenericListView {
                 id: listView

@@ -193,13 +193,9 @@ Item {
                     if (launcher.compacted) { launcher.expand(); return true }
 
                     if (nav === 1) {
-                        if (commandStack.currentItem) commandStack.currentItem.moveUp()
-                        else if (!launcher.isRootSearch) launcher.forwardKey(Qt.Key_Up)
-                        else searchList.moveUp()
+                        commandStack.currentItem.moveUp()
                     } else if (nav === 2) {
-                        if (commandStack.currentItem) commandStack.currentItem.moveDown()
-                        else if (!launcher.isRootSearch) launcher.forwardKey(Qt.Key_Down)
-                        else searchList.moveDown()
+                        commandStack.currentItem.moveDown()
                     } else if (nav === 3) {
                         if (commandStack.currentItem && typeof commandStack.currentItem.moveLeft === "function")
                             commandStack.currentItem.moveLeft()
@@ -210,47 +206,51 @@ Item {
                     return true
                 }
 
-                Keys.onUpPressed: (event) => {
-                    if (launcher.compacted) { launcher.expand(); return }
-                    const ctrl = (event.modifiers & Qt.ControlModifier)
-                    if (commandStack.currentItem) {
-                        ctrl ? commandStack.currentItem.moveSectionUp() : commandStack.currentItem.moveUp()
-                    } else if (!launcher.isRootSearch) {
-                        launcher.forwardKey(Qt.Key_Up)
-                    } else {
-                        ctrl ? searchList.moveSectionUp() : searchList.moveUp()
-                    }
+				Keys.onUpPressed: (event) => {
+					if (launcher.compacted) { launcher.expand(); return }
+
+					const ctrl = event.modifiers == Qt.ControlModifier
+					const navigatable = typeof commandStack.currentItem.moveUp === "function";
+
+					if (navigatable && (ctrl || event.modifiers == Qt.NoModifier)) {
+						event.accepted = ctrl ? commandStack.currentItem.moveSectionUp() : commandStack.currentItem.moveUp()
+					} else {
+						event.accepted = launcher.forwardKey(event.key, event.modifiers)
+					}
                 }
                 Keys.onDownPressed: (event) => {
-                    if (launcher.compacted) { launcher.expand(); return }
-                    const ctrl = (event.modifiers & Qt.ControlModifier)
-                    if (commandStack.currentItem) {
-                        ctrl ? commandStack.currentItem.moveSectionDown() : commandStack.currentItem.moveDown()
-                    } else if (!launcher.isRootSearch) {
-                        launcher.forwardKey(Qt.Key_Down)
-                    } else {
-                        ctrl ? searchList.moveSectionDown() : searchList.moveDown()
-                    }
+					if (launcher.compacted) { launcher.expand(); return }
+
+					const navigatable = typeof commandStack.currentItem.moveDown === "function";
+					const ctrl = event.modifiers == Qt.ControlModifier
+
+					if (navigatable && (ctrl || event.modifiers == Qt.NoModifier)) {
+						event.accepted = ctrl ? commandStack.currentItem.moveSectionDown() : commandStack.currentItem.moveDown()
+					} else {
+						event.accepted = launcher.forwardKey(event.key, event.modifiers)
+					}
                 }
                 Keys.onLeftPressed: (event) => {
-                    if (event.modifiers === Qt.NoModifier
-                            && commandStack.currentItem
-                            && typeof commandStack.currentItem.moveLeft === "function"
-                            && commandStack.currentItem.moveLeft()) {
-                        event.accepted = true
-                    } else {
-                        event.accepted = false
-                    }
+					if (launcher.compacted) { launcher.expand(); return }
+
+					const navigatable = typeof commandStack.currentItem.moveLeft === "function";
+
+					if (navigatable && event.modifiers == Qt.NoModifier) {
+						event.accepted = commandStack.currentItem.moveLeft()
+					} else {
+						event.accepted = launcher.forwardKey(event.key, event.modifiers)
+					}
                 }
                 Keys.onRightPressed: (event) => {
-                    if (event.modifiers === Qt.NoModifier
-                            && commandStack.currentItem
-                            && typeof commandStack.currentItem.moveRight === "function"
-                            && commandStack.currentItem.moveRight()) {
-                        event.accepted = true
-                    } else {
-                        event.accepted = false
-                    }
+					if (launcher.compacted) { launcher.expand(); return }
+
+					const navigatable = typeof commandStack.currentItem.moveRight === "function";
+
+					if (navigatable && event.modifiers == Qt.NoModifier) {
+						event.accepted = commandStack.currentItem.moveRight()
+					} else {
+						event.accepted = launcher.forwardKey(event.key, event.modifiers)
+					}
                 }
                 Keys.onReturnPressed: (event) => {
                     if (launcher.compacted) { launcher.expand(); event.accepted = true; return }

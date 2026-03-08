@@ -58,12 +58,12 @@ Item {
     }
     readonly property real rowHeight: cellSize + cellTextHeight
 
-    function moveUp() { if (cmdModel) cmdModel.navigateUp() }
-    function moveDown() { if (cmdModel) cmdModel.navigateDown() }
-    function moveLeft() { if (cmdModel) cmdModel.navigateLeft() }
-    function moveRight() { if (cmdModel) cmdModel.navigateRight() }
-    function moveSectionUp() { if (cmdModel) cmdModel.navigateSectionUp() }
-    function moveSectionDown() { if (cmdModel) cmdModel.navigateSectionDown() }
+    function moveUp() { if (cmdModel) cmdModel.navigateUp(); return true; }
+    function moveDown() { if (cmdModel) cmdModel.navigateDown(); return true; }
+    function moveLeft() { if (cmdModel) cmdModel.navigateLeft(); return true; }
+    function moveRight() { if (cmdModel) cmdModel.navigateRight(); return true; }
+    function moveSectionUp() { if (cmdModel) cmdModel.navigateSectionUp(); return true; }
+    function moveSectionDown() { if (cmdModel) cmdModel.navigateSectionDown(); return true; }
 
     function _isRowVisible(row) {
         if (row < 0) return false

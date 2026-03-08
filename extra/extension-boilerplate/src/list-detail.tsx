@@ -3,8 +3,10 @@ import {
 	ActionPanel,
 	Color,
 	Icon,
+	KeyEquivalent,
 	List,
 	showToast,
+	Toast,
 } from "@vicinae/api";
 
 export default function ListDetail() {
@@ -54,6 +56,21 @@ export default function ListDetail() {
 										showToast({ title: "Hello from custom action" })
 									}
 								/>
+
+								{(
+									[
+										"arrowUp",
+										"arrowDown",
+										"arrowLeft",
+										"arrowRight",
+									] as KeyEquivalent[]
+								).map((arrow) => (
+									<Action
+										title="Up"
+										shortcut={{ key: arrow, modifiers: ["shift"] }}
+										onAction={() => showToast(Toast.Style.Success, arrow)}
+									/>
+								))}
 							</ActionPanel>
 						}
 					/>

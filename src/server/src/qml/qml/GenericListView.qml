@@ -71,40 +71,44 @@ Item {
             listView.currentIndex = next
             const scrollTarget = sectionScrollTarget(next, -1)
             listView.positionViewAtIndex(scrollTarget, ListView.Contain)
-        }
+		}
+		return true;
     }
 
     function moveUp() {
-        if (revealCurrentSectionHeaderIfHidden()) return
+        if (revealCurrentSectionHeaderIfHidden()) return true
 
         const next = root.listModel.nextSelectableIndex(listView.currentIndex, -1)
         if (next !== listView.currentIndex) {
             listView.currentIndex = next
             const scrollTarget = sectionScrollTarget(next, -1)
             listView.positionViewAtIndex(scrollTarget, ListView.Contain)
-        }
+		}
+		return true;
     }
 
     function moveSectionDown() {
-        if (typeof root.listModel.nextSectionIndex !== "function") { moveDown(); return }
+        if (typeof root.listModel.nextSectionIndex !== "function") { return moveDown() }
         const next = root.listModel.nextSectionIndex(listView.currentIndex, 1)
         if (next !== listView.currentIndex) {
             listView.currentIndex = next
             const scrollTarget = sectionScrollTarget(next, -1)
             listView.positionViewAtIndex(scrollTarget, ListView.Contain)
-        }
+		}
+		return true;
     }
 
     function moveSectionUp() {
-        if (typeof root.listModel.nextSectionIndex !== "function") { moveUp(); return }
-        if (revealCurrentSectionHeaderIfHidden()) return
+        if (typeof root.listModel.nextSectionIndex !== "function") { return moveUp() }
+        if (revealCurrentSectionHeaderIfHidden()) return true
 
         const next = root.listModel.nextSectionIndex(listView.currentIndex, -1)
         if (next !== listView.currentIndex) {
             listView.currentIndex = next
             const scrollTarget = sectionScrollTarget(next, -1)
             listView.positionViewAtIndex(scrollTarget, ListView.Contain)
-        }
+		}
+		return true;
     }
 
     function selectFirst() {
