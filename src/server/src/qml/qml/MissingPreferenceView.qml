@@ -62,17 +62,24 @@ Item {
                 required property bool multiple
                 required property bool directoriesOnly
 
-                onLoaded: if (index === 0) Qt.callLater(formView.focusFirst)
+                onLoaded: if (index === 0)
+                    Qt.callLater(formView.focusFirst)
 
                 sourceComponent: {
                     switch (type) {
-                    case "text": return textComp
-                    case "password": return passwordComp
-                    case "checkbox": return checkboxComp
-                    case "dropdown": return dropdownComp
+                    case "text":
+                        return textComp;
+                    case "password":
+                        return passwordComp;
+                    case "checkbox":
+                        return checkboxComp;
+                    case "dropdown":
+                        return dropdownComp;
                     case "filepicker":
-                    case "directorypicker": return filepickerComp
-                    default: return null
+                    case "directorypicker":
+                        return filepickerComp;
+                    default:
+                        return null;
                     }
                 }
             }
@@ -130,19 +137,21 @@ Item {
 
             function _findCurrentItem(items, val) {
                 for (var s = 0; s < items.length; s++) {
-                    var section = items[s]
-                    if (!section || !section.items) continue
+                    var section = items[s];
+                    if (!section || !section.items)
+                        continue;
                     for (var i = 0; i < section.items.length; i++) {
-                        if (section.items[i].id === val) return section.items[i]
+                        if (section.items[i].id === val)
+                            return section.items[i];
                     }
                 }
-                return null
+                return null;
             }
 
             SearchableDropdown {
                 items: field.parent.options || []
                 currentItem: field._findCurrentItem(field.parent.options || [], field.parent.value)
-                onActivated: (item) => root.host.prefModel.setFieldValue(field.parent.index, item.id)
+                onActivated: item => root.host.prefModel.setFieldValue(field.parent.index, item.id)
             }
         }
     }
@@ -157,14 +166,18 @@ Item {
                 multiple: field.parent.multiple
                 directoriesOnly: field.parent.directoriesOnly
                 selectedPaths: {
-                    var v = field.parent.value
-                    if (Array.isArray(v)) return v
-                    if (typeof v === "string" && v !== "") return [v]
-                    return []
+                    var v = field.parent.value;
+                    if (Array.isArray(v))
+                        return v;
+                    if (typeof v === "string" && v !== "")
+                        return [v];
+                    return [];
                 }
-                onPathsChanged: (paths) => {
-                    if (field.parent.multiple) root.host.prefModel.setFieldValue(field.parent.index, paths)
-                    else root.host.prefModel.setFieldValue(field.parent.index, paths.length > 0 ? paths[0] : "")
+                onPathsChanged: paths => {
+                    if (field.parent.multiple)
+                        root.host.prefModel.setFieldValue(field.parent.index, paths);
+                    else
+                        root.host.prefModel.setFieldValue(field.parent.index, paths.length > 0 ? paths[0] : "");
                 }
             }
         }

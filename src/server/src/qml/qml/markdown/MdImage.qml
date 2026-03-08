@@ -32,14 +32,18 @@ Item {
             Layout.preferredHeight: imgH
 
             readonly property int imgW: {
-                if (root.requestedWidth > 0) return root.requestedWidth
-                if (root.requestedHeight > 0) return root.requestedHeight
-                return root.width
+                if (root.requestedWidth > 0)
+                    return root.requestedWidth;
+                if (root.requestedHeight > 0)
+                    return root.requestedHeight;
+                return root.width;
             }
             readonly property int _rawH: {
-                if (root.requestedHeight > 0) return root.requestedHeight
-                if (root.requestedWidth > 0) return root.requestedWidth
-                return 200
+                if (root.requestedHeight > 0)
+                    return root.requestedHeight;
+                if (root.requestedWidth > 0)
+                    return root.requestedWidth;
+                return 200;
             }
             readonly property int imgH: root.maxImageHeight > 0 ? Math.min(_rawH, 200, root.maxImageHeight) : Math.min(_rawH, 200)
 
@@ -67,6 +71,8 @@ Item {
         }
     }
 
-    onSelectionControllerChanged: if (selectionController) selectionController.registerSelectable(root, blockIndex * 10000, false)
-    Component.onDestruction: if (selectionController) selectionController.unregisterSelectable(root)
+    onSelectionControllerChanged: if (selectionController)
+        selectionController.registerSelectable(root, blockIndex * 10000, false)
+    Component.onDestruction: if (selectionController)
+        selectionController.unregisterSelectable(root)
 }

@@ -11,7 +11,7 @@ Item {
     property var items: []
     property var currentItem: null
     signal activated(var item)
-    signal popupClosed()
+    signal popupClosed
 
     property bool compact: false
     property real minimumWidth: 0
@@ -30,89 +30,107 @@ Item {
 
     on_HighlightedIndexChanged: {
         if (_highlightedIndex >= 0)
-            itemList.positionViewAtIndex(_highlightedIndex, ListView.Contain)
+            itemList.positionViewAtIndex(_highlightedIndex, ListView.Contain);
     }
 
     function open() {
-        if (root.readOnly) return
-        if (dropdownPopup.visible) return
+        if (root.readOnly)
+            return;
+        if (dropdownPopup.visible)
+            return;
         if (searchField.text !== "") {
-            searchField.text = ""
-            _rebuildFlat("")
+            searchField.text = "";
+            _rebuildFlat("");
         }
-        _highlightedIndex = _flatIndexOfCurrent()
-        dropdownPopup.open()
+        _highlightedIndex = _flatIndexOfCurrent();
+        dropdownPopup.open();
     }
 
     function _flatIndexOfCurrent() {
-        if (!currentItem) return _nextNavigable(-1, 1)
+        if (!currentItem)
+            return _nextNavigable(-1, 1);
         for (var i = 0; i < _flatItems.length; i++) {
-            var entry = _flatItems[i]
+            var entry = _flatItems[i];
             if (!entry.isSection && entry.item && entry.item.id === currentItem.id)
-                return i
+                return i;
         }
-        return _nextNavigable(-1, 1)
+        return _nextNavigable(-1, 1);
     }
 
     function _rebuildFlat(query) {
-        var result = []
-        var q = query.toLowerCase()
+        var result = [];
+        var q = query.toLowerCase();
         for (var s = 0; s < items.length; s++) {
-            var section = items[s]
-            var sectionItems = []
+            var section = items[s];
+            var sectionItems = [];
             for (var i = 0; i < section.items.length; i++) {
-                var item = section.items[i]
+                var item = section.items[i];
                 if (q === "" || _fuzzyMatch(item.displayName, q)) {
-                    sectionItems.push({ isSection: false, item: item })
+                    sectionItems.push({
+                        isSection: false,
+                        item: item
+                    });
                 }
             }
             if (sectionItems.length > 0) {
                 if (items.length > 1 && section.title) {
-                    result.push({ isSection: true, title: section.title })
+                    result.push({
+                        isSection: true,
+                        title: section.title
+                    });
                 }
-                result = result.concat(sectionItems)
+                result = result.concat(sectionItems);
             }
         }
-        _flatItems = result
+        _flatItems = result;
     }
 
     function _fuzzyMatch(text, query) {
-        var lower = text.toLowerCase()
-        if (lower.indexOf(query) >= 0) return true
-        var qi = 0
+        var lower = text.toLowerCase();
+        if (lower.indexOf(query) >= 0)
+            return true;
+        var qi = 0;
         for (var ti = 0; ti < lower.length && qi < query.length; ti++) {
-            if (lower[ti] === query[qi]) qi++
+            if (lower[ti] === query[qi])
+                qi++;
         }
-        return qi === query.length
+        return qi === query.length;
     }
 
     function _nextNavigable(from, direction) {
-        if (_flatItems.length === 0) return from
-        let idx = from + direction
-        if (idx < 0) idx = _flatItems.length - 1
-        else if (idx >= _flatItems.length) idx = 0
+        if (_flatItems.length === 0)
+            return from;
+        let idx = from + direction;
+        if (idx < 0)
+            idx = _flatItems.length - 1;
+        else if (idx >= _flatItems.length)
+            idx = 0;
         while (idx !== from) {
-            if (!_flatItems[idx].isSection) return idx
-            idx += direction
-            if (idx < 0) idx = _flatItems.length - 1
-            else if (idx >= _flatItems.length) idx = 0
+            if (!_flatItems[idx].isSection)
+                return idx;
+            idx += direction;
+            if (idx < 0)
+                idx = _flatItems.length - 1;
+            else if (idx >= _flatItems.length)
+                idx = 0;
         }
-        return from
+        return from;
     }
 
-    Keys.onReturnPressed: (event) => {
+    Keys.onReturnPressed: event => {
         if (event.modifiers !== Qt.NoModifier && typeof launcher !== "undefined") {
-            event.accepted = launcher.forwardKey(event.key, event.modifiers)
+            event.accepted = launcher.forwardKey(event.key, event.modifiers);
         } else if (!dropdownPopup.visible) {
-            open()
+            open();
         }
     }
     Keys.onSpacePressed: {
-        if (!dropdownPopup.visible) open()
+        if (!dropdownPopup.visible)
+            open();
     }
-    Keys.onPressed: (event) => {
+    Keys.onPressed: event => {
         if (typeof launcher !== "undefined")
-            event.accepted = launcher.forwardKey(event.key, event.modifiers)
+            event.accepted = launcher.forwardKey(event.key, event.modifiers);
     }
 
     Rectangle {
@@ -123,13 +141,8 @@ Item {
         width: compact ? root.width : implicitWidth
         height: compact ? 28 : implicitHeight
         radius: compact ? 6 : 8
-        color: buttonMouseArea.containsMouse ? Theme.listItemHoverBg
-               : Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g,
-                          Theme.secondaryBackground.b, Config.windowOpacity)
-        border.color: compact ? Theme.divider
-                      : root.hasError ? Theme.inputBorderError
-                      : (root.activeFocus || dropdownPopup.visible
-                         ? Theme.inputBorderFocus : Theme.inputBorder)
+        color: buttonMouseArea.containsMouse ? Theme.listItemHoverBg : Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, Config.windowOpacity)
+        border.color: compact ? Theme.divider : root.hasError ? Theme.inputBorderError : (root.activeFocus || dropdownPopup.visible ? Theme.inputBorderFocus : Theme.inputBorder)
         border.width: 1
 
         RowLayout {
@@ -140,8 +153,7 @@ Item {
             spacing: 6
 
             ViciImage {
-                visible: root.currentItem && root.currentItem.iconSource
-                         ? true : false
+                visible: root.currentItem && root.currentItem.iconSource ? true : false
                 source: visible ? root.currentItem.iconSource : ""
                 Layout.preferredWidth: 16
                 Layout.preferredHeight: 16
@@ -156,8 +168,7 @@ Item {
             }
 
             ViciImage {
-                source: dropdownPopup.visible
-                        ? Img.builtin("chevron-up") : Img.builtin("chevron-down")
+                source: dropdownPopup.visible ? Img.builtin("chevron-up") : Img.builtin("chevron-down")
                 Layout.preferredWidth: 10
                 Layout.preferredHeight: 10
             }
@@ -169,8 +180,9 @@ Item {
             hoverEnabled: true
             cursorShape: root.readOnly ? Qt.ArrowCursor : Qt.PointingHandCursor
             onClicked: {
-                if (Date.now() - root._closedTime < 300) return
-                root.open()
+                if (Date.now() - root._closedTime < 300)
+                    return;
+                root.open();
             }
         }
     }
@@ -187,10 +199,11 @@ Item {
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
         onOpened: searchField.forceActiveFocus()
-        onActiveFocusChanged: if (!activeFocus && visible) close()
+        onActiveFocusChanged: if (!activeFocus && visible)
+            close()
         onClosed: {
-            root._closedTime = Date.now()
-            root.popupClosed()
+            root._closedTime = Date.now();
+            root.popupClosed();
         }
 
         background: Rectangle {
@@ -245,29 +258,32 @@ Item {
                         }
 
                         onTextEdited: {
-                            root._rebuildFlat(text)
-                            root._highlightedIndex = root._nextNavigable(-1, 1)
+                            root._rebuildFlat(text);
+                            root._highlightedIndex = root._nextNavigable(-1, 1);
                         }
 
                         Keys.onUpPressed: {
-                            root._highlightedIndex = root._nextNavigable(root._highlightedIndex, -1)
+                            root._highlightedIndex = root._nextNavigable(root._highlightedIndex, -1);
                         }
                         Keys.onDownPressed: {
-                            root._highlightedIndex = root._nextNavigable(root._highlightedIndex, 1)
+                            root._highlightedIndex = root._nextNavigable(root._highlightedIndex, 1);
                         }
                         Keys.onReturnPressed: {
-                            if (root._highlightedIndex >= 0
-                                    && root._highlightedIndex < root._flatItems.length) {
-                                var entry = root._flatItems[root._highlightedIndex]
+                            if (root._highlightedIndex >= 0 && root._highlightedIndex < root._flatItems.length) {
+                                var entry = root._flatItems[root._highlightedIndex];
                                 if (!entry.isSection) {
-                                    root.activated(entry.item)
-                                    dropdownPopup.close()
+                                    root.activated(entry.item);
+                                    dropdownPopup.close();
                                 }
                             }
                         }
                         Keys.onEscapePressed: dropdownPopup.close()
-                        Keys.onTabPressed: (event) => { event.accepted = true }
-                        Keys.onBacktabPressed: (event) => { event.accepted = true }
+                        Keys.onTabPressed: event => {
+                            event.accepted = true;
+                        }
+                        Keys.onBacktabPressed: event => {
+                            event.accepted = true;
+                        }
                     }
                 }
             }
@@ -282,8 +298,7 @@ Item {
                 boundsBehavior: Flickable.StopAtBounds
 
                 ScrollBar.vertical: ViciScrollBar {
-                    policy: itemList.contentHeight > itemList.height
-                            ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+                    policy: itemList.contentHeight > itemList.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
                 }
 
                 delegate: Item {
@@ -292,11 +307,9 @@ Item {
                     height: !_entry ? 0 : _entry.isSection ? sectionRow.height : itemRow.height
 
                     required property int index
-                    readonly property var _entry: index < root._flatItems.length
-                                                  ? root._flatItems[index] : null
+                    readonly property var _entry: index < root._flatItems.length ? root._flatItems[index] : null
                     readonly property bool _isHighlighted: index === root._highlightedIndex
-                    readonly property bool _isSelected: _entry && !_entry.isSection && root.currentItem
-                                                        && _entry.item.id === root.currentItem.id
+                    readonly property bool _isSelected: _entry && !_entry.isSection && root.currentItem && _entry.item.id === root.currentItem.id
 
                     RowLayout {
                         id: sectionRow
@@ -327,9 +340,7 @@ Item {
                             anchors.leftMargin: 2
                             anchors.rightMargin: 2
                             radius: 6
-                            color: del._isHighlighted ? Theme.listItemSelectionBg
-                                   : itemHover.hovered ? Theme.listItemHoverBg
-                                   : "transparent"
+                            color: del._isHighlighted ? Theme.listItemSelectionBg : itemHover.hovered ? Theme.listItemHoverBg : "transparent"
                         }
 
                         RowLayout {
@@ -339,18 +350,15 @@ Item {
                             spacing: 6
 
                             ViciImage {
-                                visible: del._entry && del._entry.item && del._entry.item.iconSource
-                                         ? true : false
+                                visible: del._entry && del._entry.item && del._entry.item.iconSource ? true : false
                                 source: visible ? del._entry.item.iconSource : ""
                                 Layout.preferredWidth: 16
                                 Layout.preferredHeight: 16
                             }
 
                             Text {
-                                text: del._entry && !del._entry.isSection
-                                      ? del._entry.item.displayName : ""
-                                color: del._isHighlighted ? Theme.listItemSelectionFg
-                                       : Theme.foreground
+                                text: del._entry && !del._entry.isSection ? del._entry.item.displayName : ""
+                                color: del._isHighlighted ? Theme.listItemSelectionFg : Theme.foreground
                                 font.pointSize: Theme.smallerFontSize
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
@@ -359,8 +367,7 @@ Item {
                             Text {
                                 visible: del._isSelected
                                 text: "\u2713"
-                                color: del._isHighlighted ? Theme.listItemSelectionFg
-                                       : Theme.foreground
+                                color: del._isHighlighted ? Theme.listItemSelectionFg : Theme.foreground
                                 font.pointSize: Theme.smallerFontSize
                             }
                         }
@@ -373,8 +380,8 @@ Item {
                         TapHandler {
                             gesturePolicy: TapHandler.ReleaseWithinBounds
                             onTapped: {
-                                root.activated(del._entry.item)
-                                dropdownPopup.close()
+                                root.activated(del._entry.item);
+                                dropdownPopup.close();
                             }
                         }
                     }

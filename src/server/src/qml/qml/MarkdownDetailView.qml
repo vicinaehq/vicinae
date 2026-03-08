@@ -10,10 +10,18 @@ RowLayout {
     readonly property bool _hasMarkdown: root.markdown !== ""
     readonly property bool _hasMetadata: root.metadata.length > 0
 
-    function moveUp() { mdContent.scrollUp() }
-    function moveDown() { mdContent.scrollDown() }
-    function moveSectionUp() { moveUp() }
-    function moveSectionDown() { moveDown() }
+    function moveUp() {
+        mdContent.scrollUp();
+    }
+    function moveDown() {
+        mdContent.scrollDown();
+    }
+    function moveSectionUp() {
+        moveUp();
+    }
+    function moveSectionDown() {
+        moveDown();
+    }
 
     spacing: 0
 

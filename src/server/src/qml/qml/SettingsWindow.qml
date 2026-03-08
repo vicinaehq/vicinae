@@ -66,8 +66,12 @@ Window {
                             font.pixelSize: 12
                         }
 
-                        HoverHandler { id: closeHover }
-                        TapHandler { onTapped: settings.close() }
+                        HoverHandler {
+                            id: closeHover
+                        }
+                        TapHandler {
+                            onTapped: settings.close()
+                        }
                     }
                 }
 
@@ -86,16 +90,25 @@ Window {
 
                     function _loadPage(page) {
                         active = false;
-                        if (page !== "general" && page !== "keybindings"
-                            && page !== "advanced" && page !== "about") {
-                            settings.extensionModel.selectProviderById(page)
+                        if (page !== "general" && page !== "keybindings" && page !== "advanced" && page !== "about") {
+                            settings.extensionModel.selectProviderById(page);
                         }
                         switch (page) {
-                        case "general": sourceComponent = generalPage; break;
-                        case "keybindings": sourceComponent = shortcutsPage; break;
-                        case "advanced": sourceComponent = advancedPage; break;
-                        case "about": sourceComponent = aboutPage; break;
-                        default: sourceComponent = extensionPage; break;
+                        case "general":
+                            sourceComponent = generalPage;
+                            break;
+                        case "keybindings":
+                            sourceComponent = shortcutsPage;
+                            break;
+                        case "advanced":
+                            sourceComponent = advancedPage;
+                            break;
+                        case "about":
+                            sourceComponent = aboutPage;
+                            break;
+                        default:
+                            sourceComponent = extensionPage;
+                            break;
                         }
                         active = true;
                     }
@@ -103,7 +116,7 @@ Window {
                     Connections {
                         target: settings
                         function onCurrentPageChanged() {
-                            pageLoader._loadPage(settings.currentPage)
+                            pageLoader._loadPage(settings.currentPage);
                         }
                     }
                 }
@@ -135,5 +148,4 @@ Window {
         id: extensionPage
         ExtensionSettingsPage {}
     }
-
 }
