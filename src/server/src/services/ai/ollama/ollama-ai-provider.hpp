@@ -1,5 +1,6 @@
 #pragma once
 #include "builtin_icon.hpp"
+#include "common/qt.hpp"
 #include "image-url.hpp"
 #include "services/ai/ai-config.hpp"
 #include "services/ai/ai-provider.hpp"
@@ -12,83 +13,18 @@
 #include <glaze/json/write.hpp>
 #include <memory>
 #include <qcontainerfwd.h>
+#include <qdir.h>
 #include <qfuture.h>
 #include <qfuturewatcher.h>
+#include <qhttpmultipart.h>
 #include <qlogging.h>
+#include <qnetworkaccessmanager.h>
 #include <qnetworkreply.h>
 #include <qnetworkrequest.h>
 #include <qtimer.h>
 #include <ranges>
 
 namespace AI {
-
-class JsonClient {
-public:
-  template <typename T> using Watcher = QFutureWatcher<T>;
-
-  template <typename T>
-  static QFuture<AI::Result<T>> waitForRequest(QPromise<AI::Result<T>> promise, QNetworkReply *reply) {
-    auto future = promise.future();
-
-    QObject::connect(reply, &QNetworkReply::finished, [promise = std::move(promise), reply]() mutable {
-      if (reply->error() != QNetworkReply::NoError) {
-        promise.addResult(std::unexpected(reply->errorString().toStdString()));
-        promise.finish();
-        reply->deleteLater();
-        return;
-      }
-
-      auto const data = reply->readAll();
-      reply->deleteLater();
-      T res;
-
-      if (auto const error = glz::read<glz::opts{.error_on_unknown_keys = false}>(res, data.constData())) {
-        promise.addResult(std::unexpected(std::string("Failed to parse response: ") +
-                                          glz::format_error(error, data.constData())));
-        promise.finish();
-        return;
-      }
-
-      promise.addResult(std::move(res));
-      promise.finish();
-    });
-
-    return future;
-  }
-
-  template <typename T> QFuture<AI::Result<T>> get(const QUrl &url) {
-    qInfo() << "[GET]" << url;
-    QPromise<AI::Result<T>> promise;
-    QNetworkRequest req;
-
-    req.setUrl(url);
-
-    auto reply = NetworkManager::manager()->get(req);
-
-    return waitForRequest<T>(std::move(promise), reply);
-  }
-
-  template <typename T, typename U> QFuture<AI::Result<T>> post(const QUrl &url, const U &data) {
-    qInfo() << "[POST]" << url;
-    std::string payload;
-    QPromise<AI::Result<T>> promise;
-    auto future = promise.future();
-    QNetworkRequest req;
-
-    if (auto const error = glz::write_json(data, payload)) {
-      promise.addResult(std::unexpected(std::string("Failed to serialize request")));
-      promise.finish();
-      return future;
-    }
-
-    req.setUrl(url);
-    req.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader, "application/json");
-
-    auto reply = NetworkManager::manager()->post(req, payload.c_str());
-
-    return waitForRequest<T>(std::move(promise), reply);
-  }
-};
 
 class OllamaProvider : public AbstractProvider {
   struct ModelShowResponse {
@@ -289,9 +225,8 @@ class OllamaProvider : public AbstractProvider {
       return nullptr;
     }
 
-    qDebug() << url << serializedData;
-
     AI::Model resolvedModel;
+
     for (const auto &m : m_models) {
       if (m.model == payload.modelId) {
         resolvedModel = toModel(m);
@@ -299,11 +234,12 @@ class OllamaProvider : public AbstractProvider {
       }
     }
 
-    return std::make_shared<HttpCompletion>(req, QByteArray::fromStdString(serializedData),
-                                            std::move(resolvedModel));
+    return std::shared_ptr<HttpCompletion>(
+        new HttpCompletion(req, QByteArray::fromStdString(serializedData), std::move(resolvedModel)),
+        QObjectDeleter{});
   }
 
-  QFuture<TranscriptionResult> transcribe() const override { return {}; }
+  QFuture<TranscriptionResult> transcribe(const std::filesystem::path &path) const override { return {}; }
 
   using Watcher = QFutureWatcher<Result<std::vector<FullModelResponse>>>;
 
