@@ -95,16 +95,11 @@ Window {
             Layout.fillWidth: true
             Layout.fillHeight: true
 
-            RootSearchList {
-                id: searchList
-                anchors.fill: parent
-                visible: launcher.isRootSearch && !launcher.compacted
-            }
-
             StackView {
                 id: commandStack
                 anchors.fill: parent
-                visible: !launcher.isRootSearch && !launcher.compacted
+                visible: !launcher.compacted
+                initialItem: RootSearchList {}
             }
         }
 
@@ -165,11 +160,12 @@ Window {
             commandStack.replace(commandStack.currentItem, componentUrl, properties, StackView.Immediate)
         }
         function onCommandViewPopped() {
-            if (commandStack.depth > 0)
+            if (commandStack.depth > 1)
                 commandStack.pop(StackView.Immediate)
         }
         function onCommandStackCleared() {
-            commandStack.clear(StackView.Immediate)
+            if (commandStack.depth > 1)
+                commandStack.pop(null, StackView.Immediate)
         }
         function onOverlayChanged() {
             if (launcher.hasOverlay) {
