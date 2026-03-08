@@ -28,12 +28,19 @@ struct ConfigValue {
     std::string url = "http://localhost:11434";
   };
 
+  /*
   struct OpenAIConfig {
     std::string type;
     std::string apiKey;
   };
+  */
 
-  using ProviderConfig = std::variant<OllamaConfig, OpenAIConfig>;
+  struct MistralConfig {
+    std::string type;
+    std::string apiKey;
+  };
+
+  using ProviderConfig = std::variant<OllamaConfig, MistralConfig>;
 
   std::unordered_map<std::string, ProviderConfig> providers;
   std::unordered_map<std::string, ModelConfig> models;
