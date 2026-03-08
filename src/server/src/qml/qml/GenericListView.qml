@@ -76,7 +76,7 @@ Item {
     }
 
     function moveUp() {
-        if (revealCurrentSectionHeaderIfHidden()) return
+        if (revealCurrentSectionHeaderIfHidden()) return true
 
         const next = root.listModel.nextSelectableIndex(listView.currentIndex, -1)
         if (next !== listView.currentIndex) {
@@ -88,7 +88,7 @@ Item {
     }
 
     function moveSectionDown() {
-        if (typeof root.listModel.nextSectionIndex !== "function") { moveDown(); return }
+        if (typeof root.listModel.nextSectionIndex !== "function") { return moveDown() }
         const next = root.listModel.nextSectionIndex(listView.currentIndex, 1)
         if (next !== listView.currentIndex) {
             listView.currentIndex = next
@@ -99,8 +99,8 @@ Item {
     }
 
     function moveSectionUp() {
-        if (typeof root.listModel.nextSectionIndex !== "function") { moveUp(); return }
-        if (revealCurrentSectionHeaderIfHidden()) return
+        if (typeof root.listModel.nextSectionIndex !== "function") { return moveUp() }
+        if (revealCurrentSectionHeaderIfHidden()) return true
 
         const next = root.listModel.nextSectionIndex(listView.currentIndex, -1)
         if (next !== listView.currentIndex) {

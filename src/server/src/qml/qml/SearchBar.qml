@@ -242,12 +242,15 @@ Item {
 					}
                 }
                 Keys.onRightPressed: (event) => {
-                    if (event.modifiers === Qt.NoModifier
-                            && typeof commandStack.currentItem.moveRight === "function") {
-                        event.accepted = commandStack.currentItem.moveRight();
-                    } else {
-                        event.accepted = false
-                    }
+					if (launcher.compacted) { launcher.expand(); return }
+
+					const navigatable = typeof commandStack.currentItem.moveRight === "function";
+
+					if (navigatable && event.modifiers == Qt.NoModifier) {
+						event.accepted = commandStack.currentItem.moveRight()
+					} else {
+						event.accepted = launcher.forwardKey(event.key, event.modifiers)
+					}
                 }
                 Keys.onReturnPressed: (event) => {
                     if (launcher.compacted) { launcher.expand(); event.accepted = true; return }
