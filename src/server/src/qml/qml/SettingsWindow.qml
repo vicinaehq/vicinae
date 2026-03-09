@@ -169,7 +169,7 @@ Window {
 
                     function _loadPage(page) {
                         active = false;
-                        if (page !== "general" && page !== "keybindings" && page !== "advanced" && page !== "about") {
+                        if (page !== "general" && page !== "keybindings" && page !== "advanced" && page !== "ai" && page !== "about") {
                             settings.extensionModel.selectProviderById(page);
                         }
                         switch (page) {
@@ -181,6 +181,9 @@ Window {
                             break;
                         case "advanced":
                             sourceComponent = advancedPage;
+                            break;
+                        case "ai":
+                            sourceComponent = aiPage;
                             break;
                         case "about":
                             sourceComponent = aboutPage;
@@ -216,6 +219,11 @@ Window {
     Component {
         id: advancedPage
         AdvancedSettingsPage {}
+    }
+
+    Component {
+        id: aiPage
+        AISettingsPage {}
     }
 
     Component {
