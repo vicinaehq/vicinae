@@ -2,14 +2,10 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-Popup {
+ViciModal {
     id: root
-    anchors.centerIn: parent
     width: 400
     padding: 20
-    focus: true
-    modal: true
-    closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
     property bool _confirmed: false
 
