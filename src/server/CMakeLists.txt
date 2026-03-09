@@ -768,7 +768,7 @@ set(VICINAE_QML_FILES
 )
 
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
-	list(APPEND VICINAE_QML_FILES src/qml/qml/ButtonShowcase.qml)
+	list(APPEND VICINAE_QML_FILES src/qml/qml/ButtonShowcase.qml src/qml/qml/UIShowcase.qml)
 endif()
 
 # Strip directory prefix so resources are qrc:/Vicinae/Foo.qml

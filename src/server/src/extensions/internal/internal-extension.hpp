@@ -5,12 +5,12 @@
 #include "qml/bridge-view.hpp"
 #include "markdown-showcase-command.hpp"
 
-class ButtonShowcaseView : public FormViewBase {
+class UIShowcaseView : public FormViewBase {
 public:
-  QUrl qmlComponentUrl() const override { return QUrl(QStringLiteral("qrc:/Vicinae/ButtonShowcase.qml")); }
+  QUrl qmlComponentUrl() const override { return QUrl(QStringLiteral("qrc:/Vicinae/UIShowcase.qml")); }
 };
 
-class UIPlayground : public BuiltinViewCommand<ButtonShowcaseView> {
+class UIPlayground : public BuiltinViewCommand<UIShowcaseView> {
   QString id() const override { return "playground"; }
   QString name() const override { return "UI Showcase"; }
   QString description() const override { return "Showcase of vicinae UI elements"; }
