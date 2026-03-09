@@ -106,6 +106,10 @@ class OllamaProvider : public AbstractProvider {
 
   std::optional<ImageUrl> icon() const override { return {}; }
 
+  std::string_view description() const override { return "Connect to a local or remote Ollama instance."; }
+
+  bool allowMultiple() const override { return true; }
+
   ModelList listModels(const ListModelFilters &filters = {}) const override {
     return m_models | std::views::transform([](const FullModelResponse &model) { return toModel(model); }) |
            std::ranges::to<std::vector>();
