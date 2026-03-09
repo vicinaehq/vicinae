@@ -1,10 +1,7 @@
 #include "extend/action-model.hpp"
 #include "extend/image-model.hpp"
-#include "keyboard/keybind.hpp"
-#include "keyboard/keyboard.hpp"
 #include <qjsonarray.h>
 #include <qjsonobject.h>
-#include <qjsonvalue.h>
 
 ActionModel ActionPannelParser::parseAction(const QJsonObject &instance) {
   auto props = instance.value("props").toObject();
