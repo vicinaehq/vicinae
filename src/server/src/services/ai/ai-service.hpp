@@ -3,11 +3,10 @@
 #include <memory>
 #include <qobject.h>
 #include <qtmetamacros.h>
+#include "ai-provider-registry.hpp"
 #include "ai-provider.hpp"
 #include "common/types.hpp"
 #include "services/ai/ai-config.hpp"
-#include "services/ai/ollama/ollama-ai-provider.hpp"
-#include "services/ai/mistral/mistral-provider.hpp"
 #include "vicinae.hpp"
 
 namespace AI {
@@ -18,7 +17,7 @@ signals:
   void modelsChanged() const;
 
 public:
-  Service() : m_configManager(Omnicast::configDir() / "ai.json") {
+  Service() : m_registry(makeBuiltinRegistry()), m_configManager(Omnicast::configDir() / "ai.json") {
     connect(&m_configManager, &ConfigManager::configChanged, this, &Service::reconcileProviders);
     m_configManager.load();
   }
@@ -128,7 +127,7 @@ private:
     for (auto const &[id, config] : newProviders) {
       if (m_providers.contains(id)) continue;
 
-      auto provider = createProvider(id, config);
+      auto provider = m_registry.create(config);
       if (!provider) continue;
       connect(provider.get(), &AI::AbstractProvider::modelsUpdated, this, &Service::modelsChanged);
       toStart.emplace_back(provider);
@@ -140,19 +139,7 @@ private:
     }
   }
 
-  static std::shared_ptr<AI::AbstractProvider> createProvider(const std::string &id,
-                                                              const ConfigValue::ProviderConfig &config) {
-    return std::visit(
-        overloads{[](AI::ConfigValue::OllamaConfig ollama) -> std::shared_ptr<AI::AbstractProvider> {
-                    return std::make_shared<OllamaProvider>(std::move(ollama));
-                  },
-                  [](const AI::ConfigValue::MistralConfig &mistral) -> std::shared_ptr<AI::AbstractProvider> {
-                    return std::make_shared<MistralProvider>(mistral.apiKey.c_str());
-                  },
-                  [](const auto &) -> std::shared_ptr<AI::AbstractProvider> { return nullptr; }},
-        config);
-  }
-
+  ProviderRegistry m_registry;
   std::unordered_map<std::string, std::shared_ptr<AI::AbstractProvider>> m_providers;
   ConfigManager m_configManager;
 };
