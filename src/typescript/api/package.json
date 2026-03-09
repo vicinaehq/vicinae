@@ -50,7 +50,7 @@
 		"@types/chai": "^4",
 		"@types/mocha": "^10",
 		"chai": "^4",
-		"mocha": "^10",
+		"mocha": "^11.7.5",
 		"oclif": "^4",
 		"shx": "^0.3.3",
 		"ts-node": "^10",
