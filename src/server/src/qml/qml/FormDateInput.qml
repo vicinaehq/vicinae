@@ -63,15 +63,6 @@ Item {
                 if (!activeFocus)
                     _validate();
             }
-
-            Keys.onReturnPressed: event => {
-                if (typeof launcher !== "undefined")
-                    event.accepted = launcher.forwardKey(event.key, event.modifiers);
-            }
-            Keys.onPressed: event => {
-                if (typeof launcher !== "undefined")
-                    event.accepted = launcher.forwardKey(event.key, event.modifiers);
-            }
         }
     }
 

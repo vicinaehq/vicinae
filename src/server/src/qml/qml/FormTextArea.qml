@@ -107,16 +107,7 @@ Item {
                         event.accepted = true;
                         nextItemInFocusChain(false)?.forceActiveFocus(Qt.BacktabFocusReason);
                     }
-                    Keys.onReturnPressed: event => {
-                        if (typeof launcher !== "undefined")
-                            event.accepted = launcher.forwardKey(event.key, event.modifiers);
-                        if (!event.accepted)
-                            edit.insert(edit.cursorPosition, "\n");
-                    }
-                    Keys.onPressed: event => {
-                        if (typeof launcher !== "undefined")
-                            event.accepted = launcher.forwardKey(event.key, event.modifiers);
-                    }
+                    Keys.onReturnPressed: edit.insert(edit.cursorPosition, "\n")
                 }
             }
         }

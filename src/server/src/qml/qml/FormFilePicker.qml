@@ -178,17 +178,8 @@ FocusScope {
         focus: true
         activeFocusOnTab: false
 
-        Keys.onReturnPressed: event => {
-            if (typeof launcher !== "undefined")
-                event.accepted = launcher.forwardKey(event.key, event.modifiers);
-            if (!event.accepted)
-                root._openDialog();
-        }
+        Keys.onReturnPressed: root._openDialog()
         Keys.onSpacePressed: root._openDialog()
-        Keys.onPressed: event => {
-            if (typeof launcher !== "undefined")
-                event.accepted = launcher.forwardKey(event.key, event.modifiers);
-        }
     }
 
     function _appendUnique(existing, newPaths) {

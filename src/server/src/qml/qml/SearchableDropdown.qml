@@ -117,20 +117,13 @@ Item {
         return from;
     }
 
-    Keys.onReturnPressed: event => {
-        if (event.modifiers !== Qt.NoModifier && typeof launcher !== "undefined") {
-            event.accepted = launcher.forwardKey(event.key, event.modifiers);
-        } else if (!dropdownPopup.visible) {
+    Keys.onReturnPressed: {
+        if (!dropdownPopup.visible)
             open();
-        }
     }
     Keys.onSpacePressed: {
         if (!dropdownPopup.visible)
             open();
-    }
-    Keys.onPressed: event => {
-        if (typeof launcher !== "undefined")
-            event.accepted = launcher.forwardKey(event.key, event.modifiers);
     }
 
     Rectangle {

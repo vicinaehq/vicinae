@@ -252,9 +252,16 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
 }
 
 bool LauncherWindow::eventFilter(QObject *obj, QEvent *event) {
+  if (obj != m_window) return QObject::eventFilter(obj, event);
+
+  if (event->type() == QEvent::KeyPress) {
+    auto *ke = static_cast<QKeyEvent *>(event); // NOLINT
+    if (forwardKey(ke->key(), static_cast<int>(ke->modifiers()))) { return true; }
+  }
+
   // only works on some compositors.
   // we could probably make it work everywhere layer shell is supported by adding a layer behind ours.
-  if (obj == m_window && event->type() == QEvent::MouseMove && m_closeOnFocusLoss) {
+  if (event->type() == QEvent::MouseMove && m_closeOnFocusLoss) {
     auto *me = static_cast<QMouseEvent *>(event); // NOLINT
     QRect const contentRect(0, 0, m_window->width(), m_window->height());
     if (!contentRect.contains(me->position().toPoint())) { m_ctx.navigation->closeWindow(); }

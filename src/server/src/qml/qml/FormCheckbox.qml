@@ -22,16 +22,7 @@ Item {
     }
 
     Keys.onSpacePressed: toggle()
-    Keys.onReturnPressed: event => {
-        if (typeof launcher !== "undefined")
-            event.accepted = launcher.forwardKey(event.key, event.modifiers);
-        if (!event.accepted)
-            toggle();
-    }
-    Keys.onPressed: event => {
-        if (typeof launcher !== "undefined")
-            event.accepted = launcher.forwardKey(event.key, event.modifiers);
-    }
+    Keys.onReturnPressed: toggle()
 
     MouseArea {
         anchors.fill: parent
