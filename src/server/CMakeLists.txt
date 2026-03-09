@@ -683,6 +683,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/FooterNavStatus.qml
 	src/qml/qml/FooterToast.qml
 	src/qml/qml/ShortcutBadge.qml
+	src/qml/qml/TextBadge.qml
 	src/qml/qml/CommandListView.qml
 	src/qml/qml/CalculatorResultDelegate.qml
 	src/qml/qml/ThemeListView.qml
