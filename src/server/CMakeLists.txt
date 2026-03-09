@@ -581,6 +581,8 @@ set(SRCS
 	src/qml/general-settings-model.cpp
 	src/qml/keybind-settings-model.hpp
 	src/qml/keybind-settings-model.cpp
+	src/qml/ai-settings-model.hpp
+	src/qml/ai-settings-model.cpp
 	src/qml/extension-settings-model.hpp
 	src/qml/extension-settings-model.cpp
 	src/qml/preference-form-model.hpp
@@ -773,6 +775,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/AdvancedSettingsPage.qml
 	src/qml/qml/ShortcutsSettingsPage.qml
 	src/qml/qml/ExtensionSettingsPage.qml
+	src/qml/qml/AISettingsPage.qml
 	src/qml/qml/AboutSettingsPage.qml
 	src/qml/qml/ShortcutRecorderField.qml
 	src/qml/qml/PreferenceFormView.qml

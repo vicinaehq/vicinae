@@ -2,6 +2,7 @@
 #include "common/entrypoint.hpp"
 #include "async-image-provider.hpp"
 #include "config-bridge.hpp"
+#include "ai-settings-model.hpp"
 #include "extension-settings-model.hpp"
 #include "general-settings-model.hpp"
 #include "image-source.hpp"
@@ -34,6 +35,7 @@ void SettingsWindow::ensureInitialized() {
   m_generalModel = new GeneralSettingsModel(this);
   m_keybindModel = new KeybindSettingsModel(this);
   m_extensionModel = new ExtensionSettingsModel(this);
+  m_aiModel = new AISettingsModel(this);
 
   m_engine.addImageProvider(QStringLiteral("vicinae"), new AsyncImageProvider());
 
@@ -185,6 +187,10 @@ QVariantList SettingsWindow::filterSidebarItems(const QString &query) const {
       SidebarEntry{.id = QStringLiteral("advanced"),
                    .label = QStringLiteral("Advanced"),
                    .icon = QStringLiteral("wrench-screwdriver"),
+                   .kind = kCore},
+      SidebarEntry{.id = QStringLiteral("ai"),
+                   .label = QStringLiteral("AI"),
+                   .icon = QStringLiteral("computer-chip"),
                    .kind = kCore},
       SidebarEntry{.id = QStringLiteral("about"),
                    .label = QStringLiteral("About"),
