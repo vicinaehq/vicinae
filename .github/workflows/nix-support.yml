@@ -2,9 +2,6 @@ name: Nix hash check
 
 on:
   push:
-    paths:
-      - typescript
-      - vicinae
   workflow_dispatch:
 
 jobs:
