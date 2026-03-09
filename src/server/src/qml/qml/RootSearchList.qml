@@ -57,7 +57,7 @@ GenericListView {
                 calcAnswerUnit: delegateLoader.calcAnswerUnit
                 selected: searchListView.currentIndex === delegateLoader.index
                 onClicked: searchListView.currentIndex = delegateLoader.index
-                onDoubleClicked: searchListView.itemActivated(delegateLoader.index)
+                onActivated: searchListView.itemActivated(delegateLoader.index)
             }
         }
 
@@ -74,7 +74,7 @@ GenericListView {
                 itemAccessoryColor: delegateLoader.accessoryColor
                 selected: searchListView.currentIndex === delegateLoader.index
                 onClicked: searchListView.currentIndex = delegateLoader.index
-                onDoubleClicked: searchListView.itemActivated(delegateLoader.index)
+                onActivated: searchListView.itemActivated(delegateLoader.index)
             }
         }
     }

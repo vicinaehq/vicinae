@@ -55,7 +55,7 @@ GenericListView {
                 paletteColor7: delegateLoader.paletteColor7
                 selected: themeListView.currentIndex === delegateLoader.index
                 onClicked: themeListView.currentIndex = delegateLoader.index
-                onDoubleClicked: themeListView.itemActivated(delegateLoader.index)
+                onActivated: themeListView.itemActivated(delegateLoader.index)
             }
         }
     }

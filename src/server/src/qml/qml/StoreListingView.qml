@@ -59,7 +59,7 @@ Item {
                     height: 50
                     selected: listView.currentIndex === delegateLoader.index
                     onClicked: listView.currentIndex = delegateLoader.index
-                    onDoubleClicked: listView.itemActivated(delegateLoader.index)
+                    onActivated: listView.itemActivated(delegateLoader.index)
 
                     RowLayout {
                         anchors.fill: parent

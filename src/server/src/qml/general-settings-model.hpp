@@ -12,6 +12,8 @@ class GeneralSettingsModel : public QObject {
   Q_PROPERTY(bool considerPreedit READ considerPreedit WRITE setConsiderPreedit NOTIFY configChanged)
   Q_PROPERTY(bool popToRootOnClose READ popToRootOnClose WRITE setPopToRootOnClose NOTIFY configChanged)
   Q_PROPERTY(bool popOnBackspace READ popOnBackspace WRITE setPopOnBackspace NOTIFY configChanged)
+  Q_PROPERTY(bool activateOnSingleClick READ activateOnSingleClick WRITE setActivateOnSingleClick NOTIFY
+                 configChanged)
   Q_PROPERTY(bool clientSideDecorations READ clientSideDecorations WRITE setClientSideDecorations NOTIFY
                  configChanged)
   Q_PROPERTY(QString windowOpacity READ windowOpacity WRITE setWindowOpacity NOTIFY configChanged)
@@ -43,6 +45,8 @@ public:
   void setPopToRootOnClose(bool v);
   bool popOnBackspace() const;
   void setPopOnBackspace(bool v);
+  bool activateOnSingleClick() const;
+  void setActivateOnSingleClick(bool v);
   bool clientSideDecorations() const;
   void setClientSideDecorations(bool v);
   QString windowOpacity() const;

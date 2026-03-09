@@ -277,8 +277,11 @@ Item {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     onClicked: {
-                                        if (root.cmdModel)
+                                        if (root.cmdModel) {
                                             root.cmdModel.select(cellWrapper.cellSection, cellWrapper.cellItem);
+                                            if (Config.activateOnSingleClick)
+                                                root.cmdModel.activateSelected();
+                                        }
                                     }
                                     onDoubleClicked: {
                                         if (root.cmdModel) {
