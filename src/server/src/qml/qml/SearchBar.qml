@@ -17,34 +17,17 @@ Item {
         anchors.rightMargin: 16
         spacing: launcher.hasCompleter ? 4 : 12
 
-        Rectangle {
+        ViciButton {
             id: backButton
             visible: !launcher.isRootSearch && launcher.showBackButton
             Layout.preferredWidth: 28
             Layout.preferredHeight: 28
             Layout.alignment: Qt.AlignVCenter
-            radius: 6
-            color: backMouseArea.containsMouse ? Qt.lighter(Theme.buttonPrimaryBg, 1.3) : Theme.buttonPrimaryBg
-            Behavior on color {
-                ColorAnimation {
-                    duration: 100
-                }
-            }
-
-            ViciImage {
-                anchors.centerIn: parent
-                width: 14
-                height: 14
-                source: Img.builtin("arrow-left")
-            }
-
-            MouseArea {
-                id: backMouseArea
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: launcher.goBack()
-            }
+            icon: "arrow-left"
+            iconSize: 14
+            variant: "primary"
+            translucent: true
+            onClicked: launcher.goBack()
         }
 
         Item {

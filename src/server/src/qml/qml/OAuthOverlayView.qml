@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
 
 Item {
@@ -19,27 +18,14 @@ Item {
         anchors.rightMargin: 15
         spacing: 0
 
-        Rectangle {
+        ViciButton {
             id: backBtn
             width: 25
             height: 25
             radius: 4
-            color: backArea.containsMouse ? Theme.listItemHoverBg : "transparent"
-
-            ViciImage {
-                anchors.centerIn: parent
-                width: 16
-                height: 16
-                source: Img.builtin("arrow-left")
-            }
-
-            MouseArea {
-                id: backArea
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.host.abort()
-            }
+            icon: "arrow-left"
+            variant: "ghost"
+            onClicked: root.host.abort()
         }
 
         Item {
@@ -96,31 +82,16 @@ Item {
                 visible: text !== ""
             }
 
-            Button {
+            ViciButton {
                 id: continueBtn
                 Layout.alignment: Qt.AlignHCenter
                 implicitHeight: 34
-                leftPadding: 20
-                rightPadding: 20
+                horizontalPadding: 20
+                radius: 4
+                text: "Continue with " + root.host.providerName
+                variant: "accent"
                 focus: true
-
-                background: Rectangle {
-                    radius: 4
-                    color: continueBtn.hovered || continueBtn.activeFocus ? Theme.accent : Theme.listItemSelectionBg
-                    border.color: Theme.accent
-                    border.width: 1
-                }
-
-                contentItem: Text {
-                    text: "Continue with " + root.host.providerName
-                    color: continueBtn.hovered || continueBtn.activeFocus ? Theme.listItemSelectionFg : Theme.foreground
-                    font.pointSize: Theme.regularFontSize
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
-
                 onClicked: root.host.openBrowser()
-                Keys.onReturnPressed: root.host.openBrowser()
             }
         }
 

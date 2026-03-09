@@ -3,19 +3,23 @@
 #include "single-view-command-context.hpp"
 #include "vicinae.hpp"
 #include "qml/bridge-view.hpp"
-#include "qml/emoji-grid-model.hpp"
 #include "markdown-showcase-command.hpp"
 
-class UIPlayground : public BuiltinViewCommand<BridgeView<EmojiGridModel>> {
+class UIShowcaseView : public FormViewBase {
+public:
+  QUrl qmlComponentUrl() const override { return QUrl(QStringLiteral("qrc:/Vicinae/UIShowcase.qml")); }
+};
+
+class UIPlayground : public BuiltinViewCommand<UIShowcaseView> {
   QString id() const override { return "playground"; }
-  QString name() const override { return "UI Playground"; }
-  QString description() const override { return "Playground description"; }
+  QString name() const override { return "UI Showcase"; }
+  QString description() const override { return "Showcase of vicinae UI elements"; }
   bool isFallback() const override { return false; }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("opentelemetry").setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::MagnifyingGlass).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
-  virtual bool isInternal() const override { return true; }
+  bool isInternal() const override { return true; }
 };
 
 class InternalExtension : public BuiltinCommandRepository {
@@ -23,7 +27,7 @@ class InternalExtension : public BuiltinCommandRepository {
   QString displayName() const override { return "Internal Commands"; }
   QString description() const override { return "Internal Commands"; }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("magnifying-glass").setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::MagnifyingGlass).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
 public:

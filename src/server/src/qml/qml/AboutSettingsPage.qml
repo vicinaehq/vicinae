@@ -61,23 +61,32 @@ Item {
                 implicitHeight: 10
             }
 
-            SettingsLinkButton {
+            ViciButton {
                 icon: "github"
-                label: "GitHub"
+                text: "GitHub"
+                variant: "secondary"
+                radius: 8
+                implicitWidth: 200
                 onClicked: settings.openUrl("https://github.com/vicinaehq/vicinae")
                 Layout.alignment: Qt.AlignHCenter
             }
 
-            SettingsLinkButton {
+            ViciButton {
                 icon: "book"
-                label: "Documentation"
+                text: "Documentation"
+                variant: "secondary"
+                radius: 8
+                implicitWidth: 200
                 onClicked: settings.openUrl("https://docs.vicinae.com")
                 Layout.alignment: Qt.AlignHCenter
             }
 
-            SettingsLinkButton {
+            ViciButton {
                 icon: "bug"
-                label: "Report a Bug"
+                text: "Report a Bug"
+                variant: "secondary"
+                radius: 8
+                implicitWidth: 200
                 onClicked: settings.openUrl("https://github.com/vicinaehq/vicinae/issues/new")
                 Layout.alignment: Qt.AlignHCenter
             }
