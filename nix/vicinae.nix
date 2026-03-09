@@ -40,7 +40,7 @@ gcc15Stdenv.mkDerivation (finalAttrs: {
 
   extensionManagerDeps = fetchNpmDeps {
     src = "${finalAttrs.src}/src/typescript/extension-manager";
-    hash = "sha256-wl8FDFB6Vl1zD0/s2EbU6l1KX4rwUW6dOZof4ebMMO8=";
+    hash = "sha256-8ONawCmKxHwWS0Tx04MCpQmtWfIpJYU8RcqMtQiT/Sw=";
   };
 
   cmakeFlags = lib.mapAttrsToList lib.cmakeFeature {
