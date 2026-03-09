@@ -43,6 +43,11 @@ void GeneralSettingsModel::setPopToRootOnClose(bool v) {
 bool GeneralSettingsModel::popOnBackspace() const { return cfg().popOnBackspace; }
 void GeneralSettingsModel::setPopOnBackspace(bool v) { cfgManager().mergeWithUser({.popOnBackspace = v}); }
 
+bool GeneralSettingsModel::activateOnSingleClick() const { return cfg().activateOnSingleClick; }
+void GeneralSettingsModel::setActivateOnSingleClick(bool v) {
+  cfgManager().mergeWithUser({.activateOnSingleClick = v});
+}
+
 bool GeneralSettingsModel::clientSideDecorations() const {
   return cfg().launcherWindow.clientSideDecorations.enabled;
 }

@@ -139,7 +139,7 @@ Item {
                             itemAccessory: delegateLoader.itemAccessory
                             selected: listView.currentIndex === delegateLoader.index
                             onClicked: listView.currentIndex = delegateLoader.index
-                            onDoubleClicked: listView.itemActivated(delegateLoader.index)
+                            onActivated: listView.itemActivated(delegateLoader.index)
                         }
                     }
                 }

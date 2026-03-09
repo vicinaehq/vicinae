@@ -23,6 +23,9 @@
 	// rich content preview. This should be more than enough for most users.
 	"search_files_in_root": false,
 
+	// activate list and grid items with only one click
+	"activate_on_single_click": false,
+
 	// What vicinae should do when the "escape" key is pressed
 	// Supports "navigate_back" or "close_window"
 	"escape_key_behavior": "navigate_back",

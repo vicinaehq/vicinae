@@ -64,6 +64,15 @@ Flickable {
         }
 
         SettingsRow {
+            label: "Activate on single click"
+            description: "Activate items with a single click instead of requiring a double click."
+            SettingsToggle {
+                checked: root.model.activateOnSingleClick
+                onToggled: root.model.activateOnSingleClick = checked
+            }
+        }
+
+        SettingsRow {
             label: "Root file search"
             description: "Files are searched asynchronously, so if enabled you should expect a slight delay for file search results to show up."
             SettingsToggle {

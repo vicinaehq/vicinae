@@ -52,7 +52,7 @@ GenericListView {
                 itemAccessory: delegateLoader.itemAccessory
                 selected: commandListView.currentIndex === delegateLoader.index
                 onClicked: commandListView.currentIndex = delegateLoader.index
-                onDoubleClicked: commandListView.itemActivated(delegateLoader.index)
+                onActivated: commandListView.itemActivated(delegateLoader.index)
             }
         }
     }
