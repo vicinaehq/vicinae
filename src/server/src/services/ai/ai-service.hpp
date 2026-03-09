@@ -108,6 +108,8 @@ public:
     return nullptr;
   }
 
+  ConfigManager &configManager() { return m_configManager; }
+
   const auto &providers() const { return m_providers; }
 
   std::vector<AI::ProviderModel> listModels(std::optional<Capabilities> caps = std::nullopt) {

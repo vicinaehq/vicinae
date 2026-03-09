@@ -4,8 +4,12 @@ Item {
     id: root
     required property var host
 
-    function moveUp() { flickable.flick(0, 800) }
-    function moveDown() { flickable.flick(0, -800) }
+    function moveUp() {
+        flickable.flick(0, 800);
+    }
+    function moveDown() {
+        flickable.flick(0, -800);
+    }
 
     Flickable {
         id: flickable
@@ -17,7 +21,7 @@ Item {
 
         function scrollToBottom() {
             if (contentHeight > height)
-                contentY = contentHeight - height
+                contentY = contentHeight - height;
         }
 
         Column {
@@ -141,13 +145,13 @@ Item {
         target: host
         function onStreamingChanged() {
             if (host.streaming)
-                Qt.callLater(flickable.scrollToBottom)
+                Qt.callLater(flickable.scrollToBottom);
         }
         function onStreamingContentChanged() {
-            flickable.scrollToBottom()
+            flickable.scrollToBottom();
         }
         function onExchangesChanged() {
-            Qt.callLater(flickable.scrollToBottom)
+            Qt.callLater(flickable.scrollToBottom);
         }
     }
 }
