@@ -4,7 +4,7 @@ Item {
     id: root
 
     required property string label
-    required property string shortcut
+    required property var shortcutTokens
     property bool highlighted: false
 
     signal clicked
@@ -25,7 +25,8 @@ Item {
         }
 
         ShortcutBadge {
-            text: root.shortcut
+            visible: root.shortcutTokens && root.shortcutTokens.length > 0
+            tokens: root.shortcutTokens
             anchors.verticalCenter: parent.verticalCenter
         }
     }

@@ -16,7 +16,7 @@ Popup {
     closePolicy: Popup.CloseOnPressOutside
     padding: 10
 
-    property string _currentShortcut: ""
+    property var _currentShortcutTokens: []
     property string _statusText: "Recording..."
     property color _statusColor: Theme.foreground
 
@@ -27,7 +27,7 @@ Popup {
     }
 
     function show(targetItem) {
-        _currentShortcut = "";
+        _currentShortcutTokens = [];
         _statusText = "Recording...";
         _statusColor = Theme.foreground;
         closeTimer.stop();
@@ -68,7 +68,7 @@ Popup {
             }
 
             if (recorder.shortcutDisplayProvider)
-                recorder._currentShortcut = recorder.shortcutDisplayProvider(key, mods);
+                recorder._currentShortcutTokens = recorder.shortcutDisplayProvider(key, mods);
 
             if (isModKey) {
                 recorder._statusText = "Recording...";
@@ -104,11 +104,11 @@ Popup {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.preferredWidth: badge.width
                 Layout.preferredHeight: badge.height
-                visible: recorder._currentShortcut !== ""
+                visible: recorder._currentShortcutTokens.length > 0
 
                 ShortcutBadge {
                     id: badge
-                    text: recorder._currentShortcut
+                    tokens: recorder._currentShortcutTokens
                 }
             }
 

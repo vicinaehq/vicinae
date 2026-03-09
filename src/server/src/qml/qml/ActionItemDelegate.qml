@@ -10,7 +10,7 @@ Item {
 
     required property string title
     required property string iconSource
-    required property string shortcutLabel
+    required property var shortcutTokens
     required property bool isSubmenu
     required property bool isDanger
 
@@ -71,8 +71,8 @@ Item {
         }
 
         ShortcutBadge {
-            visible: root.shortcutLabel !== ""
-            text: root.shortcutLabel
+            visible: root.shortcutTokens && root.shortcutTokens.length > 0
+            tokens: root.shortcutTokens
             Layout.alignment: Qt.AlignVCenter
         }
     }

@@ -343,7 +343,7 @@ Item {
         }
 
         Shortcut {
-            sequence: Keybinds.openSearchAccessory
+            sequence: Keybinds.openSearchAccessorySequence
             enabled: !!accessoryLoader.item
             onActivated: {
                 if (typeof accessoryLoader.item.open === "function")

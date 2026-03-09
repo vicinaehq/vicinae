@@ -823,6 +823,15 @@ QString RootSearchModel::primaryActionIcon() const {
   return icon ? imageSourceFor(*icon) : QString();
 }
 
+QVariantList RootSearchModel::primaryActionShortcutTokens() const {
+  auto *state = m_scope.topState();
+  if (!state || !state->actionPanelState) return {};
+  auto *action = state->actionPanelState->primaryAction();
+  if (!action) return {};
+  auto shortcut = action->shortcut().value_or(Keyboard::Shortcut::enter());
+  return shortcut.toDisplayTokens();
+}
+
 void RootSearchModel::startCalculator() {
   if (m_calcWatcher.isRunning()) { m_calcWatcher.cancel(); }
 

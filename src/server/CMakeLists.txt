@@ -828,3 +828,16 @@ endforeach()
 install(TARGETS ${TARGET}
 	RUNTIME DESTINATION ${VICINAE_LIBEXEC_DIR}
 )
+
+if (BUILD_TESTS)
+	set(TEST_TARGET ${TARGET}-shortcut-tests)
+	find_package(Catch2 3 REQUIRED)
+	add_executable(${TEST_TARGET}
+		tests/shortcut-tests.cpp
+		src/lib/keyboard/keyboard.cpp
+		src/lib/keyboard/keybind-manager.cpp
+	)
+	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)
+	target_compile_features(${TEST_TARGET} PUBLIC cxx_std_23)
+	add_test(NAME ${TEST_TARGET} COMMAND ${TEST_TARGET})
+endif()

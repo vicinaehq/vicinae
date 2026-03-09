@@ -207,7 +207,7 @@ Window {
     }
 
     Shortcut {
-        sequence: Keybinds.toggleActionPanel
+        sequence: Keybinds.toggleActionPanelSequence
         enabled: !launcher.alertModel.visible
         onActivated: {
             if (launcher.compacted)

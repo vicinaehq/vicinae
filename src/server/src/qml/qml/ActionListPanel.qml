@@ -131,7 +131,7 @@ Item {
                 required property string itemType
                 required property string title
                 required property string iconSource
-                required property string shortcutLabel
+                required property var shortcutTokens
                 required property bool isSubmenu
                 required property bool isPrimary
                 required property bool isDanger
@@ -172,7 +172,7 @@ Item {
                         width: delegateLoader.width
                         title: delegateLoader.title
                         iconSource: delegateLoader.iconSource
-                        shortcutLabel: delegateLoader.shortcutLabel
+                        shortcutTokens: delegateLoader.shortcutTokens
                         isSubmenu: delegateLoader.isSubmenu
                         isDanger: delegateLoader.isDanger
                         selected: listView.currentIndex === delegateLoader.index

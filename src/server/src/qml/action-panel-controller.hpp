@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QUrl>
 #include <QVariantMap>
+#include <QVariantList>
 #include <memory>
 #include <vector>
 
@@ -17,7 +18,8 @@ class ActionPanelController : public QObject {
   Q_PROPERTY(bool hasActions READ hasActions NOTIFY hasActionsChanged)
   Q_PROPERTY(bool hasMultipleActions READ hasMultipleActions NOTIFY hasMultipleActionsChanged)
   Q_PROPERTY(QString primaryActionTitle READ primaryActionTitle NOTIFY primaryActionChanged)
-  Q_PROPERTY(QString primaryActionShortcut READ primaryActionShortcut NOTIFY primaryActionChanged)
+  Q_PROPERTY(
+      QVariantList primaryActionShortcutTokens READ primaryActionShortcutTokens NOTIFY primaryActionChanged)
   Q_PROPERTY(int depth READ depth NOTIFY depthChanged)
 
 signals:
@@ -37,7 +39,7 @@ public:
   bool hasActions() const { return m_hasActions; }
   bool hasMultipleActions() const { return m_hasMultipleActions; }
   QString primaryActionTitle() const;
-  QString primaryActionShortcut() const;
+  QVariantList primaryActionShortcutTokens() const;
   int depth() const { return m_depth; }
 
   void setStateFrom(const ActionPanelState &state);

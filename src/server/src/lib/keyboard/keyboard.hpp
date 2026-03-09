@@ -1,5 +1,9 @@
 #pragma once
 // We use our own shortcut stuff by design, instead of using QShortcut and the likes.
+#include <optional>
+#include <vector>
+#include <QStringView>
+#include <QVariantList>
 #include <qevent.h>
 #include <qlogging.h>
 #include <qnamespace.h>
@@ -7,6 +11,8 @@
 
 namespace Keyboard {
 std::optional<QString> stringForKey(Qt::Key key);
+std::optional<Qt::Key> keyFromString(QStringView key);
+std::optional<Qt::KeyboardModifier> modifierFromString(QStringView modifier);
 
 class Shortcut {
 public:
@@ -50,8 +56,11 @@ public:
   // e.g meta+shift+A
   QString toString() const;
 
+  QString toBindingSequence() const;
+
   // Human-readable display form for UI badges (e.g. "Ctrl+B", "Shift+Enter")
   QString toDisplayString() const;
+  QVariantList toDisplayTokens() const;
   Shortcut &modded(Qt::KeyboardModifier mod);
 
   bool equals(const Shortcut &other, bool ignoreNumpadMod = true) const;

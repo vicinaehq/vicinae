@@ -76,8 +76,8 @@ QVariant ActionPanelModel::data(const QModelIndex &index, int role) const {
                  : QString();
     case IconSource:
       return QString();
-    case ShortcutLabel:
-      return QString();
+    case ShortcutTokens:
+      return QVariantList();
     case IsSubmenu:
       return false;
     case IsPrimary:
@@ -112,9 +112,9 @@ QVariant ActionPanelModel::data(const QModelIndex &index, int role) const {
     auto icon = action->icon();
     return icon ? qml::imageSourceFor(*icon) : QString();
   }
-  case ShortcutLabel: {
+  case ShortcutTokens: {
     auto shortcut = action->shortcut();
-    return shortcut ? shortcut->toDisplayString() : QString();
+    return shortcut ? shortcut->toDisplayTokens() : QVariantList();
   }
   case IsSubmenu:
     return action->isSubmenu();
@@ -129,8 +129,9 @@ QVariant ActionPanelModel::data(const QModelIndex &index, int role) const {
 
 QHash<int, QByteArray> ActionPanelModel::roleNames() const {
   return {
-      {ItemType, "itemType"},           {Title, "title"},         {IconSource, "iconSource"},
-      {ShortcutLabel, "shortcutLabel"}, {IsSubmenu, "isSubmenu"}, {IsPrimary, "isPrimary"},
+      {ItemType, "itemType"},     {Title, "title"},
+      {IconSource, "iconSource"}, {ShortcutTokens, "shortcutTokens"},
+      {IsSubmenu, "isSubmenu"},   {IsPrimary, "isPrimary"},
       {IsDanger, "isDanger"},
   };
 }

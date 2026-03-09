@@ -18,6 +18,10 @@ include(GNUInstallDirs)
 include(Git)
 include(Utils)
 
+if (BUILD_TESTS)
+	enable_testing()
+endif()
+
 # Viciane build configuration options
 
 option(BUILD_TESTS "Build test suites for various vicinae components" OFF)

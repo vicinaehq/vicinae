@@ -47,6 +47,7 @@ test:
 	./$(BIN_DIR)/vicinae-emoji-tests
 	./$(BIN_DIR)/xdgpp-tests
 	./$(BIN_DIR)/scriptcommand-tests
+	./$(BIN_DIR)/vicinae-server-shortcut-tests
 .PHONY: test
 
 static:

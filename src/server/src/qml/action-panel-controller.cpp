@@ -11,10 +11,10 @@ QString ActionPanelController::primaryActionTitle() const {
   return m_primary ? m_primary->title() : QString();
 }
 
-QString ActionPanelController::primaryActionShortcut() const {
+QVariantList ActionPanelController::primaryActionShortcutTokens() const {
   if (!m_primary) return {};
   auto shortcut = m_primary->shortcut().value_or(Keyboard::Shortcut::enter());
-  return shortcut.toDisplayString();
+  return shortcut.toDisplayTokens();
 }
 
 void ActionPanelController::setStateFrom(const ActionPanelState &state) {
