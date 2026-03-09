@@ -54,6 +54,10 @@ Item {
                 clip: true
                 readOnly: !launcher.searchInteractive
 
+                HoverHandler {
+                    cursorShape: Qt.IBeamCursor
+                }
+
                 Text {
                     anchors.fill: parent
                     verticalAlignment: Text.AlignVCenter
