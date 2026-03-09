@@ -122,10 +122,32 @@ in
           '';
     };
 
+    settingOverrides = lib.mkOption {
+      type = lib.types.listOf lib.types.path;
+      default = [ ];
+      example =
+        lib.literalExpression # nix
+          ''
+            [
+              ${config.xdg.configHome}/vicinae/override.json
+              /run/secrets/vicinae-secrets.json
+            ]
+          '';
+      description = ''
+        Allows you to specify additional JSON files that will be merged with the imperative settings and take precedence.
+      '';
+    };
+
     settings = lib.mkOption {
       inherit (jsonFormat) type;
       default = { };
-      description = "Settings written as JSON to `~/.config/vicinae/settings.json.";
+      description = ''
+        Settings written as JSON to `~/.config/vicinae/nix.json`.
+        This is will override any settings from the default settings.json.
+        The easiest way to configure this is first configuring your settings in the app,
+        then copying the generated `~/.config/vicinae/settings.json` to `~/.config/vicinae/nix.json` and then modifying it as needed.
+        If you want to set secrets you should import these files using the settingOverrides option.
+      '';
       example = lib.literalExpression ''
         {
           close_on_focus_loss = true;
@@ -171,7 +193,7 @@ in
       in
       {
         configFile = {
-          "vicinae/settings.json" = lib.mkIf (cfg.settings != { }) {
+          "vicinae/nix.json" = lib.mkIf (cfg.settings != { }) {
             source = jsonFormat.generate "vicinae-settings" cfg.settings;
           };
         };
@@ -194,13 +216,20 @@ in
         PartOf = [ cfg.systemd.target ];
       };
       Service = {
-        Environment = lib.mapAttrsToList (
-          key: val:
-          let
-            valueStr = if lib.isBool val then (if val then "1" else "0") else toString val;
-          in
-          "${key}=${valueStr}"
-        ) cfg.systemd.environment;
+        Environment =
+          lib.mapAttrsToList (
+            key: val:
+            let
+              valueStr = if lib.isBool val then (if val then "1" else "0") else toString val;
+            in
+            "${key}=${valueStr}"
+          ) cfg.systemd.environment
+          ++ [
+            (lib.mkIf (cfg.settings != { }) ''VICINAE_OVERRIDES="${config.xdg.configHome}/vicinae/nix.json"'')
+            (lib.mkIf (
+              cfg.settingOverrides != [ ]
+            ) ''VICINAE_OVERRIDES="${lib.concatStringsSep ":" cfg.settingOverrides}"'')
+          ];
         Type = "simple";
         ExecStart = "${lib.getExe' cfg.package "vicinae"} server";
         Restart = "always";
