@@ -51,6 +51,12 @@ m_client.post<>()
 
   std::optional<ImageUrl> icon() const override { return ImageUrl{BuiltinIcon::Mistral}; }
 
+  std::string_view description() const override {
+    return "Mistral AI cloud API. Provides transcription and language models.";
+  }
+
+  bool allowMultiple() const override { return false; }
+
   void start() override {}
 
   std::optional<Model> findBestModel(Capabilities caps,
