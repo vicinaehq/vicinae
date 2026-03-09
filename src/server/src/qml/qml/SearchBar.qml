@@ -277,6 +277,17 @@ Item {
                 Keys.onBacktabPressed: event => {
                     event.accepted = false;
                 }
+                Keys.onTabPressed: event => {
+                    if (launcher.isRootSearch && searchInput.text.length > 5) {
+                        launcher.handleTab();
+                        event.accepted = true;
+                    } else {
+                        event.accepted = false;
+                    }
+                }
+                Keys.onBacktabPressed: event => {
+                    event.accepted = false;
+                }
                 Keys.onPressed: event => {
                     if (_handleEmacsEditing(event)) {
                         event.accepted = true;

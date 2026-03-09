@@ -2,6 +2,7 @@
 #include "common/entrypoint.hpp"
 #include "config-bridge.hpp"
 #include "environment.hpp"
+#include "ai-settings-model.hpp"
 #include "extension-settings-model.hpp"
 #include "general-settings-model.hpp"
 #include "image-source.hpp"
@@ -44,6 +45,7 @@ void SettingsWindow::ensureInitialized() {
   m_keybindModel = new KeybindSettingsModel(this);
   m_extensionModel = new ExtensionSettingsModel(this);
   m_sidebarModel = new SettingsSidebarModel(m_extensionModel, this);
+  m_aiModel = new AISettingsModel(this);
 
   auto *rootCtx = m_engine.rootContext();
   rootCtx->setContextProperty(QStringLiteral("Theme"), m_themeBridge);

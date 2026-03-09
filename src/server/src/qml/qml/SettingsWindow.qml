@@ -179,10 +179,29 @@ Window {
 
                     function _loadPage(page) {
                         active = false;
-                        const meta = root.corePages[page] ?? null;
-                        if (!meta)
+                        if (page !== "general" && page !== "keybindings" && page !== "advanced" && page !== "ai" && page !== "about") {
                             settings.extensionModel.selectProviderById(page);
-                        sourceComponent = meta ? meta.page : extensionPage;
+                        }
+                        switch (page) {
+                        case "general":
+                            sourceComponent = generalPage;
+                            break;
+                        case "keybindings":
+                            sourceComponent = shortcutsPage;
+                            break;
+                        case "advanced":
+                            sourceComponent = advancedPage;
+                            break;
+                        case "ai":
+                            sourceComponent = aiPage;
+                            break;
+                        case "about":
+                            sourceComponent = aboutPage;
+                            break;
+                        default:
+                            sourceComponent = extensionPage;
+                            break;
+                        }
                         active = true;
                     }
 
@@ -216,6 +235,11 @@ Window {
     Component {
         id: advancedPage
         AdvancedSettingsPage {}
+    }
+
+    Component {
+        id: aiPage
+        AISettingsPage {}
     }
 
     Component {
