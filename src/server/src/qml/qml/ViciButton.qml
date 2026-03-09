@@ -7,8 +7,8 @@ Rectangle {
     property string icon: ""
     property var iconSource
     property string variant: "ghost"
-    property bool bordered: root.variant === "secondary" || root.variant === "accent"
-    property color foreground: root.variant === "accent" && root.hovered ? Theme.listItemSelectionFg : Theme.foreground
+    property bool bordered: root.variant === "secondary"
+    property color foreground: root.variant === "accent" ? Theme.listItemSelectionFg : Theme.foreground
     property real iconSize: 16
     property real horizontalPadding: 12
     property bool translucent: false
@@ -34,7 +34,7 @@ Rectangle {
         case "secondary":
             return root._applyTranslucency(root.hovered ? Theme.listItemHoverBg : Theme.secondaryBackground);
         case "accent":
-            return root._applyTranslucency(root.hovered ? Theme.accent : Theme.listItemSelectionBg);
+            return root._applyTranslucency(root.hovered ? Qt.lighter(Theme.accent, 1.15) : Theme.accent);
         case "ghost":
         default:
             return root.hovered ? Theme.listItemHoverBg : "transparent";
@@ -46,8 +46,6 @@ Rectangle {
         if (!root.bordered)
             return "transparent";
         if (root.activeFocus)
-            return Theme.accent;
-        if (root.variant === "accent")
             return Theme.accent;
         if (root.variant === "secondary")
             return Theme.inputBorder;
