@@ -765,37 +765,24 @@ Item {
                 Layout.topMargin: 4
                 spacing: 10
 
-                Button {
+                ViciButton {
                     id: cancelBtn
                     Layout.fillWidth: true
                     implicitHeight: 32
-                    focusPolicy: Qt.StrongFocus
+                    variant: "ghost"
+                    bordered: true
+                    text: "Cancel"
+                    focus: true
                     activeFocusOnTab: true
-
-                    background: Rectangle {
-                        radius: 6
-                        color: cancelBtn.hovered || cancelBtn.activeFocus ? Theme.listItemHoverBg : "transparent"
-                        border.color: cancelBtn.activeFocus ? Theme.accent : Theme.divider
-                        border.width: 1
-                    }
-
-                    contentItem: Text {
-                        text: "Cancel"
-                        color: Theme.foreground
-                        font.pointSize: Theme.regularFontSize
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
-
                     onClicked: addModal.close()
-                    Keys.onReturnPressed: addModal.close()
                 }
 
-                Button {
+                ViciButton {
                     id: addBtn
                     Layout.fillWidth: true
                     implicitHeight: 32
-                    focusPolicy: Qt.StrongFocus
+                    variant: "accent"
+                    text: "Add"
                     activeFocusOnTab: true
 
                     readonly property bool _canSubmit: {
@@ -808,30 +795,9 @@ Item {
                         return true;
                     }
 
-                    background: Rectangle {
-                        radius: 6
-                        color: addBtn._canSubmit ? (addBtn.hovered || addBtn.activeFocus ? Qt.darker(Theme.accent, 1.1) : Theme.accent) : Theme.listItemHoverBg
-                        border.color: addBtn.activeFocus ? Theme.foreground : "transparent"
-                        border.width: addBtn.activeFocus ? 1 : 0
-                    }
-
-                    contentItem: Text {
-                        text: "Add"
-                        color: addBtn._canSubmit ? "#ffffff" : Theme.textMuted
-                        font.pointSize: Theme.regularFontSize
-                        font.bold: true
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
-
-                    onClicked: {
-                        if (_canSubmit)
-                            addModal._submit();
-                    }
-                    Keys.onReturnPressed: {
-                        if (_canSubmit)
-                            addModal._submit();
-                    }
+                    enabled: _canSubmit
+                    opacity: _canSubmit ? 1.0 : 0.5
+                    onClicked: addModal._submit()
                 }
             }
         }
