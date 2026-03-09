@@ -690,6 +690,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/GenericGridView.qml
 	src/qml/qml/EmptyView.qml
 	src/qml/qml/EmojiGridView.qml
+	src/qml/qml/ViciButton.qml
 	src/qml/qml/ViciImage.qml
 	src/qml/qml/ViciScrollBar.qml
 	src/qml/qml/ViciToolTip.qml
@@ -753,7 +754,6 @@ set(VICINAE_QML_FILES
 	src/qml/qml/SettingsSidebar.qml
 	src/qml/qml/SettingsRow.qml
 	src/qml/qml/SettingsToggle.qml
-	src/qml/qml/SettingsLinkButton.qml
 	src/qml/qml/GeneralSettingsPage.qml
 	src/qml/qml/AdvancedSettingsPage.qml
 	src/qml/qml/ShortcutsSettingsPage.qml

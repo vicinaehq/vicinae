@@ -95,27 +95,16 @@ ColumnLayout {
                     echoMode: field.revealed ? TextInput.Normal : TextInput.Password
                     onTextEdited: root.prefModel.setFieldValue(field.parent.index, text)
                 }
-                Rectangle {
+                ViciButton {
+                    id: revealBtn
                     Layout.preferredWidth: 36
                     Layout.preferredHeight: 36
                     radius: 8
-                    color: revealHover.hovered ? Theme.listItemHoverBg : "transparent"
+                    iconSource: Img.builtin(field.revealed ? "eye-disabled" : "eye").withFillColor(Theme.textMuted)
+                    variant: "ghost"
+                    border.width: revealBtn.hovered ? 1 : 0
                     border.color: Theme.inputBorder
-                    border.width: revealHover.hovered ? 1 : 0
-
-                    ViciImage {
-                        anchors.centerIn: parent
-                        source: Img.builtin(field.revealed ? "eye-disabled" : "eye").withFillColor(Theme.textMuted)
-                        width: 16
-                        height: 16
-                    }
-
-                    HoverHandler {
-                        id: revealHover
-                    }
-                    TapHandler {
-                        onTapped: field.revealed = !field.revealed
-                    }
+                    onClicked: field.revealed = !field.revealed
                 }
             }
             Text {

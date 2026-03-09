@@ -66,29 +66,18 @@ FocusScope {
                     elide: Text.ElideMiddle
                 }
 
-                Rectangle {
+                ViciButton {
                     visible: !root.readOnly && root.selectedPaths && root.selectedPaths.length > 0
                     Layout.preferredWidth: 20
                     Layout.preferredHeight: 20
                     Layout.alignment: Qt.AlignVCenter
                     radius: 4
-                    color: clearHover.hovered ? Theme.listItemHoverBg : "transparent"
-
-                    ViciImage {
-                        anchors.centerIn: parent
-                        width: 10
-                        height: 10
-                        source: Img.builtin("xmark")
-                    }
-
-                    HoverHandler {
-                        id: clearHover
-                    }
-                    TapHandler {
-                        onTapped: {
-                            root.pathsChanged([]);
-                            root.selectedPaths = [];
-                        }
+                    icon: "xmark"
+                    iconSize: 10
+                    variant: "ghost"
+                    onClicked: {
+                        root.pathsChanged([]);
+                        root.selectedPaths = [];
                     }
                 }
             }
@@ -142,65 +131,42 @@ FocusScope {
                         elide: Text.ElideMiddle
                     }
 
-                    Rectangle {
+                    ViciButton {
                         visible: !root.readOnly
                         Layout.preferredWidth: 20
                         Layout.preferredHeight: 20
                         Layout.alignment: Qt.AlignVCenter
                         radius: 4
-                        color: removeHover.hovered ? Theme.listItemHoverBg : "transparent"
-
-                        ViciImage {
-                            anchors.centerIn: parent
-                            width: 10
-                            height: 10
-                            source: Img.builtin("xmark")
-                        }
-
-                        HoverHandler {
-                            id: removeHover
-                        }
-                        TapHandler {
-                            onTapped: {
-                                const idx = index;
-                                let copy = [];
-                                for (let i = 0; i < root.selectedPaths.length; i++) {
-                                    if (i !== idx)
-                                        copy.push(root.selectedPaths[i]);
-                                }
-                                root.pathsChanged(copy);
-                                root.selectedPaths = copy;
+                        icon: "xmark"
+                        iconSize: 10
+                        variant: "ghost"
+                        onClicked: {
+                            const idx = index;
+                            let copy = [];
+                            for (let i = 0; i < root.selectedPaths.length; i++) {
+                                if (i !== idx)
+                                    copy.push(root.selectedPaths[i]);
                             }
+                            root.pathsChanged(copy);
+                            root.selectedPaths = copy;
                         }
                     }
                 }
             }
         }
 
-        Rectangle {
+        ViciButton {
             visible: !root.readOnly
             Layout.fillWidth: true
             implicitHeight: 32
             radius: 6
-            color: addHover.hovered ? Theme.listItemHoverBg : "transparent"
-            border.color: Theme.inputBorder
-            border.width: 1
-
-            Text {
-                anchors.centerIn: parent
-                text: root.directoriesOnly ? "+ Add folder…" : "+ Add file…"
-                color: Theme.textMuted
-                font.pointSize: Theme.regularFontSize
-            }
-
-            HoverHandler {
-                id: addHover
-            }
-            TapHandler {
-                onTapped: {
-                    focusItem.forceActiveFocus();
-                    root._openDialog();
-                }
+            text: root.directoriesOnly ? "+ Add folder…" : "+ Add file…"
+            foreground: Theme.textMuted
+            variant: "ghost"
+            bordered: true
+            onClicked: {
+                focusItem.forceActiveFocus();
+                root._openDialog();
             }
         }
     }
