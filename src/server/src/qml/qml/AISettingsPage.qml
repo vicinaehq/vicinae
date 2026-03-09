@@ -6,6 +6,8 @@ Item {
     id: root
 
     readonly property var model: settings.aiModel
+    property int selectedRow: -1
+    property int _refreshKey: 0
 
     readonly property var _dropdownItems: {
         const types = root.model.availableTypes;
@@ -26,21 +28,35 @@ Item {
         ];
     }
 
+    Connections {
+        target: root.model
+        function onProvidersChanged() {
+            root._refreshKey++;
+            if (root.selectedRow >= root.model.rowCount())
+                root.selectedRow = -1;
+        }
+        function onModelsConfigChanged() {
+            root._refreshKey++;
+        }
+    }
+
+    // ── List view ──
     Flickable {
-        id: flick
+        id: listFlick
         anchors.fill: parent
+        visible: root.selectedRow === -1
         contentWidth: width
-        contentHeight: col.implicitHeight
+        contentHeight: listCol.implicitHeight
         clip: true
         boundsBehavior: Flickable.StopAtBounds
 
         ScrollBar.vertical: ViciScrollBar {
-            policy: flick.contentHeight > flick.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+            policy: listFlick.contentHeight > listFlick.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
         }
 
         ColumnLayout {
-            id: col
-            width: flick.width
+            id: listCol
+            width: listFlick.width
             spacing: 0
 
             readonly property real contentWidth: Math.min(width, 680)
@@ -50,11 +66,10 @@ Item {
                 implicitHeight: 16
             }
 
-            // Header
             RowLayout {
                 Layout.fillWidth: true
-                Layout.leftMargin: col.sideMargin + 20
-                Layout.rightMargin: col.sideMargin + 20
+                Layout.leftMargin: listCol.sideMargin + 20
+                Layout.rightMargin: listCol.sideMargin + 20
                 spacing: 8
 
                 Text {
@@ -86,8 +101,8 @@ Item {
 
             Rectangle {
                 Layout.fillWidth: true
-                Layout.leftMargin: col.sideMargin + 20
-                Layout.rightMargin: col.sideMargin + 20
+                Layout.leftMargin: listCol.sideMargin + 20
+                Layout.rightMargin: listCol.sideMargin + 20
                 height: 1
                 color: Theme.divider
             }
@@ -128,57 +143,45 @@ Item {
                 }
             }
 
-            // Provider list
+            // Provider rows
             Repeater {
                 model: root.model
 
                 delegate: Column {
-                    id: providerDelegate
+                    id: listDelegate
                     Layout.fillWidth: true
 
                     required property int index
                     required property string providerId
-                    required property string type
                     required property string typeLabel
                     required property string icon
-                    required property string description
-                    required property bool expanded
-                    required property string url
-                    required property string apiKey
 
-                    // Provider row
                     Rectangle {
                         width: parent.width
                         height: 44
-                        color: providerHover.hovered ? Theme.listItemHoverBg : "transparent"
+                        color: listDelegateHover.hovered ? Theme.listItemHoverBg : "transparent"
 
                         HoverHandler {
-                            id: providerHover
+                            id: listDelegateHover
                         }
                         TapHandler {
-                            onTapped: root.model.toggleExpanded(providerDelegate.index)
+                            onTapped: root.selectedRow = listDelegate.index
                         }
 
                         RowLayout {
                             anchors.fill: parent
-                            anchors.leftMargin: col.sideMargin + 20
-                            anchors.rightMargin: col.sideMargin + 20
+                            anchors.leftMargin: listCol.sideMargin + 20
+                            anchors.rightMargin: listCol.sideMargin + 20
                             spacing: 10
 
                             ViciImage {
-                                source: Img.builtin(providerDelegate.expanded ? "chevron-down-small" : "chevron-right-small").withFillColor(Theme.textMuted)
-                                Layout.preferredWidth: 16
-                                Layout.preferredHeight: 16
-                            }
-
-                            ViciImage {
-                                source: Img.builtin(providerDelegate.icon).withFillColor(Theme.textMuted)
+                                source: Img.builtin(listDelegate.icon).withFillColor(Theme.textMuted)
                                 Layout.preferredWidth: 20
                                 Layout.preferredHeight: 20
                             }
 
                             Text {
-                                text: providerDelegate.providerId
+                                text: listDelegate.providerId
                                 color: Theme.foreground
                                 font.pointSize: Theme.regularFontSize
                                 elide: Text.ElideRight
@@ -186,227 +189,19 @@ Item {
                             }
 
                             Text {
-                                text: providerDelegate.typeLabel
+                                text: listDelegate.typeLabel
                                 color: Theme.textMuted
                                 font.pointSize: Theme.smallerFontSize
                             }
-                        }
-                    }
 
-                    // Expanded detail
-                    Loader {
-                        active: providerDelegate.expanded
-                        visible: active
-                        width: parent.width
-
-                        sourceComponent: Rectangle {
-                            implicitHeight: detailCol.implicitHeight + 24
-                            color: "transparent"
-
-                            Rectangle {
-                                anchors.top: parent.top
-                                anchors.left: parent.left
-                                anchors.right: parent.right
-                                anchors.leftMargin: col.sideMargin + 20
-                                anchors.rightMargin: col.sideMargin + 20
-                                height: 1
-                                color: Theme.divider
-                            }
-
-                            ColumnLayout {
-                                id: detailCol
-                                anchors.left: parent.left
-                                anchors.right: parent.right
-                                anchors.top: parent.top
-                                anchors.leftMargin: col.sideMargin + 46
-                                anchors.rightMargin: col.sideMargin + 20
-                                anchors.topMargin: 16
-                                spacing: 16
-
-                                // Description
-                                Text {
-                                    visible: providerDelegate.description !== ""
-                                    text: providerDelegate.description
-                                    color: Theme.textMuted
-                                    font.pointSize: Theme.smallerFontSize
-                                    wrapMode: Text.Wrap
-                                    Layout.fillWidth: true
-                                }
-
-                                // Ollama config
-                                ColumnLayout {
-                                    visible: providerDelegate.type === "ollama"
-                                    Layout.fillWidth: true
-                                    spacing: 4
-
-                                    Text {
-                                        text: "Server URL"
-                                        color: Theme.textMuted
-                                        font.pointSize: Theme.smallerFontSize
-                                    }
-
-                                    FormTextInput {
-                                        Layout.fillWidth: true
-                                        text: providerDelegate.url
-                                        placeholder: "http://localhost:11434"
-                                        onAccepted: root.model.setField(providerDelegate.index, "url", text.trim())
-                                        onEditingChanged: {
-                                            if (!editing)
-                                                root.model.setField(providerDelegate.index, "url", text.trim());
-                                        }
-                                    }
-                                }
-
-                                // Mistral config
-                                ColumnLayout {
-                                    visible: providerDelegate.type === "mistral"
-                                    Layout.fillWidth: true
-                                    spacing: 4
-
-                                    Text {
-                                        text: "API Key"
-                                        color: Theme.textMuted
-                                        font.pointSize: Theme.smallerFontSize
-                                    }
-
-                                    RowLayout {
-                                        id: apiKeyRow
-                                        Layout.fillWidth: true
-                                        spacing: 4
-
-                                        property bool revealed: false
-
-                                        FormTextInput {
-                                            Layout.fillWidth: true
-                                            text: providerDelegate.apiKey
-                                            placeholder: "sk-..."
-                                            echoMode: apiKeyRow.revealed ? TextInput.Normal : TextInput.Password
-                                            onAccepted: root.model.setField(providerDelegate.index, "apiKey", text.trim())
-                                            onEditingChanged: {
-                                                if (!editing)
-                                                    root.model.setField(providerDelegate.index, "apiKey", text.trim());
-                                            }
-                                        }
-
-                                        Rectangle {
-                                            Layout.preferredWidth: 36
-                                            Layout.preferredHeight: 36
-                                            radius: 8
-                                            color: "transparent"
-                                            border.color: revealHover.hovered ? Theme.inputBorderFocus : Theme.inputBorder
-                                            border.width: 1
-
-                                            ViciImage {
-                                                anchors.centerIn: parent
-                                                source: Img.builtin(apiKeyRow.revealed ? "eye-disabled" : "eye").withFillColor(Theme.textMuted)
-                                                width: 16
-                                                height: 16
-                                            }
-
-                                            HoverHandler {
-                                                id: revealHover
-                                            }
-                                            TapHandler {
-                                                onTapped: apiKeyRow.revealed = !apiKeyRow.revealed
-                                            }
-                                        }
-                                    }
-                                }
-
-                                // Models section
-                                ColumnLayout {
-                                    Layout.fillWidth: true
-                                    Layout.topMargin: 4
-                                    spacing: 8
-
-                                    readonly property var providerModels: root.model.modelsForProvider(providerDelegate.index)
-
-                                    Text {
-                                        text: "Models"
-                                        color: Theme.foreground
-                                        font.pointSize: Theme.smallerFontSize
-                                        font.bold: true
-                                    }
-
-                                    Text {
-                                        visible: parent.providerModels.length === 0
-                                        text: "No models available. Check the connection and configuration."
-                                        color: Theme.textPlaceholder
-                                        font.pointSize: Theme.smallerFontSize
-                                    }
-
-                                    Repeater {
-                                        model: parent.providerModels
-
-                                        delegate: RowLayout {
-                                            required property var modelData
-                                            Layout.fillWidth: true
-                                            spacing: 8
-
-                                            Text {
-                                                text: modelData.name
-                                                color: Theme.foreground
-                                                font.pointSize: Theme.smallerFontSize
-                                                elide: Text.ElideRight
-                                                Layout.fillWidth: true
-                                            }
-
-                                            Text {
-                                                visible: modelData.capabilities !== ""
-                                                text: modelData.capabilities
-                                                color: Theme.textPlaceholder
-                                                font.pointSize: Theme.smallerFontSize
-                                            }
-                                        }
-                                    }
-                                }
-
-                                // Remove button
-                                Item {
-                                    Layout.fillWidth: true
-                                    Layout.topMargin: 8
-                                    implicitHeight: removeBtn.implicitHeight
-
-                                    Rectangle {
-                                        id: removeBtn
-                                        anchors.right: parent.right
-                                        implicitWidth: removeBtnRow.implicitWidth + 16
-                                        implicitHeight: 28
-                                        radius: 6
-                                        color: removeBtnHover.hovered ? Theme.danger : "transparent"
-                                        border.color: removeBtnHover.hovered ? Theme.danger : Theme.inputBorder
-                                        border.width: 1
-
-                                        RowLayout {
-                                            id: removeBtnRow
-                                            anchors.centerIn: parent
-                                            spacing: 4
-
-                                            Text {
-                                                text: "\u2715"
-                                                color: removeBtnHover.hovered ? "#ffffff" : Theme.textMuted
-                                                font.pixelSize: 10
-                                            }
-                                            Text {
-                                                text: "Remove"
-                                                color: removeBtnHover.hovered ? "#ffffff" : Theme.foreground
-                                                font.pointSize: Theme.smallerFontSize
-                                            }
-                                        }
-
-                                        HoverHandler {
-                                            id: removeBtnHover
-                                        }
-                                        TapHandler {
-                                            onTapped: root.model.removeProvider(providerDelegate.index)
-                                        }
-                                    }
-                                }
+                            ViciImage {
+                                source: Img.builtin("chevron-right-small").withFillColor(Theme.textMuted)
+                                Layout.preferredWidth: 16
+                                Layout.preferredHeight: 16
                             }
                         }
                     }
 
-                    // Row separator
                     Rectangle {
                         width: parent.width
                         height: 1
@@ -421,16 +216,445 @@ Item {
         }
     }
 
-    // Add provider modal
-    Popup {
+    // ── Detail view ──
+    Flickable {
+        id: detailFlick
+        anchors.fill: parent
+        visible: root.selectedRow >= 0
+        contentWidth: width
+        contentHeight: detailCol.implicitHeight
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
+
+        ScrollBar.vertical: ViciScrollBar {
+            policy: detailFlick.contentHeight > detailFlick.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+        }
+
+        readonly property var details: {
+            void root._refreshKey;
+            if (root.selectedRow < 0)
+                return ({});
+            return root.model.providerDetails(root.selectedRow);
+        }
+
+        readonly property var providerModels: {
+            void root._refreshKey;
+            if (root.selectedRow < 0)
+                return [];
+            return root.model.modelsForProvider(root.selectedRow);
+        }
+
+        ColumnLayout {
+            id: detailCol
+            width: detailFlick.width
+            spacing: 0
+
+            readonly property real contentWidth: Math.min(width, 680)
+            readonly property real sideMargin: (width - contentWidth) / 2
+
+            Item {
+                implicitHeight: 16
+            }
+
+            // Breadcrumb
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: detailCol.sideMargin + 20
+                Layout.rightMargin: detailCol.sideMargin + 20
+                spacing: 0
+
+                Rectangle {
+                    implicitWidth: backRow.implicitWidth + 12
+                    implicitHeight: 28
+                    radius: 6
+                    color: breadcrumbHover.hovered ? Theme.listItemHoverBg : "transparent"
+
+                    RowLayout {
+                        id: backRow
+                        anchors.centerIn: parent
+                        spacing: 4
+
+                        ViciImage {
+                            source: Img.builtin("chevron-right-small").withFillColor(Theme.textMuted)
+                            Layout.preferredWidth: 14
+                            Layout.preferredHeight: 14
+                            rotation: 180
+                        }
+
+                        Text {
+                            text: "Providers"
+                            color: Theme.textMuted
+                            font.pointSize: Theme.smallerFontSize
+                        }
+                    }
+
+                    HoverHandler {
+                        id: breadcrumbHover
+                        cursorShape: Qt.PointingHandCursor
+                    }
+                    TapHandler {
+                        onTapped: root.selectedRow = -1
+                    }
+                }
+
+                Item {
+                    Layout.fillWidth: true
+                }
+            }
+
+            Item {
+                implicitHeight: 16
+            }
+
+            // Provider header
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: detailCol.sideMargin + 20
+                Layout.rightMargin: detailCol.sideMargin + 20
+                spacing: 12
+
+                ViciImage {
+                    source: Img.builtin(detailFlick.details.icon ?? "computer-chip").withFillColor(Theme.foreground)
+                    Layout.preferredWidth: 28
+                    Layout.preferredHeight: 28
+                    Layout.alignment: Qt.AlignTop
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 2
+
+                    Text {
+                        text: detailFlick.details.providerId ?? ""
+                        color: Theme.foreground
+                        font.pointSize: Theme.regularFontSize + 1
+                        font.bold: true
+                    }
+
+                    Text {
+                        visible: (detailFlick.details.description ?? "") !== ""
+                        text: detailFlick.details.description ?? ""
+                        color: Theme.textMuted
+                        font.pointSize: Theme.smallerFontSize
+                        wrapMode: Text.Wrap
+                        Layout.fillWidth: true
+                    }
+                }
+            }
+
+            Item {
+                implicitHeight: 24
+            }
+
+            // ── Configuration card ──
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.leftMargin: detailCol.sideMargin + 20
+                Layout.rightMargin: detailCol.sideMargin + 20
+                implicitHeight: configCardCol.implicitHeight + 32
+                radius: 8
+                color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, 0.6)
+                border.color: Theme.divider
+                border.width: 1
+
+                ColumnLayout {
+                    id: configCardCol
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.margins: 16
+                    spacing: 12
+
+                    Text {
+                        text: "Configuration"
+                        color: Theme.foreground
+                        font.pointSize: Theme.smallerFontSize
+                        font.bold: true
+                        font.capitalization: Font.AllUppercase
+                        opacity: 0.6
+                    }
+
+                    // Ollama config
+                    ColumnLayout {
+                        visible: (detailFlick.details.type ?? "") === "ollama"
+                        Layout.fillWidth: true
+                        spacing: 4
+
+                        Text {
+                            text: "Server URL"
+                            color: Theme.textMuted
+                            font.pointSize: Theme.smallerFontSize
+                        }
+
+                        FormTextInput {
+                            Layout.fillWidth: true
+                            text: detailFlick.details.url ?? ""
+                            placeholder: "http://localhost:11434"
+                            onAccepted: root.model.setField(root.selectedRow, "url", text.trim())
+                            onEditingChanged: {
+                                if (!editing)
+                                    root.model.setField(root.selectedRow, "url", text.trim());
+                            }
+                        }
+                    }
+
+                    // Mistral config
+                    ColumnLayout {
+                        visible: (detailFlick.details.type ?? "") === "mistral"
+                        Layout.fillWidth: true
+                        spacing: 4
+
+                        Text {
+                            text: "API Key"
+                            color: Theme.textMuted
+                            font.pointSize: Theme.smallerFontSize
+                        }
+
+                        FormSecretInput {
+                            text: detailFlick.details.apiKey ?? ""
+                            placeholder: "sk-..."
+                            onAccepted: root.model.setField(root.selectedRow, "apiKey", text.trim())
+                            onEditingChanged: {
+                                if (!editing)
+                                    root.model.setField(root.selectedRow, "apiKey", text.trim());
+                            }
+                        }
+                    }
+                }
+            }
+
+            Item {
+                implicitHeight: 24
+            }
+
+            // ── Models section ──
+            Text {
+                text: "Models"
+                color: Theme.foreground
+                font.pointSize: Theme.smallerFontSize
+                font.bold: true
+                font.capitalization: Font.AllUppercase
+                opacity: 0.6
+                Layout.leftMargin: detailCol.sideMargin + 20
+                Layout.rightMargin: detailCol.sideMargin + 20
+            }
+
+            Item {
+                implicitHeight: 8
+            }
+
+            // Models card
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.leftMargin: detailCol.sideMargin + 20
+                Layout.rightMargin: detailCol.sideMargin + 20
+                implicitHeight: modelsCardCol.implicitHeight
+                radius: 8
+                color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, 0.6)
+                border.color: Theme.divider
+                border.width: 1
+                clip: true
+
+                ColumnLayout {
+                    id: modelsCardCol
+                    width: parent.width
+                    spacing: 0
+
+                    // Empty model state
+                    Item {
+                        visible: detailFlick.providerModels.length === 0
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 60
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "No models available. Check the connection and configuration."
+                            color: Theme.textPlaceholder
+                            font.pointSize: Theme.smallerFontSize
+                        }
+                    }
+
+                    // Model rows
+                    Repeater {
+                        model: detailFlick.providerModels
+
+                        delegate: Column {
+                            id: modelDelegate
+                            Layout.fillWidth: true
+
+                            required property var modelData
+                            required property int index
+
+                            Rectangle {
+                                width: parent.width
+                                height: 1
+                                color: Theme.divider
+                                visible: modelDelegate.index > 0
+                            }
+
+                            Rectangle {
+                                width: parent.width
+                                height: 44
+                                color: modelRowHover.hovered ? Theme.listItemHoverBg : "transparent"
+
+                                HoverHandler {
+                                    id: modelRowHover
+                                }
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 16
+                                    anchors.rightMargin: 16
+                                    spacing: 10
+
+                                    ViciImage {
+                                        source: modelDelegate.modelData.icon ?? Img.builtin("computer-chip").withFillColor(Theme.textMuted)
+                                        Layout.preferredWidth: 18
+                                        Layout.preferredHeight: 18
+                                        opacity: modelDelegate.modelData.enabled ? 1.0 : 0.4
+                                    }
+
+                                    Text {
+                                        text: modelDelegate.modelData.name
+                                        color: modelDelegate.modelData.enabled ? Theme.foreground : Theme.textMuted
+                                        font.pointSize: Theme.smallerFontSize
+                                        elide: Text.ElideRight
+                                        Layout.fillWidth: true
+                                    }
+
+                                    // Capability badges
+                                    Row {
+                                        spacing: 4
+
+                                        Repeater {
+                                            model: modelDelegate.modelData.capabilities
+
+                                            delegate: Rectangle {
+                                                required property string modelData
+                                                width: capText.implicitWidth + 10
+                                                height: capText.implicitHeight + 4
+                                                radius: 4
+                                                color: Theme.divider
+
+                                                Text {
+                                                    id: capText
+                                                    anchors.centerIn: parent
+                                                    text: modelData
+                                                    color: Theme.textMuted
+                                                    font.pointSize: Theme.smallerFontSize - 1
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    Item {
+                                        Layout.preferredWidth: 36
+                                        Layout.preferredHeight: 20
+
+                                        SettingsToggle {
+                                            anchors.right: parent.right
+                                            checked: modelDelegate.modelData.enabled
+                                            onToggled: root.model.setModelEnabled(root.selectedRow, modelDelegate.modelData.id, checked)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Item {
+                implicitHeight: 32
+            }
+
+            // ── Danger zone ──
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.leftMargin: detailCol.sideMargin + 20
+                Layout.rightMargin: detailCol.sideMargin + 20
+                implicitHeight: dangerCol.implicitHeight + 32
+                radius: 8
+                color: "transparent"
+                border.color: Qt.rgba(Theme.danger.r, Theme.danger.g, Theme.danger.b, 0.3)
+                border.width: 1
+
+                ColumnLayout {
+                    id: dangerCol
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.margins: 16
+                    spacing: 12
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 12
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 2
+
+                            Text {
+                                text: "Remove provider"
+                                color: Theme.foreground
+                                font.pointSize: Theme.smallerFontSize
+                                font.bold: true
+                            }
+
+                            Text {
+                                text: "This will remove the provider and all its associated model settings."
+                                color: Theme.textMuted
+                                font.pointSize: Theme.smallerFontSize
+                                wrapMode: Text.Wrap
+                                Layout.fillWidth: true
+                            }
+                        }
+
+                        Rectangle {
+                            id: removeBtn
+                            implicitWidth: removeBtnText.implicitWidth + 20
+                            implicitHeight: 30
+                            radius: 6
+                            color: removeBtnHover.hovered ? Theme.danger : "transparent"
+                            border.color: removeBtnHover.hovered ? Theme.danger : Qt.rgba(Theme.danger.r, Theme.danger.g, Theme.danger.b, 0.5)
+                            border.width: 1
+
+                            Text {
+                                id: removeBtnText
+                                anchors.centerIn: parent
+                                text: "Remove"
+                                color: removeBtnHover.hovered ? "#ffffff" : Theme.danger
+                                font.pointSize: Theme.smallerFontSize
+                            }
+
+                            HoverHandler {
+                                id: removeBtnHover
+                            }
+                            TapHandler {
+                                onTapped: {
+                                    const row = root.selectedRow;
+                                    root.selectedRow = -1;
+                                    root.model.removeProvider(row);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Item {
+                implicitHeight: 24
+            }
+        }
+    }
+
+    // ── Add provider modal ──
+    ViciModal {
         id: addModal
         parent: root.Window.contentItem
-        anchors.centerIn: parent
         width: Math.min(parent.width - 40, 480)
         padding: 24
-        focus: true
-        modal: true
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
         property string _providerType: ""
         property string _providerLabel: ""
@@ -440,7 +664,7 @@ Item {
             modalIdField.text = _providerType === "ollama" ? root.model.nextProviderId(_providerType) : "";
             modalUrlField.text = "http://localhost:11434";
             modalApiKeyField.text = "";
-            modalApiKeyRow.revealed = false;
+            modalApiKeyField.revealed = false;
         }
 
         function _submit() {
@@ -462,64 +686,9 @@ Item {
                 modalApiKeyField.forceActiveFocus();
         }
 
-        onActiveFocusChanged: {
-            if (!activeFocus && opened)
-                close();
-        }
-
-        enter: Transition {
-            ParallelAnimation {
-                NumberAnimation {
-                    property: "opacity"
-                    from: 0
-                    to: 1
-                    duration: 150
-                    easing.type: Easing.OutCubic
-                }
-                NumberAnimation {
-                    property: "scale"
-                    from: 0.95
-                    to: 1
-                    duration: 150
-                    easing.type: Easing.OutCubic
-                }
-            }
-        }
-
-        exit: Transition {
-            ParallelAnimation {
-                NumberAnimation {
-                    property: "opacity"
-                    from: 1
-                    to: 0
-                    duration: 100
-                    easing.type: Easing.InCubic
-                }
-                NumberAnimation {
-                    property: "scale"
-                    from: 1
-                    to: 0.95
-                    duration: 100
-                    easing.type: Easing.InCubic
-                }
-            }
-        }
-
-        background: Rectangle {
-            radius: 10
-            color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, 0.98)
-            border.color: Theme.divider
-            border.width: 1
-        }
-
-        Overlay.modal: Rectangle {
-            color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.5)
-        }
-
         contentItem: ColumnLayout {
             spacing: 20
 
-            // Header
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 8
@@ -567,7 +736,15 @@ Item {
                         id: modalIdField
                         Layout.fillWidth: true
                         placeholder: "ollama"
+                        hasError: text.trim().length > 0 && root.model.isProviderIdTaken(text.trim())
                         onAccepted: addModal._submit()
+                    }
+
+                    Text {
+                        visible: modalIdField.hasError
+                        text: "This instance ID is already in use."
+                        color: Theme.danger
+                        font.pointSize: Theme.smallerFontSize
                     }
                 }
 
@@ -617,43 +794,10 @@ Item {
                     Layout.fillWidth: true
                 }
 
-                RowLayout {
-                    id: modalApiKeyRow
-                    Layout.fillWidth: true
-                    spacing: 4
-
-                    property bool revealed: false
-
-                    FormTextInput {
-                        id: modalApiKeyField
-                        Layout.fillWidth: true
-                        placeholder: "sk-..."
-                        echoMode: modalApiKeyRow.revealed ? TextInput.Normal : TextInput.Password
-                        onAccepted: addModal._submit()
-                    }
-
-                    Rectangle {
-                        Layout.preferredWidth: 36
-                        Layout.preferredHeight: 36
-                        radius: 8
-                        color: "transparent"
-                        border.color: modalRevealHover.hovered ? Theme.inputBorderFocus : Theme.inputBorder
-                        border.width: 1
-
-                        ViciImage {
-                            anchors.centerIn: parent
-                            source: Img.builtin(modalApiKeyRow.revealed ? "eye-disabled" : "eye").withFillColor(Theme.textMuted)
-                            width: 16
-                            height: 16
-                        }
-
-                        HoverHandler {
-                            id: modalRevealHover
-                        }
-                        TapHandler {
-                            onTapped: modalApiKeyRow.revealed = !modalApiKeyRow.revealed
-                        }
-                    }
+                FormSecretInput {
+                    id: modalApiKeyField
+                    placeholder: "sk-..."
+                    onAccepted: addModal._submit()
                 }
             }
 
@@ -697,8 +841,10 @@ Item {
                     activeFocusOnTab: true
 
                     readonly property bool _canSubmit: {
-                        if (addModal._providerType === "ollama")
-                            return modalIdField.text.trim().length > 0;
+                        if (addModal._providerType === "ollama") {
+                            const id = modalIdField.text.trim();
+                            return id.length > 0 && !root.model.isProviderIdTaken(id);
+                        }
                         if (addModal._providerType === "mistral")
                             return modalApiKeyField.text.trim().length > 0;
                         return true;
