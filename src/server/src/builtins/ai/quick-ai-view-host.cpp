@@ -207,7 +207,7 @@ void QuickAIViewHost::rebuildModelSelectorItems() {
   }
 
   if (!selectionStillValid) {
-    for (const auto &provider : m_aiService->providers()) {
+    for (const auto &[id, provider] : m_aiService->providers()) {
       if (auto model = provider->findBestModel(AI::Capability::Completion)) {
         m_selectedProviderId = provider->id();
         m_selectedModelId = model->id;

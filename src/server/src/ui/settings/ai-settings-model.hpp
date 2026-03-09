@@ -21,7 +21,6 @@ public:
     TypeLabelRole,
     IconRole,
     DescriptionRole,
-    ExpandedRole,
     UrlRole,
     ApiKeyRole,
   };
@@ -37,19 +36,21 @@ public:
 
   Q_INVOKABLE void addProvider(const QString &type, const QVariantMap &fields);
   Q_INVOKABLE void removeProvider(int row);
-  Q_INVOKABLE void toggleExpanded(int row);
   Q_INVOKABLE void setField(int row, const QString &field, const QString &value);
+  Q_INVOKABLE QVariantMap providerDetails(int row) const;
   Q_INVOKABLE QVariantList modelsForProvider(int row) const;
+  Q_INVOKABLE void setModelEnabled(int row, const QString &modelId, bool enabled);
   Q_INVOKABLE QString nextProviderId(const QString &type) const;
+  Q_INVOKABLE bool isProviderIdTaken(const QString &id) const;
 
 signals:
   void providersChanged();
+  void modelsConfigChanged();
 
 private:
   struct ProviderEntry {
     std::string id;
     std::string type;
-    bool expanded = false;
   };
 
   bool canAddType(std::string_view type) const;

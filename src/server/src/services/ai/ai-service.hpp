@@ -19,69 +19,33 @@ signals:
 
 public:
   Service() : m_configManager(Omnicast::configDir() / "ai.json") {
-    connect(&m_configManager, &ConfigManager::configChanged, this,
-            [this]() { applyConfig(m_configManager.value()); });
+    connect(&m_configManager, &ConfigManager::configChanged, this, &Service::reconcileProviders);
     m_configManager.load();
   }
 
   ~Service() override = default;
-
-  // for now, we reinstantiate all providers on config change
-  // this happens rarely enough so that this isn't a problem.
-  // this greately simplifies thing: we can directly pass the config to the provider's constructor and we do
-  // not have to handle reconfiguration. All ongoing generation tasks will be aborted.
-  void applyConfig(const ConfigValue &value) {
-
-    for (auto &provider : m_providers) {
-      disconnect(provider.get());
-    }
-
-    m_providers.clear();
-
-    for (auto const &[id, config] : value.providers) {
-      auto provider = createProvider(config);
-      connect(provider.get(), &AI::AbstractProvider::modelsUpdated, this, &Service::modelsChanged);
-      m_providers.emplace_back(provider);
-    }
-
-    for (auto &provider : m_providers) {
-      provider->start();
-    }
-  }
-
-  std::shared_ptr<AI::AbstractProvider> createProvider(const ConfigValue::ProviderConfig &config) {
-    auto const visitor =
-        overloads{[](AI::ConfigValue::OllamaConfig ollama) -> std::shared_ptr<AI::AbstractProvider> {
-                    return std::make_shared<OllamaProvider>(std::move(ollama));
-                  },
-                  [](const AI::ConfigValue::MistralConfig &mistral) -> std::shared_ptr<AI::AbstractProvider> {
-                    return std::make_shared<MistralProvider>(mistral.apiKey.c_str());
-                  },
-                  [](const auto &p) { return nullptr; }};
-
-    return std::visit(visitor, config);
-  }
 
   std::shared_ptr<AbstractChatCompletionStream>
   createChatCompletion(const ChatCompletionPayload &payload) const {
     if (!payload.modelId.empty()) {
       if (payload.providerId) {
         if (auto it =
-                std::ranges::find_if(m_providers, [&](auto &&p) { return p->id() == *payload.providerId; });
+                std::ranges::find_if(m_providers, [&](auto &&p) { return p.first == *payload.providerId; });
             it != m_providers.end()) {
-          return (*it)->createChatCompletion(payload);
+          return it->second->createChatCompletion(payload);
         }
       }
 
-      for (const auto &provider : m_providers) {
+      for (const auto &[id, provider] : m_providers) {
         for (const auto &model : provider->listModels()) {
           if (model.id == payload.modelId) { return provider->createChatCompletion(payload); }
         }
       }
     }
 
-    for (const auto &provider : m_providers) {
+    for (const auto &[id, provider] : m_providers) {
       if (const auto model = provider->findBestModel(AI::Capability::Completion)) {
+        if (!isModelEnabled(id, model->id)) continue;
         return provider->createChatCompletion({.modelId = model->id, .messages = payload.messages});
       }
     }
@@ -90,8 +54,9 @@ public:
   }
 
   QFuture<TranscriptionResult> transcribe(const std::filesystem::path &path) {
-    for (const auto &provider : m_providers) {
+    for (const auto &[id, provider] : m_providers) {
       if (const auto model = provider->findBestModel(Capability::Transcription)) {
+        if (!isModelEnabled(id, model->id)) continue;
         return provider->transcribe(path);
       }
     }
@@ -100,11 +65,7 @@ public:
   }
 
   AbstractProvider *getProviderById(std::string_view id) {
-    if (auto it = std::ranges::find_if(m_providers, [&](auto &&provider) { return provider->id() == id; });
-        it != m_providers.end()) {
-      return it->get();
-    }
-
+    if (auto it = m_providers.find(std::string(id)); it != m_providers.end()) { return it->second.get(); }
     return nullptr;
   }
 
@@ -114,22 +75,85 @@ public:
 
   std::vector<AI::ProviderModel> listModels(std::optional<Capabilities> caps = std::nullopt) {
     std::vector<AI::ProviderModel> models;
-
     models.reserve(m_providers.size() * 50);
 
-    for (const auto &provider : m_providers) {
+    for (const auto &[id, provider] : m_providers) {
       for (auto &model : provider->listModels()) {
         if (caps && !(model.caps & *caps)) continue;
-        ProviderModel pmodel(provider->id(), std::move(model));
-        models.emplace_back(pmodel);
+        ProviderModel pmodel(id, std::move(model));
+        pmodel.enabled = isModelEnabled(id, pmodel.id);
+        if (!pmodel.enabled) continue;
+        models.emplace_back(std::move(pmodel));
       }
     }
 
     return models;
   }
 
+  std::vector<AI::ProviderModel> modelsForProvider(std::string_view providerId) {
+    auto it = m_providers.find(std::string(providerId));
+    if (it == m_providers.end()) return {};
+
+    std::vector<AI::ProviderModel> models;
+    for (auto &model : it->second->listModels()) {
+      ProviderModel pmodel(std::string(providerId), std::move(model));
+      pmodel.enabled = isModelEnabled(pmodel.providerId, pmodel.id);
+      models.emplace_back(std::move(pmodel));
+    }
+    return models;
+  }
+
+  bool isModelEnabled(const std::string &providerId, const std::string &modelId) const {
+    auto modelKey = providerId + ":" + modelId;
+    auto it = m_configManager.value().models.find(modelKey);
+    return it == m_configManager.value().models.end() || it->second.enabled;
+  }
+
 private:
-  std::vector<std::shared_ptr<AI::AbstractProvider>> m_providers;
+  void reconcileProviders(const ConfigValue &current, const ConfigValue &previous) {
+    auto const &newProviders = current.providers;
+    auto const &oldProviders = previous.providers;
+
+    // Remove providers that no longer exist or whose config changed
+    std::erase_if(m_providers, [&](const auto &entry) {
+      auto const &[id, provider] = entry;
+      auto it = newProviders.find(id);
+      if (it == newProviders.end()) return true;
+      auto oldIt = oldProviders.find(id);
+      return oldIt == oldProviders.end() || oldIt->second != it->second;
+    });
+
+    // Add new providers or recreate changed ones
+    std::vector<std::shared_ptr<AbstractProvider>> toStart;
+    for (auto const &[id, config] : newProviders) {
+      if (m_providers.contains(id)) continue;
+
+      auto provider = createProvider(id, config);
+      if (!provider) continue;
+      connect(provider.get(), &AI::AbstractProvider::modelsUpdated, this, &Service::modelsChanged);
+      toStart.emplace_back(provider);
+      m_providers[id] = std::move(provider);
+    }
+
+    for (auto &provider : toStart) {
+      provider->start();
+    }
+  }
+
+  static std::shared_ptr<AI::AbstractProvider> createProvider(const std::string &id,
+                                                              const ConfigValue::ProviderConfig &config) {
+    return std::visit(
+        overloads{[](AI::ConfigValue::OllamaConfig ollama) -> std::shared_ptr<AI::AbstractProvider> {
+                    return std::make_shared<OllamaProvider>(std::move(ollama));
+                  },
+                  [](const AI::ConfigValue::MistralConfig &mistral) -> std::shared_ptr<AI::AbstractProvider> {
+                    return std::make_shared<MistralProvider>(mistral.apiKey.c_str());
+                  },
+                  [](const auto &) -> std::shared_ptr<AI::AbstractProvider> { return nullptr; }},
+        config);
+  }
+
+  std::unordered_map<std::string, std::shared_ptr<AI::AbstractProvider>> m_providers;
   ConfigManager m_configManager;
 };
 }; // namespace AI
