@@ -73,6 +73,7 @@ Item {
         ShortcutBadge {
             visible: root.shortcutTokens && root.shortcutTokens.length > 0
             tokens: root.shortcutTokens
+            contentColor: root.selected ? Theme.listItemSelectionFg : Theme.foreground
             Layout.alignment: Qt.AlignVCenter
         }
     }
