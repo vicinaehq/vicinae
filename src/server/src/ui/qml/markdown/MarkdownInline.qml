@@ -43,53 +43,95 @@ Item {
 
                 sourceComponent: {
                     switch (blockType) {
-                    case heading:        return headingComp
-                    case paragraph:      return paragraphComp
-                    case codeBlock:      return codeBlockComp
-                    case bulletList:     return listComp
-                    case orderedList:    return listComp
-                    case table:          return tableComp
-                    case image:          return imageComp
-                    case horizontalRule: return hrComp
-                    case htmlBlock:      return htmlBlockComp
-                    case blockquote:     return blockquoteComp
-                    case callout:        return calloutComp
-                    default:             return null
+                    case heading:
+                        return headingComp;
+                    case paragraph:
+                        return paragraphComp;
+                    case codeBlock:
+                        return codeBlockComp;
+                    case bulletList:
+                        return listComp;
+                    case orderedList:
+                        return listComp;
+                    case table:
+                        return tableComp;
+                    case image:
+                        return imageComp;
+                    case horizontalRule:
+                        return hrComp;
+                    case htmlBlock:
+                        return htmlBlockComp;
+                    case blockquote:
+                        return blockquoteComp;
+                    case callout:
+                        return calloutComp;
+                    default:
+                        return null;
                     }
                 }
 
                 onLoaded: {
-                    item.selectionController = null
-                    item.mdModel = mdModel
-                    item.blockIndex = index
+                    item.selectionController = null;
+                    item.mdModel = mdModel;
+                    item.blockIndex = index;
                     if (blockType !== codeBlock && blockType !== image && blockType !== horizontalRule)
-                        item.fontFamily = Qt.binding(() => root.fontFamily)
+                        item.fontFamily = Qt.binding(() => root.fontFamily);
                     if (blockType === orderedList)
-                        item.ordered = true
+                        item.ordered = true;
                     else if (blockType === bulletList)
-                        item.ordered = false
+                        item.ordered = false;
                     if (blockType === image)
-                        item.maxImageHeight = Qt.binding(() => root.height * 0.7)
-                    item.blockData = blockData
+                        item.maxImageHeight = Qt.binding(() => root.height * 0.7);
+                    item.blockData = blockData;
                 }
             }
         }
     }
 
-    Component { id: headingComp;    MdHeading {} }
-    Component { id: paragraphComp;  MdParagraph {} }
-    Component { id: codeBlockComp;  MdCodeBlock {} }
-    Component { id: listComp;       MdList {} }
-    Component { id: tableComp;      MdTable {} }
-    Component { id: imageComp;      MdImage {} }
-    Component { id: hrComp;         MdHorizontalRule {} }
-    Component { id: htmlBlockComp;  MdHtmlBlock {} }
-    Component { id: blockquoteComp; MdBlockquote {} }
-    Component { id: calloutComp;    MdCallout {} }
+    Component {
+        id: headingComp
+        MdHeading {}
+    }
+    Component {
+        id: paragraphComp
+        MdParagraph {}
+    }
+    Component {
+        id: codeBlockComp
+        MdCodeBlock {}
+    }
+    Component {
+        id: listComp
+        MdList {}
+    }
+    Component {
+        id: tableComp
+        MdTable {}
+    }
+    Component {
+        id: imageComp
+        MdImage {}
+    }
+    Component {
+        id: hrComp
+        MdHorizontalRule {}
+    }
+    Component {
+        id: htmlBlockComp
+        MdHtmlBlock {}
+    }
+    Component {
+        id: blockquoteComp
+        MdBlockquote {}
+    }
+    Component {
+        id: calloutComp
+        MdCallout {}
+    }
 
     onMarkdownChanged: mdModel.setMarkdown(markdown)
     Component.onCompleted: {
         if (markdown.length > 0)
-            mdModel.setMarkdown(markdown)
+            mdModel.setMarkdown(markdown);
     }
 }
