@@ -300,6 +300,43 @@ Item {
                 Item {
                     Layout.fillWidth: true
                 }
+
+                Rectangle {
+                    implicitWidth: removeRow.implicitWidth + 12
+                    implicitHeight: 28
+                    radius: 6
+                    color: removeHover.hovered ? Qt.rgba(Theme.danger.r, Theme.danger.g, Theme.danger.b, 0.15) : "transparent"
+
+                    RowLayout {
+                        id: removeRow
+                        anchors.centerIn: parent
+                        spacing: 4
+
+                        ViciImage {
+                            source: Img.builtin("trash").withFillColor(removeHover.hovered ? Theme.danger : Theme.textMuted)
+                            Layout.preferredWidth: 14
+                            Layout.preferredHeight: 14
+                        }
+
+                        Text {
+                            text: "Remove"
+                            color: removeHover.hovered ? Theme.danger : Theme.textMuted
+                            font.pointSize: Theme.smallerFontSize
+                        }
+                    }
+
+                    HoverHandler {
+                        id: removeHover
+                        cursorShape: Qt.PointingHandCursor
+                    }
+                    TapHandler {
+                        onTapped: {
+                            const row = root.selectedRow;
+                            root.selectedRow = -1;
+                            root.model.removeProvider(row);
+                        }
+                    }
+                }
             }
 
             Item {
@@ -557,85 +594,6 @@ Item {
                                             onToggled: root.model.setModelEnabled(root.selectedRow, modelDelegate.modelData.id, checked)
                                         }
                                     }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            Item {
-                implicitHeight: 32
-            }
-
-            // ── Danger zone ──
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.leftMargin: detailCol.sideMargin + 20
-                Layout.rightMargin: detailCol.sideMargin + 20
-                implicitHeight: dangerCol.implicitHeight + 32
-                radius: 8
-                color: "transparent"
-                border.color: Qt.rgba(Theme.danger.r, Theme.danger.g, Theme.danger.b, 0.3)
-                border.width: 1
-
-                ColumnLayout {
-                    id: dangerCol
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    anchors.margins: 16
-                    spacing: 12
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 12
-
-                        ColumnLayout {
-                            Layout.fillWidth: true
-                            spacing: 2
-
-                            Text {
-                                text: "Remove provider"
-                                color: Theme.foreground
-                                font.pointSize: Theme.smallerFontSize
-                                font.bold: true
-                            }
-
-                            Text {
-                                text: "This will remove the provider and all its associated model settings."
-                                color: Theme.textMuted
-                                font.pointSize: Theme.smallerFontSize
-                                wrapMode: Text.Wrap
-                                Layout.fillWidth: true
-                            }
-                        }
-
-                        Rectangle {
-                            id: removeBtn
-                            implicitWidth: removeBtnText.implicitWidth + 20
-                            implicitHeight: 30
-                            radius: 6
-                            color: removeBtnHover.hovered ? Theme.danger : "transparent"
-                            border.color: removeBtnHover.hovered ? Theme.danger : Qt.rgba(Theme.danger.r, Theme.danger.g, Theme.danger.b, 0.5)
-                            border.width: 1
-
-                            Text {
-                                id: removeBtnText
-                                anchors.centerIn: parent
-                                text: "Remove"
-                                color: removeBtnHover.hovered ? "#ffffff" : Theme.danger
-                                font.pointSize: Theme.smallerFontSize
-                            }
-
-                            HoverHandler {
-                                id: removeBtnHover
-                            }
-                            TapHandler {
-                                onTapped: {
-                                    const row = root.selectedRow;
-                                    root.selectedRow = -1;
-                                    root.model.removeProvider(row);
                                 }
                             }
                         }
