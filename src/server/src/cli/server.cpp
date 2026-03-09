@@ -340,26 +340,6 @@ void CliServerCommand::run(CLI::App *) {
     qInfo() << "Vicinae server successfully started. Call \"vicinae toggle\" to toggle the window";
   }
 
-  auto aiService = ServiceRegistry::instance()->ai();
-
-  QObject::connect(aiService, &AI::Service::modelsChanged, [aiService]() {
-    for (const auto &model : aiService->listModels()) {
-      qDebug() << model.name << AI::stringifyCapabilities(model.caps);
-    }
-
-    auto completion = ServiceRegistry::instance()->ai()->createChatCompletion(
-        {.messages = {AI::ChatMessage(AI::ChatRole::User, "Who are you?")}});
-
-    qDebug() << "sent completion";
-
-    QObject::connect(completion.get(), &AI::AbstractChatCompletionStream::dataAdded,
-                     [completion](const std::string &text) { std::cout << text; });
-    QObject::connect(
-        completion.get(), &AI::AbstractChatCompletionStream::errorOccured,
-        [completion](const std::string &reason) { qWarning() << "Failed to stream" << reason.c_str(); });
-    completion->start();
-  });
-
   qApp->exec();
   // make sure child processes are terminated
   ctx.services->clipman()->clipboardServer()->stop();

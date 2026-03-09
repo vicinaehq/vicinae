@@ -721,10 +721,12 @@ set(VICINAE_QML_FILES
 	src/qml/qml/QuickAIModelAccessory.qml
 	src/qml/qml/DetailPanel.qml
 	src/qml/qml/MetadataBar.qml
+	src/qml/qml/ViciModal.qml
 	src/qml/qml/AlertDialog.qml
 	src/qml/qml/FormView.qml
 	src/qml/qml/FormField.qml
 	src/qml/qml/FormTextInput.qml
+	src/qml/qml/FormSecretInput.qml
 	src/qml/qml/FormTextArea.qml
 	src/qml/qml/FormCheckbox.qml
 	src/qml/qml/FormSeparator.qml
