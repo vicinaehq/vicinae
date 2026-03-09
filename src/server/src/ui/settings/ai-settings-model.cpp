@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <format>
 #include <ranges>
+#include "image-url.hpp"
 #include "service-registry.hpp"
 #include "services/ai/ai-config.hpp"
 #include "services/ai/ai-provider.hpp"
@@ -10,7 +11,7 @@
 AISettingsModel::AISettingsModel(QObject *parent) : QAbstractListModel(parent) {
   m_aiService = ServiceRegistry::instance()->ai();
   if (m_aiService) {
-    connect(&m_aiService->configManager(), &AI::ConfigManager::configChanged, this, &AISettingsModel::reload);
+    connect(&m_aiService->configManager(), &AI::ConfigManager::configChanged, this, [this]() { reload(); });
     reload();
   }
 }
@@ -50,8 +51,6 @@ QVariant AISettingsModel::data(const QModelIndex &index, int role) const {
     if (typeInfo) return QString::fromUtf8(typeInfo->description.data(), typeInfo->description.size());
     return {};
   }
-  case ExpandedRole:
-    return entry.expanded;
   case UrlRole:
     if (auto *cfg = std::get_if<AI::ConfigValue::OllamaConfig>(&it->second)) {
       return QString::fromStdString(cfg->url);
@@ -69,14 +68,8 @@ QVariant AISettingsModel::data(const QModelIndex &index, int role) const {
 
 QHash<int, QByteArray> AISettingsModel::roleNames() const {
   return {
-      {ProviderIdRole, "providerId"},
-      {TypeRole, "type"},
-      {TypeLabelRole, "typeLabel"},
-      {IconRole, "icon"},
-      {DescriptionRole, "description"},
-      {ExpandedRole, "expanded"},
-      {UrlRole, "url"},
-      {ApiKeyRole, "apiKey"},
+      {ProviderIdRole, "providerId"},   {TypeRole, "type"}, {TypeLabelRole, "typeLabel"}, {IconRole, "icon"},
+      {DescriptionRole, "description"}, {UrlRole, "url"},   {ApiKeyRole, "apiKey"},
   };
 }
 
@@ -131,6 +124,26 @@ QString AISettingsModel::nextProviderId(const QString &type) const {
   return QString::fromStdString(id);
 }
 
+bool AISettingsModel::isProviderIdTaken(const QString &id) const {
+  auto const &config = m_aiService->configManager().value();
+  return config.providers.contains(id.toStdString());
+}
+
+QVariantMap AISettingsModel::providerDetails(int row) const {
+  QVariantMap result;
+  if (row < 0 || row >= static_cast<int>(m_entries.size())) return result;
+
+  auto idx = index(row);
+  result[QStringLiteral("providerId")] = data(idx, ProviderIdRole);
+  result[QStringLiteral("type")] = data(idx, TypeRole);
+  result[QStringLiteral("typeLabel")] = data(idx, TypeLabelRole);
+  result[QStringLiteral("icon")] = data(idx, IconRole);
+  result[QStringLiteral("description")] = data(idx, DescriptionRole);
+  result[QStringLiteral("url")] = data(idx, UrlRole);
+  result[QStringLiteral("apiKey")] = data(idx, ApiKeyRole);
+  return result;
+}
+
 void AISettingsModel::addProvider(const QString &type, const QVariantMap &fields) {
   auto typeStd = type.toStdString();
   if (!canAddType(typeStd)) return;
@@ -166,25 +179,14 @@ void AISettingsModel::removeProvider(int row) {
   if (row < 0 || row >= static_cast<int>(m_entries.size())) return;
 
   auto &config = m_aiService->configManager().value();
-  config.providers.erase(m_entries[static_cast<std::size_t>(row)].id);
+  auto const &providerId = m_entries[static_cast<std::size_t>(row)].id;
+
+  // Remove associated model configs
+  auto prefix = providerId + ":";
+  std::erase_if(config.models, [&prefix](const auto &pair) { return pair.first.starts_with(prefix); });
+
+  config.providers.erase(providerId);
   save();
-}
-
-void AISettingsModel::toggleExpanded(int row) {
-  if (row < 0 || row >= static_cast<int>(m_entries.size())) return;
-
-  // Collapse all others
-  for (std::size_t i = 0; i < m_entries.size(); ++i) {
-    if (static_cast<int>(i) != row && m_entries[i].expanded) {
-      m_entries[i].expanded = false;
-      auto idx = index(static_cast<int>(i));
-      emit dataChanged(idx, idx, {ExpandedRole});
-    }
-  }
-
-  m_entries[static_cast<std::size_t>(row)].expanded = !m_entries[static_cast<std::size_t>(row)].expanded;
-  auto idx = index(row);
-  emit dataChanged(idx, idx, {ExpandedRole});
 }
 
 void AISettingsModel::setField(int row, const QString &field, const QString &value) {
@@ -211,24 +213,55 @@ void AISettingsModel::setField(int row, const QString &field, const QString &val
 QVariantList AISettingsModel::modelsForProvider(int row) const {
   if (row < 0 || row >= static_cast<int>(m_entries.size())) return {};
 
-  auto *provider = m_aiService->getProviderById(m_entries[static_cast<std::size_t>(row)].id);
-  if (!provider) return {};
+  auto const &providerId = m_entries[static_cast<std::size_t>(row)].id;
+  auto models = m_aiService->modelsForProvider(providerId);
+
+  auto *provider = m_aiService->getProviderById(providerId);
+  auto providerIcon = provider ? provider->icon() : std::nullopt;
 
   QVariantList result;
-  for (const auto &model : provider->listModels()) {
+  result.reserve(static_cast<int>(models.size()));
+  for (const auto &model : models) {
     QVariantMap m;
     m[QStringLiteral("id")] = QString::fromStdString(model.id);
     m[QStringLiteral("name")] = QString::fromStdString(model.name);
+
+    if (model.icon) {
+      m[QStringLiteral("icon")] = QVariant::fromValue(*model.icon);
+    } else if (providerIcon) {
+      m[QStringLiteral("icon")] = QVariant::fromValue(*providerIcon);
+    }
+
+    m[QStringLiteral("enabled")] = model.enabled;
+
     auto caps = AI::stringifyCapabilities(model.caps);
-    QStringList capList;
+    QVariantList capList;
     capList.reserve(static_cast<int>(caps.size()));
     for (const auto &c : caps) {
       capList.append(QString::fromStdString(c));
     }
-    m[QStringLiteral("capabilities")] = capList.join(QStringLiteral(", "));
+    m[QStringLiteral("capabilities")] = capList;
     result.append(m);
   }
   return result;
+}
+
+void AISettingsModel::setModelEnabled(int row, const QString &modelId, bool enabled) {
+  if (row < 0 || row >= static_cast<int>(m_entries.size())) return;
+
+  auto const &providerId = m_entries[static_cast<std::size_t>(row)].id;
+  auto modelKey = providerId + ":" + modelId.toStdString();
+
+  auto &config = m_aiService->configManager().value();
+
+  if (enabled) {
+    config.models.erase(modelKey);
+  } else {
+    config.models[modelKey] = AI::ConfigValue::ModelConfig{.enabled = false};
+  }
+
+  save();
+  emit modelsConfigChanged();
 }
 
 void AISettingsModel::save() { m_aiService->configManager().save(); }
