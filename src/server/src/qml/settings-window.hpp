@@ -17,6 +17,7 @@ class GeneralSettingsModel;
 class KeybindSettingsModel;
 class ExtensionSettingsModel;
 class SettingsSidebarModel;
+class AISettingsModel;
 class QQuickWindow;
 
 class SettingsWindow : public QObject {
@@ -35,6 +36,7 @@ class SettingsWindow : public QObject {
   Q_PROPERTY(GeneralSettingsModel *generalModel READ generalModel CONSTANT)
   Q_PROPERTY(KeybindSettingsModel *keybindModel READ keybindModel CONSTANT)
   Q_PROPERTY(ExtensionSettingsModel *extensionModel READ extensionModel CONSTANT)
+  Q_PROPERTY(AISettingsModel *aiModel READ aiModel CONSTANT)
 
 public:
   explicit SettingsWindow(ApplicationContext &ctx, QObject *parent = nullptr);
@@ -55,6 +57,7 @@ public:
   GeneralSettingsModel *generalModel() const { return m_generalModel; }
   KeybindSettingsModel *keybindModel() const { return m_keybindModel; }
   ExtensionSettingsModel *extensionModel() const { return m_extensionModel; }
+  AISettingsModel *aiModel() const { return m_aiModel; }
 
   bool canGoBack() const { return !m_backStack.isEmpty(); }
   bool canGoForward() const { return !m_forwardStack.isEmpty(); }
@@ -92,6 +95,7 @@ private:
   KeybindSettingsModel *m_keybindModel = nullptr;
   ExtensionSettingsModel *m_extensionModel = nullptr;
   SettingsSidebarModel *m_sidebarModel = nullptr;
+  AISettingsModel *m_aiModel = nullptr;
   QQuickWindow *m_window = nullptr;
   QString m_currentPage = QStringLiteral("general");
   QString m_pendingCommandId;
