@@ -41,12 +41,12 @@ Rectangle {
         }
     }
 
-    border.width: root.bordered ? 1 : 0
+    border.width: root.bordered || root.activeFocus ? 1 : 0
     border.color: {
+        if (root.activeFocus)
+            return root.variant === "accent" ? Theme.listItemSelectionFg : Theme.accent;
         if (!root.bordered)
             return "transparent";
-        if (root.activeFocus)
-            return Theme.accent;
         if (root.variant === "secondary")
             return Theme.inputBorder;
         return Theme.divider;
