@@ -520,6 +520,8 @@ set(SRCS
 	src/services/ai/ai-provider.hpp
 	src/services/ai/ai-service.hpp
 	src/services/ai/ai-config.hpp
+	src/services/ai/ai-provider-registry.hpp
+	src/services/ai/ai-provider-registry.cpp
 
 	# UI
 	src/ui/bridges/keybind-bridge.hpp
