@@ -26,6 +26,7 @@ Item {
             icon: "arrow-left"
             iconSize: 14
             variant: "primary"
+            translucent: true
             onClicked: launcher.goBack()
         }
 

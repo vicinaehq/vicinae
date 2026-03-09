@@ -153,6 +153,34 @@ ColumnLayout {
     }
 
     Text {
+        text: "Translucent"
+        color: Theme.foreground
+        font.pointSize: Theme.regularFontSize + 2
+        font.bold: true
+    }
+
+    Flow {
+        Layout.fillWidth: true
+        spacing: 8
+
+        ViciButton {
+            text: "Primary"
+            variant: "primary"
+            translucent: true
+        }
+        ViciButton {
+            text: "Secondary"
+            variant: "secondary"
+            translucent: true
+        }
+        ViciButton {
+            text: "Accent"
+            variant: "accent"
+            translucent: true
+        }
+    }
+
+    Text {
         text: "Focusable (tab through)"
         color: Theme.foreground
         font.pointSize: Theme.regularFontSize + 2

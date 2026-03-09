@@ -11,6 +11,7 @@ Rectangle {
     property color foreground: root.variant === "accent" && root.hovered ? Theme.listItemSelectionFg : Theme.foreground
     property real iconSize: 16
     property real horizontalPadding: 12
+    property bool translucent: false
 
     signal clicked
 
@@ -22,14 +23,18 @@ Rectangle {
     implicitHeight: 36
     radius: 6
 
+    function _applyTranslucency(c) {
+        return root.translucent ? Qt.rgba(c.r, c.g, c.b, 0.6) : c;
+    }
+
     color: {
         switch (root.variant) {
         case "primary":
-            return root.hovered ? Theme.buttonPrimaryHoverBg : Theme.buttonPrimaryBg;
+            return root._applyTranslucency(root.hovered ? Theme.buttonPrimaryHoverBg : Theme.buttonPrimaryBg);
         case "secondary":
-            return root.hovered ? Theme.listItemHoverBg : Theme.secondaryBackground;
+            return root._applyTranslucency(root.hovered ? Theme.listItemHoverBg : Theme.secondaryBackground);
         case "accent":
-            return root.hovered ? Theme.accent : Theme.listItemSelectionBg;
+            return root._applyTranslucency(root.hovered ? Theme.accent : Theme.listItemSelectionBg);
         case "ghost":
         default:
             return root.hovered ? Theme.listItemHoverBg : "transparent";
