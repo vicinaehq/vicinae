@@ -39,6 +39,7 @@ struct Model {
 
 struct ProviderModel : public Model {
   std::string providerId;
+  bool enabled = true;
 
   ProviderModel(std::string providerId, Model &&model)
       : Model(std::move(model)), providerId(std::move(providerId)) {}
