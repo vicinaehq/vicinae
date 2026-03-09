@@ -321,5 +321,7 @@ private:
   ConfigValue m_defaultConfig;
 
   QTimer m_fsDebounce;
+
+  std::vector<std::string> m_envOverrides;
 };
 }; // namespace config

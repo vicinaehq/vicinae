@@ -1,6 +1,8 @@
+#include <cstdlib>
 #include <filesystem>
 #include <format>
 #include <fstream>
+#include <ranges>
 #include <QStyleHints>
 #include <glaze/util/key_transformers.hpp>
 #include <qlogging.h>
@@ -81,6 +83,15 @@ Manager::Manager(fs::path path) : m_userPath(std::move(path)) {
 
   m_fsDebounce.setSingleShot(true);
   m_fsDebounce.setInterval(100);
+
+  // Parse VICINAE_OVERRIDES environment variable once at construction
+  if (const char *envOverrides = std::getenv("VICINAE_OVERRIDES")) {
+    std::string_view envStr(envOverrides);
+    m_envOverrides =
+        envStr | std::views::split(':') |
+        std::views::transform([](const auto &part) { return std::string(part.begin(), part.end()); }) |
+        std::ranges::to<std::vector<std::string>>();
+  }
 
   initConfig();
   reloadConfig();
@@ -258,6 +269,13 @@ Manager::PartialConfigResult Manager::load(const std::filesystem::path &path, co
 
     for (const auto &imp : cfg.overrides.value_or({})) {
       auto result = importFile(cfg, resolvePath(imp, path), true);
+      if (!result) return result;
+      cfg = std::move(result).value();
+    }
+
+    // Process VICINAE_OVERRIDES environment variable (parsed once in constructor)
+    for (const auto &overridePath : m_envOverrides) {
+      auto result = importFile(cfg, resolvePath(overridePath, path), true);
       if (!result) return result;
       cfg = std::move(result).value();
     }

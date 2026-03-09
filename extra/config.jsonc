@@ -3,6 +3,8 @@
 
 	// Additional configuration files to load. Unlike regular imports specified in the 'imports' array,
 	// values in these files always take precedence over values defined in this current file.
+	// You can also specify additional overrides via the VICINAE_OVERRIDES environment variable
+	// using colon-separated paths (like $PATH). These take precedence over config file overrides.
 	"overrides": [
 		// "~/path/to/home-manager/config.json"
 	],
