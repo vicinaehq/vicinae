@@ -25,6 +25,10 @@ Window {
                 "title": qsTr("Advanced"),
                 "page": advancedPage
             },
+            "ai": {
+                "title": qsTr("AI"),
+                "page": aiPage
+            },
             "about": {
                 "title": qsTr("About"),
                 "page": aboutPage
@@ -340,6 +344,11 @@ Window {
     Component {
         id: advancedPage
         AdvancedSettingsPage {}
+    }
+
+    Component {
+        id: aiPage
+        AISettingsPage {}
     }
 
     Component {

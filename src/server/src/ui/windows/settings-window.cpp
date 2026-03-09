@@ -3,6 +3,8 @@
 #include "ui/bridges/config-bridge.hpp"
 #include "ui/qml-dev-loader.hpp"
 #include "ui/qml-engine-scope.hpp"
+#include "utils/environment.hpp"
+#include "ui/settings/ai-settings-model.hpp"
 #include "ui/settings/extension-settings-model.hpp"
 #include "ui/settings/general-settings-model.hpp"
 #include "ui/image/image-source.hpp"
@@ -44,6 +46,7 @@ void SettingsWindow::ensureInitialized() {
   m_keybindModel = new KeybindSettingsModel(this);
   m_extensionModel = new ExtensionSettingsModel(this);
   m_sidebarModel = new SettingsSidebarModel(m_extensionModel, this);
+  m_aiModel = new AISettingsModel(this);
 
   QmlDevLoader::attach(&m_engine, [this]() { reloadRoot(); });
   QmlEngineScope::set(&m_engine, this);

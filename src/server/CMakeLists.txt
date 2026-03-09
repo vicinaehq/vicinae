@@ -672,6 +672,8 @@ set(SRCS
 	src/ui/settings/settings-sidebar-model.cpp
 	src/ui/settings/extension-settings-model.hpp
 	src/ui/settings/extension-settings-model.cpp
+	src/ui/settings/ai-settings-model.hpp
+	src/ui/settings/ai-settings-model.cpp
 	src/ui/settings/preference-form-model.hpp
 	src/ui/settings/preference-form-model.cpp
 	src/ui/settings/provider-command-model.hpp
@@ -1233,6 +1235,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/settings/ShortcutsSettingsPage.qml
 	src/ui/qml/settings/ExtensionSettingsPage.qml
 	src/ui/qml/settings/AboutSettingsPage.qml
+	src/ui/qml/settings/AISettingsPage.qml
 	src/ui/qml/form/ShortcutRecorderField.qml
 	src/ui/qml/form/ShortcutRecorderCapture.qml
 	src/ui/qml/actions/ShortcutRecorderPanel.qml

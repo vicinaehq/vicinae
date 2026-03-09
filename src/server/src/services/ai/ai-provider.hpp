@@ -132,6 +132,16 @@ public:
    */
   virtual std::optional<ImageUrl> icon() const = 0;
 
+  /**
+   * A human-readable description of this provider.
+   */
+  virtual std::string_view description() const = 0;
+
+  /**
+   * Whether multiple instances of this provider type can coexist.
+   */
+  virtual bool allowMultiple() const = 0;
+
   virtual void start() = 0;
 
   /**
