@@ -1157,6 +1157,8 @@ set(VICINAE_QML_FILES
 	src/ui/qml/accessories/QuickAIModelAccessory.qml
 	src/ui/qml/markdown/MarkdownInline.qml
 	src/ui/qml/controls/PulsingDots.qml
+	src/ui/qml/controls/ViciModal.qml
+	src/ui/qml/form/FormSecretInput.qml
 	src/ui/qml/views/ExtensionGridView.qml
 	src/ui/qml/actions/ActionPanelPopover.qml
 	src/ui/qml/actions/ActionListPanel.qml

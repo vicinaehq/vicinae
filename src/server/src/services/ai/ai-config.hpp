@@ -17,6 +17,7 @@ namespace AI {
 struct ConfigValue {
   struct ModelConfig {
     bool enabled = true;
+    bool operator==(const ModelConfig &) const = default;
   };
 
   struct ProviderConfigBase {
@@ -27,18 +28,21 @@ struct ConfigValue {
   struct OllamaConfig {
     std::string type;
     std::string url = "http://localhost:11434";
+    bool operator==(const OllamaConfig &) const = default;
   };
 
   /*
   struct OpenAIConfig {
     std::string type;
     std::string apiKey;
+    bool operator==(const OpenAIConfig &) const = default;
   };
   */
 
   struct MistralConfig {
     std::string type;
     std::string apiKey;
+    bool operator==(const MistralConfig &) const = default;
   };
 
   using ProviderConfig = std::variant<OllamaConfig, MistralConfig>;
@@ -91,7 +95,7 @@ class ConfigManager : public QObject {
   Q_OBJECT
 
 signals:
-  void configChanged() const;
+  void configChanged(const ConfigValue &current, const ConfigValue &previous) const;
 
 public:
   ConfigManager(std::filesystem::path path) : m_path(std::move(path)) {
@@ -112,7 +116,8 @@ public:
       qWarning() << "Failed to save AI config:" << glz::format_error(error);
       return false;
     }
-    emit configChanged();
+    auto previous = std::exchange(m_lastSaved, m_value);
+    emit configChanged(m_value, previous);
     return true;
   }
 
@@ -123,8 +128,9 @@ private:
       qWarning() << "Failed to load AI config" << result.error();
       return;
     }
+    auto previous = std::exchange(m_lastSaved, result.value());
     m_value = result.value();
-    emit configChanged();
+    emit configChanged(m_value, previous);
   }
 
   std::expected<ConfigValue, std::string> loadConfig() {
@@ -145,5 +151,6 @@ private:
   QFileSystemWatcher m_watcher;
   std::filesystem::path m_path;
   ConfigValue m_value;
+  ConfigValue m_lastSaved;
 };
 }; // namespace AI
