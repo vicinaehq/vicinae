@@ -3,6 +3,7 @@
 #include "services/ai/ai-provider.hpp"
 #include "services/ai/json-client.hpp"
 #include <filesystem>
+#include <format>
 #include <qcborvalue.h>
 #include <qdir.h>
 #include <qhttpmultipart.h>
@@ -38,13 +39,6 @@ class MistralProvider : public AI::AbstractProvider {
   std::shared_ptr<AbstractChatCompletionStream>
   createChatCompletion(const ChatCompletionPayload &payload) override {
     return nullptr;
-    /*
-QUrl url("https://api.mistral.ai/v1/chat/completions");
-
-m_client.post<>()
-
-  return nullptr;
-          */
   }
 
   std::string id() const override { return "mistral"; }
@@ -73,30 +67,31 @@ m_client.post<>()
     return {voxtral};
   }
 
-  QFuture<TranscriptionResult> transcribe(const std::filesystem::path &path) override {
-    QUrl url("https://api.mistral.ai/v1/audio/transcriptions");
-
+  QFuture<TranscriptionResult> transcribe(const std::filesystem::path &path,
+                                          const TranscriptionOptions &opts) override {
     std::error_code ec;
 
     if (!std::filesystem::is_regular_file(path, ec)) {
       qWarning() << path << "is not a valid file";
-      return {};
+      return QtFuture::makeReadyValueFuture<TranscriptionResult>(
+          std::unexpected(std::format("{} is not a regular file", path.c_str())));
     }
 
     auto file = new QFile(path.c_str());
 
     if (!file->open(QIODevice::ReadOnly)) {
-      qWarning() << "Failed to open file" << path.c_str() << file->errorString();
+      return QtFuture::makeReadyValueFuture<TranscriptionResult>(std::unexpected(
+          std::format("Failed to open {}: {}", path.c_str(), file->errorString().toStdString())));
     }
 
     auto formData = new FormData;
 
     formData->addField("model", "voxtral-mini-2507");
-    formData->addFile(file, "video/mp4");
+    formData->addFile(file, "audio/mp3");
 
-    return m_client.post<TranscriptionResponse>(url, formData)
-        .then([](AI::Result<TranscriptionResponse> res) {
-          if (!res) { qWarning() << "Transcription failed" << res.error(); }
+    return m_client.post<TranscriptionResponse>("/audio/transcriptions", formData)
+        .then([](AI::Result<TranscriptionResponse> res) -> TranscriptionResult {
+          if (!res) { return std::unexpected(std::format("Transcription failed: {}", res.error())); }
           return TranscriptionResult(res->text);
         });
   }
@@ -104,6 +99,7 @@ m_client.post<>()
 public:
   MistralProvider(QString apiKey) {
     qDebug() << "mistral provider initialized with api key" << apiKey;
+    m_client.setBaseUrl("https://api.mistral.ai/v1/");
     m_client.setBearer(std::move(apiKey));
   }
 
