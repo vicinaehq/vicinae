@@ -2,7 +2,9 @@
 #include <algorithm>
 #include <expected>
 #include "common/types.hpp"
+#include <glaze/core/reflect.hpp>
 #include <qdir.h>
+#include <qfuture.h>
 #include <qfuturewatcher.h>
 #include <QPromise>
 #include <QNetworkReply>
@@ -58,6 +60,69 @@ public:
   template <typename T> using Watcher = QFutureWatcher<T>;
   template <typename T> using Result = std::expected<T, std::string>;
 
+  QUrl makeUrl(const QString &path) {
+    if (!m_baseUrl) return path;
+    QUrl url = m_baseUrl.value();
+    url.setPath(url.path() + path);
+    return url;
+  }
+
+  void setBearer(QString bearer) { m_bearer = std::move(bearer); }
+  void setBaseUrl(QString url) { m_baseUrl = std::move(url); }
+
+  template <glz::has_reflect T> QFuture<Result<T>> get(const QString &url) {
+    qInfo() << "[GET]" << url;
+    QPromise<Result<T>> promise;
+    auto req = createRequest(url);
+    auto reply = NetworkManager::manager()->get(req);
+
+    return waitForRequest<T>(std::move(promise), reply);
+  }
+
+  template <glz::has_reflect T> QFuture<Result<T>> post(const QString &url, FormData *data) {
+    qInfo() << "[POST]" << url;
+    QPromise<Result<T>> promise;
+    auto future = promise.future();
+    auto req = createRequest(url);
+    auto reply = NetworkManager::manager()->post(req, data->multipart());
+
+    data->setParent(reply);
+
+    return waitForRequest<T>(std::move(promise), reply);
+  }
+
+  template <glz::has_reflect T, glz::has_reflect U>
+  QFuture<Result<T>> post(const QString &url, const U &data) {
+    std::string payload;
+    auto req = createRequest(url);
+
+    if (auto const error = glz::write_json(data, payload)) {
+      return QtFuture::makeReadyValueFuture<Result<T>>(
+          std::unexpected(std::format("Failed to serialize request: {}", glz::format_error(error))));
+    }
+
+    qInfo() << "[POST]" << url;
+
+    QPromise<Result<T>> promise;
+    auto future = promise.future();
+
+    req.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader, "application/json");
+
+    auto reply = NetworkManager::manager()->post(req, payload.c_str());
+
+    return waitForRequest<T>(std::move(promise), reply);
+  }
+
+private:
+  QNetworkRequest createRequest(const QString &path) {
+    QNetworkRequest req;
+
+    req.setUrl(makeUrl(path));
+    if (m_bearer) { req.setRawHeader("Authorization", QString("Bearer %1").arg(m_bearer.value()).toUtf8()); }
+
+    return req;
+  }
+
   template <typename T>
   static QFuture<std::expected<T, std::string>> waitForRequest(QPromise<Result<T>> promise,
                                                                QNetworkReply *reply) {
@@ -90,64 +155,6 @@ public:
     });
 
     return future;
-  }
-
-  void setBearer(QString bearer) { m_bearer = std::move(bearer); }
-  void setBaseUrl(QString url) { m_baseUrl = std::move(url); }
-
-  template <typename T> QFuture<Result<T>> get(const QUrl &url) {
-    qInfo() << "[GET]" << url;
-    QPromise<Result<T>> promise;
-    auto req = createRequest();
-
-    req.setUrl(url);
-
-    auto reply = NetworkManager::manager()->get(req);
-
-    return waitForRequest<T>(std::move(promise), reply);
-  }
-
-  template <typename T> QFuture<Result<T>> post(const QUrl &url, FormData *data) {
-    QPromise<Result<T>> promise;
-    auto future = promise.future();
-    auto req = createRequest();
-
-    req.setUrl(url);
-
-    auto reply = NetworkManager::manager()->post(req, data->multipart());
-    data->setParent(reply);
-
-    return waitForRequest<T>(std::move(promise), reply);
-  }
-
-  template <typename T, typename U> QFuture<Result<T>> post(const QUrl &url, const U &data) {
-    qInfo() << "[POST]" << url;
-    std::string payload;
-    QPromise<Result<T>> promise;
-    auto future = promise.future();
-    auto req = createRequest();
-
-    if (auto const error = glz::write_json(data, payload)) {
-      promise.addResult(std::unexpected(std::string("Failed to serialize request")));
-      promise.finish();
-      return future;
-    }
-
-    req.setUrl(url);
-    req.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader, "application/json");
-
-    auto reply = NetworkManager::manager()->post(req, payload.c_str());
-
-    return waitForRequest<T>(std::move(promise), reply);
-  }
-
-private:
-  QNetworkRequest createRequest() {
-    QNetworkRequest req;
-
-    if (m_bearer) { req.setRawHeader("Authorization", QString("Bearer %1").arg(m_bearer.value()).toUtf8()); }
-
-    return req;
   }
 
   std::optional<QString> m_baseUrl;
