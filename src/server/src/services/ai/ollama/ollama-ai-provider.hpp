@@ -6,10 +6,12 @@
 #include "services/ai/ai-provider.hpp"
 #include <cstdint>
 #include <expected>
+#include <format>
 #include <glaze/core/opts.hpp>
 #include <glaze/core/reflect.hpp>
 #include <glaze/json/read.hpp>
 #include "services/ai/http-completion.hpp"
+#include "services/ai/json-client.hpp"
 #include <glaze/json/write.hpp>
 #include <memory>
 #include <qcontainerfwd.h>
@@ -143,7 +145,7 @@ class OllamaProvider : public AbstractProvider {
   QFuture<Result<std::vector<FullModelResponse>>> listModelsFull() {
     auto promise = std::make_shared<QPromise<Result<std::vector<FullModelResponse>>>>();
 
-    fetchModels().then([promise, showUrl = makeUrl("/api/show")](Result<ListModelsResponse> result) mutable {
+    fetchModels().then([promise, client = m_client](Result<ListModelsResponse> result) mutable {
       if (!result) {
         promise->addResult(std::unexpected(result.error()));
         promise->finish();
@@ -155,7 +157,7 @@ class OllamaProvider : public AbstractProvider {
       futures.reserve(modelList.models.size());
 
       for (const auto &model : modelList.models) {
-        auto future = JsonClient{}.post<ModelShowResponse, ModelShowRequest>(showUrl, {.model = model.model});
+        auto future = client.post<ModelShowResponse, ModelShowRequest>("/show", {.model = model.model});
         futures.emplace_back(future);
       }
 
@@ -187,9 +189,7 @@ class OllamaProvider : public AbstractProvider {
     return promise->future();
   }
 
-  QFuture<Result<ListModelsResponse>> fetchModels() {
-    return JsonClient{}.get<ListModelsResponse>(makeUrl("/api/tags"));
-  }
+  QFuture<Result<ListModelsResponse>> fetchModels() { return m_client.get<ListModelsResponse>("/tags"); }
 
   std::shared_ptr<AbstractChatCompletionStream>
   createChatCompletion(const ChatCompletionPayload &payload) override {
@@ -243,18 +243,25 @@ class OllamaProvider : public AbstractProvider {
         QObjectDeleter{});
   }
 
-  QFuture<TranscriptionResult> transcribe(const std::filesystem::path &path) override { return {}; }
+  QFuture<TranscriptionResult> transcribe(const std::filesystem::path &path,
+                                          const TranscriptionOptions &opts) override {
+    return QtFuture::makeReadyValueFuture<TranscriptionResult>(
+        std::unexpected("Transcription is not supported"));
+  }
 
   using Watcher = QFutureWatcher<Result<std::vector<FullModelResponse>>>;
 
   void start() override { m_handshakeWatcher.setFuture(fetchVersion()); }
 
-  QFuture<AI::Result<VersionResponse>> fetchVersion() {
-    return JsonClient{}.get<VersionResponse>(makeUrl("/api/version"));
-  }
+  QFuture<AI::Result<VersionResponse>> fetchVersion() { return m_client.get<VersionResponse>("/version"); }
 
 public:
   OllamaProvider(AI::ConfigValue::OllamaConfig cfg) : m_cfg(std::move(cfg)) {
+    auto const apiUrl = std::format("{}/api", m_cfg.url);
+
+    qInfo() << "Initialized ollama provider with base url" << cfg.url;
+    m_client.setBaseUrl(QString::fromStdString(apiUrl));
+
     connect(&m_handshakeWatcher, &decltype(m_handshakeWatcher)::finished, this, [this]() {
       auto const res = m_handshakeWatcher.result();
 
@@ -285,10 +292,9 @@ public:
   ~OllamaProvider() override { m_listWatcher.cancel(); }
 
 private:
+  JsonClient m_client;
   JsonClient::Watcher<AI::Result<VersionResponse>> m_handshakeWatcher;
-
   Watcher m_listWatcher;
-
   ConfigValue::OllamaConfig m_cfg;
   std::vector<FullModelResponse> m_models;
 };

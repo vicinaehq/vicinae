@@ -109,9 +109,13 @@ struct ChatCompletionPayload {
   ChatHistory messages;
 };
 
-struct TranscriptionResult {
+struct TranscriptionOptions {};
+
+struct TranscriptionResponse {
   std::string text;
 };
+
+using TranscriptionResult = std::expected<TranscriptionResponse, std::string>;
 
 class AbstractProvider : public QObject {
   Q_OBJECT
@@ -166,7 +170,8 @@ public:
   virtual std::shared_ptr<AbstractChatCompletionStream>
   createChatCompletion(const ChatCompletionPayload &payload) = 0;
 
-  virtual QFuture<TranscriptionResult> transcribe(const std::filesystem::path &path) = 0;
+  virtual QFuture<TranscriptionResult> transcribe(const std::filesystem::path &path,
+                                                  const TranscriptionOptions &opts = {}) = 0;
 };
 
 }; // namespace AI
