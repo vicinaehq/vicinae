@@ -1,5 +1,6 @@
 #include "qml/manage-models-view-host.hpp"
 #include "../../ui/image/url.hpp"
+#include "services/ai/ai-provider.hpp"
 #include "single-view-command-context.hpp"
 #include "services/ai/ai-service.hpp"
 #include "services/paste/paste-service.hpp"
@@ -18,7 +19,7 @@ class TranscribeCommand : public BuiltinCallbackCommand {
   QString id() const override { return "transcribe"; }
   QString name() const override { return "Transcribe"; }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("🎤").setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::emoji("🎤").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
   void execute(CommandController *controller) const override {
@@ -29,9 +30,14 @@ class TranscribeCommand : public BuiltinCallbackCommand {
     toast->dynamic("Transcribing...");
 
     ai->transcribe("/tmp/hello.mp4").then([ctx, toast](const AI::TranscriptionResult &result) {
+      if (!result) {
+        toast->failure("Transcription failed");
+        qWarning() << "Failed to transcribe" << result.error();
+        return;
+      }
+
       toast->success("Transcription succeeded");
-      qDebug() << "transcription text" << result.text;
-      ctx->services->pasteService()->pasteContent(Clipboard::Text(result.text.c_str()));
+      ctx->services->pasteService()->pasteContent(Clipboard::Text(result->text.c_str()));
       ctx->navigation->closeWindow();
     });
   }
