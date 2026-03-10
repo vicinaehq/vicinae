@@ -52,7 +52,7 @@ public:
     return nullptr;
   }
 
-  QFuture<TranscriptionResult> transcribe(const std::filesystem::path &path) {
+  QFuture<std::expected<TranscriptionResponse, std::string>> transcribe(const std::filesystem::path &path) {
     for (const auto &[id, provider] : m_providers) {
       if (const auto model = provider->findBestModel(Capability::Transcription)) {
         if (!isModelEnabled(id, model->id)) continue;
@@ -113,7 +113,6 @@ private:
     auto const &newProviders = current.providers;
     auto const &oldProviders = previous.providers;
 
-    // Remove providers that no longer exist or whose config changed
     std::erase_if(m_providers, [&](const auto &entry) {
       auto const &[id, provider] = entry;
       auto it = newProviders.find(id);
@@ -122,7 +121,6 @@ private:
       return oldIt == oldProviders.end() || oldIt->second != it->second;
     });
 
-    // Add new providers or recreate changed ones
     std::vector<std::shared_ptr<AbstractProvider>> toStart;
     for (auto const &[id, config] : newProviders) {
       if (m_providers.contains(id)) continue;
