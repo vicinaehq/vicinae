@@ -87,7 +87,11 @@ class MistralProvider : public AI::AbstractProvider {
     auto formData = new FormData;
 
     formData->addField("model", "voxtral-mini-2507");
-    formData->addFile(file, "audio/mp3");
+    auto ext = path.extension().string();
+    auto contentType = (ext == ".wav")                    ? "audio/wav"
+                       : (ext == ".mp4" || ext == ".m4a") ? "audio/mp4"
+                                                          : "audio/mpeg";
+    formData->addFile(file, contentType);
 
     return m_client.post<TranscriptionResponse>("/audio/transcriptions", formData)
         .then([](AI::Result<TranscriptionResponse> res) -> TranscriptionResult {

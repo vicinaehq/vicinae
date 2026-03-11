@@ -3,7 +3,7 @@ set(CMAKE_AUTORCC ON)
 set(LIBS)
 set(TARGET vicinae-server)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Sql Network Svg DBus Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2)
+find_package(Qt6 REQUIRED COMPONENTS Core Sql Network Svg DBus Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2 Multimedia)
 find_package(OpenSSL REQUIRED)
 find_package(LibXml2 REQUIRED)
 if (USE_SYSTEM_KF6)
@@ -13,7 +13,7 @@ endif()
 list(APPEND LIBS  
 	Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus Qt6::Concurrent Qt6::Quick Qt6::Qml
 	Qt6::GuiPrivate # for deeper integration with wayland protocols, we need wl_surface
-	Qt6::QuickDialogs2 Qt6::QuickControls2
+	Qt6::QuickDialogs2 Qt6::QuickControls2 Qt6::Multimedia
 	${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY} 
 	protobuf::libprotobuf
 	minizip 
@@ -455,6 +455,11 @@ set(SRCS
 	src/services/snippet/snippet-service.hpp
 	src/services/snippet/snippet-server.hpp
 	src/services/snippet/snippet-db.cpp
+	src/services/audio/wav-writer.hpp
+	src/services/audio/wav-writer.cpp
+	src/services/audio/audio-recorder.hpp
+	src/services/audio/audio-recorder.cpp
+
 	src/services/ai/ai-provider.hpp
 	src/services/ai/ai-service.hpp
 	src/services/ai/ai-config.hpp
@@ -467,6 +472,8 @@ set(SRCS
 	src/qml/manage-models-view-host.cpp
 	src/qml/quick-ai-view-host.hpp
 	src/qml/quick-ai-view-host.cpp
+	src/qml/transcribe-view-host.hpp
+	src/qml/transcribe-view-host.cpp
 
 	# QML frontend (POC)
 	src/qml/keybind-bridge.hpp
@@ -772,6 +779,8 @@ set(VICINAE_QML_FILES
 	src/qml/qml/DMenuView.qml
 	src/qml/qml/ScriptOutputText.qml
 	src/qml/qml/ScriptExecutorView.qml
+	src/qml/qml/AudioLevelMeter.qml
+	src/qml/qml/TranscribeView.qml
 	src/qml/qml/SettingsWindow.qml
 	src/qml/qml/SettingsSidebar.qml
 	src/qml/qml/SettingsRow.qml
