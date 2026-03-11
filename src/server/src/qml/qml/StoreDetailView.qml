@@ -199,6 +199,89 @@ Item {
                 color: Theme.divider
             }
 
+            Rectangle {
+                id: _alertBox
+                visible: Object.keys(root.host.alert).length > 0
+                Layout.fillWidth: true
+                Layout.margins: 20
+                Layout.bottomMargin: 0
+                implicitHeight: _alertContent.implicitHeight + 20
+                radius: 8
+                color: Qt.rgba(_alertColor.r, _alertColor.g, _alertColor.b, 0.1)
+                border.color: Qt.rgba(_alertColor.r, _alertColor.g, _alertColor.b, 0.3)
+                border.width: 1
+
+                readonly property color _alertColor: {
+                    const colors = {
+                        "success": Theme.toastSuccess,
+                        "warning": Theme.toastWarning,
+                        "danger": Theme.toastDanger,
+                        "muted": Theme.textMuted
+                    };
+                    return colors[root.host.alert.type] ?? Theme.textMuted;
+                }
+
+                readonly property string _alertIcon: {
+                    const icons = {
+                        "success": "check-circle",
+                        "warning": "warning",
+                        "danger": "x-mark-circle",
+                        "muted": "question-mark-circle"
+                    };
+                    return icons[root.host.alert.type] ?? "question-mark-circle";
+                }
+
+                RowLayout {
+                    id: _alertContent
+                    anchors.fill: parent
+                    anchors.margins: 10
+                    spacing: 10
+
+                    ViciImage {
+                        Layout.preferredWidth: 18
+                        Layout.preferredHeight: 18
+                        Layout.alignment: Qt.AlignTop
+                        source: Img.builtin(_alertBox._alertIcon).withFillColor(_alertBox._alertColor)
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 6
+
+                        Text {
+                            text: root.host.alert.message ?? ""
+                            color: Theme.foreground
+                            font.pointSize: Theme.smallerFontSize
+                            wrapMode: Text.WordWrap
+                            Layout.fillWidth: true
+                        }
+
+                        Repeater {
+                            model: root.host.alert.notes ?? []
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 6
+
+                                Text {
+                                    text: "•"
+                                    color: Theme.textMuted
+                                    font.pointSize: Theme.smallerFontSize
+                                }
+
+                                Text {
+                                    text: modelData
+                                    color: Theme.textMuted
+                                    font.pointSize: Theme.smallerFontSize
+                                    wrapMode: Text.WordWrap
+                                    Layout.fillWidth: true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             Flickable {
                 visible: root.host.hasScreenshots
                 Layout.fillWidth: true

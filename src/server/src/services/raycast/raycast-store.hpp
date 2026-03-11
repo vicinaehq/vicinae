@@ -141,6 +141,25 @@ struct ListPaginationOptions {
   int perPage = 50;
 };
 
+struct CompatInfo {
+  std::string status;
+  std::string confidence;
+  std::optional<std::vector<std::string>> notes;
+  std::optional<bool> has_equivalent;
+};
+
+enum class CompatTier { Compatible, Partial, Incompatible, Unknown };
+
+inline CompatTier compatTierFromInfo(const CompatInfo &info) {
+  if (info.status == "full") return CompatTier::Compatible;
+  if (info.status == "partial") return CompatTier::Partial;
+  if (info.status == "impossible") return CompatTier::Incompatible;
+  return CompatTier::Unknown;
+}
+
+using CompatMap = std::unordered_map<std::string, CompatInfo>;
+using CompatResult = std::expected<CompatMap, std::string>;
+
 using ListResult = std::expected<ListResponse, std::string>;
 using DownloadExtensionResult = std::expected<QByteArray, std::string>;
 
@@ -153,11 +172,17 @@ public:
   QFuture<Raycast::DownloadExtensionResult> downloadExtension(const QUrl &url);
   QFuture<Raycast::ListResult> fetchExtensions(const Raycast::ListPaginationOptions &opts = {});
   QFuture<Raycast::ListResult> search(const QString &query);
+  QFuture<Raycast::CompatResult> fetchCompat();
+
+  const Raycast::CompatMap &compatMap() const { return m_compat; }
 
 private:
   static const http::RequestOptions s_requestOpts;
   static void postProcess(std::vector<Raycast::Extension> &extensions);
 
   std::unordered_map<int, Raycast::ListResponse> m_cachedPages;
+  Raycast::CompatMap m_compat;
+  bool m_compatFetched = false;
   http::Client m_client;
+  http::Client m_vicinaeClient;
 };

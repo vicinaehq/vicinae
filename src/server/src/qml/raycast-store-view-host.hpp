@@ -29,13 +29,18 @@ private:
   void fetchExtensions();
   void handleFinishedPage();
   void handleFinishedQuery();
+  void handleFinishedCompat();
   void handleDebounce();
   void refresh();
+  void tryPopulateModel();
 
   RaycastStoreModel *m_model = nullptr;
   RaycastStoreService *m_store = nullptr;
   QFutureWatcher<Raycast::ListResult> m_listResultWatcher;
   QFutureWatcher<Raycast::ListResult> m_queryResultWatcher;
+  QFutureWatcher<Raycast::CompatResult> m_compatResultWatcher;
   QString m_lastQueryText;
   QTimer m_debounce;
+  std::optional<Raycast::ListResponse> m_pendingPage;
+  bool m_compatReady = false;
 };

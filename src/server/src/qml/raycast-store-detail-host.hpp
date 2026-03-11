@@ -28,6 +28,7 @@ public:
   Q_PROPERTY(QVariantList contributors READ contributors NOTIFY extensionChanged)
   Q_PROPERTY(QStringList categories READ categories NOTIFY extensionChanged)
   Q_PROPERTY(QVariantMap alert READ alert NOTIFY extensionChanged)
+  Q_PROPERTY(QString reportIssueUrl READ reportIssueUrl CONSTANT)
 
   explicit RaycastStoreDetailHost(const Raycast::Extension &extension);
 
@@ -52,6 +53,7 @@ public:
   QVariantList contributors() const;
   QStringList categories() const;
   QVariantMap alert() const;
+  QString reportIssueUrl() const;
 
   Q_INVOKABLE void openUrl(const QString &url);
   Q_INVOKABLE void openScreenshot(int index);

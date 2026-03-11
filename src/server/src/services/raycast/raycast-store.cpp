@@ -1,8 +1,10 @@
 #include "raycast-store.hpp"
+#include "environment.hpp"
 #include "lib/glaze-qt.hpp"
 
 RaycastStoreService::RaycastStoreService() {
   m_client.setBaseUrl(QStringLiteral("https://backend.raycast.com/api/v1"));
+  m_vicinaeClient.setBaseUrl(Environment::vicinaeApiBaseUrl());
 }
 
 const http::RequestOptions RaycastStoreService::s_requestOpts = {
@@ -37,6 +39,21 @@ QFuture<Raycast::DownloadExtensionResult> RaycastStoreService::downloadExtension
       .then([](http::Client::Result<QByteArray> result) -> Raycast::DownloadExtensionResult {
         if (!result) return std::unexpected(result.error());
         return *std::move(result);
+      });
+}
+
+QFuture<Raycast::CompatResult> RaycastStoreService::fetchCompat() {
+  if (m_compatFetched) { return QtFuture::makeReadyValueFuture<Raycast::CompatResult>(m_compat); }
+
+  return m_vicinaeClient.get<Raycast::CompatMap>(QStringLiteral("/raycast/get-compat"))
+      .then([this](http::Client::Result<Raycast::CompatMap> result) -> Raycast::CompatResult {
+        if (!result) {
+          qWarning() << "[RaycastStore] compat fetch failed:" << result.error();
+          return Raycast::CompatMap{};
+        }
+        m_compat = std::move(*result);
+        m_compatFetched = true;
+        return m_compat;
       });
 }
 

@@ -14,6 +14,8 @@ RaycastStoreViewHost::RaycastStoreViewHost() {
           &RaycastStoreViewHost::handleFinishedPage);
   connect(&m_queryResultWatcher, &QFutureWatcher<Raycast::ListResult>::finished, this,
           &RaycastStoreViewHost::handleFinishedQuery);
+  connect(&m_compatResultWatcher, &QFutureWatcher<Raycast::CompatResult>::finished, this,
+          &RaycastStoreViewHost::handleFinishedCompat);
 }
 
 QUrl RaycastStoreViewHost::qmlComponentUrl() const {
@@ -38,7 +40,10 @@ void RaycastStoreViewHost::initialize() {
           &RaycastStoreViewHost::refresh);
 }
 
-void RaycastStoreViewHost::loadInitialData() { fetchExtensions(); }
+void RaycastStoreViewHost::loadInitialData() {
+  fetchExtensions();
+  if (!m_compatReady) { m_compatResultWatcher.setFuture(m_store->fetchCompat()); }
+}
 
 void RaycastStoreViewHost::textChanged(const QString &text) {
   if (text.isEmpty()) {
@@ -67,9 +72,22 @@ void RaycastStoreViewHost::handleFinishedPage() {
     return;
   }
 
+  m_pendingPage = std::move(*result);
+  tryPopulateModel();
+}
+
+void RaycastStoreViewHost::handleFinishedCompat() {
+  m_compatReady = true;
+  tryPopulateModel();
+}
+
+void RaycastStoreViewHost::tryPopulateModel() {
+  if (!m_compatReady || !m_pendingPage) return;
+
   setLoading(false);
-  m_model->setEntries(result->extensions, context()->services->extensionRegistry(),
-                      QStringLiteral("Extensions"));
+  m_model->setEntries(m_pendingPage->extensions, context()->services->extensionRegistry(),
+                      m_store->compatMap(), QStringLiteral("Extensions"));
+  m_pendingPage.reset();
 }
 
 void RaycastStoreViewHost::handleFinishedQuery() {
@@ -82,7 +100,7 @@ void RaycastStoreViewHost::handleFinishedQuery() {
   }
 
   setLoading(false);
-  m_model->setEntries(result->extensions, context()->services->extensionRegistry(),
+  m_model->setEntries(result->extensions, context()->services->extensionRegistry(), m_store->compatMap(),
                       QStringLiteral("Results"));
 }
 
