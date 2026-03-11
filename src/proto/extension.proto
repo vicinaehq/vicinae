@@ -10,6 +10,7 @@ import "file-search.proto";
 import "manager.proto";
 import "wm.proto";
 import "command.proto";
+import "ai.proto";
 
 package proto.ext.extension;
 
@@ -28,6 +29,7 @@ message RequestData {
     file_search.Request file_search = 6;
     wm.Request wm = 7;
     command.Request command = 8;
+    ai.Request ai = 9;
   };
 };
 
@@ -49,6 +51,7 @@ message ResponseData {
     file_search.Response file_search = 6;
     wm.Response wm = 7;
     command.Response command = 8;
+    ai.Response ai = 9;
   };
 };
 
