@@ -38,11 +38,8 @@ QVariant RaycastStoreModel::data(const QModelIndex &index, int role) const {
   switch (role) {
   case DownloadCount:
     return formatCount(m_entries[i].extension.download_count);
-  case AuthorAvatar: {
-    const auto &avatar = m_entries[i].extension.author.avatar;
-    if (avatar.isEmpty()) return imageSourceFor(ImageURL::builtin("person"));
-    return imageSourceFor(ImageURL::http(QUrl(avatar)).circle());
-  }
+  case AuthorAvatar:
+    return imageSourceFor(m_entries[i].extension.author.validUserIcon());
   case IsInstalled:
     return m_entries[i].installed;
   default:

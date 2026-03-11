@@ -55,7 +55,7 @@ QString VicinaeStoreModel::itemTitle(int, int i) const { return m_entries[i].ext
 QString VicinaeStoreModel::itemSubtitle(int, int i) const { return m_entries[i].extension.description; }
 
 QString VicinaeStoreModel::itemIconSource(int, int i) const {
-  return imageSourceFor(ImageURL::http(m_entries[i].extension.themedIcon()));
+  return imageSourceFor(m_entries[i].extension.themedIcon());
 }
 
 std::unique_ptr<ActionPanelState> VicinaeStoreModel::createActionPanel(int, int i) const {
