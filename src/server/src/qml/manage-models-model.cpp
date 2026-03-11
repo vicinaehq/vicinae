@@ -13,7 +13,7 @@ QString ManageModelsModel::displayIconSource(const AI::ProviderModel &item) cons
 }
 
 QVariantList ManageModelsModel::displayAccessory(const AI::ProviderModel &item) const {
-  return qml::textAccessory(QString::fromStdString(item.providerId));
+  return qml::textAccessory(QString::fromStdString(item.ref.provider));
 }
 
 std::unique_ptr<ActionPanelState> ManageModelsModel::buildActionPanel(const AI::ProviderModel &item) const {

@@ -4,7 +4,7 @@
 
 template <> struct fuzzy::FuzzySearchable<AI::ProviderModel> {
   static int score(const AI::ProviderModel &m, std::string_view query) {
-    return fuzzy::scoreWeighted({{m.name, 1.0}, {m.id, 0.6}, {m.providerId, 0.3}}, query);
+    return fuzzy::scoreWeighted({{m.name, 1.0}, {m.id, 0.6}, {m.ref.provider, 0.3}}, query);
   }
 };
 

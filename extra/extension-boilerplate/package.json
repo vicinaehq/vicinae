@@ -78,6 +78,12 @@
 			"title": "Nested Form",
 			"description": "Test form views pushed from a list (nested navigation)",
 			"mode": "view"
+		},
+		{
+			"name": "ai",
+			"title": "AI Features",
+			"description": "Test extension AI features",
+			"mode": "view"
 		}
 	],
 	"preferences": [],

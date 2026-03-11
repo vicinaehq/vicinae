@@ -1,6 +1,7 @@
 #include "extension-command-runtime.hpp"
 #include "common.hpp"
 #include "extension/extension-navigation-controller.hpp"
+#include "extension/requests/ai-router.hpp"
 #include "qml/extension-error-view-host.hpp"
 #include "extension/requests/app-request-router.hpp"
 #include "extension/requests/clipboard-request-router.hpp"
@@ -51,6 +52,8 @@ ExtensionCommandRuntime::dispatchRequest(ExtensionRequest *request) {
     return m_commandRouter->route(data.command());
   case Request::kOauth:
     return m_oauthRouter->route(data.oauth());
+  case Request::kAi:
+    return m_aiRouter->route(data.ai());
   default:
     break;
   }
@@ -157,6 +160,7 @@ void ExtensionCommandRuntime::initialize() {
   m_wmRouter = std::make_unique<WindowManagementRouter>(*context()->services->windowManager(),
                                                         *context()->services->appDb());
   m_oauthRouter = std::make_unique<OAuthRouter>(m_command->extensionId(), *context());
+  m_aiRouter = std::make_unique<AIRouter>(*context()->services->ai(), *m_navigation->controller());
 
   connect(manager, &ExtensionManager::extensionRequest, this, &ExtensionCommandRuntime::handleRequest);
   connect(manager, &ExtensionManager::extensionEvent, this, &ExtensionCommandRuntime::handleEvent);
