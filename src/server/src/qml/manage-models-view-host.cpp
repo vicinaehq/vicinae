@@ -45,7 +45,7 @@ void ManageModelsViewHost::loadDetail(const AI::ProviderModel &model) {
 
   meta.append(QVariantMap{
       {QStringLiteral("label"), QStringLiteral("Provider")},
-      {QStringLiteral("value"), QString::fromStdString(model.providerId)},
+      {QStringLiteral("value"), QString::fromStdString(model.ref.provider)},
   });
 
   auto caps = AI::stringifyCapabilities(model.caps);

@@ -192,7 +192,7 @@ class OllamaProvider : public AbstractProvider {
   QFuture<Result<ListModelsResponse>> fetchModels() { return m_client.get<ListModelsResponse>("/tags"); }
 
   std::shared_ptr<AbstractChatCompletionStream>
-  createChatCompletion(const ChatCompletionPayload &payload) override {
+  createChatCompletion(std::string_view modelId, const ChatCompletionPayload &payload) override {
     QNetworkRequest req;
     QUrl url = QString::fromStdString(m_cfg.url);
 
@@ -219,7 +219,7 @@ class OllamaProvider : public AbstractProvider {
 
     ChatPayload data;
 
-    data.model = payload.modelId;
+    data.model = modelId;
     data.messages = payload.messages | std::views::transform(tr) | std::ranges::to<std::vector>();
 
     std::string serializedData;
@@ -232,7 +232,7 @@ class OllamaProvider : public AbstractProvider {
     AI::Model resolvedModel;
 
     for (const auto &m : m_models) {
-      if (m.model == payload.modelId) {
+      if (m.model == modelId) {
         resolvedModel = toModel(m);
         break;
       }

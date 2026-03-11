@@ -182,8 +182,10 @@ void AISettingsModel::removeProvider(int row) {
   auto const &providerId = m_entries[static_cast<std::size_t>(row)].id;
 
   // Remove associated model configs
-  auto prefix = providerId + ":";
-  std::erase_if(config.models, [&prefix](const auto &pair) { return pair.first.starts_with(prefix); });
+  std::erase_if(config.models, [&providerId](const auto &pair) {
+    auto ref = AI::ModelRef::fromString(pair.first);
+    return ref && ref->provider == providerId;
+  });
 
   config.providers.erase(providerId);
   save();
@@ -250,14 +252,15 @@ void AISettingsModel::setModelEnabled(int row, const QString &modelId, bool enab
   if (row < 0 || row >= static_cast<int>(m_entries.size())) return;
 
   auto const &providerId = m_entries[static_cast<std::size_t>(row)].id;
-  auto modelKey = providerId + ":" + modelId.toStdString();
+  auto ref = AI::ModelRef{providerId, modelId.toStdString()};
+  auto key = ref.toString();
 
   auto &config = m_aiService->configManager().value();
 
   if (enabled) {
-    config.models.erase(modelKey);
+    config.models.erase(key);
   } else {
-    config.models[modelKey] = AI::ConfigValue::ModelConfig{.enabled = false};
+    config.models[key] = AI::ConfigValue::ModelConfig{.enabled = false};
   }
 
   save();
