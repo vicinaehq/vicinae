@@ -60,10 +60,8 @@ void QuickAIViewHost::sendQuery(const std::string &query) {
 
   AI::ChatCompletionPayload payload;
   payload.messages = m_history;
-  if (m_selectedModelId) payload.modelId = *m_selectedModelId;
-  if (m_selectedProviderId) payload.providerId = *m_selectedProviderId;
 
-  m_stream = m_aiService->createChatCompletion(payload);
+  m_stream = m_aiService->createChatCompletion(m_selectedModel, payload);
 
   if (!m_stream) {
     m_streaming = false;
@@ -162,12 +160,10 @@ void QuickAIViewHost::pasteLastResponse() {
 }
 
 void QuickAIViewHost::selectModel(const QString &compositeId) {
-  auto parts = compositeId.toStdString();
-  auto sep = parts.find('|');
-  if (sep == std::string::npos) return;
+  auto ref = AI::ModelRef::fromString(compositeId.toStdString());
+  if (!ref) return;
 
-  m_selectedProviderId = parts.substr(0, sep);
-  m_selectedModelId = parts.substr(sep + 1);
+  m_selectedModel = std::move(*ref);
 
   for (const auto &section : m_modelSelectorItems) {
     auto sectionMap = section.toMap();
@@ -188,8 +184,8 @@ void QuickAIViewHost::rebuildModelSelectorItems() {
   emit modelSelectorItemsChanged();
 
   bool selectionStillValid = false;
-  if (m_selectedModelId) {
-    auto compositeId = QString::fromStdString(*m_selectedProviderId + "|" + *m_selectedModelId);
+  if (m_selectedModel) {
+    auto compositeId = QString::fromStdString(m_selectedModel->toString());
     for (const auto &section : m_modelSelectorItems) {
       auto sectionMap = section.toMap();
       auto items = sectionMap[QStringLiteral("items")].toList();
@@ -209,9 +205,8 @@ void QuickAIViewHost::rebuildModelSelectorItems() {
   if (!selectionStillValid) {
     for (const auto &[id, provider] : m_aiService->providers()) {
       if (auto model = provider->findBestModel(AI::Capability::Completion)) {
-        m_selectedProviderId = provider->id();
-        m_selectedModelId = model->id;
-        auto compositeId = QString::fromStdString(*m_selectedProviderId + "|" + *m_selectedModelId);
+        m_selectedModel = AI::ModelRef{provider->id(), model->id};
+        auto compositeId = QString::fromStdString(m_selectedModel->toString());
 
         QVariantMap item;
         item[QStringLiteral("id")] = compositeId;

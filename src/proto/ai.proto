@@ -1,0 +1,51 @@
+syntax = "proto3";
+import "google/protobuf/struct.proto";
+
+package proto.ext.ai;
+
+message Model {
+  string id = 1;
+  string name = 2;
+  repeated string capabilities = 3;
+};
+
+message GetModelsRequest {
+}
+
+message GetModelsResponse {
+  repeated Model models = 1;
+}
+
+message AskRequest {
+  string prompt = 1;
+  float temperature = 2; // 0-2
+  optional string model = 3;
+  string handler = 4;
+}
+
+message AbortAskRequest {
+  string handler = 1;
+};
+
+message AbortAskResponse {
+}
+
+message AskResponse {
+  bool accepted = 1;
+};
+
+message Request {
+  oneof payload {
+    GetModelsRequest get_models = 1;
+    AskRequest ask = 2;
+    AbortAskRequest abort_ask = 3;
+  };
+};
+
+message Response {
+  oneof payload {
+    GetModelsResponse getModels = 1;
+    AskResponse ask = 2;
+    AbortAskResponse abort_ask = 3;
+  }
+};
