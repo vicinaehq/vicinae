@@ -103,6 +103,10 @@ type EndpointMapping = {
 	"clipboard.paste": "clipboard.paste";
 	"clipboard.readContent": "clipboard.readContent";
 	"clipboard.clear": "clipboard.clear";
+
+	"ai.getModels": "ai.getModels";
+	"ai.ask": "ai.ask";
+	"ai.abortAsk": "ai.abortAsk";
 };
 
 type RequestEndpoint = keyof EndpointMapping;

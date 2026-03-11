@@ -1,6 +1,7 @@
 #pragma once
 #include "command.hpp"
 #include "common.hpp"
+#include "extension/requests/ai-router.hpp"
 #include "proto/extension.pb.h"
 #include "types.hpp"
 #include <qfuturewatcher.h>
@@ -50,6 +51,7 @@ private:
   std::unique_ptr<WindowManagementRouter> m_wmRouter;
   std::unique_ptr<CommandRequestRouter> m_commandRouter;
   std::unique_ptr<OAuthRouter> m_oauthRouter;
+  std::unique_ptr<AIRouter> m_aiRouter;
   QString m_sessionId;
   bool m_isDevMode = false;
 };
