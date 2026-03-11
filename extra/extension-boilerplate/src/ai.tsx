@@ -37,7 +37,10 @@ export default function AIPlayground() {
 	const generating = useRef(false);
 
 	const askAI = (prompt: string, options: AI.AskOptions) => {
-		return AI.ask(prompt, { ...options, model: selectedModel.current });
+		return AI.ask(prompt, {
+			...options,
+			model: selectedModel.current,
+		});
 	};
 
 	const batchCalls = async (prompt: string, n: number) => {
