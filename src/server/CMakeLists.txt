@@ -3,7 +3,7 @@ set(CMAKE_AUTORCC ON)
 set(LIBS)
 set(TARGET vicinae-server)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Network Svg Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2 ShaderTools LinguistTools)
+find_package(Qt6 REQUIRED COMPONENTS Core Network Svg Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2 ShaderTools LinguistTools Multimedia)
 
 if (USE_SYSTEM_KF6)
 	find_package(KF6SyntaxHighlighting REQUIRED)
@@ -25,7 +25,7 @@ endif()
 list(APPEND LIBS
 	Qt6::Network Qt6::Svg Qt6::Concurrent Qt6::Quick Qt6::Qml
 	Qt6::GuiPrivate # for deeper integration with wayland protocols, we need wl_surface
-	Qt6::QuickDialogs2 Qt6::QuickControls2
+	Qt6::QuickDialogs2 Qt6::QuickControls2 Qt6::Multimedia
 	${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY}
 	zip
 	qt6keychain
@@ -328,6 +328,8 @@ set(SRCS
 	src/builtins/ai/manage-models-view-host.cpp
 	src/builtins/ai/quick-ai-view-host.hpp
 	src/builtins/ai/quick-ai-view-host.cpp
+	src/builtins/ai/transcribe-view-host.hpp
+	src/builtins/ai/transcribe-view-host.cpp
 	src/builtins/system/system-run-model.hpp
 	src/builtins/system/system-run-model.cpp
 	src/builtins/system/system-run-view-host.hpp
@@ -516,6 +518,11 @@ set(SRCS
 	src/services/snippet/abstract-snippet-server.hpp
 	src/services/snippet/null-snippet-server.hpp
 	src/services/snippet/snippet-db.cpp
+
+	src/services/audio/wav-writer.hpp
+	src/services/audio/wav-writer.cpp
+	src/services/audio/audio-recorder.hpp
+	src/services/audio/audio-recorder.cpp
 
 	src/services/ai/ai-provider.hpp
 	src/services/ai/ai-service.hpp
@@ -1160,6 +1167,8 @@ set(VICINAE_QML_FILES
 	src/ui/qml/markdown/MarkdownInline.qml
 	src/ui/qml/controls/PulsingDots.qml
 	src/ui/qml/controls/ViciModal.qml
+	src/ui/qml/controls/AudioLevelMeter.qml
+	src/ui/qml/views/TranscribeView.qml
 	src/ui/qml/form/FormSecretInput.qml
 	src/ui/qml/views/ExtensionGridView.qml
 	src/ui/qml/actions/ActionPanelPopover.qml
