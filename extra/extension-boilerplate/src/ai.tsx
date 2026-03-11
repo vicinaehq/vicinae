@@ -1,12 +1,4 @@
-import {
-	AI,
-	List,
-	Action,
-	ActionPanel,
-	showToast,
-	Toast,
-	LocalStorage,
-} from "@vicinae/api";
+import { AI, List, Action, ActionPanel, showToast, Toast } from "@vicinae/api";
 import { useEffect, useRef, useState } from "react";
 
 const SearchSelector = (props: { onModelChange: (s: string) => void }) => {
@@ -39,6 +31,7 @@ export default function AIPlayground() {
 	const askAI = (prompt: string, options: AI.AskOptions) => {
 		return AI.ask(prompt, {
 			...options,
+			creativity: 2,
 			model: selectedModel.current,
 		});
 	};
