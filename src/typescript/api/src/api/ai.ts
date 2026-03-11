@@ -17,6 +17,14 @@ export namespace AI {
 	 *
 	 * @example
 	 * ```typescript
+	 * const completion = AI.ask('Give me a fun fact about bananas', { creativity: 'high' })
+	 *
+	 * // automatic streaming support
+	 * completion.on('data', (chunk) => {
+	 * 	console.log({ chunk });
+	 * });
+	 *
+	 * const fullAnswer = await completion;
 	 * ```
 	 */
 	export function ask(
@@ -26,8 +34,16 @@ export namespace AI {
 		on(event: "data", listener: (chunk: string) => void): void;
 	} {
 		const subscribers = [] as Array<(chunk: string) => void>;
-		const temperature =
-			creativityToTemperature[options?.creativity ?? "medium"];
+		let temperature = creativityToTemperature[options?.creativity ?? "medium"];
+
+		if (typeof options?.creativity === "number") {
+			if (options.creativity < 0 || options.creativity > 2) {
+				throw new Error(
+					"Creativity should be a floating point number in the 0-2 range.",
+				);
+			}
+			temperature = options.creativity;
+		}
 
 		const promise = new Promise<string>((resolve, reject) => {
 			let data = "";
@@ -80,6 +96,7 @@ export namespace AI {
 		/**
 		 * How creative you want the AI model to be. This internally maps to the `temperature` parameter.
 		 * Some models may not be affected by this option.
+		 * You can set
 		 */
 		creativity?: Creativity;
 		/**
