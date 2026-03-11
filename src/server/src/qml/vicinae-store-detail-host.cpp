@@ -67,8 +67,7 @@ QStringList VicinaeStoreDetailHost::screenshots() const { return {}; }
 QVariantList VicinaeStoreDetailHost::commands() const {
   QVariantList list;
   for (const auto &cmd : m_ext.commands) {
-    auto iconStr = cmd.themedIcon().has_value() ? qml::imageSourceFor(*cmd.themedIcon())
-                                                : qml::imageSourceFor(m_ext.themedIcon());
+    auto iconStr = qml::imageSourceFor(cmd.themedIcon().value_or(m_ext.themedIcon()));
     list.append(QVariantMap{
         {QStringLiteral("title"), cmd.title},
         {QStringLiteral("description"), cmd.description},
