@@ -12,10 +12,10 @@ inline QVariantList buildGroupedModelList(AI::Service *service, std::optional<AI
 
   for (const auto &model : models) {
     QVariantMap item;
-    item[QStringLiteral("id")] = QString::fromStdString(model.providerId + "|" + model.id);
+    item[QStringLiteral("id")] = QString::fromStdString(model.ref.toString());
     item[QStringLiteral("displayName")] = QString::fromStdString(model.name);
     if (model.icon) { item[QStringLiteral("iconSource")] = model.icon->toSource(); }
-    groups[model.providerId].append(item);
+    groups[model.ref.provider].append(item);
   }
 
   QVariantList result;
