@@ -10,7 +10,7 @@
 #include "vicinae.hpp"
 
 namespace AI {
-class Service : public QObject {
+class Service : public QObject, NonCopyable {
   Q_OBJECT
 
 signals:
@@ -25,27 +25,18 @@ public:
   ~Service() override = default;
 
   std::shared_ptr<AbstractChatCompletionStream>
-  createChatCompletion(const ChatCompletionPayload &payload) const {
-    if (!payload.modelId.empty()) {
-      if (payload.providerId) {
-        if (auto it =
-                std::ranges::find_if(m_providers, [&](auto &&p) { return p.first == *payload.providerId; });
-            it != m_providers.end()) {
-          return it->second->createChatCompletion(payload);
-        }
+  createChatCompletion(std::optional<ModelRef> ref, const ChatCompletionPayload &payload) const {
+    if (ref) {
+      if (auto it = m_providers.find(ref->provider); it != m_providers.end()) {
+        return it->second->createChatCompletion(ref->id, payload);
       }
-
-      for (const auto &[id, provider] : m_providers) {
-        for (const auto &model : provider->listModels()) {
-          if (model.id == payload.modelId) { return provider->createChatCompletion(payload); }
-        }
-      }
+      return nullptr;
     }
 
     for (const auto &[id, provider] : m_providers) {
       if (const auto model = provider->findBestModel(AI::Capability::Completion)) {
-        if (!isModelEnabled(id, model->id)) continue;
-        return provider->createChatCompletion({.modelId = model->id, .messages = payload.messages});
+        if (!isModelEnabled(ModelRef{id, model->id})) continue;
+        return provider->createChatCompletion(model->id, payload);
       }
     }
 
@@ -55,7 +46,7 @@ public:
   QFuture<std::expected<TranscriptionResponse, std::string>> transcribe(const std::filesystem::path &path) {
     for (const auto &[id, provider] : m_providers) {
       if (const auto model = provider->findBestModel(Capability::Transcription)) {
-        if (!isModelEnabled(id, model->id)) continue;
+        if (!isModelEnabled(ModelRef{id, model->id})) continue;
         return provider->transcribe(path);
       }
     }
@@ -80,7 +71,7 @@ public:
       for (auto &model : provider->listModels()) {
         if (caps && !(model.caps & *caps)) continue;
         ProviderModel pmodel(id, std::move(model));
-        pmodel.enabled = isModelEnabled(id, pmodel.id);
+        pmodel.enabled = isModelEnabled(pmodel.ref);
         if (!pmodel.enabled) continue;
         models.emplace_back(std::move(pmodel));
       }
@@ -96,15 +87,14 @@ public:
     std::vector<AI::ProviderModel> models;
     for (auto &model : it->second->listModels()) {
       ProviderModel pmodel(std::string(providerId), std::move(model));
-      pmodel.enabled = isModelEnabled(pmodel.providerId, pmodel.id);
+      pmodel.enabled = isModelEnabled(pmodel.ref);
       models.emplace_back(std::move(pmodel));
     }
     return models;
   }
 
-  bool isModelEnabled(const std::string &providerId, const std::string &modelId) const {
-    auto modelKey = providerId + ":" + modelId;
-    auto it = m_configManager.value().models.find(modelKey);
+  bool isModelEnabled(const ModelRef &ref) const {
+    auto it = m_configManager.value().models.find(ref.toString());
     return it == m_configManager.value().models.end() || it->second.enabled;
   }
 
@@ -121,24 +111,24 @@ private:
       return oldIt == oldProviders.end() || oldIt->second != it->second;
     });
 
-    std::vector<std::shared_ptr<AbstractProvider>> toStart;
+    std::vector<AbstractProvider *> toStart;
     for (auto const &[id, config] : newProviders) {
       if (m_providers.contains(id)) continue;
 
       auto provider = m_registry.create(config);
       if (!provider) continue;
       connect(provider.get(), &AI::AbstractProvider::modelsUpdated, this, &Service::modelsChanged);
-      toStart.emplace_back(provider);
+      toStart.emplace_back(provider.get());
       m_providers[id] = std::move(provider);
     }
 
-    for (auto &provider : toStart) {
+    for (auto *provider : toStart) {
       provider->start();
     }
   }
 
   ProviderRegistry m_registry;
-  std::unordered_map<std::string, std::shared_ptr<AI::AbstractProvider>> m_providers;
+  std::unordered_map<std::string, std::unique_ptr<AI::AbstractProvider>> m_providers;
   ConfigManager m_configManager;
 };
 }; // namespace AI
