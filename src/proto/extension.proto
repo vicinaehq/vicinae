@@ -1,0 +1,86 @@
+syntax = "proto3";
+import "google/protobuf/struct.proto";
+import "storage.proto";
+import "ui.proto";
+import "application.proto";
+import "clipboard.proto";
+import "common.proto";
+import "oauth.proto";
+import "file-search.proto";
+import "manager.proto";
+import "wm.proto";
+import "command.proto";
+import "ai.proto";
+
+package proto.ext.extension;
+
+message Request {
+  string request_id = 1;
+  RequestData data = 2;
+};
+
+message RequestData {
+  oneof payload {
+    ui.Request ui = 1;
+    application.Request app = 2;
+    clipboard.Request clipboard = 3;
+    storage.Request storage = 4;
+    oauth.Request oauth = 5;
+    file_search.Request file_search = 6;
+    wm.Request wm = 7;
+    command.Request command = 8;
+    ai.Request ai = 9;
+  };
+};
+
+message Response {
+  string request_id = 1;
+  oneof result {
+    ResponseData data = 2;
+    common.ErrorResponse error = 3;
+  };
+};
+
+message ResponseData {
+  oneof payload {
+    ui.Response ui = 1;
+    application.Response app = 2;
+    clipboard.Response clipboard = 3;
+    storage.Response storage = 4;
+    oauth.Response oauth = 5;
+    file_search.Response file_search = 6;
+    wm.Response wm = 7;
+    command.Response command = 8;
+    ai.Response ai = 9;
+  };
+};
+
+message Event {
+  string id = 1;
+  oneof payload {
+    GenericEventData generic = 2;
+    CrashEventData crash = 3;
+    LaunchEventData launch = 4;
+  };
+};
+
+message CrashEventData {
+  string text = 1;
+};
+
+message GenericEventData {
+  string json = 1;
+};
+
+message LaunchEventData {
+  string extension_name = 1;
+  string command_name = 2;
+  manager.CommandMode mode = 3;
+  string entrypoint = 4;
+  string asset_path = 5;
+  string support_path = 6;
+  map<string, google.protobuf.Value> preference_values = 7;
+  map<string, google.protobuf.Value> argument_values = 8;
+  bool is_raycast = 9;
+  string owner_or_author_name = 10;
+};
