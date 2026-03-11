@@ -3,7 +3,7 @@ set(CMAKE_AUTORCC ON)
 set(LIBS)
 set(TARGET vicinae-server)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Network Svg Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2 ShaderTools LinguistTools)
+find_package(Qt6 REQUIRED COMPONENTS Core Network Svg Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2 ShaderTools LinguistTools Multimedia)
 
 if (USE_SYSTEM_KF6 AND NOT WIN32)
 	find_package(KF6SyntaxHighlighting REQUIRED)
@@ -25,7 +25,7 @@ endif()
 list(APPEND LIBS
 	Qt6::Network Qt6::Svg Qt6::Concurrent Qt6::Quick Qt6::Qml
 	Qt6::GuiPrivate # for deeper integration with wayland protocols, we need wl_surface
-	Qt6::QuickDialogs2 Qt6::QuickControls2
+	Qt6::QuickDialogs2 Qt6::QuickControls2 Qt6::Multimedia
 	${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY}
 	zip
 	qt6keychain
@@ -507,6 +507,11 @@ set(SRCS
 	src/services/snippet/snippet-db.cpp
 
 	src/services/snippet/snippet-server.cpp
+	src/services/audio/wav-writer.hpp
+	src/services/audio/wav-writer.cpp
+	src/services/audio/audio-recorder.hpp
+	src/services/audio/audio-recorder.cpp
+
 	src/services/ai/ai-provider.hpp
 	src/services/ai/ai-service.hpp
 	src/services/ai/ai-config.hpp
@@ -515,6 +520,8 @@ set(SRCS
 
 	src/qml/quick-ai-view-host.hpp
 	src/qml/quick-ai-view-host.cpp
+	src/qml/transcribe-view-host.hpp
+	src/qml/transcribe-view-host.cpp
 
 	src/qml/keybind-bridge.hpp
 	src/qml/launcher-window.hpp
@@ -1153,6 +1160,8 @@ set(VICINAE_QML_FILES
 	src/qml/qml/DMenuView.qml
 	src/qml/qml/ScriptOutputText.qml
 	src/qml/qml/ScriptExecutorView.qml
+	src/qml/qml/AudioLevelMeter.qml
+	src/qml/qml/TranscribeView.qml
 	src/qml/qml/SettingsWindow.qml
 	src/qml/qml/SettingsScrollEdge.qml
 	src/qml/qml/SettingsNavButtons.qml
