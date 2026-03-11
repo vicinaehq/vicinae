@@ -67,6 +67,15 @@ std::expected<ExtensionManifest, ManifestError> ExtensionManifest::fromPackageJs
     manifest.preferences.emplace_back(parsePreferenceFromObject(obj.toObject()));
   }
 
+  for (const auto &obj : obj.value("preferenceActions").toArray()) {
+    auto a = obj.toObject();
+    manifest.preferenceActions.push_back({
+        .type = a["type"].toString(),
+        .title = a["title"].toString(),
+        .target = a["target"].toString(),
+    });
+  }
+
   return manifest;
 }
 

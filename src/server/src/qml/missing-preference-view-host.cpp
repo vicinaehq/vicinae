@@ -5,6 +5,7 @@
 #include "navigation-controller.hpp"
 #include "view-utils.hpp"
 #include "service-registry.hpp"
+#include "services/app-service/app-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/toast/toast-service.hpp"
 #include "ui/action-pannel/action.hpp"
@@ -176,6 +177,17 @@ void MissingPreferenceViewHost::initialize() {
   auto submitAction = new StaticAction(QStringLiteral("Save preferences"), ImageURL::builtin("enter-key"),
                                        [this]() { submit(); });
   section->addAction(submitAction);
+
+  for (const auto &action : m_command->preferenceActions()) {
+    if (action.type == QStringLiteral("open-url")) {
+      auto target = action.target;
+      auto *a = new StaticAction(action.title, ImageURL::builtin("link"), [target](ApplicationContext *ctx) {
+        ctx->services->appDb()->openTarget(target);
+      });
+      section->addAction(a);
+    }
+  }
+
   setActions(std::move(panel));
 }
 

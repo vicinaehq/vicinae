@@ -23,6 +23,7 @@ class ExtensionCommand : public AbstractCmd {
   QString _extensionTitle;
   QString _extensionIcon;
   PreferenceList _extensionPreferences;
+  std::vector<ManifestAction> m_preferenceActions;
   std::filesystem::path m_path;
   ExtensionManifest::Command m_command;
   QString m_author;
@@ -50,6 +51,8 @@ public:
   QString description() const override { return ""; }
 
   void setExtensionPreferences(const PreferenceList &prefs) { _extensionPreferences = prefs; }
+  void setPreferenceActions(const std::vector<ManifestAction> &actions) { m_preferenceActions = actions; }
+  const std::vector<ManifestAction> &preferenceActions() const { return m_preferenceActions; }
 
   std::filesystem::path path() const { return m_path; }
   std::filesystem::path assetPath() const { return m_path / "assets"; }

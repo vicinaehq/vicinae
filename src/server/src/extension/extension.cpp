@@ -45,6 +45,7 @@ Extension::Extension(const ExtensionManifest &manifest) : m_manifest(manifest) {
     command->setExtensionTitle(m_manifest.title);
     command->setExtensionIcon(m_manifest.icon);
     command->setExtensionPreferences(m_manifest.preferences);
+    command->setPreferenceActions(m_manifest.preferenceActions);
     command->setExtensionName(m_manifest.name);
     command->setAuthor(author());
     m_commands.emplace_back(command);

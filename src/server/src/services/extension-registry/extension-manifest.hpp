@@ -11,6 +11,12 @@ struct ManifestError {
   ManifestError(const QString &message) : m_message(message) {}
 };
 
+struct ManifestAction {
+  QString type;
+  QString title;
+  QString target;
+};
+
 struct ExtensionManifest {
   enum class Provenance { Local, Vicinae, Raycast };
 
@@ -36,6 +42,7 @@ struct ExtensionManifest {
   QString author;
   std::vector<QString> categories;
   std::vector<Preference> preferences;
+  std::vector<ManifestAction> preferenceActions;
   std::vector<Command> commands;
   bool needsRaycastApi = false;
   Provenance provenance;
