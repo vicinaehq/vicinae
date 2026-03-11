@@ -70,9 +70,13 @@ class OllamaProvider : public AbstractProvider {
   };
 
   struct ChatPayload {
+    struct Options {
+      std::optional<float> temperature;
+    };
     std::string model;
     std::vector<ChatMessage> messages;
     bool stream = true;
+    Options options;
   };
 
   static std::optional<Capability> parseCapability(std::string_view str) {
@@ -221,6 +225,7 @@ class OllamaProvider : public AbstractProvider {
 
     data.model = modelId;
     data.messages = payload.messages | std::views::transform(tr) | std::ranges::to<std::vector>();
+    data.options.temperature = payload.temperature;
 
     std::string serializedData;
 
