@@ -77,7 +77,7 @@ public:
   template <typename T> using Result = std::expected<T, std::string>;
 
   QUrl makeUrl(const QString &path) const {
-    if (!m_baseUrl) return QUrl(path);
+    if (!m_baseUrl || path.startsWith("http://") || path.startsWith("https://")) return QUrl(path);
     return QUrl(m_baseUrl.value() + path);
   }
 
