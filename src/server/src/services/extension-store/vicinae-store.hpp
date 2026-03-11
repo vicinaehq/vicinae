@@ -5,7 +5,7 @@
 #include <QString>
 #include <expected>
 #include <vector>
-#include "lib/json-client.hpp"
+#include "lib/http-client.hpp"
 #include "ui/image/url.hpp"
 
 namespace VicinaeStore {
@@ -106,7 +106,7 @@ public:
   QString baseUrl() const;
 
 private:
-  static const RequestOptions s_requestOpts;
+  static const http::RequestOptions s_requestOpts;
 
-  JsonClient m_client;
+  http::Client m_client;
 };

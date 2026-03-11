@@ -2,11 +2,10 @@
 #include "lib/glaze-qt.hpp"
 
 RaycastStoreService::RaycastStoreService() {
-  NetworkManager::enableDiskCache("omnicast/raycast-store");
   m_client.setBaseUrl(QStringLiteral("https://backend.raycast.com/api/v1"));
 }
 
-const RequestOptions RaycastStoreService::s_requestOpts = {
+const http::RequestOptions RaycastStoreService::s_requestOpts = {
     .cachePolicy = QNetworkRequest::PreferCache,
     .allowHttp2 = false,
     .contentType = QStringLiteral("application/json"),
@@ -25,7 +24,7 @@ QFuture<Raycast::ListResult> RaycastStoreService::search(const QString &query) {
   auto url = QString("/store_listings/search?q=%1").arg(query);
 
   return m_client.get<Raycast::ListApiResponse>(url, s_requestOpts)
-      .then([](JsonClient::Result<Raycast::ListApiResponse> result) -> Raycast::ListResult {
+      .then([](http::Client::Result<Raycast::ListApiResponse> result) -> Raycast::ListResult {
         if (!result) return std::unexpected(result.error());
         auto extensions = std::move(result->data);
         postProcess(extensions);
@@ -35,7 +34,7 @@ QFuture<Raycast::ListResult> RaycastStoreService::search(const QString &query) {
 
 QFuture<Raycast::DownloadExtensionResult> RaycastStoreService::downloadExtension(const QUrl &url) {
   return m_client.getRaw(url.toString(), s_requestOpts)
-      .then([](JsonClient::Result<QByteArray> result) -> Raycast::DownloadExtensionResult {
+      .then([](http::Client::Result<QByteArray> result) -> Raycast::DownloadExtensionResult {
         if (!result) return std::unexpected(result.error());
         return *std::move(result);
       });
@@ -51,7 +50,7 @@ RaycastStoreService::fetchExtensions(const Raycast::ListPaginationOptions &opts)
 
   return m_client.get<Raycast::ListApiResponse>(url, s_requestOpts)
       .then([this,
-             page = opts.page](JsonClient::Result<Raycast::ListApiResponse> result) -> Raycast::ListResult {
+             page = opts.page](http::Client::Result<Raycast::ListApiResponse> result) -> Raycast::ListResult {
         if (!result) return std::unexpected(result.error());
         auto extensions = std::move(result->data);
         postProcess(extensions);

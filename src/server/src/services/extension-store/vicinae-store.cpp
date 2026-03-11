@@ -31,7 +31,6 @@ static void postProcess(VicinaeStore::ListResponse &response) {
 }
 
 VicinaeStoreService::VicinaeStoreService(QObject *parent) : QObject(parent) {
-  NetworkManager::enableDiskCache("vicinae-store");
   m_client.setBaseUrl(Environment::vicinaeApiBaseUrl());
 }
 
@@ -39,7 +38,7 @@ void VicinaeStoreService::setBaseUrl(const QString &url) { m_client.setBaseUrl(u
 
 QString VicinaeStoreService::baseUrl() const { return m_client.makeUrl({}).toString(); }
 
-const RequestOptions VicinaeStoreService::s_requestOpts = {
+const http::RequestOptions VicinaeStoreService::s_requestOpts = {
     .cachePolicy = QNetworkRequest::PreferCache,
     .userAgent = QString("vicinae/%1").arg(VICINAE_GIT_TAG),
 };
@@ -49,7 +48,7 @@ VicinaeStoreService::fetchExtensions(const VicinaeStore::ListPaginationOptions &
   auto url = QString("/store/list?page=%1&limit=%2").arg(opts.page).arg(opts.limit);
 
   return m_client.get<VicinaeStore::ListResponse>(url, s_requestOpts)
-      .then([](JsonClient::Result<VicinaeStore::ListResponse> result) -> VicinaeStore::ListResult {
+      .then([](http::Client::Result<VicinaeStore::ListResponse> result) -> VicinaeStore::ListResult {
         if (!result) return std::unexpected(result.error());
         postProcess(*result);
         return *std::move(result);
@@ -60,7 +59,7 @@ QFuture<VicinaeStore::ListResult> VicinaeStoreService::search(const QString &que
   auto url = QString("/store/search?q=%1").arg(query);
 
   return m_client.get<VicinaeStore::ListResponse>(url, s_requestOpts)
-      .then([](JsonClient::Result<VicinaeStore::ListResponse> result) -> VicinaeStore::ListResult {
+      .then([](http::Client::Result<VicinaeStore::ListResponse> result) -> VicinaeStore::ListResult {
         if (!result) return std::unexpected(result.error());
         postProcess(*result);
         return *std::move(result);
@@ -69,7 +68,7 @@ QFuture<VicinaeStore::ListResult> VicinaeStoreService::search(const QString &que
 
 QFuture<VicinaeStore::DownloadExtensionResult> VicinaeStoreService::downloadExtension(const QUrl &url) {
   return m_client.getRaw(url.toString(), s_requestOpts)
-      .then([](JsonClient::Result<QByteArray> result) -> VicinaeStore::DownloadExtensionResult {
+      .then([](http::Client::Result<QByteArray> result) -> VicinaeStore::DownloadExtensionResult {
         if (!result) return std::unexpected(result.error());
         return *std::move(result);
       });

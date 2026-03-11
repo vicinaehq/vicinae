@@ -9,7 +9,7 @@
 #include <expected>
 #include <unordered_map>
 #include <vector>
-#include "lib/json-client.hpp"
+#include "lib/http-client.hpp"
 
 namespace Raycast {
 
@@ -155,9 +155,9 @@ public:
   QFuture<Raycast::ListResult> search(const QString &query);
 
 private:
-  static const RequestOptions s_requestOpts;
+  static const http::RequestOptions s_requestOpts;
   static void postProcess(std::vector<Raycast::Extension> &extensions);
 
   std::unordered_map<int, Raycast::ListResponse> m_cachedPages;
-  JsonClient m_client;
+  http::Client m_client;
 };

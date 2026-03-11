@@ -17,24 +17,20 @@
 #include <utility>
 #include "glaze/json/write.hpp"
 
-class NetworkManager : NonCopyable {
-public:
-  static QNetworkAccessManager *manager() {
-    static QNetworkAccessManager mgr;
-    return &mgr;
-  }
+namespace http {
 
-  static void enableDiskCache(const QString &subdir) {
-    auto *mgr = manager();
-    if (mgr->cache()) return;
-
-    auto *cache = new QNetworkDiskCache(mgr);
-    const QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + "/" + subdir;
+inline QNetworkAccessManager *networkManager() {
+  static auto *mgr = [] {
+    auto *m = new QNetworkAccessManager;
+    auto *cache = new QNetworkDiskCache(m);
+    const QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + "/http";
     QDir().mkpath(cacheDir);
     cache->setCacheDirectory(cacheDir);
-    mgr->setCache(cache);
-  }
-};
+    m->setCache(cache);
+    return m;
+  }();
+  return mgr;
+}
 
 struct RequestOptions {
   QNetworkRequest::CacheLoadControl cachePolicy = QNetworkRequest::AlwaysNetwork;
@@ -75,7 +71,7 @@ private:
   QHttpMultiPart *m_mp;
 };
 
-class JsonClient {
+class Client {
 public:
   template <typename T> using Watcher = QFutureWatcher<T>;
   template <typename T> using Result = std::expected<T, std::string>;
@@ -89,46 +85,23 @@ public:
   void setBaseUrl(QString url) { m_baseUrl = std::move(url); }
 
   template <glz::has_reflect T> QFuture<Result<T>> get(const QString &url, const RequestOptions &opts = {}) {
-    QPromise<Result<T>> promise;
     auto req = createRequest(url, opts);
     qInfo() << "[GET]" << req.url();
-    auto reply = NetworkManager::manager()->get(req);
-
-    return waitForRequest<T>(std::move(promise), reply);
+    return parseResponse<T>(waitForReply(networkManager()->get(req)));
   }
 
   QFuture<Result<QByteArray>> getRaw(const QString &url, const RequestOptions &opts = {}) {
-    QPromise<Result<QByteArray>> promise;
-    auto future = promise.future();
     auto req = createRequest(url, opts);
     qInfo() << "[GET raw]" << req.url();
-    auto reply = NetworkManager::manager()->get(req);
-
-    QObject::connect(reply, &QNetworkReply::finished, [promise = std::move(promise), reply]() mutable {
-      if (reply->error() != QNetworkReply::NoError) {
-        const auto reason = reply->readAll();
-        QString error = reply->errorString() + "\n" + reason;
-        promise.addResult(std::unexpected(error.toStdString()));
-      } else {
-        promise.addResult(reply->readAll());
-      }
-      promise.finish();
-      reply->deleteLater();
-    });
-
-    return future;
+    return waitForReply(networkManager()->get(req));
   }
 
   template <glz::has_reflect T> QFuture<Result<T>> post(const QString &url, FormData *data) {
-    QPromise<Result<T>> promise;
-    auto future = promise.future();
     auto req = createRequest(url);
     qInfo() << "[POST]" << req.url();
-    auto reply = NetworkManager::manager()->post(req, data->multipart());
-
+    auto *reply = networkManager()->post(req, data->multipart());
     data->setParent(reply);
-
-    return waitForRequest<T>(std::move(promise), reply);
+    return parseResponse<T>(waitForReply(reply));
   }
 
   template <glz::has_reflect T, glz::has_reflect U>
@@ -141,15 +114,10 @@ public:
           std::unexpected(std::format("Failed to serialize request: {}", glz::format_error(error))));
     }
 
-    QPromise<Result<T>> promise;
-    auto future = promise.future();
-
     req.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader, "application/json");
     qInfo() << "[POST]" << req.url();
 
-    auto reply = NetworkManager::manager()->post(req, payload.c_str());
-
-    return waitForRequest<T>(std::move(promise), reply);
+    return parseResponse<T>(waitForReply(networkManager()->post(req, payload.c_str())));
   }
 
 private:
@@ -167,40 +135,39 @@ private:
     return req;
   }
 
-  template <typename T>
-  static QFuture<std::expected<T, std::string>> waitForRequest(QPromise<Result<T>> promise,
-                                                               QNetworkReply *reply) {
+  static QFuture<Result<QByteArray>> waitForReply(QNetworkReply *reply) {
+    QPromise<Result<QByteArray>> promise;
     auto future = promise.future();
 
     QObject::connect(reply, &QNetworkReply::finished, [promise = std::move(promise), reply]() mutable {
       if (reply->error() != QNetworkReply::NoError) {
         const auto reason = reply->readAll();
         QString error = reply->errorString() + "\n" + reason;
-
         promise.addResult(std::unexpected(error.toStdString()));
-        promise.finish();
-        reply->deleteLater();
-        return;
+      } else {
+        promise.addResult(reply->readAll());
       }
-
-      auto const data = reply->readAll();
-      reply->deleteLater();
-      T res;
-
-      if (auto const error = glz::read<glz::opts{.error_on_unknown_keys = false}>(res, data.constData())) {
-        promise.addResult(std::unexpected(std::string("Failed to parse response: ") +
-                                          glz::format_error(error, data.constData())));
-        promise.finish();
-        return;
-      }
-
-      promise.addResult(std::move(res));
       promise.finish();
+      reply->deleteLater();
     });
 
     return future;
   }
 
+  template <typename T> static QFuture<Result<T>> parseResponse(QFuture<Result<QByteArray>> raw) {
+    return raw.then([](Result<QByteArray> result) -> Result<T> {
+      if (!result) return std::unexpected(result.error());
+      T res;
+      if (auto const error = glz::read<glz::opts{.error_on_unknown_keys = false}>(res, result->constData())) {
+        return std::unexpected(std::string("Failed to parse response: ") +
+                               glz::format_error(error, result->constData()));
+      }
+      return res;
+    });
+  }
+
   std::optional<QString> m_baseUrl;
   std::optional<QString> m_bearer;
 };
+
+} // namespace http
