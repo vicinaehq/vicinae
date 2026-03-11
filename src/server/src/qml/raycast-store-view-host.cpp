@@ -62,12 +62,13 @@ void RaycastStoreViewHost::handleFinishedPage() {
 
   auto result = m_listResultWatcher.result();
   if (!result) {
+    qWarning() << "[RaycastStore] fetch error:" << result.error();
     context()->services->toastService()->setToast("Failed to fetch extensions", ToastStyle::Danger);
     return;
   }
 
   setLoading(false);
-  m_model->setEntries(result->m_extensions, context()->services->extensionRegistry(),
+  m_model->setEntries(result->extensions, context()->services->extensionRegistry(),
                       QStringLiteral("Extensions"));
 }
 
@@ -81,7 +82,7 @@ void RaycastStoreViewHost::handleFinishedQuery() {
   }
 
   setLoading(false);
-  m_model->setEntries(result->m_extensions, context()->services->extensionRegistry(),
+  m_model->setEntries(result->extensions, context()->services->extensionRegistry(),
                       QStringLiteral("Results"));
 }
 

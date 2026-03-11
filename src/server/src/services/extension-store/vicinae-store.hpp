@@ -1,15 +1,12 @@
 #pragma once
 #include <QDateTime>
 #include <QFuture>
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QNetworkAccessManager>
 #include <QObject>
 #include <QString>
-#include <QStringList>
-#include <QUrl>
 #include <expected>
+#include <vector>
+#include "lib/json-client.hpp"
+#include "ui/image/url.hpp"
 
 namespace VicinaeStore {
 
@@ -19,12 +16,10 @@ struct ListPaginationOptions {
 };
 
 struct Icons {
-  QString light;
-  QString dark;
+  std::optional<QString> light;
+  std::optional<QString> dark;
 
-  static Icons fromJson(const QJsonObject &json);
-  QJsonObject toJson() const;
-  QString themedIcon() const;
+  std::optional<ImageURL> themedIcon() const;
 };
 
 struct Author {
@@ -32,17 +27,11 @@ struct Author {
   QString name;
   QString avatarUrl;
   QString profileUrl;
-
-  static Author fromJson(const QJsonObject &json);
-  QJsonObject toJson() const;
 };
 
 struct Category {
   QString id;
   QString name;
-
-  static Category fromJson(const QJsonObject &json);
-  QJsonObject toJson() const;
 };
 
 struct Command {
@@ -51,20 +40,17 @@ struct Command {
   QString title;
   QString subtitle;
   QString description;
-  QStringList keywords;
+  std::vector<QString> keywords;
   QString mode;
   bool disabledByDefault = false;
   bool beta = false;
   Icons icons;
 
-  static Command fromJson(const QJsonObject &json);
-  QJsonObject toJson() const;
-  std::optional<QString> themedIcon() const;
+  std::optional<ImageURL> themedIcon() const;
 };
 
 struct Extension {
   QString id;
-  QString storeId;
   QString name;
   QString title;
   QString description;
@@ -83,9 +69,7 @@ struct Extension {
   QDateTime createdAt;
   QDateTime updatedAt;
 
-  static Extension fromJson(const QJsonObject &json);
-  QJsonObject toJson() const;
-  QString themedIcon() const;
+  ImageURL themedIcon() const;
 };
 
 struct Pagination {
@@ -95,20 +79,15 @@ struct Pagination {
   int totalPages = 0;
   bool hasNext = false;
   bool hasPrev = false;
-
-  static Pagination fromJson(const QJsonObject &json);
-  QJsonObject toJson() const;
 };
 
 struct ListResponse {
-  QList<Extension> extensions;
+  std::vector<Extension> extensions;
   Pagination pagination;
-
-  static ListResponse fromJson(const QJsonDocument &doc);
 };
 
-using ListResult = std::expected<ListResponse, QString>;
-using DownloadExtensionResult = std::expected<QByteArray, QString>;
+using ListResult = std::expected<ListResponse, std::string>;
+using DownloadExtensionResult = std::expected<QByteArray, std::string>;
 
 } // namespace VicinaeStore
 
@@ -127,10 +106,7 @@ public:
   QString baseUrl() const;
 
 private:
-  static QString userAgent();
+  static const RequestOptions s_requestOpts;
 
-  QFuture<std::expected<QByteArray, QString>> get(const QUrl &url);
-
-  QNetworkAccessManager *m_networkManager;
-  QString m_baseUrl;
+  JsonClient m_client;
 };
