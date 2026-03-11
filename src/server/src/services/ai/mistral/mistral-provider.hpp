@@ -37,7 +37,7 @@ class MistralProvider : public AI::AbstractProvider {
   };
 
   std::shared_ptr<AbstractChatCompletionStream>
-  createChatCompletion(const ChatCompletionPayload &payload) override {
+  createChatCompletion(std::string_view modelId, const ChatCompletionPayload &payload) override {
     return nullptr;
   }
 

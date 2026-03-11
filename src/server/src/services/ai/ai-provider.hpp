@@ -37,12 +37,33 @@ struct Model {
   Capabilities caps;
 };
 
+struct ModelRef {
+  static std::expected<ModelRef, std::string> fromString(std::string_view model) {
+    auto pos = model.find(':');
+
+    if (pos == std::string::npos) {
+      return std::unexpected("Expected at least one ':' to separate provider from model id");
+    }
+
+    return ModelRef(std::string{model.substr(0, pos)}, std::string{model.substr(pos + 1)});
+  }
+
+  std::string toString() const {
+    std::string s;
+    s.reserve(provider.size() + id.size() + 1);
+    return s.append(provider).append(":").append(id);
+  }
+
+  std::string provider;
+  std::string id;
+};
+
 struct ProviderModel : public Model {
-  std::string providerId;
+  ModelRef ref;
   bool enabled = true;
 
   ProviderModel(std::string providerId, Model &&model)
-      : Model(std::move(model)), providerId(std::move(providerId)) {}
+      : Model(std::move(model)), ref{std::move(providerId), this->id} {}
 };
 
 inline std::vector<std::string> stringifyCapabilities(Capabilities caps) {
@@ -103,10 +124,16 @@ struct ChatMessage {
 
 using ChatHistory = std::vector<ChatMessage>;
 
+enum class ThinkingMode { None, Low, Medium, High };
+
 struct ChatCompletionPayload {
-  std::string modelId;
-  std::optional<std::string> providerId;
+  /**
+   * How much thinking the model should do before answering, if applicable to the selected model.
+   * Some providers may not support this at all.
+   */
+  ThinkingMode thinking = ThinkingMode::Medium;
   ChatHistory messages;
+  std::optional<float> temperature;
 };
 
 struct TranscriptionOptions {};
@@ -168,7 +195,7 @@ public:
    * calling `abort`.
    */
   virtual std::shared_ptr<AbstractChatCompletionStream>
-  createChatCompletion(const ChatCompletionPayload &payload) = 0;
+  createChatCompletion(std::string_view modelId, const ChatCompletionPayload &payload) = 0;
 
   virtual QFuture<TranscriptionResult> transcribe(const std::filesystem::path &path,
                                                   const TranscriptionOptions &opts = {}) = 0;

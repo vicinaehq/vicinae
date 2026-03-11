@@ -82,8 +82,7 @@ private:
   ImageUrl m_modelIcon;
   bool m_streaming = false;
 
-  std::optional<std::string> m_selectedProviderId;
-  std::optional<std::string> m_selectedModelId;
+  std::optional<AI::ModelRef> m_selectedModel;
   QVariantList m_modelSelectorItems;
   QVariantMap m_modelSelectorCurrentItem;
 };

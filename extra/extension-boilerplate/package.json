@@ -122,6 +122,12 @@
 			"mode": "no-view",
 			"interval": "30s",
 			"disabledByDefault": true
+		},
+		{
+			"name": "ai",
+			"title": "AI Features",
+			"description": "Test extension AI features",
+			"mode": "view"
 		}
 	],
 	"preferences": [],
