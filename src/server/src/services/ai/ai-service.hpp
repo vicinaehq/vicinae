@@ -1,6 +1,6 @@
 #pragma once
-#include <algorithm>
 #include <memory>
+#include <qlogging.h>
 #include <qobject.h>
 #include <qtmetamacros.h>
 #include "ai-provider-registry.hpp"
@@ -26,21 +26,9 @@ public:
 
   std::shared_ptr<AbstractChatCompletionStream>
   createChatCompletion(std::optional<ModelRef> ref, const ChatCompletionPayload &payload) const {
-    if (ref) {
-      if (auto it = m_providers.find(ref->provider); it != m_providers.end()) {
-        return it->second->createChatCompletion(ref->id, payload);
-      }
-      return nullptr;
-    }
-
-    for (const auto &[id, provider] : m_providers) {
-      if (const auto model = provider->findBestModel(AI::Capability::Completion)) {
-        if (!isModelEnabled(ModelRef{id, model->id})) continue;
-        return provider->createChatCompletion(model->id, payload);
-      }
-    }
-
-    return nullptr;
+    auto completion = createChatCompletionImpl(std::move(ref), payload);
+    if (completion) { qInfo() << "created chat completion for model" << completion->model().id; }
+    return completion;
   }
 
   QFuture<std::expected<TranscriptionResponse, std::string>> transcribe(const std::filesystem::path &path) {
@@ -99,6 +87,25 @@ public:
   }
 
 private:
+  std::shared_ptr<AbstractChatCompletionStream>
+  createChatCompletionImpl(std::optional<ModelRef> ref, const ChatCompletionPayload &payload) const {
+    if (ref) {
+      if (auto it = m_providers.find(ref->provider); it != m_providers.end()) {
+        return it->second->createChatCompletion(ref->id, payload);
+      }
+      return nullptr;
+    }
+
+    for (const auto &[id, provider] : m_providers) {
+      if (const auto model = provider->findBestModel(AI::Capability::Completion)) {
+        if (!isModelEnabled(ModelRef{id, model->id})) continue;
+        return provider->createChatCompletion(model->id, payload);
+      }
+    }
+
+    return nullptr;
+  }
+
   void reconcileProviders(const ConfigValue &current, const ConfigValue &previous) {
     auto const &newProviders = current.providers;
     auto const &oldProviders = previous.providers;
