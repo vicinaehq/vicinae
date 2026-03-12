@@ -28,6 +28,7 @@ QHash<int, QByteArray> VicinaeStoreModel::roleNames() const {
   roles[DownloadCount] = "downloadCount";
   roles[AuthorAvatar] = "authorAvatar";
   roles[IsInstalled] = "isInstalled";
+  roles[CompatTierRole] = "compatTier";
   return roles;
 }
 
@@ -45,6 +46,8 @@ QVariant VicinaeStoreModel::data(const QModelIndex &index, int role) const {
   }
   case IsInstalled:
     return m_entries[i].installed;
+  case CompatTierRole:
+    return -1;
   default:
     return CommandListModel::data(index, role);
   }

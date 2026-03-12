@@ -201,7 +201,7 @@ Item {
 
             Rectangle {
                 id: _alertBox
-                visible: Object.keys(root.host.alert).length > 0
+                visible: root.host.alert !== undefined && Object.keys(root.host.alert).length > 0
                 Layout.fillWidth: true
                 Layout.margins: 20
                 Layout.bottomMargin: 0

@@ -40,11 +40,11 @@ void RaycastStoreDetailHost::initialize() {
       break;
     case Raycast::CompatTier::Partial:
       type = QStringLiteral("warning");
-      message = QStringLiteral("This extension may not fully work.");
+      message = QStringLiteral("This extension mostly works but has a few quirks.");
       break;
     case Raycast::CompatTier::Incompatible:
       type = QStringLiteral("danger");
-      message = QStringLiteral("This extension is likely not compatible.");
+      message = QStringLiteral("This extension is not compatible.");
       break;
     case Raycast::CompatTier::Unknown:
       type = QStringLiteral("muted");

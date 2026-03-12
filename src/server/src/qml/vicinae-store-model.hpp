@@ -14,6 +14,7 @@ public:
     DownloadCount = CommandListModel::Accessory + 1,
     AuthorAvatar,
     IsInstalled,
+    CompatTierRole,
   };
 
   explicit VicinaeStoreModel(QObject *parent = nullptr);

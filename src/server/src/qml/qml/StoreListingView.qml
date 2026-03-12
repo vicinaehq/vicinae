@@ -72,6 +72,7 @@ Item {
                         spacing: 15
 
                         Rectangle {
+                            visible: delegateLoader.compatTier >= 0
                             Layout.preferredWidth: 8
                             Layout.preferredHeight: 8
                             Layout.alignment: Qt.AlignVCenter
