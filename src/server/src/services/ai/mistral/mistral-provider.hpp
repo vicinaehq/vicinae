@@ -1,7 +1,7 @@
 #include "builtin_icon.hpp"
 #include "preference.hpp"
 #include "services/ai/ai-provider.hpp"
-#include "services/ai/json-client.hpp"
+#include "lib/http-client.hpp"
 #include <filesystem>
 #include <format>
 #include <qcborvalue.h>
@@ -84,7 +84,7 @@ class MistralProvider : public AI::AbstractProvider {
           std::format("Failed to open {}: {}", path.c_str(), file->errorString().toStdString())));
     }
 
-    auto formData = new FormData;
+    auto formData = new http::FormData;
 
     formData->addField("model", "voxtral-mini-2507");
     auto ext = path.extension().string();
@@ -108,6 +108,6 @@ public:
   }
 
 private:
-  JsonClient m_client;
+  http::Client m_client;
 };
 }; // namespace AI
