@@ -27,9 +27,9 @@ class VicinaeStoreCommand : public BuiltinCallbackCommand {
 
     if (alwaysShowIntro || !ctrl->storage().getItem("introCompleted").toBool()) {
       static const QString INTRO = QStringLiteral(R"(
-# Welcome to the Vicinae Extension Store
+# Welcome to the vicinae extension store
 
-The Vicinae extension store features community-built extensions that have been approved by the core contributors of the Vicinae project.
+The vicinae extension store features community-built extensions that have been approved by our core contributors.
 
 Every extension listed here has its source code available in the [vicinaehq/extensions](https://github.com/vicinaehq/extensions) repository.
 

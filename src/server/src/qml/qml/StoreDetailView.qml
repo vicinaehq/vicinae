@@ -5,6 +5,9 @@ Item {
     id: root
     required property var host
 
+    readonly property var _alert: root.host.alert ?? ({})
+    readonly property bool _hasAlert: Object.keys(_alert).length > 0
+
     readonly property var platformIcons: ({
             "linux": "linux",
             "macOS": "apple",
@@ -201,7 +204,7 @@ Item {
 
             Rectangle {
                 id: _alertBox
-                visible: root.host.alert !== undefined && Object.keys(root.host.alert).length > 0
+                visible: root._hasAlert
                 Layout.fillWidth: true
                 Layout.margins: 20
                 Layout.bottomMargin: 0
@@ -218,7 +221,7 @@ Item {
                         "danger": Theme.toastDanger,
                         "muted": Theme.textMuted
                     };
-                    return colors[root.host.alert.type] ?? Theme.textMuted;
+                    return colors[root._alert.type] ?? Theme.textMuted;
                 }
 
                 readonly property string _alertIcon: {
@@ -228,7 +231,7 @@ Item {
                         "danger": "x-mark-circle",
                         "muted": "question-mark-circle"
                     };
-                    return icons[root.host.alert.type] ?? "question-mark-circle";
+                    return icons[root._alert.type] ?? "question-mark-circle";
                 }
 
                 RowLayout {
@@ -249,7 +252,7 @@ Item {
                         spacing: 6
 
                         Text {
-                            text: root.host.alert.message ?? ""
+                            text: root._alert.message ?? ""
                             color: Theme.foreground
                             font.pointSize: Theme.smallerFontSize
                             wrapMode: Text.WordWrap
@@ -257,7 +260,7 @@ Item {
                         }
 
                         Repeater {
-                            model: root.host.alert.notes ?? []
+                            model: root._alert.notes ?? []
 
                             RowLayout {
                                 Layout.fillWidth: true
