@@ -4,12 +4,10 @@
 #include "bridge-view.hpp"
 #include <QAbstractListModel>
 #include <QJsonObject>
-#include <filesystem>
 #include <memory>
 #include <vector>
 
 class ExtensionCommand;
-class FileChooser;
 
 class MissingPreferenceFormModel : public QAbstractListModel {
   Q_OBJECT
@@ -42,6 +40,7 @@ public:
   void load(const std::vector<Preference> &preferences, const QJsonObject &existingValues);
   Q_INVOKABLE void setFieldValue(int row, const QVariant &value);
   Q_INVOKABLE void openFilePicker(int row);
+  Q_INVOKABLE void closeFallbackDialog();
 
   QJsonObject values() const { return m_values; }
 
@@ -56,8 +55,6 @@ signals:
   void validationChanged();
 
 private:
-  void handlePickerResult(int row, const std::vector<std::filesystem::path> &paths);
-
   struct Field {
     QString type;
     QString id;
@@ -73,7 +70,6 @@ private:
 
   std::vector<Field> m_fields;
   QJsonObject m_values;
-  FileChooser *m_activeChooser = nullptr;
 };
 
 class MissingPreferenceViewHost : public FormViewBase {

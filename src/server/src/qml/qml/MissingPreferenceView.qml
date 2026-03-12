@@ -198,6 +198,7 @@ Item {
                         root.host.prefModel.setFieldValue(field.parent.index, paths.length > 0 ? paths[0] : "");
                 }
                 onOpenRequested: root.host.prefModel.openFilePicker(field.parent.index)
+                onFallbackDialogClosed: root.host.prefModel.closeFallbackDialog()
 
                 Connections {
                     target: root.host.prefModel

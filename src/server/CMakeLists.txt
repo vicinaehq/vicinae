@@ -324,6 +324,8 @@ set(SRCS
 	src/services/file-chooser/abstract-file-chooser.hpp
 	src/services/file-chooser/file-chooser.hpp
 	src/services/file-chooser/file-chooser.cpp
+	src/services/file-chooser/file-chooser-service.hpp
+	src/services/file-chooser/file-chooser-service.cpp
 	src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.hpp
 	src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.cpp
 	src/services/root-item-manager/root-item-manager.hpp

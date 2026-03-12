@@ -4,10 +4,7 @@
 #include <QAbstractListModel>
 #include <QJsonObject>
 #include <QTimer>
-#include <filesystem>
 #include <vector>
-
-class FileChooser;
 
 class PreferenceFormModel : public QAbstractListModel {
   Q_OBJECT
@@ -43,10 +40,10 @@ public:
 
   Q_INVOKABLE void setFieldValue(int row, const QVariant &value);
   Q_INVOKABLE void openFilePicker(int row);
+  Q_INVOKABLE void closeFallbackDialog();
 
 private:
   void save();
-  void handlePickerResult(int row, const std::vector<std::filesystem::path> &paths);
 
   struct Field {
     QString type;
@@ -68,5 +65,4 @@ private:
   QString m_providerId;
   bool m_isProvider = false;
   QTimer m_saveTimer;
-  FileChooser *m_activeChooser = nullptr;
 };

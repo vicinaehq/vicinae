@@ -127,6 +127,7 @@ private:
   void tryCompaction();
   void updateBlur();
   void applyWindowConfig();
+  void setExclusiveFocus(bool exclusive);
 
   ApplicationContext &m_ctx;
   ActionPanelController *m_actionPanel;

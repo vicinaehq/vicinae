@@ -9,8 +9,6 @@
 #include <QTimer>
 #include <variant>
 
-class FileChooser;
-
 class ExtensionViewHost : public ViewHostBase {
   Q_OBJECT
   Q_PROPERTY(QString viewType READ viewType NOTIFY viewTypeChanged)
@@ -56,6 +54,7 @@ public:
 
   Q_INVOKABLE void setDropdownValue(const QString &value);
   Q_INVOKABLE void openFilePicker(int index);
+  Q_INVOKABLE void closeFallbackDialog();
 
 signals:
   void selectFirstOnResetChanged();
@@ -117,6 +116,4 @@ private:
   QString m_dropdownValue;
   QString m_dropdownPlaceholder;
   std::optional<QString> m_dropdownOnChange;
-
-  FileChooser *m_activeChooser = nullptr;
 };

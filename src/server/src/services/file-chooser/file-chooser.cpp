@@ -12,3 +12,5 @@ bool FileChooser::isAvailable() const {
 }
 
 bool FileChooser::open(const FileChooserOptions &options) { return m_xdp.open(options); }
+
+void FileChooser::close() { m_xdp.close(); }

@@ -18,6 +18,7 @@ public:
 
   bool isAvailable() const;
   bool open(const FileChooserOptions &options);
+  void close();
 
 private:
   XdpFileChooser m_xdp;

@@ -17,6 +17,7 @@ FocusScope {
 
     signal pathsChanged(var paths)
     signal openRequested
+    signal fallbackDialogClosed
 
     readonly property bool _directoriesOnly: canChooseDirectories && !canChooseFiles
 
@@ -59,13 +60,21 @@ FocusScope {
     FileDialog {
         id: _fallbackFileDialog
         title: root.multiple ? "Select files" : "Select a file"
-        onAccepted: root._handleFallbackResult(selectedFiles)
+        onAccepted: {
+            root._handleFallbackResult(selectedFiles);
+            root.fallbackDialogClosed();
+        }
+        onRejected: root.fallbackDialogClosed()
     }
 
     FolderDialog {
         id: _fallbackFolderDialog
         title: "Select a directory"
-        onAccepted: root._handleFallbackResult([selectedFolder])
+        onAccepted: {
+            root._handleFallbackResult([selectedFolder]);
+            root.fallbackDialogClosed();
+        }
+        onRejected: root.fallbackDialogClosed()
     }
 
     // --- Single mode ---

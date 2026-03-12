@@ -3,7 +3,7 @@
 #include <QJSValue>
 #include <utility>
 #include "service-registry.hpp"
-#include "services/file-chooser/file-chooser.hpp"
+#include "services/file-chooser/file-chooser-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 
 using namespace std::chrono_literals;
@@ -206,62 +206,41 @@ void PreferenceFormModel::openFilePicker(int row) {
   opts.canChooseDirectories = f.canChooseDirectories;
   opts.allowMultipleSelection = f.multiple;
 
-  if (m_activeChooser) {
-    if (!m_activeChooser->isAvailable()) {
-      delete m_activeChooser;
-      m_activeChooser = nullptr;
-    } else {
-      return;
-    }
-  }
+  auto *svc = ServiceRegistry::instance()->fileChooserService();
+  if (svc->isActive()) return;
 
-  m_activeChooser = new FileChooser(this);
+  bool const portalHandled =
+      svc->open(opts, this, [this, row](const std::vector<std::filesystem::path> &paths) {
+        if (row < 0 || std::cmp_greater_equal(row, m_fields.size())) return;
+        const auto &f = m_fields[row];
 
-  if (!m_activeChooser->isAvailable()) {
-    delete m_activeChooser;
-    m_activeChooser = nullptr;
-    emit openQmlFilePicker(row);
-    return;
-  }
+        QVariantList resultPaths;
+        if (f.multiple) {
+          QVariantList existing;
+          if (f.value.canConvert<QVariantList>()) existing = f.value.toList();
 
-  connect(m_activeChooser, &FileChooser::filesChosen, this,
-          [this, row](const std::vector<std::filesystem::path> &paths) {
-            handlePickerResult(row, paths);
-            m_activeChooser->deleteLater();
-            m_activeChooser = nullptr;
-          });
+          for (const auto &p : paths) {
+            QString const s = QString::fromStdString(p.string());
+            if (!existing.contains(s)) existing.append(s);
+          }
+          setFieldValue(row, existing);
+          resultPaths = existing;
+        } else {
+          if (!paths.empty()) {
+            QString const s = QString::fromStdString(paths.front().string());
+            setFieldValue(row, s);
+            resultPaths.append(s);
+          }
+        }
+        emit filePickerResult(row, resultPaths);
+      });
 
-  connect(m_activeChooser, &FileChooser::rejected, this, [this]() {
-    m_activeChooser->deleteLater();
-    m_activeChooser = nullptr;
-  });
-
-  m_activeChooser->open(opts);
+  if (!portalHandled) emit openQmlFilePicker(row);
 }
 
-void PreferenceFormModel::handlePickerResult(int row, const std::vector<std::filesystem::path> &paths) {
-  if (row < 0 || std::cmp_greater_equal(row, m_fields.size())) return;
-  const auto &f = m_fields[row];
-
-  QVariantList resultPaths;
-  if (f.multiple) {
-    QVariantList existing;
-    if (f.value.canConvert<QVariantList>()) existing = f.value.toList();
-
-    for (const auto &p : paths) {
-      QString const s = QString::fromStdString(p.string());
-      if (!existing.contains(s)) existing.append(s);
-    }
-    setFieldValue(row, existing);
-    resultPaths = existing;
-  } else {
-    if (!paths.empty()) {
-      QString const s = QString::fromStdString(paths.front().string());
-      setFieldValue(row, s);
-      resultPaths.append(s);
-    }
-  }
-  emit filePickerResult(row, resultPaths);
+void PreferenceFormModel::closeFallbackDialog() {
+  auto *svc = ServiceRegistry::instance()->fileChooserService();
+  if (svc->isActive()) svc->reportFallbackCancelled();
 }
 
 void PreferenceFormModel::save() {

@@ -45,11 +45,11 @@ bool XdpFileChooser::open(const FileChooserOptions &options) {
     return false;
   }
 
-  QString const requestPath = message.value().path();
+  m_requestPath = message.value().path();
 
   // clang-format off
     bool const connected =
-        m_bus.connect("", requestPath, "org.freedesktop.portal.Request",
+        m_bus.connect("", m_requestPath, "org.freedesktop.portal.Request",
                       "Response", this, SLOT(handleResponse(uint,QVariantMap)));
   // clang-format on
 
@@ -59,8 +59,18 @@ bool XdpFileChooser::open(const FileChooserOptions &options) {
   return true;
 }
 
+void XdpFileChooser::close() {
+  if (!m_ongoing || m_requestPath.isEmpty()) return;
+  QDBusInterface request("org.freedesktop.portal.Desktop", m_requestPath, "org.freedesktop.portal.Request",
+                         m_bus);
+  request.call("Close");
+  m_ongoing = false;
+  m_requestPath.clear();
+}
+
 void XdpFileChooser::handleResponse(uint response, const QVariantMap &results) {
   m_ongoing = false;
+  m_requestPath.clear();
 
   if (response == 1) {
     emit rejected();

@@ -19,6 +19,7 @@
 #include "config/config.hpp"
 #include "service-registry.hpp"
 #include "services/background-effect/background-effect-manager.hpp"
+#include "services/file-chooser/file-chooser-service.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "environment.hpp"
 #include "vicinae.hpp"
@@ -235,6 +236,13 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
             applyWindowConfig();
             tryCompaction();
           });
+
+  auto *fileChooser = m_ctx.services->fileChooserService();
+  connect(fileChooser, &FileChooserService::dialogOpened, this, [this]() { setExclusiveFocus(false); });
+  connect(fileChooser, &FileChooserService::dialogClosed, this, [this]() { setExclusiveFocus(true); });
+  connect(nav, &NavigationController::viewPoped, this, [this, fileChooser](const BaseView *) {
+    if (m_window && m_window->isActive() && fileChooser->isActive()) fileChooser->cancel();
+  });
 
   connect(ctx.overlay.get(), &OverlayController::overlayChanged, this, [this]() {
     m_hasOverlay = m_ctx.overlay->hasOverlay();
@@ -490,6 +498,24 @@ void LauncherWindow::updateBlur() {
   } else {
     bgEffect->clearBlur(m_window);
   }
+}
+
+void LauncherWindow::setExclusiveFocus(bool exclusive) {
+#ifdef WAYLAND_LAYER_SHELL
+  if (!m_window) return;
+  const auto &lc = m_ctx.services->config()->value().launcherWindow.layerShell;
+  if (!Environment::isLayerShellSupported() || !lc.enabled) return;
+
+  namespace Shell = LayerShellQt;
+  if (auto *lshell = Shell::Window::get(m_window)) {
+    if (exclusive && lc.keyboardInteractivity == "exclusive")
+      lshell->setKeyboardInteractivity(Shell::Window::KeyboardInteractivityExclusive);
+    else
+      lshell->setKeyboardInteractivity(Shell::Window::KeyboardInteractivityOnDemand);
+  }
+#else
+  Q_UNUSED(exclusive)
+#endif
 }
 
 void LauncherWindow::applyWindowConfig() {

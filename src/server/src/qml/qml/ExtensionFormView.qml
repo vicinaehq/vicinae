@@ -311,6 +311,7 @@ Item {
                     root.formModel.setFilePaths(field.parent.index, paths);
                 }
                 onOpenRequested: root.host.openFilePicker(field.parent.index)
+                onFallbackDialogClosed: root.host.closeFallbackDialog()
 
                 Connections {
                     target: root.host

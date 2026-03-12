@@ -16,6 +16,7 @@ public:
 
   bool isAvailable() const override;
   bool open(const FileChooserOptions &options) override;
+  void close();
 
 public slots:
   void handleResponse(uint response, const QVariantMap &results);
@@ -25,4 +26,5 @@ private:
 
   QDBusConnection m_bus;
   QDBusInterface *m_interface;
+  QString m_requestPath;
 };

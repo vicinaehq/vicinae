@@ -170,6 +170,7 @@ Item {
                         root.prefModel.setFieldValue(field.parent.index, paths.length > 0 ? paths[0] : "");
                 }
                 onOpenRequested: root.prefModel.openFilePicker(field.parent.index)
+                onFallbackDialogClosed: root.prefModel.closeFallbackDialog()
 
                 Connections {
                     target: root.prefModel
