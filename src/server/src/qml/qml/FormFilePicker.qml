@@ -16,22 +16,26 @@ FocusScope {
     property var selectedPaths: []
 
     signal pathsChanged(var paths)
-    signal openRequested
-    signal fallbackDialogClosed
 
     readonly property bool _directoriesOnly: canChooseDirectories && !canChooseFiles
+    property bool _waitingForPortal: false
 
     function forceActiveFocus() {
         focusItem.forceActiveFocus();
     }
 
     function _openDialog() {
-        if (root.readOnly)
+        if (root.readOnly || FileChooser.active)
             return;
-        root.openRequested();
+
+        if (FileChooser.openDialog(root.canChooseFiles, root.canChooseDirectories, root.multiple)) {
+            root._waitingForPortal = true;
+        } else {
+            _openFallbackDialog();
+        }
     }
 
-    function openFallbackDialog() {
+    function _openFallbackDialog() {
         if (root._directoriesOnly)
             _fallbackFolderDialog.open();
         else {
@@ -40,10 +44,7 @@ FocusScope {
         }
     }
 
-    function _handleFallbackResult(urls) {
-        let newPaths = [];
-        for (let i = 0; i < urls.length; i++)
-            newPaths.push(urls[i].toString().replace("file://", ""));
+    function _applyResult(newPaths) {
         if (root.multiple && root.selectedPaths) {
             let merged = [];
             for (let i = 0; i < root.selectedPaths.length; i++)
@@ -57,14 +58,34 @@ FocusScope {
         root.pathsChanged(newPaths);
     }
 
+    function _handleFallbackResult(urls) {
+        let newPaths = [];
+        for (let i = 0; i < urls.length; i++)
+            newPaths.push(urls[i].toString().replace("file://", ""));
+        root._applyResult(newPaths);
+    }
+
+    Connections {
+        target: FileChooser
+        enabled: root._waitingForPortal
+
+        function onFilesSelected(paths) {
+            root._waitingForPortal = false;
+            let arr = [];
+            for (let i = 0; i < paths.length; i++)
+                arr.push(paths[i]);
+            root._applyResult(arr);
+        }
+    }
+
     FileDialog {
         id: _fallbackFileDialog
         title: root.multiple ? "Select files" : "Select a file"
         onAccepted: {
             root._handleFallbackResult(selectedFiles);
-            root.fallbackDialogClosed();
+            FileChooser.notifyFallbackDone();
         }
-        onRejected: root.fallbackDialogClosed()
+        onRejected: FileChooser.notifyFallbackDone()
     }
 
     FolderDialog {
@@ -72,9 +93,9 @@ FocusScope {
         title: "Select a directory"
         onAccepted: {
             root._handleFallbackResult([selectedFolder]);
-            root.fallbackDialogClosed();
+            FileChooser.notifyFallbackDone();
         }
-        onRejected: root.fallbackDialogClosed()
+        onRejected: FileChooser.notifyFallbackDone()
     }
 
     // --- Single mode ---

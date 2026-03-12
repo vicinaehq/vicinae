@@ -5,15 +5,6 @@ Item {
     id: root
     required property var host
 
-    Connections {
-        target: root.host.prefModel
-        function onOpenQmlFilePicker(index) {
-            const item = missingRepeater.itemAt(index);
-            if (item && item.item && typeof item.item.openFallbackPicker === "function")
-                item.item.openFallbackPicker();
-        }
-    }
-
     FormView {
         id: formView
         anchors.fill: parent
@@ -174,10 +165,6 @@ Item {
             label: parent.label
             info: parent.description
 
-            function openFallbackPicker() {
-                missingFilePicker.openFallbackDialog();
-            }
-
             FormFilePicker {
                 id: missingFilePicker
                 multiple: field.parent.multiple
@@ -196,16 +183,6 @@ Item {
                         root.host.prefModel.setFieldValue(field.parent.index, paths);
                     else
                         root.host.prefModel.setFieldValue(field.parent.index, paths.length > 0 ? paths[0] : "");
-                }
-                onOpenRequested: root.host.prefModel.openFilePicker(field.parent.index)
-                onFallbackDialogClosed: root.host.prefModel.closeFallbackDialog()
-
-                Connections {
-                    target: root.host.prefModel
-                    function onFilePickerResult(index, paths) {
-                        if (index === field.parent.index)
-                            missingFilePicker.selectedPaths = paths;
-                    }
                 }
             }
         }

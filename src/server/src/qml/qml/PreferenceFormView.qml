@@ -6,15 +6,6 @@ Item {
     required property var prefModel
     implicitHeight: formView.contentHeight
 
-    Connections {
-        target: root.prefModel
-        function onOpenQmlFilePicker(index) {
-            const item = repeater.itemAt(index);
-            if (item && item.item && typeof item.item.openFallbackPicker === "function")
-                item.item.openFallbackPicker();
-        }
-    }
-
     FormView {
         id: formView
         anchors.fill: parent
@@ -142,10 +133,6 @@ Item {
             label: parent.label
             info: parent.description
 
-            function openFallbackPicker() {
-                prefFilePicker.openFallbackDialog();
-            }
-
             FormFilePicker {
                 id: prefFilePicker
                 multiple: field.parent.multiple
@@ -168,16 +155,6 @@ Item {
                         root.prefModel.setFieldValue(field.parent.index, paths);
                     else
                         root.prefModel.setFieldValue(field.parent.index, paths.length > 0 ? paths[0] : "");
-                }
-                onOpenRequested: root.prefModel.openFilePicker(field.parent.index)
-                onFallbackDialogClosed: root.prefModel.closeFallbackDialog()
-
-                Connections {
-                    target: root.prefModel
-                    function onFilePickerResult(index, paths) {
-                        if (index === field.parent.index)
-                            prefFilePicker.selectedPaths = paths;
-                    }
                 }
             }
         }

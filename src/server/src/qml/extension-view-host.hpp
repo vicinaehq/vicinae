@@ -53,8 +53,6 @@ public:
   QString dropdownPlaceholder() const { return m_dropdownPlaceholder; }
 
   Q_INVOKABLE void setDropdownValue(const QString &value);
-  Q_INVOKABLE void openFilePicker(int index);
-  Q_INVOKABLE void closeFallbackDialog();
 
 signals:
   void selectFirstOnResetChanged();
@@ -64,8 +62,6 @@ signals:
   void suppressEmptyViewChanged();
   void linkAccessoryChanged();
   void dropdownChanged();
-  void filePickerResult(int index, const QVariantList &paths);
-  void openQmlFilePicker(int index);
 
 private:
   struct DetailState {

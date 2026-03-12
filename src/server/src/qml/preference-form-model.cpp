@@ -3,7 +3,6 @@
 #include <QJSValue>
 #include <utility>
 #include "service-registry.hpp"
-#include "services/file-chooser/file-chooser-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 
 using namespace std::chrono_literals;
@@ -195,52 +194,6 @@ void PreferenceFormModel::setFieldValue(int row, const QVariant &value) {
   auto idx = index(row);
   emit dataChanged(idx, idx, {ValueRole});
   m_saveTimer.start();
-}
-
-void PreferenceFormModel::openFilePicker(int row) {
-  if (row < 0 || std::cmp_greater_equal(row, m_fields.size())) return;
-  const auto &f = m_fields[row];
-
-  FileChooserOptions opts;
-  opts.canChooseFiles = f.canChooseFiles;
-  opts.canChooseDirectories = f.canChooseDirectories;
-  opts.allowMultipleSelection = f.multiple;
-
-  auto *svc = ServiceRegistry::instance()->fileChooserService();
-  if (svc->isActive()) return;
-
-  bool const portalHandled =
-      svc->open(opts, this, [this, row](const std::vector<std::filesystem::path> &paths) {
-        if (row < 0 || std::cmp_greater_equal(row, m_fields.size())) return;
-        const auto &f = m_fields[row];
-
-        QVariantList resultPaths;
-        if (f.multiple) {
-          QVariantList existing;
-          if (f.value.canConvert<QVariantList>()) existing = f.value.toList();
-
-          for (const auto &p : paths) {
-            QString const s = QString::fromStdString(p.string());
-            if (!existing.contains(s)) existing.append(s);
-          }
-          setFieldValue(row, existing);
-          resultPaths = existing;
-        } else {
-          if (!paths.empty()) {
-            QString const s = QString::fromStdString(paths.front().string());
-            setFieldValue(row, s);
-            resultPaths.append(s);
-          }
-        }
-        emit filePickerResult(row, resultPaths);
-      });
-
-  if (!portalHandled) emit openQmlFilePicker(row);
-}
-
-void PreferenceFormModel::closeFallbackDialog() {
-  auto *svc = ServiceRegistry::instance()->fileChooserService();
-  if (svc->isActive()) svc->reportFallbackCancelled();
 }
 
 void PreferenceFormModel::save() {

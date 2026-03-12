@@ -7,15 +7,6 @@ ColumnLayout {
     required property var prefModel
     spacing: 20
 
-    Connections {
-        target: root.prefModel
-        function onOpenQmlFilePicker(index) {
-            const item = settingsRepeater.itemAt(index);
-            if (item && item.item && typeof item.item.openFallbackPicker === "function")
-                item.item.openFallbackPicker();
-        }
-    }
-
     Repeater {
         id: settingsRepeater
         model: root.prefModel
@@ -249,10 +240,6 @@ ColumnLayout {
             id: field
             spacing: 6
 
-            function openFallbackPicker() {
-                settingsFilePicker.openFallbackDialog();
-            }
-
             Text {
                 text: field.parent.label
                 color: Theme.textMuted
@@ -281,16 +268,6 @@ ColumnLayout {
                         root.prefModel.setFieldValue(field.parent.index, paths);
                     else
                         root.prefModel.setFieldValue(field.parent.index, paths.length > 0 ? paths[0] : "");
-                }
-                onOpenRequested: root.prefModel.openFilePicker(field.parent.index)
-                onFallbackDialogClosed: root.prefModel.closeFallbackDialog()
-
-                Connections {
-                    target: root.prefModel
-                    function onFilePickerResult(index, paths) {
-                        if (index === field.parent.index)
-                            settingsFilePicker.selectedPaths = paths;
-                    }
                 }
             }
             Text {

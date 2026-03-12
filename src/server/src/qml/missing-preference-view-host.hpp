@@ -12,10 +12,6 @@ class ExtensionCommand;
 class MissingPreferenceFormModel : public QAbstractListModel {
   Q_OBJECT
 
-signals:
-  void filePickerResult(int index, const QVariantList &paths);
-  void openQmlFilePicker(int index);
-
 public:
   enum Role {
     TypeRole = Qt::UserRole + 1,
@@ -39,8 +35,6 @@ public:
 
   void load(const std::vector<Preference> &preferences, const QJsonObject &existingValues);
   Q_INVOKABLE void setFieldValue(int row, const QVariant &value);
-  Q_INVOKABLE void openFilePicker(int row);
-  Q_INVOKABLE void closeFallbackDialog();
 
   QJsonObject values() const { return m_values; }
 

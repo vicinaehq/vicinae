@@ -60,6 +60,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   rootCtx->setContextProperty(QStringLiteral("launcher"), this);
   rootCtx->setContextProperty(QStringLiteral("actionPanel"), m_actionPanel);
   rootCtx->setContextProperty(QStringLiteral("Keybinds"), m_keybindProxy);
+  rootCtx->setContextProperty(QStringLiteral("FileChooser"), ctx.services->fileChooserService());
 
   m_engine.load(QUrl(QStringLiteral("qrc:/Vicinae/LauncherWindow.qml")));
 

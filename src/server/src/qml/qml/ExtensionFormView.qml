@@ -278,10 +278,6 @@ Item {
                 filePicker.forceActiveFocus();
             }
 
-            function openFallbackPicker() {
-                filePicker.openFallbackDialog();
-            }
-
             readonly property var _fd: parent.fieldData || ({})
 
             FormFilePicker {
@@ -291,12 +287,10 @@ Item {
                 canChooseFiles: field._fd.canChooseFiles !== undefined ? field._fd.canChooseFiles : true
                 canChooseDirectories: field._fd.canChooseDirectories || false
 
-                property var _localPaths: []
-
                 selectedPaths: {
                     const v = field.parent.value;
                     if (v === undefined || v === null)
-                        return filePicker._localPaths;
+                        return [];
                     if (typeof v === "string")
                         return v !== "" ? [v] : [];
                     if (typeof v === "object" && v.length !== undefined) {
@@ -309,19 +303,6 @@ Item {
                 }
                 onPathsChanged: paths => {
                     root.formModel.setFilePaths(field.parent.index, paths);
-                }
-                onOpenRequested: root.host.openFilePicker(field.parent.index)
-                onFallbackDialogClosed: root.host.closeFallbackDialog()
-
-                Connections {
-                    target: root.host
-                    function onFilePickerResult(index, paths) {
-                        if (index !== field.parent.index)
-                            return;
-                        const v = field.parent.value;
-                        if (v === undefined || v === null)
-                            filePicker._localPaths = paths;
-                    }
                 }
             }
         }
@@ -381,15 +362,6 @@ Item {
     Component {
         id: separatorFieldComp
         FormSeparator {}
-    }
-
-    Connections {
-        target: root.host
-        function onOpenQmlFilePicker(index) {
-            const item = repeater.itemAt(index);
-            if (item && item.item && typeof item.item.openFallbackPicker === "function")
-                item.item.openFallbackPicker();
-        }
     }
 
     Component.onCompleted: Qt.callLater(_tryAutoFocus)

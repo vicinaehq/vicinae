@@ -1,7 +1,5 @@
 #include "extension-view-host.hpp"
 #include "navigation-controller.hpp"
-#include "service-registry.hpp"
-#include "services/file-chooser/file-chooser-service.hpp"
 #include "view-utils.hpp"
 #include <chrono>
 
@@ -394,48 +392,6 @@ void ExtensionViewHost::setDropdownValue(const QString &value) {
       }
     }
   }
-}
-
-void ExtensionViewHost::openFilePicker(int index) {
-  auto *form = activeModel<ExtensionFormModel>();
-  if (!form) return;
-
-  auto opts = form->filePickerOptions(index);
-  if (!opts) return;
-
-  auto *svc = ServiceRegistry::instance()->fileChooserService();
-  if (svc->isActive()) return;
-
-  bool const multiple = opts->allowMultipleSelection;
-  bool const portalHandled =
-      svc->open(*opts, this, [this, form, index, multiple](const std::vector<std::filesystem::path> &paths) {
-        QVariantList newPaths;
-        if (multiple) {
-          auto current = form->data(form->index(index), ExtensionFormModel::ValueRole);
-          QVariantList existing;
-          if (current.canConvert<QVariantList>()) existing = current.toList();
-          for (const auto &e : existing) {
-            newPaths.append(e);
-          }
-          for (const auto &p : paths) {
-            QString const s = QString::fromStdString(p.string());
-            if (!newPaths.contains(s)) newPaths.append(s);
-          }
-        } else {
-          for (const auto &p : paths) {
-            newPaths.append(QString::fromStdString(p.string()));
-          }
-        }
-        form->setFilePaths(index, newPaths);
-        emit filePickerResult(index, newPaths);
-      });
-
-  if (!portalHandled) emit openQmlFilePicker(index);
-}
-
-void ExtensionViewHost::closeFallbackDialog() {
-  auto *svc = ServiceRegistry::instance()->fileChooserService();
-  if (svc->isActive()) svc->reportFallbackCancelled();
 }
 
 void ExtensionViewHost::notifyExtension(const QString &handler, const QJsonArray &args) {
