@@ -1,8 +1,11 @@
 #pragma once
 #include "abstract-file-chooser.hpp"
+#include "xdp-file-chooser/xdp-file-chooser.hpp"
 #include <qobject.h>
 #include <qtmetamacros.h>
 
+// Thin wrapper around XdpFileChooser that exposes availability.
+// When the portal is unavailable, callers should fall back to a QML dialog.
 class FileChooser : public QObject {
   Q_OBJECT
 
@@ -13,8 +16,9 @@ signals:
 public:
   explicit FileChooser(QObject *parent = nullptr);
 
-  void open(const FileChooserOptions &options);
+  bool isAvailable() const;
+  bool open(const FileChooserOptions &options);
 
 private:
-  void connectBackend(AbstractFileChooser *backend);
+  XdpFileChooser m_xdp;
 };

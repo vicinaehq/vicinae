@@ -14,6 +14,7 @@ class XdpFileChooser : public AbstractFileChooser {
 public:
   XdpFileChooser(QObject *parent = nullptr);
 
+  bool isAvailable() const override;
   bool open(const FileChooserOptions &options) override;
 
 public slots:

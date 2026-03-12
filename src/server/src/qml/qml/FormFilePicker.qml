@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Dialogs
 import QtQuick.Layouts
 
 FocusScope {
@@ -27,6 +28,44 @@ FocusScope {
         if (root.readOnly)
             return;
         root.openRequested();
+    }
+
+    function openFallbackDialog() {
+        if (root._directoriesOnly)
+            _fallbackFolderDialog.open();
+        else {
+            _fallbackFileDialog.fileMode = root.multiple ? FileDialog.OpenFiles : FileDialog.OpenFile;
+            _fallbackFileDialog.open();
+        }
+    }
+
+    function _handleFallbackResult(urls) {
+        let newPaths = [];
+        for (let i = 0; i < urls.length; i++)
+            newPaths.push(urls[i].toString().replace("file://", ""));
+        if (root.multiple && root.selectedPaths) {
+            let merged = [];
+            for (let i = 0; i < root.selectedPaths.length; i++)
+                merged.push(root.selectedPaths[i]);
+            for (let i = 0; i < newPaths.length; i++) {
+                if (merged.indexOf(newPaths[i]) < 0)
+                    merged.push(newPaths[i]);
+            }
+            newPaths = merged;
+        }
+        root.pathsChanged(newPaths);
+    }
+
+    FileDialog {
+        id: _fallbackFileDialog
+        title: root.multiple ? "Select files" : "Select a file"
+        onAccepted: root._handleFallbackResult(selectedFiles)
+    }
+
+    FolderDialog {
+        id: _fallbackFolderDialog
+        title: "Select a directory"
+        onAccepted: root._handleFallbackResult([selectedFolder])
     }
 
     // --- Single mode ---

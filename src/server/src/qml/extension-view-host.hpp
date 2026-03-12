@@ -66,6 +66,7 @@ signals:
   void linkAccessoryChanged();
   void dropdownChanged();
   void filePickerResult(int index, const QVariantList &paths);
+  void openQmlFilePicker(int index);
 
 private:
   struct DetailState {

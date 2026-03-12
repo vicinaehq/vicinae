@@ -278,6 +278,10 @@ Item {
                 filePicker.forceActiveFocus();
             }
 
+            function openFallbackPicker() {
+                filePicker.openFallbackDialog();
+            }
+
             readonly property var _fd: parent.fieldData || ({})
 
             FormFilePicker {
@@ -376,6 +380,15 @@ Item {
     Component {
         id: separatorFieldComp
         FormSeparator {}
+    }
+
+    Connections {
+        target: root.host
+        function onOpenQmlFilePicker(index) {
+            const item = repeater.itemAt(index);
+            if (item && item.item && typeof item.item.openFallbackPicker === "function")
+                item.item.openFallbackPicker();
+        }
     }
 
     Component.onCompleted: Qt.callLater(_tryAutoFocus)

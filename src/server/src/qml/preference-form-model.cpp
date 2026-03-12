@@ -198,7 +198,6 @@ void PreferenceFormModel::setFieldValue(int row, const QVariant &value) {
 }
 
 void PreferenceFormModel::openFilePicker(int row) {
-  if (m_activeChooser) return;
   if (row < 0 || std::cmp_greater_equal(row, m_fields.size())) return;
   const auto &f = m_fields[row];
 
@@ -207,7 +206,23 @@ void PreferenceFormModel::openFilePicker(int row) {
   opts.canChooseDirectories = f.canChooseDirectories;
   opts.allowMultipleSelection = f.multiple;
 
+  if (m_activeChooser) {
+    if (!m_activeChooser->isAvailable()) {
+      delete m_activeChooser;
+      m_activeChooser = nullptr;
+    } else {
+      return;
+    }
+  }
+
   m_activeChooser = new FileChooser(this);
+
+  if (!m_activeChooser->isAvailable()) {
+    delete m_activeChooser;
+    m_activeChooser = nullptr;
+    emit openQmlFilePicker(row);
+    return;
+  }
 
   connect(m_activeChooser, &FileChooser::filesChosen, this,
           [this, row](const std::vector<std::filesystem::path> &paths) {

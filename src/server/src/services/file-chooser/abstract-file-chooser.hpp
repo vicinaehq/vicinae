@@ -24,5 +24,6 @@ signals:
 public:
   AbstractFileChooser(QObject *parent = nullptr) : QObject(parent) {}
 
+  virtual bool isAvailable() const = 0;
   virtual bool open(const FileChooserOptions &options) = 0;
 };

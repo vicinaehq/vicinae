@@ -1,21 +1,14 @@
 #include "file-chooser.hpp"
-#include "xdp-file-chooser/xdp-file-chooser.hpp"
-#include <qlogging.h>
+#include <cstdlib>
 
-FileChooser::FileChooser(QObject *parent) : QObject(parent) {}
-
-void FileChooser::connectBackend(AbstractFileChooser *backend) {
-  connect(backend, &AbstractFileChooser::filesChosen, this, &FileChooser::filesChosen);
-  connect(backend, &AbstractFileChooser::rejected, this, &FileChooser::rejected);
+FileChooser::FileChooser(QObject *parent) : QObject(parent), m_xdp(this) {
+  connect(&m_xdp, &AbstractFileChooser::filesChosen, this, &FileChooser::filesChosen);
+  connect(&m_xdp, &AbstractFileChooser::rejected, this, &FileChooser::rejected);
 }
 
-void FileChooser::open(const FileChooserOptions &options) {
-  auto *xdp = new XdpFileChooser(this);
-  connectBackend(xdp);
-
-  if (!xdp->open(options)) {
-    qWarning() << "FileChooser: XDP portal unavailable, no fallback available";
-    delete xdp;
-    emit rejected();
-  }
+bool FileChooser::isAvailable() const {
+  if (std::getenv("VICINAE_FORCE_QT_DIALOG") != nullptr) return false;
+  return m_xdp.isAvailable();
 }
+
+bool FileChooser::open(const FileChooserOptions &options) { return m_xdp.open(options); }

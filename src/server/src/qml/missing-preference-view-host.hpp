@@ -16,6 +16,7 @@ class MissingPreferenceFormModel : public QAbstractListModel {
 
 signals:
   void filePickerResult(int index, const QVariantList &paths);
+  void openQmlFilePicker(int index);
 
 public:
   enum Role {

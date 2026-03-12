@@ -5,6 +5,15 @@ Item {
     id: root
     required property var host
 
+    Connections {
+        target: root.host.prefModel
+        function onOpenQmlFilePicker(index) {
+            const item = missingRepeater.itemAt(index);
+            if (item && item.item && typeof item.item.openFallbackPicker === "function")
+                item.item.openFallbackPicker();
+        }
+    }
+
     FormView {
         id: formView
         anchors.fill: parent
@@ -44,6 +53,7 @@ Item {
         }
 
         Repeater {
+            id: missingRepeater
             model: root.host.prefModel
 
             delegate: Loader {
@@ -163,6 +173,11 @@ Item {
             id: field
             label: parent.label
             info: parent.description
+
+            function openFallbackPicker() {
+                missingFilePicker.openFallbackDialog();
+            }
+
             FormFilePicker {
                 id: missingFilePicker
                 multiple: field.parent.multiple

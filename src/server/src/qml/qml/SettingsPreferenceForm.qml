@@ -7,7 +7,17 @@ ColumnLayout {
     required property var prefModel
     spacing: 20
 
+    Connections {
+        target: root.prefModel
+        function onOpenQmlFilePicker(index) {
+            const item = settingsRepeater.itemAt(index);
+            if (item && item.item && typeof item.item.openFallbackPicker === "function")
+                item.item.openFallbackPicker();
+        }
+    }
+
     Repeater {
+        id: settingsRepeater
         model: root.prefModel
 
         delegate: Loader {
@@ -238,6 +248,11 @@ ColumnLayout {
         ColumnLayout {
             id: field
             spacing: 6
+
+            function openFallbackPicker() {
+                settingsFilePicker.openFallbackDialog();
+            }
+
             Text {
                 text: field.parent.label
                 color: Theme.textMuted

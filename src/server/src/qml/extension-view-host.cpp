@@ -396,15 +396,29 @@ void ExtensionViewHost::setDropdownValue(const QString &value) {
 }
 
 void ExtensionViewHost::openFilePicker(int index) {
-  if (m_activeChooser) return;
-
   auto *form = activeModel<ExtensionFormModel>();
   if (!form) return;
 
   auto opts = form->filePickerOptions(index);
   if (!opts) return;
 
+  if (m_activeChooser) {
+    if (!m_activeChooser->isAvailable()) {
+      delete m_activeChooser;
+      m_activeChooser = nullptr;
+    } else {
+      return;
+    }
+  }
+
   m_activeChooser = new FileChooser(this);
+
+  if (!m_activeChooser->isAvailable()) {
+    delete m_activeChooser;
+    m_activeChooser = nullptr;
+    emit openQmlFilePicker(index);
+    return;
+  }
 
   connect(m_activeChooser, &FileChooser::filesChosen, this,
           [this, form, index,
@@ -412,13 +426,8 @@ void ExtensionViewHost::openFilePicker(int index) {
             QVariantList newPaths;
             if (multiple) {
               auto current = form->data(form->index(index), ExtensionFormModel::ValueRole);
-              qDebug() << "FilePicker merge: current type:" << current.typeName()
-                       << "canConvert:" << current.canConvert<QVariantList>()
-                       << "value:" << current
-                       << "extensionControlled:" << form->isExtensionControlled(index);
               QVariantList existing;
               if (current.canConvert<QVariantList>()) existing = current.toList();
-              qDebug() << "FilePicker merge: existing count:" << existing.size() << existing;
               for (const auto &e : existing) {
                 newPaths.append(e);
               }
@@ -426,7 +435,6 @@ void ExtensionViewHost::openFilePicker(int index) {
                 QString const s = QString::fromStdString(p.string());
                 if (!newPaths.contains(s)) newPaths.append(s);
               }
-              qDebug() << "FilePicker merge: result:" << newPaths;
             } else {
               for (const auto &p : paths) {
                 newPaths.append(QString::fromStdString(p.string()));

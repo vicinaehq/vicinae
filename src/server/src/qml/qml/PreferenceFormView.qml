@@ -6,6 +6,15 @@ Item {
     required property var prefModel
     implicitHeight: formView.contentHeight
 
+    Connections {
+        target: root.prefModel
+        function onOpenQmlFilePicker(index) {
+            const item = repeater.itemAt(index);
+            if (item && item.item && typeof item.item.openFallbackPicker === "function")
+                item.item.openFallbackPicker();
+        }
+    }
+
     FormView {
         id: formView
         anchors.fill: parent
@@ -132,6 +141,11 @@ Item {
             id: field
             label: parent.label
             info: parent.description
+
+            function openFallbackPicker() {
+                prefFilePicker.openFallbackDialog();
+            }
+
             FormFilePicker {
                 id: prefFilePicker
                 multiple: field.parent.multiple

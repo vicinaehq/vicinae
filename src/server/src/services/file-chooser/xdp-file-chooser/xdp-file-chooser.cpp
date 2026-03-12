@@ -10,6 +10,8 @@ XdpFileChooser::XdpFileChooser(QObject *parent)
                                    "org.freedesktop.portal.FileChooser", m_bus, this);
 }
 
+bool XdpFileChooser::isAvailable() const { return m_bus.isConnected() && m_interface->isValid(); }
+
 QString XdpFileChooser::generateToken() const {
   return QString("qtfilechooser%1").arg(QRandomGenerator::global()->generate());
 }

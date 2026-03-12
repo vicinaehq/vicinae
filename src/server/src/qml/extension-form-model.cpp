@@ -30,12 +30,8 @@ QVariant ExtensionFormModel::data(const QModelIndex &index, int role) const {
     return item.info;
   case PlaceholderRole:
     return item.placeholder;
-  case ValueRole: {
-    auto v = item.effectiveValue();
-    qDebug() << "ValueRole for" << item.fieldId << "type:" << static_cast<int>(v.type())
-             << "isNull:" << v.isNull() << "isUndefined:" << v.isUndefined() << "value:" << v;
-    return v.toVariant();
-  }
+  case ValueRole:
+    return item.effectiveValue().toVariant();
   case AutoFocusRole:
     return item.autoFocus;
   case FieldDataRole:
