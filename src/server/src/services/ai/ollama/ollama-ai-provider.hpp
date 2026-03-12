@@ -11,7 +11,7 @@
 #include <glaze/core/reflect.hpp>
 #include <glaze/json/read.hpp>
 #include "services/ai/http-completion.hpp"
-#include "services/ai/json-client.hpp"
+#include "lib/http-client.hpp"
 #include <glaze/json/write.hpp>
 #include <memory>
 #include <qcontainerfwd.h>
@@ -297,8 +297,8 @@ public:
   ~OllamaProvider() override { m_listWatcher.cancel(); }
 
 private:
-  JsonClient m_client;
-  JsonClient::Watcher<AI::Result<VersionResponse>> m_handshakeWatcher;
+  http::Client m_client;
+  http::Client::Watcher<AI::Result<VersionResponse>> m_handshakeWatcher;
   Watcher m_listWatcher;
   ConfigValue::OllamaConfig m_cfg;
   std::vector<FullModelResponse> m_models;
