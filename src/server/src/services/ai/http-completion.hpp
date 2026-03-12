@@ -7,7 +7,7 @@
 #include <qnetworkaccessmanager.h>
 #include <qnetworkreply.h>
 #include <qnetworkrequest.h>
-#include "services/ai/json-client.hpp"
+#include "lib/http-client.hpp"
 
 namespace AI {
 struct StreamChunk {
@@ -27,7 +27,7 @@ public:
   }
 
   bool start() override {
-    m_reply = NetworkManager::manager()->post(m_req, m_data);
+    m_reply = http::networkManager()->post(m_req, m_data);
 
     connect(m_reply, &QNetworkReply::finished, this, &HttpCompletion::handleFinished);
     connect(m_reply, &QNetworkReply::readyRead, this, &HttpCompletion::handleRead);
