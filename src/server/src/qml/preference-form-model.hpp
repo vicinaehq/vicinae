@@ -4,10 +4,16 @@
 #include <QAbstractListModel>
 #include <QJsonObject>
 #include <QTimer>
+#include <filesystem>
 #include <vector>
+
+class FileChooser;
 
 class PreferenceFormModel : public QAbstractListModel {
   Q_OBJECT
+
+signals:
+  void filePickerResult(int index, const QVariantList &paths);
 
 public:
   enum Role {
@@ -20,7 +26,8 @@ public:
     OptionsRole,
     ReadOnlyRole,
     MultipleRole,
-    DirectoriesOnlyRole
+    CanChooseFilesRole,
+    CanChooseDirectoriesRole
   };
 
   explicit PreferenceFormModel(QObject *parent = nullptr);
@@ -34,9 +41,11 @@ public:
   void loadProvider(const QString &providerId, const std::vector<Preference> &preferences);
 
   Q_INVOKABLE void setFieldValue(int row, const QVariant &value);
+  Q_INVOKABLE void openFilePicker(int row);
 
 private:
   void save();
+  void handlePickerResult(int row, const std::vector<std::filesystem::path> &paths);
 
   struct Field {
     QString type;
@@ -48,7 +57,8 @@ private:
     QVariantList options;
     bool readOnly = false;
     bool multiple = false;
-    bool directoriesOnly = false;
+    bool canChooseFiles = true;
+    bool canChooseDirectories = false;
   };
 
   std::vector<Field> m_fields;
@@ -57,4 +67,5 @@ private:
   QString m_providerId;
   bool m_isProvider = false;
   QTimer m_saveTimer;
+  FileChooser *m_activeChooser = nullptr;
 };

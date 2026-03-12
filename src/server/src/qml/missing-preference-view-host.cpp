@@ -3,6 +3,7 @@
 #include <utility>
 #include "extension/extension-command.hpp"
 #include "navigation-controller.hpp"
+#include "services/file-chooser/file-chooser.hpp"
 #include "view-utils.hpp"
 #include "service-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
@@ -44,12 +45,18 @@ static QVariantList dropdownOptions(const Preference &p) {
   return {};
 }
 
-static void applyPickerFlags(const Preference &p, bool &multiple, bool &directoriesOnly) {
+static void applyPickerFlags(const Preference &p, bool &multiple, bool &canChooseFiles,
+                             bool &canChooseDirectories) {
   auto d = p.data();
-  if (auto *fp = std::get_if<Preference::FilePickerData>(&d)) multiple = fp->multiple;
+  if (auto *fp = std::get_if<Preference::FilePickerData>(&d)) {
+    multiple = fp->multiple;
+    canChooseFiles = true;
+    canChooseDirectories = false;
+  }
   if (auto *dp = std::get_if<Preference::DirectoryPickerData>(&d)) {
     multiple = dp->multiple;
-    directoriesOnly = true;
+    canChooseFiles = false;
+    canChooseDirectories = true;
   }
 }
 
@@ -87,8 +94,10 @@ QVariant MissingPreferenceFormModel::data(const QModelIndex &index, int role) co
     return false;
   case MultipleRole:
     return f.multiple;
-  case DirectoriesOnlyRole:
-    return f.directoriesOnly;
+  case CanChooseFilesRole:
+    return f.canChooseFiles;
+  case CanChooseDirectoriesRole:
+    return f.canChooseDirectories;
   default:
     return {};
   }
@@ -104,7 +113,8 @@ QHash<int, QByteArray> MissingPreferenceFormModel::roleNames() const {
           {OptionsRole, "options"},
           {ReadOnlyRole, "readOnly"},
           {MultipleRole, "multiple"},
-          {DirectoriesOnlyRole, "directoriesOnly"}};
+          {CanChooseFilesRole, "canChooseFiles"},
+          {CanChooseDirectoriesRole, "canChooseDirectories"}};
 }
 
 void MissingPreferenceFormModel::load(const std::vector<Preference> &preferences,
@@ -128,11 +138,64 @@ void MissingPreferenceFormModel::load(const std::vector<Preference> &preferences
     f.description = pref.description();
     f.placeholder = pref.placeholder();
     f.options = dropdownOptions(pref);
-    applyPickerFlags(pref, f.multiple, f.directoriesOnly);
+    applyPickerFlags(pref, f.multiple, f.canChooseFiles, f.canChooseDirectories);
 
     m_fields.push_back(std::move(f));
   }
   endResetModel();
+}
+
+void MissingPreferenceFormModel::openFilePicker(int row) {
+  if (m_activeChooser) return;
+  if (row < 0 || std::cmp_greater_equal(row, m_fields.size())) return;
+  const auto &f = m_fields[row];
+
+  FileChooserOptions opts;
+  opts.canChooseFiles = f.canChooseFiles;
+  opts.canChooseDirectories = f.canChooseDirectories;
+  opts.allowMultipleSelection = f.multiple;
+
+  m_activeChooser = new FileChooser(this);
+
+  connect(m_activeChooser, &FileChooser::filesChosen, this,
+          [this, row](const std::vector<std::filesystem::path> &paths) {
+            handlePickerResult(row, paths);
+            m_activeChooser->deleteLater();
+            m_activeChooser = nullptr;
+          });
+
+  connect(m_activeChooser, &FileChooser::rejected, this, [this]() {
+    m_activeChooser->deleteLater();
+    m_activeChooser = nullptr;
+  });
+
+  m_activeChooser->open(opts);
+}
+
+void MissingPreferenceFormModel::handlePickerResult(int row,
+                                                    const std::vector<std::filesystem::path> &paths) {
+  if (row < 0 || std::cmp_greater_equal(row, m_fields.size())) return;
+  const auto &f = m_fields[row];
+
+  QVariantList resultPaths;
+  if (f.multiple) {
+    QVariantList existing;
+    if (f.value.canConvert<QVariantList>()) existing = f.value.toList();
+
+    for (const auto &p : paths) {
+      QString const s = QString::fromStdString(p.string());
+      if (!existing.contains(s)) existing.append(s);
+    }
+    setFieldValue(row, existing);
+    resultPaths = existing;
+  } else {
+    if (!paths.empty()) {
+      QString const s = QString::fromStdString(paths.front().string());
+      setFieldValue(row, s);
+      resultPaths.append(s);
+    }
+  }
+  emit filePickerResult(row, resultPaths);
 }
 
 void MissingPreferenceFormModel::setFieldValue(int row, const QVariant &value) {

@@ -3,6 +3,7 @@
 #include <QJSValue>
 #include <utility>
 #include "service-registry.hpp"
+#include "services/file-chooser/file-chooser.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 
 using namespace std::chrono_literals;
@@ -41,8 +42,10 @@ QVariant PreferenceFormModel::data(const QModelIndex &index, int role) const {
     return f.readOnly;
   case MultipleRole:
     return f.multiple;
-  case DirectoriesOnlyRole:
-    return f.directoriesOnly;
+  case CanChooseFilesRole:
+    return f.canChooseFiles;
+  case CanChooseDirectoriesRole:
+    return f.canChooseDirectories;
   default:
     return {};
   }
@@ -58,7 +61,8 @@ QHash<int, QByteArray> PreferenceFormModel::roleNames() const {
           {OptionsRole, "options"},
           {ReadOnlyRole, "readOnly"},
           {MultipleRole, "multiple"},
-          {DirectoriesOnlyRole, "directoriesOnly"}};
+          {CanChooseFilesRole, "canChooseFiles"},
+          {CanChooseDirectoriesRole, "canChooseDirectories"}};
 }
 
 static QString preferenceType(const Preference &p) {
@@ -96,12 +100,18 @@ static QVariantList dropdownOptions(const Preference &p) {
   return {};
 }
 
-static void applyPickerFlags(const Preference &p, bool &multiple, bool &directoriesOnly) {
+static void applyPickerFlags(const Preference &p, bool &multiple, bool &canChooseFiles,
+                             bool &canChooseDirectories) {
   auto d = p.data();
-  if (auto *fp = std::get_if<Preference::FilePickerData>(&d)) multiple = fp->multiple;
+  if (auto *fp = std::get_if<Preference::FilePickerData>(&d)) {
+    multiple = fp->multiple;
+    canChooseFiles = true;
+    canChooseDirectories = false;
+  }
   if (auto *dp = std::get_if<Preference::DirectoryPickerData>(&d)) {
     multiple = dp->multiple;
-    directoriesOnly = true;
+    canChooseFiles = false;
+    canChooseDirectories = true;
   }
 }
 
@@ -131,7 +141,7 @@ void PreferenceFormModel::load(const EntrypointId &id, const std::vector<Prefere
     f.readOnly = pref.isReadOnly();
     f.options = dropdownOptions(pref);
 
-    applyPickerFlags(pref, f.multiple, f.directoriesOnly);
+    applyPickerFlags(pref, f.multiple, f.canChooseFiles, f.canChooseDirectories);
 
     if (m_values.contains(pref.name()))
       f.value = m_values.value(pref.name()).toVariant();
@@ -164,7 +174,7 @@ void PreferenceFormModel::loadProvider(const QString &providerId,
     f.readOnly = pref.isReadOnly();
     f.options = dropdownOptions(pref);
 
-    applyPickerFlags(pref, f.multiple, f.directoriesOnly);
+    applyPickerFlags(pref, f.multiple, f.canChooseFiles, f.canChooseDirectories);
 
     if (m_values.contains(pref.name()))
       f.value = m_values.value(pref.name()).toVariant();
@@ -185,6 +195,58 @@ void PreferenceFormModel::setFieldValue(int row, const QVariant &value) {
   auto idx = index(row);
   emit dataChanged(idx, idx, {ValueRole});
   m_saveTimer.start();
+}
+
+void PreferenceFormModel::openFilePicker(int row) {
+  if (m_activeChooser) return;
+  if (row < 0 || std::cmp_greater_equal(row, m_fields.size())) return;
+  const auto &f = m_fields[row];
+
+  FileChooserOptions opts;
+  opts.canChooseFiles = f.canChooseFiles;
+  opts.canChooseDirectories = f.canChooseDirectories;
+  opts.allowMultipleSelection = f.multiple;
+
+  m_activeChooser = new FileChooser(this);
+
+  connect(m_activeChooser, &FileChooser::filesChosen, this,
+          [this, row](const std::vector<std::filesystem::path> &paths) {
+            handlePickerResult(row, paths);
+            m_activeChooser->deleteLater();
+            m_activeChooser = nullptr;
+          });
+
+  connect(m_activeChooser, &FileChooser::rejected, this, [this]() {
+    m_activeChooser->deleteLater();
+    m_activeChooser = nullptr;
+  });
+
+  m_activeChooser->open(opts);
+}
+
+void PreferenceFormModel::handlePickerResult(int row, const std::vector<std::filesystem::path> &paths) {
+  if (row < 0 || std::cmp_greater_equal(row, m_fields.size())) return;
+  const auto &f = m_fields[row];
+
+  QVariantList resultPaths;
+  if (f.multiple) {
+    QVariantList existing;
+    if (f.value.canConvert<QVariantList>()) existing = f.value.toList();
+
+    for (const auto &p : paths) {
+      QString const s = QString::fromStdString(p.string());
+      if (!existing.contains(s)) existing.append(s);
+    }
+    setFieldValue(row, existing);
+    resultPaths = existing;
+  } else {
+    if (!paths.empty()) {
+      QString const s = QString::fromStdString(paths.front().string());
+      setFieldValue(row, s);
+      resultPaths.append(s);
+    }
+  }
+  emit filePickerResult(row, resultPaths);
 }
 
 void PreferenceFormModel::save() {

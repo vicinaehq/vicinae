@@ -60,7 +60,8 @@ Item {
                 required property var options
                 required property bool readOnly
                 required property bool multiple
-                required property bool directoriesOnly
+                required property bool canChooseFiles
+                required property bool canChooseDirectories
 
                 onLoaded: if (index === 0)
                     Qt.callLater(formView.focusFirst)
@@ -163,8 +164,10 @@ Item {
             label: parent.label
             info: parent.description
             FormFilePicker {
+                id: missingFilePicker
                 multiple: field.parent.multiple
-                directoriesOnly: field.parent.directoriesOnly
+                canChooseFiles: field.parent.canChooseFiles
+                canChooseDirectories: field.parent.canChooseDirectories
                 selectedPaths: {
                     var v = field.parent.value;
                     if (Array.isArray(v))
@@ -178,6 +181,15 @@ Item {
                         root.host.prefModel.setFieldValue(field.parent.index, paths);
                     else
                         root.host.prefModel.setFieldValue(field.parent.index, paths.length > 0 ? paths[0] : "");
+                }
+                onOpenRequested: root.host.prefModel.openFilePicker(field.parent.index)
+
+                Connections {
+                    target: root.host.prefModel
+                    function onFilePickerResult(index, paths) {
+                        if (index === field.parent.index)
+                            missingFilePicker.selectedPaths = paths;
+                    }
                 }
             }
         }

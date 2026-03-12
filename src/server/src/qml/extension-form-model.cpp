@@ -30,8 +30,12 @@ QVariant ExtensionFormModel::data(const QModelIndex &index, int role) const {
     return item.info;
   case PlaceholderRole:
     return item.placeholder;
-  case ValueRole:
-    return item.effectiveValue().toVariant();
+  case ValueRole: {
+    auto v = item.effectiveValue();
+    qDebug() << "ValueRole for" << item.fieldId << "type:" << static_cast<int>(v.type())
+             << "isNull:" << v.isNull() << "isUndefined:" << v.isUndefined() << "value:" << v;
+    return v.toVariant();
+  }
   case AutoFocusRole:
     return item.autoFocus;
   case FieldDataRole:
@@ -73,6 +77,12 @@ void ExtensionFormModel::fieldBlurred(int index) {
   if (item.onBlur) { m_notify(*item.onBlur, {}); }
 }
 
+bool ExtensionFormModel::isExtensionControlled(int index) const {
+  if (index < 0 || std::cmp_greater_equal(index, m_items.size())) return false;
+  const auto &v = m_items[index].modelValue;
+  return !v.isUndefined() && !v.isNull();
+}
+
 void ExtensionFormModel::setFilePaths(int index, const QVariantList &paths) {
   if (index < 0 || std::cmp_greater_equal(index, m_items.size())) return;
   auto &item = m_items[index];
@@ -83,9 +93,12 @@ void ExtensionFormModel::setFilePaths(int index, const QVariantList &paths) {
     arr.append(p.toString());
   }
 
-  item.userValue = arr;
-  item.hasUserValue = true;
-  emit dataChanged(createIndex(index, 0), createIndex(index, 0), {ValueRole});
+  bool const extensionControlled = !item.modelValue.isUndefined() && !item.modelValue.isNull();
+  if (!extensionControlled) {
+    item.userValue = arr;
+    item.hasUserValue = true;
+    emit dataChanged(createIndex(index, 0), createIndex(index, 0), {ValueRole});
+  }
 
   if (item.onChange) { m_notify(*item.onChange, QJsonArray{arr}); }
 }
@@ -95,6 +108,19 @@ void ExtensionFormModel::dropdownSearchTextChanged(int index, const QString &tex
   const auto &item = m_items[index];
   auto handler = item.fieldData.value("onSearchTextChange").toString();
   if (!handler.isEmpty()) { m_notify(handler, QJsonArray{text}); }
+}
+
+std::optional<FileChooserOptions> ExtensionFormModel::filePickerOptions(int index) const {
+  if (index < 0 || std::cmp_greater_equal(index, m_items.size())) return std::nullopt;
+  const auto &item = m_items[index];
+  if (item.type != FormItemData::Type::FilePicker) return std::nullopt;
+
+  FileChooserOptions opts;
+  opts.canChooseFiles = item.fieldData.value("canChooseFiles", true).toBool();
+  opts.canChooseDirectories = item.fieldData.value("canChooseDirectories", false).toBool();
+  opts.allowMultipleSelection = item.fieldData.value("multiple", false).toBool();
+  opts.showHiddenFiles = item.fieldData.value("showHidden", false).toBool();
+  return opts;
 }
 
 void ExtensionFormModel::setFormData(const FormModel &model) {
@@ -251,7 +277,8 @@ QVariantMap ExtensionFormModel::buildFieldData(const FormModel::IField &field) {
     if (f->tooltip) data["tooltip"] = *f->tooltip;
   } else if (auto *f = dynamic_cast<const FormModel::FilePickerField *>(&field)) {
     data["multiple"] = f->allowMultipleSelection;
-    data["directoriesOnly"] = f->canChooseDirectories && !f->canChooseFiles;
+    data["canChooseFiles"] = f->canChooseFiles;
+    data["canChooseDirectories"] = f->canChooseDirectories;
     data["showHidden"] = f->showHiddenFiles;
   } else if (auto *f = dynamic_cast<const FormModel::DatePickerField *>(&field)) {
     if (f->min) data["min"] = *f->min;

@@ -1,5 +1,6 @@
 #include "extension-view-host.hpp"
 #include "navigation-controller.hpp"
+#include "services/file-chooser/file-chooser.hpp"
 #include "view-utils.hpp"
 #include <chrono>
 
@@ -392,6 +393,57 @@ void ExtensionViewHost::setDropdownValue(const QString &value) {
       }
     }
   }
+}
+
+void ExtensionViewHost::openFilePicker(int index) {
+  if (m_activeChooser) return;
+
+  auto *form = activeModel<ExtensionFormModel>();
+  if (!form) return;
+
+  auto opts = form->filePickerOptions(index);
+  if (!opts) return;
+
+  m_activeChooser = new FileChooser(this);
+
+  connect(m_activeChooser, &FileChooser::filesChosen, this,
+          [this, form, index,
+           multiple = opts->allowMultipleSelection](const std::vector<std::filesystem::path> &paths) {
+            QVariantList newPaths;
+            if (multiple) {
+              auto current = form->data(form->index(index), ExtensionFormModel::ValueRole);
+              qDebug() << "FilePicker merge: current type:" << current.typeName()
+                       << "canConvert:" << current.canConvert<QVariantList>()
+                       << "value:" << current
+                       << "extensionControlled:" << form->isExtensionControlled(index);
+              QVariantList existing;
+              if (current.canConvert<QVariantList>()) existing = current.toList();
+              qDebug() << "FilePicker merge: existing count:" << existing.size() << existing;
+              for (const auto &e : existing) {
+                newPaths.append(e);
+              }
+              for (const auto &p : paths) {
+                QString const s = QString::fromStdString(p.string());
+                if (!newPaths.contains(s)) newPaths.append(s);
+              }
+              qDebug() << "FilePicker merge: result:" << newPaths;
+            } else {
+              for (const auto &p : paths) {
+                newPaths.append(QString::fromStdString(p.string()));
+              }
+            }
+            form->setFilePaths(index, newPaths);
+            emit filePickerResult(index, newPaths);
+            m_activeChooser->deleteLater();
+            m_activeChooser = nullptr;
+          });
+
+  connect(m_activeChooser, &FileChooser::rejected, this, [this]() {
+    m_activeChooser->deleteLater();
+    m_activeChooser = nullptr;
+  });
+
+  m_activeChooser->open(*opts);
 }
 
 void ExtensionViewHost::notifyExtension(const QString &handler, const QJsonArray &args) {

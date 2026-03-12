@@ -23,7 +23,8 @@ ColumnLayout {
             required property var options
             required property bool readOnly
             required property bool multiple
-            required property bool directoriesOnly
+            required property bool canChooseFiles
+            required property bool canChooseDirectories
 
             sourceComponent: {
                 switch (type) {
@@ -243,9 +244,11 @@ ColumnLayout {
                 font.pointSize: Theme.smallerFontSize
             }
             FormFilePicker {
+                id: settingsFilePicker
                 Layout.fillWidth: true
                 multiple: field.parent.multiple
-                directoriesOnly: field.parent.directoriesOnly
+                canChooseFiles: field.parent.canChooseFiles
+                canChooseDirectories: field.parent.canChooseDirectories
                 readOnly: field.parent.readOnly
                 selectedPaths: {
                     const v = field.parent.value;
@@ -263,6 +266,15 @@ ColumnLayout {
                         root.prefModel.setFieldValue(field.parent.index, paths);
                     else
                         root.prefModel.setFieldValue(field.parent.index, paths.length > 0 ? paths[0] : "");
+                }
+                onOpenRequested: root.prefModel.openFilePicker(field.parent.index)
+
+                Connections {
+                    target: root.prefModel
+                    function onFilePickerResult(index, paths) {
+                        if (index === field.parent.index)
+                            settingsFilePicker.selectedPaths = paths;
+                    }
                 }
             }
             Text {

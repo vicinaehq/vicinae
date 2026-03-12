@@ -111,6 +111,9 @@ FormModel FormModel::fromJson(const QJsonObject &json) {
 
         model.items.emplace_back(dropdown);
       } else if (*it == "file-picker-field") {
+        qDebug() << "FilePickerField" << base.id << "has value:" << base.value.has_value()
+                 << "raw props.value:" << props.value("value")
+                 << "props.contains(value):" << props.contains("value");
         auto filePicker = std::make_shared<FilePickerField>(base);
 
         if (props.contains("allowMultipleSelection"))
