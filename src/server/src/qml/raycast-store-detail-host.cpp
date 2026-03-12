@@ -153,7 +153,6 @@ QVariantList RaycastStoreDetailHost::contributors() const {
 
 QStringList RaycastStoreDetailHost::categories() const { return {}; }
 QVariantMap RaycastStoreDetailHost::alert() const { return m_alert; }
-QString RaycastStoreDetailHost::reportIssueUrl() const { return Omnicast::GH_REPO_CREATE_ISSUE; }
 
 void RaycastStoreDetailHost::openUrl(const QString &url) {
   ServiceRegistry::instance()->appDb()->openTarget(url);
@@ -213,10 +212,10 @@ void RaycastStoreDetailHost::createActions() {
     main->addAction(uninstall);
   }
 
-  auto reportIssue = new StaticAction("Report compatibility issue", ImageURL::builtin("bug"),
-                                      [](const ApplicationContext *ctx) {
-                                        ctx->services->appDb()->openTarget(Omnicast::GH_REPO_CREATE_ISSUE);
-                                      });
+  auto reportIssue = new StaticAction(
+      "Report issue", ImageURL::builtin("bug"), [](const ApplicationContext *ctx) {
+        ctx->services->appDb()->openTarget(Omnicast::GH_EXTENSIONS_CREATE_ISSUE);
+      });
   main->addAction(reportIssue);
 
   setActions(std::move(panel));

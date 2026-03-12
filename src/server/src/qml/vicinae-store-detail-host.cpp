@@ -1,6 +1,7 @@
 #include "vicinae-store-detail-host.hpp"
 #include "actions/extension/extension-actions.hpp"
 #include "navigation-controller.hpp"
+#include "vicinae.hpp"
 #include "view-utils.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
@@ -141,6 +142,12 @@ void VicinaeStoreDetailHost::createActions() {
     auto uninstall = new UninstallExtensionAction(m_ext.id);
     main->addAction(uninstall);
   }
+
+  auto reportIssue = new StaticAction(
+      "Report issue", ImageURL::builtin("bug"), [](const ApplicationContext *ctx) {
+        ctx->services->appDb()->openTarget(Omnicast::GH_EXTENSIONS_CREATE_ISSUE);
+      });
+  main->addAction(reportIssue);
 
   setActions(std::move(panel));
 }
