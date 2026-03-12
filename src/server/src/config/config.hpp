@@ -177,7 +177,6 @@ static constexpr const char *SCHEMA = "https://vicinae.com/schemas/config.json";
 
 struct ConfigValue {
   std::string schema = SCHEMA;
-  std::vector<std::string> overrides;
   std::vector<std::string> imports;
   bool searchFilesInRoot = false;
   bool closeOnFocusLoss = false;
@@ -226,7 +225,6 @@ using PartialValue = Partial<ConfigValue>;
 
 template <> struct Partial<ConfigValue> {
   std::string schema = SCHEMA;
-  std::optional<std::vector<std::string>> overrides;
   std::optional<std::vector<std::string>> imports;
   std::optional<bool> closeOnFocusLoss;
   std::optional<bool> considerPreedit;
