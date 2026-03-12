@@ -1,12 +1,6 @@
 {
 	"$schema": "https://vicinae.com/schemas/config.json",
 
-	// Additional configuration files to load. Unlike regular imports specified in the 'imports' array,
-	// values in these files always take precedence over values defined in this current file.
-	"overrides": [
-		// "~/path/to/home-manager/config.json"
-	],
-
 	// A list of paths pointed to separate configuration files to source during loading.
 	// Note that values defined in the main configuration file always take precedence over imported
 	// files.
