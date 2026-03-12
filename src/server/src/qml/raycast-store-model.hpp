@@ -14,12 +14,13 @@ public:
     DownloadCount = CommandListModel::Accessory + 1,
     AuthorAvatar,
     IsInstalled,
+    CompatTierRole,
   };
 
   explicit RaycastStoreModel(QObject *parent = nullptr);
 
   void setEntries(const std::vector<Raycast::Extension> &extensions, ExtensionRegistry *registry,
-                  const QString &sectionName);
+                  const Raycast::CompatMap &compat, const QString &sectionName);
   void setFilter(const QString &) override {}
 
   QHash<int, QByteArray> roleNames() const override;
@@ -35,6 +36,7 @@ private:
   struct Entry {
     Raycast::Extension extension;
     bool installed = false;
+    Raycast::CompatTier compatTier = Raycast::CompatTier::Unknown;
   };
   std::vector<Entry> m_entries;
 };

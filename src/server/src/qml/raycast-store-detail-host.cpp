@@ -1,6 +1,7 @@
 #include "raycast-store-detail-host.hpp"
 #include "actions/extension/extension-actions.hpp"
 #include "navigation-controller.hpp"
+#include "vicinae.hpp"
 #include "view-utils.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
@@ -26,12 +27,51 @@ void RaycastStoreDetailHost::initialize() {
   auto registry = context()->services->extensionRegistry();
   m_isInstalled = registry->isInstalled(m_ext.id);
 
-  // TODO: remove test alert — temporarily enabled on all extensions for visual testing
-  m_alert = {
-      {QStringLiteral("type"), QStringLiteral("warning")},
-      {QStringLiteral("message"),
-       QStringLiteral("This extension targets macOS-only platforms and may not work correctly on Linux.")},
-  };
+  const auto &compat = context()->services->raycastStore()->compatMap();
+  if (auto it = compat.find(m_ext.name.toStdString()); it != compat.end()) {
+    auto tier = Raycast::compatTierFromInfo(it->second);
+    QString type;
+    QString message;
+
+    switch (tier) {
+    case Raycast::CompatTier::Compatible:
+      type = QStringLiteral("success");
+      message = QStringLiteral("This extension should be fully compatible.");
+      break;
+    case Raycast::CompatTier::Partial:
+      type = QStringLiteral("warning");
+      message = QStringLiteral("This extension works but has a few quirks.");
+      break;
+    case Raycast::CompatTier::Incompatible:
+      type = QStringLiteral("danger");
+      message = QStringLiteral("This extension is not compatible.");
+      break;
+    case Raycast::CompatTier::Unknown:
+      type = QStringLiteral("muted");
+      message = QStringLiteral("No compatibility data is available for this extension.");
+      break;
+    }
+
+    QStringList notes;
+    if (it->second.notes) {
+      notes.reserve(it->second.notes->size());
+      for (const auto &note : *it->second.notes) {
+        notes.append(QString::fromStdString(note));
+      }
+    }
+
+    m_alert = {
+        {QStringLiteral("type"), type},
+        {QStringLiteral("message"), message},
+        {QStringLiteral("notes"), notes},
+    };
+  } else {
+    m_alert = {
+        {QStringLiteral("type"), QStringLiteral("muted")},
+        {QStringLiteral("message"),
+         QStringLiteral("No compatibility data is available — this extension may or may not work.")},
+    };
+  }
 
   createActions();
 
@@ -171,6 +211,12 @@ void RaycastStoreDetailHost::createActions() {
     auto uninstall = new UninstallExtensionAction(m_ext.id);
     main->addAction(uninstall);
   }
+
+  auto reportIssue =
+      new StaticAction("Report issue", ImageURL::builtin("bug"), [](const ApplicationContext *ctx) {
+        ctx->services->appDb()->openTarget(Omnicast::GH_EXTENSIONS_CREATE_ISSUE);
+      });
+  main->addAction(reportIssue);
 
   setActions(std::move(panel));
 }

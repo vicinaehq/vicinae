@@ -30,9 +30,9 @@ class RaycastStoreCommand : public BuiltinCallbackCommand {
 
 Vicinae provides direct integration with the official [Raycast store](https://www.raycast.com/store), allowing you to search and install Raycast extensions directly from Vicinae.
 
-Please note that many extensions may not fully work at this time. This is either due to missing feature implementations in Vicinae, or extensions relying on macOS-specific tools and APIs.
+Each extension has a colored compatibility indicator showing how well it works on Linux.
 
-Vicinae also has its own [extension store](vicinae://extensions/vicinae/vicinae/store), which does not suffer from these limitations.
+Vicinae also has its own [extension store](vicinae://extensions/vicinae/core/store), which does not suffer from these limitations.
 )");
       auto icon = iconUrl();
       auto storage = ctrl->storage();
