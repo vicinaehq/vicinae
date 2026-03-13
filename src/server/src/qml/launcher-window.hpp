@@ -128,6 +128,7 @@ private:
   void updateBlur();
   void applyWindowConfig();
   void setExclusiveFocus(bool exclusive);
+  void setLayerSuspended(bool suspended);
 
   ApplicationContext &m_ctx;
   ActionPanelController *m_actionPanel;
