@@ -1,148 +1,78 @@
 #include "raycast-store.hpp"
-#include <qfuture.h>
-#include <qnetworkdiskcache.h>
-#include <qnetworkreply.h>
-#include <expected>
-#include <qstandardpaths.h>
+#include "environment.hpp"
+#include "lib/glaze-qt.hpp"
 
-QNetworkRequest RaycastStoreService::createJsonApiRequest(const QUrl &url) {
-  QNetworkRequest request(url);
+RaycastStoreService::RaycastStoreService() {
+  m_client.setBaseUrl(QStringLiteral("https://backend.raycast.com/api/v1"));
+  m_vicinaeClient.setBaseUrl(Environment::vicinaeApiBaseUrl());
+}
 
-  // WORKAROUND: Explicitly disable HTTP/2.
-  // Qt's default HTTP/2 implementation hangs and causes a ~25-second timeout on the first
-  // request. Forcing HTTP/1.1 resolves it.
-  request.setAttribute(QNetworkRequest::Http2AllowedAttribute, false);
+const http::RequestOptions RaycastStoreService::s_requestOpts = {
+    .cachePolicy = QNetworkRequest::PreferCache,
+    .allowHttp2 = false,
+    .contentType = QStringLiteral("application/json"),
+};
 
-  request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-  request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
-  return request;
+void RaycastStoreService::postProcess(std::vector<Raycast::Extension> &extensions) {
+  for (auto &ext : extensions) {
+    ext.id = QString("store.raycast.%1").arg(ext.name);
+    for (auto &cmd : ext.commands) {
+      cmd.extensionIcons = ext.icons;
+    }
+  }
 }
 
 QFuture<Raycast::ListResult> RaycastStoreService::search(const QString &query) {
+  auto url = QString("/store_listings/search?q=%1").arg(query);
 
-  QUrl const endpoint = QString("%1/store_listings/search?q=%2").arg(BASE_URL).arg(query);
-  QPromise<Raycast::ListResult> promise;
-  auto future = promise.future();
-  QNetworkRequest const request = createJsonApiRequest(endpoint);
-
-  auto reply = m_net->get(request);
-
-  connect(reply, &QNetworkReply::finished, this, [this, reply, promise = std::move(promise)]() mutable {
-    if (reply->error() != QNetworkReply::NoError) {
-      promise.addResult(std::unexpected(""));
-    } else {
-      std::vector<Raycast::Extension> extensions;
-      auto data = reply->readAll();
-      QJsonParseError error;
-      QJsonDocument const doc = QJsonDocument::fromJson(data, &error);
-
-      if (error.error != QJsonParseError::NoError) {
-        qWarning() << "JSON parse error:" << error.errorString();
-        promise.addResult(std::unexpected("Failed to parse response"));
-        promise.finish();
-        reply->deleteLater();
-        return;
-      }
-
-      auto jsonList = doc.object().value("data").toArray();
-
-      extensions.reserve(jsonList.size());
-
-      for (const auto &result : doc.object().value("data").toArray()) {
-        extensions.emplace_back(Raycast::Extension::fromJson(result.toObject()));
-      }
-
-      promise.addResult(extensions);
-    }
-
-    promise.finish();
-    reply->deleteLater();
-  });
-
-  return future;
+  return m_client.get<Raycast::ListApiResponse>(url, s_requestOpts)
+      .then([](http::Client::Result<Raycast::ListApiResponse> result) -> Raycast::ListResult {
+        if (!result) return std::unexpected(result.error());
+        auto extensions = std::move(result->data);
+        postProcess(extensions);
+        return Raycast::ListResponse{std::move(extensions)};
+      });
 }
 
 QFuture<Raycast::DownloadExtensionResult> RaycastStoreService::downloadExtension(const QUrl &url) {
-  QNetworkRequest request(url);
-  QPromise<Raycast::DownloadExtensionResult> promise;
-  auto future = promise.future();
-  auto reply = m_net->get(request);
+  return m_client.getRaw(url.toString(), s_requestOpts)
+      .then([](http::Client::Result<QByteArray> result) -> Raycast::DownloadExtensionResult {
+        if (!result) return std::unexpected(result.error());
+        return *std::move(result);
+      });
+}
 
-  request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
-  request.setAttribute(QNetworkRequest::Http2AllowedAttribute, false);
+QFuture<Raycast::CompatResult> RaycastStoreService::fetchCompat() {
+  if (m_compatFetched) { return QtFuture::makeReadyValueFuture<Raycast::CompatResult>(m_compat); }
 
-  connect(reply, &QNetworkReply::finished, this, [this, reply, promise = std::move(promise)]() mutable {
-    if (reply->error() != QNetworkReply::NoError) {
-      promise.addResult(std::unexpected("Failed to fetch"));
-    } else {
-      promise.addResult(reply->readAll());
-    }
-
-    promise.finish();
-    reply->deleteLater();
-  });
-
-  return future;
+  return m_vicinaeClient.get<Raycast::CompatMap>(QStringLiteral("/raycast/get-compat"))
+      .then([this](http::Client::Result<Raycast::CompatMap> result) -> Raycast::CompatResult {
+        if (!result) {
+          qWarning() << "[RaycastStore] compat fetch failed:" << result.error();
+          return Raycast::CompatMap{};
+        }
+        m_compat = std::move(*result);
+        m_compatFetched = true;
+        return m_compat;
+      });
 }
 
 QFuture<Raycast::ListResult>
 RaycastStoreService::fetchExtensions(const Raycast::ListPaginationOptions &opts) {
-
-  QUrl const endpoint =
-      QString("%1/store_listings?page=%2&per_page=%3").arg(BASE_URL).arg(opts.page).arg(opts.perPage);
-  QPromise<Raycast::ListResult> promise;
-  auto future = promise.future();
-  const QNetworkRequest request = createJsonApiRequest(endpoint);
-
   if (auto it = m_cachedPages.find(opts.page); it != m_cachedPages.end()) {
-    promise.addResult(it->second);
-    promise.finish();
-    return future;
+    return QtFuture::makeReadyValueFuture<Raycast::ListResult>(it->second);
   }
 
-  auto reply = m_net->get(request);
+  auto url = QString("/store_listings?page=%1&per_page=%2").arg(opts.page).arg(opts.perPage);
 
-  connect(reply, &QNetworkReply::finished, this, [this, opts, reply, promise = std::move(promise)]() mutable {
-    if (reply->error() != QNetworkReply::NoError) {
-      promise.addResult(std::unexpected(""));
-    } else {
-      std::vector<Raycast::Extension> extensions;
-      auto data = reply->readAll();
-      QJsonParseError error;
-      QJsonDocument const doc = QJsonDocument::fromJson(data, &error);
-
-      if (error.error != QJsonParseError::NoError) {
-        qWarning() << "JSON parse error:" << error.errorString();
-        promise.addResult(std::unexpected("Failed to parse response"));
-        promise.finish();
-        reply->deleteLater();
-        return;
-      }
-
-      auto jsonList = doc.object().value("data").toArray();
-
-      extensions.reserve(jsonList.size());
-
-      for (const auto &result : doc.object().value("data").toArray()) {
-        extensions.emplace_back(Raycast::Extension::fromJson(result.toObject()));
-      }
-
-      m_cachedPages.insert({opts.page, extensions});
-      promise.addResult(extensions);
-    }
-
-    promise.finish();
-    reply->deleteLater();
-  });
-
-  return future;
-}
-
-RaycastStoreService::RaycastStoreService() {
-  auto diskCache = new QNetworkDiskCache;
-  auto cacheDir =
-      QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QString("/omnicast/raycast-store");
-
-  diskCache->setCacheDirectory(cacheDir);
-  m_net->setCache(diskCache);
+  return m_client.get<Raycast::ListApiResponse>(url, s_requestOpts)
+      .then([this,
+             page = opts.page](http::Client::Result<Raycast::ListApiResponse> result) -> Raycast::ListResult {
+        if (!result) return std::unexpected(result.error());
+        auto extensions = std::move(result->data);
+        postProcess(extensions);
+        Raycast::ListResponse response{std::move(extensions)};
+        m_cachedPages.insert({page, response});
+        return response;
+      });
 }

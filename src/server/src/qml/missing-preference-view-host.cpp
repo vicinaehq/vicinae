@@ -44,12 +44,18 @@ static QVariantList dropdownOptions(const Preference &p) {
   return {};
 }
 
-static void applyPickerFlags(const Preference &p, bool &multiple, bool &directoriesOnly) {
+static void applyPickerFlags(const Preference &p, bool &multiple, bool &canChooseFiles,
+                             bool &canChooseDirectories) {
   auto d = p.data();
-  if (auto *fp = std::get_if<Preference::FilePickerData>(&d)) multiple = fp->multiple;
+  if (auto *fp = std::get_if<Preference::FilePickerData>(&d)) {
+    multiple = fp->multiple;
+    canChooseFiles = true;
+    canChooseDirectories = false;
+  }
   if (auto *dp = std::get_if<Preference::DirectoryPickerData>(&d)) {
     multiple = dp->multiple;
-    directoriesOnly = true;
+    canChooseFiles = false;
+    canChooseDirectories = true;
   }
 }
 
@@ -87,8 +93,10 @@ QVariant MissingPreferenceFormModel::data(const QModelIndex &index, int role) co
     return false;
   case MultipleRole:
     return f.multiple;
-  case DirectoriesOnlyRole:
-    return f.directoriesOnly;
+  case CanChooseFilesRole:
+    return f.canChooseFiles;
+  case CanChooseDirectoriesRole:
+    return f.canChooseDirectories;
   default:
     return {};
   }
@@ -104,7 +112,8 @@ QHash<int, QByteArray> MissingPreferenceFormModel::roleNames() const {
           {OptionsRole, "options"},
           {ReadOnlyRole, "readOnly"},
           {MultipleRole, "multiple"},
-          {DirectoriesOnlyRole, "directoriesOnly"}};
+          {CanChooseFilesRole, "canChooseFiles"},
+          {CanChooseDirectoriesRole, "canChooseDirectories"}};
 }
 
 void MissingPreferenceFormModel::load(const std::vector<Preference> &preferences,
@@ -128,7 +137,7 @@ void MissingPreferenceFormModel::load(const std::vector<Preference> &preferences
     f.description = pref.description();
     f.placeholder = pref.placeholder();
     f.options = dropdownOptions(pref);
-    applyPickerFlags(pref, f.multiple, f.directoriesOnly);
+    applyPickerFlags(pref, f.multiple, f.canChooseFiles, f.canChooseDirectories);
 
     m_fields.push_back(std::move(f));
   }

@@ -217,11 +217,11 @@ if (LIBQALCULATE_BACKEND)
 endif()
 
 find_program(CCACHE ccache)
-find_program(HAS_MOLD mold)
+find_program(HAS_LLD ld.lld)
 
-if (HAS_MOLD)
-	message(STATUS "Using mold linker as it is present")
-	add_link_options("-fuse-ld=mold")
+if (HAS_LLD)
+	message(STATUS "Using lld linker as it is present")
+	add_link_options("-fuse-ld=lld")
 endif()
 
 if (LTO)

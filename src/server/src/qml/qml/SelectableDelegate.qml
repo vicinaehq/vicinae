@@ -12,14 +12,18 @@ Item {
     default property alias contentData: contentItem.data
 
     signal clicked
-    signal doubleClicked
+    signal activated
 
     MouseArea {
         id: mouseArea
         anchors.fill: parent
         hoverEnabled: true
-        onClicked: root.clicked()
-        onDoubleClicked: root.doubleClicked()
+        onClicked: {
+            root.clicked();
+            if (Config.activateOnSingleClick)
+                root.activated();
+        }
+        onDoubleClicked: root.activated()
     }
 
     SourceBlendRect {

@@ -1,6 +1,5 @@
 #include "globals.hpp"
 #include "ext-background-effect-v1-client-protocol.h"
-#include "virtual-keyboard-unstable-v1-client-protocol.h"
 #include <QGuiApplication>
 
 namespace Wayland {
@@ -8,10 +7,6 @@ namespace Wayland {
 zwlr_data_control_manager_v1 *Globals::wlrDataControlManager() { return instance().m_zwlrDataControlDevice; }
 
 ext_data_control_manager_v1 *Globals::dataControlDeviceManager() { return instance().extDataControlDevice; }
-
-zwp_virtual_keyboard_manager_v1 *Globals::virtualKeyboardManager() {
-  return instance().m_virtualKeyboardManager;
-}
 
 // NOLINTBEGIN(cppcoreguidelines-pro-type-static-cast-downcast)
 void Globals::handleGlobal(void *data, struct wl_registry *registry, uint32_t name, const char *interface,
@@ -26,11 +21,6 @@ void Globals::handleGlobal(void *data, struct wl_registry *registry, uint32_t na
   else if (strcmp(interface, ext_data_control_manager_v1_interface.name) == 0) {
     self->extDataControlDevice = static_cast<ext_data_control_manager_v1 *>(
         wl_registry_bind(registry, name, &ext_data_control_manager_v1_interface, version));
-  }
-
-  else if (strcmp(interface, zwp_virtual_keyboard_manager_v1_interface.name) == 0) {
-    self->m_virtualKeyboardManager = static_cast<zwp_virtual_keyboard_manager_v1 *>(
-        wl_registry_bind(registry, name, &zwp_virtual_keyboard_manager_v1_interface, version));
   }
 
   else if (strcmp(interface, org_kde_kwin_blur_manager_interface.name) == 0) {

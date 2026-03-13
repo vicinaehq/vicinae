@@ -62,14 +62,15 @@ void VicinaeStoreViewHost::handleFinishedPage() {
 
   auto result = m_listResultWatcher.result();
   if (!result) {
+    qWarning() << "[VicinaeStore] fetch error:" << result.error();
     context()->services->toastService()->setToast("Failed to fetch extensions", ToastStyle::Danger);
     return;
   }
 
   setLoading(false);
 
-  std::vector<VicinaeStore::Extension> const extensions(result->extensions.begin(), result->extensions.end());
-  m_model->setEntries(extensions, context()->services->extensionRegistry(), QStringLiteral("Extensions"));
+  m_model->setEntries(result->extensions, context()->services->extensionRegistry(),
+                      QStringLiteral("Extensions"));
 }
 
 void VicinaeStoreViewHost::handleFinishedQuery() {
@@ -83,8 +84,8 @@ void VicinaeStoreViewHost::handleFinishedQuery() {
 
   setLoading(false);
 
-  std::vector<VicinaeStore::Extension> const extensions(result->extensions.begin(), result->extensions.end());
-  m_model->setEntries(extensions, context()->services->extensionRegistry(), QStringLiteral("Results"));
+  m_model->setEntries(result->extensions, context()->services->extensionRegistry(),
+                      QStringLiteral("Results"));
 }
 
 void VicinaeStoreViewHost::handleDebounce() {

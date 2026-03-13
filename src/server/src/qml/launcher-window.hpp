@@ -127,6 +127,8 @@ private:
   void tryCompaction();
   void updateBlur();
   void applyWindowConfig();
+  bool isLayerShellActive() const;
+  void setExclusiveFocus(bool exclusive);
 
   ApplicationContext &m_ctx;
   ActionPanelController *m_actionPanel;

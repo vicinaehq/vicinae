@@ -108,31 +108,18 @@ Popup {
             Layout.fillWidth: true
             spacing: 10
 
-            Button {
+            ViciButton {
                 id: cancelBtn
                 Layout.fillWidth: true
                 implicitHeight: 30
+                radius: 4
+                variant: "ghost"
+                bordered: true
+                text: launcher.alertModel.cancelText
+                foreground: launcher.alertModel.cancelColor
                 focus: true
-                focusPolicy: Qt.StrongFocus
                 activeFocusOnTab: true
-
-                background: Rectangle {
-                    radius: 4
-                    color: cancelBtn.hovered || cancelBtn.activeFocus ? Theme.listItemHoverBg : "transparent"
-                    border.color: cancelBtn.activeFocus ? Theme.accent : Theme.divider
-                    border.width: 1
-                }
-
-                contentItem: Text {
-                    text: launcher.alertModel.cancelText
-                    color: launcher.alertModel.cancelColor
-                    font.pointSize: Theme.regularFontSize
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
-
                 onClicked: root.close()
-                Keys.onReturnPressed: root.close()
                 Keys.onRightPressed: confirmBtn.forceActiveFocus()
                 Keys.onPressed: event => {
                     const nav = launcher.matchNavigationKey(event.key, event.modifiers);
@@ -143,34 +130,17 @@ Popup {
                 }
             }
 
-            Button {
+            ViciButton {
                 id: confirmBtn
                 Layout.fillWidth: true
                 implicitHeight: 30
-                focusPolicy: Qt.StrongFocus
+                radius: 4
+                variant: "ghost"
+                bordered: true
+                text: launcher.alertModel.confirmText
+                foreground: launcher.alertModel.confirmColor
                 activeFocusOnTab: true
-
-                background: Rectangle {
-                    radius: 4
-                    color: confirmBtn.hovered || confirmBtn.activeFocus ? Theme.listItemHoverBg : "transparent"
-                    border.color: confirmBtn.activeFocus ? Theme.accent : Theme.divider
-                    border.width: 1
-                }
-
-                contentItem: Text {
-                    text: launcher.alertModel.confirmText
-                    color: launcher.alertModel.confirmColor
-                    font.pointSize: Theme.regularFontSize
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
-
                 onClicked: {
-                    root._confirmed = true;
-                    launcher.alertModel.confirm();
-                    root.close();
-                }
-                Keys.onReturnPressed: {
                     root._confirmed = true;
                     launcher.alertModel.confirm();
                     root.close();

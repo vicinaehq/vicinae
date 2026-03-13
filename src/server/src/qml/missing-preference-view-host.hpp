@@ -23,7 +23,8 @@ public:
     OptionsRole,
     ReadOnlyRole,
     MultipleRole,
-    DirectoriesOnlyRole
+    CanChooseFilesRole,
+    CanChooseDirectoriesRole
   };
 
   explicit MissingPreferenceFormModel(QObject *parent = nullptr);
@@ -57,7 +58,8 @@ private:
     QVariant value;
     QVariantList options;
     bool multiple = false;
-    bool directoriesOnly = false;
+    bool canChooseFiles = true;
+    bool canChooseDirectories = false;
   };
 
   std::vector<Field> m_fields;

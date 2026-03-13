@@ -2,6 +2,7 @@
 #include "theme.hpp"
 #include "theme/theme-file.hpp"
 #include <QColor>
+#include <QEvent>
 #include <QGuiApplication>
 #include <QObject>
 
@@ -40,14 +41,16 @@ class ThemeBridge : public QObject {
   Q_PROPERTY(QColor buttonPrimaryHoverBg READ buttonPrimaryHoverBg NOTIFY changed)
   Q_PROPERTY(qreal regularFontSize READ regularFontSize NOTIFY changed)
   Q_PROPERTY(qreal smallerFontSize READ smallerFontSize NOTIFY changed)
-  Q_PROPERTY(QString fontFamily READ fontFamily NOTIFY changed)
+  Q_PROPERTY(QString fontFamily READ fontFamily NOTIFY fontFamilyChanged)
 
 signals:
   void changed();
+  void fontFamilyChanged();
 
 public:
   explicit ThemeBridge(QObject *parent = nullptr) : QObject(parent) {
     connect(&ThemeService::instance(), &ThemeService::themeChanged, this, &ThemeBridge::changed);
+    qApp->installEventFilter(this);
   }
 
   QColor background() const { return resolve(SemanticColor::Background); }
@@ -85,6 +88,12 @@ public:
   qreal regularFontSize() const { return ThemeService::instance().pointSize(TextRegular); }
   qreal smallerFontSize() const { return ThemeService::instance().pointSize(TextSmaller); }
   QString fontFamily() const { return QGuiApplication::font().family(); }
+
+protected:
+  bool eventFilter(QObject *obj, QEvent *event) override {
+    if (event->type() == QEvent::ApplicationFontChange) { emit fontFamilyChanged(); }
+    return QObject::eventFilter(obj, event);
+  }
 
 private:
   QColor resolve(SemanticColor color) const { return ThemeService::instance().theme().resolve(color); }

@@ -1,6 +1,8 @@
+#include <cstdlib>
 #include <filesystem>
 #include <format>
 #include <fstream>
+#include <ranges>
 #include <QStyleHints>
 #include <glaze/util/key_transformers.hpp>
 #include <qlogging.h>
@@ -81,6 +83,19 @@ Manager::Manager(fs::path path) : m_userPath(std::move(path)) {
 
   m_fsDebounce.setSingleShot(true);
   m_fsDebounce.setInterval(100);
+
+  if (const char *envOverrides = std::getenv("VICINAE_OVERRIDES")) {
+    m_envOverrides =
+        std::string_view{envOverrides} | std::views::split(':') |
+        std::views::transform([](const auto &part) { return std::string{part.begin(), part.end()}; }) |
+        std::ranges::to<std::vector<std::string>>();
+
+    qInfo() << "Loaded" << m_envOverrides.size() << "path(s) from VICINAE_OVERRIDES";
+
+    for (const auto &override : m_envOverrides) {
+      qInfo() << override;
+    }
+  }
 
   initConfig();
   reloadConfig();
@@ -225,7 +240,7 @@ Manager::PartialConfigResult Manager::load(const std::filesystem::path &path, co
     return std::unexpected(std::format("Failed to read JSONC file at {}: {}", path.c_str(), glzErrMsg));
   }
 
-  auto importFile = [this, &opts](const Partial<ConfigValue> &cfg, const std::string &importPath,
+  auto importFile = [this, &opts](Partial<ConfigValue> &cfg, const std::string &importPath,
                                   bool override) -> std::expected<Partial<ConfigValue>, std::string> {
     if (opts.visited.contains(importPath)) {
       qWarning().nospace() << "Circular import detected for " << importPath << ", ignoring...";
@@ -256,8 +271,8 @@ Manager::PartialConfigResult Manager::load(const std::filesystem::path &path, co
       cfg = std::move(result).value();
     }
 
-    for (const auto &imp : cfg.overrides.value_or({})) {
-      auto result = importFile(cfg, resolvePath(imp, path), true);
+    for (const auto &overridePath : m_envOverrides) {
+      auto result = importFile(cfg, resolvePath(overridePath, path), true);
       if (!result) return result;
       cfg = std::move(result).value();
     }

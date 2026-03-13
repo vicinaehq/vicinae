@@ -284,14 +284,14 @@ Item {
                 id: filePicker
                 hasError: field.error !== ""
                 multiple: field._fd.multiple || false
-                directoriesOnly: field._fd.directoriesOnly || false
+                canChooseFiles: field._fd.canChooseFiles !== undefined ? field._fd.canChooseFiles : true
+                canChooseDirectories: field._fd.canChooseDirectories || false
+
                 selectedPaths: {
-                    var v = field.parent.value;
-                    if (Array.isArray(v))
-                        return v;
-                    if (typeof v === "string" && v !== "")
-                        return [v];
-                    return [];
+                    const v = field.parent.value;
+                    if (!v || !v.length)
+                        return [];
+                    return Array.from(v);
                 }
                 onPathsChanged: paths => {
                     root.formModel.setFilePaths(field.parent.index, paths);

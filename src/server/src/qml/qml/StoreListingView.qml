@@ -40,6 +40,7 @@ Item {
             required property string downloadCount
             required property string authorAvatar
             required property bool isInstalled
+            required property int compatTier
 
             sourceComponent: isSection ? sectionComponent : itemComponent
 
@@ -57,15 +58,27 @@ Item {
                     id: itemDelegate
                     width: delegateLoader.width
                     height: 50
+                    opacity: delegateLoader.compatTier === 2 ? 0.5 : 1.0
                     selected: listView.currentIndex === delegateLoader.index
                     onClicked: listView.currentIndex = delegateLoader.index
-                    onDoubleClicked: listView.itemActivated(delegateLoader.index)
+                    onActivated: listView.itemActivated(delegateLoader.index)
+
+                    readonly property var compatColors: [Theme.toastSuccess, Theme.toastWarning, Theme.toastDanger, Theme.textMuted]
 
                     RowLayout {
                         anchors.fill: parent
                         anchors.leftMargin: 16
                         anchors.rightMargin: 16
                         spacing: 15
+
+                        Rectangle {
+                            visible: delegateLoader.compatTier >= 0
+                            Layout.preferredWidth: 8
+                            Layout.preferredHeight: 8
+                            Layout.alignment: Qt.AlignVCenter
+                            radius: 4
+                            color: itemDelegate.compatColors[delegateLoader.compatTier] ?? Theme.textMuted
+                        }
 
                         ViciImage {
                             Layout.preferredWidth: 30

@@ -63,15 +63,6 @@ Item {
 
             onTextEdited: root.textEdited()
             onAccepted: root.accepted()
-
-            Keys.onReturnPressed: event => {
-                if (typeof launcher !== "undefined")
-                    event.accepted = launcher.forwardKey(event.key, event.modifiers);
-            }
-            Keys.onPressed: event => {
-                if (typeof launcher !== "undefined")
-                    event.accepted = launcher.forwardKey(event.key, event.modifiers);
-            }
         }
     }
 }

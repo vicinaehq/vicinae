@@ -1,10 +1,12 @@
 #pragma once
 #include "extend/form-model.hpp"
+#include "services/file-chooser/abstract-file-chooser.hpp"
 #include <QAbstractListModel>
 #include <QJsonValue>
 #include <QVariantMap>
 #include <expected>
 #include <functional>
+#include <optional>
 #include <vector>
 
 class ExtensionFormModel : public QAbstractListModel {
@@ -39,6 +41,9 @@ public:
   Q_INVOKABLE void fieldBlurred(int index);
   Q_INVOKABLE void setFilePaths(int index, const QVariantList &paths);
   Q_INVOKABLE void dropdownSearchTextChanged(int index, const QString &text);
+
+  std::optional<FileChooserOptions> filePickerOptions(int index) const;
+  bool isExtensionControlled(int index) const;
 
   void setFormData(const FormModel &model);
   std::expected<QJsonObject, QString> submit() const;

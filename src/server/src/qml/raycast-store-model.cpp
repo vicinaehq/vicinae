@@ -9,11 +9,16 @@
 RaycastStoreModel::RaycastStoreModel(QObject *parent) : CommandListModel(parent) {}
 
 void RaycastStoreModel::setEntries(const std::vector<Raycast::Extension> &extensions,
-                                   ExtensionRegistry *registry, const QString &sectionName) {
+                                   ExtensionRegistry *registry, const Raycast::CompatMap &compat,
+                                   const QString &sectionName) {
   m_entries.clear();
   m_entries.reserve(extensions.size());
   for (const auto &ext : extensions) {
-    m_entries.push_back({.extension = ext, .installed = registry->isInstalled(ext.id)});
+    auto tier = Raycast::CompatTier::Unknown;
+    if (auto it = compat.find(ext.name.toStdString()); it != compat.end()) {
+      tier = Raycast::compatTierFromInfo(it->second);
+    }
+    m_entries.push_back({.extension = ext, .installed = registry->isInstalled(ext.id), .compatTier = tier});
   }
 
   std::vector<SectionInfo> sections;
@@ -28,6 +33,7 @@ QHash<int, QByteArray> RaycastStoreModel::roleNames() const {
   roles[DownloadCount] = "downloadCount";
   roles[AuthorAvatar] = "authorAvatar";
   roles[IsInstalled] = "isInstalled";
+  roles[CompatTierRole] = "compatTier";
   return roles;
 }
 
@@ -38,13 +44,12 @@ QVariant RaycastStoreModel::data(const QModelIndex &index, int role) const {
   switch (role) {
   case DownloadCount:
     return formatCount(m_entries[i].extension.download_count);
-  case AuthorAvatar: {
-    const auto &avatar = m_entries[i].extension.author.avatar;
-    if (avatar.isEmpty()) return imageSourceFor(ImageURL::builtin("person"));
-    return imageSourceFor(ImageURL::http(QUrl(avatar)).circle());
-  }
+  case AuthorAvatar:
+    return imageSourceFor(m_entries[i].extension.author.validUserIcon());
   case IsInstalled:
     return m_entries[i].installed;
+  case CompatTierRole:
+    return static_cast<int>(m_entries[i].compatTier);
   default:
     return CommandListModel::data(index, role);
   }

@@ -1,6 +1,7 @@
 #include "vicinae-store-detail-host.hpp"
 #include "actions/extension/extension-actions.hpp"
 #include "navigation-controller.hpp"
+#include "vicinae.hpp"
 #include "view-utils.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
@@ -45,9 +46,7 @@ void VicinaeStoreDetailHost::initialize() {
 QString VicinaeStoreDetailHost::title() const { return m_ext.title; }
 QString VicinaeStoreDetailHost::description() const { return m_ext.description; }
 
-QString VicinaeStoreDetailHost::iconSource() const {
-  return qml::imageSourceFor(ImageURL::http(m_ext.themedIcon()));
-}
+QString VicinaeStoreDetailHost::iconSource() const { return qml::imageSourceFor(m_ext.themedIcon()); }
 
 QString VicinaeStoreDetailHost::authorName() const { return m_ext.author.name; }
 
@@ -59,10 +58,7 @@ QString VicinaeStoreDetailHost::authorAvatar() const {
 QString VicinaeStoreDetailHost::downloadCount() const { return formatCount(m_ext.downloadCount); }
 
 QStringList VicinaeStoreDetailHost::platforms() const {
-  QStringList list;
-  for (const auto &p : m_ext.platforms)
-    list.append(p);
-  return list;
+  return QStringList(m_ext.platforms.begin(), m_ext.platforms.end());
 }
 
 bool VicinaeStoreDetailHost::isInstalled() const { return m_isInstalled; }
@@ -72,9 +68,7 @@ QStringList VicinaeStoreDetailHost::screenshots() const { return {}; }
 QVariantList VicinaeStoreDetailHost::commands() const {
   QVariantList list;
   for (const auto &cmd : m_ext.commands) {
-    auto iconStr = cmd.themedIcon().has_value()
-                       ? qml::imageSourceFor(ImageURL::http(cmd.themedIcon().value()))
-                       : qml::imageSourceFor(ImageURL::http(m_ext.themedIcon()));
+    auto iconStr = qml::imageSourceFor(cmd.themedIcon().value_or(m_ext.themedIcon()));
     list.append(QVariantMap{
         {QStringLiteral("title"), cmd.title},
         {QStringLiteral("description"), cmd.description},
@@ -112,8 +106,7 @@ void VicinaeStoreDetailHost::createActions() {
 
   if (!m_isInstalled) {
     auto install = new StaticAction(
-        "Install extension", ImageURL::http(m_ext.themedIcon()),
-        [ext = m_ext](const ApplicationContext *ctx) {
+        "Install extension", m_ext.themedIcon(), [ext = m_ext](const ApplicationContext *ctx) {
           using Watcher = QFutureWatcher<VicinaeStore::DownloadExtensionResult>;
           auto store = ctx->services->vicinaeStore();
           auto watcher = new Watcher;
@@ -149,6 +142,12 @@ void VicinaeStoreDetailHost::createActions() {
     auto uninstall = new UninstallExtensionAction(m_ext.id);
     main->addAction(uninstall);
   }
+
+  auto reportIssue =
+      new StaticAction("Report issue", ImageURL::builtin("bug"), [](const ApplicationContext *ctx) {
+        ctx->services->appDb()->openTarget(Omnicast::GH_EXTENSIONS_CREATE_ISSUE);
+      });
+  main->addAction(reportIssue);
 
   setActions(std::move(panel));
 }

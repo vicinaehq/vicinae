@@ -40,32 +40,38 @@
         '';
         mkVicinaeExtension = pkgs.callPackage ./nix/mkVicinaeExtension.nix { };
         mkRayCastExtension = pkgs.callPackage ./nix/mkRayCastExtension.nix { };
-      });
-      devShells = forEachPkgs (pkgs: {
-        default = pkgs.mkShell {
-          stdenv = pkgs.gcc15Stdenv;
-
-          # automatically pulls nativeBuildInputs + buildInputs
-          inputsFrom = [ (pkgs.callPackage ./nix/vicinae.nix { gcc15Stdenv = pkgs.gcc15Stdenv; }) ];
-          buildInputs = with pkgs; [
-            ccache
-            catch2_3
+      }); devShells = forEachPkgs (
+        pkgs:
+        let
+          qtEnv = pkgs.qt6.env "qt-custom-${pkgs.qt6.qtbase.version}" [
+            pkgs.qt6.qtdeclarative
+            pkgs.qt6.qtwayland
+            pkgs.qt6.qtsvg
           ];
+        in
+        {
+          default = pkgs.mkShell {
+            stdenv = pkgs.gcc15Stdenv;
 
-          packages = with pkgs; [
-            clang-tools
-            nixd
-            nixfmt-rfc-style
-          ];
+            # automatically pulls nativeBuildInputs + buildInputs
+            inputsFrom = [ (pkgs.callPackage ./nix/vicinae.nix { gcc15Stdenv = pkgs.gcc15Stdenv; }) ];
 
-          shellHook = ''
-            export CC=${pkgs.gcc15}/bin/gcc
-            export CXX=${pkgs.gcc15}/bin/g++
-            export CMAKE_C_COMPILER=$CC
-            export CMAKE_CXX_COMPILER=$CXX
-          '';
-        };
-      });
+            packages = with pkgs; [
+              ccache
+              catch2_3
+              qtEnv
+              clang-tools
+            ];
+
+            shellHook = ''
+              export CC=${pkgs.gcc15}/bin/gcc
+              export CXX=${pkgs.gcc15}/bin/g++
+              export CMAKE_C_COMPILER=$CC
+              export CMAKE_CXX_COMPILER=$CXX
+            '';
+          };
+        }
+      );
       overlays.default = final: prev: {
         vicinae = final.callPackage ./nix/vicinae.nix { };
         mkVicinaeExtension = prev.callPackage ./nix/mkVicinaeExtension.nix { };

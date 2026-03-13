@@ -1,12 +1,6 @@
 {
 	"$schema": "https://vicinae.com/schemas/config.json",
 
-	// Additional configuration files to load. Unlike regular imports specified in the 'imports' array,
-	// values in these files always take precedence over values defined in this current file.
-	"overrides": [
-		// "~/path/to/home-manager/config.json"
-	],
-
 	// A list of paths pointed to separate configuration files to source during loading.
 	// Note that values defined in the main configuration file always take precedence over imported
 	// files.
@@ -22,6 +16,9 @@
 	// Note that vicinae has a built-in file search command that can be used to perform file search in isolation, accompanied with
 	// rich content preview. This should be more than enough for most users.
 	"search_files_in_root": false,
+
+	// activate list and grid items with only one click
+	"activate_on_single_click": false,
 
 	// What vicinae should do when the "escape" key is pressed
 	// Supports "navigate_back" or "close_window"

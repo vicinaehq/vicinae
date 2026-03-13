@@ -13,6 +13,7 @@
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "service-registry.hpp"
 #include "services/background-effect/background-effect-manager.hpp"
+#include "services/file-chooser/file-chooser-service.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "settings-controller/settings-controller.hpp"
@@ -42,6 +43,8 @@ void SettingsWindow::ensureInitialized() {
   rootCtx->setContextProperty(QStringLiteral("Config"), m_configBridge);
   rootCtx->setContextProperty(QStringLiteral("Img"), m_imgSource);
   rootCtx->setContextProperty(QStringLiteral("settings"), this);
+  rootCtx->setContextProperty(QStringLiteral("FileChooser"),
+                              ServiceRegistry::instance()->fileChooserService());
 
   auto *manager = ServiceRegistry::instance()->rootItemManager();
   connect(manager, &RootItemManager::itemsChanged, this, &SettingsWindow::rebuildSidebarExtensions);

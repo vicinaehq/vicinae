@@ -323,6 +323,10 @@ set(SRCS
 	src/utils/utils.cpp
 
 	src/services/file-chooser/abstract-file-chooser.hpp
+	src/services/file-chooser/file-chooser.hpp
+	src/services/file-chooser/file-chooser.cpp
+	src/services/file-chooser/file-chooser-service.hpp
+	src/services/file-chooser/file-chooser-service.cpp
 	src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.hpp
 	src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.cpp
 	src/services/root-item-manager/root-item-manager.hpp
@@ -629,8 +633,6 @@ if (UNIX AND NOT APPLE)
 		src/services/window-manager/x11/x11-event-listener.cpp
 		src/services/window-manager/x11/x11-window.cpp
 
-		src/lib/wayland/virtual-keyboard.hpp
-		src/lib/wayland/virtual-keyboard.cpp
 	)
 
 	# Add XCB (X11 C Bindings) library for X11 window manager support
@@ -643,7 +645,6 @@ if (UNIX AND NOT APPLE)
     include("Wayland")
 
     wayland_generate_protocol("wlr-foreign-toplevel-management-unstable-v1")
-	wayland_generate_protocol("virtual-keyboard-unstable-v1")
 	wayland_generate_protocol("ext-data-control-v1")
 	wayland_generate_protocol("kde-blur")
 	wayland_generate_protocol("ext-background-effect-v1")
@@ -656,9 +657,6 @@ if (UNIX AND NOT APPLE)
 		src/lib/wayland/display.cpp
 		src/lib/wayland/registry.cpp
 		src/lib/wayland/seat.cpp
-		src/lib/wayland/virtual-keyboard.hpp
-		src/lib/wayland/virtual-keyboard.cpp
-
 		src/services/clipboard/data-control/data-control-clipboard-server.hpp
 		src/services/clipboard/data-control/data-control-clipboard-server.cpp
 	)
@@ -692,6 +690,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/GenericGridView.qml
 	src/qml/qml/EmptyView.qml
 	src/qml/qml/EmojiGridView.qml
+	src/qml/qml/ViciButton.qml
 	src/qml/qml/ViciImage.qml
 	src/qml/qml/ViciScrollBar.qml
 	src/qml/qml/ViciToolTip.qml
@@ -755,7 +754,6 @@ set(VICINAE_QML_FILES
 	src/qml/qml/SettingsSidebar.qml
 	src/qml/qml/SettingsRow.qml
 	src/qml/qml/SettingsToggle.qml
-	src/qml/qml/SettingsLinkButton.qml
 	src/qml/qml/GeneralSettingsPage.qml
 	src/qml/qml/AdvancedSettingsPage.qml
 	src/qml/qml/ShortcutsSettingsPage.qml
@@ -768,6 +766,10 @@ set(VICINAE_QML_FILES
 	src/qml/qml/OAuthOverlayView.qml
 	src/qml/qml/HudWindow.qml
 )
+
+if(CMAKE_BUILD_TYPE MATCHES "Debug")
+	list(APPEND VICINAE_QML_FILES src/qml/qml/ButtonShowcase.qml src/qml/qml/UIShowcase.qml)
+endif()
 
 # Strip directory prefix so resources are qrc:/Vicinae/Foo.qml
 foreach(qml_file IN LISTS VICINAE_QML_FILES)

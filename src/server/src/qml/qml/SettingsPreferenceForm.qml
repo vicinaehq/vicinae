@@ -8,6 +8,7 @@ ColumnLayout {
     spacing: 20
 
     Repeater {
+        id: settingsRepeater
         model: root.prefModel
 
         delegate: Loader {
@@ -23,7 +24,8 @@ ColumnLayout {
             required property var options
             required property bool readOnly
             required property bool multiple
-            required property bool directoriesOnly
+            required property bool canChooseFiles
+            required property bool canChooseDirectories
 
             sourceComponent: {
                 switch (type) {
@@ -95,27 +97,16 @@ ColumnLayout {
                     echoMode: field.revealed ? TextInput.Normal : TextInput.Password
                     onTextEdited: root.prefModel.setFieldValue(field.parent.index, text)
                 }
-                Rectangle {
+                ViciButton {
+                    id: revealBtn
                     Layout.preferredWidth: 36
                     Layout.preferredHeight: 36
                     radius: 8
-                    color: revealHover.hovered ? Theme.listItemHoverBg : "transparent"
+                    iconSource: Img.builtin(field.revealed ? "eye-disabled" : "eye").withFillColor(Theme.textMuted)
+                    variant: "ghost"
+                    border.width: revealBtn.hovered ? 1 : 0
                     border.color: Theme.inputBorder
-                    border.width: revealHover.hovered ? 1 : 0
-
-                    ViciImage {
-                        anchors.centerIn: parent
-                        source: Img.builtin(field.revealed ? "eye-disabled" : "eye").withFillColor(Theme.textMuted)
-                        width: 16
-                        height: 16
-                    }
-
-                    HoverHandler {
-                        id: revealHover
-                    }
-                    TapHandler {
-                        onTapped: field.revealed = !field.revealed
-                    }
+                    onClicked: field.revealed = !field.revealed
                 }
             }
             Text {
@@ -248,15 +239,18 @@ ColumnLayout {
         ColumnLayout {
             id: field
             spacing: 6
+
             Text {
                 text: field.parent.label
                 color: Theme.textMuted
                 font.pointSize: Theme.smallerFontSize
             }
             FormFilePicker {
+                id: settingsFilePicker
                 Layout.fillWidth: true
                 multiple: field.parent.multiple
-                directoriesOnly: field.parent.directoriesOnly
+                canChooseFiles: field.parent.canChooseFiles
+                canChooseDirectories: field.parent.canChooseDirectories
                 readOnly: field.parent.readOnly
                 selectedPaths: {
                     const v = field.parent.value;
