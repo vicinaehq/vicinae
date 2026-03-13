@@ -8,9 +8,14 @@
 #include "services/files-service/abstract-file-indexer.hpp"
 #include "services/files-service/file-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
+#include <memory>
+#include <optional>
 #include <QAbstractListModel>
 #include <QFutureWatcher>
 #include <QTimer>
+#include <QVariantList>
+#include <string>
+#include <vector>
 
 class ActionPanelState;
 class BaseView;
@@ -23,6 +28,8 @@ class RootSearchModel : public QAbstractListModel {
   Q_OBJECT
   Q_PROPERTY(QString primaryActionTitle READ primaryActionTitle NOTIFY primaryActionChanged)
   Q_PROPERTY(QString primaryActionIcon READ primaryActionIcon NOTIFY primaryActionChanged)
+  Q_PROPERTY(
+      QVariantList primaryActionShortcutTokens READ primaryActionShortcutTokens NOTIFY primaryActionChanged)
   Q_PROPERTY(bool selectFirstOnReset READ selectFirstOnReset NOTIFY selectFirstOnResetChanged)
 
 public:
@@ -62,6 +69,7 @@ public:
 
   QString primaryActionTitle() const;
   QString primaryActionIcon() const;
+  QVariantList primaryActionShortcutTokens() const;
   bool selectFirstOnReset() const { return m_selectFirstOnReset; }
 
 signals:

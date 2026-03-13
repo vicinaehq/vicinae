@@ -1,3 +1,6 @@
+#include <QKeySequence>
+#include <QVariantMap>
+#include <qevent.h>
 #include "keybind-manager.hpp"
 #include "keyboard.hpp"
 
@@ -150,7 +153,6 @@ static const std::unordered_map<Qt::Key, QString> keyMapReverse{
 	{Qt::Key_Dollar, "$"},
 	{Qt::Key_Return, "return"},
 	{Qt::Key_Delete, "delete"},
-	{Qt::Key_Backspace, "deleteforward"},
 	{Qt::Key_Tab, "tab"},
 	{Qt::Key_Up, "arrowup"},
 	{Qt::Key_Down, "arrowdown"},
@@ -201,18 +203,157 @@ std::optional<QString> stringForKey(Qt::Key key) {
   return {};
 }
 
+std::optional<Qt::Key> keyFromString(QStringView key) {
+  auto keyString = key.toString().toLower();
+  if (auto it = keyMap.find(keyString); it != keyMap.end()) return it->second;
+  return {};
+}
+
+std::optional<Qt::KeyboardModifier> modifierFromString(QStringView modifier) {
+  auto modifierString = modifier.toString().toLower();
+  if (auto it = modifierMap.find(modifierString); it != modifierMap.end()) return it->second;
+  return {};
+}
+
+namespace {
+
+struct DisplayTokenSpec {
+  QString text;
+  QString icon;
+  QString label;
+};
+
+std::optional<Qt::KeyboardModifier> modifierForKey(Qt::Key key) {
+  switch (key) {
+  case Qt::Key_Meta:
+    return Qt::MetaModifier;
+  case Qt::Key_Control:
+    return Qt::ControlModifier;
+  case Qt::Key_Alt:
+    return Qt::AltModifier;
+  case Qt::Key_Shift:
+    return Qt::ShiftModifier;
+  default:
+    return std::nullopt;
+  }
+}
+
+DisplayTokenSpec modifierToken(Qt::KeyboardModifier modifier) {
+  switch (modifier) {
+  case Qt::MetaModifier:
+    return {.text = QStringLiteral("Super"), .label = QStringLiteral("Super")};
+  case Qt::ControlModifier:
+    return {.text = QStringLiteral("Ctrl"), .label = QStringLiteral("Ctrl")};
+  case Qt::AltModifier:
+    return {.text = QStringLiteral("Alt"), .label = QStringLiteral("Alt")};
+  case Qt::ShiftModifier:
+    return {.icon = QStringLiteral("keyboard-shift"), .label = QStringLiteral("Shift")};
+  default:
+    return {};
+  }
+}
+
+std::optional<DisplayTokenSpec> keyToken(Qt::Key key) {
+  switch (key) {
+  case Qt::Key_Return:
+  case Qt::Key_Enter:
+    return DisplayTokenSpec{.icon = QStringLiteral("enter-key"), .label = QStringLiteral("Enter")};
+  case Qt::Key_Tab:
+    return DisplayTokenSpec{.icon = QStringLiteral("tab-key"), .label = QStringLiteral("Tab")};
+  case Qt::Key_Space:
+    return DisplayTokenSpec{.icon = QStringLiteral("space-key"), .label = QStringLiteral("Space")};
+  case Qt::Key_Backspace:
+    return DisplayTokenSpec{.text = QStringLiteral("⌫"), .label = QStringLiteral("Backspace")};
+  case Qt::Key_Delete:
+    return DisplayTokenSpec{.text = QStringLiteral("⌦"), .label = QStringLiteral("Delete")};
+  case Qt::Key_Up:
+    return DisplayTokenSpec{.text = QStringLiteral("↑"), .label = QStringLiteral("Up")};
+  case Qt::Key_Down:
+    return DisplayTokenSpec{.text = QStringLiteral("↓"), .label = QStringLiteral("Down")};
+  case Qt::Key_Left:
+    return DisplayTokenSpec{.text = QStringLiteral("←"), .label = QStringLiteral("Left")};
+  case Qt::Key_Right:
+    return DisplayTokenSpec{.text = QStringLiteral("→"), .label = QStringLiteral("Right")};
+  case Qt::Key_PageUp:
+    return DisplayTokenSpec{.text = QStringLiteral("PgUp"), .label = QStringLiteral("PageUp")};
+  case Qt::Key_PageDown:
+    return DisplayTokenSpec{.text = QStringLiteral("PgDn"), .label = QStringLiteral("PageDown")};
+  case Qt::Key_Home:
+    return DisplayTokenSpec{.text = QStringLiteral("Home"), .label = QStringLiteral("Home")};
+  case Qt::Key_End:
+    return DisplayTokenSpec{.text = QStringLiteral("End"), .label = QStringLiteral("End")};
+  case Qt::Key_Escape:
+    return DisplayTokenSpec{.text = QStringLiteral("Esc"), .label = QStringLiteral("Escape")};
+  default:
+    break;
+  }
+
+  if (auto keyString = stringForKey(key)) {
+    auto label = keyString->toUpper();
+    return DisplayTokenSpec{.text = label, .label = label};
+  }
+
+  return std::nullopt;
+}
+
+std::vector<DisplayTokenSpec> buildDisplayTokenSpecs(const Shortcut &shortcut) {
+  Qt::KeyboardModifiers modifiers = shortcut.mods();
+  auto modifierKey = modifierForKey(shortcut.key());
+  if (modifierKey) { modifiers.setFlag(*modifierKey); }
+
+  std::vector<DisplayTokenSpec> tokens;
+  tokens.reserve(5);
+
+  auto appendModifier = [&](Qt::KeyboardModifier modifier) {
+    if (modifiers.testFlag(modifier)) { tokens.emplace_back(modifierToken(modifier)); }
+  };
+
+  appendModifier(Qt::MetaModifier);
+  appendModifier(Qt::ControlModifier);
+  appendModifier(Qt::AltModifier);
+  appendModifier(Qt::ShiftModifier);
+
+  if (!modifierKey) {
+    if (auto token = keyToken(shortcut.key())) {
+      tokens.emplace_back(std::move(*token));
+    } else if (tokens.empty()) {
+      tokens.emplace_back(DisplayTokenSpec{.text = QStringLiteral("?"), .label = QStringLiteral("?")});
+    }
+  }
+
+  return tokens;
+}
+
+} // namespace
+
+Shortcut::Shortcut(const QKeyEvent *event)
+    : m_key(static_cast<Qt::Key>(event->key())), m_modifiers(event->modifiers()), m_isValid(true) {}
+
+Shortcut Shortcut::fromKeyPress(const QKeyEvent &event) { return Shortcut(&event); }
+
 Shortcut::Shortcut(Keybind bind) { *this = KeybindManager::instance()->resolve(bind); }
 
 Shortcut::Shortcut(const QString &str) {
-  auto strs = str.split('+', Qt::SkipEmptyParts);
+  auto parts = str.split('+');
+  QStringList tokens;
+  tokens.reserve(parts.size());
+  for (qsizetype i = 0; i < parts.size(); ++i) {
+    if (parts[i].isEmpty()) {
+      tokens << QStringLiteral("+");
+      ++i;
+    } else {
+      tokens << parts[i];
+    }
+  }
+
   bool gotKey = false;
 
-  for (const auto &str : strs) {
-    if (auto it = modifierMap.find(str.toLower()); it != modifierMap.end()) {
-      m_modifiers.setFlag(it->second);
-    } else if (auto it = keyMap.find(str.toLower()); it != keyMap.end()) {
+  for (const auto &str : tokens) {
+    if (auto modifier = modifierFromString(str)) {
+      m_modifiers.setFlag(*modifier);
+    } else if (auto key = keyFromString(str)) {
       gotKey = true;
-      m_key = it->second;
+      m_key = *key;
     } else {
       m_isValid = false;
       return;
@@ -235,41 +376,44 @@ QString Shortcut::toString() const {
   return strs.join('+');
 }
 
-// clang-format off
-static const std::unordered_map<Qt::Key, QString> displayKeyMap{
-	{Qt::Key_Return,   QStringLiteral("↵")},
-	{Qt::Key_Enter,    QStringLiteral("↵")},
-	{Qt::Key_Delete,   QStringLiteral("⌦")},
-	{Qt::Key_Backspace,QStringLiteral("⌫")},
-	{Qt::Key_Tab,      QStringLiteral("⇥")},
-	{Qt::Key_Up,       QStringLiteral("↑")},
-	{Qt::Key_Down,     QStringLiteral("↓")},
-	{Qt::Key_Left,     QStringLiteral("←")},
-	{Qt::Key_Right,    QStringLiteral("→")},
-	{Qt::Key_PageUp,   QStringLiteral("PgUp")},
-	{Qt::Key_PageDown, QStringLiteral("PgDn")},
-	{Qt::Key_Home,     QStringLiteral("Home")},
-	{Qt::Key_End,      QStringLiteral("End")},
-	{Qt::Key_Space,    QStringLiteral("␣")},
-	{Qt::Key_Escape,   QStringLiteral("Esc")},
-};
-// clang-format on
+QString Shortcut::toBindingSequence() const {
+  if (!m_isValid && !modifierForKey(m_key)) return {};
 
-QString Shortcut::toDisplayString() const {
-  QStringList parts;
+  Qt::KeyboardModifiers modifiers = m_modifiers;
+  auto modifierKey = modifierForKey(m_key);
+  if (modifierKey) { modifiers.setFlag(*modifierKey); }
 
-  if (m_modifiers.testFlag(Qt::MetaModifier)) { parts << "Super"; }
-  if (m_modifiers.testFlag(Qt::ControlModifier)) { parts << "Ctrl"; }
-  if (m_modifiers.testFlag(Qt::AltModifier)) { parts << "Alt"; }
-  if (m_modifiers.testFlag(Qt::ShiftModifier)) { parts << "Shift"; }
-
-  if (auto it = displayKeyMap.find(m_key); it != displayKeyMap.end()) {
-    parts << it->second;
-  } else {
-    parts << stringForKey(m_key).value_or("?").toUpper();
+  if (modifierKey && modifiers == Qt::KeyboardModifiers(*modifierKey)) {
+    return QKeySequence(modifiers.toInt()).toString(QKeySequence::PortableText);
   }
 
+  return QKeySequence(static_cast<int>(m_key) | modifiers.toInt()).toString(QKeySequence::PortableText);
+}
+
+QString Shortcut::toDisplayString() const {
+  if (!m_isValid && !modifierForKey(m_key)) return {};
+
+  QStringList parts;
+  auto tokens = buildDisplayTokenSpecs(*this);
+  parts.reserve(static_cast<qsizetype>(tokens.size()));
+  for (const auto &token : tokens)
+    parts << token.label;
+
   return parts.join('+');
+}
+
+QVariantList Shortcut::toDisplayTokens() const {
+  if (!m_isValid && !modifierForKey(m_key)) return {};
+
+  QVariantList tokens;
+  for (const auto &token : buildDisplayTokenSpecs(*this)) {
+    QVariantMap entry;
+    entry.insert(QStringLiteral("text"), token.text);
+    entry.insert(QStringLiteral("icon"), token.icon);
+    tokens.append(entry);
+  }
+
+  return tokens;
 }
 
 std::vector<Qt::KeyboardModifier> Shortcut::modList() const {
@@ -304,4 +448,3 @@ bool Shortcut::operator==(const Shortcut &other) const {
 }
 
 }; // namespace Keyboard
-   //

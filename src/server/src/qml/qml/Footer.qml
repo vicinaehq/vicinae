@@ -33,7 +33,7 @@ Item {
             }
             Layout.alignment: Qt.AlignVCenter
             label: !launcher.isRootSearch ? actionPanel.primaryActionTitle : searchModel.primaryActionTitle
-            shortcut: !launcher.isRootSearch ? actionPanel.primaryActionShortcut : "↵"
+            shortcutTokens: !launcher.isRootSearch ? actionPanel.primaryActionShortcutTokens : searchModel.primaryActionShortcutTokens
             onClicked: launcher.handleReturn()
         }
 
@@ -50,7 +50,7 @@ Item {
             visible: actionPanel.hasMultipleActions
             Layout.alignment: Qt.AlignVCenter
             label: "Actions"
-            shortcut: Keybinds.toggleActionPanel
+            shortcutTokens: Keybinds.toggleActionPanelTokens
             highlighted: actionPanel.open
             onClicked: actionPanel.toggle()
         }

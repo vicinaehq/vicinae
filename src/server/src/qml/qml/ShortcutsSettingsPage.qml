@@ -7,13 +7,13 @@ Item {
     readonly property var model: settings.keybindModel
 
     property int _recordingRow: -1
-    property string _recordingDisplay: ""
+    property var _recordingTokens: []
     property string _recordingStatus: ""
     property color _recordingStatusColor: Theme.textMuted
 
     function _startRecording(row) {
         _recordingRow = row;
-        _recordingDisplay = "";
+        _recordingTokens = [];
         _recordingStatus = "Press a shortcut...";
         _recordingStatusColor = Theme.textMuted;
         root.forceActiveFocus();
@@ -21,7 +21,7 @@ Item {
 
     function _cancelRecording() {
         _recordingRow = -1;
-        _recordingDisplay = "";
+        _recordingTokens = [];
         _recordingStatus = "";
     }
 
@@ -46,7 +46,7 @@ Item {
             return;
         }
 
-        root._recordingDisplay = root.model.shortcutDisplayString(key, mods);
+        root._recordingTokens = root.model.shortcutDisplayTokens(key, mods);
 
         if (isModKey) {
             root._recordingStatus = "Press a key...";
@@ -159,7 +159,7 @@ Item {
                 required property int index
                 required property string name
                 required property string icon
-                required property string shortcut
+                required property var shortcutTokens
 
                 readonly property bool isRecording: index === root._recordingRow
 
@@ -201,8 +201,8 @@ Item {
                     }
 
                     ShortcutBadge {
-                        visible: rowItem.isRecording ? root._recordingDisplay !== "" : rowItem.shortcut !== ""
-                        text: rowItem.isRecording ? root._recordingDisplay : rowItem.shortcut
+                        visible: rowItem.isRecording ? root._recordingTokens.length > 0 : rowItem.shortcutTokens.length > 0
+                        tokens: rowItem.isRecording ? root._recordingTokens : rowItem.shortcutTokens
                     }
 
                     Text {
@@ -213,7 +213,7 @@ Item {
                     }
 
                     Text {
-                        visible: !rowItem.isRecording && rowItem.shortcut === "" && rowHover.hovered
+                        visible: !rowItem.isRecording && rowItem.shortcutTokens.length === 0 && rowHover.hovered
                         text: "Record Shortcut"
                         color: Theme.textMuted
                         font.pointSize: Theme.smallerFontSize

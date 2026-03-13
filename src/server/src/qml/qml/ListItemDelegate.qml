@@ -49,7 +49,7 @@ SelectableDelegate {
             implicitHeight: titleText.implicitHeight
 
             readonly property real spacing: 6
-            readonly property real aliasSpace: aliasRect.visible ? aliasRect.width + spacing : 0
+            readonly property real aliasSpace: aliasBadge.visible ? aliasBadge.width + spacing : 0
             readonly property real availableForText: width - aliasSpace
             readonly property real subtitleReserved: subtitleText.visible ? Math.min(subtitleText.implicitWidth + spacing, availableForText * 0.5) : 0
 
@@ -79,27 +79,13 @@ SelectableDelegate {
                 maximumLineCount: 1
             }
 
-            Rectangle {
-                id: aliasRect
+            TextBadge {
+                id: aliasBadge
                 visible: root.itemAlias !== ""
                 anchors.left: subtitleText.visible ? subtitleText.right : titleText.right
                 anchors.leftMargin: visible ? textRow.spacing : 0
                 anchors.verticalCenter: parent.verticalCenter
-                width: aliasText.implicitWidth + 20
-                height: aliasText.implicitHeight + 4
-                radius: 4
-                color: "transparent"
-                border.width: 1
-                border.color: Theme.divider
-
-                Text {
-                    id: aliasText
-                    anchors.centerIn: parent
-                    text: root.itemAlias
-                    color: Theme.textMuted
-                    font.pointSize: Theme.smallerFontSize
-                    maximumLineCount: 1
-                }
+                text: root.itemAlias
             }
         }
 

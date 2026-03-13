@@ -2,6 +2,7 @@
 #include "view-utils.hpp"
 #include "navigation-controller.hpp"
 #include <QAbstractListModel>
+#include <QVariantList>
 #include <memory>
 #include <string>
 #include <vector>
@@ -15,7 +16,7 @@ public:
     ItemType = Qt::UserRole + 1,
     Title,
     IconSource,
-    ShortcutLabel,
+    ShortcutTokens,
     IsSubmenu,
     IsPrimary,
     IsDanger,

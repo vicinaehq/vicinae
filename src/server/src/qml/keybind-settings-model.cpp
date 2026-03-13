@@ -19,8 +19,8 @@ QVariant KeybindSettingsModel::data(const QModelIndex &index, int role) const {
     return e.icon;
   case DescriptionRole:
     return e.description;
-  case ShortcutRole:
-    return e.shortcut;
+  case ShortcutTokensRole:
+    return e.shortcutTokens;
   case KeybindIdRole:
     return e.keybindId;
   default:
@@ -32,7 +32,7 @@ QHash<int, QByteArray> KeybindSettingsModel::roleNames() const {
   return {{NameRole, "name"},
           {IconRole, "icon"},
           {DescriptionRole, "description"},
-          {ShortcutRole, "shortcut"},
+          {ShortcutTokensRole, "shortcutTokens"},
           {KeybindIdRole, "keybindId"}};
 }
 
@@ -74,7 +74,7 @@ void KeybindSettingsModel::moveDown() {
   if (m_selectedRow < rowCount() - 1) select(m_selectedRow + 1);
 }
 
-static QString shortcutString(const Keyboard::Shortcut &s) { return s.toDisplayString(); }
+static QVariantList shortcutTokens(const Keyboard::Shortcut &shortcut) { return shortcut.toDisplayTokens(); }
 
 QString KeybindSettingsModel::validateShortcut(int key, int modifiers) const {
   Keyboard::Shortcut const shortcut(static_cast<Qt::Key>(key), static_cast<Qt::KeyboardModifiers>(modifiers));
@@ -90,23 +90,23 @@ void KeybindSettingsModel::setShortcut(int row, int key, int modifiers) {
   auto &e = m_entries[row];
   Keyboard::Shortcut const shortcut(static_cast<Qt::Key>(key), static_cast<Qt::KeyboardModifiers>(modifiers));
   KeybindManager::instance()->setKeybind(static_cast<Keybind>(e.keybindId), shortcut);
-  e.shortcut = shortcutString(shortcut);
+  e.shortcutTokens = shortcutTokens(shortcut);
   auto idx = index(row);
-  emit dataChanged(idx, idx, {ShortcutRole});
+  emit dataChanged(idx, idx, {ShortcutTokensRole});
 }
 
 void KeybindSettingsModel::clearShortcut(int row) {
   if (row < 0 || std::cmp_greater_equal(row, m_entries.size())) return;
   auto &e = m_entries[row];
   KeybindManager::instance()->setKeybind(static_cast<Keybind>(e.keybindId), Keyboard::Shortcut());
-  e.shortcut.clear();
+  e.shortcutTokens.clear();
   auto idx = index(row);
-  emit dataChanged(idx, idx, {ShortcutRole});
+  emit dataChanged(idx, idx, {ShortcutTokensRole});
 }
 
-QString KeybindSettingsModel::shortcutDisplayString(int key, int modifiers) const {
+QVariantList KeybindSettingsModel::shortcutDisplayTokens(int key, int modifiers) const {
   Keyboard::Shortcut const shortcut(static_cast<Qt::Key>(key), static_cast<Qt::KeyboardModifiers>(modifiers));
-  return shortcut.toDisplayString();
+  return shortcut.toDisplayTokens();
 }
 
 void KeybindSettingsModel::rebuild(const QString &filter) {
@@ -130,7 +130,7 @@ void KeybindSettingsModel::rebuild(const QString &filter) {
     e.name = info->name;
     e.icon = info->icon;
     e.description = info->description;
-    if (auto s = KeybindManager::instance()->resolve(id); s.isValid()) e.shortcut = shortcutString(s);
+    if (auto s = KeybindManager::instance()->resolve(id); s.isValid()) e.shortcutTokens = shortcutTokens(s);
     scored.push_back({.data = std::move(e), .score = sc});
   }
 

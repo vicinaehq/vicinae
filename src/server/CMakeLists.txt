@@ -230,6 +230,7 @@ set(SRCS
 
 
 	src/extend/accessory-model.cpp
+	src/extend/action-shortcut-parser.cpp
 	src/extend/action-model.cpp
 	src/extend/color-model.cpp
 	src/extend/detail-model.cpp
@@ -681,6 +682,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/FooterNavStatus.qml
 	src/qml/qml/FooterToast.qml
 	src/qml/qml/ShortcutBadge.qml
+	src/qml/qml/TextBadge.qml
 	src/qml/qml/CommandListView.qml
 	src/qml/qml/CalculatorResultDelegate.qml
 	src/qml/qml/ThemeListView.qml
@@ -830,3 +832,16 @@ endforeach()
 install(TARGETS ${TARGET}
 	RUNTIME DESTINATION ${VICINAE_LIBEXEC_DIR}
 )
+
+if (BUILD_TESTS)
+	set(TEST_TARGET ${TARGET}-tests)
+	find_package(Catch2 3 REQUIRED)
+	add_executable(${TEST_TARGET}
+		tests/shortcut-tests.cpp
+		src/extend/action-shortcut-parser.cpp
+		src/lib/keyboard/keyboard.cpp
+		src/lib/keyboard/keybind-manager.cpp
+	)
+	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)
+	target_compile_features(${TEST_TARGET} PUBLIC cxx_std_23)
+endif()

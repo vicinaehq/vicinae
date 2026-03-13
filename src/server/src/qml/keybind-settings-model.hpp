@@ -1,5 +1,7 @@
 #pragma once
+#include <vector>
 #include <QAbstractListModel>
+#include <QVariantList>
 
 class KeybindSettingsModel : public QAbstractListModel {
   Q_OBJECT
@@ -14,7 +16,7 @@ signals:
   void selectedChanged();
 
 public:
-  enum Role { NameRole = Qt::UserRole + 1, IconRole, DescriptionRole, ShortcutRole, KeybindIdRole };
+  enum Role { NameRole = Qt::UserRole + 1, IconRole, DescriptionRole, ShortcutTokensRole, KeybindIdRole };
 
   explicit KeybindSettingsModel(QObject *parent = nullptr);
 
@@ -35,7 +37,7 @@ public:
   Q_INVOKABLE QString validateShortcut(int key, int modifiers) const;
   Q_INVOKABLE void setShortcut(int row, int key, int modifiers);
   Q_INVOKABLE void clearShortcut(int row);
-  Q_INVOKABLE QString shortcutDisplayString(int key, int modifiers) const;
+  Q_INVOKABLE QVariantList shortcutDisplayTokens(int key, int modifiers) const;
 
 private:
   struct Entry {
@@ -43,7 +45,7 @@ private:
     QString name;
     QString icon;
     QString description;
-    QString shortcut;
+    QVariantList shortcutTokens;
   };
 
   void rebuild(const QString &filter);

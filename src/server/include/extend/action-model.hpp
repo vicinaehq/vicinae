@@ -1,11 +1,15 @@
 #pragma once
-#include "extend/image-model.hpp"
-#include <qjsonobject.h>
-#include "lib/keyboard/keyboard.hpp"
-#include <qnamespace.h>
 #include <QList>
+#include <QJsonValue>
+#include <QStringList>
 #include <memory>
+#include <optional>
+#include <qjsonobject.h>
+#include <qnamespace.h>
 #include <variant>
+#include <vector>
+#include "extend/image-model.hpp"
+#include "lib/keyboard/keyboard.hpp"
 
 struct KeyboardShortcutModel {
   QString key;
@@ -83,7 +87,6 @@ struct ActionPannelModel {
 };
 
 class ActionPannelParser {
-  Keyboard::Shortcut parseKeyboardShortcut(const QJsonValue &shortcut);
   ActionModel parseAction(const QJsonObject &instance);
 
   ActionPannelSectionPtr parseActionPannelSection(const QJsonObject &instance);
@@ -91,5 +94,6 @@ class ActionPannelParser {
 
 public:
   ActionPannelParser();
+  static Keyboard::Shortcut parseKeyboardShortcut(const QJsonValue &shortcut);
   ActionPannelModel parse(const QJsonObject &instance);
 };
