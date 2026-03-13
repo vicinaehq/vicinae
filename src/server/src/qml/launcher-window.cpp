@@ -241,11 +241,11 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   auto *fileChooser = m_ctx.services->fileChooserService();
   connect(fileChooser, &FileChooserService::dialogOpened, this, [this]() {
     setExclusiveFocus(false);
-    setLayerSuspended(true);
+    if (isLayerShellActive()) { m_ctx.navigation->closeWindow({.popToRootType = PopToRootType::Suspended}); }
   });
   connect(fileChooser, &FileChooserService::dialogClosed, this, [this]() {
     setExclusiveFocus(true);
-    setLayerSuspended(false);
+    if (isLayerShellActive()) { m_ctx.navigation->showWindow(); }
   });
   connect(nav, &NavigationController::viewPoped, this, [this, fileChooser](const BaseView *) {
     if (m_window && m_window->isActive() && fileChooser->isActive()) fileChooser->cancel();
@@ -507,13 +507,21 @@ void LauncherWindow::updateBlur() {
   }
 }
 
+bool LauncherWindow::isLayerShellActive() const {
+#ifdef WAYLAND_LAYER_SHELL
+  return Environment::isLayerShellSupported() &&
+         m_ctx.services->config()->value().launcherWindow.layerShell.enabled;
+#else
+  return false;
+#endif
+}
+
 void LauncherWindow::setExclusiveFocus(bool exclusive) {
 #ifdef WAYLAND_LAYER_SHELL
-  if (!m_window) return;
-  const auto &lc = m_ctx.services->config()->value().launcherWindow.layerShell;
-  if (!Environment::isLayerShellSupported() || !lc.enabled) return;
+  if (!m_window || !isLayerShellActive()) return;
 
   namespace Shell = LayerShellQt;
+  const auto &lc = m_ctx.services->config()->value().launcherWindow.layerShell;
   if (auto *lshell = Shell::Window::get(m_window)) {
     if (exclusive && lc.keyboardInteractivity == "exclusive")
       lshell->setKeyboardInteractivity(Shell::Window::KeyboardInteractivityExclusive);
@@ -522,25 +530,6 @@ void LauncherWindow::setExclusiveFocus(bool exclusive) {
   }
 #else
   Q_UNUSED(exclusive)
-#endif
-}
-
-void LauncherWindow::setLayerSuspended(bool suspended) {
-#ifdef WAYLAND_LAYER_SHELL
-  if (!m_window) return;
-  const auto &lc = m_ctx.services->config()->value().launcherWindow.layerShell;
-  if (!Environment::isLayerShellSupported() || !lc.enabled) return;
-
-  namespace Shell = LayerShellQt;
-  if (auto *lshell = Shell::Window::get(m_window)) {
-    if (suspended) {
-      lshell->setLayer(Shell::Window::LayerBottom);
-    } else {
-      lshell->setLayer(lc.layer == "overlay" ? Shell::Window::LayerOverlay : Shell::Window::LayerTop);
-    }
-  }
-#else
-  Q_UNUSED(suspended)
 #endif
 }
 
