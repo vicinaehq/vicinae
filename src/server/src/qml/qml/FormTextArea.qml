@@ -54,7 +54,9 @@ Item {
             anchors.leftMargin: 10
             anchors.rightMargin: 10
             acceptedButtons: Qt.NoButton
-            onWheel: wheel => {}
+            onWheel: wheel => {
+                wheel.accepted = flickable.contentHeight > flickable.height;
+            }
 
             Flickable {
                 id: flickable
