@@ -47,6 +47,24 @@ public:
 
 class SaveClipboardSelectionToFileAction : public AbstractAction {
   ClipboardHistoryEntry m_entry;
+  QString m_saveDirectoryMode;
+  QString m_saveCustomDirectory;
+  QString m_saveFileNameMode;
+
+  QString kindToken() const {
+    switch (m_entry.kind) {
+    case ClipboardOfferKind::Image:
+      return "image";
+    case ClipboardOfferKind::File:
+      return "file";
+    case ClipboardOfferKind::Link:
+      return "link";
+    case ClipboardOfferKind::Text:
+      return "text";
+    default:
+      return "entry";
+    }
+  }
 
   static QStringList uriLines(const QByteArray &data) {
     QString const text = QString::fromUtf8(data);
@@ -117,6 +135,11 @@ class SaveClipboardSelectionToFileAction : public AbstractAction {
   }
 
   QString defaultFileStem(const QByteArray &data) const {
+    if (m_saveFileNameMode == "timestamp") {
+      auto dt = QDateTime::fromSecsSinceEpoch(m_entry.updatedAt);
+      return QString("clipboard-%1-%2").arg(kindToken()).arg(dt.toString("yyyyMMdd-HHmmss"));
+    }
+
     if (m_entry.kind == ClipboardOfferKind::Image) {
       auto dt = QDateTime::fromSecsSinceEpoch(m_entry.updatedAt);
       return QString("clipboard-image-%1").arg(dt.toString("yyyyMMdd-HHmmss"));
@@ -144,6 +167,17 @@ class SaveClipboardSelectionToFileAction : public AbstractAction {
   }
 
   QString saveDirectoryPath() const {
+    if (m_saveDirectoryMode == "custom") {
+      QString const custom = m_saveCustomDirectory.trimmed();
+      if (!custom.isEmpty()) return custom;
+    }
+
+    if (m_saveDirectoryMode == "home") {
+      auto folder = homeDir();
+      if (!folder.empty()) return QString::fromStdString(folder.string());
+      return QDir::homePath();
+    }
+
     auto folder = downloadsFolder();
     std::error_code ec;
     if (folder.empty() || !std::filesystem::is_directory(folder, ec)) { folder = homeDir(); }
@@ -209,8 +243,12 @@ class SaveClipboardSelectionToFileAction : public AbstractAction {
   }
 
 public:
-  explicit SaveClipboardSelectionToFileAction(const ClipboardHistoryEntry &entry)
-      : AbstractAction("Save to file", BuiltinIcon::SaveDocument), m_entry(entry) {}
+  SaveClipboardSelectionToFileAction(const ClipboardHistoryEntry &entry, QString saveDirectoryMode,
+                                     QString saveCustomDirectory, QString saveFileNameMode)
+      : AbstractAction("Save to file", BuiltinIcon::SaveDocument), m_entry(entry),
+        m_saveDirectoryMode(std::move(saveDirectoryMode)),
+        m_saveCustomDirectory(std::move(saveCustomDirectory)),
+        m_saveFileNameMode(std::move(saveFileNameMode)) {}
 };
 
 class RemoveSelectionAction : public AbstractAction {

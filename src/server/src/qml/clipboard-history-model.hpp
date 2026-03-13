@@ -17,6 +17,9 @@ public:
 
   void setEntries(const PaginatedResponse<ClipboardHistoryEntry> &page);
   void setDefaultAction(DefaultAction action) { m_defaultAction = action; }
+  void setSaveDirectoryMode(QString value) { m_saveDirectoryMode = std::move(value); }
+  void setSaveCustomDirectory(QString value) { m_saveCustomDirectory = std::move(value); }
+  void setSaveFileNameMode(QString value) { m_saveFileNameMode = std::move(value); }
   void resetSelectionOnNextUpdate() { setSelectFirstOnReset(true); }
   void setFilter(const QString &text) override {}
   QString searchPlaceholder() const override { return QStringLiteral("Browse clipboard history..."); }
@@ -40,4 +43,7 @@ private:
 
   std::vector<ClipboardHistoryEntry> m_entries;
   DefaultAction m_defaultAction = DefaultAction::Copy;
+  QString m_saveDirectoryMode = "downloads";
+  QString m_saveCustomDirectory;
+  QString m_saveFileNameMode = "content";
 };
