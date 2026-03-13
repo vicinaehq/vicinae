@@ -187,7 +187,7 @@ export default function FormElements() {
 				onChange={(files) =>
 					showToast(
 						Toast.Style.Success,
-						`Selected ${Array.isArray(files) ? files.length : files ? 1 : 0} file(s)`,
+						`Selected ${files.length} file(s)`,
 					)
 				}
 			/>
@@ -200,7 +200,7 @@ export default function FormElements() {
 				onChange={(files) =>
 					showToast(
 						Toast.Style.Success,
-						`Selected ${Array.isArray(files) ? files.length : files ? 1 : 0} file(s)`,
+						`Selected ${files.length} file(s)`,
 					)
 				}
 			/>
@@ -214,7 +214,7 @@ export default function FormElements() {
 				onChange={(files) =>
 					showToast(
 						Toast.Style.Success,
-						`Selected ${Array.isArray(files) ? files.length : files ? 1 : 0} directory(ies)`,
+						`Selected ${files.length} directory(ies)`,
 					)
 				}
 			/>
@@ -233,7 +233,7 @@ export default function FormElements() {
 				onChange={(files) =>
 					showToast(
 						Toast.Style.Success,
-						`Selected ${Array.isArray(files) ? files.length : files ? 1 : 0} directory(ies)`,
+						`Selected ${files.length} directory(ies)`,
 					)
 				}
 			/> */}
@@ -247,7 +247,7 @@ export default function FormElements() {
 				onChange={(files) =>
 					showToast(
 						Toast.Style.Success,
-						`Selected ${Array.isArray(files) ? files.length : files ? 1 : 0} file(s)`,
+						`Selected ${files.length} file(s)`,
 					)
 				}
 			/> */}

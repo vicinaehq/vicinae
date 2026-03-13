@@ -141,20 +141,12 @@ Item {
                 readOnly: field.parent.readOnly
                 selectedPaths: {
                     const v = field.parent.value;
-                    if (!v)
+                    if (!v || !v.length)
                         return [];
-                    if (typeof v === "string")
-                        return v !== "" ? [v] : [];
-                    let arr = [];
-                    for (let i = 0; i < v.length; i++)
-                        arr.push(v[i]);
-                    return arr;
+                    return Array.from(v);
                 }
                 onPathsChanged: paths => {
-                    if (field.parent.multiple)
-                        root.prefModel.setFieldValue(field.parent.index, paths);
-                    else
-                        root.prefModel.setFieldValue(field.parent.index, paths.length > 0 ? paths[0] : "");
+                    root.prefModel.setFieldValue(field.parent.index, paths);
                 }
             }
         }

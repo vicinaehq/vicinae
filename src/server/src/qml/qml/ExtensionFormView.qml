@@ -289,17 +289,9 @@ Item {
 
                 selectedPaths: {
                     const v = field.parent.value;
-                    if (v === undefined || v === null)
+                    if (!v || !v.length)
                         return [];
-                    if (typeof v === "string")
-                        return v !== "" ? [v] : [];
-                    if (typeof v === "object" && v.length !== undefined) {
-                        let arr = [];
-                        for (let i = 0; i < v.length; i++)
-                            arr.push(v[i]);
-                        return arr;
-                    }
-                    return [];
+                    return Array.from(v);
                 }
                 onPathsChanged: paths => {
                     root.formModel.setFilePaths(field.parent.index, paths);

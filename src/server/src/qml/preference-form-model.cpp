@@ -114,6 +114,20 @@ static void applyPickerFlags(const Preference &p, bool &multiple, bool &canChoos
   }
 }
 
+static bool isFilePickerType(const Preference &p) {
+  return std::holds_alternative<Preference::FilePickerData>(p.data()) ||
+         std::holds_alternative<Preference::DirectoryPickerData>(p.data());
+}
+
+static QJsonValue normalizeFilePickerValue(const QJsonValue &v) {
+  if (v.isArray()) return v;
+  if (v.isString()) {
+    auto s = v.toString();
+    return s.isEmpty() ? QJsonArray{} : QJsonArray{s};
+  }
+  return QJsonArray{};
+}
+
 static QString resolveLabel(const Preference &p) {
   auto d = p.data();
   if (auto *cb = std::get_if<Preference::CheckboxData>(&d)) return cb->label.value_or(p.title());
@@ -142,10 +156,9 @@ void PreferenceFormModel::load(const EntrypointId &id, const std::vector<Prefere
 
     applyPickerFlags(pref, f.multiple, f.canChooseFiles, f.canChooseDirectories);
 
-    if (m_values.contains(pref.name()))
-      f.value = m_values.value(pref.name()).toVariant();
-    else
-      f.value = pref.defaultValue().toVariant();
+    QJsonValue raw = m_values.contains(pref.name()) ? m_values.value(pref.name()) : pref.defaultValue();
+    if (isFilePickerType(pref)) raw = normalizeFilePickerValue(raw);
+    f.value = raw.toVariant();
 
     m_fields.push_back(std::move(f));
   }
@@ -175,10 +188,9 @@ void PreferenceFormModel::loadProvider(const QString &providerId,
 
     applyPickerFlags(pref, f.multiple, f.canChooseFiles, f.canChooseDirectories);
 
-    if (m_values.contains(pref.name()))
-      f.value = m_values.value(pref.name()).toVariant();
-    else
-      f.value = pref.defaultValue().toVariant();
+    QJsonValue raw = m_values.contains(pref.name()) ? m_values.value(pref.name()) : pref.defaultValue();
+    if (isFilePickerType(pref)) raw = normalizeFilePickerValue(raw);
+    f.value = raw.toVariant();
 
     m_fields.push_back(std::move(f));
   }
