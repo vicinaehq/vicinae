@@ -5,6 +5,7 @@ Item {
     implicitWidth: 36
     implicitHeight: 20
     anchors.right: parent ? parent.right : undefined
+    activeFocusOnTab: true
 
     property bool checked: false
     signal toggled
@@ -13,6 +14,8 @@ Item {
         anchors.fill: parent
         radius: 10
         color: root.checked ? Theme.accent : Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.2)
+        border.width: root.activeFocus ? 1 : 0
+        border.color: Theme.inputBorderFocus
         Behavior on color {
             ColorAnimation {
                 duration: 120
@@ -41,5 +44,14 @@ Item {
             root.checked = !root.checked;
             root.toggled();
         }
+    }
+
+    Keys.onReturnPressed: {
+        root.checked = !root.checked;
+        root.toggled();
+    }
+    Keys.onSpacePressed: {
+        root.checked = !root.checked;
+        root.toggled();
     }
 }

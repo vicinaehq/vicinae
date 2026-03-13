@@ -229,8 +229,9 @@ FocusScope {
             foreground: Theme.textMuted
             variant: "ghost"
             bordered: true
+            activeFocusOnTab: !root.readOnly
             onClicked: {
-                focusItem.forceActiveFocus();
+                forceActiveFocus();
                 root._openDialog();
             }
         }
