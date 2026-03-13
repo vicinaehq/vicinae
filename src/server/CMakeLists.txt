@@ -628,8 +628,6 @@ if (UNIX AND NOT APPLE)
 		src/services/window-manager/x11/x11-event-listener.cpp
 		src/services/window-manager/x11/x11-window.cpp
 
-		src/lib/wayland/virtual-keyboard.hpp
-		src/lib/wayland/virtual-keyboard.cpp
 	)
 
 	# Add XCB (X11 C Bindings) library for X11 window manager support
@@ -642,7 +640,6 @@ if (UNIX AND NOT APPLE)
     include("Wayland")
 
     wayland_generate_protocol("wlr-foreign-toplevel-management-unstable-v1")
-	wayland_generate_protocol("virtual-keyboard-unstable-v1")
 	wayland_generate_protocol("ext-data-control-v1")
 	wayland_generate_protocol("kde-blur")
 	wayland_generate_protocol("ext-background-effect-v1")
@@ -655,9 +652,6 @@ if (UNIX AND NOT APPLE)
 		src/lib/wayland/display.cpp
 		src/lib/wayland/registry.cpp
 		src/lib/wayland/seat.cpp
-		src/lib/wayland/virtual-keyboard.hpp
-		src/lib/wayland/virtual-keyboard.cpp
-
 		src/services/clipboard/data-control/data-control-clipboard-server.hpp
 		src/services/clipboard/data-control/data-control-clipboard-server.cpp
 	)
