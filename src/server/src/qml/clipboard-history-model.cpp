@@ -95,6 +95,11 @@ std::unique_ptr<ActionPanelState> ClipboardHistorySection::actionPanel(int i) co
   auto toolsSection = panel->createSection();
   auto dangerSection = panel->createSection();
   toolsSection->addAction(pin);
+  if (isCopyable) {
+    auto saveToFile = new SaveClipboardSelectionToFileAction(entry);
+    saveToFile->setShortcut(Keybind::SaveAction);
+    toolsSection->addAction(saveToFile);
+  }
   toolsSection->addAction(editKeywords);
   dangerSection->addAction(remove);
   dangerSection->addAction(removeAll);
