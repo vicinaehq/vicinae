@@ -2,7 +2,6 @@
 #include "common/types.hpp"
 #include "ext-data-control-v1-client-protocol.h"
 #include "kde-blur-client-protocol.h"
-#include "virtual-keyboard-unstable-v1-client-protocol.h"
 #include "wlr-data-control-unstable-v1-client-protocol.h"
 #include "ext-background-effect-v1-client-protocol.h"
 
@@ -21,8 +20,6 @@ public:
    */
   static ext_data_control_manager_v1 *dataControlDeviceManager();
 
-  static zwp_virtual_keyboard_manager_v1 *virtualKeyboardManager();
-
 private:
   static Globals &instance();
 
@@ -36,7 +33,6 @@ private:
 
   zwlr_data_control_manager_v1 *m_zwlrDataControlDevice = nullptr;
   ext_data_control_manager_v1 *extDataControlDevice = nullptr;
-  zwp_virtual_keyboard_manager_v1 *m_virtualKeyboardManager = nullptr;
   org_kde_kwin_blur_manager *m_kwinBlur = nullptr;
   ext_background_effect_manager_v1 *m_backgroundEffect = nullptr;
 };
