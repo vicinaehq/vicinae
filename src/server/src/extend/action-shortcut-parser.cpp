@@ -1,7 +1,5 @@
 #include <unordered_map>
 #include "extend/action-model.hpp"
-#include "keyboard/keybind.hpp"
-#include "keyboard/keyboard.hpp"
 #include <qjsonarray.h>
 #include <qjsonvalue.h>
 
@@ -40,7 +38,7 @@ Keyboard::Shortcut ActionPannelParser::parseKeyboardShortcut(const QJsonValue &s
   auto key = Keyboard::keyFromString(obj.value("key").toString());
   if (!key) return {};
 
-  Qt::KeyboardModifiers modifiers;
+  Qt::KeyboardModifiers modifiers{};
   for (const auto &modifierValue : obj.value("modifiers").toArray()) {
     auto modifier = Keyboard::modifierFromString(modifierValue.toString());
     if (!modifier) return {};

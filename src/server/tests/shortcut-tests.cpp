@@ -65,6 +65,24 @@ TEST_CASE("binding sequence stays separate from display tokens") {
   REQUIRE(shortcut.toBindingSequence() == expected.toString(QKeySequence::PortableText));
 }
 
+TEST_CASE("fromString parses plus key correctly") {
+  auto plus = Keyboard::Shortcut::fromString("+");
+  REQUIRE(plus.isValid());
+  REQUIRE(plus.key() == Qt::Key_Plus);
+  REQUIRE(plus.mods() == Qt::KeyboardModifiers{});
+
+  auto ctrlPlus = Keyboard::Shortcut::fromString("ctrl++");
+  REQUIRE(ctrlPlus.isValid());
+  REQUIRE(ctrlPlus.key() == Qt::Key_Plus);
+  REQUIRE(ctrlPlus.mods().testFlag(Qt::ControlModifier));
+
+  auto ctrlShiftPlus = Keyboard::Shortcut::fromString("ctrl+shift++");
+  REQUIRE(ctrlShiftPlus.isValid());
+  REQUIRE(ctrlShiftPlus.key() == Qt::Key_Plus);
+  REQUIRE(ctrlShiftPlus.mods().testFlag(Qt::ControlModifier));
+  REQUIRE(ctrlShiftPlus.mods().testFlag(Qt::ShiftModifier));
+}
+
 TEST_CASE("extension object shortcuts can represent plus keys") {
   QJsonObject shortcut{
       {QStringLiteral("key"), QStringLiteral("+")},

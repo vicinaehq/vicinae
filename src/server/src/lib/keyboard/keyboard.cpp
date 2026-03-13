@@ -1,5 +1,6 @@
 #include <QKeySequence>
 #include <QVariantMap>
+#include <qevent.h>
 #include "keybind-manager.hpp"
 #include "keyboard.hpp"
 
@@ -152,7 +153,6 @@ static const std::unordered_map<Qt::Key, QString> keyMapReverse{
 	{Qt::Key_Dollar, "$"},
 	{Qt::Key_Return, "return"},
 	{Qt::Key_Delete, "delete"},
-	{Qt::Key_Backspace, "deleteforward"},
 	{Qt::Key_Tab, "tab"},
 	{Qt::Key_Up, "arrowup"},
 	{Qt::Key_Down, "arrowdown"},
@@ -326,13 +326,29 @@ std::vector<DisplayTokenSpec> buildDisplayTokenSpecs(const Shortcut &shortcut) {
 
 } // namespace
 
+Shortcut::Shortcut(const QKeyEvent *event)
+    : m_key(static_cast<Qt::Key>(event->key())), m_modifiers(event->modifiers()), m_isValid(true) {}
+
+Shortcut Shortcut::fromKeyPress(const QKeyEvent &event) { return Shortcut(&event); }
+
 Shortcut::Shortcut(Keybind bind) { *this = KeybindManager::instance()->resolve(bind); }
 
 Shortcut::Shortcut(const QString &str) {
-  auto strs = str.split('+', Qt::SkipEmptyParts);
+  auto parts = str.split('+');
+  QStringList tokens;
+  tokens.reserve(parts.size());
+  for (qsizetype i = 0; i < parts.size(); ++i) {
+    if (parts[i].isEmpty()) {
+      tokens << QStringLiteral("+");
+      ++i;
+    } else {
+      tokens << parts[i];
+    }
+  }
+
   bool gotKey = false;
 
-  for (const auto &str : strs) {
+  for (const auto &str : tokens) {
     if (auto modifier = modifierFromString(str)) {
       m_modifiers.setFlag(*modifier);
     } else if (auto key = keyFromString(str)) {
