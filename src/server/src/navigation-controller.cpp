@@ -3,7 +3,6 @@
 #include "command-controller.hpp"
 #include "extension/extension-command.hpp"
 #include "service-registry.hpp"
-#include "overlay-controller/overlay-controller.hpp"
 #include "qml/missing-preference-view-host.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "extension/manager/extension-manager.hpp"
@@ -312,9 +311,6 @@ void NavigationController::closeWindow(const CloseWindowOptions &settings) {
   if (!m_windowOpened) return;
 
   PopToRootType type = settings.popToRootType;
-
-  // never pop if an overlay is shown
-  if (m_ctx.overlay->hasOverlay()) { type = PopToRootType::Suspended; }
 
   if (m_instantDismiss) {
     qDebug() << "Consumed instantDismiss flag";

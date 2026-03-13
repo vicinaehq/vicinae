@@ -1,6 +1,6 @@
 import QtQuick
-import QtQuick.Layouts
 import QtQuick.Dialogs
+import QtQuick.Layouts
 
 FocusScope {
     id: root
@@ -9,24 +9,93 @@ FocusScope {
     activeFocusOnTab: !readOnly
 
     property bool multiple: false
-    property bool directoriesOnly: false
+    property bool canChooseDirectories: false
+    property bool canChooseFiles: true
     property bool readOnly: false
     property bool hasError: false
     property var selectedPaths: []
 
     signal pathsChanged(var paths)
 
+    readonly property bool _directoriesOnly: canChooseDirectories && !canChooseFiles
+    property bool _waitingForPortal: false
+
     function forceActiveFocus() {
         focusItem.forceActiveFocus();
     }
 
     function _openDialog() {
-        if (root.readOnly)
+        if (root.readOnly || FileChooser.active)
             return;
-        if (directoriesOnly)
-            folderDialog.open();
-        else
-            fileDialog.open();
+
+        if (FileChooser.openDialog(root.canChooseFiles, root.canChooseDirectories, root.multiple)) {
+            root._waitingForPortal = true;
+        } else {
+            _openFallbackDialog();
+        }
+    }
+
+    function _openFallbackDialog() {
+        if (root._directoriesOnly)
+            _fallbackFolderDialog.open();
+        else {
+            _fallbackFileDialog.fileMode = root.multiple ? FileDialog.OpenFiles : FileDialog.OpenFile;
+            _fallbackFileDialog.open();
+        }
+    }
+
+    function _applyResult(newPaths) {
+        if (root.multiple && root.selectedPaths) {
+            let merged = [];
+            for (let i = 0; i < root.selectedPaths.length; i++)
+                merged.push(root.selectedPaths[i]);
+            for (let i = 0; i < newPaths.length; i++) {
+                if (merged.indexOf(newPaths[i]) < 0)
+                    merged.push(newPaths[i]);
+            }
+            newPaths = merged;
+        }
+        root.pathsChanged(newPaths);
+    }
+
+    function _handleFallbackResult(urls) {
+        let newPaths = [];
+        for (let i = 0; i < urls.length; i++)
+            newPaths.push(urls[i].toString().replace("file://", ""));
+        root._applyResult(newPaths);
+    }
+
+    Connections {
+        target: FileChooser
+        enabled: root._waitingForPortal
+
+        function onFilesSelected(paths) {
+            root._waitingForPortal = false;
+            let arr = [];
+            for (let i = 0; i < paths.length; i++)
+                arr.push(paths[i]);
+            root._applyResult(arr);
+        }
+    }
+
+    FileDialog {
+        id: _fallbackFileDialog
+        title: root.multiple ? "Select files" : "Select a file"
+        onAccepted: {
+            root._handleFallbackResult(selectedFiles);
+            FileChooser.notifyFallbackDone();
+        }
+        onRejected: FileChooser.notifyFallbackDone()
+    }
+
+    FolderDialog {
+        id: _fallbackFolderDialog
+        title: "Select a directory"
+        onAccepted: {
+            root._handleFallbackResult([selectedFolder]);
+            FileChooser.notifyFallbackDone();
+        }
+        onRejected: FileChooser.notifyFallbackDone()
     }
 
     // --- Single mode ---
@@ -60,7 +129,7 @@ FocusScope {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     verticalAlignment: Text.AlignVCenter
-                    text: singleMode._displayText || (root.directoriesOnly ? "No directory selected" : "No file selected")
+                    text: singleMode._displayText || (root._directoriesOnly ? "No directory selected" : "No file selected")
                     color: singleMode._displayText ? Theme.foreground : Theme.textPlaceholder
                     font.pointSize: Theme.regularFontSize
                     elide: Text.ElideMiddle
@@ -75,10 +144,7 @@ FocusScope {
                     icon: "xmark"
                     iconSize: 10
                     variant: "ghost"
-                    onClicked: {
-                        root.pathsChanged([]);
-                        root.selectedPaths = [];
-                    }
+                    onClicked: root.pathsChanged([])
                 }
             }
 
@@ -148,7 +214,6 @@ FocusScope {
                                     copy.push(root.selectedPaths[i]);
                             }
                             root.pathsChanged(copy);
-                            root.selectedPaths = copy;
                         }
                     }
                 }
@@ -160,12 +225,13 @@ FocusScope {
             Layout.fillWidth: true
             implicitHeight: 32
             radius: 6
-            text: root.directoriesOnly ? "+ Add folder…" : "+ Add file…"
+            text: root._directoriesOnly ? "+ Add folder…" : "+ Add file…"
             foreground: Theme.textMuted
             variant: "ghost"
             bordered: true
+            activeFocusOnTab: !root.readOnly
             onClicked: {
-                focusItem.forceActiveFocus();
+                forceActiveFocus();
                 root._openDialog();
             }
         }
@@ -180,50 +246,5 @@ FocusScope {
 
         Keys.onReturnPressed: root._openDialog()
         Keys.onSpacePressed: root._openDialog()
-    }
-
-    function _appendUnique(existing, newPaths) {
-        let merged = [];
-        for (let i = 0; i < existing.length; i++)
-            merged.push(existing[i]);
-        for (let i = 0; i < newPaths.length; i++) {
-            if (merged.indexOf(newPaths[i]) === -1)
-                merged.push(newPaths[i]);
-        }
-        return merged;
-    }
-
-    FileDialog {
-        id: fileDialog
-        title: root.multiple ? "Select files" : "Select a file"
-        fileMode: root.multiple ? FileDialog.OpenFiles : FileDialog.OpenFile
-        onAccepted: {
-            let paths = [];
-            for (let i = 0; i < selectedFiles.length; i++)
-                paths.push(selectedFiles[i].toString().replace("file://", ""));
-
-            if (root.multiple)
-                paths = root._appendUnique(root.selectedPaths || [], paths);
-
-            root.selectedPaths = paths;
-            root.pathsChanged(paths);
-        }
-    }
-
-    FolderDialog {
-        id: folderDialog
-        title: "Select a directory"
-        onAccepted: {
-            const path = selectedFolder.toString().replace("file://", "");
-
-            if (root.multiple) {
-                const merged = root._appendUnique(root.selectedPaths || [], [path]);
-                root.selectedPaths = merged;
-                root.pathsChanged(merged);
-            } else {
-                root.selectedPaths = [path];
-                root.pathsChanged([path]);
-            }
-        }
     }
 }

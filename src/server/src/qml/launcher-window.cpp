@@ -19,6 +19,7 @@
 #include "config/config.hpp"
 #include "service-registry.hpp"
 #include "services/background-effect/background-effect-manager.hpp"
+#include "services/file-chooser/file-chooser-service.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "environment.hpp"
 #include "vicinae.hpp"
@@ -59,6 +60,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   rootCtx->setContextProperty(QStringLiteral("launcher"), this);
   rootCtx->setContextProperty(QStringLiteral("actionPanel"), m_actionPanel);
   rootCtx->setContextProperty(QStringLiteral("Keybinds"), m_keybindProxy);
+  rootCtx->setContextProperty(QStringLiteral("FileChooser"), ctx.services->fileChooserService());
 
   m_engine.load(QUrl(QStringLiteral("qrc:/Vicinae/LauncherWindow.qml")));
 
@@ -235,6 +237,19 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
             applyWindowConfig();
             tryCompaction();
           });
+
+  auto *fileChooser = m_ctx.services->fileChooserService();
+  connect(fileChooser, &FileChooserService::dialogOpened, this, [this]() {
+    setExclusiveFocus(false);
+    if (isLayerShellActive()) { m_ctx.navigation->closeWindow({.popToRootType = PopToRootType::Suspended}); }
+  });
+  connect(fileChooser, &FileChooserService::dialogClosed, this, [this]() {
+    setExclusiveFocus(true);
+    if (isLayerShellActive()) { m_ctx.navigation->showWindow(); }
+  });
+  connect(nav, &NavigationController::viewPoped, this, [this, fileChooser](const BaseView *) {
+    if (m_window && m_window->isActive() && fileChooser->isActive()) fileChooser->cancel();
+  });
 
   connect(ctx.overlay.get(), &OverlayController::overlayChanged, this, [this]() {
     m_hasOverlay = m_ctx.overlay->hasOverlay();
@@ -490,6 +505,32 @@ void LauncherWindow::updateBlur() {
   } else {
     bgEffect->clearBlur(m_window);
   }
+}
+
+bool LauncherWindow::isLayerShellActive() const {
+#ifdef WAYLAND_LAYER_SHELL
+  return Environment::isLayerShellSupported() &&
+         m_ctx.services->config()->value().launcherWindow.layerShell.enabled;
+#else
+  return false;
+#endif
+}
+
+void LauncherWindow::setExclusiveFocus(bool exclusive) {
+#ifdef WAYLAND_LAYER_SHELL
+  if (!m_window || !isLayerShellActive()) return;
+
+  namespace Shell = LayerShellQt;
+  const auto &lc = m_ctx.services->config()->value().launcherWindow.layerShell;
+  if (auto *lshell = Shell::Window::get(m_window)) {
+    if (exclusive && lc.keyboardInteractivity == "exclusive")
+      lshell->setKeyboardInteractivity(Shell::Window::KeyboardInteractivityExclusive);
+    else
+      lshell->setKeyboardInteractivity(Shell::Window::KeyboardInteractivityOnDemand);
+  }
+#else
+  Q_UNUSED(exclusive)
+#endif
 }
 
 void LauncherWindow::applyWindowConfig() {

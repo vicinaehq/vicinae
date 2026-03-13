@@ -22,6 +22,7 @@
 #include "services/window-manager/window-manager.hpp"
 #include "services/snippet/snippet-service.hpp"
 #include "services/paste/paste-service.hpp"
+#include "services/file-chooser/file-chooser-service.hpp"
 #include "config/config.hpp"
 
 RootItemManager *ServiceRegistry::rootItemManager() const { return m_rootItemManager.get(); }
@@ -52,6 +53,8 @@ BrowserExtensionService *ServiceRegistry::browserExtension() const { return m_br
 SnippetService *ServiceRegistry::snippetService() const { return m_snippetService.get(); }
 
 PasteService *ServiceRegistry::pasteService() const { return m_pasteService.get(); }
+
+FileChooserService *ServiceRegistry::fileChooserService() const { return m_fileChooserService.get(); }
 
 BackgroundEffectManager *ServiceRegistry::backgroundEffectManager() const {
   return m_backgroundEffectManager.get();
@@ -125,6 +128,10 @@ void ServiceRegistry::setSnippetService(std::unique_ptr<SnippetService> service)
 
 void ServiceRegistry::setPasteService(std::unique_ptr<PasteService> service) {
   m_pasteService = std::move(service);
+}
+
+void ServiceRegistry::setFileChooserService(std::unique_ptr<FileChooserService> service) {
+  m_fileChooserService = std::move(service);
 }
 
 void ServiceRegistry::setBackgroundEffectManager(std::unique_ptr<BackgroundEffectManager> service) {

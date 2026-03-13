@@ -4,6 +4,50 @@ import { useState } from "react";
 // Examples taken from:
 // https://developers.raycast.com/api-reference/user-interface/form
 
+const useCount = () => {
+	const [count, setCount] = useState(0);
+
+	return {
+		count,
+		increment: () => setCount((count) => count + 1),
+	};
+};
+
+const ManagedSingleFilePicker = () => {
+	const { count, increment } = useCount();
+	const paths = [`/path/to/file/${count}`];
+
+	return (
+		<Form.FilePicker
+			id="managedSingleFile"
+			title="(managed single file)"
+			value={paths}
+			onChange={(paths) => {
+				console.log(`managed form change, not updating`, paths);
+				increment();
+			}}
+		/>
+	);
+};
+
+const ManagedMultipleFilePicker = () => {
+	const { count, increment } = useCount();
+	const paths = [`/path/to/${count}`, `/other/path/to/${count}`];
+
+	return (
+		<Form.FilePicker
+			id="managedSingleFile"
+			title="(managed multiple file)"
+			value={paths}
+			allowMultipleSelection
+			onChange={(paths) => {
+				console.log(`managed form change, not updating`, paths);
+				increment();
+			}}
+		/>
+	);
+};
+
 export default function FormElements() {
 	const [text, setText] = useState("");
 	const [checkbox, setCheckbox] = useState(true);
@@ -143,7 +187,7 @@ export default function FormElements() {
 				onChange={(files) =>
 					showToast(
 						Toast.Style.Success,
-						`Selected ${Array.isArray(files) ? files.length : files ? 1 : 0} file(s)`,
+						`Selected ${files.length} file(s)`,
 					)
 				}
 			/>
@@ -156,7 +200,7 @@ export default function FormElements() {
 				onChange={(files) =>
 					showToast(
 						Toast.Style.Success,
-						`Selected ${Array.isArray(files) ? files.length : files ? 1 : 0} file(s)`,
+						`Selected ${files.length} file(s)`,
 					)
 				}
 			/>
@@ -170,10 +214,13 @@ export default function FormElements() {
 				onChange={(files) =>
 					showToast(
 						Toast.Style.Success,
-						`Selected ${Array.isArray(files) ? files.length : files ? 1 : 0} directory(ies)`,
+						`Selected ${files.length} directory(ies)`,
 					)
 				}
 			/>
+
+			<ManagedSingleFilePicker />
+			<ManagedMultipleFilePicker />
 
 			{/* FilePicker - Multiple Directories */}
 			{/* Qt doesn't support multi-directory picking */}
@@ -186,7 +233,7 @@ export default function FormElements() {
 				onChange={(files) =>
 					showToast(
 						Toast.Style.Success,
-						`Selected ${Array.isArray(files) ? files.length : files ? 1 : 0} directory(ies)`,
+						`Selected ${files.length} directory(ies)`,
 					)
 				}
 			/> */}
@@ -200,7 +247,7 @@ export default function FormElements() {
 				onChange={(files) =>
 					showToast(
 						Toast.Style.Success,
-						`Selected ${Array.isArray(files) ? files.length : files ? 1 : 0} file(s)`,
+						`Selected ${files.length} file(s)`,
 					)
 				}
 			/> */}

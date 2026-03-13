@@ -44,6 +44,7 @@ Item {
         }
 
         Repeater {
+            id: missingRepeater
             model: root.host.prefModel
 
             delegate: Loader {
@@ -60,7 +61,8 @@ Item {
                 required property var options
                 required property bool readOnly
                 required property bool multiple
-                required property bool directoriesOnly
+                required property bool canChooseFiles
+                required property bool canChooseDirectories
 
                 onLoaded: if (index === 0)
                     Qt.callLater(formView.focusFirst)
@@ -162,9 +164,12 @@ Item {
             id: field
             label: parent.label
             info: parent.description
+
             FormFilePicker {
+                id: missingFilePicker
                 multiple: field.parent.multiple
-                directoriesOnly: field.parent.directoriesOnly
+                canChooseFiles: field.parent.canChooseFiles
+                canChooseDirectories: field.parent.canChooseDirectories
                 selectedPaths: {
                     var v = field.parent.value;
                     if (Array.isArray(v))

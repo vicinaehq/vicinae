@@ -8,6 +8,7 @@ ColumnLayout {
     spacing: 20
 
     Repeater {
+        id: settingsRepeater
         model: root.prefModel
 
         delegate: Loader {
@@ -23,7 +24,8 @@ ColumnLayout {
             required property var options
             required property bool readOnly
             required property bool multiple
-            required property bool directoriesOnly
+            required property bool canChooseFiles
+            required property bool canChooseDirectories
 
             sourceComponent: {
                 switch (type) {
@@ -237,15 +239,18 @@ ColumnLayout {
         ColumnLayout {
             id: field
             spacing: 6
+
             Text {
                 text: field.parent.label
                 color: Theme.textMuted
                 font.pointSize: Theme.smallerFontSize
             }
             FormFilePicker {
+                id: settingsFilePicker
                 Layout.fillWidth: true
                 multiple: field.parent.multiple
-                directoriesOnly: field.parent.directoriesOnly
+                canChooseFiles: field.parent.canChooseFiles
+                canChooseDirectories: field.parent.canChooseDirectories
                 readOnly: field.parent.readOnly
                 selectedPaths: {
                     const v = field.parent.value;

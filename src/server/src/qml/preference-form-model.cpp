@@ -41,8 +41,10 @@ QVariant PreferenceFormModel::data(const QModelIndex &index, int role) const {
     return f.readOnly;
   case MultipleRole:
     return f.multiple;
-  case DirectoriesOnlyRole:
-    return f.directoriesOnly;
+  case CanChooseFilesRole:
+    return f.canChooseFiles;
+  case CanChooseDirectoriesRole:
+    return f.canChooseDirectories;
   default:
     return {};
   }
@@ -58,7 +60,8 @@ QHash<int, QByteArray> PreferenceFormModel::roleNames() const {
           {OptionsRole, "options"},
           {ReadOnlyRole, "readOnly"},
           {MultipleRole, "multiple"},
-          {DirectoriesOnlyRole, "directoriesOnly"}};
+          {CanChooseFilesRole, "canChooseFiles"},
+          {CanChooseDirectoriesRole, "canChooseDirectories"}};
 }
 
 static QString preferenceType(const Preference &p) {
@@ -96,13 +99,33 @@ static QVariantList dropdownOptions(const Preference &p) {
   return {};
 }
 
-static void applyPickerFlags(const Preference &p, bool &multiple, bool &directoriesOnly) {
+static void applyPickerFlags(const Preference &p, bool &multiple, bool &canChooseFiles,
+                             bool &canChooseDirectories) {
   auto d = p.data();
-  if (auto *fp = std::get_if<Preference::FilePickerData>(&d)) multiple = fp->multiple;
+  if (auto *fp = std::get_if<Preference::FilePickerData>(&d)) {
+    multiple = fp->multiple;
+    canChooseFiles = true;
+    canChooseDirectories = false;
+  }
   if (auto *dp = std::get_if<Preference::DirectoryPickerData>(&d)) {
     multiple = dp->multiple;
-    directoriesOnly = true;
+    canChooseFiles = false;
+    canChooseDirectories = true;
   }
+}
+
+static bool isFilePickerType(const Preference &p) {
+  return std::holds_alternative<Preference::FilePickerData>(p.data()) ||
+         std::holds_alternative<Preference::DirectoryPickerData>(p.data());
+}
+
+static QJsonValue normalizeFilePickerValue(const QJsonValue &v) {
+  if (v.isArray()) return v;
+  if (v.isString()) {
+    auto s = v.toString();
+    return s.isEmpty() ? QJsonArray{} : QJsonArray{s};
+  }
+  return QJsonArray{};
 }
 
 static QString resolveLabel(const Preference &p) {
@@ -131,12 +154,11 @@ void PreferenceFormModel::load(const EntrypointId &id, const std::vector<Prefere
     f.readOnly = pref.isReadOnly();
     f.options = dropdownOptions(pref);
 
-    applyPickerFlags(pref, f.multiple, f.directoriesOnly);
+    applyPickerFlags(pref, f.multiple, f.canChooseFiles, f.canChooseDirectories);
 
-    if (m_values.contains(pref.name()))
-      f.value = m_values.value(pref.name()).toVariant();
-    else
-      f.value = pref.defaultValue().toVariant();
+    QJsonValue raw = m_values.contains(pref.name()) ? m_values.value(pref.name()) : pref.defaultValue();
+    if (isFilePickerType(pref)) raw = normalizeFilePickerValue(raw);
+    f.value = raw.toVariant();
 
     m_fields.push_back(std::move(f));
   }
@@ -164,12 +186,11 @@ void PreferenceFormModel::loadProvider(const QString &providerId,
     f.readOnly = pref.isReadOnly();
     f.options = dropdownOptions(pref);
 
-    applyPickerFlags(pref, f.multiple, f.directoriesOnly);
+    applyPickerFlags(pref, f.multiple, f.canChooseFiles, f.canChooseDirectories);
 
-    if (m_values.contains(pref.name()))
-      f.value = m_values.value(pref.name()).toVariant();
-    else
-      f.value = pref.defaultValue().toVariant();
+    QJsonValue raw = m_values.contains(pref.name()) ? m_values.value(pref.name()) : pref.defaultValue();
+    if (isFilePickerType(pref)) raw = normalizeFilePickerValue(raw);
+    f.value = raw.toVariant();
 
     m_fields.push_back(std::move(f));
   }
