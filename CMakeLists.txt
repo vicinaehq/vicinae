@@ -217,12 +217,6 @@ if (LIBQALCULATE_BACKEND)
 endif()
 
 find_program(CCACHE ccache)
-find_program(HAS_LLD ld.lld)
-
-if (HAS_LLD)
-	message(STATUS "Using lld linker as it is present")
-	add_link_options("-fuse-ld=lld")
-endif()
 
 if (LTO)
 	set(BUILD_INFO "${BUILD_INFO} - LTO")
