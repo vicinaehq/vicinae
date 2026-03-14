@@ -33,6 +33,7 @@
 #include "services/script-command/script-command-service.hpp"
 #include "services/shortcut/shortcut-service.hpp"
 #include "services/news/news-service.hpp"
+#include "services/telemetry/telemetry-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "services/snippet/snippet-service.hpp"
@@ -173,6 +174,7 @@ void CliServerCommand::run(CLI::App *) {
     registry->setBackgroundEffectManager(std::make_unique<BackgroundEffectManager>());
     registry->setFileChooserService(std::make_unique<FileChooserService>());
     registry->setNewsService(std::make_unique<NewsService>(*registry->config()));
+    registry->setTelemetry(std::make_unique<TelemetryService>(*registry->config()));
 
     auto root = registry->rootItemManager();
     auto builtinCommandDb = std::make_unique<CommandDatabase>();
@@ -293,6 +295,9 @@ void CliServerCommand::run(CLI::App *) {
   };
 
   auto cfgService = ServiceRegistry::instance()->config();
+  auto telemetry = ServiceRegistry::instance()->telemetry();
+
+  if (cfgService->value().telemetry.systemInfo) { telemetry->trySendSystemInfo(); }
 
   QObject::connect(cfgService, &config::Manager::configLoadingError, [&ctx](std::string_view message) {
     ctx.navigation->confirmAlert("Failed to load config", qStringFromStdView(message), []() {});
