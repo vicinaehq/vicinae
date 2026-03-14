@@ -14,6 +14,8 @@
 
 class ActionPanelState;
 class BaseView;
+class NewsService;
+struct NewsItem;
 
 namespace config {
 class Manager;
@@ -87,7 +89,8 @@ private:
       FavoriteItem,
       LinkItem,
       CalculatorItem,
-      FileItem
+      FileItem,
+      NewsItem
     } kind;
     int dataIndex;
     SectionType section;
@@ -111,6 +114,7 @@ private:
   ViewScope m_scope;
   RootItemManager *m_manager;
   AppService *m_appDb;
+  NewsService *m_newsService;
   CalculatorService *m_calculator;
   FileService *m_fileService;
   config::Manager *m_config;
@@ -123,6 +127,7 @@ private:
   std::optional<LinkItem> m_defaultOpener;
   std::optional<AbstractCalculatorBackend::CalculatorResult> m_calc;
   std::vector<IndexerFileResult> m_files;
+  std::vector<const ::NewsItem *> m_newsItems;
 
   QTimer m_calculatorDebounce;
   QTimer m_fileSearchDebounce;

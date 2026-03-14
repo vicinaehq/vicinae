@@ -14,6 +14,8 @@ class GeneralSettingsModel : public QObject {
   Q_PROPERTY(bool popOnBackspace READ popOnBackspace WRITE setPopOnBackspace NOTIFY configChanged)
   Q_PROPERTY(bool activateOnSingleClick READ activateOnSingleClick WRITE setActivateOnSingleClick NOTIFY
                  configChanged)
+  Q_PROPERTY(
+      bool telemetrySystemInfo READ telemetrySystemInfo WRITE setTelemetrySystemInfo NOTIFY configChanged)
   Q_PROPERTY(bool clientSideDecorations READ clientSideDecorations WRITE setClientSideDecorations NOTIFY
                  configChanged)
   Q_PROPERTY(QString windowOpacity READ windowOpacity WRITE setWindowOpacity NOTIFY configChanged)
@@ -47,6 +49,8 @@ public:
   void setPopOnBackspace(bool v);
   bool activateOnSingleClick() const;
   void setActivateOnSingleClick(bool v);
+  bool telemetrySystemInfo() const;
+  void setTelemetrySystemInfo(bool v);
   bool clientSideDecorations() const;
   void setClientSideDecorations(bool v);
   QString windowOpacity() const;

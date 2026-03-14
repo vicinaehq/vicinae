@@ -2,9 +2,11 @@
 #include "actions/app/app-actions.hpp"
 #include "actions/calculator/calculator-actions.hpp"
 #include "config/config.hpp"
+#include "keyboard/keybind.hpp"
 #include "misc/file-list-item.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
+#include "services/news/news-service.hpp"
 #include "theme.hpp"
 #include "theme/theme-file.hpp"
 #include "utils.hpp"
@@ -14,9 +16,9 @@
 
 RootSearchModel::RootSearchModel(const ViewScope &scope, QObject *parent)
     : QAbstractListModel(parent), m_scope(scope), m_manager(scope.services()->rootItemManager()),
-      m_appDb(scope.services()->appDb()), m_calculator(scope.services()->calculatorService()),
-      m_fileService(scope.services()->fileService()), m_config(scope.services()->config()),
-      m_fileSearchEnabled(m_config->value().searchFilesInRoot) {
+      m_appDb(scope.services()->appDb()), m_newsService(scope.services()->newsService()),
+      m_calculator(scope.services()->calculatorService()), m_fileService(scope.services()->fileService()),
+      m_config(scope.services()->config()), m_fileSearchEnabled(m_config->value().searchFilesInRoot) {
 
   using namespace std::chrono_literals;
 
@@ -37,7 +39,9 @@ RootSearchModel::RootSearchModel(const ViewScope &scope, QObject *parent)
 
   connect(m_manager, &RootItemManager::metadataChanged, this, &RootSearchModel::refresh);
   connect(m_manager, &RootItemManager::itemsChanged, this, &RootSearchModel::refresh);
+  connect(m_newsService, &NewsService::itemsChanged, this, &RootSearchModel::refresh);
 
+  m_newsItems = m_newsService->activeItems();
   m_fallbackItems = m_manager->fallbackItems();
   m_favorites = m_manager->queryFavorites();
 
@@ -79,6 +83,8 @@ QVariant RootSearchModel::data(const QModelIndex &index, int role) const {
         return QString::fromStdString(std::format("Use \"{}\" with...", m_query));
       case SectionType::Favorites:
         return QStringLiteral("Favorites");
+      case SectionType::News:
+        return QStringLiteral("What's New");
       default:
         return {};
       }
@@ -187,6 +193,34 @@ QVariant RootSearchModel::data(const QModelIndex &index, int role) const {
       return {};
     case CalcAnswer:
       return {};
+    case CalcAnswerUnit:
+      return {};
+    default:
+      return {};
+    }
+  }
+
+  if (flat.kind == FlatItem::NewsItem) {
+    if (flat.dataIndex < 0 || std::cmp_greater_equal(flat.dataIndex, m_newsItems.size())) return {};
+    const auto *news = m_newsItems[flat.dataIndex];
+    switch (role) {
+    case Title:
+      return news->title;
+    case Subtitle:
+      return news->subtitle;
+    case IconSource:
+      return imageSourceFor(news->icon);
+    case Alias:
+      return {};
+    case IsActive:
+      return false;
+    case AccessoryText:
+      return {};
+    case AccessoryColor:
+      return {};
+    case CalcQuestion:
+    case CalcQuestionUnit:
+    case CalcAnswer:
     case CalcAnswerUnit:
       return {};
     default:
@@ -373,6 +407,7 @@ void RootSearchModel::setFilter(const QString &text) {
 }
 
 void RootSearchModel::refresh() {
+  m_newsItems = m_newsService->activeItems();
   m_fallbackItems = m_manager->fallbackItems();
   m_favorites = m_manager->queryFavorites();
 
@@ -443,6 +478,7 @@ void RootSearchModel::rebuildFlatList() {
   m_flat.clear();
 
   if (m_query.empty()) {
+    addSection(SectionType::News, "What's New", static_cast<int>(m_newsItems.size()));
     addSection(SectionType::Favorites, "Favorites", static_cast<int>(m_favorites.size()));
     addSection(SectionType::Results, "Suggestions", static_cast<int>(m_results.size()));
   } else {
@@ -478,6 +514,9 @@ void RootSearchModel::addSection(SectionType section, const std::string &name, i
     break;
   case SectionType::Files:
     itemKind = FlatItem::FileItem;
+    break;
+  case SectionType::News:
+    itemKind = FlatItem::NewsItem;
     break;
   default:
     itemKind = FlatItem::ResultItem;
@@ -596,6 +635,8 @@ QString RootSearchModel::itemTypeString(FlatItem::Kind kind) const {
     return QStringLiteral("calculator");
   case FlatItem::FileItem:
     return QStringLiteral("file");
+  case FlatItem::NewsItem:
+    return QStringLiteral("news");
   default:
     return QStringLiteral("unknown");
   }
@@ -659,6 +700,10 @@ void RootSearchModel::setSelectedIndex(int index) {
   case FlatItem::FileItem:
     if (flat.dataIndex >= 0 && std::cmp_less(flat.dataIndex, m_files.size()))
       itemId = QString::fromStdString(m_files[flat.dataIndex].path.string());
+    break;
+  case FlatItem::NewsItem:
+    if (flat.dataIndex >= 0 && std::cmp_less(flat.dataIndex, m_newsItems.size()))
+      itemId = QStringLiteral("news:") + QString::fromStdString(m_newsItems[flat.dataIndex]->id);
     break;
   default:
     break;
@@ -724,6 +769,18 @@ void RootSearchModel::setSelectedIndex(int index) {
   case FlatItem::FileItem: {
     if (flat.dataIndex >= 0 && std::cmp_less(flat.dataIndex, m_files.size())) {
       actionPanel = FileActions::actionPanel(m_files[flat.dataIndex].path, m_appDb);
+    }
+    break;
+  }
+  case FlatItem::NewsItem: {
+    if (flat.dataIndex >= 0 && std::cmp_less(flat.dataIndex, m_newsItems.size())) {
+      const auto *news = m_newsItems[flat.dataIndex];
+      if (news->actionFactory) {
+        actionPanel = news->actionFactory(m_scope.appContext());
+        auto *dismissAction = new DismissNewsAction(news->id);
+        dismissAction->setShortcut(Keybind::RemoveAction);
+        actionPanel->createSection()->addAction(dismissAction);
+      }
     }
     break;
   }

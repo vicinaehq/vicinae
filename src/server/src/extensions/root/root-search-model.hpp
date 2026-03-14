@@ -5,7 +5,7 @@
 #include "services/root-item-manager/root-item-manager.hpp"
 #include <cstdint>
 
-enum class SectionType : std::uint8_t { Link, Calculator, Results, Files, Fallback, Favorites };
+enum class SectionType : std::uint8_t { News, Link, Calculator, Results, Files, Fallback, Favorites };
 
 struct FallbackItem {
   const RootItem *item;

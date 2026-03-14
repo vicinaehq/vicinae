@@ -32,6 +32,7 @@
 #include "services/extension-store/vicinae-store.hpp"
 #include "services/script-command/script-command-service.hpp"
 #include "services/shortcut/shortcut-service.hpp"
+#include "services/news/news-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "services/snippet/snippet-service.hpp"
@@ -171,6 +172,7 @@ void CliServerCommand::run(CLI::App *) {
     registry->setBrowserExtension(std::make_unique<BrowserExtensionService>());
     registry->setBackgroundEffectManager(std::make_unique<BackgroundEffectManager>());
     registry->setFileChooserService(std::make_unique<FileChooserService>());
+    registry->setNewsService(std::make_unique<NewsService>(*registry->config()));
 
     auto root = registry->rootItemManager();
     auto builtinCommandDb = std::make_unique<CommandDatabase>();

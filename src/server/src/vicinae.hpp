@@ -40,6 +40,7 @@ std::filesystem::path runtimeDir();
 std::filesystem::path commandSocketPath();
 std::filesystem::path pidFile();
 std::filesystem::path dataDir();
+std::filesystem::path stateDir();
 std::filesystem::path configDir();
 
 std::vector<std::filesystem::path> systemPaths();
