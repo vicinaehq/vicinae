@@ -1,5 +1,6 @@
 #include "telemetry-service.hpp"
 #include "config/config.hpp"
+#include "environment.hpp"
 #include "version.h"
 #include "vicinae.hpp"
 #include "xdgpp/env/env.hpp"
@@ -15,13 +16,16 @@
 #include <ranges>
 
 TelemetryService::TelemetryService(config::Manager &config) : m_config(config) {
-  m_client.setBaseUrl(Omnicast::API_URL);
+  m_client.setBaseUrl(Environment::vicinaeApiBaseUrl());
+  m_client.setUserAgent(QString("vicinae/%1").arg(VICINAE_GIT_TAG));
   m_statePath = Omnicast::stateDir() / "telemetry.json";
   loadState();
 }
 
 void TelemetryService::trySendSystemInfo() {
   if (!m_config.value().telemetry.systemInfo) return;
+
+  qInfo().noquote() << "Anonymous telemetry is enabled. Learn more:" << Omnicast::DOC_TELEMETRY_URL;
 
   static constexpr const std::uint64_t ONE_DAY_SECS = 86400;
 
@@ -56,6 +60,7 @@ void TelemetryService::sendSystemInfo() {
       }) |
       std::ranges::to<std::vector>();
   payload.operatingSystem = QSysInfo::kernelType().toStdString();
+  payload.chassisType = Environment::chassisType();
   payload.kernelVersion = QSysInfo::kernelVersion().toStdString();
   payload.productId = QSysInfo::productType().toStdString();
   payload.productVersion = QSysInfo::productVersion().toStdString();

@@ -34,6 +34,7 @@ class TelemetryService : public QObject, NonCopyable {
     std::string buildProvenance;
     std::string locale;
     std::vector<ScreenInfo> screens;
+    std::string chassisType;
     std::string kernelVersion;
     std::string productId;
     std::string productVersion;

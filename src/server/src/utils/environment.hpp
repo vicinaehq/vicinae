@@ -9,6 +9,7 @@
 #include <chrono>
 #include <cstdlib>
 #include <filesystem>
+#include <fstream>
 #include <qtenvironmentvariables.h>
 
 namespace Environment {
@@ -96,7 +97,7 @@ inline QStringList fallbackIconSearchPaths() {
 }
 
 inline QString vicinaeApiBaseUrl() {
-  if (const char *url = getenv("VICINAE_API_BASE_URL")) { return url; }
+  if (const char *url = getenv("VICINAE_API_URL")) { return url; }
   return "https://api.vicinae.com/v1";
 }
 
@@ -122,6 +123,36 @@ inline QString getEnvironmentDescription() {
   }
 
   return desc;
+}
+
+inline std::string chassisType() {
+  std::ifstream file("/sys/class/dmi/id/chassis_type");
+  if (!file.is_open()) return "unknown";
+
+  int type = 0;
+  file >> type;
+
+  switch (type) {
+  case 3:
+  case 4:
+  case 5:
+  case 6:
+  case 7:
+    return "desktop";
+  case 8:
+  case 9:
+  case 10:
+  case 14:
+  case 11:
+  case 12:
+  case 13:
+  case 30:
+  case 31:
+  case 32:
+    return "laptop";
+  default:
+    return "other";
+  }
 }
 
 inline std::optional<QString> detectAppLauncher() {

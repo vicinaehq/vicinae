@@ -97,7 +97,7 @@ std::vector<NewsItem> NewsService::allItems() {
             auto panel = std::make_unique<ActionPanelState>();
             auto *section = panel->createSection();
 
-            auto *openDocs = new OpenInBrowserAction(QUrl(Omnicast::DOC_URL + "/telemetry"), "Learn more");
+            auto *openDocs = new OpenInBrowserAction(QUrl(Omnicast::DOC_TELEMETRY_URL), "Learn more");
             openDocs->setPrimary(true);
             section->addAction(openDocs);
 
