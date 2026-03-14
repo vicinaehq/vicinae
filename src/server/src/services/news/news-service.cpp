@@ -9,17 +9,12 @@
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
-#include <glaze/json.hpp>
-#include <glaze/json/read.hpp>
+#include <glaze/glaze.hpp>
 #include <ranges>
-
-namespace {
 
 struct NewsState {
   std::vector<std::string> dismissed;
 };
-
-} // namespace
 
 DismissNewsAction::DismissNewsAction(std::string newsId)
     : AbstractAction(QStringLiteral("Dismiss"), BuiltinIcon::Xmark), m_newsId(std::move(newsId)) {}

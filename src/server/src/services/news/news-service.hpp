@@ -9,7 +9,6 @@
 #include <QObject>
 
 class ActionPanelState;
-class ApplicationContext;
 
 namespace config {
 class Manager;
