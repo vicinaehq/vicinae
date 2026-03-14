@@ -2,6 +2,7 @@
 #include "common/types.hpp"
 #include "http-client.hpp"
 #include <QObject>
+#include <QTimer>
 #include <filesystem>
 #include <string>
 #include <vector>
@@ -47,6 +48,7 @@ class TelemetryService : public QObject, NonCopyable {
 public:
   explicit TelemetryService(config::Manager &config);
 
+  void setEnabled(bool enabled);
   void trySendSystemInfo();
 
 private:
@@ -59,6 +61,7 @@ private:
   config::Manager &m_config;
   State m_state;
   http::Client m_client;
+  QTimer m_timer;
   std::filesystem::path m_statePath;
   std::string m_buf;
 };

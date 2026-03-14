@@ -292,12 +292,11 @@ void CliServerCommand::run(CLI::App *) {
     } else if (QIcon::themeName() == "hicolor") {
       QIcon::setThemeName(iconThemeDb.guessBestTheme());
     }
+
+    ServiceRegistry::instance()->telemetry()->setEnabled(next.telemetry.systemInfo);
   };
 
   auto cfgService = ServiceRegistry::instance()->config();
-  auto telemetry = ServiceRegistry::instance()->telemetry();
-
-  if (cfgService->value().telemetry.systemInfo) { telemetry->trySendSystemInfo(); }
 
   QObject::connect(cfgService, &config::Manager::configLoadingError, [&ctx](std::string_view message) {
     ctx.navigation->confirmAlert("Failed to load config", qStringFromStdView(message), []() {});

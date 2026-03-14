@@ -16,18 +16,29 @@
 #include <ranges>
 
 TelemetryService::TelemetryService(config::Manager &config) : m_config(config) {
+  using namespace std::chrono_literals;
+
   m_client.setBaseUrl(Environment::vicinaeApiBaseUrl());
   m_client.setUserAgent(QString("vicinae/%1").arg(VICINAE_GIT_TAG));
   m_statePath = Omnicast::stateDir() / "telemetry.json";
   loadState();
+
+  connect(&m_timer, &QTimer::timeout, this, &TelemetryService::trySendSystemInfo);
+  m_timer.setInterval(1h);
+}
+
+void TelemetryService::setEnabled(bool enabled) {
+  if (enabled) {
+    qInfo().noquote() << "Anonymous telemetry is enabled. Learn more:" << Omnicast::DOC_TELEMETRY_URL;
+    m_timer.start();
+    trySendSystemInfo();
+  } else {
+    m_timer.stop();
+  }
 }
 
 void TelemetryService::trySendSystemInfo() {
-  if (!m_config.value().telemetry.systemInfo) return;
-
-  qInfo().noquote() << "Anonymous telemetry is enabled. Learn more:" << Omnicast::DOC_TELEMETRY_URL;
-
-  static constexpr const std::uint64_t ONE_DAY_SECS = 86400;
+  static constexpr std::uint64_t ONE_DAY_SECS = 86400;
 
   auto const now = static_cast<std::uint64_t>(QDateTime::currentSecsSinceEpoch());
   bool const shouldSend = !m_state.systemInfoLastSentAt.has_value() ||
