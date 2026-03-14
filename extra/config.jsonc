@@ -11,7 +11,6 @@
 	],
 
 	// Choose what telemetry to sent to the vicinae central server
-	// Telemetry is very helpful to help us improve vicinae or even secure grants/sponsorhips in some cases
 	// We never send personally identifiable information
 	// More details available at https://docs.vicinae.com/telemetry
 	"telemetry": {
