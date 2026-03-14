@@ -456,6 +456,9 @@ set(SRCS
 	src/qml/dmenu-view-host.hpp
 	src/qml/dmenu-view-host.cpp
 
+	src/services/news/news-service.hpp
+	src/services/news/news-service.cpp
+
 	src/services/snippet/snippet-service.hpp
 	src/services/snippet/snippet-server.hpp
 	src/services/snippet/snippet-db.cpp

@@ -27,6 +27,7 @@ class SnippetService;
 class BrowserExtensionService;
 class BackgroundEffectManager;
 class FileChooserService;
+class NewsService;
 class PasteService;
 
 namespace config {
@@ -61,6 +62,7 @@ public:
   SnippetService *snippetService() const;
   PasteService *pasteService() const;
   FileChooserService *fileChooserService() const;
+  NewsService *newsService() const;
   BackgroundEffectManager *backgroundEffectManager() const;
 
   void setPowerManager(std::unique_ptr<PowerManager> manager);
@@ -88,6 +90,7 @@ public:
   void setSnippetService(std::unique_ptr<SnippetService> service);
   void setPasteService(std::unique_ptr<PasteService> service);
   void setFileChooserService(std::unique_ptr<FileChooserService> service);
+  void setNewsService(std::unique_ptr<NewsService> service);
   void setBackgroundEffectManager(std::unique_ptr<BackgroundEffectManager> manager);
 
 private:
@@ -115,5 +118,6 @@ private:
   std::unique_ptr<SnippetService> m_snippetService;
   std::unique_ptr<PasteService> m_pasteService;
   std::unique_ptr<FileChooserService> m_fileChooserService;
+  std::unique_ptr<NewsService> m_newsService;
   std::unique_ptr<BackgroundEffectManager> m_backgroundEffectManager;
 };
