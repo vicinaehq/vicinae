@@ -23,10 +23,11 @@ TelemetryService::TelemetryService(config::Manager &config) : m_config(config) {
 void TelemetryService::trySendSystemInfo() {
   if (!m_config.value().telemetry.systemInfo) return;
 
-  auto const now = QDateTime::currentDateTime();
-  bool const shouldSend =
-      !m_state.systemInfoLastSentAt.has_value() ||
-      QDateTime::fromSecsSinceEpoch(m_state.systemInfoLastSentAt.value()).daysTo(now) != 0;
+  static constexpr const std::uint64_t ONE_DAY_SECS = 86400;
+
+  auto const now = static_cast<std::uint64_t>(QDateTime::currentSecsSinceEpoch());
+  bool const shouldSend = !m_state.systemInfoLastSentAt.has_value() ||
+                          (now - m_state.systemInfoLastSentAt.value()) >= ONE_DAY_SECS;
 
   if (shouldSend) { sendSystemInfo(); }
 }
