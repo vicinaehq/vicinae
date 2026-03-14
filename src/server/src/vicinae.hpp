@@ -18,6 +18,7 @@ static const QString GH_REPO_LICENSE = GH_REPO + "/blob/main/LICENSE";
 static const QString GH_EXTENSIONS_CREATE_ISSUE = "https://github.com/vicinaehq/extensions/issues/new/choose";
 static const QString MAIN_WINDOW_NAME = "Vicinae Launcher";
 static const QString DOC_URL = "https://docs.vicinae.com";
+static const QString DOC_TELEMETRY_URL = DOC_URL + "/telemetry";
 static const QString HEADLINE = "A focused launcher for your desktop — native, fast, extensible";
 static const QString APP_ID = "vicinae";
 static constexpr const char *LAYER_SCOPE = "vicinae";
@@ -40,6 +41,7 @@ std::filesystem::path runtimeDir();
 std::filesystem::path commandSocketPath();
 std::filesystem::path pidFile();
 std::filesystem::path dataDir();
+std::filesystem::path stateDir();
 std::filesystem::path configDir();
 
 std::vector<std::filesystem::path> systemPaths();

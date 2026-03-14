@@ -18,11 +18,13 @@
 #include "services/raycast/raycast-store.hpp"
 #include "services/extension-store/vicinae-store.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
+#include "services/telemetry/telemetry-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "services/snippet/snippet-service.hpp"
 #include "services/paste/paste-service.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
+#include "services/news/news-service.hpp"
 #include "config/config.hpp"
 
 RootItemManager *ServiceRegistry::rootItemManager() const { return m_rootItemManager.get(); }
@@ -56,9 +58,13 @@ PasteService *ServiceRegistry::pasteService() const { return m_pasteService.get(
 
 FileChooserService *ServiceRegistry::fileChooserService() const { return m_fileChooserService.get(); }
 
+NewsService *ServiceRegistry::newsService() const { return m_newsService.get(); }
+
 BackgroundEffectManager *ServiceRegistry::backgroundEffectManager() const {
   return m_backgroundEffectManager.get();
 }
+
+TelemetryService *ServiceRegistry::telemetry() const { return m_telemetry.get(); }
 
 void ServiceRegistry::setPowerManager(std::unique_ptr<PowerManager> powman) {
   m_powerManager = std::move(powman);
@@ -134,8 +140,16 @@ void ServiceRegistry::setFileChooserService(std::unique_ptr<FileChooserService> 
   m_fileChooserService = std::move(service);
 }
 
+void ServiceRegistry::setNewsService(std::unique_ptr<NewsService> service) {
+  m_newsService = std::move(service);
+}
+
 void ServiceRegistry::setBackgroundEffectManager(std::unique_ptr<BackgroundEffectManager> service) {
   m_backgroundEffectManager = std::move(service);
+}
+
+void ServiceRegistry::setTelemetry(std::unique_ptr<TelemetryService> telemetry) {
+  m_telemetry = std::move(telemetry);
 }
 
 ServiceRegistry *ServiceRegistry::instance() {

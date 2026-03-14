@@ -66,10 +66,19 @@ Flickable {
         SettingsRow {
             label: "Pop to root on close"
             description: "Reset the navigation state when the launcher window is closed."
-            showSeparator: false
             SettingsToggle {
                 checked: root.model.popToRootOnClose
                 onToggled: root.model.popToRootOnClose = checked
+            }
+        }
+
+        SettingsRow {
+            label: "Anonymous usage statistics"
+            description: "Send basic system information on startup to help improve Vicinae. No personal data is collected."
+            showSeparator: false
+            SettingsToggle {
+                checked: root.model.telemetrySystemInfo
+                onToggled: root.model.telemetrySystemInfo = checked
             }
         }
     }

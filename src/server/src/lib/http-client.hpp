@@ -83,6 +83,7 @@ public:
 
   void setBearer(QString bearer) { m_bearer = std::move(bearer); }
   void setBaseUrl(QString url) { m_baseUrl = std::move(url); }
+  void setUserAgent(QString agent) { m_userAgent = std::move(agent); }
 
   template <glz::has_reflect T> QFuture<Result<T>> get(const QString &url, const RequestOptions &opts = {}) {
     auto req = createRequest(url, opts);
@@ -129,7 +130,10 @@ private:
 
     req.setAttribute(QNetworkRequest::CacheLoadControlAttribute, opts.cachePolicy);
     req.setAttribute(QNetworkRequest::Http2AllowedAttribute, opts.allowHttp2);
-    if (opts.userAgent) req.setHeader(QNetworkRequest::UserAgentHeader, *opts.userAgent);
+    if (opts.userAgent)
+      req.setHeader(QNetworkRequest::UserAgentHeader, *opts.userAgent);
+    else if (m_userAgent)
+      req.setHeader(QNetworkRequest::UserAgentHeader, *m_userAgent);
     if (opts.contentType) req.setHeader(QNetworkRequest::ContentTypeHeader, *opts.contentType);
 
     return req;
@@ -168,6 +172,7 @@ private:
 
   std::optional<QString> m_baseUrl;
   std::optional<QString> m_bearer;
+  std::optional<QString> m_userAgent;
 };
 
 } // namespace http

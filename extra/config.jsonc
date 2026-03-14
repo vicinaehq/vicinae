@@ -10,6 +10,15 @@
 		// "./providers.json"
 	],
 
+	// Choose what telemetry to sent to the vicinae central server
+	// We never send personally identifiable information
+	// More details available at https://docs.vicinae.com/telemetry
+	"telemetry": {
+		// Sends system information such as desktop environment, vicinae version, etc...
+		// Only sent once at startup every 24 hours
+		"system_info": true
+	},
+
 	// Whether root search should also search files directly.
 	// File search is performed asynchrounously: files may take an instant to appear after a query is entered.
 	// Turning this on results in an increase in CPU usage when searching.

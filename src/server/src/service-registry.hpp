@@ -27,7 +27,9 @@ class SnippetService;
 class BrowserExtensionService;
 class BackgroundEffectManager;
 class FileChooserService;
+class NewsService;
 class PasteService;
+class TelemetryService;
 
 namespace config {
 class Manager;
@@ -61,7 +63,9 @@ public:
   SnippetService *snippetService() const;
   PasteService *pasteService() const;
   FileChooserService *fileChooserService() const;
+  NewsService *newsService() const;
   BackgroundEffectManager *backgroundEffectManager() const;
+  TelemetryService *telemetry() const;
 
   void setPowerManager(std::unique_ptr<PowerManager> manager);
   void setWindowManager(std::unique_ptr<WindowManager> manager);
@@ -88,7 +92,9 @@ public:
   void setSnippetService(std::unique_ptr<SnippetService> service);
   void setPasteService(std::unique_ptr<PasteService> service);
   void setFileChooserService(std::unique_ptr<FileChooserService> service);
+  void setNewsService(std::unique_ptr<NewsService> service);
   void setBackgroundEffectManager(std::unique_ptr<BackgroundEffectManager> manager);
+  void setTelemetry(std::unique_ptr<TelemetryService> telemetry);
 
 private:
   std::unique_ptr<WindowManager> m_windowManager;
@@ -115,5 +121,7 @@ private:
   std::unique_ptr<SnippetService> m_snippetService;
   std::unique_ptr<PasteService> m_pasteService;
   std::unique_ptr<FileChooserService> m_fileChooserService;
+  std::unique_ptr<NewsService> m_newsService;
   std::unique_ptr<BackgroundEffectManager> m_backgroundEffectManager;
+  std::unique_ptr<TelemetryService> m_telemetry;
 };

@@ -15,6 +15,8 @@ fs::path Omnicast::runtimeDir() {
 
 fs::path Omnicast::dataDir() { return xdgpp::dataHome() / "vicinae"; }
 
+fs::path Omnicast::stateDir() { return xdgpp::stateHome() / "vicinae"; }
+
 fs::path Omnicast::configDir() { return xdgpp::configHome() / "vicinae"; }
 
 fs::path Omnicast::commandSocketPath() { return runtimeDir() / "vicinae.sock"; }

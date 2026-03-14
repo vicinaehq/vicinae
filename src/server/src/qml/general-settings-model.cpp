@@ -48,6 +48,11 @@ void GeneralSettingsModel::setActivateOnSingleClick(bool v) {
   cfgManager().mergeWithUser({.activateOnSingleClick = v});
 }
 
+bool GeneralSettingsModel::telemetrySystemInfo() const { return cfg().telemetry.systemInfo; }
+void GeneralSettingsModel::setTelemetrySystemInfo(bool v) {
+  cfgManager().mergeWithUser({.telemetry = config::Partial<config::TelemetryConfig>{.systemInfo = v}});
+}
+
 bool GeneralSettingsModel::clientSideDecorations() const {
   return cfg().launcherWindow.clientSideDecorations.enabled;
 }
