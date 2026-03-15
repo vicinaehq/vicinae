@@ -777,9 +777,8 @@ void RootSearchModel::setSelectedIndex(int index) {
       const auto *news = m_newsItems[flat.dataIndex];
       if (news->actionFactory) {
         actionPanel = news->actionFactory(m_scope.appContext());
-        actionPanel->onPrimaryExecuted([id = news->id](ApplicationContext *ctx) {
-          ctx->services->newsService()->dismiss(id);
-        });
+        actionPanel->onPrimaryExecuted(
+            [id = news->id](ApplicationContext *ctx) { ctx->services->newsService()->dismiss(id); });
         auto *dismissAction = new DismissNewsAction(news->id);
         dismissAction->setShortcut(Keybind::RemoveAction);
         actionPanel->createSection()->addAction(dismissAction);

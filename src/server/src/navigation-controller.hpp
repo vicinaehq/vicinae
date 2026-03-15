@@ -99,9 +99,7 @@ public:
   void setDirty(bool value) { m_dirty = value; }
   bool dirty() const { return m_dirty; }
 
-  void onPrimaryExecuted(std::function<void(ApplicationContext *)> hook) {
-    m_primaryHook = std::move(hook);
-  }
+  void onPrimaryExecuted(std::function<void(ApplicationContext *)> hook) { m_primaryHook = std::move(hook); }
 
   const std::function<void(ApplicationContext *)> &primaryHook() const { return m_primaryHook; }
 
