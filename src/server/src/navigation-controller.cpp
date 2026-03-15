@@ -410,6 +410,7 @@ void NavigationController::executeAction(AbstractAction *action) {
   // (e.g. launch() triggering a root search refresh via itemsChanged)
   // can clear the action panel, dropping the last shared_ptr to this action.
   std::shared_ptr<AbstractAction> guard;
+  std::function<void(ApplicationContext *)> primaryHook;
   if (auto &panel = state->actionPanelState) {
     for (const auto &sec : panel->sections()) {
       for (const auto &a : sec->m_actions) {
@@ -420,6 +421,7 @@ void NavigationController::executeAction(AbstractAction *action) {
       }
       if (guard) break;
     }
+    if (action->isPrimary()) { primaryHook = panel->primaryHook(); }
   }
 
   if (action->isSubmenu()) {
@@ -440,6 +442,9 @@ void NavigationController::executeAction(AbstractAction *action) {
   }
 
   action->execute(&m_ctx);
+
+  if (primaryHook) { primaryHook(&m_ctx); }
+
   closeActionPanel();
 
   if (action->autoClose()) { closeWindow({.clearRootSearch = true}); }

@@ -11,6 +11,7 @@
 #include <QString>
 #include <chrono>
 #include <cstdint>
+#include <functional>
 #include <numeric>
 #include <qevent.h>
 
@@ -98,6 +99,12 @@ public:
   void setDirty(bool value) { m_dirty = value; }
   bool dirty() const { return m_dirty; }
 
+  void onPrimaryExecuted(std::function<void(ApplicationContext *)> hook) {
+    m_primaryHook = std::move(hook);
+  }
+
+  const std::function<void(ApplicationContext *)> &primaryHook() const { return m_primaryHook; }
+
 private:
   void computePrimaryAction() {
     AbstractAction *first = nullptr;
@@ -157,6 +164,7 @@ private:
   std::vector<Keyboard::Shortcut> m_defaultShortcuts;
   AbstractAction *m_primary = nullptr;
   ActionPanelSectionState *m_primarySection = nullptr;
+  std::function<void(ApplicationContext *)> m_primaryHook;
 };
 
 class ListActionPanelState : public ActionPanelState {
