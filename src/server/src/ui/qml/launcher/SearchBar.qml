@@ -355,7 +355,7 @@ Item {
 
             ShortcutBadge {
                 anchors.verticalCenter: parent.verticalCenter
-                text: "Tab"
+				tokens: [{ text: "Tab" }]
             }
         }
 
