@@ -16,6 +16,19 @@ struct NewsState {
   std::vector<std::string> dismissed;
 };
 
+namespace {
+class AutoDismissProxy : public ProxyAction {
+public:
+  AutoDismissProxy(AbstractAction *action, std::string newsId)
+      : ProxyAction(action), m_newsId(std::move(newsId)) {}
+
+  void executeAfter(ApplicationContext *ctx) override { ctx->services->newsService()->dismiss(m_newsId); }
+
+private:
+  std::string m_newsId;
+};
+} // namespace
+
 DismissNewsAction::DismissNewsAction(std::string newsId)
     : AbstractAction(QStringLiteral("Dismiss"), BuiltinIcon::Xmark), m_newsId(std::move(newsId)) {}
 
@@ -93,8 +106,9 @@ std::vector<NewsItem> NewsService::allItems() {
             auto *section = panel->createSection();
 
             auto *openDocs = new OpenInBrowserAction(QUrl(Omnicast::DOC_TELEMETRY_URL), "Learn more");
-            openDocs->setPrimary(true);
-            section->addAction(openDocs);
+            auto *proxy = new AutoDismissProxy(openDocs, "telemetry-notice-v1");
+            proxy->setPrimary(true);
+            section->addAction(proxy);
 
             return panel;
           },
