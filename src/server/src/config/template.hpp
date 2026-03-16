@@ -33,6 +33,11 @@ const std::string_view TEMPLATE = R"({
 	"keybinding": "default",
 
 	"font": {
+		// Text rendering backend for Qt Quick text.
+		// 'native' follows system/fontconfig rendering (can be better on dark themes).
+		// 'qt' uses Qt distance field rendering (usually faster for scaling/animations).
+		"rendering": "qt",
+
 		"normal": {
 			// The font family to use for the general vicinae UI.
 			"family": "auto",
