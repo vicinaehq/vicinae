@@ -25,6 +25,14 @@ class TelemetryService : public QObject, NonCopyable {
     double scale = 1;
   };
 
+  struct ForgetRequest {
+    std::string userId;
+  };
+
+  struct ForgetResponse {
+    std::string message;
+  };
+
   struct SystemInfoRequest {
     std::string userId;
     std::vector<std::string> desktops;
@@ -50,6 +58,12 @@ public:
 
   void setEnabled(bool enabled);
   void trySendSystemInfo();
+
+  /**
+   * Request that all data linked to the current vicinae user id is fully anonymized (strips userId from
+   * records)
+   */
+  QFuture<bool> forget();
 
 private:
   static std::string toLower(const std::string &s);

@@ -6,7 +6,7 @@
 #include "qml/oauth-token-store-view-host.hpp"
 #include "extensions/vicinae/report-bug-command.hpp"
 #include "qml/builtin-icons-view-host.hpp"
-
+#include "services/telemetry/telemetry-service.hpp"
 #include "navigation-controller.hpp"
 #include "config/config.hpp"
 #include "qml/local-storage-view-host.hpp"
@@ -177,6 +177,41 @@ class OpenKeybindSettingsCommand : public BuiltinCallbackCommand {
   }
 };
 
+class ForgetTelemetryCommand : public BuiltinCallbackCommand {
+  QString id() const override { return "forget-telemetry"; }
+  QString name() const override { return "Forget Past Vicinae Telemetry"; }
+  QString description() const override {
+    return "Asks the vicinae server to anonymize telemetry data that was sent with your vicinae instance ID "
+           "attached. The ID is only linked to your vicinae install, which has no direct relationship with "
+           "your system.";
+  }
+
+  ImageURL iconUrl() const override {
+    return ImageURL(BuiltinIcon::XMarkCircle).setBackgroundTint(Omnicast::ACCENT_COLOR);
+  }
+
+  bool isDefaultDisabled() const override { return true; }
+
+  void execute(CommandController *controller) const override {
+    auto ctx = controller->context();
+    auto toast = ctx->services->toastService();
+    auto telemetry = ctx->services->telemetry();
+    auto config = ctx->services->config();
+
+    ctx->navigation->showWindow();
+    ctx->navigation->setSearchText(">"); // force to exit out of compact mode if it is enabled
+    toast->dynamic("Processing...");
+    telemetry->forget().then([toast, config](bool ok) {
+      if (ok) {
+        config->mergeWithUser({.telemetry = config::Partial<config::TelemetryConfig>{.systemInfo = false}});
+        toast->success("Past telemetry was successfully detached from your vicinae user ID.");
+      } else {
+        toast->failure("Failed to forget past telemetry data");
+      }
+    });
+  }
+};
+
 class OAuthTokenStoreCommand : public BuiltinViewCommand<OAuthTokenStoreViewHost> {
   QString id() const override { return "oauth-token-store"; }
   QString name() const override { return "Manage OAuth Token Sets"; }
@@ -235,4 +270,5 @@ VicinaeExtension::VicinaeExtension() {
   registerCommand<ReloadScriptDirectoriesCommand>();
   registerCommand<PruneMemoryCommand>();
   registerCommand<IconBrowserCommand>();
+  registerCommand<ForgetTelemetryCommand>();
 }
