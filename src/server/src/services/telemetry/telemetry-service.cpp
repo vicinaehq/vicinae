@@ -13,6 +13,8 @@
 #include <cctype>
 #include <glaze/json/read.hpp>
 #include <glaze/json/write.hpp>
+#include <qsysinfo.h>
+#include <qtversionchecks.h>
 #include <ranges>
 
 TelemetryService::TelemetryService(config::Manager &config) : m_config(config) {
@@ -75,6 +77,7 @@ void TelemetryService::sendSystemInfo() {
   payload.kernelVersion = QSysInfo::kernelVersion().toStdString();
   payload.productId = QSysInfo::productType().toStdString();
   payload.productVersion = QSysInfo::productVersion().toStdString();
+  payload.qtVersion = QT_VERSION_STR;
 
   std::string debugBuf;
   [[maybe_unused]] auto writeErr = glz::write_json(payload, debugBuf);

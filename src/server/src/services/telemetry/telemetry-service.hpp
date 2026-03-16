@@ -37,6 +37,7 @@ class TelemetryService : public QObject, NonCopyable {
     std::string userId;
     std::vector<std::string> desktops;
     std::string vicinaeVersion;
+    std::string qtVersion;
     std::string displayProtocol;
     std::string architecture;
     std::string operatingSystem;
