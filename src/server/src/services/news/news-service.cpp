@@ -98,7 +98,7 @@ std::vector<NewsItem> NewsService::allItems() {
   items.push_back({
       .id = "telemetry-notice-v1",
       .title = QStringLiteral("Telemetry"),
-      .subtitle = QStringLiteral("We now collect anonymous usage statistics on startup"),
+      .subtitle = QStringLiteral("We now collect basic usage statistics on startup"),
       .icon = ImageURL{BuiltinIcon::Megaphone}.setBackgroundTint(SemanticColor::Yellow),
       .actionFactory =
           [](ApplicationContext *) {
