@@ -3,7 +3,7 @@
 #include "vicinae.hpp"
 
 static constexpr int FOCUS_POLL_INTERVAL_MS = 5;
-static constexpr int FOCUS_POLL_MAX = 100; // 500ms max
+static constexpr int FOCUS_POLL_MAX = 1000; // 5s max (1000 * FOCUS_POLL_INTERVAL_MS)
 static constexpr int POST_FOCUS_DELAY_MS = 30;
 static constexpr int BLIND_PASTE_DELAY_MS = 150;
 
