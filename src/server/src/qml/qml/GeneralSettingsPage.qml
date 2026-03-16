@@ -73,8 +73,8 @@ Flickable {
         }
 
         SettingsRow {
-            label: "Anonymous usage statistics"
-            description: "Send basic system information on startup to help improve Vicinae. No personal data is collected."
+            label: "Basic usage statistics"
+            description: "Send basic system and vicinae installation information on startup to help improve Vicinae."
             showSeparator: false
             SettingsToggle {
                 checked: root.model.telemetrySystemInfo

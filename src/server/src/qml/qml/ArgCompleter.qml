@@ -163,7 +163,7 @@ RowLayout {
                     radius: 4
                     color: "transparent"
                     border.width: 1
-                    border.color: dropdownDel.showError ? "#e53935" : dropdown.activeFocus ? Theme.accent : Theme.divider
+                    border.color: "transparent"
 
                     function forceActiveFocus() {
                         dropdown.forceActiveFocus();
@@ -194,6 +194,7 @@ RowLayout {
                         id: dropdown
                         anchors.fill: parent
                         compact: true
+                        activeFocusOnTab: true
                         placeholder: argLoader.modelData.placeholder || ""
                         items: {
                             if (!argLoader.modelData.data)
@@ -219,6 +220,22 @@ RowLayout {
                             dropdownDel.showError = false;
                             dropdownDel.currentValue = item.id;
                             root.valueChanged(argLoader.index, item.id);
+                        }
+
+                        Keys.onReturnPressed: event => {
+                            if (event.modifiers !== Qt.NoModifier) {
+                                event.accepted = launcher.forwardKey(event.key, event.modifiers);
+                            } else {
+                                launcher.handleReturn();
+                            }
+                        }
+                        Keys.onTabPressed: event => {
+                            if (argLoader.isLast) {
+                                root.focusSearchInput();
+                                event.accepted = true;
+                            } else {
+                                event.accepted = false;
+                            }
                         }
                     }
                 }
