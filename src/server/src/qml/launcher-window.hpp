@@ -150,6 +150,7 @@ private:
   bool m_statusBarVisible = true;
   bool m_viewWasPopped = false;
   bool m_viewWasReplaced = false;
+  bool m_pendingLauncherFileChoice = false;
   QString m_searchPlaceholder;
   QUrl m_searchAccessoryUrl;
   QMetaObject::Connection m_searchAccessoryConnection;
