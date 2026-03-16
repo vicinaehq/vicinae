@@ -196,7 +196,7 @@ Item {
                         ViciImage {
                             visible: {
                                 const p = navItem.modelData.provenance ?? "";
-                                return p === "Raycast" || p === "Vicinae";
+                                return p === "Raycast" || p === "Vicinae" || p === 'Local';
                             }
                             source: {
                                 const p = navItem.modelData.provenance ?? "";
@@ -204,6 +204,8 @@ Item {
                                     return Img.builtin("raycast").withFillColor(Theme.toastDanger);
                                 if (p === "Vicinae")
                                     return Img.builtin("vicinae").withFillColor(Theme.toastWarning);
+                                if (p === "Local")
+                                    return Img.builtin("box").withFillColor(Theme.toastInfo);
                                 return "";
                             }
                             Layout.preferredWidth: 16

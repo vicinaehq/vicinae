@@ -1,6 +1,5 @@
 #include "installed-extensions-model.hpp"
 #include "actions/extension/extension-actions.hpp"
-#include "builtin_icon.hpp"
 #include "clipboard-actions.hpp"
 #include "extend/accessory-model.hpp"
 #include "keyboard/keybind.hpp"
@@ -31,7 +30,8 @@ QVariantList InstalledExtensionsModel::displayAccessory(const ExtensionManifest 
                                            .icon = ExtensionImageModel{.source = QString("vicinae")}}});
   }
   if (m.isLocal()) {
-    return qml::accessoriesToVariantList({{.data = AccessoryModel::Tag(SemanticColor::Blue, "Local")}});
+    return qml::accessoriesToVariantList({{.data = AccessoryModel::Tag(SemanticColor::Blue, "Local"),
+                                           .icon = ExtensionImageModel{.source = QString("box")}}});
   }
   return {};
 }
