@@ -91,6 +91,11 @@ void TelemetryService::sendSystemInfo() {
       });
 }
 
+QFuture<bool> TelemetryService::forget() {
+  return m_client.post<ForgetResponse, ForgetRequest>("/telemetry/forget", {m_state.userId})
+      .then([](const http::Client::Result<ForgetResponse> &res) { return res.has_value(); });
+}
+
 std::string TelemetryService::generateUserId() {
   return QString("user-%1").arg(QUuid::createUuid().toString(QUuid::WithoutBraces)).toStdString();
 }
