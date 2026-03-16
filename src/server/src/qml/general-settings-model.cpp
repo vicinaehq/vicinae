@@ -70,6 +70,11 @@ void GeneralSettingsModel::setWindowOpacity(const QString &v) {
     cfgManager().mergeWithUser({.launcherWindow = config::Partial<config::WindowConfig>{.opacity = val}});
 }
 
+bool GeneralSettingsModel::nativeTextRendering() const { return cfg().font.rendering != "qt"; }
+void GeneralSettingsModel::setNativeTextRendering(bool v) {
+  cfgManager().mergeWithUser({.font = config::Partial<config::FontConfig>{.rendering = v ? "native" : "qt"}});
+}
+
 QString GeneralSettingsModel::fontSize() const { return QString::number(cfg().font.normal.size); }
 void GeneralSettingsModel::setFontSize(const QString &v) {
   bool ok = false;

@@ -59,6 +59,11 @@
 	"keybinding": "default",
 
 	"font": {
+		// Text rendering backend used by Qt Quick text.
+		// "native": uses platform/fontconfig rendering (can have better dark-mode weight/clarity)
+		// "qt": uses Qt distance-field rendering (typically better performance for heavy scaling/animation)
+		"rendering": "qt",
+
 		// The font family to use for the general vicinae UI.
 		// "auto" (recommended): uses the bundled Inter font
 		// "system": uses the system/platform default font

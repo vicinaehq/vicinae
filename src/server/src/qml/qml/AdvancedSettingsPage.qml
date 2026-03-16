@@ -91,6 +91,15 @@ Flickable {
         }
 
         SettingsRow {
+            label: "Native font rendering"
+            description: "Use platform/fontconfig text rendering for system-consistent text. Disable for Qt distance-field rendering (usually faster). May require reopening Vicinae to fully apply."
+            SettingsToggle {
+                checked: root.model.nativeTextRendering
+                onToggled: root.model.nativeTextRendering = checked
+            }
+        }
+
+        SettingsRow {
             label: "Favicon Fetching"
             description: "The favicon provider used to load favicons where needed. Select 'None' to turn off favicon loading."
             SearchableDropdown {

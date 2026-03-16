@@ -46,6 +46,7 @@
 #include "vicinae.hpp"
 #include <filesystem>
 #include <QGuiApplication>
+#include <QQuickWindow>
 #include <csignal>
 #include <QString>
 #include <qlockfile.h>
@@ -56,6 +57,14 @@
 #include "server.hpp"
 
 namespace fs = std::filesystem;
+
+static void applyTextRenderingMode(const config::FontConfig &fontConfig) {
+  if (fontConfig.rendering == "qt") {
+    QQuickWindow::setTextRenderType(QQuickWindow::QtTextRendering);
+  } else {
+    QQuickWindow::setTextRenderType(QQuickWindow::NativeTextRendering);
+  }
+}
 
 void CliServerCommand::setup(CLI::App *app) {
   app->add_flag("--open", m_open, "Open the main window once the server is started");
@@ -99,6 +108,7 @@ void CliServerCommand::run(CLI::App *) {
   int argc = 1;
   static char *argv[] = {strdup("command"), nullptr};
   QGuiApplication const qapp(argc, argv);
+  QQuickWindow::setTextRenderType(QQuickWindow::NativeTextRendering);
 
   if (const auto launcher = Environment::detectAppLauncher()) {
     qInfo() << "Detected launch prefix:" << *launcher;
@@ -256,6 +266,8 @@ void CliServerCommand::run(CLI::App *) {
     bool const themeChangeRequired = nextTheme.name != prevTheme.name;
 
     IconThemeDatabase const iconThemeDb;
+
+    applyTextRenderingMode(next.font);
 
     theme.setFontBasePointSize(next.font.normal.size);
 

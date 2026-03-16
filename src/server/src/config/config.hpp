@@ -129,6 +129,8 @@ template <> struct Partial<WindowConfig> {
 };
 
 struct FontConfig {
+  std::string rendering = "qt";
+
   struct {
     std::string family = "auto";
     float size = 10.5;
@@ -136,6 +138,8 @@ struct FontConfig {
 };
 
 template <> struct Partial<FontConfig> {
+  std::optional<std::string> rendering;
+
   struct {
     std::optional<std::string> family;
     std::optional<float> size;
