@@ -1,0 +1,138 @@
+name: Build .deb Packages
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. v1.2.3)"
+        required: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-deb:
+    name: Build .deb (${{ matrix.distro.label }})
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.distro.image }}
+    permissions:
+      contents: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        distro:
+          - label: ubuntu-22.04
+            image: ubuntu:22.04
+            codename: jammy
+          - label: ubuntu-24.04
+            image: ubuntu:24.04
+            codename: noble
+          - label: debian-11
+            image: debian:bullseye
+            codename: bullseye
+          - label: debian-12
+            image: debian:bookworm
+            codename: bookworm
+
+    steps:
+      - name: Resolve tag
+        id: meta
+        shell: bash
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            TAG="${INPUT_TAG:-}"
+            if [[ -z "$TAG" ]]; then
+              echo "When dispatching manually, you must provide 'tag' (e.g. v1.2.3)." >&2
+              exit 1
+            fi
+          else
+            TAG="$GITHUB_REF_NAME"
+          fi
+
+          if ! [[ "$TAG" =~ ^v[0-9]+(\.[0-9]+)*$ ]]; then
+            echo "Tag '$TAG' does not match expected format (e.g. v1.2.3)." >&2
+            exit 1
+          fi
+
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "package=vicinae_${VERSION}_${{ matrix.distro.codename }}_amd64.deb" >> "$GITHUB_OUTPUT"
+
+      - name: Install git
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          apt-get update -y
+          apt-get install -y --no-install-recommends git ca-certificates
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ steps.meta.outputs.tag }}
+
+      - name: Install build dependencies
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          apt-get install -y --no-install-recommends \
+            build-essential cmake ninja-build pkg-config curl \
+            libssl-dev libxml2-dev libminizip-dev libwayland-dev \
+            qt6-base-dev qt6-base-private-dev qt6-declarative-dev \
+            qt6-svg-dev qt6-wayland-dev \
+            libqalculate-dev \
+            dpkg-dev
+
+      - name: Install Node.js
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+          apt-get install -y nodejs
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DVICINAE_PROVENANCE=deb_package \
+            -DUSE_SYSTEM_PROTOBUF=OFF \
+            -DUSE_SYSTEM_ABSEIL=OFF \
+            -DUSE_SYSTEM_CMARK_GFM=OFF \
+            -DUSE_SYSTEM_LAYER_SHELL=OFF \
+            -DUSE_SYSTEM_KF6=OFF \
+            -DUSE_SYSTEM_QT_KEYCHAIN=OFF \
+            -DCMAKE_INSTALL_PREFIX=/usr
+
+      - name: Build
+        run: cmake --build build --parallel $(nproc)
+
+      - name: Package with CPack
+        run: |
+          cd build
+          cpack -G DEB -D CPACK_PACKAGE_FILE_NAME="${{ steps.meta.outputs.package }}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.meta.outputs.package }}
+          path: build/${{ steps.meta.outputs.package }}
+
+      - name: Upload to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          files: build/${{ steps.meta.outputs.package }}
