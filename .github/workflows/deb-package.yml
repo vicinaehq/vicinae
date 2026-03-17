@@ -37,15 +37,15 @@ jobs:
           - label: ubuntu-22.04
             image: ubuntu:22.04
             codename: jammy
+            qt_svg_pkg: libqt6svg6-dev
           - label: ubuntu-24.04
             image: ubuntu:24.04
             codename: noble
-          - label: debian-11
-            image: debian:bullseye
-            codename: bullseye
+            qt_svg_pkg: qt6-svg-dev
           - label: debian-12
             image: debian:bookworm
             codename: bookworm
+            qt_svg_pkg: qt6-svg-dev
 
     steps:
       - name: Resolve tag
@@ -104,7 +104,7 @@ jobs:
             build-essential cmake ninja-build pkg-config curl \
             libssl-dev libxml2-dev libminizip-dev libwayland-dev \
             qt6-base-dev qt6-base-private-dev qt6-declarative-dev \
-            qt6-svg-dev qt6-wayland-dev \
+            ${{ matrix.distro.qt_svg_pkg }} qt6-wayland-dev \
             libqalculate-dev \
             dpkg-dev
 
