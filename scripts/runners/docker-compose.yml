@@ -1,0 +1,47 @@
+services:
+  binfmt:
+    image: tonistiigi/binfmt
+    privileged: true
+    command: --install arm64
+    restart: "no"
+
+  runner-1:
+    build:
+      context: ./arch
+      dockerfile: Dockerfile
+    environment:
+      - REPO_URL=${REPO_URL}
+      - RUNNER_TOKEN=${RUNNER_1_TOKEN}
+      - RUNNER_NAME=docker-runner-1
+      - LABELS=linux,docker,cpp,nodejs
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - runner1-data:/home/runner
+    restart: unless-stopped
+
+  appimage-builder:
+    build:
+      context: ./appimage
+      dockerfile: gh-runner.Dockerfile
+    privileged: true
+    security_opt:
+      - apparmor:unconfined
+    devices:
+      - /dev/fuse:/dev/fuse:rwm
+    cap_add:
+      - SYS_ADMIN
+    environment:
+      - REPO_URL=${REPO_URL}
+      - RUNNER_TOKEN=${RUNNER_2_TOKEN}
+      - RUNNER_NAME=appimage-builder
+      - LABELS=linux,appimage
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - runner2-data:/home/runner
+    restart: unless-stopped
+
+volumes:
+  runner1-data:
+    driver: local
+  runner2-data:
+    driver: local

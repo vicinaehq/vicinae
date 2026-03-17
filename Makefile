@@ -79,6 +79,10 @@ appimage-build-env:
 	docker build -f $(APPIMAGE_BUILD_ENV_DIR)/AppImageBuilder.Dockerfile $(APPIMAGE_BUILD_ENV_DIR) -t $(APPIMAGE_BUILD_ENV_IMAGE_TAG)
 .PHONY: appimage-build-env
 
+appimage-build-env-arm64:
+	docker buildx build --platform linux/arm64 -f $(APPIMAGE_BUILD_ENV_DIR)/AppImageBuilder.Dockerfile $(APPIMAGE_BUILD_ENV_DIR) -t $(APPIMAGE_BUILD_ENV_IMAGE_TAG)
+.PHONY: appimage-build-env-arm64
+
 appimage-build-gh-runner: appimage-build-env
 	docker build -f $(APPIMAGE_BUILD_ENV_DIR)/gh-runner.Dockerfile $(APPIMAGE_BUILD_ENV_DIR) -t vicinae/appimage-gh-runner
 .PHONY: appimage-build-gh-runner
