@@ -1,0 +1,39 @@
+name: vicinae
+arch: ${GOARCH}
+platform: ${GOOS}
+version: ${VERSION}
+maintainer: "Aurelien Brabant <gh@aurelle.dev>"
+homepage: https://github.com/vicinaehq/vicinae
+license: GPL-3.0
+depends:
+  - layer-shell-qt
+  - protobuf-compiler
+  - libqt6concurrent6
+  - libqt6sql6-sqlite
+  - cmark
+  - cmark-gfm
+  - qml6-module-qtquick-dialogs
+  - minizip
+  - nodejs
+  - npm
+contents:
+  - src: build/bin/vicinae
+    dst: /usr/bin/vicinae
+  - src: build/bin/vicinae-*
+    dst: /usr/libexec/vicinae/
+
+  - src: extra/vicinae.desktop
+    dst: /usr/share/applications/vicinae.desktop
+  - src: extra/vicinae-url-handler.desktop
+    dst: /usr/share/applications/vicinae-url-handler.desktop
+  - src: extra/vicinae.service
+    dst: /etc/systemd/system/vicinae.service
+  - src: extra/vicinae.png
+    dst: /usr/share/icons/hicolor/512x512/apps/vicinae.png
+  - src: extra/udev/rules.d/70-vicinae.rules
+    dst: /lib/udev/rules.d/70-vicinae.rules
+  - src: extra/modules-load.d/vicinae.conf
+    dst: /lib/modules-load.d/70-vicinae.rules
+
+  - src: extra/themes
+    dst: /usr/share/vicinae/themes
