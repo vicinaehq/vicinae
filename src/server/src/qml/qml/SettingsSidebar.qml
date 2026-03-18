@@ -124,6 +124,7 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
+            bottomMargin: 8
             boundsBehavior: Flickable.StopAtBounds
             model: root._allItems
 
