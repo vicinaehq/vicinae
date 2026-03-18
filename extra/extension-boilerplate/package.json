@@ -78,6 +78,18 @@
 			"title": "Nested Form",
 			"description": "Test form views pushed from a list (nested navigation)",
 			"mode": "view"
+		},
+		{
+			"name": "ansi-colors",
+			"title": "ANSI Colors",
+			"description": "Showcase ANSI escape sequence rendering in lists",
+			"mode": "view"
+		},
+		{
+			"name": "log-viewer",
+			"title": "Log Viewer",
+			"description": "Simulated log viewer with ANSI-colored output",
+			"mode": "view"
 		}
 	],
 	"preferences": [],

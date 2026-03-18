@@ -53,26 +53,26 @@ SelectableDelegate {
             readonly property real availableForText: width - aliasSpace
             readonly property real subtitleReserved: subtitleText.visible ? Math.min(subtitleText.implicitWidth + spacing, availableForText * 0.5) : 0
 
-            Text {
+            AnsiText {
                 id: titleText
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
                 width: Math.min(implicitWidth, textRow.availableForText - textRow.subtitleReserved)
-                text: root.itemTitle
+                rawText: root.itemTitle
                 color: root.selected ? Theme.listItemSelectionFg : Theme.foreground
                 font.pointSize: Theme.regularFontSize
                 elide: Text.ElideRight
                 maximumLineCount: 1
             }
 
-            Text {
+            AnsiText {
                 id: subtitleText
                 visible: root.itemSubtitle !== ""
                 anchors.left: titleText.right
                 anchors.leftMargin: visible ? textRow.spacing : 0
                 anchors.verticalCenter: parent.verticalCenter
                 width: Math.min(implicitWidth, Math.max(0, textRow.availableForText - titleText.width - textRow.spacing))
-                text: root.itemSubtitle
+                rawText: root.itemSubtitle
                 color: Theme.textMuted
                 font.pointSize: Theme.smallerFontSize
                 elide: Text.ElideRight

@@ -44,6 +44,7 @@ strip:
 .PHONY: strip
 
 test:
+	./$(BIN_DIR)/vicinae-ansi-tests
 	./$(BIN_DIR)/vicinae-emoji-tests
 	./$(BIN_DIR)/xdgpp-tests
 	./$(BIN_DIR)/scriptcommand-tests

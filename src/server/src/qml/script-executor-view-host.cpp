@@ -1,50 +1,16 @@
 #include "script-executor-view-host.hpp"
+#include "ansi-bridge.hpp"
 #include "builtin_icon.hpp"
 #include "navigation-controller.hpp"
-#include "script/script-output-tokenizer.hpp"
 #include "script/script-process.hpp"
 #include "service-registry.hpp"
 #include "services/toast/toast-service.hpp"
 #include "ui/action-pannel/action.hpp"
 
 static QString tokenToHtml(const QString &rawOutput) {
-  ScriptOutputTokenizer tokenizer(rawOutput);
-  QString html;
-  html.reserve(rawOutput.size() * 2);
-  html += QStringLiteral("<pre style=\"font-size:10.5pt; white-space:pre-wrap; margin:0;\">");
-
-  bool inSpan = false;
-
-  while (auto tok = tokenizer.next()) {
-    if (tok->fmt) {
-      if (inSpan) html += QStringLiteral("</span>");
-      inSpan = false;
-
-      if (!tok->fmt->reset) {
-        QStringList styles;
-        if (tok->fmt->fg) styles << QStringLiteral("color:%1").arg(tok->fmt->fg->name());
-        if (tok->fmt->bg) styles << QStringLiteral("background:%1").arg(tok->fmt->bg->name());
-        if (tok->fmt->italic) styles << QStringLiteral("font-style:italic");
-        if (tok->fmt->underline) styles << QStringLiteral("text-decoration:underline");
-        if (!styles.isEmpty()) {
-          html += QStringLiteral("<span style=\"%1\">").arg(styles.join(';'));
-          inSpan = true;
-        }
-      }
-    }
-
-    QString const escaped = tok->text.toHtmlEscaped();
-
-    if (tok->url && QUrl(tok->text).isValid()) {
-      html += QStringLiteral("<a href=\"%1\">%2</a>").arg(tok->text.toHtmlEscaped(), escaped);
-    } else {
-      html += escaped;
-    }
-  }
-
-  if (inSpan) html += QStringLiteral("</span>");
-  html += QStringLiteral("</pre>");
-  return html;
+  auto html = ansi::to_html(rawOutput.toStdString(), buildAnsiPalette());
+  return QStringLiteral("<pre style=\"font-size:10.5pt; white-space:pre-wrap; margin:0;\">") +
+         QString::fromStdString(html) + QStringLiteral("</pre>");
 }
 
 ScriptExecutorViewHost::ScriptExecutorViewHost(ScriptProcess *process) : m_process(process) {

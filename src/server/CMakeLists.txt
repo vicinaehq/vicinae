@@ -30,6 +30,7 @@ list(APPEND LIBS
 	vicinae::snippet-types
 	vicinae::common
 	vicinae::linuxutils
+	vicinae::ansi
 )
 
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)
@@ -526,6 +527,7 @@ set(SRCS
 	src/qml/async-image-provider.hpp
 	src/qml/async-image-provider.cpp
 	src/qml/config-bridge.hpp
+	src/qml/ansi-bridge.hpp
 	src/qml/theme-bridge.hpp
 	src/qml/create-extension-view-host.hpp
 	src/qml/create-extension-view-host.cpp
@@ -754,6 +756,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/TextViewer.qml
 	src/qml/qml/FilePreview.qml
 	src/qml/qml/DMenuView.qml
+	src/qml/qml/AnsiText.qml
 	src/qml/qml/ScriptOutputText.qml
 	src/qml/qml/ScriptExecutorView.qml
 	src/qml/qml/SettingsWindow.qml

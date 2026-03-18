@@ -1,4 +1,5 @@
 #include "markdown-model.hpp"
+#include "ansi-bridge.hpp"
 #include "syntax-highlighter.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
@@ -58,9 +59,11 @@ QString renderOneInline(cmark_node *cur, const InlineContext &ctx) {
   QString result;
 
   switch (cmark_node_get_type(cur)) {
-  case CMARK_NODE_TEXT:
-    result += QString::fromUtf8(cmark_node_get_literal(cur)).toHtmlEscaped();
+  case CMARK_NODE_TEXT: {
+    auto *literal = cmark_node_get_literal(cur);
+    result += QString::fromStdString(ansi::to_html(literal, buildAnsiPalette()));
     break;
+  }
 
   case CMARK_NODE_SOFTBREAK:
     result += ' ';
@@ -267,7 +270,8 @@ void processHtmlNodes(xmlNode *node, HtmlBlockResult &result) {
       xmlChar *content = xmlNodeGetContent(cur);
       if (content) {
         QString const text = QString::fromUtf8(reinterpret_cast<const char *>(content)).trimmed();
-        if (!text.isEmpty()) result.html += text.toHtmlEscaped();
+        if (!text.isEmpty())
+          result.html += QString::fromStdString(ansi::to_html(text.toStdString(), buildAnsiPalette()));
         xmlFree(content);
       }
     }

@@ -239,12 +239,12 @@ Item {
                                     borderColor: cellWrapper.cellSelected ? Theme.gridItemSelectionOutline : Theme.gridItemHoverOutline
                                 }
 
-                                Text {
+                                AnsiText {
                                     visible: root.showCellTitle
                                     y: rowItem.cellHeight + root._textGap
                                     width: rowItem.cellWidth
                                     height: _titleMetrics.font.pixelSize
-                                    text: {
+                                    rawText: {
                                         var _rev = root.cmdModel ? root.cmdModel.dataRevision : 0;
                                         return (root.cmdModel && typeof root.cmdModel.cellTitle === "function") ? root.cmdModel.cellTitle(cellWrapper.cellSection, cellWrapper.cellItem) : "";
                                     }
@@ -255,12 +255,12 @@ Item {
                                     horizontalAlignment: Text.AlignHCenter
                                 }
 
-                                Text {
+                                AnsiText {
                                     visible: root.showCellSubtitle
                                     y: rowItem.cellHeight + root._textGap + (root.showCellTitle ? _titleMetrics.font.pixelSize + root._textGap : 0)
                                     width: rowItem.cellWidth
                                     height: _subtitleMetrics.font.pixelSize
-                                    text: {
+                                    rawText: {
                                         var _rev = root.cmdModel ? root.cmdModel.dataRevision : 0;
                                         return (root.cmdModel && typeof root.cmdModel.cellSubtitle === "function") ? root.cmdModel.cellSubtitle(cellWrapper.cellSection, cellWrapper.cellItem) : "";
                                     }
