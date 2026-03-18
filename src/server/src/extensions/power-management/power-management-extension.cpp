@@ -78,7 +78,7 @@ class LockCommand : public BuiltinCallbackCommand {
       QProcess process;
 
       process.start(program);
-      if (!process.waitForFinished()) { toast->failure("Failed to lock using custom program " + program); }
+      if (!process.waitForFinished(-1)) { toast->failure("Failed to lock using custom program " + program); }
     } else {
       if (!pm->provider()->canLock()) {
         toast->failure("System can't lock");
