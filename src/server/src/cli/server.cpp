@@ -306,6 +306,7 @@ void CliServerCommand::run(CLI::App *) {
     }
 
     ServiceRegistry::instance()->telemetry()->setEnabled(next.telemetry.systemInfo);
+    ServiceRegistry::instance()->appDb()->setUseSystemdScope(next.systemdScope);
   };
 
   auto cfgService = ServiceRegistry::instance()->config();

@@ -21,6 +21,7 @@ class GeneralSettingsModel : public QObject {
   Q_PROPERTY(QString windowOpacity READ windowOpacity WRITE setWindowOpacity NOTIFY configChanged)
   Q_PROPERTY(
       bool nativeTextRendering READ nativeTextRendering WRITE setNativeTextRendering NOTIFY configChanged)
+  Q_PROPERTY(bool systemdScope READ systemdScope WRITE setSystemdScope NOTIFY configChanged)
   Q_PROPERTY(QString fontSize READ fontSize WRITE setFontSize NOTIFY configChanged)
   Q_PROPERTY(QVariantList themeItems READ themeItems NOTIFY configChanged)
   Q_PROPERTY(QVariantList fontItems READ fontItems NOTIFY configChanged)
@@ -59,6 +60,8 @@ public:
   void setWindowOpacity(const QString &v);
   bool nativeTextRendering() const;
   void setNativeTextRendering(bool v);
+  bool systemdScope() const;
+  void setSystemdScope(bool v);
   QString fontSize() const;
   void setFontSize(const QString &v);
 

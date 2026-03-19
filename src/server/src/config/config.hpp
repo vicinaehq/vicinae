@@ -196,6 +196,7 @@ struct ConfigValue {
   bool popToRootOnClose = false;
   bool popOnBackspace = true;
   bool activateOnSingleClick = false;
+  bool systemdScope = false;
   std::string escapeKeyBehavior;
   std::string faviconService = "twenty";
   std::string keybinding = "default";
@@ -245,6 +246,7 @@ template <> struct Partial<ConfigValue> {
   std::optional<bool> popToRootOnClose;
   std::optional<bool> popOnBackspace;
   std::optional<bool> activateOnSingleClick;
+  std::optional<bool> systemdScope;
   std::optional<std::string> escapeKeyBehavior;
   std::optional<std::string> faviconService;
   std::optional<std::string> keybinding;

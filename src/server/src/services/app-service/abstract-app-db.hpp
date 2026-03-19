@@ -203,4 +203,10 @@ public:
    * gracefully fall back to opening the containing folder when that is not supported.
    */
   virtual bool showInFileBrowser(const std::filesystem::path &path, bool select) const = 0;
+
+  void setUseSystemdScope(bool v) { m_useSystemdScope = v; }
+  bool useSystemdScope() const { return m_useSystemdScope; }
+
+private:
+  bool m_useSystemdScope = false;
 };

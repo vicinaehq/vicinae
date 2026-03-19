@@ -75,6 +75,9 @@ void GeneralSettingsModel::setNativeTextRendering(bool v) {
   cfgManager().mergeWithUser({.font = config::Partial<config::FontConfig>{.rendering = v ? "native" : "qt"}});
 }
 
+bool GeneralSettingsModel::systemdScope() const { return cfg().systemdScope; }
+void GeneralSettingsModel::setSystemdScope(bool v) { cfgManager().mergeWithUser({.systemdScope = v}); }
+
 QString GeneralSettingsModel::fontSize() const { return QString::number(cfg().font.normal.size); }
 void GeneralSettingsModel::setFontSize(const QString &v) {
   bool ok = false;

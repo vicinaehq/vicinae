@@ -25,6 +25,7 @@ private:
   OmniDatabase &m_db;
   std::unique_ptr<AbstractAppDatabase> m_provider;
   std::optional<QString> m_prefix;
+  bool m_useSystemdScope = false;
 
   static std::unique_ptr<AbstractAppDatabase> createLocalProvider();
   std::vector<std::filesystem::path> mergedPaths() const;
@@ -59,6 +60,11 @@ public:
    * Typically used to integrate with programs such as uwsm: https://github.com/Vladimir-csp/uwsm
    */
   void setLaunchPrefix(const std::optional<QString> &prefix) { m_prefix = prefix; }
+
+  void setUseSystemdScope(bool v) {
+    m_useSystemdScope = v;
+    m_provider->setUseSystemdScope(v);
+  }
 
   std::vector<std::filesystem::path> defaultSearchPaths() const;
 

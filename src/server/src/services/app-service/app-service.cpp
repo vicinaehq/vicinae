@@ -50,15 +50,26 @@ bool AppService::launchRaw(const std::vector<QString> &args) {
   if (args.empty()) { return false; }
 
   QProcess process;
-  const QString &prog = args.at(0);
-
-  process.setProgram(prog);
-  process.setArguments(args | std::views::drop(1) | std::ranges::to<QStringList>());
   process.setStandardOutputFile(QProcess::nullDevice());
   process.setStandardErrorFile(QProcess::nullDevice());
 
+  if (m_useSystemdScope) {
+    process.setProgram("systemd-run");
+    QStringList scopeArgs;
+    scopeArgs << "--user" << "--scope" << "--";
+    for (const auto &arg : args) {
+      scopeArgs << arg;
+    }
+    process.setArguments(scopeArgs);
+  } else {
+    const QString &prog = args.at(0);
+    process.setProgram(prog);
+    process.setArguments(args | std::views::drop(1) | std::ranges::to<QStringList>());
+  }
+
   if (!process.startDetached()) {
-    qWarning() << "Failed to start app" << prog << args << process.errorString();
+    qWarning() << "Failed to start app" << process.program() << process.arguments()
+               << process.errorString();
     return false;
   }
 

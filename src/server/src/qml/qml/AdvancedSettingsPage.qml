@@ -111,6 +111,15 @@ Flickable {
         }
 
         SettingsRow {
+            label: "Systemd scope"
+            description: "Launch applications in their own systemd scope, preventing them from inheriting Vicinae's cgroup."
+            SettingsToggle {
+                checked: root.model.systemdScope
+                onToggled: root.model.systemdScope = checked
+            }
+        }
+
+        SettingsRow {
             label: "Keybinding Scheme"
             description: "Default uses Vim-style Ctrl+J/K and Ctrl+H/L; Emacs uses Ctrl+N/P and Ctrl+Opt+B/F for navigation, plus Emacs editing in the search bar."
             showSeparator: false

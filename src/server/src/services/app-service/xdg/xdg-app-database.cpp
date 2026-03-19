@@ -373,15 +373,23 @@ bool XdgAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
 bool XdgAppDatabase::launchProcess(const QString &prog, const QStringList &args,
                                    const std::optional<std::filesystem::path> &workingDirectory) const {
   QProcess process;
-  process.setProgram(prog);
-  process.setArguments(args);
   process.setStandardOutputFile(QProcess::nullDevice());
   process.setStandardErrorFile(QProcess::nullDevice());
+
+  if (useSystemdScope()) {
+    process.setProgram("systemd-run");
+    QStringList scopeArgs;
+    scopeArgs << "--user" << "--scope" << "--" << prog << args;
+    process.setArguments(scopeArgs);
+  } else {
+    process.setProgram(prog);
+    process.setArguments(args);
+  }
 
   if (workingDirectory) { process.setWorkingDirectory(workingDirectory->c_str()); }
 
   QStringList cmdline;
-  cmdline << prog << args;
+  cmdline << process.program() << process.arguments();
   qInfo() << "App started with command line" << cmdline.join(' ');
 
   if (!process.startDetached()) {
