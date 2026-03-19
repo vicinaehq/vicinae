@@ -405,6 +405,8 @@ set(SRCS
 	src/internal/program-db/program-db.hpp
 	src/internal/program-db/program-db.cpp
 
+	src/lib/http-client.hpp
+
 	src/services/power-manager/systemd/systemd-power-manager.cpp
 	src/services/power-manager/dummy-power-manager.hpp
 

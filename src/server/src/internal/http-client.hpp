@@ -5,15 +5,22 @@
 #include <glaze/core/reflect.hpp>
 #include <QNetworkDiskCache>
 #include <QStandardPaths>
+#include <qbitarray.h>
+#include <qbytearrayview.h>
+#include <qcontainerfwd.h>
 #include <qdir.h>
 #include <qfuture.h>
 #include <qfuturewatcher.h>
 #include <QPromise>
 #include <QNetworkReply>
+#include <qhashfunctions.h>
 #include <qhttpmultipart.h>
+#include <qlogging.h>
+#include <qnetworkreply.h>
 #include <qnetworkrequest.h>
 #include <qobject.h>
 #include <qstringview.h>
+#include <qtmetamacros.h>
 #include <utility>
 #include "glaze/json/write.hpp"
 
@@ -71,6 +78,80 @@ private:
   QHttpMultiPart *m_mp;
 };
 
+class EventSource : public QObject, NonCopyable {
+  Q_OBJECT
+
+signals:
+  void dataReceived(const QString &event, QByteArrayView data) const;
+  void lineReceived(QByteArrayView line) const;
+  void errorOccured(const QString &error) const;
+  void finished() const;
+
+public:
+  explicit EventSource(QNetworkReply *reply) : m_reply(reply) {
+    m_buf.reserve(1024);
+    m_reply->setParent(this);
+    connect(reply, &QNetworkReply::readyRead, this, &EventSource::handleRead);
+    connect(reply, &QNetworkReply::finished, this, &EventSource::handleFinished);
+    connect(reply, &QNetworkReply::errorOccurred, this, [this](QNetworkReply::NetworkError error) {
+      qDebug() << "completion error";
+      emit errorOccured(m_reply->errorString());
+    });
+  }
+
+  void abort() { m_reply->abort(); }
+
+  /**
+   * Underlying response. This class owns the reply.
+   */
+  QNetworkReply *reply() { return m_reply; }
+
+private:
+  void processLines() {
+    int index = -1;
+    int pos = 0;
+
+    qDebug() << "reading data" << m_buf.toStdString();
+
+    while (pos < m_buf.size()) {
+      index = m_buf.indexOf("\n", pos);
+
+      if (index == -1) break;
+
+      auto line = QByteArrayView{m_buf}.slice(pos, index - pos);
+      pos = index + 1;
+
+      if (line.empty()) continue;
+
+      qDebug() << "[EVENT-STREAM]" << line;
+
+      emit lineReceived(line);
+
+      if (line.startsWith("event:")) {
+        event = QString::fromUtf8(line.slice(7));
+      } else if (line.startsWith("data:")) {
+        emit dataReceived(event, line.slice(6));
+      }
+    }
+
+    m_buf.slice(pos);
+  }
+
+  void handleFinished() {
+    processLines();
+    emit finished();
+  }
+
+  void handleRead() {
+    m_buf.append(m_reply->readAll());
+    processLines();
+  }
+
+  QString event;
+  QByteArray m_buf;
+  QNetworkReply *m_reply = nullptr;
+};
+
 class Client {
 public:
   template <typename T> using Watcher = QFutureWatcher<T>;
@@ -112,13 +193,26 @@ public:
 
     if (auto const error = glz::write_json(data, payload)) {
       return QtFuture::makeReadyValueFuture<Result<T>>(
-          std::unexpected(std::format("Failed to serialize request: {}", glz::format_error(error))));
+          std::unexpected(std::format("failed to serialize request: {}", glz::format_error(error))));
     }
 
     req.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader, "application/json");
     qInfo() << "[POST]" << req.url();
 
     return parseResponse<T>(waitForReply(networkManager()->post(req, payload.c_str())));
+  }
+
+  template <glz::has_reflect U> EventSource *postEventSource(const QString &url, const U &payload) {
+    auto req = createRequest(url);
+    std::string buf;
+    qInfo() << "[POST]" << req.url();
+
+    if (auto const error = glz::write_json(payload, buf)) {
+      qWarning() << std::format("failed to serialize request: {}", glz::format_error(error));
+      return nullptr;
+    }
+
+    return new EventSource{networkManager()->post(req, buf.c_str())};
   }
 
 private:
