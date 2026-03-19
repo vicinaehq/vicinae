@@ -4,11 +4,14 @@
 #include <glaze/core/common.hpp>
 #include <glaze/core/reflect.hpp>
 #include <optional>
+#include <qdir.h>
 #include <qfuture.h>
+#include <qimage.h>
 #include <qobject.h>
 #include <qtmetamacros.h>
 #include <string>
 #include <vector>
+#include "common/qt.hpp"
 #include "http-client.hpp"
 #include "image-url.hpp"
 
@@ -26,7 +29,8 @@ enum Capability : std::uint8_t {
   Thinking = 1 << 2,
   ToolCalling = 1 << 3,
   Embedding = 1 << 4,
-  Transcription = 1 << 5
+  Transcription = 1 << 5,
+  OCR = 1 << 6
 };
 
 using Capabilities = std::uint32_t;
@@ -138,7 +142,9 @@ struct ChatCompletionPayload {
   std::optional<float> temperature;
 };
 
-struct TranscriptionOptions {};
+struct TranscriptionOptions {
+  std::string mime;
+};
 
 struct TranscriptionResponse {
   std::string text;
@@ -171,11 +177,6 @@ public:
    */
   virtual std::string_view description() const = 0;
 
-  /**
-   * Whether multiple instances of this provider type can coexist.
-   */
-  virtual bool allowMultiple() const = 0;
-
   virtual void start() = 0;
 
   /**
@@ -199,7 +200,7 @@ public:
   virtual std::shared_ptr<AbstractChatCompletionStream>
   createChatCompletion(std::string_view modelId, const ChatCompletionPayload &payload) = 0;
 
-  virtual QFuture<TranscriptionResult> transcribe(const std::filesystem::path &path,
+  virtual QFuture<TranscriptionResult> transcribe(QIODevice *device,
                                                   const TranscriptionOptions &opts = {}) = 0;
 };
 
@@ -270,6 +271,12 @@ struct StandardChatCompletionStreamChunk {
 
 class StandardChatCompletionStream : public AbstractChatCompletionStream {
 public:
+  static std::shared_ptr<StandardChatCompletionStream>
+  makeShared(http::Client client, const StandardChatCompletionPayload &payload) {
+    return std::shared_ptr<StandardChatCompletionStream>(
+        new StandardChatCompletionStream(std::move(client), payload), QObjectDeleter{});
+  }
+
   StandardChatCompletionStream(http::Client client, const StandardChatCompletionPayload &payload)
       : m_client(std::move(client)), m_payload(StandardChatCompletionRawPayload::fromTypedPayload(payload)) {}
 
@@ -284,7 +291,7 @@ public:
   }
 
   bool abort() override {
-    m_eventSource->abort();
+    if (m_eventSource) m_eventSource->abort();
     return true;
   }
 
