@@ -12,10 +12,13 @@
 #include <qcontainerfwd.h>
 #include <qdir.h>
 #include <qhttpmultipart.h>
+#include <qimage.h>
 #include <qlogging.h>
 #include <qobject.h>
 #include <qtmetamacros.h>
+#include <ranges>
 #include <system_error>
+#include <x86_64-pc-linux-gnu/gmp.h>
 
 namespace AI {
 
@@ -23,7 +26,7 @@ class MistralProvider : public AI::AbstractProvider {
   struct ListModelsResponse {
     struct ModelInfo {
       std::string id;
-      std::string object; // model
+      std::string object; // 'model' in all instances.
       std::string name;
       std::string description;
       std::uint32_t max_context_length;
@@ -73,12 +76,9 @@ class MistralProvider : public AI::AbstractProvider {
   std::shared_ptr<AbstractChatCompletionStream>
   createChatCompletion(std::string_view modelId, const ChatCompletionPayload &payload) override {
     StandardChatCompletionPayload p;
-
     p.model = modelId;
     p.messages = payload.messages;
-
-    return std::shared_ptr<StandardChatCompletionStream>(new StandardChatCompletionStream(m_client, p),
-                                                         QObjectDeleter{});
+    return StandardChatCompletionStream::makeShared(m_client, p);
   }
 
   std::string id() const override { return "mistral"; }
@@ -89,28 +89,9 @@ class MistralProvider : public AI::AbstractProvider {
     return "Mistral AI cloud API. Provides transcription and language models.";
   }
 
-  bool allowMultiple() const override { return false; }
+  void start() override { m_listWatcher.setFuture(fetchModels()); }
 
-  void start() override {
-    listModels().then([this](const Result<ListModelsResponse> &res) {
-      if (!res) {
-        qWarning() << "Failed to fetch model list from mistral.ai" << res.error();
-        return;
-      }
-
-      m_models.reserve(res->data.size());
-
-      for (const auto &model : res->data) {
-        auto m = transformModel(model);
-
-        if (m.caps == 0) continue;
-
-        m_models.emplace_back(transformModel(model));
-      }
-    });
-  }
-
-  QFuture<Result<ListModelsResponse>> listModels() { return m_client.get<ListModelsResponse>("/models"); }
+  QFuture<Result<ListModelsResponse>> fetchModels() { return m_client.get<ListModelsResponse>("/models"); }
 
   static Model transformModel(const ListModelsResponse::ModelInfo &info) {
     Model model;
@@ -122,52 +103,39 @@ class MistralProvider : public AI::AbstractProvider {
     if (info.capabilities.vision) { model.caps |= Capability::Vision; }
     if (info.capabilities.function_calling) { model.caps |= Capability::ToolCalling; }
     if (info.capabilities.audio_transcription) { model.caps |= Capability::Transcription; }
+    if (info.capabilities.ocr) { model.caps |= Capability::OCR; }
 
     return model;
   }
 
+public:
   std::optional<Model> findBestModel(Capabilities caps,
                                      Preference preference = Preference::None) const override {
-    for (const auto &model : m_models) {
-      if (model.caps & caps) return model;
+    for (const auto &model : m_models.data) {
+      auto m = transformModel(model);
+      if (m.caps & caps) return m;
     }
 
     return std::nullopt;
   }
 
-  ModelList listModels(const ListModelFilters &filters = {}) const override { return m_models; }
+  ModelList listModels(const ListModelFilters &filters = {}) const override {
+    return m_models.data | std::views::transform(transformModel) |
+           std::views::filter([](auto &&m) { return m.id == m.name && m.caps; }) |
+           std::ranges::to<ModelList>();
+  }
 
   std::optional<Model> findModel(std::string_view id) {
-    for (const auto &model : m_models)
+    for (const auto &model : listModels())
       if (model.id == id) return model;
     return std::nullopt;
   }
 
-  QFuture<TranscriptionResult> transcribe(const std::filesystem::path &path,
-                                          const TranscriptionOptions &opts) override {
-    std::error_code ec;
-
-    if (!std::filesystem::is_regular_file(path, ec)) {
-      qWarning() << path << "is not a valid file";
-      return QtFuture::makeReadyValueFuture<TranscriptionResult>(
-          std::unexpected(std::format("{} is not a regular file", path.c_str())));
-    }
-
-    auto file = new QFile(path.c_str());
-
-    if (!file->open(QIODevice::ReadOnly)) {
-      return QtFuture::makeReadyValueFuture<TranscriptionResult>(std::unexpected(
-          std::format("Failed to open {}: {}", path.c_str(), file->errorString().toStdString())));
-    }
-
+  QFuture<TranscriptionResult> transcribe(QIODevice *device, const TranscriptionOptions &opts) override {
     auto formData = new http::FormData;
 
     formData->addField("model", "voxtral-mini-2507");
-    auto ext = path.extension().string();
-    auto contentType = (ext == ".wav")                    ? "audio/wav"
-                       : (ext == ".mp4" || ext == ".m4a") ? "audio/mp4"
-                                                          : "audio/mpeg";
-    formData->addFile(file, contentType);
+    formData->addFile(device, opts.mime.c_str());
 
     return m_client.post<TranscriptionResponse>("/audio/transcriptions", formData)
         .then([](AI::Result<TranscriptionResponse> res) -> TranscriptionResult {
@@ -176,15 +144,28 @@ class MistralProvider : public AI::AbstractProvider {
         });
   }
 
-public:
   MistralProvider(QString apiKey) {
     qDebug() << "mistral provider initialized with api key" << apiKey;
     m_client.setBaseUrl("https://api.mistral.ai/v1/");
     m_client.setBearer(std::move(apiKey));
+    connect(&m_listWatcher, &decltype(m_listWatcher)::finished, this, &MistralProvider::handleListResult);
   }
 
 private:
+  void handleListResult() {
+    if (m_listWatcher.isCanceled()) return;
+
+    auto res = m_listWatcher.result();
+    if (!res) {
+      qWarning() << "Failed to fetch model list from mistral.ai" << res.error();
+      return;
+    }
+
+    m_models = res.value();
+  }
+
+  http::Client::Watcher<AI::Result<ListModelsResponse>> m_listWatcher;
   http::Client m_client;
-  std::vector<Model> m_models;
+  ListModelsResponse m_models;
 };
 }; // namespace AI
