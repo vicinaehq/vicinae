@@ -1,5 +1,4 @@
 #pragma once
-#include <algorithm>
 #include <expected>
 #include "common/types.hpp"
 #include <glaze/core/reflect.hpp>
@@ -15,6 +14,7 @@
 #include <QNetworkReply>
 #include <qhashfunctions.h>
 #include <qhttpmultipart.h>
+#include <qimage.h>
 #include <qlogging.h>
 #include <qnetworkreply.h>
 #include <qnetworkrequest.h>
@@ -53,13 +53,12 @@ class FormData : public QObject, NonCopyable {
 public:
   explicit FormData() : m_mp(new QHttpMultiPart(QHttpMultiPart::FormDataType, this)) {}
 
-  void addFile(QFile *file, const QString &contentType, const QString &fieldName = "file") {
+  void addFile(QIODevice *file, const QString &contentType, const QString &fieldName = "file",
+               const QString &fileName = "file") {
     QHttpPart part;
     part.setHeader(QNetworkRequest::ContentTypeHeader, contentType);
     part.setHeader(QNetworkRequest::ContentDispositionHeader,
-                   QString("form-data; name=\"%1\"; filename=\"%2\"")
-                       .arg(fieldName)
-                       .arg(file->filesystemFileName().filename().c_str()));
+                   QString("form-data; name=\"%1\"; filename=\"%2\"").arg(fieldName).arg(fileName));
     part.setBodyDevice(file);
     file->setParent(m_mp);
     m_mp->append(part);
@@ -118,7 +117,7 @@ private:
 
       if (index == -1) break;
 
-      auto line = QByteArrayView{m_buf}.slice(pos, index - pos);
+      auto line = QByteArrayView{m_buf}.slice(pos, index - pos).trimmed();
       pos = index + 1;
 
       if (line.empty()) continue;
