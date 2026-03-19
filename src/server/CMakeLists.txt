@@ -422,6 +422,9 @@ set(SRCS
 	src/internal/db/database-key.hpp
 	src/internal/db/database-key.cpp
 
+	src/lib/http-client.hpp
+
+	src/services/power-manager/systemd/systemd-power-manager.cpp
 	src/services/power-manager/dummy-power-manager.hpp
 
 	src/services/desktop-notification/dummy-desktop-notification-client.hpp
