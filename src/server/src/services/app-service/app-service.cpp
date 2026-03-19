@@ -68,8 +68,7 @@ bool AppService::launchRaw(const std::vector<QString> &args) {
   }
 
   if (!process.startDetached()) {
-    qWarning() << "Failed to start app" << process.program() << process.arguments()
-               << process.errorString();
+    qWarning() << "Failed to start app" << process.program() << process.arguments() << process.errorString();
     return false;
   }
 
