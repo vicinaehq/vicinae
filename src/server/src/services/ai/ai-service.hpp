@@ -1,5 +1,7 @@
 #pragma once
 #include <memory>
+#include <qfuture.h>
+#include <qimage.h>
 #include <qlogging.h>
 #include <qobject.h>
 #include <qtmetamacros.h>
@@ -31,11 +33,16 @@ public:
     return completion;
   }
 
-  QFuture<std::expected<TranscriptionResponse, std::string>> transcribe(const std::filesystem::path &path) {
+  QFuture<AI::Result<TranscriptionResponse>> transcribe(QIODevice *device, const QString &mime) {
+    if (!device->isOpen() && !device->open(QIODevice::ReadOnly)) {
+      return QtFuture::makeReadyValueFuture<AI::Result<TranscriptionResponse>>(
+          std::unexpected("Failed to open IO device for transcription"));
+    }
+
     for (const auto &[id, provider] : m_providers) {
       if (const auto model = provider->findBestModel(Capability::Transcription)) {
         if (!isModelEnabled(ModelRef{id, model->id})) continue;
-        return provider->transcribe(path);
+        return provider->transcribe(device, {.mime = mime.toStdString()});
       }
     }
 
