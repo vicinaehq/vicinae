@@ -83,23 +83,24 @@ void TranscribeViewHost::stopAndTranscribe() {
   toast->dynamic("Transcribing...");
 
   auto ctx = context();
-  m_aiService->transcribe(*path).then([this, ctx, toast](const AI::TranscriptionResult &result) {
-    m_transcribing = false;
-    emit transcribingChanged();
+  m_aiService->transcribe(new QFile(path.value()), "audio/wav")
+      .then([this, ctx, toast](const AI::TranscriptionResult &result) {
+        m_transcribing = false;
+        emit transcribingChanged();
 
-    if (!result) {
-      toast->failure("Transcription failed");
-      m_errorMessage = QString::fromStdString(result.error());
-      emit errorMessageChanged();
-      updateNavigationTitle();
-      updateActions();
-      return;
-    }
+        if (!result) {
+          toast->failure("Transcription failed");
+          m_errorMessage = QString::fromStdString(result.error());
+          emit errorMessageChanged();
+          updateNavigationTitle();
+          updateActions();
+          return;
+        }
 
-    toast->success("Transcription complete");
-    ctx->services->pasteService()->pasteContent(Clipboard::Text(result->text.c_str()));
-    ctx->navigation->closeWindow({.popToRootType = PopToRootType::Immediate});
-  });
+        toast->success("Transcription complete");
+        ctx->services->pasteService()->pasteContent(Clipboard::Text(result->text.c_str()));
+        ctx->navigation->closeWindow({.popToRootType = PopToRootType::Immediate});
+      });
 }
 
 void TranscribeViewHost::togglePause() {
