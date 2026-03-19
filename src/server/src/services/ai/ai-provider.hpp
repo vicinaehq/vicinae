@@ -2,12 +2,14 @@
 #include <cstdint>
 #include <expected>
 #include <glaze/core/common.hpp>
+#include <glaze/core/reflect.hpp>
 #include <optional>
 #include <qfuture.h>
 #include <qobject.h>
 #include <qtmetamacros.h>
 #include <string>
 #include <vector>
+#include "http-client.hpp"
 #include "image-url.hpp"
 
 namespace AI {
@@ -34,7 +36,7 @@ struct Model {
   std::string name;
   std::optional<std::string> description;
   std::optional<ImageUrl> icon;
-  Capabilities caps;
+  Capabilities caps = 0;
 };
 
 struct ModelRef {
@@ -115,7 +117,7 @@ private:
   Model m_model;
 };
 
-enum class ChatRole { System, User, Assistant };
+enum class ChatRole { System, User, Assistant, Tool, Developer };
 
 struct ChatMessage {
   ChatRole role;
@@ -199,6 +201,111 @@ public:
 
   virtual QFuture<TranscriptionResult> transcribe(const std::filesystem::path &path,
                                                   const TranscriptionOptions &opts = {}) = 0;
+};
+
+struct StandardChatCompletionPayload {
+  std::string model;
+  AI::ChatHistory messages;
+};
+
+struct StandardChatCompletionRawPayload {
+
+  struct Message {
+    std::string role;
+    std::string content;
+
+    static std::string_view stringifyRole(AI::ChatRole role) {
+      switch (role) {
+      case AI::ChatRole::Assistant:
+        return "assistant";
+      case AI::ChatRole::System:
+        return "system";
+      case AI::ChatRole::User:
+        return "user";
+      case AI::ChatRole::Developer:
+        return "developer";
+      case AI::ChatRole::Tool:
+        return "tool";
+      }
+    }
+
+    static Message fromMessage(const AI::ChatMessage &message) {
+      return Message(std::string{stringifyRole(message.role)}, message.value);
+    }
+  };
+
+  static StandardChatCompletionRawPayload fromTypedPayload(const StandardChatCompletionPayload &payload) {
+    StandardChatCompletionRawPayload raw{};
+
+    raw.model = payload.model;
+    raw.messages.reserve(payload.messages.size());
+
+    for (const auto &p : payload.messages) {
+      raw.messages.emplace_back(StandardChatCompletionRawPayload::Message::fromMessage(p));
+    }
+    return raw;
+  }
+
+  std::string model;
+  std::vector<Message> messages;
+  bool stream = true;
+};
+
+struct StandardChatCompletionStreamChunk {
+  struct Choice {
+    int index;
+    struct {
+      std::optional<std::string> role;
+      std::string content;
+    } delta;
+    std::optional<std::string> finish_reason;
+  };
+
+  std::string id;
+  std::string object;
+  std::int64_t created;
+  std::string model;
+  std::vector<Choice> choices;
+};
+
+class StandardChatCompletionStream : public AbstractChatCompletionStream {
+public:
+  StandardChatCompletionStream(http::Client client, const StandardChatCompletionPayload &payload)
+      : m_client(std::move(client)), m_payload(StandardChatCompletionRawPayload::fromTypedPayload(payload)) {}
+
+  bool start() override {
+    m_eventSource = m_client.postEventSource<StandardChatCompletionRawPayload>("chat/completions", m_payload);
+    m_eventSource->setParent(this);
+    connect(m_eventSource, &http::EventSource::dataReceived, this, &StandardChatCompletionStream::handleData);
+    connect(m_eventSource, &http::EventSource::finished, this, &StandardChatCompletionStream::finished);
+    connect(m_eventSource, &http::EventSource::errorOccured,
+            [this](const QString &reason) { emit errorOccured(reason.toStdString()); });
+    return true;
+  }
+
+  bool abort() override {
+    m_eventSource->abort();
+    return true;
+  }
+
+private:
+  void handleData(const QString &event, QByteArrayView data) {
+    StandardChatCompletionStreamChunk chunk;
+
+    if (data == "[DONE]") return;
+
+    if (auto const error = glz::read<glz::opts{.error_on_unknown_keys = false}>(chunk, data.constData())) {
+      qDebug() << "Failed to parse chat completion chunk" << glz::format_error(error);
+      emit errorOccured(glz::format_error(error));
+      return;
+    }
+
+    if (!chunk.choices.empty()) { emit dataAdded(chunk.choices.at(0).delta.content); }
+  }
+
+  http::Client m_client;
+  StandardChatCompletionRawPayload m_payload;
+  http::EventSource *m_eventSource = nullptr;
 };
 
 }; // namespace AI

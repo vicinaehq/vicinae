@@ -442,6 +442,8 @@ set(SRCS
 	src/lib/program-db/program-db.hpp
 	src/lib/program-db/program-db.cpp
 
+	src/lib/http-client.hpp
+
 	src/services/power-manager/systemd/systemd-power-manager.cpp
 
 	src/config/config.hpp
