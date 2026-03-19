@@ -1,18 +1,52 @@
 #include "builtin_icon.hpp"
-#include "preference.hpp"
+#include "common/qt.hpp"
 #include "services/ai/ai-provider.hpp"
 #include "lib/http-client.hpp"
+#include <cstdint>
 #include <filesystem>
 #include <format>
+#include <glaze/core/reflect.hpp>
+#include <glaze/json/read.hpp>
+#include <qbitarray.h>
 #include <qcborvalue.h>
+#include <qcontainerfwd.h>
 #include <qdir.h>
 #include <qhttpmultipart.h>
 #include <qlogging.h>
+#include <qobject.h>
+#include <qtmetamacros.h>
 #include <system_error>
 
 namespace AI {
 
 class MistralProvider : public AI::AbstractProvider {
+  struct ListModelsResponse {
+    struct ModelInfo {
+      std::string id;
+      std::string object; // model
+      std::string name;
+      std::string description;
+      std::uint32_t max_context_length;
+
+      struct {
+        bool completion_chat;
+        bool function_calling;
+        bool completion_fim;
+        bool fine_tuning;
+        bool vision;
+        bool ocr;
+        bool classification;
+        bool moderation;
+        bool audio;
+        bool audio_transcription;
+        bool audio_transcription_realtime;
+        bool audio_speech;
+      } capabilities;
+    };
+
+    std::vector<ModelInfo> data;
+  };
+
   struct TranscriptionResponse {
     struct Usage {
       int prompt_audio_seconds;
@@ -38,7 +72,13 @@ class MistralProvider : public AI::AbstractProvider {
 
   std::shared_ptr<AbstractChatCompletionStream>
   createChatCompletion(std::string_view modelId, const ChatCompletionPayload &payload) override {
-    return nullptr;
+    StandardChatCompletionPayload p;
+
+    p.model = modelId;
+    p.messages = payload.messages;
+
+    return std::shared_ptr<StandardChatCompletionStream>(new StandardChatCompletionStream(m_client, p),
+                                                         QObjectDeleter{});
   }
 
   std::string id() const override { return "mistral"; }
@@ -51,20 +91,56 @@ class MistralProvider : public AI::AbstractProvider {
 
   bool allowMultiple() const override { return false; }
 
-  void start() override {}
+  void start() override {
+    listModels().then([this](const Result<ListModelsResponse> &res) {
+      if (!res) {
+        qWarning() << "Failed to fetch model list from mistral.ai" << res.error();
+        return;
+      }
+
+      m_models.reserve(res->data.size());
+
+      for (const auto &model : res->data) {
+        auto m = transformModel(model);
+
+        if (m.caps == 0) continue;
+
+        m_models.emplace_back(transformModel(model));
+      }
+    });
+  }
+
+  QFuture<Result<ListModelsResponse>> listModels() { return m_client.get<ListModelsResponse>("/models"); }
+
+  static Model transformModel(const ListModelsResponse::ModelInfo &info) {
+    Model model;
+    model.id = info.id;
+    model.name = info.name;
+    model.description = info.description;
+
+    if (info.capabilities.completion_chat) { model.caps |= Capability::Completion; }
+    if (info.capabilities.vision) { model.caps |= Capability::Vision; }
+    if (info.capabilities.function_calling) { model.caps |= Capability::ToolCalling; }
+    if (info.capabilities.audio_transcription) { model.caps |= Capability::Transcription; }
+
+    return model;
+  }
 
   std::optional<Model> findBestModel(Capabilities caps,
                                      Preference preference = Preference::None) const override {
-    if (caps == Capability::Transcription) {
-      return AI::Model{.id = "voxtral-mini-latest", .name = "voxtral", .caps = Capability::Transcription};
+    for (const auto &model : m_models) {
+      if (model.caps & caps) return model;
     }
+
     return std::nullopt;
   }
 
-  ModelList listModels(const ListModelFilters &filters = {}) const override {
-    AI::Model voxtral{.id = "voxtral-mini-latest", .name = "voxtral", .caps = Capability::Transcription};
+  ModelList listModels(const ListModelFilters &filters = {}) const override { return m_models; }
 
-    return {voxtral};
+  std::optional<Model> findModel(std::string_view id) {
+    for (const auto &model : m_models)
+      if (model.id == id) return model;
+    return std::nullopt;
   }
 
   QFuture<TranscriptionResult> transcribe(const std::filesystem::path &path,
@@ -109,5 +185,6 @@ public:
 
 private:
   http::Client m_client;
+  std::vector<Model> m_models;
 };
 }; // namespace AI
