@@ -114,8 +114,6 @@ class OllamaProvider : public AbstractProvider {
 
   std::string_view description() const override { return "Connect to a local or remote Ollama instance."; }
 
-  bool allowMultiple() const override { return true; }
-
   ModelList listModels(const ListModelFilters &filters = {}) const override {
     return m_models | std::views::transform([](const FullModelResponse &model) { return toModel(model); }) |
            std::ranges::to<std::vector>();
@@ -211,6 +209,10 @@ class OllamaProvider : public AbstractProvider {
         return "assistant";
       case AI::ChatRole::System:
         return "system";
+      case AI::ChatRole::Developer:
+        return "developer";
+      case AI::ChatRole::Tool:
+        return "tool";
       }
       return "none";
     };
@@ -248,8 +250,7 @@ class OllamaProvider : public AbstractProvider {
         QObjectDeleter{});
   }
 
-  QFuture<TranscriptionResult> transcribe(const std::filesystem::path &path,
-                                          const TranscriptionOptions &opts) override {
+  QFuture<TranscriptionResult> transcribe(QIODevice *device, const TranscriptionOptions &opts = {}) override {
     return QtFuture::makeReadyValueFuture<TranscriptionResult>(
         std::unexpected("Transcription is not supported"));
   }
