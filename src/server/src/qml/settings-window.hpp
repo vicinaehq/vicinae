@@ -62,12 +62,14 @@ signals:
   void currentPageChanged();
   void pendingCommandIdChanged();
   void sidebarExtensionsChanged();
+  void sidebarItemEnabledChanged(const QString &providerId, bool enabled);
   void defaultFocusRequested();
 
 private:
   void ensureInitialized();
   void updateBlur();
   void rebuildSidebarExtensions();
+  void updateSidebarEnabled(const QString &providerId, bool enabled);
 
   ApplicationContext &m_ctx;
   QQmlApplicationEngine m_engine;
