@@ -1,4 +1,5 @@
 #pragma once
+#include "glaze/glaze.hpp"
 #include <expected>
 #include <filesystem>
 #include "common/types.hpp"
@@ -9,6 +10,8 @@
 <<<<<<< HEAD
 =======
 #include <QStandardPaths>
+#include <glaze/json/prettify.hpp>
+#include <iostream>
 #include <qbitarray.h>
 #include <qbytearrayview.h>
 #include <qcontainerfwd.h>
@@ -276,6 +279,8 @@ public:
       qWarning() << std::format("failed to serialize request: {}", glz::format_error(error));
       return nullptr;
     }
+
+    std::cout << glz::prettify_json(buf) << std::endl;
 
     return new EventSource{networkManager()->post(req, buf.c_str())};
   }

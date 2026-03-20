@@ -1,19 +1,25 @@
 #pragma once
+#include "ai-tool.hpp"
 #include <cstdint>
 #include <expected>
 #include <glaze/core/common.hpp>
 #include <glaze/core/reflect.hpp>
+#include <glaze/json/prettify.hpp>
 #include <optional>
 #include <qdir.h>
 #include <qfuture.h>
 #include <qimage.h>
 #include <qobject.h>
 #include <qtmetamacros.h>
+#include <ranges>
 #include <string>
 #include <vector>
+#include "common/context.hpp"
 #include "common/qt.hpp"
 #include "http-client.hpp"
 #include "image-url.hpp"
+
+class AbstractTool;
 
 namespace AI {
 
@@ -102,7 +108,18 @@ struct ListModelFilters {
 class AbstractChatCompletionStream : public QObject {
   Q_OBJECT
 
+public:
+  struct ToolCallRequest {
+    std::string id;
+    std::string type;
+    struct {
+      std::string name;
+      glz::raw_json arguments;
+    } function;
+  };
+
 signals:
+  void toolCallRequested(const ToolCallRequest &request) const;
   void dataAdded(const std::string &text) const;
   void errorOccured(const std::string &reason) const;
   void finished() const;
@@ -140,6 +157,7 @@ struct ChatCompletionPayload {
   ThinkingMode thinking = ThinkingMode::Medium;
   ChatHistory messages;
   std::optional<float> temperature;
+  std::vector<AbstractTool *> tools;
 };
 
 struct TranscriptionOptions {
@@ -207,10 +225,10 @@ public:
 struct StandardChatCompletionPayload {
   std::string model;
   AI::ChatHistory messages;
+  std::vector<AbstractTool *> tools;
 };
 
 struct StandardChatCompletionRawPayload {
-
   struct Message {
     std::string role;
     std::string content;
@@ -240,6 +258,8 @@ struct StandardChatCompletionRawPayload {
 
     raw.model = payload.model;
     raw.messages.reserve(payload.messages.size());
+    raw.tools = payload.tools | std::views::transform([](AbstractTool *tool) { return tool->toolSchema(); }) |
+                std::ranges::to<std::vector>();
 
     for (const auto &p : payload.messages) {
       raw.messages.emplace_back(StandardChatCompletionRawPayload::Message::fromMessage(p));
@@ -249,15 +269,26 @@ struct StandardChatCompletionRawPayload {
 
   std::string model;
   std::vector<Message> messages;
+  std::vector<AbstractTool::ToolSchema> tools;
   bool stream = true;
 };
 
 struct StandardChatCompletionStreamChunk {
+  struct ToolCall {
+    std::string id;
+    struct {
+      std::string name;
+      std::string arguments;
+    } function;
+    int index;
+  };
+
   struct Choice {
     int index;
     struct {
       std::optional<std::string> role;
-      std::string content;
+      std::optional<std::string> content;
+      std::optional<std::vector<ToolCall>> tool_calls;
     } delta;
     std::optional<std::string> finish_reason;
   };
@@ -307,7 +338,22 @@ private:
       return;
     }
 
-    if (!chunk.choices.empty()) { emit dataAdded(chunk.choices.at(0).delta.content); }
+    std::cout << glz::prettify_json(data.toByteArray().toStdString()) << std::endl;
+
+    if (!chunk.choices.empty()) {
+      auto &choice = chunk.choices.at(0);
+
+      if (choice.finish_reason == "tool_calls" && choice.delta.tool_calls &&
+          !choice.delta.tool_calls->empty()) {
+        auto &call = choice.delta.tool_calls->at(0);
+        emit toolCallRequested(
+            ToolCallRequest{.id = call.id,
+                            .type = "function",
+                            .function = {.name = call.function.name, .arguments = call.function.arguments}});
+      } else if (choice.delta.content) {
+        emit dataAdded(choice.delta.content.value());
+      }
+    }
   }
 
   http::Client m_client;
