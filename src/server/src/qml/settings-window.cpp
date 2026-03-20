@@ -49,7 +49,7 @@ void SettingsWindow::ensureInitialized() {
   auto *manager = ServiceRegistry::instance()->rootItemManager();
   connect(manager, &RootItemManager::itemsChanged, this, &SettingsWindow::rebuildSidebarExtensions);
   connect(m_extensionModel, &ExtensionSettingsModel::providerEnabledChanged, this,
-          &SettingsWindow::rebuildSidebarExtensions);
+          &SettingsWindow::updateSidebarEnabled);
   rebuildSidebarExtensions();
 
   m_engine.load(QUrl(QStringLiteral("qrc:/Vicinae/SettingsWindow.qml")));
@@ -105,6 +105,18 @@ void SettingsWindow::rebuildSidebarExtensions() {
     m_sidebarExtensions.append(entry);
   }
   emit sidebarExtensionsChanged();
+}
+
+void SettingsWindow::updateSidebarEnabled(const QString &providerId, bool enabled) {
+  for (auto &ext : m_sidebarExtensions) {
+    auto map = ext.toMap();
+    if (map[QStringLiteral("providerId")].toString() == providerId) {
+      map[QStringLiteral("enabled")] = enabled;
+      ext = map;
+      break;
+    }
+  }
+  emit sidebarItemEnabledChanged(providerId, enabled);
 }
 
 QString SettingsWindow::version() const { return QStringLiteral(VICINAE_GIT_TAG); }

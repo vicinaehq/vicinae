@@ -141,7 +141,15 @@ Item {
 
                 readonly property bool _isHighlighted: index === root._highlightedListIndex()
                 readonly property string _pageId: modelData.id ?? ""
-                readonly property bool _isEnabled: modelData.enabled !== false
+                property bool _isEnabled: modelData.enabled !== false
+
+                Connections {
+                    target: settings
+                    function onSidebarItemEnabledChanged(providerId, enabled) {
+                        if (providerId === navItem._pageId)
+                            navItem._isEnabled = enabled;
+                    }
+                }
 
                 Rectangle {
                     visible: navItem.modelData._kind === "divider"

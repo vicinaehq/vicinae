@@ -38,6 +38,18 @@ Item {
 
     property string expandedCommandId: ""
 
+    SettingsToggle {
+        id: enableToggle
+        visible: root.extModel.selectedIsProvider
+        checked: root.extModel.selectedEnabled
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.topMargin: 12
+        anchors.rightMargin: 20
+        z: 1
+        onToggled: root.extModel.setEnabled(root.extModel.selectedRow, checked)
+    }
+
     Flickable {
         id: cmdFlickable
         anchors.fill: parent
@@ -103,51 +115,6 @@ Item {
                     Layout.fillWidth: true
                 }
 
-                Item {
-                    visible: root.extModel.selectedIsProvider
-                    Layout.fillWidth: true
-                    Layout.topMargin: 4
-                    implicitHeight: enableToggle.height
-
-                    Item {
-                        id: enableToggle
-                        property bool checked: root.extModel.selectedEnabled
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        width: 36
-                        height: 20
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: 10
-                            color: enableToggle.checked ? Theme.accent : Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.2)
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: 120
-                                }
-                            }
-
-                            Rectangle {
-                                width: 16
-                                height: 16
-                                radius: 8
-                                x: enableToggle.checked ? parent.width - width - 2 : 2
-                                anchors.verticalCenter: parent.verticalCenter
-                                color: "#ffffff"
-                                Behavior on x {
-                                    NumberAnimation {
-                                        duration: 120
-                                    }
-                                }
-                            }
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.extModel.setEnabled(root.extModel.selectedRow, !enableToggle.checked)
-                        }
-                    }
-                }
             }
 
             Item {
