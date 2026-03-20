@@ -75,9 +75,11 @@ class MistralProvider : public AI::AbstractProvider {
 
   std::shared_ptr<AbstractChatCompletionStream>
   createChatCompletion(std::string_view modelId, const ChatCompletionPayload &payload) override {
+    qDebug() << "model ID" << modelId;
     StandardChatCompletionPayload p;
     p.model = modelId;
     p.messages = payload.messages;
+    p.tools = payload.tools;
     return StandardChatCompletionStream::makeShared(m_client, p);
   }
 
