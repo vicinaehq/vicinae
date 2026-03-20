@@ -451,6 +451,7 @@ set(SRCS
 	src/services/ai/ai-config.hpp
 	src/services/ai/ai-provider-registry.hpp
 	src/services/ai/ai-provider-registry.cpp
+	src/services/ai/agentic-loop.hpp
 
 	src/qml/quick-ai-view-host.hpp
 	src/qml/quick-ai-view-host.cpp

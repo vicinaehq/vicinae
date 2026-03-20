@@ -1,6 +1,8 @@
 #include "config/config.hpp"
 #include "environment.hpp"
+#include "services/ai/ai-tool.hpp"
 #include <QStyleHints>
+#include "services/ai/agentic-loop.hpp"
 #include "extension/extension.hpp"
 #include "root-search/browser-tabs/browser-tabs-provider.hpp"
 #include "root-search/scripts/script-root-provider.hpp"
@@ -72,6 +74,7 @@
 #include <QGuiApplication>
 #include <QQuickWindow>
 #include <QString>
+#include <glaze/json/prettify.hpp>
 #include <iostream>
 #include <qlockfile.h>
 #include <qlogging.h>
@@ -397,8 +400,18 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
   QIcon::setFallbackSearchPaths(Environment::fallbackIconSearchPaths());
 
+  AI::GenerateFunFact tool;
+
+  std::cout << "tool" << glz::prettify_json(tool.generateSchema()) << std::endl;
+
   auto builtinFont = ServiceRegistry::instance()->fontService()->builtinFontFamily();
   if (!builtinFont.isEmpty()) QGuiApplication::setFont(QFont(builtinFont));
+
+  QTimer::singleShot(2000, [&ctx]() {
+    auto agent = new AI::AgenticLoop(ctx);
+    qDebug() << "agent setup";
+    agent->addMessage("Tell me a fun fact about apples");
+  });
 
   configChanged(cfgService->value(), {});
 
