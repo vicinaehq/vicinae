@@ -529,6 +529,7 @@ set(SRCS
 	src/services/ai/ai-config.hpp
 	src/services/ai/ai-provider-registry.hpp
 	src/services/ai/ai-provider-registry.cpp
+	src/services/ai/agentic-loop.hpp
 
 	# UI
 	src/ui/bridges/keybind-bridge.hpp
