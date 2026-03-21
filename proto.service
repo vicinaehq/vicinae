@@ -1,0 +1,40 @@
+enum Flavor {
+	Strawberry,
+	Vanilla,
+	Orange,
+	Chocolate
+};
+
+struct Point {
+	x: number;
+	y: number;
+};
+
+struct Stats {
+	start: Point;
+	end: Point;
+}
+
+service Maths {
+	fn add(x: number, y: number) => number[];
+	fn mul(x: number, y: number) => Point;
+	fn distance(a: Point, b: Point) => number;
+	fn mulPoints(a: Point, b: Point) => Point;
+}
+
+struct IceCream {
+	flavor: Flavor;
+	price: number;
+};
+
+service Beach {
+	fn orderIceCream(flavor: Flavor) => IceCream;
+};
+
+struct AskResponse {
+	result: string;
+};
+
+service AI {
+	fn ask(prompt: string) => AskResponse;
+};
