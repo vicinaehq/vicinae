@@ -12,6 +12,7 @@ enum class TokenType {
   Method,
   Enum,
   Struct,
+  Event,
   Colon,
   Arrow,
   LParen,
@@ -50,6 +51,8 @@ struct Token {
       return "Enum";
     case T::Struct:
       return "Type";
+    case T::Event:
+      return "Event";
     case T::Colon:
       return "Colon";
     case T::Arrow:
@@ -90,6 +93,7 @@ public:
     if (word == "struct") { return Token(T::Struct); }
     if (word == "enum") { return Token(T::Enum); }
     if (word == "service") { return Token(T::Service); }
+    if (word == "event") { return Token(T::Event); }
     if (word == "fn") { return Token(T::Method); }
     if (word == "=>") { return Token(T::Arrow); }
     if (word == "(") { return Token(T::LParen); }
@@ -107,15 +111,15 @@ public:
     return {};
   }
 
-  std::optional<Token> peak() {
-    size_t tmp = cursor;
-    auto tok = getNext();
-    cursor = tmp;
-    return tok;
-  }
+  std::optional<Token> peak() { return m_current; }
 
   std::optional<Token> getNext() {
-    enum { Reset, Operator, Word } state = Reset;
+    m_current = getNextImpl();
+    return m_current;
+  }
+
+  std::optional<Token> getNextImpl() {
+    enum { Reset, Operator, Word, ForwardSlash, SingleLineComment } state = Reset;
     size_t start = 0;
 
     while (cursor < m_data.size()) {
@@ -127,6 +131,11 @@ public:
         if (std::isalnum(c)) {
           state = Word;
           start = cursor;
+          break;
+        }
+
+        else if (c == '/') {
+          state = ForwardSlash;
           break;
         } else if (!std::isspace(c)) {
           if (c == '{') {
@@ -160,6 +169,12 @@ public:
 
         break;
       }
+      case ForwardSlash:
+        if (c == '/') { state = SingleLineComment; }
+        break;
+      case SingleLineComment:
+        if (c == '\n') { state = Reset; }
+        break;
       case Operator: {
         if (std::isalnum(c) || std::isspace(c)) {
           if (start != cursor) {
@@ -197,6 +212,7 @@ public:
   }
 
 private:
+  std::optional<Token> m_current;
   std::string_view m_data;
   size_t cursor = 0;
 };

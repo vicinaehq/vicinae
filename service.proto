@@ -1,0 +1,65 @@
+// C-style Single line comments can appear anywhere
+// We do NOT support multiline comments
+
+enum Flavor {
+	Strawberry, // on the same line is okay too
+	Vanilla,
+	Orange,
+	Chocolate
+};
+
+struct Point {
+	x: number;
+	y: number;
+};
+
+struct Stats {
+	start: Point;
+	end: Point;
+}
+
+// we only support one dimensional arrays for now
+
+service Maths {
+	fn add(x: number, y: number) => number[];
+    fn mul(x: number, y: number) => Point;
+	fn distance(a: Point, b: Point) => number;
+	fn mulPoints(a: Point, b: Point) => Point;
+}
+
+struct IceCream {
+	flavor: Flavor;
+	price: number;
+};
+
+service Beach {
+	fn orderIceCream(flavor: Flavor) => IceCream;
+};
+
+
+service Fucker {
+  fn sayFuck(fuck: string, comment: string) => string;
+};
+
+struct AskResponse {
+	result: string;
+};
+
+
+service EventCore {
+  event handlerActivated(id: string);
+};
+
+service UI {
+  fn render(json: string) => number;
+};
+
+service AI {
+	fn ask(prompt: string) => AskResponse;
+};
+
+service ApiClipboard {
+  event clipboardChanged();
+  fn readText() => string;
+  fn paste(text: string) => string;
+};
