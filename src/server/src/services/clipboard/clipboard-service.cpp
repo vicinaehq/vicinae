@@ -321,7 +321,10 @@ ClipboardSelection &ClipboardService::sanitizeSelection(ClipboardSelection &sele
   std::ranges::sort(selection.offers, [](auto &&a, auto &&b) {
     return std::ranges::lexicographical_compare(a.mimeType, b.mimeType);
   });
-  std::ranges::unique(selection.offers, [](auto &&a, auto &&b) { return a.mimeType == b.mimeType; });
+  const auto [first, last] =
+      std::ranges::unique(selection.offers, [](auto &&a, auto &&b) { return a.mimeType == b.mimeType; });
+
+  selection.offers.erase(first, last);
 
   return selection;
 }
