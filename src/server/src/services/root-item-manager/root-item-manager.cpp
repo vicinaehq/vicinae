@@ -8,6 +8,7 @@
 #include "lib/fzf.hpp"
 #include "config/config.hpp"
 #include "services/local-storage/local-storage-service.hpp"
+#include "utils.hpp"
 #include "vicinae.hpp"
 
 RootItemManager::RootItemManager(config::Manager &cfg, LocalStorageService &storage)
@@ -104,15 +105,15 @@ void RootItemManager::updateIndex() {
     auto items = provider->loadItems();
 
     for (const auto &item : items) {
+      // we build data ready to be searched on once during indexing, so that
+      // subsequent searches are not affected by useless conversions/copies.
       SearchableRootItem sitem;
       auto id = item->uniqueId();
 
       sitem.item = item;
-      sitem.title = item->displayName().toStdString();
+      sitem.title = item->title().toStdString();
       sitem.subtitle = item->subtitle().toStdString();
-      sitem.keywords = item->keywords() | std::views::transform([](auto &&s) { return s.toStdString(); }) |
-                       std::ranges::to<std::vector>();
-
+      sitem.keywords = Utils::toStdStringVec(item->keywords());
       sitem.meta = &m_metadata[id];
       sitem.meta->item = item;
 

@@ -16,7 +16,7 @@
 #include <ranges>
 
 class ScriptRootItem : public RootItem {
-  QString displayName() const override { return m_file->data().title.c_str(); }
+  QString title() const override { return m_file->data().title.c_str(); }
 
   QString subtitle() const override { return m_file->packageName().c_str(); }
 

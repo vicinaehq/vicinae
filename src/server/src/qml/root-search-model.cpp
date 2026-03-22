@@ -250,7 +250,7 @@ QVariant RootSearchModel::data(const QModelIndex &index, int role) const {
     if (!item) return {};
     switch (role) {
     case Title:
-      return item->displayName();
+      return item->title();
     case Subtitle:
       return item->subtitle();
     case IconSource:
@@ -278,7 +278,7 @@ QVariant RootSearchModel::data(const QModelIndex &index, int role) const {
     if (!item) return {};
     switch (role) {
     case Title:
-      return item->displayName();
+      return item->title();
     case Subtitle:
       return item->subtitle();
     case IconSource:
@@ -306,7 +306,7 @@ QVariant RootSearchModel::data(const QModelIndex &index, int role) const {
     if (!item) return {};
     switch (role) {
     case Title:
-      return item->displayName();
+      return item->title();
     case Subtitle:
       return item->subtitle();
     case IconSource:

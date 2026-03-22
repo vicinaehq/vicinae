@@ -13,7 +13,7 @@ void ProviderSearchModel::setItems(std::vector<RootItemManager::ScoredItem> item
 
 const RootItem *ProviderSearchModel::itemAt(int item) const { return m_items.at(item).item.get().get(); }
 
-QString ProviderSearchModel::itemTitle(int, int i) const { return itemAt(i)->displayName(); }
+QString ProviderSearchModel::itemTitle(int, int i) const { return itemAt(i)->title(); }
 
 QString ProviderSearchModel::itemSubtitle(int, int i) const { return itemAt(i)->subtitle(); }
 

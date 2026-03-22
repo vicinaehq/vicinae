@@ -305,7 +305,7 @@ void ExtensionSettingsModel::rebuild(const QString &filter) {
     for (const auto &item : items) {
       auto metadata = manager->itemMetadata(item->uniqueId());
       Entry ie;
-      ie.name = item->displayName();
+      ie.name = item->title();
       ie.type = item->typeDisplayName();
       ie.iconSource = qml::imageSourceFor(item->iconUrl());
       ie.isProvider = false;

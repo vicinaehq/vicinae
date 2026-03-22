@@ -66,7 +66,7 @@ EntrypointId RootShortcutItem::uniqueId() const {
   return EntrypointId{"shortcuts", m_link->id().toStdString()};
 }
 
-QString RootShortcutItem::displayName() const { return m_link->name(); }
+QString RootShortcutItem::title() const { return m_link->name(); }
 
 double RootShortcutItem::baseScoreWeight() const { return 1.4; }
 

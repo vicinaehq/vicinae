@@ -6,7 +6,7 @@ using BrowserTab = BrowserExtensionService::BrowserTab;
 
 template <> struct fuzzy::FuzzySearchable<BrowserTab> {
   static int score(const BrowserTab &tab, std::string_view query) {
-    return fuzzy::scoreWeighted({{tab.title, 1.0}, {tab.url, 0.7}}, query);
+    return fuzzy::scoreWeighted({{tab.url, 1.0}, {tab.title, 0.6}}, query);
   }
 };
 

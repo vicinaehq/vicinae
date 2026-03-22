@@ -23,7 +23,7 @@
 #include <qhash.h>
 #include <qtmetamacros.h>
 
-class RootItemMetadata;
+struct RootItemMetadata;
 class ExtensionRootProvider;
 
 struct RootItemPrefixSearchOptions {
@@ -52,7 +52,7 @@ public:
    *
    * Note that camel case names are indexed as multiple tokens and not a single word.
    */
-  virtual QString displayName() const = 0;
+  virtual QString title() const = 0;
 
   virtual ImageURL iconUrl() const = 0;
 
@@ -148,7 +148,7 @@ public:
   };
 
   RootProvider() = default;
-  virtual ~RootProvider() = default;
+  ~RootProvider() override = default;
 
   /**
    * A provider flagged as transient will not list its items in the settings window

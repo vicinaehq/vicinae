@@ -6,7 +6,7 @@
 class RootShortcutItem : public RootItem {
   std::shared_ptr<Shortcut> m_link;
 
-  QString displayName() const override;
+  QString title() const override;
   double baseScoreWeight() const override;
   AccessoryList accessories() const override;
   bool isSuitableForFallback() const override;
