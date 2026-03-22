@@ -1,5 +1,7 @@
 CompileFlags:
   CompilationDatabase: build
+  Remove:
+    - -mno-direct-extern-access
 
 Diagnostics:
   ClangTidy:
