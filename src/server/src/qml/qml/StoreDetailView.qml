@@ -539,4 +539,14 @@ Item {
     ImageViewer {
         id: _imageViewer
     }
+
+    Connections {
+        target: Nav
+        function onWindowVisiblityChanged(visible) {
+            if (!visible)
+                _imageViewer.close();
+        }
+    }
+
+    Component.onDestruction: _imageViewer.close()
 }
