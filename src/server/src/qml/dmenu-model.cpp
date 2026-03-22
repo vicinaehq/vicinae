@@ -5,6 +5,7 @@
 #include "service-registry.hpp"
 #include "template-engine/template-engine.hpp"
 #include "ui/action-pannel/action.hpp"
+#include "utils/utils.hpp"
 #include <algorithm>
 #include <filesystem>
 #include <ranges>
@@ -57,12 +58,21 @@ std::string_view DMenuModel::entryAt(int section, int item) const {
 QString DMenuModel::itemTitle(int section, int item) const {
   auto entry = entryAt(section, item);
   if (entry.starts_with('/')) {
-    auto pos = entry.rfind('/');
-    if (pos != std::string_view::npos && pos + 1 < entry.size()) {
-      return QString::fromUtf8(entry.substr(pos + 1));
-    }
+    return QString::fromStdString(getLastPathComponent(std::filesystem::path(entry)));
   }
   return QString::fromUtf8(entry.data(), entry.size());
+}
+
+QString DMenuModel::itemSubtitle(int section, int item) const {
+  if (!m_noQuickLook) return {};
+  auto entry = entryAt(section, item);
+  if (entry.starts_with('/')) {
+    std::error_code ec;
+    if (std::filesystem::exists(entry, ec)) {
+      return QString::fromUtf8(std::filesystem::path(entry).parent_path().native());
+    }
+  }
+  return {};
 }
 
 QString DMenuModel::itemIconSource(int section, int item) const {

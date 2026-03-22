@@ -27,6 +27,7 @@ void DMenuViewHost::initialize() {
   m_model->setScope(ViewScope(context(), this));
   m_model->initialize();
 
+  if (m_data.noQuickLook) m_model->setNoQuickLook(true);
   if (m_data.noSection) m_model->setNoSection(true);
   if (m_data.sectionTitle) m_model->setSectionTemplate(*m_data.sectionTitle);
   if (m_data.noFooter) setStatusBarVisiblity(false);
