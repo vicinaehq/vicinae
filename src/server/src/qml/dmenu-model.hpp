@@ -15,10 +15,12 @@ public:
   void setRawEntries(std::vector<std::string_view> entries);
   void setSectionTemplate(std::string_view tpl) { m_sectionTemplate = tpl; }
   void setNoSection(bool v) { m_noSection = v; }
+  void setNoQuickLook(bool v) { m_noQuickLook = v; }
   void setFilter(const QString &text) override;
 
 protected:
   QString itemTitle(int section, int item) const override;
+  QString itemSubtitle(int section, int item) const override;
   QString itemIconSource(int section, int item) const override;
   std::unique_ptr<ActionPanelState> createActionPanel(int section, int item) const override;
   void onItemSelected(int section, int item) override;
@@ -35,4 +37,5 @@ private:
   std::string_view m_sectionTemplate = "Entries ({count})";
   QString m_currentSearchText;
   bool m_noSection = false;
+  bool m_noQuickLook = false;
 };

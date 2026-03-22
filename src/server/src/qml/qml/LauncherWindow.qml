@@ -31,7 +31,7 @@ Window {
     Item {
         visible: !launcher.compacted
         anchors.fill: parent
-        anchors.bottomMargin: launcher.hasOverlay ? 0 : footer.height + Config.borderWidth
+        anchors.bottomMargin: launcher.hasOverlay || !launcher.statusBarVisible ? 0 : footer.height + Config.borderWidth
         clip: true
 
         Rectangle {
