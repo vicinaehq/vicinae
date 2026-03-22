@@ -15,9 +15,11 @@ class BrowserTabRootItem : public RootItem {
 
   QString typeDisplayName() const override { return "Browser Tab"; }
 
-  QString displayName() const override { return m_tab.title.c_str(); }
+  QString title() const override { return m_tab.host(); }
 
-  QString subtitle() const override { return ""; }
+  QString subtitle() const override { return m_tab.title.c_str(); }
+
+  std::vector<QString> keywords() const override { return {m_tab.url.c_str()}; }
 
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx,
                                                    const RootItemMetadata &metadata) const override {
@@ -35,8 +37,6 @@ class BrowserTabRootItem : public RootItem {
   EntrypointId uniqueId() const override { return EntrypointId("browser-tabs", m_tab.uniqueId()); }
 
   ImageURL iconUrl() const override { return m_tab.icon(); }
-
-  std::vector<QString> keywords() const override { return {m_tab.url.c_str()}; }
 
   bool isActive() const override { return m_tab.active; }
 

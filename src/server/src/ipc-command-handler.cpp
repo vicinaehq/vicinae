@@ -42,6 +42,7 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
   // Command may be in host (raycast://) or as first part of path (com.raycast:/)
   QString command = url.host();
   QString path = url.path();
+
   if (command.isEmpty() && !path.isEmpty()) {
     QStringList const pathParts = path.split('/', Qt::SkipEmptyParts);
     command = pathParts.at(0);
@@ -119,7 +120,10 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
     }
 
     auto root = m_ctx.services->rootItemManager();
+
     std::string str = path.sliced(1).toStdString();
+
+    if (str.ends_with('/')) { str.erase(str.end() - 1); }
 
     // if the string directly matches a provider, we show a search view
     // for that provider only.

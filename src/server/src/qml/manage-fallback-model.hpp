@@ -6,7 +6,7 @@ using RootItemPtr = std::shared_ptr<RootItem>;
 
 template <> struct fuzzy::FuzzySearchable<RootItemPtr> {
   static int score(const RootItemPtr &item, std::string_view query) {
-    auto name = item->displayName().toStdString();
+    auto name = item->title().toStdString();
     int best = fuzzy::scoreWeighted({{name, 1.0}}, query);
     for (const auto &kw : item->keywords()) {
       auto s = kw.toStdString();

@@ -24,6 +24,14 @@ public:
 
     std::string uniqueId() const { return std::format("{}-{}", browserId, id); }
 
+    QString host() const {
+      QUrl qurl(url.c_str());
+      if (!qurl.isValid()) return QString::fromStdString(url);
+      QString h = qurl.host();
+      if (h.startsWith("www.")) h.remove(0, 4);
+      return h;
+    }
+
     ImageURL icon() const {
       if (QUrl qurl = QUrl(url.c_str());
           qurl.isValid() && std::ranges::contains(std::initializer_list{"https", "http"}, qurl.scheme())) {

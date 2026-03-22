@@ -9,7 +9,7 @@ class AppRootItem : public RootItem {
 
   double baseScoreWeight() const override;
   QString typeDisplayName() const override;
-  QString displayName() const override;
+  QString title() const override;
   QString subtitle() const override;
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx,
                                                    const RootItemMetadata &metadata) const override;

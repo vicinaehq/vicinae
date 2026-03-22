@@ -9,7 +9,7 @@
 #include "navigation-controller.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 
-QString CommandRootItem::displayName() const { return m_command->name(); }
+QString CommandRootItem::title() const { return m_command->name(); }
 
 QString CommandRootItem::subtitle() const {
   // Display overriden subtitle if set

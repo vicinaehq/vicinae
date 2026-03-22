@@ -1,12 +1,10 @@
 #include "browser-tabs-model.hpp"
 #include "actions/browser-tab-actions.hpp"
 
-QString BrowserTabsModel::displayTitle(const BrowserTab &tab) const {
-  return QString::fromStdString(tab.title);
-}
+QString BrowserTabsModel::displayTitle(const BrowserTab &tab) const { return tab.host(); }
 
 QString BrowserTabsModel::displaySubtitle(const BrowserTab &tab) const {
-  return QString::fromStdString(tab.url);
+  return QString::fromStdString(tab.title);
 }
 
 QString BrowserTabsModel::displayIconSource(const BrowserTab &tab) const {

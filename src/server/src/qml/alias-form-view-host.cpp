@@ -25,7 +25,7 @@ void AliasFormViewHost::initialize() {
   m_alias = QString::fromStdString(meta.alias.value_or(""));
   emit formChanged();
 
-  setNavigationTitle(QString("Set alias - %1").arg(meta.item->displayName()));
+  setNavigationTitle(QString("Set alias - %1").arg(meta.item->title()));
   setNavigationIcon(meta.item->iconUrl());
 
   auto panel = std::make_unique<FormActionPanelState>();

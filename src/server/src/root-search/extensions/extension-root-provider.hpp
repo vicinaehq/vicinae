@@ -8,7 +8,7 @@ class CommandRootItem : public RootItem {
   std::shared_ptr<AbstractCmd> m_command;
 
 public:
-  QString displayName() const override;
+  QString title() const override;
   QString subtitle() const override;
   ImageURL iconUrl() const override;
   ArgumentList arguments() const override;

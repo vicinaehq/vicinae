@@ -29,7 +29,7 @@ std::vector<QString> AppRootItem::keywords() const {
 
 QString AppRootItem::subtitle() const { return QString(); }
 
-QString AppRootItem::displayName() const { return m_app->displayName(); }
+QString AppRootItem::title() const { return m_app->displayName(); }
 
 QString AppRootItem::settingsDescription() const { return m_app->description(); }
 
