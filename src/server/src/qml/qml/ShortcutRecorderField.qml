@@ -44,7 +44,7 @@ Popup {
 
     background: Rectangle {
         radius: 8
-        color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, Config.windowOpacity)
+        color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, Theme.surfaceOpacity)
         border.color: Theme.divider
         border.width: 1
     }

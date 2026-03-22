@@ -57,7 +57,7 @@ Window {
                         width: 24
                         height: 24
                         radius: 12
-                        color: closeHover.hovered ? Theme.listItemHoverBg : "transparent"
+                        color: closeHover.hovered ? Qt.rgba(Theme.listItemHoverBg.r, Theme.listItemHoverBg.g, Theme.listItemHoverBg.b, Config.windowOpacity) : "transparent"
 
                         Text {
                             anchors.centerIn: parent

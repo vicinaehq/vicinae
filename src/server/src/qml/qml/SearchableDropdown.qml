@@ -134,7 +134,7 @@ Item {
         width: compact ? root.width : implicitWidth
         height: compact ? 28 : implicitHeight
         radius: compact ? 6 : 8
-        color: buttonMouseArea.containsMouse ? Theme.listItemHoverBg : Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, Config.windowOpacity)
+        color: buttonMouseArea.containsMouse ? Theme.listItemHoverBg : Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, Theme.surfaceOpacity)
         border.color: root.hasError ? Theme.inputBorderError : (root.activeFocus || dropdownPopup.visible ? Theme.inputBorderFocus : (compact ? Theme.divider : Theme.inputBorder))
         border.width: 1
 
@@ -214,7 +214,7 @@ Item {
                 Layout.preferredHeight: 28
                 Layout.bottomMargin: 4
                 radius: 6
-                color: Theme.secondaryBackground
+                color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, Theme.surfaceOpacity)
 
                 RowLayout {
                     anchors.fill: parent

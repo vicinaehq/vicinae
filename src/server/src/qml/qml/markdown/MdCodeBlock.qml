@@ -18,7 +18,7 @@ Rectangle {
     width: parent?.width ?? 0
     implicitHeight: col.implicitHeight
     radius: 6
-    color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, 0.6)
+    color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, Theme.surfaceOpacity)
     border.width: 1
     border.color: Theme.divider
 

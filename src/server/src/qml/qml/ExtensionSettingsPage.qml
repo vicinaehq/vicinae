@@ -256,10 +256,11 @@ Item {
 
                     readonly property bool isExpanded: root.expandedCommandId === entrypointId
 
-                    Rectangle {
+                    SourceBlendRect {
                         width: parent.width
                         height: cmdRow.implicitHeight + 16
-                        color: cmdHover.hovered ? Theme.listItemHoverBg : "transparent"
+                        backgroundColor: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
+                        color: cmdHover.hovered ? Qt.rgba(Theme.listItemHoverBg.r, Theme.listItemHoverBg.g, Theme.listItemHoverBg.b, Config.windowOpacity) : Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
 
                         HoverHandler {
                             id: cmdHover

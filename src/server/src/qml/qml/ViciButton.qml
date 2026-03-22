@@ -24,7 +24,7 @@ Rectangle {
     radius: 6
 
     function _applyTranslucency(c) {
-        return root.translucent ? Qt.rgba(c.r, c.g, c.b, 0.6) : c;
+        return root.translucent ? Qt.rgba(c.r, c.g, c.b, Theme.surfaceOpacity) : c;
     }
 
     color: {
