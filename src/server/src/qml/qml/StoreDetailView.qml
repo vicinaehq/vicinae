@@ -323,7 +323,7 @@ Item {
                             MouseArea {
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: root.host.openScreenshot(index)
+                                onClicked: _imageViewer.showImage(index, root.host.screenshots)
                             }
                         }
                     }
@@ -534,5 +534,9 @@ Item {
                 }
             }
         }
+    }
+
+    ImageViewer {
+        id: _imageViewer
     }
 }

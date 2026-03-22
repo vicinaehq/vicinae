@@ -730,6 +730,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/AlertBanner.qml
 	src/qml/qml/StoreDetailView.qml
 	src/qml/qml/StoreIntroView.qml
+	src/qml/qml/ImageViewer.qml
 	src/qml/qml/markdown/MarkdownView.qml
 	src/qml/qml/markdown/MarkdownText.qml
 	src/qml/qml/markdown/MdHeading.qml

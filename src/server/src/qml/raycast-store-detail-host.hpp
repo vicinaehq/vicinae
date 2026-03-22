@@ -54,7 +54,6 @@ public:
   QVariantMap alert() const;
 
   Q_INVOKABLE void openUrl(const QString &url);
-  Q_INVOKABLE void openScreenshot(int index);
 
 private:
   QString initialNavigationTitle() const override;

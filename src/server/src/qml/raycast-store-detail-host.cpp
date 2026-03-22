@@ -158,13 +158,6 @@ void RaycastStoreDetailHost::openUrl(const QString &url) {
   ServiceRegistry::instance()->appDb()->openTarget(url);
 }
 
-void RaycastStoreDetailHost::openScreenshot(int index) {
-  auto urls = m_ext.screenshots();
-  if (index < 0 || std::cmp_greater_equal(index, urls.size())) return;
-
-  ServiceRegistry::instance()->appDb()->openTarget(urls[index].toString());
-}
-
 QString RaycastStoreDetailHost::initialNavigationTitle() const {
   return QString("%1 - %2").arg(BaseView::initialNavigationTitle()).arg(m_ext.title);
 }
