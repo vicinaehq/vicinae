@@ -24,6 +24,9 @@ class ThemeBridge : public QObject {
   Q_PROPERTY(QColor divider READ divider NOTIFY changed)
   Q_PROPERTY(QColor secondaryBackground READ secondaryBackground NOTIFY changed)
   Q_PROPERTY(QColor listItemSelectionFg READ listItemSelectionFg NOTIFY changed)
+  Q_PROPERTY(QColor listItemHoverFg READ listItemHoverFg NOTIFY changed)
+  Q_PROPERTY(QColor listItemSecondarySelectionFg READ listItemSecondarySelectionFg NOTIFY changed)
+  Q_PROPERTY(QColor listItemSecondaryHoverFg READ listItemSecondaryHoverFg NOTIFY changed)
   Q_PROPERTY(QColor scrollBarBackground READ scrollBarBackground NOTIFY changed)
   Q_PROPERTY(QColor gridItemBackground READ gridItemBackground NOTIFY changed)
   Q_PROPERTY(QColor gridItemSelectionOutline READ gridItemSelectionOutline NOTIFY changed)
@@ -61,6 +64,11 @@ public:
   QColor listItemSelectionBg() const { return resolve(SemanticColor::ListItemSelectionBackground); }
   QColor listItemSelectionFg() const { return resolve(SemanticColor::ListItemSelectionForeground); }
   QColor listItemHoverBg() const { return resolve(SemanticColor::ListItemHoverBackground); }
+  QColor listItemHoverFg() const { return resolve(SemanticColor::ListItemHoverForegroud); }
+  QColor listItemSecondarySelectionFg() const {
+    return resolve(SemanticColor::ListItemSecondarySelectionForeground);
+  }
+  QColor listItemSecondaryHoverFg() const { return resolve(SemanticColor::ListItemSecondaryHoverForeground); }
   QColor accent() const { return resolve(SemanticColor::Accent); }
   QColor statusBarBackground() const { return resolve(SemanticColor::StatusBarBackground); }
   QColor mainWindowBorder() const { return resolve(SemanticColor::MainWindowBorder); }

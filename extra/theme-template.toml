@@ -63,6 +63,10 @@ foreground = "#e8e6e1"
 hover = { background = "#bb2e2e2e" }
 focus = { outline = "colors.core.accent" }
 
+[colors.list.item.hover]
+foreground = "#e8e6e1"
+secondary_foreground = "#e8e6e1"
+
 [colors.list.item.selection]
 background = "#2e2e2e"
 foreground = "#e8e6e1"

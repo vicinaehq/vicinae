@@ -59,7 +59,7 @@ SelectableDelegate {
                 anchors.verticalCenter: parent.verticalCenter
                 width: Math.min(implicitWidth, textRow.availableForText - textRow.subtitleReserved)
                 text: root.itemTitle
-                color: root.selected ? Theme.listItemSelectionFg : Theme.foreground
+                color: root.selected ? Theme.listItemSelectionFg : root.hovered ? Theme.listItemHoverFg : Theme.foreground
                 font.pointSize: Theme.regularFontSize
                 elide: Text.ElideRight
                 maximumLineCount: 1
@@ -73,7 +73,7 @@ SelectableDelegate {
                 anchors.verticalCenter: parent.verticalCenter
                 width: Math.min(implicitWidth, Math.max(0, textRow.availableForText - titleText.width - textRow.spacing))
                 text: root.itemSubtitle
-                color: Theme.textMuted
+                color: root.selected ? Theme.listItemSecondarySelectionFg : root.hovered ? Theme.listItemSecondaryHoverFg : Theme.textMuted
                 font.pointSize: Theme.smallerFontSize
                 elide: Text.ElideRight
                 maximumLineCount: 1

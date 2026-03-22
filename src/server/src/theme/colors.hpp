@@ -30,6 +30,7 @@ enum SemanticColor : std::uint8_t {
   ListItemHoverBackground,
   ListItemHoverForegroud,
   ListItemSecondaryHoverBackground,
+  ListItemSecondaryHoverForeground,
   ListItemSecondarySelectionBackground,
   ListItemSecondarySelectionForeground,
 
