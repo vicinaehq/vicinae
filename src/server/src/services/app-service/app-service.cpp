@@ -163,8 +163,10 @@ bool AppService::reinstallWatches(const std::vector<fs::path> &paths) {
 }
 
 bool AppService::scanSync() {
-  bool const result = m_provider->scan(mergedPaths());
+  auto paths = mergedPaths();
+  bool const result = m_provider->scan(paths);
 
+  reinstallWatches(paths);
   emit appsChanged();
 
   return result;

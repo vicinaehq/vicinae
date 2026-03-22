@@ -87,7 +87,7 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
 
   std::set<std::string> seen;
 
-  for (const auto &dir : xdgpp::appDirs()) {
+  for (const auto &dir : paths) {
     std::error_code ec;
 
     for (const auto &entry : fs::recursive_directory_iterator(dir, ec)) {
