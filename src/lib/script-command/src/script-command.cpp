@@ -270,6 +270,17 @@ std::expected<ScriptCommand, std::string> ScriptCommand::parse(std::string_view 
           return std::unexpected(std::format("Failed to parse exec: {}", glz::format_error(error)));
         }
       }
+      if (kv->k == "terminal") {
+        if (kv->scope != "@vicinae") {
+          return std::unexpected("terminal field is only supported in @vicinae scope");
+        }
+        TerminalOptions termOpts;
+        std::string buf{kv->v};
+        if (auto error = glz::read_json(termOpts, buf)) {
+          return std::unexpected(std::format("Failed to parse terminal: {}", glz::format_error(error)));
+        }
+        data.terminal = std::move(termOpts);
+      }
 
       for (const char *argKey : {"argument1", "argument2", "argument3"}) {
         if (kv->k == argKey) {
