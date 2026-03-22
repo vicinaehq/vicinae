@@ -143,6 +143,7 @@ Item {
 
                                 Text {
                                     text: delegateLoader.title
+                                    textFormat: Text.PlainText
                                     color: itemDelegate.selected ? Theme.listItemSelectionFg : Theme.foreground
                                     font.pointSize: Theme.regularFontSize
                                     elide: Text.ElideRight
