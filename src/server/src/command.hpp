@@ -1,7 +1,6 @@
 #pragma once
 #include "argument.hpp"
 #include "common.hpp"
-#include "vicinae.hpp"
 #include "preference.hpp"
 #include "ui/action-pannel/action.hpp"
 #include <endian.h>
@@ -10,7 +9,7 @@
 #include "common/entrypoint.hpp"
 
 class View;
-class LaunchProps;
+struct LaunchProps;
 
 class AbstractCmd {
 public:
@@ -41,14 +40,6 @@ public:
   virtual ImageURL navigationIcon() const { return iconUrl(); }
 
   virtual bool isDefaultDisabled() const { return false; }
-
-  QString deeplink() const {
-    return QString("%1://extensions/%2/%3/%4")
-        .arg(Omnicast::APP_SCHEME)
-        .arg(author())
-        .arg(repositoryName())
-        .arg(commandId());
-  }
 
   virtual QString extensionId() const = 0;
   virtual QString commandId() const = 0;

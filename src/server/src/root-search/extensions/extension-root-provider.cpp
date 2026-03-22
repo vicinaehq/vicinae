@@ -35,10 +35,8 @@ std::unique_ptr<ActionPanelState> CommandRootItem::newActionPanel(ApplicationCon
   auto itemSection = panel->createSection();
   auto extensionSection = panel->createSection();
   auto dangerSection = panel->createSection();
-  auto copyDeeplink = new CopyToClipboardAction(Clipboard::Text(m_command->deeplink()), "Copy deeplink");
 
   mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
-  itemSection->addAction(copyDeeplink);
 
   for (const auto action : RootSearchActionGenerator::generateActions(*this, metadata)) {
     itemSection->addAction(action);

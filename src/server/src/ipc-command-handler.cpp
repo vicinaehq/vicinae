@@ -2,6 +2,7 @@
 #include "common.hpp"
 #include <QDebug>
 #include <QFutureWatcher>
+#include "common/entrypoint.hpp"
 #include "services/oauth/oauth-service.hpp"
 #include "theme/theme-db.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
@@ -11,7 +12,9 @@
 #include "services/extension-registry/extension-registry.hpp"
 #include <algorithm>
 #include <QGuiApplication>
+#include <format>
 #include <qfuturewatcher.h>
+#include <qlogging.h>
 #include <qobjectdefs.h>
 #include "extension/manager/extension-manager.hpp"
 #include <qsqlquery.h>
@@ -109,6 +112,75 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
     return {};
   }
 
+  if (command == "launch") {
+    if (auto item = query.queryItemValue("toggle"); item == "true" && m_ctx.navigation->isWindowOpened()) {
+      m_ctx.navigation->closeWindow();
+      return {};
+    }
+
+    auto root = m_ctx.services->rootItemManager();
+    std::string str = path.sliced(1).toStdString();
+
+    // if the string directly matches a provider, we show a search view
+    // for that provider only.
+    if (auto provider = root->findProviderById(str.c_str())) {
+      m_ctx.navigation->popToRoot({.clearSearch = false});
+      m_ctx.navigation->setInstantDismiss();
+      m_ctx.navigation->pushView(new ProviderSearchViewHost(*provider));
+
+      if (auto text = query.queryItemValue("fallbackText"); !text.isEmpty()) {
+        m_ctx.navigation->setSearchText(text);
+      }
+
+      return {};
+    }
+
+    // otherwise we just launch the command
+
+    auto idx = str.find_last_of('/');
+
+    if (idx == std::string::npos) { return std::unexpected("Invalid format for launch deeplink"); }
+
+    EntrypointId id{str.substr(0, idx), str.substr(idx + 1)};
+    auto entrypoint = root->findItemById(id);
+
+    if (!entrypoint) {
+      return std::unexpected{std::format("{} does not refer to a valid entrypoint", std::string{id})};
+    }
+
+    m_ctx.navigation->popToRoot({.clearSearch = false});
+
+    ArgumentValues arguments;
+    if (query.hasQueryItem("arguments")) {
+      QString const argsText = query.queryItemValue("arguments");
+      QJsonParseError parseError;
+      QJsonDocument const doc = QJsonDocument::fromJson(argsText.toUtf8(), &parseError);
+      if (parseError.error == QJsonParseError::NoError && doc.isObject()) {
+        QJsonObject obj = doc.object();
+        for (auto it = obj.begin(); it != obj.end(); ++it) {
+          arguments.emplace_back(it.key(), it.value().toString());
+        }
+      } else {
+        qWarning() << "Failed to parse arguments JSON:" << parseError.errorString();
+      }
+    }
+
+    auto panel = entrypoint->newActionPanel(&m_ctx, root->itemMetadata(id));
+    panel->finalize(); // not pretty, one day we will fix this too
+    auto action = panel->primaryAction();
+
+    if (!action) return std::unexpected("No primary action for this root item");
+
+    m_ctx.navigation->setInstantDismiss();
+    action->execute(&m_ctx);
+
+    if (auto text = query.queryItemValue("fallbackText"); !text.isEmpty()) {
+      m_ctx.navigation->setSearchText(text);
+    }
+
+    return {};
+  }
+
   if (command == "pop_current") {
     m_ctx.navigation->popCurrentView();
     return {};
@@ -125,15 +197,13 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
     return {};
   }
 
-  if (command == "toast") {
-    QString const title = query.hasQueryItem("title") ? query.queryItemValue("title") : "Toast";
-    m_ctx.services->toastService()->setToast(title, ToastStyle::Info);
-    return {};
-  }
-
   if (command == "extensions") {
     auto root = m_ctx.services->rootItemManager();
     auto components = path.sliced(1).split('/');
+
+    qWarning().nospace() << "vicinae://extensions is deprecated and will be removed in a future release. "
+                            "Please use vicinae://launch instead. See "
+                         << Omnicast::DOC_URL + "/deeplink" << " for more information.";
 
     if (components.size() == 2) {
       QString author = components[0];
@@ -305,15 +375,6 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
       // stopping a development session doesn't remove the bundle, but if a command
       // from the extension is launched outside of dev mode it's going to be run in
       // the production environment (although the bundle itself won't be optimized for production)
-      return {};
-    }
-  }
-
-  if (command == "internal") {
-    if (path == "/restart-extension-runtime") {
-      qInfo() << "Restarting extension runtime....";
-      m_ctx.navigation->popToRoot();
-      m_ctx.services->extensionManager()->start();
       return {};
     }
   }
