@@ -1,10 +1,10 @@
 #include "provider-search-view-host.hpp"
 #include "provider-search-model.hpp"
 #include "service-registry.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 
-ProviderSearchViewHost::ProviderSearchViewHost(const ExtensionRootProvider &provider)
-    : m_providerId(provider.uniqueId()), m_displayName(provider.repository()->displayName()),
-      m_icon(provider.icon()) {}
+ProviderSearchViewHost::ProviderSearchViewHost(const RootProvider &provider)
+    : m_providerId(provider.uniqueId()), m_displayName(provider.displayName()), m_icon(provider.icon()) {}
 
 QUrl ProviderSearchViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/CommandListView.qml"));

@@ -154,7 +154,10 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   connect(nav, &NavigationController::actionsChanged, this,
           [this](const ActionPanelState &state) { m_actionPanel->setStateFrom(state); });
 
-  connect(nav, &NavigationController::viewPushed, this, [this](const BaseView *) { m_actionPanel->close(); });
+  connect(nav, &NavigationController::viewPushed, this, [this, nav](const BaseView *) {
+    m_actionPanel->close();
+    nav->showWindow();
+  });
 
   connect(nav, &NavigationController::navigationStatusChanged, this,
           [this](const QString &title, const ImageURL &icon) {

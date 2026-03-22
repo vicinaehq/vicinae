@@ -114,7 +114,6 @@ Item {
                     wrapMode: Text.Wrap
                     Layout.fillWidth: true
                 }
-
             }
 
             Item {

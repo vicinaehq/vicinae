@@ -9,7 +9,7 @@ class ProviderSearchViewHost : public ViewHostBase {
   Q_PROPERTY(QObject *listModel READ listModel CONSTANT)
 
 public:
-  explicit ProviderSearchViewHost(const ExtensionRootProvider &provider);
+  explicit ProviderSearchViewHost(const RootProvider &provider);
 
   QUrl qmlComponentUrl() const override;
   QVariantMap qmlProperties() override;
