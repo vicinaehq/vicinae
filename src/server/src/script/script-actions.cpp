@@ -87,14 +87,31 @@ void ScriptExecutorAction::execute(ApplicationContext *ctx) {
         }
       });
       break;
-    case Mode::Terminal:
-      if (!ctx->services->appDb()->launchTerminalCommand(script->createCommandLine(args), {.hold = true})) {
+    case Mode::Terminal: {
+      LaunchTerminalCommandOptions termOpts{.hold = true};
+      const auto &scriptData = script->data();
+
+      if (scriptData.terminal) {
+        const auto &t = *scriptData.terminal;
+        if (t.hold) termOpts.hold = *t.hold;
+        if (t.appId) termOpts.appId = QString::fromStdString(*t.appId);
+        if (t.title) termOpts.title = QString::fromStdString(*t.title);
+        if (t.workingDirectory) termOpts.workingDirectory = QString::fromStdString(*t.workingDirectory);
+      }
+
+      if (!termOpts.title && !scriptData.title.empty())
+        termOpts.title = QString::fromStdString(scriptData.title);
+      if (!termOpts.workingDirectory && scriptData.currentDirectoryPath)
+        termOpts.workingDirectory = QString::fromStdString(scriptData.currentDirectoryPath->string());
+
+      if (!ctx->services->appDb()->launchTerminalCommand(script->createCommandLine(args), termOpts)) {
         ctx->services->toastService()->failure("Failed to execute script");
       } else {
         ctx->navigation->closeWindow();
         ctx->navigation->clearSearchText();
       }
       break;
+    }
     case Mode::Inline:
       executeOneLine(*script, args, [id = std::string(script->id()), ctx](bool ok, const QString &line) {
         if (!ok) {

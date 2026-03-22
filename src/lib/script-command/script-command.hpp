@@ -37,6 +37,13 @@ struct ScriptArgument {
   std::optional<ArgumentDataOption> data;
 };
 
+struct TerminalOptions {
+  std::optional<bool> hold;
+  std::optional<std::string> title;
+  std::optional<std::string> appId;
+  std::optional<std::string> workingDirectory;
+};
+
 struct ScriptCommand {
   std::vector<std::string> exec;
   std::string schemaVersion;
@@ -53,6 +60,7 @@ struct ScriptCommand {
   std::optional<std::string> description;
   std::vector<std::string> keywords;
   std::vector<ScriptArgument> arguments;
+  std::optional<TerminalOptions> terminal;
 
   static std::expected<ScriptCommand, std::string> parse(std::string_view str);
   static std::expected<ScriptCommand, std::string> parse(std::ifstream &ifs);
