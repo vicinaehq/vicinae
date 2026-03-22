@@ -54,6 +54,7 @@ static const std::vector<std::pair<std::string, SemanticColor>> recognizedKeys =
 
     {"list.item.hover.background", SemanticColor::ListItemHoverBackground},
     {"list.item.hover.foreground", SemanticColor::ListItemHoverForegroud},
+    {"list.item.hover.secondary_foreground", SemanticColor::ListItemSecondaryHoverForeground},
     {"list.item.selection.background", SemanticColor::ListItemSelectionBackground},
     {"list.item.selection.foreground", SemanticColor::ListItemSelectionForeground},
     {"list.item.selection.secondary_background", SemanticColor::ListItemSecondarySelectionBackground},

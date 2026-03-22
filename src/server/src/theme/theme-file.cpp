@@ -131,6 +131,8 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
     return resolve(SemanticColor::ListItemSelectionForeground);
   case SemanticColor::ListItemSecondarySelectionBackground:
     return resolve(SemanticColor::ListItemSelectionBackground);
+  case SemanticColor::ListItemSecondaryHoverForeground:
+    return resolve(SemanticColor::ListItemSecondarySelectionForeground);
   case SemanticColor::ListItemSecondaryHoverBackground:
     return isDark() ? resolve(SemanticColor::ListItemSecondarySelectionBackground).darker(110)
                     : resolve(SemanticColor::ListItemSecondarySelectionBackground).lighter(110);
