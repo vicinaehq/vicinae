@@ -13,6 +13,7 @@ ScrollView {
     Text {
         width: root.availableWidth
         text: root.text
+        textFormat: Text.PlainText
         color: Theme.foreground
         font.pointSize: Theme.smallerFontSize
         font.family: root.monospace ? "monospace" : undefined
