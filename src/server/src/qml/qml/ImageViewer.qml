@@ -24,7 +24,7 @@ Popup {
         radius: 12
         color: _btnMouseArea.containsMouse ? Qt.rgba(1, 1, 1, 0.25) : Qt.rgba(1, 1, 1, 0.1)
 
-        signal clicked()
+        signal clicked
 
         ViciImage {
             id: _btnIcon

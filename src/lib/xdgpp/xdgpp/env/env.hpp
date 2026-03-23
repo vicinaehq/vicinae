@@ -52,4 +52,9 @@ std::optional<std::filesystem::path> runtimeDir();
  * List of possible locations for mimeapps.list files.
  */
 std::vector<std::filesystem::path> mimeAppsListPaths();
+
+/**
+ * List of possible locations for xdg-terminals.list files.
+ */
+std::vector<std::filesystem::path> xdgTerminalsListPaths();
 }; // namespace xdgpp

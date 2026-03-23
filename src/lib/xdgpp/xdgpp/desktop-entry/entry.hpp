@@ -140,6 +140,11 @@ public:
   bool singleMainWindow() const;
 
   /**
+   * Checks only the OnlyShowIn/NotShowIn keys against the current desktop.
+   */
+  bool matchesCurrentDesktop() const;
+
+  /**
    * Utility method to know whether the entry should be shown in the current
    * environment we are in. This checks the 'Hidden', 'NoDisplay', 'ShowIn' and 'NotShowIn' keys
    * all at once.
