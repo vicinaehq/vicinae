@@ -99,9 +99,7 @@ bool DesktopEntry::terminal() const { return m_terminal; }
 
 bool DesktopEntry::isValid() const { return !m_error.has_value(); }
 
-bool DesktopEntry::shouldBeShownInCurrentContext() const {
-  if (deleted() || noDisplay()) return false;
-
+bool DesktopEntry::matchesCurrentDesktop() const {
   auto desktops = xdgpp::currentDesktop();
   auto hasDesktopMatch = [&](const std::string &in) {
     return std::ranges::find(desktops, in) != desktops.end();
@@ -119,6 +117,12 @@ bool DesktopEntry::shouldBeShownInCurrentContext() const {
   }
 
   return true;
+}
+
+bool DesktopEntry::shouldBeShownInCurrentContext() const {
+  if (deleted() || noDisplay()) return false;
+
+  return matchesCurrentDesktop();
 }
 
 std::optional<std::string> DesktopEntry::errorMessage() const { return m_error; }

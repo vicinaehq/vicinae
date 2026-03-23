@@ -1,14 +1,13 @@
 #include "xdg-app-database.hpp"
 #include "environment.hpp"
 #include "services/app-service/xdg/xdg-app.hpp"
-#include "timer.hpp"
 #include "xdgpp/desktop-entry/entry.hpp"
 #include "xdgpp/desktop-entry/file.hpp"
 #include "xdgpp/mime/iterator.hpp"
 #include <algorithm>
 #include <qtenvironmentvariables.h>
 #include <ranges>
-#include "xdgpp/desktop-entry/exec.hpp"
+#include "xdgpp/xdg-terminal-exec/xdg-terminals-list.hpp"
 #include <QDBusConnection>
 #include <QDBusInterface>
 #include <QDBusReply>
@@ -22,6 +21,7 @@
 #include <qurl.h>
 #include <set>
 #include <QDir>
+#include <unordered_set>
 #include <xdgpp/desktop-entry/iterator.hpp>
 #include <xdgpp/env/env.hpp>
 #include <xdgpp/mime/mime-apps-list.hpp>
@@ -29,6 +29,10 @@
 namespace fs = std::filesystem;
 
 using AppPtr = XdgAppDatabase::AppPtr;
+
+// This is non standard, and isn't set correctly in most environments
+// This will be deprecated in favor of xdg-terminal-exec compliance
+static constexpr const auto FALLBACK_TERMINAL_MIME = "x-scheme-handler/terminal";
 
 namespace {
 
@@ -122,8 +126,61 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
   return true;
 }
 
+AppPtr XdgAppDatabase::findDefaultTerminalFromSpec() const {
+  std::unordered_set<std::string> seen;
+  std::unordered_set<std::string> excluded;
+  std::vector<std::string> selected;
+  std::error_code ec;
+
+  // we store app + action as "app.action" unlike the spec that uses "app:action"
+  auto toMapKey = [](const xdgpp::XdgTerminalEntry &e) -> std::string {
+    if (e.actionId) return std::string(e.entryId) + "." + std::string(*e.actionId);
+    return std::string(e.entryId);
+  };
+
+  for (const auto &path : xdgpp::xdgTerminalsListPaths()) {
+    if (!fs::is_regular_file(path, ec)) continue;
+
+    xdgpp::parseXdgTerminalsList(path,
+                                 [&](xdgpp::XdgTerminalEntry entry, xdgpp::XdgTerminalSelectionState state) {
+                                   auto key = toMapKey(entry);
+                                   if (seen.contains(key)) return;
+                                   seen.emplace(key);
+
+                                   switch (state) {
+                                   case xdgpp::XdgTerminalSelectionState::Selected:
+                                     selected.emplace_back(std::move(key));
+                                     break;
+                                   case xdgpp::XdgTerminalSelectionState::FallbackExcluded:
+                                     excluded.emplace(std::move(key));
+                                     break;
+                                   case xdgpp::XdgTerminalSelectionState::FallbackProtected:
+                                     break;
+                                   }
+                                 });
+  }
+
+  for (const auto &key : selected) {
+    if (auto it = appMap.find(key.c_str()); it != appMap.end()) {
+      // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+      auto &xdgApp = static_cast<XdgApplication &>(*it->second);
+      if (xdgApp.isTerminalEmulator() && !xdgApp.data().deleted()) { return it->second; }
+    }
+  }
+
+  for (const auto &app : m_apps) {
+    if (!excluded.contains(app->id().toStdString()) && app->isTerminalEmulator() && !app->data().deleted() &&
+        app->data().matchesCurrentDesktop()) {
+      return app;
+    }
+  }
+
+  return nullptr;
+}
+
 AppPtr XdgAppDatabase::terminalEmulator() const {
-  if (auto emulator = defaultForMime("x-scheme-handler/terminal")) { return emulator; }
+  if (auto emulator = findDefaultTerminalFromSpec()) return emulator;
+  if (auto emulator = defaultForMime(FALLBACK_TERMINAL_MIME)) { return emulator; }
 
   auto terms = m_apps | std::views::filter([](auto &&app) { return app->isTerminalEmulator(); });
   auto findWithProg = [&](const QString &prog) -> std::optional<AppPtr> {
@@ -295,7 +352,7 @@ xdgpp::DesktopEntry::TerminalExec XdgAppDatabase::inferTermExec(const XdgApplica
   // new gnome terminal
   if (app.program() == "kgx") { return TExec{.exec = "--", .title = "--title", .dir = "working-directory"}; }
   if (app.program() == "alacritty") {
-    return TExec{
+    return {
         .exec = "-e",
         .appId = "--class",
         .title = "--title",
@@ -305,14 +362,14 @@ xdgpp::DesktopEntry::TerminalExec XdgAppDatabase::inferTermExec(const XdgApplica
   }
   if (app.program() == "cosmic-term") { return TExec{.exec = "-e"}; }
   if (app.program() == "konsole") {
-    return TExec{
+    return {
         .exec = "-e",
         .dir = "--workdir",
         .hold = "--hold",
     };
   }
   if (app.program() == "foot") {
-    return TExec{
+    return {
         .exec = "-e",
         .appId = "--app-id",
         .title = "--title",
