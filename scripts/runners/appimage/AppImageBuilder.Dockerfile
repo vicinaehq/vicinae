@@ -5,7 +5,7 @@
 # Note: In order for linuxqtdeploy to work, the docker environment needs to be passed the fuse device.
 # Typically done like so: docker run --cap-add SYS_ADMIN --device /dev/fuse <image_name>
 
-FROM ubuntu:22.04 as base-builder
+FROM ubuntu:24.10 as base-builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -81,7 +81,7 @@ ENV PATH="/opt/gcc/bin:${PATH}"
 ENV LD_LIBRARY_PATH="/opt/gcc/lib64:${PATH}"
 ENV CC=/opt/gcc/bin/gcc
 ENV CXX=/opt/gcc/bin/g++
-ARG QT_VERSION=6.10.1
+ARG QT_VERSION=6.10.2
 ARG INSTALL_DIR=/usr/local
 
 RUN git clone --branch v${QT_VERSION} https://code.qt.io/qt/qt5.git /qt6
@@ -111,7 +111,7 @@ RUN cmake --build . --parallel $(nproc) \
 
 # other dep builders
 FROM qt-builder AS deps-builder
-ARG NODE_VERSION=22.19.0
+ARG NODE_VERSION=24.14.0
 
 RUN apt-get install -y python3-pip libxml2-dev
 RUN pip install meson
@@ -211,7 +211,7 @@ RUN git clone https://github.com/fcitx/fcitx5 && cd fcitx5 && git checkout 4c7e5
 	-DENABLE_ENCHANT=OFF		\
 	-DBUILD_SPELL_DICT=OFF		\
 	-DENABLE_XDGAUTOSTART=OFF	\
-	&& cmake --build . --parallel $(nproc) && cmake --install . 
+	&& cmake --build . --parallel $(nproc) && cmake --install .
 
 RUN git clone --recursive https://github.com/fcitx/fcitx5-qt
 RUN cd fcitx5-qt && mkdir build && \
@@ -227,11 +227,11 @@ RUN cd fcitx5-qt && mkdir build && \
 RUN git clone --recursive https://github.com/KDE/syntax-highlighting --branch v6.18.0
 RUN cd syntax-highlighting && /usr/bin/cmake -B build -DKSYNTAXHIGHLIGHTING_USE_GUI=OFF && /usr/bin/cmake --build build --parallel $(nproc) && /usr/bin/cmake --install build
 
-# install node 22 (used to build the main vicinae binary and bundled in the app image)
+# install node 24 (used to build the main vicinae binary and bundled in the app image)
 RUN wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz
 RUN mkdir /opt/node && tar -xf node-v${NODE_VERSION}-linux-x64.tar.xz --strip-components=1 -C /opt/node && rm -rf *.tar.xz
 
-FROM ubuntu:22.04 AS runtime
+FROM ubuntu:24.10 AS runtime
 
 ENV DEBIAN_FRONTEND=noninteractive
 
