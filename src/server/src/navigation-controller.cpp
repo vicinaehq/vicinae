@@ -37,7 +37,7 @@ bool NavigationController::hasCompleter() const {
 void NavigationController::setInstantDismiss(bool value) { m_instantDismiss = value; }
 
 void NavigationController::goBack(const GoBackOptions &opts) {
-  if (!opts.ignoreInstantDismiss && m_instantDismiss) closeWindow();
+  if (!opts.ignoreInstantDismiss && viewStackSize() == 2 && m_instantDismiss) closeWindow();
 
   if (isRootSearch()) {
     if (searchText().isEmpty()) closeWindow();
@@ -70,6 +70,13 @@ void NavigationController::setLoading(bool value, const BaseView *caller) {
   if (auto state = findViewState(VALUE_OR(caller, topView()))) {
     state->isLoading = value;
     if (state->sender == topView()) { emit loadingChanged(value); }
+  }
+}
+
+void NavigationController::setBackButtonVisibility(bool value, const BaseView *caller) {
+  if (auto state = findViewState(VALUE_OR(caller, topView()))) {
+    state->showBackButton = value;
+    if (state->sender == topView()) { emit backButtonVisibilityChanged(value); }
   }
 }
 
@@ -245,6 +252,7 @@ void NavigationController::popCurrentView() {
   emit searchInteractiveChanged(next->searchInteractive);
   emit statusBarVisiblityChanged(next->needsStatusBar);
   emit loadingChanged(next->isLoading);
+  emit backButtonVisibilityChanged(next->showBackButton);
 
   if (auto cmpl = next->completer) {
     createCompletion(cmpl->args, cmpl->icon);

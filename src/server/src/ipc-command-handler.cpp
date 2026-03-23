@@ -178,6 +178,8 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
     m_ctx.navigation->setInstantDismiss();
     action->execute(&m_ctx);
 
+    if (m_ctx.navigation->viewStackSize() > 1) m_ctx.navigation->setBackButtonVisibility(false);
+
     if (auto text = query.queryItemValue("fallbackText"); !text.isEmpty()) {
       m_ctx.navigation->setSearchText(text);
     }

@@ -284,6 +284,7 @@ public:
   void setSearchPlaceholderText(const QString &text, const BaseView *caller = nullptr);
   void broadcastSearchText(const QString &text, const BaseView *caller = nullptr);
   void setSearchText(const QString &text, const BaseView *caller = nullptr);
+  void setBackButtonVisibility(bool value, const BaseView *caller = nullptr);
 
   void setLoading(bool value, const BaseView *caller = nullptr);
   bool isLoading(const BaseView *caller = nullptr) const;
