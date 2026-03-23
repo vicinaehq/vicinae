@@ -5,7 +5,7 @@
 # Note: In order for linuxqtdeploy to work, the docker environment needs to be passed the fuse device.
 # Typically done like so: docker run --cap-add SYS_ADMIN --device /dev/fuse <image_name>
 
-FROM ubuntu:24.10 as base-builder
+FROM ubuntu:22.04 as base-builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -231,7 +231,7 @@ RUN cd syntax-highlighting && /usr/bin/cmake -B build -DKSYNTAXHIGHLIGHTING_USE_
 RUN wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz
 RUN mkdir /opt/node && tar -xf node-v${NODE_VERSION}-linux-x64.tar.xz --strip-components=1 -C /opt/node && rm -rf *.tar.xz
 
-FROM ubuntu:24.10 AS runtime
+FROM ubuntu:22.04 AS runtime
 
 ENV DEBIAN_FRONTEND=noninteractive
 
