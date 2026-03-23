@@ -44,6 +44,7 @@ std::filesystem::path dataDir();
 std::filesystem::path stateDir();
 std::filesystem::path configDir();
 
+void ensureDirectories();
 std::vector<std::filesystem::path> systemPaths();
 
 static const int TOP_BAR_HEIGHT = 60;

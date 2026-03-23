@@ -7,7 +7,6 @@
 #include "theme/colors.hpp"
 #include "vicinae.hpp"
 #include <algorithm>
-#include <filesystem>
 #include <fstream>
 #include <glaze/glaze.hpp>
 #include <ranges>
@@ -75,8 +74,6 @@ void NewsService::loadState() {
 }
 
 void NewsService::saveState() const {
-  std::filesystem::create_directories(m_stateFile.parent_path());
-
   NewsState state{.dismissed = m_dismissed};
   std::string buf;
   if (const auto err = glz::write_json(state, buf)) {

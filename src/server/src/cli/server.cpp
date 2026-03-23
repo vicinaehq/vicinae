@@ -116,7 +116,7 @@ void CliServerCommand::run(CLI::App *) {
 
   QQuickStyle::setStyle(QStringLiteral("Basic"));
 
-  std::filesystem::create_directories(Omnicast::runtimeDir());
+  Omnicast::ensureDirectories();
 
   {
     auto registry = ServiceRegistry::instance();

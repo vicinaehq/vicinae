@@ -11,18 +11,25 @@
 #include <QUuid>
 #include <algorithm>
 #include <cctype>
+#include <filesystem>
 #include <glaze/json/read.hpp>
 #include <glaze/json/write.hpp>
+#include <qlogging.h>
 #include <qsysinfo.h>
 #include <qtversionchecks.h>
 #include <ranges>
 
+namespace fs = std::filesystem;
+
 TelemetryService::TelemetryService(config::Manager &config) : m_config(config) {
   using namespace std::chrono_literals;
 
+  auto const stateDir = Omnicast::stateDir();
+
   m_client.setBaseUrl(Environment::vicinaeApiBaseUrl());
   m_client.setUserAgent(QString("vicinae/%1").arg(VICINAE_GIT_TAG));
-  m_statePath = Omnicast::stateDir() / "telemetry.json";
+
+  m_statePath = stateDir / "telemetry.json";
   loadState();
 
   connect(&m_timer, &QTimer::timeout, this, &TelemetryService::trySendSystemInfo);
@@ -111,7 +118,7 @@ void TelemetryService::saveState() {
 }
 
 void TelemetryService::loadState() {
-  if (!std::filesystem::is_regular_file(m_statePath)) {
+  if (!fs::is_regular_file(m_statePath)) {
     m_state = State{.userId = generateUserId()};
     saveState();
     return;

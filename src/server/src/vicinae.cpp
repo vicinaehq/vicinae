@@ -1,5 +1,6 @@
 #include "vicinae.hpp"
 #include "xdgpp/env/env.hpp"
+#include <qlogging.h>
 #include <qprocess.h>
 #include <QProcessEnvironment>
 #include <ranges>
@@ -21,6 +22,14 @@ fs::path Omnicast::configDir() { return xdgpp::configHome() / "vicinae"; }
 
 fs::path Omnicast::commandSocketPath() { return runtimeDir() / "vicinae.sock"; }
 fs::path Omnicast::pidFile() { return runtimeDir() / "vicinae.pid"; }
+
+void Omnicast::ensureDirectories() {
+  for (auto const &dir : {runtimeDir(), dataDir(), stateDir(), configDir()}) {
+    std::error_code ec;
+    fs::create_directories(dir, ec);
+    if (ec) { qWarning() << "Failed to create directory" << dir.c_str() << ec.message(); }
+  }
+}
 
 std::vector<fs::path> Omnicast::systemPaths() {
   const char *path = getenv("PATH");
