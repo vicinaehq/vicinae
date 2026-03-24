@@ -348,18 +348,16 @@ void CliServerCommand::run(CLI::App *) {
   QObject::connect(cfgService, &config::Manager::configChanged, configChanged);
   QIcon::setFallbackSearchPaths(Environment::fallbackIconSearchPaths());
 
-  AI::GenerateFunFact tool;
-
-  std::cout << "tool" << glz::prettify_json(tool.generateSchema()) << std::endl;
-
   auto builtinFont = ServiceRegistry::instance()->fontService()->builtinFontFamily();
   if (!builtinFont.isEmpty()) QGuiApplication::setFont(QFont(builtinFont));
 
+  /*
   QTimer::singleShot(2000, [&ctx]() {
-    auto agent = new AI::AgenticLoop(ctx);
+    auto agent = new AI::Agent(ctx);
     qDebug() << "agent setup";
     agent->addMessage("Tell me a fun fact about apples");
   });
+  */
 
   configChanged(cfgService->value(), {});
 
