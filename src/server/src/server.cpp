@@ -522,11 +522,14 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
   std::cout << "tool" << glz::prettify_json(tool.generateSchema()) << std::endl;
 
+  /*
+>>>>>>> feb17de24 (fix: rename agentic loop to agent)
   QTimer::singleShot(2000, [&ctx]() {
-    auto agent = new AI::AgenticLoop(ctx);
+    auto agent = new AI::Agent(ctx);
     qDebug() << "agent setup";
     agent->addMessage("Tell me a fun fact about apples");
   });
+  */
 
   configChanged(cfgService->value(), {});
 
