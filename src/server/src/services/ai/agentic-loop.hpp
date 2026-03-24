@@ -13,7 +13,7 @@
 #include <vector>
 
 namespace AI {
-class AgenticLoop : public QObject {
+class Agent : public QObject {
   Q_OBJECT
 
 signals:
@@ -22,10 +22,9 @@ signals:
   void tokenAdded(std::string_view name);
 
 public:
-  AgenticLoop(const ApplicationContext &ctx) : m_ctx(ctx) {
+  Agent(const ApplicationContext &ctx) : m_ctx(ctx) {
     addTool(std::make_unique<GenerateFunFact>());
-    connect(&m_currentToolWatcher, &decltype(m_currentToolWatcher)::finished, this,
-            &AgenticLoop::handleToolResult);
+    connect(&m_currentToolWatcher, &decltype(m_currentToolWatcher)::finished, this, &Agent::handleToolResult);
   }
 
   void addTool(std::unique_ptr<AbstractTool> tool) { m_tools.emplace_back(std::move(tool)); }
@@ -41,10 +40,9 @@ private:
                  std::ranges::to<std::vector>();
     m_completion = m_ctx.services->ai()->createChatCompletion({}, {.messages = m_messages, .tools = tools});
 
-    connect(m_completion.get(), &AbstractChatCompletionStream::dataAdded, this,
-            &AgenticLoop::handleDataAdded);
+    connect(m_completion.get(), &AbstractChatCompletionStream::dataAdded, this, &Agent::handleDataAdded);
     connect(m_completion.get(), &AbstractChatCompletionStream::toolCallRequested, this,
-            &AgenticLoop::handleToolCall);
+            &Agent::handleToolCall);
 
     m_completion->start();
   }
