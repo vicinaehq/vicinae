@@ -13,8 +13,10 @@ Popup {
 
     property bool _confirmed: false
 
-    onAboutToShow: _confirmed = false
-    onOpened: Qt.callLater(cancelBtn.forceActiveFocus)
+	onAboutToShow: {
+		_confirmed = false;
+		Qt.callLater(cancelBtn.forceActiveFocus);
+	}
     onClosed: {
         if (!_confirmed)
             launcher.alertModel.cancel();
