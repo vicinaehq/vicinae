@@ -14,6 +14,8 @@ ClipboardHistoryController::ClipboardHistoryController(ClipboardService *clipboa
           &ClipboardHistoryController::handleClipboardChanged);
   connect(clipboard, &ClipboardService::selectionUpdated, this,
           &ClipboardHistoryController::handleClipboardChanged);
+  connect(clipboard, &ClipboardService::selectionMetadataUpdated, this,
+          &ClipboardHistoryController::handleClipboardChanged);
 }
 
 void ClipboardHistoryController::setFilter(const QString &query) {

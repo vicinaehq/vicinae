@@ -65,9 +65,13 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
         s.kind,
         o.url_host,
         o.encryption_type,
-        s.total_count
+        s.total_count,
+        s.og_title,
+        s.og_description,
+        s.og_image
       FROM (
         SELECT id, pinned_at, updated_at, kind, preferred_mime_type,
+               og_title, og_description, og_image,
                COUNT(*) OVER() as total_count
         FROM selection
         ORDER BY pinned_at DESC, updated_at DESC
@@ -92,7 +96,10 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
         selection.kind,
         o.url_host,
         o.encryption_type,
-        COUNT(*) OVER() as count
+        COUNT(*) OVER() as count,
+        selection.og_title,
+        selection.og_description,
+        selection.og_image
       FROM selection
       JOIN data_offer o
         ON o.selection_id = selection.id
@@ -140,6 +147,9 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
                               .encryption = static_cast<ClipboardEncryptionType>(query.value(9).toUInt())};
 
     if (auto val = query.value(8); !val.isNull()) { dto.urlHost = val.toString(); }
+    if (auto val = query.value(11); !val.isNull()) { dto.ogTitle = val.toString(); }
+    if (auto val = query.value(12); !val.isNull()) { dto.ogDescription = val.toString(); }
+    if (auto val = query.value(13); !val.isNull()) { dto.ogImage = val.toString(); }
 
     response.totalCount = query.value(10).toInt();
     response.data.push_back(dto);
@@ -322,6 +332,44 @@ bool ClipboardDatabase::tryBubbleUpSelection(const QString &idLike) {
   if (!query.exec()) { qCritical() << "Failed to execute clipboard update"; }
 
   return query.numRowsAffected() > 0;
+}
+
+bool ClipboardDatabase::updateUrlMetadata(const QString &selectionId, const QString &ogTitle,
+                                           const QString &ogDescription, const QString &ogImage) {
+  QSqlQuery query(m_db);
+
+  query.prepare("UPDATE selection SET og_title = :title, og_description = :desc, og_image = :image WHERE id = :id");
+  query.bindValue(":title", ogTitle);
+  query.bindValue(":desc", ogDescription);
+  query.bindValue(":image", ogImage);
+  query.bindValue(":id", selectionId);
+
+  if (!query.exec()) {
+    qWarning() << "Failed to update URL metadata for selection" << selectionId << query.lastError();
+    return false;
+  }
+
+  return true;
+}
+
+QString ClipboardDatabase::findSelectionIdByHash(const QString &hash) {
+  QSqlQuery query(m_db);
+
+  query.prepare("SELECT id FROM selection WHERE hash_md5 = :hash LIMIT 1");
+  query.bindValue(":hash", hash);
+
+  if (!query.exec() || !query.next()) return {};
+
+  return query.value(0).toString();
+}
+
+bool ClipboardDatabase::selectionHasMetadata(const QString &id) {
+  QSqlQuery query(m_db);
+
+  query.prepare("SELECT 1 FROM selection WHERE id = :id AND (og_title IS NOT NULL OR og_image IS NOT NULL) LIMIT 1");
+  query.bindValue(":id", id);
+
+  return query.exec() && query.next();
 }
 
 bool ClipboardDatabase::indexSelectionContent(const QString &selectionId, const QString &content) {

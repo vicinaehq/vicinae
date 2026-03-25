@@ -61,6 +61,9 @@ struct ClipboardHistoryEntry {
   ClipboardOfferKind kind;
   std::optional<QString> urlHost;
   ClipboardEncryptionType encryption;
+  std::optional<QString> ogTitle;
+  std::optional<QString> ogDescription;
+  std::optional<QString> ogImage;
 };
 
 struct ClipboardListSettings {
@@ -103,8 +106,12 @@ public:
    * The id can either be the selection id or the selection hash.
    */
   bool tryBubbleUpSelection(const QString &idLike);
+  QString findSelectionIdByHash(const QString &hash);
+  bool selectionHasMetadata(const QString &id);
   bool insertSelection(const InsertSelectionPayload &payload);
   bool insertOffer(const InsertClipboardOfferPayload &payload);
+  bool updateUrlMetadata(const QString &selectionId, const QString &ogTitle, const QString &ogDescription,
+                         const QString &ogImage);
   bool indexSelectionContent(const QString &selectionId, const QString &content);
   /**
    * Remove the selection from the database and return the list of offers

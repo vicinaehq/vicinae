@@ -233,9 +233,36 @@ Item {
                 anchors.fill: parent
                 active: !root.host.hasDetailError && root.host.detailImageSource === "" && root.host.detailTextContent !== ""
                 visible: active
-                sourceComponent: TextViewer {
-                    text: root.host.detailTextContent
-                    monospace: true
+                sourceComponent: ColumnLayout {
+                    spacing: 0
+
+                    TextViewer {
+                        text: root.host.detailTextContent
+                        monospace: true
+                        Layout.fillWidth: true
+                        Layout.fillHeight: root.host.detailOgImageUrl === ""
+                        Layout.preferredHeight: root.host.detailOgImageUrl !== "" ? implicitHeight + 20 : -1
+                        Layout.maximumHeight: root.host.detailOgImageUrl !== "" ? parent.height * 0.15 : -1
+                    }
+
+                    Rectangle {
+                        visible: root.host.detailOgImageUrl !== ""
+                        Layout.fillWidth: true
+                        implicitHeight: 1
+                        color: Theme.divider
+                    }
+
+                    Image {
+                        visible: root.host.detailOgImageUrl !== ""
+                        source: root.host.detailOgImageUrl
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        Layout.margins: 10
+                        fillMode: Image.PreserveAspectFit
+                        sourceSize.width: 500
+                        cache: true
+                        asynchronous: true
+                    }
                 }
             }
 
