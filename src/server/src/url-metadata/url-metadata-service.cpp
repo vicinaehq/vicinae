@@ -95,8 +95,7 @@ void UrlMetadataService::fetchMetadata(const QString &selectionId, const QUrl &u
   QNetworkRequest req(url);
   req.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
                    static_cast<int>(QNetworkRequest::NoLessSafeRedirectPolicy));
-  req.setHeader(QNetworkRequest::UserAgentHeader,
-                QStringLiteral("Mozilla/5.0 (compatible; Vicinae/1.0)"));
+  req.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("Mozilla/5.0 (compatible; Vicinae/1.0)"));
   req.setRawHeader("Accept", "text/html");
 
   auto *reply = http::networkManager()->get(req);
@@ -131,8 +130,8 @@ void UrlMetadataService::fetchMetadata(const QString &selectionId, const QUrl &u
 
     if (metadata.ogTitle || metadata.ogDescription || metadata.ogImage) {
       for (const auto &id : selectionIds) {
-        emit metadataReady(id, metadata.ogTitle.value_or(QString()), metadata.ogDescription.value_or(QString()),
-                           metadata.ogImage.value_or(QString()));
+        emit metadataReady(id, metadata.ogTitle.value_or(QString()),
+                           metadata.ogDescription.value_or(QString()), metadata.ogImage.value_or(QString()));
       }
     }
   });

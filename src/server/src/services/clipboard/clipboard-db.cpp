@@ -335,10 +335,11 @@ bool ClipboardDatabase::tryBubbleUpSelection(const QString &idLike) {
 }
 
 bool ClipboardDatabase::updateUrlMetadata(const QString &selectionId, const QString &ogTitle,
-                                           const QString &ogDescription, const QString &ogImage) {
+                                          const QString &ogDescription, const QString &ogImage) {
   QSqlQuery query(m_db);
 
-  query.prepare("UPDATE selection SET og_title = :title, og_description = :desc, og_image = :image WHERE id = :id");
+  query.prepare(
+      "UPDATE selection SET og_title = :title, og_description = :desc, og_image = :image WHERE id = :id");
   query.bindValue(":title", ogTitle);
   query.bindValue(":desc", ogDescription);
   query.bindValue(":image", ogImage);
@@ -366,7 +367,8 @@ QString ClipboardDatabase::findSelectionIdByHash(const QString &hash) {
 bool ClipboardDatabase::selectionHasMetadata(const QString &id) {
   QSqlQuery query(m_db);
 
-  query.prepare("SELECT 1 FROM selection WHERE id = :id AND (og_title IS NOT NULL OR og_image IS NOT NULL) LIMIT 1");
+  query.prepare(
+      "SELECT 1 FROM selection WHERE id = :id AND (og_title IS NOT NULL OR og_image IS NOT NULL) LIMIT 1");
   query.bindValue(":id", id);
 
   return query.exec() && query.next();
