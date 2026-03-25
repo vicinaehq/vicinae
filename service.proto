@@ -50,8 +50,14 @@ service EventCore {
   event handlerActivated(id: string);
 };
 
+enum ToastStyle {
+  Success,
+  Danger
+};
+
 service UI {
   fn render(json: string) => number;
+  fn showToast(style: ToastStyle, msg: string) => string;
 };
 
 service AI {
