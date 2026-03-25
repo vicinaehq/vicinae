@@ -6,6 +6,7 @@
 #include "lexer.hpp"
 #include "parser.hpp"
 #include "codegen/typescript.hpp"
+#include "codegen/glaze-qt.hpp"
 
 int main(int ac, char **av) {
   assert(ac == 3);
@@ -24,12 +25,20 @@ int main(int ac, char **av) {
   std::string data = oss.str();
 
   Lexer lexer{data};
-
-  std::cout << data << std::endl;
-
   auto tree = Parser::parseTree(data);
 
-  std::ofstream ofs(av[2]);
+  std::vector<std::unique_ptr<AbstractCodeGenerator>> generators;
 
-  ofs << codegenTypescript(tree);
+  generators.emplace_back(std::make_unique<TypeScriptCodeGenerator>());
+  generators.emplace_back(std::make_unique<GlazeQtGenerator>());
+
+  for (const auto &gen : generators) {
+    if (gen->name() == av[2]) {
+      std::cout << gen->generate(tree);
+      return 0;
+    }
+  }
+
+  std::cerr << "No generator with name " << av[2] << std::endl;
+  return 1;
 }
