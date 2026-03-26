@@ -32,6 +32,7 @@ list(APPEND LIBS
 	vicinae::linuxutils
 )
 
+
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)
 set(EXTRA_PATH ${CMAKE_SOURCE_DIR}/extra)
 configure_file(resources.qrc.in resources.qrc)
@@ -654,6 +655,11 @@ if (UNIX AND NOT APPLE)
 	wayland_generate_protocol("ext-data-control-v1")
 	wayland_generate_protocol("kde-blur")
 	wayland_generate_protocol("ext-background-effect-v1")
+	
+	include("Codegen")
+
+	codegen_do(${CMAKE_SOURCE_DIR}/service.proto)
+
 
 	list(APPEND LIBS xkbcommon vicinae::linuxutils)
 

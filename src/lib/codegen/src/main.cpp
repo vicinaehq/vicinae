@@ -9,7 +9,7 @@
 #include "codegen/glaze-qt.hpp"
 
 int main(int ac, char **av) {
-  assert(ac == 3);
+  assert(ac >= 3);
 
   std::ifstream ifs{av[1]};
 
@@ -34,7 +34,11 @@ int main(int ac, char **av) {
 
   for (const auto &gen : generators) {
     if (gen->name() == av[2]) {
-      std::cout << gen->generate(tree);
+      if (ac == 4) {
+        std::ofstream{av[3]} << gen->generate(tree);
+      } else {
+        std::cout << gen->generate(tree);
+      }
       return 0;
     }
   }

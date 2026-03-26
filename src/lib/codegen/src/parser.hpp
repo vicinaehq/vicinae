@@ -1,7 +1,6 @@
 #pragma once
 #include "lexer.hpp"
 #include <format>
-#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <string_view>
@@ -76,7 +75,6 @@ public:
     while (auto tok = m_lexer.peak()) {
       if (tok->type == TokenType::Struct) {
         auto s = parseStruct();
-        std::cout << "added type" << s->name;
         m_tree.structs.emplace_back(s);
       }
       if (tok->type == TokenType::Service) { m_tree.services.emplace_back(parseService()); }

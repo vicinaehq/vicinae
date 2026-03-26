@@ -4,6 +4,30 @@
 #include "proto/extension.pb.h"
 #include "types.hpp"
 #include <qfuturewatcher.h>
+#include "codegen.hpp"
+
+struct Context {
+  int a;
+  int b;
+};
+
+class UIService : public codegen::AbstractUI<Context> {
+public:
+  std::string showToast(const std::string &style, const std::string &msg) override {
+    int b = m_ctx.a + m_ctx.b;
+
+    return {};
+  }
+
+  virtual ~UIService() = default;
+};
+
+class MathsService : public codegen::AbstractMaths<Context> {
+public:
+  codegen::Point mul(const std::string &x, const std::string &y) override { return codegen::Point{x, y}; }
+
+  virtual ~MathsService() = default;
+};
 
 class ExtensionCommand;
 class StorageRequestRouter;

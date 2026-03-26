@@ -6,11 +6,6 @@
 #include <ranges>
 
 constexpr const auto BASE = R"(
-#include <glaze/core/common.hpp>
-#include <glaze/json/read.hpp>
-#include <qfuture.h>
-#include <concepts>
-#include <variant>
 
 struct JsonRpcRequest {
   std::string jsonrpc;
@@ -90,7 +85,7 @@ class GlazeQtGenerator : public AbstractCodeGenerator {
 
     oss << "template <typename UserContext>\n";
     oss << "class " << abstractName(s.name) << " {\n";
-    oss << "\t" << abstractName(s.name) << "(UserContext ctx) {}\n\n";
+    oss << "\t" << abstractName(s.name) << "(UserContext ctx): m_ctx(ctx) {}\n\n";
 
     for (const auto &method : s.methods) {
       oss << "\t" << "virtual " << serializeTypename(method.returnType) << " " << method.name << "(";
@@ -109,6 +104,9 @@ class GlazeQtGenerator : public AbstractCodeGenerator {
       }
       oss << ") {}\n";
     }
+
+    oss << "protected:\n";
+    oss << "\tUserContext m_ctx;\n";
 
     oss << "\n};\n";
 
@@ -149,6 +147,16 @@ public:
   std::string generate(const Tree &ast) override {
     std::ostringstream oss;
 
+    oss << R"(
+#pragma once
+#include <memory>
+#include <glaze/glaze.hpp>
+#include <glaze/json/read.hpp>
+#include <qfuture.h>
+#include <concepts>
+#include <variant>
+	)";
+
     oss << "namespace codegen {\n";
     oss << BASE;
 
@@ -170,8 +178,9 @@ public:
 
     oss << "template <\n";
     oss << "\ttypename UserContext,\n";
-    for (const auto &s : ast.services) {
-      oss << "\tDerivedFrom<" << abstractName(s->name) << "> " << s->name << ",\n";
+    for (const auto &[idx, s] : ast.services | std::views::enumerate) {
+      if (idx > 0) oss << ", ";
+      oss << "\tDerivedFrom<" << abstractName(s->name) << "<UserContext>> " << s->name << "\n";
     }
 
     oss << ">\n";
@@ -184,7 +193,7 @@ public:
     }
 
     oss << "{\n";
-    oss << "\t m_transport.onMessage([this](auto message){ if (auto reqPtr = "
+    oss << "\t m_transport->onMessage([this](auto message){ if (auto reqPtr = "
            "std::get_if<JsonRpcRequest>(&message)) { dispatch(*reqPtr); } });";
     oss << "\n}\n";
 
@@ -197,7 +206,7 @@ public:
     	static thread_local std::string buf;
     	[[maybe_unused]]auto result = glz::write_json(data, buf);
 
-    	m_transport.sendResponse(JsonRpcResponse{.id = id, .result = result});
+    	m_transport->sendResponse(JsonRpcResponse{.id = id, .result = result});
   	}
 
 	)";
@@ -211,8 +220,8 @@ public:
 
         oss << "\t\tif (req.method == " << std::quoted(methodId) << ") {\n";
         oss << "\t\t\t" << getMethodParamName(m.name) << " payload;\n";
-        oss << "\t\t\t[[maybe_unused]] auto res = glz::read_json(payload, req.params);\n";
-        oss << "\t\t\t" << s->name << "->" << m.name << "(";
+        oss << "\t\t\t[[maybe_unused]] auto res = glz::read_json(payload, req.params.str);\n";
+        oss << "\t\t\t" << "m_" << s->name << "->" << m.name << "(";
         for (const auto &[idx, param] : m.params | std::views::enumerate) {
           if (idx > 0) oss << ", ";
           oss << "payload." << param.name;
@@ -225,7 +234,8 @@ public:
     oss << "\n\t}\n";
 
     for (const auto &s : ast.services) {
-      oss << "\t" << "std::unique_ptr<" << abstractName(s->name) << "> " << s->name << ";\n";
+      oss << "\t" << "std::unique_ptr<" << abstractName(s->name) << "<UserContext>> " << "m_" << s->name
+          << ";\n";
     }
 
     oss << "\tUserContext m_ctx;\n";
