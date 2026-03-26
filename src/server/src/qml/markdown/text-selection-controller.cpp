@@ -141,6 +141,8 @@ QString TextSelectionController::linkAt(QQuickItem *textEdit, qreal containerX, 
 }
 
 void TextSelectionController::handlePress(qreal x, qreal y) {
+  if (m_flickable) m_flickable->forceActiveFocus(Qt::MouseFocusReason);
+
   // Triple-click: press shortly after double-click at same spot → select all
   if (m_doubleClickTimer.isValid() && m_doubleClickTimer.elapsed() < 400 &&
       std::hypot(x - m_doubleClickPos.x(), y - m_doubleClickPos.y()) < DRAG_THRESHOLD) {
