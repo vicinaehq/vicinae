@@ -25,7 +25,14 @@ int main(int ac, char **av) {
   std::string data = oss.str();
 
   Lexer lexer{data};
-  auto tree = Parser::parseTree(data);
+  auto result = Parser::parseTree(data);
+
+  if (!result) {
+    std::cerr << "Failed to parse " << av[1] << "\n" << result.error() << std::endl;
+    return 1;
+  }
+
+  auto tree = std::move(result).value();
 
   std::vector<std::unique_ptr<AbstractCodeGenerator>> generators;
 

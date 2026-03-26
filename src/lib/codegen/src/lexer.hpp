@@ -85,6 +85,10 @@ struct Token {
 
 class Lexer {
 public:
+  struct Cursor {
+    int line = 0;
+    int column = 0;
+  };
   explicit Lexer(std::string_view data) : m_data(data) {}
 
   static Token tryParseToken(std::string_view word) {
@@ -112,6 +116,24 @@ public:
   }
 
   std::optional<Token> peak() { return m_current; }
+
+  std::string_view data() const { return m_data; }
+
+  Cursor pos() const {
+    Cursor cs;
+
+    for (int i = 0; i != cursor && i < m_data.size(); ++i) {
+      char c = m_data[i];
+      if (c == '\n') {
+        ++cs.line;
+        cs.column = 0;
+      } else {
+        ++cs.column;
+      }
+    }
+
+    return cs;
+  }
 
   std::optional<Token> getNext() {
     m_current = getNextImpl();

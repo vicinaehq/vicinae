@@ -2,10 +2,10 @@
 // We do NOT support multiline comments
 
 enum Flavor {
-	Strawberry, // on the same line is okay too
+	Strawberry, // on the same lineis okay too
 	Vanilla,
 	Orange,
-	Chocolate
+	Chocolate//choco
 };
 
 struct Point {
@@ -28,8 +28,8 @@ service Maths {
 }
 
 struct IceCream {
-	flavor: Flavor;
-	price: number;
+    flavor: Flavor;
+    price: string;
 };
 
 service Beach {
