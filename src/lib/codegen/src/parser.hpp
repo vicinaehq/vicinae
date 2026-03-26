@@ -1,9 +1,12 @@
 #pragma once
 #include "lexer.hpp"
+#include <expected>
 #include <format>
 #include <memory>
+#include <sstream>
 #include <stdexcept>
 #include <string_view>
+#include <ranges>
 #include <variant>
 #include <vector>
 
@@ -63,32 +66,67 @@ struct Tree {
 };
 
 class Parser {
+  static std::string highlightError(std::string_view data, int line, int col) {
+    static int padding = 2;
+    std::ostringstream oss;
+    auto lines = data | std::views::split('\n') |
+                 std::views::transform([](auto &&str) { return std::string_view{str}; }) |
+                 std::ranges::to<std::vector>();
+
+    auto ln = lines.at(line);
+
+    if (line > 0) oss << lines.at(line - 1) << "\n";
+
+    oss << ln << "\n";
+
+    for (int i = 0; i != col; ++i) {
+      if (i < col - padding)
+        oss << ' ';
+      else
+        oss << '^';
+    }
+
+    for (int i = col; i != ln.size(); ++i) {
+      if (i < col + padding)
+        oss << '^';
+      else
+        oss << ' ';
+    }
+    oss << "\n";
+
+    if (line < lines.size() + 1) { oss << lines.at(line + 1) << "\n"; }
+
+    return oss.str();
+  }
+
 public:
-  static Tree parseTree(std::string_view data) { return Parser{data}.parse(); }
+  static std::expected<Tree, std::string> parseTree(std::string_view data) { return Parser{data}.parse(); }
 
   Parser(std::string_view data) : m_lexer(data) {}
 
-  Tree parse() {
-    m_tree.structs.reserve(16);
-    m_lexer.getNext();
+  std::expected<Tree, std::string> parse() {
+    try {
+      m_tree.structs.reserve(16);
+      m_lexer.getNext();
 
-    while (auto tok = m_lexer.peak()) {
-      if (tok->type == TokenType::Struct) {
-        auto s = parseStruct();
-        m_tree.structs.emplace_back(s);
+      while (auto tok = m_lexer.peak()) {
+        if (tok->type == TokenType::Struct) { m_tree.structs.emplace_back(parseStruct()); }
+        if (tok->type == TokenType::Service) { m_tree.services.emplace_back(parseService()); }
+        if (tok->type == TokenType::Semicolon) {
+          m_lexer.getNext();
+          continue;
+        }
+        if (tok->type == TokenType::Enum) { m_tree.enums.emplace_back(parseEnum()); }
       }
-      if (tok->type == TokenType::Service) { m_tree.services.emplace_back(parseService()); }
-      if (tok->type == TokenType::Semicolon) {
-        m_lexer.getNext();
-        continue;
-      }
-      if (tok->type == TokenType::Enum) {
-        auto ev = parseEnum();
-        m_tree.enums.emplace_back(ev);
-      }
+
+      return std::move(m_tree);
+    } catch (std::exception &except) {
+      auto pos = m_lexer.pos();
+      auto ctx = highlightError(m_lexer.data(), pos.line, pos.column);
+
+      return std::unexpected(
+          std::format("Error: {} (L {}:{})\n{}", except.what(), pos.line + 1, pos.column, ctx));
     }
-
-    return std::move(m_tree);
   }
 
   std::optional<TypeValue> resolveType(std::string_view name) {
