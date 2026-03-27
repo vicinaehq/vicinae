@@ -37,6 +37,7 @@ class SourceBlendRect : public QQuickPaintedItem {
   Q_PROPERTY(
       qreal secondaryHeight READ secondaryHeight WRITE setSecondaryHeight NOTIFY secondaryHeightChanged)
   Q_PROPERTY(bool overlay READ overlay WRITE setOverlay NOTIFY overlayChanged)
+  Q_PROPERTY(bool cornerMask READ cornerMask WRITE setCornerMask NOTIFY cornerMaskChanged)
 
 public:
   explicit SourceBlendRect(QQuickItem *parent = nullptr) : QQuickPaintedItem(parent) {
@@ -116,8 +117,22 @@ public:
     }
   }
 
+  bool cornerMask() const { return m_cornerMask; }
+  void setCornerMask(bool v) {
+    if (m_cornerMask != v) {
+      m_cornerMask = v;
+      emit cornerMaskChanged();
+      update();
+    }
+  }
+
   void paint(QPainter *painter) override {
     painter->setRenderHint(QPainter::Antialiasing, true);
+
+    if (m_cornerMask) {
+      paintCornerMask(painter);
+      return;
+    }
 
     if (m_overlay) {
       paintOverlay(painter);
@@ -171,7 +186,8 @@ public:
       return nullptr;
     }
     auto *node = QQuickPaintedItem::updatePaintNode(oldNode, data);
-    if (node && !m_overlay && window()->rendererInterface()->graphicsApi() != QSGRendererInterface::Software)
+    if (node && !m_overlay && !m_cornerMask &&
+        window()->rendererInterface()->graphicsApi() != QSGRendererInterface::Software)
       disableBlending(node);
     return node;
   }
@@ -184,6 +200,17 @@ private:
   /// The item should be sized with `overlayPadding` px extra on each side
   /// so the border ring (1px outside the cell) fits in the texture.
   static constexpr qreal overlayPadding = 2;
+
+  void paintCornerMask(QPainter *painter) {
+    QPainterPath outerPath;
+    outerPath.addRect(boundingRect());
+    QPainterPath innerPath;
+    innerPath.addRoundedRect(boundingRect(), m_radius, m_radius);
+    QPainterPath cornerPath = outerPath - innerPath;
+
+    painter->setPen(Qt::NoPen);
+    painter->fillPath(cornerPath, m_backgroundColor);
+  }
 
   void paintOverlay(QPainter *painter) {
     if (m_borderWidth <= 0 || m_borderColor.alpha() <= 0) return;
@@ -218,6 +245,7 @@ signals:
   void secondaryColorChanged();
   void secondaryHeightChanged();
   void overlayChanged();
+  void cornerMaskChanged();
 
 private:
   QColor m_color = Qt::transparent;
@@ -228,4 +256,5 @@ private:
   QColor m_secondaryColor = Qt::transparent;
   qreal m_secondaryHeight = 0;
   bool m_overlay = false;
+  bool m_cornerMask = false;
 };

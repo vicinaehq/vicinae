@@ -61,6 +61,7 @@ void ExtensionGridModel::setExtensionData(const GridModel &model, bool resetSele
     newInset = 0.10;
     break;
   }
+  if (m_fit == ObjectFit::Fill) newInset = 0.0;
   if (!qFuzzyCompare(m_inset, newInset)) {
     m_inset = newInset;
     emit insetChanged();

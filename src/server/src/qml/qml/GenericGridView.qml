@@ -21,7 +21,7 @@ Item {
 
     property int columns: 8
     property real aspectRatio: 1.0
-    property real cellSpacing: 10
+    property real cellSpacing: 14
     property real horizontalPadding: 20
     property real cellInset: 0.10  // ratio of cell size (None≈0.05, Small=0.10, Medium=0.15, Large=0.25)
 
@@ -53,7 +53,7 @@ Item {
         font.pointSize: Theme.smallerFontSize - 1
     }
 
-    readonly property real _textGap: 4
+    readonly property real _textGap: 6
     readonly property real cellTextHeight: {
         if (!showCellTitle && !showCellSubtitle)
             return 0;
@@ -228,12 +228,24 @@ Item {
                                 }
 
                                 SourceBlendRect {
-                                    readonly property real pad: 2
+                                    visible: root.cellInset <= 0
+                                    width: rowItem.cellWidth
+                                    height: rowItem.cellHeight
+                                    radius: 10
+                                    cornerMask: true
+                                    backgroundColor: {
+                                        var bg = Theme.background;
+                                        return Qt.rgba(bg.r, bg.g, bg.b, Config.windowOpacity);
+                                    }
+                                }
+
+                                SourceBlendRect {
+                                    readonly property real pad: 3
                                     x: -pad
                                     y: -pad
                                     width: rowItem.cellWidth + pad * 2
                                     height: rowItem.cellHeight + pad * 2
-                                    radius: 10
+                                    radius: 11
                                     overlay: true
                                     borderWidth: (cellWrapper.cellSelected || cellMouseArea.containsMouse) ? 2 : 0
                                     borderColor: cellWrapper.cellSelected ? Theme.gridItemSelectionOutline : Theme.gridItemHoverOutline
