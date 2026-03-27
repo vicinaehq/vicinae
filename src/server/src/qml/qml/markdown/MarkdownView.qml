@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Effects
 import Vicinae
 
 Item {
@@ -213,6 +214,79 @@ Item {
     Shortcut {
         sequence: StandardKey.SelectAll
         onActivated: root._controller.selectAll()
+    }
+
+    Popup {
+        id: selectionMenu
+        width: 160
+        topPadding: 6
+        bottomPadding: 6
+        leftPadding: Config.borderWidth
+        rightPadding: Config.borderWidth
+
+        // Make it disappear nicely when clicking elsewhere
+        focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+
+        background: Rectangle {
+            radius: Config.borderRounding
+            color: Qt.rgba(Theme.statusBarBackground.r, Theme.statusBarBackground.g, Theme.statusBarBackground.b, 1)
+            border.color: Theme.mainWindowBorder
+            border.width: Config.borderWidth
+
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                autoPaddingEnabled: true
+                shadowEnabled: true
+                shadowBlur: 0.4
+                shadowColor: Qt.rgba(0, 0, 0, 0.25)
+                shadowVerticalOffset: 4
+            }
+        }
+
+        contentItem: ColumnLayout {
+            spacing: 0
+
+            ActionItemDelegate {
+                Layout.fillWidth: true
+                title: "Copy"
+                iconSource: ""
+                shortcutTokens: []
+                isSubmenu: false
+                isDanger: false
+                opacity: root._controller.hasSelection ? 1.0 : 0.5
+                enabled: root._controller.hasSelection
+
+                onClicked: {
+                    root._controller.copy();
+                    selectionMenu.close();
+                }
+            }
+
+            ActionItemDelegate {
+                Layout.fillWidth: true
+                title: "Select All"
+                iconSource: ""
+                shortcutTokens: []
+                isSubmenu: false
+                isDanger: false
+
+                onClicked: {
+                    root._controller.selectAll();
+                    selectionMenu.close();
+                }
+            }
+        }
+    }
+
+    TapHandler {
+        acceptedButtons: Qt.RightButton
+        onTapped: eventPoint => {
+            root.forceActiveFocus();
+            selectionMenu.x = eventPoint.position.x;
+            selectionMenu.y = eventPoint.position.y;
+            selectionMenu.open();
+        }
     }
 
     Connections {
