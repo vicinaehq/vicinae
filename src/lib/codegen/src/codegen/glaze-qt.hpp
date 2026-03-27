@@ -1,12 +1,14 @@
 #pragma once
 #include "codegen.hpp"
+#include <format>
+#include <fstream>
 #include <iomanip>
 #include <sstream>
+#include <utility>
 #include <variant>
 #include <ranges>
 
 constexpr const auto BASE = R"(
-
 struct JsonRpcRequest {
   std::string jsonrpc;
   std::string method;
@@ -40,9 +42,7 @@ using OutgoingJsonRpcMessage = std::variant<JsonRpcResponse, JsonRpcErrorRespons
 class AbstractTransport {
 public:
   using MessageHandler = std::function<void(const IncomingJsonRpcMessage &)>;
-  virtual void onMessage(const MessageHandler &message) = 0;
-  virtual void sendResponse(const JsonRpcResponse& res) = 0;
-  virtual void sendNotification(const JsonRpcNotification& notif) = 0;
+  virtual void sendResponse(std::string_view data) = 0;
   virtual ~AbstractTransport() = default;
 };
 
@@ -53,12 +53,34 @@ concept DerivedFrom = std::derived_from<T, U>;
 class GlazeQtGenerator : public AbstractCodeGenerator {
   std::string name() const override { return "glaze-qt"; }
 
+  static std::string_view serializeTypenameImpl(const TypeValue &value) {
+    auto const visitor = overloads{[](TypeStruct *s) { return s->name; },
+                                   [](const EnumValue &e) { return std::string_view{"std::string"}; },
+                                   [](PrimitiveType type) -> std::string_view {
+                                     switch (type) {
+                                     case PrimitiveType::Void:
+                                       return "void";
+                                     case PrimitiveType::Boolean:
+                                       return "bool";
+                                     case PrimitiveType::Number:
+                                       return "int";
+                                     case PrimitiveType::String:
+                                       return "std::string";
+                                     default:
+                                       std::unreachable();
+                                     }
+                                   }};
+
+    return std::visit(visitor, value.data);
+  }
+
   static std::string serializeTypename(const TypeValue &value) {
-    if (auto ptr = std::get_if<TypeStruct *>(&value.data)) {
-      return std::string{(*ptr)->name};
-    } else {
-      return "std::string";
-    }
+    std::string s{serializeTypenameImpl(value)};
+
+    if (value.isArray) { s = std::format("std::vector<{}>", s); }
+    if (value.isOptional) { s = std::format("std::optional<{}>", s); }
+
+    return s;
   }
 
   static std::string abstractName(std::string_view className) { return std::string{"Abstract"} + className; }
@@ -85,10 +107,12 @@ class GlazeQtGenerator : public AbstractCodeGenerator {
 
     oss << "template <typename UserContext>\n";
     oss << "class " << abstractName(s.name) << " {\n";
+    oss << "\tpublic:\n";
     oss << "\t" << abstractName(s.name) << "(UserContext ctx): m_ctx(ctx) {}\n\n";
 
     for (const auto &method : s.methods) {
-      oss << "\t" << "virtual " << serializeTypename(method.returnType) << " " << method.name << "(";
+      oss << "\t" << "virtual " << "QFuture<" << serializeTypename(method.returnType) << "> " << method.name
+          << "(";
       for (const auto &[idx, param] : method.params | std::views::enumerate) {
         if (idx > 0) oss << ", ";
         oss << constRef(param.type) << " " << param.name;
@@ -113,13 +137,18 @@ class GlazeQtGenerator : public AbstractCodeGenerator {
     return oss.str();
   }
 
+  // <name>[?]:<type>
+  static void serializeTypeExpression(std::ofstream &ofs, const TypeStruct &s) {}
+
   static std::string serializeType(const TypeStruct &s) {
     std::ostringstream oss;
 
     oss << "struct " << s.name << " {\n";
 
     for (const auto &field : s.fields) {
-      oss << "\t" << serializeTypename(field.type) << " " << field.name << ";\n";
+      oss << "\t";
+      oss << serializeTypename(field.type);
+      oss << " " << field.name << ";\n";
     }
 
     oss << "\n};\n";
@@ -149,12 +178,13 @@ public:
 
     oss << R"(
 #pragma once
+#include <QFuture>
 #include <memory>
 #include <glaze/glaze.hpp>
 #include <glaze/json/read.hpp>
-#include <qfuture.h>
 #include <concepts>
 #include <variant>
+#include <string_view>
 	)";
 
     oss << "namespace codegen {\n";
@@ -180,35 +210,47 @@ public:
     oss << "\ttypename UserContext,\n";
     for (const auto &[idx, s] : ast.services | std::views::enumerate) {
       if (idx > 0) oss << ", ";
-      oss << "\tDerivedFrom<" << abstractName(s->name) << "<UserContext>> " << s->name << "\n";
+      // oss << "\tDerivedFrom<" << abstractName(s->name) << "<UserContext>> " << s->name << "\n";
+      oss << "\tclass " << " " << s->name << "\n";
     }
 
     oss << ">\n";
     oss << "class Server {\n";
+    oss << "\tpublic:\n";
     oss << "\tServer(UserContext ctx, AbstractTransport* transport): m_ctx(ctx), m_transport(transport)";
 
     for (const auto &s : ast.services) {
       oss << ", ";
-      oss << s->name << "(" << "new " << s->name << "(ctx)" << ")";
+      oss << "m_" << s->name << "(" << "new " << s->name << "(ctx)" << ")";
     }
 
     oss << "{\n";
-    oss << "\t m_transport->onMessage([this](auto message){ if (auto reqPtr = "
-           "std::get_if<JsonRpcRequest>(&message)) { dispatch(*reqPtr); } });";
     oss << "\n}\n";
+
+    oss << R"(
+	void route(std::string_view data) {
+		IncomingJsonRpcMessage msg;
+		[[maybe_unused]] auto res = glz::read_json(msg, data);
+		if (auto reqPtr = std::get_if<JsonRpcRequest>(&msg)) { dispatch(*reqPtr); }
+	}
+	)";
 
     oss << "private:\n";
 
     oss << R"(
+	void sendResponse(const JsonRpcResponse& res) {
+		std::string buf;
+    	[[maybe_unused]] auto result = glz::write_json(res, buf);
+		m_transport->sendResponse(buf);
+	}
 
-	template <glz::reflectable T> 
-	void reply(int id, const T &data) {
+	void reply(int id, const auto &data) {
     	static thread_local std::string buf;
     	[[maybe_unused]]auto result = glz::write_json(data, buf);
-
-    	m_transport->sendResponse(JsonRpcResponse{.id = id, .result = result});
+    	sendResponse(JsonRpcResponse{.id = id, .result = buf});
   	}
 
+  	void replyEmpty(int id) { sendResponse(JsonRpcResponse{.id = id, .result = "{}"}); }
 	)";
 
     oss << "\tvoid dispatch(const JsonRpcRequest& req) {\n";
@@ -226,7 +268,13 @@ public:
           if (idx > 0) oss << ", ";
           oss << "payload." << param.name;
         }
-        oss << ").then([this, id = req.id](auto res){ reply(id, res); });\n";
+
+        if (auto tt = std::get_if<PrimitiveType>(&m.returnType.data); tt && *tt == PrimitiveType::Void) {
+          oss << ").then([this, id = req.id](){ replyEmpty(id); });";
+        } else {
+          oss << ").then([this, id = req.id](" << constRef(m.returnType) << " res){ reply(id, res); });";
+        }
+
         oss << "\n\t\t}\n";
       }
     }

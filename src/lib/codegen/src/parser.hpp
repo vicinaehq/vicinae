@@ -12,7 +12,13 @@
 
 struct TypeStruct;
 
-enum class DataType {
+template <class... Ts> struct overloads : Ts... {
+  using Ts::operator()...;
+};
+
+enum class PrimitiveType {
+  Void,
+  Boolean,
   String,
   Number,
 };
@@ -23,8 +29,9 @@ struct EnumValue {
 };
 
 struct TypeValue {
-  std::variant<DataType, TypeStruct *, EnumValue> data;
+  std::variant<PrimitiveType, TypeStruct *, EnumValue> data;
   bool isArray = false;
+  bool isOptional = false;
 };
 
 struct MethodParameter {
@@ -130,6 +137,11 @@ public:
   }
 
   std::optional<TypeValue> resolveType(std::string_view name) {
+    if (name == "string") return TypeValue{PrimitiveType::String};
+    if (name == "number") return TypeValue{PrimitiveType::Number};
+    if (name == "boolean" || name == "bool") return TypeValue{PrimitiveType::Boolean};
+    if (name == "void") return TypeValue{PrimitiveType::Void};
+
     for (const auto &s : m_tree.structs) {
       if (s->name == name) { return TypeValue{s.get()}; }
     }
@@ -142,15 +154,12 @@ public:
   TypeValue parseTypeValue() {
     auto typeTok = m_lexer.peak();
 
-    if (typeTok->type == TokenType::Identifier) {
-      auto type = resolveType(typeTok->data);
-      if (!type) { throw std::runtime_error(std::format("{} is not a valid type", typeTok->data)); }
-      m_lexer.getNext();
-      return type.value();
-    }
+    if (typeTok->type != TokenType::Identifier) { throw std::runtime_error("Expected type identifier"); }
 
+    auto type = resolveType(typeTok->data);
+    if (!type) { throw std::runtime_error(std::format("{} is not a valid type", typeTok->data)); }
     m_lexer.getNext();
-    return TypeValue{DataType::String};
+    return type.value();
   }
 
   TypeValue parseType() {
@@ -198,16 +207,17 @@ public:
 
     while (auto tok = m_lexer.peak()) {
       MethodParameter param;
+
       if (tok->type == TokenType::RParen) { break; }
       if (tok->type == TokenType::Comma) {
         m_lexer.getNext();
         continue;
       }
 
-      param.name = assertGetNext(TokenType::Identifier).data;
-      assertGetNext(TokenType::Colon, "expected colon");
-      param.type = parseType();
+      auto [name, tval] = parseTypeExpression();
 
+      param.name = name;
+      param.type = std::move(tval);
       params.emplace_back(param);
     }
 
@@ -278,6 +288,26 @@ public:
     return ev;
   }
 
+  // <id>[?]:<type>
+  std::pair<std::string_view, TypeValue> parseTypeExpression() {
+    std::string_view name;
+    TypeValue tval;
+
+    name = assertGetNext(TokenType::Identifier).data;
+    bool optional = false;
+
+    if (m_lexer.peak()->type == TokenType::QuestionMark) {
+      optional = true;
+      m_lexer.getNext();
+    }
+
+    assertGetNext(TokenType::Colon, "expected colon after struct field name");
+    tval = parseType();
+    tval.isOptional = optional;
+
+    return {name, tval};
+  }
+
   TypeStruct *parseStruct() {
     auto type = new TypeStruct;
     assertGetNext(TokenType::Struct, "Expected struct");
@@ -286,13 +316,11 @@ public:
 
     while (peakUnless(TokenType::RBrace)) {
       StructField field;
+      auto [name, tval] = parseTypeExpression();
 
-      field.name = assertGetNext(TokenType::Identifier).data;
-      assertGetNext(TokenType::Colon, "expected colon after struct field name");
-      field.type = parseType();
-
+      field.name = name;
+      field.type = std::move(tval);
       assertGetNext(TokenType::Semicolon, "expected semicolon at the end of struct field");
-
       type->fields.emplace_back(field);
     }
 
