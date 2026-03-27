@@ -656,9 +656,9 @@ if (UNIX AND NOT APPLE)
 	wayland_generate_protocol("kde-blur")
 	wayland_generate_protocol("ext-background-effect-v1")
 	
-	include("Codegen")
+	include("Figura")
 
-	codegen_do(${CMAKE_SOURCE_DIR}/service.proto)
+	figura_codegen(${CMAKE_SOURCE_DIR}/service.proto)
 
 
 	list(APPEND LIBS xkbcommon vicinae::linuxutils)
