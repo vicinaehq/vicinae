@@ -2,7 +2,6 @@
 #include <format>
 #include <iomanip>
 #include "codegen.hpp"
-#include <numbers>
 #include <sstream>
 #include <ranges>
 
@@ -11,6 +10,19 @@ namespace {
 inline std::string_view getTypename(const TypeValue &type) {
   if (auto ptr = std::get_if<TypeStruct *>(&type.data)) { return (*ptr)->name; }
   if (auto ptr = std::get_if<EnumValue>(&type.data)) { return ptr->name; }
+  if (auto ptype = std::get_if<PrimitiveType>(&type.data)) {
+    switch (*ptype) {
+    case PrimitiveType::Void:
+      return "void";
+    case PrimitiveType::Boolean:
+      return "boolean";
+    case PrimitiveType::Number:
+      return "number";
+    case PrimitiveType::String:
+      return "string";
+    }
+  }
+
   return "string";
 }
 
@@ -25,7 +37,11 @@ inline std::string generateType(const TypeStruct &s) {
   oss << "type " << s.name << " = {\n";
 
   for (const auto &field : s.fields) {
-    oss << "\t" << field.name << ": " << getTypeSignature(field.type) << ";\n";
+    oss << "\t" << field.name;
+
+    if (field.type.isOptional) oss << "?";
+
+    oss << ": " << getTypeSignature(field.type) << ";\n";
   }
 
   oss << "}";
@@ -69,7 +85,9 @@ inline std::string generateService(const Service &s) {
 
     for (const auto &[idx, param] : method.params | std::views::enumerate) {
       if (idx > 0) oss << ", ";
-      oss << param.name << ": " << getTypeSignature(param.type);
+      oss << param.name;
+      if (param.type.isOptional) oss << "?";
+      oss << ": " << getTypeSignature(param.type);
     }
 
     oss << "): " << "Promise<" << getTypeSignature(method.returnType) << "> {\n";

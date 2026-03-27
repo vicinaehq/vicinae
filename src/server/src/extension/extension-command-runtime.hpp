@@ -3,6 +3,7 @@
 #include "common.hpp"
 #include "proto/extension.pb.h"
 #include "types.hpp"
+#include <qfuture.h>
 #include <qfuturewatcher.h>
 #include "codegen.hpp"
 
@@ -11,23 +12,25 @@ struct Context {
   int b;
 };
 
-class UIService : public codegen::AbstractUI<Context> {
+class UIServ : public codegen::AbstractUI<Context> {
 public:
-  std::string showToast(const std::string &style, const std::string &msg) override {
-    int b = m_ctx.a + m_ctx.b;
+  UIServ(Context ctx) : AbstractUI(ctx) {}
 
-    return {};
+  QFuture<std::string> showToast(const std::string &style, const std::string &msg) override {
+    return QtFuture::makeReadyValueFuture(std::string{""});
   }
 
-  virtual ~UIService() = default;
+  QFuture<void> render(const std::string &json) override { return {}; }
+
+  virtual ~UIServ() = default;
 };
 
-class MathsService : public codegen::AbstractMaths<Context> {
+class EvCore : public codegen::AbstractEventCore<Context> {
 public:
-  codegen::Point mul(const std::string &x, const std::string &y) override { return codegen::Point{x, y}; }
-
-  virtual ~MathsService() = default;
+  EvCore(Context ctx) : AbstractEventCore(ctx) {}
 };
+
+using Server = codegen::Server<Context, EvCore, UIServ>;
 
 class ExtensionCommand;
 class StorageRequestRouter;
@@ -76,4 +79,6 @@ private:
   std::unique_ptr<OAuthRouter> m_oauthRouter;
   QString m_sessionId;
   bool m_isDevMode = false;
+
+  Server m_server;
 };

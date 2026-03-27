@@ -4,7 +4,6 @@
 #include <optional>
 #include <stdexcept>
 #include <string_view>
-#include <unordered_map>
 
 enum class TokenType {
   Identifier,
@@ -23,14 +22,8 @@ enum class TokenType {
   RBracket,
   Comma,
   Semicolon,
+  QuestionMark,
 
-  TypeString,
-  TypeNumber,
-};
-
-static const std::unordered_map<std::string_view, TokenType> TYPES{
-    {"string", TokenType::TypeString},
-    {"number", TokenType::TypeNumber},
 };
 
 struct Token {
@@ -73,14 +66,10 @@ struct Token {
       return "Comma";
     case T::Semicolon:
       return "Semicolon";
-    case T::TypeString:
-      return "String";
-    case T::TypeNumber:
-      return "Number";
+    case T::QuestionMark:
+      return "QuestionMark";
     }
   }
-
-  bool isType() const { return TYPES.contains(data); }
 };
 
 class Lexer {
@@ -107,8 +96,6 @@ public:
     if (word == ":") { return Token(T::Colon); }
     if (word == ",") { return Token(T::Comma); }
     if (word == ";") { return Token(T::Semicolon); }
-
-    if (auto it = TYPES.find(word); it != TYPES.end()) { return Token(it->second); }
 
     return Token(T::Identifier);
 
@@ -184,6 +171,11 @@ public:
             ++cursor;
             return Token(TokenType::RBracket, view);
           }
+          if (c == '?') {
+            ++cursor;
+            return Token(TokenType::QuestionMark, view);
+          }
+
           state = Operator;
           start = cursor;
           break;
