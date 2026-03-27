@@ -4,6 +4,7 @@
 #include "services/clipboard/clipboard-db.hpp"
 #include "services/clipboard/clipboard-encrypter.hpp"
 #include "services/clipboard/clipboard-server.hpp"
+#include "url-metadata/url-metadata-service.hpp"
 #include <QString>
 #include <expected>
 #include <filesystem>
@@ -65,6 +66,7 @@ signals:
    * of the list.
    */
   void selectionUpdated() const;
+  void selectionMetadataUpdated(const QString &id) const;
   void monitoringChanged(bool value) const;
 
 public:
@@ -118,6 +120,7 @@ public:
 
 private:
   std::unique_ptr<ClipboardEncrypter> m_encrypter;
+  std::unique_ptr<UrlMetadataService> m_urlMetadata;
 
   QMimeDatabase _mimeDb;
   std::filesystem::path m_dataDir;

@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="database/clipboard">
         <file>migrations/001_init.sql</file>
+        <file>migrations/002_add_url_metadata.sql</file>
+        <file>migrations/003_add_og_image.sql</file>
     </qresource>
 </RCC>

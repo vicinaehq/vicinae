@@ -41,10 +41,16 @@ QVariant ClipboardHistoryModel::data(const QModelIndex &index, int role) const {
 
 QString ClipboardHistoryModel::itemId(int, int i) const { return m_entries[i].id; }
 
-QString ClipboardHistoryModel::itemTitle(int, int i) const { return m_entries[i].textPreview; }
+QString ClipboardHistoryModel::itemTitle(int, int i) const {
+  const auto &entry = m_entries[i];
+  if (entry.ogTitle && !entry.ogTitle->isEmpty()) return *entry.ogTitle;
+  return entry.textPreview;
+}
 
 QString ClipboardHistoryModel::itemSubtitle(int, int i) const {
-  auto dt = QDateTime::fromSecsSinceEpoch(m_entries[i].updatedAt);
+  const auto &entry = m_entries[i];
+  if (entry.ogDescription && !entry.ogDescription->isEmpty()) return *entry.ogDescription;
+  auto dt = QDateTime::fromSecsSinceEpoch(entry.updatedAt);
   return getRelativeTimeString(dt);
 }
 

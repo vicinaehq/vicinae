@@ -27,6 +27,7 @@ class ClipboardHistoryViewHost : public ViewHostBase {
   Q_PROPERTY(QString detailEncryptionIcon READ detailEncryptionIcon NOTIFY detailChanged)
   Q_PROPERTY(QString detailErrorTitle READ detailErrorTitle NOTIFY detailChanged)
   Q_PROPERTY(QString detailErrorDescription READ detailErrorDescription NOTIFY detailChanged)
+  Q_PROPERTY(QString detailOgImageUrl READ detailOgImageUrl NOTIFY detailChanged)
 
 public:
   explicit ClipboardHistoryViewHost();
@@ -60,6 +61,7 @@ public:
   QString detailEncryptionIcon() const { return m_detailEncryptionIcon; }
   QString detailErrorTitle() const { return m_detailErrorTitle; }
   QString detailErrorDescription() const { return m_detailErrorDescription; }
+  QString detailOgImageUrl() const { return m_detailOgImageUrl; }
 
 signals:
   void itemCountTextChanged();
@@ -96,6 +98,7 @@ private:
   QString m_detailEncryptionIcon;
   QString m_detailErrorTitle;
   QString m_detailErrorDescription;
+  QString m_detailOgImageUrl;
 
   std::unique_ptr<QTemporaryFile> m_tmpFile;
 };
