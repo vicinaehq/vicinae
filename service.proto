@@ -13,5 +13,7 @@ enum ToastStyle {
 service UI {
   fn render(json: string) => void;
   fn showToast(style: ToastStyle, msg: string) => string;
+  event viewPushed(viewId: number);
 };
+
 //e

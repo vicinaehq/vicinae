@@ -4,6 +4,7 @@
 #include "codegen.hpp"
 #include <sstream>
 #include <ranges>
+#include <stdexcept>
 
 namespace {
 
@@ -94,14 +95,14 @@ inline std::string generateService(const Service &s) {
 
     std::string methodName = std::format("{}/{}", s.name, method.name);
 
-    oss << "\t\treturn this.transport.sendRequest(" << std::quoted(methodName) << ", { ";
+    oss << "\t\treturn this.transport.send({ id: 1, method: " << methodName << ", params: { ";
 
     for (const auto &[idx, param] : method.params | std::views::enumerate) {
       if (idx > 0) oss << ", ";
       oss << param.name;
     }
 
-    oss << " }" << ");";
+    oss << " }" << "});";
     oss << "\t" << "\n\t}\n\n";
   }
 
@@ -141,9 +142,7 @@ interface JsonRpcMessage {
 }
 
 interface ITransport {
-	sendRequest(method: string, params: Record<string, any>): Promise<any>;
-	sendNotification(method: string, params: Record<string, any>): void;
-	onMessage(handler: (message: JsonRpcMessage) => void): void;
+	send(data: string): void;
 }
 )";
 
@@ -216,5 +215,6 @@ static std::string codegenTypescript(const Tree &tree) {
 
 class TypeScriptCodeGenerator : public AbstractCodeGenerator {
   std::string name() const override { return "typescript"; }
-  std::string generate(const Tree &ast) override { return codegenTypescript(ast); }
+  std::string generateClient(const Tree &ast) override { return codegenTypescript(ast); }
+  std::string generateServer(const Tree &ast) override { throw std::runtime_error("generate server"); }
 };

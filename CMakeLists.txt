@@ -89,7 +89,7 @@ add_subdirectory(${LIB_DIR}/xdgpp)
 add_subdirectory(${LIB_DIR}/vicinae-ipc)
 add_subdirectory(${LIB_DIR}/common)
 add_subdirectory(${LIB_DIR}/linux-utils)
-add_subdirectory(${LIB_DIR}/codegen)
+add_subdirectory(${LIB_DIR}/figura)
 
 set(PROTO_DIR ${CMAKE_SOURCE_DIR}/src/proto)
 

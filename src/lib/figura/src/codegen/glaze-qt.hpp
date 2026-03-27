@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iomanip>
 #include <sstream>
+#include <stdexcept>
 #include <utility>
 #include <variant>
 #include <ranges>
@@ -44,6 +45,35 @@ public:
   using MessageHandler = std::function<void(const IncomingJsonRpcMessage &)>;
   virtual void sendResponse(std::string_view data) = 0;
   virtual ~AbstractTransport() = default;
+};
+
+class EventEmitter {
+	public:
+		EventEmitter(AbstractTransport& transport): m_transport(transport) {
+		}
+
+		template <typename T>
+		void emitEvent(std::string_view name, const T& params) {
+			std::string paramsBuf;
+			{
+			[[maybe_unused]] auto res = glz::write_json(params, paramsBuf);
+			}
+
+			JsonRpcNotification notif{
+				.method = std::string{name},
+				.params = paramsBuf
+			};
+
+			std::string buf;
+			{
+			[[maybe_unused]] auto res = glz::write_json(notif, buf);
+			}
+
+			m_transport.sendResponse(buf);
+		}
+	
+	private:
+		AbstractTransport& m_transport;
 };
 
 template <typename T, typename U>
@@ -106,9 +136,10 @@ class GlazeQtGenerator : public AbstractCodeGenerator {
     std::ostringstream oss;
 
     oss << "template <typename UserContext>\n";
-    oss << "class " << abstractName(s.name) << " {\n";
+    oss << "class " << abstractName(s.name) << ": public EventEmitter {\n";
     oss << "\tpublic:\n";
-    oss << "\t" << abstractName(s.name) << "(UserContext ctx): m_ctx(ctx) {}\n\n";
+    oss << "\t" << abstractName(s.name)
+        << "(UserContext ctx, AbstractTransport& transport): EventEmitter(transport), m_ctx(ctx) {}\n\n";
 
     for (const auto &method : s.methods) {
       oss << "\t" << "virtual " << "QFuture<" << serializeTypename(method.returnType) << "> " << method.name
@@ -126,7 +157,20 @@ class GlazeQtGenerator : public AbstractCodeGenerator {
         if (idx > 0) oss << ", ";
         oss << constRef(param.type) << " " << param.name;
       }
-      oss << ") {}\n";
+      oss << ") {\n";
+
+      std::string methodId = std::string{s.name} + "/" + event.name;
+
+      auto eventParamsName = getMethodParamName(s.name, event.name);
+
+      oss << "\t\temitEvent(" << std::quoted(methodId) << ", " << eventParamsName << "{";
+      for (const auto &[idx, param] : event.params | std::views::enumerate) {
+        if (idx > 0) oss << ", ";
+        oss << "." << param.name << " = " << param.name;
+      }
+      oss << "});";
+
+      oss << "\n}\n";
     }
 
     oss << "protected:\n";
@@ -156,12 +200,19 @@ class GlazeQtGenerator : public AbstractCodeGenerator {
     return oss.str();
   }
 
-  static std::string getMethodParamName(std::string_view mname) { return std::string{mname} + "Params"; }
+  static std::string getMethodParamName(std::string_view serviceName, std::string_view mname) {
+    return std::format("{}_{}_Params", serviceName, mname);
+  }
 
-  static std::string serializeMethodParams(const Method &method) {
+  static std::string serializeEventParams(std::string_view serviceName, const Event &e) {
+    return serializeMethodParams(serviceName,
+                                 {.name = e.name, .params = e.params, .returnType = {PrimitiveType::Void}});
+  }
+
+  static std::string serializeMethodParams(std::string_view serviceName, const Method &method) {
     std::ostringstream oss;
 
-    oss << "struct " << getMethodParamName(method.name) << " {\n";
+    oss << "struct " << getMethodParamName(serviceName, method.name) << " {\n";
 
     for (const auto &param : method.params) {
       oss << "\t" << serializeTypename(param.type) << " " << param.name << ";\n";
@@ -173,7 +224,9 @@ class GlazeQtGenerator : public AbstractCodeGenerator {
   }
 
 public:
-  std::string generate(const Tree &ast) override {
+  std::string generateClient(const Tree &ast) override { throw std::runtime_error("not implemented"); }
+
+  std::string generateServer(const Tree &ast) override {
     std::ostringstream oss;
 
     oss << R"(
@@ -199,11 +252,15 @@ public:
     }
 
     for (const auto &s : ast.services) {
-      oss << serializeService(*s) << "\n";
+      for (const auto &e : s->events) {
+        oss << serializeEventParams(s->name, e);
+      }
 
       for (const auto &m : s->methods) {
-        oss << serializeMethodParams(m);
+        oss << serializeMethodParams(s->name, m);
       }
+
+      oss << serializeService(*s) << "\n";
     }
 
     oss << "template <\n";
@@ -221,7 +278,7 @@ public:
 
     for (const auto &s : ast.services) {
       oss << ", ";
-      oss << "m_" << s->name << "(" << "new " << s->name << "(ctx)" << ")";
+      oss << "m_" << s->name << "(" << "new " << s->name << "(ctx, *transport)" << ")";
     }
 
     oss << "{\n";
@@ -261,7 +318,7 @@ public:
         std::string methodId = std::string{s->name} + "/" + m.name;
 
         oss << "\t\tif (req.method == " << std::quoted(methodId) << ") {\n";
-        oss << "\t\t\t" << getMethodParamName(m.name) << " payload;\n";
+        oss << "\t\t\t" << getMethodParamName(s->name, m.name) << " payload;\n";
         oss << "\t\t\t[[maybe_unused]] auto res = glz::read_json(payload, req.params.str);\n";
         oss << "\t\t\t" << "m_" << s->name << "->" << m.name << "(";
         for (const auto &[idx, param] : m.params | std::views::enumerate) {

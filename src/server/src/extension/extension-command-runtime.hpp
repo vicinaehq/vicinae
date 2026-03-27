@@ -14,7 +14,7 @@ struct Context {
 
 class UIServ : public codegen::AbstractUI<Context> {
 public:
-  UIServ(Context ctx) : AbstractUI(ctx) {}
+  using AbstractUI::AbstractUI;
 
   QFuture<std::string> showToast(const std::string &style, const std::string &msg) override {
     return QtFuture::makeReadyValueFuture(std::string{""});
@@ -26,8 +26,7 @@ public:
 };
 
 class EvCore : public codegen::AbstractEventCore<Context> {
-public:
-  EvCore(Context ctx) : AbstractEventCore(ctx) {}
+  using AbstractEventCore::AbstractEventCore;
 };
 
 using Server = codegen::Server<Context, EvCore, UIServ>;
