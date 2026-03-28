@@ -176,10 +176,7 @@ public:
       auto sub = app.add_subcommand(cmd->id(), cmd->description());
       cmd->prepare(sub, &success);
       cmd->setup(sub);
-      sub->callback([cmd = cmd.get(), sub, &success]() {
-        const bool r = cmd->run(sub);
-        success = r;
-      });
+      sub->callback([cmd = cmd.get(), sub, &success]() { success = cmd->run(sub); });
     }
 
     if (ac == 1) {
@@ -282,7 +279,6 @@ int main(int ac, char **av) {
   CommandLineApp cli{"figura"};
 
   cli.registerCommand<CompileCommand>();
-  cli.run(ac, av);
 
-  return 1;
+  return cli.run(ac, av);
 }

@@ -4,9 +4,19 @@
 // At this layer, the manager is unaware what the payload is made of.
 // The payload is in reality another rpc message belonging to the client<->extension spec.
 
+enum CommandMode {
+  View,
+  NoView
+};
+
+enum CommandEnv {
+  Development,
+  Production
+};
+
 struct LoadOptions {
-  mode: string;
-  env: string;
+  mode: CommandMode;
+  env: CommandEnv;
   vicinae_path: string;
   entrypoint: string;
   is_raycast: bool;
@@ -27,4 +37,5 @@ service Manager {
   fn messageExtension(session_id: string, payload: string) => bool;
 
   event extensionMessage(session_id: string, payload: string);
+  event extensionCrash(session_id: string, reason: string);
 }

@@ -1,8 +1,8 @@
 import { createRenderer, type ViewData } from "../reconciler";
-import type { LaunchEventData } from "../proto/extension";
 import { type ComponentType, Suspense } from "react";
 import * as React from "react";
 import { NavigationProvider, bus } from "@vicinae/api";
+import type * as extensionServer from "../proto/extension-manager";
 
 class ErrorBoundary extends React.Component<
 	{ children: React.ReactNode },
@@ -42,7 +42,7 @@ const App: React.FC<{ component: ComponentType; launchProps: any }> = ({
 	);
 };
 
-export default async function(data: LaunchEventData) {
+export default async function(data: extensionServer.LaunchEventData) {
 	const module = await import(data.entrypoint);
 	const Component = module.default.default;
 	const sendRender = (views: ViewData[]) => {
@@ -54,9 +54,6 @@ export default async function(data: LaunchEventData) {
 	});
 
 	renderer.render(
-		<App
-			launchProps={{ arguments: data.argumentValues }}
-			component={Component}
-		/>,
+		<App launchProps={{ arguments: {} }} component={Component} />,
 	);
 }

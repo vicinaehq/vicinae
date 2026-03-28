@@ -44,13 +44,15 @@ endif()
 
 add_custom_command(
     OUTPUT ${EXT_MGR_OUT}
-	COMMAND protobuf::protoc --plugin=${EXT_MGR_SRC_DIR}/node_modules/.bin/protoc-gen-ts_proto -I ${protobuf_SOURCE_DIR}/src -I ${PROTO_DIR} ${EXT_PROTO_FILES} --ts_proto_out ${EXT_PROTO_OUT}
+	COMMAND  ${CMAKE_BINARY_DIR}/bin/figura compile ${CMAKE_SOURCE_DIR}/figura/manager.fig --server typescript --output ${EXT_PROTO_OUT}/manager.ts
+	COMMAND  ${CMAKE_BINARY_DIR}/bin/figura compile ${CMAKE_SOURCE_DIR}/figura/manager-extension.fig --client typescript --output ${EXT_PROTO_OUT}/manager-extension.ts
+	COMMAND  ${CMAKE_BINARY_DIR}/bin/figura compile ${CMAKE_SOURCE_DIR}/figura/manager-extension.fig --server typescript --output ${EXT_PROTO_OUT}/extension-manager.ts
     COMMAND npm run build
     COMMAND ${CMAKE_COMMAND} -E copy
             ${EXT_MGR_SRC_DIR}/dist/runtime.js
             ${EXT_MGR_OUT}
     WORKING_DIRECTORY ${EXT_MGR_SRC_DIR}
-	DEPENDS ${FILTERED_TS_FILES} ${API_STAMP} ${RAY_COMPAT_STAMP} ${EXT_MGR_NODE_MODULES}
+	DEPENDS ${CMAKE_BINARY_DIR}/bin/figura ${FILTERED_TS_FILES} ${API_STAMP} ${RAY_COMPAT_STAMP} ${EXT_MGR_NODE_MODULES}
     COMMENT "Building extension manager JavaScript bundle"
 )
 

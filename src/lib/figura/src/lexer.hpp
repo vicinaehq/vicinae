@@ -127,6 +127,8 @@ public:
     return m_current;
   }
 
+  static bool isIdentifierChar(char c) { return std::isalnum(c) || c == '_'; }
+
   std::optional<Token> getNextImpl() {
     enum { Reset, Operator, Word, ForwardSlash, SingleLineComment } state = Reset;
     size_t start = 0;
@@ -137,7 +139,7 @@ public:
 
       switch (state) {
       case Reset: {
-        if (std::isalnum(c)) {
+        if (isIdentifierChar(c)) {
           state = Word;
           start = cursor;
           break;
@@ -200,7 +202,7 @@ public:
         break;
       }
       case Word: {
-        if (!std::isalnum(c)) {
+        if (!isIdentifierChar(c)) {
           if (start != cursor) {
             auto tok = tryParseToken(view);
             tok.data = view;
