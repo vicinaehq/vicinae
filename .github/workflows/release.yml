@@ -145,6 +145,61 @@ jobs:
           append_body: true
           body: ${{ steps.sponsors.outputs.body }}
 
+  build-deb:
+    needs: build-binary
+    runs-on: [self-hosted, Linux, X64, appimage]
+    permissions:
+      contents: write
+
+    env:
+      BUILD_TYPE: Release
+      INSTALL_DIR: ${{ github.workspace }}/install
+      VERSION: ${{ needs.build-binary.outputs.tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.build-binary.outputs.tag }}
+
+      - name: Install nfpm
+        run: |-
+          echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | sudo tee /etc/apt/sources.list.d/goreleaser.list
+          sudo apt-get update -y
+          sudo apt-get install nfpm
+
+      - name: Prepare dirs
+        run: mkdir -p build install
+
+      - name: Configure CMake
+        run: |
+          cd build
+          cmake -G Ninja ..                           \
+            -DCMAKE_BUILD_TYPE=${BUILD_TYPE}          \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5        \
+            -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}"   \
+            -DVICINAE_PROVENANCE=deb                  \
+            -DLTO=ON
+
+      - name: Build
+        run: |
+          cmake --build build --config ${BUILD_TYPE} --parallel $(nproc)
+
+      - name: Install
+        run: |
+          cmake --install build
+
+      - name: Make Deb Package
+        run: ./scripts/mkdeb.sh
+
+      - name: Upload AppImage to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.build-binary.outputs.tag }}
+          name: ${{ needs.build-binary.outputs.tag }}
+          files: |
+            *.deb
 
   build-appimage:
     needs: build-binary
@@ -185,9 +240,7 @@ jobs:
           cmake --install build
 
       - name: Make AppImage
-        run: |
-          chmod +x ./scripts/mkappimage.sh
-          ./scripts/mkappimage.sh "${INSTALL_DIR}" "${APP_DIR}"
+        run: ./scripts/mkappimage.sh "${INSTALL_DIR}" "${APP_DIR}"
 
       - name: Upload AppImage to GitHub Release
         uses: softprops/action-gh-release@v2
@@ -196,4 +249,3 @@ jobs:
           name: ${{ needs.build-binary.outputs.tag }}
           files: |
             *.AppImage
-
