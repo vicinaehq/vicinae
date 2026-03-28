@@ -1,5 +1,5 @@
 import "./globals";
-import type { Global } from "./globals";
+import { globalState } from "./globals";
 import type { EnvironmentType } from "./types";
 import { parentPort, workerData } from "node:worker_threads";
 import { LaunchType } from "@vicinae/api";
@@ -7,13 +7,50 @@ import { patchRequire } from "./patch-require";
 import loadView from "./loaders/load-view-command";
 import loadNoView from "./loaders/load-no-view-command";
 import * as extensionServer from "./proto/extension-manager";
+import * as api from "./proto/api";
+
+class Lifecycle extends extensionServer.LifecycleService {
+	async launch(data: extensionServer.LaunchEventData): Promise<boolean> {
+		const { environment } = workerData as { environment: EnvironmentType };
+
+		patchRequire(environment);
+		loadEnviron(environment, data);
+		(process as any).noDeprecation = environment === "production";
+
+		loaders[data.mode](data);
+		return true;
+	}
+
+	async shutdown(): Promise<boolean> {
+		return true;
+	}
+
+	async send_message(msg: string): Promise<boolean> {
+		client.route(msg);
+		return true;
+	}
+}
+
+const serverRpc = new extensionServer.RpcTransport({
+	send: (msg) => parentPort?.postMessage(msg),
+});
+
+const server = new extensionServer.Server(serverRpc, new Lifecycle(serverRpc));
+
+const clientRpc = new api.RpcTransport({
+	send: (msg: string) => {
+		server.Lifecycle.emit_extension_message(msg);
+	},
+});
+
+const client = new api.Client(clientRpc);
 
 const loadEnviron = (
 	environment: EnvironmentType,
 	data: extensionServer.LaunchEventData,
 ) => {
-	const g = globalThis as Global;
-	Object.assign(g.vicinae.environ, {
+	globalState.client = client;
+	Object.assign(globalState.environ, {
 		theme: "dark",
 		textSize: "medium",
 		appearance: "dark",
@@ -44,33 +81,6 @@ const loaders: Record<
 	NoView: loadNoView,
 };
 
-class Lifecycle extends extensionServer.Lifecycle {
-	async launch(data: extensionServer.LaunchEventData): Promise<boolean> {
-		const { environment } = workerData as { environment: EnvironmentType };
-
-		patchRequire(environment);
-		loadEnviron(environment, data);
-		(process as any).noDeprecation = environment === "production";
-
-		loaders[data.mode](data);
-		return true;
-	}
-
-	async shutdown(): Promise<boolean> {
-		return true;
-	}
-
-	async send_message(msg: string): Promise<boolean> {
-		return false;
-	}
-}
-
-const transport = new extensionServer.RpcTransport({
-	send: (msg) => parentPort?.postMessage(msg),
-});
-
-const server = new extensionServer.Server(transport, new Lifecycle(transport));
-
 export const main = async () => {
 	if (!parentPort) {
 		console.error(
@@ -80,8 +90,4 @@ export const main = async () => {
 	}
 
 	parentPort.on("message", (msg) => server.route(msg));
-
-	// workers are provisioned before extension commands are launched, in order to avoid cold starts.
-	// we need to wait for the manager to send the launch event to initialize stuff.
-	// a worker is only used for a command once
 };

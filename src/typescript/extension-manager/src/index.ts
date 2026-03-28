@@ -20,7 +20,7 @@ type WorkerInfo = {
 	client: extension.Client;
 };
 
-class ExtensionManager extends manager.Manager {
+class ExtensionManager extends manager.ManagerService {
 	constructor(transport: manager.RpcTransport) {
 		super(transport);
 		this.workerPool.push(this.createWorker("production"));
@@ -119,16 +119,16 @@ class ExtensionManager extends manager.Manager {
 		await client.Lifecycle.launch({
 			entrypoint: load.entrypoint,
 			//preferenceValues: load.preferenceValues,
-			preferenceValues: {},
+			//preferenceValues: {},
 			//argumentValues: load.argumentValues,
-			argumentValues: {},
+			//argumentValues: {},
 			mode: load.mode,
-			supportPath,
-			assetPath: assetsPath,
-			isRaycast: load.is_raycast,
-			extensionName: load.extension_name,
-			ownerOrAuthorName: load.owner_or_author_name,
-			commandName: load.command_name,
+			support_path: supportPath,
+			asset_path: assetsPath,
+			is_raycast: load.is_raycast,
+			extension_name: load.extension_name,
+			owner_or_author_name: load.owner_or_author_name,
+			command_name: load.command_name,
 		});
 
 		return { session_id: sessionId };

@@ -1,3 +1,4 @@
+include("Figura")
 set(EXT_API_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/api")
 set(EXT_API_OUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/api/dist")
 set(API_DIST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/api/dist")
@@ -38,7 +39,7 @@ endif()
 
 add_custom_command(
     OUTPUT ${API_STAMP}
-	COMMAND protobuf::protoc --plugin=${EXT_API_SRC_DIR}/node_modules/.bin/protoc-gen-ts_proto -I ${protobuf_SOURCE_DIR}/src -I ${PROTO_DIR} ${API_PROTO_FILES} --ts_proto_out ${API_PROTO_OUT}
+	COMMAND ${FIGURA_CC} compile ${CMAKE_SOURCE_DIR}/figura/extension-api.fig --client typescript --output ${API_PROTO_PATH}/api.ts
     COMMAND npm run build
     COMMAND ${CMAKE_COMMAND} -E touch ${API_STAMP}
     WORKING_DIRECTORY ${EXT_API_SRC_DIR}

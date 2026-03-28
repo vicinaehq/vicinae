@@ -87,7 +87,7 @@ inline std::string serializeParamList(std::span<const MethodParameter> params) {
 
 inline std::string generateService(const Service &s) {
   std::ostringstream oss;
-  oss << "class " << s.name << " {\n";
+  oss << "class " << s.name << "Service {\n";
 
   oss << "\tconstructor(private readonly transport: RpcTransport) {}\n\n";
 
@@ -216,17 +216,20 @@ export class RpcTransport {
 	}
 
 	subscribe(method: string, cb: (result: any) => void): EventSubscription {
-		this.handlers[method] = cb;
+		const handlers = this.handlers.get(method);
+
+		if (handlers) handlers.push(cb);
+		else this.handlers.set(method, [cb]);
 
 		return {
 			unsubscribe: () => {
-				const handlers = this.handlers[method];
+				const handlers = this.handlers.get(method);
 
 				if (handlers) {
 					handlers.splice(handlers.indexOf(cb), 1);
 				}
-			}
-		}
+			},
+		};
 	}
 
 	private sendMessage(msg: JsonRpcMessage) {
@@ -284,7 +287,7 @@ class TypeScriptCodeGenerator : public AbstractCodeGenerator {
     oss << "\tconstructor(private readonly transport: RpcTransport) {\n";
 
     for (auto const &s : tree.services) {
-      oss << "\t\tthis." << s->name << " = new " << s->name << "(this.transport);\n";
+      oss << "\t\tthis." << s->name << " = new " << s->name << "Service(this.transport);\n";
     }
 
     oss << "\t}\n";
@@ -294,10 +297,8 @@ class TypeScriptCodeGenerator : public AbstractCodeGenerator {
   )";
 
     for (auto const &s : tree.services) {
-      oss << "\t" << s->name << ": " << s->name << ";\n";
+      oss << "\t" << s->name << ": " << s->name << "Service;\n";
     }
-
-    oss << "\t" << "private transport: ClientTransport;\n";
 
     oss << "\n}\n";
 
@@ -347,7 +348,7 @@ class TypeScriptCodeGenerator : public AbstractCodeGenerator {
     // generate service interfaces, to be implemented by the user
     for (const auto &service : ast.services) {
       if (!service->methods.empty()) {
-        oss << "export abstract class " << service->name << " {\n";
+        oss << "export abstract class " << service->name << "Service {\n";
 
         oss << "\tconstructor(private readonly rpc: RpcTransport) {}\n";
 
@@ -377,7 +378,7 @@ class TypeScriptCodeGenerator : public AbstractCodeGenerator {
 
     for (const auto &[idx, service] : ast.services | std::views::enumerate) {
       if (!service->methods.empty()) {
-        oss << ", private readonly " << service->name << ": " << service->name;
+        oss << ", readonly " << service->name << ": " << service->name << "Service";
       }
     }
 

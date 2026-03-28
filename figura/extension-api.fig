@@ -1,0 +1,26 @@
+// extension (client) -> vicinae (server)
+// definition of the extension API
+
+struct Application {
+  id: string;
+  name: string;
+  icon?: string;
+  path: string;
+};
+
+struct RunInTerminalPayload {
+  cmdline: string[];
+  hold: bool;
+  appId?: string;
+  workingDirectory?: string;
+  title?: string;
+};
+
+service Application {
+  fn list(target?: string) => Application[];
+  fn open(target: string, appId?: string) => void;
+  fn getDefault(target: string) => Application;
+  fn showInFileBrowser(target: string, select: bool) => void;
+  fn runInTerminal(opts: RunInTerminalPayload) => bool;
+};
+
