@@ -1,7 +1,7 @@
 #include "../parser.hpp"
 #include <format>
-#include <iomanip>
 #include "codegen.hpp"
+#include <iomanip>
 #include <sstream>
 #include <ranges>
 #include <stdexcept>
@@ -79,7 +79,7 @@ inline std::string generateService(const Service &s) {
   std::ostringstream oss;
   oss << "class " << s.name << " {\n";
 
-  oss << "\tconstructor(private readonly transport: ITransport) {}\n\n";
+  oss << "\tconstructor(private readonly transport: ClientTransport) {}\n\n";
 
   for (const auto &method : s.methods) {
     oss << "\t" << method.name << "(";
@@ -95,33 +95,33 @@ inline std::string generateService(const Service &s) {
 
     std::string methodName = std::format("{}/{}", s.name, method.name);
 
-    oss << "\t\treturn this.transport.send({ id: 1, method: " << methodName << ", params: { ";
+    oss << "\t\treturn this.transport.request(" << std::quoted(methodName) << ", { ";
 
     for (const auto &[idx, param] : method.params | std::views::enumerate) {
       if (idx > 0) oss << ", ";
       oss << param.name;
     }
 
-    oss << " }" << "});";
+    oss << "});";
     oss << "\t" << "\n\t}\n\n";
   }
 
   if (!s.events.empty()) {
     for (const auto &event : s.events) {
-      oss << "\t" << event.name << "(handler: " << generateEventHandlerTypeSignature(event) << "): void {\n";
-      oss << "\t\tthis._handlers." << event.name << ".push(handler);\n";
+      std::string eventName = std::format("{}/{}", s.name, event.name);
+
+      oss << "\t" << event.name << "(handler: " << generateEventHandlerTypeSignature(event)
+          << "): EventSubscription {\n";
+      oss << "\t\treturn this.transport.subscribe(" << std::quoted(eventName) << ", (msg) => handler(";
+
+      for (const auto &[idx, param] : event.params | std::views::enumerate) {
+        if (idx > 0) oss << ", ";
+        oss << "msg." << param.name;
+      }
+
+      oss << "))";
       oss << "\n\t}\n";
     }
-
-    oss << "\t_handleEvent(type: string, params: Record<string, any>) {\n";
-    oss << "\t\t // some code in the future";
-    oss << "\n\t}\n";
-
-    oss << "\tprivate _handlers = {\n";
-    for (const auto &event : s.events) {
-      oss << "\t\t" << event.name << ": [] as Array<" << generateEventHandlerTypeSignature(event) << ">,\n";
-    }
-    oss << "\t}";
   }
 
   oss << "}";
@@ -144,6 +144,67 @@ interface JsonRpcMessage {
 interface ITransport {
 	send(data: string): void;
 }
+
+type EventSubscription = {
+	unsubscribe: () => void;
+};
+
+class ClientTransport {
+	constructor(private readonly transport: ITransport) { }
+
+	dispatchMessage(data: string) {
+		const msg = JSON.parse(data) as JsonRpcMessage;
+
+		if (msg.id) {
+			const handler = this.requestMap.get(msg.id);
+
+			if (handler) {
+				if (msg.error) handler.reject(msg.error);
+				if (msg.result) handler.resolve(msg.result);
+				this.requestMap.delete(msg.id);
+			}
+		}
+		if (!msg.id && msg.method) {
+			for (const cb of this.handlers.get(msg.method) ?? []) {
+				cb(msg.params);
+			}
+		}
+	}
+
+	request<T>(method: string, params: Record<string, any>): Promise<T> {
+		const id = this.id++;
+		const promise = new Promise<T>((resolve, reject) => {
+			this.requestMap.set(id, { resolve: (msg) => resolve(msg as T), reject });
+		});
+
+		this.sendMessage({ jsonrpc: '2.0', id, method, params });
+
+		return promise;
+	}
+
+	subscribe(method: string, cb: (result: any) => void): EventSubscription {
+		this.handlers[method] = cb;
+
+		return {
+			unsubscribe: () => {
+				const handlers = this.handlers[method];
+
+				if (handlers) {
+					handlers.splice(handlers.indexOf(cb), 1);
+				}
+			}
+		}
+	}
+
+	private sendMessage(msg: JsonRpcMessage) {
+		this.transport.send(JSON.stringify(msg));
+	}
+
+
+	private id = 0;
+	private requestMap = new Map<number, { resolve: (value: any) => void, reject: (error: any) => void }>;
+	private handlers = new Map<string, Array<(result: any) => void>>;
+};
 )";
 
 static std::string tab(int n) {
@@ -173,40 +234,25 @@ static std::string codegenTypescript(const Tree &tree) {
   }
 
   oss << "class Client {\n";
-  oss << "\tconstructor(private readonly transport: ITransport) {\n";
+  oss << "\tconstructor(transport: ITransport) {\n";
+
+  oss << tab(2) << "this.transport = new ClientTransport(transport);\n";
 
   for (auto const &s : tree.services) {
     oss << "\t\tthis." << s->name << " = new " << s->name << "(this.transport);\n";
   }
 
-  std::vector<std::string> serviceLines;
-
-  serviceLines.reserve(tree.services.size());
-
-  for (auto const &s : tree.services) {
-    serviceLines.emplace_back(
-        std::format(R"(if (service == '{}') this.{}.handleEvent(event, msg.params))", s->name, s->name));
-  }
-
-  oss << tab(2) << "transport.onMessage(msg => {\n";
-  oss << tab(3) << "if (!msg.id && msg.method && msg.params) {\n";
-  oss << tab(4) << "const [service, event] = msg.method.split(\"/\");\n";
-
-  for (auto const &s : tree.services) {
-    if (!s->events.empty()) {
-      oss << tab(4) << "if (service == '" << s->name << "') this." << s->name
-          << "._handleEvent(event, msg.params);"
-          << "\n";
-    }
-  }
-
-  oss << tab(3) << "}\n";
-  oss << tab(2) << "});\n";
   oss << "\t}\n";
+
+  oss << R"(
+  	route(msg: string): void { this.transport.dispatchMessage(msg); }
+  )";
 
   for (auto const &s : tree.services) {
     oss << "\t" << s->name << ": " << s->name << ";\n";
   }
+
+  oss << "\t" << "private transport: ClientTransport;\n";
 
   oss << "\n}\n";
 
