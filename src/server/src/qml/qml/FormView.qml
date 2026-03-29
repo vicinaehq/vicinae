@@ -8,6 +8,8 @@ Flickable {
     contentHeight: layout.implicitHeight
     clip: true
     boundsBehavior: Flickable.StopAtBounds
+    bottomMargin: root.padding
+    topMargin: root.padding
 
     default property alias contentData: layout.data
     property real padding: 16
@@ -39,10 +41,6 @@ Flickable {
         width: Math.min(root.width - root.padding * 2, root.maxContentWidth)
         x: (root.width - width) / 2
         spacing: 12
-
-        Item {
-            implicitHeight: 12
-        }
     }
 
     Connections {
