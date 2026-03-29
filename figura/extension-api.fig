@@ -210,3 +210,46 @@ struct UpdateCommandMetadataPayload {
 service Command {
   fn updateCommandMetadata(payload: UpdateCommandMetadataPayload) => void;
 };
+
+// OAuth
+
+struct PKCEClientOptions {
+  name: string;
+  id?: string;
+  description: string;
+  icon?: Image;
+};
+
+struct AuthorizeRequest {
+  client: PKCEClientOptions;
+  url: string;
+};
+
+struct AuthorizeResponse {
+  code: string;
+};
+
+struct TokenSet {
+  accessToken: string;
+  refreshToken?: string;
+  idToken?: string;
+  expiresIn?: number;
+  scope?: string;
+  updatedAt: number;
+};
+
+struct SetTokensRequest {
+  providerId?: string;
+  accessToken: string;
+  refreshToken?: string;
+  idToken?: string;
+  expiresIn?: number;
+  scope?: string;
+};
+
+service OAuth {
+  fn authorize(payload: AuthorizeRequest) => AuthorizeResponse;
+  fn getTokens(id?: string) => TokenSet;
+  fn setTokens(payload: SetTokensRequest) => void;
+  fn removeTokens(id?: string) => void;
+}
