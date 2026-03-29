@@ -1,6 +1,5 @@
 #include "hud-bridge.hpp"
 #include "environment.hpp"
-#include "vicinae.hpp"
 #include <QQuickWindow>
 #ifdef WAYLAND_LAYER_SHELL
 #include <LayerShellQt/Window>
@@ -50,6 +49,7 @@ void HudBridge::configureLayerShell(QQuickWindow *window) {
     lshell->setLayer(Shell::Window::LayerTop);
     lshell->setScope(QStringLiteral("vicinae-hud"));
     lshell->setAnchors(Shell::Window::AnchorNone);
+    lshell->setWantsToBeOnActiveScreen(true);
     lshell->setKeyboardInteractivity(Shell::Window::KeyboardInteractivityNone);
   }
 #else
