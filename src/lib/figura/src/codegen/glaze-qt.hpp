@@ -96,6 +96,8 @@ class GlazeQtGenerator : public AbstractCodeGenerator {
                                        return "int";
                                      case PrimitiveType::String:
                                        return "std::string";
+                                     case PrimitiveType::Any:
+                                       return "glz::json_t";
                                      default:
                                        std::unreachable();
                                      }

@@ -2,7 +2,6 @@ export * from "./ai.js";
 export * from "./components/index.js";
 export * from "./hooks/index.js";
 export * from "./context/index.js";
-export * from "./bus.js";
 export { Color, ColorLike } from "./color.js";
 export * from "./keyboard.js";
 export { ImageLike, Image } from "./image.js";

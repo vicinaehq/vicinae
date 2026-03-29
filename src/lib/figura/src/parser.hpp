@@ -21,6 +21,7 @@ enum class PrimitiveType {
   Boolean,
   String,
   Number,
+  Any,
 };
 
 struct EnumValue {
@@ -141,6 +142,7 @@ public:
     if (name == "number") return TypeValue{PrimitiveType::Number};
     if (name == "boolean" || name == "bool") return TypeValue{PrimitiveType::Boolean};
     if (name == "void") return TypeValue{PrimitiveType::Void};
+    if (name == "any") return TypeValue{PrimitiveType::Any};
 
     for (const auto &s : m_tree.structs) {
       if (s->name == name) { return TypeValue{s.get()}; }

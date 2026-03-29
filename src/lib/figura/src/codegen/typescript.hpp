@@ -20,6 +20,8 @@ inline std::string_view getTypename(const TypeValue &type) {
       return "number";
     case PrimitiveType::String:
       return "string";
+    case PrimitiveType::Any:
+      return "any";
     }
   }
 

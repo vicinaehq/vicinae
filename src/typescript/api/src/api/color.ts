@@ -1,16 +1,10 @@
-import * as ui from "./proto/ui";
-
-type DynamicColor = {
-	dark: string;
-	light: string;
-	adjustContrast?: boolean;
-};
+import type * as api from "./proto/api";
 
 /**
  * @category Colors
  */
 export namespace Color {
-	export type Dynamic = DynamicColor;
+	export type Dynamic = api.DynamicColor;
 	export type Raw = string;
 }
 
@@ -34,23 +28,18 @@ export enum Color {
  */
 export type ColorLike = Color.Dynamic | Color.Raw | Color;
 
-export type SerializedColorLike = ui.ColorLike;
+export type SerializedColorLike = api.ColorLike;
 
-export const serializeColorLike = (color: ColorLike): SerializedColorLike => {
-	const colorLike = ui.ColorLike.create();
-
+export const serializeColorLike = (color: ColorLike): api.ColorLike => {
 	if (typeof color === "string") {
-		colorLike.raw = color;
-	} else {
-		// It's a DynamicColor
-		const dynamicColor = ui.DynamicColor.create();
-		dynamicColor.light = color.light;
-		dynamicColor.dark = color.dark;
-		if (color.adjustContrast !== undefined) {
-			dynamicColor.adjustContrast = color.adjustContrast;
-		}
-		colorLike.dynamic = dynamicColor;
+		return { raw: color };
 	}
 
-	return colorLike;
+	return {
+		dynamic: {
+			light: color.light,
+			dark: color.dark,
+			adjustContrast: color.adjustContrast,
+		},
+	};
 };

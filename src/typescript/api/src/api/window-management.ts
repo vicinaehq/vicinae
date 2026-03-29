@@ -1,9 +1,8 @@
-import { bus } from "./bus";
-import { Application } from "./proto/application";
-import * as wm from "./proto/wm";
+import { client } from "./client";
+import type * as api from "./proto/api";
 
 const transformWorkspace = (
-	proto: wm.Workspace,
+	proto: api.Workspace,
 ): WindowManagement.Workspace => {
 	return {
 		id: proto.id,
@@ -13,15 +12,15 @@ const transformWorkspace = (
 	};
 };
 
-const transformWindow = (proto: wm.Window): WindowManagement.Window => {
+const transformWindow = (proto: api.Window): WindowManagement.Window => {
 	return {
 		id: proto.id,
 		title: proto.title,
 		workspaceId: proto.workspaceId,
 		active: proto.active,
 		bounds: {
-			position: { x: proto.x, y: proto.y },
-			size: { width: proto.width, height: proto.height },
+			position: { x: proto.bounds.x, y: proto.bounds.y },
+			size: { width: proto.bounds.width, height: proto.bounds.height },
 		},
 		application: proto.app,
 		focus() {
@@ -82,7 +81,7 @@ export namespace WindowManagement {
 		/**
 		 * The application this window belongs to, if any.
 		 */
-		application?: Application;
+		application?: api.Application;
 
 		/**
 		 * Request that the window manager focuses this window.
@@ -127,11 +126,11 @@ export namespace WindowManagement {
 	};
 
 	export async function getWindows(
-		options: wm.GetWindowsRequest = {},
+		workspaceId?: string,
 	): Promise<WindowManagement.Window[]> {
-		const res = await bus.request("wm.getWindows", options);
-
-		return res.unwrap().windows.map(transformWindow);
+		return client.WindowManagement.getWindows(workspaceId).then((wins) =>
+			wins.map(transformWindow),
+		);
 	}
 
 	/**
@@ -149,57 +148,48 @@ export namespace WindowManagement {
 	 * @see {@link Window.focus}
 	 */
 	export async function focusWindow(window: Window): Promise<boolean> {
-		const res = await bus.request("wm.focusWindow", {
-			id: window.id,
-		});
-
-		return res.unwrap().ok;
+		return client.WindowManagement.focusWindow(window.id);
 	}
 
 	/**
 	 * Return the list of screens (physical and virtual) currently attached to the computer.
 	 */
 	export async function getScreens(): Promise<Screen[]> {
-		const res = await bus.request("wm.getScreens", {});
-		return res.unwrap().screens.map<Screen>((sc) => ({
-			name: sc.name,
-			make: sc.make,
-			model: sc.model,
-			serial: sc.serial,
-			bounds: {
-				position: { x: sc.x, y: sc.y },
-				size: { width: sc.width, height: sc.height },
-			},
-		}));
+		return client.WindowManagement.getScreens().then((screens) =>
+			screens.map((sc) => ({
+				name: sc.name,
+				make: sc.make,
+				model: sc.model,
+				serial: sc.serial,
+				bounds: {
+					position: { x: sc.bounds.x, y: sc.bounds.y },
+					size: { width: sc.bounds.width, height: sc.bounds.height },
+				},
+			})),
+		);
 	}
 
 	export async function getActiveWorkspace(): Promise<WindowManagement.Workspace> {
-		const res = await bus.request("wm.getActiveWorkspace", {});
-
-		return transformWorkspace(res.unwrap().workspace!);
+		return client.WindowManagement.getActiveWorkspace().then(
+			transformWorkspace,
+		);
 	}
 
 	export async function getWorkspaces(): Promise<WindowManagement.Workspace[]> {
-		const res = await bus.request("wm.getWorkspaces", {});
-
-		return res.unwrap().workspaces.map(transformWorkspace);
+		return client.WindowManagement.getWorkspaces().then((workspaces) =>
+			workspaces.map(transformWorkspace),
+		);
 	}
 
 	export async function getWindowsOnActiveWorkspace(): Promise<
 		WindowManagement.Window[]
 	> {
-		const workspace = await getActiveWorkspace();
-
-		return getWindows({ workspaceId: workspace.id });
-	}
-
-	export async function setWindowBounds(payload: wm.SetWindowBoundsRequest) {
-		await bus.request("wm.setWindowBounds", payload);
+		return client.WindowManagement.getActiveWorkspace().then((ws) =>
+			getWindows(ws.id),
+		);
 	}
 
 	export async function getActiveWindow(): Promise<WindowManagement.Window> {
-		const res = await bus.request("wm.getActiveWindow", {});
-
-		return transformWindow(res.unwrap().window!);
+		return client.WindowManagement.getActiveWindow().then(transformWindow);
 	}
 }

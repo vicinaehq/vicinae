@@ -4,6 +4,7 @@ RM								:= rm
 TAG 							:= $(shell git describe --tags --abbrev=0)
 APPIMAGE_BUILD_ENV_DIR			:= ./scripts/runners/appimage/
 APPIMAGE_BUILD_ENV_IMAGE_TAG	:= vicinae/appimage-build-env
+FIGURA_CC						:= $(BIN_DIR)/figura
 
 release:
 	cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -B $(BUILD_DIR)
@@ -137,6 +138,12 @@ clean:
 	$(RM) -rf ./scripts/.tmp
 	$(RM) -rf ./src/lib/*/build
 .PHONY: clean
+
+
+figen:
+	$(FIGURA_CC) compile ./figura/extension-api.fig --client typescript --output ./src/typescript/api/src/api/proto/api.ts
+.PHONY:
+	figen
 
 re: clean release
 .PHONY: re
