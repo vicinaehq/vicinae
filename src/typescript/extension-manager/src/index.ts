@@ -82,10 +82,6 @@ class ExtensionManager extends manager.ManagerService {
 
 		worker.on("online", () => { });
 
-		worker.on("message", (buf: Buffer) => {
-			this.emit_extensionMessage(sessionId, buf.toString("utf8"));
-		});
-
 		const stdoutStream = fs.createWriteStream(stdoutLog);
 		const stderrStream = fs.createWriteStream(stderrLog);
 

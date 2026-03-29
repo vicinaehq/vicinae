@@ -54,7 +54,7 @@ add_custom_command(
             ${EXT_MGR_SRC_DIR}/dist/runtime.js
             ${EXT_MGR_OUT}
     WORKING_DIRECTORY ${EXT_MGR_SRC_DIR}
-	DEPENDS ${CMAKE_BINARY_DIR}/bin/figura ${CMAKE_SOURCE_DIR}/figura/extension-api.fig ${FILTERED_TS_FILES} ${API_STAMP} ${RAY_COMPAT_STAMP} ${EXT_MGR_NODE_MODULES}
+	DEPENDS ${FIGURA_CC} ${CMAKE_SOURCE_DIR}/figura/extension-api.fig ${FILTERED_TS_FILES} ${API_STAMP} ${RAY_COMPAT_STAMP} ${EXT_MGR_NODE_MODULES}
     COMMENT "Building extension manager JavaScript bundle"
 )
 

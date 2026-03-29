@@ -3,6 +3,7 @@ import { type ComponentType, Suspense } from "react";
 import * as React from "react";
 import { NavigationProvider, bus } from "@vicinae/api";
 import type * as extensionServer from "../proto/extension-manager";
+import { globalState } from "../globals";
 
 class ErrorBoundary extends React.Component<
 	{ children: React.ReactNode },
@@ -46,7 +47,7 @@ export default async function(data: extensionServer.LaunchEventData) {
 	const module = await import(data.entrypoint);
 	const Component = module.default.default;
 	const sendRender = (views: ViewData[]) => {
-		bus.request("ui.render", { json: JSON.stringify({ views }) });
+		globalState.client.UI.render(JSON.stringify({ views }));
 	};
 	const renderer = createRenderer({
 		onInitialRender: sendRender,

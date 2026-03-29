@@ -24,3 +24,6 @@ service Application {
   fn runInTerminal(opts: RunInTerminalPayload) => bool;
 };
 
+service UI {
+  fn render(json: string) => void;
+};
