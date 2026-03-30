@@ -8,6 +8,7 @@ import loadView from "./loaders/load-view-command";
 import loadNoView from "./loaders/load-no-view-command";
 import * as extensionServer from "./proto/extension-manager";
 import * as api from "./proto/api";
+import { callbackManager } from "./callback";
 
 class Lifecycle extends extensionServer.LifecycleService {
 	async launch(data: extensionServer.LaunchEventData): Promise<boolean> {
@@ -44,6 +45,10 @@ const clientRpc = new api.RpcTransport({
 });
 
 const client = new api.Client(clientRpc);
+
+client.EventCore.handlerActivated((id, data) => {
+	callbackManager.activateHandler(id, data);
+});
 
 const loadEnviron = (
 	environment: EnvironmentType,

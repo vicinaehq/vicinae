@@ -253,3 +253,9 @@ service OAuth {
   fn setTokens(payload: SetTokensRequest) => void;
   fn removeTokens(id?: string) => void;
 }
+
+// EventCore - used for loosely typed callbacks, required for component event handlers
+
+service EventCore {
+  event handlerActivated(id: string, args: any[]);
+};

@@ -142,6 +142,7 @@ clean:
 
 figen:
 	$(FIGURA_CC) compile ./figura/extension-api.fig --client typescript --output ./src/typescript/api/src/api/proto/api.ts
+	$(FIGURA_CC) compile ./figura/extension-api.fig --client typescript --output ./src/typescript/extension-manager/src/proto/api.ts
 .PHONY:
 	figen
 

@@ -1,7 +1,7 @@
 import { createRenderer, type ViewData } from "../reconciler";
 import { type ComponentType, Suspense } from "react";
 import * as React from "react";
-import { NavigationProvider, bus } from "@vicinae/api";
+import { NavigationProvider } from "@vicinae/api";
 import type * as extensionServer from "../proto/extension-manager";
 import { globalState } from "../globals";
 
@@ -22,8 +22,7 @@ class ErrorBoundary extends React.Component<
 		const { error } = this.state;
 
 		if (error) {
-			bus.emitCrash(error);
-			return null;
+			throw error;
 		}
 
 		return <>{this.props.children}</>;
