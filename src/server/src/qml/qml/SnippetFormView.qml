@@ -29,6 +29,7 @@ Item {
             label: "Content"
             error: root.host.contentError
             info: "You can use {dynamic placeholders} to make the content dynamic. No autocomplete is available for now."
+            topAlignLabel: true
 
             FormTextArea {
                 text: root.host.content

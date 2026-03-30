@@ -9,6 +9,8 @@ ColumnLayout {
     property string label: ""
     property string error: ""
     property string info: ""
+    property bool topAlignLabel: false
+    property real topAlignLabelTopPadding: 8
     default property alias contentData: contentSlot.data
 
     RowLayout {
@@ -18,12 +20,13 @@ ColumnLayout {
         Text {
             Layout.preferredWidth: 2
             Layout.fillWidth: true
+            Layout.topMargin: root.topAlignLabel ? root.topAlignLabelTopPadding : 0
             text: root.label
             color: Theme.textMuted
             font.pointSize: Theme.smallerFontSize
             horizontalAlignment: Text.AlignRight
-            verticalAlignment: Text.AlignVCenter
-            Layout.alignment: Qt.AlignVCenter
+            verticalAlignment: root.topAlignLabel ? Text.AlignTop : Text.AlignVCenter
+            Layout.alignment: root.topAlignLabel ? Qt.AlignTop : Qt.AlignVCenter
         }
 
         Item {

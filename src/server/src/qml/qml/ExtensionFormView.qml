@@ -168,6 +168,7 @@ Item {
             label: parent.label
             error: parent.error
             info: parent.info
+            topAlignLabel: true
 
             function focusField() {
                 textArea.forceActiveFocus();
@@ -279,6 +280,7 @@ Item {
             }
 
             readonly property var _fd: parent.fieldData || ({})
+            topAlignLabel: filePicker.multiple
 
             FormFilePicker {
                 id: filePicker
