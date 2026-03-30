@@ -169,14 +169,21 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
       }
     }
 
-    auto panel = entrypoint->newActionPanel(&m_ctx, root->itemMetadata(id));
-    panel->finalize(); // not pretty, one day we will fix this too
-    auto action = panel->primaryAction();
-
-    if (!action) return std::unexpected("No primary action for this root item");
-
     m_ctx.navigation->setInstantDismiss();
-    action->execute(&m_ctx);
+
+    // FIXME: hack, we must create a unified interface for all root items so that they can be launched with
+    // arguments And also, get their own execution context (much needed for script commands that may be async)
+    if (auto ext = dynamic_cast<CommandRootItem *>(entrypoint)) {
+      m_ctx.navigation->launch(ext->command(), arguments);
+    } else {
+      auto panel = entrypoint->newActionPanel(&m_ctx, root->itemMetadata(id));
+      panel->finalize(); // not pretty, one day we will fix this too
+      auto action = panel->primaryAction();
+
+      if (!action) return std::unexpected("No primary action for this root item");
+
+      action->execute(&m_ctx);
+    }
 
     if (m_ctx.navigation->viewStackSize() > 1) m_ctx.navigation->setBackButtonVisibility(false);
 
