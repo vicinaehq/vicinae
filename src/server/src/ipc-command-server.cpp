@@ -18,7 +18,7 @@
 #include "services/app-service/app-service.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "navigation-controller.hpp"
-#include "version.h"
+#include "generated/version.h"
 
 IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QObject *parent)
     : QObject(parent), m_ctx(*ctx), m_rpc(IpcContext::GlobalContext{.app = ctx}) {

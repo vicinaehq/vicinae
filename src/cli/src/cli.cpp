@@ -4,7 +4,7 @@
 #include "script.hpp"
 #include "common/common.hpp"
 #include "state.hpp"
-#include "version.h"
+#include "generated/version.h"
 #include "theme.hpp"
 #include "vicinae-ipc/client.hpp"
 #include "server.hpp"

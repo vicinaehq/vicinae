@@ -8,6 +8,7 @@
 #include "vicinae.hpp"
 #include <algorithm>
 #include <fstream>
+#include <glaze/core/common.hpp>
 #include <glaze/glaze.hpp>
 #include <ranges>
 

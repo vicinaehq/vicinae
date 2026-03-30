@@ -13,7 +13,7 @@
 #include "pid-file/pid-file.hpp"
 #include "proto/extension.pb.h"
 #include "proto/manager.pb.h"
-#include "version.h"
+#include "generated/version.h"
 #include "vicinae.hpp"
 
 namespace fs = std::filesystem;

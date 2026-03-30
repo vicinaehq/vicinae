@@ -658,7 +658,7 @@ if (UNIX AND NOT APPLE)
 	
 	include("Figura")
 
-	#figura_codegen_server(${CMAKE_SOURCE_DIR}/service.fig "glaze-qt" codegen.hpp)
+	figura_codegen_server(${CMAKE_SOURCE_DIR}/figura/extension-api.fig "glaze-qt" tsapi.hpp)
 
 	list(APPEND LIBS xkbcommon vicinae::linuxutils)
 

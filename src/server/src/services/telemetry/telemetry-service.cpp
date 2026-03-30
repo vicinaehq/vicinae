@@ -1,7 +1,7 @@
 #include "telemetry-service.hpp"
 #include "config/config.hpp"
 #include "environment.hpp"
-#include "version.h"
+#include "generated/version.h"
 #include "vicinae.hpp"
 #include "xdgpp/env/env.hpp"
 #include <QGuiApplication>

@@ -1193,7 +1193,7 @@ TOML_ENABLE_WARNINGS;
 
 // clang-format off
 
-//********  impl/version.hpp  ******************************************************************************************
+//********  impl/generated/version.hpp  ******************************************************************************************
 
 #define TOML_LIB_MAJOR 3
 #define TOML_LIB_MINOR 4

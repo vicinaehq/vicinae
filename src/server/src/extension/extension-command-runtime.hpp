@@ -5,31 +5,12 @@
 #include "types.hpp"
 #include <qfuture.h>
 #include <qfuturewatcher.h>
-#include "codegen.hpp"
+#include "generated/tsapi.hpp"
 
 struct Context {
   int a;
   int b;
 };
-
-class UIServ : public codegen::AbstractUI<Context> {
-public:
-  using AbstractUI::AbstractUI;
-
-  QFuture<std::string> showToast(const std::string &style, const std::string &msg) override {
-    return QtFuture::makeReadyValueFuture(std::string{""});
-  }
-
-  QFuture<void> render(const std::string &json) override { return {}; }
-
-  virtual ~UIServ() = default;
-};
-
-class EvCore : public codegen::AbstractEventCore<Context> {
-  using AbstractEventCore::AbstractEventCore;
-};
-
-using Server = codegen::Server<Context, EvCore, UIServ>;
 
 class ExtensionCommand;
 class StorageRequestRouter;
@@ -76,8 +57,7 @@ private:
   std::unique_ptr<WindowManagementRouter> m_wmRouter;
   std::unique_ptr<CommandRequestRouter> m_commandRouter;
   std::unique_ptr<OAuthRouter> m_oauthRouter;
+
   QString m_sessionId;
   bool m_isDevMode = false;
-
-  Server m_server;
 };

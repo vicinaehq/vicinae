@@ -243,4 +243,4 @@ void ExtensionCommandRuntime::unload() {
 }
 
 ExtensionCommandRuntime::ExtensionCommandRuntime(const std::shared_ptr<ExtensionCommand> &command)
-    : CommandContext(command), m_command(command), m_server(Context{}, nullptr) {}
+    : CommandContext(command), m_command(command) {}

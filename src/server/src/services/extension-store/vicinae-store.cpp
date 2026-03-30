@@ -1,6 +1,6 @@
 #include "vicinae-store.hpp"
 #include "lib/glaze-qt.hpp"
-#include "version.h"
+#include "generated/version.h"
 #include "environment.hpp"
 #include "theme.hpp"
 #include "theme/theme-file.hpp"

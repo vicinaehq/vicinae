@@ -78,7 +78,7 @@ if (APPLE)
 endif()
 
 include_directories(
-    ${CMAKE_BINARY_DIR}/generated  # For version.h
+    ${CMAKE_BINARY_DIR}
 )
 
 add_subdirectory(src/browser-extension)

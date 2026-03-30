@@ -12,7 +12,7 @@
 #include "lib/rang.hpp"
 #include <exception>
 #include "vicinae-ipc/client.hpp"
-#include "version.h"
+#include "generated/version.h"
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>

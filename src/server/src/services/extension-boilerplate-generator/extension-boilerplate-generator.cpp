@@ -1,7 +1,7 @@
 #include "services/extension-boilerplate-generator/extension-boilerplate-generator.hpp"
 #include "common.hpp"
 #include "utils/utils.hpp"
-#include "version.h"
+#include "generated/version.h"
 #include <filesystem>
 #include <qfile.h>
 

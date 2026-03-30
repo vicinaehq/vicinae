@@ -32,48 +32,73 @@ struct JsonRpcErrorResponse {
 
 struct JsonRpcResponse {
   std::string jsonrpc;
-  std::string method;
   int id;
   glz::raw_json result;
 };
 
 using IncomingJsonRpcMessage = std::variant<JsonRpcRequest, JsonRpcNotification>;
-using OutgoingJsonRpcMessage = std::variant<JsonRpcResponse, JsonRpcErrorResponse>;
+using OutgoingJsonRpcMessage = std::variant<JsonRpcResponse, JsonRpcNotification, JsonRpcErrorResponse>;
 
 class AbstractTransport {
 public:
   using MessageHandler = std::function<void(const IncomingJsonRpcMessage &)>;
-  virtual void sendResponse(std::string_view data) = 0;
+  virtual void send(std::string_view data) = 0;
   virtual ~AbstractTransport() = default;
 };
 
-class EventEmitter {
+class RpcTransport {
 	public:
-		EventEmitter(AbstractTransport& transport): m_transport(transport) {
-		}
+		RpcTransport(AbstractTransport& transport): m_transport(transport) {}
 
 		template <typename T>
-		void emitEvent(std::string_view name, const T& params) {
+		void notify(std::string_view method, const T& params) {
 			std::string paramsBuf;
 			{
 			[[maybe_unused]] auto res = glz::write_json(params, paramsBuf);
 			}
 
-			JsonRpcNotification notif{
-				.method = std::string{name},
+			send(JsonRpcNotification{
+				.method = std::string{method},
 				.params = paramsBuf
-			};
+			});
+		}
 
-			std::string buf;
+		template <typename T>
+		void reply(int id, const T& result) {
+			std::string resultBuf;
 			{
-			[[maybe_unused]] auto res = glz::write_json(notif, buf);
+			[[maybe_unused]] auto res = glz::write_json(result, resultBuf);
 			}
 
-			m_transport.sendResponse(buf);
+			send(JsonRpcResponse{
+				.id = id,
+				.result = resultBuf
+			});
+		}
+
+	private:
+		void send(const OutgoingJsonRpcMessage& msg) {
+			std::string buf;
+			[[maybe_unused]] auto res = glz::write_json(msg, buf);
+			m_transport.send(buf);
+		}
+
+
+		AbstractTransport& m_transport;
+};
+
+class EventEmitter {
+	public:
+		EventEmitter(RpcTransport& transport): m_transport(transport) {
+		}
+
+		template <typename T>
+		void emitEvent(std::string_view name, const T& params) {
+			m_transport.notify(name, params);
 		}
 	
 	private:
-		AbstractTransport& m_transport;
+		RpcTransport& m_transport;
 };
 
 template <typename T, typename U>
@@ -97,7 +122,7 @@ class GlazeQtGenerator : public AbstractCodeGenerator {
                                      case PrimitiveType::String:
                                        return "std::string";
                                      case PrimitiveType::Any:
-                                       return "glz::json_t";
+                                       return "glz::generic";
                                      default:
                                        std::unreachable();
                                      }
@@ -141,7 +166,7 @@ class GlazeQtGenerator : public AbstractCodeGenerator {
     oss << "class " << abstractName(s.name) << ": public EventEmitter {\n";
     oss << "\tpublic:\n";
     oss << "\t" << abstractName(s.name)
-        << "(UserContext ctx, AbstractTransport& transport): EventEmitter(transport), m_ctx(ctx) {}\n\n";
+        << "(UserContext ctx, RpcTransport& transport): EventEmitter(transport), m_ctx(ctx) {}\n\n";
 
     for (const auto &method : s.methods) {
       oss << "\t" << "virtual " << "QFuture<" << serializeTypename(method.returnType) << "> " << method.name
@@ -242,7 +267,7 @@ public:
 #include <string_view>
 	)";
 
-    oss << "namespace codegen {\n";
+    oss << "namespace tsapi {\n";
     oss << BASE;
 
     for (const auto &s : ast.enums) {
@@ -296,22 +321,6 @@ public:
 
     oss << "private:\n";
 
-    oss << R"(
-	void sendResponse(const JsonRpcResponse& res) {
-		std::string buf;
-    	[[maybe_unused]] auto result = glz::write_json(res, buf);
-		m_transport->sendResponse(buf);
-	}
-
-	void reply(int id, const auto &data) {
-    	static thread_local std::string buf;
-    	[[maybe_unused]]auto result = glz::write_json(data, buf);
-    	sendResponse(JsonRpcResponse{.id = id, .result = buf});
-  	}
-
-  	void replyEmpty(int id) { sendResponse(JsonRpcResponse{.id = id, .result = "{}"}); }
-	)";
-
     oss << "\tvoid dispatch(const JsonRpcRequest& req) {\n";
 
     for (const auto &s : ast.services) {
@@ -329,9 +338,10 @@ public:
         }
 
         if (auto tt = std::get_if<PrimitiveType>(&m.returnType.data); tt && *tt == PrimitiveType::Void) {
-          oss << ").then([this, id = req.id](){ replyEmpty(id); });";
+          oss << ").then([this, id = req.id](){ m_transport->reply(id, nullptr); });";
         } else {
-          oss << ").then([this, id = req.id](" << constRef(m.returnType) << " res){ reply(id, res); });";
+          oss << ").then([this, id = req.id](" << constRef(m.returnType)
+              << " res){ m_transport->reply(id, res); });";
         }
 
         oss << "\n\t\t}\n";
@@ -346,7 +356,7 @@ public:
     }
 
     oss << "\tUserContext m_ctx;\n";
-    oss << "\tAbstractTransport* m_transport;\n";
+    oss << "\tRpcTransport* m_transport;\n";
     oss << "\n";
 
     oss << "\n};\n";
