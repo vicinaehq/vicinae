@@ -164,6 +164,7 @@ Item {
             id: field
             label: parent.label
             info: parent.description
+            topAlignLabel: missingFilePicker.multiple
 
             FormFilePicker {
                 id: missingFilePicker

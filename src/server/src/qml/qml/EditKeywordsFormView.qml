@@ -18,6 +18,7 @@ Item {
         FormField {
             label: "Keywords"
             info: root.host.infoText
+            topAlignLabel: true
 
             FormTextArea {
                 id: textArea

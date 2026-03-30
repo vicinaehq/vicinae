@@ -45,6 +45,7 @@ Item {
             id: descriptionField
             label: "Description"
             error: root.host.descriptionError
+            topAlignLabel: true
 
             FormTextArea {
                 text: root.host.description
@@ -102,6 +103,7 @@ Item {
             id: cmdDescField
             label: "Description"
             error: root.host.commandDescriptionError
+            topAlignLabel: true
 
             FormTextArea {
                 text: root.host.commandDescription

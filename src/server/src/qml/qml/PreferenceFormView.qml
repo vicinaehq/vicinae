@@ -132,6 +132,7 @@ Item {
             id: field
             label: parent.label
             info: parent.description
+            topAlignLabel: prefFilePicker.multiple
 
             FormFilePicker {
                 id: prefFilePicker
