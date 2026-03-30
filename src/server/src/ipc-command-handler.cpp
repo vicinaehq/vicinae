@@ -222,16 +222,13 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
 
       if (auto it = std::ranges::find_if(extensions, pred); it != extensions.end()) {
         m_ctx.navigation->popToRoot({.clearSearch = false});
+        m_ctx.navigation->setInstantDismiss();
         m_ctx.navigation->pushView(new ProviderSearchViewHost(**it));
 
         if (auto text = query.queryItemValue("fallbackText"); !text.isEmpty()) {
           m_ctx.navigation->setSearchText(text);
         }
 
-        if (!m_ctx.navigation->isWindowOpened()) {
-          m_ctx.navigation->setInstantDismiss();
-          m_ctx.navigation->showWindow();
-        }
         return {};
       }
 
@@ -277,15 +274,11 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
             }
           }
 
+          m_ctx.navigation->setInstantDismiss();
           m_ctx.navigation->launch(cmd, arguments);
 
           if (auto text = query.queryItemValue("fallbackText"); !text.isEmpty()) {
             m_ctx.navigation->setSearchText(text);
-          }
-
-          if (cmd->isView() && !m_ctx.navigation->isWindowOpened()) {
-            m_ctx.navigation->setInstantDismiss();
-            m_ctx.navigation->showWindow();
           }
 
           break;
