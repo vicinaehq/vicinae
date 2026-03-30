@@ -9,7 +9,7 @@
 #include <variant>
 #include <ranges>
 
-constexpr const auto BASE = R"(
+constexpr const auto COMMON = R"(
 struct JsonRpcRequest {
   std::string jsonrpc;
   std::string method;
@@ -31,8 +31,8 @@ struct JsonRpcErrorResponse {
 };
 
 struct JsonRpcResponse {
-  std::string jsonrpc;
   int id;
+  std::string jsonrpc;
   glz::raw_json result;
 };
 
@@ -41,10 +41,85 @@ using OutgoingJsonRpcMessage = std::variant<JsonRpcResponse, JsonRpcNotification
 
 class AbstractTransport {
 public:
-  using MessageHandler = std::function<void(const IncomingJsonRpcMessage &)>;
   virtual void send(std::string_view data) = 0;
   virtual ~AbstractTransport() = default;
 };
+)";
+
+constexpr const auto clientCode = R"(
+export class RpcTransport {
+	RpcTransport(AbstractTransport& transport): m_transport(transport) {}
+
+	void dispatchMessage(data: string) {
+		const msg = JSON.parse(data) as JsonRpcMessage;
+		IncomingJsonRpcMessage msg;
+
+		[[maybe_unused]] auto res = glz::read_json(msg, data);
+
+		if (auto req = std::get_if<JsonRpcRequest>(&msg)) {
+			if (auto it = m_handlers.find(req->id); it != m_handlers.end()) {
+			}
+		}
+		
+
+		if (msg.id) {
+			const handler = this.requestMap.get(msg.id);
+
+			if (handler) {
+				if (msg.error) handler.reject(msg.error);
+				if (msg.result) handler.resolve(msg.result);
+				this.requestMap.delete(msg.id);
+			}
+		}
+		if (!msg.id && msg.method) {
+			for (const cb of this.handlers.get(msg.method) ?? []) {
+				cb(msg.params);
+			}
+		}
+	}
+
+	request<T>(method: string, params: Record<string, any>): Promise<T> {
+		const id = this.id++;
+		const promise = new Promise<T>((resolve, reject) => {
+			this.requestMap.set(id, { resolve: (msg) => resolve(msg as T), reject });
+		});
+
+		this.sendMessage({ jsonrpc: '2.0', id, method, params });
+
+		return promise;
+	}
+
+	subscribe(method: string, cb: (result: any) => void): EventSubscription {
+		const handlers = this.handlers.get(method);
+
+		if (handlers) handlers.push(cb);
+		else this.handlers.set(method, [cb]);
+
+		return {
+			unsubscribe: () => {
+				const handlers = this.handlers.get(method);
+
+				if (handlers) {
+					handlers.splice(handlers.indexOf(cb), 1);
+				}
+			},
+		};
+	}
+
+ 	sendMessage(msg: JsonRpcMessage) {
+		this.transport.send(JSON.stringify(msg));
+	}
+
+	using Handler = std::function<void(std::string_view result)>;
+
+	int id = 0;
+	std::unordered_map<std::string, std::vector<Handler>> m_handlers;
+	AbstractTransport& m_transport;
+};
+)";
+
+constexpr const auto BASE = R"(
+
 
 class RpcTransport {
 	public:
