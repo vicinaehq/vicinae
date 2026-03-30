@@ -250,10 +250,18 @@ class GlazeQtGenerator : public AbstractCodeGenerator {
     return oss.str();
   }
 
-public:
-  std::string generateClient(const Tree &ast) override { throw std::runtime_error("not implemented"); }
+  static std::string_view stripExtension(std::string_view path) {
+    auto const pos = path.find_last_of('.');
+    if (pos != std::string_view::npos) return path.substr(0, pos);
+    return path;
+  }
 
-  std::string generateServer(const Tree &ast) override {
+public:
+  std::string generateClient(const Tree &ast, const CodegenOptions &opts) override {
+    throw std::runtime_error("not implemented");
+  }
+
+  std::string generateServer(const Tree &ast, const CodegenOptions &opts) override {
     std::ostringstream oss;
 
     oss << R"(
@@ -267,7 +275,10 @@ public:
 #include <string_view>
 	)";
 
-    oss << "namespace tsapi {\n";
+    auto const ns =
+        opts.generationNamespace.value_or(std::string{stripExtension(opts.file.filename().string())});
+
+    oss << "namespace " << ns << " {\n";
     oss << BASE;
 
     for (const auto &s : ast.enums) {

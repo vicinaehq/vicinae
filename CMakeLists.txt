@@ -92,6 +92,7 @@ add_subdirectory(${LIB_DIR}/linux-utils)
 add_subdirectory(${LIB_DIR}/figura)
 
 set(PROTO_DIR ${CMAKE_SOURCE_DIR}/src/proto)
+set(FIGURA_DIR ${CMAKE_SOURCE_DIR}/figura)
 
 if (USE_SYSTEM_PROTOBUF)
 	set(USE_SYSTEM_ABSEIL ON)

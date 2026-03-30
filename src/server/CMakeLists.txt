@@ -658,7 +658,13 @@ if (UNIX AND NOT APPLE)
 	
 	include("Figura")
 
-	figura_codegen_server(${CMAKE_SOURCE_DIR}/figura/extension-api.fig "glaze-qt" tsapi.hpp)
+	figura_compile(
+		SERVER
+		PROTO "${FIGURA_DIR}/tsapi.fig"
+		LANG glaze-qt
+		NAMESPACE tsapi
+		OUTPUT tsapi.hpp
+	)
 
 	list(APPEND LIBS xkbcommon vicinae::linuxutils)
 

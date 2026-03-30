@@ -39,7 +39,7 @@ endif()
 
 add_custom_command(
     OUTPUT ${API_STAMP}
-	COMMAND ${FIGURA_CC} compile ${CMAKE_SOURCE_DIR}/figura/extension-api.fig --client typescript --output ${API_PROTO_PATH}/api.ts
+	COMMAND ${FIGURA_CC} compile ${CMAKE_SOURCE_DIR}/figura/tsapi.fig --client typescript --output ${API_PROTO_PATH}/api.ts
     COMMAND npm run build
     COMMAND ${CMAKE_COMMAND} -E touch ${API_STAMP}
     WORKING_DIRECTORY ${EXT_API_SRC_DIR}

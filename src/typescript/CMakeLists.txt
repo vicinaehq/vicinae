@@ -48,13 +48,13 @@ add_custom_command(
 	COMMAND  ${FIGURA_CC} compile ${CMAKE_SOURCE_DIR}/figura/manager.fig --server typescript --output ${EXT_PROTO_OUT}/manager.ts
 	COMMAND  ${FIGURA_CC} compile ${CMAKE_SOURCE_DIR}/figura/manager-extension.fig --client typescript --output ${EXT_PROTO_OUT}/manager-extension.ts
 	COMMAND  ${FIGURA_CC} compile ${CMAKE_SOURCE_DIR}/figura/manager-extension.fig --server typescript --output ${EXT_PROTO_OUT}/extension-manager.ts
-	COMMAND  ${CMAKE_BINARY_DIR}/bin/figura compile ${CMAKE_SOURCE_DIR}/figura/extension-api.fig --client typescript --output ${EXT_PROTO_OUT}/api.ts
+	COMMAND  ${CMAKE_BINARY_DIR}/bin/figura compile ${CMAKE_SOURCE_DIR}/figura/tsapi.fig --client typescript --output ${EXT_PROTO_OUT}/api.ts
     COMMAND npm run build
     COMMAND ${CMAKE_COMMAND} -E copy
             ${EXT_MGR_SRC_DIR}/dist/runtime.js
             ${EXT_MGR_OUT}
     WORKING_DIRECTORY ${EXT_MGR_SRC_DIR}
-	DEPENDS ${FIGURA_CC} ${CMAKE_SOURCE_DIR}/figura/extension-api.fig ${FILTERED_TS_FILES} ${API_STAMP} ${RAY_COMPAT_STAMP} ${EXT_MGR_NODE_MODULES}
+	DEPENDS ${FIGURA_CC} ${CMAKE_SOURCE_DIR}/figura/tsapi.fig ${FILTERED_TS_FILES} ${API_STAMP} ${RAY_COMPAT_STAMP} ${EXT_MGR_NODE_MODULES}
     COMMENT "Building extension manager JavaScript bundle"
 )
 

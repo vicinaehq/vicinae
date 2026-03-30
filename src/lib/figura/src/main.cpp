@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include "codegen/codegen.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
 #include "codegen/typescript.hpp"
@@ -214,6 +215,7 @@ public:
     app->add_option("--output,-o", m_out, "")->required();
     app->add_option("--client", m_clients, "");
     app->add_option("--server", m_servers, "");
+    app->add_option("--namespace", m_opts.generationNamespace);
   }
 
   bool run(CLI::App *app) override {
@@ -248,7 +250,10 @@ public:
     for (const auto &client : m_clients) {
       for (const auto &gen : generators) {
         if (gen->name() == client) {
-          std::ofstream{m_out} << gen->generateClient(tree);
+          CodegenOptions opts = m_opts;
+          opts.file = m_proto;
+
+          std::ofstream{m_out} << gen->generateClient(tree, m_opts);
           std::cout << "generated " << client << " client at " << m_out << std::endl;
           return true;
         }
@@ -258,7 +263,9 @@ public:
     for (const auto &server : m_servers) {
       for (const auto &gen : generators) {
         if (gen->name() == server) {
-          std::ofstream{m_out} << gen->generateServer(tree);
+          CodegenOptions opts = m_opts;
+          opts.file = m_proto;
+          std::ofstream{m_out} << gen->generateServer(tree, m_opts);
           std::cout << "generated " << server << " server at " << m_out << std::endl;
           return true;
         }
@@ -271,6 +278,7 @@ public:
 private:
   std::string m_proto;
   std::string m_out;
+  CodegenOptions m_opts;
   std::vector<std::string> m_clients;
   std::vector<std::string> m_servers;
 };

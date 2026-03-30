@@ -1,27 +1,40 @@
+include(CMakeParseArguments)
+
 set(CODEGEN_BIN ${CMAKE_BINARY_DIR}/bin/figura)
 set(GENOUT ${CMAKE_BINARY_DIR}/generated)
 
 set(FIGURA_CC ${CODEGEN_BIN})
 
-function(figura_codegen_client proto language out)
-	set(GENFILE ${GENOUT}/${out})
+function(figura_compile)
+	cmake_parse_arguments(
+        ARG
+		"CLIENT;SERVER"
+		"LANG;PROTO;NAMESPACE;OUTPUT"
+		""
+        ${ARGN}
+    )
+
+	set(GENFILE ${GENOUT}/${ARG_OUTPUT})
+
+	set(CMD_ARGS "${FIGURA_CC}" compile "${ARG_PROTO}" --output "${GENFILE}")
+
+	if (ARG_CLIENT)
+		list(APPEND CMD_ARGS --client ${ARG_LANG})
+	endif()
+
+	if (ARG_SERVER)
+		list(APPEND CMD_ARGS --server ${ARG_LANG})
+	endif()
+
+	if (DEFINED ARG_NAMESPACE)
+		list(APPEND CMD_ARGS --namespace ${ARG_NAMESPACE})
+	endif()
+
 	add_custom_command(
 	  OUTPUT ${GENFILE}
-	  COMMAND ${CODEGEN_BIN} compile ${proto} --client ${language} --output ${GENFILE}
-	  DEPENDS ${proto} ${CODEGEN_BIN}
+	  COMMAND ${CMD_ARGS}
+	  DEPENDS ${ARG_PROTO} ${CODEGEN_BIN}
 	  COMMENT "figura codegen client"
-	)
-
-	set(SRCS ${SRCS} ${GENFILE} PARENT_SCOPE)
-endfunction()
-
-function(figura_codegen_server proto language out)
-	set(GENFILE ${GENOUT}/${out})
-	add_custom_command(
-	  OUTPUT ${GENFILE}
-	  COMMAND ${CODEGEN_BIN} compile ${proto} --server ${language} --output ${GENFILE}
-	  DEPENDS ${proto} ${CODEGEN_BIN}
-	  COMMENT "figura codegen server"
 	)
 
 	set(SRCS ${SRCS} ${GENFILE} PARENT_SCOPE)
