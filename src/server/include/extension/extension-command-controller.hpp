@@ -10,7 +10,7 @@ public:
   void notify(const QString &handlerId, const QJsonArray &args) {
     QJsonObject payload;
 
-    m_manager->emitGenericExtensionEvent(m_sessionId, handlerId, args);
+    // m_manager->emitGenericExtensionEvent(m_sessionId, handlerId, args);
   }
 
   ExtensionCommandController(ExtensionManager *manager) : m_manager(manager) {}

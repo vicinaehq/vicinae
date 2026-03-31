@@ -666,6 +666,14 @@ if (UNIX AND NOT APPLE)
 		OUTPUT tsapi.hpp
 	)
 
+	figura_compile(
+		CLIENT
+		PROTO "${FIGURA_DIR}/manager.fig"
+		LANG glaze-qt
+		NAMESPACE manager
+		OUTPUT manager.hpp
+	)
+
 	list(APPEND LIBS xkbcommon vicinae::linuxutils)
 
 	# Common Wayland support files
