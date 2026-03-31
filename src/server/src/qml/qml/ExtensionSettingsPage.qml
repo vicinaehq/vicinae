@@ -6,7 +6,8 @@ Item {
     id: root
     readonly property var extModel: settings.extensionModel
     readonly property string providerId: settings.currentPage
-
+    readonly property real contentWidth: Math.min(width, 680)
+    readonly property real sideMargin: (width - contentWidth) / 2
     Component.onCompleted: {
         root.extModel.commandModel.setFilter("");
         root.extModel.selectProviderById(root.providerId);
@@ -38,18 +39,6 @@ Item {
 
     property string expandedCommandId: ""
 
-    SettingsToggle {
-        id: enableToggle
-        visible: root.extModel.selectedIsProvider
-        checked: root.extModel.selectedEnabled
-        anchors.top: parent.top
-        anchors.right: parent.right
-        anchors.topMargin: 12
-        anchors.rightMargin: 20
-        z: 1
-        onToggled: root.extModel.setEnabled(root.extModel.selectedRow, checked)
-    }
-
     Flickable {
         id: cmdFlickable
         anchors.fill: parent
@@ -75,67 +64,47 @@ Item {
             width: cmdFlickable.width
             spacing: 0
 
-            readonly property real contentWidth: Math.min(width, 680)
-            readonly property real sideMargin: (width - contentWidth) / 2
-
-            Item {
-                implicitHeight: 24
-            }
-
             ColumnLayout {
-                Layout.alignment: Qt.AlignHCenter
+                visible: root.extModel.selectedDescription !== ""
                 Layout.fillWidth: true
-                Layout.leftMargin: contentColumn.sideMargin + 20
-                Layout.rightMargin: contentColumn.sideMargin + 20
-                spacing: 8
-
-                ViciImage {
-                    source: root.extModel.selectedIconSource
-                    Layout.preferredWidth: 48
-                    Layout.preferredHeight: 48
-                    Layout.alignment: Qt.AlignHCenter
-                }
+                Layout.leftMargin: root.sideMargin + 20
+                Layout.rightMargin: root.sideMargin + 20
+                Layout.topMargin: 16
+                spacing: 0
 
                 Text {
-                    text: root.extModel.selectedTitle
+                    text: "Description"
                     color: Theme.foreground
-                    font.pointSize: Theme.regularFontSize + 2
+                    font.pointSize: Theme.regularFontSize
                     font.bold: true
-                    horizontalAlignment: Text.AlignHCenter
-                    Layout.fillWidth: true
+                    Layout.bottomMargin: 8
                 }
 
                 Text {
-                    visible: root.extModel.selectedDescription !== ""
                     text: root.extModel.selectedDescription
                     color: Theme.textMuted
                     font.pointSize: Theme.regularFontSize
-                    horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.Wrap
                     Layout.fillWidth: true
                 }
-            }
 
-            Item {
-                visible: root.extModel.hasPreferences || root.extModel.commandModel.totalCount > 0
-                implicitHeight: 16
-            }
+                Item {
+                    implicitHeight: 16
+                }
 
-            Rectangle {
-                visible: root.extModel.hasPreferences || root.extModel.commandModel.totalCount > 0
-                Layout.fillWidth: true
-                Layout.leftMargin: contentColumn.sideMargin + 20
-                Layout.rightMargin: contentColumn.sideMargin + 20
-                height: 1
-                color: Theme.divider
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 1
+                    color: Theme.divider
+                }
             }
 
             // Provider preferences
             ColumnLayout {
                 visible: root.extModel.hasPreferences
                 Layout.fillWidth: true
-                Layout.leftMargin: contentColumn.sideMargin + 20
-                Layout.rightMargin: contentColumn.sideMargin + 20
+                Layout.leftMargin: root.sideMargin + 20
+                Layout.rightMargin: root.sideMargin + 20
                 Layout.topMargin: 16
                 spacing: 0
 
@@ -167,8 +136,8 @@ Item {
             RowLayout {
                 visible: root.extModel.commandModel.totalCount > 0
                 Layout.fillWidth: true
-                Layout.leftMargin: contentColumn.sideMargin + 20
-                Layout.rightMargin: contentColumn.sideMargin + 20
+                Layout.leftMargin: root.sideMargin + 20
+                Layout.rightMargin: root.sideMargin + 20
                 Layout.topMargin: 16
                 Layout.bottomMargin: 8
                 spacing: 8
@@ -282,8 +251,8 @@ Item {
                             anchors.left: parent.left
                             anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
-                            anchors.leftMargin: contentColumn.sideMargin + 20
-                            anchors.rightMargin: contentColumn.sideMargin + 20
+                            anchors.leftMargin: root.sideMargin + 20
+                            anchors.rightMargin: root.sideMargin + 20
                             spacing: 10
 
                             ViciImage {
@@ -380,8 +349,8 @@ Item {
                                 anchors.top: parent.top
                                 anchors.left: parent.left
                                 anchors.right: parent.right
-                                anchors.leftMargin: contentColumn.sideMargin + 20
-                                anchors.rightMargin: contentColumn.sideMargin + 20
+                                anchors.leftMargin: root.sideMargin + 20
+                                anchors.rightMargin: root.sideMargin + 20
                                 height: 1
                                 color: Theme.divider
                             }
@@ -391,8 +360,8 @@ Item {
                                 anchors.left: parent.left
                                 anchors.right: parent.right
                                 anchors.top: parent.top
-                                anchors.leftMargin: contentColumn.sideMargin + 52
-                                anchors.rightMargin: contentColumn.sideMargin + 20
+                                anchors.leftMargin: root.sideMargin + 52
+                                anchors.rightMargin: root.sideMargin + 20
                                 anchors.topMargin: 12
                                 spacing: 8
 
@@ -423,8 +392,9 @@ Item {
             }
 
             Item {
-                implicitHeight: 24
+                implicitHeight: 4
             }
         }
     }
 }
+
