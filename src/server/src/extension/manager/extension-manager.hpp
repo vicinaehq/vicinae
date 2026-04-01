@@ -60,6 +60,7 @@ class ExtensionManager : public QObject {
 signals:
   void started() const;
   void extensionMessageReceived(const std::string &sessionId, std::string_view data) const;
+  void extensionCrashed(const std::string &sessionId, const std::string &reason) const;
 
 public:
   ExtensionManager();
@@ -81,7 +82,6 @@ public:
   bool hasDevelopmentSession(const QString &id) const;
 
   void processStarted();
-  static QJsonObject serializeLaunchProps(const LaunchProps &props);
 
   bool isRunning() const;
   bool start();

@@ -2,7 +2,6 @@
 #include "command.hpp"
 #include "common.hpp"
 #include "extension/extension-command.hpp"
-#include "extension/extension-navigation-controller.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "generated/tsapi.hpp"
 
@@ -33,7 +32,6 @@ public:
 private:
   std::unique_ptr<ExtensionManagerBus> m_bus;
   std::unique_ptr<tsapi::RpcTransport> m_transport;
-  std::unique_ptr<ExtensionNavigationController> m_extNavigation;
   std::shared_ptr<ExtensionCommand> m_command;
   tsapi::Server *m_server = nullptr;
 

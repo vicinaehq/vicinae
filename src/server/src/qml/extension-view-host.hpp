@@ -1,7 +1,6 @@
 #pragma once
 #include "extend/model-parser.hpp"
-#include "extension/extension-action-panel-builder.hpp"
-#include "extension/extension-command-controller.hpp"
+#include "extension/extension-action-panel-builder.hpp" // for NotifyFn
 #include "bridge-view.hpp"
 #include "extension-form-model.hpp"
 #include "extension-grid-model.hpp"
@@ -25,7 +24,7 @@ class ExtensionViewHost : public ViewHostBase {
   Q_PROPERTY(QString dropdownPlaceholder READ dropdownPlaceholder NOTIFY dropdownChanged)
 
 public:
-  explicit ExtensionViewHost(ExtensionCommandController *controller, QObject *parent = nullptr);
+  explicit ExtensionViewHost(ExtensionActionPanelBuilder::NotifyFn notify, QObject *parent = nullptr);
 
   QUrl qmlComponentUrl() const override;
   QUrl qmlSearchAccessoryUrl() const override;
@@ -87,7 +86,7 @@ private:
     return p ? *p : nullptr;
   }
 
-  ExtensionCommandController *m_controller;
+  ExtensionActionPanelBuilder::NotifyFn m_notify;
   ViewModel m_model;
   int m_renderIndex = -1;
   QTimer *m_searchDebounce;

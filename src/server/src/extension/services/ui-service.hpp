@@ -1,8 +1,10 @@
 #pragma once
-#include "extension/extension-navigation-controller.hpp"
+#include "extension/extension-command.hpp"
 #include "extension/services/tsapi-image.hpp"
 #include "generated/tsapi.hpp"
+#include "glaze-qt.hpp"
 #include "navigation-controller.hpp"
+#include "qml/extension-view-host.hpp"
 #include "qml/view-utils.hpp"
 #include "services/toast/toast-service.hpp"
 #include "ui/alert/alert.hpp"
@@ -16,11 +18,23 @@ class ExtUIService : public QObject, public tsapi::AbstractUI {
 
   using Void = tsapi::Result<void>;
 
+  struct ViewEntry {
+    BaseView *baseView;
+    std::function<void(const RenderModel &)> renderFn;
+  };
+
 public:
-  ExtUIService(tsapi::RpcTransport &transport, ExtensionNavigationController *navigation, ToastService &toast,
-               QObject *parent = nullptr)
-      : QObject(parent), AbstractUI(transport), m_navigation(navigation), m_toast(toast) {
+  ExtUIService(tsapi::RpcTransport &transport, NavigationController *navigation,
+               const std::shared_ptr<ExtensionCommand> &command, tsapi::AbstractEventCore *eventCore,
+               ToastService &toast, QObject *parent = nullptr)
+      : QObject(parent), AbstractUI(transport), m_navigation(navigation), m_command(command),
+        m_eventCore(eventCore), m_toast(toast) {
     connect(&m_modelWatcher, &QFutureWatcher<ParsedRenderData>::finished, this, &ExtUIService::modelCreated);
+    connect(navigation, &NavigationController::viewPoped, this, &ExtUIService::handleViewPoped);
+  }
+
+  void setSubtitleOverride(const std::optional<QString> &subtitle) {
+    m_command->setSubtitleOverride(subtitle);
   }
 
   Void::Future render(const std::string &json) override {
@@ -56,23 +70,22 @@ public:
 
   Void::Future showHud(const std::string &text, const bool &clear_root,
                        const tsapi::PopToRootType &popToRoot) override {
-    m_navigation->handle()->closeWindow({
+    m_navigation->closeWindow({
         .popToRootType = mapPopToRoot(popToRoot),
         .clearRootSearch = clear_root,
     });
-    m_navigation->handle()->showHud(QString::fromStdString(text));
+    m_navigation->showHud(QString::fromStdString(text));
     return Void::ok();
   }
 
   Void::Future closeMainWindow(const bool &clearRoot, const tsapi::PopToRootType &popToRoot) override {
     using namespace std::chrono_literals;
-    m_navigation->handle()->closeWindow(
-        {.popToRootType = mapPopToRoot(popToRoot), .clearRootSearch = clearRoot}, 50ms);
+    m_navigation->closeWindow({.popToRootType = mapPopToRoot(popToRoot), .clearRootSearch = clearRoot}, 50ms);
     return Void::ok();
   }
 
   Void::Future popToRoot(const bool &clearSearchBar) override {
-    m_navigation->handle()->popToRoot({.clearSearch = clearSearchBar});
+    m_navigation->popToRoot({.clearSearch = clearSearchBar});
     return Void::ok();
   }
 
@@ -98,23 +111,32 @@ public:
       promise->finish();
     });
 
-    m_navigation->handle()->setDialog(alert);
+    m_navigation->setDialog(alert);
 
     return future;
   }
 
   Void::Future pushView() override {
-    m_navigation->pushView();
+    auto notifyFn = makeNotifyFn();
+    auto *host = new ExtensionViewHost(notifyFn);
+
+    m_navigation->pushView(host);
+    m_navigation->setNavigationTitle(m_command->name());
+    m_navigation->setNavigationIcon(m_command->iconUrl());
+
+    m_views.emplace_back(ViewEntry{host, [host](const RenderModel &m) { host->render(m); }});
+    emitviewPushed();
+
     return Void::ok();
   }
 
   Void::Future popView() override {
-    m_navigation->popView();
+    m_navigation->popCurrentView();
     return Void::ok();
   }
 
   Void::Future setSearchText(const std::string &text) override {
-    m_navigation->handle()->setSearchText(QString::fromStdString(text));
+    m_navigation->setSearchText(QString::fromStdString(text));
     return Void::ok();
   }
 
@@ -127,19 +149,34 @@ private slots:
   void modelCreated() {
     if (m_modelWatcher.isCanceled()) return;
 
-    const auto &views = m_navigation->views();
     auto models = m_modelWatcher.result();
 
-    for (size_t i = 0; i < models.items.size() && i < views.size(); ++i) {
+    for (size_t i = 0; i < models.items.size() && i < m_views.size(); ++i) {
       auto &model = models.items[i];
-      const auto &entry = views[i];
+      const auto &entry = m_views[i];
       bool const shouldSkipRender = !model.dirty && !model.propsDirty;
 
       if (!shouldSkipRender) entry.renderFn(model.root);
     }
   }
 
+  void handleViewPoped(const BaseView *view) {
+    auto it =
+        std::ranges::find_if(m_views, [view](const ViewEntry &entry) { return entry.baseView == view; });
+
+    if (it == m_views.end()) return;
+    if (m_views.size() > 1) { emitviewPoped(); }
+
+    m_views.pop_back();
+  }
+
 private:
+  ExtensionActionPanelBuilder::NotifyFn makeNotifyFn() {
+    return [this](const QString &handler, const QJsonArray &args) {
+      m_eventCore->emithandlerActivated(handler.toStdString(), qJsonValueToGlazeGeneric(args).get_array());
+    };
+  }
+
   static PopToRootType mapPopToRoot(tsapi::PopToRootType type) {
     switch (type) {
     case tsapi::PopToRootType::Immediate:
@@ -168,7 +205,10 @@ private:
     }
   }
 
+  std::vector<ViewEntry> m_views;
   QFutureWatcher<ParsedRenderData> m_modelWatcher;
-  ExtensionNavigationController *m_navigation;
+  NavigationController *m_navigation;
+  std::shared_ptr<ExtensionCommand> m_command;
+  tsapi::AbstractEventCore *m_eventCore;
   ToastService &m_toast;
 };

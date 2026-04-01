@@ -5,8 +5,8 @@
 
 static const std::chrono::milliseconds THROTTLE_DEBOUNCE_DURATION(300);
 
-ExtensionViewHost::ExtensionViewHost(ExtensionCommandController *controller, QObject *parent)
-    : ViewHostBase(), m_controller(controller), m_searchDebounce(new QTimer(this)) {
+ExtensionViewHost::ExtensionViewHost(ExtensionActionPanelBuilder::NotifyFn notify, QObject *parent)
+    : ViewHostBase(), m_notify(std::move(notify)), m_searchDebounce(new QTimer(this)) {
   m_searchDebounce->setSingleShot(true);
   connect(m_searchDebounce, &QTimer::timeout, this, &ExtensionViewHost::handleDebouncedSearch);
 }
@@ -395,5 +395,5 @@ void ExtensionViewHost::setDropdownValue(const QString &value) {
 }
 
 void ExtensionViewHost::notifyExtension(const QString &handler, const QJsonArray &args) {
-  m_controller->notify(handler, args);
+  m_notify(handler, args);
 }

@@ -1,6 +1,7 @@
 #include "extension-command-runtime.hpp"
 #include "common.hpp"
 #include "common/context.hpp"
+#include "extension-error-view-host.hpp"
 #include "extension/services/application-service.hpp"
 #include "extension/services/clipboard-service.hpp"
 #include "extension/services/command-service.hpp"
@@ -15,6 +16,7 @@
 #include "service-registry.hpp"
 #include "services/asset-resolver/asset-resolver.hpp"
 #include <QString>
+#include <glaze/json/generic.hpp>
 #include <qfuturewatcher.h>
 #include <qlogging.h>
 #include <ranges>
@@ -23,42 +25,11 @@
 #include "vicinae.hpp"
 #include "generated/manager.hpp"
 
-/*
-void ExtensionCommandRuntime::handleCrash(const proto::ext::extension::CrashEventData &crash) {
-  qCritical() << "Got crash" << crash.text().c_str();
-  auto &nav = context()->navigation;
-
-  nav->popToRoot();
-  nav->pushView(new ExtensionErrorViewHost(QString::fromStdString(crash.text())));
-  nav->setNavigationTitle(QString("%1 - Crash handler").arg(m_command->name()));
-  nav->setNavigationIcon(m_command->iconUrl());
-}
-
-void ExtensionCommandRuntime::handleEvent(const ExtensionEvent &event) {
-  using Event = proto::ext::extension::Event;
-
-  switch (event.data()->payload_case()) {
-  case Event::kCrash: {
-    handleCrash(event.data()->crash());
-    return;
-  }
-  case Event::kGeneric: {
-    handleGenericEvent(event.data()->generic());
-    return;
-  }
-  default:
-    break;
-  }
-}
-*/
-
 void ExtensionCommandRuntime::initialize() {
   auto manager = context()->services->extensionManager();
 
   m_bus = std::make_unique<ExtensionManagerBus>(*manager);
   m_transport = std::make_unique<tsapi::RpcTransport>(*m_bus);
-  m_extNavigation =
-      std::make_unique<ExtensionNavigationController>(m_command, context()->navigation.get(), manager);
 
   RelativeAssetResolver::instance()->addPath(m_command->assetPath());
 
@@ -69,15 +40,16 @@ void ExtensionCommandRuntime::initialize() {
   auto services = context()->services;
   auto &ctx = *context();
 
+  auto *eventCore = new ExtEventCoreService(*m_transport);
   auto *app = new ExtApplicationService(*m_transport, *services->appDb());
-  auto *ui = new ExtUIService(*m_transport, m_extNavigation.get(), *services->toastService());
+  auto *ui = new ExtUIService(*m_transport, context()->navigation.get(), m_command, eventCore,
+                              *services->toastService());
   auto *wm = new ExtWindowManagementService(*m_transport, *services->windowManager(), *services->appDb());
   auto *clipboard = new ExtClipboardService(*m_transport, *services->clipman(), *services->pasteService());
   auto *storage = new ExtStorageService(*m_transport, *services->localStorage(), storageNamespace);
   auto *fileSearch = new ExtFileSearchService(*m_transport, *services->fileService());
-  auto *command = new ExtCommandService(*m_transport, m_extNavigation.get(), services->rootItemManager());
+  auto *command = new ExtCommandService(*m_transport, m_command, services->rootItemManager());
   auto *oauth = new ExtOAuthService(*m_transport, m_command->extensionId(), ctx);
-  auto *eventCore = new ExtEventCoreService(*m_transport);
 
   m_server =
       new tsapi::Server(*m_transport, app, ui, wm, clipboard, storage, fileSearch, command, oauth, eventCore);
@@ -94,7 +66,7 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
   if (m_command->mode() == CommandModeView) {
     // We push the first view immediately, waiting for the initial render to come
     // in and "hydrate" it.
-    // context()->navigation->pushView();
+    m_server->UI()->pushView();
   }
 
   if (m_isDevMode) {
@@ -129,6 +101,19 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
           [this](const std::string &sessionId, std::string_view data) {
             if (sessionId != m_sessionId) return; // not for us
             m_server->route(data);
+          });
+
+  connect(manager, &ExtensionManager::extensionCrashed, this,
+          [this](const std::string &sessionId, const std::string &reason) {
+            if (sessionId != m_sessionId) return;
+
+            qCritical() << "Got crash" << reason;
+            auto &nav = context()->navigation;
+
+            nav->popToRoot();
+            nav->pushView(new ExtensionErrorViewHost(QString::fromStdString(reason)));
+            nav->setNavigationTitle(QString("%1 - Crash handler").arg(m_command->name()));
+            nav->setNavigationIcon(m_command->iconUrl());
           });
 
   connect(watcher, &QFutureWatcherBase::finished, this, [this, watcher]() {

@@ -68,6 +68,10 @@ ExtensionManager::ExtensionManager() : m_bus(&m_process), m_rpc(m_bus), m_client
   connect(&m_process, &QProcess::readyReadStandardError, this, &ExtensionManager::readError);
   connect(&m_process, &QProcess::finished, this, &ExtensionManager::finished);
   connect(&m_process, &QProcess::started, this, &ExtensionManager::processStarted);
+  connect(m_client.manager(), &manager::ManagerService::extensionMessage, this,
+          &ExtensionManager::extensionMessageReceived);
+  connect(m_client.manager(), &manager::ManagerService::extensionCrash, this,
+          &ExtensionManager::extensionCrashed);
 
   connect(&m_bus, &Bus::messageReceived, this, [this](const QByteArray &msg) {
     std::string_view view{msg.constData(), static_cast<size_t>(msg.size())};
@@ -177,21 +181,8 @@ void ExtensionManager::emitGenericExtensionEvent(const QString &sessionId, const
 
 void ExtensionManager::processStarted() { emit started(); }
 
-QJsonObject ExtensionManager::serializeLaunchProps(const LaunchProps &props) {
-  QJsonObject obj;
-  QJsonObject arguments;
-
-  for (const auto &[k, v] : props.arguments) {
-    arguments[k] = v;
-  }
-
-  obj["arguments"] = arguments;
-
-  return obj;
-}
-
 void ExtensionManager::finished(int exitCode, QProcess::ExitStatus status) {
-  qCritical() << "Extension manager crashed. Extensions will not work";
+  qCritical() << "Extension manager crashed. Extensions will not work" << m_process.errorString();
 }
 
 void ExtensionManager::readError() {
@@ -201,16 +192,3 @@ void ExtensionManager::readError() {
     qInfo() << "[EXTENSION]" << line;
   }
 }
-
-/*
-void ExtensionManager::unloadCommand(const QString &sessionId) {
-  auto requestData = new proto::ext::manager::RequestData;
-  auto unload = new proto::ext::manager::ManagerUnloadCommand;
-
-  unload->set_session_id(sessionId.toStdString());
-  requestData->set_allocated_unload(unload);
-  // requestManager(requestData);
-}
-*/
-
-void ExtensionManager::handleManagerResponse(const QString &action, QJsonObject &data) {}
