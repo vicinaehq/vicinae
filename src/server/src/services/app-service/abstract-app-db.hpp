@@ -6,7 +6,6 @@
 #include <qobject.h>
 #include <qtmetamacros.h>
 #include <qurl.h>
-#include "proto/application.pb.h"
 
 class AbstractApplication {
 public:
@@ -90,17 +89,6 @@ public:
 
   // whether the executable can open url(s) or file(s)
   virtual bool isOpener() { return true; }
-
-  proto::ext::application::Application toProto() {
-    proto::ext::application::Application app;
-
-    app.set_name(displayName().toStdString());
-    app.set_icon(iconUrl().name().toStdString());
-    app.set_id(id().toStdString());
-    app.set_path(path());
-
-    return app;
-  }
 };
 
 struct LaunchTerminalCommandOptions {

@@ -397,15 +397,8 @@ set(SRCS
 
 	src/log/message-handler.cpp
 
-	src/extension/requests/storage-request-router.cpp
-	src/extension/requests/ui-request-router.cpp
-	src/extension/requests/oauth-router.cpp
-	src/extension/requests/file-search-request-router.cpp
-	src/extension/requests/app-request-router.cpp
-	src/extension/requests/clipboard-request-router.cpp
-	src/extension/requests/command-request-router.cpp
-	src/extension/requests/wm-router.cpp
 	src/extension/extension-command-runtime.cpp
+	src/extension/services/ui-service.hpp
 
 	src/extensions/vicinae/vicinae-extension.cpp
 

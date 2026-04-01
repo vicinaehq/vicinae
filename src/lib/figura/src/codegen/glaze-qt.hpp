@@ -194,6 +194,10 @@ class RpcTransport {
 			});
 		}
 
+		void replyError(int id, const std::string& error) {
+			send(JsonRpcErrorResponse{.id = id, .error = error});
+		}
+
 	private:
 		void send(const OutgoingJsonRpcMessage& msg) {
 			std::string buf;
@@ -213,9 +217,37 @@ class EventEmitter {
 		void emitEvent(std::string_view name, const T& params) {
 			m_transport.notify(name, params);
 		}
-	
+
 	private:
 		RpcTransport& m_transport;
+};
+
+template <typename T>
+struct Result {
+	using Type = std::expected<T, std::string>;
+	using Future = QFuture<Type>;
+
+	static Future ok(T value) {
+		return QtFuture::makeReadyValueFuture<Type>(std::move(value));
+	}
+
+	static Future fail(std::string error) {
+		return QtFuture::makeReadyValueFuture<Type>(std::unexpected(std::move(error)));
+	}
+};
+
+template <>
+struct Result<void> {
+	using Type = std::expected<void, std::string>;
+	using Future = QFuture<Type>;
+
+	static Future ok() {
+		return QtFuture::makeReadyValueFuture<Type>({});
+	}
+
+	static Future fail(std::string error) {
+		return QtFuture::makeReadyValueFuture<Type>(std::unexpected(std::move(error)));
+	}
 };
 
 template <typename T, typename U>
@@ -284,8 +316,8 @@ class GlazeQtGenerator : public AbstractCodeGenerator {
     oss << "\t" << abstractName(s.name) << "(RpcTransport& transport): EventEmitter(transport) {}\n\n";
 
     for (const auto &method : s.methods) {
-      oss << "\t" << "virtual " << "QFuture<" << serializeTypename(method.returnType) << "> " << method.name
-          << "(";
+      oss << "\t" << "virtual " << "Result<" << serializeTypename(method.returnType) << ">::Future "
+          << method.name << "(";
       for (const auto &[idx, param] : method.params | std::views::enumerate) {
         if (idx > 0) oss << ", ";
         oss << constRef(param.type) << " " << param.name;
@@ -538,6 +570,8 @@ oss << serializeEventParams(s->name, e);
     oss << R"(
 #pragma once
 #include <QFuture>
+#include <QFutureWatcher>
+#include <expected>
 #include <memory>
 #include <glaze/glaze.hpp>
 #include <glaze/json/read.hpp>
@@ -593,10 +627,15 @@ oss << serializeEventParams(s->name, e);
     oss << R"(
 	template <typename T>
 	void replyWatcher(int id, QFuture<T> future) {
-		if constexpr (std::is_void_v<T>) {
+		auto result = future.result();
+		if (!result) {
+			m_transport.replyError(id, result.error());
+			return;
+		}
+		if constexpr (std::is_void_v<typename T::value_type>) {
 			m_transport.reply(id, nullptr);
 		} else {
-			m_transport.reply(id, future.result());
+			m_transport.reply(id, *result);
 		}
 	}
 

@@ -326,9 +326,4 @@ std::string slurp(std::istream &ifs) {
 
   return data;
 }
-
-glz::generic qJsonValueToGlazeGeneric(const QJsonValue &value) {}
-
-glz::generic qJsonObjectToGlazeGeneric(const QJsonObject &obj) {}
-
 }; // namespace Utils

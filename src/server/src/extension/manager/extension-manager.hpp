@@ -7,9 +7,6 @@
 #include <QtCore>
 #include <cstdint>
 #include "common.hpp"
-#include "proto/extension.pb.h"
-#include "proto/ipc.pb.h"
-#include "proto/manager.pb.h"
 #include <netinet/in.h>
 #include <qdebug.h>
 #include <qdir.h>
@@ -62,6 +59,7 @@ class ExtensionManager : public QObject {
 
 signals:
   void started() const;
+  void extensionMessageReceived(const std::string &sessionId, std::string_view data) const;
 
 public:
   ExtensionManager();
@@ -75,9 +73,8 @@ public:
    */
   std::optional<std::filesystem::path> nodeExecutable();
 
-  bool respondToExtension(const QString &requestId, proto::ext::extension::ResponseData *data);
-  void emitExtensionEvent(proto::ext::QualifiedExtensionEvent *event);
-  void emitGenericExtensionEvent(const QString &sessionId, const QString &handlerId, const QJsonArray &args);
+  // void emitGenericExtensionEvent(const QString &sessionId, const QString &handlerId, const QJsonArray
+  // &args);
 
   void addDevelopmentSession(const QString &id);
   void removeDevelopmentSession(const QString &id);
@@ -95,7 +92,7 @@ public:
 
   manager::Client &client() { return m_client; }
 
-  void unloadCommand(const QString &sessionId);
+  // void unloadCommand(const QString &sessionId);
   void handleManagerResponse(const QString &action, QJsonObject &data);
   void finished(int exitCode, QProcess::ExitStatus status);
   void readError();

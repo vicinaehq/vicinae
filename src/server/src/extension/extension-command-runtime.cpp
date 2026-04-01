@@ -1,9 +1,22 @@
 #include "extension-command-runtime.hpp"
 #include "common.hpp"
+#include "common/context.hpp"
+#include "extension/services/application-service.hpp"
+#include "extension/services/clipboard-service.hpp"
+#include "extension/services/command-service.hpp"
+#include "extension/services/event-core-service.hpp"
+#include "extension/services/file-search-service.hpp"
+#include "extension/services/oauth-service.hpp"
+#include "extension/services/storage-service.hpp"
+#include "extension/services/ui-service.hpp"
+#include "extension/services/wm-service.hpp"
+#include "generated/tsapi.hpp"
 #include "glaze-qt.hpp"
 #include "service-registry.hpp"
 #include "services/asset-resolver/asset-resolver.hpp"
 #include <QString>
+#include <qfuturewatcher.h>
+#include <qlogging.h>
 #include <ranges>
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "extension/manager/extension-manager.hpp"
@@ -42,11 +55,32 @@ void ExtensionCommandRuntime::handleEvent(const ExtensionEvent &event) {
 void ExtensionCommandRuntime::initialize() {
   auto manager = context()->services->extensionManager();
 
+  m_bus = std::make_unique<ExtensionManagerBus>(*manager);
+  m_transport = std::make_unique<tsapi::RpcTransport>(*m_bus);
+  m_extNavigation =
+      std::make_unique<ExtensionNavigationController>(m_command, context()->navigation.get(), manager);
+
   RelativeAssetResolver::instance()->addPath(m_command->assetPath());
 
   m_isDevMode = manager->hasDevelopmentSession(m_command->extensionId());
 
   QString const storageNamespace = QString("%1:data").arg(m_command->uniqueId().provider.c_str());
+
+  auto services = context()->services;
+  auto &ctx = *context();
+
+  auto *app = new ExtApplicationService(*m_transport, *services->appDb());
+  auto *ui = new ExtUIService(*m_transport, m_extNavigation.get(), *services->toastService());
+  auto *wm = new ExtWindowManagementService(*m_transport, *services->windowManager(), *services->appDb());
+  auto *clipboard = new ExtClipboardService(*m_transport, *services->clipman(), *services->pasteService());
+  auto *storage = new ExtStorageService(*m_transport, *services->localStorage(), storageNamespace);
+  auto *fileSearch = new ExtFileSearchService(*m_transport, *services->fileService());
+  auto *command = new ExtCommandService(*m_transport, m_extNavigation.get(), services->rootItemManager());
+  auto *oauth = new ExtOAuthService(*m_transport, m_command->extensionId(), ctx);
+  auto *eventCore = new ExtEventCoreService(*m_transport);
+
+  m_server =
+      new tsapi::Server(*m_transport, app, ui, wm, clipboard, storage, fileSearch, command, oauth, eventCore);
 }
 
 void ExtensionCommandRuntime::load(const LaunchProps &props) {
@@ -86,7 +120,30 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
                    }) |
                    std::ranges::to<std::unordered_map<std::string, std::string>>();
 
-  manager->client().manager()->load(opts);
+  auto future = manager->client().manager()->load(opts);
+  auto watcher = new QFutureWatcher<std::expected<manager::LoadResponse, std::string>>(this);
+
+  watcher->setFuture(manager->client().manager()->load(opts));
+
+  connect(manager, &ExtensionManager::extensionMessageReceived, this,
+          [this](const std::string &sessionId, std::string_view data) {
+            if (sessionId != m_sessionId) return; // not for us
+            m_server->route(data);
+          });
+
+  connect(watcher, &QFutureWatcherBase::finished, this, [this, watcher]() {
+    if (!watcher->isCanceled()) {
+      auto res = watcher->result();
+
+      if (!res) {
+        qWarning() << "Failed to load extension" << res.error();
+      } else {
+        m_sessionId = res->session_id;
+      }
+    }
+
+    watcher->deleteLater();
+  });
 }
 
 void ExtensionCommandRuntime::unload() {
@@ -94,10 +151,9 @@ void ExtensionCommandRuntime::unload() {
   auto manager = context()->services->extensionManager();
   auto toast = context()->services->toastService();
 
-  manager->client().manager()->unload(m_sessionId.toStdString());
+  manager->client().manager()->unload(m_sessionId);
 
   context()->navigation->setNavigationSuffixIcon(std::nullopt);
-  // manager->unloadCommand(m_sessionId);
   // toast->clear();
 }
 

@@ -2,23 +2,9 @@
 #include "command.hpp"
 #include "common.hpp"
 #include "extension/extension-command.hpp"
+#include "extension/extension-navigation-controller.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "generated/tsapi.hpp"
-
-class ExtensionCommandRuntime : public CommandContext {
-  void initialize();
-
-public:
-  void load(const LaunchProps &props) override;
-  void unload() override;
-
-  ExtensionCommandRuntime(const std::shared_ptr<ExtensionCommand> &command);
-
-private:
-  std::shared_ptr<ExtensionCommand> m_command;
-  QString m_sessionId;
-  bool m_isDevMode = false;
-};
 
 class ExtensionManagerBus : public tsapi::AbstractTransport {
 public:
@@ -33,4 +19,24 @@ public:
 private:
   ExtensionManager &m_manager;
   std::string m_sessionId;
+};
+
+class ExtensionCommandRuntime : public CommandContext {
+  void initialize();
+
+public:
+  void load(const LaunchProps &props) override;
+  void unload() override;
+
+  ExtensionCommandRuntime(const std::shared_ptr<ExtensionCommand> &command);
+
+private:
+  std::unique_ptr<ExtensionManagerBus> m_bus;
+  std::unique_ptr<tsapi::RpcTransport> m_transport;
+  std::unique_ptr<ExtensionNavigationController> m_extNavigation;
+  std::shared_ptr<ExtensionCommand> m_command;
+  tsapi::Server *m_server = nullptr;
+
+  std::string m_sessionId;
+  bool m_isDevMode = false;
 };

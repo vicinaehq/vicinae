@@ -11,8 +11,6 @@
 #include <utility>
 #include "environment.hpp"
 #include "pid-file/pid-file.hpp"
-#include "proto/extension.pb.h"
-#include "proto/manager.pb.h"
 #include "generated/version.h"
 #include "vicinae.hpp"
 
@@ -159,6 +157,7 @@ bool ExtensionManager::hasDevelopmentSession(const QString &id) const {
   return m_developmentSessions.contains(id);
 }
 
+/*
 void ExtensionManager::emitGenericExtensionEvent(const QString &sessionId, const QString &handlerId,
                                                  const QJsonArray &args) {
   auto qualified = new proto::ext::QualifiedExtensionEvent;
@@ -174,6 +173,7 @@ void ExtensionManager::emitGenericExtensionEvent(const QString &sessionId, const
   qualified->set_allocated_event(event);
   // emitExtensionEvent(qualified);
 }
+*/
 
 void ExtensionManager::processStarted() { emit started(); }
 
@@ -202,6 +202,7 @@ void ExtensionManager::readError() {
   }
 }
 
+/*
 void ExtensionManager::unloadCommand(const QString &sessionId) {
   auto requestData = new proto::ext::manager::RequestData;
   auto unload = new proto::ext::manager::ManagerUnloadCommand;
@@ -210,5 +211,6 @@ void ExtensionManager::unloadCommand(const QString &sessionId) {
   requestData->set_allocated_unload(unload);
   // requestManager(requestData);
 }
+*/
 
 void ExtensionManager::handleManagerResponse(const QString &action, QJsonObject &data) {}
