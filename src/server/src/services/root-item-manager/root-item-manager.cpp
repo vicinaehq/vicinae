@@ -4,6 +4,7 @@
 #include <qlogging.h>
 #include "root-item-manager.hpp"
 #include "common.hpp"
+#include "glaze-qt.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "lib/fzf.hpp"
 #include "config/config.hpp"
@@ -215,45 +216,11 @@ bool RootItemManager::setProviderPreferenceValues(const QString &id, const QJson
 }
 
 QJsonObject RootItemManager::transformPreferenceValues(const glz::generic::object_t &preferences) {
-  QJsonObject obj;
-
-  std::function<QJsonValue(const glz::generic &)> transformValue = [&](const glz::generic &v) -> QJsonValue {
-    if (v.is_boolean()) return v.get_boolean();
-    if (v.is_string()) return v.get_string().c_str();
-    if (v.is_number()) return v.get_number();
-    if (v.is_null()) return QJsonValue::Null;
-    if (v.is_array())
-      return v.get_array() | std::views::transform(transformValue) | std::ranges::to<QJsonArray>();
-    if (v.is_object()) return transformValue(v.get_object());
-    return QJsonValue::Undefined;
-  };
-
-  for (const auto &[key, v] : preferences) {
-    obj[key.c_str()] = transformValue(v);
-  }
-
-  return obj;
+  return glazeToQJsonObject(preferences);
 }
 
 glz::generic::object_t RootItemManager::transformPreferenceValues(const QJsonObject &preferences) {
-  glz::generic::object_t obj;
-
-  std::function<glz::generic(const QJsonValue &)> transformValue = [&](const QJsonValue &v) -> glz::generic {
-    if (v.isBool()) return v.toBool();
-    if (v.isString()) return v.toString().toStdString();
-    if (v.isDouble()) return v.toDouble();
-    if (v.isNull()) return glz::generic::null_t{};
-    if (v.isArray())
-      return v.toArray() | std::views::transform(transformValue) | std::ranges::to<glz::generic::array_t>();
-    if (v.isObject()) return transformPreferenceValues(v.toObject());
-    return {};
-  };
-
-  for (const auto &key : preferences.keys()) {
-    obj[key.toStdString()] = transformValue(preferences.value(key));
-  }
-
-  return obj;
+  return qJsonObjectToGlazeGeneric(preferences);
 }
 
 bool RootItemManager::setItemPreferenceValues(const EntrypointId &id, const QJsonObject &preferences) {

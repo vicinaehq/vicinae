@@ -2,7 +2,7 @@
 // The C++ process requests the extension manager to load/unload extensions, and receives
 // a notification each time an extension requests/notifies something.
 // At this layer, the manager is unaware what the payload is made of.
-// The payload is in reality another rpc message belonging to the client<->extension spec.
+// The payload is in reality another rpc message belonging to the vicinae<->extension spec.
 
 enum CommandMode {
   View,
@@ -24,6 +24,8 @@ struct LoadOptions {
   extension_id: string;
   extension_name: string;
   owner_or_author_name: string;
+  arguments: any;
+  preferences: any;
 };
 
 struct LoadResponse {

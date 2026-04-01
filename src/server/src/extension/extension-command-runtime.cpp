@@ -1,16 +1,14 @@
 #include "extension-command-runtime.hpp"
 #include "common.hpp"
-#include "extension/requests/file-search-request-router.hpp"
-#include "generated/manager.hpp"
-#include "proto/manager.pb.h"
+#include "glaze-qt.hpp"
 #include "service-registry.hpp"
 #include "services/asset-resolver/asset-resolver.hpp"
 #include <QString>
-#include <qurlquery.h>
+#include <ranges>
 #include "services/root-item-manager/root-item-manager.hpp"
-#include "utils/utils.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "vicinae.hpp"
+#include "generated/manager.hpp"
 
 /*
 void ExtensionCommandRuntime::handleCrash(const proto::ext::extension::CrashEventData &crash) {
@@ -57,6 +55,7 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
   auto rootItemManager = context()->services->rootItemManager();
   auto preferenceValues = rootItemManager->getPreferenceValues(m_command->uniqueId());
   auto manager = context()->services->extensionManager();
+  manager::LoadOptions opts;
 
   if (m_command->mode() == CommandModeView) {
     // We push the first view immediately, waiting for the initial render to come
@@ -64,46 +63,28 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
     // context()->navigation->pushView();
   }
 
-  auto resolveCommandEnv = [&]() {
-    using namespace proto::ext::manager;
-    return m_isDevMode ? CommandEnv::Development : CommandEnv::Production;
-  };
-
   if (m_isDevMode) {
     context()->navigation->setNavigationSuffixIcon(ImageURL::builtin("hammer").setFill(SemanticColor::Green));
+    opts.env = manager::CommandEnv::Development;
+  } else {
+    opts.env = manager::CommandEnv::Production;
   }
 
-  auto load = new proto::ext::manager::ManagerLoadCommand;
-
-  manager::LoadOptions opts;
-
   opts.entrypoint = m_command->manifest().entrypoint;
-  opts.env = ""; // to fill
+  opts.mode = m_command->mode() == CommandMode::CommandModeView ? manager::CommandMode::View
+                                                                : manager::CommandMode::NoView;
   opts.extension_id = m_command->extensionId().toStdString();
   opts.vicinae_path = Omnicast::dataDir();
   opts.command_name = m_command->commandId().toStdString();
   opts.extension_name = m_command->repositoryName().toStdString();
   opts.owner_or_author_name = m_command->author().toStdString();
   opts.is_raycast = m_command->isRaycast();
-
-  if (m_command->mode() == CommandMode::CommandModeView) {
-    load->set_mode(proto::ext::manager::CommandMode::View);
-  } else {
-    load->set_mode(proto::ext::manager::CommandMode::NoView);
-  }
-
-  auto preferences = load->mutable_preference_values();
-
-  for (const auto &key : preferenceValues.keys()) {
-    auto value = preferenceValues.value(key);
-
-    preferences->insert({key.toStdString(), transformJsonValueToProto(value)});
-  }
-
-  auto arguments = load->mutable_argument_values();
-  for (const auto &[key, value] : props.arguments) {
-    arguments->insert({key.toStdString(), transformJsonValueToProto(value)});
-  }
+  opts.preferences = qJsonObjectToGlazeGeneric(preferenceValues);
+  opts.arguments = props.arguments |
+                   std::views::transform([](auto &&pair) -> std::pair<std::string, std::string> {
+                     return {pair.first.toStdString(), pair.second.toStdString()};
+                   }) |
+                   std::ranges::to<std::unordered_map<std::string, std::string>>();
 
   manager->client().manager()->load(opts);
 }

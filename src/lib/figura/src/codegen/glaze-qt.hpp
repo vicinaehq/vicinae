@@ -227,24 +227,24 @@ class GlazeQtGenerator : public AbstractCodeGenerator {
   std::string name() const override { return "glaze-qt"; }
 
   static std::string_view serializeTypenameImpl(const TypeValue &value) {
-    auto const visitor = overloads{[](TypeStruct *s) { return s->name; },
-                                   [](const EnumValue &e) { return std::string_view{"std::string"}; },
-                                   [](PrimitiveType type) -> std::string_view {
-                                     switch (type) {
-                                     case PrimitiveType::Void:
-                                       return "void";
-                                     case PrimitiveType::Boolean:
-                                       return "bool";
-                                     case PrimitiveType::Number:
-                                       return "int";
-                                     case PrimitiveType::String:
-                                       return "std::string";
-                                     case PrimitiveType::Any:
-                                       return "glz::generic";
-                                     default:
-                                       std::unreachable();
-                                     }
-                                   }};
+    auto const visitor =
+        overloads{[](TypeStruct *s) { return s->name; }, [](const EnumValue &e) { return e.name; },
+                  [](PrimitiveType type) -> std::string_view {
+                    switch (type) {
+                    case PrimitiveType::Void:
+                      return "void";
+                    case PrimitiveType::Boolean:
+                      return "bool";
+                    case PrimitiveType::Number:
+                      return "int";
+                    case PrimitiveType::String:
+                      return "std::string";
+                    case PrimitiveType::Any:
+                      return "glz::generic";
+                    default:
+                      std::unreachable();
+                    }
+                  }};
 
     return std::visit(visitor, value.data);
   }

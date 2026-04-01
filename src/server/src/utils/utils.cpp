@@ -2,6 +2,7 @@
 #include <cmath>
 #include <cstddef>
 #include <random>
+#include <glaze/json/generic.hpp>
 #include <cstdlib>
 #include <filesystem>
 #include <qmimedatabase.h>
@@ -325,4 +326,9 @@ std::string slurp(std::istream &ifs) {
 
   return data;
 }
+
+glz::generic qJsonValueToGlazeGeneric(const QJsonValue &value) {}
+
+glz::generic qJsonObjectToGlazeGeneric(const QJsonObject &obj) {}
+
 }; // namespace Utils

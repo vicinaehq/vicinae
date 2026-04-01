@@ -93,6 +93,7 @@ set(SRCS
 
 	#src/daemon/ipc-client.cpp
 	src/lib/template-engine/template-engine.cpp
+	src/lib/glaze-qt.cpp
 
 	include/favicon/favicon-service.hpp
 	src/favicon/favicon-service.cpp

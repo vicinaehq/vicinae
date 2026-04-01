@@ -2,7 +2,9 @@
 #include <filesystem>
 #include <google/protobuf/struct.pb.h>
 #include <iterator>
+#include <numbers>
 #include <qdatetime.h>
+#include <qjsonobject.h>
 #include <qjsonvalue.h>
 #include <qmimetype.h>
 #include <qstring.h>
