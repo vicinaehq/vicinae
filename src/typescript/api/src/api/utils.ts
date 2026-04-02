@@ -2,7 +2,7 @@ import type { PathLike } from "node:fs";
 import { rm } from "node:fs/promises";
 import { WindowManagement } from "./window-management";
 import type { Application } from "./proto/api";
-import { client } from "./client";
+import { getClient } from "./client";
 
 /**
   @ignore - we should probably move this to raycast compat, I don't think we want that.
@@ -79,7 +79,7 @@ export const runInTerminal = async (
 ) => {
 	const { hold = false, appId, title } = options;
 
-	await client.Application.runInTerminal({
+	await getClient().Application.runInTerminal({
 		cmdline: args,
 		hold,
 		appId,
@@ -101,7 +101,7 @@ export const open = async (target: string, app?: Application | string) => {
 		}
 	}
 
-	await client.Application.open(target, appId);
+	await getClient().Application.open(target, appId);
 };
 
 /**
@@ -123,7 +123,7 @@ export const getFrontmostApplication = async (): Promise<Application> => {
 export const getApplications = async (
 	target?: string,
 ): Promise<Application[]> => {
-	return client.Application.list(target);
+	return getClient().Application.list(target);
 };
 
 /**
@@ -132,7 +132,7 @@ export const getApplications = async (
 export const getDefaultApplication = async (
 	path: string,
 ): Promise<Application> => {
-	return client.Application.getDefault(path);
+	return getClient().Application.getDefault(path);
 };
 
 /**
@@ -142,7 +142,7 @@ export const showInFileBrowser = async (
 	path: PathLike,
 	options: ShowInFileBrowserOptions = {},
 ): Promise<void> => {
-	await client.Application.showInFileBrowser(
+	await getClient().Application.showInFileBrowser(
 		path.toString(),
 		options.select ?? true,
 	);

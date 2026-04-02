@@ -1,1 +1,1 @@
-export * from "./navigation-provider";
+export { getNavigationContext, type NavigationContextType } from "./navigation-context";

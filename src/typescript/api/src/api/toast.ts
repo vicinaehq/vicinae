@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import type { Keyboard } from "./keyboard";
 import type * as api from "./proto/api";
-import { client } from "./client";
+import { getClient } from "./client";
 
 /**
  * A Toast with a certain style, title, and message.
@@ -123,7 +123,7 @@ export class Toast {
 	*/
 
 	async update() {
-		await client.UI.showToast(
+		await getClient().UI.showToast(
 			this.id,
 			this.title,
 			this.message ?? "",
@@ -146,7 +146,7 @@ export class Toast {
 	 * @returns A Promise that resolves when toast is hidden.
 	 */
 	async hide(): Promise<void> {
-		await client.UI.hideToast(this.id);
+		await getClient().UI.hideToast(this.id);
 	}
 }
 

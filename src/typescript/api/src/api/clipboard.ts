@@ -1,6 +1,6 @@
 import type { PathLike } from "node:fs";
 import type { ClipboardContent } from "./proto/api";
-import { client } from "./client";
+import { getClient } from "./client";
 
 /**
  * Access system clipboard and clipboard history features.
@@ -53,7 +53,7 @@ export namespace Clipboard {
 		text: string | number | Clipboard.Content,
 		options: Clipboard.CopyOptions = {},
 	) {
-		await client.Clipboard.copy(mapContent(text), {
+		await getClient().Clipboard.copy(mapContent(text), {
 			concealed: options.concealed ?? false,
 		});
 	}
@@ -65,7 +65,7 @@ export namespace Clipboard {
 	 * clipboard copy.
 	 */
 	export async function paste(text: string | number | Clipboard.Content) {
-		await client.Clipboard.paste(mapContent(text));
+		await getClient().Clipboard.paste(mapContent(text));
 	}
 
 	/**
@@ -77,7 +77,7 @@ export namespace Clipboard {
 	 * ```
 	 */
 	export async function read(): Promise<Clipboard.ReadContent> {
-		return client.Clipboard.readContent();
+		return getClient().Clipboard.readContent();
 	}
 
 	/**
@@ -98,6 +98,6 @@ export namespace Clipboard {
 	 * Clear the current clipboard content.
 	 */
 	export async function clear() {
-		await client.Clipboard.clear();
+		await getClient().Clipboard.clear();
 	}
 }

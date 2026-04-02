@@ -1,4 +1,4 @@
-import { client } from "./client";
+import { getClient } from "./client";
 import type * as api from "./proto/api";
 
 /**
@@ -40,7 +40,7 @@ export const showHUD = async (
 	title: string,
 	options?: { clearRootSearch?: boolean; popToRootType?: PopToRootType },
 ) => {
-	client.UI.showHud(
+	getClient().UI.showHud(
 		title,
 		options?.clearRootSearch ?? false,
 		popToRootProtoMap[options?.popToRootType ?? PopToRootType.Default],
@@ -59,7 +59,7 @@ export const closeMainWindow = async (
 	const { clearRootSearch = false, popToRootType = PopToRootType.Default } =
 		options;
 
-	await client.UI.closeMainWindow(
+	await getClient().UI.closeMainWindow(
 		clearRootSearch,
 		popToRootProtoMap[popToRootType],
 	);
@@ -69,7 +69,7 @@ export const closeMainWindow = async (
  * @category Launcher Window
  */
 export const clearSearchBar = async () => {
-	await client.UI.setSearchText("");
+	await getClient().UI.setSearchText("");
 };
 
 /**
@@ -80,7 +80,7 @@ export const clearSearchBar = async () => {
  * @category Launcher Window
  */
 export const getSelectedText = async () => {
-	return client.UI.getSelectedText();
+	return getClient().UI.getSelectedText();
 };
 
 /**
@@ -89,5 +89,5 @@ export const getSelectedText = async () => {
  * @category Launcher Window
  */
 export const popToRoot = async (options?: { clearSearchBar?: boolean }) => {
-	await client.UI.popToRoot(options?.clearSearchBar ?? false);
+	await getClient().UI.popToRoot(options?.clearSearchBar ?? false);
 };

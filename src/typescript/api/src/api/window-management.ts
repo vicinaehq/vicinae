@@ -1,4 +1,4 @@
-import { client } from "./client";
+import { getClient } from "./client";
 import type * as api from "./proto/api";
 
 const transformWorkspace = (
@@ -128,7 +128,7 @@ export namespace WindowManagement {
 	export async function getWindows(
 		workspaceId?: string,
 	): Promise<WindowManagement.Window[]> {
-		return client.WindowManagement.getWindows(workspaceId).then((wins) =>
+		return getClient().WindowManagement.getWindows(workspaceId).then((wins) =>
 			wins.map(transformWindow),
 		);
 	}
@@ -148,14 +148,14 @@ export namespace WindowManagement {
 	 * @see {@link Window.focus}
 	 */
 	export async function focusWindow(window: Window): Promise<boolean> {
-		return client.WindowManagement.focusWindow(window.id);
+		return getClient().WindowManagement.focusWindow(window.id);
 	}
 
 	/**
 	 * Return the list of screens (physical and virtual) currently attached to the computer.
 	 */
 	export async function getScreens(): Promise<Screen[]> {
-		return client.WindowManagement.getScreens().then((screens) =>
+		return getClient().WindowManagement.getScreens().then((screens) =>
 			screens.map((sc) => ({
 				name: sc.name,
 				make: sc.make,
@@ -170,13 +170,13 @@ export namespace WindowManagement {
 	}
 
 	export async function getActiveWorkspace(): Promise<WindowManagement.Workspace> {
-		return client.WindowManagement.getActiveWorkspace().then(
+		return getClient().WindowManagement.getActiveWorkspace().then(
 			transformWorkspace,
 		);
 	}
 
 	export async function getWorkspaces(): Promise<WindowManagement.Workspace[]> {
-		return client.WindowManagement.getWorkspaces().then((workspaces) =>
+		return getClient().WindowManagement.getWorkspaces().then((workspaces) =>
 			workspaces.map(transformWorkspace),
 		);
 	}
@@ -184,12 +184,12 @@ export namespace WindowManagement {
 	export async function getWindowsOnActiveWorkspace(): Promise<
 		WindowManagement.Window[]
 	> {
-		return client.WindowManagement.getActiveWorkspace().then((ws) =>
+		return getClient().WindowManagement.getActiveWorkspace().then((ws) =>
 			getWindows(ws.id),
 		);
 	}
 
 	export async function getActiveWindow(): Promise<WindowManagement.Window> {
-		return client.WindowManagement.getActiveWindow().then(transformWindow);
+		return getClient().WindowManagement.getActiveWindow().then(transformWindow);
 	}
 }

@@ -1,18 +1,14 @@
-import type { Environment } from "@vicinae/api";
-import type { Client } from "./proto/api";
+import type { VicinaGlobal } from "@vicinae/api";
 
-export type Global = typeof globalThis & {
-	vicinae: {
-		environ: Environment;
-		preferences: any;
-		client: Client;
-	};
+type Global = typeof globalThis & {
+	vicinae: VicinaGlobal;
 };
 
 (globalThis as Global).vicinae = {
 	environ: {} as any,
 	preferences: {} as any,
 	client: {} as any,
+	navigationContext: undefined as any,
 };
 
 export const globalState = (globalThis as Global).vicinae;

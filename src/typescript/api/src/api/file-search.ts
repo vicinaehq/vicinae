@@ -1,4 +1,4 @@
-import { client } from "./client";
+import { getClient } from "./client";
 import type * as api from "./proto/api";
 /**
  * Access Vicinae's built-in file search functionality.
@@ -45,6 +45,6 @@ export namespace FileSearch {
 	 * ```
 	 */
 	export async function search(query: string): Promise<FileSearch.FileInfo[]> {
-		return client.FileSearch.search(query);
+		return getClient().FileSearch.search(query);
 	}
 }

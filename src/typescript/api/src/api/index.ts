@@ -19,3 +19,4 @@ export * from "./preference.js";
 export * from "./file-search.js";
 export * from "./window-management.js";
 export * from "./command.js";
+export type { VicinaGlobal } from "./globals";

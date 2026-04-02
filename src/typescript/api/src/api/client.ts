@@ -1,9 +1,8 @@
-import type { Client } from "./proto/api";
+import { getGlobal } from "./globals";
 
 /**
- * Client used to access vicinae capabitilies from the extension runtime.
- * The client is initialized when vicinae loads the extension command is activated.
+ * Client used to access vicinae capabilities from the extension runtime.
+ * Always use this function instead of caching the client at module load time,
+ * as the client is only initialized after the extension command is activated.
  */
-export const client = (globalThis as any).vicinae.client as Client;
-
-export const getClient = () => (globalThis as any).vicinae.client as Client;
+export const getClient = () => getGlobal().client;

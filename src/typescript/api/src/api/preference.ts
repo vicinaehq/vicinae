@@ -1,7 +1,9 @@
+import { getGlobal } from "./globals";
+
 export const getPreferenceValues = <
 	T = { [preferenceName: string]: any },
 >(): T => {
-	return (globalThis as any).vicinae.preferences;
+	return getGlobal().preferences;
 };
 
 /**

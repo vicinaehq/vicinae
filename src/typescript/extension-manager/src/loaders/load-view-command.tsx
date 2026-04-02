@@ -1,7 +1,7 @@
 import { createRenderer, type ViewData } from "../reconciler";
 import { type ComponentType, Suspense } from "react";
 import * as React from "react";
-import { NavigationProvider } from "@vicinae/api";
+import { NavigationProvider } from "../navigation-provider";
 import type * as extensionServer from "../proto/extension-manager";
 import { globalState } from "../globals";
 

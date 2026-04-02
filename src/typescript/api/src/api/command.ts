@@ -1,4 +1,4 @@
-import { client } from "./client";
+import { getClient } from "./client";
 
 /**
  * Update the values of properties declared in the manifest of the current command.
@@ -9,7 +9,7 @@ import { client } from "./client";
 export async function updateCommandMetadata(metadata: {
 	subtitle?: string | null;
 }): Promise<void> {
-	await client.Command.updateCommandMetadata({
+	await getClient().Command.updateCommandMetadata({
 		subtitle: metadata.subtitle ?? undefined,
 	});
 }

@@ -1,35 +1,26 @@
 import { type ReactNode, useEffect, useRef, useState } from "react";
-import context from "./navigation-context";
-import { getClient } from "../client";
+import { getNavigationContext } from "@vicinae/api";
+import { globalState } from "./globals";
 
 const View: React.FC<{ children: ReactNode }> = ({ children }) => {
 	return <view>{children}</view>;
 };
 
-/**
- * @ignore
- */
 export const NavigationProvider: React.FC<{ root: ReactNode }> = ({ root }) => {
 	const [navStack, setNavStack] = useState<ReactNode[]>([root]);
 	const pendingShutdown = useRef<boolean>(false);
+	const NavigationContext = getNavigationContext();
 
 	const pop = () => {
 		if (pendingShutdown.current) return;
-
-		// we ask Vicinae to pop the current view, but we need to wait
-		// for the pop-view event to be fired in order to dismount it from
-		// our local view stack: otherwise Vicinae might miss a render.
-		getClient().UI.popView();
+		globalState.client.UI.popView();
 	};
 
 	const push = (node: ReactNode) => {
 		if (pendingShutdown.current) return;
-
-		getClient()
-			.UI.pushView()
-			.then(() => {
-				setNavStack((cur) => [...cur, node]);
-			});
+		globalState.client.UI.pushView().then(() => {
+			setNavStack((cur) => [...cur, node]);
+		});
 	};
 
 	useEffect(() => {
@@ -39,26 +30,17 @@ export const NavigationProvider: React.FC<{ root: ReactNode }> = ({ root }) => {
 	}, [navStack]);
 
 	useEffect(() => {
-		// TODO: handle shutdown
-		/*
-		const shutdown = bus.subscribe("shutdown", () => {
-			pendingShutdown.current = true;
-			setNavStack([]);
-		});
-		*/
-
-		const listener = getClient().UI.viewPoped(() => {
+		const listener = globalState.client.UI.viewPoped(() => {
 			setNavStack((cur) => cur.slice(0, -1));
 		});
 
 		return () => {
-			//shutdown.unsubscribe();
 			listener.unsubscribe();
 		};
 	}, []);
 
 	return (
-		<context.Provider
+		<NavigationContext.Provider
 			value={{
 				push,
 				pop,
@@ -67,6 +49,6 @@ export const NavigationProvider: React.FC<{ root: ReactNode }> = ({ root }) => {
 			{navStack.map((el, idx) => (
 				<View key={idx}>{el}</View>
 			))}
-		</context.Provider>
+		</NavigationContext.Provider>
 	);
 };

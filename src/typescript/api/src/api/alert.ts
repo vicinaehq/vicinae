@@ -1,4 +1,4 @@
-import { client } from "./client";
+import { getClient } from "./client";
 import type { Image } from "./image";
 import type * as api from "./proto/api";
 
@@ -56,7 +56,7 @@ export const confirmAlert = async (
 	options: Alert.Options,
 ): Promise<boolean> => {
 	return new Promise<boolean>((resolve) => {
-		client.UI.confirmAlert({
+		getClient().UI.confirmAlert({
 			title: options.title,
 			description: options.message ?? "Are you sure?",
 			//icon: options.icon && serializeProtoImage(options.icon),

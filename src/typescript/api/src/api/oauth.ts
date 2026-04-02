@@ -1,6 +1,6 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { type Image, serializeProtoImage } from "./image";
-import { client } from "./client";
+import { getClient } from "./client";
 
 enum OauthRedirectMethod {
 	/**
@@ -359,7 +359,7 @@ export class PKCEClient {
 			return typeof (s as any).url === "string";
 		};
 
-		const { code } = await client.OAuth.authorize({
+		const { code } = await getClient().OAuth.authorize({
 			client: {
 				id: this.providerId,
 				description: this.description ?? "Connect to your account",
@@ -395,7 +395,7 @@ export class PKCEClient {
 		};
 
 		if (isTokenResponse(options)) {
-			await client.OAuth.setTokens({
+			await getClient().OAuth.setTokens({
 				accessToken: options.access_token,
 				refreshToken: options.refresh_token,
 				idToken: options.id_token,
@@ -404,7 +404,7 @@ export class PKCEClient {
 				providerId: this.providerId,
 			});
 		} else {
-			await client.OAuth.setTokens({
+			await getClient().OAuth.setTokens({
 				...options,
 				providerId: this.providerId,
 			});
@@ -419,7 +419,7 @@ export class PKCEClient {
 	 */
 	async getTokens(): Promise<OAuth.TokenSet | undefined> {
 		// TODO: handle nullability
-		const set = await client.OAuth.getTokens(this.providerId);
+		const set = await getClient().OAuth.getTokens(this.providerId);
 
 		if (!set) return undefined;
 
@@ -444,7 +444,7 @@ export class PKCEClient {
 	 * Removes the stored {@link OAuth.TokenSet} for the client.
 	 */
 	async removeTokens(): Promise<void> {
-		client.OAuth.removeTokens(this.providerId);
+		getClient().OAuth.removeTokens(this.providerId);
 	}
 }
 

@@ -1,5 +1,5 @@
 // manager (client) to extension (server)
-// the worker is already provisioned but waiting for the manager to initialize it with extension info
+// the worker is already provisioned but waiting for the manager to initialize it with extension info (to avoid cold starts)
 
 
 enum CommandMode {
@@ -19,8 +19,8 @@ struct LaunchEventData {
   entrypoint: string;
   asset_path: string;
   support_path: string;
-  //map<string, google.protobuf.Value> preference_values = 7;
-  //map<string, google.protobuf.Value> argument_values = 8;
+  preferenceValues: any;
+  argumentValues: any;
   is_raycast: bool;
   owner_or_author_name: string;
 };
