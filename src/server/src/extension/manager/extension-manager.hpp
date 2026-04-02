@@ -74,9 +74,6 @@ public:
    */
   std::optional<std::filesystem::path> nodeExecutable();
 
-  // void emitGenericExtensionEvent(const QString &sessionId, const QString &handlerId, const QJsonArray
-  // &args);
-
   void addDevelopmentSession(const QString &id);
   void removeDevelopmentSession(const QString &id);
   bool hasDevelopmentSession(const QString &id) const;

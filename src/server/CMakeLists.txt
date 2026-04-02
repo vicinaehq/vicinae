@@ -121,8 +121,6 @@ set(SRCS
 	src/extension/manager/extension-manager.hpp
 	src/extension/manager/extension-manager.cpp
 
-	include/extension/extension-command-controller.hpp
-
 	# Bookmark - Start
 	src/services/shortcut/shortcut-service.hpp
 	src/services/shortcut/shortcut-service.cpp

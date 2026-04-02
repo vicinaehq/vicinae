@@ -10,6 +10,14 @@ import * as extensionServer from "./proto/extension-manager";
 import * as api from "./proto/api";
 import { callbackManager } from "./callback";
 
+const loaders: Record<
+	extensionServer.CommandMode,
+	(data: extensionServer.LaunchEventData) => Promise<void>
+> = {
+	View: loadView,
+	NoView: loadNoView,
+};
+
 class Lifecycle extends extensionServer.LifecycleService {
 	async launch(data: extensionServer.LaunchEventData): Promise<boolean> {
 		const { environment } = workerData as { environment: EnvironmentType };
@@ -33,20 +41,25 @@ class Lifecycle extends extensionServer.LifecycleService {
 }
 
 const serverRpc = new extensionServer.RpcTransport({
-	send: (msg) => parentPort?.postMessage(msg),
+	send: (msg) => {
+		console.error("send back");
+		parentPort?.postMessage(msg);
+	},
 });
 
 const server = new extensionServer.Server(serverRpc, new Lifecycle(serverRpc));
 
 const clientRpc = new api.RpcTransport({
 	send: (msg: string) => {
-		server.Lifecycle.emit_extension_message(msg);
+		//server.Lifecycle.emit_extension_message(msg);
+		parentPort?.postMessage(msg);
 	},
 });
 
 const client = new api.Client(clientRpc);
 
 client.EventCore.handlerActivated((id, data) => {
+	console.error("hello world");
 	callbackManager.activateHandler(id, data);
 });
 
@@ -76,14 +89,6 @@ const loadEnviron = (
 		isRaycast: data.is_raycast,
 	});
 	//g.vicinae.preferences = data.preferenceValues;
-};
-
-const loaders: Record<
-	extensionServer.CommandMode,
-	(data: extensionServer.LaunchEventData) => Promise<void>
-> = {
-	View: loadView,
-	NoView: loadNoView,
 };
 
 export const main = async () => {

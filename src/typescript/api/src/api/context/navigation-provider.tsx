@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import context from "./navigation-context";
-import { client } from "../client";
+import { getClient } from "../client";
 
 const View: React.FC<{ children: ReactNode }> = ({ children }) => {
 	return <view>{children}</view>;
@@ -19,15 +19,17 @@ export const NavigationProvider: React.FC<{ root: ReactNode }> = ({ root }) => {
 		// we ask Vicinae to pop the current view, but we need to wait
 		// for the pop-view event to be fired in order to dismount it from
 		// our local view stack: otherwise Vicinae might miss a render.
-		client.UI.popView();
+		getClient().UI.popView();
 	};
 
 	const push = (node: ReactNode) => {
 		if (pendingShutdown.current) return;
 
-		client.UI.pushView().then(() => {
-			setNavStack((cur) => [...cur, node]);
-		});
+		getClient()
+			.UI.pushView()
+			.then(() => {
+				setNavStack((cur) => [...cur, node]);
+			});
 	};
 
 	useEffect(() => {
@@ -45,7 +47,7 @@ export const NavigationProvider: React.FC<{ root: ReactNode }> = ({ root }) => {
 		});
 		*/
 
-		const listener = client.UI.viewPoped(() => {
+		const listener = getClient().UI.viewPoped(() => {
 			setNavStack((cur) => cur.slice(0, -1));
 		});
 

@@ -92,13 +92,11 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
                    }) |
                    std::ranges::to<std::unordered_map<std::string, std::string>>();
 
-  auto future = manager->client().manager()->load(opts);
   auto watcher = new QFutureWatcher<std::expected<manager::LoadResponse, std::string>>(this);
-
-  watcher->setFuture(manager->client().manager()->load(opts));
 
   connect(manager, &ExtensionManager::extensionMessageReceived, this,
           [this](const std::string &sessionId, std::string_view data) {
+            std::cout << "got extension message" << data;
             if (sessionId != m_sessionId) return; // not for us
             m_server->route(data);
           });
@@ -117,6 +115,7 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
           });
 
   connect(watcher, &QFutureWatcherBase::finished, this, [this, watcher]() {
+    std::cout << "watcher done";
     if (!watcher->isCanceled()) {
       auto res = watcher->result();
 
@@ -124,11 +123,14 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
         qWarning() << "Failed to load extension" << res.error();
       } else {
         m_sessionId = res->session_id;
+        m_bus->setSessionId(m_sessionId);
       }
     }
 
     watcher->deleteLater();
   });
+
+  watcher->setFuture(manager->client().manager()->load(opts));
 }
 
 void ExtensionCommandRuntime::unload() {

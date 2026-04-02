@@ -10,7 +10,7 @@ public:
   ExtensionManagerBus(ExtensionManager &manager) : m_manager(manager) {}
 
   void send(std::string_view data) override {
-    m_manager.client().manager()->extensionMessage(m_sessionId, std::string{data});
+    m_manager.client().manager()->messageExtension(m_sessionId, std::string{data});
   }
 
   void setSessionId(std::string str) { m_sessionId = std::move(str); }

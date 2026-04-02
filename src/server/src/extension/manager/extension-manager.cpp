@@ -53,7 +53,6 @@ void Bus::readyRead() {
 
 Bus::Bus(QIODevice *socket) : device(socket) {
   connect(socket, &QIODevice::readyRead, this, &Bus::readyRead);
-  // connect(&m_parseMessageTask, &QFutureWatcher<FullMessage>::finished, this, &Bus::handleMessage);
 }
 
 // Extension Manager
@@ -74,6 +73,7 @@ ExtensionManager::ExtensionManager() : m_bus(&m_process), m_rpc(m_bus), m_client
           &ExtensionManager::extensionCrashed);
 
   connect(&m_bus, &Bus::messageReceived, this, [this](const QByteArray &msg) {
+    qDebug() << "message received" << msg.constData();
     std::string_view view{msg.constData(), static_cast<size_t>(msg.size())};
     if (auto res = m_client.route(view); !res) { qWarning() << "Failed to route message" << res.error(); }
   });
@@ -160,24 +160,6 @@ void ExtensionManager::removeDevelopmentSession(const QString &id) { m_developme
 bool ExtensionManager::hasDevelopmentSession(const QString &id) const {
   return m_developmentSessions.contains(id);
 }
-
-/*
-void ExtensionManager::emitGenericExtensionEvent(const QString &sessionId, const QString &handlerId,
-                                                 const QJsonArray &args) {
-  auto qualified = new proto::ext::QualifiedExtensionEvent;
-  auto event = new proto::ext::extension::Event;
-  auto generic = new proto::ext::extension::GenericEventData;
-  QJsonDocument document;
-
-  document.setArray(args);
-  qualified->set_session_id(sessionId.toStdString());
-  event->set_id(handlerId.toStdString());
-  event->set_allocated_generic(generic);
-  generic->set_json(document.toJson(QJsonDocument::Compact).toStdString());
-  qualified->set_allocated_event(event);
-  // emitExtensionEvent(qualified);
-}
-*/
 
 void ExtensionManager::processStarted() { emit started(); }
 

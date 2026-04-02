@@ -190,7 +190,7 @@ export class RpcTransport {
 	dispatchMessage(data: string) {
 		const msg = JSON.parse(data) as JsonRpcMessage;
 
-		if (msg.id) {
+		if (msg.id !== undefined) {
 			const handler = this.requestMap.get(msg.id);
 
 			if (handler) {
@@ -199,7 +199,7 @@ export class RpcTransport {
 				this.requestMap.delete(msg.id);
 			}
 		}
-		if (!msg.id && msg.method) {
+		if (msg.id === undefined && msg.method) {
 			for (const cb of this.handlers.get(msg.method) ?? []) {
 				cb(msg.params);
 			}
@@ -239,7 +239,7 @@ export class RpcTransport {
 	}
 
 
-	private id = 0;
+	private id = 1;
 	private requestMap = new Map<number, { resolve: (value: any) => void, reject: (error: any) => void }>;
 	private handlers = new Map<string, Array<(result: any) => void>>;
 };
@@ -395,7 +395,7 @@ class TypeScriptCodeGenerator : public AbstractCodeGenerator {
 		const msg = JSON.parse(raw) as JsonRpcMessage;
 
 		// request
-		if (msg.id && msg.method && msg.params) {
+		if (msg.id !== undefined && msg.method && msg.params) {
 			const id = msg.id;
 
 			switch (msg.method) {

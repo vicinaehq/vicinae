@@ -12,6 +12,7 @@
 #include <QGuiApplication>
 #include <QtConcurrent/QtConcurrent>
 #include <qfuturewatcher.h>
+#include <qlogging.h>
 
 class ExtUIService : public QObject, public tsapi::AbstractUI {
   Q_OBJECT
@@ -38,6 +39,7 @@ public:
   }
 
   Void::Future render(const std::string &json) override {
+    qWarning() << "GOT RENDER";
     QJsonParseError parseError;
     auto doc = QJsonDocument::fromJson(QByteArray::fromStdString(json), &parseError);
 
@@ -173,6 +175,7 @@ private slots:
 private:
   ExtensionActionPanelBuilder::NotifyFn makeNotifyFn() {
     return [this](const QString &handler, const QJsonArray &args) {
+      qDebug() << "emit handler" << handler;
       m_eventCore->emithandlerActivated(handler.toStdString(), qJsonValueToGlazeGeneric(args).get_array());
     };
   }

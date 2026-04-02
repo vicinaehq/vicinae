@@ -35,6 +35,7 @@ class ExtensionManager extends manager.ManagerService {
 	}
 
 	async load(load: manager.LoadOptions): Promise<manager.LoadResponse> {
+		console.error("loading", { load });
 		const sessionId = randomUUID();
 		const supportPath = path.join(
 			load.vicinae_path,
@@ -67,6 +68,12 @@ class ExtensionManager extends manager.ManagerService {
 
 		this.workerMap.set(sessionId, workerInfo);
 
+		worker.on("message", (data) => {
+			const { result } = JSON.parse(data);
+			if (result !== undefined) client.route(data); // response
+			this.emit_extensionMessage(sessionId, data); // regular extension stuff
+		});
+
 		worker.on("messageerror", (error) => {
 			console.error(error);
 		});
@@ -86,10 +93,12 @@ class ExtensionManager extends manager.ManagerService {
 		const stderrStream = fs.createWriteStream(stderrLog);
 
 		worker.stdout.on("data", async (buf: Buffer) => {
+			console.error(buf.toString());
 			stdoutStream.write(buf);
 		});
 
 		worker.stderr.on("data", async (buf: Buffer) => {
+			console.error(buf.toString());
 			stderrStream.write(buf);
 		});
 
@@ -112,6 +121,7 @@ class ExtensionManager extends manager.ManagerService {
 			this.workerMap.delete(sessionId);
 		});
 
+		console.error("launching...");
 		await client.Lifecycle.launch({
 			entrypoint: load.entrypoint,
 			//preferenceValues: load.preferenceValues,
@@ -126,6 +136,8 @@ class ExtensionManager extends manager.ManagerService {
 			owner_or_author_name: load.owner_or_author_name,
 			command_name: load.command_name,
 		});
+
+		console.error("loaded...");
 
 		return { session_id: sessionId };
 	}
@@ -225,6 +237,8 @@ class Vicinae {
 
 			const packet = this.currentMessage.data.subarray(4, length + 4);
 
+			console.error("process", packet.toString("utf8"));
+
 			this.server.route(packet.toString("utf8"));
 			//console.error('routing message');
 			this.currentMessage.data = this.currentMessage.data.subarray(length + 4);
@@ -233,7 +247,11 @@ class Vicinae {
 
 	constructor() {
 		const rpc = new manager.RpcTransport({
-			send: (data) => this.writePacket(Buffer.from(data)),
+			//e
+			send: (data) => {
+				console.error("send data back", data);
+				this.writePacket(Buffer.from(data));
+			},
 		});
 
 		this.server = new manager.Server(rpc, new ExtensionManager(rpc));

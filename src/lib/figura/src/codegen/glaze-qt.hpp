@@ -37,7 +37,7 @@ struct JsonRpcResponse {
   glz::raw_json result;
 };
 
-using RpcMessage = std::variant<JsonRpcRequest, JsonRpcResponse, JsonRpcErrorResponse, JsonRpcNotification>;
+using RpcMessage = std::variant<JsonRpcResponse, JsonRpcErrorResponse, JsonRpcNotification, JsonRpcRequest>;
 using IncomingJsonRpcMessage = std::variant<JsonRpcRequest, JsonRpcNotification>;
 using OutgoingJsonRpcMessage = std::variant<JsonRpcResponse, JsonRpcNotification, JsonRpcErrorResponse>;
 
@@ -49,46 +49,45 @@ public:
 )";
 
 constexpr const auto clientCode = R"(
+struct RpcIncomingMessage {
+  std::optional<int> id;
+  std::optional<std::string> method;
+  std::optional<std::string> error;
+  glz::raw_json result;
+  glz::raw_json params;
+};
+
 class RpcTransport {
   template <typename T> using Result = std::expected<T, std::string>;
   template <typename T> using Promise = QPromise<Result<T>>;
-  template <class... Ts> struct overloads : Ts... {
-    using Ts::operator()...;
-  };
 
-  // generic type erased response handler used for both responses and notifications
   using ResponseHandler = std::function<void(Result<std::string_view>)>;
 
 public:
   RpcTransport(AbstractTransport &transport) : m_transport(transport) {}
 
   std::expected<void, std::string> dispatchMessage(std::string_view data) {
-    RpcMessage msg;
+    RpcIncomingMessage msg;
 
-    if (auto const error = glz::read_json(msg, data)) { return std::unexpected(glz::format_error(error)); }
+    if (auto const error = glz::read<glz::opts{.error_on_unknown_keys = false}>(msg, data)) { return std::unexpected(glz::format_error(error)); }
 
-    auto const visitor = overloads{[&](const JsonRpcResponse &res) {
-                                     if (auto it = m_requestMap.find(res.id); it != m_requestMap.end()) {
-                                       it->second(std::move(res.result.str));
-                                       m_requestMap.erase(it);
-                                     }
-                                   },
-                                   [&](const JsonRpcErrorResponse &res) {
-                                     if (auto it = m_requestMap.find(res.id); it != m_requestMap.end()) {
-                                       it->second(std::unexpected(res.error));
-                                       m_requestMap.erase(it);
-                                     }
-                                   },
-                                   [&](const JsonRpcNotification &notif) {
-                                     if (auto it = m_handlers.find(notif.method); it != m_handlers.end()) {
-                                       for (const auto &handler : it->second) {
-                                         handler(notif.params.str);
-                                       }
-                                     }
-                                   },
-                                   [](auto &&other) {}};
+    if (msg.id) {
+      if (auto it = m_requestMap.find(*msg.id); it != m_requestMap.end()) {
+        if (msg.error) {
+          it->second(std::unexpected(*msg.error));
+        } else {
+          it->second(std::move(msg.result.str));
+        }
+        m_requestMap.erase(it);
+      }
+    } else if (msg.method) {
+      if (auto it = m_handlers.find(*msg.method); it != m_handlers.end()) {
+        for (const auto &handler : it->second) {
+          handler(msg.params.str);
+        }
+      }
+    }
 
-    std::visit(visitor, msg);
     return {};
   }
 
@@ -99,7 +98,7 @@ public:
     }
 
     int id = m_id++;
-    auto sendRes = sendMessage(JsonRpcRequest{.method = std::string{method}, .id = id, .params = m_buf});
+    auto sendRes = sendMessage(JsonRpcRequest{.jsonrpc = "2.0", .method = std::string{method}, .id = id, .params = m_buf});
 
     if (!sendRes)
       return QtFuture::makeReadyValueFuture<Result<T>>(std::unexpected(std::move(sendRes).error()));
@@ -141,7 +140,7 @@ public:
     if (auto it = m_handlers.find(std::string{method}); it != m_handlers.end()) {
       it->second.emplace_back(handler);
     } else {
-      it->second = {handler};
+      m_handlers[std::string{method}] = {handler};
     }
   }
 
@@ -152,7 +151,7 @@ public:
     return {};
   }
 
-  int m_id = 0;
+  int m_id = 1;
   std::unordered_map<std::string, std::vector<ResponseHandler>> m_handlers;
   std::unordered_map<int, ResponseHandler> m_requestMap;
   AbstractTransport &m_transport;
@@ -176,6 +175,7 @@ class RpcTransport {
 			}
 
 			send(JsonRpcNotification{
+				.jsonrpc = "2.0",
 				.method = std::string{method},
 				.params = paramsBuf
 			});
@@ -190,12 +190,13 @@ class RpcTransport {
 
 			send(JsonRpcResponse{
 				.id = id,
+				.jsonrpc = "2.0",
 				.result = resultBuf
 			});
 		}
 
 		void replyError(int id, const std::string& error) {
-			send(JsonRpcErrorResponse{.id = id, .error = error});
+			send(JsonRpcErrorResponse{.jsonrpc = "2.0", .id = id, .error = error});
 		}
 
 	private:
@@ -295,10 +296,37 @@ class GlazeQtGenerator : public AbstractCodeGenerator {
     return std::string{"const "} + serializeTypename(value) + "&";
   }
 
+  static std::string serializeEnumGlazeMeta(std::string_view ns, const EnumValue &e) {
+    std::ostringstream oss;
+
+    oss << "template <>";
+    oss << "struct glz::meta<" << ns << "::" << e.name << "> {\n";
+    oss << "\tusing enum " << ns << "::" << e.name << ";\n";
+    oss << "\tstatic constexpr auto value = glz::enumerate(";
+
+    for (const auto &[idx, v] : std::views::enumerate(e.values)) {
+      if (idx > 0) oss << ", ";
+      oss << v;
+    }
+
+    oss << ");";
+    oss << "\n};\n";
+
+    return oss.str();
+  }
+
+  static std::string serializeEnumGlazeMetas(std::string_view ns, std::span<EnumValue const> ee) {
+    std::ostringstream oss;
+    for (const auto &e : ee) {
+      oss << serializeEnumGlazeMeta(ns, e);
+    }
+    return oss.str();
+  }
+
   static std::string serializeEnum(const EnumValue &e) {
     std::ostringstream oss;
 
-    oss << "enum class " << e.name << "{\n";
+    oss << "enum class " << e.name << " {\n";
     for (const auto &v : e.values) {
       oss << "\t" << v << ",\n";
     }
@@ -466,7 +494,6 @@ oss << serializeEventParams(s->name, e);
 */
 
       oss << "class " << s->name << "Service: public QObject {\n";
-
       if (!s->events.empty()) {
         oss << "\tQ_OBJECT\n\tsignals:\n";
         for (const auto &e : s->events) {
@@ -560,6 +587,8 @@ oss << serializeEventParams(s->name, e);
     oss << "};";
 
     oss << "\n}"; // end namespace
+
+    oss << serializeEnumGlazeMetas(ns, ast.enums);
 
     return oss.str();
   }
@@ -691,6 +720,8 @@ oss << serializeEventParams(s->name, e);
     oss << "\n};\n";
 
     oss << "\n}"; // end namespace
+
+    oss << serializeEnumGlazeMetas(ns, ast.enums);
 
     return oss.str();
   }
