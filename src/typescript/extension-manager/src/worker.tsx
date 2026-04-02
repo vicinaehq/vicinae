@@ -68,6 +68,7 @@ const loadEnviron = (
 	data: extensionServer.LaunchEventData,
 ) => {
 	globalState.client = client;
+	globalState.preferences = data.preferenceValues;
 	Object.assign(globalState.environ, {
 		theme: "dark",
 		textSize: "medium",
@@ -88,7 +89,6 @@ const loadEnviron = (
 		},
 		isRaycast: data.is_raycast,
 	});
-	//g.vicinae.preferences = data.preferenceValues;
 };
 
 export const main = async () => {

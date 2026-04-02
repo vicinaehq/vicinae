@@ -1,4 +1,12 @@
-import type { VicinaGlobal } from "@vicinae/api";
+import type { Environment } from "@vicinae/api";
+import type { Client } from "./proto/api";
+
+type VicinaGlobal = {
+	client: Client;
+	environ: Environment;
+	preferences: any;
+	navigationContext: any;
+};
 
 type Global = typeof globalThis & {
 	vicinae: VicinaGlobal;

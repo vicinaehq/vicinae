@@ -1,3 +1,4 @@
+import type { Client } from "./proto/api";
 import { getGlobal } from "./globals";
 
 /**
@@ -5,4 +6,4 @@ import { getGlobal } from "./globals";
  * Always use this function instead of caching the client at module load time,
  * as the client is only initialized after the extension command is activated.
  */
-export const getClient = () => getGlobal().client;
+export const getClient = () => getGlobal().client as Client;

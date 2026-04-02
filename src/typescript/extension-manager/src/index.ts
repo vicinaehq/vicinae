@@ -10,6 +10,7 @@ import * as path from "node:path";
 import * as fsp from "node:fs/promises";
 
 import type { EnvironmentType } from "./types";
+import { lazy } from "react";
 
 const WORKER_GRACE_PERIOD_MS = 10_000;
 const WORKER_MAX_HEAP_SIZE_MB = 1000; // really high limit just to make sure an extension command can't exhaust RAM by itself
@@ -122,12 +123,11 @@ class ExtensionManager extends manager.ManagerService {
 		});
 
 		console.error("launching...");
+
 		await client.Lifecycle.launch({
 			entrypoint: load.entrypoint,
-			//preferenceValues: load.preferenceValues,
-			//preferenceValues: {},
-			//argumentValues: load.argumentValues,
-			//argumentValues: {},
+			argumentValues: load.arguments,
+			preferenceValues: load.preferences,
 			mode: load.mode,
 			support_path: supportPath,
 			asset_path: assetsPath,
@@ -247,7 +247,6 @@ class Vicinae {
 
 	constructor() {
 		const rpc = new manager.RpcTransport({
-			//e
 			send: (data) => {
 				console.error("send data back", data);
 				this.writePacket(Buffer.from(data));
