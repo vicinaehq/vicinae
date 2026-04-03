@@ -5,7 +5,6 @@
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"build": "tsc --outDir dist",
-		"protogen": "mkdir -p ./src/api/proto && protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto -I../../proto ../../proto/*.proto --ts_proto_out ./src/api/proto",
 		"pack": "npm run build && npm pack",
 		"docgen": "typedoc",
 		"format": "biome format --write"
@@ -45,7 +44,6 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.3.2",
-		"@bufbuild/protobuf": "^2.7.0",
 		"@oclif/test": "^4",
 		"@types/chai": "^4",
 		"@types/mocha": "^10",
@@ -54,7 +52,6 @@
 		"oclif": "^4",
 		"shx": "^0.3.3",
 		"ts-node": "^10",
-		"ts-proto": "^2.7.5",
 		"typedoc": "^0.28.13",
 		"typedoc-github-theme": "^0.3.1",
 		"typedoc-plugin-markdown": "^4.8.1",
