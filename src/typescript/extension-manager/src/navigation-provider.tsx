@@ -1,15 +1,20 @@
-import { type ReactNode, useEffect, useRef, useState } from "react";
-import { getNavigationContext } from "@vicinae/api";
+import { createContext, type ReactNode, useEffect, useRef, useState } from "react";
 import { globalState } from "./globals";
 
 const View: React.FC<{ children: ReactNode }> = ({ children }) => {
 	return <view>{children}</view>;
 };
 
+const NavigationContext = createContext<{ push: (node: ReactNode) => void; pop: () => void }>({
+	pop: () => { throw new Error("not implemented"); },
+	push: () => { throw new Error("not implemented"); },
+});
+
+globalState.navigationContext = NavigationContext;
+
 export const NavigationProvider: React.FC<{ root: ReactNode }> = ({ root }) => {
 	const [navStack, setNavStack] = useState<ReactNode[]>([root]);
 	const pendingShutdown = useRef<boolean>(false);
-	const NavigationContext = getNavigationContext();
 
 	const pop = async () => {
 		if (pendingShutdown.current) return;
