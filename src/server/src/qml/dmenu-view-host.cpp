@@ -6,7 +6,7 @@
 
 namespace fs = std::filesystem;
 
-DMenuViewHost::DMenuViewHost(ipc::DMenu::Request data) : m_data(std::move(data)) {}
+DMenuViewHost::DMenuViewHost(ipc_gen::DMenuRequest data) : m_data(std::move(data)) {}
 
 QUrl DMenuViewHost::qmlComponentUrl() const {
   if (m_data.noQuickLook) { return QUrl(QStringLiteral("qrc:/Vicinae/CommandListView.qml")); }

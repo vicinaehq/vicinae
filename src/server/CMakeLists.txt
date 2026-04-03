@@ -664,6 +664,14 @@ if (UNIX AND NOT APPLE)
 		OUTPUT manager.hpp
 	)
 
+	figura_compile(
+		SERVER
+		PROTO "${FIGURA_DIR}/ipc.fig"
+		LANG glaze-qt
+		NAMESPACE ipc_gen
+		OUTPUT ipc-server.hpp
+	)
+
 	list(APPEND LIBS xkbcommon vicinae::linuxutils)
 
 	# Common Wayland support files

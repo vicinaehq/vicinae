@@ -101,15 +101,20 @@ public:
     }
 
     m_requestMap.insert({id, [cb = std::move(cb)](Result<std::string_view> data) {
-      auto value = data.and_then([](std::string_view data) -> Result<T> {
-        T payload;
-        if (auto const error = glz::read_json(payload, data)) {
-          return std::unexpected(glz::format_error(error));
-        }
-        return payload;
-      });
+      if constexpr (std::is_void_v<T>) {
+        if (data) cb({});
+        else cb(std::unexpected(data.error()));
+      } else {
+        auto value = data.and_then([](std::string_view data) -> Result<T> {
+          T payload;
+          if (auto const error = glz::read_json(payload, data)) {
+            return std::unexpected(glz::format_error(error));
+          }
+          return payload;
+        });
 
-      cb(std::move(value));
+        cb(std::move(value));
+      }
     }});
   }
 

@@ -1,6 +1,6 @@
 #pragma once
 #include "bridge-view.hpp"
-#include "vicinae-ipc/ipc.hpp"
+#include "generated/ipc-server.hpp"
 #include <qmimedatabase.h>
 
 class DMenuModel;
@@ -20,7 +20,7 @@ signals:
   void selected(const QString &text);
 
 public:
-  explicit DMenuViewHost(ipc::DMenu::Request data);
+  explicit DMenuViewHost(ipc_gen::DMenuRequest data);
 
   QUrl qmlComponentUrl() const override;
   QVariantMap qmlProperties() override;
@@ -42,7 +42,7 @@ private:
   void loadDetail(std::string_view path);
   void clearDetail();
 
-  ipc::DMenu::Request m_data;
+  ipc_gen::DMenuRequest m_data;
   DMenuModel *m_model = nullptr;
   QMimeDatabase m_mimeDb;
   bool m_selected = false;

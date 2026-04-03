@@ -1,0 +1,87 @@
+// CLI / browser extension <-> server IPC protocol
+// Served over a Unix domain socket at $XDG_RUNTIME_DIR/vicinae/vicinae.sock
+
+struct PingResponse {
+  version: string;
+  pid: number;
+};
+
+struct DeeplinkRequest {
+  url: string;
+};
+
+struct DeeplinkResponse {
+  error?: string;
+};
+
+struct DescribeResponse {
+  open: bool;
+  entrypoint: string;
+};
+
+struct LaunchAppRequest {
+  appId: string;
+  args: string[];
+  newInstance: bool;
+};
+
+struct LaunchAppResponse {
+  error?: string;
+  focusedWindowTitle: string;
+};
+
+struct DMenuRequest {
+  rawContent: string;
+  navigationTitle?: string;
+  placeholder?: string;
+  sectionTitle?: string;
+  noSection: bool;
+  noQuickLook: bool;
+  noIcon: bool;
+  noMetadata: bool;
+  query?: string;
+  width?: number;
+  height?: number;
+  noFooter: bool;
+};
+
+struct DMenuResponse {
+  output: string;
+};
+
+struct BrowserInitRequest {
+  id: string;
+  name: string;
+  engine: string;
+};
+
+struct BrowserTabInfo {
+  id: number;
+  windowId: number;
+  title: string;
+  url: string;
+  active: bool;
+  muted: bool;
+  audible: bool;
+};
+
+struct FocusTabRequest {
+  tabId: number;
+};
+
+struct CloseTabRequest {
+  tabId: number;
+};
+
+service Ipc {
+  fn ping() => PingResponse;
+  fn deeplink(req: DeeplinkRequest) => DeeplinkResponse;
+  fn describe() => DescribeResponse;
+  fn launchApp(req: LaunchAppRequest) => LaunchAppResponse;
+  fn dmenu(req: DMenuRequest) => DMenuResponse;
+  fn browserInit(req: BrowserInitRequest) => void;
+  fn browserTabsChanged(tabs: BrowserTabInfo[]) => void;
+
+  event focusTab(req: FocusTabRequest);
+  event closeTab(req: CloseTabRequest);
+}

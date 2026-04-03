@@ -6,13 +6,23 @@ set(NATIVE_HOST_BIN ${VICINAE_LIBEXEC_PATH}/${TARGET})
 
 option(INSTALL_BROWSER_NATIVE_HOST "Install native host manifests for firefox and chromium" ON)
 
-find_package(glaze)
+include("Figura")
 
-add_executable(${TARGET} src/browser.cpp)
-target_include_directories(${TARGET} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include PRIVATE)
+set(FIGURA_DIR "${CMAKE_SOURCE_DIR}/figura")
+
+figura_compile(
+	CLIENT
+	PROTO "${FIGURA_DIR}/ipc.fig"
+	LANG glaze
+	NAMESPACE ipc
+	OUTPUT browser-ipc-client.hpp
+)
+
+add_executable(${TARGET} src/browser.cpp ${SRCS})
+target_include_directories(${TARGET} PRIVATE ${GENOUT})
 target_compile_features(${TARGET} PUBLIC cxx_std_23)
 target_compile_definitions(${TARGET} PUBLIC NATIVE_MESSAGING_HOST="${NATIVE_MESSAGING_HOST}")
-target_link_libraries(${TARGET} PUBLIC vicinae-ipc glaze::glaze)
+target_link_libraries(${TARGET} PUBLIC glaze::glaze)
 
 if (INSTALL_BROWSER_NATIVE_HOST)
 	configure_file(native-host/${NATIVE_MESSAGING_HOST}.chromium.json.in ${NATIVE_MESSAGING_HOST}.chromium.json)
