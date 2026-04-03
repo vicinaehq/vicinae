@@ -9,8 +9,7 @@ public:
   ExtApplicationService(tsapi::RpcTransport &transport, AppService &appDb)
       : tsapi::AbstractApplication(transport), m_appDb(appDb) {}
 
-  tsapi::Result<std::vector<tsapi::Application>>::Future
-  list(std::optional<std::string> target) override {
+  tsapi::Result<std::vector<tsapi::Application>>::Future list(std::optional<std::string> target) override {
     auto apps = target ? m_appDb.findOpeners(QString::fromStdString(*target)) : m_appDb.list();
     std::vector<tsapi::Application> result;
     result.reserve(apps.size());

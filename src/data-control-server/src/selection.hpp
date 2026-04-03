@@ -8,7 +8,7 @@
 #include <optional>
 #include <unistd.h>
 #include "wayland/mime.hpp"
-#include "proto/wlr-clipboard.pb.h"
+#include "generated/wlr-clipboard.hpp"
 
 class OfferReceiver {
 public:
@@ -23,8 +23,7 @@ inline const std::vector<std::string_view> preferredImageTypes = {"image/gif", "
                                                                   "image/jpg", "image/webp"};
 
 std::set<std::string> filterMimes(const std::vector<std::string> &offerMimes);
-void serializeAndWrite(const std::set<std::string> &filteredMimes, OfferReceiver &offer);
-void writeToStdout(const proto::ext::wlrclip::Selection &selection);
+wlrclip::ClipboardSelection buildSelection(const std::set<std::string> &filteredMimes, OfferReceiver &offer);
 void printDebug(const std::set<std::string> &filteredMimes, OfferReceiver &offer, const char *label);
 void printPrimarySelectionDebug(OfferReceiver &offer);
 

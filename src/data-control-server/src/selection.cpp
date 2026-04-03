@@ -1,5 +1,5 @@
 #include "selection.hpp"
-#include <netinet/in.h>
+#include <glaze/base64/base64.hpp>
 
 namespace Selection {
 
@@ -36,15 +36,17 @@ std::set<std::string> filterMimes(const std::vector<std::string> &offerMimes) {
   return filteredMimes;
 }
 
-void writeToStdout(const proto::ext::wlrclip::Selection &selection) {
-  std::string data;
-  selection.SerializeToString(&data);
+wlrclip::ClipboardSelection buildSelection(const std::set<std::string> &filteredMimes, OfferReceiver &offer) {
+  wlrclip::ClipboardSelection selection;
+  selection.offers.reserve(filteredMimes.size());
 
-  uint32_t size = htonl(data.size());
+  for (const auto &mime : filteredMimes) {
+    std::string data;
+    if (!Wayland::isFlagMime(mime)) { data = glz::write_base64(offer.receive(mime)); }
+    selection.offers.emplace_back(wlrclip::ClipboardOffer{.mime_type = mime, .data = std::move(data)});
+  }
 
-  std::cout.write(reinterpret_cast<const char *>(&size), sizeof(size));
-  std::cout.write(data.data(), data.size());
-  std::cout.flush();
+  return selection;
 }
 
 void printDebug(const std::set<std::string> &filteredMimes, OfferReceiver &offer, const char *label) {
@@ -63,23 +65,6 @@ void printPrimarySelectionDebug(OfferReceiver &offer) {
     std::cout << std::left << std::setw(30) << mime << data << std::endl;
   }
   std::cout << "********** END PRIMARY SELECTION **********" << std::endl;
-}
-
-void serializeAndWrite(const std::set<std::string> &filteredMimes, OfferReceiver &offer) {
-  if (isatty(STDOUT_FILENO)) {
-    printDebug(filteredMimes, offer, "SELECTION");
-    return;
-  }
-
-  proto::ext::wlrclip::Selection selection;
-
-  for (const auto &mime : filteredMimes) {
-    auto dataOffer = selection.add_offers();
-    dataOffer->set_mime_type(mime);
-    if (!Wayland::isFlagMime(mime)) { dataOffer->set_data(offer.receive(mime)); }
-  }
-
-  writeToStdout(selection);
 }
 
 }; // namespace Selection

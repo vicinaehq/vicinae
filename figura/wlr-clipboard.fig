@@ -1,0 +1,16 @@
+// data-control-server (server) -> main server (client)
+// The data-control-server monitors wayland clipboard selections and emits
+// them as events. Offer data is base64-encoded since it may contain binary content (images).
+
+struct ClipboardOffer {
+  mime_type: string;
+  data: string;
+};
+
+struct ClipboardSelection {
+  offers: ClipboardOffer[];
+};
+
+service Clipboard {
+  event selectionAdded(selection: ClipboardSelection);
+}

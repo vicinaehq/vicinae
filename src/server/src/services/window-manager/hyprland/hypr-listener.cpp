@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include "hypr-listener.hpp"
 #include "utils.hpp"
 #include <qlogging.h>

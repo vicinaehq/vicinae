@@ -28,8 +28,13 @@ void WlrClipman::primarySelection(WlrDataDevice &, WlrDataOffer &offer) {
 }
 
 void WlrClipman::selection(WlrDataDevice &, WlrDataOffer &offer) {
-  auto filteredMimes = Selection::filterMimes(offer.mimes());
-  Selection::serializeAndWrite(filteredMimes, offer);
+  if (isatty(STDOUT_FILENO)) {
+    Selection::printDebug(Selection::filterMimes(offer.mimes()), offer, "SELECTION");
+    return;
+  }
+
+  auto selection = Selection::buildSelection(Selection::filterMimes(offer.mimes()), offer);
+  m_service.emitselectionAdded(selection);
 }
 
 void WlrClipman::start() {
@@ -48,12 +53,13 @@ void WlrClipman::start() {
   }
 }
 
-WlrClipman *WlrClipman::instance() {
-  static WlrClipman app;
+WlrClipman *WlrClipman::instance(wlrclip::AbstractClipboard *service) {
+  static WlrClipman app{*service};
   return &app;
 }
 
-WlrClipman::WlrClipman() : _dcm(nullptr), _seat(nullptr) {
+WlrClipman::WlrClipman(wlrclip::AbstractClipboard &service)
+    : m_service(service), _dcm(nullptr), _seat(nullptr) {
   _registry = registry();
   _registry->addListener(this);
 }

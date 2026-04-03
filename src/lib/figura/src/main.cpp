@@ -8,6 +8,7 @@
 #include "parser.hpp"
 #include "codegen/typescript.hpp"
 #include "codegen/glaze-qt.hpp"
+#include "codegen/glaze.hpp"
 #include "common/CLI11.hpp"
 
 class AbstractCommandLineCommand {
@@ -246,6 +247,7 @@ public:
 
     generators.emplace_back(std::make_unique<TypeScriptCodeGenerator>());
     generators.emplace_back(std::make_unique<GlazeQtGenerator>());
+    generators.emplace_back(std::make_unique<GlazeGenerator>());
 
     for (const auto &client : m_clients) {
       for (const auto &gen : generators) {

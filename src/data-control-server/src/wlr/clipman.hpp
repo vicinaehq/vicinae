@@ -9,16 +9,18 @@
 #include <wayland-util.h>
 #include "data-control-client.hpp"
 #include "wayland/display.hpp"
+#include "generated/wlr-clipboard.hpp"
 
 class WlrClipman : public WaylandDisplay, public WaylandRegistry::Listener, public WlrDataDevice::Listener {
 
 public:
   virtual ~WlrClipman() = default;
-  static WlrClipman *instance();
+  static WlrClipman *instance(wlrclip::AbstractClipboard *service = nullptr);
   void start();
-  WlrClipman();
+  WlrClipman(wlrclip::AbstractClipboard &service);
 
 private:
+  wlrclip::AbstractClipboard &m_service;
   std::unique_ptr<WaylandRegistry> _registry;
   std::unique_ptr<WlrDataControlManager> _dcm;
   std::unique_ptr<WaylandSeat> _seat;

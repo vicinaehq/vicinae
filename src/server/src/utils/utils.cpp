@@ -1,4 +1,5 @@
 #include "utils.hpp"
+#include <iostream>
 #include <cmath>
 #include <cstddef>
 #include <random>
@@ -114,38 +115,6 @@ std::string getLastPathComponent(const std::filesystem::path &path) {
   }
 
   return path.filename();
-}
-
-google::protobuf::Value transformJsonValueToProto(const QJsonValue &value) {
-  google::protobuf::Value protoValue;
-
-  if (value.isBool())
-    protoValue.set_bool_value(value.toBool());
-  else if (value.isString())
-    protoValue.set_string_value(value.toString().toStdString());
-  else if (value.isDouble())
-    protoValue.set_number_value(value.toDouble());
-  else if (value.isNull())
-    protoValue.set_null_value(google::protobuf::NullValue{});
-
-  return protoValue;
-}
-
-QJsonValue protoToJsonValue(const google::protobuf::Value &value) {
-  using Value = google::protobuf::Value;
-
-  switch (value.kind_case()) {
-  case Value::kNumberValue:
-    return value.number_value();
-  case Value::kStringValue:
-    return QString::fromStdString(value.string_value());
-  case Value::kBoolValue:
-    return value.bool_value();
-  default:
-    return QJsonValue();
-  }
-
-  return QJsonValue();
 }
 
 QString slugify(const QString &input, const QString &separator) {
@@ -321,7 +290,7 @@ std::string slurp(std::istream &ifs) {
 
   while (ifs) {
     ifs.read(buf.data(), buf.size());
-    data += std::string{buf.data(), buf.data() + std::cin.gcount()};
+    data += std::string{buf.data(), buf.data() + ifs.gcount()};
   }
 
   return data;

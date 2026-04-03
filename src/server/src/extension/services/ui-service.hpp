@@ -66,8 +66,7 @@ public:
     return Void::ok();
   }
 
-  Void::Future showHud(std::string text, bool clear_root,
-                       tsapi::PopToRootType popToRoot) override {
+  Void::Future showHud(std::string text, bool clear_root, tsapi::PopToRootType popToRoot) override {
     m_navigation->closeWindow({
         .popToRootType = mapPopToRoot(popToRoot),
         .clearRootSearch = clear_root,

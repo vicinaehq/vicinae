@@ -1,16 +1,12 @@
 #pragma once
 #include "codegen.hpp"
 #include <format>
-#include <fstream>
 #include <iomanip>
 #include <sstream>
 #include "../utils.hpp"
-#include <stdexcept>
-#include <utility>
-#include <variant>
 #include <ranges>
 
-constexpr const auto COMMON = R"(
+constexpr const auto GLAZE_COMMON = R"(
 struct JsonRpcRequest {
   std::string jsonrpc;
   std::string method;
@@ -46,17 +42,9 @@ public:
   virtual void send(std::string_view data) = 0;
   virtual ~AbstractTransport() = default;
 };
-
-class AbstractLogger {
-	public:
-		virtual ~AbstractLogger() = default;
-		virtual void onRequest(std::string_view method) = 0;
-		virtual void onResponse(std::string_view method, bool ok, double latencyMs) = 0;
-		virtual void onEvent(std::string_view method) = 0;
-};
 )";
 
-constexpr const auto clientCode = R"(
+constexpr const auto GLAZE_CLIENT_CODE = R"(
 struct RpcIncomingMessage {
   std::optional<int> id;
   std::optional<std::string> method;
@@ -67,23 +55,10 @@ struct RpcIncomingMessage {
 
 class RpcTransport {
   template <typename T> using Result = std::expected<T, std::string>;
-  template <typename T> using Promise = QPromise<Result<T>>;
-
-  using Clock = std::chrono::steady_clock;
   using ResponseHandler = std::function<void(Result<std::string_view>)>;
-
-  struct PendingRequest {
-    std::string method;
-    ResponseHandler handler;
-    Clock::time_point sentAt;
-  };
 
 public:
   RpcTransport(AbstractTransport &transport) : m_transport(transport) {}
-
-  void setLogger(AbstractLogger* logger) {
-    m_logger = logger;
-  }
 
   std::expected<void, std::string> dispatchMessage(std::string_view data) {
     RpcIncomingMessage msg;
@@ -92,18 +67,14 @@ public:
 
     if (msg.id) {
       if (auto it = m_requestMap.find(*msg.id); it != m_requestMap.end()) {
-        auto latencyMs = std::chrono::duration<double, std::milli>(Clock::now() - it->second.sentAt).count();
         if (msg.error) {
-          if (m_logger) m_logger->onResponse(it->second.method, false, latencyMs);
-          it->second.handler(std::unexpected(*msg.error));
+          it->second(std::unexpected(*msg.error));
         } else {
-          if (m_logger) m_logger->onResponse(it->second.method, true, latencyMs);
-          it->second.handler(std::move(msg.result.str));
+          it->second(std::move(msg.result.str));
         }
         m_requestMap.erase(it);
       }
     } else if (msg.method) {
-      if (m_logger) m_logger->onEvent(*msg.method);
       if (auto it = m_handlers.find(*msg.method); it != m_handlers.end()) {
         for (const auto &handler : it->second) {
           handler(msg.params.str);
@@ -115,22 +86,21 @@ public:
   }
 
   template <typename T, typename U>
-  QFuture<std::expected<T, std::string>> request(std::string_view method, const U &params) {
+  void request(std::string_view method, const U &params, std::function<void(Result<T>)> cb) {
     if (auto const error = glz::write_json(params, m_buf)) {
-      return QtFuture::makeReadyValueFuture<Result<T>>(std::unexpected(glz::format_error(error)));
+      cb(std::unexpected(glz::format_error(error)));
+      return;
     }
 
     int id = m_id++;
     auto sendRes = sendMessage(JsonRpcRequest{.jsonrpc = "2.0", .method = std::string{method}, .id = id, .params = m_buf});
 
-    if (!sendRes)
-      return QtFuture::makeReadyValueFuture<Result<T>>(std::unexpected(std::move(sendRes).error()));
+    if (!sendRes) {
+      cb(std::unexpected(std::move(sendRes).error()));
+      return;
+    }
 
-    if (m_logger) m_logger->onRequest(method);
-
-    auto promise = std::make_shared<Promise<T>>();
-    auto future = promise->future();
-    ResponseHandler handler = [promise](Result<std::string_view> data) {
+    m_requestMap.insert({id, [cb = std::move(cb)](Result<std::string_view> data) {
       auto value = data.and_then([](std::string_view data) -> Result<T> {
         T payload;
         if (auto const error = glz::read_json(payload, data)) {
@@ -139,13 +109,8 @@ public:
         return payload;
       });
 
-      promise->addResult(std::move(value));
-      promise->finish();
-    };
-
-    m_requestMap.insert({id, PendingRequest{std::string{method}, handler, Clock::now()}});
-
-    return future;
+      cb(std::move(value));
+    }});
   }
 
   template <typename T>
@@ -177,18 +142,16 @@ public:
   }
 
 private:
-  AbstractLogger* m_logger = nullptr;
   int m_id = 1;
   std::unordered_map<std::string, std::vector<ResponseHandler>> m_handlers;
-  std::unordered_map<int, PendingRequest> m_requestMap;
+  std::unordered_map<int, ResponseHandler> m_requestMap;
   AbstractTransport &m_transport;
   std::string m_buf;
 };
 
 )";
 
-constexpr const auto BASE = R"(
-
+constexpr const auto GLAZE_SERVER_BASE = R"(
 
 class RpcTransport {
 	public:
@@ -241,53 +204,18 @@ class EventEmitter {
 		EventEmitter(RpcTransport& transport): m_transport(transport) {
 		}
 
-		void setLogger(AbstractLogger* logger) { m_logger = logger; }
-
 		template <typename T>
 		void emitEvent(std::string_view name, const T& params) {
-			if (m_logger) m_logger->onEvent(name);
 			m_transport.notify(name, params);
 		}
 
 	private:
-		AbstractLogger* m_logger = nullptr;
 		RpcTransport& m_transport;
 };
-
-template <typename T>
-struct Result {
-	using Type = std::expected<T, std::string>;
-	using Future = QFuture<Type>;
-
-	static Future ok(T value) {
-		return QtFuture::makeReadyValueFuture<Type>(std::move(value));
-	}
-
-	static Future fail(std::string error) {
-		return QtFuture::makeReadyValueFuture<Type>(std::unexpected(std::move(error)));
-	}
-};
-
-template <>
-struct Result<void> {
-	using Type = std::expected<void, std::string>;
-	using Future = QFuture<Type>;
-
-	static Future ok() {
-		return QtFuture::makeReadyValueFuture<Type>({});
-	}
-
-	static Future fail(std::string error) {
-		return QtFuture::makeReadyValueFuture<Type>(std::unexpected(std::move(error)));
-	}
-};
-
-template <typename T, typename U>
-concept DerivedFrom = std::derived_from<T, U>;
 )";
 
-class GlazeQtGenerator : public AbstractCodeGenerator {
-  std::string name() const override { return "glaze-qt"; }
+class GlazeGenerator : public AbstractCodeGenerator {
+  std::string name() const override { return "glaze"; }
 
   static std::string_view serializeTypenameImpl(const TypeValue &value) {
     auto const visitor =
@@ -367,53 +295,6 @@ class GlazeQtGenerator : public AbstractCodeGenerator {
     return oss.str();
   }
 
-  static std::string serializeService(const Service &s) {
-    std::ostringstream oss;
-
-    oss << "class " << abstractName(s.name) << ": public EventEmitter {\n";
-    oss << "\tpublic:\n";
-    oss << "\t" << abstractName(s.name) << "(RpcTransport& transport): EventEmitter(transport) {}\n\n";
-
-    for (const auto &method : s.methods) {
-      oss << "\t" << "virtual " << "Result<" << serializeTypename(method.returnType) << ">::Future "
-          << method.name << "(";
-      for (const auto &[idx, param] : method.params | std::views::enumerate) {
-        if (idx > 0) oss << ", ";
-        oss << serializeTypename(param.type) << " " << param.name;
-      }
-      oss << ") = 0;\n";
-    }
-
-    for (const auto &event : s.events) {
-      oss << "\t" << "void emit" << event.name << " (";
-      for (const auto &[idx, param] : event.params | std::views::enumerate) {
-        if (idx > 0) oss << ", ";
-        oss << constRef(param.type) << " " << param.name;
-      }
-      oss << ") {\n";
-
-      std::string methodId = std::string{s.name} + "/" + event.name;
-
-      auto eventParamsName = getMethodParamName(s.name, event.name);
-
-      oss << "\t\temitEvent(" << std::quoted(methodId) << ", " << eventParamsName << "{";
-      for (const auto &[idx, param] : event.params | std::views::enumerate) {
-        if (idx > 0) oss << ", ";
-        oss << "." << param.name << " = " << param.name;
-      }
-      oss << "});";
-
-      oss << "\n}\n";
-    }
-
-    oss << "\n};\n";
-
-    return oss.str();
-  }
-
-  // <name>[?]:<type>
-  static void serializeTypeExpression(std::ofstream &ofs, const TypeStruct &s) {}
-
   static std::string serializeType(const TypeStruct &s) {
     std::ostringstream oss;
 
@@ -479,16 +360,46 @@ class GlazeQtGenerator : public AbstractCodeGenerator {
     return path;
   }
 
-  static std::string makeFunctionSignature(std::string_view name, std::span<MethodParameter const> params,
-                                           const TypeValue &value) {
+  static std::string serializeService(const Service &s) {
     std::ostringstream oss;
 
-    oss << serializeTypename(value) << " " << name << "(";
-    for (const auto &[idx, p] : params | std::views::enumerate) {
-      if (idx > 0) oss << ", ";
-      oss << serializeTypename(p.type) << " " << p.name;
+    oss << "class " << abstractName(s.name) << ": public EventEmitter {\n";
+    oss << "\tpublic:\n";
+    oss << "\t" << abstractName(s.name) << "(RpcTransport& transport): EventEmitter(transport) {}\n\n";
+
+    for (const auto &method : s.methods) {
+      oss << "\t" << "virtual std::expected<" << serializeTypename(method.returnType) << ", std::string> "
+          << method.name << "(";
+      for (const auto &[idx, param] : method.params | std::views::enumerate) {
+        if (idx > 0) oss << ", ";
+        oss << serializeTypename(param.type) << " " << param.name;
+      }
+      oss << ") = 0;\n";
     }
-    oss << ")";
+
+    for (const auto &event : s.events) {
+      oss << "\t" << "void emit" << event.name << " (";
+      for (const auto &[idx, param] : event.params | std::views::enumerate) {
+        if (idx > 0) oss << ", ";
+        oss << constRef(param.type) << " " << param.name;
+      }
+      oss << ") {\n";
+
+      std::string methodId = std::string{s.name} + "/" + event.name;
+
+      auto eventParamsName = getMethodParamName(s.name, event.name);
+
+      oss << "\t\temitEvent(" << std::quoted(methodId) << ", " << eventParamsName << "{";
+      for (const auto &[idx, param] : event.params | std::views::enumerate) {
+        if (idx > 0) oss << ", ";
+        oss << "." << param.name << " = " << param.name;
+      }
+      oss << "});";
+
+      oss << "\n}\n";
+    }
+
+    oss << "\n};\n";
 
     return oss.str();
   }
@@ -499,15 +410,14 @@ public:
 
     oss << R"(
 #pragma once
-#include <chrono>
-#include <QDebug>
-#include <QFuture>
-#include <memory>
-#include <glaze/glaze.hpp>
-#include <concepts>
-#include <variant>
-#include <string_view>
 #include <expected>
+#include <functional>
+#include <glaze/glaze.hpp>
+#include <string>
+#include <string_view>
+#include <unordered_map>
+#include <variant>
+#include <vector>
 	)";
 
     auto const ns =
@@ -515,40 +425,27 @@ public:
 
     oss << "namespace " << ns << " {\n";
 
-    oss << COMMON << clientCode;
+    oss << GLAZE_COMMON << GLAZE_CLIENT_CODE;
 
     generateTypes(oss, ast);
 
     for (const auto &s : ast.services) {
-      /*
-for (const auto &e : s->events) {
-oss << serializeEventParams(s->name, e);
-}
-*/
-
-      oss << "class " << s->name << "Service: public QObject {\n";
-      if (!s->events.empty()) {
-        oss << "\tQ_OBJECT\n\tsignals:\n";
-        for (const auto &e : s->events) {
-          oss << "\t\t" << makeFunctionSignature(e.name, e.params, TypeValue{.data = PrimitiveType::Void})
-              << " const;\n";
-        }
-      }
-
+      oss << "class " << s->name << "Service {\n";
       oss << "\tpublic:\n";
       oss << "\t" << s->name << "Service(RpcTransport& transport): m_transport(transport) {\n";
 
       for (const auto &m : s->events) {
         std::string methodId = std::format("{}/{}", s->name, m.name);
         oss << "transport.subscribe<" << getMethodParamName(s->name, m.name) << ">(" << std::quoted(methodId)
-            << ", " << "[this](const auto& payload){ if (!payload) return; emit " << m.name << "(";
+            << ", " << "[this](const auto& payload){ if (!payload) return;";
+        oss << " if (m_" << m.name << "Handler) m_" << m.name << "Handler(";
 
         for (const auto &[idx, param] : m.params | std::views::enumerate) {
           if (idx > 0) { oss << ", "; }
           oss << "payload->" << param.name;
         }
 
-        oss << ");"; // close function call
+        oss << ");";
         oss << "});\n";
       }
 
@@ -556,15 +453,17 @@ oss << serializeEventParams(s->name, e);
 
       for (const auto &m : s->methods) {
         std::string methodId = std::format("{}/{}", s->name, m.name);
-        oss << "QFuture<std::expected<" << serializeTypename(m.returnType) << ", std::string>> " << m.name
-            << "(";
+        oss << "void " << m.name << "(";
         for (const auto &[idx, param] : m.params | std::views::enumerate) {
           if (idx > 0) { oss << ", "; }
           oss << constRef(param.type) << " " << param.name;
         }
+        if (!m.params.empty()) oss << ", ";
+        oss << "std::function<void(std::expected<" << serializeTypename(m.returnType)
+            << ", std::string>)> cb";
         oss << "){\n";
 
-        oss << "return m_transport.request<" << serializeTypename(m.returnType) << ", "
+        oss << "m_transport.request<" << serializeTypename(m.returnType) << ", "
             << getMethodParamName(s->name, m.name) << ">(" << std::quoted(methodId) << ", \n";
         oss << "{";
 
@@ -573,55 +472,66 @@ oss << serializeEventParams(s->name, e);
           oss << "." << p.name << " = " << p.name;
         }
 
-        oss << "}\n";
+        oss << "}, std::move(cb)\n";
         oss << ");\n}";
       }
+
+      for (const auto &event : s->events) {
+        oss << "\tvoid on" << toPascalCase(std::string{event.name}) << "(std::function<void(";
+        for (const auto &[idx, param] : event.params | std::views::enumerate) {
+          if (idx > 0) oss << ", ";
+          oss << constRef(param.type);
+        }
+        oss << ")> handler) {\n";
+        oss << "\t\tm_" << event.name << "Handler = std::move(handler);\n";
+        oss << "\t}\n";
+      }
+
+      oss << "private:\n";
+      oss << "RpcTransport& m_transport;\n";
+
+      for (const auto &event : s->events) {
+        oss << "std::function<void(";
+        for (const auto &[idx, param] : event.params | std::views::enumerate) {
+          if (idx > 0) oss << ", ";
+          oss << constRef(param.type);
+        }
+        oss << ")> m_" << event.name << "Handler;\n";
+      }
+
+      oss << "};\n";
     }
 
-    oss << "private:\n";
-    oss << "RpcTransport& m_transport;";
-
-    oss << "};";
-
-    oss << "class Client: public QObject {";
+    oss << "class Client {\n";
     oss << "\tpublic:\n";
 
     oss << "\tClient(RpcTransport& transport): m_transport(transport)";
 
     for (const auto &s : ast.services) {
-      oss << ", m_" << s->name << "(new " << s->name << "Service(transport))";
+      oss << ", m_" << s->name << "(transport)";
     }
 
-    oss << " {\n";
-    for (const auto &s : ast.services) {
-      oss << "\t\tm_" << s->name << "->setParent(this);\n";
-    }
-    oss << "}\n";
+    oss << " {}\n";
 
     oss << R"(
-		void setLogger(AbstractLogger* logger) {
-			m_transport.setLogger(logger);
-		}
-
 		std::expected<void, std::string> route(std::string_view data) {
 			return m_transport.dispatchMessage(data);
 		}
 	)";
 
-    // getters
     for (const auto &s : ast.services) {
-      oss << "\t\t" << s->name << "Service* " << toCamelCase(std::string{s->name}) << "() const { return m_"
+      oss << "\t\t" << s->name << "Service& " << toCamelCase(std::string{s->name}) << "() { return m_"
           << s->name << "; }\n";
     }
 
-    oss << "\tprivate:";
-    oss << "\t\tRpcTransport& m_transport;";
+    oss << "\tprivate:\n";
+    oss << "\t\tRpcTransport& m_transport;\n";
 
     for (const auto &s : ast.services) {
-      oss << "\t\t" << s->name << "Service* " << "m_" << s->name << ";";
+      oss << "\t\t" << s->name << "Service m_" << s->name << ";\n";
     }
 
-    oss << "};";
+    oss << "};\n";
 
     oss << "\n}"; // end namespace
 
@@ -635,23 +545,19 @@ oss << serializeEventParams(s->name, e);
 
     oss << R"(
 #pragma once
-#include <chrono>
-#include <QFuture>
-#include <QFutureWatcher>
 #include <expected>
-#include <memory>
 #include <glaze/glaze.hpp>
-#include <glaze/json/read.hpp>
-#include <concepts>
-#include <variant>
+#include <string>
 #include <string_view>
+#include <variant>
+#include <vector>
 	)";
 
     auto const ns =
         opts.generationNamespace.value_or(std::string{stripExtension(opts.file.filename().string())});
 
     oss << "namespace " << ns << " {\n";
-    oss << COMMON << BASE;
+    oss << GLAZE_COMMON << GLAZE_SERVER_BASE;
 
     generateTypes(oss, ast);
 
@@ -659,13 +565,12 @@ oss << serializeEventParams(s->name, e);
       oss << serializeService(*s) << "\n";
     }
 
-    oss << "class Server: public QObject {\n";
-    oss << "\tusing Clock = std::chrono::steady_clock;\n";
+    oss << "class Server {\n";
     oss << "\tpublic:\n";
     oss << "\tServer(RpcTransport& transport";
 
     for (const auto &s : ast.services) {
-      oss << ", " << abstractName(s->name) << "* " << s->name;
+      oss << ", " << abstractName(s->name) << "& " << s->name;
     }
 
     oss << "): m_transport(transport)";
@@ -674,21 +579,9 @@ oss << serializeEventParams(s->name, e);
       oss << ", m_" << s->name << "(" << s->name << ")";
     }
 
-    oss << "{\n";
-    oss << "\n}\n";
+    oss << " {}\n";
 
     oss << R"(
-	void setLogger(AbstractLogger* logger) {
-		m_logger = logger;
-		)";
-
-    for (const auto &s : ast.services) {
-      oss << "m_" << s->name << "->setLogger(logger);\n";
-    }
-
-    oss << R"(
-	}
-
 	void route(std::string_view data) {
 		JsonRpcRequest msg;
 		if (auto const error = glz::read<glz::opts{.error_on_unknown_keys = false}>(msg, data)) { return; }
@@ -698,83 +591,45 @@ oss << serializeEventParams(s->name, e);
 	)";
 
     for (const auto &s : ast.services) {
-      oss << "\t" << abstractName(s->name) << "* " << s->name << "() const { return m_" << s->name
-          << "; };\n";
+      oss << "\t" << abstractName(s->name) << "& " << toCamelCase(std::string{s->name}) << "() { return m_"
+          << s->name << "; }\n";
     }
 
     oss << "private:\n";
 
-    oss << R"(
-	template <typename T>
-	void replyWatcher(int id, std::string_view method, Clock::time_point sentAt, QFuture<T> future) {
-		auto latencyMs = std::chrono::duration<double, std::milli>(Clock::now() - sentAt).count();
-		auto result = future.result();
-		if (!result) {
-			if (m_logger) m_logger->onResponse(method, false, latencyMs);
-			m_transport.replyError(id, result.error());
-			return;
-		}
-		if (m_logger) m_logger->onResponse(method, true, latencyMs);
-		if constexpr (std::is_void_v<typename T::value_type>) {
-			m_transport.reply(id, nullptr);
-		} else {
-			m_transport.reply(id, *result);
-		}
-	}
-
-	template<typename T>
-	void handleResult(int id, std::string_view method, Clock::time_point sentAt, QFuture<T> future) {
-		if (future.isFinished()) {
-			replyWatcher(id, method, sentAt, future);
-			return;
-		}
-
-		auto watcher = new QFutureWatcher<T>(this);
-		auto methodStr = std::string{method};
-
-		connect(watcher, &QFutureWatcherBase::finished, this, [this, id, methodStr, sentAt, watcher]() {
-			replyWatcher(id, methodStr, sentAt, watcher->future());
-			watcher->deleteLater();
-		});
-		watcher->setFuture(future);
-	}
-	)";
-
     oss << "\tvoid dispatch(const JsonRpcRequest& req) {\n";
-    oss << "\t\tauto sentAt = Clock::now();\n";
-    oss << "\t\tif (m_logger) m_logger->onRequest(req.method);\n";
 
     for (const auto &s : ast.services) {
-      oss << "\t\t" << "// " << s->name << "\n";
       for (const auto &m : s->methods) {
         std::string methodId = std::string{s->name} + "/" + m.name;
 
         oss << "\t\tif (req.method == " << std::quoted(methodId) << ") {\n";
         oss << "\t\t\t" << getMethodParamName(s->name, m.name) << " payload;\n";
         oss << "\t\t\t[[maybe_unused]] auto res = glz::read_json(payload, req.params.str);\n";
-        oss << "\t\t\t" << "handleResult(req.id, req.method, sentAt, " << "m_" << s->name << "->" << m.name
-            << "(";
+        oss << "\t\t\tauto result = m_" << s->name << "." << m.name << "(";
         for (const auto &[idx, param] : m.params | std::views::enumerate) {
           if (idx > 0) oss << ", ";
           oss << "std::move(payload." << param.name << ")";
         }
+        oss << ");\n";
 
-        oss << "));";
-
-        oss << "\n\t\t}\n";
+        oss << "\t\t\tif (result) {\n";
+        oss << "\t\t\t\tm_transport.reply(req.id, *result);\n";
+        oss << "\t\t\t} else {\n";
+        oss << "\t\t\t\tm_transport.replyError(req.id, result.error());\n";
+        oss << "\t\t\t}\n";
+        oss << "\t\t\treturn;\n";
+        oss << "\t\t}\n";
       }
     }
 
     oss << "\n\t}\n";
 
-    oss << "\tAbstractLogger* m_logger = nullptr;\n";
     oss << "\tRpcTransport& m_transport;\n";
 
     for (const auto &s : ast.services) {
-      oss << "\t" << abstractName(s->name) << "* m_" << s->name << ";\n";
+      oss << "\t" << abstractName(s->name) << "& m_" << s->name << ";\n";
     }
-
-    oss << "\n";
 
     oss << "\n};\n";
 
