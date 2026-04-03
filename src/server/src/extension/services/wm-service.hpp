@@ -10,7 +10,7 @@ public:
   ExtWindowManagementService(tsapi::RpcTransport &transport, WindowManager &wm, AppService &app)
       : AbstractWindowManagement(transport), m_wm(wm), m_app(app) {}
 
-  tsapi::Result<bool>::Future focusWindow(const std::string &winId) override {
+  tsapi::Result<bool>::Future focusWindow(std::string winId) override {
     auto win = m_wm.findWindowById(QString::fromStdString(winId));
     if (!win) return tsapi::Result<bool>::ok(false);
 
@@ -44,7 +44,7 @@ public:
   }
 
   tsapi::Result<std::vector<tsapi::Window>>::Future
-  getWindows(const std::optional<std::string> &workspaceId) override {
+  getWindows(std::optional<std::string> workspaceId) override {
     auto activeWin = m_wm.provider()->getFocusedWindowSync();
     auto windows = m_wm.provider()->listWindowsSync();
     std::vector<tsapi::Window> result;
@@ -106,7 +106,7 @@ public:
     return tsapi::Result<std::vector<tsapi::Workspace>>::ok(std::move(result));
   }
 
-  tsapi::Result<bool>::Future setWindowBounds(const std::string &winId, const tsapi::Rect &bounds) override {
+  tsapi::Result<bool>::Future setWindowBounds(std::string winId, tsapi::Rect bounds) override {
     return tsapi::Result<bool>::fail("Not implemented");
   }
 

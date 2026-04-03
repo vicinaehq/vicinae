@@ -11,7 +11,7 @@ public:
                     RootItemManager *rootManager)
       : AbstractCommand(transport), m_command(command), m_rootManager(rootManager) {}
 
-  Void::Future updateCommandMetadata(const tsapi::UpdateCommandMetadataPayload &payload) override {
+  Void::Future updateCommandMetadata(tsapi::UpdateCommandMetadataPayload payload) override {
     if (payload.subtitle && !payload.subtitle->empty()) {
       m_command->setSubtitleOverride(QString::fromStdString(*payload.subtitle));
     } else {

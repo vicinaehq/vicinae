@@ -10,7 +10,7 @@ public:
       : tsapi::AbstractApplication(transport), m_appDb(appDb) {}
 
   tsapi::Result<std::vector<tsapi::Application>>::Future
-  list(const std::optional<std::string> &target) override {
+  list(std::optional<std::string> target) override {
     auto apps = target ? m_appDb.findOpeners(QString::fromStdString(*target)) : m_appDb.list();
     std::vector<tsapi::Application> result;
     result.reserve(apps.size());
@@ -20,7 +20,7 @@ public:
     return tsapi::Result<std::vector<tsapi::Application>>::ok(std::move(result));
   }
 
-  Void::Future open(const std::string &target, const std::optional<std::string> &appId) override {
+  Void::Future open(std::string target, std::optional<std::string> appId) override {
     QString const qTarget = QString::fromStdString(target);
 
     if (appId) {
@@ -35,18 +35,18 @@ public:
     return Void::ok();
   }
 
-  tsapi::Result<tsapi::Application>::Future getDefault(const std::string &target) override {
+  tsapi::Result<tsapi::Application>::Future getDefault(std::string target) override {
     auto opener = m_appDb.findDefaultOpener(QString::fromStdString(target));
     if (!opener) return tsapi::Result<tsapi::Application>::fail("No default application found");
     return tsapi::Result<tsapi::Application>::ok(appToTsapi(*opener));
   }
 
-  Void::Future showInFileBrowser(const std::string &target, const bool &select) override {
+  Void::Future showInFileBrowser(std::string target, bool select) override {
     m_appDb.showInFileBrowser(target, select);
     return Void::ok();
   }
 
-  tsapi::Result<bool>::Future runInTerminal(const tsapi::RunInTerminalPayload &opts) override {
+  tsapi::Result<bool>::Future runInTerminal(tsapi::RunInTerminalPayload opts) override {
     LaunchTerminalCommandOptions termOpts;
     std::vector<QString> cmdline;
     cmdline.reserve(opts.cmdline.size());

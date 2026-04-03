@@ -1,12 +1,11 @@
 import type React from "react";
 import type { Environment } from "./environment";
-import type { NavigationContextType } from "./context/navigation-context";
 
 export interface VicinaGlobal {
-	client: unknown;
+	client: any;
 	environ: Environment;
 	preferences: any;
-	navigationContext: React.Context<NavigationContextType>;
+	navigationContext: React.Context<any>;
 }
 
 export const getGlobal = () => (globalThis as any).vicinae as VicinaGlobal;

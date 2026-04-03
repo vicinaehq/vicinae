@@ -37,39 +37,37 @@ public:
     m_command->setSubtitleOverride(subtitle);
   }
 
-  Void::Future render(const std::string &json) override {
-    QJsonParseError parseError;
-    auto doc = QJsonDocument::fromJson(QByteArray::fromStdString(json), &parseError);
-
-    if (parseError.error) { return Void::fail("Failed to parse render tree"); }
-
-    auto views = doc.object().value("views").toArray();
-
+  Void::Future render(std::string json) override {
     if (m_modelWatcher.isRunning()) {
       m_modelWatcher.cancel();
       m_modelWatcher.waitForFinished();
     }
 
-    m_modelWatcher.setFuture(QtConcurrent::run([views]() { return ModelParser().parse(views); }));
+    m_modelWatcher.setFuture(QtConcurrent::run([json = std::move(json)]() -> ParsedRenderData {
+      QJsonParseError parseError;
+      auto doc = QJsonDocument::fromJson(QByteArray::fromStdString(json), &parseError);
+      if (parseError.error) return {};
+      return ModelParser().parse(doc.object().value("views").toArray());
+    }));
 
     return Void::ok();
   }
 
-  Void::Future showToast(const std::string &id, const std::string &title, const std::string &message,
-                         const tsapi::ToastStyle &style) override {
+  Void::Future showToast(std::string id, std::string title, std::string message,
+                         tsapi::ToastStyle style) override {
     m_toast.setToast(QString::fromStdString(title), mapToastStyle(style), QString::fromStdString(message));
     return Void::ok();
   }
 
-  Void::Future updateToast(const std::string &id, const std::string &title) override { return Void::ok(); }
+  Void::Future updateToast(std::string id, std::string title) override { return Void::ok(); }
 
-  Void::Future hideToast(const std::string &id) override {
+  Void::Future hideToast(std::string id) override {
     m_toast.clear();
     return Void::ok();
   }
 
-  Void::Future showHud(const std::string &text, const bool &clear_root,
-                       const tsapi::PopToRootType &popToRoot) override {
+  Void::Future showHud(std::string text, bool clear_root,
+                       tsapi::PopToRootType popToRoot) override {
     m_navigation->closeWindow({
         .popToRootType = mapPopToRoot(popToRoot),
         .clearRootSearch = clear_root,
@@ -78,18 +76,18 @@ public:
     return Void::ok();
   }
 
-  Void::Future closeMainWindow(const bool &clearRoot, const tsapi::PopToRootType &popToRoot) override {
+  Void::Future closeMainWindow(bool clearRoot, tsapi::PopToRootType popToRoot) override {
     using namespace std::chrono_literals;
     m_navigation->closeWindow({.popToRootType = mapPopToRoot(popToRoot), .clearRootSearch = clearRoot}, 50ms);
     return Void::ok();
   }
 
-  Void::Future popToRoot(const bool &clearSearchBar) override {
+  Void::Future popToRoot(bool clearSearchBar) override {
     m_navigation->popToRoot({.clearSearch = clearSearchBar});
     return Void::ok();
   }
 
-  tsapi::Result<bool>::Future confirmAlert(const tsapi::ConfirmAlertPayload &payload) override {
+  tsapi::Result<bool>::Future confirmAlert(tsapi::ConfirmAlertPayload payload) override {
     auto alert = new CallbackAlertWidget;
     auto promise = std::make_shared<QPromise<tsapi::Result<bool>::Type>>();
     auto future = promise->future();
@@ -136,7 +134,7 @@ public:
     return Void::ok();
   }
 
-  Void::Future setSearchText(const std::string &text) override {
+  Void::Future setSearchText(std::string text) override {
     m_navigation->setSearchText(QString::fromStdString(text));
     return Void::ok();
   }

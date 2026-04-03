@@ -10,12 +10,12 @@ public:
   ExtClipboardService(tsapi::RpcTransport &transport, ClipboardService &clipboard, PasteService &paste)
       : AbstractClipboard(transport), m_clipboard(clipboard), m_paste(paste) {}
 
-  Void::Future copy(const tsapi::ClipboardContent &content, const tsapi::ClipboardOptions &options) override {
+  Void::Future copy(tsapi::ClipboardContent content, tsapi::ClipboardOptions options) override {
     m_clipboard.copyContent(parseContent(content), {.concealed = options.concealed});
     return Void::ok();
   }
 
-  Void::Future paste(const tsapi::ClipboardContent &content) override {
+  Void::Future paste(tsapi::ClipboardContent content) override {
     m_paste.pasteContent(parseContent(content));
     return Void::ok();
   }

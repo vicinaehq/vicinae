@@ -8,7 +8,7 @@ public:
   ExtFileSearchService(tsapi::RpcTransport &transport, FileService &indexer)
       : AbstractFileSearch(transport), m_indexer(indexer) {}
 
-  tsapi::Result<std::vector<tsapi::FileInfo>>::Future search(const std::string &q) override {
+  tsapi::Result<std::vector<tsapi::FileInfo>>::Future search(std::string q) override {
     return m_indexer.queryAsync(q).then([](const std::vector<IndexerFileResult> &results)
                                             -> tsapi::Result<std::vector<tsapi::FileInfo>>::Type {
       QMimeDatabase const mimeDb;

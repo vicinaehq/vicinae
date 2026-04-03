@@ -379,7 +379,7 @@ class GlazeQtGenerator : public AbstractCodeGenerator {
           << method.name << "(";
       for (const auto &[idx, param] : method.params | std::views::enumerate) {
         if (idx > 0) oss << ", ";
-        oss << constRef(param.type) << " " << param.name;
+        oss << serializeTypename(param.type) << " " << param.name;
       }
       oss << ") = 0;\n";
     }
@@ -755,7 +755,7 @@ oss << serializeEventParams(s->name, e);
         oss << "\t\t\t" << "handleResult(req.id, req.method, sentAt, " << "m_" << s->name << "->" << m.name << "(";
         for (const auto &[idx, param] : m.params | std::views::enumerate) {
           if (idx > 0) oss << ", ";
-          oss << "payload." << param.name;
+          oss << "std::move(payload." << param.name << ")";
         }
 
         oss << "));";

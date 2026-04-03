@@ -14,7 +14,7 @@ public:
       : AbstractOAuth(transport), m_extensionId(extensionId), m_ctx(ctx),
         m_oauth(*ctx.services->oauthService()) {}
 
-  tsapi::Result<tsapi::AuthorizeResponse>::Future authorize(const tsapi::AuthorizeRequest &payload) override {
+  tsapi::Result<tsapi::AuthorizeResponse>::Future authorize(tsapi::AuthorizeRequest payload) override {
     QUrl const url(QString::fromStdString(payload.url));
     QUrlQuery const query(url.query());
     QString const state = query.queryItemValue("state");
@@ -30,7 +30,7 @@ public:
         });
   }
 
-  tsapi::Result<tsapi::TokenSet>::Future getTokens(const std::optional<std::string> &id) override {
+  tsapi::Result<tsapi::TokenSet>::Future getTokens(std::optional<std::string> id) override {
     std::optional<QString> providerId;
     if (id) providerId = QString::fromStdString(*id);
 
@@ -48,7 +48,7 @@ public:
     return tsapi::Result<tsapi::TokenSet>::ok(std::move(result));
   }
 
-  Void::Future setTokens(const tsapi::SetTokensRequest &payload) override {
+  Void::Future setTokens(tsapi::SetTokensRequest payload) override {
     OAuth::SetTokenSetPayload p;
     p.extensionId = m_extensionId;
     p.accessToken = QString::fromStdString(payload.accessToken);
@@ -63,7 +63,7 @@ public:
     return Void::ok();
   }
 
-  Void::Future removeTokens(const std::optional<std::string> &id) override {
+  Void::Future removeTokens(std::optional<std::string> id) override {
     std::optional<QString> providerId;
     if (id) providerId = QString::fromStdString(*id);
 
