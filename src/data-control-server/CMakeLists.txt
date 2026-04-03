@@ -9,18 +9,6 @@ include("${CMAKE_SOURCE_DIR}/cmake/Wayland.cmake")
 wayland_generate_protocol("wlr-data-control-unstable-v1")
 wayland_generate_protocol("ext-data-control-v1")
 
-include("Figura")
-
-set(FIGURA_DIR "${CMAKE_SOURCE_DIR}/figura")
-
-figura_compile(
-	SERVER
-	PROTO "${FIGURA_DIR}/wlr-clipboard.fig"
-	LANG glaze
-	NAMESPACE wlrclip
-	OUTPUT wlr-clipboard.hpp
-)
-
 add_executable(${DATA_CONTROL_SERVER_BIN}
   src/main.cpp
   src/selection.cpp
@@ -41,7 +29,7 @@ add_executable(${DATA_CONTROL_SERVER_BIN}
 target_include_directories(${DATA_CONTROL_SERVER_BIN} PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/src
   ${CMAKE_CURRENT_BINARY_DIR}
-  ${GENOUT}
+  ${CMAKE_SOURCE_DIR}/src/common
 )
 
 target_link_libraries(${DATA_CONTROL_SERVER_BIN} PRIVATE

@@ -8,44 +8,13 @@
 #include <qprocess.h>
 #include <qdebug.h>
 #include <qstringview.h>
-#include <glaze/base64/base64.hpp>
+#include <glaze/glaze.hpp>
 #include "data-control-clipboard-server.hpp"
 #include "common/common.hpp"
 #include "wayland/globals.hpp"
+#include "common/clipboard-protocol.hpp"
 
 static constexpr const char *HELPER_PROGRAM = "vicinae-data-control-server";
-
-// DataControlBus
-
-void DataControlBus::send(std::string_view) {
-  // data-control-server is one-way, we never send to it
-}
-
-void DataControlBus::readyRead() {
-  while (m_device->bytesAvailable() > 0) {
-    auto read = m_device->readAll();
-    m_message.data.append(read);
-
-    while (std::cmp_greater_equal(m_message.data.size(), sizeof(uint32_t))) {
-      uint32_t const length = ntohl(*reinterpret_cast<uint32_t *>(m_message.data.data()));
-      bool const isComplete = m_message.data.size() - sizeof(uint32_t) >= length;
-
-      if (!isComplete) break;
-
-      auto packet = m_message.data.sliced(sizeof(uint32_t), length);
-
-      emit messageReceived(packet);
-
-      m_message.data = m_message.data.sliced(sizeof(uint32_t) + length);
-    }
-  }
-}
-
-DataControlBus::DataControlBus(QIODevice *device) : m_device(device) {
-  connect(device, &QIODevice::readyRead, this, &DataControlBus::readyRead);
-}
-
-// DataControlClipboardServer
 
 bool DataControlClipboardServer::isAlive() const { return m_process.isOpen(); }
 
@@ -97,29 +66,47 @@ void DataControlClipboardServer::handleReadError() {
   QTextStream(stderr) << m_process.readAllStandardError();
 }
 
-DataControlClipboardServer::DataControlClipboardServer() : m_bus(&m_process), m_rpc(m_bus), m_client(m_rpc) {
+void DataControlClipboardServer::handleRead() {
+  using SizeType = uint32_t;
+
+  while (m_process.bytesAvailable() > 0) {
+    QByteArray data = m_process.readAllStandardOutput();
+    m_message.reserve(data.size());
+    m_message.insert(m_message.end(), data.begin(), data.end());
+
+    while (m_message.size() >= sizeof(SizeType)) {
+      uint32_t const length = ntohl(*reinterpret_cast<SizeType *>(m_message.data()));
+      size_t const size = m_message.size() - sizeof(SizeType);
+
+      if (size < length) break;
+
+      clipboard_proto::Selection selection;
+
+      std::string_view payload{m_message.data() + sizeof(SizeType), length};
+
+      if (auto err = glz::read_beve(selection, payload)) {
+        qWarning() << "Failed to parse clipboard selection";
+      } else {
+        ClipboardSelection cs;
+        cs.offers.reserve(selection.offers.size());
+
+        for (const auto &offer : selection.offers) {
+          cs.offers.push_back({
+              QString::fromStdString(offer.mime_type),
+              QByteArray(reinterpret_cast<const char *>(offer.data.data()), offer.data.size()),
+          });
+        }
+
+        emit selectionAdded(cs);
+      }
+
+      m_message.erase(m_message.begin(), m_message.begin() + sizeof(SizeType) + length);
+    }
+  }
+}
+
+DataControlClipboardServer::DataControlClipboardServer() {
+  connect(&m_process, &QProcess::readyReadStandardOutput, this, &DataControlClipboardServer::handleRead);
   connect(&m_process, &QProcess::readyReadStandardError, this, &DataControlClipboardServer::handleReadError);
   connect(&m_process, &QProcess::finished, this, &DataControlClipboardServer::handleExit);
-
-  connect(m_client.clipboard(), &wlrclip::ClipboardService::selectionAdded, this,
-          [this](const wlrclip::ClipboardSelection &sel) {
-            ClipboardSelection cs;
-            cs.offers.reserve(sel.offers.size());
-
-            for (const auto &offer : sel.offers) {
-              cs.offers.push_back({
-                  QString::fromStdString(offer.mime_type),
-                  QByteArray::fromStdString(glz::read_base64(offer.data)),
-              });
-            }
-
-            emit selectionAdded(cs);
-          });
-
-  connect(&m_bus, &DataControlBus::messageReceived, this, [this](const QByteArray &msg) {
-    std::string_view view{msg.constData(), static_cast<size_t>(msg.size())};
-    if (auto res = m_client.route(view); !res) {
-      qWarning() << "Failed to route clipboard message" << res.error();
-    }
-  });
 }

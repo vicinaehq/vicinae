@@ -1,5 +1,4 @@
 #include "selection.hpp"
-#include <glaze/base64/base64.hpp>
 
 namespace Selection {
 
@@ -36,14 +35,17 @@ std::set<std::string> filterMimes(const std::vector<std::string> &offerMimes) {
   return filteredMimes;
 }
 
-wlrclip::ClipboardSelection buildSelection(const std::set<std::string> &filteredMimes, OfferReceiver &offer) {
-  wlrclip::ClipboardSelection selection;
+clipboard_proto::Selection buildSelection(const std::set<std::string> &filteredMimes, OfferReceiver &offer) {
+  clipboard_proto::Selection selection;
   selection.offers.reserve(filteredMimes.size());
 
   for (const auto &mime : filteredMimes) {
-    std::string data;
-    if (!Wayland::isFlagMime(mime)) { data = glz::write_base64(offer.receive(mime)); }
-    selection.offers.emplace_back(wlrclip::ClipboardOffer{.mime_type = mime, .data = std::move(data)});
+    std::vector<uint8_t> data;
+    if (!Wayland::isFlagMime(mime)) {
+      auto raw = offer.receive(mime);
+      data.assign(raw.begin(), raw.end());
+    }
+    selection.offers.emplace_back(clipboard_proto::Offer{.mime_type = mime, .data = std::move(data)});
   }
 
   return selection;

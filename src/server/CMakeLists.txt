@@ -664,14 +664,6 @@ if (UNIX AND NOT APPLE)
 		OUTPUT manager.hpp
 	)
 
-	figura_compile(
-		CLIENT
-		PROTO "${FIGURA_DIR}/wlr-clipboard.fig"
-		LANG glaze-qt
-		NAMESPACE wlrclip
-		OUTPUT wlr-clipboard-client.hpp
-	)
-
 	list(APPEND LIBS xkbcommon vicinae::linuxutils)
 
 	# Common Wayland support files

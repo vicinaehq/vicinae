@@ -9,18 +9,20 @@
 #include <wayland-util.h>
 #include "data-control-client.hpp"
 #include "wayland/display.hpp"
-#include "generated/wlr-clipboard.hpp"
+#include "clipboard-protocol.hpp"
+
+using SelectionWriter = void (*)(const clipboard_proto::Selection &);
 
 class WlrClipman : public WaylandDisplay, public WaylandRegistry::Listener, public WlrDataDevice::Listener {
 
 public:
   virtual ~WlrClipman() = default;
-  static WlrClipman *instance(wlrclip::AbstractClipboard *service = nullptr);
+  static WlrClipman *instance(SelectionWriter writer = nullptr);
   void start();
-  WlrClipman(wlrclip::AbstractClipboard &service);
+  WlrClipman(SelectionWriter writer);
 
 private:
-  wlrclip::AbstractClipboard &m_service;
+  SelectionWriter m_writer;
   std::unique_ptr<WaylandRegistry> _registry;
   std::unique_ptr<WlrDataControlManager> _dcm;
   std::unique_ptr<WaylandSeat> _seat;

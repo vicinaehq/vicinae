@@ -8,7 +8,7 @@
 #include <optional>
 #include <unistd.h>
 #include "wayland/mime.hpp"
-#include "generated/wlr-clipboard.hpp"
+#include "clipboard-protocol.hpp"
 
 class OfferReceiver {
 public:
@@ -23,7 +23,7 @@ inline const std::vector<std::string_view> preferredImageTypes = {"image/gif", "
                                                                   "image/jpg", "image/webp"};
 
 std::set<std::string> filterMimes(const std::vector<std::string> &offerMimes);
-wlrclip::ClipboardSelection buildSelection(const std::set<std::string> &filteredMimes, OfferReceiver &offer);
+clipboard_proto::Selection buildSelection(const std::set<std::string> &filteredMimes, OfferReceiver &offer);
 void printDebug(const std::set<std::string> &filteredMimes, OfferReceiver &offer, const char *label);
 void printPrimarySelectionDebug(OfferReceiver &offer);
 

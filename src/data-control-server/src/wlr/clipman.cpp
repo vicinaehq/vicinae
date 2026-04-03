@@ -1,3 +1,4 @@
+#include <cstring>
 #include <iostream>
 #include <iomanip>
 #include <ranges>
@@ -34,7 +35,7 @@ void WlrClipman::selection(WlrDataDevice &, WlrDataOffer &offer) {
   }
 
   auto selection = Selection::buildSelection(Selection::filterMimes(offer.mimes()), offer);
-  m_service.emitselectionAdded(selection);
+  m_writer(selection);
 }
 
 void WlrClipman::start() {
@@ -53,13 +54,12 @@ void WlrClipman::start() {
   }
 }
 
-WlrClipman *WlrClipman::instance(wlrclip::AbstractClipboard *service) {
-  static WlrClipman app{*service};
+WlrClipman *WlrClipman::instance(SelectionWriter writer) {
+  static WlrClipman app{writer};
   return &app;
 }
 
-WlrClipman::WlrClipman(wlrclip::AbstractClipboard &service)
-    : m_service(service), _dcm(nullptr), _seat(nullptr) {
+WlrClipman::WlrClipman(SelectionWriter writer) : m_writer(writer), _dcm(nullptr), _seat(nullptr) {
   _registry = registry();
   _registry->addListener(this);
 }

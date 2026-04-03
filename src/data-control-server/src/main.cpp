@@ -2,25 +2,22 @@
 #include <cstring>
 #include <netinet/in.h>
 #include <wayland-client.h>
+#include <glaze/glaze.hpp>
 #include "ext-data-control-v1-client-protocol.h"
 #include "wlr-data-control-unstable-v1-client-protocol.h"
 #include "ext/clipman.hpp"
 #include "wlr/clipman.hpp"
-#include "generated/wlr-clipboard.hpp"
+#include "clipboard-protocol.hpp"
 
-class StdoutTransport : public wlrclip::AbstractTransport {
-  void send(std::string_view data) override {
-    uint32_t size = htonl(data.size());
-    std::cout.write(reinterpret_cast<const char *>(&size), sizeof(size));
-    std::cout.write(data.data(), data.size());
-    std::cout.flush();
-  }
-};
+static void writeSelection(const clipboard_proto::Selection &selection) {
+  std::string buf;
+  glz::write_beve(selection, buf);
 
-class ClipboardService : public wlrclip::AbstractClipboard {
-public:
-  using wlrclip::AbstractClipboard::AbstractClipboard;
-};
+  uint32_t size = htonl(buf.size());
+  std::cout.write(reinterpret_cast<const char *>(&size), sizeof(size));
+  std::cout.write(buf.data(), buf.size());
+  std::cout.flush();
+}
 
 struct ProtocolState {
   bool hasExtDataControl = false;
@@ -85,15 +82,11 @@ int main(int, char **) {
     return 1;
   }
 
-  StdoutTransport transport;
-  wlrclip::RpcTransport rpc{transport};
-  ClipboardService service{rpc};
-
   try {
     if (protocol == 0) {
-      ExtClipman::instance(&service)->start();
+      ExtClipman::instance(&writeSelection)->start();
     } else {
-      WlrClipman::instance(&service)->start();
+      WlrClipman::instance(&writeSelection)->start();
     }
   } catch (const std::exception &e) {
     std::cerr << "Fatal error: " << e.what() << std::endl;
