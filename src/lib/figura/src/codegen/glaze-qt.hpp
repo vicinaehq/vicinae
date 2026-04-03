@@ -131,15 +131,20 @@ public:
     auto promise = std::make_shared<Promise<T>>();
     auto future = promise->future();
     ResponseHandler handler = [promise](Result<std::string_view> data) {
-      auto value = data.and_then([](std::string_view data) -> Result<T> {
-        T payload;
-        if (auto const error = glz::read_json(payload, data)) {
-          return std::unexpected(glz::format_error(error));
-        }
-        return payload;
-      });
+      if constexpr (std::is_void_v<T>) {
+        if (data) promise->addResult({});
+        else promise->addResult(std::unexpected(data.error()));
+      } else {
+        auto value = data.and_then([](std::string_view data) -> Result<T> {
+          T payload;
+          if (auto const error = glz::read_json(payload, data)) {
+            return std::unexpected(glz::format_error(error));
+          }
+          return payload;
+        });
 
-      promise->addResult(std::move(value));
+        promise->addResult(std::move(value));
+      }
       promise->finish();
     };
 
@@ -151,15 +156,20 @@ public:
   template <typename T>
   void subscribe(std::string_view method, std::function<void(const Result<T> &result)> cb) {
     auto handler = [cb = std::move(cb)](Result<std::string_view> data) {
-      auto value = data.and_then([](std::string_view data) -> Result<T> {
-        T payload;
-        if (auto const error = glz::read_json(payload, data)) {
-          return std::unexpected(glz::format_error(error));
-        }
-        return payload;
-      });
+      if constexpr (std::is_void_v<T>) {
+        if (data) cb({});
+        else cb(std::unexpected(data.error()));
+      } else {
+        auto value = data.and_then([](std::string_view data) -> Result<T> {
+          T payload;
+          if (auto const error = glz::read_json(payload, data)) {
+            return std::unexpected(glz::format_error(error));
+          }
+          return payload;
+        });
 
-      cb(value);
+        cb(value);
+      }
     };
 
     if (auto it = m_handlers.find(std::string{method}); it != m_handlers.end()) {

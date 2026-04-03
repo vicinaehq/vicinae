@@ -2,9 +2,6 @@ include(cmake/Api.cmake)
 include(cmake/RaycastCompat.cmake)
 include("Figura")
 
-set(CMAKE_FIND_PACKAGE_PREFER_CONFIG TRUE)
-find_package(Protobuf)
-unset(CMAKE_FIND_PACKAGE_PREFER_CONFIG)
 
 set(EXT_MGR_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/extension-manager")
 set(EXT_MGR_OUT "${CMAKE_BINARY_DIR}/extension-runtime.js")

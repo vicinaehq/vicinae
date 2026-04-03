@@ -1,0 +1,51 @@
+// Snippet daemon (server) <-> main server (client)
+// The snippet daemon monitors keyboard input and detects snippet triggers.
+// The main server sends configuration (keymap, snippet definitions) to the daemon.
+
+enum ExpansionMode {
+  Keydown,
+  Word
+};
+
+struct LayoutInfo {
+  layout: string;
+  rules?: string;
+  model?: string;
+  variant?: string;
+  options?: string;
+};
+
+struct CreateSnippetRequest {
+  trigger: string;
+  mode: ExpansionMode;
+};
+
+struct CreateSnippetResponse {
+  ok: bool;
+};
+
+struct RemoveSnippetRequest {
+  trigger: string;
+};
+
+struct RemoveSnippetResponse {
+  removed: bool;
+};
+
+struct InjectClipboardRequest {
+  trigger: string;
+  terminal: bool;
+};
+
+struct TriggerSnippetPayload {
+  trigger: string;
+};
+
+service Snippet {
+  fn setKeymap(info: LayoutInfo) => void;
+  fn createSnippet(req: CreateSnippetRequest) => CreateSnippetResponse;
+  fn removeSnippet(req: RemoveSnippetRequest) => RemoveSnippetResponse;
+  fn injectClipboardExpansion(req: InjectClipboardRequest) => void;
+
+  event triggerSnippet(payload: TriggerSnippetPayload);
+}

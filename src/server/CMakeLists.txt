@@ -25,7 +25,6 @@ list(APPEND LIBS
 	vicinae::xdgpp
 	vicinae::scriptcommand
 	vicinae::emoji
-	vicinae::snippet-types
 	vicinae::common
 	vicinae::linuxutils
 )
@@ -454,6 +453,7 @@ set(SRCS
 	src/services/snippet/snippet-service.hpp
 	src/services/snippet/snippet-server.hpp
 	src/services/snippet/snippet-db.cpp
+	src/services/snippet/snippet-server.cpp
 
 	# QML frontend (POC)
 	src/qml/keybind-bridge.hpp
@@ -668,6 +668,14 @@ if (UNIX AND NOT APPLE)
 		LANG glaze-qt
 		NAMESPACE ipc_gen
 		OUTPUT ipc-server.hpp
+	)
+
+	figura_compile(
+		CLIENT
+		PROTO "${FIGURA_DIR}/snippet.fig"
+		LANG glaze-qt
+		NAMESPACE snippet_gen
+		OUTPUT snippet-client.hpp
 	)
 
 	list(APPEND LIBS xkbcommon vicinae::linuxutils)

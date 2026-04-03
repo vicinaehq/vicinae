@@ -365,6 +365,11 @@ class GlazeGenerator : public AbstractCodeGenerator {
     return path;
   }
 
+  static bool isVoid(const TypeValue &value) {
+    auto ptr = std::get_if<PrimitiveType>(&value.data);
+    return ptr && *ptr == PrimitiveType::Void;
+  }
+
   static std::string serializeService(const Service &s) {
     std::ostringstream oss;
 
@@ -618,10 +623,15 @@ public:
         }
         oss << ");\n";
 
-        oss << "\t\t\tif (result) {\n";
-        oss << "\t\t\t\tm_transport.reply(req.id, *result);\n";
-        oss << "\t\t\t} else {\n";
+        oss << "\t\t\tif (!result) {\n";
         oss << "\t\t\t\tm_transport.replyError(req.id, result.error());\n";
+        if (isVoid(m.returnType)) {
+          oss << "\t\t\t} else {\n";
+          oss << "\t\t\t\tm_transport.reply(req.id, nullptr);\n";
+        } else {
+          oss << "\t\t\t} else {\n";
+          oss << "\t\t\t\tm_transport.reply(req.id, *result);\n";
+        }
         oss << "\t\t\t}\n";
         oss << "\t\t\treturn;\n";
         oss << "\t\t}\n";
