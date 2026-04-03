@@ -112,7 +112,7 @@ private:
 
     auto data = recv();
     if (!data) return std::unexpected(data.error());
-    m_client.route(*data);
+    if (auto res = m_client.route(*data); !res) return std::unexpected(res.error());
 
     return result;
   }

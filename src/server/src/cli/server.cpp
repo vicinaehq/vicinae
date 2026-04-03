@@ -42,21 +42,16 @@
 #include "settings-controller/settings-controller.hpp"
 #include "qml/launcher-window.hpp"
 #include "utils.hpp"
-#include "vicinae-ipc/client.hpp"
 #include "vicinae.hpp"
 #include <filesystem>
 #include <QGuiApplication>
 #include <QQuickWindow>
-#include <csignal>
 #include <QString>
 #include <qlockfile.h>
 #include <qlogging.h>
 #include <QtQuickControls2/QQuickStyle>
 #include <system_error>
-#include "common/CLI11.hpp"
 #include "server.hpp"
-
-namespace fs = std::filesystem;
 
 static void applyTextRenderingMode(const config::FontConfig &fontConfig) {
   if (fontConfig.rendering == "qt") {
@@ -66,41 +61,11 @@ static void applyTextRenderingMode(const config::FontConfig &fontConfig) {
   }
 }
 
-void CliServerCommand::setup(CLI::App *app) {
-  app->add_flag("--open", m_open, "Open the main window once the server is started");
-  app->add_flag("--replace", m_replace, "Replace the currently running instance if there is one");
-  app->add_option("--config", m_config, "Path to the main config file")
-      ->default_val(Omnicast::configDir() / "settings.json")
-      ->check([](const std::string &path) {
-        std::error_code ec;
-        if (!fs::is_regular_file(path, ec)) { return "not a valid file"; }
-        return "";
-      });
-  app->add_flag("--no-extension-runtime", m_noExtensionRuntime,
-                "Do not start the extension runtime node process. Typescript extensions will not run.");
-}
-
-void CliServerCommand::run(CLI::App *) {
-  using namespace std::chrono_literals;
-
+int startServer(const ServerLaunchOptions &launchOpts) {
   qInstallMessageHandler(coloredMessageHandler);
 
-  const auto pingRes = ipc::CliClient::oneshot<ipc::Ping>({});
-
-  if (pingRes) {
-    if (!m_replace) {
-      qWarning()
-          << "A server is already running. Pass --replace if you want to replace the existing instance.";
-      exit(1);
-    }
-
-    qInfo() << "Killing existing vicinae server...";
-
-    if (kill(pingRes->pid, SIGKILL) != 0) {
-      qCritical() << "Failed to kill process with pid" << pingRes->pid;
-      exit(1);
-    }
-  }
+  auto m_config = launchOpts.config.empty() ? Omnicast::configDir() / "settings.json"
+                                            : std::filesystem::path{launchOpts.config};
 
   if (!qEnvironmentVariableIsSet("QT_QUICK_FLICKABLE_WHEEL_DECELERATION"))
     qputenv("QT_QUICK_FLICKABLE_WHEEL_DECELERATION", "10000");
@@ -146,7 +111,7 @@ void CliServerCommand::run(CLI::App *) {
     auto vicinaeStore = std::make_unique<VicinaeStoreService>();
 
 #ifdef HAS_TYPESCRIPT_EXTENSIONS
-    if (!m_noExtensionRuntime) {
+    if (!launchOpts.noExtensionRuntime) {
       if (!extensionManager->start()) {
         qCritical() << "Failed to load extension manager. Extensions will not work";
       }
@@ -348,14 +313,14 @@ void CliServerCommand::run(CLI::App *) {
 
   LauncherWindow const qmlWindow(ctx);
 
-  if (m_open) {
+  if (launchOpts.open) {
     ctx.navigation->showWindow();
   } else {
     qInfo() << "Vicinae server successfully started. Call \"vicinae toggle\" to toggle the window";
   }
 
-  qApp->exec();
-  // make sure child processes are terminated
+  auto ret = qApp->exec();
   ctx.services->clipman()->clipboardServer()->stop();
   ctx.services->extensionManager()->stop();
+  return ret;
 }

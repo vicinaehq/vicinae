@@ -25,7 +25,6 @@ list(APPEND LIBS
 	vicinae::xdgpp
 	vicinae::scriptcommand
 	vicinae::emoji
-	vicinae::ipc
 	vicinae::snippet-types
 	vicinae::common
 	vicinae::linuxutils
@@ -314,7 +313,6 @@ set(SRCS
 	src/qml/provider-search-view-host.hpp
 	src/qml/provider-search-view-host.cpp
 
-	src/cli/cli.cpp
 	src/cli/server.cpp
 
 
