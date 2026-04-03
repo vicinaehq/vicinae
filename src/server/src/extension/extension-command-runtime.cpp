@@ -136,12 +136,10 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
 void ExtensionCommandRuntime::unload() {
   RelativeAssetResolver::instance()->removePath(m_command->assetPath());
   auto manager = context()->services->extensionManager();
-  auto toast = context()->services->toastService();
 
   manager->client().manager()->unload(m_sessionId);
 
   context()->navigation->setNavigationSuffixIcon(std::nullopt);
-  // toast->clear();
 }
 
 ExtensionCommandRuntime::ExtensionCommandRuntime(const std::shared_ptr<ExtensionCommand> &command)

@@ -180,7 +180,7 @@ static int entrypoint() {
         if (initId) {
           std::string buf;
           if (auto err = glz::write_json(
-                  glz::json_t::object_t{{"id", *initId}, {"result", glz::json_t::object_t{}}}, buf)) {
+                  glz::generic::object_t{{"id", *initId}, {"result", glz::generic::object_t{}}}, buf)) {
             std::println(std::cerr, "Failed to serialize browserInit response: {}", glz::format_error(err));
             return;
           }

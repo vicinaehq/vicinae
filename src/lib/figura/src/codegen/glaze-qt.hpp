@@ -754,12 +754,14 @@ oss << serializeEventParams(s->name, e);
     oss << "\t\tauto sentAt = Clock::now();\n";
     oss << "\t\tif (m_logger) m_logger->onRequest(req.method);\n";
 
+    bool firstMethod = true;
     for (const auto &s : ast.services) {
-      oss << "\t\t" << "// " << s->name << "\n";
       for (const auto &m : s->methods) {
         std::string methodId = std::string{s->name} + "/" + m.name;
 
-        oss << "\t\tif (req.method == " << std::quoted(methodId) << ") {\n";
+        oss << "\t\t" << (firstMethod ? "if" : "} else if") << " (req.method == " << std::quoted(methodId)
+            << ") {\n";
+        firstMethod = false;
         oss << "\t\t\t" << getMethodParamName(s->name, m.name) << " payload;\n";
         oss << "\t\t\t[[maybe_unused]] auto res = glz::read_json(payload, req.params.str);\n";
         oss << "\t\t\t" << "handleResult(req.id, req.method, sentAt, " << "m_" << s->name << "->" << m.name
@@ -769,12 +771,11 @@ oss << serializeEventParams(s->name, e);
           oss << "std::move(payload." << param.name << ")";
         }
 
-        oss << "));";
-
-        oss << "\n\t\t}\n";
+        oss << "));\n";
       }
     }
 
+    if (!firstMethod) oss << "\t\t}\n";
     oss << "\n\t}\n";
 
     oss << "\tAbstractLogger* m_logger = nullptr;\n";

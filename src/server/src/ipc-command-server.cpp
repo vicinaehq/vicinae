@@ -32,7 +32,7 @@ IpcService::IpcService(ipc_gen::RpcTransport &transport, ApplicationContext &ctx
 
 ipc_gen::Result<ipc_gen::PingResponse>::Future IpcService::ping() {
   return ipc_gen::Result<ipc_gen::PingResponse>::ok(
-      {.version = VICINAE_GIT_TAG, .pid = QCoreApplication::applicationPid()});
+      {.version = VICINAE_GIT_TAG, .pid = static_cast<int>(QCoreApplication::applicationPid())});
 }
 
 ipc_gen::Result<ipc_gen::DeeplinkResponse>::Future IpcService::deeplink(ipc_gen::DeeplinkRequest req) {

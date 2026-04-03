@@ -230,8 +230,6 @@ class Vicinae {
 
 			const packet = this.currentMessage.data.subarray(4, length + 4);
 
-			console.error(packet.toString("utf8"));
-
 			this.server.route(packet.toString("utf8"));
 			this.currentMessage.data = this.currentMessage.data.subarray(length + 4);
 		}

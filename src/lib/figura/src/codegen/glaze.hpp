@@ -609,11 +609,14 @@ public:
 
     oss << "\tvoid dispatch(const JsonRpcRequest& req) {\n";
 
+    bool firstMethod = true;
     for (const auto &s : ast.services) {
       for (const auto &m : s->methods) {
         std::string methodId = std::string{s->name} + "/" + m.name;
 
-        oss << "\t\tif (req.method == " << std::quoted(methodId) << ") {\n";
+        oss << "\t\t" << (firstMethod ? "if" : "} else if") << " (req.method == " << std::quoted(methodId)
+            << ") {\n";
+        firstMethod = false;
         oss << "\t\t\t" << getMethodParamName(s->name, m.name) << " payload;\n";
         oss << "\t\t\t[[maybe_unused]] auto res = glz::read_json(payload, req.params.str);\n";
         oss << "\t\t\tauto result = m_" << s->name << "." << m.name << "(";
@@ -633,11 +636,10 @@ public:
           oss << "\t\t\t\tm_transport.reply(req.id, *result);\n";
         }
         oss << "\t\t\t}\n";
-        oss << "\t\t\treturn;\n";
-        oss << "\t\t}\n";
       }
     }
 
+    if (!firstMethod) oss << "\t\t}\n";
     oss << "\n\t}\n";
 
     oss << "\tRpcTransport& m_transport;\n";
