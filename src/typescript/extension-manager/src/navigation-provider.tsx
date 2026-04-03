@@ -11,16 +11,15 @@ export const NavigationProvider: React.FC<{ root: ReactNode }> = ({ root }) => {
 	const pendingShutdown = useRef<boolean>(false);
 	const NavigationContext = getNavigationContext();
 
-	const pop = () => {
+	const pop = async () => {
 		if (pendingShutdown.current) return;
-		globalState.client.UI.popView();
+		await globalState.client.UI.popView();
 	};
 
-	const push = (node: ReactNode) => {
+	const push = async (node: ReactNode) => {
 		if (pendingShutdown.current) return;
-		globalState.client.UI.pushView().then(() => {
-			setNavStack((cur) => [...cur, node]);
-		});
+		await globalState.client.UI.pushView();
+		setNavStack((cur) => [...cur, node]);
 	};
 
 	useEffect(() => {

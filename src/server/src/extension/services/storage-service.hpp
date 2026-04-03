@@ -16,6 +16,7 @@ public:
   }
 
   Result::Future set(const std::string &key, const glz::generic &value) override {
+    qDebug() << "storage" << key << glazeToQJsonValue(value);
     m_storage.setItem(m_namespaceId, QString::fromStdString(key), glazeToQJsonValue(value));
     return Result::ok();
   }

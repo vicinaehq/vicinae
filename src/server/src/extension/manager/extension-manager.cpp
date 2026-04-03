@@ -73,7 +73,6 @@ ExtensionManager::ExtensionManager() : m_bus(&m_process), m_rpc(m_bus), m_client
           &ExtensionManager::extensionCrashed);
 
   connect(&m_bus, &Bus::messageReceived, this, [this](const QByteArray &msg) {
-    qDebug() << "message received" << msg.constData();
     std::string_view view{msg.constData(), static_cast<size_t>(msg.size())};
     if (auto res = m_client.route(view); !res) { qWarning() << "Failed to route message" << res.error(); }
   });

@@ -42,7 +42,6 @@ class Lifecycle extends extensionServer.LifecycleService {
 
 const serverRpc = new extensionServer.RpcTransport({
 	send: (msg) => {
-		console.error("send back");
 		parentPort?.postMessage(msg);
 	},
 });
@@ -59,7 +58,6 @@ const clientRpc = new api.RpcTransport({
 const client = new api.Client(clientRpc);
 
 client.EventCore.handlerActivated((id, data) => {
-	console.error("hello world");
 	callbackManager.activateHandler(id, data);
 });
 
@@ -99,5 +97,7 @@ export const main = async () => {
 		return;
 	}
 
-	parentPort.on("message", (msg) => server.route(msg));
+	parentPort.on("message", (msg) => {
+		server.route(msg);
+	});
 };

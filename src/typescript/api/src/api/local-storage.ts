@@ -12,24 +12,18 @@ export namespace LocalStorage {
 	export async function getItem<T extends LocalStorage.Value>(
 		key: string,
 	): Promise<T | undefined> {
-		const res = await getClient().Storage.get(key);
-
-		if (!res.ok || res.value.value === null) {
-			return undefined;
-		}
-
-		return res.value.value;
+		return getClient().Storage.get(key);
 	}
 
 	export async function setItem(
 		key: string,
 		value: LocalStorage.Value,
 	): Promise<void> {
-		getClient().Storage.set(key, value);
+		await getClient().Storage.set(key, value);
 	}
 
 	export async function removeItem(key: string): Promise<void> {
-		getClient().Storage.remove(key);
+		await getClient().Storage.remove(key);
 	}
 
 	export async function allItems(): Promise<LocalStorage.Values> {
@@ -37,6 +31,6 @@ export namespace LocalStorage {
 	}
 
 	export async function clear(): Promise<void> {
-		getClient().Storage.clear();
+		await getClient().Storage.clear();
 	}
 }

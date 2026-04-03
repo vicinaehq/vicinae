@@ -36,7 +36,6 @@ class ExtensionManager extends manager.ManagerService {
 	}
 
 	async load(load: manager.LoadOptions): Promise<manager.LoadResponse> {
-		console.error("loading", { load });
 		const sessionId = randomUUID();
 		const supportPath = path.join(
 			load.vicinae_path,
@@ -117,12 +116,8 @@ class ExtensionManager extends manager.ManagerService {
 				clearTimeout(workerInfo.pendingTermination);
 			}
 
-			stdoutStream.close();
-			stderrStream.close();
 			this.workerMap.delete(sessionId);
 		});
-
-		console.error("launching...");
 
 		await client.Lifecycle.launch({
 			entrypoint: load.entrypoint,
@@ -136,8 +131,6 @@ class ExtensionManager extends manager.ManagerService {
 			owner_or_author_name: load.owner_or_author_name,
 			command_name: load.command_name,
 		});
-
-		console.error("loaded...");
 
 		return { session_id: sessionId };
 	}
@@ -237,10 +230,9 @@ class Vicinae {
 
 			const packet = this.currentMessage.data.subarray(4, length + 4);
 
-			console.error("process", packet.toString("utf8"));
+			console.error(packet.toString("utf8"));
 
 			this.server.route(packet.toString("utf8"));
-			//console.error('routing message');
 			this.currentMessage.data = this.currentMessage.data.subarray(length + 4);
 		}
 	}
@@ -248,7 +240,6 @@ class Vicinae {
 	constructor() {
 		const rpc = new manager.RpcTransport({
 			send: (data) => {
-				console.error("send data back", data);
 				this.writePacket(Buffer.from(data));
 			},
 		});

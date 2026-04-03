@@ -5,7 +5,6 @@
 #include "glaze-qt.hpp"
 #include "navigation-controller.hpp"
 #include "qml/extension-view-host.hpp"
-#include "qml/view-utils.hpp"
 #include "services/toast/toast-service.hpp"
 #include "ui/alert/alert.hpp"
 #include <QClipboard>
@@ -39,7 +38,6 @@ public:
   }
 
   Void::Future render(const std::string &json) override {
-    qWarning() << "GOT RENDER";
     QJsonParseError parseError;
     auto doc = QJsonDocument::fromJson(QByteArray::fromStdString(json), &parseError);
 
@@ -127,7 +125,8 @@ public:
     m_navigation->setNavigationIcon(m_command->iconUrl());
 
     m_views.emplace_back(ViewEntry{host, [host](const RenderModel &m) { host->render(m); }});
-    emitviewPushed();
+
+    QTimer::singleShot(0, this, [this]() { emitviewPushed(); });
 
     return Void::ok();
   }
@@ -175,7 +174,6 @@ private slots:
 private:
   ExtensionActionPanelBuilder::NotifyFn makeNotifyFn() {
     return [this](const QString &handler, const QJsonArray &args) {
-      qDebug() << "emit handler" << handler;
       m_eventCore->emithandlerActivated(handler.toStdString(), qJsonValueToGlazeGeneric(args).get_array());
     };
   }

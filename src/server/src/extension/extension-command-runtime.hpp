@@ -4,12 +4,14 @@
 #include "extension/extension-command.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "generated/tsapi.hpp"
+#include <qlogging.h>
 
 class ExtensionManagerBus : public tsapi::AbstractTransport {
 public:
   ExtensionManagerBus(ExtensionManager &manager) : m_manager(manager) {}
 
   void send(std::string_view data) override {
+    qDebug() << "data" << data;
     m_manager.client().manager()->messageExtension(m_sessionId, std::string{data});
   }
 
@@ -18,6 +20,14 @@ public:
 private:
   ExtensionManager &m_manager;
   std::string m_sessionId;
+};
+
+class ExtensionLogger : public tsapi::AbstractLogger {
+  void onRequest(std::string_view method) override { qDebug() << "-->" << method; }
+  void onResponse(std::string_view method, bool ok, double latencyMs) override {
+    qDebug() << "<-- " << method << latencyMs << "ms" << (ok ? "OK" : "ERROR");
+  }
+  void onEvent(std::string_view method) override { qDebug() << "--> " << method; }
 };
 
 class ExtensionCommandRuntime : public CommandContext {
@@ -31,6 +41,7 @@ public:
 
 private:
   std::unique_ptr<ExtensionManagerBus> m_bus;
+  std::unique_ptr<ExtensionLogger> m_logger;
   std::unique_ptr<tsapi::RpcTransport> m_transport;
   std::shared_ptr<ExtensionCommand> m_command;
   tsapi::Server *m_server = nullptr;

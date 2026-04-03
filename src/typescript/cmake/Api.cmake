@@ -5,11 +5,8 @@ set(API_DIST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/api/dist")
 set(API_PROTO_OUT "${EXT_API_SRC_DIR}/src/api/proto")
 set(API_NODE_MODULES "${EXT_API_SRC_DIR}/node_modules")
 
-message(STATUS ${API_PROTO_PATH})
-
-file(GLOB_RECURSE API_PROTO_FILES
-	"${PROTO_DIR}/*.proto"
-)
+set(API_FIG_FILE "${CMAKE_SOURCE_DIR}/figura/tsapi.fig")
+set(API_PROTO_GENERATED "${API_PROTO_OUT}/api.ts")
 
 file(GLOB_RECURSE API_TS_FILES
     "${EXT_API_SRC_DIR}/src/api/**/*"
@@ -37,14 +34,22 @@ if (INSTALL_NODE_MODULES)
 	)
 endif()
 
+# Step 1: generate TS proto from .fig + figura binary
+add_custom_command(
+    OUTPUT ${API_PROTO_GENERATED}
+    COMMAND ${FIGURA_CC} compile ${API_FIG_FILE} --client typescript --output ${API_PROTO_GENERATED}
+    DEPENDS ${FIGURA_CC} ${API_FIG_FILE}
+    COMMENT "Figura codegen: API client (typescript)"
+)
+
+# Step 2: build the API package (depends on generated proto + source files)
 add_custom_command(
     OUTPUT ${API_STAMP}
-	COMMAND ${FIGURA_CC} compile ${CMAKE_SOURCE_DIR}/figura/tsapi.fig --client typescript --output ${API_PROTO_PATH}/api.ts
     COMMAND npm run build
     COMMAND ${CMAKE_COMMAND} -E touch ${API_STAMP}
     WORKING_DIRECTORY ${EXT_API_SRC_DIR}
-	DEPENDS ${FIGURA_CC} ${EXT_API_TS_FILES} ${API_NODE_MODULES}
-    COMMENT "Build API"
+    DEPENDS ${API_PROTO_GENERATED} ${EXT_API_TS_FILES} ${API_NODE_MODULES}
+    COMMENT "Build API package"
 )
 
 add_custom_target(api DEPENDS ${API_STAMP})

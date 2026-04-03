@@ -46,6 +46,14 @@ public:
   virtual void send(std::string_view data) = 0;
   virtual ~AbstractTransport() = default;
 };
+
+class AbstractLogger {
+	public:
+		virtual ~AbstractLogger() = default;
+		virtual void onRequest(std::string_view method) = 0;
+		virtual void onResponse(std::string_view method, bool ok, double latencyMs) = 0;
+		virtual void onEvent(std::string_view method) = 0;
+};
 )";
 
 constexpr const auto clientCode = R"(
@@ -61,10 +69,21 @@ class RpcTransport {
   template <typename T> using Result = std::expected<T, std::string>;
   template <typename T> using Promise = QPromise<Result<T>>;
 
+  using Clock = std::chrono::steady_clock;
   using ResponseHandler = std::function<void(Result<std::string_view>)>;
+
+  struct PendingRequest {
+    std::string method;
+    ResponseHandler handler;
+    Clock::time_point sentAt;
+  };
 
 public:
   RpcTransport(AbstractTransport &transport) : m_transport(transport) {}
+
+  void setLogger(AbstractLogger* logger) {
+    m_logger = logger;
+  }
 
   std::expected<void, std::string> dispatchMessage(std::string_view data) {
     RpcIncomingMessage msg;
@@ -73,14 +92,18 @@ public:
 
     if (msg.id) {
       if (auto it = m_requestMap.find(*msg.id); it != m_requestMap.end()) {
+        auto latencyMs = std::chrono::duration<double, std::milli>(Clock::now() - it->second.sentAt).count();
         if (msg.error) {
-          it->second(std::unexpected(*msg.error));
+          if (m_logger) m_logger->onResponse(it->second.method, false, latencyMs);
+          it->second.handler(std::unexpected(*msg.error));
         } else {
-          it->second(std::move(msg.result.str));
+          if (m_logger) m_logger->onResponse(it->second.method, true, latencyMs);
+          it->second.handler(std::move(msg.result.str));
         }
         m_requestMap.erase(it);
       }
     } else if (msg.method) {
+      if (m_logger) m_logger->onEvent(*msg.method);
       if (auto it = m_handlers.find(*msg.method); it != m_handlers.end()) {
         for (const auto &handler : it->second) {
           handler(msg.params.str);
@@ -103,6 +126,8 @@ public:
     if (!sendRes)
       return QtFuture::makeReadyValueFuture<Result<T>>(std::unexpected(std::move(sendRes).error()));
 
+    if (m_logger) m_logger->onRequest(method);
+
     auto promise = std::make_shared<Promise<T>>();
     auto future = promise->future();
     ResponseHandler handler = [promise](Result<std::string_view> data) {
@@ -118,7 +143,7 @@ public:
       promise->finish();
     };
 
-    m_requestMap.insert({id, handler});
+    m_requestMap.insert({id, PendingRequest{std::string{method}, handler, Clock::now()}});
 
     return future;
   }
@@ -151,9 +176,11 @@ public:
     return {};
   }
 
+private:
+  AbstractLogger* m_logger = nullptr;
   int m_id = 1;
   std::unordered_map<std::string, std::vector<ResponseHandler>> m_handlers;
-  std::unordered_map<int, ResponseHandler> m_requestMap;
+  std::unordered_map<int, PendingRequest> m_requestMap;
   AbstractTransport &m_transport;
   std::string m_buf;
 };
@@ -214,12 +241,16 @@ class EventEmitter {
 		EventEmitter(RpcTransport& transport): m_transport(transport) {
 		}
 
+		void setLogger(AbstractLogger* logger) { m_logger = logger; }
+
 		template <typename T>
 		void emitEvent(std::string_view name, const T& params) {
+			if (m_logger) m_logger->onEvent(name);
 			m_transport.notify(name, params);
 		}
 
 	private:
+		AbstractLogger* m_logger = nullptr;
 		RpcTransport& m_transport;
 };
 
@@ -468,6 +499,8 @@ public:
 
     oss << R"(
 #pragma once
+#include <chrono>
+#include <QDebug>
 #include <QFuture>
 #include <memory>
 #include <glaze/glaze.hpp>
@@ -566,6 +599,10 @@ oss << serializeEventParams(s->name, e);
     oss << "}\n";
 
     oss << R"(
+		void setLogger(AbstractLogger* logger) {
+			m_transport.setLogger(logger);
+		}
+
 		std::expected<void, std::string> route(std::string_view data) {
 			return m_transport.dispatchMessage(data);
 		}
@@ -598,6 +635,7 @@ oss << serializeEventParams(s->name, e);
 
     oss << R"(
 #pragma once
+#include <chrono>
 #include <QFuture>
 #include <QFutureWatcher>
 #include <expected>
@@ -622,6 +660,7 @@ oss << serializeEventParams(s->name, e);
     }
 
     oss << "class Server: public QObject {\n";
+    oss << "\tusing Clock = std::chrono::steady_clock;\n";
     oss << "\tpublic:\n";
     oss << "\tServer(RpcTransport& transport";
 
@@ -639,10 +678,22 @@ oss << serializeEventParams(s->name, e);
     oss << "\n}\n";
 
     oss << R"(
+	void setLogger(AbstractLogger* logger) {
+		m_logger = logger;
+		)" ;
+
+    for (const auto &s : ast.services) {
+      oss << "m_" << s->name << "->setLogger(logger);\n";
+    }
+
+    oss << R"(
+	}
+
 	void route(std::string_view data) {
-		IncomingJsonRpcMessage msg;
-		[[maybe_unused]] auto res = glz::read_json(msg, data);
-		if (auto reqPtr = std::get_if<JsonRpcRequest>(&msg)) { dispatch(*reqPtr); }
+		JsonRpcRequest msg;
+		if (auto const error = glz::read<glz::opts{.error_on_unknown_keys = false}>(msg, data)) { return; }
+		if (msg.method.empty()) return;
+		dispatch(msg);
 	}
 	)";
 
@@ -655,12 +706,15 @@ oss << serializeEventParams(s->name, e);
 
     oss << R"(
 	template <typename T>
-	void replyWatcher(int id, QFuture<T> future) {
+	void replyWatcher(int id, std::string_view method, Clock::time_point sentAt, QFuture<T> future) {
+		auto latencyMs = std::chrono::duration<double, std::milli>(Clock::now() - sentAt).count();
 		auto result = future.result();
 		if (!result) {
+			if (m_logger) m_logger->onResponse(method, false, latencyMs);
 			m_transport.replyError(id, result.error());
 			return;
 		}
+		if (m_logger) m_logger->onResponse(method, true, latencyMs);
 		if constexpr (std::is_void_v<typename T::value_type>) {
 			m_transport.reply(id, nullptr);
 		} else {
@@ -669,16 +723,17 @@ oss << serializeEventParams(s->name, e);
 	}
 
 	template<typename T>
-	void handleResult(int id, QFuture<T> future) {
+	void handleResult(int id, std::string_view method, Clock::time_point sentAt, QFuture<T> future) {
 		if (future.isFinished()) {
-			replyWatcher(id, future);
+			replyWatcher(id, method, sentAt, future);
 			return;
 		}
 
 		auto watcher = new QFutureWatcher<T>(this);
+		auto methodStr = std::string{method};
 
-		connect(watcher, &QFutureWatcherBase::finished, this, [this, id, watcher]() {
-			replyWatcher(id, watcher->future());
+		connect(watcher, &QFutureWatcherBase::finished, this, [this, id, methodStr, sentAt, watcher]() {
+			replyWatcher(id, methodStr, sentAt, watcher->future());
 			watcher->deleteLater();
 		});
 		watcher->setFuture(future);
@@ -686,6 +741,8 @@ oss << serializeEventParams(s->name, e);
 	)";
 
     oss << "\tvoid dispatch(const JsonRpcRequest& req) {\n";
+    oss << "\t\tauto sentAt = Clock::now();\n";
+    oss << "\t\tif (m_logger) m_logger->onRequest(req.method);\n";
 
     for (const auto &s : ast.services) {
       oss << "\t\t" << "// " << s->name << "\n";
@@ -695,7 +752,7 @@ oss << serializeEventParams(s->name, e);
         oss << "\t\tif (req.method == " << std::quoted(methodId) << ") {\n";
         oss << "\t\t\t" << getMethodParamName(s->name, m.name) << " payload;\n";
         oss << "\t\t\t[[maybe_unused]] auto res = glz::read_json(payload, req.params.str);\n";
-        oss << "\t\t\t" << "handleResult(req.id, " << "m_" << s->name << "->" << m.name << "(";
+        oss << "\t\t\t" << "handleResult(req.id, req.method, sentAt, " << "m_" << s->name << "->" << m.name << "(";
         for (const auto &[idx, param] : m.params | std::views::enumerate) {
           if (idx > 0) oss << ", ";
           oss << "payload." << param.name;
@@ -709,6 +766,7 @@ oss << serializeEventParams(s->name, e);
 
     oss << "\n\t}\n";
 
+    oss << "\tAbstractLogger* m_logger = nullptr;\n";
     oss << "\tRpcTransport& m_transport;\n";
 
     for (const auto &s : ast.services) {

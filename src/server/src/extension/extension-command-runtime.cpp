@@ -29,6 +29,7 @@ void ExtensionCommandRuntime::initialize() {
   auto manager = context()->services->extensionManager();
 
   m_bus = std::make_unique<ExtensionManagerBus>(*manager);
+  m_logger = std::make_unique<ExtensionLogger>();
   m_transport = std::make_unique<tsapi::RpcTransport>(*m_bus);
 
   RelativeAssetResolver::instance()->addPath(m_command->assetPath());
@@ -53,6 +54,7 @@ void ExtensionCommandRuntime::initialize() {
 
   m_server =
       new tsapi::Server(*m_transport, app, ui, wm, clipboard, storage, fileSearch, command, oauth, eventCore);
+  m_server->setLogger(m_logger.get());
 }
 
 void ExtensionCommandRuntime::load(const LaunchProps &props) {
@@ -96,7 +98,6 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
 
   connect(manager, &ExtensionManager::extensionMessageReceived, this,
           [this](const std::string &sessionId, std::string_view data) {
-            std::cout << "got extension message" << data;
             if (sessionId != m_sessionId) return; // not for us
             m_server->route(data);
           });
@@ -115,7 +116,6 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
           });
 
   connect(watcher, &QFutureWatcherBase::finished, this, [this, watcher]() {
-    std::cout << "watcher done";
     if (!watcher->isCanceled()) {
       auto res = watcher->result();
 

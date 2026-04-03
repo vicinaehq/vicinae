@@ -195,7 +195,7 @@ export class RpcTransport {
 
 			if (handler) {
 				if (msg.error) handler.reject(msg.error);
-				if (msg.result) handler.resolve(msg.result);
+				else handler.resolve(msg.result);
 				this.requestMap.delete(msg.id);
 			}
 		}
