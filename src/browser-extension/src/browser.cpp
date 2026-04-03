@@ -69,8 +69,9 @@ static std::filesystem::path socketPath() {
 
 static void sendToExtension(std::string_view message) {
   uint32_t size = message.size();
-  write(STDOUT_FILENO, reinterpret_cast<char *>(&size), sizeof(size));
-  write(STDOUT_FILENO, message.data(), message.size());
+  std::cout.write(reinterpret_cast<const char *>(&size), sizeof(size));
+  std::cout.write(message.data(), message.size());
+  std::cout.flush();
 }
 
 class SocketTransport : public ipc::AbstractTransport {
@@ -204,7 +205,9 @@ static int entrypoint() {
 
   vicinaeFrame.setHandler([&](std::string_view message) {
     std::println(std::cerr, "got message from vicinae: {}", message);
-    client.route(message);
+    if (auto res = client.route(message); !res) {
+      std::println(std::cerr, "Failed to route vicinae message: {}", res.error());
+    }
   });
 
   auto fds = std::array{pollfd(STDIN_FILENO, POLLIN), pollfd(fd, POLLIN)};

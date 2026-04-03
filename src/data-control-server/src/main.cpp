@@ -11,7 +11,10 @@
 
 static void writeSelection(const clipboard_proto::Selection &selection) {
   std::string buf;
-  glz::write_beve(selection, buf);
+  if (auto err = glz::write_beve(selection, buf)) {
+    std::cerr << "Failed to serialize clipboard selection" << std::endl;
+    return;
+  }
 
   uint32_t size = htonl(buf.size());
   std::cout.write(reinterpret_cast<const char *>(&size), sizeof(size));

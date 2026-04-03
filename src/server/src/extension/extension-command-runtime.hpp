@@ -11,7 +11,6 @@ public:
   ExtensionManagerBus(ExtensionManager &manager) : m_manager(manager) {}
 
   void send(std::string_view data) override {
-    qDebug() << "data" << data;
     m_manager.client().manager()->messageExtension(m_sessionId, std::string{data});
   }
 
