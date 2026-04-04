@@ -79,6 +79,8 @@ include_directories(
     ${CMAKE_BINARY_DIR}
 )
 
+find_package(glaze)
+
 add_subdirectory(src/browser-extension)
 add_subdirectory(src/snippet)
 add_subdirectory(${LIB_DIR}/script-command)
@@ -148,8 +150,6 @@ if (NOT USE_SYSTEM_CMARK_GFM)
   set(CMARK_LIBRARY "libcmark-gfm_static")
   set(CMARK_EXT_LIBRARY "libcmark-gfm-extensions_static")
 endif()
-
-find_package(glaze)
 
 if (TYPESCRIPT_EXTENSIONS)
 	add_subdirectory(src/typescript)
