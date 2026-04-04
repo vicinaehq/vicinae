@@ -221,26 +221,35 @@ Item {
         width: 160
         topPadding: 6
         bottomPadding: 6
-        leftPadding: Config.borderWidth
-        rightPadding: Config.borderWidth
+        leftPadding: 1
+        rightPadding: 1
 
         // Make it disappear nicely when clicking elsewhere
         focus: true
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
-        background: Rectangle {
-            radius: Config.borderRounding
-            color: Qt.rgba(Theme.statusBarBackground.r, Theme.statusBarBackground.g, Theme.statusBarBackground.b, 1)
-            border.color: Theme.mainWindowBorder
-            border.width: Config.borderWidth
+        background: Item {
+            Rectangle {
+                anchors.fill: parent
+                radius: Config.borderRounding
+                color: Qt.rgba(Theme.statusBarBackground.r, Theme.statusBarBackground.g, Theme.statusBarBackground.b, 1)
 
-            layer.enabled: true
-            layer.effect: MultiEffect {
-                autoPaddingEnabled: true
-                shadowEnabled: true
-                shadowBlur: 0.4
-                shadowColor: Qt.rgba(0, 0, 0, 0.25)
-                shadowVerticalOffset: 4
+                layer.enabled: true
+                layer.effect: MultiEffect {
+                    autoPaddingEnabled: true
+                    shadowEnabled: true
+                    shadowBlur: 0.4
+                    shadowColor: Qt.rgba(0, 0, 0, 0.25)
+                    shadowVerticalOffset: 4
+                }
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                radius: Config.borderRounding
+                color: Qt.rgba(Theme.statusBarBackground.r, Theme.statusBarBackground.g, Theme.statusBarBackground.b, 1)
+                border.color: Theme.mainWindowBorder
+                border.width: 1
             }
         }
 

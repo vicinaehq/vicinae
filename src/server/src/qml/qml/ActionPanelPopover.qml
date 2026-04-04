@@ -22,18 +22,14 @@ FocusRestoringScope {
         onClicked: actionPanel.close()
     }
 
-    Rectangle {
+    Item {
         id: panel
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         anchors.rightMargin: 10
         anchors.bottomMargin: 10
         width: 400
-        height: Math.min(stack.currentItem ? stack.currentItem.implicitHeight + 2 * Config.borderWidth : 300, root.height * 0.6)
-        radius: Config.borderRounding
-        color: Qt.rgba(Theme.statusBarBackground.r, Theme.statusBarBackground.g, Theme.statusBarBackground.b, 1)
-        border.color: Theme.mainWindowBorder
-        border.width: Config.borderWidth
+        height: Math.min(stack.currentItem ? stack.currentItem.implicitHeight + 2 : 300, root.height * 0.6)
 
         opacity: 0
         scale: 0.95
@@ -57,34 +53,50 @@ FocusRestoringScope {
             }
         }
 
-        layer.enabled: true
-        layer.effect: MultiEffect {
-            autoPaddingEnabled: true
-            shadowEnabled: true
-            shadowBlur: 0.4
-            shadowColor: Qt.rgba(0, 0, 0, 0.25)
-            shadowVerticalOffset: 4
+        Rectangle {
+            id: panelShadow
+            anchors.fill: parent
+            radius: Config.borderRounding
+            color: Qt.rgba(Theme.statusBarBackground.r, Theme.statusBarBackground.g, Theme.statusBarBackground.b, 1)
+
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                autoPaddingEnabled: true
+                shadowEnabled: true
+                shadowBlur: 0.4
+                shadowColor: Qt.rgba(0, 0, 0, 0.25)
+                shadowVerticalOffset: 4
+            }
         }
 
-        // Block wheel events from propagating to the main list
-        MouseArea {
+        Rectangle {
+            id: panelContent
             anchors.fill: parent
-            anchors.margins: Config.borderWidth
-            acceptedButtons: Qt.NoButton
-            onWheel: function (wheel) {
-                wheel.accepted = true;
-            }
+            radius: Config.borderRounding
+            color: Qt.rgba(Theme.statusBarBackground.r, Theme.statusBarBackground.g, Theme.statusBarBackground.b, 1)
+            border.color: Theme.mainWindowBorder
+            border.width: 1
 
-            StackView {
-                id: stack
+            // Block wheel events from propagating to the main list
+            MouseArea {
                 anchors.fill: parent
-                clip: true
-                pushEnter: null
-                pushExit: null
-                popEnter: null
-                popExit: null
-                replaceEnter: null
-                replaceExit: null
+                anchors.margins: 1
+                acceptedButtons: Qt.NoButton
+                onWheel: function (wheel) {
+                    wheel.accepted = true;
+                }
+
+                StackView {
+                    id: stack
+                    anchors.fill: parent
+                    clip: true
+                    pushEnter: null
+                    pushExit: null
+                    popEnter: null
+                    popExit: null
+                    replaceEnter: null
+                    replaceExit: null
+                }
             }
         }
     }
