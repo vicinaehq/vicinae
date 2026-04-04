@@ -210,6 +210,8 @@ struct UpdateCommandMetadataPayload {
 
 service Command {
   fn updateCommandMetadata(payload: UpdateCommandMetadataPayload) => void;
+  fn openExtensionPreferences() => void;
+  fn openCommandPreferences() => void;
 };
 
 // OAuth

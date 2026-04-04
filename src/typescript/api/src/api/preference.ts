@@ -1,3 +1,5 @@
+import { getClient } from "./client";
+import { closeMainWindow } from "./controls";
 import { getGlobal } from "./globals";
 
 export const getPreferenceValues = <
@@ -7,17 +9,18 @@ export const getPreferenceValues = <
 };
 
 /**
- * TODO: implement
- * @ignore
+ * Opens the extension preferences in the vicinae settings window.
  */
 export const openExtensionPreferences = async (): Promise<void> => {
 	console.error("openExtensionPreferences is not implemented");
+	await getClient().Command.openExtensionPreferences();
+	await closeMainWindow();
 };
 
 /**
- * TODO: implement
- * @ignore
+ * Open the command preferences in the vicinae settings window.
  */
 export const openCommandPreferences = async (): Promise<void> => {
-	console.error("openCommandPreferences is not implemented");
+	await getClient().Command.openCommandPreferences();
+	await closeMainWindow();
 };
