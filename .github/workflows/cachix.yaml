@@ -18,6 +18,6 @@ jobs:
         name: vicinae
         authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
     - name: Build Flake
-      run: nix build
+      run: nix build -L
     - name: Run Test Shell
-      run: nix develop --command echo OK 
+      run: nix develop --command echo OK
