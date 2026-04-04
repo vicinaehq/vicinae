@@ -7,8 +7,6 @@
 /node_modules
 oclif.manifest.json
 
-/src/api/proto
-
 /docs
 
 
