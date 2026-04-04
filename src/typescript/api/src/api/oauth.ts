@@ -418,8 +418,7 @@ export class PKCEClient {
 	 * @returns A promise that resolves when the token set has been retrieved.
 	 */
 	async getTokens(): Promise<OAuth.TokenSet | undefined> {
-		// TODO: handle nullability
-		const set = await getClient().OAuth.getTokens(this.providerId);
+		const { set } = await getClient().OAuth.getTokens(this.providerId);
 
 		if (!set) return undefined;
 

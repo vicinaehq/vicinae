@@ -248,9 +248,13 @@ struct SetTokensRequest {
   scope?: string;
 };
 
+struct TokenSetResponse {
+  set?: TokenSet;
+};
+
 service OAuth {
   fn authorize(payload: AuthorizeRequest) => AuthorizeResponse;
-  fn getTokens(id?: string) => TokenSet;
+  fn getTokens(id?: string) => TokenSetResponse;
   fn setTokens(payload: SetTokensRequest) => void;
   fn removeTokens(id?: string) => void;
 }

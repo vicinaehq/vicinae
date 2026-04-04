@@ -1,6 +1,6 @@
 #pragma once
 #include "common/context.hpp"
-#include "extension/services/tsapi-image.hpp"
+#include "service-registry.hpp"
 #include "generated/tsapi.hpp"
 #include "overlay-controller/overlay-controller.hpp"
 #include "qml/oauth-overlay-host.hpp"
@@ -30,12 +30,13 @@ public:
         });
   }
 
-  tsapi::Result<tsapi::TokenSet>::Future getTokens(std::optional<std::string> id) override {
+  tsapi::Result<tsapi::TokenSetResponse>::Future getTokens(std::optional<std::string> id) override {
     std::optional<QString> providerId;
     if (id) providerId = QString::fromStdString(*id);
 
     auto set = m_oauth.store().getTokenSet(m_extensionId, providerId);
-    if (!set) return tsapi::Result<tsapi::TokenSet>::fail("No token set found");
+
+    if (!set) return tsapi::Result<tsapi::TokenSetResponse>::ok({});
 
     tsapi::TokenSet result;
     result.accessToken = set->accessToken.toStdString();
@@ -45,7 +46,7 @@ public:
     if (set->scope) result.scope = set->scope->toStdString();
     if (set->expiresIn) result.expiresIn = *set->expiresIn;
 
-    return tsapi::Result<tsapi::TokenSet>::ok(std::move(result));
+    return tsapi::Result<tsapi::TokenSetResponse>::ok({result});
   }
 
   Void::Future setTokens(tsapi::SetTokensRequest payload) override {
