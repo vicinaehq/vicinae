@@ -139,7 +139,7 @@ class ExtensionManager extends manager.ManagerService {
 		const workerInfo = this.workerMap.get(session_id);
 
 		if (!workerInfo) {
-			throw new Error(`No running command with session ${session_id}`);
+			return false;
 		}
 
 		await workerInfo.client.Lifecycle.shutdown();
@@ -224,13 +224,14 @@ class Vicinae {
 			const length = this.currentMessage.data.readUInt32BE();
 			const isComplete = this.currentMessage.data.length - 4 >= length;
 
-			//console.error('read message: length', length);
-
 			if (!isComplete) return;
 
 			const packet = this.currentMessage.data.subarray(4, length + 4);
 
-			this.server.route(packet.toString("utf8"));
+			this.server.route(packet.toString("utf8"))?.catch((error) => {
+				console.error("Uncaught exception from handler", error);
+			});
+
 			this.currentMessage.data = this.currentMessage.data.subarray(length + 4);
 		}
 	}

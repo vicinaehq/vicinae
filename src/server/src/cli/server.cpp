@@ -50,7 +50,6 @@
 #include <qlockfile.h>
 #include <qlogging.h>
 #include <QtQuickControls2/QQuickStyle>
-#include <system_error>
 #include "server.hpp"
 
 static void applyTextRenderingMode(const config::FontConfig &fontConfig) {

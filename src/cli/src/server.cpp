@@ -1,5 +1,6 @@
 #include <csignal>
 #include <cstring>
+#include <glaze/core/reflect.hpp>
 #include <thread>
 #include <unistd.h>
 #include <glaze/glaze.hpp>
@@ -50,9 +51,12 @@ bool CliServerCommand::run(CLI::App *) {
   }
 
   std::string opts;
-  glz::write_json(
-      ServerLaunchOptions{.open = m_open, .noExtensionRuntime = m_noExtensionRuntime, .config = m_config},
-      opts);
+  ServerLaunchOptions sopts{.open = m_open, .noExtensionRuntime = m_noExtensionRuntime, .config = m_config};
+
+  if (auto const error = glz::write_json(sopts, opts)) {
+    std::println(std::cerr, "Failed to serialize server arguments: {}", glz::format_error(error));
+    return false;
+  }
 
   char *argv[] = {strdup("vicinae-server"), strdup(opts.c_str()), nullptr};
 
