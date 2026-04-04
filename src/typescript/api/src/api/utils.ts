@@ -46,6 +46,11 @@ export type RunInTerminalOptions = {
 	 * @see WindowManagement
 	 */
 	title?: string;
+
+	/**
+	 * Sets the current working directory for the terminal program.
+	 */
+	workingDirectory?: string;
 };
 
 /**
@@ -77,13 +82,14 @@ export const runInTerminal = async (
 	args: string[],
 	options: RunInTerminalOptions = {},
 ) => {
-	const { hold = false, appId, title } = options;
+	const { hold = false, appId, title, workingDirectory } = options;
 
 	await getClient().Application.runInTerminal({
 		cmdline: args,
 		hold,
 		appId,
 		title,
+		workingDirectory,
 	});
 };
 
