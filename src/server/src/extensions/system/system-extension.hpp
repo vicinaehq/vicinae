@@ -17,6 +17,7 @@ class SystemRunCommand : public BuiltinCallbackCommand {
   ImageURL iconUrl() const override {
     return ImageURL::builtin("terminal").setBackgroundTint(SemanticColor::Orange);
   }
+  CommandMode mode() const override { return CommandMode::CommandModeView; }
   virtual std::vector<CommandArgument> arguments() const override {
     return {CommandArgument{.name = "command", .placeholder = "command", .required = false}};
   }
