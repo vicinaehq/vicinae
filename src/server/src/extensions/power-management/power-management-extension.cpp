@@ -1,7 +1,8 @@
 #include "power-management-extension.hpp"
 #include "command-controller.hpp"
+#include <qcontainerfwd.h>
 #include <qprocess.h>
-#include "common.hpp"
+#include "common/context.hpp"
 #include "preference.hpp"
 #include "single-view-command-context.hpp"
 #include "service-registry.hpp"
@@ -11,32 +12,66 @@
 class PowerManagementCommand : public BuiltinCallbackCommand {
 public:
   virtual bool requiresDefaultConfirmation() const { return true; }
-  bool supportsConfirmation() const { return true; }
+  virtual bool supportsCustomProgram() const { return true; }
 
   std::vector<Preference> preferences() const override {
-    if (!supportsConfirmation()) return {};
+    std::vector<Preference> preferences;
+
+    preferences.reserve(2);
 
     auto confirm = Preference::makeCheckbox("confirm", "Ask for confirmation");
-
     confirm.setDefaultValue(requiresDefaultConfirmation());
+    preferences.emplace_back(confirm);
 
-    return {confirm};
+    if (supportsCustomProgram()) {
+      auto program = Preference::makeText("customProgram");
+      program.setRequired(false);
+      program.setTitle("Custom program");
+      program.setDescription("Custom POSIX shell command to run instead of the default implementation");
+      preferences.emplace_back(program);
+    }
+
+    return preferences;
   }
 
   void execute(CommandController *controller) const final {
-    auto ctx = controller->context();
     auto &nav = controller->context()->navigation;
-    bool const shouldConfirm = controller->preferenceValues().value("confirm").toBool();
+    auto prefs = controller->preferenceValues();
+    bool const shouldConfirm = prefs.value("confirm").toBool();
+    std::optional<QString> customProgram;
+
+    if (auto prog = prefs.value("customProgram").toString(); !prog.isEmpty()) { customProgram = prog; }
+
+    auto handleConfirm = [this, ctx = controller->context(), customProgram]() {
+      auto toast = ctx->services->toastService();
+
+      if (customProgram) {
+        QProcess process;
+        QStringList args;
+
+        process.setProgram("/bin/sh");
+        args << "-c" << *customProgram;
+        process.setArguments(std::move(args));
+        process.start();
+        if (!process.waitForFinished(-1)) {
+          toast->failure("Failed to execute custom program " + *customProgram);
+        }
+      } else {
+        confirm(ctx);
+      }
+
+      ctx->navigation->closeWindow({.clearRootSearch = true});
+    };
 
     if (shouldConfirm) {
-      nav->confirmAlert("Are you sure", "High-impact operation, please confirm", [this, ctx, &nav]() {
-        confirm(ctx);
+      nav->confirmAlert("Are you sure", "High-impact operation, please confirm", [&nav, handleConfirm]() {
+        handleConfirm();
         nav->closeWindow({.clearRootSearch = true});
       });
       return;
     }
 
-    confirm(controller->context());
+    handleConfirm();
     nav->closeWindow({.clearRootSearch = true});
   }
 
@@ -47,50 +82,29 @@ public:
   virtual void confirm(const ApplicationContext *ctx) const = 0;
 };
 
-class LockCommand : public BuiltinCallbackCommand {
+class LockCommand : public PowerManagementCommand {
   QString id() const override { return "lock"; }
   QString name() const override { return "Lock Session"; }
   QString description() const override { return "Lock the current user session"; }
   std::vector<QString> keywords() const override { return {"lock"}; }
-
-  std::vector<Preference> preferences() const override {
-    auto program = Preference::makeText("customProgram");
-
-    program.setRequired(false);
-    program.setTitle("Custom locker");
-    program.setDescription("Path or name of the program to use to lock the current session. This is normally "
-                           "not needed if the system session locking mechanism was properly configured");
-
-    return {program};
-  }
+  bool requiresDefaultConfirmation() const override { return false; }
 
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("lock").setBackgroundTint(SemanticColor::Orange);
+    return ImageURL{BuiltinIcon::Lock}.setBackgroundTint(SemanticColor::Orange);
   }
 
-  void execute(CommandController *controller) const override {
-    auto ctx = controller->context();
+  void confirm(const ApplicationContext *ctx) const override {
     auto pm = ctx->services->powerManager();
     auto toast = ctx->services->toastService();
-    auto program = controller->preferenceValues().value("customProgram").toString();
 
-    if (!program.isEmpty()) {
-      QProcess process;
-
-      process.start(program);
-      if (!process.waitForFinished(-1)) { toast->failure("Failed to lock using custom program " + program); }
-    } else {
-      if (!pm->provider()->canLock()) {
-        toast->failure("System can't lock");
-        return;
-      }
-      if (!pm->provider()->lock()) {
-        toast->failure("Failed to lock");
-        return;
-      }
+    if (!pm->provider()->canLock()) {
+      toast->failure("System can't lock");
+      return;
     }
-
-    ctx->navigation->closeWindow({.clearRootSearch = true});
+    if (!pm->provider()->lock()) {
+      toast->failure("Failed to lock");
+      return;
+    }
   }
 };
 
@@ -104,7 +118,7 @@ class HibernateCommand : public PowerManagementCommand {
   std::vector<QString> keywords() const override { return {"disk", "suspend"}; }
   bool requiresDefaultConfirmation() const override { return true; }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("hard-drive").setBackgroundTint(SemanticColor::Orange);
+    return ImageURL{BuiltinIcon::HardDrive}.setBackgroundTint(SemanticColor::Orange);
   }
 
   void confirm(const ApplicationContext *ctx) const override {
@@ -129,7 +143,7 @@ class RebootCommand : public PowerManagementCommand {
   std::vector<QString> keywords() const override { return {"restart"}; }
   bool requiresDefaultConfirmation() const override { return true; }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("rotate-anti-clockwise").setBackgroundTint(SemanticColor::Orange);
+    return ImageURL{BuiltinIcon::RotateAntiClockwise}.setBackgroundTint(SemanticColor::Orange);
   }
 
   void confirm(const ApplicationContext *ctx) const override {
@@ -255,7 +269,10 @@ class LogOutCommand : public PowerManagementCommand {
     return "Terminate the current user session. If you simply want to lock your session you should use 'Lock "
            "Session' instead.";
   }
+  bool supportsCustomProgram() const override { return true; }
+
   std::vector<QString> keywords() const override { return {"logout"}; }
+
   ImageURL iconUrl() const override {
     return ImageURL::builtin("logout").setBackgroundTint(SemanticColor::Red);
   }
