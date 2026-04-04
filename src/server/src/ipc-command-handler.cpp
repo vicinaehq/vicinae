@@ -185,10 +185,13 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
       action->execute(&m_ctx);
     }
 
-    if (m_ctx.navigation->viewStackSize() > 1) m_ctx.navigation->setBackButtonVisibility(false);
-
     if (auto text = query.queryItemValue("fallbackText"); !text.isEmpty()) {
       m_ctx.navigation->setSearchText(text);
+    }
+
+    if (!m_ctx.navigation->isRootSearch() && m_ctx.navigation->activeCommand()->isView()) {
+      m_ctx.navigation->setBackButtonVisibility(false);
+      m_ctx.navigation->showWindow();
     }
 
     return {};
@@ -286,6 +289,11 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
 
           if (auto text = query.queryItemValue("fallbackText"); !text.isEmpty()) {
             m_ctx.navigation->setSearchText(text);
+          }
+
+          if (!m_ctx.navigation->isRootSearch() && m_ctx.navigation->activeCommand()->isView()) {
+            m_ctx.navigation->setBackButtonVisibility(false);
+            m_ctx.navigation->showWindow();
           }
 
           break;

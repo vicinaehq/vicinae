@@ -368,6 +368,7 @@ public:
   template <typename T> void replaceView() { replaceView(new T); }
 
   size_t viewStackSize() const;
+  bool isRootSearch() const;
   const ViewState *topState() const;
   ViewState *topState();
 
@@ -390,7 +391,6 @@ private:
   ViewState *findViewState(const BaseView *view);
   const ViewState *findViewState(const BaseView *view) const;
   const BaseView *topView() const;
-  bool isRootSearch() const;
 
   bool m_windowOpened = false;
   bool m_windowActivated = false;
