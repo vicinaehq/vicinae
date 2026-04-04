@@ -93,12 +93,12 @@ class ExtensionManager extends manager.ManagerService {
 		const stderrStream = fs.createWriteStream(stderrLog);
 
 		worker.stdout.on("data", async (buf: Buffer) => {
-			console.error(buf.toString());
+			// console.error(buf.toString());
 			stdoutStream.write(buf);
 		});
 
 		worker.stderr.on("data", async (buf: Buffer) => {
-			console.error(buf.toString());
+			// console.error(buf.toString());
 			stderrStream.write(buf);
 		});
 

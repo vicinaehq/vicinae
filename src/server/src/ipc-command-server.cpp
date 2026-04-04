@@ -19,7 +19,6 @@ void IpcCommandServer::IpcTransport::send(std::string_view data) {
     qWarning() << "IPC transport send called with null conn!";
     return;
   }
-  qDebug() << "IPC sending" << data.size() << "bytes";
   uint32_t size = data.size();
   conn->write(reinterpret_cast<const char *>(&size), sizeof(size));
   conn->write(data.data(), data.size());
@@ -185,9 +184,6 @@ void IpcCommandServer::processFrame(QLocalSocket *conn, QByteArrayView frame) {
   qDebug() << "IPC incoming:" << frame.toByteArray();
 
   m_ipcServer.route({frame.data(), static_cast<size_t>(frame.size())});
-
-  qDebug() << "IPC dispatch done, conn still valid:" << (conn != nullptr);
-
   m_service.setCallerInfo(nullptr);
   m_transport.conn = nullptr;
 }

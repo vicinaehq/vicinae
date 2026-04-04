@@ -158,7 +158,6 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
 
   connect(nav, &NavigationController::navigationStatusChanged, this,
           [this](const QString &title, const ImageURL &icon) {
-            qDebug() << "[NAV] title changed" << title;
             m_navigationTitle = title;
             m_navigationIcon = ImageUrl(icon);
             emit navigationStatusChanged();
