@@ -1,6 +1,6 @@
 #include "oauth-overlay-host.hpp"
 #include "view-utils.hpp"
-#include "ui/image/proto-url.hpp"
+#include "extension/services/tsapi-image.hpp"
 #include "navigation-controller.hpp"
 #include "overlay-controller/overlay-controller.hpp"
 #include "service-registry.hpp"
@@ -9,16 +9,14 @@
 #include "environment.hpp"
 #include <QTimer>
 
-OAuthOverlayHost::OAuthOverlayHost(const ApplicationContext *ctx,
-                                   const proto::ext::oauth::AuthorizeRequest &req, QObject *parent)
-    : QObject(parent), m_ctx(ctx), m_authorizeUrl(req.url().c_str()) {
+OAuthOverlayHost::OAuthOverlayHost(const ApplicationContext *ctx, const tsapi::AuthorizeRequest &req,
+                                   QObject *parent)
+    : QObject(parent), m_ctx(ctx), m_authorizeUrl(QString::fromStdString(req.url)) {
 
-  const auto &client = req.client();
+  m_providerName = QString::fromStdString(req.client.name);
+  m_providerDescription = QString::fromStdString(req.client.description);
 
-  m_providerName = client.name().c_str();
-  m_providerDescription = client.description().c_str();
-
-  if (client.has_icon()) { m_providerIconSource = qml::imageSourceFor(ProtoUrl::parse(client.icon())); }
+  if (req.client.icon) { m_providerIconSource = qml::imageSourceFor(TsapiImage::parse(*req.client.icon)); }
 }
 
 QUrl OAuthOverlayHost::qmlComponentUrl() const {

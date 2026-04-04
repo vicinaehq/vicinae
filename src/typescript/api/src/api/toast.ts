@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
-import { bus } from "./bus";
 import type { Keyboard } from "./keyboard";
-import * as ui from "./proto/ui";
+import type * as api from "./proto/api";
+import { getClient } from "./client";
 
 /**
  * A Toast with a certain style, title, and message.
@@ -37,10 +37,10 @@ export class Toast {
 	} = {};
 	private id: string;
 
-	private styleMap: Record<Toast.Style, ui.ToastStyle> = {
-		[Toast.Style.Success]: ui.ToastStyle.Success,
-		[Toast.Style.Failure]: ui.ToastStyle.Error,
-		[Toast.Style.Animated]: ui.ToastStyle.Dynamic,
+	private styleMap: Record<Toast.Style, api.ToastStyle> = {
+		[Toast.Style.Success]: "Success",
+		[Toast.Style.Failure]: "Error",
+		[Toast.Style.Animated]: "Dynamic",
 	};
 
 	/**
@@ -123,12 +123,12 @@ export class Toast {
 	*/
 
 	async update() {
-		await bus.request("ui.showToast", {
-			id: this.id,
-			title: this.title,
-			message: this.message ?? '',
-			style: this.styleMap[this.style],
-		});
+		await getClient().UI.showToast(
+			this.id,
+			this.title,
+			this.message ?? "",
+			this.styleMap[this.style],
+		);
 	}
 
 	/**
@@ -137,40 +137,7 @@ export class Toast {
 	 * @returns A Promise that resolves when the toast is shown.
 	 */
 	async show(): Promise<void> {
-		const payload: SerializedShowToastPayload = {
-			title: this.options.title,
-			message: this.options.message,
-			style: this.options.style,
-		};
-
-		/*
-		if (this.options.primaryAction && this.callbacks.primary) {
-			const { title, shortcut } = this.options.primaryAction;
-
-			payload.primaryAction = {
-				title,
-				shortcut,
-				onAction: this.callbacks.primary,
-			};
-		}
-
-		if (this.options.secondaryAction && this.callbacks.secondary) {
-			const { title, shortcut } = this.options.secondaryAction;
-
-			payload.secondaryAction = {
-				title,
-				shortcut,
-				onAction: this.callbacks.secondary,
-			};
-		}
-		*/
-
-		await bus.request("ui.showToast", {
-			id: this.id,
-			title: payload.title,
-			message: payload.message ?? '',
-			style: this.styleMap[payload.style ?? Toast.Style.Success],
-		});
+		this.update();
 	}
 
 	/**
@@ -179,7 +146,7 @@ export class Toast {
 	 * @returns A Promise that resolves when toast is hidden.
 	 */
 	async hide(): Promise<void> {
-		await bus.request("ui.hideToast", { id: this.id });
+		await getClient().UI.hideToast(this.id);
 	}
 }
 

@@ -4,6 +4,7 @@ RM								:= rm
 TAG 							:= $(shell git describe --tags --abbrev=0)
 APPIMAGE_BUILD_ENV_DIR			:= ./scripts/runners/appimage/
 APPIMAGE_BUILD_ENV_IMAGE_TAG	:= vicinae/appimage-build-env
+FIGURA_CC						:= $(BIN_DIR)/figura
 
 release:
 	cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -B $(BUILD_DIR)
@@ -21,8 +22,8 @@ preview:
 .PHONY: preview
 
 debug:
-	cmake -G Ninja -DLTO=OFF -DENABLE_PREVIEW_FEATURES=ON -DENABLE_SANITIZERS=ON -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
-	cmake --build $(BUILD_DIR)
+	cmake -GNinja -DLTO=OFF -DENABLE_PREVIEW_FEATURES=ON -DENABLE_SANITIZERS=ON -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
+	cmake --build $(BUILD_DIR) --parallel
 .PHONY: debug
 
 debug-tidy:
@@ -60,7 +61,7 @@ static:
 # but the resulting binary will be more portable across different distros, especially the ones
 # shipping older packages.
 portable:
-	cmake -G Ninja -DUSE_SYSTEM_PROTOBUF=OFF -DUSE_SYSTEM_ABSEIL=OFF -DUSE_SYSTEM_CMARK_GFM=OFF -B $(BUILD_DIR)
+	cmake -G Ninja -DUSE_SYSTEM_CMARK_GFM=OFF -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)
 .PHONY: portable
 
@@ -137,6 +138,13 @@ clean:
 	$(RM) -rf ./scripts/.tmp
 	$(RM) -rf ./src/lib/*/build
 .PHONY: clean
+
+
+figen:
+	$(FIGURA_CC) compile ./figura/tsapi.fig --client typescript --output ./src/typescript/api/src/api/proto/api.ts
+	$(FIGURA_CC) compile ./figura/tsapi.fig --client typescript --output ./src/typescript/extension-manager/src/proto/api.ts
+.PHONY:
+	figen
 
 re: clean release
 .PHONY: re

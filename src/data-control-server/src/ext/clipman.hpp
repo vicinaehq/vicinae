@@ -9,16 +9,20 @@
 #include <wayland-util.h>
 #include "data-control-client.hpp"
 #include "wayland/display.hpp"
+#include "clipboard-protocol.hpp"
+
+using SelectionWriter = void (*)(const clipboard_proto::Selection &);
 
 class ExtClipman : public WaylandDisplay, public WaylandRegistry::Listener, public ExtDataDevice::Listener {
 
 public:
   virtual ~ExtClipman() = default;
-  static ExtClipman *instance();
+  static ExtClipman *instance(SelectionWriter writer = nullptr);
   void start();
-  ExtClipman();
+  ExtClipman(SelectionWriter writer);
 
 private:
+  SelectionWriter m_writer;
   std::unique_ptr<WaylandRegistry> _registry;
   std::unique_ptr<ExtDataControlManager> _dcm;
   std::unique_ptr<WaylandSeat> _seat;

@@ -1,165 +1,60 @@
 #include "extension-command-runtime.hpp"
 #include "common.hpp"
-#include "extension/extension-navigation-controller.hpp"
-#include "qml/extension-error-view-host.hpp"
-#include "extension/requests/app-request-router.hpp"
-#include "extension/requests/clipboard-request-router.hpp"
-#include "extension/requests/storage-request-router.hpp"
-#include "extension/requests/ui-request-router.hpp"
-#include "extension/requests/file-search-request-router.hpp"
-#include "extension/requests/wm-router.hpp"
-#include "extension/requests/oauth-router.hpp"
-#include "extension/requests/command-request-router.hpp"
-#include "proto/manager.pb.h"
+#include "common/context.hpp"
+#include "extension-error-view-host.hpp"
+#include "extension/services/application-service.hpp"
+#include "extension/services/clipboard-service.hpp"
+#include "extension/services/command-service.hpp"
+#include "extension/services/event-core-service.hpp"
+#include "extension/services/file-search-service.hpp"
+#include "extension/services/oauth-service.hpp"
+#include "extension/services/storage-service.hpp"
+#include "extension/services/ui-service.hpp"
+#include "extension/services/wm-service.hpp"
+#include "generated/tsapi.hpp"
+#include "glaze-qt.hpp"
 #include "service-registry.hpp"
 #include "services/asset-resolver/asset-resolver.hpp"
 #include <QString>
-#include <exception>
-#include <qurlquery.h>
+#include <glaze/json/generic.hpp>
+#include <qfuturewatcher.h>
+#include <qlogging.h>
+#include <ranges>
 #include "services/root-item-manager/root-item-manager.hpp"
-#include "utils/utils.hpp"
-
-proto::ext::extension::Response *ExtensionCommandRuntime::makeErrorResponse(const QString &errorText) {
-  auto res = new proto::ext::extension::Response;
-  auto err = new proto::ext::common::ErrorResponse;
-
-  err->set_error_text(errorText.toStdString());
-  res->set_allocated_error(err);
-
-  return res;
-}
-
-PromiseLike<proto::ext::extension::Response *>
-ExtensionCommandRuntime::dispatchRequest(ExtensionRequest *request) {
-  using Request = proto::ext::extension::RequestData;
-  auto &data = request->requestData();
-
-  switch (data.payload_case()) {
-  case Request::kUi:
-    return m_uiRouter->route(data.ui());
-  case Request::kStorage:
-    return m_storageRouter->route(data.storage());
-  case Request::kApp:
-    return m_appRouter->route(data.app());
-  case Request::kClipboard:
-    return m_clipboardRouter->route(data.clipboard());
-  case Request::kFileSearch:
-    return m_fileSearchRouter->route(data.file_search());
-  case Request::kWm:
-    return m_wmRouter->route(data.wm());
-  case Request::kCommand:
-    return m_commandRouter->route(data.command());
-  case Request::kOauth:
-    return m_oauthRouter->route(data.oauth());
-  default:
-    break;
-  }
-
-  qDebug() << request->requestData().DebugString();
-
-  return makeErrorResponse("Unhandled top level request");
-}
-
-void ExtensionCommandRuntime::handleRequest(ExtensionRequest *req) {
-  if (req->sessionId() != m_sessionId) return;
-
-  auto request = std::shared_ptr<ExtensionRequest>(req);
-
-  try {
-    auto result = dispatchRequest(request.get());
-
-    if (auto res = std::get_if<proto::ext::extension::Response *>(&result)) {
-      if (!*res) {
-        request->respondWithError("No handler for this request");
-        return;
-      }
-
-      request->respond(*res);
-      return;
-    }
-
-    auto future = std::get<QFuture<proto::ext::extension::Response *>>(result);
-    auto watcher = std::shared_ptr<ResponseWatcher>(new ResponseWatcher, QObjectDeleter{});
-
-    m_pendingFutures.insert({request, watcher});
-
-    connect(watcher.get(), &ResponseWatcher::finished, this, [this, watcher, request]() {
-      m_pendingFutures.erase(request);
-
-      if (watcher->isCanceled()) {
-        request->respondWithError("Failed to send response");
-        return;
-      }
-
-      auto res = watcher->result();
-
-      if (!res) {
-        request->respondWithError("No handler for this request");
-        return;
-      }
-
-      request->respond(res);
-    });
-
-    watcher->setFuture(future);
-
-  } catch (const std::exception &except) { request->respondWithError(except.what()); }
-}
-
-void ExtensionCommandRuntime::handleCrash(const proto::ext::extension::CrashEventData &crash) {
-  qCritical() << "Got crash" << crash.text().c_str();
-  auto &nav = context()->navigation;
-
-  nav->popToRoot();
-  nav->pushView(new ExtensionErrorViewHost(QString::fromStdString(crash.text())));
-  nav->setNavigationTitle(QString("%1 - Crash handler").arg(m_command->name()));
-  nav->setNavigationIcon(m_command->iconUrl());
-}
-
-void ExtensionCommandRuntime::handleEvent(const ExtensionEvent &event) {
-  using Event = proto::ext::extension::Event;
-
-  switch (event.data()->payload_case()) {
-  case Event::kCrash: {
-    handleCrash(event.data()->crash());
-    return;
-  }
-  case Event::kGeneric: {
-    handleGenericEvent(event.data()->generic());
-    return;
-  }
-  default:
-    break;
-  }
-}
+#include "extension/manager/extension-manager.hpp"
+#include "vicinae.hpp"
+#include "generated/manager.hpp"
 
 void ExtensionCommandRuntime::initialize() {
   auto manager = context()->services->extensionManager();
 
+  m_bus = std::make_unique<ExtensionManagerBus>(*manager);
+  m_logger = std::make_unique<ExtensionLogger>();
+  m_transport = std::make_unique<tsapi::RpcTransport>(*m_bus);
+
   RelativeAssetResolver::instance()->addPath(m_command->assetPath());
 
-  m_navigation = std::make_unique<ExtensionNavigationController>(m_command, context()->navigation.get(),
-                                                                 context()->services->extensionManager());
   m_isDevMode = manager->hasDevelopmentSession(m_command->extensionId());
-  m_navigation->setDevMode(m_isDevMode);
-  m_uiRouter = std::make_unique<UIRequestRouter>(m_navigation.get(), *context()->services->toastService());
-  m_commandRouter =
-      std::make_unique<CommandRequestRouter>(m_navigation.get(), context()->services->rootItemManager());
-  m_fileSearchRouter = std::make_unique<FileSearchRequestRouter>(*context()->services->fileService());
 
   QString const storageNamespace = QString("%1:data").arg(m_command->uniqueId().provider.c_str());
 
-  m_storageRouter =
-      std::make_unique<StorageRequestRouter>(context()->services->localStorage(), storageNamespace);
-  m_appRouter = std::make_unique<AppRequestRouter>(*context()->services->appDb());
-  m_clipboardRouter = std::make_unique<ClipboardRequestRouter>(*context()->services->clipman(),
-                                                               *context()->services->pasteService());
-  m_wmRouter = std::make_unique<WindowManagementRouter>(*context()->services->windowManager(),
-                                                        *context()->services->appDb());
-  m_oauthRouter = std::make_unique<OAuthRouter>(m_command->extensionId(), *context());
+  auto services = context()->services;
+  auto &ctx = *context();
 
-  connect(manager, &ExtensionManager::extensionRequest, this, &ExtensionCommandRuntime::handleRequest);
-  connect(manager, &ExtensionManager::extensionEvent, this, &ExtensionCommandRuntime::handleEvent);
+  auto *eventCore = new ExtEventCoreService(*m_transport);
+  auto *app = new ExtApplicationService(*m_transport, *services->appDb());
+  auto *ui = new ExtUIService(*m_transport, context()->navigation.get(), m_command, eventCore,
+                              *services->toastService());
+  auto *wm = new ExtWindowManagementService(*m_transport, *services->windowManager(), *services->appDb());
+  auto *clipboard = new ExtClipboardService(*m_transport, *services->clipman(), *services->pasteService());
+  auto *storage = new ExtStorageService(*m_transport, *services->localStorage(), storageNamespace);
+  auto *fileSearch = new ExtFileSearchService(*m_transport, *services->fileService());
+  auto *command = new ExtCommandService(*m_transport, m_command, services->rootItemManager());
+  auto *oauth = new ExtOAuthService(*m_transport, m_command->extensionId(), ctx);
+
+  m_server =
+      new tsapi::Server(*m_transport, app, ui, wm, clipboard, storage, fileSearch, command, oauth, eventCore);
+  m_server->setLogger(m_logger.get());
 }
 
 void ExtensionCommandRuntime::load(const LaunchProps &props) {
@@ -168,78 +63,83 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
   auto rootItemManager = context()->services->rootItemManager();
   auto preferenceValues = rootItemManager->getPreferenceValues(m_command->uniqueId());
   auto manager = context()->services->extensionManager();
+  manager::LoadOptions opts;
 
   if (m_command->mode() == CommandModeView) {
     // We push the first view immediately, waiting for the initial render to come
     // in and "hydrate" it.
-    m_navigation->pushView();
+    m_server->UI()->pushView();
   }
-
-  auto resolveCommandEnv = [&]() {
-    using namespace proto::ext::manager;
-    return m_isDevMode ? CommandEnv::Development : CommandEnv::Production;
-  };
 
   if (m_isDevMode) {
     context()->navigation->setNavigationSuffixIcon(ImageURL::builtin("hammer").setFill(SemanticColor::Green));
-  }
-
-  auto load = new proto::ext::manager::ManagerLoadCommand;
-  auto payload = new proto::ext::manager::RequestData;
-
-  load->set_entrypoint(m_command->manifest().entrypoint);
-  load->set_env(resolveCommandEnv());
-  load->set_extension_id(m_command->extensionId().toStdString());
-  load->set_vicinae_path(Omnicast::dataDir());
-  load->set_command_name(m_command->commandId().toStdString());
-  load->set_extension_name(m_command->repositoryName().toStdString());
-  load->set_owner_or_author_name(m_command->author().toStdString());
-
-  if (m_command->mode() == CommandMode::CommandModeView) {
-    load->set_mode(proto::ext::manager::CommandMode::View);
+    opts.env = manager::CommandEnv::Development;
   } else {
-    load->set_mode(proto::ext::manager::CommandMode::NoView);
+    opts.env = manager::CommandEnv::Production;
   }
 
-  load->set_is_raycast(m_command->isRaycast());
+  opts.entrypoint = m_command->manifest().entrypoint;
+  opts.mode = m_command->mode() == CommandMode::CommandModeView ? manager::CommandMode::View
+                                                                : manager::CommandMode::NoView;
+  opts.extension_id = m_command->extensionId().toStdString();
+  opts.vicinae_path = Omnicast::dataDir();
+  opts.command_name = m_command->commandId().toStdString();
+  opts.extension_name = m_command->repositoryName().toStdString();
+  opts.owner_or_author_name = m_command->author().toStdString();
+  opts.is_raycast = m_command->isRaycast();
+  opts.preferences = qJsonObjectToGlazeGeneric(preferenceValues);
+  opts.arguments = props.arguments |
+                   std::views::transform([](auto &&pair) -> std::pair<std::string, std::string> {
+                     return {pair.first.toStdString(), pair.second.toStdString()};
+                   }) |
+                   std::ranges::to<std::unordered_map<std::string, std::string>>();
 
-  auto preferences = load->mutable_preference_values();
+  auto watcher = new QFutureWatcher<std::expected<manager::LoadResponse, std::string>>(this);
 
-  for (const auto &key : preferenceValues.keys()) {
-    auto value = preferenceValues.value(key);
-
-    preferences->insert({key.toStdString(), transformJsonValueToProto(value)});
-  }
-
-  auto arguments = load->mutable_argument_values();
-  for (const auto &[key, value] : props.arguments) {
-    arguments->insert({key.toStdString(), transformJsonValueToProto(value)});
-  }
-
-  payload->set_allocated_load(load);
-
-  auto loadRequest = manager->requestManager(payload);
-
-  connect(loadRequest, &ManagerRequest::finished, this,
-          [this, loadRequest](const proto::ext::manager::ResponseData &data) {
-            m_sessionId = QString::fromStdString(data.load().session_id());
-            m_navigation->setSessionId(m_sessionId);
-            loadRequest->deleteLater();
+  connect(manager, &ExtensionManager::extensionMessageReceived, this,
+          [this](const std::string &sessionId, std::string_view data) {
+            if (sessionId != m_sessionId) return; // not for us
+            m_server->route(data);
           });
+
+  connect(manager, &ExtensionManager::extensionCrashed, this,
+          [this](const std::string &sessionId, const std::string &reason) {
+            if (sessionId != m_sessionId) return;
+
+            qCritical() << "Got crash" << reason;
+            auto &nav = context()->navigation;
+
+            nav->popToRoot();
+            nav->pushView(new ExtensionErrorViewHost(QString::fromStdString(reason)));
+            nav->setNavigationTitle(QString("%1 - Crash handler").arg(m_command->name()));
+            nav->setNavigationIcon(m_command->iconUrl());
+          });
+
+  connect(watcher, &QFutureWatcherBase::finished, this, [this, watcher]() {
+    if (!watcher->isCanceled()) {
+      auto res = watcher->result();
+
+      if (!res) {
+        qWarning() << "Failed to load extension" << res.error();
+      } else {
+        m_sessionId = res->session_id;
+        m_bus->setSessionId(m_sessionId);
+      }
+    }
+
+    watcher->deleteLater();
+  });
+
+  watcher->setFuture(manager->client().manager()->load(opts));
 }
 
 void ExtensionCommandRuntime::unload() {
   RelativeAssetResolver::instance()->removePath(m_command->assetPath());
   auto manager = context()->services->extensionManager();
-  auto toast = context()->services->toastService();
+
+  manager->client().manager()->unload(m_sessionId);
 
   context()->navigation->setNavigationSuffixIcon(std::nullopt);
-  manager->unloadCommand(m_sessionId);
-  toast->clear();
-
-  for (const auto &[_, watcher] : m_pendingFutures) {
-    watcher->cancel();
-  }
 }
 
 ExtensionCommandRuntime::ExtensionCommandRuntime(const std::shared_ptr<ExtensionCommand> &command)

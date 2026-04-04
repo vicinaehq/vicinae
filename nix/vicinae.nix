@@ -1,5 +1,4 @@
 {
-  abseil-cpp,
   cmake,
   cmark-gfm,
   fetchNpmDeps,
@@ -11,7 +10,6 @@
   nodejs,
   npmHooks,
   pkg-config,
-  protobuf,
   qt6,
   gcc15Stdenv,
   wayland,
@@ -35,12 +33,12 @@ gcc15Stdenv.mkDerivation (finalAttrs: {
 
   apiDeps = fetchNpmDeps {
     src = "${finalAttrs.src}/src/typescript/api";
-    hash = "sha256-Tr+m8MLaWR8wq+cYpQwZTIzRt2tgDIyc8vVda2x+k4k=";
+    hash = "sha256-lIXhMBJHujs6d9fXEK8Q+sfjkKyFJEMEtKrQorkfPeU=";
   };
 
   extensionManagerDeps = fetchNpmDeps {
     src = "${finalAttrs.src}/src/typescript/extension-manager";
-    hash = "sha256-8ONawCmKxHwWS0Tx04MCpQmtWfIpJYU8RcqMtQiT/Sw=";
+    hash = "sha256-gpbS6MIHOSuHIfd4zDEB4EcMi9LHk9tPdnxwT0S0nbA=";
   };
 
   cmakeFlags = lib.mapAttrsToList lib.cmakeFeature {
@@ -63,12 +61,10 @@ gcc15Stdenv.mkDerivation (finalAttrs: {
     ninja
     nodejs
     pkg-config
-    protobuf
     qt6.wrapQtAppsHook
   ];
 
   buildInputs = [
-    abseil-cpp
     cmark-gfm
     kdePackages.layer-shell-qt
     kdePackages.qtkeychain
@@ -76,7 +72,6 @@ gcc15Stdenv.mkDerivation (finalAttrs: {
     libqalculate
     minizip
     nodejs
-    protobuf
     qt6.qtbase
     qt6.qtdeclarative
     qt6.qtsvg

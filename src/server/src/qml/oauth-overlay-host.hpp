@@ -1,6 +1,6 @@
 #pragma once
 #include "common/context.hpp"
-#include "proto/oauth.pb.h"
+#include "generated/tsapi.hpp"
 #include <QObject>
 #include <QUrl>
 
@@ -17,7 +17,7 @@ signals:
   void stateChanged();
 
 public:
-  OAuthOverlayHost(const ApplicationContext *ctx, const proto::ext::oauth::AuthorizeRequest &req,
+  OAuthOverlayHost(const ApplicationContext *ctx, const tsapi::AuthorizeRequest &req,
                    QObject *parent = nullptr);
 
   QUrl qmlComponentUrl() const;

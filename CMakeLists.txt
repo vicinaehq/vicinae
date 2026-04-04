@@ -35,8 +35,6 @@ option(
 option(WAYLAND_LAYER_SHELL "Enable support for the layer shell Wayland protocol" ON)
 option(TYPESCRIPT_EXTENSIONS "Enable support for extensions built with React/Typescript (no browser involved)" ON)
 option(PREFER_STATIC_LIBS "When available, link to a library statically instead of dynamically" OFF)
-option(USE_SYSTEM_PROTOBUF "Use system protobuf instead of building it from source" ON)
-option(USE_SYSTEM_ABSEIL "Use system abseil (libabsl) instead of building it from source" ON)
 option(USE_SYSTEM_CMARK_GFM "Use system cmark-gfm (github's fork of cmark) instead of building it from source" ON)
 option(USE_SYSTEM_LAYER_SHELL "Use system qt layer shell instead of building it from source" ON)
 option(USE_SYSTEM_KF6 "Use system KDE syntax highlighting library for markdown code block highlight support" ON)
@@ -78,7 +76,7 @@ if (APPLE)
 endif()
 
 include_directories(
-    ${CMAKE_BINARY_DIR}/generated  # For version.h
+    ${CMAKE_BINARY_DIR}
 )
 
 add_subdirectory(src/browser-extension)
@@ -86,23 +84,18 @@ add_subdirectory(src/snippet)
 add_subdirectory(${LIB_DIR}/script-command)
 add_subdirectory(${LIB_DIR}/emoji)
 add_subdirectory(${LIB_DIR}/xdgpp)
-add_subdirectory(${LIB_DIR}/vicinae-ipc)
 add_subdirectory(${LIB_DIR}/common)
 add_subdirectory(${LIB_DIR}/linux-utils)
+add_subdirectory(${LIB_DIR}/figura)
 
-set(PROTO_DIR ${CMAKE_SOURCE_DIR}/src/proto)
+set(FIGURA_DIR ${CMAKE_SOURCE_DIR}/figura)
 
-if (USE_SYSTEM_PROTOBUF)
-	set(USE_SYSTEM_ABSEIL ON)
-endif()
 
 # End of Vicinae build configuration options
 
 if (PREFER_STATIC_LIBS)
 	set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".so" ".dylib")
 	set(BUILD_SHARED_LIBS OFF)
-	set(USE_SYSTEM_PROTOBUF OFF)
-	set(USE_SYSTEM_ABSEIL OFF)
 	set(USE_SYSTEM_CMARK_GFM OFF)
 	set(USE_SYSTEM_LAYER_SHELL OFF)
 	set(USE_SYSTEM_QT_KEYCHAIN OFF)
@@ -156,22 +149,7 @@ if (NOT USE_SYSTEM_CMARK_GFM)
   set(CMARK_EXT_LIBRARY "libcmark-gfm-extensions_static")
 endif()
 
-if (NOT USE_SYSTEM_ABSEIL)
-	include(Abseil)
-	checkout_abseil()
-endif()
-
-if (NOT USE_SYSTEM_PROTOBUF)
-	include(Protobuf)
-	checkout_protobuf()
-	set(COMMON_PROTO_DIR ${CMAKE_CURRENT_BINARY_DIR}/_deps/protobuf-src/src)
-endif()
-
 find_package(glaze)
-
-set(CMAKE_FIND_PACKAGE_PREFER_CONFIG TRUE)
-find_package(Protobuf)
-unset(CMAKE_FIND_PACKAGE_PREFER_CONFIG)
 
 if (TYPESCRIPT_EXTENSIONS)
 	add_subdirectory(src/typescript)

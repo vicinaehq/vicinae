@@ -4,9 +4,9 @@
 #include "script.hpp"
 #include "common/common.hpp"
 #include "state.hpp"
-#include "version.h"
+#include "generated/version.h"
 #include "theme.hpp"
-#include "vicinae-ipc/client.hpp"
+#include "ipc-client.hpp"
 #include "server.hpp"
 #include <filesystem>
 #include <ranges>
@@ -139,8 +139,9 @@ public:
   }
 
   bool run(CLI::App *) override {
-    const auto res = ipc::CliClient::oneshot<ipc::LaunchApp>(
-        {.appId = m_appId, .args = m_args, .newInstance = m_newInstance});
+    const auto res = cli::IpcClient::connect().and_then([&](cli::IpcClient client) {
+      return client.launchApp({.appId = m_appId, .args = m_args, .newInstance = m_newInstance});
+    });
 
     if (!res) {
       std::println(std::cerr, "Failed to launch app: {}", res.error());
@@ -174,7 +175,7 @@ class CliPing : public AbstractCommandLineCommand {
   std::string description() const override { return "Ping the vicinae server"; }
 
   bool run(CLI::App *) override {
-    const auto res = ipc::CliClient::oneshot<ipc::Ping>({});
+    const auto res = cli::IpcClient::connect().and_then([](cli::IpcClient client) { return client.ping(); });
 
     if (!res) {
       std::println(std::cerr, "Failed to ping: {}", res.error());
@@ -192,11 +193,10 @@ class ToggleCommand : public AbstractCommandLineCommand {
   void setup(CLI::App *app) override { app->add_option("-q,--query", m_query, "Set search query"); }
 
   bool run(CLI::App *) override {
-    ipc::CliClient::DeeplinkOptions opts;
+    std::vector<std::pair<std::string, std::string>> query;
+    if (m_query) query = {{"fallbackText", m_query.value()}};
 
-    if (m_query) { opts.query = {{"fallbackText", m_query.value()}}; }
-
-    if (auto res = ipc::CliClient::deeplink("vicinae://toggle", opts); !res) {
+    if (auto res = cli::IpcClient::sendDeeplink("vicinae://toggle", query); !res) {
       std::println(std::cerr, "Failed to toggle: {}", res.error());
       return false;
     }
@@ -213,11 +213,10 @@ class OpenCommand : public AbstractCommandLineCommand {
   void setup(CLI::App *app) override { app->add_option("-q,--query", m_query, "Set search query"); }
 
   bool run(CLI::App *) override {
-    ipc::CliClient::DeeplinkOptions opts;
+    std::vector<std::pair<std::string, std::string>> query;
+    if (m_query) query = {{"fallbackText", m_query.value()}};
 
-    if (m_query) { opts.query = {{"fallbackText", m_query.value()}}; }
-
-    if (auto res = ipc::CliClient::deeplink("vicinae://open", opts); !res) {
+    if (auto res = cli::IpcClient::sendDeeplink("vicinae://open", query); !res) {
       std::println(std::cerr, "Failed to open: {}", res.error());
       return false;
     }
@@ -233,7 +232,7 @@ class CloseCommand : public AbstractCommandLineCommand {
   std::string description() const override { return "Close the vicinae window"; }
 
   bool run(CLI::App *) override {
-    if (auto res = ipc::CliClient::deeplink(std::format("vicinae://close")); !res) {
+    if (auto res = cli::IpcClient::sendDeeplink("vicinae://close"); !res) {
       std::println(std::cerr, "Failed to close: {}", res.error());
       return false;
     }
@@ -264,7 +263,8 @@ class DMenuCommand : public AbstractCommandLineCommand {
   bool run(CLI::App *) override {
     m_req.rawContent = vicinae::slurp(std::cin);
 
-    const auto res = ipc::CliClient::oneshot<ipc::DMenu>(m_req);
+    const auto res =
+        cli::IpcClient::connect().and_then([&](cli::IpcClient client) { return client.dmenu(m_req); });
 
     if (!res) {
       std::println(std::cerr, "Failed to invoke dmenu: {}", res.error());
@@ -277,7 +277,7 @@ class DMenuCommand : public AbstractCommandLineCommand {
   }
 
 private:
-  ipc::DMenu::Request m_req;
+  ipc::DMenuRequest m_req;
 };
 
 class VersionCommand : public AbstractCommandLineCommand {
@@ -304,7 +304,7 @@ public:
   }
 
   bool run(CLI::App *) override {
-    if (const auto result = ipc::CliClient::deeplink(link); !result) {
+    if (const auto result = cli::IpcClient::sendDeeplink(link); !result) {
       std::println(std::cerr, "Failed to execute deeplink: {}", result.error());
       return false;
     }
@@ -338,28 +338,6 @@ int CommandLineApp::run(int ac, char **av) {
     return 0;
   }
 
-  if (std::string_view{av[1]} == "server") {
-    const auto paths = vicinae::helperProgramCandidates("vicinae-server");
-    std::error_code ec;
-
-    for (const auto &path : paths) {
-      if (std::filesystem::is_regular_file(path, ec)) {
-        std::println(std::cerr, "Starting vicinae server executable at {}", path.c_str());
-        if (execv(path.c_str(), av) != 0) {
-          std::println(std::cerr, "Failed to exec vicinae-server: {}", strerror(errno));
-          return 1;
-        }
-      }
-    }
-
-    const auto candidates = paths | std::views::transform([](auto &&t) { return t.string(); }) |
-                            std::views::join_with('\n') | std::ranges::to<std::string>();
-
-    std::println(std::cerr, "Could not find vicinae-server binary. Tried the following paths, in order:\n{}",
-                 candidates);
-    return 1;
-  }
-
   // we still support direct deeplink usage
   // i.e vicinae vicinae://extensions/vicinae/clipboard/history
   if (ac == 2) {
@@ -371,7 +349,7 @@ int CommandLineApp::run(int ac, char **av) {
         std::ranges::any_of(std::initializer_list{"vicinae", "raycast", "com.raycast"}, pred);
 
     if (hasScheme) {
-      if (auto res = ipc::CliClient::deeplink(arg, {}); !res) {
+      if (auto res = cli::IpcClient::sendDeeplink(arg); !res) {
         std::println(std::cerr, "Deeplink execution failed: {}", res.error());
         return 1;
       }

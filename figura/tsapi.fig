@@ -1,0 +1,262 @@
+// extension (client) -> vicinae (server)
+// this is the definition of the typescript extension API
+// //e
+
+struct Application {
+  id: string;
+  name: string;
+  icon?: string;
+  path: string;
+};
+
+struct RunInTerminalPayload {
+  cmdline: string[];
+  hold: bool;
+  appId?: string;
+  workingDirectory?: string;
+  title?: string;
+};
+
+service Application {
+  fn list(target?: string) => Application[];
+  fn open(target: string, appId?: string) => void;
+  fn getDefault(target: string) => Application;
+  fn showInFileBrowser(target: string, select: bool) => void;
+  fn runInTerminal(opts: RunInTerminalPayload) => bool;
+};
+
+struct ThemedImageSource {
+  light?: string;
+  dark?: string;
+};
+
+struct ImageSource {
+  raw?: string;
+  themed?: ThemedImageSource;
+}
+
+struct DynamicColor {
+  light: string;
+  dark: string;
+  adjustContrast?: bool; // not used for now
+};
+
+enum ImageMask {
+  None,
+  Circle,
+  RoundedRectangle
+};
+
+struct ColorLike {
+  raw?: string;
+  dynamic?: DynamicColor;
+};
+
+struct Image {
+  source: ImageSource;
+  fallback?: ImageSource;
+  mask?: ImageMask;
+  tintColor?: ColorLike;
+};
+
+// UI Service
+
+enum ToastStyle {
+  Success,
+  Info,
+  Warning,
+  Error,
+  Dynamic
+};
+
+enum PopToRootType {
+  Default,
+  Immediate,
+  Suspended
+};
+
+enum ConfirmAlertActionStyle {
+  Default,
+  Destructive,
+  Cancel
+};
+
+struct ConfirmAlertAction {
+  title: string;
+  style: ConfirmAlertActionStyle;
+};
+
+struct ConfirmAlertPayload {
+  title: string;
+  description: string;
+  primaryAction: ConfirmAlertAction;
+  dismissAction: ConfirmAlertAction;
+  rememberUserChoice: bool;
+  icon?: Image;
+};
+
+service UI {
+  fn render(json: string) => void;
+  fn showToast(id: string, title: string, message: string, style: ToastStyle) => void;
+  fn updateToast(id: string, title: string) => void;
+  fn hideToast(id: string) => void;
+  fn showHud(text: string, clear_root: bool, popToRoot: PopToRootType) => void;
+  fn closeMainWindow(clearRoot: bool, popToRoot: PopToRootType) => void;
+  fn popToRoot(clearSearchBar: bool) => void;
+
+  fn confirmAlert(payload: ConfirmAlertPayload) => bool;
+  
+  fn pushView() => void;
+  fn popView() => void;
+
+  fn setSearchText(text: string) => void;
+  fn getSelectedText() => string;
+
+  event viewPoped();
+  event viewPushed();
+};
+
+// WindowManagement
+
+struct Rect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+struct Window {
+  id: string;
+  title: string;
+  workspaceId: string;
+  active: bool;
+  fullscreen: bool;
+  bounds: Rect;
+  app?: Application;
+};
+
+struct Screen {
+  name: string;
+  model: string;
+  make: string;
+  serial?: string;
+  bounds: Rect;
+};
+
+struct Workspace {
+  id: string;
+  name: string;
+  active: bool;
+  fullscreen: bool;
+  monitor: string;
+};
+
+service WindowManagement {
+  fn focusWindow(winId: string) => bool;
+  fn getActiveWindow() => Window;
+  fn getActiveWorkspace() => Workspace;
+  fn getWindows(workspaceId?: string) => Window[];
+  fn getScreens() => Screen[];
+  fn getWorkspaces() => Workspace[];
+  fn setWindowBounds(winId: string, bounds: Rect) => bool;
+};
+
+// Clipboard
+
+struct ClipboardContent {
+  text?: string;
+  html?: string;
+  path?: string;
+};
+
+struct ClipboardOptions {
+  concealed: bool;
+};
+
+service Clipboard {
+  fn copy(content: ClipboardContent, options: ClipboardOptions) => void;
+  fn paste(content: ClipboardContent) => void;
+  fn clear() => void;
+  fn readContent() => ClipboardContent;
+}
+
+// Storage
+
+service Storage {
+  fn get(key: string) => any;
+  fn set(key: string, value: any) => void;
+  fn remove(key: string) => void;
+  fn clear() => void;
+  fn list() => any;
+};
+
+// FileSearch
+
+struct FileInfo {
+  path: string;
+  mimeType: string;
+};
+
+service FileSearch {
+  fn search(q: string) => FileInfo[];
+};
+
+
+// Command
+
+struct UpdateCommandMetadataPayload {
+  subtitle?: string;
+};
+
+service Command {
+  fn updateCommandMetadata(payload: UpdateCommandMetadataPayload) => void;
+};
+
+// OAuth
+
+struct PKCEClientOptions {
+  name: string;
+  id?: string;
+  description: string;
+  icon?: Image;
+};
+
+struct AuthorizeRequest {
+  client: PKCEClientOptions;
+  url: string;
+};
+
+struct AuthorizeResponse {
+  code: string;
+};
+
+struct TokenSet {
+  accessToken: string;
+  refreshToken?: string;
+  idToken?: string;
+  expiresIn?: number;
+  scope?: string;
+  updatedAt: number;
+};
+
+struct SetTokensRequest {
+  providerId?: string;
+  accessToken: string;
+  refreshToken?: string;
+  idToken?: string;
+  expiresIn?: number;
+  scope?: string;
+};
+
+service OAuth {
+  fn authorize(payload: AuthorizeRequest) => AuthorizeResponse;
+  fn getTokens(id?: string) => TokenSet;
+  fn setTokens(payload: SetTokensRequest) => void;
+  fn removeTokens(id?: string) => void;
+}
+
+// EventCore - used for loosely typed callbacks, required for component event handlers
+
+service EventCore {
+  event handlerActivated(id: string, args: any[]);
+};

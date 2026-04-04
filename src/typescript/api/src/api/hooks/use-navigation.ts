@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import navigationContext from "../context/navigation-context";
+import { getGlobal } from "../globals";
 
 /**
  * A React hook that lets you access methods to push and pop views
@@ -8,7 +8,7 @@ import navigationContext from "../context/navigation-context";
  * @category Navigation
  */
 export const useNavigation = () => {
-	const { push, pop } = useContext(navigationContext);
+	const { push, pop } = useContext(getGlobal().navigationContext);
 
 	return { push, pop };
 };

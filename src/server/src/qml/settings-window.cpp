@@ -18,7 +18,7 @@
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "vicinae.hpp"
-#include "version.h"
+#include "generated/version.h"
 #include "lib/fuzzy/fuzzy-searchable.hpp"
 #include <QQmlContext>
 #include <QQuickWindow>

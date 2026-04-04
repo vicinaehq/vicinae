@@ -4,7 +4,7 @@
 #include <qurlquery.h>
 #include "environment.hpp"
 #include "lib/os-release.hpp"
-#include "version.h"
+#include "generated/version.h"
 
 static const QString ISSUE_TEMPLATE = R"(**System information**
 

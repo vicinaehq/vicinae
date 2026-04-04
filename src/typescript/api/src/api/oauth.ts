@@ -1,6 +1,6 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
-import { Image, serializeProtoImage } from "./image";
-import { bus } from "./bus";
+import { type Image, serializeProtoImage } from "./image";
+import { getClient } from "./client";
 
 enum OauthRedirectMethod {
 	/**
@@ -359,7 +359,7 @@ export class PKCEClient {
 			return typeof (s as any).url === "string";
 		};
 
-		const res = await bus.request("oauth.authorize", {
+		const { code } = await getClient().OAuth.authorize({
 			client: {
 				id: this.providerId,
 				description: this.description ?? "Connect to your account",
@@ -371,11 +371,7 @@ export class PKCEClient {
 			url: isAuthorizationOptions(options) ? options.url : options.toURL(),
 		});
 
-		if (!res.ok) {
-			throw res.error;
-		}
-
-		return { authorizationCode: res.value.code };
+		return { authorizationCode: code };
 	}
 
 	private authorizationURL;
@@ -399,7 +395,7 @@ export class PKCEClient {
 		};
 
 		if (isTokenResponse(options)) {
-			await bus.request("oauth.setTokens", {
+			await getClient().OAuth.setTokens({
 				accessToken: options.access_token,
 				refreshToken: options.refresh_token,
 				idToken: options.id_token,
@@ -408,7 +404,7 @@ export class PKCEClient {
 				providerId: this.providerId,
 			});
 		} else {
-			await bus.request("oauth.setTokens", {
+			await getClient().OAuth.setTokens({
 				...options,
 				providerId: this.providerId,
 			});
@@ -422,10 +418,8 @@ export class PKCEClient {
 	 * @returns A promise that resolves when the token set has been retrieved.
 	 */
 	async getTokens(): Promise<OAuth.TokenSet | undefined> {
-		const res = await bus.request("oauth.getTokens", {
-			providerId: this.providerId,
-		});
-		const set = res.unwrap().tokenSet;
+		// TODO: handle nullability
+		const set = await getClient().OAuth.getTokens(this.providerId);
 
 		if (!set) return undefined;
 
@@ -450,9 +444,7 @@ export class PKCEClient {
 	 * Removes the stored {@link OAuth.TokenSet} for the client.
 	 */
 	async removeTokens(): Promise<void> {
-		await bus.request("oauth.removeTokens", {
-			providerId: this.providerId,
-		});
+		getClient().OAuth.removeTokens(this.providerId);
 	}
 }
 

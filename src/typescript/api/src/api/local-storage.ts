@@ -1,6 +1,6 @@
-import { bus } from "./bus";
-
 // Implementation of Raycast's storage API: https://developers.raycast.com/api-reference/storage
+
+import { getClient } from "./client";
 
 /**
  * @category Local Storage
@@ -12,35 +12,25 @@ export namespace LocalStorage {
 	export async function getItem<T extends LocalStorage.Value>(
 		key: string,
 	): Promise<T | undefined> {
-		const res = await bus.request("storage.get", { key });
-
-		if (!res.ok || res.value.value === null) {
-			return undefined;
-		}
-
-		return res.value.value;
+		return getClient().Storage.get(key);
 	}
 
 	export async function setItem(
 		key: string,
 		value: LocalStorage.Value,
 	): Promise<void> {
-		await bus.request("storage.set", { key, value });
+		await getClient().Storage.set(key, value);
 	}
 
 	export async function removeItem(key: string): Promise<void> {
-		await bus.request("storage.remove", { key });
+		await getClient().Storage.remove(key);
 	}
 
 	export async function allItems(): Promise<LocalStorage.Values> {
-		const res = await bus.request("storage.list", {});
-
-		if (!res.ok) return {};
-
-		return res.value.values;
+		return getClient().Storage.list();
 	}
 
 	export async function clear(): Promise<void> {
-		await bus.request("storage.clear", {});
+		await getClient().Storage.clear();
 	}
 }

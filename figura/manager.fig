@@ -1,0 +1,43 @@
+// C++ process (client) -> extension manager (server)
+// The C++ process requests the extension manager to load/unload extensions, and receives
+// a notification each time an extension requests/notifies something.
+// At this layer, the manager is unaware what the payload is made of.
+// The payload is in reality another rpc message belonging to the vicinae<->extension spec.
+
+enum CommandMode {
+  View,
+  NoView
+};
+
+enum CommandEnv {
+  Development,
+  Production
+};
+
+struct LoadOptions {
+  mode: CommandMode;
+  env: CommandEnv;
+  vicinae_path: string;
+  entrypoint: string;
+  is_raycast: bool;
+  command_name: string;
+  extension_id: string;
+  extension_name: string;
+  owner_or_author_name: string;
+  arguments: any;
+  preferences: any;
+};
+
+struct LoadResponse {
+  session_id: string;
+};
+
+service Manager {
+  fn load(opts: LoadOptions) => LoadResponse;
+  fn unload(session_id: string) => bool;
+
+  fn messageExtension(session_id: string, payload: string) => bool;
+
+  event extensionMessage(session_id: string, payload: string);
+  event extensionCrash(session_id: string, reason: string);
+}

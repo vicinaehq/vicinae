@@ -1,8 +1,9 @@
 #pragma once
 #include <filesystem>
-#include <google/protobuf/struct.pb.h>
 #include <iterator>
+#include <numbers>
 #include <qdatetime.h>
+#include <qjsonobject.h>
 #include <qjsonvalue.h>
 #include <qmimetype.h>
 #include <qstring.h>
@@ -78,9 +79,6 @@ std::filesystem::path documentsFolder();
 std::vector<std::filesystem::path> homeRootDirectories();
 
 std::string getLastPathComponent(const std::filesystem::path &path);
-
-google::protobuf::Value transformJsonValueToProto(const QJsonValue &value);
-QJsonValue protoToJsonValue(const google::protobuf::Value &value);
 
 QString formatSize(size_t bytes);
 

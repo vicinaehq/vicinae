@@ -1,3 +1,4 @@
+#include <cstring>
 #include "clipman.hpp"
 #include <iostream>
 #include <iomanip>
@@ -28,8 +29,13 @@ void ExtClipman::primarySelection(ExtDataDevice &, ExtDataOffer &offer) {
 }
 
 void ExtClipman::selection(ExtDataDevice &, ExtDataOffer &offer) {
-  auto filteredMimes = Selection::filterMimes(offer.mimes());
-  Selection::serializeAndWrite(filteredMimes, offer);
+  if (isatty(STDOUT_FILENO)) {
+    Selection::printDebug(Selection::filterMimes(offer.mimes()), offer, "SELECTION");
+    return;
+  }
+
+  auto selection = Selection::buildSelection(Selection::filterMimes(offer.mimes()), offer);
+  m_writer(selection);
 }
 
 void ExtClipman::start() {
@@ -48,13 +54,13 @@ void ExtClipman::start() {
   }
 }
 
-ExtClipman *ExtClipman::instance() {
-  static ExtClipman app;
+ExtClipman *ExtClipman::instance(SelectionWriter writer) {
+  static ExtClipman app{writer};
 
   return &app;
 }
 
-ExtClipman::ExtClipman() : _dcm(nullptr), _seat(nullptr) {
+ExtClipman::ExtClipman(SelectionWriter writer) : m_writer(writer), _dcm(nullptr), _seat(nullptr) {
   _registry = registry();
   _registry->addListener(this);
 }

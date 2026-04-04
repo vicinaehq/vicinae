@@ -1,7 +1,6 @@
 #pragma once
 #include "ui/image/url.hpp"
 #include "omni-database.hpp"
-#include "proto/oauth.pb.h"
 #include <expected>
 #include "oauth-token-store.hpp"
 #include <qfuture.h>
@@ -58,17 +57,6 @@ struct OAuthClient {
   std::optional<QString> description;
   QString name;
   ImageURL icon;
-
-  static OAuthClient fromProto(const proto::ext::oauth::PKCEClientOptions &opts) {
-    OAuthClient client;
-
-    client.id = opts.id().c_str();
-    client.name = opts.name().c_str();
-    client.icon = ImageURL::builtin("omnicast");
-    client.description = opts.description().c_str();
-
-    return client;
-  }
 };
 
 struct OAuthResponseData {

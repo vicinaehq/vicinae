@@ -1,5 +1,4 @@
 #include "snippet/snippet.hpp"
-#include "vicinae-ipc/ipc.hpp"
 #include <cctype>
 #include <chrono>
 #include <cstdint>
@@ -79,22 +78,16 @@ struct Input {
   epoll_event ev;
 };
 
-Server::Server()
-    : m_udev(udev_new()), m_xkb(xkb_context_new(XKB_CONTEXT_NO_FLAGS)), m_keymap([this] {
-        static constexpr const xkb_rule_names rules{.rules = nullptr,   // defaults to "evdev"
-                                                    .model = nullptr,   // defaults to "pc105"
-                                                    .layout = "us",     // or "fr", "de", etc.
-                                                    .variant = nullptr, // e.g. "azerty" for French
-                                                    .options = nullptr};
+SnippetService::SnippetService(snippet_gen::RpcTransport &transport)
+    : snippet_gen::AbstractSnippet(transport), m_udev(udev_new()),
+      m_xkb(xkb_context_new(XKB_CONTEXT_NO_FLAGS)), m_keymap([this] {
+        static constexpr const xkb_rule_names rules{
+            .rules = nullptr, .model = nullptr, .layout = "us", .variant = nullptr, .options = nullptr};
         return xkb_keymap_new_from_names(m_xkb, &rules, XKB_KEYMAP_COMPILE_NO_FLAGS);
       }()),
-      m_kbState(xkb_state_new(m_keymap)) {
-  setupIPC();
-}
+      m_kbState(xkb_state_new(m_keymap)) {}
 
-Server::~Server() { udev_unref(m_udev); }
-
-std::vector<std::string> Server::enumerateKeyboards() {
+std::vector<std::string> SnippetService::enumerateKeyboards() {
   udev_enumerate *enumerate = udev_enumerate_new(m_udev);
   std::vector<std::string> devNames;
 
@@ -120,55 +113,54 @@ std::vector<std::string> Server::enumerateKeyboards() {
   return devNames;
 }
 
-void Server::setupIPC() {
-  m_server.route<snippet::ipc::SetKeymap>([this](const snippet::ipc::SetKeymap::Request &req) {
-    setLayout(req);
-    return snippet::ipc::SetKeymap::Response();
-  });
-
-  m_server.route<snippet::ipc::CreateSnippet>([this](const snippet::ipc::CreateSnippet::Request &req) {
-    std::println(std::cerr, "Created new snippet with trigger {}", req.trigger);
-    m_snippetMap[req.trigger] = Snippet(req.trigger, req.mode);
-    return snippet::ipc::CreateSnippet::Response();
-  });
-
-  m_server.route<snippet::ipc::RemoveSnippet>([this](const snippet::ipc::RemoveSnippet::Request &req) {
-    m_snippetMap.erase(req.trigger);
-    return snippet::ipc::RemoveSnippet::Response();
-  });
-
-  m_server.route<snippet::ipc::InjectClipboardExpansion>(
-      [this](const snippet::ipc::InjectClipboardExpansion::Request &req)
-          -> std::expected<snippet::ipc::InjectClipboardExpansion::Response, std::string> {
-        const auto it = m_snippetMap.find(req.trigger);
-
-        if (it == m_snippetMap.end()) {
-          std::println(std::cerr, "Could not find snippet with trigger {}", req.trigger);
-          return std::unexpected("No such snippet");
-        }
-
-        auto mods = linuxutils::UInputKeyboard::Modifier::Ctrl;
-        std::println(std::cerr, "Received expansion request for snippet {} (took {}ms)", req.trigger,
-                     std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() -
-                                                                           lastExpansionTime)
-                         .count());
-
-        if (req.terminal) mods |= linuxutils::UInputKeyboard::Modifier::Shift;
-
-        m_kb.repeatKey(KEY_BACKSPACE, req.trigger.size());
-        usleep(2000);
-        m_kb.sendKey(KEY_V, static_cast<int>(mods));
-
-        if (it->second.mode == ipc::ExpansionMode::Word) {
-          usleep(2000);
-          m_kb.sendKey(KEY_SPACE, 0);
-        }
-
-        return snippet::ipc::InjectClipboardExpansion::Response();
-      });
+std::expected<void, std::string> SnippetService::setKeymap(snippet_gen::LayoutInfo info) {
+  setLayout(info);
+  return {};
 }
 
-void Server::setLayout(const LayoutInfo &info) {
+std::expected<snippet_gen::CreateSnippetResponse, std::string>
+SnippetService::createSnippet(snippet_gen::CreateSnippetRequest req) {
+  std::println(std::cerr, "Created new snippet with trigger {}", req.trigger);
+  m_snippetMap[req.trigger] = Snippet{.trigger = req.trigger, .mode = req.mode};
+  return snippet_gen::CreateSnippetResponse{};
+}
+
+std::expected<snippet_gen::RemoveSnippetResponse, std::string>
+SnippetService::removeSnippet(snippet_gen::RemoveSnippetRequest req) {
+  m_snippetMap.erase(req.trigger);
+  return snippet_gen::RemoveSnippetResponse{};
+}
+
+std::expected<void, std::string>
+SnippetService::injectClipboardExpansion(snippet_gen::InjectClipboardRequest req) {
+  const auto it = m_snippetMap.find(req.trigger);
+
+  if (it == m_snippetMap.end()) {
+    std::println(std::cerr, "Could not find snippet with trigger {}", req.trigger);
+    return std::unexpected("No such snippet");
+  }
+
+  auto mods = linuxutils::UInputKeyboard::Modifier::Ctrl;
+  std::println(std::cerr, "Received expansion request for snippet {} (took {}ms)", req.trigger,
+               std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() -
+                                                                     lastExpansionTime)
+                   .count());
+
+  if (req.terminal) mods |= linuxutils::UInputKeyboard::Modifier::Shift;
+
+  m_kb.repeatKey(KEY_BACKSPACE, req.trigger.size());
+  usleep(2000);
+  m_kb.sendKey(KEY_V, static_cast<int>(mods));
+
+  if (it->second.mode == snippet_gen::ExpansionMode::Word) {
+    usleep(2000);
+    m_kb.sendKey(KEY_SPACE, 0);
+  }
+
+  return {};
+}
+
+void SnippetService::setLayout(const LayoutInfo &info) {
   const auto toPtr = [](const std::optional<std::string> &str) {
     return str.transform([](auto &&str) { return str.c_str(); }).value_or(nullptr);
   };
@@ -187,7 +179,7 @@ void Server::setLayout(const LayoutInfo &info) {
   std::println(std::cerr, "changed keyboard layout to {}", rules.layout);
 }
 
-void Server::listen() {
+void SnippetService::listen(snippet_gen::Server &rpcServer) {
   const std::error_code ec;
 
   std::unordered_map<int, Input> inputs;
@@ -265,38 +257,7 @@ void Server::listen() {
 
   Frame ipcFrame;
 
-  ipcFrame.setHandler([&](std::string_view message) {
-    using Req = decltype(m_server)::SchemaType::Request;
-    using Res = decltype(m_client)::Schema::Response;
-
-    std::variant<Req, Res> v;
-    if (const auto error = glz::read_json(v, message)) {
-      std::println(std::cerr, "Failed to parse message: {}", glz::format_error(error));
-      return;
-    }
-
-    if (auto it = std::get_if<Req>(&v)) {
-      const auto res = m_server.call(*it);
-
-      if (!res) {
-        std::println(std::cerr, "Request failed: {}", res.error());
-        return;
-      }
-
-      std::string data = std::move(res).value();
-      uint32_t size = data.size();
-
-      write(STDOUT_FILENO, reinterpret_cast<const char *>(&size), sizeof(size));
-      write(STDOUT_FILENO, data.data(), data.size());
-
-      return;
-    }
-
-    if (auto it = std::get_if<Res>(&v)) {
-      auto _ = m_client.call(*it);
-      return;
-    }
-  });
+  ipcFrame.setHandler([&](std::string_view message) { rpcServer.route(message); });
 
   setLayout({.layout = "us"});
 
@@ -415,10 +376,10 @@ void Server::listen() {
 
         if (it != m_snippetMap.end()) {
           switch (it->second.mode) {
-          case ipc::ExpansionMode::Keydown:
+          case snippet_gen::ExpansionMode::Keydown:
             emitExpansion(it->second);
             break;
-          case ipc::ExpansionMode::Word:
+          case snippet_gen::ExpansionMode::Word:
             if (ev.code == KEY_SPACE || ev.code == KEY_ENTER) {
               m_kb.sendKey(KEY_BACKSPACE, 0);
               emitExpansion(it->second);
@@ -433,10 +394,10 @@ void Server::listen() {
   }
 }
 
-void Server::emitExpansion(const Snippet &snippet) {
+void SnippetService::emitExpansion(const Snippet &snippet) {
   std::println(std::cerr, "SNIPPET EXPANDED: {}", snippet.trigger);
   lastExpansionTime = std::chrono::steady_clock::now();
-  notify<ipc::TriggerSnippet>({.trigger = snippet.trigger});
+  emittriggerSnippet({.trigger = snippet.trigger});
   m_text.clear();
 }
 

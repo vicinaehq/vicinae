@@ -1,5 +1,5 @@
-import { bus } from "./bus";
-import * as ui from "./proto/ui";
+import { getClient } from "./client";
+import type * as api from "./proto/api";
 
 /**
  * @category Launcher Window
@@ -20,10 +20,10 @@ export enum PopToRootType {
 	Suspended = "suspended",
 }
 
-const popToRootProtoMap: Record<PopToRootType, ui.PopToRootType> = {
-	[PopToRootType.Default]: ui.PopToRootType.PopToRootDefault,
-	[PopToRootType.Immediate]: ui.PopToRootType.PopToRootImmediate,
-	[PopToRootType.Suspended]: ui.PopToRootType.PopToRootSuspended,
+const popToRootProtoMap: Record<PopToRootType, api.PopToRootType> = {
+	[PopToRootType.Default]: "Default",
+	[PopToRootType.Immediate]: "Immediate",
+	[PopToRootType.Suspended]: "Suspended",
 };
 
 /**
@@ -40,12 +40,11 @@ export const showHUD = async (
 	title: string,
 	options?: { clearRootSearch?: boolean; popToRootType?: PopToRootType },
 ) => {
-	bus.request("ui.showHud", {
-		text: title,
-		clearRootSearch: options?.clearRootSearch ?? false,
-		popToRoot:
-			popToRootProtoMap[options?.popToRootType ?? PopToRootType.Default],
-	});
+	getClient().UI.showHud(
+		title,
+		options?.clearRootSearch ?? false,
+		popToRootProtoMap[options?.popToRootType ?? PopToRootType.Default],
+	);
 };
 
 /**
@@ -60,17 +59,17 @@ export const closeMainWindow = async (
 	const { clearRootSearch = false, popToRootType = PopToRootType.Default } =
 		options;
 
-	await bus.request("ui.closeMainWindow", {
+	await getClient().UI.closeMainWindow(
 		clearRootSearch,
-		popToRoot: popToRootProtoMap[popToRootType],
-	});
+		popToRootProtoMap[popToRootType],
+	);
 };
 
 /**
  * @category Launcher Window
  */
 export const clearSearchBar = async () => {
-	await bus.request("ui.setSearchText", { text: "" });
+	await getClient().UI.setSearchText("");
 };
 
 /**
@@ -81,13 +80,7 @@ export const clearSearchBar = async () => {
  * @category Launcher Window
  */
 export const getSelectedText = async () => {
-	const response = await bus.request("ui.getSelectedText", {});
-
-	if (!response.ok) {
-		throw new Error(`Failed to get selected text`);
-	}
-
-	return response.value.text;
+	return getClient().UI.getSelectedText();
 };
 
 /**
@@ -96,7 +89,5 @@ export const getSelectedText = async () => {
  * @category Launcher Window
  */
 export const popToRoot = async (options?: { clearSearchBar?: boolean }) => {
-	await bus.request("ui.popToRoot", {
-		clearSearchBar: options?.clearSearchBar ?? false,
-	});
+	await getClient().UI.popToRoot(options?.clearSearchBar ?? false);
 };

@@ -1,7 +1,7 @@
 #include <stdexcept>
 #include <string_view>
 #include "theme.hpp"
-#include "vicinae-ipc/client.hpp"
+#include "ipc-client.hpp"
 #include "THEME_TEMPLATE.hpp"
 
 class SetCliThemeCommand : public AbstractCommandLineCommand {
@@ -10,7 +10,8 @@ class SetCliThemeCommand : public AbstractCommandLineCommand {
   void setup(CLI::App *app) override { app->add_option("theme_id", m_path)->required(); }
 
   bool run(CLI::App *) override {
-    if (auto res = ipc::CliClient::deeplink(std::format("vicinae://theme/set/{}", m_path.c_str())); !res) {
+    if (auto res = cli::IpcClient::sendDeeplink(std::format("vicinae://theme/set/{}", m_path.c_str()));
+        !res) {
       throw std::runtime_error("Failed to set theme: " + res.error());
     }
     return true;

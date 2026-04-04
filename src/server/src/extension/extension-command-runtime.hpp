@@ -1,33 +1,35 @@
 #pragma once
 #include "command.hpp"
 #include "common.hpp"
-#include "proto/extension.pb.h"
-#include "types.hpp"
-#include <qfuturewatcher.h>
+#include "extension/extension-command.hpp"
+#include "extension/manager/extension-manager.hpp"
+#include "generated/tsapi.hpp"
+#include <qlogging.h>
 
-class ExtensionCommand;
-class StorageRequestRouter;
-class ExtensionNavigationController;
-class UIRequestRouter;
-class AppRequestRouter;
-class ClipboardRequestRouter;
-class ExtensionRequest;
-class ExtensionEvent;
-class FileSearchRequestRouter;
-class WindowManagementRouter;
-class CommandRequestRouter;
-class OAuthRouter;
+class ExtensionManagerBus : public tsapi::AbstractTransport {
+public:
+  ExtensionManagerBus(ExtensionManager &manager) : m_manager(manager) {}
+
+  void send(std::string_view data) override {
+    m_manager.client().manager()->messageExtension(m_sessionId, std::string{data});
+  }
+
+  void setSessionId(std::string str) { m_sessionId = std::move(str); }
+
+private:
+  ExtensionManager &m_manager;
+  std::string m_sessionId;
+};
+
+class ExtensionLogger : public tsapi::AbstractLogger {
+  void onRequest(std::string_view method) override { qDebug() << "-->" << method; }
+  void onResponse(std::string_view method, bool ok, double latencyMs) override {
+    qDebug() << "<-- " << method << latencyMs << "ms" << (ok ? "OK" : "ERROR");
+  }
+  void onEvent(std::string_view method) override { qDebug() << "--> " << method; }
+};
 
 class ExtensionCommandRuntime : public CommandContext {
-
-  proto::ext::extension::Response *makeErrorResponse(const QString &errorText);
-
-  PromiseLike<proto::ext::extension::Response *> dispatchRequest(ExtensionRequest *request);
-
-  void handleRequest(ExtensionRequest *request);
-  void handleCrash(const proto::ext::extension::CrashEventData &crash);
-  void handleGenericEvent(const proto::ext::extension::GenericEventData &event) {}
-  void handleEvent(const ExtensionEvent &event);
   void initialize();
 
 public:
@@ -37,19 +39,12 @@ public:
   ExtensionCommandRuntime(const std::shared_ptr<ExtensionCommand> &command);
 
 private:
-  using ResponseWatcher = QFutureWatcher<proto::ext::extension::Response *>;
-  std::unordered_map<std::shared_ptr<ExtensionRequest>, std::shared_ptr<ResponseWatcher>> m_pendingFutures;
-
+  std::unique_ptr<ExtensionManagerBus> m_bus;
+  std::unique_ptr<ExtensionLogger> m_logger;
+  std::unique_ptr<tsapi::RpcTransport> m_transport;
   std::shared_ptr<ExtensionCommand> m_command;
-  std::unique_ptr<StorageRequestRouter> m_storageRouter;
-  std::unique_ptr<ExtensionNavigationController> m_navigation;
-  std::unique_ptr<UIRequestRouter> m_uiRouter;
-  std::unique_ptr<AppRequestRouter> m_appRouter;
-  std::unique_ptr<ClipboardRequestRouter> m_clipboardRouter;
-  std::unique_ptr<FileSearchRequestRouter> m_fileSearchRouter;
-  std::unique_ptr<WindowManagementRouter> m_wmRouter;
-  std::unique_ptr<CommandRequestRouter> m_commandRouter;
-  std::unique_ptr<OAuthRouter> m_oauthRouter;
-  QString m_sessionId;
+  tsapi::Server *m_server = nullptr;
+
+  std::string m_sessionId;
   bool m_isDevMode = false;
 };

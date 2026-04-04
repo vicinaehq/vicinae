@@ -14,9 +14,8 @@ list(APPEND LIBS
 	Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus Qt6::Concurrent Qt6::Quick Qt6::Qml
 	Qt6::GuiPrivate # for deeper integration with wayland protocols, we need wl_surface
 	Qt6::QuickDialogs2 Qt6::QuickControls2
-	${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY} 
-	protobuf::libprotobuf
-	minizip 
+	${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY}
+	minizip
 	OpenSSL::Crypto 
 	wayland-client 
 	qt6keychain
@@ -26,11 +25,10 @@ list(APPEND LIBS
 	vicinae::xdgpp
 	vicinae::scriptcommand
 	vicinae::emoji
-	vicinae::ipc
-	vicinae::snippet-types
 	vicinae::common
 	vicinae::linuxutils
 )
+
 
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)
 set(EXTRA_PATH ${CMAKE_SOURCE_DIR}/extra)
@@ -64,11 +62,8 @@ include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/src/lib
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils
 	${CMAKE_CURRENT_SOURCE_DIR}/..
-	${Protobuf_INCLUDE_DIRS}
     ${CMAKE_CURRENT_BINARY_DIR}  # For generated headers
 )
-
-file(GLOB PROTO_FILES "${PROTO_DIR}/*.proto")
 
 set(SRCS
 	src/main.cpp
@@ -92,6 +87,7 @@ set(SRCS
 
 	#src/daemon/ipc-client.cpp
 	src/lib/template-engine/template-engine.cpp
+	src/lib/glaze-qt.cpp
 
 	include/favicon/favicon-service.hpp
 	src/favicon/favicon-service.cpp
@@ -316,7 +312,6 @@ set(SRCS
 	src/qml/provider-search-view-host.hpp
 	src/qml/provider-search-view-host.cpp
 
-	src/cli/cli.cpp
 	src/cli/server.cpp
 
 
@@ -395,15 +390,8 @@ set(SRCS
 
 	src/log/message-handler.cpp
 
-	src/extension/requests/storage-request-router.cpp
-	src/extension/requests/ui-request-router.cpp
-	src/extension/requests/oauth-router.cpp
-	src/extension/requests/file-search-request-router.cpp
-	src/extension/requests/app-request-router.cpp
-	src/extension/requests/clipboard-request-router.cpp
-	src/extension/requests/command-request-router.cpp
-	src/extension/requests/wm-router.cpp
 	src/extension/extension-command-runtime.cpp
+	src/extension/services/ui-service.hpp
 
 	src/extensions/vicinae/vicinae-extension.cpp
 
@@ -465,6 +453,7 @@ set(SRCS
 	src/services/snippet/snippet-service.hpp
 	src/services/snippet/snippet-server.hpp
 	src/services/snippet/snippet-db.cpp
+	src/services/snippet/snippet-server.cpp
 
 	# QML frontend (POC)
 	src/qml/keybind-bridge.hpp
@@ -654,6 +643,40 @@ if (UNIX AND NOT APPLE)
 	wayland_generate_protocol("ext-data-control-v1")
 	wayland_generate_protocol("kde-blur")
 	wayland_generate_protocol("ext-background-effect-v1")
+	
+	include("Figura")
+
+	figura_compile(
+		SERVER
+		PROTO "${FIGURA_DIR}/tsapi.fig"
+		LANG glaze-qt
+		NAMESPACE tsapi
+		OUTPUT tsapi.hpp
+	)
+
+	figura_compile(
+		CLIENT
+		PROTO "${FIGURA_DIR}/manager.fig"
+		LANG glaze-qt
+		NAMESPACE manager
+		OUTPUT manager.hpp
+	)
+
+	figura_compile(
+		SERVER
+		PROTO "${FIGURA_DIR}/ipc.fig"
+		LANG glaze-qt
+		NAMESPACE ipc_gen
+		OUTPUT ipc-server.hpp
+	)
+
+	figura_compile(
+		CLIENT
+		PROTO "${FIGURA_DIR}/snippet.fig"
+		LANG glaze-qt
+		NAMESPACE snippet_gen
+		OUTPUT snippet-client.hpp
+	)
 
 	list(APPEND LIBS xkbcommon vicinae::linuxutils)
 
@@ -815,26 +838,6 @@ if (USE_PRECOMPILED_HEADERS)
 else()
 	message(STATUS "Precompiled headers are disabled")
 endif()
-
-make_directory(${CMAKE_CURRENT_BINARY_DIR}/proto)
-
-set(PROTO_IMPORT_DIRS ${PROTO_DIR} ${COMMON_PROTO_DIR})
-
-if (NOT USE_SYSTEM_PROTOBUF)
-	list(APPEND PROTO_IMPORT_DIRS ${protobuf_SOURCE_DIR}/src)
-endif()
-
-protobuf_generate(
-	TARGET ${TARGET}
-	PROTOS ${PROTO_FILES}
-	IMPORT_DIRS ${PROTO_IMPORT_DIRS}
-	PROTOC_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/proto
-)
-
-foreach(PROTO_FILE ${PROTO_FILES})
-	get_filename_component(PROTO_NAME ${PROTO_FILE} NAME_WE)
-	set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/proto/${PROTO_NAME}.pb.cc PROPERTIES SKIP_LINTING ON)
-endforeach()
 
 install(TARGETS ${TARGET}
 	RUNTIME DESTINATION ${VICINAE_LIBEXEC_DIR}

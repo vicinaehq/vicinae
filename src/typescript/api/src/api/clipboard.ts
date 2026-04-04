@@ -1,6 +1,6 @@
-import { PathLike } from "fs";
-import { bus } from "./bus";
-import { ClipboardContent } from "./proto/clipboard";
+import type { PathLike } from "node:fs";
+import type { ClipboardContent } from "./proto/api";
+import { getClient } from "./client";
 
 /**
  * Access system clipboard and clipboard history features.
@@ -14,7 +14,7 @@ export namespace Clipboard {
 		| { html: string; text?: string };
 
 	export type ReadContent = {
-		text: string;
+		text?: string;
 		file?: string;
 		html?: string;
 	};
@@ -26,15 +26,16 @@ export namespace Clipboard {
 	function mapContent(
 		content: string | number | Clipboard.Content,
 	): ClipboardContent {
-		let ct = ClipboardContent.create();
+		let ct: ClipboardContent = {};
 
 		if (typeof content !== "object") {
 			ct.text = `${content}`;
 		} else {
 			if (content["file"]) {
-				ct.path = { path: content["file"] };
+				ct.path = content["file"];
 			} else if (content["html"]) {
-				ct.html = { html: content["html"], text: content["text"] };
+				ct.html = content["html"];
+				ct.text = content["text"];
 			} else {
 				ct.text = content["text"];
 			}
@@ -52,9 +53,8 @@ export namespace Clipboard {
 		text: string | number | Clipboard.Content,
 		options: Clipboard.CopyOptions = {},
 	) {
-		await bus.request("clipboard.copy", {
-			content: mapContent(text),
-			options: { concealed: options.concealed ?? false },
+		await getClient().Clipboard.copy(mapContent(text), {
+			concealed: options.concealed ?? false,
 		});
 	}
 
@@ -65,9 +65,7 @@ export namespace Clipboard {
 	 * clipboard copy.
 	 */
 	export async function paste(text: string | number | Clipboard.Content) {
-		await bus.request("clipboard.paste", {
-			content: mapContent(text),
-		});
+		await getClient().Clipboard.paste(mapContent(text));
 	}
 
 	/**
@@ -78,11 +76,8 @@ export namespace Clipboard {
 	 * const { text, html, file } = await Clipboard.read();
 	 * ```
 	 */
-	export async function read(options?: {
-		offset?: number;
-	}): Promise<Clipboard.ReadContent> {
-		const res = await bus.request("clipboard.readContent", {});
-		return res.unwrap().content!;
+	export async function read(): Promise<Clipboard.ReadContent> {
+		return getClient().Clipboard.readContent();
 	}
 
 	/**
@@ -95,17 +90,14 @@ export namespace Clipboard {
 	 * const text = await Clipboard.readText();
 	 * ```
 	 */
-	export async function readText(options?: {
-		offset?: number;
-	}): Promise<string> {
-		const { text } = await read(options);
-		return text;
+	export async function readText(): Promise<string> {
+		return read().then((r) => r.text ?? "");
 	}
 
 	/**
 	 * Clear the current clipboard content.
 	 */
 	export async function clear() {
-		await bus.request("clipboard.clear", {});
+		await getClient().Clipboard.clear();
 	}
 }

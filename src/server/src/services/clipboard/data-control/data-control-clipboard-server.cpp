@@ -1,5 +1,4 @@
 #include "pid-file/pid-file.hpp"
-#include "proto/wlr-clipboard.pb.h"
 #include "services/clipboard/clipboard-server.hpp"
 #include <QtCore>
 #include <QGuiApplication>
@@ -8,27 +7,16 @@
 #include <qlogging.h>
 #include <qprocess.h>
 #include <qdebug.h>
-#include <qresource.h>
 #include <qstringview.h>
+#include <glaze/glaze.hpp>
 #include "data-control-clipboard-server.hpp"
 #include "common/common.hpp"
 #include "wayland/globals.hpp"
+#include "common/clipboard-protocol.hpp"
 
 static constexpr const char *HELPER_PROGRAM = "vicinae-data-control-server";
 
 bool DataControlClipboardServer::isAlive() const { return m_process.isOpen(); }
-
-void DataControlClipboardServer::handleMessage(const proto::ext::wlrclip::Selection &sel) {
-  ClipboardSelection cs;
-
-  cs.offers.reserve(sel.offers().size());
-
-  for (const auto &offer : sel.offers()) {
-    cs.offers.push_back({offer.mime_type().c_str(), QByteArray::fromStdString(offer.data())});
-  }
-
-  emit selectionAdded(cs);
-}
 
 void DataControlClipboardServer::handleExit(int code, QProcess::ExitStatus status) {
   if (status == QProcess::ExitStatus::CrashExit) {
@@ -90,15 +78,26 @@ void DataControlClipboardServer::handleRead() {
       uint32_t const length = ntohl(*reinterpret_cast<SizeType *>(m_message.data()));
       size_t const size = m_message.size() - sizeof(SizeType);
 
-      // we need to read more before we can process this
       if (size < length) break;
 
-      proto::ext::wlrclip::Selection selection;
+      clipboard_proto::Selection selection;
 
-      if (!selection.ParseFromString({m_message.data() + sizeof(SizeType), length})) {
-        qWarning() << "Failed to parse selection";
+      std::string_view payload{m_message.data() + sizeof(SizeType), length};
+
+      if (auto err = glz::read_beve(selection, payload)) {
+        qWarning() << "Failed to parse clipboard selection";
       } else {
-        handleMessage(selection);
+        ClipboardSelection cs;
+        cs.offers.reserve(selection.offers.size());
+
+        for (const auto &offer : selection.offers) {
+          cs.offers.push_back({
+              QString::fromStdString(offer.mime_type),
+              QByteArray(reinterpret_cast<const char *>(offer.data.data()), offer.data.size()),
+          });
+        }
+
+        emit selectionAdded(cs);
       }
 
       m_message.erase(m_message.begin(), m_message.begin() + sizeof(SizeType) + length);

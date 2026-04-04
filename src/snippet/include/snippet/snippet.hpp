@@ -9,34 +9,29 @@
 
 namespace snippet {
 
-class Server {
+class SnippetService : public snippet_gen::AbstractSnippet {
 public:
-  Server();
-  ~Server();
+  SnippetService(snippet_gen::RpcTransport &transport);
 
-  void listen();
+  std::expected<void, std::string> setKeymap(snippet_gen::LayoutInfo info) override;
+  std::expected<snippet_gen::CreateSnippetResponse, std::string>
+  createSnippet(snippet_gen::CreateSnippetRequest req) override;
+  std::expected<snippet_gen::RemoveSnippetResponse, std::string>
+  removeSnippet(snippet_gen::RemoveSnippetRequest req) override;
+  std::expected<void, std::string> injectClipboardExpansion(snippet_gen::InjectClipboardRequest req) override;
 
-protected:
-  std::vector<std::string> enumerateKeyboards();
-  void setupIPC();
-  void setLayout(const LayoutInfo &info);
-
-  template <typename T> void notify(typename T::Request req) {
-    const auto json = m_client.notify<T>(std::move(req));
-    uint32_t size = json.size();
-    std::cout.write(reinterpret_cast<const char *>(&size), sizeof(size));
-    std::cout.write(json.data(), json.size());
-    std::cout.flush();
-  };
+  void listen(snippet_gen::Server &server);
 
   struct Snippet {
     std::string trigger;
-    ipc::ExpansionMode mode;
+    snippet_gen::ExpansionMode mode;
   };
 
-  void emitExpansion(const Snippet &snipet);
-
 private:
+  void setLayout(const snippet_gen::LayoutInfo &info);
+  std::vector<std::string> enumerateKeyboards();
+  void emitExpansion(const Snippet &snippet);
+
   linuxutils::UInputKeyboard m_kb;
   std::string m_text;
   udev *m_udev = nullptr;
@@ -44,9 +39,6 @@ private:
   xkb_keymap *m_keymap = nullptr;
   xkb_state *m_kbState = nullptr;
   std::unordered_map<std::string, Snippet> m_snippetMap;
-
-  ::ipc::RpcServer<snippet::ipc::ClientSchema> m_server; // vicinae -> snippet requests
-  ::ipc::RpcClient<snippet::ipc::ServerSchema> m_client; // snippet -> vicinae requests/notifications
 };
 
 }; // namespace snippet

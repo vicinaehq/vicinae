@@ -152,4 +152,6 @@ export interface Environment {
  * console.log({ environment });
  * ```
  */
-export const environment: Environment = (globalThis as any).vicinae.environ;
+import { getGlobal } from "./globals";
+
+export const environment: Environment = getGlobal().environ;

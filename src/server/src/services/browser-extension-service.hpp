@@ -5,7 +5,7 @@
 #include <glaze/core/reflect.hpp>
 #include <ranges>
 #include "ui/image/url.hpp"
-#include "vicinae-ipc/ipc.hpp"
+#include "generated/ipc-server.hpp"
 
 class BrowserExtensionService : public QObject {
   Q_OBJECT
@@ -19,7 +19,7 @@ signals:
   void browsersChanged() const;
 
 public:
-  struct BrowserTab : ipc::BrowserTabInfo {
+  struct BrowserTab : ipc_gen::BrowserTabInfo {
     std::string browserId;
 
     std::string uniqueId() const { return std::format("{}-{}", browserId, id); }
@@ -59,9 +59,9 @@ public:
     return std::ranges::find_if(m_browsers, [&](auto &&browser) { return browser.id == id; });
   }
 
-  void setTabs(std::string id, std::vector<ipc::BrowserTabInfo> tabs) {
+  void setTabs(std::string id, std::vector<ipc_gen::BrowserTabInfo> tabs) {
     if (auto it = findById(id); it != m_browsers.end()) {
-      it->tabs = tabs | std::views::transform([&](const ipc::BrowserTabInfo &info) {
+      it->tabs = tabs | std::views::transform([&](const ipc_gen::BrowserTabInfo &info) {
                    auto tab = BrowserTab(info);
                    tab.browserId = id;
                    return tab;

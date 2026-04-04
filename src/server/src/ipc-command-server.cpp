@@ -5,24 +5,147 @@
 #include "services/browser-extension-service.hpp"
 #include "qml/dmenu-view-host.hpp"
 #include "utils.hpp"
-#include "vicinae-ipc/ipc.hpp"
-#include <functional>
-#include <glaze/core/common.hpp>
-#include <glaze/core/reflect.hpp>
-#include <glaze/json/write.hpp>
-#include <netinet/in.h>
 #include <qlogging.h>
 #include <utility>
-#include <variant>
-#include <glaze/rpc/registry.hpp>
 #include "services/app-service/app-service.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "navigation-controller.hpp"
-#include "version.h"
+#include "generated/version.h"
+
+// IpcTransport
+
+void IpcCommandServer::IpcTransport::send(std::string_view data) {
+  if (!conn) {
+    qWarning() << "IPC transport send called with null conn!";
+    return;
+  }
+  qDebug() << "IPC sending" << data.size() << "bytes";
+  uint32_t size = data.size();
+  conn->write(reinterpret_cast<const char *>(&size), sizeof(size));
+  conn->write(data.data(), data.size());
+}
+
+// IpcService
+
+IpcService::IpcService(ipc_gen::RpcTransport &transport, ApplicationContext &ctx)
+    : ipc_gen::AbstractIpc(transport), m_ctx(ctx) {}
+
+ipc_gen::Result<ipc_gen::PingResponse>::Future IpcService::ping() {
+  return ipc_gen::Result<ipc_gen::PingResponse>::ok(
+      {.version = VICINAE_GIT_TAG, .pid = static_cast<int>(QCoreApplication::applicationPid())});
+}
+
+ipc_gen::Result<ipc_gen::DeeplinkResponse>::Future IpcService::deeplink(ipc_gen::DeeplinkRequest req) {
+  IpcCommandHandler handler(m_ctx);
+  QUrl const url(req.url.c_str());
+
+  if (!url.isValid()) return ipc_gen::Result<ipc_gen::DeeplinkResponse>::fail("Not a valid URL");
+
+  const auto res = handler.handleUrl(url);
+  if (!res) return ipc_gen::Result<ipc_gen::DeeplinkResponse>::fail(res.error());
+
+  return ipc_gen::Result<ipc_gen::DeeplinkResponse>::ok({});
+}
+
+ipc_gen::Result<ipc_gen::DescribeResponse>::Future IpcService::describe() {
+  return ipc_gen::Result<ipc_gen::DescribeResponse>::ok(
+      {.open = m_ctx.navigation->isWindowOpened(),
+       .entrypoint = m_ctx.navigation->activeCommand()->uniqueId()});
+}
+
+ipc_gen::Result<ipc_gen::LaunchAppResponse>::Future IpcService::launchApp(ipc_gen::LaunchAppRequest req) {
+  auto appDb = m_ctx.services->appDb();
+  auto wm = m_ctx.services->windowManager();
+  auto app = appDb->findById(req.appId.c_str());
+
+  if (!app) return ipc_gen::Result<ipc_gen::LaunchAppResponse>::fail("No app with id");
+
+  if (!req.newInstance) {
+    if (auto wins = wm->findAppWindows(*app); !wins.empty()) {
+      auto &win = wins.front();
+      wm->provider()->focusWindowSync(*win);
+      return ipc_gen::Result<ipc_gen::LaunchAppResponse>::ok(
+          {.focusedWindowTitle = win->title().toStdString()});
+    }
+  }
+
+  std::vector<QString> const args = Utils::toQStringVec(req.args);
+
+  if (!appDb->launch(*app, args))
+    return ipc_gen::Result<ipc_gen::LaunchAppResponse>::fail(
+        std::format("Failed to launch app with id {}", req.appId));
+
+  return ipc_gen::Result<ipc_gen::LaunchAppResponse>::ok({});
+}
+
+ipc_gen::Result<ipc_gen::DMenuResponse>::Future IpcService::dmenu(ipc_gen::DMenuRequest request) {
+  static constexpr const int DMENU_SMALL_WIDTH_THRESHOLD = 500;
+  auto &nav = m_ctx.navigation;
+  auto &cfg = m_ctx.services->config()->value();
+
+  QPromise<ipc_gen::Result<ipc_gen::DMenuResponse>::Type> promise;
+  auto future = promise.future();
+
+  if (request.width.has_value() && request.width.value() < DMENU_SMALL_WIDTH_THRESHOLD) {
+    qInfo() << "dmenu: disabling quicklook and footer because width is too low";
+    request.noFooter = true;
+    request.noQuickLook = true;
+  }
+
+  // Convert to the DMenu-specific request type used by the view host
+  ipc_gen::DMenuRequest viewReq = std::move(request);
+  auto view = new DMenuViewHost(viewReq);
+
+  using Watcher = QFutureWatcher<ipc_gen::Result<ipc_gen::DMenuResponse>::Type>;
+  auto watcher = new Watcher;
+  watcher->setFuture(future);
+
+  QObject::connect(watcher, &Watcher::canceled, [nav = nav.get()]() { nav->closeWindow(); });
+  QObject::connect(watcher, &Watcher::finished, [watcher]() { watcher->deleteLater(); });
+  QObject::connect(view, &DMenuViewHost::selected,
+                   [promise = std::move(promise)](const QString &text) mutable {
+                     promise.addResult(ipc_gen::DMenuResponse{.output = text.toStdString()});
+                     promise.finish();
+                   });
+
+  nav->popToRoot({.clearSearch = false});
+  nav->pushView(view);
+  nav->setInstantDismiss(true);
+
+  if (request.width || request.height) {
+    int const w = request.width.value_or(cfg.launcherWindow.size.width);
+    int const h = request.height.value_or(cfg.launcherWindow.size.height);
+    nav->requestWindowSize(QSize(w, h));
+  }
+
+  nav->showWindow();
+
+  return future;
+}
+
+ipc_gen::Result<void>::Future IpcService::browserInit(ipc_gen::BrowserInitRequest req) {
+  if (!m_caller) return ipc_gen::Result<void>::fail("No caller context");
+
+  m_caller->browser = req;
+  m_ctx.services->browserExtension()->registerBrowser({.id = req.id, .name = req.name});
+
+  return ipc_gen::Result<void>::ok();
+}
+
+ipc_gen::Result<void>::Future IpcService::browserTabsChanged(std::vector<ipc_gen::BrowserTabInfo> tabs) {
+  if (!m_caller || !m_caller->browser)
+    return ipc_gen::Result<void>::fail("Only browser extensions can do this");
+
+  m_ctx.services->browserExtension()->setTabs(m_caller->browser->id, tabs);
+
+  return ipc_gen::Result<void>::ok();
+}
+
+// IpcCommandServer
 
 IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QObject *parent)
-    : QObject(parent), m_ctx(*ctx), m_rpc(IpcContext::GlobalContext{.app = ctx}) {
-  using Ctx = decltype(m_rpc)::ContextHandle;
+    : QObject(parent), m_ctx(*ctx), m_rpc(m_transport), m_service(m_rpc, *ctx),
+      m_ipcServer(m_rpc, &m_service) {
 
   connect(
       ctx->services->browserExtension(), &BrowserExtensionService::tabActionRequested, this,
@@ -35,214 +158,38 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QObject *parent)
           return;
         }
 
-        ipc::RpcClient<ipc::RpcSchema<ipc::FocusTab, ipc::CloseBrowserTab>> const client;
-        std::string json;
+        m_transport.conn = it->conn;
 
         switch (action) {
         case BrowserExtensionService::TabAction::Focus:
-          json = client.notify<ipc::FocusTab>({.tabId = tabId});
+          m_service.emitfocusTab({.tabId = tabId});
           break;
         case BrowserExtensionService::TabAction::Close:
-          json = client.notify<ipc::CloseBrowserTab>({.tabId = tabId});
+          m_service.emitcloseTab({.tabId = tabId});
           break;
         }
 
-        qDebug() << "send to browser" << json;
-
-        it->sendMessage(json);
+        m_transport.conn = nullptr;
       });
-
-  m_rpc.middleware(
-      [](const decltype(m_rpc)::Schema::Request &req, const Ctx &info) -> std::optional<std::string> {
-        constexpr static const auto BROWSER_METHODS = std::array{ipc::BrowserTabsChanged::key};
-
-        if (std::ranges::contains(BROWSER_METHODS, req.method) && !info.caller->browser) {
-          return "Only browser extensions can do this";
-        }
-
-        return {};
-      });
-
-  m_rpc.route<ipc::Describe>([&](const ipc::Describe::Request &req, const Ctx &ctx) {
-    ipc::Describe::Response res;
-
-    res.entrypoint = ctx.global->app->navigation->activeCommand()->uniqueId();
-    res.open = ctx.global->app->navigation->isWindowOpened();
-
-    return res;
-  });
-
-  m_rpc.route<ipc::Ping>([&](const ipc::Ping::Request &req, const Ctx &ctx) {
-    return ipc::Ping::Response(VICINAE_GIT_TAG, QCoreApplication::applicationPid());
-  });
-
-  m_rpc.route<ipc::BrowserInit>([this](const ipc::BrowserInit::Request &init, const Ctx &context) {
-    context.caller->browser = init;
-    m_ctx.services->browserExtension()->registerBrowser({.id = init.id, .name = init.name});
-    return ipc::BrowserInit::Response();
-  });
-
-  m_rpc.route<ipc::LaunchApp>([](const ipc::LaunchApp::Request &req,
-                                 const Ctx &ctx) -> std::expected<ipc::LaunchApp::Response, std::string> {
-    auto appDb = ctx.global->app->services->appDb();
-    auto wm = ctx.global->app->services->windowManager();
-    auto app = appDb->findById(req.appId.c_str());
-
-    if (!app) { return std::unexpected("No app with id"); }
-
-    if (!req.newInstance) {
-      if (auto wins = wm->findAppWindows(*app); !wins.empty()) {
-        auto &win = wins.front();
-        wm->provider()->focusWindowSync(*win);
-        return ipc::LaunchApp::Response({.focusedWindowTitle = win->title().toStdString()});
-      }
-    }
-
-    std::vector<QString> const args = Utils::toQStringVec(req.args);
-
-    if (!appDb->launch(*app, args)) {
-      return std::unexpected(std::format("Failed to launch app with id {}", req.appId));
-    }
-
-    return ipc::LaunchApp::Response();
-  });
-
-  m_rpc.route<ipc::BrowserTabsChanged>(
-      [](const ipc::BrowserTabsChanged::Request &req,
-         const Ctx &ctx) -> std::expected<ipc::BrowserTabsChanged::Response, std::string> {
-        qDebug() << "set" << req.size() << "browser tabs";
-        if (!ctx.caller->browser) return std::unexpected("setTabs only permitted for browsers");
-        ctx.global->app->services->browserExtension()->setTabs(ctx.caller->browser->id, req);
-        return ipc::BrowserTabsChanged::Response();
-      });
-
-  m_rpc.route<ipc::DMenu>([](ipc::DMenu::Request request, const Ctx &ctx) {
-    using Watcher = QFutureWatcher<ipc::DMenu::Response>;
-    static constexpr const int DMENU_SMALL_WIDTH_THRESHOLD = 500;
-    auto &m_ctx = *ctx.global->app;
-
-    auto &nav = m_ctx.navigation;
-    auto &cfg = m_ctx.services->config()->value();
-
-    QPromise<ipc::DMenu::Response> promise;
-    auto future = promise.future();
-
-    if (request.width.has_value() && request.width.value() < DMENU_SMALL_WIDTH_THRESHOLD) {
-      qInfo() << "dmenu: disabling quicklook and footer because width is too low";
-      request.noFooter = true;
-      request.noQuickLook = true;
-    }
-
-    auto view = new DMenuViewHost(request);
-    auto watcher = new Watcher;
-
-    watcher->setFuture(future);
-
-    QObject::connect(watcher, &Watcher::canceled, [nav = nav.get()]() { nav->closeWindow(); });
-    QObject::connect(watcher, &Watcher::finished, [watcher]() { watcher->deleteLater(); });
-    QObject::connect(view, &DMenuViewHost::selected,
-                     [promise = std::move(promise)](const QString &text) mutable {
-                       promise.addResult(ipc::DMenu::Response(text.toStdString()));
-                       promise.finish();
-                     });
-
-    nav->popToRoot({.clearSearch = false});
-    nav->pushView(view);
-    nav->setInstantDismiss(true);
-
-    if (request.width || request.height) {
-      int const w = request.width.value_or(cfg.launcherWindow.size.width);
-      int const h = request.height.value_or(cfg.launcherWindow.size.height);
-      nav->requestWindowSize(QSize(w, h));
-    }
-
-    nav->showWindow();
-
-    return future;
-  });
-
-  m_rpc.route<ipc::Deeplink>([](const ipc::Deeplink::Request &req,
-                                const Ctx &ctx) -> std::expected<ipc::Deeplink::Response, std::string> {
-    IpcCommandHandler handler(*ctx.global->app);
-    QUrl const url(req.url.c_str());
-
-    if (!url.isValid()) { return std::unexpected("Not a valid URL"); }
-
-    const auto res = handler.handleUrl(QUrl(req.url.c_str()));
-
-    if (!res) return std::unexpected(res.error());
-
-    return ipc::Deeplink::Response();
-  });
 }
 
 void IpcCommandServer::processFrame(QLocalSocket *conn, QByteArrayView frame) {
-
   auto clientInfoIt =
       std::ranges::find_if(m_clients, [conn](const ClientInfo &info) { return info.conn == conn; });
 
-  auto respond = [](QLocalSocket *conn, ServerSchema::Response res) {
-    std::string buf;
-
-    if (const auto error = glz::write_json(res, buf)) {
-      qCritical() << "Failed to serialize ipc response";
-      return;
-    }
-
-    qDebug() << "IPC Response" << buf;
-
-    uint32_t size = buf.size();
-    conn->write(reinterpret_cast<const char *>(&size), sizeof(size));
-    conn->write(reinterpret_cast<const char *>(buf.data()), buf.size());
-  };
-
   if (clientInfoIt == m_clients.end()) return;
 
-  qDebug() << "IPC Request" << frame.toByteArray().toStdString();
+  m_transport.conn = conn;
+  m_service.setCallerInfo(&(*clientInfoIt));
 
-  const auto parseResult = ServerSchema::parseRequest(frame.toByteArray().toStdString());
+  qDebug() << "IPC incoming:" << frame.toByteArray();
 
-  if (!parseResult) {
-    qWarning() << "Failed to parse";
-    return;
-  }
+  m_ipcServer.route({frame.data(), static_cast<size_t>(frame.size())});
 
-  const auto &request = parseResult.value();
+  qDebug() << "IPC dispatch done, conn still valid:" << (conn != nullptr);
 
-  auto call = m_rpc.call(request, *clientInfoIt);
-
-  if (!request.id) { return; }
-
-  if (!call) {
-    respond(conn, request.makeErrorResponse({.code = 0, .message = call.error()}));
-    return;
-  }
-
-  const auto &value = call.value();
-
-  if (auto future = std::get_if<QFuture<glz::raw_json>>(&value)) {
-    auto watcher = QObjectUniquePtr<Watcher>(new Watcher);
-
-    watcher->setFuture(*future);
-    // TODO: we must check that connection still exist
-    connect(watcher.get(), &Watcher::finished, this, [respond, watcher = watcher.get(), request, conn]() {
-      if (watcher->isCanceled()) { return; }
-
-      std::string packet;
-      auto response = request.makeResponse(watcher->result());
-
-      if (const auto error = glz::write_json(response, packet)) {
-        qDebug() << "Failed to write response" << glz::format_error(error);
-      }
-
-      respond(conn, response);
-    });
-    clientInfoIt->m_pending.emplace_back(std::move(watcher));
-
-    return;
-  }
-
-  respond(conn, request.makeResponse(std::get<glz::raw_json>(value)));
+  m_service.setCallerInfo(nullptr);
+  m_transport.conn = nullptr;
 }
 
 void IpcCommandServer::handleRead(QLocalSocket *conn) {
@@ -275,10 +222,6 @@ void IpcCommandServer::handleRead(QLocalSocket *conn) {
 void IpcCommandServer::handleDisconnection(QLocalSocket *conn) {
   auto it = std::ranges::find_if(m_clients, [conn](const ClientInfo &info) { return info.conn == conn; });
 
-  for (const auto &watcher : it->m_pending) {
-    if (!watcher->isFinished()) { watcher->cancel(); }
-  }
-
   if (it->browser) { m_ctx.services->browserExtension()->unregisterBrowser(it->browser->id); }
 
   m_clients.erase(it);
@@ -296,7 +239,6 @@ void IpcCommandServer::handleConnection() {
 }
 
 bool IpcCommandServer::start(const std::filesystem::path &localPath) {
-
   if (std::filesystem::exists(localPath)) { std::filesystem::remove(localPath); }
 
   if (!m_server.listen(localPath.c_str())) {

@@ -2,7 +2,6 @@
 #include "snippet/types.hpp"
 #include "utils.hpp"
 #include "common/CLI11.hpp"
-#include "vicinae-ipc/ipc.hpp"
 #include "vicinae.hpp"
 #include "server.hpp"
 #include <format>
@@ -11,8 +10,8 @@
 #include <qobjectdefs.h>
 #include "lib/rang.hpp"
 #include <exception>
-#include "vicinae-ipc/client.hpp"
-#include "version.h"
+#include "generated/version.h"
+#include <glaze/glaze.hpp>
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -131,180 +130,6 @@ public:
 
     return out.str();
   }
-};
-
-class LaunchAppCommand : public AbstractCommandLineCommand {
-public:
-  std::string id() const override { return "launch"; }
-  std::string description() const override { return "Launch or focus an app from vicinae"; }
-
-  void setup(CLI::App *app) override {
-    app->add_option("app_id", m_appId, "The ID of the application");
-    app->add_option("args", m_args, "Arguments to pass to the launched application");
-    app->add_flag("--new", m_newInstance, "Always launch a new instance");
-  }
-
-  void run(CLI::App *) override {
-    const auto res = ipc::CliClient::oneshot<ipc::LaunchApp>(
-        {.appId = m_appId, .args = m_args, .newInstance = m_newInstance});
-
-    if (!res) {
-      std::println(std::cerr, "Failed to launch app: {}", res.error());
-      return;
-    }
-
-    if (auto title = res->focusedWindowTitle; !title.empty()) {
-      std::println(std::cout,
-                   "Focused existing window \"{}\"\nPass --new if you want to launch a new instance.", title);
-    }
-  }
-
-private:
-  std::string m_appId;
-  std::vector<std::string> m_args;
-  bool m_newInstance = false;
-};
-
-class AppCommand : public AbstractCommandLineCommand {
-  std::string id() const override { return "app"; }
-  std::string description() const override { return "System application commands"; }
-  void setup(CLI::App *) override {}
-
-public:
-  AppCommand() { registerCommand<LaunchAppCommand>(); }
-};
-
-class CliPing : public AbstractCommandLineCommand {
-  std::string id() const override { return "ping"; }
-  std::string description() const override { return "Ping the vicinae server"; }
-
-  void run(CLI::App *) override {
-    const auto res = ipc::CliClient::oneshot<ipc::Ping>({});
-
-    if (!res) {
-      std::println(std::cerr, "Failed to ping: {}", res.error());
-      return;
-    }
-
-    std::cout << "Pinged successfully." << std::endl;
-  }
-};
-
-class ToggleCommand : public AbstractCommandLineCommand {
-  std::string id() const override { return "toggle"; }
-  std::string description() const override { return "Toggle the vicinae window"; }
-  void setup(CLI::App *app) override { app->add_option("-q,--query", m_query, "Set search query"); }
-
-  void run(CLI::App *) override {
-    ipc::CliClient::DeeplinkOptions opts;
-
-    if (m_query) { opts.query = {{"fallbackText", m_query.value()}}; }
-
-    if (auto res = ipc::CliClient::deeplink("vicinae://toggle", opts); !res) {
-      std::println(std::cerr, "Failed to toggle: {}", res.error());
-    }
-  }
-
-private:
-  std::optional<std::string> m_query;
-};
-
-class OpenCommand : public AbstractCommandLineCommand {
-  std::string id() const override { return "open"; }
-  std::string description() const override { return "Open the vicinae window"; }
-  void setup(CLI::App *app) override { app->add_option("-q,--query", m_query, "Set search query"); }
-
-  void run(CLI::App *) override {
-    ipc::CliClient::DeeplinkOptions opts;
-
-    if (m_query) { opts.query = {{"fallbackText", m_query.value()}}; }
-
-    if (auto res = ipc::CliClient::deeplink("vicinae://open", opts); !res) {
-      std::println(std::cerr, "Failed to toggle: {}", res.error());
-    }
-  }
-
-private:
-  std::optional<std::string> m_query;
-};
-
-class CloseCommand : public AbstractCommandLineCommand {
-  std::string id() const override { return "close"; }
-  std::string description() const override { return "Close the vicinae window"; }
-
-  void run(CLI::App *) override {
-    if (auto res = ipc::CliClient::deeplink(std::format("vicinae://close")); !res) {
-      std::println(std::cerr, "Failed to close: {}", res.error());
-    }
-  }
-};
-
-class DMenuCommand : public AbstractCommandLineCommand {
-  std::string id() const override { return "dmenu"; }
-  std::string description() const override { return "Render a list view from stdin"; }
-
-  void setup(CLI::App *app) override {
-    app->add_option("-n,--navigation-title", m_req.navigationTitle, "Set the navigation title");
-    app->add_option(
-        "-s,--section-title", m_req.sectionTitle,
-        "Set the title of the main section. Use the {count} placeholder to render the current count.");
-    app->add_option("-p,--placeholder", m_req.placeholder, "Placeholder text to use in the search bar");
-    app->add_option("-q,--query", m_req.query, "Initial search query");
-    app->add_option("-W,--width", m_req.width, "Window width in pixels");
-    app->add_option("-H,--height", m_req.height, "Window height in pixels");
-    app->add_flag("--no-section", m_req.noSection, "Do not insert a section heading");
-    app->add_flag("--no-quick-look", m_req.noQuickLook,
-                  "Do not show quick look if available for a given entry");
-    app->add_flag("--no-metadata", m_req.noMetadata, "Do not show metadata section in quick look");
-    app->add_flag("--no-footer", m_req.noFooter, "Hide the status bar footer");
-  }
-
-  void run(CLI::App *) override {
-    m_req.rawContent = Utils::slurp(std::cin);
-
-    const auto res = ipc::CliClient::oneshot<ipc::DMenu>(m_req);
-
-    if (!res) { std::println(std::cerr, "Failed to invoke dmenu: {}", res.error()); }
-    if (res->output.empty()) { exit(1); }
-
-    std::println(std::cout, "{}", res->output);
-  }
-
-private:
-  ipc::DMenu::Request m_req;
-};
-
-class VersionCommand : public AbstractCommandLineCommand {
-  std::string id() const override { return "version"; }
-  std::string description() const override { return "Show version and build information"; }
-  void setup(CLI::App *app) override { app->alias("ver"); }
-
-  void run(CLI::App *) override {
-    std::cout << "Version " << VICINAE_GIT_TAG << " (commit " << VICINAE_GIT_COMMIT_HASH << ")\n"
-              << "Build: " << BUILD_INFO << "\n"
-              << "Provenance: " << VICINAE_PROVENANCE << "\n";
-  }
-};
-
-class DeeplinkCommand : public AbstractCommandLineCommand {
-public:
-  std::string id() const override { return "deeplink"; }
-  std::string description() const override { return "Open a deeplink"; }
-
-  void setup(CLI::App *app) override {
-    app->alias("link");
-    app->add_option("link", link, "The deeplink to open (see https://docs.vicinae.com/deeplinks)")
-        ->required();
-  }
-
-  void run(CLI::App *) override {
-    if (const auto result = ipc::CliClient::deeplink(link); !result) {
-      std::println(std::cerr, "Failed to execute deeplink: {}", result.error());
-    }
-  }
-
-private:
-  std::string link;
 };
 
 int CommandLineApp::run(int ac, char **av) {
