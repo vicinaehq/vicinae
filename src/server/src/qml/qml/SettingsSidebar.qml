@@ -50,73 +50,84 @@ Item {
         anchors.fill: parent
         spacing: 0
 
-        Rectangle {
+        Item {
             Layout.fillWidth: true
-            Layout.leftMargin: 8
-            Layout.rightMargin: 8
-            Layout.topMargin: 12
-            Layout.bottomMargin: 8
-            height: 28
-            radius: 4
-            color: "transparent"
-            border.color: extSearchField.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
-            border.width: 1
+            Layout.preferredHeight: 40
 
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: 6
-                anchors.rightMargin: 6
-                spacing: 4
+            Rectangle {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.leftMargin: 8
+                anchors.rightMargin: 8
+                anchors.verticalCenter: parent.verticalCenter
+                height: 28
+                radius: 4
+                color: "transparent"
+                border.color: extSearchField.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
+                border.width: 1
 
-                Image {
-                    source: "image://vicinae/builtin:magnifying-glass?fg=" + Theme.textMuted
-                    sourceSize.width: 12
-                    sourceSize.height: 12
-                    Layout.preferredWidth: 12
-                    Layout.preferredHeight: 12
-                }
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 6
+                    anchors.rightMargin: 6
+                    spacing: 4
 
-                TextInput {
-                    id: extSearchField
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    verticalAlignment: TextInput.AlignVCenter
-                    font.pointSize: Theme.smallerFontSize
-                    color: Theme.foreground
-                    clip: true
-                    focus: true
-                    activeFocusOnTab: true
+                    Image {
+                        source: "image://vicinae/builtin:magnifying-glass?fg=" + Theme.textMuted
+                        sourceSize.width: 12
+                        sourceSize.height: 12
+                        Layout.preferredWidth: 12
+                        Layout.preferredHeight: 12
+                    }
 
-                    Connections {
-                        target: settings
-                        function onDefaultFocusRequested() {
-                            extSearchField.forceActiveFocus();
+                    TextInput {
+                        id: extSearchField
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        verticalAlignment: TextInput.AlignVCenter
+                        font.pointSize: Theme.smallerFontSize
+                        color: Theme.foreground
+                        clip: true
+                        focus: true
+                        activeFocusOnTab: true
+
+                        Connections {
+                            target: settings
+                            function onDefaultFocusRequested() {
+                                extSearchField.forceActiveFocus();
+                            }
                         }
-                    }
 
-                    Text {
-                        anchors.fill: parent
-                        verticalAlignment: Text.AlignVCenter
-                        text: "Search..."
-                        color: Theme.textPlaceholder
-                        font: extSearchField.font
-                        visible: !extSearchField.text
-                    }
+                        Text {
+                            anchors.fill: parent
+                            verticalAlignment: Text.AlignVCenter
+                            text: "Search..."
+                            color: Theme.textPlaceholder
+                            font: extSearchField.font
+                            visible: !extSearchField.text
+                        }
 
-                    onTextChanged: root._highlightedIndex = root._navItems.length > 0 ? 0 : -1
+                        onTextChanged: root._highlightedIndex = root._navItems.length > 0 ? 0 : -1
 
-                    Keys.onUpPressed: root._navigateHighlight(-1)
-                    Keys.onDownPressed: root._navigateHighlight(1)
-                    Keys.onReturnPressed: root._activateHighlighted()
-                    Keys.onEnterPressed: root._activateHighlighted()
-                    Keys.onPressed: event => {
-                        if (event.key === Qt.Key_Escape && text) {
-                            text = "";
-                            event.accepted = true;
+                        Keys.onUpPressed: root._navigateHighlight(-1)
+                        Keys.onDownPressed: root._navigateHighlight(1)
+                        Keys.onReturnPressed: root._activateHighlighted()
+                        Keys.onEnterPressed: root._activateHighlighted()
+                        Keys.onPressed: event => {
+                            if (event.key === Qt.Key_Escape && text) {
+                                text = "";
+                                event.accepted = true;
+                            }
                         }
                     }
                 }
             }
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            height: 1
+            color: Theme.divider
         }
 
         ListView {
@@ -125,6 +136,7 @@ Item {
             Layout.fillHeight: true
             clip: true
             bottomMargin: 8
+            topMargin: 6
             boundsBehavior: Flickable.StopAtBounds
             model: root._allItems
 
