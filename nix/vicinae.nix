@@ -1,5 +1,4 @@
 {
-  abseil-cpp,
   cmake,
   cmark-gfm,
   fetchNpmDeps,
@@ -11,7 +10,6 @@
   nodejs,
   npmHooks,
   pkg-config,
-  protobuf,
   qt6,
   gcc15Stdenv,
   wayland,
@@ -63,12 +61,10 @@ gcc15Stdenv.mkDerivation (finalAttrs: {
     ninja
     nodejs
     pkg-config
-    protobuf
     qt6.wrapQtAppsHook
   ];
 
   buildInputs = [
-    abseil-cpp
     cmark-gfm
     kdePackages.layer-shell-qt
     kdePackages.qtkeychain
@@ -76,7 +72,6 @@ gcc15Stdenv.mkDerivation (finalAttrs: {
     libqalculate
     minizip
     nodejs
-    protobuf
     qt6.qtbase
     qt6.qtdeclarative
     qt6.qtsvg
