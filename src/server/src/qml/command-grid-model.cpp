@@ -185,6 +185,8 @@ void CommandGridModel::select(int section, int item) {
   if (panel) {
     panel->finalize();
     m_scope.setActions(std::move(panel));
+  } else {
+    m_scope.clearActions();
   }
 }
 
@@ -211,6 +213,8 @@ void CommandGridModel::refreshActionPanel() {
     if (panel) {
       panel->finalize();
       m_scope.setActions(std::move(panel));
+    } else {
+      m_scope.clearActions();
     }
   }
 }

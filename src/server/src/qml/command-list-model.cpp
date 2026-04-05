@@ -85,7 +85,11 @@ void CommandListModel::setSelectedIndex(int index) {
   if (!sameItem) { onItemSelected(flat.sectionIdx, flat.itemIdx); }
 
   auto panel = createActionPanel(flat.sectionIdx, flat.itemIdx);
-  if (panel) { m_scope.setActions(std::move(panel)); }
+  if (panel) {
+    m_scope.setActions(std::move(panel));
+  } else {
+    m_scope.clearActions();
+  }
 }
 
 void CommandListModel::onSelectionCleared() { m_scope.clearActions(); }
