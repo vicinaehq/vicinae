@@ -7,6 +7,7 @@
 #include <format>
 #include <qlocalserver.h>
 #include <string_view>
+#include <unordered_map>
 #include "generated/ipc-server.hpp"
 #include "common/qt.hpp"
 
@@ -55,8 +56,21 @@ private:
   ApplicationContext &m_ctx;
 
   struct IpcTransport : public ipc_gen::AbstractTransport {
+    // Current write target. Set by `processFrame` before dispatch (so
+    // synchronous replies land on the originating peer), by the event
+    // emission site before emitting a notification, and by `activateReply`
+    // when delivering an asynchronous reply.
     QLocalSocket *conn = nullptr;
+    // Pending reply routing: filled by `bindReply` at dispatch time when a
+    // handler returns an unfinished future, drained by `activateReply` when
+    // the reply is finally produced. Lets async replies find their peer even
+    // after the dispatching frame has unwound.
+    std::unordered_map<int, QLocalSocket *> pendingReplies;
+
     void send(std::string_view data) override;
+    void bindReply(int id) override;
+    void activateReply(int id) override;
+    void forgetConn(QLocalSocket *dead);
   };
 
   IpcTransport m_transport;

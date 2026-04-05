@@ -24,6 +24,21 @@ void IpcCommandServer::IpcTransport::send(std::string_view data) {
   conn->write(data.data(), data.size());
 }
 
+void IpcCommandServer::IpcTransport::bindReply(int id) {
+  if (conn) pendingReplies[id] = conn;
+}
+
+void IpcCommandServer::IpcTransport::activateReply(int id) {
+  if (auto it = pendingReplies.find(id); it != pendingReplies.end()) {
+    conn = it->second;
+    pendingReplies.erase(it);
+  }
+}
+
+void IpcCommandServer::IpcTransport::forgetConn(QLocalSocket *dead) {
+  std::erase_if(pendingReplies, [dead](const auto &kv) { return kv.second == dead; });
+}
+
 // IpcService
 
 IpcService::IpcService(ipc_gen::RpcTransport &transport, ApplicationContext &ctx)
@@ -219,6 +234,9 @@ void IpcCommandServer::handleDisconnection(QLocalSocket *conn) {
   auto it = std::ranges::find_if(m_clients, [conn](const ClientInfo &info) { return info.conn == conn; });
 
   if (it->browser) { m_ctx.services->browserExtension()->unregisterBrowser(it->browser->id); }
+
+  m_transport.forgetConn(conn);
+  if (m_transport.conn == conn) m_transport.conn = nullptr;
 
   m_clients.erase(it);
   conn->deleteLater();

@@ -43,7 +43,19 @@ using OutgoingJsonRpcMessage = std::variant<JsonRpcResponse, JsonRpcNotification
 
 class AbstractTransport {
 public:
+  // Emit raw bytes to the current target. The transport implementation is
+  // responsible for knowing which peer "current" refers to; the router only
+  // informs the transport of reply-routing transitions via the hooks below.
   virtual void send(std::string_view data) = 0;
+  // Called while a request is being dispatched, with its id. Implementations
+  // should snapshot the originating peer under this id so that a later
+  // `activateReply(id)` can restore it, even after other frames have been
+  // processed in between (the async reply case).
+  virtual void bindReply(int id) { (void)id; }
+  // Called immediately before writing a reply/error for `id`. Implementations
+  // should switch their "current target" to the peer previously bound under
+  // `id` and release the binding.
+  virtual void activateReply(int id) { (void)id; }
   virtual ~AbstractTransport() = default;
 };
 
@@ -204,6 +216,8 @@ class RpcTransport {
 	public:
 		RpcTransport(AbstractTransport& transport): m_transport(transport) {}
 
+		void bindReply(int id) { m_transport.bindReply(id); }
+
 		template <typename T>
 		void notify(std::string_view method, const T& params) {
 			std::string paramsBuf;
@@ -225,6 +239,7 @@ class RpcTransport {
 			[[maybe_unused]] auto res = glz::write_json(result, resultBuf);
 			}
 
+			m_transport.activateReply(id);
 			send(JsonRpcResponse{
 				.id = id,
 				.jsonrpc = "2.0",
@@ -233,6 +248,7 @@ class RpcTransport {
 		}
 
 		void replyError(int id, const std::string& error) {
+			m_transport.activateReply(id);
 			send(JsonRpcErrorResponse{.jsonrpc = "2.0", .id = id, .error = error});
 		}
 
@@ -738,6 +754,11 @@ oss << serializeEventParams(s->name, e);
 			replyWatcher(id, method, sentAt, future);
 			return;
 		}
+
+		// Snapshot the originating peer now, while we are still in the
+		// dispatch call stack, so the transport can route the reply correctly
+		// when the future resolves asynchronously.
+		m_transport.bindReply(id);
 
 		auto watcher = new QFutureWatcher<T>(this);
 		auto methodStr = std::string{method};
