@@ -520,6 +520,7 @@ void NavigationController::setActions(std::unique_ptr<ActionPanelState> panel, c
 size_t NavigationController::viewStackSize() const { return m_views.size(); }
 
 void NavigationController::showWindow() {
+  if (m_windowOpened) return;
   if (auto popToRoot = m_pendingPopToRoot) {
     applyPopToRoot(*popToRoot);
     m_pendingPopToRoot.reset();

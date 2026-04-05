@@ -30,6 +30,7 @@
 #include <QQuickWindow>
 #include <QWindow>
 #include <QKeyEvent>
+#include <qcoreevent.h>
 #ifdef WAYLAND_LAYER_SHELL
 #include <LayerShellQt/Window>
 #include <utility>
@@ -273,18 +274,27 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
 bool LauncherWindow::eventFilter(QObject *obj, QEvent *event) {
   if (obj != m_window) return QObject::eventFilter(obj, event);
 
-  if (event->type() == QEvent::KeyPress) {
+  // makes sure we keep our state in sync if the compositor is the one raising/closing the window for some
+  // reason. typically useful to handle close on focus loss on gnome with the gnome extension
+  if (event->type() == QEvent::WindowActivate) {
+    m_ctx.navigation->showWindow();
+  } else if (event->type() == QEvent::WindowDeactivate) {
+    m_ctx.navigation->closeWindow();
+  }
+
+  else if (event->type() == QEvent::KeyPress) {
     auto *ke = static_cast<QKeyEvent *>(event); // NOLINT
     if (forwardKey(ke->key(), static_cast<int>(ke->modifiers()))) { return true; }
   }
 
   // only works on some compositors.
   // we could probably make it work everywhere layer shell is supported by adding a layer behind ours.
-  if (event->type() == QEvent::MouseMove && m_closeOnFocusLoss) {
+  else if (event->type() == QEvent::MouseMove && m_closeOnFocusLoss) {
     auto *me = static_cast<QMouseEvent *>(event); // NOLINT
     QRect const contentRect(0, 0, m_window->width(), m_window->height());
     if (!contentRect.contains(me->position().toPoint())) { m_ctx.navigation->closeWindow(); }
   }
+
   return QObject::eventFilter(obj, event);
 }
 
