@@ -54,6 +54,9 @@ export default async function(data: extensionServer.LaunchEventData) {
 	});
 
 	renderer.render(
-		<App launchProps={{ arguments: {} }} component={Component} />,
+		<App
+			launchProps={{ arguments: data.argumentValues }}
+			component={Component}
+		/>,
 	);
 }
