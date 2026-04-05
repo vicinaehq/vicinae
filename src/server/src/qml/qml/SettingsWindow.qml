@@ -3,6 +3,43 @@ import QtQuick.Layouts
 
 Window {
     id: root
+    readonly property var extModel: settings.extensionModel
+    readonly property bool isExtensionPage: settings.currentPage !== "general" && settings.currentPage !== "keybindings" && settings.currentPage !== "advanced" && settings.currentPage !== "about"
+    readonly property string topbarTitle: {
+        if (root.isExtensionPage)
+            return root.extModel.selectedTitle;
+
+        switch (settings.currentPage) {
+        case "general":
+            return "General";
+        case "keybindings":
+            return "Keybindings";
+        case "advanced":
+            return "Advanced";
+        case "about":
+            return "About";
+        default:
+            return "";
+        }
+    }
+    readonly property var topbarIconSource: {
+        if (root.isExtensionPage)
+            return root.extModel.selectedIconSource;
+
+        switch (settings.currentPage) {
+        case "general":
+            return Img.builtin("cog").withFillColor(Theme.foreground);
+        case "keybindings":
+            return Img.builtin("keyboard").withFillColor(Theme.foreground);
+        case "advanced":
+            return Img.builtin("wrench-screwdriver").withFillColor(Theme.foreground);
+        case "about":
+            return Img.builtin("vicinae").withFillColor(Theme.foreground);
+        default:
+            return "";
+        }
+    }
+
     width: 860
     height: 540
     minimumWidth: 860
@@ -44,33 +81,75 @@ Window {
                 Layout.fillHeight: true
                 spacing: 0
 
-                // Header with close button
+                // Header with page metadata and close button
                 Item {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 40
 
-                    Rectangle {
-                        id: closeBtn
-                        anchors.right: parent.right
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 20
                         anchors.rightMargin: 12
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: 24
-                        height: 24
-                        radius: 12
-                        color: closeHover.hovered ? Qt.rgba(Theme.listItemHoverBg.r, Theme.listItemHoverBg.g, Theme.listItemHoverBg.b, Config.windowOpacity) : "transparent"
+                        spacing: 10
+
+                        ViciImage {
+                            visible: root.topbarIconSource !== ""
+                            source: root.topbarIconSource
+                            Layout.preferredWidth: 20
+                            Layout.preferredHeight: 20
+                            Layout.alignment: Qt.AlignVCenter
+                        }
 
                         Text {
-                            anchors.centerIn: parent
-                            text: "\u2715"
-                            color: closeHover.hovered ? Theme.foreground : Theme.textMuted
-                            font.pixelSize: 12
+                            visible: root.topbarTitle !== ""
+                            text: root.topbarTitle
+                            color: Theme.foreground
+                            font.pointSize: Theme.regularFontSize
+                            font.bold: true
+                            elide: Text.ElideRight
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignVCenter
                         }
 
-                        HoverHandler {
-                            id: closeHover
+                        Item {
+                            Layout.fillWidth: true
                         }
-                        TapHandler {
-                            onTapped: settings.close()
+
+                        Item {
+                            visible: root.isExtensionPage && root.extModel.selectedIsProvider
+                            Layout.preferredWidth: visible ? headerToggle.implicitWidth : 0
+                            Layout.preferredHeight: visible ? headerToggle.implicitHeight : 0
+                            Layout.alignment: Qt.AlignVCenter
+
+                            SettingsToggle {
+                                id: headerToggle
+                                visible: parent.visible
+                                checked: root.extModel.selectedEnabled
+                                onToggled: root.extModel.setEnabled(root.extModel.selectedRow, checked)
+                            }
+                        }
+
+                        Rectangle {
+                            id: closeBtn
+                            Layout.alignment: Qt.AlignVCenter
+                            width: 24
+                            height: 24
+                            radius: 12
+                            color: closeHover.hovered ? Qt.rgba(Theme.listItemHoverBg.r, Theme.listItemHoverBg.g, Theme.listItemHoverBg.b, Config.windowOpacity) : "transparent"
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "\u2715"
+                                color: closeHover.hovered ? Theme.foreground : Theme.textMuted
+                                font.pixelSize: 12
+                            }
+
+                            HoverHandler {
+                                id: closeHover
+                            }
+                            TapHandler {
+                                onTapped: settings.close()
+                            }
                         }
                     }
                 }
