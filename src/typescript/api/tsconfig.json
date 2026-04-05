@@ -10,6 +10,7 @@
 		"forceConsistentCasingInFileNames": true,
 		"strict": true,
 		"noImplicitAny": false,
-		"skipLibCheck": true
+		"skipLibCheck": true,
+		"types": ["node"]
 	}
 }

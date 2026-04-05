@@ -12,6 +12,7 @@
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
 		"resolveJsonModule": true,
-		"jsx": "react-jsx"
+		"jsx": "react-jsx",
+		"types": ["node"]
 	}
 }
