@@ -13,6 +13,7 @@
 #include "extension/api/ui-service.hpp"
 #include "extension/api/wm-service.hpp"
 #include "extension/api/wallpaper-service.hpp"
+#include "extension/api/ai-service.hpp"
 #include "generated/tsapi.hpp"
 #include "glaze-qt.hpp"
 #include "service-registry.hpp"
@@ -60,9 +61,10 @@ void ExtensionCommandRuntime::initialize() {
   auto *oauth = new ExtOAuthService(*m_transport, m_command->extensionId(), ctx);
   auto wallpaper = new ExtWallpaperService(*m_transport, *services->wallpaperManager());
   auto browserExtension = new ExtBrowserExtensionService(*m_transport, *services->browserExtension());
+  auto *ai = new ExtensionAIRouter(*m_transport, *services->ai());
 
   m_server = new tsapi::Server(*m_transport, app, ui, wm, clipboard, storage, fileSearch, command, oauth,
-                               wallpaper, browserExtension, eventCore);
+                               wallpaper, browserExtension, eventCore, ai);
   m_server->setLogger(m_logger.get());
   m_server->setParent(this);
 }
