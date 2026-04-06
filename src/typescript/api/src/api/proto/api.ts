@@ -298,6 +298,17 @@ export type BrowserTab = {
 	audible: boolean;
 }
 
+export type AskOptions = {
+	temperature?: number;
+	model?: string;
+}
+
+export type Model = {
+	id: string;
+	name: string;
+	capabilities: string[];
+}
+
 class ApplicationService {
 	constructor(private readonly transport: RpcTransport) {}
 
@@ -550,6 +561,26 @@ class EventCoreService {
 	}
 }
 
+class AIService {
+	constructor(private readonly transport: RpcTransport) {}
+
+	listModels(): Promise<Model[]> {
+		return this.transport.request("AI/listModels", { });	
+	}
+
+	ask(prompt: string, options: AskOptions): Promise<string> {
+		return this.transport.request("AI/ask", { prompt, options});	
+	}
+
+	abort(completionId: string): Promise<boolean> {
+		return this.transport.request("AI/abort", { completionId});	
+	}
+
+	dataReceived(handler: (completionId: string, data: string, done: boolean) => void): EventSubscription {
+		return this.transport.subscribe("AI/dataReceived", (msg) => handler(msg.completionId, msg.data, msg.done))
+	}
+}
+
 export class Client {
 	constructor(private readonly transport: RpcTransport) {
 		this.Application = new ApplicationService(this.transport);
@@ -563,6 +594,7 @@ export class Client {
 		this.Wallpaper = new WallpaperService(this.transport);
 		this.BrowserExtension = new BrowserExtensionService(this.transport);
 		this.EventCore = new EventCoreService(this.transport);
+		this.AI = new AIService(this.transport);
 	}
 
   	route(msg: string): void { this.transport.dispatchMessage(msg); }
@@ -577,5 +609,6 @@ export class Client {
 	Wallpaper: WallpaperService;
 	BrowserExtension: BrowserExtensionService;
 	EventCore: EventCoreService;
+	AI: AIService;
 
 }
