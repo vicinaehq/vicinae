@@ -276,9 +276,9 @@ bool LauncherWindow::eventFilter(QObject *obj, QEvent *event) {
 
   // makes sure we keep our state in sync if the compositor is the one raising/closing the window for some
   // reason. typically useful to handle close on focus loss on gnome with the gnome extension
-  if (event->type() == QEvent::WindowActivate) {
+  if (event->type() == QEvent::Show) {
     m_ctx.navigation->showWindow();
-  } else if (event->type() == QEvent::WindowDeactivate) {
+  } else if (event->type() == QEvent::Hide) {
     m_ctx.navigation->closeWindow();
   }
 
