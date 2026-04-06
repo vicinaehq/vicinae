@@ -1,3 +1,5 @@
+import { getClient } from "./client";
+
 export namespace AI {
 	const creativityToTemperature: Record<Creativity, number> = {
 		none: 0,
@@ -5,6 +7,10 @@ export namespace AI {
 		medium: 0.7,
 		high: 1.0,
 		maximum: 2.0,
+	};
+
+	type AIAskRes = Promise<string> & {
+		on(event: "data", listener: (chunk: string) => void): void;
 	};
 
 	/**
@@ -25,13 +31,9 @@ export namespace AI {
 	 * const fullAnswer = await completion;
 	 * ```
 	 */
-	export function ask(
-		prompt: string,
-		options?: AskOptions,
-	): Promise<string> & {
-		on(event: "data", listener: (chunk: string) => void): void;
-	} {
+	export function ask(prompt: string, options?: AskOptions): AIAskRes {
 		const subscribers = [] as Array<(chunk: string) => void>;
+
 		let temperature = creativityToTemperature[options?.creativity ?? "medium"];
 
 		if (typeof options?.creativity === "number") {
@@ -43,33 +45,31 @@ export namespace AI {
 			temperature = options.creativity;
 		}
 
-		const promise = new Promise<string>((resolve, reject) => {
-			let data = "";
-			/*
-			const { id } = bus.addEventHandler((chunk, done) => {
-				data += chunk;
-				for (const cb of subscribers) cb(chunk as string);
-				if (done) resolve(data);
-			});
-			*/
-
-			/*
-			options?.signal?.addEventListener("abort", () => {
-				bus.request("ai.abortAsk", { handler: id });
-			});
-
-			bus
-				.request("ai.ask", {
-					prompt,
-					temperature,
-					model: options?.model,
-					handler: id,
-				})
-				.then((res) => {
-					if (!res.ok) reject(res.error);
+		const api = getClient();
+		const promise = api.AI.ask(prompt, { temperature, ...options })
+			.then((completionId) => {
+				options?.signal?.addEventListener("abort", () => {
+					api.AI.abort(completionId);
 				});
-				*/
-		});
+				return new Promise<string>((resolve, _) => {
+					let data = "";
+
+					const { unsubscribe } = getClient().AI.dataReceived(
+						(id, chunk, done) => {
+							if (id !== completionId) return;
+							data += chunk;
+							for (const cb of subscribers) cb(chunk as string);
+							if (done) {
+								unsubscribe();
+								resolve(data);
+							}
+						},
+					);
+				});
+			})
+			.catch((error) => {
+				throw error;
+			});
 
 		Object.assign(promise, {
 			on: (event: "data", listener: (chunk: string) => void) => {
@@ -79,7 +79,7 @@ export namespace AI {
 			},
 		});
 
-		return promise as any;
+		return promise as AIAskRes;
 	}
 
 	/**
@@ -87,14 +87,7 @@ export namespace AI {
 	 * Only models that are suitable for completion tasks are returned.
 	 */
 	export async function getModels(): Promise<AI.Model[]> {
-		/*
-		return bus
-			.request("ai.getModels", {})
-			.then((res) =>
-				res.unwrap().models.map(({ capabilities, ...rest }) => rest),
-			);
-			*/
-		return [];
+		return getClient().AI.listModels();
 	}
 
 	export type AskOptions = {
