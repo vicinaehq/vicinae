@@ -1,6 +1,5 @@
 // extension (client) -> vicinae (server)
 // this is the definition of the typescript extension API
-// //e
 
 struct Application {
   id: string;
@@ -265,4 +264,24 @@ service OAuth {
 
 service EventCore {
   event handlerActivated(id: string, args: any[]);
+};
+
+// AI
+
+struct AskOptions {
+  temperature?: number; // TODO: we need to fix codegen in C++ to use double for everything probably (simpler)
+  model?: string;
+};
+
+struct Model {
+  id: string;
+  name: string;
+  capabilities: string[];
+};
+
+service AI {
+  fn listModels() => Model[];
+  fn ask(prompt: string, options: AskOptions) => string; // returns completion id
+  fn abort(completionId: string) => bool; // returns whether a completion was aborted
+  event dataReceived(completionId: string, data: string, done: bool);
 };

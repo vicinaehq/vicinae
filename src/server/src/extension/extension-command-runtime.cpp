@@ -11,6 +11,7 @@
 #include "extension/services/storage-service.hpp"
 #include "extension/services/ui-service.hpp"
 #include "extension/services/wm-service.hpp"
+#include "extension/services/ai-service.hpp"
 #include "generated/tsapi.hpp"
 #include "glaze-qt.hpp"
 #include "service-registry.hpp"
@@ -51,10 +52,12 @@ void ExtensionCommandRuntime::initialize() {
   auto *fileSearch = new ExtFileSearchService(*m_transport, *services->fileService());
   auto *command = new ExtCommandService(*m_transport, m_command, services->rootItemManager(), *ctx.settings);
   auto *oauth = new ExtOAuthService(*m_transport, m_command->extensionId(), ctx);
+  auto *ai = new ExtensionAIRouter(*m_transport, *services->ai());
 
-  m_server =
-      new tsapi::Server(*m_transport, app, ui, wm, clipboard, storage, fileSearch, command, oauth, eventCore);
+  m_server = new tsapi::Server(*m_transport, app, ui, wm, clipboard, storage, fileSearch, command, oauth,
+                               eventCore, ai);
   m_server->setLogger(m_logger.get());
+  m_server->setParent(this);
 }
 
 void ExtensionCommandRuntime::load(const LaunchProps &props) {
