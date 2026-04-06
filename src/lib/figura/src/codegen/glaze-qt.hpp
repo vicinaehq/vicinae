@@ -262,7 +262,7 @@ class RpcTransport {
 		AbstractTransport& m_transport;
 };
 
-class EventEmitter {
+class EventEmitter: public QObject {
 	public:
 		EventEmitter(RpcTransport& transport): m_transport(transport) {
 		}
@@ -697,10 +697,13 @@ oss << serializeEventParams(s->name, e);
     oss << "): m_transport(transport)";
 
     for (const auto &s : ast.services) {
-      oss << ", m_" << s->name << "(" << s->name << ")";
+      oss << ", m_" << s->name << "(" << s->name << ")\n";
     }
 
     oss << "{\n";
+    for (const auto &s : ast.services) {
+      oss << "m_" << s->name << "->setParent(this);\n";
+    }
     oss << "\n}\n";
 
     oss << R"(

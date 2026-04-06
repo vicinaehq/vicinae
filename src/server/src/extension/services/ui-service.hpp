@@ -13,7 +13,7 @@
 #include <qfuturewatcher.h>
 #include <qlogging.h>
 
-class ExtUIService : public QObject, public tsapi::AbstractUI {
+class ExtUIService : public tsapi::AbstractUI {
   Q_OBJECT
 
   using Void = tsapi::Result<void>;
@@ -27,8 +27,8 @@ public:
   ExtUIService(tsapi::RpcTransport &transport, NavigationController *navigation,
                const std::shared_ptr<ExtensionCommand> &command, tsapi::AbstractEventCore *eventCore,
                ToastService &toast, QObject *parent = nullptr)
-      : QObject(parent), AbstractUI(transport), m_navigation(navigation), m_command(command),
-        m_eventCore(eventCore), m_toast(toast) {
+      : AbstractUI(transport), m_navigation(navigation), m_command(command), m_eventCore(eventCore),
+        m_toast(toast) {
     connect(&m_modelWatcher, &QFutureWatcher<ParsedRenderData>::finished, this, &ExtUIService::modelCreated);
     connect(navigation, &NavigationController::viewPoped, this, &ExtUIService::handleViewPoped);
   }
