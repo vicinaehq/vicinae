@@ -219,7 +219,7 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
 
     qWarning().nospace() << "vicinae://extensions is deprecated and will be removed in a future release. "
                             "Please use vicinae://launch instead. See "
-                         << Omnicast::DOC_URL + "/deeplink" << " for more information.";
+                         << Omnicast::DOC_URL + "/deeplinks" << " for more information.";
 
     if (components.size() == 2) {
       QString author = components[0];
