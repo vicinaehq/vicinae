@@ -191,6 +191,19 @@ bool ClipboardDatabase::removeAll() {
          query.exec("DELETE FROM selection");
 }
 
+bool ClipboardDatabase::removeAll(bool preservePinned) {
+  QSqlQuery query(m_db);
+
+  if (preservePinned) {
+    return query.exec("DELETE FROM selection_fts") &&
+           query.exec("DELETE FROM data_offer WHERE selection_id IN (SELECT id FROM selection WHERE "
+                      "pinned_at IS NULL)") &&
+           query.exec("DELETE FROM selection WHERE pinned_at IS NULL");
+  }
+
+  return removeAll();
+}
+
 std::vector<QString> ClipboardDatabase::removeSelection(const QString &selectionId) {
   if (!m_db.transaction()) { return {}; }
 

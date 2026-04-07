@@ -598,6 +598,24 @@ bool ClipboardService::removeAllSelections() {
   return true;
 }
 
+bool ClipboardService::removeAllSelections(bool preservePinned) {
+  ClipboardDatabase db;
+
+  if (!db.removeAll(preservePinned)) {
+    qWarning() << "Failed to remove clipboard selections";
+    return false;
+  }
+
+  if (!preservePinned) {
+    fs::remove_all(m_dataDir);
+    fs::create_directories(m_dataDir);
+  }
+
+  emit allSelectionsRemoved();
+
+  return true;
+}
+
 AbstractClipboardServer *ClipboardService::clipboardServer() const { return m_clipboardServer.get(); }
 
 ClipboardService::ClipboardService(const std::filesystem::path &path) {

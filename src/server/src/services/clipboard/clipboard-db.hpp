@@ -91,6 +91,7 @@ public:
                                                  const ClipboardListSettings &opts = {}) const;
 
   bool removeAll();
+  bool removeAll(bool preservePinned);
 
   bool setKeywords(const QString &id, const QString &keywords);
   std::optional<QString> retrieveKeywords(const QString &id);
