@@ -92,6 +92,7 @@ public:
 
   bool removeAll();
   bool removeAll(bool preservePinned);
+  std::vector<QString> getOfferIdsToDelete(bool preservePinned);
 
   bool setKeywords(const QString &id, const QString &keywords);
   std::optional<QString> retrieveKeywords(const QString &id);

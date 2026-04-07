@@ -601,6 +601,8 @@ bool ClipboardService::removeAllSelections() {
 bool ClipboardService::removeAllSelections(bool preservePinned) {
   ClipboardDatabase db;
 
+  auto offerIds = db.getOfferIdsToDelete(preservePinned);
+
   if (!db.removeAll(preservePinned)) {
     qWarning() << "Failed to remove clipboard selections";
     return false;
@@ -609,6 +611,10 @@ bool ClipboardService::removeAllSelections(bool preservePinned) {
   if (!preservePinned) {
     fs::remove_all(m_dataDir);
     fs::create_directories(m_dataDir);
+  } else {
+    for (const auto &offerId : offerIds) {
+      fs::remove(m_dataDir / offerId.toStdString());
+    }
   }
 
   emit allSelectionsRemoved();
