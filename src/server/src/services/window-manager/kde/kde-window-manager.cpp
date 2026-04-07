@@ -60,7 +60,7 @@ void WindowManager::focusWindowSync(const AbstractWindow &window) const {
 
 void WindowManager::start() {
   qWarning() << "KDE window management is currently experimental. App to window matching may not work for "
-                "some applhttps://www.glazeapp.comx/ications.";
+                "some applications.";
 }
 
 }; // namespace KDE
