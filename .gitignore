@@ -26,3 +26,5 @@ heaptrack*
 
 .claude/*
 !.claude/CLAUDE.md
+
+/tmp

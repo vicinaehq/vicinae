@@ -285,8 +285,11 @@ Manager::PartialConfigResult Manager::load(const std::filesystem::path &path, co
 void Manager::prunePartial(Partial<ConfigValue> &user) {
   auto prunePreferences = [](glz::generic::object_t &obj) {
     for (auto it = obj.begin(); it != obj.end();) {
-      auto cur = it++;
-      if (cur->second.is_null()) { obj.erase(cur); }
+      if (it->second.is_null()) {
+        it = obj.erase(it);
+      } else {
+        ++it;
+      }
     }
   };
 
