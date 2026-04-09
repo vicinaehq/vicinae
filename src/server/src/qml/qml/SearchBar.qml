@@ -327,6 +327,7 @@ Item {
             source: launcher.searchAccessoryUrl
             visible: active
             Layout.alignment: Qt.AlignVCenter
+            Layout.preferredWidth: 200
         }
 
         Shortcut {
