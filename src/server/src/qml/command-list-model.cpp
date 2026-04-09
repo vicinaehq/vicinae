@@ -63,7 +63,9 @@ QHash<int, QByteArray> CommandListModel::roleNames() const {
 }
 
 void CommandListModel::setSelectedIndex(int index) {
+  bool const changed = (m_selectedIndex != index);
   m_selectedIndex = index;
+  if (changed) emit selectedIndexChanged();
 
   if (index < 0 || std::cmp_greater_equal(index, m_flat.size())) {
     m_lastSelectedItemId.clear();
@@ -240,7 +242,17 @@ void CommandListModel::setSections(const std::vector<SectionInfo> &sections) {
   int const overlap = std::min(oldCount, newCount);
   if (overlap > 0) emit dataChanged(index(0), index(overlap - 1));
 
-  if (m_selectedIndex >= newCount) m_selectedIndex = -1;
+  int const prevSelected = m_selectedIndex;
+
+  if (newCount == 0) {
+    m_selectedIndex = -1;
+  } else if (m_selectedIndex >= newCount) {
+    m_selectedIndex = nextSelectableIndex(newCount, -1);
+  } else if (m_selectedIndex >= 0 && m_flat[m_selectedIndex].kind == FlatItem::SectionHeader) {
+    m_selectedIndex = nextSelectableIndex(m_selectedIndex, 1);
+  }
+
+  if (m_selectedIndex != prevSelected) emit selectedIndexChanged();
 }
 
 bool CommandListModel::dataItemAt(int row, int &section, int &item) const {

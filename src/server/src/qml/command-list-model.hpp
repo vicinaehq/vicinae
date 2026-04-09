@@ -13,10 +13,12 @@ class CommandListModel : public QAbstractListModel {
   Q_OBJECT
   Q_PROPERTY(bool selectFirstOnReset READ selectFirstOnReset NOTIFY selectFirstOnResetChanged)
   Q_PROPERTY(bool awaitingData READ awaitingData NOTIFY awaitingDataChanged)
+  Q_PROPERTY(int selectedIndex READ selectedIndex NOTIFY selectedIndexChanged)
 
 signals:
   void selectFirstOnResetChanged();
   void awaitingDataChanged();
+  void selectedIndexChanged();
 
 public:
   enum Role {
@@ -44,6 +46,7 @@ public:
 
   bool selectFirstOnReset() const { return m_selectFirstOnReset; }
   bool awaitingData() const { return m_awaitingData; }
+  int selectedIndex() const { return m_selectedIndex; }
 
   Q_INVOKABLE void setSelectedIndex(int index);
   Q_INVOKABLE void activateSelected();

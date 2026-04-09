@@ -140,6 +140,11 @@ Item {
             if (root.listModel)
                 root.listModel.setSelectedIndex(listView.currentIndex);
         }
+        function onSelectedIndexChanged() {
+            const idx = root.listModel.selectedIndex;
+            if (listView.currentIndex !== idx)
+                listView.currentIndex = idx;
+        }
     }
 
     onItemSelected: function (index) {
