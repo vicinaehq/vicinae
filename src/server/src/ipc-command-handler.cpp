@@ -136,6 +136,11 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
         m_ctx.navigation->setSearchText(text);
       }
 
+      if (!m_ctx.navigation->isRootSearch() && m_ctx.navigation->activeCommand()->isView()) {
+        m_ctx.navigation->setBackButtonVisibility(false);
+        m_ctx.navigation->showWindow();
+      }
+
       return {};
     }
 
