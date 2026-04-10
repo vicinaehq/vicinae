@@ -6,6 +6,7 @@
 
 class ApplicationContext;
 class ActionPanelState;
+class ActionPanelView;
 class Toast;
 class ImageURL;
 class QKeyEvent;
@@ -20,6 +21,7 @@ public:
   void setProxy(BaseView *proxy);
 
   void setActions(std::unique_ptr<ActionPanelState> actions);
+  void setActions(std::unique_ptr<ActionPanelView> view);
   void clearActions();
 
   virtual bool supportsSearch() const;

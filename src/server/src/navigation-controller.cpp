@@ -8,6 +8,8 @@
 #include "extension/manager/extension-manager.hpp"
 #include "services/toast/toast-service.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
+#include "ui/action-pannel/action-list-view.hpp"
+#include "ui/action-pannel/action-panel-view.hpp"
 #include "ui/alert/alert.hpp"
 #include "ui/views/base-view.hpp"
 #include "utils/environment.hpp"
@@ -515,6 +517,26 @@ void NavigationController::setActions(std::unique_ptr<ActionPanelState> panel, c
     state->actionPanelState = std::move(panel);
     if (state->sender == topView()) { emit actionsChanged(*state->actionPanelState); }
   }
+}
+
+void NavigationController::setActions(std::unique_ptr<ActionPanelView> view, const BaseView *caller) {
+  if (!view) {
+    qDebug() << "setActions(view) called with a null pointer";
+    return;
+  }
+
+  // Step 1 transitional path: extract the wrapped state out of the view and
+  // forward through the existing snapshot pipeline. The dynamic_cast is the
+  // bridge between the new view abstraction and the legacy state-based
+  // controller; it goes away once the controller is refactored to operate on
+  // views directly.
+  if (auto *list = dynamic_cast<ActionListView *>(view.get())) {
+    if (auto state = list->takeState()) { setActions(std::move(state), caller); }
+    return;
+  }
+
+  qWarning() << "setActions(view): non-ActionListView views are not yet supported by the legacy "
+                "snapshot path; ignoring";
 }
 
 size_t NavigationController::viewStackSize() const { return m_views.size(); }

@@ -1,6 +1,8 @@
 #include "ui/views/base-view.hpp"
 #include "common.hpp"
 #include "navigation-controller.hpp"
+#include "ui/action-pannel/action-list-view.hpp"
+#include "ui/action-pannel/action-panel-view.hpp"
 #include <qlogging.h>
 #include <stdexcept>
 
@@ -27,8 +29,19 @@ void BaseView::setProxy(BaseView *proxy) {
 void BaseView::clearActions() { setActions(std::make_unique<ActionPanelState>()); }
 
 void BaseView::setActions(std::unique_ptr<ActionPanelState> actions) {
+  // Wrap the legacy state into the default view type so every call site
+  // exercises the new abstraction. The view is unwrapped again inside
+  // NavigationController::setActions(view, ...) and forwarded through the
+  // existing snapshot path. Once the controller is refactored to operate on
+  // views directly, this wrap/unwrap will collapse.
+  auto view = std::make_unique<ActionListView>();
+  view->adoptState(std::move(actions));
+  setActions(std::move(view));
+}
+
+void BaseView::setActions(std::unique_ptr<ActionPanelView> view) {
   if (!m_ctx) return;
-  m_ctx->navigation->setActions(std::move(actions), m_navProxy);
+  m_ctx->navigation->setActions(std::move(view), m_navProxy);
 }
 
 bool BaseView::supportsSearch() const { return true; }
