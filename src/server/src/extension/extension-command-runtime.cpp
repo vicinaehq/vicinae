@@ -55,6 +55,7 @@ void ExtensionCommandRuntime::initialize() {
   m_server =
       new tsapi::Server(*m_transport, app, ui, wm, clipboard, storage, fileSearch, command, oauth, eventCore);
   m_server->setLogger(m_logger.get());
+  m_server->setParent(this);
 }
 
 void ExtensionCommandRuntime::load(const LaunchProps &props) {
