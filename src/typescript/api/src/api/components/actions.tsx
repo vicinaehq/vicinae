@@ -1,4 +1,4 @@
-import React, { type ReactNode, useRef } from "react";
+import React, { type ReactNode, useEffect, useRef, useState } from "react";
 import { randomUUID } from "node:crypto";
 import type { RunInTerminalOptions } from "../utils";
 import type { PathLike } from "node:fs";
@@ -8,13 +8,16 @@ import { type ImageLike, serializeProtoImage } from "../image";
 import type { Keyboard } from "../keyboard";
 import {
 	type Application,
+	getApplications,
 	open,
 	runInTerminal,
 	showInFileBrowser,
+	trash,
 } from "../utils";
 import type { Form } from "./form";
 import { Icon } from "../icon";
 import { closeMainWindow } from "../controls";
+import { ActionPanel } from "./action-pannel";
 
 type BaseActionProps = {
 	title: string;
@@ -60,6 +63,24 @@ export namespace Action {
 		export type Props = BaseActionProps & {
 			target: string;
 			app?: Application;
+		};
+	}
+
+	/*
+	export namespace OpenWith {
+		export type Props = BaseActionProps & {
+			path: string;
+			onOpen?: (path: string) => void;
+		};
+	}
+	*/
+
+	export namespace Trash {
+		type PathArg = PathLike | PathLike[];
+
+		export type Props = BaseActionProps & {
+			paths: PathArg;
+			onTrash?: (paths: PathArg) => void;
 		};
 	}
 
@@ -193,6 +214,61 @@ const Open: React.FC<Action.Open.Props> = ({ target, app, ...props }) => {
 	);
 };
 
+// TODO: export when action panel is less buggy
+
+const OpenWith = () => null;
+
+/*
+const OpenWith: React.FC<Action.OpenWith.Props> = ({
+	path,
+	title = "Open with...",
+	shortcut,
+	icon,
+	...props
+}) => {
+	const [apps, setApps] = useState<Application[]>([]);
+
+	const fetchApps = () => {
+		getApplications(path).then(setApps);
+	};
+
+	return (
+		<ActionPanel.Submenu
+			title={title}
+			icon={icon}
+			shortcut={shortcut}
+			onOpen={() => {
+				fetchApps();
+			}}
+		>
+			{apps.map((app) => (
+				<Action
+					key={app.id}
+					title={`Open in ${app.name}`}
+					icon={app.icon}
+					onAction={() => props.onOpen?.(path)}
+				/>
+			))}
+		</ActionPanel.Submenu>
+	);
+};
+*/
+
+const Trash: React.FC<Action.Trash.Props> = ({ title, paths, ...props }) => {
+	const actionTitle = title ?? `Delete item${Array.isArray(paths) ? "s" : ""}`;
+
+	return (
+		<ActionRoot
+			title={actionTitle}
+			{...props}
+			onAction={async () => {
+				await trash(paths);
+				props.onTrash?.(paths);
+			}}
+		/>
+	);
+};
+
 const OpenInBrowser: React.FC<Action.OpenInBrowser.Props> = ({
 	url,
 	title = "Open in Browser",
@@ -312,6 +388,16 @@ const RunInTerminal: React.FC<Action.RunInTerminal.Props> = ({
 	);
 };
 
+// TODO: provide actual implementation, one day?
+const ToggleQuickLook = (props: any) => {
+	return null;
+};
+
+// TODO: provide actual implementation, one day?
+const CreateSnippet = (props: any) => {
+	return null;
+};
+
 /**
  * @category Actions
  */
@@ -322,9 +408,13 @@ export const Action = Object.assign(ActionRoot, {
 	Paste,
 	SubmitForm,
 	OpenInBrowser,
+	OpenWith,
+	Trash,
 	ShowInFinder,
 	RunInTerminal,
 	CreateQuicklink,
+	ToggleQuickLook,
+	CreateSnippet,
 	PickDate: Object.assign(PickDate, {
 		// TODO: to implement too
 		isFullDay: () => false,

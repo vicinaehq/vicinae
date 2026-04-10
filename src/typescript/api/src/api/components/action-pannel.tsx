@@ -23,7 +23,7 @@ export namespace ActionPanel {
 		export type Props = {
 			title: string;
 			icon?: Image.ImageLike;
-			shortcut?: Keyboard.Shortcut;
+			shortcut?: Keyboard.Shortcut | Keyboard.Shortcut.Common;
 			//autoFocus?: boolean;
 			//filtering?: boolean | { keepSectionOrder: boolean };
 			//isLoading?: boolean;
