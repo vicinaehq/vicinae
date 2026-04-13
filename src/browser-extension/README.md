@@ -53,9 +53,9 @@ Once that is done, reloading the extension should automatically establish a conn
 
 Copy the right manifest template from `./native-host/` and change the placeholder values.
 
-For firefox, you only need to replace `@NATIVE_HOST_BIN` with the absolute path to the `vicinae-browser-link` executable (e.g: `/usr/local/libexec/vicinae/vicinae-browser-link` or `/usr/local/libexec/vicinae/vicinae-browser-link`). Then copy the manifest at `/usr/lib/mozilla/native-messaging-hosts/com.vicinae.vicinae.json`.
+For firefox, you only need to replace `@NATIVE_HOST_BIN` with the absolute path to the `vicinae-browser-link` executable (e.g: `/usr/local/libexec/vicinae/vicinae-browser-link` or `/usr/libexec/vicinae/vicinae-browser-link`). Then copy the manifest at `/usr/lib/mozilla/native-messaging-hosts/com.vicinae.vicinae.json`.
 
-For example:
+The following shell script demonstrates how to build and sign the app starting with cloning the repo, just update the variables at the beginning with your api secrets and the email address associated with them.
 
 ```
 #!/bin/bash
@@ -81,20 +81,18 @@ cat > /lib/mozilla/native-messaging-hosts/com.vicinae.vicinae.json <<EOF
 }
 EOF
 
-cd ./build
-unzip firefox-vicinae.zip
-cd ./firefox
-sed 's|"id": "vicinae@vicinae\.com",|"id": "vicinae@vicinae\.com",\n\t\t"data_collection_permissions": \{\n\t\t\t"required": \["none"\],\n\t\t\t"optional": \[\]\n\t\t}|' -i ./manifest.json
+cd ./build/firefox
+sed 's|"id": "vicinae@vicinae\.com"|"id": ""$AMO_EMAIL_ADDRESS"",\n      "data_collection_permissions": \{\n      "required": \["none"\],\n      "optional": \[\]\n      }|' -i ./manifest.json
 web-ext sign
 ```
-At this point, if you've done everything correctly, the terminal will churn for around 8 minutes while the automated checks run, and maybe a human does a quick approval.
-Once that's resolved a .xpi file will have populated in the firefox/web-ext-artifacts/ folder, and you import that into firefox by
+At this point the terminal will usually churn for around 6 minutes while the automated checks run online, it can be flagged for a human check which would delay it.
+Once that's resolved a .xpi file will have populated in the firefox/web-ext-artifacts/ folder, import that into firefox.
 
-    \* opening Firefox and opening the extensions menu, or navigate to 'about:addons'
-    \* clicking the gear icon on the top right, selecting 'Install Add-on From File...'
-    \* selecting the .xpi file
+* open Firefox and open the extensions menu, or enter 'about:addons' into your address bar and hit enter
+* click the gear icon on the top right, select 'Install Add-on From File...'
+* select the .xpi file
 
-    And upon restarting Firefox you should be good to go!
+And upon restarting Firefox you should be good to go.  If you run into issues with signing [this page holds information on all 4 signing methods,](https://extensionworkshop.com/documentation/publish/signing-and-distribution-overview/) but you'll still need to alter the manifest if you submit through the webui
 
 # Architecture schema
 
