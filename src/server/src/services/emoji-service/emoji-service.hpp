@@ -13,7 +13,7 @@
  */
 
 struct EmojiDataHash {
-  size_t operator()(const EmojiData *data) { return std::hash<std::string_view>()(data->emoji); }
+  size_t operator()(const EmojiData *data) const { return std::hash<std::string_view>()(data->emoji); }
 };
 
 struct EmojiWithMetadata {
@@ -21,6 +21,7 @@ struct EmojiWithMetadata {
   uint32_t visitCount = 0;
   std::optional<QDateTime> pinnedAt;
   QString keywords;
+  std::optional<emoji::SkinTone> tone;
 };
 
 class EmojiService : public QObject {
@@ -31,6 +32,7 @@ signals:
   void unpinned(std::string_view emoji) const;
   void visited(std::string_view emoji) const;
   void rankingReset(std::string_view emoji) const;
+  void skintoneChanged(std::string_view emoji) const;
 
 public:
   using GroupedEmojis = std::vector<std::pair<std::string_view, std::vector<const EmojiData *>>>;
@@ -56,6 +58,8 @@ public:
   bool unpin(std::string_view emoji);
   bool registerVisit(std::string_view emoji);
   bool resetRanking(std::string_view emoji);
+  bool setSkinTone(std::string_view emoji, emoji::SkinTone tone);
+  bool resetSkinTone(std::string_view emoji);
 
   /**
    * Set custom list of keywords to be searched in addition to the existing list.

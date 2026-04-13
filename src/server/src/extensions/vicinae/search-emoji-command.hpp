@@ -43,8 +43,8 @@ class SearchEmojiCommand : public BuiltinViewCommand<BridgeView<EmojiGridModel>>
     {
       std::vector<Preference::DropdownData::Option> opts;
 
-      opts.reserve(1 + emoji::skinTones().size());
-      opts.emplace_back(Opt("👍 Default", "default"));
+      opts.reserve(emoji::skinTones().size());
+      // opts.emplace_back(Opt("👍 Default", "default"));
 
       for (const auto &info : emoji::skinTones()) {
         auto dp = QString("%1 %2")

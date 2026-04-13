@@ -17,6 +17,7 @@ class CommandGridModel : public QAbstractListModel {
   Q_PROPERTY(int columns READ columns WRITE setColumns NOTIFY columnsChanged)
   Q_PROPERTY(double aspectRatio READ aspectRatio WRITE setAspectRatio NOTIFY aspectRatioChanged)
   Q_PROPERTY(bool awaitingData READ awaitingData NOTIFY awaitingDataChanged)
+  Q_PROPERTY(int dataRevision READ dataRevision NOTIFY dataRevisionChanged)
 
 public:
   enum Role : std::uint16_t {
@@ -70,6 +71,7 @@ signals:
   void columnsChanged();
   void aspectRatioChanged();
   void awaitingDataChanged();
+  void dataRevisionChanged();
 
 protected:
   struct SectionInfo {
@@ -92,6 +94,8 @@ protected:
   const std::vector<SectionInfo> &sections() const { return m_sections; }
   QString imageSourceFor(const ImageURL &url) const { return qml::imageSourceFor(url); }
   void setSelectedIndex(int index);
+  int dataRevision() const { return m_dataRevision; }
+  void bumpDataRevision();
 
 private:
   struct FlatRow {
@@ -127,4 +131,5 @@ private:
   int m_lastNavDirection = 0;
   bool m_preferSectionHeaderForSelection = false;
   bool m_alignSelectionScrollToTop = false;
+  int m_dataRevision = 0;
 };

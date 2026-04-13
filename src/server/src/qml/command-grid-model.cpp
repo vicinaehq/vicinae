@@ -393,3 +393,8 @@ int CommandGridModel::flatRowForSelection() const {
   }
   return -1;
 }
+
+void CommandGridModel::bumpDataRevision() {
+  ++m_dataRevision;
+  emit dataRevisionChanged();
+}
