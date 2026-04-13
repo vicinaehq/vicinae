@@ -16,8 +16,6 @@ public:
   int count() const override { return static_cast<int>(m_emojis.size()); }
 
   const EmojiData *emojiAt(int i) const;
-  QString emojiIcon(int i) const;
-  QString emojiName(int i) const;
 
   std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
 
@@ -37,8 +35,6 @@ public:
   int count() const override { return static_cast<int>(m_results.size()); }
 
   const EmojiData *emojiAt(int i) const;
-  QString emojiIcon(int i) const;
-  QString emojiName(int i) const;
 
   std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
 
@@ -65,12 +61,14 @@ public:
 private:
   enum class DisplayMode { Root, Search };
 
+  const EmojiData *emojiAt(int section, int item) const;
+  void refreshMetadataCache();
   void regenerateMetaSections();
   void rebuildSections();
   void updateNavigationTitle();
 
   EmojiService *m_emojiService = nullptr;
-  std::optional<emoji::SkinTone> m_skinTone;
+  emoji::SkinTone m_skinTone = emoji::SkinTone::Default;
 
   DisplayMode m_displayMode = DisplayMode::Root;
 
@@ -82,6 +80,7 @@ private:
   std::vector<const EmojiData *> m_pinned;
   std::vector<const EmojiData *> m_recent;
   EmojiService::GroupedEmojis m_grouped;
+  std::unordered_map<const EmojiData *, EmojiWithMetadata, EmojiDataHash> m_metadataCache;
   std::vector<Scored<const EmojiData *>> m_searchResultsStorage;
   std::span<Scored<const EmojiData *>> m_searchResults;
 };

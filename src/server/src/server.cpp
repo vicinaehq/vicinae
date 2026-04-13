@@ -156,7 +156,8 @@ int startServer(const ServerLaunchOptions &launchOpts) {
         std::make_unique<ShortcutService>(Omnicast::dataDir() / "shortcuts" / "shortcuts.json", omniDb.get());
     auto toastService = std::make_unique<ToastService>();
     auto currentConfig = configService->value();
-    auto emojiService = std::make_unique<EmojiService>(*omniDb.get());
+    auto emojiService =
+        std::make_unique<EmojiService>(Omnicast::dataDir() / "emojis" / "emojis.json", omniDb.get());
     auto calculatorService = std::make_unique<CalculatorService>(*omniDb.get());
     auto fileService = std::make_unique<FileService>(*omniDb);
     auto oauthService = std::make_unique<OAuthService>(*omniDb);

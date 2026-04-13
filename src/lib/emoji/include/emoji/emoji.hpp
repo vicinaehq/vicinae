@@ -6,7 +6,7 @@
 
 namespace emoji {
 
-enum class SkinTone : std::uint8_t { Light, MediumLight, Medium, MediumDark, Dark };
+enum class SkinTone : std::uint8_t { Default, Light, MediumLight, Medium, MediumDark, Dark };
 
 struct SkinToneInfo {
   SkinTone tone;
@@ -15,7 +15,7 @@ struct SkinToneInfo {
   std::string_view utf8;
 };
 
-constexpr std::uint8_t skinToneCount = 5;
+constexpr std::uint8_t skinToneCount = 6;
 
 std::span<const SkinToneInfo> skinTones();
 SkinToneInfo skinToneInfo(SkinTone tone);
