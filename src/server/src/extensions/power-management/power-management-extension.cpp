@@ -65,14 +65,14 @@ public:
 
     if (shouldConfirm) {
       nav->confirmAlert("Are you sure", "High-impact operation, please confirm", [&nav, handleConfirm]() {
-        handleConfirm();
         nav->closeWindow({.clearRootSearch = true});
+        handleConfirm();
       });
       return;
     }
 
-    handleConfirm();
     nav->closeWindow({.clearRootSearch = true});
+    handleConfirm();
   }
 
   /**
