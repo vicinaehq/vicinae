@@ -447,10 +447,10 @@ void NavigationController::executeAction(AbstractAction *action) {
     }
   }
 
+  if (action->autoClose()) { closeWindow({.clearRootSearch = true}); }
+
   action->execute(&m_ctx);
   closeActionPanel();
-
-  if (action->autoClose()) { closeWindow({.clearRootSearch = true}); }
 }
 
 AbstractAction *NavigationController::findBoundAction(const QKeyEvent *event) const {
