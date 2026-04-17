@@ -52,6 +52,30 @@ public:
   void execute(ApplicationContext *ctx) override { ctx->services->emojiService()->resetRanking(m_emoji); }
 };
 
+class ChangeEmojiSkinToneAction : public AbstractAction {
+  std::string_view m_emoji;
+  emoji::SkinToneInfo m_toneInfo;
+  QString m_emojiIcon;
+
+public:
+  ChangeEmojiSkinToneAction(std::string_view emoji, emoji::SkinToneInfo toneInfo, QString icon)
+    : m_emoji(emoji), m_toneInfo(toneInfo), m_emojiIcon(icon) {}
+  QString title() const override { return QStringLiteral("%1 skin tone").arg(m_toneInfo.displayName); }
+  std::optional<ImageURL> icon() const override { return ImageURL::emoji(m_emojiIcon); }
+  void execute(ApplicationContext *ctx) override { ctx->services->emojiService()->setSkinTone(m_emoji, m_toneInfo.tone); }
+};
+
+class ResetEmojiSkinToneAction : public AbstractAction {
+  std::string_view m_emoji;
+  QString m_emojiIcon;
+
+public:
+  ResetEmojiSkinToneAction(std::string_view emoji, QString icon) : m_emoji(emoji), m_emojiIcon(icon) {}
+  QString title() const override { return "Reset to preference"; }
+  std::optional<ImageURL> icon() const override { return ImageURL::emoji(m_emojiIcon); }
+  void execute(ApplicationContext *ctx) override { ctx->services->emojiService()->resetSkinTone(m_emoji); }
+};
+
 } // namespace
 
 EmojiGridModel::EmojiGridModel(QObject *parent) : CommandGridModel(parent) {}
@@ -70,6 +94,8 @@ void EmojiGridModel::initialize() {
       }
     }
   }
+
+  refreshMetadataCache();
 
   regenerateMetaSections();
 
@@ -91,6 +117,22 @@ void EmojiGridModel::initialize() {
     regenerateMetaSections();
     rebuildSections();
   });
+  connect(m_emojiService, &EmojiService::skintoneChanged, this, [this](auto) {
+    refreshMetadataCache();
+    bumpDataRevision();
+    refreshActionPanel();
+  });
+}
+
+void EmojiGridModel::refreshMetadataCache() {
+  m_metadataCache.clear();
+
+  auto rows = m_emojiService->getVisited();
+  m_metadataCache.reserve(rows.size());
+
+  for (auto &row : rows) {
+    m_metadataCache.emplace(row.data, std::move(row));
+  }
 }
 
 void EmojiGridModel::regenerateMetaSections() {
@@ -151,8 +193,13 @@ QString EmojiGridModel::emojiIcon(int section, int item) const {
   auto *data = emojiAt(section, item);
   if (!data) return {};
 
-  if (data->skinToneSupport && m_skinTone) {
-    auto toned = emoji::applySkinTone(data->emoji, m_skinTone.value());
+  if (data->skinToneSupport) {
+    auto tone = m_skinTone;
+    if (auto it = m_metadataCache.find(data); it != m_metadataCache.end() && it->second.tone) {
+      tone = it->second.tone.value();
+    }
+
+    auto toned = emoji::applySkinTone(data->emoji, tone);
     return qml::imageSourceFor(ImageURL::emoji(toned.c_str()));
   }
   return qml::imageSourceFor(ImageURL::emoji(qStringFromStdView(data->emoji)));
@@ -184,9 +231,13 @@ std::unique_ptr<ActionPanelState> EmojiGridModel::createActionPanel(int section,
   if (!data) return nullptr;
 
   auto metadata = m_emojiService->mapMetadata(data->emoji);
-  QString const copiedEmoji = data->skinToneSupport && m_skinTone
-                                  ? emoji::applySkinTone(data->emoji, m_skinTone.value()).c_str()
-                                  : QString::fromUtf8(data->emoji);
+  auto tone = metadata.tone.value_or(m_skinTone);
+  QString const copiedEmoji = data->skinToneSupport 
+                                ? emoji::applySkinTone(data->emoji, tone).c_str()
+                                : QString::fromUtf8(data->emoji);
+  QString const defaultToneEmoji = data->skinToneSupport
+                                     ? emoji::applySkinTone(data->emoji, m_skinTone).c_str()
+                                     : QString::fromUtf8(data->emoji);
 
   auto pasteService = scope().services()->pasteService();
   auto panel = std::make_unique<ListActionPanelState>();
@@ -198,6 +249,7 @@ std::unique_ptr<ActionPanelState> EmojiGridModel::createActionPanel(int section,
   auto *resetRanking = new ResetEmojiRankingAction(data->emoji);
 
   auto *mainSection = panel->createSection();
+  auto *toneSection = panel->createSection("Skin tones");
 
   QString defaultAction;
   if (auto *state = scope().topState(); state && state->sender) {
@@ -226,6 +278,20 @@ std::unique_ptr<ActionPanelState> EmojiGridModel::createActionPanel(int section,
     mainSection->addAction(new UnpinEmojiAction(data->emoji));
   } else {
     mainSection->addAction(new PinEmojiAction(data->emoji));
+  }
+
+  if (data->skinToneSupport) {
+    auto *resetSkinTone = new ResetEmojiSkinToneAction(data->emoji, defaultToneEmoji);
+    if (tone != m_skinTone)
+      toneSection->addAction(resetSkinTone);
+
+    for (auto const toneInfo : emoji::skinTones()) {
+      QString tonedEmoji = emoji::applySkinTone(data->emoji, toneInfo.tone).c_str();
+
+      if (tone != toneInfo.tone && toneInfo.tone != m_skinTone) {
+        toneSection->addAction(new ChangeEmojiSkinToneAction(data->emoji, toneInfo, tonedEmoji));
+      }
+    }
   }
 
   return panel;

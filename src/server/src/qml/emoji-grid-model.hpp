@@ -26,18 +26,20 @@ protected:
 private:
   enum class DisplayMode { Root, Search };
 
+  void refreshMetadataCache();
   void regenerateMetaSections();
   void rebuildSections();
   void updateNavigationTitle();
   const EmojiData *emojiAt(int section, int item) const;
 
   EmojiService *m_emojiService = nullptr;
-  std::optional<emoji::SkinTone> m_skinTone;
+  emoji::SkinTone m_skinTone = emoji::SkinTone::Default;
 
   DisplayMode m_displayMode = DisplayMode::Root;
   std::vector<const EmojiData *> m_pinned;
   std::vector<const EmojiData *> m_recent;
   EmojiService::GroupedEmojis m_grouped;
+  std::unordered_map<const EmojiData *, EmojiWithMetadata, EmojiDataHash> m_metadataCache;
   std::vector<Scored<const EmojiData *>> m_searchResultsStorage;
   std::span<Scored<const EmojiData *>> m_searchResults;
 };
