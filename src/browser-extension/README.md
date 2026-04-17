@@ -43,13 +43,59 @@ Once that is done, reloading the extension should automatically establish a conn
 
 ### Firefox bases
 
-You need the [web-ext](`https://github.com/mozilla/web-ext`) CLI tool to be installed.
+#### Prerequisites
 
-Then make the extension bundle by running `make firefox`.
+  * install the [web-ext](https://github.com/mozilla/web-ext) CLI tool.
+  * register and authenticate a [Mozilla Add-on (AMO) account](https://addons.mozilla.org/en-US/firefox/#login) and generate your API keys in the [Mozilla Add-on Developer Hub](https://addons.mozilla.org/en-US/developers/addon/api/key/)
+  * install and configure general prerequisites like git and make
 
-And then you can import it from `./build/firefox-vicinae.zip`.
+#### Instructions
+
+Copy the right manifest template from `./native-host/` and change the placeholder values.
+
+For firefox, you only need to replace `@NATIVE_HOST_BIN` with the absolute path to the `vicinae-browser-link` executable (e.g: `/usr/local/libexec/vicinae/vicinae-browser-link` or `/usr/libexec/vicinae/vicinae-browser-link`). Then copy the manifest at `/usr/lib/mozilla/native-messaging-hosts/com.vicinae.vicinae.json`.
+
+The following shell script demonstrates how to build and sign the app starting with cloning the repo, just update the variables at the beginning with your api secrets and the email address associated with them.
+
+```
+#!/bin/bash
+
+AMO_EMAIL_ADDRESS="<yourAMO@email>"
+WEB_EXT_API_KEY="<api cred:JWT issuer>" # user:[num:num] "user:12345678:123"
+WEB_EXT_API_SECRET="<api cred:JWT secret>" # string  "123abc789abc............................................345abc90" 
+WEB_EXT_CHANNEL="unlisted" # to build and distribute locally as opposed to the store with "listed"
+
+git clone https://github.com/vicinaehq/vicinae
+cd ./vicinae/src/browser-extension
+sudo make firefox
+
+cat > /lib/mozilla/native-messaging-hosts/com.vicinae.vicinae.json <<EOF
+{
+  "name": "com.vicinae.vicinae",
+  "description": "Vicinae Native Messaging Host",
+  "path": "/usr/libexec/vicinae/vicinae-browser-link",
+  "type": "stdio",
+  "allowed_extensions": [
+    "$AMO_EMAIL_ADDRESS"
+  ]
+}
+EOF
+
+cd ./build/firefox
+sed 's|"id": "vicinae@vicinae\.com"|"id": ""$AMO_EMAIL_ADDRESS"",\n      "data_collection_permissions": \{\n      "required": \["none"\],\n      "optional": \[\]\n      }|' -i ./manifest.json
+web-ext sign
+```
+At this point the terminal will usually churn for around 6 minutes while the automated checks run online, it can be flagged for a human check which would delay it.
+Once that's resolved a .xpi file will have populated in the firefox/web-ext-artifacts/ folder, import that into firefox.
+
+* open Firefox and open the extensions menu, or enter 'about:addons' into your address bar and hit enter
+* click the gear icon on the top right, select 'Install Add-on From File...'
+* select the .xpi file
+
+And upon restarting Firefox you should be good to go.  If you run into issues with signing [this page holds information on all 4 signing methods,](https://extensionworkshop.com/documentation/publish/signing-and-distribution-overview/) but you'll still need to alter the manifest if you submit through the webui
 
 # Architecture schema
+
 
 If that's any helpful, here is a very simple schema of how communication between vicinae and the browser works:
 
