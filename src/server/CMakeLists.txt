@@ -10,14 +10,14 @@ if (USE_SYSTEM_KF6)
 	find_package(KF6SyntaxHighlighting REQUIRED)
 endif()
 
-list(APPEND LIBS  
+list(APPEND LIBS
 	Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus Qt6::Concurrent Qt6::Quick Qt6::Qml
 	Qt6::GuiPrivate # for deeper integration with wayland protocols, we need wl_surface
 	Qt6::QuickDialogs2 Qt6::QuickControls2
 	${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY}
 	minizip
-	OpenSSL::Crypto 
-	wayland-client 
+	OpenSSL::Crypto
+	wayland-client
 	qt6keychain
 	LibXml2::LibXml2
 	KF6::SyntaxHighlighting
@@ -102,6 +102,8 @@ set(SRCS
 	include/favicon/cached-favicon-request.hpp
 	src/favicon/cached-favicon-request.cpp
 
+	include/url-metadata/url-metadata-service.hpp
+	src/url-metadata/url-metadata-service.cpp
 
 	src/command-actions.cpp
 
@@ -111,7 +113,7 @@ set(SRCS
 	src/root-search/shortcuts/shortcut-root-provider.cpp
 	src/root-search/apps/app-root-provider.hpp
 	src/root-search/apps/app-root-provider.cpp
-	
+
 	src/extension/manager/extension-manager.hpp
 	src/extension/manager/extension-manager.cpp
 
@@ -134,7 +136,7 @@ set(SRCS
 
 	src/actions/app/app-actions.hpp
 	src/actions/app/app-actions.cpp
-	
+
 	src/service-registry.cpp
 
 	src/services/background-effect/ext-background-effect-v1-manager.cpp
@@ -182,7 +184,6 @@ set(SRCS
 
 	src/lib/crypto.cpp
 
-	
 	include/extension/extension-command.hpp
 
 	src/extension/extension-action-panel-builder.hpp
@@ -193,8 +194,6 @@ set(SRCS
 
 	include/extension/extension-command.hpp
 	src/extension/extension-command.cpp
-
-
 
 	src/ui/omni-painter/omni-painter.hpp
 	src/ui/omni-painter/omni-painter.cpp
@@ -216,14 +215,11 @@ set(SRCS
 
 	include/command-database.hpp
 	src/command-database.cpp
-
-		src/ui/image/url.hpp
-
+	src/ui/image/url.hpp
 
 	include/create-quicklink-command.hpp
 
 	src/builtin_icon.cpp
-
 
 	src/extend/accessory-model.cpp
 	src/extend/action-shortcut-parser.cpp
@@ -243,13 +239,10 @@ set(SRCS
 
 	src/image-fetcher.hpp
 
-
 	src/command.hpp
-	
 
 	src/vicinae.hpp
 	src/vicinae.cpp
-
 
 	${EXTRA_PATH}/extension-boilerplate/boilerplate.qrc
 
@@ -314,7 +307,6 @@ set(SRCS
 
 	src/cli/server.cpp
 
-
 	src/utils/utils.cpp
 
 	src/services/file-chooser/abstract-file-chooser.hpp
@@ -327,14 +319,12 @@ set(SRCS
 	src/services/root-item-manager/root-item-manager.hpp
 	src/services/root-item-manager/root-item-manager.cpp
 	src/services/root-item-manager/visit-tracker.cpp
-	
+
 	src/services/app-service/app-service.hpp
 	src/services/app-service/app-service.cpp
 
 	src/services/emoji-service/emoji-service.hpp
 	src/services/emoji-service/emoji-service.cpp
-
-
 
 	src/services/calculator-service/calculator-service.hpp
 	src/services/calculator-service/calculator-service.cpp
@@ -404,7 +394,6 @@ set(SRCS
 	src/services/extension-store/vicinae-store.cpp
 
 	src/overlay-controller/overlay-controller.hpp
-
 
 	src/lib/zip/unzip.cpp
 	src/lib/data-uri/data-uri.cpp
@@ -692,7 +681,6 @@ if (UNIX AND NOT APPLE)
 
 	wayland_generate_protocol("wlr-data-control-unstable-v1")
 endif()
-	
 
 qt_add_executable(${TARGET} ${SRCS})
 
@@ -733,6 +721,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/SearchableDropdown.qml
 	src/qml/qml/ClipboardHistoryView.qml
 	src/qml/qml/ClipboardFilterAccessory.qml
+	src/qml/qml/LinkPreview.qml
 	src/qml/qml/DetailPanel.qml
 	src/qml/qml/MetadataBar.qml
 	src/qml/qml/AlertDialog.qml

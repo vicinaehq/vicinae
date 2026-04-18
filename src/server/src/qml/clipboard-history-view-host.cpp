@@ -165,10 +165,16 @@ void ClipboardHistoryViewHost::handleDataRetrieved(int totalCount) {
 void ClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
   m_detailTextContent.clear();
   m_detailImageSource.clear();
+  m_detailOgTitle.clear();
+  m_detailOgDescription.clear();
+  m_detailOgImageUrl.clear();
   m_hasDetailError = false;
   m_detailErrorTitle.clear();
   m_detailErrorDescription.clear();
 
+  m_detailOgTitle = entry.ogTitle.value_or(QString());
+  m_detailOgDescription = entry.ogDescription.value_or(QString());
+  m_detailOgImageUrl = entry.ogImage.value_or(QString());
   m_detailMimeType = entry.mimeType;
   m_detailSize = formatSize(entry.size);
   m_detailCopiedAt = QDateTime::fromSecsSinceEpoch(entry.updatedAt).toString();
@@ -268,6 +274,9 @@ void ClipboardHistoryViewHost::clearDetail() {
   m_hasDetailError = false;
   m_detailTextContent.clear();
   m_detailImageSource.clear();
+  m_detailOgTitle.clear();
+  m_detailOgDescription.clear();
+  m_detailOgImageUrl.clear();
   m_detailMimeType.clear();
   m_detailSize.clear();
   m_detailCopiedAt.clear();
