@@ -1,0 +1,31 @@
+[meta]
+version = 1
+name = "Solarized Light"
+description = "Light variant of the popular Solarized theme"
+variant = "light"
+inherits = "vicinae-light"
+icon = "icons/solarized.png"
+
+[colors.core]
+background = "#FDF6E3"
+foreground = "#657B83"
+secondary_background = "#EEE8D5"
+border = "#839496"
+accent = "#268BD2"
+
+[colors.accents]
+blue = "#268BD2"
+green = "#859900"
+magenta = "#D33682"
+orange = "#CB4B16"
+purple = "#6C71C4"
+red = "#DC322F"
+yellow = "#B58900"
+cyan = "#2AA198"
+
+[colors.list.item.selection]
+background = "#EEE8D5"
+secondary_background = "#F6F0DC"
+
+[colors.list.item.hover]
+background = "#F7F2E5"
