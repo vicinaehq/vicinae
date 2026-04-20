@@ -185,7 +185,7 @@ QString formatSize(size_t bytes) {
 }
 
 QString formatCount(int count) {
-  if (count > 1000) { return QString("%1K").arg(std::round(count / 1000.f)); }
+  if (count > 1000) { return QString("%1K").arg(std::ceil((count / 1000.f) * 10) / 10.f); }
 
   return QString::number(count);
 }
