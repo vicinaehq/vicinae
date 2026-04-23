@@ -1,4 +1,5 @@
 #include <format>
+#include <QThread>
 #include "hyprland.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
 #include "services/window-manager/hyprland/hypr-workspace.hpp"
@@ -6,6 +7,32 @@
 #include "vicinae.hpp"
 
 using Hyprctl = Hyprland::Controller;
+
+namespace {
+bool isScrollingLayout() {
+  auto response = Hyprctl::oneshot("-j/getoption general:layout");
+  auto json = QJsonDocument::fromJson(response);
+
+  if (!json.isObject()) return false;
+
+  return json.object().value("str").toString() == "scrolling";
+}
+
+bool waitUntilFocused(QStringView address, int timeoutMs = 200) {
+  constexpr int pollIntervalMs = 10;
+
+  for (int elapsed = 0; elapsed <= timeoutMs; elapsed += pollIntervalMs) {
+    auto response = Hyprctl::oneshot("-j/activewindow");
+    auto json = QJsonDocument::fromJson(response);
+
+    if (json.isObject() && json.object().value("address").toString() == address) return true;
+
+    QThread::msleep(pollIntervalMs);
+  }
+
+  return false;
+}
+} // namespace
 
 HyprlandWindowManager::HyprlandWindowManager() {
   connect(&m_ev, &Hyprland::EventListener::openwindow, this, [this]() { emit windowsChanged(); });
@@ -51,8 +78,17 @@ AbstractWindowManager::WindowPtr HyprlandWindowManager::getFocusedWindowSync() c
 }
 
 void HyprlandWindowManager::focusWindowSync(const AbstractWindow &window) const {
-  Hyprctl::oneshot(std::format("[[BATCH]]dispatch focuswindow address:{};dispatch layoutmsg fit active",
-                               window.id().toStdString()));
+  const auto activeWorkspace = getActiveWorkspace();
+  const auto targetWorkspace = window.workspace();
+  const bool sameWorkspace = activeWorkspace && targetWorkspace && activeWorkspace->id() == *targetWorkspace;
+
+  Hyprctl::oneshot(std::format("dispatch focuswindow address:{}", window.id().toStdString()));
+
+  if (!sameWorkspace || !isScrollingLayout()) return;
+
+  if (!waitUntilFocused(window.id())) return;
+
+  Hyprctl::oneshot("dispatch layoutmsg center");
 }
 
 bool HyprlandWindowManager::closeWindow(const AbstractWindow &window) const {

@@ -30,6 +30,7 @@
 #include <QQuickWindow>
 #include <QWindow>
 #include <QKeyEvent>
+#include <QTimer>
 #include <qcoreevent.h>
 #ifdef WAYLAND_LAYER_SHELL
 #include <LayerShellQt/Window>
@@ -309,6 +310,10 @@ void LauncherWindow::handleVisibilityChanged(bool visible) {
     m_window->requestActivate();
   } else {
     m_window->hide();
+
+    if (auto deferred = m_ctx.navigation->takeDeferredWindowHiddenAction()) {
+      QTimer::singleShot(0, this, [deferred = std::move(deferred)]() mutable { deferred(); });
+    }
   }
 }
 

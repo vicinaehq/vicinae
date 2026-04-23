@@ -34,6 +34,16 @@ bool NavigationController::hasCompleter() const {
   return false;
 }
 
+void NavigationController::deferUntilWindowHidden(std::function<void()> fn) {
+  m_deferredWindowHiddenAction = std::move(fn);
+}
+
+std::function<void()> NavigationController::takeDeferredWindowHiddenAction() {
+  auto fn = std::move(m_deferredWindowHiddenAction);
+  m_deferredWindowHiddenAction = nullptr;
+  return fn;
+}
+
 void NavigationController::setInstantDismiss(bool value) { m_instantDismiss = value; }
 
 void NavigationController::goBack(const GoBackOptions &opts) {
