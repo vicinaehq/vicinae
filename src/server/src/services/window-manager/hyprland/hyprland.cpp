@@ -51,7 +51,8 @@ AbstractWindowManager::WindowPtr HyprlandWindowManager::getFocusedWindowSync() c
 }
 
 void HyprlandWindowManager::focusWindowSync(const AbstractWindow &window) const {
-  Hyprctl::oneshot(std::format("dispatch focuswindow address:{}", window.id().toStdString()));
+  Hyprctl::oneshot(std::format("[[BATCH]]dispatch focuswindow address:{};dispatch layoutmsg fit active",
+                               window.id().toStdString()));
 }
 
 bool HyprlandWindowManager::closeWindow(const AbstractWindow &window) const {
