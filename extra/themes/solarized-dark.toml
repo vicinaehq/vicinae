@@ -1,0 +1,33 @@
+# Solarized Dark - Low Contrast
+# Low-contrast theme designed to reduce eye strain
+
+[meta]
+version = 1
+name = "Solarized Dark"
+description = "Low-contrast theme designed to reduce eye strain"
+variant = "dark"
+inherits = "vicinae-dark"
+icon = "icons/solarized.png"
+
+[colors.core]
+accent = "#268BD2"
+background = "#002B36"
+border = "#586E75"
+foreground = "#839496"
+secondary_background = "#073642"
+
+[colors.accents]
+blue = "#268BD2"
+cyan = "#2AA198"
+green = "#859900"
+magenta = "#D33682"
+orange = "#CB4B16"
+purple = "#6C71C4"
+red = "#DC322F"
+yellow = "#B58900"
+
+[colors.list.item.hover]
+background = { name = "colors.core.border", opacity = 0.1, lighter = 10, darker = 10  }
+
+[colors.list.item.selection]
+background = { name = "colors.core.border", opacity = 0.15, lighter = 5, darker = 15  }

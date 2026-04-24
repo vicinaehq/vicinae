@@ -1,0 +1,34 @@
+# Solarized Light - Low Contrast Light
+# Light variant of the popular Solarized theme
+
+[meta]
+version = 1
+name = "Solarized Light"
+description = "Light variant of the popular Solarized theme"
+variant = "light"
+inherits = "vicinae-light"
+icon = "icons/solarized.png"
+
+[colors.core]
+accent = "#268BD2"
+background = "#FDF6E3"
+border = "#839496"
+foreground = "#657B83"
+secondary_background = "#EEE8D5"
+
+[colors.accents]
+blue = "#268BD2"
+cyan = "#2AA198"
+green = "#859900"
+magenta = "#D33682"
+orange = "#CB4B16"
+purple = "#6C71C4"
+red = "#DC322F"
+yellow = "#B58900"
+
+
+[colors.list.item.hover]
+background = { name = "colors.core.border", opacity = 0.05, darker = 6  }
+
+[colors.list.item.selection]
+background = { name = "colors.core.border", opacity = 0.1, darker = 6  }
