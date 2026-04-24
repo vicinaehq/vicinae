@@ -1,10 +1,12 @@
 #include "xdg-app-database.hpp"
 #include "environment.hpp"
 #include "services/app-service/xdg/xdg-app.hpp"
+#include "utils.hpp"
 #include "xdgpp/desktop-entry/entry.hpp"
 #include "xdgpp/desktop-entry/file.hpp"
 #include "xdgpp/mime/iterator.hpp"
 #include <algorithm>
+#include <qstandardpaths.h>
 #include <qtenvironmentvariables.h>
 #include <ranges>
 #include "xdgpp/xdg-terminal-exec/xdg-terminals-list.hpp"
@@ -35,6 +37,14 @@ using AppPtr = XdgAppDatabase::AppPtr;
 static constexpr const auto FALLBACK_TERMINAL_MIME = "x-scheme-handler/terminal";
 
 namespace {
+
+// TryExec check
+bool isExecutable(const xdgpp::DesktopEntry &entry) {
+  if (auto exec = entry.tryExec()) {
+    return !QStandardPaths::findExecutable(qStringFromStdView(*exec)).isEmpty();
+  }
+  return true;
+}
 
 bool revealInFileManager(const std::filesystem::path &path) {
   auto const fileUrl = QUrl::fromLocalFile(path.c_str()).toString();
@@ -105,7 +115,8 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
 
       auto file = xdgpp::DesktopFile::fromFile(entry.path(), dir);
 
-      if (file.deleted()) continue;
+      if (!isExecutable(file) || file.deleted()) continue;
+
       if (file.errorMessage()) {
         qWarning() << "Desktop file" << file.path().c_str() << "is invalid" << *file.errorMessage();
         continue;
