@@ -31,6 +31,7 @@
 #include <QWindow>
 #include <QKeyEvent>
 #include <qcoreevent.h>
+#include <qlogging.h>
 #ifdef WAYLAND_LAYER_SHELL
 #include <LayerShellQt/Window>
 #include <utility>
@@ -549,13 +550,14 @@ void LauncherWindow::setExclusiveFocus(bool exclusive) {
 
 void LauncherWindow::applyWindowConfig() {
   if (!m_window) return;
-  auto &cfg = m_ctx.services->config()->value().launcherWindow;
+  auto &cfg = m_ctx.services->config()->value();
+  auto &wcfg = cfg.launcherWindow;
 
   updateBlur();
-  m_ctx.services->windowManager()->provider()->setDimAround(cfg.dimAround);
+  m_ctx.services->windowManager()->provider()->setDimAround(wcfg.dimAround);
 
 #ifdef WAYLAND_LAYER_SHELL
-  const auto &lc = cfg.layerShell;
+  const auto &lc = wcfg.layerShell;
   if (Environment::isLayerShellSupported() && lc.enabled) {
     namespace Shell = LayerShellQt;
     if (auto *lshell = Shell::Window::get(m_window)) {
@@ -563,9 +565,15 @@ void LauncherWindow::applyWindowConfig() {
       lshell->setScope(Omnicast::LAYER_SCOPE);
       lshell->setWantsToBeOnActiveScreen(true);
       lshell->setAnchors(Shell::Window::AnchorNone);
-      lshell->setKeyboardInteractivity(lc.keyboardInteractivity == "exclusive"
-                                           ? Shell::Window::KeyboardInteractivityExclusive
-                                           : Shell::Window::KeyboardInteractivityOnDemand);
+
+      // exclusive interactivity is incompatible with close on focus loss, as focus cannot be lost
+      if (lc.keyboardInteractivity == "exclusive" && cfg.closeOnFocusLoss) {
+        lshell->setKeyboardInteractivity(Shell::Window::KeyboardInteractivityOnDemand);
+      } else {
+        lshell->setKeyboardInteractivity(lc.keyboardInteractivity == "exclusive"
+                                             ? Shell::Window::KeyboardInteractivityExclusive
+                                             : Shell::Window::KeyboardInteractivityOnDemand);
+      }
     }
   }
 #endif
