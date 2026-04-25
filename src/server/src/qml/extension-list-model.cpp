@@ -13,17 +13,9 @@ template <> struct fuzzy::FuzzySearchable<ListItemViewModel> {
     fields.push_back({item.title, 1.0});
     fields.push_back({item.subtitle, 0.5});
     for (const auto &kw : item.keywords)
-      fields.push_back({kw, 0.7});
+      fields.push_back({kw, 0.3});
 
-    int best = 0;
-    for (const auto &f : fields) {
-      int s = 0;
-      if (fts::fuzzy_match(query, f.text, s)) {
-        int const weighted = static_cast<int>(s * f.weight);
-        if (weighted > best) best = weighted;
-      }
-    }
-    return best;
+    return fuzzy::scoreWeighted(fields, query);
   }
 };
 

@@ -37,7 +37,7 @@ std::vector<Scored<fs::path>> ProgramDb::search(std::string_view query, int limi
   filtered.reserve(m_progs.size());
 
   for (const auto &prog : m_progs) {
-    auto score = fzf::defaultMatcher.fuzzy_match_v2_score_query(prog.c_str(), query);
+    auto score = fzf::threadLocalMatcher().fuzzy_match_v2_score_query(prog.c_str(), query);
     if (score || query.empty()) { filtered.push_back({prog, score}); }
   }
 

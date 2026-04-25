@@ -7,7 +7,7 @@ template <> struct fuzzy::FuzzySearchable<snippet::SerializedSnippet> {
     auto name = item.name;
     std::string keyword;
     if (item.expansion) keyword = item.expansion->keyword;
-    return fuzzy::scoreWeighted({{name, 1.0}, {keyword, 0.8}}, query);
+    return fuzzy::scoreWeighted({{name, 1.0}, {keyword, 0.3}}, query);
   }
 };
 

@@ -1,5 +1,6 @@
 #include "calculator-service.hpp"
 #include "crypto.hpp"
+#include "lib/fuzzy/fuzzy-searchable.hpp"
 #include "omni-database.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include "services/calculator-service/calculator-service.hpp"
@@ -105,15 +106,15 @@ std::vector<CalculatorRecord> CalculatorService::query(const QString &query) {
    * We could consider using a proper in-memory index if that ever becomes a problem.
    */
 
-  auto filter = [&query](const CalculatorRecord &record) {
-    return record.question.contains(query, Qt::CaseInsensitive) ||
-           record.answer.contains(query, Qt::CaseInsensitive);
-  };
+  if (query.isEmpty()) return records();
 
+  std::string const q = query.toStdString();
   std::vector<CalculatorRecord> results;
 
-  for (const auto &record : records() | std::views::filter(filter)) {
-    results.emplace_back(record);
+  for (const auto &record : records()) {
+    auto question = record.question.toStdString();
+    auto answer = record.answer.toStdString();
+    if (fuzzy::scoreWeighted({{question, 1.0}, {answer, 0.5}}, q) > 0) { results.emplace_back(record); }
   }
 
   return results;

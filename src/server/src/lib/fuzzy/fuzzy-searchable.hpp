@@ -2,12 +2,13 @@
 #include <algorithm>
 #include <concepts>
 #include <initializer_list>
+#include <ranges>
 #include <span>
 #include <string>
 #include <string_view>
 #include <vector>
 #include "common/scored.hpp"
-#include "lib/fts_fuzzy.hpp"
+#include "lib/fzf.hpp"
 
 namespace fuzzy {
 
@@ -24,17 +25,33 @@ struct WeightedField {
   double weight;
 };
 
+namespace detail {
+template <std::ranges::forward_range R>
+  requires std::same_as<std::ranges::range_value_t<R>, WeightedField>
+inline int scoreFields(R &&fields, std::string_view query) {
+  if (query.empty()) return 0;
+
+  auto ws = fields | std::views::transform([](const WeightedField &f) {
+              return fzf::WeightedString{f.text, static_cast<float>(f.weight)};
+            });
+
+  return fzf::threadLocalMatcher().fuzzy_match_v2_score_query(ws, query);
+}
+} // namespace detail
+
 /// Score a query against multiple weighted fields, returning the best weighted score.
+/// Backed by the FZF v2 algorithm. Multi-word queries (space-separated) require every
+/// word to match somewhere — words may match different fields, but each must match.
 inline int scoreWeighted(std::initializer_list<WeightedField> fields, std::string_view query) {
-  int best = 0;
-  for (const auto &f : fields) {
-    int s = 0;
-    if (fts::fuzzy_match(query, f.text, s)) {
-      int weighted = static_cast<int>(s * f.weight);
-      if (weighted > best) best = weighted;
-    }
-  }
-  return best;
+  return detail::scoreFields(fields, query);
+}
+
+/// Range overload: useful when the field list is built dynamically (e.g. variable
+/// keyword counts). Accepts any forward range of WeightedField.
+template <std::ranges::forward_range R>
+  requires std::same_as<std::ranges::range_value_t<R>, WeightedField>
+inline int scoreWeighted(R &&fields, std::string_view query) {
+  return detail::scoreFields(std::forward<R>(fields), query);
 }
 
 /// Filter items by fuzzy score, storing indices into `out`.

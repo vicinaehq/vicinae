@@ -1,5 +1,6 @@
 #include "theme-list-controller.hpp"
 #include "config/config.hpp"
+#include "lib/fuzzy/fuzzy-searchable.hpp"
 #include "theme-list-model.hpp"
 
 ThemeListController::ThemeListController(config::Manager *configService, ThemeService *themeService,
@@ -18,8 +19,13 @@ void ThemeListController::setFilter(const QString &query) {
   std::vector<std::shared_ptr<ThemeFile>> availableThemes;
   availableThemes.reserve(themes.size() - 1);
 
+  std::string const q = query.toStdString();
   for (auto &theme : themes) {
-    if (!theme->name().contains(query, Qt::CaseInsensitive)) continue;
+    if (!q.empty()) {
+      auto name = theme->name().toStdString();
+      auto desc = theme->description().toStdString();
+      if (fuzzy::scoreWeighted({{name, 1.0}, {desc, 0.5}}, q) == 0) continue;
+    }
     if (theme->id() == m_configService->value().systemTheme().name) {
       selectedTheme = std::move(theme);
     } else {

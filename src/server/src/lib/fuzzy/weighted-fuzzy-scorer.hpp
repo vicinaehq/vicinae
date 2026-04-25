@@ -1,36 +1,21 @@
 #pragma once
 #include <algorithm>
+#include <functional>
 #include <ranges>
 #include <vector>
-#include <functional>
 #include "common/scored.hpp"
-#include "lib/fts_fuzzy.hpp"
 
 namespace fuzzy {
+
 /**
- * Simple utility class that takes a list of strings with an optional weight assigned to them,
- * then fuzzy matches a pattern against them. The best score is returned.
+ * Generic scoring helper that takes a user-supplied projection turning each item +
+ * query into an integer score. Items with score == 0 are dropped (unless the pattern
+ * is empty, in which case all items pass through unscored). Output is stable-sorted
+ * descending by score.
+ *
+ * The projection encapsulates the actual fuzzy match — callers commonly route it to
+ * fzf::threadLocalMatcher().
  */
-class WeightedScorer {
-public:
-  void reserve(size_t n) { m_strings.reserve(n); }
-  void add(const std::string &str, double weight = 1) { m_strings.emplace_back(std::pair{str, weight}); }
-
-  int score(const std::string &pattern) const {
-    auto scores = m_strings | std::views::transform([&](const WeightedString &str) {
-                    int score = 0;
-                    fts::fuzzy_match(pattern, str.first, score);
-                    return static_cast<int>(score * str.second);
-                  });
-
-    return *std::ranges::max_element(scores);
-  }
-
-private:
-  using WeightedString = std::pair<std::string, double>;
-  std::vector<WeightedString> m_strings;
-};
-
 template <typename T> class FuzzyScorer {
 public:
   using OutType = Scored<T>;

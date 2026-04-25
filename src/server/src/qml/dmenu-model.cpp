@@ -26,7 +26,7 @@ void DMenuModel::setFilter(const QString &text) {
 
   m_filtered.clear();
   for (auto e : m_entries) {
-    int const score = fzf::defaultMatcher.fuzzy_match_v2_score_query(e, query);
+    int const score = fzf::threadLocalMatcher().fuzzy_match_v2_score_query(e, query);
     if (query.empty() || score > 0) { m_filtered.push_back({e, score}); }
   }
   std::ranges::stable_sort(m_filtered, std::greater{});

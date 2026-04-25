@@ -1,4 +1,5 @@
 #pragma once
+#include "fuzzy/fuzzy-searchable.hpp"
 #include "fuzzy/weighted-fuzzy-scorer.hpp"
 #include "ui/vlist/common/vertical-list-model.hpp"
 #include "utils.hpp"
@@ -18,11 +19,7 @@ public:
 
     scorer.score(
         m_families | std::views::transform([](const std::string &s) { return std::string_view{s}; }), q,
-        [](std::string_view query, std::string_view s) {
-          int score = 0;
-          fts::fuzzy_match(query, s, score);
-          return score;
-        },
+        [](std::string_view query, std::string_view s) { return fuzzy::scoreWeighted({{s, 1.0}}, query); },
         m_filteredItems);
 
     emit dataChanged();
