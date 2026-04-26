@@ -1,5 +1,5 @@
 #include "action-panel-model.hpp"
-#include "lib/fuzzy/fuzzy-searchable.hpp"
+#include "fuzzy/fuzzy-searchable.hpp"
 #include "theme.hpp"
 #include <QKeyEvent>
 #include <utility>

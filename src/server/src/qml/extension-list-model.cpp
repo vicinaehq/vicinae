@@ -1,7 +1,7 @@
 #include "extension-list-model.hpp"
 
 #include <utility>
-#include "lib/fuzzy/fuzzy-searchable.hpp"
+#include "fuzzy/fuzzy-searchable.hpp"
 #include "navigation-controller.hpp"
 #include "view-utils.hpp"
 #include "ui/image/url.hpp"

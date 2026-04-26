@@ -1,5 +1,5 @@
 #include "program-db/program-db.hpp"
-#include "lib/fzf.hpp"
+#include "fuzzy/fzf.hpp"
 #include "vicinae.hpp"
 #include <filesystem>
 #include <qnamespace.h>

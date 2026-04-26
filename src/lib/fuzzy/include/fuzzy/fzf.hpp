@@ -11,7 +11,6 @@
 #include <cctype>
 #include <cstdint>
 #include <iterator>
-#include <qlogging.h>
 #include <ranges>
 #include <string>
 #include <string_view>

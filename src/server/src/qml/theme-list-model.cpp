@@ -2,9 +2,9 @@
 #include "actions/app/app-actions.hpp"
 #include "actions/theme/theme-actions.hpp"
 #include "clipboard-actions.hpp"
-#include "common/scored.hpp"
+#include "fuzzy/scored.hpp"
 #include "keyboard/keybind.hpp"
-#include "lib/fuzzy/fuzzy-searchable.hpp"
+#include "fuzzy/fuzzy-searchable.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include <algorithm>

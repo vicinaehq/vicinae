@@ -1,6 +1,6 @@
 #include "calculator-service.hpp"
 #include "crypto.hpp"
-#include "lib/fuzzy/fuzzy-searchable.hpp"
+#include "fuzzy/fuzzy-searchable.hpp"
 #include "omni-database.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include "services/calculator-service/calculator-service.hpp"

@@ -1,6 +1,6 @@
 #include "theme-list-controller.hpp"
 #include "config/config.hpp"
-#include "lib/fuzzy/fuzzy-searchable.hpp"
+#include "fuzzy/fuzzy-searchable.hpp"
 #include "theme-list-model.hpp"
 
 ThemeListController::ThemeListController(config::Manager *configService, ThemeService *themeService,

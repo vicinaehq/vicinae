@@ -2,7 +2,7 @@
 
 #include <utility>
 #include "common/types.hpp"
-#include "lib/fuzzy/fuzzy-searchable.hpp"
+#include "fuzzy/fuzzy-searchable.hpp"
 #include "navigation-controller.hpp"
 #include "theme.hpp"
 #include "theme/theme-file.hpp"

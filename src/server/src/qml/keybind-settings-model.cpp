@@ -1,7 +1,7 @@
 #include "keybind-settings-model.hpp"
 #include "keyboard/keybind-manager.hpp"
 #include "keyboard/keyboard.hpp"
-#include "lib/fuzzy/fuzzy-searchable.hpp"
+#include "fuzzy/fuzzy-searchable.hpp"
 #include <algorithm>
 #include <utility>
 

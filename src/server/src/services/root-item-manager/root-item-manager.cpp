@@ -6,7 +6,7 @@
 #include "common.hpp"
 #include "glaze-qt.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
-#include "lib/fzf.hpp"
+#include "fuzzy/fzf.hpp"
 #include "config/config.hpp"
 #include "services/local-storage/local-storage-service.hpp"
 #include "utils.hpp"

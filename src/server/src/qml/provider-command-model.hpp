@@ -1,5 +1,5 @@
 #pragma once
-#include "lib/fuzzy/fuzzy-searchable.hpp"
+#include "fuzzy/fuzzy-searchable.hpp"
 #include <QAbstractListModel>
 #include <QString>
 #include <vector>

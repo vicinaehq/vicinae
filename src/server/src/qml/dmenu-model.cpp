@@ -1,6 +1,6 @@
 #include "dmenu-model.hpp"
 #include "clipboard-actions.hpp"
-#include "lib/fzf.hpp"
+#include "fuzzy/fzf.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "template-engine/template-engine.hpp"

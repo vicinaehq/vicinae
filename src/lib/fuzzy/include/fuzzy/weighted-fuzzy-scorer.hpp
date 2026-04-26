@@ -3,7 +3,7 @@
 #include <functional>
 #include <ranges>
 #include <vector>
-#include "common/scored.hpp"
+#include "fuzzy/scored.hpp"
 
 namespace fuzzy {
 

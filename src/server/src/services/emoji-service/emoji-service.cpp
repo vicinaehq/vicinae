@@ -1,5 +1,5 @@
 #include "emoji-service.hpp"
-#include "lib/fzf.hpp"
+#include "fuzzy/fzf.hpp"
 #include "omni-database.hpp"
 #include <qlogging.h>
 #include "utils/utils.hpp"
