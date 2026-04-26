@@ -194,7 +194,10 @@ void RootItemManager::search(const QString &query, std::vector<ScoredItem> &resu
       bool const aa = !a.meta->alias.value_or("").empty() && a.meta->alias->starts_with(pattern);
       bool const ab = !b.meta->alias.value_or("").empty() && b.meta->alias->starts_with(pattern);
       // always prioritize matching aliases over score
-      if (aa - ab) { return aa > ab; }
+      if (aa != ab) { return aa > ab; }
+      if (aa && ab && a.meta->alias->size() != b.meta->alias->size()) {
+        return a.meta->alias->size() < b.meta->alias->size();
+      }
     }
 
     return a.score > b.score;
