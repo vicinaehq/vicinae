@@ -218,8 +218,8 @@ public:
     const int f0 = F[0];
     const int width = last_idx - f0 + 1;
 
-    H.resize(width * M);
-    C.resize(width * M);
+    H.assign(static_cast<size_t>(width) * M, 0);
+    C.assign(static_cast<size_t>(width) * M, 0);
 
     // Copy first row
     std::copy(H0.begin() + f0, H0.begin() + last_idx + 1, H.begin());
