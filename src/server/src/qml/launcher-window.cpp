@@ -515,7 +515,7 @@ void LauncherWindow::updateBlur() {
 
   if (cfg.blur.enabled) {
     QRect region(0, 0, m_window->width(), m_window->height());
-    if (m_compacted) region.setHeight(60 + 2 * cfg.clientSideDecorations.borderWidth);
+    if (m_compacted) region.setHeight(60);
     bgEffect->setBlur(m_window, {.radius = rounding, .region = region});
   } else {
     bgEffect->clearBlur(m_window);
