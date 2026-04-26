@@ -18,9 +18,6 @@ std::span<Scored<const EmojiData *>> EmojiService::search(std::string_view query
   auto withScore = [&](const EmojiData &data) -> Scored<const EmojiData *> {
     using WS = fzf::WeightedString;
 
-    // Emoji deliberately deviates from the standard weight table: keywords are
-    // human-curated synonyms ("smile", "happy" → 😀) and are at least as relevant
-    // as the canonical name. Group is the broad category (e.g. "Smileys & Emotion").
     auto fields = std::initializer_list<WS>{WS{data.name, 1.0f}, WS{data.group, 0.5f}};
     auto kws = data.keywords | std::views::transform([](auto &&s) { return WS{s, 1.0f}; });
     auto ss = std::views::concat(fields, kws);

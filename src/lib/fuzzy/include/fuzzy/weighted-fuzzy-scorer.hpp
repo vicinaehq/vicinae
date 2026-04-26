@@ -7,15 +7,6 @@
 
 namespace fuzzy {
 
-/**
- * Generic scoring helper that takes a user-supplied projection turning each item +
- * query into an integer score. Items with score == 0 are dropped (unless the pattern
- * is empty, in which case all items pass through unscored). Output is stable-sorted
- * descending by score.
- *
- * The projection encapsulates the actual fuzzy match — callers commonly route it to
- * fzf::threadLocalMatcher().
- */
 template <typename T> class FuzzyScorer {
 public:
   using OutType = Scored<T>;

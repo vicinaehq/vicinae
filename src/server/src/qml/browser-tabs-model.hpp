@@ -6,8 +6,6 @@ using BrowserTab = BrowserExtensionService::BrowserTab;
 
 template <> struct fuzzy::FuzzySearchable<BrowserTab> {
   static int score(const BrowserTab &tab, std::string_view query) {
-    // URL is intentionally weighted above title here: when switching tabs, users
-    // overwhelmingly search by domain/path, not by the (often verbose) page title.
     return fuzzy::scoreWeighted({{tab.url, 1.0}, {tab.title, 0.6}}, query);
   }
 };
