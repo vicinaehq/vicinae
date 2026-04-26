@@ -7,13 +7,19 @@ using RootItemPtr = std::shared_ptr<RootItem>;
 template <> struct fuzzy::FuzzySearchable<RootItemPtr> {
   static int score(const RootItemPtr &item, std::string_view query) {
     auto name = item->title().toStdString();
-    int best = fuzzy::scoreWeighted({{name, 1.0}}, query);
-    for (const auto &kw : item->keywords()) {
-      auto s = kw.toStdString();
-      int kwScore = fuzzy::scoreWeighted({{s, 0.7}}, query);
-      if (kwScore > best) best = kwScore;
-    }
-    return best;
+
+    std::vector<std::string> keywords;
+    keywords.reserve(item->keywords().size());
+    for (const auto &kw : item->keywords())
+      keywords.emplace_back(kw.toStdString());
+
+    std::vector<fuzzy::WeightedField> fields;
+    fields.reserve(1 + keywords.size());
+    fields.push_back({name, 1.0});
+    for (const auto &kw : keywords)
+      fields.push_back({kw, 0.3});
+
+    return fuzzy::scoreWeighted(fields, query);
   }
 };
 

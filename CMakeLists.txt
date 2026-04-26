@@ -87,6 +87,7 @@ add_subdirectory(${LIB_DIR}/script-command)
 add_subdirectory(${LIB_DIR}/emoji)
 add_subdirectory(${LIB_DIR}/xdgpp)
 add_subdirectory(${LIB_DIR}/common)
+add_subdirectory(${LIB_DIR}/fuzzy)
 add_subdirectory(${LIB_DIR}/linux-utils)
 add_subdirectory(${LIB_DIR}/figura)
 

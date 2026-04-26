@@ -14,9 +14,9 @@ template <> struct fuzzy::FuzzySearchable<WindowEntry> {
     auto wmClass = e.window->wmClass().toStdString();
     if (e.app) {
       auto appName = e.app->displayName().toStdString();
-      return fuzzy::scoreWeighted({{title, 1.0}, {wmClass, 0.7}, {appName, 0.9}}, query);
+      return fuzzy::scoreWeighted({{title, 1.0}, {appName, 0.5}, {wmClass, 0.3}}, query);
     }
-    return fuzzy::scoreWeighted({{title, 1.0}, {wmClass, 0.7}}, query);
+    return fuzzy::scoreWeighted({{title, 1.0}, {wmClass, 0.3}}, query);
   }
 };
 

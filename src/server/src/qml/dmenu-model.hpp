@@ -1,5 +1,5 @@
 #pragma once
-#include "common/scored.hpp"
+#include "fuzzy/scored.hpp"
 #include "command-list-model.hpp"
 
 class DMenuModel : public CommandListModel {

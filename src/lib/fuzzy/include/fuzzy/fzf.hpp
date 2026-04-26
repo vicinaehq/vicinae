@@ -11,7 +11,6 @@
 #include <cctype>
 #include <cstdint>
 #include <iterator>
-#include <qlogging.h>
 #include <ranges>
 #include <string>
 #include <string_view>
@@ -102,7 +101,7 @@ public:
     }
   }
 
-  template <std::ranges::input_range R>
+  template <std::ranges::forward_range R>
     requires std::same_as<std::ranges::range_value_t<R>, WeightedString>
   int fuzzy_match_v2_score_query(R &&weightedStrs, std::string_view query,
                                  bool case_sensitive = false) const {
@@ -113,9 +112,10 @@ public:
                  std::views::filter([](auto &&s) { return !s.empty(); });
 
     for (auto word : words) {
-      int maxScore = std::ranges::max(weightedStrs | std::views::transform([&](const WeightedString &str) {
-                                        return fuzzy_match_v2(str.str, word, false, false).score * str.weight;
-                                      }));
+      int maxScore = std::ranges::max(
+          weightedStrs | std::views::transform([&](const WeightedString &str) {
+            return static_cast<int>(fuzzy_match_v2(str.str, word, case_sensitive, false).score * str.weight);
+          }));
 
       if (!maxScore) return 0;
 
@@ -129,7 +129,7 @@ public:
   int fuzzy_match_v2_score_query(std::string_view text, std::string_view query,
                                  bool case_sensitive = false) const {
     std::initializer_list<WeightedString> lst{{text, 1.0f}};
-    return fuzzy_match_v2_score_query(std::views::concat(lst), query, case_sensitive);
+    return fuzzy_match_v2_score_query(std::views::all(lst), query, case_sensitive);
   }
 
   Result fuzzy_match_v2(std::string_view text, std::string_view pattern, bool case_sensitive = false,
@@ -217,8 +217,8 @@ public:
     const int f0 = F[0];
     const int width = last_idx - f0 + 1;
 
-    H.resize(width * M);
-    C.resize(width * M);
+    H.assign(static_cast<size_t>(width) * M, 0);
+    C.assign(static_cast<size_t>(width) * M, 0);
 
     // Copy first row
     std::copy(H0.begin() + f0, H0.begin() + last_idx + 1, H.begin());
@@ -446,9 +446,14 @@ private:
 };
 
 /**
- * Non thread-safe global instance
- * If doing fuzzy matching work across threads, you need one matcher per thread.
+ * Returns a thread-local default matcher.
+ *
+ * The matcher reuses internal vectors across calls, so it is not safe to share
+ * across threads. Each thread gets its own instance via this accessor.
  */
-static const Matcher defaultMatcher;
+inline const Matcher &threadLocalMatcher() {
+  thread_local const Matcher matcher{};
+  return matcher;
+}
 
 } // namespace fzf

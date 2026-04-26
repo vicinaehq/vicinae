@@ -1,5 +1,5 @@
 #include "action-panel-model.hpp"
-#include "lib/fuzzy/fuzzy-searchable.hpp"
+#include "fuzzy/fuzzy-searchable.hpp"
 #include "theme.hpp"
 #include <QKeyEvent>
 #include <utility>
@@ -7,8 +7,7 @@
 template <> struct fuzzy::FuzzySearchable<std::shared_ptr<AbstractAction>> {
   static int score(const std::shared_ptr<AbstractAction> &action, std::string_view query) {
     auto title = action->title().toStdString();
-    int s = 0;
-    return fts::fuzzy_match(query, title, s) ? s : 0;
+    return fuzzy::scoreWeighted({{title, 1.0}}, query);
   }
 };
 

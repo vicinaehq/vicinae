@@ -7,7 +7,7 @@ template <> struct fuzzy::FuzzySearchable<ExtensionManifest> {
     auto title = m.title.toStdString();
     auto desc = m.description.toStdString();
     auto author = m.author.toStdString();
-    return fuzzy::scoreWeighted({{title, 1.0}, {desc, 0.5}, {author, 0.7}}, query);
+    return fuzzy::scoreWeighted({{title, 1.0}, {desc, 0.5}, {author, 0.2}}, query);
   }
 };
 

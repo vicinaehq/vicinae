@@ -6,7 +6,7 @@
 #include "common.hpp"
 #include "glaze-qt.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
-#include "lib/fzf.hpp"
+#include "fuzzy/fzf.hpp"
 #include "config/config.hpp"
 #include "services/local-storage/local-storage-service.hpp"
 #include "utils.hpp"
@@ -121,6 +121,7 @@ void RootItemManager::updateIndex() {
       auto visitInfo = m_visitTracker.getVisit(id);
 
       sitem.meta->visitCount = visitInfo.visitCount;
+      sitem.meta->lastVisitedAt = visitInfo.lastVisitedAt;
       m_items.emplace_back(sitem);
     }
   }
@@ -133,17 +134,34 @@ void RootItemManager::updateIndex() {
 float RootItemManager::SearchableRootItem::fuzzyScore(std::string_view pattern) const {
   using WS = fzf::WeightedString;
   std::string alias = meta->alias.value_or("");
-  std::initializer_list<WS> ss = {{title, 1.0f}, {subtitle, 0.6f}, {alias, 1.0f}};
+  std::initializer_list<WS> ss = {{title, 1.0f}, {subtitle, 0.5f}, {alias, 1.0f}};
   auto kws = keywords | std::views::transform([](auto &&kw) { return WS{kw, 0.3f}; });
   auto strs = std::views::concat(ss, kws);
   float const score =
-      pattern.empty() ? 1 : fzf::defaultMatcher.fuzzy_match_v2_score_query(strs, pattern, false);
-  double const frequencyScore = std::log(1 + meta->visitCount * 0.1);
-  float const frequencyWeight = 0.2;
+      pattern.empty() ? 1 : fzf::threadLocalMatcher().fuzzy_match_v2_score_query(strs, pattern, false);
 
-  // TODO: add recency support
+  if (score == 0) return 0;
 
-  return score * (1 + frequencyScore * frequencyWeight);
+  constexpr double FRECENCY_BOOST_CAP = 25.0;
+  constexpr double FRECENCY_FREQ_SCALE = 5.0;
+  constexpr double FRECENCY_RECENCY_PEAK = 10.0;
+  constexpr double FRECENCY_RECENCY_HALF_LIFE_DAYS = 30.0;
+  constexpr double SECONDS_PER_DAY = 86400.0;
+
+  double const frequencyTerm = FRECENCY_FREQ_SCALE * std::log(1 + meta->visitCount * 0.1);
+
+  double recencyTerm = 0.0;
+  if (meta->lastVisitedAt) {
+    double const daysSince =
+        (QDateTime::currentSecsSinceEpoch() - static_cast<std::int64_t>(*meta->lastVisitedAt)) /
+        SECONDS_PER_DAY;
+    recencyTerm =
+        FRECENCY_RECENCY_PEAK * std::exp(-std::max(0.0, daysSince) / FRECENCY_RECENCY_HALF_LIFE_DAYS);
+  }
+
+  double const boost = std::min(FRECENCY_BOOST_CAP, frequencyTerm + recencyTerm);
+
+  return score + boost;
 }
 
 std::vector<RootItemManager::ScoredItem> RootItemManager::search(const QString &query,
@@ -178,7 +196,10 @@ void RootItemManager::search(const QString &query, std::vector<ScoredItem> &resu
       bool const aa = !a.meta->alias.value_or("").empty() && a.meta->alias->starts_with(pattern);
       bool const ab = !b.meta->alias.value_or("").empty() && b.meta->alias->starts_with(pattern);
       // always prioritize matching aliases over score
-      if (aa - ab) { return aa > ab; }
+      if (aa != ab) { return aa > ab; }
+      if (aa && ab && a.meta->alias->size() != b.meta->alias->size()) {
+        return a.meta->alias->size() < b.meta->alias->size();
+      }
     }
 
     return a.score > b.score;
@@ -405,54 +426,20 @@ bool RootItemManager::setItemAsFavorite(const EntrypointId &itemId, bool value) 
   return true;
 }
 
-double RootItemManager::computeRecencyScore(const RootItemMetadata &meta) const {
-  if (!meta.lastVisitedAt) return 0.1;
-
-  auto now = std::chrono::high_resolution_clock::now();
-  auto hoursSince = std::chrono::duration_cast<std::chrono::hours>(now - *meta.lastVisitedAt).count() / 24.0;
-
-  if (hoursSince < 1) return 2.0;
-  if (hoursSince < 6) return 1.5;
-
-  return std::exp(-hoursSince / 30.0);
-}
-
-double RootItemManager::computeScore(const RootItemMetadata &meta, int weight) const {
-  double const frequencyScore = std::log(meta.visitCount + 1);
-  double const recencyScore = computeRecencyScore(meta);
-
-  return (frequencyScore + recencyScore) * weight;
-}
-
 std::vector<std::shared_ptr<RootItem>> RootItemManager::queryFavorites(std::optional<int> limit) {
   return getFromSerializedEntrypointIds(m_cfg.value().favorites);
 }
 
-std::vector<RootItemManager::SearchableRootItem> RootItemManager::querySuggestions(int limit) {
-  auto isSuggestable = [](auto &&item) {
-    return item.meta->enabled && item.meta->visitCount > 0 && !item.meta->favorite;
-  };
-  auto suggestions = m_items | std::views::filter(isSuggestable) | std::ranges::to<std::vector>();
-
-  std::ranges::sort(suggestions, [this](const auto &a, const auto &b) {
-    auto ascore = computeScore(*a.meta, a.item->baseScoreWeight());
-    auto bscore = computeScore(*b.meta, b.item->baseScoreWeight());
-    return ascore > bscore;
-  });
-
-  if (std::cmp_greater(suggestions.size(), limit)) { suggestions.resize(limit); }
-
-  return suggestions;
-}
-
 bool RootItemManager::resetRanking(const EntrypointId &id) {
   m_metadata[id].visitCount = 0;
+  m_metadata[id].lastVisitedAt.reset();
   m_visitTracker.forget(id);
   return true;
 }
 
 bool RootItemManager::registerVisit(const EntrypointId &id) {
   ++m_metadata[id].visitCount;
+  m_metadata[id].lastVisitedAt = QDateTime::currentSecsSinceEpoch();
   m_visitTracker.registerVisit(id);
   return true;
 }

@@ -19,7 +19,7 @@
 #include "settings-controller/settings-controller.hpp"
 #include "vicinae.hpp"
 #include "generated/version.h"
-#include "lib/fuzzy/fuzzy-searchable.hpp"
+#include "fuzzy/fuzzy-searchable.hpp"
 #include <QQmlContext>
 #include <QQuickWindow>
 

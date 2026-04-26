@@ -6,7 +6,7 @@ template <> struct fuzzy::FuzzySearchable<OAuth::TokenSet> {
   static int score(const OAuth::TokenSet &set, std::string_view query) {
     auto extId = set.extensionId.toStdString();
     auto providerId = set.providerId.value_or("").toStdString();
-    return fuzzy::scoreWeighted({{extId, 1.0}, {providerId, 0.8}}, query);
+    return fuzzy::scoreWeighted({{extId, 1.0}, {providerId, 0.5}}, query);
   }
 };
 

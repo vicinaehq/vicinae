@@ -2,9 +2,9 @@
 #include "actions/app/app-actions.hpp"
 #include "actions/theme/theme-actions.hpp"
 #include "clipboard-actions.hpp"
-#include "common/scored.hpp"
+#include "fuzzy/scored.hpp"
 #include "keyboard/keybind.hpp"
-#include "lib/fts_fuzzy.hpp"
+#include "fuzzy/fuzzy-searchable.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include <algorithm>
@@ -35,7 +35,9 @@ void ThemeListModel::setFilter(const QString &text) {
     int score = 0;
     if (!query.empty()) {
       auto name = theme->name().toStdString();
-      if (!fts::fuzzy_match(query, name, score)) continue;
+      auto desc = theme->description().toStdString();
+      score = fuzzy::scoreWeighted({{name, 1.0}, {desc, 0.5}}, query);
+      if (score == 0) continue;
     }
 
     if (theme->id() == currentId) {

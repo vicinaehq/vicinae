@@ -26,6 +26,7 @@ list(APPEND LIBS
 	vicinae::scriptcommand
 	vicinae::emoji
 	vicinae::common
+	vicinae::fuzzy
 	vicinae::linuxutils
 )
 

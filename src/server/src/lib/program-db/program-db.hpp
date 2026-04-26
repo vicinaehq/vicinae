@@ -1,5 +1,5 @@
 #pragma once
-#include "common/scored.hpp"
+#include "fuzzy/scored.hpp"
 #include <qfuturewatcher.h>
 #include <qobject.h>
 #include <filesystem>
