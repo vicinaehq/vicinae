@@ -1,3 +1,5 @@
+#include <thread>
+
 #include "gnome-clipboard-server.hpp"
 #include "utils/environment.hpp"
 #include <QGuiApplication>
@@ -66,23 +68,33 @@ bool GnomeClipboardServer::start() {
 }
 
 bool GnomeClipboardServer::testExtensionAvailability() const {
-  // Test if the extension D-Bus interface exists
-  QDBusInterface testInterface(DBUS_SERVICE, DBUS_PATH, DBUS_INTERFACE, QDBusConnection::sessionBus());
+  using namespace std::chrono_literals;
 
-  if (!testInterface.isValid()) {
-    qDebug() << "GnomeClipboardServer: Extension interface test failed:"
-             << testInterface.lastError().message();
-    return false;
+  static constexpr int MAX_RETRIES = 5;
+  static constexpr auto RETRY_DELAY = 500ms;
+
+  for (int attempt = 0; attempt < MAX_RETRIES; ++attempt) {
+    QDBusInterface testInterface(DBUS_SERVICE, DBUS_PATH, DBUS_INTERFACE, QDBusConnection::sessionBus());
+
+    if (testInterface.isValid()) {
+      QDBusReply<QStringList> const reply = testInterface.call("GetClipboardMimeTypes");
+      if (reply.isValid()) {
+        if (attempt > 0) {
+          qInfo() << "GnomeClipboardServer: Extension became available after" << attempt + 1 << "attempts";
+        }
+        return true;
+      }
+      qDebug() << "GnomeClipboardServer: Extension method call test failed (attempt" << attempt + 1
+               << "):" << reply.error().message();
+    } else {
+      qDebug() << "GnomeClipboardServer: Extension interface test failed (attempt" << attempt + 1
+               << "):" << testInterface.lastError().message();
+    }
+
+    if (attempt < MAX_RETRIES - 1) { std::this_thread::sleep_for(RETRY_DELAY); }
   }
 
-  // Try to call a simple method to verify the interface is working
-  QDBusReply<QStringList> const reply = testInterface.call("GetClipboardMimeTypes");
-  if (!reply.isValid()) {
-    qDebug() << "GnomeClipboardServer: Extension method call test failed:" << reply.error().message();
-    return false;
-  }
-
-  return true;
+  return false;
 }
 
 bool GnomeClipboardServer::setupDBusConnection() {
