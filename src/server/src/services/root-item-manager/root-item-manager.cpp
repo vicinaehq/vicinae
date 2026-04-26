@@ -153,8 +153,10 @@ float RootItemManager::SearchableRootItem::fuzzyScore(std::string_view pattern) 
   double recencyTerm = 0.0;
   if (meta->lastVisitedAt) {
     double const daysSince =
-        (QDateTime::currentSecsSinceEpoch() - static_cast<std::int64_t>(*meta->lastVisitedAt)) / SECONDS_PER_DAY;
-    recencyTerm = FRECENCY_RECENCY_PEAK * std::exp(-std::max(0.0, daysSince) / FRECENCY_RECENCY_HALF_LIFE_DAYS);
+        (QDateTime::currentSecsSinceEpoch() - static_cast<std::int64_t>(*meta->lastVisitedAt)) /
+        SECONDS_PER_DAY;
+    recencyTerm =
+        FRECENCY_RECENCY_PEAK * std::exp(-std::max(0.0, daysSince) / FRECENCY_RECENCY_HALF_LIFE_DAYS);
   }
 
   double const boost = std::min(FRECENCY_BOOST_CAP, frequencyTerm + recencyTerm);
