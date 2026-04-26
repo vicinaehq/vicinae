@@ -209,7 +209,7 @@ struct RootItemMetadata {
   bool enabled = true;
   bool favorite = false;
   bool fallback = false;
-  std::optional<std::chrono::time_point<std::chrono::high_resolution_clock>> lastVisitedAt;
+  std::optional<std::uint64_t> lastVisitedAt;
   std::optional<std::string> alias;
   std::string providerId;
   std::shared_ptr<RootItem> item;
@@ -286,10 +286,7 @@ public:
   bool moveFallbackDown(const EntrypointId &id);
   bool moveFallbackUp(const EntrypointId &id);
   bool enableFallback(const EntrypointId &id);
-  double computeScore(const RootItemMetadata &meta, int weight) const;
-  double computeRecencyScore(const RootItemMetadata &meta) const;
   std::vector<std::shared_ptr<RootItem>> queryFavorites(std::optional<int> limit = {});
-  std::vector<SearchableRootItem> querySuggestions(int limit = 5);
   bool resetRanking(const EntrypointId &id);
   bool registerVisit(const EntrypointId &id);
   bool setItemAsFavorite(const EntrypointId &item, bool value = true);
