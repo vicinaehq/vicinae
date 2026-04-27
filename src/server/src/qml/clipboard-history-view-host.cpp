@@ -74,8 +74,15 @@ void ClipboardHistoryViewHost::initialize() {
 
   auto preferences = command()->preferenceValues();
   auto defaultActionStr = preferences.value("defaultAction").toString();
+  auto saveDirectoryMode = preferences.value("saveDirectoryMode").toString();
+  auto saveCustomDirectory = preferences.value("saveCustomDirectory").toString();
+  auto saveFileNameMode = preferences.value("saveFileNameMode").toString();
+
   m_model->setDefaultAction(defaultActionStr == "paste" ? ClipboardHistoryModel::DefaultAction::Paste
                                                         : ClipboardHistoryModel::DefaultAction::Copy);
+  m_model->setSaveDirectoryMode(saveDirectoryMode.isEmpty() ? "downloads" : saveDirectoryMode);
+  m_model->setSaveCustomDirectory(saveCustomDirectory);
+  m_model->setSaveFileNameMode(saveFileNameMode.isEmpty() ? "content" : saveFileNameMode);
 
   setSearchPlaceholderText("Browse clipboard history...");
 
