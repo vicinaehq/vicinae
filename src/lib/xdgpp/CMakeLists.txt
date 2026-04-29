@@ -17,7 +17,6 @@ add_library(vicinae-xdgpp
 	xdgpp/desktop-entry/file.cpp
 	xdgpp/desktop-entry/action.cpp
 	xdgpp/desktop-entry/exec.cpp
-	xdgpp/desktop-entry/iterator.cpp
 	xdgpp/env/env.cpp
 	xdgpp/mime/iterator.cpp
 	xdgpp/mime/mime-apps-list.cpp

@@ -24,7 +24,6 @@
 #include <set>
 #include <QDir>
 #include <unordered_set>
-#include <xdgpp/desktop-entry/iterator.hpp>
 #include <xdgpp/env/env.hpp>
 #include <xdgpp/mime/mime-apps-list.hpp>
 
@@ -104,7 +103,7 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
   for (const auto &dir : paths) {
     std::error_code ec;
 
-    for (const auto &entry : fs::recursive_directory_iterator(dir, ec)) {
+    for (const auto &entry : fs::recursive_directory_iterator(dir, fs::directory_options::skip_permission_denied, ec)) {
       if (!entry.is_regular_file(ec)) continue;
       if (!entry.path().filename().string().ends_with(".desktop")) continue;
 
