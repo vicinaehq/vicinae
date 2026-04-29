@@ -103,7 +103,8 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
   for (const auto &dir : paths) {
     std::error_code ec;
 
-    for (const auto &entry : fs::recursive_directory_iterator(dir, fs::directory_options::skip_permission_denied, ec)) {
+    for (const auto &entry :
+         fs::recursive_directory_iterator(dir, fs::directory_options::skip_permission_denied, ec)) {
       if (!entry.is_regular_file(ec)) continue;
       if (!entry.path().filename().string().ends_with(".desktop")) continue;
 
