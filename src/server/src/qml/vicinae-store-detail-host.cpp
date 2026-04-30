@@ -1,5 +1,6 @@
 #include "vicinae-store-detail-host.hpp"
 #include "actions/extension/extension-actions.hpp"
+#include "empty-view-host.hpp"
 #include "navigation-controller.hpp"
 #include "vicinae.hpp"
 #include "view-utils.hpp"
@@ -10,7 +11,8 @@
 #include "utils/utils.hpp"
 #include <QFutureWatcher>
 
-VicinaeStoreDetailHost::VicinaeStoreDetailHost(const VicinaeStore::Extension &extension) : m_ext(extension) {}
+VicinaeStoreDetailHost::VicinaeStoreDetailHost(const QString &authorHandle, const QString &extensionName)
+    : m_authorHandle(authorHandle), m_extensionName(extensionName) {}
 
 QUrl VicinaeStoreDetailHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/StoreDetailView.qml"));
@@ -23,10 +25,50 @@ QVariantMap VicinaeStoreDetailHost::qmlProperties() {
 void VicinaeStoreDetailHost::initialize() {
   BaseView::initialize();
 
+  setLoading(true);
+  auto store = context()->services->vicinaeStore();
+  auto *watcher = new QFutureWatcher<VicinaeStore::ListResult>(this);
+  watcher->setFuture(store->fetchAll());
+
+  connect(watcher, &QFutureWatcher<VicinaeStore::ListResult>::finished, this, [this, watcher]() {
+    watcher->deleteLater();
+    auto result = watcher->result();
+    if (!result) {
+      context()->navigation->replaceView(
+          new EmptyViewHost("Failed to load extension", "Could not fetch extension data from the store.",
+                            ImageURL(BuiltinIcon::Exclamationmark).setFill(SemanticColor::Red)));
+      return;
+    }
+
+    auto it = std::ranges::find_if(result->extensions, [&](const auto &ext) {
+      return ext.author.handle == m_authorHandle && ext.name == m_extensionName;
+    });
+    if (it == result->extensions.end()) {
+      auto id = QString("%1/%2").arg(m_authorHandle, m_extensionName);
+      context()->navigation->replaceView(new EmptyViewHost(
+          "Extension not found", QString("The extension \"%1\" could not be found in the store.").arg(id),
+          ImageURL(BuiltinIcon::MagnifyingGlass).setFill(SemanticColor::Red)));
+      return;
+    }
+
+    hydrate(*it);
+    setLoading(false);
+  });
+}
+
+void VicinaeStoreDetailHost::hydrate(const VicinaeStore::Extension &extension) {
+  m_ext = extension;
+  m_isReady = true;
+
   auto registry = context()->services->extensionRegistry();
   m_isInstalled = registry->isInstalled(m_ext.id);
 
+  auto icon = ImageURL::builtin("cart");
+  icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
+  setNavigationIcon(icon);
+  setNavigationTitle(QString("Extension Store - %1").arg(m_ext.title));
   createActions();
+  emit extensionChanged();
 
   connect(registry, &ExtensionRegistry::extensionAdded, this, [this](const QString &id) {
     if (id != m_ext.id) return;
@@ -61,6 +103,7 @@ QStringList VicinaeStoreDetailHost::platforms() const {
   return QStringList(m_ext.platforms.begin(), m_ext.platforms.end());
 }
 
+bool VicinaeStoreDetailHost::isReady() const { return m_isReady; }
 bool VicinaeStoreDetailHost::isInstalled() const { return m_isInstalled; }
 bool VicinaeStoreDetailHost::hasScreenshots() const { return false; }
 QStringList VicinaeStoreDetailHost::screenshots() const { return {}; }
@@ -96,9 +139,7 @@ void VicinaeStoreDetailHost::openUrl(const QString &url) {
   ServiceRegistry::instance()->appDb()->openTarget(url);
 }
 
-QString VicinaeStoreDetailHost::initialNavigationTitle() const {
-  return QString("%1 - %2").arg(BaseView::initialNavigationTitle()).arg(m_ext.title);
-}
+QString VicinaeStoreDetailHost::initialNavigationTitle() const { return QStringLiteral("Extension Store"); }
 
 void VicinaeStoreDetailHost::createActions() {
   auto panel = std::make_unique<FormActionPanelState>();

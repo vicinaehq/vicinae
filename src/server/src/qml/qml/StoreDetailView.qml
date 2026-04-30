@@ -55,6 +55,7 @@ Item {
         clip: true
         flickableDirection: Flickable.VerticalFlick
         boundsBehavior: Flickable.StopAtBounds
+        visible: root.host.isReady
 
         ColumnLayout {
             id: _content

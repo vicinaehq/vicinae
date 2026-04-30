@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QString>
 #include <expected>
+#include <optional>
 #include <vector>
 #include "lib/http-client.hpp"
 #include "ui/image/url.hpp"
@@ -98,9 +99,14 @@ public:
 
   QFuture<VicinaeStore::ListResult> fetchExtensions(const VicinaeStore::ListPaginationOptions &opts = {});
 
+  QFuture<VicinaeStore::ListResult> fetchAll();
+
   QFuture<VicinaeStore::ListResult> search(const QString &query);
 
   QFuture<VicinaeStore::DownloadExtensionResult> downloadExtension(const QUrl &url);
+
+  const std::vector<VicinaeStore::Extension> *cached() const;
+  void invalidateCache();
 
   void setBaseUrl(const QString &url);
   QString baseUrl() const;
@@ -109,4 +115,5 @@ private:
   static const http::RequestOptions s_requestOpts;
 
   http::Client m_client;
+  std::optional<std::vector<VicinaeStore::Extension>> m_cache;
 };

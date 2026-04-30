@@ -161,6 +161,7 @@ using CompatMap = std::unordered_map<std::string, CompatInfo>;
 using CompatResult = std::expected<CompatMap, std::string>;
 
 using ListResult = std::expected<ListResponse, std::string>;
+using ExtensionResult = std::expected<Extension, std::string>;
 using DownloadExtensionResult = std::expected<QByteArray, std::string>;
 
 } // namespace Raycast
@@ -171,6 +172,7 @@ public:
 
   QFuture<Raycast::DownloadExtensionResult> downloadExtension(const QUrl &url);
   QFuture<Raycast::ListResult> fetchExtensions(const Raycast::ListPaginationOptions &opts = {});
+  QFuture<Raycast::ExtensionResult> fetchExtension(const QString &author, const QString &name);
   QFuture<Raycast::ListResult> search(const QString &query);
   QFuture<Raycast::CompatResult> fetchCompat();
 
@@ -178,6 +180,7 @@ public:
 
 private:
   static const http::RequestOptions s_requestOpts;
+  static void postProcess(Raycast::Extension &extension);
   static void postProcess(std::vector<Raycast::Extension> &extensions);
 
   std::unordered_map<int, Raycast::ListResponse> m_cachedPages;

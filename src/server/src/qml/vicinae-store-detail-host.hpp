@@ -27,8 +27,9 @@ public:
   Q_PROPERTY(QString lastUpdate READ lastUpdate NOTIFY extensionChanged)
   Q_PROPERTY(QVariantList contributors READ contributors NOTIFY extensionChanged)
   Q_PROPERTY(QStringList categories READ categories NOTIFY extensionChanged)
+  Q_PROPERTY(bool isReady READ isReady NOTIFY extensionChanged)
 
-  explicit VicinaeStoreDetailHost(const VicinaeStore::Extension &extension);
+  VicinaeStoreDetailHost(const QString &authorHandle, const QString &extensionName);
 
   QUrl qmlComponentUrl() const override;
   QVariantMap qmlProperties() override;
@@ -41,6 +42,7 @@ public:
   QString authorAvatar() const;
   QString downloadCount() const;
   QStringList platforms() const;
+  bool isReady() const;
   bool isInstalled() const;
   bool hasScreenshots() const;
   QStringList screenshots() const;
@@ -57,6 +59,11 @@ private:
   QString initialNavigationTitle() const override;
   void createActions();
 
+  void hydrate(const VicinaeStore::Extension &extension);
+
   VicinaeStore::Extension m_ext;
+  QString m_authorHandle;
+  QString m_extensionName;
+  bool m_isReady = false;
   bool m_isInstalled = false;
 };

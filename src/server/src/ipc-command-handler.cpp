@@ -5,7 +5,6 @@
 #include "common/entrypoint.hpp"
 #include "services/oauth/oauth-service.hpp"
 #include "theme/theme-db.hpp"
-#include "root-search/extensions/extension-root-provider.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/toast/toast-service.hpp"
 #include "settings-controller/settings-controller.hpp"
@@ -27,6 +26,8 @@
 #include "service-registry.hpp"
 #include "theme.hpp"
 #include "qml/provider-search-view-host.hpp"
+#include "qml/raycast-store-detail-host.hpp"
+#include "qml/vicinae-store-detail-host.hpp"
 #include "ui/toast/toast.hpp"
 #include "vicinae.hpp"
 
@@ -219,92 +220,20 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
   }
 
   if (command == "extensions") {
-    auto root = m_ctx.services->rootItemManager();
-    auto components = path.sliced(1).split('/');
+    auto segments = path.sliced(1).split('/', Qt::SkipEmptyParts);
 
-    qWarning().nospace() << "vicinae://extensions is deprecated and will be removed in a future release. "
-                            "Please use vicinae://launch instead. See "
-                         << Omnicast::DOC_URL + "/deeplinks" << " for more information.";
+    if (segments.size() != 2) return std::unexpected("Usage: vicinae://extensions/<author>/<extension-name>");
 
-    if (components.size() == 2) {
-      QString author = components[0];
-      QString extName = components[1];
-      auto pred = [&](const ExtensionRootProvider *s) {
-        return s->repository()->author() == author && s->repository()->name() == extName;
-      };
+    auto scheme = url.scheme();
+    BaseView *host = (scheme == "raycast" || scheme == "com.raycast")
+                         ? static_cast<BaseView *>(new RaycastStoreDetailHost(segments[0], segments[1]))
+                         : static_cast<BaseView *>(new VicinaeStoreDetailHost(segments[0], segments[1]));
 
-      auto extensions = root->extensions();
-
-      if (auto it = std::ranges::find_if(extensions, pred); it != extensions.end()) {
-        m_ctx.navigation->popToRoot({.clearSearch = false});
-        m_ctx.navigation->setInstantDismiss();
-        m_ctx.navigation->pushView(new ProviderSearchViewHost(**it));
-
-        if (auto text = query.queryItemValue("fallbackText"); !text.isEmpty()) {
-          m_ctx.navigation->setSearchText(text);
-        }
-
-        return {};
-      }
-
-      return std::unexpected("No such extension");
-    }
-
-    if (components.size() < 3) {
-      qWarning() << "Invalid use of extensions verb: expected format is "
-                    "vicinae://extensions/<author>/<ext_name>/<cmd_name>";
-      return {};
-    }
-
-    QString const &author = components[0];
-    QString const &extName = components[1];
-    QString const &cmdName = components[2];
-
-    for (ExtensionRootProvider const *ext : root->extensions()) {
-      for (const auto &cmd : ext->repository()->commands()) {
-        // Author is suffixed, check author with suffix
-        if (author.contains("@")) {
-          if (cmd->authorSuffixed() != author) continue;
-        } else {
-          // otherwise check plain author name
-          if (cmd->author() != author) continue;
-        }
-
-        if (cmd->commandId() == cmdName && cmd->repositoryName() == extName) {
-          m_ctx.navigation->popToRoot({.clearSearch = false});
-
-          // Read `arguments` query parameter
-          ArgumentValues arguments;
-          if (query.hasQueryItem("arguments")) {
-            QString const argsText = query.queryItemValue("arguments");
-            QJsonParseError parseError;
-            QJsonDocument const doc = QJsonDocument::fromJson(argsText.toUtf8(), &parseError);
-            if (parseError.error == QJsonParseError::NoError && doc.isObject()) {
-              QJsonObject obj = doc.object();
-              for (auto it = obj.begin(); it != obj.end(); ++it) {
-                arguments.emplace_back(it.key(), it.value().toString());
-              }
-            } else {
-              qWarning() << "Failed to parse arguments JSON:" << parseError.errorString();
-            }
-          }
-
-          m_ctx.navigation->setInstantDismiss();
-          m_ctx.navigation->launch(cmd, arguments);
-
-          if (auto text = query.queryItemValue("fallbackText"); !text.isEmpty()) {
-            m_ctx.navigation->setSearchText(text);
-          }
-
-          if (!m_ctx.navigation->isRootSearch() && m_ctx.navigation->activeCommand()->isView()) {
-            m_ctx.navigation->setBackButtonVisibility(false);
-            m_ctx.navigation->showWindow();
-          }
-
-          break;
-        }
-      }
-    }
+    m_ctx.navigation->popToRoot({.clearSearch = false});
+    m_ctx.navigation->setInstantDismiss();
+    m_ctx.navigation->pushView(host);
+    m_ctx.navigation->setBackButtonVisibility(false);
+    m_ctx.navigation->showWindow();
 
     return {};
   }
