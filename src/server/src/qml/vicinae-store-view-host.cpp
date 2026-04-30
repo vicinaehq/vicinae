@@ -3,17 +3,10 @@
 #include "service-registry.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include "services/toast/toast-service.hpp"
-#include <chrono>
 
 VicinaeStoreViewHost::VicinaeStoreViewHost() {
-  m_debounce.setSingleShot(true);
-  m_debounce.setInterval(std::chrono::milliseconds(200));
-
-  connect(&m_debounce, &QTimer::timeout, this, &VicinaeStoreViewHost::handleDebounce);
-  connect(&m_listResultWatcher, &QFutureWatcher<VicinaeStore::ListResult>::finished, this,
-          &VicinaeStoreViewHost::handleFinishedPage);
-  connect(&m_queryResultWatcher, &QFutureWatcher<VicinaeStore::ListResult>::finished, this,
-          &VicinaeStoreViewHost::handleFinishedQuery);
+  connect(&m_watcher, &QFutureWatcher<VicinaeStore::ListResult>::finished, this,
+          &VicinaeStoreViewHost::handleFinished);
 }
 
 QUrl VicinaeStoreViewHost::qmlComponentUrl() const {
@@ -40,13 +33,7 @@ void VicinaeStoreViewHost::initialize() {
 
 void VicinaeStoreViewHost::loadInitialData() { fetchExtensions(); }
 
-void VicinaeStoreViewHost::textChanged(const QString &text) {
-  if (text.isEmpty()) {
-    fetchExtensions();
-    return;
-  }
-  m_debounce.start();
-}
+void VicinaeStoreViewHost::textChanged(const QString &text) { m_model->setFilter(text); }
 
 void VicinaeStoreViewHost::onReactivated() { m_model->refreshActionPanel(); }
 
@@ -54,46 +41,27 @@ QObject *VicinaeStoreViewHost::listModel() const { return m_model; }
 
 void VicinaeStoreViewHost::fetchExtensions() {
   setLoading(true);
-  m_listResultWatcher.setFuture(m_store->fetchExtensions());
+  m_watcher.setFuture(m_store->fetchAll());
 }
 
-void VicinaeStoreViewHost::handleFinishedPage() {
-  if (!searchText().isEmpty()) return;
+void VicinaeStoreViewHost::handleFinished() {
+  auto result = m_watcher.result();
+  setLoading(false);
 
-  auto result = m_listResultWatcher.result();
   if (!result) {
     qWarning() << "[VicinaeStore] fetch error:" << result.error();
     context()->services->toastService()->setToast("Failed to fetch extensions", ToastStyle::Danger);
     return;
   }
 
-  setLoading(false);
-
   m_model->setEntries(result->extensions, context()->services->extensionRegistry(),
                       QStringLiteral("Extensions"));
 }
 
-void VicinaeStoreViewHost::handleFinishedQuery() {
-  if (searchText() != m_lastQueryText) return;
-
-  auto result = m_queryResultWatcher.result();
-  if (!result) {
-    context()->services->toastService()->setToast("Failed to search extensions", ToastStyle::Danger);
-    return;
+void VicinaeStoreViewHost::refresh() {
+  if (auto *cached = m_store->cached()) {
+    m_model->setEntries(*cached, context()->services->extensionRegistry(), QStringLiteral("Extensions"));
+  } else {
+    fetchExtensions();
   }
-
-  setLoading(false);
-
-  m_model->setEntries(result->extensions, context()->services->extensionRegistry(),
-                      QStringLiteral("Results"));
 }
-
-void VicinaeStoreViewHost::handleDebounce() {
-  if (searchText().isEmpty()) return;
-
-  setLoading(true);
-  m_lastQueryText = searchText();
-  m_queryResultWatcher.setFuture(m_store->search(m_lastQueryText));
-}
-
-void VicinaeStoreViewHost::refresh() { textChanged(searchText()); }

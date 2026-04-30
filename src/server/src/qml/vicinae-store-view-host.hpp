@@ -2,7 +2,6 @@
 #include "bridge-view.hpp"
 #include "services/extension-store/vicinae-store.hpp"
 #include <QFutureWatcher>
-#include <QTimer>
 
 class VicinaeStoreModel;
 
@@ -27,15 +26,10 @@ public:
 
 private:
   void fetchExtensions();
-  void handleFinishedPage();
-  void handleFinishedQuery();
-  void handleDebounce();
+  void handleFinished();
   void refresh();
 
   VicinaeStoreModel *m_model = nullptr;
   VicinaeStoreService *m_store = nullptr;
-  QFutureWatcher<VicinaeStore::ListResult> m_listResultWatcher;
-  QFutureWatcher<VicinaeStore::ListResult> m_queryResultWatcher;
-  QString m_lastQueryText;
-  QTimer m_debounce;
+  QFutureWatcher<VicinaeStore::ListResult> m_watcher;
 };
