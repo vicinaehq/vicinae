@@ -28,8 +28,10 @@ public:
   Q_PROPERTY(QVariantList contributors READ contributors NOTIFY extensionChanged)
   Q_PROPERTY(QStringList categories READ categories NOTIFY extensionChanged)
   Q_PROPERTY(QVariantMap alert READ alert NOTIFY extensionChanged)
+  Q_PROPERTY(bool isReady READ isReady NOTIFY extensionChanged)
 
   explicit RaycastStoreDetailHost(const Raycast::Extension &extension);
+  RaycastStoreDetailHost(const QString &authorHandle, const QString &extensionName);
 
   QUrl qmlComponentUrl() const override;
   QVariantMap qmlProperties() override;
@@ -42,6 +44,7 @@ public:
   QString authorAvatar() const;
   QString downloadCount() const;
   QStringList platforms() const;
+  bool isReady() const;
   bool isInstalled() const;
   bool hasScreenshots() const;
   QStringList screenshots() const;
@@ -58,8 +61,13 @@ public:
 private:
   QString initialNavigationTitle() const override;
   void createActions();
+  void hydrate(const Raycast::Extension &extension);
+  void buildAlert();
 
   Raycast::Extension m_ext;
+  QString m_authorHandle;
+  QString m_extensionName;
+  bool m_isReady = false;
   bool m_isInstalled = false;
   QVariantMap m_alert;
 };

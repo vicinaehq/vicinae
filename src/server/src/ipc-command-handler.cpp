@@ -26,6 +26,7 @@
 #include "service-registry.hpp"
 #include "theme.hpp"
 #include "qml/provider-search-view-host.hpp"
+#include "qml/raycast-store-detail-host.hpp"
 #include "qml/vicinae-store-detail-host.hpp"
 #include "ui/toast/toast.hpp"
 #include "vicinae.hpp"
@@ -223,9 +224,14 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
 
     if (segments.size() != 2) return std::unexpected("Usage: vicinae://extensions/<author>/<extension-name>");
 
+    auto scheme = url.scheme();
+    BaseView *host = (scheme == "raycast" || scheme == "com.raycast")
+                         ? static_cast<BaseView *>(new RaycastStoreDetailHost(segments[0], segments[1]))
+                         : static_cast<BaseView *>(new VicinaeStoreDetailHost(segments[0], segments[1]));
+
     m_ctx.navigation->popToRoot({.clearSearch = false});
     m_ctx.navigation->setInstantDismiss();
-    m_ctx.navigation->pushView(new VicinaeStoreDetailHost(segments[0], segments[1]));
+    m_ctx.navigation->pushView(host);
     m_ctx.navigation->setBackButtonVisibility(false);
     m_ctx.navigation->showWindow();
 

@@ -1,5 +1,6 @@
 #include "raycast-store-detail-host.hpp"
 #include "actions/extension/extension-actions.hpp"
+#include "empty-view-host.hpp"
 #include "navigation-controller.hpp"
 #include "vicinae.hpp"
 #include "view-utils.hpp"
@@ -13,6 +14,9 @@
 
 RaycastStoreDetailHost::RaycastStoreDetailHost(const Raycast::Extension &extension) : m_ext(extension) {}
 
+RaycastStoreDetailHost::RaycastStoreDetailHost(const QString &authorHandle, const QString &extensionName)
+    : m_authorHandle(authorHandle), m_extensionName(extensionName) {}
+
 QUrl RaycastStoreDetailHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/StoreDetailView.qml"));
 }
@@ -24,9 +28,66 @@ QVariantMap RaycastStoreDetailHost::qmlProperties() {
 void RaycastStoreDetailHost::initialize() {
   BaseView::initialize();
 
+  if (!m_extensionName.isEmpty()) {
+    setLoading(true);
+    auto store = context()->services->raycastStore();
+    auto *watcher = new QFutureWatcher<Raycast::ExtensionResult>(this);
+    watcher->setFuture(store->fetchExtension(m_authorHandle, m_extensionName));
+
+    connect(watcher, &QFutureWatcher<Raycast::ExtensionResult>::finished, this, [this, watcher]() {
+      watcher->deleteLater();
+      auto result = watcher->result();
+      if (!result) {
+        auto id = QString("%1/%2").arg(m_authorHandle, m_extensionName);
+        context()->navigation->replaceView(new EmptyViewHost(
+            "Failed to load extension",
+            QString("The extension \"%1\" could not be loaded. It may not exist or the store may be "
+                    "unreachable.")
+                .arg(id),
+            ImageURL(BuiltinIcon::Exclamationmark).setFill(SemanticColor::Red)));
+        return;
+      }
+
+      hydrate(*result);
+      setLoading(false);
+    });
+    return;
+  }
+
+  hydrate(m_ext);
+}
+
+void RaycastStoreDetailHost::hydrate(const Raycast::Extension &extension) {
+  m_ext = extension;
+  m_isReady = true;
+
   auto registry = context()->services->extensionRegistry();
   m_isInstalled = registry->isInstalled(m_ext.id);
 
+  buildAlert();
+
+  auto icon = m_ext.themedIcon();
+  setNavigationIcon(icon);
+  setNavigationTitle(QString("Extension Store - %1").arg(m_ext.title));
+  createActions();
+  emit extensionChanged();
+
+  connect(registry, &ExtensionRegistry::extensionAdded, this, [this](const QString &id) {
+    if (id != m_ext.id) return;
+    m_isInstalled = true;
+    emit extensionChanged();
+    createActions();
+  });
+
+  connect(registry, &ExtensionRegistry::extensionUninstalled, this, [this](const QString &id) {
+    if (id != m_ext.id) return;
+    m_isInstalled = false;
+    emit extensionChanged();
+    createActions();
+  });
+}
+
+void RaycastStoreDetailHost::buildAlert() {
   const auto &compat = context()->services->raycastStore()->compatMap();
   if (auto it = compat.find(m_ext.name.toStdString()); it != compat.end()) {
     auto tier = Raycast::compatTierFromInfo(it->second);
@@ -72,22 +133,6 @@ void RaycastStoreDetailHost::initialize() {
          QStringLiteral("No compatibility data is available — this extension may or may not work.")},
     };
   }
-
-  createActions();
-
-  connect(registry, &ExtensionRegistry::extensionAdded, this, [this](const QString &id) {
-    if (id != m_ext.id) return;
-    m_isInstalled = true;
-    emit extensionChanged();
-    createActions();
-  });
-
-  connect(registry, &ExtensionRegistry::extensionUninstalled, this, [this](const QString &id) {
-    if (id != m_ext.id) return;
-    m_isInstalled = false;
-    emit extensionChanged();
-    createActions();
-  });
 }
 
 QString RaycastStoreDetailHost::title() const { return m_ext.title; }
@@ -107,6 +152,8 @@ QStringList RaycastStoreDetailHost::platforms() const {
   if (!m_ext.platforms) return {};
   return QStringList(m_ext.platforms->begin(), m_ext.platforms->end());
 }
+
+bool RaycastStoreDetailHost::isReady() const { return m_isReady; }
 bool RaycastStoreDetailHost::isInstalled() const { return m_isInstalled; }
 bool RaycastStoreDetailHost::hasScreenshots() const { return m_ext.metadata_count > 0; }
 
@@ -158,9 +205,7 @@ void RaycastStoreDetailHost::openUrl(const QString &url) {
   ServiceRegistry::instance()->appDb()->openTarget(url);
 }
 
-QString RaycastStoreDetailHost::initialNavigationTitle() const {
-  return QString("%1 - %2").arg(BaseView::initialNavigationTitle()).arg(m_ext.title);
-}
+QString RaycastStoreDetailHost::initialNavigationTitle() const { return QStringLiteral("Extension Store"); }
 
 void RaycastStoreDetailHost::createActions() {
   auto panel = std::make_unique<FormActionPanelState>();

@@ -34,8 +34,9 @@ void VicinaeStoreDetailHost::initialize() {
     watcher->deleteLater();
     auto result = watcher->result();
     if (!result) {
-      context()->services->toastService()->setToast("Failed to fetch extensions", ToastStyle::Danger);
-      setLoading(false);
+      context()->navigation->replaceView(
+          new EmptyViewHost("Failed to load extension", "Could not fetch extension data from the store.",
+                            ImageURL(BuiltinIcon::Exclamationmark).setFill(SemanticColor::Red)));
       return;
     }
 
