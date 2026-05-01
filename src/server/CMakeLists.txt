@@ -119,6 +119,8 @@ set(SRCS
 	# Bookmark - Start
 	src/services/shortcut/shortcut-service.hpp
 	src/services/shortcut/shortcut-service.cpp
+	src/services/shortcut/shortcut-db.hpp
+	src/services/shortcut/shortcut-db.cpp
 	src/services/shortcut/shortcut.hpp
 	src/services/shortcut/shortcut.cpp
 

@@ -1,42 +1,72 @@
 #include "services/shortcut/shortcut-service.hpp"
-#include "shortcut-service.hpp"
-#include "crypto.hpp"
+#include "omni-database.hpp"
 #include <qlogging.h>
+#include <qsqlerror.h>
+#include <qsqlquery.h>
 
-std::vector<std::shared_ptr<Shortcut>> ShortcutService::loadAll() {
-  std::vector<std::shared_ptr<Shortcut>> shortcuts;
-  QSqlQuery query = m_db.createQuery();
+std::shared_ptr<Shortcut> ShortcutService::fromSerialized(const shortcut::SerializedShortcut &s) {
+  auto sc = std::make_shared<Shortcut>();
+  sc->setId(QString::fromStdString(s.id));
+  sc->setName(QString::fromStdString(s.name));
+  sc->setIcon(QString::fromStdString(s.icon));
+  sc->parseLink(QString::fromStdString(s.url));
+  sc->setApp(QString::fromStdString(s.app));
+  sc->setOpenCount(s.openCount);
+  sc->setCreatedAt(QDateTime::fromSecsSinceEpoch(s.createdAt));
+  sc->setUpdatedAt(QDateTime::fromSecsSinceEpoch(s.updatedAt));
+  if (s.lastUsedAt) { sc->setLastOpenedAt(QDateTime::fromSecsSinceEpoch(*s.lastUsedAt)); }
+  return sc;
+}
+
+void ShortcutService::loadAll() {
+  m_shortcuts.clear();
+  m_shortcuts.reserve(m_db.shortcuts().size());
+  for (const auto &s : m_db.shortcuts()) {
+    m_shortcuts.emplace_back(fromSerialized(s));
+  }
+}
+
+void ShortcutService::migrateFromDatabase(OmniDatabase &db) {
+  QSqlQuery query = db.createQuery();
+  query.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='shortcut'");
+
+  if (!query.exec() || !query.next()) return;
 
   query.prepare(R"(
-		SELECT id, name, icon, url, app, open_count, created_at, updated_at, last_used_at
-		FROM shortcut
-	)");
+    SELECT id, name, icon, url, app, open_count, created_at, updated_at, last_used_at
+    FROM shortcut
+  )");
 
   if (!query.exec()) {
-    qCritical() << "Failed to execute loadAll query: " << query.lastError();
-    return {};
+    qWarning() << "Failed to read shortcuts from database for migration:" << query.lastError();
+    return;
   }
+
+  std::vector<shortcut::SerializedShortcut> migrated;
 
   while (query.next()) {
-    Shortcut shortcut;
-
-    shortcut.setId(query.value(0).toString());
-    shortcut.setName(query.value(1).toString());
-    shortcut.setIcon(query.value(2).toString());
-    shortcut.parseLink(query.value(3).toString());
-    shortcut.setApp(query.value(4).toString());
-    shortcut.setOpenCount(query.value(5).toInt());
-    shortcut.setCreatedAt(QDateTime::fromSecsSinceEpoch(query.value(6).toULongLong()));
-    shortcut.setUpdatedAt(QDateTime::fromSecsSinceEpoch(query.value(7).toULongLong()));
-
-    if (auto value = query.value(8); !value.isNull()) {
-      shortcut.setLastOpenedAt(QDateTime::fromSecsSinceEpoch(value.toULongLong()));
-    }
-
-    shortcuts.emplace_back(std::make_shared<Shortcut>(shortcut));
+    shortcut::SerializedShortcut s;
+    s.id = query.value(0).toString().toStdString();
+    s.name = query.value(1).toString().toStdString();
+    s.icon = query.value(2).toString().toStdString();
+    s.url = query.value(3).toString().toStdString();
+    s.app = query.value(4).toString().toStdString();
+    s.openCount = query.value(5).toInt();
+    s.createdAt = query.value(6).toULongLong();
+    s.updatedAt = query.value(7).toULongLong();
+    if (auto val = query.value(8); !val.isNull()) { s.lastUsedAt = val.toULongLong(); }
+    migrated.emplace_back(std::move(s));
   }
 
-  return shortcuts;
+  if (migrated.empty()) return;
+
+  if (const auto result = m_db.setShortcuts(migrated); !result) {
+    qCritical() << "Failed to migrate shortcuts to JSON:" << result.error().c_str();
+    return;
+  }
+
+  m_db.reload();
+  qInfo() << "Migrated" << migrated.size() << "shortcuts from database to JSON file";
 }
 
 Shortcut *ShortcutService::findById(const QString &id) {
@@ -49,152 +79,78 @@ Shortcut *ShortcutService::findById(const QString &id) {
 }
 
 bool ShortcutService::registerVisit(const QString &id) {
-  {
-    QSqlQuery query = m_db.createQuery();
+  auto stdId = id.toStdString();
 
-    query.prepare("UPDATE shortcut SET last_used_at = :epoch, open_count = open_count + 1 WHERE id = :id "
-                  "RETURNING last_used_at, open_count");
-    query.bindValue(":id", id);
-    query.bindValue(":epoch", QDateTime::currentSecsSinceEpoch());
-
-    if (!query.exec()) {
-      qWarning() << "Failed to register shortcut visit" << query.lastError();
-      return false;
-    }
-
-    if (!query.next()) {
-      qWarning() << "No shortcut" << id << "to update";
-      return false;
-    }
-
-    auto shortcut = findById(id);
-
-    if (!shortcut) {
-      qWarning() << "no in memory shortcut with id" << id;
-      return false;
-    }
-
-    auto lastOpenedAtEpoch = query.value(0).toULongLong();
-    int const count = query.value(1).toInt();
-
-    shortcut->setLastOpenedAt(QDateTime::fromSecsSinceEpoch(lastOpenedAtEpoch));
-    shortcut->setOpenCount(count);
+  if (const auto result = m_db.registerVisit(stdId); !result) {
+    qWarning() << "Failed to register shortcut visit:" << result.error().c_str();
+    return false;
   }
 
-  emit shortcutVisited(id);
+  auto *shortcut = findById(id);
+  if (!shortcut) return false;
 
+  auto *s = m_db.findById(stdId);
+  shortcut->setOpenCount(s->openCount);
+  if (s->lastUsedAt) { shortcut->setLastOpenedAt(QDateTime::fromSecsSinceEpoch(*s->lastUsedAt)); }
+
+  emit shortcutVisited(id);
   return true;
 }
 
-std::vector<std::shared_ptr<Shortcut>> ShortcutService::shortcuts() const { return m_shortcuts; }
+const std::vector<std::shared_ptr<Shortcut>> &ShortcutService::shortcuts() const { return m_shortcuts; }
 
 bool ShortcutService::updateShortcut(const QString &id, const QString &name, const QString &icon,
                                      const QString &url, const QString &app) {
-  {
-    auto it = std::ranges::find_if(m_shortcuts, [&](auto &&bk) { return bk->id() == id; });
-
-    if (it == m_shortcuts.end()) {
-      qCritical() << "No shortcut with id" << id;
-      return false;
-    }
-
-    auto &shortcut = *it;
-    QSqlQuery query = m_db.createQuery();
-
-    query.prepare(R"(
-		UPDATE shortcut
-		SET name = :name, icon = :icon, url = :url, app = :app, updated_at = :updated_at
-		WHERE id = :id
-	)");
-    query.bindValue(":name", name);
-    query.bindValue(":icon", icon);
-    query.bindValue(":url", url);
-    query.bindValue(":app", app);
-    query.bindValue(":id", id);
-    query.bindValue(":updated_at", QDateTime::currentSecsSinceEpoch());
-
-    if (!query.exec()) {
-      qCritical() << "Failed to update shortcut" << query.lastError();
-      return false;
-    }
-
-    shortcut->setName(name);
-    shortcut->setIcon(icon);
-    shortcut->parseLink(url);
-    shortcut->setApp(app);
+  if (const auto result = m_db.updateShortcut(id.toStdString(), name.toStdString(), icon.toStdString(),
+                                              url.toStdString(), app.toStdString());
+      !result) {
+    qCritical() << "Failed to update shortcut:" << result.error().c_str();
+    return false;
   }
 
-  emit shortcutUpdated(id);
+  auto *shortcut = findById(id);
+  if (!shortcut) return false;
 
+  shortcut->setName(name);
+  shortcut->setIcon(icon);
+  shortcut->parseLink(url);
+  shortcut->setApp(app);
+
+  emit shortcutUpdated(id);
   return true;
 }
 
 bool ShortcutService::removeShortcut(const QString &id) {
-  {
-    QSqlQuery query = m_db.createQuery();
-
-    query.prepare("DELETE FROM shortcut WHERE id = :id");
-    query.bindValue(":id", id);
-
-    if (!query.exec()) {
-      qCritical() << "Failed to remove shortcut" << query.lastError();
-      return false;
-    }
-
-    auto it = std::ranges::remove_if(m_shortcuts, [id](const auto &mark) { return mark->id() == id; });
-
-    m_shortcuts.erase(it.begin(), it.end());
+  if (const auto result = m_db.removeShortcut(id.toStdString()); !result) {
+    qCritical() << "Failed to remove shortcut:" << result.error().c_str();
+    return false;
   }
 
-  emit shortcutRemoved(id);
+  auto it = std::ranges::remove_if(m_shortcuts, [&](const auto &mark) { return mark->id() == id; });
+  m_shortcuts.erase(it.begin(), it.end());
 
+  emit shortcutRemoved(id);
   return true;
 }
 
 bool ShortcutService::createShortcut(const QString &name, const QString &icon, const QString &url,
                                      const QString &app) {
-  Shortcut shortcut;
+  auto result =
+      m_db.addShortcut(name.toStdString(), icon.toStdString(), url.toStdString(), app.toStdString());
 
-  {
-    QSqlQuery query = m_db.createQuery();
-    QString const id = Crypto::UUID::v4();
-    auto now = QDateTime::currentDateTime();
-
-    query.prepare(R"(
-		INSERT INTO shortcut (id, name, icon, url, app, created_at, updated_at) VALUES (:id, :name, :icon, :url, :app, :epoch, :epoch)
-		RETURNING id, name, icon, url, app, open_count
-  )");
-    query.bindValue(":id", id);
-    query.bindValue(":name", name);
-    query.bindValue(":icon", icon);
-    query.bindValue(":url", url);
-    query.bindValue(":app", app);
-    query.bindValue(":epoch", now.currentSecsSinceEpoch());
-
-    if (!query.exec()) {
-      qWarning() << "Failed to save shortcut" << query.lastError();
-      return false;
-    }
-
-    if (!query.next()) {
-      qWarning() << "no next";
-      return false;
-    }
-
-    shortcut.setId(query.value(0).toString());
-    shortcut.setName(query.value(1).toString());
-    shortcut.setIcon(query.value(2).toString());
-    shortcut.parseLink(query.value(3).toString());
-    shortcut.setApp(query.value(4).toString());
-    shortcut.setOpenCount(query.value(5).toInt());
-    shortcut.setCreatedAt(now);
-    shortcut.setUpdatedAt(now);
-    m_shortcuts.emplace_back(std::make_shared<Shortcut>(shortcut));
+  if (!result) {
+    qWarning() << "Failed to save shortcut:" << result.error().c_str();
+    return false;
   }
 
-  emit shortcutSaved(shortcut);
+  auto shortcut = fromSerialized(*result);
+  m_shortcuts.emplace_back(shortcut);
 
+  emit shortcutSaved(*shortcut);
   return true;
 }
 
-ShortcutService::ShortcutService(OmniDatabase &db) : m_db(db) { m_shortcuts = loadAll(); }
+ShortcutService::ShortcutService(const std::filesystem::path &path, OmniDatabase *db) : m_db(path) {
+  if (db && m_db.shortcuts().empty()) { migrateFromDatabase(*db); }
+  loadAll();
+}

@@ -1,23 +1,26 @@
 #pragma once
+#include "services/shortcut/shortcut-db.hpp"
 #include "services/shortcut/shortcut.hpp"
-#include "omni-database.hpp"
-#include <qlogging.h>
-#include <qdebug.h>
 #include <qobject.h>
-#include <qsqlquery.h>
-#include <qstring.h>
-#include <qsqlerror.h>
 #include <qtmetamacros.h>
+#include <filesystem>
+#include <memory>
+#include <vector>
+
+class OmniDatabase;
 
 class ShortcutService : public QObject {
   Q_OBJECT
 
-  OmniDatabase &m_db;
+  ShortcutDatabase m_db;
   std::vector<std::shared_ptr<Shortcut>> m_shortcuts;
-  std::vector<std::shared_ptr<Shortcut>> loadAll();
+
+  void loadAll();
+  void migrateFromDatabase(OmniDatabase &db);
+  static std::shared_ptr<Shortcut> fromSerialized(const shortcut::SerializedShortcut &s);
 
 public:
-  std::vector<std::shared_ptr<Shortcut>> shortcuts() const;
+  const std::vector<std::shared_ptr<Shortcut>> &shortcuts() const;
 
   bool removeShortcut(const QString &id);
   bool createShortcut(const QString &name, const QString &icon, const QString &url, const QString &app);
@@ -26,7 +29,7 @@ public:
   Shortcut *findById(const QString &id);
   bool registerVisit(const QString &id);
 
-  ShortcutService(OmniDatabase &db);
+  ShortcutService(const std::filesystem::path &path, OmniDatabase *db = nullptr);
 
 signals:
   void shortcutSaved(const Shortcut &shortcut) const;
