@@ -3,6 +3,7 @@
 #include <expected>
 #include <filesystem>
 #include <optional>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -15,8 +16,8 @@ struct SerializedShortcut {
   std::string url;
   std::string app;
   int openCount = 0;
-  std::uint64_t createdAt;
-  std::uint64_t updatedAt;
+  std::uint64_t createdAt = 0;
+  std::uint64_t updatedAt = 0;
   std::optional<std::uint64_t> lastUsedAt;
 };
 
@@ -44,8 +45,6 @@ public:
 
 private:
   std::expected<std::vector<shortcut::SerializedShortcut>, std::string> loadShortcuts();
-
-private:
   std::string m_buf;
   std::filesystem::path m_path;
   std::vector<shortcut::SerializedShortcut> m_shortcuts;

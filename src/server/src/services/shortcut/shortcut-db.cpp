@@ -64,7 +64,12 @@ std::expected<SerializedShortcut, std::string> ShortcutDatabase::addShortcut(std
 
   m_shortcuts.emplace_back(serialized);
 
-  return setShortcuts(m_shortcuts).transform([&]() { return serialized; });
+  if (const auto result = setShortcuts(m_shortcuts); !result) {
+    m_shortcuts.pop_back();
+    return std::unexpected(result.error());
+  }
+
+  return serialized;
 }
 
 std::expected<void, std::string> ShortcutDatabase::updateShortcut(std::string_view id, std::string_view name,

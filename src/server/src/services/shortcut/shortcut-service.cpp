@@ -87,9 +87,9 @@ bool ShortcutService::registerVisit(const QString &id) {
   }
 
   auto *shortcut = findById(id);
-  if (!shortcut) return false;
-
   auto *s = m_db.findById(stdId);
+  if (!shortcut || !s) return false;
+
   shortcut->setOpenCount(s->openCount);
   if (s->lastUsedAt) { shortcut->setLastOpenedAt(QDateTime::fromSecsSinceEpoch(*s->lastUsedAt)); }
 
