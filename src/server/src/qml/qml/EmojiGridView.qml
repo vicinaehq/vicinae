@@ -13,7 +13,7 @@ GenericGridView {
 
             ViciImage {
                 anchors.fill: parent
-                source: cellRoot.model ? cellRoot.model.emojiIcon(cellRoot.sec, cellRoot.item) : ""
+                source: cellRoot.model ? (cellRoot.model.dataRevision, cellRoot.model.emojiIcon(cellRoot.sec, cellRoot.item)) : ""
                 fillMode: Image.PreserveAspectFit
                 sourceSize: Qt.size(64, 64)
             }

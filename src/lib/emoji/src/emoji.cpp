@@ -15,6 +15,7 @@ typedef const char *emoji_text_iter_t;
 namespace emoji {
 
 static constexpr std::array<SkinToneInfo, skinToneCount> skinToneInfos = {
+    SkinToneInfo{.tone = SkinTone::Default, .id = "default", .displayName = "Default", .utf8 = ""},
     SkinToneInfo{.tone = SkinTone::Light, .id = "light", .displayName = "Light", .utf8 = "\xF0\x9F\x8F\xBB"},
     SkinToneInfo{.tone = SkinTone::MediumLight,
                  .id = "medium-light",

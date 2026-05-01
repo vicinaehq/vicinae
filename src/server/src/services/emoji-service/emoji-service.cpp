@@ -92,7 +92,8 @@ std::vector<EmojiWithMetadata> EmojiService::getVisited() const {
   QSqlQuery query = m_db.createQuery();
 
   bool const ok = query.exec(R"(
-	SELECT emoji, visit_count, pinned_at, custom_keywords FROM visited_emoji ORDER BY pinned_at DESC, visit_count DESC, last_visited_at DESC
+	SELECT emoji, visit_count, pinned_at, custom_keywords, user_specified_skin_tone FROM visited_emoji
+  ORDER BY pinned_at DESC, visit_count DESC, last_visited_at DESC
   )");
 
   if (!ok) {
@@ -119,6 +120,17 @@ std::vector<EmojiWithMetadata> EmojiService::getVisited() const {
 
     if (auto value = query.value(2); !value.isNull()) {
       result.pinnedAt = QDateTime::fromSecsSinceEpoch(value.toULongLong());
+    }
+
+    if (auto value = query.value(4); !value.isNull()) {
+      auto const toneId = value.toString().toStdString();
+
+      for (auto const toneInfo : emoji::skinTones()) {
+        if (toneInfo.id == toneId) {
+          result.tone = toneInfo.tone;
+          break;
+        }
+      }
     }
 
     results.emplace_back(result);
@@ -157,7 +169,7 @@ EmojiWithMetadata EmojiService::mapMetadata(std::string_view emoji) {
 
   if (it == StaticEmojiDatabase::mapping().end()) { return {}; }
 
-  query.prepare("SELECT visit_count, pinned_at, custom_keywords FROM visited_emoji WHERE emoji = :emoji");
+  query.prepare("SELECT visit_count, pinned_at, custom_keywords, user_specified_skin_tone FROM visited_emoji WHERE emoji = :emoji");
   query.addBindValue(qStringFromStdView(emoji));
 
   if (!query.exec()) {
@@ -175,6 +187,17 @@ EmojiWithMetadata EmojiService::mapMetadata(std::string_view emoji) {
 
   if (auto value = query.value(1); !value.isNull()) {
     result.pinnedAt = QDateTime::fromSecsSinceEpoch(value.toULongLong());
+  }
+
+  if (auto value = query.value(3); !value.isNull()) {
+    auto const toneId = value.toString().toStdString();
+
+    for (auto const toneInfo : emoji::skinTones()) {
+      if (toneInfo.id == toneId) {
+        result.tone = toneInfo.tone;
+        break;
+      }
+    }
   }
 
   return result;
@@ -227,7 +250,7 @@ bool EmojiService::unpin(std::string_view emoji) {
   query.addBindValue(QString::fromUtf8(emoji.data(), emoji.size()));
 
   if (!query.exec()) {
-    qCritical() << "Failed to pin emoji";
+    qCritical() << "Failed to unpin emoji";
     return false;
   }
 
@@ -251,6 +274,41 @@ bool EmojiService::pin(std::string_view emoji) {
   }
 
   emit pinned(emoji);
+
+  return true;
+}
+
+bool EmojiService::setSkinTone(std::string_view emoji, emoji::SkinTone tone) {
+  createDbEntry(emoji);
+
+  QSqlQuery query = m_db.createQuery();
+
+  query.prepare("UPDATE visited_emoji SET user_specified_skin_tone = :tone WHERE emoji = :emoji");
+  query.bindValue(":emoji", QString::fromUtf8(emoji.data(), emoji.size()));
+  query.bindValue(":tone", qStringFromStdView(emoji::skinToneInfo(tone).id));
+
+  if (!query.exec()) {
+    qCritical() << "Failed to change emoji skin tone";
+    return false;
+  }
+
+  emit skintoneChanged(emoji);
+
+  return true;
+}
+
+bool EmojiService::resetSkinTone(std::string_view emoji) {
+  QSqlQuery query = m_db.createQuery();
+
+  query.prepare("UPDATE visited_emoji SET user_specified_skin_tone = NULL WHERE emoji = :emoji");
+  query.bindValue(":emoji", QString::fromUtf8(emoji.data(), emoji.size()));
+
+  if (!query.exec()) {
+    qCritical() << "Failed to reset emoji skin tone";
+    return false;
+  }
+
+  emit skintoneChanged(emoji);
 
   return true;
 }

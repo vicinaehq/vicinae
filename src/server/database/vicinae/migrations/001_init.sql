@@ -74,5 +74,6 @@ CREATE TABLE IF NOT EXISTS visited_emoji (
 	pinned_at INTEGER, -- if NULL, not pinned
 	last_visited_at INTEGER,
 	visit_count INTEGER DEFAULT 0,
+	user_specified_skin_tone TEXT,
 	custom_keywords TEXT
 );
