@@ -230,9 +230,7 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
                          : static_cast<BaseView *>(new VicinaeStoreDetailHost(segments[0], segments[1]));
 
     m_ctx.navigation->popToRoot({.clearSearch = false});
-    m_ctx.navigation->setInstantDismiss();
     m_ctx.navigation->pushView(host);
-    m_ctx.navigation->setBackButtonVisibility(false);
     m_ctx.navigation->showWindow();
 
     return {};
