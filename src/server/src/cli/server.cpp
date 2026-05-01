@@ -98,7 +98,8 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto fontService = std::make_unique<FontService>();
     auto configService = std::make_unique<config::Manager>(m_config);
     auto rootItemManager = std::make_unique<RootItemManager>(*configService, *localStorage);
-    auto shortcutService = std::make_unique<ShortcutService>(*omniDb.get());
+    auto shortcutService =
+        std::make_unique<ShortcutService>(Omnicast::dataDir() / "shortcuts" / "shortcuts.json", omniDb.get());
     auto toastService = std::make_unique<ToastService>();
     auto currentConfig = configService->value();
     auto emojiService = std::make_unique<EmojiService>(*omniDb.get());
