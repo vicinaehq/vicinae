@@ -195,7 +195,6 @@ void SectionGridModel::select(int section, int item) {
 
     auto panel = m_sources[sourceIdx]->actionPanel(itemIdx);
     if (panel) {
-      panel->finalize();
       m_scope.setActions(std::move(panel));
     } else {
       m_scope.clearActions();
@@ -230,7 +229,6 @@ void SectionGridModel::refreshActionPanel() {
     if (resolveSelection(m_selSection, m_selItem, sourceIdx, itemIdx)) {
       auto panel = m_sources[sourceIdx]->actionPanel(itemIdx);
       if (panel) {
-        panel->finalize();
         m_scope.setActions(std::move(panel));
       } else {
         m_scope.clearActions();

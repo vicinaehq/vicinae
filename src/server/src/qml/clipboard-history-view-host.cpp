@@ -93,8 +93,10 @@ void ClipboardHistoryViewHost::initialize() {
 
   connect(m_controller, &ClipboardHistoryController::dataRetrieved, this,
           [this](const PaginatedResponse<ClipboardHistoryEntry> &page) {
+            bool const incremental = !m_model.selectFirstOnReset();
             m_section.setEntries(page);
             m_model.setSelectFirstOnReset(false);
+            if (incremental) m_model.refreshActionPanel();
             handleDataRetrieved(page.totalCount);
           });
 

@@ -17,7 +17,7 @@ public:
   void setItems(std::vector<T> items) {
     m_items = std::move(items);
     refilter();
-    notifyChanged();
+    notifyItemsRefreshed();
   }
 
   void setFilter(std::string_view query) override {

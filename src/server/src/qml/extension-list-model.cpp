@@ -125,7 +125,7 @@ void ExtensionListModel::setExtensionData(const ListModel &model, bool resetSele
   }
 
   if (!resetSelection) {
-    setSelectFirstOnReset(false);
+    setSelectFirstOnReset(true);
     refreshActionPanel();
   }
 

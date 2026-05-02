@@ -26,9 +26,6 @@ public:
   virtual void onSelectionCleared() {}
   virtual void setFilter(std::string_view) {}
 
-  virtual QVariant customData(int, int) const { return {}; }
-  virtual QHash<int, QByteArray> customRoleNames() const { return {}; }
-
   void notifyChanged() {
     if (m_onChange) m_onChange();
   }

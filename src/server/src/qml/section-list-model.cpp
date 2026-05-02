@@ -11,7 +11,17 @@ SectionListModel::SectionListModel(QObject *parent) : QAbstractListModel(parent)
 void SectionListModel::addSource(SectionSource *source) {
   m_sources.push_back(source);
   source->setScope(m_scope);
-  source->setOnChanged([this]() { rebuild(); });
+  source->setOnChanged([this](bool preserveSelection) {
+    if (preserveSelection && !m_awaitingData) {
+      auto saved = m_selectFirstOnReset;
+      m_selectFirstOnReset = false;
+      rebuild();
+      m_selectFirstOnReset = saved;
+      refreshActionPanel();
+    } else {
+      rebuild();
+    }
+  });
 }
 
 void SectionListModel::clearSources() {

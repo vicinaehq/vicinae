@@ -34,14 +34,18 @@ public:
   virtual void setFilter(std::string_view) {}
 
   void notifyChanged() {
-    if (m_onChange) m_onChange();
+    if (m_onChange) m_onChange(false);
   }
 
-  void setOnChanged(std::function<void()> cb) { m_onChange = std::move(cb); }
+  void notifyItemsRefreshed() {
+    if (m_onChange) m_onChange(true);
+  }
+
+  void setOnChanged(std::function<void(bool)> cb) { m_onChange = std::move(cb); }
 
   QString imageSourceFor(const ImageURL &url) const { return qml::imageSourceFor(url); }
 
 private:
   ViewScope m_scope;
-  std::function<void()> m_onChange;
+  std::function<void(bool)> m_onChange;
 };
