@@ -52,9 +52,117 @@ public:
   void execute(ApplicationContext *ctx) override { ctx->services->emojiService()->resetRanking(m_emoji); }
 };
 
+std::unique_ptr<ActionPanelState> buildEmojiActionPanel(const EmojiData *data,
+                                                        std::optional<emoji::SkinTone> skinTone,
+                                                        const ViewScope &scope) {
+  if (!data) return nullptr;
+
+  auto metadata = scope.services()->emojiService()->mapMetadata(data->emoji);
+  QString const copiedEmoji = data->skinToneSupport && skinTone
+                                  ? emoji::applySkinTone(data->emoji, *skinTone).c_str()
+                                  : QString::fromUtf8(data->emoji);
+
+  auto pasteService = scope.services()->pasteService();
+  auto panel = std::make_unique<ListActionPanelState>();
+  auto *copyEmoji = new CopyToClipboardAction(Clipboard::Text(copiedEmoji), "Copy emoji");
+  auto *copyName = new CopyToClipboardAction(
+      Clipboard::Text(QString::fromUtf8(data->name.data(), data->name.size())), "Copy emoji name");
+  auto *copyGroup = new CopyToClipboardAction(
+      Clipboard::Text(QString::fromUtf8(data->group.data(), data->group.size())), "Copy emoji group");
+  auto *resetRanking = new ResetEmojiRankingAction(data->emoji);
+
+  auto *mainSection = panel->createSection();
+
+  QString defaultAction;
+  if (auto *state = scope.topState(); state && state->sender) {
+    if (auto *cmd = state->sender->command())
+      defaultAction = cmd->preferenceValues().value("defaultAction").toString();
+  }
+
+  if (pasteService->supportsPaste()) {
+    auto *paste = new PasteToFocusedWindowAction(Clipboard::Text(copiedEmoji));
+    if (defaultAction == "paste") {
+      mainSection->addAction(new VisitEmojiActionWrapper(data->emoji, paste));
+      mainSection->addAction(new VisitEmojiActionWrapper(data->emoji, copyEmoji));
+    } else {
+      mainSection->addAction(new VisitEmojiActionWrapper(data->emoji, copyEmoji));
+      mainSection->addAction(new VisitEmojiActionWrapper(data->emoji, paste));
+    }
+  } else {
+    mainSection->addAction(new VisitEmojiActionWrapper(data->emoji, copyEmoji));
+  }
+
+  mainSection->addAction(copyName);
+  mainSection->addAction(copyGroup);
+  mainSection->addAction(resetRanking);
+
+  if (metadata.pinnedAt) {
+    mainSection->addAction(new UnpinEmojiAction(data->emoji));
+  } else {
+    mainSection->addAction(new PinEmojiAction(data->emoji));
+  }
+
+  return panel;
+}
+
+QString emojiIconStr(const EmojiData *data, std::optional<emoji::SkinTone> skinTone) {
+  if (!data) return {};
+  if (data->skinToneSupport && skinTone) {
+    auto toned = emoji::applySkinTone(data->emoji, *skinTone);
+    return qml::imageSourceFor(ImageURL::emoji(toned.c_str()));
+  }
+  return qml::imageSourceFor(ImageURL::emoji(qStringFromStdView(data->emoji)));
+}
+
+QString emojiNameStr(const EmojiData *data) {
+  if (!data) return {};
+  return qStringFromStdView(data->name);
+}
+
 } // namespace
 
-EmojiGridModel::EmojiGridModel(QObject *parent) : CommandGridModel(parent) {}
+// --- EmojiGridSource ---
+
+void EmojiGridSource::setEmojis(const QString &name, std::span<const EmojiData *const> emojis) {
+  m_name = name;
+  m_emojis.assign(emojis.begin(), emojis.end());
+  notifyChanged();
+}
+
+const EmojiData *EmojiGridSource::emojiAt(int i) const {
+  if (i < 0 || std::cmp_greater_equal(i, m_emojis.size())) return nullptr;
+  return m_emojis[i];
+}
+
+QString EmojiGridSource::emojiIcon(int i) const { return emojiIconStr(emojiAt(i), m_skinTone); }
+QString EmojiGridSource::emojiName(int i) const { return emojiNameStr(emojiAt(i)); }
+
+std::unique_ptr<ActionPanelState> EmojiGridSource::actionPanel(int i) const {
+  return buildEmojiActionPanel(emojiAt(i), m_skinTone, scope());
+}
+
+// --- SearchEmojiGridSource ---
+
+void SearchEmojiGridSource::setResults(std::span<Scored<const EmojiData *>> results) {
+  m_results = results;
+  notifyChanged();
+}
+
+const EmojiData *SearchEmojiGridSource::emojiAt(int i) const {
+  if (i < 0 || std::cmp_greater_equal(i, m_results.size())) return nullptr;
+  return m_results[i].data;
+}
+
+QString SearchEmojiGridSource::emojiIcon(int i) const { return emojiIconStr(emojiAt(i), m_skinTone); }
+QString SearchEmojiGridSource::emojiName(int i) const { return emojiNameStr(emojiAt(i)); }
+
+std::unique_ptr<ActionPanelState> SearchEmojiGridSource::actionPanel(int i) const {
+  return buildEmojiActionPanel(emojiAt(i), m_skinTone, scope());
+}
+
+// --- EmojiGridModel ---
+
+EmojiGridModel::EmojiGridModel(QObject *parent) : SectionGridModel(parent) {}
 
 void EmojiGridModel::initialize() {
   m_emojiService = scope().services()->emojiService();
@@ -71,7 +179,14 @@ void EmojiGridModel::initialize() {
     }
   }
 
+  m_pinnedSource.setSkinTone(m_skinTone);
+  m_recentSource.setSkinTone(m_skinTone);
+  m_searchSource.setSkinTone(m_skinTone);
+
+  connect(this, &SectionGridModel::selectionChanged, this, &EmojiGridModel::updateNavigationTitle);
+
   regenerateMetaSections();
+  rebuildSections();
 
   connect(m_emojiService, &EmojiService::pinned, this, [this](auto) {
     regenerateMetaSections();
@@ -107,20 +222,29 @@ void EmojiGridModel::regenerateMetaSections() {
 }
 
 void EmojiGridModel::rebuildSections() {
-  std::vector<SectionInfo> secs;
+  clearSources();
+  m_groupSources.clear();
 
   if (m_displayMode == DisplayMode::Root) {
-    secs.push_back({QStringLiteral("Pinned"), static_cast<int>(m_pinned.size())});
-    secs.push_back({QStringLiteral("Recently used"), static_cast<int>(m_recent.size())});
+    m_pinnedSource.setEmojis(QStringLiteral("Pinned"), m_pinned);
+    addSource(&m_pinnedSource);
+
+    m_recentSource.setEmojis(QStringLiteral("Recently used"), m_recent);
+    addSource(&m_recentSource);
+
+    m_groupSources.reserve(m_grouped.size());
     for (const auto &[groupName, emojis] : m_grouped) {
-      secs.push_back(
-          {QString::fromUtf8(groupName.data(), groupName.size()), static_cast<int>(emojis.size())});
+      auto &src = m_groupSources.emplace_back();
+      src.setSkinTone(m_skinTone);
+      src.setEmojis(QString::fromUtf8(groupName.data(), groupName.size()), emojis);
+      addSource(&src);
     }
   } else {
-    secs.push_back({QStringLiteral("Results"), static_cast<int>(m_searchResults.size())});
+    m_searchSource.setResults(m_searchResults);
+    addSource(&m_searchSource);
   }
 
-  setSections(secs);
+  rebuild();
 }
 
 void EmojiGridModel::setFilter(const QString &text) {
@@ -134,99 +258,30 @@ void EmojiGridModel::setFilter(const QString &text) {
   selectFirst();
 }
 
-const EmojiData *EmojiGridModel::emojiAt(int section, int item) const {
-  if (section < 0 || std::cmp_greater_equal(section, sections().size())) return nullptr;
-  if (item < 0 || item >= sections()[section].count) return nullptr;
-
-  if (m_displayMode == DisplayMode::Root) {
-    if (section == 0) return m_pinned[item];
-    if (section == 1) return m_recent[item];
-    return m_grouped[section - 2].second[item];
-  }
-
-  return m_searchResults[item].data;
-}
-
 QString EmojiGridModel::emojiIcon(int section, int item) const {
-  auto *data = emojiAt(section, item);
-  if (!data) return {};
+  int sourceIdx, itemIdx;
+  if (!resolveSelection(section, item, sourceIdx, itemIdx)) return {};
 
-  if (data->skinToneSupport && m_skinTone) {
-    auto toned = emoji::applySkinTone(data->emoji, m_skinTone.value());
-    return qml::imageSourceFor(ImageURL::emoji(toned.c_str()));
-  }
-  return qml::imageSourceFor(ImageURL::emoji(qStringFromStdView(data->emoji)));
+  auto *source = sources()[sourceIdx];
+  if (auto *emoji = dynamic_cast<EmojiGridSource *>(source)) return emoji->emojiIcon(itemIdx);
+  if (auto *search = dynamic_cast<SearchEmojiGridSource *>(source)) return search->emojiIcon(itemIdx);
+  return {};
 }
 
 QString EmojiGridModel::emojiName(int section, int item) const {
-  auto *data = emojiAt(section, item);
-  if (!data) return {};
-  return qStringFromStdView(data->name);
+  int sourceIdx, itemIdx;
+  if (!resolveSelection(section, item, sourceIdx, itemIdx)) return {};
+
+  auto *source = sources()[sourceIdx];
+  if (auto *emoji = dynamic_cast<EmojiGridSource *>(source)) return emoji->emojiName(itemIdx);
+  if (auto *search = dynamic_cast<SearchEmojiGridSource *>(source)) return search->emojiName(itemIdx);
+  return {};
 }
 
 QString EmojiGridModel::cellTooltip(int section, int item) const { return emojiName(section, item); }
-
-void EmojiGridModel::onItemSelected(int section, int item) { updateNavigationTitle(); }
-
-void EmojiGridModel::onSelectionCleared() {
-  CommandGridModel::onSelectionCleared();
-  updateNavigationTitle();
-}
 
 void EmojiGridModel::updateNavigationTitle() {
   auto name = emojiName(selectedSection(), selectedItem());
   scope().setNavigationTitle(name.isEmpty() ? QStringLiteral("Search Emojis")
                                             : QStringLiteral("Search Emojis - %1").arg(name));
-}
-
-std::unique_ptr<ActionPanelState> EmojiGridModel::createActionPanel(int section, int item) const {
-  auto *data = emojiAt(section, item);
-  if (!data) return nullptr;
-
-  auto metadata = m_emojiService->mapMetadata(data->emoji);
-  QString const copiedEmoji = data->skinToneSupport && m_skinTone
-                                  ? emoji::applySkinTone(data->emoji, m_skinTone.value()).c_str()
-                                  : QString::fromUtf8(data->emoji);
-
-  auto pasteService = scope().services()->pasteService();
-  auto panel = std::make_unique<ListActionPanelState>();
-  auto *copyEmoji = new CopyToClipboardAction(Clipboard::Text(copiedEmoji), "Copy emoji");
-  auto *copyName = new CopyToClipboardAction(
-      Clipboard::Text(QString::fromUtf8(data->name.data(), data->name.size())), "Copy emoji name");
-  auto *copyGroup = new CopyToClipboardAction(
-      Clipboard::Text(QString::fromUtf8(data->group.data(), data->group.size())), "Copy emoji group");
-  auto *resetRanking = new ResetEmojiRankingAction(data->emoji);
-
-  auto *mainSection = panel->createSection();
-
-  QString defaultAction;
-  if (auto *state = scope().topState(); state && state->sender) {
-    if (auto *cmd = state->sender->command())
-      defaultAction = cmd->preferenceValues().value("defaultAction").toString();
-  }
-
-  if (pasteService->supportsPaste()) {
-    auto *paste = new PasteToFocusedWindowAction(Clipboard::Text(copiedEmoji));
-    if (defaultAction == "paste") {
-      mainSection->addAction(new VisitEmojiActionWrapper(data->emoji, paste));
-      mainSection->addAction(new VisitEmojiActionWrapper(data->emoji, copyEmoji));
-    } else {
-      mainSection->addAction(new VisitEmojiActionWrapper(data->emoji, copyEmoji));
-      mainSection->addAction(new VisitEmojiActionWrapper(data->emoji, paste));
-    }
-  } else {
-    mainSection->addAction(new VisitEmojiActionWrapper(data->emoji, copyEmoji));
-  }
-
-  mainSection->addAction(copyName);
-  mainSection->addAction(copyGroup);
-  mainSection->addAction(resetRanking);
-
-  if (metadata.pinnedAt) {
-    mainSection->addAction(new UnpinEmojiAction(data->emoji));
-  } else {
-    mainSection->addAction(new PinEmojiAction(data->emoji));
-  }
-
-  return panel;
 }

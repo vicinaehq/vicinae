@@ -2,7 +2,6 @@
 
 #include <utility>
 #include "fuzzy/fuzzy-searchable.hpp"
-#include "navigation-controller.hpp"
 #include "view-utils.hpp"
 #include "ui/image/url.hpp"
 
@@ -19,53 +18,128 @@ template <> struct fuzzy::FuzzySearchable<ListItemViewModel> {
   }
 };
 
+// --- ExtensionListSection ---
+
+ExtensionListSection::ExtensionListSection(std::string name, std::vector<ListItemViewModel> items,
+                                           bool filtering, NotifyFn notify, SubmenuCache *cache,
+                                           const std::optional<ActionPannelModel> *globalActions)
+    : m_name(std::move(name)), m_items(std::move(items)), m_filtering(filtering), m_notify(std::move(notify)),
+      m_cache(cache), m_globalActions(globalActions) {}
+
+int ExtensionListSection::count() const {
+  if (m_filtering && !m_query.empty()) return static_cast<int>(m_filtered.size());
+  return static_cast<int>(m_items.size());
+}
+
+const ListItemViewModel &ExtensionListSection::itemAt(int i) const {
+  if (m_filtering && !m_query.empty()) return m_items[m_filtered[i].data];
+  return m_items[i];
+}
+
+void ExtensionListSection::setFilter(std::string_view query) {
+  m_query = std::string(query);
+  if (!m_filtering) return;
+  fuzzy::fuzzyFilter<ListItemViewModel>(std::span<const ListItemViewModel>(m_items), m_query, m_filtered);
+}
+
+void ExtensionListSection::onSelected(int i) {
+  if (m_onItemSelected) m_onItemSelected(&itemAt(i));
+}
+
+QString ExtensionListSection::itemTitle(int i) const { return QString::fromStdString(itemAt(i).title); }
+
+QString ExtensionListSection::itemSubtitle(int i) const { return QString::fromStdString(itemAt(i).subtitle); }
+
+QString ExtensionListSection::itemIconSource(int i) const {
+  const auto &item = itemAt(i);
+  if (item.icon) return imageSourceFor(ImageURL(*item.icon));
+  return {};
+}
+
+QVariantList ExtensionListSection::itemAccessories(int i) const {
+  const auto &item = itemAt(i);
+  if (!item.accessories.empty()) return qml::accessoriesToVariantList(item.accessories);
+  return {};
+}
+
+std::unique_ptr<ActionPanelState> ExtensionListSection::actionPanel(int i) const {
+  const auto &item = itemAt(i);
+  if (item.actionPannel) {
+    return ExtensionActionPanelBuilder::build(*item.actionPannel, m_notify, m_cache,
+                                              ActionPanelState::ShortcutPreset::List);
+  }
+  if (m_globalActions && *m_globalActions) {
+    return ExtensionActionPanelBuilder::build(**m_globalActions, m_notify, m_cache,
+                                              ActionPanelState::ShortcutPreset::List);
+  }
+  return nullptr;
+}
+
+// --- ExtensionListModel ---
+
 ExtensionListModel::ExtensionListModel(NotifyFn notify, QObject *parent)
-    : CommandListModel(parent), m_notify(std::move(notify)) {}
+    : SectionListModel(parent), m_notify(std::move(notify)) {}
 
 void ExtensionListModel::setExtensionData(const ListModel &model, bool resetSelection) {
   m_model = model;
   m_placeholder = QString::fromStdString(model.searchPlaceholderText);
 
-  m_sections.clear();
+  clearSources();
+  m_ownedSections.clear();
 
-  Section freeSection;
-  freeSection.name = "";
+  std::string freeItems;
+  std::vector<ListItemViewModel> freeBuf;
+
+  auto flushFree = [&]() {
+    if (freeBuf.empty()) return;
+    auto section =
+        std::make_unique<ExtensionListSection>(std::move(freeItems), std::move(freeBuf), model.filtering,
+                                               m_notify, &m_submenuCache, &m_model.actions);
+    section->setOnItemSelected([this](const ListItemViewModel *item) { handleItemSelected(item); });
+    addSource(section.get());
+    m_ownedSections.push_back(std::move(section));
+    freeBuf = {};
+    freeItems = {};
+  };
 
   for (const auto &child : model.items) {
     if (auto item = std::get_if<ListItemViewModel>(&child)) {
-      freeSection.items.push_back(*item);
-    } else if (auto section = std::get_if<ListSectionModel>(&child)) {
-      if (!freeSection.items.empty()) {
-        m_sections.push_back(std::move(freeSection));
-        freeSection = Section{.name = "", .items = {}};
-      }
-
-      Section sec;
-      sec.name = section->title;
-      sec.items = section->children;
-      m_sections.push_back(std::move(sec));
+      freeBuf.push_back(*item);
+    } else if (auto sec = std::get_if<ListSectionModel>(&child)) {
+      flushFree();
+      auto section = std::make_unique<ExtensionListSection>(sec->title, sec->children, model.filtering,
+                                                            m_notify, &m_submenuCache, &m_model.actions);
+      section->setOnItemSelected([this](const ListItemViewModel *item) { handleItemSelected(item); });
+      addSource(section.get());
+      m_ownedSections.push_back(std::move(section));
     }
   }
-
-  if (!freeSection.items.empty()) { m_sections.push_back(std::move(freeSection)); }
+  flushFree();
 
   if (!resetSelection) setSelectFirstOnReset(false);
 
   if (m_model.filtering && !m_filter.isEmpty()) {
-    setFilter(m_filter);
+    SectionListModel::setFilter(m_filter);
   } else {
-    m_filteredSections.clear();
-    rebuildFromModel();
+    rebuild();
   }
 
   if (!resetSelection) {
     setSelectFirstOnReset(true);
-    invalidateSelection();
     refreshActionPanel();
   }
 
   emit emptyViewChanged();
   emit detailChanged();
+}
+
+void ExtensionListModel::setFilter(const QString &text) {
+  m_filter = text;
+  if (m_model.filtering) { SectionListModel::setFilter(text); }
+}
+
+QString ExtensionListModel::searchPlaceholder() const {
+  return m_placeholder.isEmpty() ? QStringLiteral("Search...") : m_placeholder;
 }
 
 QString ExtensionListModel::emptyTitle() const {
@@ -79,7 +153,8 @@ QString ExtensionListModel::emptyDescription() const {
 }
 
 QString ExtensionListModel::emptyIcon() const {
-  if (m_model.emptyView && m_model.emptyView->icon) return imageSourceFor(ImageURL(*m_model.emptyView->icon));
+  if (m_model.emptyView && m_model.emptyView->icon)
+    return qml::imageSourceFor(ImageURL(*m_model.emptyView->icon));
   return {};
 }
 
@@ -97,100 +172,6 @@ QVariantList ExtensionListModel::detailMetadata() const {
   return qml::metadataToVariantList(m_currentDetail->metadata);
 }
 
-void ExtensionListModel::rebuildFromModel() {
-  const auto &sections = activeSections();
-
-  std::vector<SectionInfo> infos;
-  infos.reserve(sections.size());
-  bool hasItems = false;
-  for (const auto &sec : sections) {
-    infos.push_back({QString::fromStdString(sec.name), static_cast<int>(sec.items.size())});
-    if (!sec.items.empty()) hasItems = true;
-  }
-  setSections(infos);
-
-  if (!hasItems) { onSelectionCleared(); }
-}
-
-const std::vector<ExtensionListModel::Section> &ExtensionListModel::activeSections() const {
-  if (m_model.filtering && !m_filter.isEmpty()) { return m_filteredSections; }
-  return m_sections;
-}
-
-void ExtensionListModel::setFilter(const QString &text) {
-  m_filter = text;
-
-  if (m_model.filtering) {
-    auto query = text.toStdString();
-    std::vector<Scored<int>> scored;
-
-    m_filteredSections.clear();
-    for (const auto &sec : m_sections) {
-      fuzzy::fuzzyFilter<ListItemViewModel>(sec.items, query, scored);
-
-      Section filtered;
-      filtered.name = sec.name;
-      filtered.items.reserve(scored.size());
-      for (const auto &s : scored)
-        filtered.items.emplace_back(sec.items[s.data]);
-      m_filteredSections.push_back(std::move(filtered));
-    }
-    rebuildFromModel();
-  }
-}
-
-QString ExtensionListModel::searchPlaceholder() const {
-  return m_placeholder.isEmpty() ? QStringLiteral("Search...") : m_placeholder;
-}
-
-const ListItemViewModel *ExtensionListModel::itemAt(int section, int item) const {
-  const auto &sections = activeSections();
-  if (section < 0 || std::cmp_greater_equal(section, sections.size())) return nullptr;
-  const auto &sec = sections[section];
-  if (item < 0 || std::cmp_greater_equal(item, sec.items.size())) return nullptr;
-  return &sec.items[item];
-}
-
-QString ExtensionListModel::itemTitle(int section, int item) const {
-  if (auto *it = itemAt(section, item)) return QString::fromStdString(it->title);
-  return {};
-}
-
-QString ExtensionListModel::itemSubtitle(int section, int item) const {
-  if (auto *it = itemAt(section, item)) return QString::fromStdString(it->subtitle);
-  return {};
-}
-
-QString ExtensionListModel::itemIconSource(int section, int item) const {
-  if (auto *it = itemAt(section, item)) {
-    if (it->icon) { return imageSourceFor(ImageURL(*it->icon)); }
-  }
-  return {};
-}
-
-QVariantList ExtensionListModel::itemAccessory(int section, int item) const {
-  if (auto *it = itemAt(section, item)) {
-    if (!it->accessories.empty()) { return qml::accessoriesToVariantList(it->accessories); }
-  }
-  return {};
-}
-
-std::unique_ptr<ActionPanelState> ExtensionListModel::createActionPanel(int section, int item) const {
-  if (auto *it = itemAt(section, item)) {
-    if (it->actionPannel) {
-      return ExtensionActionPanelBuilder::build(*it->actionPannel, m_notify, &m_submenuCache,
-                                                ActionPanelState::ShortcutPreset::List);
-    }
-  }
-
-  if (m_model.actions) {
-    return ExtensionActionPanelBuilder::build(*m_model.actions, m_notify, &m_submenuCache,
-                                              ActionPanelState::ShortcutPreset::List);
-  }
-
-  return nullptr;
-}
-
 void ExtensionListModel::onSelectionCleared() {
   std::unique_ptr<ActionPanelState> panel;
 
@@ -206,16 +187,15 @@ void ExtensionListModel::onSelectionCleared() {
     panel->finalize();
     scope().setActions(std::move(panel));
   } else {
-    CommandListModel::onSelectionCleared();
+    SectionListModel::onSelectionCleared();
   }
 }
 
-void ExtensionListModel::onItemSelected(int section, int item) {
-  auto *it = itemAt(section, item);
-  m_currentDetail = it ? it->detail : std::nullopt;
+void ExtensionListModel::handleItemSelected(const ListItemViewModel *item) {
+  m_currentDetail = item ? item->detail : std::nullopt;
   emit detailChanged();
 
   if (auto handler = m_model.onSelectionChanged) {
-    if (it) { m_notify(handler->c_str(), {it->id.c_str()}); }
+    if (item) { m_notify(handler->c_str(), {item->id.c_str()}); }
   }
 }

@@ -5,6 +5,7 @@
 #include "navigation-controller.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include "utils/utils.hpp"
+#include "view-utils.hpp"
 
 void RaycastStoreSection::setEntries(const std::vector<Raycast::Extension> &extensions,
                                      ExtensionRegistry *registry, const Raycast::CompatMap &compat,
@@ -50,4 +51,20 @@ std::unique_ptr<ActionPanelState> RaycastStoreSection::actionPanel(int i) const 
   showDetails->setPrimary(true);
 
   return panel;
+}
+
+QVariant RaycastStoreSection::customData(int i, int role) const {
+  const auto &entry = m_entries[i];
+  switch (role) {
+  case DownloadCount:
+    return formatCount(entry.extension.download_count);
+  case AuthorAvatar:
+    return imageSourceFor(entry.extension.author.validUserIcon());
+  case IsInstalled:
+    return entry.installed;
+  case CompatTierRole:
+    return static_cast<int>(entry.compatTier);
+  default:
+    return {};
+  }
 }

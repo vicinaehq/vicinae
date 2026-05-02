@@ -14,7 +14,6 @@ class KeybindBridge;
 class RootSearchModel;
 class ThemeBridge;
 class ViewHostBase;
-class CommandListModel;
 class QQuickWindow;
 class BaseView;
 class DialogContentWidget;

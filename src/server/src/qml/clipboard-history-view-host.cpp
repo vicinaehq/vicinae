@@ -48,21 +48,6 @@ static const std::unordered_map<QString, ClipboardOfferKind> savedFilterToKind{
 
 static const char *filterIndexToSavedValue[] = {"all", "text", "image", "link", "file"};
 
-QHash<int, QByteArray> ClipboardSectionListModel::roleNames() const {
-  auto roles = SectionListModel::roleNames();
-  roles[IsPinned] = "isPinned";
-  return roles;
-}
-
-QVariant ClipboardSectionListModel::data(const QModelIndex &index, int role) const {
-  if (role == IsPinned) {
-    int sourceIdx, itemIdx;
-    if (!dataItemAt(index.row(), sourceIdx, itemIdx)) return false;
-    return m_section->isPinned(itemIdx);
-  }
-  return SectionListModel::data(index, role);
-}
-
 ClipboardHistoryViewHost::ClipboardHistoryViewHost() : ViewHostBase() {}
 
 QUrl ClipboardHistoryViewHost::qmlComponentUrl() const {
@@ -82,7 +67,6 @@ void ClipboardHistoryViewHost::initialize() {
 
   m_clipman = context()->services->clipman();
   m_model.setScope(ViewScope(context(), this));
-  m_model.setSection(&m_section);
 
   m_section.setOnEntrySelected([this](const ClipboardHistoryEntry &e) { loadDetail(e); });
   m_model.addSource(&m_section);

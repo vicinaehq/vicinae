@@ -5,6 +5,7 @@
 #include "navigation-controller.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include "utils/utils.hpp"
+#include "view-utils.hpp"
 
 void VicinaeStoreSection::setEntries(const std::vector<VicinaeStore::Extension> &extensions,
                                      ExtensionRegistry *registry, const QString &sectionName) {
@@ -51,4 +52,23 @@ VicinaeStoreSection::buildActionPanel(const VicinaeStoreEntry &entry) const {
   showDetails->setPrimary(true);
 
   return panel;
+}
+
+QVariant VicinaeStoreSection::customData(int i, int role) const {
+  const auto &entry = at(i);
+  switch (role) {
+  case DownloadCount:
+    return formatCount(entry.extension.downloadCount);
+  case AuthorAvatar: {
+    const auto &avatar = entry.extension.author.avatarUrl;
+    if (avatar.isEmpty()) return imageSourceFor(ImageURL::builtin("person"));
+    return imageSourceFor(ImageURL::http(QUrl(avatar)).circle());
+  }
+  case IsInstalled:
+    return entry.installed;
+  case CompatTierRole:
+    return -1;
+  default:
+    return {};
+  }
 }

@@ -35,7 +35,13 @@ public:
 
   QString sectionName() const override { return m_sectionName; }
 
-  const VicinaeStoreEntry &resolvedEntry(int i) const { return at(i); }
+  QVariant customData(int i, int role) const override;
+  QHash<int, QByteArray> customRoleNames() const override {
+    return {{DownloadCount, "downloadCount"},
+            {AuthorAvatar, "authorAvatar"},
+            {IsInstalled, "isInstalled"},
+            {CompatTierRole, "compatTier"}};
+  }
 
 protected:
   QString displayTitle(const VicinaeStoreEntry &entry) const override;

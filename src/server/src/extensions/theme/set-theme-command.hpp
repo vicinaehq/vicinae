@@ -1,10 +1,9 @@
 #pragma once
-#include "qml/bridge-view.hpp"
-#include "qml/theme-list-model.hpp"
+#include "qml/theme-view-host.hpp"
 #include "single-view-command-context.hpp"
 #include "ui/image/url.hpp"
 
-class SetThemeCommand : public BuiltinViewCommand<BridgeView<ThemeListModel>> {
+class SetThemeCommand : public BuiltinViewCommand<ThemeViewHost> {
   QString id() const override { return "set"; }
   QString name() const override { return "Set Theme"; }
   ImageURL iconUrl() const override {

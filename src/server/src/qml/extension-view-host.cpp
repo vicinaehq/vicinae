@@ -92,13 +92,11 @@ void ExtensionViewHost::switchViewType(const RenderModel &model) {
   if (std::holds_alternative<ListModel>(model)) {
     auto *m = new ExtensionListModel(notify, this);
     m->setScope(ViewScope(context(), this));
-    m->initialize();
     m_model = m;
     setSearchInteractive(true);
   } else if (std::holds_alternative<GridModel>(model)) {
     auto *m = new ExtensionGridModel(notify, this);
     m->setScope(ViewScope(context(), this));
-    m->initialize();
     m_model = m;
     setSearchInteractive(true);
   } else if (std::holds_alternative<RootDetailModel>(model)) {

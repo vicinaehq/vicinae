@@ -58,6 +58,8 @@ public:
   virtual QUrl qmlComponentUrl() const { return QUrl(QStringLiteral("qrc:/Vicinae/CommandListView.qml")); }
 
 protected:
+  virtual void onSelectionCleared();
+  const ViewScope &scope() const { return m_scope; }
   bool dataItemAt(int row, int &sourceIdx, int &itemIdx) const;
   const std::vector<SectionSource *> &sources() const { return m_sources; }
 

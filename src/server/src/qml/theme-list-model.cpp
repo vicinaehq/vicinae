@@ -2,78 +2,36 @@
 #include "actions/app/app-actions.hpp"
 #include "actions/theme/theme-actions.hpp"
 #include "clipboard-actions.hpp"
+#include "fuzzy/fuzzy-searchable.hpp"
 #include "fuzzy/scored.hpp"
 #include "keyboard/keybind.hpp"
-#include "fuzzy/fuzzy-searchable.hpp"
 #include "navigation-controller.hpp"
-#include "service-registry.hpp"
 #include <algorithm>
+#include <utility>
 
-ThemeListModel::ThemeListModel(QObject *parent) : CommandListModel(parent) {}
-
-void ThemeListModel::initialize() {
-  m_themeService = &ThemeService::instance();
-  m_config = scope().services()->config();
-  connect(m_config, &config::Manager::configChanged, this,
-          [this](const config::ConfigValue &next, const config::ConfigValue &prev) {
-            if (next.systemTheme().name != prev.systemTheme().name) { regenerateThemes(); }
-          });
+void ThemeSection::setThemes(const QString &name, std::vector<std::shared_ptr<ThemeFile>> themes) {
+  m_name = name;
+  m_themes = std::move(themes);
+  notifyChanged();
 }
 
-void ThemeListModel::setFilter(const QString &text) {
-  m_query = text;
-  auto themes = m_themeService->themes();
-  auto query = text.toStdString();
+QString ThemeSection::itemTitle(int i) const { return m_themes[i]->name(); }
 
-  m_selectedTheme.reset();
-  m_availableThemes.clear();
+QString ThemeSection::itemSubtitle(int i) const {
+  auto desc = m_themes[i]->description();
+  return desc.isEmpty() ? QStringLiteral("Default theme description") : desc;
+}
 
-  auto currentId = QString::fromStdString(m_config->value().systemTheme().name);
-  std::vector<Scored<std::shared_ptr<ThemeFile>>> scoredAvailable;
-
-  for (auto &theme : themes) {
-    int score = 0;
-    if (!query.empty()) {
-      auto name = theme->name().toStdString();
-      auto desc = theme->description().toStdString();
-      score = fuzzy::scoreWeighted({{name, 1.0}, {desc, 0.5}}, query);
-      if (score == 0) continue;
-    }
-
-    if (theme->id() == currentId) {
-      m_selectedTheme = std::move(theme);
-    } else {
-      scoredAvailable.emplace_back(std::move(theme), score);
-    }
+QString ThemeSection::itemIconSource(int i) const {
+  const auto &theme = m_themes[i];
+  if (theme->icon()) {
+    return imageSourceFor(ImageURL::local(*theme->icon()).withFallback(ImageURL::builtin("vicinae")));
   }
-
-  if (!query.empty()) std::ranges::stable_sort(scoredAvailable, std::greater{});
-
-  m_availableThemes.reserve(scoredAvailable.size());
-  for (auto &s : scoredAvailable)
-    m_availableThemes.emplace_back(std::move(s.data));
-
-  std::vector<SectionInfo> sections;
-  sections.emplace_back(QStringLiteral("Current Theme"), m_selectedTheme.has_value() ? 1 : 0);
-  sections.emplace_back(QStringLiteral("Available Themes"), static_cast<int>(m_availableThemes.size()));
-  setSections(sections);
+  return imageSourceFor(ImageURL::builtin("vicinae"));
 }
 
-void ThemeListModel::regenerateThemes() { setFilter(m_query); }
-
-const std::shared_ptr<ThemeFile> &ThemeListModel::themeAt(int s, int i) const {
-  if (s == 0 && m_selectedTheme.has_value()) return *m_selectedTheme;
-  return m_availableThemes[i];
-}
-
-QVariant ThemeListModel::data(const QModelIndex &index, int role) const {
-  if (role < PaletteColor0) return CommandListModel::data(index, role);
-
-  int s, i;
-  if (!dataItemAt(index.row(), s, i)) return {};
-
-  const auto &theme = themeAt(s, i);
-
+QVariant ThemeSection::customData(int i, int role) const {
+  const auto &theme = m_themes[i];
   switch (role) {
   case PaletteColor0:
     return theme->resolve(SemanticColor::Red);
@@ -96,36 +54,16 @@ QVariant ThemeListModel::data(const QModelIndex &index, int role) const {
   }
 }
 
-QHash<int, QByteArray> ThemeListModel::roleNames() const {
-  auto roles = CommandListModel::roleNames();
-  roles[PaletteColor0] = "paletteColor0";
-  roles[PaletteColor1] = "paletteColor1";
-  roles[PaletteColor2] = "paletteColor2";
-  roles[PaletteColor3] = "paletteColor3";
-  roles[PaletteColor4] = "paletteColor4";
-  roles[PaletteColor5] = "paletteColor5";
-  roles[PaletteColor6] = "paletteColor6";
-  roles[PaletteColor7] = "paletteColor7";
-  return roles;
+QHash<int, QByteArray> ThemeSection::customRoleNames() const {
+  return {
+      {PaletteColor0, "paletteColor0"}, {PaletteColor1, "paletteColor1"}, {PaletteColor2, "paletteColor2"},
+      {PaletteColor3, "paletteColor3"}, {PaletteColor4, "paletteColor4"}, {PaletteColor5, "paletteColor5"},
+      {PaletteColor6, "paletteColor6"}, {PaletteColor7, "paletteColor7"},
+  };
 }
 
-QString ThemeListModel::itemTitle(int s, int i) const { return themeAt(s, i)->name(); }
-
-QString ThemeListModel::itemSubtitle(int s, int i) const {
-  auto desc = themeAt(s, i)->description();
-  return desc.isEmpty() ? QStringLiteral("Default theme description") : desc;
-}
-
-QString ThemeListModel::itemIconSource(int s, int i) const {
-  const auto &theme = themeAt(s, i);
-  if (theme->icon()) {
-    return imageSourceFor(ImageURL::local(*theme->icon()).withFallback(ImageURL::builtin("vicinae")));
-  }
-  return imageSourceFor(ImageURL::builtin("vicinae"));
-}
-
-std::unique_ptr<ActionPanelState> ThemeListModel::createActionPanel(int s, int i) const {
-  const auto &theme = themeAt(s, i);
+std::unique_ptr<ActionPanelState> ThemeSection::actionPanel(int i) const {
+  const auto &theme = m_themes[i];
 
   auto panel = std::make_unique<ListActionPanelState>();
   auto *section = panel->createSection();
@@ -153,14 +91,4 @@ std::unique_ptr<ActionPanelState> ThemeListModel::createActionPanel(int s, int i
   }
 
   return panel;
-}
-
-void ThemeListModel::onItemSelected(int s, int i) {
-  const auto &theme = themeAt(s, i);
-  m_themeService->setTheme(theme->id());
-}
-
-void ThemeListModel::beforePop() {
-  auto configuredTheme = QString::fromStdString(m_config->value().systemTheme().name);
-  m_themeService->setTheme(configuredTheme);
 }

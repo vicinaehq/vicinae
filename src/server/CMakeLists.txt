@@ -464,8 +464,6 @@ set(SRCS
 	src/qml/launcher-window.cpp
 	src/qml/root-search-model.hpp
 	src/qml/root-search-model.cpp
-	src/qml/command-list-model.hpp
-	src/qml/command-list-model.cpp
 	src/qml/section-source.hpp
 	src/qml/section-list-model.hpp
 	src/qml/section-list-model.cpp
@@ -484,10 +482,14 @@ set(SRCS
 	src/qml/calc-history-view-host.cpp
 	src/qml/theme-list-model.hpp
 	src/qml/theme-list-model.cpp
-	src/qml/command-grid-model.hpp
-	src/qml/command-grid-model.cpp
+	src/qml/theme-view-host.hpp
+	src/qml/theme-view-host.cpp
+	src/qml/grid-source.hpp
+	src/qml/section-grid-model.hpp
+	src/qml/section-grid-model.cpp
 	src/qml/emoji-grid-model.hpp
 	src/qml/emoji-grid-model.cpp
+	src/qml/emoji-grid-view-host.hpp
 	src/qml/view-utils.cpp
 	src/qml/extension-view-host.hpp
 	src/qml/extension-view-host.cpp

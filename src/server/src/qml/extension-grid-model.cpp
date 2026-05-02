@@ -3,10 +3,10 @@
 #include <utility>
 #include "common/types.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
-#include "navigation-controller.hpp"
 #include "theme.hpp"
 #include "theme/theme-file.hpp"
 #include "ui/image/url.hpp"
+#include "view-utils.hpp"
 
 template <> struct fuzzy::FuzzySearchable<GridItemViewModel> {
   static int score(const GridItemViewModel &item, std::string_view query) {
@@ -21,8 +21,55 @@ template <> struct fuzzy::FuzzySearchable<GridItemViewModel> {
   }
 };
 
+// --- ExtensionGridSection ---
+
+ExtensionGridSection::ExtensionGridSection(std::string name, std::vector<GridItemViewModel> items,
+                                           std::optional<int> columns, std::optional<double> aspectRatio,
+                                           bool filtering, NotifyFn notify, SubmenuCache *cache,
+                                           const std::optional<ActionPannelModel> *globalActions)
+    : m_name(std::move(name)), m_items(std::move(items)), m_columns(columns), m_aspectRatio(aspectRatio),
+      m_filtering(filtering), m_notify(std::move(notify)), m_cache(cache), m_globalActions(globalActions) {}
+
+int ExtensionGridSection::count() const {
+  if (m_filtering && !m_query.empty()) return static_cast<int>(m_filtered.size());
+  return static_cast<int>(m_items.size());
+}
+
+void ExtensionGridSection::setFilter(std::string_view query) {
+  m_query = std::string(query);
+  if (!m_filtering) return;
+  fuzzy::fuzzyFilter<GridItemViewModel>(std::span<const GridItemViewModel>(m_items), m_query, m_filtered);
+}
+
+void ExtensionGridSection::onSelected(int i) {
+  if (m_onItemSelected) m_onItemSelected(itemAt(i));
+}
+
+const GridItemViewModel *ExtensionGridSection::itemAt(int i) const {
+  if (m_filtering && !m_query.empty()) {
+    if (i < 0 || std::cmp_greater_equal(i, m_filtered.size())) return nullptr;
+    return &m_items[m_filtered[i].data];
+  }
+  if (i < 0 || std::cmp_greater_equal(i, m_items.size())) return nullptr;
+  return &m_items[i];
+}
+
+std::unique_ptr<ActionPanelState> ExtensionGridSection::actionPanel(int i) const {
+  if (auto *it = itemAt(i); it && it->actionPannel) {
+    return ExtensionActionPanelBuilder::build(*it->actionPannel, m_notify, m_cache,
+                                              ActionPanelState::ShortcutPreset::List);
+  }
+  if (m_globalActions && *m_globalActions) {
+    return ExtensionActionPanelBuilder::build(**m_globalActions, m_notify, m_cache,
+                                              ActionPanelState::ShortcutPreset::List);
+  }
+  return nullptr;
+}
+
+// --- ExtensionGridModel ---
+
 ExtensionGridModel::ExtensionGridModel(NotifyFn notify, QObject *parent)
-    : CommandGridModel(parent), m_notify(std::move(notify)) {}
+    : SectionGridModel(parent), m_notify(std::move(notify)) {}
 
 void ExtensionGridModel::setExtensionData(const GridModel &model, bool resetSelection) {
   m_model = model;
@@ -59,76 +106,66 @@ void ExtensionGridModel::setExtensionData(const GridModel &model, bool resetSele
     emit insetChanged();
   }
 
-  m_sections.clear();
-
-  Section freeSection;
-  freeSection.name = "";
-
-  for (const auto &child : model.items) {
-    if (auto item = std::get_if<GridItemViewModel>(&child)) {
-      freeSection.items.push_back(*item);
-    } else if (auto section = std::get_if<GridSectionModel>(&child)) {
-      if (!freeSection.items.empty()) {
-        m_sections.push_back(std::move(freeSection));
-        freeSection = Section{.name = "", .items = {}};
-      }
-
-      Section sec;
-      sec.name = section->title;
-      sec.aspectRatio = section->aspectRatio;
-      sec.columns = section->columns;
-      sec.items = section->children;
-      m_sections.push_back(std::move(sec));
-    }
-  }
-
-  if (!freeSection.items.empty()) { m_sections.push_back(std::move(freeSection)); }
-
-  if (m_model.filtering && !m_filter.isEmpty()) {
-    reapplyFilter();
-  } else {
-    m_filteredSections.clear();
-  }
-  rebuildFromModel(resetSelection);
+  rebuildFromSections(resetSelection);
 
   emit emptyViewChanged();
 }
 
-QString ExtensionGridModel::emptyTitle() const {
-  if (m_model.emptyView) return m_model.emptyView->title;
-  return QStringLiteral("No results");
-}
-
-QString ExtensionGridModel::emptyDescription() const {
-  if (m_model.emptyView) return m_model.emptyView->description;
-  return {};
-}
-
-QString ExtensionGridModel::emptyIcon() const {
-  if (m_model.emptyView && m_model.emptyView->icon) return imageSourceFor(ImageURL(*m_model.emptyView->icon));
-  return {};
-}
-
-void ExtensionGridModel::rebuildFromModel(bool resetSelection) {
-  const auto &sections = activeSections();
-
+void ExtensionGridModel::rebuildFromSections(bool resetSelection) {
   int const prevSection = selectedSection();
   int const prevItem = selectedItem();
 
-  std::vector<SectionInfo> infos;
-  infos.reserve(sections.size());
-  for (const auto &sec : sections) {
-    infos.push_back(
-        {QString::fromStdString(sec.name), static_cast<int>(sec.items.size()), sec.columns, sec.aspectRatio});
+  clearSources();
+  m_ownedSections.clear();
+
+  std::string freeItems;
+  std::vector<GridItemViewModel> freeBuf;
+
+  auto flushFree = [&]() {
+    if (freeBuf.empty()) return;
+    auto section = std::make_unique<ExtensionGridSection>(std::move(freeItems), std::move(freeBuf),
+                                                          std::nullopt, std::nullopt, m_model.filtering,
+                                                          m_notify, &m_submenuCache, &m_model.actions);
+    section->setOnItemSelected([this](const GridItemViewModel *item) {
+      if (auto handler = m_model.onSelectionChanged) {
+        if (item) { m_notify(handler->c_str(), {item->id.c_str()}); }
+      }
+    });
+    addSource(section.get());
+    m_ownedSections.push_back(std::move(section));
+    freeBuf = {};
+    freeItems = {};
+  };
+
+  for (const auto &child : m_model.items) {
+    if (auto item = std::get_if<GridItemViewModel>(&child)) {
+      freeBuf.push_back(*item);
+    } else if (auto sec = std::get_if<GridSectionModel>(&child)) {
+      flushFree();
+      auto section = std::make_unique<ExtensionGridSection>(sec->title, sec->children, sec->columns,
+                                                            sec->aspectRatio, m_model.filtering, m_notify,
+                                                            &m_submenuCache, &m_model.actions);
+      section->setOnItemSelected([this](const GridItemViewModel *item) {
+        if (auto handler = m_model.onSelectionChanged) {
+          if (item) { m_notify(handler->c_str(), {item->id.c_str()}); }
+        }
+      });
+      addSource(section.get());
+      m_ownedSections.push_back(std::move(section));
+    }
+  }
+  flushFree();
+
+  if (m_model.filtering && !m_filter.isEmpty()) {
+    SectionGridModel::setFilter(m_filter);
+  } else {
+    rebuild();
   }
 
-  setSelectFirstOnReset(resetSelection);
-  setSections(infos);
-  setSelectFirstOnReset(false);
-
   if (!resetSelection) {
-    bool const prevValid = prevSection >= 0 && std::cmp_less(prevSection, sections.size()) && prevItem >= 0 &&
-                           std::cmp_less(prevItem, sections[prevSection].items.size());
+    setSelectFirstOnReset(false);
+    bool const prevValid = prevSection >= 0 && std::cmp_less(prevSection, m_ownedSections.size()) &&
+                           prevItem >= 0 && prevItem < m_ownedSections[prevSection]->count();
 
     if (prevValid) {
       if (prevSection == selectedSection() && prevItem == selectedItem()) {
@@ -140,6 +177,7 @@ void ExtensionGridModel::rebuildFromModel(bool resetSelection) {
     } else {
       selectFirst();
     }
+    setSelectFirstOnReset(true);
   } else {
     selectFirst();
   }
@@ -148,77 +186,47 @@ void ExtensionGridModel::rebuildFromModel(bool resetSelection) {
   emit dataRevisionChanged();
 }
 
-const std::vector<ExtensionGridModel::Section> &ExtensionGridModel::activeSections() const {
-  if (m_model.filtering && !m_filter.isEmpty()) { return m_filteredSections; }
-  return m_sections;
-}
-
-void ExtensionGridModel::reapplyFilter() {
-  auto query = m_filter.toStdString();
-  std::vector<Scored<int>> scored;
-
-  m_filteredSections.clear();
-  for (const auto &sec : m_sections) {
-    fuzzy::fuzzyFilter<GridItemViewModel>(sec.items, query, scored);
-
-    Section filtered;
-    filtered.name = sec.name;
-    filtered.aspectRatio = sec.aspectRatio;
-    filtered.columns = sec.columns;
-    filtered.items.reserve(scored.size());
-    for (const auto &s : scored)
-      filtered.items.emplace_back(sec.items[s.data]);
-    m_filteredSections.push_back(std::move(filtered));
-  }
-}
-
 void ExtensionGridModel::setFilter(const QString &text) {
   m_filter = text;
-
-  if (m_model.filtering) {
-    reapplyFilter();
-    rebuildFromModel(true);
-  }
+  if (m_model.filtering) { SectionGridModel::setFilter(text); }
 }
 
 QString ExtensionGridModel::searchPlaceholder() const {
   return m_placeholder.isEmpty() ? QStringLiteral("Search...") : m_placeholder;
 }
 
-const GridItemViewModel *ExtensionGridModel::itemAt(int section, int item) const {
-  const auto &sections = activeSections();
-  if (section < 0 || std::cmp_greater_equal(section, sections.size())) return nullptr;
-  const auto &sec = sections[section];
-  if (item < 0 || std::cmp_greater_equal(item, sec.items.size())) return nullptr;
-  return &sec.items[item];
+const GridItemViewModel *ExtensionGridModel::resolveItem(int section, int item) const {
+  int sourceIdx, itemIdx;
+  if (!resolveSelection(section, item, sourceIdx, itemIdx)) return nullptr;
+  return m_ownedSections[sourceIdx]->itemAt(itemIdx);
 }
 
 QString ExtensionGridModel::cellTitle(int section, int item) const {
-  if (auto *it = itemAt(section, item)) return QString::fromStdString(it->title);
+  if (auto *it = resolveItem(section, item)) return QString::fromStdString(it->title);
   return {};
 }
 
 QString ExtensionGridModel::cellIcon(int section, int item) const {
-  if (auto *it = itemAt(section, item)) {
-    if (auto img = std::get_if<ImageLikeModel>(&it->content)) { return imageSourceFor(ImageURL(*img)); }
+  if (auto *it = resolveItem(section, item)) {
+    if (auto img = std::get_if<ImageLikeModel>(&it->content)) { return qml::imageSourceFor(ImageURL(*img)); }
   }
   return {};
 }
 
 QString ExtensionGridModel::cellSubtitle(int section, int item) const {
-  if (auto *it = itemAt(section, item)) return QString::fromStdString(it->subtitle);
+  if (auto *it = resolveItem(section, item)) return QString::fromStdString(it->subtitle);
   return {};
 }
 
 QString ExtensionGridModel::cellTooltip(int section, int item) const {
-  if (auto *it = itemAt(section, item)) {
+  if (auto *it = resolveItem(section, item)) {
     if (it->tooltip) return QString::fromStdString(*it->tooltip);
   }
   return {};
 }
 
 QString ExtensionGridModel::cellColor(int section, int item) const {
-  if (auto *it = itemAt(section, item)) {
+  if (auto *it = resolveItem(section, item)) {
     if (auto *color = std::get_if<ColorLike>(&it->content)) {
       const auto &theme = ThemeService::instance().theme();
       return std::visit(
@@ -234,20 +242,20 @@ QString ExtensionGridModel::cellColor(int section, int item) const {
   return {};
 }
 
-std::unique_ptr<ActionPanelState> ExtensionGridModel::createActionPanel(int section, int item) const {
-  if (auto *it = itemAt(section, item)) {
-    if (it->actionPannel) {
-      return ExtensionActionPanelBuilder::build(*it->actionPannel, m_notify, &m_submenuCache,
-                                                ActionPanelState::ShortcutPreset::List);
-    }
-  }
+QString ExtensionGridModel::emptyTitle() const {
+  if (m_model.emptyView) return m_model.emptyView->title;
+  return QStringLiteral("No results");
+}
 
-  if (m_model.actions) {
-    return ExtensionActionPanelBuilder::build(*m_model.actions, m_notify, &m_submenuCache,
-                                              ActionPanelState::ShortcutPreset::List);
-  }
+QString ExtensionGridModel::emptyDescription() const {
+  if (m_model.emptyView) return m_model.emptyView->description;
+  return {};
+}
 
-  return nullptr;
+QString ExtensionGridModel::emptyIcon() const {
+  if (m_model.emptyView && m_model.emptyView->icon)
+    return qml::imageSourceFor(ImageURL(*m_model.emptyView->icon));
+  return {};
 }
 
 void ExtensionGridModel::onSelectionCleared() {
@@ -265,12 +273,6 @@ void ExtensionGridModel::onSelectionCleared() {
     panel->finalize();
     scope().setActions(std::move(panel));
   } else {
-    CommandGridModel::onSelectionCleared();
-  }
-}
-
-void ExtensionGridModel::onItemSelected(int section, int item) {
-  if (auto handler = m_model.onSelectionChanged) {
-    if (auto *it = itemAt(section, item)) { m_notify(handler->c_str(), {it->id.c_str()}); }
+    SectionGridModel::onSelectionCleared();
   }
 }

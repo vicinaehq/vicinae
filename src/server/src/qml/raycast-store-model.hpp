@@ -27,6 +27,14 @@ public:
 
   const Entry &entryAt(int i) const { return m_entries[i]; }
 
+  QVariant customData(int i, int role) const override;
+  QHash<int, QByteArray> customRoleNames() const override {
+    return {{DownloadCount, "downloadCount"},
+            {AuthorAvatar, "authorAvatar"},
+            {IsInstalled, "isInstalled"},
+            {CompatTierRole, "compatTier"}};
+  }
+
 protected:
   QString itemTitle(int i) const override;
   QString itemSubtitle(int i) const override;

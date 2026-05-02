@@ -90,17 +90,20 @@ QVariant SectionListModel::data(const QModelIndex &index, int role) const {
   case Accessory:
     return source->itemAccessories(flat.itemIdx);
   default:
-    return {};
+    return source->customData(flat.itemIdx, role);
   }
 }
 
 QHash<int, QByteArray> SectionListModel::roleNames() const {
-  return {
+  QHash<int, QByteArray> roles = {
       {IsSection, "isSection"},     {IsSelectable, "isSelectable"},
       {SectionName, "sectionName"}, {Title, "title"},
       {Subtitle, "subtitle"},       {IconSource, "iconSource"},
       {Accessory, "itemAccessory"},
   };
+  for (auto *source : m_sources)
+    roles.insert(source->customRoleNames());
+  return roles;
 }
 
 void SectionListModel::setSelectedIndex(int index) {
@@ -110,18 +113,14 @@ void SectionListModel::setSelectedIndex(int index) {
 
   if (index < 0 || std::cmp_greater_equal(index, m_flat.size())) {
     m_lastSelectedItemId.clear();
-    for (auto *source : m_sources)
-      source->onSelectionCleared();
-    m_scope.clearActions();
+    onSelectionCleared();
     return;
   }
 
   const auto &flat = m_flat[index];
   if (flat.kind == FlatItem::SectionHeader) {
     m_lastSelectedItemId.clear();
-    for (auto *source : m_sources)
-      source->onSelectionCleared();
-    m_scope.clearActions();
+    onSelectionCleared();
     return;
   }
 
@@ -237,6 +236,12 @@ int SectionListModel::scrollTargetIndex(int index, int direction) const {
     if (m_flat[index - 1].kind == FlatItem::SectionHeader) return index - 1;
   }
   return index;
+}
+
+void SectionListModel::onSelectionCleared() {
+  for (auto *source : m_sources)
+    source->onSelectionCleared();
+  m_scope.clearActions();
 }
 
 void SectionListModel::beforePop() {}

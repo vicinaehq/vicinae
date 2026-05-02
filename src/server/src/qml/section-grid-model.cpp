@@ -1,0 +1,437 @@
+#include "section-grid-model.hpp"
+#include <algorithm>
+
+SectionGridModel::SectionGridModel(QObject *parent) : QAbstractListModel(parent) {}
+
+void SectionGridModel::addSource(GridSource *source) {
+  m_sources.push_back(source);
+  source->setScope(m_scope);
+  source->setOnChanged([this]() { rebuild(); });
+}
+
+void SectionGridModel::clearSources() {
+  for (auto *source : m_sources)
+    source->setOnChanged(nullptr);
+  m_sources.clear();
+}
+
+void SectionGridModel::rebuild() { rebuildFromSources(); }
+
+void SectionGridModel::setFilter(const QString &text) {
+  auto query = text.toStdString();
+  for (auto *source : m_sources)
+    source->setFilter(query);
+  rebuild();
+}
+
+void SectionGridModel::rebuildFromSources() {
+  if (m_awaitingData) {
+    m_awaitingData = false;
+    emit awaitingDataChanged();
+  }
+
+  m_sections.clear();
+  for (int s = 0; std::cmp_less(s, m_sources.size()); ++s) {
+    auto *source = m_sources[s];
+    m_sections.push_back({.sourceIdx = s,
+                          .count = source->count(),
+                          .name = source->sectionName(),
+                          .columns = source->columns(),
+                          .aspectRatio = source->aspectRatio()});
+  }
+
+  auto newFlat = buildFlatList();
+  int const oldCount = static_cast<int>(m_rows.size());
+  int const newCount = static_cast<int>(newFlat.size());
+
+  if (m_selectFirstOnReset) {
+    beginResetModel();
+    m_rows = std::move(newFlat);
+    m_selSection = -1;
+    m_selItem = -1;
+    endResetModel();
+    return;
+  }
+
+  if (newCount < oldCount) {
+    beginRemoveRows({}, newCount, oldCount - 1);
+    m_rows = std::move(newFlat);
+    endRemoveRows();
+  } else if (newCount > oldCount) {
+    beginInsertRows({}, oldCount, newCount - 1);
+    m_rows = std::move(newFlat);
+    endInsertRows();
+  } else {
+    m_rows = std::move(newFlat);
+  }
+
+  int const overlap = std::min(oldCount, newCount);
+  if (overlap > 0) emit dataChanged(index(0), index(overlap - 1));
+}
+
+std::vector<SectionGridModel::FlatRow> SectionGridModel::buildFlatList() const {
+  std::vector<FlatRow> rows;
+
+  for (int s = 0; std::cmp_less(s, m_sections.size()); ++s) {
+    const auto &sec = m_sections[s];
+    if (sec.count == 0) continue;
+
+    int const cols = sec.columns.value_or(m_columns);
+    double const ar = sec.aspectRatio.value_or(m_aspectRatio);
+
+    if (!sec.name.isEmpty()) { rows.push_back({FlatRow::SectionHeader, s, sec.name, 0, 0, cols, ar}); }
+
+    for (int i = 0; i < sec.count; i += cols) {
+      int const count = std::min(cols, sec.count - i);
+      rows.push_back({FlatRow::ItemRow, s, {}, i, count, cols, ar});
+    }
+  }
+
+  return rows;
+}
+
+int SectionGridModel::rowCount(const QModelIndex &parent) const {
+  if (parent.isValid()) return 0;
+  return static_cast<int>(m_rows.size());
+}
+
+QVariant SectionGridModel::data(const QModelIndex &index, int role) const {
+  int const row = index.row();
+  if (row < 0 || std::cmp_greater_equal(row, m_rows.size())) return {};
+  const auto &r = m_rows[row];
+
+  switch (role) {
+  case IsSection:
+    return r.kind == FlatRow::SectionHeader;
+  case SectionNameRole:
+    return r.sectionName;
+  case RowSectionIdx:
+    return r.sectionIdx;
+  case RowStartItem:
+    return r.startItem;
+  case RowItemCount:
+    return r.itemCount;
+  case RowColumnsRole:
+    return r.columns;
+  case RowAspectRatioRole:
+    return r.aspectRatio;
+  default:
+    return {};
+  }
+}
+
+QHash<int, QByteArray> SectionGridModel::roleNames() const {
+  return {
+      {IsSection, "isSection"},
+      {SectionNameRole, "sectionName"},
+      {RowSectionIdx, "rowSectionIdx"},
+      {RowStartItem, "rowStartItem"},
+      {RowItemCount, "rowItemCount"},
+      {RowColumnsRole, "rowColumns"},
+      {RowAspectRatioRole, "rowAspectRatio"},
+  };
+}
+
+void SectionGridModel::setColumns(int cols) {
+  if (cols < 1) cols = 1;
+  if (cols == m_columns) return;
+  m_columns = cols;
+  emit columnsChanged();
+  rebuildRows();
+  if (m_selSection >= 0 && m_selItem >= 0) {
+    int const s = m_selSection;
+    int const i = m_selItem;
+    m_selSection = -1;
+    m_selItem = -1;
+    select(s, i);
+  }
+}
+
+void SectionGridModel::setAspectRatio(double ratio) {
+  if (ratio <= 0.0) ratio = 1.0;
+  if (qFuzzyCompare(ratio, m_aspectRatio)) return;
+  m_aspectRatio = ratio;
+  emit aspectRatioChanged();
+  rebuildRows();
+}
+
+void SectionGridModel::rebuildRows() {
+  auto newFlat = buildFlatList();
+  int const oldCount = static_cast<int>(m_rows.size());
+  int const newCount = static_cast<int>(newFlat.size());
+
+  if (newCount < oldCount) {
+    beginRemoveRows({}, newCount, oldCount - 1);
+    m_rows = std::move(newFlat);
+    endRemoveRows();
+  } else if (newCount > oldCount) {
+    beginInsertRows({}, oldCount, newCount - 1);
+    m_rows = std::move(newFlat);
+    endInsertRows();
+  } else {
+    m_rows = std::move(newFlat);
+  }
+
+  int const overlap = std::min(oldCount, newCount);
+  if (overlap > 0) emit dataChanged(index(0), index(overlap - 1));
+}
+
+bool SectionGridModel::resolveSelection(int section, int item, int &sourceIdx, int &itemIdx) const {
+  if (section < 0 || std::cmp_greater_equal(section, m_sections.size())) return false;
+  sourceIdx = m_sections[section].sourceIdx;
+  itemIdx = item;
+  return true;
+}
+
+void SectionGridModel::select(int section, int item) {
+  bool const changed = section != m_selSection || item != m_selItem;
+  m_selSection = section;
+  m_selItem = item;
+  if (changed) emit selectionChanged();
+
+  int sourceIdx, itemIdx;
+  if (resolveSelection(section, item, sourceIdx, itemIdx)) {
+    m_sources[sourceIdx]->onSelected(itemIdx);
+
+    auto panel = m_sources[sourceIdx]->actionPanel(itemIdx);
+    if (panel) {
+      panel->finalize();
+      m_scope.setActions(std::move(panel));
+    } else {
+      m_scope.clearActions();
+    }
+  }
+}
+
+void SectionGridModel::selectFirst() {
+  for (int s = 0; std::cmp_less(s, m_sections.size()); ++s) {
+    if (m_sections[s].count > 0) {
+      select(s, 0);
+      return;
+    }
+  }
+  m_selSection = -1;
+  m_selItem = -1;
+  emit selectionChanged();
+  onSelectionCleared();
+}
+
+void SectionGridModel::onSelectionCleared() {
+  for (auto *source : m_sources)
+    source->onSelectionCleared();
+  m_scope.clearActions();
+}
+
+void SectionGridModel::activateSelected() { m_scope.executePrimaryAction(); }
+
+void SectionGridModel::refreshActionPanel() {
+  if (m_selSection >= 0 && m_selItem >= 0) {
+    int sourceIdx, itemIdx;
+    if (resolveSelection(m_selSection, m_selItem, sourceIdx, itemIdx)) {
+      auto panel = m_sources[sourceIdx]->actionPanel(itemIdx);
+      if (panel) {
+        panel->finalize();
+        m_scope.setActions(std::move(panel));
+      } else {
+        m_scope.clearActions();
+      }
+    }
+  }
+}
+
+int SectionGridModel::sectionColumns(int sectionIdx) const {
+  if (sectionIdx < 0 || std::cmp_greater_equal(sectionIdx, m_sections.size())) return m_columns;
+  return m_sections[sectionIdx].columns.value_or(m_columns);
+}
+
+int SectionGridModel::nextNonEmptySection(int sectionIdx, int direction) const {
+  if (m_sections.empty()) return -1;
+
+  int idx = sectionIdx;
+  for (size_t attempts = 0; attempts < m_sections.size(); ++attempts) {
+    idx += direction;
+    if (idx < 0) {
+      idx = static_cast<int>(m_sections.size()) - 1;
+    } else if (std::cmp_greater_equal(idx, m_sections.size())) {
+      idx = 0;
+    }
+    if (m_sections[idx].count > 0) return idx;
+  }
+  return -1;
+}
+
+void SectionGridModel::selectSectionBoundary(int sectionIdx, bool endOfSection, bool revealHeader) {
+  if (sectionIdx < 0 || std::cmp_greater_equal(sectionIdx, m_sections.size()) ||
+      m_sections[sectionIdx].count <= 0) {
+    return;
+  }
+  m_preferSectionHeaderForSelection = revealHeader;
+  m_alignSelectionScrollToTop = revealHeader && !endOfSection;
+  select(sectionIdx, endOfSection ? m_sections[sectionIdx].count - 1 : 0);
+}
+
+int SectionGridModel::totalItemCount() const {
+  int total = 0;
+  for (const auto &s : m_sections)
+    total += s.count;
+  return total;
+}
+
+int SectionGridModel::toGlobal(int section, int item) const {
+  int idx = 0;
+  for (int s = 0; s < section; ++s)
+    idx += m_sections[s].count;
+  return idx + item;
+}
+
+void SectionGridModel::fromGlobal(int globalIdx, int &section, int &item) const {
+  int offset = 0;
+  for (int s = 0; std::cmp_less(s, m_sections.size()); ++s) {
+    if (globalIdx < offset + m_sections[s].count) {
+      section = s;
+      item = globalIdx - offset;
+      return;
+    }
+    offset += m_sections[s].count;
+  }
+  section = -1;
+  item = -1;
+}
+
+void SectionGridModel::navigateRight() {
+  m_preferSectionHeaderForSelection = false;
+  m_alignSelectionScrollToTop = false;
+  int g = toGlobal(m_selSection, m_selItem) + 1;
+  int const total = totalItemCount();
+  if (total == 0) return;
+  if (g >= total) g = 0;
+  int s, i;
+  fromGlobal(g, s, i);
+  select(s, i);
+}
+
+void SectionGridModel::navigateLeft() {
+  m_preferSectionHeaderForSelection = false;
+  m_alignSelectionScrollToTop = false;
+  int g = toGlobal(m_selSection, m_selItem) - 1;
+  int const total = totalItemCount();
+  if (total == 0) return;
+  if (g < 0) g = total - 1;
+  int s, i;
+  fromGlobal(g, s, i);
+  select(s, i);
+}
+
+void SectionGridModel::navigateDown() {
+  m_preferSectionHeaderForSelection = false;
+  m_alignSelectionScrollToTop = false;
+  if (m_selSection < 0) return;
+
+  int const cols = sectionColumns(m_selSection);
+  int const col = m_selItem % cols;
+  int const nextRow = (m_selItem / cols) + 1;
+  int const maxRowInSection = (m_sections[m_selSection].count - 1) / cols;
+
+  if (nextRow <= maxRowInSection) {
+    int targetItem = nextRow * cols + col;
+    if (targetItem >= m_sections[m_selSection].count) targetItem = m_sections[m_selSection].count - 1;
+    select(m_selSection, targetItem);
+    return;
+  }
+
+  for (int s = m_selSection + 1; std::cmp_less(s, m_sections.size()); ++s) {
+    if (m_sections[s].count > 0) {
+      int const targetCols = sectionColumns(s);
+      int const targetItem = std::min(col, std::min(targetCols, m_sections[s].count) - 1);
+      select(s, targetItem);
+      return;
+    }
+  }
+
+  for (int s = 0; std::cmp_less(s, m_sections.size()); ++s) {
+    if (m_sections[s].count > 0) {
+      int const targetCols = sectionColumns(s);
+      int const targetItem = std::min(col, std::min(targetCols, m_sections[s].count) - 1);
+      select(s, targetItem);
+      return;
+    }
+  }
+}
+
+void SectionGridModel::navigateUp() {
+  m_preferSectionHeaderForSelection = false;
+  m_alignSelectionScrollToTop = false;
+  if (m_selSection < 0) return;
+
+  int const cols = sectionColumns(m_selSection);
+  int const col = m_selItem % cols;
+  int const currentRow = m_selItem / cols;
+
+  if (currentRow > 0) {
+    select(m_selSection, (currentRow - 1) * cols + col);
+    return;
+  }
+
+  for (int s = m_selSection - 1; s >= 0; --s) {
+    if (m_sections[s].count > 0) {
+      int const targetCols = sectionColumns(s);
+      int const lastRow = (m_sections[s].count - 1) / targetCols;
+      int const targetCol = std::min(col, targetCols - 1);
+      int targetItem = lastRow * targetCols + targetCol;
+      if (targetItem >= m_sections[s].count) targetItem = m_sections[s].count - 1;
+      select(s, targetItem);
+      return;
+    }
+  }
+
+  for (int s = static_cast<int>(m_sections.size()) - 1; s >= 0; --s) {
+    if (m_sections[s].count > 0) {
+      int const targetCols = sectionColumns(s);
+      int const lastRow = (m_sections[s].count - 1) / targetCols;
+      int const targetCol = std::min(col, targetCols - 1);
+      int targetItem = lastRow * targetCols + targetCol;
+      if (targetItem >= m_sections[s].count) targetItem = m_sections[s].count - 1;
+      select(s, targetItem);
+      return;
+    }
+  }
+}
+
+void SectionGridModel::navigateSectionUp() {
+  m_alignSelectionScrollToTop = false;
+  if (m_selSection < 0 || std::cmp_greater_equal(m_selSection, m_sections.size())) return;
+
+  if (m_selItem > 0) {
+    selectSectionBoundary(m_selSection, false);
+    return;
+  }
+
+  int const prevSection = nextNonEmptySection(m_selSection, -1);
+  if (prevSection >= 0) selectSectionBoundary(prevSection, false);
+}
+
+void SectionGridModel::navigateSectionDown() {
+  m_alignSelectionScrollToTop = false;
+  if (m_selSection < 0 || std::cmp_greater_equal(m_selSection, m_sections.size())) return;
+
+  int const nextSection = nextNonEmptySection(m_selSection, 1);
+  if (nextSection >= 0) selectSectionBoundary(nextSection, false);
+}
+
+bool SectionGridModel::alignSelectionScrollToTop() const { return m_alignSelectionScrollToTop; }
+
+int SectionGridModel::flatRowForSelection() const {
+  if (m_selSection < 0 || m_selItem < 0) return -1;
+  for (int r = 0; std::cmp_less(r, m_rows.size()); ++r) {
+    const auto &row = m_rows[r];
+    if (row.kind == FlatRow::ItemRow && row.sectionIdx == m_selSection && m_selItem >= row.startItem &&
+        m_selItem < row.startItem + row.itemCount) {
+      if (m_preferSectionHeaderForSelection && row.startItem == 0 && r > 0 &&
+          m_rows[r - 1].kind == FlatRow::SectionHeader && m_rows[r - 1].sectionIdx == m_selSection) {
+        return r - 1;
+      }
+      return r;
+    }
+  }
+  return -1;
+}

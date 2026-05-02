@@ -1,6 +1,6 @@
 #pragma once
 #include "clipboard-history-model.hpp"
-#include "list-view-host.hpp"
+#include "bridge-view.hpp"
 #include "section-list-model.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include <QTemporaryFile>
@@ -8,25 +8,6 @@
 
 class ClipboardHistoryController;
 class ClipboardService;
-
-class ClipboardSectionListModel : public SectionListModel {
-  Q_OBJECT
-
-public:
-  enum ExtraRole {
-    IsPinned = SectionListModel::Accessory + 1,
-  };
-
-  using SectionListModel::SectionListModel;
-
-  void setSection(ClipboardHistorySection *section) { m_section = section; }
-
-  QHash<int, QByteArray> roleNames() const override;
-  QVariant data(const QModelIndex &index, int role) const override;
-
-private:
-  ClipboardHistorySection *m_section = nullptr;
-};
 
 class ClipboardHistoryViewHost : public ViewHostBase {
   Q_OBJECT
@@ -63,7 +44,7 @@ public:
   Q_INVOKABLE void toggleMonitoring();
   Q_INVOKABLE void setKindFilter(int kind);
 
-  QObject *listModel() const { return const_cast<ClipboardSectionListModel *>(&m_model); }
+  QObject *listModel() const { return const_cast<SectionListModel *>(&m_model); }
   QString itemCountText() const { return m_itemCountText; }
   QString clipboardStatusText() const { return m_clipboardStatusText; }
   QString clipboardStatusIcon() const { return m_clipboardStatusIcon; }
@@ -95,7 +76,7 @@ private:
   void saveDropdownFilter(const QString &value);
   std::optional<QString> getSavedDropdownFilter();
 
-  ClipboardSectionListModel m_model{this};
+  SectionListModel m_model{this};
   ClipboardHistorySection m_section;
   ClipboardHistoryController *m_controller = nullptr;
   ClipboardService *m_clipman = nullptr;
