@@ -156,14 +156,15 @@ void ExtensionGridModel::rebuildFromSections(bool resetSelection) {
   }
   flushFree();
 
+  setSelectFirstOnReset(resetSelection);
   if (m_model.filtering && !m_filter.isEmpty()) {
     SectionGridModel::setFilter(m_filter);
   } else {
     rebuild();
   }
+  setSelectFirstOnReset(false);
 
   if (!resetSelection) {
-    setSelectFirstOnReset(false);
     bool const prevValid = prevSection >= 0 && std::cmp_less(prevSection, m_ownedSections.size()) &&
                            prevItem >= 0 && prevItem < m_ownedSections[prevSection]->count();
 
@@ -177,7 +178,6 @@ void ExtensionGridModel::rebuildFromSections(bool resetSelection) {
     } else {
       selectFirst();
     }
-    setSelectFirstOnReset(true);
   } else {
     selectFirst();
   }
@@ -188,7 +188,12 @@ void ExtensionGridModel::rebuildFromSections(bool resetSelection) {
 
 void ExtensionGridModel::setFilter(const QString &text) {
   m_filter = text;
-  if (m_model.filtering) { SectionGridModel::setFilter(text); }
+  if (m_model.filtering) {
+    setSelectFirstOnReset(true);
+    SectionGridModel::setFilter(text);
+    setSelectFirstOnReset(false);
+    selectFirst();
+  }
 }
 
 QString ExtensionGridModel::searchPlaceholder() const {
