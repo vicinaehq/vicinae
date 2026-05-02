@@ -1,18 +1,17 @@
 #pragma once
+#include "section-list-model.hpp"
+#include "vicinae-store-model.hpp"
 #include "bridge-view.hpp"
 #include "services/extension-store/vicinae-store.hpp"
 #include <QFutureWatcher>
 
-class VicinaeStoreModel;
-
 class VicinaeStoreViewHost : public ViewHostBase {
   Q_OBJECT
+  Q_PROPERTY(QObject *listModel READ listModel CONSTANT)
 
 signals:
 
 public:
-  Q_PROPERTY(QObject *listModel READ listModel CONSTANT)
-
   VicinaeStoreViewHost();
 
   QUrl qmlComponentUrl() const override;
@@ -22,14 +21,15 @@ public:
   void textChanged(const QString &text) override;
   void onReactivated() override;
 
-  QObject *listModel() const;
+  QObject *listModel() const { return const_cast<SectionListModel *>(&m_model); }
 
 private:
   void fetchExtensions();
   void handleFinished();
   void refresh();
 
-  VicinaeStoreModel *m_model = nullptr;
+  SectionListModel m_model{this};
+  VicinaeStoreSection m_section;
   VicinaeStoreService *m_store = nullptr;
   QFutureWatcher<VicinaeStore::ListResult> m_watcher;
 };

@@ -1,27 +1,24 @@
 #pragma once
-#include "command-list-model.hpp"
+#include "section-source.hpp"
 #include "services/calculator-service/calculator-service.hpp"
+#include <vector>
 
-class CalcHistoryModel : public CommandListModel {
-  Q_OBJECT
+using CalculatorRecord = CalculatorService::CalculatorRecord;
 
+class CalcHistorySection : public SectionSource {
 public:
-  explicit CalcHistoryModel(QObject *parent = nullptr);
+  void setRecords(const QString &groupName, std::vector<CalculatorRecord> records);
 
-  void initialize() override;
-  void setFilter(const QString &text) override;
-  QString searchPlaceholder() const override { return QStringLiteral("Search past calculations..."); }
+  QString sectionName() const override { return m_groupName; }
+  int count() const override { return static_cast<int>(m_records.size()); }
 
 protected:
-  QString itemTitle(int s, int i) const override;
-  QString itemIconSource(int s, int i) const override;
-  QVariantList itemAccessory(int s, int i) const override;
-  std::unique_ptr<ActionPanelState> createActionPanel(int s, int i) const override;
+  QString itemTitle(int i) const override;
+  QString itemIconSource(int i) const override;
+  QVariantList itemAccessories(int i) const override;
+  std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
 
 private:
-  void refresh();
-
-  CalculatorService *m_calc = nullptr;
-  CalculatorService::GroupedRecordList m_data;
-  QString m_query;
+  QString m_groupName;
+  std::vector<CalculatorRecord> m_records;
 };

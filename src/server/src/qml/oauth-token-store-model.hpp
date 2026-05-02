@@ -1,5 +1,5 @@
 #pragma once
-#include "fuzzy-list-model.hpp"
+#include "fuzzy-section.hpp"
 #include "services/oauth/oauth-token-store.hpp"
 
 template <> struct fuzzy::FuzzySearchable<OAuth::TokenSet> {
@@ -10,17 +10,14 @@ template <> struct fuzzy::FuzzySearchable<OAuth::TokenSet> {
   }
 };
 
-class OAuthTokenStoreModel : public FuzzyListModel<OAuth::TokenSet> {
-  Q_OBJECT
-
+class OAuthTokenStoreSection : public FuzzySection<OAuth::TokenSet> {
 public:
-  using FuzzyListModel::FuzzyListModel;
+  QString sectionName() const override { return QStringLiteral("OAuth Token Sets ({count})"); }
 
 protected:
   QString displayTitle(const OAuth::TokenSet &set) const override;
   QString displaySubtitle(const OAuth::TokenSet &set) const override;
   QString displayIconSource(const OAuth::TokenSet &set) const override;
-  QVariantList displayAccessory(const OAuth::TokenSet &set) const override;
+  QVariantList displayAccessories(const OAuth::TokenSet &set) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const OAuth::TokenSet &set) const override;
-  QString sectionLabel() const override;
 };

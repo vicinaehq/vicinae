@@ -1,16 +1,14 @@
 #pragma once
-#include "bridge-view.hpp"
+#include "list-view-host.hpp"
+#include "manage-shortcuts-model.hpp"
 #include <QVariantList>
 #include <memory>
 
-class ManageShortcutsModel;
-class Shortcut;
 class ShortcutService;
 
-class ManageShortcutsViewHost : public ViewHostBase {
+class ManageShortcutsViewHost : public ListViewHost {
   Q_OBJECT
 
-  Q_PROPERTY(QObject *listModel READ listModel CONSTANT)
   Q_PROPERTY(bool hasDetail READ hasDetail NOTIFY detailChanged)
   Q_PROPERTY(QString detailContent READ detailContent NOTIFY detailChanged)
   Q_PROPERTY(QVariantList detailMetadata READ detailMetadata NOTIFY detailChanged)
@@ -23,11 +21,8 @@ public:
   QVariantMap qmlProperties() override;
   void initialize() override;
   void loadInitialData() override;
-  void textChanged(const QString &text) override;
-  void onReactivated() override;
   void beforePop() override;
 
-  QObject *listModel() const;
   bool hasDetail() const { return m_hasDetail; }
   QString detailContent() const { return m_detailContent; }
   QVariantList detailMetadata() const { return m_detailMetadata; }
@@ -38,7 +33,7 @@ private:
   void clearDetail();
   void reload();
 
-  ManageShortcutsModel *m_model = nullptr;
+  ManageShortcutsSection m_section;
   ShortcutService *m_shortcutService = nullptr;
 
   std::shared_ptr<Shortcut> m_currentShortcut;

@@ -2,13 +2,13 @@
 #include "clipboard-actions.hpp"
 #include "keyboard/keybind.hpp"
 
-QString BuiltinIconsModel::displayTitle(const IconEntry &e) const { return QString::fromStdString(e.name); }
+QString BuiltinIconsSection::displayTitle(const IconEntry &e) const { return QString::fromStdString(e.name); }
 
-QString BuiltinIconsModel::displayIconSource(const IconEntry &e) const {
+QString BuiltinIconsSection::displayIconSource(const IconEntry &e) const {
   return imageSourceFor(ImageURL::builtin(QString::fromStdString(e.name)));
 }
 
-std::unique_ptr<ActionPanelState> BuiltinIconsModel::buildActionPanel(const IconEntry &e) const {
+std::unique_ptr<ActionPanelState> BuiltinIconsSection::buildActionPanel(const IconEntry &e) const {
   auto panel = std::make_unique<ListActionPanelState>();
   auto *section = panel->createSection();
 
@@ -18,5 +18,3 @@ std::unique_ptr<ActionPanelState> BuiltinIconsModel::buildActionPanel(const Icon
 
   return panel;
 }
-
-QString BuiltinIconsModel::sectionLabel() const { return QStringLiteral("Icons ({count})"); }

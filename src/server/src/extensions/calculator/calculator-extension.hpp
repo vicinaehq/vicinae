@@ -1,6 +1,5 @@
 #pragma once
-#include "qml/bridge-view.hpp"
-#include "qml/calc-history-model.hpp"
+#include "qml/calc-history-view-host.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include "services/calculator-service/calculator-service.hpp"
 #include "command-database.hpp"
@@ -19,7 +18,7 @@ static const std::vector<Preference::DropdownData::Option> refreshRatesOptions =
     {"Every month", "monthly"},
 };
 
-class CalculatorHistoryCommand : public BuiltinViewCommand<BridgeView<CalcHistoryModel>> {
+class CalculatorHistoryCommand : public BuiltinViewCommand<CalcHistoryViewHost> {
   QString id() const override { return "history"; }
   QString name() const override { return "Calculator history"; }
   QString description() const override {

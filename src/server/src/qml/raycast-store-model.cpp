@@ -5,12 +5,11 @@
 #include "navigation-controller.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include "utils/utils.hpp"
+#include "view-utils.hpp"
 
-RaycastStoreModel::RaycastStoreModel(QObject *parent) : CommandListModel(parent) {}
-
-void RaycastStoreModel::setEntries(const std::vector<Raycast::Extension> &extensions,
-                                   ExtensionRegistry *registry, const Raycast::CompatMap &compat,
-                                   const QString &sectionName) {
+void RaycastStoreSection::setEntries(const std::vector<Raycast::Extension> &extensions,
+                                     ExtensionRegistry *registry, const Raycast::CompatMap &compat,
+                                     const QString &sectionName) {
   m_entries.clear();
   m_entries.reserve(extensions.size());
   for (const auto &ext : extensions) {
@@ -20,50 +19,19 @@ void RaycastStoreModel::setEntries(const std::vector<Raycast::Extension> &extens
     }
     m_entries.push_back({.extension = ext, .installed = registry->isInstalled(ext.id), .compatTier = tier});
   }
-
-  std::vector<SectionInfo> sections;
-  if (!m_entries.empty()) {
-    sections.push_back({.name = sectionName, .count = static_cast<int>(m_entries.size())});
-  }
-  setSections(sections);
+  m_sectionName = sectionName;
+  notifyChanged();
 }
 
-QHash<int, QByteArray> RaycastStoreModel::roleNames() const {
-  auto roles = CommandListModel::roleNames();
-  roles[DownloadCount] = "downloadCount";
-  roles[AuthorAvatar] = "authorAvatar";
-  roles[IsInstalled] = "isInstalled";
-  roles[CompatTierRole] = "compatTier";
-  return roles;
-}
+QString RaycastStoreSection::itemTitle(int i) const { return m_entries[i].extension.title; }
 
-QVariant RaycastStoreModel::data(const QModelIndex &index, int role) const {
-  int s, i;
-  if (role >= DownloadCount && !dataItemAt(index.row(), s, i)) return {};
+QString RaycastStoreSection::itemSubtitle(int i) const { return m_entries[i].extension.description; }
 
-  switch (role) {
-  case DownloadCount:
-    return formatCount(m_entries[i].extension.download_count);
-  case AuthorAvatar:
-    return imageSourceFor(m_entries[i].extension.author.validUserIcon());
-  case IsInstalled:
-    return m_entries[i].installed;
-  case CompatTierRole:
-    return static_cast<int>(m_entries[i].compatTier);
-  default:
-    return CommandListModel::data(index, role);
-  }
-}
-
-QString RaycastStoreModel::itemTitle(int, int i) const { return m_entries[i].extension.title; }
-
-QString RaycastStoreModel::itemSubtitle(int, int i) const { return m_entries[i].extension.description; }
-
-QString RaycastStoreModel::itemIconSource(int, int i) const {
+QString RaycastStoreSection::itemIconSource(int i) const {
   return imageSourceFor(m_entries[i].extension.themedIcon());
 }
 
-std::unique_ptr<ActionPanelState> RaycastStoreModel::createActionPanel(int, int i) const {
+std::unique_ptr<ActionPanelState> RaycastStoreSection::actionPanel(int i) const {
   const auto &entry = m_entries[i];
   auto panel = std::make_unique<ActionPanelState>();
   auto section = panel->createSection();
@@ -83,4 +51,20 @@ std::unique_ptr<ActionPanelState> RaycastStoreModel::createActionPanel(int, int 
   showDetails->setPrimary(true);
 
   return panel;
+}
+
+QVariant RaycastStoreSection::customData(int i, int role) const {
+  const auto &entry = m_entries[i];
+  switch (role) {
+  case DownloadCount:
+    return formatCount(entry.extension.download_count);
+  case AuthorAvatar:
+    return imageSourceFor(entry.extension.author.validUserIcon());
+  case IsInstalled:
+    return entry.installed;
+  case CompatTierRole:
+    return static_cast<int>(entry.compatTier);
+  default:
+    return {};
+  }
 }

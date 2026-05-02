@@ -3,20 +3,11 @@
 #include "service-registry.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 
-QUrl InstalledExtensionsViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/Vicinae/CommandListView.qml"));
-}
-
-QVariantMap InstalledExtensionsViewHost::qmlProperties() {
-  return {{QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(m_model))}};
-}
-
 void InstalledExtensionsViewHost::initialize() {
   BaseView::initialize();
+  initModel();
 
-  m_model = new InstalledExtensionsModel(this);
-  m_model->setScope(ViewScope(context(), this));
-  m_model->initialize();
+  model()->addSource(&m_section);
 
   setSearchPlaceholderText("Search extensions...");
 
@@ -26,15 +17,7 @@ void InstalledExtensionsViewHost::initialize() {
 
 void InstalledExtensionsViewHost::loadInitialData() { reload(); }
 
-void InstalledExtensionsViewHost::textChanged(const QString &text) { m_model->setFilter(text); }
-
-void InstalledExtensionsViewHost::onReactivated() { m_model->refreshActionPanel(); }
-
-void InstalledExtensionsViewHost::beforePop() { m_model->beforePop(); }
-
-QObject *InstalledExtensionsViewHost::listModel() const { return m_model; }
-
 void InstalledExtensionsViewHost::reload() {
   auto registry = ServiceRegistry::instance()->extensionRegistry();
-  m_model->setItems(registry->scanAll());
+  m_section.setItems(registry->scanAll());
 }

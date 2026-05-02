@@ -10,49 +10,25 @@
 #include <QDateTime>
 #include <utility>
 
-ClipboardHistoryModel::ClipboardHistoryModel(QObject *parent) : CommandListModel(parent) {}
-
-void ClipboardHistoryModel::setEntries(const PaginatedResponse<ClipboardHistoryEntry> &page) {
+void ClipboardHistorySection::setEntries(const PaginatedResponse<ClipboardHistoryEntry> &page) {
   m_entries = page.data;
-  std::vector<SectionInfo> sections;
-  if (!m_entries.empty()) {
-    sections.push_back({.name = QString(), .count = static_cast<int>(m_entries.size())});
-  }
-  bool incremental = !selectFirstOnReset();
-  setSections(sections);
-  setSelectFirstOnReset(false);
-  if (incremental) refreshActionPanel();
+  notifyChanged();
 }
 
-QHash<int, QByteArray> ClipboardHistoryModel::roleNames() const {
-  auto roles = CommandListModel::roleNames();
-  roles[IsPinned] = "isPinned";
-  return roles;
-}
+QString ClipboardHistorySection::itemId(int i) const { return m_entries[i].id; }
 
-QVariant ClipboardHistoryModel::data(const QModelIndex &index, int role) const {
-  if (role == IsPinned) {
-    int s, i;
-    if (!dataItemAt(index.row(), s, i)) return false;
-    return m_entries[i].pinnedAt != 0;
-  }
-  return CommandListModel::data(index, role);
-}
+QString ClipboardHistorySection::itemTitle(int i) const { return m_entries[i].textPreview; }
 
-QString ClipboardHistoryModel::itemId(int, int i) const { return m_entries[i].id; }
-
-QString ClipboardHistoryModel::itemTitle(int, int i) const { return m_entries[i].textPreview; }
-
-QString ClipboardHistoryModel::itemSubtitle(int, int i) const {
+QString ClipboardHistorySection::itemSubtitle(int i) const {
   auto dt = QDateTime::fromSecsSinceEpoch(m_entries[i].updatedAt);
   return getRelativeTimeString(dt);
 }
 
-QString ClipboardHistoryModel::itemIconSource(int, int i) const {
+QString ClipboardHistorySection::itemIconSource(int i) const {
   return imageSourceFor(iconForEntry(m_entries[i]));
 }
 
-ImageURL ClipboardHistoryModel::iconForEntry(const ClipboardHistoryEntry &entry) const {
+ImageURL ClipboardHistorySection::iconForEntry(const ClipboardHistoryEntry &entry) const {
   switch (entry.kind) {
   case ClipboardOfferKind::Image:
     return ImageURL::builtin("image");
@@ -68,11 +44,7 @@ ImageURL ClipboardHistoryModel::iconForEntry(const ClipboardHistoryEntry &entry)
   }
 }
 
-void ClipboardHistoryModel::onItemSelected(int, int i) {
-  if (i >= 0 && std::cmp_less(i, m_entries.size())) { emit entrySelected(m_entries[i]); }
-}
-
-std::unique_ptr<ActionPanelState> ClipboardHistoryModel::createActionPanel(int, int i) const {
+std::unique_ptr<ActionPanelState> ClipboardHistorySection::actionPanel(int i) const {
   const auto &entry = m_entries[i];
   auto panel = std::make_unique<ListActionPanelState>();
   auto clipman = scope().services()->clipman();

@@ -1,45 +1,29 @@
 #pragma once
-#include "bridge-view.hpp"
+#include "list-view-host.hpp"
+#include "local-storage-model.hpp"
 
-class LocalStorageNamespaceModel;
-class LocalStorageItemModel;
-
-class LocalStorageViewHost : public ViewHostBase {
+class LocalStorageViewHost : public ListViewHost {
   Q_OBJECT
-  Q_PROPERTY(QObject *listModel READ listModel CONSTANT)
 
 public:
-  QUrl qmlComponentUrl() const override;
-  QVariantMap qmlProperties() override;
   void initialize() override;
   void loadInitialData() override;
-  void textChanged(const QString &text) override;
-  void onReactivated() override;
-
-  QObject *listModel() const;
 
 private:
-  LocalStorageNamespaceModel *m_model = nullptr;
+  LocalStorageNamespaceSection m_section;
 };
 
-class LocalStorageItemViewHost : public ViewHostBase {
+class LocalStorageItemViewHost : public ListViewHost {
   Q_OBJECT
-  Q_PROPERTY(QObject *listModel READ listModel CONSTANT)
 
 public:
   LocalStorageItemViewHost(const QString &ns, std::vector<QString> keys);
 
-  QUrl qmlComponentUrl() const override;
-  QVariantMap qmlProperties() override;
   void initialize() override;
   void loadInitialData() override;
-  void textChanged(const QString &text) override;
-  void onReactivated() override;
-
-  QObject *listModel() const;
 
 private:
   QString m_ns;
   std::vector<QString> m_keys;
-  LocalStorageItemModel *m_model = nullptr;
+  LocalStorageItemSection m_section;
 };

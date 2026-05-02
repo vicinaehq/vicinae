@@ -1,8 +1,8 @@
 #include "vicinae-store-view-host.hpp"
-#include "vicinae-store-model.hpp"
 #include "service-registry.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include "services/toast/toast-service.hpp"
+#include "utils/utils.hpp"
 
 VicinaeStoreViewHost::VicinaeStoreViewHost() {
   connect(&m_watcher, &QFutureWatcher<VicinaeStore::ListResult>::finished, this,
@@ -20,9 +20,9 @@ QVariantMap VicinaeStoreViewHost::qmlProperties() {
 void VicinaeStoreViewHost::initialize() {
   BaseView::initialize();
 
-  m_model = new VicinaeStoreModel(this);
-  m_model->setScope(ViewScope(context(), this));
-  m_model->initialize();
+  m_model.setScope(ViewScope(context(), this));
+  m_model.addSource(&m_section);
+
   m_store = context()->services->vicinaeStore();
 
   setSearchPlaceholderText("Browse Vicinae extensions");
@@ -33,11 +33,9 @@ void VicinaeStoreViewHost::initialize() {
 
 void VicinaeStoreViewHost::loadInitialData() { fetchExtensions(); }
 
-void VicinaeStoreViewHost::textChanged(const QString &text) { m_model->setFilter(text); }
+void VicinaeStoreViewHost::textChanged(const QString &text) { m_model.setFilter(text); }
 
-void VicinaeStoreViewHost::onReactivated() { m_model->refreshActionPanel(); }
-
-QObject *VicinaeStoreViewHost::listModel() const { return m_model; }
+void VicinaeStoreViewHost::onReactivated() { m_model.refreshActionPanel(); }
 
 void VicinaeStoreViewHost::fetchExtensions() {
   setLoading(true);
@@ -54,13 +52,13 @@ void VicinaeStoreViewHost::handleFinished() {
     return;
   }
 
-  m_model->setEntries(result->extensions, context()->services->extensionRegistry(),
-                      QStringLiteral("Extensions"));
+  m_section.setEntries(result->extensions, context()->services->extensionRegistry(),
+                       QStringLiteral("Extensions"));
 }
 
 void VicinaeStoreViewHost::refresh() {
   if (auto *cached = m_store->cached()) {
-    m_model->setEntries(*cached, context()->services->extensionRegistry(), QStringLiteral("Extensions"));
+    m_section.setEntries(*cached, context()->services->extensionRegistry(), QStringLiteral("Extensions"));
   } else {
     fetchExtensions();
   }

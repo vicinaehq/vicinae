@@ -1,44 +1,50 @@
 #pragma once
 #include "fuzzy/scored.hpp"
-#include "command-list-model.hpp"
+#include "section-source.hpp"
 #include <filesystem>
-#include <variant>
+#include <vector>
 
-using CommandLine = std::vector<std::string>;
-using RunProgramItem = std::variant<CommandLine, std::filesystem::path>;
+enum class SystemRunDefaultAction { RunInTerminal, RunInTerminalHold, Run };
 
-class SystemRunModel : public CommandListModel {
-  Q_OBJECT
+SystemRunDefaultAction parseSystemRunDefaultAction(QStringView s);
 
+class CommandLineSection : public SectionSource {
 public:
-  enum class DefaultAction { RunInTerminal, RunInTerminalHold, Run };
+  void setCommandLine(std::vector<std::string> cmdline, bool hasProgram);
 
-  static DefaultAction parseDefaultAction(QStringView s);
+  void setDefaultAction(SystemRunDefaultAction action) { m_defaultAction = action; }
 
-  using CommandListModel::CommandListModel;
-
-  void setDefaultAction(DefaultAction action) { m_defaultAction = action; }
-
-  void setData(std::vector<std::string> cmdline, bool hasProgram,
-               std::vector<Scored<std::filesystem::path>> programs);
-
-  void setFilter(const QString &) override {}
+  QString sectionName() const override { return QStringLiteral("Execute query"); }
+  int count() const override { return m_hasProgram ? 1 : 0; }
 
 protected:
-  QString itemTitle(int section, int item) const override;
-  QString itemSubtitle(int section, int item) const override;
-  QString itemIconSource(int section, int item) const override;
-  std::unique_ptr<ActionPanelState> createActionPanel(int section, int item) const override;
+  QString itemTitle(int i) const override;
+  QString itemIconSource(int i) const override;
+  std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
 
 private:
-  const RunProgramItem &itemAt(int section, int item) const;
-
   std::vector<std::string> m_cmdline;
-  std::vector<Scored<std::filesystem::path>> m_programs;
   bool m_hasProgram = false;
-  DefaultAction m_defaultAction = DefaultAction::RunInTerminal;
+  SystemRunDefaultAction m_defaultAction = SystemRunDefaultAction::RunInTerminal;
+};
 
-  std::vector<RunProgramItem> m_flatItems;
-  int m_cmdCount = 0;
-  int m_progCount = 0;
+class ProgramsSection : public SectionSource {
+public:
+  void setPrograms(std::vector<Scored<std::filesystem::path>> programs);
+
+  void setDefaultAction(SystemRunDefaultAction action) { m_defaultAction = action; }
+
+  QString sectionName() const override { return QStringLiteral("Programs (%1)").arg(m_programs.size()); }
+
+  int count() const override { return static_cast<int>(m_programs.size()); }
+
+protected:
+  QString itemTitle(int i) const override;
+  QString itemSubtitle(int i) const override;
+  QString itemIconSource(int) const override { return {}; }
+  std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
+
+private:
+  std::vector<Scored<std::filesystem::path>> m_programs;
+  SystemRunDefaultAction m_defaultAction = SystemRunDefaultAction::RunInTerminal;
 };

@@ -2,20 +2,12 @@
 #include "manage-fallback-model.hpp"
 #include "service-registry.hpp"
 
-QUrl ManageFallbackViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/Vicinae/CommandListView.qml"));
-}
-
-QVariantMap ManageFallbackViewHost::qmlProperties() {
-  return {{QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(m_model))}};
-}
-
 void ManageFallbackViewHost::initialize() {
   BaseView::initialize();
+  initModel();
 
-  m_model = new ManageFallbackModel(this);
-  m_model->setScope(ViewScope(context(), this));
-  m_model->initialize();
+  model()->addSource(&m_enabledSection);
+  model()->addSource(&m_availableSection);
 
   setSearchPlaceholderText("Search commands...");
 
@@ -26,25 +18,25 @@ void ManageFallbackViewHost::initialize() {
 
 void ManageFallbackViewHost::loadInitialData() { reload(); }
 
-void ManageFallbackViewHost::textChanged(const QString &text) { m_model->setFilter(text); }
-
-void ManageFallbackViewHost::onReactivated() { m_model->refreshActionPanel(); }
-
-void ManageFallbackViewHost::beforePop() { m_model->beforePop(); }
-
-QObject *ManageFallbackViewHost::listModel() const { return m_model; }
-
 void ManageFallbackViewHost::reload() {
   auto manager = context()->services->rootItemManager();
 
-  m_model->setFallbackItems(manager->fallbackItems());
+  auto fallbacks = manager->fallbackItems();
+  m_enabledSection.setFallbackOrder(fallbacks);
 
   auto results = manager->search("");
-  std::vector<RootItemPtr> items;
+  std::vector<RootItemPtr> enabled;
+  std::vector<RootItemPtr> available;
   for (const auto &scored : results) {
     auto item = scored.item.get().get();
-    if (item->isSuitableForFallback()) items.emplace_back(scored.item.get());
+    if (!item->isSuitableForFallback()) continue;
+    auto ptr = scored.item.get();
+    if (std::ranges::find(fallbacks, ptr) != fallbacks.end())
+      enabled.emplace_back(std::move(ptr));
+    else
+      available.emplace_back(std::move(ptr));
   }
 
-  m_model->setItems(std::move(items));
+  m_enabledSection.setItems(std::move(enabled));
+  m_availableSection.setItems(std::move(available));
 }

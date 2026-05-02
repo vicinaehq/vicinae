@@ -1,5 +1,5 @@
 #pragma once
-#include "fuzzy-list-model.hpp"
+#include "fuzzy-section.hpp"
 #include "services/browser-extension-service.hpp"
 
 using BrowserTab = BrowserExtensionService::BrowserTab;
@@ -10,17 +10,14 @@ template <> struct fuzzy::FuzzySearchable<BrowserTab> {
   }
 };
 
-class BrowserTabsModel : public FuzzyListModel<BrowserTab> {
-  Q_OBJECT
-
+class BrowserTabsSection : public FuzzySection<BrowserTab> {
 public:
-  using FuzzyListModel::FuzzyListModel;
+  QString sectionName() const override { return QStringLiteral("Tabs ({count})"); }
 
 protected:
   QString displayTitle(const BrowserTab &tab) const override;
   QString displaySubtitle(const BrowserTab &tab) const override;
   QString displayIconSource(const BrowserTab &tab) const override;
-  QVariantList displayAccessory(const BrowserTab &tab) const override;
+  QVariantList displayAccessories(const BrowserTab &tab) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const BrowserTab &tab) const override;
-  QString sectionLabel() const override;
 };

@@ -2,22 +2,17 @@
 #include "system-run-model.hpp"
 #include "xdgpp/desktop-entry/exec.hpp"
 
-QUrl SystemRunViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/Vicinae/CommandListView.qml"));
-}
-
-QVariantMap SystemRunViewHost::qmlProperties() {
-  return {{QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(m_model))}};
-}
-
 void SystemRunViewHost::initialize() {
   BaseView::initialize();
+  initModel();
 
-  m_model = new SystemRunModel(this);
-  m_model->setScope(ViewScope(context(), this));
-  m_model->initialize();
-  m_model->setDefaultAction(
-      SystemRunModel::parseDefaultAction(command()->preferenceValues().value("default-action").toString()));
+  auto defaultAction =
+      parseSystemRunDefaultAction(command()->preferenceValues().value("default-action").toString());
+  m_cmdSection.setDefaultAction(defaultAction);
+  m_progSection.setDefaultAction(defaultAction);
+
+  model()->addSource(&m_cmdSection);
+  model()->addSource(&m_progSection);
 
   setSearchPlaceholderText("Search for a program to execute...");
   setLoading(true);
@@ -33,10 +28,6 @@ void SystemRunViewHost::loadInitialData() {}
 
 void SystemRunViewHost::textChanged(const QString &text) { refresh(text); }
 
-void SystemRunViewHost::onReactivated() { m_model->refreshActionPanel(); }
-
-QObject *SystemRunViewHost::listModel() const { return m_model; }
-
 void SystemRunViewHost::refresh(const QString &text) {
   auto str = text.trimmed().toStdString();
   auto parsed = xdgpp::ExecParser("").parse(str);
@@ -44,5 +35,6 @@ void SystemRunViewHost::refresh(const QString &text) {
 
   if (!parsed.empty()) hasProg = ProgramDb::programPath(parsed.front()).has_value();
 
-  m_model->setData(std::move(parsed), hasProg, m_programDb.search(str, 100));
+  m_cmdSection.setCommandLine(std::move(parsed), hasProg);
+  m_progSection.setPrograms(m_programDb.search(str, 100));
 }

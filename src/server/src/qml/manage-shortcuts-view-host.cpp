@@ -1,5 +1,4 @@
 #include "manage-shortcuts-view-host.hpp"
-#include "manage-shortcuts-model.hpp"
 #include "view-utils.hpp"
 #include "service-registry.hpp"
 #include "services/shortcut/shortcut-service.hpp"
@@ -19,11 +18,12 @@ QVariantMap ManageShortcutsViewHost::qmlProperties() {
 
 void ManageShortcutsViewHost::initialize() {
   BaseView::initialize();
+  initModel();
 
   m_shortcutService = ServiceRegistry::instance()->shortcuts();
-  m_model = new ManageShortcutsModel(this);
-  m_model->setScope(ViewScope(context(), this));
-  m_model->initialize();
+
+  m_section.setOnShortcutSelected([this](const std::shared_ptr<Shortcut> &s) { loadDetail(s); });
+  model()->addSource(&m_section);
 
   setSearchPlaceholderText("Search shortcuts...");
 
@@ -31,28 +31,20 @@ void ManageShortcutsViewHost::initialize() {
   connect(m_shortcutService, &ShortcutService::shortcutUpdated, this, &ManageShortcutsViewHost::reload);
   connect(m_shortcutService, &ShortcutService::shortcutRemoved, this, &ManageShortcutsViewHost::reload);
 
-  connect(m_model, &ManageShortcutsModel::shortcutSelected, this, &ManageShortcutsViewHost::loadDetail);
-
   connect(context()->navigation.get(), &NavigationController::completionValuesChanged, this,
           [this](const ArgumentValues &) { updateExpandedUrl(); });
 
-  connect(m_model, &QAbstractItemModel::modelReset, this, [this]() {
-    if (m_model->rowCount() == 0) clearDetail();
+  connect(model(), &QAbstractItemModel::modelReset, this, [this]() {
+    if (model()->rowCount() == 0) clearDetail();
   });
 }
 
 void ManageShortcutsViewHost::loadInitialData() { reload(); }
 
-void ManageShortcutsViewHost::textChanged(const QString &text) { m_model->setFilter(text); }
-
-void ManageShortcutsViewHost::onReactivated() { m_model->refreshActionPanel(); }
-
 void ManageShortcutsViewHost::beforePop() {
   clearDetail();
-  m_model->beforePop();
+  ListViewHost::beforePop();
 }
-
-QObject *ManageShortcutsViewHost::listModel() const { return m_model; }
 
 void ManageShortcutsViewHost::loadDetail(const std::shared_ptr<Shortcut> &shortcut) {
   m_currentShortcut = shortcut;
@@ -152,4 +144,4 @@ void ManageShortcutsViewHost::clearDetail() {
   emit detailChanged();
 }
 
-void ManageShortcutsViewHost::reload() { m_model->setItems(m_shortcutService->shortcuts()); }
+void ManageShortcutsViewHost::reload() { m_section.setItems(m_shortcutService->shortcuts()); }

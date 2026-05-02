@@ -1,5 +1,4 @@
 #include "font-browser-view-host.hpp"
-#include "font-browser-model.hpp"
 #include "clipboard-actions.hpp"
 #include "config/config.hpp"
 #include "view-utils.hpp"
@@ -89,14 +88,14 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas tempus, tellus
 
 } // namespace
 
-QString FontBrowserModel::displayTitle(const QString &item) const { return item; }
+QString FontBrowserSection::displayTitle(const QString &item) const { return item; }
 
-QString FontBrowserModel::displayIconSource(const QString &item) const {
+QString FontBrowserSection::displayIconSource(const QString &item) const {
   Q_UNUSED(item)
-  return qml::imageSourceFor(ImageURL::builtin("text"));
+  return imageSourceFor(ImageURL::builtin("text"));
 }
 
-std::unique_ptr<ActionPanelState> FontBrowserModel::buildActionPanel(const QString &item) const {
+std::unique_ptr<ActionPanelState> FontBrowserSection::buildActionPanel(const QString &item) const {
   auto panel = std::make_unique<ListActionPanelState>();
   auto section = panel->createSection();
 
@@ -118,31 +117,22 @@ QVariantMap FontBrowserViewHost::qmlProperties() {
 
 void FontBrowserViewHost::initialize() {
   BaseView::initialize();
+  initModel();
 
-  m_model = new FontBrowserModel(this);
-  m_model->setScope(ViewScope(context(), this));
-  m_model->initialize();
-
-  setSearchPlaceholderText("Browse fonts to preview...");
-
-  connect(m_model, &FontBrowserModel::fontSelected, this, [this](const QString &family) {
+  m_section.setOnFontSelected([this](const QString &family) {
     m_selectedFont = family;
     emit selectedFontChanged();
   });
+
+  model()->addSource(&m_section);
+
+  setSearchPlaceholderText("Browse fonts to preview...");
 }
 
 void FontBrowserViewHost::loadInitialData() {
   auto families = QFontDatabase::families();
   std::vector<QString> items(families.begin(), families.end());
-  m_model->setItems(std::move(items));
+  m_section.setItems(std::move(items));
 }
-
-void FontBrowserViewHost::textChanged(const QString &text) { m_model->setFilter(text); }
-
-void FontBrowserViewHost::onReactivated() { m_model->refreshActionPanel(); }
-
-void FontBrowserViewHost::beforePop() { m_model->beforePop(); }
-
-QObject *FontBrowserViewHost::listModel() const { return m_model; }
 
 QString FontBrowserViewHost::showcaseMarkdown() const { return showcaseMarkdownContent; }

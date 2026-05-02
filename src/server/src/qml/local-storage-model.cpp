@@ -4,11 +4,11 @@
 #include "services/toast/toast-service.hpp"
 #include "ui/action-pannel/action.hpp"
 
-QString LocalStorageNamespaceModel::displayIconSource(const QString &) const {
+QString LocalStorageNamespaceSection::displayIconSource(const QString &) const {
   return imageSourceFor(ImageURL::builtin("coin"));
 }
 
-std::unique_ptr<ActionPanelState> LocalStorageNamespaceModel::buildActionPanel(const QString &item) const {
+std::unique_ptr<ActionPanelState> LocalStorageNamespaceSection::buildActionPanel(const QString &item) const {
   auto panel = std::make_unique<ListActionPanelState>();
   auto *section = panel->createSection();
   section->addAction(
@@ -21,11 +21,11 @@ std::unique_ptr<ActionPanelState> LocalStorageNamespaceModel::buildActionPanel(c
   return panel;
 }
 
-QString LocalStorageItemModel::displayIconSource(const QString &) const {
+QString LocalStorageItemSection::displayIconSource(const QString &) const {
   return imageSourceFor(ImageURL::builtin("coin"));
 }
 
-std::unique_ptr<ActionPanelState> LocalStorageItemModel::buildActionPanel(const QString &item) const {
+std::unique_ptr<ActionPanelState> LocalStorageItemSection::buildActionPanel(const QString &item) const {
   auto panel = std::make_unique<ListActionPanelState>();
   auto *section = panel->createSection();
   section->addAction(new StaticAction("Show value", ImageURL::builtin("coin"),

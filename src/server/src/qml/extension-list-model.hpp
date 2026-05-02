@@ -1,10 +1,53 @@
 #pragma once
 #include "extend/list-model.hpp"
 #include "extension/extension-action-panel-builder.hpp"
-#include "command-list-model.hpp"
+#include "fuzzy/scored.hpp"
+#include "section-list-model.hpp"
+#include "section-source.hpp"
 #include <functional>
+#include <memory>
+#include <vector>
 
-class ExtensionListModel : public CommandListModel {
+class ExtensionListSection : public SectionSource {
+public:
+  using NotifyFn = ExtensionActionPanelBuilder::NotifyFn;
+  using SubmenuCache = ExtensionActionPanelBuilder::SubmenuCache;
+
+  ExtensionListSection(std::string name, std::vector<ListItemViewModel> items, bool filtering,
+                       NotifyFn notify, SubmenuCache *cache,
+                       const std::optional<ActionPannelModel> *globalActions);
+
+  QString sectionName() const override { return QString::fromStdString(m_name); }
+  int count() const override;
+  void setFilter(std::string_view query) override;
+
+  void setOnItemSelected(std::function<void(const ListItemViewModel *)> cb) {
+    m_onItemSelected = std::move(cb);
+  }
+  void onSelected(int i) override;
+
+protected:
+  QString itemTitle(int i) const override;
+  QString itemSubtitle(int i) const override;
+  QString itemIconSource(int i) const override;
+  QVariantList itemAccessories(int i) const override;
+  std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
+
+private:
+  const ListItemViewModel &itemAt(int i) const;
+
+  std::string m_name;
+  std::vector<ListItemViewModel> m_items;
+  std::vector<Scored<int>> m_filtered;
+  bool m_filtering;
+  std::string m_query;
+  NotifyFn m_notify;
+  SubmenuCache *m_cache;
+  const std::optional<ActionPannelModel> *m_globalActions;
+  std::function<void(const ListItemViewModel *)> m_onItemSelected;
+};
+
+class ExtensionListModel : public SectionListModel {
   Q_OBJECT
   Q_PROPERTY(QString emptyTitle READ emptyTitle NOTIFY emptyViewChanged)
   Q_PROPERTY(QString emptyDescription READ emptyDescription NOTIFY emptyViewChanged)
@@ -15,16 +58,14 @@ class ExtensionListModel : public CommandListModel {
   Q_PROPERTY(QVariantList detailMetadata READ detailMetadata NOTIFY detailChanged)
 
 public:
-  using NotifyFn = std::function<void(const QString &handler, const QJsonArray &args)>;
+  using NotifyFn = ExtensionActionPanelBuilder::NotifyFn;
 
   explicit ExtensionListModel(NotifyFn notify, QObject *parent = nullptr);
 
-  void setExtensionData(const ListModel &model, bool resetSelection = true);
+  void setExtensionData(const ListModel &model, bool resetSelection);
+  void setFilter(const QString &text);
 
-  void setFilter(const QString &text) override;
-  QString searchPlaceholder() const override;
-  QUrl qmlComponentUrl() const override { return QUrl(QStringLiteral("qrc:/Vicinae/CommandListView.qml")); }
-  void onItemSelected(int section, int item) override;
+  QString searchPlaceholder() const;
 
   QString emptyTitle() const;
   QString emptyDescription() const;
@@ -40,30 +81,16 @@ signals:
   void emptyViewChanged();
 
 protected:
-  QString itemTitle(int section, int item) const override;
-  QString itemSubtitle(int section, int item) const override;
-  QString itemIconSource(int section, int item) const override;
-  QVariantList itemAccessory(int section, int item) const override;
-  std::unique_ptr<ActionPanelState> createActionPanel(int section, int item) const override;
   void onSelectionCleared() override;
 
 private:
-  struct Section {
-    std::string name;
-    std::vector<ListItemViewModel> items;
-  };
-
-  void rebuildFromModel();
-  const ListItemViewModel *itemAt(int section, int item) const;
+  void handleItemSelected(const ListItemViewModel *item);
 
   NotifyFn m_notify;
   mutable ExtensionActionPanelBuilder::SubmenuCache m_submenuCache;
   std::optional<DetailModel> m_currentDetail;
-  std::vector<Section> m_sections;
-  std::vector<Section> m_filteredSections;
+  std::vector<std::unique_ptr<ExtensionListSection>> m_ownedSections;
   ListModel m_model;
   QString m_filter;
   QString m_placeholder;
-
-  const std::vector<Section> &activeSections() const;
 };

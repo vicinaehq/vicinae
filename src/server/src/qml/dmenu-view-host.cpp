@@ -1,5 +1,4 @@
 #include "dmenu-view-host.hpp"
-#include "dmenu-model.hpp"
 #include "utils/utils.hpp"
 #include "view-utils.hpp"
 #include <ranges>
@@ -15,21 +14,18 @@ QUrl DMenuViewHost::qmlComponentUrl() const {
 
 QVariantMap DMenuViewHost::qmlProperties() {
   if (m_data.noQuickLook) {
-    return {{QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(m_model))}};
+    return {{QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(model()))}};
   }
   return {{QStringLiteral("host"), QVariant::fromValue(this)}};
 }
 
 void DMenuViewHost::initialize() {
   BaseView::initialize();
+  initModel();
 
-  m_model = new DMenuModel(this);
-  m_model->setScope(ViewScope(context(), this));
-  m_model->initialize();
-
-  if (m_data.noQuickLook) m_model->setNoQuickLook(true);
-  if (m_data.noSection) m_model->setNoSection(true);
-  if (m_data.sectionTitle) m_model->setSectionTemplate(*m_data.sectionTitle);
+  if (m_data.noQuickLook) m_section.setNoQuickLook(true);
+  if (m_data.noSection) m_section.setNoSection(true);
+  if (m_data.sectionTitle) m_section.setSectionTemplate(*m_data.sectionTitle);
   if (m_data.noFooter) setStatusBarVisiblity(false);
 
   setSearchPlaceholderText(m_data.placeholder.value_or("Search entries...").c_str());
@@ -37,36 +33,37 @@ void DMenuViewHost::initialize() {
   auto entries = std::views::split(m_data.rawContent, std::string_view("\n")) |
                  std::views::transform([](auto &&s) { return std::string_view(s); }) |
                  std::views::filter([](auto &&s) { return !s.empty(); }) | std::ranges::to<std::vector>();
-  m_model->setRawEntries(std::move(entries));
+  m_section.setRawEntries(std::move(entries));
 
-  connect(m_model, &DMenuModel::entryChosen, this, [this](const QString &text) {
+  m_section.setOnEntryChosen([this](const QString &text) {
     m_selected = true;
     emit selected(text);
   });
 
   if (!m_data.noQuickLook) {
-    connect(m_model, &DMenuModel::fileHighlighted, this, &DMenuViewHost::loadDetail);
+    m_section.setOnFileHighlighted([this](std::string_view path) { loadDetail(path); });
   }
+
+  model()->addSource(&m_section);
 }
 
 void DMenuViewHost::loadInitialData() {
   if (m_data.query) {
     setSearchText(m_data.query.value_or("").c_str());
   } else {
-    m_model->setFilter({});
+    model()->setFilter({});
   }
 }
 
 void DMenuViewHost::textChanged(const QString &text) {
   clearDetail();
-  m_model->setFilter(text);
+  m_section.setCurrentSearchText(text);
+  model()->setFilter(text);
 }
 
 void DMenuViewHost::beforePop() {
   if (!m_selected) { emit selected(""); }
 }
-
-QObject *DMenuViewHost::listModel() const { return m_model; }
 
 void DMenuViewHost::loadDetail(std::string_view path) {
   auto qpath = QString::fromUtf8(path.data(), path.size());

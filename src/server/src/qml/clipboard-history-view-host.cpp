@@ -1,6 +1,5 @@
 #include "clipboard-history-view-host.hpp"
 #include "extensions/clipboard/history/clipboard-history-controller.hpp"
-#include "clipboard-history-model.hpp"
 #include "view-utils.hpp"
 #include "service-registry.hpp"
 #include "services/clipboard/clipboard-service.hpp"
@@ -67,15 +66,17 @@ void ClipboardHistoryViewHost::initialize() {
   BaseView::initialize();
 
   m_clipman = context()->services->clipman();
-  m_model = new ClipboardHistoryModel(this);
-  m_model->setScope(ViewScope(context(), this));
-  m_model->initialize();
+  m_model.setScope(ViewScope(context(), this));
+
+  m_section.setOnEntrySelected([this](const ClipboardHistoryEntry &e) { loadDetail(e); });
+  m_model.addSource(&m_section);
+
   m_controller = new ClipboardHistoryController(m_clipman, this);
 
   auto preferences = command()->preferenceValues();
   auto defaultActionStr = preferences.value("defaultAction").toString();
-  m_model->setDefaultAction(defaultActionStr == "paste" ? ClipboardHistoryModel::DefaultAction::Paste
-                                                        : ClipboardHistoryModel::DefaultAction::Copy);
+  m_section.setDefaultAction(defaultActionStr == "paste" ? ClipboardHistorySection::DefaultAction::Paste
+                                                         : ClipboardHistorySection::DefaultAction::Copy);
 
   setSearchPlaceholderText("Browse clipboard history...");
 
@@ -92,13 +93,14 @@ void ClipboardHistoryViewHost::initialize() {
 
   connect(m_controller, &ClipboardHistoryController::dataRetrieved, this,
           [this](const PaginatedResponse<ClipboardHistoryEntry> &page) {
-            m_model->setEntries(page);
+            bool const incremental = !m_model.selectFirstOnReset();
+            m_section.setEntries(page);
+            m_model.setSelectFirstOnReset(false);
+            if (incremental) m_model.refreshActionPanel();
             handleDataRetrieved(page.totalCount);
           });
 
   connect(m_controller, &ClipboardHistoryController::dataLoadingChanged, this, &BaseView::setLoading);
-
-  connect(m_model, &ClipboardHistoryModel::entrySelected, this, &ClipboardHistoryViewHost::loadDetail);
 
   auto savedFilter = getSavedDropdownFilter().value_or("all");
   if (auto it = savedFilterToKind.find(savedFilter); it != savedFilterToKind.end()) {
@@ -110,15 +112,13 @@ void ClipboardHistoryViewHost::initialize() {
 void ClipboardHistoryViewHost::loadInitialData() { m_controller->setFilter(searchText()); }
 
 void ClipboardHistoryViewHost::textChanged(const QString &text) {
-  m_model->resetSelectionOnNextUpdate();
+  m_model.setSelectFirstOnReset(true);
   m_controller->setFilter(text);
 }
 
-void ClipboardHistoryViewHost::onReactivated() { m_model->refreshActionPanel(); }
+void ClipboardHistoryViewHost::onReactivated() { m_model.refreshActionPanel(); }
 
-void ClipboardHistoryViewHost::beforePop() { m_model->beforePop(); }
-
-QObject *ClipboardHistoryViewHost::listModel() const { return m_model; }
+void ClipboardHistoryViewHost::beforePop() { m_model.beforePop(); }
 
 void ClipboardHistoryViewHost::toggleMonitoring() {
   QJsonObject patch;
@@ -136,7 +136,7 @@ void ClipboardHistoryViewHost::setKindFilter(int kind) {
   emit currentKindFilterChanged();
 
   auto offerKind = kindFromFilterIndex(kind);
-  m_model->resetSelectionOnNextUpdate();
+  m_model.setSelectFirstOnReset(true);
   m_controller->setKindFilter(offerKind);
 
   if (kind >= 0 && kind <= 4) { saveDropdownFilter(filterIndexToSavedValue[kind]); }
@@ -236,8 +236,6 @@ void ClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
   }
 
   if (mime.startsWith("image/")) {
-    // Create a fresh temp file each time so the URL changes and QML does not
-    // serve a stale cached image from a previous selection.
     m_tmpFile = std::make_unique<QTemporaryFile>();
     m_tmpFile->setAutoRemove(true);
     if (m_tmpFile->open()) {

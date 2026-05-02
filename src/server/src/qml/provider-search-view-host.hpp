@@ -1,24 +1,17 @@
 #pragma once
-#include "bridge-view.hpp"
+#include "provider-search-model.hpp"
+#include "list-view-host.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 
-class ProviderSearchModel;
-
-class ProviderSearchViewHost : public ViewHostBase {
+class ProviderSearchViewHost : public ListViewHost {
   Q_OBJECT
-  Q_PROPERTY(QObject *listModel READ listModel CONSTANT)
 
 public:
   explicit ProviderSearchViewHost(const RootProvider &provider);
 
-  QUrl qmlComponentUrl() const override;
-  QVariantMap qmlProperties() override;
   void initialize() override;
   void loadInitialData() override;
   void textChanged(const QString &text) override;
-  void onReactivated() override;
-
-  QObject *listModel() const;
 
 private:
   void refresh(const QString &text);
@@ -26,5 +19,5 @@ private:
   QString m_providerId;
   QString m_displayName;
   ImageURL m_icon;
-  ProviderSearchModel *m_model = nullptr;
+  ProviderSearchSection m_section;
 };

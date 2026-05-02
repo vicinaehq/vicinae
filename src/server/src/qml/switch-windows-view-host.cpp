@@ -1,24 +1,14 @@
 #include "switch-windows-view-host.hpp"
-#include "switch-windows-model.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include <QTimer>
 
-QUrl SwitchWindowsViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/Vicinae/CommandListView.qml"));
-}
-
-QVariantMap SwitchWindowsViewHost::qmlProperties() {
-  return {{QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(m_model))}};
-}
-
 void SwitchWindowsViewHost::initialize() {
   BaseView::initialize();
+  initModel();
 
-  m_model = new SwitchWindowsModel(this);
-  m_model->setScope(ViewScope(context(), this));
-  m_model->initialize();
+  model()->addSource(&m_section);
 
   setSearchPlaceholderText("Search open window...");
 
@@ -35,14 +25,8 @@ void SwitchWindowsViewHost::textChanged(const QString &text) {
     refreshWindows();
     return;
   }
-  m_model->setFilter(text);
+  model()->setFilter(text);
 }
-
-void SwitchWindowsViewHost::onReactivated() { m_model->refreshActionPanel(); }
-
-void SwitchWindowsViewHost::beforePop() { m_model->beforePop(); }
-
-QObject *SwitchWindowsViewHost::listModel() const { return m_model; }
 
 void SwitchWindowsViewHost::refreshWindows() {
   auto wm = ServiceRegistry::instance()->windowManager();
@@ -59,7 +43,7 @@ void SwitchWindowsViewHost::refreshWindows() {
   }
 
   m_lastFetch = std::chrono::steady_clock::now();
-  m_model->setItems(std::move(entries));
+  m_section.setItems(std::move(entries));
 
-  if (!searchText().isEmpty()) { m_model->setFilter(searchText()); }
+  if (!searchText().isEmpty()) { model()->setFilter(searchText()); }
 }

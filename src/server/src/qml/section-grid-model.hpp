@@ -1,16 +1,14 @@
 #pragma once
+#include "grid-source.hpp"
 #include "view-scope.hpp"
-#include "view-utils.hpp"
 #include <QAbstractListModel>
-#include <QUrl>
 #include <cstdint>
 #include <memory>
-#include <optional>
 #include <vector>
 
 class ActionPanelState;
 
-class CommandGridModel : public QAbstractListModel {
+class SectionGridModel : public QAbstractListModel {
   Q_OBJECT
   Q_PROPERTY(int selectedSection READ selectedSection NOTIFY selectionChanged)
   Q_PROPERTY(int selectedItem READ selectedItem NOTIFY selectionChanged)
@@ -29,23 +27,29 @@ public:
     RowAspectRatioRole,
   };
 
-  explicit CommandGridModel(QObject *parent = nullptr);
+  explicit SectionGridModel(QObject *parent = nullptr);
+
+  void setScope(const ViewScope &scope) { m_scope = scope; }
+  void addSource(GridSource *source);
+  void clearSources();
+
+  void rebuild();
+  void setFilter(const QString &text);
 
   int rowCount(const QModelIndex &parent = {}) const override;
   QVariant data(const QModelIndex &index, int role) const override;
   QHash<int, QByteArray> roleNames() const override;
 
-  void setScope(const ViewScope &scope) { m_scope = scope; }
-  virtual void initialize() {}
-  virtual void setFilter(const QString &text) = 0;
-  virtual QString searchPlaceholder() const { return QStringLiteral("Search..."); }
-  virtual QUrl qmlComponentUrl() const = 0;
-  virtual void beforePop() {}
-  void refreshActionPanel();
-
   int selectedSection() const { return m_selSection; }
   int selectedItem() const { return m_selItem; }
-  Q_INVOKABLE virtual QString cellTooltip(int section, int item) const;
+  bool awaitingData() const { return m_awaitingData; }
+  int columns() const { return m_columns; }
+  double aspectRatio() const { return m_aspectRatio; }
+
+  void setColumns(int cols);
+  void setAspectRatio(double ratio);
+  void setSelectFirstOnReset(bool value) { m_selectFirstOnReset = value; }
+
   Q_INVOKABLE void select(int section, int item);
   Q_INVOKABLE void activateSelected();
   Q_INVOKABLE void navigateUp();
@@ -57,13 +61,9 @@ public:
   Q_INVOKABLE int flatRowForSelection() const;
   Q_INVOKABLE bool alignSelectionScrollToTop() const;
 
-  int columns() const { return m_columns; }
-  void setColumns(int cols);
-
-  double aspectRatio() const { return m_aspectRatio; }
-  void setAspectRatio(double ratio);
-
-  bool awaitingData() const { return m_awaitingData; }
+  void refreshActionPanel();
+  void selectFirst();
+  void beforePop() {}
 
 signals:
   void selectionChanged();
@@ -72,28 +72,21 @@ signals:
   void awaitingDataChanged();
 
 protected:
+  virtual void onSelectionCleared();
+  const ViewScope &scope() const { return m_scope; }
+
+  bool resolveSelection(int section, int item, int &sourceIdx, int &itemIdx) const;
+  const std::vector<GridSource *> &sources() const { return m_sources; }
+
+private:
   struct SectionInfo {
-    QString name;
+    int sourceIdx;
     int count;
+    QString name;
     std::optional<int> columns;
     std::optional<double> aspectRatio;
   };
 
-  void setSections(const std::vector<SectionInfo> &sections);
-  void selectFirst();
-
-  void setSelectFirstOnReset(bool value) { m_selectFirstOnReset = value; }
-
-  virtual std::unique_ptr<ActionPanelState> createActionPanel(int section, int item) const = 0;
-  virtual void onItemSelected(int section, int item) {}
-  virtual void onSelectionCleared();
-
-  const ViewScope &scope() const { return m_scope; }
-  const std::vector<SectionInfo> &sections() const { return m_sections; }
-  QString imageSourceFor(const ImageURL &url) const { return qml::imageSourceFor(url); }
-  void setSelectedIndex(int index);
-
-private:
   struct FlatRow {
     enum Kind : uint8_t { SectionHeader, ItemRow };
     Kind kind;
@@ -105,7 +98,8 @@ private:
     double aspectRatio = 1.0;
   };
 
-  std::vector<FlatRow> buildFlatList(const std::vector<SectionInfo> &sections);
+  void rebuildFromSources();
+  std::vector<FlatRow> buildFlatList() const;
   void rebuildRows();
   int sectionColumns(int sectionIdx) const;
   int nextNonEmptySection(int sectionIdx, int direction) const;
@@ -115,6 +109,7 @@ private:
   void fromGlobal(int globalIdx, int &section, int &item) const;
 
   ViewScope m_scope;
+  std::vector<GridSource *> m_sources;
   std::vector<SectionInfo> m_sections;
   std::vector<FlatRow> m_rows;
   int m_selSection = -1;
@@ -123,8 +118,6 @@ private:
   double m_aspectRatio = 1.0;
   bool m_selectFirstOnReset = false;
   bool m_awaitingData = true;
-  int m_selectedIndex = -1;
-  int m_lastNavDirection = 0;
   bool m_preferSectionHeaderForSelection = false;
   bool m_alignSelectionScrollToTop = false;
 };

@@ -58,9 +58,9 @@ class SystemRunCommand : public BuiltinCallbackCommand {
     auto appDb = ctx->services->appDb();
     auto argv = Utils::toQStringVec(parsedArgs);
 
-    using DA = SystemRunModel::DefaultAction;
+    using DA = SystemRunDefaultAction;
 
-    switch (SystemRunModel::parseDefaultAction(ctrl->preferenceValues().value("default-action").toString())) {
+    switch (parseSystemRunDefaultAction(ctrl->preferenceValues().value("default-action").toString())) {
     case DA::Run:
       appDb->launchRaw(argv);
       break;

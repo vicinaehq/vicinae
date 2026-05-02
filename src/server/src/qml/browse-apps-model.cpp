@@ -9,18 +9,20 @@
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 
-QString BrowseAppsModel::displayTitle(const AppPtr &app) const { return app->displayName(); }
+QString BrowseAppsSection::displayTitle(const AppPtr &app) const { return app->displayName(); }
 
-QString BrowseAppsModel::displaySubtitle(const AppPtr &app) const { return app->description(); }
+QString BrowseAppsSection::displaySubtitle(const AppPtr &app) const { return app->description(); }
 
-QString BrowseAppsModel::displayIconSource(const AppPtr &app) const { return imageSourceFor(app->iconUrl()); }
+QString BrowseAppsSection::displayIconSource(const AppPtr &app) const {
+  return imageSourceFor(app->iconUrl());
+}
 
-QVariantList BrowseAppsModel::displayAccessory(const AppPtr &app) const {
+QVariantList BrowseAppsSection::displayAccessories(const AppPtr &app) const {
   if (!app->displayable()) return qml::textAccessory(QStringLiteral("Hidden"));
   return {};
 }
 
-std::unique_ptr<ActionPanelState> BrowseAppsModel::buildActionPanel(const AppPtr &app) const {
+std::unique_ptr<ActionPanelState> BrowseAppsSection::buildActionPanel(const AppPtr &app) const {
   auto panel = std::make_unique<ListActionPanelState>();
   auto appDb = scope().services()->appDb();
 
@@ -57,5 +59,3 @@ std::unique_ptr<ActionPanelState> BrowseAppsModel::buildActionPanel(const AppPtr
 
   return panel;
 }
-
-QString BrowseAppsModel::sectionLabel() const { return QStringLiteral("Applications ({count})"); }

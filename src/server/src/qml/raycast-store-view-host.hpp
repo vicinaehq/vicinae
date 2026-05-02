@@ -1,19 +1,18 @@
 #pragma once
+#include "raycast-store-model.hpp"
+#include "section-list-model.hpp"
 #include "bridge-view.hpp"
 #include "services/raycast/raycast-store.hpp"
 #include <QFutureWatcher>
 #include <QTimer>
 
-class RaycastStoreModel;
-
 class RaycastStoreViewHost : public ViewHostBase {
   Q_OBJECT
+  Q_PROPERTY(QObject *listModel READ listModel CONSTANT)
 
 signals:
 
 public:
-  Q_PROPERTY(QObject *listModel READ listModel CONSTANT)
-
   RaycastStoreViewHost();
 
   QUrl qmlComponentUrl() const override;
@@ -23,7 +22,7 @@ public:
   void textChanged(const QString &text) override;
   void onReactivated() override;
 
-  QObject *listModel() const;
+  QObject *listModel() const { return const_cast<SectionListModel *>(&m_model); }
 
 private:
   void fetchExtensions();
@@ -34,7 +33,8 @@ private:
   void refresh();
   void tryPopulateModel();
 
-  RaycastStoreModel *m_model = nullptr;
+  SectionListModel m_model{this};
+  RaycastStoreSection m_section;
   RaycastStoreService *m_store = nullptr;
   QFutureWatcher<Raycast::ListResult> m_listResultWatcher;
   QFutureWatcher<Raycast::ListResult> m_queryResultWatcher;

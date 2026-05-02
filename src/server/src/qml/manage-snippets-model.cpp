@@ -8,24 +8,24 @@
 #include "services/toast/toast-service.hpp"
 #include <QGuiApplication>
 
-QString ManageSnippetsModel::displayTitle(const snippet::SerializedSnippet &item) const {
+QString ManageSnippetsSection::displayTitle(const snippet::SerializedSnippet &item) const {
   return QString::fromStdString(item.name);
 }
 
-QString ManageSnippetsModel::displayIconSource(const snippet::SerializedSnippet &item) const {
+QString ManageSnippetsSection::displayIconSource(const snippet::SerializedSnippet &item) const {
   const auto visitor =
       overloads{[this](const snippet::TextSnippet &) { return imageSourceFor(BuiltinIcon::TextInput); },
                 [this](const auto &) { return imageSourceFor(BuiltinIcon::BlankDocument); }};
   return std::visit(visitor, item.data);
 }
 
-QVariantList ManageSnippetsModel::displayAccessory(const snippet::SerializedSnippet &item) const {
+QVariantList ManageSnippetsSection::displayAccessories(const snippet::SerializedSnippet &item) const {
   if (item.expansion) return qml::textAccessory(QString::fromStdString(item.expansion->keyword));
   return {};
 }
 
 std::unique_ptr<ActionPanelState>
-ManageSnippetsModel::buildActionPanel(const snippet::SerializedSnippet &item) const {
+ManageSnippetsSection::buildActionPanel(const snippet::SerializedSnippet &item) const {
   auto panel = std::make_unique<ListActionPanelState>();
   auto section = panel->createSection();
 
@@ -62,7 +62,3 @@ ManageSnippetsModel::buildActionPanel(const snippet::SerializedSnippet &item) co
 
   return panel;
 }
-
-void ManageSnippetsModel::itemSelected(const snippet::SerializedSnippet &item) { emit snippetSelected(item); }
-
-QString ManageSnippetsModel::sectionLabel() const { return QStringLiteral("Snippets ({count})"); }

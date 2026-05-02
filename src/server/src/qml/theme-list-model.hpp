@@ -1,15 +1,14 @@
 #pragma once
-#include "command-list-model.hpp"
-#include "config/config.hpp"
-#include "theme.hpp"
+#include "section-source.hpp"
 #include "theme/theme-file.hpp"
+#include <functional>
+#include <memory>
+#include <vector>
 
-class ThemeListModel : public CommandListModel {
-  Q_OBJECT
-
+class ThemeSection : public SectionSource {
 public:
-  enum ThemeRole {
-    PaletteColor0 = CommandListModel::Accessory + 1,
+  enum ExtraRole {
+    PaletteColor0 = 100,
     PaletteColor1,
     PaletteColor2,
     PaletteColor3,
@@ -19,33 +18,30 @@ public:
     PaletteColor7,
   };
 
-  explicit ThemeListModel(QObject *parent = nullptr);
+  void setThemes(const QString &name, std::vector<std::shared_ptr<ThemeFile>> themes);
 
-  void initialize() override;
-  void setFilter(const QString &text) override;
-  QString searchPlaceholder() const override { return QStringLiteral("Search for a theme..."); }
-  QUrl qmlComponentUrl() const override { return QUrl(QStringLiteral("qrc:/Vicinae/ThemeListView.qml")); }
+  void setOnThemeSelected(std::function<void(const std::shared_ptr<ThemeFile> &)> cb) {
+    m_onThemeSelected = std::move(cb);
+  }
 
-  QVariant data(const QModelIndex &index, int role) const override;
-  QHash<int, QByteArray> roleNames() const override;
+  QString sectionName() const override { return m_name; }
+  int count() const override { return static_cast<int>(m_themes.size()); }
 
-  void onItemSelected(int section, int item) override;
-  void beforePop() override;
+  void onSelected(int i) override {
+    if (m_onThemeSelected) m_onThemeSelected(m_themes[i]);
+  }
+
+  QVariant customData(int i, int role) const override;
+  QHash<int, QByteArray> customRoleNames() const override;
 
 protected:
-  QString itemTitle(int s, int i) const override;
-  QString itemSubtitle(int s, int i) const override;
-  QString itemIconSource(int s, int i) const override;
-  std::unique_ptr<ActionPanelState> createActionPanel(int s, int i) const override;
+  QString itemTitle(int i) const override;
+  QString itemSubtitle(int i) const override;
+  QString itemIconSource(int i) const override;
+  std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
 
 private:
-  void regenerateThemes();
-  const std::shared_ptr<ThemeFile> &themeAt(int s, int i) const;
-
-  ThemeService *m_themeService = nullptr;
-  config::Manager *m_config = nullptr;
-  QString m_query;
-
-  std::optional<std::shared_ptr<ThemeFile>> m_selectedTheme;
-  std::vector<std::shared_ptr<ThemeFile>> m_availableThemes;
+  QString m_name;
+  std::vector<std::shared_ptr<ThemeFile>> m_themes;
+  std::function<void(const std::shared_ptr<ThemeFile> &)> m_onThemeSelected;
 };
