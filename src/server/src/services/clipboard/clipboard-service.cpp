@@ -381,13 +381,18 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
     return;
   }
 
+  QString savedSelectionId;
+
   cdb.transaction([&](ClipboardDatabase *db) {
     if (db->tryBubbleUpSelection(selectionHash)) {
       qInfo() << "A similar clipboard selection is already indexed: moving it on top of the history";
+      auto id = db->findSelectionIdByHash(selectionHash);
+      if (!id.isEmpty() && !db->selectionHasMetadata(id)) { savedSelectionId = id; }
       return true;
     }
 
     QString const selectionId = Crypto::UUID::v4();
+    savedSelectionId = selectionId;
 
     if (!db->insertSelection({.id = selectionId,
                               .offerCount = static_cast<int>(selection.offers.size()),
@@ -469,6 +474,11 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
   });
 
   emit itemInserted(insertedEntry);
+
+  if (preferredKind == ClipboardOfferKind::Link && !savedSelectionId.isEmpty()) {
+    auto url = QUrl::fromEncoded(preferredOfferIt->data, QUrl::StrictMode);
+    m_urlMetadata->fetchMetadata(savedSelectionId, url);
+  }
 }
 
 std::optional<ClipboardSelection> ClipboardService::retrieveSelectionById(const QString &id) {
@@ -615,6 +625,16 @@ ClipboardService::ClipboardService(const std::filesystem::path &path) {
 
   fs::create_directories(m_dataDir);
   ClipboardDatabase().runMigrations();
+
+  m_urlMetadata = std::make_unique<UrlMetadataService>(this);
+  connect(m_urlMetadata.get(), &UrlMetadataService::metadataReady, this,
+          [this](const QString &selectionId, const QString &ogTitle, const QString &ogDescription,
+                 const QString &ogImage) {
+            ClipboardDatabase db;
+            if (db.updateUrlMetadata(selectionId, ogTitle, ogDescription, ogImage)) {
+              emit selectionMetadataUpdated(selectionId);
+            }
+          });
 
   connect(m_clipboardServer.get(), &AbstractClipboardServer::selectionAdded, this,
           &ClipboardService::saveSelection);
