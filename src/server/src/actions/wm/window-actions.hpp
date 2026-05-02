@@ -8,15 +8,17 @@ class FocusWindowAction : public AbstractAction {
   std::shared_ptr<AbstractWindowManager::AbstractWindow> m_window;
 
   void execute(ApplicationContext *ctx) override {
-    auto wm = ctx->services->windowManager();
-    wm->provider()->focusWindowSync(*m_window.get());
+    auto window = m_window;
+    ctx->navigation->deferUntilWindowHidden([ctx, window]() {
+      auto wm = ctx->services->windowManager();
+      wm->provider()->focusWindowSync(*window.get());
+    });
+    ctx->navigation->closeWindow({.clearRootSearch = true});
   }
 
 public:
   FocusWindowAction(const std::shared_ptr<AbstractWindowManager::AbstractWindow> &window)
-      : AbstractAction("Focus window", ImageURL::builtin("app-window")), m_window(window) {
-    setAutoClose();
-  }
+      : AbstractAction("Focus window", ImageURL::builtin("app-window")), m_window(window) {}
 };
 
 class CloseWindowAction : public AbstractAction {

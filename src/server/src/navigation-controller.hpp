@@ -8,6 +8,7 @@
 #include "ui/action-pannel/action.hpp"
 #include "ui/dialog/dialog.hpp"
 #include "ui/image/url.hpp"
+#include <functional>
 #include <QString>
 #include <chrono>
 #include <cstdint>
@@ -263,6 +264,8 @@ public:
   Q_INVOKABLE void toggleWindow();
   bool isWindowOpened() const;
   void requestWindowSize(QSize size);
+  void deferUntilWindowHidden(std::function<void()> fn);
+  std::function<void()> takeDeferredWindowHiddenAction();
 
   bool windowActivated();
   void setWindowActivated(bool value = true);
@@ -398,6 +401,7 @@ private:
   bool m_popToRootOnClose = false;
   bool m_instantDismiss = false;
   bool m_closeOnFocusLoss = false;
+  std::function<void()> m_deferredWindowHiddenAction;
   std::vector<std::unique_ptr<ViewState>> m_views;
   std::optional<PendingPopToRoot> m_pendingPopToRoot;
 };
