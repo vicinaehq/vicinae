@@ -52,6 +52,8 @@ void ExtensionViewHost::onReactivated() {
 }
 
 void ExtensionViewHost::render(const RenderModel &model) {
+  bool const wasFirstRender = m_firstRender;
+
   auto needsSwitch = [&]() -> bool {
     if (m_firstRender) return true;
     if (std::holds_alternative<ListModel>(model)) return !activeModel<ExtensionListModel>();
@@ -77,6 +79,8 @@ void ExtensionViewHost::render(const RenderModel &model) {
   } else {
     qWarning() << "Extension sent unrecognized model type";
   }
+
+  if (wasFirstRender && !searchText().isEmpty()) { handleDebouncedSearch(); }
 }
 
 void ExtensionViewHost::switchViewType(const RenderModel &model) {
