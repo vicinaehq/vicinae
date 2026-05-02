@@ -466,6 +466,11 @@ set(SRCS
 	src/qml/root-search-model.cpp
 	src/qml/command-list-model.hpp
 	src/qml/command-list-model.cpp
+	src/qml/section-source.hpp
+	src/qml/section-list-model.hpp
+	src/qml/section-list-model.cpp
+	src/qml/fuzzy-section.hpp
+	src/qml/list-view-host.hpp
 	src/qml/action-panel-model.hpp
 	src/qml/action-panel-model.cpp
 	src/qml/action-panel-controller.hpp
@@ -475,6 +480,8 @@ set(SRCS
 	src/qml/bridge-view.hpp
 	src/qml/calc-history-model.hpp
 	src/qml/calc-history-model.cpp
+	src/qml/calc-history-view-host.hpp
+	src/qml/calc-history-view-host.cpp
 	src/qml/theme-list-model.hpp
 	src/qml/theme-list-model.cpp
 	src/qml/command-grid-model.hpp
@@ -521,7 +528,6 @@ set(SRCS
 	src/qml/theme-bridge.hpp
 	src/qml/create-extension-view-host.hpp
 	src/qml/create-extension-view-host.cpp
-	src/qml/fuzzy-list-model.hpp
 	src/qml/installed-extensions-model.hpp
 	src/qml/installed-extensions-model.cpp
 	src/qml/installed-extensions-view-host.hpp

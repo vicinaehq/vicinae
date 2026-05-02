@@ -1,23 +1,21 @@
 #pragma once
-#include "command-list-model.hpp"
+#include "section-source.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 
-class ProviderSearchModel : public CommandListModel {
-  Q_OBJECT
-
+class ProviderSearchSection : public SectionSource {
 public:
-  using CommandListModel::CommandListModel;
-
   void setItems(std::vector<RootItemManager::ScoredItem> items);
-  void setFilter(const QString &) override {}
+
+  QString sectionName() const override { return QStringLiteral("Results ({count})"); }
+  int count() const override { return static_cast<int>(m_items.size()); }
 
 protected:
-  QString itemTitle(int section, int item) const override;
-  QString itemSubtitle(int section, int item) const override;
-  QString itemIconSource(int section, int item) const override;
-  std::unique_ptr<ActionPanelState> createActionPanel(int section, int item) const override;
+  QString itemTitle(int i) const override;
+  QString itemSubtitle(int i) const override;
+  QString itemIconSource(int i) const override;
+  std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
 
 private:
-  const RootItem *itemAt(int item) const;
+  const RootItem *itemAt(int i) const;
   std::vector<RootItemManager::ScoredItem> m_items;
 };

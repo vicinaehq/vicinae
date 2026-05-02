@@ -1,6 +1,6 @@
 #pragma once
 #include "builtin_icon.hpp"
-#include "fuzzy-list-model.hpp"
+#include "fuzzy-section.hpp"
 
 struct IconEntry {
   BuiltinIcon icon;
@@ -13,16 +13,13 @@ template <> struct fuzzy::FuzzySearchable<IconEntry> {
   }
 };
 
-class BuiltinIconsModel : public FuzzyListModel<IconEntry> {
-  Q_OBJECT
-
+class BuiltinIconsSection : public FuzzySection<IconEntry> {
 public:
-  using FuzzyListModel::FuzzyListModel;
+  QString sectionName() const override { return QStringLiteral("Icons ({count})"); }
 
 protected:
   QString displayTitle(const IconEntry &e) const override;
   QString displaySubtitle(const IconEntry &) const override { return {}; }
   QString displayIconSource(const IconEntry &e) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const IconEntry &e) const override;
-  QString sectionLabel() const override;
 };

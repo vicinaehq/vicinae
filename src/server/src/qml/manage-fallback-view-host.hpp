@@ -1,25 +1,17 @@
 #pragma once
-#include "bridge-view.hpp"
+#include "manage-fallback-model.hpp"
+#include "list-view-host.hpp"
 
-class ManageFallbackModel;
-
-class ManageFallbackViewHost : public ViewHostBase {
+class ManageFallbackViewHost : public ListViewHost {
   Q_OBJECT
-  Q_PROPERTY(QObject *listModel READ listModel CONSTANT)
 
 public:
-  QUrl qmlComponentUrl() const override;
-  QVariantMap qmlProperties() override;
   void initialize() override;
   void loadInitialData() override;
-  void textChanged(const QString &text) override;
-  void onReactivated() override;
-  void beforePop() override;
-
-  QObject *listModel() const;
 
 private:
   void reload();
 
-  ManageFallbackModel *m_model = nullptr;
+  EnabledFallbackSection m_enabledSection;
+  AvailableFallbackSection m_availableSection;
 };

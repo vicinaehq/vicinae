@@ -8,11 +8,13 @@
 #include "ui/image/url.hpp"
 #include "view-utils.hpp"
 
-QString InstalledExtensionsModel::displayTitle(const ExtensionManifest &m) const { return m.title; }
+QString InstalledExtensionsSection::displayTitle(const ExtensionManifest &m) const { return m.title; }
 
-QString InstalledExtensionsModel::displaySubtitle(const ExtensionManifest &m) const { return m.description; }
+QString InstalledExtensionsSection::displaySubtitle(const ExtensionManifest &m) const {
+  return m.description;
+}
 
-QString InstalledExtensionsModel::displayIconSource(const ExtensionManifest &m) const {
+QString InstalledExtensionsSection::displayIconSource(const ExtensionManifest &m) const {
   if (!m.icon.isEmpty()) {
     auto iconPath = m.path / "assets" / m.icon.toStdString();
     return imageSourceFor(ImageURL::local(iconPath).withFallback(ImageURL::builtin("plug")));
@@ -20,7 +22,7 @@ QString InstalledExtensionsModel::displayIconSource(const ExtensionManifest &m) 
   return imageSourceFor(ImageURL::builtin("plug"));
 }
 
-QVariantList InstalledExtensionsModel::displayAccessory(const ExtensionManifest &m) const {
+QVariantList InstalledExtensionsSection::displayAccessories(const ExtensionManifest &m) const {
   if (m.isFromRaycastStore()) {
     return qml::accessoriesToVariantList({{.data = AccessoryModel::Tag(SemanticColor::Red, "Raycast"),
                                            .icon = ExtensionImageModel{.source = QString("raycast")}}});
@@ -37,7 +39,7 @@ QVariantList InstalledExtensionsModel::displayAccessory(const ExtensionManifest 
 }
 
 std::unique_ptr<ActionPanelState>
-InstalledExtensionsModel::buildActionPanel(const ExtensionManifest &m) const {
+InstalledExtensionsSection::buildActionPanel(const ExtensionManifest &m) const {
   auto panel = std::make_unique<ListActionPanelState>();
   panel->setTitle(m.title);
 
@@ -61,8 +63,4 @@ InstalledExtensionsModel::buildActionPanel(const ExtensionManifest &m) const {
   utils->addAction(copyAuthor);
 
   return panel;
-}
-
-QString InstalledExtensionsModel::sectionLabel() const {
-  return QStringLiteral("Installed Extensions ({count})");
 }

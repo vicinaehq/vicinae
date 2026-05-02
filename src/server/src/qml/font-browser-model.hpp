@@ -1,26 +1,21 @@
 #pragma once
-#include "fuzzy-list-model.hpp"
+#include "fuzzy-section.hpp"
 
-template <> struct fuzzy::FuzzySearchable<QString> {
-  static int score(const QString &item, std::string_view query) {
-    auto name = item.toStdString();
-    return fuzzy::scoreWeighted({{name, 1.0}}, query);
-  }
-};
-
-class FontBrowserModel : public FuzzyListModel<QString> {
-  Q_OBJECT
-
+class FontBrowserSection : public FuzzySection<QString> {
 public:
-  using FuzzyListModel::FuzzyListModel;
+  QString sectionName() const override { return QStringLiteral("Fonts ({count})"); }
 
-signals:
-  void fontSelected(const QString &family);
+  void setOnFontSelected(std::function<void(const QString &)> cb) { m_onFontSelected = std::move(cb); }
+
+  void onSelected(int i) override {
+    if (m_onFontSelected) m_onFontSelected(at(i));
+  }
 
 protected:
   QString displayTitle(const QString &item) const override;
   QString displayIconSource(const QString &item) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const QString &item) const override;
-  void itemSelected(const QString &item) override { emit fontSelected(item); }
-  QString sectionLabel() const override { return QStringLiteral("Fonts ({count})"); }
+
+private:
+  std::function<void(const QString &)> m_onFontSelected;
 };

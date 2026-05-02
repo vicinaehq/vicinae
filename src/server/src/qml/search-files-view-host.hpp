@@ -1,15 +1,13 @@
 #pragma once
-#include "bridge-view.hpp"
+#include "list-view-host.hpp"
+#include "search-files-model.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
 #include <QTimer>
 #include <qfuturewatcher.h>
 #include <qmimedatabase.h>
 
-class SearchFilesModel;
-
-class SearchFilesViewHost : public ViewHostBase {
+class SearchFilesViewHost : public ListViewHost {
   Q_OBJECT
-  Q_PROPERTY(QObject *listModel READ listModel CONSTANT)
   Q_PROPERTY(bool hasDetail READ hasDetail NOTIFY detailChanged)
   Q_PROPERTY(QString detailName READ detailName NOTIFY detailChanged)
   Q_PROPERTY(QString detailPath READ detailPath NOTIFY detailChanged)
@@ -27,9 +25,7 @@ public:
   void initialize() override;
   void loadInitialData() override;
   void textChanged(const QString &text) override;
-  void onReactivated() override;
 
-  QObject *listModel() const;
   bool hasDetail() const { return m_hasDetail; }
   QString detailName() const { return m_detailName; }
   QString detailPath() const { return m_detailPath; }
@@ -47,7 +43,7 @@ private:
 
   using Watcher = QFutureWatcher<std::vector<IndexerFileResult>>;
 
-  SearchFilesModel *m_model = nullptr;
+  SearchFilesSection m_section;
   QTimer m_debounce;
   Watcher m_pendingResults;
   QString m_lastSearchText;

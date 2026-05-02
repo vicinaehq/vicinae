@@ -1,5 +1,4 @@
 #include "manage-snippets-view-host.hpp"
-#include "manage-snippets-model.hpp"
 #include "placeholder.hpp"
 #include "service-registry.hpp"
 #include "services/snippet/snippet-service.hpp"
@@ -16,38 +15,31 @@ QVariantMap ManageSnippetsViewHost::qmlProperties() {
 
 void ManageSnippetsViewHost::initialize() {
   BaseView::initialize();
+  initModel();
 
   m_snippetService = context()->services->snippetService();
-  m_model = new ManageSnippetsModel(this);
-  m_model->setScope(ViewScope(context(), this));
-  m_model->initialize();
+
+  m_section.setOnSnippetSelected([this](const snippet::SerializedSnippet &s) { loadDetail(s); });
+  model()->addSource(&m_section);
 
   setSearchPlaceholderText("Search by snippet name, contents or keyword...");
 
   connect(m_snippetService, &SnippetService::snippetsChanged, this, &ManageSnippetsViewHost::reload);
 
-  connect(m_model, &ManageSnippetsModel::snippetSelected, this, &ManageSnippetsViewHost::loadDetail);
-
   connect(context()->navigation.get(), &NavigationController::completionValuesChanged, this,
           [this](const ArgumentValues &) { updateExpandedText(); });
 
-  connect(m_model, &QAbstractItemModel::modelReset, this, [this]() {
-    if (m_model->rowCount() == 0) clearDetail();
+  connect(model(), &QAbstractItemModel::modelReset, this, [this]() {
+    if (model()->rowCount() == 0) clearDetail();
   });
 }
 
 void ManageSnippetsViewHost::loadInitialData() { reload(); }
 
-void ManageSnippetsViewHost::textChanged(const QString &text) { m_model->setFilter(text); }
-
-void ManageSnippetsViewHost::onReactivated() { m_model->refreshActionPanel(); }
-
 void ManageSnippetsViewHost::beforePop() {
   clearDetail();
-  m_model->beforePop();
+  ListViewHost::beforePop();
 }
-
-QObject *ManageSnippetsViewHost::listModel() const { return m_model; }
 
 void ManageSnippetsViewHost::loadDetail(const snippet::SerializedSnippet &snippet) {
   m_currentSnippet = snippet;
@@ -141,4 +133,4 @@ void ManageSnippetsViewHost::clearDetail() {
   emit detailChanged();
 }
 
-void ManageSnippetsViewHost::reload() { m_model->setItems(m_snippetService->database()->snippets()); }
+void ManageSnippetsViewHost::reload() { m_section.setItems(m_snippetService->database()->snippets()); }

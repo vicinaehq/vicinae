@@ -1,5 +1,5 @@
 #pragma once
-#include "fuzzy-list-model.hpp"
+#include "fuzzy-section.hpp"
 #include "services/extension-registry/extension-manifest.hpp"
 
 template <> struct fuzzy::FuzzySearchable<ExtensionManifest> {
@@ -11,17 +11,14 @@ template <> struct fuzzy::FuzzySearchable<ExtensionManifest> {
   }
 };
 
-class InstalledExtensionsModel : public FuzzyListModel<ExtensionManifest> {
-  Q_OBJECT
-
+class InstalledExtensionsSection : public FuzzySection<ExtensionManifest> {
 public:
-  using FuzzyListModel::FuzzyListModel;
+  QString sectionName() const override { return QStringLiteral("Installed Extensions ({count})"); }
 
 protected:
   QString displayTitle(const ExtensionManifest &m) const override;
   QString displaySubtitle(const ExtensionManifest &m) const override;
   QString displayIconSource(const ExtensionManifest &m) const override;
-  QVariantList displayAccessory(const ExtensionManifest &m) const override;
+  QVariantList displayAccessories(const ExtensionManifest &m) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const ExtensionManifest &m) const override;
-  QString sectionLabel() const override;
 };

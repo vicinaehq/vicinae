@@ -1,16 +1,14 @@
 #pragma once
-#include "bridge-view.hpp"
-#include "services/snippet/snippet-db.hpp"
+#include "list-view-host.hpp"
+#include "manage-snippets-model.hpp"
 #include "services/snippet/snippet-expander.hpp"
 #include <QVariantList>
 
-class ManageSnippetsModel;
 class SnippetService;
 
-class ManageSnippetsViewHost : public ViewHostBase {
+class ManageSnippetsViewHost : public ListViewHost {
   Q_OBJECT
 
-  Q_PROPERTY(QObject *listModel READ listModel CONSTANT)
   Q_PROPERTY(bool hasDetail READ hasDetail NOTIFY detailChanged)
   Q_PROPERTY(QString detailContent READ detailContent NOTIFY detailChanged)
   Q_PROPERTY(QVariantList detailMetadata READ detailMetadata NOTIFY detailChanged)
@@ -23,11 +21,8 @@ public:
   QVariantMap qmlProperties() override;
   void initialize() override;
   void loadInitialData() override;
-  void textChanged(const QString &text) override;
-  void onReactivated() override;
   void beforePop() override;
 
-  QObject *listModel() const;
   bool hasDetail() const { return m_hasDetail; }
   QString detailContent() const { return m_detailContent; }
   QVariantList detailMetadata() const { return m_detailMetadata; }
@@ -38,7 +33,7 @@ private:
   void clearDetail();
   void reload();
 
-  ManageSnippetsModel *m_model = nullptr;
+  ManageSnippetsSection m_section;
   SnippetService *m_snippetService = nullptr;
   SnippetExpander m_expander;
 

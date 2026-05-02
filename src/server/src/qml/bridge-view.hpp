@@ -1,5 +1,4 @@
 #pragma once
-#include "command-list-model.hpp"
 #include "ui/views/base-view.hpp"
 #include <QUrl>
 #include <QVariantMap>

@@ -1,5 +1,4 @@
 #include "search-files-view-host.hpp"
-#include "search-files-model.hpp"
 #include "service-registry.hpp"
 #include "services/files-service/file-service.hpp"
 #include "utils/utils.hpp"
@@ -20,10 +19,10 @@ QVariantMap SearchFilesViewHost::qmlProperties() {
 void SearchFilesViewHost::initialize() {
   using namespace std::chrono_literals;
   BaseView::initialize();
+  initModel();
 
-  m_model = new SearchFilesModel(this);
-  m_model->setScope(ViewScope(context(), this));
-  m_model->initialize();
+  m_section.setOnFileSelected([this](const fs::path &p) { loadDetail(p); });
+  model()->addSource(&m_section);
 
   setSearchPlaceholderText("Search for files...");
 
@@ -31,7 +30,6 @@ void SearchFilesViewHost::initialize() {
   m_debounce.setInterval(100ms);
   connect(&m_debounce, &QTimer::timeout, this, &SearchFilesViewHost::handleDebounce);
   connect(&m_pendingResults, &Watcher::finished, this, &SearchFilesViewHost::handleSearchResults);
-  connect(m_model, &SearchFilesModel::fileSelected, this, &SearchFilesViewHost::loadDetail);
 }
 
 void SearchFilesViewHost::loadInitialData() { renderRecentFiles(); }
@@ -49,7 +47,7 @@ void SearchFilesViewHost::textChanged(const QString &text) {
   auto path = expandPath(text.trimmed().toStdString());
   if (path != "/" && fs::exists(path, ec)) {
     setLoading(false);
-    m_model->setFiles({path}, QStringLiteral("Direct file path"));
+    m_section.setFiles({path}, QStringLiteral("Direct file path"));
     return;
   }
 
@@ -57,17 +55,13 @@ void SearchFilesViewHost::textChanged(const QString &text) {
   m_debounce.start();
 }
 
-void SearchFilesViewHost::onReactivated() { m_model->refreshActionPanel(); }
-
-QObject *SearchFilesViewHost::listModel() const { return m_model; }
-
 void SearchFilesViewHost::renderRecentFiles() {
   auto fileService = context()->services->fileService();
 
   setLoading(false);
   auto recentFiles = fileService->getRecentlyAccessed() |
                      std::views::transform([](auto &&f) { return f.path; }) | std::ranges::to<std::vector>();
-  m_model->setFiles(std::move(recentFiles), QStringLiteral("Recently Accessed"));
+  m_section.setFiles(std::move(recentFiles), QStringLiteral("Recently Accessed"));
 }
 
 void SearchFilesViewHost::handleDebounce() {
@@ -94,7 +88,7 @@ void SearchFilesViewHost::handleSearchResults() {
   auto results = m_pendingResults.result();
   auto paths =
       results | std::views::transform([](auto &&f) { return f.path; }) | std::ranges::to<std::vector>();
-  m_model->setFiles(std::move(paths), QStringLiteral("Results"));
+  m_section.setFiles(std::move(paths), QStringLiteral("Results"));
 }
 
 void SearchFilesViewHost::loadDetail(const fs::path &path) {

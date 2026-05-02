@@ -6,20 +6,11 @@
 ProviderSearchViewHost::ProviderSearchViewHost(const RootProvider &provider)
     : m_providerId(provider.uniqueId()), m_displayName(provider.displayName()), m_icon(provider.icon()) {}
 
-QUrl ProviderSearchViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/Vicinae/CommandListView.qml"));
-}
-
-QVariantMap ProviderSearchViewHost::qmlProperties() {
-  return {{QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(m_model))}};
-}
-
 void ProviderSearchViewHost::initialize() {
   BaseView::initialize();
+  initModel();
 
-  m_model = new ProviderSearchModel(this);
-  m_model->setScope(ViewScope(context(), this));
-  m_model->initialize();
+  model()->addSource(&m_section);
 
   setSearchPlaceholderText(QString("Search %1").arg(m_displayName));
   setNavigationTitle(m_displayName);
@@ -33,12 +24,8 @@ void ProviderSearchViewHost::loadInitialData() { refresh({}); }
 
 void ProviderSearchViewHost::textChanged(const QString &text) { refresh(text); }
 
-void ProviderSearchViewHost::onReactivated() { m_model->refreshActionPanel(); }
-
-QObject *ProviderSearchViewHost::listModel() const { return m_model; }
-
 void ProviderSearchViewHost::refresh(const QString &text) {
   auto *manager = context()->services->rootItemManager();
   auto results = manager->search(text, {.providerId = m_providerId.toStdString()});
-  m_model->setItems(std::move(results));
+  m_section.setItems(std::move(results));
 }

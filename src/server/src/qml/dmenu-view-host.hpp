@@ -1,13 +1,11 @@
 #pragma once
-#include "bridge-view.hpp"
+#include "dmenu-model.hpp"
 #include "generated/ipc-server.hpp"
+#include "list-view-host.hpp"
 #include <qmimedatabase.h>
 
-class DMenuModel;
-
-class DMenuViewHost : public ViewHostBase {
+class DMenuViewHost : public ListViewHost {
   Q_OBJECT
-  Q_PROPERTY(QObject *listModel READ listModel CONSTANT)
   Q_PROPERTY(bool hasDetail READ hasDetail NOTIFY detailChanged)
   Q_PROPERTY(QString detailName READ detailName NOTIFY detailChanged)
   Q_PROPERTY(QString detailPath READ detailPath NOTIFY detailChanged)
@@ -30,7 +28,6 @@ public:
   void beforePop() override;
   bool showBackButton() const override { return false; }
 
-  QObject *listModel() const;
   bool hasDetail() const { return m_hasDetail; }
   QString detailName() const { return m_detailName; }
   QString detailPath() const { return m_detailPath; }
@@ -43,7 +40,7 @@ private:
   void clearDetail();
 
   ipc_gen::DMenuRequest m_data;
-  DMenuModel *m_model = nullptr;
+  DMenuSection m_section;
   QMimeDatabase m_mimeDb;
   bool m_selected = false;
 

@@ -4,27 +4,20 @@
 #include "service-registry.hpp"
 #include "utils/utils.hpp"
 
-void SearchFilesModel::setFiles(std::vector<std::filesystem::path> files, const QString &sectionName) {
+void SearchFilesSection::setFiles(std::vector<std::filesystem::path> files, const QString &sectionName) {
   m_files = std::move(files);
-
-  std::vector<SectionInfo> sections;
-  if (!m_files.empty()) sections.push_back({.name = sectionName, .count = static_cast<int>(m_files.size())});
-  setSections(sections);
-  refreshActionPanel();
+  m_sectionName = sectionName;
+  notifyChanged();
 }
 
-const std::filesystem::path &SearchFilesModel::fileAt(int, int item) const { return m_files.at(item); }
-
-QString SearchFilesModel::itemTitle(int s, int i) const {
-  return QString::fromStdString(getLastPathComponent(fileAt(s, i)));
+QString SearchFilesSection::itemTitle(int i) const {
+  return QString::fromStdString(getLastPathComponent(m_files.at(i)));
 }
 
-QString SearchFilesModel::itemIconSource(int s, int i) const {
-  return imageSourceFor(ImageURL::fileIcon(fileAt(s, i)));
+QString SearchFilesSection::itemIconSource(int i) const {
+  return imageSourceFor(ImageURL::fileIcon(m_files.at(i)));
 }
 
-std::unique_ptr<ActionPanelState> SearchFilesModel::createActionPanel(int s, int i) const {
-  return FileActions::actionPanel(fileAt(s, i), scope().services()->appDb());
+std::unique_ptr<ActionPanelState> SearchFilesSection::actionPanel(int i) const {
+  return FileActions::actionPanel(m_files.at(i), scope().services()->appDb());
 }
-
-void SearchFilesModel::onItemSelected(int s, int i) { emit fileSelected(fileAt(s, i)); }

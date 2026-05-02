@@ -1,43 +1,43 @@
 #pragma once
-#include "command-list-model.hpp"
 #include "common/paginated.hpp"
+#include "section-source.hpp"
 #include "services/clipboard/clipboard-db.hpp"
+#include <functional>
 
-class ClipboardHistoryModel : public CommandListModel {
-  Q_OBJECT
-
+class ClipboardHistorySection : public SectionSource {
 public:
-  enum ExtraRole {
-    IsPinned = CommandListModel::Accessory + 1,
-  };
-
   enum class DefaultAction { Copy, Paste };
-
-  explicit ClipboardHistoryModel(QObject *parent = nullptr);
 
   void setEntries(const PaginatedResponse<ClipboardHistoryEntry> &page);
   void setDefaultAction(DefaultAction action) { m_defaultAction = action; }
-  void resetSelectionOnNextUpdate() { setSelectFirstOnReset(true); }
-  void setFilter(const QString &text) override {}
-  QString searchPlaceholder() const override { return QStringLiteral("Browse clipboard history..."); }
 
-  QHash<int, QByteArray> roleNames() const override;
-  QVariant data(const QModelIndex &index, int role) const override;
+  QString sectionName() const override { return {}; }
+  int count() const override { return static_cast<int>(m_entries.size()); }
 
-signals:
-  void entrySelected(const ClipboardHistoryEntry &entry);
+  bool isPinned(int i) const { return m_entries[i].pinnedAt != 0; }
+  const ClipboardHistoryEntry &entryAt(int i) const { return m_entries[i]; }
+
+  void setOnEntrySelected(std::function<void(const ClipboardHistoryEntry &)> cb) {
+    m_onEntrySelected = std::move(cb);
+  }
+
+  void onSelected(int i) override {
+    if (i >= 0 && std::cmp_less(i, m_entries.size()) && m_onEntrySelected) {
+      m_onEntrySelected(m_entries[i]);
+    }
+  }
 
 protected:
-  QString itemId(int s, int i) const override;
-  QString itemTitle(int s, int i) const override;
-  QString itemSubtitle(int s, int i) const override;
-  QString itemIconSource(int s, int i) const override;
-  std::unique_ptr<ActionPanelState> createActionPanel(int s, int i) const override;
-  void onItemSelected(int s, int i) override;
+  QString itemId(int i) const override;
+  QString itemTitle(int i) const override;
+  QString itemSubtitle(int i) const override;
+  QString itemIconSource(int i) const override;
+  std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
 
 private:
   ImageURL iconForEntry(const ClipboardHistoryEntry &entry) const;
 
   std::vector<ClipboardHistoryEntry> m_entries;
   DefaultAction m_defaultAction = DefaultAction::Copy;
+  std::function<void(const ClipboardHistoryEntry &)> m_onEntrySelected;
 };

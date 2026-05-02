@@ -1,5 +1,5 @@
 #pragma once
-#include "fuzzy-list-model.hpp"
+#include "fuzzy-section.hpp"
 #include "services/app-service/abstract-app-db.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
 
@@ -20,17 +20,14 @@ template <> struct fuzzy::FuzzySearchable<WindowEntry> {
   }
 };
 
-class SwitchWindowsModel : public FuzzyListModel<WindowEntry> {
-  Q_OBJECT
-
+class SwitchWindowsSection : public FuzzySection<WindowEntry> {
 public:
-  using FuzzyListModel::FuzzyListModel;
+  QString sectionName() const override { return QStringLiteral("Open Windows"); }
 
 protected:
   QString displayTitle(const WindowEntry &e) const override;
   QString displaySubtitle(const WindowEntry &e) const override;
   QString displayIconSource(const WindowEntry &e) const override;
-  QVariantList displayAccessory(const WindowEntry &e) const override;
+  QVariantList displayAccessories(const WindowEntry &e) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const WindowEntry &e) const override;
-  QString sectionLabel() const override;
 };

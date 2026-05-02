@@ -1,25 +1,16 @@
 #pragma once
-#include "bridge-view.hpp"
+#include "installed-extensions-model.hpp"
+#include "list-view-host.hpp"
 
-class InstalledExtensionsModel;
-
-class InstalledExtensionsViewHost : public ViewHostBase {
+class InstalledExtensionsViewHost : public ListViewHost {
   Q_OBJECT
-  Q_PROPERTY(QObject *listModel READ listModel CONSTANT)
 
 public:
-  QUrl qmlComponentUrl() const override;
-  QVariantMap qmlProperties() override;
   void initialize() override;
   void loadInitialData() override;
-  void textChanged(const QString &text) override;
-  void onReactivated() override;
-  void beforePop() override;
-
-  QObject *listModel() const;
 
 private:
   void reload();
 
-  InstalledExtensionsModel *m_model = nullptr;
+  InstalledExtensionsSection m_section;
 };

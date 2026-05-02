@@ -4,35 +4,15 @@
 #include "navigation-controller.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 
-CalcHistoryModel::CalcHistoryModel(QObject *parent) : CommandListModel(parent) {}
-
-void CalcHistoryModel::initialize() {
-  m_calc = scope().services()->calculatorService();
-
-  connect(m_calc, &CalculatorService::recordPinned, this, &CalcHistoryModel::refresh);
-  connect(m_calc, &CalculatorService::recordUnpinned, this, &CalcHistoryModel::refresh);
-  connect(m_calc, &CalculatorService::recordRemoved, this, &CalcHistoryModel::refresh);
-  connect(m_calc, &CalculatorService::allRecordsRemoved, this, &CalcHistoryModel::refresh);
+void CalcHistorySection::setRecords(const QString &groupName, std::vector<CalculatorRecord> records) {
+  m_groupName = groupName;
+  m_records = std::move(records);
 }
 
-void CalcHistoryModel::setFilter(const QString &text) {
-  m_query = text;
-  m_data = m_calc->groupRecordsByTime(m_calc->query(text));
+QString CalcHistorySection::itemTitle(int i) const { return m_records[i].question; }
 
-  std::vector<SectionInfo> sections;
-  sections.reserve(m_data.size());
-  for (const auto &[name, records] : m_data) {
-    sections.push_back({.name = name, .count = static_cast<int>(records.size())});
-  }
-  setSections(sections);
-}
-
-void CalcHistoryModel::refresh() { setFilter(m_query); }
-
-QString CalcHistoryModel::itemTitle(int s, int i) const { return m_data[s].second[i].question; }
-
-QString CalcHistoryModel::itemIconSource(int s, int i) const {
-  const auto &record = m_data[s].second[i];
+QString CalcHistorySection::itemIconSource(int i) const {
+  const auto &record = m_records[i];
   switch (record.typeHint) {
   case AbstractCalculatorBackend::CONVERSION:
     return imageSourceFor(ImageURL::builtin("switch"));
@@ -41,12 +21,12 @@ QString CalcHistoryModel::itemIconSource(int s, int i) const {
   }
 }
 
-QVariantList CalcHistoryModel::itemAccessory(int s, int i) const {
-  return qml::textAccessory(m_data[s].second[i].answer);
+QVariantList CalcHistorySection::itemAccessories(int i) const {
+  return qml::textAccessory(m_records[i].answer);
 }
 
-std::unique_ptr<ActionPanelState> CalcHistoryModel::createActionPanel(int s, int i) const {
-  const auto &record = m_data[s].second[i];
+std::unique_ptr<ActionPanelState> CalcHistorySection::actionPanel(int i) const {
+  const auto &record = m_records[i];
 
   auto panel = std::make_unique<ListActionPanelState>();
 

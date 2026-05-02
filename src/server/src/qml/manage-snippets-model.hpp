@@ -1,5 +1,5 @@
 #pragma once
-#include "fuzzy-list-model.hpp"
+#include "fuzzy-section.hpp"
 #include "services/snippet/snippet-db.hpp"
 
 template <> struct fuzzy::FuzzySearchable<snippet::SerializedSnippet> {
@@ -11,20 +11,24 @@ template <> struct fuzzy::FuzzySearchable<snippet::SerializedSnippet> {
   }
 };
 
-class ManageSnippetsModel : public FuzzyListModel<snippet::SerializedSnippet> {
-  Q_OBJECT
-
-signals:
-  void snippetSelected(const snippet::SerializedSnippet &snippet);
-
+class ManageSnippetsSection : public FuzzySection<snippet::SerializedSnippet> {
 public:
-  using FuzzyListModel::FuzzyListModel;
+  QString sectionName() const override { return QStringLiteral("Snippets ({count})"); }
+
+  void setOnSnippetSelected(std::function<void(const snippet::SerializedSnippet &)> cb) {
+    m_onSnippetSelected = std::move(cb);
+  }
+
+  void onSelected(int i) override {
+    if (m_onSnippetSelected) m_onSnippetSelected(at(i));
+  }
 
 protected:
   QString displayTitle(const snippet::SerializedSnippet &item) const override;
   QString displayIconSource(const snippet::SerializedSnippet &item) const override;
-  QVariantList displayAccessory(const snippet::SerializedSnippet &item) const override;
+  QVariantList displayAccessories(const snippet::SerializedSnippet &item) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const snippet::SerializedSnippet &item) const override;
-  void itemSelected(const snippet::SerializedSnippet &item) override;
-  QString sectionLabel() const override;
+
+private:
+  std::function<void(const snippet::SerializedSnippet &)> m_onSnippetSelected;
 };

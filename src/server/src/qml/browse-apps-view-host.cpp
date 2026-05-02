@@ -3,33 +3,16 @@
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 
-QUrl BrowseAppsViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/Vicinae/CommandListView.qml"));
-}
-
-QVariantMap BrowseAppsViewHost::qmlProperties() {
-  return {{QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(m_model))}};
-}
-
 void BrowseAppsViewHost::initialize() {
   BaseView::initialize();
+  initModel();
 
-  m_model = new BrowseAppsModel(this);
-  m_model->setScope(ViewScope(context(), this));
-  m_model->initialize();
+  model()->addSource(&m_section);
 
   setSearchPlaceholderText("Search apps...");
 }
 
 void BrowseAppsViewHost::loadInitialData() { reload(); }
-
-void BrowseAppsViewHost::textChanged(const QString &text) { m_model->setFilter(text); }
-
-void BrowseAppsViewHost::onReactivated() { m_model->refreshActionPanel(); }
-
-void BrowseAppsViewHost::beforePop() { m_model->beforePop(); }
-
-QObject *BrowseAppsViewHost::listModel() const { return m_model; }
 
 void BrowseAppsViewHost::reload() {
   auto appDb = context()->services->appDb();
@@ -46,5 +29,5 @@ void BrowseAppsViewHost::reload() {
     filtered.emplace_back(std::move(app));
   }
 
-  m_model->setItems(std::move(filtered));
+  m_section.setItems(std::move(filtered));
 }

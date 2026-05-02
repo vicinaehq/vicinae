@@ -1,27 +1,19 @@
 #pragma once
-#include "bridge-view.hpp"
+#include "list-view-host.hpp"
+#include "switch-windows-model.hpp"
 #include <chrono>
 
-class SwitchWindowsModel;
-
-class SwitchWindowsViewHost : public ViewHostBase {
+class SwitchWindowsViewHost : public ListViewHost {
   Q_OBJECT
-  Q_PROPERTY(QObject *listModel READ listModel CONSTANT)
 
 public:
-  QUrl qmlComponentUrl() const override;
-  QVariantMap qmlProperties() override;
   void initialize() override;
   void loadInitialData() override;
   void textChanged(const QString &text) override;
-  void onReactivated() override;
-  void beforePop() override;
-
-  QObject *listModel() const;
 
 private:
   void refreshWindows();
 
-  SwitchWindowsModel *m_model = nullptr;
+  SwitchWindowsSection m_section;
   std::chrono::time_point<std::chrono::steady_clock> m_lastFetch{};
 };

@@ -2,24 +2,24 @@
 #include "actions/wm/window-actions.hpp"
 #include "navigation-controller.hpp"
 
-QString SwitchWindowsModel::displayTitle(const WindowEntry &e) const { return e.window->title(); }
+QString SwitchWindowsSection::displayTitle(const WindowEntry &e) const { return e.window->title(); }
 
-QString SwitchWindowsModel::displaySubtitle(const WindowEntry &e) const {
+QString SwitchWindowsSection::displaySubtitle(const WindowEntry &e) const {
   if (e.app) return e.app->displayName();
   return e.window->wmClass();
 }
 
-QString SwitchWindowsModel::displayIconSource(const WindowEntry &e) const {
+QString SwitchWindowsSection::displayIconSource(const WindowEntry &e) const {
   if (e.app) return imageSourceFor(e.app->iconUrl());
   return imageSourceFor(ImageURL::builtin("app-window"));
 }
 
-QVariantList SwitchWindowsModel::displayAccessory(const WindowEntry &e) const {
+QVariantList SwitchWindowsSection::displayAccessories(const WindowEntry &e) const {
   if (auto ws = e.window->workspace()) { return qml::textAccessory(QString("WS %1").arg(*ws)); }
   return {};
 }
 
-std::unique_ptr<ActionPanelState> SwitchWindowsModel::buildActionPanel(const WindowEntry &e) const {
+std::unique_ptr<ActionPanelState> SwitchWindowsSection::buildActionPanel(const WindowEntry &e) const {
   auto panel = std::make_unique<ListActionPanelState>();
 
   auto section = panel->createSection("Window Actions");
@@ -31,5 +31,3 @@ std::unique_ptr<ActionPanelState> SwitchWindowsModel::buildActionPanel(const Win
 
   return panel;
 }
-
-QString SwitchWindowsModel::sectionLabel() const { return QStringLiteral("Open Windows"); }

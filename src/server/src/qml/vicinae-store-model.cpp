@@ -6,87 +6,31 @@
 #include "services/extension-registry/extension-registry.hpp"
 #include "utils/utils.hpp"
 
-template <> struct fuzzy::FuzzySearchable<VicinaeStoreModel::Entry> {
-  static int score(const VicinaeStoreModel::Entry &entry, std::string_view query) {
-    auto title = entry.extension.title.toStdString();
-    auto author = entry.extension.author.name.toStdString();
-    auto desc = entry.extension.description.toStdString();
-    return fuzzy::scoreWeighted({{title, 1.0}, {author, 0.5}, {desc, 0.3}}, query);
-  }
-};
-
-VicinaeStoreModel::VicinaeStoreModel(QObject *parent) : CommandListModel(parent) {}
-
-void VicinaeStoreModel::setEntries(const std::vector<VicinaeStore::Extension> &extensions,
-                                   ExtensionRegistry *registry, const QString &sectionName) {
-  m_entries.clear();
-  m_entries.reserve(extensions.size());
-  for (const auto &ext : extensions) {
-    m_entries.push_back({.extension = ext, .installed = registry->isInstalled(ext.id)});
-  }
+void VicinaeStoreSection::setEntries(const std::vector<VicinaeStore::Extension> &extensions,
+                                     ExtensionRegistry *registry, const QString &sectionName) {
   m_sectionName = sectionName;
-  applyFilter();
-}
-
-void VicinaeStoreModel::setFilter(const QString &text) {
-  m_query = text.toStdString();
-  applyFilter();
-}
-
-void VicinaeStoreModel::applyFilter() {
-  fuzzy::fuzzyFilter<Entry>(std::span<const Entry>(m_entries), m_query, m_filtered);
-
-  std::vector<SectionInfo> sections;
-  if (!m_filtered.empty()) {
-    sections.push_back({.name = m_sectionName, .count = static_cast<int>(m_filtered.size())});
+  std::vector<VicinaeStoreEntry> entries;
+  entries.reserve(extensions.size());
+  for (const auto &ext : extensions) {
+    entries.push_back({.extension = ext, .installed = registry->isInstalled(ext.id)});
   }
-  setSections(sections);
+  setItems(std::move(entries));
 }
 
-const VicinaeStoreModel::Entry &VicinaeStoreModel::resolvedEntry(int i) const {
-  return m_entries[m_filtered[i].data];
+QString VicinaeStoreSection::displayTitle(const VicinaeStoreEntry &entry) const {
+  return entry.extension.title;
 }
 
-QHash<int, QByteArray> VicinaeStoreModel::roleNames() const {
-  auto roles = CommandListModel::roleNames();
-  roles[DownloadCount] = "downloadCount";
-  roles[AuthorAvatar] = "authorAvatar";
-  roles[IsInstalled] = "isInstalled";
-  roles[CompatTierRole] = "compatTier";
-  return roles;
+QString VicinaeStoreSection::displaySubtitle(const VicinaeStoreEntry &entry) const {
+  return entry.extension.description;
 }
 
-QVariant VicinaeStoreModel::data(const QModelIndex &index, int role) const {
-  int s, i;
-  if (role >= DownloadCount && !dataItemAt(index.row(), s, i)) return {};
-
-  switch (role) {
-  case DownloadCount:
-    return formatCount(resolvedEntry(i).extension.downloadCount);
-  case AuthorAvatar: {
-    const auto &avatar = resolvedEntry(i).extension.author.avatarUrl;
-    if (avatar.isEmpty()) return imageSourceFor(ImageURL::builtin("person"));
-    return imageSourceFor(ImageURL::http(QUrl(avatar)).circle());
-  }
-  case IsInstalled:
-    return resolvedEntry(i).installed;
-  case CompatTierRole:
-    return -1;
-  default:
-    return CommandListModel::data(index, role);
-  }
+QString VicinaeStoreSection::displayIconSource(const VicinaeStoreEntry &entry) const {
+  return imageSourceFor(entry.extension.themedIcon());
 }
 
-QString VicinaeStoreModel::itemTitle(int, int i) const { return resolvedEntry(i).extension.title; }
-
-QString VicinaeStoreModel::itemSubtitle(int, int i) const { return resolvedEntry(i).extension.description; }
-
-QString VicinaeStoreModel::itemIconSource(int, int i) const {
-  return imageSourceFor(resolvedEntry(i).extension.themedIcon());
-}
-
-std::unique_ptr<ActionPanelState> VicinaeStoreModel::createActionPanel(int, int i) const {
-  const auto &entry = resolvedEntry(i);
+std::unique_ptr<ActionPanelState>
+VicinaeStoreSection::buildActionPanel(const VicinaeStoreEntry &entry) const {
   auto panel = std::make_unique<ActionPanelState>();
   auto section = panel->createSection();
   auto danger = panel->createSection();

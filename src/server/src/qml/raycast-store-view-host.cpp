@@ -1,9 +1,39 @@
 #include "raycast-store-view-host.hpp"
-#include "raycast-store-model.hpp"
 #include "service-registry.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include "services/toast/toast-service.hpp"
+#include "utils/utils.hpp"
 #include <chrono>
+
+QHash<int, QByteArray> RaycastStoreSectionListModel::roleNames() const {
+  auto roles = SectionListModel::roleNames();
+  roles[DownloadCount] = "downloadCount";
+  roles[AuthorAvatar] = "authorAvatar";
+  roles[IsInstalled] = "isInstalled";
+  roles[CompatTierRole] = "compatTier";
+  return roles;
+}
+
+QVariant RaycastStoreSectionListModel::data(const QModelIndex &index, int role) const {
+  if (role >= DownloadCount) {
+    int sourceIdx, itemIdx;
+    if (!dataItemAt(index.row(), sourceIdx, itemIdx)) return {};
+    const auto &entry = m_section->entryAt(itemIdx);
+    switch (role) {
+    case DownloadCount:
+      return formatCount(entry.extension.download_count);
+    case AuthorAvatar:
+      return m_section->imageSourceFor(entry.extension.author.validUserIcon());
+    case IsInstalled:
+      return entry.installed;
+    case CompatTierRole:
+      return static_cast<int>(entry.compatTier);
+    default:
+      return {};
+    }
+  }
+  return SectionListModel::data(index, role);
+}
 
 RaycastStoreViewHost::RaycastStoreViewHost() {
   m_debounce.setSingleShot(true);
@@ -29,9 +59,10 @@ QVariantMap RaycastStoreViewHost::qmlProperties() {
 void RaycastStoreViewHost::initialize() {
   BaseView::initialize();
 
-  m_model = new RaycastStoreModel(this);
-  m_model->setScope(ViewScope(context(), this));
-  m_model->initialize();
+  m_model.setScope(ViewScope(context(), this));
+  m_model.setSection(&m_section);
+  m_model.addSource(&m_section);
+
   m_store = context()->services->raycastStore();
 
   setSearchPlaceholderText("Browse Raycast extensions");
@@ -53,9 +84,7 @@ void RaycastStoreViewHost::textChanged(const QString &text) {
   m_debounce.start();
 }
 
-void RaycastStoreViewHost::onReactivated() { m_model->refreshActionPanel(); }
-
-QObject *RaycastStoreViewHost::listModel() const { return m_model; }
+void RaycastStoreViewHost::onReactivated() { m_model.refreshActionPanel(); }
 
 void RaycastStoreViewHost::fetchExtensions() {
   setLoading(true);
@@ -85,8 +114,8 @@ void RaycastStoreViewHost::tryPopulateModel() {
   if (!m_compatReady || !m_pendingPage) return;
 
   setLoading(false);
-  m_model->setEntries(m_pendingPage->extensions, context()->services->extensionRegistry(),
-                      m_store->compatMap(), QStringLiteral("Extensions"));
+  m_section.setEntries(m_pendingPage->extensions, context()->services->extensionRegistry(),
+                       m_store->compatMap(), QStringLiteral("Extensions"));
   m_pendingPage.reset();
 }
 
@@ -100,8 +129,8 @@ void RaycastStoreViewHost::handleFinishedQuery() {
   }
 
   setLoading(false);
-  m_model->setEntries(result->extensions, context()->services->extensionRegistry(), m_store->compatMap(),
-                      QStringLiteral("Results"));
+  m_section.setEntries(result->extensions, context()->services->extensionRegistry(), m_store->compatMap(),
+                       QStringLiteral("Results"));
 }
 
 void RaycastStoreViewHost::handleDebounce() {

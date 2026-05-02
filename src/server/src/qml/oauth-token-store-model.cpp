@@ -6,22 +6,22 @@
 #include "services/toast/toast-service.hpp"
 #include "ui/image/url.hpp"
 
-QString OAuthTokenStoreModel::displayTitle(const OAuth::TokenSet &set) const { return set.extensionId; }
+QString OAuthTokenStoreSection::displayTitle(const OAuth::TokenSet &set) const { return set.extensionId; }
 
-QString OAuthTokenStoreModel::displaySubtitle(const OAuth::TokenSet &set) const {
+QString OAuthTokenStoreSection::displaySubtitle(const OAuth::TokenSet &set) const {
   return set.providerId.value_or("");
 }
 
-QString OAuthTokenStoreModel::displayIconSource(const OAuth::TokenSet &set) const {
+QString OAuthTokenStoreSection::displayIconSource(const OAuth::TokenSet &set) const {
   return imageSourceFor(ImageURL::builtin("key"));
 }
 
-QVariantList OAuthTokenStoreModel::displayAccessory(const OAuth::TokenSet &set) const {
+QVariantList OAuthTokenStoreSection::displayAccessories(const OAuth::TokenSet &set) const {
   if (set.isExpired()) return qml::textAccessory(QStringLiteral("Expired"));
   return {};
 }
 
-std::unique_ptr<ActionPanelState> OAuthTokenStoreModel::buildActionPanel(const OAuth::TokenSet &set) const {
+std::unique_ptr<ActionPanelState> OAuthTokenStoreSection::buildActionPanel(const OAuth::TokenSet &set) const {
   auto panel = std::make_unique<ActionPanelState>();
   panel->setTitle(set.extensionId);
 
@@ -78,5 +78,3 @@ std::unique_ptr<ActionPanelState> OAuthTokenStoreModel::buildActionPanel(const O
 
   return panel;
 }
-
-QString OAuthTokenStoreModel::sectionLabel() const { return QStringLiteral("OAuth Token Sets ({count})"); }
