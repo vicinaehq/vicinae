@@ -1,7 +1,8 @@
 #pragma once
-#include "ui/views/base-view.hpp"
 #include <QUrl>
+#include <QVariantList>
 #include <QVariantMap>
+#include "ui/views/base-view.hpp"
 
 class ViewHostBase : public BaseView {
   Q_OBJECT

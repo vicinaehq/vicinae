@@ -1,10 +1,15 @@
 #pragma once
+#include <linux/input-event-codes.h>
+#include <QClipboard>
+#include <QGuiApplication>
+#include <QMimeData>
+#include <qtmetamacros.h>
+#include "linuxutils/keyboard.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/snippet/snippet-expander.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "snippet-server.hpp"
 #include "snippet-db.hpp"
-#include <qtmetamacros.h>
 
 class SnippetService : public QObject {
   Q_OBJECT
@@ -86,22 +91,43 @@ private:
     const auto snippet = m_db.findByKeyword(keyword);
     if (!snippet || !snippet->expansion) return;
 
-    [[maybe_unused]] bool terminal = false;
+    const auto text = std::get_if<snippet::TextSnippet>(&snippet->data);
+    if (!text) return;
 
+    SnippetExpander expander;
+    const auto expanded = expander.expandToString(text->text.c_str(), {});
+
+    auto *clip = QGuiApplication::clipboard();
+    auto *expansionData = new QMimeData;
+    expansionData->setData("text/plain;charset=utf-8", expanded.toUtf8());
+    expansionData->setData("vicinae/concealed", "1");
+    clip->setMimeData(expansionData);
+
+    bool terminal = false;
     if (const auto focusedWindow = m_wm.getFocusedWindow()) {
       if (const auto app = m_appDb.findByClass(focusedWindow->wmClass())) {
-        qDebug() << "snippet service detected that current app is a terminal";
         terminal = app->isTerminalEmulator() || app->isTerminalApp();
       }
     }
 
-    if (const auto text = std::get_if<snippet::TextSnippet>(&snippet->data)) {
-      SnippetExpander expander;
-      const auto expanded = expander.expandToString(text->text.c_str(), {});
-      m_server.injectClipboardText(keyword, expanded);
+    const bool wordMode = snippet->expansion->word;
+    const int eraseCount = static_cast<int>(keyword.size()) + (wordMode ? 1 : 0);
+
+    using Mod = linuxutils::UInputKeyboard::Modifier;
+    auto mods = static_cast<int>(Mod::Ctrl);
+    if (terminal) mods = static_cast<int>(Mod::Ctrl | Mod::Shift);
+
+    m_keyboard.repeatKey(KEY_BACKSPACE, eraseCount);
+    usleep(2000);
+    m_keyboard.sendKey(KEY_V, mods);
+
+    if (wordMode) {
+      usleep(2000);
+      m_keyboard.sendKey(KEY_SPACE, 0);
     }
   }
 
+  linuxutils::UInputKeyboard m_keyboard;
   SnippetServer m_server;
   SnippetDatabase m_db;
   WindowManager &m_wm;
