@@ -19,7 +19,7 @@ APPLICATIONS_DIR="$PREFIX/share/applications"
 SYSTEMD_USER_DIR="$PREFIX/lib/systemd/user"
 
 VICINAE_SCRIPT_PATH="$TEMP_DIR/vicinae-install-script.sh"
-SCRIPT_DOWNLOAD_URL="https://vicinae.com/install.sh"
+SCRIPT_DOWNLOAD_URL="https://vicinae.com/install"
 DOCS_URL="https://docs.vicinae.com/install/script"
 
 TEMP_FILES=()
