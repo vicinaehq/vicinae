@@ -26,20 +26,40 @@ Popup {
     padding: 4
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
-    onItemsChanged: completionModel.setItems(items)
-    onSectionsChanged: completionModel.setSections(sections)
+    onItemsChanged: if (items.length > 0)
+        completionModel.setItems(items)
+    onSectionsChanged: if (sections.length > 0)
+        completionModel.setSections(sections)
 
     onOpened: {
-        if (showFilter)
+        if (showFilter) {
+            filterField.text = "";
+            completionModel.setFilter("");
+            _highlightCurrentOrFirst();
             filterField.forceActiveFocus();
+        }
     }
     onActiveFocusChanged: {
         if (showFilter && !activeFocus && visible)
             close();
     }
 
+    function _highlightCurrentOrFirst() {
+        if (currentItemId !== "") {
+            const idx = completionModel.indexOfItemId(currentItemId);
+            if (idx >= 0) {
+                _highlightedIndex = idx;
+                return;
+            }
+        }
+        const first = completionModel.nextSelectableIndex(-1, 1);
+        _highlightedIndex = first >= 0 ? first : -1;
+    }
+
     function filter(query) {
         completionModel.setFilter(query);
+        const first = completionModel.nextSelectableIndex(-1, 1);
+        _highlightedIndex = first >= 0 ? first : -1;
     }
 
     function moveUp() {
@@ -63,8 +83,8 @@ Popup {
     CompletionModel {
         id: completionModel
         onCountChanged: {
-            const first = completionModel.nextSelectableIndex(-1, 1);
-            root._highlightedIndex = first >= 0 ? first : -1;
+            if (root._highlightedIndex >= count)
+                root._highlightedIndex = -1;
         }
     }
 
@@ -120,7 +140,7 @@ Popup {
                         visible: !filterField.text
                     }
 
-                    onTextEdited: completionModel.setFilter(text)
+                    onTextEdited: root.filter(text)
 
                     Keys.onUpPressed: root.moveUp()
                     Keys.onDownPressed: root.moveDown()

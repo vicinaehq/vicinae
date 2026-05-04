@@ -77,7 +77,7 @@ void CompletionModel::setFilter(const QString &query) {
 
 int CompletionModel::nextSelectableIndex(int from, int direction) const {
   const auto count = static_cast<int>(m_flat.size());
-  if (count == 0) return from;
+  if (count == 0) return -1;
 
   int idx = from + direction;
   if (idx < 0)
@@ -85,16 +85,27 @@ int CompletionModel::nextSelectableIndex(int from, int direction) const {
   else if (idx >= count)
     idx = 0;
 
-  while (idx != from) {
+  const int start = idx;
+  do {
     if (m_flat[idx].kind == FlatItem::Entry) return idx;
     idx += direction;
     if (idx < 0)
       idx = count - 1;
     else if (idx >= count)
       idx = 0;
-  }
+  } while (idx != start);
 
-  return from;
+  return -1;
+}
+
+int CompletionModel::indexOfItemId(const QString &id) const {
+  for (int i = 0; std::cmp_less(i, m_flat.size()); ++i) {
+    const auto &fi = m_flat[i];
+    if (fi.kind != FlatItem::Entry) continue;
+    const auto &item = m_sections[fi.sectionIdx].items[fi.itemIdx];
+    if (item.data.value(QStringLiteral("id")).toString() == id) return i;
+  }
+  return -1;
 }
 
 QVariantMap CompletionModel::itemDataAt(int index) const {

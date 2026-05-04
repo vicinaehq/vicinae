@@ -26,6 +26,7 @@ public:
   Q_INVOKABLE void setSections(const QVariantList &sections);
   Q_INVOKABLE void setFilter(const QString &query);
   Q_INVOKABLE int nextSelectableIndex(int from, int direction) const;
+  Q_INVOKABLE int indexOfItemId(const QString &id) const;
   Q_INVOKABLE QVariantMap itemDataAt(int index) const;
 
   int rowCount(const QModelIndex &parent = {}) const override;
