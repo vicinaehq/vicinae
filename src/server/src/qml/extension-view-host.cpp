@@ -208,7 +208,7 @@ void ExtensionViewHost::applyControlledSearchText(const EventCounted<std::string
   QString value = QString::fromStdString(incoming.value);
   if (value == searchText()) return;
 
-  if (incoming.eventCount && *incoming.eventCount < m_searchEventCount) return;
+  if (incoming.eventCount < m_searchEventCount) return;
 
   m_settingSearchText = true;
   setSearchText(value);

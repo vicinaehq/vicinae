@@ -241,7 +241,7 @@ void ExtensionFormModel::updateItem(FormItemData &existing, const FormModel::Ite
     existing.fieldData = buildFieldData(*field);
 
     if (field->value) {
-      if (field->value->eventCount && *field->value->eventCount < existing.eventCount) return;
+      if (field->value->eventCount < existing.eventCount) return;
       existing.modelValue = field->value->value;
       existing.hasUserValue = false;
     }

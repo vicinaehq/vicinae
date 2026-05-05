@@ -62,10 +62,9 @@ FormModel FormModel::fromJson(const QJsonObject &json) {
         auto val = props.value("value");
         if (val.isObject() && val.toObject().contains("eventCount")) {
           auto obj = val.toObject();
-          base.value = EventCounted<QJsonValue>{obj.value("value"),
-                                                static_cast<uint32_t>(obj.value("eventCount").toInt())};
+          base.value = parseEventCounted(obj, obj.value("value"));
         } else {
-          base.value = EventCounted<QJsonValue>{val, std::nullopt};
+          base.value = EventCounted<QJsonValue>{val, EVENT_COUNT_UNTRACKED};
         }
       }
       if (props.contains("error")) base.error = props.value("error").toString();
