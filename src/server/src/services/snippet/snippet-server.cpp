@@ -69,6 +69,17 @@ void SnippetServer::registerSnippet(snippet_gen::CreateSnippetRequest payload) {
   m_client.snippet()->createSnippet(payload);
 }
 
+void SnippetServer::injectClipboardText(std::string_view trigger, QString text, bool terminal) {
+  auto clip = QGuiApplication::clipboard();
+  auto expansionData = new QMimeData;
+
+  expansionData->setData("text/plain;charset=utf-8", text.toUtf8());
+  expansionData->setData("vicinae/concealed", "1");
+  clip->setMimeData(expansionData);
+
+  m_client.snippet()->injectClipboardExpansion({.trigger = std::string{trigger}, .terminal = terminal});
+}
+
 void SnippetServer::unregisterSnippet(std::string_view keyword) {
   m_client.snippet()->removeSnippet({.trigger = std::string{keyword}});
 }

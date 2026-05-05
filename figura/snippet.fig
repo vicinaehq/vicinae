@@ -32,6 +32,11 @@ struct RemoveSnippetResponse {
   removed: bool;
 };
 
+struct InjectClipboardRequest {
+  trigger: string;
+  terminal: bool;
+};
+
 struct TriggerSnippetPayload {
   trigger: string;
 };
@@ -40,6 +45,7 @@ service Snippet {
   fn setKeymap(info: LayoutInfo) => void;
   fn createSnippet(req: CreateSnippetRequest) => CreateSnippetResponse;
   fn removeSnippet(req: RemoveSnippetRequest) => RemoveSnippetResponse;
+  fn injectClipboardExpansion(req: InjectClipboardRequest) => void;
 
   event triggerSnippet(payload: TriggerSnippetPayload);
 }

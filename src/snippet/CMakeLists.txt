@@ -25,7 +25,7 @@ add_library(${PROJECT_NAME} STATIC src/server.cpp ${SRCS})
 add_library(${LIB_NAMESPACE}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${GENOUT} PRIVATE src)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)
-target_link_libraries(${PROJECT_NAME} PUBLIC glaze::glaze xkbcommon udev)
+target_link_libraries(${PROJECT_NAME} PUBLIC glaze::glaze xkbcommon udev vicinae::linuxutils)
 
 add_executable(${SNIPPET_SERVER_BIN} src/main.cpp)
 target_link_libraries(${SNIPPET_SERVER_BIN} PRIVATE ${PROJECT_NAME})
