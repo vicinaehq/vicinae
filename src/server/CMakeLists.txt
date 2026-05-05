@@ -3,7 +3,7 @@ set(CMAKE_AUTORCC ON)
 set(LIBS)
 set(TARGET vicinae-server)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Sql Network Svg DBus Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2)
+find_package(Qt6 REQUIRED COMPONENTS Core Sql Network Svg DBus Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2 ShaderTools)
 find_package(OpenSSL REQUIRED)
 find_package(LibXml2 REQUIRED)
 if (USE_SYSTEM_KF6)
@@ -520,6 +520,7 @@ set(SRCS
 	src/qml/extension-grid-model.hpp
 	src/qml/extension-grid-model.cpp
 	src/qml/source-blend-rect.hpp
+	src/qml/source-blend-rect.cpp
 	src/qml/image-url.hpp
 	src/qml/image-url.cpp
 	src/qml/image-source.hpp
@@ -836,6 +837,15 @@ qt_add_qml_module(${TARGET}
 		src/qml/markdown/text-selection-controller.hpp
 	DEPENDENCIES QtQuick
 	NO_PLUGIN
+)
+
+qt6_add_shaders(${TARGET} "sourceblend_shaders"
+	BATCHABLE
+	PREFIX "/shaders"
+	GLSL "100es,120,150,330,440"
+	FILES
+		src/qml/shaders/sourceblend.vert
+		src/qml/shaders/sourceblend.frag
 )
 
 if(Qt6_FOUND)
