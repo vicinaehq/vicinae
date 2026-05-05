@@ -18,6 +18,8 @@ Item {
 
     property string triggerChar: "{"
 
+    property bool _suppressTextChanged: false
+
     signal textEdited
 
     function forceActiveFocus() {
@@ -96,6 +98,7 @@ Item {
                     }
 
                     onTextChanged: {
+                        if (root._suppressTextChanged) return;
                         root.textEdited();
                         completer.update(edit.text, edit.cursorPosition);
                     }
@@ -156,8 +159,11 @@ Item {
         text: edit.text
         cursorPosition: edit.cursorPosition
         onCompletionAccepted: (newText, newCursorPos) => {
+            root._suppressTextChanged = true;
             edit.text = newText;
             edit.cursorPosition = newCursorPos;
+            root._suppressTextChanged = false;
+            root.textEdited();
         }
     }
 }
