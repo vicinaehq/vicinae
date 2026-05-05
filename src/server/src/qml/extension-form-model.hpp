@@ -74,6 +74,7 @@ private:
     QJsonValue modelValue;
     QJsonValue userValue;
     bool hasUserValue = false;
+    uint32_t eventCount = 0;
 
     std::optional<EventHandler> onChange;
     std::optional<EventHandler> onBlur;

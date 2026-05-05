@@ -12,6 +12,7 @@
 #include <QtConcurrent/QtConcurrent>
 #include <qfuturewatcher.h>
 #include <qlogging.h>
+#include <queue>
 
 class ExtUIService : public tsapi::AbstractUI {
   Q_OBJECT
@@ -38,18 +39,8 @@ public:
   }
 
   Void::Future render(std::string json) override {
-    if (m_modelWatcher.isRunning()) {
-      m_modelWatcher.cancel();
-      m_modelWatcher.waitForFinished();
-    }
-
-    m_modelWatcher.setFuture(QtConcurrent::run([json = std::move(json)]() -> ParsedRenderData {
-      QJsonParseError parseError;
-      auto doc = QJsonDocument::fromJson(QByteArray::fromStdString(json), &parseError);
-      if (parseError.error) return {};
-      return ModelParser().parse(doc.object().value("views").toArray());
-    }));
-
+    m_renderQueue.push(std::move(json));
+    processNextRender();
     return Void::ok();
   }
 
@@ -145,17 +136,17 @@ public:
 
 private slots:
   void modelCreated() {
-    if (m_modelWatcher.isCanceled()) return;
-
     auto models = m_modelWatcher.result();
 
     for (size_t i = 0; i < models.items.size() && i < m_views.size(); ++i) {
-      auto &model = models.items[i];
+      const auto &model = models.items[i];
       const auto &entry = m_views[i];
       bool const shouldSkipRender = !model.dirty && !model.propsDirty;
 
       if (!shouldSkipRender) entry.renderFn(model.root);
     }
+
+    processNextRender();
   }
 
   void handleViewPoped(const BaseView *view) {
@@ -169,6 +160,20 @@ private slots:
   }
 
 private:
+  void processNextRender() {
+    if (m_modelWatcher.isRunning() || m_renderQueue.empty()) return;
+
+    auto json = std::move(m_renderQueue.front());
+    m_renderQueue.pop();
+
+    m_modelWatcher.setFuture(QtConcurrent::run([json = std::move(json)]() -> ParsedRenderData {
+      QJsonParseError parseError;
+      auto doc = QJsonDocument::fromJson(QByteArray::fromStdString(json), &parseError);
+      if (parseError.error) return {};
+      return ModelParser().parse(doc.object().value("views").toArray());
+    }));
+  }
+
   ExtensionActionPanelBuilder::NotifyFn makeNotifyFn() {
     return [this](const QString &handler, const QJsonArray &args) {
       m_eventCore->emithandlerActivated(handler.toStdString(), qJsonValueToGlazeGeneric(args).get_array());
@@ -204,6 +209,7 @@ private:
   }
 
   std::vector<ViewEntry> m_views;
+  std::queue<std::string> m_renderQueue;
   QFutureWatcher<ParsedRenderData> m_modelWatcher;
   NavigationController *m_navigation;
   std::shared_ptr<ExtensionCommand> m_command;

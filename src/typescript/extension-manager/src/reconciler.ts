@@ -70,7 +70,7 @@ const processProps = (props: Record<string, any>): Record<string, any> => {
  */
 const detachInstance = (instance: Instance) => {
 	for (const handler of instance._handlers)
-		callbackManager.removeHandler(handler);
+		callbackManager.deferRemoval(handler);
 	for (const child of instance.children) {
 		detachInstance(child);
 	}
@@ -299,12 +299,11 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 				}
 
 				if (typeof v === "function") {
-					const old = prevProps[k];
+					const oldHandlerId = instance.props[k];
 
-					if (typeof old === "string") {
-						// TODO: verify this still works
-						callbackManager.setHandler(k, v);
-						props[k] = old;
+					if (typeof oldHandlerId === "string") {
+						callbackManager.setHandler(oldHandlerId, v);
+						props[k] = oldHandlerId;
 						continue;
 					}
 
@@ -407,14 +406,6 @@ const serializeInstance = (instance: Instance): SerializedInstance => {
 	instance.dirty = false;
 	instance.propsDirty = false;
 
-	/*
-	let i = 0;
-
-	for (const child of instance.children) {
-		obj.children[i++] = serializeInstance(child);
-	}
-	*/
-
 	return obj;
 };
 
@@ -454,6 +445,7 @@ export const createRenderer = (config: RendererConfig) => {
 				}));
 
 				config.onUpdate?.(views);
+				callbackManager.flushDeferredRemovals();
 
 				const end = performance.now();
 

@@ -80,6 +80,7 @@ private:
   void notifyExtension(const QString &handler, const QJsonArray &args);
   void handleDebouncedSearch();
   void updateDropdown(const DropdownModel *dropdown);
+  void applyControlledSearchText(const EventCounted<std::string> &incoming);
 
   template <typename T> T *activeModel() const {
     auto p = std::get_if<T *>(&m_model);
@@ -96,6 +97,8 @@ private:
 
   bool m_throttle = false;
   bool m_filtering = false;
+  bool m_settingSearchText = false;
+  uint32_t m_searchEventCount = 0;
   std::optional<std::string> m_onSearchTextChange;
   bool m_shouldResetSelection = false;
   bool m_selectFirstOnReset = true;

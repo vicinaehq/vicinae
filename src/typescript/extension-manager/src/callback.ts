@@ -4,6 +4,10 @@ export type CallbackHandler = (...args: any[]) => void;
 
 class CallbackManager {
 	activateHandler(id: string, args: any[]) {
+		if (this.pendingCleanup.has(id) || this.previousCleanup.has(id)) {
+			return;
+		}
+
 		const handler = this.handlers.get(id);
 
 		if (!handler) {
@@ -15,11 +19,20 @@ class CallbackManager {
 		handler(...args);
 	}
 
-	/**
-	 * Removes callback associated with this ID if there is one.
-	 */
 	removeHandler(id: string): void {
 		this.handlers.delete(id);
+	}
+
+	deferRemoval(id: string): void {
+		this.pendingCleanup.add(id);
+	}
+
+	flushDeferredRemovals(): void {
+		for (const id of this.previousCleanup) {
+			this.handlers.delete(id);
+		}
+		this.previousCleanup = this.pendingCleanup;
+		this.pendingCleanup = new Set();
 	}
 
 	setHandler(id: string, handler: CallbackHandler) {
@@ -43,6 +56,8 @@ class CallbackManager {
 	}
 
 	private readonly handlers = new Map<string, CallbackHandler>();
+	private pendingCleanup = new Set<string>();
+	private previousCleanup = new Set<string>();
 }
 
 export const callbackManager = new CallbackManager();

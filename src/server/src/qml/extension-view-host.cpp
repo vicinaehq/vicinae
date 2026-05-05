@@ -127,7 +127,7 @@ void ExtensionViewHost::renderList(const ListModel &model) {
 
   if (!model.navigationTitle.empty()) { setNavigationTitle(model.navigationTitle.c_str()); }
   if (!model.searchPlaceholderText.empty()) { setSearchPlaceholderText(model.searchPlaceholderText.c_str()); }
-  if (auto text = model.searchText) { setSearchText(text->c_str()); }
+  if (model.searchText) { applyControlledSearchText(*model.searchText); }
 
   bool const wasLoading = m_isLoading;
   m_isLoading = model.isLoading;
@@ -167,7 +167,7 @@ void ExtensionViewHost::renderGrid(const GridModel &model) {
 
   if (!model.navigationTitle.empty()) { setNavigationTitle(model.navigationTitle.c_str()); }
   if (!model.searchPlaceholderText.empty()) { setSearchPlaceholderText(model.searchPlaceholderText.c_str()); }
-  if (auto text = model.searchText) { setSearchText(text->c_str()); }
+  if (model.searchText) { applyControlledSearchText(*model.searchText); }
 
   bool const wasLoading = m_isLoading;
   m_isLoading = model.isLoading;
@@ -191,6 +191,8 @@ void ExtensionViewHost::renderGrid(const GridModel &model) {
 }
 
 void ExtensionViewHost::textChanged(const QString &text) {
+  if (m_settingSearchText) return;
+
   bool const had = m_hasSearchText;
   m_hasSearchText = !text.isEmpty();
   if (had != m_hasSearchText) emit suppressEmptyViewChanged();
@@ -200,6 +202,17 @@ void ExtensionViewHost::textChanged(const QString &text) {
   } else {
     handleDebouncedSearch();
   }
+}
+
+void ExtensionViewHost::applyControlledSearchText(const EventCounted<std::string> &incoming) {
+  QString value = QString::fromStdString(incoming.value);
+  if (value == searchText()) return;
+
+  if (incoming.eventCount && *incoming.eventCount < m_searchEventCount) return;
+
+  m_settingSearchText = true;
+  setSearchText(value);
+  m_settingSearchText = false;
 }
 
 void ExtensionViewHost::handleDebouncedSearch() {
@@ -212,8 +225,9 @@ void ExtensionViewHost::handleDebouncedSearch() {
   }
 
   if (m_onSearchTextChange) {
+    ++m_searchEventCount;
     m_shouldResetSelection = !m_filtering;
-    notifyExtension(m_onSearchTextChange->c_str(), {text});
+    notifyExtension(m_onSearchTextChange->c_str(), {text, static_cast<int>(m_searchEventCount)});
   }
 }
 

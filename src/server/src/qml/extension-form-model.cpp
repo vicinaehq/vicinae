@@ -56,9 +56,12 @@ void ExtensionFormModel::setFieldValue(int index, const QVariant &value) {
 
   item.userValue = QJsonValue::fromVariant(value);
   item.hasUserValue = true;
+  ++item.eventCount;
   emit dataChanged(createIndex(index, 0), createIndex(index, 0), {ValueRole});
 
-  if (item.onChange) { m_notify(*item.onChange, QJsonArray{item.userValue}); }
+  if (item.onChange) {
+    m_notify(*item.onChange, QJsonArray{item.userValue, static_cast<int>(item.eventCount)});
+  }
 }
 
 void ExtensionFormModel::fieldFocused(int index) {
@@ -210,7 +213,7 @@ ExtensionFormModel::FormItemData ExtensionFormModel::createItem(const FormModel:
     data.fieldData = buildFieldData(*field);
 
     if (field->value) {
-      data.modelValue = *field->value;
+      data.modelValue = field->value->value;
     } else if (field->defaultValue) {
       data.modelValue = *field->defaultValue;
     }
@@ -238,7 +241,8 @@ void ExtensionFormModel::updateItem(FormItemData &existing, const FormModel::Ite
     existing.fieldData = buildFieldData(*field);
 
     if (field->value) {
-      existing.modelValue = *field->value;
+      if (field->value->eventCount && *field->value->eventCount < existing.eventCount) return;
+      existing.modelValue = field->value->value;
       existing.hasUserValue = false;
     }
   } else if (auto *desc = std::get_if<FormModel::Description>(&newItem)) {

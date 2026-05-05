@@ -1,5 +1,6 @@
 #pragma once
 #include "extend/action-model.hpp"
+#include "extend/event-counted.hpp"
 #include "extend/list-model.hpp"
 #include "extend/model.hpp"
 #include <memory>
@@ -24,7 +25,7 @@ struct FormModel {
     std::optional<EventHandler> onChange;
     std::optional<EventHandler> onFocus;
     std::optional<QString> title;
-    std::optional<QJsonValue> value;
+    std::optional<EventCounted<QJsonValue>> value;
     bool storeValue;
   };
 

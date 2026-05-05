@@ -1,6 +1,7 @@
 import type * as React from "react";
 import type {
 	DatePickerType,
+	EventCounted,
 	Grid,
 	Keyboard,
 	List,
@@ -13,6 +14,7 @@ type BaseFormField = {
 	onBlur?: Function;
 	onFocus?: Function;
 	onChange?: Function;
+	value?: any;
 };
 
 declare module "react" {
@@ -30,9 +32,10 @@ declare module "react" {
 				filtering?: boolean;
 				isLoading?: boolean;
 				isShowingDetail?: boolean;
+				searchText?: EventCounted<string>;
 				searchBarPlaceholder?: string;
 				navigationTitle?: string;
-				onSearchTextChange?: (text: string) => void;
+				onSearchTextChange?: (...args: any[]) => void;
 				onSelectionChange?: (selectedItemId: string) => void;
 			};
 			"list-section": {
@@ -67,9 +70,10 @@ declare module "react" {
 				filtering?: boolean;
 				isLoading?: boolean;
 				isShowingDetail?: boolean;
+				searchText?: EventCounted<string>;
 				searchBarPlaceholder?: string;
 				navigationTitle?: string;
-				onSearchTextChange?: (text: string) => void;
+				onSearchTextChange?: (...args: any[]) => void;
 				onSelectionChange?: (selectedItemId: string) => void;
 			};
 			"grid-section": {
@@ -193,7 +197,7 @@ declare module "react" {
 				type?: DatePickerType;
 			};
 			"checkbox-field": BaseFormField & {};
-			"password-field": {};
+			"password-field": BaseFormField & {};
 			"textarea-field": {};
 
 			dropdown: {

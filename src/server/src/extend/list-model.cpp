@@ -123,7 +123,17 @@ ListModel ListModelParser::parse(const QJsonObject &instance) {
     model.onSelectionChanged = props.value("onSelectionChange").toString().toStdString();
   }
 
-  if (props.contains("searchText")) { model.searchText = props.value("searchText").toString().toStdString(); }
+  if (props.contains("searchText")) {
+    auto val = props.value("searchText");
+    if (val.isObject()) {
+      auto obj = val.toObject();
+      EventCounted<std::string> ec{obj.value("value").toString().toStdString(), std::nullopt};
+      if (obj.contains("eventCount")) ec.eventCount = static_cast<uint32_t>(obj.value("eventCount").toInt());
+      model.searchText = ec;
+    } else {
+      model.searchText = EventCounted<std::string>{val.toString().toStdString(), std::nullopt};
+    }
+  }
   if (props.contains("pagination")) {
     model.pagination = PaginationModel::fromJson(props.value("pagination").toObject());
   }
