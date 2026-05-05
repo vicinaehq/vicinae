@@ -24,6 +24,7 @@ void SnippetFormViewHost::initialize() {
   BaseView::initialize();
 
   m_service = context()->services->snippetService();
+  buildContentCompletions();
 
   auto panel = std::make_unique<FormActionPanelState>();
   auto section = panel->createSection();
@@ -123,4 +124,36 @@ void SnippetFormViewHost::submit() {
   }
 
   popSelf();
+}
+
+void SnippetFormViewHost::buildContentCompletions() {
+  m_contentCompletions = QVariantList{
+      QVariantMap{
+          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("text-cursor"))},
+          {QStringLiteral("title"), QStringLiteral("Cursor Position")},
+          {QStringLiteral("value"), QStringLiteral("cursor")},
+      },
+      QVariantMap{
+          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("copy-clipboard"))},
+          {QStringLiteral("title"), QStringLiteral("Clipboard Text")},
+          {QStringLiteral("value"), QStringLiteral("clipboard")},
+      },
+      QVariantMap{
+          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("fingerprint"))},
+          {QStringLiteral("title"), QStringLiteral("UUID")},
+          {QStringLiteral("value"), QStringLiteral("uuid")},
+      },
+      QVariantMap{
+          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("calendar"))},
+          {QStringLiteral("title"), QStringLiteral("Date")},
+          {QStringLiteral("value"), QStringLiteral("date")},
+      },
+      QVariantMap{
+          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("text-cursor"))},
+          {QStringLiteral("title"), QStringLiteral("Argument")},
+          {QStringLiteral("value"), QStringLiteral("argument")},
+          {QStringLiteral("template"), QStringLiteral("{argument name=\"\"}")},
+          {QStringLiteral("cursorOffset"), 16},
+      },
+  };
 }

@@ -13,6 +13,8 @@ class SnippetFormViewHost : public FormViewBase {
   Q_PROPERTY(QString keyword READ keyword WRITE setKeyword NOTIFY formChanged)
   Q_PROPERTY(bool expandAsWord READ expandAsWord WRITE setExpandAsWord NOTIFY formChanged)
 
+  Q_PROPERTY(QVariantList contentCompletions READ contentCompletions CONSTANT)
+
   Q_PROPERTY(QString nameError READ nameError NOTIFY errorsChanged)
   Q_PROPERTY(QString contentError READ contentError NOTIFY errorsChanged)
   Q_PROPERTY(QString keywordError READ keywordError NOTIFY errorsChanged)
@@ -33,6 +35,8 @@ public:
   QString content() const { return m_content; }
   QString keyword() const { return m_keyword; }
   bool expandAsWord() const { return m_expandAsWord; }
+
+  QVariantList contentCompletions() const { return m_contentCompletions; }
 
   QString nameError() const { return m_nameError; }
   QString contentError() const { return m_contentError; }
@@ -68,6 +72,8 @@ signals:
   void errorsChanged();
 
 private:
+  void buildContentCompletions();
+
   Mode m_mode = Mode::Create;
   std::optional<snippet::SerializedSnippet> m_initialSnippet;
   SnippetService *m_service = nullptr;
@@ -80,4 +86,6 @@ private:
   QString m_nameError;
   QString m_contentError;
   QString m_keywordError;
+
+  QVariantList m_contentCompletions;
 };

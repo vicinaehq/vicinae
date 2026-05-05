@@ -471,6 +471,8 @@ set(SRCS
 	src/qml/list-view-host.hpp
 	src/qml/action-panel-model.hpp
 	src/qml/action-panel-model.cpp
+	src/qml/completion-model.hpp
+	src/qml/completion-model.cpp
 	src/qml/action-panel-controller.hpp
 	src/qml/action-panel-controller.cpp
 	src/qml/alert-model.hpp
@@ -757,6 +759,9 @@ set(VICINAE_QML_FILES
 	src/qml/qml/AliasFormView.qml
 	src/qml/qml/ShortcutFormView.qml
 	src/qml/qml/FormCompletedInput.qml
+	src/qml/qml/FormCompletedTextArea.qml
+	src/qml/qml/PlaceholderCompleter.qml
+	src/qml/qml/CompletionPopup.qml
 	src/qml/qml/CreateExtensionFormView.qml
 	src/qml/qml/ArgCompleter.qml
 	src/qml/qml/DetailListView.qml
@@ -826,6 +831,7 @@ qt_add_qml_module(${TARGET}
 	SOURCES
 		src/qml/source-blend-rect.hpp
 		src/qml/animated-image.hpp
+		src/qml/completion-model.hpp
 		src/qml/markdown/markdown-model.hpp
 		src/qml/markdown/text-selection-controller.hpp
 	DEPENDENCIES QtQuick

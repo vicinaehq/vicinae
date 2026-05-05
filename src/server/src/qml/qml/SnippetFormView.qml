@@ -28,12 +28,13 @@ Item {
             id: contentField
             label: "Content"
             error: root.host.contentError
-            info: "You can use {dynamic placeholders} to make the content dynamic. No autocomplete is available for now."
+            info: "You can use {dynamic placeholders} to make the content dynamic. Type { to see available placeholders."
             topAlignLabel: true
 
-            FormTextArea {
+            FormCompletedTextArea {
                 text: root.host.content
                 placeholder: "€"
+                completions: root.host.contentCompletions
                 hasError: contentField.error !== ""
                 onTextEdited: root.host.content = text
             }

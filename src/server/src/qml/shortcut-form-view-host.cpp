@@ -175,6 +175,8 @@ void ShortcutFormViewHost::buildLinkCompletions() {
           {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("text-cursor"))},
           {QStringLiteral("title"), QStringLiteral("Argument")},
           {QStringLiteral("value"), QStringLiteral("argument")},
+          {QStringLiteral("template"), QStringLiteral("{argument name=\"\"}")},
+          {QStringLiteral("cursorOffset"), 16},
       },
       QVariantMap{
           {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("fingerprint"))},
