@@ -1,6 +1,7 @@
 #pragma once
 #include "extend/action-model.hpp"
 #include "extend/empty-view-model.hpp"
+#include "extend/event-counted.hpp"
 #include "extend/image-model.hpp"
 #include "extend/pagination-model.hpp"
 #include "extend/dropdown-model.hpp"
@@ -58,7 +59,7 @@ struct GridModel {
   std::string searchPlaceholderText;
   std::optional<std::string> onSelectionChanged;
   std::optional<std::string> onSearchTextChange;
-  std::optional<std::string> searchText;
+  std::optional<EventCounted<std::string>> searchText;
   std::vector<GridChild> items;
   std::optional<ActionPannelModel> actions;
   std::optional<EmptyViewModel> emptyView;

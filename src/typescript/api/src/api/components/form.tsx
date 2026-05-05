@@ -1,5 +1,6 @@
 import type { ReactNode, Ref } from "react";
 import { useImperativeFormHandle } from "../hooks/use-imperative-form-handle";
+import { useEventCounted } from "../hooks/use-event-counted";
 import { type ImageLike, serializeProtoImage } from "../image";
 import { Dropdown as MainDropdown } from "./dropdown";
 
@@ -197,19 +198,23 @@ const FormRoot: React.FC<Form.Props> = ({
 	);
 };
 
-const TextField: React.FC<Form.TextField.Props> = ({ ref, ...props }) => {
+const TextField: React.FC<Form.TextField.Props> = ({ ref, value, onChange, ...props }) => {
 	useImperativeFormHandle(ref);
+	const [countedValue, wrappedOnChange] = useEventCounted(value, onChange);
 
-	return <text-field {...wrapFormItemProps(props)} />;
+	return <text-field {...wrapFormItemProps(props)} value={countedValue} onChange={wrappedOnChange} />;
 };
 
 const PasswordField: React.FC<Form.PasswordField.Props> = ({
 	ref,
+	value,
+	onChange,
 	...props
 }) => {
 	useImperativeFormHandle(ref);
+	const [countedValue, wrappedOnChange] = useEventCounted(value, onChange);
 
-	return <password-field {...props} />;
+	return <password-field {...props} value={countedValue} onChange={wrappedOnChange} />;
 };
 
 export enum DatePickerType {
@@ -298,10 +303,11 @@ const TagPicker = Object.assign(TagPickerRoot, {
 	Item: TagPickerItem,
 });
 
-const TextArea: React.FC<Form.TextArea.Props> = ({ ref, ...props }) => {
+const TextArea: React.FC<Form.TextArea.Props> = ({ ref, value, onChange, ...props }) => {
 	useImperativeFormHandle(ref);
+	const [countedValue, wrappedOnChange] = useEventCounted(value, onChange);
 
-	return <text-area-field {...wrapFormItemProps(props)} />;
+	return <text-area-field {...wrapFormItemProps(props)} value={countedValue} onChange={wrappedOnChange} />;
 };
 
 const FilePicker: React.FC<Form.FilePicker.Props> = ({ ref, ...props }) => {

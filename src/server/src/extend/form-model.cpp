@@ -58,7 +58,15 @@ FormModel FormModel::fromJson(const QJsonObject &json) {
       base.autoFocus = props.value("autoFocus").toBool();
 
       if (props.contains("title")) base.title = props.value("title").toString();
-      if (props.contains("value")) base.value = props.value("value");
+      if (props.contains("value")) {
+        auto val = props.value("value");
+        if (val.isObject() && val.toObject().contains("eventCount")) {
+          auto obj = val.toObject();
+          base.value = parseEventCounted(obj, obj.value("value"));
+        } else {
+          base.value = EventCounted<QJsonValue>{val, EVENT_COUNT_UNTRACKED};
+        }
+      }
       if (props.contains("error")) base.error = props.value("error").toString();
       if (props.contains("info")) base.info = props.value("info").toString();
       if (props.contains("onBlur")) base.onBlur = props.value("onBlur").toString();

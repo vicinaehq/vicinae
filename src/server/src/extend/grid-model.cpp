@@ -135,7 +135,10 @@ GridModel GridModelParser::parse(const QJsonObject &instance) {
   if (props.contains("selectedItemId")) {
     model.selectedItemId = props.value("selectedItemId").toString().toStdString();
   }
-  if (props.contains("searchText")) { model.searchText = props.value("searchText").toString().toStdString(); }
+  if (props.contains("searchText")) {
+    auto obj = props.value("searchText").toObject();
+    model.searchText = parseEventCounted(obj, obj.value("value").toString().toStdString());
+  }
   if (props.contains("pagination")) {
     model.pagination = PaginationModel::fromJson(props.value("pagination").toObject());
   }
