@@ -33,6 +33,9 @@ Item {
         } else {
             _highlightedIndex = Math.max(0, Math.min(_navItems.length - 1, _highlightedIndex + delta));
         }
+        const listIdx = _highlightedListIndex();
+        if (listIdx >= 0)
+            navList.positionViewAtIndex(listIdx, ListView.Contain);
     }
 
     function _activateHighlighted() {
