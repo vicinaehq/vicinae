@@ -20,8 +20,8 @@ jobs:
       matrix:
         compiler:
           - name: GCC
-            cc: gcc
-            cxx: g++
+            cc: gcc-15
+            cxx: g++-15
           - name: Clang
             cc: clang
             cxx: clang++
