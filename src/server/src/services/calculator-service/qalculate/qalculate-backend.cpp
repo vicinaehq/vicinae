@@ -1,28 +1,26 @@
 #include "services/calculator-service/qalculate/qalculate-backend.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include <QDebug>
+#include <QRegularExpression>
 #include <format>
 #include <libqalculate/MathStructure.h>
 #include <libqalculate/QalculateDateTime.h>
 #include <libqalculate/includes.h>
 #include <libqalculate/Unit.h>
+#include <libqalculate/Variable.h>
+#include <libqalculate/Function.h>
 #include <libqalculate/Prefix.h>
 #include <qlogging.h>
 #include <QtConcurrent/QtConcurrent>
 #include <qobjectdefs.h>
+#include <ranges>
 
 using CalculatorResult = QalculateBackend::CalculatorResult;
 using CalculatorError = QalculateBackend::CalculatorError;
 
 QalculateBackend::QalculateBackend() = default;
 
-bool QalculateBackend::isActivatable() const {
-  /**
-   * if QalculateBackend is considered as an option, it means support for it was compiled in
-   * and the vicinae binary links to the qalculate library already. That's why we don't need complex checks.
-   */
-  return true;
-}
+bool QalculateBackend::isActivatable() const { return true; }
 
 bool QalculateBackend::start() {
   if (!m_initialized) {
@@ -33,11 +31,18 @@ bool QalculateBackend::start() {
   return true;
 }
 
-std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const QString &question) const {
-  QString const expression = preprocessQuestion(question);
-  std::string const localizedExpression = CALCULATOR->unlocalizeExpression(expression.toStdString());
-  std::string res;
-  res = CALCULATOR->calculateAndPrint(localizedExpression, 10000, m_evalOpts, m_printOpts);
+std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const QString &question) {
+  QString expression = preprocessQuestion(question);
+  expression = stripTrailingOperators(expression);
+  if (expression.isEmpty()) return std::unexpected(CalculatorError("Empty expression"));
+
+  auto stdExpr = expression.toStdString();
+  if (!isComputableExpression(stdExpr)) return std::unexpected(CalculatorError("Not computable"));
+
+  std::string const localizedExpression = CALCULATOR->unlocalizeExpression(stdExpr);
+  std::string res = CALCULATOR->calculateAndPrint(localizedExpression, 10000, m_evalOpts, m_printOpts);
+
+  if (CALCULATOR->aborted()) return std::unexpected(CalculatorError("Computation aborted"));
 
   MathStructure const in = CALCULATOR->parse(localizedExpression);
   MathStructure const result = CALCULATOR->parse(res);
@@ -66,14 +71,93 @@ std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const
   return calcRes;
 }
 
-QString QalculateBackend::preprocessQuestion(const QString &query) const { return query.simplified(); }
-
-QFuture<QalculateBackend::ComputeResult> QalculateBackend::asyncCompute(const QString &question) const {
-  QPromise<ComputeResult> promise;
-  promise.addResult(compute(question));
-  promise.finish();
-  return promise.future();
+QString QalculateBackend::stripTrailingOperators(QString expr) {
+  static constexpr std::string_view asciiOps = "+-*/^&|!<>=~\\(";
+  while (!expr.isEmpty()) {
+    QChar last = expr.back();
+    if (last.unicode() < 128 && asciiOps.find(static_cast<char>(last.unicode())) != std::string_view::npos) {
+      expr.chop(1);
+    } else {
+      auto bytes = expr.last(1).toUtf8();
+      std::string_view tail(bytes.constData(), bytes.size());
+      // Unicode operators: × ÷ − ∧ ∨ ⊻ ≤ ≥ ≠
+      if (tail == "\xc3\x97" || tail == "\xc3\xb7" || tail == "\xe2\x88\x92" || tail == "\xe2\x88\xa7" ||
+          tail == "\xe2\x88\xa8" || tail == "\xe2\x8a\xbb" || tail == "\xe2\x89\xa4" ||
+          tail == "\xe2\x89\xa5" || tail == "\xe2\x89\xa0") {
+        expr.chop(1);
+      } else {
+        break;
+      }
+    }
+  }
+  return expr.trimmed();
 }
+
+bool QalculateBackend::isComputableExpression(const std::string &expr) {
+  static constexpr std::string_view opsAndParens = "~+-*/^&|!<>=() \t";
+  bool allOpsOrWhitespace =
+      std::ranges::all_of(expr, [](char c) { return opsAndParens.find(c) != std::string_view::npos; });
+  if (allOpsOrWhitespace) return false;
+
+  static constexpr std::string_view numberElements = "0123456789.:";
+  static constexpr std::string_view ops = "~+-*/^&|!<>=";
+
+  bool hasOps = std::ranges::any_of(expr, [](char c) { return ops.find(c) != std::string_view::npos; });
+  bool hasNumbers =
+      std::ranges::any_of(expr, [](char c) { return numberElements.find(c) != std::string_view::npos; });
+  bool hasSpaces = expr.find(' ') != std::string::npos;
+
+  if (hasOps || hasNumbers || hasSpaces) return true;
+
+  // Bare word — check if it's a known variable or zero-arg function
+  if (auto *var = CALCULATOR->getActiveVariable(expr); var && var->isKnown()) return true;
+  if (auto *fn = CALCULATOR->getActiveFunction(expr); fn && fn->minargs() == 0) return true;
+  if (CALCULATOR->hasToExpression(expr, false, EvaluationOptions())) return true;
+
+  return false;
+}
+
+QString QalculateBackend::preprocessQuestion(const QString &query) {
+  QString q = query.simplified();
+
+  // Rewrite " in " to " to " for unit conversion (avoids "in" being parsed as inches)
+  if (int idx = q.indexOf(QStringLiteral(" in ")); idx > 0 && idx + 4 < q.size()) {
+    q.replace(idx, 4, QStringLiteral(" to "));
+  }
+
+  struct Rule {
+    QRegularExpression re;
+    QString replacement;
+  };
+  static const auto storageNorms = std::array{
+      Rule{QRegularExpression(R"((?<![a-zA-Z])tb(?![a-zA-Z]))"), "TB"},
+      Rule{QRegularExpression(R"((?<![a-zA-Z])gb(?![a-zA-Z]))"), "GB"},
+      Rule{QRegularExpression(R"((?<![a-zA-Z])mb(?![a-zA-Z]))"), "MB"},
+      Rule{QRegularExpression(R"((?<![a-zA-Z])kb(?![a-zA-Z]))"), "kB"},
+      Rule{QRegularExpression(R"((?<![a-zA-Z])pb(?![a-zA-Z]))"), "PB"},
+      Rule{QRegularExpression(R"((?<![a-zA-Z])eb(?![a-zA-Z]))"), "EB"},
+      Rule{QRegularExpression(R"((?<![a-zA-Z])tib(?![a-zA-Z]))"), "TiB"},
+      Rule{QRegularExpression(R"((?<![a-zA-Z])gib(?![a-zA-Z]))"), "GiB"},
+      Rule{QRegularExpression(R"((?<![a-zA-Z])mib(?![a-zA-Z]))"), "MiB"},
+      Rule{QRegularExpression(R"((?<![a-zA-Z])kib(?![a-zA-Z]))"), "KiB"},
+      Rule{QRegularExpression(R"((?<![a-zA-Z])tbit(?![a-zA-Z]))"), "Tbit"},
+      Rule{QRegularExpression(R"((?<![a-zA-Z])gbit(?![a-zA-Z]))"), "Gbit"},
+      Rule{QRegularExpression(R"((?<![a-zA-Z])mbit(?![a-zA-Z]))"), "Mbit"},
+      Rule{QRegularExpression(R"((?<![a-zA-Z])kbit(?![a-zA-Z]))"), "kbit"},
+  };
+
+  for (const auto &[re, replacement] : storageNorms) {
+    q.replace(re, replacement);
+  }
+
+  return q;
+}
+
+QFuture<QalculateBackend::ComputeResult> QalculateBackend::asyncCompute(const QString &question) {
+  return QtConcurrent::run([this, question]() -> ComputeResult { return compute(question); });
+}
+
+void QalculateBackend::abort() { CALCULATOR->abort(); }
 
 QString QalculateBackend::id() const { return "qalculate"; }
 
@@ -100,16 +184,21 @@ bool QalculateBackend::supportsCurrencyConversion() const { return true; }
 void QalculateBackend::initializeCalculator() {
   m_evalOpts.auto_post_conversion = POST_CONVERSION_BEST;
   m_evalOpts.structuring = STRUCTURING_SIMPLIFY;
-  m_evalOpts.parse_options.limit_implicit_multiplication = true;
-  m_evalOpts.parse_options.parsing_mode = PARSING_MODE_CONVENTIONAL;
+  m_evalOpts.parse_options.parsing_mode = PARSING_MODE_ADAPTIVE;
   m_evalOpts.parse_options.units_enabled = true;
   m_evalOpts.parse_options.unknowns_enabled = false;
 
   m_printOpts.indicate_infinite_series = false;
   m_printOpts.interval_display = INTERVAL_DISPLAY_SIGNIFICANT_DIGITS;
   m_printOpts.use_unicode_signs = true;
-  m_printOpts.base_display = BASE_DISPLAY_ALTERNATIVE;
+  m_printOpts.base_display = BASE_DISPLAY_NORMAL;
   m_printOpts.number_fraction_format = FRACTION_DECIMAL;
+  m_printOpts.abbreviate_names = true;
+  m_printOpts.use_unit_prefixes = true;
+  m_printOpts.place_units_separately = true;
+  m_printOpts.short_multiplication = true;
+  m_printOpts.show_ending_zeroes = true;
+  m_printOpts.min_exp = EXP_PRECISION;
 
   m_calc.reset();
   m_calc.loadGlobalDefinitions();
@@ -119,6 +208,9 @@ void QalculateBackend::initializeCalculator() {
   m_calc.loadGlobalUnits();
   m_calc.loadGlobalVariables();
   m_calc.loadGlobalFunctions();
+
+  CALCULATOR->setTemperatureCalculationMode(TEMPERATURE_CALCULATION_HYBRID);
+  CALCULATOR->setPrecision(10);
 }
 
 std::optional<std::string> QalculateBackend::getUnitDisplayName(const MathStructure &s,

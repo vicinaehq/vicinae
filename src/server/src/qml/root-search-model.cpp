@@ -890,7 +890,10 @@ QVariantList RootSearchModel::primaryActionShortcutTokens() const {
 }
 
 void RootSearchModel::startCalculator() {
-  if (m_calcWatcher.isRunning()) { m_calcWatcher.cancel(); }
+  if (m_calcWatcher.isRunning()) {
+    m_calculator->backend()->abort();
+    m_calcWatcher.waitForFinished();
+  }
 
   auto expression = QString::fromStdString(m_query);
   m_calculatorSearchQuery = m_query;

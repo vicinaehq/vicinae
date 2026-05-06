@@ -14,8 +14,8 @@ public:
 
   bool isActivatable() const override;
   bool start() override;
-  ComputeResult compute(const QString &question) const override;
-  QFuture<ComputeResult> asyncCompute(const QString &question) const override;
+  ComputeResult compute(const QString &question) override;
+  QFuture<ComputeResult> asyncCompute(const QString &question) override;
 
   QString displayName() const override { return "SoulverCore"; }
   QString id() const override { return "soulver-core"; }
