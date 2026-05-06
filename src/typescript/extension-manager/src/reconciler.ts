@@ -462,6 +462,7 @@ export const createRenderer = (config: RendererConfig) => {
 	);
 
 	return {
+		flushSync: (reconciler as any).flushSyncFromReconciler.bind(reconciler),
 		render(element: ReactElement) {
 			if (!container._root) {
 				container._root = reconciler.createContainer(

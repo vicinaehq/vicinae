@@ -11,9 +11,8 @@ class CallbackManager {
 		const handler = this.handlers.get(id);
 
 		if (!handler) {
-			throw new Error(
-				`activateHandler called on non existent handler with id ${id}`,
-			);
+			console.warn(`activateHandler: no handler registered for id "${id}"`);
+			return;
 		}
 
 		handler(...args);

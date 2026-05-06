@@ -31,6 +31,9 @@ class Lifecycle extends extensionServer.LifecycleService {
 	}
 
 	async shutdown(): Promise<boolean> {
+		globalState.renderer?.flushSync(() => {
+			callbackManager.activateHandler("shutdown", []);
+		});
 		return true;
 	}
 

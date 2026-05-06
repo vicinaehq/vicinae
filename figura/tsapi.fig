@@ -1,6 +1,5 @@
 // extension (client) -> vicinae (server)
 // this is the definition of the typescript extension API
-// //e
 
 struct Application {
   id: string;
