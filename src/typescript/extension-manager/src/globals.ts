@@ -1,11 +1,13 @@
 import type { Environment } from "@vicinae/api";
 import type { Client } from "./proto/api";
+import type { createRenderer } from "./reconciler";
 
 type VicinaGlobal = {
 	client: Client;
 	environ: Environment;
 	preferences: any;
 	navigationContext: any;
+	renderer?: ReturnType<typeof createRenderer>;
 };
 
 type Global = typeof globalThis & {
