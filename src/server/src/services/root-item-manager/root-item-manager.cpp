@@ -136,9 +136,8 @@ float RootItemManager::SearchableRootItem::fuzzyScore(std::string_view pattern) 
   std::string alias = meta->alias.value_or("");
   std::initializer_list<WS> ss = {{title, 1.0f}, {subtitle, 0.5f}, {alias, 1.0f}};
   auto kws = keywords | std::views::transform([](auto &&kw) { return WS{kw, 0.3f}; });
-  auto strs = std::views::concat(ss, kws);
   float const score =
-      pattern.empty() ? 1 : fzf::threadLocalMatcher().fuzzy_match_v2_score_query(strs, pattern, false);
+      pattern.empty() ? 1 : fzf::threadLocalMatcher().fuzzy_match_v2_score_query(ss, kws, pattern, false);
 
   if (score == 0) return 0;
 
@@ -386,7 +385,10 @@ std::vector<Preference> RootItemManager::getMergedItemPreferences(const Entrypoi
 
   if (!provider || !item) return {};
 
-  return std::views::concat(provider->preferences(), item->preferences()) | std::ranges::to<std::vector>();
+  auto result = provider->preferences() | std::ranges::to<std::vector>();
+  auto itemPrefs = item->preferences();
+  result.insert(result.end(), itemPrefs.begin(), itemPrefs.end());
+  return result;
 }
 
 QJsonObject RootItemManager::getPreferenceValues(const EntrypointId &id) const {

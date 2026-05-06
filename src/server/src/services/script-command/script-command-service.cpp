@@ -41,7 +41,10 @@ const std::vector<std::filesystem::path> &ScriptCommandService::defaultScriptDir
 }
 
 std::vector<std::filesystem::path> ScriptCommandService::scriptDirectories() const {
-  return std::views::concat(m_customScriptPaths, defaultScriptDirectories()) | std::ranges::to<std::vector>();
+  auto result = m_customScriptPaths;
+  auto defaults = defaultScriptDirectories();
+  result.insert(result.end(), defaults.begin(), defaults.end());
+  return result;
 }
 
 const std::vector<std::shared_ptr<ScriptCommandFile>> &ScriptCommandService::scripts() const {
@@ -59,7 +62,8 @@ void ScriptCommandService::updateWatchedPaths() {
   for (const QString &dir : m_watcher->directories()) {
     m_watcher->removePath(dir);
   }
-  for (const auto &path : std::views::concat(m_customScriptPaths, defaultScriptDirectories())) {
+  for (const auto &path : m_customScriptPaths)
     m_watcher->addPath(path.c_str());
-  }
+  for (const auto &path : defaultScriptDirectories())
+    m_watcher->addPath(path.c_str());
 }

@@ -254,7 +254,7 @@ class GlazeGenerator : public AbstractCodeGenerator {
     return s;
   }
 
-  static std::string abstractName(std::string_view className) { return std::string{"Abstract"} + className; }
+  static std::string abstractName(std::string_view className) { return std::format("Abstract{}", className); }
 
   static std::string constRef(const TypeValue &value) {
     return std::string{"const "} + serializeTypename(value) + "&";
@@ -395,7 +395,7 @@ class GlazeGenerator : public AbstractCodeGenerator {
       }
       oss << ") {\n";
 
-      std::string methodId = std::string{s.name} + "/" + event.name;
+      std::string methodId = std::format("{}/{}", s.name, event.name);
 
       auto eventParamsName = getMethodParamName(s.name, event.name);
 
@@ -612,7 +612,7 @@ public:
     bool firstMethod = true;
     for (const auto &s : ast.services) {
       for (const auto &m : s->methods) {
-        std::string methodId = std::string{s->name} + "/" + m.name;
+        std::string methodId = std::format("{}/{}", s->name, m.name);
 
         oss << "\t\t" << (firstMethod ? "if" : "} else if") << " (req.method == " << std::quoted(methodId)
             << ") {\n";
