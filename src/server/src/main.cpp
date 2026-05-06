@@ -4,12 +4,6 @@
 #include "cli/server.hpp"
 
 int main(int argc, char **argv) {
-  if (isatty(STDIN_FILENO) && argc < 2) {
-    std::println(std::cerr,
-                 "vicinae-server is not meant to be launched directly. Use \"vicinae server\" instead.");
-    return 1;
-  }
-
   ServerLaunchOptions opts;
 
   if (argc >= 2) {

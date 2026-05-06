@@ -68,6 +68,7 @@ gcc15Stdenv.mkDerivation (finalAttrs: {
     cmark-gfm
     kdePackages.layer-shell-qt
     kdePackages.qtkeychain
+	kdePackages.qtshadertools
     kdePackages.syntax-highlighting
     libqalculate
     minizip
