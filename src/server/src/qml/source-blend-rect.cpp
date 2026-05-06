@@ -100,44 +100,78 @@ int SourceBlendMaterial::compare(const QSGMaterial *other) const {
   return 0;
 }
 
-SourceBlendRect::SourceBlendRect(QQuickItem *parent) : QQuickItem(parent) {
-  setFlag(ItemHasContents, true);
-}
+SourceBlendRect::SourceBlendRect(QQuickItem *parent) : QQuickItem(parent) { setFlag(ItemHasContents, true); }
 
 void SourceBlendRect::setColor(const QColor &c) {
-  if (m_color != c) { m_color = c; emit colorChanged(); update(); }
+  if (m_color != c) {
+    m_color = c;
+    emit colorChanged();
+    update();
+  }
 }
 
 void SourceBlendRect::setRadius(qreal r) {
-  if (m_radius != r) { m_radius = r; emit radiusChanged(); update(); }
+  if (m_radius != r) {
+    m_radius = r;
+    emit radiusChanged();
+    update();
+  }
 }
 
 void SourceBlendRect::setBorderColor(const QColor &c) {
-  if (m_borderColor != c) { m_borderColor = c; emit borderColorChanged(); update(); }
+  if (m_borderColor != c) {
+    m_borderColor = c;
+    emit borderColorChanged();
+    update();
+  }
 }
 
 void SourceBlendRect::setBorderWidth(int w) {
-  if (m_borderWidth != w) { m_borderWidth = w; emit borderWidthChanged(); update(); }
+  if (m_borderWidth != w) {
+    m_borderWidth = w;
+    emit borderWidthChanged();
+    update();
+  }
 }
 
 void SourceBlendRect::setBackgroundColor(const QColor &c) {
-  if (m_backgroundColor != c) { m_backgroundColor = c; emit backgroundColorChanged(); update(); }
+  if (m_backgroundColor != c) {
+    m_backgroundColor = c;
+    emit backgroundColorChanged();
+    update();
+  }
 }
 
 void SourceBlendRect::setSecondaryColor(const QColor &c) {
-  if (m_secondaryColor != c) { m_secondaryColor = c; emit secondaryColorChanged(); update(); }
+  if (m_secondaryColor != c) {
+    m_secondaryColor = c;
+    emit secondaryColorChanged();
+    update();
+  }
 }
 
 void SourceBlendRect::setSecondaryHeight(qreal h) {
-  if (m_secondaryHeight != h) { m_secondaryHeight = h; emit secondaryHeightChanged(); update(); }
+  if (m_secondaryHeight != h) {
+    m_secondaryHeight = h;
+    emit secondaryHeightChanged();
+    update();
+  }
 }
 
 void SourceBlendRect::setOverlay(bool v) {
-  if (m_overlay != v) { m_overlay = v; emit overlayChanged(); update(); }
+  if (m_overlay != v) {
+    m_overlay = v;
+    emit overlayChanged();
+    update();
+  }
 }
 
 void SourceBlendRect::setCornerMask(bool v) {
-  if (m_cornerMask != v) { m_cornerMask = v; emit cornerMaskChanged(); update(); }
+  if (m_cornerMask != v) {
+    m_cornerMask = v;
+    emit cornerMaskChanged();
+    update();
+  }
 }
 
 QSGNode *SourceBlendRect::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *) {
@@ -182,7 +216,7 @@ QSGNode *SourceBlendRect::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData 
   else
     material->mode = 0;
 
-  material->sourceBlend = (material->mode == 0 && m_backgroundColor.alphaF() > 0.0);
+  material->sourceBlend = (material->mode != 2 && m_backgroundColor.alphaF() > 0.0);
   material->setFlag(QSGMaterial::Blending, true);
   node->markDirty(QSGNode::DirtyMaterial);
   return node;

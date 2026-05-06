@@ -98,7 +98,8 @@ Item {
                     }
 
                     onTextChanged: {
-                        if (root._suppressTextChanged) return;
+                        if (root._suppressTextChanged)
+                            return;
                         root.textEdited();
                         completer.update(edit.text, edit.cursorPosition);
                     }

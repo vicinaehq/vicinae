@@ -31,8 +31,9 @@ void main() {
 
     if (u_mode == 1) {
         float outside = 1.0 - shape;
+        if (outside < 0.004) discard;
         vec4 bg = u_backgroundColor;
-        fragColor = vec4(bg.rgb * bg.a, bg.a) * outside * qt_Opacity;
+        fragColor = vec4(bg.rgb * bg.a, bg.a) * qt_Opacity;
     } else if (u_mode == 2) {
         if (u_borderWidth <= 0.0 || u_borderColor.a <= 0.0) {
             fragColor = vec4(0.0);
