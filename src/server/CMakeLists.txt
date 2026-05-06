@@ -856,7 +856,7 @@ endif()
 
 target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/qml ${CMAKE_CURRENT_SOURCE_DIR}/src/qml/markdown)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
-target_compile_features(${TARGET} PUBLIC cxx_std_26)
+target_compile_features(${TARGET} PUBLIC cxx_std_23)
 
 if (USE_PRECOMPILED_HEADERS)
 	message(STATUS "Precompiled headers are enabled")

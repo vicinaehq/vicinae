@@ -101,9 +101,10 @@ public:
     }
   }
 
-  template <std::ranges::forward_range R>
-    requires std::same_as<std::ranges::range_value_t<R>, WeightedString>
-  int fuzzy_match_v2_score_query(R &&weightedStrs, std::string_view query,
+  template <std::ranges::forward_range R1, std::ranges::forward_range R2>
+    requires std::same_as<std::ranges::range_value_t<R1>, WeightedString> &&
+             std::same_as<std::ranges::range_value_t<R2>, WeightedString>
+  int fuzzy_match_v2_score_query(R1 &&range1, R2 &&range2, std::string_view query,
                                  bool case_sensitive = false) const {
     int globalScore = 0;
     int globalCount = 0;
@@ -112,10 +113,14 @@ public:
                  std::views::filter([](auto &&s) { return !s.empty(); });
 
     for (auto word : words) {
-      int maxScore = std::ranges::max(
-          weightedStrs | std::views::transform([&](const WeightedString &str) {
-            return static_cast<int>(fuzzy_match_v2(str.str, word, case_sensitive, false).score * str.weight);
-          }));
+      auto scorer = [&](const WeightedString &str) {
+        return static_cast<int>(fuzzy_match_v2(str.str, word, case_sensitive, false).score * str.weight);
+      };
+      int maxScore = 0;
+      for (const auto &s : range1)
+        maxScore = std::max(maxScore, scorer(s));
+      for (const auto &s : range2)
+        maxScore = std::max(maxScore, scorer(s));
 
       if (!maxScore) return 0;
 
@@ -124,6 +129,14 @@ public:
     }
 
     return globalCount != 0 ? globalScore / globalCount : 0;
+  }
+
+  template <std::ranges::forward_range R>
+    requires std::same_as<std::ranges::range_value_t<R>, WeightedString>
+  int fuzzy_match_v2_score_query(R &&weightedStrs, std::string_view query,
+                                 bool case_sensitive = false) const {
+    return fuzzy_match_v2_score_query(std::forward<R>(weightedStrs), std::views::empty<WeightedString>, query,
+                                      case_sensitive);
   }
 
   int fuzzy_match_v2_score_query(std::string_view text, std::string_view query,

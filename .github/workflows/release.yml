@@ -66,8 +66,6 @@ jobs:
           cmake -G Ninja .. \
             -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5  \
-            -DCMAKE_C_COMPILER=gcc-15 \
-            -DCMAKE_CXX_COMPILER=g++-15 \
             -DBUILD_TESTS=ON  \
             -DVICINAE_PROVENANCE=binary_release \
             -DLTO=ON \
