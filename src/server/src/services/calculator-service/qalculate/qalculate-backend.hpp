@@ -4,7 +4,6 @@
 #include <libqalculate/MathStructure.h>
 #include <libqalculate/includes.h>
 
-
 class QalculateBackend : public AbstractCalculatorBackend {
 
   QString displayName() const override;

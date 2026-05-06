@@ -727,6 +727,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/ShortcutBadge.qml
 	src/qml/qml/TextBadge.qml
 	src/qml/qml/CommandListView.qml
+	src/qml/qml/CalcHistoryListView.qml
 	src/qml/qml/CalculatorResultDelegate.qml
 	src/qml/qml/ThemeListView.qml
 	src/qml/qml/ThemeItemDelegate.qml

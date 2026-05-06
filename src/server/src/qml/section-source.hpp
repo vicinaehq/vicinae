@@ -26,6 +26,7 @@ public:
 
   virtual QVariant customData(int, int) const { return {}; }
   virtual QHash<int, QByteArray> customRoleNames() const { return {}; }
+  virtual QHash<int, QVariant> customRoleDefaults() const { return {}; }
 
   virtual std::unique_ptr<ActionPanelState> actionPanel(int i) const = 0;
   virtual void onSelected(int) {}
