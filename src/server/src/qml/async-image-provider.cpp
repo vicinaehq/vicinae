@@ -135,7 +135,8 @@ static QImage renderBuiltinSvg(const QString &iconName, const QSize &size, const
     painter.drawRoundedRect(contentRect, radius, radius);
   }
 
-  QRectF const iconRect = contentRect.marginsRemoved({qreal(margin), qreal(margin), qreal(margin), qreal(margin)});
+  QRectF const iconRect =
+      contentRect.marginsRemoved({qreal(margin), qreal(margin), qreal(margin), qreal(margin)});
 
   QImage svgImage(iconRect.size().toSize(), QImage::Format_ARGB32_Premultiplied);
   svgImage.fill(Qt::transparent);
