@@ -132,25 +132,9 @@ static QImage renderBuiltinSvg(const QString &iconName, const QSize &size, const
     int const side = qMin(size.width(), size.height());
     qreal const radius = side * 0.25;
     margin = qRound(side * 0.19);
-
-    float h, s, l, a;
-    bg.getHslF(&h, &s, &l, &a);
-    bool const darkMode = fg.lightnessF() > 0.5f;
-    QColor mutedBg;
-    if (darkMode)
-      mutedBg.setHslF(h, std::min(s * 0.6f, 0.5f), 0.13f);
-    else
-      mutedBg.setHslF(h, std::min(s * 0.4f, 0.35f), 0.90f);
-
-    QColor borderColor = bg;
-    borderColor.setAlphaF(0.25f);
-
-    qreal const borderW = side * 0.03;
-    qreal const half = borderW / 2.0;
-
-    painter.setBrush(mutedBg);
-    painter.setPen(QPen(borderColor, borderW));
-    painter.drawRoundedRect(contentRect.adjusted(half, half, -half, -half), radius, radius);
+    painter.setBrush(bg);
+    painter.setPen(Qt::NoPen);
+    painter.drawRoundedRect(contentRect, radius, radius);
   }
 
   QRectF const iconRect = contentRect.marginsRemoved({qreal(margin), qreal(margin), qreal(margin), qreal(margin)});
@@ -165,7 +149,7 @@ static QImage renderBuiltinSvg(const QString &iconName, const QSize &size, const
     renderer.render(&svgPainter, svgImage.rect());
 
     QColor fillColor = fg;
-    if (bg.isValid() && bg.alpha() > 0) fillColor = bg;
+    if (bg.isValid() && bg.alpha() > 0) fillColor = ContrastHelper::getTonalContrastColor(bg, 5);
 
     svgPainter.setCompositionMode(QPainter::CompositionMode_SourceIn);
     svgPainter.fillRect(svgImage.rect(), fillColor);
