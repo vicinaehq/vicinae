@@ -186,7 +186,7 @@ Item {
                     spacing: 12
 
                     ViciImage {
-                        source: rowItem.icon ? Img.builtin(rowItem.icon).withBackgroundTint("orange") : ""
+                        source: rowItem.icon ? Img.builtin(rowItem.icon).withBackgroundTint("accent") : ""
                         Layout.preferredWidth: 20
                         Layout.preferredHeight: 20
                         visible: rowItem.icon !== ""

@@ -90,7 +90,7 @@ class LockCommand : public PowerManagementCommand {
   bool requiresDefaultConfirmation() const override { return false; }
 
   ImageURL iconUrl() const override {
-    return ImageURL{BuiltinIcon::Lock}.setBackgroundTint(SemanticColor::Orange);
+    return ImageURL{BuiltinIcon::Lock}.setBackgroundTint(SemanticColor::Accent);
   }
 
   void confirm(const ApplicationContext *ctx) const override {
@@ -118,7 +118,7 @@ class HibernateCommand : public PowerManagementCommand {
   std::vector<QString> keywords() const override { return {"disk", "suspend"}; }
   bool requiresDefaultConfirmation() const override { return true; }
   ImageURL iconUrl() const override {
-    return ImageURL{BuiltinIcon::HardDrive}.setBackgroundTint(SemanticColor::Orange);
+    return ImageURL{BuiltinIcon::HardDrive}.setBackgroundTint(SemanticColor::Accent);
   }
 
   void confirm(const ApplicationContext *ctx) const override {
@@ -143,7 +143,7 @@ class RebootCommand : public PowerManagementCommand {
   std::vector<QString> keywords() const override { return {"restart"}; }
   bool requiresDefaultConfirmation() const override { return true; }
   ImageURL iconUrl() const override {
-    return ImageURL{BuiltinIcon::RotateAntiClockwise}.setBackgroundTint(SemanticColor::Orange);
+    return ImageURL{BuiltinIcon::RotateAntiClockwise}.setBackgroundTint(SemanticColor::Accent);
   }
 
   void confirm(const ApplicationContext *ctx) const override {
@@ -170,7 +170,7 @@ class SoftRebootCommand : public PowerManagementCommand {
   std::vector<QString> keywords() const override { return {"restart"}; }
   bool requiresDefaultConfirmation() const override { return true; }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("rotate-anti-clockwise").setBackgroundTint(SemanticColor::Blue);
+    return ImageURL::builtin("rotate-anti-clockwise").setBackgroundTint(SemanticColor::Cyan);
   }
 
   void confirm(const ApplicationContext *ctx) const override {
@@ -221,7 +221,7 @@ class SuspendCommand : public PowerManagementCommand {
   }
   std::vector<QString> keywords() const override { return {"suspend"}; }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("pause").setBackgroundTint(SemanticColor::Orange);
+    return ImageURL::builtin("pause").setBackgroundTint(SemanticColor::Accent);
   }
 
   void confirm(const ApplicationContext *ctx) const override {
@@ -244,7 +244,7 @@ class SleepCommand : public PowerManagementCommand {
   QString name() const override { return "Put System to Sleep"; }
   QString description() const override { return "Put system to sleep"; }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("moon").setBackgroundTint(SemanticColor::Orange);
+    return ImageURL::builtin("moon").setBackgroundTint(SemanticColor::Accent);
   }
 
   void confirm(const ApplicationContext *ctx) const override {

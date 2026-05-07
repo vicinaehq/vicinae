@@ -72,7 +72,7 @@ CommandRootItem::fallbackActionPanel(ApplicationContext *ctx, const RootItemMeta
 EntrypointId CommandRootItem::uniqueId() const { return m_command->uniqueId(); }
 
 AccessoryList CommandRootItem::accessories() const {
-  if (m_command->isInternal()) { return {{.text = "Internal Command", .color = SemanticColor::Blue}}; }
+  if (m_command->isInternal()) { return {{.text = "Internal Command", .color = SemanticColor::Cyan}}; }
   return {{.text = "Command", .color = SemanticColor::TextMuted}};
 }
 

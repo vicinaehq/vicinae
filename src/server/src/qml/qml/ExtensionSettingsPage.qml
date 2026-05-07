@@ -264,8 +264,8 @@ Item {
 
                             ViciImage {
                                 source: cmdDelegate.iconSource
-                                Layout.preferredWidth: 20
-                                Layout.preferredHeight: 20
+                                Layout.preferredWidth: 24
+                                Layout.preferredHeight: 24
                             }
 
                             Text {

@@ -52,5 +52,5 @@ ImageURL ExtensionCommand::iconUrl() const {
 
   if (std::filesystem::exists(extensionIconUrl)) { return ImageURL::local(extensionIconUrl); }
 
-  return ImageURL::builtin("hammer").setBackgroundTint(SemanticColor::Blue);
+  return ImageURL::builtin("hammer").setBackgroundTint(SemanticColor::Cyan);
 }

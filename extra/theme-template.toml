@@ -12,19 +12,19 @@ inherits = "vicinae-dark"
 icon = "icons/theme-name.png"                 # Optional: path to theme icon (relative to the theme directory it is placed in if not an absolute path)
 
 [colors.core]
-accent = "#2f6fed"
-accent_foreground = "#ffffff"
-background = "#1a1a1a"
-foreground = "#e8e6e1"
-secondary_background = "#242424"
-border = "#2e2e2e"
+accent = "#b8944e"
+accent_foreground = "#0f1014"
+background = "#0f1014"
+foreground = "#e7e5e4"
+secondary_background = "#15161b"
+border = "#2a241c"
 
 [colors.main_window]
-border = "#2e2e2e"
+border = "#2a241c"
 footer = { background = "colors.core.secondary_background" }
 
 [colors.settings_window]
-border = "#2e2e2e"
+border = "#2a241c"
 
 [colors.accents]
 blue = "#2f6fed"
@@ -32,7 +32,7 @@ green = "#3a9c61"
 magenta = "#bc8cff"
 orange = "#f0883e"
 red = "#b9543b"
-yellow = "#bfae78"
+yellow = "#c9a76e"
 cyan = "#18a5b3"
 purple = "#bc8cff"
 
@@ -42,45 +42,45 @@ border = "colors.core.border"
 
 [colors.text]
 default = "colors.core.foreground"
-muted = "#e8e6e1"
+muted = "#a8a29e"
 danger = "#b9543b"
 success = "#3a9c61"
-placeholder = "#e8e6e1"
-selection = { background = "#2f6fed", foreground = "#ffffff" }
+placeholder = "#78716c"
+selection = { background = "#b8944e", foreground = "#0f1014" }
 
 [colors.text.links]
-default = "#2f6fed"
+default = "#c9a76e"
 visited = "#bc8cff"
 
 [colors.input]
-border = "#2e2e2e"
-border_focus = "#2f6fed"
+border = "#2a241c"
+border_focus = "#b8944e"
 border_error = "#b9543b"
 
 [colors.button.primary]
-background = "#2e2e2e"
-foreground = "#e8e6e1"
-hover = { background = "#bb2e2e2e" }
+background = "#1c1d23"
+foreground = "#e7e5e4"
+hover = { background = "#bb1c1d23" }
 focus = { outline = "colors.core.accent" }
 
 [colors.list.item.hover]
-foreground = "#e8e6e1"
-secondary_foreground = "#e8e6e1"
+foreground = "#e7e5e4"
+secondary_foreground = "#e7e5e4"
 
 [colors.list.item.selection]
-background = "#2e2e2e"
-foreground = "#e8e6e1"
-secondary_background = "#2e2e2e"
-secondary_foreground = "#e8e6e1"
+background = "#1c1d23"
+foreground = "#e7e5e4"
+secondary_background = "#1c1d23"
+secondary_foreground = "#e7e5e4"
 
 [colors.grid.item]
-background = "#242424"
-hover = { outline = "#e8e6e1" }
-selection = { outline = "#e8e6e1" }
+background = "#15161b"
+hover = { outline = "#e7e5e4" }
+selection = { outline = "#e7e5e4" }
 
 [colors.scrollbars]
-background = "#2e2e2e"
+background = "#2a241c"
 
 [colors.loading]
-bar = "#e8e6e1"     # shown right below the search bar when something is loading
-spinner = "#e8e6e1" # used by dynamic toasts
+bar = "#b8944e"
+spinner = "#e7e5e4"

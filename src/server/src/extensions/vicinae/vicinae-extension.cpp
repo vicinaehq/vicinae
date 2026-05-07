@@ -76,7 +76,7 @@ class OpenDefaultVicinaeConfig : public BuiltinCallbackCommand {
   QString name() const override { return "Open Default Config File"; }
   QString description() const override { return "Open the default vicinae configuration file"; }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("pencil").setBackgroundTint(SemanticColor::Orange);
+    return ImageURL::builtin("pencil").setBackgroundTint(SemanticColor::Accent);
   }
 
   void execute(CommandController *controller) const override {

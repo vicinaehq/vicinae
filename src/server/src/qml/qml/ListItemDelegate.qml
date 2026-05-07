@@ -21,8 +21,8 @@ SelectableDelegate {
 
         Item {
             visible: root.itemIconSource !== ""
-            Layout.preferredWidth: 25
-            Layout.preferredHeight: 25
+            Layout.preferredWidth: 28
+            Layout.preferredHeight: 28
             Layout.alignment: Qt.AlignVCenter
 
             ViciImage {
