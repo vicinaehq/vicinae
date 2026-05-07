@@ -23,10 +23,10 @@ Item {
             Layout.preferredWidth: 28
             Layout.preferredHeight: 28
             Layout.alignment: Qt.AlignVCenter
-            icon: "arrow-left"
+            icon: "chevron-left"
             iconSize: 14
-            variant: "primary"
-            translucent: true
+            variant: "secondary"
+            bordered: true
             onClicked: launcher.goBack()
         }
 
