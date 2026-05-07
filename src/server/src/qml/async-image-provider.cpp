@@ -109,18 +109,23 @@ private:
   std::atomic<bool> m_cancelled{false};
 };
 
+static constexpr int kAAPad = 2;
+
 static QImage renderBuiltinSvg(const QString &iconName, const QSize &size, const QColor &fg,
                                const QColor &bg) {
   QString const iconPath = QStringLiteral(":icons/%1.svg").arg(iconName);
   QSvgRenderer renderer(iconPath);
   if (!renderer.isValid()) return {};
 
-  QImage canvas(size, QImage::Format_ARGB32_Premultiplied);
+  QSize const padded(size.width() + kAAPad * 2, size.height() + kAAPad * 2);
+
+  QImage canvas(padded, QImage::Format_ARGB32_Premultiplied);
   canvas.fill(Qt::transparent);
   QPainter painter(&canvas);
   painter.setRenderHint(QPainter::Antialiasing, true);
   painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
 
+  QRectF const contentRect(kAAPad, kAAPad, size.width(), size.height());
   int margin = 0;
 
   if (bg.isValid() && bg.alpha() > 0) {
@@ -129,12 +134,12 @@ static QImage renderBuiltinSvg(const QString &iconName, const QSize &size, const
     margin = qRound(side * 0.15);
     painter.setBrush(bg);
     painter.setPen(Qt::NoPen);
-    painter.drawRoundedRect(canvas.rect(), radius, radius);
+    painter.drawRoundedRect(contentRect, radius, radius);
   }
 
-  QRect const iconRect = canvas.rect().marginsRemoved({margin, margin, margin, margin});
+  QRectF const iconRect = contentRect.marginsRemoved({qreal(margin), qreal(margin), qreal(margin), qreal(margin)});
 
-  QImage svgImage(iconRect.size(), QImage::Format_ARGB32_Premultiplied);
+  QImage svgImage(iconRect.size().toSize(), QImage::Format_ARGB32_Premultiplied);
   svgImage.fill(Qt::transparent);
   {
     QPainter svgPainter(&svgImage);
@@ -208,19 +213,21 @@ static QImage renderLocalRaster(const QString &path, const QSize &size) {
   if (size.isValid()) {
     QSize const original = reader.size();
     if (original.isValid() && (original.width() > size.width() || original.height() > size.height()))
-      reader.setScaledSize(original.scaled(size, Qt::KeepAspectRatioByExpanding));
+      reader.setScaledSize(original.scaled(size, Qt::KeepAspectRatio));
   }
 
   QImage img = reader.read();
+  if (img.isNull()) return {};
 
-  // setScaledSize is silently ignored by most formats (PNG, WebP, …).
-  // If the decoded image is still much larger than requested, scale it
-  // down now so we don't keep a full-resolution bitmap alive.
-  if (!img.isNull() && size.isValid() && (img.width() > size.width() || img.height() > size.height())) {
-    img = img.scaled(size, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
-  }
+  if (size.isValid() && (img.width() > size.width() || img.height() > size.height()))
+    img = img.scaled(size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
-  return img;
+  QImage padded(img.width() + kAAPad * 2, img.height() + kAAPad * 2, QImage::Format_ARGB32_Premultiplied);
+  padded.fill(Qt::transparent);
+  QPainter painter(&padded);
+  painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+  painter.drawImage(kAAPad, kAAPad, img);
+  return padded;
 }
 
 static QImage decodeImageData(const QByteArray &data, const QSize &size) {
@@ -366,7 +373,7 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id,
     }
   }
 
-  qreal const dpr = qGuiApp->devicePixelRatio();
+  qreal const dpr = std::max(qGuiApp->devicePixelRatio(), 4.0);
   auto *response = new ViciImageResponse(dpr);
   response->setId(id);
   QSize const logical = requestedSize.isValid() && !requestedSize.isEmpty() ? requestedSize : QSize(64, 64);
