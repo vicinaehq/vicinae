@@ -44,8 +44,8 @@ RowLayout {
     }
 
     ViciImage {
-        Layout.preferredWidth: 20
-        Layout.preferredHeight: 20
+        Layout.preferredWidth: 25
+        Layout.preferredHeight: 25
         Layout.alignment: Qt.AlignVCenter
         source: root.icon
     }
