@@ -72,22 +72,13 @@ std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const
 }
 
 QString QalculateBackend::stripTrailingOperators(QString expr) {
-  static constexpr std::string_view asciiOps = "+-*/^&|!<>=~\\(";
+  static constexpr std::string_view ops = "+-*/^&|!<>=~\\(";
   while (!expr.isEmpty()) {
     QChar last = expr.back();
-    if (last.unicode() < 128 && asciiOps.find(static_cast<char>(last.unicode())) != std::string_view::npos) {
+    if (last.unicode() < 128 && ops.find(static_cast<char>(last.unicode())) != std::string_view::npos) {
       expr.chop(1);
     } else {
-      auto bytes = expr.last(1).toUtf8();
-      std::string_view tail(bytes.constData(), bytes.size());
-      // Unicode operators: × ÷ − ∧ ∨ ⊻ ≤ ≥ ≠
-      if (tail == "\xc3\x97" || tail == "\xc3\xb7" || tail == "\xe2\x88\x92" || tail == "\xe2\x88\xa7" ||
-          tail == "\xe2\x88\xa8" || tail == "\xe2\x8a\xbb" || tail == "\xe2\x89\xa4" ||
-          tail == "\xe2\x89\xa5" || tail == "\xe2\x89\xa0") {
-        expr.chop(1);
-      } else {
-        break;
-      }
+      break;
     }
   }
   return expr.trimmed();
