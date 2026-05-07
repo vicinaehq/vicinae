@@ -41,8 +41,10 @@ public:
   virtual QString id() const = 0;
   virtual QString displayName() const { return id(); }
 
-  virtual ComputeResult compute(const QString &question) const = 0;
-  virtual QFuture<ComputeResult> asyncCompute(const QString &question) const = 0;
+  virtual ComputeResult compute(const QString &question) = 0;
+  virtual QFuture<ComputeResult> asyncCompute(const QString &question) = 0;
+
+  virtual void abort() {}
 
   virtual bool supportsCurrencyConversion() const { return false; }
 

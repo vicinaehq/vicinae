@@ -57,7 +57,7 @@ std::vector<fs::path> SoulverCoreCalculator::availableResourcePaths() const {
 }
 
 std::expected<AbstractCalculatorBackend::CalculatorResult, AbstractCalculatorBackend::CalculatorError>
-SoulverCoreCalculator::compute(const QString &question) const {
+SoulverCoreCalculator::compute(const QString &question) {
   auto soulverRes = calculate(question);
 
   if (!soulverRes) { return std::unexpected(CalculatorError(soulverRes.error())); }
@@ -72,8 +72,7 @@ SoulverCoreCalculator::compute(const QString &question) const {
   return result;
 };
 
-QFuture<SoulverCoreCalculator::ComputeResult>
-SoulverCoreCalculator::asyncCompute(const QString &question) const {
+QFuture<SoulverCoreCalculator::ComputeResult> SoulverCoreCalculator::asyncCompute(const QString &question) {
   QPromise<ComputeResult> promise;
   promise.addResult(compute(question));
   promise.finish();

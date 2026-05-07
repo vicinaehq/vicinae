@@ -22,12 +22,14 @@ void SectionListModel::addSource(SectionSource *source) {
       rebuild();
     }
   });
+  rebuildCustomRoleDefaults();
 }
 
 void SectionListModel::clearSources() {
   for (auto *source : m_sources)
     source->setOnChanged(nullptr);
   m_sources.clear();
+  m_customRoleDefaults.clear();
 }
 
 void SectionListModel::setSelectFirstOnReset(bool value) {
@@ -77,8 +79,10 @@ QVariant SectionListModel::data(const QModelIndex &index, int role) const {
       return QString();
     case Accessory:
       return {};
-    default:
-      return {};
+    default: {
+      auto it = m_customRoleDefaults.find(role);
+      return it != m_customRoleDefaults.end() ? it.value() : QVariant{};
+    }
     }
   }
 
@@ -99,8 +103,12 @@ QVariant SectionListModel::data(const QModelIndex &index, int role) const {
     return source->itemIconSource(flat.itemIdx);
   case Accessory:
     return source->itemAccessories(flat.itemIdx);
-  default:
-    return source->customData(flat.itemIdx, role);
+  default: {
+    auto v = source->customData(flat.itemIdx, role);
+    if (v.isValid()) return v;
+    auto it = m_customRoleDefaults.find(role);
+    return it != m_customRoleDefaults.end() ? it.value() : QVariant{};
+  }
   }
 }
 
@@ -263,6 +271,12 @@ bool SectionListModel::dataItemAt(int row, int &sourceIdx, int &itemIdx) const {
   sourceIdx = flat.sourceIdx;
   itemIdx = flat.itemIdx;
   return true;
+}
+
+void SectionListModel::rebuildCustomRoleDefaults() {
+  m_customRoleDefaults.clear();
+  for (auto *source : m_sources)
+    m_customRoleDefaults.insert(source->customRoleDefaults());
 }
 
 void SectionListModel::rebuildFlatList() {

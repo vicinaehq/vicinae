@@ -71,10 +71,12 @@ private:
   };
 
   void rebuildFlatList();
+  void rebuildCustomRoleDefaults();
 
   ViewScope m_scope;
   std::vector<SectionSource *> m_sources;
   std::vector<FlatItem> m_flat;
+  QHash<int, QVariant> m_customRoleDefaults;
   int m_selectedIndex = -1;
   QString m_lastSelectedItemId;
   bool m_selectFirstOnReset = true;
