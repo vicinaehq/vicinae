@@ -3,6 +3,7 @@
 #include "keybind-bridge.hpp"
 #include "view-utils.hpp"
 #include "action-panel-controller.hpp"
+#include "services/news/news-service.hpp"
 #include "alert-model.hpp"
 #include "async-image-provider.hpp"
 #include "bridge-view.hpp"
@@ -501,8 +502,8 @@ void LauncherWindow::setCompacted(bool value) {
 
 void LauncherWindow::tryCompaction() {
   auto &cfg = m_ctx.services->config()->value().launcherWindow.compactMode;
-  setCompacted(cfg.enabled && m_ctx.navigation->searchText().isEmpty() &&
-               m_ctx.navigation->viewStackSize() == 1);
+  setCompacted(!m_ctx.services->newsService()->hasUnreadNews() && cfg.enabled &&
+               m_ctx.navigation->searchText().isEmpty() && m_ctx.navigation->viewStackSize() == 1);
 }
 
 void LauncherWindow::updateBlur() {

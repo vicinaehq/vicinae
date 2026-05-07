@@ -51,6 +51,8 @@ bool NewsService::isDismissed(const std::string &id) const {
   return std::ranges::find(m_dismissed, id) != m_dismissed.end();
 }
 
+bool NewsService::hasUnreadNews() const { return !activeItems().empty(); }
+
 std::vector<const NewsItem *> NewsService::activeItems() const {
   const auto &cfg = m_config.value();
   std::vector<const NewsItem *> result;

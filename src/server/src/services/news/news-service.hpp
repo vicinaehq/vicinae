@@ -45,6 +45,7 @@ public:
   void dismiss(const std::string &id);
   bool isDismissed(const std::string &id) const;
   std::vector<const NewsItem *> activeItems() const;
+  bool hasUnreadNews() const;
 
 private:
   void loadState();
