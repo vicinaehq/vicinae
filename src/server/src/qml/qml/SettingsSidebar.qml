@@ -204,8 +204,8 @@ Item {
 
                         ViciImage {
                             source: navItem.modelData._kind === "core" ? Img.builtin(navItem.modelData.icon).withFillColor(settings.currentPage === navItem._pageId ? Theme.listItemSelectionFg : Theme.textMuted) : (navItem.modelData.iconSource ?? "")
-                            Layout.preferredWidth: 16
-                            Layout.preferredHeight: 16
+                            Layout.preferredWidth: 18
+                            Layout.preferredHeight: 18
                             opacity: navItem._isEnabled ? 1.0 : 0.4
                         }
 
