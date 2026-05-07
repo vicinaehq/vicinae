@@ -58,9 +58,9 @@ std::string ThemeFile::toToml() const { return ThemeSerializer().toToml(*this); 
 ThemeFile ThemeFile::vicinaeDark() {
   InitData data;
   data.id = "vicinae-dark";
-  data.name = "Vicinae Dark";
+  data.name = "Vicinae Inkwell";
   data.variant = ThemeVariant::Dark;
-  data.description = "Default Vicinae dark palette";
+  data.description = "Cool ink grounds, warm sand accents";
   data.semantics = {
       {SemanticColor::Background, QColor("#0f1014")},
       {SemanticColor::SecondaryBackground, QColor("#15161b")},
@@ -88,8 +88,8 @@ ThemeFile ThemeFile::vicinaeLight() {
   InitData data;
   data.id = "vicinae-light";
   data.variant = ThemeVariant::Light;
-  data.name = "Vicinae Light";
-  data.description = "Default Vicinae light palette";
+  data.name = "Vicinae Sandstone";
+  data.description = "Warm cream grounds, deepened sand accents";
   data.semantics = {
       {SemanticColor::Background, QColor("#faf8f4")},
       {SemanticColor::SecondaryBackground, QColor("#f0ece5")},
