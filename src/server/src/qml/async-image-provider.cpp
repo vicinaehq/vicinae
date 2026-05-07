@@ -117,9 +117,7 @@ static QImage renderBuiltinSvg(const QString &iconName, const QSize &size, const
   QSvgRenderer renderer(iconPath);
   if (!renderer.isValid()) return {};
 
-  QSize const padded(size.width() + kAAPad * 2, size.height() + kAAPad * 2);
-
-  QImage canvas(padded, QImage::Format_ARGB32_Premultiplied);
+  QImage canvas(size.width() + kAAPad * 2, size.height() + kAAPad * 2, QImage::Format_ARGB32_Premultiplied);
   canvas.fill(Qt::transparent);
   QPainter painter(&canvas);
   painter.setRenderHint(QPainter::Antialiasing, true);
@@ -547,6 +545,8 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id,
           img = QImage(size, QImage::Format_ARGB32_Premultiplied);
           img.fill(Qt::transparent);
           QPainter painter(&img);
+          painter.setRenderHint(QPainter::Antialiasing, true);
+          painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
           renderer.setAspectRatioMode(Qt::KeepAspectRatio);
           renderer.render(&painter, img.rect());
         }
