@@ -148,7 +148,7 @@ void ClipboardHistoryViewHost::handleMonitoringChanged(bool monitoring) {
   if (monitoring) {
     m_clipboardStatusText = QStringLiteral("Pause clipboard");
     m_clipboardStatusIcon =
-        qml::imageSourceFor(ImageURL::builtin("pause-filled").setFill(SemanticColor::Orange));
+        qml::imageSourceFor(ImageURL::builtin("pause-filled").setFill(SemanticColor::Accent));
   } else {
     m_clipboardStatusText = QStringLiteral("Resume clipboard");
     m_clipboardStatusIcon =

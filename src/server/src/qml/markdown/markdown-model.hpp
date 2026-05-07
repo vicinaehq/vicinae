@@ -62,6 +62,7 @@ private:
   QString m_inlineCodeBg;
   QString m_linkColor;
   QString m_textColor;
+  QString m_monoFamily;
 
   syntax::StyleMap m_syntaxStyles;
 };

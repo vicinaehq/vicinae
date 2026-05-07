@@ -45,7 +45,7 @@ struct User {
   std::optional<QString> avatar;
 
   ImageURL validUserIcon() const {
-    if (!avatar) return ImageURL::builtin("person").setBackgroundTint(SemanticColor::Blue);
+    if (!avatar) return ImageURL::builtin("person").setBackgroundTint(SemanticColor::Cyan);
     return ImageURL::http(*avatar);
   }
 

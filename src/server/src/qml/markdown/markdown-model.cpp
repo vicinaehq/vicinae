@@ -1,4 +1,5 @@
 #include "markdown-model.hpp"
+#include "font-service.hpp"
 #include "syntax-highlighter.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
@@ -50,6 +51,7 @@ struct InlineContext {
   const QString &inlineCodeBg;
   const QString &linkColor;
   const QString &textColor;
+  const QString &monoFamily;
 };
 
 QString renderInlineHtml(cmark_node *node, const InlineContext &ctx);
@@ -73,8 +75,8 @@ QString renderOneInline(cmark_node *cur, const InlineContext &ctx) {
   case CMARK_NODE_CODE:
     result += QStringLiteral("<code style=\"color:%1;background:%2;"
                              "padding:1px 4px;border-radius:3px;"
-                             "font-family:monospace;\">")
-                  .arg(ctx.inlineCodeFg, ctx.inlineCodeBg);
+                             "font-family:'%3',monospace;\">")
+                  .arg(ctx.inlineCodeFg, ctx.inlineCodeBg, ctx.monoFamily);
     result += QString::fromUtf8(cmark_node_get_literal(cur)).toHtmlEscaped();
     result += QStringLiteral("</code>");
     break;
@@ -313,6 +315,7 @@ void MarkdownModel::rebuildInlineStyles() {
   m_inlineCodeBg = theme.resolve(SemanticColor::SecondaryBackground).name(QColor::HexRgb);
   m_linkColor = theme.resolve(SemanticColor::LinkDefault).name(QColor::HexRgb);
   m_textColor = theme.resolve(SemanticColor::Foreground).name(QColor::HexRgb);
+  m_monoFamily = ServiceRegistry::instance()->fontService()->builtinMonoFontFamily();
   m_syntaxStyles = syntax::buildStyleMap(theme);
 }
 
@@ -334,7 +337,7 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
   cmark_node *root = cmark_parser_finish(parser);
   cmark_parser_free(parser);
 
-  InlineContext ctx{m_inlineCodeFg, m_inlineCodeBg, m_linkColor, m_textColor};
+  InlineContext ctx{m_inlineCodeFg, m_inlineCodeBg, m_linkColor, m_textColor, m_monoFamily};
 
   for (auto *node = cmark_node_first_child(root); node; node = cmark_node_next(node)) {
     auto type = cmark_node_get_type(node);

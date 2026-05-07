@@ -43,11 +43,19 @@ QFont FontService::findEmojiFont() {
 FontService::FontService() {
   m_emojiFont = findEmojiFont();
 
-  int const id = QFontDatabase::addApplicationFont(":/fonts/InterVariable.ttf");
-  if (id != -1) {
-    auto families = QFontDatabase::applicationFontFamilies(id);
+  int const bodyId = QFontDatabase::addApplicationFont(":/fonts/Outfit-Variable.ttf");
+  if (bodyId != -1) {
+    auto families = QFontDatabase::applicationFontFamilies(bodyId);
     if (!families.isEmpty()) m_builtinFamily = families.first();
   } else {
-    qWarning() << "Failed to load bundled Inter font";
+    qWarning() << "Failed to load bundled Outfit font";
+  }
+
+  int const monoId = QFontDatabase::addApplicationFont(":/fonts/GeistMono-Variable.ttf");
+  if (monoId != -1) {
+    auto families = QFontDatabase::applicationFontFamilies(monoId);
+    if (!families.isEmpty()) m_builtinMonoFamily = families.first();
+  } else {
+    qWarning() << "Failed to load bundled Geist Mono font";
   }
 }

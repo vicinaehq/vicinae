@@ -7,6 +7,7 @@
   	<file alias="config.jsonc">@EXTRA_DIR@/config.jsonc</file>
   </qresource>
   <qresource prefix="/fonts">
-  	<file alias="InterVariable.ttf">@ASSET_PATH@/fonts/InterVariable.ttf</file>
+  	<file alias="Outfit-Variable.ttf">@ASSET_PATH@/fonts/Outfit-Variable.ttf</file>
+  	<file alias="GeistMono-Variable.ttf">@ASSET_PATH@/fonts/GeistMono-Variable.ttf</file>
   </qresource>
 </RCC>

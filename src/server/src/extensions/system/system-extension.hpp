@@ -15,7 +15,7 @@ class SystemRunCommand : public BuiltinCallbackCommand {
   QString description() const override { return "Run a program in a terminal window"; }
   std::vector<QString> keywords() const override { return {"shell command", "run program"}; }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("terminal").setBackgroundTint(SemanticColor::Orange);
+    return ImageURL::builtin("terminal").setBackgroundTint(SemanticColor::Accent);
   }
   CommandMode mode() const override { return CommandMode::CommandModeView; }
   virtual std::vector<CommandArgument> arguments() const override {
@@ -83,7 +83,7 @@ class SystemBrowseApps : public BuiltinViewCommand<BrowseAppsViewHost> {
   std::vector<QString> keywords() const override { return {}; }
   bool isDefaultDisabled() const override { return true; }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("box").setBackgroundTint(SemanticColor::Orange);
+    return ImageURL::builtin("box").setBackgroundTint(SemanticColor::Accent);
   }
   std::vector<Preference> preferences() const override {
     auto showHidden = Preference::makeCheckbox("showHidden", "Show hidden apps");
@@ -99,7 +99,7 @@ class SystemExtension : public BuiltinCommandRepository {
   QString displayName() const override { return "System"; }
   QString description() const override { return "System-related commands"; }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("cog").setBackgroundTint(SemanticColor::Orange);
+    return ImageURL::builtin("cog").setBackgroundTint(SemanticColor::Accent);
   }
 
 public:

@@ -28,11 +28,11 @@ QVariantList InstalledExtensionsSection::displayAccessories(const ExtensionManif
                                            .icon = ExtensionImageModel{.source = QString("raycast")}}});
   }
   if (m.isFromVicinaeStore()) {
-    return qml::accessoriesToVariantList({{.data = AccessoryModel::Tag(SemanticColor::Orange, "Vicinae"),
+    return qml::accessoriesToVariantList({{.data = AccessoryModel::Tag(SemanticColor::Accent, "Vicinae"),
                                            .icon = ExtensionImageModel{.source = QString("vicinae")}}});
   }
   if (m.isLocal()) {
-    return qml::accessoriesToVariantList({{.data = AccessoryModel::Tag(SemanticColor::Blue, "Local"),
+    return qml::accessoriesToVariantList({{.data = AccessoryModel::Tag(SemanticColor::Cyan, "Local"),
                                            .icon = ExtensionImageModel{.source = QString("box")}}});
   }
   return {};

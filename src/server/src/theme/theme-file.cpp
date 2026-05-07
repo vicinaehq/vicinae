@@ -62,17 +62,20 @@ ThemeFile ThemeFile::vicinaeDark() {
   data.variant = ThemeVariant::Dark;
   data.description = "Default Vicinae dark palette";
   data.semantics = {
-      {SemanticColor::Background, QColor("#121212")},
-      {SemanticColor::ListItemSelectionBackground, QColor("#202020")},
-      {SemanticColor::Foreground, QColor("#E8E6E1")},
-      {SemanticColor::BackgroundBorder, QColor("#2A2A2A")},
-      {SemanticColor::SecondaryBackground, QColor("#1A1A1A")},
+      {SemanticColor::Background, QColor("#0f1014")},
+      {SemanticColor::SecondaryBackground, QColor("#15161b")},
+      {SemanticColor::ListItemSelectionBackground, QColor("#1c1d23")},
+      {SemanticColor::Foreground, QColor("#e7e5e4")},
+      {SemanticColor::BackgroundBorder, QColor("#2a241c")},
+      {SemanticColor::Accent, QColor("#b8944e")},
+      {SemanticColor::AccentForeground, QColor("#0f1014")},
+      {SemanticColor::LinkDefault, QColor("#c9a76e")},
 
       {SemanticColor::Red, QColor("#B9543B")},
       {SemanticColor::Orange, QColor("#F0883E")},
-      {SemanticColor::Yellow, QColor("#BFAE78")},
+      {SemanticColor::Yellow, QColor("#c9a76e")},
       {SemanticColor::Green, QColor("#3A9C61")},
-      {SemanticColor::Cyan, QColor("#18A5B3")},
+      {SemanticColor::Cyan, QColor("#6a8a7c")},
       {SemanticColor::Blue, QColor("#2F6FED")},
       {SemanticColor::Magenta, QColor("#BC8CFF")},
       {SemanticColor::Purple, QColor("#BC8CFF")},

@@ -111,7 +111,7 @@ Rectangle {
                 textFormat: TextEdit.RichText
                 wrapMode: TextEdit.NoWrap
                 color: Theme.foreground
-                font.family: "monospace"
+                font.family: Theme.monoFontFamily
                 font.pointSize: Theme.regularFontSize * 0.95
                 text: root.highlightedHtml
             }

@@ -1,4 +1,6 @@
 #pragma once
+#include "font-service.hpp"
+#include "service-registry.hpp"
 #include "theme.hpp"
 #include "theme/theme-file.hpp"
 #include <QColor>
@@ -46,6 +48,7 @@ class ThemeBridge : public QObject {
   Q_PROPERTY(qreal regularFontSize READ regularFontSize NOTIFY changed)
   Q_PROPERTY(qreal smallerFontSize READ smallerFontSize NOTIFY changed)
   Q_PROPERTY(QString fontFamily READ fontFamily NOTIFY fontFamilyChanged)
+  Q_PROPERTY(QString monoFontFamily READ monoFontFamily NOTIFY fontFamilyChanged)
 
 signals:
   void changed();
@@ -83,7 +86,7 @@ public:
   QColor gridItemHoverOutline() const { return resolve(SemanticColor::GridItemHoverOutline); }
   QColor danger() const { return resolve(SemanticColor::TextDanger); }
   QColor toastSuccess() const { return resolve(SemanticColor::Green); }
-  QColor toastInfo() const { return resolve(SemanticColor::Blue); }
+  QColor toastInfo() const { return resolve(SemanticColor::Cyan); }
   QColor toastWarning() const { return resolve(SemanticColor::Orange); }
   QColor toastDanger() const { return resolve(SemanticColor::Red); }
 
@@ -98,6 +101,9 @@ public:
   qreal regularFontSize() const { return ThemeService::instance().pointSize(TextRegular); }
   qreal smallerFontSize() const { return ThemeService::instance().pointSize(TextSmaller); }
   QString fontFamily() const { return QGuiApplication::font().family(); }
+  QString monoFontFamily() const {
+    return ServiceRegistry::instance()->fontService()->builtinMonoFontFamily();
+  }
 
 protected:
   bool eventFilter(QObject *obj, QEvent *event) override {
