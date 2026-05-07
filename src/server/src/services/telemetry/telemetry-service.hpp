@@ -67,6 +67,9 @@ public:
   QFuture<bool> forget();
 
 private:
+  // productId == distribution on linux
+  std::string determineProductId() const;
+
   static std::string toLower(const std::string &s);
   std::string generateUserId();
   void sendSystemInfo();
