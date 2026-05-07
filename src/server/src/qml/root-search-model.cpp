@@ -895,25 +895,20 @@ void RootSearchModel::startCalculator() {
     m_calcWatcher.waitForFinished();
   }
 
-  auto expression = QString::fromStdString(m_query);
   m_calculatorSearchQuery = m_query;
 
+  if (!m_calculator->backend()) return;
+
+  auto expression = QString::fromStdString(m_query);
   if (expression.startsWith("=") && expression.size() > 1) {
-    auto stripped = expression.mid(1);
-    m_calcWatcher.setFuture(m_calculator->backend()->asyncCompute(stripped));
+    m_calcWatcher.setFuture(m_calculator->backend()->asyncCompute(expression.mid(1)));
     return;
   }
 
-  bool const containsNonAlnum =
+  bool const looksComputable =
       std::ranges::any_of(m_query, [](QChar ch) { return !ch.isLetterOrNumber(); }) ||
       m_query.starts_with("0x") || m_query.starts_with("0b") || m_query.starts_with("0o");
-  const auto isAllowedLeadingChar = [&](QChar c) {
-    return c == '-' || c == '(' || c == ')' || c.isLetterOrNumber() || c.category() == QChar::Symbol_Currency;
-  };
-  bool const isComputable =
-      expression.size() > 1 && isAllowedLeadingChar(expression.at(0)) && containsNonAlnum;
-
-  if (!isComputable || !m_calculator->backend()) { return; }
+  if (!looksComputable) return;
 
   m_calcWatcher.setFuture(m_calculator->backend()->asyncCompute(expression));
 }
