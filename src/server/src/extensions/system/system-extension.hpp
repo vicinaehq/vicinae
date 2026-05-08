@@ -115,16 +115,29 @@ void showVolumeHud(const ApplicationContext *ctx, AbstractAudioControl *audio) {
 class VolumeUpCommand : public BuiltinCallbackCommand {
   QString id() const override { return "volume-up"; }
   QString name() const override { return "Turn Volume Up"; }
-  QString description() const override { return "Increase system volume by 5%"; }
+  QString description() const override { return "Increase system volume"; }
   std::vector<QString> keywords() const override { return {"audio", "sound", "louder"}; }
   ImageURL iconUrl() const override {
     return ImageURL{BuiltinIcon::SpeakerUp}.setBackgroundTint(VOLUME_COMMAND_TINT);
+  }
+  std::vector<CommandArgument> arguments() const override {
+    return {{.name = "step", .type = CommandArgument::Text, .placeholder = "+5", .required = false}};
   }
 
   void execute(CommandController *controller) const override {
     auto ctx = controller->context();
     auto audio = ctx->services->audioControl()->provider();
-    if (!audio->adjustVolume(0.05f)) {
+    auto arg = controller->launchProps().arguments;
+    int step = 5;
+    if (!arg.empty() && !arg.front().second.isEmpty()) {
+      bool ok = false;
+      step = arg.front().second.toInt(&ok);
+      if (!ok) {
+        ctx->services->toastService()->failure("Invalid step value");
+        return;
+      }
+    }
+    if (!audio->adjustVolume(static_cast<float>(step) / 100.0f)) {
       ctx->services->toastService()->failure("Failed to adjust volume");
       return;
     }
@@ -135,16 +148,29 @@ class VolumeUpCommand : public BuiltinCallbackCommand {
 class VolumeDownCommand : public BuiltinCallbackCommand {
   QString id() const override { return "volume-down"; }
   QString name() const override { return "Turn Volume Down"; }
-  QString description() const override { return "Decrease system volume by 5%"; }
+  QString description() const override { return "Decrease system volume"; }
   std::vector<QString> keywords() const override { return {"audio", "sound", "quieter"}; }
   ImageURL iconUrl() const override {
     return ImageURL{BuiltinIcon::SpeakerDown}.setBackgroundTint(VOLUME_COMMAND_TINT);
+  }
+  std::vector<CommandArgument> arguments() const override {
+    return {{.name = "step", .type = CommandArgument::Text, .placeholder = "-5", .required = false}};
   }
 
   void execute(CommandController *controller) const override {
     auto ctx = controller->context();
     auto audio = ctx->services->audioControl()->provider();
-    if (!audio->adjustVolume(-0.05f)) {
+    auto arg = controller->launchProps().arguments;
+    int step = -5;
+    if (!arg.empty() && !arg.front().second.isEmpty()) {
+      bool ok = false;
+      step = arg.front().second.toInt(&ok);
+      if (!ok) {
+        ctx->services->toastService()->failure("Invalid step value");
+        return;
+      }
+    }
+    if (!audio->adjustVolume(static_cast<float>(step) / 100.0f)) {
       ctx->services->toastService()->failure("Failed to adjust volume");
       return;
     }
@@ -172,6 +198,30 @@ template <int Percent, BuiltinIcon Icon> class SetVolumeCommand : public Builtin
   }
 };
 
+class ToggleMuteCommand : public BuiltinCallbackCommand {
+  QString id() const override { return "toggle-mute"; }
+  QString name() const override { return "Toggle Mute"; }
+  QString description() const override { return "Mute or unmute system audio"; }
+  std::vector<QString> keywords() const override { return {"audio", "sound", "volume", "mute", "unmute"}; }
+  ImageURL iconUrl() const override {
+    return ImageURL{BuiltinIcon::SpeakerOff}.setBackgroundTint(VOLUME_COMMAND_TINT);
+  }
+
+  void execute(CommandController *controller) const override {
+    auto ctx = controller->context();
+    auto audio = ctx->services->audioControl()->provider();
+    if (!audio->toggleMute()) {
+      ctx->services->toastService()->failure("Failed to toggle mute");
+      return;
+    }
+    if (audio->isMuted()) {
+      ctx->navigation->showHud("Muted", ImageURL{BuiltinIcon::SpeakerOff});
+    } else {
+      showVolumeHud(ctx, audio);
+    }
+  }
+};
+
 class SystemExtension : public BuiltinCommandRepository {
   QString id() const override { return "system"; }
   QString displayName() const override { return "System"; }
@@ -191,6 +241,7 @@ public:
     registerCommand<SetVolumeCommand<50, BuiltinIcon::SpeakerLow>>();
     registerCommand<SetVolumeCommand<25, BuiltinIcon::SpeakerLow>>();
     registerCommand<SetVolumeCommand<0, BuiltinIcon::SpeakerOff>>();
+    registerCommand<ToggleMuteCommand>();
   }
 
   std::vector<Preference> preferences() const override { return {}; }
