@@ -3,9 +3,9 @@
 #include <QString>
 #include "../abstract-audio-control.hpp"
 
-class WpctlAudioControl : public AbstractAudioControl {
+class PactlAudioControl : public AbstractAudioControl {
 public:
-  WpctlAudioControl();
+  PactlAudioControl();
 
   QString id() const override;
 
@@ -18,16 +18,11 @@ public:
   bool toggleMute() override;
 
   std::vector<AudioSink> listSinks() const override;
-  bool setDefaultSink(const QString &sinkId) override;
+  bool setDefaultSink(const QString &sinkName) override;
 
 private:
-  struct VolumeInfo {
-    float volume = 0.0f;
-    bool muted = false;
-  };
+  std::optional<AudioSink> getDefaultSink() const;
+  std::optional<QString> run(const QStringList &args) const;
 
-  std::optional<VolumeInfo> queryDefaultSinkVolume() const;
-  std::optional<QString> runWpctl(const QStringList &args) const;
-
-  QString m_wpctlPath;
+  QString m_pactlPath;
 };

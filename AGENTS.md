@@ -34,6 +34,7 @@ Here are a few rules to keep in mind:
 - Include order: system headers before local headers.
 - Header guards: use `#pragma once`.
 - String types: use `std::string` internally, `QString` only at the Qt boundary.
+- Constants: use `UPPER_SNAKE_CASE` for `constexpr` and `static const` values.
 - Do not overuse comments, only add them when they provide actual value
 
 ## Linting and formatting
