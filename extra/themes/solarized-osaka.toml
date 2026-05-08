@@ -1,0 +1,30 @@
+# Solarized Osaka - Deep Teal Night
+# A darker, higher-contrast take on Solarized with deep teal tones
+
+[meta]
+version = 1
+name = "Solarized Osaka"
+description = "A darker, higher-contrast take on Solarized with deep teal tones"
+variant = "dark"
+icon = "icons/solarized.png"
+
+[colors.core]
+background = "#001419"
+foreground = "#839395"
+secondary_background = "#002028"
+border = "#063540"
+accent = "#268BD3"
+
+[colors.accents]
+blue = "#268BD3"
+cyan = "#29A298"
+green = "#849900"
+magenta = "#D23681"
+orange = "#C94C16"
+purple = "#6D71C4"
+red = "#DB302D"
+yellow = "#B28500"
+
+[colors.list.item.selection]
+background = { name = "colors.core.accent", opacity = 0.12 }
+secondary_background = { name = "colors.core.accent", opacity = 0.20 }
