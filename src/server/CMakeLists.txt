@@ -434,6 +434,8 @@ set(SRCS
 
 	src/services/power-manager/systemd/systemd-power-manager.cpp
 
+	src/services/audio-control/pactl/pactl-audio-control.cpp
+
 	src/config/config.hpp
 	src/config/config.cpp
 

@@ -1,4 +1,5 @@
 #include "service-registry.hpp"
+#include "services/audio-control/audio-control-service.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "font-service.hpp"
 #include "omni-database.hpp"
@@ -65,6 +66,8 @@ BackgroundEffectManager *ServiceRegistry::backgroundEffectManager() const {
 }
 
 TelemetryService *ServiceRegistry::telemetry() const { return m_telemetry.get(); }
+
+AudioControlService *ServiceRegistry::audioControl() const { return m_audioControl.get(); }
 
 void ServiceRegistry::setPowerManager(std::unique_ptr<PowerManager> powman) {
   m_powerManager = std::move(powman);
@@ -150,6 +153,10 @@ void ServiceRegistry::setBackgroundEffectManager(std::unique_ptr<BackgroundEffec
 
 void ServiceRegistry::setTelemetry(std::unique_ptr<TelemetryService> telemetry) {
   m_telemetry = std::move(telemetry);
+}
+
+void ServiceRegistry::setAudioControl(std::unique_ptr<AudioControlService> service) {
+  m_audioControl = std::move(service);
 }
 
 ServiceRegistry *ServiceRegistry::instance() {
