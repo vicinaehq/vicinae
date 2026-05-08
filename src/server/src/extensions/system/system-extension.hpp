@@ -181,7 +181,7 @@ class VolumeDownCommand : public BuiltinCallbackCommand {
 };
 
 template <int Percent, BuiltinIcon Icon> class SetVolumeCommand : public BuiltinCallbackCommand {
-  static constexpr float level = static_cast<float>(Percent) / 100.0f;
+  static constexpr float LEVEL = static_cast<float>(Percent) / 100.0f;
 
   QString id() const override { return "volume-" + QString::number(Percent); }
   QString name() const override { return "Set Volume to " + QString::number(Percent) + "%"; }
@@ -192,7 +192,7 @@ template <int Percent, BuiltinIcon Icon> class SetVolumeCommand : public Builtin
   void execute(CommandController *controller) const override {
     auto ctx = controller->context();
     auto audio = ctx->services->audioControl()->provider();
-    auto result = audio->setVolume(level);
+    auto result = audio->setVolume(LEVEL);
     if (!result) {
       ctx->services->toastService()->failure("Failed to set volume");
       return;
