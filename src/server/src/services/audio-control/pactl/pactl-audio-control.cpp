@@ -4,8 +4,6 @@
 #include <glaze/glaze.hpp>
 #include "pactl-audio-control.hpp"
 
-namespace {
-
 struct PactlVolume {
   std::string value_percent;
 };
@@ -23,8 +21,6 @@ struct PactlSink {
   std::vector<PactlPort> ports;
   std::string active_port;
 };
-
-} // namespace
 
 template <> struct glz::meta<PactlVolume> : glz::snake_case {};
 template <> struct glz::meta<PactlPort> : glz::snake_case {};
