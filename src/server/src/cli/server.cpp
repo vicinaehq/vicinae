@@ -37,6 +37,7 @@
 #include "services/toast/toast-service.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "services/snippet/snippet-service.hpp"
+#include "services/audio-control/audio-control-service.hpp"
 #include "services/paste/paste-service.hpp"
 #include "services/paste/linux-paste-service.hpp"
 #include "settings-controller/settings-controller.hpp"
@@ -144,6 +145,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setExtensionRegistry(std::move(extensionRegistry));
     registry->setOAuthService(std::move(oauthService));
     registry->setPowerManager(std::make_unique<PowerManager>());
+    registry->setAudioControl(std::make_unique<AudioControlService>());
     registry->setScriptDb(std::make_unique<ScriptCommandService>());
     registry->setBrowserExtension(std::make_unique<BrowserExtensionService>());
     registry->setBackgroundEffectManager(std::make_unique<BackgroundEffectManager>());
