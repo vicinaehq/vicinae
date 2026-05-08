@@ -140,6 +140,10 @@ Item {
             if (root.listModel)
                 root.listModel.setSelectedIndex(listView.currentIndex);
         }
+    }
+
+    Connections {
+        target: (root.autoWireModel && root.listModel && ("selectedIndex" in root.listModel)) ? root.listModel : null
         function onSelectedIndexChanged() {
             const idx = root.listModel.selectedIndex;
             if (listView.currentIndex !== idx)
