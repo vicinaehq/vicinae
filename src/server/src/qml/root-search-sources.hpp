@@ -45,8 +45,6 @@ QString resolveAccessoryColor(const std::optional<ColorLike> &color);
 
 } // namespace root_search
 
-// ── Link ─────────────────────────────────────────────────────────────
-
 class RootLinkSection : public SectionSource {
 public:
   QString sectionName() const override { return QStringLiteral("Link"); }
@@ -65,8 +63,6 @@ public:
 private:
   std::optional<LinkItem> m_link;
 };
-
-// ── Calculator ───────────────────────────────────────────────────────
 
 class RootCalculatorSection : public SectionSource {
 public:
@@ -87,8 +83,6 @@ private:
   std::optional<AbstractCalculatorBackend::CalculatorResult> m_result;
 };
 
-// ── News ─────────────────────────────────────────────────────────────
-
 class RootNewsSection : public SectionSource {
 public:
   QString sectionName() const override { return QStringLiteral("What's New"); }
@@ -107,8 +101,6 @@ public:
 private:
   std::vector<const NewsItem *> m_items;
 };
-
-// ── Favorites ────────────────────────────────────────────────────────
 
 class RootFavoritesSection : public SectionSource {
 public:
@@ -132,8 +124,6 @@ private:
   RootItemManager *m_manager;
   std::vector<std::shared_ptr<RootItem>> m_items;
 };
-
-// ── Results ──────────────────────────────────────────────────────────
 
 class RootResultsSection : public SectionSource {
 public:
@@ -160,8 +150,6 @@ private:
   bool m_queryEmpty = true;
 };
 
-// ── Files ────────────────────────────────────────────────────────────
-
 class RootFilesSection : public SectionSource {
 public:
   explicit RootFilesSection(AppService *appDb) : m_appDb(appDb) {}
@@ -183,8 +171,6 @@ private:
   AppService *m_appDb;
   std::vector<IndexerFileResult> m_files;
 };
-
-// ── Fallback ─────────────────────────────────────────────────────────
 
 class RootFallbackSection : public SectionSource {
 public:

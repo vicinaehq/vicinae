@@ -10,8 +10,6 @@
 #include "utils/utils.hpp"
 #include <format>
 
-// ── Shared helpers ───────────────────────────────────────────────────
-
 namespace root_search {
 
 const QHash<int, QByteArray> &customRoleNames() {
@@ -84,8 +82,6 @@ QVariant rootItemAccessoryData(const RootItem *item, int role) {
 
 } // namespace
 
-// ── Link ─────────────────────────────────────────────────────────────
-
 QString RootLinkSection::itemId(int) const { return m_link ? m_link->url : QString(); }
 
 QString RootLinkSection::itemTitle(int) const { return m_link ? m_link->url : QString(); }
@@ -112,8 +108,6 @@ std::unique_ptr<ActionPanelState> RootLinkSection::actionPanel(int) const {
   section->addAction(open);
   return panel;
 }
-
-// ── Calculator ───────────────────────────────────────────────────────
 
 QString RootCalculatorSection::itemId(int) const {
   return m_result ? QStringLiteral("calc:") + m_result->question.text : QString();
@@ -165,8 +159,6 @@ std::unique_ptr<ActionPanelState> RootCalculatorSection::actionPanel(int) const 
   return panel;
 }
 
-// ── News ─────────────────────────────────────────────────────────────
-
 QString RootNewsSection::itemId(int i) const {
   if (std::cmp_greater_equal(i, m_items.size())) return {};
   return QStringLiteral("news:") + QString::fromStdString(m_items[i]->id);
@@ -205,8 +197,6 @@ std::unique_ptr<ActionPanelState> RootNewsSection::actionPanel(int i) const {
   panel->createSection()->addAction(dismissAction);
   return panel;
 }
-
-// ── Favorites ────────────────────────────────────────────────────────
 
 QString RootFavoritesSection::itemId(int i) const {
   if (std::cmp_greater_equal(i, m_items.size()) || !m_items[i]) return {};
@@ -262,8 +252,6 @@ const RootItem *RootFavoritesSection::rootItem(int i) const {
   if (std::cmp_greater_equal(i, m_items.size())) return nullptr;
   return m_items[i].get();
 }
-
-// ── Results ──────────────────────────────────────────────────────────
 
 QString RootResultsSection::sectionName() const {
   if (m_queryEmpty) return QStringLiteral("Suggestions");
@@ -321,8 +309,6 @@ const RootItem *RootResultsSection::rootItem(int i) const {
   return m_items[i].item.get();
 }
 
-// ── Files ────────────────────────────────────────────────────────────
-
 QString RootFilesSection::itemId(int i) const {
   if (std::cmp_greater_equal(i, m_files.size())) return {};
   return QString::fromStdString(m_files[i].path.string());
@@ -358,8 +344,6 @@ std::unique_ptr<ActionPanelState> RootFilesSection::actionPanel(int i) const {
   if (std::cmp_greater_equal(i, m_files.size())) return nullptr;
   return FileActions::actionPanel(m_files[i].path, m_appDb);
 }
-
-// ── Fallback ─────────────────────────────────────────────────────────
 
 QString RootFallbackSection::sectionName() const {
   return QString::fromStdString(std::format("Use \"{}\" with...", m_query));
