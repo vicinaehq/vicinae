@@ -222,9 +222,7 @@ Item {
                     const navigatable = typeof commandStack.currentItem.moveUp === "function";
 
                     if (navigatable && (ctrl || event.modifiers == Qt.NoModifier)) {
-                        event.accepted = ctrl
-                            ? (typeof commandStack.currentItem.moveSectionUp === "function" && commandStack.currentItem.moveSectionUp())
-                            : commandStack.currentItem.moveUp();
+                        event.accepted = ctrl ? (typeof commandStack.currentItem.moveSectionUp === "function" && commandStack.currentItem.moveSectionUp()) : commandStack.currentItem.moveUp();
                     } else {
                         event.accepted = launcher.forwardKey(event.key, event.modifiers);
                     }
@@ -239,9 +237,7 @@ Item {
                     const ctrl = event.modifiers == Qt.ControlModifier;
 
                     if (navigatable && (ctrl || event.modifiers == Qt.NoModifier)) {
-                        event.accepted = ctrl
-                            ? (typeof commandStack.currentItem.moveSectionDown === "function" && commandStack.currentItem.moveSectionDown())
-                            : commandStack.currentItem.moveDown();
+                        event.accepted = ctrl ? (typeof commandStack.currentItem.moveSectionDown === "function" && commandStack.currentItem.moveSectionDown()) : commandStack.currentItem.moveDown();
                     } else {
                         event.accepted = launcher.forwardKey(event.key, event.modifiers);
                     }

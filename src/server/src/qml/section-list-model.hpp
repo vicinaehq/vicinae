@@ -46,7 +46,7 @@ public:
   bool awaitingData() const { return m_awaitingData; }
   int selectedIndex() const { return m_selectedIndex; }
 
-  Q_INVOKABLE void setSelectedIndex(int index);
+  Q_INVOKABLE virtual void setSelectedIndex(int index);
   Q_INVOKABLE void activateSelected();
   Q_INVOKABLE int nextSelectableIndex(int from, int direction) const;
   Q_INVOKABLE int nextSectionIndex(int from, int direction) const;

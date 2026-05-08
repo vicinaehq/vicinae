@@ -1,24 +1,21 @@
 #include "root-search-model.hpp"
-#include "actions/app/app-actions.hpp"
-#include "actions/calculator/calculator-actions.hpp"
 #include "config/config.hpp"
-#include "keyboard/keybind.hpp"
-#include "misc/file-list-item.hpp"
-#include "navigation-controller.hpp"
 #include "service-registry.hpp"
+#include "services/app-service/app-service.hpp"
+#include "services/calculator-service/calculator-service.hpp"
+#include "services/files-service/file-service.hpp"
 #include "services/news/news-service.hpp"
 #include "theme.hpp"
-#include "theme/theme-file.hpp"
-#include "utils.hpp"
 #include <filesystem>
-#include <format>
 #include <utility>
 
 RootSearchModel::RootSearchModel(const ViewScope &scope, QObject *parent)
-    : QAbstractListModel(parent), m_scope(scope), m_manager(scope.services()->rootItemManager()),
+    : SectionListModel(parent), m_manager(scope.services()->rootItemManager()),
       m_appDb(scope.services()->appDb()), m_newsService(scope.services()->newsService()),
       m_calculator(scope.services()->calculatorService()), m_fileService(scope.services()->fileService()),
       m_config(scope.services()->config()), m_fileSearchEnabled(m_config->value().searchFilesInRoot) {
+
+  setScope(scope);
 
   using namespace std::chrono_literals;
 
@@ -41,847 +38,201 @@ RootSearchModel::RootSearchModel(const ViewScope &scope, QObject *parent)
   connect(m_manager, &RootItemManager::itemsChanged, this, &RootSearchModel::refresh);
   connect(m_newsService, &NewsService::itemsChanged, this, &RootSearchModel::refresh);
 
-  m_newsItems = m_newsService->activeItems();
-  m_fallbackItems = m_manager->fallbackItems();
-  m_favorites = m_manager->queryFavorites();
-
   connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() {
     if (rowCount() > 0) emit dataChanged(index(0), index(rowCount() - 1), {IconSource, AccessoryColor});
   });
 
+  m_linkSource = new RootLinkSection;
+  m_calcSource = new RootCalculatorSection;
+  m_newsSource = new RootNewsSection;
+  m_favoritesSource = new RootFavoritesSection(m_manager);
+  m_resultsSource = new RootResultsSection(m_manager);
+  m_filesSource = new RootFilesSection(m_appDb);
+  m_fallbackSource = new RootFallbackSection(m_manager);
+
+  addSource(m_linkSource);
+  addSource(m_calcSource);
+  addSource(m_newsSource);
+  addSource(m_favoritesSource);
+  addSource(m_resultsSource);
+  addSource(m_filesSource);
+  addSource(m_fallbackSource);
+
   setFilter({});
-}
-
-int RootSearchModel::rowCount(const QModelIndex &parent) const {
-  if (parent.isValid()) return 0;
-  return static_cast<int>(m_flat.size());
-}
-
-QVariant RootSearchModel::data(const QModelIndex &index, int role) const {
-  if (!index.isValid() || index.row() < 0 || index.row() >= static_cast<int>(m_flat.size())) return {};
-
-  const auto &flat = m_flat[index.row()];
-
-  if (flat.kind == FlatItem::SectionHeader) {
-    switch (role) {
-    case IsSection:
-      return true;
-    case IsSelectable:
-      return false;
-    case SectionName: {
-      switch (flat.section) {
-      case SectionType::Link:
-        return QStringLiteral("Link");
-      case SectionType::Calculator:
-        return QStringLiteral("Calculator");
-      case SectionType::Results:
-        return m_query.empty() ? QStringLiteral("Suggestions")
-                               : QString::fromStdString(std::format("Results ({})", m_results.size()));
-      case SectionType::Files:
-        return QStringLiteral("Files");
-      case SectionType::Fallback:
-        return QString::fromStdString(std::format("Use \"{}\" with...", m_query));
-      case SectionType::Favorites:
-        return QStringLiteral("Favorites");
-      case SectionType::News:
-        return QStringLiteral("What's New");
-      default:
-        return {};
-      }
-    }
-    case ItemType:
-      return QString();
-    case Title:
-      return QString();
-    case Subtitle:
-      return QString();
-    case IconSource:
-      return QString();
-    case Alias:
-      return QString();
-    case IsActive:
-      return false;
-    case AccessoryText:
-      return QString();
-    case AccessoryColor:
-      return QString();
-    case IsCalculator:
-      return false;
-    case CalcQuestion:
-      return QString();
-    case CalcQuestionUnit:
-      return QString();
-    case CalcAnswer:
-      return QString();
-    case CalcAnswerUnit:
-      return QString();
-    case IsFile:
-      return false;
-    default:
-      return {};
-    }
-  }
-
-  switch (role) {
-  case IsSection:
-    return false;
-  case IsSelectable:
-    return true;
-  case SectionName:
-    return QString();
-  case ItemType:
-    return itemTypeString(flat.kind);
-  case IsCalculator:
-    return flat.kind == FlatItem::CalculatorItem;
-  case IsFile:
-    return flat.kind == FlatItem::FileItem;
-  default:
-    break;
-  }
-
-  if (flat.kind == FlatItem::CalculatorItem) {
-    if (!m_calc) return {};
-    switch (role) {
-    case Title:
-      return m_calc->question.text + QStringLiteral(" = ") + m_calc->answer.text;
-    case Subtitle:
-      return {};
-    case IconSource:
-      return imageSourceFor(ImageURL::builtin("calculator"));
-    case Alias:
-      return {};
-    case IsActive:
-      return false;
-    case AccessoryText:
-      return {};
-    case AccessoryColor:
-      return {};
-    case CalcQuestion:
-      return m_calc->question.text;
-    case CalcQuestionUnit:
-      return m_calc->question.unit ? m_calc->question.unit->displayName : QString();
-    case CalcAnswer:
-      return m_calc->answer.text;
-    case CalcAnswerUnit:
-      return m_calc->answer.unit ? m_calc->answer.unit->displayName : QString();
-    default:
-      return {};
-    }
-  }
-
-  if (flat.kind == FlatItem::FileItem) {
-    if (flat.dataIndex < 0 || std::cmp_greater_equal(flat.dataIndex, m_files.size())) return {};
-    const auto &file = m_files[flat.dataIndex];
-    switch (role) {
-    case Title:
-      return QString::fromStdString(file.path.filename().string());
-    case Subtitle:
-      return QString::fromStdString(compressPath(file.path.parent_path()));
-    case IconSource:
-      return imageSourceFor(ImageURL::fileIcon(file.path));
-    case Alias:
-      return {};
-    case IsActive:
-      return false;
-    case AccessoryText:
-      return {};
-    case AccessoryColor:
-      return {};
-    case CalcQuestion:
-      return {};
-    case CalcQuestionUnit:
-      return {};
-    case CalcAnswer:
-      return {};
-    case CalcAnswerUnit:
-      return {};
-    default:
-      return {};
-    }
-  }
-
-  if (flat.kind == FlatItem::NewsItem) {
-    if (flat.dataIndex < 0 || std::cmp_greater_equal(flat.dataIndex, m_newsItems.size())) return {};
-    const auto *news = m_newsItems[flat.dataIndex];
-    switch (role) {
-    case Title:
-      return news->title;
-    case Subtitle:
-      return news->subtitle;
-    case IconSource:
-      return imageSourceFor(news->icon);
-    case Alias:
-      return {};
-    case IsActive:
-      return false;
-    case AccessoryText:
-      return {};
-    case AccessoryColor:
-      return {};
-    case CalcQuestion:
-    case CalcQuestionUnit:
-    case CalcAnswer:
-    case CalcAnswerUnit:
-      return {};
-    default:
-      return {};
-    }
-  }
-
-  const auto accessoryData = [&](const RootItem *item, int r) -> QVariant {
-    if (!item) return {};
-    if (r == AccessoryText) {
-      auto acc = item->accessories();
-      return acc.empty() ? QString() : acc.front().text;
-    }
-    if (r == AccessoryColor) {
-      auto acc = item->accessories();
-      if (acc.empty() || !acc.front().color) return QString();
-      return resolveAccessoryColor(acc.front().color);
-    }
-    return {};
-  };
-
-  switch (flat.kind) {
-  case FlatItem::ResultItem: {
-    if (flat.dataIndex < 0 || std::cmp_greater_equal(flat.dataIndex, m_results.size())) return {};
-    const auto &owned = m_results[flat.dataIndex];
-    const auto &item = owned.item;
-    if (!item) return {};
-    switch (role) {
-    case Title:
-      return item->title();
-    case Subtitle:
-      return item->subtitle();
-    case IconSource:
-      return imageSourceFor(item->iconUrl());
-    case Alias:
-      return QString::fromStdString(owned.meta.alias.value_or(""));
-    case IsActive:
-      return item->isActive();
-    case AccessoryText:
-    case AccessoryColor:
-      return accessoryData(item.get(), role);
-    case CalcQuestion:
-    case CalcQuestionUnit:
-    case CalcAnswer:
-    case CalcAnswerUnit:
-      return {};
-    default:
-      return {};
-    }
-  }
-
-  case FlatItem::FallbackItem: {
-    if (flat.dataIndex < 0 || std::cmp_greater_equal(flat.dataIndex, m_fallbackItems.size())) return {};
-    const auto &item = m_fallbackItems[flat.dataIndex];
-    if (!item) return {};
-    switch (role) {
-    case Title:
-      return item->title();
-    case Subtitle:
-      return item->subtitle();
-    case IconSource:
-      return imageSourceFor(item->iconUrl());
-    case Alias:
-      return {};
-    case IsActive:
-      return item->isActive();
-    case AccessoryText:
-    case AccessoryColor:
-      return accessoryData(item.get(), role);
-    case CalcQuestion:
-    case CalcQuestionUnit:
-    case CalcAnswer:
-    case CalcAnswerUnit:
-      return {};
-    default:
-      return {};
-    }
-  }
-
-  case FlatItem::FavoriteItem: {
-    if (flat.dataIndex < 0 || std::cmp_greater_equal(flat.dataIndex, m_favorites.size())) return {};
-    const auto &item = m_favorites[flat.dataIndex];
-    if (!item) return {};
-    switch (role) {
-    case Title:
-      return item->title();
-    case Subtitle:
-      return item->subtitle();
-    case IconSource:
-      return imageSourceFor(item->iconUrl());
-    case Alias: {
-      auto meta = m_manager->itemMetadata(item->uniqueId());
-      return QString::fromStdString(meta.alias.value_or(""));
-    }
-    case IsActive:
-      return item->isActive();
-    case AccessoryText:
-    case AccessoryColor:
-      return accessoryData(item.get(), role);
-    case CalcQuestion:
-    case CalcQuestionUnit:
-    case CalcAnswer:
-    case CalcAnswerUnit:
-      return {};
-    default:
-      return {};
-    }
-  }
-
-  case FlatItem::LinkItem: {
-    if (!m_defaultOpener) return {};
-    switch (role) {
-    case Title:
-      return m_defaultOpener->url;
-    case Subtitle:
-      return {};
-    case IconSource:
-      return imageSourceFor(m_defaultOpener->app->iconUrl());
-    case Alias:
-      return {};
-    case IsActive:
-      return false;
-    case AccessoryText:
-      return {};
-    case AccessoryColor:
-      return {};
-    case CalcQuestion:
-    case CalcQuestionUnit:
-    case CalcAnswer:
-    case CalcAnswerUnit:
-      return {};
-    default:
-      return {};
-    }
-  }
-
-  default:
-    return {};
-  }
-}
-
-QHash<int, QByteArray> RootSearchModel::roleNames() const {
-  return {
-      {IsSection, "isSection"},
-      {IsSelectable, "isSelectable"},
-      {SectionName, "sectionName"},
-      {ItemType, "itemType"},
-      {Title, "title"},
-      {Subtitle, "subtitle"},
-      {IconSource, "iconSource"},
-      {Alias, "alias"},
-      {IsActive, "isActive"},
-      {AccessoryText, "accessoryText"},
-      {AccessoryColor, "accessoryColor"},
-      {IsCalculator, "isCalculator"},
-      {CalcQuestion, "calcQuestion"},
-      {CalcQuestionUnit, "calcQuestionUnit"},
-      {CalcAnswer, "calcAnswer"},
-      {CalcAnswerUnit, "calcAnswerUnit"},
-      {IsFile, "isFile"},
-  };
 }
 
 void RootSearchModel::setFilter(const QString &text) {
   auto query = text.toStdString();
   if (query == m_query) return;
   m_query = std::move(query);
-  m_selectedIndex = -1;
-  m_selectFirstOnReset = true;
-  emit selectFirstOnResetChanged();
-  m_scope.clearActions();
-  m_calc.reset();
-  m_files.clear();
+  setSelectFirstOnReset(true);
+  scope().clearActions();
+
+  m_calcSource->setResult({});
+  m_filesSource->setFiles({});
 
   m_calculatorDebounce.stop();
   m_fileSearchDebounce.stop();
 
-  rerunSearch();
+  bool const directMatch = rerunSearch();
 
-  if (!text.isEmpty()) {
+  if (!text.isEmpty() && !directMatch) {
     m_calculatorDebounce.start();
     m_fileSearchDebounce.start();
   }
 }
 
 void RootSearchModel::refresh() {
-  m_newsItems = m_newsService->activeItems();
-  m_fallbackItems = m_manager->fallbackItems();
-  m_favorites = m_manager->queryFavorites();
-
-  m_selectedIndex = -1;
-
-  m_selectFirstOnReset = false;
-  emit selectFirstOnResetChanged();
-
+  auto saved = selectFirstOnReset();
+  setSelectFirstOnReset(false);
   rerunSearch();
-
-  m_selectFirstOnReset = true;
-  emit selectFirstOnResetChanged();
+  setSelectFirstOnReset(saved);
 }
 
-void RootSearchModel::rerunSearch() {
+bool RootSearchModel::rerunSearch() {
   auto text = QString::fromStdString(m_query);
 
   if (!text.isEmpty() && text.startsWith('/')) {
     std::error_code ec;
     if (std::filesystem::exists(m_query, ec)) {
-      m_defaultOpener.reset();
-      m_results.clear();
-      m_files = {{std::filesystem::path(m_query), 1.0}};
-      beginResetModel();
-      rebuildFlatList();
-      endResetModel();
-      return;
+      m_linkSource->setLink({});
+      m_resultsSource->setItems({});
+      m_resultsSource->setQueryEmpty(false);
+      m_filesSource->setFiles({{std::filesystem::path(m_query), 1.0}});
+      m_newsSource->setItems({});
+      m_favoritesSource->setItems({});
+      m_fallbackSource->setItems({});
+      rebuild();
+      return true;
     }
   }
 
   if (!text.isEmpty()) {
     if (auto url = QUrl(text); url.isValid() && !url.scheme().isEmpty()) {
       if (auto app = m_appDb->findDefaultOpener(text)) {
-        m_defaultOpener = ::LinkItem{.app = app, .url = text};
-        m_results.clear();
-        beginResetModel();
-        rebuildFlatList();
-        endResetModel();
-        return;
+        m_linkSource->setLink(LinkItem{.app = app, .url = text});
+        m_resultsSource->setItems({});
+        m_resultsSource->setQueryEmpty(false);
+        m_newsSource->setItems({});
+        m_favoritesSource->setItems({});
+        rebuild();
+        return true;
       }
     }
   }
 
-  m_defaultOpener.reset();
+  m_linkSource->setLink({});
+  m_resultsSource->setQueryEmpty(m_query.empty());
+  m_fallbackSource->setQuery(m_query);
 
   std::vector<RootItemManager::ScoredItem> scored;
   if (m_query.empty()) {
     m_manager->search("", scored, {.includeFavorites = false, .prioritizeAliased = false});
+    m_newsSource->setItems(m_newsService->activeItems());
+    m_favoritesSource->setItems(m_manager->queryFavorites());
+    m_fallbackSource->setItems({});
   } else {
     m_manager->search(text, scored);
+    m_newsSource->setItems({});
+    m_favoritesSource->setItems({});
+    m_fallbackSource->setItems(m_manager->fallbackItems());
   }
 
-  m_results.clear();
-  m_results.reserve(scored.size());
+  std::vector<OwnedResult> results;
+  results.reserve(scored.size());
   for (const auto &s : scored) {
-    m_results.push_back({
+    results.push_back({
         .item = s.item.get(),
         .meta = s.meta ? *s.meta : RootItemMetadata{},
     });
   }
+  m_resultsSource->setItems(std::move(results));
 
-  beginResetModel();
-  rebuildFlatList();
-  endResetModel();
-}
-
-void RootSearchModel::rebuildFlatList() {
-  m_flat.clear();
-
-  if (m_query.empty()) {
-    addSection(SectionType::News, "What's New", static_cast<int>(m_newsItems.size()));
-    addSection(SectionType::Favorites, "Favorites", static_cast<int>(m_favorites.size()));
-    addSection(SectionType::Results, "Suggestions", static_cast<int>(m_results.size()));
-  } else {
-    if (m_defaultOpener) { addSection(SectionType::Link, "Link", 1); }
-    if (m_calc) { addSection(SectionType::Calculator, "Calculator", 1); }
-    addSection(SectionType::Results, "", static_cast<int>(m_results.size()));
-    addSection(SectionType::Files, "Files", static_cast<int>(m_files.size()));
-    addSection(SectionType::Fallback, "", static_cast<int>(m_fallbackItems.size()));
-  }
-}
-
-void RootSearchModel::addSection(SectionType section, const std::string &name, int count) {
-  if (count == 0) return;
-
-  m_flat.push_back({.kind = FlatItem::SectionHeader, .dataIndex = -1, .section = section});
-
-  FlatItem::Kind itemKind;
-  switch (section) {
-  case SectionType::Results:
-    itemKind = FlatItem::ResultItem;
-    break;
-  case SectionType::Fallback:
-    itemKind = FlatItem::FallbackItem;
-    break;
-  case SectionType::Favorites:
-    itemKind = FlatItem::FavoriteItem;
-    break;
-  case SectionType::Link:
-    itemKind = FlatItem::LinkItem;
-    break;
-  case SectionType::Calculator:
-    itemKind = FlatItem::CalculatorItem;
-    break;
-  case SectionType::Files:
-    itemKind = FlatItem::FileItem;
-    break;
-  case SectionType::News:
-    itemKind = FlatItem::NewsItem;
-    break;
-  default:
-    itemKind = FlatItem::ResultItem;
-    break;
-  }
-
-  for (int i = 0; i < count; ++i) {
-    m_flat.push_back({.kind = itemKind, .dataIndex = i, .section = section});
-  }
-}
-
-int RootSearchModel::nextSelectableIndex(int from, int direction) const {
-  int const count = static_cast<int>(m_flat.size());
-  if (count == 0) return from;
-
-  int idx = from + direction;
-  if (idx < 0)
-    idx = count - 1;
-  else if (idx >= count)
-    idx = 0;
-
-  while (idx != from) {
-    if (m_flat[idx].kind != FlatItem::SectionHeader) return idx;
-    idx += direction;
-    if (idx < 0)
-      idx = count - 1;
-    else if (idx >= count)
-      idx = 0;
-  }
-
-  return from;
-}
-
-int RootSearchModel::nextSectionIndex(int from, int direction) const {
-  int const count = static_cast<int>(m_flat.size());
-  if (count == 0) return from;
-
-  SectionType currentSection{};
-  if (from >= 0 && from < count) { currentSection = m_flat[from].section; }
-
-  auto isSelectable = [&](int idx) { return m_flat[idx].kind != FlatItem::SectionHeader; };
-
-  if (direction > 0) {
-    // Jump directly to first item of next section.
-    for (int idx = from + 1; idx < count; ++idx) {
-      if (isSelectable(idx) && m_flat[idx].section != currentSection) return idx;
-    }
-    return nextSelectableIndex(-1, 1);
-  }
-
-  // Going up: find start of current section.
-  int currentStart = from;
-  for (int idx = from - 1; idx >= 0; --idx) {
-    if (isSelectable(idx) && m_flat[idx].section == currentSection) {
-      currentStart = idx;
-    } else if (m_flat[idx].section != currentSection) {
-      break;
-    }
-  }
-
-  // If not already at the first item, jump there.
-  if (currentStart < from) { return currentStart; }
-
-  // Find the previous section's first selectable item.
-  SectionType prevSection{};
-  bool foundPrev = false;
-  for (int idx = currentStart - 1; idx >= 0; --idx) {
-    if (isSelectable(idx)) {
-      prevSection = m_flat[idx].section;
-      foundPrev = true;
-      break;
-    }
-  }
-  if (foundPrev) {
-    for (int i = 0; i < count; ++i) {
-      if (isSelectable(i) && m_flat[i].section == prevSection) return i;
-    }
-  }
-
-  // Wrap: last section's first item.
-  SectionType lastSection{};
-  bool foundLast = false;
-  for (int i = count - 1; i >= 0; --i) {
-    if (isSelectable(i)) {
-      lastSection = m_flat[i].section;
-      foundLast = true;
-      break;
-    }
-  }
-  if (foundLast) {
-    for (int i = 0; i < count; ++i) {
-      if (isSelectable(i) && m_flat[i].section == lastSection) return i;
-    }
-  }
-  return from;
-}
-
-int RootSearchModel::scrollTargetIndex(int index, int direction) const {
-  if (direction < 0 && index > 0 && std::cmp_less(index, m_flat.size())) {
-    if (m_flat[index - 1].kind == FlatItem::SectionHeader) return index - 1;
-  }
-  return index;
-}
-
-QString RootSearchModel::itemTypeString(FlatItem::Kind kind) const {
-  switch (kind) {
-  case FlatItem::ResultItem:
-    return QStringLiteral("result");
-  case FlatItem::FallbackItem:
-    return QStringLiteral("fallback");
-  case FlatItem::FavoriteItem:
-    return QStringLiteral("favorite");
-  case FlatItem::LinkItem:
-    return QStringLiteral("link");
-  case FlatItem::CalculatorItem:
-    return QStringLiteral("calculator");
-  case FlatItem::FileItem:
-    return QStringLiteral("file");
-  case FlatItem::NewsItem:
-    return QStringLiteral("news");
-  default:
-    return QStringLiteral("unknown");
-  }
-}
-
-QString RootSearchModel::resolveAccessoryColor(const std::optional<ColorLike> &color) const {
-  if (!color) return {};
-  const auto &theme = ThemeService::instance().theme();
-  const auto visitor = [&](auto &&c) -> QString {
-    using T = std::decay_t<decltype(c)>;
-    if constexpr (std::is_same_v<T, QColor>) {
-      return c.name(QColor::HexArgb);
-    } else if constexpr (std::is_same_v<T, QString>) {
-      return c;
-    } else if constexpr (std::is_same_v<T, SemanticColor>) {
-      return theme.resolve(c).name(QColor::HexArgb);
-    } else if constexpr (std::is_same_v<T, DynamicColor>) {
-      if (theme.isLight()) return c.light;
-      return c.dark;
-    } else {
-      return {};
-    }
-  };
-  return std::visit(visitor, *color);
+  rebuild();
+  return false;
 }
 
 void RootSearchModel::setSelectedIndex(int index) {
-  if (index == m_selectedIndex) return;
-  m_selectedIndex = index;
+  QString oldId = m_lastCompleterItemId;
+  SectionListModel::setSelectedIndex(index);
 
-  if (index < 0 || std::cmp_greater_equal(index, m_flat.size())) {
-    m_lastSelectedItemId.clear();
-    m_scope.clearActions();
+  int sourceIdx = -1;
+  int itemIdx = -1;
+  if (!dataItemAt(index, sourceIdx, itemIdx)) {
+    if (!oldId.isEmpty()) scope().destroyCurrentCompletion();
+    m_lastCompleterItemId.clear();
     emit primaryActionChanged();
     return;
   }
 
-  const auto &flat = m_flat[index];
+  auto *src = sources()[sourceIdx];
+  auto id = src->itemId(itemIdx);
+  bool const sameItem = (!id.isEmpty() && id == oldId);
+  m_lastCompleterItemId = id;
 
-  // Compute a stable identity for the selected item
-  QString itemId;
-  switch (flat.kind) {
-  case FlatItem::ResultItem:
-    if (flat.dataIndex >= 0 && std::cmp_less(flat.dataIndex, m_results.size()))
-      itemId = QString::fromStdString(m_results[flat.dataIndex].item->uniqueId());
-    break;
-  case FlatItem::FallbackItem:
-    if (flat.dataIndex >= 0 && std::cmp_less(flat.dataIndex, m_fallbackItems.size()))
-      itemId = QString::fromStdString(m_fallbackItems[flat.dataIndex]->uniqueId());
-    break;
-  case FlatItem::FavoriteItem:
-    if (flat.dataIndex >= 0 && std::cmp_less(flat.dataIndex, m_favorites.size()))
-      itemId = QString::fromStdString(m_favorites[flat.dataIndex]->uniqueId());
-    break;
-  case FlatItem::LinkItem:
-    if (m_defaultOpener) itemId = m_defaultOpener->url;
-    break;
-  case FlatItem::CalculatorItem:
-    if (m_calc) itemId = QStringLiteral("calc:") + m_calc->question.text;
-    break;
-  case FlatItem::FileItem:
-    if (flat.dataIndex >= 0 && std::cmp_less(flat.dataIndex, m_files.size()))
-      itemId = QString::fromStdString(m_files[flat.dataIndex].path.string());
-    break;
-  case FlatItem::NewsItem:
-    if (flat.dataIndex >= 0 && std::cmp_less(flat.dataIndex, m_newsItems.size()))
-      itemId = QStringLiteral("news:") + QString::fromStdString(m_newsItems[flat.dataIndex]->id);
-    break;
-  default:
-    break;
-  }
-
-  bool const sameItem = (!itemId.isEmpty() && itemId == m_lastSelectedItemId);
-  m_lastSelectedItemId = itemId;
-
-  std::unique_ptr<ActionPanelState> actionPanel;
-
-  switch (flat.kind) {
-  case FlatItem::ResultItem: {
-    if (flat.dataIndex >= 0 && std::cmp_less(flat.dataIndex, m_results.size())) {
-      actionPanel = m_results[flat.dataIndex].item->newActionPanel(m_scope.appContext(),
-                                                                   m_results[flat.dataIndex].meta);
-    }
-    break;
-  }
-  case FlatItem::FallbackItem: {
-    if (flat.dataIndex >= 0 && std::cmp_less(flat.dataIndex, m_fallbackItems.size())) {
-      auto &item = m_fallbackItems[flat.dataIndex];
-      actionPanel =
-          item->fallbackActionPanel(m_scope.appContext(), m_manager->itemMetadata(item->uniqueId()));
-    }
-    break;
-  }
-  case FlatItem::FavoriteItem: {
-    if (flat.dataIndex >= 0 && std::cmp_less(flat.dataIndex, m_favorites.size())) {
-      auto &item = m_favorites[flat.dataIndex];
-      actionPanel = item->newActionPanel(m_scope.appContext(), m_manager->itemMetadata(item->uniqueId()));
-    }
-    break;
-  }
-  case FlatItem::LinkItem: {
-    if (m_defaultOpener) {
-      actionPanel = std::make_unique<ActionPanelState>();
-      auto section = actionPanel->createSection();
-      auto open = new OpenAppAction(m_defaultOpener->app,
-                                    QString("Open in %1").arg(m_defaultOpener->app->displayName()),
-                                    {m_defaultOpener->url});
-      open->setClearSearch(true);
-      section->addAction(open);
-    }
-    break;
-  }
-  case FlatItem::CalculatorItem: {
-    if (m_calc) {
-      auto panel = std::make_unique<ListActionPanelState>();
-      auto main = panel->createSection();
-      auto copyAnswer = new CopyCalculatorAnswerAction(*m_calc);
-      auto copyQA = new CopyCalculatorQuestionAndAnswerAction(*m_calc);
-      auto putInSearch = new PutCalculatorAnswerInSearchBar(*m_calc);
-      auto openHistory = new OpenCalculatorHistoryAction();
-      copyAnswer->setPrimary(true);
-      main->addAction(copyAnswer);
-      main->addAction(copyQA);
-      main->addAction(putInSearch);
-      main->addAction(openHistory);
-      actionPanel = std::move(panel);
-    }
-    break;
-  }
-  case FlatItem::FileItem: {
-    if (flat.dataIndex >= 0 && std::cmp_less(flat.dataIndex, m_files.size())) {
-      actionPanel = FileActions::actionPanel(m_files[flat.dataIndex].path, m_appDb);
-    }
-    break;
-  }
-  case FlatItem::NewsItem: {
-    if (flat.dataIndex >= 0 && std::cmp_less(flat.dataIndex, m_newsItems.size())) {
-      const auto *news = m_newsItems[flat.dataIndex];
-      if (news->actionFactory) {
-        actionPanel = news->actionFactory(m_scope.appContext());
-        auto *dismissAction = new DismissNewsAction(news->id);
-        dismissAction->setShortcut(Keybind::RemoveAction);
-        actionPanel->createSection()->addAction(dismissAction);
-      }
-    }
-    break;
-  }
-  default:
-    break;
-  }
-
-  if (actionPanel) {
-    actionPanel->finalize();
-    m_scope.setActions(std::move(actionPanel));
-  } else {
-    m_scope.clearActions();
-  }
-
-  // Completer: create/destroy argument completion based on the selected item.
-  // Skip if the same logical item is still selected (e.g. after search filter update).
   if (!sameItem) {
     bool createdCompleter = false;
 
     auto tryCreateCompleter = [&](const RootItem *item) {
       if (!item) return;
-      ArgumentList const args = item->arguments();
+      auto args = item->arguments();
       if (args.empty()) return;
-      m_scope.createCompletion(args, item->iconUrl());
+      scope().createCompletion(args, item->iconUrl());
       createdCompleter = true;
     };
 
-    switch (flat.kind) {
-    case FlatItem::ResultItem:
-      if (flat.dataIndex >= 0 && std::cmp_less(flat.dataIndex, m_results.size()))
-        tryCreateCompleter(m_results[flat.dataIndex].item.get());
-      break;
-    case FlatItem::FavoriteItem:
-      if (flat.dataIndex >= 0 && std::cmp_less(flat.dataIndex, m_favorites.size()))
-        tryCreateCompleter(m_favorites[flat.dataIndex].get());
-      break;
-    default:
-      break;
+    if (src == m_resultsSource) {
+      tryCreateCompleter(m_resultsSource->rootItem(itemIdx));
+    } else if (src == m_favoritesSource) {
+      tryCreateCompleter(m_favoritesSource->rootItem(itemIdx));
     }
 
-    if (!createdCompleter) { m_scope.destroyCurrentCompletion(); }
+    if (!createdCompleter) scope().destroyCurrentCompletion();
   }
 
   emit primaryActionChanged();
 }
 
-void RootSearchModel::activateSelected() { m_scope.executePrimaryAction(); }
-
 bool RootSearchModel::tryAliasFastTrack() {
-  if (m_selectedIndex < 0 || std::cmp_greater_equal(m_selectedIndex, m_flat.size())) return false;
+  int sourceIdx = -1;
+  int itemIdx = -1;
+  if (!dataItemAt(selectedIndex(), sourceIdx, itemIdx)) return false;
 
-  const auto &flat = m_flat[m_selectedIndex];
+  auto *src = sources()[sourceIdx];
+  const RootItem *item = nullptr;
 
-  const auto check = [&](const RootItem *item) -> bool {
-    if (!item || !item->supportsAliasSpaceShortcut()) return false;
-    auto meta = m_manager->itemMetadata(item->uniqueId());
-    if (!meta.alias) return false;
-    return meta.alias->starts_with(m_query);
-  };
-
-  bool shouldFastTrack = false;
-
-  switch (flat.kind) {
-  case FlatItem::ResultItem:
-    if (flat.dataIndex >= 0 && std::cmp_less(flat.dataIndex, m_results.size()))
-      shouldFastTrack = check(m_results[flat.dataIndex].item.get());
-    break;
-  case FlatItem::FavoriteItem:
-    if (flat.dataIndex >= 0 && std::cmp_less(flat.dataIndex, m_favorites.size()))
-      shouldFastTrack = check(m_favorites[flat.dataIndex].get());
-    break;
-  default:
-    break;
+  if (src == m_resultsSource) {
+    item = m_resultsSource->rootItem(itemIdx);
+  } else if (src == m_favoritesSource) {
+    item = m_favoritesSource->rootItem(itemIdx);
   }
 
-  if (shouldFastTrack) {
-    activateSelected();
-    return true;
-  }
+  if (!item || !item->supportsAliasSpaceShortcut()) return false;
+  auto meta = m_manager->itemMetadata(item->uniqueId());
+  if (!meta.alias || !meta.alias->starts_with(m_query)) return false;
 
-  return false;
+  activateSelected();
+  return true;
 }
 
 QString RootSearchModel::primaryActionTitle() const {
-  auto *state = m_scope.topState();
+  auto *state = scope().topState();
   if (!state || !state->actionPanelState) return {};
   auto *action = state->actionPanelState->primaryAction();
   return action ? action->title() : QString();
 }
 
 QString RootSearchModel::primaryActionIcon() const {
-  auto *state = m_scope.topState();
+  auto *state = scope().topState();
   if (!state || !state->actionPanelState) return {};
   auto *action = state->actionPanelState->primaryAction();
   if (!action) return {};
   auto icon = action->icon();
-  return icon ? imageSourceFor(*icon) : QString();
+  return icon ? qml::imageSourceFor(*icon) : QString();
 }
 
 QVariantList RootSearchModel::primaryActionShortcutTokens() const {
-  auto *state = m_scope.topState();
+  auto *state = scope().topState();
   if (!state || !state->actionPanelState) return {};
   auto *action = state->actionPanelState->primaryAction();
   if (!action) return {};
@@ -918,11 +269,12 @@ void RootSearchModel::handleCalculatorFinished() {
   auto res = m_calcWatcher.result();
   if (!res) return;
 
-  m_calc = res.value();
-  m_selectedIndex = -1;
-  beginResetModel();
-  rebuildFlatList();
-  endResetModel();
+  m_calcSource->setResult(res.value());
+
+  auto saved = selectFirstOnReset();
+  setSelectFirstOnReset(false);
+  rebuild();
+  setSelectFirstOnReset(saved);
 }
 
 void RootSearchModel::startFileSearch() {
@@ -934,14 +286,11 @@ void RootSearchModel::startFileSearch() {
 
 void RootSearchModel::handleFileSearchFinished() {
   if (!m_fileWatcher.isFinished() || m_fileSearchQuery != m_query) return;
-  m_files = m_fileWatcher.result();
+  m_filesSource->setFiles(m_fileWatcher.result());
   m_fileSearchQuery.clear();
 
-  m_selectFirstOnReset = false;
-  emit selectFirstOnResetChanged();
-
-  m_selectedIndex = -1;
-  beginResetModel();
-  rebuildFlatList();
-  endResetModel();
+  auto saved = selectFirstOnReset();
+  setSelectFirstOnReset(false);
+  rebuild();
+  setSelectFirstOnReset(saved);
 }
