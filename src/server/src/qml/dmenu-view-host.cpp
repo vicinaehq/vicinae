@@ -66,12 +66,11 @@ void DMenuViewHost::beforePop() {
 }
 
 void DMenuViewHost::loadDetail(std::string_view path) {
-  auto qpath = QString::fromUtf8(path.data(), path.size());
   auto fspath = fs::path(path);
 
   m_hasDetail = true;
   m_detailName = QString::fromStdString(getLastPathComponent(fspath));
-  m_detailPath = qpath;
+  m_detailPath = QString::fromUtf8(path.data(), path.size());
 
   auto preview = qml::resolveFilePreview(fspath, m_mimeDb);
   m_detailMimeType = preview.mimeType;

@@ -4,13 +4,16 @@
 #include "extend/metadata-model.hpp"
 #include "image-url.hpp"
 #include "ui/image/url.hpp"
-#include <QString>
 #include <QMimeDatabase>
+#include <QString>
 #include <QVariantList>
+#include <cstdint>
 #include <filesystem>
 #include <vector>
 
 namespace qml {
+
+inline constexpr int64_t MAX_PREVIEW_SIZE = 2 * 1024 * 1024;
 
 struct FilePreviewContent {
   QString mimeType;

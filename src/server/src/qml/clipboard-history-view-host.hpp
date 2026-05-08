@@ -3,6 +3,7 @@
 #include "bridge-view.hpp"
 #include "section-list-model.hpp"
 #include "services/clipboard/clipboard-db.hpp"
+#include "view-utils.hpp"
 #include <QTemporaryFile>
 #include <memory>
 
@@ -80,6 +81,7 @@ private:
   ClipboardHistorySection m_section;
   ClipboardHistoryController *m_controller = nullptr;
   ClipboardService *m_clipman = nullptr;
+  QMimeDatabase m_mimeDb;
 
   QString m_itemCountText = QStringLiteral("Loading...");
   QString m_clipboardStatusText;
