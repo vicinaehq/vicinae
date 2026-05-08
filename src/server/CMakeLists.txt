@@ -823,6 +823,10 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
 	list(APPEND VICINAE_QML_FILES src/qml/qml/ButtonShowcase.qml src/qml/qml/UIShowcase.qml)
 endif()
 
+if(WAYLAND_LAYER_SHELL)
+	list(APPEND VICINAE_QML_FILES src/qml/qml/LauncherWindowLayerShell.qml)
+endif()
+
 # Strip directory prefix so resources are qrc:/Vicinae/Foo.qml
 foreach(qml_file IN LISTS VICINAE_QML_FILES)
 	get_filename_component(alias ${qml_file} NAME)

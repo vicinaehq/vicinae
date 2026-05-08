@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Window
 import QtQuick.Layouts
+import org.kde.layershell as LayerShell
 
 Window {
     id: hudRoot
@@ -9,6 +10,12 @@ Window {
     flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.ToolTip
     color: "transparent"
     visible: false
+
+    LayerShell.Window.layer: LayerShell.Window.LayerTop
+    LayerShell.Window.scope: "vicinae-hud"
+    LayerShell.Window.anchors: LayerShell.Window.AnchorNone
+    LayerShell.Window.wantsToBeOnActiveScreen: true
+    LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
 
     Component.onCompleted: hud.registerWindow(hudRoot)
 
