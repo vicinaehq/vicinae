@@ -5,7 +5,6 @@
 #include "services/clipboard/clipboard-service.hpp"
 #include "utils/utils.hpp"
 #include <QDateTime>
-#include <QMimeDatabase>
 #include <QUrl>
 
 static std::optional<ClipboardOfferKind> kindFromFilterIndex(int index) {
@@ -216,20 +215,12 @@ void ClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
         std::error_code ec;
         std::filesystem::path const path = url.path().toStdString();
         if (std::filesystem::is_regular_file(path, ec)) {
-          auto fileMime = QMimeDatabase().mimeTypeForFile(path.c_str());
-          if (fileMime.name().startsWith("image/")) {
-            m_detailImageSource = qml::imageSourceFor(ImageURL::local(path));
-            m_hasDetail = true;
-            emit detailChanged();
-            return;
-          }
-          if (Utils::isTextMimeType(fileMime)) {
-            QFile file(path.c_str());
-            if (file.open(QIODevice::ReadOnly)) { m_detailTextContent = QString::fromUtf8(file.readAll()); }
-            m_hasDetail = true;
-            emit detailChanged();
-            return;
-          }
+          auto preview = qml::resolveFilePreview(path, m_mimeDb);
+          m_detailImageSource = preview.imageSource;
+          m_detailTextContent = preview.textContent;
+          m_hasDetail = true;
+          emit detailChanged();
+          return;
         }
       }
     }
@@ -250,7 +241,8 @@ void ClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
   }
 
   if (Utils::isTextMimeType(mime) || mime == "text/uri-list") {
-    m_detailTextContent = QString::fromUtf8(rawData);
+    static constexpr qsizetype MAX_DISPLAY = 10 * 1024;
+    m_detailTextContent = QString::fromUtf8(rawData.first(qMin<qsizetype>(rawData.size(), MAX_DISPLAY)));
     m_hasDetail = true;
     emit detailChanged();
     return;

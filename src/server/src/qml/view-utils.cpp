@@ -19,9 +19,9 @@ FilePreviewContent resolveFilePreview(const std::filesystem::path &path, QMimeDa
     result.imageSource = imageSourceFor(ImageURL::local(path));
   } else if (Utils::isTextMimeType(mime)) {
     QFile file(qpath);
-    if (file.open(QIODevice::ReadOnly)) {
-      static constexpr qint64 MAX_PREVIEW = static_cast<qint64>(32 * 1024);
-      result.textContent = QString::fromUtf8(file.read(MAX_PREVIEW));
+    if (file.open(QIODevice::ReadOnly) && file.size() <= MAX_PREVIEW_SIZE) {
+      static constexpr qint64 MAX_DISPLAY = 10 * 1024;
+      result.textContent = QString::fromUtf8(file.read(MAX_DISPLAY));
     }
   } else {
     result.imageSource = imageSourceFor(
