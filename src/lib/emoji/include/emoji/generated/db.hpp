@@ -2,13 +2,13 @@
 #include <string_view>
 #include <array>
 #include <unordered_map>
-#include <initializer_list>
+#include <span>
 
 struct EmojiData {
 	std::string_view emoji;
 	std::string_view name;
 	std::string_view group;
-	std::initializer_list<std::string_view> keywords;
+	std::span<const std::string_view> keywords;
 	bool skinToneSupport = false;
 };
 

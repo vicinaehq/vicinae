@@ -18,8 +18,8 @@ export class CppSourceBuilder {
 	private m_keywordMap = new Map<string, number>();
 	private m_groupMap = new Map<string, number>();
 
-	private buildItemStruct(info: EmojiInfo): string {
-		return `\tEmojiData{ .emoji = "${info.emoji}", .name = ${quoted(info.name)}, .group = GRP(${info.group}), .keywords = {${info.keywords.map(idx => `KW(${idx})`).join(',')}}, .skinToneSupport = ${info.skinToneSupport}}`;
+	private buildItemStruct(info: EmojiInfo, idx: number): string {
+		return `\tEmojiData{ .emoji = "${info.emoji}", .name = ${quoted(info.name)}, .group = GRP(${info.group}), .keywords = EKW_${idx}, .skinToneSupport = ${info.skinToneSupport}}`;
 	}
 
 	private buildHeader = (): string => {
@@ -27,13 +27,13 @@ export class CppSourceBuilder {
 #include <string_view>
 #include <array>
 #include <unordered_map>
-#include <initializer_list>
+#include <span>
 
 struct EmojiData {
 	std::string_view emoji;
 	std::string_view name;
 	std::string_view group;
-	std::initializer_list<std::string_view> keywords;
+	std::span<const std::string_view> keywords;
 	bool skinToneSupport = false;
 };
 
@@ -49,8 +49,14 @@ class StaticEmojiDatabase {
 		return HEADER_BASE;
 	}
 
+	private buildKeywordArrays() {
+		return this.m_emojis.map((info, idx) =>
+			`static constexpr std::string_view EKW_${idx}[] = {${info.keywords.map(i => `KW(${i})`).join(',')}};`
+		).join('\n');
+	}
+
 	private buildStaticArray() {
-		return `static const std::array<EmojiData, ${this.m_emojis.length}> EMOJI_LIST = {\n${this.m_emojis.map(this.buildItemStruct).join(',\n')}\n};`;
+		return `${this.buildKeywordArrays()}\n\nstatic const std::array<EmojiData, ${this.m_emojis.length}> EMOJI_LIST = {\n${this.m_emojis.map((info, idx) => this.buildItemStruct(info, idx)).join(',\n')}\n};`;
 	}
 
 	private buildSource() {
