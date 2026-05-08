@@ -1,27 +1,27 @@
+#include <QDebug>
 #include <QProcess>
 #include <QStandardPaths>
 #include <glaze/glaze.hpp>
-#include "lib/glaze-qt.hpp"
 #include "pactl-audio-control.hpp"
 
 namespace {
 
 struct PactlVolume {
-  QString value_percent;
+  std::string value_percent;
 };
 
 struct PactlPort {
-  QString name;
-  QString description;
+  std::string name;
+  std::string description;
 };
 
 struct PactlSink {
-  QString name;
-  QString description;
+  std::string name;
+  std::string description;
   bool mute = false;
   std::map<std::string, PactlVolume> volume;
   std::vector<PactlPort> ports;
-  QString active_port;
+  std::string active_port;
 };
 
 } // namespace
@@ -30,21 +30,21 @@ template <> struct glz::meta<PactlVolume> : glz::snake_case {};
 template <> struct glz::meta<PactlPort> : glz::snake_case {};
 template <> struct glz::meta<PactlSink> : glz::snake_case {};
 
-static AudioSink toAudioSink(const PactlSink &src, const QString &defaultName) {
+static AudioSink toAudioSink(const PactlSink &src, std::string_view defaultName) {
   AudioSink sink;
-  sink.name = src.name;
-  sink.description = src.description;
+  sink.name = QString::fromStdString(src.name);
+  sink.description = QString::fromStdString(src.description);
   sink.muted = src.mute;
   sink.isDefault = (src.name == defaultName);
 
   if (!src.volume.empty()) {
-    auto percent = src.volume.begin()->second.value_percent;
-    sink.volume = static_cast<float>(percent.chopped(1).toDouble() / 100.0);
+    auto &percent = src.volume.begin()->second.value_percent;
+    sink.volume = static_cast<float>(std::stod(percent) / 100.0);
   }
 
   for (const auto &port : src.ports) {
     if (port.name == src.active_port) {
-      sink.activePort = port.description;
+      sink.activePort = QString::fromStdString(port.description);
       break;
     }
   }
@@ -52,8 +52,8 @@ static AudioSink toAudioSink(const PactlSink &src, const QString &defaultName) {
   return sink;
 }
 
-PactlAudioControl::PactlAudioControl() : m_pactlPath(QStandardPaths::findExecutable("pactl")) {
-  if (m_pactlPath.isEmpty()) { qWarning() << "pactl not found, audio control will not work"; }
+PactlAudioControl::PactlAudioControl() : m_pactlPath(QStandardPaths::findExecutable("pactl").toStdString()) {
+  if (m_pactlPath.empty()) { qWarning() << "pactl not found, audio control will not work"; }
 }
 
 QString PactlAudioControl::id() const { return "pactl"; }
@@ -63,13 +63,14 @@ float PactlAudioControl::getVolume() const {
   return sink ? sink->volume : 0.0f;
 }
 
-bool PactlAudioControl::setVolume(float level) {
+std::optional<float> PactlAudioControl::setVolume(float level) {
   level = std::clamp(level, 0.0f, 1.0f);
-  auto percent = QString::number(qRound(level * 100)) + "%";
-  return run({"set-sink-volume", "@DEFAULT_SINK@", percent}).has_value();
+  auto percent = std::to_string(static_cast<int>(std::round(level * 100))) + "%";
+  if (!run({"set-sink-volume", "@DEFAULT_SINK@", percent})) return std::nullopt;
+  return level;
 }
 
-bool PactlAudioControl::adjustVolume(float delta) {
+std::optional<float> PactlAudioControl::adjustVolume(float delta) {
   auto current = getVolume();
   return setVolume(current + delta);
 }
@@ -95,14 +96,17 @@ std::vector<AudioSink> PactlAudioControl::listSinks() const {
   if (!json) return {};
 
   std::vector<PactlSink> pactlSinks;
-  auto data = json->toStdString();
 
-  if (auto err = glz::read<glz::opts{.error_on_unknown_keys = false}>(pactlSinks, data)) {
-    qWarning() << "Failed to parse pactl sink list:" << glz::format_error(err, data);
+  if (auto err = glz::read<glz::opts{.error_on_unknown_keys = false}>(pactlSinks, *json)) {
+    qWarning() << "Failed to parse pactl sink list:" << glz::format_error(err, *json);
     return {};
   }
 
-  auto trimmedDefault = defaultName->trimmed();
+  auto trimmedDefault = std::string_view{*defaultName};
+  while (!trimmedDefault.empty() && trimmedDefault.back() == '\n') {
+    trimmedDefault.remove_suffix(1);
+  }
+
   std::vector<AudioSink> sinks;
   sinks.reserve(pactlSinks.size());
 
@@ -114,7 +118,7 @@ std::vector<AudioSink> PactlAudioControl::listSinks() const {
 }
 
 bool PactlAudioControl::setDefaultSink(const QString &sinkName) {
-  return run({"set-default-sink", sinkName}).has_value();
+  return run({"set-default-sink", sinkName.toStdString()}).has_value();
 }
 
 std::optional<AudioSink> PactlAudioControl::getDefaultSink() const {
@@ -127,21 +131,28 @@ std::optional<AudioSink> PactlAudioControl::getDefaultSink() const {
   return std::nullopt;
 }
 
-std::optional<QString> PactlAudioControl::run(const QStringList &args) const {
-  if (m_pactlPath.isEmpty()) return std::nullopt;
+std::optional<std::string> PactlAudioControl::run(std::initializer_list<std::string_view> args) const {
+  if (m_pactlPath.empty()) return std::nullopt;
+
+  QStringList qargs;
+  qargs.reserve(static_cast<int>(args.size()));
+  for (auto arg : args) {
+    qargs.emplaceBack(QString::fromUtf8(arg.data(), arg.size()));
+  }
 
   QProcess proc;
-  proc.start(m_pactlPath, args);
+  proc.start(QString::fromStdString(m_pactlPath), qargs);
 
   if (!proc.waitForFinished(3000)) {
-    qWarning() << "pactl timed out:" << args;
+    qWarning() << "pactl timed out:" << qargs;
     return std::nullopt;
   }
 
   if (proc.exitCode() != 0) {
-    qWarning() << "pactl failed:" << args << proc.readAllStandardError();
+    qWarning() << "pactl failed:" << qargs << proc.readAllStandardError();
     return std::nullopt;
   }
 
-  return QString::fromUtf8(proc.readAllStandardOutput());
+  auto output = proc.readAllStandardOutput();
+  return std::string(output.constData(), output.size());
 }

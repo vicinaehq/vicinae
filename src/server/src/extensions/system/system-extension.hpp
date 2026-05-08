@@ -106,9 +106,9 @@ ImageURL volumeIcon(float level) {
   return ImageURL{BuiltinIcon::SpeakerHigh};
 }
 
-void showVolumeHud(const ApplicationContext *ctx, AbstractAudioControl *audio) {
-  auto vol = qRound(audio->getVolume() * 100);
-  ctx->navigation->showHud("Volume " + QString::number(vol) + "%", volumeIcon(audio->getVolume()));
+void showVolumeHud(const ApplicationContext *ctx, float level) {
+  auto vol = qRound(level * 100);
+  ctx->navigation->showHud("Volume " + QString::number(vol) + "%", volumeIcon(level));
 }
 } // namespace
 
@@ -137,11 +137,12 @@ class VolumeUpCommand : public BuiltinCallbackCommand {
         return;
       }
     }
-    if (!audio->adjustVolume(static_cast<float>(step) / 100.0f)) {
+    auto result = audio->adjustVolume(static_cast<float>(step) / 100.0f);
+    if (!result) {
       ctx->services->toastService()->failure("Failed to adjust volume");
       return;
     }
-    showVolumeHud(ctx, audio);
+    showVolumeHud(ctx, *result);
   }
 };
 
@@ -170,11 +171,12 @@ class VolumeDownCommand : public BuiltinCallbackCommand {
         return;
       }
     }
-    if (!audio->adjustVolume(static_cast<float>(step) / 100.0f)) {
+    auto result = audio->adjustVolume(static_cast<float>(step) / 100.0f);
+    if (!result) {
       ctx->services->toastService()->failure("Failed to adjust volume");
       return;
     }
-    showVolumeHud(ctx, audio);
+    showVolumeHud(ctx, *result);
   }
 };
 
@@ -190,11 +192,12 @@ template <int Percent, BuiltinIcon Icon> class SetVolumeCommand : public Builtin
   void execute(CommandController *controller) const override {
     auto ctx = controller->context();
     auto audio = ctx->services->audioControl()->provider();
-    if (!audio->setVolume(level)) {
+    auto result = audio->setVolume(level);
+    if (!result) {
       ctx->services->toastService()->failure("Failed to set volume");
       return;
     }
-    showVolumeHud(ctx, audio);
+    showVolumeHud(ctx, *result);
   }
 };
 
@@ -217,7 +220,7 @@ class ToggleMuteCommand : public BuiltinCallbackCommand {
     if (audio->isMuted()) {
       ctx->navigation->showHud("Muted", ImageURL{BuiltinIcon::SpeakerOff});
     } else {
-      showVolumeHud(ctx, audio);
+      showVolumeHud(ctx, audio->getVolume());
     }
   }
 };

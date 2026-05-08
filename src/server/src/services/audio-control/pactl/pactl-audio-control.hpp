@@ -1,6 +1,8 @@
 #pragma once
+#include <initializer_list>
 #include <optional>
-#include <QString>
+#include <string>
+#include <string_view>
 #include "../abstract-audio-control.hpp"
 
 class PactlAudioControl : public AbstractAudioControl {
@@ -10,8 +12,8 @@ public:
   QString id() const override;
 
   float getVolume() const override;
-  bool setVolume(float level) override;
-  bool adjustVolume(float delta) override;
+  std::optional<float> setVolume(float level) override;
+  std::optional<float> adjustVolume(float delta) override;
 
   bool isMuted() const override;
   bool setMuted(bool muted) override;
@@ -22,7 +24,7 @@ public:
 
 private:
   std::optional<AudioSink> getDefaultSink() const;
-  std::optional<QString> run(const QStringList &args) const;
+  std::optional<std::string> run(std::initializer_list<std::string_view> args) const;
 
-  QString m_pactlPath;
+  std::string m_pactlPath;
 };
