@@ -70,7 +70,7 @@ SelectableDelegate {
                 visible: root.itemSubtitle !== ""
                 anchors.left: titleText.right
                 anchors.leftMargin: visible ? textRow.spacing : 0
-                anchors.verticalCenter: parent.verticalCenter
+                anchors.baseline: titleText.baseline
                 width: Math.min(implicitWidth, Math.max(0, textRow.availableForText - titleText.width - textRow.spacing))
                 text: root.itemSubtitle
                 color: root.selected ? Theme.listItemSecondarySelectionFg : root.hovered ? Theme.listItemSecondaryHoverFg : Theme.textMuted
