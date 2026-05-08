@@ -5,10 +5,11 @@ Item {
     height: 30
 
     required property string text
+    property real leftPadding: 16
 
     Text {
         anchors.left: parent.left
-        anchors.leftMargin: 16
+        anchors.leftMargin: root.leftPadding
         anchors.verticalCenter: parent.verticalCenter
         text: root.text
         color: Theme.textMuted

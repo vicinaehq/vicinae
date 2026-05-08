@@ -150,6 +150,7 @@ Item {
                 SectionHeader {
                     width: delegateLoader.width
                     text: delegateLoader.sectionName
+                    leftPadding: root.horizontalPadding
                 }
             }
 
