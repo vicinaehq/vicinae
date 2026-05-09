@@ -280,6 +280,7 @@ void RootSearchModel::handleCalculatorFinished() {
   setSelectFirstOnReset(false);
   rebuild();
   setSelectFirstOnReset(saved);
+  refreshActionPanel();
 }
 
 void RootSearchModel::startFileSearch() {
@@ -298,4 +299,5 @@ void RootSearchModel::handleFileSearchFinished() {
   setSelectFirstOnReset(false);
   rebuild();
   setSelectFirstOnReset(saved);
+  refreshActionPanel();
 }
