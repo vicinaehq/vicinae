@@ -126,6 +126,8 @@ void SnippetFormViewHost::submit() {
   popSelf();
 }
 
+bool SnippetFormViewHost::serverRunning() const { return m_service && m_service->isServerRunning(); }
+
 void SnippetFormViewHost::buildContentCompletions() {
   m_contentCompletions = QVariantList{
       QVariantMap{

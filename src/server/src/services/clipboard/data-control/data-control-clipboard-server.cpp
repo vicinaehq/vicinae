@@ -12,6 +12,7 @@
 #include "data-control-clipboard-server.hpp"
 #include "common/common.hpp"
 #include "wayland/globals.hpp"
+#include "wayland/clipboard-writer.hpp"
 #include "common/clipboard-protocol.hpp"
 
 static constexpr const char *HELPER_PROGRAM = "vicinae-data-control-server";
@@ -103,6 +104,24 @@ void DataControlClipboardServer::handleRead() {
       m_message.erase(m_message.begin(), m_message.begin() + sizeof(SizeType) + length);
     }
   }
+}
+
+bool DataControlClipboardServer::setClipboardContent(QMimeData *data) {
+  // If we don't own focus, it means we cannot write to the clipboard (as required by the wayland
+  // core protocol). This is, of course, a huge issue as it prevents paste/snippet
+  // expansion from working properly (or makes them racy) in a lot of cases. So when we don't own focus, we
+  // just use our ClipboardWriter if available, which uses the ext-data-control protocol which does not suffer
+  // from that very limitation. QClipboard does not use it, so we have our own. To prevent deadlocks with the
+  // builtin QClipboard implementation we cannot use our writer when we have focus: in this case using
+  // native QClipboard is fine.
+  if (Wayland::ClipboardWriter::isAvailable() && !QGuiApplication::focusWindow()) {
+    bool ok = Wayland::ClipboardWriter::write(data);
+    delete data;
+    return ok;
+  }
+
+  // QClipboard can handle this...
+  return AbstractClipboardServer::setClipboardContent(data);
 }
 
 DataControlClipboardServer::DataControlClipboardServer() {

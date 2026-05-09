@@ -18,6 +18,7 @@ class SnippetFormViewHost : public FormViewBase {
   Q_PROPERTY(QString nameError READ nameError NOTIFY errorsChanged)
   Q_PROPERTY(QString contentError READ contentError NOTIFY errorsChanged)
   Q_PROPERTY(QString keywordError READ keywordError NOTIFY errorsChanged)
+  Q_PROPERTY(bool serverRunning READ serverRunning CONSTANT)
 
 public:
   enum class Mode { Create, Edit, Duplicate };
@@ -41,6 +42,7 @@ public:
   QString nameError() const { return m_nameError; }
   QString contentError() const { return m_contentError; }
   QString keywordError() const { return m_keywordError; }
+  bool serverRunning() const;
 
   void setName(const QString &v) {
     if (m_name != v) {

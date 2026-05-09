@@ -181,6 +181,18 @@ template <> struct Partial<TelemetryConfig> {
   std::optional<bool> systemInfo;
 };
 
+struct SnippetConfig {
+  bool enabled = true;
+  std::string layout;
+  int prePasteDelay = 50;
+};
+
+template <> struct Partial<SnippetConfig> {
+  std::optional<bool> enabled;
+  std::optional<std::string> layout;
+  std::optional<int> prePasteDelay;
+};
+
 using KeybindMap = std::map<std::string, std::string>;
 
 using ProviderMap = std::map<std::string, ProviderData>;
@@ -204,6 +216,7 @@ struct ConfigValue {
   FontConfig font;
   ThemeConfig theme;
   TelemetryConfig telemetry;
+  SnippetConfig snippets;
 
   WindowConfig launcherWindow;
   Header header;
@@ -254,6 +267,7 @@ template <> struct Partial<ConfigValue> {
   std::optional<Partial<FontConfig>> font;
   std::optional<Partial<ThemeConfig>> theme;
   std::optional<Partial<TelemetryConfig>> telemetry;
+  std::optional<Partial<SnippetConfig>> snippets;
 
   std::optional<Partial<WindowConfig>> launcherWindow;
   std::optional<Partial<Header>> header;

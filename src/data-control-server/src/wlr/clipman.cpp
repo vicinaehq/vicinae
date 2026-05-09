@@ -34,7 +34,10 @@ void WlrClipman::selection(WlrDataDevice &, WlrDataOffer &offer) {
     return;
   }
 
-  auto selection = Selection::buildSelection(Selection::filterMimes(offer.mimes()), offer);
+  auto &mimes = offer.mimes();
+  if (std::ranges::find(mimes, "vicinae/concealed") != mimes.end()) return;
+
+  auto selection = Selection::buildSelection(Selection::filterMimes(mimes), offer);
   m_writer(selection);
 }
 

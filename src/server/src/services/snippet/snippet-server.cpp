@@ -73,6 +73,8 @@ void SnippetServer::unregisterSnippet(std::string_view keyword) {
   m_client.snippet()->removeSnippet({.trigger = std::string{keyword}});
 }
 
+void SnippetServer::setKeymap(snippet_gen::LayoutInfo info) { m_client.snippet()->setKeymap(info); }
+
 void SnippetServer::handleError() {
   for (const auto &line : m_process.readAllStandardError().split('\n')) {
     qDebug() << "[SNIPPET-SERVER]" << line;

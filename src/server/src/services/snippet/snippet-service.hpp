@@ -1,13 +1,13 @@
 #pragma once
+#include "config/config.hpp"
 #include "services/app-service/app-service.hpp"
+#include "services/clipboard/clipboard-service.hpp"
 #include "services/keyboard/abstract-keyboard-service.hpp"
 #include "services/snippet/snippet-expander.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "snippet-server.hpp"
 #include "snippet-db.hpp"
-#include <QClipboard>
-#include <QGuiApplication>
-#include <QMimeData>
+#include <QTimer>
 #include <qtmetamacros.h>
 
 class SnippetService : public QObject {
@@ -21,13 +21,21 @@ signals:
 
 public:
   SnippetService(std::filesystem::path path, WindowManager &wm, const AppService &appDb,
-                 AbstractKeyboardService &keyboard)
-      : m_db(path), m_wm(wm), m_appDb(appDb), m_keyboard(keyboard) {
+                 AbstractKeyboardService &keyboard, ClipboardService &clipboard)
+      : m_db(path), m_wm(wm), m_appDb(appDb), m_keyboard(keyboard), m_clipboard(clipboard) {
     connect(&m_server, &SnippetServer::keywordTriggered, this, &SnippetService::handleKeywordTrigger);
   }
 
-  bool start() {
-    // m_server.start();
+  bool start(const config::SnippetConfig &cfg) {
+    if (!cfg.enabled) return true;
+
+    m_prePasteDelay = cfg.prePasteDelay;
+
+    m_server.start();
+
+    if (!m_server.isRunning()) return false;
+
+    if (!cfg.layout.empty()) { m_server.setKeymap({.layout = cfg.layout}); }
 
     for (const auto &snippet : m_db.snippets()) {
       if (const auto e = snippet.expansion) {
@@ -92,12 +100,17 @@ private:
     if (!snippet || !snippet->expansion) return;
 
     bool terminal = false;
+    const auto focusedWindow = m_wm.getFocusedWindow();
 
-    if (const auto focusedWindow = m_wm.getFocusedWindow()) {
+    if (focusedWindow) {
       if (const auto app = m_appDb.findByClass(focusedWindow->wmClass())) {
         terminal = app->isTerminalEmulator() || app->isTerminalApp();
       }
     }
+
+    qInfo().nospace() << "Snippet expansion: keyword=\"" << keyword
+                      << "\" window=" << (focusedWindow ? focusedWindow->wmClass() : "<unknown>")
+                      << " terminal=" << terminal;
 
     if (const auto text = std::get_if<snippet::TextSnippet>(&snippet->data)) {
       SnippetExpander expander;
@@ -106,22 +119,30 @@ private:
       const auto expanded = result.parts | std::views::transform([](auto &&part) { return part.text; }) |
                             std::views::join | std::ranges::to<QString>();
 
-      auto *clip = QGuiApplication::clipboard();
-      auto *mimeData = new QMimeData;
-      mimeData->setData("text/plain;charset=utf-8", expanded.toUtf8());
-      mimeData->setData("vicinae/concealed", "1");
-      clip->setMimeData(mimeData);
+      m_clipboard.copyText(expanded, {.concealed = true});
 
       const int charsToDelete = static_cast<int>(keyword.size()) + (snippet->expansion->word ? 1 : 0);
-      m_keyboard.backspace(charsToDelete);
-      m_keyboard.paste(terminal);
+      const bool wordMode = snippet->expansion->word;
 
-      if (snippet->expansion->word) { m_keyboard.space(); }
+      auto inject = [=, this]() {
+        m_keyboard.backspace(charsToDelete);
+        m_keyboard.paste(terminal);
 
-      if (result.cursorPos) {
-        const int totalLength = expanded.size();
-        const int leftMoves = totalLength - *result.cursorPos;
-        if (leftMoves > 0) { m_keyboard.moveCursorLeft(leftMoves); }
+        if (wordMode) { m_keyboard.space(); }
+
+        if (result.cursorPos) {
+          const int totalLength = expanded.size();
+          const int leftMoves = totalLength - *result.cursorPos;
+          if (leftMoves > 0) { m_keyboard.moveCursorLeft(leftMoves); }
+        }
+
+        m_clipboard.scheduleClipboardRestore(200);
+      };
+
+      if (m_prePasteDelay > 0) {
+        QTimer::singleShot(m_prePasteDelay, this, inject);
+      } else {
+        inject();
       }
     }
   }
@@ -131,4 +152,6 @@ private:
   WindowManager &m_wm;
   const AppService &m_appDb;
   AbstractKeyboardService &m_keyboard;
+  ClipboardService &m_clipboard;
+  int m_prePasteDelay = 50;
 };

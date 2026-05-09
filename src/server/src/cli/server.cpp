@@ -93,9 +93,10 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto windowManager = std::make_unique<WindowManager>();
     auto appService = std::make_unique<AppService>(*omniDb.get());
     auto keyboardService = std::make_unique<LinuxKeyboardService>();
-    auto snippetService = std::make_unique<SnippetService>(Omnicast::dataDir() / "snippets" / "snippets.json",
-                                                           *windowManager, *appService, *keyboardService);
     auto clipboardManager = std::make_unique<ClipboardService>(Omnicast::dataDir() / "clipboard.db");
+    auto snippetService =
+        std::make_unique<SnippetService>(Omnicast::dataDir() / "snippets" / "snippets.json", *windowManager,
+                                         *appService, *keyboardService, *clipboardManager);
     auto linuxPaste = std::make_unique<LinuxPasteService>(*keyboardService);
     auto pasteService =
         std::make_unique<PasteService>(*clipboardManager, *windowManager, *appService, std::move(linuxPaste));
@@ -228,7 +229,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   commandServer.start(Omnicast::commandSocketPath());
 
 #ifdef ENABLE_PREVIEW_FEATURES
-  ctx.services->snippetService()->start();
+  ctx.services->snippetService()->start(ctx.services->config()->value().snippets);
 #endif
 
   auto configChanged = [&](const config::ConfigValue &next, const config::ConfigValue &prev) {

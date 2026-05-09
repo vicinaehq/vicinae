@@ -196,6 +196,18 @@
 		"files:search"
 	],
 
+	"snippets": {
+		// Whether the snippet expansion server should run.
+		// The snippet server monitors keyboard input to detect and expand snippet keywords.
+		"enabled": true
+		// Keyboard layout for snippet trigger detection (e.g. "us", "fr").
+		// Omit to use system default.
+		// "layout": "us"
+		// Delay in milliseconds between setting the clipboard and injecting the paste keystroke.
+		// Increase if expansions are unreliable on your compositor. Set to 0 to disable.
+		// "pre_paste_delay": 50
+	},
+
 	// Every item that can be activated from the vicinae root search is referred as an entrypoint, or sometimes, in the case of extensions, as a "command".
 	// Entrypoints are always grouped under a provider.
 	// e,g applications entrypoints are all grouped under the "applications" provider

@@ -46,12 +46,13 @@ Item {
             id: keywordField
             label: "Keyword"
             error: root.host.keywordError
-            info: "Typing this keyword anywhere will result in it being replaced by the content of the snippet."
+            info: root.host.serverRunning ? "Typing this keyword anywhere will result in it being replaced by the content of the snippet." : "The snippet server is not running. Keyword expansion is unavailable. <a href=\"https://docs.vicinae.com/snippets\">Learn more</a>."
 
             FormTextInput {
                 text: root.host.keyword
                 placeholder: ":!euro"
                 hasError: keywordField.error !== ""
+                readOnly: !root.host.serverRunning
                 onTextEdited: root.host.keyword = text
                 onAccepted: launcher.handleReturn()
             }
@@ -60,6 +61,7 @@ Item {
         FormField {
             label: "Expand as word"
             info: "If a keyword is typed, it will only be expanded after space or return is pressed."
+            visible: root.host.serverRunning
 
             FormCheckbox {
                 checked: root.host.expandAsWord

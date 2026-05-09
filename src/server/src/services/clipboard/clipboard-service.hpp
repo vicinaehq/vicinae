@@ -16,6 +16,7 @@
 #include <qsqldatabase.h>
 #include <qsqlquery.h>
 #include <qstringview.h>
+#include <QTimer>
 #include <qt6keychain/keychain.h>
 
 namespace Clipboard {
@@ -90,6 +91,7 @@ public:
   QFuture<PaginatedResponse<ClipboardHistoryEntry>> listAll(int limit = 100, int offset = 0,
                                                             const ClipboardListSettings &opts = {}) const;
   bool copyText(const QString &text, const Clipboard::CopyOptions &options = {.concealed = true});
+  void scheduleClipboardRestore(int delayMs);
   bool copyHtml(const Clipboard::Html &data, const Clipboard::CopyOptions &options = {.concealed = false});
   bool copyFile(const std::filesystem::path &path,
                 const Clipboard::CopyOptions &options = {.concealed = false});
@@ -146,7 +148,12 @@ private:
 
   static ClipboardOfferKind getKind(const ClipboardDataOffer &offer);
 
+  void restoreClipboard();
+
   bool m_recordAllOffers = true;
   bool m_monitoring = false;
   bool m_ignorePasswords = true;
+  bool m_suppressNextSelection = false;
+  std::optional<ClipboardSelection> m_lastSelection;
+  QTimer m_restoreTimer;
 };

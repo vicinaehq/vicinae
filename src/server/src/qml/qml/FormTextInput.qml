@@ -5,7 +5,7 @@ Item {
     id: root
     implicitHeight: 36
     Layout.fillWidth: true
-    activeFocusOnTab: true
+    activeFocusOnTab: !readOnly
 
     property alias text: input.text
     property alias cursorPosition: input.cursorPosition
@@ -26,7 +26,7 @@ Item {
     }
 
     onActiveFocusChanged: {
-        if (activeFocus)
+        if (activeFocus && !readOnly)
             input.forceActiveFocus();
     }
 
@@ -35,8 +35,9 @@ Item {
         anchors.fill: parent
         radius: 8
         color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, Theme.surfaceOpacity)
-        border.color: root.hasError ? Theme.inputBorderError : input.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
+        border.color: root.hasError ? Theme.inputBorderError : input.activeFocus && !root.readOnly ? Theme.inputBorderFocus : Theme.inputBorder
         border.width: 1
+        opacity: root.readOnly ? 0.5 : 1.0
 
         TextInput {
             id: input
@@ -49,8 +50,8 @@ Item {
             selectionColor: Theme.textSelectionBg
             selectedTextColor: Theme.textSelectionFg
             readOnly: root.readOnly
+            activeFocusOnTab: !root.readOnly
             clip: true
-            activeFocusOnTab: false
 
             Text {
                 anchors.fill: parent

@@ -77,11 +77,8 @@ struct Input {
 
 SnippetService::SnippetService(snippet_gen::RpcTransport &transport)
     : snippet_gen::AbstractSnippet(transport), m_udev(udev_new()),
-      m_xkb(xkb_context_new(XKB_CONTEXT_NO_FLAGS)), m_keymap([this] {
-        static constexpr const xkb_rule_names rules{
-            .rules = nullptr, .model = nullptr, .layout = "us", .variant = nullptr, .options = nullptr};
-        return xkb_keymap_new_from_names(m_xkb, &rules, XKB_KEYMAP_COMPILE_NO_FLAGS);
-      }()),
+      m_xkb(xkb_context_new(XKB_CONTEXT_NO_FLAGS)),
+      m_keymap(xkb_keymap_new_from_names(m_xkb, nullptr, XKB_KEYMAP_COMPILE_NO_FLAGS)),
       m_kbState(xkb_state_new(m_keymap)) {}
 
 std::vector<std::string> SnippetService::enumerateKeyboards() {
@@ -226,8 +223,6 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
   Frame ipcFrame;
 
   ipcFrame.setHandler([&](std::string_view message) { rpcServer.route(message); });
-
-  setLayout({.layout = "us"});
 
   for (;;) {
     const int nfds = epoll_wait(epollfd, events.data(), events.size(), -1);
