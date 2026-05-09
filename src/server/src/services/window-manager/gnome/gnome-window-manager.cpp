@@ -60,6 +60,7 @@ GnomeWindowManager::GnomeWindowManager() {
                   }
 
                   emit windowFocused(addr);
+                  emit focusChanged();
                   return;
                 }
               }

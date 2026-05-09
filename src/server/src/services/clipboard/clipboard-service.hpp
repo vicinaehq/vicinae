@@ -153,7 +153,6 @@ private:
   bool m_recordAllOffers = true;
   bool m_monitoring = false;
   bool m_ignorePasswords = true;
-  bool m_suppressNextSelection = false;
   std::optional<ClipboardSelection> m_lastSelection;
   QTimer m_restoreTimer;
 };

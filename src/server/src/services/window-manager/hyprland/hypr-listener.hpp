@@ -15,6 +15,7 @@ signals:
   void openwindow(const WindowAddress &addr, const QString &workspaceName, const QString &wmClass,
                   const QString &title) const;
   void closewindow(const WindowAddress &addr) const;
+  void activewindowchanged() const;
 
 public:
   EventListener();

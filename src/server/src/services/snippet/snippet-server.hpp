@@ -41,6 +41,7 @@ public:
   void registerSnippet(snippet_gen::CreateSnippetRequest payload);
   void unregisterSnippet(std::string_view keyword);
   void setKeymap(snippet_gen::LayoutInfo info);
+  void resetContext();
 
   bool isRunning() const { return m_process.state() == QProcess::ProcessState::Running; }
 

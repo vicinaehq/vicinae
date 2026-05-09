@@ -27,6 +27,7 @@ signals:
    * or killed.
    */
   void windowsChanged() const;
+  void focusChanged() const;
 
 public:
   struct WindowBounds {

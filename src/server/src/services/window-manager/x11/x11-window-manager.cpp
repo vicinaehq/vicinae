@@ -55,6 +55,7 @@ void X11WindowManager::start() {
     connect(m_eventListener.get(), &X11EventListener::activeWindowChanged, this, [this]() {
       qDebug() << "X11WindowManager: Active window changed, emitting windowsChanged";
       emit windowsChanged();
+      emit focusChanged();
     });
     connect(m_eventListener.get(), &X11EventListener::windowTitleChanged, this, [this](xcb_window_t window) {
       qDebug() << "X11WindowManager: Window title changed for window" << window

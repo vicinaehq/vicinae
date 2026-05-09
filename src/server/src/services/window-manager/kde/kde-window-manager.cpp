@@ -139,6 +139,8 @@ void WindowManager::start() {
   m_tracker = std::make_unique<WindowTracker>(this);
   connect(m_tracker.get(), &WindowTracker::windowsChanged, this,
           [this]() { emit AbstractWindowManager::windowsChanged(); });
+  connect(m_tracker.get(), &WindowTracker::focusChanged, this,
+          [this]() { emit AbstractWindowManager::focusChanged(); });
 
   auto bus = QDBusConnection::sessionBus();
   if (!bus.registerService(TRACKER_SERVICE)) {

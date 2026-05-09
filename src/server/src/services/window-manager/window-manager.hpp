@@ -7,6 +7,7 @@ class WindowManager : public QObject {
 
 signals:
   void windowsChanged() const;
+  void focusChanged() const;
 
 public:
   AbstractWindowManager *provider() const;

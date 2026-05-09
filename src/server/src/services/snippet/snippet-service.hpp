@@ -24,6 +24,9 @@ public:
                  AbstractKeyboardService &keyboard, ClipboardService &clipboard)
       : m_db(path), m_wm(wm), m_appDb(appDb), m_keyboard(keyboard), m_clipboard(clipboard) {
     connect(&m_server, &SnippetServer::keywordTriggered, this, &SnippetService::handleKeywordTrigger);
+    connect(&wm, &WindowManager::focusChanged, this, [this]() {
+      if (m_server.isRunning()) { m_server.resetContext(); }
+    });
   }
 
   bool start(const config::SnippetConfig &cfg) {

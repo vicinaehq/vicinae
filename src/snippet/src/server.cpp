@@ -125,6 +125,11 @@ SnippetService::removeSnippet(snippet_gen::RemoveSnippetRequest req) {
   return snippet_gen::RemoveSnippetResponse{};
 }
 
+std::expected<void, std::string> SnippetService::resetContext() {
+  m_text.clear();
+  return {};
+}
+
 void SnippetService::setLayout(const LayoutInfo &info) {
   const auto toPtr = [](const std::optional<std::string> &str) {
     return str.transform([](auto &&str) { return str.c_str(); }).value_or(nullptr);
@@ -314,7 +319,7 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
         const auto now = std::chrono::steady_clock::now();
         const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastKeyTime).count();
 
-        if (elapsed > 1000) { m_text.clear(); }
+        if (elapsed > 5000) { m_text.clear(); }
 
         lastKeyTime = now;
 

@@ -40,6 +40,7 @@ service Snippet {
   fn setKeymap(info: LayoutInfo) => void;
   fn createSnippet(req: CreateSnippetRequest) => CreateSnippetResponse;
   fn removeSnippet(req: RemoveSnippetRequest) => RemoveSnippetResponse;
+  fn resetContext() => void;
 
   event triggerSnippet(payload: TriggerSnippetPayload);
 }

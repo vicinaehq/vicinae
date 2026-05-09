@@ -17,6 +17,7 @@ public:
   createSnippet(snippet_gen::CreateSnippetRequest req) override;
   std::expected<snippet_gen::RemoveSnippetResponse, std::string>
   removeSnippet(snippet_gen::RemoveSnippetRequest req) override;
+  std::expected<void, std::string> resetContext() override;
 
   void listen(snippet_gen::Server &server);
 

@@ -35,12 +35,15 @@ static void foreign_toplevel_handle_state(void *data, struct zwlr_foreign_toplev
                                           struct wl_array *value) {
   WaylandWindow *self = static_cast<WaylandWindow *>(data);
 
+  bool wasActive = self->m_active;
   self->m_active = false;
   size_t const n = value->size / sizeof(uint32_t);
   for (size_t i = 0; i < n; ++i) {
     uint32_t const *elem = (uint32_t *)value->data + i;
     if (*elem == ZWLR_FOREIGN_TOPLEVEL_HANDLE_V1_STATE_ACTIVATED) { self->m_active = true; }
   }
+
+  if (!wasActive && self->m_active) { emit self->m_manager->focusChanged(); }
 }
 
 static void foreign_toplevel_handle_done(void *data, struct zwlr_foreign_toplevel_handle_v1 *handle) {

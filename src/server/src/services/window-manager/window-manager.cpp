@@ -81,4 +81,6 @@ WindowManager::WindowManager() {
     updateWindowCache();
     emit windowsChanged();
   });
+
+  connect(m_provider.get(), &AbstractWindowManager::focusChanged, this, &WindowManager::focusChanged);
 }

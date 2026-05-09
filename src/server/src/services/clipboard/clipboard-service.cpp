@@ -343,12 +343,6 @@ ClipboardSelection &ClipboardService::sanitizeSelection(ClipboardSelection &sele
 void ClipboardService::saveSelection(ClipboardSelection selection) {
   sanitizeSelection(selection);
 
-  if (m_suppressNextSelection) {
-    m_suppressNextSelection = false;
-    m_lastSelection = selection;
-    return;
-  }
-
   m_lastSelection = selection;
 
   if (!m_monitoring) return;
@@ -530,8 +524,9 @@ void ClipboardService::restoreClipboard() {
     data->setData(offer.mimeType, offer.data);
   }
 
-  m_suppressNextSelection = true;
+  data->setData(Clipboard::CONCEALED_MIME_TYPE, {});
   m_clipboardServer->setClipboardContent(data);
+  m_lastSelection.reset();
 }
 
 bool ClipboardService::copySelection(const ClipboardSelection &selection,
