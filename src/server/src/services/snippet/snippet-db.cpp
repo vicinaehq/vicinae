@@ -11,6 +11,22 @@ namespace fs = std::filesystem;
 
 using namespace snippet;
 
+static bool isAscii(std::string_view str) {
+  return std::ranges::all_of(str, [](char c) {
+    auto uc = static_cast<unsigned char>(c);
+    return uc <= 127 && std::isprint(uc) && !std::isspace(uc);
+  });
+}
+
+static std::optional<std::string> validateKeyword(const std::string &keyword) {
+  if (keyword.empty()) return "keyword cannot be empty";
+  if (keyword.size() > SnippetDatabase::MAX_KEYWORD_LENGTH) {
+    return std::format("keyword exceeds maximum length of {}", SnippetDatabase::MAX_KEYWORD_LENGTH);
+  }
+  if (!isAscii(keyword)) return "keyword must only contain printable ASCII characters (no spaces)";
+  return std::nullopt;
+}
+
 SnippetDatabase::SnippetDatabase(const std::filesystem::path &path) : m_path(path) {
   if (!fs::is_regular_file(m_path)) {
     fs::create_directories(path.parent_path());
@@ -37,6 +53,7 @@ std::vector<SerializedSnippet> SnippetDatabase::snippets() const { return m_snip
 std::expected<void, std::string> SnippetDatabase::updateSnippet(std::string_view id,
                                                                 const SnippetPayload &payload) {
   if (const auto e = payload.expansion) {
+    if (auto err = validateKeyword(e->keyword)) { return std::unexpected(std::move(*err)); }
     if (const auto existing = findByKeyword(e->keyword); existing && existing->id != id) {
       return std::unexpected(std::format("keyword already assigned to \"{}\"", existing->name));
     }
@@ -92,6 +109,7 @@ std::expected<SerializedSnippet, std::string> SnippetDatabase::addSnippet(const 
   }
 
   if (const auto e = snippet.expansion) {
+    if (auto err = validateKeyword(e->keyword)) { return std::unexpected(std::move(*err)); }
     if (const auto existing = findByKeyword(e->keyword)) {
       return std::unexpected(std::format("keyword already assigned to \"{}\"", existing->name));
     }

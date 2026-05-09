@@ -47,6 +47,7 @@ struct SerializedSnippet {
 class SnippetDatabase {
 public:
   static constexpr size_t MAX_SNIPPETS = 10000;
+  static constexpr size_t MAX_KEYWORD_LENGTH = 32;
 
   SnippetDatabase(const std::filesystem::path &path);
 

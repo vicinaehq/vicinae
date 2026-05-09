@@ -1,6 +1,5 @@
 #include "snippet/snippet.hpp"
 #include <cctype>
-#include <chrono>
 #include <cstdint>
 #include <cstring>
 #include <glaze/json/read.hpp>
@@ -15,7 +14,10 @@
 #include <ostream>
 #include <sys/epoll.h>
 #include <unistd.h>
+#include <algorithm>
 #include <unordered_map>
+
+static constexpr size_t MAX_BUFFER_SIZE = 32;
 
 /**
  * Parse message as data gets in, and call the provided callback once a full message
@@ -79,7 +81,9 @@ SnippetService::SnippetService(snippet_gen::RpcTransport &transport)
     : snippet_gen::AbstractSnippet(transport), m_udev(udev_new()),
       m_xkb(xkb_context_new(XKB_CONTEXT_NO_FLAGS)),
       m_keymap(xkb_keymap_new_from_names(m_xkb, nullptr, XKB_KEYMAP_COMPILE_NO_FLAGS)),
-      m_kbState(xkb_state_new(m_keymap)) {}
+      m_kbState(xkb_state_new(m_keymap)) {
+  m_text.reserve(MAX_BUFFER_SIZE);
+}
 
 std::vector<std::string> SnippetService::enumerateKeyboards() {
   udev_enumerate *enumerate = udev_enumerate_new(m_udev);
@@ -115,13 +119,14 @@ std::expected<void, std::string> SnippetService::setKeymap(snippet_gen::LayoutIn
 std::expected<snippet_gen::CreateSnippetResponse, std::string>
 SnippetService::createSnippet(snippet_gen::CreateSnippetRequest req) {
   std::println(std::cerr, "Created new snippet with trigger {}", req.trigger);
-  m_snippetMap[req.trigger] = Snippet{.trigger = req.trigger, .mode = req.mode};
+  m_snippets.push_back(Snippet{.trigger = req.trigger, .mode = req.mode});
+  std::ranges::sort(m_snippets, [](auto &&a, auto &&b) { return a.trigger.size() > b.trigger.size(); });
   return snippet_gen::CreateSnippetResponse{};
 }
 
 std::expected<snippet_gen::RemoveSnippetResponse, std::string>
 SnippetService::removeSnippet(snippet_gen::RemoveSnippetRequest req) {
-  m_snippetMap.erase(req.trigger);
+  std::erase_if(m_snippets, [&](auto &&s) { return s.trigger == req.trigger; });
   return snippet_gen::RemoveSnippetResponse{};
 }
 
@@ -223,8 +228,6 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
   constexpr const int MAX_EVENTS = 256;
   std::array<epoll_event, MAX_EVENTS> events;
 
-  auto lastKeyTime = std::chrono::steady_clock::now();
-
   Frame ipcFrame;
 
   ipcFrame.setHandler([&](std::string_view message) { rpcServer.route(message); });
@@ -291,6 +294,7 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
 
       int rc = 0;
       input_event ev;
+      std::array<char, 8> key;
 
       // TODO: handle this more gracefully to allow any read size and batch?
       if ((rc = read(fd, &ev, sizeof(ev))) < sizeof(ev)) {
@@ -316,44 +320,50 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
       if (ev.value == 0) {
         xkb_state_update_key(m_kbState, keycode, XKB_KEY_UP);
       } else if (ev.value <= 2) {
-        const auto now = std::chrono::steady_clock::now();
-        const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastKeyTime).count();
-
-        if (elapsed > 5000) { m_text.clear(); }
-
-        lastKeyTime = now;
-
-        std::array<char, 32> key;
         const int len = xkb_state_key_get_utf8(m_kbState, keycode, key.data(), key.size());
         const std::string_view keyStr{key.data(), static_cast<size_t>(len)};
 
         if (ev.value == 1) { xkb_state_update_key(m_kbState, keycode, XKB_KEY_DOWN); }
 
         if (!keyStr.empty()) {
-
           if (ev.code == KEY_BACKSPACE) {
             if (!m_text.empty()) { m_text.erase(m_text.end() - 1); }
           } else if (std::isprint(keyStr.at(0)) && !std::isspace(keyStr.at(0))) {
             m_text.append(keyStr);
+            if (m_text.size() > MAX_BUFFER_SIZE) { m_text.erase(0, m_text.size() - MAX_BUFFER_SIZE); }
           }
         }
 
         std::println(std::cerr, "text='{}'", m_text);
 
-        const auto it = m_snippetMap.find(m_text);
+        bool triggered = false;
 
-        if (it != m_snippetMap.end()) {
-          switch (it->second.mode) {
+        for (const auto &snippet : m_snippets) {
+          if (snippet.trigger.size() > m_text.size()) continue;
+          if (!m_text.ends_with(snippet.trigger)) continue;
+
+          switch (snippet.mode) {
           case snippet_gen::ExpansionMode::Keydown:
-            emitExpansion(it->second);
+            emitExpansion(snippet);
+            triggered = true;
             break;
           case snippet_gen::ExpansionMode::Word:
-            if (ev.code == KEY_SPACE || ev.code == KEY_ENTER) { emitExpansion(it->second); }
+            if (ev.code == KEY_SPACE || ev.code == KEY_ENTER) {
+              const size_t pos = m_text.size() - snippet.trigger.size();
+              if (pos == 0 || m_text[pos - 1] == ' ') {
+                emitExpansion(snippet);
+                triggered = true;
+              }
+            }
             break;
           }
+          if (triggered) break;
         }
 
-        if (ev.code == KEY_SPACE) { m_text.clear(); }
+        if (!triggered && !keyStr.empty() && std::isspace(keyStr.at(0))) {
+          m_text += ' ';
+          if (m_text.size() > MAX_BUFFER_SIZE) { m_text.erase(0, m_text.size() - MAX_BUFFER_SIZE); }
+        }
       }
     }
   }

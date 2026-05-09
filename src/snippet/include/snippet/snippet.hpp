@@ -3,7 +3,6 @@
 #include <sys/epoll.h>
 #include <libudev.h>
 #include <unistd.h>
-#include <unordered_map>
 #include <xkbcommon/xkbcommon.h>
 
 namespace snippet {
@@ -36,7 +35,7 @@ private:
   xkb_context *m_xkb = nullptr;
   xkb_keymap *m_keymap = nullptr;
   xkb_state *m_kbState = nullptr;
-  std::unordered_map<std::string, Snippet> m_snippetMap;
+  std::vector<Snippet> m_snippets;
 };
 
 }; // namespace snippet
