@@ -77,7 +77,7 @@ RowLayout {
                     property string currentValue: textField.text
                     property bool showError: false
 
-                    implicitWidth: Math.min(textMetrics.advanceWidth + 16, argLoader.maxArgWidth)
+                    implicitWidth: Math.min((textField.text ? textField.contentWidth : textMetrics.advanceWidth) + 16, argLoader.maxArgWidth)
                     implicitHeight: 26
                     radius: 4
                     color: "transparent"
