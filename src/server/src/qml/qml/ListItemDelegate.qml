@@ -37,7 +37,7 @@ SelectableDelegate {
                 radius: 2
                 color: Theme.textMuted
                 anchors.top: parent.bottom
-                anchors.topMargin: 3
+                anchors.topMargin: 1
                 anchors.horizontalCenter: parent.horizontalCenter
             }
         }
