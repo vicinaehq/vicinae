@@ -60,6 +60,10 @@ RowLayout {
             required property var modelData
 
             readonly property bool isLast: index === root.visibleArgs.length - 1
+            readonly property real maxArgWidth: {
+                var totalSpacing = root.spacing * (root.visibleArgs.length + 1);
+                return Math.max((root.width - 25 - totalSpacing) / root.visibleArgs.length, 60);
+            }
 
             Layout.alignment: Qt.AlignVCenter
 
@@ -73,7 +77,7 @@ RowLayout {
                     property string currentValue: textField.text
                     property bool showError: false
 
-                    implicitWidth: textMetrics.advanceWidth + 16
+                    implicitWidth: Math.min(textMetrics.advanceWidth + 16, argLoader.maxArgWidth)
                     implicitHeight: 26
                     radius: 4
                     color: "transparent"
@@ -158,7 +162,7 @@ RowLayout {
                     property string currentValue: ""
                     property bool showError: false
 
-                    implicitWidth: Math.max(dropdownMetrics.advanceWidth + 36, 80)
+                    implicitWidth: Math.min(Math.max(dropdownMetrics.advanceWidth + 36, 80), argLoader.maxArgWidth)
                     implicitHeight: 26
                     radius: 4
                     color: "transparent"
