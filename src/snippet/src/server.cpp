@@ -19,6 +19,10 @@
 static constexpr size_t MAX_BUFFER_SIZE = 32;
 static constexpr const char *VIRTUAL_KB_NAME = "vicinae-snippet-virtual-keyboard";
 
+static bool isWordSeparator(char c) {
+  return std::isspace(static_cast<unsigned char>(c)) || std::ispunct(static_cast<unsigned char>(c));
+}
+
 /**
  * Parse message as data gets in, and call the provided callback once a full message
  * has been parsed.
@@ -332,7 +336,7 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
         if (!keyStr.empty()) {
           if (ev.code == KEY_BACKSPACE) {
             if (!m_text.empty()) { m_text.erase(m_text.end() - 1); }
-          } else if (std::isprint(keyStr.at(0)) && !std::isspace(keyStr.at(0))) {
+          } else if (std::isprint(keyStr.at(0))) {
             m_text.append(keyStr);
             if (m_text.size() > MAX_BUFFER_SIZE) { m_text.erase(0, m_text.size() - MAX_BUFFER_SIZE); }
           }
@@ -340,19 +344,22 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
 
         std::cerr << "text='" << m_text << "'\n";
 
-        for (const auto &snippet : m_snippets) {
-          if (snippet.trigger.size() > m_text.size()) continue;
-          if (!m_text.ends_with(snippet.trigger)) continue;
+        const bool wordSep = !keyStr.empty() && isWordSeparator(keyStr.at(0));
 
-          switch (snippet.mode) {
-          case snippet_gen::ExpansionMode::Keydown:
-            emitExpansion(snippet);
-            break;
-          case snippet_gen::ExpansionMode::Word:
-            if (ev.code == KEY_SPACE || ev.code == KEY_ENTER) { emitExpansion(snippet); }
-            break;
+        for (const auto &snippet : m_snippets) {
+          if (snippet.mode == snippet_gen::ExpansionMode::Keydown) {
+            if (snippet.trigger.size() > m_text.size()) continue;
+            if (m_text.ends_with(snippet.trigger)) {
+              emitExpansion(snippet);
+              break;
+            }
+          } else if (wordSep) {
+            if (snippet.trigger.size() + 1 > m_text.size()) continue;
+            if (std::string_view(m_text).substr(0, m_text.size() - 1).ends_with(snippet.trigger)) {
+              emitExpansion(snippet);
+              break;
+            }
           }
-          break;
         }
       }
     }
