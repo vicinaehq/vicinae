@@ -14,6 +14,7 @@ class ConfigBridge : public QObject {
   Q_PROPERTY(bool emacsMode READ emacsMode NOTIFY changed)
   Q_PROPERTY(bool considerPreedit READ considerPreedit NOTIFY changed)
   Q_PROPERTY(bool activateOnSingleClick READ activateOnSingleClick NOTIFY changed)
+  Q_PROPERTY(bool blurEnabled READ blurEnabled NOTIFY changed)
 
 signals:
   void changed();
@@ -41,6 +42,7 @@ public:
   bool emacsMode() const { return cfg().keybinding == "emacs"; }
   bool considerPreedit() const { return cfg().considerPreedit; }
   bool activateOnSingleClick() const { return cfg().activateOnSingleClick; }
+  bool blurEnabled() const { return cfg().launcherWindow.blur.enabled; }
 
 private:
   static const config::ConfigValue &cfg() { return ServiceRegistry::instance()->config()->value(); }

@@ -745,7 +745,6 @@ set(VICINAE_QML_FILES
 	src/qml/qml/ExtensionView.qml
 	src/qml/qml/MarkdownDetailView.qml
 	src/qml/qml/ExtensionGridView.qml
-	src/qml/qml/FocusRestoringScope.qml
 	src/qml/qml/ActionPanelPopover.qml
 	src/qml/qml/ActionListPanel.qml
 	src/qml/qml/ActionItemDelegate.qml
@@ -823,6 +822,10 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
 	list(APPEND VICINAE_QML_FILES src/qml/qml/ButtonShowcase.qml src/qml/qml/UIShowcase.qml)
 endif()
 
+if(WAYLAND_LAYER_SHELL)
+	list(APPEND VICINAE_QML_FILES src/qml/qml/LauncherWindowLayerShell.qml)
+endif()
+
 # Strip directory prefix so resources are qrc:/Vicinae/Foo.qml
 foreach(qml_file IN LISTS VICINAE_QML_FILES)
 	get_filename_component(alias ${qml_file} NAME)
@@ -840,6 +843,8 @@ qt_add_qml_module(${TARGET}
 		src/qml/completion-model.hpp
 		src/qml/markdown/markdown-model.hpp
 		src/qml/markdown/text-selection-controller.hpp
+		src/qml/background-effect-attached.hpp
+		src/qml/background-effect-attached.cpp
 	DEPENDENCIES QtQuick
 	NO_PLUGIN
 )

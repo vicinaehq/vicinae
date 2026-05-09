@@ -19,7 +19,6 @@
 #include "services/toast/toast-service.hpp"
 #include "config/config.hpp"
 #include "service-registry.hpp"
-#include "services/background-effect/background-effect-manager.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "environment.hpp"
@@ -33,10 +32,6 @@
 #include <QKeyEvent>
 #include <qcoreevent.h>
 #include <qlogging.h>
-#ifdef WAYLAND_LAYER_SHELL
-#include <LayerShellQt/Window>
-#include <utility>
-#endif
 
 LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
     : QObject(parent), m_ctx(ctx), m_actionPanel(new ActionPanelController(ctx, this)),
@@ -65,7 +60,10 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   rootCtx->setContextProperty(QStringLiteral("Keybinds"), m_keybindProxy);
   rootCtx->setContextProperty(QStringLiteral("FileChooser"), ctx.services->fileChooserService());
 
-  m_engine.load(QUrl(QStringLiteral("qrc:/Vicinae/LauncherWindow.qml")));
+  updateLayerShellProps();
+
+  m_engine.load(QUrl(isLayerShellActive() ? QStringLiteral("qrc:/Vicinae/LauncherWindowLayerShell.qml")
+                                          : QStringLiteral("qrc:/Vicinae/LauncherWindow.qml")));
 
   auto rootObjects = m_engine.rootObjects();
   if (!rootObjects.isEmpty()) { m_window = qobject_cast<QQuickWindow *>(rootObjects.first()); }
@@ -497,30 +495,12 @@ void LauncherWindow::setCompacted(bool value) {
   if (m_compacted == value) return;
   m_compacted = value;
   emit compactedChanged();
-  updateBlur();
 }
 
 void LauncherWindow::tryCompaction() {
   auto &cfg = m_ctx.services->config()->value().launcherWindow.compactMode;
   setCompacted(!m_ctx.services->newsService()->hasUnreadNews() && cfg.enabled &&
                m_ctx.navigation->searchText().isEmpty() && m_ctx.navigation->viewStackSize() == 1);
-}
-
-void LauncherWindow::updateBlur() {
-  if (!m_window) return;
-  auto &cfg = m_ctx.services->config()->value().launcherWindow;
-  auto *bgEffect = m_ctx.services->backgroundEffectManager();
-  int const rounding = cfg.clientSideDecorations.enabled ? cfg.clientSideDecorations.rounding : 0;
-
-  if (!bgEffect->supportsBlur()) return;
-
-  if (cfg.blur.enabled) {
-    QRect region(0, 0, m_window->width(), m_window->height());
-    if (m_compacted) region.setHeight(60);
-    bgEffect->setBlur(m_window, {.radius = rounding, .region = region});
-  } else {
-    bgEffect->clearBlur(m_window);
-  }
 }
 
 bool LauncherWindow::isLayerShellActive() const {
@@ -533,49 +513,42 @@ bool LauncherWindow::isLayerShellActive() const {
 }
 
 void LauncherWindow::setExclusiveFocus(bool exclusive) {
-#ifdef WAYLAND_LAYER_SHELL
-  if (!m_window || !isLayerShellActive()) return;
+  if (!isLayerShellActive()) return;
 
-  namespace Shell = LayerShellQt;
   const auto &lc = m_ctx.services->config()->value().launcherWindow.layerShell;
-  if (auto *lshell = Shell::Window::get(m_window)) {
-    if (exclusive && lc.keyboardInteractivity == "exclusive")
-      lshell->setKeyboardInteractivity(Shell::Window::KeyboardInteractivityExclusive);
-    else
-      lshell->setKeyboardInteractivity(Shell::Window::KeyboardInteractivityOnDemand);
+  int ki = (exclusive && lc.keyboardInteractivity == "exclusive") ? 1 : 2; // Exclusive : OnDemand
+  if (m_lsKeyboardInteractivity != ki) {
+    m_lsKeyboardInteractivity = ki;
+    emit lsChanged();
   }
-#else
-  Q_UNUSED(exclusive)
-#endif
 }
 
 void LauncherWindow::applyWindowConfig() {
   if (!m_window) return;
-  auto &cfg = m_ctx.services->config()->value();
-  auto &wcfg = cfg.launcherWindow;
+  auto &wcfg = m_ctx.services->config()->value().launcherWindow;
 
-  updateBlur();
   m_ctx.services->windowManager()->provider()->setDimAround(wcfg.dimAround);
+  updateLayerShellProps();
+}
 
-#ifdef WAYLAND_LAYER_SHELL
-  const auto &lc = wcfg.layerShell;
-  if (Environment::isLayerShellSupported() && lc.enabled) {
-    namespace Shell = LayerShellQt;
-    if (auto *lshell = Shell::Window::get(m_window)) {
-      lshell->setLayer(lc.layer == "overlay" ? Shell::Window::LayerOverlay : Shell::Window::LayerTop);
-      lshell->setScope(Omnicast::LAYER_SCOPE);
-      lshell->setWantsToBeOnActiveScreen(true);
-      lshell->setAnchors(Shell::Window::AnchorNone);
+void LauncherWindow::updateLayerShellProps() {
+  if (!isLayerShellActive()) return;
 
-      // exclusive interactivity is incompatible with close on focus loss, as focus cannot be lost
-      if (lc.keyboardInteractivity == "exclusive" && cfg.closeOnFocusLoss) {
-        lshell->setKeyboardInteractivity(Shell::Window::KeyboardInteractivityOnDemand);
-      } else {
-        lshell->setKeyboardInteractivity(lc.keyboardInteractivity == "exclusive"
-                                             ? Shell::Window::KeyboardInteractivityExclusive
-                                             : Shell::Window::KeyboardInteractivityOnDemand);
-      }
-    }
+  auto &cfg = m_ctx.services->config()->value();
+  const auto &lc = cfg.launcherWindow.layerShell;
+
+  int layer = (lc.layer == "overlay") ? 3 : 2;                                  // LayerOverlay : LayerTop
+  int ki = 2;                                                                   // OnDemand
+  if (lc.keyboardInteractivity == "exclusive" && !cfg.closeOnFocusLoss) ki = 1; // Exclusive
+
+  bool changed = false;
+  if (m_lsLayer != layer) {
+    m_lsLayer = layer;
+    changed = true;
   }
-#endif
+  if (m_lsKeyboardInteractivity != ki) {
+    m_lsKeyboardInteractivity = ki;
+    changed = true;
+  }
+  if (changed) emit lsChanged();
 }

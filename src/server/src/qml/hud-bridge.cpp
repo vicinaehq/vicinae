@@ -1,9 +1,5 @@
 #include "hud-bridge.hpp"
-#include "environment.hpp"
 #include <QQuickWindow>
-#ifdef WAYLAND_LAYER_SHELL
-#include <LayerShellQt/Window>
-#endif
 
 HudBridge::HudBridge(QObject *parent) : QObject(parent) {
   m_timer.setSingleShot(true);
@@ -35,24 +31,4 @@ void HudBridge::hide() {
   if (m_window) { m_window->hide(); }
 }
 
-void HudBridge::registerWindow(QQuickWindow *window) {
-  m_window = window;
-  if (m_window) { configureLayerShell(m_window); }
-}
-
-void HudBridge::configureLayerShell(QQuickWindow *window) {
-#ifdef WAYLAND_LAYER_SHELL
-  if (!Environment::isLayerShellSupported()) return;
-
-  namespace Shell = LayerShellQt;
-  if (auto *lshell = Shell::Window::get(window)) {
-    lshell->setLayer(Shell::Window::LayerTop);
-    lshell->setScope(QStringLiteral("vicinae-hud"));
-    lshell->setAnchors(Shell::Window::AnchorNone);
-    lshell->setWantsToBeOnActiveScreen(true);
-    lshell->setKeyboardInteractivity(Shell::Window::KeyboardInteractivityNone);
-  }
-#else
-  Q_UNUSED(window)
-#endif
-}
+void HudBridge::registerWindow(QQuickWindow *window) { m_window = window; }

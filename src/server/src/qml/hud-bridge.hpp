@@ -32,7 +32,6 @@ signals:
 
 private:
   void hide();
-  void configureLayerShell(QQuickWindow *window);
 
   bool m_visible = false;
   QString m_text;

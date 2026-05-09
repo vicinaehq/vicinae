@@ -47,6 +47,8 @@ class LauncherWindow : public QObject {
   Q_PROPERTY(bool hasOverlay READ hasOverlay NOTIFY overlayChanged)
   Q_PROPERTY(QUrl overlayUrl READ overlayUrl NOTIFY overlayChanged)
   Q_PROPERTY(QObject *overlayHost READ overlayHost NOTIFY overlayChanged)
+  Q_PROPERTY(int lsLayer READ lsLayer NOTIFY lsChanged)
+  Q_PROPERTY(int lsKeyboardInteractivity READ lsKeyboardInteractivity NOTIFY lsChanged)
 
 public:
   explicit LauncherWindow(ApplicationContext &ctx, QObject *parent = nullptr);
@@ -79,6 +81,8 @@ public:
   bool hasOverlay() const { return m_hasOverlay; }
   QUrl overlayUrl() const { return m_overlayUrl; }
   QObject *overlayHost() const { return m_overlayHost; }
+  int lsLayer() const { return m_lsLayer; }
+  int lsKeyboardInteractivity() const { return m_lsKeyboardInteractivity; }
 
   Q_INVOKABLE void expand();
   Q_INVOKABLE void forwardSearchText(const QString &text);
@@ -116,6 +120,7 @@ signals:
   void completerValidationFailed();
   void windowSizeOverrideChanged();
   void overlayChanged();
+  void lsChanged();
 
 private:
   bool eventFilter(QObject *obj, QEvent *event) override;
@@ -124,10 +129,10 @@ private:
   void handleViewPoped(const BaseView *view);
   void setCompacted(bool value);
   void tryCompaction();
-  void updateBlur();
   void applyWindowConfig();
   bool isLayerShellActive() const;
   void setExclusiveFocus(bool exclusive);
+  void updateLayerShellProps();
 
   ApplicationContext &m_ctx;
   ActionPanelController *m_actionPanel;
@@ -172,6 +177,8 @@ private:
   QObject *m_overlayHost = nullptr;
 
   bool m_closeOnFocusLoss = false;
+  int m_lsLayer = 2;                 // LayerShellQt::Window::LayerTop
+  int m_lsKeyboardInteractivity = 2; // LayerShellQt::Window::KeyboardInteractivityOnDemand
   bool m_hasCompleter = false;
   QVariantList m_completerArgs;
   QString m_completerIcon;

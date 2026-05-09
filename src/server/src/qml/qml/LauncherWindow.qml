@@ -18,6 +18,10 @@ Window {
     color: "transparent"
     visible: false
 
+    BackgroundEffect.enabled: Config.blurEnabled
+    BackgroundEffect.radius: Config.borderRounding
+    BackgroundEffect.region: Qt.rect(0, 0, root.width, launcher.compacted ? 60 : root.height)
+
     Rectangle {
         visible: launcher.compacted
         width: root.width
@@ -130,9 +134,7 @@ Window {
 
     ActionPanelPopover {
         id: actionPanelPopover
-        z: 100
-        anchors.fill: parent
-        anchors.bottomMargin: footer.height + 1 + Config.borderWidth
+        bottomOffset: footer.height + 1 + Config.borderWidth
     }
 
     AlertDialog {

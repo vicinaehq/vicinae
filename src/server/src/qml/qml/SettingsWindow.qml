@@ -51,6 +51,9 @@ Window {
     flags: Qt.FramelessWindowHint | Qt.Window
     title: "Vicinae Settings"
 
+    BackgroundEffect.enabled: Config.blurEnabled
+    BackgroundEffect.radius: 10
+
     Rectangle {
         id: background
         anchors.fill: parent
