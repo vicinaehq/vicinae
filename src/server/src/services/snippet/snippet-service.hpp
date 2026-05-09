@@ -102,6 +102,9 @@ private:
     const auto snippet = m_db.findByKeyword(keyword);
     if (!snippet || !snippet->expansion) return;
 
+    const auto text = std::get_if<snippet::TextSnippet>(&snippet->data);
+    if (!text) return;
+
     bool terminal = false;
     const auto focusedWindow = m_wm.getFocusedWindow();
 
@@ -115,38 +118,36 @@ private:
                       << "\" window=" << (focusedWindow ? focusedWindow->wmClass() : "<unknown>")
                       << " terminal=" << terminal;
 
-    if (const auto text = std::get_if<snippet::TextSnippet>(&snippet->data)) {
-      SnippetExpander expander;
-      const auto result = expander.expand(QString::fromStdString(text->text), {});
+    SnippetExpander expander;
+    const auto result = expander.expand(QString::fromStdString(text->text), {});
 
-      const auto expanded = result.parts | std::views::transform([](auto &&part) { return part.text; }) |
-                            std::views::join | std::ranges::to<QString>();
+    const auto expanded = result.parts | std::views::transform([](auto &&part) { return part.text; }) |
+                          std::views::join | std::ranges::to<QString>();
 
-      m_clipboard.copyText(expanded, {.concealed = true});
+    m_clipboard.copyText(expanded, {.concealed = true});
 
-      const int charsToDelete = static_cast<int>(keyword.size()) + (snippet->expansion->word ? 1 : 0);
-      const bool wordMode = snippet->expansion->word;
+    const int charsToDelete = static_cast<int>(keyword.size()) + (snippet->expansion->word ? 1 : 0);
+    const bool wordMode = snippet->expansion->word;
 
-      auto inject = [=, this]() {
-        m_keyboard.backspace(charsToDelete);
-        m_keyboard.paste(terminal);
+    auto inject = [=, this]() {
+      m_keyboard.backspace(charsToDelete);
+      m_keyboard.paste(terminal);
 
-        if (wordMode) { m_keyboard.space(); }
+      if (wordMode) { m_keyboard.space(); }
 
-        if (result.cursorPos) {
-          const int totalLength = expanded.size();
-          const int leftMoves = totalLength - *result.cursorPos;
-          if (leftMoves > 0) { m_keyboard.moveCursorLeft(leftMoves); }
-        }
-
-        m_clipboard.scheduleClipboardRestore(200);
-      };
-
-      if (m_prePasteDelay > 0) {
-        QTimer::singleShot(m_prePasteDelay, this, inject);
-      } else {
-        inject();
+      if (result.cursorPos) {
+        const int totalLength = expanded.size();
+        const int leftMoves = totalLength - *result.cursorPos;
+        if (leftMoves > 0) { m_keyboard.moveCursorLeft(leftMoves); }
       }
+
+      m_clipboard.scheduleClipboardRestore(200);
+    };
+
+    if (m_prePasteDelay > 0) {
+      QTimer::singleShot(m_prePasteDelay, this, inject);
+    } else {
+      inject();
     }
   }
 

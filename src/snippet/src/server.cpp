@@ -17,6 +17,7 @@
 #include <unordered_map>
 
 static constexpr size_t MAX_BUFFER_SIZE = 32;
+static constexpr const char *VIRTUAL_KB_NAME = "vicinae-snippet-virtual-keyboard";
 
 /**
  * Parse message as data gets in, and call the provided callback once a full message
@@ -203,6 +204,13 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
       return false;
     }
 
+    std::array<char, 256> name{};
+    if (ioctl(fd, EVIOCGNAME(name.size()), name.data()) >= 0 &&
+        std::string_view(name.data()) == VIRTUAL_KB_NAME) {
+      close(fd);
+      return false;
+    }
+
     ev.events = EPOLLIN;
     ev.data.fd = fd;
 
@@ -332,8 +340,6 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
 
         std::cerr << "text='" << m_text << "'\n";
 
-        bool triggered = false;
-
         for (const auto &snippet : m_snippets) {
           if (snippet.trigger.size() > m_text.size()) continue;
           if (!m_text.ends_with(snippet.trigger)) continue;
@@ -341,24 +347,12 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
           switch (snippet.mode) {
           case snippet_gen::ExpansionMode::Keydown:
             emitExpansion(snippet);
-            triggered = true;
             break;
           case snippet_gen::ExpansionMode::Word:
-            if (ev.code == KEY_SPACE || ev.code == KEY_ENTER) {
-              const size_t pos = m_text.size() - snippet.trigger.size();
-              if (pos == 0 || m_text[pos - 1] == ' ') {
-                emitExpansion(snippet);
-                triggered = true;
-              }
-            }
+            if (ev.code == KEY_SPACE || ev.code == KEY_ENTER) { emitExpansion(snippet); }
             break;
           }
-          if (triggered) break;
-        }
-
-        if (!triggered && !keyStr.empty() && std::isspace(keyStr.at(0))) {
-          m_text += ' ';
-          if (m_text.size() > MAX_BUFFER_SIZE) { m_text.erase(0, m_text.size() - MAX_BUFFER_SIZE); }
+          break;
         }
       }
     }
