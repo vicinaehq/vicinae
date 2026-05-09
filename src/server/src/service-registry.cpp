@@ -1,4 +1,5 @@
 #include "service-registry.hpp"
+#include "services/keyboard/abstract-keyboard-service.hpp"
 #include "services/audio-control/audio-control-service.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "font-service.hpp"
@@ -66,6 +67,8 @@ BackgroundEffectManager *ServiceRegistry::backgroundEffectManager() const {
 }
 
 TelemetryService *ServiceRegistry::telemetry() const { return m_telemetry.get(); }
+
+AbstractKeyboardService *ServiceRegistry::keyboardService() const { return m_keyboardService.get(); }
 
 AudioControlService *ServiceRegistry::audioControl() const { return m_audioControl.get(); }
 
@@ -153,6 +156,10 @@ void ServiceRegistry::setBackgroundEffectManager(std::unique_ptr<BackgroundEffec
 
 void ServiceRegistry::setTelemetry(std::unique_ptr<TelemetryService> telemetry) {
   m_telemetry = std::move(telemetry);
+}
+
+void ServiceRegistry::setKeyboardService(std::unique_ptr<AbstractKeyboardService> service) {
+  m_keyboardService = std::move(service);
 }
 
 void ServiceRegistry::setAudioControl(std::unique_ptr<AudioControlService> service) {

@@ -623,6 +623,7 @@ if (UNIX AND NOT APPLE)
 	list(APPEND SRCS
 		#src/lib/xkbcommon-utils.cpp
 
+		src/services/keyboard/linux-keyboard-service.cpp
 		src/services/paste/linux-paste-service.cpp
 		src/services/paste/paste-service.cpp
 

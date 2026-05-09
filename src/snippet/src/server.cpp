@@ -8,7 +8,6 @@
 #include <expected>
 #include <linux/input.h>
 #include <libudev.h>
-#include <linux/uinput.h>
 #include <string_view>
 #include <xkbcommon/xkbcommon.h>
 #include <fcntl.h>
@@ -17,8 +16,6 @@
 #include <sys/epoll.h>
 #include <unistd.h>
 #include <unordered_map>
-
-static auto lastExpansionTime = std::chrono::steady_clock::now();
 
 /**
  * Parse message as data gets in, and call the provided callback once a full message
@@ -129,35 +126,6 @@ std::expected<snippet_gen::RemoveSnippetResponse, std::string>
 SnippetService::removeSnippet(snippet_gen::RemoveSnippetRequest req) {
   m_snippetMap.erase(req.trigger);
   return snippet_gen::RemoveSnippetResponse{};
-}
-
-std::expected<void, std::string>
-SnippetService::injectClipboardExpansion(snippet_gen::InjectClipboardRequest req) {
-  const auto it = m_snippetMap.find(req.trigger);
-
-  if (it == m_snippetMap.end()) {
-    std::println(std::cerr, "Could not find snippet with trigger {}", req.trigger);
-    return std::unexpected("No such snippet");
-  }
-
-  auto mods = linuxutils::UInputKeyboard::Modifier::Ctrl;
-  std::println(std::cerr, "Received expansion request for snippet {} (took {}ms)", req.trigger,
-               std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() -
-                                                                     lastExpansionTime)
-                   .count());
-
-  if (req.terminal) mods |= linuxutils::UInputKeyboard::Modifier::Shift;
-
-  m_kb.repeatKey(KEY_BACKSPACE, req.trigger.size());
-  usleep(2000);
-  m_kb.sendKey(KEY_V, static_cast<int>(mods));
-
-  if (it->second.mode == snippet_gen::ExpansionMode::Word) {
-    usleep(2000);
-    m_kb.sendKey(KEY_SPACE, 0);
-  }
-
-  return {};
 }
 
 void SnippetService::setLayout(const LayoutInfo &info) {
@@ -380,10 +348,7 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
             emitExpansion(it->second);
             break;
           case snippet_gen::ExpansionMode::Word:
-            if (ev.code == KEY_SPACE || ev.code == KEY_ENTER) {
-              m_kb.sendKey(KEY_BACKSPACE, 0);
-              emitExpansion(it->second);
-            }
+            if (ev.code == KEY_SPACE || ev.code == KEY_ENTER) { emitExpansion(it->second); }
             break;
           }
         }
@@ -395,8 +360,7 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
 }
 
 void SnippetService::emitExpansion(const Snippet &snippet) {
-  std::println(std::cerr, "SNIPPET EXPANDED: {}", snippet.trigger);
-  lastExpansionTime = std::chrono::steady_clock::now();
+  std::println(std::cerr, "SNIPPET TRIGGERED: {}", snippet.trigger);
   emittriggerSnippet({.trigger = snippet.trigger});
   m_text.clear();
 }

@@ -1,10 +1,7 @@
 #pragma once
 #include <QProcess>
-#include <QGuiApplication>
 #include <qlogging.h>
-#include <QMimeData>
 #include <QObject>
-#include <QClipboard>
 #include <netinet/in.h>
 #include "common/common.hpp"
 #include "generated/snippet-client.hpp"
@@ -42,7 +39,6 @@ public:
   void stop() { m_process.close(); }
 
   void registerSnippet(snippet_gen::CreateSnippetRequest payload);
-  void injectClipboardText(std::string_view trigger, QString text, bool terminal = false);
   void unregisterSnippet(std::string_view keyword);
 
   bool isRunning() const { return m_process.state() == QProcess::ProcessState::Running; }

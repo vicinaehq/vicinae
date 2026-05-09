@@ -1,9 +1,13 @@
 #pragma once
 #include "services/app-service/app-service.hpp"
+#include "services/keyboard/abstract-keyboard-service.hpp"
 #include "services/snippet/snippet-expander.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "snippet-server.hpp"
 #include "snippet-db.hpp"
+#include <QClipboard>
+#include <QGuiApplication>
+#include <QMimeData>
 #include <qtmetamacros.h>
 
 class SnippetService : public QObject {
@@ -16,8 +20,9 @@ signals:
   void snippetsChanged(); // add/updated/remove
 
 public:
-  SnippetService(std::filesystem::path path, WindowManager &wm, const AppService &appDb)
-      : m_db(path), m_wm(wm), m_appDb(appDb) {
+  SnippetService(std::filesystem::path path, WindowManager &wm, const AppService &appDb,
+                 AbstractKeyboardService &keyboard)
+      : m_db(path), m_wm(wm), m_appDb(appDb), m_keyboard(keyboard) {
     connect(&m_server, &SnippetServer::keywordTriggered, this, &SnippetService::handleKeywordTrigger);
   }
 
@@ -82,23 +87,42 @@ public:
   SnippetDatabase *database() { return &m_db; }
 
 private:
-  void handleKeywordTrigger(std::string keyword) {
+  void handleKeywordTrigger(const std::string &keyword) {
     const auto snippet = m_db.findByKeyword(keyword);
     if (!snippet || !snippet->expansion) return;
 
-    [[maybe_unused]] bool terminal = false;
+    bool terminal = false;
 
     if (const auto focusedWindow = m_wm.getFocusedWindow()) {
       if (const auto app = m_appDb.findByClass(focusedWindow->wmClass())) {
-        qDebug() << "snippet service detected that current app is a terminal";
         terminal = app->isTerminalEmulator() || app->isTerminalApp();
       }
     }
 
     if (const auto text = std::get_if<snippet::TextSnippet>(&snippet->data)) {
       SnippetExpander expander;
-      const auto expanded = expander.expandToString(text->text.c_str(), {});
-      m_server.injectClipboardText(keyword, expanded);
+      const auto result = expander.expand(QString::fromStdString(text->text), {});
+
+      const auto expanded = result.parts | std::views::transform([](auto &&part) { return part.text; }) |
+                            std::views::join | std::ranges::to<QString>();
+
+      auto *clip = QGuiApplication::clipboard();
+      auto *mimeData = new QMimeData;
+      mimeData->setData("text/plain;charset=utf-8", expanded.toUtf8());
+      mimeData->setData("vicinae/concealed", "1");
+      clip->setMimeData(mimeData);
+
+      const int charsToDelete = static_cast<int>(keyword.size()) + (snippet->expansion->word ? 1 : 0);
+      m_keyboard.backspace(charsToDelete);
+      m_keyboard.paste(terminal);
+
+      if (snippet->expansion->word) { m_keyboard.space(); }
+
+      if (result.cursorPos) {
+        const int totalLength = expanded.size();
+        const int leftMoves = totalLength - *result.cursorPos;
+        if (leftMoves > 0) { m_keyboard.moveCursorLeft(leftMoves); }
+      }
     }
   }
 
@@ -106,4 +130,5 @@ private:
   SnippetDatabase m_db;
   WindowManager &m_wm;
   const AppService &m_appDb;
+  AbstractKeyboardService &m_keyboard;
 };
