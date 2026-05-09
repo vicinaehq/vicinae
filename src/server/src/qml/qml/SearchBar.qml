@@ -17,17 +17,35 @@ Item {
         anchors.rightMargin: 16
         spacing: launcher.hasCompleter ? 4 : 12
 
-        ViciButton {
+        SourceBlendRect {
             id: backButton
             visible: !launcher.isRootSearch && launcher.showBackButton
             Layout.preferredWidth: 28
             Layout.preferredHeight: 28
             Layout.alignment: Qt.AlignVCenter
-            icon: "chevron-left"
-            iconSize: 14
-            variant: "secondary"
-            bordered: true
-            onClicked: launcher.goBack()
+            radius: 6
+            backgroundColor: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
+            color: {
+                const base = backHover.hovered ? Theme.listItemHoverBg : Theme.secondaryBackground;
+                return Qt.rgba(base.r, base.g, base.b, Config.windowOpacity);
+            }
+            borderWidth: 1
+            borderColor: Theme.inputBorder
+
+            ViciImage {
+                anchors.centerIn: parent
+                source: Img.builtin("chevron-left")
+                width: 14
+                height: 14
+            }
+
+            HoverHandler {
+                id: backHover
+            }
+
+            TapHandler {
+                onTapped: launcher.goBack()
+            }
         }
 
         Item {
