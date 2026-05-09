@@ -14,6 +14,7 @@ Popup {
     height: 80
     focus: true
     closePolicy: Popup.CloseOnPressOutside
+    popupType: Popup.Window
     padding: 10
 
     property var _currentShortcutTokens: []
@@ -44,9 +45,11 @@ Popup {
 
     background: Rectangle {
         radius: 8
-        color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, Theme.surfaceOpacity)
+        color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, 0.95)
         border.color: Theme.divider
         border.width: 1
+        BackgroundEffect.enabled: Config.blurEnabled
+        BackgroundEffect.radius: 8
     }
 
     contentItem: FocusScope {

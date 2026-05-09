@@ -129,7 +129,6 @@ private:
   void handleViewPoped(const BaseView *view);
   void setCompacted(bool value);
   void tryCompaction();
-  void updateBlur();
   void applyWindowConfig();
   bool isLayerShellActive() const;
   void setExclusiveFocus(bool exclusive);

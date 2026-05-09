@@ -19,7 +19,6 @@
 #include "services/toast/toast-service.hpp"
 #include "config/config.hpp"
 #include "service-registry.hpp"
-#include "services/background-effect/background-effect-manager.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "environment.hpp"
@@ -496,30 +495,12 @@ void LauncherWindow::setCompacted(bool value) {
   if (m_compacted == value) return;
   m_compacted = value;
   emit compactedChanged();
-  updateBlur();
 }
 
 void LauncherWindow::tryCompaction() {
   auto &cfg = m_ctx.services->config()->value().launcherWindow.compactMode;
   setCompacted(!m_ctx.services->newsService()->hasUnreadNews() && cfg.enabled &&
                m_ctx.navigation->searchText().isEmpty() && m_ctx.navigation->viewStackSize() == 1);
-}
-
-void LauncherWindow::updateBlur() {
-  if (!m_window) return;
-  auto &cfg = m_ctx.services->config()->value().launcherWindow;
-  auto *bgEffect = m_ctx.services->backgroundEffectManager();
-  int const rounding = cfg.clientSideDecorations.enabled ? cfg.clientSideDecorations.rounding : 0;
-
-  if (!bgEffect->supportsBlur()) return;
-
-  if (cfg.blur.enabled) {
-    QRect region(0, 0, m_window->width(), m_window->height());
-    if (m_compacted) region.setHeight(60);
-    bgEffect->setBlur(m_window, {.radius = rounding, .region = region});
-  } else {
-    bgEffect->clearBlur(m_window);
-  }
 }
 
 bool LauncherWindow::isLayerShellActive() const {
@@ -546,7 +527,6 @@ void LauncherWindow::applyWindowConfig() {
   if (!m_window) return;
   auto &wcfg = m_ctx.services->config()->value().launcherWindow;
 
-  updateBlur();
   m_ctx.services->windowManager()->provider()->setDimAround(wcfg.dimAround);
   updateLayerShellProps();
 }

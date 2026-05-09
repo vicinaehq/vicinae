@@ -25,6 +25,7 @@ Popup {
 
     padding: 4
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+    popupType: Popup.Window
 
     onItemsChanged: if (items.length > 0)
         completionModel.setItems(items)
@@ -90,21 +91,21 @@ Popup {
 
     background: Rectangle {
         radius: 8
-        color: Theme.background
+        color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.95)
         border.color: Theme.divider
         border.width: 1
+        BackgroundEffect.enabled: Config.blurEnabled
+        BackgroundEffect.radius: 8
     }
 
     contentItem: ColumnLayout {
         spacing: 0
 
-        Rectangle {
+        Item {
             visible: root.showFilter
             Layout.fillWidth: true
             Layout.preferredHeight: 28
             Layout.bottomMargin: 4
-            radius: 6
-            color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, Theme.surfaceOpacity)
 
             RowLayout {
                 anchors.fill: parent

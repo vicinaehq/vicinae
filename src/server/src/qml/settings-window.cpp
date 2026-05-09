@@ -12,7 +12,6 @@
 #include "extension/extension.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "service-registry.hpp"
-#include "services/background-effect/background-effect-manager.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
@@ -61,11 +60,7 @@ void SettingsWindow::ensureInitialized() {
     connect(m_window, &QQuickWindow::visibleChanged, this, [this](bool visible) {
       if (!visible) m_ctx.settings->closeWindow();
     });
-    connect(m_window, &QQuickWindow::widthChanged, this, &SettingsWindow::updateBlur);
-    connect(m_window, &QQuickWindow::heightChanged, this, &SettingsWindow::updateBlur);
   }
-
-  connect(m_ctx.services->config(), &config::Manager::configChanged, this, &SettingsWindow::updateBlur);
 }
 
 void SettingsWindow::setCurrentPage(const QString &page) {
@@ -138,7 +133,6 @@ void SettingsWindow::show() {
   m_window->show();
   m_window->raise();
   m_window->requestActivate();
-  updateBlur();
 }
 
 void SettingsWindow::hide() {
@@ -319,17 +313,3 @@ QVariantList SettingsWindow::filterSidebarItems(const QString &query) const {
   return result;
 }
 // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
-
-void SettingsWindow::updateBlur() {
-  if (!m_window) return;
-  auto &cfg = m_ctx.services->config()->value();
-  auto *bgEffect = m_ctx.services->backgroundEffectManager();
-  if (!bgEffect->supportsBlur()) return;
-
-  if (cfg.launcherWindow.blur.enabled) {
-    QRect const region(0, 0, m_window->width(), m_window->height());
-    bgEffect->setBlur(m_window, {.radius = 10, .region = region});
-  } else {
-    bgEffect->clearBlur(m_window);
-  }
-}

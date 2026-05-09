@@ -745,7 +745,6 @@ set(VICINAE_QML_FILES
 	src/qml/qml/ExtensionView.qml
 	src/qml/qml/MarkdownDetailView.qml
 	src/qml/qml/ExtensionGridView.qml
-	src/qml/qml/FocusRestoringScope.qml
 	src/qml/qml/ActionPanelPopover.qml
 	src/qml/qml/ActionListPanel.qml
 	src/qml/qml/ActionItemDelegate.qml
@@ -844,6 +843,8 @@ qt_add_qml_module(${TARGET}
 		src/qml/completion-model.hpp
 		src/qml/markdown/markdown-model.hpp
 		src/qml/markdown/text-selection-controller.hpp
+		src/qml/background-effect-attached.hpp
+		src/qml/background-effect-attached.cpp
 	DEPENDENCIES QtQuick
 	NO_PLUGIN
 )

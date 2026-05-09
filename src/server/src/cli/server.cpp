@@ -18,6 +18,7 @@
 #include "root-search/shortcuts/shortcut-root-provider.hpp"
 #include "service-registry.hpp"
 #include "services/background-effect/background-effect-manager.hpp"
+#include "qml/background-effect-attached.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
 #include "services/browser-extension-service.hpp"
 #include "services/calculator-service/calculator-service.hpp"
@@ -149,6 +150,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setScriptDb(std::make_unique<ScriptCommandService>());
     registry->setBrowserExtension(std::make_unique<BrowserExtensionService>());
     registry->setBackgroundEffectManager(std::make_unique<BackgroundEffectManager>());
+    BackgroundEffect::setManager(registry->backgroundEffectManager());
     registry->setFileChooserService(std::make_unique<FileChooserService>());
     registry->setNewsService(std::make_unique<NewsService>(*registry->config()));
     registry->setTelemetry(std::make_unique<TelemetryService>(*registry->config()));

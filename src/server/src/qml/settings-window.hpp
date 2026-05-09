@@ -67,7 +67,6 @@ signals:
 
 private:
   void ensureInitialized();
-  void updateBlur();
   void rebuildSidebarExtensions();
   void updateSidebarEnabled(const QString &providerId, bool enabled);
 
