@@ -47,6 +47,7 @@ SelectableDelegate {
         }
 
         Rectangle {
+            visible: root.selected
             width: 1
             anchors.top: parent.top
             anchors.bottom: arrowIcon.top
@@ -64,6 +65,7 @@ SelectableDelegate {
         }
 
         Rectangle {
+            visible: root.selected
             width: 1
             anchors.top: arrowIcon.bottom
             anchors.topMargin: 4
@@ -82,7 +84,7 @@ SelectableDelegate {
             Text {
                 width: parent.width
                 text: root.calcAnswer
-                color: root.selected ? Theme.listItemSelectionFg : Theme.accent
+                color: root.selected ? Theme.listItemSelectionFg : Theme.foreground
                 font.pointSize: Theme.regularFontSize * 1.5
                 font.weight: Font.DemiBold
                 elide: Text.ElideRight
