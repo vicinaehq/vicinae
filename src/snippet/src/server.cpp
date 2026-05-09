@@ -11,7 +11,6 @@
 #include <xkbcommon/xkbcommon.h>
 #include <fcntl.h>
 #include <iostream>
-#include <ostream>
 #include <sys/epoll.h>
 #include <unistd.h>
 #include <algorithm>
@@ -33,7 +32,7 @@ public:
     const int rc = read(fd, m_buf.data(), m_buf.size());
 
     if (rc == -1) {
-      std::println(std::cerr, "Failed to read fd {}: {}", fd, strerror(errno));
+      std::cerr << "Failed to read fd " << fd << ": " << strerror(errno) << '\n';
       return false;
     }
 
@@ -118,7 +117,7 @@ std::expected<void, std::string> SnippetService::setKeymap(snippet_gen::LayoutIn
 
 std::expected<snippet_gen::CreateSnippetResponse, std::string>
 SnippetService::createSnippet(snippet_gen::CreateSnippetRequest req) {
-  std::println(std::cerr, "Created new snippet with trigger {}", req.trigger);
+  std::cerr << "Created new snippet with trigger " << req.trigger << '\n';
   m_snippets.push_back(Snippet{.trigger = req.trigger, .mode = req.mode});
   std::ranges::sort(m_snippets, [](auto &&a, auto &&b) { return a.trigger.size() > b.trigger.size(); });
   return snippet_gen::CreateSnippetResponse{};
@@ -151,7 +150,7 @@ void SnippetService::setLayout(const LayoutInfo &info) {
   xkb_keymap_unref(m_keymap);
   m_keymap = keymap;
   m_kbState = state;
-  std::println(std::cerr, "changed keyboard layout to {}", rules.layout);
+  std::cerr << "changed keyboard layout to " << rules.layout << '\n';
 }
 
 void SnippetService::listen(snippet_gen::Server &rpcServer) {
@@ -162,7 +161,7 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
   int epollfd = epoll_create1(0);
 
   if (epollfd == -1) {
-    std::println(std::cerr, "Failed to create epollfd: {}", strerror(errno));
+    std::cerr << "Failed to create epollfd: " << strerror(errno) << '\n';
     return;
   }
 
@@ -172,7 +171,7 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
   ev.events = EPOLLIN;
 
   if (epoll_ctl(epollfd, EPOLL_CTL_ADD, ev.data.fd, &ev) == -1) {
-    std::println(std::cerr, "Failed to add stdin to epoll: {}", strerror(errno));
+    std::cerr << "Failed to add stdin to epoll: " << strerror(errno) << '\n';
     exit(1);
   }
 
@@ -184,7 +183,7 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
   const int udevFd = udev_monitor_get_fd(mon);
 
   if (udevFd == -1) {
-    std::println(std::cerr, "Failed to create inotify file descriptor", strerror(errno));
+    std::cerr << "Failed to get udev monitor fd: " << strerror(errno) << '\n';
     exit(1);
   }
 
@@ -192,7 +191,7 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
   ev.events = EPOLLIN;
 
   if (epoll_ctl(epollfd, EPOLL_CTL_ADD, ev.data.fd, &ev) == -1) {
-    std::println(std::cerr, "Failed to add watch to epoll: {}", strerror(errno));
+    std::cerr << "Failed to add watch to epoll: " << strerror(errno) << '\n';
     exit(1);
   }
 
@@ -200,7 +199,7 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
     int fd = open(device, O_RDONLY);
 
     if (fd == -1) {
-      std::println(std::cerr, "Failed to open {}: {}", device, strerror(errno));
+      std::cerr << "Failed to open " << device << ": " << strerror(errno) << '\n';
       return false;
     }
 
@@ -208,7 +207,7 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
     ev.data.fd = fd;
 
     if (epoll_ctl(epollfd, EPOLL_CTL_ADD, ev.data.fd, &ev) == -1) {
-      std::println(std::cerr, "Failed to add fd {} for {} to epoll: {}", fd, device, strerror(errno));
+      std::cerr << "Failed to add fd " << fd << " for " << device << " to epoll: " << strerror(errno) << '\n';
       close(fd);
       return false;
     }
@@ -222,7 +221,7 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
   }
 
   for (const auto &[fd, data] : inputs) {
-    std::println(std::cerr, "Input ready: {} (fd={})", data.name, data.fd);
+    std::cerr << "Input ready: " << data.name << " (fd=" << data.fd << ")\n";
   }
 
   constexpr const int MAX_EVENTS = 256;
@@ -236,7 +235,7 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
     const int nfds = epoll_wait(epollfd, events.data(), events.size(), -1);
 
     if (nfds == -1) {
-      std::println(std::cerr, "Failed to epoll_wait: {}", strerror(errno));
+      std::cerr << "Failed to epoll_wait: " << strerror(errno) << '\n';
       exit(1);
     }
 
@@ -261,23 +260,23 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
         if (!kb || std::string_view{kb} != "1") continue;
 
         if (action == "add") {
-          std::println(std::cerr, "CREATE ev: {}", node);
+          std::cerr << "CREATE ev: " << node << '\n';
 
           if (createInput(node)) {
-            std::println(std::cerr, "Hot plugged device {}", node);
+            std::cerr << "Hot plugged device " << node << '\n';
           } else {
-            std::println(std::cerr, "Failed to hot plug device {}", node);
+            std::cerr << "Failed to hot plug device " << node << '\n';
           }
         }
 
         else if (action == "remove") {
-          std::println(std::cerr, "DELETE ev: {}", node);
+          std::cerr << "DELETE ev: " << node << '\n';
 
           if (auto it = std::ranges::find_if(inputs, [&](auto &&input) { return input.second.name == node; });
               it != inputs.end()) {
             epoll_ctl(epollfd, EPOLL_CTL_DEL, it->second.ev.data.fd, &it->second.ev);
             close(it->second.fd);
-            std::println(std::cerr, "Removed device {} (fd={})", it->second.name, it->second.fd);
+            std::cerr << "Removed device " << it->second.name << " (fd=" << it->second.fd << ")\n";
             inputs.erase(it);
           }
         }
@@ -288,7 +287,7 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
       auto it = inputs.find(fd);
 
       if (it == inputs.end()) {
-        std::println(std::cerr, "fd {} does not map to any known input, skipping...", fd);
+        std::cerr << "fd " << fd << " does not map to any known input, skipping...\n";
         continue;
       }
 
@@ -298,22 +297,19 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
 
       // TODO: handle this more gracefully to allow any read size and batch?
       if ((rc = read(fd, &ev, sizeof(ev))) < sizeof(ev)) {
-        std::println(std::cerr, "read of invalid size for event: expected {}, got {}", sizeof(ev), rc);
+        std::cerr << "read of invalid size for event: expected " << sizeof(ev) << ", got " << rc << '\n';
         continue;
       }
 
       if (rc <= 0) {
         epoll_ctl(epollfd, EPOLL_CTL_DEL, it->second.ev.data.fd, &it->second.ev);
         close(it->second.fd);
-        std::println(std::cerr, "Removed device {} (fd={})", it->second.name, it->second.fd);
+        std::cerr << "Removed device " << it->second.name << " (fd=" << it->second.fd << ")\n";
         inputs.erase(it);
         continue;
       }
 
-      if (ev.type != EV_KEY) {
-        // std::println(std::cerr, "Reading key input {} (fd={}) code={}", it->second.name, fd, ev.code);
-        continue;
-      }
+      if (ev.type != EV_KEY) { continue; }
 
       const xkb_keycode_t keycode = ev.code + 8;
 
@@ -334,7 +330,7 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
           }
         }
 
-        std::println(std::cerr, "text='{}'", m_text);
+        std::cerr << "text='" << m_text << "'\n";
 
         bool triggered = false;
 
@@ -370,7 +366,7 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
 }
 
 void SnippetService::emitExpansion(const Snippet &snippet) {
-  std::println(std::cerr, "SNIPPET TRIGGERED: {}", snippet.trigger);
+  std::cerr << "SNIPPET TRIGGERED: " << snippet.trigger << '\n';
   emittriggerSnippet({.trigger = snippet.trigger});
   m_text.clear();
 }
