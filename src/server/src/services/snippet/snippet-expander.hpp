@@ -51,47 +51,47 @@ public:
     Result result;
 
     std::ranges::for_each(parsed.parts(), [&](auto &part) {
-      part | match{[&](const PlaceholderString::ParsedPlaceholder placeholder) {
-                     if (placeholder.id == "cursor") {
-                       result.cursorPos = std::ranges::fold_left(
-                           result.parts, 0, [](int n, auto &&s) { return n + s.text.size(); });
-                     } else if (placeholder.id == "clipboard") {
-                       result.parts.emplace_back(clip->text(), true);
-                     } else if (placeholder.id == "uuid") {
-                       result.parts.emplace_back(ResultPart(m_uuid, true));
-                     } else if (placeholder.id == "date") {
-                       auto fmt = QStringLiteral("yyyy-MM-dd hh:mm");
-                       if (auto it = placeholder.args.find("format"); it != placeholder.args.end())
-                         fmt = it->second;
-                       result.parts.emplace_back(
-                           ResultPart(QDateTime::currentDateTime().toString(fmt), true));
-                     } else if (placeholder.id == "shell") {
-                       if (opts.executeShell && shellIdx < static_cast<int>(shellResults.size())) {
-                         result.parts.emplace_back(ResultPart(shellResults[shellIdx], true));
-                       } else {
-                         auto code = placeholder.args.contains("code") ? placeholder.args.at("code") : QString();
-                         result.parts.emplace_back(ResultPart(QStringLiteral("$(%1)").arg(code), true));
-                       }
-                       ++shellIdx;
-                     } else if (placeholder.id == "argument") {
-                       if (const auto it = placeholder.args.find("name"); it != placeholder.args.end()) {
-                         if (const auto it2 = std::ranges::find_if(
-                                 arguments, [&](auto &&pair) { return pair.first == it->second; });
-                             it2 != arguments.end()) {
-                           result.parts.emplace_back(it2->second);
-                         }
-                       } else {
-                         qDebug() << "no name!";
-                       }
-                     } else {
-                       if (const auto it2 = std::ranges::find_if(
-                               arguments, [&](auto &&pair) { return pair.first == placeholder.id; });
-                           it2 != arguments.end()) {
-                         result.parts.emplace_back(it2->second);
-                       }
-                     }
-                   },
-                   [&](const QString &text) { result.parts.emplace_back(ResultPart(text, false)); }};
+      part |
+          match{[&](const PlaceholderString::ParsedPlaceholder placeholder) {
+                  if (placeholder.id == "cursor") {
+                    result.cursorPos = std::ranges::fold_left(
+                        result.parts, 0, [](int n, auto &&s) { return n + s.text.size(); });
+                  } else if (placeholder.id == "clipboard") {
+                    result.parts.emplace_back(clip->text(), true);
+                  } else if (placeholder.id == "uuid") {
+                    result.parts.emplace_back(ResultPart(m_uuid, true));
+                  } else if (placeholder.id == "date") {
+                    auto fmt = QStringLiteral("yyyy-MM-dd hh:mm");
+                    if (auto it = placeholder.args.find("format"); it != placeholder.args.end())
+                      fmt = it->second;
+                    result.parts.emplace_back(ResultPart(QDateTime::currentDateTime().toString(fmt), true));
+                  } else if (placeholder.id == "shell") {
+                    if (opts.executeShell && shellIdx < static_cast<int>(shellResults.size())) {
+                      result.parts.emplace_back(ResultPart(shellResults[shellIdx], true));
+                    } else {
+                      auto code = placeholder.args.contains("code") ? placeholder.args.at("code") : QString();
+                      result.parts.emplace_back(ResultPart(QStringLiteral("$(%1)").arg(code), true));
+                    }
+                    ++shellIdx;
+                  } else if (placeholder.id == "argument") {
+                    if (const auto it = placeholder.args.find("name"); it != placeholder.args.end()) {
+                      if (const auto it2 = std::ranges::find_if(
+                              arguments, [&](auto &&pair) { return pair.first == it->second; });
+                          it2 != arguments.end()) {
+                        result.parts.emplace_back(it2->second);
+                      }
+                    } else {
+                      qDebug() << "no name!";
+                    }
+                  } else {
+                    if (const auto it2 = std::ranges::find_if(
+                            arguments, [&](auto &&pair) { return pair.first == placeholder.id; });
+                        it2 != arguments.end()) {
+                      result.parts.emplace_back(it2->second);
+                    }
+                  }
+                },
+                [&](const QString &text) { result.parts.emplace_back(ResultPart(text, false)); }};
     });
 
     return result;

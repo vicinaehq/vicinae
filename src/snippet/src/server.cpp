@@ -243,12 +243,21 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
 
   ipcFrame.setHandler([&](std::string_view message) { rpcServer.route(message); });
 
+  static constexpr int MODIFIER_TIMEOUT_MS = 3000;
+
   for (;;) {
-    const int nfds = epoll_wait(epollfd, events.data(), events.size(), -1);
+    const int timeout = m_pendingExpansion ? MODIFIER_TIMEOUT_MS : -1;
+    const int nfds = epoll_wait(epollfd, events.data(), events.size(), timeout);
 
     if (nfds == -1) {
       std::cerr << "Failed to epoll_wait: " << strerror(errno) << '\n';
       exit(1);
+    }
+
+    if (nfds == 0 && m_pendingExpansion) {
+      std::cerr << "Modifier release timeout, emitting anyway\n";
+      flushPendingExpansion();
+      continue;
     }
 
     for (int n = 0; n < nfds; ++n) {
@@ -327,11 +336,22 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
 
       if (ev.value == 0) {
         xkb_state_update_key(m_kbState, keycode, XKB_KEY_UP);
+        if (m_pendingExpansion && !hasActiveModifiers()) { flushPendingExpansion(); }
       } else if (ev.value <= 2) {
         const int len = xkb_state_key_get_utf8(m_kbState, keycode, key.data(), key.size());
         const std::string_view keyStr{key.data(), static_cast<size_t>(len)};
 
         if (ev.value == 1) { xkb_state_update_key(m_kbState, keycode, XKB_KEY_DOWN); }
+
+        if (m_undoTrigger && ev.value == 1) {
+          if (ev.code == KEY_BACKSPACE) {
+            std::cerr << "SNIPPET UNDO: " << *m_undoTrigger << '\n';
+            emitundoSnippet({.trigger = *m_undoTrigger});
+            m_undoTrigger.reset();
+            continue;
+          }
+          m_undoTrigger.reset();
+        }
 
         if (!keyStr.empty()) {
           if (ev.code == KEY_BACKSPACE) {
@@ -366,10 +386,32 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
   }
 }
 
+bool SnippetService::hasActiveModifiers() const {
+  return xkb_state_mod_names_are_active(m_kbState, XKB_STATE_MODS_DEPRESSED, XKB_STATE_MATCH_ANY,
+                                        XKB_MOD_NAME_SHIFT, XKB_MOD_NAME_CTRL, XKB_MOD_NAME_ALT,
+                                        XKB_MOD_NAME_LOGO, nullptr) > 0;
+}
+
+void SnippetService::flushPendingExpansion() {
+  if (!m_pendingExpansion) return;
+  std::cerr << "SNIPPET EMITTING (mods released): " << m_pendingExpansion->trigger << '\n';
+  emittriggerSnippet({.trigger = m_pendingExpansion->trigger});
+  m_undoTrigger = m_pendingExpansion->trigger;
+  m_pendingExpansion.reset();
+}
+
 void SnippetService::emitExpansion(const Snippet &snippet) {
   std::cerr << "SNIPPET TRIGGERED: " << snippet.trigger << '\n';
-  emittriggerSnippet({.trigger = snippet.trigger});
   m_text.clear();
+
+  if (hasActiveModifiers()) {
+    std::cerr << "Deferring expansion until modifiers are released\n";
+    m_pendingExpansion = snippet;
+    return;
+  }
+
+  emittriggerSnippet({.trigger = snippet.trigger});
+  m_undoTrigger = snippet.trigger;
 }
 
 }; // namespace snippet

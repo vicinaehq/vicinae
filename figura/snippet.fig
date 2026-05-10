@@ -36,6 +36,10 @@ struct TriggerSnippetPayload {
   trigger: string;
 };
 
+struct UndoSnippetPayload {
+  trigger: string;
+};
+
 service Snippet {
   fn setKeymap(info: LayoutInfo) => void;
   fn createSnippet(req: CreateSnippetRequest) => CreateSnippetResponse;
@@ -43,4 +47,5 @@ service Snippet {
   fn resetContext() => void;
 
   event triggerSnippet(payload: TriggerSnippetPayload);
+  event undoSnippet(payload: UndoSnippetPayload);
 }

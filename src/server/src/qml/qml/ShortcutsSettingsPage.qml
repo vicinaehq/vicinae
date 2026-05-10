@@ -121,7 +121,13 @@ Item {
                         padding: 0
                         activeFocusOnTab: true
 
-                        onTextChanged: root.model.setFilter(text)
+                        Timer {
+                            id: filterDebounce
+                            interval: 16
+                            onTriggered: root.model.setFilter(searchField.text)
+                        }
+
+                        onTextChanged: filterDebounce.restart()
                         Keys.onPressed: event => {
                             if (event.key === Qt.Key_Escape && text !== "") {
                                 text = "";

@@ -85,24 +85,24 @@ Item {
                     visible: !searchInput.displayText && launcher.searchInteractive
                 }
 
+                Timer {
+                    id: searchDebounce
+                    interval: 16
+                    onTriggered: searchInput._syncSearchText()
+                }
+
                 onTextEdited: {
                     if (Config.considerPreedit)
                         return false;
 
-                    launcher.forwardSearchText(text);
-                    if (launcher.isRootSearch) {
-                        searchModel.setFilter(text);
-                    }
+                    searchDebounce.restart();
                 }
 
                 onDisplayTextChanged: {
                     if (!Config.considerPreedit)
                         return false;
 
-                    launcher.forwardSearchText(displayText);
-                    if (launcher.isRootSearch) {
-                        searchModel.setFilter(displayText);
-                    }
+                    searchDebounce.restart();
                 }
 
                 function _wordBoundaryBackward(text, pos) {
@@ -124,9 +124,10 @@ Item {
                 }
 
                 function _syncSearchText() {
-                    launcher.forwardSearchText(searchInput.text);
+                    const value = Config.considerPreedit ? searchInput.displayText : searchInput.text;
+                    launcher.forwardSearchText(value);
                     if (launcher.isRootSearch)
-                        searchModel.setFilter(searchInput.text);
+                        searchModel.setFilter(value);
                 }
 
                 function _handleEmacsEditing(event) {

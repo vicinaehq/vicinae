@@ -11,6 +11,7 @@ public:
   void backspace(int n) override;
   void moveCursorLeft(int n) override;
   void space() override;
+  void typeText(std::string_view text) override;
 
 private:
   linuxutils::UInputKeyboard m_keyboard;

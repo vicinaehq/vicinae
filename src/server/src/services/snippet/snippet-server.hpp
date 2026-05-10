@@ -30,6 +30,7 @@ class SnippetServer : public QObject {
 
 signals:
   void keywordTriggered(std::string trigger) const;
+  void undoTriggered(std::string trigger) const;
   void serverStopped();
 
 public:

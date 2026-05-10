@@ -44,6 +44,9 @@ SnippetServer::SnippetServer() : m_bus(&m_process), m_rpc(m_bus), m_client(m_rpc
       m_client.snippet(), &snippet_gen::SnippetService::triggerSnippet, this,
       [this](const snippet_gen::TriggerSnippetPayload &payload) { emit keywordTriggered(payload.trigger); });
 
+  connect(m_client.snippet(), &snippet_gen::SnippetService::undoSnippet, this,
+          [this](const snippet_gen::UndoSnippetPayload &payload) { emit undoTriggered(payload.trigger); });
+
   connect(&m_bus, &SnippetServerBus::messageReceived, this, [this](const QByteArray &msg) {
     std::string_view view{msg.constData(), static_cast<size_t>(msg.size())};
     if (auto res = m_client.route(view); !res) {

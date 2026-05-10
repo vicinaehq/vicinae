@@ -7,6 +7,7 @@
 #include "services/window-manager/window-manager.hpp"
 #include "snippet-server.hpp"
 #include "snippet-db.hpp"
+#include <QtConcurrent>
 #include <QTimer>
 #include <qtmetamacros.h>
 
@@ -20,19 +21,18 @@ signals:
   void snippetsChanged(); // add/updated/remove
 
 public:
-  SnippetService(std::filesystem::path path, WindowManager &wm, const AppService &appDb,
+  SnippetService(const std::filesystem::path &path, WindowManager &wm, const AppService &appDb,
                  AbstractKeyboardService &keyboard, ClipboardService &clipboard)
       : m_db(path), m_wm(wm), m_appDb(appDb), m_keyboard(keyboard), m_clipboard(clipboard) {
     connect(&m_server, &SnippetServer::keywordTriggered, this, &SnippetService::handleKeywordTrigger);
+    connect(&m_server, &SnippetServer::undoTriggered, this, &SnippetService::handleUndo);
     connect(&wm, &WindowManager::focusChanged, this, [this]() {
-      // if (m_server.isRunning()) { m_server.resetContext(); }
+      if (m_server.isRunning()) { m_server.resetContext(); }
     });
   }
 
   bool start(const config::SnippetConfig &cfg) {
     if (!cfg.enabled) return true;
-
-    m_prePasteDelay = cfg.prePasteDelay;
 
     m_server.start();
 
@@ -51,7 +51,7 @@ public:
     return true;
   }
 
-  auto createSnippet(snippet::SnippetPayload payload) {
+  auto createSnippet(const snippet::SnippetPayload &payload) {
     auto res = m_db.addSnippet(payload);
     if (!res) return res;
 
@@ -98,6 +98,27 @@ public:
   SnippetDatabase *database() { return &m_db; }
 
 private:
+  struct UndoRecord {
+    std::string trigger;
+    QString expandedText;
+    bool wordMode = false;
+  };
+
+  void handleUndo(const std::string &trigger) {
+    if (!m_undoRecord || m_undoRecord->trigger != trigger) return;
+
+    // In non-word mode, the user's backspace already deleted one char of the expanded text.
+    // In word mode, it deleted the trailing space, so the full expanded text remains.
+    const int backspaceCount =
+        static_cast<int>(m_undoRecord->expandedText.size()) - (m_undoRecord->wordMode ? 0 : 1);
+    m_undoRecord.reset();
+
+    QtConcurrent::run([this, backspaceCount, trigger]() {
+      if (backspaceCount > 0) { m_keyboard.backspace(backspaceCount); }
+      m_keyboard.typeText(trigger);
+    });
+  }
+
   void handleKeywordTrigger(const std::string &keyword) {
     const auto snippet = m_db.findByKeyword(keyword);
     if (!snippet || !snippet->expansion) return;
@@ -138,26 +159,26 @@ private:
 
     m_clipboard.copyText(expanded, {.concealed = true});
 
-    auto inject = [=, this]() {
+    if (!result.cursorPos) {
+      m_undoRecord = UndoRecord{.trigger = keyword, .expandedText = expanded, .wordMode = wordMode};
+    } else {
+      m_undoRecord.reset();
+    }
+
+    QtConcurrent::run([this, charsToDelete, terminal, wordMode, cursorPos = result.cursorPos,
+                       expandedSize = expanded.size()]() {
       m_keyboard.backspace(charsToDelete);
       m_keyboard.paste(terminal);
 
       if (wordMode) { m_keyboard.space(); }
 
-      if (result.cursorPos) {
-        const int totalLength = expanded.size();
-        const int leftMoves = totalLength - *result.cursorPos;
+      if (cursorPos) {
+        const int leftMoves = static_cast<int>(expandedSize) - *cursorPos;
         if (leftMoves > 0) { m_keyboard.moveCursorLeft(leftMoves); }
       }
 
-      m_clipboard.scheduleClipboardRestore(200);
-    };
-
-    if (m_prePasteDelay > 0) {
-      QTimer::singleShot(m_prePasteDelay, this, inject);
-    } else {
-      inject();
-    }
+      QMetaObject::invokeMethod(this, [this]() { m_clipboard.scheduleClipboardRestore(200); });
+    });
   }
 
   SnippetServer m_server;
@@ -166,5 +187,5 @@ private:
   const AppService &m_appDb;
   AbstractKeyboardService &m_keyboard;
   ClipboardService &m_clipboard;
-  int m_prePasteDelay = 50;
+  std::optional<UndoRecord> m_undoRecord;
 };

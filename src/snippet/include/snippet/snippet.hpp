@@ -1,9 +1,10 @@
 #pragma once
-#include "types.hpp"
+#include <optional>
 #include <sys/epoll.h>
 #include <libudev.h>
 #include <unistd.h>
 #include <xkbcommon/xkbcommon.h>
+#include "types.hpp"
 
 namespace snippet {
 
@@ -29,8 +30,12 @@ private:
   void setLayout(const snippet_gen::LayoutInfo &info);
   std::vector<std::string> enumerateKeyboards();
   void emitExpansion(const Snippet &snippet);
+  bool hasActiveModifiers() const;
+  void flushPendingExpansion();
 
   std::string m_text;
+  std::optional<std::string> m_undoTrigger;
+  std::optional<Snippet> m_pendingExpansion;
   udev *m_udev = nullptr;
   xkb_context *m_xkb = nullptr;
   xkb_keymap *m_keymap = nullptr;

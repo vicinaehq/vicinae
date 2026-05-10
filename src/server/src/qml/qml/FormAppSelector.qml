@@ -19,11 +19,15 @@ ColumnLayout {
                     return items[i];
             }
         }
-        return {displayName: wmClass, iconSource: ""};
+        return {
+            displayName: wmClass,
+            iconSource: ""
+        };
     }
 
     function add(wmClass) {
-        if (model.indexOf(wmClass) >= 0) return;
+        if (model.indexOf(wmClass) >= 0)
+            return;
         let copy = model.slice();
         copy.push(wmClass);
         model = copy;

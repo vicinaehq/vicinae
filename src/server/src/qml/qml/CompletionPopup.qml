@@ -138,7 +138,13 @@ Popup {
                         visible: !filterField.text
                     }
 
-                    onTextEdited: root.filter(text)
+                    Timer {
+                        id: filterDebounce
+                        interval: 16
+                        onTriggered: root.filter(filterField.text)
+                    }
+
+                    onTextEdited: filterDebounce.restart()
 
                     Keys.onUpPressed: root.moveUp()
                     Keys.onDownPressed: root.moveDown()
