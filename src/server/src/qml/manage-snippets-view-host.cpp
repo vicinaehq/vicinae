@@ -1,7 +1,9 @@
 #include "manage-snippets-view-host.hpp"
 #include "placeholder.hpp"
 #include "service-registry.hpp"
+#include "services/app-service/app-service.hpp"
 #include "services/snippet/snippet-service.hpp"
+#include "view-utils.hpp"
 #include <QDateTime>
 #include <ranges>
 
@@ -73,6 +75,23 @@ void ManageSnippetsViewHost::loadDetail(const snippet::SerializedSnippet &snippe
         {QStringLiteral("label"), QStringLiteral("Keyword")},
         {QStringLiteral("value"), QString::fromStdString(snippet.expansion->keyword)},
     });
+
+    if (!snippet.expansion->apps.empty()) {
+      const auto *appDb = context()->services->appDb();
+      QVariantList icons;
+      for (const auto &appId : snippet.expansion->apps) {
+        const auto app = appDb->findById(QString::fromStdString(appId));
+        QVariantMap entry;
+        entry[QStringLiteral("icon")] = app ? qml::imageSourceFor(app->iconUrl()) : QString();
+        entry[QStringLiteral("tooltip")] = app ? app->displayName() : QString::fromStdString(appId);
+        icons.append(entry);
+      }
+      meta.append(QVariantMap{
+          {QStringLiteral("type"), QStringLiteral("icons")},
+          {QStringLiteral("label"), QStringLiteral("Apps")},
+          {QStringLiteral("icons"), icons},
+      });
+    }
   }
 
   m_detailMetadata = meta;
@@ -112,7 +131,7 @@ void ManageSnippetsViewHost::updateExpandedText() {
   const auto visitor = overloads{
       [this](const snippet::TextSnippet &text) {
         const auto values = context()->navigation->completionValues();
-        const auto result = m_expander.expand(text.text.c_str(), values);
+        const auto result = m_expander.expand(text.text.c_str(), values, {.executeShell = false});
         m_detailContent = result.parts | std::views::transform([](auto &&r) { return r.text; }) |
                           std::views::join | std::ranges::to<QString>();
       },

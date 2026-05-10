@@ -1,6 +1,8 @@
 #pragma once
 #include <optional>
 #include <QGuiApplication>
+#include <QProcess>
+#include <QtConcurrent>
 #include <qclipboard.h>
 #include <qcontainerfwd.h>
 #include <quuid.h>
@@ -9,6 +11,7 @@
 #include "placeholder.hpp"
 
 class SnippetExpander {
+public:
   struct ResultPart {
     QString text;
     bool placeholder = false;
@@ -19,7 +22,9 @@ class SnippetExpander {
     std::optional<int> cursorPos;
   };
 
-public:
+  struct Options {
+    bool executeShell = true;
+  };
   SnippetExpander() : m_uuid(QUuid::createUuid().toString(QUuid::WithoutBraces)) {}
 
   QString expandToString(const QString &text,
@@ -31,8 +36,17 @@ public:
   }
 
   Result expand(const QString &text, const std::vector<std::pair<QString, QString>> &arguments) const {
+    return expand(text, arguments, Options{});
+  }
+
+  Result expand(const QString &text, const std::vector<std::pair<QString, QString>> &arguments,
+                const Options &opts) const {
     const auto clip = QGuiApplication::clipboard();
     const auto parsed = PlaceholderString::parseSnippetText(text);
+
+    const auto shellResults = opts.executeShell ? executeShellPlaceholders(parsed) : std::vector<QString>{};
+    int shellIdx = 0;
+
     Result result;
 
     std::ranges::for_each(parsed.parts(), [&](auto &part) {
@@ -46,6 +60,14 @@ public:
                        result.parts.emplace_back(ResultPart(m_uuid, true));
                      } else if (placeholder.id == "date") {
                        result.parts.emplace_back(ResultPart("now", true));
+                     } else if (placeholder.id == "shell") {
+                       if (opts.executeShell && shellIdx < static_cast<int>(shellResults.size())) {
+                         result.parts.emplace_back(ResultPart(shellResults[shellIdx], true));
+                       } else {
+                         auto code = placeholder.args.contains("code") ? placeholder.args.at("code") : QString();
+                         result.parts.emplace_back(ResultPart(QStringLiteral("$(%1)").arg(code), true));
+                       }
+                       ++shellIdx;
                      } else if (placeholder.id == "argument") {
                        if (const auto it = placeholder.args.find("name"); it != placeholder.args.end()) {
                          if (const auto it2 = std::ranges::find_if(
@@ -71,6 +93,59 @@ public:
   }
 
 private:
+  static constexpr int SHELL_TIMEOUT_MS = 2000;
+
+  static std::vector<QString> executeShellPlaceholders(const PlaceholderString &parsed) {
+    struct ShellCommand {
+      QString code;
+      QString exec;
+    };
+
+    std::vector<ShellCommand> commands;
+    for (const auto &part : parsed.parts()) {
+      if (const auto *ph = std::get_if<PlaceholderString::ParsedPlaceholder>(&part)) {
+        if (ph->id != "shell") continue;
+        ShellCommand cmd;
+        if (auto it = ph->args.find("code"); it != ph->args.end()) cmd.code = it->second;
+        if (auto it = ph->args.find("exec"); it != ph->args.end())
+          cmd.exec = it->second;
+        else
+          cmd.exec = qEnvironmentVariable("SHELL", QStringLiteral("/bin/sh"));
+        commands.push_back(std::move(cmd));
+      }
+    }
+
+    if (commands.empty()) return {};
+
+    const auto runCommand = [](const ShellCommand &cmd) -> QString {
+      QProcess proc;
+      proc.start(cmd.exec, {QStringLiteral("-c"), cmd.code});
+      if (proc.waitForFinished(SHELL_TIMEOUT_MS) && proc.exitStatus() == QProcess::NormalExit &&
+          proc.exitCode() == 0) {
+        auto output = QString::fromUtf8(proc.readAllStandardOutput());
+        if (output.endsWith('\n')) output.chop(1);
+        return output;
+      }
+      qWarning() << "Shell placeholder failed:" << cmd.code << proc.errorString();
+      return {};
+    };
+
+    std::vector<QFuture<QString>> futures;
+    futures.reserve(commands.size());
+    for (const auto &cmd : commands) {
+      futures.push_back(QtConcurrent::run(runCommand, cmd));
+    }
+
+    std::vector<QString> results;
+    results.reserve(futures.size());
+    for (auto &future : futures) {
+      future.waitForFinished();
+      results.push_back(future.result());
+    }
+
+    return results;
+  }
+
   QString m_uuid; // we generate it once to keep it stable across expansions, useful when presenting in list
                   // detail
 };

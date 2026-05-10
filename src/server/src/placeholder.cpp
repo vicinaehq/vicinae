@@ -3,7 +3,7 @@
 #include <utility>
 
 PlaceholderString PlaceholderString::parseSnippetText(const QString &link) {
-  return parse(link, std::vector<QString>{"uuid", "clipboard", "date", "cursor"});
+  return parse(link, std::vector<QString>{"uuid", "clipboard", "date", "cursor", "shell"});
 }
 
 PlaceholderString PlaceholderString::parseShortcutText(const QString &link) {

@@ -183,5 +183,12 @@ void SnippetFormViewHost::buildContentCompletions() {
           {QStringLiteral("template"), QStringLiteral("{argument name=\"\"}")},
           {QStringLiteral("cursorOffset"), 16},
       },
+      QVariantMap{
+          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("terminal"))},
+          {QStringLiteral("title"), QStringLiteral("Shell Command")},
+          {QStringLiteral("value"), QStringLiteral("shell")},
+          {QStringLiteral("template"), QStringLiteral("{shell code=\"\"}")},
+          {QStringLiteral("cursorOffset"), 13},
+      },
   };
 }

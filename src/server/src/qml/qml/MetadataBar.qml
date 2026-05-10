@@ -41,6 +41,8 @@ Item {
                             return linkComponent;
                         case "tags":
                             return tagsComponent;
+                        case "icons":
+                            return iconsComponent;
                         default:
                             return labelComponent;
                         }
@@ -168,6 +170,66 @@ Item {
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+
+    Component {
+        id: iconsComponent
+        RowLayout {
+            spacing: 10
+
+            Text {
+                text: entry.label || ""
+                color: Theme.textMuted
+                font.pointSize: Theme.smallerFontSize
+            }
+
+            Item {
+                Layout.fillWidth: true
+            }
+
+            Row {
+                id: iconsRow
+                spacing: 4
+                Layout.alignment: Qt.AlignRight
+
+                readonly property int maxVisible: 6
+                readonly property var icons: entry.icons || []
+                readonly property int overflow: Math.max(0, icons.length - maxVisible)
+
+                Repeater {
+                    model: iconsRow.icons.slice(0, iconsRow.maxVisible)
+
+                    delegate: Item {
+                        required property var modelData
+                        width: 16
+                        height: 16
+
+                        ViciImage {
+                            anchors.fill: parent
+                            source: modelData.icon || ""
+                        }
+
+                        HoverHandler {
+                            id: iconHover
+                        }
+
+                        ViciToolTip {
+                            visible: iconHover.hovered
+                            text: modelData.tooltip || ""
+                        }
+                    }
+                }
+
+                Text {
+                    visible: iconsRow.overflow > 0
+                    text: "+" + iconsRow.overflow
+                    color: Theme.textMuted
+                    font.pointSize: Theme.smallerFontSize
+                    verticalAlignment: Text.AlignVCenter
+                    height: 16
                 }
             }
         }
