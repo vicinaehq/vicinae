@@ -6,7 +6,7 @@
 #include "services/window-manager/window-manager.hpp"
 #include "snippet-server.hpp"
 #include "snippet-db.hpp"
-#include <QtConcurrent>
+#include <QThreadPool>
 #include <QTimer>
 #include <qtmetamacros.h>
 
@@ -83,6 +83,8 @@ public:
     return res;
   }
 
+  static constexpr int DEFAULT_PRE_PASTE_DELAY_MS = 100;
+
   /**
    * The snippet server will not be running if it is explicitly disabled or
    * if it doesn't have the required permisions to do its job.
@@ -91,6 +93,7 @@ public:
 
   void setEnabled(bool enabled) { m_enabled = enabled; }
   void setUndoEnabled(bool enabled) { m_undoEnabled = enabled; }
+  void setPrePasteDelay(int ms) { m_prePasteDelay = ms; }
   void setLayout(const std::string &layout) {
     if (!layout.empty()) { m_server.setKeymap({.layout = layout}); }
   }
@@ -114,7 +117,7 @@ private:
         static_cast<int>(m_undoRecord->expandedText.size()) - (m_undoRecord->wordMode ? 0 : 1);
     m_undoRecord.reset();
 
-    QtConcurrent::run([this, backspaceCount, trigger]() {
+    QThreadPool::globalInstance()->start([this, backspaceCount, trigger]() {
       if (backspaceCount > 0) { m_keyboard.backspace(backspaceCount); }
       m_keyboard.typeText(trigger);
     });
@@ -168,21 +171,25 @@ private:
       m_undoRecord.reset();
     }
 
-    QtConcurrent::run([this, charsToDelete, terminal, wordMode, cursorPos = result.cursorPos,
-                       expandedSize = expanded.size()]() {
-      m_keyboard.backspace(charsToDelete);
-      m_keyboard.paste(terminal);
+    QTimer::singleShot(
+        m_prePasteDelay, this,
+        [this, charsToDelete, terminal, wordMode, cursorPos = result.cursorPos,
+         expandedSize = expanded.size()]() {
+          QThreadPool::globalInstance()->start([this, charsToDelete, terminal, wordMode, cursorPos, expandedSize]() {
+            m_keyboard.backspace(charsToDelete);
+            m_keyboard.paste(terminal);
 
-      if (wordMode) { m_keyboard.space(); }
+            if (wordMode) { m_keyboard.space(); }
 
-      if (cursorPos) {
-        int leftMoves = static_cast<int>(expandedSize) - *cursorPos;
-        if (wordMode) { ++leftMoves; }
-        if (leftMoves > 0) { m_keyboard.moveCursorLeft(leftMoves); }
-      }
+            if (cursorPos) {
+              int leftMoves = static_cast<int>(expandedSize) - *cursorPos;
+              if (wordMode) { ++leftMoves; }
+              if (leftMoves > 0) { m_keyboard.moveCursorLeft(leftMoves); }
+            }
 
-      QMetaObject::invokeMethod(this, [this]() { m_clipboard.scheduleClipboardRestore(); });
-    });
+            QMetaObject::invokeMethod(this, [this]() { m_clipboard.scheduleClipboardRestore(); });
+          });
+        });
   }
 
   SnippetServer m_server;
@@ -193,5 +200,6 @@ private:
   ClipboardService &m_clipboard;
   bool m_enabled = true;
   bool m_undoEnabled = true;
+  int m_prePasteDelay = DEFAULT_PRE_PASTE_DELAY_MS;
   std::optional<UndoRecord> m_undoRecord;
 };

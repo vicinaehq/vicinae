@@ -10,6 +10,7 @@ void SnippetExtension::preferenceValuesChanged(const QJsonObject &value) const {
   auto *snippet = ServiceRegistry::instance()->snippetService();
   snippet->setEnabled(value.value("enabled").toBool(true));
   snippet->setUndoEnabled(value.value("undo").toBool(true));
+  snippet->setPrePasteDelay(value.value("prePasteDelay").toInt(SnippetService::DEFAULT_PRE_PASTE_DELAY_MS));
 
   if (value.contains("layout")) { snippet->setLayout(value.value("layout").toString().toStdString()); }
 }
@@ -32,5 +33,13 @@ std::vector<Preference> SnippetExtension::preferences() const {
   layout.setRequired(false);
   layout.setDefaultValue("");
 
-  return {enabled, undo, layout};
+  auto prePasteDelay = Preference::makeText("prePasteDelay");
+  prePasteDelay.setTitle("Pre-paste delay (ms)");
+  prePasteDelay.setDescription(
+      "Delay between setting clipboard and injecting paste shortcut. Increase if expansions paste empty on "
+      "slow compositors.");
+  prePasteDelay.setRequired(false);
+  prePasteDelay.setDefaultValue(QString::number(SnippetService::DEFAULT_PRE_PASTE_DELAY_MS));
+
+  return {enabled, undo, layout, prePasteDelay};
 }
