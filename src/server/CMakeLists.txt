@@ -282,6 +282,8 @@ set(SRCS
 	src/extensions/clipboard/clipboard-extension.hpp
 	src/extensions/clipboard/clipboard-extension.cpp
 
+	src/extensions/snippet/snippet-extension.cpp
+
 	src/extensions/vicinae/refresh-apps-command.hpp
 	src/extensions/vicinae/refresh-apps-command.cpp
 	src/extensions/power-management/power-management-extension.cpp

@@ -1,5 +1,4 @@
 #pragma once
-#include "config/config.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/keyboard/abstract-keyboard-service.hpp"
@@ -31,14 +30,10 @@ public:
     });
   }
 
-  bool start(const config::SnippetConfig &cfg) {
-    if (!cfg.enabled) return true;
-
+  bool start() {
     m_server.start();
 
     if (!m_server.isRunning()) return false;
-
-    if (!cfg.layout.empty()) { m_server.setKeymap({.layout = cfg.layout}); }
 
     for (const auto &snippet : m_db.snippets()) {
       if (const auto e = snippet.expansion) {
@@ -94,6 +89,12 @@ public:
    */
   bool isServerRunning() { return m_server.isRunning(); }
 
+  void setEnabled(bool enabled) { m_enabled = enabled; }
+  void setUndoEnabled(bool enabled) { m_undoEnabled = enabled; }
+  void setLayout(const std::string &layout) {
+    if (!layout.empty()) { m_server.setKeymap({.layout = layout}); }
+  }
+
   SnippetServer *server() { return &m_server; }
   SnippetDatabase *database() { return &m_db; }
 
@@ -105,7 +106,7 @@ private:
   };
 
   void handleUndo(const std::string &trigger) {
-    if (!m_undoRecord || m_undoRecord->trigger != trigger) return;
+    if (!m_undoEnabled || !m_undoRecord || m_undoRecord->trigger != trigger) return;
 
     // In non-word mode, the user's backspace already deleted one char of the expanded text.
     // In word mode, it deleted the trailing space, so the full expanded text remains.
@@ -120,6 +121,8 @@ private:
   }
 
   void handleKeywordTrigger(const std::string &keyword) {
+    if (!m_enabled) return;
+
     const auto snippet = m_db.findByKeyword(keyword);
     if (!snippet || !snippet->expansion) return;
 
@@ -187,5 +190,7 @@ private:
   const AppService &m_appDb;
   AbstractKeyboardService &m_keyboard;
   ClipboardService &m_clipboard;
+  bool m_enabled = true;
+  bool m_undoEnabled = true;
   std::optional<UndoRecord> m_undoRecord;
 };
