@@ -57,6 +57,12 @@ static:
 	cmake --build $(BUILD_DIR)
 .PHONY: static
 
+# things we can't really do in cmake. should be run with elevated privileges
+postbuild:
+	# snippet server needs to monitor input devices, so it needs this cap
+	setcap "cap_dac_override+ep" ./build/bin/vicinae-snippet-server
+.PHONY: postbuild
+
 # optimize for portability (build problematic libs statically)
 # this will increase compile time as more libraries will have to be compiled from source,
 # but the resulting binary will be more portable across different distros, especially the ones
