@@ -171,25 +171,26 @@ private:
       m_undoRecord.reset();
     }
 
-    QTimer::singleShot(
-        m_prePasteDelay, this,
-        [this, charsToDelete, terminal, wordMode, cursorPos = result.cursorPos,
-         expandedSize = expanded.size()]() {
-          QThreadPool::globalInstance()->start([this, charsToDelete, terminal, wordMode, cursorPos, expandedSize]() {
-            m_keyboard.backspace(charsToDelete);
-            m_keyboard.paste(terminal);
+    QTimer::singleShot(m_prePasteDelay, this,
+                       [this, charsToDelete, terminal, wordMode, cursorPos = result.cursorPos,
+                        expandedSize = expanded.size()]() {
+                         QThreadPool::globalInstance()->start([this, charsToDelete, terminal, wordMode,
+                                                               cursorPos, expandedSize]() {
+                           m_keyboard.backspace(charsToDelete);
+                           m_keyboard.paste(terminal);
 
-            if (wordMode) { m_keyboard.space(); }
+                           if (wordMode) { m_keyboard.space(); }
 
-            if (cursorPos) {
-              int leftMoves = static_cast<int>(expandedSize) - *cursorPos;
-              if (wordMode) { ++leftMoves; }
-              if (leftMoves > 0) { m_keyboard.moveCursorLeft(leftMoves); }
-            }
+                           if (cursorPos) {
+                             int leftMoves = static_cast<int>(expandedSize) - *cursorPos;
+                             if (wordMode) { ++leftMoves; }
+                             if (leftMoves > 0) { m_keyboard.moveCursorLeft(leftMoves); }
+                           }
 
-            QMetaObject::invokeMethod(this, [this]() { m_clipboard.scheduleClipboardRestore(); });
-          });
-        });
+                           QMetaObject::invokeMethod(this,
+                                                     [this]() { m_clipboard.scheduleClipboardRestore(); });
+                         });
+                       });
   }
 
   SnippetServer m_server;
