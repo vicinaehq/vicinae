@@ -90,8 +90,10 @@ public:
   bool setPinned(const QString &id, bool pinned);
   QFuture<PaginatedResponse<ClipboardHistoryEntry>> listAll(int limit = 100, int offset = 0,
                                                             const ClipboardListSettings &opts = {}) const;
+  static constexpr int CLIPBOARD_RESTORE_DELAY_MS = 800;
+
   bool copyText(const QString &text, const Clipboard::CopyOptions &options = {.concealed = true});
-  void scheduleClipboardRestore(int delayMs);
+  void scheduleClipboardRestore(int delayMs = CLIPBOARD_RESTORE_DELAY_MS);
   bool copyHtml(const Clipboard::Html &data, const Clipboard::CopyOptions &options = {.concealed = false});
   bool copyFile(const std::filesystem::path &path,
                 const Clipboard::CopyOptions &options = {.concealed = false});

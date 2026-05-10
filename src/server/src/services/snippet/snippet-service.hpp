@@ -181,7 +181,7 @@ private:
         if (leftMoves > 0) { m_keyboard.moveCursorLeft(leftMoves); }
       }
 
-      QMetaObject::invokeMethod(this, [this]() { m_clipboard.scheduleClipboardRestore(200); });
+      QMetaObject::invokeMethod(this, [this]() { m_clipboard.scheduleClipboardRestore(); });
     });
   }
 
