@@ -59,8 +59,21 @@ Item {
         }
 
         FormField {
+            label: "Applications"
+            info: "Restrict expansion to specific applications. By default, it works everywhere."
+            visible: root.host.serverRunning && root.host.keyword !== ""
+            topAlignLabel: true
+
+            FormAppSelector {
+                model: root.host.apps
+                sections: root.host.availableApps
+                onChanged: apps => root.host.apps = apps
+            }
+        }
+
+        FormField {
             label: "Expand as word"
-            info: "If a keyword is typed, it will only be expanded after space or return is pressed."
+            info: "If a keyword is typed, it will only be expanded after space or punctuation."
             visible: root.host.serverRunning
 
             FormCheckbox {

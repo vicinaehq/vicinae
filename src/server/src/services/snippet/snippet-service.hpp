@@ -114,6 +114,15 @@ private:
       }
     }
 
+    const auto &apps = snippet->expansion->apps;
+    if (!apps.empty()) {
+      if (!focusedWindow) return;
+      const auto app = m_appDb.findByClass(focusedWindow->wmClass());
+      if (!app) return;
+      const auto appId = app->id().toStdString();
+      if (std::ranges::find(apps, appId) == apps.end()) return;
+    }
+
     qInfo().nospace() << "Snippet expansion: keyword=\"" << keyword
                       << "\" window=" << (focusedWindow ? focusedWindow->wmClass() : "<unknown>")
                       << " terminal=" << terminal;

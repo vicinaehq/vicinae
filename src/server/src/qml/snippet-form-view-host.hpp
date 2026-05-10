@@ -12,6 +12,8 @@ class SnippetFormViewHost : public FormViewBase {
   Q_PROPERTY(QString content READ content WRITE setContent NOTIFY formChanged)
   Q_PROPERTY(QString keyword READ keyword WRITE setKeyword NOTIFY formChanged)
   Q_PROPERTY(bool expandAsWord READ expandAsWord WRITE setExpandAsWord NOTIFY formChanged)
+  Q_PROPERTY(QStringList apps READ apps WRITE setApps NOTIFY formChanged)
+  Q_PROPERTY(QVariantList availableApps READ availableApps CONSTANT)
 
   Q_PROPERTY(QVariantList contentCompletions READ contentCompletions CONSTANT)
 
@@ -36,6 +38,8 @@ public:
   QString content() const { return m_content; }
   QString keyword() const { return m_keyword; }
   bool expandAsWord() const { return m_expandAsWord; }
+  QStringList apps() const { return m_apps; }
+  QVariantList availableApps() const { return m_availableApps; }
 
   QVariantList contentCompletions() const { return m_contentCompletions; }
 
@@ -68,6 +72,12 @@ public:
       emit formChanged();
     }
   }
+  void setApps(const QStringList &v) {
+    if (m_apps != v) {
+      m_apps = v;
+      emit formChanged();
+    }
+  }
 
 signals:
   void formChanged();
@@ -84,10 +94,12 @@ private:
   QString m_content;
   QString m_keyword;
   bool m_expandAsWord = true;
+  QStringList m_apps;
 
   QString m_nameError;
   QString m_contentError;
   QString m_keywordError;
 
   QVariantList m_contentCompletions;
+  QVariantList m_availableApps;
 };

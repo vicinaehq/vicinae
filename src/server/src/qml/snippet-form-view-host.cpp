@@ -1,6 +1,7 @@
 #include "snippet-form-view-host.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
+#include "services/app-service/app-service.hpp"
 #include "services/snippet/snippet-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "ui/action-pannel/action.hpp"
@@ -26,11 +27,27 @@ void SnippetFormViewHost::initialize() {
   m_service = context()->services->snippetService();
   buildContentCompletions();
 
+  QVariantList allApps;
+  const auto *appDb = context()->services->appDb();
+  for (const auto &app : appDb->list({.sortAlphabetically = true})) {
+    if (!app->displayable() || !app->windowClass()) continue;
+    QVariantMap entry;
+    entry[QStringLiteral("id")] = app->id();
+    entry[QStringLiteral("displayName")] = app->displayName();
+    entry[QStringLiteral("iconSource")] = qml::imageSourceFor(app->iconUrl());
+    allApps.append(entry);
+  }
+
+  QVariantMap section;
+  section[QStringLiteral("title")] = QString();
+  section[QStringLiteral("items")] = allApps;
+  m_availableApps.append(section);
+
   auto panel = std::make_unique<FormActionPanelState>();
-  auto section = panel->createSection();
+  auto section2 = panel->createSection();
   auto submitAction =
       new StaticAction(QStringLiteral("Submit"), ImageURL::builtin("enter-key"), [this]() { submit(); });
-  section->addAction(submitAction);
+  section2->addAction(submitAction);
   setActions(std::move(panel));
 
   if (m_initialSnippet) {
@@ -50,6 +67,10 @@ void SnippetFormViewHost::initialize() {
     if (snippet.expansion) {
       m_keyword = QString::fromStdString(snippet.expansion->keyword);
       m_expandAsWord = snippet.expansion->word;
+
+      for (const auto &wmClass : snippet.expansion->apps) {
+        m_apps.append(QString::fromStdString(wmClass));
+      }
     }
 
     emit formChanged();
@@ -104,6 +125,11 @@ void SnippetFormViewHost::submit() {
     snippet::Expansion expansion;
     expansion.keyword = m_keyword.toStdString();
     expansion.word = m_expandAsWord;
+
+    for (const auto &wmClass : m_apps) {
+      expansion.apps.emplace_back(wmClass.toStdString());
+    }
+
     payload.expansion = expansion;
   }
 
