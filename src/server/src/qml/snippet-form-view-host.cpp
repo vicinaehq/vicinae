@@ -175,6 +175,8 @@ void SnippetFormViewHost::buildContentCompletions() {
           {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("calendar"))},
           {QStringLiteral("title"), QStringLiteral("Date")},
           {QStringLiteral("value"), QStringLiteral("date")},
+          {QStringLiteral("template"), QStringLiteral("{date format=\"yyyy-MM-dd hh:mm\"}")},
+          {QStringLiteral("cursorOffset"), 30},
       },
       QVariantMap{
           {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("text-cursor"))},

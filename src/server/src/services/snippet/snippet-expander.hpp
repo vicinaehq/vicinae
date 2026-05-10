@@ -1,5 +1,6 @@
 #pragma once
 #include <optional>
+#include <QDateTime>
 #include <QGuiApplication>
 #include <QProcess>
 #include <QtConcurrent>
@@ -59,7 +60,11 @@ public:
                      } else if (placeholder.id == "uuid") {
                        result.parts.emplace_back(ResultPart(m_uuid, true));
                      } else if (placeholder.id == "date") {
-                       result.parts.emplace_back(ResultPart("now", true));
+                       auto fmt = QStringLiteral("yyyy-MM-dd hh:mm");
+                       if (auto it = placeholder.args.find("format"); it != placeholder.args.end())
+                         fmt = it->second;
+                       result.parts.emplace_back(
+                           ResultPart(QDateTime::currentDateTime().toString(fmt), true));
                      } else if (placeholder.id == "shell") {
                        if (opts.executeShell && shellIdx < static_cast<int>(shellResults.size())) {
                          result.parts.emplace_back(ResultPart(shellResults[shellIdx], true));
