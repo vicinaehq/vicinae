@@ -176,7 +176,8 @@ private:
       if (wordMode) { m_keyboard.space(); }
 
       if (cursorPos) {
-        const int leftMoves = static_cast<int>(expandedSize) - *cursorPos;
+        int leftMoves = static_cast<int>(expandedSize) - *cursorPos;
+        if (wordMode) { ++leftMoves; }
         if (leftMoves > 0) { m_keyboard.moveCursorLeft(leftMoves); }
       }
 
