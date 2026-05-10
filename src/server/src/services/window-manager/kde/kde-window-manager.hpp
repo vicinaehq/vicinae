@@ -28,6 +28,7 @@ public:
     if (m_info.pid <= 0) return std::nullopt;
     return m_info.pid;
   }
+  bool canClose() const override { return false; }
 
 private:
   WindowInfo m_info;
