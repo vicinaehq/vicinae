@@ -128,16 +128,15 @@ void ManageSnippetsViewHost::loadDetail(const snippet::SerializedSnippet &snippe
 void ManageSnippetsViewHost::updateExpandedText() {
   if (!m_currentSnippet) return;
 
-  const auto visitor = overloads{
-      [this](const snippet::TextSnippet &text) {
-        const auto values = context()->navigation->completionValues();
-        const auto result = m_expander.expand(text.text.c_str(), values, {.executeShell = false});
-        m_detailContent = result.parts | std::views::transform([](auto &&r) { return r.text; }) |
-                          std::views::join | std::ranges::to<QString>();
-      },
-      [this](const snippet::FileSnippet &file) { m_detailContent = QString::fromStdString(file.file); }};
+  m_detailContent.clear();
 
-  std::visit(visitor, m_currentSnippet->data);
+  if (const auto *text = std::get_if<snippet::TextSnippet>(&m_currentSnippet->data)) {
+    const auto values = context()->navigation->completionValues();
+    const auto result = m_expander.expand(text->text.c_str(), values, {.executeShell = false});
+    m_detailContent = result.parts | std::views::transform([](auto &&r) { return r.text; }) |
+                      std::views::join | std::ranges::to<QString>();
+  }
+
   m_hasDetail = true;
   emit detailChanged();
 }

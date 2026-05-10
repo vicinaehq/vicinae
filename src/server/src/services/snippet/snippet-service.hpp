@@ -102,9 +102,6 @@ private:
     const auto snippet = m_db.findByKeyword(keyword);
     if (!snippet || !snippet->expansion) return;
 
-    const auto text = std::get_if<snippet::TextSnippet>(&snippet->data);
-    if (!text) return;
-
     bool terminal = false;
     const auto focusedWindow = m_wm.getFocusedWindow();
 
@@ -127,6 +124,12 @@ private:
                       << "\" window=" << (focusedWindow ? focusedWindow->wmClass() : "<unknown>")
                       << " terminal=" << terminal;
 
+    const int charsToDelete = static_cast<int>(keyword.size()) + (snippet->expansion->word ? 1 : 0);
+    const bool wordMode = snippet->expansion->word;
+
+    const auto *text = std::get_if<snippet::TextSnippet>(&snippet->data);
+    if (!text) return;
+
     SnippetExpander expander;
     const auto result = expander.expand(QString::fromStdString(text->text), {});
 
@@ -134,9 +137,6 @@ private:
                           std::views::join | std::ranges::to<QString>();
 
     m_clipboard.copyText(expanded, {.concealed = true});
-
-    const int charsToDelete = static_cast<int>(keyword.size()) + (snippet->expansion->word ? 1 : 0);
-    const bool wordMode = snippet->expansion->word;
 
     auto inject = [=, this]() {
       m_keyboard.backspace(charsToDelete);
