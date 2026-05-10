@@ -25,7 +25,6 @@ Popup {
 
     padding: 4
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-    popupType: Popup.Window
 
     onItemsChanged: if (items.length > 0)
         completionModel.setItems(items)
@@ -94,8 +93,6 @@ Popup {
         color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.95)
         border.color: Theme.divider
         border.width: 1
-        BackgroundEffect.enabled: Config.blurEnabled
-        BackgroundEffect.radius: 8
     }
 
     contentItem: ColumnLayout {

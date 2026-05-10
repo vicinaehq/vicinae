@@ -103,6 +103,15 @@ Item {
         showFilter: true
         currentItemId: root.currentItem ? root.currentItem.id : ""
 
+        background: Rectangle {
+            radius: 8
+            color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.95)
+            border.color: Theme.divider
+            border.width: 1
+            BackgroundEffect.enabled: Config.blurEnabled
+            BackgroundEffect.radius: 8
+        }
+
         onClosed: {
             root._closedTime = Date.now();
             root.popupClosed();
