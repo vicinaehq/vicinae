@@ -59,7 +59,7 @@ static:
 
 # things we can't really do in cmake. should be run with elevated privileges
 postbuild:
-	setcap "cap_dac_override,cap_dac_read_search+ep" ./build/bin/vicinae-input-server
+	setcap "cap_dac_override+ep" ./build/bin/vicinae-input-server
 .PHONY: postbuild
 
 # optimize for portability (build problematic libs statically)

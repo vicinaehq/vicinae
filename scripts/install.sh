@@ -392,7 +392,7 @@ install_input_server_capabilities() {
 
 	if [[ $EUID -ne 0 ]]; then
 		warn "Skipping input server capabilities (not root)"
-		warn "  Snippet expansion and paste require evdev/uinput access. Run: sudo setcap cap_dac_override,cap_dac_read_search=ep $INSTALL_DIR/usr/libexec/vicinae/vicinae-input-server"
+		warn "  Snippet expansion and paste require evdev/uinput access. Run: sudo setcap cap_dac_override=ep $INSTALL_DIR/usr/libexec/vicinae/vicinae-input-server"
 		return
 	fi
 
@@ -400,8 +400,8 @@ install_input_server_capabilities() {
 
 	if [[ -f "$input_bin" ]]; then
 		if command -v setcap >/dev/null 2>&1; then
-			setcap "cap_dac_override,cap_dac_read_search=ep" "$input_bin"
-			ok "Input server capabilities set (cap_dac_override,cap_dac_read_search)"
+			setcap "cap_dac_override=ep" "$input_bin"
+			ok "Input server capabilities set (cap_dac_override)"
 		else
 			warn "setcap not found — snippet expansion and paste will not work without manual permission setup"
 		fi

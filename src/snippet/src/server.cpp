@@ -6,12 +6,9 @@
 #include <linux/input-event-codes.h>
 #include <expected>
 #include <linux/input.h>
-#include <linux/capability.h>
 #include <libudev.h>
 #include <poll.h>
 #include <string_view>
-#include <sys/capability.h>
-#include <sys/prctl.h>
 #include <xkbcommon/xkbcommon.h>
 #include <fcntl.h>
 #include <iostream>
@@ -23,15 +20,6 @@
 static constexpr size_t MAX_BUFFER_SIZE = 32;
 static constexpr uint32_t MAX_MESSAGE_SIZE = 64 * 1024;
 static constexpr const char *VIRTUAL_KB_NAME = "vicinae-snippet-virtual-keyboard";
-
-static void dropCapability(cap_value_t cap) {
-  cap_t caps = cap_get_proc();
-  if (!caps) return;
-  cap_set_flag(caps, CAP_EFFECTIVE, 1, &cap, CAP_CLEAR);
-  cap_set_flag(caps, CAP_PERMITTED, 1, &cap, CAP_CLEAR);
-  cap_set_proc(caps);
-  cap_free(caps);
-}
 
 static bool isWordSeparator(char c) {
   return std::isspace(static_cast<unsigned char>(c)) || std::ispunct(static_cast<unsigned char>(c));
@@ -220,8 +208,6 @@ void SnippetService::setLayout(const LayoutInfo &info) {
 }
 
 void SnippetService::listen(snippet_gen::Server &rpcServer) {
-  dropCapability(CAP_DAC_OVERRIDE);
-
   const std::error_code ec;
 
   std::unordered_map<int, Input> inputs;
