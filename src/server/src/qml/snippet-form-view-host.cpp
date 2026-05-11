@@ -1,5 +1,6 @@
 #include "snippet-form-view-host.hpp"
 #include "navigation-controller.hpp"
+#include "placeholder.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/snippet/snippet-service.hpp"
@@ -101,6 +102,14 @@ void SnippetFormViewHost::submit() {
   if (m_content.isEmpty()) {
     m_contentError = QStringLiteral("Content should not be empty");
     valid = false;
+  } else {
+    const auto parsed = PlaceholderString::parseSnippetText(m_content);
+    auto cursorCount = std::ranges::count_if(
+        parsed.placeholders(), [](const auto &ph) { return ph.id == QStringLiteral("cursor"); });
+    if (cursorCount > 1) {
+      m_contentError = QStringLiteral("Only one {cursor} placeholder is allowed");
+      valid = false;
+    }
   }
   if (!m_keyword.isEmpty()) {
     if (auto err = snippet::Expansion::validateKeyword(m_keyword.toStdString())) {
