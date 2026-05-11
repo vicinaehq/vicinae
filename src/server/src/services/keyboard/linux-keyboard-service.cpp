@@ -28,3 +28,5 @@ void LinuxKeyboardService::moveCursorLeft(int n) { m_keyboard.repeatKey(KEY_LEFT
 void LinuxKeyboardService::space() { m_keyboard.sendKey(KEY_SPACE, 0); }
 
 void LinuxKeyboardService::typeText(std::string_view text) { m_keyboard.typeText(text); }
+
+void LinuxKeyboardService::setKeyDelay(int us) { m_keyboard.setKeyDelay(us); }

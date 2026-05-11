@@ -12,6 +12,7 @@ public:
   void moveCursorLeft(int n) override;
   void space() override;
   void typeText(std::string_view text) override;
+  void setKeyDelay(int us) override;
 
 private:
   linuxutils::UInputKeyboard m_keyboard;

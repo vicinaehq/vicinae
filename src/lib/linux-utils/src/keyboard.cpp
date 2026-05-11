@@ -12,7 +12,7 @@ static constexpr const uinput_setup KB_ID = {
     .id = {.bustype = BUS_VIRTUAL, .vendor = 0x1234, .product = 0x5678, .version = 1},
     .name = "vicinae-snippet-virtual-keyboard",
 };
-static constexpr const auto KEY_DELAY_US = 2000;
+static constexpr int MODIFIER_DELAY_US = 10000;
 static constexpr const uint32_t EVDEV_OFFSET = 8;
 
 static void emit(int fd, const input_event &ev) {
@@ -87,11 +87,11 @@ void UInputKeyboard::buildCharMap() {
 
 void UInputKeyboard::sendKey(int code, int mods) {
   applyMods(mods);
-  usleep(KEY_DELAY_US);
+  usleep(mods ? MODIFIER_DELAY_US : m_keyDelayUs);
   sendKey(code);
-  usleep(KEY_DELAY_US);
+  usleep(m_keyDelayUs);
   sync();
-  usleep(KEY_DELAY_US);
+  usleep(mods ? MODIFIER_DELAY_US : m_keyDelayUs);
   clearMods(mods);
   sync();
 }
@@ -99,7 +99,7 @@ void UInputKeyboard::sendKey(int code, int mods) {
 void UInputKeyboard::repeatKey(int code, int n) {
   for (int i = 0; i != n; ++i) {
     sendKey(code);
-    usleep(KEY_DELAY_US);
+    usleep(m_keyDelayUs);
   }
 }
 

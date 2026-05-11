@@ -13,6 +13,8 @@ void SnippetExtension::preferenceValuesChanged(const QJsonObject &value) const {
   snippet->setUndoEnabled(value.value("undo").toBool(true));
   snippet->setPrePasteDelay(
       std::clamp(value.value("prePasteDelay").toInt(SnippetService::DEFAULT_PRE_PASTE_DELAY_MS), 0, 5000));
+  snippet->setKeyDelay(
+      std::clamp(value.value("keyDelay").toInt(SnippetService::DEFAULT_KEY_DELAY_US / 1000), 0, 50) * 1000);
 
   if (value.contains("layout")) { snippet->setLayout(value.value("layout").toString().toStdString()); }
 }
@@ -43,5 +45,13 @@ std::vector<Preference> SnippetExtension::preferences() const {
   prePasteDelay.setRequired(false);
   prePasteDelay.setDefaultValue(QString::number(SnippetService::DEFAULT_PRE_PASTE_DELAY_MS));
 
-  return {enabled, undo, layout, prePasteDelay};
+  auto keyDelay = Preference::makeText("keyDelay");
+  keyDelay.setTitle("Key injection delay (ms)");
+  keyDelay.setDescription("Delay between injected key events. Increase if expansions produce missing or "
+                          "garbled characters on slow "
+                          "compositors.");
+  keyDelay.setRequired(false);
+  keyDelay.setDefaultValue(QString::number(SnippetService::DEFAULT_KEY_DELAY_US / 1000));
+
+  return {enabled, undo, layout, prePasteDelay, keyDelay};
 }

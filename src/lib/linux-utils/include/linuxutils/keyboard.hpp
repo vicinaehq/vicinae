@@ -45,12 +45,15 @@ public:
   }
 
 public:
+  static constexpr int DEFAULT_KEY_DELAY_US = 2000;
+
   UInputKeyboard();
   ~UInputKeyboard();
 
   void sendKey(int code, int mods);
   void repeatKey(int code, int n);
   void typeText(std::string_view text);
+  void setKeyDelay(int us) { m_keyDelayUs = us; }
 
   int fd() const { return m_fd; }
   std::optional<std::string> error() const { return m_error; }
@@ -73,6 +76,7 @@ private:
 
   std::optional<std::string> m_error;
   int m_fd = -1;
+  int m_keyDelayUs = DEFAULT_KEY_DELAY_US;
 
   xkb_context *m_xkbCtx = nullptr;
   xkb_keymap *m_xkbKeymap = nullptr;

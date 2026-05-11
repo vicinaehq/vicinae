@@ -98,6 +98,7 @@ public:
   }
 
   static constexpr int DEFAULT_PRE_PASTE_DELAY_MS = 100;
+  static constexpr int DEFAULT_KEY_DELAY_US = 2000;
 
   /**
    * The snippet server will not be running if it is explicitly disabled or
@@ -108,6 +109,7 @@ public:
   void setEnabled(bool enabled) { m_enabled = enabled; }
   void setUndoEnabled(bool enabled) { m_undoEnabled = enabled; }
   void setPrePasteDelay(int ms) { m_prePasteDelay = ms; }
+  void setKeyDelay(int us) { m_keyboard.setKeyDelay(us); }
   void setLayout(const std::string &layout) {
     if (!layout.empty()) { m_server.setKeymap({.layout = layout}); }
   }
