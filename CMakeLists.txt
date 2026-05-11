@@ -42,7 +42,6 @@ option(USE_SYSTEM_GLAZE "Use system glaze instead of fetching it. This is a head
 option(USE_SYSTEM_QT_KEYCHAIN "Use system qt-keychain instead of building it from source. Note: still depends on system libsecret." ON)
 option(LIBQALCULATE_BACKEND "Compile in support for the Qalculate! calculator backend" ON)
 option(ENABLE_SANITIZERS "Enable ASan + UBSan for debug builds" OFF)
-option(ENABLE_PREVIEW_FEATURES "Enable preview features that are not yet ready for global release" OFF)
 option(ENABLE_CLANG_TIDY "Run clang-tidy during compilation" OFF)
 option(INSTALL_UDEV_RULES "Install udev rules to enable additional features such as paste" ON)
 option(INSTALL_MODULES_LOAD_CONFIG "Install config files to auto load required kernel modules" ON)
@@ -157,9 +156,6 @@ if (TYPESCRIPT_EXTENSIONS)
 	add_compile_definitions(HAS_TYPESCRIPT_EXTENSIONS=1)
 endif()
 
-if (ENABLE_PREVIEW_FEATURES)
-	add_compile_definitions(ENABLE_PREVIEW_FEATURES=1)
-endif()
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)

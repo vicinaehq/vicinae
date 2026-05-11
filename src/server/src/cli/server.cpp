@@ -228,9 +228,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
   commandServer.start(Omnicast::commandSocketPath());
 
-#ifdef ENABLE_PREVIEW_FEATURES
   ctx.services->snippetService()->start();
-#endif
 
   auto configChanged = [&](const config::ConfigValue &next, const config::ConfigValue &prev) {
     auto &theme = ThemeService::instance();
