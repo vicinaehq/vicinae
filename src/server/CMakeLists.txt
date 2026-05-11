@@ -27,7 +27,6 @@ list(APPEND LIBS
 	vicinae::emoji
 	vicinae::common
 	vicinae::fuzzy
-	vicinae::linuxutils
 )
 
 
@@ -625,7 +624,6 @@ if (UNIX AND NOT APPLE)
 	list(APPEND SRCS
 		#src/lib/xkbcommon-utils.cpp
 
-		src/services/keyboard/linux-keyboard-service.cpp
 		src/services/paste/linux-paste-service.cpp
 		src/services/paste/paste-service.cpp
 
@@ -699,7 +697,7 @@ if (UNIX AND NOT APPLE)
 		OUTPUT snippet-client.hpp
 	)
 
-	list(APPEND LIBS xkbcommon vicinae::linuxutils)
+	list(APPEND LIBS xkbcommon)
 
 	# Common Wayland support files
 	list(APPEND SRCS

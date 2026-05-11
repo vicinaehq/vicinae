@@ -59,8 +59,7 @@ static:
 
 # things we can't really do in cmake. should be run with elevated privileges
 postbuild:
-	# snippet server needs to monitor input devices, so it needs this cap
-	setcap "cap_dac_read_search+ep" ./build/bin/vicinae-snippet-server
+	setcap "cap_dac_override,cap_dac_read_search+ep" ./build/bin/vicinae-input-server
 .PHONY: postbuild
 
 # optimize for portability (build problematic libs statically)

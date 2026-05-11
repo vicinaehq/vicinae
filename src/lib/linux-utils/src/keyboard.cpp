@@ -39,7 +39,7 @@ UInputKeyboard::UInputKeyboard() {
   ioctl(fd, UI_DEV_CREATE);
   m_fd = fd;
 
-  buildCharMap();
+  buildCharMap(nullptr);
 }
 
 UInputKeyboard::~UInputKeyboard() {
@@ -49,16 +49,20 @@ UInputKeyboard::~UInputKeyboard() {
   if (m_xkbCtx) xkb_context_unref(m_xkbCtx);
 }
 
-void UInputKeyboard::buildCharMap() {
+void UInputKeyboard::buildCharMap(const xkb_rule_names *rules) {
+  if (m_xkbKeymap) xkb_keymap_unref(m_xkbKeymap);
+  if (m_xkbCtx) xkb_context_unref(m_xkbCtx);
+
   m_xkbCtx = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
   if (!m_xkbCtx) return;
 
-  m_xkbKeymap = xkb_keymap_new_from_names(m_xkbCtx, nullptr, XKB_KEYMAP_COMPILE_NO_FLAGS);
+  m_xkbKeymap = xkb_keymap_new_from_names(m_xkbCtx, rules, XKB_KEYMAP_COMPILE_NO_FLAGS);
   if (!m_xkbKeymap) return;
 
   auto *state = xkb_state_new(m_xkbKeymap);
   if (!state) return;
 
+  m_charMap = {};
   std::array<char, 8> buf{};
 
   for (uint32_t keycode = EVDEV_OFFSET; keycode < 256 + EVDEV_OFFSET; ++keycode) {
@@ -84,6 +88,8 @@ void UInputKeyboard::buildCharMap() {
 
   xkb_state_unref(state);
 }
+
+void UInputKeyboard::setKeymap(const xkb_rule_names *rules) { buildCharMap(rules); }
 
 void UInputKeyboard::sendKey(int code, int mods) {
   applyMods(mods);

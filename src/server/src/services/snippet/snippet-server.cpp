@@ -65,16 +65,24 @@ SnippetServer::SnippetServer() : m_bus(&m_process), m_rpc(m_bus), m_client(m_rpc
 }
 
 void SnippetServer::start() {
-  const auto path = vicinae::findHelperProgram("vicinae-snippet-server");
+  const auto path = vicinae::findHelperProgram("vicinae-input-server");
 
   if (!path) {
-    qWarning() << "could not find vicinae-snippet-server helper binary, snippet expansion will not work";
+    qWarning() << "could not find vicinae-input-server helper binary, snippet expansion will not work";
     return;
   }
 
   m_process.setProgram(path->c_str());
   m_process.start();
-  if (!m_process.waitForStarted()) { qCritical() << "Failed to start snippet server" << m_process.error(); }
+  if (!m_process.waitForStarted()) {
+    qCritical() << "Failed to start input server" << m_process.error();
+    return;
+  }
+
+  m_client.snippet()->getCapabilities().then(
+      [this](std::expected<snippet_gen::KeyboardCapabilities, std::string> result) {
+        if (result) { m_supportsInjection = result->injection; }
+      });
 }
 
 void SnippetServer::registerSnippet(snippet_gen::CreateSnippetRequest payload) {
@@ -95,6 +103,34 @@ void SnippetServer::setKeymap(snippet_gen::LayoutInfo info) {
 void SnippetServer::resetContext() {
   if (!isRunning()) return;
   m_client.snippet()->resetContext();
+}
+
+void SnippetServer::injectExpand(int charsToDelete, int prePasteDelayUs, bool terminal, int cursorLeftMoves) {
+  if (!isRunning()) return;
+  m_client.snippet()->injectExpand({.charsToDelete = charsToDelete,
+                                    .prePasteDelayUs = prePasteDelayUs,
+                                    .terminal = terminal,
+                                    .cursorLeftMoves = cursorLeftMoves});
+}
+
+void SnippetServer::injectUndo(int backspaceCount, const std::string &trigger) {
+  if (!isRunning()) return;
+  m_client.snippet()->injectUndo({.backspaceCount = backspaceCount, .triggerText = trigger});
+}
+
+void SnippetServer::injectPaste(bool terminal) {
+  if (!isRunning()) return;
+  m_client.snippet()->injectPaste({.terminal = terminal});
+}
+
+void SnippetServer::cancelInjection() {
+  if (!isRunning()) return;
+  m_client.snippet()->cancelInjection();
+}
+
+void SnippetServer::setKeyDelay(int us) {
+  if (!isRunning()) return;
+  m_client.snippet()->setKeyDelay(us);
 }
 
 void SnippetServer::handleError() {

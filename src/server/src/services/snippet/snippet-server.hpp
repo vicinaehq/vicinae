@@ -44,6 +44,13 @@ public:
   void setKeymap(snippet_gen::LayoutInfo info);
   void resetContext();
 
+  void injectExpand(int charsToDelete, int prePasteDelayUs, bool terminal, int cursorLeftMoves);
+  void injectUndo(int backspaceCount, const std::string &trigger);
+  void injectPaste(bool terminal);
+  void cancelInjection();
+  void setKeyDelay(int us);
+  bool supportsKeyInjection() const { return m_supportsInjection; }
+
   bool isRunning() const { return m_process.state() == QProcess::ProcessState::Running; }
 
 private:
@@ -53,4 +60,5 @@ private:
   SnippetServerBus m_bus;
   snippet_gen::RpcTransport m_rpc;
   snippet_gen::Client m_client;
+  bool m_supportsInjection = false;
 };

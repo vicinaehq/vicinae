@@ -30,7 +30,6 @@ class FileChooserService;
 class NewsService;
 class PasteService;
 class TelemetryService;
-class AbstractKeyboardService;
 class AudioControlService;
 
 namespace config {
@@ -68,7 +67,6 @@ public:
   NewsService *newsService() const;
   BackgroundEffectManager *backgroundEffectManager() const;
   TelemetryService *telemetry() const;
-  AbstractKeyboardService *keyboardService() const;
   AudioControlService *audioControl() const;
 
   void setPowerManager(std::unique_ptr<PowerManager> manager);
@@ -99,7 +97,6 @@ public:
   void setNewsService(std::unique_ptr<NewsService> service);
   void setBackgroundEffectManager(std::unique_ptr<BackgroundEffectManager> manager);
   void setTelemetry(std::unique_ptr<TelemetryService> telemetry);
-  void setKeyboardService(std::unique_ptr<AbstractKeyboardService> service);
   void setAudioControl(std::unique_ptr<AudioControlService> service);
 
 private:
@@ -130,6 +127,5 @@ private:
   std::unique_ptr<NewsService> m_newsService;
   std::unique_ptr<BackgroundEffectManager> m_backgroundEffectManager;
   std::unique_ptr<TelemetryService> m_telemetry;
-  std::unique_ptr<AbstractKeyboardService> m_keyboardService;
   std::unique_ptr<AudioControlService> m_audioControl;
 };

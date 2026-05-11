@@ -1,17 +1,13 @@
 #pragma once
 #include "services/app-service/app-service.hpp"
 #include "services/clipboard/clipboard-service.hpp"
-#include "services/keyboard/abstract-keyboard-service.hpp"
 #include "services/snippet/snippet-expander.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "snippet-server.hpp"
 #include "snippet-db.hpp"
-#include <atomic>
 #include <qguiapplication.h>
 #include <qobject.h>
-#include <unistd.h>
-#include <QThreadPool>
 #include <QTimer>
 #include <qtmetamacros.h>
 
@@ -26,13 +22,13 @@ signals:
 
 public:
   SnippetService(const std::filesystem::path &path, WindowManager &wm, const AppService &appDb,
-                 AbstractKeyboardService &keyboard, ClipboardService &clipboard)
-      : m_db(path), m_wm(wm), m_appDb(appDb), m_keyboard(keyboard), m_clipboard(clipboard) {
+                 ClipboardService &clipboard)
+      : m_db(path), m_wm(wm), m_appDb(appDb), m_clipboard(clipboard) {
     connect(&m_server, &SnippetServer::keywordTriggered, this, &SnippetService::handleKeywordTrigger);
     connect(&m_server, &SnippetServer::undoTriggered, this, &SnippetService::handleUndo);
     connect(&wm, &WindowManager::focusChanged, this, [this]() {
       m_undoRecord.reset();
-      m_cancelInjection.store(true, std::memory_order_relaxed);
+      m_server.cancelInjection();
       if (m_server.isRunning()) { m_server.resetContext(); }
     });
   }
@@ -116,7 +112,7 @@ public:
   void setEnabled(bool enabled) { m_enabled = enabled; }
   void setUndoEnabled(bool enabled) { m_undoEnabled = enabled; }
   void setPrePasteDelay(int ms) { m_prePasteDelay = ms; }
-  void setKeyDelay(int us) { m_keyboard.setKeyDelay(us); }
+  void setKeyDelay(int us) { m_server.setKeyDelay(us); }
   void setLayout(const std::string &layout) {
     if (!layout.empty()) { m_server.setKeymap({.layout = layout}); }
   }
@@ -134,20 +130,14 @@ private:
 
   void handleUndo(const std::string &trigger) {
     if (!m_undoEnabled || !m_undoRecord || m_undoRecord->trigger != trigger) return;
-    if (m_undoRecord->expandedText.size() > MAX_UNDO_LENGTH) { m_undoRecord.reset(); return; }
+    if (m_undoRecord->expandedText.size() > MAX_UNDO_LENGTH) {
+      m_undoRecord.reset();
+      return;
+    }
 
     const int backspaceCount = static_cast<int>(m_undoRecord->expandedText.size()) - 1;
-    m_cancelInjection.store(false, std::memory_order_relaxed);
     m_undoRecord.reset();
-
-    QThreadPool::globalInstance()->start([this, backspaceCount, trigger]() {
-      for (int i = 0; i < backspaceCount; ++i) {
-        if (m_cancelInjection.load(std::memory_order_relaxed)) return;
-        m_keyboard.backspace(1);
-      }
-      if (m_cancelInjection.load(std::memory_order_relaxed)) return;
-      m_keyboard.typeText(trigger);
-    });
+    m_server.injectUndo(backspaceCount, trigger);
   }
 
   void handleKeywordTrigger(const std::string &keyword) {
@@ -218,33 +208,23 @@ private:
       m_undoRecord.reset();
     }
 
-    QTimer::singleShot(
-        0, this,
-        [this, charsToDelete, terminal, cursorPos = result.cursorPos, expandedSize = expanded.size()]() {
-          QThreadPool::globalInstance()->start([this, charsToDelete, terminal, cursorPos, expandedSize]() {
-            m_keyboard.backspace(charsToDelete);
-            usleep(m_prePasteDelay * 1000);
-            m_keyboard.paste(terminal);
+    int cursorLeftMoves = 0;
+    if (result.cursorPos) {
+      int moves = static_cast<int>(expanded.size()) - *result.cursorPos;
+      if (moves > 0) { cursorLeftMoves = moves; }
+    }
 
-            if (cursorPos) {
-              int leftMoves = static_cast<int>(expandedSize) - *cursorPos;
-              if (leftMoves > 0) { m_keyboard.moveCursorLeft(leftMoves); }
-            }
-
-            QMetaObject::invokeMethod(this, [this]() { m_clipboard.scheduleClipboardRestore(); });
-          });
-        });
+    m_server.injectExpand(charsToDelete, m_prePasteDelay * 1000, terminal, cursorLeftMoves);
+    QTimer::singleShot(0, this, [this]() { m_clipboard.scheduleClipboardRestore(); });
   }
 
   SnippetServer m_server;
   SnippetDatabase m_db;
   WindowManager &m_wm;
   const AppService &m_appDb;
-  AbstractKeyboardService &m_keyboard;
   ClipboardService &m_clipboard;
   bool m_enabled = true;
   bool m_undoEnabled = true;
   int m_prePasteDelay = DEFAULT_PRE_PASTE_DELAY_MS;
   std::optional<UndoRecord> m_undoRecord;
-  std::atomic<bool> m_cancelInjection{false};
 };

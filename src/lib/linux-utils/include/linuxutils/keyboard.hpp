@@ -54,6 +54,7 @@ public:
   void repeatKey(int code, int n);
   void typeText(std::string_view text);
   void setKeyDelay(int us) { m_keyDelayUs = us; }
+  void setKeymap(const xkb_rule_names *rules);
 
   int fd() const { return m_fd; }
   std::optional<std::string> error() const { return m_error; }
@@ -66,7 +67,7 @@ private:
 
   static constexpr size_t CHARMAP_SIZE = 128;
 
-  void buildCharMap();
+  void buildCharMap(const xkb_rule_names *rules);
   void sync();
   void keyup(int code);
   void keydown(int code);

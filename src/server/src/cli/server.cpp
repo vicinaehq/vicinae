@@ -39,7 +39,6 @@
 #include "services/window-manager/window-manager.hpp"
 #include "services/snippet/snippet-service.hpp"
 #include "services/audio-control/audio-control-service.hpp"
-#include "services/keyboard/linux-keyboard-service.hpp"
 #include "services/paste/paste-service.hpp"
 #include "services/paste/linux-paste-service.hpp"
 #include "settings-controller/settings-controller.hpp"
@@ -92,12 +91,10 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto extensionManager = std::make_unique<ExtensionManager>();
     auto windowManager = std::make_unique<WindowManager>();
     auto appService = std::make_unique<AppService>(*omniDb.get());
-    auto keyboardService = std::make_unique<LinuxKeyboardService>();
     auto clipboardManager = std::make_unique<ClipboardService>(Omnicast::dataDir() / "clipboard.db");
-    auto snippetService =
-        std::make_unique<SnippetService>(Omnicast::dataDir() / "snippets" / "snippets.json", *windowManager,
-                                         *appService, *keyboardService, *clipboardManager);
-    auto linuxPaste = std::make_unique<LinuxPasteService>(*keyboardService);
+    auto snippetService = std::make_unique<SnippetService>(Omnicast::dataDir() / "snippets" / "snippets.json",
+                                                           *windowManager, *appService, *clipboardManager);
+    auto linuxPaste = std::make_unique<LinuxPasteService>(*snippetService->server());
     auto pasteService =
         std::make_unique<PasteService>(*clipboardManager, *windowManager, *appService, std::move(linuxPaste));
     auto fontService = std::make_unique<FontService>();
@@ -139,7 +136,6 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setLocalStorage(std::move(localStorage));
     registry->setExtensionManager(std::move(extensionManager));
     registry->setClipman(std::move(clipboardManager));
-    registry->setKeyboardService(std::move(keyboardService));
     registry->setPasteService(std::move(pasteService));
     registry->setSnippetService(std::move(snippetService));
     registry->setWindowManager(std::move(windowManager));

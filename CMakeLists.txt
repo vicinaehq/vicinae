@@ -43,7 +43,6 @@ option(USE_SYSTEM_QT_KEYCHAIN "Use system qt-keychain instead of building it fro
 option(LIBQALCULATE_BACKEND "Compile in support for the Qalculate! calculator backend" ON)
 option(ENABLE_SANITIZERS "Enable ASan + UBSan for debug builds" OFF)
 option(ENABLE_CLANG_TIDY "Run clang-tidy during compilation" OFF)
-option(INSTALL_UDEV_RULES "Install udev rules to enable additional features such as paste" ON)
 option(INSTALL_MODULES_LOAD_CONFIG "Install config files to auto load required kernel modules" ON)
 
 if (ENABLE_CLANG_TIDY)
@@ -215,7 +214,6 @@ if (UNIX AND NOT APPLE)
 endif()
 
 set(INSTALL_SHARE ${CMAKE_INSTALL_PREFIX}/share)
-set(INSTALL_UDEV ${CMAKE_INSTALL_PREFIX}/lib/udev/rules.d)
 set(INSTALL_MODULES ${CMAKE_INSTALL_PREFIX}/lib/modules-load.d)
 set(VICINAE_INSTALL_SHARE ${INSTALL_SHARE}/vicinae)
 set(VICINAE_THEME_DIR ${VICINAE_INSTALL_SHARE}/themes)
@@ -225,10 +223,6 @@ file(REMOVE_RECURSE ${VICINAE_THEME_DIR})
 install(DIRECTORY ./extra/themes DESTINATION ${VICINAE_INSTALL_SHARE})
 
 if (UNIX AND NOT APPLE)
-	if (INSTALL_UDEV_RULES)
-		install(DIRECTORY ${EXTRA_DIR}/udev/rules.d/ DESTINATION ${INSTALL_UDEV})
-	endif()
-
 	if (INSTALL_MODULES_LOAD_CONFIG)
 		install(DIRECTORY ${EXTRA_DIR}/modules-load.d/ DESTINATION ${INSTALL_MODULES})
 	endif()

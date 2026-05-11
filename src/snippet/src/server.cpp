@@ -6,8 +6,12 @@
 #include <linux/input-event-codes.h>
 #include <expected>
 #include <linux/input.h>
+#include <linux/capability.h>
 #include <libudev.h>
+#include <poll.h>
 #include <string_view>
+#include <sys/capability.h>
+#include <sys/prctl.h>
 #include <xkbcommon/xkbcommon.h>
 #include <fcntl.h>
 #include <iostream>
@@ -19,6 +23,15 @@
 static constexpr size_t MAX_BUFFER_SIZE = 32;
 static constexpr uint32_t MAX_MESSAGE_SIZE = 64 * 1024;
 static constexpr const char *VIRTUAL_KB_NAME = "vicinae-snippet-virtual-keyboard";
+
+static void dropCapability(cap_value_t cap) {
+  cap_t caps = cap_get_proc();
+  if (!caps) return;
+  cap_set_flag(caps, CAP_EFFECTIVE, 1, &cap, CAP_CLEAR);
+  cap_set_flag(caps, CAP_PERMITTED, 1, &cap, CAP_CLEAR);
+  cap_set_proc(caps);
+  cap_free(caps);
+}
 
 static bool isWordSeparator(char c) {
   return std::isspace(static_cast<unsigned char>(c)) || std::ispunct(static_cast<unsigned char>(c));
@@ -140,6 +153,52 @@ std::expected<void, std::string> SnippetService::resetContext() {
   return {};
 }
 
+std::expected<void, std::string> SnippetService::injectExpand(snippet_gen::InjectExpandRequest req) {
+  using Mod = linuxutils::UInputKeyboard::Modifier;
+  m_keyboard.repeatKey(KEY_BACKSPACE, req.charsToDelete);
+  if (req.prePasteDelayUs > 0) { usleep(req.prePasteDelayUs); }
+  m_keyboard.sendKey(KEY_V, static_cast<int>(req.terminal ? (Mod::Ctrl | Mod::Shift) : Mod::Ctrl));
+  if (req.cursorLeftMoves > 0) { m_keyboard.repeatKey(KEY_LEFT, req.cursorLeftMoves); }
+  return {};
+}
+
+std::expected<void, std::string> SnippetService::injectUndo(snippet_gen::InjectUndoRequest req) {
+  m_cancelInjection.store(false, std::memory_order_relaxed);
+  for (int i = 0; i < req.backspaceCount; ++i) {
+    if (m_cancelInjection.load(std::memory_order_relaxed)) return {};
+    m_keyboard.sendKey(KEY_BACKSPACE, 0);
+    drainStdin();
+  }
+  if (!m_cancelInjection.load(std::memory_order_relaxed)) { m_keyboard.typeText(req.triggerText); }
+  return {};
+}
+
+std::expected<void, std::string> SnippetService::injectPaste(snippet_gen::InjectPasteRequest req) {
+  using Mod = linuxutils::UInputKeyboard::Modifier;
+  m_keyboard.sendKey(KEY_V, static_cast<int>(req.terminal ? (Mod::Ctrl | Mod::Shift) : Mod::Ctrl));
+  return {};
+}
+
+std::expected<void, std::string> SnippetService::cancelInjection() {
+  m_cancelInjection.store(true, std::memory_order_relaxed);
+  return {};
+}
+
+std::expected<void, std::string> SnippetService::setKeyDelay(int delayUs) {
+  m_keyboard.setKeyDelay(delayUs);
+  return {};
+}
+
+std::expected<snippet_gen::KeyboardCapabilities, std::string> SnippetService::getCapabilities() {
+  return snippet_gen::KeyboardCapabilities{.injection = !m_keyboard.error().has_value()};
+}
+
+void SnippetService::drainStdin() {
+  if (!m_ipcFrame) return;
+  pollfd pfd = {.fd = STDIN_FILENO, .events = POLLIN, .revents = 0};
+  if (poll(&pfd, 1, 0) > 0 && (pfd.revents & POLLIN)) { m_ipcFrame->readPart(STDIN_FILENO); }
+}
+
 void SnippetService::setLayout(const LayoutInfo &info) {
   const auto toPtr = [](const std::optional<std::string> &str) {
     return str.transform([](auto &&str) { return str.c_str(); }).value_or(nullptr);
@@ -156,10 +215,13 @@ void SnippetService::setLayout(const LayoutInfo &info) {
   xkb_keymap_unref(m_keymap);
   m_keymap = keymap;
   m_kbState = state;
+  m_keyboard.setKeymap(&rules);
   std::cerr << "changed keyboard layout to " << rules.layout << '\n';
 }
 
 void SnippetService::listen(snippet_gen::Server &rpcServer) {
+  dropCapability(CAP_DAC_OVERRIDE);
+
   const std::error_code ec;
 
   std::unordered_map<int, Input> inputs;
@@ -241,6 +303,7 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
   std::array<epoll_event, MAX_EVENTS> events;
 
   Frame ipcFrame;
+  setIpcFrame(&ipcFrame);
 
   ipcFrame.setHandler([&](std::string_view message) { rpcServer.route(message); });
 
