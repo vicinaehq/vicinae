@@ -134,7 +134,9 @@ Window {
 
     ActionPanelPopover {
         id: actionPanelPopover
-        bottomOffset: footer.height + 1 + Config.borderWidth
+        z: 100
+        anchors.fill: parent
+        anchors.bottomMargin: footer.height + 1 + Config.borderWidth
     }
 
     AlertDialog {
