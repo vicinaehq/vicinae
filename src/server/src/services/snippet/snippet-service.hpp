@@ -6,6 +6,7 @@
 #include "services/window-manager/window-manager.hpp"
 #include "snippet-server.hpp"
 #include "snippet-db.hpp"
+#include <unistd.h>
 #include <QThreadPool>
 #include <QTimer>
 #include <qtmetamacros.h>
@@ -97,7 +98,7 @@ public:
     return res;
   }
 
-  static constexpr int DEFAULT_PRE_PASTE_DELAY_MS = 100;
+  static constexpr int DEFAULT_PRE_PASTE_DELAY_MS = 0;
   static constexpr int DEFAULT_KEY_DELAY_US = 2000;
 
   /**
@@ -121,16 +122,12 @@ private:
   struct UndoRecord {
     std::string trigger;
     QString expandedText;
-    bool wordMode = false;
   };
 
   void handleUndo(const std::string &trigger) {
     if (!m_undoEnabled || !m_undoRecord || m_undoRecord->trigger != trigger) return;
 
-    // In non-word mode, the user's backspace already deleted one char of the expanded text.
-    // In word mode, it deleted the trailing space, so the full expanded text remains.
-    const int backspaceCount =
-        static_cast<int>(m_undoRecord->expandedText.size()) - (m_undoRecord->wordMode ? 0 : 1);
+    const int backspaceCount = static_cast<int>(m_undoRecord->expandedText.size()) - 1;
     m_undoRecord.reset();
 
     QThreadPool::globalInstance()->start([this, backspaceCount, trigger]() {
@@ -168,7 +165,6 @@ private:
                       << " terminal=" << terminal;
 
     const int charsToDelete = static_cast<int>(keyword.size()) + (snippet->expansion->word ? 1 : 0);
-    const bool wordMode = snippet->expansion->word;
 
     const auto *text = std::get_if<snippet::TextSnippet>(&snippet->data);
     if (!text) return;
@@ -176,36 +172,36 @@ private:
     SnippetExpander expander;
     const auto result = expander.expand(QString::fromStdString(text->text), {});
 
-    const auto expanded = result.parts | std::views::transform([](auto &&part) { return part.text; }) |
-                          std::views::join | std::ranges::to<QString>();
+    auto expanded = result.parts | std::views::transform([](auto &&part) { return part.text; }) |
+                    std::views::join | std::ranges::to<QString>();
+
+    if (snippet->expansion->word) { expanded.append(' '); }
 
     m_clipboard.copyText(expanded, {.concealed = true});
 
     if (!result.cursorPos) {
-      m_undoRecord = UndoRecord{.trigger = keyword, .expandedText = expanded, .wordMode = wordMode};
+      m_undoRecord = UndoRecord{.trigger = keyword, .expandedText = expanded};
     } else {
       m_undoRecord.reset();
     }
 
-    QTimer::singleShot(m_prePasteDelay, this,
-                       [this, charsToDelete, terminal, wordMode, cursorPos = result.cursorPos,
+    QTimer::singleShot(0, this,
+                       [this, charsToDelete, terminal, cursorPos = result.cursorPos,
                         expandedSize = expanded.size()]() {
-                         QThreadPool::globalInstance()->start([this, charsToDelete, terminal, wordMode,
-                                                               cursorPos, expandedSize]() {
-                           m_keyboard.backspace(charsToDelete);
-                           m_keyboard.paste(terminal);
+                         QThreadPool::globalInstance()->start(
+                             [this, charsToDelete, terminal, cursorPos, expandedSize]() {
+                               m_keyboard.backspace(charsToDelete);
+                               usleep(m_prePasteDelay * 1000);
+                               m_keyboard.paste(terminal);
 
-                           if (wordMode) { m_keyboard.space(); }
+                               if (cursorPos) {
+                                 int leftMoves = static_cast<int>(expandedSize) - *cursorPos;
+                                 if (leftMoves > 0) { m_keyboard.moveCursorLeft(leftMoves); }
+                               }
 
-                           if (cursorPos) {
-                             int leftMoves = static_cast<int>(expandedSize) - *cursorPos;
-                             if (wordMode) { ++leftMoves; }
-                             if (leftMoves > 0) { m_keyboard.moveCursorLeft(leftMoves); }
-                           }
-
-                           QMetaObject::invokeMethod(this,
-                                                     [this]() { m_clipboard.scheduleClipboardRestore(); });
-                         });
+                               QMetaObject::invokeMethod(
+                                   this, [this]() { m_clipboard.scheduleClipboardRestore(); });
+                             });
                        });
   }
 

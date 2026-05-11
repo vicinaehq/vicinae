@@ -12,9 +12,15 @@ void SnippetExtension::preferenceValuesChanged(const QJsonObject &value) const {
   snippet->setEnabled(value.value("enabled").toBool(true));
   snippet->setUndoEnabled(value.value("undo").toBool(true));
   snippet->setPrePasteDelay(
-      std::clamp(value.value("prePasteDelay").toInt(SnippetService::DEFAULT_PRE_PASTE_DELAY_MS), 0, 5000));
-  snippet->setKeyDelay(
-      std::clamp(value.value("keyDelay").toInt(SnippetService::DEFAULT_KEY_DELAY_US / 1000), 0, 50) * 1000);
+      std::clamp(value.value("prePasteDelay")
+                     .toString(QString::number(SnippetService::DEFAULT_PRE_PASTE_DELAY_MS))
+                     .toInt(),
+                 0, 5000));
+  snippet->setKeyDelay(std::clamp(value.value("keyDelay")
+                                      .toString(QString::number(SnippetService::DEFAULT_KEY_DELAY_US / 1000))
+                                      .toInt(),
+                                  0, 50) *
+                       1000);
 
   if (value.contains("layout")) { snippet->setLayout(value.value("layout").toString().toStdString()); }
 }
