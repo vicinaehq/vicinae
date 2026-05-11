@@ -17,6 +17,7 @@
 #include <unordered_map>
 
 static constexpr size_t MAX_BUFFER_SIZE = 32;
+static constexpr uint32_t MAX_MESSAGE_SIZE = 64 * 1024;
 static constexpr const char *VIRTUAL_KB_NAME = "vicinae-snippet-virtual-keyboard";
 
 static bool isWordSeparator(char c) {
@@ -48,8 +49,8 @@ public:
     for (;;) {
       if (size == 0 && data.size() >= sizeof(size)) {
         size = *reinterpret_cast<decltype(size) *>(data.data());
-        data.erase(data.begin(),
-                   data.begin() + sizeof(size)); // we need a better way than this, this is slow
+        data.erase(data.begin(), data.begin() + sizeof(size));
+        if (size > MAX_MESSAGE_SIZE) { return false; }
       }
 
       if (size && size <= data.size()) {
@@ -264,7 +265,7 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
       int fd = events[n].data.fd;
 
       if (fd == STDIN_FILENO) {
-        ipcFrame.readPart(STDIN_FILENO);
+        if (!ipcFrame.readPart(STDIN_FILENO)) { exit(0); }
         continue;
       }
 
@@ -312,21 +313,21 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
         continue;
       }
 
-      int rc = 0;
       input_event ev;
       std::array<char, 8> key;
 
-      // TODO: handle this more gracefully to allow any read size and batch?
-      if ((rc = read(fd, &ev, sizeof(ev))) < sizeof(ev)) {
-        std::cerr << "read of invalid size for event: expected " << sizeof(ev) << ", got " << rc << '\n';
-        continue;
-      }
+      const auto rc = read(fd, &ev, sizeof(ev));
 
       if (rc <= 0) {
         epoll_ctl(epollfd, EPOLL_CTL_DEL, it->second.ev.data.fd, &it->second.ev);
         close(it->second.fd);
         std::cerr << "Removed device " << it->second.name << " (fd=" << it->second.fd << ")\n";
         inputs.erase(it);
+        continue;
+      }
+
+      if (static_cast<size_t>(rc) < sizeof(ev)) {
+        std::cerr << "read of invalid size for event: expected " << sizeof(ev) << ", got " << rc << '\n';
         continue;
       }
 

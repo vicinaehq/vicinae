@@ -40,6 +40,15 @@ SnippetServer::SnippetServer() : m_bus(&m_process), m_rpc(m_bus), m_client(m_rpc
     qCritical() << "snippet server process error occured" << m_process.errorString();
   });
 
+  connect(&m_process, &QProcess::finished, this, [this](int exitCode, QProcess::ExitStatus status) {
+    if (status == QProcess::CrashExit) {
+      qWarning() << "snippet server crashed with code" << exitCode;
+    } else {
+      qInfo() << "snippet server exited with code" << exitCode;
+    }
+    emit serverStopped();
+  });
+
   connect(
       m_client.snippet(), &snippet_gen::SnippetService::triggerSnippet, this,
       [this](const snippet_gen::TriggerSnippetPayload &payload) { emit keywordTriggered(payload.trigger); });
@@ -69,16 +78,24 @@ void SnippetServer::start() {
 }
 
 void SnippetServer::registerSnippet(snippet_gen::CreateSnippetRequest payload) {
+  if (!isRunning()) return;
   m_client.snippet()->createSnippet(payload);
 }
 
 void SnippetServer::unregisterSnippet(std::string_view keyword) {
+  if (!isRunning()) return;
   m_client.snippet()->removeSnippet({.trigger = std::string{keyword}});
 }
 
-void SnippetServer::setKeymap(snippet_gen::LayoutInfo info) { m_client.snippet()->setKeymap(info); }
+void SnippetServer::setKeymap(snippet_gen::LayoutInfo info) {
+  if (!isRunning()) return;
+  m_client.snippet()->setKeymap(info);
+}
 
-void SnippetServer::resetContext() { m_client.snippet()->resetContext(); }
+void SnippetServer::resetContext() {
+  if (!isRunning()) return;
+  m_client.snippet()->resetContext();
+}
 
 void SnippetServer::handleError() {
   for (const auto &line : m_process.readAllStandardError().split('\n')) {
