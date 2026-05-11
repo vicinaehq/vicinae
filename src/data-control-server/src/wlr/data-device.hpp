@@ -17,6 +17,7 @@ public:
 
   WlrDataDevice(zwlr_data_control_device_v1 *dev);
   ~WlrDataDevice();
+  zwlr_data_control_device_v1 *raw() const { return _dev; }
 
 private:
   zwlr_data_control_device_v1 *_dev;

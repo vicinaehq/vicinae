@@ -74,10 +74,9 @@ public:
       if (oldKeyword && oldKeyword != newKeyword) { m_server.unregisterSnippet(*oldKeyword); }
 
       if (payload.expansion) {
-        m_server.registerSnippet(
-            {.trigger = payload.expansion->keyword,
-             .mode = payload.expansion->word ? snippet_gen::ExpansionMode::Word
-                                             : snippet_gen::ExpansionMode::Keydown});
+        m_server.registerSnippet({.trigger = payload.expansion->keyword,
+                                  .mode = payload.expansion->word ? snippet_gen::ExpansionMode::Word
+                                                                  : snippet_gen::ExpansionMode::Keydown});
       }
 
       emit snippetUpdated();

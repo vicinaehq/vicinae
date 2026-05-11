@@ -16,8 +16,10 @@ static void writeSelection(const clipboard_proto::Selection &selection) {
     return;
   }
 
-  uint32_t size = htonl(buf.size());
+  uint8_t tag = static_cast<uint8_t>(clipboard_proto::Command::SelectionNotification);
+  uint32_t size = htonl(static_cast<uint32_t>(buf.size() + 1));
   std::cout.write(reinterpret_cast<const char *>(&size), sizeof(size));
+  std::cout.write(reinterpret_cast<const char *>(&tag), 1);
   std::cout.write(buf.data(), buf.size());
   std::cout.flush();
 }

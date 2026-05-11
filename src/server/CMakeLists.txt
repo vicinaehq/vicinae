@@ -707,7 +707,6 @@ if (UNIX AND NOT APPLE)
 		src/lib/wayland/display.cpp
 		src/lib/wayland/registry.cpp
 		src/lib/wayland/seat.cpp
-		src/lib/wayland/clipboard-writer.cpp
 		src/services/clipboard/data-control/data-control-clipboard-server.hpp
 		src/services/clipboard/data-control/data-control-clipboard-server.cpp
 	)

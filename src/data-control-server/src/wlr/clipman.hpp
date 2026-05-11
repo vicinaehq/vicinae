@@ -19,6 +19,7 @@ public:
   virtual ~WlrClipman() = default;
   static WlrClipman *instance(SelectionWriter writer = nullptr);
   void start();
+  void setClipboard(const clipboard_proto::Selection &selection);
   WlrClipman(SelectionWriter writer);
 
 private:
@@ -26,6 +27,7 @@ private:
   std::unique_ptr<WaylandRegistry> _registry;
   std::unique_ptr<WlrDataControlManager> _dcm;
   std::unique_ptr<WaylandSeat> _seat;
+  std::unique_ptr<WlrDataDevice> m_device;
 
   void global(WaylandRegistry &reg, uint32_t name, const char *interface, uint32_t version) override;
   void selection(WlrDataDevice &device, WlrDataOffer &offer) override;

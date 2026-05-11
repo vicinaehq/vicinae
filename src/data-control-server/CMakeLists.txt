@@ -12,6 +12,8 @@ wayland_generate_protocol("ext-data-control-v1")
 add_executable(${DATA_CONTROL_SERVER_BIN}
   src/main.cpp
   src/selection.cpp
+  src/stdin-reader.cpp
+  src/clipboard-writer.cpp
   src/wayland/display.cpp
   src/wayland/registry.cpp
   src/wayland/seat.cpp

@@ -11,7 +11,6 @@ namespace fs = std::filesystem;
 
 using namespace snippet;
 
-
 SnippetDatabase::SnippetDatabase(const std::filesystem::path &path) : m_path(path) {
   if (!fs::is_regular_file(m_path)) {
     fs::create_directories(path.parent_path());

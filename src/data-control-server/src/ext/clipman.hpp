@@ -19,6 +19,7 @@ public:
   virtual ~ExtClipman() = default;
   static ExtClipman *instance(SelectionWriter writer = nullptr);
   void start();
+  void setClipboard(const clipboard_proto::Selection &selection);
   ExtClipman(SelectionWriter writer);
 
 private:
@@ -26,6 +27,7 @@ private:
   std::unique_ptr<WaylandRegistry> _registry;
   std::unique_ptr<ExtDataControlManager> _dcm;
   std::unique_ptr<WaylandSeat> _seat;
+  std::unique_ptr<ExtDataDevice> m_device;
 
   void global(WaylandRegistry &reg, uint32_t name, const char *interface, uint32_t version) override;
   void selection(ExtDataDevice &device, ExtDataOffer &offer) override;

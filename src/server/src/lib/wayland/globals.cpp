@@ -8,8 +8,6 @@ zwlr_data_control_manager_v1 *Globals::wlrDataControlManager() { return instance
 
 ext_data_control_manager_v1 *Globals::dataControlDeviceManager() { return instance().extDataControlDevice; }
 
-wl_seat *Globals::seat() { return instance().m_seat; }
-
 // NOLINTBEGIN(cppcoreguidelines-pro-type-static-cast-downcast)
 void Globals::handleGlobal(void *data, struct wl_registry *registry, uint32_t name, const char *interface,
                            uint32_t version) {
@@ -23,13 +21,6 @@ void Globals::handleGlobal(void *data, struct wl_registry *registry, uint32_t na
   else if (strcmp(interface, ext_data_control_manager_v1_interface.name) == 0) {
     self->extDataControlDevice = static_cast<ext_data_control_manager_v1 *>(
         wl_registry_bind(registry, name, &ext_data_control_manager_v1_interface, version));
-  }
-
-  else if (strcmp(interface, wl_seat_interface.name) == 0) {
-    if (!self->m_seat) {
-      self->m_seat =
-          static_cast<wl_seat *>(wl_registry_bind(registry, name, &wl_seat_interface, std::min(version, 1u)));
-    }
   }
 
   else if (strcmp(interface, org_kde_kwin_blur_manager_interface.name) == 0) {

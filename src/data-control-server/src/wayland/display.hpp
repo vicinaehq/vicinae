@@ -15,5 +15,6 @@ public:
   int dispatch() const;
   int roundtrip() const;
   wl_display *display() const;
+  int fd() const;
   int flush() const;
 };

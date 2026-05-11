@@ -10,5 +10,6 @@ std::unique_ptr<WaylandRegistry> WaylandDisplay::registry() const {
 }
 int WaylandDisplay::dispatch() const { return wl_display_dispatch(_display); };
 wl_display *WaylandDisplay::display() const { return _display; }
+int WaylandDisplay::fd() const { return wl_display_get_fd(_display); }
 int WaylandDisplay::roundtrip() const { return wl_display_roundtrip(_display); };
 int WaylandDisplay::flush() const { return wl_display_flush(_display); }
