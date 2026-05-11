@@ -1,6 +1,9 @@
 #pragma once
+#include <algorithm>
+#include <cctype>
 #include <QDebug>
 #include <cstdint>
+#include <format>
 #include <variant>
 #include <filesystem>
 #include <string>
@@ -19,6 +22,17 @@ struct Expansion {
   std::string keyword;
   std::vector<std::string> apps;
   bool word = true;
+
+  static std::optional<std::string> validateKeyword(const std::string &keyword) {
+    if (keyword.empty()) return "Keyword cannot be empty";
+    if (keyword.size() > 32) return std::format("Keyword exceeds maximum length of {}", 32);
+    if (!std::ranges::all_of(keyword, [](char c) {
+          auto uc = static_cast<unsigned char>(c);
+          return uc <= 127 && std::isprint(uc) && !std::isspace(uc);
+        }))
+      return "Keyword must only contain printable ASCII characters (no spaces)";
+    return std::nullopt;
+  }
 };
 
 using SnippetData = std::variant<FileSnippet, TextSnippet>;

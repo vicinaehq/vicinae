@@ -363,8 +363,6 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
           }
         }
 
-        std::cerr << "text='" << m_text << "'\n";
-
         const bool wordSep = !keyStr.empty() && isWordSeparator(keyStr.at(0));
 
         for (const auto &snippet : m_snippets) {

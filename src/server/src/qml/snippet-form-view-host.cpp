@@ -103,9 +103,8 @@ void SnippetFormViewHost::submit() {
     valid = false;
   }
   if (!m_keyword.isEmpty()) {
-    const bool hasSpaces = std::ranges::any_of(m_keyword, [](QChar c) { return c.isSpace(); });
-    if (hasSpaces) {
-      m_keywordError = QStringLiteral("No spaces");
+    if (auto err = snippet::Expansion::validateKeyword(m_keyword.toStdString())) {
+      m_keywordError = QString::fromStdString(*err);
       valid = false;
     }
   }
