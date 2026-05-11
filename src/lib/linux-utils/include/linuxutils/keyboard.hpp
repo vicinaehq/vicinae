@@ -1,24 +1,22 @@
 #pragma once
+#include <array>
 #include <cstdint>
-#include <expected>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <fcntl.h>
 #include <linux/uinput.h>
 #include <linux/input-event-codes.h>
 #include <linux/input.h>
 #include <unistd.h>
+#include <xkbcommon/xkbcommon.h>
 
 namespace linuxutils {
 
 /**
  * Virtual keyboard device using /dev/uinput.
- * This is a very low level keyboard device that operates at the scan code level,
- * The main pro of this is that it will work on every linux environment.
- * We mostly use it to send ctrl+v and ctrl+shift+v in order to implement proper paste
- * functionnality.
- * It's not possible to type UTF-8 text with this alone. The way to do this is to use the clipboard
- * which is better suited for data transfer anyways.
+ * Operates at the scan code level so it works on every linux environment.
+ * Supports both raw scancode injection and character-level typing via xkbcommon.
  */
 class UInputKeyboard {
 
@@ -47,16 +45,29 @@ public:
   }
 
 public:
+  static constexpr int DEFAULT_KEY_DELAY_US = 2000;
+
   UInputKeyboard();
   ~UInputKeyboard();
 
   void sendKey(int code, int mods);
   void repeatKey(int code, int n);
+  void typeText(std::string_view text);
+  void setKeyDelay(int us) { m_keyDelayUs = us; }
+  void setKeymap(const xkb_rule_names *rules);
 
   int fd() const { return m_fd; }
   std::optional<std::string> error() const { return m_error; }
 
 private:
+  struct KeyRecord {
+    uint32_t code = 0;
+    int mods = 0;
+  };
+
+  static constexpr size_t CHARMAP_SIZE = 128;
+
+  void buildCharMap(const xkb_rule_names *rules);
   void sync();
   void keyup(int code);
   void keydown(int code);
@@ -66,5 +77,10 @@ private:
 
   std::optional<std::string> m_error;
   int m_fd = -1;
+  int m_keyDelayUs = DEFAULT_KEY_DELAY_US;
+
+  xkb_context *m_xkbCtx = nullptr;
+  xkb_keymap *m_xkbKeymap = nullptr;
+  std::array<KeyRecord, CHARMAP_SIZE> m_charMap{};
 };
 } // namespace linuxutils

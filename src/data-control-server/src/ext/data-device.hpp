@@ -17,6 +17,7 @@ public:
 
   ExtDataDevice(ext_data_control_device_v1 *dev);
   ~ExtDataDevice();
+  ext_data_control_device_v1 *raw() const { return _dev; }
 
 private:
   ext_data_control_device_v1 *_dev;

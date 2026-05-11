@@ -74,8 +74,8 @@ public:
   WindowList listWindowsSync() const override;
   WindowPtr getFocusedWindowSync() const override;
   void focusWindowSync(const AbstractWindow &window) const override;
-
   bool supportsFocusTracking() const override { return true; }
+
   bool isActivatable() const override { return Environment::isWaylandPlasmaDesktop(); }
   bool ping() const override;
 

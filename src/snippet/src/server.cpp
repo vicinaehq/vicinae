@@ -1,6 +1,5 @@
 #include "snippet/snippet.hpp"
 #include <cctype>
-#include <chrono>
 #include <cstdint>
 #include <cstring>
 #include <glaze/json/read.hpp>
@@ -8,17 +7,23 @@
 #include <expected>
 #include <linux/input.h>
 #include <libudev.h>
-#include <linux/uinput.h>
+#include <poll.h>
 #include <string_view>
 #include <xkbcommon/xkbcommon.h>
 #include <fcntl.h>
 #include <iostream>
-#include <ostream>
 #include <sys/epoll.h>
 #include <unistd.h>
+#include <algorithm>
 #include <unordered_map>
 
-static auto lastExpansionTime = std::chrono::steady_clock::now();
+static constexpr size_t MAX_BUFFER_SIZE = 32;
+static constexpr uint32_t MAX_MESSAGE_SIZE = 64 * 1024;
+static constexpr const char *VIRTUAL_KB_NAME = "vicinae-snippet-virtual-keyboard";
+
+static bool isWordSeparator(char c) {
+  return std::isspace(static_cast<unsigned char>(c)) || std::ispunct(static_cast<unsigned char>(c));
+}
 
 /**
  * Parse message as data gets in, and call the provided callback once a full message
@@ -34,7 +39,7 @@ public:
     const int rc = read(fd, m_buf.data(), m_buf.size());
 
     if (rc == -1) {
-      std::println(std::cerr, "Failed to read fd {}: {}", fd, strerror(errno));
+      std::cerr << "Failed to read fd " << fd << ": " << strerror(errno) << '\n';
       return false;
     }
 
@@ -45,8 +50,8 @@ public:
     for (;;) {
       if (size == 0 && data.size() >= sizeof(size)) {
         size = *reinterpret_cast<decltype(size) *>(data.data());
-        data.erase(data.begin(),
-                   data.begin() + sizeof(size)); // we need a better way than this, this is slow
+        data.erase(data.begin(), data.begin() + sizeof(size));
+        if (size > MAX_MESSAGE_SIZE) { return false; }
       }
 
       if (size && size <= data.size()) {
@@ -80,12 +85,11 @@ struct Input {
 
 SnippetService::SnippetService(snippet_gen::RpcTransport &transport)
     : snippet_gen::AbstractSnippet(transport), m_udev(udev_new()),
-      m_xkb(xkb_context_new(XKB_CONTEXT_NO_FLAGS)), m_keymap([this] {
-        static constexpr const xkb_rule_names rules{
-            .rules = nullptr, .model = nullptr, .layout = "us", .variant = nullptr, .options = nullptr};
-        return xkb_keymap_new_from_names(m_xkb, &rules, XKB_KEYMAP_COMPILE_NO_FLAGS);
-      }()),
-      m_kbState(xkb_state_new(m_keymap)) {}
+      m_xkb(xkb_context_new(XKB_CONTEXT_NO_FLAGS)),
+      m_keymap(xkb_keymap_new_from_names(m_xkb, nullptr, XKB_KEYMAP_COMPILE_NO_FLAGS)),
+      m_kbState(xkb_state_new(m_keymap)) {
+  m_text.reserve(MAX_BUFFER_SIZE);
+}
 
 std::vector<std::string> SnippetService::enumerateKeyboards() {
   udev_enumerate *enumerate = udev_enumerate_new(m_udev);
@@ -120,44 +124,67 @@ std::expected<void, std::string> SnippetService::setKeymap(snippet_gen::LayoutIn
 
 std::expected<snippet_gen::CreateSnippetResponse, std::string>
 SnippetService::createSnippet(snippet_gen::CreateSnippetRequest req) {
-  std::println(std::cerr, "Created new snippet with trigger {}", req.trigger);
-  m_snippetMap[req.trigger] = Snippet{.trigger = req.trigger, .mode = req.mode};
+  std::cerr << "Created new snippet with trigger " << req.trigger << '\n';
+  m_snippets.push_back(Snippet{.trigger = req.trigger, .mode = req.mode});
+  std::ranges::sort(m_snippets, [](auto &&a, auto &&b) { return a.trigger.size() > b.trigger.size(); });
   return snippet_gen::CreateSnippetResponse{};
 }
 
 std::expected<snippet_gen::RemoveSnippetResponse, std::string>
 SnippetService::removeSnippet(snippet_gen::RemoveSnippetRequest req) {
-  m_snippetMap.erase(req.trigger);
+  std::erase_if(m_snippets, [&](auto &&s) { return s.trigger == req.trigger; });
   return snippet_gen::RemoveSnippetResponse{};
 }
 
-std::expected<void, std::string>
-SnippetService::injectClipboardExpansion(snippet_gen::InjectClipboardRequest req) {
-  const auto it = m_snippetMap.find(req.trigger);
-
-  if (it == m_snippetMap.end()) {
-    std::println(std::cerr, "Could not find snippet with trigger {}", req.trigger);
-    return std::unexpected("No such snippet");
-  }
-
-  auto mods = linuxutils::UInputKeyboard::Modifier::Ctrl;
-  std::println(std::cerr, "Received expansion request for snippet {} (took {}ms)", req.trigger,
-               std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() -
-                                                                     lastExpansionTime)
-                   .count());
-
-  if (req.terminal) mods |= linuxutils::UInputKeyboard::Modifier::Shift;
-
-  m_kb.repeatKey(KEY_BACKSPACE, req.trigger.size());
-  usleep(2000);
-  m_kb.sendKey(KEY_V, static_cast<int>(mods));
-
-  if (it->second.mode == snippet_gen::ExpansionMode::Word) {
-    usleep(2000);
-    m_kb.sendKey(KEY_SPACE, 0);
-  }
-
+std::expected<void, std::string> SnippetService::resetContext() {
+  m_text.clear();
   return {};
+}
+
+std::expected<void, std::string> SnippetService::injectExpand(snippet_gen::InjectExpandRequest req) {
+  using Mod = linuxutils::UInputKeyboard::Modifier;
+  m_keyboard.repeatKey(KEY_BACKSPACE, req.charsToDelete);
+  if (req.prePasteDelayUs > 0) { usleep(req.prePasteDelayUs); }
+  m_keyboard.sendKey(KEY_V, static_cast<int>(req.terminal ? (Mod::Ctrl | Mod::Shift) : Mod::Ctrl));
+  if (req.cursorLeftMoves > 0) { m_keyboard.repeatKey(KEY_LEFT, req.cursorLeftMoves); }
+  return {};
+}
+
+std::expected<void, std::string> SnippetService::injectUndo(snippet_gen::InjectUndoRequest req) {
+  m_cancelInjection.store(false, std::memory_order_relaxed);
+  for (int i = 0; i < req.backspaceCount; ++i) {
+    if (m_cancelInjection.load(std::memory_order_relaxed)) return {};
+    m_keyboard.sendKey(KEY_BACKSPACE, 0);
+    drainStdin();
+  }
+  if (!m_cancelInjection.load(std::memory_order_relaxed)) { m_keyboard.typeText(req.triggerText); }
+  return {};
+}
+
+std::expected<void, std::string> SnippetService::injectPaste(snippet_gen::InjectPasteRequest req) {
+  using Mod = linuxutils::UInputKeyboard::Modifier;
+  m_keyboard.sendKey(KEY_V, static_cast<int>(req.terminal ? (Mod::Ctrl | Mod::Shift) : Mod::Ctrl));
+  return {};
+}
+
+std::expected<void, std::string> SnippetService::cancelInjection() {
+  m_cancelInjection.store(true, std::memory_order_relaxed);
+  return {};
+}
+
+std::expected<void, std::string> SnippetService::setKeyDelay(int delayUs) {
+  m_keyboard.setKeyDelay(delayUs);
+  return {};
+}
+
+std::expected<snippet_gen::KeyboardCapabilities, std::string> SnippetService::getCapabilities() {
+  return snippet_gen::KeyboardCapabilities{.injection = !m_keyboard.error().has_value()};
+}
+
+void SnippetService::drainStdin() {
+  if (!m_ipcFrame) return;
+  pollfd pfd = {.fd = STDIN_FILENO, .events = POLLIN, .revents = 0};
+  if (poll(&pfd, 1, 0) > 0 && (pfd.revents & POLLIN)) { m_ipcFrame->readPart(STDIN_FILENO); }
 }
 
 void SnippetService::setLayout(const LayoutInfo &info) {
@@ -176,7 +203,8 @@ void SnippetService::setLayout(const LayoutInfo &info) {
   xkb_keymap_unref(m_keymap);
   m_keymap = keymap;
   m_kbState = state;
-  std::println(std::cerr, "changed keyboard layout to {}", rules.layout);
+  m_keyboard.setKeymap(&rules);
+  std::cerr << "changed keyboard layout to " << rules.layout << '\n';
 }
 
 void SnippetService::listen(snippet_gen::Server &rpcServer) {
@@ -187,7 +215,7 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
   int epollfd = epoll_create1(0);
 
   if (epollfd == -1) {
-    std::println(std::cerr, "Failed to create epollfd: {}", strerror(errno));
+    std::cerr << "Failed to create epollfd: " << strerror(errno) << '\n';
     return;
   }
 
@@ -197,7 +225,7 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
   ev.events = EPOLLIN;
 
   if (epoll_ctl(epollfd, EPOLL_CTL_ADD, ev.data.fd, &ev) == -1) {
-    std::println(std::cerr, "Failed to add stdin to epoll: {}", strerror(errno));
+    std::cerr << "Failed to add stdin to epoll: " << strerror(errno) << '\n';
     exit(1);
   }
 
@@ -209,7 +237,7 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
   const int udevFd = udev_monitor_get_fd(mon);
 
   if (udevFd == -1) {
-    std::println(std::cerr, "Failed to create inotify file descriptor", strerror(errno));
+    std::cerr << "Failed to get udev monitor fd: " << strerror(errno) << '\n';
     exit(1);
   }
 
@@ -217,7 +245,7 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
   ev.events = EPOLLIN;
 
   if (epoll_ctl(epollfd, EPOLL_CTL_ADD, ev.data.fd, &ev) == -1) {
-    std::println(std::cerr, "Failed to add watch to epoll: {}", strerror(errno));
+    std::cerr << "Failed to add watch to epoll: " << strerror(errno) << '\n';
     exit(1);
   }
 
@@ -225,7 +253,14 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
     int fd = open(device, O_RDONLY);
 
     if (fd == -1) {
-      std::println(std::cerr, "Failed to open {}: {}", device, strerror(errno));
+      std::cerr << "Failed to open " << device << ": " << strerror(errno) << '\n';
+      return false;
+    }
+
+    std::array<char, 256> name{};
+    if (ioctl(fd, EVIOCGNAME(name.size()), name.data()) >= 0 &&
+        std::string_view(name.data()) == VIRTUAL_KB_NAME) {
+      close(fd);
       return false;
     }
 
@@ -233,7 +268,7 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
     ev.data.fd = fd;
 
     if (epoll_ctl(epollfd, EPOLL_CTL_ADD, ev.data.fd, &ev) == -1) {
-      std::println(std::cerr, "Failed to add fd {} for {} to epoll: {}", fd, device, strerror(errno));
+      std::cerr << "Failed to add fd " << fd << " for " << device << " to epoll: " << strerror(errno) << '\n';
       close(fd);
       return false;
     }
@@ -247,33 +282,39 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
   }
 
   for (const auto &[fd, data] : inputs) {
-    std::println(std::cerr, "Input ready: {} (fd={})", data.name, data.fd);
+    std::cerr << "Input ready: " << data.name << " (fd=" << data.fd << ")\n";
   }
 
   constexpr const int MAX_EVENTS = 256;
   std::array<epoll_event, MAX_EVENTS> events;
 
-  auto lastKeyTime = std::chrono::steady_clock::now();
-
   Frame ipcFrame;
+  setIpcFrame(&ipcFrame);
 
   ipcFrame.setHandler([&](std::string_view message) { rpcServer.route(message); });
 
-  setLayout({.layout = "us"});
+  static constexpr int MODIFIER_TIMEOUT_MS = 3000;
 
   for (;;) {
-    const int nfds = epoll_wait(epollfd, events.data(), events.size(), -1);
+    const int timeout = m_pendingExpansion ? MODIFIER_TIMEOUT_MS : -1;
+    const int nfds = epoll_wait(epollfd, events.data(), events.size(), timeout);
 
     if (nfds == -1) {
-      std::println(std::cerr, "Failed to epoll_wait: {}", strerror(errno));
+      std::cerr << "Failed to epoll_wait: " << strerror(errno) << '\n';
       exit(1);
+    }
+
+    if (nfds == 0 && m_pendingExpansion) {
+      std::cerr << "Modifier release timeout, emitting anyway\n";
+      flushPendingExpansion();
+      continue;
     }
 
     for (int n = 0; n < nfds; ++n) {
       int fd = events[n].data.fd;
 
       if (fd == STDIN_FILENO) {
-        ipcFrame.readPart(STDIN_FILENO);
+        if (!ipcFrame.readPart(STDIN_FILENO)) { exit(0); }
         continue;
       }
 
@@ -290,23 +331,23 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
         if (!kb || std::string_view{kb} != "1") continue;
 
         if (action == "add") {
-          std::println(std::cerr, "CREATE ev: {}", node);
+          std::cerr << "CREATE ev: " << node << '\n';
 
           if (createInput(node)) {
-            std::println(std::cerr, "Hot plugged device {}", node);
+            std::cerr << "Hot plugged device " << node << '\n';
           } else {
-            std::println(std::cerr, "Failed to hot plug device {}", node);
+            std::cerr << "Failed to hot plug device " << node << '\n';
           }
         }
 
         else if (action == "remove") {
-          std::println(std::cerr, "DELETE ev: {}", node);
+          std::cerr << "DELETE ev: " << node << '\n';
 
           if (auto it = std::ranges::find_if(inputs, [&](auto &&input) { return input.second.name == node; });
               it != inputs.end()) {
             epoll_ctl(epollfd, EPOLL_CTL_DEL, it->second.ev.data.fd, &it->second.ev);
             close(it->second.fd);
-            std::println(std::cerr, "Removed device {} (fd={})", it->second.name, it->second.fd);
+            std::cerr << "Removed device " << it->second.name << " (fd=" << it->second.fd << ")\n";
             inputs.erase(it);
           }
         }
@@ -317,88 +358,108 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
       auto it = inputs.find(fd);
 
       if (it == inputs.end()) {
-        std::println(std::cerr, "fd {} does not map to any known input, skipping...", fd);
+        std::cerr << "fd " << fd << " does not map to any known input, skipping...\n";
         continue;
       }
 
-      int rc = 0;
       input_event ev;
+      std::array<char, 8> key;
 
-      // TODO: handle this more gracefully to allow any read size and batch?
-      if ((rc = read(fd, &ev, sizeof(ev))) < sizeof(ev)) {
-        std::println(std::cerr, "read of invalid size for event: expected {}, got {}", sizeof(ev), rc);
-        continue;
-      }
+      const auto rc = read(fd, &ev, sizeof(ev));
 
       if (rc <= 0) {
         epoll_ctl(epollfd, EPOLL_CTL_DEL, it->second.ev.data.fd, &it->second.ev);
         close(it->second.fd);
-        std::println(std::cerr, "Removed device {} (fd={})", it->second.name, it->second.fd);
+        std::cerr << "Removed device " << it->second.name << " (fd=" << it->second.fd << ")\n";
         inputs.erase(it);
         continue;
       }
 
-      if (ev.type != EV_KEY) {
-        // std::println(std::cerr, "Reading key input {} (fd={}) code={}", it->second.name, fd, ev.code);
+      if (static_cast<size_t>(rc) < sizeof(ev)) {
+        std::cerr << "read of invalid size for event: expected " << sizeof(ev) << ", got " << rc << '\n';
         continue;
       }
+
+      if (ev.type != EV_KEY) { continue; }
 
       const xkb_keycode_t keycode = ev.code + 8;
 
       if (ev.value == 0) {
         xkb_state_update_key(m_kbState, keycode, XKB_KEY_UP);
+        if (m_pendingExpansion && !hasActiveModifiers()) { flushPendingExpansion(); }
       } else if (ev.value <= 2) {
-        const auto now = std::chrono::steady_clock::now();
-        const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastKeyTime).count();
-
-        if (elapsed > 1000) { m_text.clear(); }
-
-        lastKeyTime = now;
-
-        std::array<char, 32> key;
         const int len = xkb_state_key_get_utf8(m_kbState, keycode, key.data(), key.size());
         const std::string_view keyStr{key.data(), static_cast<size_t>(len)};
 
         if (ev.value == 1) { xkb_state_update_key(m_kbState, keycode, XKB_KEY_DOWN); }
 
-        if (!keyStr.empty()) {
+        if (m_undoTrigger && ev.value == 1) {
+          if (ev.code == KEY_BACKSPACE) {
+            std::cerr << "SNIPPET UNDO: " << *m_undoTrigger << '\n';
+            emitundoSnippet({.trigger = *m_undoTrigger});
+            m_undoTrigger.reset();
+            continue;
+          }
+          m_undoTrigger.reset();
+        }
 
+        if (!keyStr.empty()) {
           if (ev.code == KEY_BACKSPACE) {
             if (!m_text.empty()) { m_text.erase(m_text.end() - 1); }
-          } else if (std::isprint(keyStr.at(0)) && !std::isspace(keyStr.at(0))) {
+          } else if (std::isprint(keyStr.at(0))) {
             m_text.append(keyStr);
+            if (m_text.size() > MAX_BUFFER_SIZE) { m_text.erase(0, m_text.size() - MAX_BUFFER_SIZE); }
           }
         }
 
-        std::println(std::cerr, "text='{}'", m_text);
+        const bool wordSep = !keyStr.empty() && isWordSeparator(keyStr.at(0));
 
-        const auto it = m_snippetMap.find(m_text);
-
-        if (it != m_snippetMap.end()) {
-          switch (it->second.mode) {
-          case snippet_gen::ExpansionMode::Keydown:
-            emitExpansion(it->second);
-            break;
-          case snippet_gen::ExpansionMode::Word:
-            if (ev.code == KEY_SPACE || ev.code == KEY_ENTER) {
-              m_kb.sendKey(KEY_BACKSPACE, 0);
-              emitExpansion(it->second);
+        for (const auto &snippet : m_snippets) {
+          if (snippet.mode == snippet_gen::ExpansionMode::Keydown) {
+            if (snippet.trigger.size() > m_text.size()) continue;
+            if (m_text.ends_with(snippet.trigger)) {
+              emitExpansion(snippet);
+              break;
             }
-            break;
+          } else if (wordSep) {
+            if (snippet.trigger.size() + 1 > m_text.size()) continue;
+            if (std::string_view(m_text).substr(0, m_text.size() - 1).ends_with(snippet.trigger)) {
+              emitExpansion(snippet);
+              break;
+            }
           }
         }
-
-        if (ev.code == KEY_SPACE) { m_text.clear(); }
       }
     }
   }
 }
 
+bool SnippetService::hasActiveModifiers() const {
+  return xkb_state_mod_names_are_active(m_kbState, XKB_STATE_MODS_DEPRESSED, XKB_STATE_MATCH_ANY,
+                                        XKB_MOD_NAME_SHIFT, XKB_MOD_NAME_CTRL, XKB_MOD_NAME_ALT,
+                                        XKB_MOD_NAME_LOGO, nullptr) > 0;
+}
+
+void SnippetService::flushPendingExpansion() {
+  if (!m_pendingExpansion) return;
+  std::cerr << "SNIPPET EMITTING (mods released): " << m_pendingExpansion->trigger << '\n';
+  emittriggerSnippet({.trigger = m_pendingExpansion->trigger});
+  m_undoTrigger = m_pendingExpansion->trigger;
+  m_pendingExpansion.reset();
+}
+
 void SnippetService::emitExpansion(const Snippet &snippet) {
-  std::println(std::cerr, "SNIPPET EXPANDED: {}", snippet.trigger);
-  lastExpansionTime = std::chrono::steady_clock::now();
-  emittriggerSnippet({.trigger = snippet.trigger});
+  std::cerr << "SNIPPET TRIGGERED: " << snippet.trigger << '\n';
   m_text.clear();
+
+  if (hasActiveModifiers()) {
+    std::cerr << "Deferring expansion until modifiers are released\n";
+    m_pendingExpansion = snippet;
+    return;
+  }
+
+  emittriggerSnippet({.trigger = snippet.trigger});
+  m_undoTrigger = snippet.trigger;
 }
 
 }; // namespace snippet

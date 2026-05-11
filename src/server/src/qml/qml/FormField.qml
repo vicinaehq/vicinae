@@ -89,9 +89,18 @@ ColumnLayout {
             Layout.preferredWidth: 5
             Layout.fillWidth: true
             text: root.info
+            textFormat: Text.StyledText
             color: Theme.textMuted
+            linkColor: Theme.accent
             font.pointSize: Theme.smallerFontSize
             wrapMode: Text.Wrap
+            onLinkActivated: link => Qt.openUrlExternally(link)
+
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: parent.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor
+                acceptedButtons: Qt.NoButton
+            }
         }
 
         Item {

@@ -1,7 +1,11 @@
 #include "manage-snippets-view-host.hpp"
+#include "builtin_icon.hpp"
 #include "placeholder.hpp"
 #include "service-registry.hpp"
+#include "services/app-service/app-service.hpp"
 #include "services/snippet/snippet-service.hpp"
+#include "snippet-form-view-host.hpp"
+#include "view-utils.hpp"
 #include <QDateTime>
 #include <ranges>
 
@@ -22,7 +26,7 @@ void ManageSnippetsViewHost::initialize() {
   m_section.setOnSnippetSelected([this](const snippet::SerializedSnippet &s) { loadDetail(s); });
   model()->addSource(&m_section);
 
-  setSearchPlaceholderText("Search by snippet name, contents or keyword...");
+  setSearchPlaceholderText("Search for snippets...");
 
   connect(m_snippetService, &SnippetService::snippetsChanged, this, &ManageSnippetsViewHost::reload);
 
@@ -30,11 +34,19 @@ void ManageSnippetsViewHost::initialize() {
           [this](const ArgumentValues &) { updateExpandedText(); });
 
   connect(model(), &QAbstractItemModel::modelReset, this, [this]() {
-    if (model()->rowCount() == 0) clearDetail();
+    if (model()->rowCount() == 0) {
+      clearDetail();
+      setEmptyActions();
+    }
   });
 }
 
 void ManageSnippetsViewHost::loadInitialData() { reload(); }
+
+void ManageSnippetsViewHost::onReactivated() {
+  ListViewHost::onReactivated();
+  if (model()->rowCount() == 0) { setEmptyActions(); }
+}
 
 void ManageSnippetsViewHost::beforePop() {
   clearDetail();
@@ -73,6 +85,23 @@ void ManageSnippetsViewHost::loadDetail(const snippet::SerializedSnippet &snippe
         {QStringLiteral("label"), QStringLiteral("Keyword")},
         {QStringLiteral("value"), QString::fromStdString(snippet.expansion->keyword)},
     });
+
+    if (!snippet.expansion->apps.empty()) {
+      const auto *appDb = context()->services->appDb();
+      QVariantList icons;
+      for (const auto &appId : snippet.expansion->apps) {
+        const auto app = appDb->findById(QString::fromStdString(appId));
+        QVariantMap entry;
+        entry[QStringLiteral("icon")] = app ? qml::imageSourceFor(app->iconUrl()) : QString();
+        entry[QStringLiteral("tooltip")] = app ? app->displayName() : QString::fromStdString(appId);
+        icons.append(entry);
+      }
+      meta.append(QVariantMap{
+          {QStringLiteral("type"), QStringLiteral("icons")},
+          {QStringLiteral("label"), QStringLiteral("Apps")},
+          {QStringLiteral("icons"), icons},
+      });
+    }
   }
 
   m_detailMetadata = meta;
@@ -109,16 +138,15 @@ void ManageSnippetsViewHost::loadDetail(const snippet::SerializedSnippet &snippe
 void ManageSnippetsViewHost::updateExpandedText() {
   if (!m_currentSnippet) return;
 
-  const auto visitor = overloads{
-      [this](const snippet::TextSnippet &text) {
-        const auto values = context()->navigation->completionValues();
-        const auto result = m_expander.expand(text.text.c_str(), values);
-        m_detailContent = result.parts | std::views::transform([](auto &&r) { return r.text; }) |
-                          std::views::join | std::ranges::to<QString>();
-      },
-      [this](const snippet::FileSnippet &file) { m_detailContent = QString::fromStdString(file.file); }};
+  m_detailContent.clear();
 
-  std::visit(visitor, m_currentSnippet->data);
+  if (const auto *text = std::get_if<snippet::TextSnippet>(&m_currentSnippet->data)) {
+    const auto values = context()->navigation->completionValues();
+    const auto result = m_expander.expand(text->text.c_str(), values, {.executeShell = false});
+    m_detailContent = result.parts | std::views::transform([](auto &&r) { return r.text; }) |
+                      std::views::join | std::ranges::to<QString>();
+  }
+
   m_hasDetail = true;
   emit detailChanged();
 }
@@ -131,6 +159,20 @@ void ManageSnippetsViewHost::clearDetail() {
   m_detailMetadata.clear();
   context()->navigation->destroyCurrentCompletion();
   emit detailChanged();
+}
+
+void ManageSnippetsViewHost::createSnippet() { context()->navigation->pushView(new SnippetFormViewHost()); }
+
+void ManageSnippetsViewHost::setEmptyActions() {
+  auto panel = std::make_unique<ListActionPanelState>();
+  auto *section = panel->createSection();
+
+  auto *create = new StaticAction("Create snippet", BuiltinIcon::Plus,
+                                  [this](ApplicationContext *) { createSnippet(); });
+  create->setPrimary(true);
+  section->addAction(create);
+
+  context()->navigation->setActions(std::move(panel), this);
 }
 
 void ManageSnippetsViewHost::reload() { m_section.setItems(m_snippetService->database()->snippets()); }

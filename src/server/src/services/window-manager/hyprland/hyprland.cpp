@@ -10,6 +10,7 @@ using Hyprctl = Hyprland::Controller;
 HyprlandWindowManager::HyprlandWindowManager() {
   connect(&m_ev, &Hyprland::EventListener::openwindow, this, [this]() { emit windowsChanged(); });
   connect(&m_ev, &Hyprland::EventListener::closewindow, this, [this]() { emit windowsChanged(); });
+  connect(&m_ev, &Hyprland::EventListener::activewindowchanged, this, [this]() { emit focusChanged(); });
 }
 
 QString HyprlandWindowManager::id() const { return "hyprland"; }

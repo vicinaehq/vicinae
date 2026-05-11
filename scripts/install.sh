@@ -387,37 +387,45 @@ install_browser_manifests() {
     fi
 }
 
-install_udev_rules() {
-    	echo "Installing udev rules and modules-load config (for paste support)..." >&2
+install_input_server_capabilities() {
+	echo "Setting input server capabilities (for keyboard monitoring and injection)..." >&2
 
-    if [[ $EUID -ne 0 ]]; then
-        warn "Note: Skipping udev rules installation (not root)"
-		warn "  Paste support requires /dev/uinput access. See https://docs.vicinae.com for manual setup."
+	if [[ $EUID -ne 0 ]]; then
+		warn "Skipping input server capabilities (not root)"
+		warn "  Snippet expansion and paste require evdev/uinput access. Run: sudo setcap cap_dac_override=ep $INSTALL_DIR/usr/libexec/vicinae/vicinae-input-server"
+		return
+	fi
 
-        return
-    fi
+	local input_bin="$INSTALL_DIR/usr/libexec/vicinae/vicinae-input-server"
 
-	local udev_source="$INSTALL_DIR/usr/lib/udev/rules.d"
-	local udev_dest="$PREFIX/lib/udev/rules.d"
+	if [[ -f "$input_bin" ]]; then
+		if command -v setcap >/dev/null 2>&1; then
+			setcap "cap_dac_override=ep" "$input_bin"
+			ok "Input server capabilities set (cap_dac_override)"
+		else
+			warn "setcap not found — snippet expansion and paste will not work without manual permission setup"
+		fi
+	else
+		echo "Note: Input server binary not found at $input_bin" >&2
+	fi
+}
+
+install_modules_load() {
+	echo "Installing modules-load config (for uinput kernel module)..." >&2
+
+	if [[ $EUID -ne 0 ]]; then
+		warn "Skipping modules-load config installation (not root)"
+		return
+	fi
+
 	local modules_source="$INSTALL_DIR/usr/lib/modules-load.d"
 	local modules_dest="$PREFIX/lib/modules-load.d"
-
-	if [[ -d "$udev_source" ]]; then
-        if ! mkdir -p "$udev_dest" 2>/tmp/vic.err || ! cp "$udev_source"/* "$udev_dest/" 2>/tmp/vic.err; then
-            warn "udev rules: cannot write to $udev_dest"
-        else
-            ok "udev rules installed to $udev_dest"
-            command -v udevadm >/dev/null && udevadm control --reload-rules 2>/dev/null || true
-			ok "udev rules reloaded"
-		fi
-	fi
 
 	if [[ -d "$modules_source" ]]; then
 		mkdir -p "$modules_dest"
 		cp "$modules_source"/* "$modules_dest/" 2>/dev/null || true
 		ok "modules-load config installed to $modules_dest"
 
-		# Load uinput module immediately if not already loaded
 		if ! lsmod | grep -q "^uinput"; then
 			modprobe uinput 2>/dev/null || true
 			ok "uinput module loaded"
@@ -495,7 +503,8 @@ install_vicinae() {
 		install_desktop_files
 		install_systemd_service
 		install_browser_manifests
-		install_udev_rules
+		install_modules_load
+		install_input_server_capabilities
 	else
 		echo "Error: Vicinae binary not found in extracted files" >&2
 		echo "Looking in: $extract_dir" >&2

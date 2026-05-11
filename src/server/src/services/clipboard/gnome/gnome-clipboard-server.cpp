@@ -46,10 +46,7 @@ bool GnomeClipboardServer::isActivatable() const {
   return true;
 }
 
-int GnomeClipboardServer::activationPriority() const {
-  // Higher priority than WlrClipboardServer (15) since GNOME can't use wlr
-  return 20;
-}
+int GnomeClipboardServer::activationPriority() const { return 20; }
 
 QString GnomeClipboardServer::id() const { return "gnome-clipboard"; }
 

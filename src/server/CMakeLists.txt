@@ -27,7 +27,6 @@ list(APPEND LIBS
 	vicinae::emoji
 	vicinae::common
 	vicinae::fuzzy
-	vicinae::linuxutils
 )
 
 
@@ -281,6 +280,8 @@ set(SRCS
 
 	src/extensions/clipboard/clipboard-extension.hpp
 	src/extensions/clipboard/clipboard-extension.cpp
+
+	src/extensions/snippet/snippet-extension.cpp
 
 	src/extensions/vicinae/refresh-apps-command.hpp
 	src/extensions/vicinae/refresh-apps-command.cpp
@@ -696,7 +697,7 @@ if (UNIX AND NOT APPLE)
 		OUTPUT snippet-client.hpp
 	)
 
-	list(APPEND LIBS xkbcommon vicinae::linuxutils)
+	list(APPEND LIBS xkbcommon)
 
 	# Common Wayland support files
 	list(APPEND SRCS
@@ -708,7 +709,6 @@ if (UNIX AND NOT APPLE)
 		src/services/clipboard/data-control/data-control-clipboard-server.cpp
 	)
 
-	wayland_generate_protocol("wlr-data-control-unstable-v1")
 endif()
 	
 
@@ -790,6 +790,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/BrowseFontsView.qml
 	src/qml/qml/ExtensionFormView.qml
 	src/qml/qml/FormFilePicker.qml
+	src/qml/qml/FormAppSelector.qml
 	src/qml/qml/FormDateInput.qml
 	src/qml/qml/FormLinkAccessory.qml
 	src/qml/qml/ExtensionDropdownAccessory.qml

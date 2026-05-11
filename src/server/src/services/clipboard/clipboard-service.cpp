@@ -148,10 +148,22 @@ bool ClipboardService::copyText(const QString &text, const Clipboard::CopyOption
   auto mimeData = new QMimeData;
 
   mimeData->setData("text/plain", text.toUtf8());
+  mimeData->setData("text/plain;charset=utf-8", text.toUtf8());
 
   if (options.concealed) mimeData->setData(Clipboard::CONCEALED_MIME_TYPE, "1");
 
   return copyQMimeData(mimeData, options);
+}
+
+void ClipboardService::scheduleClipboardRestore(int delayMs) {
+  if (!m_lastSelection || m_lastSelection->offers.empty()) return;
+
+  m_restoreTimer.stop();
+  m_restoreTimer.setSingleShot(true);
+  m_restoreTimer.setInterval(delayMs);
+  m_restoreTimer.disconnect();
+  connect(&m_restoreTimer, &QTimer::timeout, this, &ClipboardService::restoreClipboard);
+  m_restoreTimer.start();
 }
 
 QFuture<PaginatedResponse<ClipboardHistoryEntry>>
@@ -330,9 +342,11 @@ ClipboardSelection &ClipboardService::sanitizeSelection(ClipboardSelection &sele
 }
 
 void ClipboardService::saveSelection(ClipboardSelection selection) {
-  if (!m_monitoring) return;
-
   sanitizeSelection(selection);
+
+  m_lastSelection = selection;
+
+  if (!m_monitoring) return;
 
   qInfo() << "Received new clipboard selection with" << selection.offers.size() << "offers";
 
@@ -501,6 +515,19 @@ bool ClipboardService::copyQMimeData(QMimeData *data, const Clipboard::CopyOptio
   if (options.concealed) { data->setData(Clipboard::CONCEALED_MIME_TYPE, "1"); }
 
   return m_clipboardServer->setClipboardContent(data);
+}
+
+void ClipboardService::restoreClipboard() {
+  if (!m_lastSelection || m_lastSelection->offers.empty()) return;
+
+  auto *data = new QMimeData;
+  for (const auto &offer : m_lastSelection->offers) {
+    data->setData(offer.mimeType, offer.data);
+  }
+
+  data->setData(Clipboard::CONCEALED_MIME_TYPE, {});
+  m_clipboardServer->setClipboardContent(data);
+  m_lastSelection.reset();
 }
 
 bool ClipboardService::copySelection(const ClipboardSelection &selection,

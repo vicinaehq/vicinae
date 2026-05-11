@@ -1,6 +1,8 @@
 #include "snippet-form-view-host.hpp"
 #include "navigation-controller.hpp"
+#include "placeholder.hpp"
 #include "service-registry.hpp"
+#include "services/app-service/app-service.hpp"
 #include "services/snippet/snippet-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "ui/action-pannel/action.hpp"
@@ -26,11 +28,27 @@ void SnippetFormViewHost::initialize() {
   m_service = context()->services->snippetService();
   buildContentCompletions();
 
+  QVariantList allApps;
+  const auto *appDb = context()->services->appDb();
+  for (const auto &app : appDb->list({.sortAlphabetically = true})) {
+    if (!app->displayable()) continue;
+    QVariantMap entry;
+    entry[QStringLiteral("id")] = app->id();
+    entry[QStringLiteral("displayName")] = app->displayName();
+    entry[QStringLiteral("iconSource")] = qml::imageSourceFor(app->iconUrl());
+    allApps.append(entry);
+  }
+
+  QVariantMap section;
+  section[QStringLiteral("title")] = QString();
+  section[QStringLiteral("items")] = allApps;
+  m_availableApps.append(section);
+
   auto panel = std::make_unique<FormActionPanelState>();
-  auto section = panel->createSection();
+  auto section2 = panel->createSection();
   auto submitAction =
       new StaticAction(QStringLiteral("Submit"), ImageURL::builtin("enter-key"), [this]() { submit(); });
-  section->addAction(submitAction);
+  section2->addAction(submitAction);
   setActions(std::move(panel));
 
   if (m_initialSnippet) {
@@ -50,6 +68,10 @@ void SnippetFormViewHost::initialize() {
     if (snippet.expansion) {
       m_keyword = QString::fromStdString(snippet.expansion->keyword);
       m_expandAsWord = snippet.expansion->word;
+
+      for (const auto &wmClass : snippet.expansion->apps) {
+        m_apps.append(QString::fromStdString(wmClass));
+      }
     }
 
     emit formChanged();
@@ -80,11 +102,18 @@ void SnippetFormViewHost::submit() {
   if (m_content.isEmpty()) {
     m_contentError = QStringLiteral("Content should not be empty");
     valid = false;
+  } else {
+    const auto parsed = PlaceholderString::parseSnippetText(m_content);
+    auto cursorCount = std::ranges::count_if(
+        parsed.placeholders(), [](const auto &ph) { return ph.id == QStringLiteral("cursor"); });
+    if (cursorCount > 1) {
+      m_contentError = QStringLiteral("Only one {cursor} placeholder is allowed");
+      valid = false;
+    }
   }
   if (!m_keyword.isEmpty()) {
-    const bool hasSpaces = std::ranges::any_of(m_keyword, [](QChar c) { return c.isSpace(); });
-    if (hasSpaces) {
-      m_keywordError = QStringLiteral("No spaces");
+    if (auto err = snippet::Expansion::validateKeyword(m_keyword.toStdString())) {
+      m_keywordError = QString::fromStdString(*err);
       valid = false;
     }
   }
@@ -104,6 +133,11 @@ void SnippetFormViewHost::submit() {
     snippet::Expansion expansion;
     expansion.keyword = m_keyword.toStdString();
     expansion.word = m_expandAsWord;
+
+    for (const auto &wmClass : m_apps) {
+      expansion.apps.emplace_back(wmClass.toStdString());
+    }
+
     payload.expansion = expansion;
   }
 
@@ -126,6 +160,8 @@ void SnippetFormViewHost::submit() {
   popSelf();
 }
 
+bool SnippetFormViewHost::serverRunning() const { return m_service && m_service->isServerRunning(); }
+
 void SnippetFormViewHost::buildContentCompletions() {
   m_contentCompletions = QVariantList{
       QVariantMap{
@@ -147,6 +183,8 @@ void SnippetFormViewHost::buildContentCompletions() {
           {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("calendar"))},
           {QStringLiteral("title"), QStringLiteral("Date")},
           {QStringLiteral("value"), QStringLiteral("date")},
+          {QStringLiteral("template"), QStringLiteral("{date format=\"yyyy-MM-dd hh:mm\"}")},
+          {QStringLiteral("cursorOffset"), 30},
       },
       QVariantMap{
           {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("text-cursor"))},
@@ -154,6 +192,13 @@ void SnippetFormViewHost::buildContentCompletions() {
           {QStringLiteral("value"), QStringLiteral("argument")},
           {QStringLiteral("template"), QStringLiteral("{argument name=\"\"}")},
           {QStringLiteral("cursorOffset"), 16},
+      },
+      QVariantMap{
+          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("terminal"))},
+          {QStringLiteral("title"), QStringLiteral("Shell Command")},
+          {QStringLiteral("value"), QStringLiteral("shell")},
+          {QStringLiteral("template"), QStringLiteral("{shell code=\"\"}")},
+          {QStringLiteral("cursorOffset"), 13},
       },
   };
 }

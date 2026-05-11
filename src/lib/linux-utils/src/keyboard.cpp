@@ -1,3 +1,4 @@
+#include <array>
 #include <cstring>
 #include <format>
 #include <print>
@@ -11,7 +12,8 @@ static constexpr const uinput_setup KB_ID = {
     .id = {.bustype = BUS_VIRTUAL, .vendor = 0x1234, .product = 0x5678, .version = 1},
     .name = "vicinae-snippet-virtual-keyboard",
 };
-static constexpr const auto KEY_DELAY_US = 2000;
+static constexpr int MODIFIER_DELAY_US = 10000;
+static constexpr const uint32_t EVDEV_OFFSET = 8;
 
 static void emit(int fd, const input_event &ev) {
   if (write(fd, &ev, sizeof(ev)) < 0) {
@@ -29,7 +31,6 @@ UInputKeyboard::UInputKeyboard() {
 
   ioctl(fd, UI_SET_EVBIT, EV_KEY);
 
-  // KEY_ESC=1 through most keys
   for (int i = KEY_ESC; i < 256; i++) {
     ioctl(fd, UI_SET_KEYBIT, i);
   }
@@ -37,20 +38,66 @@ UInputKeyboard::UInputKeyboard() {
   ioctl(fd, UI_DEV_SETUP, &KB_ID);
   ioctl(fd, UI_DEV_CREATE);
   m_fd = fd;
+
+  buildCharMap(nullptr);
 }
 
 UInputKeyboard::~UInputKeyboard() {
   ioctl(m_fd, UI_DEV_DESTROY);
   close(m_fd);
+  if (m_xkbKeymap) xkb_keymap_unref(m_xkbKeymap);
+  if (m_xkbCtx) xkb_context_unref(m_xkbCtx);
 }
+
+void UInputKeyboard::buildCharMap(const xkb_rule_names *rules) {
+  if (m_xkbKeymap) xkb_keymap_unref(m_xkbKeymap);
+  if (m_xkbCtx) xkb_context_unref(m_xkbCtx);
+
+  m_xkbCtx = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+  if (!m_xkbCtx) return;
+
+  m_xkbKeymap = xkb_keymap_new_from_names(m_xkbCtx, rules, XKB_KEYMAP_COMPILE_NO_FLAGS);
+  if (!m_xkbKeymap) return;
+
+  auto *state = xkb_state_new(m_xkbKeymap);
+  if (!state) return;
+
+  m_charMap = {};
+  std::array<char, 8> buf{};
+
+  for (uint32_t keycode = EVDEV_OFFSET; keycode < 256 + EVDEV_OFFSET; ++keycode) {
+    const uint32_t evdevCode = keycode - EVDEV_OFFSET;
+
+    xkb_state_update_key(state, keycode, XKB_KEY_UP);
+    int len = xkb_state_key_get_utf8(state, keycode, buf.data(), buf.size());
+    if (len == 1) {
+      const auto idx = static_cast<unsigned char>(buf[0]);
+      if (idx < CHARMAP_SIZE && m_charMap[idx].code == 0) { m_charMap[idx] = {.code = evdevCode, .mods = 0}; }
+    }
+
+    xkb_state_update_key(state, KEY_LEFTSHIFT + EVDEV_OFFSET, XKB_KEY_DOWN);
+    len = xkb_state_key_get_utf8(state, keycode, buf.data(), buf.size());
+    if (len == 1) {
+      const auto idx = static_cast<unsigned char>(buf[0]);
+      if (idx < CHARMAP_SIZE && m_charMap[idx].code == 0) {
+        m_charMap[idx] = {.code = evdevCode, .mods = static_cast<int>(Modifier::Shift)};
+      }
+    }
+    xkb_state_update_key(state, KEY_LEFTSHIFT + EVDEV_OFFSET, XKB_KEY_UP);
+  }
+
+  xkb_state_unref(state);
+}
+
+void UInputKeyboard::setKeymap(const xkb_rule_names *rules) { buildCharMap(rules); }
 
 void UInputKeyboard::sendKey(int code, int mods) {
   applyMods(mods);
-  usleep(KEY_DELAY_US);
+  usleep(mods ? MODIFIER_DELAY_US : m_keyDelayUs);
   sendKey(code);
-  usleep(KEY_DELAY_US);
+  usleep(m_keyDelayUs);
   sync();
-  usleep(KEY_DELAY_US);
+  usleep(mods ? MODIFIER_DELAY_US : m_keyDelayUs);
   clearMods(mods);
   sync();
 }
@@ -58,7 +105,7 @@ void UInputKeyboard::sendKey(int code, int mods) {
 void UInputKeyboard::repeatKey(int code, int n) {
   for (int i = 0; i != n; ++i) {
     sendKey(code);
-    usleep(KEY_DELAY_US);
+    usleep(m_keyDelayUs);
   }
 }
 
@@ -91,6 +138,14 @@ void UInputKeyboard::sendKey(int code) {
   sync();
   keyup(code);
   sync();
+}
+
+void UInputKeyboard::typeText(std::string_view text) {
+  for (char c : text) {
+    const auto idx = static_cast<unsigned char>(c);
+    if (idx >= CHARMAP_SIZE || m_charMap[idx].code == 0) continue;
+    sendKey(static_cast<int>(m_charMap[idx].code), m_charMap[idx].mods);
+  }
 }
 
 void UInputKeyboard::applyMods(int mods) {

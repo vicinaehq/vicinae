@@ -29,6 +29,10 @@ Item {
         detailComponent: detailPanel
         detailVisible: root.host.hasDetail
 
+        emptyTitle: root.host.emptyTitle ?? "No results"
+        emptyDescription: root.host.emptyDescription ?? ""
+        emptyIcon: root.host.emptyIcon ?? ""
+
         delegate: Loader {
             id: delegateLoader
             width: ListView.view.width

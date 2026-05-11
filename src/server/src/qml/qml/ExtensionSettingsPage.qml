@@ -185,9 +185,15 @@ Item {
                             padding: 0
                             activeFocusOnTab: true
 
+                            Timer {
+                                id: cmdFilterDebounce
+                                interval: 16
+                                onTriggered: root.extModel.commandModel.setFilter(cmdSearchField.text)
+                            }
+
                             onTextChanged: {
                                 cmdFlickable._minContentHeight = cmdFlickable.contentHeight;
-                                root.extModel.commandModel.setFilter(text);
+                                cmdFilterDebounce.restart();
                             }
                             onActiveFocusChanged: {
                                 if (!activeFocus)

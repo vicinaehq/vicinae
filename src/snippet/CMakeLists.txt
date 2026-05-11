@@ -3,7 +3,7 @@ set(PROJECT_NAME snippet)
 project(${PROJECT_NAME})
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(SNIPPET_SERVER_BIN vicinae-snippet-server)
+set(SNIPPET_SERVER_BIN vicinae-input-server)
 
 OPTION(BUILD_TESTS "Build the test suite" OFF)
 

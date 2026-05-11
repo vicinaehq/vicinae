@@ -411,6 +411,7 @@ void WindowManager::setFocusedWindow(const QString &id) {
     auto niriWindow = std::static_pointer_cast<Window>(window);
     niriWindow->setFocused(!id.isEmpty() && niriWindow->id() == id);
   }
+  emit focusChanged();
 }
 
 void WindowManager::setWindowFocusTimestamp(const QString &id, const QJsonValue &focusTimestamp) {

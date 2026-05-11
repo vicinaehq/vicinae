@@ -238,7 +238,13 @@ Item {
                         visible: !filterInput.text
                     }
 
-                    onTextEdited: root.model.setFilter(text)
+                    Timer {
+                        id: filterDebounce
+                        interval: 16
+                        onTriggered: root.model.setFilter(filterInput.text)
+                    }
+
+                    onTextEdited: filterDebounce.restart()
 
                     Keys.onPressed: function (event) {
                         const nav = launcher.matchNavigationKey(event.key, event.modifiers);

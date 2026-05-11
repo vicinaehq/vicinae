@@ -6,19 +6,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(DATA_CONTROL_SERVER_BIN vicinae-data-control-server)
 
 include("${CMAKE_SOURCE_DIR}/cmake/Wayland.cmake")
-wayland_generate_protocol("wlr-data-control-unstable-v1")
 wayland_generate_protocol("ext-data-control-v1")
 
 add_executable(${DATA_CONTROL_SERVER_BIN}
   src/main.cpp
   src/selection.cpp
+  src/stdin-reader.cpp
+  src/clipboard-writer.cpp
   src/wayland/display.cpp
   src/wayland/registry.cpp
   src/wayland/seat.cpp
-  src/wlr/clipman.cpp
-  src/wlr/data-control-client.cpp
-  src/wlr/data-device.cpp
-  src/wlr/data-offer.cpp
   src/ext/clipman.cpp
   src/ext/data-control-client.cpp
   src/ext/data-device.cpp

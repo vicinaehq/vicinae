@@ -40,9 +40,21 @@ SnippetServer::SnippetServer() : m_bus(&m_process), m_rpc(m_bus), m_client(m_rpc
     qCritical() << "snippet server process error occured" << m_process.errorString();
   });
 
+  connect(&m_process, &QProcess::finished, this, [this](int exitCode, QProcess::ExitStatus status) {
+    if (status == QProcess::CrashExit) {
+      qWarning() << "snippet server crashed with code" << exitCode;
+    } else {
+      qInfo() << "snippet server exited with code" << exitCode;
+    }
+    emit serverStopped();
+  });
+
   connect(
       m_client.snippet(), &snippet_gen::SnippetService::triggerSnippet, this,
       [this](const snippet_gen::TriggerSnippetPayload &payload) { emit keywordTriggered(payload.trigger); });
+
+  connect(m_client.snippet(), &snippet_gen::SnippetService::undoSnippet, this,
+          [this](const snippet_gen::UndoSnippetPayload &payload) { emit undoTriggered(payload.trigger); });
 
   connect(&m_bus, &SnippetServerBus::messageReceived, this, [this](const QByteArray &msg) {
     std::string_view view{msg.constData(), static_cast<size_t>(msg.size())};
@@ -53,35 +65,72 @@ SnippetServer::SnippetServer() : m_bus(&m_process), m_rpc(m_bus), m_client(m_rpc
 }
 
 void SnippetServer::start() {
-  const auto path = vicinae::findHelperProgram("vicinae-snippet-server");
+  const auto path = vicinae::findHelperProgram("vicinae-input-server");
 
   if (!path) {
-    qWarning() << "could not find vicinae-snippet-server helper binary, snippet expansion will not work";
+    qWarning() << "could not find vicinae-input-server helper binary, snippet expansion will not work";
     return;
   }
 
   m_process.setProgram(path->c_str());
   m_process.start();
-  if (!m_process.waitForStarted()) { qCritical() << "Failed to start snippet server" << m_process.error(); }
+  if (!m_process.waitForStarted()) {
+    qCritical() << "Failed to start input server" << m_process.error();
+    return;
+  }
+
+  m_client.snippet()->getCapabilities().then(
+      [this](std::expected<snippet_gen::KeyboardCapabilities, std::string> result) {
+        if (result) { m_supportsInjection = result->injection; }
+      });
 }
 
 void SnippetServer::registerSnippet(snippet_gen::CreateSnippetRequest payload) {
+  if (!isRunning()) return;
   m_client.snippet()->createSnippet(payload);
 }
 
-void SnippetServer::injectClipboardText(std::string_view trigger, QString text, bool terminal) {
-  auto clip = QGuiApplication::clipboard();
-  auto expansionData = new QMimeData;
-
-  expansionData->setData("text/plain;charset=utf-8", text.toUtf8());
-  expansionData->setData("vicinae/concealed", "1");
-  clip->setMimeData(expansionData);
-
-  m_client.snippet()->injectClipboardExpansion({.trigger = std::string{trigger}, .terminal = terminal});
+void SnippetServer::unregisterSnippet(std::string_view keyword) {
+  if (!isRunning()) return;
+  m_client.snippet()->removeSnippet({.trigger = std::string{keyword}});
 }
 
-void SnippetServer::unregisterSnippet(std::string_view keyword) {
-  m_client.snippet()->removeSnippet({.trigger = std::string{keyword}});
+void SnippetServer::setKeymap(snippet_gen::LayoutInfo info) {
+  if (!isRunning()) return;
+  m_client.snippet()->setKeymap(info);
+}
+
+void SnippetServer::resetContext() {
+  if (!isRunning()) return;
+  m_client.snippet()->resetContext();
+}
+
+void SnippetServer::injectExpand(int charsToDelete, int prePasteDelayUs, bool terminal, int cursorLeftMoves) {
+  if (!isRunning()) return;
+  m_client.snippet()->injectExpand({.charsToDelete = charsToDelete,
+                                    .prePasteDelayUs = prePasteDelayUs,
+                                    .terminal = terminal,
+                                    .cursorLeftMoves = cursorLeftMoves});
+}
+
+void SnippetServer::injectUndo(int backspaceCount, const std::string &trigger) {
+  if (!isRunning()) return;
+  m_client.snippet()->injectUndo({.backspaceCount = backspaceCount, .triggerText = trigger});
+}
+
+void SnippetServer::injectPaste(bool terminal) {
+  if (!isRunning()) return;
+  m_client.snippet()->injectPaste({.terminal = terminal});
+}
+
+void SnippetServer::cancelInjection() {
+  if (!isRunning()) return;
+  m_client.snippet()->cancelInjection();
+}
+
+void SnippetServer::setKeyDelay(int us) {
+  if (!isRunning()) return;
+  m_client.snippet()->setKeyDelay(us);
 }
 
 void SnippetServer::handleError() {

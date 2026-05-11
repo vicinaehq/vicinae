@@ -63,12 +63,12 @@ void EventListener::processEvent(const std::string &event) {
   auto name = std::string_view(ss[0].begin(), ss[0].end());
   [[maybe_unused]] auto value = std::string_view(ss[1].begin(), ss[1].end());
 
-  // TODO: parse real arguments if we really need them
-  // for now we only use these to know windows have changed
   if (name == "openwindow") {
     emit openwindow("", "", "", "");
   } else if (name == "closewindow") {
     emit closewindow("");
+  } else if (name == "activewindow" || name == "activewindowv2") {
+    emit activewindowchanged();
   }
 }
 

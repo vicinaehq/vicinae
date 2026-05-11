@@ -12,12 +12,15 @@ class SnippetFormViewHost : public FormViewBase {
   Q_PROPERTY(QString content READ content WRITE setContent NOTIFY formChanged)
   Q_PROPERTY(QString keyword READ keyword WRITE setKeyword NOTIFY formChanged)
   Q_PROPERTY(bool expandAsWord READ expandAsWord WRITE setExpandAsWord NOTIFY formChanged)
+  Q_PROPERTY(QStringList apps READ apps WRITE setApps NOTIFY formChanged)
+  Q_PROPERTY(QVariantList availableApps READ availableApps CONSTANT)
 
   Q_PROPERTY(QVariantList contentCompletions READ contentCompletions CONSTANT)
 
   Q_PROPERTY(QString nameError READ nameError NOTIFY errorsChanged)
   Q_PROPERTY(QString contentError READ contentError NOTIFY errorsChanged)
   Q_PROPERTY(QString keywordError READ keywordError NOTIFY errorsChanged)
+  Q_PROPERTY(bool serverRunning READ serverRunning CONSTANT)
 
 public:
   enum class Mode { Create, Edit, Duplicate };
@@ -35,12 +38,15 @@ public:
   QString content() const { return m_content; }
   QString keyword() const { return m_keyword; }
   bool expandAsWord() const { return m_expandAsWord; }
+  QStringList apps() const { return m_apps; }
+  QVariantList availableApps() const { return m_availableApps; }
 
   QVariantList contentCompletions() const { return m_contentCompletions; }
 
   QString nameError() const { return m_nameError; }
   QString contentError() const { return m_contentError; }
   QString keywordError() const { return m_keywordError; }
+  bool serverRunning() const;
 
   void setName(const QString &v) {
     if (m_name != v) {
@@ -66,6 +72,12 @@ public:
       emit formChanged();
     }
   }
+  void setApps(const QStringList &v) {
+    if (m_apps != v) {
+      m_apps = v;
+      emit formChanged();
+    }
+  }
 
 signals:
   void formChanged();
@@ -82,10 +94,12 @@ private:
   QString m_content;
   QString m_keyword;
   bool m_expandAsWord = true;
+  QStringList m_apps;
 
   QString m_nameError;
   QString m_contentError;
   QString m_keywordError;
 
   QVariantList m_contentCompletions;
+  QVariantList m_availableApps;
 };

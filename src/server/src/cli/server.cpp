@@ -91,10 +91,10 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto extensionManager = std::make_unique<ExtensionManager>();
     auto windowManager = std::make_unique<WindowManager>();
     auto appService = std::make_unique<AppService>(*omniDb.get());
-    auto snippetService = std::make_unique<SnippetService>(Omnicast::dataDir() / "snippets" / "snippets.json",
-                                                           *windowManager, *appService);
     auto clipboardManager = std::make_unique<ClipboardService>(Omnicast::dataDir() / "clipboard.db");
-    auto linuxPaste = std::make_unique<LinuxPasteService>();
+    auto snippetService = std::make_unique<SnippetService>(Omnicast::dataDir() / "snippets" / "snippets.json",
+                                                           *windowManager, *appService, *clipboardManager);
+    auto linuxPaste = std::make_unique<LinuxPasteService>(*snippetService->server());
     auto pasteService =
         std::make_unique<PasteService>(*clipboardManager, *windowManager, *appService, std::move(linuxPaste));
     auto fontService = std::make_unique<FontService>();
@@ -224,9 +224,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
   commandServer.start(Omnicast::commandSocketPath());
 
-#ifdef ENABLE_PREVIEW_FEATURES
   ctx.services->snippetService()->start();
-#endif
 
   auto configChanged = [&](const config::ConfigValue &next, const config::ConfigValue &prev) {
     auto &theme = ThemeService::instance();
