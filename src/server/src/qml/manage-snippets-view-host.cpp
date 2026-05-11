@@ -26,7 +26,7 @@ void ManageSnippetsViewHost::initialize() {
   m_section.setOnSnippetSelected([this](const snippet::SerializedSnippet &s) { loadDetail(s); });
   model()->addSource(&m_section);
 
-  setSearchPlaceholderText("Search by snippet name, contents or keyword...");
+  setSearchPlaceholderText("Search for snippets...");
 
   connect(m_snippetService, &SnippetService::snippetsChanged, this, &ManageSnippetsViewHost::reload);
 
