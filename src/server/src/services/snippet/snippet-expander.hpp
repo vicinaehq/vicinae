@@ -24,8 +24,12 @@ public:
   };
 
   struct Options {
+    // shell placeholders are expanded to $(code) if set to false. We typically use this
+    // in previews, since they are done on the fly as the user searches and we don't want to risk doing
+    // expensive operations (and potentially blocking, see `executeShellPlaceholdersSync`).
     bool executeShell = true;
   };
+
   SnippetExpander() : m_uuid(QUuid::createUuid().toString(QUuid::WithoutBraces)) {}
 
   QString expandToString(const QString &text,
@@ -45,12 +49,12 @@ public:
     const auto clip = QGuiApplication::clipboard();
     const auto parsed = PlaceholderString::parseSnippetText(text);
 
-    const auto shellResults = opts.executeShell ? executeShellPlaceholders(parsed) : std::vector<QString>{};
+    const auto shellResults =
+        opts.executeShell ? executeShellPlaceholdersSync(parsed) : std::vector<QString>{};
     int shellIdx = 0;
-
     Result result;
 
-    std::ranges::for_each(parsed.parts(), [&](auto &part) {
+    for (const auto &part : parsed.parts()) {
       part |
           match{[&](const PlaceholderString::ParsedPlaceholder placeholder) {
                   if (placeholder.id == "cursor") {
@@ -92,7 +96,7 @@ public:
                   }
                 },
                 [&](const QString &text) { result.parts.emplace_back(ResultPart(text, false)); }};
-    });
+    }
 
     return result;
   }
@@ -100,13 +104,20 @@ public:
 private:
   static constexpr int SHELL_TIMEOUT_MS = 2000;
 
-  static std::vector<QString> executeShellPlaceholders(const PlaceholderString &parsed) {
+  // FIXME: maybe we should execute this in a fully asynchronous manner, meaning the expansion itself
+  // should be asynchronous. For most use cases it's fine to block, even if it timeouts it will only lock down
+  // the UI for a brief moment (2s by default).
+  static std::vector<QString> executeShellPlaceholdersSync(const PlaceholderString &parsed,
+                                                           int timeout = SHELL_TIMEOUT_MS) {
     struct ShellCommand {
       QString code;
       QString exec;
     };
 
     std::vector<ShellCommand> commands;
+
+    commands.reserve(4);
+
     for (const auto &part : parsed.parts()) {
       if (const auto *ph = std::get_if<PlaceholderString::ParsedPlaceholder>(&part)) {
         if (ph->id != "shell") continue;
@@ -122,10 +133,10 @@ private:
 
     if (commands.empty()) return {};
 
-    const auto runCommand = [](const ShellCommand &cmd) -> QString {
+    const auto runCommand = [timeout](const ShellCommand &cmd) -> QString {
       QProcess proc;
       proc.start(cmd.exec, {QStringLiteral("-c"), cmd.code});
-      if (proc.waitForFinished(SHELL_TIMEOUT_MS) && proc.exitStatus() == QProcess::NormalExit &&
+      if (proc.waitForFinished(timeout) && proc.exitStatus() == QProcess::NormalExit &&
           proc.exitCode() == 0) {
         auto output = QString::fromUtf8(proc.readAllStandardOutput());
         if (output.endsWith('\n')) output.chop(1);

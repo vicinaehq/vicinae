@@ -62,9 +62,24 @@ public:
   }
 
   auto updateSnippet(std::string_view id, snippet::SnippetPayload payload) {
+    std::optional<std::string> oldKeyword;
+    if (const auto *existing = m_db.findById(id); existing && existing->expansion) {
+      oldKeyword = existing->expansion->keyword;
+    }
+
     auto res = m_db.updateSnippet(id, payload);
     if (res) {
-      if (payload.expansion) { m_server.registerSnippet({.trigger = payload.expansion->keyword}); }
+      const auto newKeyword = payload.expansion ? std::optional{payload.expansion->keyword} : std::nullopt;
+
+      if (oldKeyword && oldKeyword != newKeyword) { m_server.unregisterSnippet(*oldKeyword); }
+
+      if (payload.expansion) {
+        m_server.registerSnippet(
+            {.trigger = payload.expansion->keyword,
+             .mode = payload.expansion->word ? snippet_gen::ExpansionMode::Word
+                                             : snippet_gen::ExpansionMode::Keydown});
+      }
+
       emit snippetUpdated();
       emit snippetsChanged();
     }
