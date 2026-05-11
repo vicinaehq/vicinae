@@ -148,6 +148,7 @@ bool ClipboardService::copyText(const QString &text, const Clipboard::CopyOption
   auto mimeData = new QMimeData;
 
   mimeData->setData("text/plain", text.toUtf8());
+  mimeData->setData("text/plain;charset=utf-8", text.toUtf8());
 
   if (options.concealed) mimeData->setData(Clipboard::CONCEALED_MIME_TYPE, "1");
 

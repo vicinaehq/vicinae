@@ -130,12 +130,15 @@ private:
     QString expandedText;
   };
 
+  static constexpr int MAX_UNDO_LENGTH = 50;
+
   void handleUndo(const std::string &trigger) {
     if (!m_undoEnabled || !m_undoRecord || m_undoRecord->trigger != trigger) return;
+    if (m_undoRecord->expandedText.size() > MAX_UNDO_LENGTH) { m_undoRecord.reset(); return; }
 
     const int backspaceCount = static_cast<int>(m_undoRecord->expandedText.size()) - 1;
-    m_undoRecord.reset();
     m_cancelInjection.store(false, std::memory_order_relaxed);
+    m_undoRecord.reset();
 
     QThreadPool::globalInstance()->start([this, backspaceCount, trigger]() {
       for (int i = 0; i < backspaceCount; ++i) {
