@@ -28,7 +28,7 @@ Item {
             id: contentField
             label: "Content"
             error: root.host.contentError
-            info: "You can use {dynamic placeholders} to make the content dynamic. Type { to see available placeholders."
+            info: "You can use {dynamic placeholders} to make the content dynamic: <a href=\"https://docs.vicinae.com/snippets\">learn more</a>."
             topAlignLabel: true
 
             FormCompletedTextArea {
