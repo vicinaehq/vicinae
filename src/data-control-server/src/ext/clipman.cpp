@@ -44,7 +44,7 @@ void ExtClipman::selection(ExtDataDevice &, ExtDataOffer &offer) {
 }
 
 void ExtClipman::setClipboard(const clipboard_proto::Selection &selection) {
-  ClipboardWriter::setSelectionExt(_dcm->raw(), m_device->raw(), selection);
+  ClipboardWriter::setSelection(_dcm->raw(), m_device->raw(), selection);
   flush();
 }
 

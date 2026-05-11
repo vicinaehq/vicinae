@@ -4,22 +4,15 @@
 
 namespace Wayland {
 
-zwlr_data_control_manager_v1 *Globals::wlrDataControlManager() { return instance().m_zwlrDataControlDevice; }
-
-ext_data_control_manager_v1 *Globals::dataControlDeviceManager() { return instance().extDataControlDevice; }
+ext_data_control_manager_v1 *Globals::dataControlManager() { return instance().m_dataControlManager; }
 
 // NOLINTBEGIN(cppcoreguidelines-pro-type-static-cast-downcast)
 void Globals::handleGlobal(void *data, struct wl_registry *registry, uint32_t name, const char *interface,
                            uint32_t version) {
   auto self = static_cast<Globals *>(data);
 
-  if (strcmp(interface, zwlr_data_control_manager_v1_interface.name) == 0) {
-    self->m_zwlrDataControlDevice = static_cast<zwlr_data_control_manager_v1 *>(
-        wl_registry_bind(registry, name, &zwlr_data_control_manager_v1_interface, version));
-  }
-
-  else if (strcmp(interface, ext_data_control_manager_v1_interface.name) == 0) {
-    self->extDataControlDevice = static_cast<ext_data_control_manager_v1 *>(
+  if (strcmp(interface, ext_data_control_manager_v1_interface.name) == 0) {
+    self->m_dataControlManager = static_cast<ext_data_control_manager_v1 *>(
         wl_registry_bind(registry, name, &ext_data_control_manager_v1_interface, version));
   }
 

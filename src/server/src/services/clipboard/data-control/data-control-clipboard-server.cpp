@@ -29,7 +29,7 @@ QString DataControlClipboardServer::id() const { return "data-control"; }
 int DataControlClipboardServer::activationPriority() const { return 1; }
 
 bool DataControlClipboardServer::isActivatable() const {
-  return Wayland::Globals::dataControlDeviceManager() || Wayland::Globals::wlrDataControlManager();
+  return Wayland::Globals::dataControlManager() != nullptr;
 }
 
 // Process must stay alive even when monitoring is off: it handles clipboard writes for snippets.

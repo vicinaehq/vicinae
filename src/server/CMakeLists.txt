@@ -711,7 +711,6 @@ if (UNIX AND NOT APPLE)
 		src/services/clipboard/data-control/data-control-clipboard-server.cpp
 	)
 
-	wayland_generate_protocol("wlr-data-control-unstable-v1")
 endif()
 	
 
