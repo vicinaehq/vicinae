@@ -7,6 +7,7 @@
 #include "services/window-manager/window-manager.hpp"
 #include "snippet-server.hpp"
 #include "snippet-db.hpp"
+#include <atomic>
 #include <qguiapplication.h>
 #include <qobject.h>
 #include <unistd.h>
@@ -30,6 +31,8 @@ public:
     connect(&m_server, &SnippetServer::keywordTriggered, this, &SnippetService::handleKeywordTrigger);
     connect(&m_server, &SnippetServer::undoTriggered, this, &SnippetService::handleUndo);
     connect(&wm, &WindowManager::focusChanged, this, [this]() {
+      m_undoRecord.reset();
+      m_cancelInjection.store(true, std::memory_order_relaxed);
       if (m_server.isRunning()) { m_server.resetContext(); }
     });
   }
@@ -132,9 +135,14 @@ private:
 
     const int backspaceCount = static_cast<int>(m_undoRecord->expandedText.size()) - 1;
     m_undoRecord.reset();
+    m_cancelInjection.store(false, std::memory_order_relaxed);
 
     QThreadPool::globalInstance()->start([this, backspaceCount, trigger]() {
-      if (backspaceCount > 0) { m_keyboard.backspace(backspaceCount); }
+      for (int i = 0; i < backspaceCount; ++i) {
+        if (m_cancelInjection.load(std::memory_order_relaxed)) return;
+        m_keyboard.backspace(1);
+      }
+      if (m_cancelInjection.load(std::memory_order_relaxed)) return;
       m_keyboard.typeText(trigger);
     });
   }
@@ -235,4 +243,5 @@ private:
   bool m_undoEnabled = true;
   int m_prePasteDelay = DEFAULT_PRE_PASTE_DELAY_MS;
   std::optional<UndoRecord> m_undoRecord;
+  std::atomic<bool> m_cancelInjection{false};
 };
