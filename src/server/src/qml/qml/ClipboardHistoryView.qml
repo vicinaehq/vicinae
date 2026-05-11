@@ -48,15 +48,15 @@ Item {
 
             Item {
                 visible: root.host.clipboardStatusIcon !== ""
-                width: 25
-                height: 25
+                width: 20
+                height: 20
                 opacity: statusMouseArea.containsMouse ? 1.0 : 0.6
 
                 Image {
                     anchors.fill: parent
                     source: root.host.clipboardStatusIcon
-                    sourceSize.width: 25
-                    sourceSize.height: 25
+                    sourceSize.width: 20
+                    sourceSize.height: 20
                     asynchronous: true
                 }
 
