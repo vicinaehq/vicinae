@@ -30,7 +30,7 @@ void SnippetFormViewHost::initialize() {
   QVariantList allApps;
   const auto *appDb = context()->services->appDb();
   for (const auto &app : appDb->list({.sortAlphabetically = true})) {
-    if (!app->displayable() || !app->windowClass()) continue;
+    if (!app->displayable()) continue;
     QVariantMap entry;
     entry[QStringLiteral("id")] = app->id();
     entry[QStringLiteral("displayName")] = app->displayName();

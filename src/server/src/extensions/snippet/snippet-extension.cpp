@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "extensions/snippet/snippet-extension.hpp"
 #include "services/snippet/snippet-service.hpp"
 #include "service-registry.hpp"
@@ -10,7 +11,8 @@ void SnippetExtension::preferenceValuesChanged(const QJsonObject &value) const {
   auto *snippet = ServiceRegistry::instance()->snippetService();
   snippet->setEnabled(value.value("enabled").toBool(true));
   snippet->setUndoEnabled(value.value("undo").toBool(true));
-  snippet->setPrePasteDelay(value.value("prePasteDelay").toInt(SnippetService::DEFAULT_PRE_PASTE_DELAY_MS));
+  snippet->setPrePasteDelay(
+      std::clamp(value.value("prePasteDelay").toInt(SnippetService::DEFAULT_PRE_PASTE_DELAY_MS), 0, 5000));
 
   if (value.contains("layout")) { snippet->setLayout(value.value("layout").toString().toStdString()); }
 }

@@ -392,7 +392,7 @@ install_snippet_capabilities() {
 
 	if [[ $EUID -ne 0 ]]; then
 		warn "Skipping snippet server capabilities (not root)"
-		warn "  Snippet expansion requires evdev access. Run: sudo setcap cap_dac_override=ep $INSTALL_DIR/usr/libexec/vicinae/vicinae-snippet-server"
+		warn "  Snippet expansion requires evdev access. Run: sudo setcap cap_dac_read_search=ep $INSTALL_DIR/usr/libexec/vicinae/vicinae-snippet-server"
 		return
 	fi
 
@@ -400,8 +400,8 @@ install_snippet_capabilities() {
 
 	if [[ -f "$snippet_bin" ]]; then
 		if command -v setcap >/dev/null 2>&1; then
-			setcap "cap_dac_override=ep" "$snippet_bin"
-			ok "Snippet server capabilities set (cap_dac_override)"
+			setcap "cap_dac_read_search=ep" "$snippet_bin"
+			ok "Snippet server capabilities set (cap_dac_read_search)"
 		else
 			warn "setcap not found — snippet expansion will not work without manual permission setup"
 		fi
