@@ -3,9 +3,12 @@
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/keyboard/abstract-keyboard-service.hpp"
 #include "services/snippet/snippet-expander.hpp"
+#include "services/window-manager/abstract-window-manager.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "snippet-server.hpp"
 #include "snippet-db.hpp"
+#include <qguiapplication.h>
+#include <qobject.h>
 #include <unistd.h>
 #include <QThreadPool>
 #include <QTimer>
@@ -143,7 +146,26 @@ private:
     if (!snippet || !snippet->expansion) return;
 
     bool terminal = false;
-    const auto focusedWindow = m_wm.getFocusedWindow();
+
+    // we have focus, and we are a layer so it means that the current window might be:
+    // - the previously focused window, not invalidated by the layer grab (Hyprland does this)
+    // - nullptr as there is technically no window owning focus (a layer is not a window)
+    // this logic is here so that we don't mistakingly craft the shortcut from stale data when expanding in
+    // vicinae itself (e.g using ctrl+shift+v because the last window is a terminal, but we are really
+    // focusing the vicinae window)
+    // FIXME: currently this logic will, if not using layer shell, null the window even if the currently
+    // focused window is the vicinae one. The only problem with this is that app filtering won't work on the
+    // vicinae window itself. We probably can fix this by just checking whether we are a layer here, but
+    // requires pulling config...
+    AbstractWindowManager::WindowPtr focusedWindow = nullptr;
+
+    {
+      if (QGuiApplication::focusWindow() && !m_wm.provider()->focusNullsOnLayerGrab()) {
+        focusedWindow = nullptr;
+      } else {
+        focusedWindow = m_wm.getFocusedWindow();
+      }
+    }
 
     if (focusedWindow) {
       if (const auto app = m_appDb.findByClass(focusedWindow->wmClass())) {
@@ -185,24 +207,22 @@ private:
       m_undoRecord.reset();
     }
 
-    QTimer::singleShot(0, this,
-                       [this, charsToDelete, terminal, cursorPos = result.cursorPos,
-                        expandedSize = expanded.size()]() {
-                         QThreadPool::globalInstance()->start(
-                             [this, charsToDelete, terminal, cursorPos, expandedSize]() {
-                               m_keyboard.backspace(charsToDelete);
-                               usleep(m_prePasteDelay * 1000);
-                               m_keyboard.paste(terminal);
+    QTimer::singleShot(
+        0, this,
+        [this, charsToDelete, terminal, cursorPos = result.cursorPos, expandedSize = expanded.size()]() {
+          QThreadPool::globalInstance()->start([this, charsToDelete, terminal, cursorPos, expandedSize]() {
+            m_keyboard.backspace(charsToDelete);
+            usleep(m_prePasteDelay * 1000);
+            m_keyboard.paste(terminal);
 
-                               if (cursorPos) {
-                                 int leftMoves = static_cast<int>(expandedSize) - *cursorPos;
-                                 if (leftMoves > 0) { m_keyboard.moveCursorLeft(leftMoves); }
-                               }
+            if (cursorPos) {
+              int leftMoves = static_cast<int>(expandedSize) - *cursorPos;
+              if (leftMoves > 0) { m_keyboard.moveCursorLeft(leftMoves); }
+            }
 
-                               QMetaObject::invokeMethod(
-                                   this, [this]() { m_clipboard.scheduleClipboardRestore(); });
-                             });
-                       });
+            QMetaObject::invokeMethod(this, [this]() { m_clipboard.scheduleClipboardRestore(); });
+          });
+        });
   }
 
   SnippetServer m_server;
