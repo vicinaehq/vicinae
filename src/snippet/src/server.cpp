@@ -15,7 +15,6 @@
 #include <sys/epoll.h>
 #include <unistd.h>
 #include <algorithm>
-#include <unordered_map>
 
 static constexpr size_t MAX_BUFFER_SIZE = 32;
 static constexpr uint32_t MAX_MESSAGE_SIZE = 64 * 1024;
@@ -77,12 +76,6 @@ private:
 
 namespace snippet {
 
-struct Input {
-  int fd = -1;
-  std::string name;
-  epoll_event ev;
-};
-
 SnippetService::SnippetService(snippet_gen::RpcTransport &transport)
     : snippet_gen::AbstractSnippet(transport), m_udev(udev_new()),
       m_xkb(xkb_context_new(XKB_CONTEXT_NO_FLAGS)),
@@ -91,12 +84,12 @@ SnippetService::SnippetService(snippet_gen::RpcTransport &transport)
   m_text.reserve(MAX_BUFFER_SIZE);
 }
 
-std::vector<std::string> SnippetService::enumerateKeyboards() {
+std::vector<std::string> SnippetService::enumerateDevices(const char *property) {
   udev_enumerate *enumerate = udev_enumerate_new(m_udev);
   std::vector<std::string> devNames;
 
   udev_enumerate_add_match_subsystem(enumerate, "input");
-  udev_enumerate_add_match_property(enumerate, "ID_INPUT_KEYBOARD", "1");
+  udev_enumerate_add_match_property(enumerate, property, "1");
   udev_enumerate_scan_devices(enumerate);
 
   udev_list_entry *devices = udev_enumerate_get_list_entry(enumerate);
@@ -143,32 +136,45 @@ std::expected<void, std::string> SnippetService::resetContext() {
 
 std::expected<void, std::string> SnippetService::injectExpand(snippet_gen::InjectExpandRequest req) {
   using Mod = linuxutils::UInputKeyboard::Modifier;
+
   m_keyboard.repeatKey(KEY_BACKSPACE, req.charsToDelete);
+
   if (req.prePasteDelayUs > 0) { usleep(req.prePasteDelayUs); }
   m_keyboard.sendKey(KEY_V, static_cast<int>(req.terminal ? (Mod::Ctrl | Mod::Shift) : Mod::Ctrl));
-  if (req.cursorLeftMoves > 0) { m_keyboard.repeatKey(KEY_LEFT, req.cursorLeftMoves); }
+
+  if (req.cursorLeftMoves > 0) {
+    drainInputEvents();
+
+    for (int i = 0; i < req.cursorLeftMoves; ++i) {
+      m_keyboard.sendKey(KEY_LEFT, 0);
+      if (checkInputInterrupt()) {
+        m_text.clear();
+        return {};
+      }
+    }
+  }
+
   return {};
 }
 
 std::expected<void, std::string> SnippetService::injectUndo(snippet_gen::InjectUndoRequest req) {
-  m_cancelInjection.store(false, std::memory_order_relaxed);
+  drainInputEvents();
+
   for (int i = 0; i < req.backspaceCount; ++i) {
-    if (m_cancelInjection.load(std::memory_order_relaxed)) return {};
     m_keyboard.sendKey(KEY_BACKSPACE, 0);
-    drainStdin();
+    if (checkInputInterrupt()) {
+      m_text.clear();
+      return {};
+    }
   }
-  if (!m_cancelInjection.load(std::memory_order_relaxed)) { m_keyboard.typeText(req.triggerText); }
+
+  m_keyboard.typeText(req.triggerText);
   return {};
 }
 
 std::expected<void, std::string> SnippetService::injectPaste(snippet_gen::InjectPasteRequest req) {
   using Mod = linuxutils::UInputKeyboard::Modifier;
   m_keyboard.sendKey(KEY_V, static_cast<int>(req.terminal ? (Mod::Ctrl | Mod::Shift) : Mod::Ctrl));
-  return {};
-}
-
-std::expected<void, std::string> SnippetService::cancelInjection() {
-  m_cancelInjection.store(true, std::memory_order_relaxed);
   return {};
 }
 
@@ -181,10 +187,68 @@ std::expected<snippet_gen::KeyboardCapabilities, std::string> SnippetService::ge
   return snippet_gen::KeyboardCapabilities{.injection = !m_keyboard.error().has_value()};
 }
 
-void SnippetService::drainStdin() {
-  if (!m_ipcFrame) return;
-  pollfd pfd = {.fd = STDIN_FILENO, .events = POLLIN, .revents = 0};
-  if (poll(&pfd, 1, 0) > 0 && (pfd.revents & POLLIN)) { m_ipcFrame->readPart(STDIN_FILENO); }
+void SnippetService::drainInputEvents() {
+  for (const auto &dev : m_devices) {
+    pollfd pfd = {.fd = dev.fd, .events = POLLIN, .revents = 0};
+    while (poll(&pfd, 1, 0) > 0 && (pfd.revents & POLLIN)) {
+      input_event ev{};
+      if (read(dev.fd, &ev, sizeof(ev)) < static_cast<ssize_t>(sizeof(ev))) break;
+    }
+  }
+}
+
+bool SnippetService::checkInputInterrupt() {
+  std::array<epoll_event, 16> ready{};
+  const int n = epoll_wait(m_epollFd, ready.data(), ready.size(), 0);
+
+  for (int i = 0; i < n; ++i) {
+    const int fd = ready[i].data.fd;
+    auto it = std::ranges::find(m_devices, fd, &InputDevice::fd);
+    if (it == m_devices.end()) continue;
+
+    input_event ev{};
+    if (read(fd, &ev, sizeof(ev)) < static_cast<ssize_t>(sizeof(ev))) continue;
+
+    if (it->type == DeviceType::Pointer) return true;
+    if (ev.type == EV_KEY && ev.value == 1) return true;
+  }
+  return false;
+}
+
+bool SnippetService::registerDevice(const char *device, DeviceType type) {
+  int fd = open(device, O_RDONLY);
+
+  if (fd == -1) {
+    std::cerr << "Failed to open " << device << ": " << strerror(errno) << '\n';
+    return false;
+  }
+
+  if (type == DeviceType::Keyboard) {
+    std::array<char, 256> name{};
+    if (ioctl(fd, EVIOCGNAME(name.size()), name.data()) >= 0 &&
+        std::string_view(name.data()) == VIRTUAL_KB_NAME) {
+      close(fd);
+      return false;
+    }
+  }
+
+  epoll_event ev{.events = EPOLLIN, .data = {.fd = fd}};
+
+  if (epoll_ctl(m_epollFd, EPOLL_CTL_ADD, fd, &ev) == -1) {
+    std::cerr << "Failed to add fd " << fd << " for " << device << " to epoll: " << strerror(errno) << '\n';
+    close(fd);
+    return false;
+  }
+
+  m_devices.push_back({.fd = fd, .name = device, .ev = ev, .type = type});
+  return true;
+}
+
+void SnippetService::removeDevice(std::vector<InputDevice>::iterator it) {
+  epoll_ctl(m_epollFd, EPOLL_CTL_DEL, it->fd, &it->ev);
+  close(it->fd);
+  std::cerr << "Removed device " << it->name << " (fd=" << it->fd << ")\n";
+  m_devices.erase(it);
 }
 
 void SnippetService::setLayout(const LayoutInfo &info) {
@@ -208,23 +272,16 @@ void SnippetService::setLayout(const LayoutInfo &info) {
 }
 
 void SnippetService::listen(snippet_gen::Server &rpcServer) {
-  const std::error_code ec;
+  m_epollFd = epoll_create1(0);
 
-  std::unordered_map<int, Input> inputs;
-
-  int epollfd = epoll_create1(0);
-
-  if (epollfd == -1) {
+  if (m_epollFd == -1) {
     std::cerr << "Failed to create epollfd: " << strerror(errno) << '\n';
     return;
   }
 
-  epoll_event ev;
+  epoll_event ev{.events = EPOLLIN, .data = {.fd = STDIN_FILENO}};
 
-  ev.data.fd = STDIN_FILENO;
-  ev.events = EPOLLIN;
-
-  if (epoll_ctl(epollfd, EPOLL_CTL_ADD, ev.data.fd, &ev) == -1) {
+  if (epoll_ctl(m_epollFd, EPOLL_CTL_ADD, STDIN_FILENO, &ev) == -1) {
     std::cerr << "Failed to add stdin to epoll: " << strerror(errno) << '\n';
     exit(1);
   }
@@ -242,50 +299,26 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
   }
 
   ev.data.fd = udevFd;
-  ev.events = EPOLLIN;
 
-  if (epoll_ctl(epollfd, EPOLL_CTL_ADD, ev.data.fd, &ev) == -1) {
+  if (epoll_ctl(m_epollFd, EPOLL_CTL_ADD, udevFd, &ev) == -1) {
     std::cerr << "Failed to add watch to epoll: " << strerror(errno) << '\n';
     exit(1);
   }
 
-  const auto createInput = [&](const char *device) -> bool {
-    int fd = open(device, O_RDONLY);
-
-    if (fd == -1) {
-      std::cerr << "Failed to open " << device << ": " << strerror(errno) << '\n';
-      return false;
-    }
-
-    std::array<char, 256> name{};
-    if (ioctl(fd, EVIOCGNAME(name.size()), name.data()) >= 0 &&
-        std::string_view(name.data()) == VIRTUAL_KB_NAME) {
-      close(fd);
-      return false;
-    }
-
-    ev.events = EPOLLIN;
-    ev.data.fd = fd;
-
-    if (epoll_ctl(epollfd, EPOLL_CTL_ADD, ev.data.fd, &ev) == -1) {
-      std::cerr << "Failed to add fd " << fd << " for " << device << " to epoll: " << strerror(errno) << '\n';
-      close(fd);
-      return false;
-    }
-
-    inputs[fd] = {.fd = fd, .name = device, .ev = ev};
-    return true;
-  };
-
-  for (const auto &device : enumerateKeyboards()) {
-    createInput(device.c_str());
+  for (const auto &device : enumerateDevices("ID_INPUT_KEYBOARD")) {
+    registerDevice(device.c_str(), DeviceType::Keyboard);
   }
 
-  for (const auto &[fd, data] : inputs) {
-    std::cerr << "Input ready: " << data.name << " (fd=" << data.fd << ")\n";
+  for (const auto &device : enumerateDevices("ID_INPUT_MOUSE")) {
+    registerDevice(device.c_str(), DeviceType::Pointer);
   }
 
-  constexpr const int MAX_EVENTS = 256;
+  for (const auto &dev : m_devices) {
+    const char *label = dev.type == DeviceType::Keyboard ? "Keyboard" : "Pointer";
+    std::cerr << label << " ready: " << dev.name << " (fd=" << dev.fd << ")\n";
+  }
+
+  constexpr int MAX_EVENTS = 256;
   std::array<epoll_event, MAX_EVENTS> events;
 
   Frame ipcFrame;
@@ -297,7 +330,7 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
 
   for (;;) {
     const int timeout = m_pendingExpansion ? MODIFIER_TIMEOUT_MS : -1;
-    const int nfds = epoll_wait(epollfd, events.data(), events.size(), timeout);
+    const int nfds = epoll_wait(m_epollFd, events.data(), events.size(), timeout);
 
     if (nfds == -1) {
       std::cerr << "Failed to epoll_wait: " << strerror(errno) << '\n';
@@ -314,11 +347,19 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
       int fd = events[n].data.fd;
 
       if (fd == STDIN_FILENO) {
-        if (!ipcFrame.readPart(STDIN_FILENO)) { exit(0); }
-        continue;
+        if (!ipcFrame.readPart(STDIN_FILENO)) {
+          std::cerr << "Failed to read from server" << std::endl;
+          exit(0);
+        }
+
+        // XXX - we break from the loop, because the incoming IPC call may have us call
+        // drainInputEvents which will read some of the file descriptors that are currently
+        // ready and we don't want to try to read them afterwards (as we are going to block on them).
+        // by breaking early we just process whatever we needed to process with the IPC dispatch and
+        // we can poll again on the next loop iteration with the fully up to date notifications.
+        break;
       }
 
-      // hot plug/unplug
       if (fd == udevFd) {
         udev_device *dev = udev_monitor_receive_device(mon);
         const std::string_view action = udev_device_get_action(dev);
@@ -326,75 +367,80 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
 
         if (!node) continue;
 
-        const char *kb = udev_device_get_property_value(dev, "ID_INPUT_KEYBOARD");
+        const auto hasProp = [dev](const char *prop) {
+          const char *val = udev_device_get_property_value(dev, prop);
+          return val && std::string_view{val} == "1";
+        };
 
-        if (!kb || std::string_view{kb} != "1") continue;
+        const bool isKeyboard = hasProp("ID_INPUT_KEYBOARD");
+        const bool isMouse = hasProp("ID_INPUT_MOUSE");
+
+        if (!isKeyboard && !isMouse) continue;
 
         if (action == "add") {
           std::cerr << "CREATE ev: " << node << '\n';
 
-          if (createInput(node)) {
-            std::cerr << "Hot plugged device " << node << '\n';
-          } else {
-            std::cerr << "Failed to hot plug device " << node << '\n';
+          if (isKeyboard) {
+            if (registerDevice(node, DeviceType::Keyboard)) {
+              std::cerr << "Hot plugged keyboard " << node << '\n';
+            }
+          }
+          if (isMouse) {
+            if (registerDevice(node, DeviceType::Pointer)) {
+              std::cerr << "Hot plugged pointer " << node << '\n';
+            }
           }
         }
 
         else if (action == "remove") {
           std::cerr << "DELETE ev: " << node << '\n';
 
-          if (auto it = std::ranges::find_if(inputs, [&](auto &&input) { return input.second.name == node; });
-              it != inputs.end()) {
-            epoll_ctl(epollfd, EPOLL_CTL_DEL, it->second.ev.data.fd, &it->second.ev);
-            close(it->second.fd);
-            std::cerr << "Removed device " << it->second.name << " (fd=" << it->second.fd << ")\n";
-            inputs.erase(it);
+          if (auto it = std::ranges::find(m_devices, node, &InputDevice::name); it != m_devices.end()) {
+            removeDevice(it);
           }
         }
 
         continue;
       }
 
-      auto it = inputs.find(fd);
+      auto it = std::ranges::find(m_devices, fd, &InputDevice::fd);
 
-      if (it == inputs.end()) {
-        std::cerr << "fd " << fd << " does not map to any known input, skipping...\n";
+      if (it == m_devices.end()) {
+        std::cerr << "fd " << fd << " does not map to any known device, skipping...\n";
         continue;
       }
 
-      input_event ev;
+      input_event inputEv;
       std::array<char, 8> key;
 
-      const auto rc = read(fd, &ev, sizeof(ev));
+      const auto rc = read(fd, &inputEv, sizeof(inputEv));
 
       if (rc <= 0) {
-        epoll_ctl(epollfd, EPOLL_CTL_DEL, it->second.ev.data.fd, &it->second.ev);
-        close(it->second.fd);
-        std::cerr << "Removed device " << it->second.name << " (fd=" << it->second.fd << ")\n";
-        inputs.erase(it);
+        removeDevice(it);
         continue;
       }
 
-      if (static_cast<size_t>(rc) < sizeof(ev)) {
-        std::cerr << "read of invalid size for event: expected " << sizeof(ev) << ", got " << rc << '\n';
+      if (static_cast<size_t>(rc) < sizeof(inputEv)) {
+        std::cerr << "read of invalid size for event: expected " << sizeof(inputEv) << ", got " << rc << '\n';
         continue;
       }
 
-      if (ev.type != EV_KEY) { continue; }
+      if (it->type == DeviceType::Pointer) continue;
+      if (inputEv.type != EV_KEY) { continue; }
 
-      const xkb_keycode_t keycode = ev.code + 8;
+      const xkb_keycode_t keycode = inputEv.code + 8;
 
-      if (ev.value == 0) {
+      if (inputEv.value == 0) {
         xkb_state_update_key(m_kbState, keycode, XKB_KEY_UP);
         if (m_pendingExpansion && !hasActiveModifiers()) { flushPendingExpansion(); }
-      } else if (ev.value <= 2) {
+      } else if (inputEv.value <= 2) {
         const int len = xkb_state_key_get_utf8(m_kbState, keycode, key.data(), key.size());
         const std::string_view keyStr{key.data(), static_cast<size_t>(len)};
 
-        if (ev.value == 1) { xkb_state_update_key(m_kbState, keycode, XKB_KEY_DOWN); }
+        if (inputEv.value == 1) { xkb_state_update_key(m_kbState, keycode, XKB_KEY_DOWN); }
 
-        if (m_undoTrigger && ev.value == 1) {
-          if (ev.code == KEY_BACKSPACE) {
+        if (m_undoTrigger && inputEv.value == 1) {
+          if (inputEv.code == KEY_BACKSPACE) {
             std::cerr << "SNIPPET UNDO: " << *m_undoTrigger << '\n';
             emitundoSnippet({.trigger = *m_undoTrigger});
             m_undoTrigger.reset();
@@ -404,7 +450,7 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
         }
 
         if (!keyStr.empty()) {
-          if (ev.code == KEY_BACKSPACE) {
+          if (inputEv.code == KEY_BACKSPACE) {
             if (!m_text.empty()) { m_text.erase(m_text.end() - 1); }
           } else if (std::isprint(keyStr.at(0))) {
             m_text.append(keyStr);

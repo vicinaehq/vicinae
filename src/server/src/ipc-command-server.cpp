@@ -196,7 +196,7 @@ void IpcCommandServer::processFrame(QLocalSocket *conn, QByteArrayView frame) {
   m_transport.conn = conn;
   m_service.setCallerInfo(&(*clientInfoIt));
 
-  qDebug() << "IPC incoming:" << frame.toByteArray();
+  // qDebug() << "IPC incoming:" << frame.toByteArray();
 
   m_ipcServer.route({frame.data(), static_cast<size_t>(frame.size())});
   m_service.setCallerInfo(nullptr);

@@ -136,11 +136,6 @@ void SnippetServer::injectPaste(bool terminal) {
   m_client.snippet()->injectPaste({.terminal = terminal});
 }
 
-void SnippetServer::cancelInjection() {
-  if (!isRunning()) return;
-  m_client.snippet()->cancelInjection();
-}
-
 void SnippetServer::setKeyDelay(int us) {
   if (!isRunning()) return;
   m_client.snippet()->setKeyDelay(us);

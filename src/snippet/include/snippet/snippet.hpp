@@ -1,5 +1,4 @@
 #pragma once
-#include <atomic>
 #include <optional>
 #include <sys/epoll.h>
 #include <libudev.h>
@@ -25,7 +24,6 @@ public:
   std::expected<void, std::string> injectExpand(snippet_gen::InjectExpandRequest req) override;
   std::expected<void, std::string> injectUndo(snippet_gen::InjectUndoRequest req) override;
   std::expected<void, std::string> injectPaste(snippet_gen::InjectPasteRequest req) override;
-  std::expected<void, std::string> cancelInjection() override;
   std::expected<void, std::string> setKeyDelay(int delayUs) override;
   std::expected<snippet_gen::KeyboardCapabilities, std::string> getCapabilities() override;
 
@@ -38,12 +36,24 @@ public:
   };
 
 private:
+  enum class DeviceType { Keyboard, Pointer };
+
+  struct InputDevice {
+    int fd = -1;
+    std::string name;
+    epoll_event ev;
+    DeviceType type;
+  };
+
   void setLayout(const snippet_gen::LayoutInfo &info);
-  std::vector<std::string> enumerateKeyboards();
+  std::vector<std::string> enumerateDevices(const char *property);
+  bool registerDevice(const char *device, DeviceType type);
+  void removeDevice(std::vector<InputDevice>::iterator it);
   void emitExpansion(const Snippet &snippet);
   bool hasActiveModifiers() const;
   void flushPendingExpansion();
-  void drainStdin();
+  void drainInputEvents();
+  bool checkInputInterrupt();
 
   std::string m_text;
   std::optional<std::string> m_undoTrigger;
@@ -52,10 +62,12 @@ private:
   xkb_context *m_xkb = nullptr;
   xkb_keymap *m_keymap = nullptr;
   xkb_state *m_kbState = nullptr;
+  int m_epollFd = -1;
   std::vector<Snippet> m_snippets;
   linuxutils::UInputKeyboard m_keyboard;
-  std::atomic<bool> m_cancelInjection{false};
+
   Frame *m_ipcFrame = nullptr;
+  std::vector<InputDevice> m_devices;
 };
 
 }; // namespace snippet

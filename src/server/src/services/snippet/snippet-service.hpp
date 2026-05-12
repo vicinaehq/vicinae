@@ -21,14 +21,18 @@ signals:
   void snippetsChanged(); // add/updated/remove
 
 public:
+  static constexpr int MAX_RESTART_ATTEMPTS = 5;
+  static constexpr int STABILITY_THRESHOLD_MS = 30000;
+  static constexpr int BASE_RESTART_DELAY_MS = 1000;
+
   SnippetService(const std::filesystem::path &path, WindowManager &wm, const AppService &appDb,
                  ClipboardService &clipboard)
       : m_db(path), m_wm(wm), m_appDb(appDb), m_clipboard(clipboard) {
     connect(&m_server, &SnippetServer::keywordTriggered, this, &SnippetService::handleKeywordTrigger);
     connect(&m_server, &SnippetServer::undoTriggered, this, &SnippetService::handleUndo);
+    connect(&m_server, &SnippetServer::serverStopped, this, &SnippetService::handleCrash);
     connect(&wm, &WindowManager::focusChanged, this, [this]() {
       m_undoRecord.reset();
-      m_server.cancelInjection();
       if (m_server.isRunning()) { m_server.resetContext(); }
     });
   }
@@ -38,13 +42,8 @@ public:
 
     if (!m_server.isRunning()) return false;
 
-    for (const auto &snippet : m_db.snippets()) {
-      if (const auto e = snippet.expansion) {
-        m_server.registerSnippet(
-            {.trigger = e->keyword,
-             .mode = e->word ? snippet_gen::ExpansionMode::Word : snippet_gen::ExpansionMode::Keydown});
-      }
-    }
+    syncServerState();
+    scheduleStabilityReset();
 
     return true;
   }
@@ -112,8 +111,12 @@ public:
   void setEnabled(bool enabled) { m_enabled = enabled; }
   void setUndoEnabled(bool enabled) { m_undoEnabled = enabled; }
   void setPrePasteDelay(int ms) { m_prePasteDelay = ms; }
-  void setKeyDelay(int us) { m_server.setKeyDelay(us); }
+  void setKeyDelay(int us) {
+    m_keyDelayUs = us;
+    m_server.setKeyDelay(us);
+  }
   void setLayout(const std::string &layout) {
+    m_layout = layout;
     if (!layout.empty()) { m_server.setKeymap({.layout = layout}); }
   }
 
@@ -126,14 +129,47 @@ private:
     QString expandedText;
   };
 
-  static constexpr int MAX_UNDO_LENGTH = 50;
+  void syncServerState() {
+    for (const auto &snippet : m_db.snippets()) {
+      if (const auto e = snippet.expansion) {
+        m_server.registerSnippet(
+            {.trigger = e->keyword,
+             .mode = e->word ? snippet_gen::ExpansionMode::Word : snippet_gen::ExpansionMode::Keydown});
+      }
+    }
+
+    if (!m_layout.empty()) { m_server.setKeymap({.layout = m_layout}); }
+    if (m_keyDelayUs != DEFAULT_KEY_DELAY_US) { m_server.setKeyDelay(m_keyDelayUs); }
+  }
+
+  void scheduleStabilityReset() {
+    QTimer::singleShot(STABILITY_THRESHOLD_MS, this, [this]() {
+      if (m_server.isRunning()) { m_crashCount = 0; }
+    });
+  }
+
+  void handleCrash() {
+    ++m_crashCount;
+
+    if (m_crashCount > MAX_RESTART_ATTEMPTS) {
+      qCritical() << "snippet server crashed" << m_crashCount << "times, giving up on restart";
+      return;
+    }
+
+    const int delay = BASE_RESTART_DELAY_MS * (1 << (m_crashCount - 1));
+    qWarning() << "snippet server crashed, restarting in" << delay << "ms"
+               << "(attempt" << m_crashCount << "/" << MAX_RESTART_ATTEMPTS << ")";
+
+    QTimer::singleShot(delay, this, [this]() {
+      m_server.start();
+      if (!m_server.isRunning()) return;
+      syncServerState();
+      scheduleStabilityReset();
+    });
+  }
 
   void handleUndo(const std::string &trigger) {
     if (!m_undoEnabled || !m_undoRecord || m_undoRecord->trigger != trigger) return;
-    if (m_undoRecord->expandedText.size() > MAX_UNDO_LENGTH) {
-      m_undoRecord.reset();
-      return;
-    }
 
     const int backspaceCount = static_cast<int>(m_undoRecord->expandedText.size()) - 1;
     m_undoRecord.reset();
@@ -226,5 +262,8 @@ private:
   bool m_enabled = true;
   bool m_undoEnabled = true;
   int m_prePasteDelay = DEFAULT_PRE_PASTE_DELAY_MS;
+  int m_keyDelayUs = DEFAULT_KEY_DELAY_US;
+  int m_crashCount = 0;
+  std::string m_layout;
   std::optional<UndoRecord> m_undoRecord;
 };

@@ -68,7 +68,6 @@ service Snippet {
   fn injectExpand(req: InjectExpandRequest) => void;
   fn injectUndo(req: InjectUndoRequest) => void;
   fn injectPaste(req: InjectPasteRequest) => void;
-  fn cancelInjection() => void;
   fn setKeyDelay(delayUs: number) => void;
   fn getCapabilities() => KeyboardCapabilities;
 
