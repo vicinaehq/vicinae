@@ -21,9 +21,6 @@ public:
   void setOnFileHighlighted(std::function<void(std::string_view)> cb) { m_onFileHighlighted = std::move(cb); }
 
   void onSelected(int i) override;
-  void onSelectionCleared() override;
-
-  void setCurrentSearchText(const QString &text) { m_currentSearchText = text; }
 
 protected:
   QString itemTitle(int i) const override;

@@ -22,6 +22,7 @@ void DMenuSection::setRawEntries(std::vector<std::string_view> entries) {
 
 void DMenuSection::setFilter(std::string_view query) {
   std::string const queryStr(query);
+  m_currentSearchText = QString::fromUtf8(query.data(), query.size());
 
   m_filtered.clear();
   for (auto e : m_entries) {
@@ -114,12 +115,4 @@ void DMenuSection::onSelected(int i) {
       if (m_onFileHighlighted) m_onFileHighlighted(entry);
     }
   }
-}
-
-void DMenuSection::onSelectionCleared() {
-  auto panel = std::make_unique<ListActionPanelState>();
-  auto *main = panel->createSection();
-  main->addAction(new StaticAction("Pass search text", ImageURL::builtin("save-document"),
-                                   [this](ApplicationContext *) { selectEntry(m_currentSearchText); }));
-  scope().setActions(std::move(panel));
 }

@@ -42,6 +42,7 @@ void SectionListModel::setSelectFirstOnReset(bool value) {
 void SectionListModel::rebuild() { rebuildFlatList(); }
 
 void SectionListModel::setFilter(const QString &text) {
+  m_filterText = text;
   auto query = text.toStdString();
   for (auto *source : m_sources) {
     source->setFilter(query);
@@ -155,6 +156,8 @@ void SectionListModel::setSelectedIndex(int index) {
   } else {
     m_scope.clearActions();
   }
+
+  emit itemSelected(source, flat.itemIdx);
 }
 
 void SectionListModel::refreshActionPanel() { setSelectedIndex(m_selectedIndex); }
@@ -260,6 +263,7 @@ void SectionListModel::onSelectionCleared() {
   for (auto *source : m_sources)
     source->onSelectionCleared();
   m_scope.clearActions();
+  emit selectionCleared();
 }
 
 void SectionListModel::beforePop() {}

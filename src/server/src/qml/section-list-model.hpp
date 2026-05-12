@@ -16,6 +16,8 @@ signals:
   void selectFirstOnResetChanged();
   void awaitingDataChanged();
   void selectedIndexChanged();
+  void itemSelected(SectionSource *source, int itemIdx);
+  void selectionCleared();
 
 public:
   enum Role {
@@ -59,7 +61,9 @@ public:
 
 protected:
   virtual void onSelectionCleared();
+
   const ViewScope &scope() const { return m_scope; }
+  const QString &filterText() const { return m_filterText; }
   bool dataItemAt(int row, int &sourceIdx, int &itemIdx) const;
   const std::vector<SectionSource *> &sources() const { return m_sources; }
 
@@ -77,6 +81,7 @@ private:
   std::vector<SectionSource *> m_sources;
   std::vector<FlatItem> m_flat;
   QHash<int, QVariant> m_customRoleDefaults;
+  QString m_filterText;
   int m_selectedIndex = -1;
   QString m_lastSelectedItemId;
   bool m_selectFirstOnReset = true;

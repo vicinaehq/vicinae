@@ -22,7 +22,25 @@ public:
 protected:
   SectionListModel *model() { return &m_model; }
 
-  void initModel() { m_model.setScope(ViewScope(context(), this)); }
+  void initModel() {
+    m_model.setScope(ViewScope(context(), this));
+
+    connect(&m_model, &SectionListModel::itemSelected, this, [this](SectionSource *source, int itemIdx) {
+      if (auto panel = source->actionPanel(itemIdx))
+        setActions(std::move(panel));
+      else
+        clearActions();
+    });
+
+    connect(&m_model, &SectionListModel::selectionCleared, this, [this]() {
+      if (auto panel = emptyActionPanel())
+        setActions(std::move(panel));
+      else
+        clearActions();
+    });
+  }
+
+  virtual std::unique_ptr<ActionPanelState> emptyActionPanel() { return nullptr; }
 
 private:
   SectionListModel m_model{this};
