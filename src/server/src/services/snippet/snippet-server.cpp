@@ -1,6 +1,7 @@
 #include "snippet-server.hpp"
 #include <cstdint>
 #include <netinet/in.h>
+#include <qtenvironmentvariables.h>
 
 // SnippetServerBus
 
@@ -65,7 +66,19 @@ SnippetServer::SnippetServer() : m_bus(&m_process), m_rpc(m_bus), m_client(m_rpc
 }
 
 void SnippetServer::start() {
-  const auto path = vicinae::findHelperProgram("vicinae-input-server");
+  std::optional<std::filesystem::path> path;
+
+  {
+    // trick used by mostly NixOS since this binary has special security implications (needs a setcap to
+    // enable input injection/monitoring at the kernel level).
+    // Other installations just find the binary at the standard $prefix/libexec/vicinae/vicinae-input-server
+    // location, and the binary is setcap'd as part of the post install.
+    if (auto const binOverride = qEnvironmentVariable("VICINAE_INPUT_SERVER_BIN"); !binOverride.isEmpty()) {
+      path = binOverride.toStdString();
+    } else {
+      path = vicinae::findHelperProgram("vicinae-input-server");
+    }
+  }
 
   if (!path) {
     qWarning() << "could not find vicinae-input-server helper binary, snippet expansion will not work";
