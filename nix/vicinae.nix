@@ -96,6 +96,7 @@ gcc15Stdenv.mkDerivation (finalAttrs: {
         (placeholder "out")
       ]
     }"
+    "--set VICINAE_INPUT_SERVER_BIN /run/wrappers/bin/vicinae-input-server"
   ];
 
   meta = {
