@@ -1,11 +1,12 @@
 #include "dmenu-view-host.hpp"
+#include "builtin_icon.hpp"
+#include "clipboard-actions.hpp"
+#include "keyboard/keybind.hpp"
 #include "utils/utils.hpp"
 #include "view-utils.hpp"
 #include <ranges>
 
 namespace fs = std::filesystem;
-
-DMenuViewHost::DMenuViewHost(ipc_gen::DMenuRequest data) : m_data(std::move(data)) {}
 
 QUrl DMenuViewHost::qmlComponentUrl() const {
   if (m_data.noQuickLook) { return QUrl(QStringLiteral("qrc:/Vicinae/CommandListView.qml")); }
@@ -35,10 +36,11 @@ void DMenuViewHost::initialize() {
                  std::views::filter([](auto &&s) { return !s.empty(); }) | std::ranges::to<std::vector>();
   m_section.setRawEntries(std::move(entries));
 
-  m_section.setOnEntryChosen([this](const QString &text) {
+  auto onChosen = [this](const QString &text) {
     m_selected = true;
     emit selected(text);
-  });
+  };
+  m_section.setOnEntryChosen(onChosen);
 
   if (!m_data.noQuickLook) {
     m_section.setOnFileHighlighted([this](std::string_view path) { loadDetail(path); });
@@ -57,7 +59,6 @@ void DMenuViewHost::loadInitialData() {
 
 void DMenuViewHost::textChanged(const QString &text) {
   clearDetail();
-  m_section.setCurrentSearchText(text);
   model()->setFilter(text);
 }
 
@@ -89,4 +90,31 @@ void DMenuViewHost::clearDetail() {
   m_detailImageSource.clear();
   m_detailTextContent.clear();
   emit detailChanged();
+}
+
+std::unique_ptr<ActionPanelState> DMenuViewHost::emptyActionPanel() {
+  auto panel = std::make_unique<ListActionPanelState>();
+  auto *section = panel->createSection();
+
+  auto onChosen = [this](const QString &text, ApplicationContext *ctx) {
+    m_selected = true;
+    emit selected(text);
+    ctx->navigation->closeWindow();
+  };
+
+  auto *select = new StaticAction("Pass search text", BuiltinIcon::SaveDocument,
+                                  [this, onChosen](ApplicationContext *ctx) { onChosen(searchText(), ctx); });
+  select->setPrimary(true);
+  section->addAction(select);
+
+  auto *selectAndCopy = new StaticAction("Pass and copy search text", BuiltinIcon::CopyClipboard,
+                                         [this, onChosen](ApplicationContext *ctx) {
+                                           auto text = searchText();
+                                           ctx->services->clipman()->copyText(text);
+                                           onChosen(text, ctx);
+                                         });
+  selectAndCopy->setShortcut(Keybind::CopyAction);
+  section->addAction(selectAndCopy);
+
+  return panel;
 }

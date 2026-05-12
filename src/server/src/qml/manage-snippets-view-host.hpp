@@ -26,7 +26,6 @@ public:
   QVariantMap qmlProperties() override;
   void initialize() override;
   void loadInitialData() override;
-  void onReactivated() override;
   void beforePop() override;
 
   bool hasDetail() const { return m_hasDetail; }
@@ -35,11 +34,13 @@ public:
 
   Q_INVOKABLE void createSnippet();
 
+protected:
+  std::unique_ptr<ActionPanelState> emptyActionPanel() override;
+
 private:
   void loadDetail(const snippet::SerializedSnippet &snippet);
   void updateExpandedText();
   void clearDetail();
-  void setEmptyActions();
   void reload();
 
   ManageSnippetsSection m_section;

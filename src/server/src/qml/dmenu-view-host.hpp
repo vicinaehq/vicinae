@@ -18,7 +18,7 @@ signals:
   void selected(const QString &text);
 
 public:
-  explicit DMenuViewHost(ipc_gen::DMenuRequest data);
+  explicit DMenuViewHost(ipc_gen::DMenuRequest data) : m_data(std::move(data)) {}
 
   QUrl qmlComponentUrl() const override;
   QVariantMap qmlProperties() override;
@@ -34,6 +34,9 @@ public:
   QString detailMimeType() const { return m_detailMimeType; }
   QString detailImageSource() const { return m_detailImageSource; }
   QString detailTextContent() const { return m_detailTextContent; }
+
+protected:
+  std::unique_ptr<ActionPanelState> emptyActionPanel() override;
 
 private:
   void loadDetail(std::string_view path);

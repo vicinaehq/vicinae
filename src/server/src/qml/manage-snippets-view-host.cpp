@@ -1,5 +1,4 @@
 #include "manage-snippets-view-host.hpp"
-#include "builtin_icon.hpp"
 #include "placeholder.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
@@ -34,19 +33,11 @@ void ManageSnippetsViewHost::initialize() {
           [this](const ArgumentValues &) { updateExpandedText(); });
 
   connect(model(), &QAbstractItemModel::modelReset, this, [this]() {
-    if (model()->rowCount() == 0) {
-      clearDetail();
-      setEmptyActions();
-    }
+    if (model()->rowCount() == 0) clearDetail();
   });
 }
 
 void ManageSnippetsViewHost::loadInitialData() { reload(); }
-
-void ManageSnippetsViewHost::onReactivated() {
-  ListViewHost::onReactivated();
-  if (model()->rowCount() == 0) { setEmptyActions(); }
-}
 
 void ManageSnippetsViewHost::beforePop() {
   clearDetail();
@@ -163,16 +154,14 @@ void ManageSnippetsViewHost::clearDetail() {
 
 void ManageSnippetsViewHost::createSnippet() { context()->navigation->pushView(new SnippetFormViewHost()); }
 
-void ManageSnippetsViewHost::setEmptyActions() {
+std::unique_ptr<ActionPanelState> ManageSnippetsViewHost::emptyActionPanel() {
   auto panel = std::make_unique<ListActionPanelState>();
   auto *section = panel->createSection();
-
   auto *create = new StaticAction("Create snippet", BuiltinIcon::Plus,
                                   [this](ApplicationContext *) { createSnippet(); });
   create->setPrimary(true);
   section->addAction(create);
-
-  context()->navigation->setActions(std::move(panel), this);
+  return panel;
 }
 
 void ManageSnippetsViewHost::reload() { m_section.setItems(m_snippetService->database()->snippets()); }
