@@ -92,11 +92,11 @@
 	"launcher_window": {
 		// Control the opacity of the main window.
 		// Opacity for other surfaces are controlled by the active theme.
-		"opacity": 0.95,
+		// [0;1]
+		"opacity": 1.0,
 		
 		// Blur the window background.
-		// Only suported on Hyprland for now.
-		// May require a server restart to disable properly.
+		// Supported on wayland compositors that implement ext-background-effect
 		"blur": {
 			"enabled": true
 		},
