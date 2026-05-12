@@ -78,5 +78,15 @@
         mkRayCastExtension = prev.callPackage ./nix/mkRayCastExtension.nix { };
       };
       homeManagerModules.default = import ./nix/module.nix self;
+
+      nixosModules.default = {pkgs, ...}: {
+        nixpkgs.overlays = [self.overlays.default];
+        security.wrappers.vicinae-input-server = {
+          source = "${pkgs.vicinae}/libexec/vicinae/vicinae-input-server";
+          capabilities = "cap_dac_override+ep";
+          owner = "root";
+          group = "root";
+        };
+      };
     };
 }
