@@ -111,9 +111,8 @@
 
 			// Draws drop shadows on the client side, ONLY if we are a layer surface.
 			// We assume that non layer surfaces may already have drop shadows drawn by the compositor.
-			// In order for this to work together with blur, the compositor or whatever blur plugin is needed
-			// needs to be able to only blur a specific region of the window (so that the shadows themselves do not get blurred).
-			// Compositors implementing the ext-background-effect protocol will have no issue with this.
+			// In order to play well with blur, we do NOT allow drop shadows if the compositor doesn't support
+			// the ext-background-effect protocol (which allows defining a specific region to blur).
 			"shadow_size": 12
 		},
 
