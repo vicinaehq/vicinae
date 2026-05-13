@@ -90,7 +90,7 @@ struct WindowCSD {
   bool enabled = true;
   int rounding = 10;
   int borderWidth = 3;
-  int shadowSize = 16;
+  int shadowSize = 12;
 };
 
 template <> struct Partial<WindowCSD> {

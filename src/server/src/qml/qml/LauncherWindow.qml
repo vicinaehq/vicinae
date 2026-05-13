@@ -62,8 +62,9 @@ Window {
         layer.effect: MultiEffect {
             autoPaddingEnabled: false
             shadowEnabled: true
-            shadowBlur: 1.0
-            shadowColor: Qt.rgba(0, 0, 0, 0.4)
+            shadowBlur: 0.5
+            shadowVerticalOffset: 3
+            shadowColor: Qt.rgba(0, 0, 0, 0.3)
             maskEnabled: true
             maskInverted: true
             maskSource: shadowMask
