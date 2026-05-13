@@ -115,7 +115,7 @@ FocusScope {
             anchors.fill: parent
             radius: 8
             opacity: root.readOnly ? 0.5 : 1.0
-            color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, Theme.surfaceOpacity)
+            color: "transparent"
             border.color: root.hasError ? Theme.inputBorderError : focusItem.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
             border.width: 1
 
@@ -177,7 +177,7 @@ FocusScope {
                 Layout.fillWidth: true
                 implicitHeight: 32
                 radius: 6
-                color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, Theme.surfaceOpacity)
+                color: "transparent"
                 border.color: Theme.inputBorder
                 border.width: 1
 

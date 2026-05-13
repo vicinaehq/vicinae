@@ -64,7 +64,7 @@ ColumnLayout {
             Layout.fillWidth: true
             implicitHeight: 32
             radius: 6
-            color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, Theme.surfaceOpacity)
+            color: "transparent"
             border.color: Theme.inputBorder
             border.width: 1
 

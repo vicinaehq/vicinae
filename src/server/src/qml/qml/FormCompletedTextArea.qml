@@ -50,7 +50,7 @@ Item {
         id: border
         anchors.fill: parent
         radius: 8
-        color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, Theme.surfaceOpacity)
+        color: "transparent"
         border.color: root.hasError ? Theme.inputBorderError : edit.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
         border.width: 1
 
