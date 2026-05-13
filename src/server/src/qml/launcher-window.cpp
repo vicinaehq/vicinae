@@ -527,7 +527,6 @@ void LauncherWindow::applyWindowConfig() {
   if (!m_window) return;
   auto &wcfg = m_ctx.services->config()->value().launcherWindow;
 
-  m_ctx.services->windowManager()->provider()->setDimAround(wcfg.dimAround);
   updateLayerShellProps();
 }
 

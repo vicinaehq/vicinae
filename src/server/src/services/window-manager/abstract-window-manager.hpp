@@ -103,11 +103,6 @@ public:
    */
   virtual QString displayName() const { return id(); }
 
-  /**
-   * Will eventually be moved elsewhere. For this trigger dim around for Hyprland only.
-   */
-  virtual bool setDimAround(bool value = true) { return false; }
-
   virtual WindowList listWindowsSync() const { return {}; };
 
   virtual std::vector<Screen> listScreensSync() const {
