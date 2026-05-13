@@ -28,7 +28,6 @@ AbstractWindowManager::WindowList HyprlandWindowManager::listWindowsSync() const
   return windows;
 }
 
-
 AbstractWindowManager::WindowPtr HyprlandWindowManager::getFocusedWindowSync() const {
   auto response = Hyprctl::oneshot("-j/activewindow");
   auto json = QJsonDocument::fromJson(response);
@@ -40,18 +39,16 @@ AbstractWindowManager::WindowPtr HyprlandWindowManager::getFocusedWindowSync() c
 
 void HyprlandWindowManager::focusWindowSync(const AbstractWindow &window) const {
   auto addr = window.id().toStdString();
-  Hyprctl::oneshot(std::format(
-      "[[BATCH]]dispatch focuswindow address:{0}"
-      ";eval hl.dispatch(hl.dsp.focus({{window=\"address:{0}\"}}))",
-      addr));
+  Hyprctl::oneshot(std::format("[[BATCH]]dispatch focuswindow address:{0}"
+                               ";eval hl.dispatch(hl.dsp.focus({{window=\"address:{0}\"}}))",
+                               addr));
 }
 
 bool HyprlandWindowManager::closeWindow(const AbstractWindow &window) const {
   auto addr = window.id().toStdString();
-  Hyprctl::oneshot(std::format(
-      "[[BATCH]]dispatch closewindow address:{0}"
-      ";eval hl.dispatch(hl.dsp.window.close({{window=\"address:{0}\"}}))",
-      addr));
+  Hyprctl::oneshot(std::format("[[BATCH]]dispatch closewindow address:{0}"
+                               ";eval hl.dispatch(hl.dsp.window.close({{window=\"address:{0}\"}}))",
+                               addr));
   emit windowsChanged();
 
   return true;
