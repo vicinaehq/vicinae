@@ -202,7 +202,7 @@ Window {
                     y: root.shadowPadding
                     width: parent.width - 2 * root.shadowPadding
                     height: parent.height - 2 * root.shadowPadding
-                    radius: Config.borderRounding
+                    radius: root.shadowPadding > 0 ? Config.borderRounding : 0
                     color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.5)
                 }
             }
