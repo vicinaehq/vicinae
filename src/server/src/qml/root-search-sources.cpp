@@ -346,7 +346,9 @@ std::unique_ptr<ActionPanelState> RootFilesSection::actionPanel(int i) const {
 }
 
 QString RootFallbackSection::sectionName() const {
-  return QString::fromStdString(std::format("Use \"{}\" with...", m_query));
+  constexpr std::size_t MAX_QUERY_LEN = 30;
+  auto truncated = m_query.length() > MAX_QUERY_LEN ? m_query.substr(0, MAX_QUERY_LEN) + "..." : m_query;
+  return QString::fromStdString(std::format("Use \"{}\" with...", truncated));
 }
 
 QString RootFallbackSection::itemId(int i) const {

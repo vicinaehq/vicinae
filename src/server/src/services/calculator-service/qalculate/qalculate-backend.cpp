@@ -90,17 +90,11 @@ bool QalculateBackend::isComputableExpression(const std::string &expr) {
       std::ranges::all_of(expr, [](char c) { return opsAndParens.find(c) != std::string_view::npos; });
   if (allOpsOrWhitespace) return false;
 
-  static constexpr std::string_view numberElements = "0123456789.:";
   static constexpr std::string_view ops = "~+-*/^&|!<>=";
+  if (std::ranges::any_of(expr, [](char c) { return ops.find(c) != std::string_view::npos; })) return true;
+  if (expr.find('(') != std::string::npos) return true;
+  if (expr.find(" to ") != std::string::npos) return true;
 
-  bool hasOps = std::ranges::any_of(expr, [](char c) { return ops.find(c) != std::string_view::npos; });
-  bool hasNumbers =
-      std::ranges::any_of(expr, [](char c) { return numberElements.find(c) != std::string_view::npos; });
-  bool hasSpaces = expr.find(' ') != std::string::npos;
-
-  if (hasOps || hasNumbers || hasSpaces) return true;
-
-  // Bare word — check if it's a known variable or zero-arg function
   if (auto *var = CALCULATOR->getActiveVariable(expr); var && var->isKnown()) return true;
   if (auto *fn = CALCULATOR->getActiveFunction(expr); fn && fn->minargs() == 0) return true;
   if (CALCULATOR->hasToExpression(expr, false, EvaluationOptions())) return true;

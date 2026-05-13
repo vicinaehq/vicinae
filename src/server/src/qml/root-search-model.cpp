@@ -256,14 +256,12 @@ void RootSearchModel::startCalculator() {
     return;
   }
 
-  bool const containsNonAlnum =
-      std::ranges::any_of(m_query, [](QChar ch) { return !ch.isLetterOrNumber(); }) ||
-      m_query.starts_with("0x") || m_query.starts_with("0b") || m_query.starts_with("0o");
-  const auto isAllowedLeadingChar = [&](QChar c) {
+  const auto isAllowedLeadingChar = [](QChar c) {
     return c == '-' || c == '(' || c == ')' || c.isLetterOrNumber() || c.category() == QChar::Symbol_Currency;
   };
-  bool const isComputable =
-      expression.size() > 1 && isAllowedLeadingChar(expression.at(0)) && containsNonAlnum;
+
+  bool const isComputable = expression.size() > 1 && isAllowedLeadingChar(expression.at(0)) &&
+                            AbstractCalculatorBackend::hasMathIndicator(m_query);
   if (!isComputable) return;
 
   m_calcWatcher.setFuture(m_calculator->backend()->asyncCompute(expression));

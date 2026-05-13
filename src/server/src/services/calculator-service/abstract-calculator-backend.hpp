@@ -1,7 +1,11 @@
 #pragma once
+#include <cctype>
 #include <qfuture.h>
 #include <qstring.h>
 #include <expected>
+#include <ranges>
+#include <string>
+#include <string_view>
 
 class AbstractCalculatorBackend {
 public:
@@ -84,6 +88,28 @@ public:
    * stead. It's okay to not cleanup stuff here as hot backend swapping is not frequent, but do it if you can.
    */
   virtual void stop() {}
+
+  static bool hasMathIndicator(std::string_view query) {
+    if (query.starts_with("0x") || query.starts_with("0b") || query.starts_with("0o")) return true;
+
+    static constexpr std::string_view ALWAYS_BINARY = "*/^%";
+    for (size_t i = 1; i < query.size(); ++i) {
+      if (ALWAYS_BINARY.find(query[i]) != std::string_view::npos) return true;
+      if ((query[i] == '+' || query[i] == '-') &&
+          (std::isalnum(static_cast<unsigned char>(query[i - 1])) || query[i - 1] == ')'))
+        return true;
+    }
+
+    if (query.find('(') != std::string_view::npos) return true;
+
+    auto hasConversion = [&](std::string_view keyword) {
+      auto pos = query.find(keyword);
+      if (pos == 0 || pos == std::string_view::npos || pos + keyword.size() >= query.size()) return false;
+      auto before = query.substr(0, pos);
+      return std::ranges::any_of(before, [](unsigned char c) { return std::isdigit(c); });
+    };
+    return hasConversion(" to ") || hasConversion(" in ");
+  }
 
   virtual ~AbstractCalculatorBackend() = default;
 };
