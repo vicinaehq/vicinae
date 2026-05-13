@@ -31,15 +31,18 @@ inline ScopedRegion createRoundedRegion(QRect region, int radius) {
 
   wl_region_add(wlregion, region.x(), region.y(), w, h);
 
+  int x0 = region.x();
+  int y0 = region.y();
+
   for (int i = 0; i < r; i++) {
     int cut = r - static_cast<int>(std::sqrt(static_cast<double>((r * r) - ((r - i) * (r - i)))));
 
     if (cut <= 0) continue;
 
-    wl_region_subtract(wlregion, 0, i, cut, 1);
-    wl_region_subtract(wlregion, w - cut, i, cut, 1);
-    wl_region_subtract(wlregion, 0, h - 1 - i, cut, 1);
-    wl_region_subtract(wlregion, w - cut, h - 1 - i, cut, 1);
+    wl_region_subtract(wlregion, x0, y0 + i, cut, 1);
+    wl_region_subtract(wlregion, x0 + w - cut, y0 + i, cut, 1);
+    wl_region_subtract(wlregion, x0, y0 + h - 1 - i, cut, 1);
+    wl_region_subtract(wlregion, x0 + w - cut, y0 + h - 1 - i, cut, 1);
   }
 
   return ScopedRegion(wlregion);

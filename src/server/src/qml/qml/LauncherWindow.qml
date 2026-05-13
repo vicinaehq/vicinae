@@ -2,17 +2,22 @@ import QtQuick
 import QtQuick.Window
 import QtQuick.Layouts
 import QtQuick.Controls
+import QtQuick.Effects
 
 Window {
     id: root
+    property int shadowPadding: 0
+
     readonly property int _w: launcher.overrideWidth || Config.windowWidth
     readonly property int _h: launcher.overrideHeight || Config.windowHeight
-    width: _w
-    height: _h
-    minimumWidth: _w
-    maximumWidth: _w
-    minimumHeight: _h
-    maximumHeight: _h
+    readonly property int _contentH: launcher.compacted ? 60 + 2 * Config.borderWidth : _h
+
+    width: _w + 2 * shadowPadding
+    height: _h + 2 * shadowPadding
+    minimumWidth: _w + 2 * shadowPadding
+    maximumWidth: _w + 2 * shadowPadding
+    minimumHeight: _h + 2 * shadowPadding
+    maximumHeight: _h + 2 * shadowPadding
     title: "Vicinae Launcher"
     flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
     color: "transparent"
@@ -20,127 +25,189 @@ Window {
 
     BackgroundEffect.enabled: Config.blurEnabled
     BackgroundEffect.radius: Config.borderRounding
-    BackgroundEffect.region: Qt.rect(0, 0, root.width, launcher.compacted ? 60 : root.height)
+    BackgroundEffect.region: Qt.rect(shadowPadding, shadowPadding, _w, launcher.compacted ? 60 : _h)
 
-    Rectangle {
-        visible: launcher.compacted
+    Item {
+        id: shadowMask
         width: root.width
-        height: 60 + 2 * Config.borderWidth
-        radius: Config.borderRounding
-        color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
-        border.color: Theme.mainWindowBorder
-        border.width: Config.borderWidth
+        height: root.height
+        visible: false
+        layer.enabled: true
+
+        Rectangle {
+            x: root.shadowPadding
+            y: root.shadowPadding
+            width: _w
+            height: _contentH
+            radius: Config.borderRounding
+            color: "white"
+        }
     }
 
     Item {
-        visible: !launcher.compacted
+        id: shadowCaster
         anchors.fill: parent
-        anchors.bottomMargin: launcher.hasOverlay || !launcher.statusBarVisible ? 0 : footer.height + Config.borderWidth
-        clip: true
+        visible: root.shadowPadding > 0
 
         Rectangle {
-            width: root.width
-            height: root.height
+            x: root.shadowPadding
+            y: root.shadowPadding
+            width: _w
+            height: _contentH
+            radius: Config.borderRounding
+            color: "black"
+        }
+
+        layer.enabled: root.shadowPadding > 0
+        layer.effect: MultiEffect {
+            autoPaddingEnabled: false
+            shadowEnabled: true
+            shadowBlur: 0.5
+            shadowVerticalOffset: 3
+            shadowColor: Qt.rgba(0, 0, 0, 0.3)
+            maskEnabled: true
+            maskInverted: true
+            maskSource: shadowMask
+        }
+    }
+
+    Item {
+        id: content
+        x: root.shadowPadding
+        y: root.shadowPadding
+        width: _w
+        height: _h
+
+        Rectangle {
+            visible: launcher.compacted
+            width: _w
+            height: 60 + 2 * Config.borderWidth
             radius: Config.borderRounding
             color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
-        }
-    }
-
-    Item {
-        visible: !launcher.compacted && !launcher.hasOverlay && launcher.statusBarVisible
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        height: footer.height + Config.borderWidth
-        clip: true
-
-        Rectangle {
-            width: root.width
-            height: root.height
-            anchors.bottom: parent.bottom
-            radius: Config.borderRounding
-            color: Qt.rgba(Theme.statusBarBackground.r, Theme.statusBarBackground.g, Theme.statusBarBackground.b, Config.windowOpacity)
-        }
-    }
-
-    Rectangle {
-        visible: !launcher.compacted
-        anchors.fill: parent
-        radius: Config.borderRounding
-        color: "transparent"
-        border.color: Theme.mainWindowBorder
-        border.width: Config.borderWidth
-    }
-
-    ColumnLayout {
-        anchors.fill: parent
-        anchors.margins: Config.borderWidth
-        spacing: 0
-        visible: !launcher.hasOverlay
-
-        SearchBar {
-            id: searchBar
-            Layout.fillWidth: true
-            Layout.preferredHeight: launcher.searchVisible ? 60 : 0
-            visible: launcher.searchVisible
-            enabled: !launcher.alertModel.visible
-        }
-
-        HorizontalLoadingBar {
-            Layout.fillWidth: true
-            implicitHeight: launcher.searchVisible ? 1 : 0
-            visible: launcher.searchVisible && !launcher.compacted
-            loading: launcher.isLoading
+            border.color: Theme.mainWindowBorder
+            border.width: Config.borderWidth
         }
 
         Item {
-            id: contentArea
-            objectName: "contentArea"
-            Layout.fillWidth: true
-            Layout.fillHeight: true
+            visible: !launcher.compacted
+            anchors.fill: parent
+            anchors.bottomMargin: launcher.hasOverlay || !launcher.statusBarVisible ? 0 : footer.height + Config.borderWidth
+            clip: true
 
-            StackView {
-                id: commandStack
-                anchors.fill: parent
-                visible: !launcher.compacted
-                initialItem: RootSearchList {}
+            Rectangle {
+                width: _w
+                height: _h
+                radius: Config.borderRounding
+                color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
+            }
+        }
+
+        Item {
+            visible: !launcher.compacted && !launcher.hasOverlay && launcher.statusBarVisible
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: footer.height + Config.borderWidth
+            clip: true
+
+            Rectangle {
+                width: _w
+                height: _h
+                anchors.bottom: parent.bottom
+                radius: Config.borderRounding
+                color: Qt.rgba(Theme.statusBarBackground.r, Theme.statusBarBackground.g, Theme.statusBarBackground.b, Config.windowOpacity)
             }
         }
 
         Rectangle {
-            visible: !launcher.compacted && launcher.statusBarVisible
-            Layout.fillWidth: true
-            implicitHeight: 1
-            color: Theme.divider
+            visible: !launcher.compacted
+            anchors.fill: parent
+            radius: Config.borderRounding
+            color: "transparent"
+            border.color: Theme.mainWindowBorder
+            border.width: Config.borderWidth
         }
 
-        Footer {
-            id: footer
-            visible: !launcher.compacted && launcher.statusBarVisible
-            Layout.fillWidth: true
-            Layout.preferredHeight: visible ? 40 : 0
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: Config.borderWidth
+            spacing: 0
+            visible: !launcher.hasOverlay
+
+            SearchBar {
+                id: searchBar
+                Layout.fillWidth: true
+                Layout.preferredHeight: launcher.searchVisible ? 60 : 0
+                visible: launcher.searchVisible
+                enabled: !launcher.alertModel.visible
+            }
+
+            HorizontalLoadingBar {
+                Layout.fillWidth: true
+                implicitHeight: launcher.searchVisible ? 1 : 0
+                visible: launcher.searchVisible && !launcher.compacted
+                loading: launcher.isLoading
+            }
+
+            Item {
+                id: contentArea
+                objectName: "contentArea"
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+
+                StackView {
+                    id: commandStack
+                    anchors.fill: parent
+                    visible: !launcher.compacted
+                    initialItem: RootSearchList {}
+                }
+            }
+
+            Rectangle {
+                visible: !launcher.compacted && launcher.statusBarVisible
+                Layout.fillWidth: true
+                implicitHeight: 1
+                color: Theme.divider
+            }
+
+            Footer {
+                id: footer
+                visible: !launcher.compacted && launcher.statusBarVisible
+                Layout.fillWidth: true
+                Layout.preferredHeight: visible ? 40 : 0
+            }
         }
-    }
 
-    Loader {
-        id: overlayLoader
-        anchors.fill: parent
-        anchors.margins: Config.borderWidth
-        visible: launcher.hasOverlay
+        Loader {
+            id: overlayLoader
+            anchors.fill: parent
+            anchors.margins: Config.borderWidth
+            visible: launcher.hasOverlay
 
-        onLoaded: if (item)
-            item.forceActiveFocus()
-    }
+            onLoaded: if (item)
+                item.forceActiveFocus()
+        }
 
-    ActionPanelPopover {
-        id: actionPanelPopover
-        z: 100
-        anchors.fill: parent
-        anchors.bottomMargin: footer.height + 1 + Config.borderWidth
-    }
+        ActionPanelPopover {
+            id: actionPanelPopover
+            z: 100
+            anchors.fill: parent
+            anchors.bottomMargin: footer.height + 1 + Config.borderWidth
+        }
 
-    AlertDialog {
-        id: alertDialog
+        AlertDialog {
+            id: alertDialog
+            Overlay.modal: Item {
+                Rectangle {
+                    x: root.shadowPadding
+                    y: root.shadowPadding
+                    width: parent.width - 2 * root.shadowPadding
+                    height: parent.height - 2 * root.shadowPadding
+                    radius: root.shadowPadding > 0 ? Config.borderRounding : 0
+                    color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.5)
+                }
+            }
+        }
     }
 
     Connections {

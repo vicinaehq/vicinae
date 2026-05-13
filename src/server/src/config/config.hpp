@@ -90,12 +90,14 @@ struct WindowCSD {
   bool enabled = true;
   int rounding = 10;
   int borderWidth = 3;
+  int shadowSize = 12;
 };
 
 template <> struct Partial<WindowCSD> {
   std::optional<bool> enabled;
   std::optional<int> rounding;
   std::optional<int> borderWidth;
+  std::optional<int> shadowSize;
 };
 
 struct WindowCompactMode {

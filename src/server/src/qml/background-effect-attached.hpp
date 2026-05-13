@@ -13,6 +13,7 @@ class BackgroundEffectAttached : public QObject {
   Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY enabledChanged)
   Q_PROPERTY(int radius READ radius WRITE setRadius NOTIFY radiusChanged)
   Q_PROPERTY(QRect region READ region WRITE setRegion NOTIFY regionChanged)
+  Q_PROPERTY(bool supportsRegionalBlur READ supportsRegionalBlur CONSTANT)
 
 public:
   explicit BackgroundEffectAttached(QObject *parent);
@@ -25,6 +26,8 @@ public:
 
   QRect region() const { return m_region; }
   void setRegion(const QRect &value);
+
+  static bool supportsRegionalBlur();
 
 signals:
   void enabledChanged();

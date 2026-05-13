@@ -31,6 +31,11 @@ void BackgroundEffectAttached::setRadius(int value) {
   apply();
 }
 
+bool BackgroundEffectAttached::supportsRegionalBlur() {
+  auto *mgr = BackgroundEffect::manager();
+  return mgr && mgr->supportsBlur();
+}
+
 void BackgroundEffectAttached::setRegion(const QRect &value) {
   if (m_hasExplicitRegion && m_region == value) return;
   m_region = value;
