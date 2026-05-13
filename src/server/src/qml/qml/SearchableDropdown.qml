@@ -49,7 +49,7 @@ Item {
         width: compact ? root.width : implicitWidth
         height: compact ? 28 : implicitHeight
         radius: compact ? 6 : 8
-        color: buttonMouseArea.containsMouse ? Theme.listItemHoverBg : Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, Theme.surfaceOpacity)
+        color: buttonMouseArea.containsMouse ? Theme.listItemHoverBg : "transparent"
         border.color: root.hasError ? Theme.inputBorderError : (root.activeFocus || completionPopup.visible ? Theme.inputBorderFocus : (compact ? Theme.divider : Theme.inputBorder))
         border.width: 1
 
