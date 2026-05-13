@@ -101,11 +101,6 @@
 			"enabled": true
 		},
 
-		// Dims everything behind the vicinae window.
-		// Only supported on Hyprland for now.
-		// May require a server restart to disable properly.
-		"dim_around": true,
-
 		// You can turn client side decorations off if you want to let your compositor draw the rounded
 		// borders and such. This usually gives better results, but is more complicated to setup, if at all possible.
 		"client_side_decorations": {

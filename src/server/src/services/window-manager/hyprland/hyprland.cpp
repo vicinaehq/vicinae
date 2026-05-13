@@ -28,19 +28,6 @@ AbstractWindowManager::WindowList HyprlandWindowManager::listWindowsSync() const
   return windows;
 }
 
-void HyprlandWindowManager::applyLayerRule(std::string_view rule) {
-  Hyprctl::oneshot(std::format("keyword layerrule {}, {}", rule, Omnicast::LAYER_SCOPE));
-}
-
-void HyprlandWindowManager::applyLayerRules() {
-  if (m_dimAround) { applyLayerRule("dimaround"); }
-}
-
-bool HyprlandWindowManager::setDimAround(bool value) {
-  m_dimAround = value;
-  applyLayerRules();
-  return false;
-}
 
 AbstractWindowManager::WindowPtr HyprlandWindowManager::getFocusedWindowSync() const {
   auto response = Hyprctl::oneshot("-j/activewindow");
