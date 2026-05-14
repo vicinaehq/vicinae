@@ -334,11 +334,21 @@ void ExtensionSettingsModel::rebuild(const QString &filter) {
 
   int newRow = !filter.isEmpty() ? 0 : m_selectedRow;
   if (std::cmp_greater_equal(newRow, m_visibleIndices.size())) newRow = m_visibleIndices.empty() ? -1 : 0;
+
+  bool const sameProvider = newRow >= 0 && newRow == m_selectedRow &&
+                            std::cmp_less(newRow, m_visibleIndices.size()) &&
+                            m_allEntries[m_visibleIndices[newRow]].providerId == selectedProviderId();
+
   m_selectedRow = -1;
   if (newRow == -1)
     emit selectedChanged();
-  else
+  else if (sameProvider) {
+    m_selectedRow = newRow;
+    loadCommandsForProvider(m_allEntries[m_visibleIndices[newRow]].providerId);
+    emit selectedChanged();
+  } else {
     select(newRow);
+  }
 }
 
 void ExtensionSettingsModel::rebuildVisible() {

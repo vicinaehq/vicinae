@@ -34,6 +34,8 @@ public:
     bool hasPreferences;
     QString alias;
     QString entrypointId;
+
+    bool operator==(const Command &) const = default;
   };
 
   explicit ProviderCommandModel(QObject *parent = nullptr);
