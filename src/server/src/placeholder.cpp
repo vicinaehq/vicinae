@@ -12,7 +12,16 @@ PlaceholderString PlaceholderString::parseShortcutText(const QString &link) {
 
 PlaceholderString PlaceholderString::parse(const QString &link, std::span<const QString> reserved) {
   PlaceholderString pstr;
-  enum class State : std::uint8_t { BkNormal, BkEscape, PhId, PhKeyStart, PhKey, PhValueStart, PhValue, PhValueQuoted };
+  enum class State : std::uint8_t {
+    BkNormal,
+    BkEscape,
+    PhId,
+    PhKeyStart,
+    PhKey,
+    PhValueStart,
+    PhValue,
+    PhValueQuoted
+  };
   using enum State;
   State state = BkNormal;
   size_t i = 0;
