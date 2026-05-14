@@ -162,6 +162,43 @@ CommandArgument ExtensionManifest::parseArgumentFromObject(const QJsonObject &ob
   return arg;
 }
 
+static std::expected<std::chrono::seconds, QString> parseInterval(const std::string &str) {
+  if (str.empty()) return std::unexpected(QString("interval is empty"));
+
+  char unit = str.back();
+
+  std::int64_t value = 0;
+  auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.size() - 1, value);
+  if (ec != std::errc{} || ptr != str.data() + str.size() - 1)
+    return std::unexpected(QString("invalid interval format: %1").arg(str.c_str()));
+
+  using namespace std::chrono;
+
+  seconds secs;
+
+  switch (unit) {
+  case 's':
+    secs = seconds(value);
+    break;
+  case 'm':
+    secs = duration_cast<seconds>(minutes(value));
+    break;
+  case 'h':
+    secs = duration_cast<seconds>(hours(value));
+    break;
+  case 'd':
+    secs = duration_cast<seconds>(hours(value * 24));
+    break;
+  default:
+    return std::unexpected(QString("unknown interval unit: %1").arg(unit));
+  }
+
+  if (secs < seconds(5))
+    return std::unexpected(QString("interval must be at least 5s, got %1s").arg(secs.count()));
+
+  return secs;
+}
+
 ExtensionManifest::Command ExtensionManifest::parseCommandFromObject(const QJsonObject &obj) {
   ExtensionManifest::Command command;
   auto type = obj.value("mode");
@@ -179,6 +216,15 @@ ExtensionManifest::Command ExtensionManifest::parseCommandFromObject(const QJson
     command.mode = CommandMode::CommandModeNoView;
   } else {
     command.mode = CommandMode::CommandModeInvalid;
+  }
+
+  if (obj.contains("interval") && command.mode == CommandModeNoView) {
+    auto interval = parseInterval(obj.value("interval").toString().toStdString());
+    if (interval) {
+      command.interval = *interval;
+    } else {
+      qWarning() << "Failed to parse interval for command" << command.name << "-" << interval.error();
+    }
   }
 
   for (const auto &obj : obj.value("preferences").toArray()) {

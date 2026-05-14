@@ -392,6 +392,9 @@ set(SRCS
 	src/ipc-command-handler.hpp
 	src/ipc-command-handler.cpp
 
+	src/extension-interval-scheduler.hpp
+	src/extension-interval-scheduler.cpp
+
 	src/log/message-handler.cpp
 
 	src/extension/extension-command-runtime.cpp

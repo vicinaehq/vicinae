@@ -73,7 +73,9 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
   }
 
   if (m_isDevMode) {
-    context()->navigation->setNavigationSuffixIcon(ImageURL::builtin("hammer").setFill(SemanticColor::Green));
+    if (!m_headless)
+      context()->navigation->setNavigationSuffixIcon(
+          ImageURL::builtin("hammer").setFill(SemanticColor::Green));
     opts.env = manager::CommandEnv::Development;
   } else {
     opts.env = manager::CommandEnv::Production;
@@ -108,6 +110,9 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
             if (sessionId != m_sessionId) return;
 
             qCritical() << "Got crash" << reason;
+
+            if (m_headless) return;
+
             auto &nav = context()->navigation;
 
             nav->popToRoot();
@@ -140,7 +145,7 @@ void ExtensionCommandRuntime::unload() {
 
   manager->client().manager()->unload(m_sessionId);
 
-  context()->navigation->setNavigationSuffixIcon(std::nullopt);
+  if (!m_headless) context()->navigation->setNavigationSuffixIcon(std::nullopt);
 }
 
 ExtensionCommandRuntime::ExtensionCommandRuntime(const std::shared_ptr<ExtensionCommand> &command)
