@@ -8,7 +8,7 @@
 #include "favicon/favicon-service.hpp"
 #include "font-service.hpp"
 #include "icon-theme-db/icon-theme-db.hpp"
-#include "interval-scheduler.hpp"
+#include "extension-interval-scheduler.hpp"
 #include "ipc-command-server.hpp"
 #include "keyboard/keybind-manager.hpp"
 #include "log/message-handler.hpp"

@@ -1,4 +1,4 @@
-#include "interval-scheduler.hpp"
+#include "extension-interval-scheduler.hpp"
 #include <algorithm>
 #include <format>
 #include <QDateTime>
@@ -17,7 +17,7 @@
 namespace fs = std::filesystem;
 
 ExtensionIntervalScheduler::ExtensionIntervalScheduler(ApplicationContext &ctx) : m_ctx(ctx) {
-  m_statePath = Omnicast::stateDir() / "intervals.json";
+  m_statePath = Omnicast::stateDir() / "extension-intervals.json";
   loadState();
 
   connect(ctx.services->extensionRegistry(), &ExtensionRegistry::extensionsChanged, this,
