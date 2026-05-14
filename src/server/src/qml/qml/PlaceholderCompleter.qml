@@ -18,8 +18,11 @@ Item {
             const c = txt.charAt(i);
             if (c === '}')
                 return -1;
-            if (c === root.triggerChar)
+            if (c === root.triggerChar) {
+                if (i > 0 && txt.charAt(i - 1) === '\\')
+                    return -1;
                 return i;
+            }
         }
         return -1;
     }

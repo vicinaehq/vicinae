@@ -12,7 +12,7 @@ PlaceholderString PlaceholderString::parseShortcutText(const QString &link) {
 
 PlaceholderString PlaceholderString::parse(const QString &link, std::span<const QString> reserved) {
   PlaceholderString pstr;
-  enum class State : std::uint8_t { BkNormal, PhId, PhKeyStart, PhKey, PhValueStart, PhValue, PhValueQuoted };
+  enum class State : std::uint8_t { BkNormal, BkEscape, PhId, PhKeyStart, PhKey, PhValueStart, PhValue, PhValueQuoted };
   using enum State;
   State state = BkNormal;
   size_t i = 0;
@@ -49,11 +49,25 @@ PlaceholderString PlaceholderString::parse(const QString &link, std::span<const 
 
     switch (state) {
     case BkNormal:
+      if (ch == '\\') {
+        pstr.m_parts.emplace_back(link.sliced(startPos, i - startPos));
+        state = BkEscape;
+        break;
+      }
       if (ch == '{') {
         pstr.m_parts.emplace_back(link.sliced(startPos, i - startPos));
         state = PhId;
         startPos = i + 1;
       }
+      break;
+    case BkEscape:
+      if (ch == '\\') {
+        pstr.m_parts.emplace_back(QStringLiteral("\\"));
+        startPos = i + 1;
+      } else {
+        startPos = i;
+      }
+      state = BkNormal;
       break;
     case PhId:
       if (!ch.isLetterOrNumber()) {
@@ -117,6 +131,8 @@ PlaceholderString PlaceholderString::parse(const QString &link, std::span<const 
 
   if (state == BkNormal && i - startPos > 0) {
     pstr.m_parts.emplace_back(link.sliced(startPos, i - startPos));
+  } else if (state == BkEscape) {
+    pstr.m_parts.emplace_back(QStringLiteral("\\"));
   }
 
   return pstr;
