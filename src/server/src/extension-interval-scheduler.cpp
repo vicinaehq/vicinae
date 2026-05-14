@@ -1,6 +1,7 @@
 #include "extension-interval-scheduler.hpp"
 #include <algorithm>
 #include <format>
+#include <unordered_set>
 #include <QDateTime>
 #include <glaze/json/read.hpp>
 #include <glaze/json/write.hpp>
@@ -37,7 +38,7 @@ ExtensionIntervalScheduler::ScheduledEntry *ExtensionIntervalScheduler::findEntr
 
 void ExtensionIntervalScheduler::rebuild() {
   auto *root = m_ctx.services->rootItemManager();
-  std::vector<std::string> seen;
+  std::unordered_set<std::string> seen;
 
   for (auto *ext : root->extensions()) {
     for (const auto &cmd : ext->repository()->commands()) {
@@ -46,7 +47,7 @@ void ExtensionIntervalScheduler::rebuild() {
       if (extCmd->mode() != CommandModeNoView) continue;
 
       auto key = makeKey(*extCmd);
-      seen.emplace_back(key);
+      seen.insert(key);
 
       if (auto *existing = findEntry(key)) {
         if (existing->interval != *extCmd->interval()) {
@@ -82,7 +83,7 @@ void ExtensionIntervalScheduler::rebuild() {
   }
 
   std::erase_if(m_entries, [&](const std::unique_ptr<ScheduledEntry> &entry) {
-    if (std::ranges::find(seen, entry->key) != seen.end()) return false;
+    if (seen.contains(entry->key)) return false;
 
     qInfo() << "[ExtensionIntervalScheduler] Removing schedule for" << entry->key;
     if (entry->running) forceUnload(*entry);
