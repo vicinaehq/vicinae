@@ -340,11 +340,9 @@ void ExtensionSettingsModel::rebuild(const QString &filter) {
                             m_allEntries[m_visibleIndices[newRow]].providerId == selectedProviderId();
 
   m_selectedRow = -1;
-  if (newRow == -1)
-    emit selectedChanged();
-  else if (sameProvider) {
+  if (sameProvider) {
     m_selectedRow = newRow;
-    loadCommandsForProvider(m_allEntries[m_visibleIndices[newRow]].providerId);
+  } else if (newRow == -1) {
     emit selectedChanged();
   } else {
     select(newRow);
