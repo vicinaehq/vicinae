@@ -312,6 +312,19 @@ void FileIndexerDatabase::deleteAllIndexedFiles() {
   }
 }
 
+void FileIndexerDatabase::compact() {
+  QSqlQuery query(m_db);
+
+  if (!query.exec("VACUUM")) {
+    qWarning() << "VACUUM failed" << query.lastError();
+    return;
+  }
+
+  if (!query.exec("PRAGMA wal_checkpoint(TRUNCATE)")) {
+    qWarning() << "wal_checkpoint(TRUNCATE) failed" << query.lastError();
+  }
+}
+
 void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
   if (!m_db.transaction()) {
     qWarning() << "Failed to start batch transaction" << m_db.lastError();

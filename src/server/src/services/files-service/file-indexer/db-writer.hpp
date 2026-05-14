@@ -40,6 +40,7 @@ public:
   void indexFiles(std::vector<std::filesystem::path> paths);
   void deleteIndexedFiles(std::vector<std::filesystem::path> paths);
   void deleteAllIndexedFiles(std::function<void()> onComplete = nullptr);
+  void compact(std::function<void()> onComplete = nullptr);
 
   void indexEvents(std::vector<FileEvent> events);
 };
