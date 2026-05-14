@@ -47,4 +47,8 @@ private:
 
   std::string m_sessionId;
   bool m_isDevMode = false;
+  bool m_headless = false;
+
+public:
+  void setHeadless(bool value) { m_headless = value; }
 };

@@ -1,4 +1,5 @@
 #pragma once
+#include <chrono>
 #include <expected>
 #include <filesystem>
 #include "argument.hpp"
@@ -22,6 +23,7 @@ struct ExtensionManifest {
     std::vector<Preference> preferences;
     std::vector<CommandArgument> arguments;
     std::optional<QString> icon;
+    std::optional<std::chrono::seconds> interval;
     std::filesystem::path entrypoint;
     bool defaultDisabled;
     Provenance provenance;
