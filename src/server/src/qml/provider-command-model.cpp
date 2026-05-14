@@ -45,6 +45,8 @@ QHash<int, QByteArray> ProviderCommandModel::roleNames() const {
 }
 
 void ProviderCommandModel::load(std::vector<Command> commands) {
+  if (m_filter.isEmpty() && commands == m_allCommands) return;
+
   int const oldCount = rowCount();
   int const oldTotal = totalCount();
   m_filter.clear();
