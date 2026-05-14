@@ -67,8 +67,12 @@ std::optional<float> PactlAudioControl::setVolume(float level) {
 }
 
 std::optional<float> PactlAudioControl::adjustVolume(float delta) {
-  auto current = getVolume();
-  return setVolume(current + delta);
+  auto arg = std::format("{:+d}%", static_cast<int>(std::round(delta * 100)));
+  if (!run({"set-sink-volume", "@DEFAULT_SINK@", arg})) return std::nullopt;
+
+  auto vol = getVolume();
+  if (vol > 1.0f) return setVolume(1.0f);
+  return vol;
 }
 
 bool PactlAudioControl::isMuted() const {
