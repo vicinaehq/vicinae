@@ -3,6 +3,7 @@ import QtQuick
 Rectangle {
     id: root
     property bool loading: false
+    clip: true
     color: Theme.divider
 
     property bool _active: false
