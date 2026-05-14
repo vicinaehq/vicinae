@@ -177,11 +177,20 @@ static std::expected<std::chrono::seconds, QString> parseInterval(const std::str
   seconds secs;
 
   switch (unit) {
-  case 's': secs = seconds(value); break;
-  case 'm': secs = duration_cast<seconds>(minutes(value)); break;
-  case 'h': secs = duration_cast<seconds>(hours(value)); break;
-  case 'd': secs = duration_cast<seconds>(hours(value * 24)); break;
-  default: return std::unexpected(QString("unknown interval unit: %1").arg(unit));
+  case 's':
+    secs = seconds(value);
+    break;
+  case 'm':
+    secs = duration_cast<seconds>(minutes(value));
+    break;
+  case 'h':
+    secs = duration_cast<seconds>(hours(value));
+    break;
+  case 'd':
+    secs = duration_cast<seconds>(hours(value * 24));
+    break;
+  default:
+    return std::unexpected(QString("unknown interval unit: %1").arg(unit));
   }
 
   if (secs < seconds(5))

@@ -52,8 +52,8 @@ void ExtensionIntervalScheduler::rebuild() {
       if (auto *existing = findEntry(key)) {
         if (existing->interval != *extCmd->interval()) {
           existing->interval = *extCmd->interval();
-          qInfo() << "[ExtensionIntervalScheduler] Updated interval for" << key << "to" << existing->interval.count()
-                  << "s";
+          qInfo() << "[ExtensionIntervalScheduler] Updated interval for" << key << "to"
+                  << existing->interval.count() << "s";
         }
         continue;
       }
@@ -160,8 +160,8 @@ void ExtensionIntervalScheduler::forceUnload(ScheduledEntry &entry) {
   entry.running = false;
 }
 
-std::chrono::milliseconds ExtensionIntervalScheduler::computeInitialDelay(const std::string &key,
-                                                                 std::chrono::seconds interval) const {
+std::chrono::milliseconds
+ExtensionIntervalScheduler::computeInitialDelay(const std::string &key, std::chrono::seconds interval) const {
   auto it = m_lastRun.find(key);
   if (it == m_lastRun.end()) return std::chrono::milliseconds(0);
 
