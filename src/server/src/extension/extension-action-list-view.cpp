@@ -6,17 +6,11 @@
 ExtensionActionListView::ExtensionActionListView(ExtensionActionPanelBuilder::NotifyFn notify,
                                                  const QString &onSearchTextChangeHandler, QObject *parent)
     : ActionListView(parent), m_notify(std::move(notify)),
-      m_onSearchTextChangeHandler(onSearchTextChangeHandler) {}
-
-QVariantMap ExtensionActionListView::componentProps() {
-  auto props = ActionListView::componentProps();
-
-  if (!m_onSearchTextChangeHandler.isEmpty() && model()) {
+      m_onSearchTextChangeHandler(onSearchTextChangeHandler) {
+  if (!m_onSearchTextChangeHandler.isEmpty()) {
     connect(model(), &ActionPanelModel::filterChanged, this,
             [this](const QString &text) { m_notify(m_onSearchTextChangeHandler, {text}); });
   }
-
-  return props;
 }
 
 ActionListView *ExtensionActionListView::createSubmenuChild(SubmenuAction *action) {

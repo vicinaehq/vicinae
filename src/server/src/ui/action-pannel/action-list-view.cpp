@@ -67,7 +67,7 @@ bool ActionListView::hasActions() const { return m_state && m_state->actionCount
 bool ActionListView::hasMultipleActions() const { return m_state && m_state->actionCount() > 1; }
 
 void ActionListView::resetState() {
-  if (m_model) { m_model->setStateFrom(m_state.get()); }
+  m_model->setStateFrom(m_state.get());
 }
 
 ActionListView *ActionListView::createSubmenuChild(SubmenuAction *action) {

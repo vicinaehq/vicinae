@@ -442,6 +442,7 @@ bool LauncherWindow::forwardKey(int key, int modifiers) {
 
   if (auto *action = m_ctx.navigation->findBoundAction(&event)) {
     m_ctx.navigation->executeAction(action);
+    m_actionPanel->close();
     return true;
   }
 

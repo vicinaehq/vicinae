@@ -9,8 +9,6 @@ public:
   ExtensionActionListView(ExtensionActionPanelBuilder::NotifyFn notify,
                           const QString &onSearchTextChangeHandler, QObject *parent = nullptr);
 
-  QVariantMap componentProps() override;
-
 protected:
   ActionListView *createSubmenuChild(SubmenuAction *action) override;
 
