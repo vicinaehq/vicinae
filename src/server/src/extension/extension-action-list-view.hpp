@@ -7,8 +7,7 @@ class ExtensionActionListView : public ActionListView {
 
 public:
   ExtensionActionListView(ExtensionActionPanelBuilder::NotifyFn notify,
-                          const QString &onSearchTextChangeHandler,
-                          ExtensionActionPanelBuilder::SubmenuCache *cache, QObject *parent = nullptr);
+                          const QString &onSearchTextChangeHandler, QObject *parent = nullptr);
 
   QVariantMap componentProps() override;
 
@@ -18,5 +17,4 @@ protected:
 private:
   ExtensionActionPanelBuilder::NotifyFn m_notify;
   QString m_onSearchTextChangeHandler;
-  ExtensionActionPanelBuilder::SubmenuCache *m_cache;
 };

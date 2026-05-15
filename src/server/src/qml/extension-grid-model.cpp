@@ -25,10 +25,10 @@ template <> struct fuzzy::FuzzySearchable<GridItemViewModel> {
 
 ExtensionGridSection::ExtensionGridSection(std::string name, std::vector<GridItemViewModel> items,
                                            std::optional<int> columns, std::optional<double> aspectRatio,
-                                           bool filtering, NotifyFn notify, SubmenuCache *cache,
+                                           bool filtering, NotifyFn notify,
                                            const std::optional<ActionPannelModel> *globalActions)
     : m_name(std::move(name)), m_items(std::move(items)), m_columns(columns), m_aspectRatio(aspectRatio),
-      m_filtering(filtering), m_notify(std::move(notify)), m_cache(cache), m_globalActions(globalActions) {}
+      m_filtering(filtering), m_notify(std::move(notify)), m_globalActions(globalActions) {}
 
 int ExtensionGridSection::count() const {
   if (m_filtering && !m_query.empty()) return static_cast<int>(m_filtered.size());
@@ -56,11 +56,11 @@ const GridItemViewModel *ExtensionGridSection::itemAt(int i) const {
 
 std::unique_ptr<ActionPanelState> ExtensionGridSection::actionPanel(int i) const {
   if (auto *it = itemAt(i); it && it->actionPannel) {
-    return ExtensionActionPanelBuilder::build(*it->actionPannel, m_notify, m_cache,
+    return ExtensionActionPanelBuilder::build(*it->actionPannel, m_notify,
                                               ActionPanelState::ShortcutPreset::List);
   }
   if (m_globalActions && *m_globalActions) {
-    return ExtensionActionPanelBuilder::build(**m_globalActions, m_notify, m_cache,
+    return ExtensionActionPanelBuilder::build(**m_globalActions, m_notify,
                                               ActionPanelState::ShortcutPreset::List);
   }
   return nullptr;
@@ -68,8 +68,8 @@ std::unique_ptr<ActionPanelState> ExtensionGridSection::actionPanel(int i) const
 
 // --- ExtensionGridModel ---
 
-ExtensionGridModel::ExtensionGridModel(NotifyFn notify, SubmenuCache *cache, QObject *parent)
-    : SectionGridModel(parent), m_notify(std::move(notify)), m_submenuCache(cache) {}
+ExtensionGridModel::ExtensionGridModel(NotifyFn notify, QObject *parent)
+    : SectionGridModel(parent), m_notify(std::move(notify)) {}
 
 void ExtensionGridModel::setExtensionData(const GridModel &model, bool resetSelection) {
   m_model = model;
@@ -123,9 +123,9 @@ void ExtensionGridModel::rebuildFromSections(bool resetSelection) {
 
   auto flushFree = [&]() {
     if (freeBuf.empty()) return;
-    auto section = std::make_unique<ExtensionGridSection>(std::move(freeItems), std::move(freeBuf),
-                                                          std::nullopt, std::nullopt, m_model.filtering,
-                                                          m_notify, m_submenuCache, &m_model.actions);
+    auto section =
+        std::make_unique<ExtensionGridSection>(std::move(freeItems), std::move(freeBuf), std::nullopt,
+                                               std::nullopt, m_model.filtering, m_notify, &m_model.actions);
     section->setOnItemSelected([this](const GridItemViewModel *item) {
       if (auto handler = m_model.onSelectionChanged) {
         if (item) { m_notify(handler->c_str(), {item->id.c_str()}); }
@@ -142,9 +142,9 @@ void ExtensionGridModel::rebuildFromSections(bool resetSelection) {
       freeBuf.push_back(*item);
     } else if (auto sec = std::get_if<GridSectionModel>(&child)) {
       flushFree();
-      auto section = std::make_unique<ExtensionGridSection>(sec->title, sec->children, sec->columns,
-                                                            sec->aspectRatio, m_model.filtering, m_notify,
-                                                            m_submenuCache, &m_model.actions);
+      auto section =
+          std::make_unique<ExtensionGridSection>(sec->title, sec->children, sec->columns, sec->aspectRatio,
+                                                 m_model.filtering, m_notify, &m_model.actions);
       section->setOnItemSelected([this](const GridItemViewModel *item) {
         if (auto handler = m_model.onSelectionChanged) {
           if (item) { m_notify(handler->c_str(), {item->id.c_str()}); }
@@ -267,10 +267,10 @@ void ExtensionGridModel::onSelectionCleared() {
   std::unique_ptr<ActionPanelState> panel;
 
   if (m_model.emptyView && m_model.emptyView->actions) {
-    panel = ExtensionActionPanelBuilder::build(*m_model.emptyView->actions, m_notify, m_submenuCache,
+    panel = ExtensionActionPanelBuilder::build(*m_model.emptyView->actions, m_notify,
                                                ActionPanelState::ShortcutPreset::List);
   } else if (m_model.actions) {
-    panel = ExtensionActionPanelBuilder::build(*m_model.actions, m_notify, m_submenuCache,
+    panel = ExtensionActionPanelBuilder::build(*m_model.actions, m_notify,
                                                ActionPanelState::ShortcutPreset::List);
   }
 

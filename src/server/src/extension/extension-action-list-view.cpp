@@ -4,11 +4,9 @@
 #include <utility>
 
 ExtensionActionListView::ExtensionActionListView(ExtensionActionPanelBuilder::NotifyFn notify,
-                                                 const QString &onSearchTextChangeHandler,
-                                                 ExtensionActionPanelBuilder::SubmenuCache *cache,
-                                                 QObject *parent)
+                                                 const QString &onSearchTextChangeHandler, QObject *parent)
     : ActionListView(parent), m_notify(std::move(notify)),
-      m_onSearchTextChangeHandler(onSearchTextChangeHandler), m_cache(cache) {}
+      m_onSearchTextChangeHandler(onSearchTextChangeHandler) {}
 
 QVariantMap ExtensionActionListView::componentProps() {
   auto props = ActionListView::componentProps();
@@ -25,15 +23,7 @@ ActionListView *ExtensionActionListView::createSubmenuChild(SubmenuAction *actio
   auto state = action->createSubmenuState();
   if (!state) return nullptr;
 
-  QString onSearchTextChange;
-  QString const stableId = action->id();
-
-  if (m_cache && !stableId.isEmpty()) {
-    auto it = m_cache->find(stableId);
-    if (it != m_cache->end()) { onSearchTextChange = it->second->onSearchTextChange; }
-  }
-
-  auto *child = new ExtensionActionListView(m_notify, onSearchTextChange, m_cache, this);
+  auto *child = new ExtensionActionListView(m_notify, action->onSearchTextChangeHandler(), this);
   child->adoptState(std::move(state));
   return child;
 }

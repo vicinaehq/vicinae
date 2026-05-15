@@ -163,10 +163,14 @@ public:
 
   void setSubmenuStateFactory(SubmenuStateFactory fn) { m_stateFactory = std::move(fn); }
 
+  void setOnSearchTextChangeHandler(const QString &handler) { m_onSearchTextChangeHandler = handler; }
+  QString onSearchTextChangeHandler() const { return m_onSearchTextChangeHandler; }
+
   // Defined out-of-line because ActionPanelState is incomplete here
   std::unique_ptr<ActionPanelState> createSubmenuState() const;
   std::unique_ptr<ActionPanelState> createSubmenuStateStealthily() const;
 
 private:
   SubmenuStateFactory m_stateFactory;
+  QString m_onSearchTextChangeHandler;
 };

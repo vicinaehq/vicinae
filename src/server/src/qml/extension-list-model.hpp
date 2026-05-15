@@ -11,11 +11,9 @@
 class ExtensionListSection : public SectionSource {
 public:
   using NotifyFn = ExtensionActionPanelBuilder::NotifyFn;
-  using SubmenuCache = ExtensionActionPanelBuilder::SubmenuCache;
 
   ExtensionListSection(std::string name, std::vector<ListItemViewModel> items, bool filtering,
-                       NotifyFn notify, SubmenuCache *cache,
-                       const std::optional<ActionPannelModel> *globalActions);
+                       NotifyFn notify, const std::optional<ActionPannelModel> *globalActions);
 
   QString sectionName() const override { return QString::fromStdString(m_name); }
   int count() const override;
@@ -42,7 +40,6 @@ private:
   bool m_filtering;
   std::string m_query;
   NotifyFn m_notify;
-  SubmenuCache *m_cache;
   const std::optional<ActionPannelModel> *m_globalActions;
   std::function<void(const ListItemViewModel *)> m_onItemSelected;
 };
@@ -60,9 +57,7 @@ class ExtensionListModel : public SectionListModel {
 public:
   using NotifyFn = ExtensionActionPanelBuilder::NotifyFn;
 
-  using SubmenuCache = ExtensionActionPanelBuilder::SubmenuCache;
-
-  explicit ExtensionListModel(NotifyFn notify, SubmenuCache *cache, QObject *parent = nullptr);
+  explicit ExtensionListModel(NotifyFn notify, QObject *parent = nullptr);
 
   void setExtensionData(const ListModel &model, bool resetSelection);
   void setFilter(const QString &text);
@@ -89,7 +84,6 @@ private:
   void handleItemSelected(const ListItemViewModel *item);
 
   NotifyFn m_notify;
-  SubmenuCache *m_submenuCache;
   std::optional<DetailModel> m_currentDetail;
   std::vector<std::unique_ptr<ExtensionListSection>> m_ownedSections;
   ListModel m_model;

@@ -5,7 +5,15 @@
 #include <QKeyEvent>
 
 ActionListView::ActionListView(QObject *parent)
-    : ActionPanelView(parent), m_state(std::make_unique<ActionPanelState>()) {}
+    : ActionPanelView(parent), m_state(std::make_unique<ActionPanelState>()),
+      m_model(new ActionPanelModel(m_state.get(), this)) {
+  connect(m_model, &ActionPanelModel::actionExecuted, this, &ActionListView::actionExecuted);
+  connect(m_model, &ActionPanelModel::closeRequested, this, &ActionListView::closeRequested);
+  connect(m_model, &ActionPanelModel::submenuActivated, this, [this](SubmenuAction *action) {
+    auto *child = createSubmenuChild(action);
+    if (child) emit pushViewRequested(child);
+  });
+}
 
 ActionListView::~ActionListView() = default;
 
@@ -17,23 +25,14 @@ void ActionListView::adoptState(std::unique_ptr<ActionPanelState> state) {
   }
   setId(m_state->id());
   m_state->finalize();
-  if (m_model) { m_model->reconcile(m_state.get()); }
+
+  m_model->reconcile(m_state.get());
   emit contentChanged();
 }
 
 QUrl ActionListView::componentUrl() const { return QUrl(QStringLiteral("qrc:/Vicinae/ActionListPanel.qml")); }
 
 QVariantMap ActionListView::componentProps() {
-  delete m_model;
-  m_model = new ActionPanelModel(m_state.get(), this);
-
-  connect(m_model, &ActionPanelModel::actionExecuted, this, &ActionListView::actionExecuted);
-  connect(m_model, &ActionPanelModel::closeRequested, this, &ActionListView::closeRequested);
-  connect(m_model, &ActionPanelModel::submenuActivated, this, [this](SubmenuAction *action) {
-    auto *child = createSubmenuChild(action);
-    if (child) emit pushViewRequested(child);
-  });
-
   QVariantMap props;
   props[QStringLiteral("model")] = QVariant::fromValue(static_cast<QObject *>(m_model));
   return props;

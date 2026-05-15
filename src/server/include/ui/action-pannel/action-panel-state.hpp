@@ -74,6 +74,16 @@ public:
   void setDirty(bool value) { m_dirty = value; }
   bool dirty() const { return m_dirty; }
 
+  SubmenuAction *findSubmenuAction(const QString &id) const {
+    for (const auto &section : m_sections) {
+      for (const auto &action : section->actions()) {
+        auto *submenu = dynamic_cast<SubmenuAction *>(action.get());
+        if (submenu && submenu->id() == id) return submenu;
+      }
+    }
+    return nullptr;
+  }
+
 private:
   void computePrimaryAction() {
     AbstractAction *first = nullptr;
