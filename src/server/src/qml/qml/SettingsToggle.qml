@@ -8,7 +8,7 @@ Item {
     activeFocusOnTab: true
 
     property bool checked: false
-    signal toggled
+    signal toggled(bool checked)
 
     Rectangle {
         anchors.fill: parent
@@ -40,18 +40,9 @@ Item {
     MouseArea {
         anchors.fill: parent
         cursorShape: Qt.PointingHandCursor
-        onClicked: {
-            root.checked = !root.checked;
-            root.toggled();
-        }
+        onClicked: root.toggled(!root.checked)
     }
 
-    Keys.onReturnPressed: {
-        root.checked = !root.checked;
-        root.toggled();
-    }
-    Keys.onSpacePressed: {
-        root.checked = !root.checked;
-        root.toggled();
-    }
+    Keys.onReturnPressed: root.toggled(!root.checked)
+    Keys.onSpacePressed: root.toggled(!root.checked)
 }
