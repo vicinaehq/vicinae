@@ -60,7 +60,9 @@ class ExtensionListModel : public SectionListModel {
 public:
   using NotifyFn = ExtensionActionPanelBuilder::NotifyFn;
 
-  explicit ExtensionListModel(NotifyFn notify, QObject *parent = nullptr);
+  using SubmenuCache = ExtensionActionPanelBuilder::SubmenuCache;
+
+  explicit ExtensionListModel(NotifyFn notify, SubmenuCache *cache, QObject *parent = nullptr);
 
   void setExtensionData(const ListModel &model, bool resetSelection);
   void setFilter(const QString &text);
@@ -87,7 +89,7 @@ private:
   void handleItemSelected(const ListItemViewModel *item);
 
   NotifyFn m_notify;
-  mutable ExtensionActionPanelBuilder::SubmenuCache m_submenuCache;
+  SubmenuCache *m_submenuCache;
   std::optional<DetailModel> m_currentDetail;
   std::vector<std::unique_ptr<ExtensionListSection>> m_ownedSections;
   ListModel m_model;

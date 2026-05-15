@@ -1,4 +1,5 @@
 #include "extension-view-host.hpp"
+#include "extension/extension-action-list-view.hpp"
 #include "navigation-controller.hpp"
 #include "view-utils.hpp"
 #include <chrono>
@@ -51,6 +52,37 @@ void ExtensionViewHost::onReactivated() {
   }
 }
 
+void ExtensionViewHost::setActions(std::unique_ptr<ActionPanelState> actions) {
+  auto &stack = actionPanelStack();
+
+  if (!stack.empty() && !actions->id().isEmpty() && stack.front()->id() == actions->id()) {
+    auto *rootView = static_cast<ActionListView *>(stack.front());
+    rootView->adoptState(std::move(actions));
+
+    auto notify = [this](const QString &h, const QJsonArray &a) { notifyExtension(h, a); };
+    for (size_t i = 1; i < stack.size(); ++i) {
+      QString viewId = stack[i]->id();
+      if (viewId.isEmpty()) continue;
+
+      auto it = m_submenuCache.find(viewId);
+      if (it != m_submenuCache.end()) {
+        auto submenuState =
+            ExtensionActionPanelBuilder::buildSubmenuState(it->second, notify, &m_submenuCache);
+        if (submenuState) { static_cast<ActionListView *>(stack[i])->adoptState(std::move(submenuState)); }
+      }
+    }
+
+    if (context()) { context()->navigation->notifyActionPanelChanged(this); }
+    return;
+  }
+
+  auto *view = new ExtensionActionListView(
+      [this](const QString &handler, const QJsonArray &args) { notifyExtension(handler, args); }, QString(),
+      &m_submenuCache, this);
+  view->adoptState(std::move(actions));
+  BaseView::setActions(static_cast<ActionPanelView *>(view));
+}
+
 void ExtensionViewHost::render(const RenderModel &model) {
   bool const wasFirstRender = m_firstRender;
 
@@ -94,12 +126,12 @@ void ExtensionViewHost::switchViewType(const RenderModel &model) {
   auto notify = [this](const QString &handler, const QJsonArray &args) { notifyExtension(handler, args); };
 
   if (std::holds_alternative<ListModel>(model)) {
-    auto *m = new ExtensionListModel(notify, this);
+    auto *m = new ExtensionListModel(notify, &m_submenuCache, this);
     m->setScope(ViewScope(context(), this));
     m_model = m;
     setSearchInteractive(true);
   } else if (std::holds_alternative<GridModel>(model)) {
-    auto *m = new ExtensionGridModel(notify, this);
+    auto *m = new ExtensionGridModel(notify, &m_submenuCache, this);
     m->setScope(ViewScope(context(), this));
     m_model = m;
     setSearchInteractive(true);

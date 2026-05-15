@@ -68,8 +68,8 @@ std::unique_ptr<ActionPanelState> ExtensionGridSection::actionPanel(int i) const
 
 // --- ExtensionGridModel ---
 
-ExtensionGridModel::ExtensionGridModel(NotifyFn notify, QObject *parent)
-    : SectionGridModel(parent), m_notify(std::move(notify)) {}
+ExtensionGridModel::ExtensionGridModel(NotifyFn notify, SubmenuCache *cache, QObject *parent)
+    : SectionGridModel(parent), m_notify(std::move(notify)), m_submenuCache(cache) {}
 
 void ExtensionGridModel::setExtensionData(const GridModel &model, bool resetSelection) {
   m_model = model;
@@ -125,7 +125,7 @@ void ExtensionGridModel::rebuildFromSections(bool resetSelection) {
     if (freeBuf.empty()) return;
     auto section = std::make_unique<ExtensionGridSection>(std::move(freeItems), std::move(freeBuf),
                                                           std::nullopt, std::nullopt, m_model.filtering,
-                                                          m_notify, &m_submenuCache, &m_model.actions);
+                                                          m_notify, m_submenuCache, &m_model.actions);
     section->setOnItemSelected([this](const GridItemViewModel *item) {
       if (auto handler = m_model.onSelectionChanged) {
         if (item) { m_notify(handler->c_str(), {item->id.c_str()}); }
@@ -144,7 +144,7 @@ void ExtensionGridModel::rebuildFromSections(bool resetSelection) {
       flushFree();
       auto section = std::make_unique<ExtensionGridSection>(sec->title, sec->children, sec->columns,
                                                             sec->aspectRatio, m_model.filtering, m_notify,
-                                                            &m_submenuCache, &m_model.actions);
+                                                            m_submenuCache, &m_model.actions);
       section->setOnItemSelected([this](const GridItemViewModel *item) {
         if (auto handler = m_model.onSelectionChanged) {
           if (item) { m_notify(handler->c_str(), {item->id.c_str()}); }
@@ -267,10 +267,10 @@ void ExtensionGridModel::onSelectionCleared() {
   std::unique_ptr<ActionPanelState> panel;
 
   if (m_model.emptyView && m_model.emptyView->actions) {
-    panel = ExtensionActionPanelBuilder::build(*m_model.emptyView->actions, m_notify, &m_submenuCache,
+    panel = ExtensionActionPanelBuilder::build(*m_model.emptyView->actions, m_notify, m_submenuCache,
                                                ActionPanelState::ShortcutPreset::List);
   } else if (m_model.actions) {
-    panel = ExtensionActionPanelBuilder::build(*m_model.actions, m_notify, &m_submenuCache,
+    panel = ExtensionActionPanelBuilder::build(*m_model.actions, m_notify, m_submenuCache,
                                                ActionPanelState::ShortcutPreset::List);
   }
 

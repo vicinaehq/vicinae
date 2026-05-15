@@ -77,8 +77,8 @@ std::unique_ptr<ActionPanelState> ExtensionListSection::actionPanel(int i) const
 
 // --- ExtensionListModel ---
 
-ExtensionListModel::ExtensionListModel(NotifyFn notify, QObject *parent)
-    : SectionListModel(parent), m_notify(std::move(notify)) {}
+ExtensionListModel::ExtensionListModel(NotifyFn notify, SubmenuCache *cache, QObject *parent)
+    : SectionListModel(parent), m_notify(std::move(notify)), m_submenuCache(cache) {}
 
 void ExtensionListModel::setExtensionData(const ListModel &model, bool resetSelection) {
   m_model = model;
@@ -94,7 +94,7 @@ void ExtensionListModel::setExtensionData(const ListModel &model, bool resetSele
     if (freeBuf.empty()) return;
     auto section =
         std::make_unique<ExtensionListSection>(std::move(freeItems), std::move(freeBuf), model.filtering,
-                                               m_notify, &m_submenuCache, &m_model.actions);
+                                               m_notify, m_submenuCache, &m_model.actions);
     section->setOnItemSelected([this](const ListItemViewModel *item) { handleItemSelected(item); });
     addSource(section.get());
     m_ownedSections.push_back(std::move(section));
@@ -108,7 +108,7 @@ void ExtensionListModel::setExtensionData(const ListModel &model, bool resetSele
     } else if (auto sec = std::get_if<ListSectionModel>(&child)) {
       flushFree();
       auto section = std::make_unique<ExtensionListSection>(sec->title, sec->children, model.filtering,
-                                                            m_notify, &m_submenuCache, &m_model.actions);
+                                                            m_notify, m_submenuCache, &m_model.actions);
       section->setOnItemSelected([this](const ListItemViewModel *item) { handleItemSelected(item); });
       addSource(section.get());
       m_ownedSections.push_back(std::move(section));
@@ -176,10 +176,10 @@ void ExtensionListModel::onSelectionCleared() {
   std::unique_ptr<ActionPanelState> panel;
 
   if (m_model.emptyView && m_model.emptyView->actions) {
-    panel = ExtensionActionPanelBuilder::build(*m_model.emptyView->actions, m_notify, &m_submenuCache,
+    panel = ExtensionActionPanelBuilder::build(*m_model.emptyView->actions, m_notify, m_submenuCache,
                                                ActionPanelState::ShortcutPreset::List);
   } else if (m_model.actions) {
-    panel = ExtensionActionPanelBuilder::build(*m_model.actions, m_notify, &m_submenuCache,
+    panel = ExtensionActionPanelBuilder::build(*m_model.actions, m_notify, m_submenuCache,
                                                ActionPanelState::ShortcutPreset::List);
   }
 

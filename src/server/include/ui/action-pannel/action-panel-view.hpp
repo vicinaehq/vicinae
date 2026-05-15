@@ -35,6 +35,9 @@ public:
 
 signals:
   void contentChanged();
+  void actionExecuted(AbstractAction *action);
+  void closeRequested();
+  void pushViewRequested(ActionPanelView *view);
 
 private:
   QString m_id;

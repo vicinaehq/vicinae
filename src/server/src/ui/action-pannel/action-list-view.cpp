@@ -1,5 +1,6 @@
 #include "ui/action-pannel/action-list-view.hpp"
 #include "action-panel-model.hpp"
+#include "ui/action-pannel/action.hpp"
 #include "ui/action-pannel/action-panel-state.hpp"
 #include <QKeyEvent>
 
@@ -14,7 +15,9 @@ void ActionListView::adoptState(std::unique_ptr<ActionPanelState> state) {
   } else {
     m_state = std::move(state);
   }
+  setId(m_state->id());
   m_state->finalize();
+  if (m_model) { m_model->reconcile(m_state.get()); }
   emit contentChanged();
 }
 
@@ -23,6 +26,13 @@ QUrl ActionListView::componentUrl() const { return QUrl(QStringLiteral("qrc:/Vic
 QVariantMap ActionListView::componentProps() {
   delete m_model;
   m_model = new ActionPanelModel(m_state.get(), this);
+
+  connect(m_model, &ActionPanelModel::actionExecuted, this, &ActionListView::actionExecuted);
+  connect(m_model, &ActionPanelModel::closeRequested, this, &ActionListView::closeRequested);
+  connect(m_model, &ActionPanelModel::submenuActivated, this, [this](SubmenuAction *action) {
+    auto *child = createSubmenuChild(action);
+    if (child) emit pushViewRequested(child);
+  });
 
   QVariantMap props;
   props[QStringLiteral("model")] = QVariant::fromValue(static_cast<QObject *>(m_model));
@@ -59,4 +69,12 @@ bool ActionListView::hasMultipleActions() const { return m_state && m_state->act
 
 void ActionListView::resetState() {
   if (m_model) { m_model->setStateFrom(m_state.get()); }
+}
+
+ActionListView *ActionListView::createSubmenuChild(SubmenuAction *action) {
+  auto state = action->createSubmenuState();
+  if (!state) return nullptr;
+  auto *child = new ActionListView(this);
+  child->adoptState(std::move(state));
+  return child;
 }

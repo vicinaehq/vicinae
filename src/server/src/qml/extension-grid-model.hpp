@@ -58,7 +58,9 @@ class ExtensionGridModel : public SectionGridModel {
 public:
   using NotifyFn = std::function<void(const QString &handler, const QJsonArray &args)>;
 
-  explicit ExtensionGridModel(NotifyFn notify, QObject *parent = nullptr);
+  using SubmenuCache = ExtensionActionPanelBuilder::SubmenuCache;
+
+  explicit ExtensionGridModel(NotifyFn notify, SubmenuCache *cache, QObject *parent = nullptr);
 
   void setExtensionData(const GridModel &model, bool resetSelection = true);
   void setFilter(const QString &text);
@@ -92,7 +94,7 @@ private:
   void rebuildFromSections(bool resetSelection);
 
   NotifyFn m_notify;
-  mutable ExtensionActionPanelBuilder::SubmenuCache m_submenuCache;
+  SubmenuCache *m_submenuCache;
   std::vector<std::unique_ptr<ExtensionGridSection>> m_ownedSections;
   GridModel m_model;
   ObjectFit m_fit = ObjectFit::Contain;

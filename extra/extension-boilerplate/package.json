@@ -78,6 +78,12 @@
 			"title": "Nested Form",
 			"description": "Test form views pushed from a list (nested navigation)",
 			"mode": "view"
+		},
+		{
+			"name": "action-panel-stress",
+			"title": "Action Panel Stress Test",
+			"description": "Test action panel reconciliation, deep submenus, dynamic content, and filter preservation",
+			"mode": "view"
 		}
 	],
 	"preferences": [],

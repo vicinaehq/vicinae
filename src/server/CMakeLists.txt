@@ -193,6 +193,8 @@ set(SRCS
 
 	src/extension/extension-action-panel-builder.hpp
 	src/extension/extension-action-panel-builder.cpp
+	src/extension/extension-action-list-view.hpp
+	src/extension/extension-action-list-view.cpp
 
 	include/extension/extension.hpp
 	src/extension/extension.cpp

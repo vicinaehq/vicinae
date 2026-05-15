@@ -6,9 +6,7 @@
 #include <QVariantList>
 
 class AbstractAction;
-class ActionPanelState;
 class ActionPanelView;
-class ActionPanelModel;
 class BaseView;
 class QKeyEvent;
 
@@ -48,7 +46,6 @@ public:
   Q_INVOKABLE void open();
   Q_INVOKABLE void close();
 
-  void pushActionList(std::unique_ptr<ActionPanelState> state);
   void pushPanel(const QUrl &componentUrl, const QVariantMap &properties);
   Q_INVOKABLE void pop();
 
@@ -62,7 +59,7 @@ public:
 
 private:
   void openRootPanel();
-  void connectModel(ActionPanelModel *model);
+  void connectView(ActionPanelView *view);
 
   ActionPanelView *activeRoot() const;
 
@@ -72,6 +69,6 @@ private:
   bool m_hasMultipleActions = false;
   int m_depth = 0;
   QObject *m_currentPanel = nullptr;
-  ActionPanelModel *m_rootModel = nullptr;
+  QObject *m_connectionGuard = nullptr;
   BaseView *m_activeView = nullptr;
 };

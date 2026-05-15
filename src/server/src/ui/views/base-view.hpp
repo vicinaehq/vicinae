@@ -21,7 +21,7 @@ public:
 
   void setProxy(BaseView *proxy);
 
-  void setActions(std::unique_ptr<ActionPanelState> actions);
+  virtual void setActions(std::unique_ptr<ActionPanelState> actions);
   void setActions(ActionPanelView *view);
   void clearActions();
 

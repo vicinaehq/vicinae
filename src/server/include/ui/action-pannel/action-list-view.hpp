@@ -4,6 +4,7 @@
 
 class ActionPanelState;
 class ActionPanelModel;
+class SubmenuAction;
 
 class ActionListView : public ActionPanelView {
   Q_OBJECT
@@ -23,6 +24,10 @@ public:
   bool hasActions() const override;
   bool hasMultipleActions() const override;
   void resetState() override;
+
+protected:
+  virtual ActionListView *createSubmenuChild(SubmenuAction *action);
+  ActionPanelModel *model() const { return m_model; }
 
 private:
   std::unique_ptr<ActionPanelState> m_state;

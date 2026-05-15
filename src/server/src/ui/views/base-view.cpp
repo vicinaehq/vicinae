@@ -28,6 +28,7 @@ void BaseView::setProxy(BaseView *proxy) {
 
 void BaseView::clearActions() {
   for (auto *view : m_actionPanelStack) {
+    view->onUnmount();
     view->deleteLater();
   }
   m_actionPanelStack.clear();
@@ -43,6 +44,7 @@ void BaseView::setActions(std::unique_ptr<ActionPanelState> actions) {
 
 void BaseView::setActions(ActionPanelView *view) {
   for (auto *old : m_actionPanelStack) {
+    old->onUnmount();
     old->deleteLater();
   }
   m_actionPanelStack.clear();
@@ -50,6 +52,7 @@ void BaseView::setActions(ActionPanelView *view) {
   if (view) {
     view->setParent(this);
     m_actionPanelStack.push_back(view);
+    view->onMount();
   }
 
   if (m_ctx) { m_ctx->navigation->notifyActionPanelChanged(m_navProxy); }
@@ -63,17 +66,21 @@ void BaseView::pushActionPanelView(ActionPanelView *view) {
   if (!view) return;
   view->setParent(this);
   m_actionPanelStack.push_back(view);
+  view->onMount();
 }
 
 void BaseView::popActionPanelView() {
   if (m_actionPanelStack.size() <= 1) return;
-  m_actionPanelStack.back()->deleteLater();
+  auto *view = m_actionPanelStack.back();
+  view->onUnmount();
+  view->deleteLater();
   m_actionPanelStack.pop_back();
 }
 
 void BaseView::clearActionPanelStack() {
   if (m_actionPanelStack.size() <= 1) return;
   for (size_t i = m_actionPanelStack.size() - 1; i >= 1; --i) {
+    m_actionPanelStack[i]->onUnmount();
     m_actionPanelStack[i]->deleteLater();
   }
   m_actionPanelStack.resize(1);

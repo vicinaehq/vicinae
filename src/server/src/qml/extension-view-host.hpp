@@ -33,6 +33,7 @@ public:
   void onReactivated() override;
 
   void render(const RenderModel &model);
+  void setActions(std::unique_ptr<ActionPanelState> actions) override;
 
   void textChanged(const QString &text) override;
   bool inputFilter(QKeyEvent *event) override;

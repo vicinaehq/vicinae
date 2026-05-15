@@ -75,42 +75,30 @@ void ActionPanelController::close() {
   emit stackClearRequested();
   m_depth = 0;
   m_currentPanel = nullptr;
-  m_rootModel = nullptr;
-  emit depthChanged();
+
+  if (auto *root = activeRoot()) root->onDeactivate();
+
+  delete m_connectionGuard;
+  m_connectionGuard = nullptr;
 
   if (m_activeView) { m_activeView->clearActionPanelStack(); }
+
+  emit depthChanged();
 }
 
 void ActionPanelController::openRootPanel() {
-  m_rootModel = nullptr;
+  delete m_connectionGuard;
+  m_connectionGuard = new QObject(this);
 
   auto *root = activeRoot();
   if (!root) return;
 
   root->onActivate();
+  connectView(root);
 
   auto url = root->componentUrl();
   auto props = root->componentProps();
-
-  auto modelVar = props.value(QStringLiteral("model"));
-  if (modelVar.isValid()) {
-    m_rootModel = qobject_cast<ActionPanelModel *>(modelVar.value<QObject *>());
-    if (m_rootModel) connectModel(m_rootModel);
-  }
-
   emit panelPushRequested(url, props);
-}
-
-void ActionPanelController::pushActionList(std::unique_ptr<ActionPanelState> state) {
-  if (!state) return;
-
-  state->finalize();
-  auto *model = new ActionPanelModel(std::move(state), m_rootModel);
-  connectModel(model);
-
-  QVariantMap props;
-  props[QStringLiteral("model")] = QVariant::fromValue(static_cast<QObject *>(model));
-  emit panelPushRequested(QUrl(QStringLiteral("qrc:/Vicinae/ActionListPanel.qml")), props);
 }
 
 void ActionPanelController::pushPanel(const QUrl &componentUrl, const QVariantMap &properties) {
@@ -134,6 +122,7 @@ void ActionPanelController::onPanelPushed(QObject *panel) {
 void ActionPanelController::onPanelPopped(QObject *currentPanel) {
   if (m_depth > 0) m_depth--;
   m_currentPanel = currentPanel;
+  if (m_activeView) m_activeView->popActionPanelView();
   emit depthChanged();
 }
 
@@ -163,18 +152,20 @@ void ActionPanelController::executeAction(AbstractAction *action) {
   close();
 }
 
-void ActionPanelController::connectModel(ActionPanelModel *model) {
-  connect(model, &ActionPanelModel::actionExecuted, this, [this](AbstractAction *action) {
+void ActionPanelController::connectView(ActionPanelView *view) {
+  connect(view, &ActionPanelView::actionExecuted, m_connectionGuard, [this](AbstractAction *action) {
     m_ctx.navigation->executeAction(action);
     close();
   });
 
-  connect(model, &ActionPanelModel::submenuRequested, this, [this](ActionPanelModel *subModel) {
-    connectModel(subModel);
-    QVariantMap props;
-    props[QStringLiteral("model")] = QVariant::fromValue(static_cast<QObject *>(subModel));
-    emit panelPushRequested(QUrl(QStringLiteral("qrc:/Vicinae/ActionListPanel.qml")), props);
-  });
+  connect(view, &ActionPanelView::closeRequested, m_connectionGuard, [this]() { close(); });
 
-  connect(model, &ActionPanelModel::closeRequested, this, [this]() { close(); });
+  connect(view, &ActionPanelView::pushViewRequested, m_connectionGuard, [this](ActionPanelView *child) {
+    if (!m_activeView) return;
+    m_activeView->pushActionPanelView(child);
+    connectView(child);
+    auto url = child->componentUrl();
+    auto props = child->componentProps();
+    emit panelPushRequested(url, props);
+  });
 }
