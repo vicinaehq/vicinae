@@ -1,5 +1,7 @@
 #include "root-search-model.hpp"
 #include "config/config.hpp"
+#include "ui/action-pannel/action-panel-view.hpp"
+#include "ui/views/base-view.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/calculator-service/calculator-service.hpp"
@@ -217,15 +219,19 @@ bool RootSearchModel::tryAliasFastTrack() {
 
 QString RootSearchModel::primaryActionTitle() const {
   auto *state = scope().topState();
-  if (!state || !state->actionPanelState) return {};
-  auto *action = state->actionPanelState->primaryAction();
+  if (!state) return {};
+  auto *root = state->sender->actionPanelRoot();
+  if (!root) return {};
+  auto *action = root->primaryAction();
   return action ? action->title() : QString();
 }
 
 QString RootSearchModel::primaryActionIcon() const {
   auto *state = scope().topState();
-  if (!state || !state->actionPanelState) return {};
-  auto *action = state->actionPanelState->primaryAction();
+  if (!state) return {};
+  auto *root = state->sender->actionPanelRoot();
+  if (!root) return {};
+  auto *action = root->primaryAction();
   if (!action) return {};
   auto icon = action->icon();
   return icon ? qml::imageSourceFor(*icon) : QString();
@@ -233,8 +239,10 @@ QString RootSearchModel::primaryActionIcon() const {
 
 QVariantList RootSearchModel::primaryActionShortcutTokens() const {
   auto *state = scope().topState();
-  if (!state || !state->actionPanelState) return {};
-  auto *action = state->actionPanelState->primaryAction();
+  if (!state) return {};
+  auto *root = state->sender->actionPanelRoot();
+  if (!root) return {};
+  auto *action = root->primaryAction();
   if (!action) return {};
   auto shortcut = action->shortcut().value_or(Keyboard::Shortcut::enter());
   return shortcut.toDisplayTokens();

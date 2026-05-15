@@ -4,13 +4,13 @@
 #include <QUrl>
 #include <QVariantMap>
 #include <QVariantList>
-#include <memory>
-#include <vector>
 
 class AbstractAction;
 class ActionPanelState;
-class QKeyEvent;
+class ActionPanelView;
 class ActionPanelModel;
+class BaseView;
+class QKeyEvent;
 
 class ActionPanelController : public QObject {
   Q_OBJECT
@@ -42,8 +42,7 @@ public:
   QVariantList primaryActionShortcutTokens() const;
   int depth() const { return m_depth; }
 
-  void setStateFrom(const ActionPanelState &state);
-  void clearState();
+  void syncToView(BaseView *view);
 
   Q_INVOKABLE void toggle();
   Q_INVOKABLE void open();
@@ -56,7 +55,6 @@ public:
   Q_INVOKABLE void onPanelPushed(QObject *panel);
   Q_INVOKABLE void onPanelPopped(QObject *currentPanel);
 
-  AbstractAction *findBoundAction(const QKeyEvent *event) const;
   Q_INVOKABLE bool tryShortcut(int key, int modifiers);
 
   bool executePrimaryAction();
@@ -66,7 +64,7 @@ private:
   void openRootPanel();
   void connectModel(ActionPanelModel *model);
 
-  void destroyPanelModels();
+  ActionPanelView *activeRoot() const;
 
   ApplicationContext &m_ctx;
   bool m_open = false;
@@ -75,12 +73,5 @@ private:
   int m_depth = 0;
   QObject *m_currentPanel = nullptr;
   ActionPanelModel *m_rootModel = nullptr;
-
-  std::vector<std::shared_ptr<AbstractAction>> m_allActions;
-  struct SectionSnapshot {
-    QString name;
-    std::vector<std::shared_ptr<AbstractAction>> actions;
-  };
-  std::vector<SectionSnapshot> m_sections;
-  AbstractAction *m_primary = nullptr;
+  BaseView *m_activeView = nullptr;
 };

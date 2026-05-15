@@ -8,7 +8,6 @@
 #include "extension/manager/extension-manager.hpp"
 #include "services/toast/toast-service.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
-#include "ui/action-pannel/action-list-view.hpp"
 #include "ui/action-pannel/action-panel-view.hpp"
 #include "ui/alert/alert.hpp"
 #include "ui/views/base-view.hpp"
@@ -263,7 +262,7 @@ void NavigationController::popCurrentView() {
     destroyCurrentCompletion();
   }
 
-  if (auto &ac = next->actionPanelState) emit actionsChanged(*ac);
+  emit activeActionPanelChanged();
 
   selectSearchText();
 
@@ -302,7 +301,7 @@ bool NavigationController::isLoading(const BaseView *caller) const {
 }
 
 void NavigationController::clearActions(const BaseView *caller) {
-  setActions(std::make_unique<ActionPanelState>(), caller);
+  if (auto vs = findViewState(VALUE_OR(caller, topView()))) { vs->sender->clearActions(); }
 }
 
 QString NavigationController::navigationTitle(const BaseView *caller) const {
@@ -367,19 +366,15 @@ void searchPlaceholderText(const QString &text) {}
 
 bool NavigationController::executePrimaryAction() {
   auto state = topState();
-
   if (!state) return false;
 
-  auto &panel = state->actionPanelState;
+  auto *root = state->sender->actionPanelRoot();
+  if (!root) return false;
 
-  if (!panel) return false;
-
-  auto action = panel->primaryAction();
-
+  auto *action = root->primaryAction();
   if (!action) return false;
 
   executeAction(action);
-
   return false;
 }
 
@@ -413,24 +408,10 @@ void NavigationController::setStatusBarVisibility(bool value, const BaseView *ca
 
 void NavigationController::executeAction(AbstractAction *action) {
   auto state = topState();
-
   if (!state) return;
 
-  // Keep the action alive during execution. Side effects of execute()
-  // (e.g. launch() triggering a root search refresh via itemsChanged)
-  // can clear the action panel, dropping the last shared_ptr to this action.
   std::shared_ptr<AbstractAction> guard;
-  if (auto &panel = state->actionPanelState) {
-    for (const auto &sec : panel->sections()) {
-      for (const auto &a : sec->m_actions) {
-        if (a.get() == action) {
-          guard = a;
-          break;
-        }
-      }
-      if (guard) break;
-    }
-  }
+  if (auto *root = state->sender->actionPanelRoot()) { guard = root->retainAction(action); }
 
   if (action->isSubmenu()) {
     openActionPanel();
@@ -457,17 +438,12 @@ void NavigationController::executeAction(AbstractAction *action) {
 
 AbstractAction *NavigationController::findBoundAction(const QKeyEvent *event) const {
   auto state = topState();
-
   if (!state) return nullptr;
-  if (!state->actionPanelState) return nullptr;
 
-  for (const auto &section : state->actionPanelState->sections()) {
-    for (const auto &action : section->actions()) {
-      if (action->isBoundTo(event)) { return action.get(); }
-    }
-  }
+  auto *root = state->sender->actionPanelRoot();
+  if (!root) return nullptr;
 
-  return nullptr;
+  return root->findBoundAction(event);
 }
 
 void NavigationController::activateView(const ViewState &state) {
@@ -477,7 +453,7 @@ void NavigationController::activateView(const ViewState &state) {
   emit statusBarVisiblityChanged(state.needsStatusBar);
   emit backButtonVisibilityChanged(state.showBackButton);
   emit loadingChanged(state.isLoading);
-  emit actionsChanged({});
+  emit activeActionPanelChanged();
   emit searchPlaceholderTextChanged(state.placeholderText);
   destroyCurrentCompletion();
 
@@ -505,38 +481,15 @@ void NavigationController::pushView(BaseView *view) {
 }
 
 void NavigationController::setActions(std::unique_ptr<ActionPanelState> panel, const BaseView *caller) {
-  if (!panel) {
-    qDebug() << "setActions called with a null pointer";
-    return;
-  }
-
-  // Important: apply default shortcuts, select primary action...
-  panel->finalize();
-
-  if (auto state = findViewState(VALUE_OR(caller, topView()))) {
-    state->actionPanelState = std::move(panel);
-    if (state->sender == topView()) { emit actionsChanged(*state->actionPanelState); }
-  }
+  if (auto vs = findViewState(VALUE_OR(caller, topView()))) { vs->sender->setActions(std::move(panel)); }
 }
 
-void NavigationController::setActions(std::unique_ptr<ActionPanelView> view, const BaseView *caller) {
-  if (!view) {
-    qDebug() << "setActions(view) called with a null pointer";
-    return;
-  }
+void NavigationController::setActions(ActionPanelView *view, const BaseView *caller) {
+  if (auto vs = findViewState(VALUE_OR(caller, topView()))) { vs->sender->setActions(view); }
+}
 
-  // Step 1 transitional path: extract the wrapped state out of the view and
-  // forward through the existing snapshot pipeline. The dynamic_cast is the
-  // bridge between the new view abstraction and the legacy state-based
-  // controller; it goes away once the controller is refactored to operate on
-  // views directly.
-  if (auto *list = dynamic_cast<ActionListView *>(view.get())) {
-    if (auto state = list->takeState()) { setActions(std::move(state), caller); }
-    return;
-  }
-
-  qWarning() << "setActions(view): non-ActionListView views are not yet supported by the legacy "
-                "snapshot path; ignoring";
+void NavigationController::notifyActionPanelChanged(const BaseView *caller) {
+  if (VALUE_OR(caller, topView()) == topView()) { emit activeActionPanelChanged(); }
 }
 
 size_t NavigationController::viewStackSize() const { return m_views.size(); }

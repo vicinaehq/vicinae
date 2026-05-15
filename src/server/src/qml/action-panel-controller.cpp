@@ -1,41 +1,41 @@
 #include "action-panel-controller.hpp"
 #include "action-panel-model.hpp"
-#include "navigation-controller.hpp"
 #include "lib/keyboard/keyboard.hpp"
+#include "navigation-controller.hpp"
+#include "ui/action-pannel/action-panel-view.hpp"
+#include "ui/views/base-view.hpp"
 #include <QKeyEvent>
 
 ActionPanelController::ActionPanelController(ApplicationContext &ctx, QObject *parent)
     : QObject(parent), m_ctx(ctx) {}
 
+ActionPanelView *ActionPanelController::activeRoot() const {
+  return m_activeView ? m_activeView->actionPanelRoot() : nullptr;
+}
+
 QString ActionPanelController::primaryActionTitle() const {
-  return m_primary ? m_primary->title() : QString();
+  auto *root = activeRoot();
+  if (!root) return {};
+  auto *primary = root->primaryAction();
+  return primary ? primary->title() : QString();
 }
 
 QVariantList ActionPanelController::primaryActionShortcutTokens() const {
-  if (!m_primary) return {};
-  auto shortcut = m_primary->shortcut().value_or(Keyboard::Shortcut::enter());
+  auto *root = activeRoot();
+  if (!root) return {};
+  auto *primary = root->primaryAction();
+  if (!primary) return {};
+  auto shortcut = primary->shortcut().value_or(Keyboard::Shortcut::enter());
   return shortcut.toDisplayTokens();
 }
 
-void ActionPanelController::setStateFrom(const ActionPanelState &state) {
-  m_allActions.clear();
-  m_sections.clear();
-  m_primary = nullptr;
+void ActionPanelController::syncToView(BaseView *view) {
+  m_activeView = view;
 
-  for (const auto &section : state.sections()) {
-    SectionSnapshot snap;
-    snap.name = section->name();
-    for (const auto &action : section->actions()) {
-      snap.actions.push_back(action);
-      m_allActions.push_back(action);
-    }
-    m_sections.push_back(std::move(snap));
-  }
+  auto *root = activeRoot();
 
-  m_primary = state.primaryAction();
-
-  bool const newHasActions = state.actionCount() > 0;
-  bool const newHasMultiple = state.actionCount() > 1;
+  bool const newHasActions = root && root->hasActions();
+  bool const newHasMultiple = root && root->hasMultipleActions();
 
   if (newHasActions != m_hasActions) {
     m_hasActions = newHasActions;
@@ -48,24 +48,6 @@ void ActionPanelController::setStateFrom(const ActionPanelState &state) {
   }
 
   emit primaryActionChanged();
-}
-
-void ActionPanelController::clearState() {
-  m_allActions.clear();
-  m_sections.clear();
-  m_primary = nullptr;
-
-  if (m_hasActions) {
-    m_hasActions = false;
-    emit hasActionsChanged();
-  }
-  if (m_hasMultipleActions) {
-    m_hasMultipleActions = false;
-    emit hasMultipleActionsChanged();
-  }
-
-  emit primaryActionChanged();
-  close();
 }
 
 void ActionPanelController::toggle() {
@@ -93,35 +75,30 @@ void ActionPanelController::close() {
   emit stackClearRequested();
   m_depth = 0;
   m_currentPanel = nullptr;
+  m_rootModel = nullptr;
   emit depthChanged();
-  destroyPanelModels();
-}
 
-void ActionPanelController::destroyPanelModels() {
-  if (m_rootModel) {
-    m_rootModel->deleteLater();
-    m_rootModel = nullptr;
-  }
+  if (m_activeView) { m_activeView->clearActionPanelStack(); }
 }
 
 void ActionPanelController::openRootPanel() {
-  destroyPanelModels();
+  m_rootModel = nullptr;
 
-  auto state = std::make_unique<ActionPanelState>();
-  for (const auto &snap : m_sections) {
-    auto *section = state->createSection(snap.name);
-    for (const auto &action : snap.actions) {
-      section->m_actions.push_back(action);
-    }
+  auto *root = activeRoot();
+  if (!root) return;
+
+  root->onActivate();
+
+  auto url = root->componentUrl();
+  auto props = root->componentProps();
+
+  auto modelVar = props.value(QStringLiteral("model"));
+  if (modelVar.isValid()) {
+    m_rootModel = qobject_cast<ActionPanelModel *>(modelVar.value<QObject *>());
+    if (m_rootModel) connectModel(m_rootModel);
   }
-  state->finalize();
 
-  m_rootModel = new ActionPanelModel(std::move(state), this);
-  connectModel(m_rootModel);
-
-  QVariantMap props;
-  props[QStringLiteral("model")] = QVariant::fromValue(static_cast<QObject *>(m_rootModel));
-  emit panelPushRequested(QUrl(QStringLiteral("qrc:/Vicinae/ActionListPanel.qml")), props);
+  emit panelPushRequested(url, props);
 }
 
 void ActionPanelController::pushActionList(std::unique_ptr<ActionPanelState> state) {
@@ -160,14 +137,6 @@ void ActionPanelController::onPanelPopped(QObject *currentPanel) {
   emit depthChanged();
 }
 
-AbstractAction *ActionPanelController::findBoundAction(const QKeyEvent *event) const {
-  for (const auto &action : m_allActions) {
-    if (action->isBoundTo(event)) return action.get();
-  }
-
-  return nullptr;
-}
-
 bool ActionPanelController::tryShortcut(int key, int modifiers) {
   if (!m_open || !m_currentPanel) return false;
 
@@ -181,8 +150,11 @@ bool ActionPanelController::tryShortcut(int key, int modifiers) {
 }
 
 bool ActionPanelController::executePrimaryAction() {
-  if (!m_primary) return false;
-  executeAction(m_primary);
+  auto *root = activeRoot();
+  if (!root) return false;
+  auto *primary = root->primaryAction();
+  if (!primary) return false;
+  executeAction(primary);
   return true;
 }
 

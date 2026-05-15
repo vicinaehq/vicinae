@@ -75,7 +75,6 @@ public:
     QString placeholderText;
     QString searchText;
     std::optional<CompleterState> completer;
-    std::unique_ptr<ActionPanelState> actionPanelState;
 
     bool isLoading = false;
     bool supportsSearch = true;
@@ -95,7 +94,7 @@ signals:
   void viewPoped(const BaseView *view);
   void viewReplaced();
   void actionPanelVisibilityChanged(bool visible);
-  void actionsChanged(const ActionPanelState &actions) const;
+  void activeActionPanelChanged();
   void windowVisiblityChanged(bool visible);
   void windowSizeRequested(QSize size);
   void searchTextSelected() const;
@@ -179,8 +178,9 @@ public:
   void toggleActionPanel();
 
   void setActions(std::unique_ptr<ActionPanelState> state, const BaseView *caller = nullptr);
-  void setActions(std::unique_ptr<ActionPanelView> view, const BaseView *caller = nullptr);
+  void setActions(ActionPanelView *view, const BaseView *caller = nullptr);
   void clearActions(const BaseView *caller = nullptr);
+  void notifyActionPanelChanged(const BaseView *caller = nullptr);
 
   void clearSearchText();
   void setNavigationTitle(const QString &navigationTitle, const BaseView *caller = nullptr);

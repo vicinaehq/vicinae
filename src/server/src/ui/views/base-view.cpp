@@ -26,22 +26,58 @@ void BaseView::setProxy(BaseView *proxy) {
   setContext(proxy->context());
 }
 
-void BaseView::clearActions() { setActions(std::make_unique<ActionPanelState>()); }
+void BaseView::clearActions() {
+  for (auto *view : m_actionPanelStack) {
+    view->deleteLater();
+  }
+  m_actionPanelStack.clear();
 
-void BaseView::setActions(std::unique_ptr<ActionPanelState> actions) {
-  // Wrap the legacy state into the default view type so every call site
-  // exercises the new abstraction. The view is unwrapped again inside
-  // NavigationController::setActions(view, ...) and forwarded through the
-  // existing snapshot path. Once the controller is refactored to operate on
-  // views directly, this wrap/unwrap will collapse.
-  auto view = std::make_unique<ActionListView>();
-  view->adoptState(std::move(actions));
-  setActions(std::move(view));
+  if (m_ctx) { m_ctx->navigation->notifyActionPanelChanged(m_navProxy); }
 }
 
-void BaseView::setActions(std::unique_ptr<ActionPanelView> view) {
-  if (!m_ctx) return;
-  m_ctx->navigation->setActions(std::move(view), m_navProxy);
+void BaseView::setActions(std::unique_ptr<ActionPanelState> actions) {
+  auto *view = new ActionListView(this);
+  view->adoptState(std::move(actions));
+  setActions(view);
+}
+
+void BaseView::setActions(ActionPanelView *view) {
+  for (auto *old : m_actionPanelStack) {
+    old->deleteLater();
+  }
+  m_actionPanelStack.clear();
+
+  if (view) {
+    view->setParent(this);
+    m_actionPanelStack.push_back(view);
+  }
+
+  if (m_ctx) { m_ctx->navigation->notifyActionPanelChanged(m_navProxy); }
+}
+
+ActionPanelView *BaseView::actionPanelRoot() const {
+  return m_actionPanelStack.empty() ? nullptr : m_actionPanelStack.front();
+}
+
+void BaseView::pushActionPanelView(ActionPanelView *view) {
+  if (!view) return;
+  view->setParent(this);
+  m_actionPanelStack.push_back(view);
+}
+
+void BaseView::popActionPanelView() {
+  if (m_actionPanelStack.size() <= 1) return;
+  m_actionPanelStack.back()->deleteLater();
+  m_actionPanelStack.pop_back();
+}
+
+void BaseView::clearActionPanelStack() {
+  if (m_actionPanelStack.size() <= 1) return;
+  for (size_t i = m_actionPanelStack.size() - 1; i >= 1; --i) {
+    m_actionPanelStack[i]->deleteLater();
+  }
+  m_actionPanelStack.resize(1);
+  if (auto *root = actionPanelRoot()) { root->resetState(); }
 }
 
 bool BaseView::supportsSearch() const { return true; }
