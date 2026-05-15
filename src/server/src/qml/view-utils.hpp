@@ -2,6 +2,7 @@
 #include "extend/accessory-model.hpp"
 #include "extend/dropdown-model.hpp"
 #include "extend/metadata-model.hpp"
+#include "extend/tag-model.hpp"
 #include "image-url.hpp"
 #include "ui/image/url.hpp"
 #include <QMimeDatabase>
@@ -9,6 +10,7 @@
 #include <QVariantList>
 #include <cstdint>
 #include <filesystem>
+#include <qcontainerfwd.h>
 #include <vector>
 
 namespace qml {
@@ -83,6 +85,21 @@ inline QVariantList convertDropdownChildren(const std::vector<DropdownModel::Chi
     defaultSection["title"] = QString();
     defaultSection["items"] = unsectioned;
     result.append(defaultSection);
+  }
+
+  return result;
+}
+
+inline QVariantList convertTagPickerItems(const std::vector<TagPickerItemModel> &items) {
+  QVariantList result;
+
+  for (const auto &item : items) {
+    QVariantMap m;
+
+    m["id"] = item.value;
+    m["displayName"] = item.title;
+    m["iconSource"] = item.icon ? imageSourceFor(ImageURL(*item.icon)) : QString();
+    result.append(m);
   }
 
   return result;
