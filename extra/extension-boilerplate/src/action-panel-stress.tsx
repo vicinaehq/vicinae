@@ -18,15 +18,6 @@ function useTick(ms: number) {
 	return tick;
 }
 
-// ---------------------------------------------------------------------------
-// Test 1 — Reconciliation
-//
-// List re-renders on a timer while the action panel is open.
-// The per-item panel has a stable ID so it should update in place:
-// actions update their titles but the panel stays open, filter text
-// is preserved, and selection doesn't jump.
-// ---------------------------------------------------------------------------
-
 function ReconciliationTest() {
 	const tick = useTick(1500);
 	const [extra, setExtra] = useState(false);
@@ -109,14 +100,6 @@ function ReconciliationTest() {
 	);
 }
 
-// ---------------------------------------------------------------------------
-// Test 2 — Deep submenu navigation
-//
-// Three levels of submenus. Tests step-by-step pop with Escape:
-// Level 3 → Level 2 → Level 1 → Root panel → Close.
-// Also tests that backspace in an empty filter does NOT pop.
-// ---------------------------------------------------------------------------
-
 function DeepSubmenuTest() {
 	return (
 		<List
@@ -197,14 +180,6 @@ function DeepSubmenuTest() {
 	);
 }
 
-// ---------------------------------------------------------------------------
-// Test 3 — Dynamic submenu content
-//
-// Submenu fires onOpen, which triggers a state update that populates
-// the submenu with async-loaded items. Subsequent re-renders update
-// the submenu content while it stays open.
-// ---------------------------------------------------------------------------
-
 function DynamicSubmenuTest() {
 	const tick = useTick(2000);
 	const [loadedItems, setLoadedItems] = useState<string[]>([]);
@@ -279,15 +254,6 @@ function DynamicSubmenuTest() {
 	);
 }
 
-// ---------------------------------------------------------------------------
-// Test 4 — Large action panel
-//
-// An action panel with many actions to test filter performance and
-// verify the list virtualizes correctly. Also exercises the filter
-// input: type to filter, verify results narrow down, then verify
-// backspace does NOT pop the panel.
-// ---------------------------------------------------------------------------
-
 function LargeActionPanelTest() {
 	const categories = ["Network", "File", "System", "UI", "Data", "Auth"];
 
@@ -337,14 +303,6 @@ function LargeActionPanelTest() {
 		</List>
 	);
 }
-
-// ---------------------------------------------------------------------------
-// Test 5 — Reconciliation stress
-//
-// Rapid re-renders (every 500ms) with per-item panels that grow/shrink,
-// change sections, and swap action order. Panel must stay open and
-// coherent throughout.
-// ---------------------------------------------------------------------------
 
 function StressTest() {
 	const tick = useTick(500);
@@ -447,10 +405,6 @@ function StressTest() {
 		</List>
 	);
 }
-
-// ---------------------------------------------------------------------------
-// Root
-// ---------------------------------------------------------------------------
 
 export default function ActionPanelStress() {
 	const { push } = useNavigation();
