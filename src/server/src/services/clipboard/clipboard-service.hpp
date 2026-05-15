@@ -80,6 +80,7 @@ public:
   static Clipboard::ReadContent readContent();
 
   bool removeAllSelections();
+  bool removeAllSelections(bool preservePinned);
 
   std::optional<QString> retrieveKeywords(const QString &id);
   bool setKeywords(const QString &id, const QString &keywords);

@@ -18,4 +18,6 @@ public:
   void preferenceValuesChanged(const QJsonObject &value) const override;
 
   ClipboardExtension();
+
+  static bool preservePinnedOnClear;
 };
