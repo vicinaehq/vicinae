@@ -64,7 +64,11 @@ void ActionPanelModel::reconcile(const ActionPanelState *state) {
   buildFlatList(newFlat);
   int newCount = static_cast<int>(newFlat.size());
 
-  if (newCount > oldCount) {
+  if (oldCount == 0 || newCount == 0) {
+    beginResetModel();
+    m_flat = std::move(newFlat);
+    endResetModel();
+  } else if (newCount > oldCount) {
     beginInsertRows({}, oldCount, newCount - 1);
     m_flat = std::move(newFlat);
     endInsertRows();
