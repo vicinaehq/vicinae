@@ -2,7 +2,7 @@
 #include "services/files-service/abstract-file-indexer.hpp"
 #include <QtConcurrent/QtConcurrent>
 
-class NoopFileIndexer : public AbstractFileIndexer {
+class DummyFileIndexer : public AbstractFileIndexer {
 public:
   void start() override {}
   void rebuildIndex() override {}

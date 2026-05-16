@@ -5,7 +5,7 @@
 #ifdef Q_OS_LINUX
 #include "file-indexer/file-indexer.hpp"
 #else
-#include "noop-file-indexer.hpp"
+#include "dummy-file-indexer.hpp"
 #endif
 
 namespace fs = std::filesystem;
@@ -76,6 +76,6 @@ FileService::FileService(OmniDatabase &db) : m_db(db) {
 #ifdef Q_OS_LINUX
   m_indexer = std::make_unique<FileIndexer>();
 #else
-  m_indexer = std::make_unique<NoopFileIndexer>();
+  m_indexer = std::make_unique<DummyFileIndexer>();
 #endif
 }

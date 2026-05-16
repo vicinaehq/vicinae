@@ -3,10 +3,28 @@
 #include <sstream>
 #include <vector>
 
+#ifdef __APPLE__
+#include <climits>
+#include <mach-o/dyld.h>
+#endif
+
 namespace fs = std::filesystem;
 
 namespace vicinae {
+#ifdef __APPLE__
+fs::path selfPath() {
+  char buf[PATH_MAX];
+  uint32_t size = sizeof(buf);
+  if (_NSGetExecutablePath(buf, &size) == 0) return fs::canonical(buf);
+
+  // Path didn't fit; size now holds the required buffer length (including null).
+  std::string dyn(size, '\0');
+  if (_NSGetExecutablePath(dyn.data(), &size) != 0) return {};
+  return fs::canonical(dyn.c_str());
+}
+#else
 fs::path selfPath() { return fs::canonical("/proc/self/exe"); }
+#endif
 
 std::vector<fs::path> helperProgramCandidates(std::string_view program) {
   const auto self = selfPath().parent_path();

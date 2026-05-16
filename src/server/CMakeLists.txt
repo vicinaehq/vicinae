@@ -177,6 +177,7 @@ set(SRCS
 	src/services/app-service/xdg/xdg-app-database.cpp
 	src/services/app-service/xdg/xdg-app.cpp
 	src/services/app-service/abstract-app-db.hpp
+	src/services/app-service/dummy-app-database.hpp
 
 	# end app-database
 
@@ -351,7 +352,7 @@ set(SRCS
 	src/services/calculator-service/calculator-service.cpp
 
 	src/services/files-service/abstract-file-indexer.hpp
-	src/services/files-service/noop-file-indexer.hpp
+	src/services/files-service/dummy-file-indexer.hpp
 	src/services/files-service/file-service.hpp
 	src/services/files-service/file-service.cpp
 
@@ -432,8 +433,10 @@ set(SRCS
 	src/lib/program-db/program-db.cpp
 
 	src/services/power-manager/systemd/systemd-power-manager.cpp
+	src/services/power-manager/dummy-power-manager.hpp
 
 	src/services/audio-control/pactl/pactl-audio-control.cpp
+	src/services/audio-control/dummy-audio-control.hpp
 
 	src/config/config.hpp
 	src/config/config.cpp
