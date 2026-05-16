@@ -9,6 +9,7 @@ class AbstractAction;
 class ActionPanelView;
 class BaseView;
 class QKeyEvent;
+class SubmenuAction;
 
 class ActionPanelController : public QObject {
   Q_OBJECT
@@ -56,6 +57,7 @@ public:
 
   bool executePrimaryAction();
   void executeAction(AbstractAction *action);
+  void openSubmenu(SubmenuAction *action);
 
 private:
   void openRootPanel();

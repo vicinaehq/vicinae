@@ -2,6 +2,7 @@
 #include "action-panel-model.hpp"
 #include "lib/keyboard/keyboard.hpp"
 #include "navigation-controller.hpp"
+#include "ui/action-pannel/action-list-view.hpp"
 #include "ui/action-pannel/action-panel-view.hpp"
 #include "ui/views/base-view.hpp"
 #include <QKeyEvent>
@@ -150,6 +151,13 @@ bool ActionPanelController::executePrimaryAction() {
 void ActionPanelController::executeAction(AbstractAction *action) {
   m_ctx.navigation->executeAction(action);
   close();
+}
+
+void ActionPanelController::openSubmenu(SubmenuAction *action) {
+  open();
+
+  auto *root = dynamic_cast<ActionListView *>(activeRoot());
+  if (root) root->activateSubmenu(action);
 }
 
 void ActionPanelController::connectView(ActionPanelView *view) {

@@ -17,6 +17,11 @@ ActionListView::ActionListView(QObject *parent)
 
 ActionListView::~ActionListView() = default;
 
+void ActionListView::activateSubmenu(SubmenuAction *action) {
+  auto *child = createSubmenuChild(action);
+  if (child) emit pushViewRequested(child);
+}
+
 void ActionListView::adoptState(std::unique_ptr<ActionPanelState> state) {
   if (!state) {
     m_state = std::make_unique<ActionPanelState>();

@@ -14,6 +14,7 @@ public:
   ~ActionListView() override;
 
   void adoptState(std::unique_ptr<ActionPanelState> state);
+  void activateSubmenu(SubmenuAction *action);
   const ActionPanelState *state() const { return m_state.get(); }
 
   QUrl componentUrl() const override;

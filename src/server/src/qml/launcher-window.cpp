@@ -3,6 +3,7 @@
 #include "keybind-bridge.hpp"
 #include "view-utils.hpp"
 #include "action-panel-controller.hpp"
+#include "ui/action-pannel/action.hpp"
 #include "services/news/news-service.hpp"
 #include "alert-model.hpp"
 #include "async-image-provider.hpp"
@@ -441,8 +442,12 @@ bool LauncherWindow::forwardKey(int key, int modifiers) {
   QKeyEvent const event(QEvent::KeyPress, key, mods);
 
   if (auto *action = m_ctx.navigation->findBoundAction(&event)) {
-    m_ctx.navigation->executeAction(action);
-    m_actionPanel->close();
+    if (auto *submenu = dynamic_cast<SubmenuAction *>(action)) {
+      m_actionPanel->openSubmenu(submenu);
+    } else {
+      m_ctx.navigation->executeAction(action);
+      m_actionPanel->close();
+    }
     return true;
   }
 
