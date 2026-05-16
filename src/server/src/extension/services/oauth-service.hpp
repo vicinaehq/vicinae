@@ -5,6 +5,7 @@
 #include "overlay-controller/overlay-controller.hpp"
 #include "qml/oauth-overlay-host.hpp"
 #include "services/oauth/oauth-service.hpp"
+#include <QFutureWatcher>
 
 class ExtOAuthService : public tsapi::AbstractOAuth {
   using Void = tsapi::Result<void>;
@@ -22,12 +23,26 @@ public:
     auto host = new OAuthOverlayHost(&m_ctx, payload);
     m_ctx.overlay->setCurrent(host);
 
-    return m_oauth.authorize(state).then(
-        [host](const OAuthResponse &oauthRes) -> tsapi::Result<tsapi::AuthorizeResponse>::Type {
-          if (!oauthRes) return std::unexpected(oauthRes.error().toStdString());
-          host->showSuccess();
-          return tsapi::AuthorizeResponse{.code = oauthRes->code.toStdString()};
-        });
+    auto *watcher = new QFutureWatcher<OAuthResponse>(this);
+    QPromise<tsapi::Result<tsapi::AuthorizeResponse>::Type> promise;
+    auto future = promise.future();
+
+    connect(watcher, &QFutureWatcherBase::finished, this,
+            [host, watcher, promise = std::move(promise)]() mutable {
+              auto oauthRes = watcher->result();
+              if (!oauthRes) {
+                promise.addResult(std::unexpected(oauthRes.error().toStdString()));
+              } else {
+                host->showSuccess();
+                promise.addResult(tsapi::AuthorizeResponse{.code = oauthRes->code.toStdString()});
+              }
+              promise.finish();
+              watcher->deleteLater();
+            });
+
+    watcher->setFuture(m_oauth.authorize(state));
+
+    return future;
   }
 
   tsapi::Result<tsapi::TokenSetResponse>::Future getTokens(std::optional<std::string> id) override {
