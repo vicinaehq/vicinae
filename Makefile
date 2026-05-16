@@ -6,6 +6,11 @@ APPIMAGE_BUILD_ENV_DIR			:= ./scripts/runners/appimage/
 APPIMAGE_BUILD_ENV_IMAGE_TAG	:= vicinae/appimage-build-env
 FIGURA_CC						:= $(BIN_DIR)/figura
 
+MACOS_CC := /opt/homebrew/opt/llvm/bin/clang
+MACOS_CXX := /opt/homebrew/opt/llvm/bin/clang++
+#MACOS_CC := clang
+#MACOS_CXX := clang++ 
+
 release:
 	cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)
@@ -25,6 +30,11 @@ debug:
 	cmake -GNinja -DLTO=OFF -DENABLE_PREVIEW_FEATURES=ON -DENABLE_SANITIZERS=ON -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR) --parallel
 .PHONY: debug
+
+macos:
+	CC=$(MACOS_CC) CXX=$(MACOS_CXX) cmake -GNinja -DLTO=OFF -DENABLE_PREVIEW_FEATURES=ON -DENABLE_SANITIZERS=ON -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
+	cmake --build $(BUILD_DIR)
+.PHONY: macos
 
 debug-tidy:
 	# we need to run tidy with clang to avoid false positives

@@ -6,7 +6,8 @@ set(TARGET vicinae-server)
 find_package(Qt6 REQUIRED COMPONENTS Core Sql Network Svg DBus Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2 ShaderTools)
 find_package(OpenSSL REQUIRED)
 find_package(LibXml2 REQUIRED)
-if (USE_SYSTEM_KF6)
+
+if (USE_SYSTEM_KF6 AND NOT APPLE)
 	find_package(KF6SyntaxHighlighting REQUIRED)
 endif()
 

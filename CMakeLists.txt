@@ -63,12 +63,18 @@ if (NOT USE_SYSTEM_GLAZE)
 	import_glaze()
 endif()
 
-if (NOT USE_SYSTEM_KF6)
+if (NOT USE_SYSTEM_KF6 OR APPLE)
 	include(KF6)
 	import_kf6()
 endif()
 
 if (APPLE)
+	# we use a modern version of clang installed using brew, because the toolchain
+	# shipped by macos seem to be too old and we are having issue with it.
+	# eventually, we may try to fix these and use the system toolchain.
+	set(CC "/opt/homebrew/opt/llvm/bin/clang")
+	set(CXX "/opt/homebrew/opt/llvm/bin/clang++")
+
 	set(WAYLAND_LAYER_SHELL OFF)
 	set(WLR_DATA_CONTROL OFF)
 endif()
@@ -82,10 +88,10 @@ find_package(glaze)
 
 add_subdirectory(src/browser-extension)
 add_subdirectory(src/snippet)
+add_subdirectory(${LIB_DIR}/common)
 add_subdirectory(${LIB_DIR}/script-command)
 add_subdirectory(${LIB_DIR}/emoji)
 add_subdirectory(${LIB_DIR}/xdgpp)
-add_subdirectory(${LIB_DIR}/common)
 add_subdirectory(${LIB_DIR}/fuzzy)
 add_subdirectory(${LIB_DIR}/linux-utils)
 add_subdirectory(${LIB_DIR}/figura)

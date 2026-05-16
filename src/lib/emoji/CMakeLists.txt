@@ -6,14 +6,20 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 OPTION(BUILD_TESTS "Build the test suite" OFF)
 
-find_package(ICU REQUIRED COMPONENTS uc)
+#find_package(ICU REQUIRED COMPONENTS uc)
 
 add_library(vicinae-emoji STATIC src/emoji.cpp src/generated/db.cpp)
 add_library(vicinae::emoji ALIAS vicinae-emoji)
 set(PROJECT_NAME vicinae-emoji)
-target_include_directories(${PROJECT_NAME} PUBLIC include PRIVATE src)
+target_include_directories(${PROJECT_NAME} PUBLIC include PRIVATE src )
+
+# we install icu4c using homebrew. macOS has libicucore.dylib, maybe we should use that.
+if (APPLE)
+	target_include_directories(${PROJECT_NAME} PRIVATE /opt/homebrew/opt/icu4c@78/include)
+endif()
+
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)
-target_link_libraries(${PROJECT_NAME} PUBLIC ICU::uc)
+target_link_libraries(${PROJECT_NAME} PUBLIC icuuc)
 
 if (BUILD_TESTS)
 	set(TEST_TARGET ${PROJECT_NAME}-tests)

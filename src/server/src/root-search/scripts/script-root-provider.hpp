@@ -12,6 +12,7 @@
 #include "service-registry.hpp"
 #include "utils.hpp"
 #include <QProcess>
+#include <common/enumerate.hpp>
 #include <qjsonobject.h>
 #include <ranges>
 
@@ -26,7 +27,7 @@ class ScriptRootItem : public RootItem {
     ArgumentList args;
     args.reserve(m_file->data().arguments.size());
 
-    for (const auto &[idx, arg] : m_file->data().arguments | std::views::enumerate) {
+    for (const auto &[idx, arg] : m_file->data().arguments | vicinae::enumerate) {
       CommandArgument cmdArg;
 
       cmdArg.required = !arg.optional;

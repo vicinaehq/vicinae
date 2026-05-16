@@ -1,5 +1,6 @@
 #pragma once
 #include "codegen.hpp"
+#include <common/enumerate.hpp>
 #include <format>
 #include <iomanip>
 #include <sstream>
@@ -272,7 +273,7 @@ class GlazeGenerator : public AbstractCodeGenerator {
     oss << "\tusing enum " << ns << "::" << e.name << ";\n";
     oss << "\tstatic constexpr auto value = glz::enumerate(";
 
-    for (const auto &[idx, v] : std::views::enumerate(e.values)) {
+    for (const auto &[idx, v] : vicinae::enumerate(e.values)) {
       if (idx > 0) oss << ", ";
       oss << v;
     }
@@ -384,7 +385,7 @@ class GlazeGenerator : public AbstractCodeGenerator {
     for (const auto &method : s.methods) {
       oss << "\t" << "virtual std::expected<" << serializeTypename(method.returnType) << ", std::string> "
           << method.name << "(";
-      for (const auto &[idx, param] : method.params | std::views::enumerate) {
+      for (const auto &[idx, param] : method.params | vicinae::enumerate) {
         if (idx > 0) oss << ", ";
         oss << serializeTypename(param.type) << " " << param.name;
       }
@@ -393,7 +394,7 @@ class GlazeGenerator : public AbstractCodeGenerator {
 
     for (const auto &event : s.events) {
       oss << "\t" << "void emit" << event.name << " (";
-      for (const auto &[idx, param] : event.params | std::views::enumerate) {
+      for (const auto &[idx, param] : event.params | vicinae::enumerate) {
         if (idx > 0) oss << ", ";
         oss << constRef(param.type) << " " << param.name;
       }
@@ -404,7 +405,7 @@ class GlazeGenerator : public AbstractCodeGenerator {
       auto eventParamsName = getMethodParamName(s.name, event.name);
 
       oss << "\t\temitEvent(" << std::quoted(methodId) << ", " << eventParamsName << "{";
-      for (const auto &[idx, param] : event.params | std::views::enumerate) {
+      for (const auto &[idx, param] : event.params | vicinae::enumerate) {
         if (idx > 0) oss << ", ";
         oss << "." << param.name << " = " << param.name;
       }
@@ -454,7 +455,7 @@ public:
             << ", " << "[this](const auto& payload){ if (!payload) return;";
         oss << " if (m_" << m.name << "Handler) m_" << m.name << "Handler(";
 
-        for (const auto &[idx, param] : m.params | std::views::enumerate) {
+        for (const auto &[idx, param] : m.params | vicinae::enumerate) {
           if (idx > 0) { oss << ", "; }
           oss << "payload->" << param.name;
         }
@@ -468,7 +469,7 @@ public:
       for (const auto &m : s->methods) {
         std::string methodId = std::format("{}/{}", s->name, m.name);
         oss << "void " << m.name << "(";
-        for (const auto &[idx, param] : m.params | std::views::enumerate) {
+        for (const auto &[idx, param] : m.params | vicinae::enumerate) {
           if (idx > 0) { oss << ", "; }
           oss << constRef(param.type) << " " << param.name;
         }
@@ -481,7 +482,7 @@ public:
             << getMethodParamName(s->name, m.name) << ">(" << std::quoted(methodId) << ", \n";
         oss << "{";
 
-        for (const auto &[idx, p] : m.params | std::views::enumerate) {
+        for (const auto &[idx, p] : m.params | vicinae::enumerate) {
           if (idx > 0) oss << ", ";
           oss << "." << p.name << " = " << p.name;
         }
@@ -492,7 +493,7 @@ public:
 
       for (const auto &event : s->events) {
         oss << "\tvoid on" << toPascalCase(std::string{event.name}) << "(std::function<void(";
-        for (const auto &[idx, param] : event.params | std::views::enumerate) {
+        for (const auto &[idx, param] : event.params | vicinae::enumerate) {
           if (idx > 0) oss << ", ";
           oss << constRef(param.type);
         }
@@ -506,7 +507,7 @@ public:
 
       for (const auto &event : s->events) {
         oss << "std::function<void(";
-        for (const auto &[idx, param] : event.params | std::views::enumerate) {
+        for (const auto &[idx, param] : event.params | vicinae::enumerate) {
           if (idx > 0) oss << ", ";
           oss << constRef(param.type);
         }
@@ -624,7 +625,7 @@ public:
         oss << "\t\t\t" << getMethodParamName(s->name, m.name) << " payload;\n";
         oss << "\t\t\t[[maybe_unused]] auto res = glz::read_json(payload, req.params.str);\n";
         oss << "\t\t\tauto result = m_" << s->name << "." << m.name << "(";
-        for (const auto &[idx, param] : m.params | std::views::enumerate) {
+        for (const auto &[idx, param] : m.params | vicinae::enumerate) {
           if (idx > 0) oss << ", ";
           oss << "std::move(payload." << param.name << ")";
         }

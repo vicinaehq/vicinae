@@ -1,9 +1,9 @@
 #pragma once
+#include <common/enumerate.hpp>
 #include <cstring>
 #include <expected>
 #include <filesystem>
 #include <format>
-#include <ranges>
 #include <string>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -58,7 +58,7 @@ public:
   static std::expected<ipc::DeeplinkResponse, std::string>
   sendDeeplink(std::string_view url, const std::vector<std::pair<std::string, std::string>> &query = {}) {
     std::string fullUrl{url};
-    for (const auto &[idx, arg] : query | std::views::enumerate) {
+    for (const auto &[idx, arg] : query | vicinae::enumerate) {
       fullUrl.append(std::format("{}{}={}", idx == 0 ? "?" : "&", arg.first, arg.second));
     }
     return connect().and_then([&](IpcClient client) { return client.deeplink({.url = std::move(fullUrl)}); });

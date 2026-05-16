@@ -1,4 +1,5 @@
 #include "../parser.hpp"
+#include <common/enumerate.hpp>
 #include <format>
 #include "codegen.hpp"
 #include <iomanip>
@@ -57,7 +58,7 @@ inline std::string generateEnum(const EnumValue &e) {
   std::ostringstream oss;
   oss << "export type " << e.name << " = ";
 
-  for (const auto &[idx, value] : e.values | std::views::enumerate) {
+  for (const auto &[idx, value] : e.values | vicinae::enumerate) {
     if (idx > 0) oss << " | ";
     oss << "'" << value << "'";
   }
@@ -70,7 +71,7 @@ inline std::string generateEnum(const EnumValue &e) {
 inline std::string generateEventHandlerTypeSignature(const Event &event) {
   std::ostringstream oss;
   oss << "(";
-  for (const auto &[idx, param] : event.params | std::views::enumerate) {
+  for (const auto &[idx, param] : event.params | vicinae::enumerate) {
     if (idx > 0) oss << ", ";
     oss << param.name << ": " << getTypeSignature(param.type);
   }
@@ -81,7 +82,7 @@ inline std::string generateEventHandlerTypeSignature(const Event &event) {
 inline std::string serializeParamList(std::span<const MethodParameter> params) {
   std::ostringstream oss;
 
-  for (const auto &[idx, param] : params | std::views::enumerate) {
+  for (const auto &[idx, param] : params | vicinae::enumerate) {
     if (idx > 0) oss << ", ";
     oss << param.name << ": " << getTypename(param.type);
   }
@@ -98,7 +99,7 @@ inline std::string generateService(const Service &s) {
   for (const auto &method : s.methods) {
     oss << "\t" << method.name << "(";
 
-    for (const auto &[idx, param] : method.params | std::views::enumerate) {
+    for (const auto &[idx, param] : method.params | vicinae::enumerate) {
       if (idx > 0) oss << ", ";
       oss << param.name;
       if (param.type.isOptional) oss << "?";
@@ -111,7 +112,7 @@ inline std::string generateService(const Service &s) {
 
     oss << "\t\treturn this.transport.request(" << std::quoted(methodName) << ", { ";
 
-    for (const auto &[idx, param] : method.params | std::views::enumerate) {
+    for (const auto &[idx, param] : method.params | vicinae::enumerate) {
       if (idx > 0) oss << ", ";
       oss << param.name;
     }
@@ -128,7 +129,7 @@ inline std::string generateService(const Service &s) {
           << "): EventSubscription {\n";
       oss << "\t\treturn this.transport.subscribe(" << std::quoted(eventName) << ", (msg) => handler(";
 
-      for (const auto &[idx, param] : event.params | std::views::enumerate) {
+      for (const auto &[idx, param] : event.params | vicinae::enumerate) {
         if (idx > 0) oss << ", ";
         oss << "msg." << param.name;
       }
@@ -317,7 +318,7 @@ class TypeScriptCodeGenerator : public AbstractCodeGenerator {
         oss << "case " << std::quoted(methodId) << ":";
         oss << "\t" << "return this." << s->name << "." << m.name << "(";
 
-        for (const auto &[idx, p] : m.params | std::views::enumerate) {
+        for (const auto &[idx, p] : m.params | vicinae::enumerate) {
           if (idx > 0) oss << ", ";
           oss << "msg.params." << p.name;
         }
@@ -364,7 +365,7 @@ class TypeScriptCodeGenerator : public AbstractCodeGenerator {
           std::string eventName = std::format("{}/{}", service->name, ev.name);
           oss << "emit_" << ev.name << "(" << serializeParamList(ev.params) << ") {\n";
           oss << "\tthis.rpc.emit(" << std::quoted(eventName) << ", { ";
-          for (const auto &[idx, param] : ev.params | std::views::enumerate) {
+          for (const auto &[idx, param] : ev.params | vicinae::enumerate) {
             if (idx > 0) oss << ", ";
             oss << param.name;
           }
@@ -379,7 +380,7 @@ class TypeScriptCodeGenerator : public AbstractCodeGenerator {
     oss << "export class Server {\n";
     oss << "\tconstructor(private readonly rpc: RpcTransport";
 
-    for (const auto &[idx, service] : ast.services | std::views::enumerate) {
+    for (const auto &[idx, service] : ast.services | vicinae::enumerate) {
       if (!service->methods.empty()) {
         oss << ", readonly " << service->name << ": " << service->name << "Service";
       }
