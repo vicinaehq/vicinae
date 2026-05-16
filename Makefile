@@ -8,6 +8,8 @@ FIGURA_CC						:= $(BIN_DIR)/figura
 
 MACOS_CC := /opt/homebrew/opt/llvm/bin/clang
 MACOS_CXX := /opt/homebrew/opt/llvm/bin/clang++
+
+# System clang is slightly too old for us to compile with it (as of Tahoe)
 #MACOS_CC := clang
 #MACOS_CXX := clang++ 
 

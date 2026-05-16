@@ -71,16 +71,17 @@ static void applyTextRenderingMode(const config::FontConfig &fontConfig) {
 int startServer(const ServerLaunchOptions &launchOpts) {
   qInstallMessageHandler(coloredMessageHandler);
 
-  auto m_config = launchOpts.config.empty() ? Omnicast::configDir() / "settings.json"
-                                            : std::filesystem::path{launchOpts.config};
-
   if (!qEnvironmentVariableIsSet("QT_QUICK_FLICKABLE_WHEEL_DECELERATION"))
     qputenv("QT_QUICK_FLICKABLE_WHEEL_DECELERATION", "10000");
 
   int argc = 1;
   static char *argv[] = {strdup("command"), nullptr};
   QGuiApplication const qapp(argc, argv);
+  QGuiApplication::setApplicationName("vicinae");
   QQuickWindow::setTextRenderType(QQuickWindow::NativeTextRendering);
+
+  auto m_config = launchOpts.config.empty() ? Omnicast::configDir() / "settings.json"
+                                            : std::filesystem::path{launchOpts.config};
 
   if (const auto launcher = Environment::detectAppLauncher()) {
     qInfo() << "Detected launch prefix:" << *launcher;
@@ -101,8 +102,8 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto snippetService = std::make_unique<SnippetService>(Omnicast::dataDir() / "snippets" / "snippets.json",
                                                            *windowManager, *appService, *clipboardManager);
 #ifdef Q_OS_LINUX
-    auto platformPaste = std::unique_ptr<AbstractPasteService>(
-        std::make_unique<LinuxPasteService>(*snippetService->server()));
+    auto platformPaste =
+        std::unique_ptr<AbstractPasteService>(std::make_unique<LinuxPasteService>(*snippetService->server()));
 #else
     auto platformPaste = std::unique_ptr<AbstractPasteService>(std::make_unique<DummyPasteService>());
 #endif
@@ -222,7 +223,6 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   }
 
   FaviconService::initialize(new FaviconService(Omnicast::dataDir() / "favicon"));
-  QGuiApplication::setApplicationName("vicinae");
   QGuiApplication::setQuitOnLastWindowClosed(false);
   ApplicationContext ctx;
 

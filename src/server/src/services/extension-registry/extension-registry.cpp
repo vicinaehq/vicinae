@@ -1,5 +1,6 @@
 #include "extension-registry.hpp"
 #include "services/local-storage/local-storage-service.hpp"
+#include "vicinae.hpp"
 #include <QJsonArray>
 #include "services/extension-registry/extension-registry.hpp"
 #include "xdgpp/env/env.hpp"
@@ -93,9 +94,9 @@ bool ExtensionRegistry::uninstall(const QString &id) {
   return true;
 }
 
-fs::path ExtensionRegistry::localExtensionDirectory() { return xdgpp::dataHome() / "vicinae" / "extensions"; }
+fs::path ExtensionRegistry::localExtensionDirectory() { return Omnicast::dataDir() / "extensions"; }
 
-fs::path ExtensionRegistry::supportDirectory() { return xdgpp::dataHome() / "vicinae" / "support"; }
+fs::path ExtensionRegistry::supportDirectory() { return Omnicast::dataDir() / "support"; }
 
 fs::path ExtensionRegistry::supportDirectory(const std::string &id) { return supportDirectory() / id; }
 

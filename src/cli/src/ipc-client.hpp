@@ -13,7 +13,25 @@
 namespace cli {
 
 inline std::filesystem::path socketPath() {
-  return std::filesystem::path(getenv("XDG_RUNTIME_DIR")) / "vicinae" / "vicinae.sock";
+  // Must match what the server resolves via QStandardPaths::RuntimeLocation:
+  //   Linux: $XDG_RUNTIME_DIR (Qt falls back to /tmp/runtime-$USER if unset)
+  //   macOS: $TMPDIR (Qt's RuntimeLocation == TempLocation; falls back to /tmp)
+  std::filesystem::path base;
+#ifdef __APPLE__
+  if (const char *t = getenv("TMPDIR")) {
+    base = t;
+  } else {
+    base = "/tmp";
+  }
+#else
+  if (const char *r = getenv("XDG_RUNTIME_DIR")) {
+    base = r;
+  } else {
+    const char *user = getenv("USER");
+    base = std::filesystem::path("/tmp") / (std::string("runtime-") + (user ? user : "unknown"));
+  }
+#endif
+  return base / "vicinae" / "vicinae.sock";
 }
 
 class IpcClient {

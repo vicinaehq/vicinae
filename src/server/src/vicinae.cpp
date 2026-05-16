@@ -1,24 +1,48 @@
 #include "vicinae.hpp"
-#include "xdgpp/env/env.hpp"
 #include <qlogging.h>
 #include <qprocess.h>
 #include <QProcessEnvironment>
 #include <ranges>
 #include <set>
 
+#ifndef Q_OS_MACOS
+#include "xdgpp/env/env.hpp"
+#endif
+
 namespace fs = std::filesystem;
 
 fs::path Omnicast::runtimeDir() {
-  fs::path const osRundir(QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation).toStdString());
-
-  return osRundir / "vicinae";
+  return fs::path(QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation).toStdString()) /
+         "vicinae";
 }
 
-fs::path Omnicast::dataDir() { return xdgpp::dataHome() / "vicinae"; }
+fs::path Omnicast::dataDir() {
+#ifdef Q_OS_MACOS
+  return fs::path(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation).toStdString()) /
+         "vicinae";
+#else
+  return xdgpp::dataHome() / "vicinae";
+#endif
+}
 
-fs::path Omnicast::stateDir() { return xdgpp::stateHome() / "vicinae"; }
+fs::path Omnicast::configDir() {
+#ifdef Q_OS_MACOS
+  // ~/Library/Preferences is reserved for .plist files managed by NSUserDefaults.
+  // Our JSON config belongs under Application Support, alongside the rest of our data.
+  return dataDir();
+#else
+  return xdgpp::configHome() / "vicinae";
+#endif
+}
 
-fs::path Omnicast::configDir() { return xdgpp::configHome() / "vicinae"; }
+fs::path Omnicast::stateDir() {
+#ifdef Q_OS_MACOS
+  // macOS has no state-vs-data distinction; keep state alongside data.
+  return dataDir();
+#else
+  return xdgpp::stateHome() / "vicinae";
+#endif
+}
 
 fs::path Omnicast::commandSocketPath() { return runtimeDir() / "vicinae.sock"; }
 fs::path Omnicast::pidFile() { return runtimeDir() / "vicinae.pid"; }

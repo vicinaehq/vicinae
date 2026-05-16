@@ -96,7 +96,7 @@ std::vector<std::filesystem::path> ThemeDatabase::defaultSearchPaths() {
   paths.emplace_back(LOCAL_THEME_DIR);
 #endif
 
-  paths.emplace_back(xdgpp::dataHome() / suffix);
+  paths.emplace_back(Omnicast::dataDir() / "themes");
 
   for (const auto &dir : dd) {
     fs::path const path = dir / suffix;
