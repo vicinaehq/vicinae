@@ -76,10 +76,7 @@ export default function AppUtils() {
 										icon={defaultApp.icon}
 										target={searchText}
 									/>
-									<Action.Push
-										title="Open in..."
-										target={<OpenInView target={searchText} />}
-									/>
+									<Action.OpenWith title="Open with..." path={searchText} />
 								</ActionPanel>
 							}
 						/>

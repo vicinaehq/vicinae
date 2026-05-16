@@ -1,4 +1,5 @@
 #include "extension-view-host.hpp"
+#include "extension/extension-action-list-view.hpp"
 #include "navigation-controller.hpp"
 #include "view-utils.hpp"
 #include <chrono>
@@ -40,15 +41,48 @@ void ExtensionViewHost::onReactivated() {
       auto notify = [this](const QString &handler, const QJsonArray &args) {
         notifyExtension(handler, args);
       };
-      setActions(ExtensionActionPanelBuilder::build(*detail->actions, notify, &m_submenuCache));
+      setActions(ExtensionActionPanelBuilder::build(*detail->actions, notify));
     }
   } else if (activeModel<ExtensionFormModel>() && m_formActions) {
     auto *form = activeModel<ExtensionFormModel>();
     auto notify = [this](const QString &handler, const QJsonArray &args) { notifyExtension(handler, args); };
     auto submit = [this, form]() -> std::expected<QJsonObject, QString> { return form->submit(); };
-    setActions(ExtensionActionPanelBuilder::build(*m_formActions, notify, &m_submenuCache,
+    setActions(ExtensionActionPanelBuilder::build(*m_formActions, notify,
                                                   ActionPanelState::ShortcutPreset::Form, submit));
   }
+}
+
+void ExtensionViewHost::setActions(std::unique_ptr<ActionPanelState> actions) {
+  auto &stack = actionPanelStack();
+
+  if (!stack.empty() && !actions->id().isEmpty() && stack.front()->id() == actions->id()) {
+    auto *parentState = actions.get();
+    auto *rootView = static_cast<ActionListView *>(stack.front());
+    rootView->adoptState(std::move(actions));
+
+    for (size_t i = 1; i < stack.size(); ++i) {
+      QString viewId = stack[i]->id();
+      if (viewId.isEmpty()) break;
+
+      auto *submenuAction = parentState->findSubmenuAction(viewId);
+      if (!submenuAction) break;
+
+      auto submenuState = submenuAction->createSubmenuStateStealthily();
+      if (!submenuState) break;
+
+      parentState = submenuState.get();
+      static_cast<ActionListView *>(stack[i])->adoptState(std::move(submenuState));
+    }
+
+    if (context()) { context()->navigation->notifyActionPanelChanged(this); }
+    return;
+  }
+
+  auto *view = new ExtensionActionListView(
+      [this](const QString &handler, const QJsonArray &args) { notifyExtension(handler, args); }, QString(),
+      this);
+  view->adoptState(std::move(actions));
+  BaseView::setActions(static_cast<ActionPanelView *>(view));
 }
 
 void ExtensionViewHost::render(const RenderModel &model) {
@@ -288,7 +322,7 @@ void ExtensionViewHost::renderDetail(const RootDetailModel &model) {
   detail->actions = model.actions;
   if (model.actions) {
     auto notify = [this](const QString &handler, const QJsonArray &args) { notifyExtension(handler, args); };
-    setActions(ExtensionActionPanelBuilder::build(*model.actions, notify, &m_submenuCache));
+    setActions(ExtensionActionPanelBuilder::build(*model.actions, notify));
   }
 }
 
@@ -330,7 +364,7 @@ void ExtensionViewHost::renderForm(const FormModel &model) {
   if (model.actions) {
     auto notify = [this](const QString &handler, const QJsonArray &args) { notifyExtension(handler, args); };
     auto submit = [this, form]() -> std::expected<QJsonObject, QString> { return form->submit(); };
-    setActions(ExtensionActionPanelBuilder::build(*model.actions, notify, &m_submenuCache,
+    setActions(ExtensionActionPanelBuilder::build(*model.actions, notify,
                                                   ActionPanelState::ShortcutPreset::Form, submit));
   }
 }

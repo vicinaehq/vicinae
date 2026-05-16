@@ -117,7 +117,7 @@ FocusRestoringScope {
                 stack.currentItem.focusFilter();
         }
         function onPanelPopRequested() {
-            stack.pop(null, StackView.Immediate);
+            stack.pop();
             actionPanel.onPanelPopped(stack.currentItem);
             if (stack.currentItem && typeof stack.currentItem.focusFilter === "function")
                 stack.currentItem.focusFilter();
@@ -132,7 +132,7 @@ FocusRestoringScope {
         if (event.key === Qt.Key_Escape) {
             actionPanel.pop();
             event.accepted = true;
-        } else if (event.key === Qt.Key_Left || event.key === Qt.Key_Backspace || nav === 3) {
+        } else if (event.key === Qt.Key_Left || nav === 3) {
             if (actionPanel.depth > 1) {
                 actionPanel.pop();
                 event.accepted = true;

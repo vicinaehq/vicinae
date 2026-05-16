@@ -1,6 +1,8 @@
 #include "ui/views/base-view.hpp"
 #include "common.hpp"
 #include "navigation-controller.hpp"
+#include "ui/action-pannel/action-list-view.hpp"
+#include "ui/action-pannel/action-panel-view.hpp"
 #include <qlogging.h>
 #include <stdexcept>
 
@@ -24,11 +26,65 @@ void BaseView::setProxy(BaseView *proxy) {
   setContext(proxy->context());
 }
 
-void BaseView::clearActions() { setActions(std::make_unique<ActionPanelState>()); }
+void BaseView::clearActions() {
+  for (auto *view : m_actionPanelStack) {
+    view->onUnmount();
+    view->deleteLater();
+  }
+  m_actionPanelStack.clear();
+
+  if (m_ctx) { m_ctx->navigation->notifyActionPanelChanged(m_navProxy); }
+}
 
 void BaseView::setActions(std::unique_ptr<ActionPanelState> actions) {
-  if (!m_ctx) return;
-  m_ctx->navigation->setActions(std::move(actions), m_navProxy);
+  auto *view = new ActionListView(this);
+  view->adoptState(std::move(actions));
+  setActions(view);
+}
+
+void BaseView::setActions(ActionPanelView *view) {
+  for (auto *old : m_actionPanelStack) {
+    old->onUnmount();
+    old->deleteLater();
+  }
+  m_actionPanelStack.clear();
+
+  if (view) {
+    view->setParent(this);
+    m_actionPanelStack.push_back(view);
+    view->onMount();
+  }
+
+  if (m_ctx) { m_ctx->navigation->notifyActionPanelChanged(m_navProxy); }
+}
+
+ActionPanelView *BaseView::actionPanelRoot() const {
+  return m_actionPanelStack.empty() ? nullptr : m_actionPanelStack.front();
+}
+
+void BaseView::pushActionPanelView(ActionPanelView *view) {
+  if (!view) return;
+  view->setParent(this);
+  m_actionPanelStack.push_back(view);
+  view->onMount();
+}
+
+void BaseView::popActionPanelView() {
+  if (m_actionPanelStack.size() <= 1) return;
+  auto *view = m_actionPanelStack.back();
+  view->onUnmount();
+  view->deleteLater();
+  m_actionPanelStack.pop_back();
+}
+
+void BaseView::clearActionPanelStack() {
+  if (m_actionPanelStack.size() <= 1) return;
+  for (size_t i = m_actionPanelStack.size() - 1; i >= 1; --i) {
+    m_actionPanelStack[i]->onUnmount();
+    m_actionPanelStack[i]->deleteLater();
+  }
+  m_actionPanelStack.resize(1);
+  if (auto *root = actionPanelRoot()) { root->resetState(); }
 }
 
 bool BaseView::supportsSearch() const { return true; }

@@ -181,6 +181,10 @@ set(SRCS
 
 	include/ui/action-pannel/action.hpp
 	src/ui/action-pannel/action.cpp
+	include/ui/action-pannel/action-panel-state.hpp
+	include/ui/action-pannel/action-panel-view.hpp
+	include/ui/action-pannel/action-list-view.hpp
+	src/ui/action-pannel/action-list-view.cpp
 
 	src/lib/crypto.cpp
 
@@ -189,6 +193,8 @@ set(SRCS
 
 	src/extension/extension-action-panel-builder.hpp
 	src/extension/extension-action-panel-builder.cpp
+	src/extension/extension-action-list-view.hpp
+	src/extension/extension-action-list-view.cpp
 
 	include/extension/extension.hpp
 	src/extension/extension.cpp

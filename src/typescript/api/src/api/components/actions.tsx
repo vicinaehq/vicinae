@@ -18,6 +18,7 @@ import type { Form } from "./form";
 import { Icon } from "../icon";
 import { closeMainWindow } from "../controls";
 import { ActionPanel } from "./action-pannel";
+import { showToast } from "../toast";
 
 type BaseActionProps = {
 	title: string;
@@ -66,14 +67,12 @@ export namespace Action {
 		};
 	}
 
-	/*
 	export namespace OpenWith {
 		export type Props = BaseActionProps & {
 			path: string;
 			onOpen?: (path: string) => void;
 		};
 	}
-	*/
 
 	export namespace Trash {
 		type PathArg = PathLike | PathLike[];
@@ -214,11 +213,6 @@ const Open: React.FC<Action.Open.Props> = ({ target, app, ...props }) => {
 	);
 };
 
-// TODO: export when action panel is less buggy
-
-const OpenWith = () => null;
-
-/*
 const OpenWith: React.FC<Action.OpenWith.Props> = ({
 	path,
 	title = "Open with...",
@@ -246,13 +240,22 @@ const OpenWith: React.FC<Action.OpenWith.Props> = ({
 					key={app.id}
 					title={`Open in ${app.name}`}
 					icon={app.icon}
-					onAction={() => props.onOpen?.(path)}
+					onAction={() => {
+						closeMainWindow();
+						open(path, app)
+							.then(() => {
+								props.onOpen?.(path);
+							})
+							.catch(async (error) => {
+								showToast({ title: `Failed to open app` });
+								console.error("Failed to open app", error);
+							});
+					}}
 				/>
 			))}
 		</ActionPanel.Submenu>
 	);
 };
-*/
 
 const Trash: React.FC<Action.Trash.Props> = ({ title, paths, ...props }) => {
 	const actionTitle = title ?? `Delete item${Array.isArray(paths) ? "s" : ""}`;

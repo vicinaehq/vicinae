@@ -21,10 +21,10 @@ template <> struct fuzzy::FuzzySearchable<ListItemViewModel> {
 // --- ExtensionListSection ---
 
 ExtensionListSection::ExtensionListSection(std::string name, std::vector<ListItemViewModel> items,
-                                           bool filtering, NotifyFn notify, SubmenuCache *cache,
+                                           bool filtering, NotifyFn notify,
                                            const std::optional<ActionPannelModel> *globalActions)
     : m_name(std::move(name)), m_items(std::move(items)), m_filtering(filtering), m_notify(std::move(notify)),
-      m_cache(cache), m_globalActions(globalActions) {}
+      m_globalActions(globalActions) {}
 
 int ExtensionListSection::count() const {
   if (m_filtering && !m_query.empty()) return static_cast<int>(m_filtered.size());
@@ -65,11 +65,11 @@ QVariantList ExtensionListSection::itemAccessories(int i) const {
 std::unique_ptr<ActionPanelState> ExtensionListSection::actionPanel(int i) const {
   const auto &item = itemAt(i);
   if (item.actionPannel) {
-    return ExtensionActionPanelBuilder::build(*item.actionPannel, m_notify, m_cache,
+    return ExtensionActionPanelBuilder::build(*item.actionPannel, m_notify,
                                               ActionPanelState::ShortcutPreset::List);
   }
   if (m_globalActions && *m_globalActions) {
-    return ExtensionActionPanelBuilder::build(**m_globalActions, m_notify, m_cache,
+    return ExtensionActionPanelBuilder::build(**m_globalActions, m_notify,
                                               ActionPanelState::ShortcutPreset::List);
   }
   return nullptr;
@@ -92,9 +92,8 @@ void ExtensionListModel::setExtensionData(const ListModel &model, bool resetSele
 
   auto flushFree = [&]() {
     if (freeBuf.empty()) return;
-    auto section =
-        std::make_unique<ExtensionListSection>(std::move(freeItems), std::move(freeBuf), model.filtering,
-                                               m_notify, &m_submenuCache, &m_model.actions);
+    auto section = std::make_unique<ExtensionListSection>(std::move(freeItems), std::move(freeBuf),
+                                                          model.filtering, m_notify, &m_model.actions);
     section->setOnItemSelected([this](const ListItemViewModel *item) { handleItemSelected(item); });
     addSource(section.get());
     m_ownedSections.push_back(std::move(section));
@@ -108,7 +107,7 @@ void ExtensionListModel::setExtensionData(const ListModel &model, bool resetSele
     } else if (auto sec = std::get_if<ListSectionModel>(&child)) {
       flushFree();
       auto section = std::make_unique<ExtensionListSection>(sec->title, sec->children, model.filtering,
-                                                            m_notify, &m_submenuCache, &m_model.actions);
+                                                            m_notify, &m_model.actions);
       section->setOnItemSelected([this](const ListItemViewModel *item) { handleItemSelected(item); });
       addSource(section.get());
       m_ownedSections.push_back(std::move(section));
@@ -176,10 +175,10 @@ void ExtensionListModel::onSelectionCleared() {
   std::unique_ptr<ActionPanelState> panel;
 
   if (m_model.emptyView && m_model.emptyView->actions) {
-    panel = ExtensionActionPanelBuilder::build(*m_model.emptyView->actions, m_notify, &m_submenuCache,
+    panel = ExtensionActionPanelBuilder::build(*m_model.emptyView->actions, m_notify,
                                                ActionPanelState::ShortcutPreset::List);
   } else if (m_model.actions) {
-    panel = ExtensionActionPanelBuilder::build(*m_model.actions, m_notify, &m_submenuCache,
+    panel = ExtensionActionPanelBuilder::build(*m_model.actions, m_notify,
                                                ActionPanelState::ShortcutPreset::List);
   }
 

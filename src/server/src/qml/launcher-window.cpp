@@ -152,8 +152,8 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
     }
   });
 
-  connect(nav, &NavigationController::actionsChanged, this,
-          [this](const ActionPanelState &state) { m_actionPanel->setStateFrom(state); });
+  connect(nav, &NavigationController::activeActionPanelChanged, this,
+          [this, nav]() { m_actionPanel->syncToView(nav->topState()->sender); });
 
   connect(nav, &NavigationController::viewPushed, this, [this](const BaseView *) { m_actionPanel->close(); });
 
@@ -440,8 +440,9 @@ bool LauncherWindow::forwardKey(int key, int modifiers) {
 
   QKeyEvent const event(QEvent::KeyPress, key, mods);
 
-  if (auto *action = m_actionPanel->findBoundAction(&event)) {
-    m_actionPanel->executeAction(action);
+  if (auto *action = m_ctx.navigation->findBoundAction(&event)) {
+    m_ctx.navigation->executeAction(action);
+    m_actionPanel->close();
     return true;
   }
 

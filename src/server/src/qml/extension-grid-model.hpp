@@ -11,11 +11,10 @@
 class ExtensionGridSection : public GridSource {
 public:
   using NotifyFn = ExtensionActionPanelBuilder::NotifyFn;
-  using SubmenuCache = ExtensionActionPanelBuilder::SubmenuCache;
 
   ExtensionGridSection(std::string name, std::vector<GridItemViewModel> items, std::optional<int> columns,
                        std::optional<double> aspectRatio, bool filtering, NotifyFn notify,
-                       SubmenuCache *cache, const std::optional<ActionPannelModel> *globalActions);
+                       const std::optional<ActionPannelModel> *globalActions);
 
   QString sectionName() const override { return QString::fromStdString(m_name); }
   int count() const override;
@@ -41,7 +40,6 @@ private:
   bool m_filtering;
   std::string m_query;
   NotifyFn m_notify;
-  SubmenuCache *m_cache;
   const std::optional<ActionPannelModel> *m_globalActions;
   std::function<void(const GridItemViewModel *)> m_onItemSelected;
 };
@@ -92,7 +90,6 @@ private:
   void rebuildFromSections(bool resetSelection);
 
   NotifyFn m_notify;
-  mutable ExtensionActionPanelBuilder::SubmenuCache m_submenuCache;
   std::vector<std::unique_ptr<ExtensionGridSection>> m_ownedSections;
   GridModel m_model;
   ObjectFit m_fit = ObjectFit::Contain;

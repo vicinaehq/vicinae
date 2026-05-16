@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+class SubmenuAction;
+
 class ActionPanelModel : public QAbstractListModel {
   Q_OBJECT
   Q_PROPERTY(QString title READ title NOTIFY titleChanged)
@@ -28,6 +30,7 @@ public:
 
   void setState(std::unique_ptr<ActionPanelState> state);
   void setStateFrom(const ActionPanelState *state);
+  void reconcile(const ActionPanelState *state);
   QString title() const { return m_title; }
 
   int rowCount(const QModelIndex &parent = {}) const override;
@@ -45,9 +48,10 @@ public:
 signals:
   void titleChanged();
   void actionExecuted(AbstractAction *action);
-  void submenuRequested(ActionPanelModel *subModel);
+  void submenuActivated(SubmenuAction *action);
   void customPanelRequested(const QUrl &componentUrl, const QVariantMap &properties);
   void closeRequested();
+  void filterChanged(const QString &text);
 
 private:
   struct FlatItem {
@@ -57,6 +61,8 @@ private:
   };
 
   void rebuildFlatList();
+  void buildFlatList(std::vector<FlatItem> &out) const;
+  void loadSections(const ActionPanelState *state);
 
   QString m_title;
   std::string m_filterQuery;

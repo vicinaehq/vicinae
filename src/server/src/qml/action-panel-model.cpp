@@ -29,14 +29,10 @@ ActionPanelModel::ActionPanelModel(const ActionPanelState *state, QObject *paren
 
 void ActionPanelModel::setState(std::unique_ptr<ActionPanelState> state) { setStateFrom(state.get()); }
 
-void ActionPanelModel::setStateFrom(const ActionPanelState *state) {
-  beginResetModel();
-
-  m_title = state ? state->title() : QString();
+void ActionPanelModel::loadSections(const ActionPanelState *state) {
   m_allActions.clear();
   m_sections.clear();
-  m_flat.clear();
-  m_filterQuery.clear();
+  m_title = state ? state->title() : QString();
 
   if (state) {
     for (const auto &section : state->sections()) {
@@ -49,9 +45,44 @@ void ActionPanelModel::setStateFrom(const ActionPanelState *state) {
       m_sections.push_back(std::move(info));
     }
   }
+}
 
+void ActionPanelModel::setStateFrom(const ActionPanelState *state) {
+  beginResetModel();
+  loadSections(state);
+  m_filterQuery.clear();
   rebuildFlatList();
   endResetModel();
+  emit titleChanged();
+}
+
+void ActionPanelModel::reconcile(const ActionPanelState *state) {
+  loadSections(state);
+
+  int oldCount = static_cast<int>(m_flat.size());
+  std::vector<FlatItem> newFlat;
+  buildFlatList(newFlat);
+  int newCount = static_cast<int>(newFlat.size());
+
+  if (oldCount == 0 || newCount == 0) {
+    beginResetModel();
+    m_flat = std::move(newFlat);
+    endResetModel();
+  } else if (newCount > oldCount) {
+    beginInsertRows({}, oldCount, newCount - 1);
+    m_flat = std::move(newFlat);
+    endInsertRows();
+    if (oldCount > 0) emit dataChanged(index(0), index(oldCount - 1));
+  } else if (newCount < oldCount) {
+    beginRemoveRows({}, newCount, oldCount - 1);
+    m_flat = std::move(newFlat);
+    endRemoveRows();
+    if (newCount > 0) emit dataChanged(index(0), index(newCount - 1));
+  } else {
+    m_flat = std::move(newFlat);
+    if (newCount > 0) emit dataChanged(index(0), index(newCount - 1));
+  }
+
   emit titleChanged();
 }
 
@@ -144,13 +175,7 @@ void ActionPanelModel::activate(int index) {
 
   if (action->isSubmenu()) {
     auto *submenuAction = dynamic_cast<SubmenuAction *>(action.get());
-    if (!submenuAction) return;
-
-    auto subState = submenuAction->createSubmenuState();
-    if (!subState) return;
-
-    auto *subModel = new ActionPanelModel(std::move(subState), this);
-    emit submenuRequested(subModel);
+    if (submenuAction) emit submenuActivated(submenuAction);
     return;
   }
 
@@ -171,6 +196,7 @@ void ActionPanelModel::setFilter(const QString &text) {
   beginResetModel();
   rebuildFlatList();
   endResetModel();
+  emit filterChanged(text);
 }
 
 int ActionPanelModel::nextSelectableIndex(int from, int direction) const {
@@ -260,9 +286,9 @@ int ActionPanelModel::scrollTargetIndex(int index, int direction) const {
   return index;
 }
 
-void ActionPanelModel::rebuildFlatList() {
-  m_flat.clear();
-  m_flat.reserve(m_allActions.size() + m_sections.size() * 2);
+void ActionPanelModel::buildFlatList(std::vector<FlatItem> &out) const {
+  out.clear();
+  out.reserve(m_allActions.size() + m_sections.size() * 2);
 
   bool needsDivider = false;
   std::vector<Scored<int>> scored;
@@ -273,17 +299,19 @@ void ActionPanelModel::rebuildFlatList() {
 
     if (scored.empty()) continue;
 
-    if (needsDivider) { m_flat.emplace_back(FlatItem::Divider); }
+    if (needsDivider) { out.emplace_back(FlatItem::Divider); }
 
-    if (!section.name.isEmpty()) { m_flat.emplace_back(FlatItem::SectionHeader, s); }
+    if (!section.name.isEmpty()) { out.emplace_back(FlatItem::SectionHeader, s); }
 
     for (const auto &entry : scored) {
-      m_flat.emplace_back(FlatItem::ActionItem, s, entry.data);
+      out.emplace_back(FlatItem::ActionItem, s, entry.data);
     }
 
     needsDivider = true;
   }
 }
+
+void ActionPanelModel::rebuildFlatList() { buildFlatList(m_flat); }
 
 bool ActionPanelModel::activateByShortcut(int key, int modifiers) {
   auto mods = static_cast<Qt::KeyboardModifiers>(modifiers);

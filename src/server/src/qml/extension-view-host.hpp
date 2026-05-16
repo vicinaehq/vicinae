@@ -1,6 +1,6 @@
 #pragma once
 #include "extend/model-parser.hpp"
-#include "extension/extension-action-panel-builder.hpp" // for NotifyFn
+#include "extension/extension-action-panel-builder.hpp"
 #include "bridge-view.hpp"
 #include "extension-form-model.hpp"
 #include "extension-grid-model.hpp"
@@ -33,6 +33,7 @@ public:
   void onReactivated() override;
 
   void render(const RenderModel &model);
+  void setActions(std::unique_ptr<ActionPanelState> actions) override;
 
   void textChanged(const QString &text) override;
   bool inputFilter(QKeyEvent *event) override;
@@ -102,8 +103,6 @@ private:
   std::optional<std::string> m_onSearchTextChange;
   bool m_shouldResetSelection = false;
   bool m_selectFirstOnReset = true;
-
-  mutable ExtensionActionPanelBuilder::SubmenuCache m_submenuCache;
 
   std::optional<ActionPannelModel> m_formActions;
   QString m_linkAccessoryText;
