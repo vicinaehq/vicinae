@@ -3,16 +3,12 @@
 #include "extend/event-counted.hpp"
 #include "extend/list-model.hpp"
 #include "extend/model.hpp"
+#include "extend/node-tree.hpp"
 #include <memory>
-#include <qcoreevent.h>
-#include <qjsonobject.h>
 #include <qjsonvalue.h>
 #include <qlogging.h>
-#include <qnamespace.h>
-#include <qobject.h>
 #include <qstring.h>
 #include <optional>
-#include <qtmetamacros.h>
 
 struct FormModel {
   struct FieldBase {
@@ -91,9 +87,9 @@ struct FormModel {
   };
 
   struct DatePickerField : public IField {
-    std::optional<QString> min;  // ISO string
-    std::optional<QString> max;  // ISO string
-    std::optional<QString> type; // "date" | "dateTime"
+    std::optional<QString> min;
+    std::optional<QString> max;
+    std::optional<QString> type;
 
   public:
     DatePickerField(const FieldBase &base) : IField(base) {}
@@ -111,7 +107,6 @@ struct FormModel {
     QString target;
   };
 
-  // note: only LinkAccessoryModel is possible right now
   using FormSearchBarAccessory = std::variant<DropdownModel, LinkAccessoryModel>;
   using Item = std::variant<std::shared_ptr<IField>, Description, Separator>;
 
@@ -122,5 +117,5 @@ struct FormModel {
   std::optional<ActionPannelModel> actions;
   std::vector<Item> items;
 
-  static FormModel fromJson(const QJsonObject &json);
+  static FormModel fromNode(const Node &node, const NodeTree &tree);
 };

@@ -1,141 +1,183 @@
 #include "extend/form-model.hpp"
-#include <qjsonobject.h>
-
+#include "extend/node-props.hpp"
+#include "lib/glaze-qt.hpp"
 #include <algorithm>
 
-const static std::vector<QString> fieldTypes = {"dropdown-field",   "password-field",    "text-field",
-                                                "checkbox-field",   "date-picker-field", "text-area-field",
-                                                "file-picker-field"};
+static const std::vector<std::string> FIELD_TYPES = {
+    "dropdown-field",    "password-field",  "text-field",       "checkbox-field",
+    "date-picker-field", "text-area-field", "file-picker-field"};
 
-FormModel FormModel::fromJson(const QJsonObject &json) {
+FormModel FormModel::fromNode(const Node &node, const NodeTree &tree) {
   FormModel model;
-  auto props = json.value("props").toObject();
-  auto children = json.value("children").toArray();
+  const auto &props = node.props;
 
-  model.isLoading = props.value("isLoading").toBool(false);
-  model.enableDrafts = props.value("enableDrafts").toBool(false);
+  model.isLoading = node_props::getBool(props, "isLoading");
+  model.enableDrafts = node_props::getBool(props, "enableDrafts");
 
-  if (props.contains("navigationTitle")) {
-    model.navigationTitle = props.value("navigationTitle").toString();
+  if (auto sv = node_props::getString(props, "navigationTitle")) {
+    model.navigationTitle = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
   }
 
-  model.items.reserve(children.size());
+  model.items.reserve(node.childIds.size());
 
-  for (const auto &child : children) {
-    auto obj = child.toObject();
-    auto type = obj.value("type").toString();
-    auto props = obj.value("props").toObject();
-    auto children = obj.value("children").toArray();
+  forEachChild(node, tree, [&](const Node &child) {
+    const auto &childProps = child.props;
 
-    if (type == "action-panel") {
-      model.actions = ActionPannelParser().parse(obj);
-    } else if (type == "separator") {
+    if (child.type == "action-panel") {
+      model.actions = ActionPannelParser().parse(child, tree);
+
+    } else if (child.type == "separator") {
       model.items.emplace_back(Separator{});
-    } else if (type == "form-description") {
+
+    } else if (child.type == "form-description") {
       Description desc;
-
-      desc.text = props.value("text").toString();
-      if (props.contains("title")) desc.title = props.value("title").toString();
-
+      desc.text = QString::fromStdString(node_props::getStringOr(childProps, "text"));
+      if (auto sv = node_props::getString(childProps, "title")) {
+        desc.title = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
+      }
       model.items.emplace_back(desc);
 
-    } else if (type == "link-accessory") {
+    } else if (child.type == "link-accessory") {
       FormModel::LinkAccessoryModel link;
-      link.text = props.value("text").toString();
-      link.target = props.value("target").toString();
+      link.text = QString::fromStdString(node_props::getStringOr(childProps, "text"));
+      link.target = QString::fromStdString(node_props::getStringOr(childProps, "target"));
       model.searchBarAccessory = link;
 
-    } else if (auto it = std::ranges::find(fieldTypes, type); it != fieldTypes.end()) {
+    } else if (auto it = std::ranges::find(FIELD_TYPES, child.type); it != FIELD_TYPES.end()) {
       FieldBase base;
 
-      if (!props.contains("id")) {
-        qWarning() << "Found form field" << *it << "without ID field: skipping";
-        continue;
+      if (!node_props::has(childProps, "id")) {
+        qWarning() << "Found form field" << QString::fromStdString(*it) << "without ID field: skipping";
+        return;
       }
 
-      base.id = props.value("id").toString();
-      base.storeValue = props.value("storeValue").toBool(true);
-      base.autoFocus = props.value("autoFocus").toBool();
+      base.id = QString::fromStdString(node_props::getStringOr(childProps, "id"));
+      base.storeValue = node_props::getBool(childProps, "storeValue", true);
+      base.autoFocus = node_props::getBool(childProps, "autoFocus");
 
-      if (props.contains("title")) base.title = props.value("title").toString();
-      if (props.contains("value")) {
-        auto val = props.value("value");
-        if (val.isObject() && val.toObject().contains("eventCount")) {
-          auto obj = val.toObject();
-          base.value = parseEventCounted(obj, obj.value("value"));
+      if (auto sv = node_props::getString(childProps, "title")) {
+        base.title = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
+      }
+
+      if (auto *v = node_props::get(childProps, "value")) {
+        if (v->is_object()) {
+          const auto &valObj = v->get_object();
+          if (valObj.contains("eventCount")) {
+            auto qval = glazeToQJsonValue(*v);
+            auto innerVal = qval.toObject().value("value");
+            base.value = parseEventCounted(valObj, std::move(innerVal));
+          } else {
+            base.value = EventCounted<QJsonValue>{glazeToQJsonValue(*v), EVENT_COUNT_UNTRACKED};
+          }
         } else {
-          base.value = EventCounted<QJsonValue>{val, EVENT_COUNT_UNTRACKED};
+          base.value = EventCounted<QJsonValue>{glazeToQJsonValue(*v), EVENT_COUNT_UNTRACKED};
         }
       }
-      if (props.contains("error")) base.error = props.value("error").toString();
-      if (props.contains("info")) base.info = props.value("info").toString();
-      if (props.contains("onBlur")) base.onBlur = props.value("onBlur").toString();
-      if (props.contains("onFocus")) base.onFocus = props.value("onFocus").toString();
-      if (props.contains("onChange")) base.onChange = props.value("onChange").toString();
-      if (props.contains("defaultValue")) base.defaultValue = props.value("defaultValue").toString();
 
-      qDebug() << "registered" << base.id << base.onChange;
+      if (auto sv = node_props::getString(childProps, "error")) {
+        base.error = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
+      }
+      if (auto sv = node_props::getString(childProps, "info")) {
+        base.info = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
+      }
+      if (auto sv = node_props::getString(childProps, "onBlur")) {
+        base.onBlur = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
+      }
+      if (auto sv = node_props::getString(childProps, "onFocus")) {
+        base.onFocus = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
+      }
+      if (auto sv = node_props::getString(childProps, "onChange")) {
+        base.onChange = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
+      }
+      if (auto *v = node_props::get(childProps, "defaultValue")) {
+        base.defaultValue = glazeToQJsonValue(*v);
+      }
 
       if (*it == "text-field") {
         auto tf = std::make_shared<TextField>(base);
-        if (props.contains("placeholder")) tf->m_placeholder = props.value("placeholder").toString();
+        if (auto sv = node_props::getString(childProps, "placeholder")) {
+          tf->m_placeholder = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
+        }
         model.items.emplace_back(tf);
+
       } else if (*it == "password-field") {
         auto pf = std::make_shared<PasswordField>(base);
-        if (props.contains("placeholder")) pf->m_placeholder = props.value("placeholder").toString();
+        if (auto sv = node_props::getString(childProps, "placeholder")) {
+          pf->m_placeholder = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
+        }
         model.items.emplace_back(pf);
+
       } else if (*it == "checkbox-field") {
         auto checkbox = std::make_shared<CheckboxField>(base);
-        if (props.contains("label")) checkbox->m_label = props.value("label").toString();
+        if (auto sv = node_props::getString(childProps, "label")) {
+          checkbox->m_label = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
+        }
         model.items.emplace_back(checkbox);
+
       } else if (*it == "date-picker-field") {
         auto dp = std::make_shared<DatePickerField>(base);
-        if (props.contains("min")) dp->min = props.value("min").toString();
-        if (props.contains("max")) dp->max = props.value("max").toString();
-        if (props.contains("type")) dp->type = props.value("type").toString();
+        if (auto sv = node_props::getString(childProps, "min")) {
+          dp->min = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
+        }
+        if (auto sv = node_props::getString(childProps, "max")) {
+          dp->max = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
+        }
+        if (auto sv = node_props::getString(childProps, "type")) {
+          dp->type = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
+        }
         model.items.emplace_back(dp);
+
       } else if (*it == "text-area-field") {
         auto ta = std::make_shared<TextAreaField>(base);
-        if (props.contains("placeholder")) ta->m_placeholder = props.value("placeholder").toString();
+        if (auto sv = node_props::getString(childProps, "placeholder")) {
+          ta->m_placeholder = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
+        }
         model.items.emplace_back(ta);
+
       } else if (*it == "dropdown-field") {
         auto dropdown = std::make_shared<DropdownField>(base);
 
-        dropdown->m_items.reserve(children.size());
-        dropdown->throttle = props.value("throttle").toBool(false);
-        dropdown->isLoading = props.value("isLoading").toBool(false);
+        dropdown->m_items.reserve(child.childIds.size());
+        dropdown->throttle = node_props::getBool(childProps, "throttle");
+        dropdown->isLoading = node_props::getBool(childProps, "isLoading");
 
-        if (props.contains("placeholder")) dropdown->m_placeholder = props.value("placeholder").toString();
-        if (props.contains("tooltip")) { dropdown->tooltip = props.value("tooltip").toString(); }
-
-        if (props.contains("onSearchTextChange"))
-          dropdown->onSearchTextChange = props.value("onSearchTextChange").toString();
-
-        dropdown->filtering = props.value("filtering").toBool(!dropdown->onSearchTextChange.has_value());
-
-        for (const auto &child : children) {
-          dropdown->m_items.emplace_back(DropdownModel::childFromJson(child.toObject()));
+        if (auto sv = node_props::getString(childProps, "placeholder")) {
+          dropdown->m_placeholder = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
+        }
+        if (auto sv = node_props::getString(childProps, "tooltip")) {
+          dropdown->tooltip = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
+        }
+        if (auto sv = node_props::getString(childProps, "onSearchTextChange")) {
+          dropdown->onSearchTextChange = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
         }
 
+        dropdown->filtering =
+            node_props::getBool(childProps, "filtering", !dropdown->onSearchTextChange.has_value());
+
+        forEachChild(child, tree, [&](const Node &dropdownChild) {
+          if (dropdownChild.type == "dropdown-item") {
+            dropdown->m_items.emplace_back(DropdownModel::Item::fromNode(dropdownChild));
+          } else if (dropdownChild.type == "dropdown-section") {
+            dropdown->m_items.emplace_back(DropdownModel::Section::fromNode(dropdownChild, tree));
+          }
+        });
+
         model.items.emplace_back(dropdown);
+
       } else if (*it == "file-picker-field") {
         auto filePicker = std::make_shared<FilePickerField>(base);
 
-        if (props.contains("allowMultipleSelection"))
-          filePicker->allowMultipleSelection = props.value("allowMultipleSelection").toBool();
-        if (props.contains("canChooseDirectories"))
-          filePicker->canChooseDirectories = props.value("canChooseDirectories").toBool();
-        if (props.contains("canChooseFiles"))
-          filePicker->canChooseFiles = props.value("canChooseFiles").toBool();
-        if (props.contains("showHiddenFiles"))
-          filePicker->showHiddenFiles = props.value("showHiddenFiles").toBool();
+        filePicker->allowMultipleSelection = node_props::getBool(childProps, "allowMultipleSelection");
+        filePicker->canChooseDirectories = node_props::getBool(childProps, "canChooseDirectories");
+        filePicker->canChooseFiles = node_props::getBool(childProps, "canChooseFiles", true);
+        filePicker->showHiddenFiles = node_props::getBool(childProps, "showHiddenFiles");
 
         model.items.emplace_back(filePicker);
       }
     } else {
-      qWarning() << "Unknown form children of type" << type;
+      qWarning() << "Unknown form children of type" << QString::fromStdString(child.type);
     }
-  }
+  });
 
   return model;
 }

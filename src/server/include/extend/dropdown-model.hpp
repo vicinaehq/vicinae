@@ -1,11 +1,11 @@
 #pragma once
 #include "extend/image-model.hpp"
+#include "extend/node-props.hpp"
+#include "extend/node-tree.hpp"
+#include <QDebug>
 #include <optional>
-#include <qjsonobject.h>
-#include <qlogging.h>
-#include <qobject.h>
 #include <qstring.h>
-#include <qjsonarray.h>
+#include <variant>
 
 struct DropdownModel {
   struct Item {
@@ -14,21 +14,20 @@ struct DropdownModel {
     std::optional<ImageLikeModel> icon;
     std::vector<QString> keywords;
 
-    static Item fromJson(const QJsonObject &json) {
+    static Item fromNode(const Node &node) {
       Item model;
-      auto props = json.value("props").toObject();
+      const auto &props = node.props;
 
-      model.title = props.value("title").toString();
-      model.value = props.value("value").toString();
+      model.title = QString::fromStdString(node_props::getStringOr(props, "title"));
+      model.value = QString::fromStdString(node_props::getStringOr(props, "value"));
 
-      if (props.contains("icon")) { model.icon = ImageModelParser().parse(props.value("icon")); }
+      if (auto *v = node_props::get(props, "icon")) { model.icon = ImageModelParser().parse(*v); }
 
-      auto keywords = props.value("keywords").toArray();
-
-      model.keywords.reserve(keywords.size());
-
-      for (const auto &keyword : keywords) {
-        model.keywords.push_back(keyword.toString());
+      if (auto *arr = node_props::getArray(props, "keywords")) {
+        model.keywords.reserve(arr->size());
+        for (const auto &keyword : *arr) {
+          if (keyword.is_string()) { model.keywords.push_back(QString::fromStdString(keyword.get_string())); }
+        }
       }
 
       return model;
@@ -39,20 +38,16 @@ struct DropdownModel {
     QString title;
     std::vector<Item> items;
 
-    static Section fromJson(const QJsonObject &json) {
+    static Section fromNode(const Node &node, const NodeTree &tree) {
       Section section;
-      auto props = json.value("props").toObject();
-      auto children = json.value("children").toArray();
+      const auto &props = node.props;
 
-      section.title = props.value("title").toString();
-      section.items.reserve(children.size());
+      section.title = QString::fromStdString(node_props::getStringOr(props, "title"));
+      section.items.reserve(node.childIds.size());
 
-      for (const auto &child : children) {
-        auto obj = child.toObject();
-        auto type = obj.value("type").toString();
-
-        if (type == "dropdown-item") { section.items.push_back(Item::fromJson(obj)); }
-      }
+      forEachChild(node, tree, [&](const Node &child) {
+        if (child.type == "dropdown-item") { section.items.push_back(Item::fromNode(child)); }
+      });
 
       return section;
     }
@@ -65,7 +60,7 @@ struct DropdownModel {
     bool enabled;
   };
 
-  bool dirty;
+  bool dirty = true;
   std::optional<QString> tooltip;
   std::optional<QString> defaultValue;
   std::optional<QString> id;
@@ -79,59 +74,44 @@ struct DropdownModel {
   Filtering filtering;
   bool isLoading;
 
-  static Child childFromJson(const QJsonObject &json) {
-    auto type = json.value("type").toString();
-
-    if (type == "dropdown-item") {
-      return Item::fromJson(json);
-    } else if (type == "dropdown-section") {
-      return Section::fromJson(json);
-    } else {
-      qWarning() << "DropdownModel: unhandled child type" << type;
-    }
-
-    return {};
-  }
-
-  static DropdownModel fromJson(const QJsonObject &json) {
+  static DropdownModel fromNode(const Node &node, const NodeTree &tree) {
     DropdownModel model;
-    auto props = json.value("props").toObject();
-    auto children = json.value("children").toArray();
+    const auto &props = node.props;
 
-    model.dirty = json.value("dirty").toBool(false);
+    if (auto sv = node_props::getString(props, "tooltip"))
+      model.tooltip = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
+    if (auto sv = node_props::getString(props, "defaultValue"))
+      model.defaultValue = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
+    if (auto sv = node_props::getString(props, "id"))
+      model.id = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
+    if (auto sv = node_props::getString(props, "onChange"))
+      model.onChange = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
+    if (auto sv = node_props::getString(props, "onSearchTextChange"))
+      model.onSearchTextChange = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
+    if (auto sv = node_props::getString(props, "placeholder"))
+      model.placeholder = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
+    if (auto sv = node_props::getString(props, "value"))
+      model.value = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
 
-    if (props.contains("tooltip")) model.tooltip = props.value("tooltip").toString();
-    if (props.contains("defaultValue")) model.defaultValue = props.value("defaultValue").toString();
-    if (props.contains("id")) model.id = props.value("id").toString();
-    if (props.contains("onChange")) model.onChange = props.value("onChange").toString();
-    if (props.contains("onSearchTextChange"))
-      model.onSearchTextChange = props.value("onSearchTextChange").toString();
-    if (props.contains("placeholder")) model.placeholder = props.value("placeholder").toString();
-    if (props.contains("value")) model.value = props.value("value").toString();
-
-    model.storeValue = props.value("storeValue").toBool(true);
-    model.throttle = props.value("throttle").toBool(false);
-    model.isLoading = props.value("isLoading").toBool(false);
+    model.storeValue = node_props::getBool(props, "storeValue", true);
+    model.throttle = node_props::getBool(props, "throttle");
+    model.isLoading = node_props::getBool(props, "isLoading");
     model.filtering = {
         .keepSectionOrder = true,
-        .enabled = props.value("filtering").toBool(true),
+        .enabled = node_props::getBool(props, "filtering", true),
     };
 
-    model.children.reserve(children.size());
+    model.children.reserve(node.childIds.size());
 
-    for (const auto &child : children) {
-      auto obj = child.toObject();
-      auto type = obj.value("type").toString();
-      auto props = obj.value("props").toObject();
-
-      if (type == "dropdown-item") {
-        model.children.push_back(Item::fromJson(obj));
-      } else if (type == "dropdown-section") {
-        model.children.push_back(Section::fromJson(obj));
+    forEachChild(node, tree, [&](const Node &child) {
+      if (child.type == "dropdown-item") {
+        model.children.push_back(Item::fromNode(child));
+      } else if (child.type == "dropdown-section") {
+        model.children.push_back(Section::fromNode(child, tree));
       } else {
-        qWarning() << "DropdownModel: unhandled child type" << type;
+        qWarning() << "DropdownModel: unhandled child type" << QString::fromStdString(child.type);
       }
-    }
+    });
 
     return model;
   }

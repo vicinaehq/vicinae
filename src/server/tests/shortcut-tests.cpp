@@ -1,8 +1,8 @@
-#include <QJsonArray>
-#include <QJsonObject>
 #include <QKeySequence>
 #include <QVariantMap>
 #include <catch2/catch_test_macros.hpp>
+#include <glaze/json/generic.hpp>
+#include <glaze/json/read.hpp>
 #include "extend/action-model.hpp"
 #include "keyboard/keyboard.hpp"
 
@@ -84,10 +84,9 @@ TEST_CASE("fromString parses plus key correctly") {
 }
 
 TEST_CASE("extension object shortcuts can represent plus keys") {
-  QJsonObject shortcut{
-      {QStringLiteral("key"), QStringLiteral("+")},
-      {QStringLiteral("modifiers"), QJsonArray{QStringLiteral("ctrl"), QStringLiteral("shift")}},
-  };
+  glz::generic shortcut;
+  auto ec = glz::read_json(shortcut, R"({"key":"+","modifiers":["ctrl","shift"]})");
+  REQUIRE(!ec);
 
   auto parsed = ActionPannelParser::parseKeyboardShortcut(shortcut);
   REQUIRE(parsed.isValid());

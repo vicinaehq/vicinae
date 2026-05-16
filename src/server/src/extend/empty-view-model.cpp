@@ -1,26 +1,20 @@
 #include "extend/empty-view-model.hpp"
 #include "extend/action-model.hpp"
 #include "extend/image-model.hpp"
-#include <qjsonarray.h>
-#include <qjsonobject.h>
+#include "extend/node-props.hpp"
 
-EmptyViewModelParser::EmptyViewModelParser() = default;
-
-EmptyViewModel EmptyViewModelParser::parse(const QJsonObject &instance) {
+EmptyViewModel EmptyViewModelParser::parse(const Node &node, const NodeTree &tree) {
   EmptyViewModel model;
-  auto props = instance.value("props").toObject();
+  const auto &props = node.props;
 
-  model.title = props.value("title").toString();
-  model.description = props.value("description").toString();
+  model.title = QString::fromStdString(node_props::getStringOr(props, "title"));
+  model.description = QString::fromStdString(node_props::getStringOr(props, "description"));
 
-  if (props.contains("icon")) { model.icon = ImageModelParser().parse(props.value("icon")); }
+  if (auto *v = node_props::get(props, "icon")) { model.icon = ImageModelParser().parse(*v); }
 
-  for (const auto &child : instance.value("children").toArray()) {
-    auto obj = child.toObject();
-    auto type = obj.value("type").toString();
-
-    if (type == "action-panel") { model.actions = ActionPannelParser().parse(obj); }
-  }
+  forEachChild(node, tree, [&](const Node &child) {
+    if (child.type == "action-panel") { model.actions = ActionPannelParser().parse(child, tree); }
+  });
 
   return model;
 }

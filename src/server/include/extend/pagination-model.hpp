@@ -1,6 +1,6 @@
 #pragma once
+#include "extend/node-props.hpp"
 #include <optional>
-#include <qjsonobject.h>
 #include <qstring.h>
 
 struct PaginationModel {
@@ -8,13 +8,15 @@ struct PaginationModel {
   bool hasMore;
   size_t pageSize;
 
-  static PaginationModel fromJson(const QJsonObject &obj) {
+  static PaginationModel fromProps(const glz::generic::object_t &obj) {
     PaginationModel model;
 
-    model.hasMore = obj.value("hasMore").toBool(false);
-    model.pageSize = obj.value("pageSize").toInt();
+    model.hasMore = node_props::getBool(obj, "hasMore");
+    model.pageSize = static_cast<size_t>(node_props::getInt(obj, "pageSize"));
 
-    if (obj.contains("onLoadMore")) { model.onLoadMore = obj.value("onLoadMore").toString(); }
+    if (auto *v = node_props::get(obj, "onLoadMore"); v && v->is_string()) {
+      model.onLoadMore = QString::fromStdString(v->get_string());
+    }
 
     return model;
   }

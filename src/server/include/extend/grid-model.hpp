@@ -3,10 +3,10 @@
 #include "extend/empty-view-model.hpp"
 #include "extend/event-counted.hpp"
 #include "extend/image-model.hpp"
+#include "extend/node-tree.hpp"
 #include "extend/pagination-model.hpp"
 #include "extend/dropdown-model.hpp"
 #include "ui/image/url.hpp"
-#include <qjsonobject.h>
 
 enum GridFit { GridContain, GridFill };
 
@@ -46,11 +46,11 @@ using GridChild = std::variant<GridItemViewModel, GridSectionModel>;
 using GridSearchBarAccessory = std::variant<DropdownModel>;
 
 struct GridModel {
+  bool dirty = true;
   bool isLoading;
   bool filtering;
   bool throttle;
   double aspectRatio;
-  bool dirty;
   std::optional<int> columns;
   GridInset inset = GridInset::None;
   ObjectFit fit = ObjectFit::Contain;
@@ -70,12 +70,10 @@ struct GridModel {
 
 class GridModelParser {
   GridInset parseInset(const std::string &s);
-  GridItemViewModel parseListItem(const QJsonObject &instance, size_t index);
-  GridSectionModel parseSection(const QJsonObject &instance);
+  GridItemViewModel parseGridItem(const Node &node, const NodeTree &tree, size_t index);
+  GridSectionModel parseSection(const Node &node, const NodeTree &tree);
   ObjectFit parseFit(const std::string &fit);
 
 public:
-  GridModelParser();
-
-  GridModel parse(const QJsonObject &instance);
+  GridModel parse(const Node &node, const NodeTree &tree);
 };

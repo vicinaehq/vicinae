@@ -2,7 +2,7 @@
 #include "extend/tag-model.hpp"
 #include "../theme.hpp"
 #include "../ui/image/url.hpp"
-#include <qjsonobject.h>
+#include "extend/node-tree.hpp"
 
 struct MetadataLabel {
   QString text;
@@ -26,10 +26,6 @@ struct MetadataModel {
 };
 
 class MetadataModelParser {
-  MetadataItem parseMetadataItem(const QJsonObject &instance);
-
 public:
-  MetadataModelParser();
-
-  MetadataModel parse(const QJsonObject &instance);
+  MetadataModel parse(const Node &node, const NodeTree &tree);
 };

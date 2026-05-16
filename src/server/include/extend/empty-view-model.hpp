@@ -2,8 +2,8 @@
 
 #include "extend/action-model.hpp"
 #include "extend/image-model.hpp"
+#include "extend/node-tree.hpp"
 #include <optional>
-#include <qjsonobject.h>
 
 struct EmptyViewModel {
   QString title;
@@ -14,6 +14,5 @@ struct EmptyViewModel {
 
 class EmptyViewModelParser {
 public:
-  EmptyViewModelParser();
-  EmptyViewModel parse(const QJsonObject &instance);
+  EmptyViewModel parse(const Node &node, const NodeTree &tree);
 };

@@ -1,7 +1,7 @@
 #pragma once
 #include "extend/color-model.hpp"
 #include "extend/image-model.hpp"
-#include <qjsonobject.h>
+#include "extend/node-tree.hpp"
 #include <qstring.h>
 
 struct TagItemModel {
@@ -17,10 +17,8 @@ struct TagListModel {
 };
 
 class TagListParser {
-  TagItemModel parseTagItem(const QJsonObject &instance);
+  TagItemModel parseTagItem(const Node &node);
 
 public:
-  TagListParser();
-
-  TagListModel parse(const QJsonObject &instance);
+  TagListModel parse(const Node &node, const NodeTree &tree);
 };

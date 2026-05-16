@@ -1,21 +1,8 @@
 #pragma once
 #include "theme.hpp"
-#include <qjsonobject.h>
-#include <qstring.h>
-
-struct ColorStringModel {
-  QString colorString;
-};
-
-struct ThemeColorModel {
-  QString themeColor;
-};
-
-using ColorLikeModel = QString;
+#include <glaze/json/generic.hpp>
 
 class ColorLikeModelParser {
 public:
-  ColorLikeModelParser();
-
-  ColorLike parse(const QJsonValue &colorLike);
+  ColorLike parse(const glz::generic &colorLike);
 };

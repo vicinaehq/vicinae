@@ -1,7 +1,6 @@
 #pragma once
 #include "extend/metadata-model.hpp"
-#include <qjsonobject.h>
-#include <qjsonvalue.h>
+#include "extend/node-tree.hpp"
 
 struct DetailModel {
   std::optional<QString> markdown;
@@ -10,7 +9,5 @@ struct DetailModel {
 
 class DetailModelParser {
 public:
-  DetailModelParser();
-
-  DetailModel parse(const QJsonObject &instance);
+  DetailModel parse(const Node &node, const NodeTree &tree);
 };

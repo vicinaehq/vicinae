@@ -4,159 +4,132 @@
 #include "extend/detail-model.hpp"
 #include "extend/empty-view-model.hpp"
 #include "extend/image-model.hpp"
+#include "extend/node-props.hpp"
 #include "extend/pagination-model.hpp"
-#include <qjsonarray.h>
-#include <qjsonobject.h>
-#include <qlogging.h>
 
-ImageLikeModel ListModelParser::parseListItemIcon(const QJsonValue &value) const {
-  if (value.isObject()) {
-    // we ignore the tooltip for now
-    auto obj = value.toObject();
-    if (obj.contains("value")) { return ImageModelParser().parse(obj.value("value")); }
+ImageLikeModel ListModelParser::parseListItemIcon(const glz::generic &value) const {
+  if (value.is_object()) {
+    const auto &obj = value.get_object();
+    if (obj.contains("value")) { return ImageModelParser().parse(obj.at("value")); }
   }
 
   return ImageModelParser().parse(value);
 }
 
-QString ListModelParser::parseListItemTitle(const QJsonValue &value) const {
-  if (value.isObject()) {
-    // we ignore the tooltip for now
-    auto obj = value.toObject();
-    if (obj.contains("value")) { return obj.value("value").toString(); }
+std::string ListModelParser::parseListItemTitle(const glz::generic &value) const {
+  if (value.is_object()) {
+    const auto &obj = value.get_object();
+    if (obj.contains("value") && obj.at("value").is_string()) { return obj.at("value").get_string(); }
   }
 
-  return value.toString();
+  return value.is_string() ? value.get_string() : std::string{};
 }
 
-ListItemViewModel ListModelParser::parseListItem(const QJsonObject &instance, size_t index) {
+ListItemViewModel ListModelParser::parseListItem(const Node &node, const NodeTree &tree, size_t index) {
   ListItemViewModel model;
-  auto props = instance.value("props").toObject();
-  auto children = instance.value("children").toArray();
+  const auto &props = node.props;
 
-  model.id = props["id"].toString(QString::number(index)).toStdString();
-  model.title = parseListItemTitle(props["title"]).toStdString();
-  model.subtitle = parseListItemTitle(props["subtitle"]).toStdString();
+  auto idStr = node_props::getStringOr(props, "id");
+  model.id = idStr.empty() ? std::to_string(index) : idStr;
 
-  if (props.contains("icon")) { model.icon = parseListItemIcon(props.value("icon")); }
+  if (auto *v = node_props::get(props, "title")) { model.title = parseListItemTitle(*v); }
+  if (auto *v = node_props::get(props, "subtitle")) { model.subtitle = parseListItemTitle(*v); }
 
-  {
-    auto keywords = props.value("keywords").toArray();
+  if (auto *v = node_props::get(props, "icon")) { model.icon = parseListItemIcon(*v); }
 
-    model.keywords.reserve(keywords.size());
-    for (const auto &value : keywords) {
-      model.keywords.emplace_back(value.toString().toStdString());
+  if (auto *arr = node_props::getArray(props, "keywords")) {
+    model.keywords.reserve(arr->size());
+    for (const auto &value : *arr) {
+      if (value.is_string()) { model.keywords.emplace_back(value.get_string()); }
     }
   }
 
-  {
-    auto accessories = props.value("accessories").toArray();
-
-    model.accessories.reserve(accessories.size());
-    for (const auto &value : accessories) {
-      model.accessories.emplace_back(AccessoryModel::fromJson(value));
+  if (auto *arr = node_props::getArray(props, "accessories")) {
+    model.accessories.reserve(arr->size());
+    for (const auto &value : *arr) {
+      model.accessories.emplace_back(AccessoryModel::fromGeneric(value));
     }
   }
 
-  for (const auto &child : children) {
-    auto obj = child.toObject();
-    auto type = obj["type"].toString();
-
-    if (type == "action-panel") { model.actionPannel = ActionPannelParser().parse(obj); }
-    if (type == "list-item-detail") { model.detail = DetailModelParser().parse(obj); }
-  }
+  forEachChild(node, tree, [&](const Node &child) {
+    if (child.type == "action-panel") { model.actionPannel = ActionPannelParser().parse(child, tree); }
+    if (child.type == "list-item-detail") { model.detail = DetailModelParser().parse(child, tree); }
+  });
 
   return model;
 }
 
-ListSectionModel ListModelParser::parseSection(const QJsonObject &instance) {
+ListSectionModel ListModelParser::parseSection(const Node &node, const NodeTree &tree) {
   ListSectionModel model;
-  auto props = instance.value("props").toObject();
-  auto children = instance.value("children").toArray();
+  const auto &props = node.props;
   size_t index = 0;
 
-  model.title = props.value("title").toString().toStdString();
-  model.subtitle = props.value("subtitle").toString().toStdString();
-  model.children.reserve(children.size());
+  model.title = node_props::getStringOr(props, "title");
+  model.subtitle = node_props::getStringOr(props, "subtitle");
+  model.children.reserve(node.childIds.size());
 
-  for (const auto &child : children) {
-    auto obj = child.toObject();
-    auto type = obj.value("type").toString();
-
-    if (type == "list-item") {
-      auto item = parseListItem(obj, index);
-
-      model.children.push_back(item);
-    }
-
+  forEachChild(node, tree, [&](const Node &child) {
+    if (child.type == "list-item") { model.children.push_back(parseListItem(child, tree, index)); }
     ++index;
-  }
+  });
 
   return model;
 }
 
-ListModelParser::ListModelParser() = default;
-
-ListModel ListModelParser::parse(const QJsonObject &instance) {
+ListModel ListModelParser::parse(const Node &node, const NodeTree &tree) {
   ListModel model;
-  auto props = instance.value("props").toObject();
-  // no builtin filtering by default if onSearchTextChange handler is specified
-  bool const defaultFiltering = !props.contains("onSearchTextChange");
+  const auto &props = node.props;
+  bool const defaultFiltering = !node_props::has(props, "onSearchTextChange");
 
-  model.dirty = instance.value("dirty").toBool(false);
-  model.propsDirty = instance.value("propsDirty").toBool(false);
-  model.isLoading = props["isLoading"].toBool(false);
-  model.throttle = props["throttle"].toBool(false);
-  model.isShowingDetail = props["isShowingDetail"].toBool(false);
-  model.searchPlaceholderText = props["searchBarPlaceholder"].toString().toStdString();
-  model.filtering = props["filtering"].toBool(defaultFiltering);
+  model.isLoading = node_props::getBool(props, "isLoading");
+  model.throttle = node_props::getBool(props, "throttle");
+  model.isShowingDetail = node_props::getBool(props, "isShowingDetail");
+  model.searchPlaceholderText = node_props::getStringOr(props, "searchBarPlaceholder");
+  model.filtering = node_props::getBool(props, "filtering", defaultFiltering);
 
-  if (props.contains("navigationTitle")) {
-    model.navigationTitle = props["navigationTitle"].toString().toStdString();
+  model.navigationTitle = node_props::getStringOr(props, "navigationTitle");
+
+  if (auto sv = node_props::getString(props, "onSearchTextChange")) {
+    model.onSearchTextChange = std::string{*sv};
+  }
+  if (auto sv = node_props::getString(props, "onSelectionChange")) {
+    model.onSelectionChanged = std::string{*sv};
   }
 
-  if (props.contains("onSearchTextChange")) {
-    model.onSearchTextChange = props.value("onSearchTextChange").toString().toStdString();
+  if (auto *searchTextObj = node_props::getObject(props, "searchText")) {
+    auto value = node_props::getStringOr(*searchTextObj, "value");
+    model.searchText = parseEventCounted(*searchTextObj, std::move(value));
   }
 
-  if (props.contains("onSelectionChange")) {
-    model.onSelectionChanged = props.value("onSelectionChange").toString().toStdString();
-  }
-
-  if (props.contains("searchText")) {
-    auto obj = props.value("searchText").toObject();
-    model.searchText = parseEventCounted(obj, obj.value("value").toString().toStdString());
-  }
-  if (props.contains("pagination")) {
-    model.pagination = PaginationModel::fromJson(props.value("pagination").toObject());
+  if (auto *paginationObj = node_props::getObject(props, "pagination")) {
+    model.pagination = PaginationModel::fromProps(*paginationObj);
   }
 
   size_t index = 0;
 
-  for (const auto &child : instance.value("children").toArray()) {
-    auto childObj = child.toObject();
-    auto type = childObj.value("type").toString();
-
-    if (type == "action-panel") { model.actions = ActionPannelParser().parse(childObj); }
-
-    if (type == "list-item") {
-      auto item = parseListItem(childObj, index);
-
-      model.items.emplace_back(item);
+  forEachChild(node, tree, [&](const Node &child) {
+    if (child.type == "action-panel") {
+      model.actions = ActionPannelParser().parse(child, tree);
     }
 
-    if (type == "list-section") {
-      auto section = parseSection(childObj);
-
-      model.items.emplace_back(section);
+    else if (child.type == "list-item") {
+      model.items.emplace_back(parseListItem(child, tree, index));
     }
 
-    if (type == "dropdown") { model.searchBarAccessory = DropdownModel::fromJson(childObj); }
+    else if (child.type == "list-section") {
+      model.items.emplace_back(parseSection(child, tree));
+    }
 
-    if (type == "empty-view") { model.emptyView = EmptyViewModelParser().parse(childObj); }
+    else if (child.type == "dropdown") {
+      model.searchBarAccessory = DropdownModel::fromNode(child, tree);
+    }
+
+    else if (child.type == "empty-view") {
+      model.emptyView = EmptyViewModelParser().parse(child, tree);
+    }
 
     ++index;
-  }
+  });
 
   return model;
 }

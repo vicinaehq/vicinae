@@ -1,34 +1,28 @@
 #include "extend/color-model.hpp"
 #include "extend/image-model.hpp"
+#include "extend/node-props.hpp"
 #include "extend/tag-model.hpp"
-#include <qjsonarray.h>
-#include <qjsonobject.h>
 
-TagListParser::TagListParser() = default;
-
-TagItemModel TagListParser::parseTagItem(const QJsonObject &instance) {
+TagItemModel TagListParser::parseTagItem(const Node &node) {
   TagItemModel model;
-  auto props = instance.value("props").toObject();
+  const auto &props = node.props;
 
-  if (props.contains("icon")) model.icon = ImageModelParser().parse(props.value("icon"));
+  if (auto *v = node_props::get(props, "icon")) model.icon = ImageModelParser().parse(*v);
+  if (auto *v = node_props::get(props, "color")) { model.color = ColorLikeModelParser().parse(*v); }
 
-  if (props.contains("color")) { model.color = ColorLikeModelParser().parse(props.value("color")); }
-
-  model.text = props.value("text").toString();
-  model.onAction = props.value("onAction").toString();
+  model.text = QString::fromStdString(node_props::getStringOr(props, "text"));
+  model.onAction = QString::fromStdString(node_props::getStringOr(props, "onAction"));
 
   return model;
 }
 
-TagListModel TagListParser::parse(const QJsonObject &instance) {
+TagListModel TagListParser::parse(const Node &node, const NodeTree &tree) {
   TagListModel model;
-  auto props = instance.value("props").toObject();
+  const auto &props = node.props;
 
-  model.title = props.value("title").toString();
+  model.title = QString::fromStdString(node_props::getStringOr(props, "title"));
 
-  for (const auto &child : instance.value("children").toArray()) {
-    model.items.push_back(parseTagItem(child.toObject()));
-  }
+  forEachChild(node, tree, [&](const Node &child) { model.items.push_back(parseTagItem(child)); });
 
   return model;
 }

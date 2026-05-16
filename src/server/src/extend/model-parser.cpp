@@ -3,37 +3,47 @@
 #include "extend/grid-model.hpp"
 #include "extend/list-model.hpp"
 #include "extend/root-detail-model.hpp"
-#include <qjsonarray.h>
-#include <qjsonobject.h>
-#include <qlogging.h>
 
-ModelParser::ModelParser() = default;
-
-ParsedRenderData ModelParser::parse(const QJsonArray &views) {
+ParsedRenderData ModelParser::parse(const NodeTree &tree, const ApplyResult &result) {
   ParsedRenderData render;
+  render.items.reserve(tree.viewCount());
 
-  render.items.reserve(views.size());
-
-  for (const auto &viewTree : views) {
+  for (size_t i = 0; i < tree.viewCount(); ++i) {
     RenderRoot rootData;
-    auto instance = viewTree.toObject();
-    auto root = instance.value("root").toObject();
-    auto type = root.value("type").toString();
+    int vi = static_cast<int>(i);
 
-    rootData.dirty = root.value("dirty").toBool(true);
-    rootData.propsDirty = root.value("propsDirty").toBool(true);
+    rootData.dirty = result.dirtyViews.contains(vi);
+    rootData.propsDirty = result.propsDirtyViews.contains(vi);
 
-    if (type == "list") {
-      rootData.root = ListModelParser().parse(root);
-      // qDebug() << "push list model with";
-    } else if (type == "grid") {
-      rootData.root = GridModelParser().parse(root);
-    } else if (type == "detail") {
-      rootData.root = RootDetailModelParser().parse(root);
-    } else if (type == "form") {
-      rootData.root = FormModel::fromJson(root);
+    if (!rootData.dirty && !rootData.propsDirty) {
+      render.items.emplace_back(rootData);
+      continue;
+    }
+
+    const auto *componentRoot = tree.viewComponentRoot(vi);
+    if (!componentRoot) {
+      rootData.root = InvalidModel{QString("No component root for view %1").arg(vi)};
+      render.items.emplace_back(rootData);
+      continue;
+    }
+
+    bool childrenDirty = result.dirtyViews.contains(vi);
+
+    if (componentRoot->type == "list") {
+      auto m = ListModelParser().parse(*componentRoot, tree);
+      m.dirty = childrenDirty;
+      rootData.root = std::move(m);
+    } else if (componentRoot->type == "grid") {
+      auto m = GridModelParser().parse(*componentRoot, tree);
+      m.dirty = childrenDirty;
+      rootData.root = std::move(m);
+    } else if (componentRoot->type == "detail") {
+      rootData.root = RootDetailModelParser().parse(*componentRoot, tree);
+    } else if (componentRoot->type == "form") {
+      rootData.root = FormModel::fromNode(*componentRoot, tree);
     } else {
-      rootData.root = InvalidModel{QString("Component of type %1 cannot be used as the root").arg(type)};
+      rootData.root = InvalidModel{QString("Component of type %1 cannot be used as the root")
+                                       .arg(QString::fromStdString(componentRoot->type))};
     }
 
     render.items.emplace_back(rootData);

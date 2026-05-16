@@ -2,15 +2,13 @@
 #include "extend/form-model.hpp"
 #include "extend/grid-model.hpp"
 #include "extend/list-model.hpp"
+#include "extend/node-tree.hpp"
 #include "extend/root-detail-model.hpp"
-#include <qjsonarray.h>
-#include <qjsonobject.h>
 
 struct InvalidModel {
   QString error;
 };
 
-using RenderTree = QJsonObject;
 using RenderModel = std::variant<ListModel, GridModel, FormModel, RootDetailModel, InvalidModel>;
 
 struct RenderRoot {
@@ -25,7 +23,5 @@ struct ParsedRenderData {
 
 class ModelParser {
 public:
-  ModelParser();
-
-  ParsedRenderData parse(const QJsonArray &views);
+  ParsedRenderData parse(const NodeTree &tree, const ApplyResult &result);
 };

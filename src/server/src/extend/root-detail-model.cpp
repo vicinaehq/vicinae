@@ -1,34 +1,26 @@
 #include "extend/root-detail-model.hpp"
 #include "extend/action-model.hpp"
 #include "extend/metadata-model.hpp"
-#include <qjsonarray.h>
-#include <qjsonobject.h>
+#include "extend/node-props.hpp"
 
-RootDetailModelParser::RootDetailModelParser() = default;
-
-RootDetailModel RootDetailModelParser::parse(const QJsonObject &instance) {
+RootDetailModel RootDetailModelParser::parse(const Node &node, const NodeTree &tree) {
   RootDetailModel model;
-  auto props = instance.value("props").toObject();
+  const auto &props = node.props;
 
-  if (props.contains("navigationTitle")) {
-    model.navigationTitle = props.value("navigationTitle").toString();
+  if (auto sv = node_props::getString(props, "navigationTitle")) {
+    model.navigationTitle = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
   }
 
-  model.markdown = props.value("markdown").toString();
-  model.isLoading = props.value("isLoading").toBool();
+  model.markdown = QString::fromStdString(node_props::getStringOr(props, "markdown"));
+  model.isLoading = node_props::getBool(props, "isLoading");
 
-  for (const auto &child : instance.value("children").toArray()) {
-    auto obj = child.toObject();
-    auto type = obj.value("type").toString();
-
-    if (type == "action-panel") {
-      model.actions = ActionPannelParser().parse(obj);
+  forEachChild(node, tree, [&](const Node &child) {
+    if (child.type == "action-panel") {
+      model.actions = ActionPannelParser().parse(child, tree);
+    } else if (child.type == "metadata") {
+      model.metadata = MetadataModelParser().parse(child, tree);
     }
-
-    else if (type == "metadata") {
-      model.metadata = MetadataModelParser().parse(obj);
-    }
-  }
+  });
 
   return model;
 }

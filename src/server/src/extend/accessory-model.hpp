@@ -1,7 +1,7 @@
 #pragma once
 #include "extend/image-model.hpp"
 #include "ui/list-accessory/list-accessory.hpp"
-#include <qjsonvalue.h>
+#include <glaze/json/generic.hpp>
 
 class AccessoryModel {
 public:
@@ -17,7 +17,7 @@ public:
   using Data = std::variant<Tag, Text>;
 
   ListAccessory toAccessory() const;
-  static AccessoryModel fromJson(const QJsonValue &value);
+  static AccessoryModel fromGeneric(const glz::generic &value);
 
   Data data = Text{};
   std::optional<ImageLikeModel> icon;

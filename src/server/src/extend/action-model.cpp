@@ -1,131 +1,121 @@
 #include "extend/action-model.hpp"
 #include "extend/image-model.hpp"
-#include <qjsonarray.h>
-#include <qjsonobject.h>
+#include "extend/node-props.hpp"
+#include "lib/glaze-qt.hpp"
 
-ActionModel ActionPannelParser::parseAction(const QJsonObject &instance) {
-  auto props = instance.value("props").toObject();
+ActionModel ActionPannelParser::parseAction(const Node &node) {
+  const auto &props = node.props;
   ActionModel action;
 
-  action.title = props.value("title").toString();
-  action.onAction = props.value("onAction").toString();
+  action.title = QString::fromStdString(node_props::getStringOr(props, "title"));
+  action.onAction = QString::fromStdString(node_props::getStringOr(props, "onAction"));
 
-  if (props.contains("onSubmit")) { action.onSubmit = props.value("onSubmit").toString(); }
+  if (auto sv = node_props::getString(props, "onSubmit")) {
+    action.onSubmit = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
+  }
 
-  action.type = props.value("type").toString("callback");
+  action.type = QString::fromStdString(node_props::getStringOr(props, "type", "callback"));
 
-  if (props.contains("shortcut")) { action.shortcut = parseKeyboardShortcut(props.value("shortcut")); }
+  if (auto *v = node_props::get(props, "shortcut")) { action.shortcut = parseKeyboardShortcut(*v); }
 
-  if (props.contains("icon")) { action.icon = ImageModelParser().parse(props.value("icon")); }
+  if (auto *v = node_props::get(props, "icon")) { action.icon = ImageModelParser().parse(*v); }
 
-  if (props.contains("quicklink")) { action.quicklink = props.value("quicklink").toObject(); }
+  if (auto *v = node_props::get(props, "quicklink"); v && v->is_object()) {
+    action.quicklink = glazeToQJsonObject(v->get_object());
+  }
 
-  if (props.contains("stableId")) { action.stableId = props.value("stableId").toString(); }
+  if (auto sv = node_props::getString(props, "stableId")) {
+    action.stableId = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
+  }
 
   return action;
 }
 
-ActionPannelSubmenuPtr ActionPannelParser::parseActionPannelSubmenu(const QJsonObject &instance) {
-  auto props = instance.value("props").toObject();
+ActionPannelSubmenuPtr ActionPannelParser::parseActionPannelSubmenu(const Node &node, const NodeTree &tree) {
+  const auto &props = node.props;
   auto model = std::make_shared<ActionPannelSubmenuModel>();
 
-  // TODO: these are stored, but not used anywhere yet:
-  // onSearchTextChange, autoFocus, filtering, isLoading, throttle
+  model->title = QString::fromStdString(node_props::getStringOr(props, "title"));
+  model->onOpen = QString::fromStdString(node_props::getStringOr(props, "onOpen"));
+  model->onSearchTextChange = QString::fromStdString(node_props::getStringOr(props, "onSearchTextChange"));
 
-  model->title = props.value("title").toString();
-  model->onOpen = props.value("onOpen").toString();
-  model->onSearchTextChange = props.value("onSearchTextChange").toString();
+  if (auto *v = node_props::get(props, "icon")) { model->icon = ImageModelParser().parse(*v); }
 
-  if (props.contains("icon")) { model->icon = ImageModelParser().parse(props.value("icon")); }
+  if (auto *v = node_props::get(props, "shortcut")) { model->shortcut = parseKeyboardShortcut(*v); }
 
-  if (props.contains("shortcut")) { model->shortcut = parseKeyboardShortcut(props.value("shortcut")); }
+  if (node_props::has(props, "autoFocus")) { model->autoFocus = node_props::getBool(props, "autoFocus"); }
 
-  if (props.contains("autoFocus")) { model->autoFocus = props.value("autoFocus").toBool(); }
-
-  if (props.contains("filtering")) {
-    auto filteringValue = props.value("filtering");
-    if (filteringValue.isBool()) {
-      model->filtering = filteringValue.toBool();
-    } else if (filteringValue.isObject()) {
-      auto filteringObj = filteringValue.toObject();
+  if (auto *v = node_props::get(props, "filtering")) {
+    if (v->is_boolean()) {
+      model->filtering = v->get_boolean();
+    } else if (v->is_object()) {
+      const auto &filteringObj = v->get_object();
       ActionPannelSubmenuFiltering filtering;
-      if (filteringObj.contains("keepSectionOrder")) {
-        filtering.keepSectionOrder = filteringObj.value("keepSectionOrder").toBool();
+      if (filteringObj.contains("keepSectionOrder") && filteringObj.at("keepSectionOrder").is_boolean()) {
+        filtering.keepSectionOrder = filteringObj.at("keepSectionOrder").get_boolean();
       }
       model->filtering = filtering;
     }
   }
 
-  if (props.contains("isLoading")) { model->isLoading = props.value("isLoading").toBool(); }
+  if (node_props::has(props, "isLoading")) { model->isLoading = node_props::getBool(props, "isLoading"); }
+  if (node_props::has(props, "throttle")) { model->throttle = node_props::getBool(props, "throttle"); }
 
-  if (props.contains("throttle")) { model->throttle = props.value("throttle").toBool(); }
-
-  if (props.contains("stableId")) { model->stableId = props.value("stableId").toString(); }
-
-  for (const auto &child : instance.value("children").toArray()) {
-    auto obj = child.toObject();
-    auto type = obj.value("type").toString();
-
-    if (type == "action-panel-section") {
-      model->children.push_back(parseActionPannelSection(obj));
-    } else if (type == "action-panel-submenu") {
-      model->children.push_back(parseActionPannelSubmenu(obj));
-    } else if (type == "action") {
-      model->children.push_back(parseAction(obj));
-    }
+  if (auto sv = node_props::getString(props, "stableId")) {
+    model->stableId = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
   }
+
+  forEachChild(node, tree, [&](const Node &child) {
+    if (child.type == "action-panel-section") {
+      model->children.push_back(parseActionPannelSection(child, tree));
+    } else if (child.type == "action-panel-submenu") {
+      model->children.push_back(parseActionPannelSubmenu(child, tree));
+    } else if (child.type == "action") {
+      model->children.push_back(parseAction(child));
+    }
+  });
 
   return model;
 }
 
-ActionPannelSectionPtr ActionPannelParser::parseActionPannelSection(const QJsonObject &instance) {
-  auto props = instance.value("props").toObject();
+ActionPannelSectionPtr ActionPannelParser::parseActionPannelSection(const Node &node, const NodeTree &tree) {
+  const auto &props = node.props;
   auto model = std::make_shared<ActionPannelSectionModel>();
-  if (props.contains("title")) { model->title = props.value("title").toString(); }
 
-  for (const auto &child : instance.value("children").toArray()) {
-    auto obj = child.toObject();
-    auto type = obj.value("type").toString();
-
-    if (type == "action") {
-      auto action = parseAction(obj);
-      model->items.push_back(action);
-    } else if (type == "action-panel-submenu") {
-      auto submenu = parseActionPannelSubmenu(obj);
-      model->items.push_back(submenu);
-    }
+  if (auto sv = node_props::getString(props, "title")) {
+    model->title = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
   }
+
+  forEachChild(node, tree, [&](const Node &child) {
+    if (child.type == "action") {
+      model->items.push_back(parseAction(child));
+    } else if (child.type == "action-panel-submenu") {
+      model->items.push_back(parseActionPannelSubmenu(child, tree));
+    }
+  });
 
   return model;
 }
 
-ActionPannelParser::ActionPannelParser() = default;
-
-ActionPannelModel ActionPannelParser::parse(const QJsonObject &instance) {
+ActionPannelModel ActionPannelParser::parse(const Node &node, const NodeTree &tree) {
   ActionPannelModel pannel;
-  auto props = instance["props"].toObject();
-  auto children = instance["children"].toArray();
+  const auto &props = node.props;
 
-  pannel.dirty = instance.value("dirty").toBool(false);
-  pannel.title = props["title"].toString();
-  if (props.contains("stableId")) { pannel.stableId = props.value("stableId").toString(); }
+  pannel.title = QString::fromStdString(node_props::getStringOr(props, "title"));
 
-  for (const auto &ref : children) {
-    auto obj = ref.toObject();
-    auto type = obj.value("type").toString();
-
-    if (type == "action") {
-      pannel.children.emplace_back(parseAction(obj));
-    }
-
-    else if (type == "action-panel-section") {
-      pannel.children.emplace_back(parseActionPannelSection(obj));
-    }
-
-    else if (type == "action-panel-submenu") {
-      pannel.children.emplace_back(parseActionPannelSubmenu(obj));
-    }
+  if (auto sv = node_props::getString(props, "stableId")) {
+    pannel.stableId = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
   }
+
+  forEachChild(node, tree, [&](const Node &child) {
+    if (child.type == "action") {
+      pannel.children.emplace_back(parseAction(child));
+    } else if (child.type == "action-panel-section") {
+      pannel.children.emplace_back(parseActionPannelSection(child, tree));
+    } else if (child.type == "action-panel-submenu") {
+      pannel.children.emplace_back(parseActionPannelSubmenu(child, tree));
+    }
+  });
 
   return pannel;
 }

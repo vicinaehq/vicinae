@@ -10,11 +10,10 @@ type Instance = {
 	id: string;
 	type: InstanceType;
 	props: InstanceProps;
-	dirty: boolean;
-	propsDirty: boolean;
 	parent?: Instance;
 	children: Instance[];
 	_handlers: string[];
+	_createOpIdx?: number;
 };
 type Container = Instance & { _root?: OpaqueRoot };
 type TextInstance = any;
@@ -28,121 +27,31 @@ type MyTimeoutHandle = number;
 type NoTimeout = number;
 
 export type Op =
-	| { op: "create"; id: string; type: string; props: InstanceProps }
+	| { op: "create"; id: string; type: string; props: InstanceProps; parentId?: string; index?: number }
 	| { op: "update"; id: string; props: InstanceProps }
 	| { op: "move"; id: string; parentId: string; index: number }
 	| { op: "remove"; id: string };
-
-type ShadowNode = {
-	type: string;
-	props: InstanceProps;
-	dirty: boolean;
-	propsDirty: boolean;
-	parentId: string | null;
-	childIds: string[];
-};
 
 const ctx: HostContext = {};
 
 let nextNodeId = 0;
 const genId = () => `n${nextNodeId++}`;
 
-const emitDirty = (instance?: Instance) => {
-	let current: Instance | undefined = instance;
-
-	while (current) {
-		current.dirty = true;
-		current = current.parent;
+const detachInstance = (instance: Instance) => {
+	for (const handler of instance._handlers)
+		callbackManager.deferRemoval(handler);
+	for (const child of instance.children) {
+		detachInstance(child);
 	}
 };
 
-const emitShadowDirty = (nodes: Map<string, ShadowNode>, nodeId: string | null) => {
-	let id = nodeId;
-	while (id) {
-		const node = nodes.get(id);
-		if (!node) break;
-		node.dirty = true;
-		id = node.parentId;
-	}
+type HostConfigDeps = {
+	ops: Op[];
 };
 
-const applyShadowOp = (nodes: Map<string, ShadowNode>, op: Op) => {
-	switch (op.op) {
-		case "create":
-			nodes.set(op.id, {
-				type: op.type,
-				props: op.props,
-				dirty: true,
-				propsDirty: true,
-				parentId: null,
-				childIds: [],
-			});
-			break;
-
-		case "update": {
-			const node = nodes.get(op.id);
-			if (!node) break;
-			node.props = op.props;
-			node.propsDirty = true;
-			emitShadowDirty(nodes, node.parentId);
-			break;
-		}
-
-		case "move": {
-			const node = nodes.get(op.id);
-			const newParent = nodes.get(op.parentId);
-			if (!node || !newParent) break;
-
-			if (node.parentId) {
-				const oldParent = nodes.get(node.parentId);
-				if (oldParent) {
-					const idx = oldParent.childIds.indexOf(op.id);
-					if (idx !== -1) oldParent.childIds.splice(idx, 1);
-				}
-			}
-
-			node.parentId = op.parentId;
-			newParent.childIds.splice(op.index, 0, op.id);
-			emitShadowDirty(nodes, op.parentId);
-			break;
-		}
-
-		case "remove": {
-			const node = nodes.get(op.id);
-			if (!node) break;
-
-			if (node.parentId) {
-				const parent = nodes.get(node.parentId);
-				if (parent) {
-					const idx = parent.childIds.indexOf(op.id);
-					if (idx !== -1) parent.childIds.splice(idx, 1);
-					emitShadowDirty(nodes, node.parentId);
-				}
-			}
-
-			const removeRecursive = (removeId: string) => {
-				const n = nodes.get(removeId);
-				if (!n) return;
-				for (const childId of n.childIds) removeRecursive(childId);
-				nodes.delete(removeId);
-			};
-			removeRecursive(op.id);
-			break;
-		}
-	}
+const pushOp = (deps: HostConfigDeps, op: Op) => {
+	deps.ops.push(op);
 };
-
-function traceWrap(hostConfig: any) {
-	let traceWrappedHostConfig = {} as any;
-	Object.keys(hostConfig).map((key) => {
-		const func = hostConfig[key];
-		traceWrappedHostConfig[key] = (...args: any[]) => {
-			console.log(key);
-			return func(...args);
-		};
-	});
-	return traceWrappedHostConfig;
-}
 
 const processProps = (props: Record<string, any>): Record<string, any> => {
 	const sanitized: Record<string, any> = {};
@@ -158,25 +67,7 @@ const processProps = (props: Record<string, any>): Record<string, any> => {
 	return sanitized;
 };
 
-const detachInstance = (instance: Instance) => {
-	for (const handler of instance._handlers)
-		callbackManager.deferRemoval(handler);
-	for (const child of instance.children) {
-		detachInstance(child);
-	}
-};
-
 type FormInstance = any;
-
-type HostConfigDeps = {
-	ops: Op[];
-	shadowNodes: Map<string, ShadowNode>;
-};
-
-const pushOp = (deps: HostConfigDeps, op: Op) => {
-	deps.ops.push(op);
-	applyShadowOp(deps.shadowNodes, op);
-};
 
 const createHostConfig = (hostCtx: HostContext, callback: () => void, deps: HostConfigDeps) => {
 	const hostConfig: Reconciler.HostConfig<
@@ -218,6 +109,7 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void, deps: Host
 			const nodeId = genId();
 			const processedProps = processProps(initialProps);
 
+			const createOpIdx = deps.ops.length;
 			pushOp(deps, { op: "create", id: nodeId, type, props: processedProps });
 
 			return {
@@ -225,9 +117,8 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void, deps: Host
 				type,
 				props: processedProps,
 				children: [],
-				dirty: true,
-				propsDirty: true,
 				_handlers: handlers,
+				_createOpIdx: createOpIdx,
 			};
 		},
 
@@ -292,6 +183,7 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void, deps: Host
 		detachDeletedInstance(instance) { },
 
 		appendChild(parent: Instance, child: Instance) {
+			const wasUnparented = !child.parent;
 			const selfIdx = parent.children.indexOf(child);
 
 			if (selfIdx !== -1) {
@@ -299,11 +191,18 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void, deps: Host
 			}
 
 			child.parent = parent;
-			emitDirty(parent);
 			parent.children.push(child);
 
 			const index = parent.children.indexOf(child);
-			pushOp(deps, { op: "move", id: child.id, parentId: parent.id, index });
+
+			if (wasUnparented && child._createOpIdx !== undefined) {
+				const createOp = deps.ops[child._createOpIdx] as any;
+				createOp.parentId = parent.id;
+				createOp.index = index;
+				delete child._createOpIdx;
+			} else {
+				pushOp(deps, { op: "move", id: child.id, parentId: parent.id, index });
+			}
 		},
 
 		appendChildToContainer(container: Instance, child: Instance) {
@@ -312,6 +211,7 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void, deps: Host
 
 		insertBefore(parent, child, beforeChild) {
 			const beforeIndex = parent.children.indexOf(beforeChild);
+			const wasUnparented = !child.parent;
 			const selfIdx = parent.children.indexOf(child);
 
 			if (selfIdx != -1) {
@@ -321,10 +221,17 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void, deps: Host
 			if (beforeIndex != -1) {
 				parent.children.splice(beforeIndex, 0, child);
 				child.parent = parent;
-				emitDirty(parent);
 
 				const index = parent.children.indexOf(child);
-				pushOp(deps, { op: "move", id: child.id, parentId: parent.id, index });
+
+				if (wasUnparented && child._createOpIdx !== undefined) {
+					const createOp = deps.ops[child._createOpIdx] as any;
+					createOp.parentId = parent.id;
+					createOp.index = index;
+					delete child._createOpIdx;
+				} else {
+					pushOp(deps, { op: "move", id: child.id, parentId: parent.id, index });
+				}
 			} else {
 				throw new Error("Unreachable");
 			}
@@ -339,7 +246,6 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void, deps: Host
 
 			if (idx == -1) return;
 
-			emitDirty(parent);
 			parent.children.splice(idx, 1);
 			delete child.parent;
 			detachInstance(child);
@@ -389,8 +295,6 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void, deps: Host
 				props[k] = v;
 			}
 
-			emitDirty(instance.parent);
-			instance.propsDirty = true;
 			instance.props = props;
 
 			pushOp(deps, { op: "update", id: instance.id, props });
@@ -409,7 +313,6 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void, deps: Host
 			container.children = [];
 		},
 
-		/** added for react 19 - we don't have to implement most of this */
 		NotPendingTransition: null,
 		HostTransitionContext: {} as any,
 
@@ -453,61 +356,15 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void, deps: Host
 	return hostConfig;
 };
 
-export type ViewData = {
-	root?: SerializedInstance;
-};
-
 export type RendererConfig = {
 	maxRendersPerSecond?: number;
-	onInitialRender: (views: ViewData[]) => void;
-	onUpdate?: (views: ViewData[]) => void;
-};
-
-type SerializedInstance = {
-	props: InstanceProps;
-	type: string;
-	dirty: boolean;
-	propsDirty: boolean;
-	children: SerializedInstance[];
-};
-
-const serializeInstance = (instance: Instance): SerializedInstance => {
-	const obj: SerializedInstance = {
-		props: instance.props,
-		type: instance.type,
-		dirty: instance.dirty,
-		propsDirty: instance.propsDirty,
-		children: instance.children.map(serializeInstance),
-	};
-
-	instance.dirty = false;
-	instance.propsDirty = false;
-
-	return obj;
-};
-
-const serializeFromShadow = (nodes: Map<string, ShadowNode>, nodeId: string): SerializedInstance => {
-	const node = nodes.get(nodeId)!;
-	const obj: SerializedInstance = {
-		props: node.props,
-		type: node.type,
-		dirty: node.dirty,
-		propsDirty: node.propsDirty,
-		children: node.childIds.map((id) => serializeFromShadow(nodes, id)),
-	};
-
-	node.dirty = false;
-	node.propsDirty = false;
-
-	return obj;
+	onUpdate: (ops: Op[]) => void;
 };
 
 const createContainer = (): Container => {
 	return {
 		id: "root",
 		type: "root",
-		dirty: true,
-		propsDirty: false,
 		props: {},
 		children: [],
 		_handlers: [],
@@ -519,56 +376,29 @@ const MAX_RENDER_PER_SECOND = 60;
 export const createRenderer = (config: RendererConfig) => {
 	const container = createContainer();
 	const ops: Op[] = [];
-	const shadowNodes = new Map<string, ShadowNode>();
-
-	shadowNodes.set(container.id, {
-		type: container.type,
-		props: {},
-		dirty: true,
-		propsDirty: false,
-		parentId: null,
-		childIds: [],
-	});
 
 	let debounce: NodeJS.Timer | null = null;
 	const debounceInterval = 1000 / MAX_RENDER_PER_SECOND;
-	let lastRender = performance.now();
 
 	const renderImpl = () => {
 		if (!debounce) {
 			debounce = setTimeout(() => {
 				debounce = null;
+				if (ops.length === 0) return;
 
-				const start = performance.now();
-				const root = serializeInstance(container);
-				const shadowRoot = serializeFromShadow(shadowNodes, container.id);
-
-				const rootJson = JSON.stringify(root);
-				const shadowJson = JSON.stringify(shadowRoot);
-				if (rootJson !== shadowJson) {
-					console.error("[RECONCILER] Shadow tree mismatch!");
-				} else {
-					console.error(`[RECONCILER] Shadow tree OK (${ops.length} ops, ${shadowNodes.size} nodes)`);
-				}
-
-				const views = root.children.map<ViewData>((child) => ({
-					root: child.children.at(-1),
-				}));
-
-				config.onUpdate?.(views);
+				config.onUpdate(ops.slice());
 				callbackManager.flushDeferredRemovals();
 				ops.length = 0;
-
-				const end = performance.now();
-				lastRender = end;
 			}, debounceInterval);
 		}
 	};
 
-	const deps: HostConfigDeps = { ops, shadowNodes };
+	const deps: HostConfigDeps = { ops };
 	const hostConfig = createHostConfig({}, renderImpl, deps);
 	const reconciler = Reconciler(
-		process.env.RECONCILER_TRACE === "1" ? traceWrap(hostConfig) : hostConfig,
+		process.env.RECONCILER_TRACE === "1"
+			? traceWrap(hostConfig)
+			: hostConfig,
 	);
 
 	return {
@@ -600,3 +430,15 @@ export const createRenderer = (config: RendererConfig) => {
 		},
 	};
 };
+
+function traceWrap(hostConfig: any) {
+	let traceWrappedHostConfig = {} as any;
+	Object.keys(hostConfig).map((key) => {
+		const func = hostConfig[key];
+		traceWrappedHostConfig[key] = (...args: any[]) => {
+			console.log(key);
+			return func(...args);
+		};
+	});
+	return traceWrappedHostConfig;
+}

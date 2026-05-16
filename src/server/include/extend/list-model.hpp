@@ -6,11 +6,10 @@
 #include "extend/event-counted.hpp"
 #include "extend/image-model.hpp"
 #include "extend/dropdown-model.hpp"
+#include "extend/node-tree.hpp"
 #include "extend/pagination-model.hpp"
-#include <qjsonobject.h>
 
 struct ListItemViewModel {
-  bool changed;
   std::string id;
   std::string title;
   std::string subtitle;
@@ -32,11 +31,10 @@ using ListChild = std::variant<ListItemViewModel, ListSectionModel>;
 using ListSearchBarAccessory = std::variant<DropdownModel>;
 
 struct ListModel {
+  bool dirty = true;
   bool isLoading = false;
   bool filtering = false;
   bool throttle = false;
-  bool dirty = false;
-  bool propsDirty = false;
   bool isShowingDetail = false;
   std::string navigationTitle;
   std::string searchPlaceholderText;
@@ -51,13 +49,11 @@ struct ListModel {
 };
 
 class ListModelParser {
-  ListItemViewModel parseListItem(const QJsonObject &instance, size_t index);
-  ListSectionModel parseSection(const QJsonObject &instance);
-  ImageLikeModel parseListItemIcon(const QJsonValue &value) const;
-  QString parseListItemTitle(const QJsonValue &value) const;
+  ListItemViewModel parseListItem(const Node &node, const NodeTree &tree, size_t index);
+  ListSectionModel parseSection(const Node &node, const NodeTree &tree);
+  ImageLikeModel parseListItemIcon(const glz::generic &value) const;
+  std::string parseListItemTitle(const glz::generic &value) const;
 
 public:
-  ListModelParser();
-
-  ListModel parse(const QJsonObject &instance);
+  ListModel parse(const Node &node, const NodeTree &tree);
 };

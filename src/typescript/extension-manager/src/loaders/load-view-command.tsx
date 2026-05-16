@@ -1,4 +1,4 @@
-import { createRenderer, type ViewData } from "../reconciler";
+import { createRenderer, type Op } from "../reconciler";
 import { type ComponentType, Suspense } from "react";
 import * as React from "react";
 import { NavigationProvider } from "../navigation-provider";
@@ -60,12 +60,13 @@ const App: React.FC<{ component: ComponentType; launchProps: any }> = ({
 export default async function(data: extensionServer.LaunchEventData) {
 	const module = await import(data.entrypoint);
 	const Component = module.default.default;
-	const sendRender = (views: ViewData[]) => {
-		globalState.client.UI.render(JSON.stringify({ views }));
+
+	const sendOps = (ops: Op[]) => {
+		globalState.client.UI.applyOps(JSON.stringify(ops));
 	};
+
 	const renderer = createRenderer({
-		onInitialRender: sendRender,
-		onUpdate: sendRender,
+		onUpdate: sendOps,
 	});
 	globalState.renderer = renderer;
 

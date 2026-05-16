@@ -265,6 +265,10 @@ class UIService {
 		return this.transport.request("UI/render", { json});	
 	}
 
+	applyOps(ops: string): Promise<void> {
+		return this.transport.request("UI/applyOps", { ops});	
+	}
+
 	showToast(id: string, title: string, message: string, style: ToastStyle): Promise<void> {
 		return this.transport.request("UI/showToast", { id, title, message, style});	
 	}

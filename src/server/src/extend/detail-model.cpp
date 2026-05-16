@@ -1,23 +1,18 @@
 #include "extend/detail-model.hpp"
 #include "extend/metadata-model.hpp"
-#include <qjsonarray.h>
-#include <qjsonobject.h>
+#include "extend/node-props.hpp"
 
-DetailModelParser::DetailModelParser() = default;
-
-DetailModel DetailModelParser::parse(const QJsonObject &instance) {
+DetailModel DetailModelParser::parse(const Node &node, const NodeTree &tree) {
   DetailModel detail;
-  auto props = instance.value("props").toObject();
-  auto children = instance.value("children").toArray();
+  const auto &props = node.props;
 
-  if (props.contains("markdown")) { detail.markdown = props.value("markdown").toString(); }
-
-  for (const auto &child : children) {
-    auto obj = child.toObject();
-    auto type = obj["type"].toString();
-
-    if (type == "metadata") { detail.metadata = MetadataModelParser().parse(obj); }
+  if (auto sv = node_props::getString(props, "markdown")) {
+    detail.markdown = QString::fromUtf8(sv->data(), static_cast<qsizetype>(sv->size()));
   }
+
+  forEachChild(node, tree, [&](const Node &child) {
+    if (child.type == "metadata") { detail.metadata = MetadataModelParser().parse(child, tree); }
+  });
 
   return detail;
 }

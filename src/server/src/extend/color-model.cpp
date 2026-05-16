@@ -1,31 +1,37 @@
 #include "extend/color-model.hpp"
 #include "ui/image/url.hpp"
-#include "theme.hpp"
-#include <qjsonobject.h>
 
-ColorLikeModelParser::ColorLikeModelParser() = default;
+ColorLike ColorLikeModelParser::parse(const glz::generic &colorLike) {
+  if (!colorLike.is_object()) return QColor();
 
-ColorLike ColorLikeModelParser::parse(const QJsonValue &colorLike) {
-  auto colorLikeObj = colorLike.toObject();
+  const auto &obj = colorLike.get_object();
 
-  if (colorLikeObj.isEmpty()) {
-    qWarning() << "ColorLikeModelParser: Input JSON object is empty. colorLike =" << colorLike;
-    return QColor();
+  if (obj.contains("raw")) {
+    auto &raw = obj.at("raw");
+    if (!raw.is_string()) return QColor();
+    auto rawStr = QString::fromStdString(raw.get_string());
+    if (auto tint = ImageURL::tintForName(rawStr); tint != SemanticColor::InvalidTint) { return tint; }
+    return rawStr;
   }
 
-  if (colorLikeObj.contains("raw")) {
-    auto raw = colorLikeObj.value("raw").toString();
-    if (auto tint = ImageURL::tintForName(raw); tint != SemanticColor::InvalidTint) { return tint; }
-    return raw;
+  if (obj.contains("dynamic")) {
+    auto &dynamic = obj.at("dynamic");
+    if (!dynamic.is_object()) return QColor();
+    const auto &dynObj = dynamic.get_object();
+
+    auto light = dynObj.contains("light") && dynObj.at("light").is_string()
+                     ? QString::fromStdString(dynObj.at("light").get_string())
+                     : QString();
+    auto dark = dynObj.contains("dark") && dynObj.at("dark").is_string()
+                    ? QString::fromStdString(dynObj.at("dark").get_string())
+                    : QString();
+    bool adjustContrast = true;
+    if (dynObj.contains("adjustContrast") && dynObj.at("adjustContrast").is_boolean()) {
+      adjustContrast = dynObj.at("adjustContrast").get_boolean();
+    }
+
+    return DynamicColor{.light = light, .dark = dark, .adjustContrast = adjustContrast};
   }
 
-  if (colorLikeObj.contains("dynamic")) {
-    auto dynamic = colorLikeObj.value("dynamic").toObject();
-    return DynamicColor{.light = dynamic.value("light").toString(),
-                        .dark = dynamic.value("dark").toString(),
-                        .adjustContrast = dynamic.value("adjustContrast").toBool(true)};
-  }
-
-  qWarning() << "ColorLikeModelParser: Invalid colorLike input. colorLike =" << colorLike;
   return QColor();
 }

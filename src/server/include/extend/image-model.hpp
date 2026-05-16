@@ -1,8 +1,8 @@
 #pragma once
 #include "theme.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
-#include <qjsonobject.h>
 #include <filesystem>
+#include <glaze/json/generic.hpp>
 #include <qstring.h>
 #include <variant>
 
@@ -29,7 +29,5 @@ using ImageLikeModel =
 
 class ImageModelParser {
 public:
-  ImageModelParser();
-
-  ImageLikeModel parse(const QJsonValue &root);
+  ImageLikeModel parse(const glz::generic &imageLike);
 };

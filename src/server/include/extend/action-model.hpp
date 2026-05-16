@@ -1,7 +1,7 @@
 #pragma once
 #include <QList>
-#include <QJsonValue>
 #include <QStringList>
+#include <glaze/json/generic.hpp>
 #include <memory>
 #include <optional>
 #include <qjsonobject.h>
@@ -9,6 +9,7 @@
 #include <variant>
 #include <vector>
 #include "extend/image-model.hpp"
+#include "extend/node-tree.hpp"
 #include "lib/keyboard/keyboard.hpp"
 
 struct KeyboardShortcutModel {
@@ -80,20 +81,18 @@ struct ActionPannelSubmenuModel {
 using ActionPannelItem = std::variant<ActionModel, ActionPannelSectionPtr, ActionPannelSubmenuPtr>;
 
 struct ActionPannelModel {
-  bool dirty;
+  bool dirty = true;
   QString title;
   std::vector<ActionPannelItem> children;
   std::optional<QString> stableId;
 };
 
 class ActionPannelParser {
-  ActionModel parseAction(const QJsonObject &instance);
-
-  ActionPannelSectionPtr parseActionPannelSection(const QJsonObject &instance);
-  ActionPannelSubmenuPtr parseActionPannelSubmenu(const QJsonObject &instance);
+  ActionModel parseAction(const Node &node);
+  ActionPannelSectionPtr parseActionPannelSection(const Node &node, const NodeTree &tree);
+  ActionPannelSubmenuPtr parseActionPannelSubmenu(const Node &node, const NodeTree &tree);
 
 public:
-  ActionPannelParser();
-  static Keyboard::Shortcut parseKeyboardShortcut(const QJsonValue &shortcut);
-  ActionPannelModel parse(const QJsonObject &instance);
+  static Keyboard::Shortcut parseKeyboardShortcut(const glz::generic &shortcut);
+  ActionPannelModel parse(const Node &node, const NodeTree &tree);
 };

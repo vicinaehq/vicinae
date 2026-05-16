@@ -2,7 +2,7 @@
 
 #include "extend/action-model.hpp"
 #include "extend/metadata-model.hpp"
-#include <qjsonobject.h>
+#include "extend/node-tree.hpp"
 
 struct RootDetailModel {
   bool isLoading;
@@ -14,6 +14,5 @@ struct RootDetailModel {
 
 class RootDetailModelParser {
 public:
-  RootDetailModelParser();
-  RootDetailModel parse(const QJsonObject &instance);
+  RootDetailModel parse(const Node &node, const NodeTree &tree);
 };

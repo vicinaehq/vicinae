@@ -1,4 +1,6 @@
 #pragma once
+#include "extend/model-parser.hpp"
+#include "extend/node-tree.hpp"
 #include "extension/extension-command.hpp"
 #include "extension/services/tsapi-image.hpp"
 #include "generated/tsapi.hpp"
@@ -10,6 +12,7 @@
 #include <QClipboard>
 #include <QGuiApplication>
 #include <QtConcurrent/QtConcurrent>
+#include <glaze/json/read.hpp>
 #include <qfuturewatcher.h>
 #include <qlogging.h>
 #include <queue>
@@ -32,15 +35,21 @@ public:
         m_toast(toast) {
     connect(&m_modelWatcher, &QFutureWatcher<ParsedRenderData>::finished, this, &ExtUIService::modelCreated);
     connect(navigation, &NavigationController::viewPoped, this, &ExtUIService::handleViewPoped);
+    m_tree.initRoot("root");
   }
 
   void setSubtitleOverride(const std::optional<QString> &subtitle) {
     m_command->setSubtitleOverride(subtitle);
   }
 
-  Void::Future render(std::string json) override {
-    m_renderQueue.push(std::move(json));
-    processNextRender();
+  Void::Future render(std::string) override {
+    qWarning() << "ExtUIService::render() is deprecated, use applyOps()";
+    return Void::ok();
+  }
+
+  Void::Future applyOps(std::string ops) override {
+    m_opsQueue.push(std::move(ops));
+    processNextOps();
     return Void::ok();
   }
 
@@ -146,7 +155,7 @@ private slots:
       if (!shouldSkipRender) entry.renderFn(model.root);
     }
 
-    processNextRender();
+    processNextOps();
   }
 
   void handleViewPoped(const BaseView *view) {
@@ -160,17 +169,20 @@ private slots:
   }
 
 private:
-  void processNextRender() {
-    if (m_modelWatcher.isRunning() || m_renderQueue.empty()) return;
+  void processNextOps() {
+    if (m_modelWatcher.isRunning() || m_opsQueue.empty()) return;
 
-    auto json = std::move(m_renderQueue.front());
-    m_renderQueue.pop();
+    auto opsJson = std::move(m_opsQueue.front());
+    m_opsQueue.pop();
 
-    m_modelWatcher.setFuture(QtConcurrent::run([json = std::move(json)]() -> ParsedRenderData {
-      QJsonParseError parseError;
-      auto doc = QJsonDocument::fromJson(QByteArray::fromStdString(json), &parseError);
-      if (parseError.error) return {};
-      return ModelParser().parse(doc.object().value("views").toArray());
+    m_modelWatcher.setFuture(QtConcurrent::run([this, opsJson = std::move(opsJson)]() -> ParsedRenderData {
+      std::vector<TaggedOp> ops;
+      if (glz::read_json(ops, opsJson)) return {};
+
+      auto result = m_tree.applyOps(ops);
+      if (result.dirtyViews.empty() && result.propsDirtyViews.empty()) return {};
+
+      return ModelParser().parse(m_tree, result);
     }));
   }
 
@@ -209,8 +221,9 @@ private:
   }
 
   std::vector<ViewEntry> m_views;
-  std::queue<std::string> m_renderQueue;
+  std::queue<std::string> m_opsQueue;
   QFutureWatcher<ParsedRenderData> m_modelWatcher;
+  NodeTree m_tree;
   NavigationController *m_navigation;
   std::shared_ptr<ExtensionCommand> m_command;
   tsapi::AbstractEventCore *m_eventCore;

@@ -96,6 +96,7 @@ struct ConfirmAlertPayload {
 
 service UI {
   fn render(json: string) => void;
+  fn applyOps(ops: string) => void;
   fn showToast(id: string, title: string, message: string, style: ToastStyle) => void;
   fn updateToast(id: string, title: string) => void;
   fn hideToast(id: string) => void;
