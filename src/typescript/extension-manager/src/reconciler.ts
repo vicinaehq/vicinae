@@ -7,7 +7,7 @@ import { callbackManager } from "./callback";
 type InstanceType = string;
 type InstanceProps = Record<string, any>;
 type Instance = {
-	id: Symbol;
+	id: string;
 	type: InstanceType;
 	props: InstanceProps;
 	dirty: boolean;
@@ -27,15 +27,108 @@ type ChildSet = {};
 type MyTimeoutHandle = number;
 type NoTimeout = number;
 
+export type Op =
+	| { op: "create"; id: string; type: string; props: InstanceProps }
+	| { op: "update"; id: string; props: InstanceProps }
+	| { op: "move"; id: string; parentId: string; index: number }
+	| { op: "remove"; id: string };
+
+type ShadowNode = {
+	type: string;
+	props: InstanceProps;
+	dirty: boolean;
+	propsDirty: boolean;
+	parentId: string | null;
+	childIds: string[];
+};
+
 const ctx: HostContext = {};
+
+let nextNodeId = 0;
+const genId = () => `n${nextNodeId++}`;
 
 const emitDirty = (instance?: Instance) => {
 	let current: Instance | undefined = instance;
 
-	//while (current && !current.dirty) {
 	while (current) {
 		current.dirty = true;
 		current = current.parent;
+	}
+};
+
+const emitShadowDirty = (nodes: Map<string, ShadowNode>, nodeId: string | null) => {
+	let id = nodeId;
+	while (id) {
+		const node = nodes.get(id);
+		if (!node) break;
+		node.dirty = true;
+		id = node.parentId;
+	}
+};
+
+const applyShadowOp = (nodes: Map<string, ShadowNode>, op: Op) => {
+	switch (op.op) {
+		case "create":
+			nodes.set(op.id, {
+				type: op.type,
+				props: op.props,
+				dirty: true,
+				propsDirty: true,
+				parentId: null,
+				childIds: [],
+			});
+			break;
+
+		case "update": {
+			const node = nodes.get(op.id);
+			if (!node) break;
+			node.props = op.props;
+			node.propsDirty = true;
+			emitShadowDirty(nodes, node.parentId);
+			break;
+		}
+
+		case "move": {
+			const node = nodes.get(op.id);
+			const newParent = nodes.get(op.parentId);
+			if (!node || !newParent) break;
+
+			if (node.parentId) {
+				const oldParent = nodes.get(node.parentId);
+				if (oldParent) {
+					const idx = oldParent.childIds.indexOf(op.id);
+					if (idx !== -1) oldParent.childIds.splice(idx, 1);
+				}
+			}
+
+			node.parentId = op.parentId;
+			newParent.childIds.splice(op.index, 0, op.id);
+			emitShadowDirty(nodes, op.parentId);
+			break;
+		}
+
+		case "remove": {
+			const node = nodes.get(op.id);
+			if (!node) break;
+
+			if (node.parentId) {
+				const parent = nodes.get(node.parentId);
+				if (parent) {
+					const idx = parent.childIds.indexOf(op.id);
+					if (idx !== -1) parent.childIds.splice(idx, 1);
+					emitShadowDirty(nodes, node.parentId);
+				}
+			}
+
+			const removeRecursive = (removeId: string) => {
+				const n = nodes.get(removeId);
+				if (!n) return;
+				for (const childId of n.childIds) removeRecursive(childId);
+				nodes.delete(removeId);
+			};
+			removeRecursive(op.id);
+			break;
+		}
 	}
 };
 
@@ -65,9 +158,6 @@ const processProps = (props: Record<string, any>): Record<string, any> => {
 	return sanitized;
 };
 
-/**
- * Cleanup all event handlers and other things that are related to the instance
- */
 const detachInstance = (instance: Instance) => {
 	for (const handler of instance._handlers)
 		callbackManager.deferRemoval(handler);
@@ -78,7 +168,17 @@ const detachInstance = (instance: Instance) => {
 
 type FormInstance = any;
 
-const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
+type HostConfigDeps = {
+	ops: Op[];
+	shadowNodes: Map<string, ShadowNode>;
+};
+
+const pushOp = (deps: HostConfigDeps, op: Op) => {
+	deps.ops.push(op);
+	applyShadowOp(deps.shadowNodes, op);
+};
+
+const createHostConfig = (hostCtx: HostContext, callback: () => void, deps: HostConfigDeps) => {
 	const hostConfig: Reconciler.HostConfig<
 		InstanceType,
 		InstanceProps,
@@ -115,10 +215,15 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 				}
 			}
 
+			const nodeId = genId();
+			const processedProps = processProps(initialProps);
+
+			pushOp(deps, { op: "create", id: nodeId, type, props: processedProps });
+
 			return {
-				id: Symbol(type),
+				id: nodeId,
 				type,
-				props: processProps(initialProps),
+				props: processedProps,
 				children: [],
 				dirty: true,
 				propsDirty: true,
@@ -137,37 +242,6 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		finalizeInitialChildren(instance, type, props, root, ctx) {
 			return false;
 		},
-
-		/*
-		prepareUpdate(instance, type, oldProps, newProps, root, ctx) {
-			const changes = [];
-
-			for (const key in newProps) {
-				if (key === 'children') { continue ; }
-
-				const oldValue = oldProps[key];
-				const newValue = newProps[key];
-
-				if (typeof oldValue !== typeof newValue) {
-					changes.push(key, newValue);
-					continue ;
-				}
-
-				if (typeof newValue === 'object') {
-					if (!isDeepEqual(newValue, oldValue)) {
-						changes.push(key, newValue);
-					}
-					continue ;
-				}
-
-				if (oldValue !== newValue) {
-					changes.push(key, newValue);
-				}
-			}
-
-			return changes.length > 0 ? changes : null;
-		},
-		*/
 
 		shouldSetTextContent() {
 			return false;
@@ -199,16 +273,9 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		scheduleTimeout: setTimeout,
 		cancelTimeout: (id: MyTimeoutHandle) => clearTimeout(id),
 		noTimeout: -1,
-		//supportsMicrotasks: false,
 		scheduleMicrotask: queueMicrotask,
 
 		isPrimaryRenderer: true,
-
-		/*
-		getCurrentEventPriority() {
-			return DefaultEventPriority;
-		},
-		*/
 
 		getInstanceFromNode() {
 			return null;
@@ -222,7 +289,6 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 			return null;
 		},
 
-		// not sure what this one is really about, as it's undocumented
 		detachDeletedInstance(instance) { },
 
 		appendChild(parent: Instance, child: Instance) {
@@ -235,6 +301,9 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 			child.parent = parent;
 			emitDirty(parent);
 			parent.children.push(child);
+
+			const index = parent.children.indexOf(child);
+			pushOp(deps, { op: "move", id: child.id, parentId: parent.id, index });
 		},
 
 		appendChildToContainer(container: Instance, child: Instance) {
@@ -243,8 +312,6 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 
 		insertBefore(parent, child, beforeChild) {
 			const beforeIndex = parent.children.indexOf(beforeChild);
-
-			// insertBefore is used for reordering
 			const selfIdx = parent.children.indexOf(child);
 
 			if (selfIdx != -1) {
@@ -255,6 +322,9 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 				parent.children.splice(beforeIndex, 0, child);
 				child.parent = parent;
 				emitDirty(parent);
+
+				const index = parent.children.indexOf(child);
+				pushOp(deps, { op: "move", id: child.id, parentId: parent.id, index });
 			} else {
 				throw new Error("Unreachable");
 			}
@@ -273,6 +343,8 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 			parent.children.splice(idx, 1);
 			delete child.parent;
 			detachInstance(child);
+
+			pushOp(deps, { op: "remove", id: child.id });
 		},
 
 		removeChildFromContainer(container: Instance, child: Instance) {
@@ -320,6 +392,8 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 			emitDirty(instance.parent);
 			instance.propsDirty = true;
 			instance.props = props;
+
+			pushOp(deps, { op: "update", id: instance.id, props });
 		},
 
 		replaceContainerChildren() { },
@@ -329,6 +403,9 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		unhideTextInstance() { },
 
 		clearContainer(container) {
+			for (const child of container.children) {
+				pushOp(deps, { op: "remove", id: child.id });
+			}
 			container.children = [];
 		},
 
@@ -409,9 +486,25 @@ const serializeInstance = (instance: Instance): SerializedInstance => {
 	return obj;
 };
 
+const serializeFromShadow = (nodes: Map<string, ShadowNode>, nodeId: string): SerializedInstance => {
+	const node = nodes.get(nodeId)!;
+	const obj: SerializedInstance = {
+		props: node.props,
+		type: node.type,
+		dirty: node.dirty,
+		propsDirty: node.propsDirty,
+		children: node.childIds.map((id) => serializeFromShadow(nodes, id)),
+	};
+
+	node.dirty = false;
+	node.propsDirty = false;
+
+	return obj;
+};
+
 const createContainer = (): Container => {
 	return {
-		id: Symbol("root"),
+		id: "root",
 		type: "root",
 		dirty: true,
 		propsDirty: false,
@@ -425,6 +518,18 @@ const MAX_RENDER_PER_SECOND = 60;
 
 export const createRenderer = (config: RendererConfig) => {
 	const container = createContainer();
+	const ops: Op[] = [];
+	const shadowNodes = new Map<string, ShadowNode>();
+
+	shadowNodes.set(container.id, {
+		type: container.type,
+		props: {},
+		dirty: true,
+		propsDirty: false,
+		parentId: null,
+		childIds: [],
+	});
+
 	let debounce: NodeJS.Timer | null = null;
 	const debounceInterval = 1000 / MAX_RENDER_PER_SECOND;
 	let lastRender = performance.now();
@@ -436,9 +541,15 @@ export const createRenderer = (config: RendererConfig) => {
 
 				const start = performance.now();
 				const root = serializeInstance(container);
+				const shadowRoot = serializeFromShadow(shadowNodes, container.id);
 
-				//writeFileSync("/tmp/render.txt", `${inspect(root, { depth: null, colors: true })}`);
-				//appendFileSync('/tmp/render.txt', JSON.stringify(root, null, 2));
+				const rootJson = JSON.stringify(root);
+				const shadowJson = JSON.stringify(shadowRoot);
+				if (rootJson !== shadowJson) {
+					console.error("[RECONCILER] Shadow tree mismatch!");
+				} else {
+					console.error(`[RECONCILER] Shadow tree OK (${ops.length} ops, ${shadowNodes.size} nodes)`);
+				}
 
 				const views = root.children.map<ViewData>((child) => ({
 					root: child.children.at(-1),
@@ -446,17 +557,16 @@ export const createRenderer = (config: RendererConfig) => {
 
 				config.onUpdate?.(views);
 				callbackManager.flushDeferredRemovals();
+				ops.length = 0;
 
 				const end = performance.now();
-
-				//console.error(`[PERF] processed render frame in ${end - start}ms`);
-				///console.error(`[PERF] last render ${end - lastRender}ms`);
 				lastRender = end;
 			}, debounceInterval);
 		}
 	};
 
-	const hostConfig = createHostConfig({}, renderImpl);
+	const deps: HostConfigDeps = { ops, shadowNodes };
+	const hostConfig = createHostConfig({}, renderImpl, deps);
 	const reconciler = Reconciler(
 		process.env.RECONCILER_TRACE === "1" ? traceWrap(hostConfig) : hostConfig,
 	);
