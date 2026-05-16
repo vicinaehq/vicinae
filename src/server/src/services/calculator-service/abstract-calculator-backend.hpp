@@ -89,22 +89,21 @@ public:
    */
   virtual void stop() {}
 
-  static bool hasMathIndicator(std::string_view query) {
+  virtual bool isExpression(const std::string &query) const {
     if (query.starts_with("0x") || query.starts_with("0b") || query.starts_with("0o")) return true;
 
     static constexpr std::string_view ALWAYS_BINARY = "*/^%";
     for (size_t i = 1; i < query.size(); ++i) {
+      auto cur = static_cast<unsigned char>(query[i]);
+      auto prev = static_cast<unsigned char>(query[i - 1]);
       if (ALWAYS_BINARY.find(query[i]) != std::string_view::npos) return true;
-      if ((query[i] == '+' || query[i] == '-') &&
-          (std::isalnum(static_cast<unsigned char>(query[i - 1])) || query[i - 1] == ')'))
-        return true;
+      if ((cur == '+' || cur == '-') && (std::isalnum(prev) || query[i - 1] == ')')) return true;
+      if (cur == '(' || prev == '(') return true;
     }
-
-    if (query.find('(') != std::string_view::npos) return true;
 
     auto hasConversion = [&](std::string_view keyword) {
       auto pos = query.find(keyword);
-      if (pos == 0 || pos == std::string_view::npos || pos + keyword.size() >= query.size()) return false;
+      if (pos == std::string_view::npos || pos == 0 || pos + keyword.size() >= query.size()) return false;
       auto before = query.substr(0, pos);
       return std::ranges::any_of(before, [](unsigned char c) { return std::isdigit(c); });
     };

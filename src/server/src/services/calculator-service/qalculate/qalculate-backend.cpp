@@ -37,8 +37,6 @@ std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const
   if (expression.isEmpty()) return std::unexpected(CalculatorError("Empty expression"));
 
   auto stdExpr = expression.toStdString();
-  if (!isComputableExpression(stdExpr)) return std::unexpected(CalculatorError("Not computable"));
-
   std::string const localizedExpression = CALCULATOR->unlocalizeExpression(stdExpr);
   std::string res = CALCULATOR->calculateAndPrint(localizedExpression, 10000, m_evalOpts, m_printOpts);
 
@@ -84,20 +82,23 @@ QString QalculateBackend::stripTrailingOperators(QString expr) {
   return expr.trimmed();
 }
 
-bool QalculateBackend::isComputableExpression(const std::string &expr) {
-  static constexpr std::string_view opsAndParens = "~+-*/^&|!<>=() \t";
-  bool allOpsOrWhitespace =
-      std::ranges::all_of(expr, [](char c) { return opsAndParens.find(c) != std::string_view::npos; });
-  if (allOpsOrWhitespace) return false;
+bool QalculateBackend::isExpression(const std::string &query) const {
+  QString expression = preprocessQuestion(QString::fromStdString(query));
+  expression = stripTrailingOperators(expression);
+  if (expression.isEmpty()) return false;
 
-  static constexpr std::string_view ops = "~+-*/^&|!<>=";
-  if (std::ranges::any_of(expr, [](char c) { return ops.find(c) != std::string_view::npos; })) return true;
-  if (expr.find('(') != std::string::npos) return true;
-  if (expr.find(" to ") != std::string::npos) return true;
+  auto stdExpr = expression.toStdString();
+  std::string const localized = CALCULATOR->unlocalizeExpression(stdExpr);
+  MathStructure parsed = CALCULATOR->parse(localized, m_evalOpts.parse_options);
 
-  if (auto *var = CALCULATOR->getActiveVariable(expr); var && var->isKnown()) return true;
-  if (auto *fn = CALCULATOR->getActiveFunction(expr); fn && fn->minargs() == 0) return true;
-  if (CALCULATOR->hasToExpression(expr, false, EvaluationOptions())) return true;
+  if (parsed.containsType(STRUCT_UNIT) && parsed.containsType(STRUCT_NUMBER)) return true;
+
+  static constexpr std::string_view ARITHMETIC_OPS = "+-*/^%";
+  for (size_t i = 1; i < stdExpr.size(); ++i) {
+    if (ARITHMETIC_OPS.find(stdExpr[i]) != std::string_view::npos) return true;
+  }
+  if (stdExpr.find('(') != std::string::npos) return true;
+  if (stdExpr.find(" to ") != std::string::npos) return true;
 
   return false;
 }

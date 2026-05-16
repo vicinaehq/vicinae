@@ -17,6 +17,7 @@ class QalculateBackend : public AbstractCalculatorBackend {
   bool supportsRefreshExchangeRates() const override;
 
   bool isActivatable() const override;
+  bool isExpression(const std::string &query) const override;
 
 public:
   QalculateBackend();
@@ -27,7 +28,6 @@ private:
   void initializeCalculator();
   static QString preprocessQuestion(const QString &question);
   static QString stripTrailingOperators(QString expr);
-  static bool isComputableExpression(const std::string &expr);
 
   Calculator m_calc;
   bool m_initialized = false;

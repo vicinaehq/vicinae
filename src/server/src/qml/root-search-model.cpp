@@ -269,7 +269,7 @@ void RootSearchModel::startCalculator() {
   };
 
   bool const isComputable = expression.size() > 1 && isAllowedLeadingChar(expression.at(0)) &&
-                            AbstractCalculatorBackend::hasMathIndicator(m_query);
+                            m_calculator->backend()->isExpression(m_query);
   if (!isComputable) return;
 
   m_calcWatcher.setFuture(m_calculator->backend()->asyncCompute(expression));

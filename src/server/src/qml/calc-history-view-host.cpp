@@ -143,7 +143,7 @@ void CalcHistoryViewHost::startCalculator() {
     return;
   }
 
-  if (!AbstractCalculatorBackend::hasMathIndicator(m_query.toStdString())) return;
+  if (!m_calc->backend()->isExpression(m_query.toStdString())) return;
 
   m_calcWatcher.setFuture(m_calc->backend()->asyncCompute(m_query));
 }
