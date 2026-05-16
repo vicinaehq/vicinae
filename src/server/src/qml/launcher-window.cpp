@@ -306,6 +306,15 @@ bool LauncherWindow::eventFilter(QObject *obj, QEvent *event) {
 
   else if (event->type() == QEvent::KeyPress) {
     auto *ke = static_cast<QKeyEvent *>(event); // NOLINT
+    // KeypadModifier marks the key's origin (numpad vs main keyboard), not a
+    // user-pressed modifier. macOS Cocoa sets it on every arrow/function key
+    // even when pressed from the main keyboard; on Linux it's set for numpad
+    // arrows with NumLock off. Strip it once here so every downstream
+    // comparison — C++ shortcut matching and QML Keys handlers — treats
+    // arrows uniformly regardless of origin.
+    if (ke->modifiers().testFlag(Qt::KeypadModifier)) {
+      ke->setModifiers(ke->modifiers() & ~Qt::KeypadModifier);
+    }
     if (forwardKey(ke->key(), static_cast<int>(ke->modifiers()))) { return true; }
   }
 
