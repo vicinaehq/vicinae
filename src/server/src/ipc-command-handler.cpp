@@ -46,6 +46,7 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
 
   if (command.isEmpty() && !path.isEmpty()) {
     QStringList const pathParts = path.split('/', Qt::SkipEmptyParts);
+    if (pathParts.isEmpty()) return std::unexpected("Empty path in deeplink");
     command = pathParts.at(0);
     path = "/" + pathParts.mid(1).join('/');
   }
