@@ -32,17 +32,24 @@ PlaceholderString PlaceholderString::parse(const QString &link, std::span<const 
   const auto insertPlaceholder = [&](const ParsedPlaceholder &placeholder) {
     bool const isReserved =
         std::ranges::any_of(reserved, [&](const QString &s) { return s == placeholder.id; });
+    bool const isArgument = !isReserved || placeholder.id == "argument";
 
-    if (placeholder.id == "argument") {
+    if (isArgument) {
       Argument arg;
-      if (auto it = placeholder.args.find("name"); it != placeholder.args.end()) { arg.name = it->second; }
-      if (auto it = placeholder.args.find("default"); it != placeholder.args.end()) {
-        arg.defaultValue = it->second;
+
+      if (placeholder.id == "argument") {
+        if (auto it = placeholder.args.find("name"); it != placeholder.args.end()) { arg.name = it->second; }
+        if (auto it = placeholder.args.find("default"); it != placeholder.args.end()) {
+          arg.defaultValue = it->second;
+        }
+      } else if (!isReserved) {
+        arg.name = placeholder.id;
       }
 
-      pstr.m_args.emplace_back(arg);
-    } else if (!isReserved) {
-      pstr.m_args.emplace_back(Argument(placeholder.id));
+      // an argument is always identified by its name and can be expanded in multiple places
+      if (!std::ranges::any_of(pstr.m_args, [&](auto &&a) { return arg.name == a.name; })) {
+        pstr.m_args.emplace_back(arg);
+      }
     }
 
     pstr.m_placeholders.emplace_back(placeholder);
