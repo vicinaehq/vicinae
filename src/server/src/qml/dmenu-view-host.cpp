@@ -28,6 +28,7 @@ void DMenuViewHost::initialize() {
   if (m_data.noSection) m_section.setNoSection(true);
   if (m_data.sectionTitle) m_section.setSectionTemplate(*m_data.sectionTitle);
   if (m_data.noFooter) setStatusBarVisiblity(false);
+  if (m_data.navigationTitle) setNavigationTitle(QString::fromStdString(*m_data.navigationTitle));
 
   setSearchPlaceholderText(m_data.placeholder.value_or("Search entries...").c_str());
 
