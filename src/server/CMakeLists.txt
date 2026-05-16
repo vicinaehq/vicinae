@@ -11,14 +11,13 @@ if (USE_SYSTEM_KF6 AND NOT APPLE)
 	find_package(KF6SyntaxHighlighting REQUIRED)
 endif()
 
-list(APPEND LIBS  
+list(APPEND LIBS
 	Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus Qt6::Concurrent Qt6::Quick Qt6::Qml
 	Qt6::GuiPrivate # for deeper integration with wayland protocols, we need wl_surface
 	Qt6::QuickDialogs2 Qt6::QuickControls2
 	${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY}
 	minizip
-	OpenSSL::Crypto 
-	wayland-client 
+	OpenSSL::Crypto
 	qt6keychain
 	LibXml2::LibXml2
 	KF6::SyntaxHighlighting
@@ -29,6 +28,10 @@ list(APPEND LIBS
 	vicinae::common
 	vicinae::fuzzy
 )
+
+if (UNIX AND NOT APPLE)
+	list(APPEND LIBS wayland-client)
+endif()
 
 
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)
@@ -139,9 +142,6 @@ set(SRCS
 	src/actions/app/app-actions.cpp
 	
 	src/service-registry.cpp
-
-	src/services/background-effect/ext-background-effect-v1-manager.cpp
-	src/services/background-effect/kde-background-effect-manager.cpp
 
 	src/color-formatter.hpp
 	src/color-formatter.cpp
@@ -351,23 +351,9 @@ set(SRCS
 	src/services/calculator-service/calculator-service.cpp
 
 	src/services/files-service/abstract-file-indexer.hpp
+	src/services/files-service/noop-file-indexer.hpp
 	src/services/files-service/file-service.hpp
 	src/services/files-service/file-service.cpp
-	src/services/files-service/file-indexer/file-indexer.hpp
-	src/services/files-service/file-indexer/file-indexer.cpp
-	src/services/files-service/file-indexer/filesystem-walker.cpp
-	src/services/files-service/file-indexer/relevancy-scorer.cpp
-	src/services/files-service/file-indexer/incremental-scanner.cpp
-	src/services/files-service/file-indexer/indexer-scanner.cpp
-	src/services/files-service/file-indexer/watcher-scanner.cpp
-	src/services/files-service/file-indexer/home-directory-watcher.cpp
-	src/services/files-service/file-indexer/file-indexer-db.cpp
-	src/services/files-service/file-indexer/db-writer.cpp
-	src/services/files-service/file-indexer/writer-worker.hpp
-	src/services/files-service/file-indexer/writer-worker.cpp
-	src/services/files-service/file-indexer/scan-dispatcher.cpp
-	src/services/files-service/file-indexer/abstract-scanner.hpp
-	src/services/files-service/file-indexer/file-indexer-query-engine.hpp
 
 	src/services/extension-registry/extension-registry.hpp
 	src/services/extension-registry/extension-registry.cpp
@@ -438,6 +424,8 @@ set(SRCS
 
 	src/services/window-manager/abstract-window-manager.hpp
 	src/services/paste/abstract-paste-service.hpp
+	src/services/paste/dummy-paste-service.hpp
+	src/services/paste/paste-service.cpp
 	src/services/browser-extension-service.hpp
 
 	src/lib/program-db/program-db.hpp
@@ -635,7 +623,6 @@ if (UNIX AND NOT APPLE)
 		#src/lib/xkbcommon-utils.cpp
 
 		src/services/paste/linux-paste-service.cpp
-		src/services/paste/paste-service.cpp
 
 		src/lib/icon-theme-db/icon-theme-db.cpp
 
@@ -672,40 +659,6 @@ if (UNIX AND NOT APPLE)
 	wayland_generate_protocol("ext-data-control-v1")
 	wayland_generate_protocol("kde-blur")
 	wayland_generate_protocol("ext-background-effect-v1")
-	
-	include("Figura")
-
-	figura_compile(
-		SERVER
-		PROTO "${FIGURA_DIR}/tsapi.fig"
-		LANG glaze-qt
-		NAMESPACE tsapi
-		OUTPUT tsapi.hpp
-	)
-
-	figura_compile(
-		CLIENT
-		PROTO "${FIGURA_DIR}/manager.fig"
-		LANG glaze-qt
-		NAMESPACE manager
-		OUTPUT manager.hpp
-	)
-
-	figura_compile(
-		SERVER
-		PROTO "${FIGURA_DIR}/ipc.fig"
-		LANG glaze-qt
-		NAMESPACE ipc_gen
-		OUTPUT ipc-server.hpp
-	)
-
-	figura_compile(
-		CLIENT
-		PROTO "${FIGURA_DIR}/snippet.fig"
-		LANG glaze-qt
-		NAMESPACE snippet_gen
-		OUTPUT snippet-client.hpp
-	)
 
 	list(APPEND LIBS xkbcommon)
 
@@ -715,11 +668,63 @@ if (UNIX AND NOT APPLE)
 		src/lib/wayland/display.cpp
 		src/lib/wayland/registry.cpp
 		src/lib/wayland/seat.cpp
+		src/services/background-effect/ext-background-effect-v1-manager.cpp
+		src/services/background-effect/kde-background-effect-manager.cpp
 		src/services/clipboard/data-control/data-control-clipboard-server.hpp
 		src/services/clipboard/data-control/data-control-clipboard-server.cpp
+
+		src/services/files-service/file-indexer/file-indexer.hpp
+		src/services/files-service/file-indexer/file-indexer.cpp
+		src/services/files-service/file-indexer/filesystem-walker.cpp
+		src/services/files-service/file-indexer/relevancy-scorer.cpp
+		src/services/files-service/file-indexer/incremental-scanner.cpp
+		src/services/files-service/file-indexer/indexer-scanner.cpp
+		src/services/files-service/file-indexer/watcher-scanner.cpp
+		src/services/files-service/file-indexer/home-directory-watcher.cpp
+		src/services/files-service/file-indexer/file-indexer-db.cpp
+		src/services/files-service/file-indexer/db-writer.cpp
+		src/services/files-service/file-indexer/writer-worker.hpp
+		src/services/files-service/file-indexer/writer-worker.cpp
+		src/services/files-service/file-indexer/scan-dispatcher.cpp
+		src/services/files-service/file-indexer/abstract-scanner.hpp
+		src/services/files-service/file-indexer/file-indexer-query-engine.hpp
 	)
 
 endif()
+
+include("Figura")
+
+figura_compile(
+	SERVER
+	PROTO "${FIGURA_DIR}/tsapi.fig"
+	LANG glaze-qt
+	NAMESPACE tsapi
+	OUTPUT tsapi.hpp
+)
+
+figura_compile(
+	CLIENT
+	PROTO "${FIGURA_DIR}/manager.fig"
+	LANG glaze-qt
+	NAMESPACE manager
+	OUTPUT manager.hpp
+)
+
+figura_compile(
+	SERVER
+	PROTO "${FIGURA_DIR}/ipc.fig"
+	LANG glaze-qt
+	NAMESPACE ipc_gen
+	OUTPUT ipc-server.hpp
+)
+
+figura_compile(
+	CLIENT
+	PROTO "${FIGURA_DIR}/snippet.fig"
+	LANG glaze-qt
+	NAMESPACE snippet_gen
+	OUTPUT snippet-client.hpp
+)
 	
 
 qt_add_executable(${TARGET} ${SRCS})
@@ -892,7 +897,7 @@ install(TARGETS ${TARGET}
 	RUNTIME DESTINATION ${VICINAE_LIBEXEC_DIR}
 )
 
-if (BUILD_TESTS)
+if (BUILD_TESTS AND UNIX AND NOT APPLE)
 	set(TEST_TARGET ${TARGET}-tests)
 	find_package(Catch2 3 REQUIRED)
 	add_executable(${TEST_TARGET}

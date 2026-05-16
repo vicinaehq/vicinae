@@ -7,7 +7,9 @@
 #include "extension/manager/extension-manager.hpp"
 #include "favicon/favicon-service.hpp"
 #include "font-service.hpp"
+#ifdef Q_OS_LINUX
 #include "icon-theme-db/icon-theme-db.hpp"
+#endif
 #include "extension-interval-scheduler.hpp"
 #include "ipc-command-server.hpp"
 #include "keyboard/keybind-manager.hpp"
@@ -41,7 +43,10 @@
 #include "services/snippet/snippet-service.hpp"
 #include "services/audio-control/audio-control-service.hpp"
 #include "services/paste/paste-service.hpp"
+#include "services/paste/dummy-paste-service.hpp"
+#ifdef Q_OS_LINUX
 #include "services/paste/linux-paste-service.hpp"
+#endif
 #include "settings-controller/settings-controller.hpp"
 #include "qml/launcher-window.hpp"
 #include "utils.hpp"
@@ -95,9 +100,14 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto clipboardManager = std::make_unique<ClipboardService>(Omnicast::dataDir() / "clipboard.db");
     auto snippetService = std::make_unique<SnippetService>(Omnicast::dataDir() / "snippets" / "snippets.json",
                                                            *windowManager, *appService, *clipboardManager);
-    auto linuxPaste = std::make_unique<LinuxPasteService>(*snippetService->server());
-    auto pasteService =
-        std::make_unique<PasteService>(*clipboardManager, *windowManager, *appService, std::move(linuxPaste));
+#ifdef Q_OS_LINUX
+    auto platformPaste = std::unique_ptr<AbstractPasteService>(
+        std::make_unique<LinuxPasteService>(*snippetService->server()));
+#else
+    auto platformPaste = std::unique_ptr<AbstractPasteService>(std::make_unique<DummyPasteService>());
+#endif
+    auto pasteService = std::make_unique<PasteService>(*clipboardManager, *windowManager, *appService,
+                                                       std::move(platformPaste));
     auto fontService = std::make_unique<FontService>();
     auto configService = std::make_unique<config::Manager>(m_config);
     auto rootItemManager = std::make_unique<RootItemManager>(*configService, *localStorage);
@@ -236,8 +246,6 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto &prevTheme = prev.systemTheme();
     bool const themeChangeRequired = nextTheme.name != prevTheme.name;
 
-    IconThemeDatabase const iconThemeDb;
-
     applyTextRenderingMode(next.font);
 
     theme.setFontBasePointSize(next.font.normal.size);
@@ -272,9 +280,13 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
     if (nextTheme.iconTheme != "auto") {
       QIcon::setThemeName(nextTheme.iconTheme.c_str());
-    } else if (QIcon::themeName() == "hicolor") {
+    }
+#ifdef Q_OS_LINUX
+    else if (QIcon::themeName() == "hicolor") {
+      IconThemeDatabase const iconThemeDb;
       QIcon::setThemeName(iconThemeDb.guessBestTheme());
     }
+#endif
 
     ServiceRegistry::instance()->telemetry()->setEnabled(next.telemetry.systemInfo);
   };
@@ -286,15 +298,18 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   });
 
   QObject::connect(QGuiApplication::styleHints(), &QStyleHints::colorSchemeChanged, [&]() {
-    IconThemeDatabase const iconThemeDb;
     auto &value = cfgService->value();
     auto &theme = value.systemTheme();
 
     if (theme.iconTheme != "auto") {
       QIcon::setThemeName(theme.iconTheme.c_str());
-    } else if (QIcon::themeName() == "hicolor") {
+    }
+#ifdef Q_OS_LINUX
+    else if (QIcon::themeName() == "hicolor") {
+      IconThemeDatabase const iconThemeDb;
       QIcon::setThemeName(iconThemeDb.guessBestTheme());
     }
+#endif
 
     ThemeService::instance().setTheme(theme.name.c_str());
   });

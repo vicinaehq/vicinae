@@ -1,11 +1,13 @@
 #pragma once
 #include <qwindow.h>
-#include "lib/wayland/globals.hpp"
 #include "abstract-background-effect-manager.hpp"
 #include "common/types.hpp"
 #include "services/background-effect/dummy-background-effect-manager.hpp"
+#ifdef Q_OS_LINUX
+#include "lib/wayland/globals.hpp"
 #include "services/background-effect/ext-background-effect-v1-manager.hpp"
 #include "services/background-effect/kde-background-effect-manager.hpp"
+#endif
 
 class BackgroundEffectManager : NonCopyable {
 public:
@@ -24,12 +26,14 @@ public:
 
 private:
   static std::unique_ptr<AbstractBackgroundEffectManager> createManager() {
+#ifdef Q_OS_LINUX
     if (auto manager = Wayland::Globals::extBackgroundEffectManager()) {
       return std::make_unique<ExtBackgroundEffectV1Manager>(manager);
     }
     if (auto blur = Wayland::Globals::kwinBlur()) {
       return std::make_unique<KDE::BackgroundEffectManager>(blur);
     }
+#endif
     return std::make_unique<DummyBackgroundEffectManager>();
   }
 

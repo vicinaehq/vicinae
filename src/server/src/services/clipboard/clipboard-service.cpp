@@ -25,7 +25,9 @@
 #include "services/clipboard/clipboard-server.hpp"
 #include "services/clipboard/gnome/gnome-clipboard-server.hpp"
 #include "utils.hpp"
+#ifdef Q_OS_LINUX
 #include "data-control/data-control-clipboard-server.hpp"
+#endif
 
 namespace fs = std::filesystem;
 
@@ -634,8 +636,10 @@ ClipboardService::ClipboardService(const std::filesystem::path &path) {
     ClipboardServerFactory factory;
 
     factory.registerServer<GnomeClipboardServer>();
+#ifdef Q_OS_LINUX
     factory.registerServer<DataControlClipboardServer>();
     factory.registerServer<X11ClipboardServer>();
+#endif
     m_clipboardServer = factory.createFirstActivatable();
     qInfo() << "Activated clipboard server" << m_clipboardServer->id();
   }

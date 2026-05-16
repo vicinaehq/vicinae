@@ -18,5 +18,20 @@ function(checkout_cmark)
 
 	
 	FetchContent_MakeAvailable(cmark-gfm)
+
+	# UGLY FIX: cmark-gfm's own CMakeLists.txt uses the legacy include_directories()
+	# (directory scope) instead of target_include_directories(), so its include path
+	# does not propagate to consumers via FetchContent. See internal-docs/macos-port-notes.md.
+	foreach(_target libcmark-gfm_static libcmark-gfm-extensions_static)
+		if (TARGET ${_target})
+			target_include_directories(${_target} INTERFACE
+				${cmark-gfm_SOURCE_DIR}/src
+				${cmark-gfm_BINARY_DIR}/src
+				${cmark-gfm_SOURCE_DIR}/extensions
+				${cmark-gfm_BINARY_DIR}/extensions
+			)
+		endif()
+	endforeach()
+
 	set(CMAKE_SKIP_INSTALL_RULES OFF)
 endfunction()

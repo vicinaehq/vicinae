@@ -16,6 +16,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC include PRIVATE src )
 # we install icu4c using homebrew. macOS has libicucore.dylib, maybe we should use that.
 if (APPLE)
 	target_include_directories(${PROJECT_NAME} PRIVATE /opt/homebrew/opt/icu4c@78/include)
+	target_link_directories(${PROJECT_NAME} PUBLIC /opt/homebrew/opt/icu4c@78/lib)
 endif()
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)

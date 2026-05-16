@@ -1,5 +1,6 @@
 #include "common/common.hpp"
 #include <filesystem>
+#include <sstream>
 #include <vector>
 
 namespace fs = std::filesystem;

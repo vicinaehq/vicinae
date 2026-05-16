@@ -75,8 +75,19 @@ if (APPLE)
 	set(CC "/opt/homebrew/opt/llvm/bin/clang")
 	set(CXX "/opt/homebrew/opt/llvm/bin/clang++")
 
+	# Point at the umbrella Qt formula so CMake finds qtbase plus its sibling
+	# component packages (Qt6LinguistTools, etc.) in one prefix.
+	if (NOT QT_DIR AND EXISTS "/opt/homebrew/opt/qt/lib/cmake/Qt6")
+		list(PREPEND CMAKE_PREFIX_PATH "/opt/homebrew/opt/qt")
+	endif()
+
+	# UGLY FIX: Homebrew's lib dir is not on the linker's default search path.
+	# Plain `-lminizip` etc. fail to resolve without this.
+	link_directories(/opt/homebrew/lib)
+
 	set(WAYLAND_LAYER_SHELL OFF)
 	set(WLR_DATA_CONTROL OFF)
+	set(USE_SYSTEM_CMARK_GFM OFF)
 endif()
 
 include_directories(
@@ -87,13 +98,15 @@ include_directories(
 find_package(glaze)
 
 add_subdirectory(src/browser-extension)
-add_subdirectory(src/snippet)
 add_subdirectory(${LIB_DIR}/common)
 add_subdirectory(${LIB_DIR}/script-command)
 add_subdirectory(${LIB_DIR}/emoji)
 add_subdirectory(${LIB_DIR}/xdgpp)
 add_subdirectory(${LIB_DIR}/fuzzy)
-add_subdirectory(${LIB_DIR}/linux-utils)
+if (UNIX AND NOT APPLE)
+	add_subdirectory(${LIB_DIR}/linux-utils)
+	add_subdirectory(src/snippet)
+endif()
 add_subdirectory(${LIB_DIR}/figura)
 
 set(FIGURA_DIR ${CMAKE_SOURCE_DIR}/figura)

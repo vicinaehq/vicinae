@@ -3,7 +3,6 @@
 #include "common.hpp"
 #include "preference.hpp"
 #include "ui/action-pannel/action.hpp"
-#include <endian.h>
 #include <qobject.h>
 #include <qdebug.h>
 #include "common/entrypoint.hpp"

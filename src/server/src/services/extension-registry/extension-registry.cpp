@@ -6,7 +6,6 @@
 #include "zip/unzip.hpp"
 #include <QtConcurrent/qtconcurrentrun.h>
 #include <filesystem>
-#include <malloc.h>
 #include <qfilesystemwatcher.h>
 #include <QJsonParseError>
 #include <qfuturewatcher.h>

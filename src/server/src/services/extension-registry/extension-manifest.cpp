@@ -3,6 +3,7 @@
 #include "vicinae.hpp"
 #include <QJsonObject>
 #include <QJsonDocument>
+#include <charconv>
 
 namespace fs = std::filesystem;
 
