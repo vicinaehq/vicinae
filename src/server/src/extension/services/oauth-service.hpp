@@ -6,6 +6,7 @@
 #include "qml/oauth-overlay-host.hpp"
 #include "services/oauth/oauth-service.hpp"
 #include <QFutureWatcher>
+#include <QPointer>
 
 class ExtOAuthService : public tsapi::AbstractOAuth {
   using Void = tsapi::Result<void>;
@@ -28,12 +29,12 @@ public:
     auto future = promise.future();
 
     connect(watcher, &QFutureWatcherBase::finished, this,
-            [host, watcher, promise = std::move(promise)]() mutable {
+            [host = QPointer(host), watcher, promise = std::move(promise)]() mutable {
               auto oauthRes = watcher->result();
               if (!oauthRes) {
                 promise.addResult(std::unexpected(oauthRes.error().toStdString()));
               } else {
-                host->showSuccess();
+                if (host) host->showSuccess();
                 promise.addResult(tsapi::AuthorizeResponse{.code = oauthRes->code.toStdString()});
               }
               promise.finish();
