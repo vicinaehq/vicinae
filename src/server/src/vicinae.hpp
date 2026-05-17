@@ -43,6 +43,11 @@ std::filesystem::path dataDir();
 std::filesystem::path stateDir();
 std::filesystem::path configDir();
 
+// Read-only resources shipped with the application. On macOS this is
+// Vicinae.app/Contents/Resources; on other platforms it is the install-prefix
+// share directory (or empty if we cannot locate it).
+std::filesystem::path bundleResourceDir();
+
 void ensureDirectories();
 std::vector<std::filesystem::path> systemPaths();
 

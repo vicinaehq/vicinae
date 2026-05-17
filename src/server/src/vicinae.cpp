@@ -1,4 +1,5 @@
 #include "vicinae.hpp"
+#include <qcoreapplication.h>
 #include <qlogging.h>
 #include <qprocess.h>
 #include <QProcessEnvironment>
@@ -43,6 +44,18 @@ fs::path Omnicast::stateDir() {
   return dataDir();
 #else
   return xdgpp::stateHome() / "vicinae";
+#endif
+}
+
+fs::path Omnicast::bundleResourceDir() {
+#ifdef Q_OS_MACOS
+  // Inside Vicinae.app/Contents/MacOS/<exe>, Resources is one level up.
+  auto const appDir = QCoreApplication::applicationDirPath().toStdString();
+  return fs::path(appDir).parent_path() / "Resources";
+#else
+  // Linux: rely on the install-prefix share dir. Empty if running uninstalled —
+  // callers should layer their own fallbacks (e.g. xdgpp::dataDirs()).
+  return {};
 #endif
 }
 

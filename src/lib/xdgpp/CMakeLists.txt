@@ -8,7 +8,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 OPTION(BUILD_TESTS "Build the xdgpp test suite" ON)
 OPTION(XDGPP_INSTALL "Install xdgpp library and headers" OFF)
 
-add_library(vicinae-xdgpp
+add_library(vicinae-xdgpp STATIC
 	xdgpp/locale/locale.cpp
 	xdgpp/desktop-entry/reader.cpp
 	xdgpp/desktop-entry/group.cpp

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>Vicinae</string>
+	<key>CFBundleExecutable</key>
+	<string>@VICINAE_BUNDLE_EXECUTABLE@</string>
+	<key>CFBundleIconFile</key>
+	<string>vicinae</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.vicinaehq.Vicinae</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>Vicinae</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>@VICINAE_BUNDLE_VERSION@</string>
+	<key>CFBundleVersion</key>
+	<string>@VICINAE_BUNDLE_VERSION@</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>11.0</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.productivity</string>
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSSupportsAutomaticGraphicsSwitching</key>
+	<true/>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+</dict>
+</plist>

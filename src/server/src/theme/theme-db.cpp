@@ -2,10 +2,13 @@
 #include "theme/theme-file.hpp"
 #include "theme/theme-parser.hpp"
 #include "vicinae.hpp"
-#include "xdgpp/env/env.hpp"
 #include <filesystem>
 #include <qfilesystemwatcher.h>
 #include <qlogging.h>
+
+#ifndef Q_OS_MACOS
+#include "xdgpp/env/env.hpp"
+#endif
 
 namespace fs = std::filesystem;
 
@@ -87,10 +90,6 @@ const ThemeFile *ThemeDatabase::ThemeDatabase::theme(const QString &id) {
 
 std::vector<std::filesystem::path> ThemeDatabase::defaultSearchPaths() {
   std::vector<std::filesystem::path> paths;
-  auto dd = xdgpp::dataDirs();
-  auto suffix = fs::path("vicinae") / "themes";
-
-  paths.reserve(dd.size() + 2);
 
 #ifdef LOCAL_THEME_DIR
   paths.emplace_back(LOCAL_THEME_DIR);
@@ -98,10 +97,18 @@ std::vector<std::filesystem::path> ThemeDatabase::defaultSearchPaths() {
 
   paths.emplace_back(Omnicast::dataDir() / "themes");
 
+#ifdef Q_OS_MACOS
+  auto const bundled = Omnicast::bundleResourceDir() / "themes";
+  if (std::ranges::find(paths, bundled) == paths.end()) { paths.emplace_back(bundled); }
+#else
+  auto const dd = xdgpp::dataDirs();
+  auto const suffix = fs::path("vicinae") / "themes";
+  paths.reserve(paths.size() + dd.size());
   for (const auto &dir : dd) {
     fs::path const path = dir / suffix;
     if (std::ranges::find(paths, path) == paths.end()) { paths.emplace_back(path); }
   }
+#endif
 
   return paths;
 }

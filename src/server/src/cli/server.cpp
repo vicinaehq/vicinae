@@ -75,6 +75,19 @@ static void applyTextRenderingMode(const config::FontConfig &fontConfig) {
 int startServer(const ServerLaunchOptions &launchOpts) {
   qInstallMessageHandler(coloredMessageHandler);
 
+  // Cheap single-instance probe before building any Qt state. macOS spawns
+  // a fresh process on every `open` of the .app; without this guard, each
+  // launch would proceed and steal focus.
+  if (const auto sock = Omnicast::commandSocketPath(); std::filesystem::exists(sock)) {
+    QLocalSocket probe;
+    probe.connectToServer(sock.c_str());
+    if (probe.waitForConnected(100)) {
+      probe.disconnectFromServer();
+      qWarning() << "another vicinae instance is already running";
+      return 0;
+    }
+  }
+
   if (!qEnvironmentVariableIsSet("QT_QUICK_FLICKABLE_WHEEL_DECELERATION"))
     qputenv("QT_QUICK_FLICKABLE_WHEEL_DECELERATION", "10000");
 

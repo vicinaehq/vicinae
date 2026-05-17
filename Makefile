@@ -36,7 +36,11 @@ debug:
 mac:
 	CC=$(MACOS_CC) CXX=$(MACOS_CXX) cmake -GNinja -DLTO=ON -DCMAKE_BUILD_TYPE=Release -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)
-.PHONY: macos
+.PHONY: mac
+
+mac-deploy: mac
+	./scripts/macdeploy.sh $(BUILD_DIR)/bin/Vicinae.app
+.PHONY: mac-deploy
 
 macdbg:
 	CC=$(MACOS_CC) CXX=$(MACOS_CXX) cmake -GNinja -DLTO=OFF -DENABLE_PREVIEW_FEATURES=ON -DENABLE_SANITIZERS=ON -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)

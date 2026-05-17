@@ -226,8 +226,10 @@ if (CCACHE AND NOT IGNORE_CCACHE)
 endif()
 
 add_compile_definitions(BUILD_INFO="${BUILD_INFO}")
-add_subdirectory(src/server)
+# cli is added before server so that the server's APPLE bundle assembly can
+# reference the `vicinae` target (it copies the CLI into Contents/MacOS).
 add_subdirectory(src/cli)
+add_subdirectory(src/server)
 
 if (UNIX AND NOT APPLE)
 	add_subdirectory(src/data-control-server)
@@ -238,9 +240,23 @@ set(INSTALL_MODULES ${CMAKE_INSTALL_PREFIX}/lib/modules-load.d)
 set(VICINAE_INSTALL_SHARE ${INSTALL_SHARE}/vicinae)
 set(VICINAE_THEME_DIR ${VICINAE_INSTALL_SHARE}/themes)
 
-make_directory(${VICINAE_INSTALL_SHARE})
-file(REMOVE_RECURSE ${VICINAE_THEME_DIR})
-install(DIRECTORY ./extra/themes DESTINATION ${VICINAE_INSTALL_SHARE})
+if(NOT APPLE)
+	make_directory(${VICINAE_INSTALL_SHARE})
+	file(REMOVE_RECURSE ${VICINAE_THEME_DIR})
+	install(DIRECTORY ./extra/themes DESTINATION ${VICINAE_INSTALL_SHARE})
+endif()
+
+if(APPLE)
+	# Mirror the build-time bundle assembly under `make install`. The build-time
+	# copy (themes + CLI into the .app) lives in src/server/CMakeLists.txt.
+	install(DIRECTORY ./extra/themes
+		DESTINATION Vicinae.app/Contents/Resources
+	)
+	install(PROGRAMS $<TARGET_FILE:vicinae>
+		DESTINATION Vicinae.app/Contents/MacOS
+		RENAME vicinae-cli
+	)
+endif()
 
 if (UNIX AND NOT APPLE)
 	if (INSTALL_MODULES_LOAD_CONFIG)
