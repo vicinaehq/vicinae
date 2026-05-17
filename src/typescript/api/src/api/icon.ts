@@ -1,6 +1,5 @@
-
 export enum Icon {
-Aarch64 = "aarch64",
+	Aarch64 = "aarch64",
 	AddPerson = "add-person",
 	Adonisjs = "adonisjs",
 	Aftereffects = "aftereffects",
@@ -846,5 +845,5 @@ Aarch64 = "aarch64",
 	Yunohost = "yunohost",
 	Zend = "zend",
 	Zendesk = "zendesk",
-	Zig = "zig"
+	Zig = "zig",
 }

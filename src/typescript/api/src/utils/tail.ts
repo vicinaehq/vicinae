@@ -49,8 +49,8 @@ interface Cursor {
 }
 
 class DevNull {
-	info(...args: any) { }
-	error(...args: any) { }
+	info(...args: any) {}
+	error(...args: any) {}
 }
 
 export class Tail extends events.EventEmitter {

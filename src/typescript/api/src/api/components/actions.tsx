@@ -333,7 +333,7 @@ const SubmitForm: React.FC<Action.SubmitForm.Props> = ({
 		stableId: stableIdRef.current,
 		title,
 		icon: props.icon ? serializeProtoImage(props.icon) : props.icon,
-		onAction: () => { },
+		onAction: () => {},
 	};
 
 	return <action {...nativeProps} />;
@@ -368,7 +368,7 @@ const CreateQuicklink: React.FC<Action.CreateQuicklink.Props> = ({
 			icon: quicklink.icon,
 		},
 		icon: props.icon ? serializeProtoImage(props.icon) : props.icon,
-		onAction: () => { },
+		onAction: () => {},
 	};
 
 	return <action {...nativeProps} />;
