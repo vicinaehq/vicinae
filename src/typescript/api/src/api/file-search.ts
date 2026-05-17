@@ -34,10 +34,9 @@ export namespace FileSearch {
 	 * @returns Promise resolving to array of matching files
 	 *
 	 * @remarks
-	 * Uses prefix matching on filename tokens. For example:
-	 * - File: "invoice-new-motherboard.pdf"
-	 * - Matches: "inv", "new", "mother", "pdf"
-	 * - No match: "board", "oice" (not prefixes)
+	 * Uses fuzzy filename matching backed by Vicinae's file index. For example:
+	 * - File: "example folder"
+	 * - Matches: "fol exa", "exa fol", "ex fold"
 	 *
 	 * @example
 	 * ```typescript
