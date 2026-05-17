@@ -896,10 +896,18 @@ if (BUILD_TESTS)
 	find_package(Catch2 3 REQUIRED)
 	add_executable(${TEST_TARGET}
 		tests/shortcut-tests.cpp
+		tests/file-indexer-query-engine-tests.cpp
 		src/extend/action-shortcut-parser.cpp
 		src/lib/keyboard/keyboard.cpp
 		src/lib/keyboard/keybind-manager.cpp
 	)
-	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)
+	target_link_libraries(${TEST_TARGET} PRIVATE
+		Catch2::Catch2WithMain
+		Qt6::Core
+		Qt6::Gui
+		Qt6::Sql
+		Qt6::Concurrent
+		vicinae::fuzzy
+	)
 	target_compile_features(${TEST_TARGET} PUBLIC cxx_std_23)
 endif()

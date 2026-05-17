@@ -11,6 +11,7 @@
 #include <quuid.h>
 #include <qdebug.h>
 #include <QSqlError>
+#include <utility>
 
 // clang-format off
 static const std::vector<std::string> SQLITE_PRAGMAS = {
@@ -244,36 +245,40 @@ std::vector<FileIndexerDatabase::ScanRecord> FileIndexerDatabase::listScans(Scan
 
 QSqlDatabase *FileIndexerDatabase::database() { return &m_db; }
 
-std::vector<fs::path> FileIndexerDatabase::search(std::string_view searchQuery,
-                                                  const AbstractFileIndexer::QueryParams &params) {
-  auto queryString = QString(R"(
-  	SELECT path, rank FROM indexed_file f 
-	JOIN unicode_idx ON unicode_idx.rowid = f.id 
-	WHERE 
-	    unicode_idx MATCH '%1'
-	ORDER BY f.relevancy_score DESC, unicode_idx.rank 
-	LIMIT :limit
-	OFFSET :offset
-  )")
-                         .arg(qStringFromStdView(searchQuery));
+std::vector<FileIndexerDatabase::SearchCandidate>
+FileIndexerDatabase::searchCandidates(std::string_view searchQuery, int limit) {
+  if (searchQuery.empty() || limit <= 0) return {};
 
   QSqlQuery query(m_db);
 
-  query.prepare(queryString);
-  query.bindValue(":limit", params.pagination.limit);
-  query.bindValue(":offset", params.pagination.offset);
+  query.prepare(R"(
+    SELECT f.path, f.name, f.relevancy_score, unicode_idx.rank
+    FROM indexed_file f
+    JOIN unicode_idx ON unicode_idx.rowid = f.id
+    WHERE unicode_idx MATCH :search
+    ORDER BY unicode_idx.rank, f.relevancy_score DESC, f.path
+    LIMIT :limit
+  )");
+  query.bindValue(":search", qStringFromStdView(searchQuery));
+  query.bindValue(":limit", limit);
 
   if (!query.exec()) { qWarning() << "Search query failed" << query.lastError(); }
 
-  std::vector<fs::path> results;
+  std::vector<SearchCandidate> results;
   std::error_code ec;
 
-  results.reserve(params.pagination.limit);
+  results.reserve(limit);
 
   while (query.next()) {
-    fs::path const path = query.value(0).toString().toStdString();
+    SearchCandidate candidate;
 
-    if (fs::exists(path, ec)) { results.emplace_back(path); }
+    candidate.path = query.value(0).toString().toStdString();
+    if (!fs::exists(candidate.path, ec)) { continue; }
+
+    candidate.name = query.value(1).toString().toStdString();
+    candidate.relevancyScore = query.value(2).toDouble();
+    candidate.indexRank = query.value(3).toDouble();
+    results.emplace_back(std::move(candidate));
   }
 
   return results;

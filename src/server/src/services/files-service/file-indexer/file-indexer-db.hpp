@@ -7,6 +7,7 @@
 #include <qrandom.h>
 #include <qsqldatabase.h>
 #include <filesystem>
+#include <string>
 
 /**
  * File indexer sqlite database operations.
@@ -25,6 +26,13 @@ public:
     QDateTime createdAt;
     std::filesystem::path path;
     ScanType type;
+  };
+
+  struct SearchCandidate {
+    std::filesystem::path path;
+    std::string name;
+    double relevancyScore = 0;
+    double indexRank = 0;
   };
 
   ScanRecord mapScan(const QSqlQuery &query) const;
@@ -50,8 +58,7 @@ public:
   void compact();
   void deleteIndexedFiles(const std::vector<std::filesystem::path> &paths);
   void indexFiles(const std::vector<std::filesystem::path> &paths);
-  std::vector<std::filesystem::path> search(std::string_view searchQuery,
-                                            const AbstractFileIndexer::QueryParams &params);
+  std::vector<SearchCandidate> searchCandidates(std::string_view searchQuery, int limit);
 
   void indexEvents(const std::vector<FileEvent> &events);
 
