@@ -67,8 +67,14 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
 
   updateLayerShellProps();
 
-  m_engine.load(QUrl(isLayerShellActive() ? QStringLiteral("qrc:/Vicinae/LauncherWindowLayerShell.qml")
-                                          : QStringLiteral("qrc:/Vicinae/LauncherWindow.qml")));
+  m_engine.load(QUrl(
+#ifdef Q_OS_MACOS
+      QStringLiteral("qrc:/Vicinae/LauncherWindowMacOS.qml")
+#else
+      isLayerShellActive() ? QStringLiteral("qrc:/Vicinae/LauncherWindowLayerShell.qml")
+                           : QStringLiteral("qrc:/Vicinae/LauncherWindow.qml")
+#endif
+      ));
 
   auto rootObjects = m_engine.rootObjects();
   if (!rootObjects.isEmpty()) { m_window = qobject_cast<QQuickWindow *>(rootObjects.first()); }
@@ -306,12 +312,8 @@ bool LauncherWindow::eventFilter(QObject *obj, QEvent *event) {
 
   else if (event->type() == QEvent::KeyPress) {
     auto *ke = static_cast<QKeyEvent *>(event); // NOLINT
-    // KeypadModifier marks the key's origin (numpad vs main keyboard), not a
-    // user-pressed modifier. macOS Cocoa sets it on every arrow/function key
-    // even when pressed from the main keyboard; on Linux it's set for numpad
-    // arrows with NumLock off. Strip it once here so every downstream
-    // comparison — C++ shortcut matching and QML Keys handlers — treats
-    // arrows uniformly regardless of origin.
+    // KeypadModifier marks key origin, not user intent; strip it so numpad
+    // arrows compare equal to main-keyboard arrows downstream.
     if (ke->modifiers().testFlag(Qt::KeypadModifier)) {
       ke->setModifiers(ke->modifiers() & ~Qt::KeypadModifier);
     }

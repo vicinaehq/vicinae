@@ -846,25 +846,42 @@ if(WAYLAND_LAYER_SHELL)
 	list(APPEND VICINAE_QML_FILES src/qml/qml/LauncherWindowLayerShell.qml)
 endif()
 
+if(APPLE)
+	list(APPEND VICINAE_QML_FILES
+		src/qml/qml/LauncherWindowMacOS.qml
+		src/qml/qml/SettingsWindowMacOS.qml
+	)
+endif()
+
 # Strip directory prefix so resources are qrc:/Vicinae/Foo.qml
 foreach(qml_file IN LISTS VICINAE_QML_FILES)
 	get_filename_component(alias ${qml_file} NAME)
 	set_source_files_properties(${qml_file} PROPERTIES QT_RESOURCE_ALIAS ${alias})
 endforeach()
 
+set(VICINAE_QML_SOURCES
+	src/qml/source-blend-rect.hpp
+	src/qml/animated-image.hpp
+	src/qml/completion-model.hpp
+	src/qml/markdown/markdown-model.hpp
+	src/qml/markdown/text-selection-controller.hpp
+	src/qml/background-effect-attached.hpp
+	src/qml/background-effect-attached.cpp
+)
+
+if(APPLE)
+	list(APPEND VICINAE_QML_SOURCES
+		src/qml/macos-chrome-attached.hpp
+		src/qml/macos-chrome-attached.mm
+	)
+endif()
+
 qt_add_qml_module(${TARGET}
 	URI Vicinae
 	VERSION 1.0
 	RESOURCE_PREFIX /
 	QML_FILES ${VICINAE_QML_FILES}
-	SOURCES
-		src/qml/source-blend-rect.hpp
-		src/qml/animated-image.hpp
-		src/qml/completion-model.hpp
-		src/qml/markdown/markdown-model.hpp
-		src/qml/markdown/text-selection-controller.hpp
-		src/qml/background-effect-attached.hpp
-		src/qml/background-effect-attached.cpp
+	SOURCES ${VICINAE_QML_SOURCES}
 	DEPENDENCIES QtQuick
 	NO_PLUGIN
 )
@@ -886,6 +903,9 @@ endif()
 
 target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/qml ${CMAKE_CURRENT_SOURCE_DIR}/src/qml/markdown)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
+if(APPLE)
+	target_link_libraries(${TARGET} PRIVATE "-framework AppKit")
+endif()
 target_compile_features(${TARGET} PUBLIC cxx_std_23)
 
 if (USE_PRECOMPILED_HEADERS)

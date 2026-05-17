@@ -33,7 +33,12 @@ debug:
 	cmake --build $(BUILD_DIR) --parallel
 .PHONY: debug
 
-macos:
+mac:
+	CC=$(MACOS_CC) CXX=$(MACOS_CXX) cmake -GNinja -DLTO=ON -DCMAKE_BUILD_TYPE=Release -B $(BUILD_DIR)
+	cmake --build $(BUILD_DIR)
+.PHONY: macos
+
+macdbg:
 	CC=$(MACOS_CC) CXX=$(MACOS_CXX) cmake -GNinja -DLTO=OFF -DENABLE_PREVIEW_FEATURES=ON -DENABLE_SANITIZERS=ON -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)
 .PHONY: macos

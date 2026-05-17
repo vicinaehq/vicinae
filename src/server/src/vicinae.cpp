@@ -13,13 +13,7 @@ namespace fs = std::filesystem;
 
 fs::path Omnicast::runtimeDir() {
 #ifdef Q_OS_MACOS
-  // Don't use QStandardPaths::RuntimeLocation here: Qt resolves it to
-  // ~/Library/Application Support/<app> on macOS, which (a) is not the
-  // conventional location for unix sockets on macOS, and (b) is documented
-  // as subject to change across Qt versions. $TMPDIR is what launchd uses
-  // for per-user runtime files, and is what the CLI computes — keeping
-  // them aligned without coupling to Qt's macOS resolution.
-  if (const char *t = std::getenv("TMPDIR")) return std::filesystem::path(t) / "vicinae";
+  if (const char *t = std::getenv("TMPDIR")) return fs::path(t) / "vicinae";
   return "/tmp/vicinae";
 #else
   return fs::path(QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation).toStdString()) /
@@ -38,8 +32,6 @@ fs::path Omnicast::dataDir() {
 
 fs::path Omnicast::configDir() {
 #ifdef Q_OS_MACOS
-  // ~/Library/Preferences is reserved for .plist files managed by NSUserDefaults.
-  // Our JSON config belongs under Application Support, alongside the rest of our data.
   return dataDir();
 #else
   return xdgpp::configHome() / "vicinae";
@@ -48,7 +40,6 @@ fs::path Omnicast::configDir() {
 
 fs::path Omnicast::stateDir() {
 #ifdef Q_OS_MACOS
-  // macOS has no state-vs-data distinction; keep state alongside data.
   return dataDir();
 #else
   return xdgpp::stateHome() / "vicinae";

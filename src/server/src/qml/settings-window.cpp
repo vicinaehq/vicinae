@@ -51,7 +51,13 @@ void SettingsWindow::ensureInitialized() {
           &SettingsWindow::updateSidebarEnabled);
   rebuildSidebarExtensions();
 
-  m_engine.load(QUrl(QStringLiteral("qrc:/Vicinae/SettingsWindow.qml")));
+  m_engine.load(QUrl(
+#ifdef Q_OS_MACOS
+      QStringLiteral("qrc:/Vicinae/SettingsWindowMacOS.qml")
+#else
+      QStringLiteral("qrc:/Vicinae/SettingsWindow.qml")
+#endif
+      ));
 
   auto rootObjects = m_engine.rootObjects();
   if (!rootObjects.isEmpty()) { m_window = qobject_cast<QQuickWindow *>(rootObjects.first()); }

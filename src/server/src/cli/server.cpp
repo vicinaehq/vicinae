@@ -60,6 +60,10 @@
 #include <QtQuickControls2/QQuickStyle>
 #include "server.hpp"
 
+#ifdef Q_OS_MACOS
+#include "qml/macos-chrome-attached.hpp"
+#endif
+
 static void applyTextRenderingMode(const config::FontConfig &fontConfig) {
   if (fontConfig.rendering == "qt") {
     QQuickWindow::setTextRenderType(QQuickWindow::QtTextRendering);
@@ -79,6 +83,10 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   QGuiApplication const qapp(argc, argv);
   QGuiApplication::setApplicationName("vicinae");
   QQuickWindow::setTextRenderType(QQuickWindow::NativeTextRendering);
+
+#ifdef Q_OS_MACOS
+  macosSetAccessoryActivationPolicy();
+#endif
 
   auto m_config = launchOpts.config.empty() ? Omnicast::configDir() / "settings.json"
                                             : std::filesystem::path{launchOpts.config};

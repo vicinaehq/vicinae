@@ -240,9 +240,7 @@ std::optional<Qt::KeyboardModifier> modifierForKey(Qt::Key key) {
 
 DisplayTokenSpec modifierToken(Qt::KeyboardModifier modifier) {
 #ifdef Q_OS_MACOS
-  // Qt swaps Ctrl/Meta on macOS: Qt::ControlModifier is the physical Cmd key,
-  // Qt::MetaModifier is the physical Ctrl key. Render with the standard macOS
-  // glyphs that match what the system shows in its own menus.
+  // Qt swaps Ctrl/Meta on macOS: ControlModifier == Cmd, MetaModifier == Ctrl.
   switch (modifier) {
   case Qt::ControlModifier:
     return {.text = QStringLiteral("⌘"), .label = QStringLiteral("Command")};

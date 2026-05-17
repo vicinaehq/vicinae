@@ -13,9 +13,6 @@
 namespace cli {
 
 inline std::filesystem::path socketPath() {
-  // Must match what the server resolves via QStandardPaths::RuntimeLocation:
-  //   Linux: $XDG_RUNTIME_DIR (Qt falls back to /tmp/runtime-$USER if unset)
-  //   macOS: $TMPDIR (Qt's RuntimeLocation == TempLocation; falls back to /tmp)
   std::filesystem::path base;
 #ifdef __APPLE__
   if (const char *t = getenv("TMPDIR")) {
