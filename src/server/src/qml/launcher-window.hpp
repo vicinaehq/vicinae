@@ -3,6 +3,7 @@
 #include "image-url.hpp"
 #include <QObject>
 #include <QQmlApplicationEngine>
+#include <QTimer>
 #include <qtmetamacros.h>
 
 class ActionPanelController;
@@ -176,6 +177,7 @@ private:
   QUrl m_overlayUrl;
   QObject *m_overlayHost = nullptr;
 
+  QTimer m_cacheEvictionTimer;
   bool m_closeOnFocusLoss = false;
   int m_lsLayer = 2;                 // LayerShellQt::Window::LayerTop
   int m_lsKeyboardInteractivity = 2; // LayerShellQt::Window::KeyboardInteractivityOnDemand

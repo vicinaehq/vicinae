@@ -1,4 +1,5 @@
 #include "async-image-provider.hpp"
+#include "builtin_icon.hpp"
 #include "favicon/favicon-service.hpp"
 #include "font-service.hpp"
 #include "image-fetcher.hpp"
@@ -22,19 +23,15 @@
 #include "image-data-cache.hpp"
 #include <atomic>
 #include <mutex>
-#include <set>
 
 static bool isGif(const QByteArray &data) {
   return data.size() >= 6 && (data.startsWith("GIF87a") || data.startsWith("GIF89a"));
 }
 
-static std::mutex s_failedCacheMutex;
-static std::set<QString> s_failedImageIds;
-
 static QThreadPool &imageDecodingPool() {
   static QThreadPool pool;
   static std::once_flag flag;
-  std::call_once(flag, []() { pool.setMaxThreadCount(2); });
+  std::call_once(flag, []() { pool.setMaxThreadCount(1); });
   return pool;
 }
 
@@ -72,7 +69,6 @@ public:
       return;
     }
     tryFallback(image);
-    cacheIfFailed(image);
     image.setDevicePixelRatio(m_dpr);
     m_image = std::move(image);
     emit finished();
@@ -86,7 +82,6 @@ public:
       return;
     }
     tryFallback(image);
-    cacheIfFailed(image);
     image.setDevicePixelRatio(m_dpr);
     m_image = std::move(image);
     QTimer::singleShot(0, this, &QQuickImageResponse::finished);
@@ -94,12 +89,6 @@ public:
 
 private:
   void tryFallback(QImage &image);
-
-  void cacheIfFailed(const QImage &image) {
-    if (!image.isNull() || m_id.isEmpty()) return;
-    std::scoped_lock const lock(s_failedCacheMutex);
-    s_failedImageIds.insert(m_id);
-  }
 
   QString m_id;
   qreal m_dpr;
@@ -232,16 +221,12 @@ static QImage renderLocalRaster(const QString &path, const QSize &size) {
 }
 
 static QImage decodeImageData(const QByteArray &data, const QSize &size) {
-  QImageReader reader;
-  QBuffer *buf = new QBuffer;
-  buf->setData(data);
-  buf->open(QIODevice::ReadOnly);
-  reader.setDevice(buf);
+  QBuffer buf;
+  buf.setData(data);
+  buf.open(QIODevice::ReadOnly);
 
-  if (!reader.canRead()) {
-    delete buf;
-    return {};
-  }
+  QImageReader reader(&buf);
+  if (!reader.canRead()) return {};
 
   if (size.isValid()) {
     auto original = reader.size();
@@ -250,9 +235,7 @@ static QImage decodeImageData(const QByteArray &data, const QSize &size) {
   }
 
   QImage result = reader.read();
-  delete buf;
 
-  // Scale down if the format ignored setScaledSize (see renderLocalRaster).
   if (!result.isNull() && size.isValid() &&
       (result.width() > size.width() || result.height() > size.height())) {
     result = result.scaled(size, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
@@ -365,15 +348,6 @@ void ViciImageResponse::tryFallback(QImage &image) {
 
 QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id, const QSize &requestedSize) {
 
-  {
-    std::scoped_lock const lock(s_failedCacheMutex);
-    if (s_failedImageIds.contains(id)) {
-      auto *response = new ViciImageResponse(qGuiApp->devicePixelRatio());
-      response->finishDeferred({});
-      return response;
-    }
-  }
-
   qreal const dpr = std::max(qGuiApp->devicePixelRatio(), 4.0);
   auto *response = new ViciImageResponse(dpr);
   response->setId(id);
@@ -381,42 +355,50 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id,
   QSize const size(qCeil(logical.width() * dpr), qCeil(logical.height() * dpr));
   auto parsed = parseId(id);
 
-  if (!parsed.fallback.isEmpty()) response->setFallback(parsed.fallback, size);
+  static const QString DEFAULT_FALLBACK =
+      QStringLiteral("builtin:") + BuiltinIconService::nameForIcon(BuiltinIconService::unknownIcon());
+
+  if (!parsed.fallback.isEmpty())
+    response->setFallback(parsed.fallback, size);
+  else if (parsed.type != QStringLiteral("builtin"))
+    response->setFallback(DEFAULT_FALLBACK, size);
 
   if (parsed.type == QStringLiteral("builtin")) {
     QColor fg = parsed.fg;
     if (!fg.isValid()) fg = ThemeService::instance().theme().resolve(SemanticColor::Foreground);
-    QImage img = renderBuiltinSvg(parsed.name, size, fg, parsed.bg);
-    if (parsed.circleMask && !img.isNull()) applyCircleMask(img);
-    response->finishDeferred(std::move(img));
+    bool const circle = parsed.circleMask;
+    QColor const bg = parsed.bg;
+    imageDecodingPool().start([response, name = parsed.name, size, fg, bg, circle]() {
+      if (response->isCancelled()) {
+        response->finish({});
+        return;
+      }
+      QImage img = renderBuiltinSvg(name, size, fg, bg);
+      if (circle && !img.isNull()) applyCircleMask(img);
+      response->finish(std::move(img));
+    });
 
   } else if (parsed.type == QStringLiteral("emoji")) {
-    QMetaObject::invokeMethod(
-        qApp,
-        [response, name = parsed.name, size]() {
-          if (response->isCancelled()) {
-            response->finish({});
-            return;
-          }
-          QImage img = renderEmoji(name, size);
-          response->finish(std::move(img));
-        },
-        Qt::QueuedConnection);
+    imageDecodingPool().start([response, name = parsed.name, size]() {
+      if (response->isCancelled()) {
+        response->finish({});
+        return;
+      }
+      QImage img = renderEmoji(name, size);
+      response->finish(std::move(img));
+    });
 
   } else if (parsed.type == QStringLiteral("system")) {
     QColor const fg = parsed.fg;
-    QMetaObject::invokeMethod(
-        qApp,
-        [response, name = parsed.name, size, fg]() {
-          if (response->isCancelled()) {
-            response->finish({});
-            return;
-          }
-          QImage img = renderSystemIcon(name, size);
-          if (!img.isNull()) applyFillColor(img, fg);
-          response->finish(std::move(img));
-        },
-        Qt::QueuedConnection);
+    imageDecodingPool().start([response, name = parsed.name, size, fg]() {
+      if (response->isCancelled()) {
+        response->finish({});
+        return;
+      }
+      QImage img = renderSystemIcon(name, size);
+      if (!img.isNull()) applyFillColor(img, fg);
+      response->finish(std::move(img));
+    });
 
   } else if (parsed.type == QStringLiteral("local")) {
     QString const path = parsed.name;
@@ -424,10 +406,16 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id,
     QColor const fg = parsed.fg;
 
     if (path.endsWith(QStringLiteral(".svg"), Qt::CaseInsensitive)) {
-      QImage img = renderLocalSvg(path, size);
-      if (!img.isNull()) applyFillColor(img, fg);
-      if (circle && !img.isNull()) applyCircleMask(img);
-      response->finishDeferred(std::move(img));
+      imageDecodingPool().start([response, path, size, circle, fg]() {
+        if (response->isCancelled()) {
+          response->finish({});
+          return;
+        }
+        QImage img = renderLocalSvg(path, size);
+        if (!img.isNull()) applyFillColor(img, fg);
+        if (circle && !img.isNull()) applyCircleMask(img);
+        response->finish(std::move(img));
+      });
     } else {
       imageDecodingPool().start([response, path, size, circle, fg]() {
         if (response->isCancelled()) {
