@@ -75,10 +75,7 @@ endif()
 
 include_directories(
     ${CMAKE_BINARY_DIR}
-    ${CMAKE_SOURCE_DIR}/vendor/CLI11
-    ${CMAKE_SOURCE_DIR}/vendor/tomlplusplus
-    ${CMAKE_SOURCE_DIR}/vendor/rang
-    ${CMAKE_SOURCE_DIR}/vendor/watcher
+    ${CMAKE_SOURCE_DIR}/vendor
 )
 
 find_package(glaze)

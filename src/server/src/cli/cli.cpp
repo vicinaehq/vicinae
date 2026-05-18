@@ -1,14 +1,14 @@
 #include "cli.hpp"
 #include "snippet/types.hpp"
 #include "utils.hpp"
-#include "CLI11.hpp"
+#include "CLI11/CLI11.hpp"
 #include "vicinae.hpp"
 #include "server.hpp"
 #include <format>
 #include <iostream>
 #include <qdir.h>
 #include <qobjectdefs.h>
-#include "rang.hpp"
+#include "rang/rang.hpp"
 #include <exception>
 #include "generated/version.h"
 #include <glaze/glaze.hpp>
