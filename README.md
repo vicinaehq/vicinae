@@ -1,53 +1,44 @@
-<p align="center">
-  <img
-    width="100"
-    src="extra/vicinae.png"
-    alt="Vicinae text logo"
-  />
-</p>
-
-[![Discord](https://discord.com/api/guilds/1407488619765174273/widget.png?style=shield&nonce=1756955967)](https://discord.gg/rP4ecD42p7)
-
-**Vicinae** (pronounced _"vee-CHEE-nay"_) is a high-performance, native launcher for your desktop.
-
-It comes with a rich set of built-in modules and can be easily extended using the [Typescript SDK](https://docs.vicinae.com/extensions/introduction).
-
-Drawing inspiration from the [Raycast launcher](https://www.raycast.com/), Vicinae provides a mostly compatible extension API, allowing reuse of many existing Raycast extensions with minimal modification.
-
-Vicinae is designed for developers and power users who want fast, keyboard-first access to common system actions.
-
-Check the [website](https://vicinae.com) ;)
-
-<p align="center">
-  <video alt="demo video" src="https://private-user-images.githubusercontent.com/72200344/499625615-b5831ba7-dd16-407e-a05c-c2dbb468a0d6.mp4?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NzAxNDI4NjEsIm5iZiI6MTc3MDE0MjU2MSwicGF0aCI6Ii83MjIwMDM0NC80OTk2MjU2MTUtYjU4MzFiYTctZGQxNi00MDdlLWEwNWMtYzJkYmI0NjhhMGQ2Lm1wND9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNjAyMDMlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjYwMjAzVDE4MTYwMVomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPWFhYjI5ZTJiMDkyYjliMDFjYWYzZDkxMmI5YWRhYmFkYzI0MzkzNjFmNjQzMDRmNjc2ZGRiMGVlNTlkOTViNTUmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.ksY1Ik5XC5xCp1K7rTg2XRlL_8-qk9E2WqzkeLjHrMo" />
-</p>
-
-## Features
-
-- Launch apps
-- File search
-- Emoji picker 
-- Calculator with history (multiple backends available)
-- Clipboard history
-- Quickly open links using any app (can be used to set up web search)
-- Focus open windows
-- script commands
-- `dmenu` compatibility mode
-- Theming system 
-- Fallback commands
-- React/Typescript extension SDK, allowing to build complex search-focused UIs
-- Global [extension store](https://github.com/vicinaehq/extensions) (since v0.16.0)
-- Raycast compatibility support  
-  → Includes access to the official Raycast extension store, with one-click installs directly from within the launcher  
-  → Many extensions may not work yet due to missing APIs or general Linux incompatibilities
+<div>
+  <p align="center">
+    <img
+      width="96"
+      src="extra/vicinae.png"
+      alt="Vicinae text logo"
+    />
+  </p>
+  
+  <h1 align="center"><b>Vicinae</b></h1>
+  <h4 align="center">A focused launcher for your desktop</h4>
+  
+  <p align="center">
+     <a href="https://vicinae.com"><img src="https://img.shields.io/badge/website-vicinae.com-black.svg" alt="Website"></a>
+    <a href="https://discord.gg/rP4ecD42p7"><img src="https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
+  </p>
+  <img alt="Vicinae screenshot" src="extra/screenshot.png" />
+</div>
 
 
-## Breaking changes
+**Vicinae** (pronounced _"vee-CHEE-nay"_) is a high-performance, native command palette for your desktop.
 
-Until we reach version 1 you should expect breaking changes from release to release. Watch the changelogs to learn about them.
+Out of the box, Vicinae can be your:
 
-We try to not introduce breaking changes that result in a definitive loss of data, but you should expect to have to redo your configuration from time to time.
+- app search
+- [clipboard history](https://docs.vicinae.com/clipboard)
+- [text expander (snippets)](https://docs.vicinae.com/snippets)
+- [file search](https://docs.vicinae.com/file-search)
+- [browser tab switcher](https://docs.vicinae.com/browser-extension)
+- [emoji picker](https://docs.vicinae.com/emoji)
+- [calculator](https://docs.vicinae.com/calculator)
+- [window switcher](https://docs.vicinae.com/window)
+- font browser
+- volume controller
+
+When you need more, Vicinae can be extended in several ways:
+
+- [React/Typescript extensions](https://docs.vicinae.com/extensions), compatible with the Raycast ecosystem. In-app integration with the [Vicinae store](https://www.vicinae.com/extensions) and the [Raycast store](https://www.raycast.com/store).
+- [Script commands](https://docs.vicinae.com/scripts/getting-started), also compatible with the Raycast feature of the same name, with special Vicinae additions.
+- [dmenu style menu creation](https://docs.vicinae.com/dmenu), the linux minimalist way!
 
 ## Documentation
 
-All you need to know is at [docs.vicinae.com](https://docs.vicinae.com).
+Everything you need to know to get started with Vicinae is at [vicinae.com](https://vicinae.com). If you have any question, please feel free to come ask it on [discord](https://discord.gg/rP4ecD42p7)!
