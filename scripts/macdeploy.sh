@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Assemble Vicinae.app from build outputs, populate Qt frameworks, sign.
+# Assemble Vicinae.app from build outputs. macdeployqt handles Qt frameworks
+# and QML modules; dylibbundler handles the remaining non-Qt third-party
+# dylibs (ICU, glib, harfbuzz, ...) and rewrites their install names.
 # Set VICINAE_CODESIGN_IDENTITY to use a real Developer ID identity.
 #
 # Usage: macdeploy.sh [build-dir]
@@ -27,15 +29,17 @@ INFO_PLIST="$BUILD_DIR/Info.plist"
 
 for f in "$SERVER_BIN" "$CLI_BIN" "$INFO_PLIST"; do
   if [[ ! -f "$f" ]]; then
-    echo "macdeploy.sh: missing $f (run 'make mac-bundle' first)" >&2
+    echo "macdeploy.sh: missing $f (build first)" >&2
     exit 1
   fi
 done
 
-if ! command -v macdeployqt >/dev/null 2>&1; then
-  echo "macdeploy.sh: macdeployqt not on PATH (brew install qt)" >&2
-  exit 1
-fi
+for tool in macdeployqt dylibbundler; do
+  if ! command -v "$tool" >/dev/null 2>&1; then
+    echo "macdeploy.sh: $tool not on PATH (brew install qt dylibbundler)" >&2
+    exit 1
+  fi
+done
 
 echo "==> assembling skeleton at $BUNDLE"
 rm -rf "$BUNDLE"
@@ -48,53 +52,28 @@ cp "$CLI_BIN" "$BUNDLE/Contents/MacOS/vicinae-cli"
 chmod +w "$BUNDLE/Contents/MacOS/Vicinae" "$BUNDLE/Contents/MacOS/vicinae-cli"
 
 echo "==> macdeployqt"
-macdeployqt "$BUNDLE" -qmldir="$SRC_DIR/src/server/src/qml" "-codesign=$SIGN_IDENTITY" -verbose=2
+macdeployqt "$BUNDLE" -qmldir="$SRC_DIR/src/server/src/qml" -verbose=2
 
-echo "==> rewriting absolute LC_ID_DYLIB on copied dylibs"
-shopt -s nullglob
-rewritten=()
-for f in "$BUNDLE/Contents/Frameworks/"*.dylib; do
-  id_path="$(otool -D "$f" 2>/dev/null | tail -n +2 | head -1)"
-  case "$id_path" in
-    /opt/homebrew/*|/usr/local/*|/opt/local/*)
-      chmod u+w "$f"
-      install_name_tool -id "@executable_path/../Frameworks/$(basename "$f")" "$f"
-      chmod u-w "$f"
-      rewritten+=("$f")
-      ;;
-  esac
-done
-shopt -u nullglob
+echo "==> dylibbundler"
+dyl_args=(-of -b -cd
+  -d "$BUNDLE/Contents/Frameworks"
+  -p "@executable_path/../Frameworks/"
+  -s "$BUNDLE/Contents/Frameworks"
+  -x "$BUNDLE/Contents/MacOS/Vicinae"
+  -x "$BUNDLE/Contents/MacOS/vicinae-cli")
+while IFS= read -r -d '' p; do
+  dyl_args+=(-x "$p")
+done < <(find "$BUNDLE/Contents/PlugIns" -name "*.dylib" -print0)
+# Also feed loose dylibs in Frameworks/ so dylibbundler rewrites any
+# absolute LC_ID_DYLIB macdeployqt left in place (e.g. brotlicommon
+# pulled in transitively via @rpath).
+while IFS= read -r -d '' p; do
+  dyl_args+=(-x "$p")
+done < <(find "$BUNDLE/Contents/Frameworks" -maxdepth 1 -name "*.dylib" -print0)
+dylibbundler "${dyl_args[@]}"
 
-echo "==> stripping absolute LC_RPATH entries"
-while IFS= read -r -d '' f; do
-  if ! file -b "$f" 2>/dev/null | grep -q "Mach-O"; then continue; fi
-  touched=0
-  while IFS= read -r rpath; do
-    case "$rpath" in
-      ""|@*) ;;
-      *)
-        chmod u+w "$f"
-        install_name_tool -delete_rpath "$rpath" "$f" 2>/dev/null || true
-        touched=1
-        ;;
-    esac
-  done < <(otool -l "$f" 2>/dev/null |
-    awk '/LC_RPATH/{getline;getline;sub(/ \(offset [0-9]+\)/,"");sub(/^[[:space:]]*path[[:space:]]*/,"");print}')
-  if [[ "$touched" -eq 1 ]]; then
-    rewritten+=("$f")
-    chmod u-w "$f" 2>/dev/null || true
-  fi
-done < <(find "$BUNDLE/Contents" -type f \
-           \( -name "*.dylib" -o -name "*.so" -o -perm -u+x \) -print0)
-
-echo "==> re-signing files modified by install_name_tool"
-if [[ "${#rewritten[@]}" -gt 0 ]]; then
-  printf '%s\n' "${rewritten[@]}" | sort -u | while IFS= read -r f; do
-    codesign --force --sign "$SIGN_IDENTITY" "$f" 2>/dev/null || true
-  done
-fi
-codesign --force --sign "$SIGN_IDENTITY" "$BUNDLE" 2>&1 | tail -3
+echo "==> signing bundle"
+codesign --force --deep --sign "$SIGN_IDENTITY" "$BUNDLE" 2>&1 | tail -3
 
 echo "==> audit"
 fail=0
@@ -112,8 +91,6 @@ done < <(find "$BUNDLE/Contents" -type f \
 
 if [[ "$fail" -ne 0 ]]; then
   echo "macdeploy.sh: bundle still links absolute paths (see above)" >&2
-  echo "  macdeployqt missed a non-Qt dep. Add the lib's source dir to" >&2
-  echo "  macdeployqt's -libpath, or copy the lib in manually." >&2
   exit 1
 fi
 

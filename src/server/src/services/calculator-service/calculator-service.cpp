@@ -15,7 +15,7 @@
 #include "qalculate/qalculate-backend.hpp"
 #endif
 
-#ifdef Q_OS_UNIX
+#if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
 #include "soulver-core/soulver-core.hpp"
 #endif
 
@@ -372,8 +372,7 @@ CalculatorService::CalculatorService(OmniDatabase &db) : m_db(db) {
 #ifdef HAS_QALCULATE
     candidates.emplace_back(std::make_unique<QalculateBackend>());
 #endif
-#include "services/calculator-service/soulver-core/soulver-core.hpp"
-#ifdef Q_OS_UNIX
+#if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
     // only activates if the libSoulverWrapper.so shared library is available
     candidates.emplace_back(std::make_unique<SoulverCoreCalculator>());
 #endif

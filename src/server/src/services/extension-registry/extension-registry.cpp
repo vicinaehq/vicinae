@@ -3,7 +3,6 @@
 #include "vicinae.hpp"
 #include <QJsonArray>
 #include "services/extension-registry/extension-registry.hpp"
-#include "xdgpp/env/env.hpp"
 #include "zip/unzip.hpp"
 #include <QtConcurrent/qtconcurrentrun.h>
 #include <filesystem>
@@ -101,20 +100,7 @@ fs::path ExtensionRegistry::supportDirectory() { return Omnicast::dataDir() / "s
 fs::path ExtensionRegistry::supportDirectory(const std::string &id) { return supportDirectory() / id; }
 
 std::vector<fs::path> ExtensionRegistry::extensionDirectories() {
-  std::vector<fs::path> paths;
-  auto dd = xdgpp::dataDirs();
-  auto local = localExtensionDirectory();
-
-  paths.reserve(dd.size() + 1);
-  paths.push_back(local); // we always consider local directory first, no matter what's
-                          // in XDG_DATA_DIRS
-
-  for (const auto &dir : dd) {
-    fs::path const extDir = dir / "vicinae" / "extensions";
-    if (extDir != local) paths.emplace_back(extDir);
-  }
-
-  return paths;
+  return Omnicast::dataSearchPaths("extensions");
 }
 
 std::vector<ExtensionManifest> ExtensionRegistry::scanAll() {

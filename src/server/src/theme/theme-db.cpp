@@ -6,10 +6,6 @@
 #include <qfilesystemwatcher.h>
 #include <qlogging.h>
 
-#ifndef Q_OS_MACOS
-#include "xdgpp/env/env.hpp"
-#endif
-
 namespace fs = std::filesystem;
 
 ThemeDatabase::ThemeDatabase() : m_watcher(new QFileSystemWatcher) {
@@ -95,20 +91,9 @@ std::vector<std::filesystem::path> ThemeDatabase::defaultSearchPaths() {
   paths.emplace_back(LOCAL_THEME_DIR);
 #endif
 
-  paths.emplace_back(Omnicast::dataDir() / "themes");
-
-#ifdef Q_OS_MACOS
-  auto const bundled = Omnicast::bundleResourceDir() / "themes";
-  if (std::ranges::find(paths, bundled) == paths.end()) { paths.emplace_back(bundled); }
-#else
-  auto const dd = xdgpp::dataDirs();
-  auto const suffix = fs::path("vicinae") / "themes";
-  paths.reserve(paths.size() + dd.size());
-  for (const auto &dir : dd) {
-    fs::path const path = dir / suffix;
-    if (std::ranges::find(paths, path) == paths.end()) { paths.emplace_back(path); }
+  for (auto const &dir : Omnicast::dataSearchPaths("themes")) {
+    if (std::ranges::find(paths, dir) == paths.end()) paths.emplace_back(dir);
   }
-#endif
 
   return paths;
 }

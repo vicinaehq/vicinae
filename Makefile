@@ -27,10 +27,12 @@ debug:
 .PHONY: debug
 
 mac-bundle:
-	cmake -GNinja -DLTO=ON -DCMAKE_BUILD_TYPE=Release -B $(BUILD_DIR)
-	cmake --build $(BUILD_DIR)
 	./scripts/macdeploy.sh $(BUILD_DIR)
 .PHONY: mac-bundle
+
+mac-deps:
+	./scripts/macos-setup.sh
+.PHONY: mac-deps
 
 debug-tidy:
 	# we need to run tidy with clang to avoid false positives

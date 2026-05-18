@@ -53,10 +53,36 @@ fs::path Omnicast::bundleResourceDir() {
   auto const appDir = QCoreApplication::applicationDirPath().toStdString();
   return fs::path(appDir).parent_path() / "Resources";
 #else
-  // Linux: rely on the install-prefix share dir. Empty if running uninstalled —
-  // callers should layer their own fallbacks (e.g. xdgpp::dataDirs()).
   return {};
 #endif
+}
+
+std::vector<fs::path> Omnicast::systemDataDirs() {
+  std::vector<fs::path> paths;
+#ifdef Q_OS_MACOS
+  if (auto bundle = bundleResourceDir(); !bundle.empty()) { paths.emplace_back(std::move(bundle)); }
+#else
+  auto const dd = xdgpp::dataDirs();
+  paths.reserve(dd.size());
+  for (auto const &dir : dd) {
+    paths.emplace_back(dir / "vicinae");
+  }
+#endif
+  return paths;
+}
+
+std::vector<fs::path> Omnicast::dataSearchPaths(std::string_view subdir) {
+  std::vector<fs::path> paths;
+  auto const sub = fs::path(subdir);
+  auto const user = dataDir() / sub;
+
+  paths.reserve(1 + systemDataDirs().size());
+  paths.emplace_back(user);
+  for (auto const &dir : systemDataDirs()) {
+    auto p = dir / sub;
+    if (p != user) paths.emplace_back(std::move(p));
+  }
+  return paths;
 }
 
 fs::path Omnicast::commandSocketPath() { return runtimeDir() / "vicinae.sock"; }

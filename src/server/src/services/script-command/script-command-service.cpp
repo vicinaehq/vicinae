@@ -1,8 +1,7 @@
 #include "script-command-service.hpp"
 #include "script/script-scanner.hpp"
-#include "xdgpp/env/env.hpp"
+#include "vicinae.hpp"
 #include <algorithm>
-#include <ranges>
 #include <QtConcurrentRun>
 
 ScriptCommandService::ScriptCommandService() {
@@ -34,9 +33,7 @@ void ScriptCommandService::setCustomScriptPaths(const std::vector<std::filesyste
 }
 
 const std::vector<std::filesystem::path> &ScriptCommandService::defaultScriptDirectories() const {
-  static const auto dirs = xdgpp::commonDataDirs() |
-                           std::views::transform([](auto &&p) { return p / "vicinae" / "scripts"; }) |
-                           std::ranges::to<std::vector>();
+  static const auto dirs = Omnicast::dataSearchPaths("scripts");
   return dirs;
 }
 

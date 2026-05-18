@@ -602,7 +602,7 @@ set(SRCS
 
 )
 
-if (UNIX)
+if (UNIX AND NOT APPLE)
 	list(APPEND SRCS
 		src/services/calculator-service/soulver-core/soulver-core.cpp
 	)

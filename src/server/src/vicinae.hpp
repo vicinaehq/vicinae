@@ -48,6 +48,16 @@ std::filesystem::path configDir();
 // share directory (or empty if we cannot locate it).
 std::filesystem::path bundleResourceDir();
 
+// System-wide read-only directories that may contain Vicinae assets.
+// macOS: { bundleResourceDir() }. Linux: $XDG_DATA_DIRS each suffixed with
+// "vicinae". Empty entries are stripped.
+std::vector<std::filesystem::path> systemDataDirs();
+
+// Per-feature search paths in priority order: user dataDir() / subdir first,
+// then each systemDataDirs() entry / subdir. Used by themes, extensions,
+// scripts, etc.
+std::vector<std::filesystem::path> dataSearchPaths(std::string_view subdir);
+
 void ensureDirectories();
 std::vector<std::filesystem::path> systemPaths();
 
