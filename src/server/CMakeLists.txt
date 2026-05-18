@@ -730,52 +730,21 @@ figura_compile(
 )
 	
 
-if(APPLE)
-	# Bundle the .icns into Contents/Resources so CFBundleIconFile resolves.
-	set(VICINAE_ICNS "${CMAKE_SOURCE_DIR}/extra/vicinae.icns")
-	set_source_files_properties(${VICINAE_ICNS} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
-	list(APPEND SRCS ${VICINAE_ICNS})
-endif()
-
 qt_add_executable(${TARGET} ${SRCS})
 
 if(APPLE)
 	set(VICINAE_BUNDLE_EXECUTABLE "Vicinae")
-	# CFBundleVersion must be a numeric build number. Strip the leading 'v' from
-	# tags like "v0.21.0"; fall back to 0.0.0 when there's no tag at all.
-	set(VICINAE_BUNDLE_VERSION "${VICINAE_GIT_TAG}")
-	string(REGEX REPLACE "^v" "" VICINAE_BUNDLE_VERSION "${VICINAE_BUNDLE_VERSION}")
-	if(NOT VICINAE_BUNDLE_VERSION MATCHES "^[0-9]+(\\.[0-9]+)*$")
-		set(VICINAE_BUNDLE_VERSION "0.0.0")
+	set(VICINAE_BUNDLE_SHORT_VERSION "${VICINAE_GIT_TAG}")
+	string(REGEX REPLACE "^v" "" VICINAE_BUNDLE_SHORT_VERSION "${VICINAE_BUNDLE_SHORT_VERSION}")
+	if(NOT VICINAE_BUNDLE_SHORT_VERSION MATCHES "^[0-9]+(\\.[0-9]+)*$")
+		set(VICINAE_BUNDLE_SHORT_VERSION "0.0.0")
 	endif()
+	get_git_commit_count(VICINAE_BUNDLE_VERSION)
 	configure_file(
 		"${CMAKE_SOURCE_DIR}/extra/Info.plist.in"
-		"${CMAKE_CURRENT_BINARY_DIR}/Info.plist"
+		"${CMAKE_BINARY_DIR}/Info.plist"
 		@ONLY
 	)
-	set_target_properties(${TARGET} PROPERTIES
-		MACOSX_BUNDLE ON
-		OUTPUT_NAME "${VICINAE_BUNDLE_EXECUTABLE}"
-		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_BINARY_DIR}/Info.plist"
-	)
-
-	# Drop themes into Contents/Resources/themes and the CLI into
-	# Contents/MacOS so the bundle in build/ is self-contained.
-	#
-	# The CLI is renamed `vicinae-cli` inside the bundle so it does not collide
-	# case-insensitively with `Vicinae` (default APFS is case-insensitive).
-	# Users symlink it as `vicinae` from their PATH at install time.
-	add_custom_command(TARGET ${TARGET} POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy_directory
-			"${CMAKE_SOURCE_DIR}/extra/themes"
-			"$<TARGET_BUNDLE_DIR:${TARGET}>/Contents/Resources/themes"
-		COMMAND ${CMAKE_COMMAND} -E copy
-			"$<TARGET_FILE:vicinae>"
-			"$<TARGET_BUNDLE_DIR:${TARGET}>/Contents/MacOS/vicinae-cli"
-		COMMENT "Assembling Vicinae.app (themes + CLI helper)"
-		VERBATIM
-	)
-	add_dependencies(${TARGET} vicinae)
 endif()
 
 set(VICINAE_QML_FILES
@@ -962,11 +931,7 @@ else()
 	message(STATUS "Precompiled headers are disabled")
 endif()
 
-if(APPLE)
-	install(TARGETS ${TARGET}
-		BUNDLE DESTINATION .
-	)
-else()
+if(NOT APPLE)
 	install(TARGETS ${TARGET}
 		RUNTIME DESTINATION ${VICINAE_LIBEXEC_DIR}
 	)

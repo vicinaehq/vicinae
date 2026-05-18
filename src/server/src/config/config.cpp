@@ -266,7 +266,7 @@ Manager::PartialConfigResult Manager::load(const std::filesystem::path &path, co
   };
 
   if (opts.resolveImports) {
-    for (const auto &imp : cfg.imports.value_or({})) {
+    for (const auto &imp : cfg.imports.value_or(std::vector<std::string>{})) {
       auto result = importFile(cfg, resolvePath(imp, path), false);
       if (!result) return result;
       cfg = std::move(result).value();
@@ -317,7 +317,8 @@ void Manager::prunePartial(Partial<ConfigValue> &user) {
           }
 
           if (vi.alias && vi.alias->empty()) { vi.alias.reset(); }
-          if (!vi.enabled.has_value() && vi.preferences.value_or({}).empty() && !vi.alias) {
+          if (!vi.enabled.has_value() && vi.preferences.value_or(glz::generic::object_t{}).empty() &&
+              !vi.alias) {
             entrypoints.erase(currentIt);
           }
         }
@@ -325,7 +326,9 @@ void Manager::prunePartial(Partial<ConfigValue> &user) {
         if (entrypoints.empty()) { v.entrypoints.reset(); }
       }
 
-      if (!v.enabled && v.preferences.value_or({}).empty() && !v.entrypoints) { pvd.erase(currentIt); }
+      if (!v.enabled && v.preferences.value_or(glz::generic::object_t{}).empty() && !v.entrypoints) {
+        pvd.erase(currentIt);
+      }
     }
 
     if (pvd.empty()) { user.providers.reset(); }

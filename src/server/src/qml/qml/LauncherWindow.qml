@@ -256,12 +256,17 @@ Window {
         }
     }
 
+    function _centerOnCursorScreen() {
+        const g = launcher.cursorScreenGeometry();
+        root.x = g.x + (g.width - root.width) / 2;
+        root.y = g.y + (g.height - root.height) / 3;
+    }
+
     Connections {
         target: Nav
         function onWindowVisiblityChanged(visible) {
             if (visible) {
-                root.x = (Screen.width - root.width) / 2;
-                root.y = (Screen.height - root.height) / 3;
+                root._centerOnCursorScreen();
                 root.visible = true;
                 root.raise();
                 root.requestActivate();
@@ -294,11 +299,8 @@ Window {
         }
     }
 
-    onWidthChanged: root.x = (Screen.width - root.width) / 2
-    onHeightChanged: root.y = (Screen.height - root.height) / 3
+    onWidthChanged: root.x = Screen.virtualX + (Screen.width - root.width) / 2
+    onHeightChanged: root.y = Screen.virtualY + (Screen.height - root.height) / 3
 
-    Component.onCompleted: {
-        root.x = (Screen.width - root.width) / 2;
-        root.y = (Screen.height - root.height) / 3;
-    }
+    Component.onCompleted: _centerOnCursorScreen()
 }

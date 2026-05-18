@@ -91,6 +91,10 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   if (!qEnvironmentVariableIsSet("QT_QUICK_FLICKABLE_WHEEL_DECELERATION"))
     qputenv("QT_QUICK_FLICKABLE_WHEEL_DECELERATION", "10000");
 
+#ifdef Q_OS_MACOS
+  if (!qEnvironmentVariableIsSet("QT_MAC_SET_RAISE_PROCESS")) qputenv("QT_MAC_SET_RAISE_PROCESS", "0");
+#endif
+
   int argc = 1;
   static char *argv[] = {strdup("command"), nullptr};
   QGuiApplication const qapp(argc, argv);

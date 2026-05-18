@@ -1,5 +1,4 @@
 #include "common/common.hpp"
-#include <cctype>
 #include <filesystem>
 #include <sstream>
 #include <string>
@@ -30,28 +29,9 @@ fs::path selfPath() { return fs::canonical("/proc/self/exe"); }
 std::vector<fs::path> helperProgramCandidates(std::string_view program) {
   const auto self = selfPath().parent_path();
   std::vector<fs::path> candidates;
-  candidates.reserve(4);
+  candidates.reserve(3);
 
   candidates.emplace_back(self / program);
-
-#ifdef __APPLE__
-  // Inside Vicinae.app/Contents/MacOS the bundle's main executable is "Vicinae"
-  // (capitalised target output name), not "vicinae-server". When the CLI asks
-  // for "vicinae-server" we also try a capitalised first letter so it finds its
-  // sibling.
-  if (!program.empty()) {
-    std::string capitalised;
-    capitalised.reserve(program.size());
-    capitalised.push_back(static_cast<char>(std::toupper(static_cast<unsigned char>(program.front()))));
-    capitalised.append(program.substr(1));
-    // strip trailing "-server" so "vicinae-server" -> "Vicinae"
-    if (auto const dash = capitalised.find('-'); dash != std::string::npos) {
-      capitalised.resize(dash);
-    }
-    if (capitalised != program) { candidates.emplace_back(self / capitalised); }
-  }
-#endif
-
   candidates.emplace_back(self.parent_path() / VICINAE_LIBEXECDIR / program);
   candidates.emplace_back(fs::path{VICINAE_LIBEXEC_PATH} / program);
   return candidates;
@@ -77,6 +57,13 @@ std::optional<fs::path> findHelperProgram(std::string_view program) {
   }
 
   return {};
+}
+
+std::optional<fs::path> findServerBinary() {
+#ifdef __APPLE__
+  if (auto p = findHelperProgram("Vicinae")) return p;
+#endif
+  return findHelperProgram("vicinae-server");
 }
 
 }; // namespace vicinae

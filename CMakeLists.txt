@@ -69,21 +69,29 @@ if (NOT USE_SYSTEM_KF6 OR APPLE)
 endif()
 
 if (APPLE)
-	# we use a modern version of clang installed using brew, because the toolchain
-	# shipped by macos seem to be too old and we are having issue with it.
-	# eventually, we may try to fix these and use the system toolchain.
-	set(CC "/opt/homebrew/opt/llvm/bin/clang")
-	set(CXX "/opt/homebrew/opt/llvm/bin/clang++")
-
-	# Point at the umbrella Qt formula so CMake finds qtbase plus its sibling
-	# component packages (Qt6LinguistTools, etc.) in one prefix.
-	if (NOT QT_DIR AND EXISTS "/opt/homebrew/opt/qt/lib/cmake/Qt6")
-		list(PREPEND CMAKE_PREFIX_PATH "/opt/homebrew/opt/qt")
+	find_program(BREW_EXECUTABLE brew)
+	if (BREW_EXECUTABLE)
+		execute_process(
+			COMMAND ${BREW_EXECUTABLE} --prefix
+			OUTPUT_VARIABLE HOMEBREW_PREFIX
+			OUTPUT_STRIP_TRAILING_WHITESPACE
+			RESULT_VARIABLE _brew_status
+		)
+		if (NOT _brew_status EQUAL 0)
+			set(HOMEBREW_PREFIX "")
+		endif()
 	endif()
 
-	# UGLY FIX: Homebrew's lib dir is not on the linker's default search path.
-	# Plain `-lminizip` etc. fail to resolve without this.
-	link_directories(/opt/homebrew/lib)
+	if (HOMEBREW_PREFIX)
+		message(STATUS "Detected Homebrew prefix: ${HOMEBREW_PREFIX}")
+		if (NOT QT_DIR AND EXISTS "${HOMEBREW_PREFIX}/opt/qt/lib/cmake/Qt6")
+			list(PREPEND CMAKE_PREFIX_PATH "${HOMEBREW_PREFIX}/opt/qt")
+		endif()
+		if (NOT DEFINED ENV{ICU_ROOT} AND EXISTS "${HOMEBREW_PREFIX}/opt/icu4c")
+			set(ENV{ICU_ROOT} "${HOMEBREW_PREFIX}/opt/icu4c")
+		endif()
+		link_directories(${HOMEBREW_PREFIX}/lib)
+	endif()
 
 	set(WAYLAND_LAYER_SHELL OFF)
 	set(WLR_DATA_CONTROL OFF)
@@ -226,8 +234,6 @@ if (CCACHE AND NOT IGNORE_CCACHE)
 endif()
 
 add_compile_definitions(BUILD_INFO="${BUILD_INFO}")
-# cli is added before server so that the server's APPLE bundle assembly can
-# reference the `vicinae` target (it copies the CLI into Contents/MacOS).
 add_subdirectory(src/cli)
 add_subdirectory(src/server)
 
@@ -244,18 +250,6 @@ if(NOT APPLE)
 	make_directory(${VICINAE_INSTALL_SHARE})
 	file(REMOVE_RECURSE ${VICINAE_THEME_DIR})
 	install(DIRECTORY ./extra/themes DESTINATION ${VICINAE_INSTALL_SHARE})
-endif()
-
-if(APPLE)
-	# Mirror the build-time bundle assembly under `make install`. The build-time
-	# copy (themes + CLI into the .app) lives in src/server/CMakeLists.txt.
-	install(DIRECTORY ./extra/themes
-		DESTINATION Vicinae.app/Contents/Resources
-	)
-	install(PROGRAMS $<TARGET_FILE:vicinae>
-		DESTINATION Vicinae.app/Contents/MacOS
-		RENAME vicinae-cli
-	)
 endif()
 
 if (UNIX AND NOT APPLE)

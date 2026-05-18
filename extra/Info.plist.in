@@ -19,7 +19,7 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>@VICINAE_BUNDLE_VERSION@</string>
+	<string>@VICINAE_BUNDLE_SHORT_VERSION@</string>
 	<key>CFBundleVersion</key>
 	<string>@VICINAE_BUNDLE_VERSION@</string>
 	<key>LSMinimumSystemVersion</key>
@@ -34,5 +34,7 @@
 	<true/>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>Copyright © Vicinae contributors. Licensed under GPL-3.0.</string>
 </dict>
 </plist>

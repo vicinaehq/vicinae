@@ -6,13 +6,6 @@ APPIMAGE_BUILD_ENV_DIR			:= ./scripts/runners/appimage/
 APPIMAGE_BUILD_ENV_IMAGE_TAG	:= vicinae/appimage-build-env
 FIGURA_CC						:= $(BIN_DIR)/figura
 
-MACOS_CC := /opt/homebrew/opt/llvm/bin/clang
-MACOS_CXX := /opt/homebrew/opt/llvm/bin/clang++
-
-# System clang is slightly too old for us to compile with it (as of Tahoe)
-#MACOS_CC := clang
-#MACOS_CXX := clang++ 
-
 release:
 	cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)
@@ -33,19 +26,11 @@ debug:
 	cmake --build $(BUILD_DIR) --parallel
 .PHONY: debug
 
-mac:
-	CC=$(MACOS_CC) CXX=$(MACOS_CXX) cmake -GNinja -DLTO=ON -DCMAKE_BUILD_TYPE=Release -B $(BUILD_DIR)
+mac-bundle:
+	cmake -GNinja -DLTO=ON -DCMAKE_BUILD_TYPE=Release -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)
-.PHONY: mac
-
-mac-deploy: mac
-	./scripts/macdeploy.sh $(BUILD_DIR)/bin/Vicinae.app
-.PHONY: mac-deploy
-
-macdbg:
-	CC=$(MACOS_CC) CXX=$(MACOS_CXX) cmake -GNinja -DLTO=OFF -DENABLE_PREVIEW_FEATURES=ON -DENABLE_SANITIZERS=ON -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
-	cmake --build $(BUILD_DIR)
-.PHONY: macos
+	./scripts/macdeploy.sh $(BUILD_DIR)
+.PHONY: mac-bundle
 
 debug-tidy:
 	# we need to run tidy with clang to avoid false positives
@@ -115,8 +100,11 @@ appimage-build-env-push:
 	docker push $(APPIMAGE_BUILD_ENV_IMAGE_TAG)
 .PHONY: appimage-build-env-push
 
+NPROC := $(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
+CLANG_FORMAT := $(shell command -v clang-format 2>/dev/null || echo /opt/homebrew/opt/llvm/bin/clang-format)
+
 qmlformat:
-	find ./src -type f -name '*.qml' -print0 | xargs -0 -n 10 -P $(shell nproc) qmlformat -i
+	find ./src -type f -name '*.qml' -print0 | xargs -0 -n 10 -P $(NPROC) qmlformat -i
 .PHONY: qmlformat
 
 tsfmt:
@@ -128,7 +116,7 @@ format: qmlformat tsfmt
 .PHONY: format
 
 check-format:
-	find ./src -type f \( -name '*.cpp' -o -name '*.hpp' \) -print0 | xargs -0 -n 10 -P $(shell nproc) clang-format --dry-run -Werror
+	find ./src -type f \( -name '*.cpp' -o -name '*.hpp' \) -print0 | xargs -0 -n 10 -P $(NPROC) $(CLANG_FORMAT) --dry-run -Werror
 .PHONY: check-format
 
 bump-patch:

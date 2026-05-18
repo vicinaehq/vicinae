@@ -2,7 +2,7 @@ LauncherWindow {
     nativeChrome: true
     color: "transparent"
     shadowPadding: 0
-    flags: Qt.Dialog | Qt.FramelessWindowHint
+    flags: Qt.Tool | Qt.FramelessWindowHint
 
     MacOSWindow.enabled: true
     MacOSWindow.cornerRadius: cornerRadius

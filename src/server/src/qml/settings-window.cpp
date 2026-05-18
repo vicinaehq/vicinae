@@ -21,6 +21,9 @@
 #include "fuzzy/fuzzy-searchable.hpp"
 #include <QQmlContext>
 #include <QQuickWindow>
+#ifdef Q_OS_MACOS
+#include "macos-chrome-attached.hpp"
+#endif
 
 SettingsWindow::SettingsWindow(ApplicationContext &ctx, QObject *parent) : QObject(parent), m_ctx(ctx) {}
 
@@ -57,7 +60,7 @@ void SettingsWindow::ensureInitialized() {
 #else
       QStringLiteral("qrc:/Vicinae/SettingsWindow.qml")
 #endif
-      ));
+          ));
 
   auto rootObjects = m_engine.rootObjects();
   if (!rootObjects.isEmpty()) { m_window = qobject_cast<QQuickWindow *>(rootObjects.first()); }
@@ -139,6 +142,9 @@ void SettingsWindow::show() {
   m_window->show();
   m_window->raise();
   m_window->requestActivate();
+#ifdef Q_OS_MACOS
+  macosActivateApp();
+#endif
 }
 
 void SettingsWindow::hide() {

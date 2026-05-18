@@ -3,11 +3,14 @@
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <qevent.h>
+#include <qlogging.h>
 
 #import <AppKit/AppKit.h>
 #import <objc/message.h>
 
 namespace {
+
+NSView *nsViewFromWinId(WId winId) { return (__bridge NSView *)reinterpret_cast<void *>(winId); }
 
 NSVisualEffectMaterial materialFromString(const QString &name) {
   if (name == "popover") return NSVisualEffectMaterialPopover;
@@ -69,38 +72,6 @@ void installEffectView(NSWindow *nswin, bool enabled, NSVisualEffectMaterial mat
   CGColorRelease(cg);
 }
 
-void configurePanelBehavior(NSWindow *nswin) {
-  // Make this a non-activating panel so the launcher can take key focus
-  // without making vicinae the foreground app — same model Spotlight/Raycast use.
-  NSWindowStyleMask mask = nswin.styleMask;
-  if (!(mask & NSWindowStyleMaskNonactivatingPanel)) {
-    mask |= NSWindowStyleMaskNonactivatingPanel;
-    [nswin setStyleMask:mask];
-  }
-
-  // AppKit caches the WindowServer "prevents activation" tag at -[NSWindow init];
-  // setStyleMask alone doesn't refresh it. Force-sync via the private SPI.
-  SEL preventsSel = NSSelectorFromString(@"_setPreventsActivation:");
-  if ([nswin respondsToSelector:preventsSel]) {
-    ((void (*)(id, SEL, BOOL))objc_msgSend)(nswin, preventsSel, YES);
-  }
-
-  nswin.level = NSMainMenuWindowLevel + 1;
-  nswin.collectionBehavior = NSWindowCollectionBehaviorCanJoinAllSpaces |
-                             NSWindowCollectionBehaviorFullScreenAuxiliary |
-                             NSWindowCollectionBehaviorTransient |
-                             NSWindowCollectionBehaviorIgnoresCycle;
-  nswin.hidesOnDeactivate = NO;
-  nswin.movableByWindowBackground = NO;
-
-  if ([nswin isKindOfClass:[NSPanel class]]) {
-    NSPanel *panel = (NSPanel *)nswin;
-    panel.floatingPanel = YES;
-    panel.becomesKeyOnlyIfNeeded = NO;
-    panel.worksWhenModal = YES;
-  }
-}
-
 } // namespace
 
 // ---------------- MacOSWindowAttached ----------------
@@ -122,7 +93,11 @@ void MacOSWindowAttached::setEnabled(bool value) {
   if (m_enabled == value) return;
   m_enabled = value;
   emit enabledChanged();
-  apply();
+  if (m_enabled) {
+    apply();
+  } else {
+    revert();
+  }
 }
 
 void MacOSWindowAttached::setCornerRadius(int value) {
@@ -171,6 +146,7 @@ void MacOSWindowAttached::onWindowChanged(QQuickWindow *window) {
     m_window->removeEventFilter(this);
     m_window = nullptr;
     m_surfaceReady = false;
+    m_snapshot = {};
   }
   if (window) {
     trackWindow(window);
@@ -185,10 +161,17 @@ void MacOSWindowAttached::apply() {
     m_surfaceReady = true;
   }
 
-  NSView *nsview = reinterpret_cast<NSView *>(m_window->winId());
+  NSView *nsview = nsViewFromWinId(m_window->winId());
   if (!nsview) return;
   NSWindow *nswin = nsview.window;
   if (!nswin) return;
+
+  if (!m_snapshot.valid) {
+    m_snapshot.valid = true;
+    m_snapshot.opaque = nswin.opaque;
+    m_snapshot.backgroundColor = (void *)CFBridgingRetain(nswin.backgroundColor);
+    m_snapshot.hasShadow = nswin.hasShadow;
+  }
 
   nswin.opaque = NO;
   nswin.backgroundColor = NSColor.clearColor;
@@ -196,6 +179,27 @@ void MacOSWindowAttached::apply() {
 
   installEffectView(nswin, m_blurEnabled, materialFromString(m_material), m_cornerRadius,
                     m_borderColor, m_borderWidth);
+}
+
+void MacOSWindowAttached::revert() {
+  if (!m_window) return;
+  NSView *nsview = nsViewFromWinId(m_window->winId());
+  if (!nsview) return;
+  NSWindow *nswin = nsview.window;
+  if (!nswin) return;
+
+  installEffectView(nswin, /*enabled=*/false, NSVisualEffectMaterialHUDWindow, 0, QColor(), 0);
+
+  if (m_snapshot.valid) {
+    nswin.opaque = m_snapshot.opaque;
+    nswin.hasShadow = m_snapshot.hasShadow;
+    if (m_snapshot.backgroundColor) {
+      NSColor *bg = (NSColor *)CFBridgingRelease(m_snapshot.backgroundColor);
+      m_snapshot.backgroundColor = nullptr;
+      nswin.backgroundColor = bg;
+    }
+    m_snapshot = {};
+  }
 }
 
 bool MacOSWindowAttached::eventFilter(QObject *obj, QEvent *event) {
@@ -235,8 +239,16 @@ void MacOSPanelAttached::setEnabled(bool value) {
   if (m_enabled) {
     apply();
   } else {
+    revert();
     removeResignKeyObserver();
   }
+}
+
+void MacOSPanelAttached::setWindowLevel(int value) {
+  if (m_windowLevel == value) return;
+  m_windowLevel = value;
+  emit windowLevelChanged();
+  if (m_enabled) apply();
 }
 
 void MacOSPanelAttached::trackWindow(QWindow *window) {
@@ -250,6 +262,7 @@ void MacOSPanelAttached::onWindowChanged(QQuickWindow *window) {
     m_window->removeEventFilter(this);
     m_window = nullptr;
     m_surfaceReady = false;
+    m_snapshot = {};
     removeResignKeyObserver();
   }
   if (window) {
@@ -289,13 +302,90 @@ void MacOSPanelAttached::apply() {
     m_surfaceReady = true;
   }
 
-  NSView *nsview = reinterpret_cast<NSView *>(m_window->winId());
+  NSView *nsview = nsViewFromWinId(m_window->winId());
   if (!nsview) return;
   NSWindow *nswin = nsview.window;
   if (!nswin) return;
 
-  configurePanelBehavior(nswin);
+  if (!m_snapshot.valid) {
+    m_snapshot.valid = true;
+    m_snapshot.styleMask = (unsigned long)nswin.styleMask;
+    m_snapshot.level = (int)nswin.level;
+    m_snapshot.collectionBehavior = (unsigned long)nswin.collectionBehavior;
+    m_snapshot.hidesOnDeactivate = nswin.hidesOnDeactivate;
+    m_snapshot.movableByWindowBackground = nswin.movableByWindowBackground;
+    m_snapshot.isPanel = [nswin isKindOfClass:[NSPanel class]];
+    if (m_snapshot.isPanel) {
+      NSPanel *panel = (NSPanel *)nswin;
+      m_snapshot.floatingPanel = panel.floatingPanel;
+      m_snapshot.becomesKeyOnlyIfNeeded = panel.becomesKeyOnlyIfNeeded;
+      m_snapshot.worksWhenModal = panel.worksWhenModal;
+    }
+  }
+
+  // Make this a non-activating panel so the launcher can take key focus
+  // without making vicinae the foreground app — same model Spotlight/Raycast use.
+  NSWindowStyleMask mask = nswin.styleMask;
+  if (!(mask & NSWindowStyleMaskNonactivatingPanel)) {
+    mask |= NSWindowStyleMaskNonactivatingPanel;
+    [nswin setStyleMask:mask];
+  }
+
+  // AppKit caches the WindowServer "prevents activation" tag at -[NSWindow init];
+  // setStyleMask alone doesn't refresh it. Force-sync via the private SPI.
+  SEL preventsSel = NSSelectorFromString(@"_setPreventsActivation:");
+  if ([nswin respondsToSelector:preventsSel]) {
+    ((void (*)(id, SEL, BOOL))objc_msgSend)(nswin, preventsSel, YES);
+  } else {
+    qWarning() << "macos-chrome: -[NSWindow _setPreventsActivation:] is unavailable; panel will steal focus";
+  }
+
+  nswin.level = m_windowLevel;
+  nswin.collectionBehavior = NSWindowCollectionBehaviorCanJoinAllSpaces |
+                             NSWindowCollectionBehaviorFullScreenAuxiliary |
+                             NSWindowCollectionBehaviorTransient |
+                             NSWindowCollectionBehaviorIgnoresCycle;
+  nswin.hidesOnDeactivate = NO;
+  nswin.movableByWindowBackground = NO;
+
+  if ([nswin isKindOfClass:[NSPanel class]]) {
+    NSPanel *panel = (NSPanel *)nswin;
+    panel.floatingPanel = YES;
+    panel.becomesKeyOnlyIfNeeded = NO;
+    panel.worksWhenModal = YES;
+  }
+
   installResignKeyObserver((__bridge void *)nswin);
+}
+
+void MacOSPanelAttached::revert() {
+  if (!m_window || !m_snapshot.valid) return;
+  NSView *nsview = nsViewFromWinId(m_window->winId());
+  if (!nsview) return;
+  NSWindow *nswin = nsview.window;
+  if (!nswin) return;
+
+  [nswin setStyleMask:(NSWindowStyleMask)m_snapshot.styleMask];
+
+  SEL preventsSel = NSSelectorFromString(@"_setPreventsActivation:");
+  if ([nswin respondsToSelector:preventsSel]) {
+    BOOL prevents = (m_snapshot.styleMask & NSWindowStyleMaskNonactivatingPanel) ? YES : NO;
+    ((void (*)(id, SEL, BOOL))objc_msgSend)(nswin, preventsSel, prevents);
+  }
+
+  nswin.level = m_snapshot.level;
+  nswin.collectionBehavior = (NSWindowCollectionBehavior)m_snapshot.collectionBehavior;
+  nswin.hidesOnDeactivate = m_snapshot.hidesOnDeactivate;
+  nswin.movableByWindowBackground = m_snapshot.movableByWindowBackground;
+
+  if (m_snapshot.isPanel && [nswin isKindOfClass:[NSPanel class]]) {
+    NSPanel *panel = (NSPanel *)nswin;
+    panel.floatingPanel = m_snapshot.floatingPanel;
+    panel.becomesKeyOnlyIfNeeded = m_snapshot.becomesKeyOnlyIfNeeded;
+    panel.worksWhenModal = m_snapshot.worksWhenModal;
+  }
+
+  m_snapshot = {};
 }
 
 bool MacOSPanelAttached::eventFilter(QObject *obj, QEvent *event) {
@@ -317,3 +407,5 @@ bool MacOSPanelAttached::eventFilter(QObject *obj, QEvent *event) {
 void macosSetAccessoryActivationPolicy() {
   [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
 }
+
+void macosActivateApp() { [NSApp activateIgnoringOtherApps:YES]; }

@@ -26,9 +26,11 @@
 #include "vicinae.hpp"
 #include "lib/keyboard/keyboard.hpp"
 #include "ui/views/base-view.hpp"
+#include <QCursor>
 #include <QGuiApplication>
 #include <QQmlContext>
 #include <QQuickWindow>
+#include <QScreen>
 #include <QWindow>
 #include <QKeyEvent>
 #include <qcoreevent.h>
@@ -44,8 +46,10 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
       m_imgSource(new ImageSource(this)), m_keybindProxy(new KeybindBridge(this)),
       m_themeBridge(new ThemeBridge(this)) {
 
+#ifndef Q_OS_MACOS
   // Ensure Wayland app_id / X11 WM_CLASS is "vicinae"
   QGuiApplication::setDesktopFileName(QStringLiteral("vicinae"));
+#endif
 
   m_searchModel = new RootSearchModel(ViewScope(&ctx, ctx.navigation->topState()->sender), this);
 
@@ -74,7 +78,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
       isLayerShellActive() ? QStringLiteral("qrc:/Vicinae/LauncherWindowLayerShell.qml")
                            : QStringLiteral("qrc:/Vicinae/LauncherWindow.qml")
 #endif
-      ));
+          ));
 
   auto rootObjects = m_engine.rootObjects();
   if (!rootObjects.isEmpty()) { m_window = qobject_cast<QQuickWindow *>(rootObjects.first()); }
@@ -527,6 +531,12 @@ void LauncherWindow::setCompleterValue(int index, const QString &value) {
   if (index < 0 || std::cmp_greater_equal(index, values.size())) return;
   values[index].second = value;
   nav->setCompletionValues(values);
+}
+
+QRect LauncherWindow::cursorScreenGeometry() const {
+  auto *screen = QGuiApplication::screenAt(QCursor::pos());
+  if (!screen) screen = QGuiApplication::primaryScreen();
+  return screen ? screen->geometry() : QRect();
 }
 
 void LauncherWindow::expand() { setCompacted(false); }

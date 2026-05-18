@@ -1,23 +1,9 @@
 #!/usr/bin/env bash
-# Make a Vicinae.app bundle portable.
+# Assemble Vicinae.app from build outputs, populate Qt frameworks, sign.
+# Set VICINAE_CODESIGN_IDENTITY to use a real Developer ID identity.
 #
-# 1. macdeployqt copies Qt frameworks + their transitive Homebrew deps
-#    into Contents/Frameworks/ and rewrites consumer load commands to
-#    @executable_path/../Frameworks/.
-# 2. macdeployqt is known to leave copied dylibs' own install names
-#    (LC_ID_DYLIB) pointing at their original absolute Homebrew paths,
-#    which breaks codesign --verify. We rewrite those here.
-# 3. Audit: scan every Mach-O in the bundle and fail if any load
-#    command still resolves to an absolute Homebrew path.
-#
-# We deliberately do NOT use dylibbundler: it owns the Frameworks dir
-# (the -od flag erases it on every run) and does not compose with
-# macdeployqt's output. macdeployqt + install_name_tool fixup is the
-# pattern used by Tiled, Krita, and Conan's fix_apple_shared_install_name.
-# Codesigning is out of scope here.
-#
-# Usage: macdeploy.sh [bundle-path]
-#   bundle-path defaults to build/bin/Vicinae.app
+# Usage: macdeploy.sh [build-dir]
+#   build-dir defaults to ./build
 set -euo pipefail
 
 if [[ "$(uname -s)" != "Darwin" ]]; then
@@ -25,31 +11,56 @@ if [[ "$(uname -s)" != "Darwin" ]]; then
   exit 1
 fi
 
-BUNDLE="${1:-build/bin/Vicinae.app}"
-if [[ ! -d "$BUNDLE" ]]; then
-  echo "macdeploy.sh: bundle not found at $BUNDLE (run 'make mac' first)" >&2
+BUILD_DIR="${1:-build}"
+if [[ ! -d "$BUILD_DIR" ]]; then
+  echo "macdeploy.sh: build dir not found at $BUILD_DIR" >&2
   exit 1
 fi
-BUNDLE="$(cd "$BUNDLE" && pwd)"
+BUILD_DIR="$(cd "$BUILD_DIR" && pwd)"
+SRC_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+BUNDLE="$BUILD_DIR/bin/Vicinae.app"
+SIGN_IDENTITY="${VICINAE_CODESIGN_IDENTITY:--}"
+
+SERVER_BIN="$BUILD_DIR/bin/vicinae-server"
+CLI_BIN="$BUILD_DIR/bin/vicinae"
+INFO_PLIST="$BUILD_DIR/Info.plist"
+
+for f in "$SERVER_BIN" "$CLI_BIN" "$INFO_PLIST"; do
+  if [[ ! -f "$f" ]]; then
+    echo "macdeploy.sh: missing $f (run 'make mac-bundle' first)" >&2
+    exit 1
+  fi
+done
 
 if ! command -v macdeployqt >/dev/null 2>&1; then
   echo "macdeploy.sh: macdeployqt not on PATH (brew install qt)" >&2
   exit 1
 fi
 
-QML_DIR="$(cd "$(dirname "$0")/.." && pwd)/src/server/src/qml"
+echo "==> assembling skeleton at $BUNDLE"
+rm -rf "$BUNDLE"
+mkdir -p "$BUNDLE/Contents/MacOS" "$BUNDLE/Contents/Resources"
+cp "$INFO_PLIST" "$BUNDLE/Contents/Info.plist"
+cp "$SRC_DIR/extra/vicinae.icns" "$BUNDLE/Contents/Resources/vicinae.icns"
+cp -R "$SRC_DIR/extra/themes" "$BUNDLE/Contents/Resources/themes"
+cp "$SERVER_BIN" "$BUNDLE/Contents/MacOS/Vicinae"
+cp "$CLI_BIN" "$BUNDLE/Contents/MacOS/vicinae-cli"
+chmod +w "$BUNDLE/Contents/MacOS/Vicinae" "$BUNDLE/Contents/MacOS/vicinae-cli"
 
 echo "==> macdeployqt"
-macdeployqt "$BUNDLE" -qmldir="$QML_DIR" -verbose=2
+macdeployqt "$BUNDLE" -qmldir="$SRC_DIR/src/server/src/qml" "-codesign=$SIGN_IDENTITY" -verbose=2
 
-echo "==> rewriting absolute install names"
+echo "==> rewriting absolute LC_ID_DYLIB on copied dylibs"
 shopt -s nullglob
+rewritten=()
 for f in "$BUNDLE/Contents/Frameworks/"*.dylib; do
   id_path="$(otool -D "$f" 2>/dev/null | tail -n +2 | head -1)"
   case "$id_path" in
     /opt/homebrew/*|/usr/local/*|/opt/local/*)
       chmod u+w "$f"
       install_name_tool -id "@executable_path/../Frameworks/$(basename "$f")" "$f"
+      chmod u-w "$f"
+      rewritten+=("$f")
       ;;
   esac
 done
@@ -58,22 +69,32 @@ shopt -u nullglob
 echo "==> stripping absolute LC_RPATH entries"
 while IFS= read -r -d '' f; do
   if ! file -b "$f" 2>/dev/null | grep -q "Mach-O"; then continue; fi
+  touched=0
   while IFS= read -r rpath; do
     case "$rpath" in
       ""|@*) ;;
-      *) chmod u+w "$f"; install_name_tool -delete_rpath "$rpath" "$f" 2>/dev/null || true ;;
+      *)
+        chmod u+w "$f"
+        install_name_tool -delete_rpath "$rpath" "$f" 2>/dev/null || true
+        touched=1
+        ;;
     esac
   done < <(otool -l "$f" 2>/dev/null |
     awk '/LC_RPATH/{getline;getline;sub(/ \(offset [0-9]+\)/,"");sub(/^[[:space:]]*path[[:space:]]*/,"");print}')
+  if [[ "$touched" -eq 1 ]]; then
+    rewritten+=("$f")
+    chmod u-w "$f" 2>/dev/null || true
+  fi
 done < <(find "$BUNDLE/Contents" -type f \
            \( -name "*.dylib" -o -name "*.so" -o -perm -u+x \) -print0)
 
-echo "==> ad-hoc resign"
-# install_name_tool invalidates macdeployqt's ad-hoc signature; without
-# this step macOS AMFI silently kills the binary on launch (exit 0, no
-# output). Proper Developer ID signing for distribution is a separate
-# concern.
-codesign --force --deep --sign - "$BUNDLE" 2>&1 | tail -3
+echo "==> re-signing files modified by install_name_tool"
+if [[ "${#rewritten[@]}" -gt 0 ]]; then
+  printf '%s\n' "${rewritten[@]}" | sort -u | while IFS= read -r f; do
+    codesign --force --sign "$SIGN_IDENTITY" "$f" 2>/dev/null || true
+  done
+fi
+codesign --force --sign "$SIGN_IDENTITY" "$BUNDLE" 2>&1 | tail -3
 
 echo "==> audit"
 fail=0
@@ -91,8 +112,8 @@ done < <(find "$BUNDLE/Contents" -type f \
 
 if [[ "$fail" -ne 0 ]]; then
   echo "macdeploy.sh: bundle still links absolute paths (see above)" >&2
-  echo "  — macdeployqt missed a non-Qt dep. Add the lib's source dir to" >&2
-  echo "    macdeployqt's -libpath, or copy the lib in manually." >&2
+  echo "  macdeployqt missed a non-Qt dep. Add the lib's source dir to" >&2
+  echo "  macdeployqt's -libpath, or copy the lib in manually." >&2
   exit 1
 fi
 
