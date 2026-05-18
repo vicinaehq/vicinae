@@ -1,6 +1,10 @@
 import React from "react";
 import { type ImageLike, serializeProtoImage } from "../image";
-import { type ColorLike, serializeColorLike, type SerializedColorLike } from "../color";
+import {
+	type ColorLike,
+	serializeColorLike,
+	type SerializedColorLike,
+} from "../color";
 import { TagList } from "./tag";
 
 export type MetadataProps = {
@@ -27,7 +31,9 @@ const MetadataLabel: React.FC<ListItemDetailMetadataLabelProps> = (props) => {
 	let serializedText: string | { color?: SerializedColorLike; value: string };
 	if (props.text && typeof props.text === "object") {
 		serializedText = {
-			color: props.text.color ? serializeColorLike(props.text.color) : undefined,
+			color: props.text.color
+				? serializeColorLike(props.text.color)
+				: undefined,
 			value: props.text.value,
 		};
 	} else {
@@ -36,7 +42,13 @@ const MetadataLabel: React.FC<ListItemDetailMetadataLabelProps> = (props) => {
 
 	const { text, ...restProps } = props;
 
-	return <metadata-label {...restProps} icon={serializedIcon} text={serializedText} />;
+	return (
+		<metadata-label
+			{...restProps}
+			icon={serializedIcon}
+			text={serializedText}
+		/>
+	);
 };
 
 const MetadataSeparator: React.FC = () => {

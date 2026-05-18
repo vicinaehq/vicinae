@@ -98,7 +98,11 @@ qmlformat:
 	find ./src -type f -name '*.qml' -print0 | xargs -0 -n 10 -P $(shell nproc) qmlformat -i
 .PHONY: qmlformat
 
-format: qmlformat
+tsfmt:
+	cd src/typescript && biome format --write .
+.PHONY: tsfmt
+
+format: qmlformat tsfmt
 	find ./src -type f \( -name '*.cpp' -o -name '*.hpp' \) -print0 | xargs -0 -n 10 -P $(shell nproc) clang-format -i
 .PHONY: format
 

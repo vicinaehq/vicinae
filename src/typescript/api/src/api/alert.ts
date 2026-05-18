@@ -56,29 +56,31 @@ export const confirmAlert = async (
 	options: Alert.Options,
 ): Promise<boolean> => {
 	return new Promise<boolean>((resolve) => {
-		getClient().UI.confirmAlert({
-			title: options.title,
-			description: options.message ?? "Are you sure?",
-			//icon: options.icon && serializeProtoImage(options.icon),
-			rememberUserChoice: false,
-			primaryAction: {
-				title: options.primaryAction?.title ?? "Confirm",
-				style:
-					styleMap[options.primaryAction?.style ?? Alert.ActionStyle.Default],
-			},
-			dismissAction: {
-				title: options.dismissAction?.title ?? "Cancel",
-				style:
-					styleMap[options.dismissAction?.style ?? Alert.ActionStyle.Cancel],
-			},
-		}).then((confirmed) => {
-			if (confirmed) {
-				options.primaryAction?.onAction?.();
-			} else {
-				options.dismissAction?.onAction?.();
-			}
+		getClient()
+			.UI.confirmAlert({
+				title: options.title,
+				description: options.message ?? "Are you sure?",
+				//icon: options.icon && serializeProtoImage(options.icon),
+				rememberUserChoice: false,
+				primaryAction: {
+					title: options.primaryAction?.title ?? "Confirm",
+					style:
+						styleMap[options.primaryAction?.style ?? Alert.ActionStyle.Default],
+				},
+				dismissAction: {
+					title: options.dismissAction?.title ?? "Cancel",
+					style:
+						styleMap[options.dismissAction?.style ?? Alert.ActionStyle.Cancel],
+				},
+			})
+			.then((confirmed) => {
+				if (confirmed) {
+					options.primaryAction?.onAction?.();
+				} else {
+					options.dismissAction?.onAction?.();
+				}
 
-			resolve(confirmed);
-		});
+				resolve(confirmed);
+			});
 	});
 };

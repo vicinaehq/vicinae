@@ -10,7 +10,7 @@
 		"format": "biome format --write"
 	},
 	"bin": {
-		"vici": "./bin/run.js"
+		"vici": "./dist/bin.js"
 	},
 	"files": [
 		"dist",
@@ -27,15 +27,9 @@
 	},
 	"main": "dist/index.js",
 	"dependencies": {
-		"@jgoz/esbuild-plugin-typecheck": "^4.0.3",
-		"@oclif/core": "^4",
-		"@oclif/plugin-help": "^6",
-		"@oclif/plugin-plugins": "^5",
-		"@types/node": ">=18",
-		"@types/react": "19.0.10",
 		"chokidar": "^4.0.3",
 		"esbuild": "^0.25.2",
-		"react": "19.0.0",
+		"react": "^19.0.0",
 		"zod": "^4.0.17"
 	},
 	"peerDependencies": {
@@ -44,28 +38,12 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.3.2",
-		"@oclif/test": "^4",
-		"@types/chai": "^4",
-		"@types/mocha": "^10",
-		"chai": "^4",
-		"mocha": "^11.7.5",
-		"oclif": "^4",
-		"shx": "^0.3.3",
-		"ts-node": "^10",
-		"typedoc": "^0.28.13",
-		"typedoc-github-theme": "^0.3.1",
-		"typedoc-plugin-markdown": "^4.8.1",
-		"typescript": "^5"
-	},
-	"oclif": {
-		"bin": "vici",
-		"dirname": "vici",
-		"commands": "./dist/commands",
-		"plugins": [
-			"@oclif/plugin-help"
-		],
-		"topicSeparator": " ",
-		"topics": {}
+		"@types/node": "24.3.0",
+		"@types/react": "19.0.10",
+		"typedoc": "0.28.13",
+		"typedoc-github-theme": "0.3.1",
+		"typedoc-plugin-markdown": "4.8.1",
+		"typescript": "5.9.2"
 	},
 	"repository": "vicinaehq/vicinae"
 }

@@ -1,46 +1,39 @@
-import { Command, Flags } from "@oclif/core";
 import * as chokidar from "chokidar";
 import * as esbuild from "esbuild";
 import { spawn } from "node:child_process";
 import * as fs from "node:fs";
 import * as fsp from "node:fs/promises";
 import * as path from "node:path";
+import type { CommandDef } from "../../cli.js";
+import ManifestSchema from "../../schemas/manifest.js";
+import { updateExtensionTypes } from "../../utils/extension-types.js";
 import { Logger } from "../../utils/logger.js";
+import { Tail } from "../../utils/tail.js";
 import {
 	extensionDataDir,
 	extensionInternalSupportDir,
 } from "../../utils/utils.js";
-import { updateExtensionTypes } from "../../utils/extension-types.js";
 import { VicinaeClient } from "../../utils/vicinae.js";
-import ManifestSchema from "../../schemas/manifest.js";
-import { Tail } from "../../utils/tail.js";
 
 type TypeCheckResult = {
 	error: string;
 	ok: boolean;
 };
 
-export default class Develop extends Command {
-	static args = {};
-	static description = "Start an extension development session";
-	static examples = [
-		`<%= config.bin %> <%= command.id %> --target /path/to/extension`,
-	];
-	static flags = {
-		target: Flags.string({
-			aliases: ["input"],
-			char: "i",
-			default: process.cwd(),
-			defaultHelp: "The current working directory",
+const develop: CommandDef = {
+	description: "Start an extension development session",
+	flags: {
+		target: {
+			short: "i",
 			description: "Path to the extension directory",
-			required: false,
-		}),
-	};
+			default: process.cwd(),
+		},
+	},
 
-	async run(): Promise<void> {
-		const { flags } = await this.parse(Develop);
+	async run(flags) {
 		const logger = new Logger();
-		const pkgPath = path.join(flags.target, "package.json");
+		const target = flags.target ?? process.cwd();
+		const pkgPath = path.join(target, "package.json");
 		const parseManifest = () => {
 			if (!fs.existsSync(pkgPath)) {
 				logger.logError(
@@ -50,7 +43,6 @@ export default class Develop extends Command {
 			}
 
 			const json = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
-
 			const e = ManifestSchema.safeParse(json);
 
 			if (e.error) {
@@ -67,7 +59,7 @@ export default class Develop extends Command {
 		const vicinae = new VicinaeClient();
 
 		logger.logInfo("Generating extension types...");
-		updateExtensionTypes(manifest, flags.target);
+		updateExtensionTypes(manifest, target);
 
 		const typeCheck = async (): Promise<TypeCheckResult> => {
 			const spawned = spawn("npx", ["tsc", "--noEmit"]);
@@ -85,17 +77,6 @@ export default class Develop extends Command {
 		};
 
 		const build = async (outDir: string) => {
-			/*
-	  logger.logInfo("Started type checking in background thread");
-	  typeCheck().then(({ error, ok }) => {
-		if (!ok) {
-		  logger.logInfo(`Type checking error: ${error}`);
-		}
-
-		logger.logInfo("Done type checking");
-	  });
-	  */
-
 			const entryPoints = manifest.commands
 				.map((cmd) => path.join("src", `${cmd.name}.tsx`))
 				.filter(fs.existsSync);
@@ -113,7 +94,6 @@ export default class Develop extends Command {
 					);
 				}
 
-				// we allow .ts or .tsx for no-view
 				if (cmd.mode === "no-view") {
 					if (!fs.existsSync(tsxSource)) {
 						source = tsSource;
@@ -175,7 +155,7 @@ export default class Develop extends Command {
 			}
 		};
 
-		process.chdir(flags.target);
+		process.chdir(target);
 
 		const dataDir = extensionDataDir();
 		const id = `${manifest.name}`;
@@ -225,15 +205,17 @@ export default class Develop extends Command {
 				awaitWriteFinish: { pollInterval: 100, stabilityThreshold: 100 },
 				ignoreInitial: true,
 			})
-			.on("all", async (_, path) => {
-				if (path.endsWith("package.json")) {
+			.on("all", async (_, filePath) => {
+				if (filePath.endsWith("package.json")) {
 					manifest = parseManifest();
 					logger.logInfo("Generating extension types...");
-					updateExtensionTypes(manifest, flags.target);
+					updateExtensionTypes(manifest, target);
 				}
 
-				logger.logEvent(`changed file ${path}`);
+				logger.logEvent(`changed file ${filePath}`);
 				await safeBuild(extensionDir);
 			});
-	}
-}
+	},
+};
+
+export default develop;

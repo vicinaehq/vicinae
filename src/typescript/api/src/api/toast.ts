@@ -229,12 +229,12 @@ export namespace Toast {
 /**
  * @deprecated Use {@link Toast.ActionOptions} instead
  */
-export declare interface ToastActionOptions extends Toast.ActionOptions { }
+export declare interface ToastActionOptions extends Toast.ActionOptions {}
 
 /**
  * @deprecated Use {@link Toast.Options} instead
  */
-export declare interface ToastOptions extends Toast.Options { }
+export declare interface ToastOptions extends Toast.Options {}
 
 /**
  * @deprecated Use {@link Toast.Style} instead

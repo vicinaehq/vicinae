@@ -1,3 +1,3 @@
-const values = ['development', 'production'] as const
+const values = ["development", "production"] as const;
 
-export type EnvironmentType = typeof values[number];
+export type EnvironmentType = (typeof values)[number];
