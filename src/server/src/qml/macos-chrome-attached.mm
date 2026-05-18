@@ -12,6 +12,8 @@ namespace {
 
 NSView *nsViewFromWinId(WId winId) { return (__bridge NSView *)reinterpret_cast<void *>(winId); }
 
+Class liquidGlassClass() { return NSClassFromString(@"NSGlassEffectView"); }
+
 NSVisualEffectMaterial materialFromString(const QString &name) {
   if (name == "popover") return NSVisualEffectMaterialPopover;
   if (name == "menu") return NSVisualEffectMaterialMenu;
@@ -23,9 +25,11 @@ NSVisualEffectMaterial materialFromString(const QString &name) {
   return NSVisualEffectMaterialHUDWindow;
 }
 
-NSVisualEffectView *findEffectView(NSView *root) {
+NSView *findEffectView(NSView *root) {
+  Class glassCls = liquidGlassClass();
   for (NSView *sub in root.subviews) {
-    if ([sub isKindOfClass:[NSVisualEffectView class]]) { return (NSVisualEffectView *)sub; }
+    if ([sub isKindOfClass:[NSVisualEffectView class]]) return sub;
+    if (glassCls && [sub isKindOfClass:glassCls]) return sub;
   }
   return nil;
 }
@@ -38,8 +42,9 @@ CGColorRef cgColorFromQColor(const QColor &c) {
   return cg;
 }
 
-void installEffectView(NSWindow *nswin, bool enabled, NSVisualEffectMaterial material,
-                       int cornerRadius, const QColor &borderColor, int borderWidth) {
+void installEffectView(NSWindow *nswin, bool enabled, bool wantLiquidGlass,
+                       NSVisualEffectMaterial fallbackMaterial, int cornerRadius,
+                       const QColor &borderColor, int borderWidth) {
   NSView *contentView = nswin.contentView;
   if (!contentView) return;
 
@@ -48,28 +53,71 @@ void installEffectView(NSWindow *nswin, bool enabled, NSVisualEffectMaterial mat
   NSView *parent = contentView.superview;
   if (!parent) return;
 
-  NSVisualEffectView *existing = findEffectView(parent);
+  NSView *existing = findEffectView(parent);
 
   if (!enabled) {
     [existing removeFromSuperview];
+    parent.layer.cornerRadius = 0;
+    parent.layer.masksToBounds = NO;
     return;
   }
 
+  Class glassCls = liquidGlassClass();
+  bool useGlass = wantLiquidGlass && glassCls != nil;
+  if (wantLiquidGlass && !glassCls) {
+    static bool warned = false;
+    if (!warned) {
+      warned = true;
+      qWarning() << "macos-chrome: liquidGlass requested but NSGlassEffectView is unavailable "
+                    "(requires macOS 26 Tahoe); falling back to NSVisualEffectView";
+    }
+  }
+
+  bool existingIsGlass = existing && glassCls && [existing isKindOfClass:glassCls];
+  if (existing && existingIsGlass != useGlass) {
+    [existing removeFromSuperview];
+    existing = nil;
+  }
+
   if (!existing) {
-    existing = [[NSVisualEffectView alloc] initWithFrame:parent.bounds];
+    if (useGlass) {
+      existing = [[glassCls alloc] initWithFrame:parent.bounds];
+    } else {
+      NSVisualEffectView *v = [[NSVisualEffectView alloc] initWithFrame:parent.bounds];
+      v.blendingMode = NSVisualEffectBlendingModeBehindWindow;
+      v.state = NSVisualEffectStateActive;
+      existing = v;
+    }
     existing.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-    existing.blendingMode = NSVisualEffectBlendingModeBehindWindow;
-    existing.state = NSVisualEffectStateActive;
     existing.wantsLayer = YES;
     [parent addSubview:existing positioned:NSWindowBelow relativeTo:contentView];
   }
-  existing.material = material;
-  existing.layer.cornerRadius = cornerRadius;
-  existing.layer.masksToBounds = YES;
-  existing.layer.borderWidth = borderWidth;
-  CGColorRef cg = cgColorFromQColor(borderColor);
-  existing.layer.borderColor = cg;
-  CGColorRelease(cg);
+
+  // Round the parent (NSThemeFrame) when using glass so its rectangular layer
+  // doesn't bleed through the glass's rounded corners. The visual-effect path
+  // masks the parent on its own.
+  parent.wantsLayer = YES;
+  parent.layer.cornerRadius = useGlass ? cornerRadius : 0;
+  parent.layer.masksToBounds = useGlass && cornerRadius > 0;
+
+  if (useGlass) {
+    SEL setCR = sel_registerName("setCornerRadius:");
+    if ([existing respondsToSelector:setCR]) {
+      ((void (*)(id, SEL, double))objc_msgSend)(existing, setCR, (double)cornerRadius);
+    }
+    // borderColor is a 1px outline concept (visual-effect path). Mapping it to
+    // setTintColor: tints the entire glass surface — opaque theme colors make
+    // the glass opaque. Leave the default tint until a dedicated property is
+    // added.
+  } else {
+    ((NSVisualEffectView *)existing).material = fallbackMaterial;
+    existing.layer.cornerRadius = cornerRadius;
+    existing.layer.masksToBounds = YES;
+    existing.layer.borderWidth = borderWidth;
+    CGColorRef cg = cgColorFromQColor(borderColor);
+    existing.layer.borderColor = cg;
+    CGColorRelease(cg);
+  }
 }
 
 } // namespace
@@ -177,8 +225,8 @@ void MacOSWindowAttached::apply() {
   nswin.backgroundColor = NSColor.clearColor;
   nswin.hasShadow = YES;
 
-  installEffectView(nswin, m_blurEnabled, materialFromString(m_material), m_cornerRadius,
-                    m_borderColor, m_borderWidth);
+  installEffectView(nswin, m_blurEnabled, m_material == QStringLiteral("liquidGlass"),
+                    materialFromString(m_material), m_cornerRadius, m_borderColor, m_borderWidth);
 }
 
 void MacOSWindowAttached::revert() {
@@ -188,7 +236,8 @@ void MacOSWindowAttached::revert() {
   NSWindow *nswin = nsview.window;
   if (!nswin) return;
 
-  installEffectView(nswin, /*enabled=*/false, NSVisualEffectMaterialHUDWindow, 0, QColor(), 0);
+  installEffectView(nswin, /*enabled=*/false, /*wantLiquidGlass=*/false, NSVisualEffectMaterialHUDWindow,
+                    0, QColor(), 0);
 
   if (m_snapshot.valid) {
     nswin.opaque = m_snapshot.opaque;
