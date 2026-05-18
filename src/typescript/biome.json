@@ -2,7 +2,7 @@
 	"files": {
 		"includes": [
 			"api/**",
-			"!api/src/api",
+			"!api/src/api/proto",
 			"extension-manager",
 			"raycast-api-compat"
 		]
