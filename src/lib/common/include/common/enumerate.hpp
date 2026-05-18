@@ -4,6 +4,9 @@
 #include <ranges>
 #include <utility>
 
+// we implement our own std::views::enumerate because latest libc++ still does not
+// implement it on arm64. We care since we now need to build on macOS.
+
 namespace vicinae {
 
 template <std::ranges::input_range R>
