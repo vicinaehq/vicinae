@@ -1,7 +1,16 @@
 #pragma once
 #include "command-database.hpp"
+#include "single-view-command-context.hpp"
+#include "transcribe-view-host.hpp"
 #include "ui/image/url.hpp"
-#include "manage-models-command.hpp"
+
+class TranscribeCommand : public BuiltinViewCommand<TranscribeViewHost> {
+  QString id() const override { return "transcribe"; }
+  QString name() const override { return "Transcribe"; }
+  ImageURL iconUrl() const override {
+    return ImageURL::emoji("🎤").setBackgroundTint(Omnicast::ACCENT_COLOR);
+  }
+};
 
 class IntelligenceExtension : public BuiltinCommandRepository {
   QString id() const override { return "intelligence"; }
@@ -11,8 +20,5 @@ class IntelligenceExtension : public BuiltinCommandRepository {
   }
 
 public:
-  IntelligenceExtension() {
-    registerCommand<ManageModelsCommand>();
-    registerCommand<TranscribeCommand>();
-  }
+  IntelligenceExtension() { registerCommand<TranscribeCommand>(); }
 };
