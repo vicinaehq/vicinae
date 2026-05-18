@@ -1,6 +1,6 @@
 #include "cli.hpp"
 #include "config.hpp"
-#include "lib/rang.hpp"
+#include "rang.hpp"
 #include "script.hpp"
 #include "common/common.hpp"
 #include "state.hpp"

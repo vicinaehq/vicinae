@@ -8,7 +8,7 @@
 #include <iostream>
 #include <qdir.h>
 #include <qobjectdefs.h>
-#include "lib/rang.hpp"
+#include "rang.hpp"
 #include <exception>
 #include "generated/version.h"
 #include <glaze/glaze.hpp>
