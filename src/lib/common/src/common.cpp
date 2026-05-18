@@ -61,7 +61,10 @@ std::optional<fs::path> findHelperProgram(std::string_view program) {
 
 std::optional<fs::path> findServerBinary() {
 #ifdef __APPLE__
-  if (auto p = findHelperProgram("Vicinae")) return p;
+  // Inside a .app bundle the server is renamed to "Vicinae" (matches
+  // CFBundleExecutable). Flat dev builds keep the Linux name "vicinae-server".
+  const auto self = selfPath();
+  if (self.parent_path().filename() == "MacOS") { return findHelperProgram("Vicinae"); }
 #endif
   return findHelperProgram("vicinae-server");
 }

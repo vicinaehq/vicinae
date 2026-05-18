@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 set(PROJECT_NAME vicinae)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_OSX_DEPLOYMENT_TARGET "14.4" CACHE STRING "Minimum macOS version to target")
 project(${PROJECT_NAME} VERSION 1.0.0 LANGUAGES C CXX)
 
 set(LIB_NAMESPACE "vicinae")
