@@ -171,7 +171,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
     }
   });
 
-  // Search state — programmatic text changes (e.g. from extensions)
+  // Search state: programmatic text changes (e.g. from extensions)
   connect(nav, &NavigationController::searchTextTampered, this, [this](const QString &text) {
     emit searchTextUpdated(text);
     tryCompaction();

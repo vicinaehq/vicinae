@@ -8,9 +8,6 @@
 class QQuickItem;
 class QQuickWindow;
 
-// Visual chrome for any macOS window: transparent NSWindow + NSVisualEffectView
-// blur + corner radius + border. Safe to attach to launcher, settings,
-// popups, dropdowns — anything that just wants the look.
 class MacOSWindowAttached : public QObject {
   Q_OBJECT
   Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY enabledChanged)
@@ -66,10 +63,10 @@ private:
   QQuickItem *m_item = nullptr;
   QWindow *m_window = nullptr;
   bool m_enabled = false;
-  int m_cornerRadius = 12;
-  bool m_blurEnabled = true;
-  QString m_material = QStringLiteral("hud");
-  QColor m_borderColor = QColor(0, 0, 0, 0);
+  int m_cornerRadius = 0;
+  bool m_blurEnabled = false;
+  QString m_material;
+  QColor m_borderColor;
   int m_borderWidth = 0;
   bool m_surfaceReady = false;
   Snapshot m_snapshot;
@@ -87,13 +84,9 @@ public:
   }
 };
 
-// Launcher-panel behavior: nonactivating NSPanel styleMask, high window level,
-// all-spaces collection behavior, resignKey signal for click-outside dismissal.
 // The QML window must use Qt.Tool (or Qt.Popup / Qt.ToolTip / Qt.SplashScreen)
-// so Qt instantiates a QNSPanel under the hood — Qt.Dialog and Qt.Window both
-// produce a plain QNSWindow, which makes the nonactivating-panel style mask a
-// no-op and lets show() activate the whole app, stealing focus from the
-// frontmost application.
+// so Qt instantiates a QNSPanel. Qt.Dialog and Qt.Window produce a plain
+// QNSWindow, where the nonactivating styleMask is silently a no-op.
 class MacOSPanelAttached : public QObject {
   Q_OBJECT
   Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY enabledChanged)
@@ -140,7 +133,7 @@ private:
   QWindow *m_window = nullptr;
   bool m_enabled = false;
   bool m_surfaceReady = false;
-  int m_windowLevel = 3; // NSFloatingWindowLevel
+  int m_windowLevel = 0;
   void *m_resignKeyObserver = nullptr;
   void *m_observedNSWindow = nullptr;
   Snapshot m_snapshot;

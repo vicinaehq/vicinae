@@ -1,5 +1,6 @@
 #include "macos-chrome-attached.hpp"
 
+#include <QPointer>
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <qevent.h>
@@ -9,6 +10,8 @@
 #import <objc/message.h>
 
 namespace {
+
+NSString *const EFFECT_VIEW_IDENTIFIER = @"vicinae-effect";
 
 NSView *nsViewFromWinId(WId winId) { return (__bridge NSView *)reinterpret_cast<void *>(winId); }
 
@@ -28,6 +31,7 @@ NSVisualEffectMaterial materialFromString(const QString &name) {
 NSView *findEffectView(NSView *root) {
   Class glassCls = liquidGlassClass();
   for (NSView *sub in root.subviews) {
+    if (![sub.identifier isEqualToString:EFFECT_VIEW_IDENTIFIER]) continue;
     if ([sub isKindOfClass:[NSVisualEffectView class]]) return sub;
     if (glassCls && [sub isKindOfClass:glassCls]) return sub;
   }
@@ -88,6 +92,7 @@ void installEffectView(NSWindow *nswin, bool enabled, bool wantLiquidGlass,
       v.state = NSVisualEffectStateActive;
       existing = v;
     }
+    existing.identifier = EFFECT_VIEW_IDENTIFIER;
     existing.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     existing.wantsLayer = YES;
     [parent addSubview:existing positioned:NSWindowBelow relativeTo:contentView];
@@ -105,10 +110,6 @@ void installEffectView(NSWindow *nswin, bool enabled, bool wantLiquidGlass,
     if ([existing respondsToSelector:setCR]) {
       ((void (*)(id, SEL, double))objc_msgSend)(existing, setCR, (double)cornerRadius);
     }
-    // borderColor is a 1px outline concept (visual-effect path). Mapping it to
-    // setTintColor: tints the entire glass surface — opaque theme colors make
-    // the glass opaque. Leave the default tint until a dedicated property is
-    // added.
   } else {
     ((NSVisualEffectView *)existing).material = fallbackMaterial;
     existing.layer.cornerRadius = cornerRadius;
@@ -121,8 +122,6 @@ void installEffectView(NSWindow *nswin, bool enabled, bool wantLiquidGlass,
 }
 
 } // namespace
-
-// ---------------- MacOSWindowAttached ----------------
 
 MacOSWindowAttached::MacOSWindowAttached(QObject *parent) : QObject(parent) {
   m_window = qobject_cast<QWindow *>(parent);
@@ -264,8 +263,6 @@ bool MacOSWindowAttached::eventFilter(QObject *obj, QEvent *event) {
   return QObject::eventFilter(obj, event);
 }
 
-// ---------------- MacOSPanelAttached ----------------
-
 MacOSPanelAttached::MacOSPanelAttached(QObject *parent) : QObject(parent) {
   m_window = qobject_cast<QWindow *>(parent);
   if (m_window) {
@@ -326,11 +323,14 @@ void MacOSPanelAttached::installResignKeyObserver(void *nswinPtr) {
 
   removeResignKeyObserver();
 
+  QPointer<MacOSPanelAttached> weak(this);
   id token = [[NSNotificationCenter defaultCenter]
       addObserverForName:NSWindowDidResignKeyNotification
                   object:nswin
                    queue:[NSOperationQueue mainQueue]
-              usingBlock:^(NSNotification *) { emit this->resignKey(); }];
+              usingBlock:^(NSNotification *) {
+                if (weak) emit weak->resignKey();
+              }];
 
   m_resignKeyObserver = (void *)CFBridgingRetain(token);
   m_observedNSWindow = nswinPtr;
@@ -372,8 +372,6 @@ void MacOSPanelAttached::apply() {
     }
   }
 
-  // Make this a non-activating panel so the launcher can take key focus
-  // without making vicinae the foreground app — same model Spotlight/Raycast use.
   NSWindowStyleMask mask = nswin.styleMask;
   if (!(mask & NSWindowStyleMaskNonactivatingPanel)) {
     mask |= NSWindowStyleMaskNonactivatingPanel;
@@ -450,8 +448,6 @@ bool MacOSPanelAttached::eventFilter(QObject *obj, QEvent *event) {
   }
   return QObject::eventFilter(obj, event);
 }
-
-// ---------------- App-level helpers ----------------
 
 void macosSetAccessoryActivationPolicy() {
   [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
