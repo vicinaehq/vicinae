@@ -194,7 +194,7 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 			return null;
 		},
 
-		preparePortalMount(container) { },
+		preparePortalMount(container) {},
 
 		scheduleTimeout: setTimeout,
 		cancelTimeout: (id: MyTimeoutHandle) => clearTimeout(id),
@@ -214,16 +214,16 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 			return null;
 		},
 
-		beforeActiveInstanceBlur() { },
-		afterActiveInstanceBlur() { },
+		beforeActiveInstanceBlur() {},
+		afterActiveInstanceBlur() {},
 
-		prepareScopeUpdate(scope, instance) { },
+		prepareScopeUpdate(scope, instance) {},
 		getInstanceFromScope(scope) {
 			return null;
 		},
 
 		// not sure what this one is really about, as it's undocumented
-		detachDeletedInstance(instance) { },
+		detachDeletedInstance(instance) {},
 
 		appendChild(parent: Instance, child: Instance) {
 			const selfIdx = parent.children.indexOf(child);
@@ -279,11 +279,11 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 			hostConfig.removeChild?.(container, child);
 		},
 
-		resetTextContent() { },
+		resetTextContent() {},
 
-		commitTextUpdate() { },
+		commitTextUpdate() {},
 
-		commitMount() { },
+		commitMount() {},
 
 		commitUpdate(instance: Instance, type, prevProps, nextProps, handle) {
 			const props: Record<string, any> = {};
@@ -322,11 +322,11 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 			instance.props = props;
 		},
 
-		replaceContainerChildren() { },
-		hideInstance() { },
-		hideTextInstance() { },
-		unhideInstance() { },
-		unhideTextInstance() { },
+		replaceContainerChildren() {},
+		hideInstance() {},
+		hideTextInstance() {},
+		unhideInstance() {},
+		unhideTextInstance() {},
 
 		clearContainer(container) {
 			container.children = [];
@@ -336,7 +336,7 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		NotPendingTransition: null,
 		HostTransitionContext: {} as any,
 
-		setCurrentUpdatePriority(priority) { },
+		setCurrentUpdatePriority(priority) {},
 
 		getCurrentUpdatePriority() {
 			return DefaultEventPriority;
@@ -346,13 +346,13 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 			return DefaultEventPriority;
 		},
 
-		resetFormInstance(form) { },
-		requestPostPaintCallback() { },
+		resetFormInstance(form) {},
+		requestPostPaintCallback() {},
 		shouldAttemptEagerTransition() {
 			return false;
 		},
 
-		trackSchedulerEvent() { },
+		trackSchedulerEvent() {},
 		resolveEventType() {
 			return null;
 		},
@@ -366,8 +366,8 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		preloadInstance(type, props) {
 			return false;
 		},
-		startSuspendingCommit() { },
-		suspendInstance(type, props) { },
+		startSuspendingCommit() {},
+		suspendInstance(type, props) {},
 		waitForCommitToBeReady() {
 			return null;
 		},
@@ -481,7 +481,7 @@ export const createRenderer = (config: RendererConfig) => {
 					(error) => {
 						throw error;
 					},
-					() => { },
+					() => {},
 					null,
 				);
 			}

@@ -7,8 +7,8 @@ const injectJsxGlobals = () => {
 	// react/jsx-runtime always expect non-null props
 	const safeJsx =
 		(original: typeof jsx) =>
-			(type: React.ElementType, props: unknown, key: React.Key) =>
-				original(type, props ?? {}, key);
+		(type: React.ElementType, props: unknown, key: React.Key) =>
+			original(type, props ?? {}, key);
 
 	(globalThis as any)._jsx = safeJsx(jsx);
 	(globalThis as any)._jsxs = safeJsx(jsxs);
@@ -39,7 +39,7 @@ export const patchRequire = (env: EnvironmentType) => {
 	injectJsxGlobals();
 
 	// @ts-ignore
-	Module.prototype.require = function(id: string) {
+	Module.prototype.require = function (id: string) {
 		return requireOverrides[id]?.() ?? originalRequire.call(this, id);
 	};
 };
