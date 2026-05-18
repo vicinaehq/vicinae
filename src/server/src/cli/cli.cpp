@@ -1,7 +1,7 @@
 #include "cli.hpp"
 #include "snippet/types.hpp"
 #include "utils.hpp"
-#include "common/CLI11.hpp"
+#include "CLI11.hpp"
 #include "vicinae.hpp"
 #include "server.hpp"
 #include <format>

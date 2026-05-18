@@ -1,5 +1,5 @@
 #pragma once
-#include "common/CLI11.hpp"
+#include "CLI11.hpp"
 
 class AbstractCommandLineCommand {
 public:

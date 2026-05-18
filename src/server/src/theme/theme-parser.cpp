@@ -1,7 +1,7 @@
 #include <variant>
 #include <set>
 #include "theme-parser.hpp"
-#include "lib/toml.hpp"
+#include "toml.hpp"
 #include "theme/colors.hpp"
 #include "theme/theme-file.hpp"
 #include "common/types.hpp"

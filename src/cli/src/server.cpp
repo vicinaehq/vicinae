@@ -7,7 +7,7 @@
 #include "server.hpp"
 #include "ipc-client.hpp"
 #include "common/common.hpp"
-#include "common/CLI11.hpp"
+#include "CLI11.hpp"
 
 struct ServerLaunchOptions {
   bool open = false;
