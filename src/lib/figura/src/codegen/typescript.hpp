@@ -16,7 +16,9 @@ inline std::string_view getTypename(const TypeValue &type) {
       return "void";
     case PrimitiveType::Boolean:
       return "boolean";
-    case PrimitiveType::Number:
+    case PrimitiveType::Int:
+    case PrimitiveType::UInt:
+    case PrimitiveType::Double:
       return "number";
     case PrimitiveType::String:
       return "string";

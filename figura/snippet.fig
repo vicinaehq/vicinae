@@ -41,14 +41,14 @@ struct UndoSnippetPayload {
 };
 
 struct InjectExpandRequest {
-  charsToDelete: number;
-  prePasteDelayUs: number;
+  charsToDelete: uint;
+  prePasteDelayUs: uint;
   terminal: bool;
-  cursorLeftMoves: number;
+  cursorLeftMoves: uint;
 };
 
 struct InjectUndoRequest {
-  backspaceCount: number;
+  backspaceCount: uint;
   triggerText: string;
 };
 
@@ -68,7 +68,7 @@ service Snippet {
   fn injectExpand(req: InjectExpandRequest) => void;
   fn injectUndo(req: InjectUndoRequest) => void;
   fn injectPaste(req: InjectPasteRequest) => void;
-  fn setKeyDelay(delayUs: number) => void;
+  fn setKeyDelay(delayUs: int) => void;
   fn getCapabilities() => KeyboardCapabilities;
 
   event triggerSnippet(payload: TriggerSnippetPayload);

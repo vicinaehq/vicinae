@@ -118,7 +118,8 @@ void SnippetServer::resetContext() {
   m_client.snippet()->resetContext();
 }
 
-void SnippetServer::injectExpand(int charsToDelete, int prePasteDelayUs, bool terminal, int cursorLeftMoves) {
+void SnippetServer::injectExpand(unsigned charsToDelete, unsigned prePasteDelayUs, bool terminal,
+                                 unsigned cursorLeftMoves) {
   if (!isRunning()) return;
   m_client.snippet()->injectExpand({.charsToDelete = charsToDelete,
                                     .prePasteDelayUs = prePasteDelayUs,
@@ -126,7 +127,7 @@ void SnippetServer::injectExpand(int charsToDelete, int prePasteDelayUs, bool te
                                     .cursorLeftMoves = cursorLeftMoves});
 }
 
-void SnippetServer::injectUndo(int backspaceCount, const std::string &trigger) {
+void SnippetServer::injectUndo(unsigned backspaceCount, const std::string &trigger) {
   if (!isRunning()) return;
   m_client.snippet()->injectUndo({.backspaceCount = backspaceCount, .triggerText = trigger});
 }

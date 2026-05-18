@@ -118,10 +118,10 @@ service UI {
 // WindowManagement
 
 struct Rect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
+  x: int;
+  y: int;
+  width: int;
+  height: int;
 };
 
 struct Window {
@@ -235,9 +235,9 @@ struct TokenSet {
   accessToken: string;
   refreshToken?: string;
   idToken?: string;
-  expiresIn?: number;
+  expiresIn?: uint;
   scope?: string;
-  updatedAt: number;
+  updatedAt: uint;
 };
 
 struct SetTokensRequest {
@@ -245,7 +245,7 @@ struct SetTokensRequest {
   accessToken: string;
   refreshToken?: string;
   idToken?: string;
-  expiresIn?: number;
+  expiresIn?: uint;
   scope?: string;
 };
 
