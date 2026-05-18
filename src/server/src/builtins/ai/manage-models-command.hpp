@@ -10,11 +10,3 @@ class ManageModelsCommand : public BuiltinViewCommand<ManageModelsViewHost> {
     return ImageURL::builtin("computer-chip").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 };
-
-class TranscribeCommand : public BuiltinViewCommand<TranscribeViewHost> {
-  QString id() const override { return "transcribe"; }
-  QString name() const override { return "Transcribe"; }
-  ImageURL iconUrl() const override {
-    return ImageURL::emoji("🎤").setBackgroundTint(Omnicast::ACCENT_COLOR);
-  }
-};
