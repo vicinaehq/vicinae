@@ -322,10 +322,6 @@ set(SRCS
 	src/builtins/vicinae/manage-fallback-model.cpp
 	src/builtins/vicinae/manage-fallback-view-host.hpp
 	src/builtins/vicinae/manage-fallback-view-host.cpp
-	src/builtins/ai/manage-models-model.hpp
-	src/builtins/ai/manage-models-model.cpp
-	src/builtins/ai/manage-models-view-host.hpp
-	src/builtins/ai/manage-models-view-host.cpp
 	src/builtins/ai/quick-ai-view-host.hpp
 	src/builtins/ai/quick-ai-view-host.cpp
 	src/builtins/ai/transcribe-view-host.hpp
