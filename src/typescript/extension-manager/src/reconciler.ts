@@ -377,7 +377,9 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 };
 
 export type ViewData = {
-	root?: SerializedInstance;
+	dirty: boolean;
+	propsDirty: boolean;
+	root?: Record<string, any>;
 };
 
 export type RendererConfig = {
@@ -386,22 +388,12 @@ export type RendererConfig = {
 	onUpdate?: (views: ViewData[]) => void;
 };
 
-type SerializedInstance = {
-	props: InstanceProps;
-	type: string;
-	dirty: boolean;
-	propsDirty: boolean;
-	children: SerializedInstance[];
-};
+const serializeNode = (instance: Instance): Record<string, any> => {
+	const obj: Record<string, any> = { $t: instance.type, ...instance.props };
 
-const serializeInstance = (instance: Instance): SerializedInstance => {
-	const obj: SerializedInstance = {
-		props: instance.props,
-		type: instance.type,
-		dirty: instance.dirty,
-		propsDirty: instance.propsDirty,
-		children: instance.children.map(serializeInstance),
-	};
+	if (instance.children.length > 0) {
+		obj.children = instance.children.map((child) => serializeNode(child));
+	}
 
 	instance.dirty = false;
 	instance.propsDirty = false;
@@ -435,14 +427,18 @@ export const createRenderer = (config: RendererConfig) => {
 				debounce = null;
 
 				const start = performance.now();
-				const root = serializeInstance(container);
 
-				//writeFileSync("/tmp/render.txt", `${inspect(root, { depth: null, colors: true })}`);
-				//appendFileSync('/tmp/render.txt', JSON.stringify(root, null, 2));
+				const views = container.children.map<ViewData>((viewSlot) => {
+					const root = viewSlot.children.at(-1);
+					const dirty = root?.dirty ?? true;
+					const propsDirty = root?.propsDirty ?? true;
 
-				const views = root.children.map<ViewData>((child) => ({
-					root: child.children.at(-1),
-				}));
+					return {
+						dirty,
+						propsDirty,
+						root: root ? serializeNode(root) : undefined,
+					};
+				});
 
 				config.onUpdate?.(views);
 				callbackManager.flushDeferredRemovals();

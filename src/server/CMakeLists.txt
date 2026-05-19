@@ -245,6 +245,7 @@ set(SRCS
 	src/extend/list-model.cpp
 	src/extend/metadata-model.cpp
 	src/extend/model-parser.cpp
+	src/extend/model-deser.cpp
 	src/extend/tag-list.cpp
 	src/extend/root-detail-model.cpp
 	src/extend/empty-view-model.cpp

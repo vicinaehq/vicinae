@@ -1,5 +1,6 @@
 #pragma once
 #include <QDateTime>
+#include <QList>
 #include <QString>
 #include <glaze/json/generic.hpp>
 #include <glaze/json/read.hpp>
@@ -8,6 +9,7 @@
 #include <qjsonvalue.h>
 #include <qjsonarray.h>
 #include <string_view>
+#include <vector>
 
 namespace glz {
 
@@ -50,6 +52,18 @@ template <> struct to<JSON, QDateTime> {
   static void op(const QDateTime &value, is_context auto &&ctx, auto &&b, auto &&ix) noexcept {
     const auto str = value.toString(Qt::ISODate);
     to<JSON, QString>::op<Opts>(str, ctx, b, ix);
+  }
+};
+
+template <typename T> struct from<JSON, QList<T>> {
+  template <auto Opts> static void op(QList<T> &value, is_context auto &&ctx, auto &&it, auto &&end) {
+    std::vector<T> temp;
+    parse<JSON>::op<Opts>(temp, ctx, it, end);
+    if (bool(ctx.error)) [[unlikely]]
+      return;
+    value.reserve(static_cast<qsizetype>(temp.size()));
+    for (auto &item : temp)
+      value.push_back(std::move(item));
   }
 };
 

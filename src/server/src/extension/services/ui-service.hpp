@@ -1,4 +1,5 @@
 #pragma once
+#include "extend/model-deser.hpp"
 #include "extension/extension-command.hpp"
 #include "extension/services/tsapi-image.hpp"
 #include "generated/tsapi.hpp"
@@ -166,12 +167,8 @@ private:
     auto json = std::move(m_renderQueue.front());
     m_renderQueue.pop();
 
-    m_modelWatcher.setFuture(QtConcurrent::run([json = std::move(json)]() -> ParsedRenderData {
-      QJsonParseError parseError;
-      auto doc = QJsonDocument::fromJson(QByteArray::fromStdString(json), &parseError);
-      if (parseError.error) return {};
-      return ModelParser().parse(doc.object().value("views").toArray());
-    }));
+    m_modelWatcher.setFuture(QtConcurrent::run(
+        [json = std::move(json)]() -> ParsedRenderData { return parseRenderPayload(json); }));
   }
 
   ExtensionActionPanelBuilder::NotifyFn makeNotifyFn() {
