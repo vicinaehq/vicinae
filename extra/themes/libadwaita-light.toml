@@ -1,0 +1,84 @@
+# Vicinae theme based on GNOME's LibAdwaita light palette.
+# Colours are sourced directly from LibAdwaita CSS variables
+
+[meta]
+name = "Adwaita Light"
+description = "GNOME LibAdwaita inspired light theme for Vicinae"
+variant = "light"
+inherits = "vicinae-light"
+icon = "icons/libadwaita.svg"
+
+# swap core.accent below to any of these to match your systems accent colour
+[colors.accents]
+blue = "#3584e4"  # --accent-blue
+green = "#3a944a"  # --accent-green
+magenta = "#d56199"  # --accent-pink
+orange = "#ed5b00"  # --accent-orange
+red = "#e62d42"  # --accent-red
+yellow = "#c88800"  # --accent-yellow
+cyan = "#2190a4"  # --accent-teal
+purple = "#9141ac"  # --accent-purple
+
+# swap to any accents value from the list above to match your systems accent colour
+[colors.core]
+accent = "colors.accents.blue"
+accent_foreground = "colors.accents.blue"
+background = "#fafafb"
+foreground = "#333338"
+secondary_background = "#ebebed"
+border = "#dddde0"
+
+[colors.main_window]
+border = "colors.core.border"
+footer = { background = "colors.core.secondary_background" }
+
+[colors.settings_window]
+border = "#dddde0"
+
+[colors.shortcut]
+border = "colors.core.border"
+
+[colors.text]
+default = "colors.core.foreground"
+muted = "#5e5c64"
+danger = "#c30000"
+success = "#007c3d"
+placeholder = "#9a9996"
+selection = { background = "colors.core.accent", foreground = "#ffffff" }
+
+[colors.text.links]
+default = "#0461be"
+visited = "#8939a4"
+
+[colors.input]
+border = "#dddde0"
+border_focus = "colors.core.accent"
+border_error = "#c30000"
+
+[colors.button.primary]
+background = "#ffffff"
+foreground = "#333338"
+hover = { background = "#bbffffff" }
+focus = { outline = "colors.core.accent" }
+
+[colors.list.item.hover]
+foreground = "#333338"
+secondary_foreground = "#5e5c64"
+
+[colors.list.item.selection]
+background = "colors.core.accent"
+foreground = "#ffffff"
+secondary_background = "colors.core.accent"
+secondary_foreground = "#ffffff"
+
+[colors.grid.item]
+background = "#ebebed"
+hover = { outline = "colors.core.accent" }
+selection = { outline = "colors.core.accent" }
+
+[colors.scrollbars]
+background = "#c0bfbc"
+
+[colors.loading]
+bar = "colors.core.accent"
+spinner = "#333338"

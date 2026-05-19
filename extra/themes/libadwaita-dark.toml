@@ -1,0 +1,84 @@
+# Vicinae theme based on GNOME's LibAdwaita dark palette.
+# Colours are sourced directly from LibAdwaita CSS variables
+
+[meta]
+name = "Adwaita Dark"
+description = "GNOME LibAdwaita inspired dark theme for Vicinae"
+variant = "dark"
+inherits = "vicinae-dark"
+icon = "icons/libadwaita.svg"
+
+# swap core.accent below to any of these to match your systems accent colour
+[colors.accents]
+blue = "#3584e4"  # --accent-blue
+green = "#3a944a"  # --accent-green
+magenta = "#d56199"  # --accent-pink
+orange = "#ed5b00"  # --accent-orange
+red = "#e62d42"  # --accent-red
+yellow = "#c88800"  # --accent-yellow
+cyan = "#2190a4"  # --accent-teal
+purple = "#9141ac"  # --accent-purple
+
+# swap to any accents value from the list above to match your systems accent colour
+[colors.core]
+accent = "colors.accents.blue"
+accent_foreground = "colors.accents.blue"
+background = "#222226"
+foreground = "#ffffff"
+secondary_background = "#2e2e32"
+border = "#383838"
+
+[colors.main_window]
+border = "colors.core.border"
+footer = { background = "colors.core.secondary_background" }
+
+[colors.settings_window]
+border = "#48484c"
+
+[colors.shortcut]
+border = "colors.core.border"
+
+[colors.text]
+default = "colors.core.foreground"
+muted = "#c0bfbc"
+danger = "#ff938c"
+success = "#78e9ab"
+placeholder = "#77767b"
+selection = { background = "colors.core.accent", foreground = "#ffffff" }
+
+[colors.text.links]
+default = "#81d0ff"
+visited = "#fba7ff"
+
+[colors.input]
+border = "#48484c"
+border_focus = "colors.core.accent"
+border_error = "#ff938c"
+
+[colors.button.primary]
+background = "#2e2e32"
+foreground = "#ffffff"
+hover = { background = "#bb2e2e32" }
+focus = { outline = "colors.core.accent" }
+
+[colors.list.item.hover]
+foreground = "#ffffff"
+secondary_foreground = "#c0bfbc"
+
+[colors.list.item.selection]
+background = "colors.core.accent"
+foreground = "#ffffff"
+secondary_background = "colors.core.accent"
+secondary_foreground = "#ffffff"
+
+[colors.grid.item]
+background = "#2e2e32"
+hover = { outline = "colors.core.accent" }
+selection = { outline = "colors.core.accent" }
+
+[colors.scrollbars]
+background = "#48484c"
+
+[colors.loading]
+bar = "colors.core.accent"
+spinner = "#ffffff"
