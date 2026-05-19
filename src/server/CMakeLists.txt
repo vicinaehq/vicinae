@@ -237,18 +237,7 @@ set(SRCS
 
 	src/extend/accessory-model.cpp
 	src/extend/action-shortcut-parser.cpp
-	src/extend/action-model.cpp
-	src/extend/color-model.cpp
-	src/extend/detail-model.cpp
-	src/extend/image-model.cpp
-	src/extend/grid-model.cpp
-	src/extend/list-model.cpp
-	src/extend/metadata-model.cpp
-	src/extend/model-parser.cpp
 	src/extend/model-deser.cpp
-	src/extend/tag-list.cpp
-	src/extend/root-detail-model.cpp
-	src/extend/empty-view-model.cpp
 	include/extend/form-model.hpp
 
 	src/image-fetcher.hpp

@@ -8,6 +8,12 @@ template <class... Ts> struct overloaded : Ts... {
   using Ts::operator()...;
 };
 
+static inline QString toQ(const std::string &s) {
+  return QString::fromUtf8(s.data(), static_cast<qsizetype>(s.size()));
+}
+
+static inline QString optToQ(const std::optional<std::string> &s) { return s ? toQ(*s) : QString(); }
+
 ExtensionFormModel::ExtensionFormModel(NotifyFn notify, QObject *parent)
     : QAbstractListModel(parent), m_notify(std::move(notify)) {}
 
@@ -64,20 +70,20 @@ void ExtensionFormModel::setFieldValue(int index, const QVariant &value) {
   emit dataChanged(createIndex(index, 0), createIndex(index, 0), {ValueRole});
 
   if (item.onChange) {
-    m_notify(*item.onChange, QJsonArray{item.userValue, static_cast<int>(item.eventCount)});
+    m_notify(toQ(*item.onChange), QJsonArray{item.userValue, static_cast<int>(item.eventCount)});
   }
 }
 
 void ExtensionFormModel::fieldFocused(int index) {
   if (index < 0 || std::cmp_greater_equal(index, m_items.size())) return;
   const auto &item = m_items[index];
-  if (item.onFocus) { m_notify(*item.onFocus, {}); }
+  if (item.onFocus) { m_notify(toQ(*item.onFocus), {}); }
 }
 
 void ExtensionFormModel::fieldBlurred(int index) {
   if (index < 0 || std::cmp_greater_equal(index, m_items.size())) return;
   const auto &item = m_items[index];
-  if (item.onBlur) { m_notify(*item.onBlur, {}); }
+  if (item.onBlur) { m_notify(toQ(*item.onBlur), {}); }
 }
 
 bool ExtensionFormModel::isExtensionControlled(int index) const {
@@ -103,7 +109,7 @@ void ExtensionFormModel::setFilePaths(int index, const QVariantList &paths) {
     emit dataChanged(createIndex(index, 0), createIndex(index, 0), {ValueRole});
   }
 
-  if (item.onChange) { m_notify(*item.onChange, QJsonArray{arr}); }
+  if (item.onChange) { m_notify(toQ(*item.onChange), QJsonArray{arr}); }
 }
 
 void ExtensionFormModel::dropdownSearchTextChanged(int index, const QString &text) {
@@ -207,10 +213,10 @@ ExtensionFormModel::FormItemData ExtensionFormModel::createItem(const FormModel:
   if (auto *fieldPtr = std::get_if<FormModel::Field>(&item)) {
     const auto &base = getBase(*fieldPtr);
     data.type = fieldType(*fieldPtr);
-    data.fieldId = base.id;
-    data.label = base.title.value_or(QString());
-    data.error = base.error.value_or(QString());
-    data.info = base.info.value_or(QString());
+    data.fieldId = toQ(base.id);
+    data.label = optToQ(base.title);
+    data.error = optToQ(base.error);
+    data.info = optToQ(base.info);
     data.autoFocus = base.autoFocus;
     data.storeValue = base.storeValue;
     data.onChange = base.onChange;
@@ -218,15 +224,14 @@ ExtensionFormModel::FormItemData ExtensionFormModel::createItem(const FormModel:
     data.onFocus = base.onFocus;
     data.fieldData = buildFieldData(*fieldPtr);
 
-    data.placeholder =
-        std::visit(overloaded{
-                       [](const FormModel::TextField &f) { return f.placeholder.value_or(QString()); },
-                       [](const FormModel::PasswordField &f) { return f.placeholder.value_or(QString()); },
-                       [](const FormModel::DropdownField &f) { return f.placeholder.value_or(QString()); },
-                       [](const FormModel::TextAreaField &f) { return f.placeholder.value_or(QString()); },
-                       [](const auto &) { return QString(); },
-                   },
-                   *fieldPtr);
+    data.placeholder = std::visit(overloaded{
+                                      [](const FormModel::TextField &f) { return optToQ(f.placeholder); },
+                                      [](const FormModel::PasswordField &f) { return optToQ(f.placeholder); },
+                                      [](const FormModel::DropdownField &f) { return optToQ(f.placeholder); },
+                                      [](const FormModel::TextAreaField &f) { return optToQ(f.placeholder); },
+                                      [](const auto &) { return QString(); },
+                                  },
+                                  *fieldPtr);
 
     if (base.value) {
       data.modelValue = base.value->value;
@@ -235,8 +240,8 @@ ExtensionFormModel::FormItemData ExtensionFormModel::createItem(const FormModel:
     }
   } else if (auto *desc = std::get_if<FormModel::Description>(&item)) {
     data.type = FormItemData::Type::Description;
-    data.label = desc->title.value_or(QString());
-    data.fieldData = {{"text", desc->text}};
+    data.label = optToQ(desc->title);
+    data.fieldData = {{"text", toQ(desc->text)}};
   } else if (std::holds_alternative<FormModel::Separator>(item)) {
     data.type = FormItemData::Type::Separator;
   }
@@ -247,9 +252,9 @@ ExtensionFormModel::FormItemData ExtensionFormModel::createItem(const FormModel:
 void ExtensionFormModel::updateItem(FormItemData &existing, const FormModel::Item &newItem) {
   if (auto *fieldPtr = std::get_if<FormModel::Field>(&newItem)) {
     const auto &base = getBase(*fieldPtr);
-    existing.label = base.title.value_or(QString());
-    existing.error = base.error.value_or(QString());
-    existing.info = base.info.value_or(QString());
+    existing.label = optToQ(base.title);
+    existing.error = optToQ(base.error);
+    existing.info = optToQ(base.info);
     existing.onChange = base.onChange;
     existing.onBlur = base.onBlur;
     existing.onFocus = base.onFocus;
@@ -257,10 +262,10 @@ void ExtensionFormModel::updateItem(FormItemData &existing, const FormModel::Ite
 
     existing.placeholder =
         std::visit(overloaded{
-                       [](const FormModel::TextField &f) { return f.placeholder.value_or(QString()); },
-                       [](const FormModel::PasswordField &f) { return f.placeholder.value_or(QString()); },
-                       [](const FormModel::DropdownField &f) { return f.placeholder.value_or(QString()); },
-                       [](const FormModel::TextAreaField &f) { return f.placeholder.value_or(QString()); },
+                       [](const FormModel::TextField &f) { return optToQ(f.placeholder); },
+                       [](const FormModel::PasswordField &f) { return optToQ(f.placeholder); },
+                       [](const FormModel::DropdownField &f) { return optToQ(f.placeholder); },
+                       [](const FormModel::TextAreaField &f) { return optToQ(f.placeholder); },
                        [](const auto &) { return QString(); },
                    },
                    *fieldPtr);
@@ -271,8 +276,8 @@ void ExtensionFormModel::updateItem(FormItemData &existing, const FormModel::Ite
       existing.hasUserValue = false;
     }
   } else if (auto *desc = std::get_if<FormModel::Description>(&newItem)) {
-    existing.label = desc->title.value_or(QString());
-    existing.fieldData = {{"text", desc->text}};
+    existing.label = optToQ(desc->title);
+    existing.fieldData = {{"text", toQ(desc->text)}};
   }
 }
 
@@ -294,16 +299,16 @@ QVariantMap ExtensionFormModel::buildFieldData(const FormModel::Field &field) {
 
   std::visit(overloaded{
                  [&](const FormModel::CheckboxField &f) {
-                   if (f.label) data["label"] = *f.label;
+                   if (f.label) data["label"] = toQ(*f.label);
                  },
                  [&](const FormModel::DropdownField &f) {
                    data["items"] = qml::convertDropdownChildren(f.items);
                    data["isLoading"] = f.isLoading;
                    data["filtering"] = f.filtering;
                    data["hasRemoteSearch"] = f.onSearchTextChange.has_value();
-                   if (f.onSearchTextChange) data["onSearchTextChange"] = *f.onSearchTextChange;
-                   if (f.placeholder) data["placeholder"] = *f.placeholder;
-                   if (f.tooltip) data["tooltip"] = *f.tooltip;
+                   if (f.onSearchTextChange) data["onSearchTextChange"] = toQ(*f.onSearchTextChange);
+                   if (f.placeholder) data["placeholder"] = toQ(*f.placeholder);
+                   if (f.tooltip) data["tooltip"] = toQ(*f.tooltip);
                  },
                  [&](const FormModel::FilePickerField &f) {
                    data["multiple"] = f.allowMultipleSelection;
@@ -312,8 +317,8 @@ QVariantMap ExtensionFormModel::buildFieldData(const FormModel::Field &field) {
                    data["showHidden"] = f.showHiddenFiles;
                  },
                  [&](const FormModel::DatePickerField &f) {
-                   if (f.min) data["min"] = *f.min;
-                   if (f.max) data["max"] = *f.max;
+                   if (f.min) data["min"] = toQ(*f.min);
+                   if (f.max) data["max"] = toQ(*f.max);
                    data["includeTime"] = f.type.value_or("date") == "dateTime";
                  },
                  [](const auto &) {},

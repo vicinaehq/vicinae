@@ -313,9 +313,9 @@ void ExtensionViewHost::renderDetail(const RootDetailModel &model) {
   }
   setLoading(model.isLoading);
 
-  if (model.navigationTitle) { setNavigationTitle(*model.navigationTitle); }
+  if (model.navigationTitle) { setNavigationTitle(QString::fromStdString(*model.navigationTitle)); }
 
-  detail->markdown = model.markdown;
+  detail->markdown = QString::fromStdString(model.markdown);
   detail->metadata = model.metadata ? qml::metadataToVariantList(*model.metadata) : QVariantList{};
   emit detailContentChanged();
 
@@ -341,15 +341,15 @@ void ExtensionViewHost::renderForm(const FormModel &model) {
   }
   setLoading(model.isLoading);
 
-  if (model.navigationTitle) { setNavigationTitle(*model.navigationTitle); }
+  if (model.navigationTitle) { setNavigationTitle(QString::fromStdString(*model.navigationTitle)); }
 
   form->setFormData(model);
 
   QString newLinkText, newLinkHref;
   if (model.searchBarAccessory) {
     if (auto *link = std::get_if<FormModel::LinkAccessoryModel>(&*model.searchBarAccessory)) {
-      newLinkText = link->text;
-      newLinkHref = link->target;
+      newLinkText = QString::fromStdString(link->text);
+      newLinkHref = QString::fromStdString(link->target);
     }
   }
   if (newLinkText != m_linkAccessoryText || newLinkHref != m_linkAccessoryHref) {
@@ -385,17 +385,17 @@ void ExtensionViewHost::updateDropdown(const DropdownModel *dropdown) {
   }
 
   m_dropdownOnChange = dropdown->onChange;
-  m_dropdownPlaceholder = dropdown->placeholder.value_or(QString());
+  m_dropdownPlaceholder = dropdown->placeholder ? QString::fromStdString(*dropdown->placeholder) : QString();
 
   if (dropdown->dirty) { m_dropdownItems = qml::convertDropdownChildren(dropdown->children); }
 
   QString resolvedValue;
   if (dropdown->value) {
-    resolvedValue = *dropdown->value;
+    resolvedValue = QString::fromStdString(*dropdown->value);
   } else if (!m_dropdownValue.isEmpty()) {
     resolvedValue = m_dropdownValue;
   } else if (dropdown->defaultValue) {
-    resolvedValue = *dropdown->defaultValue;
+    resolvedValue = QString::fromStdString(*dropdown->defaultValue);
   } else {
     auto first = qml::firstDropdownItemValue(dropdown->children);
     if (first) resolvedValue = *first;
@@ -422,7 +422,7 @@ void ExtensionViewHost::updateDropdown(const DropdownModel *dropdown) {
   if (hadDropdown != !m_dropdownItems.isEmpty()) { emit searchAccessoryUrlChanged(); }
 
   if (!hadDropdown && !resolvedValue.isEmpty() && m_dropdownOnChange) {
-    notifyExtension(*m_dropdownOnChange, {resolvedValue});
+    notifyExtension(QString::fromStdString(*m_dropdownOnChange), {resolvedValue});
   }
 }
 
@@ -437,7 +437,7 @@ void ExtensionViewHost::setDropdownValue(const QString &value) {
       if (itemMap["id"].toString() == value) {
         m_dropdownCurrentItem = item;
         emit dropdownChanged();
-        if (m_dropdownOnChange) { notifyExtension(*m_dropdownOnChange, {value}); }
+        if (m_dropdownOnChange) { notifyExtension(QString::fromStdString(*m_dropdownOnChange), {value}); }
         return;
       }
     }

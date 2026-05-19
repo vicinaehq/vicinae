@@ -76,9 +76,9 @@ private:
     bool hasUserValue = false;
     uint32_t eventCount = 0;
 
-    std::optional<EventHandler> onChange;
-    std::optional<EventHandler> onBlur;
-    std::optional<EventHandler> onFocus;
+    std::optional<std::string> onChange;
+    std::optional<std::string> onBlur;
+    std::optional<std::string> onFocus;
 
     QVariantMap fieldData;
 

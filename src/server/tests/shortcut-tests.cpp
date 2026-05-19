@@ -93,7 +93,7 @@ TEST_CASE("extension object shortcuts can represent plus keys") {
       {QStringLiteral("modifiers"), QJsonArray{QStringLiteral("ctrl"), QStringLiteral("shift")}},
   };
 
-  auto parsed = ActionPannelParser::parseKeyboardShortcut(shortcut);
+  auto parsed = parseKeyboardShortcut(shortcut);
   REQUIRE(parsed.isValid());
   REQUIRE(parsed.key() == Qt::Key_Plus);
   REQUIRE(parsed.mods().testFlag(Qt::ControlModifier));

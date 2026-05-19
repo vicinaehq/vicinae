@@ -3,6 +3,7 @@
 #include "extend/image-model.hpp"
 #include "theme.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
+#include <QUrl>
 #include <cstdint>
 #include <filesystem>
 #include <qstringview.h>

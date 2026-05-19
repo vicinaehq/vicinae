@@ -1,10 +1,8 @@
 #include "extend/model-deser.hpp"
 
 #include <chrono>
-#include <memory>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <variant>
 #include <vector>
 
@@ -12,6 +10,7 @@
 #include <QJsonDocument>
 #include <glaze/json.hpp>
 
+#include "common/types.hpp"
 #include "extend/action-model.hpp"
 #include "extend/color-model.hpp"
 #include "extend/detail-model.hpp"
@@ -23,7 +22,6 @@
 #include "extend/image-model.hpp"
 #include "extend/list-model.hpp"
 #include "extend/metadata-model.hpp"
-#include "extend/model-parser.hpp"
 #include "extend/pagination-model.hpp"
 #include "extend/root-detail-model.hpp"
 #include "extend/tag-model.hpp"
@@ -33,16 +31,8 @@
 #include "ui/image/url.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
 
-// ============================================================
-// Tag constant and parse options
-// ============================================================
-
 static constexpr std::string_view TAG = "$t";
 static constexpr glz::opts PARSE_OPTS{.error_on_unknown_keys = false, .minified = true};
-
-// ============================================================
-// QString conversion helpers — used only at model boundaries
-// ============================================================
 
 static inline QString toQStr(const std::string &s) {
   return QString::fromUtf8(s.data(), static_cast<qsizetype>(s.size()));
@@ -52,22 +42,10 @@ static inline std::optional<QString> toOptQStr(const std::optional<std::string> 
   return s ? std::optional(toQStr(*s)) : std::nullopt;
 }
 
-// ============================================================
-// Wire structs — all strings are std::string to avoid
-// UTF-8 → UTF-16 conversion during the Glaze parse phase.
-// Conversion to QString happens in toModel() / from<JSON> boundaries.
-// ============================================================
-
 struct DynColorRaw {
   std::string light;
   std::string dark;
   bool adjustContrast = true;
-};
-
-template <> struct glz::meta<DynColorRaw> {
-  using T = DynColorRaw;
-  static constexpr auto value =
-      glz::object("light", &T::light, "dark", &T::dark, "adjustContrast", &T::adjustContrast);
 };
 
 struct ColorLikeWire {
@@ -75,19 +53,9 @@ struct ColorLikeWire {
   std::optional<DynColorRaw> dynamic;
 };
 
-template <> struct glz::meta<ColorLikeWire> {
-  using T = ColorLikeWire;
-  static constexpr auto value = glz::object("raw", &T::raw, "dynamic", &T::dynamic);
-};
-
 struct ThemedIconSourceWire {
   std::string light;
   std::string dark;
-};
-
-template <> struct glz::meta<ThemedIconSourceWire> {
-  using T = ThemedIconSourceWire;
-  static constexpr auto value = glz::object("light", &T::light, "dark", &T::dark);
 };
 
 struct ImageSourceWire {
@@ -97,1141 +65,166 @@ struct ImageSourceWire {
   std::optional<std::string> dark;
 };
 
-template <> struct glz::meta<ImageSourceWire> {
-  using T = ImageSourceWire;
-  static constexpr auto value =
-      glz::object("raw", &T::raw, "themed", &T::themed, "light", &T::light, "dark", &T::dark);
-};
+using ImageSourceVariant = std::variant<std::string, ImageSourceWire>;
 
 struct ImageObjectWire {
-  std::optional<std::variant<QString, ThemedIconSource>> source;
-  std::optional<std::variant<QString, ThemedIconSource>> fallback;
-  std::optional<ColorLike> tintColor;
+  std::optional<ImageSourceVariant> source;
+  std::optional<ImageSourceVariant> fallback;
+  std::optional<ColorLikeWire> tintColor;
   std::optional<std::string> mask;
   std::optional<std::string> fileIcon;
 };
 
-template <> struct glz::meta<ImageObjectWire> {
-  using T = ImageObjectWire;
-  static constexpr auto value = glz::object("source", &T::source, "fallback", &T::fallback, "tintColor",
-                                            &T::tintColor, "mask", &T::mask, "fileIcon", &T::fileIcon);
-};
-
-struct FlexText {
-  std::string value;
-  std::optional<ColorLike> color;
-};
+using ImageLikeWire = std::variant<std::string, ImageObjectWire>;
 
 struct FlexTextObj {
   std::string value;
-  std::optional<ColorLike> color;
+  std::optional<ColorLikeWire> color;
 };
 
-template <> struct glz::meta<FlexTextObj> {
-  using T = FlexTextObj;
-  static constexpr auto value = glz::object("value", &T::value, "color", &T::color);
+using FlexText = std::variant<std::string, FlexTextObj>;
+
+struct FlexStringObj {
+  std::string value;
 };
 
-namespace glz {
-
-template <> struct from<JSON, FlexText> {
-  template <auto Opts, auto... Extra>
-  static void op(FlexText &v, is_context auto &&ctx, auto &&it, auto &&end) {
-    if (*it == '"') {
-      parse<JSON>::op<Opts>(v.value, ctx, it, end);
-    } else if (*it == '{') {
-      FlexTextObj w;
-      parse<JSON>::op<Opts>(w, ctx, it, end);
-      if (bool(ctx.error)) [[unlikely]]
-        return;
-      v.value = std::move(w.value);
-      v.color = std::move(w.color);
-    } else {
-      raw_json skip;
-      parse<JSON>::op<Opts>(skip, ctx, it, end);
-    }
-  }
-};
-
-} // namespace glz
-
-// ============================================================
-// Custom glz::from specializations for polymorphic types
-// ============================================================
-
-namespace glz {
-
-// --- ThemedIconSource ---
-template <> struct from<JSON, ThemedIconSource> {
-  template <auto Opts, auto... Extra>
-  static void op(ThemedIconSource &value, is_context auto &&ctx, auto &&it, auto &&end) {
-    ThemedIconSourceWire w;
-    parse<JSON>::op<Opts>(w, ctx, it, end);
-    if (bool(ctx.error)) [[unlikely]]
-      return;
-    value.light = toQStr(w.light);
-    value.dark = toQStr(w.dark);
-  }
-};
-
-// --- ColorLike ---
-template <> struct from<JSON, ColorLike> {
-  template <auto Opts, auto... Extra>
-  static void op(ColorLike &value, is_context auto &&ctx, auto &&it, auto &&end) {
-    if (*it != '{') {
-      ctx.error = error_code::syntax_error;
-      return;
-    }
-    ColorLikeWire w;
-    parse<JSON>::op<Opts>(w, ctx, it, end);
-    if (bool(ctx.error)) [[unlikely]]
-      return;
-
-    if (w.raw) {
-      auto qs = toQStr(*w.raw);
-      if (auto tint = ImageURL::tintForName(qs); tint != SemanticColor::InvalidTint) {
-        value = tint;
-      } else {
-        value = std::move(qs);
-      }
-    } else if (w.dynamic) {
-      value = DynamicColor{.light = toQStr(w.dynamic->light),
-                           .dark = toQStr(w.dynamic->dark),
-                           .adjustContrast = w.dynamic->adjustContrast};
-    }
-  }
-};
-
-// --- variant<QString, ThemedIconSource> (image source) ---
-template <> struct from<JSON, std::variant<QString, ThemedIconSource>> {
-  template <auto Opts, auto... Extra>
-  static void op(std::variant<QString, ThemedIconSource> &value, is_context auto &&ctx, auto &&it,
-                 auto &&end) {
-    if (*it == '"') {
-      std::string s;
-      parse<JSON>::op<Opts>(s, ctx, it, end);
-      if (bool(ctx.error)) [[unlikely]]
-        return;
-      value = toQStr(s);
-      return;
-    }
-    if (*it == '{') {
-      ImageSourceWire w;
-      parse<JSON>::op<Opts>(w, ctx, it, end);
-      if (bool(ctx.error)) [[unlikely]]
-        return;
-      if (w.raw) {
-        value = toQStr(*w.raw);
-      } else if (w.themed) {
-        ThemedIconSource themed;
-        themed.light = toQStr(w.themed->light);
-        themed.dark = toQStr(w.themed->dark);
-        value = std::move(themed);
-      } else if (w.light) {
-        ThemedIconSource themed;
-        themed.light = toQStr(*w.light);
-        if (w.dark) themed.dark = toQStr(*w.dark);
-        value = std::move(themed);
-      }
-      return;
-    }
-    value = QString();
-  }
-};
-
-// --- ImageLikeModel ---
-template <> struct from<JSON, ImageLikeModel> {
-  template <auto Opts, auto... Extra>
-  static void op(ImageLikeModel &value, is_context auto &&ctx, auto &&it, auto &&end) {
-    if (*it == '"') {
-      std::string s;
-      parse<JSON>::op<Opts>(s, ctx, it, end);
-      if (bool(ctx.error)) [[unlikely]]
-        return;
-      value = ExtensionImageModel{.source = toQStr(s)};
-      return;
-    }
-    if (*it == '{') {
-      ImageObjectWire w;
-      parse<JSON>::op<Opts>(w, ctx, it, end);
-      if (bool(ctx.error)) [[unlikely]]
-        return;
-
-      if (w.source) {
-        ExtensionImageModel model;
-        model.source = std::move(*w.source);
-        if (w.fallback) model.fallback = std::move(*w.fallback);
-        if (w.tintColor) model.tintColor = std::move(*w.tintColor);
-        if (w.mask) model.mask = OmniPainter::maskForName(toQStr(*w.mask));
-        value = std::move(model);
-      } else if (w.fileIcon) {
-        value = ExtensionFileIconModel{.file = *w.fileIcon};
-      } else {
-        value = InvalidImageModel{};
-      }
-      return;
-    }
-    value = InvalidImageModel{};
-  }
-};
-
-// --- Keyboard::Shortcut ---
-template <> struct from<JSON, Keyboard::Shortcut> {
-  template <auto Opts, auto... Extra>
-  static void op(Keyboard::Shortcut &value, is_context auto &&ctx, auto &&it, auto &&end) {
-    static const std::unordered_map<std::string, Keybind> NAMED_MAP = {
-        {"copy", Keybind::CopyAction},
-        {"copy-deeplink", Keybind::CopyAction},
-        {"copy-name", Keybind::CopyNameAction},
-        {"copy-path", Keybind::CopyPathAction},
-        {"save", Keybind::SaveAction},
-        {"duplicate", Keybind::DuplicateAction},
-        {"edit", Keybind::EditAction},
-        {"move-down", Keybind::MoveDownAction},
-        {"move-up", Keybind::MoveUpAction},
-        {"new", Keybind::NewAction},
-        {"open", Keybind::OpenAction},
-        {"open-with", Keybind::OpenAction},
-        {"pin", Keybind::PinAction},
-        {"refresh", Keybind::RefreshAction},
-        {"remove", Keybind::RemoveAction},
-        {"remove-all", Keybind::DangerousRemoveAction},
-    };
-
-    if (*it == '"') {
-      std::string s;
-      parse<JSON>::op<Opts>(s, ctx, it, end);
-      if (bool(ctx.error)) [[unlikely]]
-        return;
-      if (auto found = NAMED_MAP.find(s); found != NAMED_MAP.end()) {
-        value = found->second;
-      } else {
-        value = Keyboard::Shortcut::fromString(toQStr(s));
-      }
-      return;
-    }
-    if (*it == '{') {
-      struct Obj {
-        std::string key;
-        std::vector<std::string> modifiers;
-      };
-      Obj obj;
-      parse<JSON>::op<Opts>(obj, ctx, it, end);
-      if (bool(ctx.error)) [[unlikely]]
-        return;
-
-      auto k = Keyboard::keyFromString(toQStr(obj.key));
-      if (!k) return;
-
-      Qt::KeyboardModifiers mods{};
-      for (const auto &m : obj.modifiers) {
-        auto mod = Keyboard::modifierFromString(toQStr(m));
-        if (mod) mods.setFlag(*mod);
-      }
-      value = Keyboard::Shortcut(*k, mods);
-      return;
-    }
-    value = {};
-  }
-};
-
-// --- QJsonObject ---
-template <> struct from<JSON, QJsonObject> {
-  template <auto Opts, auto... Extra>
-  static void op(QJsonObject &value, is_context auto &&ctx, auto &&it, auto &&end) {
-    raw_json raw;
-    parse<JSON>::op<Opts>(raw, ctx, it, end);
-    if (bool(ctx.error)) [[unlikely]]
-      return;
-    auto doc = QJsonDocument::fromJson(QByteArray::fromRawData(raw.str.data(), raw.str.size()));
-    value = doc.object();
-  }
-};
-
-// --- ObjectFit ---
-template <> struct from<JSON, ObjectFit> {
-  template <auto Opts, auto... Extra>
-  static void op(ObjectFit &value, is_context auto &&ctx, auto &&it, auto &&end) {
-    std::string s;
-    parse<JSON>::op<Opts>(s, ctx, it, end);
-    if (bool(ctx.error)) [[unlikely]]
-      return;
-    value = (s == "fill") ? ObjectFit::Fill : ObjectFit::Contain;
-  }
-};
-
-// --- GridInset ---
-template <> struct from<JSON, GridInset> {
-  template <auto Opts, auto... Extra>
-  static void op(GridInset &value, is_context auto &&ctx, auto &&it, auto &&end) {
-    std::string s;
-    parse<JSON>::op<Opts>(s, ctx, it, end);
-    if (bool(ctx.error)) [[unlikely]]
-      return;
-    if (s == "zero")
-      value = GridInset::None;
-    else if (s == "small")
-      value = GridInset::Small;
-    else if (s == "medium")
-      value = GridInset::Medium;
-    else if (s == "large")
-      value = GridInset::Large;
-    else
-      value = GridInset::Small;
-  }
-};
-
-// --- OmniPainter::ImageMaskType ---
-template <> struct from<JSON, OmniPainter::ImageMaskType> {
-  template <auto Opts>
-  static void op(OmniPainter::ImageMaskType &value, is_context auto &&ctx, auto &&it, auto &&end) {
-    std::string s;
-    parse<JSON>::op<Opts>(s, ctx, it, end);
-    if (bool(ctx.error)) [[unlikely]]
-      return;
-    value = OmniPainter::maskForName(toQStr(s));
-  }
-};
-
-// --- DropdownModel::Filtering ---
-template <> struct from<JSON, DropdownModel::Filtering> {
-  template <auto Opts, auto... Extra>
-  static void op(DropdownModel::Filtering &value, is_context auto &&ctx, auto &&it, auto &&end) {
-    if (*it == 't' || *it == 'f') {
-      bool b = true;
-      parse<JSON>::op<Opts>(b, ctx, it, end);
-      value = {.keepSectionOrder = true, .enabled = b};
-      return;
-    }
-    value = {.keepSectionOrder = true, .enabled = true};
-    raw_json skip;
-    parse<JSON>::op<Opts>(skip, ctx, it, end);
-  }
-};
-
-// --- variant<bool, ActionPannelSubmenuFiltering> ---
-template <> struct from<JSON, std::variant<bool, ActionPannelSubmenuFiltering>> {
-  template <auto Opts>
-  static void op(std::variant<bool, ActionPannelSubmenuFiltering> &value, is_context auto &&ctx, auto &&it,
-                 auto &&end) {
-    if (*it == 't' || *it == 'f') {
-      bool b = false;
-      parse<JSON>::op<Opts>(b, ctx, it, end);
-      value = b;
-    } else if (*it == '{') {
-      ActionPannelSubmenuFiltering f;
-      parse<JSON>::op<Opts>(f, ctx, it, end);
-      value = std::move(f);
-    } else {
-      raw_json skip;
-      parse<JSON>::op<Opts>(skip, ctx, it, end);
-    }
-  }
-};
-
-// --- AccessoryModel ---
-
-} // namespace glz
+using FlexString = std::variant<std::string, FlexStringObj>;
 
 struct AccessoryWire {
-  std::optional<ImageLikeModel> icon;
+  std::optional<ImageLikeWire> icon;
   std::optional<std::string> tooltip;
   std::optional<FlexText> tag;
   std::optional<FlexText> text;
 };
 
-template <> struct glz::meta<AccessoryWire> {
-  using T = AccessoryWire;
-  static constexpr auto value =
-      glz::object("icon", &T::icon, "tooltip", &T::tooltip, "tag", &T::tag, "text", &T::text);
-};
-
-namespace glz {
-
-template <> struct from<JSON, AccessoryModel> {
-  template <auto Opts, auto... Extra>
-  static void op(AccessoryModel &value, is_context auto &&ctx, auto &&it, auto &&end) {
-    if (*it != '{') {
-      raw_json skip;
-      parse<JSON>::op<Opts>(skip, ctx, it, end);
-      return;
-    }
-    AccessoryWire w;
-    parse<JSON>::op<Opts>(w, ctx, it, end);
-    if (bool(ctx.error)) [[unlikely]]
-      return;
-
-    if (w.icon) value.icon = std::move(*w.icon);
-    if (w.tooltip) value.tooltip = toQStr(*w.tooltip);
-    if (w.tag) {
-      value.data = AccessoryModel::Tag{.color = std::move(w.tag->color), .value = toQStr(w.tag->value)};
-    } else if (w.text) {
-      value.data = AccessoryModel::Text{.color = std::move(w.text->color), .value = toQStr(w.text->value)};
-    }
-  }
-};
-
-// --- ImageURL ---
-template <> struct from<JSON, ImageURL> {
-  template <auto Opts, auto... Extra>
-  static void op(ImageURL &value, is_context auto &&ctx, auto &&it, auto &&end) {
-    ImageLikeModel img;
-    from<JSON, ImageLikeModel>::op<Opts>(img, ctx, it, end);
-    if (!bool(ctx.error)) value = ImageURL(img);
-  }
-};
-
-} // namespace glz
-
-// ============================================================
-// Helper types for fields with non-trivial wire shapes
-// ============================================================
-
-struct FlexString {
-  std::string value;
-};
-
-namespace glz {
-template <> struct from<JSON, FlexString> {
-  template <auto Opts, auto... Extra>
-  static void op(FlexString &v, is_context auto &&ctx, auto &&it, auto &&end) {
-    if (*it == '"') {
-      parse<JSON>::op<Opts>(v.value, ctx, it, end);
-    } else if (*it == '{') {
-      struct W {
-        std::string value;
-      };
-      W w;
-      parse<JSON>::op<Opts>(w, ctx, it, end);
-      v.value = std::move(w.value);
-    } else {
-      raw_json skip;
-      parse<JSON>::op<Opts>(skip, ctx, it, end);
-    }
-  }
-};
-} // namespace glz
-
-struct GridContentParsed {
-  GridItemViewModel::Content content = InvalidImageModel{};
+struct GridContentObjWire {
   std::optional<std::string> tooltip;
-};
-
-struct GridContentObj {
-  std::optional<std::string> tooltip;
-  std::optional<ColorLike> color;
-  std::optional<ImageLikeModel> value;
-  std::optional<std::variant<QString, ThemedIconSource>> source;
-  std::optional<std::variant<QString, ThemedIconSource>> fallback;
-  std::optional<ColorLike> tintColor;
+  std::optional<ColorLikeWire> color;
+  std::optional<ImageLikeWire> value;
+  std::optional<ImageSourceVariant> source;
+  std::optional<ImageSourceVariant> fallback;
+  std::optional<ColorLikeWire> tintColor;
   std::optional<std::string> mask;
   std::optional<std::string> fileIcon;
 };
 
-template <> struct glz::meta<GridContentObj> {
-  using T = GridContentObj;
-  static constexpr auto value = glz::object("tooltip", &T::tooltip, "color", &T::color, "value", &T::value,
-                                            "source", &T::source, "fallback", &T::fallback, "tintColor",
-                                            &T::tintColor, "mask", &T::mask, "fileIcon", &T::fileIcon);
-};
+using GridContentWire = std::variant<std::string, GridContentObjWire>;
 
-namespace glz {
-template <> struct from<JSON, GridContentParsed> {
-  template <auto Opts, auto... Extra>
-  static void op(GridContentParsed &v, is_context auto &&ctx, auto &&it, auto &&end) {
-    if (*it == '"') {
-      ImageLikeModel img;
-      from<JSON, ImageLikeModel>::op<Opts>(img, ctx, it, end);
-      v.content = std::move(img);
-      return;
-    }
-    if (*it == '{') {
-      GridContentObj w;
-      parse<JSON>::op<Opts>(w, ctx, it, end);
-      if (bool(ctx.error)) [[unlikely]]
-        return;
-      if (w.tooltip) v.tooltip = std::move(*w.tooltip);
-      if (w.color) {
-        v.content = std::move(*w.color);
-      } else if (w.value) {
-        v.content = std::move(*w.value);
-      } else if (w.source) {
-        ExtensionImageModel model;
-        model.source = std::move(*w.source);
-        if (w.fallback) model.fallback = std::move(*w.fallback);
-        if (w.tintColor) model.tintColor = std::move(*w.tintColor);
-        if (w.mask) model.mask = OmniPainter::maskForName(toQStr(*w.mask));
-        v.content = std::move(model);
-      } else if (w.fileIcon) {
-        v.content = ExtensionFileIconModel{.file = *w.fileIcon};
-      } else {
-        v.content = InvalidImageModel{};
-      }
-      return;
-    }
-    raw_json skip;
-    parse<JSON>::op<Opts>(skip, ctx, it, end);
-  }
-};
-} // namespace glz
-
-struct ImageLikeWrapped {
-  ImageLikeModel value = InvalidImageModel{};
-};
-
-struct ImageWrappedObj {
-  std::optional<ImageLikeModel> value;
-  std::optional<std::variant<QString, ThemedIconSource>> source;
-  std::optional<std::variant<QString, ThemedIconSource>> fallback;
-  std::optional<ColorLike> tintColor;
+struct ImageWrappedObjWire {
+  std::optional<ImageLikeWire> value;
+  std::optional<ImageSourceVariant> source;
+  std::optional<ImageSourceVariant> fallback;
+  std::optional<ColorLikeWire> tintColor;
   std::optional<std::string> mask;
   std::optional<std::string> fileIcon;
 };
 
-template <> struct glz::meta<ImageWrappedObj> {
-  using T = ImageWrappedObj;
+using ImageWrappedWire = std::variant<std::string, ImageWrappedObjWire>;
+
+template <> struct glz::meta<ObjectFit> {
+  using enum ObjectFit;
+  static constexpr auto value = glz::enumerate("contain", Contain, "fill", Fill, "stretch", Stretch);
+};
+
+template <> struct glz::meta<GridInset> {
+  using enum GridInset;
   static constexpr auto value =
-      glz::object("value", &T::value, "source", &T::source, "fallback", &T::fallback, "tintColor",
-                  &T::tintColor, "mask", &T::mask, "fileIcon", &T::fileIcon);
+      glz::enumerate("zero", None, "small", Small, "medium", Medium, "large", Large);
 };
 
-namespace glz {
-template <> struct from<JSON, ImageLikeWrapped> {
-  template <auto Opts, auto... Extra>
-  static void op(ImageLikeWrapped &v, is_context auto &&ctx, auto &&it, auto &&end) {
-    if (*it == '"') {
-      from<JSON, ImageLikeModel>::op<Opts>(v.value, ctx, it, end);
-      return;
-    }
-    if (*it == '{') {
-      ImageWrappedObj w;
-      parse<JSON>::op<Opts>(w, ctx, it, end);
-      if (bool(ctx.error)) [[unlikely]]
-        return;
-      if (w.value && !w.source && !w.fileIcon) {
-        v.value = std::move(*w.value);
-      } else if (w.source) {
-        ExtensionImageModel model;
-        model.source = std::move(*w.source);
-        if (w.fallback) model.fallback = std::move(*w.fallback);
-        if (w.tintColor) model.tintColor = std::move(*w.tintColor);
-        if (w.mask) model.mask = OmniPainter::maskForName(toQStr(*w.mask));
-        v.value = std::move(model);
-      } else if (w.fileIcon) {
-        v.value = ExtensionFileIconModel{.file = *w.fileIcon};
-      } else {
-      }
-      return;
-    }
-    raw_json skip;
-    parse<JSON>::op<Opts>(skip, ctx, it, end);
-  }
-};
-} // namespace glz
-
-// ============================================================
-// glz::meta for simple/leaf types (kept for compatibility)
-// ============================================================
-
-template <> struct glz::meta<ThemedIconSource> {
-  using T = ThemedIconSource;
-  static constexpr auto value = glz::object("light", &T::light, "dark", &T::dark);
-};
-
-template <> struct glz::meta<ActionPannelSubmenuFiltering> {
-  using T = ActionPannelSubmenuFiltering;
-  static constexpr auto value = glz::object("keepSectionOrder", &T::keepSectionOrder);
-};
-
-template <> struct glz::meta<PaginationModel> {
-  using T = PaginationModel;
+template <> struct glz::meta<OmniPainter::ImageMaskType> {
+  using enum OmniPainter::ImageMaskType;
   static constexpr auto value =
-      glz::object("onLoadMore", &T::onLoadMore, "hasMore", &T::hasMore, "pageSize", &T::pageSize);
+      glz::enumerate("circle", CircleMask, "roundedRectangle", RoundedRectangleMask);
 };
 
-template <typename T> struct glz::meta<EventCounted<T>> {
-  using U = EventCounted<T>;
-  static constexpr auto value = glz::object("value", &U::value, "eventCount", &U::eventCount);
+struct ShortcutObjWire {
+  std::string key;
+  std::vector<std::string> modifiers;
 };
 
-// ============================================================
-// Wire structs + from<JSON> for model types with QString fields
-// ============================================================
-
-struct MetadataLinkWire {
-  std::string title;
-  std::string text;
-  std::string target;
-};
-
-template <> struct glz::meta<MetadataLinkWire> {
-  using T = MetadataLinkWire;
-  static constexpr auto value = glz::object("title", &T::title, "text", &T::text, "target", &T::target);
-};
-
-template <> struct glz::meta<MetadataLink> {
-  using T = MetadataLink;
-  static constexpr auto value = glz::object("title", &T::title, "text", &T::text, "target", &T::target);
-};
-
-namespace glz {
-template <> struct from<JSON, MetadataLink> {
-  template <auto Opts, auto... Extra>
-  static void op(MetadataLink &value, is_context auto &&ctx, auto &&it, auto &&end) {
-    MetadataLinkWire w;
-    parse<JSON>::op<Opts>(w, ctx, it, end);
-    if (bool(ctx.error)) [[unlikely]]
-      return;
-    value.title = toQStr(w.title);
-    value.text = toQStr(w.text);
-    value.target = toQStr(w.target);
-  }
-};
-} // namespace glz
+using ShortcutWire = std::variant<std::string, ShortcutObjWire>;
 
 struct ActionModelWire {
   std::string title;
   std::string onAction;
   std::optional<std::string> onSubmit;
-  std::optional<ImageLikeModel> icon;
-  std::optional<Keyboard::Shortcut> shortcut;
-  std::string type;
-  QJsonObject quicklink;
+  std::optional<ImageLikeWire> icon;
+  std::optional<ShortcutWire> shortcut;
+  std::string type = "callback";
+  glz::raw_json quicklink;
   std::optional<std::string> stableId;
 };
 
-template <> struct glz::meta<ActionModelWire> {
-  using T = ActionModelWire;
-  static constexpr auto value = glz::object("title", &T::title, "onAction", &T::onAction, "onSubmit",
-                                            &T::onSubmit, "icon", &T::icon, "shortcut", &T::shortcut, "type",
-                                            &T::type, "quicklink", &T::quicklink, "stableId", &T::stableId);
-};
-
-template <> struct glz::meta<ActionModel> {
-  using T = ActionModel;
-  static constexpr auto value = glz::object("title", &T::title, "onAction", &T::onAction, "onSubmit",
-                                            &T::onSubmit, "icon", &T::icon, "shortcut", &T::shortcut, "type",
-                                            &T::type, "quicklink", &T::quicklink, "stableId", &T::stableId);
-};
-
-namespace glz {
-template <> struct from<JSON, ActionModel> {
-  template <auto Opts, auto... Extra>
-  static void op(ActionModel &value, is_context auto &&ctx, auto &&it, auto &&end) {
-    ActionModelWire w;
-    parse<JSON>::op<Opts>(w, ctx, it, end);
-    if (bool(ctx.error)) [[unlikely]]
-      return;
-    value.title = toQStr(w.title);
-    value.onAction = toQStr(w.onAction);
-    value.onSubmit = toOptQStr(w.onSubmit);
-    value.icon = std::move(w.icon);
-    value.shortcut = std::move(w.shortcut);
-    value.type = toQStr(w.type);
-    value.quicklink = std::move(w.quicklink);
-    value.stableId = toOptQStr(w.stableId);
-  }
-};
-} // namespace glz
-
-struct TagItemModelWire {
-  std::string text;
-  std::string onAction;
-  std::optional<ImageLikeModel> icon;
-  std::optional<ColorLike> color;
-};
-
-template <> struct glz::meta<TagItemModelWire> {
-  using T = TagItemModelWire;
-  static constexpr auto value =
-      glz::object("text", &T::text, "onAction", &T::onAction, "icon", &T::icon, "color", &T::color);
-};
-
-template <> struct glz::meta<TagItemModel> {
-  using T = TagItemModel;
-  static constexpr auto value =
-      glz::object("text", &T::text, "onAction", &T::onAction, "icon", &T::icon, "color", &T::color);
-};
-
-namespace glz {
-template <> struct from<JSON, TagItemModel> {
-  template <auto Opts, auto... Extra>
-  static void op(TagItemModel &value, is_context auto &&ctx, auto &&it, auto &&end) {
-    TagItemModelWire w;
-    parse<JSON>::op<Opts>(w, ctx, it, end);
-    if (bool(ctx.error)) [[unlikely]]
-      return;
-    value.text = toQStr(w.text);
-    value.onAction = toQStr(w.onAction);
-    value.icon = std::move(w.icon);
-    value.color = std::move(w.color);
-  }
-};
-} // namespace glz
-
-struct DropdownItemWire {
-  std::string title;
-  std::string value;
-  std::vector<std::string> keywords;
-  std::optional<ImageLikeModel> icon;
-};
-
-template <> struct glz::meta<DropdownItemWire> {
-  using T = DropdownItemWire;
-  static constexpr auto value =
-      glz::object("title", &T::title, "value", &T::value, "keywords", &T::keywords, "icon", &T::icon);
-};
-
-template <> struct glz::meta<DropdownModel::Item> {
-  using T = DropdownModel::Item;
-  static constexpr auto value =
-      glz::object("title", &T::title, "value", &T::value, "keywords", &T::keywords, "icon", &T::icon);
-};
-
-namespace glz {
-template <> struct from<JSON, DropdownModel::Item> {
-  template <auto Opts, auto... Extra>
-  static void op(DropdownModel::Item &value, is_context auto &&ctx, auto &&it, auto &&end) {
-    DropdownItemWire w;
-    parse<JSON>::op<Opts>(w, ctx, it, end);
-    if (bool(ctx.error)) [[unlikely]]
-      return;
-    value.title = toQStr(w.title);
-    value.value = toQStr(w.value);
-    value.keywords.reserve(w.keywords.size());
-    for (auto &kw : w.keywords)
-      value.keywords.emplace_back(toQStr(kw));
-    value.icon = std::move(w.icon);
-  }
-};
-} // namespace glz
-
-// ============================================================
-// Wire struct forward declarations
-// ============================================================
+struct ActionPannelSubmenuModelWire;
+using ActionPannelSubmenuWirePtr = std::shared_ptr<ActionPannelSubmenuModelWire>;
 
 struct ActionPannelSectionModelWire;
-struct ActionPannelSubmenuModelWire;
+using ActionPannelSectionWirePtr = std::shared_ptr<ActionPannelSectionModelWire>;
 
-// ============================================================
-// Child variant types with tagged variant metas
-// ============================================================
+using ActionPannelSectionItemWire = std::variant<ActionModelWire, ActionPannelSubmenuWirePtr>;
 
-using APSectionChild = std::variant<ActionModel, std::shared_ptr<ActionPannelSubmenuModelWire>>;
-
-template <> struct glz::meta<APSectionChild> {
+template <> struct glz::meta<ActionPannelSectionItemWire> {
   static constexpr std::string_view tag = TAG;
   static constexpr auto ids = std::array{"action", "action-panel-submenu"};
 };
 
-using APSubmenuChild = std::variant<std::shared_ptr<ActionPannelSectionModelWire>, ActionModel,
-                                    std::shared_ptr<ActionPannelSubmenuModelWire>>;
+using ActionPannelSubmenuChildWire =
+    std::variant<ActionPannelSectionWirePtr, ActionModelWire, ActionPannelSubmenuWirePtr>;
 
-template <> struct glz::meta<APSubmenuChild> {
+template <> struct glz::meta<ActionPannelSubmenuChildWire> {
   static constexpr std::string_view tag = TAG;
   static constexpr auto ids = std::array{"action-panel-section", "action", "action-panel-submenu"};
 };
 
-using APPanelChild = std::variant<ActionModel, std::shared_ptr<ActionPannelSectionModelWire>,
-                                  std::shared_ptr<ActionPannelSubmenuModelWire>>;
-
-template <> struct glz::meta<APPanelChild> {
-  static constexpr std::string_view tag = TAG;
-  static constexpr auto ids = std::array{"action", "action-panel-section", "action-panel-submenu"};
-};
-
-// ============================================================
-// Wire structs for action panel (mutually recursive via shared_ptr)
-// ============================================================
-
 struct ActionPannelSectionModelWire {
   std::string title;
-  std::vector<APSectionChild> children;
-};
-
-template <> struct glz::meta<ActionPannelSectionModelWire> {
-  using T = ActionPannelSectionModelWire;
-  static constexpr auto value = glz::object("title", &T::title, "children", &T::children);
+  std::vector<ActionPannelSectionItemWire> children;
 };
 
 struct ActionPannelSubmenuModelWire {
   std::string title;
-  std::optional<ImageLikeModel> icon;
-  std::optional<Keyboard::Shortcut> shortcut;
+  std::optional<ImageLikeWire> icon;
+  std::optional<ShortcutWire> shortcut;
   std::optional<bool> autoFocus;
   std::optional<std::variant<bool, ActionPannelSubmenuFiltering>> filtering;
   std::optional<bool> isLoading;
   std::optional<bool> throttle;
   std::string onOpen;
   std::string onSearchTextChange;
+  std::vector<ActionPannelSubmenuChildWire> children;
   std::optional<std::string> stableId;
-  std::vector<APSubmenuChild> children;
 };
 
-template <> struct glz::meta<ActionPannelSubmenuModelWire> {
-  using T = ActionPannelSubmenuModelWire;
-  static constexpr auto value = glz::object(
-      "title", &T::title, "icon", &T::icon, "shortcut", &T::shortcut, "autoFocus", &T::autoFocus, "filtering",
-      &T::filtering, "isLoading", &T::isLoading, "throttle", &T::throttle, "onOpen", &T::onOpen,
-      "onSearchTextChange", &T::onSearchTextChange, "stableId", &T::stableId, "children", &T::children);
+using ActionPannelItemWire =
+    std::variant<ActionModelWire, ActionPannelSectionWirePtr, ActionPannelSubmenuWirePtr>;
+
+template <> struct glz::meta<ActionPannelItemWire> {
+  static constexpr std::string_view tag = TAG;
+  static constexpr auto ids = std::array{"action", "action-panel-section", "action-panel-submenu"};
 };
 
 struct ActionPannelModelWire {
   std::string title;
+  std::vector<ActionPannelItemWire> children;
   std::optional<std::string> stableId;
-  std::vector<APPanelChild> children;
 };
 
-template <> struct glz::meta<ActionPannelModelWire> {
-  using T = ActionPannelModelWire;
-  static constexpr auto value =
-      glz::object("title", &T::title, "stableId", &T::stableId, "children", &T::children);
-};
-
-// ============================================================
-// Distribute helpers for action panel wire → model conversion
-// ============================================================
-
-static void fixupAction(ActionModel &a) {
-  if (a.type.isEmpty()) a.type = QStringLiteral("callback");
-}
-
-static ActionPannelSectionModel toModel(const ActionPannelSectionModelWire &w);
-static ActionPannelSubmenuModel toModel(const ActionPannelSubmenuModelWire &w);
-
-static ActionPannelSectionModel toModel(const ActionPannelSectionModelWire &w) {
-  ActionPannelSectionModel m;
-  m.title = toQStr(w.title);
-  m.items.reserve(w.children.size());
-  for (const auto &child : w.children) {
-    std::visit(
-        [&](auto &&c) {
-          using T = std::decay_t<decltype(c)>;
-          if constexpr (std::is_same_v<T, ActionModel>) {
-            auto a = c;
-            fixupAction(a);
-            m.items.push_back(std::move(a));
-          } else if constexpr (std::is_same_v<T, std::shared_ptr<ActionPannelSubmenuModelWire>>) {
-            auto sub = std::make_shared<ActionPannelSubmenuModel>(toModel(*c));
-            m.items.push_back(std::move(sub));
-          }
-        },
-        child);
-  }
-  return m;
-}
-
-static ActionPannelSubmenuModel toModel(const ActionPannelSubmenuModelWire &w) {
-  ActionPannelSubmenuModel m;
-  m.title = toQStr(w.title);
-  m.icon = w.icon;
-  m.shortcut = w.shortcut;
-  m.autoFocus = w.autoFocus;
-  m.filtering = w.filtering;
-  m.isLoading = w.isLoading;
-  m.throttle = w.throttle;
-  m.onOpen = toQStr(w.onOpen);
-  m.onSearchTextChange = toQStr(w.onSearchTextChange);
-  m.stableId = toOptQStr(w.stableId);
-  m.children.reserve(w.children.size());
-
-  for (const auto &child : w.children) {
-    std::visit(
-        [&](auto &&c) {
-          using T = std::decay_t<decltype(c)>;
-          if constexpr (std::is_same_v<T, ActionModel>) {
-            auto a = c;
-            fixupAction(a);
-            m.children.push_back(std::move(a));
-          } else if constexpr (std::is_same_v<T, std::shared_ptr<ActionPannelSectionModelWire>>) {
-            auto sec = std::make_shared<ActionPannelSectionModel>(toModel(*c));
-            m.children.push_back(std::move(sec));
-          } else if constexpr (std::is_same_v<T, std::shared_ptr<ActionPannelSubmenuModelWire>>) {
-            auto sub = std::make_shared<ActionPannelSubmenuModel>(toModel(*c));
-            m.children.push_back(std::move(sub));
-          }
-        },
-        child);
-  }
-  return m;
-}
-
-static ActionPannelModel toModel(const ActionPannelModelWire &w) {
-  ActionPannelModel m;
-  m.dirty = true;
-  m.title = toQStr(w.title);
-  m.stableId = toOptQStr(w.stableId);
-  m.children.reserve(w.children.size());
-
-  for (const auto &child : w.children) {
-    std::visit(
-        [&](auto &&c) {
-          using T = std::decay_t<decltype(c)>;
-          if constexpr (std::is_same_v<T, ActionModel>) {
-            auto a = c;
-            fixupAction(a);
-            m.children.push_back(std::move(a));
-          } else if constexpr (std::is_same_v<T, std::shared_ptr<ActionPannelSectionModelWire>>) {
-            auto sec = std::make_shared<ActionPannelSectionModel>(toModel(*c));
-            m.children.push_back(std::move(sec));
-          } else if constexpr (std::is_same_v<T, std::shared_ptr<ActionPannelSubmenuModelWire>>) {
-            auto sub = std::make_shared<ActionPannelSubmenuModel>(toModel(*c));
-            m.children.push_back(std::move(sub));
-          }
-        },
-        child);
-  }
-  return m;
-}
-
-namespace glz {
-template <> struct from<JSON, ActionPannelModel> {
-  template <auto Opts, auto... Extra>
-  static void op(ActionPannelModel &value, is_context auto &&ctx, auto &&it, auto &&end) {
-    ActionPannelModelWire w;
-    parse<JSON>::op<Opts>(w, ctx, it, end);
-    if (!bool(ctx.error)) value = toModel(w);
-  }
-};
-} // namespace glz
-
-// ============================================================
-// TagListModel wire (children are tag-items → items field)
-// ============================================================
-
-struct TagListModelWire {
+struct DropdownItemWire {
   std::string title;
-  std::vector<TagItemModel> children;
+  std::string value;
+  std::optional<ImageLikeWire> icon;
+  std::vector<std::string> keywords;
 };
-
-template <> struct glz::meta<TagListModelWire> {
-  using T = TagListModelWire;
-  static constexpr auto value = glz::object("title", &T::title, "children", &T::children);
-};
-
-template <> struct glz::meta<TagListModel> {
-  static constexpr auto value = glz::object();
-};
-
-namespace glz {
-template <> struct from<JSON, TagListModel> {
-  template <auto Opts, auto... Extra>
-  static void op(TagListModel &value, is_context auto &&ctx, auto &&it, auto &&end) {
-    TagListModelWire w;
-    parse<JSON>::op<Opts>(w, ctx, it, end);
-    if (bool(ctx.error)) [[unlikely]]
-      return;
-    value.title = toQStr(w.title);
-    value.items = QList<TagItemModel>(w.children.begin(), w.children.end());
-  }
-};
-} // namespace glz
-
-// ============================================================
-// MetadataLabel wire (FlexText for text field)
-// ============================================================
-
-struct MetadataLabelWire {
-  std::string title;
-  FlexText text;
-  std::optional<ImageURL> icon;
-};
-
-template <> struct glz::meta<MetadataLabelWire> {
-  using T = MetadataLabelWire;
-  static constexpr auto value = glz::object("title", &T::title, "text", &T::text, "icon", &T::icon);
-};
-
-template <> struct glz::meta<MetadataLabel> {
-  static constexpr auto value = glz::object();
-};
-
-namespace glz {
-template <> struct from<JSON, MetadataLabel> {
-  template <auto Opts, auto... Extra>
-  static void op(MetadataLabel &value, is_context auto &&ctx, auto &&it, auto &&end) {
-    MetadataLabelWire w;
-    parse<JSON>::op<Opts>(w, ctx, it, end);
-    if (bool(ctx.error)) [[unlikely]]
-      return;
-    value.title = toQStr(w.title);
-    value.text = toQStr(w.text.value);
-    value.icon = std::move(w.icon);
-    value.color = std::move(w.text.color);
-  }
-};
-} // namespace glz
-
-// ============================================================
-// MetadataModel (heterogeneous children)
-// ============================================================
-
-using MetadataChild = std::variant<MetadataLabel, MetadataLink, MetadataSeparator, TagListModel>;
-
-template <> struct glz::meta<MetadataSeparator> {
-  static constexpr auto value = glz::object();
-};
-
-template <> struct glz::meta<MetadataChild> {
-  static constexpr std::string_view tag = TAG;
-  static constexpr auto ids = std::array{"metadata-label", "metadata-link", "metadata-separator", "tag-list"};
-};
-
-struct MetadataModelWire {
-  std::vector<MetadataChild> children;
-};
-
-template <> struct glz::meta<MetadataModelWire> {
-  using T = MetadataModelWire;
-  static constexpr auto value = glz::object("children", &T::children);
-};
-
-template <> struct glz::meta<MetadataModel> {
-  static constexpr auto value = glz::object();
-};
-
-namespace glz {
-template <> struct from<JSON, MetadataModel> {
-  template <auto Opts, auto... Extra>
-  static void op(MetadataModel &value, is_context auto &&ctx, auto &&it, auto &&end) {
-    MetadataModelWire w;
-    parse<JSON>::op<Opts>(w, ctx, it, end);
-    if (bool(ctx.error)) [[unlikely]]
-      return;
-    value.children.reserve(w.children.size());
-    for (auto &child : w.children) {
-      std::visit([&](auto &&c) { value.children.emplace_back(std::move(c)); }, child);
-    }
-  }
-};
-} // namespace glz
-
-// ============================================================
-// DetailModel (children: metadata node)
-// ============================================================
-
-using DetailChild = std::variant<MetadataModel>;
-
-template <> struct glz::meta<DetailChild> {
-  static constexpr std::string_view tag = TAG;
-  static constexpr auto ids = std::array{"metadata"};
-};
-
-struct DetailModelWire {
-  std::optional<std::string> markdown;
-  std::vector<DetailChild> children;
-};
-
-template <> struct glz::meta<DetailModelWire> {
-  using T = DetailModelWire;
-  static constexpr auto value = glz::object("markdown", &T::markdown, "children", &T::children);
-};
-
-template <> struct glz::meta<DetailModel> {
-  static constexpr auto value = glz::object();
-};
-
-namespace glz {
-template <> struct from<JSON, DetailModel> {
-  template <auto Opts, auto... Extra>
-  static void op(DetailModel &value, is_context auto &&ctx, auto &&it, auto &&end) {
-    DetailModelWire w;
-    parse<JSON>::op<Opts>(w, ctx, it, end);
-    if (bool(ctx.error)) [[unlikely]]
-      return;
-    value.markdown = toOptQStr(w.markdown);
-    for (auto &child : w.children) {
-      if (auto *m = std::get_if<MetadataModel>(&child)) { value.metadata = std::move(*m); }
-    }
-  }
-};
-} // namespace glz
-
-// ============================================================
-// EmptyViewModel (children: action-panel)
-// ============================================================
-
-using SingleAPChild = std::variant<ActionPannelModel>;
-
-template <> struct glz::meta<SingleAPChild> {
-  static constexpr std::string_view tag = TAG;
-  static constexpr auto ids = std::array{"action-panel"};
-};
-
-struct EmptyViewModelWire {
-  std::string title;
-  std::string description;
-  std::optional<ImageLikeModel> icon;
-  std::vector<SingleAPChild> children;
-};
-
-template <> struct glz::meta<EmptyViewModelWire> {
-  using T = EmptyViewModelWire;
-  static constexpr auto value = glz::object("title", &T::title, "description", &T::description, "icon",
-                                            &T::icon, "children", &T::children);
-};
-
-template <> struct glz::meta<EmptyViewModel> {
-  static constexpr auto value = glz::object();
-};
-
-namespace glz {
-template <> struct from<JSON, EmptyViewModel> {
-  template <auto Opts, auto... Extra>
-  static void op(EmptyViewModel &value, is_context auto &&ctx, auto &&it, auto &&end) {
-    EmptyViewModelWire w;
-    parse<JSON>::op<Opts>(w, ctx, it, end);
-    if (bool(ctx.error)) [[unlikely]]
-      return;
-    value.title = toQStr(w.title);
-    value.description = toQStr(w.description);
-    value.icon = std::move(w.icon);
-    for (auto &child : w.children) {
-      if (auto *ap = std::get_if<ActionPannelModel>(&child)) value.actions = std::move(*ap);
-    }
-  }
-};
-} // namespace glz
-
-// ============================================================
-// DropdownModel::Section (homogeneous children → items)
-// ============================================================
 
 struct DropdownSectionWire {
   std::string title;
-  std::vector<DropdownModel::Item> children;
+  std::vector<DropdownItemWire> children;
 };
 
-template <> struct glz::meta<DropdownSectionWire> {
-  using T = DropdownSectionWire;
-  static constexpr auto value = glz::object("title", &T::title, "children", &T::children);
-};
+using DropdownChildWire = std::variant<DropdownItemWire, DropdownSectionWire>;
 
-template <> struct glz::meta<DropdownModel::Section> {
-  static constexpr auto value = glz::object();
-};
-
-namespace glz {
-template <> struct from<JSON, DropdownModel::Section> {
-  template <auto Opts, auto... Extra>
-  static void op(DropdownModel::Section &value, is_context auto &&ctx, auto &&it, auto &&end) {
-    DropdownSectionWire w;
-    parse<JSON>::op<Opts>(w, ctx, it, end);
-    if (bool(ctx.error)) [[unlikely]]
-      return;
-    value.title = toQStr(w.title);
-    value.items = std::move(w.children);
-  }
-};
-} // namespace glz
-
-// ============================================================
-// DropdownModel (heterogeneous children: item or section)
-// ============================================================
-
-using DropdownChild = std::variant<DropdownModel::Item, DropdownModel::Section>;
-
-template <> struct glz::meta<DropdownChild> {
+template <> struct glz::meta<DropdownChildWire> {
   static constexpr std::string_view tag = TAG;
   static constexpr auto ids = std::array{"dropdown-item", "dropdown-section"};
 };
@@ -1244,163 +237,97 @@ struct DropdownModelWire {
   std::optional<std::string> onSearchTextChange;
   std::optional<std::string> placeholder;
   std::optional<std::string> value;
+  std::vector<DropdownChildWire> children;
   bool storeValue = true;
   bool throttle = false;
+  std::optional<bool> filtering;
   bool isLoading = false;
-  DropdownModel::Filtering filtering = {.keepSectionOrder = true, .enabled = true};
-  std::vector<DropdownChild> children;
 };
 
-template <> struct glz::meta<DropdownModelWire> {
-  using T = DropdownModelWire;
-  static constexpr auto value =
-      glz::object("tooltip", &T::tooltip, "defaultValue", &T::defaultValue, "id", &T::id, "onChange",
-                  &T::onChange, "onSearchTextChange", &T::onSearchTextChange, "placeholder", &T::placeholder,
-                  "value", &T::value, "storeValue", &T::storeValue, "throttle", &T::throttle, "isLoading",
-                  &T::isLoading, "filtering", &T::filtering, "children", &T::children);
+struct TagItemWire {
+  std::string text;
+  std::string onAction;
+  std::optional<ImageLikeWire> icon;
+  std::optional<ColorLikeWire> color;
 };
 
-template <> struct glz::meta<DropdownModel> {
+struct TagListWire {
+  std::string title;
+  std::vector<TagItemWire> children;
+};
+
+struct MetadataLabelWire {
+  std::string title;
+  FlexText text;
+  std::optional<ImageLikeWire> icon;
+};
+
+template <> struct glz::meta<MetadataSeparator> {
   static constexpr auto value = glz::object();
 };
 
-namespace glz {
-template <> struct from<JSON, DropdownModel> {
-  template <auto Opts, auto... Extra>
-  static void op(DropdownModel &value, is_context auto &&ctx, auto &&it, auto &&end) {
-    DropdownModelWire w;
-    parse<JSON>::op<Opts>(w, ctx, it, end);
-    if (bool(ctx.error)) [[unlikely]]
-      return;
-    value.dirty = true;
-    value.tooltip = toOptQStr(w.tooltip);
-    value.defaultValue = toOptQStr(w.defaultValue);
-    value.id = toOptQStr(w.id);
-    value.onChange = toOptQStr(w.onChange);
-    value.onSearchTextChange = toOptQStr(w.onSearchTextChange);
-    value.placeholder = toOptQStr(w.placeholder);
-    value.value = toOptQStr(w.value);
-    value.storeValue = w.storeValue;
-    value.throttle = w.throttle;
-    value.isLoading = w.isLoading;
-    value.filtering = w.filtering;
-    value.children.reserve(w.children.size());
-    for (auto &child : w.children) {
-      std::visit([&](auto &&c) { value.children.emplace_back(std::move(c)); }, child);
-    }
-  }
-};
-} // namespace glz
+using MetadataChild = std::variant<MetadataLabelWire, MetadataLink, MetadataSeparator, TagListWire>;
 
-// ============================================================
-// ListItemViewModel wire
-// ============================================================
+template <> struct glz::meta<MetadataChild> {
+  static constexpr std::string_view tag = TAG;
+  static constexpr auto ids = std::array{"metadata-label", "metadata-link", "metadata-separator", "tag-list"};
+};
+
+struct MetadataModelWire {
+  std::vector<MetadataChild> children;
+};
+
+using DetailChild = std::variant<MetadataModelWire>;
+
+template <> struct glz::meta<DetailChild> {
+  static constexpr std::string_view tag = TAG;
+  static constexpr auto ids = std::array{"metadata"};
+};
+
+struct DetailModelWire {
+  std::optional<std::string> markdown;
+  std::vector<DetailChild> children;
+};
+
+using SingleAPChild = std::variant<ActionPannelModelWire>;
+
+template <> struct glz::meta<SingleAPChild> {
+  static constexpr std::string_view tag = TAG;
+  static constexpr auto ids = std::array{"action-panel"};
+};
+
+struct EmptyViewModelWire {
+  std::string title;
+  std::string description;
+  std::optional<ImageLikeWire> icon;
+  std::vector<SingleAPChild> children;
+};
+
+using ListItemChild = std::variant<ActionPannelModelWire, DetailModelWire>;
+
+template <> struct glz::meta<ListItemChild> {
+  static constexpr std::string_view tag = TAG;
+  static constexpr auto ids = std::array{"action-panel", "list-item-detail"};
+};
 
 struct ListItemViewModelWire {
   std::string id;
   FlexString title;
   FlexString subtitle;
-  std::optional<ImageLikeWrapped> icon;
-  std::vector<AccessoryModel> accessories;
+  std::optional<ImageWrappedWire> icon;
+  std::vector<AccessoryWire> accessories;
   std::vector<std::string> keywords;
-
-  using Child = std::variant<ActionPannelModel, DetailModel>;
-  std::vector<Child> children;
+  std::vector<ListItemChild> children;
 };
-
-template <> struct glz::meta<ListItemViewModelWire::Child> {
-  static constexpr std::string_view tag = TAG;
-  static constexpr auto ids = std::array{"action-panel", "list-item-detail"};
-};
-
-template <> struct glz::meta<ListItemViewModelWire> {
-  using T = ListItemViewModelWire;
-  static constexpr auto value =
-      glz::object("id", &T::id, "title", &T::title, "subtitle", &T::subtitle, "icon", &T::icon, "keywords",
-                  &T::keywords, "accessories", &T::accessories, "children", &T::children);
-};
-
-template <> struct glz::meta<ListItemViewModel> {
-  static constexpr auto value = glz::object();
-};
-
-namespace glz {
-template <> struct from<JSON, ListItemViewModel> {
-  template <auto Opts, auto... Extra>
-  static void op(ListItemViewModel &value, is_context auto &&ctx, auto &&it, auto &&end) {
-    ListItemViewModelWire w;
-    parse<JSON>::op<Opts>(w, ctx, it, end);
-    if (bool(ctx.error)) [[unlikely]]
-      return;
-    value.changed = true;
-    value.id = std::move(w.id);
-    value.title = std::move(w.title.value);
-    value.subtitle = std::move(w.subtitle.value);
-    value.icon = w.icon ? std::optional(std::move(w.icon->value)) : std::nullopt;
-    value.accessories = std::move(w.accessories);
-    value.keywords = std::move(w.keywords);
-    for (auto &child : w.children) {
-      std::visit(
-          [&](auto &&c) {
-            using T = std::decay_t<decltype(c)>;
-            if constexpr (std::is_same_v<T, ActionPannelModel>)
-              value.actionPannel = std::move(c);
-            else if constexpr (std::is_same_v<T, DetailModel>)
-              value.detail = std::move(c);
-          },
-          child);
-    }
-  }
-};
-} // namespace glz
-
-// ============================================================
-// ListSectionModel (homogeneous children: list-item)
-// ============================================================
 
 struct ListSectionModelWire {
   std::string title;
   std::string subtitle;
-  std::vector<ListItemViewModel> children;
+  std::vector<ListItemViewModelWire> children;
 };
 
-template <> struct glz::meta<ListSectionModelWire> {
-  using T = ListSectionModelWire;
-  static constexpr auto value =
-      glz::object("title", &T::title, "subtitle", &T::subtitle, "children", &T::children);
-};
-
-template <> struct glz::meta<ListSectionModel> {
-  static constexpr auto value = glz::object();
-};
-
-namespace glz {
-template <> struct from<JSON, ListSectionModel> {
-  template <auto Opts, auto... Extra>
-  static void op(ListSectionModel &value, is_context auto &&ctx, auto &&it, auto &&end) {
-    ListSectionModelWire w;
-    parse<JSON>::op<Opts>(w, ctx, it, end);
-    if (bool(ctx.error)) [[unlikely]]
-      return;
-    value.title = std::move(w.title);
-    value.subtitle = std::move(w.subtitle);
-    value.children.reserve(w.children.size());
-    size_t index = 0;
-    for (auto &item : w.children) {
-      if (item.id.empty()) item.id = std::to_string(index);
-      value.children.emplace_back(std::move(item));
-      ++index;
-    }
-  }
-};
-} // namespace glz
-
-// ============================================================
-// ListModel (heterogeneous children)
-// ============================================================
-
-using ListWireChild =
-    std::variant<ListItemViewModel, ListSectionModel, ActionPannelModel, EmptyViewModel, DropdownModel>;
+using ListWireChild = std::variant<ListItemViewModelWire, ListSectionModelWire, ActionPannelModelWire,
+                                   EmptyViewModelWire, DropdownModelWire>;
 
 template <> struct glz::meta<ListWireChild> {
   static constexpr std::string_view tag = TAG;
@@ -1414,115 +341,23 @@ struct ListModelWire {
   bool throttle = false;
   bool isShowingDetail = false;
   std::string navigationTitle;
-  std::string searchPlaceholderText;
-  std::optional<std::string> onSelectionChanged;
+  std::string searchBarPlaceholder;
+  std::optional<std::string> onSelectionChange;
   std::optional<std::string> onSearchTextChange;
   std::optional<EventCounted<std::string>> searchText;
   std::optional<PaginationModel> pagination;
   std::vector<ListWireChild> children;
 };
 
-template <> struct glz::meta<ListModelWire> {
-  using T = ListModelWire;
-  static constexpr auto value =
-      glz::object("isLoading", &T::isLoading, "throttle", &T::throttle, "isShowingDetail",
-                  &T::isShowingDetail, "navigationTitle", &T::navigationTitle, "searchBarPlaceholder",
-                  &T::searchPlaceholderText, "filtering", &T::filtering, "onSearchTextChange",
-                  &T::onSearchTextChange, "onSelectionChange", &T::onSelectionChanged, "searchText",
-                  &T::searchText, "pagination", &T::pagination, "children", &T::children);
-};
-
-static ListModel toListModel(ListModelWire &&w) {
-  ListModel m;
-  m.dirty = true;
-  m.propsDirty = true;
-  m.isLoading = w.isLoading;
-  m.filtering = w.filtering.value_or(!w.onSearchTextChange.has_value());
-  m.throttle = w.throttle;
-  m.isShowingDetail = w.isShowingDetail;
-  m.navigationTitle = std::move(w.navigationTitle);
-  m.searchPlaceholderText = std::move(w.searchPlaceholderText);
-  m.onSelectionChanged = std::move(w.onSelectionChanged);
-  m.onSearchTextChange = std::move(w.onSearchTextChange);
-  m.searchText = std::move(w.searchText);
-  m.pagination = std::move(w.pagination);
-
-  m.items.reserve(w.children.size());
-  size_t index = 0;
-  for (auto &child : w.children) {
-    std::visit(
-        [&](auto &&c) {
-          using T = std::decay_t<decltype(c)>;
-          if constexpr (std::is_same_v<T, ListItemViewModel>) {
-            if (c.id.empty()) c.id = std::to_string(index);
-            m.items.emplace_back(std::move(c));
-          } else if constexpr (std::is_same_v<T, ListSectionModel>) {
-            m.items.emplace_back(std::move(c));
-          } else if constexpr (std::is_same_v<T, ActionPannelModel>) {
-            m.actions = std::move(c);
-          } else if constexpr (std::is_same_v<T, EmptyViewModel>) {
-            m.emptyView = std::move(c);
-          } else if constexpr (std::is_same_v<T, DropdownModel>) {
-            m.searchBarAccessory = std::move(c);
-          }
-        },
-        child);
-    ++index;
-  }
-
-  return m;
-}
-
-// ============================================================
-// GridItemViewModel wire
-// ============================================================
-
 struct GridItemViewModelWire {
   std::string id;
   std::string title;
   std::string subtitle;
-  GridContentParsed content;
+  GridContentWire content;
   std::optional<std::string> tooltip;
   std::vector<std::string> keywords;
-
   std::vector<SingleAPChild> children;
 };
-
-template <> struct glz::meta<GridItemViewModelWire> {
-  using T = GridItemViewModelWire;
-  static constexpr auto value =
-      glz::object("id", &T::id, "title", &T::title, "subtitle", &T::subtitle, "content", &T::content,
-                  "tooltip", &T::tooltip, "keywords", &T::keywords, "children", &T::children);
-};
-
-template <> struct glz::meta<GridItemViewModel> {
-  static constexpr auto value = glz::object();
-};
-
-namespace glz {
-template <> struct from<JSON, GridItemViewModel> {
-  template <auto Opts, auto... Extra>
-  static void op(GridItemViewModel &value, is_context auto &&ctx, auto &&it, auto &&end) {
-    GridItemViewModelWire w;
-    parse<JSON>::op<Opts>(w, ctx, it, end);
-    if (bool(ctx.error)) [[unlikely]]
-      return;
-    value.id = std::move(w.id);
-    value.title = std::move(w.title);
-    value.subtitle = std::move(w.subtitle);
-    value.content = std::move(w.content.content);
-    value.tooltip = w.content.tooltip ? std::move(w.content.tooltip) : std::move(w.tooltip);
-    value.keywords = std::move(w.keywords);
-    for (auto &child : w.children) {
-      if (auto *ap = std::get_if<ActionPannelModel>(&child)) { value.actionPannel = std::move(*ap); }
-    }
-  }
-};
-} // namespace glz
-
-// ============================================================
-// GridSectionModel (homogeneous children: grid-item)
-// ============================================================
 
 struct GridSectionModelWire {
   std::string title;
@@ -1531,51 +366,11 @@ struct GridSectionModelWire {
   std::optional<int> columns;
   std::optional<ObjectFit> fit;
   std::optional<GridInset> inset;
-  std::vector<GridItemViewModel> children;
+  std::vector<GridItemViewModelWire> children;
 };
 
-template <> struct glz::meta<GridSectionModelWire> {
-  using T = GridSectionModelWire;
-  static constexpr auto value =
-      glz::object("title", &T::title, "subtitle", &T::subtitle, "aspectRatio", &T::aspectRatio, "columns",
-                  &T::columns, "fit", &T::fit, "inset", &T::inset, "children", &T::children);
-};
-
-template <> struct glz::meta<GridSectionModel> {
-  static constexpr auto value = glz::object();
-};
-
-namespace glz {
-template <> struct from<JSON, GridSectionModel> {
-  template <auto Opts, auto... Extra>
-  static void op(GridSectionModel &value, is_context auto &&ctx, auto &&it, auto &&end) {
-    GridSectionModelWire w;
-    parse<JSON>::op<Opts>(w, ctx, it, end);
-    if (bool(ctx.error)) [[unlikely]]
-      return;
-    value.title = std::move(w.title);
-    value.subtitle = std::move(w.subtitle);
-    value.aspectRatio = w.aspectRatio;
-    value.columns = w.columns;
-    value.fit = w.fit;
-    value.inset = w.inset;
-    value.children.reserve(w.children.size());
-    size_t index = 0;
-    for (auto &item : w.children) {
-      if (item.id.empty()) item.id = std::to_string(index);
-      value.children.emplace_back(std::move(item));
-      ++index;
-    }
-  }
-};
-} // namespace glz
-
-// ============================================================
-// GridModel (heterogeneous children)
-// ============================================================
-
-using GridWireChild =
-    std::variant<GridItemViewModel, GridSectionModel, ActionPannelModel, EmptyViewModel, DropdownModel>;
+using GridWireChild = std::variant<GridItemViewModelWire, GridSectionModelWire, ActionPannelModelWire,
+                                   EmptyViewModelWire, DropdownModelWire>;
 
 template <> struct glz::meta<GridWireChild> {
   static constexpr std::string_view tag = TAG;
@@ -1592,8 +387,8 @@ struct GridModelWire {
   GridInset inset = GridInset::None;
   ObjectFit fit = ObjectFit::Contain;
   std::string navigationTitle;
-  std::string searchPlaceholderText;
-  std::optional<std::string> onSelectionChanged;
+  std::string searchBarPlaceholder;
+  std::optional<std::string> onSelectionChange;
   std::optional<std::string> onSearchTextChange;
   std::optional<std::string> selectedItemId;
   std::optional<EventCounted<std::string>> searchText;
@@ -1601,66 +396,7 @@ struct GridModelWire {
   std::vector<GridWireChild> children;
 };
 
-template <> struct glz::meta<GridModelWire> {
-  using T = GridModelWire;
-  static constexpr auto value =
-      glz::object("isLoading", &T::isLoading, "throttle", &T::throttle, "aspectRatio", &T::aspectRatio,
-                  "columns", &T::columns, "inset", &T::inset, "fit", &T::fit, "navigationTitle",
-                  &T::navigationTitle, "searchBarPlaceholder", &T::searchPlaceholderText, "filtering",
-                  &T::filtering, "onSearchTextChange", &T::onSearchTextChange, "onSelectionChange",
-                  &T::onSelectionChanged, "selectedItemId", &T::selectedItemId, "searchText", &T::searchText,
-                  "pagination", &T::pagination, "children", &T::children);
-};
-
-static GridModel toGridModel(GridModelWire &&w) {
-  GridModel m;
-  m.dirty = true;
-  m.isLoading = w.isLoading;
-  m.filtering = w.filtering.value_or(!w.onSearchTextChange.has_value());
-  m.throttle = w.throttle;
-  m.aspectRatio = w.aspectRatio;
-  m.columns = w.columns;
-  m.inset = w.inset;
-  m.fit = w.fit;
-  m.navigationTitle = std::move(w.navigationTitle);
-  m.searchPlaceholderText = std::move(w.searchPlaceholderText);
-  m.onSelectionChanged = std::move(w.onSelectionChanged);
-  m.onSearchTextChange = std::move(w.onSearchTextChange);
-  m.selectedItemId = std::move(w.selectedItemId);
-  m.searchText = std::move(w.searchText);
-  m.pagination = std::move(w.pagination);
-
-  m.items.reserve(w.children.size());
-  size_t index = 0;
-  for (auto &child : w.children) {
-    std::visit(
-        [&](auto &&c) {
-          using T = std::decay_t<decltype(c)>;
-          if constexpr (std::is_same_v<T, GridItemViewModel>) {
-            if (c.id.empty()) c.id = std::to_string(index);
-            m.items.emplace_back(std::move(c));
-          } else if constexpr (std::is_same_v<T, GridSectionModel>) {
-            m.items.emplace_back(std::move(c));
-          } else if constexpr (std::is_same_v<T, ActionPannelModel>) {
-            m.actions = std::move(c);
-          } else if constexpr (std::is_same_v<T, EmptyViewModel>) {
-            m.emptyView = std::move(c);
-          } else if constexpr (std::is_same_v<T, DropdownModel>) {
-            m.searchBarAccessory = std::move(c);
-          }
-        },
-        child);
-    ++index;
-  }
-
-  return m;
-}
-
-// ============================================================
-// RootDetailModel (children: metadata, action-panel)
-// ============================================================
-
-using RootDetailChild = std::variant<MetadataModel, ActionPannelModel>;
+using RootDetailChild = std::variant<MetadataModelWire, ActionPannelModelWire>;
 
 template <> struct glz::meta<RootDetailChild> {
   static constexpr std::string_view tag = TAG;
@@ -1674,36 +410,547 @@ struct RootDetailModelWire {
   std::vector<RootDetailChild> children;
 };
 
-template <> struct glz::meta<RootDetailModelWire> {
-  using T = RootDetailModelWire;
-  static constexpr auto value = glz::object("isLoading", &T::isLoading, "markdown", &T::markdown,
-                                            "navigationTitle", &T::navigationTitle, "children", &T::children);
+static std::string takeString(FlexString v) {
+  return std::visit(overloads{
+                        [](std::string &s) { return std::move(s); },
+                        [](FlexStringObj &o) { return std::move(o.value); },
+                    },
+                    v);
+}
+
+static ColorLike toColorLike(ColorLikeWire w) {
+  if (w.raw) {
+    auto qs = toQStr(*w.raw);
+    if (auto tint = ImageURL::tintForName(qs); tint != SemanticColor::InvalidTint) return tint;
+    return qs;
+  }
+  if (w.dynamic) {
+    return DynamicColor{.light = toQStr(w.dynamic->light),
+                        .dark = toQStr(w.dynamic->dark),
+                        .adjustContrast = w.dynamic->adjustContrast};
+  }
+  return {};
+}
+
+static std::optional<ColorLike> toOptColorLike(std::optional<ColorLikeWire> w) {
+  return w ? std::optional(toColorLike(std::move(*w))) : std::nullopt;
+}
+
+static std::variant<QString, ThemedIconSource> toImageSource(ImageSourceVariant v) {
+  return std::visit(overloads{
+                        [](std::string &s) -> std::variant<QString, ThemedIconSource> { return toQStr(s); },
+                        [](ImageSourceWire &w) -> std::variant<QString, ThemedIconSource> {
+                          if (w.raw) return toQStr(*w.raw);
+                          if (w.themed)
+                            return ThemedIconSource{.light = toQStr(w.themed->light),
+                                                    .dark = toQStr(w.themed->dark)};
+                          if (w.light)
+                            return ThemedIconSource{.light = toQStr(*w.light),
+                                                    .dark = w.dark ? toQStr(*w.dark) : QString()};
+                          return QString();
+                        },
+                    },
+                    v);
+}
+
+static ImageLikeModel toImageLike(ImageLikeWire v) {
+  return std::visit(
+      overloads{
+          [](std::string &s) -> ImageLikeModel { return ExtensionImageModel{.source = toQStr(s)}; },
+          [](ImageObjectWire &w) -> ImageLikeModel {
+            if (w.source) {
+              ExtensionImageModel model;
+              model.source = toImageSource(std::move(*w.source));
+              if (w.fallback) model.fallback = toImageSource(std::move(*w.fallback));
+              if (w.tintColor) model.tintColor = toColorLike(std::move(*w.tintColor));
+              if (w.mask) model.mask = OmniPainter::maskForName(toQStr(*w.mask));
+              return model;
+            }
+            if (w.fileIcon) return ExtensionFileIconModel{.file = *w.fileIcon};
+            return InvalidImageModel{};
+          },
+      },
+      v);
+}
+
+static std::optional<ImageLikeModel> toOptImageLike(std::optional<ImageLikeWire> w) {
+  return w ? std::optional(toImageLike(std::move(*w))) : std::nullopt;
+}
+
+static ImageURL toImageURL(ImageLikeWire v) { return ImageURL(toImageLike(std::move(v))); }
+
+static std::optional<ImageURL> toOptImageURL(std::optional<ImageLikeWire> w) {
+  return w ? std::optional(toImageURL(std::move(*w))) : std::nullopt;
+}
+
+static ImageLikeModel toImageWrapped(ImageWrappedWire v) {
+  return std::visit(
+      overloads{
+          [](std::string &s) -> ImageLikeModel { return ExtensionImageModel{.source = toQStr(s)}; },
+          [](ImageWrappedObjWire &w) -> ImageLikeModel {
+            if (w.value && !w.source && !w.fileIcon) return toImageLike(std::move(*w.value));
+            if (w.source) {
+              ExtensionImageModel model;
+              model.source = toImageSource(std::move(*w.source));
+              if (w.fallback) model.fallback = toImageSource(std::move(*w.fallback));
+              if (w.tintColor) model.tintColor = toColorLike(std::move(*w.tintColor));
+              if (w.mask) model.mask = OmniPainter::maskForName(toQStr(*w.mask));
+              return model;
+            }
+            if (w.fileIcon) return ExtensionFileIconModel{.file = *w.fileIcon};
+            return InvalidImageModel{};
+          },
+      },
+      v);
+}
+
+static GridItemViewModel::Content toGridContent(GridContentWire v, std::optional<std::string> &tooltip) {
+  return std::visit(overloads{
+                        [](std::string &s) -> GridItemViewModel::Content {
+                          return ExtensionImageModel{.source = toQStr(s)};
+                        },
+                        [&tooltip](GridContentObjWire &w) -> GridItemViewModel::Content {
+                          if (w.tooltip) tooltip = std::move(*w.tooltip);
+                          if (w.color) return toColorLike(std::move(*w.color));
+                          if (w.value) return toImageLike(std::move(*w.value));
+                          if (w.source) {
+                            ExtensionImageModel model;
+                            model.source = toImageSource(std::move(*w.source));
+                            if (w.fallback) model.fallback = toImageSource(std::move(*w.fallback));
+                            if (w.tintColor) model.tintColor = toColorLike(std::move(*w.tintColor));
+                            if (w.mask) model.mask = OmniPainter::maskForName(toQStr(*w.mask));
+                            return model;
+                          }
+                          if (w.fileIcon) return ExtensionFileIconModel{.file = *w.fileIcon};
+                          return InvalidImageModel{};
+                        },
+                    },
+                    v);
+}
+
+static AccessoryModel toAccessoryModel(AccessoryWire w) {
+  AccessoryModel m;
+  m.icon = toOptImageLike(std::move(w.icon));
+  if (w.tooltip) m.tooltip = std::move(*w.tooltip);
+
+  auto unpackFlexText = [](FlexText &ft) -> std::pair<std::string, std::optional<ColorLike>> {
+    return std::visit(overloads{
+                          [](std::string &s) -> std::pair<std::string, std::optional<ColorLike>> {
+                            return {std::move(s), std::nullopt};
+                          },
+                          [](FlexTextObj &o) -> std::pair<std::string, std::optional<ColorLike>> {
+                            return {std::move(o.value), toOptColorLike(std::move(o.color))};
+                          },
+                      },
+                      ft);
+  };
+
+  if (w.tag) {
+    auto [val, color] = unpackFlexText(*w.tag);
+    m.data = AccessoryModel::Tag{.color = std::move(color), .value = std::move(val)};
+  } else if (w.text) {
+    auto [val, color] = unpackFlexText(*w.text);
+    m.data = AccessoryModel::Text{.color = std::move(color), .value = std::move(val)};
+  }
+  return m;
+}
+
+static const std::unordered_map<std::string, Keybind> NAMED_SHORTCUTS = {
+    {"copy", Keybind::CopyAction},
+    {"copy-deeplink", Keybind::CopyAction},
+    {"copy-name", Keybind::CopyNameAction},
+    {"copy-path", Keybind::CopyPathAction},
+    {"save", Keybind::SaveAction},
+    {"duplicate", Keybind::DuplicateAction},
+    {"edit", Keybind::EditAction},
+    {"move-down", Keybind::MoveDownAction},
+    {"move-up", Keybind::MoveUpAction},
+    {"new", Keybind::NewAction},
+    {"open", Keybind::OpenAction},
+    {"open-with", Keybind::OpenAction},
+    {"pin", Keybind::PinAction},
+    {"refresh", Keybind::RefreshAction},
+    {"remove", Keybind::RemoveAction},
+    {"remove-all", Keybind::DangerousRemoveAction},
 };
 
-static RootDetailModel toRootDetailModel(RootDetailModelWire &&w) {
-  RootDetailModel m;
-  m.isLoading = w.isLoading;
-  m.markdown = toQStr(w.markdown);
-  m.navigationTitle = toOptQStr(w.navigationTitle);
+static Keyboard::Shortcut toShortcut(ShortcutWire w) {
+  return std::visit(overloads{
+                        [](std::string &s) -> Keyboard::Shortcut {
+                          if (auto found = NAMED_SHORTCUTS.find(s); found != NAMED_SHORTCUTS.end())
+                            return found->second;
+                          return Keyboard::Shortcut::fromString(toQStr(s));
+                        },
+                        [](ShortcutObjWire &o) -> Keyboard::Shortcut {
+                          auto k = Keyboard::keyFromString(toQStr(o.key));
+                          if (!k) return {};
+                          Qt::KeyboardModifiers mods{};
+                          for (const auto &m : o.modifiers) {
+                            auto mod = Keyboard::modifierFromString(toQStr(m));
+                            if (mod) mods.setFlag(*mod);
+                          }
+                          return Keyboard::Shortcut(*k, mods);
+                        },
+                    },
+                    w);
+}
 
+static std::optional<Keyboard::Shortcut> toOptShortcut(std::optional<ShortcutWire> w) {
+  return w ? std::optional(toShortcut(std::move(*w))) : std::nullopt;
+}
+
+static ActionModel toActionModel(ActionModelWire w) {
+  ActionModel m;
+  m.title = std::move(w.title);
+  m.onAction = std::move(w.onAction);
+  m.onSubmit = std::move(w.onSubmit);
+  m.icon = toOptImageLike(std::move(w.icon));
+  m.shortcut = toOptShortcut(std::move(w.shortcut));
+  m.type = std::move(w.type);
+  if (!w.quicklink.str.empty()) {
+    auto doc =
+        QJsonDocument::fromJson(QByteArray::fromRawData(w.quicklink.str.data(), w.quicklink.str.size()));
+    m.quicklink = doc.object();
+  }
+  m.stableId = std::move(w.stableId);
+  return m;
+}
+
+static ActionPannelSectionModel toActionPannelSection(ActionPannelSectionModelWire w);
+static ActionPannelSubmenuModel toActionPannelSubmenu(ActionPannelSubmenuModelWire w);
+
+static ActionPannelSectionModel toActionPannelSection(ActionPannelSectionModelWire w) {
+  ActionPannelSectionModel m;
+  m.title = std::move(w.title);
+  m.items.reserve(w.children.size());
   for (auto &child : w.children) {
-    std::visit(
-        [&](auto &&c) {
-          using T = std::decay_t<decltype(c)>;
-          if constexpr (std::is_same_v<T, MetadataModel>)
-            m.metadata = std::move(c);
-          else if constexpr (std::is_same_v<T, ActionPannelModel>)
-            m.actions = std::move(c);
-        },
-        child);
+    std::visit(overloads{
+                   [&](ActionModelWire &c) { m.items.emplace_back(toActionModel(std::move(c))); },
+                   [&](ActionPannelSubmenuWirePtr &c) {
+                     m.items.emplace_back(
+                         std::make_shared<ActionPannelSubmenuModel>(toActionPannelSubmenu(std::move(*c))));
+                   },
+               },
+               child);
+  }
+  return m;
+}
+
+static ActionPannelSubmenuModel toActionPannelSubmenu(ActionPannelSubmenuModelWire w) {
+  ActionPannelSubmenuModel m;
+  m.title = std::move(w.title);
+  m.icon = toOptImageLike(std::move(w.icon));
+  m.shortcut = toOptShortcut(std::move(w.shortcut));
+  m.autoFocus = w.autoFocus;
+  m.filtering = std::move(w.filtering);
+  m.isLoading = w.isLoading;
+  m.throttle = w.throttle;
+  m.onOpen = std::move(w.onOpen);
+  m.onSearchTextChange = std::move(w.onSearchTextChange);
+  m.stableId = std::move(w.stableId);
+  m.children.reserve(w.children.size());
+  for (auto &child : w.children) {
+    std::visit(overloads{
+                   [&](ActionPannelSectionWirePtr &c) {
+                     m.children.emplace_back(
+                         std::make_shared<ActionPannelSectionModel>(toActionPannelSection(std::move(*c))));
+                   },
+                   [&](ActionModelWire &c) { m.children.emplace_back(toActionModel(std::move(c))); },
+                   [&](ActionPannelSubmenuWirePtr &c) {
+                     m.children.emplace_back(
+                         std::make_shared<ActionPannelSubmenuModel>(toActionPannelSubmenu(std::move(*c))));
+                   },
+               },
+               child);
+  }
+  return m;
+}
+
+static ActionPannelModel toActionPannelModel(ActionPannelModelWire w) {
+  ActionPannelModel m;
+  m.title = std::move(w.title);
+  m.stableId = std::move(w.stableId);
+  m.children.reserve(w.children.size());
+  for (auto &child : w.children) {
+    std::visit(overloads{
+                   [&](ActionModelWire &c) { m.children.emplace_back(toActionModel(std::move(c))); },
+                   [&](ActionPannelSectionWirePtr &c) {
+                     m.children.emplace_back(
+                         std::make_shared<ActionPannelSectionModel>(toActionPannelSection(std::move(*c))));
+                   },
+                   [&](ActionPannelSubmenuWirePtr &c) {
+                     m.children.emplace_back(
+                         std::make_shared<ActionPannelSubmenuModel>(toActionPannelSubmenu(std::move(*c))));
+                   },
+               },
+               child);
+  }
+  return m;
+}
+
+static DropdownModel::Item toDropdownItem(DropdownItemWire w) {
+  return {.title = std::move(w.title),
+          .value = std::move(w.value),
+          .icon = toOptImageLike(std::move(w.icon)),
+          .keywords = std::move(w.keywords)};
+}
+
+static DropdownModel::Section toDropdownSection(DropdownSectionWire w) {
+  DropdownModel::Section m;
+  m.title = std::move(w.title);
+  m.items.reserve(w.children.size());
+  for (auto &c : w.children)
+    m.items.emplace_back(toDropdownItem(std::move(c)));
+  return m;
+}
+
+static DropdownModel toDropdownModel(DropdownModelWire w) {
+  DropdownModel m;
+  m.tooltip = std::move(w.tooltip);
+  m.defaultValue = std::move(w.defaultValue);
+  m.id = std::move(w.id);
+  m.onChange = std::move(w.onChange);
+  m.onSearchTextChange = std::move(w.onSearchTextChange);
+  m.placeholder = std::move(w.placeholder);
+  m.value = std::move(w.value);
+  m.storeValue = w.storeValue;
+  m.throttle = w.throttle;
+  m.filtering.enabled = w.filtering.value_or(true);
+  m.isLoading = w.isLoading;
+  m.children.reserve(w.children.size());
+  for (auto &child : w.children) {
+    std::visit(overloads{
+                   [&](DropdownItemWire &c) { m.children.emplace_back(toDropdownItem(std::move(c))); },
+                   [&](DropdownSectionWire &c) { m.children.emplace_back(toDropdownSection(std::move(c))); },
+               },
+               child);
+  }
+  return m;
+}
+
+static TagItemModel toTagItem(TagItemWire w) {
+  return {.text = std::move(w.text),
+          .icon = toOptImageLike(std::move(w.icon)),
+          .color = toOptColorLike(std::move(w.color)),
+          .onAction = std::move(w.onAction)};
+}
+
+static TagListModel toTagList(TagListWire w) {
+  TagListModel m;
+  m.title = std::move(w.title);
+  m.items.reserve(w.children.size());
+  for (auto &c : w.children)
+    m.items.emplace_back(toTagItem(std::move(c)));
+  return m;
+}
+
+static MetadataLabel toMetadataLabel(MetadataLabelWire w) {
+  MetadataLabel m;
+  m.title = std::move(w.title);
+  m.icon = toOptImageURL(std::move(w.icon));
+  std::visit(overloads{
+                 [&](std::string &s) { m.text = std::move(s); },
+                 [&](FlexTextObj &o) {
+                   m.text = std::move(o.value);
+                   m.color = toOptColorLike(std::move(o.color));
+                 },
+             },
+             w.text);
+  return m;
+}
+
+static MetadataModel toMetadataModel(MetadataModelWire w) {
+  MetadataModel m;
+  m.children.reserve(w.children.size());
+  for (auto &child : w.children) {
+    std::visit(overloads{
+                   [&](MetadataLabelWire &c) { m.children.emplace_back(toMetadataLabel(std::move(c))); },
+                   [&](TagListWire &c) { m.children.emplace_back(toTagList(std::move(c))); },
+                   [&](auto &c) { m.children.emplace_back(std::move(c)); },
+               },
+               child);
+  }
+  return m;
+}
+
+static DetailModel toDetailModel(DetailModelWire w) {
+  DetailModel m;
+  m.markdown = std::move(w.markdown);
+  for (auto &child : w.children) {
+    if (auto *mw = std::get_if<MetadataModelWire>(&child)) m.metadata = toMetadataModel(std::move(*mw));
+  }
+  return m;
+}
+
+static EmptyViewModel toEmptyViewModel(EmptyViewModelWire w) {
+  EmptyViewModel m;
+  m.title = std::move(w.title);
+  m.description = std::move(w.description);
+  m.icon = toOptImageLike(std::move(w.icon));
+  for (auto &child : w.children) {
+    if (auto *ap = std::get_if<ActionPannelModelWire>(&child))
+      m.actions = toActionPannelModel(std::move(*ap));
+  }
+  return m;
+}
+
+static ListItemViewModel toListItemViewModel(ListItemViewModelWire w) {
+  ListItemViewModel m;
+  m.changed = true;
+  m.id = std::move(w.id);
+  m.title = takeString(std::move(w.title));
+  m.subtitle = takeString(std::move(w.subtitle));
+  m.icon = w.icon ? std::optional(toImageWrapped(std::move(*w.icon))) : std::nullopt;
+  m.accessories.reserve(w.accessories.size());
+  for (auto &a : w.accessories)
+    m.accessories.emplace_back(toAccessoryModel(std::move(a)));
+  m.keywords = std::move(w.keywords);
+  for (auto &child : w.children) {
+    std::visit(overloads{
+                   [&](ActionPannelModelWire &c) { m.actionPannel = toActionPannelModel(std::move(c)); },
+                   [&](DetailModelWire &c) { m.detail = toDetailModel(std::move(c)); },
+               },
+               child);
+  }
+  return m;
+}
+
+static ListSectionModel toListSectionModel(ListSectionModelWire w) {
+  ListSectionModel m;
+  m.title = std::move(w.title);
+  m.subtitle = std::move(w.subtitle);
+  m.children.reserve(w.children.size());
+  for (size_t i = 0; i < w.children.size(); ++i) {
+    auto item = toListItemViewModel(std::move(w.children[i]));
+    if (item.id.empty()) item.id = std::to_string(i);
+    m.children.emplace_back(std::move(item));
+  }
+  return m;
+}
+
+static ListModel toListModel(ListModelWire w) {
+  ListModel m;
+  m.dirty = true;
+  m.propsDirty = true;
+  m.isLoading = w.isLoading;
+  m.filtering = w.filtering.value_or(!w.onSearchTextChange.has_value());
+  m.throttle = w.throttle;
+  m.isShowingDetail = w.isShowingDetail;
+  m.navigationTitle = std::move(w.navigationTitle);
+  m.searchPlaceholderText = std::move(w.searchBarPlaceholder);
+  m.onSelectionChanged = std::move(w.onSelectionChange);
+  m.onSearchTextChange = std::move(w.onSearchTextChange);
+  m.searchText = std::move(w.searchText);
+  m.pagination = std::move(w.pagination);
+
+  m.items.reserve(w.children.size());
+  size_t index = 0;
+  for (auto &child : w.children) {
+    std::visit(overloads{
+                   [&](ListItemViewModelWire &c) {
+                     auto item = toListItemViewModel(std::move(c));
+                     if (item.id.empty()) item.id = std::to_string(index);
+                     m.items.emplace_back(std::move(item));
+                   },
+                   [&](ListSectionModelWire &c) { m.items.emplace_back(toListSectionModel(std::move(c))); },
+                   [&](ActionPannelModelWire &c) { m.actions = toActionPannelModel(std::move(c)); },
+                   [&](EmptyViewModelWire &c) { m.emptyView = toEmptyViewModel(std::move(c)); },
+                   [&](DropdownModelWire &c) { m.searchBarAccessory = toDropdownModel(std::move(c)); },
+               },
+               child);
+    ++index;
   }
 
   return m;
 }
 
-// ============================================================
-// FormModel wire structs
-// ============================================================
+static GridItemViewModel toGridItemViewModel(GridItemViewModelWire w) {
+  GridItemViewModel m;
+  m.id = std::move(w.id);
+  m.title = std::move(w.title);
+  m.subtitle = std::move(w.subtitle);
+  m.tooltip = std::move(w.tooltip);
+  m.content = toGridContent(std::move(w.content), m.tooltip);
+  m.keywords = std::move(w.keywords);
+  for (auto &child : w.children) {
+    if (auto *ap = std::get_if<ActionPannelModelWire>(&child))
+      m.actionPannel = toActionPannelModel(std::move(*ap));
+  }
+  return m;
+}
+
+static GridSectionModel toGridSectionModel(GridSectionModelWire w) {
+  GridSectionModel m;
+  m.title = std::move(w.title);
+  m.subtitle = std::move(w.subtitle);
+  m.aspectRatio = w.aspectRatio;
+  m.columns = w.columns;
+  m.fit = w.fit;
+  m.inset = w.inset;
+  m.children.reserve(w.children.size());
+  for (size_t i = 0; i < w.children.size(); ++i) {
+    auto item = toGridItemViewModel(std::move(w.children[i]));
+    if (item.id.empty()) item.id = std::to_string(i);
+    m.children.emplace_back(std::move(item));
+  }
+  return m;
+}
+
+static GridModel toGridModel(GridModelWire w) {
+  GridModel m;
+  m.dirty = true;
+  m.isLoading = w.isLoading;
+  m.filtering = w.filtering.value_or(!w.onSearchTextChange.has_value());
+  m.throttle = w.throttle;
+  m.aspectRatio = w.aspectRatio;
+  m.columns = w.columns;
+  m.inset = w.inset;
+  m.fit = w.fit;
+  m.navigationTitle = std::move(w.navigationTitle);
+  m.searchPlaceholderText = std::move(w.searchBarPlaceholder);
+  m.onSelectionChanged = std::move(w.onSelectionChange);
+  m.onSearchTextChange = std::move(w.onSearchTextChange);
+  m.selectedItemId = std::move(w.selectedItemId);
+  m.searchText = std::move(w.searchText);
+  m.pagination = std::move(w.pagination);
+
+  m.items.reserve(w.children.size());
+  size_t index = 0;
+  for (auto &child : w.children) {
+    std::visit(overloads{
+                   [&](GridItemViewModelWire &c) {
+                     auto item = toGridItemViewModel(std::move(c));
+                     if (item.id.empty()) item.id = std::to_string(index);
+                     m.items.emplace_back(std::move(item));
+                   },
+                   [&](GridSectionModelWire &c) { m.items.emplace_back(toGridSectionModel(std::move(c))); },
+                   [&](ActionPannelModelWire &c) { m.actions = toActionPannelModel(std::move(c)); },
+                   [&](EmptyViewModelWire &c) { m.emptyView = toEmptyViewModel(std::move(c)); },
+                   [&](DropdownModelWire &c) { m.searchBarAccessory = toDropdownModel(std::move(c)); },
+               },
+               child);
+    ++index;
+  }
+
+  return m;
+}
+
+static RootDetailModel toRootDetailModel(RootDetailModelWire w) {
+  RootDetailModel m;
+  m.isLoading = w.isLoading;
+  m.markdown = std::move(w.markdown);
+  m.navigationTitle = std::move(w.navigationTitle);
+
+  for (auto &child : w.children) {
+    std::visit(overloads{
+                   [&](MetadataModelWire &c) { m.metadata = toMetadataModel(std::move(c)); },
+                   [&](ActionPannelModelWire &c) { m.actions = toActionPannelModel(std::move(c)); },
+               },
+               child);
+  }
+
+  return m;
+}
 
 struct FormFieldValue {
   std::optional<EventCounted<QJsonValue>> val;
@@ -1753,18 +1000,17 @@ template <> struct from<JSON, FormFieldValue> {
 
 template <typename T> static FormModel::FieldBase toFieldBase(T &w) {
   FormModel::FieldBase b;
-  b.id = toQStr(w.id);
+  b.id = std::move(w.id);
   b.autoFocus = w.autoFocus;
-  b.error = toOptQStr(w.error);
-  b.info = toOptQStr(w.info);
-  b.onBlur = toOptQStr(w.onBlur);
-  b.onChange = toOptQStr(w.onChange);
-  b.onFocus = toOptQStr(w.onFocus);
-  b.title = toOptQStr(w.title);
+  b.error = std::move(w.error);
+  b.info = std::move(w.info);
+  b.onBlur = std::move(w.onBlur);
+  b.onChange = std::move(w.onChange);
+  b.onFocus = std::move(w.onFocus);
+  b.title = std::move(w.title);
   b.storeValue = w.storeValue;
   b.value = std::move(w.value.val);
   if (w.defaultValue) b.defaultValue = glazeToQJsonValue(*w.defaultValue);
-  qDebug() << "registered" << b.id << b.onChange;
   return b;
 }
 
@@ -1806,7 +1052,7 @@ struct FormDropdownFieldWire {
   bool isLoading = false;
   bool throttle = false;
   std::optional<bool> filtering;
-  std::vector<DropdownChild> children;
+  std::vector<DropdownChildWire> children;
 };
 
 template <> struct glz::meta<FormDropdownFieldWire> {
@@ -1866,26 +1112,9 @@ struct FormDescriptionWire {
   std::optional<std::string> title;
 };
 
-template <> struct glz::meta<FormDescriptionWire> {
-  using T = FormDescriptionWire;
-  static constexpr auto value = glz::object("text", &T::text, "title", &T::title);
-};
-
 struct FormLinkAccessoryWire {
   std::string text;
   std::string target;
-};
-
-template <> struct glz::meta<FormLinkAccessoryWire> {
-  using T = FormLinkAccessoryWire;
-  static constexpr auto value = glz::object("text", &T::text, "target", &T::target);
-};
-
-// Glaze's tagged variant dispatch requires glz::meta on ALL alternatives to build
-// its dispatch table. A type with only from<JSON> (no meta) causes the variant to
-// always select index 0. ActionPannelModel has from<JSON> so we add a stub meta.
-template <> struct glz::meta<ActionPannelModel> {
-  static constexpr auto value = glz::object();
 };
 
 struct FormIgnoredWire {};
@@ -1897,7 +1126,7 @@ template <> struct glz::meta<FormIgnoredWire> {
 using FormChild =
     std::variant<FormTextFieldWire, FormPasswordFieldWire, FormCheckboxFieldWire, FormDropdownFieldWire,
                  FormTextAreaFieldWire, FormFilePickerFieldWire, FormDatePickerFieldWire, FormSeparatorWire,
-                 FormDescriptionWire, FormLinkAccessoryWire, ActionPannelModel, FormIgnoredWire>;
+                 FormDescriptionWire, FormLinkAccessoryWire, ActionPannelModelWire, FormIgnoredWire>;
 
 template <> struct glz::meta<FormChild> {
   static constexpr std::string_view tag = TAG;
@@ -1914,90 +1143,92 @@ struct FormModelWire {
   std::vector<FormChild> children;
 };
 
-template <> struct glz::meta<FormModelWire> {
-  using T = FormModelWire;
-  static constexpr auto value = glz::object("isLoading", &T::isLoading, "enableDrafts", &T::enableDrafts,
-                                            "navigationTitle", &T::navigationTitle, "children", &T::children);
-};
-
-static FormModel toFormModel(FormModelWire &&w) {
+static FormModel toFormModel(FormModelWire w) {
   FormModel m;
   m.isLoading = w.isLoading;
   m.enableDrafts = w.enableDrafts;
-  m.navigationTitle = toOptQStr(w.navigationTitle);
+  m.navigationTitle = std::move(w.navigationTitle);
   m.items.reserve(w.children.size());
 
   for (auto &child : w.children) {
-    std::visit(
-        [&](auto &&c) {
-          using T = std::decay_t<decltype(c)>;
-          if constexpr (std::is_same_v<T, FormTextFieldWire>) {
-            FormModel::TextField f{toFieldBase(c), toOptQStr(c.placeholder)};
-            m.items.emplace_back(FormModel::Field{std::move(f)});
-          } else if constexpr (std::is_same_v<T, FormPasswordFieldWire>) {
-            FormModel::PasswordField f{toFieldBase(c), toOptQStr(c.placeholder)};
-            m.items.emplace_back(FormModel::Field{std::move(f)});
-          } else if constexpr (std::is_same_v<T, FormCheckboxFieldWire>) {
-            FormModel::CheckboxField f{toFieldBase(c), toOptQStr(c.label)};
-            m.items.emplace_back(FormModel::Field{std::move(f)});
-          } else if constexpr (std::is_same_v<T, FormDropdownFieldWire>) {
-            FormModel::DropdownField f;
-            f.base = toFieldBase(c);
-            f.onSearchTextChange = toOptQStr(c.onSearchTextChange);
-            f.placeholder = toOptQStr(c.placeholder);
-            f.tooltip = toOptQStr(c.tooltip);
-            f.isLoading = c.isLoading;
-            f.throttle = c.throttle;
-            f.filtering = c.filtering.value_or(!c.onSearchTextChange.has_value());
-            f.items.reserve(c.children.size());
-            for (auto &dc : c.children) {
-              std::visit([&](auto &&v) { f.items.emplace_back(std::move(v)); }, dc);
-            }
-            m.items.emplace_back(FormModel::Field{std::move(f)});
-          } else if constexpr (std::is_same_v<T, FormTextAreaFieldWire>) {
-            FormModel::TextAreaField f{toFieldBase(c), toOptQStr(c.placeholder)};
-            m.items.emplace_back(FormModel::Field{std::move(f)});
-          } else if constexpr (std::is_same_v<T, FormFilePickerFieldWire>) {
-            FormModel::FilePickerField f;
-            f.base = toFieldBase(c);
-            f.allowMultipleSelection = c.allowMultipleSelection;
-            f.canChooseDirectories = c.canChooseDirectories;
-            f.canChooseFiles = c.canChooseFiles;
-            f.showHiddenFiles = c.showHiddenFiles;
-            m.items.emplace_back(FormModel::Field{std::move(f)});
-          } else if constexpr (std::is_same_v<T, FormDatePickerFieldWire>) {
-            FormModel::DatePickerField f;
-            f.base = toFieldBase(c);
-            f.min = toOptQStr(c.min);
-            f.max = toOptQStr(c.max);
-            f.type = toOptQStr(c.type);
-            m.items.emplace_back(FormModel::Field{std::move(f)});
-          } else if constexpr (std::is_same_v<T, FormSeparatorWire>) {
-            m.items.emplace_back(FormModel::Separator{});
-          } else if constexpr (std::is_same_v<T, FormDescriptionWire>) {
-            FormModel::Description desc;
-            desc.text = toQStr(c.text);
-            desc.title = toOptQStr(c.title);
-            m.items.emplace_back(std::move(desc));
-          } else if constexpr (std::is_same_v<T, FormLinkAccessoryWire>) {
-            FormModel::LinkAccessoryModel link;
-            link.text = toQStr(c.text);
-            link.target = toQStr(c.target);
-            m.searchBarAccessory = std::move(link);
-          } else if constexpr (std::is_same_v<T, ActionPannelModel>) {
-            m.actions = std::move(c);
-          } else if constexpr (std::is_same_v<T, FormIgnoredWire>) {
-          }
-        },
-        child);
+    std::visit(overloads{
+                   [&](FormTextFieldWire &c) {
+                     m.items.emplace_back(
+                         FormModel::Field{FormModel::TextField{toFieldBase(c), std::move(c.placeholder)}});
+                   },
+                   [&](FormPasswordFieldWire &c) {
+                     m.items.emplace_back(FormModel::Field{
+                         FormModel::PasswordField{toFieldBase(c), std::move(c.placeholder)}});
+                   },
+                   [&](FormCheckboxFieldWire &c) {
+                     m.items.emplace_back(
+                         FormModel::Field{FormModel::CheckboxField{toFieldBase(c), std::move(c.label)}});
+                   },
+                   [&](FormDropdownFieldWire &c) {
+                     FormModel::DropdownField f;
+                     f.base = toFieldBase(c);
+                     f.onSearchTextChange = std::move(c.onSearchTextChange);
+                     f.placeholder = std::move(c.placeholder);
+                     f.tooltip = std::move(c.tooltip);
+                     f.isLoading = c.isLoading;
+                     f.throttle = c.throttle;
+                     f.filtering = c.filtering.value_or(!f.onSearchTextChange.has_value());
+                     f.items.reserve(c.children.size());
+                     for (auto &dc : c.children) {
+                       std::visit(overloads{
+                                      [&](DropdownItemWire &v) {
+                                        f.items.emplace_back(toDropdownItem(std::move(v)));
+                                      },
+                                      [&](DropdownSectionWire &v) {
+                                        f.items.emplace_back(toDropdownSection(std::move(v)));
+                                      },
+                                  },
+                                  dc);
+                     }
+                     m.items.emplace_back(FormModel::Field{std::move(f)});
+                   },
+                   [&](FormTextAreaFieldWire &c) {
+                     m.items.emplace_back(FormModel::Field{
+                         FormModel::TextAreaField{toFieldBase(c), std::move(c.placeholder)}});
+                   },
+                   [&](FormFilePickerFieldWire &c) {
+                     FormModel::FilePickerField f;
+                     f.base = toFieldBase(c);
+                     f.allowMultipleSelection = c.allowMultipleSelection;
+                     f.canChooseDirectories = c.canChooseDirectories;
+                     f.canChooseFiles = c.canChooseFiles;
+                     f.showHiddenFiles = c.showHiddenFiles;
+                     m.items.emplace_back(FormModel::Field{std::move(f)});
+                   },
+                   [&](FormDatePickerFieldWire &c) {
+                     FormModel::DatePickerField f;
+                     f.base = toFieldBase(c);
+                     f.min = std::move(c.min);
+                     f.max = std::move(c.max);
+                     f.type = std::move(c.type);
+                     m.items.emplace_back(FormModel::Field{std::move(f)});
+                   },
+                   [&](FormSeparatorWire &) { m.items.emplace_back(FormModel::Separator{}); },
+                   [&](FormDescriptionWire &c) {
+                     FormModel::Description desc;
+                     desc.text = std::move(c.text);
+                     desc.title = std::move(c.title);
+                     m.items.emplace_back(std::move(desc));
+                   },
+                   [&](FormLinkAccessoryWire &c) {
+                     FormModel::LinkAccessoryModel link;
+                     link.text = std::move(c.text);
+                     link.target = std::move(c.target);
+                     m.searchBarAccessory = std::move(link);
+                   },
+                   [&](ActionPannelModelWire &c) { m.actions = toActionPannelModel(std::move(c)); },
+                   [&](FormIgnoredWire &) {},
+               },
+               child);
   }
 
   return m;
 }
-
-// ============================================================
-// Top-level payload (single read, tagged variant for root)
-// ============================================================
 
 using RootWireModel = std::variant<ListModelWire, GridModelWire, RootDetailModelWire, FormModelWire>;
 
@@ -2012,19 +1243,8 @@ struct ViewEntry {
   std::optional<RootWireModel> root;
 };
 
-template <> struct glz::meta<ViewEntry> {
-  using T = ViewEntry;
-  static constexpr auto value =
-      glz::object("dirty", &T::dirty, "propsDirty", &T::propsDirty, "root", &T::root);
-};
-
 struct RenderPayload {
   std::vector<ViewEntry> views;
-};
-
-template <> struct glz::meta<RenderPayload> {
-  using T = RenderPayload;
-  static constexpr auto value = glz::object("views", &T::views);
 };
 
 ParsedRenderData parseRenderPayload(std::string_view json) {
@@ -2052,25 +1272,22 @@ ParsedRenderData parseRenderPayload(std::string_view json) {
       continue;
     }
 
-    std::visit(
-        [&](auto &&w) {
-          using W = std::decay_t<decltype(w)>;
-          if constexpr (std::is_same_v<W, ListModelWire>) {
-            auto model = toListModel(std::move(w));
-            model.dirty = view.dirty;
-            model.propsDirty = view.propsDirty;
-            rr.root = std::move(model);
-          } else if constexpr (std::is_same_v<W, GridModelWire>) {
-            auto model = toGridModel(std::move(w));
-            model.dirty = view.dirty;
-            rr.root = std::move(model);
-          } else if constexpr (std::is_same_v<W, RootDetailModelWire>) {
-            rr.root = toRootDetailModel(std::move(w));
-          } else if constexpr (std::is_same_v<W, FormModelWire>) {
-            rr.root = toFormModel(std::move(w));
-          }
-        },
-        *view.root);
+    std::visit(overloads{
+                   [&](ListModelWire &w) {
+                     auto model = toListModel(std::move(w));
+                     model.dirty = view.dirty;
+                     model.propsDirty = view.propsDirty;
+                     rr.root = std::move(model);
+                   },
+                   [&](GridModelWire &w) {
+                     auto model = toGridModel(std::move(w));
+                     model.dirty = view.dirty;
+                     rr.root = std::move(model);
+                   },
+                   [&](RootDetailModelWire &w) { rr.root = toRootDetailModel(std::move(w)); },
+                   [&](FormModelWire &w) { rr.root = toFormModel(std::move(w)); },
+               },
+               *view.root);
 
     result.items.emplace_back(std::move(rr));
   }

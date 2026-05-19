@@ -1,41 +1,25 @@
 #pragma once
-#include <QList>
+#include <QJsonObject>
 #include <QJsonValue>
-#include <QStringList>
 #include <memory>
 #include <optional>
-#include <qjsonobject.h>
-#include <qnamespace.h>
+#include <string>
 #include <variant>
 #include <vector>
 #include "extend/image-model.hpp"
 #include "lib/keyboard/keyboard.hpp"
 
-struct KeyboardShortcutModel {
-  QString key;
-  QStringList modifiers;
-
-  static KeyboardShortcutModel submit() { return {.key = "return", .modifiers = {"shift"}}; }
-  static KeyboardShortcutModel remove() { return {.key = "X", .modifiers = {"ctrl"}}; }
-  static KeyboardShortcutModel edit() { return {.key = "E", .modifiers = {"ctrl"}}; }
-  static KeyboardShortcutModel removeAll() { return {.key = "X", .modifiers = {"ctrl", "shift"}}; }
-  static KeyboardShortcutModel open() { return {.key = "O", .modifiers = {"ctrl"}}; }
-  static KeyboardShortcutModel enter() { return {.key = "return"}; }
-
-  bool operator==(const KeyboardShortcutModel &rhs) const {
-    return key == rhs.key && modifiers == rhs.modifiers;
-  }
-};
+Keyboard::Shortcut parseKeyboardShortcut(const QJsonValue &shortcut);
 
 struct ActionModel {
-  QString title;
-  QString onAction;
-  std::optional<QString> onSubmit;
+  std::string title;
+  std::string onAction;
+  std::optional<std::string> onSubmit;
   std::optional<ImageLikeModel> icon;
   std::optional<Keyboard::Shortcut> shortcut;
-  QString type;
+  std::string type = "callback";
   QJsonObject quicklink;
-  std::optional<QString> stableId;
+  std::optional<std::string> stableId;
 };
 
 struct ActionPannelSectionModel;
@@ -47,11 +31,11 @@ using ActionPannelSectionItem = std::variant<ActionModel, ActionPannelSubmenuPtr
 using ActionPannelSubmenuChild = std::variant<ActionPannelSectionPtr, ActionModel, ActionPannelSubmenuPtr>;
 
 struct ActionPannelSectionModel {
-  QString title;
-  QList<ActionPannelSectionItem> items;
+  std::string title;
+  std::vector<ActionPannelSectionItem> items;
 
-  QList<ActionModel> actions() const {
-    QList<ActionModel> result;
+  std::vector<ActionModel> actions() const {
+    std::vector<ActionModel> result;
     for (const auto &item : items) {
       if (auto action = std::get_if<ActionModel>(&item)) { result.push_back(*action); }
     }
@@ -64,36 +48,24 @@ struct ActionPannelSubmenuFiltering {
 };
 
 struct ActionPannelSubmenuModel {
-  QString title;
+  std::string title;
   std::optional<ImageLikeModel> icon;
   std::optional<Keyboard::Shortcut> shortcut;
   std::optional<bool> autoFocus;
   std::optional<std::variant<bool, ActionPannelSubmenuFiltering>> filtering;
   std::optional<bool> isLoading;
   std::optional<bool> throttle;
-  QString onOpen;
-  QString onSearchTextChange;
-  QList<ActionPannelSubmenuChild> children;
-  std::optional<QString> stableId;
+  std::string onOpen;
+  std::string onSearchTextChange;
+  std::vector<ActionPannelSubmenuChild> children;
+  std::optional<std::string> stableId;
 };
 
 using ActionPannelItem = std::variant<ActionModel, ActionPannelSectionPtr, ActionPannelSubmenuPtr>;
 
 struct ActionPannelModel {
-  bool dirty;
-  QString title;
+  bool dirty = true;
+  std::string title;
   std::vector<ActionPannelItem> children;
-  std::optional<QString> stableId;
-};
-
-class ActionPannelParser {
-  ActionModel parseAction(const QJsonObject &instance);
-
-  ActionPannelSectionPtr parseActionPannelSection(const QJsonObject &instance);
-  ActionPannelSubmenuPtr parseActionPannelSubmenu(const QJsonObject &instance);
-
-public:
-  ActionPannelParser();
-  static Keyboard::Shortcut parseKeyboardShortcut(const QJsonValue &shortcut);
-  ActionPannelModel parse(const QJsonObject &instance);
+  std::optional<std::string> stableId;
 };

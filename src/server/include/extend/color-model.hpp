@@ -1,6 +1,5 @@
 #pragma once
 #include "theme.hpp"
-#include <qjsonobject.h>
 #include <qstring.h>
 
 struct ColorStringModel {
@@ -12,10 +11,3 @@ struct ThemeColorModel {
 };
 
 using ColorLikeModel = QString;
-
-class ColorLikeModelParser {
-public:
-  ColorLikeModelParser();
-
-  ColorLike parse(const QJsonValue &colorLike);
-};

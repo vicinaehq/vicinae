@@ -2,18 +2,13 @@
 
 #include "extend/action-model.hpp"
 #include "extend/metadata-model.hpp"
-#include <qjsonobject.h>
+#include <optional>
+#include <string>
 
 struct RootDetailModel {
-  bool isLoading;
-  QString markdown;
+  bool isLoading = false;
+  std::string markdown;
   std::optional<MetadataModel> metadata;
   std::optional<ActionPannelModel> actions;
-  std::optional<QString> navigationTitle;
-};
-
-class RootDetailModelParser {
-public:
-  RootDetailModelParser();
-  RootDetailModel parse(const QJsonObject &instance);
+  std::optional<std::string> navigationTitle;
 };

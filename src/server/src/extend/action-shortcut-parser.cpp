@@ -26,7 +26,7 @@ const std::unordered_map<QString, Keybind> NAMED_SHORTCUT_MAP = {
 
 } // namespace
 
-Keyboard::Shortcut ActionPannelParser::parseKeyboardShortcut(const QJsonValue &shortcut) {
+Keyboard::Shortcut parseKeyboardShortcut(const QJsonValue &shortcut) {
   if (shortcut.isString()) {
     auto str = shortcut.toString();
 

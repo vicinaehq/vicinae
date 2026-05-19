@@ -7,10 +7,9 @@
 #include "extend/image-model.hpp"
 #include "extend/dropdown-model.hpp"
 #include "extend/pagination-model.hpp"
-#include <qjsonobject.h>
 
 struct ListItemViewModel {
-  bool changed;
+  bool changed = false;
   std::string id;
   std::string title;
   std::string subtitle;
@@ -48,16 +47,4 @@ struct ListModel {
   std::optional<EmptyViewModel> emptyView;
   std::optional<PaginationModel> pagination;
   std::optional<ListSearchBarAccessory> searchBarAccessory;
-};
-
-class ListModelParser {
-  ListItemViewModel parseListItem(const QJsonObject &instance, size_t index);
-  ListSectionModel parseSection(const QJsonObject &instance);
-  ImageLikeModel parseListItemIcon(const QJsonValue &value) const;
-  QString parseListItemTitle(const QJsonValue &value) const;
-
-public:
-  ListModelParser();
-
-  ListModel parse(const QJsonObject &instance);
 };
