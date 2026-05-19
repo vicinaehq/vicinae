@@ -1,0 +1,40 @@
+# elementary OS - Dark
+# Inspired by elementary OS dark styling
+
+[meta]
+version = 1
+name = "elementary OS Dark"
+description = "A detailed elementary OS inspired dark theme for Vicinae"
+variant = "dark"
+inherits = "vicinae-dark"
+icon = "icons/elementary@dark.svg"
+
+[colors.core]
+background = "#2D2D2D"
+foreground = "#F5F5F5"
+secondary_background = "#383838"
+border = "#4A4A4A"
+
+accent = "#3689E6"
+accent_foreground = "#FFFFFF"
+
+[colors.main_window]
+border = "#1F1F1F"
+footer = { background = "colors.core.secondary_background" }
+
+[colors.settings_window]
+border = "#1F1F1F"
+
+[colors.accents]
+blue = "#3689E6"
+green = "#68B723"
+magenta = "#A56DE2"
+orange = "#F37329"
+red = "#C6262E"
+yellow = "#F9C440"
+cyan = "#28BCA3"
+purple = "#7E57C2"
+
+[colors.list.item.selection]
+background = "#4A4A4A"
+secondary_background = "#555555"
