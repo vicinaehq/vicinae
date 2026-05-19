@@ -113,8 +113,11 @@ tsfmt:
 	cd src/typescript && biome format --write .
 .PHONY: tsfmt
 
-format: qmlformat tsfmt
-	find ./src -type f \( -name '*.cpp' -o -name '*.hpp' \) -print0 | xargs -0 -n 10 -P $(shell nproc) clang-format -i
+clang-format:
+	find ./src -type f \( -name '*.cpp' -o -name '*.hpp' \) -print0 | xargs -0 -n 10 -P $(NPROC) clang-format -i
+.PHONY: clang-format
+
+format: qmlformat tsfmt clang-format
 .PHONY: format
 
 check-format:
