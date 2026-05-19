@@ -44,8 +44,9 @@ public:
   void setKeymap(snippet_gen::LayoutInfo info);
   void resetContext();
 
-  void injectExpand(int charsToDelete, int prePasteDelayUs, bool terminal, int cursorLeftMoves);
-  void injectUndo(int backspaceCount, const std::string &trigger);
+  void injectExpand(unsigned charsToDelete, unsigned prePasteDelayUs, bool terminal,
+                    unsigned cursorLeftMoves);
+  void injectUndo(unsigned backspaceCount, const std::string &trigger);
   void injectPaste(bool terminal);
   void setKeyDelay(int us);
   bool supportsKeyInjection() const { return m_supportsInjection; }

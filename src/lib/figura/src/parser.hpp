@@ -20,7 +20,9 @@ enum class PrimitiveType {
   Void,
   Boolean,
   String,
-  Number,
+  Int,
+  UInt,
+  Double,
   Any,
 };
 
@@ -139,7 +141,9 @@ public:
 
   std::optional<TypeValue> resolveType(std::string_view name) {
     if (name == "string") return TypeValue{PrimitiveType::String};
-    if (name == "number") return TypeValue{PrimitiveType::Number};
+    if (name == "int") return TypeValue{PrimitiveType::Int};
+    if (name == "uint") return TypeValue{PrimitiveType::UInt};
+    if (name == "double") return TypeValue{PrimitiveType::Double};
     if (name == "boolean" || name == "bool") return TypeValue{PrimitiveType::Boolean};
     if (name == "void") return TypeValue{PrimitiveType::Void};
     if (name == "any") return TypeValue{PrimitiveType::Any};
