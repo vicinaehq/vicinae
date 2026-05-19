@@ -6,7 +6,7 @@ version = 1
 name = "Nord Light"
 description = "Arctic, north-bluish clean and elegant theme"
 variant = "light"
-icon = "icons/nord.svg"
+icon = "icons/nord@light.svg"
 
 [colors.core]
 background = "#ECEFF4"        # nord6 (Snow Storm)
