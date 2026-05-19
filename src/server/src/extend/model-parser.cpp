@@ -1,5 +1,4 @@
 #include "extend/model-parser.hpp"
-#include "extend/form-model.hpp"
 #include "extend/grid-model.hpp"
 #include "extend/list-model.hpp"
 #include "extend/root-detail-model.hpp"
@@ -30,8 +29,6 @@ ParsedRenderData ModelParser::parse(const QJsonArray &views) {
       rootData.root = GridModelParser().parse(root);
     } else if (type == "detail") {
       rootData.root = RootDetailModelParser().parse(root);
-    } else if (type == "form") {
-      rootData.root = FormModel::fromJson(root);
     } else {
       rootData.root = InvalidModel{QString("Component of type %1 cannot be used as the root").arg(type)};
     }

@@ -3,16 +3,10 @@
 #include "extend/event-counted.hpp"
 #include "extend/list-model.hpp"
 #include "extend/model.hpp"
-#include <memory>
-#include <qcoreevent.h>
-#include <qjsonobject.h>
-#include <qjsonvalue.h>
-#include <qlogging.h>
-#include <qnamespace.h>
-#include <qobject.h>
-#include <qstring.h>
 #include <optional>
-#include <qtmetamacros.h>
+#include <qjsonvalue.h>
+#include <qstring.h>
+#include <variant>
 
 struct FormModel {
   struct FieldBase {
@@ -29,76 +23,51 @@ struct FormModel {
     bool storeValue;
   };
 
-  class IField : public FieldBase {
-  public:
-    size_t fieldTypeId() const { return typeid(*this).hash_code(); }
-    virtual std::optional<QString> placeholder() const { return std::nullopt; }
-
-    virtual ~IField() {}
-
-    IField(const FieldBase &base) : FieldBase(base) {}
+  struct TextField {
+    FieldBase base;
+    std::optional<QString> placeholder;
   };
 
-  struct TextField : public IField {
-    std::optional<QString> m_placeholder;
-
-    std::optional<QString> placeholder() const override { return m_placeholder; }
-    TextField(const FieldBase &base) : IField(base) {}
+  struct PasswordField {
+    FieldBase base;
+    std::optional<QString> placeholder;
   };
 
-  struct PasswordField : public IField {
-    std::optional<QString> m_placeholder;
-
-    std::optional<QString> placeholder() const override { return m_placeholder; }
-    PasswordField(const FieldBase &base) : IField(base) {}
+  struct CheckboxField {
+    FieldBase base;
+    std::optional<QString> label;
   };
 
-  struct CheckboxField : public IField {
-    std::optional<QString> m_label;
-
-  public:
-    CheckboxField(const FieldBase &base) : IField(base) {}
-  };
-
-  struct DropdownField : public IField {
-    std::vector<DropdownModel::Child> m_items;
+  struct DropdownField {
+    FieldBase base;
+    std::vector<DropdownModel::Child> items;
     std::optional<QString> onSearchTextChange;
-    std::optional<QString> m_placeholder;
+    std::optional<QString> placeholder;
     bool isLoading;
     bool throttle;
     std::optional<QString> tooltip;
     bool filtering;
-
-    std::optional<QString> placeholder() const override { return m_placeholder; }
-    DropdownField(const FieldBase &base) : IField(base) {}
   };
 
-  struct TextAreaField : public IField {
-    std::optional<QString> m_placeholder;
-
-    std::optional<QString> placeholder() const override { return m_placeholder; }
-    TextAreaField(const FieldBase &base) : IField(base) {}
+  struct TextAreaField {
+    FieldBase base;
+    std::optional<QString> placeholder;
   };
 
-  struct FilePickerField : public IField {
+  struct FilePickerField {
+    FieldBase base;
     bool allowMultipleSelection = false;
     bool canChooseDirectories = false;
     bool canChooseFiles = true;
     bool showHiddenFiles = false;
-
-  public:
-    FilePickerField(const FieldBase &base) : IField(base) {}
   };
 
-  struct DatePickerField : public IField {
-    std::optional<QString> min;  // ISO string
-    std::optional<QString> max;  // ISO string
-    std::optional<QString> type; // "date" | "dateTime"
-
-  public:
-    DatePickerField(const FieldBase &base) : IField(base) {}
+  struct DatePickerField {
+    FieldBase base;
+    std::optional<QString> min;
+    std::optional<QString> max;
+    std::optional<QString> type;
   };
-  struct InvalidField : public FieldBase {};
 
   struct Separator {};
   struct Description {
@@ -111,9 +80,10 @@ struct FormModel {
     QString target;
   };
 
-  // note: only LinkAccessoryModel is possible right now
+  using Field = std::variant<TextField, PasswordField, CheckboxField, DropdownField, TextAreaField,
+                             FilePickerField, DatePickerField>;
   using FormSearchBarAccessory = std::variant<DropdownModel, LinkAccessoryModel>;
-  using Item = std::variant<std::shared_ptr<IField>, Description, Separator>;
+  using Item = std::variant<Field, Description, Separator>;
 
   bool isLoading;
   bool enableDrafts;
@@ -121,6 +91,4 @@ struct FormModel {
   std::optional<FormSearchBarAccessory> searchBarAccessory;
   std::optional<ActionPannelModel> actions;
   std::vector<Item> items;
-
-  static FormModel fromJson(const QJsonObject &json);
 };

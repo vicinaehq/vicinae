@@ -1009,6 +1009,10 @@ template <> struct glz::meta<TagListModelWire> {
   static constexpr auto value = glz::object("title", &T::title, "children", &T::children);
 };
 
+template <> struct glz::meta<TagListModel> {
+  static constexpr auto value = glz::object();
+};
+
 namespace glz {
 template <> struct from<JSON, TagListModel> {
   template <auto Opts, auto... Extra>
@@ -1036,6 +1040,10 @@ struct MetadataLabelWire {
 template <> struct glz::meta<MetadataLabelWire> {
   using T = MetadataLabelWire;
   static constexpr auto value = glz::object("title", &T::title, "text", &T::text, "icon", &T::icon);
+};
+
+template <> struct glz::meta<MetadataLabel> {
+  static constexpr auto value = glz::object();
 };
 
 namespace glz {
@@ -1078,6 +1086,10 @@ template <> struct glz::meta<MetadataModelWire> {
   static constexpr auto value = glz::object("children", &T::children);
 };
 
+template <> struct glz::meta<MetadataModel> {
+  static constexpr auto value = glz::object();
+};
+
 namespace glz {
 template <> struct from<JSON, MetadataModel> {
   template <auto Opts, auto... Extra>
@@ -1113,6 +1125,10 @@ struct DetailModelWire {
 template <> struct glz::meta<DetailModelWire> {
   using T = DetailModelWire;
   static constexpr auto value = glz::object("markdown", &T::markdown, "children", &T::children);
+};
+
+template <> struct glz::meta<DetailModel> {
+  static constexpr auto value = glz::object();
 };
 
 namespace glz {
@@ -1155,6 +1171,10 @@ template <> struct glz::meta<EmptyViewModelWire> {
                                             &T::icon, "children", &T::children);
 };
 
+template <> struct glz::meta<EmptyViewModel> {
+  static constexpr auto value = glz::object();
+};
+
 namespace glz {
 template <> struct from<JSON, EmptyViewModel> {
   template <auto Opts, auto... Extra>
@@ -1185,6 +1205,10 @@ struct DropdownSectionWire {
 template <> struct glz::meta<DropdownSectionWire> {
   using T = DropdownSectionWire;
   static constexpr auto value = glz::object("title", &T::title, "children", &T::children);
+};
+
+template <> struct glz::meta<DropdownModel::Section> {
+  static constexpr auto value = glz::object();
 };
 
 namespace glz {
@@ -1234,6 +1258,10 @@ template <> struct glz::meta<DropdownModelWire> {
                   &T::onChange, "onSearchTextChange", &T::onSearchTextChange, "placeholder", &T::placeholder,
                   "value", &T::value, "storeValue", &T::storeValue, "throttle", &T::throttle, "isLoading",
                   &T::isLoading, "filtering", &T::filtering, "children", &T::children);
+};
+
+template <> struct glz::meta<DropdownModel> {
+  static constexpr auto value = glz::object();
 };
 
 namespace glz {
@@ -1292,6 +1320,10 @@ template <> struct glz::meta<ListItemViewModelWire> {
                   &T::keywords, "accessories", &T::accessories, "children", &T::children);
 };
 
+template <> struct glz::meta<ListItemViewModel> {
+  static constexpr auto value = glz::object();
+};
+
 namespace glz {
 template <> struct from<JSON, ListItemViewModel> {
   template <auto Opts, auto... Extra>
@@ -1336,6 +1368,10 @@ template <> struct glz::meta<ListSectionModelWire> {
   using T = ListSectionModelWire;
   static constexpr auto value =
       glz::object("title", &T::title, "subtitle", &T::subtitle, "children", &T::children);
+};
+
+template <> struct glz::meta<ListSectionModel> {
+  static constexpr auto value = glz::object();
 };
 
 namespace glz {
@@ -1459,6 +1495,10 @@ template <> struct glz::meta<GridItemViewModelWire> {
                   "tooltip", &T::tooltip, "keywords", &T::keywords, "children", &T::children);
 };
 
+template <> struct glz::meta<GridItemViewModel> {
+  static constexpr auto value = glz::object();
+};
+
 namespace glz {
 template <> struct from<JSON, GridItemViewModel> {
   template <auto Opts, auto... Extra>
@@ -1499,6 +1539,10 @@ template <> struct glz::meta<GridSectionModelWire> {
   static constexpr auto value =
       glz::object("title", &T::title, "subtitle", &T::subtitle, "aspectRatio", &T::aspectRatio, "columns",
                   &T::columns, "fit", &T::fit, "inset", &T::inset, "children", &T::children);
+};
+
+template <> struct glz::meta<GridSectionModel> {
+  static constexpr auto value = glz::object();
 };
 
 namespace glz {
@@ -1658,23 +1702,304 @@ static RootDetailModel toRootDetailModel(RootDetailModelWire &&w) {
 }
 
 // ============================================================
-// Top-level payload (single read, tagged variant for root)
+// FormModel wire structs
 // ============================================================
 
-struct FormModelFallback {
-  QJsonObject obj;
+struct FormFieldValue {
+  std::optional<EventCounted<QJsonValue>> val;
 };
 
 namespace glz {
-template <> struct from<JSON, FormModelFallback> {
+template <> struct from<JSON, FormFieldValue> {
   template <auto Opts, auto... Extra>
-  static void op(FormModelFallback &value, is_context auto &&ctx, auto &&it, auto &&end) {
-    from<JSON, QJsonObject>::op<Opts>(value.obj, ctx, it, end);
+  static void op(FormFieldValue &value, is_context auto &&ctx, auto &&it, auto &&end) {
+    generic g;
+    parse<JSON>::op<Opts>(g, ctx, it, end);
+    if (bool(ctx.error)) [[unlikely]]
+      return;
+    if (g.is_object()) {
+      auto &obj = g.get_object();
+      if (auto ecIt = obj.find("eventCount"); ecIt != obj.end() && ecIt->second.is_number()) {
+        QJsonValue inner;
+        if (auto vIt = obj.find("value"); vIt != obj.end()) inner = glazeToQJsonValue(vIt->second);
+        value.val = EventCounted<QJsonValue>{inner, static_cast<uint32_t>(ecIt->second.get_number())};
+        return;
+      }
+    }
+    value.val = EventCounted<QJsonValue>{glazeToQJsonValue(g), EVENT_COUNT_UNTRACKED};
   }
 };
 } // namespace glz
 
-using RootWireModel = std::variant<ListModelWire, GridModelWire, RootDetailModelWire, FormModelFallback>;
+// clang-format off
+#define FIELD_BASE_WIRE_MEMBERS                     \
+  std::string id;                                   \
+  bool autoFocus = false;                           \
+  std::optional<std::string> error;                 \
+  std::optional<std::string> info;                  \
+  std::optional<std::string> onBlur;                \
+  std::optional<std::string> onChange;               \
+  std::optional<std::string> onFocus;               \
+  std::optional<std::string> title;                 \
+  bool storeValue = true;                           \
+  FormFieldValue value;                             \
+  std::optional<glz::generic> defaultValue;
+
+#define FIELD_BASE_WIRE_FIELDS(T)                                                                              \
+  "id", &T::id, "autoFocus", &T::autoFocus, "error", &T::error, "info", &T::info, "onBlur", &T::onBlur,      \
+      "onChange", &T::onChange, "onFocus", &T::onFocus, "title", &T::title, "storeValue", &T::storeValue,      \
+      "value", &T::value, "defaultValue", &T::defaultValue
+// clang-format on
+
+template <typename T> static FormModel::FieldBase toFieldBase(T &w) {
+  FormModel::FieldBase b;
+  b.id = toQStr(w.id);
+  b.autoFocus = w.autoFocus;
+  b.error = toOptQStr(w.error);
+  b.info = toOptQStr(w.info);
+  b.onBlur = toOptQStr(w.onBlur);
+  b.onChange = toOptQStr(w.onChange);
+  b.onFocus = toOptQStr(w.onFocus);
+  b.title = toOptQStr(w.title);
+  b.storeValue = w.storeValue;
+  b.value = std::move(w.value.val);
+  if (w.defaultValue) b.defaultValue = glazeToQJsonValue(*w.defaultValue);
+  qDebug() << "registered" << b.id << b.onChange;
+  return b;
+}
+
+struct FormTextFieldWire {
+  FIELD_BASE_WIRE_MEMBERS
+  std::optional<std::string> placeholder;
+};
+
+template <> struct glz::meta<FormTextFieldWire> {
+  using T = FormTextFieldWire;
+  static constexpr auto value = glz::object(FIELD_BASE_WIRE_FIELDS(T), "placeholder", &T::placeholder);
+};
+
+struct FormPasswordFieldWire {
+  FIELD_BASE_WIRE_MEMBERS
+  std::optional<std::string> placeholder;
+};
+
+template <> struct glz::meta<FormPasswordFieldWire> {
+  using T = FormPasswordFieldWire;
+  static constexpr auto value = glz::object(FIELD_BASE_WIRE_FIELDS(T), "placeholder", &T::placeholder);
+};
+
+struct FormCheckboxFieldWire {
+  FIELD_BASE_WIRE_MEMBERS
+  std::optional<std::string> label;
+};
+
+template <> struct glz::meta<FormCheckboxFieldWire> {
+  using T = FormCheckboxFieldWire;
+  static constexpr auto value = glz::object(FIELD_BASE_WIRE_FIELDS(T), "label", &T::label);
+};
+
+struct FormDropdownFieldWire {
+  FIELD_BASE_WIRE_MEMBERS
+  std::optional<std::string> onSearchTextChange;
+  std::optional<std::string> placeholder;
+  std::optional<std::string> tooltip;
+  bool isLoading = false;
+  bool throttle = false;
+  std::optional<bool> filtering;
+  std::vector<DropdownChild> children;
+};
+
+template <> struct glz::meta<FormDropdownFieldWire> {
+  using T = FormDropdownFieldWire;
+  static constexpr auto value =
+      glz::object(FIELD_BASE_WIRE_FIELDS(T), "onSearchTextChange", &T::onSearchTextChange, "placeholder",
+                  &T::placeholder, "tooltip", &T::tooltip, "isLoading", &T::isLoading, "throttle",
+                  &T::throttle, "filtering", &T::filtering, "children", &T::children);
+};
+
+struct FormTextAreaFieldWire {
+  FIELD_BASE_WIRE_MEMBERS
+  std::optional<std::string> placeholder;
+};
+
+template <> struct glz::meta<FormTextAreaFieldWire> {
+  using T = FormTextAreaFieldWire;
+  static constexpr auto value = glz::object(FIELD_BASE_WIRE_FIELDS(T), "placeholder", &T::placeholder);
+};
+
+struct FormFilePickerFieldWire {
+  FIELD_BASE_WIRE_MEMBERS
+  bool allowMultipleSelection = false;
+  bool canChooseDirectories = false;
+  bool canChooseFiles = true;
+  bool showHiddenFiles = false;
+};
+
+template <> struct glz::meta<FormFilePickerFieldWire> {
+  using T = FormFilePickerFieldWire;
+  static constexpr auto value = glz::object(
+      FIELD_BASE_WIRE_FIELDS(T), "allowMultipleSelection", &T::allowMultipleSelection, "canChooseDirectories",
+      &T::canChooseDirectories, "canChooseFiles", &T::canChooseFiles, "showHiddenFiles", &T::showHiddenFiles);
+};
+
+struct FormDatePickerFieldWire {
+  FIELD_BASE_WIRE_MEMBERS
+  std::optional<std::string> min;
+  std::optional<std::string> max;
+  std::optional<std::string> type;
+};
+
+template <> struct glz::meta<FormDatePickerFieldWire> {
+  using T = FormDatePickerFieldWire;
+  static constexpr auto value =
+      glz::object(FIELD_BASE_WIRE_FIELDS(T), "min", &T::min, "max", &T::max, "type", &T::type);
+};
+
+struct FormSeparatorWire {};
+
+template <> struct glz::meta<FormSeparatorWire> {
+  static constexpr auto value = glz::object();
+};
+
+struct FormDescriptionWire {
+  std::string text;
+  std::optional<std::string> title;
+};
+
+template <> struct glz::meta<FormDescriptionWire> {
+  using T = FormDescriptionWire;
+  static constexpr auto value = glz::object("text", &T::text, "title", &T::title);
+};
+
+struct FormLinkAccessoryWire {
+  std::string text;
+  std::string target;
+};
+
+template <> struct glz::meta<FormLinkAccessoryWire> {
+  using T = FormLinkAccessoryWire;
+  static constexpr auto value = glz::object("text", &T::text, "target", &T::target);
+};
+
+// Glaze's tagged variant dispatch requires glz::meta on ALL alternatives to build
+// its dispatch table. A type with only from<JSON> (no meta) causes the variant to
+// always select index 0. ActionPannelModel has from<JSON> so we add a stub meta.
+template <> struct glz::meta<ActionPannelModel> {
+  static constexpr auto value = glz::object();
+};
+
+struct FormIgnoredWire {};
+
+template <> struct glz::meta<FormIgnoredWire> {
+  static constexpr auto value = glz::object();
+};
+
+using FormChild =
+    std::variant<FormTextFieldWire, FormPasswordFieldWire, FormCheckboxFieldWire, FormDropdownFieldWire,
+                 FormTextAreaFieldWire, FormFilePickerFieldWire, FormDatePickerFieldWire, FormSeparatorWire,
+                 FormDescriptionWire, FormLinkAccessoryWire, ActionPannelModel, FormIgnoredWire>;
+
+template <> struct glz::meta<FormChild> {
+  static constexpr std::string_view tag = TAG;
+  static constexpr auto ids =
+      std::array{"text-field",       "password-field",    "checkbox-field",    "dropdown-field",
+                 "text-area-field",  "file-picker-field", "date-picker-field", "separator",
+                 "form-description", "link-accessory",    "action-panel"};
+};
+
+struct FormModelWire {
+  bool isLoading = false;
+  bool enableDrafts = false;
+  std::optional<std::string> navigationTitle;
+  std::vector<FormChild> children;
+};
+
+template <> struct glz::meta<FormModelWire> {
+  using T = FormModelWire;
+  static constexpr auto value = glz::object("isLoading", &T::isLoading, "enableDrafts", &T::enableDrafts,
+                                            "navigationTitle", &T::navigationTitle, "children", &T::children);
+};
+
+static FormModel toFormModel(FormModelWire &&w) {
+  FormModel m;
+  m.isLoading = w.isLoading;
+  m.enableDrafts = w.enableDrafts;
+  m.navigationTitle = toOptQStr(w.navigationTitle);
+  m.items.reserve(w.children.size());
+
+  for (auto &child : w.children) {
+    std::visit(
+        [&](auto &&c) {
+          using T = std::decay_t<decltype(c)>;
+          if constexpr (std::is_same_v<T, FormTextFieldWire>) {
+            FormModel::TextField f{toFieldBase(c), toOptQStr(c.placeholder)};
+            m.items.emplace_back(FormModel::Field{std::move(f)});
+          } else if constexpr (std::is_same_v<T, FormPasswordFieldWire>) {
+            FormModel::PasswordField f{toFieldBase(c), toOptQStr(c.placeholder)};
+            m.items.emplace_back(FormModel::Field{std::move(f)});
+          } else if constexpr (std::is_same_v<T, FormCheckboxFieldWire>) {
+            FormModel::CheckboxField f{toFieldBase(c), toOptQStr(c.label)};
+            m.items.emplace_back(FormModel::Field{std::move(f)});
+          } else if constexpr (std::is_same_v<T, FormDropdownFieldWire>) {
+            FormModel::DropdownField f;
+            f.base = toFieldBase(c);
+            f.onSearchTextChange = toOptQStr(c.onSearchTextChange);
+            f.placeholder = toOptQStr(c.placeholder);
+            f.tooltip = toOptQStr(c.tooltip);
+            f.isLoading = c.isLoading;
+            f.throttle = c.throttle;
+            f.filtering = c.filtering.value_or(!c.onSearchTextChange.has_value());
+            f.items.reserve(c.children.size());
+            for (auto &dc : c.children) {
+              std::visit([&](auto &&v) { f.items.emplace_back(std::move(v)); }, dc);
+            }
+            m.items.emplace_back(FormModel::Field{std::move(f)});
+          } else if constexpr (std::is_same_v<T, FormTextAreaFieldWire>) {
+            FormModel::TextAreaField f{toFieldBase(c), toOptQStr(c.placeholder)};
+            m.items.emplace_back(FormModel::Field{std::move(f)});
+          } else if constexpr (std::is_same_v<T, FormFilePickerFieldWire>) {
+            FormModel::FilePickerField f;
+            f.base = toFieldBase(c);
+            f.allowMultipleSelection = c.allowMultipleSelection;
+            f.canChooseDirectories = c.canChooseDirectories;
+            f.canChooseFiles = c.canChooseFiles;
+            f.showHiddenFiles = c.showHiddenFiles;
+            m.items.emplace_back(FormModel::Field{std::move(f)});
+          } else if constexpr (std::is_same_v<T, FormDatePickerFieldWire>) {
+            FormModel::DatePickerField f;
+            f.base = toFieldBase(c);
+            f.min = toOptQStr(c.min);
+            f.max = toOptQStr(c.max);
+            f.type = toOptQStr(c.type);
+            m.items.emplace_back(FormModel::Field{std::move(f)});
+          } else if constexpr (std::is_same_v<T, FormSeparatorWire>) {
+            m.items.emplace_back(FormModel::Separator{});
+          } else if constexpr (std::is_same_v<T, FormDescriptionWire>) {
+            FormModel::Description desc;
+            desc.text = toQStr(c.text);
+            desc.title = toOptQStr(c.title);
+            m.items.emplace_back(std::move(desc));
+          } else if constexpr (std::is_same_v<T, FormLinkAccessoryWire>) {
+            FormModel::LinkAccessoryModel link;
+            link.text = toQStr(c.text);
+            link.target = toQStr(c.target);
+            m.searchBarAccessory = std::move(link);
+          } else if constexpr (std::is_same_v<T, ActionPannelModel>) {
+            m.actions = std::move(c);
+          } else if constexpr (std::is_same_v<T, FormIgnoredWire>) {
+          }
+        },
+        child);
+  }
+
+  return m;
+}
+
+// ============================================================
+// Top-level payload (single read, tagged variant for root)
+// ============================================================
+
+using RootWireModel = std::variant<ListModelWire, GridModelWire, RootDetailModelWire, FormModelWire>;
 
 template <> struct glz::meta<RootWireModel> {
   static constexpr std::string_view tag = TAG;
@@ -1741,8 +2066,8 @@ ParsedRenderData parseRenderPayload(std::string_view json) {
             rr.root = std::move(model);
           } else if constexpr (std::is_same_v<W, RootDetailModelWire>) {
             rr.root = toRootDetailModel(std::move(w));
-          } else if constexpr (std::is_same_v<W, FormModelFallback>) {
-            rr.root = FormModel::fromJson(w.obj);
+          } else if constexpr (std::is_same_v<W, FormModelWire>) {
+            rr.root = toFormModel(std::move(w));
           }
         },
         *view.root);

@@ -250,7 +250,6 @@ set(SRCS
 	src/extend/root-detail-model.cpp
 	src/extend/empty-view-model.cpp
 	include/extend/form-model.hpp
-	src/extend/form-model.cpp
 
 	src/image-fetcher.hpp
 

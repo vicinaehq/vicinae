@@ -90,8 +90,9 @@ private:
   FormItemData createItem(const FormModel::Item &item) const;
   void updateItem(FormItemData &existing, const FormModel::Item &newItem);
 
-  static FormItemData::Type fieldType(const FormModel::IField &field);
-  static QVariantMap buildFieldData(const FormModel::IField &field);
+  static FormItemData::Type fieldType(const FormModel::Field &field);
+  static QVariantMap buildFieldData(const FormModel::Field &field);
+  static const FormModel::FieldBase &getBase(const FormModel::Field &field);
 
   NotifyFn m_notify;
   std::vector<FormItemData> m_items;

@@ -4,6 +4,10 @@
 #include <QJsonObject>
 #include <utility>
 
+template <class... Ts> struct overloaded : Ts... {
+  using Ts::operator()...;
+};
+
 ExtensionFormModel::ExtensionFormModel(NotifyFn notify, QObject *parent)
     : QAbstractListModel(parent), m_notify(std::move(notify)) {}
 
@@ -123,7 +127,6 @@ std::optional<FileChooserOptions> ExtensionFormModel::filePickerOptions(int inde
 }
 
 void ExtensionFormModel::setFormData(const FormModel &model) {
-  // Save user values so they survive structural changes
   std::unordered_map<QString, QJsonValue> savedValues;
   for (const auto &item : m_items) {
     if (item.isField() && item.hasUserValue) { savedValues[item.fieldId] = item.userValue; }
@@ -194,28 +197,41 @@ std::expected<QJsonObject, QString> ExtensionFormModel::submit() const {
   return payload;
 }
 
+const FormModel::FieldBase &ExtensionFormModel::getBase(const FormModel::Field &field) {
+  return std::visit([](const auto &f) -> const FormModel::FieldBase & { return f.base; }, field);
+}
+
 ExtensionFormModel::FormItemData ExtensionFormModel::createItem(const FormModel::Item &item) const {
   FormItemData data{};
 
-  if (auto *fieldPtr = std::get_if<std::shared_ptr<FormModel::IField>>(&item)) {
-    const auto &field = *fieldPtr;
-    data.type = fieldType(*field);
-    data.fieldId = field->id;
-    data.label = field->title.value_or(QString());
-    data.error = field->error.value_or(QString());
-    data.info = field->info.value_or(QString());
-    data.placeholder = field->placeholder().value_or(QString());
-    data.autoFocus = field->autoFocus;
-    data.storeValue = field->storeValue;
-    data.onChange = field->onChange;
-    data.onBlur = field->onBlur;
-    data.onFocus = field->onFocus;
-    data.fieldData = buildFieldData(*field);
+  if (auto *fieldPtr = std::get_if<FormModel::Field>(&item)) {
+    const auto &base = getBase(*fieldPtr);
+    data.type = fieldType(*fieldPtr);
+    data.fieldId = base.id;
+    data.label = base.title.value_or(QString());
+    data.error = base.error.value_or(QString());
+    data.info = base.info.value_or(QString());
+    data.autoFocus = base.autoFocus;
+    data.storeValue = base.storeValue;
+    data.onChange = base.onChange;
+    data.onBlur = base.onBlur;
+    data.onFocus = base.onFocus;
+    data.fieldData = buildFieldData(*fieldPtr);
 
-    if (field->value) {
-      data.modelValue = field->value->value;
-    } else if (field->defaultValue) {
-      data.modelValue = *field->defaultValue;
+    data.placeholder =
+        std::visit(overloaded{
+                       [](const FormModel::TextField &f) { return f.placeholder.value_or(QString()); },
+                       [](const FormModel::PasswordField &f) { return f.placeholder.value_or(QString()); },
+                       [](const FormModel::DropdownField &f) { return f.placeholder.value_or(QString()); },
+                       [](const FormModel::TextAreaField &f) { return f.placeholder.value_or(QString()); },
+                       [](const auto &) { return QString(); },
+                   },
+                   *fieldPtr);
+
+    if (base.value) {
+      data.modelValue = base.value->value;
+    } else if (base.defaultValue) {
+      data.modelValue = *base.defaultValue;
     }
   } else if (auto *desc = std::get_if<FormModel::Description>(&item)) {
     data.type = FormItemData::Type::Description;
@@ -229,20 +245,29 @@ ExtensionFormModel::FormItemData ExtensionFormModel::createItem(const FormModel:
 }
 
 void ExtensionFormModel::updateItem(FormItemData &existing, const FormModel::Item &newItem) {
-  if (auto *fieldPtr = std::get_if<std::shared_ptr<FormModel::IField>>(&newItem)) {
-    const auto &field = *fieldPtr;
-    existing.label = field->title.value_or(QString());
-    existing.error = field->error.value_or(QString());
-    existing.info = field->info.value_or(QString());
-    existing.placeholder = field->placeholder().value_or(QString());
-    existing.onChange = field->onChange;
-    existing.onBlur = field->onBlur;
-    existing.onFocus = field->onFocus;
-    existing.fieldData = buildFieldData(*field);
+  if (auto *fieldPtr = std::get_if<FormModel::Field>(&newItem)) {
+    const auto &base = getBase(*fieldPtr);
+    existing.label = base.title.value_or(QString());
+    existing.error = base.error.value_or(QString());
+    existing.info = base.info.value_or(QString());
+    existing.onChange = base.onChange;
+    existing.onBlur = base.onBlur;
+    existing.onFocus = base.onFocus;
+    existing.fieldData = buildFieldData(*fieldPtr);
 
-    if (field->value) {
-      if (field->value->eventCount < existing.eventCount) return;
-      existing.modelValue = field->value->value;
+    existing.placeholder =
+        std::visit(overloaded{
+                       [](const FormModel::TextField &f) { return f.placeholder.value_or(QString()); },
+                       [](const FormModel::PasswordField &f) { return f.placeholder.value_or(QString()); },
+                       [](const FormModel::DropdownField &f) { return f.placeholder.value_or(QString()); },
+                       [](const FormModel::TextAreaField &f) { return f.placeholder.value_or(QString()); },
+                       [](const auto &) { return QString(); },
+                   },
+                   *fieldPtr);
+
+    if (base.value) {
+      if (base.value->eventCount < existing.eventCount) return;
+      existing.modelValue = base.value->value;
       existing.hasUserValue = false;
     }
   } else if (auto *desc = std::get_if<FormModel::Description>(&newItem)) {
@@ -251,40 +276,49 @@ void ExtensionFormModel::updateItem(FormItemData &existing, const FormModel::Ite
   }
 }
 
-ExtensionFormModel::FormItemData::Type ExtensionFormModel::fieldType(const FormModel::IField &field) {
-  if (dynamic_cast<const FormModel::TextField *>(&field)) return FormItemData::Type::Text;
-  if (dynamic_cast<const FormModel::PasswordField *>(&field)) return FormItemData::Type::Password;
-  if (dynamic_cast<const FormModel::CheckboxField *>(&field)) return FormItemData::Type::Checkbox;
-  if (dynamic_cast<const FormModel::DropdownField *>(&field)) return FormItemData::Type::Dropdown;
-  if (dynamic_cast<const FormModel::TextAreaField *>(&field)) return FormItemData::Type::TextArea;
-  if (dynamic_cast<const FormModel::FilePickerField *>(&field)) return FormItemData::Type::FilePicker;
-  if (dynamic_cast<const FormModel::DatePickerField *>(&field)) return FormItemData::Type::DatePicker;
-  return FormItemData::Type::Text;
+ExtensionFormModel::FormItemData::Type ExtensionFormModel::fieldType(const FormModel::Field &field) {
+  return std::visit(overloaded{
+                        [](const FormModel::TextField &) { return FormItemData::Type::Text; },
+                        [](const FormModel::PasswordField &) { return FormItemData::Type::Password; },
+                        [](const FormModel::CheckboxField &) { return FormItemData::Type::Checkbox; },
+                        [](const FormModel::DropdownField &) { return FormItemData::Type::Dropdown; },
+                        [](const FormModel::TextAreaField &) { return FormItemData::Type::TextArea; },
+                        [](const FormModel::FilePickerField &) { return FormItemData::Type::FilePicker; },
+                        [](const FormModel::DatePickerField &) { return FormItemData::Type::DatePicker; },
+                    },
+                    field);
 }
 
-QVariantMap ExtensionFormModel::buildFieldData(const FormModel::IField &field) {
+QVariantMap ExtensionFormModel::buildFieldData(const FormModel::Field &field) {
   QVariantMap data;
 
-  if (auto *f = dynamic_cast<const FormModel::CheckboxField *>(&field)) {
-    if (f->m_label) data["label"] = *f->m_label;
-  } else if (auto *f = dynamic_cast<const FormModel::DropdownField *>(&field)) {
-    data["items"] = qml::convertDropdownChildren(f->m_items);
-    data["isLoading"] = f->isLoading;
-    data["filtering"] = f->filtering;
-    data["hasRemoteSearch"] = f->onSearchTextChange.has_value();
-    if (f->onSearchTextChange) data["onSearchTextChange"] = *f->onSearchTextChange;
-    if (f->m_placeholder) data["placeholder"] = *f->m_placeholder;
-    if (f->tooltip) data["tooltip"] = *f->tooltip;
-  } else if (auto *f = dynamic_cast<const FormModel::FilePickerField *>(&field)) {
-    data["multiple"] = f->allowMultipleSelection;
-    data["canChooseFiles"] = f->canChooseFiles;
-    data["canChooseDirectories"] = f->canChooseDirectories;
-    data["showHidden"] = f->showHiddenFiles;
-  } else if (auto *f = dynamic_cast<const FormModel::DatePickerField *>(&field)) {
-    if (f->min) data["min"] = *f->min;
-    if (f->max) data["max"] = *f->max;
-    data["includeTime"] = f->type.value_or("date") == "dateTime";
-  }
+  std::visit(overloaded{
+                 [&](const FormModel::CheckboxField &f) {
+                   if (f.label) data["label"] = *f.label;
+                 },
+                 [&](const FormModel::DropdownField &f) {
+                   data["items"] = qml::convertDropdownChildren(f.items);
+                   data["isLoading"] = f.isLoading;
+                   data["filtering"] = f.filtering;
+                   data["hasRemoteSearch"] = f.onSearchTextChange.has_value();
+                   if (f.onSearchTextChange) data["onSearchTextChange"] = *f.onSearchTextChange;
+                   if (f.placeholder) data["placeholder"] = *f.placeholder;
+                   if (f.tooltip) data["tooltip"] = *f.tooltip;
+                 },
+                 [&](const FormModel::FilePickerField &f) {
+                   data["multiple"] = f.allowMultipleSelection;
+                   data["canChooseFiles"] = f.canChooseFiles;
+                   data["canChooseDirectories"] = f.canChooseDirectories;
+                   data["showHidden"] = f.showHiddenFiles;
+                 },
+                 [&](const FormModel::DatePickerField &f) {
+                   if (f.min) data["min"] = *f.min;
+                   if (f.max) data["max"] = *f.max;
+                   data["includeTime"] = f.type.value_or("date") == "dateTime";
+                 },
+                 [](const auto &) {},
+             },
+             field);
 
   return data;
 }
