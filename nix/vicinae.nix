@@ -33,7 +33,7 @@ gcc15Stdenv.mkDerivation (finalAttrs: {
 
   apiDeps = fetchNpmDeps {
     src = "${finalAttrs.src}/src/typescript/api";
-    hash = "sha256-1BSZPziV0zWPDViWH6DElU7rN1sj0z8hnT7joVNB4CY=";
+    hash = "sha256-Ki/l3PiBY3R0Bzd6leqx2OxA7c+jckjr+YD4GHHaSqI=";
   };
 
   extensionManagerDeps = fetchNpmDeps {
