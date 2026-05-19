@@ -411,11 +411,8 @@ struct RootDetailModelWire {
 };
 
 static std::string takeString(FlexString v) {
-  return std::visit(overloads{
-                        [](std::string &s) { return std::move(s); },
-                        [](FlexStringObj &o) { return std::move(o.value); },
-                    },
-                    v);
+  return match(
+      v, [](std::string &s) { return std::move(s); }, [](FlexStringObj &o) { return std::move(o.value); });
 }
 
 static ColorLike toColorLike(ColorLikeWire w) {
@@ -437,40 +434,33 @@ static std::optional<ColorLike> toOptColorLike(std::optional<ColorLikeWire> w) {
 }
 
 static std::variant<QString, ThemedIconSource> toImageSource(ImageSourceVariant v) {
-  return std::visit(overloads{
-                        [](std::string &s) -> std::variant<QString, ThemedIconSource> { return toQStr(s); },
-                        [](ImageSourceWire &w) -> std::variant<QString, ThemedIconSource> {
-                          if (w.raw) return toQStr(*w.raw);
-                          if (w.themed)
-                            return ThemedIconSource{.light = toQStr(w.themed->light),
-                                                    .dark = toQStr(w.themed->dark)};
-                          if (w.light)
-                            return ThemedIconSource{.light = toQStr(*w.light),
-                                                    .dark = w.dark ? toQStr(*w.dark) : QString()};
-                          return QString();
-                        },
-                    },
-                    v);
+  return match(
+      v, [](std::string &s) -> std::variant<QString, ThemedIconSource> { return toQStr(s); },
+      [](ImageSourceWire &w) -> std::variant<QString, ThemedIconSource> {
+        if (w.raw) return toQStr(*w.raw);
+        if (w.themed)
+          return ThemedIconSource{.light = toQStr(w.themed->light), .dark = toQStr(w.themed->dark)};
+        if (w.light)
+          return ThemedIconSource{.light = toQStr(*w.light), .dark = w.dark ? toQStr(*w.dark) : QString()};
+        return QString();
+      });
 }
 
 static ImageLikeModel toImageLike(ImageLikeWire v) {
-  return std::visit(
-      overloads{
-          [](std::string &s) -> ImageLikeModel { return ExtensionImageModel{.source = toQStr(s)}; },
-          [](ImageObjectWire &w) -> ImageLikeModel {
-            if (w.source) {
-              ExtensionImageModel model;
-              model.source = toImageSource(std::move(*w.source));
-              if (w.fallback) model.fallback = toImageSource(std::move(*w.fallback));
-              if (w.tintColor) model.tintColor = toColorLike(std::move(*w.tintColor));
-              if (w.mask) model.mask = OmniPainter::maskForName(toQStr(*w.mask));
-              return model;
-            }
-            if (w.fileIcon) return ExtensionFileIconModel{.file = *w.fileIcon};
-            return InvalidImageModel{};
-          },
-      },
-      v);
+  return match(
+      v, [](std::string &s) -> ImageLikeModel { return ExtensionImageModel{.source = toQStr(s)}; },
+      [](ImageObjectWire &w) -> ImageLikeModel {
+        if (w.source) {
+          ExtensionImageModel model;
+          model.source = toImageSource(std::move(*w.source));
+          if (w.fallback) model.fallback = toImageSource(std::move(*w.fallback));
+          if (w.tintColor) model.tintColor = toColorLike(std::move(*w.tintColor));
+          if (w.mask) model.mask = OmniPainter::maskForName(toQStr(*w.mask));
+          return model;
+        }
+        if (w.fileIcon) return ExtensionFileIconModel{.file = *w.fileIcon};
+        return InvalidImageModel{};
+      });
 }
 
 static std::optional<ImageLikeModel> toOptImageLike(std::optional<ImageLikeWire> w) {
@@ -484,48 +474,42 @@ static std::optional<ImageURL> toOptImageURL(std::optional<ImageLikeWire> w) {
 }
 
 static ImageLikeModel toImageWrapped(ImageWrappedWire v) {
-  return std::visit(
-      overloads{
-          [](std::string &s) -> ImageLikeModel { return ExtensionImageModel{.source = toQStr(s)}; },
-          [](ImageWrappedObjWire &w) -> ImageLikeModel {
-            if (w.value && !w.source && !w.fileIcon) return toImageLike(std::move(*w.value));
-            if (w.source) {
-              ExtensionImageModel model;
-              model.source = toImageSource(std::move(*w.source));
-              if (w.fallback) model.fallback = toImageSource(std::move(*w.fallback));
-              if (w.tintColor) model.tintColor = toColorLike(std::move(*w.tintColor));
-              if (w.mask) model.mask = OmniPainter::maskForName(toQStr(*w.mask));
-              return model;
-            }
-            if (w.fileIcon) return ExtensionFileIconModel{.file = *w.fileIcon};
-            return InvalidImageModel{};
-          },
-      },
-      v);
+  return match(
+      v, [](std::string &s) -> ImageLikeModel { return ExtensionImageModel{.source = toQStr(s)}; },
+      [](ImageWrappedObjWire &w) -> ImageLikeModel {
+        if (w.value && !w.source && !w.fileIcon) return toImageLike(std::move(*w.value));
+        if (w.source) {
+          ExtensionImageModel model;
+          model.source = toImageSource(std::move(*w.source));
+          if (w.fallback) model.fallback = toImageSource(std::move(*w.fallback));
+          if (w.tintColor) model.tintColor = toColorLike(std::move(*w.tintColor));
+          if (w.mask) model.mask = OmniPainter::maskForName(toQStr(*w.mask));
+          return model;
+        }
+        if (w.fileIcon) return ExtensionFileIconModel{.file = *w.fileIcon};
+        return InvalidImageModel{};
+      });
 }
 
 static GridItemViewModel::Content toGridContent(GridContentWire v, std::optional<std::string> &tooltip) {
-  return std::visit(overloads{
-                        [](std::string &s) -> GridItemViewModel::Content {
-                          return ExtensionImageModel{.source = toQStr(s)};
-                        },
-                        [&tooltip](GridContentObjWire &w) -> GridItemViewModel::Content {
-                          if (w.tooltip) tooltip = std::move(*w.tooltip);
-                          if (w.color) return toColorLike(std::move(*w.color));
-                          if (w.value) return toImageLike(std::move(*w.value));
-                          if (w.source) {
-                            ExtensionImageModel model;
-                            model.source = toImageSource(std::move(*w.source));
-                            if (w.fallback) model.fallback = toImageSource(std::move(*w.fallback));
-                            if (w.tintColor) model.tintColor = toColorLike(std::move(*w.tintColor));
-                            if (w.mask) model.mask = OmniPainter::maskForName(toQStr(*w.mask));
-                            return model;
-                          }
-                          if (w.fileIcon) return ExtensionFileIconModel{.file = *w.fileIcon};
-                          return InvalidImageModel{};
-                        },
-                    },
-                    v);
+  return match(
+      v,
+      [](std::string &s) -> GridItemViewModel::Content { return ExtensionImageModel{.source = toQStr(s)}; },
+      [&tooltip](GridContentObjWire &w) -> GridItemViewModel::Content {
+        if (w.tooltip) tooltip = std::move(*w.tooltip);
+        if (w.color) return toColorLike(std::move(*w.color));
+        if (w.value) return toImageLike(std::move(*w.value));
+        if (w.source) {
+          ExtensionImageModel model;
+          model.source = toImageSource(std::move(*w.source));
+          if (w.fallback) model.fallback = toImageSource(std::move(*w.fallback));
+          if (w.tintColor) model.tintColor = toColorLike(std::move(*w.tintColor));
+          if (w.mask) model.mask = OmniPainter::maskForName(toQStr(*w.mask));
+          return model;
+        }
+        if (w.fileIcon) return ExtensionFileIconModel{.file = *w.fileIcon};
+        return InvalidImageModel{};
+      });
 }
 
 static AccessoryModel toAccessoryModel(AccessoryWire w) {
@@ -534,15 +518,14 @@ static AccessoryModel toAccessoryModel(AccessoryWire w) {
   if (w.tooltip) m.tooltip = std::move(*w.tooltip);
 
   auto unpackFlexText = [](FlexText &ft) -> std::pair<std::string, std::optional<ColorLike>> {
-    return std::visit(overloads{
-                          [](std::string &s) -> std::pair<std::string, std::optional<ColorLike>> {
-                            return {std::move(s), std::nullopt};
-                          },
-                          [](FlexTextObj &o) -> std::pair<std::string, std::optional<ColorLike>> {
-                            return {std::move(o.value), toOptColorLike(std::move(o.color))};
-                          },
-                      },
-                      ft);
+    return match(
+        ft,
+        [](std::string &s) -> std::pair<std::string, std::optional<ColorLike>> {
+          return {std::move(s), std::nullopt};
+        },
+        [](FlexTextObj &o) -> std::pair<std::string, std::optional<ColorLike>> {
+          return {std::move(o.value), toOptColorLike(std::move(o.color))};
+        });
   };
 
   if (w.tag) {
@@ -575,24 +558,22 @@ static const std::unordered_map<std::string, Keybind> NAMED_SHORTCUTS = {
 };
 
 static Keyboard::Shortcut toShortcut(ShortcutWire w) {
-  return std::visit(overloads{
-                        [](std::string &s) -> Keyboard::Shortcut {
-                          if (auto found = NAMED_SHORTCUTS.find(s); found != NAMED_SHORTCUTS.end())
-                            return found->second;
-                          return Keyboard::Shortcut::fromString(toQStr(s));
-                        },
-                        [](ShortcutObjWire &o) -> Keyboard::Shortcut {
-                          auto k = Keyboard::keyFromString(toQStr(o.key));
-                          if (!k) return {};
-                          Qt::KeyboardModifiers mods{};
-                          for (const auto &m : o.modifiers) {
-                            auto mod = Keyboard::modifierFromString(toQStr(m));
-                            if (mod) mods.setFlag(*mod);
-                          }
-                          return Keyboard::Shortcut(*k, mods);
-                        },
-                    },
-                    w);
+  return match(
+      w,
+      [](std::string &s) -> Keyboard::Shortcut {
+        if (auto found = NAMED_SHORTCUTS.find(s); found != NAMED_SHORTCUTS.end()) return found->second;
+        return Keyboard::Shortcut::fromString(toQStr(s));
+      },
+      [](ShortcutObjWire &o) -> Keyboard::Shortcut {
+        auto k = Keyboard::keyFromString(toQStr(o.key));
+        if (!k) return {};
+        Qt::KeyboardModifiers mods{};
+        for (const auto &m : o.modifiers) {
+          auto mod = Keyboard::modifierFromString(toQStr(m));
+          if (mod) mods.setFlag(*mod);
+        }
+        return Keyboard::Shortcut(*k, mods);
+      });
 }
 
 static std::optional<Keyboard::Shortcut> toOptShortcut(std::optional<ShortcutWire> w) {
@@ -624,14 +605,12 @@ static ActionPannelSectionModel toActionPannelSection(ActionPannelSectionModelWi
   m.title = std::move(w.title);
   m.items.reserve(w.children.size());
   for (auto &child : w.children) {
-    std::visit(overloads{
-                   [&](ActionModelWire &c) { m.items.emplace_back(toActionModel(std::move(c))); },
-                   [&](ActionPannelSubmenuWirePtr &c) {
-                     m.items.emplace_back(
-                         std::make_shared<ActionPannelSubmenuModel>(toActionPannelSubmenu(std::move(*c))));
-                   },
-               },
-               child);
+    match(
+        child, [&](ActionModelWire &c) { m.items.emplace_back(toActionModel(std::move(c))); },
+        [&](ActionPannelSubmenuWirePtr &c) {
+          m.items.emplace_back(
+              std::make_shared<ActionPannelSubmenuModel>(toActionPannelSubmenu(std::move(*c))));
+        });
   }
   return m;
 }
@@ -650,18 +629,17 @@ static ActionPannelSubmenuModel toActionPannelSubmenu(ActionPannelSubmenuModelWi
   m.stableId = std::move(w.stableId);
   m.children.reserve(w.children.size());
   for (auto &child : w.children) {
-    std::visit(overloads{
-                   [&](ActionPannelSectionWirePtr &c) {
-                     m.children.emplace_back(
-                         std::make_shared<ActionPannelSectionModel>(toActionPannelSection(std::move(*c))));
-                   },
-                   [&](ActionModelWire &c) { m.children.emplace_back(toActionModel(std::move(c))); },
-                   [&](ActionPannelSubmenuWirePtr &c) {
-                     m.children.emplace_back(
-                         std::make_shared<ActionPannelSubmenuModel>(toActionPannelSubmenu(std::move(*c))));
-                   },
-               },
-               child);
+    match(
+        child,
+        [&](ActionPannelSectionWirePtr &c) {
+          m.children.emplace_back(
+              std::make_shared<ActionPannelSectionModel>(toActionPannelSection(std::move(*c))));
+        },
+        [&](ActionModelWire &c) { m.children.emplace_back(toActionModel(std::move(c))); },
+        [&](ActionPannelSubmenuWirePtr &c) {
+          m.children.emplace_back(
+              std::make_shared<ActionPannelSubmenuModel>(toActionPannelSubmenu(std::move(*c))));
+        });
   }
   return m;
 }
@@ -672,18 +650,16 @@ static ActionPannelModel toActionPannelModel(ActionPannelModelWire w) {
   m.stableId = std::move(w.stableId);
   m.children.reserve(w.children.size());
   for (auto &child : w.children) {
-    std::visit(overloads{
-                   [&](ActionModelWire &c) { m.children.emplace_back(toActionModel(std::move(c))); },
-                   [&](ActionPannelSectionWirePtr &c) {
-                     m.children.emplace_back(
-                         std::make_shared<ActionPannelSectionModel>(toActionPannelSection(std::move(*c))));
-                   },
-                   [&](ActionPannelSubmenuWirePtr &c) {
-                     m.children.emplace_back(
-                         std::make_shared<ActionPannelSubmenuModel>(toActionPannelSubmenu(std::move(*c))));
-                   },
-               },
-               child);
+    match(
+        child, [&](ActionModelWire &c) { m.children.emplace_back(toActionModel(std::move(c))); },
+        [&](ActionPannelSectionWirePtr &c) {
+          m.children.emplace_back(
+              std::make_shared<ActionPannelSectionModel>(toActionPannelSection(std::move(*c))));
+        },
+        [&](ActionPannelSubmenuWirePtr &c) {
+          m.children.emplace_back(
+              std::make_shared<ActionPannelSubmenuModel>(toActionPannelSubmenu(std::move(*c))));
+        });
   }
   return m;
 }
@@ -719,11 +695,9 @@ static DropdownModel toDropdownModel(DropdownModelWire w) {
   m.isLoading = w.isLoading;
   m.children.reserve(w.children.size());
   for (auto &child : w.children) {
-    std::visit(overloads{
-                   [&](DropdownItemWire &c) { m.children.emplace_back(toDropdownItem(std::move(c))); },
-                   [&](DropdownSectionWire &c) { m.children.emplace_back(toDropdownSection(std::move(c))); },
-               },
-               child);
+    match(
+        child, [&](DropdownItemWire &c) { m.children.emplace_back(toDropdownItem(std::move(c))); },
+        [&](DropdownSectionWire &c) { m.children.emplace_back(toDropdownSection(std::move(c))); });
   }
   return m;
 }
@@ -748,14 +722,12 @@ static MetadataLabel toMetadataLabel(MetadataLabelWire w) {
   MetadataLabel m;
   m.title = std::move(w.title);
   m.icon = toOptImageURL(std::move(w.icon));
-  std::visit(overloads{
-                 [&](std::string &s) { m.text = std::move(s); },
-                 [&](FlexTextObj &o) {
-                   m.text = std::move(o.value);
-                   m.color = toOptColorLike(std::move(o.color));
-                 },
-             },
-             w.text);
+  match(
+      w.text, [&](std::string &s) { m.text = std::move(s); },
+      [&](FlexTextObj &o) {
+        m.text = std::move(o.value);
+        m.color = toOptColorLike(std::move(o.color));
+      });
   return m;
 }
 
@@ -763,12 +735,10 @@ static MetadataModel toMetadataModel(MetadataModelWire w) {
   MetadataModel m;
   m.children.reserve(w.children.size());
   for (auto &child : w.children) {
-    std::visit(overloads{
-                   [&](MetadataLabelWire &c) { m.children.emplace_back(toMetadataLabel(std::move(c))); },
-                   [&](TagListWire &c) { m.children.emplace_back(toTagList(std::move(c))); },
-                   [&](auto &c) { m.children.emplace_back(std::move(c)); },
-               },
-               child);
+    match(
+        child, [&](MetadataLabelWire &c) { m.children.emplace_back(toMetadataLabel(std::move(c))); },
+        [&](TagListWire &c) { m.children.emplace_back(toTagList(std::move(c))); },
+        [&](auto &c) { m.children.emplace_back(std::move(c)); });
   }
   return m;
 }
@@ -806,11 +776,9 @@ static ListItemViewModel toListItemViewModel(ListItemViewModelWire w) {
     m.accessories.emplace_back(toAccessoryModel(std::move(a)));
   m.keywords = std::move(w.keywords);
   for (auto &child : w.children) {
-    std::visit(overloads{
-                   [&](ActionPannelModelWire &c) { m.actionPannel = toActionPannelModel(std::move(c)); },
-                   [&](DetailModelWire &c) { m.detail = toDetailModel(std::move(c)); },
-               },
-               child);
+    match(
+        child, [&](ActionPannelModelWire &c) { m.actionPannel = toActionPannelModel(std::move(c)); },
+        [&](DetailModelWire &c) { m.detail = toDetailModel(std::move(c)); });
   }
   return m;
 }
@@ -846,18 +814,17 @@ static ListModel toListModel(ListModelWire w) {
   m.items.reserve(w.children.size());
   size_t index = 0;
   for (auto &child : w.children) {
-    std::visit(overloads{
-                   [&](ListItemViewModelWire &c) {
-                     auto item = toListItemViewModel(std::move(c));
-                     if (item.id.empty()) item.id = std::to_string(index);
-                     m.items.emplace_back(std::move(item));
-                   },
-                   [&](ListSectionModelWire &c) { m.items.emplace_back(toListSectionModel(std::move(c))); },
-                   [&](ActionPannelModelWire &c) { m.actions = toActionPannelModel(std::move(c)); },
-                   [&](EmptyViewModelWire &c) { m.emptyView = toEmptyViewModel(std::move(c)); },
-                   [&](DropdownModelWire &c) { m.searchBarAccessory = toDropdownModel(std::move(c)); },
-               },
-               child);
+    match(
+        child,
+        [&](ListItemViewModelWire &c) {
+          auto item = toListItemViewModel(std::move(c));
+          if (item.id.empty()) item.id = std::to_string(index);
+          m.items.emplace_back(std::move(item));
+        },
+        [&](ListSectionModelWire &c) { m.items.emplace_back(toListSectionModel(std::move(c))); },
+        [&](ActionPannelModelWire &c) { m.actions = toActionPannelModel(std::move(c)); },
+        [&](EmptyViewModelWire &c) { m.emptyView = toEmptyViewModel(std::move(c)); },
+        [&](DropdownModelWire &c) { m.searchBarAccessory = toDropdownModel(std::move(c)); });
     ++index;
   }
 
@@ -917,18 +884,17 @@ static GridModel toGridModel(GridModelWire w) {
   m.items.reserve(w.children.size());
   size_t index = 0;
   for (auto &child : w.children) {
-    std::visit(overloads{
-                   [&](GridItemViewModelWire &c) {
-                     auto item = toGridItemViewModel(std::move(c));
-                     if (item.id.empty()) item.id = std::to_string(index);
-                     m.items.emplace_back(std::move(item));
-                   },
-                   [&](GridSectionModelWire &c) { m.items.emplace_back(toGridSectionModel(std::move(c))); },
-                   [&](ActionPannelModelWire &c) { m.actions = toActionPannelModel(std::move(c)); },
-                   [&](EmptyViewModelWire &c) { m.emptyView = toEmptyViewModel(std::move(c)); },
-                   [&](DropdownModelWire &c) { m.searchBarAccessory = toDropdownModel(std::move(c)); },
-               },
-               child);
+    match(
+        child,
+        [&](GridItemViewModelWire &c) {
+          auto item = toGridItemViewModel(std::move(c));
+          if (item.id.empty()) item.id = std::to_string(index);
+          m.items.emplace_back(std::move(item));
+        },
+        [&](GridSectionModelWire &c) { m.items.emplace_back(toGridSectionModel(std::move(c))); },
+        [&](ActionPannelModelWire &c) { m.actions = toActionPannelModel(std::move(c)); },
+        [&](EmptyViewModelWire &c) { m.emptyView = toEmptyViewModel(std::move(c)); },
+        [&](DropdownModelWire &c) { m.searchBarAccessory = toDropdownModel(std::move(c)); });
     ++index;
   }
 
@@ -942,11 +908,9 @@ static RootDetailModel toRootDetailModel(RootDetailModelWire w) {
   m.navigationTitle = std::move(w.navigationTitle);
 
   for (auto &child : w.children) {
-    std::visit(overloads{
-                   [&](MetadataModelWire &c) { m.metadata = toMetadataModel(std::move(c)); },
-                   [&](ActionPannelModelWire &c) { m.actions = toActionPannelModel(std::move(c)); },
-               },
-               child);
+    match(
+        child, [&](MetadataModelWire &c) { m.metadata = toMetadataModel(std::move(c)); },
+        [&](ActionPannelModelWire &c) { m.actions = toActionPannelModel(std::move(c)); });
   }
 
   return m;
@@ -1151,80 +1115,73 @@ static FormModel toFormModel(FormModelWire w) {
   m.items.reserve(w.children.size());
 
   for (auto &child : w.children) {
-    std::visit(overloads{
-                   [&](FormTextFieldWire &c) {
-                     m.items.emplace_back(
-                         FormModel::Field{FormModel::TextField{toFieldBase(c), std::move(c.placeholder)}});
-                   },
-                   [&](FormPasswordFieldWire &c) {
-                     m.items.emplace_back(FormModel::Field{
-                         FormModel::PasswordField{toFieldBase(c), std::move(c.placeholder)}});
-                   },
-                   [&](FormCheckboxFieldWire &c) {
-                     m.items.emplace_back(
-                         FormModel::Field{FormModel::CheckboxField{toFieldBase(c), std::move(c.label)}});
-                   },
-                   [&](FormDropdownFieldWire &c) {
-                     FormModel::DropdownField f;
-                     f.base = toFieldBase(c);
-                     f.onSearchTextChange = std::move(c.onSearchTextChange);
-                     f.placeholder = std::move(c.placeholder);
-                     f.tooltip = std::move(c.tooltip);
-                     f.isLoading = c.isLoading;
-                     f.throttle = c.throttle;
-                     f.filtering = c.filtering.value_or(!f.onSearchTextChange.has_value());
-                     f.items.reserve(c.children.size());
-                     for (auto &dc : c.children) {
-                       std::visit(overloads{
-                                      [&](DropdownItemWire &v) {
-                                        f.items.emplace_back(toDropdownItem(std::move(v)));
-                                      },
-                                      [&](DropdownSectionWire &v) {
-                                        f.items.emplace_back(toDropdownSection(std::move(v)));
-                                      },
-                                  },
-                                  dc);
-                     }
-                     m.items.emplace_back(FormModel::Field{std::move(f)});
-                   },
-                   [&](FormTextAreaFieldWire &c) {
-                     m.items.emplace_back(FormModel::Field{
-                         FormModel::TextAreaField{toFieldBase(c), std::move(c.placeholder)}});
-                   },
-                   [&](FormFilePickerFieldWire &c) {
-                     FormModel::FilePickerField f;
-                     f.base = toFieldBase(c);
-                     f.allowMultipleSelection = c.allowMultipleSelection;
-                     f.canChooseDirectories = c.canChooseDirectories;
-                     f.canChooseFiles = c.canChooseFiles;
-                     f.showHiddenFiles = c.showHiddenFiles;
-                     m.items.emplace_back(FormModel::Field{std::move(f)});
-                   },
-                   [&](FormDatePickerFieldWire &c) {
-                     FormModel::DatePickerField f;
-                     f.base = toFieldBase(c);
-                     f.min = std::move(c.min);
-                     f.max = std::move(c.max);
-                     f.type = std::move(c.type);
-                     m.items.emplace_back(FormModel::Field{std::move(f)});
-                   },
-                   [&](FormSeparatorWire &) { m.items.emplace_back(FormModel::Separator{}); },
-                   [&](FormDescriptionWire &c) {
-                     FormModel::Description desc;
-                     desc.text = std::move(c.text);
-                     desc.title = std::move(c.title);
-                     m.items.emplace_back(std::move(desc));
-                   },
-                   [&](FormLinkAccessoryWire &c) {
-                     FormModel::LinkAccessoryModel link;
-                     link.text = std::move(c.text);
-                     link.target = std::move(c.target);
-                     m.searchBarAccessory = std::move(link);
-                   },
-                   [&](ActionPannelModelWire &c) { m.actions = toActionPannelModel(std::move(c)); },
-                   [&](FormIgnoredWire &) {},
-               },
-               child);
+    match(
+        child,
+        [&](FormTextFieldWire &c) {
+          m.items.emplace_back(
+              FormModel::Field{FormModel::TextField{toFieldBase(c), std::move(c.placeholder)}});
+        },
+        [&](FormPasswordFieldWire &c) {
+          m.items.emplace_back(
+              FormModel::Field{FormModel::PasswordField{toFieldBase(c), std::move(c.placeholder)}});
+        },
+        [&](FormCheckboxFieldWire &c) {
+          m.items.emplace_back(
+              FormModel::Field{FormModel::CheckboxField{toFieldBase(c), std::move(c.label)}});
+        },
+        [&](FormDropdownFieldWire &c) {
+          FormModel::DropdownField f;
+          f.base = toFieldBase(c);
+          f.onSearchTextChange = std::move(c.onSearchTextChange);
+          f.placeholder = std::move(c.placeholder);
+          f.tooltip = std::move(c.tooltip);
+          f.isLoading = c.isLoading;
+          f.throttle = c.throttle;
+          f.filtering = c.filtering.value_or(!f.onSearchTextChange.has_value());
+          f.items.reserve(c.children.size());
+          for (auto &dc : c.children) {
+            match(
+                dc, [&](DropdownItemWire &v) { f.items.emplace_back(toDropdownItem(std::move(v))); },
+                [&](DropdownSectionWire &v) { f.items.emplace_back(toDropdownSection(std::move(v))); });
+          }
+          m.items.emplace_back(FormModel::Field{std::move(f)});
+        },
+        [&](FormTextAreaFieldWire &c) {
+          m.items.emplace_back(
+              FormModel::Field{FormModel::TextAreaField{toFieldBase(c), std::move(c.placeholder)}});
+        },
+        [&](FormFilePickerFieldWire &c) {
+          FormModel::FilePickerField f;
+          f.base = toFieldBase(c);
+          f.allowMultipleSelection = c.allowMultipleSelection;
+          f.canChooseDirectories = c.canChooseDirectories;
+          f.canChooseFiles = c.canChooseFiles;
+          f.showHiddenFiles = c.showHiddenFiles;
+          m.items.emplace_back(FormModel::Field{std::move(f)});
+        },
+        [&](FormDatePickerFieldWire &c) {
+          FormModel::DatePickerField f;
+          f.base = toFieldBase(c);
+          f.min = std::move(c.min);
+          f.max = std::move(c.max);
+          f.type = std::move(c.type);
+          m.items.emplace_back(FormModel::Field{std::move(f)});
+        },
+        [&](FormSeparatorWire &) { m.items.emplace_back(FormModel::Separator{}); },
+        [&](FormDescriptionWire &c) {
+          FormModel::Description desc;
+          desc.text = std::move(c.text);
+          desc.title = std::move(c.title);
+          m.items.emplace_back(std::move(desc));
+        },
+        [&](FormLinkAccessoryWire &c) {
+          FormModel::LinkAccessoryModel link;
+          link.text = std::move(c.text);
+          link.target = std::move(c.target);
+          m.searchBarAccessory = std::move(link);
+        },
+        [&](ActionPannelModelWire &c) { m.actions = toActionPannelModel(std::move(c)); },
+        [&](FormIgnoredWire &) {});
   }
 
   return m;
@@ -1272,22 +1229,21 @@ ParsedRenderData parseRenderPayload(std::string_view json) {
       continue;
     }
 
-    std::visit(overloads{
-                   [&](ListModelWire &w) {
-                     auto model = toListModel(std::move(w));
-                     model.dirty = view.dirty;
-                     model.propsDirty = view.propsDirty;
-                     rr.root = std::move(model);
-                   },
-                   [&](GridModelWire &w) {
-                     auto model = toGridModel(std::move(w));
-                     model.dirty = view.dirty;
-                     rr.root = std::move(model);
-                   },
-                   [&](RootDetailModelWire &w) { rr.root = toRootDetailModel(std::move(w)); },
-                   [&](FormModelWire &w) { rr.root = toFormModel(std::move(w)); },
-               },
-               *view.root);
+    match(
+        *view.root,
+        [&](ListModelWire &w) {
+          auto model = toListModel(std::move(w));
+          model.dirty = view.dirty;
+          model.propsDirty = view.propsDirty;
+          rr.root = std::move(model);
+        },
+        [&](GridModelWire &w) {
+          auto model = toGridModel(std::move(w));
+          model.dirty = view.dirty;
+          rr.root = std::move(model);
+        },
+        [&](RootDetailModelWire &w) { rr.root = toRootDetailModel(std::move(w)); },
+        [&](FormModelWire &w) { rr.root = toFormModel(std::move(w)); });
 
     result.items.emplace_back(std::move(rr));
   }
