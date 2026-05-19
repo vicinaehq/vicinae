@@ -195,3 +195,13 @@ jobs:
           files: |
             *.AppImage
 
+  trigger-packaging:
+    needs: [build-binary, build-appimage]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger bumpver in packaging-arch
+        env:
+          GH_TOKEN: ${{ secrets.PACKAGING_AUR_TOKEN }}
+        run: |
+          gh workflow run bumpver.yml --repo vicinaehq/packaging-arch
+
