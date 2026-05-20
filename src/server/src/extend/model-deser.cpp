@@ -6,7 +6,6 @@
 #include <variant>
 #include <vector>
 
-#include <QColor>
 #include <QJsonDocument>
 #include <glaze/json.hpp>
 
@@ -36,10 +35,6 @@ static constexpr glz::opts PARSE_OPTS{.error_on_unknown_keys = false, .minified 
 
 static inline QString toQStr(const std::string &s) {
   return QString::fromUtf8(s.data(), static_cast<qsizetype>(s.size()));
-}
-
-static inline std::optional<QString> toOptQStr(const std::optional<std::string> &s) {
-  return s ? std::optional(toQStr(*s)) : std::nullopt;
 }
 
 struct DynColorRaw {
@@ -156,9 +151,11 @@ struct ActionModelWire {
   std::optional<std::string> stableId;
 };
 
+struct ActionPannelItemWire;
+
 struct ActionPannelSectionModelWire {
   std::string title;
-  std::vector<glz::raw_json> children;
+  std::vector<std::unique_ptr<ActionPannelItemWire>> children;
 };
 
 struct ActionPannelSubmenuModelWire {
@@ -171,17 +168,30 @@ struct ActionPannelSubmenuModelWire {
   std::optional<bool> throttle;
   std::string onOpen;
   std::string onSearchTextChange;
-  std::vector<glz::raw_json> children;
+  std::vector<std::unique_ptr<ActionPannelItemWire>> children;
   std::optional<std::string> stableId;
 };
 
-using ActionPannelItemWire =
+using ActionPannelItemVariant =
     std::variant<ActionModelWire, ActionPannelSectionModelWire, ActionPannelSubmenuModelWire>;
 
-template <> struct glz::meta<ActionPannelItemWire> {
+template <> struct glz::meta<ActionPannelItemVariant> {
   static constexpr std::string_view tag = TAG;
   static constexpr auto ids = std::array{"action", "action-panel-section", "action-panel-submenu"};
 };
+
+struct ActionPannelItemWire {
+  ActionPannelItemVariant v;
+};
+
+namespace glz {
+template <> struct from<JSON, ActionPannelItemWire> {
+  template <auto Opts, auto... Extra>
+  static void op(ActionPannelItemWire &value, is_context auto &&ctx, auto &&it, auto &&end) {
+    parse<JSON>::op<Opts>(value.v, ctx, it, end);
+  }
+};
+} // namespace glz
 
 struct ActionPannelModelWire {
   std::string title;
@@ -239,10 +249,6 @@ struct MetadataLabelWire {
   std::string title;
   FlexText text;
   std::optional<ImageLikeWire> icon;
-};
-
-template <> struct glz::meta<MetadataSeparator> {
-  static constexpr auto value = glz::object();
 };
 
 using MetadataChild = std::variant<MetadataLabelWire, MetadataLink, MetadataSeparator, TagListWire>;
@@ -583,11 +589,10 @@ static ActionPannelSectionModel toActionPannelSection(ActionPannelSectionModelWi
   ActionPannelSectionModel m;
   m.title = std::move(w.title);
   m.items.reserve(w.children.size());
-  for (auto &raw : w.children) {
-    ActionPannelItemWire child{};
-    if (auto err = glz::read<PARSE_OPTS>(child, raw.str)) continue;
+  for (auto &child : w.children) {
+    if (!child) continue;
     match(
-        std::move(child), [&](ActionModelWire c) { m.items.emplace_back(toActionModel(std::move(c))); },
+        std::move(child->v), [&](ActionModelWire c) { m.items.emplace_back(toActionModel(std::move(c))); },
         [&](ActionPannelSubmenuModelWire c) {
           m.items.emplace_back(
               std::make_shared<ActionPannelSubmenuModel>(toActionPannelSubmenu(std::move(c))));
@@ -610,11 +615,10 @@ static ActionPannelSubmenuModel toActionPannelSubmenu(ActionPannelSubmenuModelWi
   m.onSearchTextChange = std::move(w.onSearchTextChange);
   m.stableId = std::move(w.stableId);
   m.children.reserve(w.children.size());
-  for (auto &raw : w.children) {
-    ActionPannelItemWire child{};
-    if (auto err = glz::read<PARSE_OPTS>(child, raw.str)) continue;
+  for (auto &child : w.children) {
+    if (!child) continue;
     match(
-        std::move(child),
+        std::move(child->v),
         [&](ActionPannelSectionModelWire c) {
           m.children.emplace_back(
               std::make_shared<ActionPannelSectionModel>(toActionPannelSection(std::move(c))));
@@ -635,7 +639,7 @@ static ActionPannelModel toActionPannelModel(ActionPannelModelWire w) {
   m.children.reserve(w.children.size());
   for (auto &child : w.children) {
     match(
-        std::move(child), [&](ActionModelWire c) { m.children.emplace_back(toActionModel(std::move(c))); },
+        std::move(child.v), [&](ActionModelWire c) { m.children.emplace_back(toActionModel(std::move(c))); },
         [&](ActionPannelSectionModelWire c) {
           m.children.emplace_back(
               std::make_shared<ActionPannelSectionModel>(toActionPannelSection(std::move(c))));
@@ -1015,12 +1019,10 @@ struct FormLinkAccessoryWire {
   std::string target;
 };
 
-struct FormIgnoredWire {};
-
 using FormChild =
     std::variant<FormTextFieldWire, FormPasswordFieldWire, FormCheckboxFieldWire, FormDropdownFieldWire,
                  FormTextAreaFieldWire, FormFilePickerFieldWire, FormDatePickerFieldWire, FormSeparatorWire,
-                 FormDescriptionWire, FormLinkAccessoryWire, ActionPannelModelWire, FormIgnoredWire>;
+                 FormDescriptionWire, FormLinkAccessoryWire, ActionPannelModelWire>;
 
 template <> struct glz::meta<FormChild> {
   static constexpr std::string_view tag = TAG;
@@ -1110,8 +1112,7 @@ static FormModel toFormModel(FormModelWire w) {
           link.target = std::move(c.target);
           m.searchBarAccessory = std::move(link);
         },
-        [&](ActionPannelModelWire &c) { m.actions = toActionPannelModel(std::move(c)); },
-        [&](FormIgnoredWire &) {});
+        [&](ActionPannelModelWire &c) { m.actions = toActionPannelModel(std::move(c)); });
   }
 
   return m;
