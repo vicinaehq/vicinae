@@ -939,10 +939,6 @@ template <> struct from<JSON, FormFieldValue> {
   FormFieldValue value;                             \
   std::optional<glz::generic> defaultValue;
 
-#define FIELD_BASE_WIRE_FIELDS(T)                                                                              \
-  "id", &T::id, "autoFocus", &T::autoFocus, "error", &T::error, "info", &T::info, "onBlur", &T::onBlur,      \
-      "onChange", &T::onChange, "onFocus", &T::onFocus, "title", &T::title, "storeValue", &T::storeValue,      \
-      "value", &T::value, "defaultValue", &T::defaultValue
 // clang-format on
 
 template <typename T> static FormModel::FieldBase toFieldBase(T &w) {
@@ -966,29 +962,14 @@ struct FormTextFieldWire {
   std::optional<std::string> placeholder;
 };
 
-template <> struct glz::meta<FormTextFieldWire> {
-  using T = FormTextFieldWire;
-  static constexpr auto value = glz::object(FIELD_BASE_WIRE_FIELDS(T), "placeholder", &T::placeholder);
-};
-
 struct FormPasswordFieldWire {
   FIELD_BASE_WIRE_MEMBERS
   std::optional<std::string> placeholder;
 };
 
-template <> struct glz::meta<FormPasswordFieldWire> {
-  using T = FormPasswordFieldWire;
-  static constexpr auto value = glz::object(FIELD_BASE_WIRE_FIELDS(T), "placeholder", &T::placeholder);
-};
-
 struct FormCheckboxFieldWire {
   FIELD_BASE_WIRE_MEMBERS
   std::optional<std::string> label;
-};
-
-template <> struct glz::meta<FormCheckboxFieldWire> {
-  using T = FormCheckboxFieldWire;
-  static constexpr auto value = glz::object(FIELD_BASE_WIRE_FIELDS(T), "label", &T::label);
 };
 
 struct FormDropdownFieldWire {
@@ -1002,22 +983,9 @@ struct FormDropdownFieldWire {
   std::vector<DropdownChildWire> children;
 };
 
-template <> struct glz::meta<FormDropdownFieldWire> {
-  using T = FormDropdownFieldWire;
-  static constexpr auto value =
-      glz::object(FIELD_BASE_WIRE_FIELDS(T), "onSearchTextChange", &T::onSearchTextChange, "placeholder",
-                  &T::placeholder, "tooltip", &T::tooltip, "isLoading", &T::isLoading, "throttle",
-                  &T::throttle, "filtering", &T::filtering, "children", &T::children);
-};
-
 struct FormTextAreaFieldWire {
   FIELD_BASE_WIRE_MEMBERS
   std::optional<std::string> placeholder;
-};
-
-template <> struct glz::meta<FormTextAreaFieldWire> {
-  using T = FormTextAreaFieldWire;
-  static constexpr auto value = glz::object(FIELD_BASE_WIRE_FIELDS(T), "placeholder", &T::placeholder);
 };
 
 struct FormFilePickerFieldWire {
@@ -1028,13 +996,6 @@ struct FormFilePickerFieldWire {
   bool showHiddenFiles = false;
 };
 
-template <> struct glz::meta<FormFilePickerFieldWire> {
-  using T = FormFilePickerFieldWire;
-  static constexpr auto value = glz::object(
-      FIELD_BASE_WIRE_FIELDS(T), "allowMultipleSelection", &T::allowMultipleSelection, "canChooseDirectories",
-      &T::canChooseDirectories, "canChooseFiles", &T::canChooseFiles, "showHiddenFiles", &T::showHiddenFiles);
-};
-
 struct FormDatePickerFieldWire {
   FIELD_BASE_WIRE_MEMBERS
   std::optional<std::string> min;
@@ -1042,17 +1003,7 @@ struct FormDatePickerFieldWire {
   std::optional<std::string> type;
 };
 
-template <> struct glz::meta<FormDatePickerFieldWire> {
-  using T = FormDatePickerFieldWire;
-  static constexpr auto value =
-      glz::object(FIELD_BASE_WIRE_FIELDS(T), "min", &T::min, "max", &T::max, "type", &T::type);
-};
-
 struct FormSeparatorWire {};
-
-template <> struct glz::meta<FormSeparatorWire> {
-  static constexpr auto value = glz::object();
-};
 
 struct FormDescriptionWire {
   std::string text;
@@ -1065,10 +1016,6 @@ struct FormLinkAccessoryWire {
 };
 
 struct FormIgnoredWire {};
-
-template <> struct glz::meta<FormIgnoredWire> {
-  static constexpr auto value = glz::object();
-};
 
 using FormChild =
     std::variant<FormTextFieldWire, FormPasswordFieldWire, FormCheckboxFieldWire, FormDropdownFieldWire,
