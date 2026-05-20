@@ -1,0 +1,46 @@
+# elementary OS - Light
+# Inspired by elementary OS dark styling
+
+[meta]
+name = "elementary OS Light"
+description = "Warm, soft elementary OS inspired light theme"
+variant = "light"
+inherits = "vicinae-light"
+icon = "icons/elementary@light.svg"
+
+[colors.core]
+accent = "#3689E6"
+accent_foreground = "#FFFFFF"
+background = "#FAFAFA"
+foreground = "#333333"
+secondary_background = "#F0F0F0"
+border = "#D4D4D4"
+
+[colors.main_window]
+border = "#C9C9C9"
+footer = { background = "#ECECEC" }
+
+[colors.settings_window]
+border = "#C9C9C9"
+
+[colors.accents]
+blue = "#3689E6"
+green = "#68B723"
+magenta = "#A56DE2"
+orange = "#F37329"
+red = "#C6262E"
+yellow = "#F9C440"
+cyan = "#28BCA3"
+purple = "#7E57C2"
+
+[colors.list.item.selection]
+background = "#E7F2FD"
+secondary_background = "#D5E9FA"
+outline = "#3689E6" 
+
+[colors.scrollbars]
+background = "#CFCFCF"
+
+[colors.loading]
+bar = "#3689E6"
+spinner = "#666666"
