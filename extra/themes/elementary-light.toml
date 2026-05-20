@@ -33,12 +33,10 @@ yellow = "#F9C440"
 cyan = "#28BCA3"
 purple = "#7E57C2"
 
-[colors.list.item]
-selection = { outline = "#3689E6" }
-
 [colors.list.item.selection]
 background = "#E7F2FD"
 secondary_background = "#D5E9FA"
+outline = "#3689E6" 
 
 [colors.scrollbars]
 background = "#CFCFCF"
