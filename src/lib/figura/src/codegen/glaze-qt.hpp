@@ -1,5 +1,6 @@
 #pragma once
 #include "codegen.hpp"
+#include <common/enumerate.hpp>
 #include <format>
 #include <fstream>
 #include <iomanip>
@@ -365,7 +366,7 @@ class GlazeQtGenerator : public AbstractCodeGenerator {
     oss << "\tusing enum " << ns << "::" << e.name << ";\n";
     oss << "\tstatic constexpr auto value = glz::enumerate(";
 
-    for (const auto &[idx, v] : std::views::enumerate(e.values)) {
+    for (const auto &[idx, v] : vicinae::enumerate(e.values)) {
       if (idx > 0) oss << ", ";
       oss << v;
     }
@@ -407,7 +408,7 @@ class GlazeQtGenerator : public AbstractCodeGenerator {
     for (const auto &method : s.methods) {
       oss << "\t" << "virtual " << "Result<" << serializeTypename(method.returnType) << ">::Future "
           << method.name << "(";
-      for (const auto &[idx, param] : method.params | std::views::enumerate) {
+      for (const auto &[idx, param] : method.params | vicinae::enumerate) {
         if (idx > 0) oss << ", ";
         oss << serializeTypename(param.type) << " " << param.name;
       }
@@ -416,7 +417,7 @@ class GlazeQtGenerator : public AbstractCodeGenerator {
 
     for (const auto &event : s.events) {
       oss << "\t" << "void emit" << event.name << " (";
-      for (const auto &[idx, param] : event.params | std::views::enumerate) {
+      for (const auto &[idx, param] : event.params | vicinae::enumerate) {
         if (idx > 0) oss << ", ";
         oss << constRef(param.type) << " " << param.name;
       }
@@ -427,7 +428,7 @@ class GlazeQtGenerator : public AbstractCodeGenerator {
       auto eventParamsName = getMethodParamName(s.name, event.name);
 
       oss << "\t\temitEvent(" << std::quoted(methodId) << ", " << eventParamsName << "{";
-      for (const auto &[idx, param] : event.params | std::views::enumerate) {
+      for (const auto &[idx, param] : event.params | vicinae::enumerate) {
         if (idx > 0) oss << ", ";
         oss << "." << param.name << " = " << param.name;
       }
@@ -514,7 +515,7 @@ class GlazeQtGenerator : public AbstractCodeGenerator {
     std::ostringstream oss;
 
     oss << serializeTypename(value) << " " << name << "(";
-    for (const auto &[idx, p] : params | std::views::enumerate) {
+    for (const auto &[idx, p] : params | vicinae::enumerate) {
       if (idx > 0) oss << ", ";
       oss << serializeTypename(p.type) << " " << p.name;
     }
@@ -573,7 +574,7 @@ oss << serializeEventParams(s->name, e);
         oss << "transport.subscribe<" << getMethodParamName(s->name, m.name) << ">(" << std::quoted(methodId)
             << ", " << "[this](const auto& payload){ if (!payload) return; emit " << m.name << "(";
 
-        for (const auto &[idx, param] : m.params | std::views::enumerate) {
+        for (const auto &[idx, param] : m.params | vicinae::enumerate) {
           if (idx > 0) { oss << ", "; }
           oss << "payload->" << param.name;
         }
@@ -588,7 +589,7 @@ oss << serializeEventParams(s->name, e);
         std::string methodId = std::format("{}/{}", s->name, m.name);
         oss << "QFuture<std::expected<" << serializeTypename(m.returnType) << ", std::string>> " << m.name
             << "(";
-        for (const auto &[idx, param] : m.params | std::views::enumerate) {
+        for (const auto &[idx, param] : m.params | vicinae::enumerate) {
           if (idx > 0) { oss << ", "; }
           oss << constRef(param.type) << " " << param.name;
         }
@@ -598,7 +599,7 @@ oss << serializeEventParams(s->name, e);
             << getMethodParamName(s->name, m.name) << ">(" << std::quoted(methodId) << ", \n";
         oss << "{";
 
-        for (const auto &[idx, p] : m.params | std::views::enumerate) {
+        for (const auto &[idx, p] : m.params | vicinae::enumerate) {
           if (idx > 0) oss << ", ";
           oss << "." << p.name << " = " << p.name;
         }
@@ -794,7 +795,7 @@ oss << serializeEventParams(s->name, e);
         oss << "\t\t\t[[maybe_unused]] auto res = glz::read_json(payload, req.params.str);\n";
         oss << "\t\t\t" << "handleResult(req.id, req.method, sentAt, " << "m_" << s->name << "->" << m.name
             << "(";
-        for (const auto &[idx, param] : m.params | std::views::enumerate) {
+        for (const auto &[idx, param] : m.params | vicinae::enumerate) {
           if (idx > 0) oss << ", ";
           oss << "std::move(payload." << param.name << ")";
         }

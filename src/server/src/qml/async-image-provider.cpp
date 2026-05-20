@@ -176,7 +176,7 @@ static QImage renderLocalSvg(const QString &path, const QSize &size) {
   QSvgRenderer renderer(path);
   if (!renderer.isValid()) return {};
 
-  // Respect the SVG's natural size — don't upscale beyond it.
+  // Respect the SVG's natural size; don't upscale beyond it.
   // This keeps small SVGs (e.g. 45x45 viewBox) at their intended
   // visual size rather than stretching them to fill the cell.
   QSize renderSize = size;
@@ -484,7 +484,7 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id,
             return;
           }
           auto future = svc->makeRequest(domain);
-          // No parent — watcher must live on main thread, response lives on reader thread
+          // No parent: watcher must live on main thread, response lives on reader thread
           auto *watcher = new QFutureWatcher<FaviconService::FaviconResponse>;
           QObject::connect(watcher, &QFutureWatcherBase::finished, qApp, [response, watcher, size]() {
             auto result = watcher->result();

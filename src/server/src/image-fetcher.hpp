@@ -42,8 +42,7 @@ class FetcherWorker : public QObject {
 
 public:
   void initialize() {
-    QString directory =
-        QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QString("/vicinae/");
+    QString directory = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + "/images";
 
     m_manager = new QNetworkAccessManager;
     m_diskCache = new QNetworkDiskCache;

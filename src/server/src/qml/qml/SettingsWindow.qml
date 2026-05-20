@@ -89,6 +89,12 @@ Window {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 40
 
+                    MouseArea {
+                        anchors.fill: parent
+                        acceptedButtons: Qt.LeftButton
+                        onPressed: root.startSystemMove()
+                    }
+
                     RowLayout {
                         anchors.fill: parent
                         anchors.leftMargin: 20

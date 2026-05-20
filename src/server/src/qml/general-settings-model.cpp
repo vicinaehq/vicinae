@@ -6,7 +6,9 @@
 #include "theme/theme-file.hpp"
 #include "favicon/favicon-service.hpp"
 #include "font-service.hpp"
+#ifdef Q_OS_LINUX
 #include "lib/icon-theme-db/icon-theme-db.hpp"
+#endif
 #include "services/keybinding/keybinding-service.hpp"
 #include <QGuiApplication>
 #include <QIcon>
@@ -133,10 +135,12 @@ QVariant GeneralSettingsModel::currentFont() const {
 
 QVariantList GeneralSettingsModel::iconThemeItems() const {
   QVariantList items;
+#ifdef Q_OS_LINUX
   IconThemeDatabase const db;
   for (const auto &theme : db.themes()) {
     items.append(makeDropdownItem(theme.name, theme.name));
   }
+#endif
   return wrapSection(QStringLiteral("Icon Themes"), items);
 }
 

@@ -8,6 +8,11 @@ Window {
     id: root
     property int shadowPadding: 0
 
+    property int cornerRadius: Config.borderRounding
+    property bool blurEnabled: Config.blurEnabled
+    property bool shadowEnabled: shadowPadding > 0
+    property bool nativeChrome: false
+
     readonly property int _w: launcher.overrideWidth || Config.windowWidth
     readonly property int _h: launcher.overrideHeight || Config.windowHeight
     readonly property int _contentH: launcher.compacted ? 60 + 2 * Config.borderWidth : _h
@@ -23,8 +28,8 @@ Window {
     color: "transparent"
     visible: false
 
-    BackgroundEffect.enabled: Config.blurEnabled
-    BackgroundEffect.radius: Config.borderRounding
+    BackgroundEffect.enabled: root.blurEnabled && !root.nativeChrome
+    BackgroundEffect.radius: root.cornerRadius
     BackgroundEffect.region: Qt.rect(shadowPadding, shadowPadding, _w, launcher.compacted ? 60 : _h)
 
     Item {
@@ -47,18 +52,18 @@ Window {
     Item {
         id: shadowCaster
         anchors.fill: parent
-        visible: root.shadowPadding > 0
+        visible: root.shadowEnabled && !root.nativeChrome
 
         Rectangle {
             x: root.shadowPadding
             y: root.shadowPadding
             width: _w
             height: _contentH
-            radius: Config.borderRounding
+            radius: root.cornerRadius
             color: "black"
         }
 
-        layer.enabled: root.shadowPadding > 0
+        layer.enabled: root.shadowEnabled && !root.nativeChrome
         layer.effect: MultiEffect {
             autoPaddingEnabled: false
             shadowEnabled: true
@@ -82,7 +87,7 @@ Window {
             visible: launcher.compacted
             width: _w
             height: 60 + 2 * Config.borderWidth
-            radius: Config.borderRounding
+            radius: root.cornerRadius
             color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
             border.color: Theme.mainWindowBorder
             border.width: Config.borderWidth
@@ -97,7 +102,7 @@ Window {
             Rectangle {
                 width: _w
                 height: _h
-                radius: Config.borderRounding
+                radius: root.cornerRadius
                 color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
             }
         }
@@ -114,15 +119,15 @@ Window {
                 width: _w
                 height: _h
                 anchors.bottom: parent.bottom
-                radius: Config.borderRounding
+                radius: root.cornerRadius
                 color: Qt.rgba(Theme.statusBarBackground.r, Theme.statusBarBackground.g, Theme.statusBarBackground.b, Config.windowOpacity)
             }
         }
 
         Rectangle {
-            visible: !launcher.compacted
+            visible: !launcher.compacted && !root.nativeChrome
             anchors.fill: parent
-            radius: Config.borderRounding
+            radius: root.cornerRadius
             color: "transparent"
             border.color: Theme.mainWindowBorder
             border.width: Config.borderWidth
@@ -251,10 +256,17 @@ Window {
         }
     }
 
+    function _centerOnCursorScreen() {
+        const g = launcher.cursorScreenGeometry();
+        root.x = g.x + (g.width - root.width) / 2;
+        root.y = g.y + (g.height - root.height) / 3;
+    }
+
     Connections {
         target: Nav
         function onWindowVisiblityChanged(visible) {
             if (visible) {
+                root._centerOnCursorScreen();
                 root.visible = true;
                 root.raise();
                 root.requestActivate();
@@ -293,5 +305,6 @@ Window {
     Component.onCompleted: {
         root.x = Screen.virtualX + (Screen.width - root.width) / 2;
         root.y = Screen.virtualY + (Screen.height - root.height) / 3;
+        _centerOnCursorScreen();
     }
 }

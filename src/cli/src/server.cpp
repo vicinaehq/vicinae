@@ -43,10 +43,10 @@ bool CliServerCommand::run(CLI::App *) {
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
   }
 
-  const auto path = vicinae::findHelperProgram("vicinae-server");
+  const auto path = vicinae::findServerBinary();
 
   if (!path) {
-    std::println(std::cerr, "Could not find vicinae-server binary.");
+    std::println(std::cerr, "Could not find vicinae server binary.");
     return false;
   }
 
@@ -58,10 +58,10 @@ bool CliServerCommand::run(CLI::App *) {
     return false;
   }
 
-  char *argv[] = {strdup("vicinae-server"), strdup(opts.c_str()), nullptr};
+  char *argv[] = {strdup(path->filename().c_str()), strdup(opts.c_str()), nullptr};
 
   if (execv(path->c_str(), argv) != 0) {
-    std::println(std::cerr, "Failed to exec vicinae-server: {}", strerror(errno));
+    std::println(std::cerr, "Failed to exec server: {}", strerror(errno));
     return false;
   }
 

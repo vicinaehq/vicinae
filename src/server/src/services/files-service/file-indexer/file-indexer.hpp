@@ -8,7 +8,6 @@
 #include "services/files-service/file-indexer/home-directory-watcher.hpp"
 #include "services/files-service/file-indexer/file-indexer-db.hpp"
 #include "services/files-service/file-indexer/scan-dispatcher.hpp"
-#include <malloc.h>
 #include <qdatetime.h>
 #include <qsqldatabase.h>
 #include <qtmetamacros.h>

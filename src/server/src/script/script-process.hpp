@@ -1,6 +1,6 @@
 #pragma once
+#include <common/enumerate.hpp>
 #include <qprocess.h>
-#include <ranges>
 #include "script-command-file.hpp"
 
 class ScriptProcess : public QProcess {
@@ -9,7 +9,7 @@ public:
     const auto cmdline = script.createCommandLine(args);
     QStringList argv;
 
-    for (const auto &[idx, arg] : cmdline | std::views::enumerate) {
+    for (const auto &[idx, arg] : cmdline | vicinae::enumerate) {
       if (idx == 0) {
         setProgram(arg);
       } else {

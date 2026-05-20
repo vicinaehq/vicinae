@@ -6,7 +6,7 @@
 #include <wayland-client-protocol.h>
 #include "wlr-foreign-toplevel-management-unstable-v1-client-protocol.h"
 
-// Events — wayland protocol callback names must follow C naming conventions
+// Events: wayland protocol callback names must follow C naming conventions
 // NOLINTBEGIN(readability-identifier-naming,cppcoreguidelines-pro-type-static-cast-downcast)
 static void foreign_toplevel_handle_title(void *data, struct zwlr_foreign_toplevel_handle_v1 *handle,
                                           const char *title) {

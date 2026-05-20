@@ -239,6 +239,21 @@ std::optional<Qt::KeyboardModifier> modifierForKey(Qt::Key key) {
 }
 
 DisplayTokenSpec modifierToken(Qt::KeyboardModifier modifier) {
+#ifdef Q_OS_MACOS
+  // Qt swaps Ctrl/Meta on macOS: ControlModifier == Cmd, MetaModifier == Ctrl.
+  switch (modifier) {
+  case Qt::ControlModifier:
+    return {.text = QStringLiteral("⌘"), .label = QStringLiteral("Command")};
+  case Qt::MetaModifier:
+    return {.text = QStringLiteral("⌃"), .label = QStringLiteral("Control")};
+  case Qt::AltModifier:
+    return {.text = QStringLiteral("⌥"), .label = QStringLiteral("Option")};
+  case Qt::ShiftModifier:
+    return {.text = QStringLiteral("⇧"), .label = QStringLiteral("Shift")};
+  default:
+    return {};
+  }
+#else
   switch (modifier) {
   case Qt::MetaModifier:
     return {.text = QStringLiteral("Super"), .label = QStringLiteral("Super")};
@@ -251,6 +266,7 @@ DisplayTokenSpec modifierToken(Qt::KeyboardModifier modifier) {
   default:
     return {};
   }
+#endif
 }
 
 std::optional<DisplayTokenSpec> keyToken(Qt::Key key) {

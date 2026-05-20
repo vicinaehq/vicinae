@@ -19,7 +19,7 @@ SnippetDatabase::SnippetDatabase(const std::filesystem::path &path) : m_path(pat
     }
   }
 
-  m_snippets = loadSnippets().value_or({});
+  m_snippets = loadSnippets().value_or(std::vector<SerializedSnippet>{});
 }
 
 std::expected<std::vector<SerializedSnippet>, std::string> SnippetDatabase::loadSnippets() {

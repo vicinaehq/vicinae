@@ -29,3 +29,18 @@ function(get_git_tag OUT_TAG)
 
 	set(${OUT_TAG} "${_git_tag}" PARENT_SCOPE)
 endfunction()
+
+function(get_git_commit_count OUT_COUNT)
+    execute_process(
+        COMMAND git rev-list --count HEAD
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE _git_count
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+    if(_git_count STREQUAL "")
+        set(_git_count "0")
+    endif()
+
+    set(${OUT_COUNT} "${_git_count}" PARENT_SCOPE)
+endfunction()

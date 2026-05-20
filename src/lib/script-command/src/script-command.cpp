@@ -1,6 +1,7 @@
 #include "script-command.hpp"
 #include <algorithm>
 #include <charconv>
+#include <common/enumerate.hpp>
 #include <format>
 #include <fstream>
 #include <glaze/json/read.hpp>
@@ -55,7 +56,7 @@ std::ostream &operator<<(std::ostream &ofs, const ScriptCommand &cmd) {
   if (cmd.authorUrl) std::println(ofs, "authorUrl => {}", cmd.authorUrl.value());
   if (cmd.description) std::println(ofs, "description => {}", cmd.description.value());
 
-  for (const auto &[idx, arg] : cmd.arguments | std::views::enumerate) {
+  for (const auto &[idx, arg] : cmd.arguments | vicinae::enumerate) {
     std::println(ofs, "argument{} => {}", idx, arg.placeholder.value_or("no placeholder"));
   }
 
