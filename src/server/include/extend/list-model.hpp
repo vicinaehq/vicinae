@@ -35,7 +35,6 @@ struct ListModel {
   bool filtering = false;
   bool throttle = false;
   bool dirty = false;
-  bool propsDirty = false;
   bool isShowingDetail = false;
   std::string navigationTitle;
   std::string searchPlaceholderText;

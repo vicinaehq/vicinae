@@ -142,9 +142,7 @@ private slots:
     for (size_t i = 0; i < models.items.size() && i < m_views.size(); ++i) {
       const auto &model = models.items[i];
       const auto &entry = m_views[i];
-      bool const shouldSkipRender = !model.dirty && !model.propsDirty;
-
-      if (!shouldSkipRender) entry.renderFn(model.root);
+      if (model.dirty) entry.renderFn(model.root);
     }
 
     processNextRender();

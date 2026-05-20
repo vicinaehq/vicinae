@@ -799,7 +799,6 @@ static ListSectionModel toListSectionModel(ListSectionModelWire w) {
 static ListModel toListModel(ListModelWire w) {
   ListModel m;
   m.dirty = true;
-  m.propsDirty = true;
   m.isLoading = w.isLoading;
   m.filtering = w.filtering.value_or(!w.onSearchTextChange.has_value());
   m.throttle = w.throttle;
@@ -1196,7 +1195,6 @@ template <> struct glz::meta<RootWireModel> {
 
 struct ViewEntry {
   bool dirty = true;
-  bool propsDirty = true;
   std::optional<RootWireModel> root;
 };
 
@@ -1221,7 +1219,6 @@ ParsedRenderData parseRenderPayload(std::string_view json) {
   for (auto &view : payload.views) {
     RenderRoot rr;
     rr.dirty = view.dirty;
-    rr.propsDirty = view.propsDirty;
 
     if (!view.root.has_value()) {
       rr.root = InvalidModel{QString("Empty view root")};
@@ -1234,7 +1231,6 @@ ParsedRenderData parseRenderPayload(std::string_view json) {
         [&](ListModelWire &w) {
           auto model = toListModel(std::move(w));
           model.dirty = view.dirty;
-          model.propsDirty = view.propsDirty;
           rr.root = std::move(model);
         },
         [&](GridModelWire &w) {

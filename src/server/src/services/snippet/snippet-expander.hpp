@@ -59,16 +59,15 @@ public:
           part,
           [&](const PlaceholderString::ParsedPlaceholder placeholder) {
             if (placeholder.id == "cursor") {
-              result.cursorPos = std::ranges::fold_left(
-                  result.parts, 0, [](int n, auto &&s) { return n + s.text.size(); });
+              result.cursorPos =
+                  std::ranges::fold_left(result.parts, 0, [](int n, auto &&s) { return n + s.text.size(); });
             } else if (placeholder.id == "clipboard") {
               result.parts.emplace_back(clip->text(), true);
             } else if (placeholder.id == "uuid") {
               result.parts.emplace_back(ResultPart(m_uuid, true));
             } else if (placeholder.id == "date") {
               auto fmt = QStringLiteral("yyyy-MM-dd hh:mm");
-              if (auto it = placeholder.args.find("format"); it != placeholder.args.end())
-                fmt = it->second;
+              if (auto it = placeholder.args.find("format"); it != placeholder.args.end()) fmt = it->second;
               result.parts.emplace_back(ResultPart(QDateTime::currentDateTime().toString(fmt), true));
             } else if (placeholder.id == "shell") {
               if (opts.executeShell && shellIdx < static_cast<int>(shellResults.size())) {

@@ -15,7 +15,6 @@ using RenderModel = std::variant<ListModel, GridModel, FormModel, RootDetailMode
 
 struct RenderRoot {
   bool dirty;
-  bool propsDirty;
   RenderModel root;
 };
 
