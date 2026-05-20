@@ -156,30 +156,9 @@ struct ActionModelWire {
   std::optional<std::string> stableId;
 };
 
-struct ActionPannelSubmenuModelWire;
-using ActionPannelSubmenuWirePtr = std::shared_ptr<ActionPannelSubmenuModelWire>;
-
-struct ActionPannelSectionModelWire;
-using ActionPannelSectionWirePtr = std::shared_ptr<ActionPannelSectionModelWire>;
-
-using ActionPannelSectionItemWire = std::variant<ActionModelWire, ActionPannelSubmenuWirePtr>;
-
-template <> struct glz::meta<ActionPannelSectionItemWire> {
-  static constexpr std::string_view tag = TAG;
-  static constexpr auto ids = std::array{"action", "action-panel-submenu"};
-};
-
-using ActionPannelSubmenuChildWire =
-    std::variant<ActionPannelSectionWirePtr, ActionModelWire, ActionPannelSubmenuWirePtr>;
-
-template <> struct glz::meta<ActionPannelSubmenuChildWire> {
-  static constexpr std::string_view tag = TAG;
-  static constexpr auto ids = std::array{"action-panel-section", "action", "action-panel-submenu"};
-};
-
 struct ActionPannelSectionModelWire {
   std::string title;
-  std::vector<ActionPannelSectionItemWire> children;
+  std::vector<glz::raw_json> children;
 };
 
 struct ActionPannelSubmenuModelWire {
@@ -192,12 +171,12 @@ struct ActionPannelSubmenuModelWire {
   std::optional<bool> throttle;
   std::string onOpen;
   std::string onSearchTextChange;
-  std::vector<ActionPannelSubmenuChildWire> children;
+  std::vector<glz::raw_json> children;
   std::optional<std::string> stableId;
 };
 
 using ActionPannelItemWire =
-    std::variant<ActionModelWire, ActionPannelSectionWirePtr, ActionPannelSubmenuWirePtr>;
+    std::variant<ActionModelWire, ActionPannelSectionModelWire, ActionPannelSubmenuModelWire>;
 
 template <> struct glz::meta<ActionPannelItemWire> {
   static constexpr std::string_view tag = TAG;
@@ -604,13 +583,16 @@ static ActionPannelSectionModel toActionPannelSection(ActionPannelSectionModelWi
   ActionPannelSectionModel m;
   m.title = std::move(w.title);
   m.items.reserve(w.children.size());
-  for (auto &child : w.children) {
+  for (auto &raw : w.children) {
+    ActionPannelItemWire child{};
+    if (auto err = glz::read<PARSE_OPTS>(child, raw.str)) continue;
     match(
-        child, [&](ActionModelWire &c) { m.items.emplace_back(toActionModel(std::move(c))); },
-        [&](ActionPannelSubmenuWirePtr &c) {
+        std::move(child), [&](ActionModelWire c) { m.items.emplace_back(toActionModel(std::move(c))); },
+        [&](ActionPannelSubmenuModelWire c) {
           m.items.emplace_back(
-              std::make_shared<ActionPannelSubmenuModel>(toActionPannelSubmenu(std::move(*c))));
-        });
+              std::make_shared<ActionPannelSubmenuModel>(toActionPannelSubmenu(std::move(c))));
+        },
+        [&](ActionPannelSectionModelWire) {});
   }
   return m;
 }
@@ -628,17 +610,19 @@ static ActionPannelSubmenuModel toActionPannelSubmenu(ActionPannelSubmenuModelWi
   m.onSearchTextChange = std::move(w.onSearchTextChange);
   m.stableId = std::move(w.stableId);
   m.children.reserve(w.children.size());
-  for (auto &child : w.children) {
+  for (auto &raw : w.children) {
+    ActionPannelItemWire child{};
+    if (auto err = glz::read<PARSE_OPTS>(child, raw.str)) continue;
     match(
-        child,
-        [&](ActionPannelSectionWirePtr &c) {
+        std::move(child),
+        [&](ActionPannelSectionModelWire c) {
           m.children.emplace_back(
-              std::make_shared<ActionPannelSectionModel>(toActionPannelSection(std::move(*c))));
+              std::make_shared<ActionPannelSectionModel>(toActionPannelSection(std::move(c))));
         },
-        [&](ActionModelWire &c) { m.children.emplace_back(toActionModel(std::move(c))); },
-        [&](ActionPannelSubmenuWirePtr &c) {
+        [&](ActionModelWire c) { m.children.emplace_back(toActionModel(std::move(c))); },
+        [&](ActionPannelSubmenuModelWire c) {
           m.children.emplace_back(
-              std::make_shared<ActionPannelSubmenuModel>(toActionPannelSubmenu(std::move(*c))));
+              std::make_shared<ActionPannelSubmenuModel>(toActionPannelSubmenu(std::move(c))));
         });
   }
   return m;
@@ -651,14 +635,14 @@ static ActionPannelModel toActionPannelModel(ActionPannelModelWire w) {
   m.children.reserve(w.children.size());
   for (auto &child : w.children) {
     match(
-        child, [&](ActionModelWire &c) { m.children.emplace_back(toActionModel(std::move(c))); },
-        [&](ActionPannelSectionWirePtr &c) {
+        std::move(child), [&](ActionModelWire c) { m.children.emplace_back(toActionModel(std::move(c))); },
+        [&](ActionPannelSectionModelWire c) {
           m.children.emplace_back(
-              std::make_shared<ActionPannelSectionModel>(toActionPannelSection(std::move(*c))));
+              std::make_shared<ActionPannelSectionModel>(toActionPannelSection(std::move(c))));
         },
-        [&](ActionPannelSubmenuWirePtr &c) {
+        [&](ActionPannelSubmenuModelWire c) {
           m.children.emplace_back(
-              std::make_shared<ActionPannelSubmenuModel>(toActionPannelSubmenu(std::move(*c))));
+              std::make_shared<ActionPannelSubmenuModel>(toActionPannelSubmenu(std::move(c))));
         });
   }
   return m;

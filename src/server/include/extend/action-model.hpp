@@ -30,6 +30,10 @@ using ActionPannelSubmenuPtr = std::shared_ptr<ActionPannelSubmenuModel>;
 using ActionPannelSectionItem = std::variant<ActionModel, ActionPannelSubmenuPtr>;
 using ActionPannelSubmenuChild = std::variant<ActionPannelSectionPtr, ActionModel, ActionPannelSubmenuPtr>;
 
+struct ActionPannelSubmenuFiltering {
+  bool keepSectionOrder = false;
+};
+
 struct ActionPannelSectionModel {
   std::string title;
   std::vector<ActionPannelSectionItem> items;
@@ -41,10 +45,6 @@ struct ActionPannelSectionModel {
     }
     return result;
   }
-};
-
-struct ActionPannelSubmenuFiltering {
-  bool keepSectionOrder = false;
 };
 
 struct ActionPannelSubmenuModel {
