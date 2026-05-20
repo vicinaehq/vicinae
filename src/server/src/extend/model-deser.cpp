@@ -784,7 +784,7 @@ static ListSectionModel toListSectionModel(ListSectionModelWire w) {
   return m;
 }
 
-static ListModel toListModel(ListModelWire w) {
+static ListModel toListModel(ListModelWire &w) {
   ListModel m;
   m.dirty = true;
   m.isLoading = w.isLoading;
@@ -850,7 +850,7 @@ static GridSectionModel toGridSectionModel(GridSectionModelWire w) {
   return m;
 }
 
-static GridModel toGridModel(GridModelWire w) {
+static GridModel toGridModel(GridModelWire &w) {
   GridModel m;
   m.dirty = true;
   m.isLoading = w.isLoading;
@@ -888,7 +888,7 @@ static GridModel toGridModel(GridModelWire w) {
   return m;
 }
 
-static RootDetailModel toRootDetailModel(RootDetailModelWire w) {
+static RootDetailModel toRootDetailModel(RootDetailModelWire &w) {
   RootDetailModel m;
   m.isLoading = w.isLoading;
   m.markdown = std::move(w.markdown);
@@ -1019,17 +1019,21 @@ struct FormLinkAccessoryWire {
   std::string target;
 };
 
+struct FormTagPickerFieldWire {
+  FIELD_BASE_WIRE_MEMBERS
+};
+
 using FormChild =
     std::variant<FormTextFieldWire, FormPasswordFieldWire, FormCheckboxFieldWire, FormDropdownFieldWire,
                  FormTextAreaFieldWire, FormFilePickerFieldWire, FormDatePickerFieldWire, FormSeparatorWire,
-                 FormDescriptionWire, FormLinkAccessoryWire, ActionPannelModelWire>;
+                 FormDescriptionWire, FormLinkAccessoryWire, ActionPannelModelWire, FormTagPickerFieldWire>;
 
 template <> struct glz::meta<FormChild> {
   static constexpr std::string_view tag = TAG;
   static constexpr auto ids =
       std::array{"text-field",       "password-field",    "checkbox-field",    "dropdown-field",
                  "text-area-field",  "file-picker-field", "date-picker-field", "separator",
-                 "form-description", "link-accessory",    "action-panel"};
+                 "form-description", "link-accessory",    "action-panel",      "tag-picker-field"};
 };
 
 struct FormModelWire {
@@ -1039,7 +1043,7 @@ struct FormModelWire {
   std::vector<FormChild> children;
 };
 
-static FormModel toFormModel(FormModelWire w) {
+static FormModel toFormModel(FormModelWire &w) {
   FormModel m;
   m.isLoading = w.isLoading;
   m.enableDrafts = w.enableDrafts;
@@ -1112,7 +1116,8 @@ static FormModel toFormModel(FormModelWire w) {
           link.target = std::move(c.target);
           m.searchBarAccessory = std::move(link);
         },
-        [&](ActionPannelModelWire &c) { m.actions = toActionPannelModel(std::move(c)); });
+        [&](ActionPannelModelWire &c) { m.actions = toActionPannelModel(std::move(c)); },
+        [&](FormTagPickerFieldWire &) {});
   }
 
   return m;
@@ -1137,7 +1142,8 @@ struct RenderPayload {
 ParsedRenderData parseRenderPayload(std::string_view json) {
   auto t0 = std::chrono::steady_clock::now();
 
-  RenderPayload payload;
+  thread_local RenderPayload payload;
+  payload.views.clear();
   if (auto err = glz::read<PARSE_OPTS>(payload, json)) {
     qWarning() << "parseRenderPayload: failed:" << QString::fromStdString(glz::format_error(err, json));
     return {};
@@ -1161,17 +1167,17 @@ ParsedRenderData parseRenderPayload(std::string_view json) {
     match(
         *view.root,
         [&](ListModelWire &w) {
-          auto model = toListModel(std::move(w));
+          auto model = toListModel(w);
           model.dirty = view.dirty;
           rr.root = std::move(model);
         },
         [&](GridModelWire &w) {
-          auto model = toGridModel(std::move(w));
+          auto model = toGridModel(w);
           model.dirty = view.dirty;
           rr.root = std::move(model);
         },
-        [&](RootDetailModelWire &w) { rr.root = toRootDetailModel(std::move(w)); },
-        [&](FormModelWire &w) { rr.root = toFormModel(std::move(w)); });
+        [&](RootDetailModelWire &w) { rr.root = toRootDetailModel(w); },
+        [&](FormModelWire &w) { rr.root = toFormModel(w); });
 
     result.items.emplace_back(std::move(rr));
   }
