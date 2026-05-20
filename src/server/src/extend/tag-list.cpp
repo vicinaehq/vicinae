@@ -1,8 +1,11 @@
 #include "extend/color-model.hpp"
 #include "extend/image-model.hpp"
 #include "extend/tag-model.hpp"
+#include <exception>
 #include <qjsonarray.h>
 #include <qjsonobject.h>
+#include <qlogging.h>
+#include <stdexcept>
 
 TagListParser::TagListParser() = default;
 
@@ -29,6 +32,18 @@ TagListModel TagListParser::parse(const QJsonObject &instance) {
   for (const auto &child : instance.value("children").toArray()) {
     model.items.push_back(parseTagItem(child.toObject()));
   }
+
+  return model;
+}
+
+TagPickerItemModel TagPickerItemModel::fromJson(const QJsonObject &instance) {
+  TagPickerItemModel model;
+  auto props = instance.value("props").toObject();
+
+  model.title = props.value("title").toString();
+  model.value = props.value("value").toString();
+
+  if (props.contains("icon")) { model.icon = ImageModelParser().parse(props.value("icon")); }
 
   return model;
 }

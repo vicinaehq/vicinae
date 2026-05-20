@@ -3,6 +3,7 @@
 #include "extend/event-counted.hpp"
 #include "extend/list-model.hpp"
 #include "extend/model.hpp"
+#include "extend/tag-model.hpp"
 #include <memory>
 #include <qcoreevent.h>
 #include <qjsonobject.h>
@@ -98,6 +99,14 @@ struct FormModel {
   public:
     DatePickerField(const FieldBase &base) : IField(base) {}
   };
+
+  struct TagPickerField : public IField {
+    std::vector<TagPickerItemModel> m_items;
+
+  public:
+    TagPickerField(const FieldBase &base) : IField(base) {}
+  };
+
   struct InvalidField : public FieldBase {};
 
   struct Separator {};
