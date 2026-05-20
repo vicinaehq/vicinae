@@ -69,6 +69,9 @@ if (NOT USE_SYSTEM_KF6 OR APPLE)
 	import_kf6()
 endif()
 
+include(Fff)
+fff_configure()
+
 if (APPLE)
 	find_program(BREW_EXECUTABLE brew)
 	if (BREW_EXECUTABLE)

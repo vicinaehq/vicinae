@@ -45,6 +45,7 @@ public:
   QFuture<std::vector<IndexerFileResult>> queryAsync(std::string_view view,
                                                      const QueryParams &params = {}) override;
   void start() override;
+  ScanState scanState() const override;
 
   FileIndexer();
 };

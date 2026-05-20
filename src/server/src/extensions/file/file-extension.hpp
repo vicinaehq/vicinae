@@ -62,8 +62,11 @@ class FileExtension : public BuiltinCommandRepository {
 
 public:
   void initialized(const QJsonObject &preferences) const override {
-    auto files = ServiceRegistry::instance()->fileService();
-    if (preferences.value("autoIndexing").toBool()) { files->indexer()->start(); }
+    // TODO check this out on review: I do not think that it makes sense to do any file system
+    // scanning in the background, on ext4 wired with getdents64 + the default garbage filters
+    // fff has (e.g. skipping node modules, targets, and binary files) 1TB files would be indexed
+    // within a few seconds, so I do not think there is a reason to keep all of those in memory
+    Q_UNUSED(preferences);
   }
 
   FileExtension() {
@@ -97,7 +100,15 @@ public:
     watcherPaths.setDescription("Semicolon-separated list of paths watched by experimental watcher");
     watcherPaths.setDefaultValue("");
 
-    return {indexing, paths, excludedPaths, watcherPaths};
+    auto reuseNvim = Preference::makeCheckbox("reuseNvimDbs");
+    reuseNvim.setTitle("Reuse fff.nvim databases");
+    reuseNvim.setDescription(
+        "When enabled and the fff.nvim plugin's frecency / history databases are detected at "
+        "$XDG_CACHE_HOME/nvim/fff_nvim and $XDG_DATA_HOME/nvim/fff_queries, vicinae will share them so "
+        "file-ranking learning carries over both ways. Disable if you hit fff schema/version errors.");
+    reuseNvim.setDefaultValue(true);
+
+    return {indexing, paths, excludedPaths, watcherPaths, reuseNvim};
   }
 
   void preferenceValuesChanged(const QJsonObject &preferences) const override {
