@@ -236,7 +236,6 @@ set(SRCS
 
 
 	src/extend/accessory-model.cpp
-	src/extend/action-shortcut-parser.cpp
 	src/extend/model-deser.cpp
 	include/extend/form-model.hpp
 

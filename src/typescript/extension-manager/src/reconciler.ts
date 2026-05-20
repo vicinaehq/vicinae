@@ -22,12 +22,21 @@ type NoTimeout = number;
 const ctx: HostContext = {};
 let frameGen = 0;
 
-const initMeta = (instance: Instance, dirty: boolean, handlers: string[]) => {
+const initMeta = (
+	instance: Instance,
+	dirty: boolean,
+	handlers: Set<string>,
+) => {
 	Object.defineProperties(instance, {
 		_dirtyGen: { value: dirty ? frameGen : -1, writable: true },
 		_parent: { value: undefined, writable: true },
 		_handlers: { value: handlers, writable: true },
 	});
+};
+
+const releaseHandler = (instance: Instance, id: string) => {
+	callbackManager.deferRemoval(id);
+	instance._handlers.delete(id);
 };
 
 const emitDirty = (instance?: Instance) => {
@@ -84,7 +93,7 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 
 		createInstance(type, props, root, ctx, handle): Instance {
 			const { children, key, ...rest } = props;
-			const handlers: string[] = [];
+			const handlers = new Set<string>();
 			const instance: Instance = { $t: type };
 
 			for (const [k, v] of Object.entries(rest)) {
@@ -95,7 +104,7 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 				if (typeof v === "function") {
 					const { id } = callbackManager.subscribe(v);
 					instance[k] = id;
-					handlers.push(id);
+					handlers.add(id);
 				} else {
 					instance[k] = v;
 				}
@@ -226,25 +235,34 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		commitUpdate(instance: Instance, type, prevProps, nextProps, handle) {
 			for (const key of Object.keys(instance)) {
 				if (key === "$t" || key === "children") continue;
-				if (!(key in nextProps)) delete instance[key];
+				if (!(key in nextProps)) {
+					const old = instance[key];
+					if (typeof old === "string" && instance._handlers.has(old))
+						releaseHandler(instance, old);
+					delete instance[key];
+				}
 			}
 
 			for (const [k, v] of Object.entries(nextProps)) {
 				if (k === "children" || k === "key") continue;
 				if (React.isValidElement(v)) continue;
 
+				const old = instance[k];
+				const oldIsHandler =
+					typeof old === "string" && instance._handlers.has(old);
+
 				if (typeof v === "function") {
-					const oldHandlerId = instance[k];
-					if (typeof oldHandlerId === "string") {
-						callbackManager.setHandler(oldHandlerId, v);
+					if (oldIsHandler) {
+						callbackManager.setHandler(old, v);
 						continue;
 					}
 					const { id } = callbackManager.subscribe(v);
-					instance._handlers.push(id);
+					instance._handlers.add(id);
 					instance[k] = id;
 					continue;
 				}
 
+				if (oldIsHandler) releaseHandler(instance, old);
 				instance[k] = v;
 			}
 
@@ -319,7 +337,7 @@ const MAX_RENDER_PER_SECOND = 60;
 
 export const createRenderer = (config: RendererConfig) => {
 	const container: Container = { $t: "root", children: [] };
-	initMeta(container, true, []);
+	initMeta(container, true, new Set());
 
 	let root: OpaqueRoot | undefined;
 	let debounce: NodeJS.Timer | null = null;

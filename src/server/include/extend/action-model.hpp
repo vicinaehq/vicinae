@@ -1,6 +1,5 @@
 #pragma once
 #include <QJsonObject>
-#include <QJsonValue>
 #include <memory>
 #include <optional>
 #include <string>
@@ -8,8 +7,6 @@
 #include <vector>
 #include "extend/image-model.hpp"
 #include "lib/keyboard/keyboard.hpp"
-
-Keyboard::Shortcut parseKeyboardShortcut(const QJsonValue &shortcut);
 
 struct ActionModel {
   std::string title;
