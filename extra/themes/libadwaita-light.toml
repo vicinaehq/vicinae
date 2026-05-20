@@ -66,10 +66,10 @@ foreground = "#333338"
 secondary_foreground = "#5e5c64"
 
 [colors.list.item.selection]
-background = "colors.core.accent"
-foreground = "#ffffff"
+background = "#DFDFE1"
+foreground = "#333338"
 secondary_background = "colors.core.accent"
-secondary_foreground = "#ffffff"
+secondary_foreground = "#5e5c64"
 
 [colors.grid.item]
 background = "#ebebed"

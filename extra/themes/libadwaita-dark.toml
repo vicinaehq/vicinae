@@ -66,7 +66,7 @@ foreground = "#ffffff"
 secondary_foreground = "#c0bfbc"
 
 [colors.list.item.selection]
-background = "colors.core.accent"
+background = "#3D3D41"
 foreground = "#ffffff"
 secondary_background = "colors.core.accent"
 secondary_foreground = "#ffffff"
