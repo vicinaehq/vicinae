@@ -1,9 +1,9 @@
 #pragma once
+#include <common/enumerate.hpp>
 #include <cstring>
 #include <expected>
 #include <filesystem>
 #include <format>
-#include <ranges>
 #include <string>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -13,7 +13,22 @@
 namespace cli {
 
 inline std::filesystem::path socketPath() {
-  return std::filesystem::path(getenv("XDG_RUNTIME_DIR")) / "vicinae" / "vicinae.sock";
+  std::filesystem::path base;
+#ifdef __APPLE__
+  if (const char *t = getenv("TMPDIR")) {
+    base = t;
+  } else {
+    base = "/tmp";
+  }
+#else
+  if (const char *r = getenv("XDG_RUNTIME_DIR")) {
+    base = r;
+  } else {
+    const char *user = getenv("USER");
+    base = std::filesystem::path("/tmp") / (std::string("runtime-") + (user ? user : "unknown"));
+  }
+#endif
+  return base / "vicinae" / "vicinae.sock";
 }
 
 class IpcClient {
@@ -58,7 +73,7 @@ public:
   static std::expected<ipc::DeeplinkResponse, std::string>
   sendDeeplink(std::string_view url, const std::vector<std::pair<std::string, std::string>> &query = {}) {
     std::string fullUrl{url};
-    for (const auto &[idx, arg] : query | std::views::enumerate) {
+    for (const auto &[idx, arg] : query | vicinae::enumerate) {
       fullUrl.append(std::format("{}{}={}", idx == 0 ? "?" : "&", arg.first, arg.second));
     }
     return connect().and_then([&](IpcClient client) { return client.deeplink({.url = std::move(fullUrl)}); });

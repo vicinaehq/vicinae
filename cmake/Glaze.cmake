@@ -8,6 +8,7 @@ function(import_glaze)
 	  GIT_TAG v7.2.0
 	  GIT_SHALLOW TRUE
 	  EXCLUDE_FROM_ALL
+	  OVERRIDE_FIND_PACKAGE
 	)
 	FetchContent_MakeAvailable(glaze)
 endfunction()

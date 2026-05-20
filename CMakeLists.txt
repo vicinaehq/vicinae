@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 set(PROJECT_NAME vicinae)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_OSX_DEPLOYMENT_TARGET "14.4" CACHE STRING "Minimum macOS version to target")
 project(${PROJECT_NAME} VERSION 1.0.0 LANGUAGES C CXX)
 
 set(LIB_NAMESPACE "vicinae")
@@ -63,14 +64,39 @@ if (NOT USE_SYSTEM_GLAZE)
 	import_glaze()
 endif()
 
-if (NOT USE_SYSTEM_KF6)
+if (NOT USE_SYSTEM_KF6 OR APPLE)
 	include(KF6)
 	import_kf6()
 endif()
 
 if (APPLE)
+	find_program(BREW_EXECUTABLE brew)
+	if (BREW_EXECUTABLE)
+		execute_process(
+			COMMAND ${BREW_EXECUTABLE} --prefix
+			OUTPUT_VARIABLE HOMEBREW_PREFIX
+			OUTPUT_STRIP_TRAILING_WHITESPACE
+			RESULT_VARIABLE _brew_status
+		)
+		if (NOT _brew_status EQUAL 0)
+			set(HOMEBREW_PREFIX "")
+		endif()
+	endif()
+
+	if (HOMEBREW_PREFIX)
+		message(STATUS "Detected Homebrew prefix: ${HOMEBREW_PREFIX}")
+		if (NOT QT_DIR AND EXISTS "${HOMEBREW_PREFIX}/opt/qt/lib/cmake/Qt6")
+			list(PREPEND CMAKE_PREFIX_PATH "${HOMEBREW_PREFIX}/opt/qt")
+		endif()
+		if (NOT DEFINED ENV{ICU_ROOT} AND EXISTS "${HOMEBREW_PREFIX}/opt/icu4c")
+			set(ENV{ICU_ROOT} "${HOMEBREW_PREFIX}/opt/icu4c")
+		endif()
+		link_directories(${HOMEBREW_PREFIX}/lib)
+	endif()
+
 	set(WAYLAND_LAYER_SHELL OFF)
 	set(WLR_DATA_CONTROL OFF)
+	set(USE_SYSTEM_CMARK_GFM OFF)
 endif()
 
 include_directories(
@@ -81,13 +107,15 @@ include_directories(
 find_package(glaze)
 
 add_subdirectory(src/browser-extension)
-add_subdirectory(src/snippet)
+add_subdirectory(${LIB_DIR}/common)
 add_subdirectory(${LIB_DIR}/script-command)
 add_subdirectory(${LIB_DIR}/emoji)
 add_subdirectory(${LIB_DIR}/xdgpp)
-add_subdirectory(${LIB_DIR}/common)
 add_subdirectory(${LIB_DIR}/fuzzy)
-add_subdirectory(${LIB_DIR}/linux-utils)
+if (UNIX AND NOT APPLE)
+	add_subdirectory(${LIB_DIR}/linux-utils)
+	add_subdirectory(src/snippet)
+endif()
 add_subdirectory(${LIB_DIR}/figura)
 
 set(FIGURA_DIR ${CMAKE_SOURCE_DIR}/figura)
@@ -207,8 +235,8 @@ if (CCACHE AND NOT IGNORE_CCACHE)
 endif()
 
 add_compile_definitions(BUILD_INFO="${BUILD_INFO}")
-add_subdirectory(src/server)
 add_subdirectory(src/cli)
+add_subdirectory(src/server)
 
 if (UNIX AND NOT APPLE)
 	add_subdirectory(src/data-control-server)
@@ -219,9 +247,11 @@ set(INSTALL_MODULES ${CMAKE_INSTALL_PREFIX}/lib/modules-load.d)
 set(VICINAE_INSTALL_SHARE ${INSTALL_SHARE}/vicinae)
 set(VICINAE_THEME_DIR ${VICINAE_INSTALL_SHARE}/themes)
 
-make_directory(${VICINAE_INSTALL_SHARE})
-file(REMOVE_RECURSE ${VICINAE_THEME_DIR})
-install(DIRECTORY ./extra/themes DESTINATION ${VICINAE_INSTALL_SHARE})
+if(NOT APPLE)
+	make_directory(${VICINAE_INSTALL_SHARE})
+	file(REMOVE_RECURSE ${VICINAE_THEME_DIR})
+	install(DIRECTORY ./extra/themes DESTINATION ${VICINAE_INSTALL_SHARE})
+endif()
 
 if (UNIX AND NOT APPLE)
 	if (INSTALL_MODULES_LOAD_CONFIG)

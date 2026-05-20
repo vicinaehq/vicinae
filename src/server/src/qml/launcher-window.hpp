@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QQmlApplicationEngine>
 #include <QTimer>
+#include <QRect>
 #include <qtmetamacros.h>
 
 class ActionPanelController;
@@ -95,6 +96,7 @@ public:
   Q_INVOKABLE bool tryAliasFastTrack();
   Q_INVOKABLE int matchNavigationKey(int key, int modifiers);
   Q_INVOKABLE void setCompleterValue(int index, const QString &value);
+  Q_INVOKABLE QRect cursorScreenGeometry() const;
 
 signals:
   void compactedChanged();

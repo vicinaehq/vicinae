@@ -1,19 +1,40 @@
 #include "common/common.hpp"
 #include <filesystem>
+#include <sstream>
+#include <string>
 #include <vector>
+
+#ifdef __APPLE__
+#include <climits>
+#include <mach-o/dyld.h>
+#endif
 
 namespace fs = std::filesystem;
 
 namespace vicinae {
+#ifdef __APPLE__
+fs::path selfPath() {
+  char buf[PATH_MAX];
+  uint32_t size = sizeof(buf);
+  if (_NSGetExecutablePath(buf, &size) == 0) return fs::canonical(buf);
+
+  std::string dyn(size, '\0');
+  if (_NSGetExecutablePath(dyn.data(), &size) != 0) return {};
+  return fs::canonical(dyn.c_str());
+}
+#else
 fs::path selfPath() { return fs::canonical("/proc/self/exe"); }
+#endif
 
 std::vector<fs::path> helperProgramCandidates(std::string_view program) {
   const auto self = selfPath().parent_path();
-  return {
-      self / program,
-      self.parent_path() / VICINAE_LIBEXECDIR / program,
-      fs::path{VICINAE_LIBEXEC_PATH} / program,
-  };
+  std::vector<fs::path> candidates;
+  candidates.reserve(3);
+
+  candidates.emplace_back(self / program);
+  candidates.emplace_back(self.parent_path() / VICINAE_LIBEXECDIR / program);
+  candidates.emplace_back(fs::path{VICINAE_LIBEXEC_PATH} / program);
+  return candidates;
 }
 
 std::string slurp(std::istream &is) {
@@ -36,6 +57,16 @@ std::optional<fs::path> findHelperProgram(std::string_view program) {
   }
 
   return {};
+}
+
+std::optional<fs::path> findServerBinary() {
+#ifdef __APPLE__
+  // Inside a .app bundle the server is renamed to "Vicinae" (matches
+  // CFBundleExecutable). Flat dev builds keep the Linux name "vicinae-server".
+  const auto self = selfPath();
+  if (self.parent_path().filename() == "MacOS") { return findHelperProgram("Vicinae"); }
+#endif
+  return findHelperProgram("vicinae-server");
 }
 
 }; // namespace vicinae

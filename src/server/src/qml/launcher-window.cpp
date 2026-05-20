@@ -26,9 +26,11 @@
 #include "vicinae.hpp"
 #include "lib/keyboard/keyboard.hpp"
 #include "ui/views/base-view.hpp"
+#include <QCursor>
 #include <QGuiApplication>
 #include <QQmlContext>
 #include <QQuickWindow>
+#include <QScreen>
 #include <QWindow>
 #include <QKeyEvent>
 #include <qcoreevent.h>
@@ -44,8 +46,10 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
       m_imgSource(new ImageSource(this)), m_keybindProxy(new KeybindBridge(this)),
       m_themeBridge(new ThemeBridge(this)) {
 
+#ifndef Q_OS_MACOS
   // Ensure Wayland app_id / X11 WM_CLASS is "vicinae"
   QGuiApplication::setDesktopFileName(QStringLiteral("vicinae"));
+#endif
 
   m_searchModel = new RootSearchModel(ViewScope(&ctx, ctx.navigation->topState()->sender), this);
 
@@ -67,8 +71,14 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
 
   updateLayerShellProps();
 
-  m_engine.load(QUrl(isLayerShellActive() ? QStringLiteral("qrc:/Vicinae/LauncherWindowLayerShell.qml")
-                                          : QStringLiteral("qrc:/Vicinae/LauncherWindow.qml")));
+  m_engine.load(QUrl(
+#ifdef Q_OS_MACOS
+      QStringLiteral("qrc:/Vicinae/LauncherWindowMacOS.qml")
+#else
+      isLayerShellActive() ? QStringLiteral("qrc:/Vicinae/LauncherWindowLayerShell.qml")
+                           : QStringLiteral("qrc:/Vicinae/LauncherWindow.qml")
+#endif
+          ));
 
   auto rootObjects = m_engine.rootObjects();
   if (!rootObjects.isEmpty()) { m_window = qobject_cast<QQuickWindow *>(rootObjects.first()); }
@@ -161,7 +171,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
     }
   });
 
-  // Search state — programmatic text changes (e.g. from extensions)
+  // Search state: programmatic text changes (e.g. from extensions)
   connect(nav, &NavigationController::searchTextTampered, this, [this](const QString &text) {
     emit searchTextUpdated(text);
     tryCompaction();
@@ -306,6 +316,11 @@ bool LauncherWindow::eventFilter(QObject *obj, QEvent *event) {
 
   else if (event->type() == QEvent::KeyPress) {
     auto *ke = static_cast<QKeyEvent *>(event); // NOLINT
+    // KeypadModifier marks key origin, not user intent; strip it so numpad
+    // arrows compare equal to main-keyboard arrows downstream.
+    if (ke->modifiers().testFlag(Qt::KeypadModifier)) {
+      ke->setModifiers(ke->modifiers() & ~Qt::KeypadModifier);
+    }
     if (forwardKey(ke->key(), static_cast<int>(ke->modifiers()))) { return true; }
   }
 
@@ -516,6 +531,12 @@ void LauncherWindow::setCompleterValue(int index, const QString &value) {
   if (index < 0 || std::cmp_greater_equal(index, values.size())) return;
   values[index].second = value;
   nav->setCompletionValues(values);
+}
+
+QRect LauncherWindow::cursorScreenGeometry() const {
+  auto *screen = QGuiApplication::screenAt(QCursor::pos());
+  if (!screen) screen = QGuiApplication::primaryScreen();
+  return screen ? screen->geometry() : QRect();
 }
 
 void LauncherWindow::expand() { setCompacted(false); }

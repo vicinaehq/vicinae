@@ -1,12 +1,11 @@
 #include "extension-registry.hpp"
 #include "services/local-storage/local-storage-service.hpp"
+#include "vicinae.hpp"
 #include <QJsonArray>
 #include "services/extension-registry/extension-registry.hpp"
-#include "xdgpp/env/env.hpp"
 #include "zip/unzip.hpp"
 #include <QtConcurrent/qtconcurrentrun.h>
 #include <filesystem>
-#include <malloc.h>
 #include <qfilesystemwatcher.h>
 #include <QJsonParseError>
 #include <qfuturewatcher.h>
@@ -94,27 +93,14 @@ bool ExtensionRegistry::uninstall(const QString &id) {
   return true;
 }
 
-fs::path ExtensionRegistry::localExtensionDirectory() { return xdgpp::dataHome() / "vicinae" / "extensions"; }
+fs::path ExtensionRegistry::localExtensionDirectory() { return Omnicast::dataDir() / "extensions"; }
 
-fs::path ExtensionRegistry::supportDirectory() { return xdgpp::dataHome() / "vicinae" / "support"; }
+fs::path ExtensionRegistry::supportDirectory() { return Omnicast::dataDir() / "support"; }
 
 fs::path ExtensionRegistry::supportDirectory(const std::string &id) { return supportDirectory() / id; }
 
 std::vector<fs::path> ExtensionRegistry::extensionDirectories() {
-  std::vector<fs::path> paths;
-  auto dd = xdgpp::dataDirs();
-  auto local = localExtensionDirectory();
-
-  paths.reserve(dd.size() + 1);
-  paths.push_back(local); // we always consider local directory first, no matter what's
-                          // in XDG_DATA_DIRS
-
-  for (const auto &dir : dd) {
-    fs::path const extDir = dir / "vicinae" / "extensions";
-    if (extDir != local) paths.emplace_back(extDir);
-  }
-
-  return paths;
+  return Omnicast::dataSearchPaths("extensions");
 }
 
 std::vector<ExtensionManifest> ExtensionRegistry::scanAll() {

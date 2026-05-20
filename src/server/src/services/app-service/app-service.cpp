@@ -1,4 +1,5 @@
 #include "app-service.hpp"
+#include "services/app-service/dummy-app-database.hpp"
 #include "services/app-service/xdg/xdg-app-database.hpp"
 #include "omni-database.hpp"
 #include <filesystem>
@@ -34,10 +35,8 @@ bool AppService::launchTerminalCommand(const std::vector<QString> &cmdLine,
 
 std::unique_ptr<AbstractAppDatabase> AppService::createLocalProvider() {
 #ifdef Q_OS_DARWIN
-  return nullptr;
-#endif
-
-#if defined(Q_OS_UNIX) && not defined(Q_OS_DARWIN)
+  return std::make_unique<DummyAppDatabase>();
+#else
   return std::make_unique<XdgAppDatabase>();
 #endif
 }

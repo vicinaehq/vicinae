@@ -9,9 +9,10 @@ function(import_kf6)
 	  GIT_TAG v6.20.0
 	  GIT_SHALLOW TRUE
 	  EXCLUDE_FROM_ALL
+	  OVERRIDE_FIND_PACKAGE
 	)
 	FetchContent_MakeAvailable(KF6)
-	set(BUILD_SHARED_LIBS ON)
+	set(BUILD_SHARED_LIBS OFF)
 
 	# kf6 does not create the alias by itself
 	if (NOT TARGET KF6::SyntaxHighlighting)

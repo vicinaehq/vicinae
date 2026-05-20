@@ -6,18 +6,18 @@ set(TARGET vicinae-server)
 find_package(Qt6 REQUIRED COMPONENTS Core Sql Network Svg DBus Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2 ShaderTools)
 find_package(OpenSSL REQUIRED)
 find_package(LibXml2 REQUIRED)
-if (USE_SYSTEM_KF6)
+
+if (USE_SYSTEM_KF6 AND NOT APPLE)
 	find_package(KF6SyntaxHighlighting REQUIRED)
 endif()
 
-list(APPEND LIBS  
+list(APPEND LIBS
 	Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus Qt6::Concurrent Qt6::Quick Qt6::Qml
 	Qt6::GuiPrivate # for deeper integration with wayland protocols, we need wl_surface
 	Qt6::QuickDialogs2 Qt6::QuickControls2
 	${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY}
 	minizip
-	OpenSSL::Crypto 
-	wayland-client 
+	OpenSSL::Crypto
 	qt6keychain
 	LibXml2::LibXml2
 	KF6::SyntaxHighlighting
@@ -28,6 +28,10 @@ list(APPEND LIBS
 	vicinae::common
 	vicinae::fuzzy
 )
+
+if (UNIX AND NOT APPLE)
+	list(APPEND LIBS wayland-client)
+endif()
 
 
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)
@@ -139,9 +143,6 @@ set(SRCS
 	
 	src/service-registry.cpp
 
-	src/services/background-effect/ext-background-effect-v1-manager.cpp
-	src/services/background-effect/kde-background-effect-manager.cpp
-
 	src/color-formatter.hpp
 	src/color-formatter.cpp
 
@@ -176,6 +177,7 @@ set(SRCS
 	src/services/app-service/xdg/xdg-app-database.cpp
 	src/services/app-service/xdg/xdg-app.cpp
 	src/services/app-service/abstract-app-db.hpp
+	src/services/app-service/dummy-app-database.hpp
 
 	# end app-database
 
@@ -350,23 +352,9 @@ set(SRCS
 	src/services/calculator-service/calculator-service.cpp
 
 	src/services/files-service/abstract-file-indexer.hpp
+	src/services/files-service/dummy-file-indexer.hpp
 	src/services/files-service/file-service.hpp
 	src/services/files-service/file-service.cpp
-	src/services/files-service/file-indexer/file-indexer.hpp
-	src/services/files-service/file-indexer/file-indexer.cpp
-	src/services/files-service/file-indexer/filesystem-walker.cpp
-	src/services/files-service/file-indexer/relevancy-scorer.cpp
-	src/services/files-service/file-indexer/incremental-scanner.cpp
-	src/services/files-service/file-indexer/indexer-scanner.cpp
-	src/services/files-service/file-indexer/watcher-scanner.cpp
-	src/services/files-service/file-indexer/home-directory-watcher.cpp
-	src/services/files-service/file-indexer/file-indexer-db.cpp
-	src/services/files-service/file-indexer/db-writer.cpp
-	src/services/files-service/file-indexer/writer-worker.hpp
-	src/services/files-service/file-indexer/writer-worker.cpp
-	src/services/files-service/file-indexer/scan-dispatcher.cpp
-	src/services/files-service/file-indexer/abstract-scanner.hpp
-	src/services/files-service/file-indexer/file-indexer-query-engine.hpp
 
 	src/services/extension-registry/extension-registry.hpp
 	src/services/extension-registry/extension-registry.cpp
@@ -437,14 +425,18 @@ set(SRCS
 
 	src/services/window-manager/abstract-window-manager.hpp
 	src/services/paste/abstract-paste-service.hpp
+	src/services/paste/dummy-paste-service.hpp
+	src/services/paste/paste-service.cpp
 	src/services/browser-extension-service.hpp
 
 	src/lib/program-db/program-db.hpp
 	src/lib/program-db/program-db.cpp
 
 	src/services/power-manager/systemd/systemd-power-manager.cpp
+	src/services/power-manager/dummy-power-manager.hpp
 
 	src/services/audio-control/pactl/pactl-audio-control.cpp
+	src/services/audio-control/dummy-audio-control.hpp
 
 	src/config/config.hpp
 	src/config/config.cpp
@@ -610,7 +602,7 @@ set(SRCS
 
 )
 
-if (UNIX)
+if (UNIX AND NOT APPLE)
 	list(APPEND SRCS
 		src/services/calculator-service/soulver-core/soulver-core.cpp
 	)
@@ -634,7 +626,6 @@ if (UNIX AND NOT APPLE)
 		#src/lib/xkbcommon-utils.cpp
 
 		src/services/paste/linux-paste-service.cpp
-		src/services/paste/paste-service.cpp
 
 		src/lib/icon-theme-db/icon-theme-db.cpp
 
@@ -671,40 +662,6 @@ if (UNIX AND NOT APPLE)
 	wayland_generate_protocol("ext-data-control-v1")
 	wayland_generate_protocol("kde-blur")
 	wayland_generate_protocol("ext-background-effect-v1")
-	
-	include("Figura")
-
-	figura_compile(
-		SERVER
-		PROTO "${FIGURA_DIR}/tsapi.fig"
-		LANG glaze-qt
-		NAMESPACE tsapi
-		OUTPUT tsapi.hpp
-	)
-
-	figura_compile(
-		CLIENT
-		PROTO "${FIGURA_DIR}/manager.fig"
-		LANG glaze-qt
-		NAMESPACE manager
-		OUTPUT manager.hpp
-	)
-
-	figura_compile(
-		SERVER
-		PROTO "${FIGURA_DIR}/ipc.fig"
-		LANG glaze-qt
-		NAMESPACE ipc_gen
-		OUTPUT ipc-server.hpp
-	)
-
-	figura_compile(
-		CLIENT
-		PROTO "${FIGURA_DIR}/snippet.fig"
-		LANG glaze-qt
-		NAMESPACE snippet_gen
-		OUTPUT snippet-client.hpp
-	)
 
 	list(APPEND LIBS xkbcommon)
 
@@ -714,14 +671,81 @@ if (UNIX AND NOT APPLE)
 		src/lib/wayland/display.cpp
 		src/lib/wayland/registry.cpp
 		src/lib/wayland/seat.cpp
+		src/services/background-effect/ext-background-effect-v1-manager.cpp
+		src/services/background-effect/kde-background-effect-manager.cpp
 		src/services/clipboard/data-control/data-control-clipboard-server.hpp
 		src/services/clipboard/data-control/data-control-clipboard-server.cpp
+
+		src/services/files-service/file-indexer/file-indexer.hpp
+		src/services/files-service/file-indexer/file-indexer.cpp
+		src/services/files-service/file-indexer/filesystem-walker.cpp
+		src/services/files-service/file-indexer/relevancy-scorer.cpp
+		src/services/files-service/file-indexer/incremental-scanner.cpp
+		src/services/files-service/file-indexer/indexer-scanner.cpp
+		src/services/files-service/file-indexer/watcher-scanner.cpp
+		src/services/files-service/file-indexer/home-directory-watcher.cpp
+		src/services/files-service/file-indexer/file-indexer-db.cpp
+		src/services/files-service/file-indexer/db-writer.cpp
+		src/services/files-service/file-indexer/writer-worker.hpp
+		src/services/files-service/file-indexer/writer-worker.cpp
+		src/services/files-service/file-indexer/scan-dispatcher.cpp
+		src/services/files-service/file-indexer/abstract-scanner.hpp
+		src/services/files-service/file-indexer/file-indexer-query-engine.hpp
 	)
 
 endif()
+
+include("Figura")
+
+figura_compile(
+	SERVER
+	PROTO "${FIGURA_DIR}/tsapi.fig"
+	LANG glaze-qt
+	NAMESPACE tsapi
+	OUTPUT tsapi.hpp
+)
+
+figura_compile(
+	CLIENT
+	PROTO "${FIGURA_DIR}/manager.fig"
+	LANG glaze-qt
+	NAMESPACE manager
+	OUTPUT manager.hpp
+)
+
+figura_compile(
+	SERVER
+	PROTO "${FIGURA_DIR}/ipc.fig"
+	LANG glaze-qt
+	NAMESPACE ipc_gen
+	OUTPUT ipc-server.hpp
+)
+
+figura_compile(
+	CLIENT
+	PROTO "${FIGURA_DIR}/snippet.fig"
+	LANG glaze-qt
+	NAMESPACE snippet_gen
+	OUTPUT snippet-client.hpp
+)
 	
 
 qt_add_executable(${TARGET} ${SRCS})
+
+if(APPLE)
+	set(VICINAE_BUNDLE_EXECUTABLE "Vicinae")
+	set(VICINAE_BUNDLE_SHORT_VERSION "${VICINAE_GIT_TAG}")
+	string(REGEX REPLACE "^v" "" VICINAE_BUNDLE_SHORT_VERSION "${VICINAE_BUNDLE_SHORT_VERSION}")
+	if(NOT VICINAE_BUNDLE_SHORT_VERSION MATCHES "^[0-9]+(\\.[0-9]+)*$")
+		set(VICINAE_BUNDLE_SHORT_VERSION "0.0.0")
+	endif()
+	get_git_commit_count(VICINAE_BUNDLE_VERSION)
+	configure_file(
+		"${CMAKE_SOURCE_DIR}/extra/Info.plist.in"
+		"${CMAKE_BINARY_DIR}/Info.plist"
+		@ONLY
+	)
+endif()
 
 set(VICINAE_QML_FILES
 	src/qml/qml/LauncherWindow.qml
@@ -837,25 +861,42 @@ if(WAYLAND_LAYER_SHELL)
 	list(APPEND VICINAE_QML_FILES src/qml/qml/LauncherWindowLayerShell.qml)
 endif()
 
+if(APPLE)
+	list(APPEND VICINAE_QML_FILES
+		src/qml/qml/LauncherWindowMacOS.qml
+		src/qml/qml/SettingsWindowMacOS.qml
+	)
+endif()
+
 # Strip directory prefix so resources are qrc:/Vicinae/Foo.qml
 foreach(qml_file IN LISTS VICINAE_QML_FILES)
 	get_filename_component(alias ${qml_file} NAME)
 	set_source_files_properties(${qml_file} PROPERTIES QT_RESOURCE_ALIAS ${alias})
 endforeach()
 
+set(VICINAE_QML_SOURCES
+	src/qml/source-blend-rect.hpp
+	src/qml/animated-image.hpp
+	src/qml/completion-model.hpp
+	src/qml/markdown/markdown-model.hpp
+	src/qml/markdown/text-selection-controller.hpp
+	src/qml/background-effect-attached.hpp
+	src/qml/background-effect-attached.cpp
+)
+
+if(APPLE)
+	list(APPEND VICINAE_QML_SOURCES
+		src/qml/macos-chrome-attached.hpp
+		src/qml/macos-chrome-attached.mm
+	)
+endif()
+
 qt_add_qml_module(${TARGET}
 	URI Vicinae
 	VERSION 1.0
 	RESOURCE_PREFIX /
 	QML_FILES ${VICINAE_QML_FILES}
-	SOURCES
-		src/qml/source-blend-rect.hpp
-		src/qml/animated-image.hpp
-		src/qml/completion-model.hpp
-		src/qml/markdown/markdown-model.hpp
-		src/qml/markdown/text-selection-controller.hpp
-		src/qml/background-effect-attached.hpp
-		src/qml/background-effect-attached.cpp
+	SOURCES ${VICINAE_QML_SOURCES}
 	DEPENDENCIES QtQuick
 	NO_PLUGIN
 )
@@ -877,6 +918,9 @@ endif()
 
 target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/qml ${CMAKE_CURRENT_SOURCE_DIR}/src/qml/markdown)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
+if(APPLE)
+	target_link_libraries(${TARGET} PRIVATE "-framework AppKit")
+endif()
 target_compile_features(${TARGET} PUBLIC cxx_std_23)
 
 if (USE_PRECOMPILED_HEADERS)
@@ -887,11 +931,13 @@ else()
 	message(STATUS "Precompiled headers are disabled")
 endif()
 
-install(TARGETS ${TARGET}
-	RUNTIME DESTINATION ${VICINAE_LIBEXEC_DIR}
-)
+if(NOT APPLE)
+	install(TARGETS ${TARGET}
+		RUNTIME DESTINATION ${VICINAE_LIBEXEC_DIR}
+	)
+endif()
 
-if (BUILD_TESTS)
+if (BUILD_TESTS AND UNIX AND NOT APPLE)
 	set(TEST_TARGET ${TARGET}-tests)
 	find_package(Catch2 3 REQUIRED)
 	add_executable(${TEST_TARGET}

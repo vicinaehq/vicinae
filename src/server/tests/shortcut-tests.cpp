@@ -59,7 +59,11 @@ TEST_CASE("special keys are exposed as hybrid raycast tokens") {
 TEST_CASE("binding sequence stays separate from display tokens") {
   Keyboard::Shortcut const shortcut(Qt::Key_B, Qt::ControlModifier | Qt::ShiftModifier);
 
+#ifdef Q_OS_MACOS
+  REQUIRE(shortcut.toDisplayString() == "Command+Shift+B");
+#else
   REQUIRE(shortcut.toDisplayString() == "Ctrl+Shift+B");
+#endif
 
   QKeySequence const expected(Qt::CTRL | Qt::SHIFT | Qt::Key_B);
   REQUIRE(shortcut.toBindingSequence() == expected.toString(QKeySequence::PortableText));

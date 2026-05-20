@@ -253,6 +253,9 @@ void IpcCommandServer::handleConnection() {
 }
 
 bool IpcCommandServer::start(const std::filesystem::path &localPath) {
+  // Stale socket from a previous run blocks listen(). The single-instance
+  // probe that decides whether we're the canonical server lives in
+  // startServer(); by this point we already know we are.
   if (std::filesystem::exists(localPath)) { std::filesystem::remove(localPath); }
 
   if (!m_server.listen(localPath.c_str())) {

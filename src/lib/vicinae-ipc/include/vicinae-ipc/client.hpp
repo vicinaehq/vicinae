@@ -1,4 +1,5 @@
 #pragma once
+#include <common/enumerate.hpp>
 #include <cstring>
 #include <filesystem>
 #include <expected>
@@ -7,7 +8,6 @@
 #include <glaze/json/read.hpp>
 #include <glaze/util/string_literal.hpp>
 #include <netinet/in.h>
-#include <ranges>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include "ipc.hpp"
@@ -141,7 +141,7 @@ struct CliClient : public Client<CliSchema> {
     std::string fullUrl{url};
 
     if (!opts.query.empty()) {
-      for (const auto &[idx, arg] : opts.query | std::views::enumerate) {
+      for (const auto &[idx, arg] : opts.query | vicinae::enumerate) {
         fullUrl.append(std::format("{}{}={}", idx == 0 ? "?" : "&", arg.first, arg.second));
       }
     }

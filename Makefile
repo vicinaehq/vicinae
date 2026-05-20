@@ -26,6 +26,14 @@ debug:
 	cmake --build $(BUILD_DIR) --parallel
 .PHONY: debug
 
+mac-bundle:
+	./scripts/macdeploy.sh $(BUILD_DIR)
+.PHONY: mac-bundle
+
+mac-deps:
+	./scripts/macos-setup.sh
+.PHONY: mac-deps
+
 debug-tidy:
 	# we need to run tidy with clang to avoid false positives
 	CC=clang CXX=clang++ cmake -G Ninja -DLTO=OFF -DENABLE_PREVIEW_FEATURES=ON -DENABLE_SANITIZERS=ON -DENABLE_CLANG_TIDY=ON -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
@@ -94,20 +102,26 @@ appimage-build-env-push:
 	docker push $(APPIMAGE_BUILD_ENV_IMAGE_TAG)
 .PHONY: appimage-build-env-push
 
+NPROC := $(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
+CLANG_FORMAT := $(shell command -v clang-format 2>/dev/null || echo /opt/homebrew/opt/llvm/bin/clang-format)
+
 qmlformat:
-	find ./src -type f -name '*.qml' -print0 | xargs -0 -n 10 -P $(shell nproc) qmlformat -i
+	find ./src -type f -name '*.qml' -print0 | xargs -0 -n 10 -P $(NPROC) qmlformat -i
 .PHONY: qmlformat
 
 tsfmt:
 	cd src/typescript && biome format --write .
 .PHONY: tsfmt
 
-format: qmlformat tsfmt
-	find ./src -type f \( -name '*.cpp' -o -name '*.hpp' \) -print0 | xargs -0 -n 10 -P $(shell nproc) clang-format -i
+clang-format:
+	find ./src -type f \( -name '*.cpp' -o -name '*.hpp' \) -print0 | xargs -0 -n 10 -P $(NPROC) clang-format -i
+.PHONY: clang-format
+
+format: qmlformat tsfmt clang-format
 .PHONY: format
 
 check-format:
-	find ./src -type f \( -name '*.cpp' -o -name '*.hpp' \) -print0 | xargs -0 -n 10 -P $(shell nproc) clang-format --dry-run -Werror
+	find ./src -type f \( -name '*.cpp' -o -name '*.hpp' \) -print0 | xargs -0 -n 10 -P $(NPROC) $(CLANG_FORMAT) --dry-run -Werror
 .PHONY: check-format
 
 bump-patch:

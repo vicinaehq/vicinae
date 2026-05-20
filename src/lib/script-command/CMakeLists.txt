@@ -18,7 +18,7 @@ add_library(vicinae-scriptcommand STATIC src/script-command.cpp)
 add_library(vicinae::scriptcommand ALIAS vicinae-scriptcommand)
 set(PROJECT_NAME vicinae-scriptcommand)
 target_include_directories(${PROJECT_NAME} PUBLIC .)
-target_link_libraries(${PROJECT_NAME} PUBLIC glaze::glaze)
+target_link_libraries(${PROJECT_NAME} PUBLIC glaze::glaze vicinae::common)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)
 
 if (BUILD_TESTS)
