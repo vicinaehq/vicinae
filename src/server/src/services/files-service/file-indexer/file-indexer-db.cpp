@@ -12,7 +12,6 @@ static constexpr const char *SQLITE_PRAGMAS[] = {
     "PRAGMA journal_mode = WAL",
     "PRAGMA synchronous = normal",
     "PRAGMA temp_store = memory",
-    "PRAGMA busy_timeout = 100",
 };
 
 namespace fs = std::filesystem;

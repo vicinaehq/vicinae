@@ -4,7 +4,7 @@
 #include <qlogging.h>
 #include <filesystem>
 
-static constexpr const char *OMNI_PRAGMAS[] = {"PRAGMA foreign_keys = ON;"};
+static constexpr const char *OMNI_PRAGMAS[] = {"PRAGMA journal_mode = WAL", "PRAGMA foreign_keys = ON"};
 
 class OmniDatabase {
   db::Database _db;

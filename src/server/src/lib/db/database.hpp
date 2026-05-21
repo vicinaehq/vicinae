@@ -13,6 +13,8 @@
 
 namespace db {
 
+static constexpr int BUSY_TIMEOUT_MS = 5000;
+
 class Statement {
   sqlite3_stmt *m_stmt = nullptr;
   sqlite3 *m_db = nullptr;
@@ -223,6 +225,7 @@ public:
       if (handle) sqlite3_close_v2(handle);
       return std::unexpected(std::move(err));
     }
+    sqlite3_busy_timeout(handle, BUSY_TIMEOUT_MS);
     return Database(handle);
   }
 
