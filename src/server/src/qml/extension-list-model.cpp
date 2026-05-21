@@ -142,12 +142,12 @@ QString ExtensionListModel::searchPlaceholder() const {
 }
 
 QString ExtensionListModel::emptyTitle() const {
-  if (m_model.emptyView) return m_model.emptyView->title;
+  if (m_model.emptyView) return QString::fromStdString(m_model.emptyView->title);
   return QStringLiteral("No results");
 }
 
 QString ExtensionListModel::emptyDescription() const {
-  if (m_model.emptyView) return m_model.emptyView->description;
+  if (m_model.emptyView) return QString::fromStdString(m_model.emptyView->description);
   return {};
 }
 
@@ -162,7 +162,7 @@ bool ExtensionListModel::isShowingDetail() const { return m_model.isShowingDetai
 bool ExtensionListModel::hasDetail() const { return m_currentDetail.has_value(); }
 
 QString ExtensionListModel::detailMarkdown() const {
-  if (m_currentDetail && m_currentDetail->markdown) return *m_currentDetail->markdown;
+  if (m_currentDetail && m_currentDetail->markdown) return QString::fromStdString(*m_currentDetail->markdown);
   return {};
 }
 

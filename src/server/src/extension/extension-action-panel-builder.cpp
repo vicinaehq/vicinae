@@ -36,19 +36,21 @@ static AbstractAction *createActionFromModel(const ActionModel &model, const Not
       actionIcon = ImageURL::builtin("link");
     }
 
-    auto action = new PushViewAction(model.title, view, actionIcon);
-    if (model.stableId) { action->setId(*model.stableId); }
+    auto qTitle = QString::fromStdString(model.title);
+    auto action = new PushViewAction(qTitle, view, actionIcon);
+    if (model.stableId) { action->setId(QString::fromStdString(*model.stableId)); }
     return action;
   }
 
-  auto action = new StaticAction(model.title, model.icon, [notify, model, submit]() {
-    notify(model.onAction, {});
+  auto qTitle = QString::fromStdString(model.title);
+  auto action = new StaticAction(qTitle, model.icon, [notify, model, submit]() {
+    notify(QString::fromStdString(model.onAction), {});
 
     if (auto handler = model.onSubmit) {
       if (submit) {
         auto res = submit();
         if (res.has_value()) {
-          notify(*handler, QJsonArray{res.value()});
+          notify(QString::fromStdString(*handler), QJsonArray{res.value()});
         } else {
           qCritical() << "Failed to submit action" << res.error();
         }
@@ -56,7 +58,7 @@ static AbstractAction *createActionFromModel(const ActionModel &model, const Not
     }
   });
 
-  if (model.stableId) { action->setId(*model.stableId); }
+  if (model.stableId) { action->setId(QString::fromStdString(*model.stableId)); }
   return action;
 }
 
@@ -68,17 +70,18 @@ static AbstractAction *createSubmenuAction(const ActionPannelSubmenuPtr &submenu
   if (submenuModel->icon) { icon = ImageURL(*submenuModel->icon); }
 
   std::function<void()> onOpen = nullptr;
-  if (!submenuModel->onOpen.isEmpty()) {
+  if (!submenuModel->onOpen.empty()) {
     onOpen = [notify, handler = submenuModel->onOpen]() {
-      if (!handler.isEmpty()) { notify(handler, {}); }
+      if (!handler.empty()) { notify(QString::fromStdString(handler), {}); }
     };
   }
 
-  auto action = new SubmenuAction(submenuModel->title, icon, onOpen);
-  if (submenuModel->stableId) { action->setId(*submenuModel->stableId); }
+  auto qTitle = QString::fromStdString(submenuModel->title);
+  auto action = new SubmenuAction(qTitle, icon, onOpen);
+  if (submenuModel->stableId) { action->setId(QString::fromStdString(*submenuModel->stableId)); }
   if (submenuModel->shortcut) { action->addShortcut(submenuModel->shortcut.value()); }
-  if (!submenuModel->onSearchTextChange.isEmpty()) {
-    action->setOnSearchTextChangeHandler(submenuModel->onSearchTextChange);
+  if (!submenuModel->onSearchTextChange.empty()) {
+    action->setOnSearchTextChangeHandler(QString::fromStdString(submenuModel->onSearchTextChange));
   }
 
   auto stateFactory = [notify, submenuModel, submit]() -> std::unique_ptr<ActionPanelState> {
@@ -94,8 +97,8 @@ std::unique_ptr<ActionPanelState> buildSubmenuState(const ActionPannelSubmenuPtr
   if (!submenuModel) return nullptr;
 
   auto state = std::make_unique<ActionPanelState>();
-  state->setTitle(submenuModel->title);
-  if (submenuModel->stableId) { state->setId(*submenuModel->stableId); }
+  state->setTitle(QString::fromStdString(submenuModel->title));
+  if (submenuModel->stableId) { state->setId(QString::fromStdString(*submenuModel->stableId)); }
 
   ActionPanelSectionState *outsideSection = nullptr;
 
@@ -105,7 +108,7 @@ std::unique_ptr<ActionPanelState> buildSubmenuState(const ActionPannelSubmenuPtr
       if (!section) continue;
       outsideSection = nullptr;
 
-      auto sec = state->createSection(section->title);
+      auto sec = state->createSection(QString::fromStdString(section->title));
 
       for (const auto &item : section->items) {
         if (auto actionModel = std::get_if<ActionModel>(&item)) {
@@ -136,9 +139,9 @@ std::unique_ptr<ActionPanelState> build(const ActionPannelModel &model, const No
                                         ActionPanelState::ShortcutPreset preset, const SubmitFn &submit) {
   auto panel = std::make_unique<ActionPanelState>();
   panel->setDirty(model.dirty);
-  panel->setTitle(model.title);
+  panel->setTitle(QString::fromStdString(model.title));
   panel->setShortcutPreset(preset);
-  if (model.stableId) { panel->setId(*model.stableId); }
+  if (model.stableId) { panel->setId(QString::fromStdString(*model.stableId)); }
 
   size_t idx = 0;
   ActionPanelSectionState *outsideSection = nullptr;
@@ -149,7 +152,7 @@ std::unique_ptr<ActionPanelState> build(const ActionPannelModel &model, const No
       if (!section) continue;
       outsideSection = nullptr;
 
-      auto sec = panel->createSection(section->title);
+      auto sec = panel->createSection(QString::fromStdString(section->title));
 
       for (const auto &sectionItem : section->items) {
         if (auto actionModel = std::get_if<ActionModel>(&sectionItem)) {

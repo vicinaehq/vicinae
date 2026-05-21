@@ -6,16 +6,10 @@
 #include "extend/pagination-model.hpp"
 #include "extend/dropdown-model.hpp"
 #include "ui/image/url.hpp"
-#include <qjsonobject.h>
 
 enum GridFit { GridContain, GridFill };
 
 enum class GridInset { None, Small, Medium, Large };
-
-struct ImageContentWithTooltip {
-  ImageLikeModel value;
-  std::optional<std::string> tooltip;
-};
 
 struct GridItemViewModel {
   using Content = std::variant<ImageLikeModel, ColorLike>;
@@ -46,11 +40,11 @@ using GridChild = std::variant<GridItemViewModel, GridSectionModel>;
 using GridSearchBarAccessory = std::variant<DropdownModel>;
 
 struct GridModel {
-  bool isLoading;
-  bool filtering;
-  bool throttle;
-  double aspectRatio;
-  bool dirty;
+  bool isLoading = false;
+  bool filtering = false;
+  bool throttle = false;
+  double aspectRatio = 1.0;
+  bool dirty = false;
   std::optional<int> columns;
   GridInset inset = GridInset::None;
   ObjectFit fit = ObjectFit::Contain;
@@ -66,16 +60,4 @@ struct GridModel {
   std::optional<std::string> selectedItemId;
   std::optional<PaginationModel> pagination;
   std::optional<GridSearchBarAccessory> searchBarAccessory;
-};
-
-class GridModelParser {
-  GridInset parseInset(const std::string &s);
-  GridItemViewModel parseListItem(const QJsonObject &instance, size_t index);
-  GridSectionModel parseSection(const QJsonObject &instance);
-  ObjectFit parseFit(const std::string &fit);
-
-public:
-  GridModelParser();
-
-  GridModel parse(const QJsonObject &instance);
 };

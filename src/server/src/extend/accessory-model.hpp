@@ -1,25 +1,26 @@
 #pragma once
 #include "extend/image-model.hpp"
 #include "ui/list-accessory/list-accessory.hpp"
-#include <qjsonvalue.h>
+#include <optional>
+#include <string>
+#include <variant>
 
 class AccessoryModel {
 public:
   struct Tag {
     std::optional<ColorLike> color;
-    QString value;
+    std::string value;
   };
 
   struct Text {
     std::optional<ColorLike> color;
-    QString value;
+    std::string value;
   };
   using Data = std::variant<Tag, Text>;
 
   ListAccessory toAccessory() const;
-  static AccessoryModel fromJson(const QJsonValue &value);
 
   Data data = Text{};
   std::optional<ImageLikeModel> icon;
-  std::optional<QString> tooltip;
+  std::optional<std::string> tooltip;
 };

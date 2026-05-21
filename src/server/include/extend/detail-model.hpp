@@ -1,16 +1,9 @@
 #pragma once
 #include "extend/metadata-model.hpp"
-#include <qjsonobject.h>
-#include <qjsonvalue.h>
+#include <optional>
+#include <string>
 
 struct DetailModel {
-  std::optional<QString> markdown;
+  std::optional<std::string> markdown;
   MetadataModel metadata;
-};
-
-class DetailModelParser {
-public:
-  DetailModelParser();
-
-  DetailModel parse(const QJsonObject &instance);
 };

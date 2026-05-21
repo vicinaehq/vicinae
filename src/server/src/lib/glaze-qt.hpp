@@ -8,6 +8,7 @@
 #include <qjsonvalue.h>
 #include <qjsonarray.h>
 #include <string_view>
+#include <vector>
 
 namespace glz {
 

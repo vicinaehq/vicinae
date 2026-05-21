@@ -11,7 +11,7 @@ import * as fsp from "node:fs/promises";
 
 import type { EnvironmentType } from "./types";
 
-const WORKER_GRACE_PERIOD_MS = 10_000;
+const WORKER_GRACE_PERIOD_MS = 5000;
 const WORKER_MAX_HEAP_SIZE_MB = 1000; // really high limit just to make sure an extension command can't exhaust RAM by itself
 
 type WorkerInfo = {

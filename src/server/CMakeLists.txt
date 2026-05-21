@@ -237,20 +237,8 @@ set(SRCS
 
 
 	src/extend/accessory-model.cpp
-	src/extend/action-shortcut-parser.cpp
-	src/extend/action-model.cpp
-	src/extend/color-model.cpp
-	src/extend/detail-model.cpp
-	src/extend/image-model.cpp
-	src/extend/grid-model.cpp
-	src/extend/list-model.cpp
-	src/extend/metadata-model.cpp
-	src/extend/model-parser.cpp
-	src/extend/tag-list.cpp
-	src/extend/root-detail-model.cpp
-	src/extend/empty-view-model.cpp
+	src/extend/model-deser.cpp
 	include/extend/form-model.hpp
-	src/extend/form-model.cpp
 
 	src/image-fetcher.hpp
 
@@ -942,8 +930,6 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 	set(TEST_TARGET ${TARGET}-tests)
 	find_package(Catch2 3 REQUIRED)
 	add_executable(${TEST_TARGET}
-		tests/shortcut-tests.cpp
-		src/extend/action-shortcut-parser.cpp
 		src/lib/keyboard/keyboard.cpp
 		src/lib/keyboard/keybind-manager.cpp
 	)

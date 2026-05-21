@@ -7,12 +7,8 @@ template <class... Ts> struct overloads : Ts... {
   using Ts::operator()...;
 };
 
-template <class... Ts> struct match : Ts... {
-  using Ts::operator()...;
-};
-
-template <class V, class... Ts> auto operator|(V &&variant, match<Ts...> &&m) {
-  return std::visit(std::move(m), std::forward<V>(variant));
+template <typename V, typename... Fs> auto match(V &&v, Fs &&...fs) {
+  return std::visit(overloads{std::forward<Fs>(fs)...}, std::forward<V>(v));
 }
 
 class NonCopyable {

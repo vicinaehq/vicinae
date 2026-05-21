@@ -1,20 +1,22 @@
 #pragma once
 #include "extend/tag-model.hpp"
-#include "../theme.hpp"
-#include "../ui/image/url.hpp"
-#include <qjsonobject.h>
+#include "ui/image/url.hpp"
+#include <optional>
+#include <string>
+#include <variant>
+#include <vector>
 
 struct MetadataLabel {
-  QString text;
-  QString title;
+  std::string text;
+  std::string title;
   std::optional<ImageURL> icon;
   std::optional<ColorLike> color;
 };
 
 struct MetadataLink {
-  QString title;
-  QString text;
-  QString target;
+  std::string title;
+  std::string text;
+  std::string target;
 };
 
 struct MetadataSeparator {};
@@ -23,13 +25,4 @@ using MetadataItem = std::variant<MetadataLabel, MetadataLink, MetadataSeparator
 
 struct MetadataModel {
   std::vector<MetadataItem> children;
-};
-
-class MetadataModelParser {
-  MetadataItem parseMetadataItem(const QJsonObject &instance);
-
-public:
-  MetadataModelParser();
-
-  MetadataModel parse(const QJsonObject &instance);
 };

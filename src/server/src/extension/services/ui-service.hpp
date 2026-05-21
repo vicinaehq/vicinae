@@ -1,4 +1,5 @@
 #pragma once
+#include "extend/model-deser.hpp"
 #include "extension/extension-command.hpp"
 #include "extension/services/tsapi-image.hpp"
 #include "generated/tsapi.hpp"
@@ -141,9 +142,7 @@ private slots:
     for (size_t i = 0; i < models.items.size() && i < m_views.size(); ++i) {
       const auto &model = models.items[i];
       const auto &entry = m_views[i];
-      bool const shouldSkipRender = !model.dirty && !model.propsDirty;
-
-      if (!shouldSkipRender) entry.renderFn(model.root);
+      if (model.dirty) entry.renderFn(model.root);
     }
 
     processNextRender();
@@ -166,12 +165,8 @@ private:
     auto json = std::move(m_renderQueue.front());
     m_renderQueue.pop();
 
-    m_modelWatcher.setFuture(QtConcurrent::run([json = std::move(json)]() -> ParsedRenderData {
-      QJsonParseError parseError;
-      auto doc = QJsonDocument::fromJson(QByteArray::fromStdString(json), &parseError);
-      if (parseError.error) return {};
-      return ModelParser().parse(doc.object().value("views").toArray());
-    }));
+    m_modelWatcher.setFuture(QtConcurrent::run(
+        [json = std::move(json)]() -> ParsedRenderData { return parseRenderPayload(json); }));
   }
 
   ExtensionActionPanelBuilder::NotifyFn makeNotifyFn() {

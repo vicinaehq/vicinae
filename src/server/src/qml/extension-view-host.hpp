@@ -112,5 +112,5 @@ private:
   QVariant m_dropdownCurrentItem;
   QString m_dropdownValue;
   QString m_dropdownPlaceholder;
-  std::optional<QString> m_dropdownOnChange;
+  std::optional<std::string> m_dropdownOnChange;
 };

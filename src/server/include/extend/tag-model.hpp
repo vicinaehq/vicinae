@@ -1,26 +1,18 @@
 #pragma once
 #include "extend/color-model.hpp"
 #include "extend/image-model.hpp"
-#include <qjsonobject.h>
-#include <qstring.h>
+#include <optional>
+#include <string>
+#include <vector>
 
 struct TagItemModel {
-  QString text;
+  std::string text;
   std::optional<ImageLikeModel> icon;
   std::optional<ColorLike> color;
-  QString onAction;
+  std::string onAction;
 };
 
 struct TagListModel {
-  QString title;
-  QList<TagItemModel> items;
-};
-
-class TagListParser {
-  TagItemModel parseTagItem(const QJsonObject &instance);
-
-public:
-  TagListParser();
-
-  TagListModel parse(const QJsonObject &instance);
+  std::string title;
+  std::vector<TagItemModel> items;
 };

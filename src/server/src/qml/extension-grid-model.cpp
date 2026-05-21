@@ -248,12 +248,12 @@ QString ExtensionGridModel::cellColor(int section, int item) const {
 }
 
 QString ExtensionGridModel::emptyTitle() const {
-  if (m_model.emptyView) return m_model.emptyView->title;
+  if (m_model.emptyView) return QString::fromStdString(m_model.emptyView->title);
   return QStringLiteral("No results");
 }
 
 QString ExtensionGridModel::emptyDescription() const {
-  if (m_model.emptyView) return m_model.emptyView->description;
+  if (m_model.emptyView) return QString::fromStdString(m_model.emptyView->description);
   return {};
 }
 
