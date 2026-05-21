@@ -72,6 +72,8 @@ include_directories(
 set(SRCS
 	src/main.cpp
 
+	${VENDOR_DIR}/sqlcipher/sqlite3.c
+
 	src/theme.hpp
 	src/theme.cpp
 
