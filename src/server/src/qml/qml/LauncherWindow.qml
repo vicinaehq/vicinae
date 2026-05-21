@@ -302,5 +302,9 @@ Window {
     onWidthChanged: root.x = Screen.virtualX + (Screen.width - root.width) / 2
     onHeightChanged: root.y = Screen.virtualY + (Screen.height - root.height) / 3
 
-    Component.onCompleted: _centerOnCursorScreen()
+    Component.onCompleted: {
+        root.x = Screen.virtualX + (Screen.width - root.width) / 2;
+        root.y = Screen.virtualY + (Screen.height - root.height) / 3;
+        _centerOnCursorScreen();
+    }
 }
