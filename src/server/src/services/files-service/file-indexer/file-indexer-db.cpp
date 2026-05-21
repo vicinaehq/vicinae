@@ -179,14 +179,11 @@ std::vector<FileIndexerDatabase::ScanRecord> FileIndexerDatabase::listScans(Scan
 
 db::Database &FileIndexerDatabase::database() { return m_db; }
 
-<<<<<<< HEAD
 std::vector<FileIndexerDatabase::SearchCandidate>
 FileIndexerDatabase::searchCandidates(std::string_view searchQuery, int limit) {
   if (searchQuery.empty() || limit <= 0) return {};
 
-  QSqlQuery query(m_db);
-
-  query.prepare(R"(
+  auto stmt = m_db.prepare(R"(
     SELECT f.path, f.name, f.relevancy_score, unicode_idx.rank
     FROM indexed_file f
     JOIN unicode_idx ON unicode_idx.rowid = f.id
@@ -194,48 +191,24 @@ FileIndexerDatabase::searchCandidates(std::string_view searchQuery, int limit) {
     ORDER BY unicode_idx.rank, f.relevancy_score DESC, f.path
     LIMIT :limit
   )");
-  query.bindValue(":search", qStringFromStdView(searchQuery));
-  query.bindValue(":limit", limit);
-
-  if (!query.exec()) { qWarning() << "Search query failed" << query.lastError(); }
-=======
-std::vector<fs::path> FileIndexerDatabase::search(std::string_view searchQuery,
-                                                  const AbstractFileIndexer::QueryParams &params) {
-  auto sql = std::format(R"(
-    SELECT path, rank FROM indexed_file f
-    JOIN unicode_idx ON unicode_idx.rowid = f.id
-    WHERE unicode_idx MATCH '{}'
-    ORDER BY f.relevancy_score DESC, unicode_idx.rank
-    LIMIT :limit OFFSET :offset
-  )",
-                         searchQuery);
-
-  auto stmt = m_db.prepare(sql);
-  stmt.bind(":limit", params.pagination.limit);
-  stmt.bind(":offset", params.pagination.offset);
->>>>>>> 0bfc59760 (feat: migrate from QSql to vendored sqlcipher)
+  stmt.bind(":search", searchQuery);
+  stmt.bind(":limit", limit);
 
   std::vector<SearchCandidate> results;
   std::error_code ec;
 
   results.reserve(limit);
 
-<<<<<<< HEAD
-  while (query.next()) {
+  while (stmt.step()) {
     SearchCandidate candidate;
 
-    candidate.path = query.value(0).toString().toStdString();
+    candidate.path = stmt.columnText(0);
     if (!fs::exists(candidate.path, ec)) { continue; }
 
-    candidate.name = query.value(1).toString().toStdString();
-    candidate.relevancyScore = query.value(2).toDouble();
-    candidate.indexRank = query.value(3).toDouble();
+    candidate.name = stmt.columnText(1);
+    candidate.relevancyScore = stmt.columnDouble(2);
+    candidate.indexRank = stmt.columnDouble(3);
     results.emplace_back(std::move(candidate));
-=======
-  while (stmt.step()) {
-    fs::path const path = stmt.columnText(0);
-    if (fs::exists(path, ec)) { results.emplace_back(path); }
->>>>>>> 0bfc59760 (feat: migrate from QSql to vendored sqlcipher)
   }
 
   return results;
