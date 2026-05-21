@@ -341,21 +341,21 @@ install_desktop_files() {
 install_icons() {
 	echo "Installing application icons..." >&2
 
-	local icons_source="$INSTALL_DIR/usr/share/icons"
-	local icons_dest="$PREFIX/share/icons"
+	local icon_source="$INSTALL_DIR/usr/share/icons/hicolor/512x512/apps/vicinae.png"
+	local icon_dest_dir="$PREFIX/share/icons/hicolor/512x512/apps"
 
-	if [[ -d "$icons_source" ]]; then
-		mkdir -p "$icons_dest"
-		cp -r "$icons_source"/* "$icons_dest/"
+	if [[ -f "$icon_source" ]]; then
+		mkdir -p "$icon_dest_dir"
+		cp "$icon_source" "$icon_dest_dir/"
 
 		if command -v gtk-update-icon-cache >/dev/null 2>&1; then
-			gtk-update-icon-cache -f -t "$icons_dest/hicolor" 2>/dev/null || true
+			gtk-update-icon-cache -f -t "$PREFIX/share/icons/hicolor" 2>/dev/null || true
 		fi
 
-		ok "Application icons installed to $icons_dest"
+		ok "Application icon installed to $icon_dest_dir/vicinae.png"
 		echo
 	else
-		warn "Icons directory not found at $icons_source"
+		warn "Application icon not found at $icon_source"
 	fi
 }
 
