@@ -105,7 +105,8 @@ QJsonObject LocalStorageService::listNamespaceItems(const QString &namespaceId) 
   while (m_listQuery.step()) {
     auto key = m_listQuery.columnQString(0);
     auto value = m_listQuery.columnQString(1);
-    obj[key] = value;
+    auto valueType = static_cast<ValueType>(m_listQuery.columnInt(2));
+    obj[key] = deserializeValue(value, valueType);
   }
 
   return obj;
@@ -126,8 +127,8 @@ bool LocalStorageService::clearNamespace(const QString &namespaceId) {
 
 LocalStorageService::LocalStorageService(OmniDatabase &db) : m_omniDb(db) {
   m_clearQuery = db.db().prepare("DELETE FROM storage_data_item WHERE namespace_id = :namespace_id");
-  m_listQuery =
-      db.db().prepare("SELECT key, value FROM storage_data_item WHERE namespace_id = :namespace_id");
+  m_listQuery = db.db().prepare(
+      "SELECT key, value, value_type FROM storage_data_item WHERE namespace_id = :namespace_id");
   m_removeQuery =
       db.db().prepare("DELETE FROM storage_data_item WHERE namespace_id = :namespace_id AND key = :key");
   m_setItemQuery = db.db().prepare(R"(

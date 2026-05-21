@@ -27,7 +27,6 @@ public:
     double indexRank = 0;
   };
 
-  static QString createRandomConnectionId();
   ScanRecord mapScan(const db::Statement &stmt) const;
   static std::filesystem::path getDatabasePath();
 

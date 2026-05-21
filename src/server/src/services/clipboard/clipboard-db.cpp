@@ -3,7 +3,7 @@
 #include "vicinae.hpp"
 #include <qlogging.h>
 
-static constexpr std::string_view CLIPBOARD_PRAGMAS[] = {
+static constexpr const char *CLIPBOARD_PRAGMAS[] = {
     "PRAGMA journal_mode = WAL", "PRAGMA synchronous = normal", "PRAGMA journal_size_limit = 6144000",
     "PRAGMA foreign_keys = ON"};
 
@@ -317,6 +317,6 @@ ClipboardDatabase::ClipboardDatabase() {
   m_db = std::move(*result);
 
   for (const auto &pragma : CLIPBOARD_PRAGMAS) {
-    if (!m_db.exec(pragma)) { qCritical() << "Failed to execute pragma" << std::string(pragma).c_str(); }
+    if (!m_db.exec(pragma)) { qCritical() << "Failed to execute pragma" << pragma; }
   }
 }

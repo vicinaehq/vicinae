@@ -18,9 +18,9 @@ class Statement {
   sqlite3 *m_db = nullptr;
   bool m_valid = true;
 
-  int paramIndex(std::string_view name) const {
+  int paramIndex(const char *name) const {
     if (!m_stmt) return 0;
-    return sqlite3_bind_parameter_index(m_stmt, std::string(name).c_str());
+    return sqlite3_bind_parameter_index(m_stmt, name);
   }
 
 public:
@@ -56,39 +56,39 @@ public:
     return *this;
   }
 
-  void bind(std::string_view name, int val) {
+  void bind(const char *name, int val) {
     if (int const idx = paramIndex(name)) sqlite3_bind_int(m_stmt, idx, val);
   }
 
-  void bind(std::string_view name, int64_t val) {
+  void bind(const char *name, int64_t val) {
     if (int const idx = paramIndex(name)) sqlite3_bind_int64(m_stmt, idx, val);
   }
 
-  void bind(std::string_view name, uint64_t val) {
+  void bind(const char *name, uint64_t val) {
     if (int const idx = paramIndex(name)) sqlite3_bind_int64(m_stmt, idx, static_cast<int64_t>(val));
   }
 
-  void bind(std::string_view name, double val) {
+  void bind(const char *name, double val) {
     if (int const idx = paramIndex(name)) sqlite3_bind_double(m_stmt, idx, val);
   }
 
-  void bind(std::string_view name, std::string_view val) {
+  void bind(const char *name, std::string_view val) {
     if (int const idx = paramIndex(name))
       sqlite3_bind_text(m_stmt, idx, val.data(), static_cast<int>(val.size()), SQLITE_TRANSIENT);
   }
 
-  void bind(std::string_view name, const char *val) { bind(name, std::string_view(val)); }
+  void bind(const char *name, const char *val) { bind(name, std::string_view(val)); }
 
-  void bind(std::string_view name, const std::string &val) { bind(name, std::string_view(val)); }
+  void bind(const char *name, const std::string &val) { bind(name, std::string_view(val)); }
 
-  void bind(std::string_view name, const QString &val) {
+  void bind(const char *name, const QString &val) {
     int const idx = paramIndex(name);
     if (!idx) return;
     auto utf8 = val.toUtf8();
     sqlite3_bind_text(m_stmt, idx, utf8.constData(), utf8.size(), SQLITE_TRANSIENT);
   }
 
-  template <typename T> void bind(std::string_view name, const std::optional<T> &val) {
+  template <typename T> void bind(const char *name, const std::optional<T> &val) {
     if (val) {
       bind(name, *val);
     } else {
@@ -96,7 +96,7 @@ public:
     }
   }
 
-  void bindNull(std::string_view name) {
+  void bindNull(const char *name) {
     if (int const idx = paramIndex(name)) sqlite3_bind_null(m_stmt, idx);
   }
 
@@ -237,9 +237,11 @@ public:
     return {stmt, m_handle};
   }
 
-  bool exec(std::string_view sql) const {
-    return sqlite3_exec(m_handle, std::string(sql).c_str(), nullptr, nullptr, nullptr) == SQLITE_OK;
+  bool exec(const char *sql) const {
+    return sqlite3_exec(m_handle, sql, nullptr, nullptr, nullptr) == SQLITE_OK;
   }
+
+  bool exec(const std::string &sql) const { return exec(sql.c_str()); }
 
   Transaction transaction() const { return Transaction(m_handle); }
 

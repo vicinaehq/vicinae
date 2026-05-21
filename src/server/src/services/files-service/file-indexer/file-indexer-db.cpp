@@ -8,7 +8,7 @@
 #include <format>
 #include <qlogging.h>
 
-static constexpr std::string_view SQLITE_PRAGMAS[] = {
+static constexpr const char *SQLITE_PRAGMAS[] = {
     "PRAGMA journal_mode = WAL",
     "PRAGMA synchronous = normal",
     "PRAGMA temp_store = memory",
@@ -356,8 +356,6 @@ FileIndexerDatabase::FileIndexerDatabase() {
   m_db = std::move(*result);
 
   for (const auto &pragma : SQLITE_PRAGMAS) {
-    if (!m_db.exec(pragma)) {
-      qCritical() << "Failed to run file-indexer pragma" << std::string(pragma).c_str();
-    }
+    if (!m_db.exec(pragma)) { qCritical() << "Failed to run file-indexer pragma" << pragma; }
   }
 }
