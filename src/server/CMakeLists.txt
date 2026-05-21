@@ -3,7 +3,7 @@ set(CMAKE_AUTORCC ON)
 set(LIBS)
 set(TARGET vicinae-server)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Sql Network Svg DBus Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2 ShaderTools)
+find_package(Qt6 REQUIRED COMPONENTS Core Network Svg DBus Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2 ShaderTools)
 find_package(OpenSSL REQUIRED)
 find_package(LibXml2 REQUIRED)
 
@@ -12,7 +12,7 @@ if (USE_SYSTEM_KF6 AND NOT APPLE)
 endif()
 
 list(APPEND LIBS
-	Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus Qt6::Concurrent Qt6::Quick Qt6::Qml
+	Qt6::Network Qt6::Svg Qt6::DBus Qt6::Concurrent Qt6::Quick Qt6::Qml
 	Qt6::GuiPrivate # for deeper integration with wayland protocols, we need wl_surface
 	Qt6::QuickDialogs2 Qt6::QuickControls2
 	${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY}
@@ -27,6 +27,7 @@ list(APPEND LIBS
 	vicinae::emoji
 	vicinae::common
 	vicinae::fuzzy
+	sqlcipher
 )
 
 if (UNIX AND NOT APPLE)
@@ -71,8 +72,6 @@ include_directories(
 
 set(SRCS
 	src/main.cpp
-
-	${VENDOR_DIR}/sqlcipher/sqlite3.c
 
 	src/theme.hpp
 	src/theme.cpp

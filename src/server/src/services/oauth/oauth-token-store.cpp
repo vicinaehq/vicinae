@@ -7,35 +7,36 @@ namespace OAuth {
 TokenStore::TokenStore(OmniDatabase &db) : m_db(db) {}
 
 bool TokenStore::setTokenSet(const SetTokenSetPayload &payload) const {
-  auto query = m_db.createQuery();
-
-  query.prepare(R"(
-  	INSERT INTO oauth_token_set(extension_id, provider_id, access_token, refresh_token, id_token, scope, expires_in, updated_at)
-	VALUES (:extension_id, :provider_id, :access_token, :refresh_token, :id_token, :scope, :expires_in, :updated_at)
-	ON CONFLICT
-	DO UPDATE SET
-		access_token = :access_token,
-		refresh_token = :refresh_token,
-		id_token = :id_token,
-		scope = :scope,
-		expires_in = :expires_in,
-		updated_at = :updated_at
+  auto stmt = m_db.db().prepare(R"(
+    INSERT INTO oauth_token_set(extension_id, provider_id, access_token, refresh_token, id_token, scope, expires_in, updated_at)
+    VALUES (:extension_id, :provider_id, :access_token, :refresh_token, :id_token, :scope, :expires_in, :updated_at)
+    ON CONFLICT
+    DO UPDATE SET
+      access_token = :access_token,
+      refresh_token = :refresh_token,
+      id_token = :id_token,
+      scope = :scope,
+      expires_in = :expires_in,
+      updated_at = :updated_at
   )");
-  // to handle NULL cases properly
-  auto strVar = [](auto &&a) { return QVariant(a); };
-  auto intVar = [](auto &&a) { return QVariant(static_cast<quint64>(a)); };
 
-  query.bindValue(":extension_id", payload.extensionId);
-  query.bindValue(":provider_id", payload.providerId.value_or(""));
-  query.bindValue(":access_token", payload.accessToken);
-  query.bindValue(":refresh_token", payload.refreshToken.transform(strVar).value_or(QVariant()));
-  query.bindValue(":id_token", payload.idToken.transform(strVar).value_or(QVariant()));
-  query.bindValue(":scope", payload.scope.transform(strVar).value_or(QVariant()));
-  query.bindValue(":expires_in", payload.expiresIn.transform(intVar).value_or(QVariant()));
-  query.bindValue(":updated_at", QDateTime::currentSecsSinceEpoch());
+  stmt.bind(":extension_id", payload.extensionId);
+  stmt.bind(":provider_id", payload.providerId.value_or(QString("")));
+  stmt.bind(":access_token", payload.accessToken);
+  stmt.bind(":refresh_token", payload.refreshToken);
+  stmt.bind(":id_token", payload.idToken);
+  stmt.bind(":scope", payload.scope);
 
-  if (!query.exec()) {
-    qWarning() << "Failed to setTokenSet for extension" << payload.extensionId << query.lastError();
+  if (payload.expiresIn) {
+    stmt.bind(":expires_in", static_cast<int64_t>(*payload.expiresIn));
+  } else {
+    stmt.bindNull(":expires_in");
+  }
+
+  stmt.bind(":updated_at", static_cast<int64_t>(QDateTime::currentSecsSinceEpoch()));
+
+  if (!stmt.exec()) {
+    qWarning() << "Failed to setTokenSet for extension" << payload.extensionId << stmt.lastError().c_str();
     return false;
   }
 
@@ -44,14 +45,12 @@ bool TokenStore::setTokenSet(const SetTokenSetPayload &payload) const {
 }
 
 bool TokenStore::removeTokenSet(const QString &extensionId, const std::optional<QString> &providerId) const {
-  auto query = m_db.createQuery();
-
-  query.prepare(
+  auto stmt = m_db.db().prepare(
       "DELETE FROM oauth_token_set WHERE extension_id = :extension_id AND provider_id = :provider_id");
-  query.bindValue(":extension_id", extensionId);
-  query.bindValue(":provider_id", providerId.value_or(""));
+  stmt.bind(":extension_id", extensionId);
+  stmt.bind(":provider_id", providerId.value_or(QString("")));
 
-  if (!query.exec()) {
+  if (!stmt.exec()) {
     qWarning() << "Failed to delete token set with id" << extensionId;
     return false;
   }
@@ -62,59 +61,46 @@ bool TokenStore::removeTokenSet(const QString &extensionId, const std::optional<
 
 std::optional<TokenSet> TokenStore::getTokenSet(const QString &extensionId,
                                                 const std::optional<QString> &providerId) const {
-  auto query = m_db.createQuery();
+  auto stmt = m_db.db().prepare(R"(
+    SELECT access_token, refresh_token, id_token, scope, expires_in, updated_at
+    FROM oauth_token_set
+    WHERE extension_id = :extension_id AND provider_id = :provider_id
+  )");
+  stmt.bind(":extension_id", extensionId);
+  stmt.bind(":provider_id", providerId.value_or(QString("")));
 
-  query.prepare(R"(
-		SELECT access_token, refresh_token, id_token, scope, expires_in, updated_at
-		FROM oauth_token_set
-		WHERE extension_id = :extension_id AND provider_id = :provider_id
-	)");
-  query.bindValue(":extension_id", extensionId);
-  query.bindValue(":provider_id", providerId.value_or(""));
-
-  if (!query.exec()) {
-    qWarning() << "Failed to getTokenSet" << query.lastError();
-    return {};
-  }
-  if (!query.next()) { return {}; }
+  if (!stmt.step()) { return {}; }
 
   TokenSet set;
   set.extensionId = extensionId;
   set.providerId = providerId;
-  set.accessToken = query.value(0).toString();
-  if (auto v = query.value(1); !v.isNull()) { set.refreshToken = v.toString(); }
-  if (auto v = query.value(2); !v.isNull()) { set.idToken = v.toString(); }
-  if (auto v = query.value(3); !v.isNull()) { set.scope = v.toString(); }
-  if (auto v = query.value(4); !v.isNull()) { set.expiresIn = v.toUInt(); }
-  set.updatedAt = query.value(5).toUInt();
+  set.accessToken = stmt.columnQString(0);
+  if (!stmt.isNull(1)) { set.refreshToken = stmt.columnQString(1); }
+  if (!stmt.isNull(2)) { set.idToken = stmt.columnQString(2); }
+  if (!stmt.isNull(3)) { set.scope = stmt.columnQString(3); }
+  if (!stmt.isNull(4)) { set.expiresIn = static_cast<unsigned int>(stmt.columnInt(4)); }
+  set.updatedAt = static_cast<unsigned int>(stmt.columnInt(5));
 
   return set;
 }
 
 TokenSetList TokenStore::list() const {
-  auto query = m_db.createQuery();
-
-  query.prepare(R"(
-		SELECT extension_id, provider_id, access_token, refresh_token, id_token, scope, expires_in, updated_at FROM oauth_token_set
-	)");
-
-  if (!query.exec()) {
-    qWarning() << "Failed to list token sets" << query.lastError();
-    return {};
-  }
+  auto stmt = m_db.db().prepare(R"(
+    SELECT extension_id, provider_id, access_token, refresh_token, id_token, scope, expires_in, updated_at FROM oauth_token_set
+  )");
 
   TokenSetList sets;
 
-  while (query.next()) {
+  while (stmt.step()) {
     TokenSet set;
-    set.extensionId = query.value(0).toString();
-    if (auto v = query.value(1).toString(); !v.isEmpty()) { set.providerId = v; }
-    set.accessToken = query.value(2).toString();
-    if (auto v = query.value(3); !v.isNull()) { set.refreshToken = v.toString(); }
-    if (auto v = query.value(4); !v.isNull()) { set.idToken = v.toString(); }
-    if (auto v = query.value(5); !v.isNull()) { set.scope = v.toString(); }
-    if (auto v = query.value(6); !v.isNull()) { set.expiresIn = v.toUInt(); }
-    set.updatedAt = query.value(7).toUInt();
+    set.extensionId = stmt.columnQString(0);
+    if (auto v = stmt.columnQString(1); !v.isEmpty()) { set.providerId = v; }
+    set.accessToken = stmt.columnQString(2);
+    if (!stmt.isNull(3)) { set.refreshToken = stmt.columnQString(3); }
+    if (!stmt.isNull(4)) { set.idToken = stmt.columnQString(4); }
+    if (!stmt.isNull(5)) { set.scope = stmt.columnQString(5); }
+    if (!stmt.isNull(6)) { set.expiresIn = static_cast<unsigned int>(stmt.columnInt(6)); }
+    set.updatedAt = static_cast<unsigned int>(stmt.columnInt(7));
     sets.emplace_back(set);
   }
 

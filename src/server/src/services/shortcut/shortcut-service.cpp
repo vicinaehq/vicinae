@@ -1,8 +1,6 @@
 #include "services/shortcut/shortcut-service.hpp"
 #include "omni-database.hpp"
 #include <qlogging.h>
-#include <qsqlerror.h>
-#include <qsqlquery.h>
 
 std::shared_ptr<Shortcut> ShortcutService::fromSerialized(const shortcut::SerializedShortcut &s) {
   auto sc = std::make_shared<Shortcut>();
@@ -27,34 +25,28 @@ void ShortcutService::loadAll() {
 }
 
 void ShortcutService::migrateFromDatabase(OmniDatabase &db) {
-  QSqlQuery query = db.createQuery();
-  query.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='shortcut'");
+  auto checkStmt = db.db().prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='shortcut'");
 
-  if (!query.exec() || !query.next()) return;
+  if (!checkStmt.step()) return;
 
-  query.prepare(R"(
+  auto stmt = db.db().prepare(R"(
     SELECT id, name, icon, url, app, open_count, created_at, updated_at, last_used_at
     FROM shortcut
   )");
 
-  if (!query.exec()) {
-    qWarning() << "Failed to read shortcuts from database for migration:" << query.lastError();
-    return;
-  }
-
   std::vector<shortcut::SerializedShortcut> migrated;
 
-  while (query.next()) {
+  while (stmt.step()) {
     shortcut::SerializedShortcut s;
-    s.id = query.value(0).toString().toStdString();
-    s.name = query.value(1).toString().toStdString();
-    s.icon = query.value(2).toString().toStdString();
-    s.url = query.value(3).toString().toStdString();
-    s.app = query.value(4).toString().toStdString();
-    s.openCount = query.value(5).toInt();
-    s.createdAt = query.value(6).toULongLong();
-    s.updatedAt = query.value(7).toULongLong();
-    if (auto val = query.value(8); !val.isNull()) { s.lastUsedAt = val.toULongLong(); }
+    s.id = stmt.columnText(0);
+    s.name = stmt.columnText(1);
+    s.icon = stmt.columnText(2);
+    s.url = stmt.columnText(3);
+    s.app = stmt.columnText(4);
+    s.openCount = stmt.columnInt(5);
+    s.createdAt = stmt.columnUInt64(6);
+    s.updatedAt = stmt.columnUInt64(7);
+    if (!stmt.isNull(8)) { s.lastUsedAt = stmt.columnUInt64(8); }
     migrated.emplace_back(std::move(s));
   }
 

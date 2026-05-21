@@ -1,12 +1,11 @@
 #pragma once
 #include <expected>
 #include <qcryptographichash.h>
-#include <qlogging.h>
-#include <qsqlerror.h>
 #include <qdir.h>
+#include <qlogging.h>
 #include <qregularexpression.h>
-#include <qsqldatabase.h>
-#include <qsqlquery.h>
+
+#include "db/database.hpp"
 
 struct MigrationLoadingError {
   std::filesystem::path path;
@@ -14,7 +13,7 @@ struct MigrationLoadingError {
 };
 
 class MigrationManager {
-  QSqlDatabase &m_db;
+  db::Database &m_db;
   QString m_migrationNamespace;
 
   struct Migration {
@@ -35,7 +34,6 @@ class MigrationManager {
   std::expected<Migration, MigrationLoadingError> loadMigrationFile(const std::filesystem::path &path);
 
   void executeMigration(const Migration &migration);
-  QStringList splitSqlStatements(const QString &content);
   QString computeContentHash(const QString &content);
   void insertMigration(const Migration &migration);
 
@@ -43,5 +41,5 @@ public:
   std::vector<Migration> loadMigrations();
   void runMigrations();
 
-  MigrationManager(QSqlDatabase &db, const QString &migrationNamespace);
+  MigrationManager(db::Database &db, const QString &migrationNamespace);
 };

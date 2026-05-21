@@ -1,7 +1,5 @@
 #include <qjsondocument.h>
 #include <qjsonobject.h>
-#include <qsqlquery.h>
-#include <qvariant.h>
 #include "local-storage-service.hpp"
 #include "scoped-local-storage.hpp"
 #include "omni-database.hpp"
@@ -44,29 +42,24 @@ void LocalStorageService::setItemAsJson(const QString &namespaceId, const QStrin
 
 std::vector<QString> LocalStorageService::namespaces() const {
   std::vector<QString> ss;
-  auto query = db.createQuery();
-  query.exec("SELECT DISTINCT(namespace_id) FROM storage_data_item");
+  auto stmt = m_omniDb.db().prepare("SELECT DISTINCT(namespace_id) FROM storage_data_item");
 
-  while (query.next()) {
-    ss.emplace_back(query.value(0).toString());
+  while (stmt.step()) {
+    ss.emplace_back(stmt.columnQString(0));
   }
 
   return ss;
 }
 
 QJsonValue LocalStorageService::getItem(const QString &namespaceId, const QString &key) {
-  m_getQuery.bindValue(":namespace_id", namespaceId);
-  m_getQuery.bindValue(":key", key);
+  m_getQuery.reset();
+  m_getQuery.bind(":namespace_id", namespaceId);
+  m_getQuery.bind(":key", key);
 
-  if (!m_getQuery.exec()) {
-    qCritical() << "LocalStorageService::getItem: failed to execute query" << m_getQuery.lastError();
-    return {};
-  }
+  if (!m_getQuery.step()) return {};
 
-  if (!m_getQuery.next()) return {};
-
-  QString const value = m_getQuery.value(0).toString();
-  ValueType const valueType = static_cast<ValueType>(m_getQuery.value(1).toUInt());
+  QString const value = m_getQuery.columnQString(0);
+  ValueType const valueType = static_cast<ValueType>(m_getQuery.columnInt(1));
 
   return deserializeValue(value, valueType);
 }
@@ -74,13 +67,15 @@ QJsonValue LocalStorageService::getItem(const QString &namespaceId, const QStrin
 bool LocalStorageService::setItem(const QString &namespaceId, const QString &key, const QJsonValue &json) {
   auto [value, valueType] = serializeValue(json);
 
-  m_setItemQuery.bindValue(":namespace_id", namespaceId);
-  m_setItemQuery.bindValue(":key", key);
-  m_setItemQuery.bindValue(":value", value);
-  m_setItemQuery.bindValue(":value_type", valueType);
+  m_setItemQuery.reset();
+  m_setItemQuery.bind(":namespace_id", namespaceId);
+  m_setItemQuery.bind(":key", key);
+  m_setItemQuery.bind(":value", value);
+  m_setItemQuery.bind(":value_type", static_cast<int>(valueType));
 
   if (!m_setItemQuery.exec()) {
-    qCritical() << "LocalStorageService::setItem: failed to execute query" << m_setItemQuery.lastError();
+    qCritical() << "LocalStorageService::setItem: failed to execute query"
+                << m_setItemQuery.lastError().c_str();
     return false;
   }
 
@@ -88,65 +83,59 @@ bool LocalStorageService::setItem(const QString &namespaceId, const QString &key
 }
 
 bool LocalStorageService::removeItem(const QString &namespaceId, const QString &key) {
-  m_removeQuery.bindValue(":namespace_id", namespaceId);
-  m_removeQuery.bindValue(":key", key);
+  m_removeQuery.reset();
+  m_removeQuery.bind(":namespace_id", namespaceId);
+  m_removeQuery.bind(":key", key);
 
   if (!m_removeQuery.exec()) {
-    qCritical() << "LocalStorageService::removeItem: failed to execute query" << m_removeQuery.lastError();
+    qCritical() << "LocalStorageService::removeItem: failed to execute query"
+                << m_removeQuery.lastError().c_str();
     return false;
   }
 
-  return m_removeQuery.numRowsAffected() != 0;
+  return m_omniDb.db().changes() != 0;
 }
 
 QJsonObject LocalStorageService::listNamespaceItems(const QString &namespaceId) {
-  m_listQuery.bindValue(":namespace_id", namespaceId);
-
-  if (!m_listQuery.exec()) {
-    qCritical() << "LocalStorageService::listNamespaceItems: failed to execute query"
-                << m_listQuery.lastError();
-    return {};
-  }
+  m_listQuery.reset();
+  m_listQuery.bind(":namespace_id", namespaceId);
 
   QJsonObject obj;
 
-  while (m_listQuery.next()) {
-    auto key = m_listQuery.value(0).toString();
-    auto value = m_listQuery.value(1);
-
-    obj[key] = QJsonValue::fromVariant(value);
+  while (m_listQuery.step()) {
+    auto key = m_listQuery.columnQString(0);
+    auto value = m_listQuery.columnQString(1);
+    obj[key] = value;
   }
 
   return obj;
 }
 
 bool LocalStorageService::clearNamespace(const QString &namespaceId) {
-  m_clearQuery.bindValue(":namespace_id", namespaceId);
+  m_clearQuery.reset();
+  m_clearQuery.bind(":namespace_id", namespaceId);
 
   if (!m_clearQuery.exec()) {
-    qCritical() << "LocalStorageService::clearNamespace: failed to execute query" << m_clearQuery.lastError();
+    qCritical() << "LocalStorageService::clearNamespace: failed to execute query"
+                << m_clearQuery.lastError().c_str();
     return false;
   }
 
   return true;
 }
 
-LocalStorageService::LocalStorageService(OmniDatabase &db) : db(db) {
-  m_clearQuery = db.createQuery();
-  m_listQuery = db.createQuery();
-  m_removeQuery = db.createQuery();
-  m_setItemQuery = db.createQuery();
-  m_getQuery = db.createQuery();
-
-  m_clearQuery.prepare("DELETE FROM storage_data_item WHERE namespace_id = :namespace_id");
-  m_listQuery.prepare("SELECT key, value FROM storage_data_item WHERE namespace_id = :namespace_id");
-  m_removeQuery.prepare("DELETE FROM storage_data_item WHERE namespace_id = :namespace_id AND key = :key");
-  m_setItemQuery.prepare(R"(
-		INSERT INTO storage_data_item (namespace_id, key, value, value_type)
-		VALUES (:namespace_id, :key, :value, :value_type)
-		ON CONFLICT (namespace_id, key) DO UPDATE SET value = :value, value_type = :value_type
-	)");
-  m_getQuery.prepare(
+LocalStorageService::LocalStorageService(OmniDatabase &db) : m_omniDb(db) {
+  m_clearQuery = db.db().prepare("DELETE FROM storage_data_item WHERE namespace_id = :namespace_id");
+  m_listQuery =
+      db.db().prepare("SELECT key, value FROM storage_data_item WHERE namespace_id = :namespace_id");
+  m_removeQuery =
+      db.db().prepare("DELETE FROM storage_data_item WHERE namespace_id = :namespace_id AND key = :key");
+  m_setItemQuery = db.db().prepare(R"(
+    INSERT INTO storage_data_item (namespace_id, key, value, value_type)
+    VALUES (:namespace_id, :key, :value, :value_type)
+    ON CONFLICT (namespace_id, key) DO UPDATE SET value = :value, value_type = :value_type
+  )");
+  m_getQuery = db.db().prepare(
       "SELECT value, value_type FROM storage_data_item WHERE namespace_id = :namespace_id AND key = :key");
 }
 

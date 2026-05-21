@@ -18,7 +18,6 @@
 #include <qnamespace.h>
 #include <qobject.h>
 #include <qobjectdefs.h>
-#include <qsqlquery.h>
 #include <qstring.h>
 #include <qhash.h>
 #include <qtmetamacros.h>

@@ -3,9 +3,7 @@
 #include <qlogging.h>
 #include <qdebug.h>
 #include <qobject.h>
-#include <qsqlquery.h>
 #include <qstring.h>
-#include <qsqlerror.h>
 #include <qtmetamacros.h>
 
 class Shortcut {

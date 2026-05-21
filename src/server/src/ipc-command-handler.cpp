@@ -16,7 +16,6 @@
 #include <qlogging.h>
 #include <qobjectdefs.h>
 #include "extension/manager/extension-manager.hpp"
-#include <qsqlquery.h>
 #include <qurl.h>
 #include <qurlquery.h>
 #include <qjsondocument.h>

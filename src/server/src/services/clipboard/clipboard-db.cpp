@@ -1,34 +1,24 @@
 #include "clipboard-db.hpp"
-#include "crypto.hpp"
 #include "utils/migration-manager/migration-manager.hpp"
 #include "vicinae.hpp"
 #include <qlogging.h>
-#include <qsqldatabase.h>
-#include <qsqlquery.h>
-#include <qsqlerror.h>
 
-static const std::vector<QString> DB_PRAGMAS = {"PRAGMA journal_mode = WAL", "PRAGMA synchronous = normal",
-                                                "PRAGMA journal_size_limit = 6144000",
-                                                "PRAGMA foreign_keys = ON"};
+static constexpr std::string_view CLIPBOARD_PRAGMAS[] = {
+    "PRAGMA journal_mode = WAL", "PRAGMA synchronous = normal", "PRAGMA journal_size_limit = 6144000",
+    "PRAGMA foreign_keys = ON"};
 
 std::optional<ClipboardSelectionRecord> ClipboardDatabase::findSelection(const QString &id) {
   ClipboardSelectionRecord selection;
-  QSqlQuery query(m_db);
 
-  query.prepare("SELECT id, mime_type, encryption_type from data_offer where selection_id = :id");
-  query.addBindValue(id);
+  auto stmt = m_db.prepare("SELECT id, mime_type, encryption_type from data_offer where selection_id = :id");
+  stmt.bind(":id", id);
 
-  if (!query.exec()) {
-    qCritical() << "Failed to retrieve selection for id" << id << query.lastError();
-    return std::nullopt;
-  }
-
-  while (query.next()) {
+  while (stmt.step()) {
     ClipboardSelectionOfferRecord record;
 
-    record.id = query.value(0).toString();
-    record.mimeType = query.value(1).toString();
-    record.encryption = static_cast<ClipboardEncryptionType>(query.value(2).toUInt());
+    record.id = stmt.columnQString(0);
+    record.mimeType = stmt.columnQString(1);
+    record.encryption = static_cast<ClipboardEncryptionType>(stmt.columnInt(2));
     selection.offers.emplace_back(record);
   }
 
@@ -45,13 +35,6 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
 
   bool const hasFilters = !opts.query.isEmpty() || opts.kind.has_value();
 
-  // Use different query strategies based on whether we have filters:
-  // - Without filters: Sort-before-join strategy allows the index on (pinned_at, updated_at)
-  //   to be used for sorting before the expensive JOIN operation. This is critical for
-  //   performance on large datasets where sorting after JOIN+GROUP BY
-  //   would require materializing and sorting the entire result set.
-  // - With filters: FTS search or kind filter already reduces the dataset significantly,
-  //   so the standard join approach is acceptable.
   if (!hasFilters) {
     queryString = QString(R"(
       SELECT
@@ -118,30 +101,24 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
     queryString = QString("SELECT * FROM (%1) LIMIT %2 OFFSET %3").arg(queryString).arg(limit).arg(offset);
   }
 
-  QSqlQuery query(m_db);
-  query.prepare(queryString);
+  auto stmt = m_db.prepare(queryString.toStdString());
 
-  if (opts.kind) { query.bindValue(":kind", static_cast<quint8>(*opts.kind)); }
+  if (opts.kind) { stmt.bind(":kind", static_cast<int>(*opts.kind)); }
 
-  if (!query.exec()) {
-    qWarning() << "Failed to list all clipboard items" << query.lastError();
-    return {};
-  }
+  while (stmt.step()) {
+    ClipboardHistoryEntry dto{.id = stmt.columnQString(0),
+                              .mimeType = stmt.columnQString(1),
+                              .textPreview = stmt.columnQString(2),
+                              .pinnedAt = stmt.columnUInt64(3),
+                              .md5sum = stmt.columnQString(4),
+                              .updatedAt = stmt.columnUInt64(5),
+                              .size = stmt.columnUInt64(6),
+                              .kind = static_cast<ClipboardOfferKind>(stmt.columnInt(7)),
+                              .encryption = static_cast<ClipboardEncryptionType>(stmt.columnInt(9))};
 
-  while (query.next()) {
-    ClipboardHistoryEntry dto{.id = query.value(0).toString(),
-                              .mimeType = query.value(1).toString(),
-                              .textPreview = query.value(2).toString(),
-                              .pinnedAt = query.value(3).toULongLong(),
-                              .md5sum = query.value(4).toString(),
-                              .updatedAt = query.value(5).toULongLong(),
-                              .size = query.value(6).toULongLong(),
-                              .kind = static_cast<ClipboardOfferKind>(query.value(7).toUInt()),
-                              .encryption = static_cast<ClipboardEncryptionType>(query.value(9).toUInt())};
+    if (!stmt.isNull(8)) { dto.urlHost = stmt.columnQString(8); }
 
-    if (auto val = query.value(8); !val.isNull()) { dto.urlHost = val.toString(); }
-
-    response.totalCount = query.value(10).toInt();
+    response.totalCount = stmt.columnInt(10);
     response.data.push_back(dto);
   }
 
@@ -152,31 +129,22 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
 }
 
 std::optional<QString> ClipboardDatabase::retrieveKeywords(const QString &id) {
-  QSqlQuery query(m_db);
+  auto stmt = m_db.prepare("SELECT keywords FROM selection WHERE id = :id");
+  stmt.bind(":id", id);
 
-  query.prepare("SELECT keywords FROM selection WHERE id = :id");
-  query.bindValue(":id", id);
+  if (!stmt.step()) return std::nullopt;
 
-  if (!query.exec()) {
-    qWarning() << "Failed to get keywords for selection" << id << query.lastError();
-    return std::nullopt;
-  }
-
-  if (!query.next()) return std::nullopt;
-
-  return query.value(0).toString();
+  return stmt.columnQString(0);
 }
 
 bool ClipboardDatabase::setKeywords(const QString &id, const QString &keywords) {
   return transaction([&](auto *) {
-    QSqlQuery query(m_db);
+    auto stmt = m_db.prepare("UPDATE selection SET keywords = :keywords WHERE id = :id");
+    stmt.bind(":id", id);
+    stmt.bind(":keywords", keywords);
 
-    query.prepare("UPDATE selection SET keywords = :keywords WHERE id = :id");
-    query.bindValue(":id", id);
-    query.bindValue(":keywords", keywords);
-
-    if (!query.exec()) {
-      qWarning() << "Failed to set keywords for id" << id << query.lastError();
+    if (!stmt.exec()) {
+      qWarning() << "Failed to set keywords for id" << id << stmt.lastError().c_str();
       return false;
     }
 
@@ -185,115 +153,90 @@ bool ClipboardDatabase::setKeywords(const QString &id, const QString &keywords) 
 }
 
 bool ClipboardDatabase::removeAll() {
-  QSqlQuery query(m_db);
-
-  return query.exec("DELETE FROM selection_fts") && query.exec("DELETE FROM data_offer") &&
-         query.exec("DELETE FROM selection");
+  return m_db.exec("DELETE FROM selection_fts") && m_db.exec("DELETE FROM data_offer") &&
+         m_db.exec("DELETE FROM selection");
 }
 
 std::vector<QString> ClipboardDatabase::removeSelection(const QString &selectionId) {
-  if (!m_db.transaction()) { return {}; }
+  auto tx = m_db.transaction();
 
-  QSqlQuery query(m_db);
-
-  query.prepare(R"(
-  	DELETE FROM
-		data_offer
-	WHERE
-		selection_id = :selection_id
-	RETURNING id
+  auto offerStmt = m_db.prepare(R"(
+    DELETE FROM
+      data_offer
+    WHERE
+      selection_id = :selection_id
+    RETURNING id
   )");
-  query.bindValue(":selection_id", selectionId);
-
-  if (!query.exec()) {
-    qDebug() << "failed to execute data_offer deletion" << query.lastError();
-    m_db.rollback();
-    return {};
-  }
+  offerStmt.bind(":selection_id", selectionId);
 
   std::vector<QString> deletedOffers;
 
-  while (query.next()) {
-    deletedOffers.emplace_back(query.value(0).toString());
+  while (offerStmt.step()) {
+    deletedOffers.emplace_back(offerStmt.columnQString(0));
   }
 
-  query.prepare("DELETE FROM selection WHERE id = :selection_id");
-  query.bindValue(":selection_id", selectionId);
+  auto selStmt = m_db.prepare("DELETE FROM selection WHERE id = :selection_id");
+  selStmt.bind(":selection_id", selectionId);
 
-  if (!query.exec()) {
-    qDebug() << "failed to execute selecton deletion" << query.lastError();
-    m_db.rollback();
+  if (!selStmt.exec()) {
+    qDebug() << "failed to execute selection deletion" << selStmt.lastError().c_str();
+    tx.rollback();
     return {};
   }
 
-  m_db.commit();
+  tx.commit();
 
   return deletedOffers;
 }
 
 std::optional<PreferredClipboardOfferRecord>
 ClipboardDatabase::findPreferredOffer(const QString &selectionId) {
-  QSqlQuery query(m_db);
+  auto stmt = m_db.prepare(R"(
+    SELECT o.id, o.encryption_type FROM data_offer o
+    JOIN selection s ON s.id = o.selection_id
+    WHERE o.mime_type = s.preferred_mime_type
+    AND selection_id = :selection
+  )");
+  stmt.bind(":selection", selectionId);
 
-  query.prepare(R"(
-		SELECT o.id, o.encryption_type FROM data_offer o
-		JOIN selection s ON s.id = o.selection_id
-		WHERE o.mime_type = s.preferred_mime_type
-		AND selection_id = :selection
-	)");
-  query.addBindValue(selectionId);
-
-  if (!query.exec()) {
-    qCritical() << "Failed to decrypt main selection offer" << query.lastError();
+  if (!stmt.step()) {
+    qCritical() << "No match for default mime type";
     return {};
   }
 
-  if (!query.next()) {
-    qCritical() << "No match for default mime type" << query.lastError();
-    return {};
-  }
-
-  QString const id = query.value(0).toString();
-  auto encryption = static_cast<ClipboardEncryptionType>(query.value(1).toUInt());
-
-  return PreferredClipboardOfferRecord{.id = id, .encryption = encryption};
+  return PreferredClipboardOfferRecord{.id = stmt.columnQString(0),
+                                       .encryption = static_cast<ClipboardEncryptionType>(stmt.columnInt(1))};
 }
 
 bool ClipboardDatabase::setPinned(const QString &id, bool pinned) {
-  qint64 const epoch = QDateTime::currentSecsSinceEpoch();
-  QSqlQuery query(m_db);
-
   if (pinned) {
-    query.prepare("UPDATE selection SET pinned_at = :epoch WHERE id = :id");
-  } else {
-    query.prepare("UPDATE selection SET pinned_at = NULL WHERE id = :id");
+    auto stmt = m_db.prepare("UPDATE selection SET pinned_at = :epoch WHERE id = :id");
+    stmt.bind(":id", id);
+    stmt.bind(":epoch", static_cast<int64_t>(QDateTime::currentSecsSinceEpoch()));
+    return stmt.exec();
   }
 
-  query.bindValue(":id", id);
-  query.bindValue(":epoch", epoch);
-
-  return query.exec();
+  auto stmt = m_db.prepare("UPDATE selection SET pinned_at = NULL WHERE id = :id");
+  stmt.bind(":id", id);
+  return stmt.exec();
 }
 
 bool ClipboardDatabase::insertSelection(const InsertSelectionPayload &payload) {
-  QSqlQuery query(m_db);
-
-  query.prepare(R"(
-  	INSERT INTO selection (id, kind, offer_count, hash_md5, preferred_mime_type, source, created_at, updated_at)
-	VALUES (:id, :kind, :offer_count, :hash_md5, :preferred_mime_type, :source, :epoch, :epoch)
-	RETURNING id, created_at;
+  auto stmt = m_db.prepare(R"(
+    INSERT INTO selection (id, kind, offer_count, hash_md5, preferred_mime_type, source, created_at, updated_at)
+    VALUES (:id, :kind, :offer_count, :hash_md5, :preferred_mime_type, :source, :epoch, :epoch)
+    RETURNING id, created_at;
   )");
-  query.bindValue(":id", payload.id);
-  query.bindValue(":kind", static_cast<quint8>(payload.kind));
-  query.bindValue(":offer_count", static_cast<uint>(payload.offerCount));
-  query.bindValue(":hash_md5", payload.hash);
-  query.bindValue(":preferred_mime_type", payload.preferredMimeType);
-  query.bindValue(":epoch", QDateTime::currentSecsSinceEpoch());
+  stmt.bind(":id", payload.id);
+  stmt.bind(":kind", static_cast<int>(payload.kind));
+  stmt.bind(":offer_count", payload.offerCount);
+  stmt.bind(":hash_md5", payload.hash);
+  stmt.bind(":preferred_mime_type", payload.preferredMimeType);
+  stmt.bind(":epoch", static_cast<int64_t>(QDateTime::currentSecsSinceEpoch()));
+  stmt.bind(":source", payload.source);
 
-  if (payload.source) { query.bindValue(":source", *payload.source); }
-
-  if (!query.exec()) {
-    qCritical() << "Failed to insert selection" << query.lastError();
+  if (!stmt.exec()) {
+    qCritical() << "Failed to insert selection" << stmt.lastError().c_str();
     return false;
   }
 
@@ -301,40 +244,33 @@ bool ClipboardDatabase::insertSelection(const InsertSelectionPayload &payload) {
 }
 
 bool ClipboardDatabase::transaction(const TxHandle &handle) {
-  if (!m_db.transaction()) {
-    qCritical() << "Failed to start transaction" << m_db.lastError();
-    return false;
-  }
+  auto tx = m_db.transaction();
 
-  if (handle(this)) { return m_db.commit(); }
+  if (handle(this)) { return tx.commit(); }
 
-  return m_db.rollback();
+  tx.rollback();
+  return false;
 }
 
 bool ClipboardDatabase::tryBubbleUpSelection(const QString &idLike) {
-  qint64 const updatedAt = QDateTime::currentSecsSinceEpoch();
-  QSqlQuery query(m_db);
+  auto stmt = m_db.prepare("UPDATE selection SET updated_at = :updated_at WHERE hash_md5 = :id OR id = :id");
+  stmt.bind(":id", idLike);
+  stmt.bind(":updated_at", static_cast<int64_t>(QDateTime::currentSecsSinceEpoch()));
 
-  query.prepare("UPDATE selection SET updated_at = :updated_at WHERE hash_md5 = :id OR id = :id");
-  query.bindValue(":id", idLike);
-  query.bindValue(":updated_at", updatedAt);
+  if (!stmt.exec()) { qCritical() << "Failed to execute clipboard update"; }
 
-  if (!query.exec()) { qCritical() << "Failed to execute clipboard update"; }
-
-  return query.numRowsAffected() > 0;
+  return m_db.changes() > 0;
 }
 
 bool ClipboardDatabase::indexSelectionContent(const QString &selectionId, const QString &content) {
-  QSqlQuery query(m_db);
+  auto stmt = m_db.prepare(R"(
+    INSERT INTO selection_fts (selection_id, content) VALUES (:selection_id, :content);
+  )");
+  stmt.bind(":selection_id", selectionId);
+  stmt.bind(":content", content);
 
-  query.prepare(R"(
-		INSERT INTO selection_fts (selection_id, content) VALUES (:selection_id, :content);
-	)");
-  query.bindValue(":selection_id", selectionId);
-  query.bindValue(":content", content);
-
-  if (!query.exec()) {
-    qCritical() << "failed to index text" << query.lastError();
+  if (!stmt.exec()) {
+    qCritical() << "failed to index text" << stmt.lastError().c_str();
     return false;
   }
 
@@ -348,25 +284,22 @@ void ClipboardDatabase::runMigrations() {
 }
 
 bool ClipboardDatabase::insertOffer(const InsertClipboardOfferPayload &payload) {
-  QSqlQuery query(m_db);
+  auto stmt = m_db.prepare(R"(
+    INSERT INTO data_offer (id, selection_id, mime_type, text_preview, content_hash_md5, encryption_type, size, kind, url_host)
+    VALUES (:id, :selection_id, :mime_type, :text_preview, :content_hash_md5, :encryption, :size, :kind, :url_host)
+  )");
+  stmt.bind(":id", payload.id);
+  stmt.bind(":selection_id", payload.selectionId);
+  stmt.bind(":mime_type", payload.mimeType);
+  stmt.bind(":text_preview", payload.textPreview);
+  stmt.bind(":content_hash_md5", payload.md5sum);
+  stmt.bind(":encryption", static_cast<int>(payload.encryption));
+  stmt.bind(":size", static_cast<int64_t>(payload.size));
+  stmt.bind(":kind", static_cast<int>(payload.kind));
+  stmt.bind(":url_host", payload.urlHost);
 
-  query.prepare(R"(
-		INSERT INTO data_offer (id, selection_id, mime_type, text_preview, content_hash_md5, encryption_type, size, kind, url_host)
-		VALUES (:id, :selection_id, :mime_type, :text_preview, :content_hash_md5, :encryption, :size, :kind, :url_host)
-  	)");
-  query.bindValue(":id", payload.id);
-  query.bindValue(":selection_id", payload.selectionId);
-  query.bindValue(":mime_type", payload.mimeType);
-  query.bindValue(":text_preview", payload.textPreview);
-  query.bindValue(":content_hash_md5", payload.md5sum);
-  query.bindValue(":encryption", static_cast<quint8>(payload.encryption));
-  query.bindValue(":size", payload.size);
-  query.bindValue(":kind", static_cast<quint8>(payload.kind));
-
-  if (payload.urlHost) { query.bindValue(":url_host", *payload.urlHost); }
-
-  if (!query.exec()) {
-    qCritical() << "Failed to inset offer" << query.lastError();
+  if (!stmt.exec()) {
+    qCritical() << "Failed to insert offer" << stmt.lastError().c_str();
     return false;
   }
 
@@ -374,22 +307,16 @@ bool ClipboardDatabase::insertOffer(const InsertClipboardOfferPayload &payload) 
 }
 
 ClipboardDatabase::ClipboardDatabase() {
-  QString const connId = QString("%1-%2").arg("clipboard").arg(Crypto::UUID::v4());
-  m_db = QSqlDatabase::addDatabase("QSQLITE", connId);
-  m_db.setDatabaseName((Omnicast::dataDir() / "clipboard.db").c_str());
+  auto result = db::Database::open(Omnicast::dataDir() / "clipboard.db");
 
-  if (!m_db.open()) { qCritical() << "Failed to open database"; }
-
-  QSqlQuery query(m_db);
-
-  for (const auto &pragma : DB_PRAGMAS) {
-    if (!query.exec(pragma)) { qCritical() << "Failed to execute pragma" << pragma << query.lastError(); }
+  if (!result) {
+    qCritical() << "Failed to open clipboard database:" << result.error().c_str();
+    return;
   }
-}
 
-ClipboardDatabase::~ClipboardDatabase() {
-  QString const conn = m_db.connectionName();
-  m_db.close();
-  m_db = QSqlDatabase();
-  QSqlDatabase::removeDatabase(conn);
+  m_db = std::move(*result);
+
+  for (const auto &pragma : CLIPBOARD_PRAGMAS) {
+    if (!m_db.exec(pragma)) { qCritical() << "Failed to execute pragma" << std::string(pragma).c_str(); }
+  }
 }

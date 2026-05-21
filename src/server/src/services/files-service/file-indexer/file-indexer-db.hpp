@@ -1,23 +1,15 @@
 #pragma once
+#include "db/database.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
 #include "services/files-service/file-indexer/scan.hpp"
 #include <expected>
 #include <qdatetime.h>
 #include <qobject.h>
-#include <qrandom.h>
-#include <qsqldatabase.h>
 #include <filesystem>
 #include <string>
 
-/**
- * File indexer sqlite database operations.
- * Note that each instance owns its own database connection, as a single
- * connection is not thread safe.
- */
-
 class FileIndexerDatabase : public QObject {
-  QSqlDatabase m_db;
-  QString m_connectionId;
+  db::Database m_db;
 
 public:
   struct ScanRecord {
@@ -35,8 +27,8 @@ public:
     double indexRank = 0;
   };
 
-  ScanRecord mapScan(const QSqlQuery &query) const;
   static QString createRandomConnectionId();
+  ScanRecord mapScan(const db::Statement &stmt) const;
   static std::filesystem::path getDatabasePath();
 
   std::optional<ScanRecord> getLastScan(const std::filesystem::path &path, ScanType scanType) const;
@@ -64,8 +56,8 @@ public:
 
   void runMigrations();
 
-  QSqlDatabase *database();
+  db::Database &database();
 
   FileIndexerDatabase();
-  ~FileIndexerDatabase();
+  ~FileIndexerDatabase() = default;
 };

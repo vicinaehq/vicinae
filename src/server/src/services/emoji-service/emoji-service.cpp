@@ -3,7 +3,6 @@
 #include "omni-database.hpp"
 #include <qlogging.h>
 #include "utils/utils.hpp"
-#include <qsqlquery.h>
 
 void EmojiService::loadKeywords() {
   for (const auto &visited : getVisited()) {
@@ -35,31 +34,29 @@ std::span<Scored<const EmojiData *>> EmojiService::search(std::string_view query
 }
 
 void EmojiService::createDbEntry(std::string_view emoji) {
-  QSqlQuery query = m_db.createQuery();
+  auto stmt =
+      m_db.db().prepare("INSERT INTO visited_emoji (emoji) VALUES (:emoji) ON CONFLICT(emoji) DO NOTHING");
+  stmt.bind(":emoji", QString::fromUtf8(emoji.data(), emoji.size()));
 
-  query.prepare("INSERT INTO visited_emoji (emoji) VALUES (:emoji) ON CONFLICT(emoji) DO NOTHING");
-  query.addBindValue(QString::fromUtf8(emoji.data(), emoji.size()));
-
-  if (!query.exec()) { qCritical() << "Failed to create database entry for emoji" << query.lastError(); }
+  if (!stmt.exec()) {
+    qCritical() << "Failed to create database entry for emoji" << stmt.lastError().c_str();
+  }
 }
 
 bool EmojiService::registerVisit(std::string_view emoji) {
-  QSqlQuery query = m_db.createQuery();
-  qint64 const epoch = QDateTime::currentSecsSinceEpoch();
+  auto stmt = m_db.db().prepare(R"(
+    INSERT INTO visited_emoji (emoji, visit_count, last_visited_at)
+    VALUES (:emoji, 1, :epoch)
+    ON CONFLICT(emoji) DO UPDATE
+    SET
+      visit_count = visit_count + 1,
+      last_visited_at = :epoch
+  )");
+  stmt.bind(":emoji", QString::fromUtf8(emoji.data(), emoji.size()));
+  stmt.bind(":epoch", static_cast<int64_t>(QDateTime::currentSecsSinceEpoch()));
 
-  query.prepare(R"(
-  	INSERT INTO visited_emoji (emoji, visit_count, last_visited_at)
-	VALUES (:emoji, 1, :epoch)
-	ON CONFLICT(emoji) DO UPDATE 
-	SET 
-		visit_count = visit_count + 1, 
-		last_visited_at = :epoch
-	)");
-  query.bindValue(":emoji", QString::fromUtf8(emoji.data(), emoji.size()));
-  query.bindValue(":epoch", epoch);
-
-  if (!query.exec()) {
-    qCritical() << "Failed to register visit for emoji" << query.lastError();
+  if (!stmt.exec()) {
+    qCritical() << "Failed to register visit for emoji" << stmt.lastError().c_str();
     return false;
   }
 
@@ -88,23 +85,16 @@ std::vector<std::pair<std::string_view, std::vector<const EmojiData *>>> EmojiSe
 }
 
 std::vector<EmojiWithMetadata> EmojiService::getVisited() const {
-  QSqlQuery query = m_db.createQuery();
-
-  bool const ok = query.exec(R"(
-	SELECT emoji, visit_count, pinned_at, custom_keywords FROM visited_emoji ORDER BY pinned_at DESC, visit_count DESC, last_visited_at DESC
+  auto stmt = m_db.db().prepare(R"(
+    SELECT emoji, visit_count, pinned_at, custom_keywords FROM visited_emoji ORDER BY pinned_at DESC, visit_count DESC, last_visited_at DESC
   )");
-
-  if (!ok) {
-    qCritical() << "Failed to getVisited()" << query.lastError();
-    return {};
-  }
 
   std::vector<EmojiWithMetadata> results;
   const auto &mapping = StaticEmojiDatabase::mapping();
 
-  while (query.next()) {
+  while (stmt.step()) {
     EmojiWithMetadata result;
-    auto emoji = query.value(0).toString();
+    auto emoji = stmt.columnQString(0);
     auto it = mapping.find(emoji.toStdString());
 
     if (it == mapping.end()) {
@@ -113,12 +103,10 @@ std::vector<EmojiWithMetadata> EmojiService::getVisited() const {
     }
 
     result.data = it->second;
-    result.visitCount = query.value(1).toUInt();
-    result.keywords = query.value(3).toString();
+    result.visitCount = static_cast<uint32_t>(stmt.columnInt(1));
+    result.keywords = stmt.columnQString(3);
 
-    if (auto value = query.value(2); !value.isNull()) {
-      result.pinnedAt = QDateTime::fromSecsSinceEpoch(value.toULongLong());
-    }
+    if (!stmt.isNull(2)) { result.pinnedAt = QDateTime::fromSecsSinceEpoch(stmt.columnInt64(2)); }
 
     results.emplace_back(result);
   }
@@ -151,46 +139,38 @@ std::vector<EmojiWithMetadata> EmojiService::mapMetadata(const std::vector<const
 }
 
 EmojiWithMetadata EmojiService::mapMetadata(std::string_view emoji) {
-  QSqlQuery query = m_db.createQuery();
   auto it = StaticEmojiDatabase::mapping().find(emoji);
 
   if (it == StaticEmojiDatabase::mapping().end()) { return {}; }
 
-  query.prepare("SELECT visit_count, pinned_at, custom_keywords FROM visited_emoji WHERE emoji = :emoji");
-  query.addBindValue(qStringFromStdView(emoji));
+  auto stmt = m_db.db().prepare(
+      "SELECT visit_count, pinned_at, custom_keywords FROM visited_emoji WHERE emoji = :emoji");
+  stmt.bind(":emoji", qStringFromStdView(emoji));
 
-  if (!query.exec()) {
-    qCritical() << "Failed to map metadata for" << query.lastError();
-    return {.data = it->second};
-  }
-
-  if (!query.next()) { return EmojiWithMetadata{.data = it->second}; }
+  if (!stmt.step()) { return {.data = it->second}; }
 
   EmojiWithMetadata result;
 
   result.data = it->second;
-  result.visitCount = query.value(0).toUInt();
-  result.keywords = query.value(2).toString();
+  result.visitCount = static_cast<uint32_t>(stmt.columnInt(0));
+  result.keywords = stmt.columnQString(2);
 
-  if (auto value = query.value(1); !value.isNull()) {
-    result.pinnedAt = QDateTime::fromSecsSinceEpoch(value.toULongLong());
-  }
+  if (!stmt.isNull(1)) { result.pinnedAt = QDateTime::fromSecsSinceEpoch(stmt.columnInt64(1)); }
 
   return result;
 }
 
 bool EmojiService::setCustomKeywords(std::string_view emoji, const QString &keywords) {
-  QSqlQuery query = m_db.createQuery();
   auto oldMetadata = mapMetadata(emoji);
 
   createDbEntry(emoji);
 
-  query.prepare("UPDATE visited_emoji SET custom_keywords = :keywords WHERE emoji = :emoji");
-  query.addBindValue(keywords);
-  query.addBindValue(qStringFromStdView(emoji));
+  auto stmt = m_db.db().prepare("UPDATE visited_emoji SET custom_keywords = :keywords WHERE emoji = :emoji");
+  stmt.bind(":keywords", keywords);
+  stmt.bind(":emoji", qStringFromStdView(emoji));
 
-  if (!query.exec()) {
-    qCritical() << "Failed to setCustomKeywords for emoji" << query.lastError();
+  if (!stmt.exec()) {
+    qCritical() << "Failed to setCustomKeywords for emoji" << stmt.lastError().c_str();
     return false;
   }
 
@@ -202,13 +182,12 @@ bool EmojiService::setCustomKeywords(std::string_view emoji, const QString &keyw
 bool EmojiService::resetRanking(std::string_view emoji) {
   createDbEntry(emoji);
 
-  QSqlQuery query = m_db.createQuery();
+  auto stmt = m_db.db().prepare(
+      "UPDATE visited_emoji SET visit_count = 0, last_visited_at = NULL WHERE emoji = :emoji");
+  stmt.bind(":emoji", qStringFromStdView(emoji));
 
-  query.prepare("UPDATE visited_emoji SET visit_count = 0, last_visited_at = NULL WHERE emoji = :emoji");
-  query.addBindValue(qStringFromStdView(emoji));
-
-  if (!query.exec()) {
-    qCritical() << "Failed to reset ranking" << query.lastError();
+  if (!stmt.exec()) {
+    qCritical() << "Failed to reset ranking" << stmt.lastError().c_str();
     return false;
   }
 
@@ -220,12 +199,10 @@ bool EmojiService::resetRanking(std::string_view emoji) {
 bool EmojiService::unpin(std::string_view emoji) {
   createDbEntry(emoji);
 
-  QSqlQuery query = m_db.createQuery();
+  auto stmt = m_db.db().prepare("UPDATE visited_emoji SET pinned_at = NULL WHERE emoji = :emoji");
+  stmt.bind(":emoji", QString::fromUtf8(emoji.data(), emoji.size()));
 
-  query.prepare("UPDATE visited_emoji SET pinned_at = NULL WHERE emoji = :emoji");
-  query.addBindValue(QString::fromUtf8(emoji.data(), emoji.size()));
-
-  if (!query.exec()) {
+  if (!stmt.exec()) {
     qCritical() << "Failed to pin emoji";
     return false;
   }
@@ -238,13 +215,11 @@ bool EmojiService::unpin(std::string_view emoji) {
 bool EmojiService::pin(std::string_view emoji) {
   createDbEntry(emoji);
 
-  QSqlQuery query = m_db.createQuery();
+  auto stmt = m_db.db().prepare("UPDATE visited_emoji SET pinned_at = :epoch WHERE emoji = :emoji");
+  stmt.bind(":emoji", QString::fromUtf8(emoji.data(), emoji.size()));
+  stmt.bind(":epoch", static_cast<int64_t>(QDateTime::currentSecsSinceEpoch()));
 
-  query.prepare("UPDATE visited_emoji SET pinned_at = :epoch WHERE emoji = :emoji");
-  query.bindValue(":emoji", QString::fromUtf8(emoji.data(), emoji.size()));
-  query.bindValue(":epoch", QDateTime::currentSecsSinceEpoch());
-
-  if (!query.exec()) {
+  if (!stmt.exec()) {
     qCritical() << "Failed to pin emoji";
     return false;
   }

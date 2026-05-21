@@ -1,40 +1,35 @@
 #include "migration-manager.hpp"
-#include <qsqldatabase.h>
 #include <regex>
 #include <ranges>
 
 void MigrationManager::initialize() {
-  QSqlQuery query(m_db);
-  bool const created = query.exec(R"(
-	  	CREATE TABLE IF NOT EXISTS schema_migrations (
-			id TEXT PRIMARY KEY,
-			applied_at INTEGER NOT NULL,
-			version INTEGER,
-			checksum TEXT NOT NULL
-		);
-	  )");
-
-  if (!created) { qCritical() << "Failed to initialize migration manager" << query.lastError(); }
+  if (!m_db.exec(R"(
+      CREATE TABLE IF NOT EXISTS schema_migrations (
+        id TEXT PRIMARY KEY,
+        applied_at INTEGER NOT NULL,
+        version INTEGER,
+        checksum TEXT NOT NULL
+      );
+    )")) {
+    qCritical() << "Failed to initialize migration manager:" << m_db.lastError().c_str();
+  }
 }
 
 std::vector<MigrationManager::RegisteredMigration> MigrationManager::loadDatabaseMigrations() {
-  QSqlQuery query(m_db);
-  const char *QUERY = R"(
-		SELECT id, version, applied_at, checksum FROM schema_migrations
-		ORDER BY version
-	)";
-
-  if (!query.exec(QUERY)) { return {}; }
+  auto stmt = m_db.prepare(R"(
+    SELECT id, version, applied_at, checksum FROM schema_migrations
+    ORDER BY version
+  )");
 
   std::vector<RegisteredMigration> migrations;
 
-  while (query.next()) {
+  while (stmt.step()) {
     RegisteredMigration migration;
 
-    migration.id = query.value(0).toString();
-    migration.version = query.value(1).toInt();
-    migration.createdAt = query.value(2).toULongLong();
-    migration.checksum = query.value(3).toString();
+    migration.id = stmt.columnQString(0);
+    migration.version = stmt.columnInt(1);
+    migration.createdAt = stmt.columnUInt64(2);
+    migration.checksum = stmt.columnQString(3);
     migrations.emplace_back(migration);
   }
 
@@ -74,50 +69,10 @@ MigrationManager::loadMigrationFile(const std::filesystem::path &path) {
 }
 
 void MigrationManager::executeMigration(const Migration &migration) {
-  // The sqlite driver does not support executing multiple statements at once
-  // so we need this manual splitting.
-  QStringList const statements = splitSqlStatements(migration.content);
-
-  for (const QString &statement : statements) {
-    QString const trimmed = statement.trimmed();
-    if (trimmed.isEmpty() || trimmed.startsWith("--")) { continue; }
-
-    qDebug() << "executing" << statement;
-
-    QSqlQuery query(m_db);
-    if (!query.exec(trimmed)) {
-      auto error = std::format("Failed to execute statement in migration {}: {}", migration.version,
-                               query.lastError().databaseText().toStdString());
-
-      throw std::runtime_error(error);
-    }
+  if (!m_db.exec(migration.content.toStdString())) {
+    throw std::runtime_error(
+        std::format("Failed to execute migration {}: {}", migration.version, m_db.lastError()));
   }
-}
-
-QStringList MigrationManager::splitSqlStatements(const QString &content) {
-  QStringList statements;
-  QString current;
-  QStringList const lines = content.split('\n');
-
-  for (const QString &line : lines) {
-    QString const trimmed = line.trimmed();
-
-    // Skip comment lines
-    if (trimmed.startsWith("--") || trimmed.isEmpty()) { continue; }
-
-    current += line + "\n";
-
-    // Check if line ends with semicolon (simple approach)
-    if (trimmed.endsWith(';')) {
-      statements.append(current.trimmed());
-      current.clear();
-    }
-  }
-
-  // Add any remaining content
-  if (!current.trimmed().isEmpty()) { statements.append(current.trimmed()); }
-
-  return statements;
 }
 
 QString MigrationManager::computeContentHash(const QString &content) {
@@ -125,18 +80,16 @@ QString MigrationManager::computeContentHash(const QString &content) {
 }
 
 void MigrationManager::insertMigration(const Migration &migration) {
-  QSqlQuery query(m_db);
+  auto stmt = m_db.prepare(R"(
+    INSERT INTO schema_migrations (id, applied_at, version, checksum)
+    VALUES (:id, :applied_at, :version, :checksum)
+  )");
+  stmt.bind(":id", migration.id);
+  stmt.bind(":applied_at", static_cast<int64_t>(QDateTime::currentSecsSinceEpoch()));
+  stmt.bind(":version", migration.version);
+  stmt.bind(":checksum", computeContentHash(migration.content));
 
-  query.prepare(R"(
-	  	INSERT INTO schema_migrations (id, applied_at, version, checksum)
-		VALUES (:id, :applied_at, :version, :checksum)
-	  )");
-  query.bindValue(":id", migration.id);
-  query.bindValue(":applied_at", QDateTime::currentSecsSinceEpoch());
-  query.bindValue(":version", migration.version);
-  query.bindValue(":checksum", computeContentHash(migration.content));
-
-  if (!query.exec()) {
+  if (!stmt.exec()) {
     throw std::runtime_error(
         std::format("Failed to insert migration entry for migration: {}", migration.id.toStdString()));
   }
@@ -164,10 +117,7 @@ void MigrationManager::runMigrations() {
   auto dbMigrations = loadDatabaseMigrations();
   auto fsMigrations = loadMigrations();
 
-  if (!m_db.transaction()) {
-    qCritical() << "Failed to start" << m_db.lastError();
-    return;
-  }
+  auto tx = m_db.transaction();
 
   try {
     for (size_t idx = 0; idx != fsMigrations.size(); ++idx) {
@@ -192,14 +142,14 @@ void MigrationManager::runMigrations() {
       insertMigration(migration);
     }
 
-    if (!m_db.commit()) { throw std::runtime_error("Failed to commit transaction"); }
+    if (!tx.commit()) { throw std::runtime_error("Failed to commit transaction"); }
   } catch (const std::exception &exception) {
     qCritical() << "Failed to run migrations:" << exception.what();
-    m_db.rollback();
+    tx.rollback();
   }
 }
 
-MigrationManager::MigrationManager(QSqlDatabase &db, const QString &migrationNamespace)
+MigrationManager::MigrationManager(db::Database &db, const QString &migrationNamespace)
     : m_db(db), m_migrationNamespace(migrationNamespace) {
   initialize();
 }

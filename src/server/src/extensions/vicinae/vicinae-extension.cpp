@@ -24,7 +24,6 @@
 #include <malloc.h>
 #endif
 #include <qpixmapcache.h>
-#include <qsqlquery.h>
 #include <qurlquery.h>
 
 class OpenDocumentationCommand : public BuiltinUrlCommand {
