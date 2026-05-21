@@ -338,6 +338,27 @@ install_desktop_files() {
 	fi
 }
 
+install_icons() {
+	echo "Installing application icons..." >&2
+
+	local icon_source="$INSTALL_DIR/usr/share/icons/hicolor/512x512/apps/vicinae.png"
+	local icon_dest_dir="$PREFIX/share/icons/hicolor/512x512/apps"
+
+	if [[ -f "$icon_source" ]]; then
+		mkdir -p "$icon_dest_dir"
+		cp "$icon_source" "$icon_dest_dir/"
+
+		if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+			gtk-update-icon-cache -f -t "$PREFIX/share/icons/hicolor" 2>/dev/null || true
+		fi
+
+		ok "Application icon installed to $icon_dest_dir/vicinae.png"
+		echo
+	else
+		warn "Application icon not found at $icon_source"
+	fi
+}
+
 install_browser_manifests() {
     echo "Installing browser native messaging manifests..." >&2
 
@@ -498,9 +519,10 @@ install_vicinae() {
 		ok "Installation completed"
 		echo
 
-		# Install themes, desktop files, systemd service, and system configs
+		# Install themes, desktop files, icons, systemd service, and system configs
 		install_themes
 		install_desktop_files
+		install_icons
 		install_systemd_service
 		install_browser_manifests
 		install_modules_load
@@ -546,6 +568,15 @@ uninstall_vicinae() {
 		# Update desktop database if available
 		if command -v update-desktop-database >/dev/null 2>&1; then
 			update-desktop-database "$APPLICATIONS_DIR" 2>/dev/null || true
+		fi
+	fi
+
+	local icon_file="$PREFIX/share/icons/hicolor/512x512/apps/vicinae.png"
+	if [[ -f "$icon_file" ]]; then
+		rm -f "$icon_file"
+		ok "Removed application icon:        $icon_file"
+		if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+			gtk-update-icon-cache -f -t "$PREFIX/share/icons/hicolor" 2>/dev/null || true
 		fi
 	fi
 
