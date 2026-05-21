@@ -198,11 +198,22 @@ const FormRoot: React.FC<Form.Props> = ({
 	);
 };
 
-const TextField: React.FC<Form.TextField.Props> = ({ ref, value, onChange, ...props }) => {
+const TextField: React.FC<Form.TextField.Props> = ({
+	ref,
+	value,
+	onChange,
+	...props
+}) => {
 	useImperativeFormHandle(ref);
 	const [countedValue, wrappedOnChange] = useEventCounted(value, onChange);
 
-	return <text-field {...wrapFormItemProps(props)} value={countedValue} onChange={wrappedOnChange} />;
+	return (
+		<text-field
+			{...wrapFormItemProps(props)}
+			value={countedValue}
+			onChange={wrappedOnChange}
+		/>
+	);
 };
 
 const PasswordField: React.FC<Form.PasswordField.Props> = ({
@@ -214,7 +225,13 @@ const PasswordField: React.FC<Form.PasswordField.Props> = ({
 	useImperativeFormHandle(ref);
 	const [countedValue, wrappedOnChange] = useEventCounted(value, onChange);
 
-	return <password-field {...props} value={countedValue} onChange={wrappedOnChange} />;
+	return (
+		<password-field
+			{...props}
+			value={countedValue}
+			onChange={wrappedOnChange}
+		/>
+	);
 };
 
 export enum DatePickerType {
@@ -231,9 +248,9 @@ const DatePickerRoot: React.FC<Form.DatePicker.Props> = ({
 
 	const _onChange = onChange
 		? (newValue: string | null) => {
-			const dateObj = newValue ? new Date(newValue) : null;
-			onChange(dateObj);
-		}
+				const dateObj = newValue ? new Date(newValue) : null;
+				onChange(dateObj);
+			}
 		: undefined;
 
 	return (
@@ -303,11 +320,22 @@ const TagPicker = Object.assign(TagPickerRoot, {
 	Item: TagPickerItem,
 });
 
-const TextArea: React.FC<Form.TextArea.Props> = ({ ref, value, onChange, ...props }) => {
+const TextArea: React.FC<Form.TextArea.Props> = ({
+	ref,
+	value,
+	onChange,
+	...props
+}) => {
 	useImperativeFormHandle(ref);
 	const [countedValue, wrappedOnChange] = useEventCounted(value, onChange);
 
-	return <text-area-field {...wrapFormItemProps(props)} value={countedValue} onChange={wrappedOnChange} />;
+	return (
+		<text-area-field
+			{...wrapFormItemProps(props)}
+			value={countedValue}
+			onChange={wrappedOnChange}
+		/>
+	);
 };
 
 const FilePicker: React.FC<Form.FilePicker.Props> = ({ ref, ...props }) => {

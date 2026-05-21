@@ -1,9 +1,14 @@
-import { RaycastApplication, transformApp } from './system';
-import * as vicinae from '@vicinae/api';
+import { RaycastApplication, transformApp } from "./system";
+import * as vicinae from "@vicinae/api";
 
 type RaycastWindow = {
 	active: boolean;
-	bounds: { position: { x: number; y: number }; size: { height: number; width: number } } | "fullscreen";
+	bounds:
+		| {
+				position: { x: number; y: number };
+				size: { height: number; width: number };
+		  }
+		| "fullscreen";
 	desktopId: string;
 	fullScreenSettable: boolean;
 	id: string;
@@ -14,8 +19,8 @@ type RaycastWindow = {
 
 enum DesktopType {
 	User,
-	FullScreen
-};
+	FullScreen,
+}
 
 type RaycastDesktop = {
 	id: string;
@@ -25,17 +30,21 @@ type RaycastDesktop = {
 	type: DesktopType;
 };
 
-const transformNativeDesktop = (win: vicinae.WindowManagement.Workspace): RaycastDesktop => {
+const transformNativeDesktop = (
+	win: vicinae.WindowManagement.Workspace,
+): RaycastDesktop => {
 	return {
 		id: win.id,
 		screenId: win.monitorId,
 		size: { width: 0, height: 0 }, // FIXME: implement
 		active: win.active,
-		type: DesktopType.User
+		type: DesktopType.User,
 	};
-}
+};
 
-const transformNativeWindow = (win: vicinae.WindowManagement.Window): RaycastWindow => {
+const transformNativeWindow = (
+	win: vicinae.WindowManagement.Window,
+): RaycastWindow => {
 	return {
 		id: win.id,
 		fullScreenSettable: true,
@@ -43,10 +52,10 @@ const transformNativeWindow = (win: vicinae.WindowManagement.Window): RaycastWin
 		resizable: true,
 		active: win.active,
 		bounds: win.bounds,
-		desktopId: win.workspaceId ?? '0',
-		application: win.application && transformApp(win.application)
+		desktopId: win.workspaceId ?? "0",
+		application: win.application && transformApp(win.application),
 	};
-}
+};
 
 class RaycastWindowManagement {
 	async getActiveWindow(): Promise<RaycastWindow> {
@@ -68,6 +77,6 @@ class RaycastWindowManagement {
 	}
 
 	constructor() {}
-};
+}
 
-export const WindowManagement = new RaycastWindowManagement;
+export const WindowManagement = new RaycastWindowManagement();

@@ -231,8 +231,12 @@ class GlazeGenerator : public AbstractCodeGenerator {
                       return "void";
                     case PrimitiveType::Boolean:
                       return "bool";
-                    case PrimitiveType::Number:
-                      return "int";
+                    case PrimitiveType::Int:
+                      return "int32_t";
+                    case PrimitiveType::UInt:
+                      return "uint32_t";
+                    case PrimitiveType::Double:
+                      return "double";
                     case PrimitiveType::String:
                       return "std::string";
                     case PrimitiveType::Any:

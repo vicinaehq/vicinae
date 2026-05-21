@@ -18,5 +18,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Check formatting
+      - name: Check C++ formatting
         run: make check-format
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check TypeScript formatting
+        working-directory: src/typescript
+        run: npx @biomejs/biome format

@@ -1,0 +1,5 @@
+{
+	"files": {
+		"includes": ["api/**", "extension-manager/**", "raycast-api-compat/**"]
+	}
+}

@@ -34,6 +34,10 @@
 #include <qcoreevent.h>
 #include <qlogging.h>
 
+#ifdef __GLIBC__
+#include <malloc.h>
+#endif
+
 LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
     : QObject(parent), m_ctx(ctx), m_actionPanel(new ActionPanelController(ctx, this)),
       m_alertModel(new AlertModel(*ctx.navigation, this)), m_configBridge(new ConfigBridge(this)),
@@ -85,6 +89,23 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
             [this]() { m_ctx.navigation->setWindowActivated(m_window->isActive()); });
     m_window->installEventFilter(this);
   }
+
+  using namespace std::chrono_literals;
+
+  // Sometime after we close the window, we release some of our cached resources to lower
+  // memory usage.
+  static constexpr auto CACHE_EVICTION_DELAY = 10s;
+
+  m_cacheEvictionTimer.setSingleShot(true);
+  m_cacheEvictionTimer.setInterval(CACHE_EVICTION_DELAY);
+
+  connect(&m_cacheEvictionTimer, &QTimer::timeout, this, [this]() {
+    if (m_window) m_window->releaseResources();
+    m_engine.trimComponentCache();
+#ifdef __GLIBC__
+    malloc_trim(0);
+#endif
+  });
 
   m_closeOnFocusLoss = ctx.services->config()->value().closeOnFocusLoss;
 
@@ -303,6 +324,7 @@ void LauncherWindow::handleVisibilityChanged(bool visible) {
   if (!m_window) return;
 
   if (visible) {
+    m_cacheEvictionTimer.stop();
     applyWindowConfig();
     tryCompaction();
     m_window->show();
@@ -310,6 +332,7 @@ void LauncherWindow::handleVisibilityChanged(bool visible) {
     m_window->requestActivate();
   } else {
     m_window->hide();
+    m_cacheEvictionTimer.start();
   }
 }
 

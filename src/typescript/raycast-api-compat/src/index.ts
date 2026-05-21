@@ -7,9 +7,12 @@
 
 export {
 	useNavigation,
-	Toast, showToast,
-	ImageLike, Image,
-	Keyboard, KeyModifier,
+	Toast,
+	showToast,
+	ImageLike,
+	Image,
+	Keyboard,
+	KeyModifier,
 	Icon,
 	environment,
 	Environment,
@@ -17,20 +20,28 @@ export {
 	Color,
 	ColorLike,
 	getPreferenceValues,
-	confirmAlert, Alert,
-	open, showInFileBrowser,
-	closeMainWindow, showHUD, clearSearchBar, getSelectedText, popToRoot, PopToRootType,
+	confirmAlert,
+	Alert,
+	open,
+	showInFileBrowser,
+	closeMainWindow,
+	showHUD,
+	clearSearchBar,
+	getSelectedText,
+	popToRoot,
+	PopToRootType,
 	updateCommandMetadata,
-
-	openCommandPreferences, openExtensionPreferences,
+	openCommandPreferences,
+	openExtensionPreferences,
 	LaunchType,
-
 	AI,
 	OAuth,
-
-	List, Grid, Form, Detail,
-	Action
-} from '@vicinae/api';
+	List,
+	Grid,
+	Form,
+	Detail,
+	Action,
+} from "@vicinae/api";
 
 export {
 	getFrontmostApplication,
@@ -40,8 +51,8 @@ export {
 	captureException,
 } from "./system.js";
 
-export { Clipboard } from './clipboard.js';
+export { Clipboard } from "./clipboard.js";
 export { ActionPanel } from "./components/action-panel.js";
-export { randomId } from './utils.js';
+export { randomId } from "./utils.js";
 export * from "./local-storage.js";
-export { WindowManagement } from './window-management.js';
+export { WindowManagement } from "./window-management.js";

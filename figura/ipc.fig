@@ -3,7 +3,7 @@
 
 struct PingResponse {
   version: string;
-  pid: number;
+  pid: int;
 };
 
 struct DeeplinkRequest {
@@ -40,8 +40,8 @@ struct DMenuRequest {
   noIcon: bool;
   noMetadata: bool;
   query?: string;
-  width?: number;
-  height?: number;
+  width?: int;
+  height?: int;
   noFooter: bool;
 };
 
@@ -56,8 +56,8 @@ struct BrowserInitRequest {
 };
 
 struct BrowserTabInfo {
-  id: number;
-  windowId: number;
+  id: int;
+  windowId: int;
   title: string;
   url: string;
   active: bool;
@@ -66,11 +66,11 @@ struct BrowserTabInfo {
 };
 
 struct FocusTabRequest {
-  tabId: number;
+  tabId: int;
 };
 
 struct CloseTabRequest {
-  tabId: number;
+  tabId: int;
 };
 
 service Ipc {

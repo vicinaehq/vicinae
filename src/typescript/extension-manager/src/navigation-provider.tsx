@@ -1,13 +1,26 @@
-import { createContext, type ReactNode, useEffect, useRef, useState } from "react";
+import {
+	createContext,
+	type ReactNode,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
 import { globalState } from "./globals";
 
 const View: React.FC<{ children: ReactNode }> = ({ children }) => {
 	return <view>{children}</view>;
 };
 
-const NavigationContext = createContext<{ push: (node: ReactNode) => void; pop: () => void }>({
-	pop: () => { throw new Error("not implemented"); },
-	push: () => { throw new Error("not implemented"); },
+const NavigationContext = createContext<{
+	push: (node: ReactNode) => void;
+	pop: () => void;
+}>({
+	pop: () => {
+		throw new Error("not implemented");
+	},
+	push: () => {
+		throw new Error("not implemented");
+	},
 });
 
 globalState.navigationContext = NavigationContext;

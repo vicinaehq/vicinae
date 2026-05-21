@@ -75,6 +75,7 @@ endif()
 
 include_directories(
     ${CMAKE_BINARY_DIR}
+    ${CMAKE_SOURCE_DIR}/vendor
 )
 
 find_package(glaze)
