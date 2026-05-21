@@ -4,14 +4,25 @@
 #include "service-registry.hpp"
 #include "utils/utils.hpp"
 
+namespace fs = std::filesystem;
+
 void SearchFilesSection::setFiles(std::vector<std::filesystem::path> files, const QString &sectionName) {
   m_files = std::move(files);
   m_sectionName = sectionName;
   notifyChanged();
 }
 
+QString SearchFilesSection::itemId(int i) const { return QString::fromStdString(m_files.at(i).string()); }
+
 QString SearchFilesSection::itemTitle(int i) const {
   return QString::fromStdString(getLastPathComponent(m_files.at(i)));
+}
+
+QString SearchFilesSection::itemSubtitle(int i) const {
+  const auto &p = m_files.at(i);
+  fs::path parent = p.parent_path();
+  if (parent.empty()) return QString::fromStdString(compressPath(p).string());
+  return QString::fromStdString(compressPath(parent).string());
 }
 
 QString SearchFilesSection::itemIconSource(int i) const {

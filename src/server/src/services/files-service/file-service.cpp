@@ -1,12 +1,8 @@
 #include "omni-database.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
+#include "services/files-service/fff/fff-file-indexer.hpp"
 #include <qlogging.h>
 #include "file-service.hpp"
-#ifdef Q_OS_LINUX
-#include "file-indexer/file-indexer.hpp"
-#else
-#include "dummy-file-indexer.hpp"
-#endif
 
 namespace fs = std::filesystem;
 
@@ -72,10 +68,4 @@ void FileService::preferenceValuesChanged(const QJsonObject &preferences) {
   m_indexer->preferenceValuesChanged(preferences);
 }
 
-FileService::FileService(OmniDatabase &db) : m_db(db) {
-#ifdef Q_OS_LINUX
-  m_indexer = std::make_unique<FileIndexer>();
-#else
-  m_indexer = std::make_unique<DummyFileIndexer>();
-#endif
-}
+FileService::FileService(OmniDatabase &db) : m_db(db) { m_indexer = std::make_unique<FffFileIndexer>(); }

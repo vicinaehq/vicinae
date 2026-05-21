@@ -26,6 +26,8 @@ Item {
         cmdModel: root.host.listModel
         detailComponent: detailPanel
         detailVisible: root.host.hasDetail
+        emptyTitle: root.host.emptyTitle
+        emptyDescription: root.host.emptyDescription
     }
 
     Component {

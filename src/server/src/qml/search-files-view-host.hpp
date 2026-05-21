@@ -16,8 +16,15 @@ class SearchFilesViewHost : public ListViewHost {
   Q_PROPERTY(QString detailImageSource READ detailImageSource NOTIFY detailChanged)
   Q_PROPERTY(QString detailTextContent READ detailTextContent NOTIFY detailChanged)
 
+  Q_PROPERTY(bool isIndexing READ isIndexing NOTIFY indexingStateChanged)
+  Q_PROPERTY(bool showReadyPulse READ showReadyPulse NOTIFY indexingStateChanged)
+  Q_PROPERTY(quint64 indexedFilesCount READ indexedFilesCount NOTIFY indexingStateChanged)
+  Q_PROPERTY(QString emptyTitle READ emptyTitle NOTIFY indexingStateChanged)
+  Q_PROPERTY(QString emptyDescription READ emptyDescription NOTIFY indexingStateChanged)
+
 signals:
   void detailChanged();
+  void indexingStateChanged();
 
 public:
   QUrl qmlComponentUrl() const override;
@@ -34,10 +41,18 @@ public:
   QString detailImageSource() const { return m_detailImageSource; }
   QString detailTextContent() const { return m_detailTextContent; }
 
+  bool isIndexing() const { return m_isIndexing; }
+  bool showReadyPulse() const { return m_showReadyPulse; }
+  quint64 indexedFilesCount() const { return m_indexedFilesCount; }
+  QString emptyTitle() const;
+  QString emptyDescription() const;
+
 private:
   void renderRecentFiles();
+  void clearSection();
   void handleDebounce();
   void handleSearchResults();
+  void handleScanState(quint64 scanned, bool scanning, bool ready);
   void loadDetail(const std::filesystem::path &path);
   void clearDetail();
 
@@ -56,4 +71,13 @@ private:
   QString m_detailLastModified;
   QString m_detailImageSource;
   QString m_detailTextContent;
+
+  bool m_isIndexing = false;
+  bool m_indexReady = false;
+  // Brief pulse window after the scan flips to ready, used to render a
+  // "Ready — N files indexed" message before recents take over.
+  bool m_showReadyPulse = false;
+  quint64 m_indexedFilesCount = 0;
+  quint64 m_readyAnnounceCount = 0;
+  QTimer m_readyPulseTimer;
 };

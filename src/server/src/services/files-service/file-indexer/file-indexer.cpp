@@ -130,6 +130,8 @@ QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view
   return m_queryEngine.query(view, params);
 }
 
+AbstractFileIndexer::ScanState FileIndexer::scanState() const { return {}; }
+
 FileIndexer::FileIndexer() : m_writer(std::make_shared<DbWriter>()), m_dispatcher(m_writer) {
   m_db.runMigrations();
 }

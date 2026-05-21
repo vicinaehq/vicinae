@@ -21,6 +21,8 @@
 #include "config/config.hpp"
 #include "service-registry.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
+#include "services/files-service/abstract-file-indexer.hpp"
+#include "services/files-service/file-service.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "environment.hpp"
 #include "vicinae.hpp"
@@ -348,6 +350,12 @@ void LauncherWindow::handleVisibilityChanged(bool visible) {
   } else {
     m_window->hide();
     m_cacheEvictionTimer.start();
+    // fff scanning on linux is failry fast and parallel, there is no reason
+    // to keep it in memory on the backend side especailly given the fact that the files
+    // are going to be changed between reruns of the file service
+    if (auto *files = m_ctx.services->fileService()) {
+      if (auto *indexer = files->indexer()) { indexer->stop(); }
+    }
   }
 }
 

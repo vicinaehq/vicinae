@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include <qfuture.h>
 #include <qobject.h>
 #include <qtmetamacros.h>
@@ -39,17 +40,38 @@ struct Pagination {
 };
 
 class AbstractFileIndexer : public QObject {
+  Q_OBJECT
+
+signals:
+  /** Emitted when underlying indexer changes the amount of scanned files */
+  void scanStateChanged(quint64 scannedFilesCount, bool isScanning, bool isReady);
+
 public:
+  struct ScanState {
+    std::uint64_t scannedFilesCount = 0;
+    bool isScanning = false;
+    bool isReady = false;
+  };
+
   struct QueryParams {
     Pagination pagination;
   };
 
 public:
   virtual void start() = 0;
+
+  /** Clears all the in-memory file indexer */
+  virtual void stop() {}
+
   virtual void rebuildIndex() = 0;
   virtual void preferenceValuesChanged(const QJsonObject &preferences) = 0;
   virtual QFuture<std::vector<IndexerFileResult>> queryAsync(std::string_view view,
                                                              const QueryParams &params = {}) = 0;
 
-  virtual ~AbstractFileIndexer() = default;
+  /**
+   * Snapshot of the current scan state. Thread-safe; may briefly contend on an internal mutex.
+   */
+  virtual ScanState scanState() const = 0;
+
+  ~AbstractFileIndexer() override = default;
 };

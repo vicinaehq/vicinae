@@ -15,7 +15,7 @@ list(APPEND LIBS
 	Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus Qt6::Concurrent Qt6::Quick Qt6::Qml
 	Qt6::GuiPrivate # for deeper integration with wayland protocols, we need wl_surface
 	Qt6::QuickDialogs2 Qt6::QuickControls2
-	${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY}
+	${CMARK_EXT_LIBRARY} ${CMARK_LIBRARY}
 	minizip
 	OpenSSL::Crypto
 	qt6keychain
@@ -27,6 +27,8 @@ list(APPEND LIBS
 	vicinae::emoji
 	vicinae::common
 	vicinae::fuzzy
+	vicinae::linuxutils
+	vicinae::fff
 )
 
 if (UNIX AND NOT APPLE)
@@ -355,6 +357,11 @@ set(SRCS
 	src/services/files-service/dummy-file-indexer.hpp
 	src/services/files-service/file-service.hpp
 	src/services/files-service/file-service.cpp
+
+	src/services/files-service/fff/fff-library.hpp
+	src/services/files-service/fff/fff-library.cpp
+	src/services/files-service/fff/fff-file-indexer.hpp
+	src/services/files-service/fff/fff-file-indexer.cpp
 
 	src/services/extension-registry/extension-registry.hpp
 	src/services/extension-registry/extension-registry.cpp
@@ -937,6 +944,30 @@ if(NOT APPLE)
 	)
 endif()
 
+# Ship libfff_c.so next to vicinae-server and make the linker find it at
+# runtime through a relative rpath. $ORIGIN resolves to the directory of the
+# server binary at execution time.
+if (FFF_RUNTIME_LIBRARY)
+	install(FILES "${FFF_RUNTIME_LIBRARY}"
+		DESTINATION ${VICINAE_LIBEXEC_DIR}
+		PERMISSIONS
+			OWNER_READ OWNER_WRITE OWNER_EXECUTE
+			GROUP_READ GROUP_EXECUTE
+			WORLD_READ WORLD_EXECUTE)
+
+	if (APPLE)
+		set(_fff_rpath "@loader_path")
+	else()
+		set(_fff_rpath "$ORIGIN")
+	endif()
+
+	set_target_properties(${TARGET} PROPERTIES
+		BUILD_WITH_INSTALL_RPATH FALSE
+		BUILD_RPATH "${CMAKE_BINARY_DIR}/_fff/lib"
+		INSTALL_RPATH "${_fff_rpath}"
+		INSTALL_RPATH_USE_LINK_PATH TRUE)
+endif()
+
 if (BUILD_TESTS AND UNIX AND NOT APPLE)
 	set(TEST_TARGET ${TARGET}-tests)
 	find_package(Catch2 3 REQUIRED)
@@ -948,4 +979,42 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 	)
 	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)
 	target_compile_features(${TEST_TARGET} PUBLIC cxx_std_23)
+endif()
+
+# Standalone smoke test for the fff integration. Not gated on BUILD_TESTS,
+# because it does not require Catch2 - builds opt-in via -DBUILD_FFF_SMOKE=ON.
+option(BUILD_FFF_SMOKE "Build the fff integration smoke test binary" OFF)
+if (BUILD_FFF_SMOKE)
+	set(FFF_SMOKE_TARGET ${TARGET}-fff-smoke)
+	add_executable(${FFF_SMOKE_TARGET}
+		tests/fff-smoke.cpp
+		src/services/files-service/abstract-file-indexer.hpp
+		src/services/files-service/fff/fff-library.cpp
+		src/services/files-service/fff/fff-file-indexer.hpp
+		src/services/files-service/fff/fff-file-indexer.cpp
+		src/utils/utils.cpp
+		src/vicinae.cpp
+	)
+	set_target_properties(${FFF_SMOKE_TARGET} PROPERTIES AUTOMOC ON)
+	target_include_directories(${FFF_SMOKE_TARGET} PRIVATE
+		${CMAKE_CURRENT_SOURCE_DIR}/src
+		${CMAKE_CURRENT_SOURCE_DIR}/src/lib
+		${CMAKE_CURRENT_SOURCE_DIR}/src/utils
+		${CMAKE_CURRENT_SOURCE_DIR}/..
+		${CMAKE_CURRENT_BINARY_DIR})
+	target_link_libraries(${FFF_SMOKE_TARGET} PRIVATE
+		Qt6::Core Qt6::Concurrent Qt6::Gui
+		glaze::glaze
+		vicinae::fff
+		vicinae::xdgpp)
+	target_compile_features(${FFF_SMOKE_TARGET} PUBLIC cxx_std_26)
+
+	if (APPLE)
+		set(_fff_smoke_rpath "@loader_path")
+	else()
+		set(_fff_smoke_rpath "$ORIGIN")
+	endif()
+	set_target_properties(${FFF_SMOKE_TARGET} PROPERTIES
+		BUILD_RPATH "${CMAKE_BINARY_DIR}/_fff/lib"
+		INSTALL_RPATH "${_fff_smoke_rpath}")
 endif()
