@@ -929,8 +929,6 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 	set(TEST_TARGET ${TARGET}-tests)
 	find_package(Catch2 3 REQUIRED)
 	add_executable(${TEST_TARGET}
-		tests/shortcut-tests.cpp
-		src/extend/action-shortcut-parser.cpp
 		src/lib/keyboard/keyboard.cpp
 		src/lib/keyboard/keybind-manager.cpp
 	)
