@@ -99,6 +99,8 @@ if (APPLE)
 	set(USE_SYSTEM_CMARK_GFM OFF)
 endif()
 
+set(VENDOR_DIR ${CMAKE_SOURCE_DIR}/vendor)
+
 include_directories(
     ${CMAKE_BINARY_DIR}
     ${CMAKE_SOURCE_DIR}/vendor
@@ -112,6 +114,7 @@ add_subdirectory(${LIB_DIR}/script-command)
 add_subdirectory(${LIB_DIR}/emoji)
 add_subdirectory(${LIB_DIR}/xdgpp)
 add_subdirectory(${LIB_DIR}/fuzzy)
+add_subdirectory(vendor/sqlcipher)
 if (UNIX AND NOT APPLE)
 	add_subdirectory(${LIB_DIR}/linux-utils)
 	add_subdirectory(src/snippet)

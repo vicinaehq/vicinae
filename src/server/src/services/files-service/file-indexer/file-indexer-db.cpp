@@ -5,87 +5,56 @@
 #include "utils/migration-manager/migration-manager.hpp"
 #include "utils/utils.hpp"
 #include <chrono>
+#include <format>
 #include <qlogging.h>
-#include <qsqldatabase.h>
-#include <qsqlquery.h>
-#include <quuid.h>
-#include <qdebug.h>
-#include <QSqlError>
-#include <utility>
 
-// clang-format off
-static const std::vector<std::string> SQLITE_PRAGMAS = {
-	"PRAGMA journal_mode = WAL",
-	"PRAGMA synchronous = normal",
-	"PRAGMA temp_store = memory",
-	"PRAGMA busy_timeout = 100",
-	// "PRAGMA mmap_size = 30000000000"
+static constexpr const char *SQLITE_PRAGMAS[] = {
+    "PRAGMA journal_mode = WAL",
+    "PRAGMA synchronous = normal",
+    "PRAGMA temp_store = memory",
 };
-// clang-format on
 
 namespace fs = std::filesystem;
-
-QString FileIndexerDatabase::createRandomConnectionId() {
-  return QString("file-indexer-%1").arg(QUuid::createUuid().toString(QUuid::WithoutBraces));
-}
 
 fs::path FileIndexerDatabase::getDatabasePath() { return Omnicast::dataDir() / "file-indexer.db"; }
 
 std::optional<QDateTime>
 FileIndexerDatabase::retrieveIndexedLastModified(const std::filesystem::path &path) const {
-  QSqlQuery query(m_db);
+  auto stmt = m_db.prepare("SELECT last_modified_at FROM indexed_file WHERE path = :path");
+  stmt.bind(":path", path.c_str());
 
-  query.prepare("SELECT last_modified_at FROM indexed_file WHERE path = :path");
-  query.addBindValue(path.c_str());
+  if (!stmt.step()) { return std::nullopt; }
 
-  if (!query.exec()) {
-    qWarning() << "Failed to retriveIndexedLastModified" << query.lastError();
-    return std::nullopt;
-  }
-
-  if (!query.next()) { return std::nullopt; }
-
-  return QDateTime::fromSecsSinceEpoch(query.value(0).toULongLong());
+  return QDateTime::fromSecsSinceEpoch(stmt.columnUInt64(0));
 }
 
 std::vector<std::filesystem::path>
 FileIndexerDatabase::listIndexedDirectoryFiles(const std::filesystem::path &path) const {
-  QSqlQuery query(m_db);
-
-  query.prepare("SELECT path, last_modified_at FROM indexed_file WHERE parent_path = :path");
-  query.addBindValue(path.c_str());
-
-  if (!query.exec()) {
-    qCritical() << "listIndexedDirectoryFiles failed:" << query.lastError();
-    return {};
-  }
+  auto stmt = m_db.prepare("SELECT path, last_modified_at FROM indexed_file WHERE parent_path = :path");
+  stmt.bind(":path", path.c_str());
 
   std::vector<fs::path> paths;
 
-  while (query.next()) {
-    paths.emplace_back(query.value(0).toString().toStdString());
+  while (stmt.step()) {
+    paths.emplace_back(stmt.columnText(0));
   }
 
   return paths;
 }
 
 void FileIndexerDatabase::runMigrations() {
-  QSqlQuery const query(m_db);
   MigrationManager manager(m_db, "file-indexer");
-
   manager.runMigrations();
 }
 
 bool FileIndexerDatabase::setScanError(int scanId, const QString &error) {
-  QSqlQuery query(m_db);
+  auto stmt = m_db.prepare("UPDATE scan_history SET status = :status, error = :error WHERE id = :id");
+  stmt.bind(":id", scanId);
+  stmt.bind(":status", static_cast<int>(ScanStatus::Failed));
+  stmt.bind(":error", error);
 
-  query.prepare("UPDATE scan_history SET status = :status, error = :error WHERE id = :id");
-  query.bindValue(":id", scanId);
-  query.bindValue(":status", static_cast<quint8>(ScanStatus::Failed));
-  query.bindValue(":error", error);
-
-  if (!query.exec()) {
-    qWarning() << "Failed to update scan status" << query.lastError();
+  if (!stmt.exec()) {
+    qWarning() << "Failed to update scan status" << stmt.lastError().c_str();
     return false;
   }
 
@@ -93,14 +62,12 @@ bool FileIndexerDatabase::setScanError(int scanId, const QString &error) {
 }
 
 bool FileIndexerDatabase::updateScanStatus(int scanId, ScanStatus status) {
-  QSqlQuery query(m_db);
+  auto stmt = m_db.prepare("UPDATE scan_history SET status = :status WHERE id = :id");
+  stmt.bind(":id", scanId);
+  stmt.bind(":status", static_cast<int>(status));
 
-  query.prepare("UPDATE scan_history SET status = :status WHERE id = :id");
-  query.bindValue(":id", scanId);
-  query.bindValue(":status", static_cast<quint8>(status));
-
-  if (!query.exec()) {
-    qWarning() << "Failed to update scan status" << query.lastError();
+  if (!stmt.exec()) {
+    qWarning() << "Failed to update scan status" << stmt.lastError().c_str();
     return false;
   }
 
@@ -109,110 +76,84 @@ bool FileIndexerDatabase::updateScanStatus(int scanId, ScanStatus status) {
 
 std::expected<FileIndexerDatabase::ScanRecord, QString>
 FileIndexerDatabase::createScan(const std::filesystem::path &path, ScanType type) {
-  QSqlQuery query(m_db);
+  auto stmt =
+      m_db.prepare("INSERT INTO scan_history (entrypoint, type, status) VALUES (:entrypoint, :type, :status) "
+                   "RETURNING id, status, created_at, entrypoint");
+  stmt.bind(":entrypoint", path.c_str());
+  stmt.bind(":status", static_cast<int>(ScanStatus::Pending));
+  stmt.bind(":type", static_cast<int>(type));
 
-  query.prepare("INSERT INTO scan_history (entrypoint, type, status) VALUES (:entrypoint, :type, :status) "
-                "RETURNING id, status, "
-                "created_at, entrypoint");
-  query.bindValue(":entrypoint", path.c_str());
-  query.bindValue(":status", static_cast<quint8>(ScanStatus::Pending));
-  query.bindValue(":type", static_cast<quint8>(type));
-
-  if (!query.exec()) {
-    qWarning() << "Failed to create scan history" << query.lastError();
-    return std::unexpected("Failed to create scan history");
-  }
-
-  if (!query.next()) {
-    qWarning() << "No next entry after createScan" << query.lastError();
-    return std::unexpected("No next entry after createScan");
+  if (!stmt.step()) {
+    qWarning() << "Failed to create scan history";
+    return std::unexpected(QString("Failed to create scan history"));
   }
 
   ScanRecord record;
-
-  record.id = query.value(0).toInt();
-  record.status = static_cast<ScanStatus>(query.value(1).toInt());
-  record.createdAt = QDateTime::fromSecsSinceEpoch(query.value(2).toULongLong());
+  record.id = stmt.columnInt(0);
+  record.status = static_cast<ScanStatus>(stmt.columnInt(1));
+  record.createdAt = QDateTime::fromSecsSinceEpoch(stmt.columnUInt64(2));
   record.path = path;
 
   return record;
 }
 
-FileIndexerDatabase::ScanRecord FileIndexerDatabase::mapScan(const QSqlQuery &query) const {
+FileIndexerDatabase::ScanRecord FileIndexerDatabase::mapScan(const db::Statement &stmt) const {
   ScanRecord record;
 
-  record.id = query.value(0).toInt();
-  record.status = static_cast<ScanStatus>(query.value(1).toInt());
-  record.createdAt = QDateTime::fromSecsSinceEpoch(query.value(2).toULongLong());
-  record.path = query.value(3).toString().toStdString();
-  record.type = static_cast<ScanType>(query.value(4).toUInt());
+  record.id = stmt.columnInt(0);
+  record.status = static_cast<ScanStatus>(stmt.columnInt(1));
+  record.createdAt = QDateTime::fromSecsSinceEpoch(stmt.columnUInt64(2));
+  record.path = stmt.columnText(3);
+  record.type = static_cast<ScanType>(stmt.columnInt(4));
 
   return record;
 }
 
 std::optional<FileIndexerDatabase::ScanRecord>
 FileIndexerDatabase::getLastSuccessfulScan(const std::filesystem::path &path) const {
-  QSqlQuery query(m_db);
-  query.prepare("SELECT id, status, created_at, entrypoint, type "
-                "FROM scan_history "
-                "WHERE type in (:type1, :type2) "
-                "AND status = :status "
-                "AND entrypoint = :entrypoint "
-                "ORDER BY created_at "
-                "DESC LIMIT 1");
+  auto stmt = m_db.prepare("SELECT id, status, created_at, entrypoint, type "
+                           "FROM scan_history "
+                           "WHERE type in (:type1, :type2) "
+                           "AND status = :status "
+                           "AND entrypoint = :entrypoint "
+                           "ORDER BY created_at "
+                           "DESC LIMIT 1");
 
-  query.bindValue(":type1", static_cast<quint8>(ScanType::Full));
-  query.bindValue(":type2", static_cast<quint8>(ScanType::Incremental));
-  query.bindValue(":status", static_cast<quint8>(ScanStatus::Succeeded));
-  query.bindValue(":entrypoint", path.c_str());
+  stmt.bind(":type1", static_cast<int>(ScanType::Full));
+  stmt.bind(":type2", static_cast<int>(ScanType::Incremental));
+  stmt.bind(":status", static_cast<int>(ScanStatus::Succeeded));
+  stmt.bind(":entrypoint", path.c_str());
 
-  if (!query.exec()) {
-    qCritical() << "Failed to get last successful scan record" << query.lastError();
-    return {};
-  }
+  if (!stmt.step()) return std::nullopt;
 
-  if (!query.next()) return std::nullopt;
-
-  return mapScan(query);
+  return mapScan(stmt);
 }
 
 std::optional<FileIndexerDatabase::ScanRecord>
 FileIndexerDatabase::getLastScan(const std::filesystem::path &path, ScanType scanType) const {
-  QSqlQuery query(m_db);
-  query.prepare("SELECT id, status, created_at, entrypoint, type "
-                "FROM scan_history "
-                "WHERE type = :type "
-                "AND entrypoint = :entrypoint "
-                "ORDER BY created_at "
-                "DESC LIMIT 1");
+  auto stmt = m_db.prepare("SELECT id, status, created_at, entrypoint, type "
+                           "FROM scan_history "
+                           "WHERE type = :type "
+                           "AND entrypoint = :entrypoint "
+                           "ORDER BY created_at "
+                           "DESC LIMIT 1");
 
-  query.bindValue(":type", static_cast<quint8>(scanType));
-  query.bindValue(":entrypoint", path.c_str());
+  stmt.bind(":type", static_cast<int>(scanType));
+  stmt.bind(":entrypoint", path.c_str());
 
-  if (!query.exec()) {
-    qCritical() << "Failed to get last scan record" << query.lastError();
-    return {};
-  }
+  if (!stmt.step()) return std::nullopt;
 
-  if (!query.next()) return std::nullopt;
-
-  return mapScan(query);
+  return mapScan(stmt);
 }
 
 std::vector<FileIndexerDatabase::ScanRecord> FileIndexerDatabase::listScans() {
-  QSqlQuery query(m_db);
-
-  if (!query.exec("SELECT id, status, created_at, entrypoint, type FROM scan_history")) {
-    qCritical() << "Failed to list scan records" << query.lastError();
-    return {};
-  }
+  auto stmt = m_db.prepare("SELECT id, status, created_at, entrypoint, type FROM scan_history");
 
   std::vector<ScanRecord> records;
-
   records.reserve(0xF);
 
-  while (query.next()) {
-    records.emplace_back(mapScan(query));
+  while (stmt.step()) {
+    records.emplace_back(mapScan(stmt));
   }
 
   return records;
@@ -220,38 +161,28 @@ std::vector<FileIndexerDatabase::ScanRecord> FileIndexerDatabase::listScans() {
 
 std::vector<FileIndexerDatabase::ScanRecord> FileIndexerDatabase::listScans(ScanType scanType,
                                                                             ScanStatus scanStatus) {
-  QSqlQuery query(m_db);
-
-  query.prepare("SELECT id, status, created_at, entrypoint, type "
-                "FROM scan_history WHERE status = :status and type = :type");
-  query.bindValue(":status", static_cast<quint8>(ScanStatus::Started));
-  query.bindValue(":type", static_cast<quint8>(scanType));
-
-  if (!query.exec()) {
-    qCritical() << "Failed to list started scan records" << query.lastError();
-    return {};
-  }
+  auto stmt = m_db.prepare("SELECT id, status, created_at, entrypoint, type "
+                           "FROM scan_history WHERE status = :status and type = :type");
+  stmt.bind(":status", static_cast<int>(ScanStatus::Started));
+  stmt.bind(":type", static_cast<int>(scanType));
 
   std::vector<ScanRecord> records;
-
   records.reserve(0xF);
 
-  while (query.next()) {
-    records.emplace_back(mapScan(query));
+  while (stmt.step()) {
+    records.emplace_back(mapScan(stmt));
   }
 
   return records;
 }
 
-QSqlDatabase *FileIndexerDatabase::database() { return &m_db; }
+db::Database &FileIndexerDatabase::database() { return m_db; }
 
 std::vector<FileIndexerDatabase::SearchCandidate>
 FileIndexerDatabase::searchCandidates(std::string_view searchQuery, int limit) {
   if (searchQuery.empty() || limit <= 0) return {};
 
-  QSqlQuery query(m_db);
-
-  query.prepare(R"(
+  auto stmt = m_db.prepare(R"(
     SELECT f.path, f.name, f.relevancy_score, unicode_idx.rank
     FROM indexed_file f
     JOIN unicode_idx ON unicode_idx.rowid = f.id
@@ -259,25 +190,23 @@ FileIndexerDatabase::searchCandidates(std::string_view searchQuery, int limit) {
     ORDER BY unicode_idx.rank, f.relevancy_score DESC, f.path
     LIMIT :limit
   )");
-  query.bindValue(":search", qStringFromStdView(searchQuery));
-  query.bindValue(":limit", limit);
-
-  if (!query.exec()) { qWarning() << "Search query failed" << query.lastError(); }
+  stmt.bind(":search", searchQuery);
+  stmt.bind(":limit", limit);
 
   std::vector<SearchCandidate> results;
   std::error_code ec;
 
   results.reserve(limit);
 
-  while (query.next()) {
+  while (stmt.step()) {
     SearchCandidate candidate;
 
-    candidate.path = query.value(0).toString().toStdString();
+    candidate.path = stmt.columnText(0);
     if (!fs::exists(candidate.path, ec)) { continue; }
 
-    candidate.name = query.value(1).toString().toStdString();
-    candidate.relevancyScore = query.value(2).toDouble();
-    candidate.indexRank = query.value(3).toDouble();
+    candidate.name = stmt.columnText(1);
+    candidate.relevancyScore = stmt.columnDouble(2);
+    candidate.indexRank = stmt.columnDouble(3);
     results.emplace_back(std::move(candidate));
   }
 
@@ -285,181 +214,147 @@ FileIndexerDatabase::searchCandidates(std::string_view searchQuery, int limit) {
 }
 
 void FileIndexerDatabase::deleteIndexedFiles(const std::vector<fs::path> &paths) {
-  if (!m_db.transaction()) {
-    qCritical() << "Failed to start transaction";
-    return;
-  }
+  auto tx = m_db.transaction();
 
-  {
-    QSqlQuery query(m_db);
+  auto stmt = m_db.prepare("DELETE FROM indexed_file WHERE path = :path");
 
-    query.prepare("DELETE FROM indexed_file WHERE path = :path");
+  for (const auto &path : paths) {
+    stmt.bind(":path", path.c_str());
 
-    for (const auto &path : paths) {
-      query.addBindValue(path.c_str());
-
-      if (!query.exec()) {
-        qCritical() << "Failed to delete indexed file" << path.c_str();
-        m_db.rollback();
-        return;
-      }
+    if (!stmt.exec()) {
+      qCritical() << "Failed to delete indexed file" << path.c_str();
+      tx.rollback();
+      return;
     }
   }
 
-  if (!m_db.commit()) { qCritical() << "Failed to commit"; }
+  if (!tx.commit()) { qCritical() << "Failed to commit"; }
 }
 
 void FileIndexerDatabase::deleteAllIndexedFiles() {
-  QSqlQuery query(m_db);
-
-  if (!query.exec("DELETE FROM indexed_file")) {
-    qCritical() << "Failed to delete all indexed files" << query.lastError();
+  if (!m_db.exec("DELETE FROM indexed_file")) {
+    qCritical() << "Failed to delete all indexed files" << m_db.lastError().c_str();
   }
 }
 
 void FileIndexerDatabase::compact() {
-  QSqlQuery query(m_db);
-
-  if (!query.exec("VACUUM")) {
-    qWarning() << "VACUUM failed" << query.lastError();
+  if (!m_db.exec("VACUUM")) {
+    qWarning() << "VACUUM failed" << m_db.lastError().c_str();
     return;
   }
 
-  if (!query.exec("PRAGMA wal_checkpoint(TRUNCATE)")) {
-    qWarning() << "wal_checkpoint(TRUNCATE) failed" << query.lastError();
+  if (!m_db.exec("PRAGMA wal_checkpoint(TRUNCATE)")) {
+    qWarning() << "wal_checkpoint(TRUNCATE) failed" << m_db.lastError().c_str();
   }
 }
 
 void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
-  if (!m_db.transaction()) {
-    qWarning() << "Failed to start batch transaction" << m_db.lastError();
-    return;
-  }
+  auto tx = m_db.transaction();
 
-  {
-    QSqlQuery modifyQuery(m_db);
-    modifyQuery.prepare(R"(
-    INSERT INTO 
-                indexed_file (path, parent_path, name, last_modified_at, relevancy_score) 
-        VALUES 
-                (:path, :parent_path, :name, :last_modified_at, :relevancy_score) 
-        ON CONFLICT (path) DO UPDATE SET last_modified_at = :last_modified_at
-    )");
+  auto modifyStmt = m_db.prepare(R"(
+    INSERT INTO
+      indexed_file (path, parent_path, name, last_modified_at, relevancy_score)
+    VALUES
+      (:path, :parent_path, :name, :last_modified_at, :relevancy_score)
+    ON CONFLICT (path) DO UPDATE SET last_modified_at = :last_modified_at
+  )");
 
-    QSqlQuery deleteQuery(m_db);
-    deleteQuery.prepare("DELETE FROM indexed_file WHERE path = :path");
+  auto deleteStmt = m_db.prepare("DELETE FROM indexed_file WHERE path = :path");
 
-    QSqlQuery *activeQuery;
+  db::Statement *activeStmt = nullptr;
 
-    for (const auto &event : events) {
-      switch (event.type) {
-      case FileEventType::Modify: {
-        using namespace std::chrono;
-        long long const secondsSinceEpoch =
-            duration_cast<seconds>(event.eventTime.time_since_epoch()).count();
-        modifyQuery.bindValue(":last_modified_at", secondsSinceEpoch);
+  for (const auto &event : events) {
+    switch (event.type) {
+    case FileEventType::Modify: {
+      using namespace std::chrono;
+      auto const secondsSinceEpoch =
+          static_cast<int64_t>(duration_cast<seconds>(event.eventTime.time_since_epoch()).count());
+      modifyStmt.bind(":last_modified_at", secondsSinceEpoch);
+      modifyStmt.bind(":path", event.path.c_str());
+      modifyStmt.bind(":parent_path", event.path.parent_path().c_str());
+      modifyStmt.bind(":name", event.path.filename().c_str());
 
-        modifyQuery.bindValue(":path", event.path.c_str());
-        modifyQuery.bindValue(":parent_path", event.path.parent_path().c_str());
-        modifyQuery.bindValue(":name", event.path.filename().c_str());
+      RelevancyScorer scorer;
+      modifyStmt.bind(":relevancy_score", scorer.computeScore(event.path, event.eventTime));
 
-        // Move this out of the loop if RelevancyScore ends up having any state
-        RelevancyScorer scorer;
-        modifyQuery.bindValue(":relevancy_score", scorer.computeScore(event.path, event.eventTime));
+      activeStmt = &modifyStmt;
+      break;
+    }
 
-        activeQuery = &modifyQuery;
-        break;
-      }
+    case FileEventType::Delete: {
+      deleteStmt.bind(":path", event.path.c_str());
+      activeStmt = &deleteStmt;
+      break;
+    }
+    }
 
-      case FileEventType::Delete: {
-        deleteQuery.bindValue(":path", event.path.c_str());
-
-        activeQuery = &deleteQuery;
-        break;
-      }
-      }
-      if (!activeQuery->exec()) {
-        static std::map<FileEventType, std::string> verbMap = {{FileEventType::Delete, "deleted"},
-                                                               {FileEventType::Modify, "modified"}};
-        qCritical() << "Failed to index" << verbMap[event.type] << "file" << event.path
-                    << activeQuery->lastError();
-        m_db.rollback();
-        return;
-      }
+    if (!activeStmt->exec()) {
+      static std::map<FileEventType, std::string> verbMap = {{FileEventType::Delete, "deleted"},
+                                                             {FileEventType::Modify, "modified"}};
+      qCritical() << "Failed to index" << verbMap[event.type] << "file" << event.path
+                  << activeStmt->lastError().c_str();
+      tx.rollback();
+      return;
     }
   }
-  if (!m_db.commit()) { qCritical() << "Failed to commit"; }
+
+  if (!tx.commit()) { qCritical() << "Failed to commit"; }
 }
 
 void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &paths) {
+  auto tx = m_db.transaction();
 
-  if (!m_db.transaction()) {
-    qWarning() << "Failed to start batch insert transaction" << m_db.lastError();
-    return;
-  }
-
-  {
-    QSqlQuery query(m_db);
-
-    query.prepare(R"(
-    INSERT INTO 
-	  	indexed_file (path, parent_path, name, last_modified_at, relevancy_score) 
-	VALUES 
-		(:path, :parent_path, :name, :last_modified_at, :relevancy_score) 
-	ON CONFLICT (path) DO UPDATE SET last_modified_at = :last_modified_at
+  auto stmt = m_db.prepare(R"(
+    INSERT INTO
+      indexed_file (path, parent_path, name, last_modified_at, relevancy_score)
+    VALUES
+      (:path, :parent_path, :name, :last_modified_at, :relevancy_score)
+    ON CONFLICT (path) DO UPDATE SET last_modified_at = :last_modified_at
   )");
 
-    std::error_code ec;
-    RelevancyScorer scorer;
-    double score = 1.0;
+  std::error_code ec;
+  RelevancyScorer scorer;
+  double score = 1.0;
 
-    for (const auto &path : paths) {
-      if (auto lastModified = fs::last_write_time(path, ec); !ec) {
-        using namespace std::chrono;
-        auto sctp = clock_cast<system_clock>(lastModified);
-        long long const epoch = duration_cast<seconds>(sctp.time_since_epoch()).count();
+  for (const auto &path : paths) {
+    if (auto lastModified = fs::last_write_time(path, ec); !ec) {
+      using namespace std::chrono;
+      auto sctp = clock_cast<system_clock>(lastModified);
+      auto const epoch = static_cast<int64_t>(duration_cast<seconds>(sctp.time_since_epoch()).count());
 
-        query.bindValue(":last_modified_at", epoch);
-        score = scorer.computeScore(path, lastModified);
-      } else {
-        query.bindValue(":last_modified_at", QVariant());
-        score = scorer.computeScore(path, std::nullopt);
-      }
+      stmt.bind(":last_modified_at", epoch);
+      score = scorer.computeScore(path, lastModified);
+    } else {
+      stmt.bindNull(":last_modified_at");
+      score = scorer.computeScore(path, std::nullopt);
+    }
 
-      query.bindValue(":path", path.c_str());
-      query.bindValue(":parent_path", path.parent_path().c_str());
-      query.bindValue(":name", path.filename().c_str());
-      query.bindValue(":relevancy_score", score);
+    stmt.bind(":path", path.c_str());
+    stmt.bind(":parent_path", path.parent_path().c_str());
+    stmt.bind(":name", path.filename().c_str());
+    stmt.bind(":relevancy_score", score);
 
-      if (!query.exec()) {
-        qCritical() << "Failed to insert file in index" << path << query.lastError();
-        m_db.rollback();
-        return;
-      }
+    if (!stmt.exec()) {
+      qCritical() << "Failed to insert file in index" << path << stmt.lastError().c_str();
+      tx.rollback();
+      return;
     }
   }
 
-  if (!m_db.commit()) { qCritical() << "Failed to commit batchIndex" << m_db.lastError(); }
+  if (!tx.commit()) { qCritical() << "Failed to commit batchIndex" << m_db.lastError().c_str(); }
 }
 
-FileIndexerDatabase::FileIndexerDatabase() : m_connectionId(createRandomConnectionId()) {
-  m_db = QSqlDatabase::addDatabase("QSQLITE", m_connectionId);
-  m_db.setDatabaseName(getDatabasePath().c_str());
+FileIndexerDatabase::FileIndexerDatabase() {
+  auto result = db::Database::open(getDatabasePath());
 
-  if (!m_db.open()) {
-    qCritical() << "Failed to open datbase at" << getDatabasePath();
+  if (!result) {
+    qCritical() << "Failed to open database at" << getDatabasePath().c_str();
     return;
   }
 
-  QSqlQuery query(m_db);
+  m_db = std::move(*result);
 
   for (const auto &pragma : SQLITE_PRAGMAS) {
-    if (!query.exec(pragma.c_str())) { qCritical() << "Failed to run file-indexer pragma" << pragma.c_str(); }
+    if (!m_db.exec(pragma)) { qCritical() << "Failed to run file-indexer pragma" << pragma; }
   }
-}
-
-FileIndexerDatabase::~FileIndexerDatabase() {
-  m_db.close();
-  m_db = QSqlDatabase();
-  QSqlDatabase::removeDatabase(m_connectionId);
 }

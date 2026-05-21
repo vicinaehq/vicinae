@@ -2,7 +2,6 @@
 #include <expected>
 #include <openssl/rand.h>
 #include <QDebug>
-#include <quuid.h>
 
 namespace Crypto::AES256GCM {
 std::expected<QByteArray, EncryptError> encrypt(const QByteArray &data, const QByteArray &key) {
@@ -114,7 +113,3 @@ QByteArray generateKey() {
 }
 
 }; // namespace Crypto::AES256GCM
-
-namespace Crypto::UUID {
-QString v4() { return QUuid::createUuid().toString(QUuid::WithoutBraces); }
-}; // namespace Crypto::UUID

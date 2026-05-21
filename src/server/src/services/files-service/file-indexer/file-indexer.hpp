@@ -1,7 +1,6 @@
 #pragma once
 #include <qfilesystemwatcher.h>
 #include <qobject.h>
-#include <qsqlquery.h>
 #include <qthread.h>
 #include "services/files-service/abstract-file-indexer.hpp"
 #include "services/files-service/file-indexer/file-indexer-query-engine.hpp"
@@ -9,7 +8,6 @@
 #include "services/files-service/file-indexer/file-indexer-db.hpp"
 #include "services/files-service/file-indexer/scan-dispatcher.hpp"
 #include <qdatetime.h>
-#include <qsqldatabase.h>
 #include <qtmetamacros.h>
 
 /**

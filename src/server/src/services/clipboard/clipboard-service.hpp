@@ -13,8 +13,6 @@
 #include <qfuture.h>
 #include <qjsonobject.h>
 #include <qmimedatabase.h>
-#include <qsqldatabase.h>
-#include <qsqlquery.h>
 #include <qstringview.h>
 #include <QTimer>
 #include <qt6keychain/keychain.h>

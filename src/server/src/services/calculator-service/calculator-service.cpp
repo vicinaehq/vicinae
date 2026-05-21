@@ -1,5 +1,5 @@
 #include "calculator-service.hpp"
-#include "crypto.hpp"
+#include <quuid.h>
 #include "fuzzy/fuzzy-searchable.hpp"
 #include "omni-database.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
@@ -9,7 +9,6 @@
 #include <qlogging.h>
 #include <qnamespace.h>
 #include <qobjectdefs.h>
-#include <qsqlquery.h>
 
 #ifdef HAS_QALCULATE
 #include "qalculate/qalculate-backend.hpp"
@@ -62,35 +61,26 @@ bool CalculatorService::setBackend(const QString &id) {
 }
 
 std::vector<CalculatorService::CalculatorRecord> CalculatorService::loadAll() const {
-  QSqlQuery query = m_db.createQuery();
-
-  query.prepare(R"(
-		SELECT
-			id, type_hint, question, answer, created_at, pinned_at	
-		FROM 
-			calculator_history
-		ORDER BY pinned_at DESC, created_at DESC
-	)");
-
-  if (!query.exec()) {
-    qCritical() << "CalculatorService::loadAll() failed" << query.lastError();
-    return {};
-  }
+  auto stmt = m_db.db().prepare(R"(
+    SELECT
+      id, type_hint, question, answer, created_at, pinned_at
+    FROM
+      calculator_history
+    ORDER BY pinned_at DESC, created_at DESC
+  )");
 
   std::vector<CalculatorRecord> records;
 
-  while (query.next()) {
+  while (stmt.step()) {
     CalculatorRecord record;
 
-    record.id = query.value(0).toString();
-    record.typeHint = static_cast<AbstractCalculatorBackend::CalculatorAnswerType>(query.value(1).toInt());
-    record.question = query.value(2).toString();
-    record.answer = query.value(3).toString();
-    record.createdAt = QDateTime::fromSecsSinceEpoch(query.value(4).toULongLong());
+    record.id = stmt.columnQString(0);
+    record.typeHint = static_cast<AbstractCalculatorBackend::CalculatorAnswerType>(stmt.columnInt(1));
+    record.question = stmt.columnQString(2);
+    record.answer = stmt.columnQString(3);
+    record.createdAt = QDateTime::fromSecsSinceEpoch(stmt.columnInt64(4));
 
-    if (auto value = query.value(5); !value.isNull()) {
-      record.pinnedAt = QDateTime::fromSecsSinceEpoch(value.toULongLong());
-    }
+    if (!stmt.isNull(5)) { record.pinnedAt = QDateTime::fromSecsSinceEpoch(stmt.columnInt64(5)); }
 
     records.emplace_back(record);
   }
@@ -101,11 +91,6 @@ std::vector<CalculatorService::CalculatorRecord> CalculatorService::loadAll() co
 std::vector<CalculatorRecord> CalculatorService::records() const { return m_records; }
 
 std::vector<CalculatorRecord> CalculatorService::query(const QString &query) {
-  /**
-   * For now, we scan the entire list linearly as it will be fast enough for 99% of use cases.
-   * We could consider using a proper in-memory index if that ever becomes a problem.
-   */
-
   if (query.isEmpty()) return records();
 
   std::string const q = query.toStdString();
@@ -195,26 +180,27 @@ CalculatorService::groupRecordsByTime(const std::vector<CalculatorRecord> &recor
 AbstractCalculatorBackend *CalculatorService::backend() const { return m_backend; }
 
 bool CalculatorService::addRecord(const AbstractCalculatorBackend::CalculatorResult &result) {
-  QSqlQuery query = m_db.createQuery();
+  auto stmt = m_db.db().prepare(R"(
+    INSERT INTO calculator_history (id, type_hint, question, answer, created_at)
+    VALUES (:id, :type_hint, :question, :answer, :epoch)
+  )");
 
-  query.prepare(R"(
-		INSERT INTO calculator_history (id, type_hint, question, answer, created_at)
-		VALUES (:id, :type_hint, :question, :answer, :epoch)
-	)");
-  query.bindValue(":id", Crypto::UUID::v4());
-  query.bindValue(":type_hint", result.type);
-  query.bindValue(":question", result.question.text);
-  query.bindValue(":answer", result.answer.text);
-  query.bindValue(":epoch", QDateTime::currentSecsSinceEpoch());
+  auto id = QUuid::createUuid().toString(QUuid::WithoutBraces);
 
-  if (!query.exec()) {
-    qCritical() << "Failed to add calculator record" << query.lastError();
+  stmt.bind(":id", id);
+  stmt.bind(":type_hint", static_cast<int>(result.type));
+  stmt.bind(":question", result.question.text);
+  stmt.bind(":answer", result.answer.text);
+  stmt.bind(":epoch", static_cast<int64_t>(QDateTime::currentSecsSinceEpoch()));
+
+  if (!stmt.exec()) {
+    qCritical() << "Failed to add calculator record" << stmt.lastError().c_str();
     return false;
   }
 
   CalculatorRecord record;
 
-  record.id = query.lastInsertId().toString();
+  record.id = id;
   record.question = result.question.text;
   record.answer = result.answer.text;
   record.typeHint = result.type;
@@ -232,14 +218,12 @@ bool CalculatorService::addRecord(const AbstractCalculatorBackend::CalculatorRes
 }
 
 bool CalculatorService::pinRecord(const QString &id) {
-  QSqlQuery query = m_db.createQuery();
+  auto stmt = m_db.db().prepare("UPDATE calculator_history SET pinned_at = :epoch WHERE id = :id");
+  stmt.bind(":id", id);
+  stmt.bind(":epoch", static_cast<int64_t>(QDateTime::currentSecsSinceEpoch()));
 
-  query.prepare("UPDATE calculator_history SET pinned_at = :epoch WHERE id = :id");
-  query.bindValue(":id", id);
-  query.bindValue(":epoch", QDateTime::currentSecsSinceEpoch());
-
-  if (!query.exec()) {
-    qCritical() << "Failed to pin record with id" << id << query.lastError();
+  if (!stmt.exec()) {
+    qCritical() << "Failed to pin record with id" << id << stmt.lastError().c_str();
     return false;
   }
 
@@ -255,13 +239,11 @@ bool CalculatorService::pinRecord(const QString &id) {
 }
 
 bool CalculatorService::unpinRecord(const QString &id) {
-  QSqlQuery query = m_db.createQuery();
+  auto stmt = m_db.db().prepare("UPDATE calculator_history SET pinned_at = NULL WHERE id = :id");
+  stmt.bind(":id", id);
 
-  query.prepare("UPDATE calculator_history SET pinned_at = NULL WHERE id = :id");
-  query.addBindValue(id);
-
-  if (!query.exec()) {
-    qCritical() << "Failed to unpin record with id" << id << query.lastError();
+  if (!stmt.exec()) {
+    qCritical() << "Failed to unpin record with id" << id << stmt.lastError().c_str();
     return false;
   }
 
@@ -288,13 +270,11 @@ bool CalculatorService::unpinRecord(const QString &id) {
 }
 
 bool CalculatorService::removeRecord(const QString &id) {
-  QSqlQuery query = m_db.createQuery();
+  auto stmt = m_db.db().prepare("DELETE FROM calculator_history WHERE id = :id");
+  stmt.bind(":id", id);
 
-  query.prepare("DELETE FROM calculator_history WHERE id = :id");
-  query.addBindValue(id);
-
-  if (!query.exec()) {
-    qCritical() << "Failed to remove record with id" << id << query.lastError();
+  if (!stmt.exec()) {
+    qCritical() << "Failed to remove record with id" << id << stmt.lastError().c_str();
     return false;
   }
 
@@ -312,10 +292,8 @@ void CalculatorService::setUpdateConversionsAfterRateUpdate(bool value) {
 }
 
 bool CalculatorService::removeAll() {
-  QSqlQuery query = m_db.createQuery();
-
-  if (!query.exec("DELETE FROM calculator_history")) {
-    qCritical() << "removeAll: failed" << query.lastError();
+  if (!m_db.db().exec("DELETE FROM calculator_history")) {
+    qCritical() << "removeAll: failed" << m_db.db().lastError().c_str();
     return false;
   }
 
@@ -323,14 +301,10 @@ bool CalculatorService::removeAll() {
 }
 
 void CalculatorService::updateConversionRecords() {
-  if (!m_db.db().transaction()) {
-    qCritical() << "updateConversionRecords: failed to start transaction";
-    return;
-  }
+  auto tx = m_db.db().transaction();
 
-  QSqlQuery query = m_db.createQuery();
-
-  query.prepare("UPDATE calculator_history SET answer = :answer, type_hint = :type WHERE id = :id");
+  auto stmt =
+      m_db.db().prepare("UPDATE calculator_history SET answer = :answer, type_hint = :type WHERE id = :id");
 
   auto isConversionRecord = [](const CalculatorRecord &record) {
     return record.typeHint == AbstractCalculatorBackend::CONVERSION;
@@ -341,17 +315,18 @@ void CalculatorService::updateConversionRecords() {
 
     if (!result) continue;
 
-    query.bindValue(":answer", result->answer.text);
-    query.bindValue(":type", result->type);
-    query.bindValue(":id", record.id);
+    stmt.reset();
+    stmt.bind(":answer", result->answer.text);
+    stmt.bind(":type", static_cast<int>(result->type));
+    stmt.bind(":id", record.id);
 
-    if (!query.exec()) { qCritical() << "Failed to update conversion record" << query.lastError(); }
+    if (!stmt.exec()) { qCritical() << "Failed to update conversion record" << stmt.lastError().c_str(); }
 
     record.answer = result->answer.text;
     record.typeHint = result->type;
   }
 
-  if (!m_db.db().commit()) {
+  if (!tx.commit()) {
     qCritical() << "updateConversionRecords: failed to commit transaction";
     return;
   }
@@ -373,7 +348,6 @@ CalculatorService::CalculatorService(OmniDatabase &db) : m_db(db) {
     candidates.emplace_back(std::make_unique<QalculateBackend>());
 #endif
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
-    // only activates if the libSoulverWrapper.so shared library is available
     candidates.emplace_back(std::make_unique<SoulverCoreCalculator>());
 #endif
 

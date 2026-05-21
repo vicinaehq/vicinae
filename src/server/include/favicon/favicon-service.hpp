@@ -1,6 +1,6 @@
 #pragma once
+#include "db/database.hpp"
 #include "ui/image/url.hpp"
-#include <QSqlError>
 #include <cassert>
 #include <expected>
 #include <qbuffer.h>
@@ -11,13 +11,10 @@
 #include <qobject.h>
 #include <qpixmap.h>
 #include <qpixmapcache.h>
-#include <qsqldatabase.h>
-#include <qsqlquery.h>
 #include <qstringview.h>
 #include <unordered_map>
 
 class FaviconService : public QObject {
-  // TODO: limit cache based on storage size not number of elements
   static constexpr size_t maxCacheCount = 50;
 
 public:
@@ -34,7 +31,7 @@ public:
 private:
   inline static FaviconService *_instance = nullptr;
 
-  QSqlDatabase _db;
+  db::Database _db;
   RequesterType _requesterType;
   QDir _dataDir;
   std::unordered_map<QString, QPixmap> _cache;

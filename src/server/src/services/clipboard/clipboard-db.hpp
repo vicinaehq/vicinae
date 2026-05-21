@@ -1,8 +1,11 @@
 #pragma once
 #include <cstdint>
-#include <qsqldatabase.h>
-#include <qvariant.h>
+#include <QString>
+#include <optional>
+#include <functional>
+#include <vector>
 #include "common/paginated.hpp"
+#include "db/database.hpp"
 
 enum class ClipboardEncryptionType : std::uint8_t {
   None,
@@ -96,31 +99,18 @@ public:
   std::optional<QString> retrieveKeywords(const QString &id);
 
   bool setPinned(const QString &id, bool pinned);
-  /**
-   * Tries to take an existing selection and update its created_at date
-   * to make it appear as new without duplicating it. Return whether a record
-   * was updated or not.
-   * The id can either be the selection id or the selection hash.
-   */
   bool tryBubbleUpSelection(const QString &idLike);
   bool insertSelection(const InsertSelectionPayload &payload);
   bool insertOffer(const InsertClipboardOfferPayload &payload);
   bool indexSelectionContent(const QString &selectionId, const QString &content);
-  /**
-   * Remove the selection from the database and return the list of offers
-   * that were deleted with it.
-   */
   std::vector<QString> removeSelection(const QString &selectionId);
   std::optional<PreferredClipboardOfferRecord> findPreferredOffer(const QString &selectionId);
 
-  /**
-   * Apply new migrations if any. If no new migration is available this is a no-op.
-   */
   void runMigrations();
 
   ClipboardDatabase();
-  ~ClipboardDatabase();
+  ~ClipboardDatabase() = default;
 
 private:
-  QSqlDatabase m_db;
+  db::Database m_db;
 };

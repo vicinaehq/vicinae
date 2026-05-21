@@ -1,33 +1,29 @@
 #pragma once
+#include "db/database.hpp"
 #include "utils/migration-manager/migration-manager.hpp"
 #include <qlogging.h>
-#include <qsqldatabase.h>
-#include <qsqlquery.h>
-#include <QDebug>
 #include <filesystem>
 
-static const std::vector<QString> pragmas = {"PRAGMA foreign_keys = ON;"};
+static constexpr const char *OMNI_PRAGMAS[] = {"PRAGMA journal_mode = WAL", "PRAGMA foreign_keys = ON"};
 
 class OmniDatabase {
-  QSqlDatabase _db;
+  db::Database _db;
 
 public:
-  QSqlDatabase &db() { return _db; }
+  db::Database &db() { return _db; }
 
-  QSqlQuery createQuery() { return QSqlQuery(_db); }
+  OmniDatabase(const std::filesystem::path &path) {
+    auto result = db::Database::open(path);
 
-  OmniDatabase(const std::filesystem::path &path) : _db(QSqlDatabase::addDatabase("QSQLITE", "omni")) {
-    _db.setDatabaseName(path.c_str());
-
-    if (!_db.open()) {
-      qCritical() << "Could not open main omnicast SQLite database.";
+    if (!result) {
+      qCritical() << "Could not open main omnicast SQLite database:" << result.error().c_str();
       return;
     }
 
-    auto query = createQuery();
+    _db = std::move(*result);
 
-    for (const auto &pragma : pragmas) {
-      query.exec(pragma);
+    for (const auto &pragma : OMNI_PRAGMAS) {
+      _db.exec(pragma);
     }
 
     MigrationManager manager(_db, "omnicast");

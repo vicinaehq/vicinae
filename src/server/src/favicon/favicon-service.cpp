@@ -31,18 +31,16 @@ void FaviconService::handleFetchedFavicon(const QString &domain, const QPixmap &
     return;
   }
 
-  QSqlQuery query(_db);
+  auto stmt = _db.prepare(R"(
+    INSERT INTO favicon (id, created_at, size)
+    VALUES (:id, :epoch, :size)
+  )");
+  stmt.bind(":id", domain);
+  stmt.bind(":epoch", static_cast<int64_t>(QDateTime::currentSecsSinceEpoch()));
+  stmt.bind(":size", favicon.width());
 
-  query.prepare(R"(
-		INSERT INTO favicon (id, created_at, size)
-		VALUES (:id, :epoch, :size)
-	)");
-  query.bindValue(":id", domain);
-  query.bindValue(":epoch", QDateTime::currentSecsSinceEpoch());
-  query.bindValue(":size", favicon.width());
-
-  if (!query.exec()) {
-    qDebug() << "Favicon DB: failed to insert favicon: " << query.lastError();
+  if (!stmt.exec()) {
+    qDebug() << "Favicon DB: failed to insert favicon:" << stmt.lastError().c_str();
     return;
   }
 }
@@ -51,13 +49,12 @@ QPixmap FaviconService::retrieveFromCache(const QString &domain) {
   if (auto it = _cache.find(domain); it != _cache.end()) { return it->second; }
 
   QPixmap pm;
-  QSqlQuery query(_db);
 
-  query.prepare("UPDATE favicon SET last_used_at = :epoch WHERE id = :domain;");
-  query.bindValue(":domain", domain);
-  query.bindValue(":epoch", QDateTime::currentSecsSinceEpoch());
+  auto stmt = _db.prepare("UPDATE favicon SET last_used_at = :epoch WHERE id = :domain;");
+  stmt.bind(":domain", domain);
+  stmt.bind(":epoch", static_cast<int64_t>(QDateTime::currentSecsSinceEpoch()));
 
-  if (!query.exec()) { qDebug() << "Favicon DB: failed to update last_used_at" << query.lastError(); }
+  if (!stmt.exec()) { qDebug() << "Favicon DB: failed to update last_used_at" << stmt.lastError().c_str(); }
 
   QFile favicon(_dataDir.filePath(domain));
 
@@ -125,28 +122,28 @@ QFuture<FaviconService::FaviconResponse> FaviconService::makeRequest(const QStri
 }
 
 FaviconService::FaviconService(const std::filesystem::path &path, QObject *parent)
-    : QObject(parent), _db(QSqlDatabase::addDatabase("QSQLITE", "favicon")),
-      _requesterType(RequesterType::Google) {
+    : QObject(parent), _requesterType(RequesterType::Google) {
   _dataDir = QFileInfo(path).dir().filePath("favicon-data");
   _dataDir.mkpath(_dataDir.path());
-  _db.setDatabaseName(path.c_str());
 
-  if (!_db.open()) {
-    qDebug() << "Failed to open favicon DB" << _db.lastError();
+  auto result = db::Database::open(path);
+
+  if (!result) {
+    qDebug() << "Failed to open favicon DB" << result.error().c_str();
     return;
   }
 
-  QSqlQuery query(_db);
+  _db = std::move(*result);
 
-  bool const ok = query.exec(R"(
-		CREATE TABLE IF NOT EXISTS favicon (
-			id TEXT PRIMARY KEY,
-			size INTEGER,
-			created_at INTEGER NOT NULL,
-			last_used_at INTEGER,
-			updated_at INTEGER
-		);
-	)");
-
-  if (!ok) { qDebug() << "Failed to init favicon database:" << query.lastError(); }
+  if (!_db.exec(R"(
+    CREATE TABLE IF NOT EXISTS favicon (
+      id TEXT PRIMARY KEY,
+      size INTEGER,
+      created_at INTEGER NOT NULL,
+      last_used_at INTEGER,
+      updated_at INTEGER
+    );
+  )")) {
+    qDebug() << "Failed to init favicon database:" << _db.lastError().c_str();
+  }
 }

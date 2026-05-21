@@ -16,7 +16,3 @@ std::expected<QByteArray, EncryptError> encrypt(const QByteArray &dta, const QBy
 std::expected<QByteArray, DecryptError> decrypt(const QByteArray &dta, const QByteArray &ky);
 QByteArray generateKey();
 } // namespace Crypto::AES256GCM
-
-namespace Crypto::UUID {
-QString v4();
-};

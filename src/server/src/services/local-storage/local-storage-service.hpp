@@ -1,8 +1,8 @@
 #pragma once
 #include <qjsondocument.h>
-#include <qsqlquery.h>
-#include <qsqlerror.h>
 #include <qjsonobject.h>
+
+#include "db/database.hpp"
 
 class OmniDatabase;
 class ScopedLocalStorage;
@@ -24,12 +24,12 @@ public:
   ScopedLocalStorage scoped(const QString &scope);
 
 private:
-  OmniDatabase &db;
-  QSqlQuery m_clearQuery;
-  QSqlQuery m_listQuery;
-  QSqlQuery m_removeQuery;
-  QSqlQuery m_setItemQuery;
-  QSqlQuery m_getQuery;
+  OmniDatabase &m_omniDb;
+  db::Statement m_clearQuery;
+  db::Statement m_listQuery;
+  db::Statement m_removeQuery;
+  db::Statement m_setItemQuery;
+  db::Statement m_getQuery;
 
   std::pair<QString, ValueType> serializeValue(const QJsonValue &value) const;
 

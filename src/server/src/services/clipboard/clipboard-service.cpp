@@ -10,7 +10,6 @@
 #include <qlogging.h>
 #include <qmimedata.h>
 #include <qnamespace.h>
-#include <qsqlquery.h>
 #include <qstringview.h>
 #include <qt6keychain/keychain.h>
 #include <QtConcurrent/QtConcurrent>
@@ -18,7 +17,7 @@
 #include <QBuffer>
 #include <QImage>
 #include "clipboard-server-factory.hpp"
-#include "crypto.hpp"
+#include <quuid.h>
 #include "services/app-service/app-service.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include "services/clipboard/clipboard-encrypter.hpp"
@@ -403,7 +402,7 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
       return true;
     }
 
-    QString const selectionId = Crypto::UUID::v4();
+    QString const selectionId = QUuid::createUuid().toString(QUuid::WithoutBraces);
 
     if (!db->insertSelection({.id = selectionId,
                               .offerCount = static_cast<int>(selection.offers.size()),
@@ -429,7 +428,7 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
       }
 
       auto md5sum = QCryptographicHash::hash(offer.data, QCryptographicHash::Md5).toHex();
-      auto offerId = Crypto::UUID::v4();
+      auto offerId = QUuid::createUuid().toString(QUuid::WithoutBraces);
       ClipboardEncryptionType encryption = ClipboardEncryptionType::None;
 
       if (m_encrypter) encryption = ClipboardEncryptionType::Local;

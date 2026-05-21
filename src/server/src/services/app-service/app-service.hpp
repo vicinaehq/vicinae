@@ -4,7 +4,6 @@
 #include <qlogging.h>
 #include <qobject.h>
 #include <qobjectdefs.h>
-#include <qsqlquery.h>
 #include <qtmetamacros.h>
 #include "abstract-app-db.hpp"
 #include "common/types.hpp"
