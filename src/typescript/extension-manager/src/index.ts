@@ -86,7 +86,7 @@ class ExtensionManager extends manager.ManagerService {
 			console.error(`worker error`, error);
 		});
 
-		worker.on("online", () => { });
+		worker.on("online", () => {});
 
 		const stdoutStream = fs.createWriteStream(stdoutLog);
 		const stderrStream = fs.createWriteStream(stderrLog);

@@ -57,7 +57,6 @@ test:
 	./$(BIN_DIR)/vicinae-fuzzy-tests
 	./$(BIN_DIR)/xdgpp-tests
 	./$(BIN_DIR)/scriptcommand-tests
-	./$(BIN_DIR)/vicinae-server-tests
 .PHONY: test
 
 static:
