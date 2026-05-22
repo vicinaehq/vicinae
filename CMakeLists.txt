@@ -119,6 +119,7 @@ add_subdirectory(${LIB_DIR}/fuzzy)
 # Most of the other vendored libs are header only so no need for a CMakeLists.txt
 add_subdirectory(${VENDOR_DIR}/sqlcipher)
 add_subdirectory(${VENDOR_DIR}/pugixml)
+add_subdirectory(${VENDOR_DIR}/zip)
 
 if (UNIX AND NOT APPLE)
 	add_subdirectory(${LIB_DIR}/linux-utils)

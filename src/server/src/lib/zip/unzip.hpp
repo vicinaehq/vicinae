@@ -1,34 +1,24 @@
 #pragma once
-#include <QtCore>
-#include <algorithm>
-#include <array>
-#include <fstream>
-#include <ranges>
-#include <qlogging.h>
-#include <string>
-#include <minizip/unzip.h>
+#include <QTemporaryFile>
 #include <filesystem>
+#include <optional>
+#include <string>
+#include <string_view>
 #include <vector>
+#include <memory>
 
-struct UnzipHandle {
-  unzFile file = nullptr;
-  unz_global_info info;
-
-public:
-  bool positionToIndex(int idx);
-};
+struct zip_t;
 
 class ZipedFile {
-  UnzipHandle m_handle;
+  zip_t *m_zip;
   std::filesystem::path m_path;
   int m_idx;
 
 public:
-  const std::filesystem::path path() const { return m_path; }
+  const std::filesystem::path &path() const { return m_path; }
   std::string readAll();
 
-public:
-  ZipedFile(UnzipHandle handle, const std::filesystem::path &path, int idx);
+  ZipedFile(zip_t *zip, const std::filesystem::path &path, int idx);
 };
 
 class Unzipper {
@@ -39,18 +29,16 @@ public:
   };
 
 private:
-  UnzipHandle m_handle;
+  zip_t *m_zip = nullptr;
   std::unique_ptr<QTemporaryFile> m_tmpFile;
 
 public:
-  operator bool() const { return m_handle.file; }
+  operator bool() const { return m_zip != nullptr; }
 
   void extract(const std::filesystem::path &target, const ExtractOptions &opts = {});
   std::vector<ZipedFile> listFiles();
 
-  // Handling memory reading directly can be quite tricky so we use a temp file instead
-  // to keep things simple.
-  Unzipper(std::string_view path);
+  Unzipper(std::string_view data);
   Unzipper(const std::filesystem::path &path);
 
   ~Unzipper();

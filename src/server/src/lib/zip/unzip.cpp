@@ -1,43 +1,22 @@
 #include "unzip.hpp"
 #include "utils.hpp"
+#include <zip/zip.h>
 #include <qlogging.h>
+#include <fstream>
 
-#include <utility>
-
-bool UnzipHandle::positionToIndex(int idx) {
-  if (std::cmp_less_equal(info.number_entry, idx)) {
-    qCritical() << "Invalid idx" << idx;
-    return false;
-  }
-
-  unzGoToFirstFile(file);
-
-  for (int i = 0; i != idx; ++i) {
-    unzGoToNextFile(file);
-  }
-
-  return true;
-}
-
-ZipedFile::ZipedFile(UnzipHandle handle, const std::filesystem::path &path, int idx)
-    : m_handle(handle), m_path(path), m_idx(idx) {}
+ZipedFile::ZipedFile(zip_t *zip, const std::filesystem::path &path, int idx)
+    : m_zip(zip), m_path(path), m_idx(idx) {}
 
 std::string ZipedFile::readAll() {
-  m_handle.positionToIndex(m_idx);
-
-  std::array<char, 8192> buffer;
-  std::string data;
-  int bytesRead;
-
-  if (unzOpenCurrentFile(m_handle.file) != UNZ_OK) {
-    qWarning() << "Failed to open ziped file" << path();
+  if (zip_entry_openbyindex(m_zip, m_idx) < 0) {
+    qWarning() << "Failed to open zipped file" << m_path.c_str();
     return {};
   }
 
-  while ((bytesRead = unzReadCurrentFile(m_handle.file, buffer.data(), buffer.size())) > 0) {
-    data += std::string(buffer.data(), bytesRead);
-  }
-
+  auto size = zip_entry_size(m_zip);
+  std::string data(static_cast<size_t>(size), '\0');
+  zip_entry_noallocread(m_zip, data.data(), data.size());
+  zip_entry_close(m_zip);
   return data;
 }
 
@@ -47,55 +26,42 @@ void Unzipper::extract(const std::filesystem::path &target, const Unzipper::Extr
   for (auto &file : listFiles()) {
     std::filesystem::path const path = target / stripPathComponents(file.path(), sc);
     std::filesystem::create_directories(path.parent_path());
-    std::ofstream ofs(path);
     auto data = file.readAll();
-
-    ofs.write(data.data(), data.size());
+    std::ofstream ofs(path, std::ios::binary);
+    ofs.write(data.data(), static_cast<std::streamsize>(data.size()));
   }
 }
 
 std::vector<ZipedFile> Unzipper::listFiles() {
-  if (!m_handle.file) return {};
+  if (!m_zip) return {};
 
+  auto total = zip_entries_total(m_zip);
   std::vector<ZipedFile> files;
+  files.reserve(static_cast<size_t>(total));
 
-  files.reserve(m_handle.info.number_entry);
-  unzGoToFirstFile(m_handle.file);
-
-  for (int i = 0; std::cmp_not_equal(i, m_handle.info.number_entry); ++i) {
-    unz_file_info fileInfo;
-    char filename[256];
-
-    if (unzGetCurrentFileInfo(m_handle.file, &fileInfo, filename, sizeof(filename), nullptr, 0, nullptr, 0) !=
-        UNZ_OK) {
-      continue;
-    }
-
-    files.emplace_back(m_handle, filename, i);
-    unzGoToNextFile(m_handle.file);
+  for (ssize_t i = 0; i < total; ++i) {
+    if (zip_entry_openbyindex(m_zip, i) < 0) continue;
+    if (!zip_entry_isdir(m_zip)) { files.emplace_back(m_zip, zip_entry_name(m_zip), static_cast<int>(i)); }
+    zip_entry_close(m_zip);
   }
 
   return files;
 }
 
-Unzipper::Unzipper(std::string_view path) {
+Unzipper::Unzipper(std::string_view data) {
   m_tmpFile = std::make_unique<QTemporaryFile>();
   if (!m_tmpFile->open()) {
     qCritical() << "Failed to open unzip temp file";
     return;
   }
 
-  m_tmpFile->write(path.data(), path.size());
+  m_tmpFile->write(data.data(), data.size());
   m_tmpFile->flush();
-  m_handle.file = unzOpen(m_tmpFile->filesystemFileName().c_str());
-  unzGetGlobalInfo(m_handle.file, &m_handle.info);
+  m_zip = zip_open(m_tmpFile->filesystemFileName().c_str(), 0, 'r');
 }
 
-Unzipper::Unzipper(const std::filesystem::path &path) {
-  m_handle.file = unzOpen(path.c_str());
-  unzGetGlobalInfo(m_handle.file, &m_handle.info);
-}
+Unzipper::Unzipper(const std::filesystem::path &path) { m_zip = zip_open(path.c_str(), 0, 'r'); }
 
 Unzipper::~Unzipper() {
-  if (m_handle.file) unzClose(m_handle.file);
+  if (m_zip) zip_close(m_zip);
 }
