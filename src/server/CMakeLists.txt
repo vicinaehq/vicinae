@@ -5,7 +5,6 @@ set(TARGET vicinae-server)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Network Svg DBus Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2 ShaderTools)
 find_package(OpenSSL REQUIRED)
-find_package(LibXml2 REQUIRED)
 
 if (USE_SYSTEM_KF6 AND NOT APPLE)
 	find_package(KF6SyntaxHighlighting REQUIRED)
@@ -19,7 +18,7 @@ list(APPEND LIBS
 	minizip
 	OpenSSL::Crypto
 	qt6keychain
-	LibXml2::LibXml2
+	pugixml
 	KF6::SyntaxHighlighting
 	glaze::glaze
 	vicinae::xdgpp

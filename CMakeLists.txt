@@ -114,7 +114,12 @@ add_subdirectory(${LIB_DIR}/script-command)
 add_subdirectory(${LIB_DIR}/emoji)
 add_subdirectory(${LIB_DIR}/xdgpp)
 add_subdirectory(${LIB_DIR}/fuzzy)
-add_subdirectory(vendor/sqlcipher)
+
+# statically linked vendored libs.
+# Most of the other vendored libs are header only so no need for a CMakeLists.txt
+add_subdirectory(${VENDOR_DIR}/sqlcipher)
+add_subdirectory(${VENDOR_DIR}/pugixml)
+
 if (UNIX AND NOT APPLE)
 	add_subdirectory(${LIB_DIR}/linux-utils)
 	add_subdirectory(src/snippet)

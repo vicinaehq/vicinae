@@ -11,8 +11,7 @@
 #include <cmark-gfm.h>
 #include <cmark-gfm-core-extensions.h>
 #include <cmark-gfm-extension_api.h>
-#include <libxml/HTMLparser.h>
-#include <libxml/tree.h>
+#include <pugixml/pugixml.hpp>
 #include <cstring>
 #include <utility>
 
@@ -221,18 +220,15 @@ struct HtmlBlockResult {
   std::vector<QVariantMap> extractedImages;
 };
 
-void processHtmlNodes(xmlNode *node, HtmlBlockResult &result) {
-  for (xmlNode const *cur = node; cur; cur = cur->next) {
-    if (cur->type == XML_ELEMENT_NODE) {
-      if (xmlStrcmp(cur->name, BAD_CAST "img") == 0) {
+void processHtmlNodes(pugi::xml_node node, HtmlBlockResult &result) {
+  for (auto cur = node.first_child(); cur; cur = cur.next_sibling()) {
+    if (cur.type() == pugi::node_element) {
+      if (std::strcmp(cur.name(), "img") == 0) {
         QString src;
         int w = 0, h = 0;
-        for (xmlAttrPtr attr = cur->properties; attr; attr = attr->next) {
-          xmlChar *val = xmlNodeListGetString(cur->doc, attr->children, 1);
-          if (!val) continue;
-          QString const name = QString::fromUtf8(reinterpret_cast<const char *>(attr->name)).toLower();
-          QString const value = QString::fromUtf8(reinterpret_cast<const char *>(val));
-          xmlFree(val);
+        for (auto attr = cur.first_attribute(); attr; attr = attr.next_attribute()) {
+          QString const name = QString::fromUtf8(attr.name()).toLower();
+          QString const value = QString::fromUtf8(attr.value());
 
           if (name == "src") {
             src = value;
@@ -263,15 +259,11 @@ void processHtmlNodes(xmlNode *node, HtmlBlockResult &result) {
           result.extractedImages.push_back(img);
         }
       } else {
-        processHtmlNodes(cur->children, result);
+        processHtmlNodes(cur, result);
       }
-    } else if (cur->type == XML_TEXT_NODE) {
-      xmlChar *content = xmlNodeGetContent(cur);
-      if (content) {
-        QString const text = QString::fromUtf8(reinterpret_cast<const char *>(content)).trimmed();
-        if (!text.isEmpty()) result.html += text.toHtmlEscaped();
-        xmlFree(content);
-      }
+    } else if (cur.type() == pugi::node_pcdata) {
+      QString const text = QString::fromUtf8(cur.value()).trimmed();
+      if (!text.isEmpty()) result.html += text.toHtmlEscaped();
     }
   }
 }
@@ -449,24 +441,22 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
       QString const html = QString::fromUtf8(cmark_node_get_literal(node));
       QByteArray const wrapped = "<div>" + html.toUtf8() + "</div>";
 
-      htmlDocPtr doc = htmlReadMemory(wrapped.constData(), wrapped.size(), nullptr, nullptr,
-                                      HTML_PARSE_RECOVER | HTML_PARSE_NOERROR | HTML_PARSE_NOWARNING);
-      if (doc) {
-        xmlNode const *xmlRoot = xmlDocGetRootElement(doc);
-        if (xmlRoot) {
-          HtmlBlockResult result;
-          processHtmlNodes(xmlRoot->children, result);
+      pugi::xml_document doc;
+      auto parseResult = doc.load_buffer(wrapped.constData(), wrapped.size(),
+                                         pugi::parse_default | pugi::parse_ws_pcdata_single);
+      if (parseResult) {
+        auto root = doc.first_child();
+        HtmlBlockResult result;
+        processHtmlNodes(root, result);
 
-          for (auto &img : result.extractedImages)
-            blocks.push_back({MdBlockType::Image, img});
+        for (auto &img : result.extractedImages)
+          blocks.push_back({MdBlockType::Image, img});
 
-          if (!result.html.isEmpty()) {
-            QVariantMap data;
-            data[QStringLiteral("html")] = result.html;
-            blocks.push_back({MdBlockType::HtmlBlock, data});
-          }
+        if (!result.html.isEmpty()) {
+          QVariantMap data;
+          data[QStringLiteral("html")] = result.html;
+          blocks.push_back({MdBlockType::HtmlBlock, data});
         }
-        xmlFreeDoc(doc);
       } else {
         QVariantMap data;
         data[QStringLiteral("html")] = html;
