@@ -19,7 +19,7 @@ export const build = async () => {
 		outfile: outFile,
 		format: "cjs",
 		external: [],
-		minify: false,
+		minify: true,
 		platform: "node",
 		alias: {
 			"@vicinae/api": "../api/src/", // we bundle the local api directly
