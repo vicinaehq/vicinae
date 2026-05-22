@@ -41,9 +41,7 @@ std::vector<ZipedFile> Unzipper::listFiles() {
 
   for (ssize_t i = 0; i < total; ++i) {
     if (zip_entry_openbyindex(m_zip, i) < 0) continue;
-    if (!zip_entry_isdir(m_zip)) {
-      files.emplace_back(m_zip, zip_entry_name(m_zip), static_cast<int>(i));
-    }
+    if (!zip_entry_isdir(m_zip)) { files.emplace_back(m_zip, zip_entry_name(m_zip), static_cast<int>(i)); }
     zip_entry_close(m_zip);
   }
 
@@ -62,9 +60,7 @@ Unzipper::Unzipper(std::string_view data) {
   m_zip = zip_open(m_tmpFile->filesystemFileName().c_str(), 0, 'r');
 }
 
-Unzipper::Unzipper(const std::filesystem::path &path) {
-  m_zip = zip_open(path.c_str(), 0, 'r');
-}
+Unzipper::Unzipper(const std::filesystem::path &path) { m_zip = zip_open(path.c_str(), 0, 'r'); }
 
 Unzipper::~Unzipper() {
   if (m_zip) zip_close(m_zip);
