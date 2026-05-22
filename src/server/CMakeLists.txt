@@ -15,7 +15,7 @@ list(APPEND LIBS
 	Qt6::GuiPrivate # for deeper integration with wayland protocols, we need wl_surface
 	Qt6::QuickDialogs2 Qt6::QuickControls2
 	${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY}
-	minizip
+	zip
 	OpenSSL::Crypto
 	qt6keychain
 	pugixml
