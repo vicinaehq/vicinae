@@ -912,6 +912,15 @@ if(APPLE)
 endif()
 target_compile_features(${TARGET} PUBLIC cxx_std_23)
 
+# Workaround: libc++ pre-C++26 has unconstrained std::variant relational operators,
+# which trigger a hard error inside glaze's tuplet-based reflection over structs
+# whose fields contain variants. Compile this file in C++26 mode on Apple so
+# libc++'s SFINAE on variant::operator< makes the synthesis short-circuit.
+if(APPLE)
+	set_source_files_properties(src/extend/model-deser.cpp
+		PROPERTIES COMPILE_OPTIONS "-std=gnu++26")
+endif()
+
 if (USE_PRECOMPILED_HEADERS)
 	message(STATUS "Precompiled headers are enabled")
 	target_precompile_headers(${TARGET} PUBLIC "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/src/pch.h>")
