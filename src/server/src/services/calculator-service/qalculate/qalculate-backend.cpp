@@ -91,7 +91,8 @@ bool QalculateBackend::isExpression(const std::string &query) const {
   std::string const localized = CALCULATOR->unlocalizeExpression(stdExpr);
   MathStructure parsed = CALCULATOR->parse(localized, m_evalOpts.parse_options);
 
-  if (parsed.containsType(STRUCT_UNIT) && parsed.containsType(STRUCT_NUMBER)) return true;
+  bool hasDigit = std::ranges::any_of(stdExpr, [](unsigned char c) { return std::isdigit(c); });
+  if (hasDigit && parsed.containsType(STRUCT_UNIT) && parsed.containsType(STRUCT_NUMBER)) return true;
 
   static constexpr std::string_view ARITHMETIC_OPS = "+-*/^%";
   for (size_t i = 1; i < stdExpr.size(); ++i) {
@@ -152,16 +153,16 @@ QString QalculateBackend::displayName() const { return "Qalculate!"; }
 bool QalculateBackend::supportsRefreshExchangeRates() const { return true; }
 
 QFuture<AbstractCalculatorBackend::RefreshExchangeRatesResult> QalculateBackend::refreshExchangeRates() {
-  return QtConcurrent::run([this]() {
-    qInfo() << "Refreshing Qalculate exchange rates...";
-    auto die = [](auto &&s) {
-      qWarning() << "Failed to refresh exchange rates" << s;
-      return RefreshExchangeRatesResult{std::unexpected(s)};
-    };
-    if (!CALCULATOR->fetchExchangeRates()) { return die("Failed to fetch exchange rates"); }
-    QTimer::singleShot(0, [this]() { initializeCalculator(); });
+  qInfo() << "Refreshing Qalculate exchange rates...";
+
+  return QtConcurrent::run([this]() -> RefreshExchangeRatesResult {
+    if (!CALCULATOR->fetchExchangeRates()) {
+      qWarning() << "Failed to fetch exchange rates";
+      return std::unexpected("Failed to fetch exchange rates");
+    }
+    m_calc.loadExchangeRates();
     qInfo() << "Done refreshing exchange rates";
-    return RefreshExchangeRatesResult{};
+    return {};
   });
 }
 
