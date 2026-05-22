@@ -20,8 +20,11 @@ public:
     if (m_onFileSelected) m_onFileSelected(m_files.at(i));
   }
 
+  QString itemId(int i) const override;
+
 protected:
   QString itemTitle(int i) const override;
+  QString itemSubtitle(int i) const override;
   QString itemIconSource(int i) const override;
   std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
 

@@ -10,8 +10,14 @@ void SearchFilesSection::setFiles(std::vector<std::filesystem::path> files, cons
   notifyChanged();
 }
 
+QString SearchFilesSection::itemId(int i) const { return QString::fromStdString(m_files.at(i).string()); }
+
 QString SearchFilesSection::itemTitle(int i) const {
   return QString::fromStdString(getLastPathComponent(m_files.at(i)));
+}
+
+QString SearchFilesSection::itemSubtitle(int i) const {
+  return QString::fromStdString(compressPath(m_files.at(i).parent_path()).string());
 }
 
 QString SearchFilesSection::itemIconSource(int i) const {
