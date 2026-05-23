@@ -7,6 +7,7 @@ Item {
 
     required property var model
     property var boundActions: root.model
+    property var controller: actionPanel
 
     signal navigateBack
 
@@ -255,10 +256,10 @@ Item {
                             root.moveDown();
                             event.accepted = true;
                         } else if (nav === 3) {
-                            if (actionPanel.depth > 1)
+                            if (root.controller.depth > 1)
                                 root.navigateBack();
                             event.accepted = true;
-                        } else if ((event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)) && actionPanel.tryShortcut(event.key, event.modifiers)) {
+                        } else if ((event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)) && root.controller.tryShortcut(event.key, event.modifiers)) {
                             event.accepted = true;
                         }
                     }

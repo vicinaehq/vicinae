@@ -53,7 +53,7 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             label: "Actions"
             shortcutTokens: Keybinds.toggleActionPanelTokens
-            highlighted: actionPanel.open && !launcher.footerMenuOpen
+            highlighted: actionPanel.open
             onClicked: actionPanel.toggle()
         }
     }

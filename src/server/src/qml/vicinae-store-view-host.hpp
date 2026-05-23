@@ -3,6 +3,7 @@
 #include "vicinae-store-model.hpp"
 #include "bridge-view.hpp"
 #include "services/extension-store/vicinae-store.hpp"
+#include "ui/image/url.hpp"
 #include <QFutureWatcher>
 
 class VicinaeStoreViewHost : public ViewHostBase {
@@ -20,6 +21,8 @@ public:
   void loadInitialData() override;
   void textChanged(const QString &text) override;
   void onReactivated() override;
+  QString initialNavigationTitle() const override;
+  ImageURL initialNavigationIcon() const override;
 
   QObject *listModel() const { return const_cast<SectionListModel *>(&m_model); }
 

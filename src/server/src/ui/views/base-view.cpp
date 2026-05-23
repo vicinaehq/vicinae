@@ -27,11 +27,10 @@ void BaseView::setProxy(BaseView *proxy) {
 }
 
 void BaseView::clearActions() {
-  for (auto *view : m_actionPanelStack) {
-    view->onUnmount();
-    view->deleteLater();
+  if (m_rootPanel) {
+    m_rootPanel->deleteLater();
+    m_rootPanel = nullptr;
   }
-  m_actionPanelStack.clear();
 
   if (m_ctx) { m_ctx->navigation->notifyActionPanelChanged(m_navProxy); }
 }
@@ -43,49 +42,15 @@ void BaseView::setActions(std::unique_ptr<ActionPanelState> actions) {
 }
 
 void BaseView::setActions(ActionPanelView *view) {
-  for (auto *old : m_actionPanelStack) {
-    old->onUnmount();
-    old->deleteLater();
-  }
-  m_actionPanelStack.clear();
+  if (m_rootPanel) { m_rootPanel->deleteLater(); }
 
-  if (view) {
-    view->setParent(this);
-    m_actionPanelStack.push_back(view);
-    view->onMount();
-  }
+  m_rootPanel = view;
+  if (view) { view->setParent(this); }
 
   if (m_ctx) { m_ctx->navigation->notifyActionPanelChanged(m_navProxy); }
 }
 
-ActionPanelView *BaseView::actionPanelRoot() const {
-  return m_actionPanelStack.empty() ? nullptr : m_actionPanelStack.front();
-}
-
-void BaseView::pushActionPanelView(ActionPanelView *view) {
-  if (!view) return;
-  view->setParent(this);
-  m_actionPanelStack.push_back(view);
-  view->onMount();
-}
-
-void BaseView::popActionPanelView() {
-  if (m_actionPanelStack.size() <= 1) return;
-  auto *view = m_actionPanelStack.back();
-  view->onUnmount();
-  view->deleteLater();
-  m_actionPanelStack.pop_back();
-}
-
-void BaseView::clearActionPanelStack() {
-  if (m_actionPanelStack.size() <= 1) return;
-  for (size_t i = m_actionPanelStack.size() - 1; i >= 1; --i) {
-    m_actionPanelStack[i]->onUnmount();
-    m_actionPanelStack[i]->deleteLater();
-  }
-  m_actionPanelStack.resize(1);
-  if (auto *root = actionPanelRoot()) { root->resetState(); }
-}
+ActionPanelView *BaseView::actionPanelRoot() const { return m_rootPanel; }
 
 bool BaseView::supportsSearch() const { return true; }
 

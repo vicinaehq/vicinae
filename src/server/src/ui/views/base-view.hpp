@@ -26,10 +26,6 @@ public:
   void clearActions();
 
   ActionPanelView *actionPanelRoot() const;
-  const std::vector<ActionPanelView *> &actionPanelStack() const { return m_actionPanelStack; }
-  void pushActionPanelView(ActionPanelView *view);
-  void popActionPanelView();
-  void clearActionPanelStack();
 
   virtual bool supportsSearch() const;
   virtual bool searchInteractive() const;
@@ -97,5 +93,5 @@ private:
   CommandController *m_cmd = nullptr;
 
   const BaseView *m_navProxy = this;
-  std::vector<ActionPanelView *> m_actionPanelStack;
+  ActionPanelView *m_rootPanel = nullptr;
 };

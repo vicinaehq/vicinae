@@ -13,7 +13,7 @@ Item {
     implicitHeight: Math.max(row.implicitHeight, clickable ? 26 : 0)
 
     Rectangle {
-        visible: root.clickable && (mouseArea.containsMouse || launcher.footerMenuOpen)
+        visible: root.clickable && (mouseArea.containsMouse || footerPanel.open)
         x: -Math.round((root.buttonSize - root.width) / 2)
         anchors.verticalCenter: parent.verticalCenter
         width: root.buttonSize

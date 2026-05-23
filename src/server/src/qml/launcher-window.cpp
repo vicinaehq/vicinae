@@ -47,6 +47,7 @@
 
 LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
     : QObject(parent), m_ctx(ctx), m_actionPanel(new ActionPanelController(ctx, this)),
+      m_footerPanel(new ActionPanelController(ctx, this)),
       m_alertModel(new AlertModel(*ctx.navigation, this)), m_configBridge(new ConfigBridge(this)),
       m_imgSource(new ImageSource(this)), m_keybindProxy(new KeybindBridge(this)),
       m_themeBridge(new ThemeBridge(this)) {
@@ -71,10 +72,12 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
 
   rootCtx->setContextProperty(QStringLiteral("launcher"), this);
   rootCtx->setContextProperty(QStringLiteral("actionPanel"), m_actionPanel);
+  rootCtx->setContextProperty(QStringLiteral("footerPanel"), m_footerPanel);
   rootCtx->setContextProperty(QStringLiteral("Keybinds"), m_keybindProxy);
   rootCtx->setContextProperty(QStringLiteral("FileChooser"), ctx.services->fileChooserService());
 
   updateLayerShellProps();
+  buildFooterMenu();
 
   m_engine.load(QUrl(
 #ifdef Q_OS_MACOS
@@ -189,17 +192,19 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
     }
   });
 
-  connect(nav, &NavigationController::activeActionPanelChanged, this, [this, nav]() {
-    if (!m_footerMenuOpen) { m_actionPanel->syncToView(nav->topState()->sender); }
+  connect(nav, &NavigationController::activeActionPanelChanged, this,
+          [this, nav]() { m_actionPanel->syncToView(nav->topState()->sender); });
+
+  connect(nav, &NavigationController::viewPushed, this, [this](const BaseView *) {
+    m_actionPanel->close();
+    m_footerPanel->close();
   });
 
-  connect(nav, &NavigationController::viewPushed, this, [this](const BaseView *) { m_actionPanel->close(); });
-
-  connect(m_actionPanel, &ActionPanelController::openChanged, this, [this, nav]() {
-    if (!m_actionPanel->isOpen() && m_footerMenuOpen) {
-      closeFooterMenu();
-      QTimer::singleShot(0, this, [this, nav]() { m_actionPanel->syncToView(nav->topState()->sender); });
-    }
+  connect(m_footerPanel, &ActionPanelController::openChanged, this, [this]() {
+    if (m_footerPanel->isOpen()) m_actionPanel->close();
+  });
+  connect(m_actionPanel, &ActionPanelController::openChanged, this, [this]() {
+    if (m_actionPanel->isOpen()) m_footerPanel->close();
   });
 
   connect(nav, &NavigationController::navigationStatusChanged, this,
@@ -552,14 +557,9 @@ QRect LauncherWindow::cursorScreenGeometry() const {
   return screen ? screen->geometry() : QRect();
 }
 
-void LauncherWindow::openFooterMenu() {
-  if (m_footerMenuOpen) {
-    m_actionPanel->close();
-    return;
-  }
+void LauncherWindow::openFooterMenu() { m_footerPanel->toggle(); }
 
-  m_actionPanel->close();
-
+void LauncherWindow::buildFooterMenu() {
   auto state = std::make_unique<ActionPanelState>();
   state->setAutoSelectPrimary(false);
   state->setTitle(QStringLiteral("Vicinae"));
@@ -600,21 +600,7 @@ void LauncherWindow::openFooterMenu() {
                                             ctx->settings->openTab(QStringLiteral("about"));
                                           }));
 
-  m_footerMenuView = new BaseView(this);
-  m_footerMenuView->setActions(std::move(state));
-  m_footerMenuOpen = true;
-  emit footerMenuOpenChanged();
-
-  m_actionPanel->syncToView(m_footerMenuView);
-  m_actionPanel->open();
-}
-
-void LauncherWindow::closeFooterMenu() {
-  m_footerMenuOpen = false;
-  auto *view = m_footerMenuView;
-  m_footerMenuView = nullptr;
-  if (view) { QTimer::singleShot(0, view, &QObject::deleteLater); }
-  emit footerMenuOpenChanged();
+  m_footerPanel->setActions(std::move(state));
 }
 
 void LauncherWindow::expand() { setCompacted(false); }
