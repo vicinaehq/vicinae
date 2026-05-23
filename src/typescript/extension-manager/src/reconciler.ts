@@ -342,14 +342,14 @@ export const createRenderer = (config: RendererConfig) => {
 	let root: OpaqueRoot | undefined;
 	let debounce: NodeJS.Timer | null = null;
 	const debounceInterval = 1000 / MAX_RENDER_PER_SECOND;
-	let lastRender = performance.now();
+	//let lastRender = performance.now();
 
 	const renderImpl = () => {
 		if (!debounce) {
 			debounce = setTimeout(() => {
 				debounce = null;
 
-				const start = performance.now();
+				//const start = performance.now();
 
 				const views = (container.children ?? []).map<ViewData>((viewSlot) => {
 					const viewRoot = viewSlot.children?.at(-1);
@@ -363,12 +363,14 @@ export const createRenderer = (config: RendererConfig) => {
 				callbackManager.flushDeferredRemovals();
 				frameGen++;
 
-				const end = performance.now();
+				//const end = performance.now();
 
+				/*
 				console.error(
 					`[PERF] reconciler frame: ${(end - start).toFixed(2)}ms (since last: ${(end - lastRender).toFixed(1)}ms)`,
 				);
-				lastRender = end;
+				*/
+				//lastRender = end;
 			}, debounceInterval);
 		}
 	};
