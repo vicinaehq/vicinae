@@ -2,22 +2,26 @@ import { randomUUID } from "node:crypto";
 import * as fs from "node:fs";
 import { isatty } from "node:tty";
 import { isMainThread, Worker } from "node:worker_threads";
+import * as fsp from "node:fs/promises";
 import { main as workerMain } from "./worker";
 
 import * as manager from "./proto/manager";
 import * as extension from "./proto/manager-extension";
 import * as path from "node:path";
-import * as fsp from "node:fs/promises";
 
 import type { EnvironmentType } from "./types";
 
 const WORKER_GRACE_PERIOD_MS = 5000;
 const WORKER_MAX_HEAP_SIZE_MB = 1000; // really high limit just to make sure an extension command can't exhaust RAM by itself
 
+type WorkerStatus = "unloading" | "running" | "handshake";
+
 type WorkerInfo = {
 	worker: Worker;
 	pendingTermination?: NodeJS.Timeout;
 	client: extension.Client;
+	status: WorkerStatus;
+	payload: extension.LaunchEventData;
 };
 
 class ExtensionManager extends manager.ManagerService {
@@ -34,14 +38,30 @@ class ExtensionManager extends manager.ManagerService {
 		return new extension.Client(transport);
 	}
 
+	async ready(sessionId: string): Promise<boolean> {
+		const worker = this.workerMap.get(sessionId);
+
+		if (!worker) return false;
+
+		worker.status = "running";
+		await worker.client.Lifecycle.launch(worker.payload);
+
+		return true;
+	}
+
 	async load(load: manager.LoadOptions): Promise<manager.LoadResponse> {
 		const sessionId = randomUUID();
+		const worker = this.acquireWorker(load.env);
+		const client = this.createExtensionClient(worker);
 		const supportPath = path.join(
 			load.vicinae_path,
 			"support",
 			load.extension_id,
 		);
 		const supportInternal = path.join(supportPath, ".vicinae"); // for log stream, cli pid file...
+
+		const stdoutLog = path.join(supportInternal, "stdout.txt");
+		const stderrLog = path.join(supportInternal, "stderr.txt");
 		const assetsPath = path.join(
 			load.vicinae_path,
 			"extensions",
@@ -54,20 +74,33 @@ class ExtensionManager extends manager.ManagerService {
 			fsp.mkdir(supportInternal, { recursive: true }),
 		]);
 
-		const stdoutLog = path.join(supportInternal, "stdout.txt");
-		const stderrLog = path.join(supportInternal, "stderr.txt");
+		const workerInfo: WorkerInfo = {
+			worker,
+			client,
+			status: "handshake",
+			payload: {
+				entrypoint: load.entrypoint,
+				argumentValues: load.arguments,
+				preferenceValues: load.preferences,
+				mode: load.mode,
+				support_path: supportPath,
+				asset_path: assetsPath,
+				is_raycast: load.is_raycast,
+				extension_name: load.extension_name,
+				owner_or_author_name: load.owner_or_author_name,
+				command_name: load.command_name,
+			},
+		};
 
-		const worker = this.acquireWorker(load.env);
-		const client = this.createExtensionClient(worker);
-		const workerInfo: WorkerInfo = { worker, client };
+		this.workerMap.set(sessionId, workerInfo);
 
 		client.Lifecycle.extension_message((message) => {
 			this.emit_extensionMessage(sessionId, message);
 		});
 
-		this.workerMap.set(sessionId, workerInfo);
-
 		worker.on("message", (data) => {
+			if (workerInfo.status !== "running") return;
+
 			const { result } = JSON.parse(data);
 			if (result !== undefined) client.route(data); // response
 			this.emit_extensionMessage(sessionId, data); // regular extension stuff
@@ -78,6 +111,7 @@ class ExtensionManager extends manager.ManagerService {
 		});
 
 		const sendCrash = (text: string) => {
+			if (workerInfo.status !== "running") return;
 			this.emit_extensionCrash(sessionId, text);
 		};
 
@@ -118,19 +152,6 @@ class ExtensionManager extends manager.ManagerService {
 			this.workerMap.delete(sessionId);
 		});
 
-		await client.Lifecycle.launch({
-			entrypoint: load.entrypoint,
-			argumentValues: load.arguments,
-			preferenceValues: load.preferences,
-			mode: load.mode,
-			support_path: supportPath,
-			asset_path: assetsPath,
-			is_raycast: load.is_raycast,
-			extension_name: load.extension_name,
-			owner_or_author_name: load.owner_or_author_name,
-			command_name: load.command_name,
-		});
-
 		return { session_id: sessionId };
 	}
 
@@ -141,9 +162,10 @@ class ExtensionManager extends manager.ManagerService {
 			return false;
 		}
 
+		workerInfo.status = "unloading";
 		await workerInfo.client.Lifecycle.shutdown();
 
-		// force kill after 10s
+		// force kill after
 		workerInfo.pendingTermination = setTimeout(() => {
 			workerInfo.worker.terminate();
 		}, WORKER_GRACE_PERIOD_MS);
