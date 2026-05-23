@@ -4,6 +4,9 @@ import QtQuick.Effects
 
 FocusRestoringScope {
     id: root
+
+    property bool alignLeft: false
+
     active: actionPanel.open
     visible: actionPanel.open || panel.opacity > 0
     enabled: actionPanel.open
@@ -24,16 +27,15 @@ FocusRestoringScope {
 
     Item {
         id: panel
-        anchors.right: parent.right
+        x: root.alignLeft ? 10 : parent.width - width - 10
         anchors.bottom: parent.bottom
-        anchors.rightMargin: 10
         anchors.bottomMargin: 10
         width: 400
         height: Math.min(stack.currentItem ? stack.currentItem.implicitHeight + 2 : 300, root.height * 0.6)
 
         opacity: 0
         scale: 0.95
-        transformOrigin: Item.BottomRight
+        transformOrigin: root.alignLeft ? Item.BottomLeft : Item.BottomRight
 
         states: State {
             name: "open"

@@ -51,6 +51,7 @@ class LauncherWindow : public QObject {
   Q_PROPERTY(QObject *overlayHost READ overlayHost NOTIFY overlayChanged)
   Q_PROPERTY(int lsLayer READ lsLayer NOTIFY lsChanged)
   Q_PROPERTY(int lsKeyboardInteractivity READ lsKeyboardInteractivity NOTIFY lsChanged)
+  Q_PROPERTY(bool footerMenuOpen READ footerMenuOpen NOTIFY footerMenuOpenChanged)
 
 public:
   explicit LauncherWindow(ApplicationContext &ctx, QObject *parent = nullptr);
@@ -85,6 +86,7 @@ public:
   QObject *overlayHost() const { return m_overlayHost; }
   int lsLayer() const { return m_lsLayer; }
   int lsKeyboardInteractivity() const { return m_lsKeyboardInteractivity; }
+  bool footerMenuOpen() const { return m_footerMenuOpen; }
 
   Q_INVOKABLE void expand();
   Q_INVOKABLE void forwardSearchText(const QString &text);
@@ -97,6 +99,7 @@ public:
   Q_INVOKABLE int matchNavigationKey(int key, int modifiers);
   Q_INVOKABLE void setCompleterValue(int index, const QString &value);
   Q_INVOKABLE QRect cursorScreenGeometry() const;
+  Q_INVOKABLE void openFooterMenu();
 
 signals:
   void compactedChanged();
@@ -124,6 +127,7 @@ signals:
   void windowSizeOverrideChanged();
   void overlayChanged();
   void lsChanged();
+  void footerMenuOpenChanged();
 
 private:
   bool eventFilter(QObject *obj, QEvent *event) override;
@@ -136,6 +140,7 @@ private:
   bool isLayerShellActive() const;
   void setExclusiveFocus(bool exclusive);
   void updateLayerShellProps();
+  void closeFooterMenu();
 
   ApplicationContext &m_ctx;
   ActionPanelController *m_actionPanel;
@@ -187,4 +192,6 @@ private:
   QVariantList m_completerArgs;
   QString m_completerIcon;
   QVariantList m_completerValues;
+  bool m_footerMenuOpen = false;
+  BaseView *m_footerMenuView = nullptr;
 };

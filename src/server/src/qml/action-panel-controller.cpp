@@ -71,13 +71,15 @@ void ActionPanelController::open() {
 void ActionPanelController::close() {
   if (!m_open) return;
 
+  auto *root = activeRoot();
+
   m_open = false;
   emit openChanged();
   emit stackClearRequested();
   m_depth = 0;
   m_currentPanel = nullptr;
 
-  if (auto *root = activeRoot()) root->onDeactivate();
+  if (root) root->onDeactivate();
 
   delete m_connectionGuard;
   m_connectionGuard = nullptr;

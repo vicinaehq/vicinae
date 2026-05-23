@@ -196,6 +196,7 @@ Window {
         ActionPanelPopover {
             id: actionPanelPopover
             z: 100
+            alignLeft: launcher.footerMenuOpen
             anchors.fill: parent
             anchors.bottomMargin: footer.height + 1 + Config.borderWidth
         }
