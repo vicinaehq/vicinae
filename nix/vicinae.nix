@@ -5,7 +5,6 @@
   kdePackages,
   lib,
   libqalculate,
-  minizip,
   ninja,
   nodejs,
   npmHooks,
@@ -13,7 +12,6 @@
   qt6,
   gcc15Stdenv,
   wayland,
-  libxml2,
   glaze,
 }:
 let
@@ -71,14 +69,12 @@ gcc15Stdenv.mkDerivation (finalAttrs: {
 	kdePackages.qtshadertools
     kdePackages.syntax-highlighting
     libqalculate
-    minizip
     nodejs
     qt6.qtbase
     qt6.qtdeclarative
     qt6.qtsvg
     qt6.qtwayland
     wayland
-    libxml2
     glaze
   ];
 
