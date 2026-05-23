@@ -134,6 +134,9 @@ std::vector<std::shared_ptr<RootItem>> AppRootProvider::loadItems() const {
 
 AppRootProvider::AppRootProvider(AppService &appService) : m_appService(appService) {
   connect(&m_appService, &AppService::appsChanged, this, &AppRootProvider::itemsChanged);
+  if (auto runtime = ServiceRegistry::instance()->appRuntime()) {
+    connect(runtime, &AppRuntime::runningAppsChanged, this, &AppRootProvider::itemsChanged);
+  }
 }
 
 PreferenceList AppRootProvider::preferences() const { return m_appService.provider()->preferences(); }

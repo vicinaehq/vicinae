@@ -45,7 +45,8 @@ void ExtensionCommandRuntime::initialize() {
   auto *app = new ExtApplicationService(*m_transport, *services->appDb());
   auto *ui = new ExtUIService(*m_transport, context()->navigation.get(), m_command, eventCore,
                               *services->toastService());
-  auto *wm = new ExtWindowManagementService(*m_transport, *services->windowManager(), *services->appDb());
+  auto *wm = new ExtWindowManagementService(*m_transport, *services->windowManager(), *services->appDb(),
+                                            *services->appRuntime());
   auto *clipboard = new ExtClipboardService(*m_transport, *services->clipman(), *services->pasteService());
   auto *storage = new ExtStorageService(*m_transport, *services->localStorage(), storageNamespace);
   auto *fileSearch = new ExtFileSearchService(*m_transport, *services->fileService());

@@ -123,8 +123,8 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto localStorage = std::make_unique<LocalStorageService>(*omniDb);
     auto extensionManager = std::make_unique<ExtensionManager>();
     auto windowManager = std::make_unique<WindowManager>();
-    auto appRuntime = std::make_unique<AppRuntime>(*windowManager);
     auto appService = std::make_unique<AppService>(*omniDb.get());
+    auto appRuntime = std::make_unique<AppRuntime>(*windowManager, *appService);
     auto clipboardManager = std::make_unique<ClipboardService>(Omnicast::dataDir() / "clipboard.db");
     auto snippetService = std::make_unique<SnippetService>(Omnicast::dataDir() / "snippets" / "snippets.json",
                                                            *windowManager, *appService, *clipboardManager);

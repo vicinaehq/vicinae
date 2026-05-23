@@ -1,5 +1,6 @@
 #pragma once
 #include "generated/tsapi.hpp"
+#include "services/app-runtime/app-runtime.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/window-manager/window-manager.hpp"
 
@@ -7,8 +8,9 @@ class ExtWindowManagementService : public tsapi::AbstractWindowManagement {
   using Void = tsapi::Result<void>;
 
 public:
-  ExtWindowManagementService(tsapi::RpcTransport &transport, WindowManager &wm, AppService &app)
-      : AbstractWindowManagement(transport), m_wm(wm), m_app(app) {}
+  ExtWindowManagementService(tsapi::RpcTransport &transport, WindowManager &wm, AppService &app,
+                             AppRuntime &runtime)
+      : AbstractWindowManagement(transport), m_wm(wm), m_app(app), m_runtime(runtime) {}
 
   tsapi::Result<bool>::Future focusWindow(std::string winId) override {
     auto win = m_wm.findWindowById(QString::fromStdString(winId));
@@ -19,15 +21,24 @@ public:
   }
 
   tsapi::Result<tsapi::Window>::Future getActiveWindow() override {
-    auto activeWindow = m_wm.getFocusedWindow();
-    if (!activeWindow) return tsapi::Result<tsapi::Window>::fail("No active window");
+    if (auto activeWindow = m_wm.getFocusedWindow()) {
+      auto result = serializeWindow(*activeWindow);
+      result.active = true;
+      if (auto app = m_app.findByClass(activeWindow->wmClass())) { result.app = toTsapiApp(*app); }
+      return tsapi::Result<tsapi::Window>::ok(std::move(result));
+    }
 
-    auto result = serializeWindow(*activeWindow);
-    result.active = true;
+    // Platforms without window-level focus (macOS) still know the frontmost app.
+    if (auto front = m_runtime.frontmostApp()) {
+      tsapi::Window result;
+      result.id = front->id().toStdString();
+      result.title = front->displayName().toStdString();
+      result.active = true;
+      result.app = toTsapiApp(*front);
+      return tsapi::Result<tsapi::Window>::ok(std::move(result));
+    }
 
-    if (auto app = m_app.findByClass(activeWindow->wmClass())) { result.app = toTsapiApp(*app); }
-
-    return tsapi::Result<tsapi::Window>::ok(std::move(result));
+    return tsapi::Result<tsapi::Window>::fail("No active window");
   }
 
   tsapi::Result<tsapi::Workspace>::Future getActiveWorkspace() override {
@@ -137,4 +148,5 @@ private:
 
   WindowManager &m_wm;
   AppService &m_app;
+  AppRuntime &m_runtime;
 };

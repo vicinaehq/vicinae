@@ -58,15 +58,6 @@ const AbstractWindowManager::AbstractWindow *WindowManager::findWindowById(const
 
 AbstractWindowManager::WindowList WindowManager::listWindows() const { return m_windows; }
 
-bool WindowManager::focusApp(const AbstractApplication &app) const {
-  if (auto wins = findAppWindows(app); !wins.empty()) {
-    provider()->focusWindowSync(*wins.front());
-    return true;
-  }
-
-  return false;
-}
-
 AbstractWindowManager::WindowList WindowManager::findAppWindows(const AbstractApplication &app) const {
   return m_windows | std::views::filter([&](auto &&win) {
            return app.matchesWindowClass(win->wmClass()) ||

@@ -6,19 +6,24 @@
 
 class WindowManager;
 
+class AppService;
+
 class AppRuntime : public QObject {
   Q_OBJECT
 
 signals:
   void runningAppsChanged();
+  void frontmostAppChanged();
 
 public:
-  explicit AppRuntime(WindowManager &wm);
+  AppRuntime(WindowManager &wm, AppService &appService);
 
   bool isRunning(const AbstractApplication &app) const;
+  std::shared_ptr<AbstractApplication> frontmostApp() const;
+  bool activate(const AbstractApplication &app) const;
 
 private:
-  static std::unique_ptr<AbstractAppRuntime> createProvider(WindowManager &wm);
+  static std::unique_ptr<AbstractAppRuntime> createProvider(WindowManager &wm, AppService &appService);
 
   std::unique_ptr<AbstractAppRuntime> m_provider;
 };
