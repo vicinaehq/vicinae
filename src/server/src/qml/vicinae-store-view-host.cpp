@@ -56,6 +56,12 @@ void VicinaeStoreViewHost::handleFinished() {
                        QStringLiteral("Extensions"));
 }
 
+QString VicinaeStoreViewHost::initialNavigationTitle() const { return QStringLiteral("Extension Store"); }
+
+ImageURL VicinaeStoreViewHost::initialNavigationIcon() const {
+  return ImageURL::builtin("cart").setBackgroundTint(SemanticColor::Accent);
+}
+
 void VicinaeStoreViewHost::refresh() {
   if (auto *cached = m_store->cached()) {
     m_section.setEntries(*cached, context()->services->extensionRegistry(), QStringLiteral("Extensions"));

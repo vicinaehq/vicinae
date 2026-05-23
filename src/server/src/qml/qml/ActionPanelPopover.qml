@@ -4,40 +4,43 @@ import QtQuick.Effects
 
 FocusRestoringScope {
     id: root
-    active: actionPanel.open
-    visible: actionPanel.open || panel.opacity > 0
-    enabled: actionPanel.open
+
+    required property var controller
+    property bool alignLeft: false
+
+    active: root.controller.open
+    visible: root.controller.open || panel.opacity > 0
+    enabled: root.controller.open
 
     onVisibleChanged: {
         if (!visible)
             stack.clear(StackView.Immediate);
     }
     onActiveFocusChanged: {
-        if (!activeFocus && actionPanel.open)
-            actionPanel.close();
+        if (!activeFocus && root.controller.open)
+            root.controller.close();
     }
 
     MouseArea {
         anchors.fill: parent
-        onClicked: actionPanel.close()
+        onClicked: root.controller.close()
     }
 
     Item {
         id: panel
-        anchors.right: parent.right
+        x: root.alignLeft ? 10 : parent.width - width - 10
         anchors.bottom: parent.bottom
-        anchors.rightMargin: 10
         anchors.bottomMargin: 10
         width: 400
         height: Math.min(stack.currentItem ? stack.currentItem.implicitHeight + 2 : 300, root.height * 0.6)
 
         opacity: 0
         scale: 0.95
-        transformOrigin: Item.BottomRight
+        transformOrigin: root.alignLeft ? Item.BottomLeft : Item.BottomRight
 
         states: State {
             name: "open"
-            when: actionPanel.open
+            when: root.controller.open
             PropertyChanges {
                 target: panel
                 opacity: 1
@@ -104,21 +107,22 @@ FocusRestoringScope {
         target: stack.currentItem
         ignoreUnknownSignals: true
         function onNavigateBack() {
-            actionPanel.pop();
+            root.controller.pop();
         }
     }
 
     Connections {
-        target: actionPanel
+        target: root.controller
         function onPanelPushRequested(componentUrl, properties) {
             stack.push(componentUrl, properties, StackView.Immediate);
-            actionPanel.onPanelPushed(stack.currentItem);
+            stack.currentItem.controller = root.controller;
+            root.controller.onPanelPushed(stack.currentItem);
             if (typeof stack.currentItem.focusFilter === "function")
                 stack.currentItem.focusFilter();
         }
         function onPanelPopRequested() {
             stack.pop();
-            actionPanel.onPanelPopped(stack.currentItem);
+            root.controller.onPanelPopped(stack.currentItem);
             if (stack.currentItem && typeof stack.currentItem.focusFilter === "function")
                 stack.currentItem.focusFilter();
         }
@@ -130,11 +134,11 @@ FocusRestoringScope {
     Keys.onPressed: event => {
         const nav = launcher.matchNavigationKey(event.key, event.modifiers);
         if (event.key === Qt.Key_Escape) {
-            actionPanel.pop();
+            root.controller.pop();
             event.accepted = true;
         } else if (event.key === Qt.Key_Left || nav === 3) {
-            if (actionPanel.depth > 1) {
-                actionPanel.pop();
+            if (root.controller.depth > 1) {
+                root.controller.pop();
                 event.accepted = true;
             }
         } else if (event.key === Qt.Key_Up || nav === 1) {

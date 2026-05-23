@@ -15,17 +15,21 @@
 #include "theme-bridge.hpp"
 #include "navigation-controller.hpp"
 #include "overlay-controller/overlay-controller.hpp"
+#include "extensions/vicinae/bug-report-url.hpp"
+#include "qml/vicinae-store-view-host.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "services/keybinding/keybinding-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "config/config.hpp"
 #include "service-registry.hpp"
+#include "services/app-service/app-service.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "environment.hpp"
 #include "vicinae.hpp"
 #include "lib/keyboard/keyboard.hpp"
 #include "ui/views/base-view.hpp"
+#include "ui/action-pannel/action-panel-state.hpp"
 #include <QCursor>
 #include <QGuiApplication>
 #include <QQmlContext>
@@ -35,6 +39,7 @@
 #include <QKeyEvent>
 #include <qcoreevent.h>
 #include <qlogging.h>
+#include <memory>
 
 #ifdef __GLIBC__
 #include <malloc.h>
@@ -42,6 +47,7 @@
 
 LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
     : QObject(parent), m_ctx(ctx), m_actionPanel(new ActionPanelController(ctx, this)),
+      m_footerPanel(new ActionPanelController(ctx, this)),
       m_alertModel(new AlertModel(*ctx.navigation, this)), m_configBridge(new ConfigBridge(this)),
       m_imgSource(new ImageSource(this)), m_keybindProxy(new KeybindBridge(this)),
       m_themeBridge(new ThemeBridge(this)) {
@@ -66,10 +72,12 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
 
   rootCtx->setContextProperty(QStringLiteral("launcher"), this);
   rootCtx->setContextProperty(QStringLiteral("actionPanel"), m_actionPanel);
+  rootCtx->setContextProperty(QStringLiteral("footerPanel"), m_footerPanel);
   rootCtx->setContextProperty(QStringLiteral("Keybinds"), m_keybindProxy);
   rootCtx->setContextProperty(QStringLiteral("FileChooser"), ctx.services->fileChooserService());
 
   updateLayerShellProps();
+  buildFooterMenu();
 
   m_engine.load(QUrl(
 #ifdef Q_OS_MACOS
@@ -187,7 +195,17 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   connect(nav, &NavigationController::activeActionPanelChanged, this,
           [this, nav]() { m_actionPanel->syncToView(nav->topState()->sender); });
 
-  connect(nav, &NavigationController::viewPushed, this, [this](const BaseView *) { m_actionPanel->close(); });
+  connect(nav, &NavigationController::viewPushed, this, [this](const BaseView *) {
+    m_actionPanel->close();
+    m_footerPanel->close();
+  });
+
+  connect(m_footerPanel, &ActionPanelController::openChanged, this, [this]() {
+    if (m_footerPanel->isOpen()) m_actionPanel->close();
+  });
+  connect(m_actionPanel, &ActionPanelController::openChanged, this, [this]() {
+    if (m_actionPanel->isOpen()) m_footerPanel->close();
+  });
 
   connect(nav, &NavigationController::navigationStatusChanged, this,
           [this](const QString &title, const ImageURL &icon) {
@@ -537,6 +555,52 @@ QRect LauncherWindow::cursorScreenGeometry() const {
   auto *screen = QGuiApplication::screenAt(QCursor::pos());
   if (!screen) screen = QGuiApplication::primaryScreen();
   return screen ? screen->geometry() : QRect();
+}
+
+void LauncherWindow::openFooterMenu() { m_footerPanel->toggle(); }
+
+void LauncherWindow::buildFooterMenu() {
+  auto state = std::make_unique<ActionPanelState>();
+  state->setAutoSelectPrimary(false);
+  state->setTitle(QStringLiteral("Vicinae"));
+  state->setId(QStringLiteral("footer-menu"));
+
+  auto *appSection = state->createSection();
+  appSection->addAction(new StaticAction(QStringLiteral("Open Settings"), ImageURL::builtin("cog"),
+                                         [](ApplicationContext *ctx) {
+                                           ctx->navigation->closeWindow();
+                                           ctx->settings->openWindow();
+                                         }));
+  appSection->addAction(new StaticAction(QStringLiteral("Keyboard Shortcuts"), ImageURL::builtin("keyboard"),
+                                         [](ApplicationContext *ctx) {
+                                           ctx->navigation->closeWindow();
+                                           ctx->settings->openTab(QStringLiteral("shortcuts"));
+                                         }));
+  appSection->addAction(new StaticAction(QStringLiteral("Extension Store"), ImageURL::builtin("cart"),
+                                         [](ApplicationContext *ctx) {
+                                           ctx->navigation->popToRoot();
+                                           ctx->navigation->clearSearchText();
+                                           ctx->navigation->pushView(new VicinaeStoreViewHost);
+                                         }));
+
+  auto *helpSection = state->createSection();
+  helpSection->addAction(new StaticAction(QStringLiteral("Documentation"), ImageURL::builtin("book"),
+                                          [](ApplicationContext *ctx) {
+                                            ctx->services->appDb()->openTarget(Omnicast::DOC_URL);
+                                            ctx->navigation->showHud(QStringLiteral("Opened in browser"));
+                                          }));
+  helpSection->addAction(
+      new StaticAction(QStringLiteral("Report a Bug"), ImageURL::builtin("bug"), [](ApplicationContext *ctx) {
+        ctx->services->appDb()->openTarget(makeVicinaeBugReportUrl());
+        ctx->navigation->showHud(QStringLiteral("Opened in browser"));
+      }));
+  helpSection->addAction(new StaticAction(QStringLiteral("About Vicinae"), ImageURL::builtin("info-01"),
+                                          [](ApplicationContext *ctx) {
+                                            ctx->navigation->closeWindow();
+                                            ctx->settings->openTab(QStringLiteral("about"));
+                                          }));
+
+  m_footerPanel->setActions(std::move(state));
 }
 
 void LauncherWindow::expand() { setCompacted(false); }

@@ -4,8 +4,12 @@
 #include <QUrl>
 #include <QVariantMap>
 #include <QVariantList>
+#include <memory>
+#include <vector>
 
 class AbstractAction;
+class ActionListView;
+class ActionPanelState;
 class ActionPanelView;
 class BaseView;
 class QKeyEvent;
@@ -14,8 +18,8 @@ class SubmenuAction;
 class ActionPanelController : public QObject {
   Q_OBJECT
   Q_PROPERTY(bool open READ isOpen NOTIFY openChanged)
-  Q_PROPERTY(bool hasActions READ hasActions NOTIFY hasActionsChanged)
-  Q_PROPERTY(bool hasMultipleActions READ hasMultipleActions NOTIFY hasMultipleActionsChanged)
+  Q_PROPERTY(bool hasActions READ hasActions NOTIFY actionsChanged)
+  Q_PROPERTY(bool hasMultipleActions READ hasMultipleActions NOTIFY actionsChanged)
   Q_PROPERTY(QString primaryActionTitle READ primaryActionTitle NOTIFY primaryActionChanged)
   Q_PROPERTY(
       QVariantList primaryActionShortcutTokens READ primaryActionShortcutTokens NOTIFY primaryActionChanged)
@@ -23,8 +27,7 @@ class ActionPanelController : public QObject {
 
 signals:
   void openChanged();
-  void hasActionsChanged();
-  void hasMultipleActionsChanged();
+  void actionsChanged();
   void primaryActionChanged();
   void depthChanged();
   void panelPushRequested(const QUrl &componentUrl, const QVariantMap &properties);
@@ -35,13 +38,14 @@ public:
   explicit ActionPanelController(ApplicationContext &ctx, QObject *parent = nullptr);
 
   bool isOpen() const { return m_open; }
-  bool hasActions() const { return m_hasActions; }
-  bool hasMultipleActions() const { return m_hasMultipleActions; }
+  bool hasActions() const;
+  bool hasMultipleActions() const;
   QString primaryActionTitle() const;
   QVariantList primaryActionShortcutTokens() const;
-  int depth() const { return m_depth; }
+  int depth() const { return m_open ? 1 + static_cast<int>(m_submenuStack.size()) : 0; }
 
   void syncToView(BaseView *view);
+  void setActions(std::unique_ptr<ActionPanelState> actions);
 
   Q_INVOKABLE void toggle();
   Q_INVOKABLE void open();
@@ -62,15 +66,16 @@ public:
 private:
   void openRootPanel();
   void connectView(ActionPanelView *view);
+  void clearSubmenuStack();
+  void refreshSubmenus();
 
   ActionPanelView *activeRoot() const;
 
   ApplicationContext &m_ctx;
   bool m_open = false;
-  bool m_hasActions = false;
-  bool m_hasMultipleActions = false;
-  int m_depth = 0;
   QObject *m_currentPanel = nullptr;
   QObject *m_connectionGuard = nullptr;
   BaseView *m_activeView = nullptr;
+  std::unique_ptr<ActionListView> m_ownedRoot;
+  std::vector<ActionPanelView *> m_submenuStack;
 };

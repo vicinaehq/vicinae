@@ -97,6 +97,7 @@ public:
   Q_INVOKABLE int matchNavigationKey(int key, int modifiers);
   Q_INVOKABLE void setCompleterValue(int index, const QString &value);
   Q_INVOKABLE QRect cursorScreenGeometry() const;
+  Q_INVOKABLE void openFooterMenu();
 
 signals:
   void compactedChanged();
@@ -136,9 +137,11 @@ private:
   bool isLayerShellActive() const;
   void setExclusiveFocus(bool exclusive);
   void updateLayerShellProps();
+  void buildFooterMenu();
 
   ApplicationContext &m_ctx;
   ActionPanelController *m_actionPanel;
+  ActionPanelController *m_footerPanel;
   AlertModel *m_alertModel = nullptr;
   ConfigBridge *m_configBridge;
   ImageSource *m_imgSource;

@@ -53,27 +53,10 @@ void ExtensionViewHost::onReactivated() {
 }
 
 void ExtensionViewHost::setActions(std::unique_ptr<ActionPanelState> actions) {
-  auto &stack = actionPanelStack();
+  auto *root = actionPanelRoot();
 
-  if (!stack.empty() && !actions->id().isEmpty() && stack.front()->id() == actions->id()) {
-    auto *parentState = actions.get();
-    auto *rootView = static_cast<ActionListView *>(stack.front());
-    rootView->adoptState(std::move(actions));
-
-    for (size_t i = 1; i < stack.size(); ++i) {
-      QString viewId = stack[i]->id();
-      if (viewId.isEmpty()) break;
-
-      auto *submenuAction = parentState->findSubmenuAction(viewId);
-      if (!submenuAction) break;
-
-      auto submenuState = submenuAction->createSubmenuStateStealthily();
-      if (!submenuState) break;
-
-      parentState = submenuState.get();
-      static_cast<ActionListView *>(stack[i])->adoptState(std::move(submenuState));
-    }
-
+  if (root && !actions->id().isEmpty() && root->id() == actions->id()) {
+    static_cast<ActionListView *>(root)->adoptState(std::move(actions));
     if (context()) { context()->navigation->notifyActionPanelChanged(this); }
     return;
   }

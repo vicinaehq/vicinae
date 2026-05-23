@@ -3,6 +3,7 @@
 #include "lib/keyboard/keyboard.hpp"
 #include "navigation-controller.hpp"
 #include "ui/action-pannel/action-list-view.hpp"
+#include "ui/action-pannel/action-panel-state.hpp"
 #include "ui/action-pannel/action-panel-view.hpp"
 #include "ui/views/base-view.hpp"
 #include <QKeyEvent>
@@ -10,7 +11,18 @@
 ActionPanelController::ActionPanelController(ApplicationContext &ctx, QObject *parent)
     : QObject(parent), m_ctx(ctx) {}
 
+bool ActionPanelController::hasActions() const {
+  auto *r = activeRoot();
+  return r && r->hasActions();
+}
+
+bool ActionPanelController::hasMultipleActions() const {
+  auto *r = activeRoot();
+  return r && r->hasMultipleActions();
+}
+
 ActionPanelView *ActionPanelController::activeRoot() const {
+  if (m_ownedRoot) return m_ownedRoot.get();
   return m_activeView ? m_activeView->actionPanelRoot() : nullptr;
 }
 
@@ -30,25 +42,40 @@ QVariantList ActionPanelController::primaryActionShortcutTokens() const {
   return shortcut.toDisplayTokens();
 }
 
+void ActionPanelController::setActions(std::unique_ptr<ActionPanelState> actions) {
+  close();
+
+  auto *prevRoot = activeRoot();
+  if (prevRoot) prevRoot->onUnmount();
+
+  m_activeView = nullptr;
+  m_ownedRoot = std::make_unique<ActionListView>(this);
+  m_ownedRoot->adoptState(std::move(actions));
+  m_ownedRoot->onMount();
+
+  emit actionsChanged();
+  emit primaryActionChanged();
+}
+
 void ActionPanelController::syncToView(BaseView *view) {
+  auto *prevRoot = activeRoot();
+  auto prevOwned = std::move(m_ownedRoot);
+
   m_activeView = view;
 
   auto *root = activeRoot();
 
-  bool const newHasActions = root && root->hasActions();
-  bool const newHasMultiple = root && root->hasMultipleActions();
+  if (prevRoot != root) {
+    if (prevRoot) prevRoot->onUnmount();
+    if (root) root->onMount();
+  }
 
-  if (newHasActions != m_hasActions) {
-    m_hasActions = newHasActions;
-    emit hasActionsChanged();
-    if (!m_hasActions) close();
-  }
-  if (newHasMultiple != m_hasMultipleActions) {
-    m_hasMultipleActions = newHasMultiple;
-    emit hasMultipleActionsChanged();
-  }
+  emit actionsChanged();
+  if (!hasActions()) close();
 
   emit primaryActionChanged();
+
+  refreshSubmenus();
 }
 
 void ActionPanelController::toggle() {
@@ -61,7 +88,7 @@ void ActionPanelController::toggle() {
 
 void ActionPanelController::open() {
   if (m_open) return;
-  if (!m_hasActions) return;
+  if (!hasActions()) return;
 
   m_open = true;
   emit openChanged();
@@ -71,18 +98,19 @@ void ActionPanelController::open() {
 void ActionPanelController::close() {
   if (!m_open) return;
 
+  auto *root = activeRoot();
+
   m_open = false;
   emit openChanged();
   emit stackClearRequested();
-  m_depth = 0;
   m_currentPanel = nullptr;
 
-  if (auto *root = activeRoot()) root->onDeactivate();
+  if (root) root->onDeactivate();
 
   delete m_connectionGuard;
   m_connectionGuard = nullptr;
 
-  if (m_activeView) { m_activeView->clearActionPanelStack(); }
+  clearSubmenuStack();
 
   emit depthChanged();
 }
@@ -94,6 +122,7 @@ void ActionPanelController::openRootPanel() {
   auto *root = activeRoot();
   if (!root) return;
 
+  root->resetState();
   root->onActivate();
   connectView(root);
 
@@ -107,7 +136,7 @@ void ActionPanelController::pushPanel(const QUrl &componentUrl, const QVariantMa
 }
 
 void ActionPanelController::pop() {
-  if (m_depth > 1) {
+  if (!m_submenuStack.empty()) {
     emit panelPopRequested();
   } else {
     close();
@@ -116,14 +145,19 @@ void ActionPanelController::pop() {
 
 void ActionPanelController::onPanelPushed(QObject *panel) {
   m_currentPanel = panel;
-  m_depth++;
   emit depthChanged();
 }
 
 void ActionPanelController::onPanelPopped(QObject *currentPanel) {
-  if (m_depth > 0) m_depth--;
   m_currentPanel = currentPanel;
-  if (m_activeView) m_activeView->popActionPanelView();
+
+  if (!m_submenuStack.empty()) {
+    auto *view = m_submenuStack.back();
+    view->onUnmount();
+    view->deleteLater();
+    m_submenuStack.pop_back();
+  }
+
   emit depthChanged();
 }
 
@@ -169,11 +203,43 @@ void ActionPanelController::connectView(ActionPanelView *view) {
   connect(view, &ActionPanelView::closeRequested, m_connectionGuard, [this]() { close(); });
 
   connect(view, &ActionPanelView::pushViewRequested, m_connectionGuard, [this](ActionPanelView *child) {
-    if (!m_activeView) return;
-    m_activeView->pushActionPanelView(child);
+    child->setParent(this);
+    m_submenuStack.push_back(child);
+    child->onMount();
     connectView(child);
     auto url = child->componentUrl();
     auto props = child->componentProps();
     emit panelPushRequested(url, props);
   });
+}
+
+void ActionPanelController::clearSubmenuStack() {
+  for (auto it = m_submenuStack.rbegin(); it != m_submenuStack.rend(); ++it) {
+    (*it)->onUnmount();
+    (*it)->deleteLater();
+  }
+  m_submenuStack.clear();
+}
+
+void ActionPanelController::refreshSubmenus() {
+  if (m_submenuStack.empty()) return;
+
+  auto *root = dynamic_cast<ActionListView *>(activeRoot());
+  if (!root || !root->state()) return;
+
+  const auto *parentState = root->state();
+
+  for (auto *view : m_submenuStack) {
+    auto viewId = view->id();
+    if (viewId.isEmpty()) break;
+
+    auto *submenuAction = parentState->findSubmenuAction(viewId);
+    if (!submenuAction) break;
+
+    auto submenuState = submenuAction->createSubmenuStateStealthily();
+    if (!submenuState) break;
+
+    parentState = submenuState.get();
+    static_cast<ActionListView *>(view)->adoptState(std::move(submenuState));
+  }
 }

@@ -196,6 +196,16 @@ Window {
         ActionPanelPopover {
             id: actionPanelPopover
             z: 100
+            controller: actionPanel
+            anchors.fill: parent
+            anchors.bottomMargin: footer.height + 1 + Config.borderWidth
+        }
+
+        ActionPanelPopover {
+            id: footerMenuPopover
+            z: 100
+            controller: footerPanel
+            alignLeft: true
             anchors.fill: parent
             anchors.bottomMargin: footer.height + 1 + Config.borderWidth
         }
@@ -279,7 +289,7 @@ Window {
 
     Shortcut {
         sequence: "Escape"
-        enabled: !launcher.alertModel.visible && !actionPanel.open && !launcher.hasOverlay
+        enabled: !launcher.alertModel.visible && !actionPanel.open && !footerPanel.open && !launcher.hasOverlay
         onActivated: launcher.handleEscape()
     }
 
