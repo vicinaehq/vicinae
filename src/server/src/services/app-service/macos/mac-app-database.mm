@@ -79,10 +79,7 @@ bool MacAppDatabase::scan(const std::vector<fs::path> &paths) {
   return true;
 }
 
-bool MacAppDatabase::launch(const AbstractApplication &app, const std::vector<QString> &args,
-                            const std::optional<QString> &launchPrefix) const {
-  (void)launchPrefix;
-
+bool MacAppDatabase::launch(const AbstractApplication &app, const std::vector<QString> &args) const {
   fs::path const bundlePath = app.path();
   std::error_code ec;
   if (!fs::exists(bundlePath, ec)) {
@@ -119,11 +116,10 @@ bool MacAppDatabase::launch(const AbstractApplication &app, const std::vector<QS
 }
 
 bool MacAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
-                                           const LaunchTerminalCommandOptions &opts,
-                                           const std::optional<QString> &prefix) const {
+                                           const LaunchTerminalCommandOptions &opts) const {
   (void)cmdline;
   (void)opts;
-  (void)prefix;
+  qWarning() << "launchTerminalCommand: not implemented on macOS";
   return false;
 }
 

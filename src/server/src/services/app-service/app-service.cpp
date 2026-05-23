@@ -29,12 +29,12 @@ std::vector<std::filesystem::path> AppService::mergedPaths() const {
 AbstractAppDatabase *AppService::provider() const { return m_provider.get(); }
 
 bool AppService::launch(const AbstractApplication &app, const std::vector<QString> &args) const {
-  return m_provider->launch(app, args, m_prefix);
+  return m_provider->launch(app, args);
 }
 
 bool AppService::launchTerminalCommand(const std::vector<QString> &cmdLine,
                                        const LaunchTerminalCommandOptions &opts) {
-  return m_provider->launchTerminalCommand(cmdLine, opts, m_prefix);
+  return m_provider->launchTerminalCommand(cmdLine, opts);
 }
 
 std::unique_ptr<AbstractAppDatabase> AppService::createLocalProvider() {

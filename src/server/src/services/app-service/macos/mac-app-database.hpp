@@ -12,11 +12,9 @@ public:
   std::vector<std::filesystem::path> defaultSearchPaths() const override;
   bool scan(const std::vector<std::filesystem::path> &paths) override;
 
-  bool launch(const AbstractApplication &exec, const std::vector<QString> &args = {},
-              const std::optional<QString> &launchPrefix = {}) const override;
+  bool launch(const AbstractApplication &exec, const std::vector<QString> &args = {}) const override;
   bool launchTerminalCommand(const std::vector<QString> &cmdline,
-                             const LaunchTerminalCommandOptions &opts = {},
-                             const std::optional<QString> &prefix = {}) const override;
+                             const LaunchTerminalCommandOptions &opts = {}) const override;
 
   std::vector<AppPtr> findOpeners(const Target &target) const override;
   AppPtr findDefaultOpener(const Target &target) const override;

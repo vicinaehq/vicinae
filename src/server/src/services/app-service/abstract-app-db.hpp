@@ -1,5 +1,7 @@
 #pragma once
+#include "preference.hpp"
 #include "ui/image/url.hpp"
+#include <QJsonObject>
 #include <QString>
 #include <optional>
 #include <qmimetype.h>
@@ -133,15 +135,25 @@ public:
    * vicinae is.
    * - You should trash stdout and stderr as vicinae should not print application logs.
    */
-  virtual bool launch(const AbstractApplication &exec, const std::vector<QString> &args = {},
-                      const std::optional<QString> &launchPrefix = {}) const = 0;
+  virtual bool launch(const AbstractApplication &exec, const std::vector<QString> &args = {}) const = 0;
 
   /**
    * Launch the specified command in the default terminal.
    */
   virtual bool launchTerminalCommand(const std::vector<QString> &cmdline,
-                                     const LaunchTerminalCommandOptions &opts = {},
-                                     const std::optional<QString> &prefix = {}) const = 0;
+                                     const LaunchTerminalCommandOptions &opts = {}) const = 0;
+
+  /**
+   * Preferences that are specific to this provider (e.g. launch prefix on XDG).
+   * The root provider merges these with its own UI preferences when exposing them to the user.
+   */
+  virtual PreferenceList preferences() const { return {}; }
+
+  /**
+   * Apply the subset of preferences that this provider declared via preferences().
+   * The root provider forwards the full preferences blob; implementations look up the keys they own.
+   */
+  virtual void applyPreferences(const QJsonObject &preferences) { (void)preferences; }
 
   /**
    * Find all the possible openers for the given target, from most to least preferred.

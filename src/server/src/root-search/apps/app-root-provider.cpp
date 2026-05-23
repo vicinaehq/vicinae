@@ -157,50 +157,8 @@ std::optional<QJsonObject> AppRootProvider::patchPreferences(const QJsonObject &
   return patched;
 }
 
-PreferenceList AppRootProvider::preferences() const {
-#ifdef Q_OS_MACOS
-  return {};
-#else
-  auto defaultAction =
-      Preference::makeDropdown("defaultAction", {{"Focus window", "focus"}, {"Launch app", "launch"}});
-
-  defaultAction.setDefaultValue("focus");
-  defaultAction.setTitle("Default action");
-  defaultAction.setDescription("Action to perform when the return key is pressed. Always default to 'launch' "
-                               "if the app has no open window.");
-
-  auto launchPrefix = Preference::makeText("launchPrefix");
-
-  launchPrefix.setTitle("Launch Prefix");
-  launchPrefix.setDescription(
-      "Custom app launcher to use. Affects applications as well as their sub-actions.");
-  launchPrefix.setPlaceholder("uwsm app --");
-
-  auto paths = Preference::directories("paths");
-  QJsonArray defaultPaths;
-  for (const auto &searchPath : m_appService.defaultSearchPaths()) {
-    defaultPaths.push_back(QString::fromStdString(searchPath));
-  }
-  paths.setTitle("Application directories");
-  paths.setDescription(
-      "Directories applications are sourced from. The list cannot be modified directly. In order to do so, "
-      "you need to append additonal paths to the <b>XDG_DATA_DIRS</b> environment variables.");
-  paths.setReadOnly(true);
-  paths.setDefaultValue(defaultPaths);
-
-  return {defaultAction, launchPrefix, paths};
-#endif
-}
+PreferenceList AppRootProvider::preferences() const { return m_appService.provider()->preferences(); }
 
 void AppRootProvider::preferencesChanged(const QJsonObject &preferences) {
-#ifdef Q_OS_MACOS
-  (void)preferences;
-#else
-  auto val = preferences.value("launchPrefix").toString();
-  if (val.isEmpty()) {
-    m_appService.setLaunchPrefix(Environment::detectAppLauncher());
-  } else {
-    m_appService.setLaunchPrefix(val);
-  }
-#endif
+  m_appService.provider()->applyPreferences(preferences);
 }
