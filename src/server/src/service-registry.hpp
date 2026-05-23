@@ -31,6 +31,7 @@ class NewsService;
 class PasteService;
 class TelemetryService;
 class AudioControlService;
+class AppRuntime;
 
 namespace config {
 class Manager;
@@ -68,6 +69,7 @@ public:
   BackgroundEffectManager *backgroundEffectManager() const;
   TelemetryService *telemetry() const;
   AudioControlService *audioControl() const;
+  AppRuntime *appRuntime() const;
 
   void setPowerManager(std::unique_ptr<PowerManager> manager);
   void setWindowManager(std::unique_ptr<WindowManager> manager);
@@ -98,6 +100,7 @@ public:
   void setBackgroundEffectManager(std::unique_ptr<BackgroundEffectManager> manager);
   void setTelemetry(std::unique_ptr<TelemetryService> telemetry);
   void setAudioControl(std::unique_ptr<AudioControlService> service);
+  void setAppRuntime(std::unique_ptr<AppRuntime> service);
 
 private:
   std::unique_ptr<WindowManager> m_windowManager;
@@ -128,4 +131,5 @@ private:
   std::unique_ptr<BackgroundEffectManager> m_backgroundEffectManager;
   std::unique_ptr<TelemetryService> m_telemetry;
   std::unique_ptr<AudioControlService> m_audioControl;
+  std::unique_ptr<AppRuntime> m_appRuntime;
 };

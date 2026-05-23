@@ -22,6 +22,7 @@
 #include "services/telemetry/telemetry-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/window-manager/window-manager.hpp"
+#include "services/app-runtime/app-runtime.hpp"
 #include "services/snippet/snippet-service.hpp"
 #include "services/paste/paste-service.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
@@ -68,6 +69,8 @@ BackgroundEffectManager *ServiceRegistry::backgroundEffectManager() const {
 TelemetryService *ServiceRegistry::telemetry() const { return m_telemetry.get(); }
 
 AudioControlService *ServiceRegistry::audioControl() const { return m_audioControl.get(); }
+
+AppRuntime *ServiceRegistry::appRuntime() const { return m_appRuntime.get(); }
 
 void ServiceRegistry::setPowerManager(std::unique_ptr<PowerManager> powman) {
   m_powerManager = std::move(powman);
@@ -157,6 +160,10 @@ void ServiceRegistry::setTelemetry(std::unique_ptr<TelemetryService> telemetry) 
 
 void ServiceRegistry::setAudioControl(std::unique_ptr<AudioControlService> service) {
   m_audioControl = std::move(service);
+}
+
+void ServiceRegistry::setAppRuntime(std::unique_ptr<AppRuntime> service) {
+  m_appRuntime = std::move(service);
 }
 
 ServiceRegistry *ServiceRegistry::instance() {

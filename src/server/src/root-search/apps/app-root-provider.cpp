@@ -8,6 +8,7 @@
 #include "service-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/window-manager/window-manager.hpp"
+#include "services/app-runtime/app-runtime.hpp"
 #include "vicinae.hpp"
 #include "actions/wm/window-actions.hpp"
 #include "utils/environment.hpp"
@@ -40,10 +41,7 @@ std::vector<std::pair<QString, QString>> AppRootItem::settingsMetadata() const {
           {"Opens in terminal", m_app->isTerminalApp() ? "Yes" : "No"}};
 }
 
-bool AppRootItem::isActive() const {
-  auto wm = ServiceRegistry::instance()->windowManager();
-  return !wm->findAppWindows(*m_app).empty();
-}
+bool AppRootItem::isActive() const { return ServiceRegistry::instance()->appRuntime()->isRunning(*m_app); }
 
 AccessoryList AppRootItem::accessories() const {
   return {{.text = "Application", .color = SemanticColor::TextMuted}};
@@ -122,19 +120,6 @@ ImageURL AppRootProvider::icon() const {
 
 QString AppRootProvider::displayName() const { return "Applications"; }
 
-QJsonObject AppRootProvider::generateDefaultPreferences() const {
-  QJsonObject preferences;
-  QJsonArray paths;
-
-  for (const auto &searchPath : m_appService.defaultSearchPaths()) {
-    paths.push_back(QString::fromStdString(searchPath));
-  }
-
-  preferences["paths"] = paths;
-
-  return preferences;
-}
-
 QString AppRootProvider::uniqueId() const { return "applications"; }
 
 std::vector<std::shared_ptr<RootItem>> AppRootProvider::loadItems() const {
@@ -149,12 +134,6 @@ std::vector<std::shared_ptr<RootItem>> AppRootProvider::loadItems() const {
 
 AppRootProvider::AppRootProvider(AppService &appService) : m_appService(appService) {
   connect(&m_appService, &AppService::appsChanged, this, &AppRootProvider::itemsChanged);
-}
-
-std::optional<QJsonObject> AppRootProvider::patchPreferences(const QJsonObject &values) {
-  QJsonObject patched = values;
-  patched["paths"] = QJsonValue::Undefined; // we no longer allow edits, we rely on defaults
-  return patched;
 }
 
 PreferenceList AppRootProvider::preferences() const { return m_appService.provider()->preferences(); }

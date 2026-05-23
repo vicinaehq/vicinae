@@ -29,9 +29,9 @@ const std::unordered_set<std::string> &knownTerminalBundleIds() {
 } // namespace
 
 MacApplication::MacApplication(std::filesystem::path bundlePath, QString id, QString displayName,
-                               QString executable, bool displayable)
+                               QString executable)
     : m_bundlePath(std::move(bundlePath)), m_id(std::move(id)), m_displayName(std::move(displayName)),
-      m_executable(std::move(executable)), m_displayable(displayable) {}
+      m_executable(std::move(executable)) {}
 
 std::shared_ptr<MacApplication> MacApplication::fromBundle(const std::filesystem::path &bundlePath) {
   @autoreleasepool {
@@ -46,8 +46,11 @@ std::shared_ptr<MacApplication> MacApplication::fromBundle(const std::filesystem
     if (bundleId.length == 0) return nullptr;
 
     NSDictionary *info = bundle.infoDictionary;
+    NSDictionary *localized = bundle.localizedInfoDictionary;
 
-    NSString *displayName = info[@"CFBundleDisplayName"];
+    NSString *displayName = localized[@"CFBundleDisplayName"];
+    if (displayName.length == 0) displayName = info[@"CFBundleDisplayName"];
+    if (displayName.length == 0) displayName = localized[@"CFBundleName"];
     if (displayName.length == 0) displayName = info[@"CFBundleName"];
     if (displayName.length == 0) {
       displayName = [[nsPath lastPathComponent] stringByDeletingPathExtension];
@@ -55,12 +58,8 @@ std::shared_ptr<MacApplication> MacApplication::fromBundle(const std::filesystem
 
     NSString *executable = info[@"CFBundleExecutable"];
 
-    bool const isUIElement = [info[@"LSUIElement"] boolValue];
-    bool const isBackgroundOnly = [info[@"LSBackgroundOnly"] boolValue];
-    bool const displayable = !isUIElement && !isBackgroundOnly;
-
     return std::make_shared<MacApplication>(bundlePath, toQString(bundleId), toQString(displayName),
-                                            toQString(executable), displayable);
+                                            toQString(executable));
   }
 }
 

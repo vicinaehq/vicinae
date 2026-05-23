@@ -10,7 +10,7 @@ public:
 
   QString id() const override { return m_id; }
   QString displayName() const override { return m_displayName; }
-  bool displayable() const override { return m_displayable; }
+  bool displayable() const override { return true; }
   bool isTerminalApp() const override { return false; }
   bool isTerminalEmulator() const override;
   ImageURL iconUrl() const override;
@@ -20,13 +20,11 @@ public:
   bool matchesWindowClass(const QString &wmClass) const override;
   QString description() const override { return {}; }
 
-  MacApplication(std::filesystem::path bundlePath, QString id, QString displayName, QString executable,
-                 bool displayable);
+  MacApplication(std::filesystem::path bundlePath, QString id, QString displayName, QString executable);
 
 private:
   std::filesystem::path m_bundlePath;
   QString m_id;
   QString m_displayName;
   QString m_executable;
-  bool m_displayable;
 };

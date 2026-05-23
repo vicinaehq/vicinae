@@ -1,5 +1,5 @@
 #include "app-service.hpp"
-#ifdef Q_OS_DARWIN
+#ifdef Q_OS_MACOS
 #include "services/app-service/macos/mac-app-database.hpp"
 #else
 #include "services/app-service/xdg/xdg-app-database.hpp"
@@ -38,7 +38,7 @@ bool AppService::launchTerminalCommand(const std::vector<QString> &cmdLine,
 }
 
 std::unique_ptr<AbstractAppDatabase> AppService::createLocalProvider() {
-#ifdef Q_OS_DARWIN
+#ifdef Q_OS_MACOS
   return std::make_unique<MacAppDatabase>();
 #else
   return std::make_unique<XdgAppDatabase>();
