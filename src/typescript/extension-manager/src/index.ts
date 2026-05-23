@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import * as fs from "node:fs";
 import { isatty } from "node:tty";
 import { isMainThread, Worker } from "node:worker_threads";
+import * as fsp from "node:fs/promises";
 import { main as workerMain } from "./worker";
 
 import * as manager from "./proto/manager";
@@ -67,6 +68,11 @@ class ExtensionManager extends manager.ManagerService {
 			load.extension_id,
 			"assets",
 		);
+
+		await Promise.all([
+			fsp.mkdir(assetsPath, { recursive: true }),
+			fsp.mkdir(supportInternal, { recursive: true }),
+		]);
 
 		const workerInfo: WorkerInfo = {
 			worker,
