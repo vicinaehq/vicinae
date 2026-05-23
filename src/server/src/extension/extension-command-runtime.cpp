@@ -2,6 +2,7 @@
 #include "common.hpp"
 #include "common/context.hpp"
 #include "extension-error-view-host.hpp"
+#include "extension-view-host.hpp"
 #include "extension/services/application-service.hpp"
 #include "extension/services/clipboard-service.hpp"
 #include "extension/services/command-service.hpp"
@@ -121,7 +122,7 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
             nav->setNavigationIcon(m_command->iconUrl());
           });
 
-  connect(watcher, &QFutureWatcherBase::finished, this, [this, watcher]() {
+  connect(watcher, &QFutureWatcherBase::finished, this, [this, manager, watcher]() {
     if (!watcher->isCanceled()) {
       auto res = watcher->result();
 
@@ -130,6 +131,7 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
       } else {
         m_sessionId = res->session_id;
         m_bus->setSessionId(m_sessionId);
+        manager->client().manager()->ready(res->session_id);
       }
     }
 

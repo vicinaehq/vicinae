@@ -36,6 +36,12 @@ service Manager {
   fn load(opts: LoadOptions) => LoadResponse;
   fn unload(session_id: string) => bool;
 
+  // C++ side signals to extension manager that its ready to process messages from said extension
+  // Happens right after the C++ side gets the session id from `load` and stores it.
+  // It is important to synchronize this way otherwise we can theoretically miss the first messages if the
+  // extension loads too fast.
+  fn ready(session_id: string) => bool;
+
   fn messageExtension(session_id: string, payload: string) => bool;
 
   event extensionMessage(session_id: string, payload: string);
