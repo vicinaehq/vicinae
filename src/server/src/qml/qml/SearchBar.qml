@@ -79,7 +79,7 @@ Item {
                 Text {
                     anchors.fill: parent
                     verticalAlignment: Text.AlignVCenter
-                    text: launcher.hasCompleter ? "..." : !launcher.isRootSearch && launcher.searchPlaceholder !== "" ? launcher.searchPlaceholder : "Search for anything..."
+                    text: launcher.hasCompleter ? "..." : launcher.searchPlaceholder
                     color: Theme.textPlaceholder
                     font: searchInput.font
                     visible: !searchInput.displayText && launcher.searchInteractive
