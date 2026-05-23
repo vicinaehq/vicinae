@@ -1,7 +1,11 @@
 #include "app-service.hpp"
-#include "services/app-service/dummy-app-database.hpp"
+#ifdef Q_OS_DARWIN
+#include "services/app-service/macos/mac-app-database.hpp"
+#else
 #include "services/app-service/xdg/xdg-app-database.hpp"
+#endif
 #include "omni-database.hpp"
+#include <QProcess>
 #include <filesystem>
 #include <qcontainerfwd.h>
 #include <qfilesystemwatcher.h>
@@ -35,7 +39,7 @@ bool AppService::launchTerminalCommand(const std::vector<QString> &cmdLine,
 
 std::unique_ptr<AbstractAppDatabase> AppService::createLocalProvider() {
 #ifdef Q_OS_DARWIN
-  return std::make_unique<DummyAppDatabase>();
+  return std::make_unique<MacAppDatabase>();
 #else
   return std::make_unique<XdgAppDatabase>();
 #endif
@@ -114,11 +118,8 @@ bool AppService::showInFileBrowser(const std::filesystem::path &path, bool selec
 }
 
 void AppService::handleDirectoryChanged(const QString &path) {
-  // This event can fire multiple times for a single change.
-  // Since scanning apps is fast we don't really need to batch events, at least for now.
-
-  qInfo() << "app directory" << path << "changed, launching a new scan";
-  scanSync();
+  (void)path;
+  m_rescanDebounce->start();
 }
 
 void AppService::setAdditionalSearchPaths(const std::vector<std::filesystem::path> &paths) {
@@ -162,16 +163,16 @@ bool AppService::reinstallWatches(const std::vector<fs::path> &paths) {
 }
 
 bool AppService::scanSync() {
-  auto paths = mergedPaths();
-  bool const result = m_provider->scan(paths);
-
-  reinstallWatches(paths);
+  bool const result = m_provider->scan(mergedPaths());
   emit appsChanged();
-
   return result;
 }
 
 AppService::AppService(OmniDatabase &db) : m_db(db), m_provider(createLocalProvider()) {
+  m_rescanDebounce->setSingleShot(true);
+  m_rescanDebounce->setInterval(500);
+  connect(m_rescanDebounce, &QTimer::timeout, this, [this] { scanSync(); });
+
   reinstallWatches(mergedPaths());
   connect(m_watcher, &QFileSystemWatcher::directoryChanged, this, &AppService::handleDirectoryChanged);
 }

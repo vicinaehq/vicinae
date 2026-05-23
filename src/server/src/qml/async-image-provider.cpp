@@ -7,6 +7,9 @@
 #include "theme.hpp"
 #include "theme/theme-file.hpp"
 #include "ui/image/contrast-helper.hpp"
+#ifdef Q_OS_MACOS
+#include "ui/image/mac-bundle-icon-loader.hpp"
+#endif
 #include <QCoreApplication>
 #include <QGuiApplication>
 #include <QIcon>
@@ -399,6 +402,22 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id,
       if (!img.isNull()) applyFillColor(img, fg);
       response->finish(std::move(img));
     });
+
+#ifdef Q_OS_MACOS
+  } else if (parsed.type == QStringLiteral("bundle")) {
+    QColor const fg = parsed.fg;
+    bool const circle = parsed.circleMask;
+    imageDecodingPool().start([response, path = parsed.name, size, fg, circle]() {
+      if (response->isCancelled()) {
+        response->finish({});
+        return;
+      }
+      QImage img = renderMacBundleIcon(path, size);
+      if (!img.isNull()) applyFillColor(img, fg);
+      if (circle && !img.isNull()) applyCircleMask(img);
+      response->finish(std::move(img));
+    });
+#endif
 
   } else if (parsed.type == QStringLiteral("local")) {
     QString const path = parsed.name;

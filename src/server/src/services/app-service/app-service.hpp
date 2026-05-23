@@ -4,6 +4,7 @@
 #include <qlogging.h>
 #include <qobject.h>
 #include <qobjectdefs.h>
+#include <qtimer.h>
 #include <qtmetamacros.h>
 #include "abstract-app-db.hpp"
 #include "common/types.hpp"
@@ -21,6 +22,7 @@ public:
 
 private:
   QFileSystemWatcher *m_watcher = new QFileSystemWatcher(this);
+  QTimer *m_rescanDebounce = new QTimer(this);
   OmniDatabase &m_db;
   std::unique_ptr<AbstractAppDatabase> m_provider;
   std::optional<QString> m_prefix;

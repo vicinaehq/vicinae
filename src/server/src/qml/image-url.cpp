@@ -81,6 +81,9 @@ QString ImageUrl::toSource() const {
   case ImageURLType::Local:
     return prefix + QStringLiteral("local:") + name + buildParams(m_url);
 
+  case ImageURLType::MacBundle:
+    return prefix + QStringLiteral("bundle:") + name + buildParams(m_url);
+
   case ImageURLType::Http:
   case ImageURLType::Https: {
     QString params = buildParams(m_url);

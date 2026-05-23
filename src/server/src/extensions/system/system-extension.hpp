@@ -235,7 +235,9 @@ class SystemExtension : public BuiltinCommandRepository {
 
 public:
   SystemExtension() {
+#ifndef Q_OS_MACOS
     registerCommand<SystemRunCommand>();
+#endif
     registerCommand<SystemBrowseApps>();
     registerCommand<VolumeUpCommand>();
     registerCommand<VolumeDownCommand>();

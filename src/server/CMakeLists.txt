@@ -597,6 +597,22 @@ if (UNIX AND NOT APPLE)
 	)
 endif()
 
+if (APPLE)
+	list(APPEND SRCS
+		src/ui/image/mac-bundle-icon-loader.hpp
+		src/ui/image/mac-bundle-icon-loader.mm
+		src/services/app-service/macos/mac-app.hpp
+		src/services/app-service/macos/mac-app.mm
+		src/services/app-service/macos/mac-app-database.hpp
+		src/services/app-service/macos/mac-app-database.mm
+	)
+	set_source_files_properties(
+		src/ui/image/mac-bundle-icon-loader.mm
+		src/services/app-service/macos/mac-app.mm
+		src/services/app-service/macos/mac-app-database.mm
+		PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
+endif()
+
 if (LIBQALCULATE_BACKEND)
 	list(APPEND LIBS qalculate)
 	add_compile_definitions(HAS_QALCULATE=1)
@@ -908,7 +924,7 @@ endif()
 target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/qml ${CMAKE_CURRENT_SOURCE_DIR}/src/qml/markdown)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
 if(APPLE)
-	target_link_libraries(${TARGET} PRIVATE "-framework AppKit")
+	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework UniformTypeIdentifiers")
 endif()
 target_compile_features(${TARGET} PUBLIC cxx_std_23)
 

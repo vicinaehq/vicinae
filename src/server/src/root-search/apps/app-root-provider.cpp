@@ -158,6 +158,9 @@ std::optional<QJsonObject> AppRootProvider::patchPreferences(const QJsonObject &
 }
 
 PreferenceList AppRootProvider::preferences() const {
+#ifdef Q_OS_MACOS
+  return {};
+#else
   auto defaultAction =
       Preference::makeDropdown("defaultAction", {{"Focus window", "focus"}, {"Launch app", "launch"}});
 
@@ -186,13 +189,18 @@ PreferenceList AppRootProvider::preferences() const {
   paths.setDefaultValue(defaultPaths);
 
   return {defaultAction, launchPrefix, paths};
+#endif
 }
 
 void AppRootProvider::preferencesChanged(const QJsonObject &preferences) {
+#ifdef Q_OS_MACOS
+  (void)preferences;
+#else
   auto val = preferences.value("launchPrefix").toString();
   if (val.isEmpty()) {
     m_appService.setLaunchPrefix(Environment::detectAppLauncher());
   } else {
     m_appService.setLaunchPrefix(val);
   }
+#endif
 }
