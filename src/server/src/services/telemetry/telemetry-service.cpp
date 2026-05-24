@@ -39,7 +39,13 @@ TelemetryService::TelemetryService(config::Manager &config) : m_config(config) {
   m_timer.setInterval(1h);
 }
 
-void TelemetryService::setEnabled(bool enabled) {
+void TelemetryService::setEnabled(bool v) {
+  static bool enabled = true;
+
+  if (enabled == v) return;
+
+  enabled = v;
+
   if (enabled) {
     qInfo().noquote() << "Anonymous telemetry is enabled. Learn more:" << Omnicast::DOC_TELEMETRY_URL;
     m_timer.start();
