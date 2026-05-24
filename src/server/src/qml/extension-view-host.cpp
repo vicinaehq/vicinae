@@ -85,6 +85,8 @@ void ExtensionViewHost::render(const RenderModel &model) {
     switchViewType(model);
   }
 
+  QString currentText = searchText();
+
   if (auto *listModel = std::get_if<ListModel>(&model)) {
     renderList(*listModel);
   } else if (auto *gridModel = std::get_if<GridModel>(&model)) {
@@ -97,7 +99,14 @@ void ExtensionViewHost::render(const RenderModel &model) {
     qWarning() << "Extension sent unrecognized model type";
   }
 
-  if (wasFirstRender && !searchText().isEmpty()) { handleDebouncedSearch(); }
+  // make sure we forward the fallback text correctly, even when the target List/Grid is controlled
+  // it is important to take a snapshot of the search text BEFORE we do the first render because a controlled
+  // component will change the search text as part of its render.
+  if (wasFirstRender && m_onSearchTextChange.has_value() && !currentText.isEmpty()) {
+    qDebug() << "sending initial text" << currentText;
+    setSearchText(currentText);
+    ++m_searchEventCount;
+  }
 }
 
 void ExtensionViewHost::switchViewType(const RenderModel &model) {
