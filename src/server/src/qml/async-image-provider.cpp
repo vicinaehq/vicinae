@@ -351,7 +351,7 @@ void ViciImageResponse::tryFallback(QImage &image) {
 
 QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id, const QSize &requestedSize) {
 
-  qreal const dpr = std::max(qGuiApp->devicePixelRatio(), 4.0);
+  qreal const dpr = qGuiApp->devicePixelRatio();
   auto *response = new ViciImageResponse(dpr);
   response->setId(id);
   QSize const logical = requestedSize.isValid() && !requestedSize.isEmpty() ? requestedSize : QSize(64, 64);
