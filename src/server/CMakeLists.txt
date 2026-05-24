@@ -606,12 +606,15 @@ if (APPLE)
 		src/services/app-service/macos/mac-app-database.mm
 		src/services/app-runtime/macos/mac-app-runtime.hpp
 		src/services/app-runtime/macos/mac-app-runtime.mm
+		src/root-search/macos-settings/macos-settings-root-provider.hpp
+		src/root-search/macos-settings/macos-settings-root-provider.mm
 	)
 	set_source_files_properties(
 		src/ui/image/mac-bundle-icon-loader.mm
 		src/services/app-service/macos/mac-app.mm
 		src/services/app-service/macos/mac-app-database.mm
 		src/services/app-runtime/macos/mac-app-runtime.mm
+		src/root-search/macos-settings/macos-settings-root-provider.mm
 		PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
 else()
 	list(APPEND SRCS
