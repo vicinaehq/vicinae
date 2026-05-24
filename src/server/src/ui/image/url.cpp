@@ -252,6 +252,17 @@ ImageURL ImageURL::local(const QString &path) {
 
 ImageURL ImageURL::local(const std::filesystem::path &path) { return local(QString(path.c_str())); }
 
+ImageURL ImageURL::macBundle(const std::filesystem::path &bundlePath) {
+  ImageURL url;
+  QString const name = QString::fromStdString(bundlePath.string());
+
+  url.setType(ImageURLType::MacBundle);
+  url.setName(name);
+  url.setCacheKey(name);
+
+  return url;
+}
+
 ImageURL ImageURL::http(const QUrl &httpUrl) {
   ImageURL url;
 

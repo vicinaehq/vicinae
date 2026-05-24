@@ -8,6 +8,7 @@
 #include "service-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/window-manager/window-manager.hpp"
+#include "services/app-runtime/app-runtime.hpp"
 #include "vicinae.hpp"
 #include "actions/wm/window-actions.hpp"
 #include "utils/environment.hpp"
@@ -40,10 +41,7 @@ std::vector<std::pair<QString, QString>> AppRootItem::settingsMetadata() const {
           {"Opens in terminal", m_app->isTerminalApp() ? "Yes" : "No"}};
 }
 
-bool AppRootItem::isActive() const {
-  auto wm = ServiceRegistry::instance()->windowManager();
-  return !wm->findAppWindows(*m_app).empty();
-}
+bool AppRootItem::isActive() const { return ServiceRegistry::instance()->appRuntime()->isRunning(*m_app); }
 
 AccessoryList AppRootItem::accessories() const {
   return {{.text = "Application", .color = SemanticColor::TextMuted}};
@@ -122,19 +120,6 @@ ImageURL AppRootProvider::icon() const {
 
 QString AppRootProvider::displayName() const { return "Applications"; }
 
-QJsonObject AppRootProvider::generateDefaultPreferences() const {
-  QJsonObject preferences;
-  QJsonArray paths;
-
-  for (const auto &searchPath : m_appService.defaultSearchPaths()) {
-    paths.push_back(QString::fromStdString(searchPath));
-  }
-
-  preferences["paths"] = paths;
-
-  return preferences;
-}
-
 QString AppRootProvider::uniqueId() const { return "applications"; }
 
 std::vector<std::shared_ptr<RootItem>> AppRootProvider::loadItems() const {
@@ -149,50 +134,13 @@ std::vector<std::shared_ptr<RootItem>> AppRootProvider::loadItems() const {
 
 AppRootProvider::AppRootProvider(AppService &appService) : m_appService(appService) {
   connect(&m_appService, &AppService::appsChanged, this, &AppRootProvider::itemsChanged);
-}
-
-std::optional<QJsonObject> AppRootProvider::patchPreferences(const QJsonObject &values) {
-  QJsonObject patched = values;
-  patched["paths"] = QJsonValue::Undefined; // we no longer allow edits, we rely on defaults
-  return patched;
-}
-
-PreferenceList AppRootProvider::preferences() const {
-  auto defaultAction =
-      Preference::makeDropdown("defaultAction", {{"Focus window", "focus"}, {"Launch app", "launch"}});
-
-  defaultAction.setDefaultValue("focus");
-  defaultAction.setTitle("Default action");
-  defaultAction.setDescription("Action to perform when the return key is pressed. Always default to 'launch' "
-                               "if the app has no open window.");
-
-  auto launchPrefix = Preference::makeText("launchPrefix");
-
-  launchPrefix.setTitle("Launch Prefix");
-  launchPrefix.setDescription(
-      "Custom app launcher to use. Affects applications as well as their sub-actions.");
-  launchPrefix.setPlaceholder("uwsm app --");
-
-  auto paths = Preference::directories("paths");
-  QJsonArray defaultPaths;
-  for (const auto &searchPath : m_appService.defaultSearchPaths()) {
-    defaultPaths.push_back(QString::fromStdString(searchPath));
+  if (auto runtime = ServiceRegistry::instance()->appRuntime()) {
+    connect(runtime, &AppRuntime::runningAppsChanged, this, &AppRootProvider::itemsChanged);
   }
-  paths.setTitle("Application directories");
-  paths.setDescription(
-      "Directories applications are sourced from. The list cannot be modified directly. In order to do so, "
-      "you need to append additonal paths to the <b>XDG_DATA_DIRS</b> environment variables.");
-  paths.setReadOnly(true);
-  paths.setDefaultValue(defaultPaths);
-
-  return {defaultAction, launchPrefix, paths};
 }
+
+PreferenceList AppRootProvider::preferences() const { return m_appService.provider()->preferences(); }
 
 void AppRootProvider::preferencesChanged(const QJsonObject &preferences) {
-  auto val = preferences.value("launchPrefix").toString();
-  if (val.isEmpty()) {
-    m_appService.setLaunchPrefix(Environment::detectAppLauncher());
-  } else {
-    m_appService.setLaunchPrefix(val);
-  }
+  m_appService.provider()->applyPreferences(preferences);
 }

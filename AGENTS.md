@@ -26,6 +26,8 @@ Here are a few rules to keep in mind:
 - vectors: always reserve `std::vector`s and use `emplace_back` to push new elements.
 - STL ranges: we like to use `<ranges>` where it works well. If you need to use a `for` loop, prioritize ranged ones or use `std::views::enumerate` if you need to deal with indexes and data.
 - casts: as you may notice from the clang-tidy rules, using `static_cast` is generally discouraged for classes that are related by inheritance, as it is very easy to make mistakes. Unless the logic is in a hot path (e.g a QT event filter), it's preferrable to use `dynamic_cast` as a safety net when there is no safer option. Note however that `dynamic_cast` is STILL a code smell and should generally be avoided in favor of better polymorphism.
+- Platform guards: use Qt's `Q_OS_*` macros (`Q_OS_MACOS`, `Q_OS_LINUX`, `Q_OS_WIN`) rather than `Q_OS_DARWIN` or compiler-defined ones like `__APPLE__`. `Q_OS_MACOS` specifically targets desktop macOS (excluding iOS/tvOS) and keeps guards consistent across the codebase.
+- As Vicinae becomes cross-platform, it is really important that we implement functionality the way it is intended to on the target platform. We should avoid using weird hacks and always use native APIs when possible.
 
 ## Coding style
 

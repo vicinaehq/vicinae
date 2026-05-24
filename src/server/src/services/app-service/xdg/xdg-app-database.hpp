@@ -20,12 +20,13 @@ public:
   AppPtr findById(const QString &id) const override;
   std::vector<AppPtr> list() const override;
   std::vector<AppPtr> findOpeners(const QString &mimeName);
-  bool launch(const AbstractApplication &exec, const std::vector<QString> &args = {},
-              const std::optional<QString> &launchPrefix = {}) const override;
+  bool launch(const AbstractApplication &exec, const std::vector<QString> &args = {}) const override;
 
   bool launchTerminalCommand(const std::vector<QString> &cmdline,
-                             const LaunchTerminalCommandOptions &opts = {},
-                             const std::optional<QString> &prefix = {}) const override;
+                             const LaunchTerminalCommandOptions &opts = {}) const override;
+
+  PreferenceList preferences() const override;
+  void applyPreferences(const QJsonObject &preferences) override;
 
   AppPtr terminalEmulator() const override;
   AppPtr fileBrowser() const override;
@@ -56,6 +57,7 @@ private:
   std::vector<xdgpp::MimeAppsListFile> m_mimeAppsLists;
   QMimeDatabase m_mimeDb;
   std::vector<std::shared_ptr<XdgApplication>> m_apps;
+  std::optional<QString> m_launchPrefix;
 
   // apps segmented by data dir (needed for association resolution)
   std::unordered_map<std::filesystem::path, std::vector<std::shared_ptr<XdgApplication>>> m_dataDirToApps;

@@ -32,13 +32,11 @@ public:
 
   std::vector<std::shared_ptr<RootItem>> loadItems() const override;
 
-  QJsonObject generateDefaultPreferences() const override;
   Type type() const override;
   ImageURL icon() const override;
   QString displayName() const override;
   QString uniqueId() const override;
   PreferenceList preferences() const override;
-  std::optional<QJsonObject> patchPreferences(const QJsonObject &values) override;
   void preferencesChanged(const QJsonObject &preferences) override;
 
 public:

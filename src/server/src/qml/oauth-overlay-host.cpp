@@ -4,8 +4,8 @@
 #include "navigation-controller.hpp"
 #include "overlay-controller/overlay-controller.hpp"
 #include "service-registry.hpp"
+#include "services/app-runtime/app-runtime.hpp"
 #include "services/app-service/app-service.hpp"
-#include "services/window-manager/window-manager.hpp"
 #include "environment.hpp"
 #include <QTimer>
 
@@ -34,11 +34,11 @@ void OAuthOverlayHost::openBrowser() {
   }
 
   auto appDb = m_ctx->services->appDb();
-  auto wm = m_ctx->services->windowManager();
+  auto runtime = m_ctx->services->appRuntime();
 
   if (auto browser = appDb->webBrowser()) {
     appDb->openTarget(m_authorizeUrl);
-    wm->focusApp(*browser);
+    runtime->activate(*browser);
   }
 }
 

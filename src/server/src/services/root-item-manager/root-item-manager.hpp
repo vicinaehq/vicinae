@@ -176,13 +176,6 @@ public:
   bool isGroup() const { return type() == Type::GroupProvider; }
 
   /**
-   * Generate the default set of preferences for this item.
-   * This function is called on _each_ startup and diffed against the existing preference values.
-   * Existing keys are untouched but new ones can be added.
-   */
-  virtual QJsonObject generateDefaultPreferences() const { return {}; }
-
-  /**
    * Called when the provider preferences are changed.
    */
   virtual void preferencesChanged(const QJsonObject &preferences) {}
@@ -192,12 +185,6 @@ public:
   // Called the first time the root provider is loaded by the root item manager, right after the first
   // `preferencesChanged` call.
   virtual void initialized(const QJsonObject &preference) {}
-
-  /**
-   * Called only once, right after `initialized`. This can be used to transform the preference object and save
-   * the changes in database right away. This can be useful to implement migrations from a version to another.
-   */
-  virtual std::optional<QJsonObject> patchPreferences(const QJsonObject &values) { return {}; }
 
   virtual std::vector<std::shared_ptr<RootItem>> loadItems() const = 0;
   virtual PreferenceList preferences() const { return {}; }

@@ -40,6 +40,7 @@
 #include "services/telemetry/telemetry-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/window-manager/window-manager.hpp"
+#include "services/app-runtime/app-runtime.hpp"
 #include "services/snippet/snippet-service.hpp"
 #include "services/audio-control/audio-control-service.hpp"
 #include "services/paste/paste-service.hpp"
@@ -123,6 +124,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto extensionManager = std::make_unique<ExtensionManager>();
     auto windowManager = std::make_unique<WindowManager>();
     auto appService = std::make_unique<AppService>(*omniDb.get());
+    auto appRuntime = std::make_unique<AppRuntime>(*windowManager, *appService);
     auto clipboardManager = std::make_unique<ClipboardService>(Omnicast::dataDir() / "clipboard.db");
     auto snippetService = std::make_unique<SnippetService>(Omnicast::dataDir() / "snippets" / "snippets.json",
                                                            *windowManager, *appService, *clipboardManager);
@@ -176,6 +178,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setPasteService(std::move(pasteService));
     registry->setSnippetService(std::move(snippetService));
     registry->setWindowManager(std::move(windowManager));
+    registry->setAppRuntime(std::move(appRuntime));
     registry->setFontService(std::move(fontService));
     registry->setEmojiService(std::move(emojiService));
     registry->setRaycastStore(std::move(raycastStore));

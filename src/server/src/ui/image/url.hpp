@@ -11,11 +11,22 @@
 #include <QString>
 
 enum class ObjectFit : std::uint8_t { Contain, Fill, Stretch };
-enum ImageURLType : std::uint8_t { Invalid, Builtin, Favicon, System, Http, Https, Local, Emoji, DataURI };
+enum ImageURLType : std::uint8_t {
+  Invalid,
+  Builtin,
+  Favicon,
+  System,
+  Http,
+  Https,
+  Local,
+  Emoji,
+  DataURI,
+  MacBundle
+};
 
 static std::vector<std::pair<QString, ImageURLType>> iconTypes = {
-    {"favicon", Favicon}, {"omnicast", Builtin}, {"system", System},
-    {"http", Http},       {"https", Http},       {"local", Local},
+    {"favicon", Favicon}, {"omnicast", Builtin}, {"system", System},    {"http", Http},
+    {"https", Http},      {"local", Local},      {"bundle", MacBundle},
 };
 
 static std::vector<std::pair<QString, SemanticColor>> colorTints = {
@@ -123,6 +134,7 @@ public:
   static ImageURL system(const QString &name);
   static ImageURL local(const QString &path);
   static ImageURL local(const std::filesystem::path &path);
+  static ImageURL macBundle(const std::filesystem::path &bundlePath);
   static ImageURL http(const QUrl &httpUrl);
   static ImageURL emoji(const QString &emoji);
   static ImageURL rawData(const QByteArray &data, const QString &mimeType);
