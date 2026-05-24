@@ -7,21 +7,17 @@
 #include <QPointer>
 
 @interface MacAppRuntimeObserver : NSObject
-- (instancetype)initWithRunningCallback:(std::function<void()>)running
-                       frontmostCallback:(std::function<void()>)frontmost;
+- (instancetype)initWithTarget:(QPointer<MacAppRuntime>)target;
 - (void)stop;
 @end
 
 @implementation MacAppRuntimeObserver {
-  std::function<void()> _running;
-  std::function<void()> _frontmost;
+  QPointer<MacAppRuntime> _target;
 }
 
-- (instancetype)initWithRunningCallback:(std::function<void()>)running
-                       frontmostCallback:(std::function<void()>)frontmost {
+- (instancetype)initWithTarget:(QPointer<MacAppRuntime>)target {
   if ((self = [super init])) {
-    _running = std::move(running);
-    _frontmost = std::move(frontmost);
+    _target = std::move(target);
     NSNotificationCenter *nc = [[NSWorkspace sharedWorkspace] notificationCenter];
     [nc addObserver:self
            selector:@selector(handleRunning:)
@@ -41,41 +37,37 @@
 
 - (void)stop {
   [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
-  _running = nullptr;
-  _frontmost = nullptr;
+  _target.clear();
 }
 
 - (void)handleRunning:(NSNotification *)note {
   (void)note;
-  if (_running) _running();
+  if (auto *t = _target.data()) t->onRunningAppsChanged();
 }
 
 - (void)handleFrontmost:(NSNotification *)note {
   (void)note;
-  if (_frontmost) _frontmost();
+  if (auto *t = _target.data()) t->onFrontmostAppChanged();
 }
 
 @end
 
 MacAppRuntime::MacAppRuntime(AppService &appService) : m_appService(appService) {
   refreshRunningCache();
-
-  QPointer<MacAppRuntime> self(this);
-  m_observer = [[MacAppRuntimeObserver alloc]
-      initWithRunningCallback:[self]() {
-        if (!self) return;
-        self->refreshRunningCache();
-        emit self->runningAppsChanged();
-      }
-            frontmostCallback:[self]() {
-              if (self) emit self->frontmostAppChanged();
-            }];
+  m_observer = [[MacAppRuntimeObserver alloc] initWithTarget:QPointer<MacAppRuntime>(this)];
 }
 
 MacAppRuntime::~MacAppRuntime() {
   [m_observer stop];
   m_observer = nil;
 }
+
+void MacAppRuntime::onRunningAppsChanged() {
+  refreshRunningCache();
+  emit runningAppsChanged();
+}
+
+void MacAppRuntime::onFrontmostAppChanged() { emit frontmostAppChanged(); }
 
 void MacAppRuntime::refreshRunningCache() {
   std::unordered_set<QString> ids;

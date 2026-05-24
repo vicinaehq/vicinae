@@ -21,6 +21,10 @@ public:
   std::shared_ptr<AbstractApplication> frontmostApp() const override;
   bool activate(const AbstractApplication &app) const override;
 
+  // Invoked by the observer when a workspace notification arrives.
+  void onRunningAppsChanged();
+  void onFrontmostAppChanged();
+
 private:
   void refreshRunningCache();
 
