@@ -8,19 +8,18 @@
 #include "theme.hpp"
 #include "ipc-client.hpp"
 #include "server.hpp"
-#include <filesystem>
-#include <ranges>
 
-constexpr const std::string_view HEADLINE = "A focused launcher for your desktop — native, fast, extensible";
+constexpr const auto HEADLINE = "A focused launcher for your desktop — native, fast, extensible";
 
 class Formatter : public CLI::Formatter {
 public:
   std::string make_help(const CLI::App *app, std::string name, CLI::AppFormatMode mode) const override {
-    const std::string BOLD = "\033[1m";
-    const std::string BRIGHT_GREEN = "\033[92m";
-    const std::string BLUE = "\033[34m";
-    const std::string CYAN = "\033[36m";
-    const std::string RESET = "\033[0m";
+    constexpr const auto BOLD = "\033[1m";
+    constexpr const auto BRIGHT_GREEN = "\033[92m";
+    constexpr const auto BLUE = "\033[34m";
+    constexpr const auto CYAN = "\033[36m";
+    constexpr const auto YELLOW = "\033[33m";
+    constexpr const auto RESET = "\033[0m";
     std::stringstream out;
 
     // Show command description for subcommands, general headline for root
@@ -103,7 +102,7 @@ public:
       for (const auto *sub : subcommands) {
         if (sub->get_name().empty()) continue;
 
-        out << "  " << BLUE << sub->get_name() << RESET;
+        out << "  " << YELLOW << sub->get_name() << RESET;
 
         // Pad to align descriptions
         const int padding = max_name_len - sub->get_name().length() + 8;
@@ -375,24 +374,6 @@ int CommandLineApp::run(int ac, char **av) {
 }
 
 int CommandLineInterface::execute(int ac, char **av) {
-  /*
-  bool ignoreAppImageWarning = false;
-
-  if (const char *p = getenv("IGNORE_APPIMAGE_WARNING"); p && std::string_view{p} == "1") {
-    ignoreAppImageWarning = true;
-  }
-
-  if (Environment::isAppImage() && !ignoreAppImageWarning) {
-    std::cerr
-        << rang::fg::red
-        << "Running Vicinae directly as an AppImage is not officially supported.\nThe AppImage version is "
-           "intended to be installed using the script: https://docs.vicinae.com/install/script\nIf you "
-           "REALLY want to do this, relaunch with IGNORE_APPIMAGE_WARNING=1. Please do not file bug reports
-  " "if using it like this.\n"; return false;
-  }
-  */
-
-  const std::vector<std::unique_ptr<AbstractCommandLineCommand>> commands;
   CommandLineApp app(std::string{HEADLINE});
 
   app.registerCommand<VersionCommand>();
