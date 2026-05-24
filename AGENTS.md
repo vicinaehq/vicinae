@@ -20,7 +20,7 @@ We use C++23 so we have access to most modern C++ features.
 Here are a few rules to keep in mind:
 
 - Lack of value: use `std::optional` instead of arbitrary value discriminants such as the empty string. If this is not possible or goes against a commonly used convention, respect the convention first, no shoehorning. If we are dealing with raw pointers, the nullable component is already part of it so no need to add a layer of indirection.
-- Avoid raw pointers: unless we are dealing with QT's ownership model or a C API. For QT classes that are not QObjects, you should probably use standard smart pointers as recommended in modern QT.
+- Avoid raw pointers: unless we are dealing with QT's ownership model or a C API. For QT classes that are not QObjects, you should probably use standard smart pointers as recommended in modern QT. QObjects must be deleted using `deleteLater` and never raw `delete`, as this can cause memory corruption with signal and slots.
 - Watch for implicit copies: avoid copies as much as possible, use non owning containers when you can (`std::span`, `std::string_view`, `QStringView`) and just `std::move` the data when applicable. When copy is the safest option, use copy: don't go out of your way to respect this rule.
 - QT vs STL classes: prefer STL containers over QT counterparts.
 - vectors: always reserve `std::vector`s and use `emplace_back` to push new elements.
@@ -58,6 +58,7 @@ Some configuration and theming options may need to be accessed directly in QML. 
 ## General guidelines
 
 - Search should always be fuzzy, unless it has a good reason not to. We have fuzzy utilities already, and we like to use our fuzzy trait system by specializing the `FuzzySearchable` template
+- We are building Vicinae with cross-platform compatibility in mind (Linux, MacOS, Windows) so abstractions need to be designed accordingly. While Linux is our main development target, we should avoid making abstractions that are too platform specific.
 
 ## React/TypeScript extensions
 
