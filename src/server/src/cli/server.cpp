@@ -19,6 +19,9 @@
 #include "root-search/apps/app-root-provider.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "root-search/shortcuts/shortcut-root-provider.hpp"
+#ifdef Q_OS_MACOS
+#include "root-search/macos-settings/macos-settings-root-provider.hpp"
+#endif
 #include "service-registry.hpp"
 #include "services/background-effect/background-effect-manager.hpp"
 #include "qml/background-effect-attached.hpp"
@@ -245,6 +248,9 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     root->loadProvider(std::make_unique<ShortcutRootProvider>(*registry->shortcuts()));
     root->loadProvider(std::make_unique<ScriptRootProvider>(*registry->scriptDb()));
     root->loadProvider(std::make_unique<BrowserTabProvider>(*registry->browserExtension()));
+#ifdef Q_OS_MACOS
+    root->loadProvider(std::make_unique<MacSettingsRootProvider>());
+#endif
 
     // Force reload providers to make sure items that depend on them are shown
     root->updateIndex();
