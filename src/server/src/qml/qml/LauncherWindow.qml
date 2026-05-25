@@ -164,7 +164,6 @@ Window {
                     id: commandStack
                     anchors.fill: parent
                     visible: !launcher.compacted
-                    initialItem: RootSearchList {}
                 }
             }
 
@@ -249,10 +248,6 @@ Window {
         function onCommandViewPopped() {
             if (commandStack.depth > 1)
                 commandStack.pop(StackView.Immediate);
-        }
-        function onCommandStackCleared() {
-            if (commandStack.depth > 1)
-                commandStack.pop(null, StackView.Immediate);
         }
         function onOverlayChanged() {
             if (launcher.hasOverlay) {

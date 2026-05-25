@@ -10,7 +10,6 @@
 #include "bridge-view.hpp"
 #include "image-source.hpp"
 #include "image-url.hpp"
-#include "root-search-model.hpp"
 #include "config-bridge.hpp"
 #include "theme-bridge.hpp"
 #include "navigation-controller.hpp"
@@ -57,15 +56,12 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   QGuiApplication::setDesktopFileName(QStringLiteral("vicinae"));
 #endif
 
-  m_searchModel = new RootSearchModel(ViewScope(&ctx, ctx.navigation->topState()->sender), this);
-
   qRegisterMetaType<ImageUrl>("ImageUrl");
 
   m_engine.addImageProvider(QStringLiteral("vicinae"), new AsyncImageProvider());
 
   auto *rootCtx = m_engine.rootContext();
   rootCtx->setContextProperty(QStringLiteral("Nav"), ctx.navigation.get());
-  rootCtx->setContextProperty(QStringLiteral("searchModel"), m_searchModel);
   rootCtx->setContextProperty(QStringLiteral("Theme"), m_themeBridge);
   rootCtx->setContextProperty(QStringLiteral("Config"), m_configBridge);
   rootCtx->setContextProperty(QStringLiteral("Img"), m_imgSource);
@@ -382,39 +378,23 @@ void LauncherWindow::handleCurrentViewChanged() {
   m_viewWasPopped = false;
   m_viewWasReplaced = false;
 
-  if (nav->viewStackSize() == 1) {
-    disconnect(m_searchAccessoryConnection);
-    if (!m_searchAccessoryUrl.isEmpty()) {
-      m_searchAccessoryUrl.clear();
-      emit searchAccessoryChanged();
-    }
-    if (m_commandViewHost) {
-      m_commandViewHost = nullptr;
-      emit commandViewHostChanged();
-    }
-    if (!m_isRootSearch) {
-      m_isRootSearch = true;
-      emit isRootSearchChanged();
-    }
-    if (!m_showBackButton) {
-      m_showBackButton = true;
-      emit showBackButtonChanged();
-    }
-    if (m_overrideWidth != 0 || m_overrideHeight != 0) {
-      m_overrideWidth = 0;
-      m_overrideHeight = 0;
-      emit windowSizeOverrideChanged();
-    }
-    emit commandStackCleared();
-    tryCompaction();
-    return;
-  }
-
   auto *state = nav->topState();
   if (!state || !state->sender) return;
 
   auto *bridge = dynamic_cast<ViewHostBase *>(state->sender);
   if (!bridge) return;
+
+  bool const isRoot = nav->viewStackSize() == 1;
+  if (m_atRoot != isRoot) {
+    m_atRoot = isRoot;
+    emit atRootChanged();
+  }
+
+  if (m_overrideWidth != 0 || m_overrideHeight != 0) {
+    m_overrideWidth = 0;
+    m_overrideHeight = 0;
+    emit windowSizeOverrideChanged();
+  }
 
   disconnect(m_searchAccessoryConnection);
   m_searchAccessoryConnection =
@@ -446,11 +426,6 @@ void LauncherWindow::handleCurrentViewChanged() {
   } else {
     bridge->onReactivated();
   }
-
-  if (m_isRootSearch) {
-    m_isRootSearch = false;
-    emit isRootSearchChanged();
-  }
   tryCompaction();
 }
 
@@ -459,13 +434,7 @@ void LauncherWindow::forwardSearchText(const QString &text) {
   tryCompaction();
 }
 
-void LauncherWindow::handleReturn() {
-  if (!m_isRootSearch) {
-    m_actionPanel->executePrimaryAction();
-  } else {
-    m_searchModel->activateSelected();
-  }
-}
+void LauncherWindow::handleReturn() { m_actionPanel->executePrimaryAction(); }
 
 bool LauncherWindow::forwardKey(int key, int modifiers) {
   auto mods = static_cast<Qt::KeyboardModifiers>(modifiers);
@@ -536,8 +505,6 @@ void LauncherWindow::popToRoot() {
 }
 
 bool LauncherWindow::popOnBackspace() { return m_ctx.services->config()->value().popOnBackspace; }
-
-bool LauncherWindow::tryAliasFastTrack() { return m_searchModel->tryAliasFastTrack(); }
 
 int LauncherWindow::matchNavigationKey(int key, int modifiers) {
   return KeyBindingService::matchNavigation(key, modifiers, m_ctx.services->config()->value().keybinding);

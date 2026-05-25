@@ -358,9 +358,9 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
   configChanged(cfgService->value(), {});
 
-  ctx.navigation->launch(std::make_shared<RootCommand>());
-
   LauncherWindow const qmlWindow(ctx);
+
+  ctx.navigation->launch(std::make_shared<RootCommand>());
 
   if (launchOpts.open) {
     ctx.navigation->showWindow();

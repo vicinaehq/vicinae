@@ -454,6 +454,8 @@ set(SRCS
 	src/qml/keybind-bridge.hpp
 	src/qml/launcher-window.hpp
 	src/qml/launcher-window.cpp
+	src/qml/root-view-host.hpp
+	src/qml/root-view-host.cpp
 	src/qml/root-search-model.hpp
 	src/qml/root-search-model.cpp
 	src/qml/root-search-sources.hpp

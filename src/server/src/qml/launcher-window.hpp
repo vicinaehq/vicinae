@@ -13,7 +13,6 @@ class ConfigBridge;
 class HudBridge;
 class ImageSource;
 class KeybindBridge;
-class RootSearchModel;
 class ThemeBridge;
 class ViewHostBase;
 class QQuickWindow;
@@ -22,7 +21,7 @@ class DialogContentWidget;
 
 class LauncherWindow : public QObject {
   Q_OBJECT
-  Q_PROPERTY(bool isRootSearch READ isRootSearch NOTIFY isRootSearchChanged)
+  Q_PROPERTY(bool atRoot READ atRoot NOTIFY atRootChanged)
   Q_PROPERTY(bool showBackButton READ showBackButton NOTIFY showBackButtonChanged)
   Q_PROPERTY(QString searchPlaceholder READ searchPlaceholder NOTIFY searchPlaceholderChanged)
   Q_PROPERTY(QUrl searchAccessoryUrl READ searchAccessoryUrl NOTIFY searchAccessoryChanged)
@@ -55,7 +54,7 @@ class LauncherWindow : public QObject {
 public:
   explicit LauncherWindow(ApplicationContext &ctx, QObject *parent = nullptr);
 
-  bool isRootSearch() const { return m_isRootSearch; }
+  bool atRoot() const { return m_atRoot; }
   bool showBackButton() const { return m_showBackButton; }
   QString searchPlaceholder() const { return m_searchPlaceholder; }
   QUrl searchAccessoryUrl() const { return m_searchAccessoryUrl; }
@@ -93,7 +92,6 @@ public:
   Q_INVOKABLE void handleEscape();
   Q_INVOKABLE void goBack();
   Q_INVOKABLE void popToRoot();
-  Q_INVOKABLE bool tryAliasFastTrack();
   Q_INVOKABLE int matchNavigationKey(int key, int modifiers);
   Q_INVOKABLE void setCompleterValue(int index, const QString &value);
   Q_INVOKABLE QRect cursorScreenGeometry() const;
@@ -101,7 +99,7 @@ public:
 
 signals:
   void compactedChanged();
-  void isRootSearchChanged();
+  void atRootChanged();
   void showBackButtonChanged();
   void searchPlaceholderChanged();
   void searchAccessoryChanged();
@@ -111,7 +109,6 @@ signals:
   void commandViewPushed(const QUrl &componentUrl, const QVariantMap &properties);
   void commandViewReplaced(const QUrl &componentUrl, const QVariantMap &properties);
   void commandViewPopped();
-  void commandStackCleared();
   void navigationStatusChanged();
   void toastActiveChanged();
   void toastChanged();
@@ -149,10 +146,9 @@ private:
   ThemeBridge *m_themeBridge;
 
   QQmlApplicationEngine m_engine;
-  RootSearchModel *m_searchModel;
   QQuickWindow *m_window = nullptr;
   bool m_compacted = false;
-  bool m_isRootSearch = true;
+  bool m_atRoot = true;
   bool m_showBackButton = true;
   bool m_isLoading = false;
   bool m_searchVisible = true;
