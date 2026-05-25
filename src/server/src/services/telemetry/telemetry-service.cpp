@@ -40,13 +40,13 @@ TelemetryService::TelemetryService(config::Manager &config) : m_config(config) {
 }
 
 void TelemetryService::setEnabled(bool v) {
-  static bool enabled = true;
+  static std::optional<bool> enabled;
 
-  if (enabled == v) return;
+  if (enabled.has_value() && enabled.value() == v) return;
 
   enabled = v;
 
-  if (enabled) {
+  if (enabled.value()) {
     qInfo().noquote() << "Anonymous telemetry is enabled. Learn more:" << Omnicast::DOC_TELEMETRY_URL;
     m_timer.start();
     trySendSystemInfo();
