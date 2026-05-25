@@ -446,9 +446,9 @@ set(SRCS
 	src/services/telemetry/telemetry-service.cpp
 
 	src/services/snippet/snippet-service.hpp
-	src/services/snippet/snippet-server.hpp
+	src/services/snippet/abstract-snippet-server.hpp
+	src/services/snippet/null-snippet-server.hpp
 	src/services/snippet/snippet-db.cpp
-	src/services/snippet/snippet-server.cpp
 
 	# QML frontend (POC)
 	src/qml/keybind-bridge.hpp
@@ -649,6 +649,11 @@ if (UNIX AND NOT APPLE)
 		#src/lib/xkbcommon-utils.cpp
 
 		src/services/paste/linux-paste-service.cpp
+
+		src/services/input-server/linux-input-server.hpp
+		src/services/input-server/linux-input-server.cpp
+		src/services/snippet/linux-snippet-server.hpp
+		src/services/snippet/linux-snippet-server.cpp
 
 		src/lib/icon-theme-db/icon-theme-db.cpp
 

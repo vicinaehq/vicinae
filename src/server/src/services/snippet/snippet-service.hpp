@@ -4,14 +4,13 @@
 #include "services/snippet/snippet-expander.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
 #include "services/window-manager/window-manager.hpp"
-#include "snippet-server.hpp"
+#include "abstract-snippet-server.hpp"
 #include "snippet-db.hpp"
 #include <qguiapplication.h>
 #include <qobject.h>
 #include <QTimer>
 #include <qtmetamacros.h>
 
-// TODO: decouple input server lifecycle from snippet-specific logic
 class SnippetService : public QObject {
   Q_OBJECT
 
@@ -19,47 +18,19 @@ signals:
   void snippetAdded();
   void snippetUpdated();
   void snippetRemoved();
-  void snippetsChanged(); // add/updated/remove
+  void snippetsChanged();
 
 public:
-  static constexpr int MAX_RESTART_ATTEMPTS = 5;
-  static constexpr int STABILITY_THRESHOLD_MS = 30000;
-  static constexpr int BASE_RESTART_DELAY_MS = 1000;
-
-  SnippetService(const std::filesystem::path &path, WindowManager &wm, const AppService &appDb,
-                 ClipboardService &clipboard)
-      : m_db(path), m_wm(wm), m_appDb(appDb), m_clipboard(clipboard) {
-    connect(&m_server, &SnippetServer::keywordTriggered, this, &SnippetService::handleKeywordTrigger);
-    connect(&m_server, &SnippetServer::undoTriggered, this, &SnippetService::handleUndo);
-    connect(&m_server, &SnippetServer::serverCrashed, this, &SnippetService::handleCrash);
+  SnippetService(const std::filesystem::path &path, AbstractSnippetServer &snippetServer, WindowManager &wm,
+                 const AppService &appDb, ClipboardService &clipboard)
+      : m_server(snippetServer), m_db(path), m_wm(wm), m_appDb(appDb), m_clipboard(clipboard) {
+    connect(&m_server, &AbstractSnippetServer::keywordTriggered, this, &SnippetService::handleKeywordTrigger);
+    connect(&m_server, &AbstractSnippetServer::undoTriggered, this, &SnippetService::handleUndo);
+    connect(&m_server, &AbstractSnippetServer::ready, this, &SnippetService::syncServerState);
     connect(&wm, &WindowManager::focusChanged, this, [this]() {
       m_undoRecord.reset();
       if (m_server.isRunning()) { m_server.resetContext(); }
     });
-  }
-
-  void setEnabled(bool value) {
-    if (m_inputServerEnabled.has_value() && m_inputServerEnabled.value() == value) return;
-
-    m_inputServerEnabled = value;
-
-    if (*m_inputServerEnabled) {
-      start();
-    } else {
-      m_crashCount = 0;
-      m_server.stop();
-    }
-  }
-
-  bool start() {
-    m_server.start();
-
-    if (!m_server.isRunning()) return false;
-
-    syncServerState();
-    scheduleStabilityReset();
-
-    return true;
   }
 
   auto createSnippet(const snippet::SnippetPayload &payload) {
@@ -116,10 +87,6 @@ public:
   static constexpr int DEFAULT_PRE_PASTE_DELAY_MS = 0;
   static constexpr int DEFAULT_KEY_DELAY_US = 2000;
 
-  /**
-   * The snippet server will not be running if it is explicitly disabled or
-   * if it doesn't have the required permisions to do its job.
-   */
   bool isServerRunning() { return m_server.isRunning(); }
 
   void setExpansionEnabled(bool enabled) { m_enabled = enabled; }
@@ -134,7 +101,6 @@ public:
     if (!layout.empty()) { m_server.setKeymap({.layout = layout}); }
   }
 
-  SnippetServer *server() { return &m_server; }
   SnippetDatabase *database() { return &m_db; }
 
 private:
@@ -154,34 +120,6 @@ private:
 
     if (!m_layout.empty()) { m_server.setKeymap({.layout = m_layout}); }
     if (m_keyDelayUs != DEFAULT_KEY_DELAY_US) { m_server.setKeyDelay(m_keyDelayUs); }
-  }
-
-  void scheduleStabilityReset() {
-    QTimer::singleShot(STABILITY_THRESHOLD_MS, this, [this]() {
-      if (m_server.isRunning()) { m_crashCount = 0; }
-    });
-  }
-
-  void handleCrash() {
-    if (!m_inputServerEnabled.value_or(false)) return;
-
-    ++m_crashCount;
-
-    if (m_crashCount > MAX_RESTART_ATTEMPTS) {
-      qCritical() << "snippet server crashed" << m_crashCount << "times, giving up on restart";
-      return;
-    }
-
-    const int delay = BASE_RESTART_DELAY_MS * (1 << (m_crashCount - 1));
-    qWarning() << "snippet server crashed, restarting in" << delay << "ms"
-               << "(attempt" << m_crashCount << "/" << MAX_RESTART_ATTEMPTS << ")";
-
-    QTimer::singleShot(delay, this, [this]() {
-      m_server.start();
-      if (!m_server.isRunning()) return;
-      syncServerState();
-      scheduleStabilityReset();
-    });
   }
 
   void handleUndo(const std::string &trigger) {
@@ -270,7 +208,7 @@ private:
     QTimer::singleShot(0, this, [this]() { m_clipboard.scheduleClipboardRestore(); });
   }
 
-  SnippetServer m_server;
+  AbstractSnippetServer &m_server;
   SnippetDatabase m_db;
   WindowManager &m_wm;
   const AppService &m_appDb;
@@ -279,8 +217,6 @@ private:
   bool m_undoEnabled = true;
   int m_prePasteDelay = DEFAULT_PRE_PASTE_DELAY_MS;
   int m_keyDelayUs = DEFAULT_KEY_DELAY_US;
-  int m_crashCount = 0;
   std::string m_layout;
   std::optional<UndoRecord> m_undoRecord;
-  std::optional<bool> m_inputServerEnabled;
 };

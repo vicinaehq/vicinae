@@ -1,12 +1,13 @@
 #pragma once
-#include <QProcess>
-#include <qlogging.h>
 #include <QObject>
+#include <QProcess>
+#include <QTimer>
 #include <netinet/in.h>
+#include <qlogging.h>
 #include "common/common.hpp"
 #include "generated/snippet-client.hpp"
 
-class SnippetServerBus : public QObject, public snippet_gen::AbstractTransport {
+class InputServerBus : public QObject, public snippet_gen::AbstractTransport {
   Q_OBJECT
 
   struct MessageBuffer {
@@ -19,23 +20,28 @@ class SnippetServerBus : public QObject, public snippet_gen::AbstractTransport {
   void readyRead();
 
 public:
-  SnippetServerBus(QIODevice *device);
+  InputServerBus(QIODevice *device);
 
 signals:
   void messageReceived(const QByteArray &msg);
 };
 
-class SnippetServer : public QObject {
+class LinuxInputServer : public QObject {
   Q_OBJECT
 
 signals:
   void keywordTriggered(std::string trigger) const;
   void undoTriggered(std::string trigger) const;
-  void serverCrashed();
-  void serverStopped();
+  void serverReady();
 
 public:
-  SnippetServer();
+  static constexpr int MAX_RESTART_ATTEMPTS = 5;
+  static constexpr int STABILITY_THRESHOLD_MS = 30000;
+  static constexpr int BASE_RESTART_DELAY_MS = 1000;
+
+  LinuxInputServer();
+
+  void setEnabled(bool value);
 
   void start();
   void stop() { m_process.close(); }
@@ -56,10 +62,14 @@ public:
 
 private:
   void handleError();
+  void handleCrash();
+  void scheduleStabilityReset();
 
   QProcess m_process;
-  SnippetServerBus m_bus;
+  InputServerBus m_bus;
   snippet_gen::RpcTransport m_rpc;
   snippet_gen::Client m_client;
   bool m_supportsInjection = false;
+  std::optional<bool> m_enabled;
+  int m_crashCount = 0;
 };

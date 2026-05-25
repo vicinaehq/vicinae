@@ -45,6 +45,12 @@
 #include "services/window-manager/window-manager.hpp"
 #include "services/app-runtime/app-runtime.hpp"
 #include "services/snippet/snippet-service.hpp"
+#ifdef Q_OS_LINUX
+#include "services/input-server/linux-input-server.hpp"
+#include "services/snippet/linux-snippet-server.hpp"
+#else
+#include "services/snippet/null-snippet-server.hpp"
+#endif
 #include "services/audio-control/audio-control-service.hpp"
 #include "services/paste/paste-service.hpp"
 #include "services/paste/dummy-paste-service.hpp"
@@ -120,6 +126,10 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
   Omnicast::ensureDirectories();
 
+#ifdef Q_OS_LINUX
+  LinuxInputServer *inputServerPtr = nullptr;
+#endif
+
   {
     auto registry = ServiceRegistry::instance();
     auto omniDb = std::make_unique<OmniDatabase>(Omnicast::dataDir() / "vicinae.db");
@@ -129,14 +139,19 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto appService = std::make_unique<AppService>(*omniDb.get());
     auto appRuntime = std::make_unique<AppRuntime>(*windowManager, *appService);
     auto clipboardManager = std::make_unique<ClipboardService>(Omnicast::dataDir() / "clipboard.db");
-    auto snippetService = std::make_unique<SnippetService>(Omnicast::dataDir() / "snippets" / "snippets.json",
-                                                           *windowManager, *appService, *clipboardManager);
 #ifdef Q_OS_LINUX
+    auto inputServer = std::make_unique<LinuxInputServer>();
+    auto snippetServer = std::make_unique<LinuxSnippetServer>(*inputServer);
     auto platformPaste =
-        std::unique_ptr<AbstractPasteService>(std::make_unique<LinuxPasteService>(*snippetService->server()));
+        std::unique_ptr<AbstractPasteService>(std::make_unique<LinuxPasteService>(*inputServer));
+    inputServerPtr = inputServer.get();
 #else
+    auto snippetServer = std::make_unique<NullSnippetServer>();
     auto platformPaste = std::unique_ptr<AbstractPasteService>(std::make_unique<DummyPasteService>());
 #endif
+    auto snippetService =
+        std::make_unique<SnippetService>(Omnicast::dataDir() / "snippets" / "snippets.json", *snippetServer,
+                                         *windowManager, *appService, *clipboardManager);
     auto pasteService = std::make_unique<PasteService>(*clipboardManager, *windowManager, *appService,
                                                        std::move(platformPaste));
     auto fontService = std::make_unique<FontService>();
@@ -179,6 +194,10 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setExtensionManager(std::move(extensionManager));
     registry->setClipman(std::move(clipboardManager));
     registry->setPasteService(std::move(pasteService));
+#ifdef Q_OS_LINUX
+    registry->setInputServer(std::move(inputServer));
+#endif
+    registry->setSnippetServerBackend(std::move(snippetServer));
     registry->setSnippetService(std::move(snippetService));
     registry->setWindowManager(std::move(windowManager));
     registry->setAppRuntime(std::move(appRuntime));
@@ -306,7 +325,9 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
     ctx.navigation->setPopToRootOnClose(next.popToRootOnClose);
     ctx.navigation->setCloseOnFocusLoss(next.closeOnFocusLoss);
-    ctx.services->snippetService()->setEnabled(next.inputServer.enabled);
+#ifdef Q_OS_LINUX
+    inputServerPtr->setEnabled(next.inputServer.enabled);
+#endif
 
     KeybindManager::instance()->mergeBinds({next.keybinds.begin(), next.keybinds.end()});
     FaviconService::instance()->setService(next.faviconService.c_str());

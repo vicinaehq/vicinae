@@ -134,6 +134,12 @@ void ServiceRegistry::setBrowserExtension(std::unique_ptr<BrowserExtensionServic
   m_browserExtensionService = std::move(service);
 }
 
+void ServiceRegistry::setInputServer(std::unique_ptr<QObject> server) { m_inputServer = std::move(server); }
+
+void ServiceRegistry::setSnippetServerBackend(std::unique_ptr<AbstractSnippetServer> backend) {
+  m_snippetServerBackend = std::move(backend);
+}
+
 void ServiceRegistry::setSnippetService(std::unique_ptr<SnippetService> service) {
   m_snippetService = std::move(service);
 }

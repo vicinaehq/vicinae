@@ -23,6 +23,7 @@ class OAuthService;
 class WindowManager;
 class PowerManager;
 class ScriptCommandService;
+class AbstractSnippetServer;
 class SnippetService;
 class BrowserExtensionService;
 class BackgroundEffectManager;
@@ -93,6 +94,8 @@ public:
   void setClipman(std::unique_ptr<ClipboardService> service);
   void setAppDb(std::unique_ptr<AppService> service);
   void setBrowserExtension(std::unique_ptr<BrowserExtensionService> service);
+  void setInputServer(std::unique_ptr<QObject> server);
+  void setSnippetServerBackend(std::unique_ptr<AbstractSnippetServer> backend);
   void setSnippetService(std::unique_ptr<SnippetService> service);
   void setPasteService(std::unique_ptr<PasteService> service);
   void setFileChooserService(std::unique_ptr<FileChooserService> service);
@@ -124,6 +127,8 @@ private:
   std::unique_ptr<PowerManager> m_powerManager;
   std::unique_ptr<ScriptCommandService> m_scriptCommandService;
   std::unique_ptr<BrowserExtensionService> m_browserExtensionService;
+  std::unique_ptr<QObject> m_inputServer;
+  std::unique_ptr<AbstractSnippetServer> m_snippetServerBackend;
   std::unique_ptr<SnippetService> m_snippetService;
   std::unique_ptr<PasteService> m_pasteService;
   std::unique_ptr<FileChooserService> m_fileChooserService;
