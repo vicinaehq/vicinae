@@ -68,7 +68,7 @@ Item {
             }
 
             Text {
-                text: root.currentItem ? root.currentItem.displayName : root.placeholder
+                text: root.currentItem?.displayName ?? root.placeholder ?? ""
                 color: !compact && !root.currentItem ? Theme.textPlaceholder : Theme.foreground
                 font.pointSize: compact ? Theme.smallerFontSize : Theme.regularFontSize
                 elide: Text.ElideRight

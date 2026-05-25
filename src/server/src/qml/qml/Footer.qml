@@ -14,7 +14,7 @@ Item {
 
             FooterNavStatus {
                 visible: !launcher.toastActive
-                clickable: launcher.isRootSearch
+                clickable: launcher.atRoot
                 anchors.verticalCenter: parent.verticalCenter
                 onClicked: launcher.openFooterMenu()
             }
@@ -28,14 +28,10 @@ Item {
 
         FooterButton {
             id: primaryButton
-            visible: {
-                if (!launcher.isRootSearch)
-                    return actionPanel.primaryActionTitle !== "";
-                return searchModel.primaryActionTitle !== "";
-            }
+            visible: actionPanel.primaryActionTitle !== ""
             Layout.alignment: Qt.AlignVCenter
-            label: !launcher.isRootSearch ? actionPanel.primaryActionTitle : searchModel.primaryActionTitle
-            shortcutTokens: !launcher.isRootSearch ? actionPanel.primaryActionShortcutTokens : searchModel.primaryActionShortcutTokens
+            label: actionPanel.primaryActionTitle
+            shortcutTokens: actionPanel.primaryActionShortcutTokens
             onClicked: launcher.handleReturn()
         }
 

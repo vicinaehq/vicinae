@@ -163,7 +163,7 @@ void RootSearchModel::setSelectedIndex(int index) {
   if (!dataItemAt(index, sourceIdx, itemIdx)) {
     if (!oldId.isEmpty()) scope().destroyCurrentCompletion();
     m_lastCompleterItemId.clear();
-    emit primaryActionChanged();
+
     return;
   }
 
@@ -191,8 +191,6 @@ void RootSearchModel::setSelectedIndex(int index) {
 
     if (!createdCompleter) scope().destroyCurrentCompletion();
   }
-
-  emit primaryActionChanged();
 }
 
 bool RootSearchModel::tryAliasFastTrack() {
@@ -215,37 +213,6 @@ bool RootSearchModel::tryAliasFastTrack() {
 
   activateSelected();
   return true;
-}
-
-QString RootSearchModel::primaryActionTitle() const {
-  auto *state = scope().topState();
-  if (!state) return {};
-  auto *root = state->sender->actionPanelRoot();
-  if (!root) return {};
-  auto *action = root->primaryAction();
-  return action ? action->title() : QString();
-}
-
-QString RootSearchModel::primaryActionIcon() const {
-  auto *state = scope().topState();
-  if (!state) return {};
-  auto *root = state->sender->actionPanelRoot();
-  if (!root) return {};
-  auto *action = root->primaryAction();
-  if (!action) return {};
-  auto icon = action->icon();
-  return icon ? qml::imageSourceFor(*icon) : QString();
-}
-
-QVariantList RootSearchModel::primaryActionShortcutTokens() const {
-  auto *state = scope().topState();
-  if (!state) return {};
-  auto *root = state->sender->actionPanelRoot();
-  if (!root) return {};
-  auto *action = root->primaryAction();
-  if (!action) return {};
-  auto shortcut = action->shortcut().value_or(Keyboard::Shortcut::enter());
-  return shortcut.toDisplayTokens();
 }
 
 void RootSearchModel::startCalculator() {

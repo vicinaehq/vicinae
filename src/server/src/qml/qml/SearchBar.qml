@@ -19,7 +19,7 @@ Item {
 
         SourceBlendRect {
             id: backButton
-            visible: !launcher.isRootSearch && launcher.showBackButton
+            visible: launcher.showBackButton
             Layout.preferredWidth: 28
             Layout.preferredHeight: 28
             Layout.alignment: Qt.AlignVCenter
@@ -126,8 +126,6 @@ Item {
                 function _syncSearchText() {
                     const value = Config.considerPreedit ? searchInput.displayText : searchInput.text;
                     launcher.forwardSearchText(value);
-                    if (launcher.isRootSearch)
-                        searchModel.setFilter(value);
                 }
 
                 function _handleEmacsEditing(event) {
@@ -309,13 +307,11 @@ Item {
                         event.accepted = true;
                     } else if (_handleNavigation(event)) {
                         event.accepted = true;
-                    } else if (event.key === Qt.Key_Backspace && searchInput.text === "" && !event.isAutoRepeat && !launcher.isRootSearch && launcher.showBackButton && launcher.popOnBackspace) {
+                    } else if (event.key === Qt.Key_Backspace && searchInput.text === "" && !event.isAutoRepeat && launcher.showBackButton && launcher.popOnBackspace) {
                         launcher.goBack();
                         event.accepted = true;
-                    } else if (event.key === Qt.Key_Space && launcher.isRootSearch && event.modifiers === Qt.NoModifier) {
-                        if (launcher.tryAliasFastTrack()) {
-                            event.accepted = true;
-                        }
+                    } else if (event.key === Qt.Key_Space && event.modifiers === Qt.NoModifier && launcher.commandViewHost?.tryAliasFastTrack()) {
+                        event.accepted = true;
                     } else if (launcher.forwardKey(event.key, event.modifiers)) {
                         if (launcher.compacted)
                             launcher.expand();
@@ -378,12 +374,8 @@ Item {
                 searchInput.forceActiveFocus();
         }
         function onSearchTextUpdated(text) {
-            if (searchInput.text !== text) {
+            if (searchInput.text !== text)
                 searchInput.text = text;
-                if (launcher.isRootSearch) {
-                    searchModel.setFilter(text);
-                }
-            }
         }
         function onViewNavigatedBack() {
             root.focusInput();

@@ -3,10 +3,11 @@ import QtQuick.Controls
 
 GenericListView {
     id: searchListView
-    model: searchModel
-    listModel: searchModel
+    required property var cmdModel
+    model: cmdModel
+    listModel: cmdModel
     autoWireModel: true
-    selectFirstOnReset: searchModel.selectFirstOnReset
+    selectFirstOnReset: cmdModel.selectFirstOnReset
 
     delegate: Loader {
         id: delegateLoader
