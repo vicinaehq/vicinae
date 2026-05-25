@@ -82,6 +82,10 @@ void LinuxInputServer::start() {
   std::optional<std::filesystem::path> path;
 
   {
+    // trick used by mostly NixOS since this binary has special security implications (needs a setcap to
+    // enable input injection/monitoring at the kernel level).
+    // Other installations just find the binary at the standard $prefix/libexec/vicinae/vicinae-input-server
+    // location, and the binary is setcap'd as part of the post install.
     if (auto const binOverride = qEnvironmentVariable("VICINAE_INPUT_SERVER_BIN"); !binOverride.isEmpty()) {
       path = binOverride.toStdString();
     } else {
