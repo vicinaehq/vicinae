@@ -1,6 +1,6 @@
 #include "linux-input-server.hpp"
 #include <cstdint>
-#include <netinet/in.h>
+#include <QTimer>
 #include <qtenvironmentvariables.h>
 
 // InputServerBus

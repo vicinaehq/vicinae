@@ -126,10 +126,6 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
   Omnicast::ensureDirectories();
 
-#ifdef Q_OS_LINUX
-  LinuxInputServer *inputServerPtr = nullptr;
-#endif
-
   {
     auto registry = ServiceRegistry::instance();
     auto omniDb = std::make_unique<OmniDatabase>(Omnicast::dataDir() / "vicinae.db");
@@ -144,7 +140,6 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto snippetServer = std::make_unique<LinuxSnippetServer>(*inputServer);
     auto platformPaste =
         std::unique_ptr<AbstractPasteService>(std::make_unique<LinuxPasteService>(*inputServer));
-    inputServerPtr = inputServer.get();
 #else
     auto snippetServer = std::make_unique<NullSnippetServer>();
     auto platformPaste = std::unique_ptr<AbstractPasteService>(std::make_unique<DummyPasteService>());
@@ -326,7 +321,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     ctx.navigation->setPopToRootOnClose(next.popToRootOnClose);
     ctx.navigation->setCloseOnFocusLoss(next.closeOnFocusLoss);
 #ifdef Q_OS_LINUX
-    inputServerPtr->setEnabled(next.inputServer.enabled);
+    ctx.services->inputServer()->setEnabled(next.inputServer.enabled);
 #endif
 
     KeybindManager::instance()->mergeBinds({next.keybinds.begin(), next.keybinds.end()});

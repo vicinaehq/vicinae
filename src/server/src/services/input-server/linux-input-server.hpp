@@ -1,8 +1,6 @@
 #pragma once
 #include <QObject>
 #include <QProcess>
-#include <QTimer>
-#include <netinet/in.h>
 #include <qlogging.h>
 #include "common/common.hpp"
 #include "generated/snippet-client.hpp"
