@@ -42,12 +42,13 @@ SnippetServer::SnippetServer() : m_bus(&m_process), m_rpc(m_bus), m_client(m_rpc
   });
 
   connect(&m_process, &QProcess::finished, this, [this](int exitCode, QProcess::ExitStatus status) {
-    if (status == QProcess::CrashExit) {
+    if (status == QProcess::CrashExit || exitCode != 0) {
       qWarning() << "snippet server crashed with code" << exitCode;
+      emit serverCrashed();
     } else {
       qInfo() << "snippet server exited with code" << exitCode;
+      emit serverStopped();
     }
-    emit serverStopped();
   });
 
   connect(

@@ -8,6 +8,7 @@ class GeneralSettingsModel : public QObject {
   Q_OBJECT
 
   Q_PROPERTY(bool searchFilesInRoot READ searchFilesInRoot WRITE setSearchFilesInRoot NOTIFY configChanged)
+  Q_PROPERTY(bool inputServerEnabled READ inputServerEnabled WRITE setInputServerEnabled NOTIFY configChanged)
   Q_PROPERTY(bool closeOnFocusLoss READ closeOnFocusLoss WRITE setCloseOnFocusLoss NOTIFY configChanged)
   Q_PROPERTY(bool considerPreedit READ considerPreedit WRITE setConsiderPreedit NOTIFY configChanged)
   Q_PROPERTY(bool popToRootOnClose READ popToRootOnClose WRITE setPopToRootOnClose NOTIFY configChanged)
@@ -59,6 +60,8 @@ public:
   void setWindowOpacity(const QString &v);
   bool nativeTextRendering() const;
   void setNativeTextRendering(bool v);
+  bool inputServerEnabled() const;
+  void setInputServerEnabled(bool v);
   QString fontSize() const;
   void setFontSize(const QString &v);
 

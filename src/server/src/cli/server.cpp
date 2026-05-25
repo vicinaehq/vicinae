@@ -272,8 +272,6 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   ExtensionIntervalScheduler intervalScheduler(ctx);
   intervalScheduler.rebuild();
 
-  ctx.services->snippetService()->start();
-
   auto configChanged = [&](const config::ConfigValue &next, const config::ConfigValue &prev) {
     auto &theme = ThemeService::instance();
     auto &nextTheme = next.systemTheme();
@@ -308,6 +306,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
     ctx.navigation->setPopToRootOnClose(next.popToRootOnClose);
     ctx.navigation->setCloseOnFocusLoss(next.closeOnFocusLoss);
+    ctx.services->snippetService()->setEnabled(next.inputServer.enabled);
 
     KeybindManager::instance()->mergeBinds({next.keybinds.begin(), next.keybinds.end()});
     FaviconService::instance()->setService(next.faviconService.c_str());

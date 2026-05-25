@@ -1,4 +1,5 @@
 #include "general-settings-model.hpp"
+#include "config/config.hpp"
 #include "image-url.hpp"
 #include "view-utils.hpp"
 #include "service-registry.hpp"
@@ -62,6 +63,12 @@ void GeneralSettingsModel::setClientSideDecorations(bool v) {
   cfgManager().mergeWithUser(
       {.launcherWindow = config::Partial<config::WindowConfig>{
            .clientSideDecorations = config::Partial<config::WindowCSD>{.enabled = v}}});
+}
+
+bool GeneralSettingsModel::inputServerEnabled() const { return cfg().inputServer.enabled; }
+
+void GeneralSettingsModel::setInputServerEnabled(bool v) {
+  cfgManager().mergeWithUser({.inputServer = config::Partial<config::InputServer>{.enabled = v}});
 }
 
 QString GeneralSettingsModel::windowOpacity() const { return QString::number(cfg().launcherWindow.opacity); }

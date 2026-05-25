@@ -19,6 +19,10 @@
 		"system_info": true
 	},
 
+	"input_server": {
+		"enabled": true
+	},
+
 	// Whether root search should also search files directly.
 	// File search is performed asynchrounously: files may take an instant to appear after a query is entered.
 	// Turning this on results in an increase in CPU usage when searching.

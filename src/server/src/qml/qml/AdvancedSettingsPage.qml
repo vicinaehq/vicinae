@@ -73,6 +73,15 @@ Flickable {
         }
 
         SettingsRow {
+            label: "Input server"
+            description: "Whether to spawn the input server at startup. This needs to be enabled in order to support snippets, paste to active window, and other features that require input monitoring or injection."
+            SettingsToggle {
+                checked: root.model.inputServerEnabled
+                onToggled: root.model.inputServerEnabled = checked
+            }
+        }
+
+        SettingsRow {
             label: "Root file search"
             description: "Files are searched asynchronously, so if enabled you should expect a slight delay for file search results to show up."
             SettingsToggle {

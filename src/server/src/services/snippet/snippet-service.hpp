@@ -11,6 +11,7 @@
 #include <QTimer>
 #include <qtmetamacros.h>
 
+// TODO: decouple input server lifecycle from snippet-specific logic
 class SnippetService : public QObject {
   Q_OBJECT
 
@@ -30,11 +31,24 @@ public:
       : m_db(path), m_wm(wm), m_appDb(appDb), m_clipboard(clipboard) {
     connect(&m_server, &SnippetServer::keywordTriggered, this, &SnippetService::handleKeywordTrigger);
     connect(&m_server, &SnippetServer::undoTriggered, this, &SnippetService::handleUndo);
-    connect(&m_server, &SnippetServer::serverStopped, this, &SnippetService::handleCrash);
+    connect(&m_server, &SnippetServer::serverCrashed, this, &SnippetService::handleCrash);
     connect(&wm, &WindowManager::focusChanged, this, [this]() {
       m_undoRecord.reset();
       if (m_server.isRunning()) { m_server.resetContext(); }
     });
+  }
+
+  void setEnabled(bool value) {
+    if (m_inputServerEnabled.has_value() && m_inputServerEnabled.value() == value) return;
+
+    m_inputServerEnabled = value;
+
+    if (*m_inputServerEnabled) {
+      start();
+    } else {
+      m_crashCount = 0;
+      m_server.stop();
+    }
   }
 
   bool start() {
@@ -108,7 +122,7 @@ public:
    */
   bool isServerRunning() { return m_server.isRunning(); }
 
-  void setEnabled(bool enabled) { m_enabled = enabled; }
+  void setExpansionEnabled(bool enabled) { m_enabled = enabled; }
   void setUndoEnabled(bool enabled) { m_undoEnabled = enabled; }
   void setPrePasteDelay(int ms) { m_prePasteDelay = ms; }
   void setKeyDelay(int us) {
@@ -149,6 +163,8 @@ private:
   }
 
   void handleCrash() {
+    if (!m_inputServerEnabled.value_or(false)) return;
+
     ++m_crashCount;
 
     if (m_crashCount > MAX_RESTART_ATTEMPTS) {
@@ -266,4 +282,5 @@ private:
   int m_crashCount = 0;
   std::string m_layout;
   std::optional<UndoRecord> m_undoRecord;
+  std::optional<bool> m_inputServerEnabled;
 };
