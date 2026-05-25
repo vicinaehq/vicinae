@@ -130,22 +130,19 @@ Item {
                             edit.insert(edit.cursorPosition, "\n");
                     }
                     Keys.onUpPressed: event => {
-                        if (completer.active) {
-                            event.accepted = true;
+                        event.accepted = completer.active;
+                        if (completer.active)
                             completer.moveUp();
-                        }
                     }
                     Keys.onDownPressed: event => {
-                        if (completer.active) {
-                            event.accepted = true;
+                        event.accepted = completer.active;
+                        if (completer.active)
                             completer.moveDown();
-                        }
                     }
                     Keys.onEscapePressed: event => {
-                        if (completer.active) {
-                            event.accepted = true;
+                        event.accepted = completer.active;
+                        if (completer.active)
                             completer.dismiss();
-                        }
                     }
                 }
             }
