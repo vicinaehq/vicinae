@@ -79,6 +79,7 @@ struct ClipboardSelectionOfferRecord {
 
 struct ClipboardSelectionRecord {
   std::vector<ClipboardSelectionOfferRecord> offers;
+  std::optional<QString> source;
 };
 
 class ClipboardDatabase {

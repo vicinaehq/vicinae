@@ -22,6 +22,10 @@ std::optional<ClipboardSelectionRecord> ClipboardDatabase::findSelection(const Q
     selection.offers.emplace_back(record);
   }
 
+  auto srcStmt = m_db.prepare("SELECT source FROM selection WHERE id = :id");
+  srcStmt.bind(":id", id);
+  if (srcStmt.step() && !srcStmt.isNull(0)) { selection.source = srcStmt.columnQString(0); }
+
   return selection;
 }
 

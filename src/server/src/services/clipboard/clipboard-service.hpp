@@ -18,8 +18,6 @@
 #include <qt6keychain/keychain.h>
 
 namespace Clipboard {
-[[maybe_unused]] static const char *CONCEALED_MIME_TYPE = "vicinae/concealed";
-
 using NoData = std::monostate;
 struct File {
   std::filesystem::path path;
@@ -34,10 +32,6 @@ struct Html {
 
 struct SelectionRecordHandle {
   QString id;
-};
-
-struct CopyOptions {
-  bool concealed = false;
 };
 
 using Content = std::variant<NoData, File, Text, Html, SelectionRecordHandle, ClipboardSelection>;
@@ -134,8 +128,6 @@ private:
    */
   QByteArray computeSelectionHash(const ClipboardSelection &selection) const;
   bool isClearSelection(const ClipboardSelection &selection) const;
-  static bool isConcealedSelection(const ClipboardSelection &selection);
-  static bool isPasswordSelection(const ClipboardSelection &selection);
 
   /**
    * Sanitize the passed selection by removing duplicate offers.

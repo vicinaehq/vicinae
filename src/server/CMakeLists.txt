@@ -606,12 +606,15 @@ if (APPLE)
 		src/services/app-service/macos/mac-app-database.mm
 		src/services/app-runtime/macos/mac-app-runtime.hpp
 		src/services/app-runtime/macos/mac-app-runtime.mm
+		src/services/clipboard/macos/macos-clipboard-server.hpp
+		src/services/clipboard/macos/macos-clipboard-server.mm
 	)
 	set_source_files_properties(
 		src/ui/image/mac-bundle-icon-loader.mm
 		src/services/app-service/macos/mac-app.mm
 		src/services/app-service/macos/mac-app-database.mm
 		src/services/app-runtime/macos/mac-app-runtime.mm
+		src/services/clipboard/macos/macos-clipboard-server.mm
 		PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
 else()
 	list(APPEND SRCS

@@ -1,5 +1,11 @@
 #include "qt-clipboard-server.hpp"
+#include <qlogging.h>
 #include <ranges>
+
+namespace {
+constexpr const char *CONCEALED_MARKER = "vicinae/concealed";
+constexpr const char *PASSWORD_MARKER = "x-kde-passwordManagerHint";
+} // namespace
 
 bool AbstractQtClipboardServer::start() {
   auto clip = QGuiApplication::clipboard();
@@ -12,10 +18,22 @@ bool AbstractQtClipboardServer::stop() {
   return true;
 }
 
-void AbstractQtClipboardServer::dataChanged() {
+bool AbstractQtClipboardServer::setClipboardContent(QMimeData *data, const Clipboard::CopyOptions &options) {
+  if (options.concealed) { data->setData(CONCEALED_MARKER, "1"); }
+  return AbstractClipboardServer::setClipboardContent(data, options);
+}
+
+std::optional<ClipboardSelection>
+AbstractQtClipboardServer::selectionFromMimeData(const QMimeData *mimeData) {
+  if (!mimeData) return ClipboardSelection{};
+
+  if (mimeData->hasFormat(CONCEALED_MARKER)) {
+    qInfo() << "Qt clipboard: dropping concealed selection";
+    return std::nullopt;
+  }
+
   ClipboardSelection selection;
-  auto clip = QGuiApplication::clipboard();
-  auto mimeData = clip->mimeData();
+  selection.isPassword = mimeData->hasFormat(PASSWORD_MARKER);
 
   if (mimeData->hasImage()) {
     // Prefer image formats in order: PNG > JPEG/JPG > SVG > anything else
@@ -71,7 +89,8 @@ void AbstractQtClipboardServer::dataChanged() {
   // We also want to index other formats that are not text, image, or legacy X11 target types.
 
   auto isIndexableFormat = [](const QString &fmt) {
-    return !isLegacyContentType(fmt) && !fmt.startsWith("text/") && !fmt.startsWith("image/");
+    return !isLegacyContentType(fmt) && !fmt.startsWith("text/") && !fmt.startsWith("image/") &&
+           fmt != PASSWORD_MARKER;
   };
 
   for (const auto &format : mimeData->formats() | std::views::filter(isIndexableFormat)) {
@@ -79,7 +98,13 @@ void AbstractQtClipboardServer::dataChanged() {
     selection.offers.emplace_back(ClipboardDataOffer{format, data});
   }
 
-  emit selectionAdded(selection);
+  return selection;
+}
+
+void AbstractQtClipboardServer::dataChanged() {
+  if (auto selection = selectionFromMimeData(QGuiApplication::clipboard()->mimeData())) {
+    emit selectionAdded(*selection);
+  }
 }
 
 bool AbstractQtClipboardServer::isLegacyContentType(const QString &str) {

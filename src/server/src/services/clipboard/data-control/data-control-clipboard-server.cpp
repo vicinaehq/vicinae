@@ -15,6 +15,8 @@
 #include "common/clipboard-protocol.hpp"
 
 static constexpr const char *HELPER_PROGRAM = "vicinae-data-control-server";
+static constexpr const char *CONCEALED_MARKER = "vicinae/concealed";
+static constexpr const char *PASSWORD_MARKER = "x-kde-passwordManagerHint";
 
 bool DataControlClipboardServer::isAlive() const { return m_process.isOpen(); }
 
@@ -89,17 +91,32 @@ void DataControlClipboardServer::handleRead() {
         if (auto err = glz::read_beve(selection, payload)) {
           qWarning() << "Failed to parse clipboard selection";
         } else {
-          ClipboardSelection cs;
-          cs.offers.reserve(selection.offers.size());
-
+          bool concealed = false;
           for (const auto &offer : selection.offers) {
-            cs.offers.push_back({
-                QString::fromStdString(offer.mime_type),
-                QByteArray(reinterpret_cast<const char *>(offer.data.data()), offer.data.size()),
-            });
+            if (offer.mime_type == CONCEALED_MARKER) {
+              concealed = true;
+              break;
+            }
           }
+          if (concealed) {
+            qInfo() << "data-control: dropping concealed selection";
+          } else {
+            ClipboardSelection cs;
+            cs.offers.reserve(selection.offers.size());
 
-          emit selectionAdded(cs);
+            for (const auto &offer : selection.offers) {
+              if (offer.mime_type == PASSWORD_MARKER) {
+                cs.isPassword = true;
+                continue;
+              }
+              cs.offers.push_back({
+                  QString::fromStdString(offer.mime_type),
+                  QByteArray(reinterpret_cast<const char *>(offer.data.data()), offer.data.size()),
+              });
+            }
+
+            emit selectionAdded(cs);
+          }
         }
       } else {
         qWarning() << "Unknown command tag from data-control-server:" << static_cast<int>(tag);
@@ -110,7 +127,9 @@ void DataControlClipboardServer::handleRead() {
   }
 }
 
-bool DataControlClipboardServer::setClipboardContent(QMimeData *data) {
+bool DataControlClipboardServer::setClipboardContent(QMimeData *data, const Clipboard::CopyOptions &options) {
+  if (options.concealed) { data->setData(CONCEALED_MARKER, "1"); }
+
   if (!QGuiApplication::focusWindow() && m_process.state() == QProcess::Running) {
     clipboard_proto::Selection selection;
     for (const auto &format : data->formats()) {
@@ -136,7 +155,7 @@ bool DataControlClipboardServer::setClipboardContent(QMimeData *data) {
     return true;
   }
 
-  return AbstractClipboardServer::setClipboardContent(data);
+  return AbstractClipboardServer::setClipboardContent(data, options);
 }
 
 DataControlClipboardServer::DataControlClipboardServer() {
