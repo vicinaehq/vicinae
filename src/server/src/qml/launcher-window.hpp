@@ -50,6 +50,7 @@ class LauncherWindow : public QObject {
   Q_PROPERTY(QObject *overlayHost READ overlayHost NOTIFY overlayChanged)
   Q_PROPERTY(int lsLayer READ lsLayer NOTIFY lsChanged)
   Q_PROPERTY(int lsKeyboardInteractivity READ lsKeyboardInteractivity NOTIFY lsChanged)
+  Q_PROPERTY(bool canPositionWindow READ canPositionWindow CONSTANT)
 
 public:
   explicit LauncherWindow(ApplicationContext &ctx, QObject *parent = nullptr);
@@ -84,6 +85,7 @@ public:
   QObject *overlayHost() const { return m_overlayHost; }
   int lsLayer() const { return m_lsLayer; }
   int lsKeyboardInteractivity() const { return m_lsKeyboardInteractivity; }
+  static bool canPositionWindow();
 
   Q_INVOKABLE void expand();
   Q_INVOKABLE void forwardSearchText(const QString &text);

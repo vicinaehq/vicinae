@@ -524,6 +524,8 @@ QRect LauncherWindow::cursorScreenGeometry() const {
   return screen ? screen->geometry() : QRect();
 }
 
+bool LauncherWindow::canPositionWindow() { return Environment::supportsArbitraryWindowPlacement(); }
+
 void LauncherWindow::openFooterMenu() { m_footerPanel->toggle(); }
 
 void LauncherWindow::buildFooterMenu() {
