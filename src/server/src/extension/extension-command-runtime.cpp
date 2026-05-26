@@ -23,6 +23,7 @@
 #include <ranges>
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "extension/manager/extension-manager.hpp"
+#include "ui/toast/toast.hpp"
 #include "vicinae.hpp"
 #include "generated/manager.hpp"
 
@@ -145,6 +146,13 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
 void ExtensionCommandRuntime::unload() {
   RelativeAssetResolver::instance()->removePath(m_command->assetPath());
   auto manager = context()->services->extensionManager();
+  auto toast = context()->services->toastService();
+
+  // make sure we are not carrying any loading state outside of the command
+  // it's fine to let other toasts dismiss themselves automatically after the default timeout.
+  if (auto const current = toast->currentToast()) {
+    if (current->priority() == ToastStyle::Dynamic) toast->clear();
+  }
 
   manager->client().manager()->unload(m_sessionId);
 
