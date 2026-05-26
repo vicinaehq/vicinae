@@ -274,6 +274,25 @@ static void applyCircleMask(QImage &image) {
   image = masked;
 }
 
+static void applyPostTransforms(QImage &image, const QColor &fg, bool circleMask) {
+  if (image.isNull()) return;
+  if (fg.isValid()) applyFillColor(image, fg);
+  if (circleMask) applyCircleMask(image);
+}
+
+template <typename Render>
+static void dispatchRender(ViciImageResponse *response, QColor fg, bool circleMask, Render render) {
+  imageDecodingPool().start([response, fg, circleMask, render = std::move(render)]() {
+    if (response->isCancelled()) {
+      response->finish({});
+      return;
+    }
+    QImage img = render();
+    applyPostTransforms(img, fg, circleMask);
+    response->finish(std::move(img));
+  });
+}
+
 struct ParsedId {
   QString type;
   QString name;
@@ -343,10 +362,10 @@ void ViciImageResponse::tryFallback(QImage &image) {
     QColor const fg =
         fb.fg.isValid() ? fb.fg : ThemeService::instance().theme().resolve(SemanticColor::Foreground);
     image = renderBuiltinSvg(fb.name, m_size, fg, fb.bg);
-    if (fb.circleMask && !image.isNull()) applyCircleMask(image);
+    applyPostTransforms(image, QColor(), fb.circleMask);
   } else if (fb.type == QStringLiteral("system")) {
     image = renderSystemIcon(fb.name, m_size);
-    if (!image.isNull()) applyFillColor(image, fb.fg);
+    applyPostTransforms(image, fb.fg, fb.circleMask);
   }
 }
 
@@ -367,118 +386,58 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id,
   else if (parsed.type != QStringLiteral("builtin"))
     response->setFallback(DEFAULT_FALLBACK, size);
 
+  QColor const fg = parsed.fg;
+  bool const circle = parsed.circleMask;
+
   if (parsed.type == QStringLiteral("builtin")) {
-    QColor fg = parsed.fg;
-    if (!fg.isValid()) fg = ThemeService::instance().theme().resolve(SemanticColor::Foreground);
-    bool const circle = parsed.circleMask;
+    QColor builtinFg = fg;
+    if (!builtinFg.isValid()) builtinFg = ThemeService::instance().theme().resolve(SemanticColor::Foreground);
     QColor const bg = parsed.bg;
-    imageDecodingPool().start([response, name = parsed.name, size, fg, bg, circle]() {
-      if (response->isCancelled()) {
-        response->finish({});
-        return;
-      }
-      QImage img = renderBuiltinSvg(name, size, fg, bg);
-      if (circle && !img.isNull()) applyCircleMask(img);
-      response->finish(std::move(img));
+    dispatchRender(response, QColor(), circle, [name = parsed.name, size, builtinFg, bg]() {
+      return renderBuiltinSvg(name, size, builtinFg, bg);
     });
 
   } else if (parsed.type == QStringLiteral("emoji")) {
-    imageDecodingPool().start([response, name = parsed.name, size]() {
-      if (response->isCancelled()) {
-        response->finish({});
-        return;
-      }
-      QImage img = renderEmoji(name, size);
-      response->finish(std::move(img));
-    });
+    dispatchRender(response, fg, circle, [name = parsed.name, size]() { return renderEmoji(name, size); });
 
   } else if (parsed.type == QStringLiteral("system")) {
-    QColor const fg = parsed.fg;
-    imageDecodingPool().start([response, name = parsed.name, size, fg]() {
-      if (response->isCancelled()) {
-        response->finish({});
-        return;
-      }
-      QImage img = renderSystemIcon(name, size);
-      if (!img.isNull()) applyFillColor(img, fg);
-      response->finish(std::move(img));
-    });
+    dispatchRender(response, fg, circle,
+                   [name = parsed.name, size]() { return renderSystemIcon(name, size); });
 
 #ifdef Q_OS_MACOS
   } else if (parsed.type == QStringLiteral("bundle")) {
-    QColor const fg = parsed.fg;
-    bool const circle = parsed.circleMask;
-    imageDecodingPool().start([response, path = parsed.name, size, fg, circle]() {
-      if (response->isCancelled()) {
-        response->finish({});
-        return;
-      }
-      QImage img = renderMacBundleIcon(path, size);
-      if (!img.isNull()) applyFillColor(img, fg);
-      if (circle && !img.isNull()) applyCircleMask(img);
-      response->finish(std::move(img));
-    });
+    dispatchRender(response, fg, circle,
+                   [path = parsed.name, size]() { return renderMacBundleIcon(path, size); });
 #endif
 
   } else if (parsed.type == QStringLiteral("local")) {
     QString const path = parsed.name;
-    bool const circle = parsed.circleMask;
-    QColor const fg = parsed.fg;
-
     if (path.endsWith(QStringLiteral(".svg"), Qt::CaseInsensitive)) {
-      imageDecodingPool().start([response, path, size, circle, fg]() {
-        if (response->isCancelled()) {
-          response->finish({});
-          return;
-        }
-        QImage img = renderLocalSvg(path, size);
-        if (!img.isNull()) applyFillColor(img, fg);
-        if (circle && !img.isNull()) applyCircleMask(img);
-        response->finish(std::move(img));
-      });
+      dispatchRender(response, fg, circle, [path, size]() { return renderLocalSvg(path, size); });
     } else {
-      imageDecodingPool().start([response, path, size, circle, fg]() {
-        if (response->isCancelled()) {
-          response->finish({});
-          return;
-        }
-        QImage img = renderLocalRaster(path, size);
-        if (!img.isNull()) applyFillColor(img, fg);
-        if (circle && !img.isNull()) applyCircleMask(img);
-        response->finish(std::move(img));
-      });
+      dispatchRender(response, fg, circle, [path, size]() { return renderLocalRaster(path, size); });
     }
 
   } else if (parsed.type == QStringLiteral("file-icon")) {
     QString const path = parsed.name;
-    QColor const explicitFg = parsed.fg;
     QColor const defaultFg = ThemeService::instance().theme().resolve(SemanticColor::Foreground);
     QColor const bg = parsed.bg;
-    bool const circle = parsed.circleMask;
-    imageDecodingPool().start([response, path, size, explicitFg, defaultFg, bg, circle]() {
-      if (response->isCancelled()) {
-        response->finish({});
-        return;
-      }
-
+    dispatchRender(response, QColor(), circle, [path, size, fg, defaultFg, bg]() {
       QMimeDatabase const db;
       auto const mime = db.mimeTypeForFile(path, QMimeDatabase::MatchDefault);
 
       QImage img = renderSystemIcon(mime.iconName(), size);
       if (img.isNull()) img = renderSystemIcon(mime.genericIconName(), size);
 
-      if (img.isNull()) {
-        QString const builtinName = mime.name() == QStringLiteral("inode/directory")
-                                        ? QStringLiteral("folder")
-                                        : QStringLiteral("blank-document");
-        QColor const fg = explicitFg.isValid() ? explicitFg : defaultFg;
-        img = renderBuiltinSvg(builtinName, size, fg, bg);
-      } else if (explicitFg.isValid()) {
-        applyFillColor(img, explicitFg);
+      if (!img.isNull()) {
+        if (fg.isValid()) applyFillColor(img, fg);
+        return img;
       }
 
-      if (circle && !img.isNull()) applyCircleMask(img);
-      response->finish(std::move(img));
+      QString const builtinName = mime.name() == QStringLiteral("inode/directory")
+                                      ? QStringLiteral("folder")
+                                      : QStringLiteral("blank-document");
+      return renderBuiltinSvg(builtinName, size, fg.isValid() ? fg : defaultFg, bg);
     });
 
   } else if (parsed.type == QStringLiteral("http")) {
@@ -487,8 +446,6 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id,
       url.insert(6, '/');
     else if (url.startsWith(QStringLiteral("http:/")) && !url.startsWith(QStringLiteral("http://")))
       url.insert(5, '/');
-    bool const circle = parsed.circleMask;
-    QColor const fg = parsed.fg;
     QMetaObject::invokeMethod(
         qApp,
         [response, url, size, circle, fg, id]() {
@@ -508,16 +465,8 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id,
                                ImageDataCache::instance().storeAnimated(id, data);
                              else
                                ImageDataCache::instance().storeNotAnimated(id);
-                             imageDecodingPool().start([response, data, size, circle, fg]() {
-                               if (response->isCancelled()) {
-                                 response->finish({});
-                                 return;
-                               }
-                               QImage img = decodeImageData(data, size);
-                               if (!img.isNull()) applyFillColor(img, fg);
-                               if (circle && !img.isNull()) applyCircleMask(img);
-                               response->finish(std::move(img));
-                             });
+                             dispatchRender(response, fg, circle,
+                                            [data, size]() { return decodeImageData(data, size); });
                            });
         },
         Qt::QueuedConnection);
@@ -525,7 +474,7 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id,
   } else if (parsed.type == QStringLiteral("favicon")) {
     QMetaObject::invokeMethod(
         qApp,
-        [response, domain = parsed.name, size]() {
+        [response, domain = parsed.name, size, fg, circle]() {
           if (response->isCancelled()) {
             response->finish({});
             return;
@@ -538,40 +487,31 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id,
           auto future = svc->makeRequest(domain);
           // No parent: watcher must live on main thread, response lives on reader thread
           auto *watcher = new QFutureWatcher<FaviconService::FaviconResponse>;
-          QObject::connect(watcher, &QFutureWatcherBase::finished, qApp, [response, watcher, size]() {
-            auto result = watcher->result();
-            if (!response->isCancelled() && result) {
-              QImage img =
-                  result.value().scaled(size, Qt::KeepAspectRatio, Qt::SmoothTransformation).toImage();
-              response->finish(std::move(img));
-            } else {
-              response->finish({});
-            }
-            watcher->deleteLater();
-          });
+          QObject::connect(
+              watcher, &QFutureWatcherBase::finished, qApp, [response, watcher, size, fg, circle]() {
+                auto result = watcher->result();
+                if (!response->isCancelled() && result) {
+                  QImage img =
+                      result.value().scaled(size, Qt::KeepAspectRatio, Qt::SmoothTransformation).toImage();
+                  applyPostTransforms(img, fg, circle);
+                  response->finish(std::move(img));
+                } else {
+                  response->finish({});
+                }
+                watcher->deleteLater();
+              });
           watcher->setFuture(future);
         },
         Qt::QueuedConnection);
 
   } else if (parsed.type == QStringLiteral("datauri")) {
     QString const dataStr = parsed.name;
-    bool const circle = parsed.circleMask;
-    QColor const fg = parsed.fg;
-    imageDecodingPool().start([response, dataStr, size, circle, fg, id]() {
-      if (response->isCancelled()) {
-        response->finish({});
-        return;
-      }
-
+    dispatchRender(response, fg, circle, [dataStr, size, id]() {
       DataUri const uri(dataStr);
       QByteArray const decoded = uri.decodeContent();
-      if (decoded.isEmpty()) {
-        response->finish({});
-        return;
-      }
+      if (decoded.isEmpty()) return QImage();
 
       bool const isSvg = uri.mediaType().contains(QStringLiteral("svg"));
-
       if (!isSvg) {
         if (isGif(decoded))
           ImageDataCache::instance().storeAnimated(id, decoded);
@@ -579,25 +519,18 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id,
           ImageDataCache::instance().storeNotAnimated(id);
       }
 
-      QImage img;
-      if (isSvg) {
-        QSvgRenderer renderer(decoded);
-        if (renderer.isValid()) {
-          img = QImage(size, QImage::Format_ARGB32_Premultiplied);
-          img.fill(Qt::transparent);
-          QPainter painter(&img);
-          painter.setRenderHint(QPainter::Antialiasing, true);
-          painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
-          renderer.setAspectRatioMode(Qt::KeepAspectRatio);
-          renderer.render(&painter, img.rect());
-        }
-      } else {
-        img = decodeImageData(decoded, size);
-      }
+      if (!isSvg) return decodeImageData(decoded, size);
 
-      if (!img.isNull()) applyFillColor(img, fg);
-      if (circle && !img.isNull()) applyCircleMask(img);
-      response->finish(std::move(img));
+      QSvgRenderer renderer(decoded);
+      if (!renderer.isValid()) return QImage();
+      QImage img(size, QImage::Format_ARGB32_Premultiplied);
+      img.fill(Qt::transparent);
+      QPainter painter(&img);
+      painter.setRenderHint(QPainter::Antialiasing, true);
+      painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+      renderer.setAspectRatioMode(Qt::KeepAspectRatio);
+      renderer.render(&painter, img.rect());
+      return img;
     });
 
   } else {
