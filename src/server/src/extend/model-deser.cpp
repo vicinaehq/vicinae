@@ -1144,6 +1144,7 @@ ParsedRenderData parseRenderPayload(std::string_view json) {
 
   thread_local RenderPayload payload;
   payload.views.clear();
+
   if (auto err = glz::read<PARSE_OPTS>(payload, json)) {
     qWarning() << "parseRenderPayload: failed:" << QString::fromStdString(glz::format_error(err, json));
     return {};
@@ -1185,9 +1186,9 @@ ParsedRenderData parseRenderPayload(std::string_view json) {
   auto t2 = std::chrono::steady_clock::now();
   auto parseMs = std::chrono::duration<double, std::milli>(t1 - t0).count();
   auto convertMs = std::chrono::duration<double, std::milli>(t2 - t1).count();
-  qWarning().nospace() << "[PERF] parseRenderPayload: glaze=" << parseMs << "ms, convert=" << convertMs
-                       << "ms, total=" << (parseMs + convertMs)
-                       << "ms, json=" << (json.size() / 1024.0 / 1024.0) << "MB";
+  qDebug().nospace() << "[PERF] parseRenderPayload: glaze=" << parseMs << "ms, convert=" << convertMs
+                     << "ms, total=" << (parseMs + convertMs)
+                     << "ms, json=" << (json.size() / 1024.0 / 1024.0) << "MB";
 
   return result;
 }
