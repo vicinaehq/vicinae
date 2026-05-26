@@ -39,6 +39,9 @@ static QThreadPool &imageDecodingPool() {
   return pool;
 }
 
+class ViciImageResponse;
+static void dispatchForId(ViciImageResponse *response, const QString &id, const QSize &size);
+
 class ViciImageResponse : public QQuickImageResponse {
   Q_OBJECT
 
@@ -72,7 +75,7 @@ public:
       emit finished();
       return;
     }
-    tryFallback(image);
+    if (image.isNull() && tryDispatchFallback()) return;
     image.setDevicePixelRatio(m_dpr);
     m_image = std::move(image);
     emit finished();
@@ -85,14 +88,26 @@ public:
       QTimer::singleShot(0, this, &QQuickImageResponse::finished);
       return;
     }
-    tryFallback(image);
+    if (image.isNull() && !m_fallback.isEmpty()) {
+      QString const fb = m_fallback;
+      m_fallback.clear();
+      QSize const size = m_size;
+      QTimer::singleShot(0, this, [this, fb, size]() { dispatchForId(this, fb, size); });
+      return;
+    }
     image.setDevicePixelRatio(m_dpr);
     m_image = std::move(image);
     QTimer::singleShot(0, this, &QQuickImageResponse::finished);
   }
 
 private:
-  void tryFallback(QImage &image);
+  bool tryDispatchFallback() {
+    if (m_fallback.isEmpty()) return false;
+    QString const fb = m_fallback;
+    m_fallback.clear();
+    dispatchForId(this, fb, m_size);
+    return true;
+  }
 
   QString m_id;
   qreal m_dpr;
@@ -376,41 +391,8 @@ static ParsedId parseId(const QString &id) {
   return result;
 }
 
-void ViciImageResponse::tryFallback(QImage &image) {
-  if (!image.isNull() || m_fallback.isEmpty()) return;
-
-  QString const fallback = m_fallback;
-  m_fallback.clear();
-  auto fb = parseId(fallback);
-
-  if (fb.type == QStringLiteral("builtin")) {
-    QColor const fg =
-        fb.fg.isValid() ? fb.fg : ThemeService::instance().theme().resolve(SemanticColor::Foreground);
-    image = renderBuiltinSvg(fb.name, m_size, fg, fb.bg);
-    applyPostTransforms(image, QColor(), fb.mask);
-  } else if (fb.type == QStringLiteral("system")) {
-    image = renderSystemIcon(fb.name, m_size);
-    applyPostTransforms(image, fb.fg, fb.mask);
-  }
-}
-
-QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id, const QSize &requestedSize) {
-
-  qreal const dpr = qGuiApp->devicePixelRatio();
-  auto *response = new ViciImageResponse(dpr);
-  response->setId(id);
-  QSize const logical = requestedSize.isValid() && !requestedSize.isEmpty() ? requestedSize : QSize(64, 64);
-  QSize const size(qCeil(logical.width() * dpr), qCeil(logical.height() * dpr));
+static void dispatchForId(ViciImageResponse *response, const QString &id, const QSize &size) {
   auto parsed = parseId(id);
-
-  static const QString DEFAULT_FALLBACK =
-      QStringLiteral("builtin:") + BuiltinIconService::nameForIcon(BuiltinIconService::unknownIcon());
-
-  if (!parsed.fallback.isEmpty())
-    response->setFallback(parsed.fallback, size);
-  else if (parsed.type != QStringLiteral("builtin"))
-    response->setFallback(DEFAULT_FALLBACK, size);
-
   QColor const fg = parsed.fg;
   auto const mask = parsed.mask;
 
@@ -560,7 +542,25 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id,
   } else {
     response->finishDeferred({});
   }
+}
 
+QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id, const QSize &requestedSize) {
+  qreal const dpr = qGuiApp->devicePixelRatio();
+  auto *response = new ViciImageResponse(dpr);
+  response->setId(id);
+  QSize const logical = requestedSize.isValid() && !requestedSize.isEmpty() ? requestedSize : QSize(64, 64);
+  QSize const size(qCeil(logical.width() * dpr), qCeil(logical.height() * dpr));
+  auto const parsed = parseId(id);
+
+  static const QString DEFAULT_FALLBACK =
+      QStringLiteral("builtin:") + BuiltinIconService::nameForIcon(BuiltinIconService::unknownIcon());
+
+  if (!parsed.fallback.isEmpty())
+    response->setFallback(parsed.fallback, size);
+  else if (parsed.type != QStringLiteral("builtin"))
+    response->setFallback(DEFAULT_FALLBACK, size);
+
+  dispatchForId(response, id, size);
   return response;
 }
 
