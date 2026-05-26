@@ -17,7 +17,7 @@ export type Image = {
  * Renders the system icon associated with the given file path.
  * @category Image
  */
-export type FileIcon = { fileIcon: string };
+type FileIcon = { fileIcon: string };
 
 /**
  * @category Image
