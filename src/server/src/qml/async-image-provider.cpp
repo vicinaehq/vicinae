@@ -555,10 +555,7 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id,
   static const QString DEFAULT_FALLBACK =
       QStringLiteral("builtin:") + BuiltinIconService::nameForIcon(BuiltinIconService::unknownIcon());
 
-  if (!parsed.fallback.isEmpty())
-    response->setFallback(parsed.fallback, size);
-  else if (parsed.type != QStringLiteral("builtin"))
-    response->setFallback(DEFAULT_FALLBACK, size);
+  response->setFallback(parsed.fallback.isEmpty() ? DEFAULT_FALLBACK : parsed.fallback, size);
 
   dispatchForId(response, id, size);
   return response;
