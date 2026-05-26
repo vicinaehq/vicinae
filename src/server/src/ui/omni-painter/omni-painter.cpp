@@ -56,12 +56,8 @@ QString OmniPainter::serializeColor(const ColorLike &color) {
 }
 
 OmniPainter::ImageMaskType OmniPainter::maskForName(const QString &name) {
-  if (name == "circle") {
-    return CircleMask;
-  } else if (name == "roundedRectangle") {
-    return RoundedRectangleMask;
-  }
-
+  if (name == "circle") return CircleMask;
+  if (name == "roundedRectangle") return RoundedRectangleMask;
   return NoMask;
 }
 

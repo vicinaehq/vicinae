@@ -274,21 +274,46 @@ static void applyCircleMask(QImage &image) {
   image = masked;
 }
 
-static void applyPostTransforms(QImage &image, const QColor &fg, bool circleMask) {
+static void applyRoundedRectMask(QImage &image) {
+  QImage masked(image.size(), QImage::Format_ARGB32_Premultiplied);
+  masked.fill(Qt::transparent);
+  QPainter painter(&masked);
+  painter.setRenderHint(QPainter::Antialiasing, true);
+  painter.setBrush(Qt::white);
+  painter.setPen(Qt::NoPen);
+  int const side = qMin(masked.width(), masked.height());
+  qreal const radius = side * 0.25;
+  painter.drawRoundedRect(masked.rect(), radius, radius);
+  painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
+  painter.drawImage(0, 0, image);
+  image = masked;
+}
+
+static void applyPostTransforms(QImage &image, const QColor &fg, OmniPainter::ImageMaskType mask) {
   if (image.isNull()) return;
   if (fg.isValid()) applyFillColor(image, fg);
-  if (circleMask) applyCircleMask(image);
+  switch (mask) {
+  case OmniPainter::CircleMask:
+    applyCircleMask(image);
+    break;
+  case OmniPainter::RoundedRectangleMask:
+    applyRoundedRectMask(image);
+    break;
+  case OmniPainter::NoMask:
+    break;
+  }
 }
 
 template <typename Render>
-static void dispatchRender(ViciImageResponse *response, QColor fg, bool circleMask, Render render) {
-  imageDecodingPool().start([response, fg, circleMask, render = std::move(render)]() {
+static void dispatchRender(ViciImageResponse *response, QColor fg, OmniPainter::ImageMaskType mask,
+                           Render render) {
+  imageDecodingPool().start([response, fg, mask, render = std::move(render)]() {
     if (response->isCancelled()) {
       response->finish({});
       return;
     }
     QImage img = render();
-    applyPostTransforms(img, fg, circleMask);
+    applyPostTransforms(img, fg, mask);
     response->finish(std::move(img));
   });
 }
@@ -298,7 +323,7 @@ struct ParsedId {
   QString name;
   QColor fg;
   QColor bg;
-  bool circleMask = false;
+  OmniPainter::ImageMaskType mask = OmniPainter::NoMask;
   QString fallback;
 };
 
@@ -312,8 +337,8 @@ static void parseParams(const QString &str, QChar sep, ParsedId &result) {
       result.fg = QColor(val);
     else if (key == QStringLiteral("bg"))
       result.bg = QColor(val);
-    else if (key == QStringLiteral("mask") && val == QStringLiteral("circle"))
-      result.circleMask = true;
+    else if (key == QStringLiteral("mask"))
+      result.mask = OmniPainter::maskForName(val);
     else if (key == QStringLiteral("fallback"))
       result.fallback = val;
   }
@@ -362,10 +387,10 @@ void ViciImageResponse::tryFallback(QImage &image) {
     QColor const fg =
         fb.fg.isValid() ? fb.fg : ThemeService::instance().theme().resolve(SemanticColor::Foreground);
     image = renderBuiltinSvg(fb.name, m_size, fg, fb.bg);
-    applyPostTransforms(image, QColor(), fb.circleMask);
+    applyPostTransforms(image, QColor(), fb.mask);
   } else if (fb.type == QStringLiteral("system")) {
     image = renderSystemIcon(fb.name, m_size);
-    applyPostTransforms(image, fb.fg, fb.circleMask);
+    applyPostTransforms(image, fb.fg, fb.mask);
   }
 }
 
@@ -387,42 +412,41 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id,
     response->setFallback(DEFAULT_FALLBACK, size);
 
   QColor const fg = parsed.fg;
-  bool const circle = parsed.circleMask;
+  auto const mask = parsed.mask;
 
   if (parsed.type == QStringLiteral("builtin")) {
     QColor builtinFg = fg;
     if (!builtinFg.isValid()) builtinFg = ThemeService::instance().theme().resolve(SemanticColor::Foreground);
     QColor const bg = parsed.bg;
-    dispatchRender(response, QColor(), circle, [name = parsed.name, size, builtinFg, bg]() {
+    dispatchRender(response, QColor(), mask, [name = parsed.name, size, builtinFg, bg]() {
       return renderBuiltinSvg(name, size, builtinFg, bg);
     });
 
   } else if (parsed.type == QStringLiteral("emoji")) {
-    dispatchRender(response, fg, circle, [name = parsed.name, size]() { return renderEmoji(name, size); });
+    dispatchRender(response, fg, mask, [name = parsed.name, size]() { return renderEmoji(name, size); });
 
   } else if (parsed.type == QStringLiteral("system")) {
-    dispatchRender(response, fg, circle,
-                   [name = parsed.name, size]() { return renderSystemIcon(name, size); });
+    dispatchRender(response, fg, mask, [name = parsed.name, size]() { return renderSystemIcon(name, size); });
 
 #ifdef Q_OS_MACOS
   } else if (parsed.type == QStringLiteral("bundle")) {
-    dispatchRender(response, fg, circle,
+    dispatchRender(response, fg, mask,
                    [path = parsed.name, size]() { return renderMacBundleIcon(path, size); });
 #endif
 
   } else if (parsed.type == QStringLiteral("local")) {
     QString const path = parsed.name;
     if (path.endsWith(QStringLiteral(".svg"), Qt::CaseInsensitive)) {
-      dispatchRender(response, fg, circle, [path, size]() { return renderLocalSvg(path, size); });
+      dispatchRender(response, fg, mask, [path, size]() { return renderLocalSvg(path, size); });
     } else {
-      dispatchRender(response, fg, circle, [path, size]() { return renderLocalRaster(path, size); });
+      dispatchRender(response, fg, mask, [path, size]() { return renderLocalRaster(path, size); });
     }
 
   } else if (parsed.type == QStringLiteral("file-icon")) {
     QString const path = parsed.name;
     QColor const defaultFg = ThemeService::instance().theme().resolve(SemanticColor::Foreground);
     QColor const bg = parsed.bg;
-    dispatchRender(response, QColor(), circle, [path, size, fg, defaultFg, bg]() {
+    dispatchRender(response, QColor(), mask, [path, size, fg, defaultFg, bg]() {
       QMimeDatabase const db;
       auto const mime = db.mimeTypeForFile(path, QMimeDatabase::MatchDefault);
 
@@ -448,14 +472,14 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id,
       url.insert(5, '/');
     QMetaObject::invokeMethod(
         qApp,
-        [response, url, size, circle, fg, id]() {
+        [response, url, size, mask, fg, id]() {
           if (response->isCancelled()) {
             response->finish({});
             return;
           }
           auto *reply = NetworkFetcher::instance()->fetch(QUrl(url));
           QObject::connect(reply, &FetchReply::finished, qApp,
-                           [response, reply, size, circle, fg, id](const QByteArray &data) {
+                           [response, reply, size, mask, fg, id](const QByteArray &data) {
                              reply->deleteLater();
                              if (response->isCancelled()) {
                                response->finish({});
@@ -465,7 +489,7 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id,
                                ImageDataCache::instance().storeAnimated(id, data);
                              else
                                ImageDataCache::instance().storeNotAnimated(id);
-                             dispatchRender(response, fg, circle,
+                             dispatchRender(response, fg, mask,
                                             [data, size]() { return decodeImageData(data, size); });
                            });
         },
@@ -474,7 +498,7 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id,
   } else if (parsed.type == QStringLiteral("favicon")) {
     QMetaObject::invokeMethod(
         qApp,
-        [response, domain = parsed.name, size, fg, circle]() {
+        [response, domain = parsed.name, size, fg, mask]() {
           if (response->isCancelled()) {
             response->finish({});
             return;
@@ -488,12 +512,12 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id,
           // No parent: watcher must live on main thread, response lives on reader thread
           auto *watcher = new QFutureWatcher<FaviconService::FaviconResponse>;
           QObject::connect(
-              watcher, &QFutureWatcherBase::finished, qApp, [response, watcher, size, fg, circle]() {
+              watcher, &QFutureWatcherBase::finished, qApp, [response, watcher, size, fg, mask]() {
                 auto result = watcher->result();
                 if (!response->isCancelled() && result) {
                   QImage img =
                       result.value().scaled(size, Qt::KeepAspectRatio, Qt::SmoothTransformation).toImage();
-                  applyPostTransforms(img, fg, circle);
+                  applyPostTransforms(img, fg, mask);
                   response->finish(std::move(img));
                 } else {
                   response->finish({});
@@ -506,7 +530,7 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id,
 
   } else if (parsed.type == QStringLiteral("datauri")) {
     QString const dataStr = parsed.name;
-    dispatchRender(response, fg, circle, [dataStr, size, id]() {
+    dispatchRender(response, fg, mask, [dataStr, size, id]() {
       DataUri const uri(dataStr);
       QByteArray const decoded = uri.decodeContent();
       if (decoded.isEmpty()) return QImage();

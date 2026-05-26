@@ -66,7 +66,7 @@ struct ImageObjectWire {
   std::optional<ImageSourceVariant> source;
   std::optional<ImageSourceVariant> fallback;
   std::optional<ColorLikeWire> tintColor;
-  std::optional<std::string> mask;
+  std::optional<OmniPainter::ImageMaskType> mask;
   std::optional<std::string> fileIcon;
 };
 
@@ -99,7 +99,7 @@ struct GridContentObjWire {
   std::optional<ImageSourceVariant> source;
   std::optional<ImageSourceVariant> fallback;
   std::optional<ColorLikeWire> tintColor;
-  std::optional<std::string> mask;
+  std::optional<OmniPainter::ImageMaskType> mask;
   std::optional<std::string> fileIcon;
 };
 
@@ -110,7 +110,7 @@ struct ImageWrappedObjWire {
   std::optional<ImageSourceVariant> source;
   std::optional<ImageSourceVariant> fallback;
   std::optional<ColorLikeWire> tintColor;
-  std::optional<std::string> mask;
+  std::optional<OmniPainter::ImageMaskType> mask;
   std::optional<std::string> fileIcon;
 };
 
@@ -130,7 +130,7 @@ template <> struct glz::meta<GridInset> {
 template <> struct glz::meta<OmniPainter::ImageMaskType> {
   using enum OmniPainter::ImageMaskType;
   static constexpr auto value =
-      glz::enumerate("circle", CircleMask, "roundedRectangle", RoundedRectangleMask);
+      glz::enumerate("None", NoMask, "Circle", CircleMask, "RoundedRectangle", RoundedRectangleMask);
 };
 
 struct ShortcutObjWire {
@@ -440,7 +440,7 @@ static ImageLikeModel toImageLike(ImageLikeWire v) {
           model.source = toImageSource(std::move(*w.source));
           if (w.fallback) model.fallback = toImageSource(std::move(*w.fallback));
           if (w.tintColor) model.tintColor = toColorLike(std::move(*w.tintColor));
-          if (w.mask) model.mask = OmniPainter::maskForName(toQStr(*w.mask));
+          if (w.mask) model.mask = *w.mask;
           return model;
         }
         if (w.fileIcon) return ExtensionFileIconModel{.file = *w.fileIcon};
@@ -468,7 +468,7 @@ static ImageLikeModel toImageWrapped(ImageWrappedWire v) {
           model.source = toImageSource(std::move(*w.source));
           if (w.fallback) model.fallback = toImageSource(std::move(*w.fallback));
           if (w.tintColor) model.tintColor = toColorLike(std::move(*w.tintColor));
-          if (w.mask) model.mask = OmniPainter::maskForName(toQStr(*w.mask));
+          if (w.mask) model.mask = *w.mask;
           return model;
         }
         if (w.fileIcon) return ExtensionFileIconModel{.file = *w.fileIcon};
@@ -489,7 +489,7 @@ static GridItemViewModel::Content toGridContent(GridContentWire v, std::optional
           model.source = toImageSource(std::move(*w.source));
           if (w.fallback) model.fallback = toImageSource(std::move(*w.fallback));
           if (w.tintColor) model.tintColor = toColorLike(std::move(*w.tintColor));
-          if (w.mask) model.mask = OmniPainter::maskForName(toQStr(*w.mask));
+          if (w.mask) model.mask = *w.mask;
           return model;
         }
         if (w.fileIcon) return ExtensionFileIconModel{.file = *w.fileIcon};
