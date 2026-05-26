@@ -52,10 +52,11 @@ struct ColorLike {
 };
 
 struct Image {
-  source: ImageSource;
+  source?: ImageSource;
   fallback?: ImageSource;
   mask?: ImageMask;
   tintColor?: ColorLike;
+  fileIcon?: string;
 };
 
 // UI Service

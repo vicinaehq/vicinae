@@ -14,16 +14,23 @@ export type Image = {
 };
 
 /**
+ * Renders the system icon associated with the given file path.
  * @category Image
  */
-export type ImageLike = Image.ImageLike; // TODO: FileIcon
+export type FileIcon = { fileIcon: string };
+
+/**
+ * @category Image
+ */
+export type ImageLike = Image.ImageLike;
 
 export type SerializedImageLike =
 	| URL
 	| Image.Asset
 	| Icon
 	| api.Image
-	| Image.ThemedImage;
+	| Image.ThemedImage
+	| FileIcon;
 
 /**
  * @category Image
@@ -34,13 +41,24 @@ export namespace Image {
 	export type Fallback = Source;
 	export type Source = URL | Asset | ThemedSource;
 	export type ThemedImage = { light: URL | Asset; dark: URL | Asset };
-	export type ImageLike = URL | Image.Asset | Icon | Image | Image.ThemedImage;
+	export type ImageLike =
+		| URL
+		| Image.Asset
+		| Icon
+		| Image
+		| Image.ThemedImage
+		| FileIcon;
 
 	export enum Mask {
 		Circle = "circle",
 		RoundedRectangle = "roundedRectangle",
 	}
 }
+
+const isFileIcon = (v: unknown): v is FileIcon =>
+	typeof v === "object" &&
+	v !== null &&
+	typeof (v as FileIcon).fileIcon === "string";
 
 const maskMap: Record<Image.Mask, api.ImageMask> = {
 	[Image.Mask.Circle]: "Circle",
@@ -62,6 +80,10 @@ export const serializeProtoImage = (image: ImageLike): api.Image => {
 
 	if (image instanceof URL || typeof image === "string") {
 		return { source: { raw: image.toString() } };
+	}
+
+	if (isFileIcon(image)) {
+		return { fileIcon: image.fileIcon };
 	}
 
 	const img = image as Image;

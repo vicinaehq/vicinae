@@ -3,7 +3,7 @@ export * from "./components/index.js";
 export * from "./hooks/index.js";
 export { Color, ColorLike } from "./color.js";
 export * from "./keyboard.js";
-export { ImageLike, Image } from "./image.js";
+export { ImageLike, Image, FileIcon } from "./image.js";
 export * from "./icon.js";
 export * from "./environment.js";
 export * from "./controls.js";

@@ -124,10 +124,11 @@ export type ColorLike = {
 };
 
 export type Image = {
-	source: ImageSource;
+	source?: ImageSource;
 	fallback?: ImageSource;
 	mask?: ImageMask;
 	tintColor?: ColorLike;
+	fileIcon?: string;
 };
 
 export type ConfirmAlertAction = {

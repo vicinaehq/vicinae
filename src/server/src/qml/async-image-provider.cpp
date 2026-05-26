@@ -16,6 +16,7 @@
 #include <QImageReader>
 #include <QPainter>
 #include <QQuickTextureFactory>
+#include <QMimeDatabase>
 #include <QSvgRenderer>
 #include <QFutureWatcher>
 #include <QtMath>
@@ -447,6 +448,38 @@ QQuickImageResponse *AsyncImageProvider::requestImageResponse(const QString &id,
         response->finish(std::move(img));
       });
     }
+
+  } else if (parsed.type == QStringLiteral("file-icon")) {
+    QString const path = parsed.name;
+    QColor const explicitFg = parsed.fg;
+    QColor const defaultFg = ThemeService::instance().theme().resolve(SemanticColor::Foreground);
+    QColor const bg = parsed.bg;
+    bool const circle = parsed.circleMask;
+    imageDecodingPool().start([response, path, size, explicitFg, defaultFg, bg, circle]() {
+      if (response->isCancelled()) {
+        response->finish({});
+        return;
+      }
+
+      QMimeDatabase const db;
+      auto const mime = db.mimeTypeForFile(path, QMimeDatabase::MatchDefault);
+
+      QImage img = renderSystemIcon(mime.iconName(), size);
+      if (img.isNull()) img = renderSystemIcon(mime.genericIconName(), size);
+
+      if (img.isNull()) {
+        QString const builtinName = mime.name() == QStringLiteral("inode/directory")
+                                        ? QStringLiteral("folder")
+                                        : QStringLiteral("blank-document");
+        QColor const fg = explicitFg.isValid() ? explicitFg : defaultFg;
+        img = renderBuiltinSvg(builtinName, size, fg, bg);
+      } else if (explicitFg.isValid()) {
+        applyFillColor(img, explicitFg);
+      }
+
+      if (circle && !img.isNull()) applyCircleMask(img);
+      response->finish(std::move(img));
+    });
 
   } else if (parsed.type == QStringLiteral("http")) {
     QString url = parsed.name;
