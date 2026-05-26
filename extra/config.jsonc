@@ -19,6 +19,14 @@
 		"system_info": true
 	},
 
+	// Input monitoring/injection binary required to handle "paste to active window" actions and snippet expansion.
+	// If disabled, Vicinae will automatically fallback on copy instead of paste, and keyword expansion for snippets will no longer work.
+	// Note that conceptually, the input server is not uniquely related to snippets, so disabling snippets will not shutdown the input server process:
+	// only this key can.
+	"input_server": {
+		"enabled": true
+	},
+
 	// Whether root search should also search files directly.
 	// File search is performed asynchrounously: files may take an instant to appear after a query is entered.
 	// Turning this on results in an increase in CPU usage when searching.

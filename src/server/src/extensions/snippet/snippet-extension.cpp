@@ -9,7 +9,7 @@ void SnippetExtension::initialized(const QJsonObject &preferences) const {
 
 void SnippetExtension::preferenceValuesChanged(const QJsonObject &value) const {
   auto *snippet = ServiceRegistry::instance()->snippetService();
-  snippet->setEnabled(value.value("enabled").toBool(true));
+  snippet->setExpansionEnabled(value.value("enabled").toBool(true));
   snippet->setUndoEnabled(value.value("undo").toBool(true));
   snippet->setPrePasteDelay(
       std::clamp(value.value("prePasteDelay")

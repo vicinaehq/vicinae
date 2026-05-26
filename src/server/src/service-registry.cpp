@@ -1,4 +1,7 @@
 #include "service-registry.hpp"
+#ifdef Q_OS_LINUX
+#include "services/input-server/linux-input-server.hpp"
+#endif
 #include "services/audio-control/audio-control-service.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "font-service.hpp"
@@ -29,6 +32,8 @@
 #include "services/news/news-service.hpp"
 #include "config/config.hpp"
 
+ServiceRegistry::~ServiceRegistry() = default;
+
 RootItemManager *ServiceRegistry::rootItemManager() const { return m_rootItemManager.get(); }
 config::Manager *ServiceRegistry::config() const { return m_config.get(); }
 OmniDatabase *ServiceRegistry::omniDb() const { return m_omniDb.get(); }
@@ -53,6 +58,10 @@ PowerManager *ServiceRegistry::powerManager() const { return m_powerManager.get(
 ScriptCommandService *ServiceRegistry::scriptDb() const { return m_scriptCommandService.get(); }
 
 BrowserExtensionService *ServiceRegistry::browserExtension() const { return m_browserExtensionService.get(); }
+
+#ifdef Q_OS_LINUX
+LinuxInputServer *ServiceRegistry::inputServer() const { return m_inputServer.get(); }
+#endif
 
 SnippetService *ServiceRegistry::snippetService() const { return m_snippetService.get(); }
 
@@ -132,6 +141,16 @@ void ServiceRegistry::setScriptDb(std::unique_ptr<ScriptCommandService> service)
 
 void ServiceRegistry::setBrowserExtension(std::unique_ptr<BrowserExtensionService> service) {
   m_browserExtensionService = std::move(service);
+}
+
+#ifdef Q_OS_LINUX
+void ServiceRegistry::setInputServer(std::unique_ptr<LinuxInputServer> server) {
+  m_inputServer = std::move(server);
+}
+#endif
+
+void ServiceRegistry::setSnippetServerBackend(std::unique_ptr<AbstractSnippetServer> backend) {
+  m_snippetServerBackend = std::move(backend);
 }
 
 void ServiceRegistry::setSnippetService(std::unique_ptr<SnippetService> service) {

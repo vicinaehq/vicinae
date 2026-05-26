@@ -187,6 +187,14 @@ using ProviderMap = std::map<std::string, ProviderData>;
 
 static constexpr const char *SCHEMA = "https://vicinae.com/schemas/config.json";
 
+struct InputServer {
+  bool enabled = true;
+};
+
+template <> struct Partial<InputServer> {
+  std::optional<bool> enabled;
+};
+
 struct ConfigValue {
   std::string schema = SCHEMA;
   std::vector<std::string> imports;
@@ -200,6 +208,8 @@ struct ConfigValue {
   std::string faviconService = "twenty";
   std::string keybinding = "default";
   int pixmapCacheMb = 50;
+
+  InputServer inputServer;
 
   FontConfig font;
   ThemeConfig theme;
@@ -250,6 +260,7 @@ template <> struct Partial<ConfigValue> {
   std::optional<std::string> keybinding;
   std::optional<int> pixmapCacheMb;
   std::optional<bool> searchFilesInRoot;
+  std::optional<Partial<InputServer>> inputServer;
 
   std::optional<Partial<FontConfig>> font;
   std::optional<Partial<ThemeConfig>> theme;

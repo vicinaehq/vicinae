@@ -1,7 +1,7 @@
 #include "linux-paste-service.hpp"
-#include "services/snippet/snippet-server.hpp"
+#include "services/input-server/linux-input-server.hpp"
 
-LinuxPasteService::LinuxPasteService(SnippetServer &server) : m_server(server) {}
+LinuxPasteService::LinuxPasteService(LinuxInputServer &server) : m_server(server) {}
 
 bool LinuxPasteService::supportsPaste() const { return m_server.supportsKeyInjection(); }
 

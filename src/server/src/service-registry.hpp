@@ -23,6 +23,10 @@ class OAuthService;
 class WindowManager;
 class PowerManager;
 class ScriptCommandService;
+class AbstractSnippetServer;
+#ifdef Q_OS_LINUX
+class LinuxInputServer;
+#endif
 class SnippetService;
 class BrowserExtensionService;
 class BackgroundEffectManager;
@@ -40,6 +44,7 @@ class Manager;
 class ServiceRegistry : public QObject {
 
 public:
+  ~ServiceRegistry() override;
   static ServiceRegistry *instance();
   RootItemManager *rootItemManager() const;
   config::Manager *config() const;
@@ -62,6 +67,9 @@ public:
   PowerManager *powerManager() const;
   ScriptCommandService *scriptDb() const;
   BrowserExtensionService *browserExtension() const;
+#ifdef Q_OS_LINUX
+  LinuxInputServer *inputServer() const;
+#endif
   SnippetService *snippetService() const;
   PasteService *pasteService() const;
   FileChooserService *fileChooserService() const;
@@ -93,6 +101,10 @@ public:
   void setClipman(std::unique_ptr<ClipboardService> service);
   void setAppDb(std::unique_ptr<AppService> service);
   void setBrowserExtension(std::unique_ptr<BrowserExtensionService> service);
+#ifdef Q_OS_LINUX
+  void setInputServer(std::unique_ptr<LinuxInputServer> server);
+#endif
+  void setSnippetServerBackend(std::unique_ptr<AbstractSnippetServer> backend);
   void setSnippetService(std::unique_ptr<SnippetService> service);
   void setPasteService(std::unique_ptr<PasteService> service);
   void setFileChooserService(std::unique_ptr<FileChooserService> service);
@@ -124,6 +136,10 @@ private:
   std::unique_ptr<PowerManager> m_powerManager;
   std::unique_ptr<ScriptCommandService> m_scriptCommandService;
   std::unique_ptr<BrowserExtensionService> m_browserExtensionService;
+#ifdef Q_OS_LINUX
+  std::unique_ptr<LinuxInputServer> m_inputServer;
+#endif
+  std::unique_ptr<AbstractSnippetServer> m_snippetServerBackend;
   std::unique_ptr<SnippetService> m_snippetService;
   std::unique_ptr<PasteService> m_pasteService;
   std::unique_ptr<FileChooserService> m_fileChooserService;
