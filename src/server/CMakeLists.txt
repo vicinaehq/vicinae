@@ -60,7 +60,6 @@ else()
 endif()
 
 include_directories(
-	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_SOURCE_DIR}/src
 	${CMAKE_CURRENT_SOURCE_DIR}/src/lib
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils
@@ -85,23 +84,23 @@ set(SRCS
 	src/placeholder.cpp
 
 
-	include/font-service.hpp
+	src/font-service.hpp
 	src/font-service.cpp
 
 	src/lib/template-engine/template-engine.cpp
 	src/lib/glaze-qt.cpp
 
-	include/favicon/favicon-service.hpp
+	src/favicon/favicon-service.hpp
 	src/favicon/favicon-service.cpp
-	include/favicon/favicon-request.hpp
+	src/favicon/favicon-request.hpp
 	src/favicon/favicon-request.cpp
-	include/favicon/google-favicon-request.hpp
+	src/favicon/google-favicon-request.hpp
 	src/favicon/google-favicon-request.cpp
-	include/favicon/twenty-favicon-request.hpp
+	src/favicon/twenty-favicon-request.hpp
 	src/favicon/twenty-favicon-request.cpp
-	include/favicon/dummy-favicon-request.hpp
+	src/favicon/dummy-favicon-request.hpp
 	src/favicon/dummy-favicon-request.cpp
-	include/favicon/cached-favicon-request.hpp
+	src/favicon/cached-favicon-request.hpp
 	src/favicon/cached-favicon-request.cpp
 
 
@@ -179,27 +178,27 @@ set(SRCS
 
 	# end app-database
 
-	include/ui/action-pannel/action.hpp
+	src/ui/action-pannel/action.hpp
 	src/ui/action-pannel/action.cpp
-	include/ui/action-pannel/action-panel-state.hpp
-	include/ui/action-pannel/action-panel-view.hpp
-	include/ui/action-pannel/action-list-view.hpp
+	src/ui/action-pannel/action-panel-state.hpp
+	src/ui/action-pannel/action-panel-view.hpp
+	src/ui/action-pannel/action-list-view.hpp
 	src/ui/action-pannel/action-list-view.cpp
 
 	src/lib/crypto.cpp
 
 	
-	include/extension/extension-command.hpp
+	src/extension/extension-command.hpp
 
 	src/extension/extension-action-panel-builder.hpp
 	src/extension/extension-action-panel-builder.cpp
 	src/extension/extension-action-list-view.hpp
 	src/extension/extension-action-list-view.cpp
 
-	include/extension/extension.hpp
+	src/extension/extension.hpp
 	src/extension/extension.cpp
 
-	include/extension/extension-command.hpp
+	src/extension/extension-command.hpp
 	src/extension/extension-command.cpp
 
 
@@ -222,20 +221,20 @@ set(SRCS
 	src/ui/image/emoji-image-loader.cpp
 	src/ui/image/image-decoder.hpp
 
-	include/command-database.hpp
+	src/command-database.hpp
 	src/command-database.cpp
 
 		src/ui/image/url.hpp
 
 
-	include/create-quicklink-command.hpp
+	src/create-quicklink-command.hpp
 
 	src/builtin_icon.cpp
 
 
 	src/extend/accessory-model.cpp
 	src/extend/model-deser.cpp
-	include/extend/form-model.hpp
+	src/extend/form-model.hpp
 
 	src/image-fetcher.hpp
 
