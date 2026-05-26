@@ -268,6 +268,8 @@ Window {
     }
 
     function _centerOnCursorScreen() {
+        if (!launcher.canPositionWindow)
+            return;
         const g = launcher.cursorScreenGeometry();
         root.x = g.x + (g.width - root.width) / 2;
         root.y = g.y + (g.height - root.height) / 3;
@@ -310,12 +312,20 @@ Window {
         }
     }
 
-    onWidthChanged: root.x = Screen.virtualX + (Screen.width - root.width) / 2
-    onHeightChanged: root.y = Screen.virtualY + (Screen.height - root.height) / 3
+    onWidthChanged: {
+        if (launcher.canPositionWindow)
+            root.x = Screen.virtualX + (Screen.width - root.width) / 2;
+    }
+    onHeightChanged: {
+        if (launcher.canPositionWindow)
+            root.y = Screen.virtualY + (Screen.height - root.height) / 3;
+    }
 
     Component.onCompleted: {
-        root.x = Screen.virtualX + (Screen.width - root.width) / 2;
-        root.y = Screen.virtualY + (Screen.height - root.height) / 3;
+        if (launcher.canPositionWindow) {
+            root.x = Screen.virtualX + (Screen.width - root.width) / 2;
+            root.y = Screen.virtualY + (Screen.height - root.height) / 3;
+        }
         _centerOnCursorScreen();
     }
 }
