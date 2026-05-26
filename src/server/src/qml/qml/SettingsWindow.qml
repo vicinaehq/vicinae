@@ -60,8 +60,6 @@ Window {
         radius: 10
         Keys.onEscapePressed: settings.close()
         color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
-        border.color: Theme.divider
-        border.width: 1
         clip: true
 
         RowLayout {
@@ -73,10 +71,9 @@ Window {
                 Layout.preferredWidth: 220
             }
 
-            Rectangle {
+            ViciDivider {
+                vertical: true
                 Layout.fillHeight: true
-                width: 1
-                color: Theme.divider
             }
 
             ColumnLayout {
@@ -163,10 +160,8 @@ Window {
                     }
                 }
 
-                Rectangle {
+                ViciDivider {
                     Layout.fillWidth: true
-                    height: 1
-                    color: Theme.divider
                 }
 
                 Loader {
@@ -210,6 +205,14 @@ Window {
                 }
             }
         }
+    }
+
+    SourceBlendRect {
+        anchors.fill: parent
+        radius: 10
+        overlay: true
+        borderColor: Config.withAlpha(Theme.divider, Config.windowOpacity)
+        borderWidth: 1
     }
 
     Component {

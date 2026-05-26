@@ -40,7 +40,7 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             width: 1
             height: 14
-            color: Theme.divider
+            color: Config.withAlpha(Theme.divider, Config.windowOpacity)
         }
 
         FooterButton {

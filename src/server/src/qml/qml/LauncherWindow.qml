@@ -89,8 +89,16 @@ Window {
             height: 60 + 2 * Config.borderWidth
             radius: root.cornerRadius
             color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
-            border.color: Theme.mainWindowBorder
-            border.width: Config.borderWidth
+        }
+
+        SourceBlendRect {
+            visible: launcher.compacted && !root.nativeChrome
+            width: _w
+            height: 60 + 2 * Config.borderWidth
+            radius: root.cornerRadius
+            overlay: true
+            borderColor: Config.withAlpha(Theme.mainWindowBorder, Config.windowOpacity)
+            borderWidth: Config.borderWidth
         }
 
         Item {
@@ -124,13 +132,13 @@ Window {
             }
         }
 
-        Rectangle {
+        SourceBlendRect {
             visible: !launcher.compacted && !root.nativeChrome
             anchors.fill: parent
             radius: root.cornerRadius
-            color: "transparent"
-            border.color: Theme.mainWindowBorder
-            border.width: Config.borderWidth
+            overlay: true
+            borderColor: Config.withAlpha(Theme.mainWindowBorder, Config.windowOpacity)
+            borderWidth: Config.borderWidth
         }
 
         ColumnLayout {
@@ -167,11 +175,9 @@ Window {
                 }
             }
 
-            Rectangle {
+            ViciDivider {
                 visible: !launcher.compacted && launcher.statusBarVisible
                 Layout.fillWidth: true
-                implicitHeight: 1
-                color: Theme.divider
             }
 
             Footer {

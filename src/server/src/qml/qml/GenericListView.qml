@@ -191,11 +191,10 @@ Item {
             }
         }
 
-        Rectangle {
+        ViciDivider {
             visible: root._showDetail
+            vertical: true
             Layout.fillHeight: true
-            implicitWidth: 1
-            color: Theme.divider
         }
 
         Loader {

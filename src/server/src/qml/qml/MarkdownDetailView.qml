@@ -34,11 +34,10 @@ RowLayout {
         contentPadding: 20
     }
 
-    Rectangle {
+    ViciDivider {
         visible: root._hasMarkdown && root._hasMetadata
+        vertical: true
         Layout.fillHeight: true
-        implicitWidth: 1
-        color: Theme.divider
     }
 
     MetadataBar {

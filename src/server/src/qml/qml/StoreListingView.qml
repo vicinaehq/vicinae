@@ -58,7 +58,6 @@ Item {
                     id: itemDelegate
                     width: delegateLoader.width
                     height: 50
-                    opacity: delegateLoader.compatTier === 2 ? 0.5 : 1.0
                     selected: listView.currentIndex === delegateLoader.index
                     onClicked: listView.currentIndex = delegateLoader.index
                     onActivated: listView.itemActivated(delegateLoader.index)

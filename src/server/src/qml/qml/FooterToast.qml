@@ -35,7 +35,7 @@ RowLayout {
         radius: 6
         color: "transparent"
         border.width: 2
-        border.color: Theme.textMuted
+        border.color: Config.withAlpha(Theme.textMuted, Config.windowOpacity)
 
         Rectangle {
             width: 6

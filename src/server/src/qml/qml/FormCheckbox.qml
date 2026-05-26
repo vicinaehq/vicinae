@@ -42,7 +42,7 @@ Item {
             radius: 4
             Layout.alignment: Qt.AlignVCenter
             color: root.checked ? Theme.accent : "transparent"
-            border.color: root.hasError ? Theme.inputBorderError : root.activeFocus ? Theme.inputBorderFocus : root.checked ? Theme.accent : Theme.inputBorder
+            border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : root.activeFocus ? Theme.inputBorderFocus : root.checked ? Theme.accent : Theme.inputBorder, Config.windowOpacity)
             border.width: 1
 
             Text {

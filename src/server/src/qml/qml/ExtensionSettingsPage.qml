@@ -92,10 +92,8 @@ Item {
                     implicitHeight: 16
                 }
 
-                Rectangle {
+                ViciDivider {
                     Layout.fillWidth: true
-                    height: 1
-                    color: Theme.divider
                 }
             }
 
@@ -125,10 +123,8 @@ Item {
                     implicitHeight: 16
                 }
 
-                Rectangle {
+                ViciDivider {
                     Layout.fillWidth: true
-                    height: 1
-                    color: Theme.divider
                 }
             }
 
@@ -155,7 +151,7 @@ Item {
                     height: 24
                     radius: 4
                     color: "transparent"
-                    border.color: cmdSearchField.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
+                    border.color: Config.withAlpha(cmdSearchField.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder, Config.windowOpacity)
                     border.width: 1
 
                     RowLayout {
@@ -300,7 +296,7 @@ Item {
                                 background: Rectangle {
                                     radius: 4
                                     color: "transparent"
-                                    border.color: cmdAliasInput.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
+                                    border.color: Config.withAlpha(cmdAliasInput.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder, Config.windowOpacity)
                                     border.width: cmdAliasInput.activeFocus || cmdAliasInput.hovered ? 1 : 0
                                 }
 
@@ -320,7 +316,7 @@ Item {
                                 Layout.preferredHeight: 20
                                 radius: 4
                                 color: cmdDelegate.enabled ? Theme.accent : "transparent"
-                                border.color: cmdDelegate.enabled ? Theme.accent : Theme.inputBorder
+                                border.color: Config.withAlpha(cmdDelegate.enabled ? Theme.accent : Theme.inputBorder, Config.windowOpacity)
                                 border.width: 1
 
                                 Text {
@@ -351,14 +347,12 @@ Item {
                             implicitHeight: expandedContent.implicitHeight + 24
                             color: "transparent"
 
-                            Rectangle {
+                            ViciDivider {
                                 anchors.top: parent.top
                                 anchors.left: parent.left
                                 anchors.right: parent.right
                                 anchors.leftMargin: root.sideMargin + 20
                                 anchors.rightMargin: root.sideMargin + 20
-                                height: 1
-                                color: Theme.divider
                             }
 
                             ColumnLayout {
@@ -387,12 +381,9 @@ Item {
                         }
                     }
 
-                    // Row separator
-                    Rectangle {
+                    ViciDivider {
                         visible: cmdDelegate.index < root.extModel.commandModel.count - 1
                         width: parent.width
-                        height: 1
-                        color: Theme.divider
                     }
                 }
             }

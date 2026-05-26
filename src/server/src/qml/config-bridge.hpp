@@ -50,6 +50,10 @@ public:
   bool activateOnSingleClick() const { return cfg().activateOnSingleClick; }
   bool blurEnabled() const { return cfg().launcherWindow.blur.enabled; }
 
+  Q_INVOKABLE static QColor withAlpha(const QColor &c, qreal alpha) {
+    return QColor::fromRgbF(c.redF(), c.greenF(), c.blueF(), alpha);
+  }
+
 private:
   static const config::ConfigValue &cfg() { return ServiceRegistry::instance()->config()->value(); }
 };

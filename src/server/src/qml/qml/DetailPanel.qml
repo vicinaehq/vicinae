@@ -22,11 +22,9 @@ Item {
             Layout.fillHeight: true
         }
 
-        Rectangle {
+        ViciDivider {
             visible: root._hasMetadata && root.hasContent
             Layout.fillWidth: true
-            implicitHeight: 1
-            color: Theme.divider
         }
 
         MetadataBar {

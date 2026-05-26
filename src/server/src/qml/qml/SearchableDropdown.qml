@@ -50,7 +50,7 @@ Item {
         height: compact ? 28 : implicitHeight
         radius: compact ? 6 : 8
         color: buttonMouseArea.containsMouse ? Theme.listItemHoverBg : "transparent"
-        border.color: root.hasError ? Theme.inputBorderError : (root.activeFocus || completionPopup.visible ? Theme.inputBorderFocus : (compact ? Theme.divider : Theme.inputBorder))
+        border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : (root.activeFocus || completionPopup.visible ? Theme.inputBorderFocus : (compact ? Theme.divider : Theme.inputBorder)), Config.windowOpacity)
         border.width: 1
 
         RowLayout {
@@ -106,7 +106,7 @@ Item {
         background: Rectangle {
             radius: 8
             color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.95)
-            border.color: Theme.divider
+            border.color: Config.withAlpha(Theme.divider, Config.windowOpacity)
             border.width: 1
             BackgroundEffect.enabled: Config.blurEnabled
             BackgroundEffect.radius: 8

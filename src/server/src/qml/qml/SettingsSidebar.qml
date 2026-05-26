@@ -66,7 +66,7 @@ Item {
                 height: 28
                 radius: 4
                 color: "transparent"
-                border.color: extSearchField.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
+                border.color: Config.withAlpha(extSearchField.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder, Config.windowOpacity)
                 border.width: 1
 
                 RowLayout {
@@ -127,10 +127,8 @@ Item {
             }
         }
 
-        Rectangle {
+        ViciDivider {
             Layout.fillWidth: true
-            height: 1
-            color: Theme.divider
         }
 
         ListView {
@@ -166,15 +164,13 @@ Item {
                     }
                 }
 
-                Rectangle {
+                ViciDivider {
                     visible: navItem.modelData._kind === "divider"
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.leftMargin: 16
                     anchors.rightMargin: 16
                     anchors.verticalCenter: parent.verticalCenter
-                    height: 1
-                    color: Theme.divider
                 }
 
                 SourceBlendRect {

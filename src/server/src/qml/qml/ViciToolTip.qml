@@ -14,7 +14,7 @@ ToolTip {
 
     background: Rectangle {
         color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, 0.95)
-        border.color: Theme.divider
+        border.color: Config.withAlpha(Theme.divider, Config.windowOpacity)
         border.width: 1
         radius: 4
         BackgroundEffect.enabled: Config.blurEnabled

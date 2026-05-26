@@ -35,7 +35,7 @@ Item {
         anchors.fill: parent
         radius: 8
         color: "transparent"
-        border.color: root.hasError ? Theme.inputBorderError : input.activeFocus && !root.readOnly ? Theme.inputBorderFocus : Theme.inputBorder
+        border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : input.activeFocus && !root.readOnly ? Theme.inputBorderFocus : Theme.inputBorder, Config.windowOpacity)
         border.width: 1
         opacity: root.readOnly ? 0.5 : 1.0
 

@@ -39,12 +39,12 @@ Rectangle {
     border.width: root.bordered || root.activeFocus ? 1 : 0
     border.color: {
         if (root.activeFocus)
-            return root.variant === "accent" ? Theme.listItemSelectionFg : Theme.accent;
+            return Config.withAlpha(root.variant === "accent" ? Theme.listItemSelectionFg : Theme.accent, Config.windowOpacity);
         if (!root.bordered)
             return "transparent";
         if (root.variant === "secondary")
-            return Theme.inputBorder;
-        return Theme.divider;
+            return Config.withAlpha(Theme.inputBorder, Config.windowOpacity);
+        return Config.withAlpha(Theme.divider, Config.windowOpacity);
     }
 
     Row {

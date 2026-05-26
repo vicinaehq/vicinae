@@ -316,7 +316,7 @@ Item {
                             Rectangle {
                                 anchors.fill: parent
                                 color: "transparent"
-                                border.color: Theme.divider
+                                border.color: Config.withAlpha(Theme.divider, Config.windowOpacity)
                                 border.width: 1
                                 radius: 4
                             }
