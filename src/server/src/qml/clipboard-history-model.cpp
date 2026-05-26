@@ -1,7 +1,7 @@
 #include "clipboard-history-model.hpp"
 #include "actions/root-search/root-search-actions.hpp"
 #include "extensions/clipboard/history/clipboard-history-actions.hpp"
-#include "lib/keyboard/keybind.hpp"
+#include "internal/keyboard/keybind.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/clipboard/clipboard-service.hpp"

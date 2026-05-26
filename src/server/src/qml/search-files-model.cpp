@@ -1,6 +1,6 @@
 #include "search-files-model.hpp"
 #include "clipboard-actions.hpp"
-#include "misc/file-list-item.hpp"
+#include "utils/file-list-item.hpp"
 #include "service-registry.hpp"
 #include "utils/utils.hpp"
 

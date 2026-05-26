@@ -1,6 +1,6 @@
 #include "action-panel-controller.hpp"
 #include "action-panel-model.hpp"
-#include "lib/keyboard/keyboard.hpp"
+#include "internal/keyboard/keyboard.hpp"
 #include "navigation-controller.hpp"
 #include "ui/action-pannel/action-list-view.hpp"
 #include "ui/action-pannel/action-panel-state.hpp"

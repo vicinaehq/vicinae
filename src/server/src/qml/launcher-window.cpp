@@ -26,7 +26,7 @@
 #include "services/window-manager/window-manager.hpp"
 #include "environment.hpp"
 #include "vicinae.hpp"
-#include "lib/keyboard/keyboard.hpp"
+#include "internal/keyboard/keyboard.hpp"
 #include "ui/views/base-view.hpp"
 #include "ui/action-pannel/action-panel-state.hpp"
 #include <QCursor>

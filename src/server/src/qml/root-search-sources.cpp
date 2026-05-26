@@ -2,7 +2,7 @@
 #include "actions/app/app-actions.hpp"
 #include "actions/calculator/calculator-actions.hpp"
 #include "keyboard/keybind.hpp"
-#include "misc/file-list-item.hpp"
+#include "utils/file-list-item.hpp"
 #include "navigation-controller.hpp"
 #include "services/news/news-service.hpp"
 #include "theme.hpp"

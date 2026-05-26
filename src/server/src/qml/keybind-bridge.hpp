@@ -2,7 +2,7 @@
 #include <QObject>
 #include <QVariantList>
 #include <qtmetamacros.h>
-#include "lib/keyboard/keybind-manager.hpp"
+#include "internal/keyboard/keybind-manager.hpp"
 
 class KeybindBridge : public QObject {
   Q_OBJECT

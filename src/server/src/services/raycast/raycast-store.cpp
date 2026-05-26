@@ -1,6 +1,6 @@
 #include "raycast-store.hpp"
 #include "environment.hpp"
-#include "lib/glaze-qt.hpp"
+#include "internal/glaze-qt.hpp"
 
 RaycastStoreService::RaycastStoreService() {
   m_client.setBaseUrl(QStringLiteral("https://backend.raycast.com/api/v1"));

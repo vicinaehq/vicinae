@@ -4,7 +4,7 @@
 #include "common/types.hpp"
 #include "services/background-effect/dummy-background-effect-manager.hpp"
 #ifdef Q_OS_LINUX
-#include "lib/wayland/globals.hpp"
+#include "internal/wayland/globals.hpp"
 #include "services/background-effect/ext-background-effect-v1-manager.hpp"
 #include "services/background-effect/kde-background-effect-manager.hpp"
 #endif

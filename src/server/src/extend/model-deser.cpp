@@ -25,7 +25,7 @@
 #include "extend/root-detail-model.hpp"
 #include "extend/tag-model.hpp"
 #include "glaze-qt.hpp"
-#include "lib/keyboard/keyboard.hpp"
+#include "internal/keyboard/keyboard.hpp"
 #include "theme.hpp"
 #include "ui/image/url.hpp"
 #include "ui/omni-painter/omni-painter.hpp"

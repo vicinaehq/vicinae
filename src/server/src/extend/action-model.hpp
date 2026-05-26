@@ -6,7 +6,7 @@
 #include <variant>
 #include <vector>
 #include "extend/image-model.hpp"
-#include "lib/keyboard/keyboard.hpp"
+#include "internal/keyboard/keyboard.hpp"
 
 struct ActionModel {
   std::string title;

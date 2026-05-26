@@ -6,7 +6,7 @@
 #include <expected>
 #include <optional>
 #include <vector>
-#include "lib/http-client.hpp"
+#include "internal/http-client.hpp"
 #include "ui/image/url.hpp"
 
 namespace VicinaeStore {

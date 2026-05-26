@@ -3,7 +3,7 @@
 #include <functional>
 #include <string>
 #include <vector>
-#include "clipboard-protocol.hpp"
+#include "common/clipboard-protocol.hpp"
 
 class StdinReader {
 public:

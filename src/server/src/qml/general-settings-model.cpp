@@ -8,7 +8,7 @@
 #include "favicon/favicon-service.hpp"
 #include "font-service.hpp"
 #ifdef Q_OS_LINUX
-#include "lib/icon-theme-db/icon-theme-db.hpp"
+#include "internal/icon-theme-db/icon-theme-db.hpp"
 #endif
 #include "services/keybinding/keybinding-service.hpp"
 #include <QGuiApplication>

@@ -1,7 +1,7 @@
 #pragma once
 #include "common/context.hpp"
 #include "ui/image/url.hpp"
-#include "lib/keyboard/keyboard.hpp"
+#include "internal/keyboard/keyboard.hpp"
 #include <QUuid>
 #include <qcontainerfwd.h>
 #include <qevent.h>
