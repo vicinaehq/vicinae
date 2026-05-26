@@ -261,7 +261,6 @@ set(SRCS
 
 	src/theme/theme-file.hpp
 	src/theme/theme-file.cpp
-	src/theme/theme-parser.hpp
 	src/theme/theme-parser.cpp
 	src/theme/theme-db.hpp
 	src/theme/theme-db.cpp

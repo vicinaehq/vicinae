@@ -33,6 +33,7 @@ public:
 
   QVariant customData(int i, int role) const override;
   QHash<int, QByteArray> customRoleNames() const override;
+  QHash<int, QVariant> customRoleDefaults() const override;
 
 protected:
   QString itemTitle(int i) const override;
