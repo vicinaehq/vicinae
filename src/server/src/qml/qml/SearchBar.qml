@@ -17,27 +17,14 @@ Item {
         anchors.rightMargin: 16
         spacing: launcher.hasCompleter ? 4 : 12
 
-        SourceBlendRect {
+        ViciImage {
             id: backButton
             visible: launcher.showBackButton
-            Layout.preferredWidth: 28
-            Layout.preferredHeight: 28
+            Layout.preferredWidth: 22
+            Layout.preferredHeight: 22
             Layout.alignment: Qt.AlignVCenter
-            radius: 6
-            backgroundColor: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
-            color: {
-                const base = backHover.hovered ? Theme.listItemHoverBg : Theme.secondaryBackground;
-                return Qt.rgba(base.r, base.g, base.b, Config.windowOpacity);
-            }
-            borderWidth: 1
-            borderColor: Config.withAlpha(Theme.inputBorder, Config.windowOpacity)
-
-            ViciImage {
-                anchors.centerIn: parent
-                source: Img.builtin("chevron-left")
-                width: 14
-                height: 14
-            }
+            source: Img.builtin("chevron-left").withFillColor(Theme.textMuted)
+            opacity: backHover.hovered ? 0.6 : 1.0
 
             HoverHandler {
                 id: backHover
@@ -65,7 +52,7 @@ Item {
                 anchors.fill: parent
                 verticalAlignment: TextInput.AlignVCenter
                 font.family: Theme.fontFamily
-                font.pointSize: Theme.regularFontSize * 1.1
+                font.pointSize: Theme.regularFontSize * 1.15
                 color: Theme.foreground
                 selectionColor: Theme.textSelectionBg
                 selectedTextColor: Theme.textSelectionFg
