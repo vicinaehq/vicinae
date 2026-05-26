@@ -9,7 +9,7 @@
 #include <wayland-util.h>
 #include "data-control-client.hpp"
 #include "wayland/display.hpp"
-#include "clipboard-protocol.hpp"
+#include "common/clipboard-protocol.hpp"
 
 using SelectionWriter = void (*)(const clipboard_proto::Selection &);
 

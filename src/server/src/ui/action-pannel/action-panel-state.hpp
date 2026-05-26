@@ -1,6 +1,6 @@
 #pragma once
 #include "common/types.hpp"
-#include "lib/keyboard/keyboard.hpp"
+#include "internal/keyboard/keyboard.hpp"
 #include "ui/action-pannel/action.hpp"
 #include <QString>
 #include <cstdint>

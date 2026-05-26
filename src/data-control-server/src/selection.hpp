@@ -8,7 +8,7 @@
 #include <optional>
 #include <unistd.h>
 #include "wayland/mime.hpp"
-#include "clipboard-protocol.hpp"
+#include "common/clipboard-protocol.hpp"
 
 class OfferReceiver {
 public:

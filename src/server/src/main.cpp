@@ -1,7 +1,7 @@
 #include <unistd.h>
 #include <iostream>
 #include <glaze/glaze.hpp>
-#include "cli/server.hpp"
+#include "server.hpp"
 
 int main(int argc, char **argv) {
   ServerLaunchOptions opts;

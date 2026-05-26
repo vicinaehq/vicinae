@@ -61,7 +61,7 @@ endif()
 
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/src
-	${CMAKE_CURRENT_SOURCE_DIR}/src/lib
+	${CMAKE_CURRENT_SOURCE_DIR}/src/internal
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils
 	${CMAKE_CURRENT_SOURCE_DIR}/..
     ${CMAKE_CURRENT_BINARY_DIR}  # For generated headers
@@ -87,8 +87,8 @@ set(SRCS
 	src/font-service.hpp
 	src/font-service.cpp
 
-	src/lib/template-engine/template-engine.cpp
-	src/lib/glaze-qt.cpp
+	src/internal/template-engine/template-engine.cpp
+	src/internal/glaze-qt.cpp
 
 	src/favicon/favicon-service.hpp
 	src/favicon/favicon-service.cpp
@@ -185,7 +185,7 @@ set(SRCS
 	src/ui/action-pannel/action-list-view.hpp
 	src/ui/action-pannel/action-list-view.cpp
 
-	src/lib/crypto.cpp
+	src/internal/crypto.cpp
 
 	
 	src/extension/extension-command.hpp
@@ -255,9 +255,9 @@ set(SRCS
 	./database/file-indexer//migrations.qrc
 
 
-	src/lib/keyboard/keybind-manager.hpp
-	src/lib/keyboard/keybind-manager.cpp
-	src/lib/keyboard/keyboard.cpp
+	src/internal/keyboard/keybind-manager.hpp
+	src/internal/keyboard/keybind-manager.cpp
+	src/internal/keyboard/keyboard.cpp
 
 	src/theme/theme-file.hpp
 	src/theme/theme-file.cpp
@@ -309,7 +309,7 @@ set(SRCS
 	src/qml/provider-search-view-host.hpp
 	src/qml/provider-search-view-host.cpp
 
-	src/cli/server.cpp
+	src/server.cpp
 
 
 	src/utils/utils.cpp
@@ -391,9 +391,9 @@ set(SRCS
 	src/overlay-controller/overlay-controller.hpp
 
 
-	src/lib/zip/unzip.cpp
-	src/lib/data-uri/data-uri.cpp
-	src/lib/pid-file/pid-file.cpp
+	src/internal/zip/unzip.cpp
+	src/internal/data-uri/data-uri.cpp
+	src/internal/pid-file/pid-file.cpp
 
 	src/ui/alert/alert.hpp
 	src/ui/alert/alert.cpp
@@ -401,7 +401,7 @@ set(SRCS
 	src/ui/dialog/dialog.hpp
 	src/ui/dialog/dialog.cpp
 
-	src/lib/os-release.cpp
+	src/internal/os-release.cpp
 
 	src/services/window-manager/window-manager.cpp
 
@@ -413,8 +413,8 @@ set(SRCS
 	src/services/paste/paste-service.cpp
 	src/services/browser-extension-service.hpp
 
-	src/lib/program-db/program-db.hpp
-	src/lib/program-db/program-db.cpp
+	src/internal/program-db/program-db.hpp
+	src/internal/program-db/program-db.cpp
 
 	src/services/power-manager/systemd/systemd-power-manager.cpp
 	src/services/power-manager/dummy-power-manager.hpp
@@ -446,7 +446,7 @@ set(SRCS
 	src/services/snippet/null-snippet-server.hpp
 	src/services/snippet/snippet-db.cpp
 
-	# QML frontend (POC)
+	# QML frontend
 	src/qml/keybind-bridge.hpp
 	src/qml/launcher-window.hpp
 	src/qml/launcher-window.cpp
@@ -649,7 +649,7 @@ if (UNIX AND NOT APPLE)
 		src/services/snippet/linux-snippet-server.hpp
 		src/services/snippet/linux-snippet-server.cpp
 
-		src/lib/icon-theme-db/icon-theme-db.cpp
+		src/internal/icon-theme-db/icon-theme-db.cpp
 
 		src/services/window-manager/hyprland/hyprland.cpp
 		src/services/window-manager/hyprland/hypr-listener.hpp
@@ -689,10 +689,10 @@ if (UNIX AND NOT APPLE)
 
 	# Common Wayland support files
 	list(APPEND SRCS
-		src/lib/wayland/globals.cpp
-		src/lib/wayland/display.cpp
-		src/lib/wayland/registry.cpp
-		src/lib/wayland/seat.cpp
+		src/internal/wayland/globals.cpp
+		src/internal/wayland/display.cpp
+		src/internal/wayland/registry.cpp
+		src/internal/wayland/seat.cpp
 		src/services/background-effect/ext-background-effect-v1-manager.cpp
 		src/services/background-effect/kde-background-effect-manager.cpp
 		src/services/clipboard/data-control/data-control-clipboard-server.hpp
@@ -973,8 +973,8 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 	set(TEST_TARGET ${TARGET}-tests)
 	find_package(Catch2 3 REQUIRED)
 	add_executable(${TEST_TARGET}
-		src/lib/keyboard/keyboard.cpp
-		src/lib/keyboard/keybind-manager.cpp
+		src/internal/keyboard/keyboard.cpp
+		src/internal/keyboard/keybind-manager.cpp
 	)
 	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)
 	target_compile_features(${TEST_TARGET} PUBLIC cxx_std_23)
