@@ -34,7 +34,6 @@ signals:
 
 public:
   static constexpr int MAX_RESTART_ATTEMPTS = 5;
-  static constexpr int STABILITY_THRESHOLD_MS = 30000;
   static constexpr int BASE_RESTART_DELAY_MS = 1000;
 
   LinuxInputServer();
@@ -61,7 +60,6 @@ public:
 private:
   void handleError();
   void handleCrash();
-  void scheduleStabilityReset();
 
   QProcess m_process;
   InputServerBus m_bus;

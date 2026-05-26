@@ -108,7 +108,7 @@ void LinuxInputServer::start() {
   m_client.snippet()->getCapabilities().then(
       [this](std::expected<snippet_gen::KeyboardCapabilities, std::string> result) {
         if (result) { m_supportsInjection = result->injection; }
-        scheduleStabilityReset();
+        m_crashCount = 0;
         emit serverReady();
       });
 }
@@ -130,11 +130,6 @@ void LinuxInputServer::handleCrash() {
   QTimer::singleShot(delay, this, [this]() { start(); });
 }
 
-void LinuxInputServer::scheduleStabilityReset() {
-  QTimer::singleShot(STABILITY_THRESHOLD_MS, this, [this]() {
-    if (m_process.state() == QProcess::ProcessState::Running) { m_crashCount = 0; }
-  });
-}
 
 void LinuxInputServer::registerSnippet(snippet_gen::CreateSnippetRequest payload) {
   if (!isRunning()) return;
