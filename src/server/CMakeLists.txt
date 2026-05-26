@@ -44,7 +44,6 @@ endif()
 
 if (WAYLAND_LAYER_SHELL)
 	message(STATUS "Compiling with wayland layer shell support (for wlroots-like compositors)")
-	#find_package(Qt6 REQUIRED COMPONENTS WaylandClient)
 	if (USE_SYSTEM_LAYER_SHELL)
 		find_package(LayerShellQt REQUIRED)
 		list(APPEND LIBS LayerShellQt::Interface)
@@ -89,7 +88,6 @@ set(SRCS
 	include/font-service.hpp
 	src/font-service.cpp
 
-	#src/daemon/ipc-client.cpp
 	src/lib/template-engine/template-engine.cpp
 	src/lib/glaze-qt.cpp
 
@@ -364,7 +362,6 @@ set(SRCS
 	src/navigation-controller.cpp
 
 	src/ui/views/base-view.cpp
-	#src/ui/views/form-view.cpp
 
 	src/command-controller.hpp
 	src/command-controller.cpp
@@ -646,8 +643,6 @@ endif()
 
 if (UNIX AND NOT APPLE)
 	list(APPEND SRCS
-		#src/lib/xkbcommon-utils.cpp
-
 		src/services/paste/linux-paste-service.cpp
 
 		src/services/input-server/linux-input-server.hpp
