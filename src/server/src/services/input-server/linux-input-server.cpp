@@ -130,7 +130,6 @@ void LinuxInputServer::handleCrash() {
   QTimer::singleShot(delay, this, [this]() { start(); });
 }
 
-
 void LinuxInputServer::registerSnippet(snippet_gen::CreateSnippetRequest payload) {
   if (!isRunning()) return;
   m_client.snippet()->createSnippet(payload);
