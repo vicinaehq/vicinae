@@ -51,7 +51,7 @@ Item {
         anchors.fill: parent
         radius: 8
         color: "transparent"
-        border.color: root.hasError ? Theme.inputBorderError : edit.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
+        border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : edit.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder, Config.windowOpacity)
         border.width: 1
 
         MouseArea {

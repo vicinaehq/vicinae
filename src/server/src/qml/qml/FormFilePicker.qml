@@ -116,7 +116,7 @@ FocusScope {
             radius: 8
             opacity: root.readOnly ? 0.5 : 1.0
             color: "transparent"
-            border.color: root.hasError ? Theme.inputBorderError : focusItem.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
+            border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : focusItem.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder, Config.windowOpacity)
             border.width: 1
 
             RowLayout {
@@ -178,7 +178,7 @@ FocusScope {
                 implicitHeight: 32
                 radius: 6
                 color: "transparent"
-                border.color: Theme.inputBorder
+                border.color: Config.withAlpha(Theme.inputBorder, Config.windowOpacity)
                 border.width: 1
 
                 RowLayout {

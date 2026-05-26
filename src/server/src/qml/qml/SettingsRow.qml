@@ -48,12 +48,10 @@ ColumnLayout {
         }
     }
 
-    Rectangle {
+    ViciDivider {
         visible: root.showSeparator
         Layout.fillWidth: true
         Layout.leftMargin: 20
         Layout.rightMargin: 20
-        height: 1
-        color: Theme.divider
     }
 }

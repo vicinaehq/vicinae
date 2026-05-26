@@ -15,7 +15,7 @@ Item {
         radius: 10
         color: root.checked ? Theme.accent : Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.2)
         border.width: root.activeFocus ? 1 : 0
-        border.color: Theme.inputBorderFocus
+        border.color: Config.withAlpha(Theme.inputBorderFocus, Config.windowOpacity)
         Behavior on color {
             ColorAnimation {
                 duration: 120

@@ -797,6 +797,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/ViciButton.qml
 	src/qml/qml/ViciImage.qml
 	src/qml/qml/ViciScrollBar.qml
+	src/qml/qml/ViciDivider.qml
 	src/qml/qml/ViciToolTip.qml
 	src/qml/qml/ExtensionView.qml
 	src/qml/qml/MarkdownDetailView.qml

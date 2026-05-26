@@ -30,7 +30,7 @@ Item {
                 return Qt.rgba(base.r, base.g, base.b, Config.windowOpacity);
             }
             borderWidth: 1
-            borderColor: Theme.inputBorder
+            borderColor: Config.withAlpha(Theme.inputBorder, Config.windowOpacity)
 
             ViciImage {
                 anchors.centerIn: parent

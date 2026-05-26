@@ -65,7 +65,7 @@ ColumnLayout {
             implicitHeight: 32
             radius: 6
             color: "transparent"
-            border.color: Theme.inputBorder
+            border.color: Config.withAlpha(Theme.inputBorder, Config.windowOpacity)
             border.width: 1
 
             RowLayout {

@@ -248,7 +248,7 @@ Item {
                 anchors.fill: parent
                 radius: Config.borderRounding
                 color: Qt.rgba(Theme.statusBarBackground.r, Theme.statusBarBackground.g, Theme.statusBarBackground.b, 1)
-                border.color: Theme.mainWindowBorder
+                border.color: Config.withAlpha(Theme.mainWindowBorder, Config.windowOpacity)
                 border.width: 1
             }
         }

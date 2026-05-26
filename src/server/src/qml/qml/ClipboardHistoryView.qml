@@ -74,10 +74,8 @@ Item {
             }
         }
 
-        Rectangle {
+        ViciDivider {
             Layout.fillWidth: true
-            implicitHeight: 1
-            color: Theme.divider
         }
 
         GenericListView {

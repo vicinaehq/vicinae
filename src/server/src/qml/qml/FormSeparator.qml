@@ -6,5 +6,5 @@ Rectangle {
     Layout.topMargin: 5
     Layout.bottomMargin: 5
     implicitHeight: 1
-    color: Theme.divider
+    color: Config.withAlpha(Theme.divider, Config.windowOpacity)
 }

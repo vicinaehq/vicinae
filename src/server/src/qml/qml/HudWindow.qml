@@ -25,7 +25,7 @@ Window {
         height: row.height + 20
         radius: height / 2
         color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.9)
-        border.color: Theme.divider
+        border.color: Config.withAlpha(Theme.divider, Config.windowOpacity)
         border.width: 1
 
         RowLayout {

@@ -91,7 +91,7 @@ Item {
                 height: 24
                 radius: 4
                 color: "transparent"
-                border.color: searchField.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
+                border.color: Config.withAlpha(searchField.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder, Config.windowOpacity)
                 border.width: 1
 
                 RowLayout {
@@ -139,10 +139,8 @@ Item {
             }
         }
 
-        Rectangle {
+        ViciDivider {
             Layout.fillWidth: true
-            height: 1
-            color: Theme.divider
         }
 
         ListView {
@@ -226,12 +224,10 @@ Item {
                     }
                 }
 
-                Rectangle {
+                ViciDivider {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.bottom: parent.bottom
-                    height: 1
-                    color: Theme.divider
                 }
             }
         }

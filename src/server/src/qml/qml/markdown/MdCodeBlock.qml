@@ -20,7 +20,7 @@ Rectangle {
     radius: 6
     color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, Theme.surfaceOpacity)
     border.width: 1
-    border.color: Theme.divider
+    border.color: Config.withAlpha(Theme.divider, Config.windowOpacity)
 
     ColumnLayout {
         id: col

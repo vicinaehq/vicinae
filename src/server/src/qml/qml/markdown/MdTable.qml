@@ -20,7 +20,7 @@ Rectangle {
     implicitHeight: tableCol.implicitHeight
     color: "transparent"
     border.width: 1
-    border.color: Theme.divider
+    border.color: Config.withAlpha(Theme.divider, Config.windowOpacity)
     radius: 4
     clip: true
 
