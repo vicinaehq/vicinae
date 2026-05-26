@@ -54,6 +54,15 @@ QVariant ThemeSection::customData(int i, int role) const {
   }
 }
 
+QHash<int, QVariant> ThemeSection::customRoleDefaults() const {
+  return {
+      {PaletteColor0, QColor(Qt::transparent)}, {PaletteColor1, QColor(Qt::transparent)},
+      {PaletteColor2, QColor(Qt::transparent)}, {PaletteColor3, QColor(Qt::transparent)},
+      {PaletteColor4, QColor(Qt::transparent)}, {PaletteColor5, QColor(Qt::transparent)},
+      {PaletteColor6, QColor(Qt::transparent)}, {PaletteColor7, QColor(Qt::transparent)},
+  };
+}
+
 QHash<int, QByteArray> ThemeSection::customRoleNames() const {
   return {
       {PaletteColor0, "paletteColor0"}, {PaletteColor1, "paletteColor1"}, {PaletteColor2, "paletteColor2"},
