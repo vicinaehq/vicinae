@@ -32,6 +32,12 @@
 			"mode": "view"
 		},
 		{
+			"name": "icon-transforms",
+			"title": "Icon Transforms",
+			"description": "Apply every transform (tint, mask, fallback) to every icon source type",
+			"mode": "view"
+		},
+		{
 			"name": "controlled-list",
 			"title": "Controlled List",
 			"description": "A list where search is controlled by state",

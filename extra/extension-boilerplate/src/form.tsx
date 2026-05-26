@@ -185,10 +185,7 @@ export default function FormElements() {
 				id="singleFile"
 				title="(single file)"
 				onChange={(files) =>
-					showToast(
-						Toast.Style.Success,
-						`Selected ${files.length} file(s)`,
-					)
+					showToast(Toast.Style.Success, `Selected ${files.length} file(s)`)
 				}
 			/>
 
@@ -198,10 +195,7 @@ export default function FormElements() {
 				title="(multiple files)"
 				allowMultipleSelection={true}
 				onChange={(files) =>
-					showToast(
-						Toast.Style.Success,
-						`Selected ${files.length} file(s)`,
-					)
+					showToast(Toast.Style.Success, `Selected ${files.length} file(s)`)
 				}
 			/>
 

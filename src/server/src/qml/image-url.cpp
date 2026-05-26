@@ -44,7 +44,10 @@ static QString buildParams(const ImageURL &url, bool builtinFgDefault = false) {
     parts << QStringLiteral("bg=%23") + bg.name(QColor::HexRgb).mid(1);
   }
 
-  if (url.mask() == OmniPainter::CircleMask) parts << QStringLiteral("mask=circle");
+  if (url.mask() == OmniPainter::CircleMask)
+    parts << QStringLiteral("mask=circle");
+  else if (url.mask() == OmniPainter::RoundedRectangleMask)
+    parts << QStringLiteral("mask=roundedRectangle");
 
   if (auto fb = url.fallback()) {
     ImageURL const fbUrl(*fb);
@@ -76,10 +79,13 @@ QString ImageUrl::toSource() const {
     return prefix + QStringLiteral("builtin:") + name + buildParams(m_url, true);
 
   case ImageURLType::System:
-    return prefix + QStringLiteral("system:") + name + buildParams(m_url);
+    return prefix + QStringLiteral("system:") + name;
 
   case ImageURLType::Local:
     return prefix + QStringLiteral("local:") + name + buildParams(m_url);
+
+  case ImageURLType::FileIcon:
+    return prefix + QStringLiteral("file-icon:") + name;
 
   case ImageURLType::MacBundle:
     return prefix + QStringLiteral("bundle:") + name + buildParams(m_url);

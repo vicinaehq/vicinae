@@ -4,6 +4,8 @@
 
 struct TsapiImage {
   static ImageURL parse(const tsapi::Image &image) {
+    if (image.fileIcon) { return ImageURL::fileIcon(*image.fileIcon); }
+
     ExtensionImageModel model;
 
     if (image.tintColor) {
@@ -36,12 +38,14 @@ struct TsapiImage {
       }
     }
 
-    if (image.source.raw) {
-      model.source = QString::fromStdString(*image.source.raw);
-    } else if (image.source.themed) {
-      model.source =
-          ThemedIconSource{.light = QString::fromStdString(image.source.themed->light.value_or("")),
-                           .dark = QString::fromStdString(image.source.themed->dark.value_or(""))};
+    if (image.source) {
+      if (image.source->raw) {
+        model.source = QString::fromStdString(*image.source->raw);
+      } else if (image.source->themed) {
+        model.source =
+            ThemedIconSource{.light = QString::fromStdString(image.source->themed->light.value_or("")),
+                             .dark = QString::fromStdString(image.source->themed->dark.value_or(""))};
+      }
     }
 
     if (image.fallback) {

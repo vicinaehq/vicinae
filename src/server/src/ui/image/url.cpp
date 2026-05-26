@@ -6,7 +6,6 @@
 #include "ui/omni-painter/omni-painter.hpp"
 #include "theme/theme-file.hpp"
 #include <qdir.h>
-#include <qmimedatabase.h>
 #include <qstringview.h>
 #include <QIcon>
 #include <qurlquery.h>
@@ -200,6 +199,10 @@ ImageURL::ImageURL(const ImageLikeModel &imageLike) {
       return;
     }
   }
+
+  if (auto fileIcon = std::get_if<ExtensionFileIconModel>(&imageLike)) {
+    *this = ImageURL::fileIcon(fileIcon->file);
+  }
 }
 
 ImageURL ImageURL::builtin(const QString &name) {
@@ -292,13 +295,10 @@ ImageURL ImageURL::rawData(const QByteArray &data, const QString &mimeType) {
 }
 
 ImageURL ImageURL::fileIcon(const fs::path &path) {
-  QMimeDatabase const db;
-  auto mime = db.mimeTypeForFile(path.c_str());
-  if (auto icon = QIcon::fromTheme(mime.iconName()); !icon.isNull()) {
-    return ImageURL::system(mime.iconName());
-  }
-  if (auto icon = QIcon::fromTheme(mime.genericIconName()); !icon.isNull()) {
-    return ImageURL::system(mime.genericIconName());
-  }
-  return ImageURL::builtin(mime.name() == "inode/directory" ? "folder" : "blank-document");
+  ImageURL url;
+
+  url.setType(ImageURLType::FileIcon);
+  url.setName(QString::fromStdString(path.string()));
+
+  return url;
 }
