@@ -15,109 +15,28 @@ bool ImageUrl::isThemeSensitive() const {
   return m_url.fillColor().has_value();
 }
 
-static QColor resolveFillColor(const ImageURL &url) {
-  auto fill = url.fillColor();
-  if (!fill) return {};
+static void resolveColors(ImageURL &url) {
+  if (auto fill = url.fillColor())
+    url.setFill(OmniPainter::resolveColor(*fill));
+  else if (url.type() == ImageURLType::Builtin)
+    url.setFill(ThemeService::instance().theme().resolve(SemanticColor::Foreground));
 
-  auto &theme = ThemeService::instance().theme();
-  if (auto *sc = std::get_if<SemanticColor>(&*fill)) return theme.resolve(*sc);
-  if (auto *qc = std::get_if<QColor>(&*fill)) return *qc;
-  if (auto *str = std::get_if<QString>(&*fill)) return QColor(*str);
-  return {};
-}
-
-static QString buildProviderIdForFallback(const ImageURL &url);
-
-static QString buildParams(const ImageURL &url, bool builtinFgDefault = false) {
-  QStringList parts;
-
-  QColor fg = resolveFillColor(url);
-  if (builtinFgDefault && !fg.isValid())
-    fg = ThemeService::instance().theme().resolve(SemanticColor::Foreground);
-  if (fg.isValid()) {
-    auto fmt = fg.alphaF() < 1.0 ? QColor::HexArgb : QColor::HexRgb;
-    parts << QStringLiteral("fg=%23") + fg.name(fmt).mid(1);
-  }
-
-  if (auto bgTint = url.backgroundTint()) {
-    QColor const bg = ThemeService::instance().theme().resolve(*bgTint);
-    parts << QStringLiteral("bg=%23") + bg.name(QColor::HexRgb).mid(1);
-  }
-
-  if (url.mask() == OmniPainter::CircleMask)
-    parts << QStringLiteral("mask=circle");
-  else if (url.mask() == OmniPainter::RoundedRectangleMask)
-    parts << QStringLiteral("mask=roundedRectangle");
-
-  if (auto fb = url.fallback()) {
-    ImageURL const fbUrl(*fb);
-    QString const fbId = buildProviderIdForFallback(fbUrl);
-    if (!fbId.isEmpty())
-      parts << QStringLiteral("fallback=") + QString::fromUtf8(QUrl::toPercentEncoding(fbId));
-  }
-
-  if (parts.isEmpty()) return {};
-  return QStringLiteral("?") + parts.join(QStringLiteral("&"));
-}
-
-static QString buildProviderIdForFallback(const ImageURL &url) {
-  QString const source = ImageUrl(url).toSource();
-  static const QString prefix = QStringLiteral("image://vicinae/");
-  if (source.startsWith(prefix)) return source.mid(prefix.length());
-  return {};
+  if (auto bg = url.backgroundTint()) url.setBackgroundTint(OmniPainter::resolveColor(*bg));
 }
 
 QString ImageUrl::toSource() const {
   if (!isValid()) return {};
 
-  QString const prefix = QStringLiteral("image://vicinae/");
-  auto type = m_url.type();
-  const QString &name = m_url.name();
+  ImageURL resolved = m_url;
+  resolveColors(resolved);
 
-  switch (type) {
-  case ImageURLType::Builtin:
-    return prefix + QStringLiteral("builtin:") + name + buildParams(m_url, true);
-
-  case ImageURLType::System:
-    return prefix + QStringLiteral("system:") + name;
-
-  case ImageURLType::Local:
-    return prefix + QStringLiteral("local:") + name + buildParams(m_url);
-
-  case ImageURLType::FileIcon:
-    return prefix + QStringLiteral("file-icon:") + name;
-
-  case ImageURLType::MacBundle:
-    return prefix + QStringLiteral("bundle:") + name + buildParams(m_url);
-
-  case ImageURLType::Http:
-  case ImageURLType::Https: {
-    QString params = buildParams(m_url);
-    if (!params.isEmpty()) {
-      params[0] = ';';
-      params.replace('&', ';');
-    }
-    return prefix + QStringLiteral("http") + params + QStringLiteral(":") + name;
+  if (auto fb = m_url.fallback()) {
+    ImageURL fbUrl(*fb);
+    resolveColors(fbUrl);
+    resolved.withFallback(fbUrl);
   }
 
-  case ImageURLType::Emoji:
-    return prefix + QStringLiteral("emoji:") + name;
-
-  case ImageURLType::Favicon:
-    return prefix + QStringLiteral("favicon:") + name;
-
-  case ImageURLType::DataURI: {
-    QString params = buildParams(m_url);
-    if (!params.isEmpty()) {
-      params[0] = ';';
-      params.replace('&', ';');
-    }
-    return prefix + QStringLiteral("datauri") + params + QStringLiteral(":") + name;
-  }
-
-  default:
-    return {};
-  }
+  return QStringLiteral("image://vicinae/") + resolved.toString();
 }
 
 ImageUrl ImageUrl::withFallback(const ImageUrl &fb) const {

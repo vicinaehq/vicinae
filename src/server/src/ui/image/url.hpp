@@ -26,8 +26,9 @@ enum ImageURLType : std::uint8_t {
 };
 
 static std::vector<std::pair<QString, ImageURLType>> iconTypes = {
-    {"favicon", Favicon}, {"omnicast", Builtin}, {"system", System},    {"http", Http},
-    {"https", Http},      {"local", Local},      {"bundle", MacBundle}, {"file-icon", FileIcon},
+    {"favicon", Favicon},    {"omnicast", Builtin}, {"builtin", Builtin}, {"system", System},
+    {"http", Http},          {"https", Http},       {"local", Local},     {"bundle", MacBundle},
+    {"file-icon", FileIcon}, {"emoji", Emoji},      {"datauri", DataURI},
 };
 
 static std::vector<std::pair<QString, SemanticColor>> colorTints = {
@@ -101,7 +102,7 @@ public:
   ImageURLType type() const;
   const QString &name() const;
   std::optional<SemanticColor> foregroundTint() const;
-  std::optional<SemanticColor> backgroundTint() const;
+  std::optional<ColorLike> backgroundTint() const;
   const std::optional<ColorLike> &fillColor() const;
   OmniPainter::ImageMaskType mask() const;
   std::optional<ObjectFit> fit() const { return m_fit; }
@@ -118,7 +119,7 @@ public:
   ImageURL &setFill(const std::optional<ColorLike> &color);
   ImageURL &setMask(OmniPainter::ImageMaskType mask);
   ImageURL &setForegroundTint(SemanticColor tint);
-  ImageURL &setBackgroundTint(SemanticColor tint);
+  ImageURL &setBackgroundTint(const ColorLike &tint);
 
   ImageURL();
   ImageURL(const QString &s) noexcept;
@@ -146,7 +147,7 @@ private:
   bool _isValid = false;
   QString _name;
   bool m_cache = true;
-  std::optional<SemanticColor> _bgTint;
+  std::optional<ColorLike> _bgTint;
   std::optional<SemanticColor> _fgTint;
   OmniPainter::ImageMaskType _mask = OmniPainter::ImageMaskType::NoMask;
   std::optional<QString> _fallback;

@@ -207,6 +207,8 @@ set(SRCS
 	src/ui/omni-painter/omni-painter.cpp
 
 	src/ui/image/url.cpp
+	src/ui/image/image-renderer.hpp
+	src/ui/image/image-renderer.cpp
 	src/ui/image/image.hpp
 	src/ui/image/static-image-loader.cpp
 	src/ui/image/animated-image-loader.cpp

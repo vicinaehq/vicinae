@@ -39,7 +39,7 @@ ImageURL &ImageURL::setForegroundTint(SemanticColor tint) {
   _fgTint = tint;
   return *this;
 }
-ImageURL &ImageURL::setBackgroundTint(SemanticColor tint) {
+ImageURL &ImageURL::setBackgroundTint(const ColorLike &tint) {
   _bgTint = tint;
   return *this;
 }
@@ -47,7 +47,7 @@ ImageURL &ImageURL::setBackgroundTint(SemanticColor tint) {
 ImageURLType ImageURL::type() const { return _type; }
 const QString &ImageURL::name() const { return _name; }
 std::optional<SemanticColor> ImageURL::foregroundTint() const { return _fgTint; }
-std::optional<SemanticColor> ImageURL::backgroundTint() const { return _bgTint; }
+std::optional<ColorLike> ImageURL::backgroundTint() const { return _bgTint; }
 const std::optional<ColorLike> &ImageURL::fillColor() const { return _fillColor; }
 OmniPainter::ImageMaskType ImageURL::mask() const { return _mask; }
 
@@ -66,8 +66,13 @@ QUrl ImageURL::url() const {
   QUrlQuery query;
 
   if (_fallback) query.addQueryItem("fallback", *_fallback);
-  if (_bgTint) query.addQueryItem("bg_tint", nameForTint(*_bgTint));
-  if (_fillColor) { query.addQueryItem("fill", OmniPainter::serializeColor(_fillColor.value())); }
+  if (_fgTint) query.addQueryItem("fg_tint", nameForTint(*_fgTint));
+  if (_bgTint) query.addQueryItem("bg_tint", OmniPainter::serializeColor(*_bgTint));
+  if (_fillColor) query.addQueryItem("fill", OmniPainter::serializeColor(_fillColor.value()));
+  if (_mask == OmniPainter::CircleMask)
+    query.addQueryItem("mask", "circle");
+  else if (_mask == OmniPainter::RoundedRectangleMask)
+    query.addQueryItem("mask", "roundedRectangle");
 
   for (const auto &[k, v] : m_params) {
     query.addQueryItem(k, v);
@@ -110,8 +115,18 @@ ImageURL::ImageURL(const QUrl &url) {
   auto query = QUrlQuery(url.query());
 
   if (auto fgTint = query.queryItemValue("fg_tint"); !fgTint.isEmpty()) { _fgTint = tintForName(fgTint); }
-  if (auto bgTint = query.queryItemValue("bg_tint"); !bgTint.isEmpty()) { _bgTint = tintForName(bgTint); }
-  if (auto fill = query.queryItemValue("fill"); !fill.isEmpty()) { _fillColor = tintForName(fill); }
+  if (auto bgTint = query.queryItemValue("bg_tint"); !bgTint.isEmpty()) {
+    if (auto tint = tintForName(bgTint); tint != SemanticColor::InvalidTint)
+      _bgTint = tint;
+    else
+      _bgTint = QColor(bgTint);
+  }
+  if (auto fill = query.queryItemValue("fill"); !fill.isEmpty()) {
+    if (auto tint = tintForName(fill); tint != SemanticColor::InvalidTint)
+      _fillColor = tint;
+    else
+      _fillColor = QColor(fill);
+  }
   if (auto fallback = query.queryItemValue("fallback"); !fallback.isEmpty()) { _fallback = fallback; }
   if (auto mask = query.queryItemValue("mask"); !mask.isEmpty()) {
     if (mask == "circle")
@@ -120,8 +135,12 @@ ImageURL::ImageURL(const QUrl &url) {
       _mask = OmniPainter::ImageMaskType::RoundedRectangleMask;
   }
 
+  static const QStringList KNOWN_KEYS = {
+      QStringLiteral("fg_tint"),  QStringLiteral("bg_tint"), QStringLiteral("fill"),
+      QStringLiteral("fallback"), QStringLiteral("mask"),
+  };
   for (const auto &[k, v] : query.queryItems()) {
-    m_params[k] = v;
+    if (!KNOWN_KEYS.contains(k)) m_params[k] = v;
   }
 
   _isValid = true;
