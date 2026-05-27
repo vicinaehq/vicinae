@@ -1,5 +1,6 @@
 #include "image-url.hpp"
 #include "theme.hpp"
+#include <QVariant>
 #include "theme/theme-file.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
 
@@ -52,9 +53,11 @@ ImageUrl ImageUrl::withBackgroundTint(const QString &tint) const {
   return ImageUrl(std::move(copy));
 }
 
-ImageUrl ImageUrl::withFillColor(const QColor &color) const {
+ImageUrl ImageUrl::withFillColor(const QVariant &color) const {
+  auto c = color.value<QColor>();
+  if (!c.isValid()) return *this;
   ImageURL copy = m_url;
-  copy.setFill(color);
+  copy.setFill(c);
   return ImageUrl(std::move(copy));
 }
 

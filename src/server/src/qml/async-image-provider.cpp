@@ -12,58 +12,11 @@
 #include <QQuickTextureFactory>
 #include <QSvgRenderer>
 #include <QTimer>
-#include <QUrlQuery>
 #include <QtConcurrent>
 #include <QtMath>
 #include <atomic>
 
-static QString remapLegacyKey(const QString &key) {
-  if (key == QStringLiteral("fg")) return QStringLiteral("fill");
-  if (key == QStringLiteral("bg")) return QStringLiteral("bg_tint");
-  return key;
-}
-
-static ImageURL parseProviderId(const QString &id) {
-  if (id.startsWith(QStringLiteral("icon://"))) return ImageURL(id);
-
-  int colonIdx = id.indexOf(':');
-  if (colonIdx < 0) return {};
-
-  QString typeStr = id.left(colonIdx);
-  QString name = id.mid(colonIdx + 1);
-  QUrlQuery query;
-
-  int semiIdx = typeStr.indexOf(';');
-  if (semiIdx >= 0) {
-    for (const auto &p : typeStr.mid(semiIdx + 1).split(';')) {
-      int eq = p.indexOf('=');
-      if (eq < 0) continue;
-      query.addQueryItem(remapLegacyKey(p.left(eq)), QUrl::fromPercentEncoding(p.mid(eq + 1).toUtf8()));
-    }
-    typeStr = typeStr.left(semiIdx);
-  }
-
-  bool isBlob = (typeStr == QStringLiteral("http") || typeStr == QStringLiteral("datauri"));
-  if (!isBlob) {
-    int qmark = name.indexOf('?');
-    if (qmark >= 0) {
-      for (const auto &p : name.mid(qmark + 1).split('&')) {
-        int eq = p.indexOf('=');
-        if (eq < 0) continue;
-        query.addQueryItem(remapLegacyKey(p.left(eq)), QUrl::fromPercentEncoding(p.mid(eq + 1).toUtf8()));
-      }
-      name = name.left(qmark);
-    }
-  }
-
-  QUrl iconUrl;
-  iconUrl.setScheme(QStringLiteral("icon"));
-  iconUrl.setHost(typeStr);
-  iconUrl.setPath(QStringLiteral("/") + name);
-  if (!query.isEmpty()) iconUrl.setQuery(query);
-
-  return ImageURL(iconUrl);
-}
+static ImageURL parseProviderId(const QString &id) { return ImageURL(id); }
 
 static bool isGif(const QByteArray &data) {
   return data.size() >= 6 && (data.startsWith("GIF87a") || data.startsWith("GIF89a"));

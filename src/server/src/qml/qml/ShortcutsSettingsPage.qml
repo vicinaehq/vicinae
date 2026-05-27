@@ -100,8 +100,8 @@ Item {
                     anchors.rightMargin: 6
                     spacing: 4
 
-                    Image {
-                        source: "image://vicinae/builtin:magnifying-glass?fg=" + Theme.textMuted
+                    ViciImage {
+                        source: Img.builtin("magnifying-glass").withFillColor(Theme.textMuted)
                         sourceSize.width: 10
                         sourceSize.height: 10
                         Layout.preferredWidth: 10

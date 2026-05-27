@@ -11,11 +11,7 @@ GenericListView {
 
     emptyTitle: cmdModel && cmdModel.emptyTitle || "No results"
     emptyDescription: (cmdModel && cmdModel.emptyDescription) || ""
-    emptyIcon: {
-        var _ = Theme.foreground;
-        var icon = cmdModel ? (cmdModel.emptyIcon || "") : "";
-        return icon !== "" ? icon : "image://vicinae/builtin:magnifying-glass?fg=" + Theme.foreground;
-    }
+    emptyIcon: cmdModel?.emptyIcon?.valid ? cmdModel.emptyIcon : Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
 
     delegate: Loader {
         id: delegateLoader

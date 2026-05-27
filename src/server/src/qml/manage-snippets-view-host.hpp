@@ -16,7 +16,7 @@ class ManageSnippetsViewHost : public ListViewHost {
   Q_PROPERTY(QVariantList detailMetadata READ detailMetadata NOTIFY detailChanged)
   Q_PROPERTY(QString emptyTitle MEMBER m_emptyTitle CONSTANT)
   Q_PROPERTY(QString emptyDescription MEMBER m_emptyDescription CONSTANT)
-  Q_PROPERTY(QString emptyIcon MEMBER m_emptyIcon CONSTANT)
+  Q_PROPERTY(ImageUrl emptyIcon MEMBER m_emptyIcon CONSTANT)
 
 signals:
   void detailChanged();
@@ -53,5 +53,5 @@ private:
   QVariantList m_detailMetadata;
   QString m_emptyTitle = QStringLiteral("No snippets");
   QString m_emptyDescription = QStringLiteral("Create a snippet to get started");
-  QString m_emptyIcon = qml::imageSourceFor(ImageURL(BuiltinIcon::Snippets));
+  ImageUrl m_emptyIcon = ImageUrl(ImageURL(BuiltinIcon::Snippets));
 };

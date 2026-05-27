@@ -153,8 +153,6 @@ Just some preformatted text.
 
 ## Images
 
-![Vicinae icon](image://vicinae/builtin:cart?raycast-width=32&raycast-height=32)
-
 [![Pikachu](https://archives.bulbagarden.net/media/upload/thumb/4/4a/0025Pikachu.png/600px-0025Pikachu.png)](https://bulbapedia.bulbagarden.net/wiki/Pikachu)
 
 ![HTTP GIF](https://docs.vicinae.com/scripts/full-output-demo.gif)

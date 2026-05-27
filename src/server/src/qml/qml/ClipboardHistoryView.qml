@@ -154,9 +154,9 @@ Item {
 
                                 RowLayout {
                                     spacing: 5
-                                    Image {
+                                    ViciImage {
                                         visible: delegateLoader.isPinned
-                                        source: "image://vicinae/builtin:pin?fg=" + Theme.red
+                                        source: Img.builtin("pin").withFillColor(Theme.danger)
                                         sourceSize.width: 14
                                         sourceSize.height: 14
                                         Layout.preferredWidth: 14
@@ -210,7 +210,7 @@ Item {
                 sourceComponent: EmptyView {
                     title: root.host.detailErrorTitle
                     description: root.host.detailErrorDescription
-                    icon: "image://vicinae/builtin:key?fg=" + Theme.red
+                    icon: Img.builtin("key").withFillColor(Theme.danger)
                 }
             }
 
