@@ -107,7 +107,10 @@ QImage renderSystemIcon(const QString &name, const QSize &size) {
   std::lock_guard lock(mtx);
   QIcon const icon = QIcon::fromTheme(name);
   if (icon.isNull()) return {};
-  return icon.pixmap(size).toImage();
+
+  qreal const dpr = qGuiApp->devicePixelRatio();
+  QSize const logicalSize(qCeil(size.width() / dpr), qCeil(size.height() / dpr));
+  return icon.pixmap(logicalSize, dpr).toImage();
 }
 
 static void applyFillColor(QImage &image, const QColor &fg) {
