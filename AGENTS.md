@@ -20,7 +20,8 @@ We use C++23 so we have access to most modern C++ features.
 Here are a few rules to keep in mind:
 
 - Lack of value: use `std::optional` instead of arbitrary value discriminants such as the empty string. If this is not possible or goes against a commonly used convention, respect the convention first, no shoehorning. If we are dealing with raw pointers, the nullable component is already part of it so no need to add a layer of indirection.
-- Avoid raw pointers: unless we are dealing with QT's ownership model or a C API. For QT classes that are not QObjects, you should probably use standard smart pointers as recommended in modern QT. QObjects must be deleted using `deleteLater` and never raw `delete`, as this can cause memory corruption with signal and slots.
+- Avoid raw pointers: unless we are dealing with QT's ownership model or a C API. For QT classes that are not QObjects, you should probably use standard smart pointers as recommended in modern QT. 
+- QObjects must be deleted using `deleteLater` and never raw `delete`, as this can cause memory corruption with signal and slots. Calling `delete` on a `QObject` is a **STRONG** code smell.
 - Watch for implicit copies: avoid copies as much as possible, use non owning containers when you can (`std::span`, `std::string_view`, `QStringView`) and just `std::move` the data when applicable. When copy is the safest option, use copy: don't go out of your way to respect this rule.
 - QT vs STL classes: prefer STL containers over QT counterparts.
 - vectors: always reserve `std::vector`s and use `emplace_back` to push new elements.

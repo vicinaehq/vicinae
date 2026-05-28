@@ -46,8 +46,6 @@ static std::vector<std::pair<QString, SemanticColor>> colorTints = {
 
 class ImageURL {
 public:
-  static Qt::AspectRatioMode fitToAspectRatio(ObjectFit fit);
-
   ImageURL &circle() {
     setMask(OmniPainter::CircleMask);
     return *this;
@@ -97,27 +95,17 @@ public:
 
   QUrl url() const;
 
-  ImageURL &param(const QString &name, const QString &value);
-  std::optional<QString> param(const QString &name) const;
-
   ImageURLType type() const;
   const QString &name() const;
-  std::optional<SemanticColor> foregroundTint() const;
   std::optional<ColorLike> backgroundTint() const;
   const std::optional<ColorLike> &fillColor() const;
   OmniPainter::ImageMaskType mask() const;
-  std::optional<ObjectFit> fit() const { return m_fit; }
-  bool cachable() const { return m_cache; }
-  void setCachable(bool value) { m_cache = value; }
 
-  void setFit(ObjectFit fit) { m_fit = fit; }
   void setType(ImageURLType type);
   void setName(const QString &name);
-  void setSize(QSize size);
 
   ImageURL &setFill(const std::optional<ColorLike> &color);
   ImageURL &setMask(OmniPainter::ImageMaskType mask);
-  ImageURL &setForegroundTint(SemanticColor tint);
   ImageURL &setBackgroundTint(const ColorLike &tint);
 
   // Returns a copy with colors resolved against the current theme (SemanticColor/DynamicColor
@@ -131,7 +119,6 @@ public:
   ImageURL(const ImageLikeModel &imageLike);
   ImageURL(const QUrl &url);
 
-  bool operator==(const ImageURL &rhs) const;
   operator QString() const { return toString(); }
 
   static ImageURL builtin(const QString &name);
@@ -150,14 +137,8 @@ private:
   ImageURLType _type = ImageURLType::Invalid;
   bool _isValid = false;
   QString _name;
-  bool m_cache = true;
   std::optional<ColorLike> _bgTint;
-  std::optional<SemanticColor> _fgTint;
   OmniPainter::ImageMaskType _mask = OmniPainter::ImageMaskType::NoMask;
   std::optional<QString> _fallback;
   std::optional<ColorLike> _fillColor = std::nullopt;
-  std::optional<ObjectFit> m_fit;
-
-  // url dependant custom params
-  std::map<QString, QString> m_params;
 };

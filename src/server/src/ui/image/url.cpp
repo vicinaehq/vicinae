@@ -14,18 +14,6 @@
 
 namespace fs = std::filesystem;
 
-Qt::AspectRatioMode ImageURL::fitToAspectRatio(ObjectFit fit) {
-  switch (fit) {
-  case ObjectFit::Fill:
-    return Qt::KeepAspectRatioByExpanding;
-  case ObjectFit::Contain:
-    return Qt::KeepAspectRatio;
-  case ObjectFit::Stretch:
-    return Qt::IgnoreAspectRatio;
-  }
-  return Qt::IgnoreAspectRatio;
-}
-
 ImageURL &ImageURL::setFill(const std::optional<ColorLike> &color) {
   _fillColor = color;
   return *this;
@@ -36,10 +24,6 @@ ImageURL &ImageURL::setMask(OmniPainter::ImageMaskType mask) {
   return *this;
 }
 
-ImageURL &ImageURL::setForegroundTint(SemanticColor tint) {
-  _fgTint = tint;
-  return *this;
-}
 ImageURL &ImageURL::setBackgroundTint(const ColorLike &tint) {
   _bgTint = tint;
   return *this;
@@ -47,7 +31,6 @@ ImageURL &ImageURL::setBackgroundTint(const ColorLike &tint) {
 
 ImageURLType ImageURL::type() const { return _type; }
 const QString &ImageURL::name() const { return _name; }
-std::optional<SemanticColor> ImageURL::foregroundTint() const { return _fgTint; }
 std::optional<ColorLike> ImageURL::backgroundTint() const { return _bgTint; }
 const std::optional<ColorLike> &ImageURL::fillColor() const { return _fillColor; }
 OmniPainter::ImageMaskType ImageURL::mask() const { return _mask; }
@@ -90,7 +73,6 @@ QUrl ImageURL::url() const {
   QUrlQuery query;
 
   if (_fallback) query.addQueryItem("fallback", *_fallback);
-  if (_fgTint) query.addQueryItem("fg_tint", nameForTint(*_fgTint));
   if (_bgTint) query.addQueryItem("bg_tint", OmniPainter::serializeColor(*_bgTint));
   if (_fillColor) query.addQueryItem("fill", OmniPainter::serializeColor(_fillColor.value()));
   if (_mask == OmniPainter::CircleMask)
@@ -98,30 +80,13 @@ QUrl ImageURL::url() const {
   else if (_mask == OmniPainter::RoundedRectangleMask)
     query.addQueryItem("mask", "roundedRectangle");
 
-  for (const auto &[k, v] : m_params) {
-    query.addQueryItem(k, v);
-  }
-
   url.setQuery(query);
 
   return url;
 }
 
-ImageURL &ImageURL::param(const QString &name, const QString &value) {
-  m_params[name] = value;
-  return *this;
-}
-
-std::optional<QString> ImageURL::param(const QString &name) const {
-  if (auto it = m_params.find(name); it != m_params.end()) return it->second;
-
-  return std::nullopt;
-}
-
 void ImageURL::setType(ImageURLType type) { _type = type; }
 void ImageURL::setName(const QString &name) { _name = name; }
-
-bool ImageURL::operator==(const ImageURL &rhs) const { return toString() == rhs.toString(); }
 
 ImageURL::ImageURL(const QString &s) noexcept { *this = std::move(QUrl(s)); }
 
@@ -138,7 +103,6 @@ ImageURL::ImageURL(const QUrl &url) {
 
   auto query = QUrlQuery(url.query());
 
-  if (auto fgTint = query.queryItemValue("fg_tint"); !fgTint.isEmpty()) { _fgTint = tintForName(fgTint); }
   if (auto bgTint = query.queryItemValue("bg_tint"); !bgTint.isEmpty()) {
     if (auto tint = tintForName(bgTint); tint != SemanticColor::InvalidTint)
       _bgTint = tint;
@@ -157,14 +121,6 @@ ImageURL::ImageURL(const QUrl &url) {
       _mask = OmniPainter::ImageMaskType::CircleMask;
     else if (mask == "roundedRectangle")
       _mask = OmniPainter::ImageMaskType::RoundedRectangleMask;
-  }
-
-  static const QStringList KNOWN_KEYS = {
-      QStringLiteral("fg_tint"),  QStringLiteral("bg_tint"), QStringLiteral("fill"),
-      QStringLiteral("fallback"), QStringLiteral("mask"),
-  };
-  for (const auto &[k, v] : query.queryItems()) {
-    if (!KNOWN_KEYS.contains(k)) m_params[k] = v;
   }
 
   _isValid = true;
@@ -280,7 +236,6 @@ ImageURL ImageURL::system(const QString &name) {
 
   url.setType(ImageURLType::System);
   url.setName(name);
-  url.setCachable(false); // cached internally
 
   return url;
 }

@@ -33,9 +33,3 @@ ImageUrl ImageUrl::withFillColor(const QColor &color) const {
   copy.setFill(color);
   return ImageUrl(std::move(copy));
 }
-
-ImageUrl ImageUrl::withCircleMask() const {
-  ImageURL copy = m_url;
-  copy.circle();
-  return ImageUrl(std::move(copy));
-}
