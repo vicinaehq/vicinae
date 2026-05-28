@@ -90,6 +90,13 @@
 			"title": "Action Panel Stress Test",
 			"description": "Test action panel reconciliation, deep submenus, dynamic content, and filter preservation",
 			"mode": "view"
+		},
+		{
+			"name": "desktop-notif-interval",
+			"title": "Desktop Notification Interval",
+			"description": "Desktop Notification Interval",
+			"mode": "no-view",
+			"interval": "30s"
 		}
 	],
 	"preferences": [],

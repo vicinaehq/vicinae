@@ -6,10 +6,13 @@
 #include "glaze-qt.hpp"
 #include "navigation-controller.hpp"
 #include "qml/extension-view-host.hpp"
+#include "services/desktop-notification/desktop-notification-client.hpp"
 #include "services/toast/toast-service.hpp"
 #include "ui/alert/alert.hpp"
+#include "ui/image/image-renderer.hpp"
 #include <QClipboard>
 #include <QGuiApplication>
+#include <QTemporaryFile>
 #include <QtConcurrent/QtConcurrent>
 #include <qfuturewatcher.h>
 #include <qlogging.h>
@@ -135,6 +138,47 @@ public:
     return tsapi::Result<std::string>::ok(text.toStdString());
   }
 
+  tsapi::Result<void>::Future sendDesktopNotification(tsapi::DesktopNotificationPayload data) override {
+    QString title = QString::fromStdString(data.title);
+    QString body = QString::fromStdString(data.body);
+    auto urgency = mapNotificationUrgency(data.urgency);
+
+    if (!data.icon) {
+      m_notificationClient.provider()->send({title, body, std::nullopt, urgency});
+      return Void::ok();
+    }
+
+    ImageURL iconUrl = TsapiImage::parse(*data.icon);
+
+    auto promise = std::make_shared<QPromise<Void::Type>>();
+    auto future = promise->future();
+    promise->start();
+
+    auto renderFuture = ImageRendering::renderFirstFrame(iconUrl, QSize(128, 128));
+    auto *watcher = new QFutureWatcher<QImage>(this);
+    connect(watcher, &QFutureWatcherBase::finished, this, [this, watcher, promise, title, body, urgency]() {
+      QImage image = watcher->result();
+      std::optional<QString> iconPath;
+
+      if (!image.isNull()) {
+        auto *tmp = new QTemporaryFile(QDir::tempPath() + "/vicinae-notif-XXXXXX.png", this);
+        if (tmp->open()) {
+          image.save(tmp, "PNG");
+          tmp->close();
+          iconPath = tmp->fileName();
+        }
+      }
+
+      m_notificationClient.provider()->send({title, body, iconPath, urgency});
+      promise->addResult(Void::Type{});
+      promise->finish();
+      watcher->deleteLater();
+    });
+    watcher->setFuture(renderFuture);
+
+    return future;
+  }
+
 private slots:
   void modelCreated() {
     auto models = m_modelWatcher.result();
@@ -186,6 +230,19 @@ private:
     }
   }
 
+  static AbstractDesktopNotificationClient::Urgency
+  mapNotificationUrgency(tsapi::NotificationUrgency urgency) {
+    using Urgency = AbstractDesktopNotificationClient::Urgency;
+    switch (urgency) {
+    case tsapi::NotificationUrgency::Low:
+      return Urgency::Low;
+    case tsapi::NotificationUrgency::High:
+      return Urgency::High;
+    default:
+      return Urgency::Normal;
+    }
+  }
+
   static ToastStyle mapToastStyle(tsapi::ToastStyle style) {
     switch (style) {
     case tsapi::ToastStyle::Success:
@@ -210,4 +267,5 @@ private:
   std::shared_ptr<ExtensionCommand> m_command;
   tsapi::AbstractEventCore *m_eventCore;
   ToastService &m_toast;
+  DesktopNotificationClient m_notificationClient;
 };

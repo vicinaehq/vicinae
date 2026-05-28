@@ -87,6 +87,8 @@ export type PopToRootType = "Default" | "Immediate" | "Suspended";
 
 export type ConfirmAlertActionStyle = "Default" | "Destructive" | "Cancel";
 
+export type NotificationUrgency = "Low" | "Normal" | "High";
+
 export type Application = {
 	id: string;
 	name: string;
@@ -143,6 +145,13 @@ export type ConfirmAlertPayload = {
 	dismissAction: ConfirmAlertAction;
 	rememberUserChoice: boolean;
 	icon?: Image;
+};
+
+export type DesktopNotificationPayload = {
+	title: string;
+	body: string;
+	icon?: Image;
+	urgency: NotificationUrgency;
 };
 
 export type Rect = {
@@ -332,6 +341,10 @@ class UIService {
 
 	getSelectedText(): Promise<string> {
 		return this.transport.request("UI/getSelectedText", {});
+	}
+
+	sendDesktopNotification(data: DesktopNotificationPayload): Promise<void> {
+		return this.transport.request("UI/sendDesktopNotification", { data });
 	}
 
 	viewPoped(handler: () => void): EventSubscription {

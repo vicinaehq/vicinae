@@ -1,8 +1,13 @@
 import type { PathLike } from "node:fs";
 import { rm } from "node:fs/promises";
 import { WindowManagement } from "./window-management";
-import type { Application } from "./proto/api";
+import type {
+	Application,
+	DesktopNotificationPayload,
+	NotificationUrgency,
+} from "./proto/api";
 import { getClient } from "./client";
+import { ImageLike, serializeProtoImage } from "./image";
 
 /**
   @ignore - we should probably move this to raycast compat, I don't think we want that.
@@ -153,5 +158,18 @@ export const showInFileBrowser = async (
 		options.select ?? true,
 	);
 };
+
+export const sendDesktopNotification = (payload: {
+	title: string;
+	body: string;
+	icon?: ImageLike;
+	urgency?: NotificationUrgency;
+}) =>
+	getClient().UI.sendDesktopNotification({
+		title: payload.title,
+		body: payload.body,
+		icon: payload.icon ? serializeProtoImage(payload.icon) : undefined,
+		urgency: payload.urgency ?? "Normal",
+	});
 
 export type { Application } from "./proto/api";

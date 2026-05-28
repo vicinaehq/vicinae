@@ -95,6 +95,19 @@ struct ConfirmAlertPayload {
   icon?: Image;
 };
 
+enum NotificationUrgency {
+  Low,
+  Normal,
+  High
+};
+
+struct DesktopNotificationPayload {
+  title: string;
+  body: string;
+  icon?: Image;
+  urgency: NotificationUrgency;
+};
+
 service UI {
   fn render(json: string) => void;
   fn showToast(id: string, title: string, message: string, style: ToastStyle) => void;
@@ -111,6 +124,8 @@ service UI {
 
   fn setSearchText(text: string) => void;
   fn getSelectedText() => string;
+
+  fn sendDesktopNotification(data: DesktopNotificationPayload) => void;
 
   event viewPoped();
   event viewPushed();
