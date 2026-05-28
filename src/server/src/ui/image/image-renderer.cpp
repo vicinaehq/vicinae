@@ -267,7 +267,7 @@ static QFuture<QImage> renderHttp(const QString &rawUrl, const QSize &size, QCol
         QObject::connect(reply, &FetchReply::finished, qApp,
                          [promise, reply, size, fg, mask](const QByteArray &data) {
                            reply->deleteLater();
-                           QtConcurrent::run(&decodingPool(), [promise, data, size, fg, mask]() {
+                           decodingPool().start([promise, data, size, fg, mask]() {
                              QImage img = decodeImageData(data, size);
                              applyPostTransforms(img, fg, mask);
                              promise->addResult(std::move(img));
@@ -431,6 +431,27 @@ QImage decodeAndTransform(const QByteArray &data, const QSize &size, const QColo
 
   applyPostTransforms(img, fg, mask);
   return img;
+}
+
+static QFuture<QImage> renderWithFallback(ImageURL url, const QSize &size, int remaining) {
+  return render(url, size)
+      .then([url = std::move(url), size, remaining](QImage img) -> QFuture<QImage> {
+        if (!img.isNull()) return QtFuture::makeReadyValueFuture(std::move(img));
+        if (remaining <= 0) return QtFuture::makeReadyValueFuture(QImage{});
+
+        ImageURL next;
+        if (auto fb = url.fallback())
+          next = ImageURL(*fb);
+        else
+          next = ImageURL::builtin("question-mark-circle");
+
+        return renderWithFallback(std::move(next), size, remaining - 1);
+      })
+      .unwrap();
+}
+
+QFuture<QImage> renderFirstFrame(const ImageURL &url, const QSize &size) {
+  return renderWithFallback(url, size, 2);
 }
 
 QThread &animationThread() {

@@ -39,6 +39,7 @@ static std::vector<std::pair<QString, SemanticColor>> colorTints = {
     {"orange", SemanticColor::Orange},
     {"red", SemanticColor::Red},
     {"yellow", SemanticColor::Yellow},
+    {"cyan", SemanticColor::Cyan},
     {"accent", SemanticColor::Accent},
     {"primary-text", SemanticColor::Foreground},
     {"secondary-text", SemanticColor::TextMuted}};

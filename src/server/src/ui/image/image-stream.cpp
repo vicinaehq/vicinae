@@ -2,6 +2,8 @@
 #include "data-uri/data-uri.hpp"
 #include "image-fetcher.hpp"
 #include "image-renderer.hpp"
+#include "theme.hpp"
+#include "theme/theme-file.hpp"
 #include <QBuffer>
 #include <QCache>
 #include <QFutureWatcher>
@@ -51,7 +53,11 @@ ImageStream::ImageStream(const ImageURL &url, const QSize &size, QObject *parent
     QTimer::singleShot(0, this, [this, img = *cached]() { emit frameReady(img); });
     return;
   }
-  switch (url.type()) {
+  dispatch();
+}
+
+void ImageStream::dispatch() {
+  switch (m_url.type()) {
   case ImageURLType::Http:
   case ImageURLType::Https:
   case ImageURLType::DataURI:
@@ -62,6 +68,32 @@ ImageStream::ImageStream(const ImageURL &url, const QSize &size, QObject *parent
     startStatic();
     break;
   }
+}
+
+void ImageStream::tryFallback() {
+  if (m_fallbacksRemaining <= 0) {
+    emit failed();
+    return;
+  }
+  m_fallbacksRemaining--;
+
+  if (auto fb = m_url.fallback())
+    m_url = ImageURL(*fb);
+  else
+    m_url = ImageURL::builtin("question-mark-circle");
+
+  if (auto fill = m_url.fillColor())
+    m_fg = OmniPainter::resolveColor(*fill);
+  else if (m_url.type() == ImageURLType::Builtin)
+    m_fg = ThemeService::instance().theme().resolve(SemanticColor::Foreground);
+  m_mask = m_url.mask();
+  m_cacheKey = makeCacheKey(m_url, m_size);
+
+  if (auto *cached = imageCache().object(m_cacheKey)) {
+    emit frameReady(*cached);
+    return;
+  }
+  dispatch();
 }
 
 std::optional<QImage> ImageStream::findCached(const ImageURL &url, const QSize &size) {
@@ -113,7 +145,7 @@ void ImageStream::startFetchable() {
     DataUri const uri(name);
     QByteArray decoded = uri.decodeContent();
     if (decoded.isEmpty()) {
-      emit failed();
+      tryFallback();
       return;
     }
     bool const isSvg = uri.mediaType().contains(QStringLiteral("svg"));
@@ -141,7 +173,7 @@ void ImageStream::startFetchable() {
 
 void ImageStream::onDataReceived(const QByteArray &data) {
   if (data.isEmpty()) {
-    emit failed();
+    tryFallback();
     return;
   }
 
@@ -183,7 +215,7 @@ void ImageStream::decodeStatic(const QByteArray &data) {
 
 void ImageStream::emitStaticFrame(QImage img) {
   if (img.isNull()) {
-    emit failed();
+    tryFallback();
     return;
   }
   auto cost = static_cast<int>(img.sizeInBytes());

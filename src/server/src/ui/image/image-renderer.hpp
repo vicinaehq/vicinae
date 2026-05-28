@@ -10,6 +10,7 @@ class QThread;
 namespace ImageRendering {
 
 QFuture<QImage> render(const ImageURL &url, const QSize &size);
+QFuture<QImage> renderFirstFrame(const ImageURL &url, const QSize &size);
 
 QImage decodeAndTransform(const QByteArray &data, const QSize &size, const QColor &fg = {},
                           OmniPainter::ImageMaskType mask = OmniPainter::NoMask);

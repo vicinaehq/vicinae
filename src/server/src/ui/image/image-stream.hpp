@@ -27,6 +27,8 @@ public:
 private:
   void startStatic();
   void startFetchable();
+  void dispatch();
+  void tryFallback();
 
   void onDataReceived(const QByteArray &data);
   void decodeStatic(const QByteArray &data);
@@ -38,6 +40,7 @@ private:
   QColor m_fg;
   OmniPainter::ImageMaskType m_mask = OmniPainter::NoMask;
   QString m_cacheKey;
+  int m_fallbacksRemaining = 2;
 
   QMovie *m_movie = nullptr;
   FetchReply *m_pendingReply = nullptr;
