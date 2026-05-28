@@ -295,7 +295,7 @@ QFuture<QImage> renderFirstFrame(const ImageURL &url, const QSize &size, bool sa
   QMetaObject::invokeMethod(
       qApp,
       [promise, url, size, safetyMargins]() {
-        auto *stream = new ImageStream(url, size, safetyMargins);
+        auto *stream = new ImageStream(url, size, {.safetyMargins = safetyMargins});
         auto finalize = [promise, stream](QImage img) {
           if (!promise->future().isFinished()) {
             promise->addResult(std::move(img));

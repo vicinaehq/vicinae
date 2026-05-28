@@ -11,6 +11,11 @@
 class FetchReply;
 class QMovie;
 
+struct ImageStreamOptions {
+  bool safetyMargins = false;
+  bool cache = true;
+};
+
 class ImageStream : public QObject {
   Q_OBJECT
 
@@ -19,7 +24,9 @@ signals:
   void failed();
 
 public:
-  ImageStream(const ImageURL &url, const QSize &size, bool safetyMargins = false, QObject *parent = nullptr);
+  using Options = ImageStreamOptions;
+
+  ImageStream(const ImageURL &url, const QSize &size, Options opts = {}, QObject *parent = nullptr);
   ~ImageStream() override;
 
   // Looks up the cache; if hit, emits frameReady synchronously and returns true.
@@ -46,7 +53,7 @@ private:
   QString m_cacheKey;
   QString m_originalCacheKey;
   int m_fallbacksRemaining = 2;
-  bool m_safetyMargins = false;
+  Options m_opts;
 
   QMovie *m_movie = nullptr;
   FetchReply *m_pendingReply = nullptr;

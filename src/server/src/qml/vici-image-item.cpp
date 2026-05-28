@@ -96,7 +96,8 @@ void ViciImageItem::reload() {
   qreal const dpr = window() ? window()->devicePixelRatio() : qGuiApp->devicePixelRatio();
   QSize const physicalSize(qCeil(w * dpr), qCeil(h * dpr));
 
-  m_stream = new ImageStream(m_resolvedUrl.imageUrl(), physicalSize, m_safetyMargins, this);
+  m_stream = new ImageStream(m_resolvedUrl.imageUrl(), physicalSize,
+                             {.safetyMargins = m_safetyMargins, .cache = m_cache}, this);
 
   connect(m_stream, &ImageStream::frameReady, this, [this, dpr](const QImage &frame) {
     qint64 const key = frame.cacheKey();

@@ -5,6 +5,9 @@
 #include "services/clipboard/clipboard-service.hpp"
 #include "utils/utils.hpp"
 #include <QDateTime>
+#include <QDir>
+#include <QFile>
+#include <QStandardPaths>
 #include <QUrl>
 
 static std::optional<ClipboardOfferKind> kindFromFilterIndex(int index) {
@@ -227,14 +230,15 @@ void ClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
   }
 
   if (mime.startsWith("image/")) {
-    m_tmpFile = std::make_unique<QTemporaryFile>();
-    m_tmpFile->setAutoRemove(true);
-    if (m_tmpFile->open()) {
-      m_tmpFile->write(rawData);
-      m_tmpFile->flush();
-      m_detailImageSource = qml::imageSourceFor(ImageURL::local(m_tmpFile->filesystemFileName()));
-      m_tmpFile->close();
+    auto const cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+    QDir().mkpath(cacheDir);
+    QString const path = cacheDir + QStringLiteral("/clipboard-") + entry.md5sum;
+    QFile f(path);
+    if (!f.exists() && f.open(QIODevice::WriteOnly)) {
+      f.write(rawData);
+      f.close();
     }
+    m_detailImageSource = qml::imageSourceFor(ImageURL::local(path));
     m_hasDetail = true;
     emit detailChanged();
     return;

@@ -4,8 +4,6 @@
 #include "section-list-model.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include "view-utils.hpp"
-#include <QTemporaryFile>
-#include <memory>
 
 class ClipboardHistoryController;
 class ClipboardService;
@@ -100,6 +98,4 @@ private:
   QString m_detailEncryptionIcon;
   QString m_detailErrorTitle;
   QString m_detailErrorDescription;
-
-  std::unique_ptr<QTemporaryFile> m_tmpFile;
 };
