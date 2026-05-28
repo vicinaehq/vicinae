@@ -55,7 +55,6 @@ protected:
   QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *) override;
   void geometryChange(const QRectF &newGeo, const QRectF &oldGeo) override;
   void itemChange(ItemChange change, const ItemChangeData &value) override;
-  void updatePolish() override;
 
 private:
   void reload();

@@ -89,7 +89,6 @@ void ViciImageItem::reload() {
   int h = m_sourceSize.height() > 0 ? m_sourceSize.height() : qCeil(height());
   if (w <= 0 || h <= 0) {
     m_deferredReload = true;
-    polish();
     return;
   }
 
@@ -133,15 +132,6 @@ void ViciImageItem::reload() {
     setStatus(Loading);
     update();
   }
-}
-
-void ViciImageItem::updatePolish() {
-  if (!m_deferredReload) return;
-  int w = m_sourceSize.width() > 0 ? m_sourceSize.width() : qCeil(width());
-  int h = m_sourceSize.height() > 0 ? m_sourceSize.height() : qCeil(height());
-  if (w <= 0 || h <= 0) return;
-  m_deferredReload = false;
-  reload();
 }
 
 void ViciImageItem::itemChange(ItemChange change, const ItemChangeData &value) {
