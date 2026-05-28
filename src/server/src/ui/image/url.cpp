@@ -7,6 +7,7 @@
 #include "theme/theme-file.hpp"
 #include <qdir.h>
 #include <qstringview.h>
+#include <QFile>
 #include <QIcon>
 #include <qurlquery.h>
 #include "url.hpp"
@@ -56,6 +57,18 @@ ImageURL &ImageURL::withFallback(const ImageURL &fallback) {
   return *this;
 }
 
+static QString resolveThemedLocalPath(const QString &path) {
+  QString const suffix =
+      QStringLiteral("@") + (ThemeService::instance().theme().isLight() ? "light" : "dark");
+
+  qsizetype const baseStart = path.lastIndexOf('/') + 1;
+  qsizetype const dotPos = path.indexOf('.', baseStart);
+  QString const themed = dotPos == -1 ? path + suffix : path.left(dotPos) + suffix + path.mid(dotPos);
+
+  if (QFile::exists(themed)) return themed;
+  return path;
+}
+
 ImageURL ImageURL::resolved() const {
   ImageURL out = *this;
   if (auto fill = fillColor())
@@ -63,6 +76,7 @@ ImageURL ImageURL::resolved() const {
   else if (type() == ImageURLType::Builtin)
     out.setFill(ThemeService::instance().theme().resolve(SemanticColor::Foreground));
   if (auto bg = backgroundTint()) out.setBackgroundTint(OmniPainter::resolveColor(*bg));
+  if (out.type() == ImageURLType::Local) out.setName(resolveThemedLocalPath(out.name()));
   return out;
 }
 

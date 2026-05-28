@@ -6,7 +6,7 @@ name = "elementary OS Light"
 description = "Warm, soft elementary OS inspired light theme"
 variant = "light"
 inherits = "vicinae-light"
-icon = "icons/elementary@light.svg"
+icon = "icons/elementary.svg"
 
 [colors.core]
 accent = "#3689E6"

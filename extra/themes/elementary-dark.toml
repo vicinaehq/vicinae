@@ -7,7 +7,7 @@ name = "elementary OS Dark"
 description = "A detailed elementary OS inspired dark theme for Vicinae"
 variant = "dark"
 inherits = "vicinae-dark"
-icon = "icons/elementary@dark.svg"
+icon = "icons/elementary.svg"
 
 [colors.core]
 background = "#2D2D2D"
