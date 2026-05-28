@@ -44,6 +44,7 @@ private:
   QColor m_fg;
   OmniPainter::ImageMaskType m_mask = OmniPainter::NoMask;
   QString m_cacheKey;
+  QString m_originalCacheKey;
   int m_fallbacksRemaining = 2;
   bool m_safetyMargins = false;
 

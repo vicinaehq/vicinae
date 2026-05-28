@@ -55,6 +55,7 @@ ImageStream::ImageStream(const ImageURL &url, const QSize &size, bool safetyMarg
   if (auto fill = m_url.fillColor()) m_fg = OmniPainter::resolveColor(*fill);
   m_mask = m_url.mask();
   m_cacheKey = makeCacheKey(m_url, size, m_safetyMargins);
+  m_originalCacheKey = m_cacheKey;
 }
 
 bool ImageStream::start() {
@@ -272,6 +273,7 @@ void ImageStream::emitStaticFrame(QImage img) {
   if (m_safetyMargins && m_url.type() != ImageURLType::MacBundle) ImageRendering::applySafetyMargins(img);
   auto cost = static_cast<int>(img.sizeInBytes());
   imageCache().insert(m_cacheKey, new QImage(img), cost);
+  if (m_originalCacheKey != m_cacheKey) imageCache().insert(m_originalCacheKey, new QImage(img), cost);
   emit frameReady(img);
 }
 
