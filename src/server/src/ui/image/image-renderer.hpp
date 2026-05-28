@@ -30,4 +30,6 @@ void applySafetyMargins(QImage &image);
 QThreadPool &decodingPool();
 QThread &animationThread();
 
+void clearCache();
+
 } // namespace ImageRendering

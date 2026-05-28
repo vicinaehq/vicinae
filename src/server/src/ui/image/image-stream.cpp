@@ -29,6 +29,10 @@ static QCache<QString, QImage> &imageCache() {
   return cache;
 }
 
+namespace ImageRendering {
+void clearCache() { imageCache().clear(); }
+} // namespace ImageRendering
+
 static QString makeCacheKey(const ImageURL &url, const QSize &size, bool safetyMargins) {
   auto key = QStringLiteral("%1|%2x%3").arg(url.toString()).arg(size.width()).arg(size.height());
   if (safetyMargins) key += QStringLiteral("|m");

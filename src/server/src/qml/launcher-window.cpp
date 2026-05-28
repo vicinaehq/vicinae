@@ -4,6 +4,7 @@
 #include "view-utils.hpp"
 #include "action-panel-controller.hpp"
 #include "ui/action-pannel/action.hpp"
+#include "ui/image/image-renderer.hpp"
 #include "services/news/news-service.hpp"
 #include "alert-model.hpp"
 #include "bridge-view.hpp"
@@ -113,6 +114,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   connect(&m_cacheEvictionTimer, &QTimer::timeout, this, [this]() {
     if (m_window) m_window->releaseResources();
     m_engine.trimComponentCache();
+    ImageRendering::clearCache();
 #ifdef __GLIBC__
     malloc_trim(0);
 #endif
