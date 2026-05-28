@@ -6,7 +6,6 @@
 #include "ui/action-pannel/action.hpp"
 #include "services/news/news-service.hpp"
 #include "alert-model.hpp"
-#include "async-image-provider.hpp"
 #include "bridge-view.hpp"
 #include "image-source.hpp"
 #include "image-url.hpp"
@@ -57,8 +56,6 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
 #endif
 
   qRegisterMetaType<ImageUrl>("ImageUrl");
-
-  m_engine.addImageProvider(QStringLiteral("vicinae"), new AsyncImageProvider());
 
   auto *rootCtx = m_engine.rootContext();
   rootCtx->setContextProperty(QStringLiteral("Nav"), ctx.navigation.get());

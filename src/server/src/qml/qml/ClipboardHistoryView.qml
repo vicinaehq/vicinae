@@ -55,12 +55,11 @@ Item {
                 height: 20
                 opacity: statusMouseArea.containsMouse ? 1.0 : 0.6
 
-                Image {
+                ViciImage {
                     anchors.fill: parent
                     source: root.host.clipboardStatusIcon
                     sourceSize.width: 20
                     sourceSize.height: 20
-                    asynchronous: true
                 }
 
                 MouseArea {

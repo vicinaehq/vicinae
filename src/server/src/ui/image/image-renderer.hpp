@@ -5,20 +5,19 @@
 #include <QSize>
 
 class ImageURL;
+class QThread;
 
 namespace ImageRendering {
 
 QFuture<QImage> render(const ImageURL &url, const QSize &size);
 
-QImage renderBuiltinSvg(const QString &name, const QSize &size, const QColor &fg, const QColor &bg);
-QImage renderEmoji(const QString &emoji, const QSize &size);
-QImage renderSystemIcon(const QString &name, const QSize &size);
-QImage renderLocalSvg(const QString &path, const QSize &size);
-QImage renderLocalRaster(const QString &path, const QSize &size);
-QImage decodeImageData(const QByteArray &data, const QSize &size);
+QImage decodeAndTransform(const QByteArray &data, const QSize &size, const QColor &fg = {},
+                          OmniPainter::ImageMaskType mask = OmniPainter::NoMask);
 
 void applyPostTransforms(QImage &image, const QColor &fg, OmniPainter::ImageMaskType mask);
 
 QThreadPool &decodingPool();
+
+QThread &animationThread();
 
 } // namespace ImageRendering

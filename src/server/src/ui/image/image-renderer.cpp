@@ -22,6 +22,7 @@
 #include <QPainter>
 #include <QPromise>
 #include <QSvgRenderer>
+#include <QThread>
 #include <QThreadPool>
 #include <QUrl>
 #include <QtConcurrent>
@@ -35,11 +36,12 @@ static constexpr int AA_PAD = 2;
 QThreadPool &decodingPool() {
   static QThreadPool pool;
   static std::once_flag flag;
-  std::call_once(flag, []() { pool.setMaxThreadCount(1); });
+  std::call_once(flag, []() { pool.setMaxThreadCount(4); });
   return pool;
 }
 
-QImage renderBuiltinSvg(const QString &iconName, const QSize &size, const QColor &fg, const QColor &bg) {
+static QImage renderBuiltinSvg(const QString &iconName, const QSize &size, const QColor &fg,
+                               const QColor &bg) {
   QString const iconPath = QStringLiteral(":icons/%1.svg").arg(iconName);
   QSvgRenderer renderer(iconPath);
   if (!renderer.isValid()) return {};
@@ -85,7 +87,7 @@ QImage renderBuiltinSvg(const QString &iconName, const QSize &size, const QColor
   return canvas;
 }
 
-QImage renderEmoji(const QString &emoji, const QSize &size) {
+static QImage renderEmoji(const QString &emoji, const QSize &size) {
   QImage canvas(size, QImage::Format_ARGB32_Premultiplied);
   canvas.fill(Qt::transparent);
 
@@ -104,13 +106,15 @@ QImage renderEmoji(const QString &emoji, const QSize &size) {
   return canvas;
 }
 
-QImage renderSystemIcon(const QString &name, const QSize &size) {
+static QImage renderSystemIcon(const QString &name, const QSize &size) {
+  static std::mutex mtx;
+  std::lock_guard lock(mtx);
   QIcon const icon = QIcon::fromTheme(name);
   if (icon.isNull()) return {};
   return icon.pixmap(size).toImage();
 }
 
-QImage renderLocalSvg(const QString &path, const QSize &size) {
+static QImage renderLocalSvg(const QString &path, const QSize &size) {
   QSvgRenderer renderer(path);
   if (!renderer.isValid()) return {};
 
@@ -131,7 +135,7 @@ QImage renderLocalSvg(const QString &path, const QSize &size) {
   return canvas;
 }
 
-QImage renderLocalRaster(const QString &path, const QSize &size) {
+static QImage renderLocalRaster(const QString &path, const QSize &size) {
   QImageReader reader(path);
   if (!reader.canRead()) return {};
 
@@ -155,7 +159,7 @@ QImage renderLocalRaster(const QString &path, const QSize &size) {
   return padded;
 }
 
-QImage decodeImageData(const QByteArray &data, const QSize &size) {
+static QImage decodeImageData(const QByteArray &data, const QSize &size) {
   QBuffer buf;
   buf.setData(data);
   buf.open(QIODevice::ReadOnly);
@@ -404,6 +408,39 @@ QFuture<QImage> render(const ImageURL &url, const QSize &size) {
   default:
     return QtFuture::makeReadyValueFuture(QImage{});
   }
+}
+
+QImage decodeAndTransform(const QByteArray &data, const QSize &size, const QColor &fg,
+                          OmniPainter::ImageMaskType mask) {
+  QImage img;
+
+  if (data.trimmed().startsWith("<?xml") || data.trimmed().startsWith("<svg")) {
+    QSvgRenderer renderer(data);
+    if (renderer.isValid()) {
+      img = QImage(size, QImage::Format_ARGB32_Premultiplied);
+      img.fill(Qt::transparent);
+      QPainter painter(&img);
+      painter.setRenderHint(QPainter::Antialiasing, true);
+      painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+      renderer.setAspectRatioMode(Qt::KeepAspectRatio);
+      renderer.render(&painter, img.rect());
+    }
+  } else {
+    img = decodeImageData(data, size);
+  }
+
+  applyPostTransforms(img, fg, mask);
+  return img;
+}
+
+QThread &animationThread() {
+  static auto *thread = [] {
+    auto *t = new QThread();
+    t->setObjectName(QStringLiteral("GifAnimation"));
+    t->start();
+    return t;
+  }();
+  return *thread;
 }
 
 } // namespace ImageRendering

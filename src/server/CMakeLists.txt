@@ -209,19 +209,8 @@ set(SRCS
 	src/ui/image/url.cpp
 	src/ui/image/image-renderer.hpp
 	src/ui/image/image-renderer.cpp
-	src/ui/image/image.hpp
-	src/ui/image/static-image-loader.cpp
-	src/ui/image/animated-image-loader.cpp
-	src/ui/image/io-image-loader.cpp
-	src/ui/image/local-image-loader.cpp
-	src/ui/image/http-image-loader.cpp
-	src/ui/image/data-uri-image-loader.cpp
-	src/ui/image/favicon-image-loader.cpp
-	src/ui/image/svg-image-loader.cpp
-	src/ui/image/builtin-icon-loader.cpp
-	src/ui/image/qicon-image-loader.cpp
-	src/ui/image/emoji-image-loader.cpp
-	src/ui/image/image-decoder.hpp
+	src/ui/image/image-stream.hpp
+	src/ui/image/image-stream.cpp
 
 	src/command-database.hpp
 	src/command-database.cpp
@@ -518,10 +507,8 @@ set(SRCS
 	src/qml/image-url.cpp
 	src/qml/image-source.hpp
 	src/qml/image-source.cpp
-	src/qml/animated-image.hpp
-	src/qml/animated-image.cpp
-	src/qml/async-image-provider.hpp
-	src/qml/async-image-provider.cpp
+	src/qml/vici-image-item.hpp
+	src/qml/vici-image-item.cpp
 	src/qml/config-bridge.hpp
 	src/qml/theme-bridge.hpp
 	src/qml/create-extension-view-host.hpp
@@ -795,7 +782,6 @@ set(VICINAE_QML_FILES
 	src/qml/qml/EmptyView.qml
 	src/qml/qml/EmojiGridView.qml
 	src/qml/qml/ViciButton.qml
-	src/qml/qml/ViciImage.qml
 	src/qml/qml/ViciScrollBar.qml
 	src/qml/qml/ViciDivider.qml
 	src/qml/qml/ViciToolTip.qml
@@ -900,7 +886,7 @@ endforeach()
 
 set(VICINAE_QML_SOURCES
 	src/qml/source-blend-rect.hpp
-	src/qml/animated-image.hpp
+	src/qml/vici-image-item.hpp
 	src/qml/completion-model.hpp
 	src/qml/markdown/markdown-model.hpp
 	src/qml/markdown/text-selection-controller.hpp

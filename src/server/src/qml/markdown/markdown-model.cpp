@@ -35,21 +35,21 @@ QString imageProviderUrl(const QString &rawUrl) {
   QUrl const url(rawUrl);
   auto const scheme = url.scheme();
 
-  if (scheme == "https" || scheme == "http") return ImageUrl(ImageURL::http(url)).toSource();
+  if (scheme == "https" || scheme == "http") return ImageURL::http(url).toString();
 
   if (scheme == "data") {
     ImageURL imgUrl;
     imgUrl.setType(ImageURLType::DataURI);
     imgUrl.setName(rawUrl);
-    return ImageUrl(imgUrl).toSource();
+    return imgUrl.toString();
   }
 
   if (scheme == "file") {
     auto path = url.host().isEmpty() ? url.path() : url.host() + url.path();
-    return ImageUrl(ImageURL::local(path)).toSource();
+    return ImageURL::local(path).toString();
   }
 
-  if (scheme.isEmpty()) return ImageUrl(ImageURL::local(rawUrl)).toSource();
+  if (scheme.isEmpty()) return ImageURL::local(rawUrl).toString();
 
   return {};
 }
