@@ -28,6 +28,7 @@ SelectableDelegate {
             ViciImage {
                 anchors.fill: parent
                 source: root.itemIconSource
+                safetyMargins: true
             }
 
             Rectangle {

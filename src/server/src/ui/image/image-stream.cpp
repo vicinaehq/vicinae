@@ -26,8 +26,10 @@ static QCache<QString, QImage> &imageCache() {
   return cache;
 }
 
-static QString makeCacheKey(const ImageURL &url, const QSize &size) {
-  return QStringLiteral("%1|%2x%3").arg(url.cacheKey()).arg(size.width()).arg(size.height());
+static QString makeCacheKey(const ImageURL &url, const QSize &size, bool safetyMargins) {
+  auto key = QStringLiteral("%1|%2x%3").arg(url.cacheKey()).arg(size.width()).arg(size.height());
+  if (safetyMargins) key += QStringLiteral("|m");
+  return key;
 }
 
 static bool isGif(const QByteArray &data) {
@@ -43,11 +45,11 @@ static bool isMultiFrameGif(const QByteArray &data) {
   return reader.imageCount() > 1;
 }
 
-ImageStream::ImageStream(const ImageURL &url, const QSize &size, QObject *parent)
-    : QObject(parent), m_url(url), m_size(size) {
+ImageStream::ImageStream(const ImageURL &url, const QSize &size, bool safetyMargins, QObject *parent)
+    : QObject(parent), m_url(url), m_size(size), m_safetyMargins(safetyMargins) {
   if (auto fill = url.fillColor()) m_fg = OmniPainter::resolveColor(*fill);
   m_mask = url.mask();
-  m_cacheKey = makeCacheKey(url, size);
+  m_cacheKey = makeCacheKey(url, size, m_safetyMargins);
 
   if (auto *cached = imageCache().object(m_cacheKey)) {
     QTimer::singleShot(0, this, [this, img = *cached]() { emit frameReady(img); });
@@ -87,7 +89,7 @@ void ImageStream::tryFallback() {
   else if (m_url.type() == ImageURLType::Builtin)
     m_fg = ThemeService::instance().theme().resolve(SemanticColor::Foreground);
   m_mask = m_url.mask();
-  m_cacheKey = makeCacheKey(m_url, m_size);
+  m_cacheKey = makeCacheKey(m_url, m_size, m_safetyMargins);
 
   if (auto *cached = imageCache().object(m_cacheKey)) {
     emit frameReady(*cached);
@@ -96,8 +98,8 @@ void ImageStream::tryFallback() {
   dispatch();
 }
 
-std::optional<QImage> ImageStream::findCached(const ImageURL &url, const QSize &size) {
-  if (auto *img = imageCache().object(makeCacheKey(url, size))) return *img;
+std::optional<QImage> ImageStream::findCached(const ImageURL &url, const QSize &size, bool safetyMargins) {
+  if (auto *img = imageCache().object(makeCacheKey(url, size, safetyMargins))) return *img;
   return std::nullopt;
 }
 
@@ -218,6 +220,7 @@ void ImageStream::emitStaticFrame(QImage img) {
     tryFallback();
     return;
   }
+  if (m_safetyMargins && m_url.type() != ImageURLType::MacBundle) ImageRendering::applySafetyMargins(img);
   auto cost = static_cast<int>(img.sizeInBytes());
   imageCache().insert(m_cacheKey, new QImage(img), cost);
   emit frameReady(img);
@@ -247,8 +250,9 @@ void ImageStream::startAnimation(QByteArray data) {
   auto fg = m_fg;
   auto mask = m_mask;
   auto canceled = m_canceled;
+  auto safetyMargins = m_safetyMargins;
 
-  connect(movie, &QMovie::updated, worker, [movie, worker, fg, mask, canceled]() {
+  connect(movie, &QMovie::updated, worker, [movie, worker, fg, mask, canceled, safetyMargins]() {
     if (canceled->load(std::memory_order_relaxed)) {
       movie->stop();
       return;
@@ -256,6 +260,7 @@ void ImageStream::startAnimation(QByteArray data) {
     QImage frame = movie->currentImage();
     if (frame.isNull()) return;
     ImageRendering::applyPostTransforms(frame, fg, mask);
+    if (safetyMargins) ImageRendering::applySafetyMargins(frame);
     emit worker->frameReady(frame);
   });
 

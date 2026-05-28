@@ -65,6 +65,7 @@ Item {
                 source: visible ? root.currentItem.iconSource : ""
                 Layout.preferredWidth: 16
                 Layout.preferredHeight: 16
+                safetyMargins: true
             }
 
             Text {

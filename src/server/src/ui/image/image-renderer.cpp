@@ -46,16 +46,19 @@ static QImage renderBuiltinSvg(const QString &iconName, const QSize &size, const
   QSvgRenderer renderer(iconPath);
   if (!renderer.isValid()) return {};
 
-  QImage canvas(size.width() + AA_PAD * 2, size.height() + AA_PAD * 2, QImage::Format_ARGB32_Premultiplied);
+  bool const hasBg = bg.isValid() && bg.alpha() > 0;
+  int const pad = hasBg ? 0 : AA_PAD;
+
+  QImage canvas(size.width() + pad * 2, size.height() + pad * 2, QImage::Format_ARGB32_Premultiplied);
   canvas.fill(Qt::transparent);
   QPainter painter(&canvas);
   painter.setRenderHint(QPainter::Antialiasing, true);
   painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
 
-  QRectF const contentRect(AA_PAD, AA_PAD, size.width(), size.height());
+  QRectF const contentRect(pad, pad, size.width(), size.height());
   int margin = 0;
 
-  if (bg.isValid() && bg.alpha() > 0) {
+  if (hasBg) {
     int const side = qMin(size.width(), size.height());
     qreal const radius = side * 0.25;
     margin = qRound(side * 0.19);
@@ -222,6 +225,20 @@ static void applyRoundedRectMask(QImage &image) {
   painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
   painter.drawImage(0, 0, image);
   image = masked;
+}
+
+void applySafetyMargins(QImage &image) {
+  if (image.isNull()) return;
+  int const side = qMin(image.width(), image.height());
+  int const margin = qRound(side * 0.07);
+
+  QImage padded(image.size(), QImage::Format_ARGB32_Premultiplied);
+  padded.fill(Qt::transparent);
+  QRectF const dest(margin, margin, image.width() - margin * 2, image.height() - margin * 2);
+  QPainter painter(&padded);
+  painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+  painter.drawImage(dest, image);
+  image = padded;
 }
 
 void applyPostTransforms(QImage &image, const QColor &fg, OmniPainter::ImageMaskType mask) {
@@ -433,10 +450,14 @@ QImage decodeAndTransform(const QByteArray &data, const QSize &size, const QColo
   return img;
 }
 
-static QFuture<QImage> renderWithFallback(ImageURL url, const QSize &size, int remaining) {
+static QFuture<QImage> renderWithFallback(ImageURL url, const QSize &size, bool safetyMargins,
+                                          int remaining) {
   return render(url, size)
-      .then([url = std::move(url), size, remaining](QImage img) -> QFuture<QImage> {
-        if (!img.isNull()) return QtFuture::makeReadyValueFuture(std::move(img));
+      .then([url = std::move(url), size, safetyMargins, remaining](QImage img) -> QFuture<QImage> {
+        if (!img.isNull()) {
+          if (safetyMargins && url.type() != ImageURLType::MacBundle) applySafetyMargins(img);
+          return QtFuture::makeReadyValueFuture(std::move(img));
+        }
         if (remaining <= 0) return QtFuture::makeReadyValueFuture(QImage{});
 
         ImageURL next;
@@ -445,13 +466,13 @@ static QFuture<QImage> renderWithFallback(ImageURL url, const QSize &size, int r
         else
           next = ImageURL::builtin("question-mark-circle");
 
-        return renderWithFallback(std::move(next), size, remaining - 1);
+        return renderWithFallback(std::move(next), size, safetyMargins, remaining - 1);
       })
       .unwrap();
 }
 
-QFuture<QImage> renderFirstFrame(const ImageURL &url, const QSize &size) {
-  return renderWithFallback(url, size, 2);
+QFuture<QImage> renderFirstFrame(const ImageURL &url, const QSize &size, bool safetyMargins) {
+  return renderWithFallback(url, size, safetyMargins, 2);
 }
 
 QThread &animationThread() {

@@ -19,10 +19,10 @@ signals:
   void failed();
 
 public:
-  ImageStream(const ImageURL &url, const QSize &size, QObject *parent = nullptr);
+  ImageStream(const ImageURL &url, const QSize &size, bool safetyMargins = false, QObject *parent = nullptr);
   ~ImageStream() override;
 
-  static std::optional<QImage> findCached(const ImageURL &url, const QSize &size);
+  static std::optional<QImage> findCached(const ImageURL &url, const QSize &size, bool safetyMargins = false);
 
 private:
   void startStatic();
@@ -41,6 +41,7 @@ private:
   OmniPainter::ImageMaskType m_mask = OmniPainter::NoMask;
   QString m_cacheKey;
   int m_fallbacksRemaining = 2;
+  bool m_safetyMargins = false;
 
   QMovie *m_movie = nullptr;
   FetchReply *m_pendingReply = nullptr;

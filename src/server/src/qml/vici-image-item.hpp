@@ -13,6 +13,7 @@ class ViciImageItem : public QQuickItem {
   Q_PROPERTY(QSize sourceSize READ sourceSize WRITE setSourceSize NOTIFY sourceSizeChanged)
   Q_PROPERTY(int fillMode READ fillMode WRITE setFillMode NOTIFY fillModeChanged)
   Q_PROPERTY(bool cache READ cache WRITE setCache NOTIFY cacheChanged)
+  Q_PROPERTY(bool safetyMargins READ safetyMargins WRITE setSafetyMargins NOTIFY safetyMarginsChanged)
   Q_PROPERTY(int status READ status NOTIFY statusChanged)
 
 signals:
@@ -20,6 +21,7 @@ signals:
   void sourceSizeChanged();
   void fillModeChanged();
   void cacheChanged();
+  void safetyMarginsChanged();
   void statusChanged();
 
 public:
@@ -44,6 +46,9 @@ public:
   bool cache() const { return m_cache; }
   void setCache(bool c);
 
+  bool safetyMargins() const { return m_safetyMargins; }
+  void setSafetyMargins(bool enabled);
+
   int status() const { return m_status; }
 
 protected:
@@ -61,6 +66,7 @@ private:
   QSize m_sourceSize;
   int m_fillMode = PreserveAspectFit;
   bool m_cache = true;
+  bool m_safetyMargins = false;
   Status m_status = Null;
 
   ImageStream *m_stream = nullptr;

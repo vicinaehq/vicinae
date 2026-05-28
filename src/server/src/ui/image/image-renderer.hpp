@@ -10,11 +10,12 @@ class QThread;
 namespace ImageRendering {
 
 QFuture<QImage> render(const ImageURL &url, const QSize &size);
-QFuture<QImage> renderFirstFrame(const ImageURL &url, const QSize &size);
+QFuture<QImage> renderFirstFrame(const ImageURL &url, const QSize &size, bool safetyMargins = false);
 
 QImage decodeAndTransform(const QByteArray &data, const QSize &size, const QColor &fg = {},
                           OmniPainter::ImageMaskType mask = OmniPainter::NoMask);
 
+void applySafetyMargins(QImage &image);
 void applyPostTransforms(QImage &image, const QColor &fg, OmniPainter::ImageMaskType mask);
 
 QThreadPool &decodingPool();

@@ -55,6 +55,13 @@ void ViciImageItem::setCache(bool c) {
   emit cacheChanged();
 }
 
+void ViciImageItem::setSafetyMargins(bool enabled) {
+  if (m_safetyMargins == enabled) return;
+  m_safetyMargins = enabled;
+  emit safetyMarginsChanged();
+  reload();
+}
+
 void ViciImageItem::setStatus(Status s) {
   if (m_status == s) return;
   m_status = s;
@@ -99,7 +106,7 @@ void ViciImageItem::reload() {
     if (auto bg = url.backgroundTint()) url.setBackgroundTint(OmniPainter::resolveColor(*bg));
   }
 
-  if (auto cached = ImageStream::findCached(url, physicalSize)) {
+  if (auto cached = ImageStream::findCached(url, physicalSize, m_safetyMargins)) {
     QImage img = std::move(*cached);
     img.setDevicePixelRatio(dpr);
     m_currentFrame = std::move(img);
@@ -119,7 +126,7 @@ void ViciImageItem::reload() {
   update();
 
   setStatus(Loading);
-  m_stream = new ImageStream(url, physicalSize, this);
+  m_stream = new ImageStream(url, physicalSize, m_safetyMargins, this);
 
   connect(m_stream, &ImageStream::frameReady, this, [this, dpr](const QImage &frame) {
     QImage img = frame;
