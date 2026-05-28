@@ -157,6 +157,7 @@ static QImage renderLocalRaster(const QString &path, const QSize &size) {
   QImage padded(img.width() + AA_PAD * 2, img.height() + AA_PAD * 2, QImage::Format_ARGB32_Premultiplied);
   padded.fill(Qt::transparent);
   QPainter painter(&padded);
+  painter.setRenderHint(QPainter::Antialiasing, true);
   painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
   painter.drawImage(AA_PAD, AA_PAD, img);
   return padded;
@@ -236,6 +237,7 @@ void applySafetyMargins(QImage &image) {
   padded.fill(Qt::transparent);
   QRectF const dest(margin, margin, image.width() - margin * 2, image.height() - margin * 2);
   QPainter painter(&padded);
+  painter.setRenderHint(QPainter::Antialiasing, true);
   painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
   painter.drawImage(dest, image);
   image = padded;

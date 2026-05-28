@@ -112,7 +112,8 @@ void ViciImageItem::reload() {
     m_currentFrame = std::move(img);
     setImplicitSize(m_currentFrame.width() / dpr, m_currentFrame.height() / dpr);
     delete m_pendingTexture;
-    m_pendingTexture = window() ? window()->createTextureFromImage(m_currentFrame) : nullptr;
+    m_pendingTexture =
+        window() ? window()->createTextureFromImage(m_currentFrame, QQuickWindow::TextureHasMipmaps) : nullptr;
     m_frameDirty = true;
     setStatus(Ready);
     update();
@@ -137,7 +138,7 @@ void ViciImageItem::reload() {
 
     delete m_pendingTexture;
     m_pendingTexture = nullptr;
-    if (window()) m_pendingTexture = window()->createTextureFromImage(m_currentFrame);
+    if (window()) m_pendingTexture = window()->createTextureFromImage(m_currentFrame, QQuickWindow::TextureHasMipmaps);
 
     m_frameDirty = true;
     setStatus(Ready);
@@ -159,7 +160,8 @@ void ViciImageItem::updatePolish() {
 void ViciImageItem::itemChange(ItemChange change, const ItemChangeData &value) {
   QQuickItem::itemChange(change, value);
   if (change == ItemSceneChange && value.window && !m_currentFrame.isNull() && !m_pendingTexture) {
-    m_pendingTexture = value.window->createTextureFromImage(m_currentFrame);
+    m_pendingTexture =
+        value.window->createTextureFromImage(m_currentFrame, QQuickWindow::TextureHasMipmaps);
     m_frameDirty = true;
     update();
   }
@@ -206,8 +208,9 @@ QSGNode *ViciImageItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
   }
 
   if (m_frameDirty) {
-    if (!m_pendingTexture && window()) m_pendingTexture = window()->createTextureFromImage(m_currentFrame);
+    if (!m_pendingTexture && window()) m_pendingTexture = window()->createTextureFromImage(m_currentFrame, QQuickWindow::TextureHasMipmaps);
     if (m_pendingTexture) {
+      m_pendingTexture->setMipmapFiltering(QSGTexture::Linear);
       node->setTexture(m_pendingTexture);
       m_pendingTexture = nullptr;
       m_frameDirty = false;
