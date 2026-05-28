@@ -43,7 +43,7 @@ public:
     return dynamic.dark;
   }
 
-  QString operator()(const QColor &color) const { return color.name(); }
+  QString operator()(const QColor &color) const { return color.name(QColor::HexArgb); }
   QString operator()(const SemanticColor &color) const { return ImageURL::nameForTint(color); }
   QString operator()(const QString &text) const { return text; }
 

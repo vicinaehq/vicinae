@@ -1,6 +1,6 @@
 #pragma once
 #include "bridge-view.hpp"
-#include "ui/image/url.hpp"
+#include "image-url.hpp"
 
 class EmptyViewHost : public FormViewBase {
   Q_OBJECT
@@ -14,5 +14,5 @@ public:
 private:
   QString m_title;
   QString m_description;
-  QString m_iconSource;
+  ImageUrl m_icon;
 };

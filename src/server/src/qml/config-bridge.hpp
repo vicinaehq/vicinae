@@ -1,6 +1,7 @@
 #pragma once
 #include "config/config.hpp"
 #include "service-registry.hpp"
+#include <QColor>
 #include <QObject>
 
 class ConfigBridge : public QObject {

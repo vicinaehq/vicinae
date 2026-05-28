@@ -110,8 +110,8 @@ Popup {
                 anchors.rightMargin: 8
                 spacing: 6
 
-                Image {
-                    source: "image://vicinae/builtin:magnifying-glass?fg=" + Theme.textMuted
+                ViciImage {
+                    source: Img.builtin("magnifying-glass").withFillColor(Theme.textMuted)
                     sourceSize.width: 12
                     sourceSize.height: 12
                     Layout.preferredWidth: 12

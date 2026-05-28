@@ -31,7 +31,7 @@ Item {
 
         emptyTitle: root.host.emptyTitle ?? "No results"
         emptyDescription: root.host.emptyDescription ?? ""
-        emptyIcon: root.host.emptyIcon ?? ""
+        emptyIcon: root.host.emptyIcon
 
         delegate: Loader {
             id: delegateLoader

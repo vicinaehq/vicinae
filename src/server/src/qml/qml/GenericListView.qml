@@ -24,7 +24,7 @@ Item {
 
     property string emptyTitle: "No results"
     property string emptyDescription: ""
-    property string emptyIcon: "image://vicinae/builtin:magnifying-glass?fg=" + Theme.foreground
+    property var emptyIcon: Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
     property Component emptyViewComponent: null
 
     property bool suppressEmpty: false

@@ -151,9 +151,8 @@ QString ExtensionListModel::emptyDescription() const {
   return {};
 }
 
-QString ExtensionListModel::emptyIcon() const {
-  if (m_model.emptyView && m_model.emptyView->icon)
-    return qml::imageSourceFor(ImageURL(*m_model.emptyView->icon));
+ImageUrl ExtensionListModel::emptyIcon() const {
+  if (m_model.emptyView && m_model.emptyView->icon) return ImageUrl(ImageURL(*m_model.emptyView->icon));
   return {};
 }
 

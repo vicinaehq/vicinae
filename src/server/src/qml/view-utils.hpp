@@ -31,7 +31,7 @@ inline QVariantList textAccessory(const QString &text) {
   return accessoriesToVariantList({{.data = AccessoryModel::Text{{}, text.toStdString()}}});
 }
 
-inline QString imageSourceFor(const ImageURL &url) { return ImageUrl(url).toSource(); }
+inline QString imageSourceFor(const ImageURL &url) { return url.toString(); }
 
 inline std::optional<QString> firstDropdownItemValue(const std::vector<DropdownModel::Child> &children) {
   for (const auto &child : children) {

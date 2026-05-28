@@ -1,5 +1,6 @@
 #include "markdown-model.hpp"
 #include "font-service.hpp"
+#include "image-url.hpp"
 #include "syntax-highlighter.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
@@ -31,18 +32,26 @@ GfmNodeType getGfmNodeType(cmark_node *node) {
 }
 
 QString imageProviderUrl(const QString &rawUrl) {
-  if (rawUrl.startsWith(QStringLiteral("image://vicinae/"))) return rawUrl;
-
   QUrl const url(rawUrl);
-  auto scheme = url.scheme();
-  if (scheme == "https" || scheme == "http") return QStringLiteral("image://vicinae/http:") + rawUrl;
-  if (scheme == "data") return QStringLiteral("image://vicinae/datauri:") + rawUrl;
+  auto const scheme = url.scheme();
+
+  if (scheme == "https" || scheme == "http") return ImageURL::http(url).toString();
+
+  if (scheme == "data") {
+    ImageURL imgUrl;
+    imgUrl.setType(ImageURLType::DataURI);
+    imgUrl.setName(rawUrl);
+    return imgUrl.toString();
+  }
+
   if (scheme == "file") {
     auto path = url.host().isEmpty() ? url.path() : url.host() + url.path();
-    return QStringLiteral("image://vicinae/local:") + path;
+    return ImageURL::local(path).toString();
   }
-  auto path = url.host() + url.path();
-  return QStringLiteral("image://vicinae/local:") + path;
+
+  if (scheme.isEmpty()) return ImageURL::local(rawUrl).toString();
+
+  return {};
 }
 
 struct InlineContext {

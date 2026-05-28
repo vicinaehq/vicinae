@@ -1,6 +1,5 @@
 #include "settings-window.hpp"
 #include "common/entrypoint.hpp"
-#include "async-image-provider.hpp"
 #include "config-bridge.hpp"
 #include "extension-settings-model.hpp"
 #include "general-settings-model.hpp"
@@ -37,8 +36,6 @@ void SettingsWindow::ensureInitialized() {
   m_generalModel = new GeneralSettingsModel(this);
   m_keybindModel = new KeybindSettingsModel(this);
   m_extensionModel = new ExtensionSettingsModel(this);
-
-  m_engine.addImageProvider(QStringLiteral("vicinae"), new AsyncImageProvider());
 
   auto *rootCtx = m_engine.rootContext();
   rootCtx->setContextProperty(QStringLiteral("Theme"), m_themeBridge);

@@ -4,9 +4,9 @@
 #include "view-utils.hpp"
 #include "action-panel-controller.hpp"
 #include "ui/action-pannel/action.hpp"
+#include "ui/image/image-renderer.hpp"
 #include "services/news/news-service.hpp"
 #include "alert-model.hpp"
-#include "async-image-provider.hpp"
 #include "bridge-view.hpp"
 #include "image-source.hpp"
 #include "image-url.hpp"
@@ -57,8 +57,6 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
 #endif
 
   qRegisterMetaType<ImageUrl>("ImageUrl");
-
-  m_engine.addImageProvider(QStringLiteral("vicinae"), new AsyncImageProvider());
 
   auto *rootCtx = m_engine.rootContext();
   rootCtx->setContextProperty(QStringLiteral("Nav"), ctx.navigation.get());
@@ -116,6 +114,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   connect(&m_cacheEvictionTimer, &QTimer::timeout, this, [this]() {
     if (m_window) m_window->releaseResources();
     m_engine.trimComponentCache();
+    ImageRendering::clearCache();
 #ifdef __GLIBC__
     malloc_trim(0);
 #endif
