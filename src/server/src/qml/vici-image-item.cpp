@@ -70,7 +70,7 @@ void ViciImageItem::setStatus(Status s) {
 void ViciImageItem::reload() {
   m_deferredReload = false;
 
-  delete m_stream;
+  if (m_stream) m_stream->deleteLater();
   m_stream = nullptr;
 
   if (!m_resolvedUrl.isValid()) {

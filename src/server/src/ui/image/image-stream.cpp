@@ -50,12 +50,21 @@ static bool isMultiFrameGif(const QByteArray &data) {
   return reader.imageCount() > 1;
 }
 
-ImageStream::ImageStream(const ImageURL &url, const QSize &size, Options opts, QObject *parent)
+ImageStream::ImageStream(const ImageURL &url, const QSize &size, ImageStreamOptions opts, QObject *parent)
     : QObject(parent), m_url(url.resolved()), m_size(size), m_opts(opts) {
   if (auto fill = m_url.fillColor()) m_fg = OmniPainter::resolveColor(*fill);
   m_mask = m_url.mask();
   m_cacheKey = makeCacheKey(m_url, size, m_opts.safetyMargins);
   m_originalCacheKey = m_cacheKey;
+}
+
+ImageStream::~ImageStream() {
+  m_canceled->store(true, std::memory_order_relaxed);
+  if (m_movie) m_movie->deleteLater();
+  if (m_pendingReply) {
+    m_pendingReply->abort();
+    m_pendingReply->deleteLater();
+  }
 }
 
 bool ImageStream::start() {
@@ -107,15 +116,6 @@ void ImageStream::tryFallback() {
     }
   }
   dispatch();
-}
-
-ImageStream::~ImageStream() {
-  m_canceled->store(true, std::memory_order_relaxed);
-  if (m_movie) m_movie->deleteLater();
-  if (m_pendingReply) {
-    m_pendingReply->abort();
-    m_pendingReply->deleteLater();
-  }
 }
 
 void ImageStream::handleStaticFuture(QFuture<QImage> future) {

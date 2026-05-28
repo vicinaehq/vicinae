@@ -24,9 +24,8 @@ signals:
   void failed();
 
 public:
-  using Options = ImageStreamOptions;
-
-  ImageStream(const ImageURL &url, const QSize &size, Options opts = {}, QObject *parent = nullptr);
+  ImageStream(const ImageURL &url, const QSize &size, ImageStreamOptions opts = {},
+              QObject *parent = nullptr);
   ~ImageStream() override;
 
   // Looks up the cache; if hit, emits frameReady synchronously and returns true.
@@ -53,7 +52,7 @@ private:
   QString m_cacheKey;
   QString m_originalCacheKey;
   int m_fallbacksRemaining = 2;
-  Options m_opts;
+  ImageStreamOptions m_opts;
 
   QMovie *m_movie = nullptr;
   FetchReply *m_pendingReply = nullptr;

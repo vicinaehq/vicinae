@@ -103,6 +103,7 @@ QImage renderEmoji(const QString &emoji, const QSize &size) {
 }
 
 QImage renderSystemIcon(const QString &name, const QSize &size) {
+  // QIcon::fromTheme is not reentrant; serialize calls since this runs on the decoding pool.
   static std::mutex mtx;
   std::lock_guard lock(mtx);
   QIcon const icon = QIcon::fromTheme(name);

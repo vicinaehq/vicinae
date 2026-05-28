@@ -120,8 +120,9 @@ public:
   ImageURL &setForegroundTint(SemanticColor tint);
   ImageURL &setBackgroundTint(const ColorLike &tint);
 
-  // Returns a copy with fill and background colors resolved against the current theme:
-  // SemanticColor/DynamicColor become QColor; Builtin without fill gets Foreground.
+  // Returns a copy with colors resolved against the current theme (SemanticColor/DynamicColor
+  // become QColor; Builtin without fill gets Foreground) and local paths substituted with their
+  // @light/@dark sibling when present on disk.
   ImageURL resolved() const;
 
   ImageURL();
