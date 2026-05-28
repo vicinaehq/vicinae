@@ -29,8 +29,16 @@ static QCache<QString, QImage> &imageCache() {
   return cache;
 }
 
+static QCache<QString, QByteArray> &bytesCache() {
+  static QCache<QString, QByteArray> cache(32 * 1024 * 1024);
+  return cache;
+}
+
 namespace ImageRendering {
-void clearCache() { imageCache().clear(); }
+void clearCache() {
+  imageCache().clear();
+  bytesCache().clear();
+}
 } // namespace ImageRendering
 
 static QString makeCacheKey(const ImageURL &url, const QSize &size, bool safetyMargins) {
@@ -184,6 +192,13 @@ void ImageStream::startFetchable() {
   auto type = m_url.type();
   const QString &name = m_url.name();
 
+  if (m_opts.cache) {
+    if (auto *bytes = bytesCache().object(name)) {
+      onDataReceived(*bytes);
+      return;
+    }
+  }
+
   if (type == ImageURLType::Local) {
     auto canceled = m_canceled;
     auto future = QtConcurrent::run(&ImageRendering::decodingPool(), [name, canceled]() -> QByteArray {
@@ -236,6 +251,9 @@ void ImageStream::onDataReceived(const QByteArray &data) {
     tryFallback();
     return;
   }
+
+  if (m_opts.cache && !bytesCache().contains(m_url.name()))
+    bytesCache().insert(m_url.name(), new QByteArray(data), data.size());
 
   auto canceled = m_canceled;
   auto future = QtConcurrent::run(
