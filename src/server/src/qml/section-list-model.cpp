@@ -9,7 +9,7 @@ SectionListModel::SectionListModel(QObject *parent) : QAbstractListModel(parent)
 }
 
 void SectionListModel::addSource(SectionSource *source) {
-  m_sources.push_back(source);
+  m_sources.emplace_back(source);
   source->setScope(m_scope);
   source->setOnChanged([this](bool preserveSelection) {
     if (preserveSelection && !m_awaitingData) {
@@ -298,11 +298,11 @@ void SectionListModel::rebuildFlatList() {
 
     auto name = source->sectionName();
     if (!name.isEmpty()) {
-      newFlat.push_back({.kind = FlatItem::SectionHeader, .sourceIdx = s, .itemIdx = -1});
+      newFlat.emplace_back({.kind = FlatItem::SectionHeader, .sourceIdx = s, .itemIdx = -1});
     }
 
     for (int i = 0; i < itemCount; ++i) {
-      newFlat.push_back({.kind = FlatItem::DataItem, .sourceIdx = s, .itemIdx = i});
+      newFlat.emplace_back({.kind = FlatItem::DataItem, .sourceIdx = s, .itemIdx = i});
     }
   }
 

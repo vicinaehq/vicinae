@@ -217,12 +217,12 @@ QVariantList SettingsWindow::filterSidebarItems(const QString &query) const {
   all.reserve(corePages.size() + m_sidebarExtensions.size());
 
   for (const auto &page : corePages) {
-    all.push_back(page);
+    all.emplace_back(page);
   }
   for (const auto &ext : m_sidebarExtensions) {
     auto map = ext.toMap();
     auto isGroup = map[QStringLiteral("isGroup")].toBool();
-    all.push_back({
+    all.emplace_back({
         .id = map[QStringLiteral("providerId")].toString(),
         .label = map[QStringLiteral("name")].toString(),
         .iconSource = map[kIconSource].toString(),
@@ -245,11 +245,11 @@ QVariantList SettingsWindow::filterSidebarItems(const QString &query) const {
 
   for (const auto &e : all) {
     if (queryStd.empty()) {
-      scored.push_back({&e, 0});
+      scored.emplace_back({&e, 0});
     } else {
       auto label = e.label.toStdString();
       int s = fuzzy::scoreWeighted({{label, 1.0}}, queryStd);
-      if (s > 0) { scored.push_back({&e, s}); }
+      if (s > 0) { scored.emplace_back({&e, s}); }
     }
   }
 

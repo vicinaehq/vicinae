@@ -38,7 +38,7 @@ struct ActionPannelSectionModel {
   std::vector<ActionModel> actions() const {
     std::vector<ActionModel> result;
     for (const auto &item : items) {
-      if (auto action = std::get_if<ActionModel>(&item)) { result.push_back(*action); }
+      if (auto action = std::get_if<ActionModel>(&item)) { result.emplace_back(*action); }
     }
     return result;
   }

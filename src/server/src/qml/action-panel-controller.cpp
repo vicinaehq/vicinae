@@ -204,7 +204,7 @@ void ActionPanelController::connectView(ActionPanelView *view) {
 
   connect(view, &ActionPanelView::pushViewRequested, m_connectionGuard, [this](ActionPanelView *child) {
     child->setParent(this);
-    m_submenuStack.push_back(child);
+    m_submenuStack.emplace_back(child);
     child->onMount();
     connectView(child);
     auto url = child->componentUrl();

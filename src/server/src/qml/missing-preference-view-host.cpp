@@ -139,7 +139,7 @@ void MissingPreferenceFormModel::load(const std::vector<Preference> &preferences
     f.options = dropdownOptions(pref);
     applyPickerFlags(pref, f.multiple, f.canChooseFiles, f.canChooseDirectories);
 
-    m_fields.push_back(std::move(f));
+    m_fields.emplace_back(std::move(f));
   }
   endResetModel();
 }

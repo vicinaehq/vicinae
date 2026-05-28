@@ -27,7 +27,7 @@ void CompletionModel::setItems(const QVariantList &items) {
         .data = m,
     });
   }
-  m_sections.push_back(std::move(section));
+  m_sections.emplace_back(std::move(section));
 
   rebuildFlatList();
   endResetModel();
@@ -56,7 +56,7 @@ void CompletionModel::setSections(const QVariantList &sections) {
           .data = m,
       });
     }
-    m_sections.push_back(std::move(section));
+    m_sections.emplace_back(std::move(section));
   }
 
   rebuildFlatList();

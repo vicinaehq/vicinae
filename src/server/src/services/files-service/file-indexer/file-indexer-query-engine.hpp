@@ -39,7 +39,7 @@ public:
       if (term.isEmpty()) { continue; }
 
       term.replace('"', "\"\"");
-      terms.push_back(QString("\"%1\"*").arg(term));
+      terms.emplace_back(QString("\"%1\"*").arg(term));
     }
 
     return terms.join(QStringLiteral(" OR "));

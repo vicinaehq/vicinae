@@ -85,7 +85,7 @@ void ProviderCommandModel::rebuildVisible() {
   m_visibleIndices.clear();
   m_visibleIndices.reserve(m_scored.size());
   for (const auto &s : m_scored) {
-    m_visibleIndices.push_back(s.data);
+    m_visibleIndices.emplace_back(s.data);
   }
 }
 

@@ -9,10 +9,10 @@ template <> struct fuzzy::FuzzySearchable<ListItemViewModel> {
   static int score(const ListItemViewModel &item, std::string_view query) {
     std::vector<fuzzy::WeightedField> fields;
     fields.reserve(2 + item.keywords.size());
-    fields.push_back({item.title, 1.0});
-    fields.push_back({item.subtitle, 0.5});
+    fields.emplace_back({item.title, 1.0});
+    fields.emplace_back({item.subtitle, 0.5});
     for (const auto &kw : item.keywords)
-      fields.push_back({kw, 0.3});
+      fields.emplace_back({kw, 0.3});
 
     return fuzzy::scoreWeighted(fields, query);
   }
@@ -96,21 +96,21 @@ void ExtensionListModel::setExtensionData(const ListModel &model, bool resetSele
                                                           model.filtering, m_notify, &m_model.actions);
     section->setOnItemSelected([this](const ListItemViewModel *item) { handleItemSelected(item); });
     addSource(section.get());
-    m_ownedSections.push_back(std::move(section));
+    m_ownedSections.emplace_back(std::move(section));
     freeBuf = {};
     freeItems = {};
   };
 
   for (const auto &child : model.items) {
     if (auto item = std::get_if<ListItemViewModel>(&child)) {
-      freeBuf.push_back(*item);
+      freeBuf.emplace_back(*item);
     } else if (auto sec = std::get_if<ListSectionModel>(&child)) {
       flushFree();
       auto section = std::make_unique<ExtensionListSection>(sec->title, sec->children, model.filtering,
                                                             m_notify, &m_model.actions);
       section->setOnItemSelected([this](const ListItemViewModel *item) { handleItemSelected(item); });
       addSource(section.get());
-      m_ownedSections.push_back(std::move(section));
+      m_ownedSections.emplace_back(std::move(section));
     }
   }
   flushFree();

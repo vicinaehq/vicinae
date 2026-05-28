@@ -203,7 +203,7 @@ void ExtensionSettingsModel::toggleExpanded(int row) {
   if (e.expanded) {
     std::vector<int> toInsert;
     for (int i = allIdx + 1; std::cmp_less(i, m_allEntries.size()) && !m_allEntries[i].isProvider; ++i) {
-      toInsert.push_back(i);
+      toInsert.emplace_back(i);
     }
     if (!toInsert.empty()) {
       beginInsertRows({}, row + 1, row + static_cast<int>(toInsert.size()));
@@ -260,7 +260,7 @@ void ExtensionSettingsModel::rebuild(const QString &filter) {
     if (auto it = std::ranges::find_if(providerMap, pred); it != providerMap.end()) {
       it->second.emplace_back(itemPtr);
     } else {
-      providerMap.push_back({id.provider, {itemPtr}});
+      providerMap.emplace_back({id.provider, {itemPtr}});
     }
   }
 
@@ -300,7 +300,7 @@ void ExtensionSettingsModel::rebuild(const QString &filter) {
     if (!provider || provider->isTransient()) continue;
 
     seenProviders.insert(providerId);
-    m_allEntries.push_back(makeProviderEntry(provider, static_cast<int>(items.size())));
+    m_allEntries.emplace_back(makeProviderEntry(provider, static_cast<int>(items.size())));
 
     for (const auto &item : items) {
       auto metadata = manager->itemMetadata(item->uniqueId());
@@ -315,7 +315,7 @@ void ExtensionSettingsModel::rebuild(const QString &filter) {
       ie.entrypointId = item->uniqueId();
       ie.providerId = provider->uniqueId();
       ie.description = item->settingsDescription();
-      m_allEntries.push_back(std::move(ie));
+      m_allEntries.emplace_back(std::move(ie));
     }
   }
 
@@ -324,7 +324,7 @@ void ExtensionSettingsModel::rebuild(const QString &filter) {
     for (auto *provider : manager->providers()) {
       if (provider->isTransient()) continue;
       if (seenProviders.contains(provider->uniqueId().toStdString())) continue;
-      m_allEntries.push_back(makeProviderEntry(provider, 0));
+      m_allEntries.emplace_back(makeProviderEntry(provider, 0));
     }
   }
 
@@ -355,10 +355,10 @@ void ExtensionSettingsModel::rebuildVisible() {
   for (int i = 0; std::cmp_less(i, m_allEntries.size()); ++i) {
     auto &e = m_allEntries[i];
     if (e.isProvider) {
-      m_visibleIndices.push_back(i);
+      m_visibleIndices.emplace_back(i);
       skipChildren = !e.expanded;
     } else {
-      if (!skipChildren) m_visibleIndices.push_back(i);
+      if (!skipChildren) m_visibleIndices.emplace_back(i);
     }
   }
 }
@@ -396,7 +396,7 @@ void ExtensionSettingsModel::loadCommandsForProvider(const QString &providerId) 
         const auto &e = m_allEntries[j];
         auto *item = manager->findItemById(e.entrypointId);
         bool const hasPrefs = item && !item->preferences().empty();
-        commands.push_back({e.name, e.type, e.iconSource, e.description, e.enabled, hasPrefs, e.alias,
+        commands.emplace_back({e.name, e.type, e.iconSource, e.description, e.enabled, hasPrefs, e.alias,
                             QString::fromStdString(e.entrypointId)});
       }
       break;

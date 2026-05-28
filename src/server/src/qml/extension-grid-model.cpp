@@ -12,10 +12,10 @@ template <> struct fuzzy::FuzzySearchable<GridItemViewModel> {
   static int score(const GridItemViewModel &item, std::string_view query) {
     std::vector<fuzzy::WeightedField> fields;
     fields.reserve(2 + item.keywords.size());
-    fields.push_back({item.title, 1.0});
-    fields.push_back({item.subtitle, 0.5});
+    fields.emplace_back({item.title, 1.0});
+    fields.emplace_back({item.subtitle, 0.5});
     for (const auto &kw : item.keywords)
-      fields.push_back({kw, 0.3});
+      fields.emplace_back({kw, 0.3});
 
     return fuzzy::scoreWeighted(fields, query);
   }
@@ -132,14 +132,14 @@ void ExtensionGridModel::rebuildFromSections(bool resetSelection) {
       }
     });
     addSource(section.get());
-    m_ownedSections.push_back(std::move(section));
+    m_ownedSections.emplace_back(std::move(section));
     freeBuf = {};
     freeItems = {};
   };
 
   for (const auto &child : m_model.items) {
     if (auto item = std::get_if<GridItemViewModel>(&child)) {
-      freeBuf.push_back(*item);
+      freeBuf.emplace_back(*item);
     } else if (auto sec = std::get_if<GridSectionModel>(&child)) {
       flushFree();
       auto section =
@@ -151,7 +151,7 @@ void ExtensionGridModel::rebuildFromSections(bool resetSelection) {
         }
       });
       addSource(section.get());
-      m_ownedSections.push_back(std::move(section));
+      m_ownedSections.emplace_back(std::move(section));
     }
   }
   flushFree();

@@ -31,4 +31,4 @@ WaylandRegistry::~WaylandRegistry() {
   if (_registry) { wl_registry_destroy(_registry); }
 }
 
-void WaylandRegistry::addListener(Listener *lstn) { listeners.push_back(lstn); }
+void WaylandRegistry::addListener(Listener *lstn) { listeners.emplace_back(lstn); }

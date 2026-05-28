@@ -119,7 +119,7 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
     if (!stmt.isNull(8)) { dto.urlHost = stmt.columnQString(8); }
 
     response.totalCount = stmt.columnInt(10);
-    response.data.push_back(dto);
+    response.data.emplace_back(dto);
   }
 
   response.totalPages = ceil(static_cast<double>(response.totalCount) / limit);

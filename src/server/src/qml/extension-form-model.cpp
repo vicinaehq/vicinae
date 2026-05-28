@@ -176,7 +176,7 @@ void ExtensionFormModel::setFormData(const FormModel &model) {
           newData.hasUserValue = true;
         }
       }
-      m_items.push_back(std::move(newData));
+      m_items.emplace_back(std::move(newData));
     }
     endInsertRows();
   }

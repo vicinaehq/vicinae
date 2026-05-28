@@ -57,7 +57,7 @@ void ThemeViewHost::regenerateThemes() {
     }
 
     if (theme->id() == currentId) {
-      current.push_back(std::move(theme));
+      current.emplace_back(std::move(theme));
     } else {
       scoredAvailable.emplace_back(std::move(theme), score);
     }

@@ -97,7 +97,7 @@ private:
   }
 
   void registerToast(std::shared_ptr<Toast> toast) {
-    m_queue.push_back(toast);
+    m_queue.emplace_back(toast);
     updateCurrent();
     connect(toast.get(), &Toast::destroyRequested, this,
             [this, toast = toast.get()]() { destroyToast(toast); });

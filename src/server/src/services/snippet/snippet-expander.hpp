@@ -127,7 +127,7 @@ private:
           cmd.exec = it->second;
         else
           cmd.exec = qEnvironmentVariable("SHELL", QStringLiteral("/bin/sh"));
-        commands.push_back(std::move(cmd));
+        commands.emplace_back(std::move(cmd));
       }
     }
 
@@ -149,14 +149,14 @@ private:
     std::vector<QFuture<QString>> futures;
     futures.reserve(commands.size());
     for (const auto &cmd : commands) {
-      futures.push_back(QtConcurrent::run(runCommand, cmd));
+      futures.emplace_back(QtConcurrent::run(runCommand, cmd));
     }
 
     std::vector<QString> results;
     results.reserve(futures.size());
     for (auto &future : futures) {
       future.waitForFinished();
-      results.push_back(future.result());
+      results.emplace_back(future.result());
     }
 
     return results;

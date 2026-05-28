@@ -222,7 +222,7 @@ public:
       result.start = min_idx + max_score_pos;
       result.end = result.start + 1;
       result.score = max_score;
-      if (with_pos) { result.positions.push_back(result.start); }
+      if (with_pos) { result.positions.emplace_back(result.start); }
       return result;
     }
 
@@ -320,7 +320,7 @@ public:
         if (j > F[i]) { s2 = H[I + j0 - 1]; }
 
         if (s > s1 && (s > s2 || (s == s2 && prefer_match))) {
-          result.positions.push_back(min_idx + j);
+          result.positions.emplace_back(min_idx + j);
           if (i == 0) break;
           i--;
         }

@@ -256,7 +256,7 @@ void processHtmlNodes(pugi::xml_node node, HtmlBlockResult &result) {
           img[QStringLiteral("alt")] = QString();
           if (w > 0) img[QStringLiteral("width")] = w;
           if (h > 0) img[QStringLiteral("height")] = h;
-          result.extractedImages.push_back(img);
+          result.extractedImages.emplace_back(img);
         }
       } else {
         processHtmlNodes(cur, result);
@@ -355,7 +355,7 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
       if (!hasImage) {
         QVariantMap data;
         data[QStringLiteral("html")] = renderInlineChildren(node, ctx);
-        blocks.push_back({MdBlockType::Paragraph, data});
+        blocks.emplace_back({MdBlockType::Paragraph, data});
         break;
       }
 
@@ -366,7 +366,7 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
         }
         QVariantMap data;
         data[QStringLiteral("html")] = run;
-        blocks.push_back({MdBlockType::Paragraph, data});
+        blocks.emplace_back({MdBlockType::Paragraph, data});
         run.clear();
       };
 
@@ -376,7 +376,7 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
 
         if (ct == CMARK_NODE_IMAGE) {
           flushRun(run);
-          blocks.push_back({MdBlockType::Image, buildImageBlock(c)});
+          blocks.emplace_back({MdBlockType::Image, buildImageBlock(c)});
           continue;
         }
 
@@ -386,7 +386,7 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
             flushRun(run);
             auto data = buildImageBlock(lc);
             data[QStringLiteral("link")] = QString::fromUtf8(cmark_node_get_url(c));
-            blocks.push_back({MdBlockType::Image, data});
+            blocks.emplace_back({MdBlockType::Image, data});
             continue;
           }
         }
@@ -401,7 +401,7 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
       QVariantMap data;
       data[QStringLiteral("level")] = cmark_node_get_heading_level(node);
       data[QStringLiteral("html")] = renderInlineChildren(node, ctx);
-      blocks.push_back({MdBlockType::Heading, data});
+      blocks.emplace_back({MdBlockType::Heading, data});
       break;
     }
 
@@ -416,7 +416,7 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
       data[QStringLiteral("language")] = language;
       bool const isDark = ThemeService::instance().theme().isDark();
       data[QStringLiteral("highlightedHtml")] = syntax::highlight(code, language, m_syntaxStyles, isDark);
-      blocks.push_back({MdBlockType::CodeBlock, data});
+      blocks.emplace_back({MdBlockType::CodeBlock, data});
       break;
     }
 
@@ -426,15 +426,15 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
       data[QStringLiteral("items")] = buildListItems(node, ctx);
       if (ordered) {
         data[QStringLiteral("startNumber")] = cmark_node_get_list_start(node);
-        blocks.push_back({MdBlockType::OrderedList, data});
+        blocks.emplace_back({MdBlockType::OrderedList, data});
       } else {
-        blocks.push_back({MdBlockType::BulletList, data});
+        blocks.emplace_back({MdBlockType::BulletList, data});
       }
       break;
     }
 
     case CMARK_NODE_THEMATIC_BREAK:
-      blocks.push_back({MdBlockType::HorizontalRule, {}});
+      blocks.emplace_back({MdBlockType::HorizontalRule, {}});
       break;
 
     case CMARK_NODE_HTML_BLOCK: {
@@ -450,17 +450,17 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
         processHtmlNodes(root, result);
 
         for (auto &img : result.extractedImages)
-          blocks.push_back({MdBlockType::Image, img});
+          blocks.emplace_back({MdBlockType::Image, img});
 
         if (!result.html.isEmpty()) {
           QVariantMap data;
           data[QStringLiteral("html")] = result.html;
-          blocks.push_back({MdBlockType::HtmlBlock, data});
+          blocks.emplace_back({MdBlockType::HtmlBlock, data});
         }
       } else {
         QVariantMap data;
         data[QStringLiteral("html")] = html;
-        blocks.push_back({MdBlockType::HtmlBlock, data});
+        blocks.emplace_back({MdBlockType::HtmlBlock, data});
       }
       break;
     }
@@ -497,9 +497,9 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
 
       if (!calloutType.isEmpty()) {
         data[QStringLiteral("calloutType")] = calloutType;
-        blocks.push_back({MdBlockType::Callout, data});
+        blocks.emplace_back({MdBlockType::Callout, data});
       } else {
-        blocks.push_back({MdBlockType::Blockquote, data});
+        blocks.emplace_back({MdBlockType::Blockquote, data});
       }
       break;
     }
@@ -546,7 +546,7 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
             body = child;
             break;
           case GfmNodeType::TableRow:
-            extraRows.push_back(child);
+            extraRows.emplace_back(child);
             break;
           default:
             break;
@@ -590,7 +590,7 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
         }
         data[QStringLiteral("rows")] = rows;
 
-        blocks.push_back({MdBlockType::Table, data});
+        blocks.emplace_back({MdBlockType::Table, data});
       }
       break;
     }

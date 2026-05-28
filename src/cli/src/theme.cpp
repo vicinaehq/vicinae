@@ -26,20 +26,7 @@ class CheckThemeCommand : public AbstractCommandLineCommand {
   std::string description() const override { return "Check whether the target theme file is valid"; }
   void setup(CLI::App *app) override { app->add_option("file", m_path)->required(); }
 
-  bool run(CLI::App *) override {
-    /*
-ThemeParser parser;
-auto res = parser.parse(m_path);
-
-if (!res) { throw std::runtime_error("Theme is invalid: " + res.error()); }
-
-for (const auto &diag : parser.diagnostics()) {
-std::cout << rang::fg::yellow << "Warning: " << rang::fg::reset << diag << "\n";
-}
-std::cout << rang::fg::green << "Theme file is valid" << rang::fg::reset << "\n";
-  */
-    return true;
-  }
+  bool run(CLI::App *) override { return true; }
 
 private:
   std::filesystem::path m_path;
@@ -54,9 +41,6 @@ class TemplateThemeCommand : public AbstractCommandLineCommand {
     std::cout << THEME_TEMPLATE << std::endl;
     return true;
   }
-
-private:
-  std::optional<std::filesystem::path> m_path;
 };
 
 class ThemeSearchPathsCommand : public AbstractCommandLineCommand {

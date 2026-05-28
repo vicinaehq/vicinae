@@ -45,7 +45,7 @@ static std::string stripVariationSelectors(std::string_view str) {
         str.substr(pos, kVariationSelector16.size()) == kVariationSelector16) {
       pos += kVariationSelector16.size();
     } else {
-      result.push_back(str[pos]);
+      result.emplace_back(str[pos]);
       pos++;
     }
   }
@@ -171,7 +171,7 @@ static std::string segment(std::string_view str) {
 
     if (c < 0) { continue; }
 
-    result.push_back(emojiSegmentationCategory(c));
+    result.emplace_back(emojiSegmentationCategory(c));
   }
 
   return result;

@@ -81,7 +81,7 @@ class CommandDatabase {
 public:
   const std::vector<std::shared_ptr<AbstractCommandRepository>> &repositories() const;
 
-  template <typename T> void registerRepository() { _repositories.push_back(std::make_shared<T>()); }
+  template <typename T> void registerRepository() { _repositories.emplace_back(std::make_shared<T>()); }
 
   const AbstractCommandRepository *findRepository(const QString &name);
 

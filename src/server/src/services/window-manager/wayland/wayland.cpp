@@ -129,7 +129,7 @@ static void foreign_toplevel_manager_toplevel(void *data, struct zwlr_foreign_to
   WaylandWindowManager *wm = static_cast<WaylandWindowManager *>(data);
 
   WaylandWindow *window = new WaylandWindow(wm, toplevel);
-  wm->m_toplevels.push_back(AbstractWindowManager::WindowPtr(window));
+  wm->m_toplevels.emplace_back(AbstractWindowManager::WindowPtr(window));
 }
 
 static void foreign_toplevel_manager_finished(void *data, struct zwlr_foreign_toplevel_manager_v1 *manager) {

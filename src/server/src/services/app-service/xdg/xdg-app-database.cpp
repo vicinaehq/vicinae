@@ -541,7 +541,7 @@ PreferenceList XdgAppDatabase::preferences() const {
   auto paths = Preference::directories("paths");
   QJsonArray defaultPaths;
   for (const auto &searchPath : defaultSearchPaths()) {
-    defaultPaths.push_back(QString::fromStdString(searchPath));
+    defaultPaths.emplace_back(QString::fromStdString(searchPath));
   }
   paths.setTitle("Application directories");
   paths.setDescription(

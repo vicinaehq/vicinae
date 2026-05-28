@@ -1,6 +1,5 @@
 #include "cli.hpp"
 #include "config.hpp"
-#include "rang/rang.hpp"
 #include "script.hpp"
 #include "common/common.hpp"
 #include "state.hpp"
@@ -358,16 +357,16 @@ int CommandLineApp::run(int ac, char **av) {
 
   app.require_subcommand();
 
-  std::atexit([]() { std::cout << rang::style::reset; });
+  std::atexit([]() { std::cout << "\033[0m"; });
 
   try {
     app.parse(ac, av);
     return success ? 0 : 1;
   } catch (const CLI::ParseError &e) {
-    if (e.get_exit_code() != 0) { std::cerr << rang::fg::red; }
+    if (e.get_exit_code() != 0) { std::cerr << "\033[31m"; }
     return app.exit(e);
   } catch (const std::exception &except) {
-    std::cerr << rang::fg::red;
+    std::cerr << "\033[31m";
     app.exit(CLI::Error("Exception", except.what()));
     return 1;
   }

@@ -39,10 +39,10 @@ void ActionPanelModel::loadSections(const ActionPanelState *state) {
       SectionInfo info;
       info.name = section->name();
       for (const auto &action : section->actions()) {
-        info.actions.push_back(action);
-        m_allActions.push_back(action);
+        info.actions.emplace_back(action);
+        m_allActions.emplace_back(action);
       }
-      m_sections.push_back(std::move(info));
+      m_sections.emplace_back(std::move(info));
     }
   }
 }

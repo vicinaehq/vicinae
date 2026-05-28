@@ -175,7 +175,7 @@ void GnomeClipboardServer::handleClipboardChanged(const QByteArray &content, con
     qDebug() << "GnomeClipboardServer: Processing binary data (" << mimeType
              << "), size:" << offer.data.size() << "bytes";
 
-    selection.offers.push_back(offer);
+    selection.offers.emplace_back(offer);
     selection.sourceApp = sourceApp.isEmpty() ? std::nullopt : std::optional<QString>(sourceApp);
 
     // Emit the selection to the clipboard service

@@ -190,7 +190,7 @@ AbstractWindowManager::WindowList GnomeWindowManager::listWindowsSync() const {
     QString const mappedWmClass = mapToComplexId(originalWmClass);
     if (mappedWmClass != originalWmClass) { window->setMappedWmClass(mappedWmClass); }
 
-    windows.push_back(window);
+    windows.emplace_back(window);
   }
 
   qDebug() << "GnomeWindowManager: Found" << windows.size() << "windows";
@@ -383,7 +383,7 @@ AbstractWindowManager::WorkspaceList GnomeWindowManager::listWorkspaces() const 
 
     QJsonObject const workspaceObj = workspaceValue.toObject();
     auto workspace = std::make_shared<Gnome::Workspace>(workspaceObj);
-    workspaces.push_back(workspace);
+    workspaces.emplace_back(workspace);
   }
 
   qDebug() << "GnomeWindowManager: Found" << workspaces.size() << "workspaces";

@@ -13,7 +13,7 @@ public:
     virtual void primarySelection(ExtDataDevice &, ExtDataOffer &) {}
   };
 
-  void registerListener(Listener *listener) { _listeners.push_back(listener); }
+  void registerListener(Listener *listener) { _listeners.emplace_back(listener); }
 
   ExtDataDevice(ext_data_control_device_v1 *dev);
   ~ExtDataDevice();

@@ -93,7 +93,7 @@ void DataControlClipboardServer::handleRead() {
           cs.offers.reserve(selection.offers.size());
 
           for (const auto &offer : selection.offers) {
-            cs.offers.push_back({
+            cs.offers.emplace_back({
                 QString::fromStdString(offer.mime_type),
                 QByteArray(reinterpret_cast<const char *>(offer.data.data()), offer.data.size()),
             });
@@ -115,7 +115,7 @@ bool DataControlClipboardServer::setClipboardContent(QMimeData *data) {
     clipboard_proto::Selection selection;
     for (const auto &format : data->formats()) {
       QByteArray raw = data->data(format);
-      selection.offers.push_back(
+      selection.offers.emplace_back(
           {.mime_type = format.toStdString(), .data = std::vector<uint8_t>(raw.begin(), raw.end())});
     }
 

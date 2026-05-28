@@ -118,7 +118,7 @@ std::expected<void, std::string> SnippetService::setKeymap(snippet_gen::LayoutIn
 std::expected<snippet_gen::CreateSnippetResponse, std::string>
 SnippetService::createSnippet(snippet_gen::CreateSnippetRequest req) {
   std::cerr << "Created new snippet with trigger " << req.trigger << '\n';
-  m_snippets.push_back(Snippet{.trigger = req.trigger, .mode = req.mode});
+  m_snippets.emplace_back(Snippet{.trigger = req.trigger, .mode = req.mode});
   std::ranges::sort(m_snippets, [](auto &&a, auto &&b) { return a.trigger.size() > b.trigger.size(); });
   return snippet_gen::CreateSnippetResponse{};
 }
@@ -240,7 +240,7 @@ bool SnippetService::registerDevice(const char *device, DeviceType type) {
     return false;
   }
 
-  m_devices.push_back({.fd = fd, .name = device, .ev = ev, .type = type});
+  m_devices.emplace_back({.fd = fd, .name = device, .ev = ev, .type = type});
   return true;
 }
 

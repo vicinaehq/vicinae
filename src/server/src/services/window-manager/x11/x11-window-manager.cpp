@@ -170,7 +170,7 @@ std::vector<xcb_window_t> X11WindowManager::getClientList() const {
 
   windows.reserve(count);
   for (int i = 0; i < count; i++) {
-    windows.push_back(window_list[i]);
+    windows.emplace_back(window_list[i]);
   }
 
   return windows;
@@ -209,7 +209,7 @@ AbstractWindowManager::WindowList X11WindowManager::listWindowsSync() const {
   for (xcb_window_t const window : client_list) {
     try {
       auto x11_window = std::make_shared<X11Window>(conn, window);
-      windows.push_back(x11_window);
+      windows.emplace_back(x11_window);
     } catch (const std::exception &e) {
       qWarning() << "X11WindowManager: Failed to create X11Window for" << window << ":" << e.what();
     }
@@ -443,7 +443,7 @@ AbstractWindowManager::WorkspaceList X11WindowManager::listWorkspaces() const {
   workspaces.reserve(*desktop_count);
   for (uint32_t i = 0; i < *desktop_count; i++) {
     QString const name = (std::cmp_less(i, desktop_names.size())) ? desktop_names[i] : QString();
-    workspaces.push_back(std::make_shared<X11Workspace>(i, name));
+    workspaces.emplace_back(std::make_shared<X11Workspace>(i, name));
   }
 
   return workspaces;

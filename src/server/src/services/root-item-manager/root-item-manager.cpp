@@ -553,7 +553,7 @@ RootItemManager::getFromSerializedEntrypointIds(std::span<const std::string> ids
     auto entrypointId = EntrypointId::fromSerialized(id);
 
     if (auto it = m_metadata.find(entrypointId); it != m_metadata.end()) {
-      entrypoints.push_back(it->second.item);
+      entrypoints.emplace_back(it->second.item);
     }
   }
 
