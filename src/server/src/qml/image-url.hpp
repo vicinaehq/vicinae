@@ -20,7 +20,7 @@ public:
   bool isValid() const;
   bool isThemeSensitive() const;
 
-  bool operator==(const ImageUrl &other) const { return m_url == other.m_url; }
+  bool operator==(const ImageUrl &other) const { return m_url.toString() == other.m_url.toString(); }
 
 private:
   ImageURL m_url;

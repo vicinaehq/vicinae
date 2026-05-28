@@ -216,7 +216,9 @@ ImageURL ImageURL::builtin(const QString &name) {
 
 ImageURL ImageURL::builtin(BuiltinIcon icon) {
   if (auto name = BuiltinIconService::nameForIcon(icon)) { return ImageURL::builtin(name); }
-  if (auto name = ImageURL::builtin(BuiltinIconService::unknownIcon())) { return ImageURL::builtin(name); }
+  if (auto name = BuiltinIconService::nameForIcon(BuiltinIconService::unknownIcon())) {
+    return ImageURL::builtin(name);
+  }
   return {};
 }
 
