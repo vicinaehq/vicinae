@@ -12,7 +12,6 @@ public:
   ImageUrl() = default;
   explicit ImageUrl(ImageURL url);
 
-  Q_INVOKABLE QString toSource() const;
   Q_INVOKABLE ImageUrl withFallback(const ImageUrl &fb) const;
   Q_INVOKABLE ImageUrl withBackgroundTint(const QString &tint) const;
   Q_INVOKABLE ImageUrl withFillColor(const QColor &color) const;
@@ -21,6 +20,8 @@ public:
   const ImageURL &imageUrl() const;
   bool isValid() const;
   bool isThemeSensitive() const;
+
+  bool operator==(const ImageUrl &other) const { return m_url == other.m_url; }
 
 private:
   ImageURL m_url;

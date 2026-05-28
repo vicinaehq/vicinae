@@ -71,6 +71,7 @@ private:
 
   ImageStream *m_stream = nullptr;
   QImage m_currentFrame;
+  qint64 m_currentFrameKey = 0;
   QSGTexture *m_pendingTexture = nullptr;
   bool m_frameDirty = false;
   bool m_deferredReload = false;

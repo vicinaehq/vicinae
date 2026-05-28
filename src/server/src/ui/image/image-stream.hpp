@@ -1,12 +1,12 @@
 #pragma once
 #include "ui/image/url.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
+#include <QFuture>
 #include <QImage>
 #include <QObject>
 #include <QSize>
 #include <atomic>
 #include <memory>
-#include <optional>
 
 class FetchReply;
 class QMovie;
@@ -22,7 +22,10 @@ public:
   ImageStream(const ImageURL &url, const QSize &size, bool safetyMargins = false, QObject *parent = nullptr);
   ~ImageStream() override;
 
-  static std::optional<QImage> findCached(const ImageURL &url, const QSize &size, bool safetyMargins = false);
+  // Looks up the cache; if hit, emits frameReady synchronously and returns true.
+  // Otherwise dispatches the rendering pipeline asynchronously and returns false.
+  // Connect to frameReady/failed before calling.
+  bool start();
 
 private:
   void startStatic();
@@ -34,6 +37,7 @@ private:
   void decodeStatic(const QByteArray &data);
   void startAnimation(QByteArray data);
   void emitStaticFrame(QImage img);
+  void handleStaticFuture(QFuture<QImage> future);
 
   ImageURL m_url;
   QSize m_size;

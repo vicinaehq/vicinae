@@ -107,8 +107,6 @@ public:
   const std::optional<ColorLike> &fillColor() const;
   OmniPainter::ImageMaskType mask() const;
   std::optional<ObjectFit> fit() const { return m_fit; }
-  QString cacheKey() const { return m_cacheKey.value_or(toString()); }
-  void setCacheKey(const QString &key) { m_cacheKey = key; }
   bool cachable() const { return m_cache; }
   void setCachable(bool value) { m_cache = value; }
 
@@ -121,6 +119,10 @@ public:
   ImageURL &setMask(OmniPainter::ImageMaskType mask);
   ImageURL &setForegroundTint(SemanticColor tint);
   ImageURL &setBackgroundTint(const ColorLike &tint);
+
+  // Returns a copy with fill and background colors resolved against the current theme:
+  // SemanticColor/DynamicColor become QColor; Builtin without fill gets Foreground.
+  ImageURL resolved() const;
 
   ImageURL();
   ImageURL(const QString &s) noexcept;
@@ -154,7 +156,6 @@ private:
   std::optional<QString> _fallback;
   std::optional<ColorLike> _fillColor = std::nullopt;
   std::optional<ObjectFit> m_fit;
-  std::optional<QString> m_cacheKey;
 
   // url dependant custom params
   std::map<QString, QString> m_params;

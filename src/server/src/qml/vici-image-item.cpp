@@ -1,6 +1,5 @@
 #include "vici-image-item.hpp"
 #include "theme.hpp"
-#include "theme/theme-file.hpp"
 #include "ui/image/image-stream.hpp"
 #include <QGuiApplication>
 #include <QQuickWindow>
@@ -78,6 +77,7 @@ void ViciImageItem::reload() {
     delete m_pendingTexture;
     m_pendingTexture = nullptr;
     m_currentFrame = {};
+    m_currentFrameKey = 0;
     m_frameDirty = true;
     setImplicitSize(0, 0);
     setStatus(Null);
@@ -96,49 +96,25 @@ void ViciImageItem::reload() {
   qreal const dpr = window() ? window()->devicePixelRatio() : qGuiApp->devicePixelRatio();
   QSize const physicalSize(qCeil(w * dpr), qCeil(h * dpr));
 
-  ImageURL url = m_resolvedUrl.imageUrl();
-
-  if (m_resolvedUrl.isThemeSensitive()) {
-    if (auto fill = url.fillColor())
-      url.setFill(OmniPainter::resolveColor(*fill));
-    else if (url.type() == ImageURLType::Builtin)
-      url.setFill(ThemeService::instance().theme().resolve(SemanticColor::Foreground));
-    if (auto bg = url.backgroundTint()) url.setBackgroundTint(OmniPainter::resolveColor(*bg));
-  }
-
-  if (auto cached = ImageStream::findCached(url, physicalSize, m_safetyMargins)) {
-    QImage img = std::move(*cached);
-    img.setDevicePixelRatio(dpr);
-    m_currentFrame = std::move(img);
-    setImplicitSize(m_currentFrame.width() / dpr, m_currentFrame.height() / dpr);
-    delete m_pendingTexture;
-    m_pendingTexture =
-        window() ? window()->createTextureFromImage(m_currentFrame, QQuickWindow::TextureHasMipmaps) : nullptr;
-    m_frameDirty = true;
-    setStatus(Ready);
-    update();
-    return;
-  }
-
-  delete m_pendingTexture;
-  m_pendingTexture = nullptr;
-  m_currentFrame = {};
-  m_frameDirty = true;
-  update();
-
-  setStatus(Loading);
-  m_stream = new ImageStream(url, physicalSize, m_safetyMargins, this);
+  m_stream = new ImageStream(m_resolvedUrl.imageUrl(), physicalSize, m_safetyMargins, this);
 
   connect(m_stream, &ImageStream::frameReady, this, [this, dpr](const QImage &frame) {
+    qint64 const key = frame.cacheKey();
+    if (m_currentFrameKey == key && !m_currentFrame.isNull()) {
+      setStatus(Ready);
+      return;
+    }
     QImage img = frame;
     img.setDevicePixelRatio(dpr);
     m_currentFrame = std::move(img);
+    m_currentFrameKey = key;
 
     setImplicitSize(m_currentFrame.width() / dpr, m_currentFrame.height() / dpr);
 
     delete m_pendingTexture;
     m_pendingTexture = nullptr;
-    if (window()) m_pendingTexture = window()->createTextureFromImage(m_currentFrame, QQuickWindow::TextureHasMipmaps);
+    if (window())
+      m_pendingTexture = window()->createTextureFromImage(m_currentFrame, QQuickWindow::TextureHasMipmaps);
 
     m_frameDirty = true;
     setStatus(Ready);
@@ -146,6 +122,16 @@ void ViciImageItem::reload() {
   });
 
   connect(m_stream, &ImageStream::failed, this, [this]() { setStatus(Error); });
+
+  if (!m_stream->start()) {
+    delete m_pendingTexture;
+    m_pendingTexture = nullptr;
+    m_currentFrame = {};
+    m_currentFrameKey = 0;
+    m_frameDirty = true;
+    setStatus(Loading);
+    update();
+  }
 }
 
 void ViciImageItem::updatePolish() {
@@ -160,8 +146,7 @@ void ViciImageItem::updatePolish() {
 void ViciImageItem::itemChange(ItemChange change, const ItemChangeData &value) {
   QQuickItem::itemChange(change, value);
   if (change == ItemSceneChange && value.window && !m_currentFrame.isNull() && !m_pendingTexture) {
-    m_pendingTexture =
-        value.window->createTextureFromImage(m_currentFrame, QQuickWindow::TextureHasMipmaps);
+    m_pendingTexture = value.window->createTextureFromImage(m_currentFrame, QQuickWindow::TextureHasMipmaps);
     m_frameDirty = true;
     update();
   }
@@ -208,7 +193,8 @@ QSGNode *ViciImageItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
   }
 
   if (m_frameDirty) {
-    if (!m_pendingTexture && window()) m_pendingTexture = window()->createTextureFromImage(m_currentFrame, QQuickWindow::TextureHasMipmaps);
+    if (!m_pendingTexture && window())
+      m_pendingTexture = window()->createTextureFromImage(m_currentFrame, QQuickWindow::TextureHasMipmaps);
     if (m_pendingTexture) {
       m_pendingTexture->setMipmapFiltering(QSGTexture::Linear);
       node->setTexture(m_pendingTexture);

@@ -56,6 +56,16 @@ ImageURL &ImageURL::withFallback(const ImageURL &fallback) {
   return *this;
 }
 
+ImageURL ImageURL::resolved() const {
+  ImageURL out = *this;
+  if (auto fill = fillColor())
+    out.setFill(OmniPainter::resolveColor(*fill));
+  else if (type() == ImageURLType::Builtin)
+    out.setFill(ThemeService::instance().theme().resolve(SemanticColor::Foreground));
+  if (auto bg = backgroundTint()) out.setBackgroundTint(OmniPainter::resolveColor(*bg));
+  return out;
+}
+
 QUrl ImageURL::url() const {
   QUrl url;
 
@@ -247,7 +257,6 @@ ImageURL ImageURL::favicon(const QString &domain) {
 
   url.setType(ImageURLType::Favicon);
   url.setName(domain);
-  url.setCacheKey(domain);
 
   return url;
 }
@@ -266,7 +275,6 @@ ImageURL ImageURL::local(const QString &path) {
   ImageURL url;
 
   url.setType(ImageURLType::Local);
-  url.setCacheKey(path);
   url.setName(path);
 
   return url;
@@ -280,7 +288,6 @@ ImageURL ImageURL::macBundle(const std::filesystem::path &bundlePath) {
 
   url.setType(ImageURLType::MacBundle);
   url.setName(name);
-  url.setCacheKey(name);
 
   return url;
 }
@@ -290,7 +297,6 @@ ImageURL ImageURL::http(const QUrl &httpUrl) {
 
   url.setType(ImageURLType::Http);
   url.setName(httpUrl.toString());
-  url.setCacheKey(httpUrl.toString());
 
   return url;
 }

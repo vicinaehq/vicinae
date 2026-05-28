@@ -4,13 +4,16 @@
 #include "image-renderer.hpp"
 #include "theme.hpp"
 #include "theme/theme-file.hpp"
+#ifdef Q_OS_MACOS
+#include "ui/image/mac-bundle-icon-loader.hpp"
+#endif
 #include <QBuffer>
 #include <QCache>
 #include <QFutureWatcher>
+#include <QIcon>
 #include <QImageReader>
 #include <QMovie>
 #include <QThread>
-#include <QTimer>
 #include <QtConcurrent>
 
 class AnimFrameWorker : public QObject {
@@ -27,8 +30,10 @@ static QCache<QString, QImage> &imageCache() {
 }
 
 static QString makeCacheKey(const ImageURL &url, const QSize &size, bool safetyMargins) {
-  auto key = QStringLiteral("%1|%2x%3").arg(url.cacheKey()).arg(size.width()).arg(size.height());
+  auto key = QStringLiteral("%1|%2x%3").arg(url.toString()).arg(size.width()).arg(size.height());
   if (safetyMargins) key += QStringLiteral("|m");
+  if (url.type() == ImageURLType::System || url.type() == ImageURLType::FileIcon)
+    key += QStringLiteral("|it:") + QIcon::themeName();
   return key;
 }
 
@@ -46,16 +51,19 @@ static bool isMultiFrameGif(const QByteArray &data) {
 }
 
 ImageStream::ImageStream(const ImageURL &url, const QSize &size, bool safetyMargins, QObject *parent)
-    : QObject(parent), m_url(url), m_size(size), m_safetyMargins(safetyMargins) {
-  if (auto fill = url.fillColor()) m_fg = OmniPainter::resolveColor(*fill);
-  m_mask = url.mask();
-  m_cacheKey = makeCacheKey(url, size, m_safetyMargins);
+    : QObject(parent), m_url(url.resolved()), m_size(size), m_safetyMargins(safetyMargins) {
+  if (auto fill = m_url.fillColor()) m_fg = OmniPainter::resolveColor(*fill);
+  m_mask = m_url.mask();
+  m_cacheKey = makeCacheKey(m_url, size, m_safetyMargins);
+}
 
+bool ImageStream::start() {
   if (auto *cached = imageCache().object(m_cacheKey)) {
-    QTimer::singleShot(0, this, [this, img = *cached]() { emit frameReady(img); });
-    return;
+    emit frameReady(*cached);
+    return true;
   }
   dispatch();
+  return false;
 }
 
 void ImageStream::dispatch() {
@@ -80,14 +88,12 @@ void ImageStream::tryFallback() {
   m_fallbacksRemaining--;
 
   if (auto fb = m_url.fallback())
-    m_url = ImageURL(*fb);
+    m_url = ImageURL(*fb).resolved();
   else
-    m_url = ImageURL::builtin("question-mark-circle");
+    m_url = ImageURL::builtin("question-mark-circle").resolved();
 
-  if (auto fill = m_url.fillColor())
-    m_fg = OmniPainter::resolveColor(*fill);
-  else if (m_url.type() == ImageURLType::Builtin)
-    m_fg = ThemeService::instance().theme().resolve(SemanticColor::Foreground);
+  m_fg = QColor();
+  if (auto fill = m_url.fillColor()) m_fg = OmniPainter::resolveColor(*fill);
   m_mask = m_url.mask();
   m_cacheKey = makeCacheKey(m_url, m_size, m_safetyMargins);
 
@@ -96,11 +102,6 @@ void ImageStream::tryFallback() {
     return;
   }
   dispatch();
-}
-
-std::optional<QImage> ImageStream::findCached(const ImageURL &url, const QSize &size, bool safetyMargins) {
-  if (auto *img = imageCache().object(makeCacheKey(url, size, safetyMargins))) return *img;
-  return std::nullopt;
 }
 
 ImageStream::~ImageStream() {
@@ -112,14 +113,62 @@ ImageStream::~ImageStream() {
   }
 }
 
-void ImageStream::startStatic() {
-  auto future = ImageRendering::render(m_url, m_size);
+void ImageStream::handleStaticFuture(QFuture<QImage> future) {
   auto *watcher = new QFutureWatcher<QImage>(this);
   connect(watcher, &QFutureWatcherBase::finished, this, [this, watcher]() {
     watcher->deleteLater();
     emitStaticFrame(watcher->result());
   });
   watcher->setFuture(future);
+}
+
+void ImageStream::startStatic() {
+  const QString name = m_url.name();
+  QColor bg;
+  if (auto bgTint = m_url.backgroundTint()) bg = OmniPainter::resolveColor(*bgTint);
+
+  auto canceled = m_canceled;
+  auto runInPool = [this, canceled](auto renderFn, const QColor &postFg) {
+    auto mask = m_mask;
+    handleStaticFuture(
+        QtConcurrent::run(&ImageRendering::decodingPool(),
+                          [renderFn = std::move(renderFn), postFg, mask, canceled]() -> QImage {
+                            if (canceled->load(std::memory_order_relaxed)) return {};
+                            QImage img = renderFn();
+                            ImageRendering::applyPostTransforms(img, postFg, mask);
+                            return img;
+                          }));
+  };
+
+  switch (m_url.type()) {
+  case ImageURLType::Builtin:
+    runInPool([name, size = m_size, fg = m_fg,
+               bg]() { return ImageRendering::renderBuiltinSvg(name, size, fg, bg); },
+              QColor());
+    break;
+  case ImageURLType::Emoji:
+    runInPool([name, size = m_size]() { return ImageRendering::renderEmoji(name, size); }, m_fg);
+    break;
+  case ImageURLType::System:
+    runInPool([name, size = m_size]() { return ImageRendering::renderSystemIcon(name, size); }, m_fg);
+    break;
+#ifdef Q_OS_MACOS
+  case ImageURLType::MacBundle:
+    runInPool([name, size = m_size]() { return renderMacBundleIcon(name, size); }, m_fg);
+    break;
+#endif
+  case ImageURLType::FileIcon:
+    runInPool(
+        [name, size = m_size, fg = m_fg, bg]() { return ImageRendering::renderFileIcon(name, size, fg, bg); },
+        QColor());
+    break;
+  case ImageURLType::Favicon:
+    handleStaticFuture(ImageRendering::renderFavicon(name, m_size, m_fg, m_mask));
+    break;
+  default:
+    tryFallback();
+    break;
+  }
 }
 
 void ImageStream::startFetchable() {
@@ -247,19 +296,18 @@ void ImageStream::startAnimation(QByteArray data) {
     movie->setScaledSize(native.scaled(m_size, Qt::KeepAspectRatio));
 
   auto *worker = new AnimFrameWorker(movie);
-  auto fg = m_fg;
   auto mask = m_mask;
   auto canceled = m_canceled;
   auto safetyMargins = m_safetyMargins;
 
-  connect(movie, &QMovie::updated, worker, [movie, worker, fg, mask, canceled, safetyMargins]() {
+  connect(movie, &QMovie::updated, worker, [movie, worker, mask, canceled, safetyMargins]() {
     if (canceled->load(std::memory_order_relaxed)) {
       movie->stop();
       return;
     }
     QImage frame = movie->currentImage();
     if (frame.isNull()) return;
-    ImageRendering::applyPostTransforms(frame, fg, mask);
+    ImageRendering::applyPostTransforms(frame, QColor(), mask);
     if (safetyMargins) ImageRendering::applySafetyMargins(frame);
     emit worker->frameReady(frame);
   });
