@@ -15,6 +15,7 @@
 #include <QMovie>
 #include <QThread>
 #include <QtConcurrent>
+#include <variant>
 
 class AnimFrameWorker : public QObject {
   Q_OBJECT
@@ -23,6 +24,9 @@ public:
 signals:
   void frameReady(const QImage &frame);
 };
+
+// Worker result: either a fully decoded static frame, or the source bytes for an animation.
+using DecodeResult = std::variant<QImage, QByteArray>;
 
 static QCache<QString, QImage> &imageCache() {
   static QCache<QString, QImage> cache(64 * 1024 * 1024);
@@ -201,16 +205,45 @@ void ImageStream::startFetchable() {
 
   if (type == ImageURLType::Local) {
     auto canceled = m_canceled;
-    auto future = QtConcurrent::run(&ImageRendering::decodingPool(), [name, canceled]() -> QByteArray {
-      if (canceled->load(std::memory_order_relaxed)) return {};
-      QFile f(name);
-      if (f.open(QIODevice::ReadOnly)) return f.readAll();
-      return {};
-    });
-    auto *watcher = new QFutureWatcher<QByteArray>(this);
+    auto future =
+        QtConcurrent::run(&ImageRendering::decodingPool(),
+                          [name, canceled, size = m_size, fg = m_fg, mask = m_mask]() -> DecodeResult {
+                            if (canceled->load(std::memory_order_relaxed)) return QImage{};
+                            QFile f(name);
+                            if (!f.open(QIODevice::ReadOnly)) return QImage{};
+
+                            // Animated GIFs need full bytes for QMovie; everything else streams.
+                            if (isGif(f.peek(6))) {
+                              QByteArray data = f.readAll();
+                              if (isMultiFrameGif(data)) return data;
+                              return ImageRendering::decodeAndTransform(data, size, fg, mask);
+                            }
+
+                            // SVG can't be read by QImageReader; fall back to the bytes path.
+                            if (name.endsWith(QStringLiteral(".svg"), Qt::CaseInsensitive))
+                              return ImageRendering::decodeAndTransform(f.readAll(), size, fg, mask);
+
+                            // Raster: stream-decode directly from the file (no intermediate QByteArray).
+                            QImage img = ImageRendering::decodeImageData(&f, size);
+                            ImageRendering::applyPostTransforms(img, fg, mask);
+                            return img;
+                          });
+    auto *watcher = new QFutureWatcher<DecodeResult>(this);
     connect(watcher, &QFutureWatcherBase::finished, this, [this, watcher]() {
+      auto result = watcher->result();
       watcher->deleteLater();
-      onDataReceived(watcher->result());
+      if (auto *animData = std::get_if<QByteArray>(&result)) {
+        if (m_opts.cache && !bytesCache().contains(m_url.name()))
+          bytesCache().insert(m_url.name(), new QByteArray(*animData), animData->size());
+        startAnimation(std::move(*animData));
+        return;
+      }
+      auto &img = std::get<QImage>(result);
+      if (img.isNull()) {
+        tryFallback();
+        return;
+      }
+      emitStaticFrame(std::move(img));
     });
     watcher->setFuture(future);
     return;
@@ -256,22 +289,22 @@ void ImageStream::onDataReceived(const QByteArray &data) {
     bytesCache().insert(m_url.name(), new QByteArray(data), data.size());
 
   auto canceled = m_canceled;
-  auto future = QtConcurrent::run(
-      &ImageRendering::decodingPool(),
-      [data, size = m_size, fg = m_fg, mask = m_mask, canceled]() -> std::pair<QImage, QByteArray> {
-        if (canceled->load(std::memory_order_relaxed)) return {};
-        if (isMultiFrameGif(data)) return {{}, data};
-        return {ImageRendering::decodeAndTransform(data, size, fg, mask), {}};
-      });
-  auto *watcher = new QFutureWatcher<std::pair<QImage, QByteArray>>(this);
+  auto future =
+      QtConcurrent::run(&ImageRendering::decodingPool(),
+                        [data, size = m_size, fg = m_fg, mask = m_mask, canceled]() -> DecodeResult {
+                          if (canceled->load(std::memory_order_relaxed)) return QImage{};
+                          if (isMultiFrameGif(data)) return data;
+                          return ImageRendering::decodeAndTransform(data, size, fg, mask);
+                        });
+  auto *watcher = new QFutureWatcher<DecodeResult>(this);
   connect(watcher, &QFutureWatcherBase::finished, this, [this, watcher]() {
-    auto [img, animData] = watcher->result();
+    auto result = watcher->result();
     watcher->deleteLater();
-    if (!animData.isEmpty()) {
-      startAnimation(std::move(animData));
+    if (auto *animData = std::get_if<QByteArray>(&result)) {
+      startAnimation(std::move(*animData));
       return;
     }
-    emitStaticFrame(std::move(img));
+    emitStaticFrame(std::move(std::get<QImage>(result)));
   });
   watcher->setFuture(future);
 }
@@ -314,7 +347,6 @@ void ImageStream::startAnimation(QByteArray data) {
   auto *movie = new QMovie();
   movie->setDevice(buffer);
   buffer->setParent(movie);
-  movie->setCacheMode(QMovie::CacheAll);
 
   if (!movie->isValid() || movie->frameCount() <= 1) {
     delete movie;

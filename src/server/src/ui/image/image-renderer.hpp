@@ -20,6 +20,7 @@ QImage renderFileIcon(const QString &path, const QSize &size, const QColor &fg, 
 QFuture<QImage> renderFavicon(const QString &domain, const QSize &size, const QColor &fg,
                               OmniPainter::ImageMaskType mask);
 
+QImage decodeImageData(QIODevice *device, const QSize &size);
 QImage decodeImageData(const QByteArray &data, const QSize &size);
 QImage decodeAndTransform(const QByteArray &data, const QSize &size, const QColor &fg = {},
                           OmniPainter::ImageMaskType mask = OmniPainter::NoMask);

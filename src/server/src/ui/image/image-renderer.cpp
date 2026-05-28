@@ -147,12 +147,8 @@ QImage renderFileIcon(const QString &path, const QSize &size, const QColor &fg, 
   return renderBuiltinSvg(builtinName, size, builtinFg, bg);
 }
 
-QImage decodeImageData(const QByteArray &data, const QSize &size) {
-  QBuffer buf;
-  buf.setData(data);
-  buf.open(QIODevice::ReadOnly);
-
-  QImageReader reader(&buf);
+QImage decodeImageData(QIODevice *device, const QSize &size) {
+  QImageReader reader(device);
   if (!reader.canRead()) return {};
 
   if (size.isValid()) {
@@ -169,6 +165,13 @@ QImage decodeImageData(const QByteArray &data, const QSize &size) {
   }
 
   return result;
+}
+
+QImage decodeImageData(const QByteArray &data, const QSize &size) {
+  QBuffer buf;
+  buf.setData(data);
+  buf.open(QIODevice::ReadOnly);
+  return decodeImageData(&buf, size);
 }
 
 static void applyCircleMask(QImage &image) {
