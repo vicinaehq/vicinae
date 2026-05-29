@@ -11,7 +11,7 @@
 #include <glaze/core/reflect.hpp>
 #include <glaze/json/read.hpp>
 #include "services/ai/http-completion.hpp"
-#include "lib/http-client.hpp"
+#include "internal/http-client.hpp"
 #include <glaze/json/write.hpp>
 #include <memory>
 #include <qcontainerfwd.h>
