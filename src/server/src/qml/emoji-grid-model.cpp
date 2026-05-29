@@ -237,11 +237,20 @@ void EmojiGridModel::initialize() {
     rebuildSections();
   });
   connect(m_emojiService, &EmojiService::skintoneChanged, this, [this](auto) {
+    int const section = selectedSection();
+    int const item = selectedItem();
+
     refreshMetadataCache();
+
     setSelectFirstOnReset(true);
     rebuildSections();
     setSelectFirstOnReset(false);
-    selectFirst();
+
+    if (section >= 0 && item >= 0) {
+      select(section, item);
+    } else {
+      selectFirst();
+    }
   });
 }
 

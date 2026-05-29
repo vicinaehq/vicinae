@@ -11,8 +11,8 @@ class SearchEmojiCommand : public BuiltinViewCommand<EmojiGridViewHost> {
   QString id() const override { return "search-emojis"; }
   QString name() const override { return "Search Emojis"; }
   QString description() const override {
-    return "Search for any emoji to copy it into the clipboard. Also offers pinning, usage "
-           "tracking, and custom keyword indexing.";
+    return "Search for any emoji to copy it into the clipboard. Also offers pinning and usage "
+           "tracking.";
   }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("emoji").setBackgroundTint(Omnicast::ACCENT_COLOR);
