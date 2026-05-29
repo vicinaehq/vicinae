@@ -168,7 +168,7 @@ export type DesktopNotificationOptions = {
 	/**
 	 * The content of the notification.
 	 * How much you can fit in there highly depends on the capabilities of the running notification server.
-	 * Similarly, you may be able to use some markup language to further style the content,
+	 * Similarly, your notification server may accept the use of some markup language to further style the content.
 	 */
 	body: string;
 
