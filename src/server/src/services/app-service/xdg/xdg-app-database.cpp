@@ -379,7 +379,7 @@ xdgpp::DesktopEntry::TerminalExec XdgAppDatabase::inferTermExec(const XdgApplica
         .hold = "--hold",
     };
   }
-  if (app.program() == "foot") {
+  if (app.program() == "foot" || app.program() == "footclient") {
     return {
         .exec = "-e",
         .appId = "--app-id",
