@@ -1,7 +1,7 @@
 #include "catch2/catch_test_macros.hpp"
 #include "emoji/emoji.hpp"
 
-TEST_CASE("has 5 skin tones") { REQUIRE(emoji::skinTones().size() == 5); }
+TEST_CASE("has 6 skin tones") { REQUIRE(emoji::skinTones().size() == 6); }
 
 TEST_CASE("apply all skin tones") {
   REQUIRE(emoji::applySkinTone("👋", emoji::SkinTone::Light) == "👋🏻");
