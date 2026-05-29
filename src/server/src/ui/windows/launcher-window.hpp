@@ -173,6 +173,7 @@ signals:
   void dragOverlayChanged();
   void dragActiveAnchorChanged();
   void filePickingChanged();
+  void rootSearchChanged();
 
 private:
   bool eventFilter(QObject *obj, QEvent *event) override;
