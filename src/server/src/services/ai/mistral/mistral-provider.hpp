@@ -1,7 +1,7 @@
 #include "builtin_icon.hpp"
 #include "common/qt.hpp"
 #include "services/ai/ai-provider.hpp"
-#include "lib/http-client.hpp"
+#include "internal/http-client.hpp"
 #include <cstdint>
 #include <filesystem>
 #include <format>

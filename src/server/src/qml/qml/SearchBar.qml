@@ -324,7 +324,10 @@ Item {
 
         Row {
             id: tabHint
-            visible: launcher.isRootSearch && searchInput.text.length > 5 && !launcher.hasCompleter
+			visible: {
+				return launcher.atRoot && !launcher.hasCompleter && searchInput.text.length > 5;
+			}
+
             spacing: 6
             Layout.alignment: Qt.AlignVCenter
 

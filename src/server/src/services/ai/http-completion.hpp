@@ -7,7 +7,7 @@
 #include <qnetworkaccessmanager.h>
 #include <qnetworkreply.h>
 #include <qnetworkrequest.h>
-#include "lib/http-client.hpp"
+#include "internal/http-client.hpp"
 
 namespace AI {
 struct StreamChunk {
