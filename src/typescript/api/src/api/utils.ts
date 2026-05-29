@@ -159,6 +159,33 @@ export const showInFileBrowser = async (
 	);
 };
 
+export type DesktopNotificationOptions = {
+	/**
+	 * The title of the notification, usually shown at the very top.
+	 */
+	title: string;
+
+	/**
+	 * The content of the notification.
+	 * How much you can fit in there highly depends on the capabilities of the running notification server.
+	 * Similarly, you may be able to use some markup language to further style the content,
+	 */
+	body: string;
+
+	/**
+	 * Icon used to represent the notification, usually positionned on the left.
+	 */
+	icon?: ImageLike;
+
+	/**
+	 * Urgency level associated with the notification.
+	 */
+	urgency?: NotificationUrgency;
+};
+
+/**
+ * @category System
+ */
 export const sendDesktopNotification = (payload: {
 	title: string;
 	body: string;
