@@ -471,6 +471,7 @@ void LauncherWindow::handleCurrentViewChanged() {
   updateWindowTitle();
 
   bool const isRoot = nav->viewStackSize() == 1;
+
   if (m_atRoot != isRoot) {
     m_atRoot = isRoot;
     emit atRootChanged();
