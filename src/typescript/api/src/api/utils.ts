@@ -1,8 +1,13 @@
 import type { PathLike } from "node:fs";
 import { rm } from "node:fs/promises";
 import { WindowManagement } from "./window-management";
-import type { Application } from "./proto/api";
+import type {
+	Application,
+	DesktopNotificationPayload,
+	NotificationUrgency,
+} from "./proto/api";
 import { getClient } from "./client";
+import { ImageLike, serializeProtoImage } from "./image";
 
 /**
   @ignore - we should probably move this to raycast compat, I don't think we want that.
@@ -153,5 +158,45 @@ export const showInFileBrowser = async (
 		options.select ?? true,
 	);
 };
+
+export type DesktopNotificationOptions = {
+	/**
+	 * The title of the notification, usually shown at the very top.
+	 */
+	title: string;
+
+	/**
+	 * The content of the notification.
+	 * How much you can fit in there highly depends on the capabilities of the running notification server.
+	 * Similarly, your notification server may accept the use of some markup language to further style the content.
+	 */
+	body: string;
+
+	/**
+	 * Icon used to represent the notification, usually positionned on the left.
+	 */
+	icon?: ImageLike;
+
+	/**
+	 * Urgency level associated with the notification.
+	 */
+	urgency?: NotificationUrgency;
+};
+
+/**
+ * @category System
+ */
+export const sendDesktopNotification = (payload: {
+	title: string;
+	body: string;
+	icon?: ImageLike;
+	urgency?: NotificationUrgency;
+}) =>
+	getClient().UI.sendDesktopNotification({
+		title: payload.title,
+		body: payload.body,
+		icon: payload.icon ? serializeProtoImage(payload.icon) : undefined,
+		urgency: payload.urgency ?? "Normal",
+	});
 
 export type { Application } from "./proto/api";

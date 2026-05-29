@@ -409,6 +409,9 @@ set(SRCS
 	src/services/power-manager/systemd/systemd-power-manager.cpp
 	src/services/power-manager/dummy-power-manager.hpp
 
+	src/services/desktop-notification/freedesktop/freedesktop-notification-client.cpp
+	src/services/desktop-notification/dummy-desktop-notification-client.hpp
+
 	src/services/audio-control/pactl/pactl-audio-control.cpp
 	src/services/audio-control/dummy-audio-control.hpp
 
