@@ -96,7 +96,8 @@
 			"title": "Desktop Notification Interval",
 			"description": "Desktop Notification Interval",
 			"mode": "no-view",
-			"interval": "30s"
+			"interval": "30s",
+			"disabledByDefault": true
 		}
 	],
 	"preferences": [],
