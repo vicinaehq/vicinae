@@ -14,7 +14,7 @@ inline QVariantList buildGroupedModelList(AI::Service *service, std::optional<AI
     QVariantMap item;
     item[QStringLiteral("id")] = QString::fromStdString(model.ref.toString());
     item[QStringLiteral("displayName")] = QString::fromStdString(model.name);
-    if (model.icon) { item[QStringLiteral("iconSource")] = model.icon->toSource(); }
+    if (model.icon) { item[QStringLiteral("iconSource")] = model.icon->imageUrl().toString(); }
     groups[model.ref.provider].append(item);
   }
 
