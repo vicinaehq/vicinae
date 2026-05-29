@@ -389,6 +389,7 @@ void LauncherWindow::handleCurrentViewChanged() {
   if (!bridge) return;
 
   bool const isRoot = nav->viewStackSize() == 1;
+
   if (m_atRoot != isRoot) {
     m_atRoot = isRoot;
     emit atRootChanged();

@@ -405,7 +405,7 @@ set(SRCS
 	src/internal/program-db/program-db.hpp
 	src/internal/program-db/program-db.cpp
 
-	src/lib/http-client.hpp
+	src/internal/http-client.hpp
 
 	src/services/power-manager/systemd/systemd-power-manager.cpp
 	src/services/power-manager/dummy-power-manager.hpp
@@ -440,7 +440,6 @@ set(SRCS
 	src/services/snippet/null-snippet-server.hpp
 	src/services/snippet/snippet-db.cpp
 
-	src/services/snippet/snippet-server.cpp
 	src/services/audio/wav-writer.hpp
 	src/services/audio/wav-writer.cpp
 	src/services/audio/audio-recorder.hpp

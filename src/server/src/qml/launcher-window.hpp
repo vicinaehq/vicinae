@@ -125,6 +125,7 @@ signals:
   void windowSizeOverrideChanged();
   void overlayChanged();
   void lsChanged();
+  void rootSearchChanged();
 
 private:
   bool eventFilter(QObject *obj, QEvent *event) override;
