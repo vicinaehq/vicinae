@@ -12,11 +12,8 @@
 #include "extension/services/storage-service.hpp"
 #include "extension/services/ui-service.hpp"
 #include "extension/services/wm-service.hpp"
-<<<<<<< HEAD
 #include "extension/services/wallpaper-service.hpp"
-=======
 #include "extension/services/ai-service.hpp"
->>>>>>> 43db140ac (refactor: migrate AI API to new figura based system)
 #include "generated/tsapi.hpp"
 #include "glaze-qt.hpp"
 #include "service-registry.hpp"
@@ -59,18 +56,13 @@ void ExtensionCommandRuntime::initialize() {
   auto *fileSearch = new ExtFileSearchService(*m_transport, *services->fileService());
   auto *command = new ExtCommandService(*m_transport, m_command, services->rootItemManager(), *ctx.settings);
   auto *oauth = new ExtOAuthService(*m_transport, m_command->extensionId(), ctx);
-<<<<<<< HEAD
   auto wallpaper = new ExtWallpaperService(*m_transport, *services->wallpaperManager());
   auto browserExtension = new ExtBrowserExtensionService(*m_transport, *services->browserExtension());
-
-  m_server = new tsapi::Server(*m_transport, app, ui, wm, clipboard, storage, fileSearch, command, oauth,
-                               wallpaper, browserExtension, eventCore);
-=======
   auto *ai = new ExtensionAIRouter(*m_transport, *services->ai());
 
   m_server = new tsapi::Server(*m_transport, app, ui, wm, clipboard, storage, fileSearch, command, oauth,
-                               eventCore, ai);
->>>>>>> 43db140ac (refactor: migrate AI API to new figura based system)
+                               wallpaper, browserExtension, eventCore, ai);
+
   m_server->setLogger(m_logger.get());
   m_server->setParent(this);
 }

@@ -7,16 +7,16 @@ Item {
     required property var host
 
     function moveUp() {
-        listView.moveUp();
+        return listView.moveUp();
     }
     function moveDown() {
-        listView.moveDown();
+        return listView.moveDown();
     }
     function moveSectionUp() {
-        listView.moveSectionUp();
+        return listView.moveSectionUp();
     }
     function moveSectionDown() {
-        listView.moveSectionDown();
+        return listView.moveSectionDown();
     }
 
     GenericListView {
@@ -80,12 +80,13 @@ Item {
         id: detailPanel
 
         DetailPanel {
+            id: panel
             metadata: root.host.detailMetadata
             hasContent: root._hasCustomDetail || (root.host.detailContent !== undefined && root.host.detailContent !== "")
 
             Loader {
                 anchors.fill: parent
-                sourceComponent: root._hasCustomDetail ? null : (parent.hasContent ? defaultTextContent : null)
+                sourceComponent: root._hasCustomDetail ? null : (panel.hasContent ? defaultTextContent : null)
                 source: root._hasCustomDetail ? root.host.detailContentUrl : ""
             }
         }

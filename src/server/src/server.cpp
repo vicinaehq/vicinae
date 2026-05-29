@@ -28,8 +28,6 @@
 #include "services/window-material/window-material-manager.hpp"
 #include "qml/window-material-attached.hpp"
 #include "services/ai/ai-provider.hpp"
-#include "services/background-effect/background-effect-manager.hpp"
-#include "qml/background-effect-attached.hpp"
 #include "services/shortcut-inhibit/shortcut-inhibit-manager.hpp"
 #include "qml/shortcut-inhibitor-attached.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
