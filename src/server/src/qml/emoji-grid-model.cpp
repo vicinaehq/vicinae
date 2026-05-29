@@ -1,5 +1,7 @@
 #include "emoji-grid-model.hpp"
+#include "builtin_icon.hpp"
 #include "clipboard-actions.hpp"
+#include "edit-keywords-view-host.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
@@ -81,6 +83,32 @@ public:
   void execute(ApplicationContext *ctx) override { ctx->services->emojiService()->resetSkinTone(m_emoji); }
 };
 
+class EditEmojiKeywordsAction : public AbstractAction {
+public:
+  void execute(ApplicationContext *ctx) override {
+    auto emojiService = ctx->services->emojiService();
+    auto view = new EditKeywordsViewHost(
+        [emojiService, emoji = m_emoji]() {
+          return QString::fromStdString(emojiService->mapMetadata(emoji).keyword);
+        },
+        [emojiService, emoji = m_emoji](const QString &kw) {
+          return emojiService->setKeywords(emoji, kw.toStdString());
+        },
+        "Additional keywords that will be used to index this emoji");
+    ctx->navigation->pushView(view);
+    ctx->navigation->setNavigationTitle(title());
+  }
+
+  std::optional<ImageURL> icon() const override { return BuiltinIcon::Text; }
+
+  QString title() const override { return "Edit keyword"; }
+
+  EditEmojiKeywordsAction(std::string_view emoji) : m_emoji(emoji) {}
+
+private:
+  std::string_view m_emoji;
+};
+
 std::unique_ptr<ActionPanelState> buildEmojiActionPanel(const EmojiData *data,
                                                         std::optional<emoji::SkinTone> skinTone,
                                                         const ViewScope &scope) {
@@ -104,6 +132,9 @@ std::unique_ptr<ActionPanelState> buildEmojiActionPanel(const EmojiData *data,
   auto *copyGroup = new CopyToClipboardAction(
       Clipboard::Text(QString::fromUtf8(data->group.data(), data->group.size())), "Copy emoji group");
   auto *resetRanking = new ResetEmojiRankingAction(data->emoji);
+  auto editKeyword = new EditEmojiKeywordsAction(data->emoji);
+
+  editKeyword->setShortcut(Keybind::EditAction);
 
   auto *mainSection = panel->createSection();
 
@@ -128,6 +159,7 @@ std::unique_ptr<ActionPanelState> buildEmojiActionPanel(const EmojiData *data,
 
   mainSection->addAction(copyName);
   mainSection->addAction(copyGroup);
+  mainSection->addAction(editKeyword);
   mainSection->addAction(resetRanking);
 
   if (metadata.pinnedAt) {
