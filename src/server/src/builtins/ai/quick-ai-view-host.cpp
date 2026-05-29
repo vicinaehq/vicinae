@@ -211,7 +211,7 @@ void QuickAIViewHost::rebuildModelSelectorItems() {
         QVariantMap item;
         item[QStringLiteral("id")] = compositeId;
         item[QStringLiteral("displayName")] = QString::fromStdString(model->name);
-        if (model->icon) { item[QStringLiteral("iconSource")] = model->icon->toSource(); }
+        if (model->icon) { item[QStringLiteral("iconSource")] = model->icon->imageUrl().toString(); }
         m_modelSelectorCurrentItem = item;
         emit modelSelectorCurrentItemChanged();
         break;
