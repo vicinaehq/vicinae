@@ -571,6 +571,8 @@ void LauncherWindow::handleTab() {
   auto text = m_ctx.navigation->searchText();
   if (text.length() <= 5) return;
 
+  qDebug() << "handle Tab";
+
   auto *view = new QuickAIViewHost(text);
   m_ctx.navigation->pushView(view);
 }

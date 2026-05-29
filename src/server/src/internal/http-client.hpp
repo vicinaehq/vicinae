@@ -7,15 +7,12 @@
 #include <glaze/core/reflect.hpp>
 #include <QFile>
 #include <QNetworkDiskCache>
-<<<<<<< HEAD
-=======
 #include <QStandardPaths>
 #include <glaze/json/prettify.hpp>
 #include <iostream>
 #include <qbitarray.h>
 #include <qbytearrayview.h>
 #include <qcontainerfwd.h>
->>>>>>> 4a277a276 (feat: add event source support)
 #include <qdir.h>
 #include <qfuture.h>
 #include <qfuturewatcher.h>
