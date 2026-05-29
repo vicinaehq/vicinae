@@ -309,11 +309,8 @@ Item {
                         event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                     }
                 }
-                Keys.onBacktabPressed: event => {
-                    event.accepted = false;
-                }
                 Keys.onTabPressed: event => {
-                    if (launcher.isRootSearch && searchInput.text.length > 5) {
+                    if (launcher.atRoot && searchInput.text.length > 5) {
                         launcher.handleTab();
                         event.accepted = true;
                     } else {
@@ -360,9 +357,9 @@ Item {
 
         Row {
             id: tabHint
-			visible: {
-				return launcher.atRoot && !launcher.hasCompleter && searchInput.text.length > 5;
-			}
+            visible: {
+                return launcher.atRoot && !launcher.hasCompleter && searchInput.text.length > 5;
+            }
 
             spacing: 6
             Layout.alignment: Qt.AlignVCenter
@@ -377,7 +374,11 @@ Item {
 
             ShortcutBadge {
                 anchors.verticalCenter: parent.verticalCenter
-				tokens: [{ text: "Tab" }]
+                tokens: [
+                    {
+                        text: "Tab"
+                    }
+                ]
             }
         }
 
