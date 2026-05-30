@@ -10,14 +10,6 @@ import * as extensionServer from "./proto/extension-manager";
 import * as api from "./proto/api";
 import { callbackManager } from "./callback";
 
-const loaders: Record<
-	extensionServer.CommandMode,
-	(data: extensionServer.LaunchEventData) => Promise<void>
-> = {
-	View: loadView,
-	NoView: loadNoView,
-};
-
 class Lifecycle extends extensionServer.LifecycleService {
 	async launch(data: extensionServer.LaunchEventData): Promise<boolean> {
 		const { environment } = workerData as { environment: EnvironmentType };
@@ -26,14 +18,26 @@ class Lifecycle extends extensionServer.LifecycleService {
 		loadEnviron(environment, data);
 		(process as any).noDeprecation = environment === "production";
 
-		loaders[data.mode](data);
+		if (data.mode === "View") {
+			await loadView(data);
+		} else {
+			await loadNoView(data);
+			// for no-view commands, we can request unload right away
+			server.Lifecycle.emit_unload_requested();
+		}
+
 		return true;
 	}
 
 	async shutdown(): Promise<boolean> {
-		globalState.renderer?.flushSync(() => {
+		if (globalState.renderer) {
+			globalState.renderer?.flushSync(() => {
+				callbackManager.activateHandler("shutdown", []);
+			});
+		} else {
 			callbackManager.activateHandler("shutdown", []);
-		});
+		}
+
 		return true;
 	}
 
@@ -53,7 +57,6 @@ const server = new extensionServer.Server(serverRpc, new Lifecycle(serverRpc));
 
 const clientRpc = new api.RpcTransport({
 	send: (msg: string) => {
-		//server.Lifecycle.emit_extension_message(msg);
 		parentPort?.postMessage(msg);
 	},
 });

@@ -36,4 +36,7 @@ service Lifecycle {
   fn shutdown() => bool;
   fn send_message(msg: string) => bool;
   event extension_message(msg: string);
+  
+  // worker can explicitly request to be unloaded. only applies to `no-view` commands which have a predictable termination point.
+  event unload_requested();
 }

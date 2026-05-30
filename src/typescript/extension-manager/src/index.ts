@@ -10,11 +10,13 @@ import * as extension from "./proto/manager-extension";
 import * as path from "node:path";
 
 import type { EnvironmentType } from "./types";
+import { Logger } from "./logger";
+import { setTimeout } from "node:timers";
 
 const WORKER_GRACE_PERIOD_MS = 5000;
 const WORKER_MAX_HEAP_SIZE_MB = 1000; // really high limit just to make sure an extension command can't exhaust RAM by itself
 
-type WorkerStatus = "unloading" | "running" | "handshake";
+type WorkerStatus = "unloading" | "running" | "awaiting_handshake";
 
 type WorkerInfo = {
 	worker: Worker;
@@ -22,7 +24,11 @@ type WorkerInfo = {
 	client: extension.Client;
 	status: WorkerStatus;
 	payload: extension.LaunchEventData;
+	displayId: string; // <extension_id>:<command_id>
+	startedAt?: bigint; // worker info is set on start (after handshake), therefore it starts as undefined
 };
+
+export const logger = new Logger();
 
 class ExtensionManager extends manager.ManagerService {
 	constructor(transport: manager.RpcTransport) {
@@ -45,6 +51,11 @@ class ExtensionManager extends manager.ManagerService {
 
 		worker.status = "running";
 		await worker.client.Lifecycle.launch(worker.payload);
+		worker.startedAt = process.hrtime.bigint();
+
+		logger.info(
+			`Started extension ${worker.payload.extension_name}:${worker.payload.command_name}`,
+		);
 
 		return true;
 	}
@@ -77,7 +88,8 @@ class ExtensionManager extends manager.ManagerService {
 		const workerInfo: WorkerInfo = {
 			worker,
 			client,
-			status: "handshake",
+			status: "awaiting_handshake",
+			displayId: `${load.extension_id}:${load.command_name}`,
 			payload: {
 				entrypoint: load.entrypoint,
 				argumentValues: load.arguments,
@@ -95,20 +107,18 @@ class ExtensionManager extends manager.ManagerService {
 
 		this.workerMap.set(sessionId, workerInfo);
 
-		client.Lifecycle.extension_message((message) => {
-			this.emit_extensionMessage(sessionId, message);
+		client.Lifecycle.unload_requested(() => {
+			this.unload(sessionId);
 		});
 
 		worker.on("message", (data) => {
+			client.route(data);
 			if (workerInfo.status !== "running") return;
-
-			const { result } = JSON.parse(data);
-			if (result !== undefined) client.route(data); // response
 			this.emit_extensionMessage(sessionId, data); // regular extension stuff
 		});
 
 		worker.on("messageerror", (error) => {
-			console.error(error);
+			logger.error(error.toString());
 		});
 
 		const sendCrash = (text: string) => {
@@ -118,7 +128,7 @@ class ExtensionManager extends manager.ManagerService {
 
 		worker.on("error", (error) => {
 			sendCrash(`${error.stack}`);
-			console.error(`worker error`, error);
+			logger.error(`worker error: ${error}`);
 		});
 
 		worker.on("online", () => {});
@@ -127,23 +137,24 @@ class ExtensionManager extends manager.ManagerService {
 		const stderrStream = fs.createWriteStream(stderrLog);
 
 		worker.stdout.on("data", async (buf: Buffer) => {
-			// console.error(buf.toString());
 			stdoutStream.write(buf);
 		});
 
 		worker.stderr.on("data", async (buf: Buffer) => {
-			// console.error(buf.toString());
 			stderrStream.write(buf);
 		});
 
 		worker.on("error", (error) => {
-			console.error(`worker error: ${error.name}:${error.message}`);
+			logger.error(`worker error: ${error.name}:${error.message}`);
 		});
 
 		worker.on("exit", (code) => {
-			console.error(`Worker exited with code ${code}`);
+			logger.info(`Worker exited with code ${code}`);
 
-			// any exit is considered as a crash if not flagged for termination
+			stdoutStream.close();
+			stderrStream.close();
+
+			// exit is considered as a crash if not flagged for termination
 			if (!workerInfo.pendingTermination) {
 				sendCrash(`Extension exited prematurely with exit code ${code}`);
 			} else {
@@ -153,6 +164,20 @@ class ExtensionManager extends manager.ManagerService {
 			this.workerMap.delete(sessionId);
 		});
 
+		logger.info(`Loaded extension ${workerInfo.displayId}`);
+
+		// if handshake is not completed 1 second (!) later we auto unload the worker
+		// we don't expect that to happen but we provide this as a safeguard
+		setTimeout(() => {
+			const worker = this.workerMap.get(sessionId);
+			if (worker?.status === "awaiting_handshake") {
+				logger.error(
+					`worker for command ${worker.displayId} did not complete handshake under 1s, unloading...`,
+				);
+				this.unload(sessionId);
+			}
+		}, 1000);
+
 		return { session_id: sessionId };
 	}
 
@@ -160,16 +185,31 @@ class ExtensionManager extends manager.ManagerService {
 		const workerInfo = this.workerMap.get(session_id);
 
 		if (!workerInfo) {
+			logger.error(
+				`Failed to unload extension with session id ${session_id}: no such worker`,
+			);
 			return false;
 		}
 
-		workerInfo.status = "unloading";
-		await workerInfo.client.Lifecycle.shutdown();
-
-		// force kill after
+		// force kill after timeout. we set this before we call shutdown so that we still kill the worker
+		// if it hangs for any reason.
 		workerInfo.pendingTermination = setTimeout(() => {
 			workerInfo.worker.terminate();
 		}, WORKER_GRACE_PERIOD_MS);
+
+		logger.info(`Unloading extension ${workerInfo.displayId}`);
+
+		await workerInfo.client.Lifecycle.shutdown();
+		workerInfo.status = "unloading";
+
+		const end = process.hrtime.bigint();
+		const elapsed = end - (workerInfo.startedAt ?? end);
+		const elapsedMs = parseInt((elapsed / BigInt(1e6)).toString(), 10);
+		const elapsedSeconds = elapsedMs / 1e3;
+
+		logger.info(
+			`Unloaded extension ${workerInfo.displayId} (ran for ${elapsedSeconds}s)`,
+		);
 
 		return true;
 	}
@@ -210,7 +250,7 @@ class ExtensionManager extends manager.ManagerService {
 		}
 
 		if (!this.workerPool.length) {
-			console.error("no worker in pool!");
+			logger.error("no worker in pool!");
 		}
 
 		const acquired = this.workerPool.pop() ?? this.createWorker("production");
@@ -251,7 +291,7 @@ class Vicinae {
 			const packet = this.currentMessage.data.subarray(4, length + 4);
 
 			this.server.route(packet.toString("utf8"))?.catch((error) => {
-				console.error("Uncaught exception from handler", error);
+				logger.error(`Uncaught exception from handler: ${error}`);
 			});
 
 			this.currentMessage.data = this.currentMessage.data.subarray(length + 4);

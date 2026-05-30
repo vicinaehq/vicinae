@@ -104,28 +104,20 @@ export class Logger {
 		ready: `${green("ready")}${reset()}`,
 	};
 
-	logError(message: string) {
-		console.log(`${this.prefixes.error.padEnd(15)} - ${message}`);
+	error(message: string) {
+		console.error(`${this.prefixes.error.padEnd(15)} - ${message}`);
 	}
 
-	logEvent(message: string) {
-		console.log(`${this.prefixes.event.padEnd(15)} - ${message}`);
+	event(message: string) {
+		console.error(`${this.prefixes.event.padEnd(15)} - ${message}`);
 	}
 
-	logInfo(message: string) {
-		console.log(`${this.prefixes.info.padEnd(15)} - ${message}`);
+	info(message: string) {
+		console.error(`${this.prefixes.info.padEnd(15)} - ${message}`);
 	}
 
-	logReady(message: string) {
-		console.log(`${this.prefixes.ready.padEnd(15)} - ${message}`);
-	}
-
-	logExtensionOut(s: string) {
-		this.logTimestamp(s);
-	}
-
-	logExtensionError(s: string) {
-		this.logTimestamp(`${red(s)}${reset()}`);
+	ready(message: string) {
+		console.error(`${this.prefixes.ready.padEnd(15)} - ${message}`);
 	}
 
 	logTimestamp(s: string) {
