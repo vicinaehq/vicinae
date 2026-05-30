@@ -12,6 +12,11 @@ enum CommandEnv {
   Production
 };
 
+enum LaunchType {
+  User,
+  Background
+};
+
 struct LaunchEventData {
   extension_name: string;
   command_name: string;
@@ -23,6 +28,7 @@ struct LaunchEventData {
   argumentValues: any;
   is_raycast: bool;
   owner_or_author_name: string;
+  launch_type: LaunchType;
 };
 
 service Lifecycle {
