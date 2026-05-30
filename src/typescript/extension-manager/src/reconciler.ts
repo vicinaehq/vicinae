@@ -407,5 +407,16 @@ export const createRenderer = (config: RendererConfig) => {
 
 			reconciler.updateContainer(element, root, null, renderImpl);
 		},
+		unmount() {
+			if (!root) return;
+
+			const currentRoot = root;
+
+			(reconciler as any).flushSyncFromReconciler(() => {
+				reconciler.updateContainer(null, currentRoot, null, () => {});
+			});
+
+			root = undefined;
+		},
 	};
 };

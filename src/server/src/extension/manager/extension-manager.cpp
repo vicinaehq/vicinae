@@ -12,6 +12,7 @@
 #include "environment.hpp"
 #include "pid-file/pid-file.hpp"
 #include "generated/version.h"
+#include "rang/rang.hpp"
 #include "vicinae.hpp"
 
 namespace fs = std::filesystem;
@@ -168,8 +169,10 @@ void ExtensionManager::finished(int exitCode, QProcess::ExitStatus status) {
 
 void ExtensionManager::readError() {
   auto buf = m_process.readAllStandardError();
+  auto ts = QDateTime::currentDateTime().toString("yyyy-MM-dd'T'hh:mm:ss");
 
   for (const auto &line : buf.trimmed().split('\n')) {
-    qInfo() << "[EXTENSION]" << line;
+    std::cout << "[" << rang::fg::magenta << "E" << rang::fg::reset << "] " << rang::fg::gray
+              << ts.toStdString() << " " << line.toStdString() << "\n";
   }
 }

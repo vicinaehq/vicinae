@@ -4,7 +4,6 @@ import * as React from "react";
 import { NavigationProvider } from "../navigation-provider";
 import type * as extensionServer from "../proto/extension-manager";
 import { globalState } from "../globals";
-import { callbackManager } from "../callback";
 
 class ErrorBoundary extends React.Component<
 	{ children: React.ReactNode },
@@ -34,24 +33,10 @@ const App: React.FC<{ component: ComponentType; launchProps: any }> = ({
 	component: Component,
 	launchProps,
 }) => {
-	const [isRunning, setIsRunning] = React.useState(true);
-
-	React.useEffect(() => {
-		callbackManager.setHandler("shutdown", () => {
-			setIsRunning(false);
-		});
-
-		return () => {
-			callbackManager.removeHandler("shutdown");
-		};
-	}, []);
-
 	return (
 		<ErrorBoundary>
 			<Suspense fallback={null}>
-				{isRunning && (
-					<NavigationProvider root={<Component {...launchProps} />} />
-				)}
+				<NavigationProvider root={<Component {...launchProps} />} />
 			</Suspense>
 		</ErrorBoundary>
 	);

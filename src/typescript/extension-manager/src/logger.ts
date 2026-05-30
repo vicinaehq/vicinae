@@ -95,3 +95,41 @@ export const bgBlueBright = format(104, 49);
 export const bgMagentaBright = format(105, 49);
 export const bgCyanBright = format(106, 49);
 export const bgWhiteBright = format(107, 49);
+
+export class Logger {
+	prefixes = {
+		error: `${red("error")}${reset()}`,
+		event: `${magenta("event")}${reset()}`,
+		info: `${blue("info")}${reset()}`,
+		ready: `${green("ready")}${reset()}`,
+	};
+
+	error(message: string) {
+		console.error(`${this.prefixes.error.padEnd(15)} - ${message}`);
+	}
+
+	event(message: string) {
+		console.error(`${this.prefixes.event.padEnd(15)} - ${message}`);
+	}
+
+	info(message: string) {
+		console.error(`${this.prefixes.info.padEnd(15)} - ${message}`);
+	}
+
+	ready(message: string) {
+		console.error(`${this.prefixes.ready.padEnd(15)} - ${message}`);
+	}
+
+	logTimestamp(s: string) {
+		const ts = new Date().toJSON();
+		const lines = s.split("\n");
+
+		for (let i = 0; i !== lines.length; ++i) {
+			const line = lines[i];
+
+			if (i === lines.length - 1 && line.length === 0) continue;
+
+			console.log(`${gray(ts.padEnd(20))}${reset()} - ${line}`);
+		}
+	}
+}
