@@ -154,10 +154,11 @@ class ExtensionManager extends manager.ManagerService {
 			stdoutStream.close();
 			stderrStream.close();
 
-			// exit is considered as a crash if not flagged for termination
-			if (!workerInfo.pendingTermination) {
+			// an exit while we are not deliberately unloading is a crash
+			if (workerInfo.status !== "unloading") {
 				sendCrash(`Extension exited prematurely with exit code ${code}`);
-			} else {
+			} else if (workerInfo.pendingTermination) {
+				// worker exited on its own before the grace period elapsed
 				clearTimeout(workerInfo.pendingTermination);
 			}
 
@@ -186,7 +187,7 @@ class ExtensionManager extends manager.ManagerService {
 
 		if (!workerInfo) {
 			// FIXME: no-view interval scheduler will try to unload non existent extension when
-			// launching a new instance, resulting in misleading error message. Eventually, we just
+			// launching a new instance, resulting in a misleading error message. Eventually, we just
 			// need to watch for unload on the C++ side.
 			/*	
 			logger.error(
@@ -197,7 +198,6 @@ class ExtensionManager extends manager.ManagerService {
 		}
 
 		logger.info(`Unloading extension ${workerInfo.displayId}`);
-
 		workerInfo.status = "unloading";
 		await workerInfo.client.Lifecycle.shutdown();
 
