@@ -149,7 +149,7 @@ class ExtensionManager extends manager.ManagerService {
 		});
 
 		worker.on("exit", (code) => {
-			logger.info(`Worker exited with code ${code}`);
+			logger.info(`Worker ${workerInfo.displayId} exited with code ${code}`);
 
 			stdoutStream.close();
 			stderrStream.close();
@@ -197,7 +197,6 @@ class ExtensionManager extends manager.ManagerService {
 			return false;
 		}
 
-		logger.info(`Unloading extension ${workerInfo.displayId}`);
 		workerInfo.status = "unloading";
 		await workerInfo.client.Lifecycle.shutdown();
 

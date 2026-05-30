@@ -125,14 +125,17 @@ check-format:
 
 bump-patch:
 	./scripts/bump_version.sh patch
-	make update-manifest
 .PHONY: bump-patch
 
 bump-minor:
 	./scripts/bump_version.sh minor
-	make update-manifest
 .PHONY: bump-minor
 
+bump-major:
+	./scripts/bump_version.sh major
+.PHONY: bump-major
+
+# Regenerate the manifest in place from the latest existing tag (does not bump).
 update-manifest:
 	./scripts/update-manifest.sh ./manifest.yaml
 .PHONY: update-manifest
