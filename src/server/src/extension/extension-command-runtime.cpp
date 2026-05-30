@@ -100,6 +100,12 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
                    }) |
                    std::ranges::to<std::unordered_map<std::string, std::string>>();
 
+  if (m_headless) {
+    opts.launch_type = manager::LaunchType::Background;
+  } else {
+    opts.launch_type = manager::LaunchType::User;
+  }
+
   auto watcher = new QFutureWatcher<std::expected<manager::LoadResponse, std::string>>(this);
 
   connect(manager, &ExtensionManager::extensionMessageReceived, this,

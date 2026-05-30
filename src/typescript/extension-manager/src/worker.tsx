@@ -81,7 +81,10 @@ const loadEnviron = (
 		supportPath: data.support_path,
 		assetsPath: data.asset_path,
 		raycastVersion: "1.0.0", // provided for compatibility only, not meaningful
-		launchType: LaunchType.UserInitiated,
+		launchType:
+			data.launch_type === "User"
+				? LaunchType.UserInitiated
+				: LaunchType.Background,
 		extensionName: data.extension_name,
 		ownerOrAuthorName: data.owner_or_author_name,
 		vicinaeVersion: {
