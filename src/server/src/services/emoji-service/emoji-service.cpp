@@ -6,7 +6,8 @@
 #include "fuzzy/fzf.hpp"
 #include "omni-database.hpp"
 #include <qlogging.h>
-#include "utils/utils.hpp"
+#include <ranges>
+#include <string>
 
 namespace fs = std::filesystem;
 
@@ -25,6 +26,7 @@ EmojiWithMetadata toMetadata(const SerializedEmojiMetadata &entry, const EmojiDa
   meta.visitCount = entry.visitCount;
   if (entry.pinnedAt) { meta.pinnedAt = QDateTime::fromSecsSinceEpoch(static_cast<qint64>(*entry.pinnedAt)); }
   if (entry.skinTone) { meta.tone = toneFromId(*entry.skinTone); }
+  if (entry.keyword) { meta.keyword = entry.keyword.value(); }
   return meta;
 }
 
@@ -88,6 +90,11 @@ void EmojiService::migrateFromDatabase(OmniDatabase &db) {
   qInfo() << "Migrated" << m_entries.size() << "emoji metadata entries from database to JSON file";
 }
 
+SerializedEmojiMetadata const *EmojiService::findEntry(std::string_view emoji) const {
+  auto it = std::ranges::find(m_entries, emoji, &SerializedEmojiMetadata::emoji);
+  return it != m_entries.end() ? &*it : nullptr;
+}
+
 SerializedEmojiMetadata *EmojiService::findEntry(std::string_view emoji) {
   auto it = std::ranges::find(m_entries, emoji, &SerializedEmojiMetadata::emoji);
   return it != m_entries.end() ? &*it : nullptr;
@@ -103,8 +110,12 @@ std::span<Scored<const EmojiData *>> EmojiService::search(std::string_view query
   static std::vector<Scored<const EmojiData *>> searchResults;
   auto withScore = [&](const EmojiData &data) -> Scored<const EmojiData *> {
     using WS = fzf::WeightedString;
+    auto entry = findEntry(data.emoji);
 
-    std::initializer_list<WS> fields = {WS{data.name, 1.0f}, WS{data.group, 0.5f}};
+    // user defined keyword, we may or may not have one for this emoji
+    std::string_view kw = entry && entry->keyword ? std::string_view{*entry->keyword} : "";
+    std::initializer_list<WS> fields = {WS{kw, 2.0f}, WS{data.name, 1.0f}, WS{data.group, 0.5f}};
+
     auto kws = data.keywords | std::views::transform([](auto &&s) { return WS{s, 1.0f}; });
     int const score = fzf::threadLocalMatcher().fuzzy_match_v2_score_query(fields, kws, query);
 
@@ -268,6 +279,25 @@ bool EmojiService::resetSkinTone(std::string_view emoji) {
   }
 
   emit skintoneChanged(emoji);
+
+  return true;
+}
+
+bool EmojiService::setKeywords(std::string_view emoji, const std::string &text) {
+  auto &entry = entryFor(emoji);
+
+  if (text.empty()) {
+    entry.keyword.reset();
+  } else {
+    entry.keyword = text;
+  }
+
+  if (!save()) {
+    qWarning() << "Failed to save";
+    return false;
+  }
+
+  emit keywordsChanged(emoji);
 
   return true;
 }

@@ -7,7 +7,6 @@
 #include <optional>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <vector>
 #include "fuzzy/scored.hpp"
 
@@ -29,6 +28,7 @@ struct SerializedEmojiMetadata {
   std::optional<std::uint64_t> pinnedAt;
   std::optional<std::uint64_t> lastVisitedAt;
   std::optional<std::string> skinTone;
+  std::optional<std::string> keyword;
 };
 
 struct EmojiWithMetadata {
@@ -36,6 +36,7 @@ struct EmojiWithMetadata {
   uint32_t visitCount = 0;
   std::optional<QDateTime> pinnedAt;
   std::optional<emoji::SkinTone> tone;
+  std::string keyword; // concatenated as one, space delimited
 };
 
 class EmojiService : public QObject {
@@ -47,6 +48,7 @@ signals:
   void visited(std::string_view emoji) const;
   void rankingReset(std::string_view emoji) const;
   void skintoneChanged(std::string_view emoji) const;
+  void keywordsChanged(std::string_view emoji) const;
 
 public:
   using GroupedEmojis = std::vector<std::pair<std::string_view, std::vector<const EmojiData *>>>;
@@ -73,11 +75,15 @@ public:
   bool resetRanking(std::string_view emoji);
   bool setSkinTone(std::string_view emoji, emoji::SkinTone tone);
   bool resetSkinTone(std::string_view emoji);
+  bool setKeywords(std::string_view emoji, const std::string &text);
 
 private:
   void migrateFromDatabase(OmniDatabase &db);
 
+  SerializedEmojiMetadata const *findEntry(std::string_view emoji) const;
   SerializedEmojiMetadata *findEntry(std::string_view emoji);
+
+  // Return metadata entry for emoji, or create it if it doesn't exist
   SerializedEmojiMetadata &entryFor(std::string_view emoji);
 
   bool load();
