@@ -112,7 +112,7 @@ class ExtensionManager extends manager.ManagerService {
 		});
 
 		worker.on("message", (data) => {
-			client.route(data);
+			client.route(data); // try routing to us
 			if (workerInfo.status !== "running") return;
 			this.emit_extensionMessage(sessionId, data); // regular extension stuff
 		});
@@ -131,7 +131,7 @@ class ExtensionManager extends manager.ManagerService {
 			logger.error(`worker error: ${error}`);
 		});
 
-		worker.on("online", () => {});
+		worker.on("online", () => { });
 
 		const stdoutStream = fs.createWriteStream(stdoutLog);
 		const stderrStream = fs.createWriteStream(stderrLog);
@@ -185,22 +185,32 @@ class ExtensionManager extends manager.ManagerService {
 		const workerInfo = this.workerMap.get(session_id);
 
 		if (!workerInfo) {
+			// FIXME: no-view interval scheduler will try to unload non existent extension when
+			// launching a new instance, resulting in misleading error message. Eventually, we just
+			// need to watch for unload on the C++ side.
+			/*	
 			logger.error(
 				`Failed to unload extension with session id ${session_id}: no such worker`,
 			);
+			*/
 			return false;
 		}
 
-		// force kill after timeout. we set this before we call shutdown so that we still kill the worker
-		// if it hangs for any reason.
-		workerInfo.pendingTermination = setTimeout(() => {
-			workerInfo.worker.terminate();
-		}, WORKER_GRACE_PERIOD_MS);
-
 		logger.info(`Unloading extension ${workerInfo.displayId}`);
 
-		await workerInfo.client.Lifecycle.shutdown();
 		workerInfo.status = "unloading";
+		await workerInfo.client.Lifecycle.shutdown();
+
+		if (workerInfo.payload.mode === "NoView") {
+			workerInfo.worker.terminate();
+		} else {
+			// FIXME: we let view commands some time to execute their useEffect cleanup, if they need to.
+			// Currently this has one significant caveat: vicinae won't process incoming requests during the
+			// grace period to avoid unexpected behavior.
+			workerInfo.pendingTermination = setTimeout(() => {
+				workerInfo.worker.terminate();
+			}, WORKER_GRACE_PERIOD_MS);
+		}
 
 		const end = process.hrtime.bigint();
 		const elapsed = end - (workerInfo.startedAt ?? end);
