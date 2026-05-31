@@ -1,13 +1,21 @@
 #include "glyph-service.hpp"
+#include <algorithm>
+#include <bits/ranges_algo.h>
 #include <filesystem>
 #include <glaze/core/reflect.hpp>
 #include <glaze/json/read.hpp>
 #include <glaze/json/write.hpp>
 #include "fuzzy/fzf.hpp"
+#include "glyph/glyph.hpp"
 #include "omni-database.hpp"
+#include <qfuture.h>
+#include <qfuturesynchronizer.h>
 #include <qlogging.h>
+#include <qtconcurrentrun.h>
+#include <qthreadpool.h>
 #include <ranges>
 #include <string>
+#include <unordered_map>
 
 namespace fs = std::filesystem;
 
@@ -47,8 +55,10 @@ bool GlyphService::load() {
   if (const auto error = glz::read_file_json(m_entries, m_path.c_str(), m_buf)) {
     qWarning() << "Failed to read emoji metadata:" << glz::format_error(error).c_str();
     m_entries.clear();
+    m_indexDirty = true;
     return false;
   }
+  m_indexDirty = true;
   return true;
 }
 
@@ -84,6 +94,7 @@ void GlyphService::migrateFromDatabase(OmniDatabase &db) {
   if (migrated.empty()) return;
 
   m_entries = std::move(migrated);
+  m_indexDirty = true;
 
   if (!save()) return;
 
@@ -103,31 +114,72 @@ SerializedEmojiMetadata *GlyphService::findEntry(std::string_view emoji) {
 SerializedEmojiMetadata &GlyphService::entryFor(std::string_view emoji) {
   auto it = std::ranges::find(m_entries, emoji, &SerializedEmojiMetadata::emoji);
   if (it != m_entries.end()) return *it;
+  m_indexDirty = true;
   return m_entries.emplace_back(SerializedEmojiMetadata{.emoji = std::string(emoji)});
 }
 
+void GlyphService::ensureIndex() const {
+  if (!m_indexDirty) return;
+  m_entryByItem.assign(glyph::items().size(), nullptr);
+  for (const auto &entry : m_entries)
+    if (const auto *item = glyph::lookup(entry.emoji)) m_entryByItem[item - glyph::items().data()] = &entry;
+  m_indexDirty = false;
+}
+
 std::span<Scored<const glyph::Item *>> GlyphService::search(std::string_view query) const {
-  static std::vector<Scored<const glyph::Item *>> searchResults;
+  ensureIndex();
+
   auto withScore = [&](const glyph::Item &data) -> Scored<const glyph::Item *> {
     using WS = fzf::WeightedString;
-    auto entry = findEntry(data.character);
+    const auto *entry = m_entryByItem[&data - glyph::items().data()];
 
     // user defined keyword, we may or may not have one for this item
     std::string_view kw = entry && entry->keyword ? std::string_view{*entry->keyword} : "";
     std::initializer_list<WS> fields = {WS{kw, 2.0f}, WS{data.name, 1.0f},
                                         WS{glyph::categoryLabel(data.category), 0.5f}};
 
-    auto kws = data.keywords | std::views::transform([](auto &&s) { return WS{s, 1.0f}; });
+    auto kws = data.keywords | std::views::transform([](auto &&s) { return WS{s, 0.3f}; });
     int const score = fzf::threadLocalMatcher().fuzzy_match_v2_score_query(fields, kws, query);
 
     return {&data, score};
   };
 
-  auto filtered = glyph::items() | std::views::transform(withScore) |
-                  std::views::filter([](auto &&s) { return s.score > 0; });
-  searchResults.clear();
-  std::ranges::copy(filtered, std::back_inserter(searchResults));
+  const auto batchCount = std::ceil(glyph::items().size() / 500.0);
+  size_t batchSize = 500;
+
+  static std::vector<Scored<const glyph::Item *>> searchResults;
+
+  searchResults.resize(glyph::items().size());
+
+  std::vector<QFuture<size_t>> futures;
+
+  futures.reserve(batchCount);
+
+  for (auto i = 0; i != batchCount; ++i) {
+    int startIdx = batchSize * i;
+    int endIdx = std::min(startIdx + batchSize, glyph::items().size());
+
+    futures.emplace_back(QtConcurrent::run([withScore, startIdx, endIdx]() {
+      size_t zeroCount = 0;
+      for (auto i = startIdx; i != endIdx; ++i) {
+        auto &glyph = glyph::items()[i];
+        searchResults[i] = withScore(glyph);
+        if (searchResults[i].score == 0) zeroCount += 1;
+      }
+
+      return zeroCount;
+    }));
+  }
+
+  auto batch = QtFuture::whenAll(futures.begin(), futures.end());
+  batch.waitForFinished();
+
+  const size_t zeroCount =
+      std::ranges::fold_left(batch.result(), 0, [](auto &&a, auto &&b) { return a + b.result(); });
+
   std::ranges::stable_sort(searchResults, std::greater{});
+
+  searchResults.resize(searchResults.size() - zeroCount);
 
   return searchResults;
 }
@@ -145,11 +197,8 @@ bool GlyphService::registerVisit(std::string_view emoji) {
 }
 
 std::vector<GlyphMetadata> GlyphService::getVisited() const {
-  std::vector<const SerializedEmojiMetadata *> sorted;
-  sorted.reserve(m_entries.size());
-  for (const auto &entry : m_entries) {
-    sorted.emplace_back(&entry);
-  }
+  auto sorted = m_entries | std::views::filter([](auto &&e) { return e.visitCount > 0; }) |
+                std::views::transform([](auto &&e) { return &e; }) | std::ranges::to<std::vector>();
 
   std::ranges::sort(sorted, [](const SerializedEmojiMetadata *a, const SerializedEmojiMetadata *b) {
     auto const ap = a->pinnedAt.value_or(0), bp = b->pinnedAt.value_or(0);
@@ -162,15 +211,7 @@ std::vector<GlyphMetadata> GlyphService::getVisited() const {
   results.reserve(sorted.size());
 
   for (const auto *entry : sorted) {
-    const auto *item = glyph::lookup(entry->emoji);
-
-    if (!item) {
-      // Stored metadata can reference a glyph that a later curation change dropped; skip it.
-      qDebug() << "Skipping stored glyph no longer in the table" << QString::fromStdString(entry->emoji);
-      continue;
-    }
-
-    results.emplace_back(toMetadata(*entry, item));
+    if (const auto *item = glyph::lookup(entry->emoji)) { results.emplace_back(toMetadata(*entry, item)); }
   }
 
   return results;

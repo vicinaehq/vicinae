@@ -52,7 +52,7 @@ public:
   void initialize();
   void setFilter(const QString &text);
   void setCategoryFilter(std::optional<glyph::Category> category);
-  QString searchPlaceholder() const { return QStringLiteral("Search for emojis..."); }
+  QString searchPlaceholder() const { return QStringLiteral("Search for emojis and symbols..."); }
   QUrl qmlComponentUrl() const { return QUrl(QStringLiteral("qrc:/Vicinae/EmojiGridView.qml")); }
 
   Q_INVOKABLE QString emojiIcon(int section, int item) const;

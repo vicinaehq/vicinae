@@ -265,6 +265,23 @@ void EmojiGridModel::initialize() {
     setSelectFirstOnReset(false);
     selectFirst();
   });
+  connect(m_glyphService, &GlyphService::rankingReset, this, [this](auto) {
+    int const section = selectedSection();
+    int const item = selectedItem();
+
+    refreshMetadataCache();
+    regenerateMetaSections();
+
+    setSelectFirstOnReset(true);
+    rebuildSections();
+    setSelectFirstOnReset(false);
+
+    if (section >= 0 && item >= 0) {
+      select(section, item);
+    } else {
+      selectFirst();
+    }
+  });
   connect(m_glyphService, &GlyphService::visited, this, [this](auto) {
     regenerateMetaSections();
     rebuildSections();
@@ -412,6 +429,7 @@ QString EmojiGridModel::cellTooltip(int section, int item) const { return emojiN
 
 void EmojiGridModel::updateNavigationTitle() {
   auto name = emojiName(selectedSection(), selectedItem());
-  scope().setNavigationTitle(name.isEmpty() ? QStringLiteral("Search Emojis")
-                                            : QStringLiteral("Search Emojis - %1").arg(name));
+  auto commandName = scope().appContext()->navigation->activeCommand()->name();
+
+  scope().setNavigationTitle(name.isEmpty() ? name : QStringLiteral("%1 - %2").arg(commandName).arg(name));
 }

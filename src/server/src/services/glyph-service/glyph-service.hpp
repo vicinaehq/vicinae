@@ -63,7 +63,9 @@ public:
   std::vector<GlyphMetadata> mapMetadata(const std::vector<const glyph::Item *> &items);
   GlyphMetadata mapMetadata(std::string_view emoji);
 
+  // Returns all the visited and pinned emojis. pinned emojis are always included first in the list.
   std::vector<GlyphMetadata> getVisited() const;
+
   bool pin(std::string_view emoji);
   bool unpin(std::string_view emoji);
   bool registerVisit(std::string_view emoji);
@@ -81,10 +83,17 @@ private:
   // Return metadata entry for emoji, or create it if it doesn't exist
   SerializedEmojiMetadata &entryFor(std::string_view emoji);
 
+  // Rebuilds m_entryByItem from m_entries if a structural change marked it dirty.
+  void ensureIndex() const;
+
   bool load();
   bool save();
 
   std::filesystem::path m_path;
+  // Any structural change to m_entries (add/replace) must set m_indexDirty.
   std::vector<SerializedEmojiMetadata> m_entries;
+  // Per-item slot (indexed by position in glyph::items()); nullptr = no metadata.
+  mutable std::vector<const SerializedEmojiMetadata *> m_entryByItem;
+  mutable bool m_indexDirty = true;
   std::string m_buf;
 };
