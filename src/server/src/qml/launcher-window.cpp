@@ -6,6 +6,7 @@
 #include "ui/action-pannel/action.hpp"
 #include "ui/image/image-renderer.hpp"
 #include "services/news/news-service.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 #include "alert-model.hpp"
 #include "bridge-view.hpp"
 #include "image-source.hpp"
@@ -580,9 +581,16 @@ void LauncherWindow::setCompacted(bool value) {
 }
 
 void LauncherWindow::tryCompaction() {
-  auto &cfg = m_ctx.services->config()->value().launcherWindow.compactMode;
-  setCompacted(!m_ctx.services->newsService()->hasUnreadNews() && cfg.enabled &&
-               m_ctx.navigation->searchText().isEmpty() && m_ctx.navigation->viewStackSize() == 1);
+  const auto &val = m_ctx.services->config()->value();
+  const auto &cfg = val.launcherWindow.compactMode;
+  const auto &rs = val.rootSearch;
+  const bool atRoot =
+      m_ctx.navigation->searchText().isEmpty() && m_ctx.navigation->viewStackSize() == 1;
+  const bool noUnreadNews = !m_ctx.services->newsService()->hasUnreadNews();
+  const bool noFavoritesToShow =
+      rs.hideFavoritesWhenEmpty || m_ctx.services->rootItemManager()->queryFavorites(1).empty();
+  const bool rootListEmpty = rs.hideSuggestionsWhenEmpty && noFavoritesToShow;
+  setCompacted(atRoot && noUnreadNews && (cfg.enabled || rootListEmpty));
 }
 
 bool LauncherWindow::isLayerShellActive() const {

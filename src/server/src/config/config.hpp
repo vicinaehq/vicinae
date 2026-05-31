@@ -101,7 +101,7 @@ template <> struct Partial<WindowCSD> {
 };
 
 struct WindowCompactMode {
-  bool enabled;
+  bool enabled = false;
 };
 
 template <> struct Partial<WindowCompactMode> {

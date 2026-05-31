@@ -15,7 +15,11 @@ Window {
 
     readonly property int _w: launcher.overrideWidth || Config.windowWidth
     readonly property int _h: launcher.overrideHeight || Config.windowHeight
-    readonly property int _contentH: launcher.compacted ? 60 + 2 * Config.borderWidth : _h
+    // When compacted, the visible frame collapses to "search bar + (optional toolbar)".
+    // The toolbar (Footer) stays visible whenever the status bar is, even when compacted —
+    // so the frame must reserve space for it: 60 search + 1 divider + 40 footer.
+    readonly property int _h_compact: 60 + (launcher.statusBarVisible ? (1 + 40) : 0) + 2 * Config.borderWidth
+    readonly property int _contentH: launcher.compacted ? _h_compact : _h
 
     width: _w + 2 * shadowPadding
     height: _h + 2 * shadowPadding
@@ -30,7 +34,7 @@ Window {
 
     BackgroundEffect.enabled: root.blurEnabled && !root.nativeChrome
     BackgroundEffect.radius: root.cornerRadius
-    BackgroundEffect.region: Qt.rect(shadowPadding, shadowPadding, _w, launcher.compacted ? 60 : _h)
+    BackgroundEffect.region: Qt.rect(shadowPadding, shadowPadding, _w, launcher.compacted ? (_h_compact - 2 * Config.borderWidth) : _h)
 
     Item {
         id: shadowMask
@@ -86,7 +90,7 @@ Window {
         Rectangle {
             visible: launcher.compacted
             width: _w
-            height: 60 + 2 * Config.borderWidth
+            height: _h_compact
             radius: root.cornerRadius
             color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
         }
@@ -94,7 +98,7 @@ Window {
         SourceBlendRect {
             visible: launcher.compacted && !root.nativeChrome
             width: _w
-            height: 60 + 2 * Config.borderWidth
+            height: _h_compact
             radius: root.cornerRadius
             overlay: true
             borderColor: Config.withAlpha(Theme.mainWindowBorder, Config.windowOpacity)
@@ -142,8 +146,13 @@ Window {
         }
 
         ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: Config.borderWidth
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.topMargin: Config.borderWidth
+            anchors.leftMargin: Config.borderWidth
+            anchors.rightMargin: Config.borderWidth
+            height: _contentH - 2 * Config.borderWidth
             spacing: 0
             visible: !launcher.hasOverlay
 
@@ -165,8 +174,9 @@ Window {
             Item {
                 id: contentArea
                 objectName: "contentArea"
+                visible: !launcher.compacted
                 Layout.fillWidth: true
-                Layout.fillHeight: true
+                Layout.fillHeight: !launcher.compacted
 
                 StackView {
                     id: commandStack
@@ -176,13 +186,13 @@ Window {
             }
 
             ViciDivider {
-                visible: !launcher.compacted && launcher.statusBarVisible
+                visible: launcher.statusBarVisible
                 Layout.fillWidth: true
             }
 
             Footer {
                 id: footer
-                visible: !launcher.compacted && launcher.statusBarVisible
+                visible: launcher.statusBarVisible
                 Layout.fillWidth: true
                 Layout.preferredHeight: visible ? 40 : 0
             }
