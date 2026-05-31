@@ -103,9 +103,17 @@ QImage renderEmoji(const QString &emoji, const QSize &size) {
 }
 
 QImage renderSystemIcon(const QString &name, const QSize &size) {
-  // QIcon::fromTheme is not reentrant; serialize calls since this runs on the decoding pool.
-  static std::mutex mtx;
-  std::lock_guard lock(mtx);
+  // QIconLoader and QPixmap are GUI-thread only.
+  // Calling it from another thread can result in the icon not being found from the very beginning or after
+  // the next cache update.
+  // https://github.com/vicinaehq/vicinae/issues/1450
+  if (QThread::currentThread() != qApp->thread()) {
+    QImage result;
+    QMetaObject::invokeMethod(
+        qApp, [&] { result = renderSystemIcon(name, size); }, Qt::BlockingQueuedConnection);
+    return result;
+  }
+
   QIcon const icon = QIcon::fromTheme(name);
   if (icon.isNull()) return {};
 
