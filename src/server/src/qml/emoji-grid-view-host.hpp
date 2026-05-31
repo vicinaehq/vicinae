@@ -1,7 +1,7 @@
 #pragma once
 #include "bridge-view.hpp"
 #include "emoji-grid-model.hpp"
-#include "emoji/glyph.hpp"
+#include "glyph/glyph.hpp"
 #include <QStringList>
 
 class EmojiGridViewHost : public ViewHostBase {
@@ -34,8 +34,6 @@ public:
 
   QObject *listModel() const { return const_cast<EmojiGridModel *>(&m_model); }
 
-  // "All" followed by every category label, in section order. Option index i
-  // (i >= 1) maps to glyph::sections()[i - 1]; index 0 means no filter.
   QStringList categoryFilterOptions() const {
     QStringList options{QStringLiteral("All")};
     for (const auto &section : glyph::sections())

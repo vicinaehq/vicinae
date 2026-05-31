@@ -29,7 +29,7 @@
 #include "services/browser-extension-service.hpp"
 #include "services/calculator-service/calculator-service.hpp"
 #include "services/clipboard/clipboard-service.hpp"
-#include "services/emoji-service/emoji-service.hpp"
+#include "services/glyph-service/glyph-service.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include "services/files-service/file-service.hpp"
 #include "services/local-storage/local-storage-service.hpp"
@@ -156,8 +156,8 @@ int startServer(const ServerLaunchOptions &launchOpts) {
         std::make_unique<ShortcutService>(Omnicast::dataDir() / "shortcuts" / "shortcuts.json", omniDb.get());
     auto toastService = std::make_unique<ToastService>();
     auto currentConfig = configService->value();
-    auto emojiService =
-        std::make_unique<EmojiService>(Omnicast::dataDir() / "emojis" / "emojis.json", omniDb.get());
+    auto glyphService =
+        std::make_unique<GlyphService>(Omnicast::dataDir() / "emojis" / "emojis.json", omniDb.get());
     auto calculatorService = std::make_unique<CalculatorService>(*omniDb.get());
     auto fileService = std::make_unique<FileService>(*omniDb);
     auto oauthService = std::make_unique<OAuthService>(*omniDb);
@@ -198,7 +198,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setWindowManager(std::move(windowManager));
     registry->setAppRuntime(std::move(appRuntime));
     registry->setFontService(std::move(fontService));
-    registry->setEmojiService(std::move(emojiService));
+    registry->setGlyphService(std::move(glyphService));
     registry->setRaycastStore(std::move(raycastStore));
     registry->setVicinaeStore(std::move(vicinaeStore));
     registry->setExtensionRegistry(std::move(extensionRegistry));

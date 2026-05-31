@@ -6,7 +6,7 @@ all: test
 test:
 	cmake -GNinja -DBUILD_TESTS=ON -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)
-	./$(BUILD_DIR)/emoji-tests
+	./$(BUILD_DIR)/vicinae-glyph-tests
 .PHONY: test
 
 # we run this from time to time only, it's not part of the build pipeline

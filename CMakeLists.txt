@@ -111,7 +111,7 @@ find_package(glaze)
 add_subdirectory(src/browser-extension)
 add_subdirectory(${LIB_DIR}/common)
 add_subdirectory(${LIB_DIR}/script-command)
-add_subdirectory(${LIB_DIR}/emoji)
+add_subdirectory(${LIB_DIR}/glyph)
 add_subdirectory(${LIB_DIR}/xdgpp)
 add_subdirectory(${LIB_DIR}/fuzzy)
 

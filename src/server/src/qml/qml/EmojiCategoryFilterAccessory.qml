@@ -10,10 +10,10 @@ SearchableDropdown {
     items: [
         {
             title: "",
-            items: _options.map((name, i) => ({
+            items: _options?.map((name, i) => ({
                         id: i.toString(),
                         displayName: name
-                    }))
+                    })) ?? []
         }
     ]
 
@@ -21,7 +21,7 @@ SearchableDropdown {
         var idx = launcher.commandViewHost ? launcher.commandViewHost.currentCategoryFilter : 0;
         return {
             id: idx?.toString() ?? 'unknown',
-            displayName: _options[idx]
+            displayName: _options?.[idx] ?? ''
         };
     }
 

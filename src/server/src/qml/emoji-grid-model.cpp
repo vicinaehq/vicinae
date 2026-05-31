@@ -20,7 +20,7 @@ public:
   VisitEmojiActionWrapper(std::string_view emoji, AbstractAction *action)
       : ProxyAction(action), m_emoji(emoji) {}
   void executeAfter(ApplicationContext *ctx) override {
-    ctx->services->emojiService()->registerVisit(m_emoji);
+    ctx->services->glyphService()->registerVisit(m_emoji);
   }
 };
 
@@ -31,7 +31,7 @@ public:
   PinEmojiAction(std::string_view emoji) : m_emoji(emoji) {}
   QString title() const override { return "Pin emoji"; }
   std::optional<ImageURL> icon() const override { return ImageURL::builtin("pin"); }
-  void execute(ApplicationContext *ctx) override { ctx->services->emojiService()->pin(m_emoji); }
+  void execute(ApplicationContext *ctx) override { ctx->services->glyphService()->pin(m_emoji); }
 };
 
 class UnpinEmojiAction : public AbstractAction {
@@ -41,7 +41,7 @@ public:
   UnpinEmojiAction(std::string_view emoji) : m_emoji(emoji) {}
   QString title() const override { return "Unpin emoji"; }
   std::optional<ImageURL> icon() const override { return ImageURL::builtin("pin-disabled"); }
-  void execute(ApplicationContext *ctx) override { ctx->services->emojiService()->unpin(m_emoji); }
+  void execute(ApplicationContext *ctx) override { ctx->services->glyphService()->unpin(m_emoji); }
 };
 
 class ResetEmojiRankingAction : public AbstractAction {
@@ -51,7 +51,7 @@ public:
   ResetEmojiRankingAction(std::string_view emoji) : m_emoji(emoji) {}
   QString title() const override { return "Reset ranking"; }
   std::optional<ImageURL> icon() const override { return ImageURL::builtin("arrow-counter-clockwise"); }
-  void execute(ApplicationContext *ctx) override { ctx->services->emojiService()->resetRanking(m_emoji); }
+  void execute(ApplicationContext *ctx) override { ctx->services->glyphService()->resetRanking(m_emoji); }
 };
 
 class ChangeEmojiSkinToneAction : public AbstractAction {
@@ -67,7 +67,7 @@ public:
   }
   std::optional<ImageURL> icon() const override { return ImageURL::emoji(m_emojiIcon); }
   void execute(ApplicationContext *ctx) override {
-    ctx->services->emojiService()->setSkinTone(m_emoji, m_toneInfo.tone);
+    ctx->services->glyphService()->setSkinTone(m_emoji, m_toneInfo.tone);
   }
 };
 
@@ -80,19 +80,19 @@ public:
       : m_emoji(emoji), m_emojiIcon(std::move(icon)) {}
   QString title() const override { return "Reset to preference"; }
   std::optional<ImageURL> icon() const override { return ImageURL::emoji(m_emojiIcon); }
-  void execute(ApplicationContext *ctx) override { ctx->services->emojiService()->resetSkinTone(m_emoji); }
+  void execute(ApplicationContext *ctx) override { ctx->services->glyphService()->resetSkinTone(m_emoji); }
 };
 
 class EditEmojiKeywordsAction : public AbstractAction {
 public:
   void execute(ApplicationContext *ctx) override {
-    auto emojiService = ctx->services->emojiService();
+    auto glyphService = ctx->services->glyphService();
     auto view = new EditKeywordsViewHost(
-        [emojiService, emoji = m_emoji]() {
-          return QString::fromStdString(emojiService->mapMetadata(emoji).keyword);
+        [glyphService, emoji = m_emoji]() {
+          return QString::fromStdString(glyphService->mapMetadata(emoji).keyword);
         },
-        [emojiService, emoji = m_emoji](const QString &kw) {
-          return emojiService->setKeywords(emoji, kw.toStdString());
+        [glyphService, emoji = m_emoji](const QString &kw) {
+          return glyphService->setKeywords(emoji, kw.toStdString());
         },
         "Additional keywords that will be used to index this emoji");
     ctx->navigation->pushView(view);
@@ -114,7 +114,7 @@ std::unique_ptr<ActionPanelState> buildEmojiActionPanel(const glyph::Item *data,
                                                         const ViewScope &scope) {
   if (!data) return nullptr;
 
-  auto metadata = scope.services()->emojiService()->mapMetadata(data->character);
+  auto metadata = scope.services()->glyphService()->mapMetadata(data->character);
   auto const defaultTone = skinTone.value_or(emoji::SkinTone::Default);
   auto const tone = metadata.tone.value_or(defaultTone);
 
@@ -226,7 +226,7 @@ std::unique_ptr<ActionPanelState> SearchEmojiGridSource::actionPanel(int i) cons
 EmojiGridModel::EmojiGridModel(QObject *parent) : SectionGridModel(parent) {}
 
 void EmojiGridModel::initialize() {
-  m_emojiService = scope().services()->emojiService();
+  m_glyphService = scope().services()->glyphService();
   m_sections = glyph::sections();
 
   if (auto *state = scope().topState(); state && state->sender) {
@@ -251,25 +251,25 @@ void EmojiGridModel::initialize() {
   regenerateMetaSections();
   rebuildSections();
 
-  connect(m_emojiService, &EmojiService::pinned, this, [this](auto) {
+  connect(m_glyphService, &GlyphService::pinned, this, [this](auto) {
     regenerateMetaSections();
     setSelectFirstOnReset(true);
     rebuildSections();
     setSelectFirstOnReset(false);
     selectFirst();
   });
-  connect(m_emojiService, &EmojiService::unpinned, this, [this](auto) {
+  connect(m_glyphService, &GlyphService::unpinned, this, [this](auto) {
     regenerateMetaSections();
     setSelectFirstOnReset(true);
     rebuildSections();
     setSelectFirstOnReset(false);
     selectFirst();
   });
-  connect(m_emojiService, &EmojiService::visited, this, [this](auto) {
+  connect(m_glyphService, &GlyphService::visited, this, [this](auto) {
     regenerateMetaSections();
     rebuildSections();
   });
-  connect(m_emojiService, &EmojiService::skintoneChanged, this, [this](auto) {
+  connect(m_glyphService, &GlyphService::skintoneChanged, this, [this](auto) {
     int const section = selectedSection();
     int const item = selectedItem();
 
@@ -290,7 +290,7 @@ void EmojiGridModel::initialize() {
 void EmojiGridModel::refreshMetadataCache() {
   m_metadataCache.clear();
 
-  auto rows = m_emojiService->getVisited();
+  auto rows = m_glyphService->getVisited();
   m_metadataCache.reserve(rows.size());
 
   for (auto &row : rows) {
@@ -302,7 +302,7 @@ void EmojiGridModel::regenerateMetaSections() {
   m_pinned.clear();
   m_recent.clear();
 
-  for (const auto &visited : m_emojiService->getVisited()) {
+  for (const auto &visited : m_glyphService->getVisited()) {
     if (visited.pinnedAt) {
       m_pinned.emplace_back(visited.data);
     } else {
@@ -316,7 +316,6 @@ void EmojiGridModel::rebuildSections() {
   m_groupSources.clear();
 
   if (m_displayMode == DisplayMode::Root) {
-    // Pinned/recent span categories, so they only make sense in the unfiltered view.
     if (!m_categoryFilter) {
       m_pinnedSource.setEmojis(QStringLiteral("Pinned"), m_pinned);
       addSource(&m_pinnedSource);
@@ -349,7 +348,7 @@ void EmojiGridModel::setFilter(const QString &text) {
   m_displayMode = text.isEmpty() ? DisplayMode::Root : DisplayMode::Search;
 
   if (!text.isEmpty()) {
-    auto results = m_emojiService->search(text.toStdString());
+    auto results = m_glyphService->search(text.toStdString());
     if (m_categoryFilter) {
       m_searchResultsStorage.clear();
       for (const auto &scored : results)

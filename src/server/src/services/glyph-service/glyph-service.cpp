@@ -1,4 +1,4 @@
-#include "emoji-service.hpp"
+#include "glyph-service.hpp"
 #include <filesystem>
 #include <glaze/core/reflect.hpp>
 #include <glaze/json/read.hpp>
@@ -20,8 +20,8 @@ std::optional<emoji::SkinTone> toneFromId(std::string_view id) {
   return std::nullopt;
 }
 
-EmojiWithMetadata toMetadata(const SerializedEmojiMetadata &entry, const glyph::Item *data) {
-  EmojiWithMetadata meta;
+GlyphMetadata toMetadata(const SerializedEmojiMetadata &entry, const glyph::Item *data) {
+  GlyphMetadata meta;
   meta.data = data;
   meta.visitCount = entry.visitCount;
   if (entry.pinnedAt) { meta.pinnedAt = QDateTime::fromSecsSinceEpoch(static_cast<qint64>(*entry.pinnedAt)); }
@@ -32,7 +32,7 @@ EmojiWithMetadata toMetadata(const SerializedEmojiMetadata &entry, const glyph::
 
 } // namespace
 
-EmojiService::EmojiService(const std::filesystem::path &path, OmniDatabase *legacyDb) : m_path(path) {
+GlyphService::GlyphService(const std::filesystem::path &path, OmniDatabase *legacyDb) : m_path(path) {
   if (!fs::is_regular_file(m_path)) {
     fs::create_directories(m_path.parent_path());
     save();
@@ -43,7 +43,7 @@ EmojiService::EmojiService(const std::filesystem::path &path, OmniDatabase *lega
   if (legacyDb && m_entries.empty()) { migrateFromDatabase(*legacyDb); }
 }
 
-bool EmojiService::load() {
+bool GlyphService::load() {
   if (const auto error = glz::read_file_json(m_entries, m_path.c_str(), m_buf)) {
     qWarning() << "Failed to read emoji metadata:" << glz::format_error(error).c_str();
     m_entries.clear();
@@ -52,7 +52,7 @@ bool EmojiService::load() {
   return true;
 }
 
-bool EmojiService::save() {
+bool GlyphService::save() {
   if (const auto error = glz::write_file_json(m_entries, m_path.c_str(), m_buf)) {
     qCritical() << "Failed to save emoji metadata:" << glz::format_error(error).c_str();
     return false;
@@ -60,7 +60,7 @@ bool EmojiService::save() {
   return true;
 }
 
-void EmojiService::migrateFromDatabase(OmniDatabase &db) {
+void GlyphService::migrateFromDatabase(OmniDatabase &db) {
   auto check = db.db().prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='visited_emoji'");
 
   if (!check.step()) return;
@@ -90,23 +90,23 @@ void EmojiService::migrateFromDatabase(OmniDatabase &db) {
   qInfo() << "Migrated" << m_entries.size() << "emoji metadata entries from database to JSON file";
 }
 
-SerializedEmojiMetadata const *EmojiService::findEntry(std::string_view emoji) const {
+SerializedEmojiMetadata const *GlyphService::findEntry(std::string_view emoji) const {
   auto it = std::ranges::find(m_entries, emoji, &SerializedEmojiMetadata::emoji);
   return it != m_entries.end() ? &*it : nullptr;
 }
 
-SerializedEmojiMetadata *EmojiService::findEntry(std::string_view emoji) {
+SerializedEmojiMetadata *GlyphService::findEntry(std::string_view emoji) {
   auto it = std::ranges::find(m_entries, emoji, &SerializedEmojiMetadata::emoji);
   return it != m_entries.end() ? &*it : nullptr;
 }
 
-SerializedEmojiMetadata &EmojiService::entryFor(std::string_view emoji) {
+SerializedEmojiMetadata &GlyphService::entryFor(std::string_view emoji) {
   auto it = std::ranges::find(m_entries, emoji, &SerializedEmojiMetadata::emoji);
   if (it != m_entries.end()) return *it;
   return m_entries.emplace_back(SerializedEmojiMetadata{.emoji = std::string(emoji)});
 }
 
-std::span<Scored<const glyph::Item *>> EmojiService::search(std::string_view query) const {
+std::span<Scored<const glyph::Item *>> GlyphService::search(std::string_view query) const {
   static std::vector<Scored<const glyph::Item *>> searchResults;
   auto withScore = [&](const glyph::Item &data) -> Scored<const glyph::Item *> {
     using WS = fzf::WeightedString;
@@ -132,7 +132,7 @@ std::span<Scored<const glyph::Item *>> EmojiService::search(std::string_view que
   return searchResults;
 }
 
-bool EmojiService::registerVisit(std::string_view emoji) {
+bool GlyphService::registerVisit(std::string_view emoji) {
   auto &entry = entryFor(emoji);
   entry.visitCount += 1;
   entry.lastVisitedAt = static_cast<std::uint64_t>(QDateTime::currentSecsSinceEpoch());
@@ -144,7 +144,7 @@ bool EmojiService::registerVisit(std::string_view emoji) {
   return true;
 }
 
-std::vector<EmojiWithMetadata> EmojiService::getVisited() const {
+std::vector<GlyphMetadata> GlyphService::getVisited() const {
   std::vector<const SerializedEmojiMetadata *> sorted;
   sorted.reserve(m_entries.size());
   for (const auto &entry : m_entries) {
@@ -158,14 +158,15 @@ std::vector<EmojiWithMetadata> EmojiService::getVisited() const {
     return a->lastVisitedAt.value_or(0) > b->lastVisitedAt.value_or(0);
   });
 
-  std::vector<EmojiWithMetadata> results;
+  std::vector<GlyphMetadata> results;
   results.reserve(sorted.size());
 
   for (const auto *entry : sorted) {
     const auto *item = glyph::lookup(entry->emoji);
 
     if (!item) {
-      qWarning() << "Glyph is not in the table" << QString::fromStdString(entry->emoji);
+      // Stored metadata can reference a glyph that a later curation change dropped; skip it.
+      qDebug() << "Skipping stored glyph no longer in the table" << QString::fromStdString(entry->emoji);
       continue;
     }
 
@@ -175,7 +176,7 @@ std::vector<EmojiWithMetadata> EmojiService::getVisited() const {
   return results;
 }
 
-std::vector<EmojiWithMetadata> EmojiService::mapMetadata(const std::vector<const glyph::Item *> &items) {
+std::vector<GlyphMetadata> GlyphService::mapMetadata(const std::vector<const glyph::Item *> &items) {
   if (items.empty()) return {};
 
   std::unordered_map<std::string_view, const SerializedEmojiMetadata *> byEmoji;
@@ -184,21 +185,21 @@ std::vector<EmojiWithMetadata> EmojiService::mapMetadata(const std::vector<const
     byEmoji.emplace(entry.emoji, &entry);
   }
 
-  std::vector<EmojiWithMetadata> metadatas;
+  std::vector<GlyphMetadata> metadatas;
   metadatas.reserve(items.size());
 
   for (const auto *item : items) {
     if (auto it = byEmoji.find(item->character); it != byEmoji.end()) {
       metadatas.emplace_back(toMetadata(*it->second, item));
     } else {
-      metadatas.emplace_back(EmojiWithMetadata{.data = item});
+      metadatas.emplace_back(GlyphMetadata{.data = item});
     }
   }
 
   return metadatas;
 }
 
-EmojiWithMetadata EmojiService::mapMetadata(std::string_view emoji) {
+GlyphMetadata GlyphService::mapMetadata(std::string_view emoji) {
   const auto *item = glyph::lookup(emoji);
 
   if (!item) { return {}; }
@@ -208,7 +209,7 @@ EmojiWithMetadata EmojiService::mapMetadata(std::string_view emoji) {
   return {.data = item};
 }
 
-bool EmojiService::resetRanking(std::string_view emoji) {
+bool GlyphService::resetRanking(std::string_view emoji) {
   if (auto *entry = findEntry(emoji)) {
     entry->visitCount = 0;
     entry->lastVisitedAt = std::nullopt;
@@ -220,7 +221,7 @@ bool EmojiService::resetRanking(std::string_view emoji) {
   return true;
 }
 
-bool EmojiService::unpin(std::string_view emoji) {
+bool GlyphService::unpin(std::string_view emoji) {
   if (auto *entry = findEntry(emoji)) {
     entry->pinnedAt = std::nullopt;
     if (!save()) return false;
@@ -231,7 +232,7 @@ bool EmojiService::unpin(std::string_view emoji) {
   return true;
 }
 
-bool EmojiService::pin(std::string_view emoji) {
+bool GlyphService::pin(std::string_view emoji) {
   auto &entry = entryFor(emoji);
   entry.pinnedAt = static_cast<std::uint64_t>(QDateTime::currentSecsSinceEpoch());
 
@@ -242,7 +243,7 @@ bool EmojiService::pin(std::string_view emoji) {
   return true;
 }
 
-bool EmojiService::setSkinTone(std::string_view emoji, emoji::SkinTone tone) {
+bool GlyphService::setSkinTone(std::string_view emoji, emoji::SkinTone tone) {
   auto &entry = entryFor(emoji);
   entry.skinTone = std::string(emoji::skinToneInfo(tone).id);
 
@@ -253,7 +254,7 @@ bool EmojiService::setSkinTone(std::string_view emoji, emoji::SkinTone tone) {
   return true;
 }
 
-bool EmojiService::resetSkinTone(std::string_view emoji) {
+bool GlyphService::resetSkinTone(std::string_view emoji) {
   if (auto *entry = findEntry(emoji)) {
     entry->skinTone = std::nullopt;
     if (!save()) return false;
@@ -264,7 +265,7 @@ bool EmojiService::resetSkinTone(std::string_view emoji) {
   return true;
 }
 
-bool EmojiService::setKeywords(std::string_view emoji, const std::string &text) {
+bool GlyphService::setKeywords(std::string_view emoji, const std::string &text) {
   auto &entry = entryFor(emoji);
 
   if (text.empty()) {

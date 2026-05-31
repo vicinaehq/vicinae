@@ -1,7 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <iostream>
-#include "emoji/emoji.hpp"
-#include "emoji/glyph.hpp"
+#include "glyph/emoji.hpp"
+#include "glyph/glyph.hpp"
 
 TEST_CASE("find smile emoji") {
   const auto *info = glyph::lookup("😄");

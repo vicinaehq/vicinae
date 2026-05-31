@@ -9,7 +9,7 @@ bool ImageUrl::isValid() const { return m_url.type() != ImageURLType::Invalid; }
 
 bool ImageUrl::isThemeSensitive() const {
   auto const type = m_url.type();
-  if (type == ImageURLType::Builtin) return true;
+  if (type == ImageURLType::Builtin || type == ImageURLType::Symbol) return true;
   // Local may have a @light/@dark sibling on disk; we can't tell without stat'ing, so assume yes.
   if (type == ImageURLType::Local) return true;
   return m_url.fillColor().has_value() || m_url.backgroundTint().has_value();

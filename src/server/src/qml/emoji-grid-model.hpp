@@ -1,8 +1,8 @@
 #pragma once
-#include "emoji/emoji.hpp"
+#include "glyph/emoji.hpp"
 #include "grid-source.hpp"
 #include "section-grid-model.hpp"
-#include "services/emoji-service/emoji-service.hpp"
+#include "services/glyph-service/glyph-service.hpp"
 #include <optional>
 #include <span>
 
@@ -68,7 +68,7 @@ private:
   void rebuildSections();
   void updateNavigationTitle();
 
-  EmojiService *m_emojiService = nullptr;
+  GlyphService *m_glyphService = nullptr;
   emoji::SkinTone m_skinTone = emoji::SkinTone::Default;
 
   DisplayMode m_displayMode = DisplayMode::Root;
@@ -82,7 +82,7 @@ private:
   std::vector<const glyph::Item *> m_pinned;
   std::vector<const glyph::Item *> m_recent;
   std::span<const glyph::Section> m_sections;
-  std::unordered_map<const glyph::Item *, EmojiWithMetadata, EmojiDataHash> m_metadataCache;
+  std::unordered_map<const glyph::Item *, GlyphMetadata, GlyphItemHash> m_metadataCache;
   std::vector<Scored<const glyph::Item *>> m_searchResultsStorage;
   std::span<Scored<const glyph::Item *>> m_searchResults;
 };

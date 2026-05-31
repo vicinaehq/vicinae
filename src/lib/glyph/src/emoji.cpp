@@ -1,4 +1,4 @@
-#include "emoji/emoji.hpp"
+#include "glyph/emoji.hpp"
 #include <array>
 #include <cstdint>
 #include <string>

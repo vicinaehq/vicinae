@@ -1,5 +1,5 @@
 #include "builtin_icon.hpp"
-#include "emoji/emoji.hpp"
+#include "glyph/emoji.hpp"
 #include "extend/image-model.hpp"
 #include "services/asset-resolver/asset-resolver.hpp"
 #include "theme.hpp"
@@ -11,7 +11,7 @@
 #include <QIcon>
 #include <qurlquery.h>
 #include "url.hpp"
-#include "emoji/glyph.hpp"
+#include "glyph/glyph.hpp"
 
 namespace fs = std::filesystem;
 
@@ -57,7 +57,7 @@ ImageURL ImageURL::resolved() const {
   ImageURL out = *this;
   if (auto fill = fillColor())
     out.setFill(OmniPainter::resolveColor(*fill));
-  else if (type() == ImageURLType::Builtin)
+  else if (type() == ImageURLType::Builtin || type() == ImageURLType::Symbol)
     out.setFill(ThemeService::instance().theme().resolve(SemanticColor::Foreground));
   if (auto bg = backgroundTint()) out.setBackgroundTint(OmniPainter::resolveColor(*bg));
   if (out.type() == ImageURLType::Local) out.setName(resolveThemedLocalPath(out.name()));
