@@ -1,6 +1,7 @@
 #include "glyph-service.hpp"
 #include <algorithm>
 #include <bits/ranges_algo.h>
+#include <cmath>
 #include <filesystem>
 #include <glaze/core/reflect.hpp>
 #include <glaze/json/read.hpp>
@@ -26,6 +27,26 @@ std::optional<emoji::SkinTone> toneFromId(std::string_view id) {
     if (info.id == id) return info.tone;
   }
   return std::nullopt;
+}
+
+// Frequency + recency boost added to a glyph's match score, mirroring root search.
+double frecencyBoost(std::uint32_t visitCount, std::optional<std::uint64_t> lastVisitedAt) {
+  constexpr double BOOST_CAP = 25.0;
+  constexpr double FREQ_SCALE = 5.0;
+  constexpr double RECENCY_PEAK = 10.0;
+  constexpr double RECENCY_HALF_LIFE_DAYS = 30.0;
+  constexpr double SECONDS_PER_DAY = 86400.0;
+
+  double const frequencyTerm = FREQ_SCALE * std::log(1 + visitCount * 0.1);
+
+  double recencyTerm = 0.0;
+  if (lastVisitedAt) {
+    double const daysSince =
+        (QDateTime::currentSecsSinceEpoch() - static_cast<std::int64_t>(*lastVisitedAt)) / SECONDS_PER_DAY;
+    recencyTerm = RECENCY_PEAK * std::exp(-std::max(0.0, daysSince) / RECENCY_HALF_LIFE_DAYS);
+  }
+
+  return std::min(BOOST_CAP, frequencyTerm + recencyTerm);
 }
 
 GlyphMetadata toMetadata(const SerializedEmojiMetadata &entry, const glyph::Item *data) {
@@ -55,10 +76,8 @@ bool GlyphService::load() {
   if (const auto error = glz::read_file_json(m_entries, m_path.c_str(), m_buf)) {
     qWarning() << "Failed to read emoji metadata:" << glz::format_error(error).c_str();
     m_entries.clear();
-    m_indexDirty = true;
     return false;
   }
-  m_indexDirty = true;
   return true;
 }
 
@@ -94,7 +113,6 @@ void GlyphService::migrateFromDatabase(OmniDatabase &db) {
   if (migrated.empty()) return;
 
   m_entries = std::move(migrated);
-  m_indexDirty = true;
 
   if (!save()) return;
 
@@ -114,74 +132,29 @@ SerializedEmojiMetadata *GlyphService::findEntry(std::string_view emoji) {
 SerializedEmojiMetadata &GlyphService::entryFor(std::string_view emoji) {
   auto it = std::ranges::find(m_entries, emoji, &SerializedEmojiMetadata::emoji);
   if (it != m_entries.end()) return *it;
-  m_indexDirty = true;
   return m_entries.emplace_back(SerializedEmojiMetadata{.emoji = std::string(emoji)});
 }
 
-void GlyphService::ensureIndex() const {
-  if (!m_indexDirty) return;
-  m_entryByItem.assign(glyph::items().size(), nullptr);
-  for (const auto &entry : m_entries)
-    if (const auto *item = glyph::lookup(entry.emoji)) m_entryByItem[item - glyph::items().data()] = &entry;
-  m_indexDirty = false;
-}
-
 std::span<Scored<const glyph::Item *>> GlyphService::search(std::string_view query) const {
-  ensureIndex();
-
-  auto withScore = [&](const glyph::Item &data) -> Scored<const glyph::Item *> {
+  auto score = [this](const glyph::Item &data, std::string_view query) {
     using WS = fzf::WeightedString;
-    const auto *entry = m_entryByItem[&data - glyph::items().data()];
+    const auto *entry = findEntry(data.character);
 
     // user defined keyword, we may or may not have one for this item
     std::string_view kw = entry && entry->keyword ? std::string_view{*entry->keyword} : "";
     std::initializer_list<WS> fields = {WS{kw, 2.0f}, WS{data.name, 1.0f},
                                         WS{glyph::categoryLabel(data.category), 0.5f}};
 
-    auto kws = data.keywords | std::views::transform([](auto &&s) { return WS{s, 0.3f}; });
-    int const score = fzf::threadLocalMatcher().fuzzy_match_v2_score_query(fields, kws, query);
+    auto kws = data.keywords | std::views::transform([](auto &&s) { return WS{s, 0.7f}; });
+    int score = fzf::threadLocalMatcher().fuzzy_match_v2_score_query(fields, kws, query);
 
-    return {&data, score};
+    // Boost matches by frecency; gate on a positive score so non-matches stay 0 and get dropped.
+    if (score > 0 && entry) score += static_cast<int>(frecencyBoost(entry->visitCount, entry->lastVisitedAt));
+
+    return score;
   };
 
-  const auto batchCount = std::ceil(glyph::items().size() / 500.0);
-  size_t batchSize = 500;
-
-  static std::vector<Scored<const glyph::Item *>> searchResults;
-
-  searchResults.resize(glyph::items().size());
-
-  std::vector<QFuture<size_t>> futures;
-
-  futures.reserve(batchCount);
-
-  for (auto i = 0; i != batchCount; ++i) {
-    int startIdx = batchSize * i;
-    int endIdx = std::min(startIdx + batchSize, glyph::items().size());
-
-    futures.emplace_back(QtConcurrent::run([withScore, startIdx, endIdx]() {
-      size_t zeroCount = 0;
-      for (auto i = startIdx; i != endIdx; ++i) {
-        auto &glyph = glyph::items()[i];
-        searchResults[i] = withScore(glyph);
-        if (searchResults[i].score == 0) zeroCount += 1;
-      }
-
-      return zeroCount;
-    }));
-  }
-
-  auto batch = QtFuture::whenAll(futures.begin(), futures.end());
-  batch.waitForFinished();
-
-  const size_t zeroCount =
-      std::ranges::fold_left(batch.result(), 0, [](auto &&a, auto &&b) { return a + b.result(); });
-
-  std::ranges::stable_sort(searchResults, std::greater{});
-
-  searchResults.resize(searchResults.size() - zeroCount);
-
-  return searchResults;
+  return m_scorer.score(glyph::items(), query, score);
 }
 
 bool GlyphService::registerVisit(std::string_view emoji) {

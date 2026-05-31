@@ -1,4 +1,5 @@
 #pragma once
+#include "fuzzy-scorer.hpp"
 #include "glyph/emoji.hpp"
 #include "glyph/glyph.hpp"
 #include <QDateTime>
@@ -83,17 +84,12 @@ private:
   // Return metadata entry for emoji, or create it if it doesn't exist
   SerializedEmojiMetadata &entryFor(std::string_view emoji);
 
-  // Rebuilds m_entryByItem from m_entries if a structural change marked it dirty.
-  void ensureIndex() const;
-
   bool load();
   bool save();
 
   std::filesystem::path m_path;
-  // Any structural change to m_entries (add/replace) must set m_indexDirty.
   std::vector<SerializedEmojiMetadata> m_entries;
-  // Per-item slot (indexed by position in glyph::items()); nullptr = no metadata.
-  mutable std::vector<const SerializedEmojiMetadata *> m_entryByItem;
-  mutable bool m_indexDirty = true;
   std::string m_buf;
+
+  FuzzyScorer<glyph::Item> m_scorer;
 };
