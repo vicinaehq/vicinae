@@ -28,6 +28,19 @@ Item {
         }
 
         FooterButton {
+            id: expandButton
+            visible: launcher.compacted
+            Layout.alignment: Qt.AlignVCenter
+            label: "Expand"
+            shortcutTokens: [
+                {
+                    "text": "↓"
+                }
+            ]
+            onClicked: launcher.userExpand()
+        }
+
+        FooterButton {
             id: primaryButton
             visible: actionPanel.primaryActionTitle !== ""
             Layout.alignment: Qt.AlignVCenter

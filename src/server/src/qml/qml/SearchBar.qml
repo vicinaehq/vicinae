@@ -198,7 +198,9 @@ Item {
                         return false;
 
                     if (launcher.compacted) {
-                        launcher.expand();
+                        // In partial state only the Down direction expands; other directions are no-ops.
+                        if (nav === 2)
+                            launcher.userExpand();
                         return true;
                     }
 
@@ -218,7 +220,7 @@ Item {
 
                 Keys.onUpPressed: event => {
                     if (launcher.compacted) {
-                        launcher.expand();
+                        event.accepted = true;
                         return;
                     }
 
@@ -233,7 +235,8 @@ Item {
                 }
                 Keys.onDownPressed: event => {
                     if (launcher.compacted) {
-                        launcher.expand();
+                        launcher.userExpand();
+                        event.accepted = true;
                         return;
                     }
 
@@ -248,7 +251,7 @@ Item {
                 }
                 Keys.onLeftPressed: event => {
                     if (launcher.compacted) {
-                        launcher.expand();
+                        event.accepted = true;
                         return;
                     }
 
@@ -262,7 +265,7 @@ Item {
                 }
                 Keys.onRightPressed: event => {
                     if (launcher.compacted) {
-                        launcher.expand();
+                        event.accepted = true;
                         return;
                     }
 
@@ -276,7 +279,6 @@ Item {
                 }
                 Keys.onReturnPressed: event => {
                     if (launcher.compacted) {
-                        launcher.expand();
                         event.accepted = true;
                         return;
                     }

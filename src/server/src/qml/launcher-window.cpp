@@ -45,12 +45,20 @@
 #include <malloc.h>
 #endif
 
+namespace {
+LauncherWindow *g_currentLauncherWindow = nullptr;
+}
+
+LauncherWindow *LauncherWindow::current() { return g_currentLauncherWindow; }
+
 LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
     : QObject(parent), m_ctx(ctx), m_actionPanel(new ActionPanelController(ctx, this)),
       m_footerPanel(new ActionPanelController(ctx, this)),
       m_alertModel(new AlertModel(*ctx.navigation, this)), m_configBridge(new ConfigBridge(this)),
       m_imgSource(new ImageSource(this)), m_keybindProxy(new KeybindBridge(this)),
       m_themeBridge(new ThemeBridge(this)) {
+
+  g_currentLauncherWindow = this;
 
 #ifndef Q_OS_MACOS
   // Ensure Wayland app_id / X11 WM_CLASS is "vicinae"
@@ -360,6 +368,10 @@ void LauncherWindow::handleVisibilityChanged(bool visible) {
     m_window->raise();
     m_window->requestActivate();
   } else {
+    if (m_userExpanded) {
+      m_userExpanded = false;
+      emit userExpandedChanged();
+    }
     m_window->hide();
     m_cacheEvictionTimer.start();
   }
@@ -574,6 +586,14 @@ void LauncherWindow::buildFooterMenu() {
 
 void LauncherWindow::expand() { setCompacted(false); }
 
+void LauncherWindow::userExpand() {
+  if (!m_userExpanded) {
+    m_userExpanded = true;
+    emit userExpandedChanged();
+  }
+  tryCompaction();
+}
+
 void LauncherWindow::setCompacted(bool value) {
   if (m_compacted == value) return;
   m_compacted = value;
@@ -581,6 +601,10 @@ void LauncherWindow::setCompacted(bool value) {
 }
 
 void LauncherWindow::tryCompaction() {
+  if (m_userExpanded) {
+    setCompacted(false);
+    return;
+  }
   const auto &val = m_ctx.services->config()->value();
   const auto &cfg = val.launcherWindow.compactMode;
   const auto &rs = val.rootSearch;

@@ -1,5 +1,6 @@
 #include "root-search-model.hpp"
 #include "config/config.hpp"
+#include "launcher-window.hpp"
 #include "ui/action-pannel/action-panel-view.hpp"
 #include "ui/views/base-view.hpp"
 #include "service-registry.hpp"
@@ -36,6 +37,10 @@ RootSearchModel::RootSearchModel(const ViewScope &scope, QObject *parent)
             m_fileSearchEnabled = next.searchFilesInRoot;
             refresh();
           });
+
+  if (auto *launcher = LauncherWindow::current()) {
+    connect(launcher, &LauncherWindow::userExpandedChanged, this, &RootSearchModel::refresh);
+  }
 
   connect(m_manager, &RootItemManager::metadataChanged, this, &RootSearchModel::refresh);
   connect(m_manager, &RootItemManager::itemsChanged, this, &RootSearchModel::refresh);
@@ -129,9 +134,11 @@ bool RootSearchModel::rerunSearch() {
   m_fallbackSource->setQuery(m_query);
 
   const auto &rs = m_config->value().rootSearch;
+  const auto *launcher = LauncherWindow::current();
+  const bool userExpanded = launcher && launcher->userExpanded();
   const bool emptyQuery = m_query.empty();
-  const bool hideSuggestions = emptyQuery && rs.hideSuggestionsWhenEmpty;
-  const bool hideFavorites = emptyQuery && rs.hideFavoritesWhenEmpty;
+  const bool hideSuggestions = emptyQuery && rs.hideSuggestionsWhenEmpty && !userExpanded;
+  const bool hideFavorites = emptyQuery && rs.hideFavoritesWhenEmpty && !userExpanded;
 
   std::vector<RootItemManager::ScoredItem> scored;
   if (emptyQuery) {

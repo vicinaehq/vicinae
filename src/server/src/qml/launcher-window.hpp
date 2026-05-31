@@ -38,6 +38,7 @@ class LauncherWindow : public QObject {
   Q_PROPERTY(bool searchInteractive READ searchInteractive NOTIFY searchInteractiveChanged)
   Q_PROPERTY(bool statusBarVisible READ statusBarVisible NOTIFY statusBarVisibleChanged)
   Q_PROPERTY(bool compacted READ compacted NOTIFY compactedChanged)
+  Q_PROPERTY(bool userExpanded READ userExpanded NOTIFY userExpandedChanged)
   Q_PROPERTY(bool hasCompleter READ hasCompleter NOTIFY completerChanged)
   Q_PROPERTY(bool popOnBackspace READ popOnBackspace)
   Q_PROPERTY(QVariantList completerArgs READ completerArgs NOTIFY completerChanged)
@@ -73,6 +74,7 @@ public:
   bool searchInteractive() const { return m_searchInteractive; }
   bool statusBarVisible() const { return m_statusBarVisible; }
   bool compacted() const { return m_compacted; }
+  bool userExpanded() const { return m_userExpanded; }
   bool hasCompleter() const { return m_hasCompleter; }
   bool popOnBackspace();
   QVariantList completerArgs() const { return m_completerArgs; }
@@ -88,6 +90,9 @@ public:
   static bool canPositionWindow();
 
   Q_INVOKABLE void expand();
+  Q_INVOKABLE void userExpand();
+
+  static LauncherWindow *current();
   Q_INVOKABLE void forwardSearchText(const QString &text);
   Q_INVOKABLE void handleReturn();
   Q_INVOKABLE bool forwardKey(int key, int modifiers = 0);
@@ -101,6 +106,7 @@ public:
 
 signals:
   void compactedChanged();
+  void userExpandedChanged();
   void atRootChanged();
   void showBackButtonChanged();
   void searchPlaceholderChanged();
@@ -150,6 +156,7 @@ private:
   QQmlApplicationEngine m_engine;
   QQuickWindow *m_window = nullptr;
   bool m_compacted = false;
+  bool m_userExpanded = false;
   bool m_atRoot = true;
   bool m_showBackButton = true;
   bool m_isLoading = false;
