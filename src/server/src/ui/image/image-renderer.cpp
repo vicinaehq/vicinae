@@ -111,7 +111,9 @@ QImage renderEmoji(const QString &emoji, const QSize &size) {
 QImage renderSymbol(const QString &symbol, const QSize &size) {
   auto *fontService = ServiceRegistry::instance()->fontService();
   if (!fontService) return QImage(size, QImage::Format_ARGB32_Premultiplied);
-  return renderGlyph(symbol, size, QFont(fontService->builtinFontFamily()), /*allowMerging=*/true);
+  QFont font;
+  font.setFamilies(fontService->symbolFontFamilies());
+  return renderGlyph(symbol, size, font, /*allowMerging=*/true);
 }
 
 QImage renderSystemIcon(const QString &name, const QSize &size) {

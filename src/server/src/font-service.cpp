@@ -58,4 +58,16 @@ FontService::FontService() {
   } else {
     qWarning() << "Failed to load bundled Geist Mono font";
   }
+
+  for (const auto *path : {":/fonts/NotoSansMath-Regular.ttf", ":/fonts/NotoSansSymbols2-Regular.ttf",
+                           ":/fonts/NotoSansSymbols-Regular.ttf"}) {
+    int const id = QFontDatabase::addApplicationFont(path);
+    if (id == -1) {
+      qWarning() << "Failed to load bundled symbol font" << path;
+      continue;
+    }
+    auto families = QFontDatabase::applicationFontFamilies(id);
+    if (!families.isEmpty()) m_symbolFamilies << families.first();
+  }
+  if (!m_builtinFamily.isEmpty()) m_symbolFamilies << m_builtinFamily;
 }

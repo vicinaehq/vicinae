@@ -9,5 +9,8 @@
   <qresource prefix="/fonts">
   	<file alias="Outfit-Variable.ttf">@ASSET_PATH@/fonts/Outfit-Variable.ttf</file>
   	<file alias="GeistMono-Variable.ttf">@ASSET_PATH@/fonts/GeistMono-Variable.ttf</file>
+  	<file alias="NotoSansMath-Regular.ttf">@ASSET_PATH@/fonts/NotoSansMath-Regular.ttf</file>
+  	<file alias="NotoSansSymbols2-Regular.ttf">@ASSET_PATH@/fonts/NotoSansSymbols2-Regular.ttf</file>
+  	<file alias="NotoSansSymbols-Regular.ttf">@ASSET_PATH@/fonts/NotoSansSymbols-Regular.ttf</file>
   </qresource>
 </RCC>
