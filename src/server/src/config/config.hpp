@@ -181,6 +181,16 @@ template <> struct Partial<TelemetryConfig> {
   std::optional<bool> systemInfo;
 };
 
+struct RootSearch {
+  bool hideSuggestionsWhenEmpty = false;
+  bool hideFavoritesWhenEmpty = false;
+};
+
+template <> struct Partial<RootSearch> {
+  std::optional<bool> hideSuggestionsWhenEmpty;
+  std::optional<bool> hideFavoritesWhenEmpty;
+};
+
 using KeybindMap = std::map<std::string, std::string>;
 
 using ProviderMap = std::map<std::string, ProviderData>;
@@ -214,6 +224,7 @@ struct ConfigValue {
   FontConfig font;
   ThemeConfig theme;
   TelemetryConfig telemetry;
+  RootSearch rootSearch;
 
   WindowConfig launcherWindow;
   Header header;
@@ -265,6 +276,7 @@ template <> struct Partial<ConfigValue> {
   std::optional<Partial<FontConfig>> font;
   std::optional<Partial<ThemeConfig>> theme;
   std::optional<Partial<TelemetryConfig>> telemetry;
+  std::optional<Partial<RootSearch>> rootSearch;
 
   std::optional<Partial<WindowConfig>> launcherWindow;
   std::optional<Partial<Header>> header;
