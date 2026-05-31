@@ -91,6 +91,22 @@ void GeneralSettingsModel::setFontSize(const QString &v) {
   if (ok) cfgManager().mergeWithUser({.font = config::Partial<config::FontConfig>{.normal{.size = val}}});
 }
 
+bool GeneralSettingsModel::hideSuggestionsWhenEmpty() const {
+  return cfg().rootSearch.hideSuggestionsWhenEmpty;
+}
+void GeneralSettingsModel::setHideSuggestionsWhenEmpty(bool v) {
+  cfgManager().mergeWithUser(
+      {.rootSearch = config::Partial<config::RootSearch>{.hideSuggestionsWhenEmpty = v}});
+}
+
+bool GeneralSettingsModel::hideFavoritesWhenEmpty() const {
+  return cfg().rootSearch.hideFavoritesWhenEmpty;
+}
+void GeneralSettingsModel::setHideFavoritesWhenEmpty(bool v) {
+  cfgManager().mergeWithUser(
+      {.rootSearch = config::Partial<config::RootSearch>{.hideFavoritesWhenEmpty = v}});
+}
+
 static QVariantMap makeDropdownItem(const QString &id, const QString &displayName,
                                     const QString &iconSource = {}) {
   QVariantMap m;

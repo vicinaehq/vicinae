@@ -33,6 +33,10 @@ class GeneralSettingsModel : public QObject {
   Q_PROPERTY(QVariant currentIconTheme READ currentIconTheme NOTIFY configChanged)
   Q_PROPERTY(QVariant currentFaviconService READ currentFaviconService NOTIFY configChanged)
   Q_PROPERTY(QVariant currentKeybindingScheme READ currentKeybindingScheme NOTIFY configChanged)
+  Q_PROPERTY(bool hideSuggestionsWhenEmpty READ hideSuggestionsWhenEmpty WRITE setHideSuggestionsWhenEmpty
+                 NOTIFY configChanged)
+  Q_PROPERTY(bool hideFavoritesWhenEmpty READ hideFavoritesWhenEmpty WRITE setHideFavoritesWhenEmpty NOTIFY
+                 configChanged)
 
 signals:
   void configChanged();
@@ -64,6 +68,10 @@ public:
   void setInputServerEnabled(bool v);
   QString fontSize() const;
   void setFontSize(const QString &v);
+  bool hideSuggestionsWhenEmpty() const;
+  void setHideSuggestionsWhenEmpty(bool v);
+  bool hideFavoritesWhenEmpty() const;
+  void setHideFavoritesWhenEmpty(bool v);
 
   QVariantList themeItems() const;
   QVariantList fontItems() const;

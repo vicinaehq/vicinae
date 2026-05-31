@@ -73,6 +73,24 @@ Flickable {
         }
 
         SettingsRow {
+            label: "Hide suggestions when empty"
+            description: "Hide the frecency-ranked Suggestions list shown when the search bar is empty."
+            SettingsToggle {
+                checked: root.model.hideSuggestionsWhenEmpty
+                onToggled: (checked) => root.model.hideSuggestionsWhenEmpty = checked
+            }
+        }
+
+        SettingsRow {
+            label: "Hide favorites when empty"
+            description: "Hide the Favorites section shown when the search bar is empty."
+            SettingsToggle {
+                checked: root.model.hideFavoritesWhenEmpty
+                onToggled: (checked) => root.model.hideFavoritesWhenEmpty = checked
+            }
+        }
+
+        SettingsRow {
             label: "Basic usage statistics"
             description: "Send basic system and vicinae installation information on startup to help improve Vicinae."
             showSeparator: false
