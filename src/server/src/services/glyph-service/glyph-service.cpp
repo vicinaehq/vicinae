@@ -29,7 +29,6 @@ std::optional<emoji::SkinTone> toneFromId(std::string_view id) {
   return std::nullopt;
 }
 
-// Frequency + recency boost added to a glyph's match score, mirroring root search.
 double frecencyBoost(std::uint32_t visitCount, std::optional<std::uint64_t> lastVisitedAt) {
   constexpr double BOOST_CAP = 25.0;
   constexpr double FREQ_SCALE = 5.0;
@@ -148,7 +147,6 @@ std::span<Scored<const glyph::Item *>> GlyphService::search(std::string_view que
     auto kws = data.keywords | std::views::transform([](auto &&s) { return WS{s, 0.7f}; });
     int score = fzf::threadLocalMatcher().fuzzy_match_v2_score_query(fields, kws, query);
 
-    // Boost matches by frecency; gate on a positive score so non-matches stay 0 and get dropped.
     if (score > 0 && entry) score += static_cast<int>(frecencyBoost(entry->visitCount, entry->lastVisitedAt));
 
     return score;

@@ -13,6 +13,12 @@
 
 namespace {
 
+QString getFormattedCodepoint(std::string_view glyph) {
+  auto codepoint = qStringFromStdView(glyph).toUcs4().constFirst();
+  return QStringLiteral("U+%1").arg(QString::number(static_cast<uint>(codepoint), 16).toUpper(), 4,
+                                    QLatin1Char('0'));
+}
+
 class VisitEmojiActionWrapper : public ProxyAction {
   std::string_view m_emoji;
 
@@ -94,7 +100,7 @@ public:
         [glyphService, emoji = m_emoji](const QString &kw) {
           return glyphService->setKeywords(emoji, kw.toStdString());
         },
-        "Additional keywords that will be used to index this emoji");
+        "Additional keywords that will be used to index this glyph");
     ctx->navigation->pushView(view);
     ctx->navigation->setNavigationTitle(title());
   }
@@ -126,10 +132,12 @@ std::unique_ptr<ActionPanelState> buildEmojiActionPanel(const glyph::Item *data,
 
   auto pasteService = scope.services()->pasteService();
   auto panel = std::make_unique<ListActionPanelState>();
-  auto *copyEmoji = new CopyToClipboardAction(Clipboard::Text(copiedEmoji), "Copy emoji");
+  auto *copyEmoji = new CopyToClipboardAction(Clipboard::Text(copiedEmoji), "Copy");
   auto *copyName = new CopyToClipboardAction(
-      Clipboard::Text(QString::fromUtf8(data->name.data(), data->name.size())), "Copy emoji name");
+      Clipboard::Text(QString::fromUtf8(data->name.data(), data->name.size())), "Copy name");
   auto const categoryLabel = glyph::categoryLabel(data->category);
+  auto copyCodepoint = new CopyToClipboardAction(Clipboard::Text(getFormattedCodepoint(data->character)),
+                                                 "Copy unicode codepoint");
   auto *copyGroup = new CopyToClipboardAction(
       Clipboard::Text(QString::fromUtf8(categoryLabel.data(), categoryLabel.size())), "Copy category");
   auto *resetRanking = new ResetEmojiRankingAction(data->character);
@@ -159,6 +167,7 @@ std::unique_ptr<ActionPanelState> buildEmojiActionPanel(const glyph::Item *data,
   }
 
   mainSection->addAction(copyName);
+  mainSection->addAction(copyCodepoint);
   mainSection->addAction(copyGroup);
   mainSection->addAction(editKeyword);
   mainSection->addAction(resetRanking);
