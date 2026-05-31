@@ -798,6 +798,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/SearchableDropdown.qml
 	src/qml/qml/ClipboardHistoryView.qml
 	src/qml/qml/ClipboardFilterAccessory.qml
+	src/qml/qml/EmojiCategoryFilterAccessory.qml
 	src/qml/qml/DetailPanel.qml
 	src/qml/qml/MetadataBar.qml
 	src/qml/qml/AlertDialog.qml

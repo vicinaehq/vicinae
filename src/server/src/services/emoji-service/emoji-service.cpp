@@ -20,7 +20,7 @@ std::optional<emoji::SkinTone> toneFromId(std::string_view id) {
   return std::nullopt;
 }
 
-EmojiWithMetadata toMetadata(const SerializedEmojiMetadata &entry, const EmojiData *data) {
+EmojiWithMetadata toMetadata(const SerializedEmojiMetadata &entry, const glyph::Item *data) {
   EmojiWithMetadata meta;
   meta.data = data;
   meta.visitCount = entry.visitCount;
@@ -106,15 +106,16 @@ SerializedEmojiMetadata &EmojiService::entryFor(std::string_view emoji) {
   return m_entries.emplace_back(SerializedEmojiMetadata{.emoji = std::string(emoji)});
 }
 
-std::span<Scored<const EmojiData *>> EmojiService::search(std::string_view query) const {
-  static std::vector<Scored<const EmojiData *>> searchResults;
-  auto withScore = [&](const EmojiData &data) -> Scored<const EmojiData *> {
+std::span<Scored<const glyph::Item *>> EmojiService::search(std::string_view query) const {
+  static std::vector<Scored<const glyph::Item *>> searchResults;
+  auto withScore = [&](const glyph::Item &data) -> Scored<const glyph::Item *> {
     using WS = fzf::WeightedString;
-    auto entry = findEntry(data.emoji);
+    auto entry = findEntry(data.character);
 
-    // user defined keyword, we may or may not have one for this emoji
+    // user defined keyword, we may or may not have one for this item
     std::string_view kw = entry && entry->keyword ? std::string_view{*entry->keyword} : "";
-    std::initializer_list<WS> fields = {WS{kw, 2.0f}, WS{data.name, 1.0f}, WS{data.group, 0.5f}};
+    std::initializer_list<WS> fields = {WS{kw, 2.0f}, WS{data.name, 1.0f},
+                                        WS{glyph::categoryLabel(data.category), 0.5f}};
 
     auto kws = data.keywords | std::views::transform([](auto &&s) { return WS{s, 1.0f}; });
     int const score = fzf::threadLocalMatcher().fuzzy_match_v2_score_query(fields, kws, query);
@@ -122,7 +123,7 @@ std::span<Scored<const EmojiData *>> EmojiService::search(std::string_view query
     return {&data, score};
   };
 
-  auto filtered = StaticEmojiDatabase::orderedList() | std::views::transform(withScore) |
+  auto filtered = glyph::items() | std::views::transform(withScore) |
                   std::views::filter([](auto &&s) { return s.score > 0; });
   searchResults.clear();
   std::ranges::copy(filtered, std::back_inserter(searchResults));
@@ -143,25 +144,6 @@ bool EmojiService::registerVisit(std::string_view emoji) {
   return true;
 }
 
-std::vector<std::pair<std::string_view, std::vector<const EmojiData *>>> EmojiService::grouped() {
-  std::unordered_map<std::string_view, std::vector<const EmojiData *>> map;
-
-  for (const auto &emoji : StaticEmojiDatabase::orderedList()) {
-    map[emoji.group].emplace_back(&emoji);
-  }
-
-  std::vector<std::pair<std::string_view, std::vector<const EmojiData *>>> grouped;
-  auto &groups = StaticEmojiDatabase::groups();
-
-  grouped.reserve(groups.size());
-
-  for (auto group : groups) {
-    grouped.emplace_back(group, std::move(map[group]));
-  }
-
-  return grouped;
-}
-
 std::vector<EmojiWithMetadata> EmojiService::getVisited() const {
   std::vector<const SerializedEmojiMetadata *> sorted;
   sorted.reserve(m_entries.size());
@@ -178,23 +160,22 @@ std::vector<EmojiWithMetadata> EmojiService::getVisited() const {
 
   std::vector<EmojiWithMetadata> results;
   results.reserve(sorted.size());
-  const auto &mapping = StaticEmojiDatabase::mapping();
 
   for (const auto *entry : sorted) {
-    auto it = mapping.find(entry->emoji);
+    const auto *item = glyph::lookup(entry->emoji);
 
-    if (it == mapping.end()) {
-      qWarning() << "Emoji is not in the mapping" << QString::fromStdString(entry->emoji);
+    if (!item) {
+      qWarning() << "Glyph is not in the table" << QString::fromStdString(entry->emoji);
       continue;
     }
 
-    results.emplace_back(toMetadata(*entry, it->second));
+    results.emplace_back(toMetadata(*entry, item));
   }
 
   return results;
 }
 
-std::vector<EmojiWithMetadata> EmojiService::mapMetadata(const std::vector<const EmojiData *> &items) {
+std::vector<EmojiWithMetadata> EmojiService::mapMetadata(const std::vector<const glyph::Item *> &items) {
   if (items.empty()) return {};
 
   std::unordered_map<std::string_view, const SerializedEmojiMetadata *> byEmoji;
@@ -207,7 +188,7 @@ std::vector<EmojiWithMetadata> EmojiService::mapMetadata(const std::vector<const
   metadatas.reserve(items.size());
 
   for (const auto *item : items) {
-    if (auto it = byEmoji.find(item->emoji); it != byEmoji.end()) {
+    if (auto it = byEmoji.find(item->character); it != byEmoji.end()) {
       metadatas.emplace_back(toMetadata(*it->second, item));
     } else {
       metadatas.emplace_back(EmojiWithMetadata{.data = item});
@@ -218,13 +199,13 @@ std::vector<EmojiWithMetadata> EmojiService::mapMetadata(const std::vector<const
 }
 
 EmojiWithMetadata EmojiService::mapMetadata(std::string_view emoji) {
-  auto it = StaticEmojiDatabase::mapping().find(emoji);
+  const auto *item = glyph::lookup(emoji);
 
-  if (it == StaticEmojiDatabase::mapping().end()) { return {}; }
+  if (!item) { return {}; }
 
-  if (const auto *entry = findEntry(emoji)) { return toMetadata(*entry, it->second); }
+  if (const auto *entry = findEntry(emoji)) { return toMetadata(*entry, item); }
 
-  return {.data = it->second};
+  return {.data = item};
 }
 
 bool EmojiService::resetRanking(std::string_view emoji) {

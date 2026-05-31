@@ -8,38 +8,38 @@
 
 class EmojiGridSource : public GridSource {
 public:
-  void setEmojis(const QString &name, std::span<const EmojiData *const> emojis);
+  void setEmojis(const QString &name, std::span<const glyph::Item *const> emojis);
 
   void setSkinTone(std::optional<emoji::SkinTone> tone) { m_skinTone = tone; }
 
   QString sectionName() const override { return m_name; }
   int count() const override { return static_cast<int>(m_emojis.size()); }
 
-  const EmojiData *emojiAt(int i) const;
+  const glyph::Item *emojiAt(int i) const;
 
   std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
 
 private:
   QString m_name;
-  std::vector<const EmojiData *> m_emojis;
+  std::vector<const glyph::Item *> m_emojis;
   std::optional<emoji::SkinTone> m_skinTone;
 };
 
 class SearchEmojiGridSource : public GridSource {
 public:
-  void setResults(std::span<Scored<const EmojiData *>> results);
+  void setResults(std::span<Scored<const glyph::Item *>> results);
 
   void setSkinTone(std::optional<emoji::SkinTone> tone) { m_skinTone = tone; }
 
   QString sectionName() const override { return QStringLiteral("Results"); }
   int count() const override { return static_cast<int>(m_results.size()); }
 
-  const EmojiData *emojiAt(int i) const;
+  const glyph::Item *emojiAt(int i) const;
 
   std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
 
 private:
-  std::span<Scored<const EmojiData *>> m_results;
+  std::span<Scored<const glyph::Item *>> m_results;
   std::optional<emoji::SkinTone> m_skinTone;
 };
 
@@ -51,6 +51,7 @@ public:
 
   void initialize();
   void setFilter(const QString &text);
+  void setCategoryFilter(std::optional<glyph::Category> category);
   QString searchPlaceholder() const { return QStringLiteral("Search for emojis..."); }
   QUrl qmlComponentUrl() const { return QUrl(QStringLiteral("qrc:/Vicinae/EmojiGridView.qml")); }
 
@@ -61,7 +62,7 @@ public:
 private:
   enum class DisplayMode { Root, Search };
 
-  const EmojiData *emojiAt(int section, int item) const;
+  const glyph::Item *emojiAt(int section, int item) const;
   void refreshMetadataCache();
   void regenerateMetaSections();
   void rebuildSections();
@@ -71,16 +72,17 @@ private:
   emoji::SkinTone m_skinTone = emoji::SkinTone::Default;
 
   DisplayMode m_displayMode = DisplayMode::Root;
+  std::optional<glyph::Category> m_categoryFilter;
 
   EmojiGridSource m_pinnedSource;
   EmojiGridSource m_recentSource;
   std::vector<EmojiGridSource> m_groupSources;
   SearchEmojiGridSource m_searchSource;
 
-  std::vector<const EmojiData *> m_pinned;
-  std::vector<const EmojiData *> m_recent;
-  EmojiService::GroupedEmojis m_grouped;
-  std::unordered_map<const EmojiData *, EmojiWithMetadata, EmojiDataHash> m_metadataCache;
-  std::vector<Scored<const EmojiData *>> m_searchResultsStorage;
-  std::span<Scored<const EmojiData *>> m_searchResults;
+  std::vector<const glyph::Item *> m_pinned;
+  std::vector<const glyph::Item *> m_recent;
+  std::span<const glyph::Section> m_sections;
+  std::unordered_map<const glyph::Item *, EmojiWithMetadata, EmojiDataHash> m_metadataCache;
+  std::vector<Scored<const glyph::Item *>> m_searchResultsStorage;
+  std::span<Scored<const glyph::Item *>> m_searchResults;
 };

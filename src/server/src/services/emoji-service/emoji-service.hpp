@@ -1,5 +1,6 @@
 #pragma once
 #include "emoji/emoji.hpp"
+#include "emoji/glyph.hpp"
 #include <QDateTime>
 #include <qobject.h>
 #include <cstdint>
@@ -19,7 +20,7 @@ class OmniDatabase;
  */
 
 struct EmojiDataHash {
-  size_t operator()(const EmojiData *data) const { return std::hash<std::string_view>()(data->emoji); }
+  size_t operator()(const glyph::Item *data) const { return std::hash<std::string_view>()(data->character); }
 };
 
 struct SerializedEmojiMetadata {
@@ -32,7 +33,7 @@ struct SerializedEmojiMetadata {
 };
 
 struct EmojiWithMetadata {
-  const EmojiData *data = nullptr;
+  const glyph::Item *data = nullptr;
   uint32_t visitCount = 0;
   std::optional<QDateTime> pinnedAt;
   std::optional<emoji::SkinTone> tone;
@@ -51,21 +52,14 @@ signals:
   void keywordsChanged(std::string_view emoji) const;
 
 public:
-  using GroupedEmojis = std::vector<std::pair<std::string_view, std::vector<const EmojiData *>>>;
-
   EmojiService(const std::filesystem::path &path, OmniDatabase *legacyDb = nullptr);
 
-  std::span<Scored<const EmojiData *>> search(std::string_view query) const;
+  std::span<Scored<const glyph::Item *>> search(std::string_view query) const;
 
   /**
-   * List of emojis, ordered and grouped.
+   * Map metadata to the provided list of items.
    */
-  GroupedEmojis grouped();
-
-  /**
-   * Map metadata to the provided list of emojis.
-   */
-  std::vector<EmojiWithMetadata> mapMetadata(const std::vector<const EmojiData *> &items);
+  std::vector<EmojiWithMetadata> mapMetadata(const std::vector<const glyph::Item *> &items);
   EmojiWithMetadata mapMetadata(std::string_view emoji);
 
   std::vector<EmojiWithMetadata> getVisited() const;

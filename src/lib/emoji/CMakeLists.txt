@@ -8,10 +8,11 @@ OPTION(BUILD_TESTS "Build the test suite" OFF)
 
 find_package(ICU REQUIRED COMPONENTS uc)
 
-add_library(vicinae-emoji STATIC src/emoji.cpp src/generated/db.cpp)
+add_library(vicinae-emoji STATIC src/emoji.cpp src/glyph.cpp)
 add_library(vicinae::emoji ALIAS vicinae-emoji)
 set(PROJECT_NAME vicinae-emoji)
-target_include_directories(${PROJECT_NAME} PUBLIC include PRIVATE src)
+# include/emoji on the private path so the generated glyph.cpp can #include "glyph.hpp".
+target_include_directories(${PROJECT_NAME} PUBLIC include PRIVATE src include/emoji)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)
 target_link_libraries(${PROJECT_NAME} PUBLIC ICU::uc)
 

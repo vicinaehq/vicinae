@@ -11,6 +11,7 @@
 #include <QIcon>
 #include <qurlquery.h>
 #include "url.hpp"
+#include "emoji/glyph.hpp"
 
 namespace fs = std::filesystem;
 
@@ -173,6 +174,12 @@ ImageURL::ImageURL(const ImageLikeModel &imageLike) {
       return;
     }
 
+    if (const auto *item = glyph::lookup(source.toStdString())) {
+      setType(item->kind == glyph::Kind::Emoji ? ImageURLType::Emoji : ImageURLType::Symbol);
+      setName(source);
+      return;
+    }
+
     if (QFile(":icons/" + source + ".svg").exists()) {
       setType(ImageURLType::Builtin);
       setFill(image->tintColor.value_or(SemanticColor::Foreground));
@@ -277,6 +284,15 @@ ImageURL ImageURL::emoji(const QString &emoji) {
 
   url.setType(ImageURLType::Emoji);
   url.setName(emoji);
+
+  return url;
+}
+
+ImageURL ImageURL::symbol(const QString &symbol) {
+  ImageURL url;
+
+  url.setType(ImageURLType::Symbol);
+  url.setName(symbol);
 
   return url;
 }

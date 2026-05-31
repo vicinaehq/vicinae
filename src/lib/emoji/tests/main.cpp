@@ -1,18 +1,19 @@
 #include <catch2/catch_test_macros.hpp>
 #include <iostream>
 #include "emoji/emoji.hpp"
+#include "emoji/glyph.hpp"
 
 TEST_CASE("find smile emoji") {
-  const auto info = emoji::findStaticEmoji("😄");
+  const auto *info = glyph::lookup("😄");
 
   REQUIRE(info);
 }
 
 TEST_CASE("make sure emojis are skin tone tagged") {
-  const auto info = emoji::findStaticEmoji("✋");
+  const auto *info = glyph::lookup("✋");
 
   REQUIRE(info);
-  REQUIRE(info->skinToneSupport);
+  REQUIRE(info->skinnable);
 }
 
 TEST_CASE("car emoji should be identified has emoji") { REQUIRE(emoji::isUtf8EncodedEmoji("🚗")); }
@@ -20,10 +21,10 @@ TEST_CASE("car emoji should be identified has emoji") { REQUIRE(emoji::isUtf8Enc
 TEST_CASE("skin toned emoji should identify as emoji") { REQUIRE(emoji::isUtf8EncodedEmoji("👌🏻")); }
 
 TEST_CASE("all emojis in database pass isEmoji test") {
-  const auto &emojis = emoji::emojis();
-  for (const auto &emojiData : emojis) {
-    const bool ok = emoji::isUtf8EncodedEmoji(emojiData.emoji);
-    if (!ok) { std::cout << emojiData.emoji << std::endl; }
+  for (const auto &item : glyph::items()) {
+    if (item.kind != glyph::Kind::Emoji) continue;
+    const bool ok = emoji::isUtf8EncodedEmoji(item.character);
+    if (!ok) { std::cout << item.character << std::endl; }
     REQUIRE(ok);
   }
 }
