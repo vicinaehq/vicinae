@@ -34,6 +34,7 @@ RootSearchModel::RootSearchModel(const ViewScope &scope, QObject *parent)
   connect(m_config, &config::Manager::configChanged, this,
           [this](const config::ConfigValue &next, const config::ConfigValue &) {
             m_fileSearchEnabled = next.searchFilesInRoot;
+            refresh();
           });
 
   connect(m_manager, &RootItemManager::metadataChanged, this, &RootSearchModel::refresh);
@@ -127,11 +128,22 @@ bool RootSearchModel::rerunSearch() {
   m_resultsSource->setQueryEmpty(m_query.empty());
   m_fallbackSource->setQuery(m_query);
 
+  const auto &rs = m_config->value().rootSearch;
+  const bool emptyQuery = m_query.empty();
+  const bool hideSuggestions = emptyQuery && rs.hideSuggestionsWhenEmpty;
+  const bool hideFavorites = emptyQuery && rs.hideFavoritesWhenEmpty;
+
   std::vector<RootItemManager::ScoredItem> scored;
-  if (m_query.empty()) {
-    m_manager->search("", scored, {.includeFavorites = false, .prioritizeAliased = false});
+  if (emptyQuery) {
+    if (!hideSuggestions) {
+      m_manager->search("", scored, {.includeFavorites = false, .prioritizeAliased = false});
+    }
     m_newsSource->setItems(m_newsService->activeItems());
-    m_favoritesSource->setItems(m_manager->queryFavorites());
+    if (hideFavorites) {
+      m_favoritesSource->setItems({});
+    } else {
+      m_favoritesSource->setItems(m_manager->queryFavorites());
+    }
     m_fallbackSource->setItems({});
   } else {
     m_manager->search(text, scored);
@@ -148,7 +160,11 @@ bool RootSearchModel::rerunSearch() {
         .meta = s.meta ? *s.meta : RootItemMetadata{},
     });
   }
-  m_resultsSource->setItems(std::move(results));
+  if (hideSuggestions) {
+    m_resultsSource->setItems({});
+  } else {
+    m_resultsSource->setItems(std::move(results));
+  }
 
   rebuild();
   return false;
