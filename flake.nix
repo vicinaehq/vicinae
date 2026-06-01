@@ -38,9 +38,12 @@
 
           [[ "$OLD_EXT_MAN_DEPS_HASH" == "$NEW_EXT_MAN_DEPS_HASH" ]] || { echo -e "\e[31mHash mismatch for extension-manager npm deps, please replace the value in vicinae.nix with '$NEW_EXT_MAN_DEPS_HASH'.\e[0m" >&2; exit 1;}
         '';
+      });
+      lib = forEachPkgs (pkgs: {
         mkVicinaeExtension = pkgs.callPackage ./nix/mkVicinaeExtension.nix { };
         mkRayCastExtension = pkgs.callPackage ./nix/mkRayCastExtension.nix { };
-      }); devShells = forEachPkgs (
+      });
+      devShells = forEachPkgs (
         pkgs:
         let
           qtEnv = pkgs.qt6.env "qt-custom-${pkgs.qt6.qtbase.version}" [
