@@ -25,6 +25,7 @@ public:
     m_model.setScope(ViewScope(context(), this));
     m_model.initialize();
     setSearchPlaceholderText(m_model.searchPlaceholder());
+    restoreCategoryFilter();
   }
 
   void textChanged(const QString &text) override { m_model.setFilter(text); }
@@ -52,6 +53,7 @@ public:
     std::optional<glyph::Category> category;
     if (index >= 1 && index - 1 < static_cast<int>(sections.size())) category = sections[index - 1].category;
     m_model.setCategoryFilter(category);
+    command()->storage().setItem("categoryFilter", category ? categoryKey(*category) : QStringLiteral("all"));
 
     if (!searchText().isEmpty()) clearSearchText();
   }
@@ -60,6 +62,24 @@ signals:
   void currentCategoryFilterChanged();
 
 private:
+  static QString categoryKey(glyph::Category category) {
+    const auto label = glyph::categoryLabel(category);
+    return QString::fromUtf8(label.data(), label.size());
+  }
+
+  void restoreCategoryFilter() {
+    const auto saved = command()->storage().getItem("categoryFilter");
+    if (saved.isUndefined() || saved.isNull()) return;
+    const QString key = saved.toString();
+    const auto sections = glyph::sections();
+    for (int i = 0; i < static_cast<int>(sections.size()); ++i) {
+      if (categoryKey(sections[i].category) == key) {
+        setCategoryFilter(i + 1);
+        return;
+      }
+    }
+  }
+
   EmojiGridModel m_model{this};
   int m_currentCategoryFilter = 0;
 };
