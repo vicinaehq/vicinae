@@ -197,6 +197,7 @@ struct RootItemMetadata {
   bool fallback = false;
   std::optional<std::uint64_t> lastVisitedAt;
   std::optional<std::string> alias;
+  std::optional<std::string> shortcut;
   std::string providerId;
   std::shared_ptr<RootItem> item;
 };
@@ -257,6 +258,7 @@ public:
   void setPreferenceValues(const EntrypointId &id, const QJsonObject &preferences);
 
   bool setAlias(const EntrypointId &id, std::string_view alias);
+  bool setShortcut(const EntrypointId &id, std::string_view shortcut);
 
   QJsonObject getProviderPreferenceValues(const QString &id) const;
   QJsonObject getItemPreferenceValues(const EntrypointId &id) const;

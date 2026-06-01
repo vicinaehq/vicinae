@@ -514,6 +514,7 @@ set(SRCS
 	src/qml/vici-image-item.cpp
 	src/qml/config-bridge.hpp
 	src/qml/theme-bridge.hpp
+	src/qml/keyboard-bridge.hpp
 	src/qml/create-extension-view-host.hpp
 	src/qml/create-extension-view-host.cpp
 	src/qml/installed-extensions-model.hpp
@@ -618,6 +619,15 @@ list(APPEND SRCS
 	src/services/app-runtime/app-runtime.cpp
 )
 
+list(APPEND SRCS
+	src/services/global-shortcuts/abstract-global-shortcut-backend.hpp
+	src/services/global-shortcuts/dummy-global-shortcut-backend.hpp
+	src/services/global-shortcuts/global-shortcut-backend-factory.hpp
+	src/services/global-shortcuts/global-shortcut-backend-factory.cpp
+	src/services/global-shortcuts/global-shortcut-service.hpp
+	src/services/global-shortcuts/global-shortcut-service.cpp
+)
+
 if (LIBQALCULATE_BACKEND)
 	list(APPEND LIBS qalculate)
 	add_compile_definitions(HAS_QALCULATE=1)
@@ -639,6 +649,9 @@ if (UNIX AND NOT APPLE)
 		src/services/input-server/linux-input-server.cpp
 		src/services/snippet/linux-snippet-server.hpp
 		src/services/snippet/linux-snippet-server.cpp
+
+		src/services/global-shortcuts/input-server-global-shortcut-backend.hpp
+		src/services/global-shortcuts/input-server-global-shortcut-backend.cpp
 
 		src/internal/icon-theme-db/icon-theme-db.cpp
 
@@ -860,6 +873,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/ExtensionSettingsPage.qml
 	src/qml/qml/AboutSettingsPage.qml
 	src/qml/qml/ShortcutRecorderField.qml
+	src/qml/qml/ShortcutField.qml
 	src/qml/qml/PreferenceFormView.qml
 	src/qml/qml/SettingsPreferenceForm.qml
 	src/qml/qml/MissingPreferenceView.qml

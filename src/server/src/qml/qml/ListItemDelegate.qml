@@ -9,6 +9,7 @@ SelectableDelegate {
     required property string itemSubtitle
     required property string itemIconSource
     required property string itemAlias
+    property var itemShortcutTokens: []
     required property bool itemIsActive
     property var itemAccessory: []
     property string itemAccessoryColor: ""
@@ -50,7 +51,7 @@ SelectableDelegate {
             implicitHeight: titleText.implicitHeight
 
             readonly property real spacing: 6
-            readonly property real aliasSpace: aliasBadge.visible ? aliasBadge.width + spacing : 0
+            readonly property real aliasSpace: (aliasBadge.visible ? aliasBadge.width + spacing : 0) + (shortcutBadge.visible ? shortcutBadge.width + spacing : 0)
             readonly property real availableForText: width - aliasSpace
             readonly property real subtitleReserved: subtitleText.visible ? Math.min(subtitleText.implicitWidth + spacing, availableForText * 0.5) : 0
 
@@ -87,6 +88,15 @@ SelectableDelegate {
                 anchors.leftMargin: visible ? textRow.spacing : 0
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.itemAlias
+            }
+
+            ShortcutBadge {
+                id: shortcutBadge
+                visible: root.itemShortcutTokens.length > 0
+                anchors.left: aliasBadge.visible ? aliasBadge.right : (subtitleText.visible ? subtitleText.right : titleText.right)
+                anchors.leftMargin: visible ? textRow.spacing : 0
+                anchors.verticalCenter: parent.verticalCenter
+                tokens: root.itemShortcutTokens
             }
         }
 

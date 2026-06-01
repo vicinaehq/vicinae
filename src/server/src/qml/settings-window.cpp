@@ -4,6 +4,7 @@
 #include "extension-settings-model.hpp"
 #include "general-settings-model.hpp"
 #include "image-source.hpp"
+#include "keyboard-bridge.hpp"
 #include "keybind-settings-model.hpp"
 #include "theme-bridge.hpp"
 #include "view-utils.hpp"
@@ -33,6 +34,7 @@ void SettingsWindow::ensureInitialized() {
   m_themeBridge = new ThemeBridge(this);
   m_configBridge = new ConfigBridge(this);
   m_imgSource = new ImageSource(this);
+  m_keyboardBridge = new KeyboardBridge(this);
   m_generalModel = new GeneralSettingsModel(this);
   m_keybindModel = new KeybindSettingsModel(this);
   m_extensionModel = new ExtensionSettingsModel(this);
@@ -41,6 +43,7 @@ void SettingsWindow::ensureInitialized() {
   rootCtx->setContextProperty(QStringLiteral("Theme"), m_themeBridge);
   rootCtx->setContextProperty(QStringLiteral("Config"), m_configBridge);
   rootCtx->setContextProperty(QStringLiteral("Img"), m_imgSource);
+  rootCtx->setContextProperty(QStringLiteral("Keyboard"), m_keyboardBridge);
   rootCtx->setContextProperty(QStringLiteral("settings"), this);
   rootCtx->setContextProperty(QStringLiteral("FileChooser"),
                               ServiceRegistry::instance()->fileChooserService());

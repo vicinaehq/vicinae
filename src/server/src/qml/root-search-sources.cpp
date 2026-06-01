@@ -2,6 +2,7 @@
 #include "actions/app/app-actions.hpp"
 #include "actions/calculator/calculator-actions.hpp"
 #include "keyboard/keybind.hpp"
+#include "keyboard/keyboard.hpp"
 #include "utils/file-list-item.hpp"
 #include "navigation-controller.hpp"
 #include "services/news/news-service.hpp"
@@ -16,6 +17,7 @@ const QHash<int, QByteArray> &customRoleNames() {
   static const QHash<int, QByteArray> roles = {
       {ItemType, "itemType"},
       {Alias, "alias"},
+      {ShortcutTokens, "shortcutTokens"},
       {IsActive, "isActive"},
       {AccessoryText, "accessoryText"},
       {AccessoryColor, "accessoryColor"},
@@ -31,17 +33,10 @@ const QHash<int, QByteArray> &customRoleNames() {
 
 const QHash<int, QVariant> &customRoleDefaults() {
   static const QHash<int, QVariant> defaults = {
-      {ItemType, QString()},
-      {Alias, QString()},
-      {IsActive, false},
-      {AccessoryText, QString()},
-      {AccessoryColor, QString()},
-      {IsCalculator, false},
-      {CalcQuestion, QString()},
-      {CalcQuestionUnit, QString()},
-      {CalcAnswer, QString()},
-      {CalcAnswerUnit, QString()},
-      {IsFile, false},
+      {ItemType, QString()},   {Alias, QString()},          {ShortcutTokens, QVariantList()},
+      {IsActive, false},       {AccessoryText, QString()},  {AccessoryColor, QString()},
+      {IsCalculator, false},   {CalcQuestion, QString()},   {CalcQuestionUnit, QString()},
+      {CalcAnswer, QString()}, {CalcAnswerUnit, QString()}, {IsFile, false},
   };
   return defaults;
 }
@@ -78,6 +73,11 @@ QVariant rootItemAccessoryData(const RootItem *item, int role) {
   if (role == AccessoryText) return acc.front().text;
   if (role == AccessoryColor) return root_search::resolveAccessoryColor(acc.front().color);
   return {};
+}
+
+QVariantList shortcutTokensFor(const RootItemMetadata &meta) {
+  if (!meta.shortcut || meta.shortcut->empty()) return {};
+  return Keyboard::Shortcut::fromString(QString::fromStdString(*meta.shortcut)).toDisplayTokens();
 }
 
 } // namespace
@@ -226,6 +226,8 @@ QVariant RootFavoritesSection::customData(int i, int role) const {
     auto meta = m_manager->itemMetadata(m_items[i]->uniqueId());
     return QString::fromStdString(meta.alias.value_or(""));
   }
+  case ShortcutTokens:
+    return shortcutTokensFor(m_manager->itemMetadata(m_items[i]->uniqueId()));
   case IsActive:
     return m_items[i]->isActive();
   case AccessoryText:
@@ -284,6 +286,8 @@ QVariant RootResultsSection::customData(int i, int role) const {
   switch (role) {
   case Alias:
     return QString::fromStdString(m_items[i].meta.alias.value_or(""));
+  case ShortcutTokens:
+    return shortcutTokensFor(m_items[i].meta);
   case IsActive:
     return m_items[i].item->isActive();
   case AccessoryText:

@@ -56,6 +56,18 @@ Flickable {
         }
 
         SettingsRow {
+            label: "Launcher hotkey"
+            description: "Global shortcut to toggle the Vicinae launcher. On Linux this requires the (privileged) input server."
+            ShortcutField {
+                width: parent.width
+                layoutDirection: Qt.RightToLeft
+                shortcut: root.model.toggleShortcut
+                onAccepted: shortcut => root.model.toggleShortcut = shortcut
+                onCleared: root.model.toggleShortcut = ""
+            }
+        }
+
+        SettingsRow {
             label: "Close on focus loss"
             SettingsToggle {
                 checked: root.model.closeOnFocusLoss

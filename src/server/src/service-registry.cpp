@@ -26,6 +26,7 @@
 #include "services/toast/toast-service.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "services/app-runtime/app-runtime.hpp"
+#include "services/global-shortcuts/global-shortcut-service.hpp"
 #include "services/snippet/snippet-service.hpp"
 #include "services/paste/paste-service.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
@@ -183,6 +184,12 @@ void ServiceRegistry::setAudioControl(std::unique_ptr<AudioControlService> servi
 
 void ServiceRegistry::setAppRuntime(std::unique_ptr<AppRuntime> service) {
   m_appRuntime = std::move(service);
+}
+
+GlobalShortcutService *ServiceRegistry::globalShortcuts() const { return m_globalShortcuts.get(); }
+
+void ServiceRegistry::setGlobalShortcuts(std::unique_ptr<GlobalShortcutService> service) {
+  m_globalShortcuts = std::move(service);
 }
 
 ServiceRegistry *ServiceRegistry::instance() {

@@ -47,6 +47,8 @@
 #include "services/snippet/snippet-service.hpp"
 #ifdef Q_OS_LINUX
 #include "services/input-server/linux-input-server.hpp"
+#include "services/global-shortcuts/global-shortcut-service.hpp"
+#include "services/global-shortcuts/global-shortcut-backend-factory.hpp"
 #include "services/snippet/linux-snippet-server.hpp"
 #else
 #include "services/snippet/null-snippet-server.hpp"
@@ -80,6 +82,16 @@ static void applyTextRenderingMode(const config::FontConfig &fontConfig) {
   } else {
     QQuickWindow::setTextRenderType(QQuickWindow::NativeTextRendering);
   }
+}
+
+static bool hasGlobalShortcuts(const config::ConfigValue &cfg) {
+  if (cfg.globalShortcuts.toggle && !cfg.globalShortcuts.toggle->empty()) return true;
+  for (const auto &[_, provider] : cfg.providers) {
+    for (const auto &[__, item] : provider.entrypoints) {
+      if (item.shortcut && !item.shortcut->empty()) return true;
+    }
+  }
+  return false;
 }
 
 int startServer(const ServerLaunchOptions &launchOpts) {
@@ -151,6 +163,13 @@ int startServer(const ServerLaunchOptions &launchOpts) {
                                                        std::move(platformPaste));
     auto fontService = std::make_unique<FontService>();
     auto configService = std::make_unique<config::Manager>(m_config);
+#ifdef Q_OS_LINUX
+    auto globalShortcutBackend = createGlobalShortcutBackend(inputServer.get());
+#else
+    auto globalShortcutBackend = createGlobalShortcutBackend();
+#endif
+    auto globalShortcutService =
+        std::make_unique<GlobalShortcutService>(*configService, std::move(globalShortcutBackend));
     auto rootItemManager = std::make_unique<RootItemManager>(*configService, *localStorage);
     auto shortcutService =
         std::make_unique<ShortcutService>(Omnicast::dataDir() / "shortcuts" / "shortcuts.json", omniDb.get());
@@ -204,6 +223,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setExtensionRegistry(std::move(extensionRegistry));
     registry->setOAuthService(std::move(oauthService));
     registry->setPowerManager(std::make_unique<PowerManager>());
+    registry->setGlobalShortcuts(std::move(globalShortcutService));
     registry->setAudioControl(std::make_unique<AudioControlService>());
     registry->setScriptDb(std::make_unique<ScriptCommandService>());
     registry->setBrowserExtension(std::make_unique<BrowserExtensionService>());
@@ -322,7 +342,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     ctx.navigation->setPopToRootOnClose(next.popToRootOnClose);
     ctx.navigation->setCloseOnFocusLoss(next.closeOnFocusLoss);
 #ifdef Q_OS_LINUX
-    ctx.services->inputServer()->setEnabled(next.inputServer.enabled);
+    ctx.services->inputServer()->setEnabled(next.inputServer.enabled || hasGlobalShortcuts(next));
 #endif
 
     KeybindManager::instance()->mergeBinds({next.keybinds.begin(), next.keybinds.end()});
@@ -373,6 +393,17 @@ int startServer(const ServerLaunchOptions &launchOpts) {
       });
 
   QObject::connect(cfgService, &config::Manager::configChanged, configChanged);
+
+  if (auto *globalShortcuts = ServiceRegistry::instance()->globalShortcuts()) {
+    QObject::connect(globalShortcuts, &GlobalShortcutService::toggleLauncherRequested,
+                     [&ctx](quint64) { ctx.navigation->toggleWindow(); });
+    QObject::connect(globalShortcuts, &GlobalShortcutService::commandActivated,
+                     [&ctx](const EntrypointId &id, quint64) {
+                       ctx.navigation->launch(id);
+                       ctx.navigation->showWindow();
+                     });
+  }
+
   QIcon::setFallbackSearchPaths(Environment::fallbackIconSearchPaths());
 
   auto builtinFont = ServiceRegistry::instance()->fontService()->builtinFontFamily();

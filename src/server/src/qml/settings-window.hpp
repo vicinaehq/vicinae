@@ -7,6 +7,7 @@
 class ConfigBridge;
 class ImageSource;
 class ThemeBridge;
+class KeyboardBridge;
 class GeneralSettingsModel;
 class KeybindSettingsModel;
 class ExtensionSettingsModel;
@@ -75,6 +76,7 @@ private:
   ThemeBridge *m_themeBridge = nullptr;
   ConfigBridge *m_configBridge = nullptr;
   ImageSource *m_imgSource = nullptr;
+  KeyboardBridge *m_keyboardBridge = nullptr;
   GeneralSettingsModel *m_generalModel = nullptr;
   KeybindSettingsModel *m_keybindModel = nullptr;
   ExtensionSettingsModel *m_extensionModel = nullptr;

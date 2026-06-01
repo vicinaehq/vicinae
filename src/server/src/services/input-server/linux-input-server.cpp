@@ -57,6 +57,11 @@ LinuxInputServer::LinuxInputServer() : m_bus(&m_process), m_rpc(m_bus), m_client
   connect(m_client.snippet(), &snippet_gen::SnippetService::undoSnippet, this,
           [this](const snippet_gen::UndoSnippetPayload &payload) { emit undoTriggered(payload.trigger); });
 
+  connect(m_client.snippet(), &snippet_gen::SnippetService::globalShortcutActivated, this,
+          [this](const snippet_gen::GlobalShortcutActivatedPayload &payload) {
+            emit globalShortcutTriggered(payload.id, payload.timestamp);
+          });
+
   connect(&m_bus, &InputServerBus::messageReceived, this, [this](const QByteArray &msg) {
     std::string_view view{msg.constData(), static_cast<size_t>(msg.size())};
     if (auto res = m_client.route(view); !res) {
@@ -138,6 +143,16 @@ void LinuxInputServer::registerSnippet(snippet_gen::CreateSnippetRequest payload
 void LinuxInputServer::unregisterSnippet(std::string_view keyword) {
   if (!isRunning()) return;
   m_client.snippet()->removeSnippet({.trigger = std::string{keyword}});
+}
+
+void LinuxInputServer::registerGlobalShortcut(snippet_gen::GlobalShortcutBinding binding) {
+  if (!isRunning()) return;
+  m_client.snippet()->registerGlobalShortcut(binding);
+}
+
+void LinuxInputServer::unregisterGlobalShortcut(std::string id) {
+  if (!isRunning()) return;
+  m_client.snippet()->unregisterGlobalShortcut({.id = std::move(id)});
 }
 
 void LinuxInputServer::setKeymap(snippet_gen::LayoutInfo info) {

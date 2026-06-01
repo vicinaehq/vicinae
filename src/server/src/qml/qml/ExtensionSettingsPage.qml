@@ -224,6 +224,7 @@ Item {
                     required property string alias
                     required property string entrypointId
                     required property bool hasPreferences
+                    required property string shortcut
 
                     readonly property bool isExpanded: root.expandedCommandId === entrypointId
 
@@ -276,6 +277,14 @@ Item {
                                 font.pointSize: Theme.regularFontSize
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
+                            }
+
+                            ShortcutField {
+                                bordered: false
+                                placeholder: "Shortcut"
+                                shortcut: cmdDelegate.shortcut
+                                onAccepted: shortcut => root.extModel.setShortcutByEntrypointId(cmdDelegate.entrypointId, shortcut)
+                                onCleared: root.extModel.clearShortcutByEntrypointId(cmdDelegate.entrypointId)
                             }
 
                             TextField {
