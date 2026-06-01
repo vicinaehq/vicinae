@@ -73,6 +73,15 @@ Flickable {
         }
 
         SettingsRow {
+            label: "Compact mode"
+            description: "Show only the search bar at root; expand when a query is entered."
+            SettingsToggle {
+                checked: root.model.compactMode
+                onToggled: root.model.compactMode = checked
+            }
+        }
+
+        SettingsRow {
             label: "Basic usage statistics"
             description: "Send basic system and vicinae installation information on startup to help improve Vicinae."
             showSeparator: false
