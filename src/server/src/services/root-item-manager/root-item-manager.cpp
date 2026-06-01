@@ -420,7 +420,9 @@ bool RootItemManager::setItemAsFavorite(const EntrypointId &itemId, bool value) 
   if (value) {
     favorites.insert(favorites.begin(), id);
   } else {
-    favorites.erase(std::ranges::find(favorites, id));
+    auto it = std::ranges::find(favorites, id);
+    if (it == favorites.end()) { return false; }
+    favorites.erase(it);
   }
 
   m_cfg.mergeWithUser({.favorites = favorites});
