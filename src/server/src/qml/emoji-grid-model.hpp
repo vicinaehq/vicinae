@@ -31,7 +31,7 @@ public:
 
   void setSkinTone(std::optional<emoji::SkinTone> tone) { m_skinTone = tone; }
 
-  QString sectionName() const override { return QStringLiteral("Results"); }
+  QString sectionName() const override { return QStringLiteral("Results (%1)").arg(m_results.size()); }
   int count() const override { return static_cast<int>(m_results.size()); }
 
   const glyph::Item *emojiAt(int i) const;
