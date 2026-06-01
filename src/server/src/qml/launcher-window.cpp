@@ -598,7 +598,7 @@ void LauncherWindow::setExclusiveFocus(bool exclusive) {
   if (!isLayerShellActive()) return;
 
   const auto &lc = m_ctx.services->config()->value().launcherWindow.layerShell;
-  int ki = (exclusive && lc.keyboardInteractivity == "exclusive") ? 1 : 2; // Exclusive : OnDemand
+  int ki = (exclusive && lc.keyboardInteractivity == "exclusive" && !Environment::isHyprlandCompositor()) ? 1 : 2; // Exclusive : OnDemand
   if (m_lsKeyboardInteractivity != ki) {
     m_lsKeyboardInteractivity = ki;
     emit lsChanged();
@@ -620,7 +620,7 @@ void LauncherWindow::updateLayerShellProps() {
 
   int layer = (lc.layer == "overlay") ? 3 : 2;                                  // LayerOverlay : LayerTop
   int ki = 2;                                                                   // OnDemand
-  if (lc.keyboardInteractivity == "exclusive" && !cfg.closeOnFocusLoss) ki = 1; // Exclusive
+  if (lc.keyboardInteractivity == "exclusive" && !cfg.closeOnFocusLoss && !Environment::isHyprlandCompositor()) ki = 1; // Exclusive
 
   bool changed = false;
   if (m_lsLayer != layer) {
