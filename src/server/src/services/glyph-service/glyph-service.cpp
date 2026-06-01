@@ -1,6 +1,5 @@
 #include "glyph-service.hpp"
 #include <algorithm>
-#include <bits/ranges_algo.h>
 #include <cmath>
 #include <filesystem>
 #include <glaze/core/reflect.hpp>
