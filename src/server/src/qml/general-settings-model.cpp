@@ -65,6 +65,12 @@ void GeneralSettingsModel::setClientSideDecorations(bool v) {
            .clientSideDecorations = config::Partial<config::WindowCSD>{.enabled = v}}});
 }
 
+bool GeneralSettingsModel::compactMode() const { return cfg().launcherWindow.compactMode.enabled; }
+void GeneralSettingsModel::setCompactMode(bool v) {
+  cfgManager().mergeWithUser({.launcherWindow = config::Partial<config::WindowConfig>{
+                                  .compactMode = config::Partial<config::WindowCompactMode>{.enabled = v}}});
+}
+
 bool GeneralSettingsModel::inputServerEnabled() const { return cfg().inputServer.enabled; }
 
 void GeneralSettingsModel::setInputServerEnabled(bool v) {
