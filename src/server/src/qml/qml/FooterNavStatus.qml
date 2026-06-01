@@ -4,6 +4,7 @@ Item {
     id: root
 
     property bool clickable: false
+    property real availableWidth: 0
 
     signal clicked
 
@@ -29,6 +30,7 @@ Item {
         spacing: 6
 
         ViciImage {
+            id: navIcon
             width: 20
             height: 20
             source: root.clickable ? Img.builtin("vicinae").withFillColor(Theme.textMuted) : launcher.navigationIcon
@@ -41,6 +43,8 @@ Item {
             color: Theme.textMuted
             font.family: Theme.fontFamily
             font.pointSize: Theme.smallerFontSize
+            elide: Text.ElideRight
+            width: Math.max(0, root.availableWidth - (navIcon.visible ? navIcon.width + row.spacing : 0))
             anchors.verticalCenter: parent.verticalCenter
             visible: launcher.navigationTitle !== ""
         }
