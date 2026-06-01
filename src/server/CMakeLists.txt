@@ -652,6 +652,10 @@ if (UNIX AND NOT APPLE)
 
 		src/services/global-shortcuts/input-server-global-shortcut-backend.hpp
 		src/services/global-shortcuts/input-server-global-shortcut-backend.cpp
+		src/services/global-shortcuts/global-shortcut-portal-backend.hpp
+		src/services/global-shortcuts/global-shortcut-portal-backend.cpp
+		src/services/global-shortcuts/xkb-keysym.hpp
+		src/services/global-shortcuts/xkb-keysym.cpp
 
 		src/internal/icon-theme-db/icon-theme-db.cpp
 

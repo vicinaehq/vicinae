@@ -3,12 +3,15 @@
 
 #ifdef Q_OS_LINUX
 #include "services/global-shortcuts/input-server-global-shortcut-backend.hpp"
+#include "services/global-shortcuts/global-shortcut-portal-backend.hpp"
 #include <algorithm>
 #include <vector>
 
 std::unique_ptr<AbstractGlobalShortcutBackend> createGlobalShortcutBackend(LinuxInputServer *inputServer) {
   std::vector<std::unique_ptr<AbstractGlobalShortcutBackend>> candidates;
-  candidates.reserve(2);
+  candidates.reserve(3);
+
+  candidates.emplace_back(std::make_unique<GlobalShortcutPortalBackend>());
 
   if (inputServer) {
     candidates.emplace_back(std::make_unique<InputServerGlobalShortcutBackend>(*inputServer));
