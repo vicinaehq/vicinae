@@ -1,4 +1,4 @@
-#include "emoji/emoji.hpp"
+#include "glyph/emoji.hpp"
 #include <array>
 #include <cstdint>
 #include <string>
@@ -75,14 +75,6 @@ std::string applySkinTone(std::string_view emoji, SkinTone tone) {
 
   return result;
 }
-
-const EmojiData *findStaticEmoji(std::string_view emoji) {
-  auto &map = StaticEmojiDatabase::mapping();
-  if (auto it = map.find(emoji); it != map.end()) { return it->second; }
-  return nullptr;
-}
-
-std::span<const EmojiData> emojis() { return StaticEmojiDatabase::orderedList(); }
 
 static constexpr char32_t kCombiningEnclosingKeycapCharacter = 0x20E3;
 static constexpr char32_t kCombiningEnclosingCircleBackslashCharacter = 0x20E0;

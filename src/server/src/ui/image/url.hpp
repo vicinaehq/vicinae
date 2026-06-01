@@ -20,6 +20,7 @@ enum ImageURLType : std::uint8_t {
   Https,
   Local,
   Emoji,
+  Symbol,
   DataURI,
   MacBundle,
   FileIcon
@@ -28,7 +29,7 @@ enum ImageURLType : std::uint8_t {
 static std::vector<std::pair<QString, ImageURLType>> iconTypes = {
     {"favicon", Favicon},    {"omnicast", Builtin}, {"builtin", Builtin}, {"system", System},
     {"http", Http},          {"https", Http},       {"local", Local},     {"bundle", MacBundle},
-    {"file-icon", FileIcon}, {"emoji", Emoji},      {"datauri", DataURI},
+    {"file-icon", FileIcon}, {"emoji", Emoji},      {"symbol", Symbol},   {"datauri", DataURI},
 };
 
 static std::vector<std::pair<QString, SemanticColor>> colorTints = {
@@ -130,6 +131,7 @@ public:
   static ImageURL macBundle(const std::filesystem::path &bundlePath);
   static ImageURL http(const QUrl &httpUrl);
   static ImageURL emoji(const QString &emoji);
+  static ImageURL symbol(const QString &symbol);
   static ImageURL rawData(const QByteArray &data, const QString &mimeType);
   static ImageURL fileIcon(const std::filesystem::path &path);
 

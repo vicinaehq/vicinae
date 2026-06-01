@@ -53,7 +53,7 @@ strip:
 .PHONY: strip
 
 test:
-	./$(BIN_DIR)/vicinae-emoji-tests
+	./$(BIN_DIR)/vicinae-glyph-tests
 	./$(BIN_DIR)/vicinae-fuzzy-tests
 	./$(BIN_DIR)/xdgpp-tests
 	./$(BIN_DIR)/scriptcommand-tests

@@ -170,6 +170,9 @@ void ImageStream::startStatic() {
   case ImageURLType::Emoji:
     runInPool([name, size = m_size]() { return ImageRendering::renderEmoji(name, size); }, m_fg);
     break;
+  case ImageURLType::Symbol:
+    runInPool([name, size = m_size]() { return ImageRendering::renderSymbol(name, size); }, m_fg);
+    break;
   case ImageURLType::System:
     runInPool([name, size = m_size]() { return ImageRendering::renderSystemIcon(name, size); }, m_fg);
     break;

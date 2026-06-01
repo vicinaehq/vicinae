@@ -14,7 +14,7 @@
 #include "services/shortcut/shortcut-service.hpp"
 #include "services/calculator-service/calculator-service.hpp"
 #include "services/clipboard/clipboard-service.hpp"
-#include "services/emoji-service/emoji-service.hpp"
+#include "services/glyph-service/glyph-service.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include "services/files-service/file-service.hpp"
 #include "services/local-storage/local-storage-service.hpp"
@@ -39,7 +39,7 @@ config::Manager *ServiceRegistry::config() const { return m_config.get(); }
 OmniDatabase *ServiceRegistry::omniDb() const { return m_omniDb.get(); }
 CalculatorService *ServiceRegistry::calculatorService() const { return m_calculatorService.get(); }
 WindowManager *ServiceRegistry::windowManager() const { return m_windowManager.get(); }
-EmojiService *ServiceRegistry::emojiService() const { return m_emojiService.get(); }
+GlyphService *ServiceRegistry::glyphService() const { return m_glyphService.get(); }
 FontService *ServiceRegistry::fontService() const { return m_fontService.get(); }
 LocalStorageService *ServiceRegistry::localStorage() const { return m_localStorage.get(); }
 ExtensionManager *ServiceRegistry::extensionManager() const { return m_extensionManager.get(); }
@@ -115,8 +115,8 @@ void ServiceRegistry::ServiceRegistry::setExtensionRegistry(std::unique_ptr<Exte
 void ServiceRegistry::ServiceRegistry::setFileService(std::unique_ptr<FileService> service) {
   m_fileService = std::move(service);
 }
-void ServiceRegistry::setEmojiService(std::unique_ptr<EmojiService> service) {
-  m_emojiService = std::move(service);
+void ServiceRegistry::setGlyphService(std::unique_ptr<GlyphService> service) {
+  m_glyphService = std::move(service);
 }
 void ServiceRegistry::setToastService(std::unique_ptr<ToastService> service) {
   m_toastService = std::move(service);

@@ -83,23 +83,37 @@ QImage renderBuiltinSvg(const QString &iconName, const QSize &size, const QColor
   return canvas;
 }
 
-QImage renderEmoji(const QString &emoji, const QSize &size) {
+// Shared glyph draw. Emoji and symbols differ only in the font and whether font
+// merging (fallback) is allowed: emoji force the color emoji font with no
+// merging; symbols use a text font with merging so fallback resolves the wide
+// symbol ranges (math, box-drawing, etc.).
+static QImage renderGlyph(const QString &glyph, const QSize &size, QFont font, bool allowMerging) {
   QImage canvas(size, QImage::Format_ARGB32_Premultiplied);
   canvas.fill(Qt::transparent);
 
-  auto *fontService = ServiceRegistry::instance()->fontService();
-  if (!fontService) return canvas;
-
-  QFont font = fontService->emojiFont();
-  font.setStyleStrategy(QFont::NoFontMerging);
+  font.setStyleStrategy(allowMerging ? QFont::PreferDefault : QFont::NoFontMerging);
   font.setPixelSize(static_cast<int>(size.height() * 0.8));
 
   QPainter painter(&canvas);
   painter.setRenderHint(QPainter::Antialiasing, true);
   painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
   painter.setFont(font);
-  painter.drawText(canvas.rect(), Qt::AlignCenter, emoji);
+  painter.drawText(canvas.rect(), Qt::AlignCenter, glyph);
   return canvas;
+}
+
+QImage renderEmoji(const QString &emoji, const QSize &size) {
+  auto *fontService = ServiceRegistry::instance()->fontService();
+  if (!fontService) return QImage(size, QImage::Format_ARGB32_Premultiplied);
+  return renderGlyph(emoji, size, fontService->emojiFont(), /*allowMerging=*/false);
+}
+
+QImage renderSymbol(const QString &symbol, const QSize &size) {
+  auto *fontService = ServiceRegistry::instance()->fontService();
+  if (!fontService) return QImage(size, QImage::Format_ARGB32_Premultiplied);
+  QFont font;
+  font.setFamilies(fontService->symbolFontFamilies());
+  return renderGlyph(symbol, size, font, /*allowMerging=*/true);
 }
 
 QImage renderSystemIcon(const QString &name, const QSize &size) {

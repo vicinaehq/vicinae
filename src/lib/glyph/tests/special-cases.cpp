@@ -1,5 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
-#include "emoji/emoji.hpp"
+#include "glyph/emoji.hpp"
 
 TEST_CASE("ZWJ sequence family emoji") { REQUIRE(emoji::isUtf8EncodedEmoji("👨‍👩‍👧‍👦")); }
 

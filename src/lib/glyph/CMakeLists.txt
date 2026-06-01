@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-set(PROJECT_NAME emoji)
+set(PROJECT_NAME glyph)
 project(${PROJECT_NAME})
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -8,10 +8,11 @@ OPTION(BUILD_TESTS "Build the test suite" OFF)
 
 find_package(ICU REQUIRED COMPONENTS uc)
 
-add_library(vicinae-emoji STATIC src/emoji.cpp src/generated/db.cpp)
-add_library(vicinae::emoji ALIAS vicinae-emoji)
-set(PROJECT_NAME vicinae-emoji)
-target_include_directories(${PROJECT_NAME} PUBLIC include PRIVATE src)
+add_library(vicinae-glyph STATIC src/emoji.cpp src/glyph.cpp)
+add_library(vicinae::glyph ALIAS vicinae-glyph)
+set(PROJECT_NAME vicinae-glyph)
+# include/glyph on the private path so the generated glyph.cpp can #include "glyph.hpp".
+target_include_directories(${PROJECT_NAME} PUBLIC include PRIVATE src include/glyph)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)
 target_link_libraries(${PROJECT_NAME} PUBLIC ICU::uc)
 

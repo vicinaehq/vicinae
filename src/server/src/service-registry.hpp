@@ -13,7 +13,7 @@ class RootItemManager;
 class ConfigService;
 class ShortcutService;
 class ToastService;
-class EmojiService;
+class GlyphService;
 class CalculatorService;
 class FileService;
 class RaycastStoreService;
@@ -51,7 +51,7 @@ public:
   OmniDatabase *omniDb() const;
   CalculatorService *calculatorService() const;
   WindowManager *windowManager() const;
-  EmojiService *emojiService() const;
+  GlyphService *glyphService() const;
   FontService *fontService() const;
   LocalStorageService *localStorage() const;
   ExtensionManager *extensionManager() const;
@@ -91,7 +91,7 @@ public:
   void setCalculatorService(std::unique_ptr<CalculatorService> service);
   void setExtensionRegistry(std::unique_ptr<ExtensionRegistry> service);
   void setFileService(std::unique_ptr<FileService> service);
-  void setEmojiService(std::unique_ptr<EmojiService> service);
+  void setGlyphService(std::unique_ptr<GlyphService> service);
   void setToastService(std::unique_ptr<ToastService> service);
   void setFontService(std::unique_ptr<FontService> font);
   void setOmniDb(std::unique_ptr<OmniDatabase> service);
@@ -126,7 +126,7 @@ private:
   std::unique_ptr<config::Manager> m_config;
   std::unique_ptr<ShortcutService> m_shortcutService;
   std::unique_ptr<ToastService> m_toastService;
-  std::unique_ptr<EmojiService> m_emojiService;
+  std::unique_ptr<GlyphService> m_glyphService;
   std::unique_ptr<CalculatorService> m_calculatorService;
   std::unique_ptr<FileService> m_fileService;
   std::unique_ptr<RaycastStoreService> m_raycastStoreService;

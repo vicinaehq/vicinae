@@ -2,7 +2,6 @@
 #include <cstdint>
 #include <string_view>
 #include <span>
-#include "generated/db.hpp"
 
 namespace emoji {
 
@@ -20,9 +19,6 @@ constexpr std::uint8_t skinToneCount = 6;
 std::span<const SkinToneInfo> skinTones();
 SkinToneInfo skinToneInfo(SkinTone tone);
 std::string applySkinTone(std::string_view emoji, SkinTone tone);
-
-const EmojiData *findStaticEmoji(std::string_view emoji);
-std::span<const EmojiData> emojis();
 
 bool isUtf8EncodedEmoji(std::string_view str);
 

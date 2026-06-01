@@ -1,5 +1,5 @@
 #include "builtin_icon.hpp"
-#include "emoji/emoji.hpp"
+#include "glyph/emoji.hpp"
 #include "extend/image-model.hpp"
 #include "services/asset-resolver/asset-resolver.hpp"
 #include "theme.hpp"
@@ -11,6 +11,7 @@
 #include <QIcon>
 #include <qurlquery.h>
 #include "url.hpp"
+#include "glyph/glyph.hpp"
 
 namespace fs = std::filesystem;
 
@@ -56,7 +57,7 @@ ImageURL ImageURL::resolved() const {
   ImageURL out = *this;
   if (auto fill = fillColor())
     out.setFill(OmniPainter::resolveColor(*fill));
-  else if (type() == ImageURLType::Builtin)
+  else if (type() == ImageURLType::Builtin || type() == ImageURLType::Symbol)
     out.setFill(ThemeService::instance().theme().resolve(SemanticColor::Foreground));
   if (auto bg = backgroundTint()) out.setBackgroundTint(OmniPainter::resolveColor(*bg));
   if (out.type() == ImageURLType::Local) out.setName(resolveThemedLocalPath(out.name()));
@@ -173,6 +174,12 @@ ImageURL::ImageURL(const ImageLikeModel &imageLike) {
       return;
     }
 
+    if (const auto *item = glyph::lookup(source.toStdString())) {
+      setType(item->kind == glyph::Kind::Emoji ? ImageURLType::Emoji : ImageURLType::Symbol);
+      setName(source);
+      return;
+    }
+
     if (QFile(":icons/" + source + ".svg").exists()) {
       setType(ImageURLType::Builtin);
       setFill(image->tintColor.value_or(SemanticColor::Foreground));
@@ -277,6 +284,15 @@ ImageURL ImageURL::emoji(const QString &emoji) {
 
   url.setType(ImageURLType::Emoji);
   url.setName(emoji);
+
+  return url;
+}
+
+ImageURL ImageURL::symbol(const QString &symbol) {
+  ImageURL url;
+
+  url.setType(ImageURLType::Symbol);
+  url.setName(symbol);
 
   return url;
 }

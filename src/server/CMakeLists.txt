@@ -23,7 +23,7 @@ list(APPEND LIBS
 	glaze::glaze
 	vicinae::xdgpp
 	vicinae::scriptcommand
-	vicinae::emoji
+	vicinae::glyph
 	vicinae::common
 	vicinae::fuzzy
 	sqlcipher
@@ -318,8 +318,8 @@ set(SRCS
 	src/services/app-service/app-service.hpp
 	src/services/app-service/app-service.cpp
 
-	src/services/emoji-service/emoji-service.hpp
-	src/services/emoji-service/emoji-service.cpp
+	src/services/glyph-service/glyph-service.hpp
+	src/services/glyph-service/glyph-service.cpp
 
 
 
@@ -798,6 +798,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/SearchableDropdown.qml
 	src/qml/qml/ClipboardHistoryView.qml
 	src/qml/qml/ClipboardFilterAccessory.qml
+	src/qml/qml/EmojiCategoryFilterAccessory.qml
 	src/qml/qml/DetailPanel.qml
 	src/qml/qml/MetadataBar.qml
 	src/qml/qml/AlertDialog.qml
