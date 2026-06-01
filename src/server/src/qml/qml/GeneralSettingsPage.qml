@@ -74,7 +74,7 @@ Flickable {
 
         SettingsRow {
             label: "Hide suggestions"
-            description: "Hide the frecency-ranked Suggestions list when the search bar is empty."
+            description: "Hide the frecency-ranked Suggestions list when the search bar is empty, unless expanded."
             SettingsToggle {
                 checked: root.model.hideSuggestionsWhenEmpty
                 onToggled: checked => root.model.hideSuggestionsWhenEmpty = checked
@@ -83,7 +83,7 @@ Flickable {
 
         SettingsRow {
             label: "Hide favorites"
-            description: "Hide the Favorites section when the search bar is empty."
+            description: "Hide the Favorites section when the search bar is empty, unless expanded."
             SettingsToggle {
                 checked: root.model.hideFavoritesWhenEmpty
                 onToggled: checked => root.model.hideFavoritesWhenEmpty = checked
