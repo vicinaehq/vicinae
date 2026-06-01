@@ -608,8 +608,7 @@ void LauncherWindow::tryCompaction() {
   const auto &val = m_ctx.services->config()->value();
   const auto &cfg = val.launcherWindow.compactMode;
   const auto &rs = val.rootSearch;
-  const bool atRoot =
-      m_ctx.navigation->searchText().isEmpty() && m_ctx.navigation->viewStackSize() == 1;
+  const bool atRoot = m_ctx.navigation->searchText().isEmpty() && m_ctx.navigation->viewStackSize() == 1;
   const bool noUnreadNews = !m_ctx.services->newsService()->hasUnreadNews();
   const bool noFavoritesToShow =
       rs.hideFavoritesWhenEmpty || m_ctx.services->rootItemManager()->queryFavorites(1).empty();

@@ -99,9 +99,7 @@ void GeneralSettingsModel::setHideSuggestionsWhenEmpty(bool v) {
       {.rootSearch = config::Partial<config::RootSearch>{.hideSuggestionsWhenEmpty = v}});
 }
 
-bool GeneralSettingsModel::hideFavoritesWhenEmpty() const {
-  return cfg().rootSearch.hideFavoritesWhenEmpty;
-}
+bool GeneralSettingsModel::hideFavoritesWhenEmpty() const { return cfg().rootSearch.hideFavoritesWhenEmpty; }
 void GeneralSettingsModel::setHideFavoritesWhenEmpty(bool v) {
   cfgManager().mergeWithUser(
       {.rootSearch = config::Partial<config::RootSearch>{.hideFavoritesWhenEmpty = v}});
