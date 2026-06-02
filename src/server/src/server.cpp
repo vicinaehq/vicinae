@@ -84,16 +84,6 @@ static void applyTextRenderingMode(const config::FontConfig &fontConfig) {
   }
 }
 
-static bool hasGlobalShortcuts(const config::ConfigValue &cfg) {
-  if (cfg.globalShortcuts.toggle && !cfg.globalShortcuts.toggle->empty()) return true;
-  for (const auto &[_, provider] : cfg.providers) {
-    for (const auto &[__, item] : provider.entrypoints) {
-      if (item.shortcut && !item.shortcut->empty()) return true;
-    }
-  }
-  return false;
-}
-
 int startServer(const ServerLaunchOptions &launchOpts) {
   qInstallMessageHandler(coloredMessageHandler);
 
@@ -163,13 +153,8 @@ int startServer(const ServerLaunchOptions &launchOpts) {
                                                        std::move(platformPaste));
     auto fontService = std::make_unique<FontService>();
     auto configService = std::make_unique<config::Manager>(m_config);
-#ifdef Q_OS_LINUX
-    auto globalShortcutBackend = createGlobalShortcutBackend(inputServer.get());
-#else
-    auto globalShortcutBackend = createGlobalShortcutBackend();
-#endif
     auto globalShortcutService =
-        std::make_unique<GlobalShortcutService>(*configService, std::move(globalShortcutBackend));
+        std::make_unique<GlobalShortcutService>(*configService, createGlobalShortcutBackend());
     auto rootItemManager = std::make_unique<RootItemManager>(*configService, *localStorage);
     auto shortcutService =
         std::make_unique<ShortcutService>(Omnicast::dataDir() / "shortcuts" / "shortcuts.json", omniDb.get());
@@ -342,7 +327,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     ctx.navigation->setPopToRootOnClose(next.popToRootOnClose);
     ctx.navigation->setCloseOnFocusLoss(next.closeOnFocusLoss);
 #ifdef Q_OS_LINUX
-    ctx.services->inputServer()->setEnabled(next.inputServer.enabled || hasGlobalShortcuts(next));
+    ctx.services->inputServer()->setEnabled(next.inputServer.enabled);
 #endif
 
     KeybindManager::instance()->mergeBinds({next.keybinds.begin(), next.keybinds.end()});

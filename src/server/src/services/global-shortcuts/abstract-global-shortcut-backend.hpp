@@ -41,6 +41,10 @@ public:
 
   virtual QString id() const = 0;
 
+  /// Whether this backend actually provides global shortcuts. The dummy fallback returns false, so
+  /// callers (and the UI) can tell when global shortcuts are unsupported in the current environment.
+  virtual bool isSupported() const { return true; }
+
   /// Whether this backend is suitable in the current environment. Make it as specific as possible.
   virtual bool isActivatable() const = 0;
 

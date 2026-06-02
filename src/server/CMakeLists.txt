@@ -650,10 +650,6 @@ if (UNIX AND NOT APPLE)
 		src/services/snippet/linux-snippet-server.hpp
 		src/services/snippet/linux-snippet-server.cpp
 
-		src/services/global-shortcuts/input-server-global-shortcut-backend.hpp
-		src/services/global-shortcuts/input-server-global-shortcut-backend.cpp
-		src/services/global-shortcuts/global-shortcut-portal-backend.hpp
-		src/services/global-shortcuts/global-shortcut-portal-backend.cpp
 		src/services/global-shortcuts/xkb-keysym.hpp
 		src/services/global-shortcuts/xkb-keysym.cpp
 

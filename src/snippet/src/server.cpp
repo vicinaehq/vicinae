@@ -226,6 +226,19 @@ void SnippetService::checkGlobalShortcuts(xkb_keycode_t keycode, uint32_t timest
   for (const auto &sc : m_globalShortcuts) {
     if (sc.keysym == base && sc.modifiers == mods) {
       std::cerr << "GLOBAL SHORTCUT: " << sc.id << '\n';
+
+      // We monitor passively, so the keystroke also reaches the focused app. Ctrl/Alt suppress text
+      // entry, but Super/Shift do not: a printable key gets inserted there. Backspace it before
+      // emitting (emitting runs the action, which may steal focus). Backspace is an editing key, so
+      // it deletes even with Super/Shift held - no need to wait for modifier release.
+      const bool hasCtrlAlt = (sc.modifiers & ((1u << 0) | (1u << 1))) != 0;
+      const uint32_t codepoint = xkb_keysym_to_utf32(base);
+      const bool printable = codepoint >= 0x20 && codepoint != 0x7f;
+
+      if (!hasCtrlAlt && printable) {
+        std::cerr << "Erasing leaked shortcut character\n";
+        m_keyboard.sendKey(KEY_BACKSPACE, 0);
+      }
       emitglobalShortcutActivated({.id = sc.id, .timestamp = timestamp});
       break;
     }

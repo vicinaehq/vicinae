@@ -5,6 +5,8 @@
 #include "keyboard/keyboard.hpp"
 #include "utils/file-list-item.hpp"
 #include "navigation-controller.hpp"
+#include "service-registry.hpp"
+#include "services/global-shortcuts/global-shortcut-service.hpp"
 #include "services/news/news-service.hpp"
 #include "theme.hpp"
 #include "theme/theme-file.hpp"
@@ -77,6 +79,8 @@ QVariant rootItemAccessoryData(const RootItem *item, int role) {
 
 QVariantList shortcutTokensFor(const RootItemMetadata &meta) {
   if (!meta.shortcut || meta.shortcut->empty()) return {};
+  auto *service = ServiceRegistry::instance()->globalShortcuts();
+  if (!service || !service->isSupported()) return {};
   return Keyboard::Shortcut::fromString(QString::fromStdString(*meta.shortcut)).toDisplayTokens();
 }
 

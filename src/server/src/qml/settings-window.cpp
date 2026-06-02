@@ -12,6 +12,7 @@
 #include "extension/extension.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "service-registry.hpp"
+#include "services/global-shortcuts/global-shortcut-service.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
@@ -127,6 +128,11 @@ QString SettingsWindow::version() const { return QStringLiteral(VICINAE_GIT_TAG)
 QString SettingsWindow::commitHash() const { return QStringLiteral(VICINAE_GIT_COMMIT_HASH); }
 QString SettingsWindow::buildInfo() const { return QStringLiteral(BUILD_INFO); }
 QString SettingsWindow::headline() const { return Omnicast::HEADLINE; }
+
+bool SettingsWindow::globalShortcutsSupported() const {
+  auto *service = ServiceRegistry::instance()->globalShortcuts();
+  return service && service->isSupported();
+}
 
 void SettingsWindow::openUrl(const QString &url) { m_ctx.services->appDb()->openTarget(url); }
 

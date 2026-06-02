@@ -197,7 +197,7 @@ template <> struct Partial<InputServer> {
 };
 
 struct GlobalShortcuts {
-  std::optional<std::string> toggle = "super+shift+space";
+  std::optional<std::string> toggle = "super+control+space";
 };
 
 template <> struct Partial<GlobalShortcuts> {

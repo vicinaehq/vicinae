@@ -27,6 +27,7 @@ public:
   GlobalShortcutService(config::Manager &config, std::unique_ptr<AbstractGlobalShortcutBackend> backend);
 
   AbstractGlobalShortcutBackend *backend() const { return m_backend.get(); }
+  bool isSupported() const { return m_backend && m_backend->isSupported(); }
 
 private:
   struct Action {

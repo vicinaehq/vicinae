@@ -56,8 +56,9 @@ Flickable {
         }
 
         SettingsRow {
+            visible: settings.globalShortcutsSupported
             label: "Launcher hotkey"
-            description: "Global shortcut to toggle the Vicinae launcher. On Linux this requires the (privileged) input server."
+            description: "Global shortcut to toggle the Vicinae launcher."
             ShortcutField {
                 width: parent.width
                 layoutDirection: Qt.RightToLeft

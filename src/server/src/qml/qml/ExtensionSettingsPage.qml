@@ -280,6 +280,7 @@ Item {
                             }
 
                             ShortcutField {
+                                visible: settings.globalShortcutsSupported
                                 bordered: false
                                 placeholder: "Shortcut"
                                 shortcut: cmdDelegate.shortcut

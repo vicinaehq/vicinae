@@ -10,6 +10,7 @@ class DummyGlobalShortcutBackend : public AbstractGlobalShortcutBackend {
 
 public:
   QString id() const override { return "dummy"; }
+  bool isSupported() const override { return false; }
   bool isActivatable() const override { return true; }
   int activationPriority() const override { return std::numeric_limits<int>::min(); }
 
