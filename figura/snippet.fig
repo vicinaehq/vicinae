@@ -60,28 +60,6 @@ struct KeyboardCapabilities {
   injection: bool;
 };
 
-// keysym is an xkb keysym (XKB_KEY_*), base layer.
-// modifiers is a bitmask defined by ShortcutModifier (Ctrl=1, Alt=2, Shift=4, Super=8),
-// kept in sync on both ends; it is neither Qt's nor xkb's native numbering.
-struct GlobalShortcutBinding {
-  id: string;
-  keysym: uint;
-  modifiers: uint;
-};
-
-struct RegisterGlobalShortcutResponse {
-  ok: bool;
-};
-
-struct UnregisterGlobalShortcutRequest {
-  id: string;
-};
-
-struct GlobalShortcutActivatedPayload {
-  id: string;
-  timestamp: uint;
-};
-
 service Snippet {
   fn setKeymap(info: LayoutInfo) => void;
   fn createSnippet(req: CreateSnippetRequest) => CreateSnippetResponse;
@@ -93,10 +71,6 @@ service Snippet {
   fn setKeyDelay(delayUs: int) => void;
   fn getCapabilities() => KeyboardCapabilities;
 
-  fn registerGlobalShortcut(binding: GlobalShortcutBinding) => RegisterGlobalShortcutResponse;
-  fn unregisterGlobalShortcut(req: UnregisterGlobalShortcutRequest) => void;
-
   event triggerSnippet(payload: TriggerSnippetPayload);
   event undoSnippet(payload: UndoSnippetPayload);
-  event globalShortcutActivated(payload: GlobalShortcutActivatedPayload);
 }

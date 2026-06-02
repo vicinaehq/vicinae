@@ -26,10 +26,6 @@ public:
   std::expected<void, std::string> injectPaste(snippet_gen::InjectPasteRequest req) override;
   std::expected<void, std::string> setKeyDelay(int delayUs) override;
   std::expected<snippet_gen::KeyboardCapabilities, std::string> getCapabilities() override;
-  std::expected<snippet_gen::RegisterGlobalShortcutResponse, std::string>
-  registerGlobalShortcut(snippet_gen::GlobalShortcutBinding binding) override;
-  std::expected<void, std::string>
-  unregisterGlobalShortcut(snippet_gen::UnregisterGlobalShortcutRequest req) override;
 
   void listen(snippet_gen::Server &server);
   void setIpcFrame(Frame *frame) { m_ipcFrame = frame; }
@@ -37,12 +33,6 @@ public:
   struct Snippet {
     std::string trigger;
     snippet_gen::ExpansionMode mode;
-  };
-
-  struct GlobalShortcut {
-    std::string id;
-    xkb_keysym_t keysym;
-    uint32_t modifiers;
   };
 
 private:
@@ -60,7 +50,6 @@ private:
   bool registerDevice(const char *device, DeviceType type);
   void removeDevice(std::vector<InputDevice>::iterator it);
   void emitExpansion(const Snippet &snippet);
-  void checkGlobalShortcuts(xkb_keycode_t keycode, uint32_t timestamp);
   bool hasActiveModifiers() const;
   void flushPendingExpansion();
   void drainInputEvents();
@@ -75,7 +64,6 @@ private:
   xkb_state *m_kbState = nullptr;
   int m_epollFd = -1;
   std::vector<Snippet> m_snippets;
-  std::vector<GlobalShortcut> m_globalShortcuts;
   linuxutils::UInputKeyboard m_keyboard;
 
   Frame *m_ipcFrame = nullptr;

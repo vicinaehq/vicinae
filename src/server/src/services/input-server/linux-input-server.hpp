@@ -30,7 +30,6 @@ class LinuxInputServer : public QObject {
 signals:
   void keywordTriggered(std::string trigger) const;
   void undoTriggered(std::string trigger) const;
-  void globalShortcutTriggered(std::string id, quint64 timestamp) const;
   void serverReady();
 
 public:
@@ -47,8 +46,6 @@ public:
   void registerSnippet(snippet_gen::CreateSnippetRequest payload);
   void unregisterSnippet(std::string_view keyword);
 
-  void registerGlobalShortcut(snippet_gen::GlobalShortcutBinding binding);
-  void unregisterGlobalShortcut(std::string id);
   void setKeymap(snippet_gen::LayoutInfo info);
   void resetContext();
 

@@ -187,64 +187,6 @@ std::expected<snippet_gen::KeyboardCapabilities, std::string> SnippetService::ge
   return snippet_gen::KeyboardCapabilities{.injection = !m_keyboard.error().has_value()};
 }
 
-std::expected<snippet_gen::RegisterGlobalShortcutResponse, std::string>
-SnippetService::registerGlobalShortcut(snippet_gen::GlobalShortcutBinding binding) {
-  std::erase_if(m_globalShortcuts, [&](auto &&s) { return s.id == binding.id; });
-  m_globalShortcuts.push_back({.id = binding.id,
-                               .keysym = static_cast<xkb_keysym_t>(binding.keysym),
-                               .modifiers = binding.modifiers});
-  std::cerr << "Registered global shortcut " << binding.id << '\n';
-  return snippet_gen::RegisterGlobalShortcutResponse{.ok = true};
-}
-
-std::expected<void, std::string>
-SnippetService::unregisterGlobalShortcut(snippet_gen::UnregisterGlobalShortcutRequest req) {
-  std::erase_if(m_globalShortcuts, [&](auto &&s) { return s.id == req.id; });
-  return {};
-}
-
-void SnippetService::checkGlobalShortcuts(xkb_keycode_t keycode, uint32_t timestamp) {
-  if (m_globalShortcuts.empty()) return;
-
-  // Match against the primary layout's base level so a shortcut keeps firing regardless of the
-  // active layout group (e.g. after switching to a non-Latin layout).
-  const xkb_keysym_t *syms = nullptr;
-  const int n = xkb_keymap_key_get_syms_by_level(m_keymap, keycode, 0, 0, &syms);
-  if (n <= 0) return;
-  const xkb_keysym_t base = syms[0];
-
-  const auto active = [&](const char *name) {
-    return xkb_state_mod_name_is_active(m_kbState, name, XKB_STATE_MODS_EFFECTIVE) > 0;
-  };
-
-  uint32_t mods = 0;
-  if (active(XKB_MOD_NAME_CTRL)) mods |= 1u << 0;
-  if (active(XKB_MOD_NAME_ALT)) mods |= 1u << 1;
-  if (active(XKB_MOD_NAME_SHIFT)) mods |= 1u << 2;
-  if (active(XKB_MOD_NAME_LOGO)) mods |= 1u << 3;
-
-  for (const auto &sc : m_globalShortcuts) {
-    if (sc.keysym == base && sc.modifiers == mods) {
-      std::cerr << "GLOBAL SHORTCUT: " << sc.id << '\n';
-
-      // We monitor passively, so the keystroke also reaches the focused app. Ctrl/Alt suppress text
-      // entry, but Super/Shift do not: a printable key gets inserted there. Backspace it before
-      // emitting (emitting runs the action, which may steal focus). Backspace is an editing key, so
-      // it deletes even with Super/Shift held - no need to wait for modifier release.
-      const bool hasCtrlAlt = (sc.modifiers & ((1u << 0) | (1u << 1))) != 0;
-      const uint32_t codepoint = xkb_keysym_to_utf32(base);
-      const bool printable = codepoint >= 0x20 && codepoint != 0x7f;
-
-      if (!hasCtrlAlt && printable) {
-        std::cerr << "Erasing leaked shortcut character\n";
-        m_keyboard.sendKey(KEY_BACKSPACE, 0);
-      }
-      emitglobalShortcutActivated({.id = sc.id, .timestamp = timestamp});
-      break;
-    }
-  }
-}
-
 void SnippetService::drainInputEvents() {
   for (const auto &dev : m_devices) {
     pollfd pfd = {.fd = dev.fd, .events = POLLIN, .revents = 0};
@@ -495,12 +437,7 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
         const int len = xkb_state_key_get_utf8(m_kbState, keycode, key.data(), key.size());
         const std::string_view keyStr{key.data(), static_cast<size_t>(len)};
 
-        if (inputEv.value == 1) {
-          xkb_state_update_key(m_kbState, keycode, XKB_KEY_DOWN);
-          const uint32_t timestamp =
-              static_cast<uint32_t>(inputEv.time.tv_sec * 1000 + inputEv.time.tv_usec / 1000);
-          checkGlobalShortcuts(keycode, timestamp);
-        }
+        if (inputEv.value == 1) { xkb_state_update_key(m_kbState, keycode, XKB_KEY_DOWN); }
 
         if (m_undoTrigger && inputEv.value == 1) {
           if (inputEv.code == KEY_BACKSPACE) {

@@ -1,11 +1,13 @@
 #include "services/global-shortcuts/global-shortcut-service.hpp"
+#include "common/types.hpp"
 #include "config/config.hpp"
 #include <utility>
 
 namespace {
-// Reserved id for the built-in "open/close the launcher" action. The colon-less form keeps it
-// distinct from any serialized EntrypointId ("provider:entrypoint").
-constexpr const char *TOGGLE_ID = "@toggle-launcher";
+
+// non command global shortcuts are always prefix with '@' to prevent potential conflicts
+constexpr const auto TOGGLE_ID = "@toggle-launcher";
+
 } // namespace
 
 GlobalShortcutService::GlobalShortcutService(config::Manager &config,
@@ -26,9 +28,7 @@ void GlobalShortcutService::reconcile() {
   std::unordered_map<QString, std::pair<QString, Action>> desired;
 
   if (cfg.globalShortcuts.toggle && !cfg.globalShortcuts.toggle->empty()) {
-    desired.emplace(QString::fromUtf8(TOGGLE_ID),
-                    std::pair{QString::fromStdString(*cfg.globalShortcuts.toggle),
-                              Action{.kind = Action::Kind::ToggleLauncher, .entrypoint = {}}});
+    desired.emplace(TOGGLE_ID, std::pair{*cfg.globalShortcuts.toggle, ToggleLauncherWindow{}});
   }
 
   for (const auto &[provider, providerData] : cfg.providers) {
@@ -37,9 +37,7 @@ void GlobalShortcutService::reconcile() {
       if (item.enabled.has_value() && !*item.enabled) { continue; }
 
       EntrypointId eid{provider, entrypoint};
-      desired.emplace(QString::fromStdString(std::string(eid)),
-                      std::pair{QString::fromStdString(*item.shortcut),
-                                Action{.kind = Action::Kind::RunCommand, .entrypoint = eid}});
+      desired.emplace(eid, std::pair{*item.shortcut, RunCommand{eid}});
     }
   }
 
@@ -61,24 +59,19 @@ void GlobalShortcutService::reconcile() {
     }
 
     auto shortcut = Keyboard::Shortcut::fromString(trigger);
+
     if (!shortcut.isValid()) { continue; }
 
-    m_backend->bindShortcut({.id = id, .description = id, .preferredTrigger = shortcut});
+    m_backend->bindShortcut({.id = id, .description = id, .trigger = shortcut});
     m_actions[id] = action;
     m_boundTriggers[id] = trigger;
   }
 }
 
 void GlobalShortcutService::onActivated(const QString &id, quint64 timestamp) {
-  auto it = m_actions.find(id);
-  if (it == m_actions.end()) { return; }
-
-  switch (it->second.kind) {
-  case Action::Kind::ToggleLauncher:
-    emit toggleLauncherRequested(timestamp);
-    break;
-  case Action::Kind::RunCommand:
-    emit commandActivated(it->second.entrypoint, timestamp);
-    break;
+  if (auto it = m_actions.find(id); it != m_actions.end()) {
+    match(
+        it->second, [&](const RunCommand &cmd) { emit commandActivated(cmd.id, timestamp); },
+        [&](const ToggleLauncherWindow &launcher) { emit toggleLauncherRequested(timestamp); });
   }
 }

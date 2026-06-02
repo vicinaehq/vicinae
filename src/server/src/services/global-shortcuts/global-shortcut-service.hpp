@@ -30,10 +30,13 @@ public:
   bool isSupported() const { return m_backend && m_backend->isSupported(); }
 
 private:
-  struct Action {
-    enum class Kind { ToggleLauncher, RunCommand } kind;
-    EntrypointId entrypoint;
+  struct RunCommand {
+    EntrypointId id;
   };
+
+  struct ToggleLauncherWindow {};
+
+  using Action = std::variant<RunCommand, ToggleLauncherWindow>;
 
   void reconcile();
   void onActivated(const QString &id, quint64 timestamp);

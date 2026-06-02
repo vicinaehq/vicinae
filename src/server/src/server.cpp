@@ -384,8 +384,14 @@ int startServer(const ServerLaunchOptions &launchOpts) {
                      [&ctx](quint64) { ctx.navigation->toggleWindow(); });
     QObject::connect(globalShortcuts, &GlobalShortcutService::commandActivated,
                      [&ctx](const EntrypointId &id, quint64) {
+                       ctx.navigation->popToRoot({.clearSearch = false});
+                       ctx.navigation->setInstantDismiss();
                        ctx.navigation->launch(id);
-                       ctx.navigation->showWindow();
+
+                       if (!ctx.navigation->isRootSearch() && ctx.navigation->activeCommand()->isView()) {
+                         ctx.navigation->setBackButtonVisibility(false);
+                         ctx.navigation->showWindow();
+                       }
                      });
   }
 
