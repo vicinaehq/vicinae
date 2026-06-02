@@ -2,5 +2,5 @@
 #include "common.hpp"
 
 void OpenCalculatorHistoryAction::execute(ApplicationContext *ctx) {
-  ctx->navigation->launch(EntrypointId{"calculator", "history"});
+  ctx->navigation->activateEntrypoint(EntrypointId{"calculator", "history"});
 }

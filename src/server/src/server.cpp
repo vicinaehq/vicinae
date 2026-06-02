@@ -383,16 +383,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     QObject::connect(globalShortcuts, &GlobalShortcutService::toggleLauncherRequested,
                      [&ctx](quint64) { ctx.navigation->toggleWindow(); });
     QObject::connect(globalShortcuts, &GlobalShortcutService::commandActivated,
-                     [&ctx](const EntrypointId &id, quint64) {
-                       ctx.navigation->popToRoot({.clearSearch = false});
-                       ctx.navigation->setInstantDismiss();
-                       ctx.navigation->launch(id);
-
-                       if (!ctx.navigation->isRootSearch() && ctx.navigation->activeCommand()->isView()) {
-                         ctx.navigation->setBackButtonVisibility(false);
-                         ctx.navigation->showWindow();
-                       }
-                     });
+                     [&ctx](const EntrypointId &id, quint64) { ctx.navigation->activateEntrypoint(id); });
   }
 
   QIcon::setFallbackSearchPaths(Environment::fallbackIconSearchPaths());

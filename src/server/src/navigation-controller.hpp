@@ -204,7 +204,7 @@ public:
 
   void launch(const std::shared_ptr<AbstractCmd> &cmd);
   void launch(const std::shared_ptr<AbstractCmd> &cmd, const ArgumentValues &arguments);
-  void launch(const EntrypointId &id);
+  bool activateEntrypoint(const EntrypointId &id, const ArgumentValues &arguments = {});
 
   const AbstractCmd *activeCommand() const;
   CommandFrame *activeFrame() const { return m_frames.back().get(); }
