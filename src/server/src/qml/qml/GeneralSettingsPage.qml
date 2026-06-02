@@ -60,8 +60,9 @@ Flickable {
             label: "Launcher hotkey"
             description: "Global shortcut to toggle the Vicinae launcher."
             ShortcutField {
-                width: parent.width
-                layoutDirection: Qt.RightToLeft
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                bordered: false
                 shortcutId: GlobalShortcuts.toggleId
                 shortcut: root.model.toggleShortcut
                 onAccepted: shortcut => root.model.toggleShortcut = shortcut
