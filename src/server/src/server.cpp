@@ -45,10 +45,10 @@
 #include "services/window-manager/window-manager.hpp"
 #include "services/app-runtime/app-runtime.hpp"
 #include "services/snippet/snippet-service.hpp"
-#ifdef Q_OS_LINUX
-#include "services/input-server/linux-input-server.hpp"
 #include "services/global-shortcuts/global-shortcut-service.hpp"
 #include "services/global-shortcuts/global-shortcut-backend-factory.hpp"
+#ifdef Q_OS_LINUX
+#include "services/input-server/linux-input-server.hpp"
 #include "services/snippet/linux-snippet-server.hpp"
 #else
 #include "services/snippet/null-snippet-server.hpp"
