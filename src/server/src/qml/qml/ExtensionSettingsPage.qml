@@ -283,6 +283,7 @@ Item {
                                 visible: settings.globalShortcutsSupported
                                 bordered: false
                                 placeholder: "Shortcut"
+                                shortcutId: cmdDelegate.entrypointId
                                 shortcut: cmdDelegate.shortcut
                                 onAccepted: shortcut => root.extModel.setShortcutByEntrypointId(cmdDelegate.entrypointId, shortcut)
                                 onCleared: root.extModel.clearShortcutByEntrypointId(cmdDelegate.entrypointId)

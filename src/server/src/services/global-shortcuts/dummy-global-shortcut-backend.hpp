@@ -17,5 +17,6 @@ public:
   bool start() override { return true; }
   void bindShortcut(const GlobalShortcutRequest &) override {}
   void unbindShortcut(const QString &) override {}
+  void unbindAll() override {}
   std::optional<GlobalShortcutInfo> shortcut(const QString &) const override { return std::nullopt; }
 };

@@ -515,6 +515,9 @@ set(SRCS
 	src/qml/config-bridge.hpp
 	src/qml/theme-bridge.hpp
 	src/qml/keyboard-bridge.hpp
+	src/qml/global-shortcut-bridge.hpp
+	src/qml/shortcut-conflict.hpp
+	src/qml/shortcut-conflict.cpp
 	src/qml/create-extension-view-host.hpp
 	src/qml/create-extension-view-host.cpp
 	src/qml/installed-extensions-model.hpp
@@ -598,6 +601,8 @@ if (APPLE)
 		src/services/app-runtime/macos/mac-app-runtime.mm
 		src/root-search/macos-settings/macos-settings-root-provider.hpp
 		src/root-search/macos-settings/macos-settings-root-provider.mm
+		src/services/global-shortcuts/macos-global-shortcut-backend.hpp
+		src/services/global-shortcuts/macos-global-shortcut-backend.cpp
 	)
 	set_source_files_properties(
 		src/ui/image/mac-bundle-icon-loader.mm
@@ -947,7 +952,7 @@ endif()
 target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/qml ${CMAKE_CURRENT_SOURCE_DIR}/src/qml/markdown)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
 if(APPLE)
-	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework UniformTypeIdentifiers")
+	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework UniformTypeIdentifiers" "-framework Carbon")
 endif()
 target_compile_features(${TARGET} PUBLIC cxx_std_23)
 

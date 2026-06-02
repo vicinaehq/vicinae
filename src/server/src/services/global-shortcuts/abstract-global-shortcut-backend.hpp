@@ -5,7 +5,6 @@
 
 struct GlobalShortcutRequest {
   QString id;
-  QString description;
   std::optional<Keyboard::Shortcut> trigger;
 };
 
@@ -15,7 +14,6 @@ struct GlobalShortcutInfo {
   QString id;
   GlobalShortcutStatus status = GlobalShortcutStatus::Unbound;
   std::optional<Keyboard::Shortcut> trigger;
-  QString triggerDisplay;
   QString error;
 };
 
@@ -50,6 +48,7 @@ public:
 
   virtual void bindShortcut(const GlobalShortcutRequest &request) = 0;
   virtual void unbindShortcut(const QString &id) = 0;
+  virtual void unbindAll() = 0;
 
   /// Current cached state for a shortcut. Never blocks; reads the backend's local view.
   virtual std::optional<GlobalShortcutInfo> shortcut(const QString &id) const = 0;

@@ -24,10 +24,21 @@ signals:
   void commandActivated(const EntrypointId &id, quint64 timestamp);
 
 public:
+  // Non-command global shortcuts are prefixed with '@' to avoid colliding with entrypoint ids.
+  static constexpr const char *TOGGLE_ID = "@toggle-launcher";
+
   GlobalShortcutService(config::Manager &config, std::unique_ptr<AbstractGlobalShortcutBackend> backend);
 
   AbstractGlobalShortcutBackend *backend() const { return m_backend.get(); }
   bool isSupported() const { return m_backend && m_backend->isSupported(); }
+
+  // Display name of the global shortcut already using `shortcut` (excluding `excludeId`), or nullopt.
+  // Always nullopt when the backend is unsupported (inert shortcuts can't actually conflict).
+  std::optional<QString> findConflict(const Keyboard::Shortcut &shortcut, const QString &excludeId) const;
+
+  // Suspends all global binds while the in-app recorder captures (so it doesn't hijack the keystroke),
+  // then rebinds from config on release.
+  void setCapturing(bool capturing);
 
 private:
   struct RunCommand {
@@ -45,4 +56,5 @@ private:
   std::unique_ptr<AbstractGlobalShortcutBackend> m_backend;
   std::unordered_map<QString, Action> m_actions;
   std::unordered_map<QString, QString> m_boundTriggers;
+  bool m_capturing = false;
 };

@@ -39,7 +39,11 @@ Popup {
         recorder.open();
     }
 
-    onOpened: keyReceiver.forceActiveFocus()
+    onOpened: {
+        GlobalShortcuts.setCapturing(true);
+        keyReceiver.forceActiveFocus();
+    }
+    onClosed: GlobalShortcuts.setCapturing(false)
     onActiveFocusChanged: if (!activeFocus && opened)
         close()
 

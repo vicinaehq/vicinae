@@ -11,6 +11,8 @@ RowLayout {
     // Whether to draw an outline around the trigger (off for dense list rows).
     property bool bordered: true
     property string placeholder: "Record shortcut"
+    // Owner id of this shortcut, excluded from conflict checks (so re-recording it isn't self-conflict).
+    property string shortcutId: ""
 
     signal accepted(string shortcut)
     signal cleared
@@ -79,7 +81,7 @@ RowLayout {
     ShortcutRecorderField {
         id: recorder
         shortcutDisplayProvider: (key, mods) => Keyboard.tokens(key, mods)
-        validateShortcut: (key, mods) => Keyboard.validate(key, mods)
+        validateShortcut: (key, mods) => GlobalShortcuts.validate(key, mods, field.shortcutId)
         onShortcutCaptured: (key, modifiers) => {
             const serialized = Keyboard.serialize(key, modifiers);
             if (serialized !== "")

@@ -62,6 +62,7 @@ Flickable {
             ShortcutField {
                 width: parent.width
                 layoutDirection: Qt.RightToLeft
+                shortcutId: GlobalShortcuts.toggleId
                 shortcut: root.model.toggleShortcut
                 onAccepted: shortcut => root.model.toggleShortcut = shortcut
                 onCleared: root.model.toggleShortcut = ""

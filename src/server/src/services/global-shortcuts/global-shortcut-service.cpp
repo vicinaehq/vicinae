@@ -1,14 +1,9 @@
 #include "services/global-shortcuts/global-shortcut-service.hpp"
 #include "common/types.hpp"
 #include "config/config.hpp"
+#include "service-registry.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 #include <utility>
-
-namespace {
-
-// non command global shortcuts are always prefix with '@' to prevent potential conflicts
-constexpr const auto TOGGLE_ID = "@toggle-launcher";
-
-} // namespace
 
 GlobalShortcutService::GlobalShortcutService(config::Manager &config,
                                              std::unique_ptr<AbstractGlobalShortcutBackend> backend)
@@ -22,13 +17,30 @@ GlobalShortcutService::GlobalShortcutService(config::Manager &config,
   reconcile();
 }
 
+void GlobalShortcutService::setCapturing(bool capturing) {
+  if (m_capturing == capturing) { return; }
+  m_capturing = capturing;
+
+  if (capturing) {
+    m_backend->unbindAll();
+    m_boundTriggers.clear();
+    m_actions.clear();
+  } else {
+    reconcile();
+  }
+}
+
 void GlobalShortcutService::reconcile() {
+  if (m_capturing) { return; }
+
   const config::ConfigValue &cfg = m_config.value();
 
   std::unordered_map<QString, std::pair<QString, Action>> desired;
 
   if (cfg.globalShortcuts.toggle && !cfg.globalShortcuts.toggle->empty()) {
-    desired.emplace(TOGGLE_ID, std::pair{*cfg.globalShortcuts.toggle, ToggleLauncherWindow{}});
+    desired.emplace(
+        QString::fromUtf8(TOGGLE_ID),
+        std::pair{QString::fromStdString(*cfg.globalShortcuts.toggle), Action{ToggleLauncherWindow{}}});
   }
 
   for (const auto &[provider, providerData] : cfg.providers) {
@@ -37,7 +49,8 @@ void GlobalShortcutService::reconcile() {
       if (item.enabled.has_value() && !*item.enabled) { continue; }
 
       EntrypointId eid{provider, entrypoint};
-      desired.emplace(eid, std::pair{*item.shortcut, RunCommand{eid}});
+      desired.emplace(QString::fromStdString(eid),
+                      std::pair{QString::fromStdString(*item.shortcut), Action{RunCommand{eid}}});
     }
   }
 
@@ -62,7 +75,7 @@ void GlobalShortcutService::reconcile() {
 
     if (!shortcut.isValid()) { continue; }
 
-    m_backend->bindShortcut({.id = id, .description = id, .trigger = shortcut});
+    m_backend->bindShortcut({.id = id, .trigger = shortcut});
     m_actions[id] = action;
     m_boundTriggers[id] = trigger;
   }
@@ -74,4 +87,35 @@ void GlobalShortcutService::onActivated(const QString &id, quint64 timestamp) {
         it->second, [&](const RunCommand &cmd) { emit commandActivated(cmd.id, timestamp); },
         [&](const ToggleLauncherWindow &launcher) { emit toggleLauncherRequested(timestamp); });
   }
+}
+
+std::optional<QString> GlobalShortcutService::findConflict(const Keyboard::Shortcut &shortcut,
+                                                           const QString &excludeId) const {
+  if (!isSupported()) { return std::nullopt; }
+
+  const config::ConfigValue &cfg = m_config.value();
+  const auto matches = [&](const std::string &trigger) {
+    return Keyboard::Shortcut::fromString(QString::fromStdString(trigger)) == shortcut;
+  };
+
+  if (excludeId != QString::fromUtf8(TOGGLE_ID) && cfg.globalShortcuts.toggle &&
+      !cfg.globalShortcuts.toggle->empty() && matches(*cfg.globalShortcuts.toggle)) {
+    return QStringLiteral("the launcher hotkey");
+  }
+
+  for (const auto &[provider, providerData] : cfg.providers) {
+    for (const auto &[entrypoint, item] : providerData.entrypoints) {
+      if (!item.shortcut || item.shortcut->empty()) { continue; }
+
+      EntrypointId eid{provider, entrypoint};
+      if (QString::fromStdString(eid) == excludeId || !matches(*item.shortcut)) { continue; }
+
+      if (auto *manager = ServiceRegistry::instance()->rootItemManager()) {
+        if (auto meta = manager->itemMetadata(eid); meta.item) { return meta.item->title(); }
+      }
+      return QStringLiteral("another command");
+    }
+  }
+
+  return std::nullopt;
 }

@@ -1,8 +1,15 @@
 #include "services/global-shortcuts/global-shortcut-backend-factory.hpp"
 #include "services/global-shortcuts/dummy-global-shortcut-backend.hpp"
 
+#ifdef Q_OS_MACOS
+#include "services/global-shortcuts/macos-global-shortcut-backend.hpp"
+#endif
+
 std::unique_ptr<AbstractGlobalShortcutBackend> createGlobalShortcutBackend() {
-  // TODO: select an X11 (XGrabKey) / macOS / Windows backend here. Wayland has no mechanism we're
-  // willing to support, so it falls through to the dummy (global shortcuts reported as unsupported).
+  // TODO: X11 (XGrabKey) / Windows backends.
+#ifdef Q_OS_MACOS
+  return std::make_unique<MacOSGlobalShortcutBackend>();
+#else
   return std::make_unique<DummyGlobalShortcutBackend>();
+#endif
 }

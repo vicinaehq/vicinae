@@ -197,7 +197,11 @@ template <> struct Partial<InputServer> {
 };
 
 struct GlobalShortcuts {
+#if defined(Q_OS_MACOS) || defined(Q_OS_WIN)
+  std::optional<std::string> toggle = "alt+space";
+#else
   std::optional<std::string> toggle = "super+control+space";
+#endif
 };
 
 template <> struct Partial<GlobalShortcuts> {
