@@ -56,6 +56,21 @@ Flickable {
         }
 
         SettingsRow {
+            visible: settings.globalShortcutsSupported
+            label: "Launcher hotkey"
+            description: "Global shortcut to toggle the Vicinae launcher."
+            ShortcutField {
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                bordered: false
+                shortcutId: GlobalShortcuts.toggleId
+                shortcut: root.model.toggleShortcut
+                onAccepted: shortcut => root.model.toggleShortcut = shortcut
+                onCleared: root.model.toggleShortcut = ""
+            }
+        }
+
+        SettingsRow {
             label: "Close on focus loss"
             SettingsToggle {
                 checked: root.model.closeOnFocusLoss

@@ -54,7 +54,7 @@ Item {
             return;
         }
 
-        const error = root.model.validateShortcut(key, mods);
+        const error = root.model.validateShortcut(root._recordingRow, key, mods);
         if (error !== "") {
             root._recordingStatus = error;
             root._recordingStatusColor = Theme.danger;

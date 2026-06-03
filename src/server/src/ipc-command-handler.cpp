@@ -152,13 +152,10 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
     if (idx == std::string::npos) { return std::unexpected("Invalid format for launch deeplink"); }
 
     EntrypointId id{str.substr(0, idx), str.substr(idx + 1)};
-    auto entrypoint = root->findItemById(id);
 
-    if (!entrypoint) {
+    if (!root->findItemById(id)) {
       return std::unexpected{std::format("{} does not refer to a valid entrypoint", std::string{id})};
     }
-
-    m_ctx.navigation->popToRoot({.clearSearch = false});
 
     ArgumentValues arguments;
     if (query.hasQueryItem("arguments")) {
@@ -175,29 +172,9 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
       }
     }
 
-    m_ctx.navigation->setInstantDismiss();
-
-    // FIXME: hack, we must create a unified interface for all root items so that they can be launched with
-    // arguments And also, get their own execution context (much needed for script commands that may be async)
-    if (auto ext = dynamic_cast<CommandRootItem *>(entrypoint)) {
-      m_ctx.navigation->launch(ext->command(), arguments);
-    } else {
-      auto panel = entrypoint->newActionPanel(&m_ctx, root->itemMetadata(id));
-      panel->finalize(); // not pretty, one day we will fix this too
-      auto action = panel->primaryAction();
-
-      if (!action) return std::unexpected("No primary action for this root item");
-
-      action->execute(&m_ctx);
-    }
-
-    if (auto text = query.queryItemValue("fallbackText"); !text.isEmpty()) {
-      m_ctx.navigation->setSearchText(text);
-    }
-
-    if (!m_ctx.navigation->isRootSearch() && m_ctx.navigation->activeCommand()->isView()) {
-      m_ctx.navigation->setBackButtonVisibility(false);
-      m_ctx.navigation->showWindow();
+    if (!m_ctx.navigation->activateEntrypoint(
+            id, {.arguments = std::move(arguments), .fallbackText = query.queryItemValue("fallbackText")})) {
+      return std::unexpected("No primary action for this root item");
     }
 
     return {};

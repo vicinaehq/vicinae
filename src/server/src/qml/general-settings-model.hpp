@@ -34,6 +34,7 @@ class GeneralSettingsModel : public QObject {
   Q_PROPERTY(QVariant currentIconTheme READ currentIconTheme NOTIFY configChanged)
   Q_PROPERTY(QVariant currentFaviconService READ currentFaviconService NOTIFY configChanged)
   Q_PROPERTY(QVariant currentKeybindingScheme READ currentKeybindingScheme NOTIFY configChanged)
+  Q_PROPERTY(QString toggleShortcut READ toggleShortcut WRITE setToggleShortcut NOTIFY configChanged)
 
 signals:
   void configChanged();
@@ -84,6 +85,9 @@ public:
   Q_INVOKABLE void selectIconTheme(const QString &id);
   Q_INVOKABLE void selectFaviconService(const QString &id);
   Q_INVOKABLE void selectKeybindingScheme(const QString &id);
+
+  QString toggleShortcut() const;
+  void setToggleShortcut(const QString &shortcut);
 
 private:
   const config::ConfigValue &cfg() const;

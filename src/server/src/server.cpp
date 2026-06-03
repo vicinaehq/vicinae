@@ -45,6 +45,8 @@
 #include "services/window-manager/window-manager.hpp"
 #include "services/app-runtime/app-runtime.hpp"
 #include "services/snippet/snippet-service.hpp"
+#include "services/global-shortcuts/global-shortcut-service.hpp"
+#include "services/global-shortcuts/global-shortcut-backend-factory.hpp"
 #ifdef Q_OS_LINUX
 #include "services/input-server/linux-input-server.hpp"
 #include "services/snippet/linux-snippet-server.hpp"
@@ -151,6 +153,8 @@ int startServer(const ServerLaunchOptions &launchOpts) {
                                                        std::move(platformPaste));
     auto fontService = std::make_unique<FontService>();
     auto configService = std::make_unique<config::Manager>(m_config);
+    auto globalShortcutService =
+        std::make_unique<GlobalShortcutService>(*configService, createGlobalShortcutBackend());
     auto rootItemManager = std::make_unique<RootItemManager>(*configService, *localStorage);
     auto shortcutService =
         std::make_unique<ShortcutService>(Omnicast::dataDir() / "shortcuts" / "shortcuts.json", omniDb.get());
@@ -204,6 +208,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setExtensionRegistry(std::move(extensionRegistry));
     registry->setOAuthService(std::move(oauthService));
     registry->setPowerManager(std::make_unique<PowerManager>());
+    registry->setGlobalShortcuts(std::move(globalShortcutService));
     registry->setAudioControl(std::make_unique<AudioControlService>());
     registry->setScriptDb(std::make_unique<ScriptCommandService>());
     registry->setBrowserExtension(std::make_unique<BrowserExtensionService>());
@@ -373,6 +378,14 @@ int startServer(const ServerLaunchOptions &launchOpts) {
       });
 
   QObject::connect(cfgService, &config::Manager::configChanged, configChanged);
+
+  if (auto *globalShortcuts = ServiceRegistry::instance()->globalShortcuts()) {
+    QObject::connect(globalShortcuts, &GlobalShortcutService::toggleLauncherRequested,
+                     [&ctx](quint64) { ctx.navigation->toggleWindow(); });
+    QObject::connect(globalShortcuts, &GlobalShortcutService::commandActivated,
+                     [&ctx](const EntrypointId &id, quint64) { ctx.navigation->activateEntrypoint(id); });
+  }
+
   QIcon::setFallbackSearchPaths(Environment::fallbackIconSearchPaths());
 
   auto builtinFont = ServiceRegistry::instance()->fontService()->builtinFontFamily();

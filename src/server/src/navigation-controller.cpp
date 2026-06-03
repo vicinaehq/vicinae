@@ -550,7 +550,9 @@ bool NavigationController::reloadActiveCommand() {
   EntrypointId const id = cmd->uniqueId();
 
   unloadActiveCommand();
-  launch(id);
+
+  auto *item = m_ctx.services->rootItemManager()->findItemById(id);
+  if (auto *ext = dynamic_cast<CommandRootItem *>(item)) { launch(ext->command()); }
 
   return true;
 }
@@ -574,17 +576,44 @@ void NavigationController::unloadActiveCommand() {
   }
 }
 
-void NavigationController::launch(const EntrypointId &id) {
-  auto root = m_ctx.services->rootItemManager();
-
-  for (ExtensionRootProvider const *extension : root->extensions()) {
-    for (const auto &cmd : extension->repository()->commands()) {
-      if (cmd->uniqueId() == id) {
-        launch(cmd);
-        return;
-      }
-    }
+bool NavigationController::activateEntrypoint(const EntrypointId &id,
+                                              const ActivateEntrypointOptions &options) {
+  auto *root = m_ctx.services->rootItemManager();
+  auto *entrypoint = root->findItemById(id);
+  if (!entrypoint) {
+    qWarning() << "activateEntrypoint: unknown entrypoint" << QString::fromStdString(std::string{id});
+    return false;
   }
+
+  popToRoot({.clearSearch = false});
+
+  bool initialOpenState = m_ctx.navigation->isWindowOpened();
+
+  if (!initialOpenState) { setInstantDismiss(); }
+
+  if (auto *ext = dynamic_cast<CommandRootItem *>(entrypoint)) {
+    launch(ext->command(), options.arguments);
+  } else {
+    auto panel = entrypoint->newActionPanel(&m_ctx, root->itemMetadata(id));
+    panel->finalize();
+    auto *action = panel->primaryAction();
+    if (!action) {
+      qWarning() << "activateEntrypoint: no primary action for" << QString::fromStdString(std::string{id});
+      return false;
+    }
+    action->execute(&m_ctx);
+  }
+
+  if (!options.fallbackText.isEmpty()) { setSearchText(options.fallbackText); }
+
+  auto *active = activeCommand();
+
+  if (!isRootSearch() && active && active->isView() && !initialOpenState) {
+    setBackButtonVisibility(false);
+    showWindow();
+  }
+
+  return true;
 }
 
 void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd) {

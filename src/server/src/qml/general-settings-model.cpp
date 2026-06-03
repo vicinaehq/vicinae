@@ -213,3 +213,12 @@ void GeneralSettingsModel::selectFaviconService(const QString &id) {
 void GeneralSettingsModel::selectKeybindingScheme(const QString &id) {
   cfgManager().mergeWithUser({.keybinding = id.toStdString()});
 }
+
+QString GeneralSettingsModel::toggleShortcut() const {
+  return QString::fromStdString(cfg().globalShortcuts.toggle.value_or(""));
+}
+
+void GeneralSettingsModel::setToggleShortcut(const QString &shortcut) {
+  cfgManager().mergeWithUser(
+      {.globalShortcuts = config::Partial<config::GlobalShortcuts>{.toggle = shortcut.toStdString()}});
+}

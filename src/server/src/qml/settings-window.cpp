@@ -4,6 +4,8 @@
 #include "extension-settings-model.hpp"
 #include "general-settings-model.hpp"
 #include "image-source.hpp"
+#include "keyboard-bridge.hpp"
+#include "global-shortcut-bridge.hpp"
 #include "keybind-settings-model.hpp"
 #include "theme-bridge.hpp"
 #include "view-utils.hpp"
@@ -11,6 +13,7 @@
 #include "extension/extension.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "service-registry.hpp"
+#include "services/global-shortcuts/global-shortcut-service.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
@@ -33,6 +36,8 @@ void SettingsWindow::ensureInitialized() {
   m_themeBridge = new ThemeBridge(this);
   m_configBridge = new ConfigBridge(this);
   m_imgSource = new ImageSource(this);
+  m_keyboardBridge = new KeyboardBridge(this);
+  m_globalShortcutBridge = new GlobalShortcutBridge(this);
   m_generalModel = new GeneralSettingsModel(this);
   m_keybindModel = new KeybindSettingsModel(this);
   m_extensionModel = new ExtensionSettingsModel(this);
@@ -41,6 +46,8 @@ void SettingsWindow::ensureInitialized() {
   rootCtx->setContextProperty(QStringLiteral("Theme"), m_themeBridge);
   rootCtx->setContextProperty(QStringLiteral("Config"), m_configBridge);
   rootCtx->setContextProperty(QStringLiteral("Img"), m_imgSource);
+  rootCtx->setContextProperty(QStringLiteral("Keyboard"), m_keyboardBridge);
+  rootCtx->setContextProperty(QStringLiteral("GlobalShortcuts"), m_globalShortcutBridge);
   rootCtx->setContextProperty(QStringLiteral("settings"), this);
   rootCtx->setContextProperty(QStringLiteral("FileChooser"),
                               ServiceRegistry::instance()->fileChooserService());
@@ -124,6 +131,11 @@ QString SettingsWindow::version() const { return QStringLiteral(VICINAE_GIT_TAG)
 QString SettingsWindow::commitHash() const { return QStringLiteral(VICINAE_GIT_COMMIT_HASH); }
 QString SettingsWindow::buildInfo() const { return QStringLiteral(BUILD_INFO); }
 QString SettingsWindow::headline() const { return Omnicast::HEADLINE; }
+
+bool SettingsWindow::globalShortcutsSupported() const {
+  auto *service = ServiceRegistry::instance()->globalShortcuts();
+  return service && service->isSupported();
+}
 
 void SettingsWindow::openUrl(const QString &url) { m_ctx.services->appDb()->openTarget(url); }
 

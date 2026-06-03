@@ -34,7 +34,7 @@ public:
   Q_INVOKABLE void select(int row);
   Q_INVOKABLE void moveUp();
   Q_INVOKABLE void moveDown();
-  Q_INVOKABLE QString validateShortcut(int key, int modifiers) const;
+  Q_INVOKABLE QString validateShortcut(int row, int key, int modifiers) const;
   Q_INVOKABLE void setShortcut(int row, int key, int modifiers);
   Q_INVOKABLE void clearShortcut(int row);
   Q_INVOKABLE QVariantList shortcutDisplayTokens(int key, int modifiers) const;

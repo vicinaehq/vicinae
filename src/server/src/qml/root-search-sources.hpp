@@ -25,6 +25,7 @@ enum RootSearchRole {
   CalcAnswer,
   CalcAnswerUnit,
   IsFile,
+  ShortcutTokens,
 };
 
 struct OwnedResult {

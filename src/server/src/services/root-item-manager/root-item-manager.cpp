@@ -329,6 +329,17 @@ bool RootItemManager::setAlias(const EntrypointId &id, std::string_view alias) {
   return true;
 }
 
+bool RootItemManager::setShortcut(const EntrypointId &id, std::string_view shortcut) {
+  if (shortcut.empty()) {
+    m_metadata[id].shortcut.reset();
+  } else {
+    m_metadata[id].shortcut = shortcut;
+  }
+  m_cfg.mergeEntrypointWithUser(id, {.shortcut = std::string{shortcut}});
+
+  return true;
+}
+
 QJsonObject RootItemManager::getProviderPreferenceValues(const QString &id) const {
   auto provider = findProviderById(id);
   auto json = transformPreferenceValues(
@@ -593,6 +604,7 @@ void RootItemManager::mergeConfigWithMetadata(const config::ConfigValue &cfg) {
       item.item->preferenceValuesChanged(getItemPreferenceValues(entrypointId));
       if (auto enabled = itemConfig->enabled) { meta.enabled = enabled.value(); }
       if (auto alias = itemConfig->alias) { meta.alias = alias.value(); }
+      if (auto shortcut = itemConfig->shortcut) { meta.shortcut = shortcut.value(); }
     }
 
     if (providerConfig) {
