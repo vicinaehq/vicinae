@@ -586,7 +586,10 @@ bool NavigationController::activateEntrypoint(const EntrypointId &id,
   }
 
   popToRoot({.clearSearch = false});
-  setInstantDismiss();
+
+  bool initialOpenState = m_ctx.navigation->isWindowOpened();
+
+  if (!initialOpenState) { setInstantDismiss(); }
 
   if (auto *ext = dynamic_cast<CommandRootItem *>(entrypoint)) {
     launch(ext->command(), options.arguments);
@@ -604,7 +607,8 @@ bool NavigationController::activateEntrypoint(const EntrypointId &id,
   if (!options.fallbackText.isEmpty()) { setSearchText(options.fallbackText); }
 
   auto *active = activeCommand();
-  if (!isRootSearch() && active && active->isView()) {
+
+  if (!isRootSearch() && active && active->isView() && !initialOpenState) {
     setBackButtonVisibility(false);
     showWindow();
   }
