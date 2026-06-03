@@ -1,6 +1,6 @@
 #pragma once
-#include <limits>
 #include "services/global-shortcuts/abstract-global-shortcut-backend.hpp"
+#include <expected>
 
 /**
  * Fallback used when no real backend is activatable. Accepts binds but never fires.
@@ -11,12 +11,11 @@ class DummyGlobalShortcutBackend : public AbstractGlobalShortcutBackend {
 public:
   QString id() const override { return "dummy"; }
   bool isSupported() const override { return false; }
-  bool isActivatable() const override { return true; }
-  int activationPriority() const override { return std::numeric_limits<int>::min(); }
 
   bool start() override { return true; }
-  void bindShortcut(const GlobalShortcutRequest &) override {}
+  std::expected<void, QString> bindShortcut(const GlobalShortcutRequest &) override {
+    return std::unexpected(QStringLiteral("global shortcuts are not supported in this environment"));
+  }
   void unbindShortcut(const QString &) override {}
   void unbindAll() override {}
-  std::optional<GlobalShortcutInfo> shortcut(const QString &) const override { return std::nullopt; }
 };

@@ -1,13 +1,12 @@
 #include "services/global-shortcuts/global-shortcut-service.hpp"
 #include "common/types.hpp"
 #include "config/config.hpp"
-#include "service-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include <utility>
 
-GlobalShortcutService::GlobalShortcutService(config::Manager &config,
+GlobalShortcutService::GlobalShortcutService(config::Manager &config, RootItemManager &rootItemManager,
                                              std::unique_ptr<AbstractGlobalShortcutBackend> backend)
-    : m_config(config), m_backend(std::move(backend)) {
+    : m_config(config), m_rootItemManager(rootItemManager), m_backend(std::move(backend)) {
   connect(m_backend.get(), &AbstractGlobalShortcutBackend::shortcutActivated, this,
           &GlobalShortcutService::onActivated);
   connect(m_backend.get(), &AbstractGlobalShortcutBackend::ready, this, &GlobalShortcutService::reconcile);
@@ -32,15 +31,17 @@ void GlobalShortcutService::setCapturing(bool capturing) {
 
 void GlobalShortcutService::reconcile() {
   if (m_capturing) { return; }
+  if (!isSupported()) { return; }
 
   const config::ConfigValue &cfg = m_config.value();
 
-  std::unordered_map<QString, std::pair<QString, Action>> desired;
+  std::unordered_map<QString, Desired> desired;
 
   if (cfg.globalShortcuts.toggle && !cfg.globalShortcuts.toggle->empty()) {
-    desired.emplace(
-        QString::fromUtf8(TOGGLE_ID),
-        std::pair{QString::fromStdString(*cfg.globalShortcuts.toggle), Action{ToggleLauncherWindow{}}});
+    desired.emplace(QString::fromUtf8(TOGGLE_ID),
+                    Desired{.trigger = QString::fromStdString(*cfg.globalShortcuts.toggle),
+                            .description = QStringLiteral("Toggle Vicinae"),
+                            .action = ToggleLauncherWindow{}});
   }
 
   for (const auto &[provider, providerData] : cfg.providers) {
@@ -49,14 +50,15 @@ void GlobalShortcutService::reconcile() {
       if (item.enabled.has_value() && !*item.enabled) { continue; }
 
       EntrypointId eid{provider, entrypoint};
-      desired.emplace(QString::fromStdString(eid),
-                      std::pair{QString::fromStdString(*item.shortcut), Action{RunCommand{eid}}});
+      desired.emplace(QString::fromStdString(eid), Desired{.trigger = QString::fromStdString(*item.shortcut),
+                                                           .description = describeCommand(eid),
+                                                           .action = RunCommand{eid}});
     }
   }
 
   for (auto it = m_appliedTriggers.begin(); it != m_appliedTriggers.end();) {
     auto desiredIt = desired.find(it->first);
-    if (desiredIt == desired.end() || desiredIt->second.first != it->second) {
+    if (desiredIt == desired.end() || desiredIt->second.trigger != it->second) {
       m_backend->unbindShortcut(it->first);
       m_actions.erase(it->first);
       it = m_appliedTriggers.erase(it);
@@ -66,28 +68,41 @@ void GlobalShortcutService::reconcile() {
   }
 
   for (const auto &[id, entry] : desired) {
-    const auto &[trigger, action] = entry;
-    if (auto it = m_appliedTriggers.find(id); it != m_appliedTriggers.end() && it->second == trigger) {
+    if (auto it = m_appliedTriggers.find(id); it != m_appliedTriggers.end() && it->second == entry.trigger) {
       continue;
     }
 
-    auto shortcut = Keyboard::Shortcut::fromString(trigger);
+    auto shortcut = Keyboard::Shortcut::fromString(entry.trigger);
 
     if (!shortcut.isValid()) { continue; }
 
-    m_backend->bindShortcut({.id = id, .trigger = shortcut});
-    m_appliedTriggers[id] = trigger;
+    auto bound = m_backend->bindShortcut({.id = id, .trigger = shortcut, .description = entry.description});
+    m_appliedTriggers[id] = entry.trigger;
 
-    // TODO: assumes a synchronous backend. An async backend won't have a Bound status yet here;
-    // drive m_actions off the backend's shortcutsChanged signal instead.
-    auto info = m_backend->shortcut(id);
-
-    if (info && info->status == GlobalShortcutStatus::Bound) {
-      m_actions[id] = action;
+    if (bound) {
+      m_actions[id] = entry.action;
     } else {
       m_actions.erase(id);
+      qWarning() << "Failed to bind global shortcut" << id << "(" << entry.trigger << "):" << bound.error();
     }
   }
+}
+
+std::optional<QString> GlobalShortcutService::probeBind(const Keyboard::Shortcut &shortcut) {
+  if (!isSupported() || !m_capturing) { return std::nullopt; }
+
+  const QString probeId = QStringLiteral("@probe");
+  auto bound =
+      m_backend->bindShortcut({.id = probeId, .trigger = shortcut, .description = QStringLiteral("Vicinae")});
+  m_backend->unbindShortcut(probeId);
+
+  if (!bound) { return bound.error(); }
+  return std::nullopt;
+}
+
+QString GlobalShortcutService::describeCommand(const EntrypointId &id) const {
+  if (auto meta = m_rootItemManager.itemMetadata(id); meta.item) { return meta.item->title(); }
+  return QString::fromStdString(id);
 }
 
 void GlobalShortcutService::onActivated(const QString &id, quint64 timestamp) {
@@ -119,9 +134,7 @@ std::optional<QString> GlobalShortcutService::findConflict(const Keyboard::Short
       EntrypointId eid{provider, entrypoint};
       if (QString::fromStdString(eid) == excludeId || !matches(*item.shortcut)) { continue; }
 
-      if (auto *manager = ServiceRegistry::instance()->rootItemManager()) {
-        if (auto meta = manager->itemMetadata(eid); meta.item) { return meta.item->title(); }
-      }
+      if (auto meta = m_rootItemManager.itemMetadata(eid); meta.item) { return meta.item->title(); }
       return QStringLiteral("another command");
     }
   }

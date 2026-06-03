@@ -25,6 +25,8 @@
 #include "service-registry.hpp"
 #include "services/background-effect/background-effect-manager.hpp"
 #include "qml/background-effect-attached.hpp"
+#include "services/shortcut-inhibit/shortcut-inhibit-manager.hpp"
+#include "qml/shortcut-inhibitor-attached.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
 #include "services/browser-extension-service.hpp"
 #include "services/calculator-service/calculator-service.hpp"
@@ -153,9 +155,9 @@ int startServer(const ServerLaunchOptions &launchOpts) {
                                                        std::move(platformPaste));
     auto fontService = std::make_unique<FontService>();
     auto configService = std::make_unique<config::Manager>(m_config);
-    auto globalShortcutService =
-        std::make_unique<GlobalShortcutService>(*configService, createGlobalShortcutBackend());
     auto rootItemManager = std::make_unique<RootItemManager>(*configService, *localStorage);
+    auto globalShortcutService = std::make_unique<GlobalShortcutService>(*configService, *rootItemManager,
+                                                                         createGlobalShortcutBackend());
     auto shortcutService =
         std::make_unique<ShortcutService>(Omnicast::dataDir() / "shortcuts" / "shortcuts.json", omniDb.get());
     auto toastService = std::make_unique<ToastService>();
@@ -214,6 +216,8 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setBrowserExtension(std::make_unique<BrowserExtensionService>());
     registry->setBackgroundEffectManager(std::make_unique<BackgroundEffectManager>());
     BackgroundEffect::setManager(registry->backgroundEffectManager());
+    registry->setShortcutInhibitManager(std::make_unique<ShortcutInhibitManager>());
+    ShortcutInhibitor::setManager(registry->shortcutInhibitManager());
     registry->setFileChooserService(std::make_unique<FileChooserService>());
     registry->setNewsService(std::make_unique<NewsService>(*registry->config()));
     registry->setTelemetry(std::make_unique<TelemetryService>(*registry->config()));

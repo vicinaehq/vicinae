@@ -209,19 +209,11 @@ bool MacOSGlobalShortcutBackend::start() {
   return true;
 }
 
-void MacOSGlobalShortcutBackend::bindShortcut(const GlobalShortcutRequest &request) {
+std::expected<void, QString> MacOSGlobalShortcutBackend::bindShortcut(const GlobalShortcutRequest &request) {
   unbindShortcut(request.id);
 
-  GlobalShortcutInfo info{.id = request.id, .trigger = request.trigger};
   const auto keyCode = macVirtualKeyForQtKey(request.trigger.key());
-
-  if (!keyCode) {
-    info.status = GlobalShortcutStatus::Failed;
-    info.error = QStringLiteral("unsupported or invalid trigger");
-    m_bindings.emplace(request.id, Binding{.info = info});
-    emit shortcutsChanged();
-    return;
-  }
+  if (!keyCode) { return std::unexpected(QStringLiteral("unsupported or invalid trigger")); }
 
   const uint32_t carbonId = m_nextCarbonId++;
   const EventHotKeyID hotKeyId{.signature = HOT_KEY_SIGNATURE, .id = carbonId};
@@ -230,17 +222,12 @@ void MacOSGlobalShortcutBackend::bindShortcut(const GlobalShortcutRequest &reque
                                               GetApplicationEventTarget(), 0, &ref);
 
   if (status != noErr || !ref) {
-    info.status = GlobalShortcutStatus::Failed;
-    info.error = QStringLiteral("RegisterEventHotKey failed (%1)").arg(status);
-    m_bindings.emplace(request.id, Binding{.info = info});
-    emit shortcutsChanged();
-    return;
+    return std::unexpected(QStringLiteral("RegisterEventHotKey failed (%1)").arg(status));
   }
 
-  info.status = GlobalShortcutStatus::Bound;
-  m_bindings.emplace(request.id, Binding{.info = info, .ref = ref, .carbonId = carbonId});
+  m_bindings.emplace(request.id, Binding{.ref = ref, .carbonId = carbonId});
   m_idByCarbonId.emplace(carbonId, request.id);
-  emit shortcutsChanged();
+  return {};
 }
 
 void MacOSGlobalShortcutBackend::unbindShortcut(const QString &id) {
@@ -253,7 +240,6 @@ void MacOSGlobalShortcutBackend::unbindShortcut(const QString &id) {
   }
 
   m_bindings.erase(it);
-  emit shortcutsChanged();
 }
 
 void MacOSGlobalShortcutBackend::unbindAll() {
@@ -262,12 +248,6 @@ void MacOSGlobalShortcutBackend::unbindAll() {
   }
   m_bindings.clear();
   m_idByCarbonId.clear();
-  emit shortcutsChanged();
-}
-
-std::optional<GlobalShortcutInfo> MacOSGlobalShortcutBackend::shortcut(const QString &id) const {
-  if (const auto it = m_bindings.find(id); it != m_bindings.end()) { return it->second.info; }
-  return std::nullopt;
 }
 
 void MacOSGlobalShortcutBackend::handleHotKey(uint32_t carbonId, quint64 timestamp) {
