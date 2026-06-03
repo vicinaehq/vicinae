@@ -5,7 +5,7 @@
 
 struct GlobalShortcutRequest {
   QString id;
-  std::optional<Keyboard::Shortcut> trigger;
+  Keyboard::Shortcut trigger;
 };
 
 enum class GlobalShortcutStatus { Bound, Unbound, Failed };
@@ -13,7 +13,7 @@ enum class GlobalShortcutStatus { Bound, Unbound, Failed };
 struct GlobalShortcutInfo {
   QString id;
   GlobalShortcutStatus status = GlobalShortcutStatus::Unbound;
-  std::optional<Keyboard::Shortcut> trigger;
+  Keyboard::Shortcut trigger;
   QString error;
 };
 

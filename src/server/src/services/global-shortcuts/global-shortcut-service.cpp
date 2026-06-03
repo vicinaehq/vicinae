@@ -81,6 +81,7 @@ void GlobalShortcutService::reconcile() {
     // TODO: assumes a synchronous backend. An async backend won't have a Bound status yet here;
     // drive m_actions off the backend's shortcutsChanged signal instead.
     auto info = m_backend->shortcut(id);
+
     if (info && info->status == GlobalShortcutStatus::Bound) {
       m_actions[id] = action;
     } else {

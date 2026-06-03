@@ -213,10 +213,9 @@ void MacOSGlobalShortcutBackend::bindShortcut(const GlobalShortcutRequest &reque
   unbindShortcut(request.id);
 
   GlobalShortcutInfo info{.id = request.id, .trigger = request.trigger};
+  const auto keyCode = macVirtualKeyForQtKey(request.trigger.key());
 
-  const auto keyCode = request.trigger ? macVirtualKeyForQtKey(request.trigger->key()) : std::nullopt;
-
-  if (!request.trigger || !request.trigger->isValid() || !keyCode) {
+  if (!keyCode) {
     info.status = GlobalShortcutStatus::Failed;
     info.error = QStringLiteral("unsupported or invalid trigger");
     m_bindings.emplace(request.id, Binding{.info = info});
@@ -227,7 +226,7 @@ void MacOSGlobalShortcutBackend::bindShortcut(const GlobalShortcutRequest &reque
   const uint32_t carbonId = m_nextCarbonId++;
   const EventHotKeyID hotKeyId{.signature = HOT_KEY_SIGNATURE, .id = carbonId};
   EventHotKeyRef ref = nullptr;
-  const OSStatus status = RegisterEventHotKey(*keyCode, carbonModifiers(request.trigger->mods()), hotKeyId,
+  const OSStatus status = RegisterEventHotKey(*keyCode, carbonModifiers(request.trigger.mods()), hotKeyId,
                                               GetApplicationEventTarget(), 0, &ref);
 
   if (status != noErr || !ref) {
