@@ -576,12 +576,12 @@ void NavigationController::unloadActiveCommand() {
   }
 }
 
-bool NavigationController::activateEntrypoint(const EntrypointId &id, const ArgumentValues &arguments) {
+bool NavigationController::activateEntrypoint(const EntrypointId &id,
+                                              const ActivateEntrypointOptions &options) {
   auto *root = m_ctx.services->rootItemManager();
   auto *entrypoint = root->findItemById(id);
   if (!entrypoint) {
-    qWarning() << "activateEntrypoint: unknown entrypoint"
-               << QString::fromStdString(std::string{id});
+    qWarning() << "activateEntrypoint: unknown entrypoint" << QString::fromStdString(std::string{id});
     return false;
   }
 
@@ -589,18 +589,19 @@ bool NavigationController::activateEntrypoint(const EntrypointId &id, const Argu
   setInstantDismiss();
 
   if (auto *ext = dynamic_cast<CommandRootItem *>(entrypoint)) {
-    launch(ext->command(), arguments);
+    launch(ext->command(), options.arguments);
   } else {
     auto panel = entrypoint->newActionPanel(&m_ctx, root->itemMetadata(id));
     panel->finalize();
     auto *action = panel->primaryAction();
     if (!action) {
-      qWarning() << "activateEntrypoint: no primary action for"
-                 << QString::fromStdString(std::string{id});
+      qWarning() << "activateEntrypoint: no primary action for" << QString::fromStdString(std::string{id});
       return false;
     }
     action->execute(&m_ctx);
   }
+
+  if (!options.fallbackText.isEmpty()) { setSearchText(options.fallbackText); }
 
   auto *active = activeCommand();
   if (!isRootSearch() && active && active->isView()) {

@@ -36,6 +36,11 @@ struct PopToRootOptions {
 
 using ArgumentValues = std::vector<std::pair<QString, QString>>;
 
+struct ActivateEntrypointOptions {
+  ArgumentValues arguments;
+  QString fallbackText;
+};
+
 struct CompleterState {
   ArgumentList args;
   ArgumentValues values;
@@ -204,7 +209,7 @@ public:
 
   void launch(const std::shared_ptr<AbstractCmd> &cmd);
   void launch(const std::shared_ptr<AbstractCmd> &cmd, const ArgumentValues &arguments);
-  bool activateEntrypoint(const EntrypointId &id, const ArgumentValues &arguments = {});
+  bool activateEntrypoint(const EntrypointId &id, const ActivateEntrypointOptions &options = {});
 
   const AbstractCmd *activeCommand() const;
   CommandFrame *activeFrame() const { return m_frames.back().get(); }

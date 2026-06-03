@@ -175,8 +175,8 @@ uint32_t carbonModifiers(Qt::KeyboardModifiers mods) {
 
 OSStatus hotKeyHandler(EventHandlerCallRef, EventRef event, void *userData) {
   EventHotKeyID hotKeyId{};
-  if (GetEventParameter(event, kEventParamDirectObject, typeEventHotKeyID, nullptr, sizeof(hotKeyId),
-                        nullptr, &hotKeyId) != noErr) {
+  if (GetEventParameter(event, kEventParamDirectObject, typeEventHotKeyID, nullptr, sizeof(hotKeyId), nullptr,
+                        &hotKeyId) != noErr) {
     return eventNotHandledErr;
   }
 
@@ -201,9 +201,7 @@ bool MacOSGlobalShortcutBackend::start() {
 
   const EventTypeSpec spec{kEventClassKeyboard, kEventHotKeyPressed};
   EventHandlerRef handlerRef = nullptr;
-  if (InstallApplicationEventHandler(&hotKeyHandler, 1, &spec, this, &handlerRef) != noErr) {
-    return false;
-  }
+  if (InstallApplicationEventHandler(&hotKeyHandler, 1, &spec, this, &handlerRef) != noErr) { return false; }
 
   m_handler = handlerRef;
   m_started = true;

@@ -55,6 +55,6 @@ private:
   config::Manager &m_config;
   std::unique_ptr<AbstractGlobalShortcutBackend> m_backend;
   std::unordered_map<QString, Action> m_actions;
-  std::unordered_map<QString, QString> m_boundTriggers;
+  std::unordered_map<QString, QString> m_appliedTriggers;
   bool m_capturing = false;
 };

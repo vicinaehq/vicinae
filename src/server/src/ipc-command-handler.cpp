@@ -172,12 +172,9 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
       }
     }
 
-    if (!m_ctx.navigation->activateEntrypoint(id, arguments)) {
+    if (!m_ctx.navigation->activateEntrypoint(
+            id, {.arguments = std::move(arguments), .fallbackText = query.queryItemValue("fallbackText")})) {
       return std::unexpected("No primary action for this root item");
-    }
-
-    if (auto text = query.queryItemValue("fallbackText"); !text.isEmpty()) {
-      m_ctx.navigation->setSearchText(text);
     }
 
     return {};

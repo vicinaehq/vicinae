@@ -47,6 +47,8 @@ Popup {
     onActiveFocusChanged: if (!activeFocus && opened)
         close()
 
+    Component.onDestruction: GlobalShortcuts.setCapturing(false)
+
     background: Rectangle {
         radius: 8
         color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, 0.95)

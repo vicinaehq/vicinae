@@ -23,7 +23,7 @@ void GlobalShortcutService::setCapturing(bool capturing) {
 
   if (capturing) {
     m_backend->unbindAll();
-    m_boundTriggers.clear();
+    m_appliedTriggers.clear();
     m_actions.clear();
   } else {
     reconcile();
@@ -54,12 +54,12 @@ void GlobalShortcutService::reconcile() {
     }
   }
 
-  for (auto it = m_boundTriggers.begin(); it != m_boundTriggers.end();) {
+  for (auto it = m_appliedTriggers.begin(); it != m_appliedTriggers.end();) {
     auto desiredIt = desired.find(it->first);
     if (desiredIt == desired.end() || desiredIt->second.first != it->second) {
       m_backend->unbindShortcut(it->first);
       m_actions.erase(it->first);
-      it = m_boundTriggers.erase(it);
+      it = m_appliedTriggers.erase(it);
     } else {
       ++it;
     }
@@ -67,7 +67,7 @@ void GlobalShortcutService::reconcile() {
 
   for (const auto &[id, entry] : desired) {
     const auto &[trigger, action] = entry;
-    if (auto it = m_boundTriggers.find(id); it != m_boundTriggers.end() && it->second == trigger) {
+    if (auto it = m_appliedTriggers.find(id); it != m_appliedTriggers.end() && it->second == trigger) {
       continue;
     }
 
@@ -76,8 +76,16 @@ void GlobalShortcutService::reconcile() {
     if (!shortcut.isValid()) { continue; }
 
     m_backend->bindShortcut({.id = id, .trigger = shortcut});
-    m_actions[id] = action;
-    m_boundTriggers[id] = trigger;
+    m_appliedTriggers[id] = trigger;
+
+    // TODO: assumes a synchronous backend. An async backend won't have a Bound status yet here;
+    // drive m_actions off the backend's shortcutsChanged signal instead.
+    auto info = m_backend->shortcut(id);
+    if (info && info->status == GlobalShortcutStatus::Bound) {
+      m_actions[id] = action;
+    } else {
+      m_actions.erase(id);
+    }
   }
 }
 

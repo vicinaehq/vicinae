@@ -459,8 +459,6 @@ bool Shortcut::equals(const Shortcut &other, bool ignoreNumpadMod) const {
   return m_key == other.m_key && m_modifiers.toInt() == other.m_modifiers.toInt();
 }
 
-bool Shortcut::operator==(const Shortcut &other) const {
-  return m_key == other.m_key && m_modifiers.toInt() == other.m_modifiers.toInt();
-}
+bool Shortcut::operator==(const Shortcut &other) const { return equals(other, /*ignoreNumpadMod=*/true); }
 
 }; // namespace Keyboard
