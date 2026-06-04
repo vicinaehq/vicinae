@@ -8,6 +8,7 @@
 #include "omni-database.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/background-effect/background-effect-manager.hpp"
+#include "services/shortcut-inhibit/shortcut-inhibit-manager.hpp"
 #include "services/browser-extension-service.hpp"
 #include "services/power-manager/power-manager.hpp"
 #include "services/script-command/script-command-service.hpp"
@@ -74,6 +75,10 @@ NewsService *ServiceRegistry::newsService() const { return m_newsService.get(); 
 
 BackgroundEffectManager *ServiceRegistry::backgroundEffectManager() const {
   return m_backgroundEffectManager.get();
+}
+
+ShortcutInhibitManager *ServiceRegistry::shortcutInhibitManager() const {
+  return m_shortcutInhibitManager.get();
 }
 
 TelemetryService *ServiceRegistry::telemetry() const { return m_telemetry.get(); }
@@ -172,6 +177,10 @@ void ServiceRegistry::setNewsService(std::unique_ptr<NewsService> service) {
 
 void ServiceRegistry::setBackgroundEffectManager(std::unique_ptr<BackgroundEffectManager> service) {
   m_backgroundEffectManager = std::move(service);
+}
+
+void ServiceRegistry::setShortcutInhibitManager(std::unique_ptr<ShortcutInhibitManager> service) {
+  m_shortcutInhibitManager = std::move(service);
 }
 
 void ServiceRegistry::setTelemetry(std::unique_ptr<TelemetryService> telemetry) {

@@ -21,13 +21,24 @@ Popup {
     property string _statusText: "Recording..."
     property color _statusColor: Theme.foreground
 
+    property bool _justClosed: false
+
     Timer {
         id: closeTimer
         interval: 2000
         onTriggered: recorder.close()
     }
 
-    function show(targetItem) {
+    Timer {
+        id: reopenGuard
+        interval: 300
+        onTriggered: recorder._justClosed = false
+    }
+
+    function show(targetItem, below) {
+        if (_justClosed)
+            return false;
+
         _currentShortcutTokens = [];
         _statusText = "Recording...";
         _statusColor = Theme.foreground;
@@ -35,13 +46,18 @@ Popup {
 
         var pos = targetItem.mapToItem(recorder.parent, 0, 0);
         recorder.x = pos.x + targetItem.width / 2 - recorder.width / 2;
-        recorder.y = pos.y - recorder.height - 10;
+        recorder.y = below ? pos.y + targetItem.height + 10 : pos.y - recorder.height - 10;
         recorder.open();
+        return true;
     }
 
     onOpened: {
         GlobalShortcuts.setCapturing(true);
         keyReceiver.forceActiveFocus();
+    }
+    onAboutToHide: {
+        _justClosed = true;
+        reopenGuard.restart();
     }
     onClosed: GlobalShortcuts.setCapturing(false)
     onActiveFocusChanged: if (!activeFocus && opened)
@@ -60,6 +76,8 @@ Popup {
 
     contentItem: FocusScope {
         focus: true
+
+        ShortcutInhibitor.enabled: recorder.opened
 
         Keys.onPressed: event => {
             event.accepted = true;

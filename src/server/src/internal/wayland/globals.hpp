@@ -3,6 +3,8 @@
 #include "ext-data-control-v1-client-protocol.h"
 #include "kde-blur-client-protocol.h"
 #include "ext-background-effect-v1-client-protocol.h"
+#include "ext-hotkey-v1-client-protocol.h"
+#include "keyboard-shortcuts-inhibit-unstable-v1-client-protocol.h"
 #include <wayland-client.h>
 
 namespace Wayland {
@@ -12,6 +14,8 @@ public:
   static auto kwinBlur() { return instance().m_kwinBlur; }
   static auto *extBackgroundEffectManager() { return instance().m_backgroundEffect; }
   static ext_data_control_manager_v1 *dataControlManager();
+  static ext_hotkey_manager_v1 *hotkey() { return instance().m_hotkey; }
+  static zwp_keyboard_shortcuts_inhibit_manager_v1 *shortcutInhibit() { return instance().m_shortcutInhibit; }
 
 private:
   static Globals &instance();
@@ -27,5 +31,7 @@ private:
   ext_data_control_manager_v1 *m_dataControlManager = nullptr;
   org_kde_kwin_blur_manager *m_kwinBlur = nullptr;
   ext_background_effect_manager_v1 *m_backgroundEffect = nullptr;
+  ext_hotkey_manager_v1 *m_hotkey = nullptr;
+  zwp_keyboard_shortcuts_inhibit_manager_v1 *m_shortcutInhibit = nullptr;
 };
 } // namespace Wayland

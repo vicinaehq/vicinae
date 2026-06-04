@@ -22,9 +22,16 @@ public:
     if (auto *service = ServiceRegistry::instance()->globalShortcuts()) { service->setCapturing(capturing); }
   }
 
-  Q_INVOKABLE QString validate(int key, int modifiers, const QString &excludeId) const {
+  Q_INVOKABLE QString validate(int key, int modifiers, const QString &excludeId) {
     Keyboard::Shortcut const shortcut(static_cast<Qt::Key>(key),
                                       static_cast<Qt::KeyboardModifiers>(modifiers));
-    return shortcut_conflict::validate(shortcut, excludeId);
+
+    if (auto error = shortcut_conflict::validate(shortcut, excludeId); !error.isEmpty()) { return error; }
+
+    if (auto *service = ServiceRegistry::instance()->globalShortcuts()) {
+      if (auto denied = service->probeBind(shortcut)) { return *denied; }
+    }
+
+    return {};
   }
 };

@@ -693,6 +693,8 @@ if (UNIX AND NOT APPLE)
 	wayland_generate_protocol("ext-data-control-v1")
 	wayland_generate_protocol("kde-blur")
 	wayland_generate_protocol("ext-background-effect-v1")
+	wayland_generate_protocol("keyboard-shortcuts-inhibit-unstable-v1")
+	wayland_generate_protocol("ext-hotkey-v1")
 
 	list(APPEND LIBS xkbcommon)
 
@@ -704,8 +706,12 @@ if (UNIX AND NOT APPLE)
 		src/internal/wayland/seat.cpp
 		src/services/background-effect/ext-background-effect-v1-manager.cpp
 		src/services/background-effect/kde-background-effect-manager.cpp
+		src/services/shortcut-inhibit/wayland-shortcut-inhibit-manager.cpp
 		src/services/clipboard/data-control/data-control-clipboard-server.hpp
 		src/services/clipboard/data-control/data-control-clipboard-server.cpp
+
+		src/services/global-shortcuts/ext-hotkey-global-shortcut-backend.hpp
+		src/services/global-shortcuts/ext-hotkey-global-shortcut-backend.cpp
 
 		src/services/files-service/file-indexer/file-indexer.hpp
 		src/services/files-service/file-indexer/file-indexer.cpp
@@ -915,6 +921,8 @@ set(VICINAE_QML_SOURCES
 	src/qml/markdown/text-selection-controller.hpp
 	src/qml/background-effect-attached.hpp
 	src/qml/background-effect-attached.cpp
+	src/qml/shortcut-inhibitor-attached.hpp
+	src/qml/shortcut-inhibitor-attached.cpp
 )
 
 if(APPLE)

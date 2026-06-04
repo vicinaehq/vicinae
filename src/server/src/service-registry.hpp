@@ -30,6 +30,7 @@ class LinuxInputServer;
 class SnippetService;
 class BrowserExtensionService;
 class BackgroundEffectManager;
+class ShortcutInhibitManager;
 class FileChooserService;
 class NewsService;
 class PasteService;
@@ -76,6 +77,7 @@ public:
   FileChooserService *fileChooserService() const;
   NewsService *newsService() const;
   BackgroundEffectManager *backgroundEffectManager() const;
+  ShortcutInhibitManager *shortcutInhibitManager() const;
   TelemetryService *telemetry() const;
   AudioControlService *audioControl() const;
   AppRuntime *appRuntime() const;
@@ -112,6 +114,7 @@ public:
   void setFileChooserService(std::unique_ptr<FileChooserService> service);
   void setNewsService(std::unique_ptr<NewsService> service);
   void setBackgroundEffectManager(std::unique_ptr<BackgroundEffectManager> manager);
+  void setShortcutInhibitManager(std::unique_ptr<ShortcutInhibitManager> manager);
   void setTelemetry(std::unique_ptr<TelemetryService> telemetry);
   void setAudioControl(std::unique_ptr<AudioControlService> service);
   void setAppRuntime(std::unique_ptr<AppRuntime> service);
@@ -148,6 +151,7 @@ private:
   std::unique_ptr<FileChooserService> m_fileChooserService;
   std::unique_ptr<NewsService> m_newsService;
   std::unique_ptr<BackgroundEffectManager> m_backgroundEffectManager;
+  std::unique_ptr<ShortcutInhibitManager> m_shortcutInhibitManager;
   std::unique_ptr<TelemetryService> m_telemetry;
   std::unique_ptr<AudioControlService> m_audioControl;
   std::unique_ptr<AppRuntime> m_appRuntime;
