@@ -97,6 +97,7 @@ public:
   Q_INVOKABLE int matchNavigationKey(int key, int modifiers);
   Q_INVOKABLE void setCompleterValue(int index, const QString &value);
   Q_INVOKABLE QRect cursorScreenGeometry() const;
+  Q_INVOKABLE void positionOnCursorScreen();
   Q_INVOKABLE void openFooterMenu();
 
 signals:
