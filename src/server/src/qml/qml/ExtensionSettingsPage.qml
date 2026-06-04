@@ -14,6 +14,10 @@ Item {
         _handlePendingCommand();
     }
 
+    HoverResetOnModelChange {
+        target: root.extModel ? root.extModel.commandModel : null
+    }
+
     function _handlePendingCommand() {
         const pending = settings.pendingCommandId;
         if (!pending)
@@ -232,7 +236,7 @@ Item {
                         width: parent.width
                         height: cmdRow.implicitHeight + 16
                         backgroundColor: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
-                        color: cmdHover.hovered ? Qt.rgba(Theme.listItemHoverBg.r, Theme.listItemHoverBg.g, Theme.listItemHoverBg.b, Config.windowOpacity) : Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
+                        color: (cmdHover.hovered && HoverActivation.active) ? Qt.rgba(Theme.listItemHoverBg.r, Theme.listItemHoverBg.g, Theme.listItemHoverBg.b, Config.windowOpacity) : Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
 
                         HoverHandler {
                             id: cmdHover

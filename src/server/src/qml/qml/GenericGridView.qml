@@ -43,6 +43,10 @@ Item {
 
     readonly property real cellSize: Math.floor((root.width - horizontalPadding * 2 - cellSpacing * (columns - 1)) / columns)
 
+    HoverResetOnModelChange {
+        target: root.cmdModel
+    }
+
     // Hidden TextMetrics to measure actual line heights from the font
     TextMetrics {
         id: _titleMetrics
@@ -193,6 +197,7 @@ Item {
                                 readonly property int cellSection: delegateLoader.rowSectionIdx
                                 readonly property int cellItem: delegateLoader.rowStartItem + index
                                 readonly property bool cellSelected: root.cmdModel && root.cmdModel.selectedSection === cellSection && root.cmdModel.selectedItem === cellItem
+                                readonly property bool cellHovered: cellMouseArea.containsMouse && HoverActivation.active
 
                                 width: rowItem.cellWidth
                                 height: rowItem.cellHeight + rowItem.cellTextHeight
@@ -221,7 +226,7 @@ Item {
                                     property int cellSection: cellWrapper.cellSection
                                     property int cellItem: cellWrapper.cellItem
                                     property bool cellSelected: cellWrapper.cellSelected
-                                    property bool cellHovered: cellMouseArea.containsMouse
+                                    property bool cellHovered: cellWrapper.cellHovered
                                     property real cellSize: rowItem.cellWidth
                                     property real cellWidth: rowItem.cellWidth
                                     property real cellHeight: rowItem.cellHeight
@@ -248,7 +253,7 @@ Item {
                                     height: rowItem.cellHeight + pad * 2
                                     radius: 11
                                     overlay: true
-                                    borderWidth: (cellWrapper.cellSelected || cellMouseArea.containsMouse) ? 2 : 0
+                                    borderWidth: (cellWrapper.cellSelected || cellWrapper.cellHovered) ? 2 : 0
                                     borderColor: cellWrapper.cellSelected ? Theme.gridItemSelectionOutline : Theme.gridItemHoverOutline
                                 }
 
@@ -306,7 +311,7 @@ Item {
 
                                 ViciToolTip {
                                     readonly property string tooltipText: root.cmdModel ? root.cmdModel.cellTooltip(cellWrapper.cellSection, cellWrapper.cellItem) : ""
-                                    visible: cellMouseArea.containsMouse && tooltipText !== ""
+                                    visible: cellWrapper.cellHovered && tooltipText !== ""
                                     text: tooltipText
                                 }
                             }

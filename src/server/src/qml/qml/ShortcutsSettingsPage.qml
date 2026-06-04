@@ -8,6 +8,10 @@ Item {
 
     property int _recordingRow: -1
 
+    HoverResetOnModelChange {
+        target: root.model
+    }
+
     ShortcutRecorderField {
         id: recorder
         shortcutDisplayProvider: (key, mods) => root.model.shortcutDisplayTokens(key, mods)
@@ -127,7 +131,7 @@ Item {
                 Rectangle {
                     anchors.fill: parent
                     anchors.bottomMargin: 1
-                    color: rowItem.isRecording ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.08) : rowHover.hovered ? Theme.listItemHoverBg : "transparent"
+                    color: rowItem.isRecording ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.08) : (rowHover.hovered && HoverActivation.active) ? Theme.listItemHoverBg : "transparent"
                 }
 
                 HoverHandler {
@@ -170,7 +174,7 @@ Item {
                     }
 
                     Text {
-                        visible: !rowItem.isRecording && rowItem.shortcutTokens.length === 0 && rowHover.hovered
+                        visible: !rowItem.isRecording && rowItem.shortcutTokens.length === 0 && rowHover.hovered && HoverActivation.active
                         text: "Record Shortcut"
                         color: Theme.textMuted
                         font.pointSize: Theme.smallerFontSize
