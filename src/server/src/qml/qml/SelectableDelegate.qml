@@ -7,7 +7,7 @@ Item {
     id: root
 
     property bool selected: false
-    readonly property bool hovered: mouseArea.containsMouse
+    readonly property bool hovered: mouseArea.containsMouse && launcher.pointerActive
 
     default property alias contentData: contentItem.data
 

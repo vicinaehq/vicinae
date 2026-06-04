@@ -176,6 +176,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
 
   // Search state: programmatic text changes (e.g. from extensions)
   connect(nav, &NavigationController::searchTextTampered, this, [this](const QString &text) {
+    resetPointerActivation();
     emit searchTextUpdated(text);
     tryCompaction();
   });
@@ -337,12 +338,17 @@ bool LauncherWindow::eventFilter(QObject *obj, QEvent *event) {
     if (forwardKey(ke->key(), static_cast<int>(ke->modifiers()))) { return true; }
   }
 
-  // only works on some compositors.
-  // we could probably make it work everywhere layer shell is supported by adding a layer behind ours.
-  else if (event->type() == QEvent::MouseMove && m_closeOnFocusLoss) {
+  else if (event->type() == QEvent::MouseMove) {
     auto *me = static_cast<QMouseEvent *>(event); // NOLINT
-    QRect const contentRect(0, 0, m_window->width(), m_window->height());
-    if (!contentRect.contains(me->position().toPoint())) { m_ctx.navigation->closeWindow(); }
+
+    if (!m_pointerActive && me->globalPosition().toPoint() != m_pointerAnchor) { setPointerActive(true); }
+
+    // only works on some compositors.
+    // we could probably make it work everywhere layer shell is supported by adding a layer behind ours.
+    if (m_closeOnFocusLoss) {
+      QRect const contentRect(0, 0, m_window->width(), m_window->height());
+      if (!contentRect.contains(me->position().toPoint())) { m_ctx.navigation->closeWindow(); }
+    }
   }
 
   return QObject::eventFilter(obj, event);
@@ -352,6 +358,7 @@ void LauncherWindow::handleVisibilityChanged(bool visible) {
   if (!m_window) return;
 
   if (visible) {
+    resetPointerActivation();
     m_cacheEvictionTimer.stop();
     applyWindowConfig();
     tryCompaction();
@@ -371,6 +378,7 @@ void LauncherWindow::handleViewPoped(const BaseView *view) {
 }
 
 void LauncherWindow::handleCurrentViewChanged() {
+  resetPointerActivation();
   auto *nav = m_ctx.navigation.get();
   bool const wasPopped = m_viewWasPopped;
   bool const wasReplaced = m_viewWasReplaced;
@@ -429,8 +437,20 @@ void LauncherWindow::handleCurrentViewChanged() {
 }
 
 void LauncherWindow::forwardSearchText(const QString &text) {
+  resetPointerActivation();
   m_ctx.navigation->broadcastSearchText(text);
   tryCompaction();
+}
+
+void LauncherWindow::setPointerActive(bool active) {
+  if (m_pointerActive == active) return;
+  m_pointerActive = active;
+  emit pointerActiveChanged();
+}
+
+void LauncherWindow::resetPointerActivation() {
+  m_pointerAnchor = QCursor::pos();
+  setPointerActive(false);
 }
 
 void LauncherWindow::handleReturn() { m_actionPanel->executePrimaryAction(); }

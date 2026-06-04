@@ -41,7 +41,7 @@ Rectangle {
         acceptedButtons: Qt.NoButton
 
         ViciToolTip {
-            visible: parent.containsMouse && root.tooltip !== ""
+            visible: parent.containsMouse && launcher.pointerActive && root.tooltip !== ""
             text: root.tooltip
         }
     }
