@@ -788,6 +788,8 @@ set(VICINAE_QML_FILES
 	src/qml/qml/LauncherWindow.qml
 	src/qml/qml/SearchBar.qml
 	src/qml/qml/GenericListView.qml
+	src/qml/qml/HoverResetOnModelChange.qml
+	src/qml/qml/HoverResetOnShow.qml
 	src/qml/qml/RootSearchList.qml
 	src/qml/qml/ListItemDelegate.qml
 	src/qml/qml/ListAccessory.qml
@@ -916,6 +918,8 @@ endforeach()
 set(VICINAE_QML_SOURCES
 	src/qml/source-blend-rect.hpp
 	src/qml/vici-image-item.hpp
+	src/qml/hover-activation.hpp
+	src/qml/hover-activation.cpp
 	src/qml/completion-model.hpp
 	src/qml/markdown/markdown-model.hpp
 	src/qml/markdown/text-selection-controller.hpp

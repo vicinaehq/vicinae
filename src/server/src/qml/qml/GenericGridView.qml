@@ -43,6 +43,10 @@ Item {
 
     readonly property real cellSize: Math.floor((root.width - horizontalPadding * 2 - cellSpacing * (columns - 1)) / columns)
 
+    HoverResetOnModelChange {
+        target: root.cmdModel
+    }
+
     // Hidden TextMetrics to measure actual line heights from the font
     TextMetrics {
         id: _titleMetrics
@@ -193,7 +197,7 @@ Item {
                                 readonly property int cellSection: delegateLoader.rowSectionIdx
                                 readonly property int cellItem: delegateLoader.rowStartItem + index
                                 readonly property bool cellSelected: root.cmdModel && root.cmdModel.selectedSection === cellSection && root.cmdModel.selectedItem === cellItem
-                                readonly property bool cellHovered: cellMouseArea.containsMouse && launcher.pointerActive
+                                readonly property bool cellHovered: cellMouseArea.containsMouse && HoverActivation.active
 
                                 width: rowItem.cellWidth
                                 height: rowItem.cellHeight + rowItem.cellTextHeight

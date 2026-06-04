@@ -4,7 +4,6 @@
 #include <QObject>
 #include <QQmlApplicationEngine>
 #include <QTimer>
-#include <QPoint>
 #include <QRect>
 #include <qtmetamacros.h>
 
@@ -52,7 +51,6 @@ class LauncherWindow : public QObject {
   Q_PROPERTY(int lsLayer READ lsLayer NOTIFY lsChanged)
   Q_PROPERTY(int lsKeyboardInteractivity READ lsKeyboardInteractivity NOTIFY lsChanged)
   Q_PROPERTY(bool canPositionWindow READ canPositionWindow CONSTANT)
-  Q_PROPERTY(bool pointerActive READ pointerActive NOTIFY pointerActiveChanged)
 
 public:
   explicit LauncherWindow(ApplicationContext &ctx, QObject *parent = nullptr);
@@ -88,10 +86,8 @@ public:
   int lsLayer() const { return m_lsLayer; }
   int lsKeyboardInteractivity() const { return m_lsKeyboardInteractivity; }
   static bool canPositionWindow();
-  bool pointerActive() const { return m_pointerActive; }
 
   Q_INVOKABLE void expand();
-  Q_INVOKABLE void resetPointerActivation();
   Q_INVOKABLE void forwardSearchText(const QString &text);
   Q_INVOKABLE void handleReturn();
   Q_INVOKABLE bool forwardKey(int key, int modifiers = 0);
@@ -128,11 +124,9 @@ signals:
   void windowSizeOverrideChanged();
   void overlayChanged();
   void lsChanged();
-  void pointerActiveChanged();
 
 private:
   bool eventFilter(QObject *obj, QEvent *event) override;
-  void setPointerActive(bool active);
   void handleVisibilityChanged(bool visible);
   void handleCurrentViewChanged();
   void handleViewPoped(const BaseView *view);
@@ -188,8 +182,6 @@ private:
 
   QTimer m_cacheEvictionTimer;
   bool m_closeOnFocusLoss = false;
-  bool m_pointerActive = false;
-  QPoint m_pointerAnchor;
   int m_lsLayer = 2;                 // LayerShellQt::Window::LayerTop
   int m_lsKeyboardInteractivity = 2; // LayerShellQt::Window::KeyboardInteractivityOnDemand
   bool m_hasCompleter = false;

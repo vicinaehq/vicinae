@@ -6,7 +6,7 @@ Item {
     height: 36
 
     property bool selected: false
-    readonly property bool hovered: mouseArea.containsMouse
+    readonly property bool hovered: mouseArea.containsMouse && HoverActivation.active
 
     required property string title
     required property string iconSource
