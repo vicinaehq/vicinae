@@ -1,6 +1,5 @@
 import QtQuick
 
-// Structural changes only: dataChanged is excluded since it doesn't move rows.
 Connections {
     ignoreUnknownSignals: true
     function onModelReset() {
