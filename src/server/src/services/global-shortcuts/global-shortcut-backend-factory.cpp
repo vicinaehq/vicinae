@@ -1,11 +1,12 @@
 #include "services/global-shortcuts/global-shortcut-backend-factory.hpp"
 #include "services/global-shortcuts/dummy-global-shortcut-backend.hpp"
-#include "services/global-shortcuts/ext-hotkey-global-shortcut-backend.hpp"
-#include "wayland/globals.hpp"
 #include <memory>
 
 #ifdef Q_OS_MACOS
 #include "services/global-shortcuts/macos-global-shortcut-backend.hpp"
+#elifdef Q_OS_LINUX
+#include "services/global-shortcuts/ext-hotkey-global-shortcut-backend.hpp"
+#include "wayland/globals.hpp"
 #endif
 
 std::unique_ptr<AbstractGlobalShortcutBackend> createGlobalShortcutBackend() {

@@ -12,6 +12,9 @@ Window {
     property bool blurEnabled: Config.blurEnabled
     property bool shadowEnabled: shadowPadding > 0
     property bool nativeChrome: false
+    property bool autoPlaceOnShow: true
+    signal aboutToShow
+    signal shown
 
     readonly property int _w: launcher.overrideWidth || Config.windowWidth
     readonly property int _h: launcher.overrideHeight || Config.windowHeight
@@ -267,23 +270,18 @@ Window {
         }
     }
 
-    function _centerOnCursorScreen() {
-        if (!launcher.canPositionWindow)
-            return;
-        const g = launcher.cursorScreenGeometry();
-        root.x = g.x + (g.width - root.width) / 2;
-        root.y = g.y + (g.height - root.height) / 3;
-    }
-
     Connections {
         target: Nav
         function onWindowVisiblityChanged(visible) {
             if (visible) {
-                root._centerOnCursorScreen();
+                root.aboutToShow();
+                if (root.autoPlaceOnShow)
+                    launcher.positionOnCursorScreen();
                 root.visible = true;
                 root.raise();
                 root.requestActivate();
                 searchBar.focusInput();
+                root.shown();
             } else {
                 root.visible = false;
             }
@@ -313,19 +311,19 @@ Window {
     }
 
     onWidthChanged: {
-        if (launcher.canPositionWindow)
+        if (launcher.canPositionWindow && root.autoPlaceOnShow)
             root.x = Screen.virtualX + (Screen.width - root.width) / 2;
     }
     onHeightChanged: {
-        if (launcher.canPositionWindow)
+        if (launcher.canPositionWindow && root.autoPlaceOnShow)
             root.y = Screen.virtualY + (Screen.height - root.height) / 3;
     }
 
     Component.onCompleted: {
-        if (launcher.canPositionWindow) {
+        if (launcher.canPositionWindow && root.autoPlaceOnShow) {
             root.x = Screen.virtualX + (Screen.width - root.width) / 2;
             root.y = Screen.virtualY + (Screen.height - root.height) / 3;
+            launcher.positionOnCursorScreen();
         }
-        _centerOnCursorScreen();
     }
 }
