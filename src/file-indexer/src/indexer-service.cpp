@@ -9,22 +9,19 @@
 
 namespace fs = std::filesystem;
 
-namespace {
+namespace file_indexer {
 
+// Named namespace (not anonymous): glaze's reflection needs the type to have linkage,
+// otherwise clang rejects it with "used but not defined ... type does not have linkage".
 struct MethodPeek {
-  std::string jsonrpc;
   std::string method;
 };
 
-bool isQueryMessage(std::string_view payload) {
+static bool isQueryMessage(std::string_view payload) {
   MethodPeek peek;
   if (glz::read<glz::opts{.error_on_unknown_keys = false}>(peek, payload)) { return false; }
   return peek.method == "FileIndexer/query";
 }
-
-} // namespace
-
-namespace file_indexer {
 
 IndexerService::IndexerService(file_indexer_gen::RpcTransport &transport)
     : file_indexer_gen::AbstractFileIndexer(transport) {}

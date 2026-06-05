@@ -62,8 +62,15 @@ FileIndexer::FileIndexer() : m_bus(&m_process), m_rpc(m_bus), m_client(m_rpc) {
 }
 
 void FileIndexer::start() {
+  if (isRunning()) return;
   m_wantRunning = true;
   startProcess();
+}
+
+void FileIndexer::stopProcess() {
+  m_wantRunning = false;
+  m_crashCount = 0;
+  m_process.close();
 }
 
 void FileIndexer::startProcess() {
@@ -128,7 +135,15 @@ void FileIndexer::preferenceValuesChanged(const QJsonObject &preferences) {
   m_config.excluded_paths = splitField("excludedPaths");
   m_config.watcher_paths = splitField("watcherPaths");
 
-  sendConfigure();
+  if (preferences.value("autoIndexing").toBool()) {
+    if (isRunning()) {
+      sendConfigure();
+    } else {
+      start();
+    }
+  } else {
+    stopProcess();
+  }
 }
 
 QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view view,

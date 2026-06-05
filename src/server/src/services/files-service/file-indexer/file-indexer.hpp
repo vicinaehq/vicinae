@@ -45,6 +45,7 @@ public:
 
 private:
   void startProcess();
+  void stopProcess();
   void handleCrash();
   void handleStderr();
   void sendConfigure();
