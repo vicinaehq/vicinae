@@ -1,48 +1,60 @@
 #pragma once
-#include <qfilesystemwatcher.h>
-#include <qobject.h>
-#include <qthread.h>
+#include <QByteArray>
+#include <QObject>
+#include <QProcess>
+#include <qlogging.h>
+#include "common/common.hpp"
+#include "generated/file-indexer-client.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
-#include "services/files-service/file-indexer/file-indexer-query-engine.hpp"
-#include "services/files-service/file-indexer/home-directory-watcher.hpp"
-#include "services/files-service/file-indexer/file-indexer-db.hpp"
-#include "services/files-service/file-indexer/scan-dispatcher.hpp"
-#include <qdatetime.h>
-#include <qtmetamacros.h>
 
-/**
- * Generic file indexer that should be usable in most linux environments.
- * SQLite FTS5 is used as a backend, making it technically possible to index the entire
- * filesystem if necessary.
- * Queries usually remain very fast (<100ms), although not fast enough to perform them in the UI thread
- * without introducing slowdowns.
- */
+class FileIndexerBus : public QObject, public file_indexer_gen::AbstractTransport {
+  Q_OBJECT
+
+  struct MessageBuffer {
+    QByteArray data;
+  };
+
+  MessageBuffer m_message;
+  QIODevice *m_device = nullptr;
+  void send(std::string_view data) override;
+  void readyRead();
+
+public:
+  FileIndexerBus(QIODevice *device);
+
+signals:
+  void messageReceived(const QByteArray &msg);
+};
+
 class FileIndexer : public AbstractFileIndexer {
   Q_OBJECT
 
 public:
-  std::shared_ptr<DbWriter> m_writer;
-  std::vector<std::filesystem::path> m_entrypoints;
-  std::vector<std::filesystem::path> m_excludedPaths;
-  std::vector<std::filesystem::path> m_watcherPaths;
-  std::vector<std::string> m_excludedFilenames;
-  FileIndexerQueryEngine m_queryEngine;
-  FileIndexerDatabase m_db;
+  static constexpr int MAX_RESTART_ATTEMPTS = 5;
+  static constexpr int BASE_RESTART_DELAY_MS = 1000;
 
-  ScanDispatcher m_dispatcher;
+  FileIndexer();
 
-  std::unique_ptr<HomeDirectoryWatcher> m_homeWatcher;
-
-public:
-  void startFullScan();
-  void startSingleScan(const std::filesystem::path &entrypoint, ScanType type,
-                       const std::vector<std::string> &excludedFilenames = {});
-  void markScanAsInterrupted(std::optional<FileIndexerDatabase::ScanRecord> scan);
+  void start() override;
   void rebuildIndex() override;
   void preferenceValuesChanged(const QJsonObject &preferences) override;
   QFuture<std::vector<IndexerFileResult>> queryAsync(std::string_view view,
                                                      const QueryParams &params = {}) override;
-  void start() override;
 
-  FileIndexer();
+  bool isRunning() const { return m_process.state() == QProcess::ProcessState::Running; }
+
+private:
+  void startProcess();
+  void handleCrash();
+  void handleStderr();
+  void sendConfigure();
+
+  QProcess m_process;
+  FileIndexerBus m_bus;
+  file_indexer_gen::RpcTransport m_rpc;
+  file_indexer_gen::Client m_client;
+  file_indexer_gen::IndexerConfig m_config;
+  QByteArray m_stderrBuf;
+  int m_crashCount = 0;
+  bool m_wantRunning = false;
 };

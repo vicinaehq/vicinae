@@ -1,0 +1,44 @@
+// vicinae-file-indexer (server) <-> main server (client)
+
+struct IndexerConfig {
+  paths: string[];
+  excluded_paths: string[];
+  watcher_paths: string[];
+};
+
+struct Pagination {
+  offset: int;
+  limit: int;
+};
+
+struct QueryRequest {
+  text: string;
+  pagination: Pagination;
+};
+
+struct FileMatch {
+  path: string;
+  rank: double;
+};
+
+struct QueryResponse {
+  matches: FileMatch[];
+};
+
+// enum ScanKind { Full, Incremental, Watcher };
+// enum ScanState { Started, Succeeded, Failed, Interrupted };
+//
+// struct ScanStatusEvent {
+//   kind: ScanKind;
+//   state: ScanState;
+//   entrypoint: string;
+//   indexed_file_count: uint;
+// };
+
+service FileIndexer {
+  fn configure(config: IndexerConfig) => void;
+  fn rebuildIndex() => void;
+  fn query(req: QueryRequest) => QueryResponse;
+
+  // event scanStatusChanged(status: ScanStatusEvent);
+}

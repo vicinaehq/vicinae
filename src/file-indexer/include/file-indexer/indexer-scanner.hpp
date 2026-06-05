@@ -1,9 +1,14 @@
 #pragma once
-#include "common.hpp"
-#include "services/files-service/file-indexer/writer-worker.hpp"
-#include "services/files-service/file-indexer/abstract-scanner.hpp"
+#include "file-indexer/util.hpp"
+#include "file-indexer/writer-worker.hpp"
+#include "file-indexer/abstract-scanner.hpp"
+#include <condition_variable>
+#include <deque>
+#include <memory>
+#include <mutex>
+#include <thread>
 
-class IndexerScanner : public AbstractScanner, public NonCopyable {
+class IndexerScanner : public AbstractScanner, public file_indexer::NonCopyable {
 private:
   static constexpr size_t INDEX_BATCH_SIZE = 10'000;
   static constexpr size_t MAX_PENDING_BATCH_COUNT = 10;

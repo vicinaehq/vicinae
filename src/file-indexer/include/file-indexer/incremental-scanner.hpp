@@ -1,8 +1,13 @@
 #pragma once
-#include "common/types.hpp"
-#include "services/files-service/file-indexer/abstract-scanner.hpp"
+#include "file-indexer/util.hpp"
+#include "file-indexer/abstract-scanner.hpp"
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <thread>
+#include <vector>
 
-class IncrementalScanner : public AbstractScanner, NonCopyable {
+class IncrementalScanner : public AbstractScanner, file_indexer::NonCopyable {
   std::unique_ptr<FileIndexerDatabase> m_read_db;
   std::thread m_scanThread;
 
@@ -10,8 +15,7 @@ class IncrementalScanner : public AbstractScanner, NonCopyable {
   getScannableDirectories(const std::filesystem::path &path, std::optional<size_t> maxDepth,
                           const std::vector<std::filesystem::path> &excludedPaths) const;
   void processDirectory(const std::filesystem::path &path);
-  bool shouldProcessEntry(const std::filesystem::directory_entry &entry,
-                          const QDateTime &cutOffDateTime) const;
+  bool shouldProcessEntry(const std::filesystem::directory_entry &entry, int64_t cutOffSeconds) const;
 
   void scan(const Scan &scan);
 

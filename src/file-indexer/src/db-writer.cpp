@@ -1,6 +1,6 @@
-#include "db-writer.hpp"
-#include "file-indexer-db.hpp"
-#include <QtLogging>
+#include "file-indexer/db-writer.hpp"
+#include "file-indexer/file-indexer-db.hpp"
+#include <future>
 
 void DbWriter::listen() {
   m_db = std::make_unique<FileIndexerDatabase>();
@@ -37,7 +37,7 @@ DbWriter::~DbWriter() {
   m_workerThread.join();
 }
 
-void DbWriter::setScanError(int scanId, const QString &error) {
+void DbWriter::setScanError(int scanId, const std::string &error) {
   submit([scanId, error = std::move(error)](FileIndexerDatabase &db) { db.setScanError(scanId, error); });
 }
 
@@ -45,12 +45,12 @@ void DbWriter::updateScanStatus(int scanId, ScanStatus status) {
   submit([scanId, status](FileIndexerDatabase &db) { db.updateScanStatus(scanId, status); });
 }
 
-std::expected<FileIndexerDatabase::ScanRecord, QString>
+std::expected<FileIndexerDatabase::ScanRecord, std::string>
 DbWriter::createScan(const std::filesystem::path &path, ScanType type) {
   // TODO: Fragile lifetime issues
   // TODO: Proritize record creation over normal writes
 
-  std::promise<std::expected<FileIndexerDatabase::ScanRecord, QString>> result;
+  std::promise<std::expected<FileIndexerDatabase::ScanRecord, std::string>> result;
   auto future = result.get_future();
 
   submit([&result, &path, type](FileIndexerDatabase &db) { result.set_value(db.createScan(path, type)); });

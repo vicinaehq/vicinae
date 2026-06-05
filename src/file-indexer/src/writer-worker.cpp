@@ -1,4 +1,4 @@
-#include "writer-worker.hpp"
+#include "file-indexer/writer-worker.hpp"
 
 #include <utility>
 

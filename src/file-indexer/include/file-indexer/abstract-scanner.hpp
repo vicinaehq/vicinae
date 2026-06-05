@@ -1,8 +1,10 @@
 #pragma once
-#include "services/files-service/file-indexer/db-writer.hpp"
-#include "services/files-service/file-indexer/scan.hpp"
-#include "services/files-service/file-indexer/file-indexer-db.hpp"
-#include <QDebug>
+#include "file-indexer/db-writer.hpp"
+#include "file-indexer/scan.hpp"
+#include "file-indexer/file-indexer-db.hpp"
+#include "file-indexer/log.hpp"
+#include <atomic>
+#include <functional>
 #include <memory>
 
 class AbstractScanner {
@@ -34,8 +36,8 @@ protected:
     auto result = m_writer->createScan(scan.path, scan.type);
 
     if (!result.has_value()) {
-      qWarning() << "Not scanning" << scan.path.native() << "because scan record creation failed with error"
-                 << result.error();
+      flog::warn() << "Not scanning" << scan.path.native() << "because scan record creation failed with error"
+                   << result.error();
       // TODO: Signal that the scan failed to start
       m_finishCallback(ScanStatus::Failed);
       return;

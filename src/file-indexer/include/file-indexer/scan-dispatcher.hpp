@@ -1,11 +1,15 @@
 #pragma once
-#include "services/files-service/file-indexer/scan.hpp"
-#include "services/files-service/file-indexer/abstract-scanner.hpp"
-#include "services/files-service/file-indexer/db-writer.hpp"
+#include "file-indexer/scan.hpp"
+#include "file-indexer/abstract-scanner.hpp"
+#include "file-indexer/db-writer.hpp"
 #include <atomic>
+#include <condition_variable>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <queue>
+#include <thread>
+#include <vector>
 
 class ScanDispatcher {
   std::shared_ptr<DbWriter> m_writer;

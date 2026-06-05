@@ -1,12 +1,11 @@
-#include "scan-dispatcher.hpp"
-#include "services/files-service/file-indexer/indexer-scanner.hpp"
-#include "services/files-service/file-indexer/incremental-scanner.hpp"
-#include "services/files-service/file-indexer/watcher-scanner.hpp"
+#include "file-indexer/scan-dispatcher.hpp"
+#include "file-indexer/indexer-scanner.hpp"
+#include "file-indexer/incremental-scanner.hpp"
+#include "file-indexer/watcher-scanner.hpp"
 #include <map>
 #include <memory>
 #include <mutex>
 #include <ranges>
-#include <stdexcept>
 #include <utility>
 
 void ScanDispatcher::handleFinishedScan(int id, ScanStatus status) {
@@ -99,10 +98,10 @@ std::vector<std::pair<int, Scan>> ScanDispatcher::scans() {
   {
     std::scoped_lock const l(m_scannerMapMtx);
 
-    return ranges_to<std::vector>(m_scannerMap |
-                                  std::views::transform([](auto const &it) -> std::pair<int, Scan> {
-                                    return {it.first, it.second.scan};
-                                  }));
+    return m_scannerMap | std::views::transform([](auto const &it) -> std::pair<int, Scan> {
+             return {it.first, it.second.scan};
+           }) |
+           std::ranges::to<std::vector>();
   }
 }
 

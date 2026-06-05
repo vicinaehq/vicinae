@@ -243,7 +243,6 @@ set(SRCS
 
 	./database/vicinae/migrations.qrc
 	./database/clipboard/migrations.qrc
-	./database/file-indexer//migrations.qrc
 
 
 	src/internal/keyboard/keybind-manager.hpp
@@ -718,19 +717,6 @@ if (UNIX AND NOT APPLE)
 
 		src/services/files-service/file-indexer/file-indexer.hpp
 		src/services/files-service/file-indexer/file-indexer.cpp
-		src/services/files-service/file-indexer/filesystem-walker.cpp
-		src/services/files-service/file-indexer/relevancy-scorer.cpp
-		src/services/files-service/file-indexer/incremental-scanner.cpp
-		src/services/files-service/file-indexer/indexer-scanner.cpp
-		src/services/files-service/file-indexer/watcher-scanner.cpp
-		src/services/files-service/file-indexer/home-directory-watcher.cpp
-		src/services/files-service/file-indexer/file-indexer-db.cpp
-		src/services/files-service/file-indexer/db-writer.cpp
-		src/services/files-service/file-indexer/writer-worker.hpp
-		src/services/files-service/file-indexer/writer-worker.cpp
-		src/services/files-service/file-indexer/scan-dispatcher.cpp
-		src/services/files-service/file-indexer/abstract-scanner.hpp
-		src/services/files-service/file-indexer/file-indexer-query-engine.hpp
 	)
 
 endif()
@@ -768,7 +754,17 @@ figura_compile(
 	NAMESPACE snippet_gen
 	OUTPUT snippet-client.hpp
 )
-	
+
+if (UNIX AND NOT APPLE)
+	figura_compile(
+		CLIENT
+		PROTO "${FIGURA_DIR}/file-indexer.fig"
+		LANG glaze-qt
+		NAMESPACE file_indexer_gen
+		OUTPUT file-indexer-client.hpp
+	)
+endif()
+
 
 qt_add_executable(${TARGET} ${SRCS})
 

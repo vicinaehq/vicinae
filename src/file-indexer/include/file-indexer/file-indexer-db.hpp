@@ -1,21 +1,21 @@
 #pragma once
-#include "db/database.hpp"
-#include "services/files-service/abstract-file-indexer.hpp"
-#include "services/files-service/file-indexer/scan.hpp"
+#include "file-indexer/db.hpp"
+#include "file-indexer/scan.hpp"
+#include <cstdint>
 #include <expected>
-#include <qdatetime.h>
-#include <qobject.h>
 #include <filesystem>
+#include <optional>
 #include <string>
+#include <vector>
 
-class FileIndexerDatabase : public QObject {
+class FileIndexerDatabase {
   db::Database m_db;
 
 public:
   struct ScanRecord {
     int id;
     ScanStatus status;
-    QDateTime createdAt;
+    int64_t createdAt; // unix seconds
     std::filesystem::path path;
     ScanType type;
   };
@@ -38,11 +38,11 @@ public:
   std::vector<ScanRecord> listScans(ScanType scanType, ScanStatus scanStatus);
 
   bool updateScanStatus(int scanId, ScanStatus status);
-  std::expected<ScanRecord, QString> createScan(const std::filesystem::path &path, ScanType type);
+  std::expected<ScanRecord, std::string> createScan(const std::filesystem::path &path, ScanType type);
 
-  bool setScanError(int scanId, const QString &error);
+  bool setScanError(int scanId, const std::string &error);
 
-  std::optional<QDateTime> retrieveIndexedLastModified(const std::filesystem::path &path) const;
+  std::optional<int64_t> retrieveIndexedLastModified(const std::filesystem::path &path) const;
   std::vector<std::filesystem::path> listIndexedDirectoryFiles(const std::filesystem::path &path) const;
 
   void deleteAllIndexedFiles();

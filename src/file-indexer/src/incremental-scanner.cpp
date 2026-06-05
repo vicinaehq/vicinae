@@ -1,8 +1,9 @@
-#include "utils/utils.hpp"
-#include "incremental-scanner.hpp"
-#include "services/files-service/file-indexer/filesystem-walker.hpp"
-#include <QDebug>
+#include "file-indexer/incremental-scanner.hpp"
+#include "file-indexer/filesystem-walker.hpp"
+#include "file-indexer/log.hpp"
+#include <chrono>
 #include <memory>
+#include <ranges>
 #include <unordered_set>
 #include <utility>
 
@@ -30,7 +31,7 @@ void IncrementalScanner::processDirectory(const std::filesystem::path &root) {
   }
 
   m_writer->deleteIndexedFiles(deletedFiles);
-  m_writer->indexFiles(ranges_to<std::vector>(currentFiles));
+  m_writer->indexFiles(std::ranges::to<std::vector>(currentFiles));
 }
 
 std::vector<fs::path>
@@ -52,7 +53,7 @@ IncrementalScanner::getScannableDirectories(const fs::path &path, std::optional<
 
   // This should not happen as we would have run a full scan before coming here
   if (!lastSuccessfulScan.has_value()) {
-    qCritical() << "No previous successful scan found for incremental scan at" << path.c_str();
+    flog::error() << "No previous successful scan found for incremental scan at" << path.c_str();
     return scannableDirs;
   }
 
@@ -67,18 +68,17 @@ IncrementalScanner::getScannableDirectories(const fs::path &path, std::optional<
   return scannableDirs;
 }
 
-bool IncrementalScanner::shouldProcessEntry(const fs::directory_entry &entry,
-                                            const QDateTime &cutOffDateTime) const {
+bool IncrementalScanner::shouldProcessEntry(const fs::directory_entry &entry, int64_t cutOffSeconds) const {
   std::error_code ec;
 
   if (auto lastModified = fs::last_write_time(entry, ec); !ec) {
     using namespace std::chrono;
     auto sctp = clock_cast<system_clock>(lastModified);
-    auto lastModifiedDate =
-        QDateTime::fromSecsSinceEpoch(duration_cast<seconds>(sctp.time_since_epoch()).count());
+    auto const lastModifiedSeconds =
+        static_cast<int64_t>(duration_cast<seconds>(sctp.time_since_epoch()).count());
 
     // Only process if directory was modified after the cutoff or equal (to be safe)
-    return lastModifiedDate >= cutOffDateTime;
+    return lastModifiedSeconds >= cutOffSeconds;
   }
 
   // If we can't get mtime, process anyway to be safe
@@ -102,7 +102,7 @@ IncrementalScanner::IncrementalScanner(std::shared_ptr<DbWriter> writer, const S
       scan(sc);
       finish();
     } catch (const std::exception &error) {
-      qCritical() << "Caught exception during incremental scan" << error.what();
+      flog::error() << "Caught exception during incremental scan" << error.what();
       fail();
     }
   });
