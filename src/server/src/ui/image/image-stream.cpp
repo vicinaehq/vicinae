@@ -5,7 +5,7 @@
 #include "theme.hpp"
 #include "theme/theme-file.hpp"
 #ifdef Q_OS_MACOS
-#include "ui/image/mac-bundle-icon-loader.hpp"
+#include "ui/image/mac-file-icon-loader.hpp"
 #endif
 #include <QBuffer>
 #include <QCache>
@@ -178,7 +178,7 @@ void ImageStream::startStatic() {
     break;
 #ifdef Q_OS_MACOS
   case ImageURLType::MacBundle:
-    runInPool([name, size = m_size]() { return renderMacBundleIcon(name, size); }, m_fg);
+    runInPool([name, size = m_size]() { return renderMacFileIcon(name, size); }, m_fg);
     break;
 #endif
   case ImageURLType::FileIcon:

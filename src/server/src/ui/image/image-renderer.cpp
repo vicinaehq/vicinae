@@ -7,6 +7,9 @@
 #include "theme/theme-file.hpp"
 #include "ui/image/contrast-helper.hpp"
 #include "ui/image/url.hpp"
+#ifdef Q_OS_MACOS
+#include "ui/image/mac-file-icon-loader.hpp"
+#endif
 #include <QBuffer>
 #include <QCoreApplication>
 #include <QFutureWatcher>
@@ -150,6 +153,12 @@ static void applyFillColor(QImage &image, const QColor &fg) {
 }
 
 QImage renderFileIcon(const QString &path, const QSize &size, const QColor &fg, const QColor &bg) {
+#ifdef Q_OS_MACOS
+  if (!fg.isValid()) {
+    if (QImage native = renderMacFileIcon(path, size); !native.isNull()) { return native; }
+  }
+#endif
+
   QMimeDatabase const db;
   auto const mime = db.mimeTypeForFile(path, QMimeDatabase::MatchDefault);
 
