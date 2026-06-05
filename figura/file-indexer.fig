@@ -38,7 +38,7 @@ struct QueryResponse {
 service FileIndexer {
   fn configure(config: IndexerConfig) => void;
   fn rebuildIndex() => void;
-  fn query(req: QueryRequest) => QueryResponse;
+  async fn query(req: QueryRequest) => QueryResponse;
 
   // event scanStatusChanged(status: ScanStatusEvent);
 }

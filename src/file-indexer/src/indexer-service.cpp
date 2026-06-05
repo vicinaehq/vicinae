@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <cstring>
 #include <filesystem>
-#include <glaze/glaze.hpp>
+#include <functional>
 #include <thread>
 #include <unistd.h>
 #include <vector>
@@ -10,18 +10,6 @@
 namespace fs = std::filesystem;
 
 namespace file_indexer {
-
-// Named namespace (not anonymous): glaze's reflection needs the type to have linkage,
-// otherwise clang rejects it with "used but not defined ... type does not have linkage".
-struct MethodPeek {
-  std::string method;
-};
-
-static bool isQueryMessage(std::string_view payload) {
-  MethodPeek peek;
-  if (glz::read<glz::opts{.error_on_unknown_keys = false}>(peek, payload)) { return false; }
-  return peek.method == "FileIndexer/query";
-}
 
 IndexerService::IndexerService(file_indexer_gen::RpcTransport &transport)
     : file_indexer_gen::AbstractFileIndexer(transport) {}
@@ -51,19 +39,23 @@ std::expected<void, std::string> IndexerService::rebuildIndex() {
   return {};
 }
 
-std::expected<file_indexer_gen::QueryResponse, std::string>
-IndexerService::query(file_indexer_gen::QueryRequest req) {
-  Pagination const pagination{.offset = req.pagination.offset, .limit = req.pagination.limit};
-  auto results = m_indexer.query(req.text, pagination);
+void IndexerService::query(
+    file_indexer_gen::QueryRequest req,
+    std::function<void(std::expected<file_indexer_gen::QueryResponse, std::string>)> reply) {
+  // Run off-thread so a slow query can't block the read loop / other queries.
+  std::thread([this, req = std::move(req), reply = std::move(reply)]() {
+    Pagination const pagination{.offset = req.pagination.offset, .limit = req.pagination.limit};
+    auto results = m_indexer.query(req.text, pagination);
 
-  file_indexer_gen::QueryResponse response;
-  response.matches.reserve(results.size());
-  for (const auto &result : results) {
-    response.matches.emplace_back(
-        file_indexer_gen::FileMatch{.path = result.path.string(), .rank = result.rank});
-  }
+    file_indexer_gen::QueryResponse response;
+    response.matches.reserve(results.size());
+    for (const auto &result : results) {
+      response.matches.emplace_back(
+          file_indexer_gen::FileMatch{.path = result.path.string(), .rank = result.rank});
+    }
 
-  return response;
+    reply(response);
+  }).detach();
 }
 
 void IndexerService::listen(file_indexer_gen::Server &server) {
@@ -85,14 +77,7 @@ void IndexerService::listen(file_indexer_gen::Server &server) {
       if (buffer.size() - HEADER_SIZE < frameLen) break;
 
       std::string_view payload{buffer.data() + HEADER_SIZE, frameLen};
-
-      // Queries run off-thread so a slow one can't block keystrokes behind it; control
-      // messages stay inline. Handlers are reentrant: each query opens its own connection.
-      if (isQueryMessage(payload)) {
-        std::thread([&server, msg = std::string(payload)]() { server.route(msg); }).detach();
-      } else {
-        server.route(payload);
-      }
+      server.route(payload);
 
       buffer.erase(buffer.begin(), buffer.begin() + HEADER_SIZE + frameLen);
     }
