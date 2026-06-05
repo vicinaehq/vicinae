@@ -550,7 +550,19 @@ PreferenceList XdgAppDatabase::preferences() const {
   paths.setReadOnly(true);
   paths.setDefaultValue(defaultPaths);
 
-  return {defaultAction, launchPrefix, paths};
+  auto showPin = Preference::makeCheckbox("showPin", "Show Pin to workspace");
+  showPin.setDefaultValue(true);
+  showPin.setDescription("Show the Pin/Unpin window action in the app action panel.");
+
+  auto showBring = Preference::makeCheckbox("showBring", "Show Bring to workspace");
+  showBring.setDefaultValue(true);
+  showBring.setDescription("Show the Bring to current workspace action in the app action panel.");
+
+  auto showClose = Preference::makeCheckbox("showClose", "Show Close window");
+  showClose.setDefaultValue(true);
+  showClose.setDescription("Show the Close window action in the app action panel.");
+
+  return {defaultAction, launchPrefix, paths, showPin, showBring, showClose};
 }
 
 void XdgAppDatabase::applyPreferences(const QJsonObject &preferences) {
