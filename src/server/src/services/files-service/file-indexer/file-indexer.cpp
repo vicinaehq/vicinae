@@ -147,7 +147,7 @@ void FileIndexer::preferenceValuesChanged(const QJsonObject &preferences) {
 }
 
 QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view view,
-                                                                          const QueryParams &params) {
+                                                                const QueryParams &params) {
   if (!isRunning()) { return QtFuture::makeReadyValueFuture(std::vector<IndexerFileResult>{}); }
 
   file_indexer_gen::QueryRequest req{
