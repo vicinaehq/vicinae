@@ -170,6 +170,7 @@ bool QalculateBackend::supportsCurrencyConversion() const { return true; }
 
 void QalculateBackend::initializeCalculator() {
   m_evalOpts.auto_post_conversion = POST_CONVERSION_BEST;
+  m_evalOpts.local_currency_conversion = true;
   m_evalOpts.structuring = STRUCTURING_SIMPLIFY;
   m_evalOpts.parse_options.parsing_mode = PARSING_MODE_ADAPTIVE;
   m_evalOpts.parse_options.units_enabled = true;
