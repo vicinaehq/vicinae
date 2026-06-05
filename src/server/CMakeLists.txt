@@ -591,8 +591,8 @@ endif()
 
 if (APPLE)
 	list(APPEND SRCS
-		src/ui/image/mac-bundle-icon-loader.hpp
-		src/ui/image/mac-bundle-icon-loader.mm
+		src/ui/image/mac-file-icon-loader.hpp
+		src/ui/image/mac-file-icon-loader.mm
 		src/services/app-service/macos/mac-app.hpp
 		src/services/app-service/macos/mac-app.mm
 		src/services/app-service/macos/mac-app-database.hpp
@@ -603,13 +603,16 @@ if (APPLE)
 		src/root-search/macos-settings/macos-settings-root-provider.mm
 		src/services/global-shortcuts/macos-global-shortcut-backend.hpp
 		src/services/global-shortcuts/macos-global-shortcut-backend.cpp
+		src/services/files-service/macos/spotlight-file-indexer.hpp
+		src/services/files-service/macos/spotlight-file-indexer.mm
 	)
 	set_source_files_properties(
-		src/ui/image/mac-bundle-icon-loader.mm
+		src/ui/image/mac-file-icon-loader.mm
 		src/services/app-service/macos/mac-app.mm
 		src/services/app-service/macos/mac-app-database.mm
 		src/services/app-runtime/macos/mac-app-runtime.mm
 		src/root-search/macos-settings/macos-settings-root-provider.mm
+		src/services/files-service/macos/spotlight-file-indexer.mm
 		PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
 else()
 	list(APPEND SRCS
@@ -964,7 +967,7 @@ endif()
 target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/qml ${CMAKE_CURRENT_SOURCE_DIR}/src/qml/markdown)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
 if(APPLE)
-	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework UniformTypeIdentifiers" "-framework Carbon")
+	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework UniformTypeIdentifiers" "-framework Carbon" "-framework CoreServices")
 endif()
 target_compile_features(${TARGET} PUBLIC cxx_std_23)
 

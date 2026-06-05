@@ -62,16 +62,21 @@ class FileExtension : public BuiltinCommandRepository {
 
 public:
   void initialized(const QJsonObject &preferences) const override {
+#ifdef Q_OS_LINUX
     auto files = ServiceRegistry::instance()->fileService();
     if (preferences.value("autoIndexing").toBool()) { files->indexer()->start(); }
+#endif
   }
 
   FileExtension() {
     registerCommand<SearchFilesCommand>();
+#ifdef Q_OS_LINUX
     registerCommand<RebuildFileIndexCommand>();
+#endif
   }
 
   std::vector<Preference> preferences() const override {
+#ifdef Q_OS_LINUX
     auto indexing = Preference::makeCheckbox("autoIndexing");
 
     indexing.setTitle("Auto Indexing");
@@ -98,10 +103,14 @@ public:
     watcherPaths.setDefaultValue("");
 
     return {indexing, paths, excludedPaths, watcherPaths};
+#else
+    return {};
+#endif
   }
 
   void preferenceValuesChanged(const QJsonObject &preferences) const override {
-    QStringList searchPaths = preferences.value("paths").toString().split(';', Qt::SkipEmptyParts);
+#ifdef Q_OS_LINUX
     ServiceRegistry::instance()->fileService()->preferenceValuesChanged(preferences);
+#endif
   }
 };

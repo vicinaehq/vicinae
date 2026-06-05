@@ -24,8 +24,7 @@ FilePreviewContent resolveFilePreview(const std::filesystem::path &path, QMimeDa
       result.textContent = QString::fromUtf8(file.read(MAX_DISPLAY));
     }
   } else {
-    result.imageSource = imageSourceFor(
-        ImageURL::system(mime.iconName()).withFallback(ImageURL::system(mime.genericIconName())));
+    result.imageSource = imageSourceFor(ImageURL::fileIcon(path));
   }
 
   return result;

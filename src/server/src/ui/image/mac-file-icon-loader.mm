@@ -1,12 +1,12 @@
-#include "mac-bundle-icon-loader.hpp"
+#include "mac-file-icon-loader.hpp"
 
 #import <AppKit/AppKit.h>
 
-QImage renderMacBundleIcon(const QString &bundlePath, const QSize &size) {
-  if (bundlePath.isEmpty() || !size.isValid() || size.isEmpty()) return {};
+QImage renderMacFileIcon(const QString &path, const QSize &size) {
+  if (path.isEmpty() || !size.isValid() || size.isEmpty()) return {};
 
   @autoreleasepool {
-    NSString *nsPath = [NSString stringWithUTF8String:bundlePath.toUtf8().constData()];
+    NSString *nsPath = [NSString stringWithUTF8String:path.toUtf8().constData()];
     if (!nsPath) return {};
 
     NSImage *icon = [[NSWorkspace sharedWorkspace] iconForFile:nsPath];
@@ -32,12 +32,19 @@ QImage renderMacBundleIcon(const QString &bundlePath, const QSize &size) {
     NSGraphicsContext *ctx = [NSGraphicsContext graphicsContextWithBitmapImageRep:target];
     if (!ctx) return {};
 
+    // file icons are always square: if the size is not a square, we center the icon
+    // in it and make sure we preserve the correct aspect ratio.
+    NSInteger const side = MIN(width, height);
+    NSRect const drawRect = NSMakeRect((width - side) / 2.0, (height - side) / 2.0, side, side);
+
     [NSGraphicsContext saveGraphicsState];
     [NSGraphicsContext setCurrentContext:ctx];
     [ctx setImageInterpolation:NSImageInterpolationHigh];
-    [icon drawInRect:NSMakeRect(0, 0, width, height)
+    [[NSColor clearColor] setFill];
+    NSRectFillUsingOperation(NSMakeRect(0, 0, width, height), NSCompositingOperationCopy);
+    [icon drawInRect:drawRect
             fromRect:NSZeroRect
-           operation:NSCompositingOperationCopy
+           operation:NSCompositingOperationSourceOver
             fraction:1.0
       respectFlipped:YES
                hints:nil];

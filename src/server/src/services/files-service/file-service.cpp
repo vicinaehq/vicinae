@@ -2,8 +2,10 @@
 #include "services/files-service/abstract-file-indexer.hpp"
 #include <qlogging.h>
 #include "file-service.hpp"
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX)
 #include "file-indexer/file-indexer.hpp"
+#elif defined(Q_OS_MACOS)
+#include "macos/spotlight-file-indexer.hpp"
 #else
 #include "dummy-file-indexer.hpp"
 #endif
@@ -64,8 +66,10 @@ void FileService::preferenceValuesChanged(const QJsonObject &preferences) {
 }
 
 FileService::FileService(OmniDatabase &db) : m_db(db) {
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX)
   m_indexer = std::make_unique<FileIndexer>();
+#elif defined(Q_OS_MACOS)
+  m_indexer = std::make_unique<SpotlightFileIndexer>();
 #else
   m_indexer = std::make_unique<DummyFileIndexer>();
 #endif
