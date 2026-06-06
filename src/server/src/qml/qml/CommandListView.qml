@@ -25,6 +25,14 @@ GenericListView {
         required property string subtitle
         required property string iconSource
         required property var itemAccessory
+        required property string filePath
+        required property string fileUrl
+
+        Component.onCompleted: {
+            if (!isSection && filePath !== "") {
+                console.log("[DRAG] CommandListView delegate: title=" + title + " filePath=" + filePath + " fileUrl=" + fileUrl)
+            }
+        }
 
         sourceComponent: isSection ? sectionComponent : itemComponent
 
@@ -49,6 +57,8 @@ GenericListView {
                 selected: commandListView.currentIndex === delegateLoader.index
                 onClicked: commandListView.currentIndex = delegateLoader.index
                 onActivated: commandListView.itemActivated(delegateLoader.index)
+                filePath: delegateLoader.filePath
+                fileUrl: delegateLoader.fileUrl
             }
         }
     }
