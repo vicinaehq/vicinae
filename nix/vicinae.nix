@@ -13,6 +13,9 @@
   gcc15Stdenv,
   wayland,
   glaze,
+  formats,
+  settings ? {},
+  settingOverrides ? [],
 }: let
   manifestRaw = builtins.readFile ../manifest.yaml;
   manifestGet = key: let
@@ -84,15 +87,18 @@ in
       npmRoot=src/typescript/extension-manager npmDeps=${finalAttrs.extensionManagerDeps} npmConfigHook
     '';
 
-    qtWrapperArgs = [
-      "--prefix PATH : ${
-        lib.makeBinPath [
-          nodejs
-          (placeholder "out")
-        ]
-      }"
-      "--set VICINAE_INPUT_SERVER_BIN /run/wrappers/bin/vicinae-input-server"
-    ];
+    qtWrapperArgs =
+      [
+        "--prefix PATH : ${
+          lib.makeBinPath [
+            nodejs
+            (placeholder "out")
+          ]
+        }"
+        "--set VICINAE_INPUT_SERVER_BIN /run/wrappers/bin/vicinae-input-server"
+      ]
+      ++ lib.optional (settings != {}) "--set VICINAE_OVERRIDES ${toString ((formats.json {}).generate "vicinae-settings.json" settings)}"
+      ++ lib.optional (settingOverrides != []) "--set VICINAE_OVERRIDES ${lib.concatStringsSep ":" settingOverrides}";
 
     meta = {
       description = "A focused launcher for your desktop — native, fast, extensible";

@@ -175,74 +175,69 @@ in {
     };
   };
 
-  config = lib.mkIf cfg.enable {
-    home.packages = [cfg.package];
+  config = let
+    finalPackage = cfg.package.override {
+      inherit (cfg) settings settingOverrides;
+    };
+  in
+    lib.mkIf cfg.enable {
+      home.packages = [finalPackage];
 
-    xdg = let
-      themeFiles =
-        lib.mapAttrs' (
-          name: theme:
-            lib.nameValuePair "vicinae/themes/${name}.toml" {
-              source = tomlFormat.generate "vicinae-${name}-theme" theme;
-            }
-        )
-        cfg.themes;
-    in {
-      configFile = {
-        "vicinae/nix.json" = lib.mkIf (cfg.settings != {}) {
-          source = jsonFormat.generate "vicinae-settings" cfg.settings;
+      xdg = let
+        themeFiles =
+          lib.mapAttrs' (
+            name: theme:
+              lib.nameValuePair "vicinae/themes/${name}.toml" {
+                source = tomlFormat.generate "vicinae-${name}-theme" theme;
+              }
+          )
+          cfg.themes;
+      in {
+        configFile = {};
+
+        dataFile =
+          builtins.listToAttrs (
+            builtins.map (item: {
+              name = "vicinae/extensions/${item.name}";
+              value.source = item;
+            })
+            cfg.extensions
+          )
+          // themeFiles;
+      };
+
+      systemd.user.services.vicinae = lib.mkIf (cfg.systemd.enable) {
+        Unit = {
+          Description = "Vicinae server daemon";
+          Documentation = ["https://docs.vicinae.com"];
+          After = [cfg.systemd.target];
+          PartOf = [cfg.systemd.target];
+        };
+        Service = {
+          Environment =
+            lib.mapAttrsToList (
+              key: val: let
+                valueStr =
+                  if lib.isBool val
+                  then
+                    (
+                      if val
+                      then "1"
+                      else "0"
+                    )
+                  else toString val;
+              in "${key}=${valueStr}"
+            )
+            cfg.systemd.environment;
+          Type = "simple";
+          ExecStart = "${lib.getExe' finalPackage "vicinae"} server";
+          Restart = "always";
+          RestartSec = 5;
+          KillMode = "process";
+        };
+        Install = lib.mkIf cfg.systemd.autoStart {
+          WantedBy = [cfg.systemd.target];
         };
       };
-
-      dataFile =
-        builtins.listToAttrs (
-          builtins.map (item: {
-            name = "vicinae/extensions/${item.name}";
-            value.source = item;
-          })
-          cfg.extensions
-        )
-        // themeFiles;
     };
-
-    systemd.user.services.vicinae = lib.mkIf (cfg.systemd.enable) {
-      Unit = {
-        Description = "Vicinae server daemon";
-        Documentation = ["https://docs.vicinae.com"];
-        After = [cfg.systemd.target];
-        PartOf = [cfg.systemd.target];
-      };
-      Service = {
-        Environment =
-          lib.mapAttrsToList (
-            key: val: let
-              valueStr =
-                if lib.isBool val
-                then
-                  (
-                    if val
-                    then "1"
-                    else "0"
-                  )
-                else toString val;
-            in "${key}=${valueStr}"
-          )
-          cfg.systemd.environment
-          ++ [
-            (lib.mkIf (cfg.settings != {}) ''VICINAE_OVERRIDES="${config.xdg.configHome}/vicinae/nix.json"'')
-            (lib.mkIf (
-              cfg.settingOverrides != []
-            ) ''VICINAE_OVERRIDES="${lib.concatStringsSep ":" cfg.settingOverrides}"'')
-          ];
-        Type = "simple";
-        ExecStart = "${lib.getExe' cfg.package "vicinae"} server";
-        Restart = "always";
-        RestartSec = 5;
-        KillMode = "process";
-      };
-      Install = lib.mkIf cfg.systemd.autoStart {
-        WantedBy = [cfg.systemd.target];
-      };
-    };
-  };
 }
