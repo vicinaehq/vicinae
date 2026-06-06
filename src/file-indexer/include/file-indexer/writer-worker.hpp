@@ -1,9 +1,14 @@
+#pragma once
 #include <atomic>
+#include <condition_variable>
 #include <deque>
-#include "common/types.hpp"
-#include "services/files-service/file-indexer/db-writer.hpp"
+#include <memory>
+#include <mutex>
+#include <vector>
+#include "file-indexer/util.hpp"
+#include "file-indexer/db-writer.hpp"
 
-class WriterWorker : NonCopyable {
+class WriterWorker : file_indexer::NonCopyable {
   std::shared_ptr<DbWriter> m_writer;
 
   std::mutex &batchMutex;

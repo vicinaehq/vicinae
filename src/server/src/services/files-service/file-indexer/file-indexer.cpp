@@ -1,135 +1,205 @@
 #include "file-indexer.hpp"
+#include <cstdint>
+#include <QDateTime>
+#include <QJsonObject>
+#include <QTimer>
 #include <filesystem>
-#include <QtConcurrent/QtConcurrent>
-#include "services/files-service/file-indexer/scan.hpp"
-#include "services/files-service/abstract-file-indexer.hpp"
-#include "file-indexer-db.hpp"
-#include "utils/utils.hpp"
-#include <QDebug>
-#include <qthread.h>
-#include <ranges>
-#include <unistd.h>
-#include <thread>
+#include "rang/rang.hpp"
 
-namespace fs = std::filesystem;
+// FileIndexerBus
 
-/*
- * List of absolute paths to never follow during indexing. Mostly used to exclude
- * pseudo filesystems such as /run or /proc.
- * Contextual exclusions (using gitignore-like semantics) are handled separately.
- */
-static const std::vector<fs::path> EXCLUDED_PATHS = {"/sys", "/run",     "/proc", "/tmp",
-                                                     "/mnt", "/var/tmp", "/efi",  "/dev"};
-
-void FileIndexer::startFullScan() {
-  m_dispatcher.interruptAll();
-
-  // Prevent starting the full scan and watchers before deletion is done
-  std::thread([this]() {
-    qInfo() << "Starting full scan, clearing existing index...";
-
-    // Delete all indexed files, then enqueue new scans in the completion callback
-    m_writer->deleteAllIndexedFiles([this]() {
-      qInfo() << "Existing index cleared, compacting database...";
-
-      m_writer->compact([this]() {
-        qInfo() << "Database compacted, enqueuing full scan tasks...";
-
-        for (const auto &entrypoint : m_entrypoints) {
-          qInfo() << "Enqueuing full scan for" << entrypoint.c_str();
-          // For now we don't exclude filenames during full scans, though this might change in the future.
-          // The reason being that we still want to know where the db file is (current use case), just not
-          // watch it. May want to split the list in two later (scan vs watch).
-          m_dispatcher.enqueue(
-              {.type = ScanType::Full, .path = entrypoint, .excludedPaths = m_excludedPaths});
-        }
-
-        for (const auto &entrypoint : m_watcherPaths) {
-          qInfo() << "Enqueuing watcher scan for" << entrypoint.c_str();
-          startSingleScan(entrypoint, ScanType::Watcher, m_excludedFilenames);
-        }
-      });
-    });
-  }).detach();
+void FileIndexerBus::send(std::string_view data) {
+  uint32_t size = data.size();
+  m_device->write(reinterpret_cast<const char *>(&size), sizeof(size));
+  m_device->write(data.data(), data.size());
 }
 
-void FileIndexer::startSingleScan(const std::filesystem::path &entrypoint, ScanType type,
-                                  const std::vector<std::string> &excludedFilenames) {
-  for (auto const &[id, scan] : m_dispatcher.scans()) {
-    if (scan.type == type && scan.path == entrypoint) { m_dispatcher.interrupt(id); }
+void FileIndexerBus::readyRead() {
+  while (m_device->bytesAvailable() > 0) {
+    auto read = m_device->readAll();
+    m_message.data.append(read);
+
+    while (std::cmp_greater_equal(m_message.data.size(), sizeof(uint32_t))) {
+      uint32_t const length = *reinterpret_cast<uint32_t *>(m_message.data.data());
+      bool const isComplete = m_message.data.size() - sizeof(uint32_t) >= length;
+
+      if (!isComplete) break;
+
+      auto packet = m_message.data.sliced(sizeof(uint32_t), length);
+      emit messageReceived(packet);
+      m_message.data = m_message.data.sliced(sizeof(uint32_t) + length);
+    }
   }
-
-  m_dispatcher.enqueue({.type = type,
-                        .path = entrypoint,
-                        .excludedFilenames = m_excludedFilenames,
-                        .excludedPaths = m_excludedPaths});
 }
 
-void FileIndexer::rebuildIndex() { startFullScan(); }
+FileIndexerBus::FileIndexerBus(QIODevice *device) : m_device(device) {
+  connect(device, &QIODevice::readyRead, this, &FileIndexerBus::readyRead);
+}
 
-void FileIndexer::markScanAsInterrupted(std::optional<FileIndexerDatabase::ScanRecord> scan) {
-  if (!scan.has_value()) return;
+// FileIndexer
 
-  qWarning() << "Creating new scan after previous scan for" << scan.value().path.c_str()
-             << "was unsuccessful";
-  m_writer->setScanError(scan.value().id, "Interrupted");
+FileIndexer::FileIndexer() : m_bus(&m_process), m_rpc(m_bus), m_client(m_rpc) {
+  connect(&m_process, &QProcess::readyReadStandardError, this, &FileIndexer::handleStderr);
+  connect(&m_process, &QProcess::errorOccurred, this, [this](QProcess::ProcessError) {
+    qCritical() << "file indexer process error occured" << m_process.errorString();
+  });
+
+  connect(&m_process, &QProcess::finished, this, [this](int exitCode, QProcess::ExitStatus status) {
+    if (status == QProcess::CrashExit || exitCode != 0) {
+      qWarning() << "file indexer crashed with code" << exitCode;
+      handleCrash();
+    } else {
+      qInfo() << "file indexer exited with code" << exitCode;
+    }
+  });
+
+  connect(&m_bus, &FileIndexerBus::messageReceived, this, [this](const QByteArray &msg) {
+    std::string_view view{msg.constData(), static_cast<size_t>(msg.size())};
+    if (auto res = m_client.route(view); !res) {
+      qWarning() << "Failed to route file indexer message" << res.error();
+    }
+  });
 }
 
 void FileIndexer::start() {
-  for (const auto &entrypoint : m_entrypoints) {
-    auto lastScan = m_db.getLastScan(entrypoint, ScanType::Full);
+  if (isRunning()) return;
+  m_wantRunning = true;
+  startProcess();
+}
 
-    // we have never had a full scan or it failed
-    if (!lastScan) {
-      qInfo() << "This is our first startup for entrypoint" << entrypoint.c_str() << ", starting full scan";
-      startSingleScan(entrypoint, ScanType::Full);
-      continue;
-    }
+void FileIndexer::stopProcess() {
+  m_wantRunning = false;
+  m_crashCount = 0;
+  m_process.close();
+}
 
-    // Scans marked as started when we call start() (that is, at the beginning of the program)
-    // are considered failed because they were not able to finish.
-    if (lastScan->status != ScanStatus::Succeeded) {
-      qInfo() << "Last full scan for entrypoint" << entrypoint.c_str()
-              << "did not complete successfully, marking as interrupted and starting a new full scan";
-      markScanAsInterrupted(lastScan);
-      startSingleScan(entrypoint, ScanType::Full);
-      continue;
-    }
+void FileIndexer::startProcess() {
+  auto path = vicinae::findHelperProgram("vicinae-file-indexer");
 
-    lastScan = m_db.getLastScan(entrypoint, ScanType::Incremental);
-    if (lastScan && lastScan.value().status != ScanStatus::Succeeded) { markScanAsInterrupted(lastScan); }
-
-    qInfo() << "Starting incremental scan for entrypoint" << entrypoint.c_str();
-    startSingleScan(entrypoint, ScanType::Incremental);
+  if (!path) {
+    qWarning() << "could not find vicinae-file-indexer helper binary, file search will not work";
+    return;
   }
 
-  for (const auto &entrypoint : m_watcherPaths) {
-    startSingleScan(entrypoint, ScanType::Watcher, m_excludedFilenames);
+  m_process.setProgram(path->c_str());
+  m_process.start();
+
+  if (!m_process.waitForStarted()) {
+    qCritical() << "Failed to start file indexer" << m_process.error();
+    return;
   }
+
+  m_crashCount = 0;
+  sendConfigure();
+}
+
+void FileIndexer::sendConfigure() {
+  if (!isRunning()) return;
+  m_client.fileindexer()->configure(m_config);
+}
+
+void FileIndexer::handleCrash() {
+  if (!m_wantRunning) return;
+
+  ++m_crashCount;
+
+  if (m_crashCount > MAX_RESTART_ATTEMPTS) {
+    qCritical() << "file indexer crashed" << m_crashCount << "times, giving up on restart";
+    return;
+  }
+
+  const int delay = BASE_RESTART_DELAY_MS * (1 << (m_crashCount - 1));
+  qWarning() << "file indexer crashed, restarting in" << delay << "ms"
+             << "(attempt" << m_crashCount << "/" << MAX_RESTART_ATTEMPTS << ")";
+
+  QTimer::singleShot(delay, this, [this]() { startProcess(); });
+}
+
+void FileIndexer::rebuildIndex() {
+  if (!isRunning()) return;
+  m_client.fileindexer()->rebuildIndex();
 }
 
 void FileIndexer::preferenceValuesChanged(const QJsonObject &preferences) {
-  m_entrypoints = ranges_to<std::vector>(
-      preferences.value("paths").toString().split(';', Qt::SkipEmptyParts) |
-      std::views::transform([](const QStringView &v) { return fs::path(v.toString().toStdString()); }));
+  auto splitField = [&](const char *key) {
+    std::vector<std::string> out;
+    const auto parts = preferences.value(key).toString().split(';', Qt::SkipEmptyParts);
+    out.reserve(parts.size());
+    for (const auto &part : parts) {
+      out.emplace_back(part.toStdString());
+    }
+    return out;
+  };
 
-  m_excludedPaths = ranges_to<std::vector>(
-      preferences.value("excludedPaths").toString().split(';', Qt::SkipEmptyParts) |
-      std::views::transform([](const QStringView &v) { return fs::path(v.toString().toStdString()); }));
+  m_config.paths = splitField("paths");
+  m_config.excluded_paths = splitField("excludedPaths");
+  m_config.watcher_paths = splitField("watcherPaths");
 
-  m_watcherPaths = ranges_to<std::vector>(
-      preferences.value("watcherPaths").toString().split(';', Qt::SkipEmptyParts) |
-      std::views::transform([](const QStringView &v) { return fs::path(v.toString().toStdString()); }));
-
-  std::string const databaseFilename = FileIndexerDatabase::getDatabasePath().filename().string();
-  m_excludedFilenames = {databaseFilename, databaseFilename + "-wal"};
+  if (preferences.value("autoIndexing").toBool()) {
+    if (isRunning()) {
+      sendConfigure();
+    } else {
+      start();
+    }
+  } else {
+    stopProcess();
+  }
 }
 
 QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view view,
                                                                 const QueryParams &params) {
-  return m_queryEngine.query(view, params);
+  if (!isRunning()) { return QtFuture::makeReadyValueFuture(std::vector<IndexerFileResult>{}); }
+
+  file_indexer_gen::QueryRequest req{
+      .text = std::string(view),
+      .pagination = {.offset = params.pagination.offset, .limit = params.pagination.limit}};
+
+  return m_client.fileindexer()->query(req).then(
+      [](std::expected<file_indexer_gen::QueryResponse, std::string> result) {
+        std::vector<IndexerFileResult> results;
+        if (!result) { return results; }
+
+        results.reserve(result->matches.size());
+        for (const auto &match : result->matches) {
+          results.emplace_back(
+              IndexerFileResult{.path = std::filesystem::path(match.path), .rank = match.rank});
+        }
+        return results;
+      });
 }
 
-FileIndexer::FileIndexer() : m_writer(std::make_shared<DbWriter>()), m_dispatcher(m_writer) {
-  m_db.runMigrations();
+void FileIndexer::handleStderr() {
+  m_stderrBuf += m_process.readAllStandardError();
+
+  int idx = 0;
+  while ((idx = m_stderrBuf.indexOf('\n')) != -1) {
+    QByteArray const lineBytes = m_stderrBuf.left(idx);
+    m_stderrBuf = m_stderrBuf.sliced(idx + 1);
+
+    QString const line = QString::fromUtf8(lineBytes);
+    if (line.isEmpty()) continue;
+
+    QString level;
+    QString message = line;
+    if (int const tab = line.indexOf('\t'); tab != -1) {
+      level = line.left(tab);
+      message = line.sliced(tab + 1);
+    }
+
+    rang::fg color = rang::fg::reset;
+    if (level == "debug") {
+      color = rang::fg::cyan;
+    } else if (level == "info") {
+      color = rang::fg::green;
+    } else if (level == "warn") {
+      color = rang::fg::yellow;
+    } else if (level == "error") {
+      color = rang::fg::red;
+    }
+
+    auto const ts = QDateTime::currentDateTime().toString("yyyy-MM-dd'T'hh:mm:ss");
+    std::cerr << "[" << rang::fg::blue << "F" << rang::fg::reset << "] " << rang::fg::gray << ts.toStdString()
+              << " " << color << level.toStdString() << rang::fg::reset << (level.isEmpty() ? "" : " - ")
+              << message.toStdString() << "\n";
+  }
 }

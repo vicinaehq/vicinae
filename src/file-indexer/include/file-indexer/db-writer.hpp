@@ -1,9 +1,16 @@
 #pragma once
-#include "utils/utils.hpp"
-#include <queue>
-#include <vector>
+#include <atomic>
+#include <condition_variable>
+#include <expected>
+#include <functional>
 #include <filesystem>
-#include "services/files-service/file-indexer/file-indexer-db.hpp"
+#include <memory>
+#include <mutex>
+#include <queue>
+#include <string>
+#include <thread>
+#include <vector>
+#include "file-indexer/file-indexer-db.hpp"
 
 class DbWriter {
 public:
@@ -32,9 +39,9 @@ public:
   // Utility functions
   void updateScanStatus(int scanId, ScanStatus status);
 
-  void setScanError(int scanId, const QString &error);
-  std::expected<FileIndexerDatabase::ScanRecord, QString> createScan(const std::filesystem::path &path,
-                                                                     ScanType type);
+  void setScanError(int scanId, const std::string &error);
+  std::expected<FileIndexerDatabase::ScanRecord, std::string> createScan(const std::filesystem::path &path,
+                                                                         ScanType type);
 
   // Receive by value because `paths` could mutate while the work is waiting in queue
   void indexFiles(std::vector<std::filesystem::path> paths);

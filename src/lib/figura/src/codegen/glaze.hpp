@@ -383,13 +383,22 @@ class GlazeGenerator : public AbstractCodeGenerator {
     oss << "\t" << abstractName(s.name) << "(RpcTransport& transport): EventEmitter(transport) {}\n\n";
 
     for (const auto &method : s.methods) {
-      oss << "\t" << "virtual std::expected<" << serializeTypename(method.returnType) << ", std::string> "
-          << method.name << "(";
-      for (const auto &[idx, param] : method.params | vicinae::enumerate) {
-        if (idx > 0) oss << ", ";
-        oss << serializeTypename(param.type) << " " << param.name;
+      if (method.isAsync) {
+        oss << "\t" << "virtual void " << method.name << "(";
+        for (const auto &param : method.params) {
+          oss << serializeTypename(param.type) << " " << param.name << ", ";
+        }
+        oss << "std::function<void(std::expected<" << serializeTypename(method.returnType)
+            << ", std::string>)> reply) = 0;\n";
+      } else {
+        oss << "\t" << "virtual std::expected<" << serializeTypename(method.returnType) << ", std::string> "
+            << method.name << "(";
+        for (const auto &[idx, param] : method.params | vicinae::enumerate) {
+          if (idx > 0) oss << ", ";
+          oss << serializeTypename(param.type) << " " << param.name;
+        }
+        oss << ") = 0;\n";
       }
-      oss << ") = 0;\n";
     }
 
     for (const auto &event : s.events) {
@@ -561,6 +570,7 @@ public:
     oss << R"(
 #pragma once
 #include <expected>
+#include <functional>
 #include <glaze/glaze.hpp>
 #include <string>
 #include <string_view>
@@ -624,23 +634,43 @@ public:
         firstMethod = false;
         oss << "\t\t\t" << getMethodParamName(s->name, m.name) << " payload;\n";
         oss << "\t\t\t[[maybe_unused]] auto res = glz::read_json(payload, req.params.str);\n";
-        oss << "\t\t\tauto result = m_" << s->name << "." << m.name << "(";
-        for (const auto &[idx, param] : m.params | vicinae::enumerate) {
-          if (idx > 0) oss << ", ";
-          oss << "std::move(payload." << param.name << ")";
-        }
-        oss << ");\n";
-
-        oss << "\t\t\tif (!result) {\n";
-        oss << "\t\t\t\tm_transport.replyError(req.id, result.error());\n";
-        if (isVoid(m.returnType)) {
-          oss << "\t\t\t} else {\n";
-          oss << "\t\t\t\tm_transport.reply(req.id, nullptr);\n";
+        if (m.isAsync) {
+          oss << "\t\t\tm_" << s->name << "." << m.name << "(";
+          for (const auto &param : m.params) {
+            oss << "std::move(payload." << param.name << "), ";
+          }
+          oss << "[this, id = req.id](std::expected<" << serializeTypename(m.returnType)
+              << ", std::string> result) {\n";
+          oss << "\t\t\t\tif (!result) {\n";
+          oss << "\t\t\t\t\tm_transport.replyError(id, result.error());\n";
+          if (isVoid(m.returnType)) {
+            oss << "\t\t\t\t} else {\n";
+            oss << "\t\t\t\t\tm_transport.reply(id, nullptr);\n";
+          } else {
+            oss << "\t\t\t\t} else {\n";
+            oss << "\t\t\t\t\tm_transport.reply(id, *result);\n";
+          }
+          oss << "\t\t\t\t}\n";
+          oss << "\t\t\t});\n";
         } else {
-          oss << "\t\t\t} else {\n";
-          oss << "\t\t\t\tm_transport.reply(req.id, *result);\n";
+          oss << "\t\t\tauto result = m_" << s->name << "." << m.name << "(";
+          for (const auto &[idx, param] : m.params | vicinae::enumerate) {
+            if (idx > 0) oss << ", ";
+            oss << "std::move(payload." << param.name << ")";
+          }
+          oss << ");\n";
+
+          oss << "\t\t\tif (!result) {\n";
+          oss << "\t\t\t\tm_transport.replyError(req.id, result.error());\n";
+          if (isVoid(m.returnType)) {
+            oss << "\t\t\t} else {\n";
+            oss << "\t\t\t\tm_transport.reply(req.id, nullptr);\n";
+          } else {
+            oss << "\t\t\t} else {\n";
+            oss << "\t\t\t\tm_transport.reply(req.id, *result);\n";
+          }
+          oss << "\t\t\t}\n";
         }
-        oss << "\t\t\t}\n";
       }
     }
 

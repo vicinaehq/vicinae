@@ -1,3 +1,11 @@
+#pragma once
+#include <string_view>
+
+namespace file_indexer {
+
+inline constexpr int SCHEMA_VERSION = 1;
+
+inline constexpr std::string_view INIT_SQL = R"sql(
 CREATE TABLE IF NOT EXISTS scan_history (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		status INTEGER NOT NULL,
@@ -21,17 +29,16 @@ CREATE VIRTUAL TABLE IF NOT EXISTS unicode_idx USING fts5(
 	name, content=indexed_file, tokenize='unicode61', prefix='1 2 3 4 5 6'
 );
 
--- Triggers to keep the FTS index up to date.
-
-CREATE TRIGGER unicode_idx_ai AFTER INSERT ON indexed_file BEGIN
+CREATE TRIGGER IF NOT EXISTS unicode_idx_ai AFTER INSERT ON indexed_file BEGIN
   INSERT INTO unicode_idx(rowid, name) VALUES (new.id, new.name);END;
 
-CREATE TRIGGER unicode_idx_ad AFTER DELETE ON indexed_file BEGIN
-  INSERT INTO unicode_idx(unicode_idx, rowid, name) VALUES('delete', old.id, old.name);END; 
+CREATE TRIGGER IF NOT EXISTS unicode_idx_ad AFTER DELETE ON indexed_file BEGIN
+  INSERT INTO unicode_idx(unicode_idx, rowid, name) VALUES('delete', old.id, old.name);END;
 
--- we use those to maintain the index up to date when performing incremental scans
-CREATE INDEX idx_indexed_file_parent_path ON indexed_file(parent_path);
-CREATE INDEX idx_indexed_file_path ON indexed_file(path);
-
-CREATE INDEX idx_indexed_file_covering 
+CREATE INDEX IF NOT EXISTS idx_indexed_file_parent_path ON indexed_file(parent_path);
+CREATE INDEX IF NOT EXISTS idx_indexed_file_path ON indexed_file(path);
+CREATE INDEX IF NOT EXISTS idx_indexed_file_covering
 ON indexed_file(id, relevancy_score DESC, path);
+)sql";
+
+}; // namespace file_indexer

@@ -79,12 +79,10 @@ public:
 #ifdef Q_OS_LINUX
     auto indexing = Preference::makeCheckbox("autoIndexing");
 
-    indexing.setTitle("Auto Indexing");
+    indexing.setTitle("Enabled");
     indexing.setDescription(
-        "Whether to enable automatic file indexing in the background. If this is turned off, Vicinae will "
-        "still be "
-        "able to query the index if there is one, but will no longer update it by itself. This does not "
-        "cancel ongoing indexing tasks.");
+        "Whether to run the file indexer in the background. When turned off, the indexer process is "
+        "stopped entirely and file search becomes unavailable until it is turned back on.");
     indexing.setDefaultValue(true);
 
     auto paths = Preference::makeText("paths");

@@ -1,7 +1,8 @@
-#include "indexer-scanner.hpp"
-#include "abstract-scanner.hpp"
-#include "services/files-service/file-indexer/filesystem-walker.hpp"
-#include <QDebug>
+#include "file-indexer/indexer-scanner.hpp"
+#include "file-indexer/abstract-scanner.hpp"
+#include "file-indexer/filesystem-walker.hpp"
+#include "file-indexer/log.hpp"
+#include <chrono>
 #include <utility>
 
 namespace fs = std::filesystem;
@@ -21,7 +22,7 @@ void IndexerScanner::enqueueBatch(const std::vector<FileEvent> &paths) {
     }
 
     if (shouldWait) {
-      qDebug() << "Handling backpressure: too many batched";
+      flog::debug() << "Handling backpressure: too many batched";
       std::this_thread::sleep_for(std::chrono::milliseconds(BACKPRESSURE_WAIT_MS));
     }
   }
@@ -63,7 +64,7 @@ IndexerScanner::IndexerScanner(const std::shared_ptr<DbWriter> &writer, const Sc
       m_writerWorker->stop();
       finish();
     } catch (const std::exception &error) {
-      qCritical() << "Caught exception during fullscan" << error.what();
+      flog::error() << "Caught exception during fullscan" << error.what();
       fail();
     }
   });

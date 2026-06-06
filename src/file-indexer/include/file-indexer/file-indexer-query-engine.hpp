@@ -1,48 +1,60 @@
 #pragma once
 #include "fuzzy/fzf.hpp"
-#include "services/files-service/abstract-file-indexer.hpp"
-#include "services/files-service/file-indexer/file-indexer-db.hpp"
-#include "utils.hpp"
-#include <QtConcurrent/QtConcurrentRun>
+#include "file-indexer/file-indexer-db.hpp"
 #include <algorithm>
+#include <filesystem>
 #include <ranges>
-#include <qstringlist.h>
 #include <string>
 #include <utility>
 #include <vector>
 
-// FIXME: this fires a new query and creates a database connection on each search, which can
-// potentially cause issues when doing a lot of file search. Adding a slight debounce on
-// search is recommended.
+struct IndexerFileResult {
+  std::filesystem::path path;
+  double rank;
+};
+
+struct Pagination {
+  int offset = 0;
+  int limit = 50;
+};
+
 class FileIndexerQueryEngine {
 public:
-  QFuture<std::vector<IndexerFileResult>> query(std::string_view q,
-                                                const AbstractFileIndexer::QueryParams &params) {
-    return QtConcurrent::run([params, query = qStringFromStdView(q)]() {
-      FileIndexerDatabase db;
-      QString finalQuery = prepareCandidateSearchQuery(query);
+  std::vector<IndexerFileResult> query(std::string_view q, const Pagination &pagination) {
+    FileIndexerDatabase db;
+    std::string const finalQuery = prepareCandidateSearchQuery(q);
 
-      if (finalQuery.isEmpty()) return std::vector<IndexerFileResult>();
+    if (finalQuery.empty()) return {};
 
-      auto candidates = db.searchCandidates(finalQuery.toStdString(), candidateLimitFor(params.pagination));
+    auto candidates = db.searchCandidates(finalQuery, candidateLimitFor(pagination));
 
-      return rankCandidates(std::move(candidates), query.toStdString(), params.pagination);
-    });
+    return rankCandidates(std::move(candidates), q, pagination);
   }
 
-  static QString prepareCandidateSearchQuery(QStringView query) {
-    QStringList terms;
+  static std::string prepareCandidateSearchQuery(std::string_view query) {
+    static constexpr std::string_view WHITESPACE = " \t\n\r\f\v";
 
-    for (const auto &word : query.split(' ')) {
-      QString term = word.toString().trimmed();
+    auto trim = [](std::string_view word) -> std::string_view {
+      auto const begin = word.find_first_not_of(WHITESPACE);
+      if (begin == std::string_view::npos) return {};
+      return word.substr(begin, word.find_last_not_of(WHITESPACE) - begin + 1);
+    };
 
-      if (term.isEmpty()) { continue; }
+    std::string result;
+    for (const auto word : query | std::views::split(' ')) {
+      auto const term = trim(std::string_view(word));
+      if (term.empty()) continue;
 
-      term.replace('"', "\"\"");
-      terms.push_back(QString("\"%1\"*").arg(term));
+      if (!result.empty()) result += " OR ";
+      result += '"';
+      for (char const c : term) {
+        if (c == '"') result += '"'; // FTS5 escapes a quote by doubling it
+        result += c;
+      }
+      result += "\"*";
     }
 
-    return terms.join(QStringLiteral(" OR "));
+    return result;
   }
 
   static int candidateLimitFor(const Pagination &pagination) {

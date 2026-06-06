@@ -1,12 +1,12 @@
-#include "file-indexer-db.hpp"
-#include "scan.hpp"
-#include "vicinae.hpp"
-#include "services/files-service/file-indexer/relevancy-scorer.hpp"
-#include "utils/migration-manager/migration-manager.hpp"
-#include "utils/utils.hpp"
+#include "file-indexer/file-indexer-db.hpp"
+#include "file-indexer/scan.hpp"
+#include "file-indexer/relevancy-scorer.hpp"
+#include "file-indexer/migrations.hpp"
+#include "file-indexer/util.hpp"
+#include "file-indexer/log.hpp"
 #include <chrono>
-#include <format>
-#include <qlogging.h>
+#include <map>
+#include <string>
 
 static constexpr const char *SQLITE_PRAGMAS[] = {
     "PRAGMA journal_mode = WAL",
@@ -16,16 +16,16 @@ static constexpr const char *SQLITE_PRAGMAS[] = {
 
 namespace fs = std::filesystem;
 
-fs::path FileIndexerDatabase::getDatabasePath() { return Omnicast::dataDir() / "file-indexer.db"; }
+fs::path FileIndexerDatabase::getDatabasePath() { return file_indexer::databasePath(); }
 
-std::optional<QDateTime>
+std::optional<int64_t>
 FileIndexerDatabase::retrieveIndexedLastModified(const std::filesystem::path &path) const {
   auto stmt = m_db.prepare("SELECT last_modified_at FROM indexed_file WHERE path = :path");
   stmt.bind(":path", path.c_str());
 
   if (!stmt.step()) { return std::nullopt; }
 
-  return QDateTime::fromSecsSinceEpoch(stmt.columnUInt64(0));
+  return static_cast<int64_t>(stmt.columnUInt64(0));
 }
 
 std::vector<std::filesystem::path>
@@ -43,18 +43,30 @@ FileIndexerDatabase::listIndexedDirectoryFiles(const std::filesystem::path &path
 }
 
 void FileIndexerDatabase::runMigrations() {
-  MigrationManager manager(m_db, "file-indexer");
-  manager.runMigrations();
+  int version = 0;
+  {
+    auto stmt = m_db.prepare("PRAGMA user_version");
+    if (stmt.step()) { version = stmt.columnInt(0); }
+  }
+
+  if (version >= file_indexer::SCHEMA_VERSION) { return; }
+
+  if (!m_db.exec(std::string(file_indexer::INIT_SQL))) {
+    flog::error() << "Failed to run file-indexer migrations" << m_db.lastError();
+    return;
+  }
+
+  m_db.exec("PRAGMA user_version = " + std::to_string(file_indexer::SCHEMA_VERSION));
 }
 
-bool FileIndexerDatabase::setScanError(int scanId, const QString &error) {
+bool FileIndexerDatabase::setScanError(int scanId, const std::string &error) {
   auto stmt = m_db.prepare("UPDATE scan_history SET status = :status, error = :error WHERE id = :id");
   stmt.bind(":id", scanId);
   stmt.bind(":status", static_cast<int>(ScanStatus::Failed));
   stmt.bind(":error", error);
 
   if (!stmt.exec()) {
-    qWarning() << "Failed to update scan status" << stmt.lastError().c_str();
+    flog::warn() << "Failed to update scan status" << stmt.lastError();
     return false;
   }
 
@@ -67,14 +79,14 @@ bool FileIndexerDatabase::updateScanStatus(int scanId, ScanStatus status) {
   stmt.bind(":status", static_cast<int>(status));
 
   if (!stmt.exec()) {
-    qWarning() << "Failed to update scan status" << stmt.lastError().c_str();
+    flog::warn() << "Failed to update scan status" << stmt.lastError();
     return false;
   }
 
   return true;
 }
 
-std::expected<FileIndexerDatabase::ScanRecord, QString>
+std::expected<FileIndexerDatabase::ScanRecord, std::string>
 FileIndexerDatabase::createScan(const std::filesystem::path &path, ScanType type) {
   auto stmt =
       m_db.prepare("INSERT INTO scan_history (entrypoint, type, status) VALUES (:entrypoint, :type, :status) "
@@ -84,14 +96,14 @@ FileIndexerDatabase::createScan(const std::filesystem::path &path, ScanType type
   stmt.bind(":type", static_cast<int>(type));
 
   if (!stmt.step()) {
-    qWarning() << "Failed to create scan history";
-    return std::unexpected(QString("Failed to create scan history"));
+    flog::warn() << "Failed to create scan history";
+    return std::unexpected(std::string("Failed to create scan history"));
   }
 
   ScanRecord record;
   record.id = stmt.columnInt(0);
   record.status = static_cast<ScanStatus>(stmt.columnInt(1));
-  record.createdAt = QDateTime::fromSecsSinceEpoch(stmt.columnUInt64(2));
+  record.createdAt = static_cast<int64_t>(stmt.columnUInt64(2));
   record.path = path;
 
   return record;
@@ -102,7 +114,7 @@ FileIndexerDatabase::ScanRecord FileIndexerDatabase::mapScan(const db::Statement
 
   record.id = stmt.columnInt(0);
   record.status = static_cast<ScanStatus>(stmt.columnInt(1));
-  record.createdAt = QDateTime::fromSecsSinceEpoch(stmt.columnUInt64(2));
+  record.createdAt = static_cast<int64_t>(stmt.columnUInt64(2));
   record.path = stmt.columnText(3);
   record.type = static_cast<ScanType>(stmt.columnInt(4));
 
@@ -222,29 +234,29 @@ void FileIndexerDatabase::deleteIndexedFiles(const std::vector<fs::path> &paths)
     stmt.bind(":path", path.c_str());
 
     if (!stmt.exec()) {
-      qCritical() << "Failed to delete indexed file" << path.c_str();
+      flog::error() << "Failed to delete indexed file" << path.c_str();
       tx.rollback();
       return;
     }
   }
 
-  if (!tx.commit()) { qCritical() << "Failed to commit"; }
+  if (!tx.commit()) { flog::error() << "Failed to commit"; }
 }
 
 void FileIndexerDatabase::deleteAllIndexedFiles() {
   if (!m_db.exec("DELETE FROM indexed_file")) {
-    qCritical() << "Failed to delete all indexed files" << m_db.lastError().c_str();
+    flog::error() << "Failed to delete all indexed files" << m_db.lastError();
   }
 }
 
 void FileIndexerDatabase::compact() {
   if (!m_db.exec("VACUUM")) {
-    qWarning() << "VACUUM failed" << m_db.lastError().c_str();
+    flog::warn() << "VACUUM failed" << m_db.lastError();
     return;
   }
 
   if (!m_db.exec("PRAGMA wal_checkpoint(TRUNCATE)")) {
-    qWarning() << "wal_checkpoint(TRUNCATE) failed" << m_db.lastError().c_str();
+    flog::warn() << "wal_checkpoint(TRUNCATE) failed" << m_db.lastError();
   }
 }
 
@@ -291,14 +303,14 @@ void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
     if (!activeStmt->exec()) {
       static std::map<FileEventType, std::string> verbMap = {{FileEventType::Delete, "deleted"},
                                                              {FileEventType::Modify, "modified"}};
-      qCritical() << "Failed to index" << verbMap[event.type] << "file" << event.path
-                  << activeStmt->lastError().c_str();
+      flog::error() << "Failed to index" << verbMap[event.type] << "file" << event.path.string()
+                    << activeStmt->lastError();
       tx.rollback();
       return;
     }
   }
 
-  if (!tx.commit()) { qCritical() << "Failed to commit"; }
+  if (!tx.commit()) { flog::error() << "Failed to commit"; }
 }
 
 void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &paths) {
@@ -335,26 +347,26 @@ void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &p
     stmt.bind(":relevancy_score", score);
 
     if (!stmt.exec()) {
-      qCritical() << "Failed to insert file in index" << path << stmt.lastError().c_str();
+      flog::error() << "Failed to insert file in index" << path.string() << stmt.lastError();
       tx.rollback();
       return;
     }
   }
 
-  if (!tx.commit()) { qCritical() << "Failed to commit batchIndex" << m_db.lastError().c_str(); }
+  if (!tx.commit()) { flog::error() << "Failed to commit batchIndex" << m_db.lastError(); }
 }
 
 FileIndexerDatabase::FileIndexerDatabase() {
   auto result = db::Database::open(getDatabasePath());
 
   if (!result) {
-    qCritical() << "Failed to open database at" << getDatabasePath().c_str();
+    flog::error() << "Failed to open database at" << getDatabasePath().c_str();
     return;
   }
 
   m_db = std::move(*result);
 
   for (const auto &pragma : SQLITE_PRAGMAS) {
-    if (!m_db.exec(pragma)) { qCritical() << "Failed to run file-indexer pragma" << pragma; }
+    if (!m_db.exec(pragma)) { flog::error() << "Failed to run file-indexer pragma" << pragma; }
   }
 }

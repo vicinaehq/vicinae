@@ -1,6 +1,7 @@
 #pragma once
-#include "services/files-service/file-indexer/abstract-scanner.hpp"
+#include "file-indexer/abstract-scanner.hpp"
 #include "watcher/watcher.hpp"
+#include <memory>
 
 class WatcherScanner : public AbstractScanner {
 private:

@@ -46,6 +46,7 @@ struct Method {
   std::string_view name;
   std::vector<MethodParameter> params;
   TypeValue returnType;
+  bool isAsync = false;
 };
 
 struct Event {
@@ -192,7 +193,7 @@ public:
     while (peakUnless(TokenType::RBrace)) {
       auto tok = m_lexer.peak();
 
-      if (tok->type == TokenType::Method) {
+      if (tok->type == TokenType::Method || tok->type == TokenType::Async) {
         service->methods.emplace_back(parseMethod());
       } else if (tok->type == TokenType::Event) {
         service->events.emplace_back(parseEvent());
@@ -248,6 +249,11 @@ public:
 
   Method parseMethod() {
     Method method{};
+
+    if (auto tok = m_lexer.peak(); tok && tok->type == TokenType::Async) {
+      m_lexer.getNext();
+      method.isAsync = true;
+    }
 
     assertGetNext(TokenType::Method, "expected fn keyword before method");
     method.name = assertGetNext(TokenType::Identifier, "Expected identifier after \"fn\"").data;

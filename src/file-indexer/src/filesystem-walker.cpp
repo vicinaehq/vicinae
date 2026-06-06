@@ -1,12 +1,12 @@
-#include "services/files-service/file-indexer/filesystem-walker.hpp"
-#include "utils/utils.hpp"
+#include "file-indexer/filesystem-walker.hpp"
+#include "file-indexer/log.hpp"
+#include "file-indexer/util.hpp"
 #include <chrono>
 #include <cstdlib>
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <fnmatch.h>
-#include <qlogging.h>
-#include <qobjectdefs.h>
 #include <stack>
 #include <string>
 
@@ -36,7 +36,7 @@ static const std::vector<std::string_view> EXCLUDED_FILENAMES = {
 
 bool GitIgnoreReader::matches(const fs::path &path) const {
   for (const auto &pattern : m_patterns) {
-    std::string const filename = getLastPathComponent(path);
+    std::string const filename = file_indexer::getLastPathComponent(path);
     std::string processedPattern = pattern;
 
     if (pattern.starts_with('/')) {
@@ -113,8 +113,8 @@ void FileSystemWalker::walk(const fs::path &root, const WalkCallback &callback) 
   std::error_code ec;
 
   if (!fs::is_directory(root, ec)) {
-    qWarning() << "FileSystemWalker needs to be passed a readable directory as its root entrypoint"
-               << (ec ? ec.message().c_str() : "");
+    flog::warn() << "FileSystemWalker needs to be passed a readable directory as its root entrypoint"
+                 << (ec ? ec.message().c_str() : "");
     return;
   }
 
@@ -129,27 +129,27 @@ void FileSystemWalker::walk(const fs::path &root, const WalkCallback &callback) 
 
     for (const auto &entry : fs::directory_iterator(path, ec)) {
       if (ec) {
-        qWarning() << "walk error" << ec.message().c_str();
+        flog::warn() << "walk error" << ec.message().c_str();
         continue;
       }
       if (entry.is_symlink(ec)) { continue; }
 
       const auto &path = entry.path();
 
-      if (m_ignoreHiddenFiles && isHiddenPath(path)) {
-        if (m_verbose) { qInfo() << "FileSystemWalker: ignoring hidden path" << path.c_str(); }
+      if (m_ignoreHiddenFiles && file_indexer::isHiddenPath(path)) {
+        if (m_verbose) { flog::info() << "FileSystemWalker: ignoring hidden path" << path.c_str(); }
         continue;
       }
 
       if (std::ranges::find(EXCLUDED_PATHS, path) != EXCLUDED_PATHS.end()) { continue; }
       if (std::ranges::find(EXCLUDED_FILENAMES, path.filename()) != EXCLUDED_FILENAMES.end()) { continue; }
       if (isIgnored(path)) {
-        if (m_verbose) { qInfo() << "Indexing: ignoring git-ignored path" << path.c_str(); }
+        if (m_verbose) { flog::info() << "Indexing: ignoring git-ignored path" << path.c_str(); }
         continue;
       }
 
       if (isExcludedPath(path)) {
-        if (m_verbose) { qInfo() << "FileSystemWalker: excluding path" << path.c_str(); }
+        if (m_verbose) { flog::info() << "FileSystemWalker: excluding path" << path.c_str(); }
         continue;
       }
 
@@ -173,12 +173,9 @@ void FileSystemWalker::walk(const fs::path &root, const WalkCallback &callback) 
 
   double const duration = duration_cast<seconds>(high_resolution_clock::now() - start).count();
 
-  qInfo().noquote()
-      << QString("Done walking file tree at %1. Processed %2 directories and %3 files in %4 seconds.")
-             .arg(root.c_str())
-             .arg(dirCount)
-             .arg(fileCount)
-             .arg(duration);
+  flog::info() << std::format("Done walking file tree at {}. Processed {} directories and {} files in {} "
+                              "seconds.",
+                              root.string(), dirCount, fileCount, duration);
 }
 
 void FileSystemWalker::stop() { m_alive = false; }

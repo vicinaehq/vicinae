@@ -1,6 +1,6 @@
-#include "watcher-scanner.hpp"
-#include "scan.hpp"
-#include <QtLogging>
+#include "file-indexer/watcher-scanner.hpp"
+#include "file-indexer/scan.hpp"
+#include "file-indexer/log.hpp"
 #include <filesystem>
 #include <utility>
 
@@ -12,7 +12,7 @@ void WatcherScanner::handleMessage(const wtr::event &ev) {
 
   case 's':
     if (err_case("s/self/live@")) {
-      qInfo() << "Creating inotify watchers in" << scan.path.c_str();
+      flog::info() << "Creating inotify watchers in" << scan.path.c_str();
       start(scan);
       return;
     }
@@ -20,14 +20,14 @@ void WatcherScanner::handleMessage(const wtr::event &ev) {
   case 'w':
     // TODO
     if (err_case("w/sys/not_watched@")) {
-      qCritical()
+      flog::error()
           << "Ran out of inotify watchers.\n"
           << "    Please increase /proc/sys/fs/inotify/max_user_watches, or set it parmanently:\n"
           << "    `echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p`";
       fail();
       return;
     }
-    qWarning() << "Watcher error:" << ev.path_name.c_str();
+    flog::warn() << "Watcher error:" << ev.path_name.c_str();
     break;
   case 'e':
     if (err_case("e/self/die@")) {
@@ -36,9 +36,9 @@ void WatcherScanner::handleMessage(const wtr::event &ev) {
     }
     if (err_case("e/self/live@")) {
       // Failed to start
-      qWarning() << "Watcher failed to start: is" << scan.path.c_str() << "a correct path?";
+      flog::warn() << "Watcher failed to start: is" << scan.path.c_str() << "a correct path?";
     } else {
-      qWarning() << "Fatal Watcher error:" << ev.path_name.c_str();
+      flog::warn() << "Fatal Watcher error:" << ev.path_name.c_str();
     }
     fail();
     break;
@@ -82,7 +82,8 @@ void WatcherScanner::handleEvent(const wtr::event &ev) {
       m_writer->indexEvents({FileEvent(FileEventType::Modify, ev.associated->path_name,
                                        toFileTimeType(ev.associated->effect_time))});
     } else {
-      qWarning() << "Got rename event for" << ev.path_name.c_str() << ", but didn't get any associated event";
+      flog::warn() << "Got rename event for" << ev.path_name.c_str()
+                   << ", but didn't get any associated event";
     }
     break;
 
