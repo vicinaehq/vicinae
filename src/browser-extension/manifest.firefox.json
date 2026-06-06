@@ -3,7 +3,11 @@
   "name": "Vicinae Browser Integration",
   "browser_specific_settings": {
     "gecko": {
-      "id": "vicinae@vicinae.com"
+      "id": "firefox@vicinae.com",
+      "data_collection_permissions": {
+        "required": ["none"],
+        "optional": []
+      }
     }
   },
   "version": "1.0.0",
