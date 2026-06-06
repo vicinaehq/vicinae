@@ -660,6 +660,9 @@ if (UNIX AND NOT APPLE)
 		src/services/global-shortcuts/xkb-keysym.hpp
 		src/services/global-shortcuts/xkb-keysym.cpp
 
+		src/services/global-shortcuts/x11-global-shortcut-backend.hpp
+		src/services/global-shortcuts/x11-global-shortcut-backend.cpp
+
 		src/internal/icon-theme-db/icon-theme-db.cpp
 
 		src/services/window-manager/hyprland/hyprland.cpp
@@ -685,7 +688,7 @@ if (UNIX AND NOT APPLE)
 	# Add XCB (X11 C Bindings) library for X11 window manager support
 	find_package(X11 REQUIRED)
 	if (X11_FOUND)
-		list(APPEND LIBS X11::xcb)
+		list(APPEND LIBS X11::xcb X11::xcb_keysyms)
 		message(STATUS "XCB library found for X11 window manager support")
 	endif()
 

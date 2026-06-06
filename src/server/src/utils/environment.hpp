@@ -22,6 +22,8 @@ inline bool isGnomeEnvironment() {
 
 inline bool isWaylandSession() { return QGuiApplication::platformName() == "wayland"; }
 
+inline bool isX11() { return QGuiApplication::platformName() == "xcb"; }
+
 inline bool supportsArbitraryWindowPlacement() { return !isWaylandSession(); }
 
 /**
