@@ -2,7 +2,6 @@
 #include "fuzzy/fzf.hpp"
 #include "file-indexer/file-indexer-db.hpp"
 #include <algorithm>
-#include <cctype>
 #include <filesystem>
 #include <ranges>
 #include <string>
@@ -19,9 +18,6 @@ struct Pagination {
   int limit = 50;
 };
 
-// FIXME: this fires a new query and creates a database connection on each search, which can
-// potentially cause issues when doing a lot of file search. Adding a slight debounce on
-// search is recommended.
 class FileIndexerQueryEngine {
 public:
   std::vector<IndexerFileResult> query(std::string_view q, const Pagination &pagination) {
@@ -36,41 +32,26 @@ public:
   }
 
   static std::string prepareCandidateSearchQuery(std::string_view query) {
-    std::vector<std::string> terms;
+    static constexpr std::string_view WHITESPACE = " \t\n\r\f\v";
 
-    size_t start = 0;
-    while (start <= query.size()) {
-      size_t const end = query.find(' ', start);
-      std::string_view const wordView =
-          end == std::string_view::npos ? query.substr(start) : query.substr(start, end - start);
-
-      size_t b = 0;
-      size_t e = wordView.size();
-      while (b < e && std::isspace(static_cast<unsigned char>(wordView[b])))
-        ++b;
-      while (e > b && std::isspace(static_cast<unsigned char>(wordView[e - 1])))
-        --e;
-
-      if (e > b) {
-        std::string term;
-        term.reserve(e - b + 4);
-        term.push_back('"');
-        for (size_t i = b; i < e; ++i) {
-          if (wordView[i] == '"') { term.push_back('"'); } // escape by doubling
-          term.push_back(wordView[i]);
-        }
-        term += "\"*";
-        terms.emplace_back(std::move(term));
-      }
-
-      if (end == std::string_view::npos) break;
-      start = end + 1;
-    }
+    auto trim = [](std::string_view word) -> std::string_view {
+      auto const begin = word.find_first_not_of(WHITESPACE);
+      if (begin == std::string_view::npos) return {};
+      return word.substr(begin, word.find_last_not_of(WHITESPACE) - begin + 1);
+    };
 
     std::string result;
-    for (size_t i = 0; i < terms.size(); ++i) {
-      if (i != 0) result += " OR ";
-      result += terms[i];
+    for (const auto word : query | std::views::split(' ')) {
+      auto const term = trim(std::string_view(word));
+      if (term.empty()) continue;
+
+      if (!result.empty()) result += " OR ";
+      result += '"';
+      for (char const c : term) {
+        if (c == '"') result += '"'; // FTS5 escapes a quote by doubling it
+        result += c;
+      }
+      result += "\"*";
     }
 
     return result;
