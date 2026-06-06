@@ -1,4 +1,5 @@
 #include "services/global-shortcuts/global-shortcut-backend-factory.hpp"
+#include "environment.hpp"
 #include "services/global-shortcuts/dummy-global-shortcut-backend.hpp"
 #include <memory>
 
@@ -16,9 +17,7 @@ std::unique_ptr<AbstractGlobalShortcutBackend> createGlobalShortcutBackend() {
 #ifdef Q_OS_MACOS
   return std::make_unique<MacOSGlobalShortcutBackend>();
 #elifdef Q_OS_LINUX
-  // A real X11 session reports the "xcb" platform; under Wayland Qt defaults to the wayland plugin.
-  // XGrabKey on the root window is not truly global under XWayland, so X11 is only used for "xcb".
-  if (QGuiApplication::platformName() == "xcb") { return std::make_unique<X11GlobalShortcutBackend>(); }
+  if (Environment::isX11()) { return std::make_unique<X11GlobalShortcutBackend>(); }
   if (Wayland::Globals::hotkey()) { return std::make_unique<ExtHotkeyGlobalShortcutBackend>(); }
 #endif
   return std::make_unique<DummyGlobalShortcutBackend>();

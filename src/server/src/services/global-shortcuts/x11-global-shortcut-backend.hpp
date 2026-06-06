@@ -36,7 +36,7 @@ private:
     QString id;
     xcb_keysym_t keysym;
     xcb_keycode_t keycode;
-    uint16_t mods; // base modifier mask, without lock-key bits
+    uint16_t mods;
   };
 
   std::expected<void, QString> grab(xcb_keycode_t keycode, uint16_t mods);
@@ -53,7 +53,11 @@ private:
 
   uint16_t m_numLockMask = 0;
   uint16_t m_scrollLockMask = 0;
-  std::vector<uint16_t> m_lockCombos; // every on/off combination of the detected lock modifiers
+  std::vector<uint16_t> m_lockCombos;
 
   std::vector<Binding> m_binds;
+
+  xcb_keycode_t m_lastReleaseCode = 0;
+  xcb_timestamp_t m_lastReleaseTime = 0;
+  bool m_lastReleaseValid = false;
 };

@@ -66,8 +66,8 @@ void X11GlobalShortcutBackend::computeLockMasks() {
   m_numLockMask = modMaskForKeysym(XKB_KEY_Num_Lock);
   m_scrollLockMask = modMaskForKeysym(XKB_KEY_Scroll_Lock);
 
-  // CapsLock is always the dedicated Lock modifier. Build every on/off combination of the lock
-  // modifiers we actually found, so a grab matches regardless of their toggle state.
+  // XGrabKey matches modifiers exactly, so to fire regardless of lock state we grab every on/off
+  // combination of the active lock modifiers (CapsLock is always the dedicated Lock modifier).
   std::vector<uint16_t> active;
   active.reserve(3);
   active.emplace_back(XCB_MOD_MASK_LOCK);
@@ -81,7 +81,8 @@ void X11GlobalShortcutBackend::computeLockMasks() {
     for (size_t i = 0; i < active.size(); ++i) {
       if (subset & (1u << i)) { mask |= active[i]; }
     }
-    m_lockCombos.emplace_back(mask);
+    // Dedupe: grabbing the same combo twice on one connection raises BadAccess.
+    if (std::ranges::find(m_lockCombos, mask) == m_lockCombos.end()) { m_lockCombos.emplace_back(mask); }
   }
 }
 
@@ -114,7 +115,6 @@ std::expected<void, QString> X11GlobalShortcutBackend::grab(xcb_keycode_t keycod
     xcb_void_cookie_t const cookie = xcb_grab_key_checked(m_connection, 0, m_root, mods | m_lockCombos[i],
                                                           keycode, XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC);
     if (CPtr<xcb_generic_error_t> err{xcb_request_check(m_connection, cookie)}) {
-      // Roll back the combos we already grabbed before this one failed.
       for (size_t j = 0; j < i; ++j) {
         xcb_ungrab_key(m_connection, keycode, m_root, mods | m_lockCombos[j]);
       }
@@ -192,10 +192,23 @@ void X11GlobalShortcutBackend::drainEvents() {
     switch (event->response_type & ~0x80) {
     case XCB_KEY_PRESS: {
       auto *key = reinterpret_cast<xcb_key_press_event_t *>(event.get());
+      // Auto-repeat arrives as a KeyRelease/KeyPress pair sharing a timestamp; skip the repeat press.
+      bool const isRepeat =
+          m_lastReleaseValid && m_lastReleaseCode == key->detail && m_lastReleaseTime == key->time;
+      m_lastReleaseValid = false;
+      if (isRepeat) { break; }
+
       uint16_t const mods = key->state & MODIFIER_BITS;
       auto it =
           std::ranges::find_if(m_binds, [&](auto &&b) { return b.keycode == key->detail && b.mods == mods; });
       if (it != m_binds.end()) { emit shortcutActivated(it->id, key->time); }
+      break;
+    }
+    case XCB_KEY_RELEASE: {
+      auto *key = reinterpret_cast<xcb_key_release_event_t *>(event.get());
+      m_lastReleaseCode = key->detail;
+      m_lastReleaseTime = key->time;
+      m_lastReleaseValid = true;
       break;
     }
     case XCB_MAPPING_NOTIFY: {
