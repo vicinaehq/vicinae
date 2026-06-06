@@ -578,20 +578,31 @@ void NavigationController::unloadActiveCommand() {
 
 bool NavigationController::activateEntrypoint(const EntrypointId &id,
                                               const ActivateEntrypointOptions &options) {
-  auto *root = m_ctx.services->rootItemManager();
-  auto *entrypoint = root->findItemById(id);
+  const auto *root = m_ctx.services->rootItemManager();
+  const auto *entrypoint = root->findItemById(id);
+
   if (!entrypoint) {
     qWarning() << "activateEntrypoint: unknown entrypoint" << QString::fromStdString(std::string{id});
     return false;
   }
 
-  popToRoot({.clearSearch = false});
+  const auto previouslyActive = activeCommand();
+  const bool initialOpenState = m_ctx.navigation->isWindowOpened();
+  const bool isSameView = previouslyActive->uniqueId() == id && previouslyActive->isView();
 
-  bool initialOpenState = m_ctx.navigation->isWindowOpened();
+  // toggle visibility if we are already showing
+  if (initialOpenState && isSameView) {
+    popToRoot({.clearSearch = false});
+    m_ctx.navigation->closeWindow();
+    return true;
+  }
+
+  popToRoot({.clearSearch = false});
 
   if (!initialOpenState) { setInstantDismiss(); }
 
-  if (auto *ext = dynamic_cast<CommandRootItem *>(entrypoint)) {
+  // FIXME: we need a unified interface for this
+  if (auto *ext = dynamic_cast<const CommandRootItem *>(entrypoint)) {
     launch(ext->command(), options.arguments);
   } else {
     auto panel = entrypoint->newActionPanel(&m_ctx, root->itemMetadata(id));
