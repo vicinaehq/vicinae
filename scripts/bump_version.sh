@@ -19,8 +19,13 @@ bump_version() {
         exit 1
     fi
 
+    # Use the highest version tag across the whole repo, not just tags reachable
+    # from HEAD: bump commits are tagged but never merged back into the working
+    # branch, so `git describe` would miss the most recent release and we'd
+    # recompute a version that already exists.
     local current_tag
-    current_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+    current_tag=$(git tag -l 'v*' --sort=-v:refname | head -n1)
+    current_tag=${current_tag:-v0.0.0}
 
     local current_version=${current_tag#v}
     IFS='.' read -ra VERSION_PARTS <<< "$current_version"
