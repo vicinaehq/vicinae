@@ -19,9 +19,14 @@
 static constexpr size_t MAX_BUFFER_SIZE = 32;
 static constexpr uint32_t MAX_MESSAGE_SIZE = 64 * 1024;
 static constexpr const char *VIRTUAL_KB_NAME = "vicinae-snippet-virtual-keyboard";
+static constexpr std::string_view INPUT_EVENT_PREFIX = "/dev/input/event";
 
 static bool isWordSeparator(char c) {
   return std::isspace(static_cast<unsigned char>(c)) || std::ispunct(static_cast<unsigned char>(c));
+}
+
+static bool isInputEventDevice(const char *node) {
+  return node && std::string_view{node}.starts_with(INPUT_EVENT_PREFIX);
 }
 
 /**
@@ -100,7 +105,7 @@ std::vector<std::string> SnippetService::enumerateDevices(const char *property) 
     struct udev_device *dev = udev_device_new_from_syspath(m_udev, path);
     const char *node = udev_device_get_devnode(dev);
 
-    if (node) { devNames.emplace_back(node); }
+    if (isInputEventDevice(node)) { devNames.emplace_back(node); }
 
     udev_device_unref(dev);
   }
@@ -365,7 +370,7 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
         const std::string_view action = udev_device_get_action(dev);
         const char *node = udev_device_get_devnode(dev);
 
-        if (!node) continue;
+        if (!isInputEventDevice(node)) continue;
 
         const auto hasProp = [dev](const char *prop) {
           const char *val = udev_device_get_property_value(dev, prop);
