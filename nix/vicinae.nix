@@ -66,7 +66,7 @@ gcc15Stdenv.mkDerivation (finalAttrs: {
     cmark-gfm
     kdePackages.layer-shell-qt
     kdePackages.qtkeychain
-	kdePackages.qtshadertools
+    kdePackages.qtshadertools
     kdePackages.syntax-highlighting
     libqalculate
     nodejs
@@ -85,6 +85,11 @@ gcc15Stdenv.mkDerivation (finalAttrs: {
     npmRoot=src/typescript/extension-manager npmDeps=${finalAttrs.extensionManagerDeps} npmConfigHook
   '';
 
+  postFixup = ''
+    wrapProgram "$out/bin/vicinae" \
+      --set VICINAE_INPUT_SERVER_BIN "$out/libexec/vicinae/vicinae-input-server"
+  '';
+
   qtWrapperArgs = [
     "--prefix PATH : ${
       lib.makeBinPath [
@@ -92,7 +97,6 @@ gcc15Stdenv.mkDerivation (finalAttrs: {
         (placeholder "out")
       ]
     }"
-    "--set VICINAE_INPUT_SERVER_BIN /run/wrappers/bin/vicinae-input-server"
   ];
 
   meta = {
