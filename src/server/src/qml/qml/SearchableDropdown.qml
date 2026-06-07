@@ -32,6 +32,10 @@ Item {
         completionPopup.open();
     }
 
+    function popupX() {
+        return Math.min(0, triggerButton.width - completionPopup.width);
+    }
+
     Keys.onReturnPressed: {
         if (!completionPopup.visible)
             open();
@@ -95,8 +99,8 @@ Item {
     CompletionPopup {
         id: completionPopup
         parent: triggerButton
-        popupType: Popup.Window
-        x: compact ? triggerButton.width - width : 0
+        popupType: Popup.Item
+        x: root.popupX()
         y: triggerButton.height + 4
         width: Math.max(compact ? 200 : 250, root.width)
         focus: true
