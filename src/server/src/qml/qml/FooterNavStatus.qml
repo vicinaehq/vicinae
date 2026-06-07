@@ -4,20 +4,23 @@ Item {
     id: root
 
     property bool clickable: false
+    property bool rootMode: false
     property real availableWidth: 0
 
     signal clicked
 
     readonly property int buttonSize: 26
+    readonly property int backgroundPadding: root.rootMode ? 0 : 6
+    readonly property real textMaxWidth: Math.max(0, root.availableWidth - (navIcon.visible ? navIcon.width + row.spacing : 0))
 
-    implicitWidth: clickable ? 20 : row.implicitWidth
+    implicitWidth: root.rootMode ? 20 : row.implicitWidth
     implicitHeight: Math.max(row.implicitHeight, clickable ? 26 : 0)
 
     Rectangle {
         visible: root.clickable && (mouseArea.containsMouse || footerPanel.open)
-        x: -Math.round((root.buttonSize - root.width) / 2)
+        x: root.rootMode ? -Math.round((root.buttonSize - root.width) / 2) : -root.backgroundPadding
         anchors.verticalCenter: parent.verticalCenter
-        width: root.buttonSize
+        width: root.rootMode ? root.buttonSize : root.width + 2 * root.backgroundPadding
         height: root.buttonSize
         radius: 6
         color: Theme.listItemHoverBg
@@ -33,8 +36,8 @@ Item {
             id: navIcon
             width: 20
             height: 20
-            source: root.clickable ? Img.builtin("vicinae").withFillColor(Theme.textMuted) : launcher.navigationIcon
-            visible: root.clickable || launcher.navigationIcon.valid
+            source: root.rootMode ? Img.builtin("vicinae").withFillColor(Theme.textMuted) : launcher.navigationIcon
+            visible: root.rootMode || launcher.navigationIcon.valid
             anchors.verticalCenter: parent.verticalCenter
         }
 
@@ -44,7 +47,7 @@ Item {
             font.family: Theme.fontFamily
             font.pointSize: Theme.smallerFontSize
             elide: Text.ElideRight
-            width: Math.max(0, root.availableWidth - (navIcon.visible ? navIcon.width + row.spacing : 0))
+            width: Math.min(implicitWidth, root.textMaxWidth)
             anchors.verticalCenter: parent.verticalCenter
             visible: launcher.navigationTitle !== ""
         }
@@ -52,9 +55,9 @@ Item {
 
     MouseArea {
         id: mouseArea
-        x: -Math.round((root.buttonSize - root.width) / 2)
+        x: root.rootMode ? -Math.round((root.buttonSize - root.width) / 2) : -root.backgroundPadding
         anchors.verticalCenter: parent.verticalCenter
-        width: root.buttonSize
+        width: root.rootMode ? root.buttonSize : root.width + 2 * root.backgroundPadding
         height: root.buttonSize
         enabled: root.clickable
         hoverEnabled: enabled
