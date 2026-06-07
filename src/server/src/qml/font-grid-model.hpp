@@ -10,8 +10,6 @@
 #include <span>
 #include <vector>
 
-// A script bucket (root view) or the flat ranked results (search). Entries are non-owning
-// pointers into FontService's cached families.
 class FontGridSource : public GridSource {
 public:
   void setBucket(QString name, std::vector<const FontFamily *> families);

@@ -151,7 +151,6 @@ void FontGridModel::setCategoryFilter(std::optional<int> index) {
 }
 
 void FontGridModel::applyReset() {
-  // Full reset re-creates the delegates (so cell bindings refresh) and clears the selection.
   setSelectFirstOnReset(true);
   rebuildSections();
   setSelectFirstOnReset(false);
