@@ -6,6 +6,7 @@ Item {
     required property string label
     required property var shortcutTokens
     property bool highlighted: false
+    property bool backgrounded: false
 
     signal clicked
 
@@ -18,7 +19,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        visible: root.hovered
+        visible: root.hovered || root.backgrounded
         radius: 6
         color: Theme.listItemHoverBg
     }
