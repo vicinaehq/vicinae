@@ -42,7 +42,7 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             width: 1
             height: 12
-            opacity: primaryButton.hovered || actionsButton.hovered ? 0 : 0.35
+            opacity: primaryButton.hovered || actionsButton.hovered || actionsButton.backgrounded ? 0 : 0.35
             color: Config.withAlpha(Theme.textMuted, Config.windowOpacity)
 
             Behavior on opacity {
@@ -60,6 +60,7 @@ Item {
             label: "Actions"
             shortcutTokens: Keybinds.toggleActionPanelTokens
             highlighted: actionPanel.open
+            backgrounded: actionPanel.open
             onClicked: actionPanel.toggle()
         }
     }
