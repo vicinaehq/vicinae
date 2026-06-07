@@ -141,19 +141,11 @@ void FontGridModel::setFilter(const QString &text) {
     m_mode = Mode::Search;
     const auto &all = m_fontService->fontFamilies();
     auto results = m_scorer.score(std::span<const FontFamily>(all), text.toStdString(),
-                                  [](const FontFamily &f, std::string_view query) {
+                                  [this](const FontFamily &f, std::string_view query) {
+                                    if (m_categoryFilter && !f.has(*m_categoryFilter)) return 0;
                                     return fzf::threadLocalMatcher().fuzzy_match_v2_score_query(
                                         f.name.toStdString(), query);
                                   });
-
-    if (m_categoryFilter) {
-      m_scopedResults.clear();
-      for (const auto &result : results) {
-        if (result.data->has(*m_categoryFilter)) m_scopedResults.push_back(result);
-      }
-      results = std::span<Scored<const FontFamily *>>(m_scopedResults);
-    }
-
     m_searchSource.setResults(QStringLiteral("Results (%1)").arg(results.size()), results);
   }
   applyReset();

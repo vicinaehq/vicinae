@@ -70,5 +70,4 @@ private:
   FontGridSource m_filteredBucket;
   FontGridSource m_searchSource;
   FuzzyScorer<FontFamily> m_scorer;
-  std::vector<Scored<const FontFamily *>> m_scopedResults;
 };
