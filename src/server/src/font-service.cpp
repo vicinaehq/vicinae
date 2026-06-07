@@ -410,6 +410,7 @@ const std::vector<FontFamily> &FontService::fontFamilies() const {
   for (const auto &base : order) {
     const QString rep = representativeFamily(base, groups.at(base));
     const auto [primary, categories, glyph, color] = categorize(rep);
+    if (primary == FontCategory::Symbols) continue;
     m_fontFamilies.push_back({.name = base,
                               .family = rep,
                               .primary = primary,
