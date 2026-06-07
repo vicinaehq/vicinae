@@ -11,7 +11,6 @@
 #include "ui/action-pannel/action.hpp"
 #include "ui/image/url.hpp"
 #include "view-utils.hpp"
-#include <unordered_map>
 
 namespace {
 
@@ -83,7 +82,8 @@ void FontGridModel::initialize() {
   connect(this, &SectionGridModel::selectionChanged, this, &FontGridModel::updateNavigationTitle);
   setColumns(6);
   setAspectRatio(1.0);
-  buildBuckets();
+  buildFilterOptions();
+  rebuildRoot();
   setFilter(QString());
 }
 
@@ -94,34 +94,10 @@ void FontGridModel::updateNavigationTitle() {
   scope().setNavigationTitle(name.isEmpty() ? name : QStringLiteral("%1 - %2").arg(command).arg(name));
 }
 
-void FontGridModel::buildBuckets() {
-  const auto &families = m_fontService->fontFamilies();
-
-  std::unordered_map<FontCategory, std::vector<const FontFamily *>> byPrimary;
+void FontGridModel::buildFilterOptions() {
   FontCategoryMask present = 0;
-  for (const auto &family : families) {
-    byPrimary[family.primary].push_back(&family);
+  for (const auto &family : m_fontService->fontFamilies()) {
     present |= family.categories;
-  }
-
-  m_buckets.clear();
-  m_buckets.reserve(byPrimary.size());
-
-  auto addBucket = [&](FontCategory category, std::vector<const FontFamily *> members) {
-    const int n = static_cast<int>(members.size());
-    auto &src = m_buckets.emplace_back();
-    src.setBucket(QStringLiteral("%1 (%2)").arg(FontService::categoryName(category)).arg(n),
-                  std::move(members));
-  };
-
-  for (const FontCategory category : FontService::orderedCategories()) {
-    auto it = byPrimary.find(category);
-    if (it == byPrimary.end() || it->second.empty()) continue;
-    addBucket(category, std::move(it->second));
-    byPrimary.erase(it);
-  }
-  for (auto &[category, members] : byPrimary) {
-    if (!members.empty()) addBucket(category, std::move(members));
   }
 
   m_filterCategories.clear();
@@ -132,6 +108,19 @@ void FontGridModel::buildBuckets() {
       m_categoryNames.push_back(FontService::categoryName(category));
     }
   }
+}
+
+void FontGridModel::rebuildRoot() {
+  std::vector<const FontFamily *> members;
+  for (const auto &family : m_fontService->fontFamilies()) {
+    if (!m_categoryFilter || family.has(*m_categoryFilter)) members.push_back(&family);
+  }
+
+  const int n = static_cast<int>(members.size());
+  const QString title =
+      m_categoryFilter ? QStringLiteral("%1 (%2)").arg(FontService::categoryName(*m_categoryFilter)).arg(n)
+                       : QStringLiteral("All Fonts (%1)").arg(n);
+  m_rootSource.setBucket(title, std::move(members));
 }
 
 void FontGridModel::setFilter(const QString &text) {
@@ -157,17 +146,7 @@ void FontGridModel::setCategoryFilter(std::optional<int> index) {
   else
     m_categoryFilter = std::nullopt;
 
-  if (m_categoryFilter) {
-    std::vector<const FontFamily *> members;
-    for (const auto &family : m_fontService->fontFamilies()) {
-      if (family.has(*m_categoryFilter)) members.push_back(&family);
-    }
-    const int n = static_cast<int>(members.size());
-    m_filteredBucket.setBucket(
-        QStringLiteral("%1 (%2)").arg(FontService::categoryName(*m_categoryFilter)).arg(n),
-        std::move(members));
-  }
-
+  rebuildRoot();
   if (m_mode == Mode::Root) applyReset();
 }
 
@@ -181,15 +160,7 @@ void FontGridModel::applyReset() {
 
 void FontGridModel::rebuildSections() {
   clearSources();
-  if (m_mode == Mode::Search) {
-    addSource(&m_searchSource);
-  } else if (m_categoryFilter) {
-    addSource(&m_filteredBucket);
-  } else {
-    for (auto &bucket : m_buckets) {
-      addSource(&bucket);
-    }
-  }
+  addSource(m_mode == Mode::Search ? &m_searchSource : &m_rootSource);
   rebuild();
 }
 

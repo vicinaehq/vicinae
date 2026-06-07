@@ -55,7 +55,8 @@ public:
 private:
   enum class Mode : std::uint8_t { Root, Search };
 
-  void buildBuckets();
+  void buildFilterOptions();
+  void rebuildRoot();
   void rebuildSections();
   void applyReset();
   void updateNavigationTitle();
@@ -63,11 +64,10 @@ private:
 
   FontService *m_fontService = nullptr;
   Mode m_mode = Mode::Root;
-  std::vector<FontGridSource> m_buckets;
   std::vector<FontCategory> m_filterCategories;
   QStringList m_categoryNames;
   std::optional<FontCategory> m_categoryFilter;
-  FontGridSource m_filteredBucket;
+  FontGridSource m_rootSource;
   FontGridSource m_searchSource;
   FuzzyScorer<FontFamily> m_scorer;
 };
