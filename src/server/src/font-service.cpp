@@ -118,6 +118,8 @@ struct CategoryInfo {
 const std::vector<CategoryInfo> &categories() {
   static const std::vector<CategoryInfo> v = {
       {FontCategory::Latin, QStringLiteral("Latin"), QStringLiteral("Aa")},
+      {FontCategory::Cyrillic, QStringLiteral("Cyrillic"), QStringLiteral("Аб")},
+      {FontCategory::Greek, QStringLiteral("Greek"), QStringLiteral("Αα")},
       {FontCategory::Monospace, QStringLiteral("Monospace"), QStringLiteral("Aa")},
       {FontCategory::NerdFonts, QStringLiteral("Nerd Fonts"), QStringLiteral("Aa")},
       {FontCategory::Emoji, QStringLiteral("Emoji"), QStringLiteral("😀")},
@@ -192,8 +194,70 @@ const std::vector<std::pair<QFontDatabase::WritingSystem, FontCategory>> &distin
 
 using WritingSystems = QList<QFontDatabase::WritingSystem>;
 
-std::optional<QFontDatabase::WritingSystem> categoryWritingSystem(FontCategory category) {
+QString pangramFor(QFontDatabase::WritingSystem ws) {
+  static const std::vector<std::pair<QFontDatabase::WritingSystem, QString>> table = {
+      {QFontDatabase::Latin, QStringLiteral("The quick brown fox jumps over the lazy dog")},
+      {QFontDatabase::Cyrillic, QStringLiteral("Съешь же ещё этих мягких французских булок да выпей чаю")},
+      {QFontDatabase::Greek, QStringLiteral("Ταχίστη αλώπηξ βαφής ψημένη γη, δρασκελίζει υπέρ νωθρού κυνός")},
+      {QFontDatabase::Japanese, QStringLiteral("いろはにほへと ちりぬるを わかよたれそ つねならむ "
+                                               "うゐのおくやま けふこえて あさきゆめみし ゑひもせす")},
+      {QFontDatabase::Korean,
+       QStringLiteral("키스의 고유조건은 입술끼리 만나야 하고 특별한 기술은 필요치 않다")},
+      {QFontDatabase::SimplifiedChinese, QStringLiteral("视野无限广，窗外有蓝天")},
+      {QFontDatabase::TraditionalChinese, QStringLiteral("視野無限廣，窗外有藍天")},
+      {QFontDatabase::Arabic, QStringLiteral("صِف خَلقَ خَودِ كَمِثلِ الشَمسِ إِذ بَزَغَت — يَحظى الضَجيعُ بِها نَجلاءَ مِعطارِ")},
+      {QFontDatabase::Hebrew, QStringLiteral("דג סקרן שט בים מאוכזב ולפתע מצא חברה")},
+      {QFontDatabase::Thai, QStringLiteral("เป็นมนุษย์สุดประเสริฐเลิศคุณค่า กว่าบรรดาฝูงสัตว์เดรัจฉาน จงฝ่าฟันพัฒนาวิชาการ")},
+      {QFontDatabase::Devanagari,
+       QStringLiteral("ऋषियों को सताने वाले दुष्ट राक्षसों के राजा रावण का सर्वनाश करने वाले भगवान श्रीराम")},
+  };
+  for (const auto &[w, text] : table) {
+    if (w == ws) return text;
+  }
+  return QFontDatabase::writingSystemSample(ws);
+}
+
+// Secondary-script order for the demo; the font's primary leads (see specimenMarkdown).
+const std::vector<QFontDatabase::WritingSystem> &demoScripts() {
+  static const std::vector<QFontDatabase::WritingSystem> v = {
+      QFontDatabase::Japanese,
+      QFontDatabase::Korean,
+      QFontDatabase::SimplifiedChinese,
+      QFontDatabase::TraditionalChinese,
+      QFontDatabase::Latin,
+      QFontDatabase::Cyrillic,
+      QFontDatabase::Greek,
+      QFontDatabase::Arabic,
+      QFontDatabase::Hebrew,
+      QFontDatabase::Thai,
+      QFontDatabase::Lao,
+      QFontDatabase::Devanagari,
+      QFontDatabase::Bengali,
+      QFontDatabase::Gurmukhi,
+      QFontDatabase::Gujarati,
+      QFontDatabase::Tamil,
+      QFontDatabase::Telugu,
+      QFontDatabase::Kannada,
+      QFontDatabase::Malayalam,
+      QFontDatabase::Sinhala,
+      QFontDatabase::Thaana,
+      QFontDatabase::Tibetan,
+      QFontDatabase::Myanmar,
+      QFontDatabase::Khmer,
+      QFontDatabase::Syriac,
+      QFontDatabase::Ogham,
+      QFontDatabase::Runic,
+      QFontDatabase::Nko,
+  };
+  return v;
+}
+
+std::optional<QFontDatabase::WritingSystem> primaryWritingSystem(FontCategory category) {
   switch (category) {
+  case FontCategory::Latin:
+  case FontCategory::Monospace:
+  case FontCategory::NerdFonts:
+    return QFontDatabase::Latin;
   case FontCategory::CJK:
   case FontCategory::Japanese:
     return QFontDatabase::Japanese;
@@ -315,6 +379,11 @@ Classified categorize(const QString &family) {
   if (nerd) mask |= categoryBit(FontCategory::NerdFonts);
   if (mono) mask |= categoryBit(FontCategory::Monospace);
 
+  // Filter-only facets: never a primary section, but tagged on any font that covers them.
+  auto has = [&](QFontDatabase::WritingSystem ws) { return std::ranges::find(systems, ws) != systems.end(); };
+  if (has(QFontDatabase::Cyrillic)) mask |= categoryBit(FontCategory::Cyrillic);
+  if (has(QFontDatabase::Greek)) mask |= categoryBit(FontCategory::Greek);
+
   return {primary, mask, glyphFor(primary, systems), false};
 }
 
@@ -357,43 +426,36 @@ QString FontService::categoryName(FontCategory category) {
   return info ? info->name : QString();
 }
 
-QString FontService::scriptSample(FontCategory category, const QString &family) {
-  if (category == FontCategory::Emoji)
-    return QStringLiteral("😀 😂 😍 😎 🥳 😭 👍 🙏 🎉 ❤️ 🔥 ⭐ 🌈 ☀️ 🐶 🐱 🦊 🐧 🍕 🍩 ☕ 🚀 ✈️ ⚽ 🎸 📷 🇫🇷 🇯🇵");
-
-  auto pangram = [](QFontDatabase::WritingSystem ws) -> QString {
-    static const std::vector<std::pair<QFontDatabase::WritingSystem, QString>> table = {
-        {QFontDatabase::Latin, QStringLiteral("The quick brown fox jumps over the lazy dog")},
-        {QFontDatabase::Cyrillic, QStringLiteral("Съешь же ещё этих мягких французских булок да выпей чаю")},
-        {QFontDatabase::Greek,
-         QStringLiteral("Ταχίστη αλώπηξ βαφής ψημένη γη, δρασκελίζει υπέρ νωθρού κυνός")},
-        {QFontDatabase::Japanese, QStringLiteral("いろはにほへと ちりぬるを わかよたれそ つねならむ "
-                                                 "うゐのおくやま けふこえて あさきゆめみし ゑひもせす")},
-        {QFontDatabase::Korean,
-         QStringLiteral("키스의 고유조건은 입술끼리 만나야 하고 특별한 기술은 필요치 않다")},
-        {QFontDatabase::SimplifiedChinese, QStringLiteral("视野无限广，窗外有蓝天")},
-        {QFontDatabase::TraditionalChinese, QStringLiteral("視野無限廣，窗外有藍天")},
-        {QFontDatabase::Arabic,
-         QStringLiteral("صِف خَلقَ خَودِ كَمِثلِ الشَمسِ إِذ بَزَغَت — يَحظى الضَجيعُ بِها نَجلاءَ مِعطارِ")},
-        {QFontDatabase::Hebrew, QStringLiteral("דג סקרן שט בים מאוכזב ולפתע מצא חברה")},
-        {QFontDatabase::Thai,
-         QStringLiteral("เป็นมนุษย์สุดประเสริฐเลิศคุณค่า กว่าบรรดาฝูงสัตว์เดรัจฉาน จงฝ่าฟันพัฒนาวิชาการ")},
-        {QFontDatabase::Devanagari,
-         QStringLiteral("ऋषियों को सताने वाले दुष्ट राक्षसों के राजा रावण का सर्वनाश करने वाले भगवान श्रीराम")},
-    };
-    for (const auto &[w, text] : table) {
-      if (w == ws) return text;
-    }
-    return QFontDatabase::writingSystemSample(ws);
+QString FontService::specimenMarkdown(const QString &family, FontCategory category) {
+  auto block = [](QStringView sample) {
+    return QStringLiteral("# %1\n\n%1\n\n**%1**\n\n*%1*\n\n").arg(sample);
   };
 
-  if (const auto ws = categoryWritingSystem(category)) return pangram(*ws);
+  if (category == FontCategory::Emoji)
+    return block(
+        QStringLiteral("😀 😂 😍 😎 🥳 😭 👍 🙏 🎉 ❤️ 🔥 ⭐ 🌈 ☀️ 🐶 🐱 🦊 🐧 🍕 🍩 ☕ 🚀 ✈️ ⚽ 🎸 📷 🇫🇷 🇯🇵"));
 
   const auto systems = QFontDatabase::writingSystems(family);
   auto has = [&](QFontDatabase::WritingSystem ws) { return std::ranges::find(systems, ws) != systems.end(); };
-  if (!has(QFontDatabase::Latin) && has(QFontDatabase::Cyrillic)) return pangram(QFontDatabase::Cyrillic);
-  if (!has(QFontDatabase::Latin) && has(QFontDatabase::Greek)) return pangram(QFontDatabase::Greek);
-  return pangram(QFontDatabase::Latin);
+
+  std::vector<QFontDatabase::WritingSystem> order;
+  const auto primary = primaryWritingSystem(category);
+  if (primary && has(*primary)) order.push_back(*primary);
+  for (const auto ws : demoScripts()) {
+    if (has(ws) && primary != ws) order.push_back(ws);
+  }
+
+  QString md;
+  bool chineseShown = false;
+  for (const auto ws : order) {
+    const bool chinese = ws == QFontDatabase::SimplifiedChinese || ws == QFontDatabase::TraditionalChinese;
+    if (chinese && chineseShown) continue;
+    chineseShown = chineseShown || chinese;
+    if (!md.isEmpty()) md += QStringLiteral("---\n\n");
+    md += block(pangramFor(ws));
+  }
+  if (md.isEmpty()) md = block(pangramFor(QFontDatabase::Latin));
+  return md;
 }
 
 const std::vector<FontCategory> &FontService::orderedCategories() {

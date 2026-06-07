@@ -11,6 +11,8 @@
 
 enum class FontCategory : std::uint8_t {
   Latin,
+  Cyrillic,
+  Greek,
   Monospace,
   NerdFonts,
   Emoji,
@@ -81,8 +83,7 @@ public:
 
   static QString categoryName(FontCategory category);
   static const std::vector<FontCategory> &orderedCategories();
-  // Specimen text (a pangram) for a font's preview, matched to its primary script.
-  static QString scriptSample(FontCategory category, const QString &family);
+  static QString specimenMarkdown(const QString &family, FontCategory category);
 
   FontService();
 };
