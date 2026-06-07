@@ -36,6 +36,12 @@ void BaseView::clearActions() {
 }
 
 void BaseView::setActions(std::unique_ptr<ActionPanelState> actions) {
+  if (auto *existing = dynamic_cast<ActionListView *>(m_rootPanel)) {
+    existing->adoptState(std::move(actions));
+    if (m_ctx) { m_ctx->navigation->notifyActionPanelChanged(m_navProxy); }
+    return;
+  }
+
   auto *view = new ActionListView(this);
   view->adoptState(std::move(actions));
   setActions(view);
