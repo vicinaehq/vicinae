@@ -9,8 +9,8 @@ Item {
 
     signal clicked
 
-    readonly property int buttonSize: 26
-    readonly property int backgroundPadding: root.rootMode ? 0 : 6
+    readonly property int buttonSize: 28
+    readonly property int backgroundPadding: root.rootMode ? 0 : 8
     readonly property real textMaxWidth: Math.max(0, root.availableWidth - (navIcon.visible ? navIcon.width + row.spacing : 0))
 
     implicitWidth: root.rootMode ? 20 : row.implicitWidth
