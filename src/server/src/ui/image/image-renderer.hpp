@@ -16,6 +16,7 @@ QFuture<QImage> renderFirstFrame(const ImageURL &url, const QSize &size, bool sa
 QImage renderBuiltinSvg(const QString &name, const QSize &size, const QColor &fg, const QColor &bg);
 QImage renderEmoji(const QString &emoji, const QSize &size);
 QImage renderSymbol(const QString &symbol, const QSize &size);
+QImage renderFontPreview(const QString &spec, const QSize &size);
 QImage renderSystemIcon(const QString &name, const QSize &size);
 QImage renderFileIcon(const QString &path, const QSize &size, const QColor &fg, const QColor &bg);
 QFuture<QImage> renderFavicon(const QString &domain, const QSize &size, const QColor &fg,

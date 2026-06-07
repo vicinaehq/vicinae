@@ -297,6 +297,16 @@ ImageURL ImageURL::symbol(const QString &symbol) {
   return url;
 }
 
+ImageURL ImageURL::fontPreview(const QString &family, const QString &glyph) {
+  ImageURL url;
+
+  // family and glyph packed into the name, split by a unit separator.
+  url.setType(ImageURLType::FontPreview);
+  url.setName(family + QChar(0x1F) + glyph);
+
+  return url;
+}
+
 ImageURL ImageURL::rawData(const QByteArray &data, const QString &mimeType) {
   ImageURL url;
 

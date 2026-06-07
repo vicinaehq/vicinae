@@ -557,9 +557,11 @@ set(SRCS
 	src/qml/markdown/text-selection-controller.cpp
 	src/qml/store-intro-view-host.hpp
 	src/qml/store-intro-view-host.cpp
-	src/qml/font-browser-model.hpp
 	src/qml/font-browser-view-host.hpp
-	src/qml/font-browser-view-host.cpp
+	src/qml/font-grid-model.hpp
+	src/qml/font-grid-model.cpp
+	src/qml/font-demo-view-host.hpp
+	src/qml/font-demo-view-host.cpp
 	src/qml/edit-keywords-view-host.hpp
 	src/qml/edit-keywords-view-host.cpp
 	src/qml/hud-bridge.hpp
@@ -864,6 +866,8 @@ set(VICINAE_QML_FILES
 	src/qml/qml/markdown/MdBlockquote.qml
 	src/qml/qml/markdown/MdCallout.qml
 	src/qml/qml/BrowseFontsView.qml
+	src/qml/qml/FontDemoView.qml
+	src/qml/qml/CategoryFilterAccessory.qml
 	src/qml/qml/ExtensionFormView.qml
 	src/qml/qml/FormFilePicker.qml
 	src/qml/qml/FormAppSelector.qml

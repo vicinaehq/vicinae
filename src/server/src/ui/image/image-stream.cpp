@@ -173,6 +173,9 @@ void ImageStream::startStatic() {
   case ImageURLType::Symbol:
     runInPool([name, size = m_size]() { return ImageRendering::renderSymbol(name, size); }, m_fg);
     break;
+  case ImageURLType::FontPreview:
+    runInPool([name, size = m_size]() { return ImageRendering::renderFontPreview(name, size); }, m_fg);
+    break;
   case ImageURLType::System:
     runInPool([name, size = m_size]() { return ImageRendering::renderSystemIcon(name, size); }, m_fg);
     break;
