@@ -1,4 +1,4 @@
-name: Format
+name: nix format
 
 on:
   push:
