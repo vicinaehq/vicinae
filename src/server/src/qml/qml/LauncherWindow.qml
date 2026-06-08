@@ -33,7 +33,7 @@ Window {
 
     BackgroundEffect.enabled: root.blurEnabled && !root.nativeChrome
     BackgroundEffect.radius: root.cornerRadius
-    BackgroundEffect.region: Qt.rect(shadowPadding, shadowPadding, _w, launcher.compacted ? 60 : _h)
+    BackgroundEffect.region: Qt.rect(shadowPadding, shadowPadding, _w, launcher.compacted ? _contentH : _h)
 
     Item {
         id: shadowMask
