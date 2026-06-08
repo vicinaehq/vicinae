@@ -176,12 +176,23 @@ in {
   };
 
   config = let
-    finalPackage = cfg.package.override {
-      inherit (cfg) settings settingOverrides;
+    settingsFile = jsonFormat.generate "vicinae-settings.json" cfg.settings;
+
+    wrappedVicinae = pkgs.symlinkJoin {
+      name = "${cfg.package.name}-configured";
+      paths = [cfg.package];
+      nativeBuildInputs = [pkgs.makeWrapper];
+      postBuild = let
+        allOverrides = (lib.optional (cfg.settings != {}) settingsFile) ++ cfg.settingOverrides;
+        overrideString = lib.concatStringsSep ":" allOverrides;
+      in ''
+        wrapProgram $out/bin/vicinae \
+          ${lib.optionalString (allOverrides != []) ''--set VICINAE_OVERRIDES "${overrideString}"''}
+      '';
     };
   in
     lib.mkIf cfg.enable {
-      home.packages = [finalPackage];
+      home.packages = [wrappedVicinae];
 
       xdg = let
         themeFiles =
@@ -197,7 +208,7 @@ in {
 
         dataFile =
           builtins.listToAttrs (
-            builtins.map (item: {
+            map (item: {
               name = "vicinae/extensions/${item.name}";
               value.source = item;
             })
@@ -230,7 +241,7 @@ in {
             )
             cfg.systemd.environment;
           Type = "simple";
-          ExecStart = "${lib.getExe' finalPackage "vicinae"} server";
+          ExecStart = "${lib.getExe' wrappedVicinae "vicinae"} server";
           Restart = "always";
           RestartSec = 5;
           KillMode = "process";
