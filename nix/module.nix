@@ -1,21 +1,17 @@
-self:
-{
+self: {
   config,
   pkgs,
   lib,
   ...
-}:
-let
+}: let
   cfg = config.services.vicinae;
 
   inherit (pkgs.stdenv.hostPlatform) system;
   vicinaePkg = self.packages.${system}.default;
 
-  jsonFormat = pkgs.formats.json { };
-  tomlFormat = pkgs.formats.toml { };
-in
-{
-
+  jsonFormat = pkgs.formats.json {};
+  tomlFormat = pkgs.formats.toml {};
+in {
   options.services.vicinae = {
     enable = lib.mkEnableOption "vicinae launcher daemon";
 
@@ -36,18 +32,16 @@ in
       };
 
       environment = lib.mkOption {
-        type =
-          with lib.types;
-          let
-            valueType = attrsOf (oneOf [
-              str
-              int
-              float
-              bool
-            ]);
-          in
+        type = with lib.types; let
+          valueType = attrsOf (oneOf [
+            str
+            int
+            float
+            bool
+          ]);
+        in
           valueType;
-        default = { };
+        default = {};
         description = "Environment variables for the vicinae daemon. See <https://docs.vicinae.com/launcher-window#wayland-layer-shell>";
         example = lib.literalExpression ''
           {
@@ -69,7 +63,7 @@ in
 
     extensions = lib.mkOption {
       type = lib.types.listOf lib.types.package;
-      default = [ ];
+      default = [];
       description = ''
         List of Vicinae extensions to install.
         You can use the `mkVicinaeExtension` function from the overlay to create extensions.
@@ -78,7 +72,7 @@ in
 
     themes = lib.mkOption {
       inherit (tomlFormat) type;
-      default = { };
+      default = {};
       description = ''
         Theme settings to add to the themes folder in `~/.config/vicinae/themes`. See <https://docs.vicinae.com/theming/getting-started> for supported values.
 
@@ -86,53 +80,55 @@ in
       '';
       example =
         lib.literalExpression # nix
-          ''
-            {
-              catppuccin-mocha = {
-                meta = {
-                  version = 1;
-                  name = "Catppuccin Mocha";
-                  description = "Cozy feeling with color-rich accents";
-                  variant = "dark";
-                  icon = "icons/catppuccin-mocha.png";
-                  inherits = "vicinae-dark";
-                };
+        
+        ''
+          {
+            catppuccin-mocha = {
+              meta = {
+                version = 1;
+                name = "Catppuccin Mocha";
+                description = "Cozy feeling with color-rich accents";
+                variant = "dark";
+                icon = "icons/catppuccin-mocha.png";
+                inherits = "vicinae-dark";
+              };
 
-                colors = {
-                  core = {
-                    background = "#1E1E2E";
-                    foreground = "#CDD6F4";
-                    secondary_background = "#181825";
-                    border = "#313244";
-                    accent = "#89B4FA";
-                  };
-                  accents = {
-                    blue = "#89B4FA";
-                    green = "#A6E3A1";
-                    magenta = "#F5C2E7";
-                    orange = "#FAB387";
-                    purple = "#CBA6F7";
-                    red = "#F38BA8";
-                    yellow = "#F9E2AF";
-                    cyan = "#94E2D5";
-                  };
+              colors = {
+                core = {
+                  background = "#1E1E2E";
+                  foreground = "#CDD6F4";
+                  secondary_background = "#181825";
+                  border = "#313244";
+                  accent = "#89B4FA";
+                };
+                accents = {
+                  blue = "#89B4FA";
+                  green = "#A6E3A1";
+                  magenta = "#F5C2E7";
+                  orange = "#FAB387";
+                  purple = "#CBA6F7";
+                  red = "#F38BA8";
+                  yellow = "#F9E2AF";
+                  cyan = "#94E2D5";
                 };
               };
-            }
-          '';
+            };
+          }
+        '';
     };
 
     settingOverrides = lib.mkOption {
       type = lib.types.listOf lib.types.path;
-      default = [ ];
+      default = [];
       example =
         lib.literalExpression # nix
-          ''
-            [
-              ${config.xdg.configHome}/vicinae/override.json
-              /run/secrets/vicinae-secrets.json
-            ]
-          '';
+        
+        ''
+          [
+            ${config.xdg.configHome}/vicinae/override.json
+            /run/secrets/vicinae-secrets.json
+          ]
+        '';
       description = ''
         Allows you to specify additional JSON files that will be merged with the imperative settings and take precedence.
       '';
@@ -140,7 +136,7 @@ in
 
     settings = lib.mkOption {
       inherit (jsonFormat) type;
-      default = { };
+      default = {};
       description = ''
         Settings written as JSON to `~/.config/vicinae/nix.json`.
         This is will override any settings from the default settings.json.
@@ -179,67 +175,69 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable {
-    home.packages = [ cfg.package ];
+  config = let
+    finalPackage = cfg.package.override {
+      inherit (cfg) settings settingOverrides;
+    };
+  in
+    lib.mkIf cfg.enable {
+      home.packages = [finalPackage];
 
-    xdg =
-      let
-        themeFiles = lib.mapAttrs' (
-          name: theme:
-          lib.nameValuePair "vicinae/themes/${name}.toml" {
-            source = tomlFormat.generate "vicinae-${name}-theme" theme;
-          }
-        ) cfg.themes;
-      in
-      {
-        configFile = {
-          "vicinae/nix.json" = lib.mkIf (cfg.settings != { }) {
-            source = jsonFormat.generate "vicinae-settings" cfg.settings;
-          };
-        };
+      xdg = let
+        themeFiles =
+          lib.mapAttrs' (
+            name: theme:
+              lib.nameValuePair "vicinae/themes/${name}.toml" {
+                source = tomlFormat.generate "vicinae-${name}-theme" theme;
+              }
+          )
+          cfg.themes;
+      in {
+        configFile = {};
 
         dataFile =
           builtins.listToAttrs (
             builtins.map (item: {
               name = "vicinae/extensions/${item.name}";
               value.source = item;
-            }) cfg.extensions
+            })
+            cfg.extensions
           )
           // themeFiles;
       };
 
-    systemd.user.services.vicinae = lib.mkIf (cfg.systemd.enable) {
-      Unit = {
-        Description = "Vicinae server daemon";
-        Documentation = [ "https://docs.vicinae.com" ];
-        After = [ cfg.systemd.target ];
-        PartOf = [ cfg.systemd.target ];
-      };
-      Service = {
-        Environment =
-          lib.mapAttrsToList (
-            key: val:
-            let
-              valueStr = if lib.isBool val then (if val then "1" else "0") else toString val;
-            in
-            "${key}=${valueStr}"
-          ) cfg.systemd.environment
-          ++ [
-            (lib.mkIf (cfg.settings != { }) ''VICINAE_OVERRIDES="${config.xdg.configHome}/vicinae/nix.json"'')
-            (lib.mkIf (
-              cfg.settingOverrides != [ ]
-            ) ''VICINAE_OVERRIDES="${lib.concatStringsSep ":" cfg.settingOverrides}"'')
-          ];
-        Type = "simple";
-        ExecStart = "${lib.getExe' cfg.package "vicinae"} server";
-        Restart = "always";
-        RestartSec = 5;
-        KillMode = "process";
-      };
-      Install = lib.mkIf cfg.systemd.autoStart {
-        WantedBy = [ cfg.systemd.target ];
+      systemd.user.services.vicinae = lib.mkIf (cfg.systemd.enable) {
+        Unit = {
+          Description = "Vicinae server daemon";
+          Documentation = ["https://docs.vicinae.com"];
+          After = [cfg.systemd.target];
+          PartOf = [cfg.systemd.target];
+        };
+        Service = {
+          Environment =
+            lib.mapAttrsToList (
+              key: val: let
+                valueStr =
+                  if lib.isBool val
+                  then
+                    (
+                      if val
+                      then "1"
+                      else "0"
+                    )
+                  else toString val;
+              in "${key}=${valueStr}"
+            )
+            cfg.systemd.environment;
+          Type = "simple";
+          ExecStart = "${lib.getExe' finalPackage "vicinae"} server";
+          Restart = "always";
+          RestartSec = 5;
+          KillMode = "process";
+        };
+        Install = lib.mkIf cfg.systemd.autoStart {
+          WantedBy = [cfg.systemd.target];
+        };
       };
     };
-
-  };
 }
