@@ -5,6 +5,7 @@
 #include "file-indexer/util.hpp"
 #include "file-indexer/log.hpp"
 #include <chrono>
+#include <filesystem>
 #include <map>
 #include <string>
 
@@ -42,21 +43,11 @@ FileIndexerDatabase::listIndexedDirectoryFiles(const std::filesystem::path &path
   return paths;
 }
 
-void FileIndexerDatabase::runMigrations() {
-  int version = 0;
-  {
-    auto stmt = m_db.prepare("PRAGMA user_version");
-    if (stmt.step()) { version = stmt.columnInt(0); }
-  }
-
-  if (version >= file_indexer::SCHEMA_VERSION) { return; }
-
+void FileIndexerDatabase::init() {
   if (!m_db.exec(std::string(file_indexer::INIT_SQL))) {
     flog::error() << "Failed to run file-indexer migrations" << m_db.lastError();
     return;
   }
-
-  m_db.exec("PRAGMA user_version = " + std::to_string(file_indexer::SCHEMA_VERSION));
 }
 
 bool FileIndexerDatabase::setScanError(int scanId, const std::string &error) {
@@ -356,7 +347,22 @@ void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &p
   if (!tx.commit()) { flog::error() << "Failed to commit batchIndex" << m_db.lastError(); }
 }
 
+int FileIndexerDatabase::userVersion() {
+  auto stmt = m_db.prepare("PRAGMA user_version;");
+  if (!stmt.step()) return 0;
+  return stmt.columnInt(0);
+}
+
+void FileIndexerDatabase::setUserVersion(int version) {
+  if (!m_db.exec(std::format("PRAGMA user_version = {};", version))) {
+    flog::warn() << "Failed to set user version to " << version << ": " << m_db.lastError() << "\n";
+  }
+}
+
 FileIndexerDatabase::FileIndexerDatabase() {
+  std::error_code ec;
+  fs::create_directories(file_indexer::dataDir(), ec);
+
   auto result = db::Database::open(getDatabasePath());
 
   if (!result) {

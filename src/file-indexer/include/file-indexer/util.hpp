@@ -2,6 +2,8 @@
 #include <algorithm>
 #include <cstdlib>
 #include <filesystem>
+#include <system_error>
+#include "file-indexer/log.hpp"
 #include "xdgpp/env/env.hpp"
 
 namespace file_indexer {
@@ -19,9 +21,31 @@ inline std::filesystem::path homeDir() {
   return env;
 }
 
-inline std::filesystem::path dataDir() { return xdgpp::dataHome() / "vicinae"; }
+inline std::filesystem::path dataDir() { return xdgpp::dataHome() / "vicinae" / "file-indexer"; }
 
 inline std::filesystem::path databasePath() { return dataDir() / "file-indexer.db"; }
+
+inline void removeLegacyDbFiles() {
+  std::error_code ec;
+  auto dir = xdgpp::dataHome() / "vicinae" / "file-indexer.db";
+  auto files = {std::format("{}-wal", dir.c_str()), std::format("{}-shm", dir.c_str()),
+                std::string{dir.c_str()}};
+
+  for (const auto &file : files) {
+    if (std::filesystem::remove(file, ec)) { flog::info() << "Removed " << file << "\n"; }
+  }
+}
+
+inline void purgeDbFiles() {
+  auto dir = databasePath();
+  auto files = {std::format("{}-wal", dir.c_str()), std::format("{}-shm", dir.c_str()),
+                std::string{dir.c_str()}};
+  std::error_code ec;
+
+  for (const auto &file : files) {
+    if (std::filesystem::remove(file, ec)) { flog::info() << "Removed " << file << "\n"; }
+  }
+}
 
 inline std::filesystem::path downloadsFolder() { return homeDir() / "Downloads"; }
 inline std::filesystem::path documentsFolder() { return homeDir() / "Documents"; }

@@ -2,7 +2,11 @@
 #include <iostream>
 #include <mutex>
 #include <unistd.h>
+#include "file-indexer/file-indexer-db.hpp"
 #include "file-indexer/indexer-service.hpp"
+#include "file-indexer/log.hpp"
+#include "file-indexer/migrations.hpp"
+#include "file-indexer/util.hpp"
 
 // Locked so concurrent query replies don't interleave mid-frame.
 class StdoutTransport : public file_indexer_gen::AbstractTransport {
@@ -18,6 +22,20 @@ class StdoutTransport : public file_indexer_gen::AbstractTransport {
 };
 
 int main(int, char **) {
+  // TODO: remove this at some point
+  file_indexer::removeLegacyDbFiles();
+
+  // We made a breaking change that requires fully rebuilding the index
+  // Instead of methodically updating the DB, we just remove it entirely
+  // and start over fresh. Much simpler :D
+  // We use temporary database connections to get the user version through `PRAGMA user_version`
+  if (auto userVersion = FileIndexerDatabase{}.userVersion(); userVersion != file_indexer::SCHEMA_VERSION) {
+    flog::info() << "Breaking change detected (current rev=" << file_indexer::SCHEMA_VERSION
+                 << ", user version=" << userVersion << "), starting over... \n";
+    file_indexer::purgeDbFiles();
+    FileIndexerDatabase{}.setUserVersion(file_indexer::SCHEMA_VERSION);
+  }
+
   StdoutTransport transport;
   file_indexer_gen::RpcTransport rpc{transport};
   file_indexer::IndexerService service{rpc};

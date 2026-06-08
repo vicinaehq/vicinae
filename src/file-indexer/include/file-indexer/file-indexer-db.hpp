@@ -51,9 +51,12 @@ public:
   void indexFiles(const std::vector<std::filesystem::path> &paths);
   std::vector<SearchCandidate> searchCandidates(std::string_view searchQuery, int limit);
 
+  int userVersion();
+  void setUserVersion(int version);
+
   void indexEvents(const std::vector<FileEvent> &events);
 
-  void runMigrations();
+  void init();
 
   db::Database &database();
 

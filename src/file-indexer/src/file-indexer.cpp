@@ -109,6 +109,4 @@ std::vector<IndexerFileResult> FileIndexer::query(std::string_view view, const P
   return m_queryEngine.query(view, pagination);
 }
 
-FileIndexer::FileIndexer() : m_writer(std::make_shared<DbWriter>()), m_dispatcher(m_writer) {
-  m_db.runMigrations();
-}
+FileIndexer::FileIndexer() : m_writer(std::make_shared<DbWriter>()), m_dispatcher(m_writer) { m_db.init(); }
