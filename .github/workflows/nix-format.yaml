@@ -26,4 +26,4 @@ jobs:
             experimental-features = nix-command flakes
 
       - name: Check Nix code formatting
-        run: nix run github:kamadorueda/alejandra -- --check .
+        run: nix run nixpkgs#alejandra -- --check .
