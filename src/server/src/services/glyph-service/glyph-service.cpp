@@ -167,7 +167,7 @@ bool GlyphService::registerVisit(std::string_view emoji) {
 }
 
 std::vector<GlyphMetadata> GlyphService::getVisited() const {
-  auto sorted = m_entries | std::views::filter([](auto &&e) { return e.visitCount > 0; }) |
+  auto sorted = m_entries | std::views::filter([](auto &&e) { return e.pinnedAt || e.visitCount > 0; }) |
                 std::views::transform([](auto &&e) { return &e; }) | std::ranges::to<std::vector>();
 
   std::ranges::sort(sorted, [](const SerializedEmojiMetadata *a, const SerializedEmojiMetadata *b) {
