@@ -1,10 +1,13 @@
 #pragma once
+#include "file-indexer/log.hpp"
 #include "fuzzy/fzf.hpp"
 #include "file-indexer/file-indexer-db.hpp"
 #include <algorithm>
 #include <filesystem>
+#include <format>
 #include <ranges>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -22,11 +25,11 @@ class FileIndexerQueryEngine {
 public:
   std::vector<IndexerFileResult> query(std::string_view q, const Pagination &pagination) {
     FileIndexerDatabase db;
-    std::string const finalQuery = prepareCandidateSearchQuery(q);
+    auto dbQuery = prepareCandidateSearchQuery(q);
 
-    if (finalQuery.empty()) return {};
+    if (dbQuery.empty()) return {};
 
-    auto candidates = db.searchCandidates(finalQuery, candidateLimitFor(pagination));
+    auto candidates = db.searchCandidates(dbQuery, candidateLimitFor(pagination));
 
     return rankCandidates(std::move(candidates), q, pagination);
   }
@@ -40,21 +43,14 @@ public:
       return word.substr(begin, word.find_last_not_of(WHITESPACE) - begin + 1);
     };
 
-    std::string result;
-    for (const auto word : query | std::views::split(' ')) {
-      auto const term = trim(std::string_view(word));
-      if (term.empty()) continue;
+    // we escape each word in the query by enclosing it in quotes, as expected by FTS5
+    auto escapedParts = query | std::views::split(std::string_view{" "}) |
+                        std::views::transform(
+                            [&](auto &&str) { return std::format("\"{}\"", trim(std::string_view{str})); }) |
+                        std::ranges::to<std::vector>();
+    auto escapedQuery = escapedParts | std::views::join_with(' ') | std::ranges::to<std::string>();
 
-      if (!result.empty()) result += " OR ";
-      result += '"';
-      for (char const c : term) {
-        if (c == '"') result += '"'; // FTS5 escapes a quote by doubling it
-        result += c;
-      }
-      result += "\"*";
-    }
-
-    return result;
+    return escapedQuery;
   }
 
   static int candidateLimitFor(const Pagination &pagination) {
@@ -84,15 +80,11 @@ public:
     scored.reserve(candidates.size());
 
     for (auto &candidate : candidates) {
-      std::string filename = candidate.name.empty() ? candidate.path.filename().string() : candidate.name;
-      int const fuzzyScore = matcher.fuzzy_match_v2_score_query(filename, query);
-
-      if (fuzzyScore <= 0) { continue; }
-
+      int const fuzzyScore = matcher.fuzzy_match_v2_score_query(candidate.path.c_str(), query);
       scored.emplace_back(ScoredCandidate{.candidate = std::move(candidate), .fuzzyScore = fuzzyScore});
     }
 
-    std::ranges::stable_sort(scored, [](const ScoredCandidate &a, const ScoredCandidate &b) {
+    std::ranges::sort(scored, [](const ScoredCandidate &a, const ScoredCandidate &b) {
       if (a.fuzzyScore != b.fuzzyScore) { return a.fuzzyScore > b.fuzzyScore; }
       if (a.candidate.relevancyScore != b.candidate.relevancyScore) {
         return a.candidate.relevancyScore > b.candidate.relevancyScore;

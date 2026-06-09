@@ -33,12 +33,14 @@ add_executable(${FILE_INDEXER_BIN}
 	src/filesystem-walker.cpp
 	src/relevancy-scorer.cpp
 	src/home-directory-watcher.cpp
+	${CMAKE_SOURCE_DIR}/vendor/better-trigram/register.c
 	${SRCS}
 )
 target_include_directories(${FILE_INDEXER_BIN} PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${GENOUT}
 	${CMAKE_SOURCE_DIR}/vendor
+	${CMAKE_SOURCE_DIR}/vendor/sqlcipher
 )
 target_compile_features(${FILE_INDEXER_BIN} PRIVATE cxx_std_23)
 target_link_libraries(${FILE_INDEXER_BIN} PRIVATE

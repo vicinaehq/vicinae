@@ -1,12 +1,16 @@
 #include <cstdint>
 #include <iostream>
 #include <mutex>
+#include <sqlcipher/sqlite3.h>
 #include <unistd.h>
 #include "file-indexer/file-indexer-db.hpp"
 #include "file-indexer/indexer-service.hpp"
 #include "file-indexer/log.hpp"
 #include "file-indexer/migrations.hpp"
 #include "file-indexer/util.hpp"
+
+// Statically-linked better_trigram FTS5 tokenizer (vendor/better-trigram).
+extern "C" int vicinaeBetterTrigramInit(sqlite3 *, char **, const void *);
 
 // Locked so concurrent query replies don't interleave mid-frame.
 class StdoutTransport : public file_indexer_gen::AbstractTransport {
@@ -22,6 +26,9 @@ class StdoutTransport : public file_indexer_gen::AbstractTransport {
 };
 
 int main(int, char **) {
+  // Register the better_trigram tokenizer on every connection opened from here on.
+  sqlite3_auto_extension(reinterpret_cast<void (*)()>(vicinaeBetterTrigramInit));
+
   // TODO: remove this at some point
   file_indexer::removeLegacyDbFiles();
 

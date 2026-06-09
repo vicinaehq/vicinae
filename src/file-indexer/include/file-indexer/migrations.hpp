@@ -3,7 +3,7 @@
 
 namespace file_indexer {
 
-inline constexpr int SCHEMA_VERSION = 2;
+inline constexpr int SCHEMA_VERSION = 3;
 
 inline constexpr std::string_view INIT_SQL = R"sql(
 CREATE TABLE IF NOT EXISTS scan_history (
@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS indexed_file (
 );
 
 CREATE VIRTUAL TABLE IF NOT EXISTS unicode_idx USING fts5(
-	path, content=indexed_file, tokenize='trigram'
+	path, content=indexed_file, tokenize='better_trigram'
 );
 
 CREATE TRIGGER IF NOT EXISTS unicode_idx_ai AFTER INSERT ON indexed_file BEGIN
