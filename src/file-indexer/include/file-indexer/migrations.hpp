@@ -19,13 +19,12 @@ CREATE TABLE IF NOT EXISTS scan_history (
 CREATE TABLE IF NOT EXISTS indexed_file (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	path TEXT UNIQUE NOT NULL,
-	parent_path TEXT NOT NULL,
 	last_modified_at INT,
 	relevancy_score REAL NOT NULL
 );
 
 CREATE VIRTUAL TABLE IF NOT EXISTS unicode_idx USING fts5(
-	path, content=indexed_file, tokenize='better_trigram'
+	path, content=indexed_file, tokenize='unicode61'
 );
 
 CREATE TRIGGER IF NOT EXISTS unicode_idx_ai AFTER INSERT ON indexed_file BEGIN
@@ -33,8 +32,6 @@ CREATE TRIGGER IF NOT EXISTS unicode_idx_ai AFTER INSERT ON indexed_file BEGIN
 
 CREATE TRIGGER IF NOT EXISTS unicode_idx_ad AFTER DELETE ON indexed_file BEGIN
   INSERT INTO unicode_idx(unicode_idx, rowid, path) VALUES('delete', old.id, old.path);END;
-
-CREATE INDEX IF NOT EXISTS idx_indexed_file_parent_path ON indexed_file(parent_path);
 )sql";
 
 }; // namespace file_indexer

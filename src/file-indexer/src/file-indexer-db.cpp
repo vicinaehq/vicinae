@@ -31,7 +31,8 @@ FileIndexerDatabase::retrieveIndexedLastModified(const std::filesystem::path &pa
 
 std::vector<std::filesystem::path>
 FileIndexerDatabase::listIndexedDirectoryFiles(const std::filesystem::path &path) const {
-  auto stmt = m_db.prepare("SELECT path, last_modified_at FROM indexed_file WHERE parent_path = :path");
+  auto stmt = m_db.prepare(
+      std::format("SELECT path, last_modified_at FROM indexed_file WHERE path LIKE \"{}%\"", path.c_str()));
   stmt.bind(":path", path.c_str());
 
   std::vector<fs::path> paths;
@@ -258,9 +259,9 @@ void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
 
   auto modifyStmt = m_db.prepare(R"(
     INSERT INTO
-      indexed_file (path, parent_path, last_modified_at, relevancy_score)
+      indexed_file (path, last_modified_at, relevancy_score)
     VALUES
-      (:path, :parent_path, :last_modified_at, :relevancy_score)
+      (:path, :last_modified_at, :relevancy_score)
     ON CONFLICT (path) DO UPDATE SET last_modified_at = :last_modified_at
   )");
 
@@ -276,7 +277,6 @@ void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
           static_cast<int64_t>(duration_cast<seconds>(event.eventTime.time_since_epoch()).count());
       modifyStmt.bind(":last_modified_at", secondsSinceEpoch);
       modifyStmt.bind(":path", event.path.c_str());
-      modifyStmt.bind(":parent_path", event.path.parent_path().c_str());
 
       RelevancyScorer scorer;
       modifyStmt.bind(":relevancy_score", scorer.computeScore(event.path, event.eventTime));
@@ -311,9 +311,9 @@ void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &p
 
   auto stmt = m_db.prepare(R"(
     INSERT INTO
-      indexed_file (path, parent_path, last_modified_at, relevancy_score)
+      indexed_file (path, last_modified_at, relevancy_score)
     VALUES
-      (:path, :parent_path, :last_modified_at, :relevancy_score)
+      (:path, :last_modified_at, :relevancy_score)
     ON CONFLICT (path) DO UPDATE SET last_modified_at = :last_modified_at
   )");
 
@@ -335,7 +335,6 @@ void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &p
     }
 
     stmt.bind(":path", path.c_str());
-    stmt.bind(":parent_path", path.parent_path().c_str());
     stmt.bind(":relevancy_score", score);
 
     if (!stmt.exec()) {

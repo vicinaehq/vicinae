@@ -45,10 +45,12 @@ public:
 
     // we escape each word in the query by enclosing it in quotes, as expected by FTS5
     auto escapedParts = query | std::views::split(std::string_view{" "}) |
-                        std::views::transform(
-                            [&](auto &&str) { return std::format("\"{}\"", trim(std::string_view{str})); }) |
+                        std::views::transform([&](auto &&v) { return trim(std::string_view{v}); }) |
+                        std::views::filter([](auto &&w) { return w.size() >= 3; }) |
+                        std::views::transform([&](auto &&str) { return std::format("\"{}\"", str); }) |
                         std::ranges::to<std::vector>();
-    auto escapedQuery = escapedParts | std::views::join_with(' ') | std::ranges::to<std::string>();
+    auto escapedQuery =
+        escapedParts | std::views::join_with(std::string_view{" "}) | std::ranges::to<std::string>();
 
     return escapedQuery;
   }
@@ -73,6 +75,8 @@ public:
       FileIndexerDatabase::SearchCandidate candidate;
       int fuzzyScore = 0;
     };
+
+    flog::info() << "ranking " << candidates.size() << " candidates...\n";
 
     std::vector<ScoredCandidate> scored;
     auto &matcher = fzf::threadLocalMatcher();
