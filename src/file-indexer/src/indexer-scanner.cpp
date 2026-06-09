@@ -11,6 +11,8 @@ void IndexerScanner::enqueueBatch(const std::vector<FileEvent> &paths) {
   bool shouldWait = true;
 
   while (shouldWait) {
+    if (!m_alive) return;
+
     {
       std::scoped_lock const lock(m_batchMutex);
 
@@ -32,11 +34,10 @@ void IndexerScanner::enqueueBatch(const std::vector<FileEvent> &paths) {
 
 void IndexerScanner::scan(const Scan &scan) {
   std::vector<FileEvent> batchedIndex;
-  FileSystemWalker walker;
 
-  walker.setVerbose();
-  walker.setExcludedPaths(scan.excludedPaths);
-  walker.walk(scan.path, [&](const fs::directory_entry &entry) {
+  m_walker.setVerbose();
+  m_walker.setExcludedPaths(scan.excludedPaths);
+  m_walker.walk(scan.path, [&](const fs::directory_entry &entry) {
     std::error_code ec;
     // In case of error, returns file_time_time::min() - erroring entries deserve a bad relevance score anyway
     batchedIndex.emplace_back(FileEventType::Modify, entry.path(), entry.last_write_time(ec));
@@ -59,23 +60,27 @@ IndexerScanner::IndexerScanner(const std::shared_ptr<DbWriter> &writer, const Sc
   m_scanThread = std::thread([this, sc]() {
     start(sc);
 
+    bool failed = false;
     try {
       scan(sc);
-      m_writerWorker->stop();
-      finish();
     } catch (const std::exception &error) {
       flog::error() << "Caught exception during fullscan" << error.what();
-      fail();
+      failed = true;
     }
+
+    m_writerWorker->stop();
+    m_writerThread.join();
+
+    failed ? fail() : finish();
   });
 }
 
 void IndexerScanner::interrupt() {
   setInterruptFlag();
+  m_alive = false;
+  m_walker.stop();
+  m_batchCv.notify_all();
   m_writerWorker->stop();
 }
 
-void IndexerScanner::join() {
-  m_writerThread.join();
-  m_scanThread.join();
-}
+void IndexerScanner::join() { m_scanThread.join(); }

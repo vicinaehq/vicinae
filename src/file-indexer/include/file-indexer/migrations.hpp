@@ -3,7 +3,7 @@
 
 namespace file_indexer {
 
-inline constexpr int SCHEMA_VERSION = 1;
+inline constexpr int SCHEMA_VERSION = 2;
 
 inline constexpr std::string_view INIT_SQL = R"sql(
 CREATE TABLE IF NOT EXISTS scan_history (
@@ -35,9 +35,6 @@ CREATE TRIGGER IF NOT EXISTS unicode_idx_ad AFTER DELETE ON indexed_file BEGIN
   INSERT INTO unicode_idx(unicode_idx, rowid, path) VALUES('delete', old.id, old.path);END;
 
 CREATE INDEX IF NOT EXISTS idx_indexed_file_parent_path ON indexed_file(parent_path);
-CREATE INDEX IF NOT EXISTS idx_indexed_file_path ON indexed_file(path);
-CREATE INDEX IF NOT EXISTS idx_indexed_file_covering
-ON indexed_file(id, relevancy_score DESC, path);
 )sql";
 
 }; // namespace file_indexer

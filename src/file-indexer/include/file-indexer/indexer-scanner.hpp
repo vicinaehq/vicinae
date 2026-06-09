@@ -2,6 +2,8 @@
 #include "file-indexer/util.hpp"
 #include "file-indexer/writer-worker.hpp"
 #include "file-indexer/abstract-scanner.hpp"
+#include "file-indexer/filesystem-walker.hpp"
+#include <atomic>
 #include <condition_variable>
 #include <deque>
 #include <memory>
@@ -17,6 +19,9 @@ private:
   std::deque<std::vector<FileEvent>> m_writeBatches;
   std::mutex m_batchMutex;
   std::condition_variable m_batchCv;
+  std::atomic<bool> m_alive = true;
+
+  FileSystemWalker m_walker;
 
   std::unique_ptr<WriterWorker> m_writerWorker;
   std::thread m_writerThread;

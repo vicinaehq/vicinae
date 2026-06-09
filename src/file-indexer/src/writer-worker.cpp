@@ -8,13 +8,14 @@ void WriterWorker::stop() {
 }
 
 void WriterWorker::run() {
-  while (m_alive) {
+  while (true) {
     std::deque<std::vector<FileEvent>> batch;
 
     {
       std::unique_lock<std::mutex> lock(batchMutex);
 
-      m_batchCv.wait(lock, [&]() { return !batchQueue.empty(); });
+      m_batchCv.wait(lock, [&]() { return !batchQueue.empty() || !m_alive; });
+      if (batchQueue.empty() && !m_alive) break;
       batch = std::move(batchQueue);
       batchQueue.clear();
     }
