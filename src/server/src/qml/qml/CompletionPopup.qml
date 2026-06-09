@@ -26,6 +26,10 @@ Popup {
     padding: 4
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
+    HoverResetOnShow {
+        target: root
+    }
+
     onItemsChanged: if (items.length > 0)
         completionModel.setItems(items)
     onSectionsChanged: if (sections.length > 0)
@@ -86,6 +90,10 @@ Popup {
             if (root._highlightedIndex >= count)
                 root._highlightedIndex = -1;
         }
+    }
+
+    HoverResetOnModelChange {
+        target: completionModel
     }
 
     background: Rectangle {
@@ -215,7 +223,7 @@ Popup {
                         anchors.leftMargin: 2
                         anchors.rightMargin: 2
                         radius: 6
-                        color: del._isHighlighted ? Theme.listItemSelectionBg : itemHover.hovered ? Theme.listItemHoverBg : "transparent"
+                        color: del._isHighlighted ? Theme.listItemSelectionBg : (itemHover.hovered && HoverActivation.active) ? Theme.listItemHoverBg : "transparent"
                     }
 
                     RowLayout {

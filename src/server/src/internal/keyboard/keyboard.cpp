@@ -256,7 +256,7 @@ DisplayTokenSpec modifierToken(Qt::KeyboardModifier modifier) {
 #else
   switch (modifier) {
   case Qt::MetaModifier:
-    return {.text = QStringLiteral("Super"), .label = QStringLiteral("Super")};
+    return {.text = QStringLiteral("◈"), .label = QStringLiteral("Super")};
   case Qt::ControlModifier:
     return {.text = QStringLiteral("Ctrl"), .label = QStringLiteral("Ctrl")};
   case Qt::AltModifier:
@@ -459,8 +459,6 @@ bool Shortcut::equals(const Shortcut &other, bool ignoreNumpadMod) const {
   return m_key == other.m_key && m_modifiers.toInt() == other.m_modifiers.toInt();
 }
 
-bool Shortcut::operator==(const Shortcut &other) const {
-  return m_key == other.m_key && m_modifiers.toInt() == other.m_modifiers.toInt();
-}
+bool Shortcut::operator==(const Shortcut &other) const { return equals(other, /*ignoreNumpadMod=*/true); }
 
 }; // namespace Keyboard

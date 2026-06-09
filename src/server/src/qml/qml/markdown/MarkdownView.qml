@@ -206,13 +206,13 @@ Item {
     }
 
     Shortcut {
-        sequence: StandardKey.Copy
+        sequences: [StandardKey.Copy]
         enabled: root._controller.hasSelection
         onActivated: root._controller.copy()
     }
 
     Shortcut {
-        sequence: StandardKey.SelectAll
+        sequences: [StandardKey.SelectAll]
         onActivated: root._controller.selectAll()
     }
 

@@ -14,6 +14,10 @@ Item {
         _handlePendingCommand();
     }
 
+    HoverResetOnModelChange {
+        target: root.extModel ? root.extModel.commandModel : null
+    }
+
     function _handlePendingCommand() {
         const pending = settings.pendingCommandId;
         if (!pending)
@@ -224,6 +228,7 @@ Item {
                     required property string alias
                     required property string entrypointId
                     required property bool hasPreferences
+                    required property string shortcut
 
                     readonly property bool isExpanded: root.expandedCommandId === entrypointId
 
@@ -231,7 +236,7 @@ Item {
                         width: parent.width
                         height: cmdRow.implicitHeight + 16
                         backgroundColor: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
-                        color: cmdHover.hovered ? Qt.rgba(Theme.listItemHoverBg.r, Theme.listItemHoverBg.g, Theme.listItemHoverBg.b, Config.windowOpacity) : Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
+                        color: (cmdHover.hovered && HoverActivation.active) ? Qt.rgba(Theme.listItemHoverBg.r, Theme.listItemHoverBg.g, Theme.listItemHoverBg.b, Config.windowOpacity) : Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
 
                         HoverHandler {
                             id: cmdHover
@@ -276,6 +281,16 @@ Item {
                                 font.pointSize: Theme.regularFontSize
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
+                            }
+
+                            ShortcutField {
+                                visible: settings.globalShortcutsSupported
+                                bordered: false
+                                placeholder: "Shortcut"
+                                shortcutId: cmdDelegate.entrypointId
+                                shortcut: cmdDelegate.shortcut
+                                onAccepted: shortcut => root.extModel.setShortcutByEntrypointId(cmdDelegate.entrypointId, shortcut)
+                                onCleared: root.extModel.clearShortcutByEntrypointId(cmdDelegate.entrypointId)
                             }
 
                             TextField {

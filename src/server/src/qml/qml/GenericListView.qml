@@ -142,6 +142,10 @@ Item {
         }
     }
 
+    HoverResetOnModelChange {
+        target: root.listModel
+    }
+
     Connections {
         target: (root.autoWireModel && root.listModel && ("selectedIndex" in root.listModel)) ? root.listModel : null
         function onSelectedIndexChanged() {

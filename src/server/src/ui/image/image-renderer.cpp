@@ -7,8 +7,12 @@
 #include "theme/theme-file.hpp"
 #include "ui/image/contrast-helper.hpp"
 #include "ui/image/url.hpp"
+#ifdef Q_OS_MACOS
+#include "ui/image/mac-file-icon-loader.hpp"
+#endif
 #include <QBuffer>
 #include <QCoreApplication>
+#include <QFontMetricsF>
 #include <QFutureWatcher>
 #include <QGuiApplication>
 #include <QIcon>
@@ -21,6 +25,7 @@
 #include <QThreadPool>
 #include <QtConcurrent>
 #include <QtMath>
+#include <algorithm>
 #include <mutex>
 
 namespace ImageRendering {
@@ -116,6 +121,39 @@ QImage renderSymbol(const QString &symbol, const QSize &size) {
   return renderGlyph(symbol, size, font, /*allowMerging=*/true);
 }
 
+// spec is "family<US>glyph" (see ImageURL::fontPreview). Scales the glyph's ink box to fit
+// the canvas so glyphs of any size are uniformly sized and never clipped.
+QImage renderFontPreview(const QString &spec, const QSize &size) {
+  const qsizetype sep = spec.indexOf(QChar(0x1F));
+  const QString family = sep >= 0 ? spec.left(sep) : spec;
+  const QString glyph = sep >= 0 ? spec.sliced(sep + 1) : QStringLiteral("Aa");
+
+  QImage canvas(size, QImage::Format_ARGB32_Premultiplied);
+  canvas.fill(Qt::transparent);
+
+  // Empty family => placeholder: default font with merging so the glyph always resolves.
+  QFont font = family.isEmpty() ? QFont() : QFont(family);
+  font.setStyleStrategy(family.isEmpty() ? QFont::PreferDefault : QFont::NoFontMerging);
+  font.setPixelSize(size.height());
+
+  const QFontMetricsF metrics(font);
+  const QRectF ink = metrics.tightBoundingRect(glyph);
+  if (ink.isEmpty()) return canvas;
+
+  constexpr qreal FILL = 0.7;
+  const qreal scale = std::min(size.width() * FILL / ink.width(), size.height() * FILL / ink.height());
+
+  QPainter painter(&canvas);
+  painter.setRenderHint(QPainter::Antialiasing, true);
+  painter.setRenderHint(QPainter::TextAntialiasing, true);
+  painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+  painter.setFont(font);
+  painter.translate(size.width() / 2.0, size.height() / 2.0);
+  painter.scale(scale, scale);
+  painter.drawText(QPointF(-ink.center().x(), -ink.center().y()), glyph);
+  return canvas;
+}
+
 QImage renderSystemIcon(const QString &name, const QSize &size) {
   // QIconLoader and QPixmap are GUI-thread only.
   // Calling it from another thread can result in the icon not being found from the very beginning or after
@@ -150,6 +188,12 @@ static void applyFillColor(QImage &image, const QColor &fg) {
 }
 
 QImage renderFileIcon(const QString &path, const QSize &size, const QColor &fg, const QColor &bg) {
+#ifdef Q_OS_MACOS
+  if (!fg.isValid()) {
+    if (QImage native = renderMacFileIcon(path, size); !native.isNull()) { return native; }
+  }
+#endif
+
   QMimeDatabase const db;
   auto const mime = db.mimeTypeForFile(path, QMimeDatabase::MatchDefault);
 

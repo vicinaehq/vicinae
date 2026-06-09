@@ -7,6 +7,8 @@
 class ConfigBridge;
 class ImageSource;
 class ThemeBridge;
+class KeyboardBridge;
+class GlobalShortcutBridge;
 class GeneralSettingsModel;
 class KeybindSettingsModel;
 class ExtensionSettingsModel;
@@ -23,6 +25,7 @@ class SettingsWindow : public QObject {
   Q_PROPERTY(QString commitHash READ commitHash CONSTANT)
   Q_PROPERTY(QString buildInfo READ buildInfo CONSTANT)
   Q_PROPERTY(QString headline READ headline CONSTANT)
+  Q_PROPERTY(bool globalShortcutsSupported READ globalShortcutsSupported CONSTANT)
   Q_PROPERTY(GeneralSettingsModel *generalModel READ generalModel CONSTANT)
   Q_PROPERTY(KeybindSettingsModel *keybindModel READ keybindModel CONSTANT)
   Q_PROPERTY(ExtensionSettingsModel *extensionModel READ extensionModel CONSTANT)
@@ -42,6 +45,7 @@ public:
   QString commitHash() const;
   QString buildInfo() const;
   QString headline() const;
+  bool globalShortcutsSupported() const;
 
   GeneralSettingsModel *generalModel() const { return m_generalModel; }
   KeybindSettingsModel *keybindModel() const { return m_keybindModel; }
@@ -75,6 +79,8 @@ private:
   ThemeBridge *m_themeBridge = nullptr;
   ConfigBridge *m_configBridge = nullptr;
   ImageSource *m_imgSource = nullptr;
+  KeyboardBridge *m_keyboardBridge = nullptr;
+  GlobalShortcutBridge *m_globalShortcutBridge = nullptr;
   GeneralSettingsModel *m_generalModel = nullptr;
   KeybindSettingsModel *m_keybindModel = nullptr;
   ExtensionSettingsModel *m_extensionModel = nullptr;

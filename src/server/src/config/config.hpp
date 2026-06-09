@@ -19,6 +19,7 @@ namespace config {
 struct ProviderItemData {
   std::optional<std::string> alias;
   std::optional<bool> enabled;
+  std::optional<std::string> shortcut;
   std::optional<glz::generic::object_t> preferences;
 };
 
@@ -195,6 +196,18 @@ template <> struct Partial<InputServer> {
   std::optional<bool> enabled;
 };
 
+struct GlobalShortcuts {
+#if defined(Q_OS_MACOS) || defined(Q_OS_WIN)
+  std::optional<std::string> toggle = "alt+space";
+#else
+  std::optional<std::string> toggle = "super+control+space";
+#endif
+};
+
+template <> struct Partial<GlobalShortcuts> {
+  std::optional<std::string> toggle;
+};
+
 struct ConfigValue {
   std::string schema = SCHEMA;
   std::vector<std::string> imports;
@@ -210,6 +223,7 @@ struct ConfigValue {
   int pixmapCacheMb = 50;
 
   InputServer inputServer;
+  GlobalShortcuts globalShortcuts;
 
   FontConfig font;
   ThemeConfig theme;
@@ -261,6 +275,7 @@ template <> struct Partial<ConfigValue> {
   std::optional<int> pixmapCacheMb;
   std::optional<bool> searchFilesInRoot;
   std::optional<Partial<InputServer>> inputServer;
+  std::optional<Partial<GlobalShortcuts>> globalShortcuts;
 
   std::optional<Partial<FontConfig>> font;
   std::optional<Partial<ThemeConfig>> theme;

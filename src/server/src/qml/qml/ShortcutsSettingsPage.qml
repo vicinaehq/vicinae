@@ -7,62 +7,23 @@ Item {
     readonly property var model: settings.keybindModel
 
     property int _recordingRow: -1
-    property var _recordingTokens: []
-    property string _recordingStatus: ""
-    property color _recordingStatusColor: Theme.textMuted
 
-    function _startRecording(row) {
-        _recordingRow = row;
-        _recordingTokens = [];
-        _recordingStatus = "Press a shortcut...";
-        _recordingStatusColor = Theme.textMuted;
-        root.forceActiveFocus();
+    HoverResetOnModelChange {
+        target: root.model
     }
 
-    function _cancelRecording() {
-        _recordingRow = -1;
-        _recordingTokens = [];
-        _recordingStatus = "";
+    ShortcutRecorderField {
+        id: recorder
+        shortcutDisplayProvider: (key, mods) => root.model.shortcutDisplayTokens(key, mods)
+        validateShortcut: (key, mods) => root.model.validateShortcut(root._recordingRow, key, mods)
+        onShortcutCaptured: (key, modifiers) => root.model.setShortcut(root._recordingRow, key, modifiers)
     }
 
-    onActiveFocusChanged: {
-        if (!activeFocus && _recordingRow >= 0)
-            _cancelRecording();
-    }
-
-    Keys.onPressed: event => {
-        if (root._recordingRow < 0)
-            return;
-        event.accepted = true;
-
-        const key = event.key;
-        const mods = event.modifiers;
-
-        const isModKey = key === Qt.Key_Shift || key === Qt.Key_Control || key === Qt.Key_Alt || key === Qt.Key_Meta;
-        const isCloseKey = key === Qt.Key_Escape || key === Qt.Key_Backspace;
-
-        if (!isModKey && isCloseKey && mods === Qt.NoModifier) {
-            root._cancelRecording();
-            return;
+    Connections {
+        target: recorder
+        function onClosed() {
+            root._recordingRow = -1;
         }
-
-        root._recordingTokens = root.model.shortcutDisplayTokens(key, mods);
-
-        if (isModKey) {
-            root._recordingStatus = "Press a key...";
-            root._recordingStatusColor = Theme.textMuted;
-            return;
-        }
-
-        const error = root.model.validateShortcut(key, mods);
-        if (error !== "") {
-            root._recordingStatus = error;
-            root._recordingStatusColor = Theme.danger;
-            return;
-        }
-
-        root.model.setShortcut(root._recordingRow, key, mods);
-        root._cancelRecording();
     }
 
     ColumnLayout {
@@ -170,7 +131,7 @@ Item {
                 Rectangle {
                     anchors.fill: parent
                     anchors.bottomMargin: 1
-                    color: rowItem.isRecording ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.08) : rowHover.hovered ? Theme.listItemHoverBg : "transparent"
+                    color: rowItem.isRecording ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.08) : (rowHover.hovered && HoverActivation.active) ? Theme.listItemHoverBg : "transparent"
                 }
 
                 HoverHandler {
@@ -178,7 +139,10 @@ Item {
                 }
                 MouseArea {
                     anchors.fill: parent
-                    onClicked: root._startRecording(rowItem.index)
+                    onClicked: {
+                        if (recorder.show(rowItem, true))
+                            root._recordingRow = rowItem.index;
+                    }
                 }
 
                 RowLayout {
@@ -205,19 +169,12 @@ Item {
                     }
 
                     ShortcutBadge {
-                        visible: rowItem.isRecording ? root._recordingTokens.length > 0 : rowItem.shortcutTokens.length > 0
-                        tokens: rowItem.isRecording ? root._recordingTokens : rowItem.shortcutTokens
+                        visible: rowItem.shortcutTokens.length > 0
+                        tokens: rowItem.shortcutTokens
                     }
 
                     Text {
-                        visible: rowItem.isRecording
-                        text: root._recordingStatus
-                        color: root._recordingStatusColor
-                        font.pointSize: Theme.smallerFontSize
-                    }
-
-                    Text {
-                        visible: !rowItem.isRecording && rowItem.shortcutTokens.length === 0 && rowHover.hovered
+                        visible: !rowItem.isRecording && rowItem.shortcutTokens.length === 0 && rowHover.hovered && HoverActivation.active
                         text: "Record Shortcut"
                         color: Theme.textMuted
                         font.pointSize: Theme.smallerFontSize

@@ -124,6 +124,7 @@ add_subdirectory(${VENDOR_DIR}/zip)
 if (UNIX AND NOT APPLE)
 	add_subdirectory(${LIB_DIR}/linux-utils)
 	add_subdirectory(src/snippet)
+	add_subdirectory(src/file-indexer)
 endif()
 add_subdirectory(${LIB_DIR}/figura)
 

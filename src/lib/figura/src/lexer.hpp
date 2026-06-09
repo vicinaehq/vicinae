@@ -9,6 +9,7 @@ enum class TokenType {
   Identifier,
   Service,
   Method,
+  Async,
   Enum,
   Struct,
   Event,
@@ -40,6 +41,8 @@ struct Token {
       return "Service";
     case T::Method:
       return "Method";
+    case T::Async:
+      return "Async";
     case T::Enum:
       return "Enum";
     case T::Struct:
@@ -87,6 +90,7 @@ public:
     if (word == "enum") { return Token(T::Enum); }
     if (word == "service") { return Token(T::Service); }
     if (word == "event") { return Token(T::Event); }
+    if (word == "async") { return Token(T::Async); }
     if (word == "fn") { return Token(T::Method); }
     if (word == "=>") { return Token(T::Arrow); }
     if (word == "(") { return Token(T::LParen); }

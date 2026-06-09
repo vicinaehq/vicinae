@@ -3,6 +3,7 @@
 #include <QPointer>
 #include <QQuickItem>
 #include <QQuickWindow>
+#include <QTimer>
 #include <qevent.h>
 #include <qlogging.h>
 
@@ -121,6 +122,32 @@ void installEffectView(NSWindow *nswin, bool enabled, bool wantLiquidGlass,
   }
 }
 
+void placeWindowOnCursorScreen(QWindow *window, qreal yFraction) {
+  if (!window) return;
+  NSView *view = nsViewFromWinId(window->winId());
+  if (!view) return;
+  NSWindow *nswin = view.window;
+  if (!nswin) return;
+
+  NSPoint mouse = [NSEvent mouseLocation];
+  NSScreen *screen = nil;
+  for (NSScreen *candidate in [NSScreen screens]) {
+    if (NSPointInRect(mouse, candidate.frame)) {
+      screen = candidate;
+      break;
+    }
+  }
+  if (!screen) screen = [NSScreen mainScreen];
+  if (!screen) return;
+
+  NSRect const vf = screen.visibleFrame;
+  NSSize const size = nswin.frame.size;
+  CGFloat const x = vf.origin.x + (vf.size.width - size.width) / 2.0;
+  CGFloat const visibleTop = vf.origin.y + vf.size.height;
+  CGFloat const windowTop = visibleTop - (vf.size.height - size.height) * yFraction;
+  [nswin setFrameOrigin:NSMakePoint(x, windowTop - size.height)];
+}
+
 } // namespace
 
 MacOSWindowAttached::MacOSWindowAttached(QObject *parent) : QObject(parent) {
@@ -218,11 +245,13 @@ void MacOSWindowAttached::apply() {
     m_snapshot.opaque = nswin.opaque;
     m_snapshot.backgroundColor = (void *)CFBridgingRetain(nswin.backgroundColor);
     m_snapshot.hasShadow = nswin.hasShadow;
+    m_snapshot.animationBehavior = (long)nswin.animationBehavior;
   }
 
   nswin.opaque = NO;
   nswin.backgroundColor = NSColor.clearColor;
   nswin.hasShadow = YES;
+  nswin.animationBehavior = NSWindowAnimationBehaviorNone;
 
   installEffectView(nswin, m_blurEnabled, m_material == QStringLiteral("liquidGlass"),
                     materialFromString(m_material), m_cornerRadius, m_borderColor, m_borderWidth);
@@ -241,6 +270,7 @@ void MacOSWindowAttached::revert() {
   if (m_snapshot.valid) {
     nswin.opaque = m_snapshot.opaque;
     nswin.hasShadow = m_snapshot.hasShadow;
+    nswin.animationBehavior = (NSWindowAnimationBehavior)m_snapshot.animationBehavior;
     if (m_snapshot.backgroundColor) {
       NSColor *bg = (NSColor *)CFBridgingRelease(m_snapshot.backgroundColor);
       m_snapshot.backgroundColor = nullptr;
@@ -387,7 +417,6 @@ void MacOSPanelAttached::apply() {
     qWarning() << "macos-chrome: -[NSWindow _setPreventsActivation:] is unavailable; panel will steal focus";
   }
 
-  nswin.level = m_windowLevel;
   nswin.collectionBehavior = NSWindowCollectionBehaviorCanJoinAllSpaces |
                              NSWindowCollectionBehaviorFullScreenAuxiliary |
                              NSWindowCollectionBehaviorTransient |
@@ -401,6 +430,9 @@ void MacOSPanelAttached::apply() {
     panel.becomesKeyOnlyIfNeeded = NO;
     panel.worksWhenModal = YES;
   }
+
+  // Set after floatingPanel, whose setter resets the level to NSFloatingWindowLevel.
+  nswin.level = m_windowLevel;
 
   installResignKeyObserver((__bridge void *)nswin);
 }
@@ -454,3 +486,19 @@ void macosSetAccessoryActivationPolicy() {
 }
 
 void macosActivateApp() { [NSApp activateIgnoringOtherApps:YES]; }
+
+void MacOSPanelAttached::beginShow(qreal yFraction) {
+  if (!m_window) return;
+  m_window->setOpacity(0.0);
+  placeWindowOnCursorScreen(m_window, yFraction);
+}
+
+void MacOSPanelAttached::finishShow(qreal yFraction) {
+  if (!m_window) return;
+  QPointer<MacOSPanelAttached> self(this);
+  QTimer::singleShot(0, this, [self, yFraction]() {
+    if (!self || !self->m_window) return;
+    placeWindowOnCursorScreen(self->m_window, yFraction);
+    self->m_window->setOpacity(1.0);
+  });
+}

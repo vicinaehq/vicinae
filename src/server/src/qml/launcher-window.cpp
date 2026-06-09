@@ -525,6 +525,13 @@ QRect LauncherWindow::cursorScreenGeometry() const {
 
 bool LauncherWindow::canPositionWindow() { return Environment::supportsArbitraryWindowPlacement(); }
 
+void LauncherWindow::positionOnCursorScreen() {
+  if (!m_window || !canPositionWindow()) return;
+  const QRect g = cursorScreenGeometry();
+  m_window->setX(g.x() + (g.width() - m_window->width()) / 2);
+  m_window->setY(g.y() + (g.height() - m_window->height()) / 3);
+}
+
 void LauncherWindow::openFooterMenu() { m_footerPanel->toggle(); }
 
 void LauncherWindow::buildFooterMenu() {

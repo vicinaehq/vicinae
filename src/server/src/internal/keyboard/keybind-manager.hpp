@@ -38,9 +38,13 @@ public:
   bool isBound(const Keyboard::Shortcut &shortcut) const;
 
   /**
-   * Get info about the keybind this shortcut is bound to, if any.
+   * Get info about the keybind this shortcut is bound to, if any. `excludeId` skips a keybind by its
+   * id (so re-recording an entry doesn't conflict with itself).
    */
-  std::optional<KeybindInfo> findBoundInfo(const Keyboard::Shortcut &shortcut) const;
+  std::optional<KeybindInfo> findBoundInfo(const Keyboard::Shortcut &shortcut,
+                                           const QString &excludeId = {}) const;
+
+  QString idFor(Keybind bind) const;
 
   void setMap(const KeybindMap &map);
   const KeybindMap &map() const;

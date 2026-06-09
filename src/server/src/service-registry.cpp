@@ -8,6 +8,7 @@
 #include "omni-database.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/background-effect/background-effect-manager.hpp"
+#include "services/shortcut-inhibit/shortcut-inhibit-manager.hpp"
 #include "services/browser-extension-service.hpp"
 #include "services/power-manager/power-manager.hpp"
 #include "services/script-command/script-command-service.hpp"
@@ -26,6 +27,7 @@
 #include "services/toast/toast-service.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "services/app-runtime/app-runtime.hpp"
+#include "services/global-shortcuts/global-shortcut-service.hpp"
 #include "services/snippet/snippet-service.hpp"
 #include "services/paste/paste-service.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
@@ -73,6 +75,10 @@ NewsService *ServiceRegistry::newsService() const { return m_newsService.get(); 
 
 BackgroundEffectManager *ServiceRegistry::backgroundEffectManager() const {
   return m_backgroundEffectManager.get();
+}
+
+ShortcutInhibitManager *ServiceRegistry::shortcutInhibitManager() const {
+  return m_shortcutInhibitManager.get();
 }
 
 TelemetryService *ServiceRegistry::telemetry() const { return m_telemetry.get(); }
@@ -173,6 +179,10 @@ void ServiceRegistry::setBackgroundEffectManager(std::unique_ptr<BackgroundEffec
   m_backgroundEffectManager = std::move(service);
 }
 
+void ServiceRegistry::setShortcutInhibitManager(std::unique_ptr<ShortcutInhibitManager> service) {
+  m_shortcutInhibitManager = std::move(service);
+}
+
 void ServiceRegistry::setTelemetry(std::unique_ptr<TelemetryService> telemetry) {
   m_telemetry = std::move(telemetry);
 }
@@ -183,6 +193,12 @@ void ServiceRegistry::setAudioControl(std::unique_ptr<AudioControlService> servi
 
 void ServiceRegistry::setAppRuntime(std::unique_ptr<AppRuntime> service) {
   m_appRuntime = std::move(service);
+}
+
+GlobalShortcutService *ServiceRegistry::globalShortcuts() const { return m_globalShortcuts.get(); }
+
+void ServiceRegistry::setGlobalShortcuts(std::unique_ptr<GlobalShortcutService> service) {
+  m_globalShortcuts = std::move(service);
 }
 
 ServiceRegistry *ServiceRegistry::instance() {

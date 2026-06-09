@@ -31,10 +31,7 @@ class Lifecycle extends extensionServer.LifecycleService {
 
 	async shutdown(): Promise<boolean> {
 		if (globalState.renderer) {
-			// unmounting the whole tree runs every useEffect cleanup synchronously
 			globalState.renderer.unmount();
-		} else {
-			callbackManager.activateHandler("shutdown", []);
 		}
 
 		return true;

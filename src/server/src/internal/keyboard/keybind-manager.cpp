@@ -162,13 +162,19 @@ bool KeybindManager::isBound(const Keyboard::Shortcut &shortcut) const {
 /**
  * Get info about the keybind this shortcut is bound to, if any.
  */
-std::optional<KeybindInfo> KeybindManager::findBoundInfo(const Keyboard::Shortcut &shortcut) const {
+std::optional<KeybindInfo> KeybindManager::findBoundInfo(const Keyboard::Shortcut &shortcut,
+                                                         const QString &excludeId) const {
   for (const auto &[bind, stcut] : m_shortcuts) {
     if (stcut == shortcut) {
-      if (auto it = infos.find(bind); it != infos.end()) { return it->second; }
+      if (auto it = infos.find(bind); it != infos.end() && it->second.id != excludeId) { return it->second; }
     }
   }
 
+  return {};
+}
+
+QString KeybindManager::idFor(Keybind bind) const {
+  if (auto it = infos.find(bind); it != infos.end()) { return it->second.id; }
   return {};
 }
 

@@ -110,7 +110,10 @@ Item {
                             visible: !extSearchField.text
                         }
 
-                        onTextChanged: root._highlightedIndex = root._navItems.length > 0 ? 0 : -1
+                        onTextChanged: {
+                            HoverActivation.reset();
+                            root._highlightedIndex = root._navItems.length > 0 ? 0 : -1;
+                        }
 
                         Keys.onUpPressed: root._navigateHighlight(-1)
                         Keys.onDownPressed: root._navigateHighlight(1)
@@ -185,7 +188,7 @@ Item {
                             const c = Theme.listItemSelectionBg;
                             return Qt.rgba(c.r, c.g, c.b, Config.windowOpacity);
                         }
-                        if (navItem._isHighlighted || itemHover.hovered) {
+                        if (navItem._isHighlighted || (itemHover.hovered && HoverActivation.active)) {
                             const h = Theme.listItemHoverBg;
                             return Qt.rgba(h.r, h.g, h.b, Config.windowOpacity);
                         }

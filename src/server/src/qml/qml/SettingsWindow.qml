@@ -141,12 +141,12 @@ Window {
                             width: 24
                             height: 24
                             radius: 12
-                            color: closeHover.hovered ? Qt.rgba(Theme.listItemHoverBg.r, Theme.listItemHoverBg.g, Theme.listItemHoverBg.b, Config.windowOpacity) : "transparent"
+                            color: (closeHover.hovered && HoverActivation.active) ? Qt.rgba(Theme.listItemHoverBg.r, Theme.listItemHoverBg.g, Theme.listItemHoverBg.b, Config.windowOpacity) : "transparent"
 
                             Text {
                                 anchors.centerIn: parent
                                 text: "\u2715"
-                                color: closeHover.hovered ? Theme.foreground : Theme.textMuted
+                                color: (closeHover.hovered && HoverActivation.active) ? Theme.foreground : Theme.textMuted
                                 font.pixelSize: 12
                             }
 
@@ -199,6 +199,7 @@ Window {
                     Connections {
                         target: settings
                         function onCurrentPageChanged() {
+                            HoverActivation.reset();
                             pageLoader._loadPage(settings.currentPage);
                         }
                     }

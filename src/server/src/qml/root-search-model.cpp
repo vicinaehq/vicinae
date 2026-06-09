@@ -89,6 +89,7 @@ void RootSearchModel::refresh() {
   setSelectFirstOnReset(false);
   rerunSearch();
   setSelectFirstOnReset(saved);
+  refreshActionPanel();
 }
 
 bool RootSearchModel::rerunSearch() {

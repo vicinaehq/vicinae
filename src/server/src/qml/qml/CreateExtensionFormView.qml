@@ -14,7 +14,7 @@ Item {
             id: authorField
             label: "Author"
             error: root.host.authorError
-            info: 'If you plan on submitting your extension to the <a href="vicinae://extensions/vicinae/vicinae/store">Vicinae store</a>, this must exactly match your GitHub handle. Otherwise, you can set it to anything.'
+            info: 'If you plan on submitting your extension to the <a href="vicinae://launch/core/store">Vicinae store</a>, this must exactly match your GitHub handle. Otherwise, you can set it to anything.'
 
             FormTextInput {
                 text: root.host.author

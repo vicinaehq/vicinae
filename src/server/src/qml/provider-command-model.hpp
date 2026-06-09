@@ -22,7 +22,8 @@ public:
     AliasRole,
     EntrypointIdRole,
     DescriptionRole,
-    HasPreferencesRole
+    HasPreferencesRole,
+    ShortcutRole
   };
 
   struct Command {
@@ -34,6 +35,7 @@ public:
     bool hasPreferences;
     QString alias;
     QString entrypointId;
+    QString shortcut;
 
     bool operator==(const Command &) const = default;
   };
@@ -51,6 +53,7 @@ public:
   bool setEnabled(const QString &entrypointId, bool value);
   void setAllEnabled(bool value);
   bool setAlias(const QString &entrypointId, const QString &alias);
+  bool setShortcut(const QString &entrypointId, const QString &shortcut);
 
   Q_INVOKABLE int findByEntrypointId(const QString &id) const;
   Q_INVOKABLE void setFilter(const QString &text);

@@ -13,93 +13,92 @@
   gcc15Stdenv,
   wayland,
   glaze,
-}:
-let
+}: let
   manifestRaw = builtins.readFile ../manifest.yaml;
-  manifestGet =
-    key:
-    let
-      m = builtins.match ".*${key}:[[:space:]]*\"([^\"]+)\".*" manifestRaw;
-    in
-    if m == null then throw "Key ${key} not found in manifest.yaml" else builtins.elemAt m 0;
+  manifestGet = key: let
+    m = builtins.match ".*${key}:[[:space:]]*\"([^\"]+)\".*" manifestRaw;
+  in
+    if m == null
+    then throw "Key ${key} not found in manifest.yaml"
+    else builtins.elemAt m 0;
 in
-gcc15Stdenv.mkDerivation (finalAttrs: {
-  pname = "vicinae";
-  version = lib.removePrefix "v" (manifestGet "tag");
+  gcc15Stdenv.mkDerivation (finalAttrs: {
+    pname = "vicinae";
+    version = lib.removePrefix "v" (manifestGet "tag");
 
-  src = ../.;
+    src = ../.;
 
-  apiDeps = fetchNpmDeps {
-    src = "${finalAttrs.src}/src/typescript/api";
-    hash = "sha256-Ki/l3PiBY3R0Bzd6leqx2OxA7c+jckjr+YD4GHHaSqI=";
-  };
+    apiDeps = fetchNpmDeps {
+      src = "${finalAttrs.src}/src/typescript/api";
+      hash = "sha256-Ki/l3PiBY3R0Bzd6leqx2OxA7c+jckjr+YD4GHHaSqI=";
+    };
 
-  extensionManagerDeps = fetchNpmDeps {
-    src = "${finalAttrs.src}/src/typescript/extension-manager";
-    hash = "sha256-6Kz7I8cGm1lnGPOI/gju3t5/imnbBFlDEKzWar5O770=";
-  };
+    extensionManagerDeps = fetchNpmDeps {
+      src = "${finalAttrs.src}/src/typescript/extension-manager";
+      hash = "sha256-6Kz7I8cGm1lnGPOI/gju3t5/imnbBFlDEKzWar5O770=";
+    };
 
-  cmakeFlags = lib.mapAttrsToList lib.cmakeFeature {
-    "VICINAE_GIT_TAG" = "v${finalAttrs.version}";
-    "VICINAE_GIT_COMMIT_HASH" = manifestGet "short_rev";
-    "VICINAE_PROVENANCE" = "nix";
-    "INSTALL_NODE_MODULES" = "OFF";
-    "USE_SYSTEM_GLAZE" = "ON";
-    "CMAKE_INSTALL_PREFIX" = placeholder "out";
-    "CMAKE_INSTALL_DATAROOTDIR" = "share";
-    "CMAKE_INSTALL_BINDIR" = "bin";
-    "CMAKE_INSTALL_LIBDIR" = "lib";
-    "INSTALL_BROWSER_NATIVE_HOST" = "OFF";
-  };
+    cmakeFlags = lib.mapAttrsToList lib.cmakeFeature {
+      "VICINAE_GIT_TAG" = "v${finalAttrs.version}";
+      "VICINAE_GIT_COMMIT_HASH" = manifestGet "short_rev";
+      "VICINAE_PROVENANCE" = "nix";
+      "INSTALL_NODE_MODULES" = "OFF";
+      "USE_SYSTEM_GLAZE" = "ON";
+      "CMAKE_INSTALL_PREFIX" = placeholder "out";
+      "CMAKE_INSTALL_DATAROOTDIR" = "share";
+      "CMAKE_INSTALL_BINDIR" = "bin";
+      "CMAKE_INSTALL_LIBDIR" = "lib";
+      "INSTALL_BROWSER_NATIVE_HOST" = "OFF";
+    };
 
-  strictDeps = true;
+    strictDeps = true;
 
-  nativeBuildInputs = [
-    cmake
-    ninja
-    nodejs
-    pkg-config
-    qt6.wrapQtAppsHook
-  ];
+    nativeBuildInputs = [
+      cmake
+      ninja
+      nodejs
+      pkg-config
+      qt6.wrapQtAppsHook
+    ];
 
-  buildInputs = [
-    cmark-gfm
-    kdePackages.layer-shell-qt
-    kdePackages.qtkeychain
-	kdePackages.qtshadertools
-    kdePackages.syntax-highlighting
-    libqalculate
-    nodejs
-    qt6.qtbase
-    qt6.qtdeclarative
-    qt6.qtsvg
-    qt6.qtwayland
-    wayland
-    glaze
-  ];
+    buildInputs = [
+      cmark-gfm
+      kdePackages.layer-shell-qt
+      kdePackages.qtkeychain
+      kdePackages.qtshadertools
+      kdePackages.syntax-highlighting
+      libqalculate
+      nodejs
+      qt6.qtbase
+      qt6.qtdeclarative
+      qt6.qtsvg
+      qt6.qtwayland
+      wayland
+      glaze
+    ];
 
-  postPatch = ''
-    local postPatchHooks=()
-    source ${npmHooks.npmConfigHook}/nix-support/setup-hook
-    npmRoot=src/typescript/api npmDeps=${finalAttrs.apiDeps} npmConfigHook
-    npmRoot=src/typescript/extension-manager npmDeps=${finalAttrs.extensionManagerDeps} npmConfigHook
-  '';
+    postPatch = ''
+      local postPatchHooks=()
+      source ${npmHooks.npmConfigHook}/nix-support/setup-hook
+      npmRoot=src/typescript/api npmDeps=${finalAttrs.apiDeps} npmConfigHook
+      npmRoot=src/typescript/extension-manager npmDeps=${finalAttrs.extensionManagerDeps} npmConfigHook
+    '';
 
-  qtWrapperArgs = [
-    "--prefix PATH : ${
-      lib.makeBinPath [
-        nodejs
-        (placeholder "out")
-      ]
-    }"
-    "--set VICINAE_INPUT_SERVER_BIN /run/wrappers/bin/vicinae-input-server"
-  ];
+    qtWrapperArgs = [
+      "--prefix PATH : ${
+        lib.makeBinPath [
+          nodejs
+          (placeholder "out")
+        ]
+      }"
+      "--set VICINAE_INPUT_SERVER_BIN /run/wrappers/bin/vicinae-input-server"
+    ];
 
-  meta = {
-    description = "A focused launcher for your desktop — native, fast, extensible";
-    homepage = "https://github.com/vicinaehq/vicinae";
-    license = lib.licenses.gpl3Plus;
-    platforms = lib.platforms.linux;
-    mainProgram = "vicinae";
-  };
-})
+    meta = {
+      description = "A focused launcher for your desktop — native, fast, extensible";
+      homepage = "https://github.com/vicinaehq/vicinae";
+      license = lib.licenses.gpl3Plus;
+      platforms = lib.platforms.linux;
+      mainProgram = "vicinae";
+    };
+  })

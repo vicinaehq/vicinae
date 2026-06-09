@@ -25,6 +25,8 @@
 #include "service-registry.hpp"
 #include "services/background-effect/background-effect-manager.hpp"
 #include "qml/background-effect-attached.hpp"
+#include "services/shortcut-inhibit/shortcut-inhibit-manager.hpp"
+#include "qml/shortcut-inhibitor-attached.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
 #include "services/browser-extension-service.hpp"
 #include "services/calculator-service/calculator-service.hpp"
@@ -45,6 +47,8 @@
 #include "services/window-manager/window-manager.hpp"
 #include "services/app-runtime/app-runtime.hpp"
 #include "services/snippet/snippet-service.hpp"
+#include "services/global-shortcuts/global-shortcut-service.hpp"
+#include "services/global-shortcuts/global-shortcut-backend-factory.hpp"
 #ifdef Q_OS_LINUX
 #include "services/input-server/linux-input-server.hpp"
 #include "services/snippet/linux-snippet-server.hpp"
@@ -152,6 +156,8 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto fontService = std::make_unique<FontService>();
     auto configService = std::make_unique<config::Manager>(m_config);
     auto rootItemManager = std::make_unique<RootItemManager>(*configService, *localStorage);
+    auto globalShortcutService = std::make_unique<GlobalShortcutService>(*configService, *rootItemManager,
+                                                                         createGlobalShortcutBackend());
     auto shortcutService =
         std::make_unique<ShortcutService>(Omnicast::dataDir() / "shortcuts" / "shortcuts.json", omniDb.get());
     auto toastService = std::make_unique<ToastService>();
@@ -204,11 +210,14 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setExtensionRegistry(std::move(extensionRegistry));
     registry->setOAuthService(std::move(oauthService));
     registry->setPowerManager(std::make_unique<PowerManager>());
+    registry->setGlobalShortcuts(std::move(globalShortcutService));
     registry->setAudioControl(std::make_unique<AudioControlService>());
     registry->setScriptDb(std::make_unique<ScriptCommandService>());
     registry->setBrowserExtension(std::make_unique<BrowserExtensionService>());
     registry->setBackgroundEffectManager(std::make_unique<BackgroundEffectManager>());
     BackgroundEffect::setManager(registry->backgroundEffectManager());
+    registry->setShortcutInhibitManager(std::make_unique<ShortcutInhibitManager>());
+    ShortcutInhibitor::setManager(registry->shortcutInhibitManager());
     registry->setFileChooserService(std::make_unique<FileChooserService>());
     registry->setNewsService(std::make_unique<NewsService>(*registry->config()));
     registry->setTelemetry(std::make_unique<TelemetryService>(*registry->config()));
@@ -373,6 +382,14 @@ int startServer(const ServerLaunchOptions &launchOpts) {
       });
 
   QObject::connect(cfgService, &config::Manager::configChanged, configChanged);
+
+  if (auto *globalShortcuts = ServiceRegistry::instance()->globalShortcuts()) {
+    QObject::connect(globalShortcuts, &GlobalShortcutService::toggleLauncherRequested,
+                     [&ctx](quint64) { ctx.navigation->toggleWindow(); });
+    QObject::connect(globalShortcuts, &GlobalShortcutService::commandActivated,
+                     [&ctx](const EntrypointId &id, quint64) { ctx.navigation->activateEntrypoint(id); });
+  }
+
   QIcon::setFallbackSearchPaths(Environment::fallbackIconSearchPaths());
 
   auto builtinFont = ServiceRegistry::instance()->fontService()->builtinFontFamily();

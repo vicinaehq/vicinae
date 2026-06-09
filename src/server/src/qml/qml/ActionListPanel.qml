@@ -95,6 +95,14 @@ Item {
 
     implicitHeight: (_empty ? emptyLabel.implicitHeight + 2 * emptyPadding : listView.contentHeight + listView.topMargin + listView.bottomMargin) + filterBar.height + divider.height
 
+    HoverResetOnModelChange {
+        target: root.model
+    }
+
+    HoverResetOnShow {
+        target: root
+    }
+
     ColumnLayout {
         anchors.fill: parent
         spacing: 0

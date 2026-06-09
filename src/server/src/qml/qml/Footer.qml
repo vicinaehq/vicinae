@@ -6,7 +6,7 @@ Item {
         anchors.fill: parent
         anchors.leftMargin: 16
         anchors.rightMargin: 16
-        spacing: 8
+        spacing: 4
 
         Item {
             Layout.fillWidth: true
@@ -33,6 +33,7 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             label: actionPanel.primaryActionTitle
             shortcutTokens: actionPanel.primaryActionShortcutTokens
+            highlighted: true
             onClicked: launcher.handleReturn()
         }
 
@@ -40,8 +41,16 @@ Item {
             visible: primaryButton.visible && actionsButton.visible
             Layout.alignment: Qt.AlignVCenter
             width: 1
-            height: 14
-            color: Config.withAlpha(Theme.divider, Config.windowOpacity)
+            height: 12
+            opacity: primaryButton.hovered || actionsButton.hovered || actionsButton.backgrounded ? 0 : 0.35
+            color: Config.withAlpha(Theme.textMuted, Config.windowOpacity)
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 200
+                    easing.type: Easing.OutCubic
+                }
+            }
         }
 
         FooterButton {
@@ -51,6 +60,7 @@ Item {
             label: "Actions"
             shortcutTokens: Keybinds.toggleActionPanelTokens
             highlighted: actionPanel.open
+            backgrounded: actionPanel.open
             onClicked: actionPanel.toggle()
         }
     }

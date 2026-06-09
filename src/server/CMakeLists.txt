@@ -243,7 +243,6 @@ set(SRCS
 
 	./database/vicinae/migrations.qrc
 	./database/clipboard/migrations.qrc
-	./database/file-indexer//migrations.qrc
 
 
 	src/internal/keyboard/keybind-manager.hpp
@@ -514,6 +513,10 @@ set(SRCS
 	src/qml/vici-image-item.cpp
 	src/qml/config-bridge.hpp
 	src/qml/theme-bridge.hpp
+	src/qml/keyboard-bridge.hpp
+	src/qml/global-shortcut-bridge.hpp
+	src/qml/shortcut-conflict.hpp
+	src/qml/shortcut-conflict.cpp
 	src/qml/create-extension-view-host.hpp
 	src/qml/create-extension-view-host.cpp
 	src/qml/installed-extensions-model.hpp
@@ -554,9 +557,11 @@ set(SRCS
 	src/qml/markdown/text-selection-controller.cpp
 	src/qml/store-intro-view-host.hpp
 	src/qml/store-intro-view-host.cpp
-	src/qml/font-browser-model.hpp
 	src/qml/font-browser-view-host.hpp
-	src/qml/font-browser-view-host.cpp
+	src/qml/font-grid-model.hpp
+	src/qml/font-grid-model.cpp
+	src/qml/font-demo-view-host.hpp
+	src/qml/font-demo-view-host.cpp
 	src/qml/edit-keywords-view-host.hpp
 	src/qml/edit-keywords-view-host.cpp
 	src/qml/hud-bridge.hpp
@@ -587,8 +592,8 @@ endif()
 
 if (APPLE)
 	list(APPEND SRCS
-		src/ui/image/mac-bundle-icon-loader.hpp
-		src/ui/image/mac-bundle-icon-loader.mm
+		src/ui/image/mac-file-icon-loader.hpp
+		src/ui/image/mac-file-icon-loader.mm
 		src/services/app-service/macos/mac-app.hpp
 		src/services/app-service/macos/mac-app.mm
 		src/services/app-service/macos/mac-app-database.hpp
@@ -597,13 +602,18 @@ if (APPLE)
 		src/services/app-runtime/macos/mac-app-runtime.mm
 		src/root-search/macos-settings/macos-settings-root-provider.hpp
 		src/root-search/macos-settings/macos-settings-root-provider.mm
+		src/services/global-shortcuts/macos-global-shortcut-backend.hpp
+		src/services/global-shortcuts/macos-global-shortcut-backend.cpp
+		src/services/files-service/macos/spotlight-file-indexer.hpp
+		src/services/files-service/macos/spotlight-file-indexer.mm
 	)
 	set_source_files_properties(
-		src/ui/image/mac-bundle-icon-loader.mm
+		src/ui/image/mac-file-icon-loader.mm
 		src/services/app-service/macos/mac-app.mm
 		src/services/app-service/macos/mac-app-database.mm
 		src/services/app-runtime/macos/mac-app-runtime.mm
 		src/root-search/macos-settings/macos-settings-root-provider.mm
+		src/services/files-service/macos/spotlight-file-indexer.mm
 		PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
 else()
 	list(APPEND SRCS
@@ -616,6 +626,15 @@ list(APPEND SRCS
 	src/services/app-runtime/abstract-app-runtime.hpp
 	src/services/app-runtime/app-runtime.hpp
 	src/services/app-runtime/app-runtime.cpp
+)
+
+list(APPEND SRCS
+	src/services/global-shortcuts/abstract-global-shortcut-backend.hpp
+	src/services/global-shortcuts/dummy-global-shortcut-backend.hpp
+	src/services/global-shortcuts/global-shortcut-backend-factory.hpp
+	src/services/global-shortcuts/global-shortcut-backend-factory.cpp
+	src/services/global-shortcuts/global-shortcut-service.hpp
+	src/services/global-shortcuts/global-shortcut-service.cpp
 )
 
 if (LIBQALCULATE_BACKEND)
@@ -639,6 +658,12 @@ if (UNIX AND NOT APPLE)
 		src/services/input-server/linux-input-server.cpp
 		src/services/snippet/linux-snippet-server.hpp
 		src/services/snippet/linux-snippet-server.cpp
+
+		src/services/global-shortcuts/xkb-keysym.hpp
+		src/services/global-shortcuts/xkb-keysym.cpp
+
+		src/services/global-shortcuts/x11-global-shortcut-backend.hpp
+		src/services/global-shortcuts/x11-global-shortcut-backend.cpp
 
 		src/internal/icon-theme-db/icon-theme-db.cpp
 
@@ -665,7 +690,7 @@ if (UNIX AND NOT APPLE)
 	# Add XCB (X11 C Bindings) library for X11 window manager support
 	find_package(X11 REQUIRED)
 	if (X11_FOUND)
-		list(APPEND LIBS X11::xcb)
+		list(APPEND LIBS X11::xcb X11::xcb_keysyms)
 		message(STATUS "XCB library found for X11 window manager support")
 	endif()
 
@@ -675,6 +700,8 @@ if (UNIX AND NOT APPLE)
 	wayland_generate_protocol("ext-data-control-v1")
 	wayland_generate_protocol("kde-blur")
 	wayland_generate_protocol("ext-background-effect-v1")
+	wayland_generate_protocol("keyboard-shortcuts-inhibit-unstable-v1")
+	wayland_generate_protocol("ext-hotkey-v1")
 
 	list(APPEND LIBS xkbcommon)
 
@@ -686,24 +713,15 @@ if (UNIX AND NOT APPLE)
 		src/internal/wayland/seat.cpp
 		src/services/background-effect/ext-background-effect-v1-manager.cpp
 		src/services/background-effect/kde-background-effect-manager.cpp
+		src/services/shortcut-inhibit/wayland-shortcut-inhibit-manager.cpp
 		src/services/clipboard/data-control/data-control-clipboard-server.hpp
 		src/services/clipboard/data-control/data-control-clipboard-server.cpp
 
+		src/services/global-shortcuts/ext-hotkey-global-shortcut-backend.hpp
+		src/services/global-shortcuts/ext-hotkey-global-shortcut-backend.cpp
+
 		src/services/files-service/file-indexer/file-indexer.hpp
 		src/services/files-service/file-indexer/file-indexer.cpp
-		src/services/files-service/file-indexer/filesystem-walker.cpp
-		src/services/files-service/file-indexer/relevancy-scorer.cpp
-		src/services/files-service/file-indexer/incremental-scanner.cpp
-		src/services/files-service/file-indexer/indexer-scanner.cpp
-		src/services/files-service/file-indexer/watcher-scanner.cpp
-		src/services/files-service/file-indexer/home-directory-watcher.cpp
-		src/services/files-service/file-indexer/file-indexer-db.cpp
-		src/services/files-service/file-indexer/db-writer.cpp
-		src/services/files-service/file-indexer/writer-worker.hpp
-		src/services/files-service/file-indexer/writer-worker.cpp
-		src/services/files-service/file-indexer/scan-dispatcher.cpp
-		src/services/files-service/file-indexer/abstract-scanner.hpp
-		src/services/files-service/file-indexer/file-indexer-query-engine.hpp
 	)
 
 endif()
@@ -741,7 +759,17 @@ figura_compile(
 	NAMESPACE snippet_gen
 	OUTPUT snippet-client.hpp
 )
-	
+
+if (UNIX AND NOT APPLE)
+	figura_compile(
+		CLIENT
+		PROTO "${FIGURA_DIR}/file-indexer.fig"
+		LANG glaze-qt
+		NAMESPACE file_indexer_gen
+		OUTPUT file-indexer-client.hpp
+	)
+endif()
+
 
 qt_add_executable(${TARGET} ${SRCS})
 
@@ -764,6 +792,8 @@ set(VICINAE_QML_FILES
 	src/qml/qml/LauncherWindow.qml
 	src/qml/qml/SearchBar.qml
 	src/qml/qml/GenericListView.qml
+	src/qml/qml/HoverResetOnModelChange.qml
+	src/qml/qml/HoverResetOnShow.qml
 	src/qml/qml/RootSearchList.qml
 	src/qml/qml/ListItemDelegate.qml
 	src/qml/qml/ListAccessory.qml
@@ -836,6 +866,8 @@ set(VICINAE_QML_FILES
 	src/qml/qml/markdown/MdBlockquote.qml
 	src/qml/qml/markdown/MdCallout.qml
 	src/qml/qml/BrowseFontsView.qml
+	src/qml/qml/FontDemoView.qml
+	src/qml/qml/CategoryFilterAccessory.qml
 	src/qml/qml/ExtensionFormView.qml
 	src/qml/qml/FormFilePicker.qml
 	src/qml/qml/FormAppSelector.qml
@@ -860,6 +892,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/ExtensionSettingsPage.qml
 	src/qml/qml/AboutSettingsPage.qml
 	src/qml/qml/ShortcutRecorderField.qml
+	src/qml/qml/ShortcutField.qml
 	src/qml/qml/PreferenceFormView.qml
 	src/qml/qml/SettingsPreferenceForm.qml
 	src/qml/qml/MissingPreferenceView.qml
@@ -891,11 +924,15 @@ endforeach()
 set(VICINAE_QML_SOURCES
 	src/qml/source-blend-rect.hpp
 	src/qml/vici-image-item.hpp
+	src/qml/hover-activation.hpp
+	src/qml/hover-activation.cpp
 	src/qml/completion-model.hpp
 	src/qml/markdown/markdown-model.hpp
 	src/qml/markdown/text-selection-controller.hpp
 	src/qml/background-effect-attached.hpp
 	src/qml/background-effect-attached.cpp
+	src/qml/shortcut-inhibitor-attached.hpp
+	src/qml/shortcut-inhibitor-attached.cpp
 )
 
 if(APPLE)
@@ -933,7 +970,7 @@ endif()
 target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/qml ${CMAKE_CURRENT_SOURCE_DIR}/src/qml/markdown)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
 if(APPLE)
-	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework UniformTypeIdentifiers")
+	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework UniformTypeIdentifiers" "-framework Carbon" "-framework CoreServices")
 endif()
 target_compile_features(${TARGET} PUBLIC cxx_std_23)
 

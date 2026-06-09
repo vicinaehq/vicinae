@@ -62,24 +62,27 @@ class FileExtension : public BuiltinCommandRepository {
 
 public:
   void initialized(const QJsonObject &preferences) const override {
+#ifdef Q_OS_LINUX
     auto files = ServiceRegistry::instance()->fileService();
     if (preferences.value("autoIndexing").toBool()) { files->indexer()->start(); }
+#endif
   }
 
   FileExtension() {
     registerCommand<SearchFilesCommand>();
+#ifdef Q_OS_LINUX
     registerCommand<RebuildFileIndexCommand>();
+#endif
   }
 
   std::vector<Preference> preferences() const override {
+#ifdef Q_OS_LINUX
     auto indexing = Preference::makeCheckbox("autoIndexing");
 
-    indexing.setTitle("Auto Indexing");
+    indexing.setTitle("Enabled");
     indexing.setDescription(
-        "Whether to enable automatic file indexing in the background. If this is turned off, Vicinae will "
-        "still be "
-        "able to query the index if there is one, but will no longer update it by itself. This does not "
-        "cancel ongoing indexing tasks.");
+        "Whether to run the file indexer in the background. When turned off, the indexer process is "
+        "stopped entirely and file search becomes unavailable until it is turned back on.");
     indexing.setDefaultValue(true);
 
     auto paths = Preference::makeText("paths");
@@ -98,10 +101,14 @@ public:
     watcherPaths.setDefaultValue("");
 
     return {indexing, paths, excludedPaths, watcherPaths};
+#else
+    return {};
+#endif
   }
 
   void preferenceValuesChanged(const QJsonObject &preferences) const override {
-    QStringList searchPaths = preferences.value("paths").toString().split(';', Qt::SkipEmptyParts);
+#ifdef Q_OS_LINUX
     ServiceRegistry::instance()->fileService()->preferenceValuesChanged(preferences);
+#endif
   }
 };

@@ -550,7 +550,9 @@ bool NavigationController::reloadActiveCommand() {
   EntrypointId const id = cmd->uniqueId();
 
   unloadActiveCommand();
-  launch(id);
+
+  auto *item = m_ctx.services->rootItemManager()->findItemById(id);
+  if (auto *ext = dynamic_cast<CommandRootItem *>(item)) { launch(ext->command()); }
 
   return true;
 }
@@ -574,17 +576,55 @@ void NavigationController::unloadActiveCommand() {
   }
 }
 
-void NavigationController::launch(const EntrypointId &id) {
-  auto root = m_ctx.services->rootItemManager();
+bool NavigationController::activateEntrypoint(const EntrypointId &id,
+                                              const ActivateEntrypointOptions &options) {
+  const auto *root = m_ctx.services->rootItemManager();
+  const auto *entrypoint = root->findItemById(id);
 
-  for (ExtensionRootProvider const *extension : root->extensions()) {
-    for (const auto &cmd : extension->repository()->commands()) {
-      if (cmd->uniqueId() == id) {
-        launch(cmd);
-        return;
-      }
-    }
+  if (!entrypoint) {
+    qWarning() << "activateEntrypoint: unknown entrypoint" << QString::fromStdString(std::string{id});
+    return false;
   }
+
+  const auto previouslyActive = activeCommand();
+  const bool initialOpenState = m_ctx.navigation->isWindowOpened();
+  const bool isSameView = previouslyActive->uniqueId() == id && previouslyActive->isView();
+
+  // toggle visibility if we are already showing
+  if (initialOpenState && isSameView) {
+    popToRoot({.clearSearch = false});
+    m_ctx.navigation->closeWindow();
+    return true;
+  }
+
+  popToRoot({.clearSearch = false});
+
+  if (!initialOpenState) { setInstantDismiss(); }
+
+  // FIXME: we need a unified interface for this
+  if (auto *ext = dynamic_cast<const CommandRootItem *>(entrypoint)) {
+    launch(ext->command(), options.arguments);
+  } else {
+    auto panel = entrypoint->newActionPanel(&m_ctx, root->itemMetadata(id));
+    panel->finalize();
+    auto *action = panel->primaryAction();
+    if (!action) {
+      qWarning() << "activateEntrypoint: no primary action for" << QString::fromStdString(std::string{id});
+      return false;
+    }
+    action->execute(&m_ctx);
+  }
+
+  if (!options.fallbackText.isEmpty()) { setSearchText(options.fallbackText); }
+
+  auto *active = activeCommand();
+
+  if (!isRootSearch() && active && active->isView() && !initialOpenState) {
+    setBackButtonVisibility(false);
+    showWindow();
+  }
+
+  return true;
 }
 
 void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd) {
