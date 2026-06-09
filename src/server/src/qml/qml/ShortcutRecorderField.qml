@@ -15,7 +15,10 @@ Popup {
     focus: true
     closePolicy: Popup.CloseOnPressOutside
     popupType: Popup.Window
+    PopupPlacement.alignment: Qt.AlignHCenter | (recorder._below ? Qt.AlignBottom : Qt.AlignTop)
     padding: 10
+
+    property bool _below: false
 
     property var _currentShortcutTokens: []
     property string _statusText: "Recording..."
@@ -44,9 +47,12 @@ Popup {
         _statusColor = Theme.foreground;
         closeTimer.stop();
 
-        var pos = targetItem.mapToItem(recorder.parent, 0, 0);
-        recorder.x = pos.x + targetItem.width / 2 - recorder.width / 2;
-        recorder.y = below ? pos.y + targetItem.height + 10 : pos.y - recorder.height - 10;
+        // Parent to the trigger so the native popup anchors to it; x/y only
+        // apply on non-Wayland platforms.
+        recorder._below = !!below;
+        recorder.parent = targetItem;
+        recorder.x = targetItem.width / 2 - recorder.width / 2;
+        recorder.y = below ? targetItem.height + 10 : -recorder.height - 10;
         recorder.open();
         return true;
     }

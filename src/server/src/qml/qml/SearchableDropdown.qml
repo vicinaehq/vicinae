@@ -32,6 +32,10 @@ Item {
         completionPopup.open();
     }
 
+    function popupX() {
+        return Math.min(0, triggerButton.width - completionPopup.width);
+    }
+
     Keys.onReturnPressed: {
         if (!completionPopup.visible)
             open();
@@ -96,7 +100,10 @@ Item {
         id: completionPopup
         parent: triggerButton
         popupType: Popup.Window
-        x: compact ? triggerButton.width - width : 0
+        // On Wayland the compositor places the native popup window from the
+        // PopupPlacement anchor; x/y only apply on other platforms.
+        PopupPlacement.alignment: root.compact ? Qt.AlignRight : Qt.AlignLeft
+        x: root.popupX()
         y: triggerButton.height + 4
         width: Math.max(compact ? 200 : 250, root.width)
         focus: true
