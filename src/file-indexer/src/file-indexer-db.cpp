@@ -186,7 +186,7 @@ FileIndexerDatabase::searchCandidates(std::string_view searchQuery, int limit) {
   if (searchQuery.empty() || limit <= 0) return {};
 
   auto stmt = m_db.prepare(R"(
-    SELECT f.path, f.name, f.relevancy_score, unicode_idx.rank
+    SELECT f.path, f.relevancy_score, unicode_idx.rank
     FROM indexed_file f
     JOIN unicode_idx ON unicode_idx.rowid = f.id
     WHERE unicode_idx MATCH :search
@@ -207,9 +207,8 @@ FileIndexerDatabase::searchCandidates(std::string_view searchQuery, int limit) {
     candidate.path = stmt.columnText(0);
     if (!fs::exists(candidate.path, ec)) { continue; }
 
-    candidate.name = stmt.columnText(1);
-    candidate.relevancyScore = stmt.columnDouble(2);
-    candidate.indexRank = stmt.columnDouble(3);
+    candidate.relevancyScore = stmt.columnDouble(1);
+    candidate.indexRank = stmt.columnDouble(2);
     results.emplace_back(std::move(candidate));
   }
 
@@ -252,13 +251,16 @@ void FileIndexerDatabase::compact() {
 }
 
 void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
+
+  flog::info() << "Indexing " << events.size() << " events\n";
+
   auto tx = m_db.transaction();
 
   auto modifyStmt = m_db.prepare(R"(
     INSERT INTO
-      indexed_file (path, parent_path, name, last_modified_at, relevancy_score)
+      indexed_file (path, parent_path, last_modified_at, relevancy_score)
     VALUES
-      (:path, :parent_path, :name, :last_modified_at, :relevancy_score)
+      (:path, :parent_path, :last_modified_at, :relevancy_score)
     ON CONFLICT (path) DO UPDATE SET last_modified_at = :last_modified_at
   )");
 
@@ -275,7 +277,6 @@ void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
       modifyStmt.bind(":last_modified_at", secondsSinceEpoch);
       modifyStmt.bind(":path", event.path.c_str());
       modifyStmt.bind(":parent_path", event.path.parent_path().c_str());
-      modifyStmt.bind(":name", event.path.filename().c_str());
 
       RelevancyScorer scorer;
       modifyStmt.bind(":relevancy_score", scorer.computeScore(event.path, event.eventTime));
@@ -305,13 +306,14 @@ void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
 }
 
 void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &paths) {
+  flog::info() << "Indexing " << paths.size() << " files\n";
   auto tx = m_db.transaction();
 
   auto stmt = m_db.prepare(R"(
     INSERT INTO
-      indexed_file (path, parent_path, name, last_modified_at, relevancy_score)
+      indexed_file (path, parent_path, last_modified_at, relevancy_score)
     VALUES
-      (:path, :parent_path, :name, :last_modified_at, :relevancy_score)
+      (:path, :parent_path, :last_modified_at, :relevancy_score)
     ON CONFLICT (path) DO UPDATE SET last_modified_at = :last_modified_at
   )");
 
@@ -334,7 +336,6 @@ void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &p
 
     stmt.bind(":path", path.c_str());
     stmt.bind(":parent_path", path.parent_path().c_str());
-    stmt.bind(":name", path.filename().c_str());
     stmt.bind(":relevancy_score", score);
 
     if (!stmt.exec()) {

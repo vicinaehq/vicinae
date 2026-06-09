@@ -22,7 +22,7 @@ void IndexerScanner::enqueueBatch(const std::vector<FileEvent> &paths) {
     }
 
     if (shouldWait) {
-      flog::debug() << "Handling backpressure: too many batched";
+      // flog::debug() << "Handling backpressure: too many batched";
       std::this_thread::sleep_for(std::chrono::milliseconds(BACKPRESSURE_WAIT_MS));
     }
   }

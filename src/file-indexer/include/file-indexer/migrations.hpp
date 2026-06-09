@@ -20,20 +20,19 @@ CREATE TABLE IF NOT EXISTS indexed_file (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	path TEXT UNIQUE NOT NULL,
 	parent_path TEXT NOT NULL,
-	name TEXT NOT NULL,
 	last_modified_at INT,
 	relevancy_score REAL NOT NULL
 );
 
 CREATE VIRTUAL TABLE IF NOT EXISTS unicode_idx USING fts5(
-	name, content=indexed_file, tokenize='unicode61', prefix='1 2 3 4 5 6'
+	path, content=indexed_file, tokenize='trigram'
 );
 
 CREATE TRIGGER IF NOT EXISTS unicode_idx_ai AFTER INSERT ON indexed_file BEGIN
-  INSERT INTO unicode_idx(rowid, name) VALUES (new.id, new.name);END;
+  INSERT INTO unicode_idx(rowid, path) VALUES (new.id, new.path);END;
 
 CREATE TRIGGER IF NOT EXISTS unicode_idx_ad AFTER DELETE ON indexed_file BEGIN
-  INSERT INTO unicode_idx(unicode_idx, rowid, name) VALUES('delete', old.id, old.name);END;
+  INSERT INTO unicode_idx(unicode_idx, rowid, path) VALUES('delete', old.id, old.path);END;
 
 CREATE INDEX IF NOT EXISTS idx_indexed_file_parent_path ON indexed_file(parent_path);
 CREATE INDEX IF NOT EXISTS idx_indexed_file_path ON indexed_file(path);

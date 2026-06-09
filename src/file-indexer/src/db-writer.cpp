@@ -11,18 +11,32 @@ void DbWriter::listen() {
 
     if (m_queue.empty() && !m_active) break;
 
-    Work const work = std::move(m_queue.front());
+    QueuedWork const work = std::move(m_queue.front());
     m_queue.pop();
     lock.unlock();
 
-    work(*m_db);
+    work.work(*m_db);
+
+    if (work.bounded) {
+      {
+        std::scoped_lock const l(m_queueMtx);
+        --m_pendingBulkWrites;
+      }
+      m_notFull.notify_one();
+    }
   }
 }
 
-void DbWriter::submit(Work work) {
+void DbWriter::submit(Work work, bool bounded) {
   {
-    std::scoped_lock const l(m_queueMtx);
-    m_queue.push(std::move(work));
+    std::unique_lock lock(m_queueMtx);
+
+    if (bounded) {
+      m_notFull.wait(lock, [&]() { return m_pendingBulkWrites < MAX_PENDING_BULK_WRITES || !m_active; });
+      ++m_pendingBulkWrites;
+    }
+
+    m_queue.push({std::move(work), bounded});
   }
   m_updateSignal.notify_one();
 }
@@ -34,6 +48,7 @@ DbWriter::DbWriter() {
 DbWriter::~DbWriter() {
   m_active = false;
   m_updateSignal.notify_one();
+  m_notFull.notify_all();
   m_workerThread.join();
 }
 
@@ -59,7 +74,7 @@ DbWriter::createScan(const std::filesystem::path &path, ScanType type) {
 }
 
 void DbWriter::indexFiles(std::vector<std::filesystem::path> paths) {
-  submit([paths = std::move(paths)](FileIndexerDatabase &db) { db.indexFiles(paths); });
+  submit([paths = std::move(paths)](FileIndexerDatabase &db) { db.indexFiles(paths); }, true);
 }
 
 void DbWriter::deleteIndexedFiles(std::vector<std::filesystem::path> paths) {
@@ -81,5 +96,5 @@ void DbWriter::compact(std::function<void()> onComplete) {
 }
 
 void DbWriter::indexEvents(std::vector<FileEvent> events) {
-  submit([events = std::move(events)](FileIndexerDatabase &db) { db.indexEvents(events); });
+  submit([events = std::move(events)](FileIndexerDatabase &db) { db.indexEvents(events); }, true);
 }

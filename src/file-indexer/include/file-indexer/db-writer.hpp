@@ -17,11 +17,22 @@ public:
   using Work = std::function<void(FileIndexerDatabase &)>;
 
 private:
+  // Backpressure cap on in-flight bulk writes (indexEvents/indexFiles). Producers
+  // block once this many are queued so the file walk cannot outrun the writer thread.
+  static constexpr size_t MAX_PENDING_BULK_WRITES = 8;
+
+  struct QueuedWork {
+    Work work;
+    bool bounded;
+  };
+
   std::mutex m_queueMtx;
-  std::queue<Work> m_queue;
+  std::queue<QueuedWork> m_queue;
+  size_t m_pendingBulkWrites = 0;
 
   std::atomic<bool> m_active = true;
   std::condition_variable m_updateSignal;
+  std::condition_variable m_notFull;
 
   std::unique_ptr<FileIndexerDatabase> m_db;
 
@@ -33,8 +44,9 @@ public:
   DbWriter();
   ~DbWriter();
 
-  // Use with std::move to avoid copies
-  void submit(Work work);
+  // Use with std::move to avoid copies. Pass bounded=true for high-volume writes so
+  // the call blocks under backpressure; control-plane submits must stay unbounded.
+  void submit(Work work, bool bounded = false);
 
   // Utility functions
   void updateScanStatus(int scanId, ScanStatus status);
