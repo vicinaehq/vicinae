@@ -210,9 +210,7 @@ QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view
                                                                 const QueryParams &params) {
   if (!isRunning()) { return QtFuture::makeReadyValueFuture(std::vector<IndexerFileResult>{}); }
 
-  file_indexer_gen::QueryRequest req{
-      .text = std::string(view),
-      .pagination = {.offset = params.pagination.offset, .limit = params.pagination.limit}};
+  file_indexer_gen::QueryRequest req{std::string{view}, params.limit};
 
   return m_client.fileindexer()->query(req).then(
       [](std::expected<file_indexer_gen::QueryResponse, std::string> result) {
@@ -220,10 +218,12 @@ QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view
         if (!result) { return results; }
 
         results.reserve(result->matches.size());
+
         for (const auto &match : result->matches) {
           results.emplace_back(
               IndexerFileResult{.path = std::filesystem::path(match.path), .rank = match.rank});
         }
+
         return results;
       });
 }

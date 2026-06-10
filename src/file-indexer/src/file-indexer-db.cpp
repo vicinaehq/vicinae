@@ -1,6 +1,5 @@
 #include "file-indexer/file-indexer-db.hpp"
 #include "file-indexer/scan.hpp"
-#include "file-indexer/relevancy-scorer.hpp"
 #include "file-indexer/migrations.hpp"
 #include "file-indexer/util.hpp"
 #include "file-indexer/log.hpp"
@@ -51,15 +50,14 @@ std::optional<int64_t> FileIndexerDatabase::ensureDirectory(const std::filesyste
 
   auto stmt = m_db.prepare(R"(
     INSERT INTO
-      indexed_file (path, parent_id, last_modified_at, relevancy_score)
+      indexed_file (path, parent_id, last_modified_at)
     VALUES
-      (:path, :parent_id, :last_modified_at, :relevancy_score)
+      (:path, :parent_id, :last_modified_at)
     ON CONFLICT (path) DO UPDATE SET parent_id = excluded.parent_id
     RETURNING id
   )");
 
   std::error_code ec;
-  RelevancyScorer scorer;
 
   stmt.bind(":path", dir.c_str());
   stmt.bind(":parent_id", parentId);
@@ -69,10 +67,8 @@ std::optional<int64_t> FileIndexerDatabase::ensureDirectory(const std::filesyste
     auto sctp = clock_cast<system_clock>(lastModified);
     stmt.bind(":last_modified_at",
               static_cast<int64_t>(duration_cast<seconds>(sctp.time_since_epoch()).count()));
-    stmt.bind(":relevancy_score", scorer.computeScore(dir, lastModified));
   } else {
     stmt.bindNull(":last_modified_at");
-    stmt.bind(":relevancy_score", scorer.computeScore(dir, std::nullopt));
   }
 
   if (!stmt.step()) {
@@ -253,30 +249,22 @@ FileIndexerDatabase::searchCandidates(std::string_view searchQuery, int limit) {
   if (searchQuery.empty() || limit <= 0) return {};
 
   auto stmt = m_db.prepare(R"(
-    SELECT f.path, f.relevancy_score, unicode_idx.rank
+    SELECT f.path
     FROM indexed_file f
     JOIN unicode_idx ON unicode_idx.rowid = f.id
     WHERE unicode_idx MATCH :search
-    ORDER BY unicode_idx.rank, f.relevancy_score DESC
+    ORDER BY unicode_idx.rank DESC
     LIMIT :limit
   )");
   stmt.bind(":search", searchQuery);
   stmt.bind(":limit", limit);
 
   std::vector<SearchCandidate> results;
-  std::error_code ec;
 
   results.reserve(limit);
 
   while (stmt.step()) {
-    SearchCandidate candidate;
-
-    candidate.path = stmt.columnText(0);
-    if (!fs::exists(candidate.path, ec)) { continue; }
-
-    candidate.relevancyScore = stmt.columnDouble(1);
-    candidate.indexRank = stmt.columnDouble(2);
-    results.emplace_back(std::move(candidate));
+    results.emplace_back(SearchCandidate{.path = stmt.columnText(0), .indexRank = stmt.columnDouble(1)});
   }
 
   return results;
@@ -332,9 +320,9 @@ void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
 
   auto modifyStmt = m_db.prepare(R"(
     INSERT INTO
-      indexed_file (path, parent_id, last_modified_at, relevancy_score)
+      indexed_file (path, parent_id, last_modified_at)
     VALUES
-      (:path, :parent_id, :last_modified_at, :relevancy_score)
+      (:path, :parent_id, :last_modified_at)
     ON CONFLICT (path) DO UPDATE SET last_modified_at = excluded.last_modified_at, parent_id = excluded.parent_id
   )");
 
@@ -362,10 +350,6 @@ void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
       modifyStmt.bind(":last_modified_at", secondsSinceEpoch);
       modifyStmt.bind(":path", event.path.c_str());
       modifyStmt.bind(":parent_id", resolveParent(event.path));
-
-      RelevancyScorer scorer;
-      modifyStmt.bind(":relevancy_score", scorer.computeScore(event.path, event.eventTime));
-
       ok = modifyStmt.exec();
       break;
     }
@@ -398,14 +382,13 @@ void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &p
 
   auto stmt = m_db.prepare(R"(
     INSERT INTO
-      indexed_file (path, parent_id, last_modified_at, relevancy_score)
+      indexed_file (path, parent_id, last_modified_at)
     VALUES
-      (:path, :parent_id, :last_modified_at, :relevancy_score)
+      (:path, :parent_id, :last_modified_at)
     ON CONFLICT (path) DO UPDATE SET last_modified_at = excluded.last_modified_at, parent_id = excluded.parent_id
   )");
 
   std::error_code ec;
-  RelevancyScorer scorer;
   double score = 1.0;
   std::unordered_map<std::string, std::optional<int64_t>> parentIds;
 
@@ -424,15 +407,12 @@ void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &p
       auto const epoch = static_cast<int64_t>(duration_cast<seconds>(sctp.time_since_epoch()).count());
 
       stmt.bind(":last_modified_at", epoch);
-      score = scorer.computeScore(path, lastModified);
     } else {
       stmt.bindNull(":last_modified_at");
-      score = scorer.computeScore(path, std::nullopt);
     }
 
     stmt.bind(":path", path.c_str());
     stmt.bind(":parent_id", resolveParent(path));
-    stmt.bind(":relevancy_score", score);
 
     if (!stmt.exec()) {
       flog::error() << "Failed to insert file in index" << path.string() << stmt.lastError();

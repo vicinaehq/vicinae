@@ -72,17 +72,19 @@ ipc_gen::Result<ipc_gen::DescribeResponse>::Future IpcService::describe() {
        .entrypoint = m_ctx.navigation->activeCommand()->uniqueId()});
 }
 
-ipc_gen::Result<std::vector<ipc_gen::FileResult>>::Future IpcService::fsQuery(std::string q) {
+ipc_gen::Result<std::vector<ipc_gen::FileResult>>::Future IpcService::fsQuery(std::string q,
+                                                                              ipc_gen::FsQueryParams params) {
   auto files = m_ctx.services->fileService();
 
-  return files->queryAsync(q).then([](const std::vector<IndexerFileResult> &results) {
-    auto fileResults = results | std::views::transform([](const IndexerFileResult &result) {
-                         return ipc_gen::FileResult{.path = result.path};
-                       }) |
-                       std::ranges::to<std::vector>();
+  return files->queryAsync(q, {.limit = params.limit})
+      .then([](const std::vector<IndexerFileResult> &results) {
+        auto fileResults = results | std::views::transform([](const IndexerFileResult &result) {
+                             return ipc_gen::FileResult{.path = result.path};
+                           }) |
+                           std::ranges::to<std::vector>();
 
-    return std::expected<std::vector<ipc_gen::FileResult>, std::string>{std::move(fileResults)};
-  });
+        return std::expected<std::vector<ipc_gen::FileResult>, std::string>{std::move(fileResults)};
+      });
 }
 
 ipc_gen::Result<ipc_gen::LaunchAppResponse>::Future IpcService::launchApp(ipc_gen::LaunchAppRequest req) {

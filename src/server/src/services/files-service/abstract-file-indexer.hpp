@@ -56,7 +56,7 @@ public:
   };
 
   struct QueryParams {
-    Pagination pagination;
+    int limit;
   };
 
 signals:

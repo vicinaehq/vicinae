@@ -21,6 +21,7 @@ void WriterWorker::run() {
     }
 
     m_isWorking = true;
+
     for (const auto &paths : batch) {
       batchWrite(paths);
     }

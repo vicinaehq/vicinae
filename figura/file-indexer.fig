@@ -6,14 +6,9 @@ struct IndexerConfig {
   watcher_paths: string[];
 };
 
-struct Pagination {
-  offset: int;
-  limit: int;
-};
-
 struct QueryRequest {
   text: string;
-  pagination: Pagination;
+  limit: int;
 };
 
 struct FileMatch {

@@ -2,12 +2,16 @@
 #include "file-indexer/log.hpp"
 #include "fuzzy/fzf.hpp"
 #include "file-indexer/file-indexer-db.hpp"
+#include "fuzzy/scored.hpp"
 #include <algorithm>
+#include <bits/ranges_algo.h>
 #include <filesystem>
 #include <format>
+#include <functional>
 #include <ranges>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -16,22 +20,27 @@ struct IndexerFileResult {
   double rank;
 };
 
-struct Pagination {
-  int offset = 0;
-  int limit = 50;
-};
+static constexpr const auto BATCH_SIZE = 500;
+static constexpr const auto FZF_CUTOFF = 0;
+static constexpr const auto CANDIDATE_LIMIT = 10000;
+
+using SC = FileIndexerDatabase::SearchCandidate;
 
 class FileIndexerQueryEngine {
 public:
-  std::vector<IndexerFileResult> query(std::string_view q, const Pagination &pagination) {
+  std::vector<IndexerFileResult> query(std::string_view q, int limit) {
     FileIndexerDatabase db;
     auto dbQuery = prepareCandidateSearchQuery(q);
 
     if (dbQuery.empty()) return {};
 
-    auto candidates = db.searchCandidates(dbQuery, candidateLimitFor(pagination));
+    auto candidates = db.searchCandidates(dbQuery, CANDIDATE_LIMIT);
 
-    return rankCandidates(std::move(candidates), q, pagination);
+    auto results = rankCandidates(std::move(candidates), q, limit);
+
+    // TODO: if we did not get enough results, try fallback paths.
+
+    return results;
   }
 
   static std::string prepareCandidateSearchQuery(std::string_view query) {
@@ -59,63 +68,99 @@ public:
     return escapedQuery;
   }
 
-  static int candidateLimitFor(const Pagination &pagination) {
-    static constexpr int minCandidateLimit = 250;
-    static constexpr int candidateLimitMultiplier = 20;
+  static int scoreCandidate(const FileIndexerDatabase::SearchCandidate &candidate, std::string_view query) {
+    const auto &ranker = fzf::threadLocalMatcher();
+    std::initializer_list<fzf::WeightedString> strs = {{candidate.path.filename().c_str(), 1},
+                                                       {candidate.path.c_str(), 0.7}};
+    return ranker.fuzzy_match_v2_score_query(strs, query);
+  }
 
-    int const offset = std::max(0, pagination.offset);
-    int const limit = std::max(0, pagination.limit);
-    int const requestedResultCount = offset + limit;
+  static std::vector<ScoredRef<SC>> scoreCandidates(std::span<const SC> candidates, std::string_view query) {
+    // if number of candidates is small, don't bother with multithreading
+    if (candidates.size() < BATCH_SIZE) {
+      std::vector<ScoredRef<SC>> ranked;
 
-    if (requestedResultCount == 0) { return 0; }
+      ranked.reserve(candidates.size());
 
-    return std::max(minCandidateLimit, requestedResultCount * candidateLimitMultiplier);
+      for (const auto &candidate : candidates) {
+        const auto score = scoreCandidate(candidate, query);
+        if (score > FZF_CUTOFF) ranked.push_back({&candidate, score});
+      }
+
+      std::ranges::sort(ranked, std::greater{});
+
+      return ranked;
+    }
+
+    return scoreCandidatesParallel(candidates, query);
+  }
+
+  static std::vector<ScoredRef<FileIndexerDatabase::SearchCandidate>>
+  scoreCandidatesParallel(std::span<const FileIndexerDatabase::SearchCandidate> candidates,
+                          std::string_view query) {
+    auto batchCount = std::min(static_cast<unsigned int>((candidates.size() + BATCH_SIZE - 1) / BATCH_SIZE),
+                               std::thread::hardware_concurrency());
+    std::vector<Scored<const FileIndexerDatabase::SearchCandidate *>> ranked;
+
+    ranked.resize(candidates.size());
+
+    std::vector<std::thread> threads;
+    std::vector<size_t> cutCounts;
+
+    threads.resize(batchCount);
+    cutCounts.resize(batchCount);
+
+    flog::info() << "query " << query << " on " << candidates.size() << " using " << threads.size()
+                 << " batches\n";
+
+    for (auto [idx, thread] : threads | std::views::enumerate) {
+      flog::info() << "starting up thread " << idx << "\n";
+      thread = std::thread{[&, idx]() {
+        const auto &ranker = fzf::threadLocalMatcher();
+        const auto start = idx * BATCH_SIZE;
+        const auto end = std::min(static_cast<size_t>(start + BATCH_SIZE), ranked.size());
+        auto &z = cutCounts[idx];
+        z = 0;
+
+        for (auto i = start; i != end; ++i) {
+          auto &candidate = candidates[i];
+          auto score = scoreCandidate(candidate, query);
+          ranked[i] = {&candidate, score};
+          if (score <= FZF_CUTOFF) z += 1;
+        }
+      }};
+    }
+
+    for (auto &thread : threads) {
+      thread.join();
+    }
+
+    auto cutCount = std::ranges::fold_left(cutCounts, 0, std::plus{});
+
+    flog::info() << "all threads joined\n";
+
+    std::ranges::sort(ranked, std::greater{});
+    ranked.resize(ranked.size() - cutCount); // everything to the right of the offset is below the score
+                                             // threshold so we can just resize to nuke it
+
+    return ranked;
   }
 
   static std::vector<IndexerFileResult>
   rankCandidates(std::vector<FileIndexerDatabase::SearchCandidate> candidates, std::string_view query,
-                 const Pagination &pagination) {
-    struct ScoredCandidate {
-      FileIndexerDatabase::SearchCandidate candidate;
-      int fuzzyScore = 0;
-    };
-
-    flog::info() << "ranking " << candidates.size() << " candidates...\n";
-
-    std::vector<ScoredCandidate> scored;
-    auto &matcher = fzf::threadLocalMatcher();
-
-    scored.reserve(candidates.size());
-
-    for (auto &candidate : candidates) {
-      int const fuzzyScore = matcher.fuzzy_match_v2_score_query(candidate.path.c_str(), query);
-      scored.emplace_back(ScoredCandidate{.candidate = std::move(candidate), .fuzzyScore = fuzzyScore});
-    }
-
-    std::ranges::sort(scored, [](const ScoredCandidate &a, const ScoredCandidate &b) {
-      if (a.fuzzyScore != b.fuzzyScore) { return a.fuzzyScore > b.fuzzyScore; }
-      if (a.candidate.relevancyScore != b.candidate.relevancyScore) {
-        return a.candidate.relevancyScore > b.candidate.relevancyScore;
-      }
-      if (a.candidate.indexRank != b.candidate.indexRank) {
-        return a.candidate.indexRank < b.candidate.indexRank;
-      }
-      return a.candidate.path < b.candidate.path;
-    });
-
-    int const offset = std::max(0, pagination.offset);
-    int const limit = std::max(0, pagination.limit);
-    size_t const start = std::min(static_cast<size_t>(offset), scored.size());
-    size_t const end = std::min(start + static_cast<size_t>(limit), scored.size());
+                 int limit) {
+    const auto ranked = scoreCandidates(candidates, query);
+    std::error_code ec;
     std::vector<IndexerFileResult> results;
 
-    results.reserve(end - start);
+    results.reserve(limit);
 
-    for (size_t i = start; i < end; ++i) {
-      const auto &candidate = scored.at(i);
-
-      results.emplace_back(IndexerFileResult{.path = candidate.candidate.path,
-                                             .rank = static_cast<double>(candidate.fuzzyScore)});
+    for (const auto &scored : ranked) {
+      if (std::filesystem::exists(scored.data->path, ec)) {
+        results.emplace_back(
+            IndexerFileResult{std::move(scored.data->path), static_cast<double>(scored.score)});
+        if (results.size() == limit) break;
+      }
     }
 
     return results;

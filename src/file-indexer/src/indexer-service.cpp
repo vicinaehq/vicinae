@@ -79,8 +79,7 @@ void IndexerService::query(
     std::function<void(std::expected<file_indexer_gen::QueryResponse, std::string>)> reply) {
   // Run off-thread so a slow query can't block the read loop / other queries.
   std::thread([this, req = std::move(req), reply = std::move(reply)]() {
-    Pagination const pagination{.offset = req.pagination.offset, .limit = req.pagination.limit};
-    auto results = m_indexer.query(req.text, pagination);
+    auto results = m_indexer.query(req.text, req.limit);
 
     file_indexer_gen::QueryResponse response;
     response.matches.reserve(results.size());

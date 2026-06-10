@@ -38,7 +38,7 @@ void FileIndexer::startFullScan() {
   }).detach();
 }
 
-void FileIndexer::startSingleScan(const std::filesystem::path &entrypoint, ScanType type,
+void FileIndexer::startSingleScan(const fs::path &entrypoint, ScanType type,
                                   const std::vector<std::string> &excludedFilenames) {
   for (auto const &[id, scan] : m_dispatcher.scans()) {
     if (scan.type == type && scan.path == entrypoint) { m_dispatcher.interrupt(id); }
@@ -95,9 +95,8 @@ void FileIndexer::start() {
   }
 }
 
-void FileIndexer::setConfig(std::vector<std::filesystem::path> paths,
-                            std::vector<std::filesystem::path> excludedPaths,
-                            std::vector<std::filesystem::path> watcherPaths) {
+void FileIndexer::setConfig(std::vector<fs::path> paths, std::vector<fs::path> excludedPaths,
+                            std::vector<fs::path> watcherPaths) {
   m_entrypoints = std::move(paths);
   m_excludedPaths = std::move(excludedPaths);
   m_watcherPaths = std::move(watcherPaths);
@@ -106,8 +105,8 @@ void FileIndexer::setConfig(std::vector<std::filesystem::path> paths,
   m_excludedFilenames = {databaseFilename, databaseFilename + "-wal"};
 }
 
-std::vector<IndexerFileResult> FileIndexer::query(std::string_view view, const Pagination &pagination) {
-  return m_queryEngine.query(view, pagination);
+std::vector<IndexerFileResult> FileIndexer::query(std::string_view view, int limit) {
+  return m_queryEngine.query(view, limit);
 }
 
 FileIndexer::FileIndexer() : m_writer(std::make_shared<DbWriter>()), m_dispatcher(m_writer) { m_db.init(); }

@@ -77,6 +77,10 @@ struct FileResult {
   path: string;
 };
 
+struct FsQueryParams {
+  limit: int;
+};
+
 service Ipc {
   fn ping() => PingResponse;
   fn deeplink(req: DeeplinkRequest) => DeeplinkResponse;
@@ -87,7 +91,7 @@ service Ipc {
   fn browserTabsChanged(tabs: BrowserTabInfo[]) => void;
 
   // filesystem
-  fn fsQuery(q: string) => FileResult[];
+  fn fsQuery(q: string, params: FsQueryParams) => FileResult[];
 
   event focusTab(req: FocusTabRequest);
   event closeTab(req: CloseTabRequest);

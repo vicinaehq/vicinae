@@ -42,7 +42,7 @@ public:
   void rebuildIndex();
   void setConfig(std::vector<std::filesystem::path> paths, std::vector<std::filesystem::path> excludedPaths,
                  std::vector<std::filesystem::path> watcherPaths);
-  std::vector<IndexerFileResult> query(std::string_view view, const Pagination &pagination = {});
+  std::vector<IndexerFileResult> query(std::string_view view, int limit);
   void start();
 
   FileIndexer();

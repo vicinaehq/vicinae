@@ -20,8 +20,7 @@ CREATE TABLE IF NOT EXISTS indexed_file (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	path TEXT UNIQUE NOT NULL,
 	parent_id INT,
-	last_modified_at INT,
-	relevancy_score REAL NOT NULL
+	last_modified_at INT
 );
 
 CREATE INDEX IF NOT EXISTS indexed_file_parent_id_idx ON indexed_file(parent_id);
