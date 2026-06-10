@@ -46,13 +46,15 @@ public:
     // we escape each word in the query by enclosing it in quotes, as expected by FTS5
     auto escapedParts = query | std::views::split(std::string_view{" "}) |
                         std::views::transform([&](auto &&v) { return trim(std::string_view{v}); }) |
-                        std::views::filter([](auto &&w) { return w.size() >= 3; }) |
-                        std::views::transform([&](auto &&str) { return std::format("\"{}\"", str); }) |
+                        std::views::filter([](auto &&v) { return v.size() >= 2; }) |
+                        std::views::transform([&](auto &&str) {
+                          // if it's a bigram, use prefix matching to match all trigrams that start with it
+                          if (str.size() == 2) { return std::format("\"{}\"*", str); }
+                          return std::format("\"{}\"", str);
+                        }) |
                         std::ranges::to<std::vector>();
     auto escapedQuery =
         escapedParts | std::views::join_with(std::string_view{" "}) | std::ranges::to<std::string>();
-
-    escapedQuery += '*'; // we need last word to act as a prefix
 
     return escapedQuery;
   }
