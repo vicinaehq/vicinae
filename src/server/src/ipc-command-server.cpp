@@ -1,11 +1,16 @@
 #include "ipc-command-server.hpp"
+#include "generated/ipc-server.hpp"
 #include "ipc-command-handler.hpp"
 #include "config/config.hpp"
 #include "service-registry.hpp"
 #include "services/browser-extension-service.hpp"
+#include "services/files-service/abstract-file-indexer.hpp"
+#include "services/files-service/file-service.hpp"
 #include "qml/dmenu-view-host.hpp"
 #include "utils.hpp"
+#include <qfuture.h>
 #include <qlogging.h>
+#include <ranges>
 #include <utility>
 #include "services/app-service/app-service.hpp"
 #include "services/window-manager/window-manager.hpp"
@@ -65,6 +70,19 @@ ipc_gen::Result<ipc_gen::DescribeResponse>::Future IpcService::describe() {
   return ipc_gen::Result<ipc_gen::DescribeResponse>::ok(
       {.open = m_ctx.navigation->isWindowOpened(),
        .entrypoint = m_ctx.navigation->activeCommand()->uniqueId()});
+}
+
+ipc_gen::Result<std::vector<ipc_gen::FileResult>>::Future IpcService::fsQuery(std::string q) {
+  auto files = m_ctx.services->fileService();
+
+  return files->queryAsync(q).then([](const std::vector<IndexerFileResult> &results) {
+    auto fileResults = results | std::views::transform([](const IndexerFileResult &result) {
+                         return ipc_gen::FileResult{.path = result.path};
+                       }) |
+                       std::ranges::to<std::vector>();
+
+    return std::expected<std::vector<ipc_gen::FileResult>, std::string>{std::move(fileResults)};
+  });
 }
 
 ipc_gen::Result<ipc_gen::LaunchAppResponse>::Future IpcService::launchApp(ipc_gen::LaunchAppRequest req) {

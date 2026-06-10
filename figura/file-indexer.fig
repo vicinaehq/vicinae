@@ -25,20 +25,21 @@ struct QueryResponse {
   matches: FileMatch[];
 };
 
-// enum ScanKind { Full, Incremental, Watcher };
-// enum ScanState { Started, Succeeded, Failed, Interrupted };
-//
-// struct ScanStatusEvent {
-//   kind: ScanKind;
-//   state: ScanState;
-//   entrypoint: string;
-//   indexed_file_count: uint;
-// };
+enum ScanKind { Full, Incremental, Watcher };
+enum ScanState { Started, Succeeded, Failed, Interrupted };
+
+struct ScanStatusEvent {
+  scan_id: int;
+  kind: ScanKind;
+  state: ScanState;
+  entrypoint: string;
+  processed_file_count: uint;
+};
 
 service FileIndexer {
   fn configure(config: IndexerConfig) => void;
   fn rebuildIndex() => void;
   async fn query(req: QueryRequest) => QueryResponse;
 
-  // event scanStatusChanged(status: ScanStatusEvent);
+  event scanStatusChanged(status: ScanStatusEvent);
 }

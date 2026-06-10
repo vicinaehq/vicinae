@@ -12,7 +12,7 @@ private:
   void handleEvent(const wtr::event &ev);
 
 public:
-  WatcherScanner(std::shared_ptr<DbWriter> writer, const Scan &scan, FinishCallback callback);
+  WatcherScanner(std::shared_ptr<DbWriter> writer, const Scan &scan, StatusCallback callback);
   void interrupt() override;
   void join() override;
 };

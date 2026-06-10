@@ -21,11 +21,20 @@ struct Scan {
   std::optional<size_t> maxDepth;
   std::vector<std::string> excludedFilenames;
   std::vector<std::filesystem::path> excludedPaths;
+  bool notify = false;
 
   bool operator<(const Scan &other) const {
     // TODO: Find a proper way to suppport std::set
     return path < other.path;
   }
+};
+
+struct ScanEvent {
+  int scanId;
+  ScanType type;
+  ScanStatus status;
+  std::filesystem::path entrypoint;
+  size_t processedFileCount;
 };
 
 enum class FileEventType { Modify, Delete };

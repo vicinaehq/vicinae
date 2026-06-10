@@ -52,6 +52,8 @@ public:
     auto escapedQuery =
         escapedParts | std::views::join_with(std::string_view{" "}) | std::ranges::to<std::string>();
 
+    escapedQuery += '*'; // we need last word to act as a prefix
+
     return escapedQuery;
   }
 

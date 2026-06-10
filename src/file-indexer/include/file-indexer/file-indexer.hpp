@@ -36,6 +36,9 @@ public:
   void startSingleScan(const std::filesystem::path &entrypoint, ScanType type,
                        const std::vector<std::string> &excludedFilenames = {});
   void markScanAsInterrupted(std::optional<FileIndexerDatabase::ScanRecord> scan);
+  void setScanEventCallback(ScanDispatcher::EventCallback callback) {
+    m_dispatcher.setEventCallback(std::move(callback));
+  }
   void rebuildIndex();
   void setConfig(std::vector<std::filesystem::path> paths, std::vector<std::filesystem::path> excludedPaths,
                  std::vector<std::filesystem::path> watcherPaths);

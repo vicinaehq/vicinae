@@ -26,7 +26,7 @@ void FileIndexer::startFullScan() {
           // The reason being that we still want to know where the db file is (current use case), just not
           // watch it. May want to split the list in two later (scan vs watch).
           m_dispatcher.enqueue(
-              {.type = ScanType::Full, .path = entrypoint, .excludedPaths = m_excludedPaths});
+              {.type = ScanType::Full, .path = entrypoint, .excludedPaths = m_excludedPaths, .notify = true});
         }
 
         for (const auto &entrypoint : m_watcherPaths) {
@@ -47,7 +47,8 @@ void FileIndexer::startSingleScan(const std::filesystem::path &entrypoint, ScanT
   m_dispatcher.enqueue({.type = type,
                         .path = entrypoint,
                         .excludedFilenames = m_excludedFilenames,
-                        .excludedPaths = m_excludedPaths});
+                        .excludedPaths = m_excludedPaths,
+                        .notify = type != ScanType::Watcher});
 }
 
 void FileIndexer::rebuildIndex() { startFullScan(); }

@@ -4,6 +4,7 @@
 #include "file-indexer/db-writer.hpp"
 #include <atomic>
 #include <condition_variable>
+#include <functional>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -12,7 +13,12 @@
 #include <vector>
 
 class ScanDispatcher {
+public:
+  using EventCallback = std::function<void(const ScanEvent &)>;
+
+private:
   std::shared_ptr<DbWriter> m_writer;
+  EventCallback m_eventCallback;
 
   struct Element {
     Scan scan;
@@ -34,6 +40,9 @@ class ScanDispatcher {
 public:
   ScanDispatcher(std::shared_ptr<DbWriter> writer);
   ~ScanDispatcher();
+
+  void setEventCallback(EventCallback callback) { m_eventCallback = std::move(callback); }
+
   int enqueue(const Scan &scan);
   bool interrupt(int id);
   void interruptAll();

@@ -16,7 +16,7 @@ figura_compile(
 	OUTPUT ipc-client.hpp
 )
 
-add_executable(${PROJECT_NAME} src/main.cpp src/cli.cpp src/server.cpp src/theme.cpp ${SRCS})
+add_executable(${PROJECT_NAME} src/main.cpp src/cli.cpp src/server.cpp src/theme.cpp src/fs.cpp ${SRCS})
 target_include_directories(${PROJECT_NAME} PRIVATE src ${GENOUT})
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)
 include(EmbedFile)

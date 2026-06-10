@@ -93,7 +93,7 @@ void WatcherScanner::handleEvent(const wtr::event &ev) {
   }
 }
 
-WatcherScanner::WatcherScanner(std::shared_ptr<DbWriter> writer, const Scan &scan, FinishCallback callback)
+WatcherScanner::WatcherScanner(std::shared_ptr<DbWriter> writer, const Scan &scan, StatusCallback callback)
     : AbstractScanner(std::move(writer), scan, std::move(callback)), scan(scan) {
   m_watch = std::make_unique<wtr::watch>(scan.path, [this](const wtr::event &ev) { handleEvent(ev); });
 }

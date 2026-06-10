@@ -22,7 +22,16 @@ int ScanDispatcher::enqueue(const Scan &scan) {
   int const scanId = idCounter;
   idCounter++;
 
-  auto handler = [this, scanId](ScanStatus status) { handleFinishedScan(scanId, status); };
+  auto handler = [this, scanId, scan](ScanStatus status, size_t processedCount) {
+    if (scan.notify && m_eventCallback) {
+      m_eventCallback({.scanId = scanId,
+                       .type = scan.type,
+                       .status = status,
+                       .entrypoint = scan.path,
+                       .processedFileCount = processedCount});
+    }
+    if (status != ScanStatus::Started) { handleFinishedScan(scanId, status); }
+  };
 
   {
     std::scoped_lock const l(m_scannerMapMtx);

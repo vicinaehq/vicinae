@@ -6,8 +6,10 @@
 #include "file-indexer/log.hpp"
 #include <chrono>
 #include <filesystem>
-#include <map>
+#include <format>
 #include <string>
+#include <unordered_map>
+#include <utility>
 
 static constexpr const char *SQLITE_PRAGMAS[] = {
     "PRAGMA journal_mode = WAL",
@@ -17,7 +19,69 @@ static constexpr const char *SQLITE_PRAGMAS[] = {
 
 namespace fs = std::filesystem;
 
+namespace {
+
+// [p + '/', p + ('/' + 1)) covers exactly the byte range of p's descendants
+std::pair<std::string, std::string> subtreeRange(const fs::path &path) {
+  std::string lower = path.native() + '/';
+  std::string upper = path.native() + static_cast<char>('/' + 1);
+  return {std::move(lower), std::move(upper)};
+}
+
+} // namespace
+
 fs::path FileIndexerDatabase::getDatabasePath() { return file_indexer::databasePath(); }
+
+std::optional<int64_t> FileIndexerDatabase::retrieveFileId(const std::filesystem::path &path) const {
+  auto stmt = m_db.prepare("SELECT id FROM indexed_file WHERE path = :path");
+  stmt.bind(":path", path.c_str());
+
+  if (!stmt.step()) { return std::nullopt; }
+
+  return stmt.columnInt64(0);
+}
+
+std::optional<int64_t> FileIndexerDatabase::ensureDirectory(const std::filesystem::path &dir) {
+  if (auto id = retrieveFileId(dir)) { return id; }
+
+  std::optional<int64_t> parentId;
+  if (auto parent = dir.parent_path(); !parent.empty() && parent != dir) {
+    parentId = ensureDirectory(parent);
+  }
+
+  auto stmt = m_db.prepare(R"(
+    INSERT INTO
+      indexed_file (path, parent_id, last_modified_at, relevancy_score)
+    VALUES
+      (:path, :parent_id, :last_modified_at, :relevancy_score)
+    ON CONFLICT (path) DO UPDATE SET parent_id = excluded.parent_id
+    RETURNING id
+  )");
+
+  std::error_code ec;
+  RelevancyScorer scorer;
+
+  stmt.bind(":path", dir.c_str());
+  stmt.bind(":parent_id", parentId);
+
+  if (auto lastModified = fs::last_write_time(dir, ec); !ec) {
+    using namespace std::chrono;
+    auto sctp = clock_cast<system_clock>(lastModified);
+    stmt.bind(":last_modified_at",
+              static_cast<int64_t>(duration_cast<seconds>(sctp.time_since_epoch()).count()));
+    stmt.bind(":relevancy_score", scorer.computeScore(dir, lastModified));
+  } else {
+    stmt.bindNull(":last_modified_at");
+    stmt.bind(":relevancy_score", scorer.computeScore(dir, std::nullopt));
+  }
+
+  if (!stmt.step()) {
+    flog::error() << "Failed to index parent directory" << dir.c_str() << stmt.lastError();
+    return std::nullopt;
+  }
+
+  return stmt.columnInt64(0);
+}
 
 std::optional<int64_t>
 FileIndexerDatabase::retrieveIndexedLastModified(const std::filesystem::path &path) const {
@@ -31,9 +95,11 @@ FileIndexerDatabase::retrieveIndexedLastModified(const std::filesystem::path &pa
 
 std::vector<std::filesystem::path>
 FileIndexerDatabase::listIndexedDirectoryFiles(const std::filesystem::path &path) const {
-  auto stmt = m_db.prepare(
-      std::format("SELECT path, last_modified_at FROM indexed_file WHERE path LIKE \"{}%\"", path.c_str()));
-  stmt.bind(":path", path.c_str());
+  auto dirId = retrieveFileId(path);
+  if (!dirId) { return {}; }
+
+  auto stmt = m_db.prepare("SELECT path FROM indexed_file WHERE parent_id = :parent_id");
+  stmt.bind(":parent_id", *dirId);
 
   std::vector<fs::path> paths;
 
@@ -219,12 +285,19 @@ FileIndexerDatabase::searchCandidates(std::string_view searchQuery, int limit) {
 void FileIndexerDatabase::deleteIndexedFiles(const std::vector<fs::path> &paths) {
   auto tx = m_db.transaction();
 
+  flog::warn() << "Deleting " << paths.size() << " files\n";
+
   auto stmt = m_db.prepare("DELETE FROM indexed_file WHERE path = :path");
+  auto subtreeStmt = m_db.prepare("DELETE FROM indexed_file WHERE path >= :lower AND path < :upper");
 
   for (const auto &path : paths) {
-    stmt.bind(":path", path.c_str());
+    auto [lower, upper] = subtreeRange(path);
 
-    if (!stmt.exec()) {
+    stmt.bind(":path", path.c_str());
+    subtreeStmt.bind(":lower", lower);
+    subtreeStmt.bind(":upper", upper);
+
+    if (!stmt.exec() || !subtreeStmt.exec()) {
       flog::error() << "Failed to delete indexed file" << path.c_str();
       tx.rollback();
       return;
@@ -259,17 +332,28 @@ void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
 
   auto modifyStmt = m_db.prepare(R"(
     INSERT INTO
-      indexed_file (path, last_modified_at, relevancy_score)
+      indexed_file (path, parent_id, last_modified_at, relevancy_score)
     VALUES
-      (:path, :last_modified_at, :relevancy_score)
-    ON CONFLICT (path) DO UPDATE SET last_modified_at = :last_modified_at
+      (:path, :parent_id, :last_modified_at, :relevancy_score)
+    ON CONFLICT (path) DO UPDATE SET last_modified_at = excluded.last_modified_at, parent_id = excluded.parent_id
   )");
 
   auto deleteStmt = m_db.prepare("DELETE FROM indexed_file WHERE path = :path");
+  auto deleteSubtreeStmt = m_db.prepare("DELETE FROM indexed_file WHERE path >= :lower AND path < :upper");
 
-  db::Statement *activeStmt = nullptr;
+  std::unordered_map<std::string, std::optional<int64_t>> parentIds;
+
+  auto resolveParent = [&](const fs::path &path) -> std::optional<int64_t> {
+    auto parent = path.parent_path();
+    if (parent.empty() || parent == path) { return std::nullopt; }
+    auto [it, inserted] = parentIds.try_emplace(parent.native());
+    if (inserted) { it->second = ensureDirectory(parent); }
+    return it->second;
+  };
 
   for (const auto &event : events) {
+    bool ok = false;
+
     switch (event.type) {
     case FileEventType::Modify: {
       using namespace std::chrono;
@@ -277,26 +361,29 @@ void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
           static_cast<int64_t>(duration_cast<seconds>(event.eventTime.time_since_epoch()).count());
       modifyStmt.bind(":last_modified_at", secondsSinceEpoch);
       modifyStmt.bind(":path", event.path.c_str());
+      modifyStmt.bind(":parent_id", resolveParent(event.path));
 
       RelevancyScorer scorer;
       modifyStmt.bind(":relevancy_score", scorer.computeScore(event.path, event.eventTime));
 
-      activeStmt = &modifyStmt;
+      ok = modifyStmt.exec();
       break;
     }
 
     case FileEventType::Delete: {
+      auto [lower, upper] = subtreeRange(event.path);
+
       deleteStmt.bind(":path", event.path.c_str());
-      activeStmt = &deleteStmt;
+      deleteSubtreeStmt.bind(":lower", lower);
+      deleteSubtreeStmt.bind(":upper", upper);
+
+      ok = deleteStmt.exec() && deleteSubtreeStmt.exec();
       break;
     }
     }
 
-    if (!activeStmt->exec()) {
-      static std::map<FileEventType, std::string> verbMap = {{FileEventType::Delete, "deleted"},
-                                                             {FileEventType::Modify, "modified"}};
-      flog::error() << "Failed to index" << verbMap[event.type] << "file" << event.path.string()
-                    << activeStmt->lastError();
+    if (!ok) {
+      flog::error() << "Failed to index event for" << event.path.string() << m_db.lastError();
       tx.rollback();
       return;
     }
@@ -311,15 +398,24 @@ void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &p
 
   auto stmt = m_db.prepare(R"(
     INSERT INTO
-      indexed_file (path, last_modified_at, relevancy_score)
+      indexed_file (path, parent_id, last_modified_at, relevancy_score)
     VALUES
-      (:path, :last_modified_at, :relevancy_score)
-    ON CONFLICT (path) DO UPDATE SET last_modified_at = :last_modified_at
+      (:path, :parent_id, :last_modified_at, :relevancy_score)
+    ON CONFLICT (path) DO UPDATE SET last_modified_at = excluded.last_modified_at, parent_id = excluded.parent_id
   )");
 
   std::error_code ec;
   RelevancyScorer scorer;
   double score = 1.0;
+  std::unordered_map<std::string, std::optional<int64_t>> parentIds;
+
+  auto resolveParent = [&](const fs::path &path) -> std::optional<int64_t> {
+    auto parent = path.parent_path();
+    if (parent.empty() || parent == path) { return std::nullopt; }
+    auto [it, inserted] = parentIds.try_emplace(parent.native());
+    if (inserted) { it->second = ensureDirectory(parent); }
+    return it->second;
+  };
 
   for (const auto &path : paths) {
     if (auto lastModified = fs::last_write_time(path, ec); !ec) {
@@ -335,6 +431,7 @@ void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &p
     }
 
     stmt.bind(":path", path.c_str());
+    stmt.bind(":parent_id", resolveParent(path));
     stmt.bind(":relevancy_score", score);
 
     if (!stmt.exec()) {

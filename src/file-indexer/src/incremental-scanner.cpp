@@ -11,7 +11,6 @@ namespace fs = std::filesystem;
 
 void IncrementalScanner::processDirectory(const std::filesystem::path &root) {
   auto indexedFiles = m_read_db->listIndexedDirectoryFiles(root);
-  std::unordered_set<fs::path> const existingFiles(indexedFiles.begin(), indexedFiles.end());
   std::unordered_set<fs::path> currentFiles;
   std::vector<fs::path> deletedFiles;
   std::error_code ec;
@@ -32,11 +31,12 @@ void IncrementalScanner::processDirectory(const std::filesystem::path &root) {
 
   m_writer->deleteIndexedFiles(deletedFiles);
   m_writer->indexFiles(std::ranges::to<std::vector>(currentFiles));
+  reportProgress(currentFiles.size());
 }
 
 std::vector<fs::path>
 IncrementalScanner::getScannableDirectories(const fs::path &path, std::optional<size_t> maxDepth,
-                                            const std::vector<fs::path> &excludedPaths) const {
+                                            const std::vector<fs::path> &excludedPaths) {
   std::vector<fs::path> scannableDirs;
   std::error_code ec;
   FileSystemWalker walker;
@@ -60,6 +60,7 @@ IncrementalScanner::getScannableDirectories(const fs::path &path, std::optional<
   walker.setMaxDepth(maxDepth);
   walker.setExcludedPaths(excludedPaths);
   walker.walk(path, [&](const fs::directory_entry &entry) {
+    reportProgress();
     if (!entry.is_directory(ec)) return;
     bool const shouldProcess = shouldProcessEntry(entry, lastSuccessfulScan->createdAt);
     if (shouldProcess) { scannableDirs.emplace_back(entry.path()); }
@@ -92,7 +93,7 @@ void IncrementalScanner::scan(const Scan &scan) {
 }
 
 IncrementalScanner::IncrementalScanner(std::shared_ptr<DbWriter> writer, const Scan &sc,
-                                       FinishCallback callback)
+                                       StatusCallback callback)
     : AbstractScanner(std::move(writer), sc, std::move(callback)) {
   m_scanThread = std::thread([this, sc]() {
     m_read_db = std::make_unique<FileIndexerDatabase>();

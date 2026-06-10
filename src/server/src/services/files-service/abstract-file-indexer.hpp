@@ -39,10 +39,28 @@ struct Pagination {
 };
 
 class AbstractFileIndexer : public QObject {
+  Q_OBJECT
+
 public:
+  enum class ScanKind { Full, Incremental, Watcher };
+  enum class ScanState { Started, Succeeded, Failed, Interrupted };
+
+  struct ScanStatus {
+    int scanId;
+    ScanKind kind;
+    ScanState state;
+    std::filesystem::path entrypoint;
+    size_t processedFileCount;
+
+    bool isTerminal() const { return state != ScanState::Started; }
+  };
+
   struct QueryParams {
     Pagination pagination;
   };
+
+signals:
+  void scanStatusChanged(const AbstractFileIndexer::ScanStatus &status);
 
 public:
   virtual void start() = 0;

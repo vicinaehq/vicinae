@@ -87,6 +87,11 @@ public:
     return call<ipc::LaunchAppResponse>([&](auto cb) { m_client.ipc().launchApp(req, std::move(cb)); });
   }
 
+  std::expected<std::vector<ipc::FileResult>, std::string> fsQuery(std::string_view query) {
+    return call<std::vector<ipc::FileResult>>(
+        [&](auto cb) { m_client.ipc().fsQuery(std::string{query}, std::move(cb)); });
+  }
+
   std::expected<ipc::DMenuResponse, std::string> dmenu(ipc::DMenuRequest req) {
     return call<ipc::DMenuResponse>([&](auto cb) { m_client.ipc().dmenu(req, std::move(cb)); });
   }

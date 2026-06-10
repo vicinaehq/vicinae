@@ -39,6 +39,7 @@ void IndexerScanner::scan(const Scan &scan) {
   m_walker.setExcludedPaths(scan.excludedPaths);
   m_walker.walk(scan.path, [&](const fs::directory_entry &entry) {
     std::error_code ec;
+    reportProgress();
     // In case of error, returns file_time_time::min() - erroring entries deserve a bad relevance score anyway
     batchedIndex.emplace_back(FileEventType::Modify, entry.path(), entry.last_write_time(ec));
 
@@ -52,7 +53,7 @@ void IndexerScanner::scan(const Scan &scan) {
 }
 
 IndexerScanner::IndexerScanner(const std::shared_ptr<DbWriter> &writer, const Scan &sc,
-                               FinishCallback callback)
+                               StatusCallback callback)
     : AbstractScanner(writer, sc, std::move(callback)) {
   m_writerWorker = std::make_unique<WriterWorker>(writer, m_batchMutex, m_writeBatches, m_batchCv);
   m_writerThread = std::thread([&]() { m_writerWorker->run(); });

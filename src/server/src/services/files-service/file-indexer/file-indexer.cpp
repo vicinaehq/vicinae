@@ -4,6 +4,7 @@
 #include <QJsonObject>
 #include <QTimer>
 #include <filesystem>
+#include <utility>
 #include "rang/rang.hpp"
 
 // FileIndexerBus
@@ -38,6 +39,32 @@ FileIndexerBus::FileIndexerBus(QIODevice *device) : m_device(device) {
 
 // FileIndexer
 
+static AbstractFileIndexer::ScanKind toScanKind(file_indexer_gen::ScanKind kind) {
+  switch (kind) {
+  case file_indexer_gen::ScanKind::Full:
+    return AbstractFileIndexer::ScanKind::Full;
+  case file_indexer_gen::ScanKind::Incremental:
+    return AbstractFileIndexer::ScanKind::Incremental;
+  case file_indexer_gen::ScanKind::Watcher:
+    return AbstractFileIndexer::ScanKind::Watcher;
+  }
+  return AbstractFileIndexer::ScanKind::Full;
+}
+
+static AbstractFileIndexer::ScanState toScanState(file_indexer_gen::ScanState state) {
+  switch (state) {
+  case file_indexer_gen::ScanState::Started:
+    return AbstractFileIndexer::ScanState::Started;
+  case file_indexer_gen::ScanState::Succeeded:
+    return AbstractFileIndexer::ScanState::Succeeded;
+  case file_indexer_gen::ScanState::Failed:
+    return AbstractFileIndexer::ScanState::Failed;
+  case file_indexer_gen::ScanState::Interrupted:
+    return AbstractFileIndexer::ScanState::Interrupted;
+  }
+  return AbstractFileIndexer::ScanState::Failed;
+}
+
 FileIndexer::FileIndexer() : m_bus(&m_process), m_rpc(m_bus), m_client(m_rpc) {
   connect(&m_process, &QProcess::readyReadStandardError, this, &FileIndexer::handleStderr);
   connect(&m_process, &QProcess::errorOccurred, this, [this](QProcess::ProcessError) {
@@ -45,6 +72,8 @@ FileIndexer::FileIndexer() : m_bus(&m_process), m_rpc(m_bus), m_client(m_rpc) {
   });
 
   connect(&m_process, &QProcess::finished, this, [this](int exitCode, QProcess::ExitStatus status) {
+    interruptActiveScans();
+
     if (status == QProcess::CrashExit || exitCode != 0) {
       qWarning() << "file indexer crashed with code" << exitCode;
       handleCrash();
@@ -52,6 +81,9 @@ FileIndexer::FileIndexer() : m_bus(&m_process), m_rpc(m_bus), m_client(m_rpc) {
       qInfo() << "file indexer exited with code" << exitCode;
     }
   });
+
+  connect(m_client.fileindexer(), &file_indexer_gen::FileIndexerService::scanStatusChanged, this,
+          [this](const file_indexer_gen::ScanStatusEvent &event) { handleScanStatus(event); });
 
   connect(&m_bus, &FileIndexerBus::messageReceived, this, [this](const QByteArray &msg) {
     std::string_view view{msg.constData(), static_cast<size_t>(msg.size())};
@@ -91,6 +123,34 @@ void FileIndexer::startProcess() {
 
   m_crashCount = 0;
   sendConfigure();
+}
+
+void FileIndexer::handleScanStatus(const file_indexer_gen::ScanStatusEvent &event) {
+  qDebug() << "scan status" << event.scan_id << "kind" << static_cast<int>(event.kind) << "state"
+           << static_cast<int>(event.state) << "processed" << event.processed_file_count << "entrypoint"
+           << event.entrypoint.c_str();
+  ScanStatus const status{.scanId = event.scan_id,
+                          .kind = toScanKind(event.kind),
+                          .state = toScanState(event.state),
+                          .entrypoint = std::filesystem::path(event.entrypoint),
+                          .processedFileCount = event.processed_file_count};
+
+  if (status.isTerminal()) {
+    m_activeScans.erase(status.scanId);
+  } else {
+    m_activeScans[status.scanId] = status;
+  }
+
+  emit scanStatusChanged(status);
+}
+
+void FileIndexer::interruptActiveScans() {
+  auto scans = std::exchange(m_activeScans, {});
+
+  for (auto &[id, status] : scans) {
+    status.state = ScanState::Interrupted;
+    emit scanStatusChanged(status);
+  }
 }
 
 void FileIndexer::sendConfigure() {

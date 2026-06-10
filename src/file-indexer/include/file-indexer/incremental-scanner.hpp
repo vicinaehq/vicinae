@@ -13,14 +13,14 @@ class IncrementalScanner : public AbstractScanner, file_indexer::NonCopyable {
 
   std::vector<std::filesystem::path>
   getScannableDirectories(const std::filesystem::path &path, std::optional<size_t> maxDepth,
-                          const std::vector<std::filesystem::path> &excludedPaths) const;
+                          const std::vector<std::filesystem::path> &excludedPaths);
   void processDirectory(const std::filesystem::path &path);
   bool shouldProcessEntry(const std::filesystem::directory_entry &entry, int64_t cutOffSeconds) const;
 
   void scan(const Scan &scan);
 
 public:
-  IncrementalScanner(std::shared_ptr<DbWriter> writer, const Scan &scan, FinishCallback callback);
+  IncrementalScanner(std::shared_ptr<DbWriter> writer, const Scan &scan, StatusCallback callback);
   ~IncrementalScanner() = default;
 
   void interrupt() override;

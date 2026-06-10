@@ -11,8 +11,43 @@ namespace fs = std::filesystem;
 
 namespace file_indexer {
 
+static file_indexer_gen::ScanKind toScanKind(ScanType type) {
+  switch (type) {
+  case ScanType::Full:
+    return file_indexer_gen::ScanKind::Full;
+  case ScanType::Incremental:
+    return file_indexer_gen::ScanKind::Incremental;
+  case ScanType::Watcher:
+    return file_indexer_gen::ScanKind::Watcher;
+  }
+  return file_indexer_gen::ScanKind::Full;
+}
+
+static file_indexer_gen::ScanState toScanState(ScanStatus status) {
+  switch (status) {
+  case ScanStatus::Succeeded:
+    return file_indexer_gen::ScanState::Succeeded;
+  case ScanStatus::Failed:
+    return file_indexer_gen::ScanState::Failed;
+  case ScanStatus::Interrupted:
+    return file_indexer_gen::ScanState::Interrupted;
+  case ScanStatus::Pending:
+  case ScanStatus::Started:
+    return file_indexer_gen::ScanState::Started;
+  }
+  return file_indexer_gen::ScanState::Started;
+}
+
 IndexerService::IndexerService(file_indexer_gen::RpcTransport &transport)
-    : file_indexer_gen::AbstractFileIndexer(transport) {}
+    : file_indexer_gen::AbstractFileIndexer(transport) {
+  m_indexer.setScanEventCallback([this](const ScanEvent &event) {
+    emitscanStatusChanged({.scan_id = event.scanId,
+                           .kind = toScanKind(event.type),
+                           .state = toScanState(event.status),
+                           .entrypoint = event.entrypoint.string(),
+                           .processed_file_count = static_cast<uint32_t>(event.processedFileCount)});
+  });
+}
 
 static std::vector<fs::path> toPaths(const std::vector<std::string> &values) {
   std::vector<fs::path> paths;
