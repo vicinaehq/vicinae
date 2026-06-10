@@ -98,3 +98,12 @@ void DbWriter::compact(std::function<void()> onComplete) {
 void DbWriter::indexEvents(std::vector<FileEvent> events) {
   submit([events = std::move(events)](FileIndexerDatabase &db) { db.indexEvents(events); }, true);
 }
+
+void DbWriter::rebuildSpellfixVocabulary() {
+  if (m_vocabRebuildQueued.exchange(true)) return;
+
+  submit([this](FileIndexerDatabase &db) {
+    m_vocabRebuildQueued = false;
+    db.rebuildSpellfixVocabulary();
+  });
+}

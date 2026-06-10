@@ -25,9 +25,6 @@ public:
 
   struct SearchCandidate {
     std::filesystem::path path;
-    std::string name;
-    double relevancyScore = 0;
-    double indexRank = 0;
   };
 
   ScanRecord mapScan(const db::Statement &stmt) const;
@@ -48,8 +45,18 @@ public:
   std::optional<int64_t> retrieveIndexedLastModified(const std::filesystem::path &path) const;
   std::vector<std::filesystem::path> listIndexedDirectoryFiles(const std::filesystem::path &path) const;
 
+  struct SpellfixSuggestion {
+    std::string word;
+    int distance = 0;
+    int score = 0;
+    int64_t rank = 0;
+  };
+
   void deleteAllIndexedFiles();
   void compact();
+  void rebuildSpellfixVocabulary();
+  bool hasSpellfixVocabulary();
+  std::vector<SpellfixSuggestion> spellfixSuggestions(std::string_view word, int top, bool prefix);
   void deleteIndexedFiles(const std::vector<std::filesystem::path> &paths);
   void indexFiles(const std::vector<std::filesystem::path> &paths);
   std::vector<SearchCandidate> searchCandidates(std::string_view searchQuery, int limit);

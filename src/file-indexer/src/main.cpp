@@ -12,6 +12,9 @@
 // Statically-linked better_trigram FTS5 tokenizer (vendor/better-trigram).
 extern "C" int vicinaeBetterTrigramInit(sqlite3 *, char **, const void *);
 
+// Statically-linked spellfix1 virtual table (vendor/spellfix).
+extern "C" int vicinaeSpellfixInit(sqlite3 *, char **, const void *);
+
 // Locked so concurrent query replies don't interleave mid-frame.
 class StdoutTransport : public file_indexer_gen::AbstractTransport {
   std::mutex m_mtx;
@@ -26,8 +29,9 @@ class StdoutTransport : public file_indexer_gen::AbstractTransport {
 };
 
 int main(int, char **) {
-  // Register the better_trigram tokenizer on every connection opened from here on.
+  // Register the better_trigram tokenizer and spellfix1 on every connection opened from here on.
   sqlite3_auto_extension(reinterpret_cast<void (*)()>(vicinaeBetterTrigramInit));
+  sqlite3_auto_extension(reinterpret_cast<void (*)()>(vicinaeSpellfixInit));
 
   // TODO: remove this at some point
   file_indexer::removeLegacyDbFiles();

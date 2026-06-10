@@ -33,7 +33,10 @@ add_executable(${FILE_INDEXER_BIN}
 	src/filesystem-walker.cpp
 	src/relevancy-scorer.cpp
 	src/home-directory-watcher.cpp
+	src/file-indexer-query-engine.cpp
+	src/file-indexer-query-policy.cpp
 	${CMAKE_SOURCE_DIR}/vendor/better-trigram/register.c
+	${CMAKE_SOURCE_DIR}/vendor/spellfix/register.c
 	${SRCS}
 )
 target_include_directories(${FILE_INDEXER_BIN} PRIVATE
@@ -53,3 +56,11 @@ target_link_libraries(${FILE_INDEXER_BIN} PRIVATE
 install(TARGETS ${FILE_INDEXER_BIN}
 	RUNTIME DESTINATION ${VICINAE_LIBEXEC_DIR}
 )
+
+if (BUILD_TESTS)
+	set(TEST_TARGET ${FILE_INDEXER_BIN}-tests)
+	find_package(Catch2 3 REQUIRED)
+	add_executable(${TEST_TARGET} tests/main.cpp src/file-indexer-query-policy.cpp)
+	target_include_directories(${TEST_TARGET} PRIVATE include ${CMAKE_SOURCE_DIR}/vendor)
+	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain vicinae::fuzzy)
+endif()

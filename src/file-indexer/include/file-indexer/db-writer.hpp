@@ -31,6 +31,7 @@ private:
   size_t m_pendingBulkWrites = 0;
 
   std::atomic<bool> m_active = true;
+  std::atomic<bool> m_vocabRebuildQueued = false;
   std::condition_variable m_updateSignal;
   std::condition_variable m_notFull;
 
@@ -60,6 +61,10 @@ public:
   void deleteIndexedFiles(std::vector<std::filesystem::path> paths);
   void deleteAllIndexedFiles(std::function<void()> onComplete = nullptr);
   void compact(std::function<void()> onComplete = nullptr);
+
+  // Coalescing: scheduling while a rebuild is already queued is a no-op, so a
+  // burst of scan completions results in a single rebuild.
+  void rebuildSpellfixVocabulary();
 
   void indexEvents(std::vector<FileEvent> events);
 };

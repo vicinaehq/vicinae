@@ -34,6 +34,10 @@ CREATE TRIGGER IF NOT EXISTS unicode_idx_ai AFTER INSERT ON indexed_file BEGIN
 
 CREATE TRIGGER IF NOT EXISTS unicode_idx_ad AFTER DELETE ON indexed_file BEGIN
   INSERT INTO unicode_idx(unicode_idx, rowid, path) VALUES('delete', old.id, old.path);END;
+
+-- spellfix1 typo-correction vocabulary, fully rebuilt from indexed_file basenames
+-- after successful scans. Derived data: no schema version bump needed.
+CREATE VIRTUAL TABLE IF NOT EXISTS spellfix_vocab USING spellfix1;
 )sql";
 
 }; // namespace file_indexer

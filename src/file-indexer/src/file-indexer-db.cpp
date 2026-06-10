@@ -2,7 +2,9 @@
 #include "file-indexer/scan.hpp"
 #include "file-indexer/migrations.hpp"
 #include "file-indexer/util.hpp"
+#include "file-indexer/vocabulary.hpp"
 #include "file-indexer/log.hpp"
+#include <cctype>
 #include <chrono>
 #include <filesystem>
 #include <format>
@@ -248,12 +250,14 @@ std::vector<FileIndexerDatabase::SearchCandidate>
 FileIndexerDatabase::searchCandidates(std::string_view searchQuery, int limit) {
   if (searchQuery.empty() || limit <= 0) return {};
 
+  // FTS5 rank is negative-is-better: ascending order puts the best matches first,
+  // which decides what survives the LIMIT when the match set exceeds it
   auto stmt = m_db.prepare(R"(
     SELECT f.path
     FROM indexed_file f
     JOIN unicode_idx ON unicode_idx.rowid = f.id
     WHERE unicode_idx MATCH :search
-    ORDER BY unicode_idx.rank DESC
+    ORDER BY unicode_idx.rank
     LIMIT :limit
   )");
   stmt.bind(":search", searchQuery);
@@ -264,7 +268,7 @@ FileIndexerDatabase::searchCandidates(std::string_view searchQuery, int limit) {
   results.reserve(limit);
 
   while (stmt.step()) {
-    results.emplace_back(SearchCandidate{.path = stmt.columnText(0), .indexRank = stmt.columnDouble(1)});
+    results.emplace_back(SearchCandidate{.path = stmt.columnText(0)});
   }
 
   return results;
@@ -310,6 +314,97 @@ void FileIndexerDatabase::compact() {
   if (!m_db.exec("PRAGMA wal_checkpoint(TRUNCATE)")) {
     flog::warn() << "wal_checkpoint(TRUNCATE) failed" << m_db.lastError();
   }
+}
+
+void FileIndexerDatabase::rebuildSpellfixVocabulary() {
+  using namespace std::chrono;
+
+  auto const start = steady_clock::now();
+  std::unordered_map<std::string, int64_t> counts;
+
+  {
+    auto stmt = m_db.prepare("SELECT path FROM indexed_file");
+
+    while (stmt.step()) {
+      auto const path = stmt.columnText(0);
+
+      for (auto &token : file_indexer::vocab::tokenizeFilename(file_indexer::vocab::basenameView(path))) {
+        ++counts[std::move(token)];
+      }
+    }
+  }
+
+  auto tx = m_db.transaction();
+
+  // drop and recreate: the spellfix1 virtual table has no upsert and mass DELETE
+  // through a vtab is much slower
+  if (!m_db.exec("DROP TABLE IF EXISTS spellfix_vocab") ||
+      !m_db.exec("CREATE VIRTUAL TABLE spellfix_vocab USING spellfix1")) {
+    flog::error() << "Failed to recreate spellfix_vocab" << m_db.lastError();
+    return;
+  }
+
+  auto insert = m_db.prepare("INSERT INTO spellfix_vocab(word, rank) VALUES (:word, :rank)");
+
+  for (const auto &[word, count] : counts) {
+    insert.bind(":word", word);
+    insert.bind(":rank", count);
+
+    if (!insert.exec()) {
+      flog::error() << "Failed to insert vocabulary word" << m_db.lastError();
+      return;
+    }
+  }
+
+  if (!tx.commit()) {
+    flog::error() << "Failed to commit vocabulary rebuild" << m_db.lastError();
+    return;
+  }
+
+  auto const elapsed = duration_cast<milliseconds>(steady_clock::now() - start);
+  flog::info() << "Rebuilt spellfix vocabulary: " << counts.size() << " words in " << elapsed.count()
+               << "ms\n";
+}
+
+bool FileIndexerDatabase::hasSpellfixVocabulary() {
+  auto stmt = m_db.prepare("SELECT 1 FROM spellfix_vocab_vocab LIMIT 1");
+  return static_cast<bool>(stmt) && stmt.step();
+}
+
+std::vector<FileIndexerDatabase::SpellfixSuggestion>
+FileIndexerDatabase::spellfixSuggestions(std::string_view word, int top, bool prefix) {
+  if (word.empty() || top <= 0) return {};
+
+  auto stmt = m_db.prepare(R"(
+    SELECT word, distance, score, rank
+    FROM spellfix_vocab
+    WHERE word MATCH :pattern AND top = :top
+  )");
+
+  // a trailing '*' makes spellfix match against vocabulary word prefixes, which fits
+  // incomplete launcher queries; both modes are worth querying as they rank differently
+  std::string pattern;
+  pattern.reserve(word.size() + 1);
+  for (char const c : word) {
+    pattern.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
+  }
+  if (prefix) { pattern.push_back('*'); }
+
+  stmt.bind(":pattern", pattern);
+  stmt.bind(":top", top);
+
+  std::vector<SpellfixSuggestion> results;
+
+  results.reserve(top);
+
+  while (stmt.step()) {
+    results.emplace_back(SpellfixSuggestion{.word = stmt.columnText(0),
+                                            .distance = stmt.columnInt(1),
+                                            .score = stmt.columnInt(2),
+                                            .rank = stmt.columnInt64(3)});
+  }
+
+  return results;
 }
 
 void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {

@@ -1,0 +1,155 @@
+#include <catch2/catch_test_macros.hpp>
+#include <ranges>
+#include "file-indexer/vocabulary.hpp"
+#include "file-indexer/file-indexer-query-engine.hpp"
+
+using file_indexer::vocab::basenameView;
+using file_indexer::vocab::tokenizeFilename;
+using namespace file_indexer::query;
+using Suggestion = FileIndexerDatabase::SpellfixSuggestion;
+
+static std::vector<std::string> correctionWords(const std::vector<Suggestion> &picked) {
+  return picked | std::views::transform(&Suggestion::word) | std::ranges::to<std::vector>();
+}
+
+TEST_CASE("basenameView extracts the last path component") {
+  CHECK(basenameView("/home/user/docs/report.pdf") == "report.pdf");
+  CHECK(basenameView("/home/user/docs") == "docs");
+  CHECK(basenameView("report.pdf") == "report.pdf");
+  CHECK(basenameView("/") == "");
+}
+
+TEST_CASE("tokenizeFilename splits on non-alphanumeric characters") {
+  CHECK(tokenizeFilename("kube-config.yaml") == std::vector<std::string>{"kube", "config", "yaml"});
+  CHECK(tokenizeFilename("my_report (final).pdf") == std::vector<std::string>{"report", "final", "pdf"});
+}
+
+TEST_CASE("tokenizeFilename splits camelCase boundaries") {
+  CHECK(tokenizeFilename("fileIndexerService") == std::vector<std::string>{"file", "indexer", "service"});
+  CHECK(tokenizeFilename("HTTPServer") == std::vector<std::string>{"http", "server"});
+  CHECK(tokenizeFilename("v2Final") == std::vector<std::string>{"final"});
+}
+
+TEST_CASE("tokenizeFilename lowercases tokens") {
+  CHECK(tokenizeFilename("REPORT.PDF") == std::vector<std::string>{"report", "pdf"});
+}
+
+TEST_CASE("tokenizeFilename drops short and all-digit tokens") {
+  CHECK(tokenizeFilename("a_to_b.md") == std::vector<std::string>{});
+  CHECK(tokenizeFilename("IMG_20240115.jpg") == std::vector<std::string>{"img", "jpg"});
+  CHECK(tokenizeFilename("...") == std::vector<std::string>{});
+  CHECK(tokenizeFilename("") == std::vector<std::string>{});
+}
+
+TEST_CASE("tokenizeFilename keeps digits inside mixed tokens") {
+  CHECK(tokenizeFilename("k8s-notes.txt") == std::vector<std::string>{"k8s", "notes", "txt"});
+  CHECK(tokenizeFilename("mp3gain") == std::vector<std::string>{"mp3gain"});
+}
+
+TEST_CASE("tokenizeFilename keeps non-ascii bytes in tokens") {
+  CHECK(tokenizeFilename("résumé.pdf") == std::vector<std::string>{"résumé", "pdf"});
+}
+
+TEST_CASE("pickCorrections takes best suggestions under the distance cutoff") {
+  std::vector<Suggestion> const suggestions = {
+      {.word = "budget", .distance = 100, .score = 125},
+      {.word = "budgie", .distance = 100, .score = 126},
+      {.word = "budgets", .distance = 100, .score = 128},
+      {.word = "bandage", .distance = 300, .score = 80},
+  };
+
+  auto picked = correctionWords(pickCorrections(suggestions, "budgte", 3));
+  CHECK(picked == std::vector<std::string>{"budget", "budgie"});
+}
+
+TEST_CASE("pickCorrections collapses numbered variant families") {
+  std::vector<Suggestion> const suggestions = {
+      {.word = "sercom5", .distance = 21, .score = 51}, {.word = "sercom3", .distance = 21, .score = 51},
+      {.word = "sercom", .distance = 21, .score = 51},  {.word = "src", .distance = 41, .score = 59},
+      {.word = "search", .distance = 40, .score = 59},  {.word = "searchable", .distance = 40, .score = 66},
+  };
+
+  // sercom replaces sercom5 (prefix = broader substring coverage), sercom3 collapses
+  // into the same family, searchable collapses into search
+  auto picked = correctionWords(pickCorrections(suggestions, "serach", 3));
+  CHECK(picked == std::vector<std::string>{"sercom", "src", "search"});
+}
+
+TEST_CASE("pickCorrections keeps genuinely distinct words apart") {
+  std::vector<Suggestion> const suggestions = {
+      {.word = "famine", .distance = 40, .score = 68},
+      {.word = "feminism", .distance = 80, .score = 107},
+      {.word = "feminisation", .distance = 80, .score = 108},
+  };
+
+  auto picked = correctionWords(pickCorrections(suggestions, "famina", 3));
+  CHECK(picked == std::vector<std::string>{"famine", "feminism", "feminisation"});
+}
+
+TEST_CASE("pickCorrections drops the original word and its extensions") {
+  std::vector<Suggestion> const suggestions = {
+      {.word = "engine", .distance = 0, .score = 25, .rank = 1},
+      {.word = "engines", .distance = 40, .score = 60, .rank = 1},
+      {.word = "engineering", .distance = 60, .score = 80, .rank = 1},
+  };
+
+  // paths containing an extension always contain the original word itself, so
+  // correctly-spelled words end up with no corrections at all
+  auto picked = correctionWords(pickCorrections(suggestions, "Engine", 3));
+  CHECK(picked == std::vector<std::string>{});
+}
+
+TEST_CASE("pickCorrections trusts frequent vocabulary words and corrects rare ones") {
+  std::vector<Suggestion> const frequent = {
+      {.word = "vicinae", .distance = 0, .score = 25, .rank = 5000},
+      {.word = "visionary", .distance = 110, .score = 90, .rank = 2},
+  };
+  CHECK(correctionWords(pickCorrections(frequent, "vicinae", 3)) == std::vector<std::string>{});
+
+  // with trust disabled (last-resort retry), even known words get corrected
+  CHECK(correctionWords(pickCorrections(frequent, "vicinae", 3, false)) ==
+        std::vector<std::string>{"visionary"});
+
+  // a one-off exact match may itself be a typo'd filename: still correct it
+  std::vector<Suggestion> const rare = {
+      {.word = "budgte", .distance = 0, .score = 25, .rank = 1},
+      {.word = "budget", .distance = 100, .score = 125, .rank = 200},
+  };
+  CHECK(correctionWords(pickCorrections(rare, "budgte", 3)) == std::vector<std::string>{"budget"});
+}
+
+TEST_CASE("prepareRelaxedSearchQuery expands corrected words into OR groups") {
+  std::vector<QueryWord> const words = {
+      {.word = "hello", .corrections = {}},
+      {.word = "budgte", .corrections = {{.word = "budget"}, {.word = "budgie"}}},
+      {.word = "vrs", .corrections = {{.word = "vers"}}},
+  };
+
+  CHECK(prepareRelaxedSearchQuery(words) ==
+        R"("hello" AND ("budgte" OR "budget" OR "budgie") AND ("vrs" OR "vers"))");
+}
+
+TEST_CASE("prepareRelaxedSearchQuery drops bigrams entirely") {
+  std::vector<QueryWord> const words = {
+      {.word = "budgte", .corrections = {{.word = "budget"}}},
+      {.word = "yo", .corrections = {}},
+      {.word = "a", .corrections = {}},
+  };
+
+  // sub-3-char words are uncorrectable: as hard filters they only flood or nullify,
+  // so they are enforced by the reranker instead
+  CHECK(prepareRelaxedSearchQuery(words) == R"(("budgte" OR "budget"))");
+}
+
+TEST_CASE("correctionWeight decays with spelling distance") {
+  // a close correction (frostwire d=20) must outweigh a far one (firstperson d=120)
+  // enough that the far one can't win on raw fzf match length alone
+  CHECK(correctionWeight(0) == CORRECTION_PENALTY);
+  CHECK(correctionWeight(20) > correctionWeight(120) * 1.5);
+  CHECK(correctionWeight(MAX_CORRECTION_DISTANCE) == CORRECTION_PENALTY * 0.5);
+}
+
+TEST_CASE("splitQueryWords trims and drops empty words") {
+  CHECK(splitQueryWords("  hello   yo ") == std::vector<std::string_view>{"hello", "yo"});
+  CHECK(splitQueryWords("") == std::vector<std::string_view>{});
+}

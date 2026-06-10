@@ -28,6 +28,7 @@ public:
   FileIndexerDatabase m_db;
 
   ScanDispatcher m_dispatcher;
+  ScanDispatcher::EventCallback m_scanEventCallback;
 
   std::unique_ptr<HomeDirectoryWatcher> m_homeWatcher;
 
@@ -37,7 +38,7 @@ public:
                        const std::vector<std::string> &excludedFilenames = {});
   void markScanAsInterrupted(std::optional<FileIndexerDatabase::ScanRecord> scan);
   void setScanEventCallback(ScanDispatcher::EventCallback callback) {
-    m_dispatcher.setEventCallback(std::move(callback));
+    m_scanEventCallback = std::move(callback);
   }
   void rebuildIndex();
   void setConfig(std::vector<std::filesystem::path> paths, std::vector<std::filesystem::path> excludedPaths,

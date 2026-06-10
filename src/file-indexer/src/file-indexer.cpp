@@ -62,6 +62,9 @@ void FileIndexer::markScanAsInterrupted(std::optional<FileIndexerDatabase::ScanR
 }
 
 void FileIndexer::start() {
+  // make typo corrections available before the first scan of this session completes
+  if (!m_db.hasSpellfixVocabulary()) { m_writer->rebuildSpellfixVocabulary(); }
+
   for (const auto &entrypoint : m_entrypoints) {
     auto lastScan = m_db.getLastScan(entrypoint, ScanType::Full);
 
@@ -109,4 +112,12 @@ std::vector<IndexerFileResult> FileIndexer::query(std::string_view view, int lim
   return m_queryEngine.query(view, limit);
 }
 
-FileIndexer::FileIndexer() : m_writer(std::make_shared<DbWriter>()), m_dispatcher(m_writer) { m_db.init(); }
+FileIndexer::FileIndexer() : m_writer(std::make_shared<DbWriter>()), m_dispatcher(m_writer) {
+  m_db.init();
+
+  m_dispatcher.setEventCallback([this](const ScanEvent &event) {
+    // keep the typo-correction vocabulary in sync with the index
+    if (event.status == ScanStatus::Succeeded) { m_writer->rebuildSpellfixVocabulary(); }
+    if (m_scanEventCallback) { m_scanEventCallback(event); }
+  });
+}
