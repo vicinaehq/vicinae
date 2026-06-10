@@ -701,7 +701,7 @@ if (UNIX AND NOT APPLE)
 	wayland_generate_protocol("kde-blur")
 	wayland_generate_protocol("ext-background-effect-v1")
 	wayland_generate_protocol("keyboard-shortcuts-inhibit-unstable-v1")
-	wayland_generate_protocol("ext-hotkey-v1")
+	wayland_generate_protocol("vicinae-hotkey-v1")
 
 	list(APPEND LIBS xkbcommon)
 
@@ -717,8 +717,8 @@ if (UNIX AND NOT APPLE)
 		src/services/clipboard/data-control/data-control-clipboard-server.hpp
 		src/services/clipboard/data-control/data-control-clipboard-server.cpp
 
-		src/services/global-shortcuts/ext-hotkey-global-shortcut-backend.hpp
-		src/services/global-shortcuts/ext-hotkey-global-shortcut-backend.cpp
+		src/services/global-shortcuts/vicinae-hotkey-global-shortcut-backend.hpp
+		src/services/global-shortcuts/vicinae-hotkey-global-shortcut-backend.cpp
 
 		src/services/files-service/file-indexer/file-indexer.hpp
 		src/services/files-service/file-indexer/file-indexer.cpp

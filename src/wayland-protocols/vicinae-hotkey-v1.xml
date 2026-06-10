@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<protocol name="ext_hotkey_v1">
+<protocol name="vicinae_hotkey_v1">
   <copyright>
     Copyright © 2026 Aurelien Brabant
 
@@ -29,24 +29,12 @@
     accepts it or rejects it with a reason. The compositor remains the eventual
     arbiter (it may deny a request, revoke a binding at any time, or apply
     whatever policy it likes), but within that the application manages its own
-    bindings, including changing them at runtime (for example from its own
-    settings UI), with no out-of-band user configuration, no persisted compositor
-    state, and no per-change confirmation dialog.
-
-    This is the same model native applications already use on Windows
-    (RegisterHotKey), macOS (RegisterEventHotKey), and X11 (XGrabKey). A
-    cross-platform application or UI toolkit can therefore map its existing
-    global-hotkey API directly onto this protocol, so supporting Wayland becomes a
-    port rather than a redesign. That is the key difference from the
-    org.freedesktop.portal GlobalShortcuts interface and compositor protocols such
-    as hyprland-global-shortcuts-v1, which register an anonymous action and let
-    the user choose its trigger out-of-band (with the binding outliving the
-    client); here the client owns the trigger and the compositor arbitrates.
-    It is unrelated to keyboard-shortcuts-inhibit, which lets a focused client
-    suppress the compositor's own shortcuts.
+    bindings, including changing them at runtime, with no out-of-band user
+    configuration and no persisted compositor state.
 
     A hotkey is a key combination that fires regardless of which surface holds
-    keyboard focus.
+    keyboard focus. This is unrelated to keyboard-shortcuts-inhibit, which lets a
+    focused client suppress the compositor's own shortcuts.
 
     Whether a combination is exclusive is compositor policy. A compositor MAY
     treat combinations as exclusive and reject a clashing request with
@@ -57,7 +45,7 @@
     It is intentionally a thin mechanism. It does NOT define which combinations
     are acceptable: that is policy and belongs to the compositor, expressed
     through the accept/deny channel. It does NOT persist hotkeys: a binding lives
-    only as long as its ext_hotkey_v1 object and the client connection; there is
+    only as long as its vicinae_hotkey_v1 object and the client connection; there is
     no configure or storage step, a binding never outlives the client that created
     it, and reconfiguring is simply destroying a hotkey and binding the new
     combination.
@@ -92,7 +80,7 @@
     regardless of each compositor's policy.
   </description>
 
-  <interface name="ext_hotkey_manager_v1" version="1">
+  <interface name="vicinae_hotkey_manager_v1" version="1">
     <description summary="global hotkey factory">
       This interface is the entry point of the protocol. It is used to request
       global hotkeys.
@@ -133,7 +121,7 @@
 
         The keysym identifies the trigger key using the keysym numbering shared
         with the keymap delivered over wl_keyboard (for the xkb_v1 keymap format,
-        an XKB_KEY_* value), taken in its unshifted form. A compositor SHOULD match
+        an XKB_KEY_* value), taken in its unshifted form (XKB_KEY_b not XKB_KEY_B). A compositor SHOULD match
         it against any of the user's layout groups, so a binding keeps firing after
         the user switches layout group. This is one deliberately specified rule,
         not a universal one: other platforms differ (macOS matches a physical
@@ -141,7 +129,7 @@
         and no rule serves a layout that never produces the keysym; the single
         documented rule is chosen for predictability across compositors.
 
-        The request creates an ext_hotkey_v1 object immediately, but the binding
+        The request creates an vicinae_hotkey_v1 object immediately, but the binding
         is not active yet. The compositor replies asynchronously with either the
         "bound" event (the hotkey is now active) or the "denied" event (the
         request was rejected, with a reason).
@@ -151,27 +139,33 @@
         provided for completeness on multi-seat systems.
 
         app_id identifies the requesting application, for use in the compositor's
-        policy and any user-facing audit UI. It is advisory and may be spoofed;
-        a compositor that needs a trustworthy identity SHOULD obtain it through
-        the security-context mechanism rather than relying on this string.
+        policy and any user-facing audit UI. Where the application has a desktop
+        entry, app_id SHOULD be its desktop file ID as defined by the
+        freedesktop.org Desktop Entry specification, that is the .desktop file
+        name with the .desktop suffix removed (for example "org.example.Launcher"),
+        matching the convention used by xdg_toplevel.set_app_id so a compositor
+        can correlate the two. It is advisory and may be spoofed; a compositor
+        that needs a trustworthy identity SHOULD obtain it through the
+        security-context mechanism rather than relying on this string.
 
         description is a human-readable, localized description of what the hotkey
-        does (e.g. "Toggle the launcher"), for display in compositor UI.
+		  does (e.g. "Toggle the launcher"), for display in compositor UI or even in this protocol error messages.
       </description>
-      <arg name="id" type="new_id" interface="ext_hotkey_v1"
+      <arg name="id" type="new_id" interface="vicinae_hotkey_v1"
            summary="the new hotkey object"/>
       <arg name="keysym" type="uint" summary="keysym of the trigger key (see description)"/>
       <arg name="modifiers" type="uint" enum="modifiers"
            summary="bitmask of required modifiers"/>
       <arg name="seat" type="object" interface="wl_seat" allow-null="true"
            summary="target seat, or null for all of the client's seats"/>
-      <arg name="app_id" type="string" summary="advisory application identifier"/>
+      <arg name="app_id" type="string"
+           summary="advisory application identifier (SHOULD be the desktop file ID)"/>
       <arg name="description" type="string"
            summary="human-readable action description"/>
     </request>
   </interface>
 
-  <interface name="ext_hotkey_v1" version="1">
+  <interface name="vicinae_hotkey_v1" version="1">
     <description summary="a single global hotkey">
       Represents one requested global hotkey. Its binding is ephemeral: it is
       released when this object is destroyed or when the client disconnects, and
@@ -273,6 +267,11 @@
     <event name="pressed">
       <description summary="the hotkey combination was pressed">
         The bound combination was activated.
+
+        This event is sent once per activation. While the combination is held
+        down no further "pressed" events are sent, and a single "released"
+        follows when the trigger key is released: the compositor does not
+        auto-repeat the hotkey.
 
         serial is a compositor-issued input serial that counts as a recent user
         interaction, so the client can act on the hotkey even though the

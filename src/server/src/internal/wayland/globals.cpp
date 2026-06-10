@@ -1,6 +1,6 @@
 #include "globals.hpp"
 #include "ext-background-effect-v1-client-protocol.h"
-#include "ext-hotkey-v1-client-protocol.h"
+#include "vicinae-hotkey-v1-client-protocol.h"
 #include "keyboard-shortcuts-inhibit-unstable-v1-client-protocol.h"
 #include <QGuiApplication>
 
@@ -28,9 +28,9 @@ void Globals::handleGlobal(void *data, struct wl_registry *registry, uint32_t na
         wl_registry_bind(registry, name, &ext_background_effect_manager_v1_interface, version));
   }
 
-  else if (strcmp(interface, ext_hotkey_manager_v1_interface.name) == 0) {
+  else if (strcmp(interface, vicinae_hotkey_manager_v1_interface.name) == 0) {
     self->m_hotkey = static_cast<decltype(self->m_hotkey)>(
-        wl_registry_bind(registry, name, &ext_hotkey_manager_v1_interface, version));
+        wl_registry_bind(registry, name, &vicinae_hotkey_manager_v1_interface, version));
   }
 
   else if (strcmp(interface, zwp_keyboard_shortcuts_inhibit_manager_v1_interface.name) == 0) {
