@@ -103,12 +103,24 @@ std::vector<IndexerFileResult> FileIndexer::query(std::string_view view, int lim
   return m_queryEngine.query(view, limit);
 }
 
+bool FileIndexer::shouldRebuildVocabulary() {
+  std::scoped_lock const l(m_vocabRebuildMtx);
+  auto const now = std::chrono::steady_clock::now();
+
+  if (now - m_lastVocabRebuild < VOCAB_REBUILD_MIN_INTERVAL) return false;
+
+  m_lastVocabRebuild = now;
+  return true;
+}
+
 FileIndexer::FileIndexer() : m_writer(std::make_shared<DbWriter>()), m_dispatcher(m_writer) {
   m_db.init();
 
   m_dispatcher.setEventCallback([this](const ScanEvent &event) {
-    // keep the typo-correction vocabulary in sync with the index
-    if (event.status == ScanStatus::Succeeded) { m_writer->rebuildSpellfixVocabulary(); }
+    // keep the typo-correction vocabulary loosely in sync with the index
+    if (event.status == ScanStatus::Succeeded && shouldRebuildVocabulary()) {
+      m_writer->rebuildSpellfixVocabulary();
+    }
     if (m_scanEventCallback) { m_scanEventCallback(event); }
   });
 }

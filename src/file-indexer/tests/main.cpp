@@ -4,6 +4,7 @@
 #include "file-indexer/file-indexer-query-engine.hpp"
 
 using file_indexer::vocab::basenameView;
+using file_indexer::vocab::isJunkToken;
 using file_indexer::vocab::tokenizeFilename;
 using namespace file_indexer::query;
 using Suggestion = FileIndexerDatabase::SpellfixSuggestion;
@@ -48,6 +49,32 @@ TEST_CASE("tokenizeFilename keeps digits inside mixed tokens") {
 
 TEST_CASE("tokenizeFilename keeps non-ascii bytes in tokens") {
   CHECK(tokenizeFilename("résumé.pdf") == std::vector<std::string>{"résumé", "pdf"});
+}
+
+TEST_CASE("isJunkToken drops hash-like and overlong tokens") {
+  // git object names, content hashes
+  CHECK(isJunkToken("fa7086f94e22ede4670185890453f911"));
+  CHECK(isJunkToken("d6a2e953560029757dba39b9303e5b20"));
+  // hex fragments under the length cap
+  CHECK(isJunkToken("abcdef123456"));
+  // overlong non-hex tokens (minified assets, base64 names)
+  CHECK(isJunkToken("zxqwjkrtyplmbvcxzqwjkrtypl"));
+}
+
+TEST_CASE("isJunkToken keeps human vocabulary") {
+  CHECK_FALSE(isJunkToken("downloads"));
+  CHECK_FALSE(isJunkToken("qsystemsemaphore"));
+  CHECK_FALSE(isJunkToken("internationalization"));
+  // hex-only letters but too short to be a hash
+  CHECK_FALSE(isJunkToken("deadbeef"));
+  CHECK_FALSE(isJunkToken("facade"));
+  // mixed alpha tokens at hash-like lengths are not hex
+  CHECK_FALSE(isJunkToken("modernisation"));
+}
+
+TEST_CASE("tokenizeFilename drops junk tokens") {
+  CHECK(tokenizeFilename("fa7086f94e22ede4670185890453f911_backup.tar") ==
+        std::vector<std::string>{"backup", "tar"});
 }
 
 TEST_CASE("pickCorrections takes best suggestions under the distance cutoff") {

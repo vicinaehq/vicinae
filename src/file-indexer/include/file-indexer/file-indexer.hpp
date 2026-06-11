@@ -3,8 +3,10 @@
 #include "file-indexer/home-directory-watcher.hpp"
 #include "file-indexer/file-indexer-db.hpp"
 #include "file-indexer/scan-dispatcher.hpp"
+#include <chrono>
 #include <filesystem>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -30,6 +32,15 @@ public:
   ScanDispatcher::EventCallback m_scanEventCallback;
 
   std::unique_ptr<HomeDirectoryWatcher> m_homeWatcher;
+
+  // Rebuilding the vocabulary scans the entire index (~seconds on large ones), so we
+  // don't redo it for every scan the watcher triggers. Slight staleness is harmless:
+  // the strict query path doesn't use the vocabulary at all.
+  static constexpr std::chrono::minutes VOCAB_REBUILD_MIN_INTERVAL{10};
+  std::mutex m_vocabRebuildMtx;
+  std::chrono::steady_clock::time_point m_lastVocabRebuild{};
+
+  bool shouldRebuildVocabulary();
 
 public:
   void startFullScan();
