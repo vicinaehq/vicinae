@@ -278,6 +278,7 @@ Item {
                         (event.modifiers & Qt.ControlModifier) ? root.moveSectionDown() : root.moveDown();
                     }
                     Keys.onReturnPressed: root.activateCurrent()
+                    Keys.onEnterPressed: root.activateCurrent()
                 }
             }
         }

@@ -274,18 +274,6 @@ Item {
                         event.accepted = launcher.forwardKey(event.key, event.modifiers);
                     }
                 }
-                Keys.onReturnPressed: event => {
-                    if (launcher.compacted) {
-                        launcher.expand();
-                        event.accepted = true;
-                        return;
-                    }
-                    if (event.modifiers !== Qt.NoModifier) {
-                        event.accepted = launcher.forwardKey(event.key, event.modifiers);
-                    } else {
-                        launcher.handleReturn();
-                    }
-                }
                 Keys.onBacktabPressed: event => {
                     event.accepted = false;
                 }

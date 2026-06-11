@@ -17,7 +17,6 @@ Item {
                 text: root.host.name
                 placeholder: "Shortcut Name"
                 onTextEdited: root.host.name = text
-                onAccepted: launcher.handleReturn()
             }
         }
 
@@ -35,7 +34,6 @@ Item {
                 hasError: urlField.error !== ""
 
                 onTextEdited: root.host.link = text
-                onAccepted: launcher.handleReturn()
 
                 onEditingChanged: {
                     if (!editing)

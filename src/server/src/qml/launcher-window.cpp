@@ -3,7 +3,6 @@
 #include "keybind-bridge.hpp"
 #include "view-utils.hpp"
 #include "action-panel-controller.hpp"
-#include "ui/action-pannel/action.hpp"
 #include "ui/image/image-renderer.hpp"
 #include "services/news/news-service.hpp"
 #include "alert-model.hpp"
@@ -334,7 +333,12 @@ bool LauncherWindow::eventFilter(QObject *obj, QEvent *event) {
     if (ke->modifiers().testFlag(Qt::KeypadModifier)) {
       ke->setModifiers(ke->modifiers() & ~Qt::KeypadModifier);
     }
-    if (forwardKey(ke->key(), static_cast<int>(ke->modifiers()))) { return true; }
+    // unmodified keys (return included) belong to the focused component: forwarding
+    // them globally would steal text input or returns meant for local widgets such as
+    // text areas, overlays or the opened action panel.
+    if (ke->modifiers() != Qt::NoModifier && forwardKey(ke->key(), static_cast<int>(ke->modifiers()))) {
+      return true;
+    }
   }
 
   // only works on some compositors.
@@ -433,12 +437,19 @@ void LauncherWindow::forwardSearchText(const QString &text) {
   tryCompaction();
 }
 
-void LauncherWindow::handleReturn() { m_actionPanel->executePrimaryAction(); }
-
 bool LauncherWindow::forwardKey(int key, int modifiers) {
   auto mods = static_cast<Qt::KeyboardModifiers>(modifiers);
+  const bool isReturn = key == Qt::Key_Return || key == Qt::Key_Enter;
+  const bool unmodified = (mods & ~Qt::KeypadModifier) == Qt::NoModifier;
 
-  if (mods == Qt::NoModifier) return false;
+  // unmodified keys are regular text input, except return which the action panel
+  // knows how to handle
+  if (unmodified && !isReturn) return false;
+
+  if (unmodified && m_compacted) {
+    expand();
+    return true;
+  }
 
   switch (key) {
   case Qt::Key_Shift:
@@ -465,15 +476,7 @@ bool LauncherWindow::forwardKey(int key, int modifiers) {
 
   QKeyEvent const event(QEvent::KeyPress, key, mods);
 
-  if (auto *action = m_ctx.navigation->findBoundAction(&event)) {
-    if (auto *submenu = dynamic_cast<SubmenuAction *>(action)) {
-      m_actionPanel->openSubmenu(submenu);
-    } else {
-      m_ctx.navigation->executeAction(action);
-      m_actionPanel->close();
-    }
-    return true;
-  }
+  if (m_actionPanel->activateBoundAction(&event)) return true;
 
   if (Keyboard::Shortcut(Keybind::OpenSettings) == &event) {
     m_ctx.navigation->closeWindow();

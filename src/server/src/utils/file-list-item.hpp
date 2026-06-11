@@ -40,7 +40,7 @@ private:
 
 inline std::unique_ptr<ActionPanelState> actionPanel(const std::filesystem::path &path, AppService *appDb) {
   QMimeDatabase mimeDb;
-  auto panel = std::make_unique<ActionPanelState>();
+  auto panel = std::make_unique<ListActionPanelState>();
   auto section = panel->createSection();
   auto mime = mimeDb.mimeTypeForFile(path.c_str());
   auto openers = appDb->findCuratedOpeners(mime.name());
