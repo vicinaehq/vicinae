@@ -22,7 +22,6 @@ public:
   std::shared_ptr<DbWriter> m_writer;
   std::vector<std::filesystem::path> m_entrypoints;
   std::vector<std::filesystem::path> m_excludedPaths;
-  std::vector<std::filesystem::path> m_watcherPaths;
   std::vector<std::string> m_excludedFilenames;
   FileIndexerQueryEngine m_queryEngine;
   FileIndexerDatabase m_db;
@@ -41,8 +40,7 @@ public:
     m_scanEventCallback = std::move(callback);
   }
   void rebuildIndex();
-  void setConfig(std::vector<std::filesystem::path> paths, std::vector<std::filesystem::path> excludedPaths,
-                 std::vector<std::filesystem::path> watcherPaths);
+  void setConfig(std::vector<std::filesystem::path> paths, std::vector<std::filesystem::path> excludedPaths);
   std::vector<IndexerFileResult> query(std::string_view view, int limit);
   void start();
 

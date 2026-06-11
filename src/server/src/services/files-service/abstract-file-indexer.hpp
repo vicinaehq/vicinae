@@ -42,7 +42,7 @@ class AbstractFileIndexer : public QObject {
   Q_OBJECT
 
 public:
-  enum class ScanKind { Full, Incremental, Watcher };
+  enum class ScanKind { Full, Incremental };
   enum class ScanState { Started, Succeeded, Failed, Interrupted };
 
   struct ScanStatus {

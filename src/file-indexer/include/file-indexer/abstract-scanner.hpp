@@ -78,6 +78,8 @@ protected:
 
   void setInterruptFlag() { m_interrupted = true; }
 
+  bool isInterrupted() const { return m_interrupted; }
+
 public:
   AbstractScanner(std::shared_ptr<DbWriter> writer, const Scan &scan, StatusCallback callback)
       : m_writer(writer), m_statusCallback(callback) {}

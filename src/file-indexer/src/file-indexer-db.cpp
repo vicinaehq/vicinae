@@ -91,7 +91,7 @@ FileIndexerDatabase::retrieveIndexedLastModified(const std::filesystem::path &pa
   return static_cast<int64_t>(stmt.columnUInt64(0));
 }
 
-std::vector<std::filesystem::path>
+std::unordered_set<std::filesystem::path>
 FileIndexerDatabase::listIndexedDirectoryFiles(const std::filesystem::path &path) const {
   auto dirId = retrieveFileId(path);
   if (!dirId) { return {}; }
@@ -99,10 +99,10 @@ FileIndexerDatabase::listIndexedDirectoryFiles(const std::filesystem::path &path
   auto stmt = m_db.prepare("SELECT path FROM indexed_file WHERE parent_id = :parent_id");
   stmt.bind(":parent_id", *dirId);
 
-  std::vector<fs::path> paths;
+  std::unordered_set<fs::path> paths;
 
   while (stmt.step()) {
-    paths.emplace_back(stmt.columnText(0));
+    paths.emplace(stmt.columnText(0));
   }
 
   return paths;

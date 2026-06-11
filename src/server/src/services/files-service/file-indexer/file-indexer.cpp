@@ -45,8 +45,6 @@ static AbstractFileIndexer::ScanKind toScanKind(file_indexer_gen::ScanKind kind)
     return AbstractFileIndexer::ScanKind::Full;
   case file_indexer_gen::ScanKind::Incremental:
     return AbstractFileIndexer::ScanKind::Incremental;
-  case file_indexer_gen::ScanKind::Watcher:
-    return AbstractFileIndexer::ScanKind::Watcher;
   }
   return AbstractFileIndexer::ScanKind::Full;
 }
@@ -193,7 +191,6 @@ void FileIndexer::preferenceValuesChanged(const QJsonObject &preferences) {
 
   m_config.paths = splitField("paths");
   m_config.excluded_paths = splitField("excludedPaths");
-  m_config.watcher_paths = splitField("watcherPaths");
 
   if (preferences.value("autoIndexing").toBool()) {
     if (isRunning()) {

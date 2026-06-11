@@ -28,11 +28,6 @@ void FileIndexer::startFullScan() {
           m_dispatcher.enqueue(
               {.type = ScanType::Full, .path = entrypoint, .excludedPaths = m_excludedPaths, .notify = true});
         }
-
-        for (const auto &entrypoint : m_watcherPaths) {
-          flog::info() << "Enqueuing watcher scan for" << entrypoint.c_str();
-          startSingleScan(entrypoint, ScanType::Watcher, m_excludedFilenames);
-        }
       });
     });
   }).detach();
@@ -48,7 +43,7 @@ void FileIndexer::startSingleScan(const fs::path &entrypoint, ScanType type,
                         .path = entrypoint,
                         .excludedFilenames = m_excludedFilenames,
                         .excludedPaths = m_excludedPaths,
-                        .notify = type != ScanType::Watcher});
+                        .notify = true});
 }
 
 void FileIndexer::rebuildIndex() { startFullScan(); }
@@ -93,16 +88,12 @@ void FileIndexer::start() {
     startSingleScan(entrypoint, ScanType::Incremental);
   }
 
-  for (const auto &entrypoint : m_watcherPaths) {
-    startSingleScan(entrypoint, ScanType::Watcher, m_excludedFilenames);
-  }
+  if (!m_homeWatcher) { m_homeWatcher = std::make_unique<HomeDirectoryWatcher>(m_dispatcher); }
 }
 
-void FileIndexer::setConfig(std::vector<fs::path> paths, std::vector<fs::path> excludedPaths,
-                            std::vector<fs::path> watcherPaths) {
+void FileIndexer::setConfig(std::vector<fs::path> paths, std::vector<fs::path> excludedPaths) {
   m_entrypoints = std::move(paths);
   m_excludedPaths = std::move(excludedPaths);
-  m_watcherPaths = std::move(watcherPaths);
 
   std::string const databaseFilename = FileIndexerDatabase::getDatabasePath().filename().string();
   m_excludedFilenames = {databaseFilename, databaseFilename + "-wal"};

@@ -2,36 +2,37 @@
 #include "file-indexer/filesystem-walker.hpp"
 #include "file-indexer/log.hpp"
 #include <chrono>
+#include <deque>
 #include <memory>
 #include <ranges>
-#include <unordered_set>
 #include <utility>
 
 namespace fs = std::filesystem;
 
-void IncrementalScanner::processDirectory(const std::filesystem::path &root) {
+void IncrementalScanner::processDirectory(const fs::path &root, const EntryCallback &onEntry) {
   auto indexedFiles = m_read_db->listIndexedDirectoryFiles(root);
-  std::unordered_set<fs::path> currentFiles;
   std::vector<fs::path> deletedFiles;
   std::error_code ec;
 
-  currentFiles.insert(root);
+  m_currentEntries.clear();
+  m_currentEntries.insert(root);
 
   for (const auto &entry : fs::directory_iterator(root, ec)) {
     if (ec) continue;
+    if (!m_filter.shouldVisit(entry)) continue;
 
-    // XXX - We may want to differenciate between new files and already existing later
-    // especially if we start indexing file content as well.
-    currentFiles.insert(entry.path());
+    m_currentEntries.insert(entry.path());
+
+    if (onEntry) { onEntry(entry, !indexedFiles.contains(entry.path())); }
   }
 
   for (const auto &path : indexedFiles) {
-    if (!currentFiles.contains(path)) { deletedFiles.emplace_back(path); }
+    if (!m_currentEntries.contains(path)) { deletedFiles.emplace_back(path); }
   }
 
-  m_writer->deleteIndexedFiles(deletedFiles);
-  m_writer->indexFiles(std::ranges::to<std::vector>(currentFiles));
-  reportProgress(currentFiles.size());
+  m_writer->deleteIndexedFiles(std::move(deletedFiles));
+  m_writer->indexFiles(m_currentEntries | std::ranges::to<std::vector>());
+  reportProgress(m_currentEntries.size());
 }
 
 std::vector<fs::path>
@@ -86,9 +87,48 @@ bool IncrementalScanner::shouldProcessEntry(const fs::directory_entry &entry, in
   return true;
 }
 
-void IncrementalScanner::scan(const Scan &scan) {
+void IncrementalScanner::exhaustiveScan(const Scan &scan) {
   for (const auto &dir : getScannableDirectories(scan.path, scan.maxDepth, scan.excludedPaths)) {
+    if (isInterrupted()) break;
     processDirectory(dir);
+  }
+}
+
+void IncrementalScanner::prunedScan(const Scan &scan) {
+  int64_t cutOffSeconds = 0;
+
+  if (auto lastSuccessfulScan = m_read_db->getLastSuccessfulScan(scan.path)) {
+    cutOffSeconds = lastSuccessfulScan->createdAt;
+  }
+
+  std::deque<fs::path> queue;
+  std::error_code ec;
+
+  auto collectChangedDirs = [&](const fs::directory_entry &entry, bool isNew) {
+    if (!entry.is_directory(ec)) return;
+    if (isNew || shouldProcessEntry(entry, cutOffSeconds)) { queue.emplace_back(entry.path()); }
+  };
+
+  queue.emplace_back(scan.path);
+
+  while (!queue.empty() && !isInterrupted()) {
+    auto dir = std::move(queue.front());
+    queue.pop_front();
+    processDirectory(dir, collectChangedDirs);
+  }
+}
+
+void IncrementalScanner::scan(const Scan &scan) {
+  m_filter.setExcludedPaths(scan.excludedPaths);
+  m_filter.setExcludedFilenames(scan.excludedFilenames);
+
+  switch (scan.mode) {
+  case ScanMode::Exhaustive:
+    exhaustiveScan(scan);
+    break;
+  case ScanMode::Pruned:
+    prunedScan(scan);
+    break;
   }
 }
 
@@ -109,9 +149,6 @@ IncrementalScanner::IncrementalScanner(std::shared_ptr<DbWriter> writer, const S
   });
 }
 
-void IncrementalScanner::interrupt() {
-  setInterruptFlag();
-  // TODO: Actually add signalling
-}
+void IncrementalScanner::interrupt() { setInterruptFlag(); }
 
 void IncrementalScanner::join() { m_scanThread.join(); }

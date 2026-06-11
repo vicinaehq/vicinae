@@ -3,6 +3,7 @@
 #include "file-indexer/abstract-scanner.hpp"
 #include "file-indexer/db-writer.hpp"
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include <functional>
 #include <map>
@@ -17,12 +18,21 @@ public:
   using EventCallback = std::function<void(const ScanEvent &)>;
 
 private:
+  static constexpr std::chrono::seconds DEBOUNCE_QUIET{5};
+  static constexpr std::chrono::seconds DEBOUNCE_MAX_DELAY{30};
+
   std::shared_ptr<DbWriter> m_writer;
   EventCallback m_eventCallback;
 
   struct Element {
     Scan scan;
     std::unique_ptr<AbstractScanner> scanner;
+  };
+
+  struct Pending {
+    Scan scan;
+    std::chrono::steady_clock::time_point deadline;
+    std::chrono::steady_clock::time_point firstSeen;
   };
 
   std::mutex m_scannerMapMtx;
@@ -35,7 +45,13 @@ private:
   std::condition_variable m_collectorCv;
   std::atomic<bool> m_running;
 
+  std::mutex m_pendingMtx;
+  std::vector<Pending> m_pending;
+  std::condition_variable m_pendingCv;
+  std::thread m_schedulerThread;
+
   void handleFinishedScan(int id, ScanStatus status);
+  void schedulerLoop();
 
 public:
   ScanDispatcher(std::shared_ptr<DbWriter> writer);
@@ -44,6 +60,12 @@ public:
   void setEventCallback(EventCallback callback) { m_eventCallback = std::move(callback); }
 
   int enqueue(const Scan &scan);
+
+  // Coalesces identical scan requests: the scan starts once no equal request
+  // has been made for DEBOUNCE_QUIET, or at most DEBOUNCE_MAX_DELAY after the
+  // first one.
+  void enqueueDebounced(const Scan &scan);
+
   bool interrupt(int id);
   void interruptAll();
 

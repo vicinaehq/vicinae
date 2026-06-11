@@ -1,7 +1,9 @@
 #include "file-indexer/scan-dispatcher.hpp"
 #include "file-indexer/indexer-scanner.hpp"
 #include "file-indexer/incremental-scanner.hpp"
-#include "file-indexer/watcher-scanner.hpp"
+#include "file-indexer/log.hpp"
+#include <algorithm>
+#include <chrono>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -17,6 +19,7 @@ void ScanDispatcher::handleFinishedScan(int id, ScanStatus status) {
 }
 
 int ScanDispatcher::enqueue(const Scan &scan) {
+  flog::info() << "Enqueuing scan for " << scan.path << "\n";
   static int idCounter;
 
   int const scanId = idCounter;
@@ -43,16 +46,60 @@ int ScanDispatcher::enqueue(const Scan &scan) {
     case ScanType::Incremental:
       m_scannerMap[scanId] = {scan, std::make_unique<IncrementalScanner>(m_writer, scan, handler)};
       break;
-    case ScanType::Watcher:
-      m_scannerMap[scanId] = {scan, std::make_unique<WatcherScanner>(m_writer, scan, handler)};
-      break;
     }
   }
   return scanId;
 }
 
+void ScanDispatcher::enqueueDebounced(const Scan &scan) {
+  auto const now = std::chrono::steady_clock::now();
+  {
+    std::scoped_lock const l(m_pendingMtx);
+    auto it = std::ranges::find(m_pending, scan, &Pending::scan);
+
+    if (it != m_pending.end()) {
+      it->deadline = std::min(now + DEBOUNCE_QUIET, it->firstSeen + DEBOUNCE_MAX_DELAY);
+    } else {
+      m_pending.emplace_back(scan, now + DEBOUNCE_QUIET, now);
+    }
+  }
+  m_pendingCv.notify_one();
+}
+
+void ScanDispatcher::schedulerLoop() {
+  std::unique_lock lock(m_pendingMtx);
+
+  while (m_running) {
+    if (m_pending.empty()) {
+      m_pendingCv.wait(lock, [&]() { return !m_pending.empty() || !m_running; });
+      continue;
+    }
+
+    auto const next = std::ranges::min_element(m_pending, {}, &Pending::deadline)->deadline;
+    if (m_pendingCv.wait_until(lock, next, [&]() { return !m_running.load(); })) break;
+
+    auto const now = std::chrono::steady_clock::now();
+    std::vector<Scan> due;
+
+    due.reserve(m_pending.size());
+    std::erase_if(m_pending, [&](const Pending &pending) {
+      if (pending.deadline > now) return false;
+      due.emplace_back(pending.scan);
+      return true;
+    });
+
+    lock.unlock();
+    for (const auto &scan : due) {
+      if (!m_running) break;
+      enqueue(scan);
+    }
+    lock.lock();
+  }
+}
+
 ScanDispatcher::ScanDispatcher(std::shared_ptr<DbWriter> writer)
     : m_writer(std::move(writer)), m_running(true) {
+  m_schedulerThread = std::thread([this]() { schedulerLoop(); });
 
   m_collectorThread = std::thread([this]() {
     while (true) {
@@ -118,7 +165,9 @@ ScanDispatcher::~ScanDispatcher() {
   interruptAll();
 
   m_running = false;
+  m_pendingCv.notify_one();
   m_collectorCv.notify_one();
 
+  m_schedulerThread.join();
   m_collectorThread.join();
 }

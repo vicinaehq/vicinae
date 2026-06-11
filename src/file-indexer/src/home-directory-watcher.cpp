@@ -1,27 +1,25 @@
 #include "file-indexer/home-directory-watcher.hpp"
+#include "file-indexer/log.hpp"
 #include "file-indexer/util.hpp"
 #include "file-indexer/scan.hpp"
 #include <chrono>
 
 namespace fs = std::filesystem;
 
-void HomeDirectoryWatcher::handleEvent(const wtr::event &ev) {
-  if (ev.path_type == wtr::event::path_type::watcher) return;
+void HomeDirectoryWatcher::handleEvent(const ImportantDirectoryWatcher::Event &ev) {
+  using Kind = ImportantDirectoryWatcher::Event::Kind;
 
-  // only structural changes affect a directory's listing
-  switch (ev.effect_type) {
-  case wtr::event::effect_type::create:
-  case wtr::event::effect_type::destroy:
-  case wtr::event::effect_type::rename:
+  switch (ev.kind) {
+  case Kind::DirectoryChanged:
+    m_dispatcher.enqueueDebounced({.type = ScanType::Incremental, .mode = ScanMode::Pruned, .path = ev.dir});
     break;
-  default:
-    return;
+  case Kind::Degraded:
+    flog::warn() << "Directory watcher degraded, rescanning all watched directories";
+    for (const auto &dir : m_watcher->watchedDirectories()) {
+      m_dispatcher.enqueueDebounced({.type = ScanType::Incremental, .mode = ScanMode::Pruned, .path = dir});
+    }
+    break;
   }
-
-  fs::path const parent = fs::path(ev.path_name).parent_path();
-  if (parent.empty()) return;
-
-  m_dispatcher.enqueue({.type = ScanType::Incremental, .path = parent, .maxDepth = 1});
 }
 
 std::vector<std::filesystem::path> HomeDirectoryWatcher::getImportantDirectories() {
@@ -69,8 +67,9 @@ void HomeDirectoryWatcher::timerLoop() {
 }
 
 HomeDirectoryWatcher::HomeDirectoryWatcher(ScanDispatcher &dispatcher) : m_dispatcher(dispatcher) {
-  m_watch = std::make_unique<wtr::watch>(file_indexer::homeDir(),
-                                         [this](const wtr::event &ev) { handleEvent(ev); });
+  m_watcher = ImportantDirectoryWatcher::create(
+      [this](const ImportantDirectoryWatcher::Event &ev) { handleEvent(ev); });
+
   m_timerThread = std::thread([this] { timerLoop(); });
 }
 
@@ -78,5 +77,4 @@ HomeDirectoryWatcher::~HomeDirectoryWatcher() {
   m_alive = false;
   m_cv.notify_all();
   if (m_timerThread.joinable()) m_timerThread.join();
-  if (m_watch) m_watch->close();
 }

@@ -3,7 +3,6 @@
 struct IndexerConfig {
   paths: string[];
   excluded_paths: string[];
-  watcher_paths: string[];
 };
 
 struct QueryRequest {
@@ -20,7 +19,7 @@ struct QueryResponse {
   matches: FileMatch[];
 };
 
-enum ScanKind { Full, Incremental, Watcher };
+enum ScanKind { Full, Incremental };
 enum ScanState { Started, Succeeded, Failed, Interrupted };
 
 struct ScanStatusEvent {

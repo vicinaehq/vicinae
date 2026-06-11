@@ -95,12 +95,7 @@ public:
     excludedPaths.setDescription("Semicolon-separated list of paths to exclude from file indexing");
     excludedPaths.setDefaultValue("");
 
-    auto watcherPaths = Preference::makeText("watcherPaths");
-    watcherPaths.setTitle("Watcher paths");
-    watcherPaths.setDescription("Semicolon-separated list of paths watched by experimental watcher");
-    watcherPaths.setDefaultValue("");
-
-    return {indexing, paths, excludedPaths, watcherPaths};
+    return {indexing, paths, excludedPaths};
 #else
     return {};
 #endif

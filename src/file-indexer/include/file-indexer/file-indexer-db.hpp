@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 class FileIndexerDatabase {
@@ -43,7 +44,8 @@ public:
   bool setScanError(int scanId, const std::string &error);
 
   std::optional<int64_t> retrieveIndexedLastModified(const std::filesystem::path &path) const;
-  std::vector<std::filesystem::path> listIndexedDirectoryFiles(const std::filesystem::path &path) const;
+  std::unordered_set<std::filesystem::path>
+  listIndexedDirectoryFiles(const std::filesystem::path &path) const;
 
   struct SpellfixSuggestion {
     std::string word;

@@ -23,6 +23,10 @@ figura_compile(
 
 set(VENDOR_DIR ${CMAKE_SOURCE_DIR}/vendor)
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+	set(PLATFORM_SRCS src/important-dir-watcher-linux.cpp)
+endif()
+
 # core library used by the file indexer binary and the tests
 add_library(${FILE_INDEXER_CORE} STATIC
 	src/file-indexer.cpp
@@ -34,10 +38,11 @@ add_library(${FILE_INDEXER_CORE} STATIC
 	src/scan-dispatcher.cpp
 	src/indexer-scanner.cpp
 	src/incremental-scanner.cpp
-	src/watcher-scanner.cpp
 	src/filesystem-walker.cpp
+	src/entry-filter.cpp
 	src/relevancy-scorer.cpp
 	src/home-directory-watcher.cpp
+	${PLATFORM_SRCS}
 	${VENDOR_DIR}/better-trigram/register.c
 	${VENDOR_DIR}/spellfix/register.c
 )

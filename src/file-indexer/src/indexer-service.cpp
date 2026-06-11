@@ -17,8 +17,6 @@ static file_indexer_gen::ScanKind toScanKind(ScanType type) {
     return file_indexer_gen::ScanKind::Full;
   case ScanType::Incremental:
     return file_indexer_gen::ScanKind::Incremental;
-  case ScanType::Watcher:
-    return file_indexer_gen::ScanKind::Watcher;
   }
   return file_indexer_gen::ScanKind::Full;
 }
@@ -59,7 +57,7 @@ static std::vector<fs::path> toPaths(const std::vector<std::string> &values) {
 }
 
 std::expected<void, std::string> IndexerService::configure(file_indexer_gen::IndexerConfig config) {
-  m_indexer.setConfig(toPaths(config.paths), toPaths(config.excluded_paths), toPaths(config.watcher_paths));
+  m_indexer.setConfig(toPaths(config.paths), toPaths(config.excluded_paths));
 
   if (!m_started) {
     m_started = true;
