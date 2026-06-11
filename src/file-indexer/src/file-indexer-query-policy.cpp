@@ -60,14 +60,15 @@ std::string prepareRelaxedSearchQuery(std::span<const QueryWord> words) {
     }
 
     std::string group = std::format("(\"{}\"", word);
+
     for (const auto &correction : queryWord.corrections) {
       group += std::format(" OR \"{}\"", correction.word);
     }
+
     group += ")";
     parts.emplace_back(std::move(group));
   }
 
-  // explicit AND: FTS5 rejects implicit AND next to a parenthesized group
   return parts | std::views::join_with(std::string_view{" AND "}) | std::ranges::to<std::string>();
 }
 

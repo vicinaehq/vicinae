@@ -4,6 +4,7 @@ project(${PROJECT_NAME})
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(FILE_INDEXER_BIN vicinae-file-indexer)
+set(FILE_INDEXER_CORE ${FILE_INDEXER_BIN}-core)
 
 find_package(glaze)
 
@@ -19,11 +20,15 @@ figura_compile(
 	OUTPUT file-indexer-server.hpp
 )
 
-add_executable(${FILE_INDEXER_BIN}
-	src/main.cpp
-	src/indexer-service.cpp
+
+set(VENDOR_DIR ${CMAKE_SOURCE_DIR}/vendor)
+
+# core library used by the file indexer binary and the tests
+add_library(${FILE_INDEXER_CORE} STATIC
 	src/file-indexer.cpp
 	src/file-indexer-db.cpp
+	src/file-indexer-query-engine.cpp
+	src/file-indexer-query-policy.cpp
 	src/db-writer.cpp
 	src/writer-worker.cpp
 	src/scan-dispatcher.cpp
@@ -33,24 +38,33 @@ add_executable(${FILE_INDEXER_BIN}
 	src/filesystem-walker.cpp
 	src/relevancy-scorer.cpp
 	src/home-directory-watcher.cpp
-	src/file-indexer-query-engine.cpp
-	src/file-indexer-query-policy.cpp
-	${CMAKE_SOURCE_DIR}/vendor/better-trigram/register.c
-	${CMAKE_SOURCE_DIR}/vendor/spellfix/register.c
-	${SRCS}
+	${VENDOR_DIR}/better-trigram/register.c
+	${VENDOR_DIR}/spellfix/register.c
 )
-target_include_directories(${FILE_INDEXER_BIN} PRIVATE
+
+target_include_directories(${FILE_INDEXER_CORE} PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}/include
-	${GENOUT}
-	${CMAKE_SOURCE_DIR}/vendor
-	${CMAKE_SOURCE_DIR}/vendor/sqlcipher
+	${VENDOR_DIR}
+	${VENDOR_DIR}/sqlcipher
 )
-target_compile_features(${FILE_INDEXER_BIN} PRIVATE cxx_std_23)
-target_link_libraries(${FILE_INDEXER_BIN} PRIVATE
-	glaze::glaze
+
+target_compile_features(${FILE_INDEXER_CORE} PUBLIC cxx_std_23)
+
+target_link_libraries(${FILE_INDEXER_CORE} PUBLIC
 	sqlcipher
 	vicinae::fuzzy
 	vicinae::xdgpp
+)
+
+add_executable(${FILE_INDEXER_BIN}
+	src/main.cpp
+	src/indexer-service.cpp
+	${SRCS}
+)
+target_include_directories(${FILE_INDEXER_BIN} PRIVATE ${GENOUT})
+target_link_libraries(${FILE_INDEXER_BIN} PRIVATE
+	${FILE_INDEXER_CORE}
+	glaze::glaze
 )
 
 install(TARGETS ${FILE_INDEXER_BIN}
@@ -60,7 +74,9 @@ install(TARGETS ${FILE_INDEXER_BIN}
 if (BUILD_TESTS)
 	set(TEST_TARGET ${FILE_INDEXER_BIN}-tests)
 	find_package(Catch2 3 REQUIRED)
-	add_executable(${TEST_TARGET} tests/main.cpp src/file-indexer-query-policy.cpp)
-	target_include_directories(${TEST_TARGET} PRIVATE include ${CMAKE_SOURCE_DIR}/vendor)
-	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain vicinae::fuzzy)
+	add_executable(${TEST_TARGET}
+		tests/main.cpp
+		tests/query-quality.cpp
+	)
+	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain ${FILE_INDEXER_CORE})
 endif()

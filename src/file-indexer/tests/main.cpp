@@ -93,8 +93,6 @@ TEST_CASE("pickCorrections drops the original word and its extensions") {
       {.word = "engineering", .distance = 60, .score = 80, .rank = 1},
   };
 
-  // paths containing an extension always contain the original word itself, so
-  // correctly-spelled words end up with no corrections at all
   auto picked = correctionWords(pickCorrections(suggestions, "Engine", 3));
   CHECK(picked == std::vector<std::string>{});
 }
