@@ -7,12 +7,12 @@ APPIMAGE_BUILD_ENV_IMAGE_TAG	:= vicinae/appimage-build-env
 FIGURA_CC						:= $(BIN_DIR)/figura
 
 release:
-	cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -B $(BUILD_DIR)
+	cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DLTO=ON -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)
 .PHONY: release
 
 host-optimized:
-	CXXFLAGS="${CXXFLAGS} -march=native" cmake -DLTO=ON -G Ninja -B build
+	CXXFLAGS="${CXXFLAGS} -march=native" cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DLTO=ON -B build
 	cmake --build $(BUILD_DIR)
 .PHONY: optimized
 
@@ -31,7 +31,7 @@ mac-bundle:
 .PHONY: mac-bundle
 
 mac-deps:
-	./scripts/macos-setup.sh
+	@./scripts/macos-setup.sh
 .PHONY: mac-deps
 
 debug-tidy:
