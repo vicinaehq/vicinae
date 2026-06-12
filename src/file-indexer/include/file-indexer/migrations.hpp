@@ -3,7 +3,7 @@
 
 namespace file_indexer {
 
-inline constexpr int SCHEMA_VERSION = 4;
+inline constexpr int SCHEMA_VERSION = 8;
 
 inline constexpr std::string_view INIT_SQL = R"sql(
 CREATE TABLE IF NOT EXISTS scan_history (
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS indexed_file (
 CREATE INDEX IF NOT EXISTS indexed_file_parent_id_idx ON indexed_file(parent_id);
 
 CREATE VIRTUAL TABLE IF NOT EXISTS unicode_idx USING fts5(
-	path, content=indexed_file, tokenize='better_trigram'
+	path, content=indexed_file, tokenize='fuzzy_trigram'
 );
 
 CREATE TRIGGER IF NOT EXISTS unicode_idx_ai AFTER INSERT ON indexed_file BEGIN
@@ -34,6 +34,20 @@ CREATE TRIGGER IF NOT EXISTS unicode_idx_ai AFTER INSERT ON indexed_file BEGIN
 
 CREATE TRIGGER IF NOT EXISTS unicode_idx_ad AFTER DELETE ON indexed_file BEGIN
   INSERT INTO unicode_idx(unicode_idx, rowid, path) VALUES('delete', old.id, old.path);END;
+
+-- trigram index over abbreviation skeletons: the tokenizer applies the skeleton
+-- transform to documents and queries alike, so devowelized queries ('dwnlds',
+-- 'dflt') match here when the regular index starves. Skip-gram tokenization
+-- additionally covers dropped consonants ('cfg', 'kmap', 'dwld').
+CREATE VIRTUAL TABLE IF NOT EXISTS skeleton_idx USING fts5(
+	path, content='', contentless_delete=1, tokenize='fuzzy_trigram skeleton 1 skipgrams 1'
+);
+
+CREATE TRIGGER IF NOT EXISTS skeleton_idx_ai AFTER INSERT ON indexed_file BEGIN
+  INSERT INTO skeleton_idx(rowid, path) VALUES (new.id, new.path);END;
+
+CREATE TRIGGER IF NOT EXISTS skeleton_idx_ad AFTER DELETE ON indexed_file BEGIN
+  DELETE FROM skeleton_idx WHERE rowid = old.id;END;
 
 -- spellfix1 typo-correction vocabulary, fully rebuilt from indexed_file basenames
 -- after successful scans. Derived data: no schema version bump needed.

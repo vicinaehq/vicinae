@@ -274,6 +274,32 @@ FileIndexerDatabase::searchCandidates(std::string_view searchQuery, int limit) {
   return results;
 }
 
+std::vector<FileIndexerDatabase::SearchCandidate>
+FileIndexerDatabase::searchSkeletonCandidates(std::string_view searchQuery, int limit) {
+  if (searchQuery.empty() || limit <= 0) return {};
+
+  auto stmt = m_db.prepare(R"(
+    SELECT f.path
+    FROM indexed_file f
+    JOIN skeleton_idx ON skeleton_idx.rowid = f.id
+    WHERE skeleton_idx MATCH :search
+    ORDER BY skeleton_idx.rank
+    LIMIT :limit
+  )");
+  stmt.bind(":search", searchQuery);
+  stmt.bind(":limit", limit);
+
+  std::vector<SearchCandidate> results;
+
+  results.reserve(limit);
+
+  while (stmt.step()) {
+    results.emplace_back(SearchCandidate{.path = stmt.columnText(0)});
+  }
+
+  return results;
+}
+
 void FileIndexerDatabase::deleteIndexedFiles(const std::vector<fs::path> &paths) {
   auto tx = m_db.transaction();
 

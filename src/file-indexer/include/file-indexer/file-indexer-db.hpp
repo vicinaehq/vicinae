@@ -62,6 +62,9 @@ public:
   void deleteIndexedFiles(const std::vector<std::filesystem::path> &paths);
   void indexFiles(const std::vector<std::filesystem::path> &paths);
   std::vector<SearchCandidate> searchCandidates(std::string_view searchQuery, int limit);
+  // same contract as searchCandidates, against the abbreviation-skeleton index;
+  // takes the same query string (the tokenizer skeletonizes queries itself)
+  std::vector<SearchCandidate> searchSkeletonCandidates(std::string_view searchQuery, int limit);
 
   int userVersion();
   void setUserVersion(int version);

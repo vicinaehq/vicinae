@@ -9,8 +9,8 @@
 #include "file-indexer/migrations.hpp"
 #include "file-indexer/util.hpp"
 
-// Statically-linked better_trigram FTS5 tokenizer (vendor/better-trigram).
-extern "C" int vicinaeBetterTrigramInit(sqlite3 *, char **, const void *);
+// Statically-linked fuzzy_trigram FTS5 tokenizer (vendor/fuzzy-trigram).
+extern "C" int vicinaeFuzzyTrigramInit(sqlite3 *, char **, const void *);
 
 // Statically-linked spellfix1 virtual table (vendor/spellfix).
 extern "C" int vicinaeSpellfixInit(sqlite3 *, char **, const void *);
@@ -29,8 +29,8 @@ class StdoutTransport : public file_indexer_gen::AbstractTransport {
 };
 
 int main(int, char **) {
-  // Register the better_trigram tokenizer and spellfix1 on every connection opened from here on.
-  sqlite3_auto_extension(reinterpret_cast<void (*)()>(vicinaeBetterTrigramInit));
+  // Register the fuzzy_trigram tokenizer and spellfix1 on every connection opened from here on.
+  sqlite3_auto_extension(reinterpret_cast<void (*)()>(vicinaeFuzzyTrigramInit));
   sqlite3_auto_extension(reinterpret_cast<void (*)()>(vicinaeSpellfixInit));
 
   // TODO: remove this at some point

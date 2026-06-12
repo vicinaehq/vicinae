@@ -27,7 +27,7 @@ void SearchFilesViewHost::initialize() {
   setSearchPlaceholderText("Search for files...");
 
   m_debounce.setSingleShot(true);
-  m_debounce.setInterval(100ms);
+  m_debounce.setInterval(200ms);
   connect(&m_debounce, &QTimer::timeout, this, &SearchFilesViewHost::handleDebounce);
   connect(&m_pendingResults, &Watcher::finished, this, &SearchFilesViewHost::handleSearchResults);
 }

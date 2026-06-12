@@ -43,7 +43,7 @@ add_library(${FILE_INDEXER_CORE} STATIC
 	src/relevancy-scorer.cpp
 	src/home-directory-watcher.cpp
 	${PLATFORM_SRCS}
-	${VENDOR_DIR}/better-trigram/register.c
+	${VENDOR_DIR}/fuzzy-trigram/register.c
 	${VENDOR_DIR}/spellfix/register.c
 )
 

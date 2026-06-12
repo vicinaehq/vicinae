@@ -10,7 +10,7 @@
 #include "file-indexer/file-indexer-db.hpp"
 #include "file-indexer/file-indexer-query-engine.hpp"
 
-extern "C" int vicinaeBetterTrigramInit(sqlite3 *, char **, const void *);
+extern "C" int vicinaeFuzzyTrigramInit(sqlite3 *, char **, const void *);
 extern "C" int vicinaeSpellfixInit(sqlite3 *, char **, const void *);
 
 namespace fs = std::filesystem;
@@ -44,13 +44,20 @@ constexpr std::string_view CORPUS[] = {
     "home/dev/captures/vrs-dump2.bin",
     "home/music/mayonnaise.flac",
     "home/music/yolo-compilation.mp4",
+    "home/archive/downloads_backup.tar",
+    "home/qmk_firmware/keyboards/planck/keymaps/default/keymap.c",
+    "home/dev/kernel/vm_kmap.c",
+    "home/docs/la belle data.pdf",
+    "home/pictures/Screen Shot 2024-01-15 at 10.30.12.png",
+    "home/fonts/SF-Pro-Display-Bold.otf",
+    "home/dev/data_loader_utils.py",
 };
 
 struct QualityEnv {
   fs::path root;
 
   QualityEnv() {
-    sqlite3_auto_extension(reinterpret_cast<void (*)()>(vicinaeBetterTrigramInit));
+    sqlite3_auto_extension(reinterpret_cast<void (*)()>(vicinaeFuzzyTrigramInit));
     sqlite3_auto_extension(reinterpret_cast<void (*)()>(vicinaeSpellfixInit));
 
     std::string tmpl = (fs::temp_directory_path() / "vicinae-fi-quality.XXXXXX").string();
@@ -141,4 +148,46 @@ TEST_CASE("fallback: weak words are dropped from filtering but still ranked") {
 TEST_CASE("fallback: gibberish returns nothing rather than noise") {
   FileIndexerQueryEngine engine;
   CHECK(engine.query("zzqqxxw", 10).empty());
+}
+
+TEST_CASE("skeleton: fully devowelized word matches") {
+  // distance 3 from 'downloads': far out of spellfix reach
+  CHECK(inTop("dwnlds", "downloads_backup.tar", 3));
+}
+
+TEST_CASE("skeleton: real-world abbreviation mix") {
+  // 'firm' covers firmware by substring, 'dflt' needs the skeleton index
+  CHECK(inTop("qmk firm dflt", "keymaps/default/keymap.c", 3));
+}
+
+TEST_CASE("skeleton: merges with literal matches instead of being gated by them") {
+  // 'kmap' literally matches vm_kmap.c, which must not lock keymap.c out of the
+  // results: both compete in one rerank, the contiguous match winning on score
+  CHECK(rankOf("kmap", "vm_kmap.c") == 1);
+  CHECK(inTop("kmap", "keymaps/default/keymap.c", 4));
+}
+
+TEST_CASE("bridging: concatenated queries match across word boundaries") {
+  // trigram windows no longer reset at spaces, so spaceless queries reach
+  // space-separated filenames
+  CHECK(inTop("labelledata", "la belle data.pdf", 3));
+  CHECK(inTop("screenshot", "Screen Shot 2024-01-15 at 10.30.12.png", 3));
+}
+
+TEST_CASE("bridging: every separator collapses like a space") {
+  CHECK(inTop("sfpro", "SF-Pro-Display-Bold.otf", 3));
+  CHECK(inTop("sf pro", "SF-Pro-Display-Bold.otf", 3));
+  CHECK(inTop("dataloader", "data_loader_utils.py", 3));
+  CHECK(inTop("invoicexlsx", "invoice.xlsx", 3));
+  // the path separator bridges too: components fuse for retrieval
+  CHECK(inTop("kernelvm", "vm_kmap.c", 3));
+}
+
+TEST_CASE("skeleton: dropped consonants match through skip-grams") {
+  // these abbreviations drop a consonant the skeleton keeps ('cfg' vs 'cnfg',
+  // 'dwld' vs 'dwnlds', 'kmap' vs 'kymp'): the colocated skip-one trigrams cover them
+  CHECK(inTop("cfg backup", "kubeConfigBackup.yaml", 3));
+  CHECK(inTop("cfg bkup", "kubeConfigBackup.yaml", 3));
+  CHECK(inTop("dwld", "downloads_backup.tar", 3));
+  CHECK(inTop("kmap", "keymaps/default/keymap.c", 3));
 }

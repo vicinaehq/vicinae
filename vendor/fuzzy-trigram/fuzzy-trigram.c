@@ -10,7 +10,7 @@
 **
 */
 
-#include "better-trigram.h"
+#include "fuzzy-trigram.h"
 #include "tokenizer.c"
 #include <stdio.h>
 #include <string.h>
@@ -56,23 +56,27 @@ static fts5_api *fts5_api_from_db(sqlite3 *db) {
 typedef struct {
   int bFold;      /* Fold case if 1 */
   int iFoldParam; /* Diacritic removal parameter */
-} BetterTrigramTokenizer;
+  int bSkipgrams; /* Also index skip-one trigrams (documents only) if 1 */
+  int bSkeleton;  /* Tokenize abbreviation skeletons instead of raw words if 1 */
+} FuzzyTrigramTokenizer;
 
 /* Free the tokenizer */
-static void fts5BetterTrigramDelete(Fts5Tokenizer *p) { sqlite3_free(p); }
+static void fts5FuzzyTrigramDelete(Fts5Tokenizer *p) { sqlite3_free(p); }
 
 /* Create the tokenizer */
-static int fts5BetterTrigramCreate(void *pUnused, const char **azArg, int nArg,
+static int fts5FuzzyTrigramCreate(void *pUnused, const char **azArg, int nArg,
                                    Fts5Tokenizer **ppOut) {
-  BetterTrigramTokenizer *p =
-      (BetterTrigramTokenizer *)sqlite3_malloc(sizeof(BetterTrigramTokenizer));
+  FuzzyTrigramTokenizer *p =
+      (FuzzyTrigramTokenizer *)sqlite3_malloc(sizeof(FuzzyTrigramTokenizer));
   UNUSED_PARAM(pUnused);
   if (!p)
     return SQLITE_NOMEM;
 
   int rc = SQLITE_OK;
-  p->bFold = 1;      /* Default case folding enabled */
-  p->iFoldParam = 0; /* Default diacritic removal disabled */
+  p->bFold = 1;       /* Default case folding enabled */
+  p->iFoldParam = 0;  /* Default diacritic removal disabled */
+  p->bSkipgrams = 0;  /* Default skip-gram indexing disabled */
+  p->bSkeleton = 0;   /* Default skeleton transform disabled */
 
   /* Parse options */
   for (int i = 0; rc == SQLITE_OK && i < nArg; i += 2) {
@@ -82,6 +86,18 @@ static int fts5BetterTrigramCreate(void *pUnused, const char **azArg, int nArg,
         rc = SQLITE_ERROR;
       } else {
         p->bFold = (zArg[0] == '0');
+      }
+    } else if (0 == sqlite3_stricmp(azArg[i], "skipgrams")) {
+      if ((zArg[0] != '0' && zArg[0] != '1') || zArg[1]) {
+        rc = SQLITE_ERROR;
+      } else {
+        p->bSkipgrams = (zArg[0] == '1');
+      }
+    } else if (0 == sqlite3_stricmp(azArg[i], "skeleton")) {
+      if ((zArg[0] != '0' && zArg[0] != '1') || zArg[1]) {
+        rc = SQLITE_ERROR;
+      } else {
+        p->bSkeleton = (zArg[0] == '1');
       }
     } else if (0 == sqlite3_stricmp(azArg[i], "remove_diacritics")) {
       if ((zArg[0] != '0' && zArg[0] != '1' && zArg[0] != '2') || zArg[1]) {
@@ -98,7 +114,7 @@ static int fts5BetterTrigramCreate(void *pUnused, const char **azArg, int nArg,
     }
 
     if (rc != SQLITE_OK) {
-      fts5BetterTrigramDelete((Fts5Tokenizer *)p);
+      fts5FuzzyTrigramDelete((Fts5Tokenizer *)p);
       p = 0;
     }
   }
@@ -107,26 +123,32 @@ static int fts5BetterTrigramCreate(void *pUnused, const char **azArg, int nArg,
   return rc;
 }
 
-static int fts5BetterTrigramTokenize(Fts5Tokenizer *pTokenizer, void *pCtx,
+static int fts5FuzzyTrigramTokenize(Fts5Tokenizer *pTokenizer, void *pCtx,
                                      int flags, const char *pText, int nText,
                                      int (*xToken)(void *, int, const char *,
                                                    int, int, int)) {
-  UNUSED_PARAM(flags);
-  BetterTrigramTokenizer *p = (BetterTrigramTokenizer *)pTokenizer;
-  tokenize(pText, nText, p->bFold, p->iFoldParam, pCtx, xToken);
+  FuzzyTrigramTokenizer *p = (FuzzyTrigramTokenizer *)pTokenizer;
+  int isQuery = (flags & FTS5_TOKENIZE_QUERY) != 0;
+
+  /* the skeleton transform applies to documents AND queries (both sides must
+  ** live in the same space); skip-grams are an indexing-side expansion only:
+  ** query trigrams stay contiguous and match either a contiguous or a
+  ** colocated skip token */
+  tokenizeBuffered(pText, nText, p->bFold, p->iFoldParam, p->bSkeleton,
+                   p->bSkipgrams && !isQuery, pCtx, xToken);
   return SQLITE_OK;
 }
 
-static int fts5BetterTrigramInit(sqlite3 *db) {
+static int fts5FuzzyTrigramInit(sqlite3 *db) {
   fts5_api *ftsApi;
 
-  fts5_tokenizer tokenizer = {fts5BetterTrigramCreate, fts5BetterTrigramDelete,
-                              fts5BetterTrigramTokenize};
+  fts5_tokenizer tokenizer = {fts5FuzzyTrigramCreate, fts5FuzzyTrigramDelete,
+                              fts5FuzzyTrigramTokenize};
 
   ftsApi = fts5_api_from_db(db);
 
   if (ftsApi) {
-    ftsApi->xCreateTokenizer(ftsApi, "better_trigram", (void *)ftsApi,
+    ftsApi->xCreateTokenizer(ftsApi, "fuzzy_trigram", (void *)ftsApi,
                              &tokenizer, NULL);
     return SQLITE_OK;
   } else {
@@ -136,16 +158,16 @@ static int fts5BetterTrigramInit(sqlite3 *db) {
 }
 
 #ifdef SQLITE_CORE
-SQLITE_PRIVATE int sqlite3Fts5BetterTrigramInit(sqlite3 *db) {
-  return fts5BetterTrigramInit(db);
+SQLITE_PRIVATE int sqlite3Fts5FuzzyTrigramInit(sqlite3 *db) {
+  return fts5FuzzyTrigramInit(db);
 }
 #else
-SQLITE_BETTER_TRIGRAM_API int
-sqlite3_bettertrigram_init(sqlite3 *db, char **error,
+SQLITE_FUZZY_TRIGRAM_API int
+sqlite3_fuzzytrigram_init(sqlite3 *db, char **error,
                            const sqlite3_api_routines *api) {
   SQLITE_EXTENSION_INIT2(api);
   UNUSED_PARAM(error);
 
-  return fts5BetterTrigramInit(db);
+  return fts5FuzzyTrigramInit(db);
 }
 #endif

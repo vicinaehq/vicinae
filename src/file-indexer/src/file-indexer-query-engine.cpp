@@ -8,6 +8,7 @@
 #include <string>
 #include <system_error>
 #include <thread>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -206,15 +207,39 @@ std::vector<IndexerFileResult> FileIndexerQueryEngine::query(std::string_view q,
 
   auto candidates = db.searchCandidates(dbQuery, CANDIDATE_LIMIT);
 
-  if (!candidates.empty()) {
-    auto scorer = [&](const SC &candidate) { return scoreCandidate(candidate, q); };
-    return rankCandidates(std::move(candidates), scorer, limit);
+  // merge in abbreviation-skeleton matches ('dwnlds', 'kmap') and let the reranker
+  // arbitrate: a literal match isn't necessarily the intended one (kmap can name a
+  // real file while the user wants keymap.c). The same query string works against
+  // both indexes: the skeleton tokenizer transforms queries itself. Skipped when the
+  // strict query already saturated the cap: the query is too broad for expansions to
+  // rank anyway.
+  if (candidates.size() < static_cast<size_t>(CANDIDATE_LIMIT)) {
+    auto seen = candidates |
+                std::views::transform([](const SC &candidate) { return candidate.path.native(); }) |
+                std::ranges::to<std::unordered_set>();
+
+    auto skeletonCandidates = db.searchSkeletonCandidates(dbQuery, CANDIDATE_LIMIT);
+
+    flog::info() << "skeleton merge: '" << q << "' -> " << skeletonCandidates.size() << " candidates\n";
+
+    for (auto &candidate : skeletonCandidates) {
+      if (!seen.contains(candidate.path.native())) { candidates.emplace_back(std::move(candidate)); }
+    }
   }
 
-  // the strict query starved: attempt spellfix typo corrections. If even that
-  // returns nothing, stop trusting vocabulary words: a word can be a real token
-  // AND a typo of another word at the same time, and an empty conjunction is
-  // proof the trust was misplaced.
+  if (!candidates.empty()) {
+    auto scorer = [&](const SC &candidate) { return scoreCandidate(candidate, q); };
+
+    // skeleton collisions that aren't subsequences of the query all score 0: an
+    // empty ranking means the candidates were noise, keep falling back
+    if (auto results = rankCandidates(std::move(candidates), scorer, limit); !results.empty()) {
+      return results;
+    }
+  }
+
+  // attempt spellfix typo corrections. If even that returns nothing, stop trusting
+  // vocabulary words: a word can be a real token AND a typo of another word at the
+  // same time, and an empty conjunction is proof the trust was misplaced.
   if (auto results = queryWithCorrections(db, q, limit, true); !results.empty()) { return results; }
 
   return queryWithCorrections(db, q, limit, false);
