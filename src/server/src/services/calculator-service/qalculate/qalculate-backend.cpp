@@ -184,6 +184,7 @@ void QalculateBackend::initializeCalculator() {
   m_evalOpts.parse_options.parsing_mode = PARSING_MODE_ADAPTIVE;
   m_evalOpts.parse_options.units_enabled = true;
   m_evalOpts.parse_options.unknowns_enabled = false;
+  m_evalOpts.local_currency_conversion = true;
 
   m_printOpts.indicate_infinite_series = false;
   m_printOpts.interval_display = INTERVAL_DISPLAY_SIGNIFICANT_DIGITS;
