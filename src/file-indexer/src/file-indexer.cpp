@@ -60,6 +60,8 @@ void FileIndexer::start() {
   // make typo corrections available before the first scan of this session completes
   if (!m_db.hasSpellfixVocabulary()) { m_writer->rebuildSpellfixVocabulary(); }
 
+  bool needsFullScan = false;
+
   for (const auto &entrypoint : m_entrypoints) {
     auto lastScan = m_db.getLastScan(entrypoint, ScanType::Full);
 
@@ -68,6 +70,7 @@ void FileIndexer::start() {
       flog::info() << "This is our first startup for entrypoint" << entrypoint.c_str()
                    << ", starting full scan";
       startSingleScan(entrypoint, ScanType::Full);
+      needsFullScan = true;
       continue;
     }
 
@@ -78,6 +81,7 @@ void FileIndexer::start() {
                    << "did not complete successfully, marking as interrupted and starting a new full scan";
       markScanAsInterrupted(lastScan);
       startSingleScan(entrypoint, ScanType::Full);
+      needsFullScan = true;
       continue;
     }
 
@@ -88,6 +92,14 @@ void FileIndexer::start() {
     startSingleScan(entrypoint, ScanType::Incremental);
   }
 
+  // with a full scan in flight, watcher events would only queue expensive
+  // incremental scans behind it for content the scan covers anyway: wait for
+  // it to succeed (the event callback starts the watcher then)
+  if (!needsFullScan) { startHomeWatcher(); }
+}
+
+void FileIndexer::startHomeWatcher() {
+  std::scoped_lock const l(m_homeWatcherMtx);
   if (!m_homeWatcher) { m_homeWatcher = std::make_unique<HomeDirectoryWatcher>(m_dispatcher); }
 }
 
@@ -121,6 +133,7 @@ FileIndexer::FileIndexer() : m_writer(std::make_shared<DbWriter>()), m_dispatche
     if (event.status == ScanStatus::Succeeded && shouldRebuildVocabulary()) {
       m_writer->rebuildSpellfixVocabulary();
     }
+    if (event.status == ScanStatus::Succeeded && event.type == ScanType::Full) { startHomeWatcher(); }
     if (m_scanEventCallback) { m_scanEventCallback(event); }
   });
 }

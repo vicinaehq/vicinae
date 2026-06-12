@@ -95,10 +95,18 @@ void IncrementalScanner::exhaustiveScan(const Scan &scan) {
 }
 
 void IncrementalScanner::prunedScan(const Scan &scan) {
+  // most scanned paths never have their own scan record, but a successful scan
+  // of an ancestor (typically the entrypoint's full scan) covered this subtree:
+  // its timestamp is a valid cutoff. Without it the cutoff degrades to 0 and
+  // first contact descends the entire subtree.
   int64_t cutOffSeconds = 0;
 
-  if (auto lastSuccessfulScan = m_read_db->getLastSuccessfulScan(scan.path)) {
-    cutOffSeconds = lastSuccessfulScan->createdAt;
+  for (fs::path path = scan.path;; path = path.parent_path()) {
+    if (auto lastSuccessfulScan = m_read_db->getLastSuccessfulScan(path)) {
+      cutOffSeconds = lastSuccessfulScan->createdAt;
+      break;
+    }
+    if (path == path.parent_path()) break;
   }
 
   std::deque<fs::path> queue;

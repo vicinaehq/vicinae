@@ -31,7 +31,10 @@ public:
   ScanDispatcher m_dispatcher;
   ScanDispatcher::EventCallback m_scanEventCallback;
 
+  std::mutex m_homeWatcherMtx;
   std::unique_ptr<HomeDirectoryWatcher> m_homeWatcher;
+
+  void startHomeWatcher();
 
   // Rebuilding the vocabulary scans the entire index (~seconds on large ones), so we
   // don't redo it for every scan the watcher triggers. Slight staleness is harmless:
