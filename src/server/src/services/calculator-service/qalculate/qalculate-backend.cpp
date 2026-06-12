@@ -57,7 +57,6 @@ std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const
   in.format(m_printOpts);
 
   PrintOptions parsedPrintOpts = m_printOpts;
-  parsedPrintOpts.abbreviate_names = false;
   parsedPrintOpts.excessive_parenthesis = true;
   std::string parsedExprText = in.print(parsedPrintOpts);
 
