@@ -350,7 +350,7 @@ QHash<int, QVariant> RootFilesSection::customRoleDefaults() const {
 
 std::unique_ptr<ActionPanelState> RootFilesSection::actionPanel(int i) const {
   if (std::cmp_greater_equal(i, m_files.size())) return nullptr;
-  return FileActions::actionPanel(m_files[i].path, m_appDb);
+  return FileActions::actionPanel(m_files[i].path, scope().appContext());
 }
 
 QString RootFallbackSection::sectionName() const {

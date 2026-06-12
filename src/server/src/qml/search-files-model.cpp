@@ -1,7 +1,5 @@
 #include "search-files-model.hpp"
-#include "clipboard-actions.hpp"
 #include "utils/file-list-item.hpp"
-#include "service-registry.hpp"
 #include "utils/utils.hpp"
 
 void SearchFilesSection::setFiles(std::vector<std::filesystem::path> files, const QString &sectionName) {
@@ -25,5 +23,5 @@ QString SearchFilesSection::itemIconSource(int i) const {
 }
 
 std::unique_ptr<ActionPanelState> SearchFilesSection::actionPanel(int i) const {
-  return FileActions::actionPanel(m_files.at(i), scope().services()->appDb());
+  return FileActions::actionPanel(m_files.at(i), scope().appContext());
 }
