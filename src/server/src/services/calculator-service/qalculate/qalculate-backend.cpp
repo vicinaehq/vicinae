@@ -13,7 +13,6 @@
 #include <qlogging.h>
 #include <QtConcurrent/QtConcurrent>
 #include <qobjectdefs.h>
-#include <ranges>
 
 using CalculatorResult = QalculateBackend::CalculatorResult;
 using CalculatorError = QalculateBackend::CalculatorError;
@@ -38,12 +37,13 @@ std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const
 
   auto stdExpr = expression.toStdString();
   std::string const localizedExpression = CALCULATOR->unlocalizeExpression(stdExpr);
-  std::string res = CALCULATOR->calculateAndPrint(localizedExpression, 10000, m_evalOpts, m_printOpts);
+
+  MathStructure in = CALCULATOR->parse(localizedExpression);
+  MathStructure result;
+  CALCULATOR->calculate(&result, localizedExpression, 10000, m_evalOpts, &in);
 
   if (CALCULATOR->aborted()) return std::unexpected(CalculatorError("Computation aborted"));
 
-  MathStructure const in = CALCULATOR->parse(localizedExpression);
-  MathStructure const result = CALCULATOR->parse(res);
   if (result.containsUnknowns()) { return std::unexpected(CalculatorError("Unknown component in question")); }
 
   bool error = false;
@@ -54,6 +54,15 @@ std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const
 
   if (error) return std::unexpected(CalculatorError("Calculation error"));
 
+  in.format(m_printOpts);
+
+  PrintOptions parsedPrintOpts = m_printOpts;
+  parsedPrintOpts.excessive_parenthesis = true;
+  std::string parsedExprText = in.print(parsedPrintOpts);
+
+  result.format(m_printOpts);
+  std::string res = result.print(m_printOpts);
+
   CalculatorResult calcRes;
   if (result.containsType(STRUCT_UNIT)) {
     if (auto unit = getUnitDisplayName(in)) { calcRes.question.unit = Unit{.displayName = unit->c_str()}; }
@@ -63,7 +72,7 @@ std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const
     calcRes.type = CalculatorAnswerType::NORMAL;
   }
 
-  calcRes.question.text = question;
+  calcRes.question.text = QString::fromStdString(parsedExprText);
   calcRes.answer.text = QString::fromStdString(res);
 
   return calcRes;
@@ -174,6 +183,7 @@ void QalculateBackend::initializeCalculator() {
   m_evalOpts.parse_options.parsing_mode = PARSING_MODE_ADAPTIVE;
   m_evalOpts.parse_options.units_enabled = true;
   m_evalOpts.parse_options.unknowns_enabled = false;
+  m_evalOpts.local_currency_conversion = true;
 
   m_printOpts.indicate_infinite_series = false;
   m_printOpts.interval_display = INTERVAL_DISPLAY_SIGNIFICANT_DIGITS;
@@ -188,13 +198,9 @@ void QalculateBackend::initializeCalculator() {
   m_printOpts.min_exp = EXP_PRECISION;
 
   m_calc.reset();
+  m_calc.loadExchangeRates();
   m_calc.loadGlobalDefinitions();
   m_calc.loadLocalDefinitions();
-  m_calc.loadExchangeRates();
-  m_calc.loadGlobalCurrencies();
-  m_calc.loadGlobalUnits();
-  m_calc.loadGlobalVariables();
-  m_calc.loadGlobalFunctions();
 
   CALCULATOR->setTemperatureCalculationMode(TEMPERATURE_CALCULATION_HYBRID);
   CALCULATOR->setPrecision(10);
