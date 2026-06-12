@@ -51,7 +51,6 @@ void SearchFilesViewHost::textChanged(const QString &text) {
     return;
   }
 
-  setLoading(true);
   m_debounce.start();
 }
 
@@ -76,6 +75,7 @@ void SearchFilesViewHost::handleDebounce() {
   }
 
   m_lastSearchText = query;
+  setLoading(true);
   m_pendingResults.setFuture(fileService->queryAsync(query.toStdString()));
 }
 

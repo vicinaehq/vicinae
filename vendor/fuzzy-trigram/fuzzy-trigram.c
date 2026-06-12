@@ -130,10 +130,7 @@ static int fts5FuzzyTrigramTokenize(Fts5Tokenizer *pTokenizer, void *pCtx,
   FuzzyTrigramTokenizer *p = (FuzzyTrigramTokenizer *)pTokenizer;
   int isQuery = (flags & FTS5_TOKENIZE_QUERY) != 0;
 
-  /* the skeleton transform applies to documents AND queries (both sides must
-  ** live in the same space); skip-grams are an indexing-side expansion only:
-  ** query trigrams stay contiguous and match either a contiguous or a
-  ** colocated skip token */
+  /* skeleton applies to documents AND queries; skip-grams are document-only */
   tokenizeBuffered(pText, nText, p->bFold, p->iFoldParam, p->bSkeleton,
                    p->bSkipgrams && !isQuery, pCtx, xToken);
   return SQLITE_OK;

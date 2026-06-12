@@ -1,5 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 #include <ranges>
+#include "file-indexer/io-pacer.hpp"
 #include "file-indexer/vocabulary.hpp"
 #include "file-indexer/file-indexer-query-engine.hpp"
 
@@ -75,6 +76,24 @@ TEST_CASE("isJunkToken keeps human vocabulary") {
 TEST_CASE("tokenizeFilename drops junk tokens") {
   CHECK(tokenizeFilename("fa7086f94e22ede4670185890453f911_backup.tar") ==
         std::vector<std::string>{"backup", "tar"});
+}
+
+TEST_CASE("IoPacer parses pressure stall information") {
+  using file_indexer::IoPacer;
+
+  CHECK(IoPacer::parseSomeAvg10("some avg10=12.34 avg60=1.00 avg300=0.10 total=12345\n"
+                                "full avg10=0.00 avg60=0.00 avg300=0.00 total=0\n") == 12.34);
+  CHECK(IoPacer::parseSomeAvg10("some avg10=0.00 avg60=0.00 avg300=0.00 total=0") == 0.0);
+  CHECK_FALSE(IoPacer::parseSomeAvg10("garbage").has_value());
+  CHECK_FALSE(IoPacer::parseSomeAvg10("").has_value());
+}
+
+TEST_CASE("IoPacer without PSI support is a no-op") {
+  file_indexer::IoPacer pacer{"/nonexistent/pressure/io"};
+  // must not block, sleep or crash
+  for (int i = 0; i < 1000; ++i) {
+    pacer.checkpoint();
+  }
 }
 
 TEST_CASE("pickCorrections takes best suggestions under the distance cutoff") {

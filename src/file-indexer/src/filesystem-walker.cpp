@@ -78,6 +78,8 @@ void FileSystemWalker::walk(const fs::path &root, const WalkCallback &callback) 
     for (const auto &entry : entries) {
       const auto &path = entry.path();
 
+      m_pacer.checkpoint();
+
       if (!m_filter.shouldVisit(entry)) {
         if (m_verbose) { flog::info() << "FileSystemWalker: skipping filtered path" << path.c_str(); }
         continue;

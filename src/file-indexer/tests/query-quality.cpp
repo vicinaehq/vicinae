@@ -17,6 +17,16 @@ namespace fs = std::filesystem;
 
 namespace {
 
+// registered before any test can open a connection, so test order can't matter
+struct ExtensionRegistrar {
+  ExtensionRegistrar() {
+    sqlite3_auto_extension(reinterpret_cast<void (*)()>(vicinaeFuzzyTrigramInit));
+    sqlite3_auto_extension(reinterpret_cast<void (*)()>(vicinaeSpellfixInit));
+  }
+};
+
+ExtensionRegistrar const g_extensionRegistrar;
+
 // every path is created as a real empty file: result ranking stats paths and
 // silently drops entries that don't exist
 constexpr std::string_view CORPUS[] = {
@@ -57,9 +67,6 @@ struct QualityEnv {
   fs::path root;
 
   QualityEnv() {
-    sqlite3_auto_extension(reinterpret_cast<void (*)()>(vicinaeFuzzyTrigramInit));
-    sqlite3_auto_extension(reinterpret_cast<void (*)()>(vicinaeSpellfixInit));
-
     std::string tmpl = (fs::temp_directory_path() / "vicinae-fi-quality.XXXXXX").string();
     root = mkdtemp(tmpl.data());
 
@@ -181,6 +188,20 @@ TEST_CASE("bridging: every separator collapses like a space") {
   CHECK(inTop("invoicexlsx", "invoice.xlsx", 3));
   // the path separator bridges too: components fuse for retrieval
   CHECK(inTop("kernelvm", "vm_kmap.c", 3));
+}
+
+TEST_CASE("directories are typed in the index and queryable by recency") {
+  // any query forces the shared corpus env into existence
+  CHECK(rankOf("budget", "budget_2024.xlsx") == 1);
+
+  FileIndexerDatabase db;
+  auto const dirs = db.listRecentDirectories(100);
+
+  CHECK_FALSE(dirs.empty());
+
+  for (const auto &dir : dirs) {
+    CHECK(fs::is_directory(dir));
+  }
 }
 
 TEST_CASE("skeleton: dropped consonants match through skip-grams") {

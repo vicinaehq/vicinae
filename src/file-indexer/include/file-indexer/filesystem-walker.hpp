@@ -1,5 +1,6 @@
 #pragma once
 #include "file-indexer/entry-filter.hpp"
+#include "file-indexer/io-pacer.hpp"
 #include <optional>
 #include <filesystem>
 #include <functional>
@@ -28,6 +29,7 @@ public:
 
 private:
   EntryFilter m_filter;
+  file_indexer::IoPacer m_pacer;
   bool m_recursive = true;
   std::optional<size_t> m_maxDepth;
   bool m_verbose = false;

@@ -2,13 +2,22 @@
 #include "file-indexer/indexer-scanner.hpp"
 #include "file-indexer/incremental-scanner.hpp"
 #include "file-indexer/log.hpp"
+#include "file-indexer/scan.hpp"
 #include <algorithm>
 #include <chrono>
+#include <format>
 #include <map>
 #include <memory>
 #include <mutex>
 #include <ranges>
 #include <utility>
+
+namespace {
+std::string makeScanLog(const Scan &scan) {
+  return std::format("Enqueuing {} scan for {} ({})", scan.type == ScanType::Full ? "full" : "incremental",
+                     scan.path.c_str(), scan.mode == ScanMode::Exhaustive ? "exhaustive" : "pruned");
+}
+} // namespace
 
 void ScanDispatcher::handleFinishedScan(int id, ScanStatus status) {
   {
@@ -19,7 +28,8 @@ void ScanDispatcher::handleFinishedScan(int id, ScanStatus status) {
 }
 
 int ScanDispatcher::enqueue(const Scan &scan) {
-  flog::info() << "Enqueuing scan for " << scan.path << "\n";
+  flog::info() << makeScanLog(scan);
+
   static int idCounter;
 
   int const scanId = idCounter;

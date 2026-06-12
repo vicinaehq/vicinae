@@ -32,7 +32,7 @@ private:
   static constexpr std::chrono::milliseconds PROGRESS_NOTIFY_INTERVAL{500};
 
   StatusCallback m_statusCallback;
-  int m_recordId;
+  int m_recordId = -1;
   size_t m_processedCount = 0;
   std::chrono::steady_clock::time_point m_lastProgressNotify;
   std::atomic<bool> m_interrupted = false;
@@ -67,12 +67,16 @@ protected:
 
   void finish() {
     ScanStatus status = m_interrupted ? ScanStatus::Interrupted : ScanStatus::Succeeded;
-    m_writer->updateScanStatus(m_recordId, status);
+    if (m_recordId >= 0) {
+      m_writer->finalizeScan(m_recordId, status, static_cast<int64_t>(m_processedCount));
+    }
     m_statusCallback(status, m_processedCount);
   }
 
   void fail() {
-    m_writer->updateScanStatus(m_recordId, ScanStatus::Failed);
+    if (m_recordId >= 0) {
+      m_writer->finalizeScan(m_recordId, ScanStatus::Failed, static_cast<int64_t>(m_processedCount));
+    }
     m_statusCallback(ScanStatus::Failed, m_processedCount);
   }
 

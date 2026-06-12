@@ -24,7 +24,10 @@ figura_compile(
 set(VENDOR_DIR ${CMAKE_SOURCE_DIR}/vendor)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-	set(PLATFORM_SRCS src/important-dir-watcher-linux.cpp)
+	set(PLATFORM_SRCS
+		src/important-dir-watcher-linux.cpp
+		src/background-thread-linux.cpp
+	)
 endif()
 
 # core library used by the file indexer binary and the tests
@@ -34,12 +37,12 @@ add_library(${FILE_INDEXER_CORE} STATIC
 	src/file-indexer-query-engine.cpp
 	src/file-indexer-query-policy.cpp
 	src/db-writer.cpp
-	src/writer-worker.cpp
 	src/scan-dispatcher.cpp
 	src/indexer-scanner.cpp
 	src/incremental-scanner.cpp
 	src/filesystem-walker.cpp
 	src/entry-filter.cpp
+	src/io-pacer.cpp
 	src/relevancy-scorer.cpp
 	src/home-directory-watcher.cpp
 	${PLATFORM_SRCS}

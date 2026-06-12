@@ -61,9 +61,8 @@ public:
 
   int enqueue(const Scan &scan);
 
-  // Coalesces identical scan requests: the scan starts once no equal request
-  // has been made for DEBOUNCE_QUIET, or at most DEBOUNCE_MAX_DELAY after the
-  // first one.
+  // coalesces identical requests: starts after DEBOUNCE_QUIET of silence, at
+  // most DEBOUNCE_MAX_DELAY after the first request
   void enqueueDebounced(const Scan &scan);
 
   bool interrupt(int id);

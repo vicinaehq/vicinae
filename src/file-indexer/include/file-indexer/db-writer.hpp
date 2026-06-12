@@ -11,6 +11,7 @@
 #include <thread>
 #include <vector>
 #include "file-indexer/file-indexer-db.hpp"
+#include "file-indexer/io-pacer.hpp"
 
 class DbWriter {
 public:
@@ -32,10 +33,14 @@ private:
 
   std::atomic<bool> m_active = true;
   std::atomic<bool> m_vocabRebuildQueued = false;
+
   std::condition_variable m_updateSignal;
   std::condition_variable m_notFull;
 
   std::unique_ptr<FileIndexerDatabase> m_db;
+
+  // pausing the writer propagates to every producer through the bounded queue
+  file_indexer::IoPacer m_pacer{"/proc/pressure/io", 1};
 
   std::thread m_workerThread;
 
@@ -51,6 +56,7 @@ public:
 
   // Utility functions
   void updateScanStatus(int scanId, ScanStatus status);
+  void finalizeScan(int scanId, ScanStatus status, int64_t indexedFileCount);
 
   void setScanError(int scanId, const std::string &error);
   std::expected<FileIndexerDatabase::ScanRecord, std::string> createScan(const std::filesystem::path &path,

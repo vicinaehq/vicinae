@@ -52,10 +52,10 @@ std::optional<int64_t> FileIndexerDatabase::ensureDirectory(const std::filesyste
 
   auto stmt = m_db.prepare(R"(
     INSERT INTO
-      indexed_file (path, parent_id, last_modified_at)
+      indexed_file (path, parent_id, last_modified_at, type)
     VALUES
-      (:path, :parent_id, :last_modified_at)
-    ON CONFLICT (path) DO UPDATE SET parent_id = excluded.parent_id
+      (:path, :parent_id, :last_modified_at, 1)
+    ON CONFLICT (path) DO UPDATE SET parent_id = excluded.parent_id, type = 1
     RETURNING id
   )");
 
@@ -116,13 +116,29 @@ void FileIndexerDatabase::init() {
 }
 
 bool FileIndexerDatabase::setScanError(int scanId, const std::string &error) {
-  auto stmt = m_db.prepare("UPDATE scan_history SET status = :status, error = :error WHERE id = :id");
+  auto stmt = m_db.prepare("UPDATE scan_history SET status = :status, error = :error, "
+                           "finished_at = unixepoch() WHERE id = :id");
   stmt.bind(":id", scanId);
   stmt.bind(":status", static_cast<int>(ScanStatus::Failed));
   stmt.bind(":error", error);
 
   if (!stmt.exec()) {
     flog::warn() << "Failed to update scan status" << stmt.lastError();
+    return false;
+  }
+
+  return true;
+}
+
+bool FileIndexerDatabase::finalizeScan(int scanId, ScanStatus status, int64_t indexedFileCount) {
+  auto stmt = m_db.prepare("UPDATE scan_history SET status = :status, finished_at = unixepoch(), "
+                           "indexed_file_count = :count WHERE id = :id");
+  stmt.bind(":id", scanId);
+  stmt.bind(":status", static_cast<int>(status));
+  stmt.bind(":count", indexedFileCount);
+
+  if (!stmt.exec()) {
+    flog::warn() << "Failed to finalize scan" << stmt.lastError();
     return false;
   }
 
@@ -173,13 +189,15 @@ FileIndexerDatabase::ScanRecord FileIndexerDatabase::mapScan(const db::Statement
   record.createdAt = static_cast<int64_t>(stmt.columnUInt64(2));
   record.path = stmt.columnText(3);
   record.type = static_cast<ScanType>(stmt.columnInt(4));
+  record.finishedAt = stmt.columnInt64(5); // NULL reads as 0: still running
+  record.indexedFileCount = stmt.columnInt64(6);
 
   return record;
 }
 
 std::optional<FileIndexerDatabase::ScanRecord>
 FileIndexerDatabase::getLastSuccessfulScan(const std::filesystem::path &path) const {
-  auto stmt = m_db.prepare("SELECT id, status, created_at, entrypoint, type "
+  auto stmt = m_db.prepare("SELECT id, status, created_at, entrypoint, type, finished_at, indexed_file_count "
                            "FROM scan_history "
                            "WHERE type in (:type1, :type2) "
                            "AND status = :status "
@@ -199,7 +217,7 @@ FileIndexerDatabase::getLastSuccessfulScan(const std::filesystem::path &path) co
 
 std::optional<FileIndexerDatabase::ScanRecord>
 FileIndexerDatabase::getLastScan(const std::filesystem::path &path, ScanType scanType) const {
-  auto stmt = m_db.prepare("SELECT id, status, created_at, entrypoint, type "
+  auto stmt = m_db.prepare("SELECT id, status, created_at, entrypoint, type, finished_at, indexed_file_count "
                            "FROM scan_history "
                            "WHERE type = :type "
                            "AND entrypoint = :entrypoint "
@@ -215,7 +233,8 @@ FileIndexerDatabase::getLastScan(const std::filesystem::path &path, ScanType sca
 }
 
 std::vector<FileIndexerDatabase::ScanRecord> FileIndexerDatabase::listScans() {
-  auto stmt = m_db.prepare("SELECT id, status, created_at, entrypoint, type FROM scan_history");
+  auto stmt = m_db.prepare(
+      "SELECT id, status, created_at, entrypoint, type, finished_at, indexed_file_count FROM scan_history");
 
   std::vector<ScanRecord> records;
   records.reserve(0xF);
@@ -229,7 +248,7 @@ std::vector<FileIndexerDatabase::ScanRecord> FileIndexerDatabase::listScans() {
 
 std::vector<FileIndexerDatabase::ScanRecord> FileIndexerDatabase::listScans(ScanType scanType,
                                                                             ScanStatus scanStatus) {
-  auto stmt = m_db.prepare("SELECT id, status, created_at, entrypoint, type "
+  auto stmt = m_db.prepare("SELECT id, status, created_at, entrypoint, type, finished_at, indexed_file_count "
                            "FROM scan_history WHERE status = :status and type = :type");
   stmt.bind(":status", static_cast<int>(ScanStatus::Started));
   stmt.bind(":type", static_cast<int>(scanType));
@@ -302,8 +321,6 @@ FileIndexerDatabase::searchSkeletonCandidates(std::string_view searchQuery, int 
 
 void FileIndexerDatabase::deleteIndexedFiles(const std::vector<fs::path> &paths) {
   auto tx = m_db.transaction();
-
-  flog::warn() << "Deleting " << paths.size() << " files\n";
 
   auto stmt = m_db.prepare("DELETE FROM indexed_file WHERE path = :path");
   auto subtreeStmt = m_db.prepare("DELETE FROM indexed_file WHERE path >= :lower AND path < :upper");
@@ -434,17 +451,15 @@ FileIndexerDatabase::spellfixSuggestions(std::string_view word, int top, bool pr
 }
 
 void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
-
-  flog::info() << "Indexing " << events.size() << " events\n";
-
   auto tx = m_db.transaction();
 
   auto modifyStmt = m_db.prepare(R"(
     INSERT INTO
-      indexed_file (path, parent_id, last_modified_at)
+      indexed_file (path, parent_id, last_modified_at, type)
     VALUES
-      (:path, :parent_id, :last_modified_at)
-    ON CONFLICT (path) DO UPDATE SET last_modified_at = excluded.last_modified_at, parent_id = excluded.parent_id
+      (:path, :parent_id, :last_modified_at, :type)
+    ON CONFLICT (path) DO UPDATE SET last_modified_at = excluded.last_modified_at,
+      parent_id = excluded.parent_id, type = excluded.type
   )");
 
   auto deleteStmt = m_db.prepare("DELETE FROM indexed_file WHERE path = :path");
@@ -471,6 +486,7 @@ void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
       modifyStmt.bind(":last_modified_at", secondsSinceEpoch);
       modifyStmt.bind(":path", event.path.c_str());
       modifyStmt.bind(":parent_id", resolveParent(event.path));
+      modifyStmt.bind(":type", event.isDirectory ? 1 : 0);
       ok = modifyStmt.exec();
       break;
     }
@@ -498,15 +514,16 @@ void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
 }
 
 void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &paths) {
-  flog::info() << "Indexing " << paths.size() << " files\n";
+  // flog::info() << "Indexing " << paths.size() << " files\n";
   auto tx = m_db.transaction();
 
   auto stmt = m_db.prepare(R"(
     INSERT INTO
-      indexed_file (path, parent_id, last_modified_at)
+      indexed_file (path, parent_id, last_modified_at, type)
     VALUES
-      (:path, :parent_id, :last_modified_at)
-    ON CONFLICT (path) DO UPDATE SET last_modified_at = excluded.last_modified_at, parent_id = excluded.parent_id
+      (:path, :parent_id, :last_modified_at, :type)
+    ON CONFLICT (path) DO UPDATE SET last_modified_at = excluded.last_modified_at,
+      parent_id = excluded.parent_id, type = excluded.type
   )");
 
   std::error_code ec;
@@ -534,6 +551,7 @@ void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &p
 
     stmt.bind(":path", path.c_str());
     stmt.bind(":parent_id", resolveParent(path));
+    stmt.bind(":type", fs::is_directory(path, ec) ? 1 : 0);
 
     if (!stmt.exec()) {
       flog::error() << "Failed to insert file in index" << path.string() << stmt.lastError();
@@ -543,6 +561,22 @@ void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &p
   }
 
   if (!tx.commit()) { flog::error() << "Failed to commit batchIndex" << m_db.lastError(); }
+}
+
+std::vector<fs::path> FileIndexerDatabase::listRecentDirectories(int limit) const {
+  auto stmt = m_db.prepare("SELECT path FROM indexed_file WHERE type = 1 "
+                           "ORDER BY last_modified_at DESC LIMIT :limit");
+  stmt.bind(":limit", limit);
+
+  std::vector<fs::path> dirs;
+
+  dirs.reserve(limit);
+
+  while (stmt.step()) {
+    dirs.emplace_back(stmt.columnText(0));
+  }
+
+  return dirs;
 }
 
 int FileIndexerDatabase::userVersion() {

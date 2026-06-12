@@ -19,7 +19,9 @@ public:
   struct ScanRecord {
     int id;
     ScanStatus status;
-    int64_t createdAt; // unix seconds
+    int64_t createdAt = 0;  // unix seconds
+    int64_t finishedAt = 0; // unix seconds, 0 while the scan is running
+    int64_t indexedFileCount = 0;
     std::filesystem::path path;
     ScanType type;
   };
@@ -39,6 +41,7 @@ public:
   std::vector<ScanRecord> listScans(ScanType scanType, ScanStatus scanStatus);
 
   bool updateScanStatus(int scanId, ScanStatus status);
+  bool finalizeScan(int scanId, ScanStatus status, int64_t indexedFileCount);
   std::expected<ScanRecord, std::string> createScan(const std::filesystem::path &path, ScanType type);
 
   bool setScanError(int scanId, const std::string &error);
@@ -46,6 +49,8 @@ public:
   std::optional<int64_t> retrieveIndexedLastModified(const std::filesystem::path &path) const;
   std::unordered_set<std::filesystem::path>
   listIndexedDirectoryFiles(const std::filesystem::path &path) const;
+
+  std::vector<std::filesystem::path> listRecentDirectories(int limit) const;
 
   struct SpellfixSuggestion {
     std::string word;
@@ -62,8 +67,7 @@ public:
   void deleteIndexedFiles(const std::vector<std::filesystem::path> &paths);
   void indexFiles(const std::vector<std::filesystem::path> &paths);
   std::vector<SearchCandidate> searchCandidates(std::string_view searchQuery, int limit);
-  // same contract as searchCandidates, against the abbreviation-skeleton index;
-  // takes the same query string (the tokenizer skeletonizes queries itself)
+  // same query string as searchCandidates: the tokenizer skeletonizes queries itself
   std::vector<SearchCandidate> searchSkeletonCandidates(std::string_view searchQuery, int limit);
 
   int userVersion();

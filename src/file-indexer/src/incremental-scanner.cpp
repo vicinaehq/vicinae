@@ -1,4 +1,5 @@
 #include "file-indexer/incremental-scanner.hpp"
+#include "file-indexer/background-thread.hpp"
 #include "file-indexer/filesystem-walker.hpp"
 #include "file-indexer/log.hpp"
 #include <chrono>
@@ -10,18 +11,24 @@
 namespace fs = std::filesystem;
 
 void IncrementalScanner::processDirectory(const fs::path &root, const EntryCallback &onEntry) {
+  m_pacer.checkpoint();
+
   auto indexedFiles = m_read_db->listIndexedDirectoryFiles(root);
   std::vector<fs::path> deletedFiles;
+  std::vector<FileEvent> events;
   std::error_code ec;
 
   m_currentEntries.clear();
   m_currentEntries.insert(root);
+  events.emplace_back(FileEventType::Modify, root, fs::last_write_time(root, ec), true);
 
   for (const auto &entry : fs::directory_iterator(root, ec)) {
     if (ec) continue;
     if (!m_filter.shouldVisit(entry)) continue;
 
     m_currentEntries.insert(entry.path());
+    events.emplace_back(FileEventType::Modify, entry.path(), entry.last_write_time(ec),
+                        entry.is_directory(ec));
 
     if (onEntry) { onEntry(entry, !indexedFiles.contains(entry.path())); }
   }
@@ -30,9 +37,11 @@ void IncrementalScanner::processDirectory(const fs::path &root, const EntryCallb
     if (!m_currentEntries.contains(path)) { deletedFiles.emplace_back(path); }
   }
 
+  auto const processedCount = events.size();
+
   m_writer->deleteIndexedFiles(std::move(deletedFiles));
-  m_writer->indexFiles(m_currentEntries | std::ranges::to<std::vector>());
-  reportProgress(m_currentEntries.size());
+  m_writer->indexEvents(std::move(events));
+  reportProgress(processedCount);
 }
 
 std::vector<fs::path>
@@ -88,17 +97,34 @@ bool IncrementalScanner::shouldProcessEntry(const fs::directory_entry &entry, in
 }
 
 void IncrementalScanner::exhaustiveScan(const Scan &scan) {
+  std::deque<fs::path> newDirs;
+  std::unordered_set<fs::path> processed;
+  std::error_code ec;
+
+  auto collectNewDirs = [&](const fs::directory_entry &entry, bool isNew) {
+    if (isNew && entry.is_directory(ec)) { newDirs.emplace_back(entry.path()); }
+  };
+
   for (const auto &dir : getScannableDirectories(scan.path, scan.maxDepth, scan.excludedPaths)) {
     if (isInterrupted()) break;
-    processDirectory(dir);
+    processed.insert(dir);
+    processDirectory(dir, collectNewDirs);
+  }
+
+  // new directories are fully descended past the depth cap: timestamp-preserving
+  // extractions (tar -xp, rsync -a) are only ever reached through this
+  while (!newDirs.empty() && !isInterrupted()) {
+    auto dir = std::move(newDirs.front());
+    newDirs.pop_front();
+
+    if (!processed.insert(dir).second) continue;
+    processDirectory(dir, collectNewDirs);
   }
 }
 
 void IncrementalScanner::prunedScan(const Scan &scan) {
-  // most scanned paths never have their own scan record, but a successful scan
-  // of an ancestor (typically the entrypoint's full scan) covered this subtree:
-  // its timestamp is a valid cutoff. Without it the cutoff degrades to 0 and
-  // first contact descends the entire subtree.
+  // a successful ancestor scan covered this subtree, so its timestamp is a valid
+  // cutoff; without it first contact would descend everything
   int64_t cutOffSeconds = 0;
 
   for (fs::path path = scan.path;; path = path.parent_path()) {
@@ -144,6 +170,7 @@ IncrementalScanner::IncrementalScanner(std::shared_ptr<DbWriter> writer, const S
                                        StatusCallback callback)
     : AbstractScanner(std::move(writer), sc, std::move(callback)) {
   m_scanThread = std::thread([this, sc]() {
+    file_indexer::setBackgroundThreadPriority();
     m_read_db = std::make_unique<FileIndexerDatabase>();
     start(sc);
 

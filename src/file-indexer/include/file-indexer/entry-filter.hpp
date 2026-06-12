@@ -14,12 +14,7 @@ public:
   GitIgnoreReader(const std::filesystem::path &path);
 };
 
-/**
- * Decides whether a directory entry should be indexed or descended into.
- * Shared by every component that traverses the filesystem so that all of them
- * apply the same exclusion policy (hardcoded exclusions, ignore files,
- * configured excluded paths...).
- */
+// Single exclusion policy for every component that traverses the filesystem.
 class EntryFilter {
 public:
   void setExcludedPaths(std::vector<std::filesystem::path> paths);

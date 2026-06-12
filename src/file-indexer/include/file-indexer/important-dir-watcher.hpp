@@ -5,13 +5,9 @@
 #include <vector>
 
 /**
- * Watches a platform-defined set of "important" directories for structural
- * changes (entries created, deleted or renamed). Each platform implementation
- * owns both the heuristics (which directories matter) and the mechanism used
- * to watch them.
- *
- * This is a best-effort change feed: events may be dropped or coalesced.
- * Periodic incremental scans remain the source of truth for the index.
+ * Best-effort structural change feed over a platform-defined set of important
+ * directories: events may be dropped or coalesced, periodic scans remain the
+ * source of truth. Each platform owns both heuristics and mechanism.
  */
 class ImportantDirectoryWatcher {
 public:
@@ -19,8 +15,7 @@ public:
     enum class Kind {
       // the direct contents of `dir` changed
       DirectoryChanged,
-      // the watcher lost track of some events (e.g. queue overflow), callers
-      // should rescan whatever they care about
+      // lost events (e.g. queue overflow): rescan whatever you care about
       Degraded
     };
 
@@ -32,7 +27,15 @@ public:
 
   virtual ~ImportantDirectoryWatcher() = default;
 
+  // the heuristic root set: what periodic sweeps should cover
+  virtual std::vector<std::filesystem::path> rootDirectories() const = 0;
+
+  // every currently watched directory (roots + bounded-depth descendants)
   virtual std::vector<std::filesystem::path> watchedDirectories() const = 0;
+
+  // replaces the dynamic watch tier; already-watched paths are ignored, absent
+  // ones are unwatched. Shares the budget with the static set.
+  virtual void setDynamicDirectories(const std::vector<std::filesystem::path> &dirs) = 0;
 
   // The callback is invoked from the watcher's own thread.
   static std::unique_ptr<ImportantDirectoryWatcher> create(Callback cb);

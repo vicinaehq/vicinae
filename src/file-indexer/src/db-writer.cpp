@@ -1,8 +1,11 @@
 #include "file-indexer/db-writer.hpp"
+#include "file-indexer/background-thread.hpp"
 #include "file-indexer/file-indexer-db.hpp"
+#include "file-indexer/log.hpp"
 #include <future>
 
 void DbWriter::listen() {
+  file_indexer::setBackgroundThreadPriority();
   m_db = std::make_unique<FileIndexerDatabase>();
 
   while (true) {
@@ -15,6 +18,7 @@ void DbWriter::listen() {
     m_queue.pop();
     lock.unlock();
 
+    m_pacer.checkpoint();
     work.work(*m_db);
 
     if (work.bounded) {
@@ -54,6 +58,12 @@ DbWriter::~DbWriter() {
 
 void DbWriter::setScanError(int scanId, const std::string &error) {
   submit([scanId, error = std::move(error)](FileIndexerDatabase &db) { db.setScanError(scanId, error); });
+}
+
+void DbWriter::finalizeScan(int scanId, ScanStatus status, int64_t indexedFileCount) {
+  submit([scanId, status, indexedFileCount](FileIndexerDatabase &db) {
+    db.finalizeScan(scanId, status, indexedFileCount);
+  });
 }
 
 void DbWriter::updateScanStatus(int scanId, ScanStatus status) {

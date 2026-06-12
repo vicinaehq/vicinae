@@ -13,22 +13,18 @@ void FileIndexer::startFullScan() {
   std::thread([this]() {
     flog::info() << "Starting full scan, clearing existing index...";
 
-    // Delete all indexed files, then enqueue new scans in the completion callback
+    // no VACUUM here: the freed pages are about to be reused by the rescan
     m_writer->deleteAllIndexedFiles([this]() {
-      flog::info() << "Existing index cleared, compacting database...";
+      flog::info() << "Existing index cleared, enqueuing full scan tasks...";
 
-      m_writer->compact([this]() {
-        flog::info() << "Database compacted, enqueuing full scan tasks...";
-
-        for (const auto &entrypoint : m_entrypoints) {
-          flog::info() << "Enqueuing full scan for" << entrypoint.c_str();
-          // For now we don't exclude filenames during full scans, though this might change in the future.
-          // The reason being that we still want to know where the db file is (current use case), just not
-          // watch it. May want to split the list in two later (scan vs watch).
-          m_dispatcher.enqueue(
-              {.type = ScanType::Full, .path = entrypoint, .excludedPaths = m_excludedPaths, .notify = true});
-        }
-      });
+      for (const auto &entrypoint : m_entrypoints) {
+        flog::info() << "Enqueuing full scan for" << entrypoint.c_str();
+        // For now we don't exclude filenames during full scans, though this might change in the future.
+        // The reason being that we still want to know where the db file is (current use case), just not
+        // watch it. May want to split the list in two later (scan vs watch).
+        m_dispatcher.enqueue(
+            {.type = ScanType::Full, .path = entrypoint, .excludedPaths = m_excludedPaths, .notify = true});
+      }
     });
   }).detach();
 }
@@ -92,9 +88,7 @@ void FileIndexer::start() {
     startSingleScan(entrypoint, ScanType::Incremental);
   }
 
-  // with a full scan in flight, watcher events would only queue expensive
-  // incremental scans behind it for content the scan covers anyway: wait for
-  // it to succeed (the event callback starts the watcher then)
+  // otherwise the event callback starts the watcher once the full scan succeeds
   if (!needsFullScan) { startHomeWatcher(); }
 }
 

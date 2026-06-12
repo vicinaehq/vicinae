@@ -36,9 +36,7 @@ public:
 
   void startHomeWatcher();
 
-  // Rebuilding the vocabulary scans the entire index (~seconds on large ones), so we
-  // don't redo it for every scan the watcher triggers. Slight staleness is harmless:
-  // the strict query path doesn't use the vocabulary at all.
+  // rebuilds scan the entire index: don't redo it for every watcher-triggered scan
   static constexpr std::chrono::minutes VOCAB_REBUILD_MIN_INTERVAL{10};
   std::mutex m_vocabRebuildMtx;
   std::chrono::steady_clock::time_point m_lastVocabRebuild{};

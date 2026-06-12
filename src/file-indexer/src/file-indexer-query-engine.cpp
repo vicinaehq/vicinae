@@ -1,5 +1,6 @@
 #include "file-indexer/file-indexer-query-engine.hpp"
 #include "file-indexer/log.hpp"
+#include "file-indexer/vocabulary.hpp"
 #include "fuzzy/fzf.hpp"
 #include "fuzzy/scored.hpp"
 #include <algorithm>
@@ -19,18 +20,16 @@ using namespace file_indexer::query;
 using SC = FileIndexerDatabase::SearchCandidate;
 using Scorer = std::function<int(const SC &)>;
 
-constexpr size_t BATCH_SIZE = 500;
-constexpr int FZF_CUTOFF = 0;
-constexpr int CANDIDATE_LIMIT = 10000;
-constexpr int SUGGESTION_FETCH_COUNT = 20;
-constexpr size_t MAX_CORRECTIONS_PER_WORD = 3;
-constexpr size_t MIN_CORRECTABLE_WORD_LENGTH = 3;
+constexpr const auto SCORING_BATCH_SIZE = 500;
+constexpr const auto FZF_CUTOFF = 0;
+constexpr const auto CANDIDATE_LIMIT = 10000;
+constexpr const auto SUGGESTION_FETCH_COUNT = 20;
+constexpr const auto MAX_CORRECTIONS_PER_WORD = 3;
+constexpr const auto MIN_CORRECTABLE_WORD_LENGTH = 3;
 
 int scoreCandidate(const SC &candidate, std::string_view query) {
   const auto &ranker = fzf::threadLocalMatcher();
-  // keep the filename alive for the duration of the call: path.filename() is a
-  // temporary and WeightedString only holds a view into it
-  std::string const filename = candidate.path.filename().string();
+  auto filename = file_indexer::vocab::basenameView(candidate.path.c_str());
   std::initializer_list<fzf::WeightedString> strs = {{filename, 1}, {candidate.path.c_str(), 0.7}};
   return ranker.fuzzy_match_v2_score_query(strs, query);
 }
@@ -73,9 +72,9 @@ int scoreCandidate(const SC &candidate, std::span<const QueryWord> words) {
 }
 
 std::vector<ScoredRef<SC>> scoreCandidatesParallel(std::span<const SC> candidates, const Scorer &scorer) {
-  size_t const threadCount = std::min<size_t>((candidates.size() + BATCH_SIZE - 1) / BATCH_SIZE,
-                                              std::max(1u, std::thread::hardware_concurrency()));
-  // chunks must cover all candidates, even when there are more than threadCount * BATCH_SIZE
+  size_t const threadCount =
+      std::min<size_t>((candidates.size() + SCORING_BATCH_SIZE - 1) / SCORING_BATCH_SIZE,
+                       std::max(1u, std::thread::hardware_concurrency()));
   size_t const chunkSize = (candidates.size() + threadCount - 1) / threadCount;
   std::vector<Scored<const SC *>> ranked;
 
@@ -120,7 +119,7 @@ std::vector<ScoredRef<SC>> scoreCandidatesParallel(std::span<const SC> candidate
 
 std::vector<ScoredRef<SC>> scoreCandidates(std::span<const SC> candidates, const Scorer &scorer) {
   // if number of candidates is small, don't bother with multithreading
-  if (candidates.size() < BATCH_SIZE) {
+  if (candidates.size() < SCORING_BATCH_SIZE) {
     std::vector<ScoredRef<SC>> ranked;
 
     ranked.reserve(candidates.size());
@@ -207,12 +206,8 @@ std::vector<IndexerFileResult> FileIndexerQueryEngine::query(std::string_view q,
 
   auto candidates = db.searchCandidates(dbQuery, CANDIDATE_LIMIT);
 
-  // merge in abbreviation-skeleton matches ('dwnlds', 'kmap') and let the reranker
-  // arbitrate: a literal match isn't necessarily the intended one (kmap can name a
-  // real file while the user wants keymap.c). The same query string works against
-  // both indexes: the skeleton tokenizer transforms queries itself. Skipped when the
-  // strict query already saturated the cap: the query is too broad for expansions to
-  // rank anyway.
+  // skeleton matches merge into the candidate set and the reranker arbitrates;
+  // skipped when the strict query already saturated the cap
   if (candidates.size() < static_cast<size_t>(CANDIDATE_LIMIT)) {
     auto seen = candidates |
                 std::views::transform([](const SC &candidate) { return candidate.path.native(); }) |
@@ -230,16 +225,13 @@ std::vector<IndexerFileResult> FileIndexerQueryEngine::query(std::string_view q,
   if (!candidates.empty()) {
     auto scorer = [&](const SC &candidate) { return scoreCandidate(candidate, q); };
 
-    // skeleton collisions that aren't subsequences of the query all score 0: an
-    // empty ranking means the candidates were noise, keep falling back
+    // an empty ranking means the candidates were noise: keep falling back
     if (auto results = rankCandidates(std::move(candidates), scorer, limit); !results.empty()) {
       return results;
     }
   }
 
-  // attempt spellfix typo corrections. If even that returns nothing, stop trusting
-  // vocabulary words: a word can be a real token AND a typo of another word at the
-  // same time, and an empty conjunction is proof the trust was misplaced.
+  // attempt spellfix, trusting vocab words
   if (auto results = queryWithCorrections(db, q, limit, true); !results.empty()) { return results; }
 
   return queryWithCorrections(db, q, limit, false);

@@ -11,11 +11,8 @@ inline constexpr size_t MIN_TOKEN_LENGTH = 3;
 inline constexpr size_t MAX_TOKEN_LENGTH = 24;
 inline constexpr size_t MIN_HEX_JUNK_LENGTH = 12;
 
-/**
- * Machine-generated tokens (hashes, ids, minified asset names...) that no human would
- * ever type an approximation of. They make poor correction targets and needlessly
- * bloat the vocabulary. Expects an already-lowercased token.
- */
+// machine-generated tokens (hashes, ids...) make poor correction targets;
+// expects an already-lowercased token
 inline bool isJunkToken(std::string_view token) {
   if (token.size() > MAX_TOKEN_LENGTH) return true;
 

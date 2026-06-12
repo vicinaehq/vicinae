@@ -6,11 +6,9 @@
 enum ScanType { Full, Incremental };
 
 enum class ScanMode {
-  // visit every directory under the scan path (subject to maxDepth)
   Exhaustive,
-  // only descend into directories that are new or were modified since the last
-  // successful scan, recursively. Cheap, but changes deep under unchanged
-  // directories are not discovered.
+  // only descends into new or modified-since-last-scan directories: misses
+  // changes deep under unchanged ancestors
   Pruned
 };
 
@@ -54,4 +52,5 @@ struct FileEvent {
   FileEventType type;
   std::filesystem::path path;
   std::filesystem::file_time_type eventTime;
+  bool isDirectory = false;
 };
