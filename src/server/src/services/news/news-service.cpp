@@ -102,7 +102,7 @@ std::vector<NewsItem> NewsService::allItems() {
       .icon = ImageURL{BuiltinIcon::Megaphone}.setBackgroundTint(SemanticColor::Yellow),
       .actionFactory =
           [](ApplicationContext *) {
-            auto panel = std::make_unique<ActionPanelState>();
+            auto panel = std::make_unique<ListActionPanelState>();
             auto *section = panel->createSection();
 
             auto *openDocs = new OpenInBrowserAction(QUrl(Omnicast::DOC_TELEMETRY_URL), "Learn more");

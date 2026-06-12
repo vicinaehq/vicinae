@@ -20,7 +20,6 @@ Item {
                 placeholder: "Euro symbol"
                 hasError: titleField.error !== ""
                 onTextEdited: root.host.name = text
-                onAccepted: launcher.handleReturn()
             }
         }
 
@@ -54,7 +53,6 @@ Item {
                 hasError: keywordField.error !== ""
                 readOnly: !root.host.serverRunning
                 onTextEdited: root.host.keyword = text
-                onAccepted: launcher.handleReturn()
             }
         }
 

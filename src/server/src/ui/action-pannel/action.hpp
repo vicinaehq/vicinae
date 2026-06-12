@@ -47,9 +47,9 @@ public:
   }
 
   bool isBoundTo(const QKeyEvent *event) {
+    // numpad enter is uniformized with the regular return key
     if (event->key() == Qt::Key_Enter) {
-      qDebug() << "remapping numpad enter to return";
-      return isBoundTo(Keyboard::Shortcut(Qt::Key_Return, event->modifiers() ^= Qt::KeypadModifier));
+      return isBoundTo(Keyboard::Shortcut(Qt::Key_Return, event->modifiers()));
     }
 
     return isBoundTo(Keyboard::Shortcut(event));

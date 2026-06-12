@@ -21,7 +21,6 @@ Item {
                 placeholder: "Username"
                 hasError: authorField.error !== ""
                 onTextEdited: root.host.author = text
-                onAccepted: launcher.handleReturn()
             }
         }
 
@@ -37,7 +36,6 @@ Item {
                 placeholder: "My Extension"
                 hasError: extTitleField.error !== ""
                 onTextEdited: root.host.title = text
-                onAccepted: launcher.handleReturn()
             }
         }
 
@@ -65,7 +63,6 @@ Item {
                 placeholder: "~/code/vicinae-extensions"
                 hasError: locationField.error !== ""
                 onTextEdited: root.host.location = text
-                onAccepted: launcher.handleReturn()
             }
         }
 
@@ -81,7 +78,6 @@ Item {
                 placeholder: "My Wonderful Command"
                 hasError: cmdTitleField.error !== ""
                 onTextEdited: root.host.commandTitle = text
-                onAccepted: launcher.handleReturn()
             }
         }
 
@@ -95,7 +91,6 @@ Item {
                 placeholder: "An helpful subtitle"
                 hasError: subtitleField.error !== ""
                 onTextEdited: root.host.commandSubtitle = text
-                onAccepted: launcher.handleReturn()
             }
         }
 

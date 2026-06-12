@@ -142,7 +142,7 @@ void VicinaeStoreDetailHost::openUrl(const QString &url) {
 QString VicinaeStoreDetailHost::initialNavigationTitle() const { return QStringLiteral("Extension Store"); }
 
 void VicinaeStoreDetailHost::createActions() {
-  auto panel = std::make_unique<FormActionPanelState>();
+  auto panel = std::make_unique<ListActionPanelState>();
   auto main = panel->createSection();
 
   if (!m_isInstalled) {

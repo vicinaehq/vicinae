@@ -104,7 +104,7 @@ QHash<int, QVariant> RootLinkSection::customRoleDefaults() const { return root_s
 
 std::unique_ptr<ActionPanelState> RootLinkSection::actionPanel(int) const {
   if (!m_link) return nullptr;
-  auto panel = std::make_unique<ActionPanelState>();
+  auto panel = std::make_unique<ListActionPanelState>();
   auto *section = panel->createSection();
   auto *open =
       new OpenAppAction(m_link->app, QString("Open in %1").arg(m_link->app->displayName()), {m_link->url});

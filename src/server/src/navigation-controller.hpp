@@ -164,8 +164,6 @@ public:
   QString navigationTitle(const BaseView *caller = nullptr) const;
   void searchPlaceholderText(const QString &text);
 
-  AbstractAction *findBoundAction(const QKeyEvent *event) const;
-
   void setDialog(DialogContentWidget *dialog);
   void confirmAlert(const QString &title, const QString &description, const std::function<void()> &onConfirm);
 

@@ -436,16 +436,6 @@ void NavigationController::executeAction(AbstractAction *action) {
   closeActionPanel();
 }
 
-AbstractAction *NavigationController::findBoundAction(const QKeyEvent *event) const {
-  auto state = topState();
-  if (!state) return nullptr;
-
-  auto *root = state->sender->actionPanelRoot();
-  if (!root) return nullptr;
-
-  return root->findBoundAction(event);
-}
-
 void NavigationController::activateView(const ViewState &state) {
   emit headerVisiblityChanged(state.needsTopBar);
   emit searchVisibilityChanged(state.supportsSearch);

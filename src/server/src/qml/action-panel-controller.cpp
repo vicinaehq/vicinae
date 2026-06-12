@@ -2,6 +2,7 @@
 #include "action-panel-model.hpp"
 #include "internal/keyboard/keyboard.hpp"
 #include "navigation-controller.hpp"
+#include "ui/action-pannel/action.hpp"
 #include "ui/action-pannel/action-list-view.hpp"
 #include "ui/action-pannel/action-panel-state.hpp"
 #include "ui/action-pannel/action-panel-view.hpp"
@@ -171,6 +172,22 @@ bool ActionPanelController::tryShortcut(int key, int modifiers) {
   if (!model) return false;
 
   return model->activateByShortcut(key, modifiers);
+}
+
+bool ActionPanelController::activateBoundAction(const QKeyEvent *event) {
+  auto *root = activeRoot();
+  if (!root) return false;
+
+  auto *action = root->findBoundAction(event);
+  if (!action) return false;
+
+  if (auto *submenu = dynamic_cast<SubmenuAction *>(action)) {
+    openSubmenu(submenu);
+  } else {
+    executeAction(action);
+  }
+
+  return true;
 }
 
 bool ActionPanelController::executePrimaryAction() {

@@ -34,7 +34,7 @@ Item {
             label: actionPanel.primaryActionTitle
             shortcutTokens: actionPanel.primaryActionShortcutTokens
             highlighted: true
-            onClicked: launcher.handleReturn()
+            onClicked: actionPanel.executePrimaryAction()
         }
 
         Rectangle {

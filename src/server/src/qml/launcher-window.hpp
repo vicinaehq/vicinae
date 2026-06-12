@@ -89,7 +89,6 @@ public:
 
   Q_INVOKABLE void expand();
   Q_INVOKABLE void forwardSearchText(const QString &text);
-  Q_INVOKABLE void handleReturn();
   Q_INVOKABLE bool forwardKey(int key, int modifiers = 0);
   Q_INVOKABLE void handleEscape();
   Q_INVOKABLE void goBack();
