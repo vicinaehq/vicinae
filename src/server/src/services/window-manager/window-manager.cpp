@@ -12,6 +12,9 @@
 #include "x11/x11-window-manager.hpp"
 #include "wayland/wayland.hpp"
 #endif
+#ifdef Q_OS_MACOS
+#include "macos/macos-window-manager.hpp"
+#endif
 
 std::vector<std::unique_ptr<AbstractWindowManager>> WindowManager::createCandidates() {
   // XXX - For all new window managers, it is needed to add it to this vector
@@ -26,6 +29,10 @@ std::vector<std::unique_ptr<AbstractWindowManager>> WindowManager::createCandida
 
   // this implementation is good enough for most standalone wayland compositors
   candidates.emplace_back(std::make_unique<WaylandWindowManager>());
+#endif
+
+#ifdef Q_OS_MACOS
+  candidates.emplace_back(std::make_unique<MacosWindowManager>());
 #endif
 
   return candidates;
