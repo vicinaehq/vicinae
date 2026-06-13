@@ -86,8 +86,10 @@ void ScriptExecutorAction::execute(ApplicationContext *ctx) {
             } else {
               toastService->setToast(line, style);
             }
-            ctx->navigation->setSearchText(title);
-            ctx->navigation->showWindow();
+            if (!ctx->navigation->isWindowOpened()) {
+              ctx->navigation->setSearchText(title);
+              ctx->navigation->showWindow();
+            }
           });
       break;
     case Mode::Terminal: {
@@ -127,8 +129,10 @@ void ScriptExecutorAction::execute(ApplicationContext *ctx) {
 
                        ctx->services->scriptDb()->metadata()->saveRun(id, line.toStdString());
                        emit ctx->services->rootItemManager()->subtitleChanged();
-                       ctx->navigation->setSearchText(title);
-                       ctx->navigation->showWindow();
+                       if (!ctx->navigation->isWindowOpened()) {
+                         ctx->navigation->setSearchText(title);
+                         ctx->navigation->showWindow();
+                       }
                      });
       break;
     default:
