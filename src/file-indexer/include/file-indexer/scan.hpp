@@ -30,7 +30,7 @@ struct Scan {
   std::vector<std::filesystem::path> excludedPaths;
   bool notify = false;
 
-  bool operator==(const Scan &) const = default;
+  bool operator==(const Scan &rhs) const = default;
 
   bool operator<(const Scan &other) const {
     // TODO: Find a proper way to suppport std::set

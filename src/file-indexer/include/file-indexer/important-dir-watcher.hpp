@@ -12,12 +12,7 @@
 class ImportantDirectoryWatcher {
 public:
   struct Event {
-    enum class Kind {
-      // the direct contents of `dir` changed
-      DirectoryChanged,
-      // lost events (e.g. queue overflow): rescan whatever you care about
-      Degraded
-    };
+    enum class Kind { DirectoryChanged, Degraded };
 
     Kind kind;
     std::filesystem::path dir;

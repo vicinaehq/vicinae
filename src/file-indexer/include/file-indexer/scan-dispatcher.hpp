@@ -18,8 +18,8 @@ public:
   using EventCallback = std::function<void(const ScanEvent &)>;
 
 private:
-  static constexpr std::chrono::seconds DEBOUNCE_QUIET{5};
-  static constexpr std::chrono::seconds DEBOUNCE_MAX_DELAY{30};
+  static const constexpr std::chrono::seconds DEBOUNCE_QUIET{5};
+  static const constexpr std::chrono::seconds DEBOUNCE_MAX_DELAY{30};
 
   std::shared_ptr<DbWriter> m_writer;
   EventCallback m_eventCallback;
@@ -27,6 +27,7 @@ private:
   struct Element {
     Scan scan;
     std::unique_ptr<AbstractScanner> scanner;
+    std::chrono::steady_clock::time_point startedAt;
   };
 
   struct Pending {

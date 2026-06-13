@@ -191,9 +191,9 @@ class LinuxImportantDirectoryWatcher : public ImportantDirectoryWatcher {
   }
 
 public:
-  LinuxImportantDirectoryWatcher(Callback cb) : m_cb(std::move(cb)) {
-    m_inFd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
-    m_wakeFd = eventfd(0, EFD_CLOEXEC);
+  LinuxImportantDirectoryWatcher(Callback cb)
+      : m_cb(std::move(cb)), m_inFd(inotify_init1(IN_NONBLOCK | IN_CLOEXEC)),
+        m_wakeFd(eventfd(0, EFD_CLOEXEC)) {
 
     if (m_inFd < 0 || m_wakeFd < 0) {
       flog::error() << "Failed to initialize inotify based directory watcher";

@@ -12,13 +12,6 @@
 #include <ranges>
 #include <utility>
 
-namespace {
-std::string makeScanLog(const Scan &scan) {
-  return std::format("Enqueuing {} scan for {} ({})", scan.type == ScanType::Full ? "full" : "incremental",
-                     scan.path.c_str(), scan.mode == ScanMode::Exhaustive ? "exhaustive" : "pruned");
-}
-} // namespace
-
 void ScanDispatcher::handleFinishedScan(int id, ScanStatus status) {
   {
     std::scoped_lock const l(m_collectorQueueMtx);
@@ -28,7 +21,9 @@ void ScanDispatcher::handleFinishedScan(int id, ScanStatus status) {
 }
 
 int ScanDispatcher::enqueue(const Scan &scan) {
-  flog::info() << makeScanLog(scan);
+  flog::info() << std::format("Enqueuing {} scan for {} ({})",
+                              scan.type == ScanType::Full ? "full" : "incremental", scan.path.c_str(),
+                              scan.mode == ScanMode::Exhaustive ? "exhaustive" : "pruned");
 
   static int idCounter;
 
@@ -48,13 +43,14 @@ int ScanDispatcher::enqueue(const Scan &scan) {
 
   {
     std::scoped_lock const l(m_scannerMapMtx);
+    auto startedAt = std::chrono::steady_clock::now();
 
     switch (scan.type) {
     case ScanType::Full:
-      m_scannerMap[scanId] = {scan, std::make_unique<IndexerScanner>(m_writer, scan, handler)};
+      m_scannerMap[scanId] = {scan, std::make_unique<IndexerScanner>(m_writer, scan, handler), startedAt};
       break;
     case ScanType::Incremental:
-      m_scannerMap[scanId] = {scan, std::make_unique<IncrementalScanner>(m_writer, scan, handler)};
+      m_scannerMap[scanId] = {scan, std::make_unique<IncrementalScanner>(m_writer, scan, handler), startedAt};
       break;
     }
   }
@@ -110,7 +106,6 @@ void ScanDispatcher::schedulerLoop() {
 ScanDispatcher::ScanDispatcher(std::shared_ptr<DbWriter> writer)
     : m_writer(std::move(writer)), m_running(true) {
   m_schedulerThread = std::thread([this]() { schedulerLoop(); });
-
   m_collectorThread = std::thread([this]() {
     while (true) {
       {
@@ -132,6 +127,15 @@ ScanDispatcher::ScanDispatcher(std::shared_ptr<DbWriter> writer)
           // Attempted to close the same scanner twice
           continue;
         }
+
+        auto &scan = it->second.scan;
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now() - it->second.startedAt);
+
+        flog::info() << std::format("Done scanning {} in {}ms ({}, {})", scan.path.c_str(), duration,
+                                    scan.type == ScanType::Full ? "full" : "incremental",
+                                    scan.mode == ScanMode::Exhaustive ? "exhaustive" : "pruned");
+
         it->second.scanner->join();
         m_scannerMap.erase(it);
       }
