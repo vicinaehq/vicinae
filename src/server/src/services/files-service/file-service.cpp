@@ -14,8 +14,8 @@ namespace fs = std::filesystem;
 
 AbstractFileIndexer *FileService::indexer() const { return m_indexer.get(); }
 
-QFuture<std::vector<IndexerFileResult>>
-FileService::queryAsync(std::string_view query, const AbstractFileIndexer::QueryParams &params) {
+QFuture<std::vector<IndexerFileResult>> FileService::queryAsync(std::string_view query,
+                                                                const IndexerQueryParams &params) {
   return m_indexer->queryAsync(query, params);
 }
 

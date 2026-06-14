@@ -61,7 +61,7 @@ std::string buildPredicate(std::string_view query) {
 }
 
 std::vector<IndexerFileResult> runQuery(const std::string &query,
-                                        const AbstractFileIndexer::QueryParams &params) {
+                                        const IndexerQueryParams &params) {
   std::vector<IndexerFileResult> results;
   int const candidateLimit = candidateLimitFor(params.pagination);
 

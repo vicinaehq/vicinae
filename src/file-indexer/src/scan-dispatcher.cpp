@@ -130,7 +130,8 @@ ScanDispatcher::ScanDispatcher(std::shared_ptr<DbWriter> writer)
 
         auto &scan = it->second.scan;
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::steady_clock::now() - it->second.startedAt);
+                            std::chrono::steady_clock::now() - it->second.startedAt)
+                            .count();
 
         flog::info() << std::format("Done scanning {} in {}ms ({}, {})", scan.path.c_str(), duration,
                                     scan.type == ScanType::Full ? "full" : "incremental",

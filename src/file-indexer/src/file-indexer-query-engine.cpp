@@ -200,7 +200,8 @@ std::vector<IndexerFileResult> queryWithCorrections(FileIndexerDatabase &db, std
 
 std::vector<IndexerFileResult> FileIndexerQueryEngine::query(std::string_view q, int limit) {
   FileIndexerDatabase db;
-  auto dbQuery = prepareCandidateSearchQuery(q);
+  // auto dbQuery = prepareCandidateSearchQuery(q);
+  auto dbQuery = q;
 
   if (dbQuery.empty()) return {};
 

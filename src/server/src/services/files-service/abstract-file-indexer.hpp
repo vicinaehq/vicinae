@@ -26,16 +26,15 @@ struct IndexerFileResult {
   double rank;
 };
 
+struct IndexerQueryParams {
+  int limit = 100;
+};
+
 struct IndexerAsyncQuery : public QObject {
   Q_OBJECT
 
 signals:
   void finished(const std::vector<IndexerFileResult> &results) const;
-};
-
-struct Pagination {
-  int offset = 0;
-  int limit = 50;
 };
 
 class AbstractFileIndexer : public QObject {
@@ -55,10 +54,6 @@ public:
     bool isTerminal() const { return state != ScanState::Started; }
   };
 
-  struct QueryParams {
-    int limit;
-  };
-
 signals:
   void scanStatusChanged(const AbstractFileIndexer::ScanStatus &status);
 
@@ -67,7 +62,7 @@ public:
   virtual void rebuildIndex() = 0;
   virtual void preferenceValuesChanged(const QJsonObject &preferences) = 0;
   virtual QFuture<std::vector<IndexerFileResult>> queryAsync(std::string_view view,
-                                                             const QueryParams &params = {}) = 0;
+                                                             const IndexerQueryParams &params = {}) = 0;
 
   virtual ~AbstractFileIndexer() = default;
 };

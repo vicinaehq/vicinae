@@ -4,7 +4,6 @@
 #include <QProcess>
 #include <qlogging.h>
 #include <unordered_map>
-#include "common/common.hpp"
 #include "generated/file-indexer-client.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
 
@@ -40,7 +39,7 @@ public:
   void rebuildIndex() override;
   void preferenceValuesChanged(const QJsonObject &preferences) override;
   QFuture<std::vector<IndexerFileResult>> queryAsync(std::string_view view,
-                                                     const QueryParams &params = {}) override;
+                                                     const IndexerQueryParams &params = {}) override;
 
   bool isRunning() const { return m_process.state() == QProcess::ProcessState::Running; }
 

@@ -18,7 +18,7 @@ public:
   void rebuildIndex();
 
   QFuture<std::vector<IndexerFileResult>> queryAsync(std::string_view query,
-                                                     const AbstractFileIndexer::QueryParams &params = {});
+                                                     const IndexerQueryParams &params = {});
 
   std::vector<RecentFile> getRecentlyAccessed() const;
   void saveAccess(const std::filesystem::path &path);

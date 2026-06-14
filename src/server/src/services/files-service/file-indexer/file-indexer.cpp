@@ -5,6 +5,7 @@
 #include <QTimer>
 #include <filesystem>
 #include <utility>
+#include "common/common.hpp"
 #include "rang/rang.hpp"
 
 // FileIndexerBus
@@ -204,7 +205,7 @@ void FileIndexer::preferenceValuesChanged(const QJsonObject &preferences) {
 }
 
 QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view view,
-                                                                const QueryParams &params) {
+                                                                const IndexerQueryParams &params) {
   if (!isRunning()) { return QtFuture::makeReadyValueFuture(std::vector<IndexerFileResult>{}); }
 
   file_indexer_gen::QueryRequest req{std::string{view}, params.limit};
