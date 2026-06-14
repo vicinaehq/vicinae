@@ -36,12 +36,12 @@ QVariant SearchFilesSection::customData(int i, int role) const {
   switch (role) {
   case SectionListModel::FilePath: {
     auto val = QString::fromStdString(m_files[i].string());
-    if (dbgCount++ < 3) qWarning() << "[DRAG] customData FilePathRole i=" << i << "val=" << val;
+    if (dbgCount++ < 3) qDebug() << "[DRAG] customData FilePathRole i=" << i << "val=" << val;
     return val;
   }
   case SectionListModel::FileUrl: {
     auto val = QUrl::fromLocalFile(QString::fromStdString(m_files[i].string())).toString();
-    if (dbgCount++ < 3) qWarning() << "[DRAG] customData FileUrlRole i=" << i << "val=" << val;
+    if (dbgCount++ < 3) qDebug() << "[DRAG] customData FileUrlRole i=" << i << "val=" << val;
     return val;
   }
   default:
@@ -52,7 +52,7 @@ QVariant SearchFilesSection::customData(int i, int role) const {
 QHash<int, QByteArray> SearchFilesSection::customRoleNames() const {
   static int callCount = 0;
   if (callCount++ == 0) {
-    qWarning() << "[DRAG] SearchFilesSection::customRoleNames() called, roles:" << SectionListModel::FilePath << SectionListModel::FileUrl;
+    qDebug() << "[DRAG] SearchFilesSection::customRoleNames() called, roles:" << SectionListModel::FilePath << SectionListModel::FileUrl;
   }
   return {
       {SectionListModel::FilePath, "filePath"},
