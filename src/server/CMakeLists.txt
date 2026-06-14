@@ -573,6 +573,8 @@ set(SRCS
 	src/qml/general-settings-model.cpp
 	src/qml/keybind-settings-model.hpp
 	src/qml/keybind-settings-model.cpp
+	src/qml/settings-sidebar-model.hpp
+	src/qml/settings-sidebar-model.cpp
 	src/qml/extension-settings-model.hpp
 	src/qml/extension-settings-model.cpp
 	src/qml/preference-form-model.hpp

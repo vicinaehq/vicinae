@@ -10,72 +10,36 @@ Item {
     readonly property bool _searching: extSearchField.text.length > 0
     readonly property string _activeKey: _searching ? _selectedKey : settings.currentPage
 
-    readonly property var _allItems: {
-        settings.sidebarExtensions; // re-evaluate when extensions change
-        return settings.filterSidebarItems(extSearchField.text);
-    }
-
-    readonly property var _navItems: {
-        let nav = [];
-        for (let i = 0; i < _allItems.length; i++) {
-            const it = _allItems[i];
-            if (it._kind !== "divider")
-                nav.push({
-                    listIndex: i,
-                    key: it.id,
-                    kind: it._kind
-                });
-        }
-        return nav;
-    }
-
-    function _navIndexOfKey(key) {
-        for (let i = 0; i < _navItems.length; i++) {
-            if (_navItems[i].key === key)
-                return i;
-        }
-        return -1;
-    }
-
     function _activate(key) {
-        const idx = _navIndexOfKey(key);
+        const model = settings.sidebarModel;
+        const idx = model.indexOfKey(key);
         if (idx < 0)
             return;
         const wasSearching = _searching;
-        if (_navItems[idx].kind === "command")
+        if (model.kindAt(idx) === "command")
             settings.selectExtension(key);
         else
             settings.currentPage = key;
         extSearchField.text = "";
         if (wasSearching)
             Qt.callLater(() => {
-                const i = root._navIndexOfKey(settings.currentPage);
+                const i = settings.sidebarModel.indexOfKey(settings.currentPage);
                 if (i >= 0)
-                    navList.positionViewAtIndex(root._navItems[i].listIndex, ListView.Beginning);
+                    navList.positionViewAtIndex(i, ListView.Beginning);
             });
     }
 
     function _move(delta) {
-        if (_navItems.length === 0)
+        const model = settings.sidebarModel;
+        const next = model.stepRow(model.indexOfKey(_activeKey), delta);
+        if (next < 0)
             return;
-        const cur = _navIndexOfKey(_activeKey);
-        const next = cur < 0 ? (delta > 0 ? 0 : _navItems.length - 1) : Math.max(0, Math.min(_navItems.length - 1, cur + delta));
-        const item = _navItems[next];
+        const key = model.keyAt(next);
         if (root._searching)
-            root._selectedKey = item.key;
+            root._selectedKey = key;
         else
-            settings.currentPage = item.key;
-        navList.positionViewAtIndex(item.listIndex, ListView.Contain);
-    }
-
-    // Filter directly; the _navItems binding can be stale inside onTextChanged.
-    function _firstMatchKey(query) {
-        const items = settings.filterSidebarItems(query);
-        for (let i = 0; i < items.length; i++) {
-            if (items[i]._kind !== "divider")
-                return items[i].id;
-        }
-        return "";
+            settings.currentPage = key;
+        navList.positionViewAtIndex(next, ListView.Contain);
     }
 
     ColumnLayout {
@@ -140,7 +104,8 @@ Item {
 
                         onTextChanged: {
                             HoverActivation.reset();
-                            root._selectedKey = text.length > 0 ? root._firstMatchKey(text) : "";
+                            settings.sidebarModel.setQuery(text);
+                            root._selectedKey = text.length > 0 ? settings.sidebarModel.keyAt(settings.sidebarModel.firstSelectableRow()) : "";
                         }
 
                         Keys.onUpPressed: root._move(-1)
@@ -166,7 +131,7 @@ Item {
             bottomMargin: 8
             topMargin: 2
             boundsBehavior: Flickable.StopAtBounds
-            model: root._allItems
+            model: settings.sidebarModel
 
             ScrollBar.vertical: ViciScrollBar {
                 policy: navList.contentHeight > navList.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
@@ -174,26 +139,17 @@ Item {
 
             delegate: Item {
                 id: navItem
-                required property var modelData
-                required property int index
+                required property var model
                 width: navList.width
-                height: modelData._kind === "divider" ? 18 : 32
+                height: navItem.model.kind === "divider" ? 18 : 32
 
-                readonly property string _key: modelData.id ?? ""
-                readonly property bool _isCommand: modelData._kind === "command"
+                readonly property string _key: navItem.model.key
+                readonly property bool _isCommand: navItem.model.kind === "command"
                 readonly property bool _selected: root._activeKey === navItem._key
-                property bool _isEnabled: modelData.enabled !== false
-
-                Connections {
-                    target: settings
-                    function onSidebarItemEnabledChanged(providerId, enabled) {
-                        if (providerId === navItem._key)
-                            navItem._isEnabled = enabled;
-                    }
-                }
+                readonly property bool _enabled: navItem.model.enabled !== false
 
                 ViciDivider {
-                    visible: navItem.modelData._kind === "divider"
+                    visible: navItem.model.kind === "divider"
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.leftMargin: 14
@@ -202,7 +158,7 @@ Item {
                 }
 
                 SourceBlendRect {
-                    visible: navItem.modelData._kind !== "divider"
+                    visible: navItem.model.kind !== "divider"
                     anchors.fill: parent
                     anchors.leftMargin: 6
                     anchors.rightMargin: 6
@@ -227,17 +183,17 @@ Item {
                         anchors.leftMargin: 8 + (navItem._isCommand ? 12 : 0)
                         anchors.rightMargin: 8
                         spacing: 10
+                        opacity: navItem._enabled ? 1.0 : 0.5
 
                         ViciImage {
-                            source: navItem.modelData._kind === "core" ? Img.builtin(navItem.modelData.icon).withFillColor(navItem._selected ? Theme.listItemSelectionFg : Theme.textMuted) : (navItem.modelData.iconSource ?? "")
+                            source: navItem.model.kind === "core" ? Img.builtin(navItem.model.icon).withFillColor(navItem._selected ? Theme.listItemSelectionFg : Theme.textMuted) : navItem.model.iconSource
                             Layout.preferredWidth: navItem._isCommand ? 16 : 18
                             Layout.preferredHeight: navItem._isCommand ? 16 : 18
-                            opacity: navItem._isEnabled ? 1.0 : 0.4
                         }
 
                         Text {
-                            text: navItem.modelData.label ?? ""
-                            color: navItem._selected ? Theme.listItemSelectionFg : navItem._isEnabled ? Theme.foreground : Theme.textMuted
+                            text: navItem.model.label
+                            color: navItem._selected ? Theme.listItemSelectionFg : Theme.foreground
                             font.pointSize: Theme.regularFontSize
                             elide: Text.ElideRight
                             Layout.fillWidth: true
