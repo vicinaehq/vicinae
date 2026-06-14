@@ -148,7 +148,13 @@ IconThemeDatabase::IconThemeList IconThemeDatabase::scan() {
       ini.beginGroup("Icon Theme");
       info.name = ini.value("Name").toString();
       info.hidden = ini.value("Hidden").toString() == "true";
+      // The XDG icon theme spec requires a "Directories" key listing the theme's icon
+      // subdirectories. Cursor themes live under the same search paths but omit it, so its absence
+      // lets us skip them (and other non-icon entries) instead of offering them as icon themes.
+      const bool isIconTheme = ini.contains("Directories");
       ini.endGroup();
+
+      if (!isIconTheme) continue;
 
       if (info.name.isEmpty()) info.name = info.id;
 
