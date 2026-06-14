@@ -15,6 +15,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include "fuzzy/normalize.hpp"
 
 namespace fzf {
 
@@ -147,6 +148,27 @@ public:
 
   Result fuzzy_match_v2(std::string_view text, std::string_view pattern, bool case_sensitive = false,
                         bool with_pos = false) const {
+    if (case_sensitive || (!has_non_ascii(text) && !has_non_ascii(pattern))) {
+      return fuzzy_match_v2_ascii(text, pattern, case_sensitive, with_pos);
+    }
+
+    fold_text(text);
+    const std::string_view ftext{m_fold_text.data(), m_fold_text.size()};
+    const std::string_view fpat = fold_pattern(pattern);
+
+    Result r = fuzzy_match_v2_ascii(ftext, fpat, case_sensitive, with_pos);
+    if (r.matched()) {
+      r.start = m_fold_off[r.start];
+      r.end = m_fold_off[r.end];
+      for (int &p : r.positions) {
+        p = m_fold_off[p];
+      }
+    }
+    return r;
+  }
+
+  Result fuzzy_match_v2_ascii(std::string_view text, std::string_view pattern, bool case_sensitive = false,
+                              bool with_pos = false) const {
     const int M = static_cast<int>(pattern.length());
     const int N = static_cast<int>(text.length());
 
@@ -338,6 +360,62 @@ public:
   }
 
 private:
+  static bool has_non_ascii(std::string_view s) {
+    unsigned char acc = 0;
+    for (const char c : s) {
+      acc |= static_cast<unsigned char>(c);
+    }
+    return (acc & 0x80) != 0;
+  }
+
+  void fold_text(std::string_view text) const {
+    m_fold_text.clear();
+    m_fold_off.clear();
+    m_fold_text.reserve(text.size());
+    m_fold_off.reserve(text.size() + 1);
+
+    size_t i = 0;
+    const size_t n = text.size();
+    while (i < n) {
+      const auto [cp, len] = decodeUtf8(text, i);
+      const char folded = cp < 0x80 ? static_cast<char>(cp) : foldDiacritic(cp);
+      if (folded != 0) {
+        m_fold_text.emplace_back(folded);
+        m_fold_off.emplace_back(static_cast<int>(i));
+      } else {
+        for (int k = 0; k < len; ++k) {
+          m_fold_text.emplace_back(text[i + k]);
+          m_fold_off.emplace_back(static_cast<int>(i + k));
+        }
+      }
+      i += len;
+    }
+    m_fold_off.emplace_back(static_cast<int>(n)); // sentinel for exclusive end remap
+  }
+
+  std::string_view fold_pattern(std::string_view pattern) const {
+    if (!has_non_ascii(pattern)) { return pattern; }
+
+    m_fold_pat.clear();
+    m_fold_pat.reserve(pattern.size());
+
+    size_t i = 0;
+    const size_t n = pattern.size();
+    while (i < n) {
+      const auto [cp, len] = decodeUtf8(pattern, i);
+      const char folded = cp < 0x80 ? static_cast<char>(cp) : foldDiacritic(cp);
+      if (folded != 0) {
+        m_fold_pat.emplace_back(folded);
+      } else {
+        for (int k = 0; k < len; ++k) {
+          m_fold_pat.emplace_back(pattern[i + k]);
+        }
+      }
+      i += len;
+    }
+    return {m_fold_pat.data(), m_fold_pat.size()};
+  }
+
   // Helper: Get character class
   CharClass char_class_of(char c) const {
     if (static_cast<unsigned char>(c) < 128) { return ascii_char_classes_[static_cast<unsigned char>(c)]; }
@@ -456,6 +534,10 @@ private:
   mutable std::vector<char> T; // Normalized text
   mutable std::vector<int> H;  // Score matrix
   mutable std::vector<int> C;  // Consecutive match matrix
+
+  mutable std::vector<char> m_fold_text; // folded text
+  mutable std::vector<int> m_fold_off;   // source byte offset per folded byte (+1 sentinel)
+  mutable std::vector<char> m_fold_pat;  // folded pattern
 };
 
 /**
