@@ -1,6 +1,5 @@
 #include "general-settings-model.hpp"
 #include "config/config.hpp"
-#include "image-url.hpp"
 #include "view-utils.hpp"
 #include "service-registry.hpp"
 #include "theme.hpp"
@@ -10,7 +9,6 @@
 #ifdef Q_OS_LINUX
 #include "internal/icon-theme-db/icon-theme-db.hpp"
 #endif
-#include "services/keybinding/keybinding-service.hpp"
 #include <QGuiApplication>
 #include <QIcon>
 

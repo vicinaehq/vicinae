@@ -38,7 +38,7 @@ Item {
         contentWidth: width
 
         ScrollBar.vertical: ViciScrollBar {
-            policy: contentHeight > height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+            policy: ScrollBar.AsNeeded
         }
 
         ColumnLayout {

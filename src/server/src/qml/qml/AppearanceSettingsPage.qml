@@ -12,7 +12,7 @@ Flickable {
     readonly property var model: settings.generalModel
 
     ScrollBar.vertical: ViciScrollBar {
-        policy: root.contentHeight > root.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+        policy: ScrollBar.AsNeeded
     }
 
     ColumnLayout {
@@ -100,15 +100,6 @@ Flickable {
             }
 
             SettingsRow {
-                label: "Native font rendering"
-                description: "Use platform/fontconfig text rendering for system-consistent text. Disable for Qt distance-field rendering (usually faster). May require reopening Vicinae to fully apply."
-                SettingsToggle {
-                    checked: root.model.nativeTextRendering
-                    onToggled: checked => root.model.nativeTextRendering = checked
-                }
-            }
-
-            SettingsRow {
                 visible: settings.layerShellSupported
                 label: "Use layer shell"
                 description: "Anchor the launcher as a Wayland layer surface (wlr-layer-shell) instead of a regular window. May require reopening Vicinae to fully apply."
@@ -179,6 +170,15 @@ Flickable {
                         if (!editing)
                             root.model.csdShadowSize = text;
                     }
+                }
+            }
+
+            SettingsRow {
+                label: "Native font rendering"
+                description: "Use platform/fontconfig text rendering for system-consistent text. Disable for Qt distance-field rendering (usually faster). May require reopening Vicinae to fully apply."
+                SettingsToggle {
+                    checked: root.model.nativeTextRendering
+                    onToggled: checked => root.model.nativeTextRendering = checked
                 }
             }
         }
