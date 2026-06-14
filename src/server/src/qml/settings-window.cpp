@@ -259,21 +259,6 @@ QVariantList SettingsWindow::filterSidebarItems(const QString &query) const {
 
   auto queryStd = query.toStdString();
 
-  struct ScoredEntry {
-    const SidebarEntry *entry;
-    int score;
-  };
-
-  // Only the empty-query (full list) branch consumes `scored`; the search branch
-  // builds its own ranked tree below.
-  std::vector<ScoredEntry> scored;
-  if (queryStd.empty()) {
-    scored.reserve(all.size());
-    for (const auto &e : all) {
-      scored.push_back({&e, 0});
-    }
-  }
-
   static const auto kEnabled = QStringLiteral("enabled");
 
   auto makeEntry = [&](const SidebarEntry &e) {
@@ -296,18 +281,18 @@ QVariantList SettingsWindow::filterSidebarItems(const QString &query) const {
     bool hasGroups = false;
     bool hasExts = false;
 
-    for (const auto &s : scored) {
-      if (s.entry->kind == kCore)
+    for (const auto &e : all) {
+      if (e.kind == kCore)
         hasCore = true;
-      else if (s.entry->isGroup)
+      else if (e.isGroup)
         hasGroups = true;
       else
         hasExts = true;
     }
 
-    for (const auto &s : scored) {
-      if (s.entry->kind != kCore) break;
-      result.append(makeEntry(*s.entry));
+    for (const auto &e : all) {
+      if (e.kind != kCore) break;
+      result.append(makeEntry(e));
     }
 
     if (hasCore && (hasGroups || hasExts)) {
@@ -316,9 +301,9 @@ QVariantList SettingsWindow::filterSidebarItems(const QString &query) const {
       result.append(div);
     }
 
-    for (const auto &s : scored) {
-      if (!s.entry->isGroup) continue;
-      result.append(makeEntry(*s.entry));
+    for (const auto &e : all) {
+      if (!e.isGroup) continue;
+      result.append(makeEntry(e));
     }
 
     if (hasGroups && hasExts) {
@@ -327,9 +312,9 @@ QVariantList SettingsWindow::filterSidebarItems(const QString &query) const {
       result.append(div);
     }
 
-    for (const auto &s : scored) {
-      if (s.entry->kind != kExt) continue;
-      result.append(makeEntry(*s.entry));
+    for (const auto &e : all) {
+      if (e.kind != kExt) continue;
+      result.append(makeEntry(e));
     }
   } else {
     static const auto kCommand = QStringLiteral("command");

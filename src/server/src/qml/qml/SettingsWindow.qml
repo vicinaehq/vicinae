@@ -4,45 +4,38 @@ import QtQuick.Layouts
 Window {
     id: root
     readonly property var extModel: settings.extensionModel
-    readonly property bool isExtensionPage: settings.currentPage !== "general" && settings.currentPage !== "appearance" && settings.currentPage !== "keybindings" && settings.currentPage !== "advanced" && settings.currentPage !== "about"
-    readonly property string topbarTitle: {
-        if (root.isExtensionPage)
-            return root.extModel.selectedTitle;
-
-        switch (settings.currentPage) {
-        case "general":
-            return "General";
-        case "appearance":
-            return "Appearance";
-        case "keybindings":
-            return "Keybindings";
-        case "advanced":
-            return "Advanced";
-        case "about":
-            return "About";
-        default:
-            return "";
-        }
-    }
-    readonly property var topbarIconSource: {
-        if (root.isExtensionPage)
-            return root.extModel.selectedIconSource;
-
-        switch (settings.currentPage) {
-        case "general":
-            return Img.builtin("cog").withFillColor(Theme.foreground);
-        case "appearance":
-            return Img.builtin("swatch").withFillColor(Theme.foreground);
-        case "keybindings":
-            return Img.builtin("keyboard").withFillColor(Theme.foreground);
-        case "advanced":
-            return Img.builtin("wrench-screwdriver").withFillColor(Theme.foreground);
-        case "about":
-            return Img.builtin("vicinae").withFillColor(Theme.foreground);
-        default:
-            return "";
-        }
-    }
+    // Single source of truth for the built-in (non-extension) pages.
+    readonly property var corePages: ({
+            "general": {
+                "title": "General",
+                "icon": "cog",
+                "page": generalPage
+            },
+            "appearance": {
+                "title": "Appearance",
+                "icon": "swatch",
+                "page": appearancePage
+            },
+            "keybindings": {
+                "title": "Keybindings",
+                "icon": "keyboard",
+                "page": shortcutsPage
+            },
+            "advanced": {
+                "title": "Advanced",
+                "icon": "wrench-screwdriver",
+                "page": advancedPage
+            },
+            "about": {
+                "title": "About",
+                "icon": "vicinae",
+                "page": aboutPage
+            }
+        })
+    readonly property var coreMeta: root.corePages[settings.currentPage] ?? null
+    readonly property bool isExtensionPage: root.coreMeta === null
+    readonly property string topbarTitle: root.isExtensionPage ? root.extModel.selectedTitle : root.coreMeta.title
+    readonly property var topbarIconSource: root.isExtensionPage ? root.extModel.selectedIconSource : Img.builtin(root.coreMeta.icon).withFillColor(Theme.foreground)
 
     width: 980
     height: 680
@@ -186,29 +179,10 @@ Window {
 
                     function _loadPage(page) {
                         active = false;
-                        if (page !== "general" && page !== "appearance" && page !== "keybindings" && page !== "advanced" && page !== "about") {
+                        const meta = root.corePages[page] ?? null;
+                        if (!meta)
                             settings.extensionModel.selectProviderById(page);
-                        }
-                        switch (page) {
-                        case "general":
-                            sourceComponent = generalPage;
-                            break;
-                        case "appearance":
-                            sourceComponent = appearancePage;
-                            break;
-                        case "keybindings":
-                            sourceComponent = shortcutsPage;
-                            break;
-                        case "advanced":
-                            sourceComponent = advancedPage;
-                            break;
-                        case "about":
-                            sourceComponent = aboutPage;
-                            break;
-                        default:
-                            sourceComponent = extensionPage;
-                            break;
-                        }
+                        sourceComponent = meta ? meta.page : extensionPage;
                         active = true;
                     }
 

@@ -12,7 +12,6 @@ Item {
     property string placeholder: ""
     property bool readOnly: false
     property bool hasError: false
-    property bool filled: false
     property bool releaseFocusOnAccept: false
     property alias echoMode: input.echoMode
     readonly property bool editing: input.activeFocus
@@ -32,18 +31,8 @@ Item {
             input.forceActiveFocus();
     }
 
-    SourceBlendRect {
-        anchors.fill: parent
-        visible: root.filled
-        radius: 8
-        opacity: root.readOnly ? 0.5 : 1.0
-        backgroundColor: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
-        color: Config.withAlpha(Theme.secondaryBackground, Config.windowOpacity)
-    }
-
     Rectangle {
         anchors.fill: parent
-        visible: !root.filled
         radius: 8
         color: "transparent"
         border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : input.activeFocus && !root.readOnly ? Theme.inputBorderFocus : Theme.inputBorder, Config.windowOpacity)

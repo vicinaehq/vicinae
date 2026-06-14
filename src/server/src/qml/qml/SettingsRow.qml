@@ -9,14 +9,15 @@ ColumnLayout {
     property string label: ""
     property string description: ""
     property bool showSeparator: true
-    property real hPadding: 16
     property real controlWidth: 200
+
+    readonly property real _hPadding: 16
     default property alias contentData: controlSlot.data
 
     RowLayout {
         Layout.fillWidth: true
-        Layout.leftMargin: root.hPadding
-        Layout.rightMargin: root.hPadding
+        Layout.leftMargin: root._hPadding
+        Layout.rightMargin: root._hPadding
         Layout.topMargin: root.description !== "" ? 11 : 9
         Layout.bottomMargin: root.description !== "" ? 11 : 9
         spacing: 20
@@ -53,7 +54,7 @@ ColumnLayout {
     ViciDivider {
         visible: root.showSeparator
         Layout.fillWidth: true
-        Layout.leftMargin: root.hPadding
-        Layout.rightMargin: root.hPadding
+        Layout.leftMargin: root._hPadding
+        Layout.rightMargin: root._hPadding
     }
 }
