@@ -136,7 +136,7 @@ float RootItemManager::SearchableRootItem::fuzzyScore(std::string_view pattern) 
   std::initializer_list<WS> ss = {{title, 1.0f}, {subtitle, 0.5f}, {alias, 1.0f}};
   auto kws = keywords | std::views::transform([](auto &&kw) { return WS{kw, 0.3f}; });
   float const score =
-      pattern.empty() ? 1 : fzf::threadLocalMatcher().fuzzy_match_v2_score_query(ss, kws, pattern, false);
+      pattern.empty() ? 1 : fzf::threadLocalMatcher().fuzzy_match_v2_score_query(ss, kws, pattern);
 
   if (score == 0) return 0;
 

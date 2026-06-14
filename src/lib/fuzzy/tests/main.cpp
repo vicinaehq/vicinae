@@ -41,8 +41,8 @@ TEST_CASE("fuzzy_match_v2: non-Latin scripts are unaffected by folding") {
       {"Привет мир", "мир"}, {"Москва", "оск"}, {"日本語入力", "本語"}, {"中文搜索", "搜索"}};
 
   for (const auto &[text, pattern] : cases) {
-    const auto folded = m.fuzzy_match_v2(text, pattern, false, true);
-    const auto raw = m.fuzzy_match_v2_ascii(text, pattern, false, true);
+    const auto folded = m.fuzzy_match_v2(text, pattern, true);
+    const auto raw = m.fuzzy_match_v2_ascii(text, pattern, true);
 
     REQUIRE(folded.matched());
     REQUIRE(folded.score == raw.score);
@@ -55,7 +55,7 @@ TEST_CASE("fuzzy_match_v2: non-Latin scripts are unaffected by folding") {
 TEST_CASE("fuzzy_match_v2: match offsets map back to original bytes") {
   const auto &m = fzf::threadLocalMatcher();
   // "Café Bar": C(0) a(1) f(2) é(bytes 3-4) space(5) B(6) a(7) r(8)
-  const auto r = m.fuzzy_match_v2("Café Bar", "bar", false, true);
+  const auto r = m.fuzzy_match_v2("Café Bar", "bar", true);
 
   REQUIRE(r.matched());
   REQUIRE(r.start == 6);

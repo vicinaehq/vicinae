@@ -105,8 +105,7 @@ public:
   template <std::ranges::forward_range R1, std::ranges::forward_range R2>
     requires std::same_as<std::ranges::range_value_t<R1>, WeightedString> &&
              std::same_as<std::ranges::range_value_t<R2>, WeightedString>
-  int fuzzy_match_v2_score_query(R1 &&range1, R2 &&range2, std::string_view query,
-                                 bool case_sensitive = false) const {
+  int fuzzy_match_v2_score_query(R1 &&range1, R2 &&range2, std::string_view query) const {
     int globalScore = 0;
     int globalCount = 0;
     auto words = std::views::split(query, std::string_view{" "}) |
@@ -115,7 +114,7 @@ public:
 
     for (auto word : words) {
       auto scorer = [&](const WeightedString &str) {
-        return static_cast<int>(fuzzy_match_v2(str.str, word, case_sensitive, false).score * str.weight);
+        return static_cast<int>(fuzzy_match_v2(str.str, word).score * str.weight);
       };
       int maxScore = 0;
       for (const auto &s : range1)
@@ -134,29 +133,26 @@ public:
 
   template <std::ranges::forward_range R>
     requires std::same_as<std::ranges::range_value_t<R>, WeightedString>
-  int fuzzy_match_v2_score_query(R &&weightedStrs, std::string_view query,
-                                 bool case_sensitive = false) const {
-    return fuzzy_match_v2_score_query(std::forward<R>(weightedStrs), std::views::empty<WeightedString>, query,
-                                      case_sensitive);
+  int fuzzy_match_v2_score_query(R &&weightedStrs, std::string_view query) const {
+    return fuzzy_match_v2_score_query(std::forward<R>(weightedStrs), std::views::empty<WeightedString>,
+                                      query);
   }
 
-  int fuzzy_match_v2_score_query(std::string_view text, std::string_view query,
-                                 bool case_sensitive = false) const {
+  int fuzzy_match_v2_score_query(std::string_view text, std::string_view query) const {
     std::initializer_list<WeightedString> lst{{text, 1.0f}};
-    return fuzzy_match_v2_score_query(std::views::all(lst), query, case_sensitive);
+    return fuzzy_match_v2_score_query(std::views::all(lst), query);
   }
 
-  Result fuzzy_match_v2(std::string_view text, std::string_view pattern, bool case_sensitive = false,
-                        bool with_pos = false) const {
-    if (case_sensitive || (!has_non_ascii(text) && !has_non_ascii(pattern))) {
-      return fuzzy_match_v2_ascii(text, pattern, case_sensitive, with_pos);
+  Result fuzzy_match_v2(std::string_view text, std::string_view pattern, bool with_pos = false) const {
+    if (!has_non_ascii(text) && !has_non_ascii(pattern)) {
+      return fuzzy_match_v2_ascii(text, pattern, with_pos);
     }
 
     fold_text(text);
     const std::string_view ftext{m_fold_text.data(), m_fold_text.size()};
     const std::string_view fpat = fold_pattern(pattern);
 
-    Result r = fuzzy_match_v2_ascii(ftext, fpat, case_sensitive, with_pos);
+    Result r = fuzzy_match_v2_ascii(ftext, fpat, with_pos);
     if (r.matched()) {
       r.start = m_fold_off[r.start];
       r.end = m_fold_off[r.end];
@@ -167,8 +163,7 @@ public:
     return r;
   }
 
-  Result fuzzy_match_v2_ascii(std::string_view text, std::string_view pattern, bool case_sensitive = false,
-                              bool with_pos = false) const {
+  Result fuzzy_match_v2_ascii(std::string_view text, std::string_view pattern, bool with_pos = false) const {
     const int M = static_cast<int>(pattern.length());
     const int N = static_cast<int>(text.length());
 
@@ -176,7 +171,7 @@ public:
     if (M > N) { return Result{}; }
 
     // Phase 1: Find search boundaries
-    auto [min_idx, max_idx] = ascii_fuzzy_index(text, pattern, case_sensitive);
+    auto [min_idx, max_idx] = ascii_fuzzy_index(text, pattern);
     if (min_idx < 0) { return Result{}; }
 
     const int search_len = max_idx - min_idx;
@@ -200,7 +195,7 @@ public:
 
     for (int off = 0; off < search_len; ++off) {
       char c = text[min_idx + off];
-      T[off] = case_sensitive ? c : std::tolower(static_cast<unsigned char>(c));
+      T[off] = std::tolower(static_cast<unsigned char>(c));
 
       CharClass cls = char_class_of(c);
       int bonus = bonus_matrix_[static_cast<int>(prev_class)][static_cast<int>(cls)];
@@ -455,8 +450,7 @@ private:
   }
 
   // ASCII fast path to find pattern boundaries
-  std::pair<int, int> ascii_fuzzy_index(std::string_view text, std::string_view pattern,
-                                        bool case_sensitive) const {
+  std::pair<int, int> ascii_fuzzy_index(std::string_view text, std::string_view pattern) const {
     if (pattern.empty()) return {0, static_cast<int>(text.length())};
 
     int first_idx = 0;
@@ -468,22 +462,10 @@ private:
       char p_lower = std::tolower(static_cast<unsigned char>(p));
       char p_upper = std::toupper(static_cast<unsigned char>(p));
 
-      // Find next occurrence
-      size_t found = std::string_view::npos;
-      if (case_sensitive) {
-        found = text.find(p, idx);
-      } else {
-        // Search for both cases
-        size_t lower_pos = text.find(p_lower, idx);
-        size_t upper_pos = text.find(p_upper, idx);
-        if (lower_pos != std::string_view::npos && upper_pos != std::string_view::npos) {
-          found = std::min(lower_pos, upper_pos);
-        } else if (lower_pos != std::string_view::npos) {
-          found = lower_pos;
-        } else {
-          found = upper_pos;
-        }
-      }
+      // Find next occurrence in either case
+      size_t lower_pos = text.find(p_lower, idx);
+      size_t upper_pos = text.find(p_upper, idx);
+      size_t found = std::min(lower_pos, upper_pos);
 
       if (found == std::string_view::npos) { return {-1, -1}; }
 
@@ -493,15 +475,12 @@ private:
     }
 
     // Find last occurrence of last character
-    char last_char = pattern.back();
-    char last_lower = std::tolower(static_cast<unsigned char>(last_char));
-    char last_upper = std::toupper(static_cast<unsigned char>(last_char));
+    char last_lower = std::tolower(static_cast<unsigned char>(pattern.back()));
+    char last_upper = std::toupper(static_cast<unsigned char>(pattern.back()));
 
     for (int i = static_cast<int>(text.length()) - 1; i > last_idx; --i) {
       char c = text[i];
-      if (c == last_char || (!case_sensitive && (c == last_lower || c == last_upper))) {
-        return {first_idx, i + 1};
-      }
+      if (c == last_lower || c == last_upper) { return {first_idx, i + 1}; }
     }
 
     return {first_idx, last_idx + 1};
