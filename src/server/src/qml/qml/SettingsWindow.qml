@@ -40,15 +40,16 @@ Window {
         }
     }
 
-    width: 860
-    height: 540
-    minimumWidth: 860
-    minimumHeight: 540
-    maximumWidth: 860
-    maximumHeight: 540
+    width: 980
+    height: 680
+    minimumWidth: 980
+    minimumHeight: 680
+    maximumWidth: 980
+    maximumHeight: 680
     visible: true
     color: "transparent"
-    flags: Qt.FramelessWindowHint | Qt.Window
+    // Server-side decorations: the compositor / OS owns the frame.
+    flags: Qt.Window
     title: "Vicinae Settings"
 
     BackgroundEffect.enabled: Config.blurEnabled
@@ -57,7 +58,6 @@ Window {
     Rectangle {
         id: background
         anchors.fill: parent
-        radius: 10
         Keys.onEscapePressed: settings.close()
         color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
         clip: true
@@ -81,28 +81,21 @@ Window {
                 Layout.fillHeight: true
                 spacing: 0
 
-                // Header with page metadata and close button
                 Item {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 40
-
-                    MouseArea {
-                        anchors.fill: parent
-                        acceptedButtons: Qt.LeftButton
-                        onPressed: root.startSystemMove()
-                    }
+                    Layout.preferredHeight: 44
 
                     RowLayout {
                         anchors.fill: parent
-                        anchors.leftMargin: 20
-                        anchors.rightMargin: 12
-                        spacing: 10
+                        anchors.leftMargin: 24
+                        anchors.rightMargin: 16
+                        spacing: 12
 
                         ViciImage {
                             visible: root.topbarIconSource !== ""
                             source: root.topbarIconSource
-                            Layout.preferredWidth: 20
-                            Layout.preferredHeight: 20
+                            Layout.preferredWidth: 22
+                            Layout.preferredHeight: 22
                             Layout.alignment: Qt.AlignVCenter
                         }
 
@@ -110,11 +103,50 @@ Window {
                             visible: root.topbarTitle !== ""
                             text: root.topbarTitle
                             color: Theme.foreground
-                            font.pointSize: Theme.regularFontSize
+                            font.pointSize: Theme.regularFontSize + 1
                             font.bold: true
                             elide: Text.ElideRight
-                            Layout.fillWidth: true
+                            Layout.maximumWidth: root.width * 0.5
                             Layout.alignment: Qt.AlignVCenter
+                        }
+
+                        ViciImage {
+                            id: provenanceIcon
+                            visible: {
+                                const p = root.extModel.selectedProvenance;
+                                return root.isExtensionPage && (p === "Raycast" || p === "Vicinae" || p === "Local");
+                            }
+                            source: {
+                                const p = root.extModel.selectedProvenance;
+                                if (p === "Raycast")
+                                    return Img.builtin("raycast").withFillColor(Theme.toastDanger);
+                                if (p === "Vicinae")
+                                    return Img.builtin("vicinae").withFillColor(Theme.toastWarning);
+                                if (p === "Local")
+                                    return Img.builtin("box").withFillColor(Theme.toastInfo);
+                                return "";
+                            }
+                            Layout.preferredWidth: 16
+                            Layout.preferredHeight: 16
+                            Layout.alignment: Qt.AlignVCenter
+
+                            HoverHandler {
+                                id: provenanceHover
+                            }
+
+                            ViciToolTip {
+                                text: {
+                                    const p = root.extModel.selectedProvenance;
+                                    if (p === "Raycast")
+                                        return "Imported from Raycast";
+                                    if (p === "Vicinae")
+                                        return "From the Vicinae store";
+                                    if (p === "Local")
+                                        return "Locally installed extension";
+                                    return "";
+                                }
+                                visible: provenanceHover.hovered && text !== ""
+                            }
                         }
 
                         Item {
@@ -132,29 +164,6 @@ Window {
                                 visible: parent.visible
                                 checked: root.extModel.selectedEnabled
                                 onToggled: root.extModel.setEnabled(root.extModel.selectedRow, checked)
-                            }
-                        }
-
-                        Rectangle {
-                            id: closeBtn
-                            Layout.alignment: Qt.AlignVCenter
-                            width: 24
-                            height: 24
-                            radius: 12
-                            color: (closeHover.hovered && HoverActivation.active) ? Qt.rgba(Theme.listItemHoverBg.r, Theme.listItemHoverBg.g, Theme.listItemHoverBg.b, Config.windowOpacity) : "transparent"
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: "\u2715"
-                                color: (closeHover.hovered && HoverActivation.active) ? Theme.foreground : Theme.textMuted
-                                font.pixelSize: 12
-                            }
-
-                            HoverHandler {
-                                id: closeHover
-                            }
-                            TapHandler {
-                                onTapped: settings.close()
                             }
                         }
                     }
@@ -206,14 +215,6 @@ Window {
                 }
             }
         }
-    }
-
-    SourceBlendRect {
-        anchors.fill: parent
-        radius: 10
-        overlay: true
-        borderColor: Config.withAlpha(Theme.divider, Config.windowOpacity)
-        borderWidth: 1
     }
 
     Component {

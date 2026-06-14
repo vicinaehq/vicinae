@@ -12,6 +12,8 @@ Item {
     property string placeholder: ""
     property bool readOnly: false
     property bool hasError: false
+    property bool filled: false
+    property bool releaseFocusOnAccept: false
     property alias echoMode: input.echoMode
     readonly property bool editing: input.activeFocus
 
@@ -30,40 +32,53 @@ Item {
             input.forceActiveFocus();
     }
 
-    Rectangle {
-        id: border
+    SourceBlendRect {
         anchors.fill: parent
+        visible: root.filled
+        radius: 8
+        opacity: root.readOnly ? 0.5 : 1.0
+        backgroundColor: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
+        color: Config.withAlpha(Theme.secondaryBackground, Config.windowOpacity)
+    }
+
+    Rectangle {
+        anchors.fill: parent
+        visible: !root.filled
         radius: 8
         color: "transparent"
         border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : input.activeFocus && !root.readOnly ? Theme.inputBorderFocus : Theme.inputBorder, Config.windowOpacity)
         border.width: 1
         opacity: root.readOnly ? 0.5 : 1.0
+    }
 
-        TextInput {
-            id: input
+    TextInput {
+        id: input
+        anchors.fill: parent
+        anchors.leftMargin: 10
+        anchors.rightMargin: 10
+        verticalAlignment: TextInput.AlignVCenter
+        font.pointSize: Theme.regularFontSize
+        color: Theme.foreground
+        selectionColor: Theme.textSelectionBg
+        selectedTextColor: Theme.textSelectionFg
+        readOnly: root.readOnly
+        activeFocusOnTab: !root.readOnly
+        clip: true
+
+        Text {
             anchors.fill: parent
-            anchors.leftMargin: 10
-            anchors.rightMargin: 10
-            verticalAlignment: TextInput.AlignVCenter
-            font.pointSize: Theme.regularFontSize
-            color: Theme.foreground
-            selectionColor: Theme.textSelectionBg
-            selectedTextColor: Theme.textSelectionFg
-            readOnly: root.readOnly
-            activeFocusOnTab: !root.readOnly
-            clip: true
+            verticalAlignment: Text.AlignVCenter
+            text: root.placeholder
+            color: Theme.textPlaceholder
+            font: input.font
+            visible: !input.text && !input.preeditText
+        }
 
-            Text {
-                anchors.fill: parent
-                verticalAlignment: Text.AlignVCenter
-                text: root.placeholder
-                color: Theme.textPlaceholder
-                font: input.font
-                visible: !input.text && !input.preeditText
-            }
-
-            onTextEdited: root.textEdited()
-            onAccepted: root.accepted()
+        onTextEdited: root.textEdited()
+        onAccepted: {
+            root.accepted();
+            if (root.releaseFocusOnAccept)
+                focus = false;
         }
     }
 }

@@ -109,9 +109,18 @@ void SettingsWindow::rebuildSidebarExtensions() {
     entry[QStringLiteral("providerId")] = provider->uniqueId();
     entry[QStringLiteral("isGroup")] = provider->isGroup();
     entry[QStringLiteral("enabled")] = enabled;
-    entry[QStringLiteral("provenance")] = ExtensionSettingsModel::provenanceForProvider(provider);
     m_sidebarExtensions.append(entry);
   }
+
+  m_providerCommands.clear();
+  for (const auto &si : manager->allItems()) {
+    if (!si.item) continue;
+    auto id = si.item->uniqueId();
+    m_providerCommands[id.provider].push_back({.entrypointId = std::string(id),
+                                               .name = si.item->title().toStdString(),
+                                               .iconSource = qml::imageSourceFor(si.item->iconUrl())});
+  }
+
   emit sidebarExtensionsChanged();
 }
 
@@ -176,6 +185,7 @@ void SettingsWindow::selectExtension(const QString &entrypointId) {
   auto providerId = QString::fromStdString(EntrypointId::fromSerialized(entrypointId.toStdString()).provider);
   if (providerId.isEmpty()) return;
   m_extensionModel->selectProviderById(providerId);
+  // Page first so the surviving (new) page handles the pending command.
   setCurrentPage(providerId);
   setPendingCommandId(entrypointId);
 }
@@ -198,7 +208,6 @@ QVariantList SettingsWindow::filterSidebarItems(const QString &query) const {
     QString icon;
     QString iconSource;
     QString kind;
-    QString provenance;
     bool isGroup = false;
     bool enabled = true;
   };
@@ -236,7 +245,6 @@ QVariantList SettingsWindow::filterSidebarItems(const QString &query) const {
         .label = map[QStringLiteral("name")].toString(),
         .iconSource = map[kIconSource].toString(),
         .kind = isGroup ? kGroup : kExt,
-        .provenance = map[QStringLiteral("provenance")].toString(),
         .isGroup = isGroup,
         .enabled = map[QStringLiteral("enabled")].toBool(),
     });
@@ -249,22 +257,14 @@ QVariantList SettingsWindow::filterSidebarItems(const QString &query) const {
     int score;
   };
 
+  // Only the empty-query (full list) branch consumes `scored`; the search branch
+  // builds its own ranked tree below.
   std::vector<ScoredEntry> scored;
-  scored.reserve(all.size());
-
-  for (const auto &e : all) {
-    if (queryStd.empty()) {
+  if (queryStd.empty()) {
+    scored.reserve(all.size());
+    for (const auto &e : all) {
       scored.push_back({&e, 0});
-    } else {
-      auto label = e.label.toStdString();
-      int s = fuzzy::scoreWeighted({{label, 1.0}}, queryStd);
-      if (s > 0) { scored.push_back({&e, s}); }
     }
-  }
-
-  if (!queryStd.empty()) {
-    std::stable_sort(scored.begin(), scored.end(),
-                     [](const auto &a, const auto &b) { return a.score > b.score; });
   }
 
   static const auto kEnabled = QStringLiteral("enabled");
@@ -279,7 +279,6 @@ QVariantList SettingsWindow::filterSidebarItems(const QString &query) const {
       m[kIcon] = e.icon;
     } else {
       m[kIconSource] = e.iconSource;
-      m[QStringLiteral("provenance")] = e.provenance;
     }
     return m;
   };
@@ -326,8 +325,90 @@ QVariantList SettingsWindow::filterSidebarItems(const QString &query) const {
       result.append(makeEntry(*s.entry));
     }
   } else {
-    for (const auto &s : scored) {
-      result.append(makeEntry(*s.entry));
+    static const auto kCommand = QStringLiteral("command");
+    auto *manager = ServiceRegistry::instance()->rootItemManager();
+
+    auto makeCommandEntry = [&](const QString &id, const QString &name, const QString &iconSource) {
+      QVariantMap m;
+      m[kId] = id;
+      m[kLabel] = name;
+      m[kKind] = kCommand;
+      m[kIconSource] = iconSource;
+      m[kEnabled] = true;
+      return m;
+    };
+
+    struct MatchedCommand {
+      QString id;
+      QString name;
+      QString iconSource;
+    };
+    std::unordered_map<std::string, std::vector<MatchedCommand>> matchedByProvider;
+    std::unordered_map<std::string, double> providerCmdScore;
+    {
+      RootItemPrefixSearchOptions opts;
+      opts.includeDisabled = true;
+      for (const auto &scored : manager->search(query, opts)) {
+        auto &item = scored.item.get();
+        if (!item) continue;
+        auto id = item->uniqueId();
+        matchedByProvider[id.provider].push_back(
+            {QString::fromStdString(std::string(id)), item->title(), qml::imageSourceFor(item->iconUrl())});
+        auto &best = providerCmdScore[id.provider];
+        best = std::max(best, scored.score);
+      }
+    }
+
+    struct TopLevel {
+      const SidebarEntry *entry;
+      double score;
+      QVariantList commands;
+    };
+
+    std::vector<TopLevel> tops;
+    tops.reserve(all.size());
+
+    for (const auto &e : all) {
+      int const nameScore = fuzzy::scoreWeighted({{e.label.toStdString(), 1.0}}, queryStd);
+      bool const nameMatched = nameScore > 0;
+
+      if (e.kind == kCore) {
+        if (nameMatched) tops.push_back({&e, static_cast<double>(nameScore), {}});
+        continue;
+      }
+
+      auto providerId = e.id.toStdString();
+      QVariantList commands;
+      double cmdScore = 0;
+
+      if (nameMatched) {
+        // A name match lists all the provider's commands (search only matches an
+        // item's own text).
+        if (auto it = m_providerCommands.find(providerId); it != m_providerCommands.end()) {
+          for (const auto &c : it->second) {
+            commands.append(makeCommandEntry(QString::fromStdString(c.entrypointId),
+                                             QString::fromStdString(c.name), c.iconSource));
+          }
+        }
+      } else if (auto it = matchedByProvider.find(providerId); it != matchedByProvider.end()) {
+        for (const auto &c : it->second) {
+          commands.append(makeCommandEntry(c.id, c.name, c.iconSource));
+        }
+        cmdScore = providerCmdScore[providerId];
+      }
+
+      if (nameMatched || !commands.isEmpty())
+        tops.push_back({&e, nameMatched ? static_cast<double>(nameScore) : cmdScore, std::move(commands)});
+    }
+
+    std::stable_sort(tops.begin(), tops.end(),
+                     [](const auto &a, const auto &b) { return a.score > b.score; });
+
+    for (const auto &top : tops) {
+      result.append(makeEntry(*top.entry));
+      for (const auto &c : top.commands) {
+        result.append(c);
+      }
     }
   }
 

@@ -885,6 +885,9 @@ set(VICINAE_QML_FILES
 	src/qml/qml/SettingsWindow.qml
 	src/qml/qml/SettingsSidebar.qml
 	src/qml/qml/SettingsRow.qml
+	src/qml/qml/SettingsGroup.qml
+	src/qml/qml/SettingsSectionLabel.qml
+	src/qml/qml/InlineEditableText.qml
 	src/qml/qml/SettingsToggle.qml
 	src/qml/qml/GeneralSettingsPage.qml
 	src/qml/qml/AdvancedSettingsPage.qml

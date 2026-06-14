@@ -5,7 +5,10 @@ import QtQuick.Layouts
 ColumnLayout {
     id: root
     required property var prefModel
-    spacing: 20
+    // Shared width for every field's control, so the label/description column
+    // is the same width across all rows regardless of control type.
+    property real fieldControlWidth: 300
+    spacing: 0
 
     Repeater {
         id: settingsRepeater
@@ -49,48 +52,42 @@ ColumnLayout {
 
     Component {
         id: textComp
-        ColumnLayout {
+        SettingsRow {
             id: field
-            spacing: 6
-            Text {
-                text: field.parent.label
-                color: Theme.textMuted
-                font.pointSize: Theme.smallerFontSize
-            }
+            label: field.parent.label
+            description: field.parent.description
+            controlWidth: root.fieldControlWidth
+            showSeparator: field.parent.index < settingsRepeater.count - 1
+
             FormTextInput {
-                Layout.fillWidth: true
+                width: parent.width
+                releaseFocusOnAccept: true
                 text: field.parent.value != null ? String(field.parent.value) : ""
                 placeholder: field.parent.placeholder
                 readOnly: field.parent.readOnly
                 onTextEdited: root.prefModel.setFieldValue(field.parent.index, text)
-            }
-            Text {
-                visible: field.parent.description !== ""
-                text: field.parent.description
-                color: Theme.textMuted
-                font.pointSize: Theme.smallerFontSize
-                wrapMode: Text.Wrap
-                Layout.fillWidth: true
             }
         }
     }
 
     Component {
         id: passwordComp
-        ColumnLayout {
+        SettingsRow {
             id: field
-            spacing: 6
+            label: field.parent.label
+            description: field.parent.description
+            controlWidth: root.fieldControlWidth
+            showSeparator: field.parent.index < settingsRepeater.count - 1
+
             property bool revealed: false
-            Text {
-                text: field.parent.label
-                color: Theme.textMuted
-                font.pointSize: Theme.smallerFontSize
-            }
+
             RowLayout {
-                Layout.fillWidth: true
+                width: parent.width
                 spacing: 6
+
                 FormTextInput {
                     Layout.fillWidth: true
+                    releaseFocusOnAccept: true
                     text: field.parent.value != null ? String(field.parent.value) : ""
                     placeholder: field.parent.placeholder
                     readOnly: field.parent.readOnly
@@ -109,94 +106,38 @@ ColumnLayout {
                     onClicked: field.revealed = !field.revealed
                 }
             }
-            Text {
-                visible: field.parent.description !== ""
-                text: field.parent.description
-                color: Theme.textMuted
-                font.pointSize: Theme.smallerFontSize
-                wrapMode: Text.Wrap
-                Layout.fillWidth: true
-            }
         }
     }
 
     Component {
         id: switchComp
-        ColumnLayout {
+        SettingsRow {
             id: field
-            spacing: 6
+            label: field.parent.label
+            description: field.parent.description
+            controlWidth: root.fieldControlWidth
+            showSeparator: field.parent.index < settingsRepeater.count - 1
 
-            RowLayout {
-                Layout.fillWidth: true
-
-                Text {
-                    text: field.parent.label
-                    color: Theme.textMuted
-                    font.pointSize: Theme.smallerFontSize
-                    Layout.fillWidth: true
+            SettingsToggle {
+                opacity: field.parent.readOnly ? 0.5 : 1.0
+                checked: field.parent.value === true
+                onToggled: checked => {
+                    if (field.parent.readOnly)
+                        return;
+                    root.prefModel.setFieldValue(field.parent.index, checked);
                 }
-
-                Item {
-                    id: toggle
-                    property bool checked: field.parent.value === true
-                    opacity: field.parent.readOnly ? 0.5 : 1.0
-                    width: 36
-                    height: 20
-
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: 10
-                        color: toggle.checked ? Theme.accent : Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.2)
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: 120
-                            }
-                        }
-
-                        Rectangle {
-                            width: 16
-                            height: 16
-                            radius: 8
-                            x: toggle.checked ? parent.width - width - 2 : 2
-                            anchors.verticalCenter: parent.verticalCenter
-                            color: "#ffffff"
-                            Behavior on x {
-                                NumberAnimation {
-                                    duration: 120
-                                }
-                            }
-                        }
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: field.parent.readOnly ? Qt.ArrowCursor : Qt.PointingHandCursor
-                        onClicked: {
-                            if (field.parent.readOnly)
-                                return;
-                            toggle.checked = !toggle.checked;
-                            root.prefModel.setFieldValue(field.parent.index, toggle.checked);
-                        }
-                    }
-                }
-            }
-
-            Text {
-                visible: field.parent.description !== ""
-                text: field.parent.description
-                color: Theme.textMuted
-                font.pointSize: Theme.smallerFontSize
-                wrapMode: Text.Wrap
-                Layout.fillWidth: true
             }
         }
     }
 
     Component {
         id: dropdownComp
-        ColumnLayout {
+        SettingsRow {
             id: field
-            spacing: 6
+            label: field.parent.label
+            description: field.parent.description
+            controlWidth: root.fieldControlWidth
+            showSeparator: field.parent.index < settingsRepeater.count - 1
 
             function _findCurrentItem(items, val) {
                 for (var s = 0; s < items.length; s++) {
@@ -211,72 +152,81 @@ ColumnLayout {
                 return null;
             }
 
-            Text {
-                text: field.parent.label
-                color: Theme.textMuted
-                font.pointSize: Theme.smallerFontSize
-            }
             SearchableDropdown {
-                Layout.fillWidth: true
+                width: parent.width
                 items: field.parent.options || []
                 readOnly: field.parent.readOnly
                 currentItem: field._findCurrentItem(field.parent.options || [], field.parent.value)
                 onActivated: item => root.prefModel.setFieldValue(field.parent.index, item.id)
             }
-            Text {
-                visible: field.parent.description !== ""
-                text: field.parent.description
-                color: Theme.textMuted
-                font.pointSize: Theme.smallerFontSize
-                wrapMode: Text.Wrap
-                Layout.fillWidth: true
-            }
         }
     }
 
+    // File/directory pickers use a vertical layout: a fixed-width slot on the
+    // right doesn't work well as the selected-path list grows.
     Component {
         id: filepickerComp
         ColumnLayout {
             id: field
-            spacing: 6
+            Layout.fillWidth: true
+            spacing: 0
 
-            Text {
-                text: field.parent.label
-                color: Theme.textMuted
-                font.pointSize: Theme.smallerFontSize
-            }
-            FormFilePicker {
-                id: settingsFilePicker
+            ColumnLayout {
                 Layout.fillWidth: true
-                multiple: field.parent.multiple
-                canChooseFiles: field.parent.canChooseFiles
-                canChooseDirectories: field.parent.canChooseDirectories
-                readOnly: field.parent.readOnly
-                selectedPaths: {
-                    const v = field.parent.value;
-                    if (!v)
-                        return [];
-                    if (typeof v === "string")
-                        return v !== "" ? [v] : [];
-                    let arr = [];
-                    for (let i = 0; i < v.length; i++)
-                        arr.push(v[i]);
-                    return arr;
+                Layout.leftMargin: 16
+                Layout.rightMargin: 16
+                Layout.topMargin: 14
+                Layout.bottomMargin: 14
+                spacing: 8
+
+                Text {
+                    text: field.parent.label
+                    color: Theme.foreground
+                    font.pointSize: Theme.regularFontSize
+                    Layout.fillWidth: true
                 }
-                onPathsChanged: paths => {
-                    if (field.parent.multiple)
-                        root.prefModel.setFieldValue(field.parent.index, paths);
-                    else
-                        root.prefModel.setFieldValue(field.parent.index, paths.length > 0 ? paths[0] : "");
+
+                Text {
+                    visible: field.parent.description !== ""
+                    text: field.parent.description
+                    color: Theme.textMuted
+                    font.pointSize: Theme.smallerFontSize
+                    wrapMode: Text.Wrap
+                    Layout.fillWidth: true
+                }
+
+                FormFilePicker {
+                    Layout.fillWidth: true
+                    Layout.topMargin: 2
+                    multiple: field.parent.multiple
+                    canChooseFiles: field.parent.canChooseFiles
+                    canChooseDirectories: field.parent.canChooseDirectories
+                    readOnly: field.parent.readOnly
+                    selectedPaths: {
+                        const v = field.parent.value;
+                        if (!v)
+                            return [];
+                        if (typeof v === "string")
+                            return v !== "" ? [v] : [];
+                        let arr = [];
+                        for (let i = 0; i < v.length; i++)
+                            arr.push(v[i]);
+                        return arr;
+                    }
+                    onPathsChanged: paths => {
+                        if (field.parent.multiple)
+                            root.prefModel.setFieldValue(field.parent.index, paths);
+                        else
+                            root.prefModel.setFieldValue(field.parent.index, paths.length > 0 ? paths[0] : "");
+                    }
                 }
             }
-            Text {
-                visible: field.parent.description !== ""
-                text: field.parent.description
-                color: Theme.textMuted
-                font.pointSize: Theme.smallerFontSize
-                wrapMode: Text.Wrap
+
+            ViciDivider {
+                visible: field.parent.index < settingsRepeater.count - 1
                 Layout.fillWidth: true
+                Layout.leftMargin: 16
+                Layout.rightMargin: 16
             }
         }
     }

@@ -75,9 +75,7 @@ bool RootItemManager::disableFallback(const EntrypointId &id) {
 }
 
 RootItem *RootItemManager::findItemById(const EntrypointId &id) const {
-  for (const auto &item : m_items) {
-    if (item.item->uniqueId() == id) { return item.item.get(); }
-  }
+  if (auto it = m_metadata.find(id); it != m_metadata.end()) { return it->second.item.get(); }
 
   return nullptr;
 }

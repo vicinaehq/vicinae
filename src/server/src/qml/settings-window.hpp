@@ -3,6 +3,9 @@
 #include <QObject>
 #include <QQmlApplicationEngine>
 #include <QVariantList>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 class ConfigBridge;
 class ImageSource;
@@ -60,7 +63,7 @@ public:
   void hide();
 
   void openTab(const QString &tabId);
-  void selectExtension(const QString &entrypointId);
+  Q_INVOKABLE void selectExtension(const QString &entrypointId);
 
 signals:
   void currentPageChanged();
@@ -70,6 +73,12 @@ signals:
   void defaultFocusRequested();
 
 private:
+  struct SidebarCommand {
+    std::string entrypointId; // serialized "provider:entrypoint"
+    std::string name;
+    QString iconSource;
+  };
+
   void ensureInitialized();
   void rebuildSidebarExtensions();
   void updateSidebarEnabled(const QString &providerId, bool enabled);
@@ -88,5 +97,6 @@ private:
   QString m_currentPage = QStringLiteral("general");
   QString m_pendingCommandId;
   QVariantList m_sidebarExtensions;
+  std::unordered_map<std::string, std::vector<SidebarCommand>> m_providerCommands;
   bool m_initialized = false;
 };
