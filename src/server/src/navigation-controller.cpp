@@ -589,8 +589,6 @@ bool NavigationController::activateEntrypoint(const EntrypointId &id,
 
   popToRoot({.clearSearch = false});
 
-  if (!initialOpenState) { setInstantDismiss(); }
-
   // FIXME: we need a unified interface for this
   if (auto *ext = dynamic_cast<const CommandRootItem *>(entrypoint)) {
     launch(ext->command(), options.arguments);
@@ -609,7 +607,8 @@ bool NavigationController::activateEntrypoint(const EntrypointId &id,
 
   auto *active = activeCommand();
 
-  if (!isRootSearch() && active && active->isView() && !initialOpenState) {
+  if (!isRootSearch() && !initialOpenState) {
+    setInstantDismiss();
     setBackButtonVisibility(false);
     showWindow();
   }

@@ -9,6 +9,7 @@
 #include "services/toast/toast-service.hpp"
 #include "navigation-controller.hpp"
 #include "qml/script-executor-view-host.hpp"
+#include "utils.hpp"
 
 ScriptExecutorAction::ScriptExecutorAction(const std::shared_ptr<ScriptCommandFile> &file,
                                            std::optional<script_command::OutputMode> mode)
@@ -45,19 +46,17 @@ void ScriptExecutorAction::executeOneLine(const ScriptCommandFile &script, const
 // activated we can automatically cancel any pending script execution. The current architecture does not
 // allow this, so this will have to do for now.
 void ScriptExecutorAction::execute(ApplicationContext *ctx) {
-  const auto error = m_file->reload();
-
-  if (error) {
+  if (const auto error = m_file->reload()) {
     ctx->services->toastService()->failure(QString("Failed to parse script: %1").arg(error->c_str()));
     return;
   }
+
+  using Mode = script_command::OutputMode;
 
   const bool needsConfirm = m_file->data().needsConfirmation;
   const auto outputMode = m_outputModeOverride.value_or(m_file->data().mode);
   const auto runScript = [script = m_file, ctx, outputMode]() {
     const auto args = ctx->navigation->unnamedCompletionValues();
-
-    using Mode = script_command::OutputMode;
 
     switch (outputMode) {
     case Mode::Full:
@@ -76,16 +75,22 @@ void ScriptExecutorAction::execute(ApplicationContext *ctx) {
       });
       break;
     case Mode::Compact:
-      executeOneLine(*script, args, [ctx](bool ok, const QString &line) {
-        const auto toastService = ctx->services->toastService();
-        ToastStyle const style = ok ? ToastStyle::Success : ToastStyle::Danger;
+      executeOneLine(
+          *script, args,
+          [ctx, title = QString::fromStdString(script->data().title)](bool ok, const QString &line) {
+            const auto toastService = ctx->services->toastService();
+            ToastStyle const style = ok ? ToastStyle::Success : ToastStyle::Danger;
 
-        if (line.isEmpty()) {
-          toastService->setToast(ok ? "Script executed" : "Script execution failed", style);
-        } else {
-          toastService->setToast(line, style);
-        }
-      });
+            if (line.isEmpty()) {
+              toastService->setToast(ok ? "Script executed" : "Script execution failed", style);
+            } else {
+              toastService->setToast(line, style);
+            }
+            if (!ctx->navigation->isWindowOpened()) {
+              ctx->navigation->setSearchText(title);
+              ctx->navigation->showWindow();
+            }
+          });
       break;
     case Mode::Terminal: {
       LaunchTerminalCommandOptions termOpts{.hold = true};
@@ -113,15 +118,22 @@ void ScriptExecutorAction::execute(ApplicationContext *ctx) {
       break;
     }
     case Mode::Inline:
-      executeOneLine(*script, args, [id = std::string(script->id()), ctx](bool ok, const QString &line) {
-        if (!ok) {
-          ctx->services->toastService()->failure(line.isEmpty() ? "Script exited with error code" : line);
-          return;
-        }
+      executeOneLine(*script, args,
+                     [id = script->id(), title = QString::fromStdString(script->data().title),
+                      ctx](bool ok, const QString &line) {
+                       if (!ok) {
+                         ctx->services->toastService()->failure(
+                             line.isEmpty() ? "Script exited with error code" : line);
+                         return;
+                       }
 
-        ctx->services->scriptDb()->metadata()->saveRun(id, line.toStdString());
-        emit ctx->services->rootItemManager()->subtitleChanged();
-      });
+                       ctx->services->scriptDb()->metadata()->saveRun(id, line.toStdString());
+                       emit ctx->services->rootItemManager()->subtitleChanged();
+                       if (!ctx->navigation->isWindowOpened()) {
+                         ctx->navigation->setSearchText(title);
+                         ctx->navigation->showWindow();
+                       }
+                     });
       break;
     default:
       qWarning() << "script command has invalid mode" << static_cast<int>(outputMode);
