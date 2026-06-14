@@ -30,7 +30,7 @@ class GeneralSettingsModel : public QObject {
       bool nativeTextRendering READ nativeTextRendering WRITE setNativeTextRendering NOTIFY configChanged)
   Q_PROPERTY(QString fontSize READ fontSize WRITE setFontSize NOTIFY configChanged)
   Q_PROPERTY(QVariantList themeItems READ themeItems NOTIFY configChanged)
-  Q_PROPERTY(QVariantList fontItems READ fontItems NOTIFY configChanged)
+  Q_PROPERTY(QVariantList fontItems READ fontItems CONSTANT)
   Q_PROPERTY(QVariantList iconThemeItems READ iconThemeItems NOTIFY configChanged)
   Q_PROPERTY(QVariantList faviconServiceItems READ faviconServiceItems NOTIFY configChanged)
   Q_PROPERTY(QVariantList keybindingSchemeItems READ keybindingSchemeItems NOTIFY configChanged)
@@ -107,4 +107,6 @@ public:
 private:
   const config::ConfigValue &cfg() const;
   config::Manager &cfgManager() const;
+
+  mutable QVariantList m_fontItems;
 };

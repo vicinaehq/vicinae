@@ -180,11 +180,14 @@ QVariant GeneralSettingsModel::currentTheme() const {
 }
 
 QVariantList GeneralSettingsModel::fontItems() const {
-  QVariantList items;
-  for (const auto &family : ServiceRegistry::instance()->fontService()->families()) {
-    items.append(makeDropdownItem(family, family));
+  if (m_fontItems.isEmpty()) {
+    QVariantList items;
+    for (const auto &family : ServiceRegistry::instance()->fontService()->families()) {
+      items.append(makeDropdownItem(family, family));
+    }
+    m_fontItems = wrapSection(QStringLiteral("Fonts"), items);
   }
-  return wrapSection(QStringLiteral("Fonts"), items);
+  return m_fontItems;
 }
 
 QVariant GeneralSettingsModel::currentFont() const {
