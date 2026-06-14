@@ -19,6 +19,16 @@ RowLayout {
 
     readonly property var _tokens: Keyboard.tokensForString(shortcut)
 
+    // The recorder is a window-backed Popup; create it lazily so dense lists
+    // (e.g. hundreds of command rows) don't each build one upfront.
+    property var _recorder: null
+    function _showRecorder() {
+        if (!_recorder)
+            _recorder = recorderComponent.createObject(trigger);
+        if (_recorder)
+            _recorder.show(trigger);
+    }
+
     spacing: 4
 
     Rectangle {
@@ -27,8 +37,9 @@ RowLayout {
         implicitWidth: Math.max(content.implicitWidth + 16, 80)
         radius: 4
         color: "transparent"
-        border.width: field.bordered && (hover.hovered || field._tokens.length > 0) ? 1 : 0
-        border.color: Config.withAlpha(hover.hovered ? Theme.inputBorderFocus : Theme.inputBorder, Config.windowOpacity)
+        // Borderless fields (dense list rows) still reveal a border on hover.
+        border.width: hover.hovered || (field.bordered && field._tokens.length > 0) ? 1 : 0
+        border.color: Config.withAlpha(Theme.inputBorder, Config.windowOpacity)
 
         HoverHandler {
             id: hover
@@ -36,7 +47,7 @@ RowLayout {
         MouseArea {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
-            onClicked: recorder.show(trigger)
+            onClicked: field._showRecorder()
         }
 
         Item {
@@ -78,14 +89,16 @@ RowLayout {
         }
     }
 
-    ShortcutRecorderField {
-        id: recorder
-        shortcutDisplayProvider: (key, mods) => Keyboard.tokens(key, mods)
-        validateShortcut: (key, mods) => GlobalShortcuts.validate(key, mods, field.shortcutId)
-        onShortcutCaptured: (key, modifiers) => {
-            const serialized = Keyboard.serialize(key, modifiers);
-            if (serialized !== "")
-                field.accepted(serialized);
+    Component {
+        id: recorderComponent
+        ShortcutRecorderField {
+            shortcutDisplayProvider: (key, mods) => Keyboard.tokens(key, mods)
+            validateShortcut: (key, mods) => GlobalShortcuts.validate(key, mods, field.shortcutId)
+            onShortcutCaptured: (key, modifiers) => {
+                const serialized = Keyboard.serialize(key, modifiers);
+                if (serialized !== "")
+                    field.accepted(serialized);
+            }
         }
     }
 }

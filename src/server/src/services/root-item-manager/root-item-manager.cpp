@@ -1,6 +1,7 @@
 #include <qjsonvalue.h>
 #include <ranges>
 #include <algorithm>
+#include <unordered_map>
 #include <qlogging.h>
 #include "root-item-manager.hpp"
 #include "common.hpp"
@@ -75,9 +76,7 @@ bool RootItemManager::disableFallback(const EntrypointId &id) {
 }
 
 RootItem *RootItemManager::findItemById(const EntrypointId &id) const {
-  for (const auto &item : m_items) {
-    if (item.item->uniqueId() == id) { return item.item.get(); }
-  }
+  if (auto it = m_metadata.find(id); it != m_metadata.end()) { return it->second.item.get(); }
 
   return nullptr;
 }
@@ -203,6 +202,66 @@ void RootItemManager::search(const QString &query, std::vector<ScoredItem> &resu
 
     return a.score > b.score;
   });
+}
+
+std::vector<RootItemManager::ProviderSearchGroup>
+RootItemManager::searchGroupedByProvider(const QString &query, const RootItemPrefixSearchOptions &opts) {
+  std::string const pattern = query.toStdString();
+  std::string_view const patternView = pattern;
+  const auto &matcher = fzf::threadLocalMatcher();
+
+  std::unordered_map<std::string, RootProvider *> providerById;
+  std::unordered_map<std::string, double> providerNameScore;
+  for (auto *provider : providers()) {
+    if (provider->isTransient()) continue;
+    auto id = provider->uniqueId().toStdString();
+    providerById.emplace(id, provider);
+    int const score = matcher.fuzzy_match_v2_score_query(provider->displayName().toStdString(), patternView);
+    if (score > 0) providerNameScore.emplace(id, static_cast<double>(score));
+  }
+
+  struct ScoredEntry {
+    double score = 0;
+    ItemPtr item;
+    bool enabled = true;
+  };
+  struct Bucket {
+    double best = 0;
+    std::vector<ScoredEntry> entries;
+  };
+  std::unordered_map<std::string, Bucket> buckets;
+
+  for (auto &item : m_items) {
+    if (!item.meta->enabled && !opts.includeDisabled) continue;
+    if (item.meta->favorite && !opts.includeFavorites) continue;
+
+    const auto &providerId = item.meta->providerId;
+    if (!providerById.contains(providerId)) continue;
+
+    double const titleScore = item.fuzzyScore(patternView);
+    auto nameIt = providerNameScore.find(providerId);
+    bool const providerMatched = nameIt != providerNameScore.end();
+    if (titleScore <= 0 && !providerMatched) continue;
+
+    auto &bucket = buckets[providerId];
+    bucket.entries.push_back({titleScore, item.item, item.meta->enabled});
+    bucket.best = std::max(bucket.best, std::max<double>(titleScore, providerMatched ? nameIt->second : 0.0));
+  }
+
+  std::vector<ProviderSearchGroup> groups;
+  groups.reserve(buckets.size());
+  for (auto &[id, bucket] : buckets) {
+    std::ranges::stable_sort(bucket.entries, [](const auto &a, const auto &b) { return a.score > b.score; });
+    ProviderSearchGroup group{.provider = providerById[id], .score = bucket.best};
+    group.items.reserve(bucket.entries.size());
+    for (auto &entry : bucket.entries) {
+      group.items.push_back({std::move(entry.item), entry.enabled});
+    }
+    groups.push_back(std::move(group));
+  }
+
+  std::ranges::stable_sort(groups, [](const auto &a, const auto &b) { return a.score > b.score; });
+  return groups;
 }
 
 bool RootItemManager::setItemEnabled(const EntrypointId &id, bool value) {

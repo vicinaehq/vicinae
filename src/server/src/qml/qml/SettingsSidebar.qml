@@ -6,47 +6,40 @@ Item {
     id: root
     implicitWidth: 220
 
-    property int _highlightedIndex: -1
+    property string _selectedKey: ""
+    readonly property bool _searching: extSearchField.text.length > 0
+    readonly property string _activeKey: _searching ? _selectedKey : settings.currentPage
 
-    readonly property var _allItems: {
-        settings.sidebarExtensions; // re-evaluate when extensions change
-        return settings.filterSidebarItems(extSearchField.text);
-    }
-
-    readonly property var _navItems: {
-        let nav = [];
-        for (let i = 0; i < _allItems.length; i++) {
-            if (_allItems[i]._kind !== "divider")
-                nav.push({
-                    listIndex: i,
-                    pageId: _allItems[i].id
-                });
-        }
-        return nav;
-    }
-
-    function _navigateHighlight(delta) {
-        if (_navItems.length === 0)
+    function _activate(key) {
+        const model = settings.sidebarModel;
+        const idx = model.indexOfKey(key);
+        if (idx < 0)
             return;
-        if (_highlightedIndex < 0) {
-            _highlightedIndex = delta > 0 ? 0 : _navItems.length - 1;
-        } else {
-            _highlightedIndex = Math.max(0, Math.min(_navItems.length - 1, _highlightedIndex + delta));
-        }
-        const listIdx = _highlightedListIndex();
-        if (listIdx >= 0)
-            navList.positionViewAtIndex(listIdx, ListView.Contain);
+        const wasSearching = _searching;
+        if (model.kindAt(idx) === "command")
+            settings.selectExtension(key);
+        else
+            settings.currentPage = key;
+        extSearchField.text = "";
+        if (wasSearching)
+            Qt.callLater(() => {
+                const i = settings.sidebarModel.indexOfKey(settings.currentPage);
+                if (i >= 0)
+                    navList.positionViewAtIndex(i, ListView.Beginning);
+            });
     }
 
-    function _activateHighlighted() {
-        if (_highlightedIndex >= 0 && _highlightedIndex < _navItems.length)
-            settings.currentPage = _navItems[_highlightedIndex].pageId;
-    }
-
-    function _highlightedListIndex() {
-        if (_highlightedIndex < 0 || _highlightedIndex >= _navItems.length)
-            return -1;
-        return _navItems[_highlightedIndex].listIndex;
+    function _move(delta) {
+        const model = settings.sidebarModel;
+        const next = model.stepRow(model.indexOfKey(_activeKey), delta);
+        if (next < 0)
+            return;
+        const key = model.keyAt(next);
+        if (root._searching)
+            root._selectedKey = key;
+        else
+            settings.currentPage = key;
+        navList.positionViewAtIndex(next, ListView.Contain);
     }
 
     ColumnLayout {
@@ -55,32 +48,31 @@ Item {
 
         Item {
             Layout.fillWidth: true
-            Layout.preferredHeight: 40
+            Layout.preferredHeight: 46
 
-            Rectangle {
+            SourceBlendRect {
                 anchors.left: parent.left
                 anchors.right: parent.right
-                anchors.leftMargin: 8
-                anchors.rightMargin: 8
+                anchors.leftMargin: 6
+                anchors.rightMargin: 6
                 anchors.verticalCenter: parent.verticalCenter
-                height: 28
-                radius: 4
-                color: "transparent"
-                border.color: Config.withAlpha(extSearchField.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder, Config.windowOpacity)
-                border.width: 1
+                height: 30
+                radius: 8
+                backgroundColor: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
+                color: Config.withAlpha(Theme.secondaryBackground, Config.windowOpacity)
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 6
-                    anchors.rightMargin: 6
-                    spacing: 4
+                    anchors.leftMargin: 10
+                    anchors.rightMargin: 10
+                    spacing: 6
 
                     ViciImage {
                         source: Img.builtin("magnifying-glass").withFillColor(Theme.textMuted)
-                        sourceSize.width: 12
-                        sourceSize.height: 12
-                        Layout.preferredWidth: 12
-                        Layout.preferredHeight: 12
+                        sourceSize.width: 14
+                        sourceSize.height: 14
+                        Layout.preferredWidth: 14
+                        Layout.preferredHeight: 14
                     }
 
                     TextInput {
@@ -88,7 +80,7 @@ Item {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         verticalAlignment: TextInput.AlignVCenter
-                        font.pointSize: Theme.smallerFontSize
+                        font.pointSize: Theme.regularFontSize
                         color: Theme.foreground
                         clip: true
                         focus: true
@@ -112,13 +104,14 @@ Item {
 
                         onTextChanged: {
                             HoverActivation.reset();
-                            root._highlightedIndex = root._navItems.length > 0 ? 0 : -1;
+                            settings.sidebarModel.setQuery(text);
+                            root._selectedKey = text.length > 0 ? settings.sidebarModel.keyAt(settings.sidebarModel.firstSelectableRow()) : "";
                         }
 
-                        Keys.onUpPressed: root._navigateHighlight(-1)
-                        Keys.onDownPressed: root._navigateHighlight(1)
-                        Keys.onReturnPressed: root._activateHighlighted()
-                        Keys.onEnterPressed: root._activateHighlighted()
+                        Keys.onUpPressed: root._move(-1)
+                        Keys.onDownPressed: root._move(1)
+                        Keys.onReturnPressed: root._activate(root._activeKey)
+                        Keys.onEnterPressed: root._activate(root._activeKey)
                         Keys.onPressed: event => {
                             if (event.key === Qt.Key_Escape && text) {
                                 text = "";
@@ -130,19 +123,15 @@ Item {
             }
         }
 
-        ViciDivider {
-            Layout.fillWidth: true
-        }
-
         ListView {
             id: navList
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
             bottomMargin: 8
-            topMargin: 6
+            topMargin: 2
             boundsBehavior: Flickable.StopAtBounds
-            model: root._allItems
+            model: settings.sidebarModel
 
             ScrollBar.vertical: ViciScrollBar {
                 policy: navList.contentHeight > navList.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
@@ -150,45 +139,39 @@ Item {
 
             delegate: Item {
                 id: navItem
-                required property var modelData
-                required property int index
+                required property var model
                 width: navList.width
-                height: modelData._kind === "divider" ? 9 : 32
+                height: navItem.model.kind === "divider" ? 18 : 32
 
-                readonly property bool _isHighlighted: index === root._highlightedListIndex()
-                readonly property string _pageId: modelData.id ?? ""
-                property bool _isEnabled: modelData.enabled !== false
-
-                Connections {
-                    target: settings
-                    function onSidebarItemEnabledChanged(providerId, enabled) {
-                        if (providerId === navItem._pageId)
-                            navItem._isEnabled = enabled;
-                    }
-                }
+                readonly property string _key: navItem.model.key
+                readonly property bool _isCommand: navItem.model.kind === "command"
+                readonly property bool _selected: root._activeKey === navItem._key
+                readonly property bool _enabled: navItem.model.enabled !== false
 
                 ViciDivider {
-                    visible: navItem.modelData._kind === "divider"
+                    visible: navItem.model.kind === "divider"
                     anchors.left: parent.left
                     anchors.right: parent.right
-                    anchors.leftMargin: 16
-                    anchors.rightMargin: 16
+                    anchors.leftMargin: 14
+                    anchors.rightMargin: 14
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
                 SourceBlendRect {
-                    visible: navItem.modelData._kind !== "divider"
+                    visible: navItem.model.kind !== "divider"
                     anchors.fill: parent
-                    anchors.leftMargin: 8
-                    anchors.rightMargin: 8
-                    radius: 6
+                    anchors.leftMargin: 6
+                    anchors.rightMargin: 6
+                    anchors.topMargin: 1
+                    anchors.bottomMargin: 1
+                    radius: 8
                     backgroundColor: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
                     color: {
-                        if (settings.currentPage === navItem._pageId) {
+                        if (navItem._selected) {
                             const c = Theme.listItemSelectionBg;
                             return Qt.rgba(c.r, c.g, c.b, Config.windowOpacity);
                         }
-                        if (navItem._isHighlighted || (itemHover.hovered && HoverActivation.active)) {
+                        if (itemHover.hovered && HoverActivation.active) {
                             const h = Theme.listItemHoverBg;
                             return Qt.rgba(h.r, h.g, h.b, Config.windowOpacity);
                         }
@@ -197,42 +180,23 @@ Item {
 
                     RowLayout {
                         anchors.fill: parent
-                        anchors.leftMargin: 8
+                        anchors.leftMargin: 8 + (navItem._isCommand ? 12 : 0)
                         anchors.rightMargin: 8
-                        spacing: 8
+                        spacing: 10
+                        opacity: navItem._enabled ? 1.0 : 0.5
 
                         ViciImage {
-                            source: navItem.modelData._kind === "core" ? Img.builtin(navItem.modelData.icon).withFillColor(settings.currentPage === navItem._pageId ? Theme.listItemSelectionFg : Theme.textMuted) : (navItem.modelData.iconSource ?? "")
-                            Layout.preferredWidth: 18
-                            Layout.preferredHeight: 18
-                            opacity: navItem._isEnabled ? 1.0 : 0.4
+                            source: navItem.model.kind === "core" ? Img.builtin(navItem.model.icon).withFillColor(navItem._selected ? Theme.listItemSelectionFg : Theme.textMuted) : navItem.model.iconSource
+                            Layout.preferredWidth: navItem._isCommand ? 16 : 18
+                            Layout.preferredHeight: navItem._isCommand ? 16 : 18
                         }
 
                         Text {
-                            text: navItem.modelData.label ?? ""
-                            color: settings.currentPage === navItem._pageId ? Theme.listItemSelectionFg : navItem._isEnabled ? Theme.foreground : Theme.textMuted
+                            text: navItem.model.label
+                            color: navItem._selected ? Theme.listItemSelectionFg : Theme.foreground
                             font.pointSize: Theme.regularFontSize
                             elide: Text.ElideRight
                             Layout.fillWidth: true
-                        }
-
-                        ViciImage {
-                            visible: {
-                                const p = navItem.modelData.provenance ?? "";
-                                return p === "Raycast" || p === "Vicinae" || p === 'Local';
-                            }
-                            source: {
-                                const p = navItem.modelData.provenance ?? "";
-                                if (p === "Raycast")
-                                    return Img.builtin("raycast").withFillColor(Theme.toastDanger);
-                                if (p === "Vicinae")
-                                    return Img.builtin("vicinae").withFillColor(Theme.toastWarning);
-                                if (p === "Local")
-                                    return Img.builtin("box").withFillColor(Theme.toastInfo);
-                                return "";
-                            }
-                            Layout.preferredWidth: 16
-                            Layout.preferredHeight: 16
                         }
                     }
 
@@ -240,7 +204,7 @@ Item {
                         id: itemHover
                     }
                     TapHandler {
-                        onTapped: settings.currentPage = navItem._pageId
+                        onTapped: root._activate(navItem._key)
                     }
                 }
             }

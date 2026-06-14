@@ -9,19 +9,22 @@ ColumnLayout {
     property string label: ""
     property string description: ""
     property bool showSeparator: true
+    property real controlWidth: 200
+
+    readonly property real _hPadding: 16
     default property alias contentData: controlSlot.data
 
     RowLayout {
         Layout.fillWidth: true
-        Layout.leftMargin: 20
-        Layout.rightMargin: 20
-        Layout.topMargin: root.description !== "" ? 12 : 8
-        Layout.bottomMargin: root.description !== "" ? 12 : 8
+        Layout.leftMargin: root._hPadding
+        Layout.rightMargin: root._hPadding
+        Layout.topMargin: root.description !== "" ? 11 : 9
+        Layout.bottomMargin: root.description !== "" ? 11 : 9
         spacing: 20
 
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 2
+            spacing: 3
 
             Text {
                 text: root.label
@@ -42,7 +45,7 @@ ColumnLayout {
 
         Item {
             id: controlSlot
-            Layout.preferredWidth: 180
+            Layout.preferredWidth: root.controlWidth
             Layout.alignment: Qt.AlignVCenter
             implicitHeight: children.length > 0 ? children[0].implicitHeight : 0
         }
@@ -51,7 +54,7 @@ ColumnLayout {
     ViciDivider {
         visible: root.showSeparator
         Layout.fillWidth: true
-        Layout.leftMargin: 20
-        Layout.rightMargin: 20
+        Layout.leftMargin: root._hPadding
+        Layout.rightMargin: root._hPadding
     }
 }
