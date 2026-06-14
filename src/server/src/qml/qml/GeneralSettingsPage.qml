@@ -22,51 +22,6 @@ Flickable {
         spacing: 0
 
         SettingsSectionLabel {
-            text: "Appearance"
-            Layout.topMargin: 24
-            Layout.bottomMargin: 10
-        }
-
-        SettingsGroup {
-            SettingsRow {
-                label: "Theme"
-                SearchableDropdown {
-                    width: parent.width
-                    items: root.model.themeItems
-                    currentItem: root.model.currentTheme
-                    onActivated: item => root.model.selectTheme(item.id)
-                }
-            }
-
-            SettingsRow {
-                label: "Font"
-                SearchableDropdown {
-                    width: parent.width
-                    items: root.model.fontItems
-                    currentItem: root.model.currentFont
-                    onActivated: item => root.model.selectFont(item.id)
-                }
-            }
-
-            SettingsRow {
-                label: "Font size"
-                description: "The base point size used to compute font sizes. Fractional values are accepted. Recommended range is [10.0;12.0]."
-                showSeparator: false
-                FormTextInput {
-                    width: parent.width
-                    releaseFocusOnAccept: true
-                    text: root.model.fontSize
-                    placeholder: "e.g. 11"
-                    onAccepted: root.model.fontSize = text
-                    onEditingChanged: {
-                        if (!editing)
-                            root.model.fontSize = text;
-                    }
-                }
-            }
-        }
-
-        SettingsSectionLabel {
             text: "Behavior"
             Layout.topMargin: 24
             Layout.bottomMargin: 10
@@ -92,7 +47,16 @@ Flickable {
                 label: "Close on focus loss"
                 SettingsToggle {
                     checked: root.model.closeOnFocusLoss
-                    onToggled: root.model.closeOnFocusLoss = checked
+                    onToggled: checked => root.model.closeOnFocusLoss = checked
+                }
+            }
+
+            SettingsRow {
+                label: "Close on Escape"
+                description: "Pressing Escape closes the launcher instead of navigating one view back."
+                SettingsToggle {
+                    checked: root.model.closeOnEscape
+                    onToggled: checked => root.model.closeOnEscape = checked
                 }
             }
 

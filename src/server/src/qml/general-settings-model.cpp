@@ -35,6 +35,11 @@ void GeneralSettingsModel::setCloseOnFocusLoss(bool v) {
   cfgManager().mergeWithUser({.closeOnFocusLoss = v});
 }
 
+bool GeneralSettingsModel::closeOnEscape() const { return cfg().escapeKeyBehavior == "close_window"; }
+void GeneralSettingsModel::setCloseOnEscape(bool v) {
+  cfgManager().mergeWithUser({.escapeKeyBehavior = v ? std::string{"close_window"} : std::string{}});
+}
+
 bool GeneralSettingsModel::considerPreedit() const { return cfg().considerPreedit; }
 void GeneralSettingsModel::setConsiderPreedit(bool v) { cfgManager().mergeWithUser({.considerPreedit = v}); }
 
@@ -56,6 +61,12 @@ void GeneralSettingsModel::setTelemetrySystemInfo(bool v) {
   cfgManager().mergeWithUser({.telemetry = config::Partial<config::TelemetryConfig>{.systemInfo = v}});
 }
 
+bool GeneralSettingsModel::layerShellEnabled() const { return cfg().launcherWindow.layerShell.enabled; }
+void GeneralSettingsModel::setLayerShellEnabled(bool v) {
+  cfgManager().mergeWithUser({.launcherWindow = config::Partial<config::WindowConfig>{
+                                  .layerShell = config::Partial<config::LayerShellConfig>{.enabled = v}}});
+}
+
 bool GeneralSettingsModel::clientSideDecorations() const {
   return cfg().launcherWindow.clientSideDecorations.enabled;
 }
@@ -63,6 +74,42 @@ void GeneralSettingsModel::setClientSideDecorations(bool v) {
   cfgManager().mergeWithUser(
       {.launcherWindow = config::Partial<config::WindowConfig>{
            .clientSideDecorations = config::Partial<config::WindowCSD>{.enabled = v}}});
+}
+
+QString GeneralSettingsModel::csdRounding() const {
+  return QString::number(cfg().launcherWindow.clientSideDecorations.rounding);
+}
+void GeneralSettingsModel::setCsdRounding(const QString &v) {
+  bool ok = false;
+  int val = v.toInt(&ok);
+  if (ok)
+    cfgManager().mergeWithUser(
+        {.launcherWindow = config::Partial<config::WindowConfig>{
+             .clientSideDecorations = config::Partial<config::WindowCSD>{.rounding = val}}});
+}
+
+QString GeneralSettingsModel::csdBorderWidth() const {
+  return QString::number(cfg().launcherWindow.clientSideDecorations.borderWidth);
+}
+void GeneralSettingsModel::setCsdBorderWidth(const QString &v) {
+  bool ok = false;
+  int val = v.toInt(&ok);
+  if (ok)
+    cfgManager().mergeWithUser(
+        {.launcherWindow = config::Partial<config::WindowConfig>{
+             .clientSideDecorations = config::Partial<config::WindowCSD>{.borderWidth = val}}});
+}
+
+QString GeneralSettingsModel::csdShadowSize() const {
+  return QString::number(cfg().launcherWindow.clientSideDecorations.shadowSize);
+}
+void GeneralSettingsModel::setCsdShadowSize(const QString &v) {
+  bool ok = false;
+  int val = v.toInt(&ok);
+  if (ok)
+    cfgManager().mergeWithUser(
+        {.launcherWindow = config::Partial<config::WindowConfig>{
+             .clientSideDecorations = config::Partial<config::WindowCSD>{.shadowSize = val}}});
 }
 
 bool GeneralSettingsModel::compactMode() const { return cfg().launcherWindow.compactMode.enabled; }

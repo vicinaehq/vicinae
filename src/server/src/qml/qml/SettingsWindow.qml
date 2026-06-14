@@ -4,7 +4,7 @@ import QtQuick.Layouts
 Window {
     id: root
     readonly property var extModel: settings.extensionModel
-    readonly property bool isExtensionPage: settings.currentPage !== "general" && settings.currentPage !== "keybindings" && settings.currentPage !== "advanced" && settings.currentPage !== "about"
+    readonly property bool isExtensionPage: settings.currentPage !== "general" && settings.currentPage !== "appearance" && settings.currentPage !== "keybindings" && settings.currentPage !== "advanced" && settings.currentPage !== "about"
     readonly property string topbarTitle: {
         if (root.isExtensionPage)
             return root.extModel.selectedTitle;
@@ -12,6 +12,8 @@ Window {
         switch (settings.currentPage) {
         case "general":
             return "General";
+        case "appearance":
+            return "Appearance";
         case "keybindings":
             return "Keybindings";
         case "advanced":
@@ -29,6 +31,8 @@ Window {
         switch (settings.currentPage) {
         case "general":
             return Img.builtin("cog").withFillColor(Theme.foreground);
+        case "appearance":
+            return Img.builtin("swatch").withFillColor(Theme.foreground);
         case "keybindings":
             return Img.builtin("keyboard").withFillColor(Theme.foreground);
         case "advanced":
@@ -182,12 +186,15 @@ Window {
 
                     function _loadPage(page) {
                         active = false;
-                        if (page !== "general" && page !== "keybindings" && page !== "advanced" && page !== "about") {
+                        if (page !== "general" && page !== "appearance" && page !== "keybindings" && page !== "advanced" && page !== "about") {
                             settings.extensionModel.selectProviderById(page);
                         }
                         switch (page) {
                         case "general":
                             sourceComponent = generalPage;
+                            break;
+                        case "appearance":
+                            sourceComponent = appearancePage;
                             break;
                         case "keybindings":
                             sourceComponent = shortcutsPage;
@@ -220,6 +227,11 @@ Window {
     Component {
         id: generalPage
         GeneralSettingsPage {}
+    }
+
+    Component {
+        id: appearancePage
+        AppearanceSettingsPage {}
     }
 
     Component {

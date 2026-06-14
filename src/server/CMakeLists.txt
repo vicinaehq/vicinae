@@ -890,6 +890,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/InlineEditableText.qml
 	src/qml/qml/SettingsToggle.qml
 	src/qml/qml/GeneralSettingsPage.qml
+	src/qml/qml/AppearanceSettingsPage.qml
 	src/qml/qml/AdvancedSettingsPage.qml
 	src/qml/qml/ShortcutsSettingsPage.qml
 	src/qml/qml/ExtensionSettingsPage.qml

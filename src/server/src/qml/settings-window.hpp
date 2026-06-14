@@ -29,6 +29,7 @@ class SettingsWindow : public QObject {
   Q_PROPERTY(QString buildInfo READ buildInfo CONSTANT)
   Q_PROPERTY(QString headline READ headline CONSTANT)
   Q_PROPERTY(bool globalShortcutsSupported READ globalShortcutsSupported CONSTANT)
+  Q_PROPERTY(bool layerShellSupported READ layerShellSupported CONSTANT)
   Q_PROPERTY(GeneralSettingsModel *generalModel READ generalModel CONSTANT)
   Q_PROPERTY(KeybindSettingsModel *keybindModel READ keybindModel CONSTANT)
   Q_PROPERTY(ExtensionSettingsModel *extensionModel READ extensionModel CONSTANT)
@@ -49,6 +50,7 @@ public:
   QString buildInfo() const;
   QString headline() const;
   bool globalShortcutsSupported() const;
+  bool layerShellSupported() const;
 
   GeneralSettingsModel *generalModel() const { return m_generalModel; }
   KeybindSettingsModel *keybindModel() const { return m_keybindModel; }

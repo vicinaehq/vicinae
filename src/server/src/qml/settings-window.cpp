@@ -1,6 +1,7 @@
 #include "settings-window.hpp"
 #include "common/entrypoint.hpp"
 #include "config-bridge.hpp"
+#include "environment.hpp"
 #include "extension-settings-model.hpp"
 #include "general-settings-model.hpp"
 #include "image-source.hpp"
@@ -146,6 +147,8 @@ bool SettingsWindow::globalShortcutsSupported() const {
   return service && service->isSupported();
 }
 
+bool SettingsWindow::layerShellSupported() const { return Environment::isLayerShellSupported(); }
+
 void SettingsWindow::openUrl(const QString &url) { m_ctx.services->appDb()->openTarget(url); }
 
 void SettingsWindow::close() {
@@ -216,6 +219,10 @@ QVariantList SettingsWindow::filterSidebarItems(const QString &query) const {
       SidebarEntry{.id = QStringLiteral("general"),
                    .label = QStringLiteral("General"),
                    .icon = QStringLiteral("cog"),
+                   .kind = kCore},
+      SidebarEntry{.id = QStringLiteral("appearance"),
+                   .label = QStringLiteral("Appearance"),
+                   .icon = QStringLiteral("swatch"),
                    .kind = kCore},
       SidebarEntry{.id = QStringLiteral("keybindings"),
                    .label = QStringLiteral("Keybindings"),

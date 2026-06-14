@@ -22,59 +22,6 @@ Flickable {
         spacing: 0
 
         SettingsSectionLabel {
-            text: "Appearance"
-            Layout.topMargin: 24
-            Layout.bottomMargin: 10
-        }
-
-        SettingsGroup {
-            SettingsRow {
-                label: "Icon Theme"
-                description: "The icon theme used for system icons (applications, mime types, folder icons...). Does not affect builtin Vicinae icons."
-                SearchableDropdown {
-                    width: parent.width
-                    items: root.model.iconThemeItems
-                    currentItem: root.model.currentIconTheme
-                    onActivated: item => root.model.selectIconTheme(item.id)
-                }
-            }
-
-            SettingsRow {
-                label: "Window opacity"
-                FormTextInput {
-                    width: parent.width
-                    releaseFocusOnAccept: true
-                    text: root.model.windowOpacity
-                    placeholder: "e.g. 1.0"
-                    onAccepted: root.model.windowOpacity = text
-                    onEditingChanged: {
-                        if (!editing)
-                            root.model.windowOpacity = text;
-                    }
-                }
-            }
-
-            SettingsRow {
-                label: "Client-side decorations"
-                description: "Let Vicinae draw its own rounded borders instead of relying on the windowing system."
-                SettingsToggle {
-                    checked: root.model.clientSideDecorations
-                    onToggled: root.model.clientSideDecorations = checked
-                }
-            }
-
-            SettingsRow {
-                label: "Native font rendering"
-                description: "Use platform/fontconfig text rendering for system-consistent text. Disable for Qt distance-field rendering (usually faster). May require reopening Vicinae to fully apply."
-                showSeparator: false
-                SettingsToggle {
-                    checked: root.model.nativeTextRendering
-                    onToggled: root.model.nativeTextRendering = checked
-                }
-            }
-        }
-
-        SettingsSectionLabel {
             text: "Input & Navigation"
             Layout.topMargin: 24
             Layout.bottomMargin: 10
