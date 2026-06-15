@@ -302,9 +302,6 @@ Item {
                         event.accepted = false;
                     }
                 }
-                Keys.onBacktabPressed: event => {
-                    event.accepted = false;
-                }
                 Keys.onPressed: event => {
                     if (_handleEmacsEditing(event)) {
                         event.accepted = true;
