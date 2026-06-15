@@ -49,6 +49,7 @@ public:
   std::optional<int64_t> retrieveIndexedLastModified(const std::filesystem::path &path) const;
   std::unordered_set<std::filesystem::path>
   listIndexedDirectoryFiles(const std::filesystem::path &path) const;
+  bool tracksFile(const std::filesystem::path &path) const;
 
   std::vector<std::filesystem::path> listRecentDirectories(int limit) const;
 

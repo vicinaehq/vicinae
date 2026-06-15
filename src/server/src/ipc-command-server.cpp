@@ -8,6 +8,7 @@
 #include "services/files-service/file-service.hpp"
 #include "qml/dmenu-view-host.hpp"
 #include "utils.hpp"
+#include <cstdint>
 #include <qfuture.h>
 #include <qlogging.h>
 #include <ranges>
@@ -79,7 +80,8 @@ ipc_gen::Result<std::vector<ipc_gen::FileResult>>::Future IpcService::fsQuery(st
   return files->queryAsync(q, {.limit = params.limit})
       .then([](const std::vector<IndexerFileResult> &results) {
         auto fileResults = results | std::views::transform([](const IndexerFileResult &result) {
-                             return ipc_gen::FileResult{.path = result.path};
+                             return ipc_gen::FileResult{.path = result.path,
+                                                        .score = static_cast<std::uint32_t>(result.rank)};
                            }) |
                            std::ranges::to<std::vector>();
 

@@ -75,6 +75,7 @@ struct CloseTabRequest {
 
 struct FileResult {
   path: string;
+  score: uint;
 };
 
 struct FsQueryParams {

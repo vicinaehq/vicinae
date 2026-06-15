@@ -108,6 +108,13 @@ FileIndexerDatabase::listIndexedDirectoryFiles(const std::filesystem::path &path
   return paths;
 }
 
+bool FileIndexerDatabase::tracksFile(const std::filesystem::path &path) const {
+  auto stmt = m_db.prepare("SELECT COUNT(*) FROM indexed_file WHERE path = :path");
+  stmt.bind(":path", path.c_str());
+  if (stmt.step()) { return stmt.columnInt(0) != 0; }
+  return false;
+}
+
 void FileIndexerDatabase::init() {
   if (!m_db.exec(std::string(file_indexer::INIT_SQL))) {
     flog::error() << "Failed to run file-indexer migrations" << m_db.lastError();

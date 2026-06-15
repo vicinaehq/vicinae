@@ -1,5 +1,6 @@
 #include "file-indexer/entry-filter.hpp"
 #include "file-indexer/util.hpp"
+#include "file-indexer/vocabulary.hpp"
 #include <algorithm>
 #include <array>
 #include <fstream>
@@ -22,17 +23,6 @@ static const std::unordered_set<std::string> &excludedPaths() {
 
     const auto HOME_RELATIVE = {
         ".local/share/Trash",
-        ".local/share/Steam/steamapps",
-        ".local/share/Steam/steamrt64",
-        ".local/share/Steam/ubuntu12_32",
-        ".local/share/Steam/ubuntu12_64",
-        ".local/share/flatpak",
-        ".local/share/containers",
-        ".local/share/icons",
-        ".local/share/pnpm",
-        ".local/share/JetBrains",
-        ".local/share/zed",
-        ".icons",
         ".conda",
         "anaconda3",
         "miniconda3",
@@ -75,7 +65,7 @@ static const std::unordered_set<std::string> &excludedPaths() {
  * The indexer is pretty fast and can index millions of files without issue, so indexing some garbage
  * is forgivable.
  */
-static const std::unordered_set<std::string_view> EXCLUDED_FILENAMES = {
+static constexpr auto EXCLUDED_FILENAMES = std::array{
     ".git",
     ".hg",
     ".svn",
@@ -198,8 +188,9 @@ bool EntryFilter::shouldVisit(const fs::directory_entry &entry) const {
   if (excludedPaths().contains(path.native())) return false;
 
   // .noindex is the Spotlight convention for "do not index", honored by many apps
-  const std::string filename = path.filename().native();
-  if (EXCLUDED_FILENAMES.contains(filename) || filename.ends_with(".noindex")) return false;
+  const auto filename = file_indexer::vocab::basenameView(path.c_str());
+
+  if (std::ranges::contains(EXCLUDED_FILENAMES, filename) || filename.ends_with(".noindex")) return false;
   if (std::ranges::find(m_excludedFilenames, filename) != m_excludedFilenames.end()) return false;
 
   if (isIgnored(path)) return false;

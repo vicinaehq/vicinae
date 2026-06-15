@@ -30,18 +30,11 @@ std::vector<std::string_view> splitQueryWords(std::string_view query) {
 }
 
 std::string prepareCandidateSearchQuery(std::string_view query) {
-  // we escape each word in the query by enclosing it in quotes, as expected by FTS5
-  auto escapedParts = splitQueryWords(query) | std::views::filter([](auto &&v) { return v.size() >= 2; }) |
-                      std::views::transform([&](auto &&str) {
-                        // if it's a bigram, use prefix matching to match all trigrams that start with it
-                        if (str.size() == 2) { return std::format("\"{}\"*", str); }
-                        return std::format("\"{}\"", str);
-                      }) |
-                      std::ranges::to<std::vector>();
-  auto escapedQuery =
-      escapedParts | std::views::join_with(std::string_view{" "}) | std::ranges::to<std::string>();
+  auto words = splitQueryWords(query);
+  auto enquote = [](auto &&w) { return std::format("\"{}\"", w); };
 
-  return escapedQuery;
+  return words | std::views::transform(enquote) | std::views::join_with(std::string_view{" "}) |
+         std::ranges::to<std::string>();
 }
 
 std::string prepareRelaxedSearchQuery(std::span<const QueryWord> words) {

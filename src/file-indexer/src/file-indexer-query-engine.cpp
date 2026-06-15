@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <bits/ranges_algo.h>
 #include <functional>
+#include <iomanip>
 #include <ranges>
 #include <string>
 #include <string_view>
@@ -106,6 +107,15 @@ int scoreCandidate(const SC &candidate, std::span<const QueryWord> words) {
   return count != 0 ? total / count : 0;
 }
 
+void sortCandidates(std::vector<ScoredRef<SC>> &ranked) {
+  auto pathSize = [](const std::filesystem::path &p) { return std::string_view{p.c_str()}.size(); };
+
+  std::ranges::sort(ranked, [&](auto &&a, auto &&b) {
+    if (a.score != b.score) return std::cmp_greater(a.score, b.score);
+    return std::cmp_less(pathSize(a.data->path), pathSize(b.data->path));
+  });
+}
+
 std::vector<ScoredRef<SC>> scoreCandidatesParallel(std::span<const SC> candidates, const Scorer &scorer) {
   size_t const threadCount =
       std::min<size_t>((candidates.size() + SCORING_BATCH_SIZE - 1) / SCORING_BATCH_SIZE,
@@ -145,7 +155,7 @@ std::vector<ScoredRef<SC>> scoreCandidatesParallel(std::span<const SC> candidate
 
   auto cutCount = std::ranges::fold_left(cutCounts, 0, std::plus{});
 
-  std::ranges::sort(ranked, std::greater{});
+  sortCandidates(ranked);
   ranked.resize(ranked.size() - cutCount); // everything to the right of the offset is below the score
                                            // threshold so we can just resize to nuke it
 
@@ -164,7 +174,7 @@ std::vector<ScoredRef<SC>> scoreCandidates(std::span<const SC> candidates, const
       if (score > FZF_CUTOFF) ranked.push_back({&candidate, score});
     }
 
-    std::ranges::sort(ranked, std::greater{});
+    sortCandidates(ranked);
 
     return ranked;
   }
@@ -235,12 +245,15 @@ std::vector<IndexerFileResult> queryWithCorrections(FileIndexerDatabase &db, std
 
 std::vector<IndexerFileResult> FileIndexerQueryEngine::query(std::string_view q, int limit) {
   FileIndexerDatabase db;
-  // auto dbQuery = prepareCandidateSearchQuery(q);
-  auto dbQuery = q;
+  auto dbQuery = prepareCandidateSearchQuery(q);
 
   if (dbQuery.empty()) return {};
 
-  auto candidates = db.searchCandidates(dbQuery, CANDIDATE_LIMIT);
+  flog::info() << "searching" << std::quoted(dbQuery) << "\n";
+
+  auto candidates = db.searchCandidates(q, CANDIDATE_LIMIT);
+
+  flog::info() << "got " << candidates.size() << " candidates\n";
 
   // skeleton matches merge into the candidate set and the reranker arbitrates;
   // skipped when the strict query already saturated the cap
