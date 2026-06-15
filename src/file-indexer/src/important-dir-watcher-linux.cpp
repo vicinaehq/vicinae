@@ -184,7 +184,13 @@ class LinuxImportantDirectoryWatcher : public ImportantDirectoryWatcher {
     pollfd fds[2] = {{m_inFd, POLLIN, 0}, {m_wakeFd, POLLIN, 0}};
 
     while (true) {
-      if (poll(fds, 2, -1) < 0 && errno != EINTR) break;
+      if (poll(fds, 2, -1) < 0) {
+        if (errno != EINTR)
+          break;
+        else
+          continue;
+      }
+
       if (fds[1].revents & POLLIN) break;
       if (fds[0].revents & POLLIN) drainEvents();
     }
