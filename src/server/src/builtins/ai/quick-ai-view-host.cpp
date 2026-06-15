@@ -78,6 +78,9 @@ void QuickAIViewHost::sendQuery(const std::string &query) {
           });
 
   connect(m_stream.get(), &AI::AbstractChatCompletionStream::finished, this, [this]() {
+    // an error might have occured, yet finished is still emitted
+    if (!m_streaming) return;
+
     const auto &model = m_stream->model();
     m_modelLabel = QString::fromStdString(model.name);
     m_modelIcon = model.icon.value_or(ImageUrl{});

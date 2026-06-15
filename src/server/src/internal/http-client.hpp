@@ -113,6 +113,7 @@ public:
     connect(reply, &QNetworkReply::finished, this, &EventSource::handleFinished);
     connect(reply, &QNetworkReply::errorOccurred, this, [this](QNetworkReply::NetworkError error) {
       qDebug() << "completion error";
+      m_errored = true;
       emit errorOccured(m_reply->errorString());
     });
   }
@@ -156,15 +157,17 @@ private:
   }
 
   void handleFinished() {
-    processLines();
+    if (!m_errored) processLines();
     emit finished();
   }
 
   void handleRead() {
+    if (m_errored) return;
     m_buf.append(m_reply->readAll());
     processLines();
   }
 
+  bool m_errored = false;
   QString event;
   QByteArray m_buf;
   QNetworkReply *m_reply = nullptr;
