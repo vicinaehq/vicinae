@@ -3,13 +3,15 @@
 #include "services/window-manager/window-manager.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/image/url.hpp"
+#include <QTimer>
 
 class FocusWindowAction : public AbstractAction {
   std::shared_ptr<AbstractWindowManager::AbstractWindow> m_window;
 
   void execute(ApplicationContext *ctx) override {
     auto wm = ctx->services->windowManager();
-    wm->provider()->focusWindowSync(*m_window.get());
+    auto window = m_window;
+    QTimer::singleShot(0, [wm, window]() { wm->provider()->focusWindowSync(*window.get()); });
   }
 
 public:
