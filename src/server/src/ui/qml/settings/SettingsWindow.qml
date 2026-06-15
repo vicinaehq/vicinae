@@ -21,13 +21,13 @@ Window {
                 "title": qsTr("Keybindings"),
                 "page": shortcutsPage
             },
-            "advanced": {
-                "title": qsTr("Advanced"),
-                "page": advancedPage
-            },
             "ai": {
                 "title": qsTr("AI"),
                 "page": aiPage
+            },
+            "advanced": {
+                "title": qsTr("Advanced"),
+                "page": advancedPage
             },
             "about": {
                 "title": qsTr("About"),
