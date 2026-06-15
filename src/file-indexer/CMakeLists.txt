@@ -43,7 +43,6 @@ add_library(${FILE_INDEXER_CORE} STATIC
 	src/filesystem-walker.cpp
 	src/entry-filter.cpp
 	src/io-pacer.cpp
-	src/relevancy-scorer.cpp
 	src/home-directory-watcher.cpp
 	${PLATFORM_SRCS}
 	${VENDOR_DIR}/fuzzy-trigram/register.c

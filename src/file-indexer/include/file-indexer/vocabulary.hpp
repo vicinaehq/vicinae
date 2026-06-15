@@ -26,6 +26,16 @@ inline std::string_view basenameView(std::string_view path) {
   return path;
 }
 
+inline std::string_view fileExtensionView(std::string_view path) {
+  if (auto const pos = path.rfind('.'); pos != std::string_view::npos) return path.substr(pos + 1);
+  return path;
+}
+
+inline std::string_view dirnameView(std::string_view path) {
+  if (auto const pos = path.rfind('/'); pos != std::string_view::npos) return path.substr(0, pos);
+  return path;
+}
+
 /**
  * Splits a filename into vocabulary words: non-alphanumeric characters and camelCase
  * boundaries delimit tokens, which are then lowercased. Tokens shorter than

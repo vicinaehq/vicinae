@@ -4,9 +4,11 @@
 #include "fuzzy/fzf.hpp"
 #include "fuzzy/scored.hpp"
 #include <algorithm>
+#include <bits/ranges_algo.h>
 #include <functional>
 #include <ranges>
 #include <string>
+#include <string_view>
 #include <system_error>
 #include <thread>
 #include <unordered_set>
@@ -27,11 +29,44 @@ constexpr const auto SUGGESTION_FETCH_COUNT = 20;
 constexpr const auto MAX_CORRECTIONS_PER_WORD = 3;
 constexpr const auto MIN_CORRECTABLE_WORD_LENGTH = 3;
 
+// for now, we don't try to be too smart about how we prioritize files
+// depending on their types, because it is very easy to introduce
+// undesirable behavior doing so.
+// There are, however, a lot of junk files that really deserve to score lower,
+// so we do some amount of work here.
+double computeFileRelevanceMultiplier(const SC &candidate) {
+  auto pcstr = std::string_view{candidate.path.c_str()};
+  auto ext = file_indexer::vocab::fileExtensionView(candidate.path.c_str());
+
+  // FIXME: maybe we want some logic to avoid discriminating against a file extension that
+  // is explicitly in the query.
+
+  // emacs junk
+  if (std::ranges::starts_with(pcstr, "#") && std::ranges::ends_with(pcstr, "#")) { return 0.1; }
+  if (std::ranges::starts_with(ext, "#")) return 0.1;
+
+  // we rarely want object files as a first match
+  if (ext == "o") { return 0.5; }
+
+  // swap file stuff, not sure if it can conflict with legitimate extensions so
+  // keeping the malus medium.
+  if (std::ranges::ends_with(pcstr, "~")) return 0.3;
+  if (ext == "swp") return 0.5;
+  if (ext == "swo") return 0.5;
+  if (ext == "swm") return 0.5;
+
+  return 1.0;
+}
+
 int scoreCandidate(const SC &candidate, std::string_view query) {
   const auto &ranker = fzf::threadLocalMatcher();
-  auto filename = file_indexer::vocab::basenameView(candidate.path.c_str());
-  std::initializer_list<fzf::WeightedString> strs = {{filename, 1}, {candidate.path.c_str(), 0.7}};
-  return ranker.fuzzy_match_v2_score_query(strs, query);
+  auto pcstr = candidate.path.c_str();
+  auto filename = file_indexer::vocab::basenameView(pcstr);
+  auto dirname = file_indexer::vocab::dirnameView(pcstr);
+  std::initializer_list<fzf::WeightedString> strs = {{filename, 1}, {dirname, 0.7}};
+  int score = ranker.fuzzy_match_v2_score_query(strs, query);
+
+  return score * computeFileRelevanceMultiplier(candidate);
 }
 
 /**
