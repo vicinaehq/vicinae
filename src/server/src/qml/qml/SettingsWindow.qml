@@ -21,6 +21,11 @@ Window {
                 "icon": "keyboard",
                 "page": shortcutsPage
             },
+            "ai": {
+                "title": "AI",
+                "icon": "stars",
+                "page": aiPage
+            },
             "advanced": {
                 "title": "Advanced",
                 "icon": "wrench-screwdriver",

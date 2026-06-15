@@ -5,6 +5,7 @@
 #include "services/ai/ai-service.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/paste/paste-service.hpp"
+#include "ui/action-pannel/action-panel-state.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/image/url.hpp"
 
@@ -115,7 +116,7 @@ void QuickAIViewHost::sendQuery(const std::string &query) {
 }
 
 void QuickAIViewHost::updateActions() {
-  auto panel = std::make_unique<ActionPanelState>();
+  auto panel = std::make_unique<ListActionPanelState>();
   auto *section = panel->createSection();
 
   if (m_streaming) {
