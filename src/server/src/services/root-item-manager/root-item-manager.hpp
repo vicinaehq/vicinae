@@ -244,6 +244,18 @@ public:
     std::reference_wrapper<ItemPtr> item;
   };
 
+  // A provider together with the items that matched a query, used by views that
+  // present results grouped under their provider (e.g. the settings sidebar).
+  struct ProviderSearchItem {
+    ItemPtr item;
+    bool enabled = true;
+  };
+  struct ProviderSearchGroup {
+    RootProvider *provider = nullptr;
+    double score = 0;
+    std::vector<ProviderSearchItem> items;
+  };
+
   RootItemManager(config::Manager &config, LocalStorageService &storage);
 
   static glz::generic::object_t transformPreferenceValues(const QJsonObject &preferences);
@@ -314,6 +326,13 @@ public:
   void search(const QString &query, std::vector<ScoredItem> &results,
               const RootItemPrefixSearchOptions &opts = {});
   std::vector<ScoredItem> search(const QString &query, const RootItemPrefixSearchOptions &opts = {});
+
+  /**
+   * Like search(), but grouped by provider: an item also matches when its
+   * provider's name does, so a provider name lists all its commands.
+   */
+  std::vector<ProviderSearchGroup> searchGroupedByProvider(const QString &query,
+                                                           const RootItemPrefixSearchOptions &opts = {});
 
   RootItem *findItemById(const EntrypointId &id) const;
   bool pruneProvider(const QString &id);

@@ -184,7 +184,9 @@ bool Manager::writeUser(const Partial<ConfigValue> &cfg) {
     ofs << TOP_COMMENT << "\n\n" << glz::prettify_json(buf);
   }
 
-  reloadConfig();
+  // XXX - we needed this at some point, maybe I'm breaking something
+  // The idea is that the watcher should take care of this already, we don't want double firing
+  // reloadConfig();
 
   return true;
 }

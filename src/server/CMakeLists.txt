@@ -573,6 +573,8 @@ set(SRCS
 	src/qml/general-settings-model.cpp
 	src/qml/keybind-settings-model.hpp
 	src/qml/keybind-settings-model.cpp
+	src/qml/settings-sidebar-model.hpp
+	src/qml/settings-sidebar-model.cpp
 	src/qml/extension-settings-model.hpp
 	src/qml/extension-settings-model.cpp
 	src/qml/preference-form-model.hpp
@@ -885,8 +887,12 @@ set(VICINAE_QML_FILES
 	src/qml/qml/SettingsWindow.qml
 	src/qml/qml/SettingsSidebar.qml
 	src/qml/qml/SettingsRow.qml
+	src/qml/qml/SettingsGroup.qml
+	src/qml/qml/SettingsSectionLabel.qml
+	src/qml/qml/InlineEditableText.qml
 	src/qml/qml/SettingsToggle.qml
 	src/qml/qml/GeneralSettingsPage.qml
+	src/qml/qml/AppearanceSettingsPage.qml
 	src/qml/qml/AdvancedSettingsPage.qml
 	src/qml/qml/ShortcutsSettingsPage.qml
 	src/qml/qml/ExtensionSettingsPage.qml
