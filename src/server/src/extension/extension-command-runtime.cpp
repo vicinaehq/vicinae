@@ -94,6 +94,8 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
   opts.owner_or_author_name = m_command->author().toStdString();
   opts.is_raycast = m_command->isRaycast();
   opts.preferences = qJsonObjectToGlazeGeneric(preferenceValues);
+  opts.launch_context =
+      props.launchContext ? qJsonObjectToGlazeGeneric(*props.launchContext) : glz::generic{};
   opts.arguments = props.arguments |
                    std::views::transform([](auto &&pair) -> std::pair<std::string, std::string> {
                      return {pair.first.toStdString(), pair.second.toStdString()};
