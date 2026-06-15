@@ -283,7 +283,6 @@ FileIndexerDatabase::searchCandidates(std::string_view searchQuery, int limit) {
     FROM indexed_file f
     JOIN unicode_idx ON unicode_idx.rowid = f.id
     WHERE unicode_idx MATCH :search
-    ORDER BY unicode_idx.rank
     LIMIT :limit
   )");
   stmt.bind(":search", searchQuery);
