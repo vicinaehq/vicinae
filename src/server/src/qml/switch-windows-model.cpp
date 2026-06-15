@@ -25,11 +25,13 @@ std::unique_ptr<ActionPanelState> SwitchWindowsSection::buildActionPanel(const W
   auto section = panel->createSection("Window Actions");
   section->addAction(new FocusWindowAction(e.window));
 
-  auto pinAction = new PinWindowAction(e.window);
-  section->addAction(pinAction);
+  if (scope().services()->windowManager()->id() == "x11") {
+    auto pinAction = new PinWindowAction(e.window);
+    section->addAction(pinAction);
 
-  auto bringAction = new BringToWorkspaceAction(e.window);
-  section->addAction(bringAction);
+    auto bringAction = new BringToWorkspaceAction(e.window);
+    section->addAction(bringAction);
+  }
 
   auto closeAction = new CloseWindowAction(e.window);
   closeAction->setShortcut(Keyboard::Shortcut(Qt::Key_Q, Qt::ControlModifier));

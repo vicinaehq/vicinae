@@ -83,13 +83,9 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
       mainSection->addAction(focus);
     }
 
-    if (preferences.value("showPin").toBool(true)) {
+    if (ctx->services->windowManager()->id() == "x11") {
       mainSection->addAction(new PinWindowAction(activeWindows.front()));
-    }
-    if (preferences.value("showBring").toBool(true)) {
       mainSection->addAction(new BringToWorkspaceAction(activeWindows.front()));
-    }
-    if (preferences.value("showClose").toBool(true)) {
       mainSection->addAction(new CloseWindowAction(activeWindows.front()));
     }
   } else {
