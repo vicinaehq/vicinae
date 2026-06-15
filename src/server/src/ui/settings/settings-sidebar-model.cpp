@@ -86,10 +86,11 @@ void SettingsSidebarModel::rebuildRows() {
     QString label;
     BuiltinIcon icon;
   };
-  const std::array<CorePage, 5> corePages = {{
+  const std::array<CorePage, 6> corePages = {{
       {QStringLiteral("general"), tr("General"), BuiltinIcon::Cog},
       {QStringLiteral("appearance"), tr("Appearance"), BuiltinIcon::Swatch},
       {QStringLiteral("keybindings"), tr("Keybindings"), BuiltinIcon::Keyboard},
+      {QStringLiteral("ai"), tr("AI"), BuiltinIcon::Stars},
       {QStringLiteral("advanced"), tr("Advanced"), BuiltinIcon::WrenchScrewdriver},
       {QStringLiteral("about"), tr("About"), BuiltinIcon::Vicinae},
   }};
