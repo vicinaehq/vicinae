@@ -19,6 +19,11 @@ Window {
                 "title": qsTr("Keybindings"),
                 "page": shortcutsPage
             },
+            "ai": {
+                "title": "AI",
+                "icon": "stars",
+                "page": aiPage
+            },
             "advanced": {
                 "title": qsTr("Advanced"),
                 "page": advancedPage
