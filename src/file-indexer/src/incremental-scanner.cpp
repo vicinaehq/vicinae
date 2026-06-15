@@ -89,7 +89,7 @@ bool IncrementalScanner::shouldProcessEntry(const fs::directory_entry &entry, in
         static_cast<int64_t>(duration_cast<seconds>(sctp.time_since_epoch()).count());
 
     // Only process if directory was modified after the cutoff or equal (to be safe)
-    return lastModifiedSeconds >= cutOffSeconds;
+    return lastModifiedSeconds >= cutOffSeconds || !m_read_db->tracksFile(entry.path());
   }
 
   // If we can't get mtime, process anyway to be safe
