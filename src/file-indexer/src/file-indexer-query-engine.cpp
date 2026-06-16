@@ -263,7 +263,7 @@ std::vector<IndexerFileResult> FileIndexerQueryEngine::query(std::string_view q,
 
   flog::info() << "searching" << std::quoted(dbQuery) << "\n";
 
-  auto candidates = db.searchCandidates(q, CANDIDATE_LIMIT);
+  auto candidates = db.searchCandidates(dbQuery, CANDIDATE_LIMIT);
 
   flog::info() << "got " << candidates.size() << " candidates\n";
 

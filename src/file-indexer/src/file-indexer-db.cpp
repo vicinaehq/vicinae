@@ -257,7 +257,7 @@ std::vector<FileIndexerDatabase::ScanRecord> FileIndexerDatabase::listScans(Scan
                                                                             ScanStatus scanStatus) {
   auto stmt = m_db.prepare("SELECT id, status, created_at, entrypoint, type, finished_at, indexed_file_count "
                            "FROM scan_history WHERE status = :status and type = :type");
-  stmt.bind(":status", static_cast<int>(ScanStatus::Started));
+  stmt.bind(":status", static_cast<int>(scanStatus));
   stmt.bind(":type", static_cast<int>(scanType));
 
   std::vector<ScanRecord> records;
