@@ -85,15 +85,15 @@ public:
         "stopped entirely and file search becomes unavailable until it is turned back on.");
     indexing.setDefaultValue(true);
 
-    auto paths = Preference::makeText("paths");
+    auto paths = Preference::directories("paths");
     paths.setTitle("Search paths");
     paths.setDescription("Semicolon-separated list of paths that vicinae will search");
-    paths.setDefaultValue(homeDir().c_str());
+    paths.setDefaultValue(QJsonArray{homeDir().c_str()});
 
-    auto excludedPaths = Preference::makeText("excludedPaths");
+    auto excludedPaths = Preference::directories("excludedPaths");
     excludedPaths.setTitle("Excluded search paths");
     excludedPaths.setDescription("Semicolon-separated list of paths to exclude from file indexing");
-    excludedPaths.setDefaultValue("");
+    excludedPaths.setDefaultValue(QJsonArray{});
 
     return {indexing, paths, excludedPaths};
 #else
