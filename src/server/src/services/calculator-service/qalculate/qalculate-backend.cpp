@@ -1,6 +1,5 @@
 #include "services/calculator-service/qalculate/qalculate-backend.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
-#include <QDebug>
 #include <QRegularExpression>
 #include <QTimeZone>
 #include <format>
@@ -31,7 +30,27 @@ bool QalculateBackend::start() {
   return true;
 }
 
+void QalculateBackend::populateTzOffset() {
+  if (!m_cityToTzMinuteOffset.empty()) { return; }
+
+  for (const auto &tz : QTimeZone::availableTimeZoneIds()) {
+    std::string tzcode(tz.constData(), tz.length());
+
+    // Extract city name from tzcode (remove continent part if present)
+    size_t slashPos = tzcode.find('/');
+    std::string cityName = tzcode;
+    if (slashPos != std::string::npos) { cityName = tzcode.substr(slashPos + 1); }
+
+    // Get the timezone offset
+    QTimeZone qtz(tz);
+    int offsetSeconds = qtz.offsetFromUtc(QDateTime::currentDateTimeUtc());
+    int offsetMinutes = offsetSeconds / 60;
+    m_cityToTzMinuteOffset[cityName] = offsetMinutes;
+  }
+}
+
 std::optional<int> QalculateBackend::getTimezoneOffset(const std::string &tzName) {
+
   // Try to parse as custom offset format: +HH:MM or -HH:MM
   if (tzName.size() >= 6 && (tzName[0] == '+' || tzName[0] == '-')) {
     try {
@@ -42,6 +61,27 @@ std::optional<int> QalculateBackend::getTimezoneOffset(const std::string &tzName
       }
     } catch (...) { return std::nullopt; }
   }
+
+  this->populateTzOffset();
+
+  // Try to interpret tzName as a city name
+  std::string normalizedCity = tzName;
+  // Normalize: uppercase initials, replace spaces with underscores
+  bool capitalizeNext = true;
+  for (size_t i = 0; i < normalizedCity.size(); ++i) {
+    if (normalizedCity[i] == ' ') {
+      normalizedCity[i] = '_';
+      capitalizeNext = true;
+    } else if (capitalizeNext) {
+      normalizedCity[i] = std::toupper(static_cast<unsigned char>(normalizedCity[i]));
+      capitalizeNext = false;
+    } else {
+      normalizedCity[i] = std::tolower(static_cast<unsigned char>(normalizedCity[i]));
+    }
+  }
+
+  auto it = m_cityToTzMinuteOffset.find(normalizedCity);
+  if (it != m_cityToTzMinuteOffset.end()) { return it->second; }
 
   // Try to look up timezone in IANA database
   QString tzQStr = QString::fromStdString(tzName);
@@ -60,10 +100,9 @@ std::pair<std::string, PrintOptions> QalculateBackend::handleToExpression(const 
   PrintOptions resultPrintOpts = m_printOpts;
 
   std::string toExpression;
-  std::string calcExpression = expression; // This will be modified to remove "to" part for display formats
+  std::string calcExpression = expression;
 
   if (CALCULATOR->separateToExpression(calcExpression, toExpression, m_evalOpts, true)) {
-    // Parse the "to" part and check if it's a display format (not a unit conversion)
     if (!toExpression.empty()) {
       std::string toStr = toExpression;
       // Remove leading/trailing whitespace
@@ -71,8 +110,6 @@ std::pair<std::string, PrintOptions> QalculateBackend::handleToExpression(const 
       size_t end = toStr.find_last_not_of(" \t\n\r");
       if (start != std::string::npos) { toStr = toStr.substr(start, end - start + 1); }
 
-      // Check if it's a display format conversion (not a unit conversion)
-      // Map "to" conversions to display options
       if (toStr == "hex" || toStr == "hexadecimal") {
         resultPrintOpts.base = BASE_HEXADECIMAL;
       } else if (toStr == "bin" || toStr == "binary") {
@@ -108,22 +145,16 @@ std::pair<std::string, PrintOptions> QalculateBackend::handleToExpression(const 
         resultPrintOpts.negative_exponents = false;
       } else if (toStr == "utc" || toStr == "gmt") {
         resultPrintOpts.time_zone = TIME_ZONE_UTC;
-      } else if (toStr.length() >= 6 && (toStr[0] == '+' || toStr[0] == '-')) {
-        // Custom timezone offset (e.g., "+05:30", "-08:00")
-        if (auto offset = getTimezoneOffset(toStr)) {
-          resultPrintOpts.time_zone = TIME_ZONE_CUSTOM;
-          resultPrintOpts.custom_time_zone = *offset;
-        }
       } else {
-        // Try to look up as IANA timezone name or other format
+        // Try to look up as timezone offset or IANA timezone name
         if (auto offset = getTimezoneOffset(toStr)) {
           resultPrintOpts.time_zone = TIME_ZONE_CUSTOM;
           resultPrintOpts.custom_time_zone = *offset;
+        } else {
+          // Not a display format or timezone - it's a unit conversion, restore the full expression
+          calcExpression = expression;
         }
       }
-    } else {
-      // For unit conversions, restore the full expression
-      calcExpression = expression;
     }
   }
 
@@ -331,11 +362,15 @@ std::optional<std::string> QalculateBackend::getUnitDisplayName(const MathStruct
                                                                 std::string_view prefix) {
   if (prefix.empty() && s.prefix()) {
     std::string_view const prefix = s.prefix()->preferredDisplayName().name;
+
     if (!prefix.empty()) { return getUnitDisplayName(s, prefix); }
   }
 
   if (auto unit = s.unit()) {
-    return std::format("{}{}", prefix, unit->preferredDisplayName(false, false, true, false).name);
+    std::string displayName =
+        std::format("{}{}", prefix, unit->preferredDisplayName(false, false, true, false).name);
+
+    return displayName;
   }
 
   for (size_t i = 0; i != s.size(); ++i) {
