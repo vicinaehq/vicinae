@@ -8,12 +8,13 @@
 namespace fs = std::filesystem;
 
 void IndexerScanner::scan(const Scan &scan) {
+  const auto &fullScan = std::get<FullScan>(scan.data);
   std::vector<FileEvent> batchedIndex;
 
   batchedIndex.reserve(INDEX_BATCH_SIZE);
 
   // m_walker.setVerbose();
-  m_walker.setExcludedPaths(scan.excludedPaths);
+  m_walker.setExcludedPaths(fullScan.excludedPaths);
   m_walker.walk(scan.path, [&](const fs::directory_entry &entry) {
     std::error_code ec;
     reportProgress();

@@ -96,7 +96,7 @@ bool IncrementalScanner::shouldProcessEntry(const fs::directory_entry &entry, in
   return true;
 }
 
-void IncrementalScanner::exhaustiveScan(const Scan &scan) {
+void IncrementalScanner::exhaustiveScan(const fs::path &path, const IncrementalScan &scan) {
   std::deque<fs::path> newDirs;
   std::unordered_set<fs::path> processed;
   std::error_code ec;
@@ -105,7 +105,7 @@ void IncrementalScanner::exhaustiveScan(const Scan &scan) {
     if (isNew && entry.is_directory(ec)) { newDirs.emplace_back(entry.path()); }
   };
 
-  for (const auto &dir : getScannableDirectories(scan.path, scan.maxDepth, scan.excludedPaths)) {
+  for (const auto &dir : getScannableDirectories(path, scan.maxDepth, scan.excludedPaths)) {
     if (isInterrupted()) break;
     processed.insert(dir);
     processDirectory(dir, collectNewDirs);
@@ -122,12 +122,12 @@ void IncrementalScanner::exhaustiveScan(const Scan &scan) {
   }
 }
 
-void IncrementalScanner::prunedScan(const Scan &scan) {
+void IncrementalScanner::prunedScan(const fs::path &scanPath, const IncrementalScan &scan) {
   // a successful ancestor scan covered this subtree, so its timestamp is a valid
   // cutoff; without it first contact would descend everything
   int64_t cutOffSeconds = 0;
 
-  for (fs::path path = scan.path;; path = path.parent_path()) {
+  for (fs::path path = scanPath;; path = path.parent_path()) {
     if (auto lastSuccessfulScan = m_read_db->getLastSuccessfulScan(path)) {
       cutOffSeconds = lastSuccessfulScan->createdAt;
       break;
@@ -143,7 +143,7 @@ void IncrementalScanner::prunedScan(const Scan &scan) {
     if (isNew || shouldProcessEntry(entry, cutOffSeconds)) { queue.emplace_back(entry.path()); }
   };
 
-  queue.emplace_back(scan.path);
+  queue.emplace_back(scanPath);
 
   while (!queue.empty() && !isInterrupted()) {
     auto dir = std::move(queue.front());
@@ -152,16 +152,16 @@ void IncrementalScanner::prunedScan(const Scan &scan) {
   }
 }
 
-void IncrementalScanner::scan(const Scan &scan) {
+void IncrementalScanner::scan(const fs::path &path, const IncrementalScan &scan) {
   m_filter.setExcludedPaths(scan.excludedPaths);
   m_filter.setExcludedFilenames(scan.excludedFilenames);
 
   switch (scan.mode) {
   case ScanMode::Exhaustive:
-    exhaustiveScan(scan);
+    exhaustiveScan(path, scan);
     break;
   case ScanMode::Pruned:
-    prunedScan(scan);
+    prunedScan(path, scan);
     break;
   }
 }
@@ -175,7 +175,7 @@ IncrementalScanner::IncrementalScanner(std::shared_ptr<DbWriter> writer, const S
     start(sc);
 
     try {
-      scan(sc);
+      scan(sc.path, std::get<IncrementalScan>(sc.data));
       finish();
     } catch (const std::exception &error) {
       flog::error() << "Caught exception during incremental scan" << error.what();

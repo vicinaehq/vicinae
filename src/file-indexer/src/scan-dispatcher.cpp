@@ -12,6 +12,20 @@
 #include <ranges>
 #include <utility>
 
+namespace {
+
+std::string_view scanTypeLabel(ScanType type) { return type == ScanType::Full ? "full" : "incremental"; }
+
+std::string_view scanModeLabel(const Scan &scan) {
+  if (const auto *incremental = std::get_if<IncrementalScan>(&scan.data)) {
+    return incremental->mode == ScanMode::Exhaustive ? "exhaustive" : "pruned";
+  }
+
+  return "exhaustive";
+}
+
+} // namespace
+
 void ScanDispatcher::handleFinishedScan(int id, ScanStatus status) {
   {
     std::scoped_lock const l(m_collectorQueueMtx);
@@ -21,9 +35,8 @@ void ScanDispatcher::handleFinishedScan(int id, ScanStatus status) {
 }
 
 int ScanDispatcher::enqueue(const Scan &scan) {
-  flog::info() << std::format("Enqueuing {} scan for {} ({})",
-                              scan.type == ScanType::Full ? "full" : "incremental", scan.path.c_str(),
-                              scan.mode == ScanMode::Exhaustive ? "exhaustive" : "pruned");
+  flog::info() << std::format("Enqueuing {} scan for {} ({})", scanTypeLabel(scan.type()), scan.path.c_str(),
+                              scanModeLabel(scan));
 
   static int idCounter;
 
@@ -33,7 +46,7 @@ int ScanDispatcher::enqueue(const Scan &scan) {
   auto handler = [this, scanId, scan](ScanStatus status, size_t processedCount) {
     if (scan.notify && m_eventCallback) {
       m_eventCallback({.scanId = scanId,
-                       .type = scan.type,
+                       .type = scan.type(),
                        .status = status,
                        .entrypoint = scan.path,
                        .processedFileCount = processedCount});
@@ -45,7 +58,7 @@ int ScanDispatcher::enqueue(const Scan &scan) {
     std::scoped_lock const l(m_scannerMapMtx);
     auto startedAt = std::chrono::steady_clock::now();
 
-    switch (scan.type) {
+    switch (scan.type()) {
     case ScanType::Full:
       m_scannerMap[scanId] = {scan, std::make_unique<IndexerScanner>(m_writer, scan, handler), startedAt};
       break;
@@ -134,8 +147,7 @@ ScanDispatcher::ScanDispatcher(std::shared_ptr<DbWriter> writer)
                             .count();
 
         flog::info() << std::format("Done scanning {} in {}ms ({}, {})", scan.path.c_str(), duration,
-                                    scan.type == ScanType::Full ? "full" : "incremental",
-                                    scan.mode == ScanMode::Exhaustive ? "exhaustive" : "pruned");
+                                    scanTypeLabel(scan.type()), scanModeLabel(scan));
 
         it->second.scanner->join();
         m_scannerMap.erase(it);

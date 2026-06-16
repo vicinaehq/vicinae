@@ -11,12 +11,12 @@ void HomeDirectoryWatcher::handleEvent(const ImportantDirectoryWatcher::Event &e
 
   switch (ev.kind) {
   case Kind::DirectoryChanged:
-    m_dispatcher.enqueueDebounced({.type = ScanType::Incremental, .mode = ScanMode::Pruned, .path = ev.dir});
+    m_dispatcher.enqueueDebounced({.path = ev.dir, .data = IncrementalScan{.mode = ScanMode::Pruned}});
     break;
   case Kind::Degraded:
     flog::warn() << "Directory watcher degraded, rescanning all watched roots";
     for (const auto &dir : m_watcher->rootDirectories()) {
-      m_dispatcher.enqueueDebounced({.type = ScanType::Incremental, .mode = ScanMode::Pruned, .path = dir});
+      m_dispatcher.enqueueDebounced({.path = dir, .data = IncrementalScan{.mode = ScanMode::Pruned}});
     }
     break;
   }
@@ -52,8 +52,7 @@ void HomeDirectoryWatcher::timerLoop() {
       lastSweep = now;
       for (const auto &dir : getImportantDirectories()) {
         if (fs::is_directory(dir, ec)) {
-          m_dispatcher.enqueue(
-              {.type = ScanType::Incremental, .path = dir, .maxDepth = BACKGROUND_UPDATE_DEPTH});
+          m_dispatcher.enqueue({.path = dir, .data = IncrementalScan{.maxDepth = BACKGROUND_UPDATE_DEPTH}});
         }
       }
 

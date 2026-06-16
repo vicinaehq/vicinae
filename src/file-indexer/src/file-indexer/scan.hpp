@@ -1,6 +1,8 @@
 #pragma once
 #include <filesystem>
 #include <optional>
+#include <string>
+#include <variant>
 #include <vector>
 
 enum ScanType { Full, Incremental };
@@ -20,17 +22,31 @@ enum ScanStatus {
   Succeeded,
 };
 
-// TODO: use unions for each ScanType
-struct Scan {
-  ScanType type;
+struct FullScan {
+  std::vector<std::filesystem::path> excludedPaths;
+
+  bool operator==(const FullScan &rhs) const = default;
+};
+
+struct IncrementalScan {
   ScanMode mode = ScanMode::Exhaustive;
-  std::filesystem::path path;
   std::optional<size_t> maxDepth;
   std::vector<std::string> excludedFilenames;
   std::vector<std::filesystem::path> excludedPaths;
+
+  bool operator==(const IncrementalScan &rhs) const = default;
+};
+
+struct Scan {
+  std::filesystem::path path;
+  std::variant<FullScan, IncrementalScan> data;
   bool notify = false;
 
   bool operator==(const Scan &rhs) const = default;
+
+  ScanType type() const {
+    return std::holds_alternative<FullScan>(data) ? ScanType::Full : ScanType::Incremental;
+  }
 
   bool operator<(const Scan &other) const {
     // TODO: Find a proper way to suppport std::set

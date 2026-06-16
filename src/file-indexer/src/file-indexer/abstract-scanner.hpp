@@ -39,7 +39,7 @@ private:
 
 protected:
   void start(const Scan &scan) {
-    auto result = m_writer->createScan(scan.path, scan.type);
+    auto result = m_writer->createScan(scan.path, scan.type());
 
     if (!result.has_value()) {
       flog::warn() << "Not scanning" << scan.path.native() << "because scan record creation failed with error"

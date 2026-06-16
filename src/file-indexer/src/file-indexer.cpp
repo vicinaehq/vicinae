@@ -23,7 +23,7 @@ void FileIndexer::startFullScan() {
         // The reason being that we still want to know where the db file is (current use case), just not
         // watch it. May want to split the list in two later (scan vs watch).
         m_dispatcher.enqueue(
-            {.type = ScanType::Full, .path = entrypoint, .excludedPaths = m_excludedPaths, .notify = true});
+            {.path = entrypoint, .data = FullScan{.excludedPaths = m_excludedPaths}, .notify = true});
       }
     });
   }).detach();
@@ -32,14 +32,19 @@ void FileIndexer::startFullScan() {
 void FileIndexer::startSingleScan(const fs::path &entrypoint, ScanType type,
                                   const std::vector<std::string> &excludedFilenames) {
   for (auto const &[id, scan] : m_dispatcher.scans()) {
-    if (scan.type == type && scan.path == entrypoint) { m_dispatcher.interrupt(id); }
+    if (scan.type() == type && scan.path == entrypoint) { m_dispatcher.interrupt(id); }
   }
 
-  m_dispatcher.enqueue({.type = type,
-                        .path = entrypoint,
-                        .excludedFilenames = m_excludedFilenames,
-                        .excludedPaths = m_excludedPaths,
-                        .notify = true});
+  if (type == ScanType::Full) {
+    m_dispatcher.enqueue(
+        {.path = entrypoint, .data = FullScan{.excludedPaths = m_excludedPaths}, .notify = true});
+    return;
+  }
+
+  m_dispatcher.enqueue(
+      {.path = entrypoint,
+       .data = IncrementalScan{.excludedFilenames = m_excludedFilenames, .excludedPaths = m_excludedPaths},
+       .notify = true});
 }
 
 void FileIndexer::rebuildIndex() { startFullScan(); }

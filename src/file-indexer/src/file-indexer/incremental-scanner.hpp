@@ -29,9 +29,9 @@ class IncrementalScanner : public AbstractScanner, file_indexer::NonCopyable {
   void processDirectory(const std::filesystem::path &path, const EntryCallback &onEntry = {});
   bool shouldProcessEntry(const std::filesystem::directory_entry &entry, int64_t cutOffSeconds) const;
 
-  void scan(const Scan &scan);
-  void exhaustiveScan(const Scan &scan);
-  void prunedScan(const Scan &scan);
+  void scan(const std::filesystem::path &path, const IncrementalScan &scan);
+  void exhaustiveScan(const std::filesystem::path &path, const IncrementalScan &scan);
+  void prunedScan(const std::filesystem::path &path, const IncrementalScan &scan);
 
 public:
   IncrementalScanner(std::shared_ptr<DbWriter> writer, const Scan &scan, StatusCallback callback);
