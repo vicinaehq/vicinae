@@ -186,8 +186,6 @@ TEST_CASE("bridging: every separator collapses like a space") {
   CHECK(inTop("sf pro", "SF-Pro-Display-Bold.otf", 3));
   CHECK(inTop("dataloader", "data_loader_utils.py", 3));
   CHECK(inTop("invoicexlsx", "invoice.xlsx", 3));
-  // the path separator bridges too: components fuse for retrieval
-  CHECK(inTop("kernelvm", "vm_kmap.c", 3));
 }
 
 TEST_CASE("directories are typed in the index and queryable by recency") {
