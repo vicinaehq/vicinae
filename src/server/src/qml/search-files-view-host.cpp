@@ -6,7 +6,11 @@
 #include <QFileInfo>
 #include <ranges>
 
+using namespace std::chrono_literals;
+
 namespace fs = std::filesystem;
+
+constexpr auto FILE_SEARCH_DEBOUNCE = 100ms;
 
 QUrl SearchFilesViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/SearchFilesView.qml"));
@@ -17,7 +21,6 @@ QVariantMap SearchFilesViewHost::qmlProperties() {
 }
 
 void SearchFilesViewHost::initialize() {
-  using namespace std::chrono_literals;
   BaseView::initialize();
   initModel();
 
@@ -27,7 +30,7 @@ void SearchFilesViewHost::initialize() {
   setSearchPlaceholderText("Search for files...");
 
   m_debounce.setSingleShot(true);
-  m_debounce.setInterval(200ms);
+  m_debounce.setInterval(FILE_SEARCH_DEBOUNCE);
   connect(&m_debounce, &QTimer::timeout, this, &SearchFilesViewHost::handleDebounce);
   connect(&m_pendingResults, &Watcher::finished, this, &SearchFilesViewHost::handleSearchResults);
 }

@@ -64,4 +64,7 @@ pickCorrections(std::span<const FileIndexerDatabase::SpellfixSuggestion> suggest
 class FileIndexerQueryEngine {
 public:
   std::vector<IndexerFileResult> query(std::string_view q, int limit);
+
+private:
+  FileIndexerDatabase m_db;
 };

@@ -36,6 +36,7 @@ add_library(${FILE_INDEXER_CORE} STATIC
 	src/file-indexer-db.cpp
 	src/file-indexer-query-engine.cpp
 	src/file-indexer-query-policy.cpp
+	src/query-pool.cpp
 	src/db-writer.cpp
 	src/scan-dispatcher.cpp
 	src/indexer-scanner.cpp

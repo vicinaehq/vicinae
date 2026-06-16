@@ -3,7 +3,6 @@
 #include <cstring>
 #include <filesystem>
 #include <functional>
-#include <thread>
 #include <unistd.h>
 #include <vector>
 
@@ -36,8 +35,10 @@ static file_indexer_gen::ScanState toScanState(ScanStatus status) {
   return file_indexer_gen::ScanState::Started;
 }
 
+static constexpr size_t QUERY_WORKER_COUNT = 3;
+
 IndexerService::IndexerService(file_indexer_gen::RpcTransport &transport)
-    : file_indexer_gen::AbstractFileIndexer(transport) {
+    : file_indexer_gen::AbstractFileIndexer(transport), m_queryPool(QUERY_WORKER_COUNT) {
   m_indexer.setScanEventCallback([this](const ScanEvent &event) {
     emitscanStatusChanged({.scan_id = event.scanId,
                            .kind = toScanKind(event.type),
@@ -75,19 +76,17 @@ std::expected<void, std::string> IndexerService::rebuildIndex() {
 void IndexerService::query(
     file_indexer_gen::QueryRequest req,
     std::function<void(std::expected<file_indexer_gen::QueryResponse, std::string>)> reply) {
-  // Run off-thread so a slow query can't block the read loop / other queries.
-  std::thread([this, req = std::move(req), reply = std::move(reply)]() {
-    auto results = m_indexer.query(req.text, req.limit);
-
-    file_indexer_gen::QueryResponse response;
-    response.matches.reserve(results.size());
-    for (const auto &result : results) {
-      response.matches.emplace_back(
-          file_indexer_gen::FileMatch{.path = result.path.string(), .rank = result.rank});
-    }
-
-    reply(response);
-  }).detach();
+  m_queryPool.submit({.text = std::move(req.text),
+                      .limit = req.limit,
+                      .onResult = [reply = std::move(reply)](std::vector<IndexerFileResult> results) {
+                        file_indexer_gen::QueryResponse response;
+                        response.matches.reserve(results.size());
+                        for (const auto &result : results) {
+                          response.matches.emplace_back(
+                              file_indexer_gen::FileMatch{.path = result.path.string(), .rank = result.rank});
+                        }
+                        reply(response);
+                      }});
 }
 
 void IndexerService::listen(file_indexer_gen::Server &server) {

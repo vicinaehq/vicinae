@@ -5,6 +5,7 @@
 #include "fuzzy/scored.hpp"
 #include <algorithm>
 #include <bits/ranges_algo.h>
+#include <filesystem>
 #include <functional>
 #include <iomanip>
 #include <ranges>
@@ -15,6 +16,8 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+
+namespace fs = std::filesystem;
 
 namespace {
 
@@ -108,11 +111,19 @@ int scoreCandidate(const SC &candidate, std::span<const QueryWord> words) {
 }
 
 void sortCandidates(std::vector<ScoredRef<SC>> &ranked) {
-  auto pathSize = [](const std::filesystem::path &p) { return std::string_view{p.c_str()}.size(); };
-
   std::ranges::sort(ranked, [&](auto &&a, auto &&b) {
     if (a.score != b.score) return std::cmp_greater(a.score, b.score);
-    return std::cmp_less(pathSize(a.data->path), pathSize(b.data->path));
+    const auto psA = a.data->path.native().size();
+    const auto psB = b.data->path.native().size();
+    if (psA != psB) return std::cmp_less(psA, psB);
+
+    std::error_code ec;
+    auto typeA = fs::is_directory(a.data->path, ec) ? 0 : 1;
+    auto typeB = fs::is_directory(b.data->path, ec) ? 0 : 1;
+
+    if (typeA != typeB) return std::cmp_greater(typeA, typeB);
+
+    return std::ranges::lexicographical_compare(a.data->path.native(), b.data->path.native());
   });
 }
 
@@ -190,7 +201,7 @@ std::vector<IndexerFileResult> rankCandidates(std::vector<SC> candidates, const 
   results.reserve(limit);
 
   for (const auto &scored : ranked) {
-    if (std::filesystem::exists(scored.data->path, ec)) {
+    if (fs::exists(scored.data->path, ec)) {
       results.emplace_back(
           IndexerFileResult{std::move(scored.data->path), static_cast<double>(scored.score)});
       if (results.size() == limit) break;
@@ -244,7 +255,8 @@ std::vector<IndexerFileResult> queryWithCorrections(FileIndexerDatabase &db, std
 } // namespace
 
 std::vector<IndexerFileResult> FileIndexerQueryEngine::query(std::string_view q, int limit) {
-  FileIndexerDatabase db;
+  constexpr auto SKELETON_THRESHOLD = 10; // below n, also query skeleton index to increase recall
+  FileIndexerDatabase &db = m_db;
   auto dbQuery = prepareCandidateSearchQuery(q);
 
   if (dbQuery.empty()) return {};
@@ -257,7 +269,7 @@ std::vector<IndexerFileResult> FileIndexerQueryEngine::query(std::string_view q,
 
   // skeleton matches merge into the candidate set and the reranker arbitrates;
   // skipped when the strict query already saturated the cap
-  if (candidates.size() < static_cast<size_t>(CANDIDATE_LIMIT)) {
+  if (candidates.size() < static_cast<size_t>(SKELETON_THRESHOLD)) {
     auto seen = candidates |
                 std::views::transform([](const SC &candidate) { return candidate.path.native(); }) |
                 std::ranges::to<std::unordered_set>();
