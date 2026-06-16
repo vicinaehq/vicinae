@@ -21,6 +21,31 @@ inline bool isJunkToken(std::string_view token) {
   return token.size() >= MIN_HEX_JUNK_LENGTH && std::ranges::all_of(token, isHexChar);
 }
 
+inline bool isSkeletonVowel(unsigned char c) {
+  return c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u';
+}
+
+inline std::string skeletonizeToken(std::string_view token) {
+  std::string skeleton;
+  char last = 0;
+
+  skeleton.reserve(token.size());
+
+  for (unsigned char c : token) {
+    c = static_cast<unsigned char>(std::tolower(c));
+
+    if (!skeleton.empty()) {
+      if (isSkeletonVowel(c)) continue;
+      if (c == last) continue;
+    }
+
+    skeleton.push_back(static_cast<char>(c));
+    last = static_cast<char>(c);
+  }
+
+  return skeleton;
+}
+
 inline std::string_view basenameView(std::string_view path) {
   if (auto const pos = path.rfind('/'); pos != std::string_view::npos) return path.substr(pos + 1);
   return path;

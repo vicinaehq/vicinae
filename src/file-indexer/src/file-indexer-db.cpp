@@ -29,6 +29,23 @@ std::pair<std::string, std::string> subtreeRange(const fs::path &path) {
   return {std::move(lower), std::move(upper)};
 }
 
+std::string skeletonDocument(const fs::path &path) {
+  auto tokens = file_indexer::vocab::tokenizeFilename(path.native());
+  std::string document;
+
+  document.reserve(path.native().size());
+
+  for (const auto &token : tokens) {
+    auto skeleton = file_indexer::vocab::skeletonizeToken(token);
+    if (skeleton.size() < file_indexer::vocab::MIN_TOKEN_LENGTH) continue;
+
+    if (!document.empty()) { document.push_back(' '); }
+    document += skeleton;
+  }
+
+  return document;
+}
+
 } // namespace
 
 fs::path FileIndexerDatabase::getDatabasePath() { return file_indexer::databasePath(); }
@@ -52,16 +69,18 @@ std::optional<int64_t> FileIndexerDatabase::ensureDirectory(const std::filesyste
 
   auto stmt = m_db.prepare(R"(
     INSERT INTO
-      indexed_file (path, parent_id, last_modified_at, type)
+      indexed_file (path, skeleton_path, parent_id, last_modified_at, type)
     VALUES
-      (:path, :parent_id, :last_modified_at, 1)
-    ON CONFLICT (path) DO UPDATE SET parent_id = excluded.parent_id, type = 1
+      (:path, :skeleton_path, :parent_id, :last_modified_at, 1)
+    ON CONFLICT (path) DO UPDATE SET skeleton_path = excluded.skeleton_path,
+      parent_id = excluded.parent_id, type = 1
     RETURNING id
   )");
 
   std::error_code ec;
 
   stmt.bind(":path", dir.c_str());
+  stmt.bind(":skeleton_path", skeletonDocument(dir));
   stmt.bind(":parent_id", parentId);
 
   if (auto lastModified = fs::last_write_time(dir, ec); !ec) {
@@ -461,11 +480,11 @@ void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
 
   auto modifyStmt = m_db.prepare(R"(
     INSERT INTO
-      indexed_file (path, parent_id, last_modified_at, type)
+      indexed_file (path, skeleton_path, parent_id, last_modified_at, type)
     VALUES
-      (:path, :parent_id, :last_modified_at, :type)
+      (:path, :skeleton_path, :parent_id, :last_modified_at, :type)
     ON CONFLICT (path) DO UPDATE SET last_modified_at = excluded.last_modified_at,
-      parent_id = excluded.parent_id, type = excluded.type
+      skeleton_path = excluded.skeleton_path, parent_id = excluded.parent_id, type = excluded.type
   )");
 
   auto deleteStmt = m_db.prepare("DELETE FROM indexed_file WHERE path = :path");
@@ -491,6 +510,7 @@ void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
           static_cast<int64_t>(duration_cast<seconds>(event.eventTime.time_since_epoch()).count());
       modifyStmt.bind(":last_modified_at", secondsSinceEpoch);
       modifyStmt.bind(":path", event.path.c_str());
+      modifyStmt.bind(":skeleton_path", skeletonDocument(event.path));
       modifyStmt.bind(":parent_id", resolveParent(event.path));
       modifyStmt.bind(":type", event.isDirectory ? 1 : 0);
       ok = modifyStmt.exec();
@@ -525,11 +545,11 @@ void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &p
 
   auto stmt = m_db.prepare(R"(
     INSERT INTO
-      indexed_file (path, parent_id, last_modified_at, type)
+      indexed_file (path, skeleton_path, parent_id, last_modified_at, type)
     VALUES
-      (:path, :parent_id, :last_modified_at, :type)
+      (:path, :skeleton_path, :parent_id, :last_modified_at, :type)
     ON CONFLICT (path) DO UPDATE SET last_modified_at = excluded.last_modified_at,
-      parent_id = excluded.parent_id, type = excluded.type
+      skeleton_path = excluded.skeleton_path, parent_id = excluded.parent_id, type = excluded.type
   )");
 
   std::error_code ec;
@@ -556,6 +576,7 @@ void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &p
     }
 
     stmt.bind(":path", path.c_str());
+    stmt.bind(":skeleton_path", skeletonDocument(path));
     stmt.bind(":parent_id", resolveParent(path));
     stmt.bind(":type", fs::is_directory(path, ec) ? 1 : 0);
 
