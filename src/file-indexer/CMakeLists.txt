@@ -51,7 +51,7 @@ add_library(${FILE_INDEXER_CORE} STATIC
 )
 
 target_include_directories(${FILE_INDEXER_CORE} PUBLIC
-	${CMAKE_CURRENT_SOURCE_DIR}/include
+	${CMAKE_CURRENT_SOURCE_DIR}/src
 	${VENDOR_DIR}
 	${VENDOR_DIR}/sqlcipher
 )
