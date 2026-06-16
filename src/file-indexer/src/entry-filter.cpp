@@ -5,6 +5,7 @@
 #include <array>
 #include <fstream>
 #include <fnmatch.h>
+#include <ranges>
 #include <string>
 #include <unordered_set>
 #include <utility>
@@ -42,6 +43,12 @@ static const std::unordered_set<std::string> &excludedPaths() {
         ".wine",
         ".docker",
         ".android",
+        ".local/share/flatpak/app",
+        ".local/share/flatpak/repo/objects",
+        ".local/share/flatpak/runtime",
+        ".local/share/pnpm/store",
+        ".local/share/Steam/config/htmlcache",
+        ".local/share/vicinae/clipboard-data",
         "snap",
     };
 
@@ -111,6 +118,46 @@ static bool hasCacheDirTagSignature(const fs::path &path) {
   if (!ifs.read(buf.data(), buf.size())) return false;
 
   return std::string_view(buf.data(), buf.size()) == CACHEDIR_TAG_SIGNATURE;
+}
+
+static bool pathContains(const fs::path &path, std::string_view component) {
+  return std::ranges::any_of(path, [&](const fs::path &part) { return part.native() == component; });
+}
+
+static bool pathContainsAfter(const fs::path &path, std::string_view first, std::string_view second) {
+  bool seenFirst = false;
+
+  for (const auto &part : path) {
+    const auto name = part.native();
+    if (seenFirst && name == second) return true;
+    if (name == first) seenFirst = true;
+  }
+
+  return false;
+}
+
+static bool isMachineTrashDirectory(const fs::path &path) {
+  const auto filename = file_indexer::vocab::basenameView(path.c_str());
+
+  if (filename == "Cache_Data") return pathContains(path, "Cache");
+  if (filename == "GPUCache") return true;
+  if (filename == "Code Cache") return true;
+  if (filename == "CacheStorage") return true;
+  if (filename == "Service Worker") return true;
+  if (filename == "blob_storage") return true;
+  if (filename == "DawnGraphiteCache") return true;
+  if (filename == "DawnWebGPUCache") return true;
+  if (filename == "mesa_shader_cache") return true;
+  if (filename == "shader_cache") return true;
+  if (filename == "ShaderCache") return true;
+  if (filename == "GrShaderCache") return true;
+  if (filename == "Crashpad") return true;
+  if (filename == "crashpad") return true;
+  if (filename == "cache" && pathContains(path, "Shared Dictionary")) return true;
+
+  if (pathContainsAfter(path, ".var", "cache")) return true;
+
+  return false;
 }
 
 bool GitIgnoreReader::matches(const fs::path &path) const {
@@ -192,6 +239,7 @@ bool EntryFilter::shouldVisit(const fs::directory_entry &entry) const {
 
   if (std::ranges::contains(EXCLUDED_FILENAMES, filename) || filename.ends_with(".noindex")) return false;
   if (std::ranges::find(m_excludedFilenames, filename) != m_excludedFilenames.end()) return false;
+  if (entry.is_directory(ec) && isMachineTrashDirectory(path)) return false;
 
   if (isIgnored(path)) return false;
   if (isExcludedPath(path)) return false;
