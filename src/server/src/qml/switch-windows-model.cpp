@@ -1,6 +1,5 @@
 #include "switch-windows-model.hpp"
 #include "actions/wm/window-actions.hpp"
-#include "navigation-controller.hpp"
 
 QString SwitchWindowsSection::displayTitle(const WindowEntry &e) const { return e.window->title(); }
 
@@ -25,7 +24,7 @@ std::unique_ptr<ActionPanelState> SwitchWindowsSection::buildActionPanel(const W
   auto section = panel->createSection("Window Actions");
   section->addAction(new FocusWindowAction(e.window));
 
-  if (scope().services()->windowManager()->id() == "x11") {
+  if (scope().services()->windowManager()->provider()->id() == "x11") {
     auto pinAction = new PinWindowAction(e.window);
     section->addAction(pinAction);
 

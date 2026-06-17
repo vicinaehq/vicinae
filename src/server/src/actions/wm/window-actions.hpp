@@ -9,7 +9,7 @@ class FocusWindowAction : public AbstractAction {
 
   void execute(ApplicationContext *ctx) override {
     auto wm = ctx->services->windowManager();
-    wm->provider()->focusWindowSync(*m_window.get());
+    wm->provider()->focusWindowSync(*m_window);
   }
 
 public:
@@ -24,7 +24,7 @@ class CloseWindowAction : public AbstractAction {
 
   void execute(ApplicationContext *ctx) override {
     auto wm = ctx->services->windowManager();
-    wm->provider()->closeWindow(*m_window.get());
+    wm->provider()->closeWindow(*m_window);
   }
 
 public:
@@ -40,7 +40,7 @@ class PinWindowAction : public AbstractAction {
   void execute(ApplicationContext *ctx) override {
     auto provider = ctx->services->windowManager()->provider();
     bool currentlySticky = m_window->sticky();
-    provider->setSticky(*m_window.get(), !currentlySticky);
+    provider->setSticky(*m_window, !currentlySticky);
   }
 
 public:
@@ -57,7 +57,7 @@ class BringToWorkspaceAction : public AbstractAction {
     auto provider = ctx->services->windowManager()->provider();
     auto activeWs = provider->getActiveWorkspace();
     if (!activeWs) return;
-    provider->moveToWorkspace(*m_window.get(), activeWs->id());
+    provider->moveToWorkspace(*m_window, activeWs->id());
   }
 
 public:

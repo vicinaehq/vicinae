@@ -466,7 +466,8 @@ bool X11WindowManager::setSticky(const AbstractWindow &window, bool sticky) cons
   auto root = getRootWindow();
   if (!conn || root == XCB_WINDOW_NONE) return false;
 
-  const auto &x11_window = static_cast<const X11Window &>(window);  // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+  const auto &x11_window =
+      static_cast<const X11Window &>(window); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
   xcb_window_t const win = x11_window.windowId();
 
   xcb_atom_t const net_wm_state = internAtom("_NET_WM_STATE");
@@ -484,8 +485,7 @@ bool X11WindowManager::setSticky(const AbstractWindow &window, bool sticky) cons
   event.data.data32[1] = net_wm_state_sticky;
   event.data.data32[2] = 0;
 
-  xcb_send_event(conn, 0, root,
-                 XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY,
+  xcb_send_event(conn, 0, root, XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY,
                  reinterpret_cast<const char *>(&event));
   xcb_flush(conn);
 
@@ -498,7 +498,8 @@ bool X11WindowManager::moveToWorkspace(const AbstractWindow &window, const QStri
   auto root = getRootWindow();
   if (!conn || root == XCB_WINDOW_NONE) return false;
 
-  const auto &x11_window = static_cast<const X11Window &>(window);  // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+  const auto &x11_window =
+      static_cast<const X11Window &>(window); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
   xcb_window_t const win = x11_window.windowId();
 
   bool ok = false;
@@ -517,8 +518,7 @@ bool X11WindowManager::moveToWorkspace(const AbstractWindow &window, const QStri
   event.data.data32[0] = desktop;
   event.data.data32[1] = 2;
 
-  xcb_send_event(conn, 0, root,
-                 XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY,
+  xcb_send_event(conn, 0, root, XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY,
                  reinterpret_cast<const char *>(&event));
   xcb_flush(conn);
 
