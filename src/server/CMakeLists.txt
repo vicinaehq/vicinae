@@ -639,14 +639,11 @@ list(APPEND SRCS
 	src/services/global-shortcuts/global-shortcut-service.cpp
 )
 
-if (LIBQALCULATE_BACKEND)
-	list(APPEND LIBS qalculate)
-	add_compile_definitions(HAS_QALCULATE=1)
-	list(APPEND SRCS
-		src/services/calculator-service/qalculate/qalculate-backend.hpp
-		src/services/calculator-service/qalculate/qalculate-backend.cpp
-	)
-endif()
+list(APPEND LIBS qalculate)
+list(APPEND SRCS
+	src/services/calculator-service/qalculate/qalculate-backend.hpp
+	src/services/calculator-service/qalculate/qalculate-backend.cpp
+)
 
 if (TYPESCRIPT_EXTENSIONS)
 	list(APPEND SRCS ${CMAKE_CURRENT_BINARY_DIR}/resources.qrc)
@@ -1010,13 +1007,11 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 		src/internal/keyboard/keyboard.cpp
 		src/internal/keyboard/keybind-manager.cpp
 	)
-	if (LIBQALCULATE_BACKEND)
-		target_sources(${TEST_TARGET} PRIVATE
-			src/services/calculator-service/qalculate/qalculate-backend.cpp
-			tests/calculator/qalculate-backend.cpp
-		)
-		target_link_libraries(${TEST_TARGET} PRIVATE qalculate Qt6::Concurrent)
-	endif()
+	target_sources(${TEST_TARGET} PRIVATE
+		src/services/calculator-service/qalculate/qalculate-backend.cpp
+		tests/calculator/qalculate-backend.cpp
+	)
+	target_link_libraries(${TEST_TARGET} PRIVATE qalculate Qt6::Concurrent)
 	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)
 	target_compile_features(${TEST_TARGET} PUBLIC cxx_std_23)
 endif()

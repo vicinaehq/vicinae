@@ -10,9 +10,7 @@
 #include <qnamespace.h>
 #include <qobjectdefs.h>
 
-#ifdef HAS_QALCULATE
 #include "qalculate/qalculate-backend.hpp"
-#endif
 
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
 #include "soulver-core/soulver-core.hpp"
@@ -344,9 +342,7 @@ CalculatorService::CalculatorService(OmniDatabase &db) : m_db(db) {
   {
     std::vector<std::unique_ptr<AbstractCalculatorBackend>> candidates;
 
-#ifdef HAS_QALCULATE
     candidates.emplace_back(std::make_unique<QalculateBackend>());
-#endif
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
     candidates.emplace_back(std::make_unique<SoulverCoreCalculator>());
 #endif
