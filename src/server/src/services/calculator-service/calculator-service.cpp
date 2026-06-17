@@ -10,9 +10,7 @@
 #include <qnamespace.h>
 #include <qobjectdefs.h>
 
-#ifdef HAS_QALCULATE
 #include "qalculate/qalculate-backend.hpp"
-#endif
 
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
 #include "soulver-core/soulver-core.hpp"
@@ -311,7 +309,7 @@ void CalculatorService::updateConversionRecords() {
   };
 
   for (auto &record : m_records | std::views::filter(isConversionRecord)) {
-    auto result = m_backend->compute(record.question);
+    auto result = m_backend->compute(record.question, {.mode = AbstractCalculatorBackend::ComputeMode::Full});
 
     if (!result) continue;
 
@@ -344,9 +342,7 @@ CalculatorService::CalculatorService(OmniDatabase &db) : m_db(db) {
   {
     std::vector<std::unique_ptr<AbstractCalculatorBackend>> candidates;
 
-#ifdef HAS_QALCULATE
     candidates.emplace_back(std::make_unique<QalculateBackend>());
-#endif
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
     candidates.emplace_back(std::make_unique<SoulverCoreCalculator>());
 #endif

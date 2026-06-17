@@ -30,7 +30,22 @@ bool QalculateBackend::start() {
   return true;
 }
 
-std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const QString &question) {
+std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const QString &question,
+                                                                           const ComputeOptions &opts) {
+
+  const auto fail = [](auto &&reason) { return std::unexpected(CalculatorError(reason)); };
+
+  if (opts.mode == ComputeMode::MixedSearch) {
+    const auto isAllowedLeadingChar = [](QChar c) {
+      return c == '-' || c == '(' || c == ')' || c.isLetterOrNumber() ||
+             c.category() == QChar::Symbol_Currency;
+    };
+    bool const isMixedSearchComputable =
+        question.size() > 1 && isAllowedLeadingChar(question.at(0)) && isExpression(question.toStdString());
+
+    if (!isMixedSearchComputable) { return fail("Not a valid expression"); }
+  }
+
   QString expression = preprocessQuestion(question);
   expression = stripTrailingOperators(expression);
   if (expression.isEmpty()) return std::unexpected(CalculatorError("Empty expression"));
@@ -149,8 +164,9 @@ QString QalculateBackend::preprocessQuestion(const QString &query) {
   return q;
 }
 
-QFuture<QalculateBackend::ComputeResult> QalculateBackend::asyncCompute(const QString &question) {
-  return QtConcurrent::run([this, question]() -> ComputeResult { return compute(question); });
+QFuture<QalculateBackend::ComputeResult> QalculateBackend::asyncCompute(const QString &question,
+                                                                        const ComputeOptions &opts) {
+  return QtConcurrent::run([this, question, opts]() -> ComputeResult { return compute(question, opts); });
 }
 
 void QalculateBackend::abort() { CALCULATOR->abort(); }
