@@ -1,6 +1,7 @@
 #include "services/calculator-service/qalculate/qalculate-backend.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include <catch2/catch_test_macros.hpp>
+#include <qlocale.h>
 
 namespace {
 
@@ -10,6 +11,12 @@ QalculateBackend makeBackend() {
   QalculateBackend backend;
   REQUIRE(backend.start());
   return backend;
+}
+
+void assertComputationResult(const QString &question, const QString &expected) {
+  auto r = makeBackend().compute(question, {.mode = ComputeMode::MixedSearch});
+  REQUIRE(r);
+  REQUIRE(r->answer.text == expected);
 }
 
 } // namespace
@@ -22,6 +29,15 @@ TEST_CASE("computes full expressions") {
   REQUIRE(result);
   REQUIRE(result->type == AbstractCalculatorBackend::NORMAL);
   REQUIRE(result->answer.text == "4");
+}
+
+TEST_CASE("supports basic unit conversion") {
+  assertComputationResult("100 g to kg", "0.1 kg");
+  assertComputationResult("ns to us", "0.001 μs");
+  assertComputationResult("ns to us", "0.001 μs");
+  assertComputationResult("day in hrs", "24 h");
+  assertComputationResult("day in min", "1440 min");
+  assertComputationResult("100mm to m", "0.1 m");
 }
 
 TEST_CASE("rejects non expressions in mixed search mode") {
