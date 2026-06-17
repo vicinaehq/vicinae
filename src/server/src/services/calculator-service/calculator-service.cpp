@@ -311,7 +311,7 @@ void CalculatorService::updateConversionRecords() {
   };
 
   for (auto &record : m_records | std::views::filter(isConversionRecord)) {
-    auto result = m_backend->compute(record.question);
+    auto result = m_backend->compute(record.question, {.mode = AbstractCalculatorBackend::ComputeMode::Full});
 
     if (!result) continue;
 
