@@ -22,7 +22,7 @@ public:
   };
 
   struct ComputeOptions {
-    ComputeMode mode;
+    ComputeMode mode = ComputeMode::Full;
   };
 
   struct Unit {
