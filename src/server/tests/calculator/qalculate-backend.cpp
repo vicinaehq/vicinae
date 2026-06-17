@@ -1,11 +1,15 @@
 #include "services/calculator-service/qalculate/qalculate-backend.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_string.hpp>
+#include <array>
+#include <regex>
 #include <qlocale.h>
 
 namespace {
 
 using ComputeMode = AbstractCalculatorBackend::ComputeMode;
+using Catch::Matchers::Equals;
 
 QalculateBackend makeBackend() {
   QalculateBackend backend;
@@ -16,7 +20,38 @@ QalculateBackend makeBackend() {
 void assertComputationResult(const QString &question, const QString &expected) {
   auto r = makeBackend().compute(question, {.mode = ComputeMode::MixedSearch});
   REQUIRE(r);
-  REQUIRE(r->answer.text == expected);
+  REQUIRE_THAT(r->answer.text.toStdString(), Equals(expected.toStdString()));
+}
+
+enum class DatetimeFormat {
+  Local,      // "2026-06-17T20:52:38" (no timezone)
+  UtcWithZ,   // "2026-06-17T18:52:38Z" (Z suffix)
+  WithOffset, // "2026-06-17T14:52:38-04:00" (timezone offset)
+};
+
+struct DatetimeFormatSpec {
+  std::regex pattern;
+};
+
+const std::array<DatetimeFormatSpec, 3> DATETIME_FORMATS{{
+    {std::regex(R"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})")},               // Local
+    {std::regex(R"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)")},              // UtcWithZ
+    {std::regex(R"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2})")} // WithOffset
+}};
+
+bool isValidIsoDatetime(const std::string &str, DatetimeFormat format) {
+  std::string_view trimmed = str;
+  if (trimmed.front() == '"' && trimmed.back() == '"') { trimmed = trimmed.substr(1, trimmed.length() - 2); }
+
+  const auto &spec = DATETIME_FORMATS[static_cast<std::size_t>(format)];
+  return std::regex_match(trimmed.begin(), trimmed.end(), spec.pattern);
+}
+
+void assertIsValidDatetime(const QString &question, DatetimeFormat format) {
+  auto backend = makeBackend();
+  auto r = backend.compute(question, {.mode = ComputeMode::Full});
+  REQUIRE(r);
+  REQUIRE(isValidIsoDatetime(r->answer.text.toStdString(), format));
 }
 
 } // namespace
@@ -38,6 +73,14 @@ TEST_CASE("supports basic unit conversion") {
   assertComputationResult("day in hrs", "24 h");
   assertComputationResult("day in min", "1440 min");
   assertComputationResult("100mm to m", "0.1 m");
+}
+
+TEST_CASE("handles datetime operations and convertions") {
+  assertIsValidDatetime("now", DatetimeFormat::Local);
+  assertIsValidDatetime("now + 1d", DatetimeFormat::Local);
+  assertIsValidDatetime("now to utc", DatetimeFormat::UtcWithZ);
+  assertIsValidDatetime("now + 1   week to utc", DatetimeFormat::UtcWithZ);
+  assertIsValidDatetime("now in havana", DatetimeFormat::WithOffset);
 }
 
 TEST_CASE("rejects non expressions in mixed search mode") {
