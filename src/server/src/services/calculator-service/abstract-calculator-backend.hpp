@@ -3,6 +3,7 @@
 #include <qfuture.h>
 #include <qstring.h>
 #include <expected>
+#include <ranges>
 #include <string>
 #include <string_view>
 
