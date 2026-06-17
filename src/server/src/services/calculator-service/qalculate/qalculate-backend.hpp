@@ -28,6 +28,8 @@ private:
   void initializeCalculator();
   static QString preprocessQuestion(const QString &question);
   static QString stripTrailingOperators(QString expr);
+  std::pair<std::string, PrintOptions> handleToExpression(const std::string &expression);
+  static std::optional<int> getTimezoneOffset(const std::string &tzName);
 
   Calculator m_calc;
   bool m_initialized = false;
