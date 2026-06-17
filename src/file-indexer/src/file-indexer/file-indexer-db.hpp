@@ -17,7 +17,6 @@ enum class IndexedFileCategory {
   Audio,
   Document,
   Archive,
-  Code,
   Application,
 };
 

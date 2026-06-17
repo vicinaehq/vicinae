@@ -30,7 +30,6 @@ enum class IndexerFileCategory {
   Audio,
   Document,
   Archive,
-  Code,
   Application,
 };
 

@@ -77,10 +77,6 @@ IndexedFileCategory fileCategoryFor(const fs::path &path, bool isDirectory) {
       "xls", "xlsx", "ods", "csv",      "ppt", "pptx", "odp", "epub"};
   static constexpr std::string_view ARCHIVE_EXTENSIONS[] = {"zip", "tar", "gz",  "tgz", "bz2", "xz",
                                                             "7z",  "rar", "zst", "lz4", "deb", "rpm"};
-  static constexpr std::string_view CODE_EXTENSIONS[] = {
-      "c",   "cc",   "cpp",   "cxx",  "h",     "hpp", "hh",  "rs",   "go",  "py",   "js",   "jsx",   "ts",
-      "tsx", "java", "kt",    "kts",  "swift", "rb",  "php", "cs",   "lua", "sh",   "bash", "zsh",   "fish",
-      "qml", "json", "jsonc", "toml", "yaml",  "yml", "xml", "html", "css", "scss", "sql",  "cmake", "nix"};
   static constexpr std::string_view APPLICATION_EXTENSIONS[] = {"desktop", "appimage", "exe",
                                                                 "msi",     "app",      "dmg"};
 
@@ -89,7 +85,6 @@ IndexedFileCategory fileCategoryFor(const fs::path &path, bool isDirectory) {
   if (hasExtension(ext, AUDIO_EXTENSIONS)) return IndexedFileCategory::Audio;
   if (hasExtension(ext, DOCUMENT_EXTENSIONS)) return IndexedFileCategory::Document;
   if (hasExtension(ext, ARCHIVE_EXTENSIONS)) return IndexedFileCategory::Archive;
-  if (hasExtension(ext, CODE_EXTENSIONS)) return IndexedFileCategory::Code;
   if (hasExtension(ext, APPLICATION_EXTENSIONS)) return IndexedFileCategory::Application;
 
   return IndexedFileCategory::Other;

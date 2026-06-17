@@ -12,7 +12,7 @@
 namespace {
 
 static constexpr std::array FILE_TYPE_NAMES = {
-    "image", "video", "audio", "document", "archive", "code", "application", "directory", "other",
+    "image", "video", "audio", "document", "archive", "application", "directory", "other",
 };
 
 std::vector<std::string> fileTypeNames() {

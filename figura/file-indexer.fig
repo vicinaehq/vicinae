@@ -13,7 +13,6 @@ enum FileCategory {
   Audio,
   Document,
   Archive,
-  Code,
   Application
 };
 

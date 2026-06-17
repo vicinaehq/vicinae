@@ -245,7 +245,7 @@ TEST_CASE("query results include indexed file categories") {
   CHECK(categoryOf("mayonnaise", "mayonnaise.flac") == IndexedFileCategory::Audio);
   CHECK(categoryOf("yolo", "yolo-compilation.mp4") == IndexedFileCategory::Video);
   CHECK(categoryOf("downloads", "downloads_backup.tar") == IndexedFileCategory::Archive);
-  CHECK(categoryOf("keymap", "keymap.c") == IndexedFileCategory::Code);
+  CHECK(categoryOf("keymap", "keymap.c") == IndexedFileCategory::Other);
   CHECK(categoryOf("vicinae", "vicinae.AppImage") == IndexedFileCategory::Application);
   CHECK(categoryOf("vrs dump0", "vrs-dump0.bin") == IndexedFileCategory::Other);
   CHECK(categoryOf("docs", "home/docs") == IndexedFileCategory::Directory);
@@ -257,7 +257,7 @@ TEST_CASE("category filter returns matching files") {
   CHECK(inTop("mayonnaise", "mayonnaise.flac", 3, IndexedFileCategory::Audio));
   CHECK(inTop("yolo", "yolo-compilation.mp4", 3, IndexedFileCategory::Video));
   CHECK(inTop("downloads", "downloads_backup.tar", 3, IndexedFileCategory::Archive));
-  CHECK(inTop("keymap", "keymap.c", 3, IndexedFileCategory::Code));
+  CHECK(inTop("keymap", "keymap.c", 3, IndexedFileCategory::Other));
   CHECK(inTop("vicinae", "vicinae.AppImage", 3, IndexedFileCategory::Application));
   CHECK(inTop("vrs dump0", "vrs-dump0.bin", 3, IndexedFileCategory::Other));
   CHECK(inTop("docs", "home/docs", 3, IndexedFileCategory::Directory));

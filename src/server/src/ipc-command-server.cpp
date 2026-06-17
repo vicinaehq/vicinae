@@ -67,7 +67,6 @@ static constexpr FileCategoryDefinition FILE_CATEGORIES[] = {
     {.name = "audio", .category = IndexerFileCategory::Audio},
     {.name = "document", .category = IndexerFileCategory::Document},
     {.name = "archive", .category = IndexerFileCategory::Archive},
-    {.name = "code", .category = IndexerFileCategory::Code},
     {.name = "application", .category = IndexerFileCategory::Application},
 };
 

@@ -51,8 +51,6 @@ static IndexedFileCategory toIndexedFileCategory(file_indexer_gen::FileCategory 
     return IndexedFileCategory::Document;
   case file_indexer_gen::FileCategory::Archive:
     return IndexedFileCategory::Archive;
-  case file_indexer_gen::FileCategory::Code:
-    return IndexedFileCategory::Code;
   case file_indexer_gen::FileCategory::Application:
     return IndexedFileCategory::Application;
   }
@@ -75,8 +73,6 @@ static file_indexer_gen::FileCategory toFileCategory(IndexedFileCategory categor
     return file_indexer_gen::FileCategory::Document;
   case IndexedFileCategory::Archive:
     return file_indexer_gen::FileCategory::Archive;
-  case IndexedFileCategory::Code:
-    return file_indexer_gen::FileCategory::Code;
   case IndexedFileCategory::Application:
     return file_indexer_gen::FileCategory::Application;
   }
