@@ -1,49 +1,42 @@
 #include "services/calculator-service/qalculate/qalculate-backend.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
-
 #include <catch2/catch_test_macros.hpp>
 
 namespace {
 
 using ComputeMode = AbstractCalculatorBackend::ComputeMode;
 
-AbstractCalculatorBackend::ComputeResult compute(AbstractCalculatorBackend &backend, const QString &question,
-                                                 ComputeMode mode = ComputeMode::MixedSearch) {
-  return backend.compute(question, {.mode = mode});
-}
-
 QalculateBackend makeBackend() {
   QalculateBackend backend;
-  AbstractCalculatorBackend &calculator = backend;
-  REQUIRE(calculator.start());
+  REQUIRE(backend.start());
   return backend;
 }
 
 } // namespace
 
-TEST_CASE("Qalculate backend computes full expressions") {
+TEST_CASE("computes full expressions") {
   auto backend = makeBackend();
 
-  auto result = compute(backend, "2 + 2", ComputeMode::Full);
+  auto result = backend.compute("2 + 2", {.mode = ComputeMode::Full});
 
   REQUIRE(result);
   REQUIRE(result->type == AbstractCalculatorBackend::NORMAL);
   REQUIRE(result->answer.text == "4");
 }
 
-TEST_CASE("Qalculate backend rejects non expressions in mixed search mode") {
+TEST_CASE("rejects non expressions in mixed search mode") {
   auto backend = makeBackend();
 
-  REQUIRE_FALSE(compute(backend, "hello"));
-  REQUIRE_FALSE(compute(backend, "2"));
-  REQUIRE_FALSE(compute(backend, "+ 2"));
+  REQUIRE_FALSE(backend.compute("hello", {.mode = ComputeMode::MixedSearch}));
+  REQUIRE_FALSE(backend.compute("2", {.mode = ComputeMode::MixedSearch}));
+  REQUIRE_FALSE(backend.compute("+ 2", {.mode = ComputeMode::MixedSearch}));
 }
 
-TEST_CASE("Qalculate backend accepts expressions in mixed search mode") {
+TEST_CASE("accepts expressions in mixed search mode") {
   auto backend = makeBackend();
 
-  auto arithmetic = compute(backend, "2 + 2");
-  auto functionCall = compute(backend, "sqrt(16)");
+  auto arithmetic = backend.compute("2 + 2", {.mode = ComputeMode::MixedSearch});
+  auto functionCall = backend.compute("sqrt(16)", {.mode = ComputeMode::MixedSearch});
 
   REQUIRE(arithmetic);
   REQUIRE(arithmetic->answer.text == "4");
@@ -51,19 +44,19 @@ TEST_CASE("Qalculate backend accepts expressions in mixed search mode") {
   REQUIRE(functionCall->answer.text == "4");
 }
 
-TEST_CASE("Qalculate backend strips trailing operators before computing") {
+TEST_CASE("strips trailing operators before computing") {
   auto backend = makeBackend();
 
-  auto result = compute(backend, "2 +", ComputeMode::Full);
+  auto result = backend.compute("2 +", {.mode = ComputeMode::Full});
 
   REQUIRE(result);
   REQUIRE(result->answer.text == "2");
 }
 
-TEST_CASE("Qalculate backend rewrites infix in to to for unit conversion") {
+TEST_CASE("rewrites infix in to to for unit conversion") {
   auto backend = makeBackend();
 
-  auto result = compute(backend, "100in in m");
+  auto result = backend.compute("100in in m", {.mode = ComputeMode::MixedSearch});
 
   REQUIRE(result);
   REQUIRE(result->type == AbstractCalculatorBackend::CONVERSION);
@@ -72,11 +65,11 @@ TEST_CASE("Qalculate backend rewrites infix in to to for unit conversion") {
   REQUIRE_FALSE(result->answer.unit->displayName.isEmpty());
 }
 
-TEST_CASE("Qalculate backend normalizes storage unit shorthand") {
+TEST_CASE("normalizes storage unit shorthand") {
   auto backend = makeBackend();
 
-  auto decimal = compute(backend, "1 gb to mb");
-  auto binary = compute(backend, "1 gib to mib");
+  auto decimal = backend.compute("1 gb to mb", {.mode = ComputeMode::MixedSearch});
+  auto binary = backend.compute("1 gib to mib", {.mode = ComputeMode::MixedSearch});
 
   REQUIRE(decimal);
   REQUIRE(decimal->type == AbstractCalculatorBackend::CONVERSION);
@@ -89,4 +82,61 @@ TEST_CASE("Qalculate backend normalizes storage unit shorthand") {
   REQUIRE(binary->answer.text.contains("1024"));
   REQUIRE(binary->answer.unit);
   REQUIRE_FALSE(binary->answer.unit->displayName.isEmpty());
+}
+
+TEST_CASE("Standalone currency name should not trigger conversion in mixed search mode") {
+  auto r = makeBackend().compute("USD", {.mode = ComputeMode::MixedSearch});
+  REQUIRE_FALSE(r);
+}
+
+TEST_CASE("Standalone currency name should trigger conversion in full mode") {
+  auto r = makeBackend().compute("USD", {.mode = ComputeMode::Full});
+  REQUIRE(r);
+}
+
+const auto CONSTANTS = {"pi", "e"};
+
+TEST_CASE("raw constants should not expand in mixed search mode") {
+  auto calc = makeBackend();
+
+  for (auto constant : CONSTANTS) {
+    REQUIRE_FALSE(calc.compute(constant, {.mode = ComputeMode::MixedSearch}));
+  }
+}
+
+TEST_CASE("PI constant should expand in full mode") {
+  auto calc = makeBackend();
+
+  for (auto constant : CONSTANTS) {
+    REQUIRE(calc.compute(constant, {.mode = ComputeMode::Full}));
+  }
+}
+
+TEST_CASE("supports currency conversions") {
+  auto backend = makeBackend();
+  auto result = backend.compute("1 USD to USD", {.mode = ComputeMode::MixedSearch});
+
+  REQUIRE(result);
+  REQUIRE(result->type == AbstractCalculatorBackend::CONVERSION);
+  REQUIRE(result->answer.text.contains("1"));
+  REQUIRE(result->answer.unit);
+  REQUIRE_FALSE(result->answer.unit->displayName.isEmpty());
+}
+
+TEST_CASE("basic currency support") {
+  auto backend = makeBackend();
+  const auto assertCurrency = [&](auto &&cur) {
+    auto result = backend.compute(QString("1 %1 to %1").arg(cur), {.mode = ComputeMode::MixedSearch});
+    REQUIRE(result);
+    REQUIRE(result->type == AbstractCalculatorBackend::CONVERSION);
+    REQUIRE(result->answer.text.contains("1"));
+    REQUIRE(result->answer.unit);
+    REQUIRE_FALSE(result->answer.unit->displayName.isEmpty());
+  };
+
+  const auto currencies = {"AUD", "USD", "YEN", "EUR", "GBP"};
+
+  for (auto currency : currencies) {
+    assertCurrency(currency);
+  }
 }

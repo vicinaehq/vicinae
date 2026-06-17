@@ -6,6 +6,9 @@
 
 class QalculateBackend : public AbstractCalculatorBackend {
 
+public:
+  QalculateBackend();
+
   QString displayName() const override;
   QString id() const override;
   bool supportsCurrencyConversion() const override;
@@ -18,9 +21,6 @@ class QalculateBackend : public AbstractCalculatorBackend {
 
   bool isActivatable() const override;
   bool isExpression(const std::string &query) const override;
-
-public:
-  QalculateBackend();
 
 private:
   static std::optional<std::string> getUnitDisplayName(const MathStructure &s, std::string_view prefix = "");
