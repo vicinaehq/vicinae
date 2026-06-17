@@ -40,7 +40,7 @@ std::string skeletonDocument(const fs::path &path) {
 
   for (const auto &token : tokens) {
     auto skeleton = file_indexer::vocab::skeletonizeToken(token);
-    if (skeleton.size() < file_indexer::vocab::MIN_TOKEN_LENGTH) continue;
+    if (skeleton.empty()) continue;
 
     if (!document.empty()) { document.push_back(' '); }
     document += skeleton;
@@ -360,7 +360,7 @@ FileIndexerDatabase::searchCandidates(std::string_view searchQuery, int limit, c
   if (searchQuery.empty() || limit <= 0) return {};
 
   std::string sql = R"(
-    SELECT f.path
+    SELECT f.path, f.category
     FROM indexed_file f
     JOIN unicode_idx ON unicode_idx.rowid = f.id
     WHERE unicode_idx MATCH :search
@@ -380,7 +380,8 @@ FileIndexerDatabase::searchCandidates(std::string_view searchQuery, int limit, c
   results.reserve(limit);
 
   while (stmt.step()) {
-    results.emplace_back(SearchCandidate{.path = stmt.columnText(0)});
+    results.emplace_back(SearchCandidate{.path = stmt.columnText(0),
+                                         .category = static_cast<IndexedFileCategory>(stmt.columnInt(1))});
   }
 
   return results;
@@ -392,7 +393,7 @@ FileIndexerDatabase::searchSkeletonCandidates(std::string_view searchQuery, int 
   if (searchQuery.empty() || limit <= 0) return {};
 
   std::string sql = R"(
-    SELECT f.path
+    SELECT f.path, f.category
     FROM indexed_file f
     JOIN skeleton_idx ON skeleton_idx.rowid = f.id
     WHERE skeleton_idx MATCH :search
@@ -415,7 +416,8 @@ FileIndexerDatabase::searchSkeletonCandidates(std::string_view searchQuery, int 
   results.reserve(limit);
 
   while (stmt.step()) {
-    results.emplace_back(SearchCandidate{.path = stmt.columnText(0)});
+    results.emplace_back(SearchCandidate{.path = stmt.columnText(0),
+                                         .category = static_cast<IndexedFileCategory>(stmt.columnInt(1))});
   }
 
   return results;

@@ -1,6 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
 #include <sqlcipher/sqlite3.h>
-#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <optional>
@@ -63,7 +62,9 @@ constexpr std::string_view CORPUS[] = {
     "home/fonts/SF-Pro-Display-Bold.otf",
     "home/dev/data_loader_utils.py",
     "home/apps/vicinae.AppImage",
+    "home/dev/jai/modules/windows.jai",
     "home/pictures/VACATION.JPG",
+    "home/pictures/forest_color.jpg",
 };
 
 struct QualityEnv {
@@ -97,9 +98,14 @@ struct QualityEnv {
   }
 };
 
+const QualityEnv &qualityEnv() {
+  static QualityEnv const env;
+  return env;
+}
+
 // rank of the first result whose path ends with `suffix`, or -1 when absent
 int rankOf(std::string_view query, std::string_view suffix) {
-  static QualityEnv const env;
+  qualityEnv();
   FileIndexerQueryEngine engine;
 
   for (auto const [idx, result] : engine.query(query, 10) | std::views::enumerate) {
@@ -110,7 +116,7 @@ int rankOf(std::string_view query, std::string_view suffix) {
 }
 
 int rankOf(std::string_view query, std::string_view suffix, IndexedFileCategory category) {
-  static QualityEnv const env;
+  qualityEnv();
   FileIndexerQueryEngine engine;
   FileIndexerQueryEngine::QueryOptions const options{.category = category};
 
@@ -132,7 +138,7 @@ bool inTop(std::string_view query, std::string_view suffix, int k, IndexedFileCa
 }
 
 std::optional<IndexedFileCategory> categoryOf(std::string_view query, std::string_view suffix) {
-  static QualityEnv const env;
+  qualityEnv();
   FileIndexerQueryEngine engine;
 
   for (const auto &result : engine.query(query, 10)) {
@@ -269,4 +275,9 @@ TEST_CASE("skeleton: dropped consonants match through skip-grams") {
   CHECK(inTop("cfg bkup", "kubeConfigBackup.yaml", 3));
   CHECK(inTop("dwld", "downloads_backup.tar", 3));
   CHECK(inTop("kmap", "keymaps/default/keymap.c", 3));
+  CHECK(inTop("frs clr", "home/pictures/forest_color.jpg", 3));
+}
+
+TEST_CASE("skeleton: short skeleton tokens are kept in phrase matches") {
+  CHECK(inTop("jai wndws", "jai/modules/windows.jai", 3));
 }
