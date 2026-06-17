@@ -110,8 +110,9 @@ void FileIndexer::setConfig(std::vector<fs::path> paths, std::vector<fs::path> e
   m_excludedFilenames = {databaseFilename, databaseFilename + "-wal"};
 }
 
-std::vector<IndexerFileResult> FileIndexer::query(std::string_view view, int limit) {
-  return m_queryEngine.query(view, limit);
+std::vector<IndexerFileResult> FileIndexer::query(std::string_view view, int limit,
+                                                  const FileIndexerQueryEngine::QueryOptions &options) {
+  return m_queryEngine.query(view, limit, options);
 }
 
 bool FileIndexer::shouldRebuildVocabulary() {

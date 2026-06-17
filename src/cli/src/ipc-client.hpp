@@ -4,6 +4,7 @@
 #include <expected>
 #include <filesystem>
 #include <format>
+#include <optional>
 #include <string>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -87,9 +88,12 @@ public:
     return call<ipc::LaunchAppResponse>([&](auto cb) { m_client.ipc().launchApp(req, std::move(cb)); });
   }
 
-  std::expected<std::vector<ipc::FileResult>, std::string> fsQuery(std::string_view query, int limit = 100) {
+  std::expected<std::vector<ipc::FileResult>, std::string> fsQuery(std::string_view query, int limit = 100,
+                                                                   std::optional<std::string> type = {}) {
+    ipc::FsQueryParams params{.limit = limit, .type = std::move(type)};
+
     return call<std::vector<ipc::FileResult>>(
-        [&](auto cb) { m_client.ipc().fsQuery(std::string{query}, {.limit = limit}, std::move(cb)); });
+        [&](auto cb) { m_client.ipc().fsQuery(std::string{query}, params, std::move(cb)); });
   }
 
   std::expected<ipc::DMenuResponse, std::string> dmenu(ipc::DMenuRequest req) {

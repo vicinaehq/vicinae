@@ -8,7 +8,10 @@
 #include <chrono>
 #include <filesystem>
 #include <format>
+#include <ranges>
+#include <span>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 
@@ -46,6 +49,66 @@ std::string skeletonDocument(const fs::path &path) {
   return document;
 }
 
+bool extensionEquals(std::string_view ext, std::string_view candidate) {
+  return ext.size() == candidate.size() &&
+         std::ranges::equal(ext, candidate, [](unsigned char a, unsigned char b) {
+           return std::tolower(a) == std::tolower(b);
+         });
+}
+
+bool hasExtension(std::string_view ext, std::span<const std::string_view> extensions) {
+  return std::ranges::any_of(extensions,
+                             [&](std::string_view candidate) { return extensionEquals(ext, candidate); });
+}
+
+IndexedFileCategory fileCategoryFor(const fs::path &path, bool isDirectory) {
+  if (isDirectory) return IndexedFileCategory::Directory;
+
+  auto ext = file_indexer::vocab::fileExtensionView(path.c_str());
+
+  static constexpr std::string_view IMAGE_EXTENSIONS[] = {"jpg", "jpeg", "png",  "gif", "webp", "avif",
+                                                          "bmp", "tif",  "tiff", "svg", "heic", "ico"};
+  static constexpr std::string_view VIDEO_EXTENSIONS[] = {"mp4", "m4v", "mkv",  "mov", "avi", "webm",
+                                                          "wmv", "flv", "mpeg", "mpg", "3gp"};
+  static constexpr std::string_view AUDIO_EXTENSIONS[] = {"mp3",  "flac", "wav",  "aac", "m4a", "ogg",
+                                                          "opus", "wma",  "aiff", "mid", "midi"};
+  static constexpr std::string_view DOCUMENT_EXTENSIONS[] = {
+      "pdf", "txt",  "md",  "markdown", "doc", "docx", "odt", "rtf", "pages",
+      "xls", "xlsx", "ods", "csv",      "ppt", "pptx", "odp", "epub"};
+  static constexpr std::string_view ARCHIVE_EXTENSIONS[] = {"zip", "tar", "gz",  "tgz", "bz2", "xz",
+                                                            "7z",  "rar", "zst", "lz4", "deb", "rpm"};
+  static constexpr std::string_view CODE_EXTENSIONS[] = {
+      "c",   "cc",   "cpp",   "cxx",  "h",     "hpp", "hh",  "rs",   "go",  "py",   "js",   "jsx",   "ts",
+      "tsx", "java", "kt",    "kts",  "swift", "rb",  "php", "cs",   "lua", "sh",   "bash", "zsh",   "fish",
+      "qml", "json", "jsonc", "toml", "yaml",  "yml", "xml", "html", "css", "scss", "sql",  "cmake", "nix"};
+  static constexpr std::string_view APPLICATION_EXTENSIONS[] = {"desktop", "appimage", "exe",
+                                                                "msi",     "app",      "dmg"};
+
+  if (hasExtension(ext, IMAGE_EXTENSIONS)) return IndexedFileCategory::Image;
+  if (hasExtension(ext, VIDEO_EXTENSIONS)) return IndexedFileCategory::Video;
+  if (hasExtension(ext, AUDIO_EXTENSIONS)) return IndexedFileCategory::Audio;
+  if (hasExtension(ext, DOCUMENT_EXTENSIONS)) return IndexedFileCategory::Document;
+  if (hasExtension(ext, ARCHIVE_EXTENSIONS)) return IndexedFileCategory::Archive;
+  if (hasExtension(ext, CODE_EXTENSIONS)) return IndexedFileCategory::Code;
+  if (hasExtension(ext, APPLICATION_EXTENSIONS)) return IndexedFileCategory::Application;
+
+  return IndexedFileCategory::Other;
+}
+
+void bindSearchOptions(db::Statement &stmt, const FileIndexerDatabase::SearchOptions &options) {
+  if (options.category) {
+    stmt.bind(":category", static_cast<int>(*options.category));
+  } else {
+    stmt.bindNull(":category");
+  }
+}
+
+std::string searchFiltersSql() {
+  return R"(
+    AND (:category IS NULL OR f.category = :category)
+  )";
+}
+
 } // namespace
 
 fs::path FileIndexerDatabase::getDatabasePath() { return file_indexer::databasePath(); }
@@ -69,11 +132,11 @@ std::optional<int64_t> FileIndexerDatabase::ensureDirectory(const std::filesyste
 
   auto stmt = m_db.prepare(R"(
     INSERT INTO
-      indexed_file (path, skeleton_path, parent_id, last_modified_at, type)
+      indexed_file (path, skeleton_path, parent_id, last_modified_at, type, category)
     VALUES
-      (:path, :skeleton_path, :parent_id, :last_modified_at, 1)
+      (:path, :skeleton_path, :parent_id, :last_modified_at, 1, :category)
     ON CONFLICT (path) DO UPDATE SET skeleton_path = excluded.skeleton_path,
-      parent_id = excluded.parent_id, type = 1
+      parent_id = excluded.parent_id, type = 1, category = excluded.category
     RETURNING id
   )");
 
@@ -82,6 +145,7 @@ std::optional<int64_t> FileIndexerDatabase::ensureDirectory(const std::filesyste
   stmt.bind(":path", dir.c_str());
   stmt.bind(":skeleton_path", skeletonDocument(dir));
   stmt.bind(":parent_id", parentId);
+  stmt.bind(":category", static_cast<int>(IndexedFileCategory::Directory));
 
   if (auto lastModified = fs::last_write_time(dir, ec); !ec) {
     using namespace std::chrono;
@@ -292,20 +356,24 @@ std::vector<FileIndexerDatabase::ScanRecord> FileIndexerDatabase::listScans(Scan
 db::Database &FileIndexerDatabase::database() { return m_db; }
 
 std::vector<FileIndexerDatabase::SearchCandidate>
-FileIndexerDatabase::searchCandidates(std::string_view searchQuery, int limit) {
+FileIndexerDatabase::searchCandidates(std::string_view searchQuery, int limit, const SearchOptions &options) {
   if (searchQuery.empty() || limit <= 0) return {};
 
-  // FTS5 rank is negative-is-better: ascending order puts the best matches first,
-  // which decides what survives the LIMIT when the match set exceeds it
-  auto stmt = m_db.prepare(R"(
+  std::string sql = R"(
     SELECT f.path
     FROM indexed_file f
     JOIN unicode_idx ON unicode_idx.rowid = f.id
     WHERE unicode_idx MATCH :search
-    LIMIT :limit
-  )");
+  )";
+
+  sql += searchFiltersSql();
+
+  sql += "LIMIT :limit";
+
+  auto stmt = m_db.prepare(sql);
   stmt.bind(":search", searchQuery);
   stmt.bind(":limit", limit);
+  bindSearchOptions(stmt, options);
 
   std::vector<SearchCandidate> results;
 
@@ -319,19 +387,28 @@ FileIndexerDatabase::searchCandidates(std::string_view searchQuery, int limit) {
 }
 
 std::vector<FileIndexerDatabase::SearchCandidate>
-FileIndexerDatabase::searchSkeletonCandidates(std::string_view searchQuery, int limit) {
+FileIndexerDatabase::searchSkeletonCandidates(std::string_view searchQuery, int limit,
+                                              const SearchOptions &options) {
   if (searchQuery.empty() || limit <= 0) return {};
 
-  auto stmt = m_db.prepare(R"(
+  std::string sql = R"(
     SELECT f.path
     FROM indexed_file f
     JOIN skeleton_idx ON skeleton_idx.rowid = f.id
     WHERE skeleton_idx MATCH :search
+  )";
+
+  sql += searchFiltersSql();
+  sql += R"(
     ORDER BY skeleton_idx.rank
-    LIMIT :limit
-  )");
+    )";
+
+  sql += "LIMIT :limit";
+
+  auto stmt = m_db.prepare(sql);
   stmt.bind(":search", searchQuery);
   stmt.bind(":limit", limit);
+  bindSearchOptions(stmt, options);
 
   std::vector<SearchCandidate> results;
 
@@ -343,7 +420,6 @@ FileIndexerDatabase::searchSkeletonCandidates(std::string_view searchQuery, int 
 
   return results;
 }
-
 void FileIndexerDatabase::deleteIndexedFiles(const std::vector<fs::path> &paths) {
   auto tx = m_db.transaction();
 
@@ -480,11 +556,12 @@ void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
 
   auto modifyStmt = m_db.prepare(R"(
     INSERT INTO
-      indexed_file (path, skeleton_path, parent_id, last_modified_at, type)
+      indexed_file (path, skeleton_path, parent_id, last_modified_at, type, category)
     VALUES
-      (:path, :skeleton_path, :parent_id, :last_modified_at, :type)
+      (:path, :skeleton_path, :parent_id, :last_modified_at, :type, :category)
     ON CONFLICT (path) DO UPDATE SET last_modified_at = excluded.last_modified_at,
-      skeleton_path = excluded.skeleton_path, parent_id = excluded.parent_id, type = excluded.type
+      skeleton_path = excluded.skeleton_path, parent_id = excluded.parent_id, type = excluded.type,
+      category = excluded.category
   )");
 
   auto deleteStmt = m_db.prepare("DELETE FROM indexed_file WHERE path = :path");
@@ -513,6 +590,7 @@ void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
       modifyStmt.bind(":skeleton_path", skeletonDocument(event.path));
       modifyStmt.bind(":parent_id", resolveParent(event.path));
       modifyStmt.bind(":type", event.isDirectory ? 1 : 0);
+      modifyStmt.bind(":category", static_cast<int>(fileCategoryFor(event.path, event.isDirectory)));
       ok = modifyStmt.exec();
       break;
     }
@@ -545,11 +623,12 @@ void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &p
 
   auto stmt = m_db.prepare(R"(
     INSERT INTO
-      indexed_file (path, skeleton_path, parent_id, last_modified_at, type)
+      indexed_file (path, skeleton_path, parent_id, last_modified_at, type, category)
     VALUES
-      (:path, :skeleton_path, :parent_id, :last_modified_at, :type)
+      (:path, :skeleton_path, :parent_id, :last_modified_at, :type, :category)
     ON CONFLICT (path) DO UPDATE SET last_modified_at = excluded.last_modified_at,
-      skeleton_path = excluded.skeleton_path, parent_id = excluded.parent_id, type = excluded.type
+      skeleton_path = excluded.skeleton_path, parent_id = excluded.parent_id, type = excluded.type,
+      category = excluded.category
   )");
 
   std::error_code ec;
@@ -578,7 +657,9 @@ void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &p
     stmt.bind(":path", path.c_str());
     stmt.bind(":skeleton_path", skeletonDocument(path));
     stmt.bind(":parent_id", resolveParent(path));
-    stmt.bind(":type", fs::is_directory(path, ec) ? 1 : 0);
+    bool const isDirectory = fs::is_directory(path, ec);
+    stmt.bind(":type", isDirectory ? 1 : 0);
+    stmt.bind(":category", static_cast<int>(fileCategoryFor(path, isDirectory)));
 
     if (!stmt.exec()) {
       flog::error() << "Failed to insert file in index" << path.string() << stmt.lastError();

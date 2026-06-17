@@ -9,6 +9,7 @@
 struct IndexerFileResult {
   std::filesystem::path path;
   double rank;
+  IndexedFileCategory category = IndexedFileCategory::Other;
 };
 
 namespace file_indexer::query {
@@ -63,7 +64,9 @@ pickCorrections(std::span<const FileIndexerDatabase::SpellfixSuggestion> suggest
 
 class FileIndexerQueryEngine {
 public:
-  std::vector<IndexerFileResult> query(std::string_view q, int limit);
+  using QueryOptions = FileIndexerDatabase::SearchOptions;
+
+  std::vector<IndexerFileResult> query(std::string_view q, int limit, const QueryOptions &options = {});
 
 private:
   FileIndexerDatabase m_db;

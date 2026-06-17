@@ -5,14 +5,28 @@ struct IndexerConfig {
   excluded_paths: string[];
 };
 
+enum FileCategory {
+  Other,
+  Directory,
+  Image,
+  Video,
+  Audio,
+  Document,
+  Archive,
+  Code,
+  Application
+};
+
 struct QueryRequest {
   text: string;
   limit: int;
+  category?: FileCategory;
 };
 
 struct FileMatch {
   path: string;
   rank: double;
+  category: FileCategory;
 };
 
 struct QueryResponse {

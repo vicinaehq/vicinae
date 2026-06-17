@@ -9,9 +9,11 @@
 #include "qml/dmenu-view-host.hpp"
 #include "utils.hpp"
 #include <cstdint>
+#include <optional>
 #include <qfuture.h>
 #include <qlogging.h>
 #include <ranges>
+#include <string_view>
 #include <utility>
 #include "services/app-service/app-service.hpp"
 #include "services/window-manager/window-manager.hpp"
@@ -50,6 +52,41 @@ void IpcCommandServer::IpcTransport::forgetConn(QLocalSocket *dead) {
 IpcService::IpcService(ipc_gen::RpcTransport &transport, ApplicationContext &ctx)
     : ipc_gen::AbstractIpc(transport), m_ctx(ctx) {}
 
+namespace {
+
+struct FileCategoryDefinition {
+  std::string_view name;
+  IndexerFileCategory category;
+};
+
+static constexpr FileCategoryDefinition FILE_CATEGORIES[] = {
+    {.name = "other", .category = IndexerFileCategory::Other},
+    {.name = "directory", .category = IndexerFileCategory::Directory},
+    {.name = "image", .category = IndexerFileCategory::Image},
+    {.name = "video", .category = IndexerFileCategory::Video},
+    {.name = "audio", .category = IndexerFileCategory::Audio},
+    {.name = "document", .category = IndexerFileCategory::Document},
+    {.name = "archive", .category = IndexerFileCategory::Archive},
+    {.name = "code", .category = IndexerFileCategory::Code},
+    {.name = "application", .category = IndexerFileCategory::Application},
+};
+
+std::optional<IndexerFileCategory> fileCategoryFromString(std::string_view type) {
+  for (const auto &definition : FILE_CATEGORIES) {
+    if (definition.name == type) return definition.category;
+  }
+  return std::nullopt;
+}
+
+std::string_view fileCategoryToString(IndexerFileCategory category) {
+  for (const auto &definition : FILE_CATEGORIES) {
+    if (definition.category == category) return definition.name;
+  }
+  return "other";
+}
+
+} // namespace
+
 ipc_gen::Result<ipc_gen::PingResponse>::Future IpcService::ping() {
   return ipc_gen::Result<ipc_gen::PingResponse>::ok(
       {.version = VICINAE_GIT_TAG, .pid = static_cast<int>(QCoreApplication::applicationPid())});
@@ -76,17 +113,27 @@ ipc_gen::Result<ipc_gen::DescribeResponse>::Future IpcService::describe() {
 ipc_gen::Result<std::vector<ipc_gen::FileResult>>::Future IpcService::fsQuery(std::string q,
                                                                               ipc_gen::FsQueryParams params) {
   auto files = m_ctx.services->fileService();
+  IndexerQueryParams queryParams{.limit = params.limit};
 
-  return files->queryAsync(q, {.limit = params.limit})
-      .then([](const std::vector<IndexerFileResult> &results) {
-        auto fileResults = results | std::views::transform([](const IndexerFileResult &result) {
-                             return ipc_gen::FileResult{.path = result.path,
-                                                        .score = static_cast<std::uint32_t>(result.rank)};
-                           }) |
-                           std::ranges::to<std::vector>();
+  if (params.type) {
+    auto category = fileCategoryFromString(*params.type);
+    if (!category) {
+      return ipc_gen::Result<std::vector<ipc_gen::FileResult>>::fail("Unknown file type: " + *params.type);
+    }
+    queryParams.category = *category;
+  }
 
-        return std::expected<std::vector<ipc_gen::FileResult>, std::string>{std::move(fileResults)};
-      });
+  return files->queryAsync(q, queryParams).then([](const std::vector<IndexerFileResult> &results) {
+    auto fileResults =
+        results | std::views::transform([](const IndexerFileResult &result) {
+          return ipc_gen::FileResult{.path = result.path,
+                                     .score = static_cast<std::uint32_t>(result.rank),
+                                     .type = std::string{fileCategoryToString(result.category)}};
+        }) |
+        std::ranges::to<std::vector>();
+
+    return std::expected<std::vector<ipc_gen::FileResult>, std::string>{std::move(fileResults)};
+  });
 }
 
 ipc_gen::Result<ipc_gen::LaunchAppResponse>::Future IpcService::launchApp(ipc_gen::LaunchAppRequest req) {

@@ -9,6 +9,18 @@
 #include <unordered_set>
 #include <vector>
 
+enum class IndexedFileCategory {
+  Other,
+  Directory,
+  Image,
+  Video,
+  Audio,
+  Document,
+  Archive,
+  Code,
+  Application,
+};
+
 class FileIndexerDatabase {
   db::Database m_db;
 
@@ -28,6 +40,11 @@ public:
 
   struct SearchCandidate {
     std::filesystem::path path;
+    IndexedFileCategory category = IndexedFileCategory::Other;
+  };
+
+  struct SearchOptions {
+    std::optional<IndexedFileCategory> category;
   };
 
   ScanRecord mapScan(const db::Statement &stmt) const;
@@ -67,9 +84,11 @@ public:
   std::vector<SpellfixSuggestion> spellfixSuggestions(std::string_view word, int top, bool prefix);
   void deleteIndexedFiles(const std::vector<std::filesystem::path> &paths);
   void indexFiles(const std::vector<std::filesystem::path> &paths);
-  std::vector<SearchCandidate> searchCandidates(std::string_view searchQuery, int limit);
+  std::vector<SearchCandidate> searchCandidates(std::string_view searchQuery, int limit,
+                                                const SearchOptions &options = {});
   // same query string as searchCandidates: the tokenizer skeletonizes queries itself
-  std::vector<SearchCandidate> searchSkeletonCandidates(std::string_view searchQuery, int limit);
+  std::vector<SearchCandidate> searchSkeletonCandidates(std::string_view searchQuery, int limit,
+                                                        const SearchOptions &options = {});
 
   int userVersion();
   void setUserVersion(int version);

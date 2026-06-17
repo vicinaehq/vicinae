@@ -64,6 +64,54 @@ static AbstractFileIndexer::ScanState toScanState(file_indexer_gen::ScanState st
   return AbstractFileIndexer::ScanState::Failed;
 }
 
+static file_indexer_gen::FileCategory toFileCategory(IndexerFileCategory category) {
+  switch (category) {
+  case IndexerFileCategory::Other:
+    return file_indexer_gen::FileCategory::Other;
+  case IndexerFileCategory::Directory:
+    return file_indexer_gen::FileCategory::Directory;
+  case IndexerFileCategory::Image:
+    return file_indexer_gen::FileCategory::Image;
+  case IndexerFileCategory::Video:
+    return file_indexer_gen::FileCategory::Video;
+  case IndexerFileCategory::Audio:
+    return file_indexer_gen::FileCategory::Audio;
+  case IndexerFileCategory::Document:
+    return file_indexer_gen::FileCategory::Document;
+  case IndexerFileCategory::Archive:
+    return file_indexer_gen::FileCategory::Archive;
+  case IndexerFileCategory::Code:
+    return file_indexer_gen::FileCategory::Code;
+  case IndexerFileCategory::Application:
+    return file_indexer_gen::FileCategory::Application;
+  }
+  return file_indexer_gen::FileCategory::Other;
+}
+
+static IndexerFileCategory toIndexerFileCategory(file_indexer_gen::FileCategory category) {
+  switch (category) {
+  case file_indexer_gen::FileCategory::Other:
+    return IndexerFileCategory::Other;
+  case file_indexer_gen::FileCategory::Directory:
+    return IndexerFileCategory::Directory;
+  case file_indexer_gen::FileCategory::Image:
+    return IndexerFileCategory::Image;
+  case file_indexer_gen::FileCategory::Video:
+    return IndexerFileCategory::Video;
+  case file_indexer_gen::FileCategory::Audio:
+    return IndexerFileCategory::Audio;
+  case file_indexer_gen::FileCategory::Document:
+    return IndexerFileCategory::Document;
+  case file_indexer_gen::FileCategory::Archive:
+    return IndexerFileCategory::Archive;
+  case file_indexer_gen::FileCategory::Code:
+    return IndexerFileCategory::Code;
+  case file_indexer_gen::FileCategory::Application:
+    return IndexerFileCategory::Application;
+  }
+  return IndexerFileCategory::Other;
+}
+
 FileIndexer::FileIndexer() : m_bus(&m_process), m_rpc(m_bus), m_client(m_rpc) {
   connect(&m_process, &QProcess::readyReadStandardError, this, &FileIndexer::handleStderr);
   connect(&m_process, &QProcess::errorOccurred, this, [this](QProcess::ProcessError) {
@@ -208,7 +256,8 @@ QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view
                                                                 const IndexerQueryParams &params) {
   if (!isRunning()) { return QtFuture::makeReadyValueFuture(std::vector<IndexerFileResult>{}); }
 
-  file_indexer_gen::QueryRequest req{std::string{view}, params.limit};
+  file_indexer_gen::QueryRequest req{.text = std::string{view}, .limit = params.limit};
+  if (params.category) { req.category = toFileCategory(*params.category); }
 
   return m_client.fileindexer()->query(req).then(
       [](std::expected<file_indexer_gen::QueryResponse, std::string> result) {
@@ -218,8 +267,9 @@ QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view
         results.reserve(result->matches.size());
 
         for (const auto &match : result->matches) {
-          results.emplace_back(
-              IndexerFileResult{.path = std::filesystem::path(match.path), .rank = match.rank});
+          results.emplace_back(IndexerFileResult{.path = std::filesystem::path(match.path),
+                                                 .rank = match.rank,
+                                                 .category = toIndexerFileCategory(match.category)});
         }
 
         return results;

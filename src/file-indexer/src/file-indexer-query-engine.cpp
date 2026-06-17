@@ -202,8 +202,9 @@ std::vector<IndexerFileResult> rankCandidates(std::vector<SC> candidates, const 
 
   for (const auto &scored : ranked) {
     if (fs::exists(scored.data->path, ec)) {
-      results.emplace_back(
-          IndexerFileResult{std::move(scored.data->path), static_cast<double>(scored.score)});
+      results.emplace_back(IndexerFileResult{.path = std::move(scored.data->path),
+                                             .rank = static_cast<double>(scored.score),
+                                             .category = scored.data->category});
       if (results.size() == limit) break;
     }
   }
@@ -212,6 +213,7 @@ std::vector<IndexerFileResult> rankCandidates(std::vector<SC> candidates, const 
 }
 
 std::vector<IndexerFileResult> queryWithCorrections(FileIndexerDatabase &db, std::string_view q, int limit,
+                                                    const FileIndexerDatabase::SearchOptions &options,
                                                     bool trustKnownWords) {
   auto words =
       splitQueryWords(q) |
@@ -242,7 +244,7 @@ std::vector<IndexerFileResult> queryWithCorrections(FileIndexerDatabase &db, std
 
   if (relaxedQuery.empty()) return {};
 
-  auto candidates = db.searchCandidates(relaxedQuery, CANDIDATE_LIMIT);
+  auto candidates = db.searchCandidates(relaxedQuery, CANDIDATE_LIMIT, options);
 
   flog::info() << "spellfix fallback: '" << q << "' -> " << relaxedQuery << " (" << candidates.size()
                << " candidates)\n";
@@ -254,7 +256,8 @@ std::vector<IndexerFileResult> queryWithCorrections(FileIndexerDatabase &db, std
 
 } // namespace
 
-std::vector<IndexerFileResult> FileIndexerQueryEngine::query(std::string_view q, int limit) {
+std::vector<IndexerFileResult> FileIndexerQueryEngine::query(std::string_view q, int limit,
+                                                             const QueryOptions &options) {
   constexpr auto SKELETON_THRESHOLD = 10; // below n, also query skeleton index to increase recall
   FileIndexerDatabase &db = m_db;
   auto dbQuery = prepareCandidateSearchQuery(q);
@@ -263,7 +266,7 @@ std::vector<IndexerFileResult> FileIndexerQueryEngine::query(std::string_view q,
 
   flog::info() << "searching" << std::quoted(dbQuery) << "\n";
 
-  auto candidates = db.searchCandidates(dbQuery, CANDIDATE_LIMIT);
+  auto candidates = db.searchCandidates(dbQuery, CANDIDATE_LIMIT, options);
 
   flog::info() << "got " << candidates.size() << " candidates\n";
 
@@ -274,7 +277,7 @@ std::vector<IndexerFileResult> FileIndexerQueryEngine::query(std::string_view q,
                 std::views::transform([](const SC &candidate) { return candidate.path.native(); }) |
                 std::ranges::to<std::unordered_set>();
 
-    auto skeletonCandidates = db.searchSkeletonCandidates(dbQuery, CANDIDATE_LIMIT);
+    auto skeletonCandidates = db.searchSkeletonCandidates(dbQuery, CANDIDATE_LIMIT, options);
 
     flog::info() << "skeleton merge: '" << q << "' -> " << skeletonCandidates.size() << " candidates\n";
 
@@ -293,7 +296,7 @@ std::vector<IndexerFileResult> FileIndexerQueryEngine::query(std::string_view q,
   }
 
   // attempt spellfix, trusting vocab words
-  if (auto results = queryWithCorrections(db, q, limit, true); !results.empty()) { return results; }
+  if (auto results = queryWithCorrections(db, q, limit, options, true); !results.empty()) { return results; }
 
-  return queryWithCorrections(db, q, limit, false);
+  return queryWithCorrections(db, q, limit, options, false);
 }

@@ -2,8 +2,9 @@
 #include <qfuture.h>
 #include <qobject.h>
 #include <qtmetamacros.h>
-#include <vector>
 #include <filesystem>
+#include <optional>
+#include <vector>
 
 /**
  * A file indexer capable of indexing a LOT of files (technically, a whole filesystem, if the user wants so)
@@ -21,13 +22,27 @@
  * environments.
  */
 
+enum class IndexerFileCategory {
+  Other,
+  Directory,
+  Image,
+  Video,
+  Audio,
+  Document,
+  Archive,
+  Code,
+  Application,
+};
+
 struct IndexerFileResult {
   std::filesystem::path path;
   double rank;
+  IndexerFileCategory category = IndexerFileCategory::Other;
 };
 
 struct IndexerQueryParams {
   int limit = 100;
+  std::optional<IndexerFileCategory> category;
 };
 
 struct IndexerAsyncQuery : public QObject {

@@ -14,9 +14,7 @@ QString SearchFilesSection::itemTitle(int i) const {
   return QString::fromStdString(getLastPathComponent(m_files.at(i)));
 }
 
-QString SearchFilesSection::itemSubtitle(int i) const {
-  return QString::fromStdString(compressPath(m_files.at(i).parent_path()).string());
-}
+QString SearchFilesSection::itemSubtitle(int i) const { return {}; }
 
 QString SearchFilesSection::itemIconSource(int i) const {
   return imageSourceFor(ImageURL::fileIcon(m_files.at(i)));

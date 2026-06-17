@@ -49,6 +49,6 @@ void QueryPool::workerLoop() {
       m_queue.pop_front();
     }
 
-    job.onResult(engine.query(job.text, job.limit));
+    job.onResult(engine.query(job.text, job.limit, job.options));
   }
 }

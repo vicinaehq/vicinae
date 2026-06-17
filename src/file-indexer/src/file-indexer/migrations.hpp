@@ -3,7 +3,7 @@
 
 namespace file_indexer {
 
-inline constexpr int SCHEMA_VERSION = 9;
+inline constexpr int SCHEMA_VERSION = 10;
 
 inline constexpr std::string_view INIT_SQL = R"sql(
 CREATE TABLE IF NOT EXISTS scan_history (
@@ -23,7 +23,8 @@ CREATE TABLE IF NOT EXISTS indexed_file (
 	skeleton_path TEXT NOT NULL,
 	parent_id INT,
 	last_modified_at INT,
-	type INT NOT NULL DEFAULT 0 -- 0 file, 1 directory
+	type INT NOT NULL DEFAULT 0, -- 0 file, 1 directory
+	category INT NOT NULL DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS indexed_file_parent_id_idx ON indexed_file(parent_id);
@@ -31,6 +32,8 @@ CREATE INDEX IF NOT EXISTS indexed_file_parent_id_idx ON indexed_file(parent_id)
 -- serves the recently-active-directories query backing the dynamic watch set
 CREATE INDEX IF NOT EXISTS indexed_file_dir_mtime_idx
 	ON indexed_file(last_modified_at DESC) WHERE type = 1;
+
+CREATE INDEX IF NOT EXISTS indexed_file_category_idx ON indexed_file(category);
 
 CREATE VIRTUAL TABLE IF NOT EXISTS unicode_idx USING fts5(
 	path, content=indexed_file, tokenize='fuzzy_trigram'

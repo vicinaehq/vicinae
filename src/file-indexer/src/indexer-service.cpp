@@ -35,6 +35,54 @@ static file_indexer_gen::ScanState toScanState(ScanStatus status) {
   return file_indexer_gen::ScanState::Started;
 }
 
+static IndexedFileCategory toIndexedFileCategory(file_indexer_gen::FileCategory category) {
+  switch (category) {
+  case file_indexer_gen::FileCategory::Other:
+    return IndexedFileCategory::Other;
+  case file_indexer_gen::FileCategory::Directory:
+    return IndexedFileCategory::Directory;
+  case file_indexer_gen::FileCategory::Image:
+    return IndexedFileCategory::Image;
+  case file_indexer_gen::FileCategory::Video:
+    return IndexedFileCategory::Video;
+  case file_indexer_gen::FileCategory::Audio:
+    return IndexedFileCategory::Audio;
+  case file_indexer_gen::FileCategory::Document:
+    return IndexedFileCategory::Document;
+  case file_indexer_gen::FileCategory::Archive:
+    return IndexedFileCategory::Archive;
+  case file_indexer_gen::FileCategory::Code:
+    return IndexedFileCategory::Code;
+  case file_indexer_gen::FileCategory::Application:
+    return IndexedFileCategory::Application;
+  }
+  return IndexedFileCategory::Other;
+}
+
+static file_indexer_gen::FileCategory toFileCategory(IndexedFileCategory category) {
+  switch (category) {
+  case IndexedFileCategory::Other:
+    return file_indexer_gen::FileCategory::Other;
+  case IndexedFileCategory::Directory:
+    return file_indexer_gen::FileCategory::Directory;
+  case IndexedFileCategory::Image:
+    return file_indexer_gen::FileCategory::Image;
+  case IndexedFileCategory::Video:
+    return file_indexer_gen::FileCategory::Video;
+  case IndexedFileCategory::Audio:
+    return file_indexer_gen::FileCategory::Audio;
+  case IndexedFileCategory::Document:
+    return file_indexer_gen::FileCategory::Document;
+  case IndexedFileCategory::Archive:
+    return file_indexer_gen::FileCategory::Archive;
+  case IndexedFileCategory::Code:
+    return file_indexer_gen::FileCategory::Code;
+  case IndexedFileCategory::Application:
+    return file_indexer_gen::FileCategory::Application;
+  }
+  return file_indexer_gen::FileCategory::Other;
+}
+
 static constexpr size_t QUERY_WORKER_COUNT = 3;
 
 IndexerService::IndexerService(file_indexer_gen::RpcTransport &transport)
@@ -76,14 +124,21 @@ std::expected<void, std::string> IndexerService::rebuildIndex() {
 void IndexerService::query(
     file_indexer_gen::QueryRequest req,
     std::function<void(std::expected<file_indexer_gen::QueryResponse, std::string>)> reply) {
+  FileIndexerQueryEngine::QueryOptions options;
+  if (req.category) { options.category = toIndexedFileCategory(*req.category); }
+
   m_queryPool.submit({.text = std::move(req.text),
                       .limit = req.limit,
+                      .options = options,
                       .onResult = [reply = std::move(reply)](std::vector<IndexerFileResult> results) {
                         file_indexer_gen::QueryResponse response;
                         response.matches.reserve(results.size());
                         for (const auto &result : results) {
-                          response.matches.emplace_back(
-                              file_indexer_gen::FileMatch{.path = result.path.string(), .rank = result.rank});
+                          response.matches.emplace_back(file_indexer_gen::FileMatch{
+                              .path = result.path.string(),
+                              .rank = result.rank,
+                              .category = toFileCategory(result.category),
+                          });
                         }
                         reply(response);
                       }});

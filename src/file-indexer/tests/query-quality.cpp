@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <optional>
 #include <ranges>
 #include <string_view>
 #include <system_error>
@@ -61,6 +62,8 @@ constexpr std::string_view CORPUS[] = {
     "home/pictures/Screen Shot 2024-01-15 at 10.30.12.png",
     "home/fonts/SF-Pro-Display-Bold.otf",
     "home/dev/data_loader_utils.py",
+    "home/apps/vicinae.AppImage",
+    "home/pictures/VACATION.JPG",
 };
 
 struct QualityEnv {
@@ -106,9 +109,37 @@ int rankOf(std::string_view query, std::string_view suffix) {
   return -1;
 }
 
+int rankOf(std::string_view query, std::string_view suffix, IndexedFileCategory category) {
+  static QualityEnv const env;
+  FileIndexerQueryEngine engine;
+  FileIndexerQueryEngine::QueryOptions const options{.category = category};
+
+  for (auto const [idx, result] : engine.query(query, 10, options) | std::views::enumerate) {
+    if (std::string_view{result.path.native()}.ends_with(suffix)) { return static_cast<int>(idx) + 1; }
+  }
+
+  return -1;
+}
+
 bool inTop(std::string_view query, std::string_view suffix, int k) {
   int const rank = rankOf(query, suffix);
   return rank > 0 && rank <= k;
+}
+
+bool inTop(std::string_view query, std::string_view suffix, int k, IndexedFileCategory category) {
+  int const rank = rankOf(query, suffix, category);
+  return rank > 0 && rank <= k;
+}
+
+std::optional<IndexedFileCategory> categoryOf(std::string_view query, std::string_view suffix) {
+  static QualityEnv const env;
+  FileIndexerQueryEngine engine;
+
+  for (const auto &result : engine.query(query, 10)) {
+    if (std::string_view{result.path.native()}.ends_with(suffix)) { return result.category; }
+  }
+
+  return std::nullopt;
 }
 
 } // namespace
@@ -200,6 +231,35 @@ TEST_CASE("directories are typed in the index and queryable by recency") {
   for (const auto &dir : dirs) {
     CHECK(fs::is_directory(dir));
   }
+}
+
+TEST_CASE("query results include indexed file categories") {
+  CHECK(categoryOf("invoice", "invoice.xlsx") == IndexedFileCategory::Document);
+  CHECK(categoryOf("vacation", "VACATION.JPG") == IndexedFileCategory::Image);
+  CHECK(categoryOf("mayonnaise", "mayonnaise.flac") == IndexedFileCategory::Audio);
+  CHECK(categoryOf("yolo", "yolo-compilation.mp4") == IndexedFileCategory::Video);
+  CHECK(categoryOf("downloads", "downloads_backup.tar") == IndexedFileCategory::Archive);
+  CHECK(categoryOf("keymap", "keymap.c") == IndexedFileCategory::Code);
+  CHECK(categoryOf("vicinae", "vicinae.AppImage") == IndexedFileCategory::Application);
+  CHECK(categoryOf("vrs dump0", "vrs-dump0.bin") == IndexedFileCategory::Other);
+  CHECK(categoryOf("docs", "home/docs") == IndexedFileCategory::Directory);
+}
+
+TEST_CASE("category filter returns matching files") {
+  CHECK(inTop("invoice", "invoice.xlsx", 3, IndexedFileCategory::Document));
+  CHECK(inTop("vacation", "VACATION.JPG", 3, IndexedFileCategory::Image));
+  CHECK(inTop("mayonnaise", "mayonnaise.flac", 3, IndexedFileCategory::Audio));
+  CHECK(inTop("yolo", "yolo-compilation.mp4", 3, IndexedFileCategory::Video));
+  CHECK(inTop("downloads", "downloads_backup.tar", 3, IndexedFileCategory::Archive));
+  CHECK(inTop("keymap", "keymap.c", 3, IndexedFileCategory::Code));
+  CHECK(inTop("vicinae", "vicinae.AppImage", 3, IndexedFileCategory::Application));
+  CHECK(inTop("vrs dump0", "vrs-dump0.bin", 3, IndexedFileCategory::Other));
+  CHECK(inTop("docs", "home/docs", 3, IndexedFileCategory::Directory));
+}
+
+TEST_CASE("category filter is case-insensitive for extensions") {
+  CHECK(inTop("vacation", "VACATION.JPG", 3, IndexedFileCategory::Image));
+  CHECK_FALSE(inTop("vacation", "VACATION.JPG", 3, IndexedFileCategory::Document));
 }
 
 TEST_CASE("skeleton: dropped consonants match through skip-grams") {

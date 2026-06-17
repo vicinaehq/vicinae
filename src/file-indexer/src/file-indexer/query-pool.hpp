@@ -13,6 +13,7 @@ public:
   struct Job {
     std::string text;
     int limit;
+    FileIndexerQueryEngine::QueryOptions options;
     std::function<void(std::vector<IndexerFileResult>)> onResult;
   };
 

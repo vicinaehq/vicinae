@@ -53,7 +53,8 @@ public:
   }
   void rebuildIndex();
   void setConfig(std::vector<std::filesystem::path> paths, std::vector<std::filesystem::path> excludedPaths);
-  std::vector<IndexerFileResult> query(std::string_view view, int limit);
+  std::vector<IndexerFileResult> query(std::string_view view, int limit,
+                                       const FileIndexerQueryEngine::QueryOptions &options = {});
   void start();
 
   FileIndexer();
