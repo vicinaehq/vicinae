@@ -90,7 +90,7 @@ export type NotificationUrgency = 'Low' | 'Normal' | 'High';
 
 export type FileSearchCategory = 'Other' | 'Directory' | 'Image' | 'Video' | 'Audio' | 'Document' | 'Archive' | 'Application';
 
-export type WallpaperFit = 'Cover' | 'Contain' | 'Stretch' | 'Center' | 'Title';
+export type WallpaperFit = 'Cover' | 'Contain' | 'Stretch' | 'Center' | 'Tile';
 
 export type Application = {
 	id: string;

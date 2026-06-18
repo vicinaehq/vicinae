@@ -7,9 +7,10 @@
 
 namespace wallpaper {
 
-// Run a command synchronously, returning stdout or a human-readable error.
+// Run a command synchronously, returning stdout or a human-readable error. The timeout is only a
+// ceiling (we return as soon as the process exits), so it stays generous for slow applies (large gifs).
 inline std::expected<QByteArray, std::string> runCommand(const QString &program, const QStringList &args,
-                                                         int timeoutMs = 5000) {
+                                                         int timeoutMs = 30000) {
   QProcess proc;
 
   proc.start(program, args);

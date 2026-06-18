@@ -23,7 +23,6 @@ QString resizeMode(WallpaperFit fit) {
 } // namespace
 
 std::optional<QString> SwwwWallpaperBackend::binary() {
-  // awww is the renamed successor of swww; prefer it, fall back to the legacy name.
   for (const auto *name : {"awww", "swww"}) {
     if (auto path = QStandardPaths::findExecutable(name); !path.isEmpty()) { return path; }
   }
@@ -47,7 +46,8 @@ std::expected<void, std::string> SwwwWallpaperBackend::setWallpaper(const Wallpa
   auto bin = binary();
   if (!bin) return std::unexpected("neither awww nor swww is installed");
 
-  QStringList args{"img", "--resize", resizeMode(request.fit)};
+  // swww defaults to a fade transition; set instantly to match the other backends.
+  QStringList args{"img", "--transition-type", "none", "--resize", resizeMode(request.fit)};
   if (request.screen) { args << "--outputs" << QString::fromStdString(*request.screen); }
   args << QString::fromStdString(request.path);
 

@@ -19,7 +19,7 @@ public:
         .fit = options.fit.transform(mapFit).value_or(WallpaperFit::Cover),
     };
 
-    return WallpaperManager::setWallpaper(req);
+    return WallpaperManager::setWallpaper(req, options.persist.value_or(false));
   }
 
 private:
@@ -34,7 +34,7 @@ private:
       return WallpaperFit::Cover;
     case AW::Stretch:
       return WallpaperFit::Stretch;
-    case AW::Title:
+    case AW::Tile:
       return WallpaperFit::Tile;
     }
     std::unreachable();
