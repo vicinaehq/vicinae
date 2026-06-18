@@ -29,15 +29,6 @@ int fillMode(WallpaperFit fit) {
 
 bool KdeWallpaperBackend::isActivatable() const { return dbus::isServiceRegistered(PLASMA_SERVICE); }
 
-WallpaperCapabilities KdeWallpaperBackend::capabilities() const {
-  return {
-      .perMonitor = false,
-      .persistent = true,
-      .fitModes = {WallpaperFit::Cover, WallpaperFit::Contain, WallpaperFit::Stretch, WallpaperFit::Center,
-                   WallpaperFit::Tile},
-  };
-}
-
 std::expected<void, std::string> KdeWallpaperBackend::setWallpaper(const WallpaperRequest &request) {
   const QString uri = QUrl::fromLocalFile(QString::fromStdString(request.path)).toString();
 

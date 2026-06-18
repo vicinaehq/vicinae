@@ -7,6 +7,6 @@ class HyprpaperWallpaperBackend : public AbstractWallpaperBackend {
 public:
   std::string id() const override { return "hyprpaper"; }
   bool isActivatable() const override;
-  WallpaperCapabilities capabilities() const override;
+  bool supportsPerScreen() const override { return true; }
   std::expected<void, std::string> setWallpaper(const WallpaperRequest &request) override;
 };

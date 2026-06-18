@@ -9,7 +9,7 @@ class SwwwWallpaperBackend : public AbstractWallpaperBackend {
 public:
   std::string id() const override { return "swww"; }
   bool isActivatable() const override;
-  WallpaperCapabilities capabilities() const override;
+  bool supportsPerScreen() const override { return true; }
   std::expected<void, std::string> setWallpaper(const WallpaperRequest &request) override;
 
 private:

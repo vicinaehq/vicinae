@@ -10,7 +10,7 @@ public:
 
   std::string id() const override { return "custom"; }
   bool isActivatable() const override { return !m_command.empty(); }
-  WallpaperCapabilities capabilities() const override;
+  bool supportsPerScreen() const override { return m_command.contains("{screen}"); }
   std::expected<void, std::string> setWallpaper(const WallpaperRequest &request) override;
 
 private:

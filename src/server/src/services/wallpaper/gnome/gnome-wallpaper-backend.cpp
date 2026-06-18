@@ -15,15 +15,6 @@ bool GnomeWallpaperBackend::isActivatable() const {
   return Environment::isGnomeEnvironment() && !QStandardPaths::findExecutable("gsettings").isEmpty();
 }
 
-WallpaperCapabilities GnomeWallpaperBackend::capabilities() const {
-  return {
-      .perMonitor = false,
-      .persistent = true,
-      .fitModes = {WallpaperFit::Cover, WallpaperFit::Contain, WallpaperFit::Stretch, WallpaperFit::Center,
-                   WallpaperFit::Tile},
-  };
-}
-
 std::expected<void, std::string> GnomeWallpaperBackend::setWallpaper(const WallpaperRequest &request) {
   const QString uri = QUrl::fromLocalFile(QString::fromStdString(request.path)).toString();
   const QString schema = QString::fromUtf8(SCHEMA.data(), SCHEMA.size());

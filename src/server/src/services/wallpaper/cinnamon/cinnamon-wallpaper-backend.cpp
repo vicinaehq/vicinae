@@ -13,15 +13,6 @@ bool CinnamonWallpaperBackend::isActivatable() const {
   return Environment::isCinnamonDesktop() && !QStandardPaths::findExecutable("gsettings").isEmpty();
 }
 
-WallpaperCapabilities CinnamonWallpaperBackend::capabilities() const {
-  return {
-      .perMonitor = false,
-      .persistent = true,
-      .fitModes = {WallpaperFit::Cover, WallpaperFit::Contain, WallpaperFit::Stretch, WallpaperFit::Center,
-                   WallpaperFit::Tile},
-  };
-}
-
 std::expected<void, std::string> CinnamonWallpaperBackend::setWallpaper(const WallpaperRequest &request) {
   const QString uri = QUrl::fromLocalFile(QString::fromStdString(request.path)).toString();
   const QString schema = QString::fromUtf8(SCHEMA.data(), SCHEMA.size());

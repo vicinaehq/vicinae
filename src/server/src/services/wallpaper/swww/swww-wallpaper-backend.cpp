@@ -34,14 +34,6 @@ bool SwwwWallpaperBackend::isActivatable() const {
   return bin && wallpaper::runCommand(*bin, {"query"}).has_value();
 }
 
-WallpaperCapabilities SwwwWallpaperBackend::capabilities() const {
-  return {
-      .perMonitor = true,
-      .persistent = false,
-      .fitModes = {WallpaperFit::Cover, WallpaperFit::Contain, WallpaperFit::Stretch, WallpaperFit::Center},
-  };
-}
-
 std::expected<void, std::string> SwwwWallpaperBackend::setWallpaper(const WallpaperRequest &request) {
   auto bin = binary();
   if (!bin) return std::unexpected("neither awww nor swww is installed");

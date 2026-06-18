@@ -26,14 +26,6 @@ bool HyprpaperWallpaperBackend::isActivatable() const {
          wallpaper::runCommand("hyprctl", {"hyprpaper", "listloaded"}).has_value();
 }
 
-WallpaperCapabilities HyprpaperWallpaperBackend::capabilities() const {
-  return {
-      .perMonitor = true,
-      .persistent = false,
-      .fitModes = {WallpaperFit::Cover, WallpaperFit::Contain, WallpaperFit::Tile},
-  };
-}
-
 std::expected<void, std::string> HyprpaperWallpaperBackend::setWallpaper(const WallpaperRequest &request) {
   const QString path = QString::fromStdString(request.path);
 

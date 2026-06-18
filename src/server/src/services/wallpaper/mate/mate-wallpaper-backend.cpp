@@ -12,15 +12,6 @@ bool MateWallpaperBackend::isActivatable() const {
   return Environment::isMateDesktop() && !QStandardPaths::findExecutable("gsettings").isEmpty();
 }
 
-WallpaperCapabilities MateWallpaperBackend::capabilities() const {
-  return {
-      .perMonitor = false,
-      .persistent = true,
-      .fitModes = {WallpaperFit::Cover, WallpaperFit::Contain, WallpaperFit::Stretch, WallpaperFit::Center,
-                   WallpaperFit::Tile},
-  };
-}
-
 std::expected<void, std::string> MateWallpaperBackend::setWallpaper(const WallpaperRequest &request) {
   const QString path = QString::fromStdString(request.path);
   const QString schema = QString::fromUtf8(SCHEMA.data(), SCHEMA.size());

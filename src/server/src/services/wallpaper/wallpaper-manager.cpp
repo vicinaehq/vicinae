@@ -60,5 +60,6 @@ QFuture<std::expected<void, std::string>> WallpaperManager::setWallpaper(const W
 }
 
 WallpaperCapabilities WallpaperManager::capabilities() {
-  return resolveBackend(customCommand())->capabilities();
+  auto backend = resolveBackend(customCommand());
+  return {.available = backend->id() != "dummy", .perMonitor = backend->supportsPerScreen()};
 }

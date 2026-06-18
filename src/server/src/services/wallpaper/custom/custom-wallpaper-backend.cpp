@@ -23,15 +23,6 @@ QString fitName(WallpaperFit fit) {
 
 } // namespace
 
-WallpaperCapabilities CustomCommandWallpaperBackend::capabilities() const {
-  return {
-      .perMonitor = m_command.contains("{screen}"),
-      .persistent = false,
-      .fitModes = {WallpaperFit::Cover, WallpaperFit::Contain, WallpaperFit::Stretch, WallpaperFit::Center,
-                   WallpaperFit::Tile},
-  };
-}
-
 std::expected<void, std::string>
 CustomCommandWallpaperBackend::setWallpaper(const WallpaperRequest &request) {
   if (m_command.empty()) return std::unexpected("No custom wallpaper command configured");

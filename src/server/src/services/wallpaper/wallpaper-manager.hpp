@@ -9,9 +9,12 @@ namespace config {
 class Manager;
 }
 
-// A backend is resolved per call (no wallpaper state held), so daemon churn is handled transparently.
-// Work runs on a worker thread; config is read on the calling thread and captured into it, so backends
-// never touch shared config off-thread.
+struct WallpaperCapabilities {
+  bool available = false;  // a backend is available to set the wallpaper
+  bool perMonitor = false; // the active backend honors a per-screen request
+};
+
+// Try to set the wallpaper using the currently available backend.
 class WallpaperManager {
 public:
   explicit WallpaperManager(config::Manager &config) : m_config(config) {}
