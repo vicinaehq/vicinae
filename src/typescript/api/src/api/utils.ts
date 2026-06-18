@@ -3,8 +3,8 @@ import { rm } from "node:fs/promises";
 import { WindowManagement } from "./window-management";
 import type {
 	Application,
-	DesktopNotificationPayload,
 	NotificationUrgency,
+	WallpaperFit,
 } from "./proto/api";
 import { getClient } from "./client";
 import { ImageLike, serializeProtoImage } from "./image";
@@ -186,17 +186,51 @@ export type DesktopNotificationOptions = {
 /**
  * @category System
  */
-export const sendDesktopNotification = (payload: {
-	title: string;
-	body: string;
-	icon?: ImageLike;
-	urgency?: NotificationUrgency;
-}) =>
+export const sendDesktopNotification = (payload: DesktopNotificationOptions) =>
 	getClient().UI.sendDesktopNotification({
 		title: payload.title,
 		body: payload.body,
 		icon: payload.icon ? serializeProtoImage(payload.icon) : undefined,
 		urgency: payload.urgency ?? "Normal",
 	});
+
+export type SetWallpaperOptions = {
+	/**
+	 * How to fit the wallpaper on the screen.
+	 *
+	 * Note that some of the fits presented in this enum may not be supported
+	 * by the current backend, and will silently degrade to something else if that is the case.
+	 *
+	 * @default `Cover`
+	 */
+	fit?: WallpaperFit;
+
+	/**
+	 * Name of the screen the wallpaper should be applied to.
+	 * The name of the available screens can be obtained through {@link WindowManagement.getScreens}
+	 * Note that some backends may not be able to set a different wallpaper per screen. In such case,
+	 * this property is ignored and the wallpaper is set on all.
+	 */
+	screen?: string;
+
+	/**
+	 * Whether Vicinae should automatically reapply that wallpaper on next start.
+	 * This is only useful if the backend does not persist the wallpaper automatically.
+	 * @default false
+	 */
+	persist?: boolean;
+};
+
+/**
+ * @category System
+ *
+ * Sets the desktop wallpaper to the image at `path`.
+ *
+ * Uses the preferred backend, which depends on the desktop environment/wallpaper daemon used.
+ *
+ * @throws if no backend is available to serve the set wallpaper request
+ */
+export const setWallpaper = (path: string, options: SetWallpaperOptions) =>
+	getClient().Misc.setWallpaper(path, options);
 
 export type { Application } from "./proto/api";

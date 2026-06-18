@@ -370,6 +370,7 @@ set(SRCS
 
 	src/extension/extension-command-runtime.cpp
 	src/extension/services/ui-service.hpp
+	src/extension/services/misc-service.hpp
 
 	src/extensions/vicinae/vicinae-extension.cpp
 
@@ -397,6 +398,8 @@ set(SRCS
 	src/internal/os-release.cpp
 
 	src/services/window-manager/window-manager.cpp
+
+	src/services/wallpaper/wallpaper-manager.cpp
 
 	src/services/extension-boilerplate-generator/extension-boilerplate-generator.cpp
 
@@ -718,6 +721,13 @@ if (UNIX AND NOT APPLE)
 		src/services/window-manager/x11/x11-window-manager.cpp
 		src/services/window-manager/x11/x11-event-listener.cpp
 		src/services/window-manager/x11/x11-window.cpp
+
+		src/services/wallpaper/gnome/gnome-wallpaper-backend.cpp
+		src/services/wallpaper/swww/swww-wallpaper-backend.cpp
+		src/services/wallpaper/hyprpaper/hyprpaper-wallpaper-backend.cpp
+		src/services/wallpaper/kde/kde-wallpaper-backend.cpp
+		src/services/wallpaper/cinnamon/cinnamon-wallpaper-backend.cpp
+		src/services/wallpaper/mate/mate-wallpaper-backend.cpp
 
 	)
 

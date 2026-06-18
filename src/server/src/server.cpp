@@ -1,6 +1,7 @@
 #include "config/config.hpp"
 #include "environment.hpp"
 #include <QStyleHints>
+#include <QTimer>
 #include "extension/extension.hpp"
 #include "root-search/browser-tabs/browser-tabs-provider.hpp"
 #include "root-search/scripts/script-root-provider.hpp"
@@ -45,6 +46,7 @@
 #include "services/telemetry/telemetry-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/window-manager/window-manager.hpp"
+#include "services/wallpaper/wallpaper-manager.hpp"
 #include "services/app-runtime/app-runtime.hpp"
 #include "services/snippet/snippet-service.hpp"
 #include "services/global-shortcuts/global-shortcut-service.hpp"
@@ -464,6 +466,11 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   } else {
     qInfo() << "Vicinae server successfully started. Call \"vicinae toggle\" to toggle the window";
   }
+
+  // Re-apply a persisted wallpaper for non-persistent backends (swww, hyprpaper...).
+  // Deferred so the wallpaper daemon has a chance to come up first on session start;
+  // reapplyPersisted dispatches the blocking work to a worker thread itself.
+  QTimer::singleShot(2000, qApp, [] { WallpaperManager::reapplyPersisted(); });
 
   auto ret = qApp->exec();
   ctx.services->clipman()->clipboardServer()->stop();

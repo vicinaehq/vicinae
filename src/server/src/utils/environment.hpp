@@ -52,6 +52,13 @@ inline bool isHyprlandCompositor() { return containsIgnoreCase(xdgpp::currentDes
 inline bool isPlasmaDesktop() { return containsIgnoreCase(xdgpp::currentDesktop(), "kde"); }
 inline bool isWaylandPlasmaDesktop() { return isWaylandSession() && isPlasmaDesktop(); }
 inline bool isGnomeDesktop() { return containsIgnoreCase(xdgpp::currentDesktop(), "gnome"); }
+inline bool isCinnamonDesktop() {
+  // "X-Cinnamon" is the pre-spec value (used by Linux Mint); "Cinnamon" is the registered one.
+  return containsIgnoreCase(xdgpp::currentDesktop(), "x-cinnamon") ||
+         containsIgnoreCase(xdgpp::currentDesktop(), "cinnamon");
+}
+inline bool isMateDesktop() { return containsIgnoreCase(xdgpp::currentDesktop(), "mate"); }
+inline bool isXfceDesktop() { return containsIgnoreCase(xdgpp::currentDesktop(), "xfce"); }
 
 // used mostly to exclude cosmic which's implementation is currently broken
 inline bool isLayerShellSupported() {
