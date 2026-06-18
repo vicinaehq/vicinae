@@ -142,7 +142,7 @@ std::vector<ScoredRef<SC>> scoreCandidatesParallel(std::span<const SC> candidate
   threads.resize(threadCount);
   cutCounts.resize(threadCount);
 
-  flog::info() << "scoring " << candidates.size() << " candidates using " << threads.size() << " threads\n";
+  flog::debug() << "scoring " << candidates.size() << " candidates using " << threads.size() << " threads\n";
 
   for (auto [idx, thread] : threads | std::views::enumerate) {
     thread = std::thread{[&, idx]() {
@@ -246,8 +246,8 @@ std::vector<IndexerFileResult> queryWithCorrections(FileIndexerDatabase &db, std
 
   auto candidates = db.searchCandidates(relaxedQuery, CANDIDATE_LIMIT, options);
 
-  flog::info() << "spellfix fallback: '" << q << "' -> " << relaxedQuery << " (" << candidates.size()
-               << " candidates)\n";
+  flog::debug() << "spellfix fallback: '" << q << "' -> " << relaxedQuery << " (" << candidates.size()
+                << " candidates)\n";
 
   auto scorer = [&](const SC &candidate) { return scoreCandidate(candidate, words); };
 
@@ -266,11 +266,11 @@ std::vector<IndexerFileResult> FileIndexerQueryEngine::query(std::string_view q,
 
   if (dbQuery.empty()) return {};
 
-  flog::info() << "searching" << std::quoted(dbQuery) << "\n";
+  flog::debug() << "searching" << std::quoted(dbQuery) << "\n";
 
   auto candidates = db.searchCandidates(dbQuery, CANDIDATE_LIMIT, options);
 
-  flog::info() << "got " << candidates.size() << " candidates\n";
+  flog::debug() << "got " << candidates.size() << " candidates\n";
 
   // skeleton matches merge into the candidate set and the reranker arbitrates;
   // skipped when the strict query already saturated the cap
@@ -281,7 +281,7 @@ std::vector<IndexerFileResult> FileIndexerQueryEngine::query(std::string_view q,
 
     auto skeletonCandidates = db.searchSkeletonCandidates(dbQuery, CANDIDATE_LIMIT, options);
 
-    flog::info() << "skeleton merge: '" << q << "' -> " << skeletonCandidates.size() << " candidates\n";
+    flog::debug() << "skeleton merge: '" << q << "' -> " << skeletonCandidates.size() << " candidates\n";
 
     for (auto &candidate : skeletonCandidates) {
       if (!seen.contains(candidate.path.native())) { candidates.emplace_back(std::move(candidate)); }

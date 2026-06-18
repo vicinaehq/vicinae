@@ -24,6 +24,10 @@ std::string_view scanModeLabel(const Scan &scan) {
   return "exhaustive";
 }
 
+flog::LogStream scanLog(const Scan &scan) {
+  return scan.type() == ScanType::Full ? flog::info() : flog::debug();
+}
+
 } // namespace
 
 void ScanDispatcher::handleFinishedScan(int id, ScanStatus status) {
@@ -35,8 +39,8 @@ void ScanDispatcher::handleFinishedScan(int id, ScanStatus status) {
 }
 
 int ScanDispatcher::enqueue(const Scan &scan) {
-  flog::info() << std::format("Enqueuing {} scan for {} ({})", scanTypeLabel(scan.type()), scan.path.c_str(),
-                              scanModeLabel(scan));
+  scanLog(scan) << std::format("Enqueuing {} scan for {} ({})", scanTypeLabel(scan.type()), scan.path.c_str(),
+                               scanModeLabel(scan));
 
   static int idCounter;
 
@@ -146,8 +150,8 @@ ScanDispatcher::ScanDispatcher(std::shared_ptr<DbWriter> writer)
                             std::chrono::steady_clock::now() - it->second.startedAt)
                             .count();
 
-        flog::info() << std::format("Done scanning {} in {}ms ({}, {})", scan.path.c_str(), duration,
-                                    scanTypeLabel(scan.type()), scanModeLabel(scan));
+        scanLog(scan) << std::format("Done scanning {} in {}ms ({}, {})", scan.path.c_str(), duration,
+                                     scanTypeLabel(scan.type()), scanModeLabel(scan));
 
         it->second.scanner->join();
         m_scannerMap.erase(it);

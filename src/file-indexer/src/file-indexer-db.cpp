@@ -488,8 +488,8 @@ void FileIndexerDatabase::rebuildSpellfixVocabulary() {
   }
 
   auto const elapsed = duration_cast<milliseconds>(steady_clock::now() - start);
-  flog::info() << "Rebuilt spellfix vocabulary: " << counts.size() << " words in " << elapsed.count()
-               << "ms\n";
+  flog::debug() << "Rebuilt spellfix vocabulary: " << counts.size() << " words in " << elapsed.count()
+                << "ms\n";
 }
 
 bool FileIndexerDatabase::hasSpellfixVocabulary() {

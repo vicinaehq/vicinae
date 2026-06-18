@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <QDateTime>
 #include <QJsonObject>
+#include <QProcessEnvironment>
 #include <QTimer>
 #include <filesystem>
 #include <utility>
@@ -157,6 +158,15 @@ void FileIndexer::startProcess() {
   }
 
   m_process.setProgram(path->c_str());
+
+#if defined(DEBUG)
+  auto env = QProcessEnvironment::systemEnvironment();
+  if (!env.contains(QStringLiteral("VICINAE_FILE_INDEXER_LOG"))) {
+    env.insert(QStringLiteral("VICINAE_FILE_INDEXER_LOG"), QStringLiteral("debug"));
+  }
+  m_process.setProcessEnvironment(env);
+#endif
+
   m_process.start();
 
   if (!m_process.waitForStarted()) {
@@ -291,7 +301,9 @@ void FileIndexer::handleStderr() {
     }
 
     rang::fg color = rang::fg::reset;
-    if (level == "debug") {
+    if (level == "trace") {
+      color = rang::fg::gray;
+    } else if (level == "debug") {
       color = rang::fg::cyan;
     } else if (level == "info") {
       color = rang::fg::green;

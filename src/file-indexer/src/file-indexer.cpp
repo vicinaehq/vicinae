@@ -94,7 +94,7 @@ void FileIndexer::start() {
     lastScan = m_db.getLastScan(entrypoint, ScanType::Incremental);
     if (lastScan && lastScan.value().status != ScanStatus::Succeeded) { markScanAsInterrupted(lastScan); }
 
-    flog::info() << "Starting incremental scan for entrypoint" << entrypoint.c_str();
+    flog::debug() << "Starting incremental scan for entrypoint" << entrypoint.c_str();
     startSingleScan(entrypoint, ScanType::Incremental);
   }
 

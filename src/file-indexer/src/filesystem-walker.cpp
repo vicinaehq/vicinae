@@ -71,7 +71,7 @@ void FileSystemWalker::walk(const fs::path &root, const WalkCallback &callback) 
     }
 
     if (isCacheDir) {
-      if (m_verbose) { flog::info() << "FileSystemWalker: skipping CACHEDIR.TAG directory" << dir.c_str(); }
+      if (m_verbose) { flog::trace() << "FileSystemWalker: skipping CACHEDIR.TAG directory" << dir.c_str(); }
       continue;
     }
 
@@ -81,7 +81,7 @@ void FileSystemWalker::walk(const fs::path &root, const WalkCallback &callback) 
       m_pacer.checkpoint();
 
       if (!m_filter.shouldVisit(entry)) {
-        if (m_verbose) { flog::info() << "FileSystemWalker: skipping filtered path" << path.c_str(); }
+        if (m_verbose) { flog::trace() << "FileSystemWalker: skipping filtered path" << path.c_str(); }
         continue;
       }
 
@@ -105,9 +105,9 @@ void FileSystemWalker::walk(const fs::path &root, const WalkCallback &callback) 
 
   double const duration = duration_cast<seconds>(high_resolution_clock::now() - start).count();
 
-  flog::info() << std::format("Done walking file tree at {}. Processed {} directories and {} files in {} "
-                              "seconds.",
-                              root.string(), dirCount, fileCount, duration);
+  flog::debug() << std::format("Done walking file tree at {}. Processed {} directories and {} files in {} "
+                               "seconds.",
+                               root.string(), dirCount, fileCount, duration);
 }
 
 void FileSystemWalker::stop() { m_alive = false; }
