@@ -13,6 +13,9 @@
 #include "mate/mate-wallpaper-backend.hpp"
 #include "swww/swww-wallpaper-backend.hpp"
 #endif
+#ifdef Q_OS_MACOS
+#include "macos/mac-wallpaper-backend.hpp"
+#endif
 
 std::vector<std::unique_ptr<AbstractWallpaperBackend>>
 WallpaperManager::createCandidates(const std::string &customCommand) {
@@ -30,6 +33,9 @@ WallpaperManager::createCandidates(const std::string &customCommand) {
   candidates.emplace_back(std::make_unique<KdeWallpaperBackend>());
   candidates.emplace_back(std::make_unique<CinnamonWallpaperBackend>());
   candidates.emplace_back(std::make_unique<MateWallpaperBackend>());
+#endif
+#ifdef Q_OS_MACOS
+  candidates.emplace_back(std::make_unique<MacWallpaperBackend>());
 #endif
 
   return candidates;
@@ -57,9 +63,4 @@ std::string WallpaperManager::customCommand() const { return m_config.value().wa
 
 QFuture<std::expected<void, std::string>> WallpaperManager::setWallpaper(const WallpaperRequest &request) {
   return QtConcurrent::run([request, command = customCommand()] { return apply(request, command); });
-}
-
-WallpaperCapabilities WallpaperManager::capabilities() {
-  auto backend = resolveBackend(customCommand());
-  return {.available = backend->id() != "dummy", .perMonitor = backend->supportsPerScreen()};
 }

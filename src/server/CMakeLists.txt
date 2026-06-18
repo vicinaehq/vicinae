@@ -627,9 +627,12 @@ if (APPLE)
 		src/services/window-manager/macos/macos-window.mm
 		src/services/window-manager/macos/macos-window-manager.hpp
 		src/services/window-manager/macos/macos-window-manager.mm
+		src/services/wallpaper/macos/mac-wallpaper-backend.hpp
+		src/services/wallpaper/macos/mac-wallpaper-backend.mm
 	)
 	set_source_files_properties(
 		src/ui/image/mac-file-icon-loader.mm
+		src/services/wallpaper/macos/mac-wallpaper-backend.mm
 		src/services/app-service/macos/mac-app.mm
 		src/services/app-service/macos/mac-app-database.mm
 		src/services/app-runtime/macos/mac-app-runtime.mm
