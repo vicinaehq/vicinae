@@ -95,6 +95,7 @@ public:
   void indexEvents(const std::vector<FileEvent> &events);
 
   void init();
+  bool isOpen() const;
 
   db::Database &database();
 

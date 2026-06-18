@@ -131,7 +131,10 @@ public:
 
   bool isNull(int col) const { return sqlite3_column_type(m_stmt, col) == SQLITE_NULL; }
 
-  std::string lastError() const { return sqlite3_errmsg(m_db); }
+  std::string lastError() const {
+    if (!m_db) return "database is not open";
+    return sqlite3_errmsg(m_db);
+  }
 };
 
 class Transaction {
@@ -139,7 +142,9 @@ class Transaction {
   bool m_done = false;
 
 public:
-  explicit Transaction(sqlite3 *db) : m_db(db) { sqlite3_exec(m_db, "BEGIN", nullptr, nullptr, nullptr); }
+  explicit Transaction(sqlite3 *db) : m_db(db) {
+    if (m_db) { sqlite3_exec(m_db, "BEGIN", nullptr, nullptr, nullptr); }
+  }
 
   ~Transaction() {
     if (!m_done && m_db) sqlite3_exec(m_db, "ROLLBACK", nullptr, nullptr, nullptr);
@@ -165,11 +170,13 @@ public:
   }
 
   bool commit() {
+    if (!m_db) return false;
     m_done = true;
     return sqlite3_exec(m_db, "COMMIT", nullptr, nullptr, nullptr) == SQLITE_OK;
   }
 
   void rollback() {
+    if (!m_db) return;
     m_done = true;
     sqlite3_exec(m_db, "ROLLBACK", nullptr, nullptr, nullptr);
   }
@@ -206,25 +213,33 @@ public:
     int const rc = sqlite3_open_v2(
         path.c_str(), &handle, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, nullptr);
     if (rc != SQLITE_OK) {
-      std::string err = handle ? sqlite3_errmsg(handle) : "failed to allocate sqlite handle";
+      std::string err = errorString("open", rc, handle, path);
       if (handle) sqlite3_close_v2(handle);
       return std::unexpected(std::move(err));
     }
+
+    sqlite3_extended_result_codes(handle, 1);
     sqlite3_busy_timeout(handle, BUSY_TIMEOUT_MS);
     return Database(handle);
   }
 
   Statement prepare(std::string_view sql) const {
+    if (!m_handle) {
+      flog::warn() << "db::prepare failed: database is not open";
+      return {};
+    }
+
     sqlite3_stmt *stmt = nullptr;
     int const rc = sqlite3_prepare_v2(m_handle, sql.data(), static_cast<int>(sql.size()), &stmt, nullptr);
     if (rc != SQLITE_OK) {
-      flog::warn() << "db::prepare failed:" << sqlite3_errmsg(m_handle);
+      flog::warn() << errorString("prepare", rc, m_handle);
       return {};
     }
     return {stmt, m_handle};
   }
 
   bool exec(const char *sql) const {
+    if (!m_handle) return false;
     return sqlite3_exec(m_handle, sql, nullptr, nullptr, nullptr) == SQLITE_OK;
   }
 
@@ -232,13 +247,62 @@ public:
 
   Transaction transaction() const { return Transaction(m_handle); }
 
-  int64_t lastInsertRowId() const { return sqlite3_last_insert_rowid(m_handle); }
+  int64_t lastInsertRowId() const {
+    if (!m_handle) return 0;
+    return sqlite3_last_insert_rowid(m_handle);
+  }
 
-  int changes() const { return sqlite3_changes(m_handle); }
+  int changes() const {
+    if (!m_handle) return 0;
+    return sqlite3_changes(m_handle);
+  }
 
-  std::string lastError() const { return sqlite3_errmsg(m_handle); }
+  std::string lastError() const {
+    if (!m_handle) return "database is not open";
+    return sqlite3_errmsg(m_handle);
+  }
 
   sqlite3 *handle() { return m_handle; }
+  bool isOpen() const { return m_handle != nullptr; }
+
+  static std::string errorString(std::string_view operation, int rc, sqlite3 *handle,
+                                 const std::filesystem::path &path = {}) {
+    std::string message;
+
+    message.reserve(128);
+    message += "sqlite ";
+    message += operation;
+    message += " failed";
+
+    if (!path.empty()) {
+      message += " for ";
+      message += path.string();
+    }
+
+    message += ": rc=";
+    message += std::to_string(rc);
+    message += " (";
+    message += sqlite3_errstr(rc);
+    message += ")";
+
+    if (handle) {
+      int const extended = sqlite3_extended_errcode(handle);
+      if (extended != rc) {
+        message += ", extended_rc=";
+        message += std::to_string(extended);
+        message += " (";
+        message += sqlite3_errstr(extended);
+        message += ")";
+      }
+
+      message += ": ";
+      message += sqlite3_errmsg(handle);
+    } else {
+      message += ": failed to allocate sqlite handle";
+    }
+
+    return message;
+  }
 };
 
 } // namespace db

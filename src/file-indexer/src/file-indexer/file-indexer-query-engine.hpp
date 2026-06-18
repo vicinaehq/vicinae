@@ -67,6 +67,7 @@ public:
   using QueryOptions = FileIndexerDatabase::SearchOptions;
 
   std::vector<IndexerFileResult> query(std::string_view q, int limit, const QueryOptions &options = {});
+  bool isAvailable() const { return m_db.isOpen(); }
 
 private:
   FileIndexerDatabase m_db;

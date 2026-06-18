@@ -260,6 +260,8 @@ std::vector<IndexerFileResult> FileIndexerQueryEngine::query(std::string_view q,
                                                              const QueryOptions &options) {
   constexpr auto SKELETON_THRESHOLD = 10; // below n, also query skeleton index to increase recall
   FileIndexerDatabase &db = m_db;
+  if (!db.isOpen()) return {};
+
   auto dbQuery = prepareCandidateSearchQuery(q);
 
   if (dbQuery.empty()) return {};

@@ -58,6 +58,11 @@ void FileIndexer::markScanAsInterrupted(std::optional<FileIndexerDatabase::ScanR
 }
 
 void FileIndexer::start() {
+  if (!m_db.isOpen()) {
+    flog::error() << "File indexer database is not open, refusing to start scans";
+    return;
+  }
+
   // make typo corrections available before the first scan of this session completes
   if (!m_db.hasSpellfixVocabulary()) { m_writer->rebuildSpellfixVocabulary(); }
 
@@ -112,6 +117,7 @@ void FileIndexer::setConfig(std::vector<fs::path> paths, std::vector<fs::path> e
 
 std::vector<IndexerFileResult> FileIndexer::query(std::string_view view, int limit,
                                                   const FileIndexerQueryEngine::QueryOptions &options) {
+  if (!m_db.isOpen() || !m_queryEngine.isAvailable()) return {};
   return m_queryEngine.query(view, limit, options);
 }
 
@@ -126,7 +132,7 @@ bool FileIndexer::shouldRebuildVocabulary() {
 }
 
 FileIndexer::FileIndexer() : m_writer(std::make_shared<DbWriter>()), m_dispatcher(m_writer) {
-  m_db.init();
+  if (m_db.isOpen()) { m_db.init(); }
 
   m_dispatcher.setEventCallback([this](const ScanEvent &event) {
     // keep the typo-correction vocabulary loosely in sync with the index

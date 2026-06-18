@@ -194,6 +194,11 @@ bool FileIndexerDatabase::tracksFile(const std::filesystem::path &path) const {
 }
 
 void FileIndexerDatabase::init() {
+  if (!m_db.isOpen()) {
+    flog::error() << "Cannot initialize file-indexer database: database is not open";
+    return;
+  }
+
   if (!m_db.exec(std::string(file_indexer::INIT_SQL))) {
     flog::error() << "Failed to run file-indexer migrations" << m_db.lastError();
     return;
@@ -349,6 +354,8 @@ std::vector<FileIndexerDatabase::ScanRecord> FileIndexerDatabase::listScans(Scan
 }
 
 db::Database &FileIndexerDatabase::database() { return m_db; }
+
+bool FileIndexerDatabase::isOpen() const { return m_db.isOpen(); }
 
 std::vector<FileIndexerDatabase::SearchCandidate>
 FileIndexerDatabase::searchCandidates(std::string_view searchQuery, int limit, const SearchOptions &options) {
@@ -699,11 +706,16 @@ void FileIndexerDatabase::setUserVersion(int version) {
 FileIndexerDatabase::FileIndexerDatabase() {
   std::error_code ec;
   fs::create_directories(file_indexer::dataDir(), ec);
+  if (ec) {
+    flog::error() << "Failed to create file-indexer data directory" << file_indexer::dataDir().c_str()
+                  << ec.message().c_str();
+    return;
+  }
 
   auto result = db::Database::open(getDatabasePath());
 
   if (!result) {
-    flog::error() << "Failed to open database at" << getDatabasePath().c_str();
+    flog::error() << result.error();
     return;
   }
 

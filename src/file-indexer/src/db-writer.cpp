@@ -7,6 +7,9 @@
 void DbWriter::listen() {
   file_indexer::setBackgroundThreadPriority();
   m_db = std::make_unique<FileIndexerDatabase>();
+  if (!m_db->isOpen()) {
+    flog::error() << "File indexer writer database is not open, queued writes will fail";
+  }
 
   while (true) {
     std::unique_lock lock(m_queueMtx);

@@ -40,11 +40,26 @@ int main(int, char **) {
   // Instead of methodically updating the DB, we just remove it entirely
   // and start over fresh. Much simpler :D
   // We use temporary database connections to get the user version through `PRAGMA user_version`
-  if (auto userVersion = FileIndexerDatabase{}.userVersion(); userVersion != file_indexer::SCHEMA_VERSION) {
+  int userVersion = 0;
+  {
+    FileIndexerDatabase startupDb;
+    if (!startupDb.isOpen()) {
+      flog::error() << "File indexer database could not be opened, exiting";
+      return 1;
+    }
+    userVersion = startupDb.userVersion();
+  }
+
+  if (userVersion != file_indexer::SCHEMA_VERSION) {
     flog::info() << "Breaking change detected (current rev=" << file_indexer::SCHEMA_VERSION
                  << ", user version=" << userVersion << "), starting over... \n";
     file_indexer::purgeDbFiles();
-    FileIndexerDatabase{}.setUserVersion(file_indexer::SCHEMA_VERSION);
+    FileIndexerDatabase rebuiltDb;
+    if (!rebuiltDb.isOpen()) {
+      flog::error() << "File indexer database could not be reopened after purge, exiting";
+      return 1;
+    }
+    rebuiltDb.setUserVersion(file_indexer::SCHEMA_VERSION);
   }
 
   StdoutTransport transport;
