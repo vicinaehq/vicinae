@@ -54,7 +54,7 @@ void ExtensionCommandRuntime::initialize() {
   auto *fileSearch = new ExtFileSearchService(*m_transport, *services->fileService());
   auto *command = new ExtCommandService(*m_transport, m_command, services->rootItemManager(), *ctx.settings);
   auto *oauth = new ExtOAuthService(*m_transport, m_command->extensionId(), ctx);
-  auto misc = new MiscService(*m_transport);
+  auto misc = new MiscService(*m_transport, *services->wallpaperManager());
 
   m_server = new tsapi::Server(*m_transport, app, ui, wm, clipboard, storage, fileSearch, command, oauth,
                                misc, eventCore);

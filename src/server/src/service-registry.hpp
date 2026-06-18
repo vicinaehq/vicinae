@@ -21,6 +21,7 @@ class VicinaeStoreService;
 class ExtensionRegistry;
 class OAuthService;
 class WindowManager;
+class WallpaperManager;
 class PowerManager;
 class ScriptCommandService;
 class AbstractSnippetServer;
@@ -53,6 +54,7 @@ public:
   OmniDatabase *omniDb() const;
   CalculatorService *calculatorService() const;
   WindowManager *windowManager() const;
+  WallpaperManager *wallpaperManager() const;
   GlyphService *glyphService() const;
   FontService *fontService() const;
   LocalStorageService *localStorage() const;
@@ -85,6 +87,7 @@ public:
 
   void setPowerManager(std::unique_ptr<PowerManager> manager);
   void setWindowManager(std::unique_ptr<WindowManager> manager);
+  void setWallpaperManager(std::unique_ptr<WallpaperManager> manager);
   void setRootItemManager(std::unique_ptr<RootItemManager> manager);
   void setRaycastStore(std::unique_ptr<RaycastStoreService> service);
   void setScriptDb(std::unique_ptr<ScriptCommandService> service);
@@ -122,6 +125,7 @@ public:
 
 private:
   std::unique_ptr<WindowManager> m_windowManager;
+  std::unique_ptr<WallpaperManager> m_wallpaperManager;
   std::unique_ptr<AppService> m_appDb;
   std::unique_ptr<OmniDatabase> m_omniDb;
   std::unique_ptr<LocalStorageService> m_localStorage;

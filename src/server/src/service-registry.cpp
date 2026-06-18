@@ -26,6 +26,7 @@
 #include "services/telemetry/telemetry-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/window-manager/window-manager.hpp"
+#include "services/wallpaper/wallpaper-manager.hpp"
 #include "services/app-runtime/app-runtime.hpp"
 #include "services/global-shortcuts/global-shortcut-service.hpp"
 #include "services/snippet/snippet-service.hpp"
@@ -41,6 +42,7 @@ config::Manager *ServiceRegistry::config() const { return m_config.get(); }
 OmniDatabase *ServiceRegistry::omniDb() const { return m_omniDb.get(); }
 CalculatorService *ServiceRegistry::calculatorService() const { return m_calculatorService.get(); }
 WindowManager *ServiceRegistry::windowManager() const { return m_windowManager.get(); }
+WallpaperManager *ServiceRegistry::wallpaperManager() const { return m_wallpaperManager.get(); }
 GlyphService *ServiceRegistry::glyphService() const { return m_glyphService.get(); }
 FontService *ServiceRegistry::fontService() const { return m_fontService.get(); }
 LocalStorageService *ServiceRegistry::localStorage() const { return m_localStorage.get(); }
@@ -93,6 +95,10 @@ void ServiceRegistry::setPowerManager(std::unique_ptr<PowerManager> powman) {
 
 void ServiceRegistry::setWindowManager(std::unique_ptr<WindowManager> manager) {
   m_windowManager = std::move(manager);
+}
+
+void ServiceRegistry::setWallpaperManager(std::unique_ptr<WallpaperManager> manager) {
+  m_wallpaperManager = std::move(manager);
 }
 
 void ServiceRegistry::ServiceRegistry::setRootItemManager(std::unique_ptr<RootItemManager> manager) {

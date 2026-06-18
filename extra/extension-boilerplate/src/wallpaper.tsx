@@ -89,14 +89,7 @@ function WallpaperActions({
 
 	return (
 		<ActionPanel>
-			{/* Default action: set with no options (Cover, all screens, not persisted). */}
 			<Action title="Set Wallpaper" icon={Icon.Image} onAction={() => apply(basename(path))} />
-
-			<Action
-				title="Set & Persist"
-				icon={Icon.Pin}
-				onAction={() => apply("persisted across restarts", { persist: true })}
-			/>
 
 			<ActionPanel.Submenu title="Set with Fit" icon={Icon.Crop}>
 				{FIT_MODES.map((fit) => (

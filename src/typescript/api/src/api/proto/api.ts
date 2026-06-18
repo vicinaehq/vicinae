@@ -259,7 +259,6 @@ export type TokenSetResponse = {
 
 export type SetWallpaperOptions = {
 	fit?: WallpaperFit;
-	persist?: boolean;
 	screen?: string;
 }
 

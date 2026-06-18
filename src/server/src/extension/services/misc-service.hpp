@@ -10,7 +10,8 @@ class MiscService : public tsapi::AbstractMisc {
   using Void = tsapi::Result<void>;
 
 public:
-  MiscService(tsapi::RpcTransport &transport) : AbstractMisc(transport) {}
+  MiscService(tsapi::RpcTransport &transport, WallpaperManager &wallpaper)
+      : AbstractMisc(transport), m_wallpaper(wallpaper) {}
 
   tsapi::Result<void>::Future setWallpaper(std::string path, tsapi::SetWallpaperOptions options) override {
     auto req = WallpaperRequest{
@@ -19,7 +20,7 @@ public:
         .fit = options.fit.transform(mapFit).value_or(WallpaperFit::Cover),
     };
 
-    return WallpaperManager::setWallpaper(req, options.persist.value_or(false));
+    return m_wallpaper.setWallpaper(req);
   }
 
 private:
@@ -39,4 +40,6 @@ private:
     }
     std::unreachable();
   }
+
+  WallpaperManager &m_wallpaper;
 };

@@ -306,7 +306,6 @@ enum WallpaperFit {
 
 struct SetWallpaperOptions {
   fit?: WallpaperFit;
-  persist?: bool;
   screen?: string;
 };
 

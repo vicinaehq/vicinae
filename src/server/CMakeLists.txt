@@ -400,6 +400,7 @@ set(SRCS
 	src/services/window-manager/window-manager.cpp
 
 	src/services/wallpaper/wallpaper-manager.cpp
+	src/services/wallpaper/custom/custom-wallpaper-backend.cpp
 
 	src/services/extension-boilerplate-generator/extension-boilerplate-generator.cpp
 

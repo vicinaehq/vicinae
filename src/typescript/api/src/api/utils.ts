@@ -212,13 +212,6 @@ export type SetWallpaperOptions = {
 	 * this property is ignored and the wallpaper is set on all.
 	 */
 	screen?: string;
-
-	/**
-	 * Whether Vicinae should automatically reapply that wallpaper on next start.
-	 * This is only useful if the backend does not persist the wallpaper automatically.
-	 * @default false
-	 */
-	persist?: boolean;
 };
 
 /**
