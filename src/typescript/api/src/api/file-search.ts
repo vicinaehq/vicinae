@@ -26,6 +26,20 @@ export namespace FileSearch {
 
 	export type FileInfo = api.FileInfo;
 
+	export interface FileSearchOptions {
+		/**
+		 * The maximum number of files to return in one call.
+		 * Defaults to 100, limited to 10,000.
+		 */
+		limit?: number;
+		filters: {
+			/**
+			 * Category of files the results should belong to.
+			 */
+			category?: api.FileSearchCategory;
+		};
+	}
+
 	/**
 	 * Search for files matching the provided query string.
 	 *
@@ -43,7 +57,10 @@ export namespace FileSearch {
 	 * const files = await fileSearch.search('invoice');
 	 * ```
 	 */
-	export async function search(query: string): Promise<FileSearch.FileInfo[]> {
-		return getClient().FileSearch.search(query);
+	export async function search(
+		query: string,
+		{ filters = {}, limit = 100 }: FileSearchOptions,
+	): Promise<FileSearch.FileInfo[]> {
+		return getClient().FileSearch.search(query, { limit, filters });
 	}
 }

@@ -68,6 +68,12 @@
 			"mode": "view"
 		},
 		{
+			"name": "image-search",
+			"title": "Image Search",
+			"description": "Image search",
+			"mode": "view"
+		},
+		{
 			"name": "window-switcher",
 			"title": "Window Switcher",
 			"description": "Test window management APIs",
