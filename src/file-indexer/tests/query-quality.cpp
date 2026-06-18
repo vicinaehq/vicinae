@@ -1,9 +1,12 @@
 #include <catch2/catch_test_macros.hpp>
 #include <sqlcipher/sqlite3.h>
+#include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <optional>
 #include <ranges>
+#include <stdexcept>
+#include <string>
 #include <string_view>
 #include <system_error>
 #include <vector>
@@ -67,12 +70,26 @@ constexpr std::string_view CORPUS[] = {
     "home/pictures/forest_color.jpg",
 };
 
+fs::path makeQualityRoot() {
+  auto const timestamp = std::chrono::system_clock::now().time_since_epoch().count();
+  auto const base = fs::temp_directory_path() / ("vicinae-fi-quality-" + std::to_string(timestamp));
+
+  for (int attempt = 0; attempt != 100; ++attempt) {
+    auto candidate = base;
+    if (attempt != 0) { candidate += "-" + std::to_string(attempt); }
+
+    std::error_code ec;
+    if (fs::create_directory(candidate, ec)) { return candidate; }
+  }
+
+  throw std::runtime_error{"failed to create quality test root"};
+}
+
 struct QualityEnv {
   fs::path root;
 
   QualityEnv() {
-    std::string tmpl = (fs::temp_directory_path() / "vicinae-fi-quality.XXXXXX").string();
-    root = mkdtemp(tmpl.data());
+    root = makeQualityRoot();
 
     setenv("XDG_DATA_HOME", (root / "data").c_str(), 1);
 
@@ -192,8 +209,16 @@ TEST_CASE("fallback: weak words are dropped from filtering but still ranked") {
 }
 
 TEST_CASE("fallback: gibberish returns nothing rather than noise") {
+  auto const &env = qualityEnv();
   FileIndexerQueryEngine engine;
-  CHECK(engine.query("zzqqxxw", 10).empty());
+  auto results = engine.query("zzqqxxw", 10);
+
+  INFO("quality root: " << env.root);
+  for (const auto &result : results) {
+    INFO("result: " << result.path);
+  }
+
+  CHECK(results.empty());
 }
 
 TEST_CASE("skeleton: fully devowelized word matches") {
