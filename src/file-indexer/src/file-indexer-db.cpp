@@ -117,49 +117,6 @@ std::optional<int64_t> FileIndexerDatabase::retrieveFileId(const std::filesystem
   return stmt.columnInt64(0);
 }
 
-std::optional<int64_t> FileIndexerDatabase::ensureDirectory(const std::filesystem::path &dir) {
-  if (auto id = retrieveFileId(dir)) { return id; }
-
-  std::optional<int64_t> parentId;
-  if (auto parent = dir.parent_path(); !parent.empty() && parent != dir) {
-    parentId = ensureDirectory(parent);
-  }
-
-  auto stmt = m_db.prepare(R"(
-    INSERT INTO
-      indexed_file (path, skeleton_path, parent_id, last_modified_at, type, category, size_bytes)
-    VALUES
-      (:path, :skeleton_path, :parent_id, :last_modified_at, 1, :category, NULL)
-    ON CONFLICT (path) DO UPDATE SET skeleton_path = excluded.skeleton_path,
-      parent_id = excluded.parent_id, type = 1, category = excluded.category,
-      size_bytes = NULL, indexed_at = unixepoch()
-    RETURNING id
-  )");
-
-  std::error_code ec;
-
-  stmt.bind(":path", dir.c_str());
-  stmt.bind(":skeleton_path", skeletonDocument(dir));
-  stmt.bind(":parent_id", parentId);
-  stmt.bind(":category", static_cast<int>(IndexedFileCategory::Directory));
-
-  if (auto lastModified = fs::last_write_time(dir, ec); !ec) {
-    using namespace std::chrono;
-    auto sctp = clock_cast<system_clock>(lastModified);
-    stmt.bind(":last_modified_at",
-              static_cast<int64_t>(duration_cast<seconds>(sctp.time_since_epoch()).count()));
-  } else {
-    stmt.bindNull(":last_modified_at");
-  }
-
-  if (!stmt.step()) {
-    flog::error() << "Failed to index parent directory" << dir.c_str() << stmt.lastError();
-    return std::nullopt;
-  }
-
-  return stmt.columnInt64(0);
-}
-
 std::optional<int64_t>
 FileIndexerDatabase::retrieveIndexedLastModified(const std::filesystem::path &path) const {
   auto stmt = m_db.prepare("SELECT last_modified_at FROM indexed_file WHERE path = :path");
@@ -598,7 +555,7 @@ void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
     auto parent = path.parent_path();
     if (parent.empty() || parent == path) { return std::nullopt; }
     auto [it, inserted] = parentIds.try_emplace(parent.native());
-    if (inserted) { it->second = ensureDirectory(parent); }
+    if (inserted) { it->second = retrieveFileId(parent); }
     return it->second;
   };
 
@@ -665,7 +622,7 @@ void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &p
     auto parent = path.parent_path();
     if (parent.empty() || parent == path) { return std::nullopt; }
     auto [it, inserted] = parentIds.try_emplace(parent.native());
-    if (inserted) { it->second = ensureDirectory(parent); }
+    if (inserted) { it->second = retrieveFileId(parent); }
     return it->second;
   };
 

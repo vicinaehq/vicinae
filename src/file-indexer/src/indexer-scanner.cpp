@@ -15,6 +15,12 @@ void IndexerScanner::scan(const Scan &scan) {
 
   // m_walker.setVerbose();
   m_walker.setExcludedPaths(fullScan.excludedPaths);
+  {
+    std::error_code ec;
+    batchedIndex.emplace_back(FileEventType::Modify, scan.path, fs::last_write_time(scan.path, ec), true,
+                              std::nullopt);
+  }
+
   m_walker.walk(scan.path, [&](const fs::directory_entry &entry) {
     std::error_code ec;
     reportProgress();

@@ -24,7 +24,6 @@ class FileIndexerDatabase {
   db::Database m_db;
 
   std::optional<int64_t> retrieveFileId(const std::filesystem::path &path) const;
-  std::optional<int64_t> ensureDirectory(const std::filesystem::path &dir);
 
 public:
   struct ScanRecord {

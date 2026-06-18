@@ -86,6 +86,7 @@ struct QualityEnv {
       if (relative == std::string_view{"home/docs/budget_2024.xlsx"}) { ofs << "budget-data"; }
       paths.emplace_back(path);
     }
+    paths.emplace_back(root / "corpus" / "home/docs");
 
     FileIndexerDatabase db;
     db.init();
@@ -238,6 +239,16 @@ TEST_CASE("directories are typed in the index and queryable by recency") {
   for (const auto &dir : dirs) {
     CHECK(fs::is_directory(dir));
   }
+}
+
+TEST_CASE("structural parent directories are not queryable as indexed content") {
+  auto const &env = qualityEnv();
+  FileIndexerDatabase db;
+
+  auto const parent = env.root / "corpus" / "home";
+
+  CHECK_FALSE(db.tracksFile(parent));
+  CHECK_FALSE(inTop("home", "corpus/home", 10, IndexedFileCategory::Directory));
 }
 
 TEST_CASE("indexed entries persist file size and refresh time") {
