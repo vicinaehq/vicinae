@@ -476,11 +476,11 @@ class OAuthService {
 
 }
 
-class MiscService {
+class WallpaperService {
 	constructor(private readonly transport: RpcTransport) {}
 
-	setWallpaper(path: string, options: SetWallpaperOptions): Promise<void> {
-		return this.transport.request("Misc/setWallpaper", { path, options});	
+	set(path: string, options: SetWallpaperOptions): Promise<void> {
+		return this.transport.request("Wallpaper/set", { path, options});	
 	}
 
 }
@@ -503,7 +503,7 @@ export class Client {
 		this.FileSearch = new FileSearchService(this.transport);
 		this.Command = new CommandService(this.transport);
 		this.OAuth = new OAuthService(this.transport);
-		this.Misc = new MiscService(this.transport);
+		this.Wallpaper = new WallpaperService(this.transport);
 		this.EventCore = new EventCoreService(this.transport);
 	}
 
@@ -516,7 +516,7 @@ export class Client {
 	FileSearch: FileSearchService;
 	Command: CommandService;
 	OAuth: OAuthService;
-	Misc: MiscService;
+	Wallpaper: WallpaperService;
 	EventCore: EventCoreService;
 
 }

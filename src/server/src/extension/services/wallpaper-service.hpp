@@ -1,19 +1,16 @@
-
 #include "generated/tsapi.hpp"
 #include "services/wallpaper/abstract-wallpaper-backend.hpp"
 #include "services/wallpaper/wallpaper-manager.hpp"
 #include <utility>
 
-class MiscService : public tsapi::AbstractMisc {
+class ExtWallpaperService : public tsapi::AbstractWallpaper {
   Q_OBJECT
 
-  using Void = tsapi::Result<void>;
-
 public:
-  MiscService(tsapi::RpcTransport &transport, WallpaperManager &wallpaper)
-      : AbstractMisc(transport), m_wallpaper(wallpaper) {}
+  ExtWallpaperService(tsapi::RpcTransport &transport, WallpaperManager &wallpaper)
+      : AbstractWallpaper(transport), m_wallpaper(wallpaper) {}
 
-  tsapi::Result<void>::Future setWallpaper(std::string path, tsapi::SetWallpaperOptions options) override {
+  tsapi::Result<void>::Future set(std::string path, tsapi::SetWallpaperOptions options) override {
     auto req = WallpaperRequest{
         .path = std::move(path),
         .screen = std::move(options.screen),

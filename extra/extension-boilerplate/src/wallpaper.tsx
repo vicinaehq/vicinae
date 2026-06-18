@@ -3,10 +3,9 @@ import {
 	ActionPanel,
 	Grid,
 	Icon,
-	type SetWallpaperOptions,
-	setWallpaper,
 	showToast,
 	Toast,
+	Wallpaper,
 	WindowManagement,
 } from "@vicinae/api";
 import { readdir } from "node:fs/promises";
@@ -74,9 +73,9 @@ function WallpaperActions({
 	path: string;
 	screens: WindowManagement.Screen[];
 }) {
-	const apply = async (summary: string, options: SetWallpaperOptions = {}) => {
+	const apply = async (summary: string, options: Wallpaper.SetOptions = {}) => {
 		try {
-			await setWallpaper(path, options);
+			await Wallpaper.set(path, options);
 			await showToast({ style: Toast.Style.Success, title: "Wallpaper set", message: summary });
 		} catch (error) {
 			await showToast({

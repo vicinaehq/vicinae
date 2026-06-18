@@ -309,8 +309,8 @@ struct SetWallpaperOptions {
   screen?: string;
 };
 
-service Misc {
-  fn setWallpaper(path: string, options: SetWallpaperOptions) => void;
+service Wallpaper {
+  fn set(path: string, options: SetWallpaperOptions) => void;
 };
 
 // EventCore - used for loosely typed callbacks, required for component event handlers

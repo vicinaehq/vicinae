@@ -370,7 +370,7 @@ set(SRCS
 
 	src/extension/extension-command-runtime.cpp
 	src/extension/services/ui-service.hpp
-	src/extension/services/misc-service.hpp
+	src/extension/services/wallpaper-service.hpp
 
 	src/extensions/vicinae/vicinae-extension.cpp
 
