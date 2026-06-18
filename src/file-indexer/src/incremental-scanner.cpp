@@ -20,15 +20,16 @@ void IncrementalScanner::processDirectory(const fs::path &root, const EntryCallb
 
   m_currentEntries.clear();
   m_currentEntries.insert(root);
-  events.emplace_back(FileEventType::Modify, root, fs::last_write_time(root, ec), true);
+  events.emplace_back(FileEventType::Modify, root, fs::last_write_time(root, ec), true, std::nullopt);
 
   for (const auto &entry : fs::directory_iterator(root, ec)) {
     if (ec) continue;
     if (!m_filter.shouldVisit(entry)) continue;
 
+    bool const isDirectory = entry.is_directory(ec);
     m_currentEntries.insert(entry.path());
-    events.emplace_back(FileEventType::Modify, entry.path(), entry.last_write_time(ec),
-                        entry.is_directory(ec));
+    events.emplace_back(FileEventType::Modify, entry.path(), entry.last_write_time(ec), isDirectory,
+                        file_indexer::fileSizeBytesFor(entry.path(), isDirectory));
 
     if (onEntry) { onEntry(entry, !indexedFiles.contains(entry.path())); }
   }

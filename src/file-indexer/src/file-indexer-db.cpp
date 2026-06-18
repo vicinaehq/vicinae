@@ -127,11 +127,12 @@ std::optional<int64_t> FileIndexerDatabase::ensureDirectory(const std::filesyste
 
   auto stmt = m_db.prepare(R"(
     INSERT INTO
-      indexed_file (path, skeleton_path, parent_id, last_modified_at, type, category)
+      indexed_file (path, skeleton_path, parent_id, last_modified_at, type, category, size_bytes)
     VALUES
-      (:path, :skeleton_path, :parent_id, :last_modified_at, 1, :category)
+      (:path, :skeleton_path, :parent_id, :last_modified_at, 1, :category, NULL)
     ON CONFLICT (path) DO UPDATE SET skeleton_path = excluded.skeleton_path,
-      parent_id = excluded.parent_id, type = 1, category = excluded.category
+      parent_id = excluded.parent_id, type = 1, category = excluded.category,
+      size_bytes = NULL, indexed_at = unixepoch()
     RETURNING id
   )");
 
@@ -165,8 +166,28 @@ FileIndexerDatabase::retrieveIndexedLastModified(const std::filesystem::path &pa
   stmt.bind(":path", path.c_str());
 
   if (!stmt.step()) { return std::nullopt; }
+  if (stmt.isNull(0)) { return std::nullopt; }
 
   return static_cast<int64_t>(stmt.columnUInt64(0));
+}
+
+std::optional<int64_t>
+FileIndexerDatabase::retrieveIndexedSizeBytes(const std::filesystem::path &path) const {
+  auto stmt = m_db.prepare("SELECT size_bytes FROM indexed_file WHERE path = :path");
+  stmt.bind(":path", path.c_str());
+
+  if (!stmt.step() || stmt.isNull(0)) { return std::nullopt; }
+
+  return stmt.columnInt64(0);
+}
+
+std::optional<int64_t> FileIndexerDatabase::retrieveIndexedAt(const std::filesystem::path &path) const {
+  auto stmt = m_db.prepare("SELECT indexed_at FROM indexed_file WHERE path = :path");
+  stmt.bind(":path", path.c_str());
+
+  if (!stmt.step() || stmt.isNull(0)) { return std::nullopt; }
+
+  return stmt.columnInt64(0);
 }
 
 std::unordered_set<std::filesystem::path>
@@ -560,12 +581,12 @@ void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
 
   auto modifyStmt = m_db.prepare(R"(
     INSERT INTO
-      indexed_file (path, skeleton_path, parent_id, last_modified_at, type, category)
+      indexed_file (path, skeleton_path, parent_id, last_modified_at, type, category, size_bytes)
     VALUES
-      (:path, :skeleton_path, :parent_id, :last_modified_at, :type, :category)
+      (:path, :skeleton_path, :parent_id, :last_modified_at, :type, :category, :size_bytes)
     ON CONFLICT (path) DO UPDATE SET last_modified_at = excluded.last_modified_at,
       skeleton_path = excluded.skeleton_path, parent_id = excluded.parent_id, type = excluded.type,
-      category = excluded.category
+      category = excluded.category, size_bytes = excluded.size_bytes, indexed_at = unixepoch()
   )");
 
   auto deleteStmt = m_db.prepare("DELETE FROM indexed_file WHERE path = :path");
@@ -595,6 +616,7 @@ void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
       modifyStmt.bind(":parent_id", resolveParent(event.path));
       modifyStmt.bind(":type", event.isDirectory ? 1 : 0);
       modifyStmt.bind(":category", static_cast<int>(fileCategoryFor(event.path, event.isDirectory)));
+      modifyStmt.bind(":size_bytes", event.sizeBytes);
       ok = modifyStmt.exec();
       break;
     }
@@ -627,12 +649,12 @@ void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &p
 
   auto stmt = m_db.prepare(R"(
     INSERT INTO
-      indexed_file (path, skeleton_path, parent_id, last_modified_at, type, category)
+      indexed_file (path, skeleton_path, parent_id, last_modified_at, type, category, size_bytes)
     VALUES
-      (:path, :skeleton_path, :parent_id, :last_modified_at, :type, :category)
+      (:path, :skeleton_path, :parent_id, :last_modified_at, :type, :category, :size_bytes)
     ON CONFLICT (path) DO UPDATE SET last_modified_at = excluded.last_modified_at,
       skeleton_path = excluded.skeleton_path, parent_id = excluded.parent_id, type = excluded.type,
-      category = excluded.category
+      category = excluded.category, size_bytes = excluded.size_bytes, indexed_at = unixepoch()
   )");
 
   std::error_code ec;
@@ -664,6 +686,7 @@ void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &p
     bool const isDirectory = fs::is_directory(path, ec);
     stmt.bind(":type", isDirectory ? 1 : 0);
     stmt.bind(":category", static_cast<int>(fileCategoryFor(path, isDirectory)));
+    stmt.bind(":size_bytes", file_indexer::fileSizeBytesFor(path, isDirectory));
 
     if (!stmt.exec()) {
       flog::error() << "Failed to insert file in index" << path.string() << stmt.lastError();

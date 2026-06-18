@@ -3,7 +3,7 @@
 
 namespace file_indexer {
 
-inline constexpr int SCHEMA_VERSION = 10;
+inline constexpr int SCHEMA_VERSION = 11;
 
 inline constexpr std::string_view INIT_SQL = R"sql(
 CREATE TABLE IF NOT EXISTS scan_history (
@@ -23,8 +23,10 @@ CREATE TABLE IF NOT EXISTS indexed_file (
 	skeleton_path TEXT NOT NULL,
 	parent_id INT,
 	last_modified_at INT,
+	indexed_at INT NOT NULL DEFAULT (unixepoch()),
 	type INT NOT NULL DEFAULT 0, -- 0 file, 1 directory
-	category INT NOT NULL DEFAULT 0
+	category INT NOT NULL DEFAULT 0,
+	size_bytes INT
 );
 
 CREATE INDEX IF NOT EXISTS indexed_file_parent_id_idx ON indexed_file(parent_id);

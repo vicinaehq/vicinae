@@ -18,9 +18,10 @@ void IndexerScanner::scan(const Scan &scan) {
   m_walker.walk(scan.path, [&](const fs::directory_entry &entry) {
     std::error_code ec;
     reportProgress();
+    bool const isDirectory = entry.is_directory(ec);
     // In case of error, returns file_time_time::min() - erroring entries deserve a bad relevance score anyway
-    batchedIndex.emplace_back(FileEventType::Modify, entry.path(), entry.last_write_time(ec),
-                              entry.is_directory(ec));
+    batchedIndex.emplace_back(FileEventType::Modify, entry.path(), entry.last_write_time(ec), isDirectory,
+                              file_indexer::fileSizeBytesFor(entry.path(), isDirectory));
 
     if (batchedIndex.size() >= INDEX_BATCH_SIZE) {
       // bounded submit: blocks under writer backpressure

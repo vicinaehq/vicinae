@@ -82,7 +82,8 @@ struct QualityEnv {
     for (auto const relative : CORPUS) {
       fs::path const path = root / "corpus" / relative;
       fs::create_directories(path.parent_path());
-      std::ofstream{path};
+      std::ofstream ofs{path};
+      if (relative == std::string_view{"home/docs/budget_2024.xlsx"}) { ofs << "budget-data"; }
       paths.emplace_back(path);
     }
 
@@ -237,6 +238,18 @@ TEST_CASE("directories are typed in the index and queryable by recency") {
   for (const auto &dir : dirs) {
     CHECK(fs::is_directory(dir));
   }
+}
+
+TEST_CASE("indexed entries persist file size and refresh time") {
+  auto const &env = qualityEnv();
+  fs::path const file = env.root / "corpus" / "home/docs/budget_2024.xlsx";
+  fs::path const dir = env.root / "corpus" / "home/docs";
+  FileIndexerDatabase db;
+
+  CHECK(db.retrieveIndexedSizeBytes(file) == 11);
+  CHECK_FALSE(db.retrieveIndexedSizeBytes(dir).has_value());
+  CHECK(db.retrieveIndexedAt(file).value_or(0) > 0);
+  CHECK(db.retrieveIndexedAt(dir).value_or(0) > 0);
 }
 
 TEST_CASE("query results include indexed file categories") {

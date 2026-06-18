@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include <filesystem>
 #include <optional>
 #include <string>
@@ -69,4 +70,5 @@ struct FileEvent {
   std::filesystem::path path;
   std::filesystem::file_time_type eventTime;
   bool isDirectory = false;
+  std::optional<int64_t> sizeBytes;
 };

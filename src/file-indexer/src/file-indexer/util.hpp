@@ -1,7 +1,10 @@
 #pragma once
 #include <algorithm>
+#include <cstdint>
 #include <cstdlib>
 #include <filesystem>
+#include <limits>
+#include <optional>
 #include <system_error>
 #include "file-indexer/log.hpp"
 #include "xdgpp/env/env.hpp"
@@ -24,6 +27,17 @@ inline std::filesystem::path homeDir() {
 inline std::filesystem::path dataDir() { return xdgpp::dataHome() / "vicinae" / "file-indexer"; }
 
 inline std::filesystem::path databasePath() { return dataDir() / "file-indexer.db"; }
+
+inline std::optional<int64_t> fileSizeBytesFor(const std::filesystem::path &path, bool isDirectory) {
+  if (isDirectory) return std::nullopt;
+
+  std::error_code ec;
+  auto const size = std::filesystem::file_size(path, ec);
+
+  if (ec || size > static_cast<uintmax_t>(std::numeric_limits<int64_t>::max())) { return std::nullopt; }
+
+  return static_cast<int64_t>(size);
+}
 
 inline void removeLegacyDbFiles() {
   std::error_code ec;

@@ -63,6 +63,8 @@ public:
   bool setScanError(int scanId, const std::string &error);
 
   std::optional<int64_t> retrieveIndexedLastModified(const std::filesystem::path &path) const;
+  std::optional<int64_t> retrieveIndexedSizeBytes(const std::filesystem::path &path) const;
+  std::optional<int64_t> retrieveIndexedAt(const std::filesystem::path &path) const;
   std::unordered_set<std::filesystem::path>
   listIndexedDirectoryFiles(const std::filesystem::path &path) const;
   bool tracksFile(const std::filesystem::path &path) const;
