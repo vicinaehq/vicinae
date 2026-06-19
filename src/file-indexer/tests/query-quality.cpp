@@ -35,6 +35,7 @@ ExtensionRegistrar const g_extensionRegistrar;
 constexpr std::string_view CORPUS[] = {
     "home/docs/budget_2024.xlsx",
     "home/docs/invoice.xlsx",
+    "home/docs/Répondre à la nuit.epub",
     "home/docs/vers_la_modernisation.pdf",
     "home/docs/hello-yo.txt",
     "home/docs/notes/meeting_notes.md",
@@ -157,6 +158,17 @@ bool inTop(std::string_view query, std::string_view suffix, int k, IndexedFileCa
   return rank > 0 && rank <= k;
 }
 
+bool hasStrictCandidate(std::string_view query, std::string_view suffix, IndexedFileCategory category) {
+  qualityEnv();
+  FileIndexerDatabase db;
+  FileIndexerDatabase::SearchOptions const options{.category = category};
+  auto const candidates = db.searchCandidates(query, 10, options);
+
+  return std::ranges::any_of(candidates, [&](const auto &candidate) {
+    return std::string_view{candidate.path.native()}.ends_with(suffix);
+  });
+}
+
 std::optional<IndexedFileCategory> categoryOf(std::string_view query, std::string_view suffix) {
   qualityEnv();
   FileIndexerQueryEngine engine;
@@ -177,6 +189,10 @@ TEST_CASE("strict path: exact words rank their file first") {
 
 TEST_CASE("strict path: bigrams match through prefix queries") {
   CHECK(rankOf("hello yo", "hello-yo.txt") == 1);
+}
+
+TEST_CASE("strict path: trigram search ignores diacritics") {
+  CHECK(hasStrictCandidate("repondre", "Répondre à la nuit.epub", IndexedFileCategory::Document));
 }
 
 TEST_CASE("fallback: transposition typo") { CHECK(inTop("budgte", "budget_2024.xlsx", 3)); }
