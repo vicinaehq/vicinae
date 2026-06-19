@@ -52,7 +52,8 @@ QVariant SearchFilesSection::customData(int i, int role) const {
 QHash<int, QByteArray> SearchFilesSection::customRoleNames() const {
   static int callCount = 0;
   if (callCount++ == 0) {
-    qDebug() << "[DRAG] SearchFilesSection::customRoleNames() called, roles:" << SectionListModel::FilePath << SectionListModel::FileUrl;
+    qDebug() << "[DRAG] SearchFilesSection::customRoleNames() called, roles:" << SectionListModel::FilePath
+             << SectionListModel::FileUrl;
   }
   return {
       {SectionListModel::FilePath, "filePath"},
