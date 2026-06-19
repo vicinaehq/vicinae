@@ -3,6 +3,7 @@
 #include "services/files-service/file-service.hpp"
 #include "utils/utils.hpp"
 #include "view-utils.hpp"
+#include <common/file-category.hpp>
 #include <QFileInfo>
 #include <ranges>
 
@@ -12,8 +13,44 @@ namespace fs = std::filesystem;
 
 constexpr auto FILE_SEARCH_DEBOUNCE = 100ms;
 
+namespace {
+
+IndexerFileCategory toIndexerFileCategory(vicinae::FileCategory category) {
+  switch (category) {
+  case vicinae::FileCategory::Other:
+    return IndexerFileCategory::Other;
+  case vicinae::FileCategory::Directory:
+    return IndexerFileCategory::Directory;
+  case vicinae::FileCategory::Image:
+    return IndexerFileCategory::Image;
+  case vicinae::FileCategory::Video:
+    return IndexerFileCategory::Video;
+  case vicinae::FileCategory::Audio:
+    return IndexerFileCategory::Audio;
+  case vicinae::FileCategory::Document:
+    return IndexerFileCategory::Document;
+  case vicinae::FileCategory::Archive:
+    return IndexerFileCategory::Archive;
+  case vicinae::FileCategory::Application:
+    return IndexerFileCategory::Application;
+  }
+
+  return IndexerFileCategory::Other;
+}
+
+IndexerFileCategory categoryForPath(const fs::path &path) {
+  std::error_code ec;
+  return toIndexerFileCategory(vicinae::fileCategoryFor(path, fs::is_directory(path, ec)));
+}
+
+} // namespace
+
 QUrl SearchFilesViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/SearchFilesView.qml"));
+}
+
+QUrl SearchFilesViewHost::qmlSearchAccessoryUrl() const {
+  return QUrl(QStringLiteral("qrc:/Vicinae/CategoryFilterAccessory.qml"));
 }
 
 QVariantMap SearchFilesViewHost::qmlProperties() {
@@ -28,6 +65,7 @@ void SearchFilesViewHost::initialize() {
   model()->addSource(&m_section);
 
   setSearchPlaceholderText("Search for files...");
+  restoreCategoryFilter();
 
   m_debounce.setSingleShot(true);
   m_debounce.setInterval(FILE_SEARCH_DEBOUNCE);
@@ -50,6 +88,12 @@ void SearchFilesViewHost::textChanged(const QString &text) {
   auto path = expandPath(text.trimmed().toStdString());
   if (path != "/" && fs::exists(path, ec)) {
     setLoading(false);
+
+    if (auto category = selectedCategory(); category && categoryForPath(path) != *category) {
+      m_section.setFiles({}, QStringLiteral("Direct file path"));
+      return;
+    }
+
     m_section.setFiles({path}, QStringLiteral("Direct file path"));
     return;
   }
@@ -62,7 +106,12 @@ void SearchFilesViewHost::renderRecentFiles() {
 
   setLoading(false);
   auto recentFiles = fileService->getRecentlyAccessed() |
-                     std::views::transform([](auto &&f) { return f.path; }) | std::ranges::to<std::vector>();
+                     std::views::transform([](auto &&f) { return f.path; }) |
+                     std::views::filter([&](const auto &path) {
+                       auto category = selectedCategory();
+                       return !category || categoryForPath(path) == *category;
+                     }) |
+                     std::ranges::to<std::vector>();
   m_section.setFiles(std::move(recentFiles), QStringLiteral("Recently Accessed"));
 }
 
@@ -79,7 +128,7 @@ void SearchFilesViewHost::handleDebounce() {
 
   m_lastSearchText = query;
   setLoading(true);
-  m_pendingResults.setFuture(fileService->queryAsync(query.toStdString()));
+  m_pendingResults.setFuture(fileService->queryAsync(query.toStdString(), {.category = selectedCategory()}));
 }
 
 void SearchFilesViewHost::handleSearchResults() {
@@ -119,4 +168,59 @@ void SearchFilesViewHost::clearDetail() {
   m_detailImageSource.clear();
   m_detailTextContent.clear();
   emit detailChanged();
+}
+
+QStringList SearchFilesViewHost::categoryFilterOptions() const {
+  return {
+      QStringLiteral("All"),       QStringLiteral("Other"),    QStringLiteral("Directories"),
+      QStringLiteral("Images"),    QStringLiteral("Videos"),   QStringLiteral("Audio"),
+      QStringLiteral("Documents"), QStringLiteral("Archives"), QStringLiteral("Applications"),
+  };
+}
+
+void SearchFilesViewHost::setCategoryFilter(int index) {
+  if (index < 0 || index >= categoryFilterOptions().size()) return;
+  if (index == m_currentCategoryFilter) return;
+
+  m_currentCategoryFilter = index;
+  emit currentCategoryFilterChanged();
+
+  command()->storage().setItem("fileCategory", categoryFilterOptions().value(index));
+
+  if (searchText().isEmpty()) {
+    renderRecentFiles();
+  } else {
+    textChanged(searchText());
+  }
+}
+
+void SearchFilesViewHost::restoreCategoryFilter() {
+  const auto saved = command()->storage().getItem("fileCategory");
+  if (saved.isUndefined() || saved.isNull()) return;
+
+  const int index = categoryFilterOptions().indexOf(saved.toString());
+  if (index > 0) setCategoryFilter(index);
+}
+
+std::optional<IndexerFileCategory> SearchFilesViewHost::selectedCategory() const {
+  switch (m_currentCategoryFilter) {
+  case 1:
+    return IndexerFileCategory::Other;
+  case 2:
+    return IndexerFileCategory::Directory;
+  case 3:
+    return IndexerFileCategory::Image;
+  case 4:
+    return IndexerFileCategory::Video;
+  case 5:
+    return IndexerFileCategory::Audio;
+  case 6:
+    return IndexerFileCategory::Document;
+  case 7:
+    return IndexerFileCategory::Archive;
+  case 8:
+    return IndexerFileCategory::Application;
+  default:
+    return std::nullopt;
+  }
 }

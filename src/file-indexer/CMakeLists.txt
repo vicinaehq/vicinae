@@ -62,6 +62,7 @@ target_link_libraries(${FILE_INDEXER_CORE} PUBLIC
 	sqlcipher
 	vicinae::fuzzy
 	vicinae::xdgpp
+	vicinae::common
 )
 
 add_executable(${FILE_INDEXER_BIN}

@@ -4,6 +4,7 @@
 #include "file-indexer/util.hpp"
 #include "file-indexer/vocabulary.hpp"
 #include "file-indexer/log.hpp"
+#include <common/file-category.hpp>
 #include <cctype>
 #include <chrono>
 #include <filesystem>
@@ -24,6 +25,33 @@ static constexpr const char *SQLITE_PRAGMAS[] = {
 namespace fs = std::filesystem;
 
 namespace {
+
+IndexedFileCategory toIndexedFileCategory(vicinae::FileCategory category) {
+  switch (category) {
+  case vicinae::FileCategory::Other:
+    return IndexedFileCategory::Other;
+  case vicinae::FileCategory::Directory:
+    return IndexedFileCategory::Directory;
+  case vicinae::FileCategory::Image:
+    return IndexedFileCategory::Image;
+  case vicinae::FileCategory::Video:
+    return IndexedFileCategory::Video;
+  case vicinae::FileCategory::Audio:
+    return IndexedFileCategory::Audio;
+  case vicinae::FileCategory::Document:
+    return IndexedFileCategory::Document;
+  case vicinae::FileCategory::Archive:
+    return IndexedFileCategory::Archive;
+  case vicinae::FileCategory::Application:
+    return IndexedFileCategory::Application;
+  }
+
+  return IndexedFileCategory::Other;
+}
+
+IndexedFileCategory indexedFileCategoryFor(const fs::path &path, bool isDirectory) {
+  return toIndexedFileCategory(vicinae::fileCategoryFor(path, isDirectory));
+}
 
 // [p + '/', p + ('/' + 1)) covers exactly the byte range of p's descendants
 std::pair<std::string, std::string> subtreeRange(const fs::path &path) {
@@ -47,47 +75,6 @@ std::string skeletonDocument(const fs::path &path) {
   }
 
   return document;
-}
-
-bool extensionEquals(std::string_view ext, std::string_view candidate) {
-  return ext.size() == candidate.size() &&
-         std::ranges::equal(ext, candidate, [](unsigned char a, unsigned char b) {
-           return std::tolower(a) == std::tolower(b);
-         });
-}
-
-bool hasExtension(std::string_view ext, std::span<const std::string_view> extensions) {
-  return std::ranges::any_of(extensions,
-                             [&](std::string_view candidate) { return extensionEquals(ext, candidate); });
-}
-
-IndexedFileCategory fileCategoryFor(const fs::path &path, bool isDirectory) {
-  if (isDirectory) return IndexedFileCategory::Directory;
-
-  auto ext = file_indexer::vocab::fileExtensionView(path.c_str());
-
-  static constexpr std::string_view IMAGE_EXTENSIONS[] = {"jpg", "jpeg", "png",  "gif", "webp", "avif",
-                                                          "bmp", "tif",  "tiff", "svg", "heic", "ico"};
-  static constexpr std::string_view VIDEO_EXTENSIONS[] = {"mp4", "m4v", "mkv",  "mov", "avi", "webm",
-                                                          "wmv", "flv", "mpeg", "mpg", "3gp"};
-  static constexpr std::string_view AUDIO_EXTENSIONS[] = {"mp3",  "flac", "wav",  "aac", "m4a", "ogg",
-                                                          "opus", "wma",  "aiff", "mid", "midi"};
-  static constexpr std::string_view DOCUMENT_EXTENSIONS[] = {
-      "pdf", "txt",  "md",  "markdown", "doc", "docx", "odt", "rtf", "pages",
-      "xls", "xlsx", "ods", "csv",      "ppt", "pptx", "odp", "epub"};
-  static constexpr std::string_view ARCHIVE_EXTENSIONS[] = {"zip", "tar", "gz",  "tgz", "bz2", "xz",
-                                                            "7z",  "rar", "zst", "lz4", "deb", "rpm"};
-  static constexpr std::string_view APPLICATION_EXTENSIONS[] = {"desktop", "appimage", "exe",
-                                                                "msi",     "app",      "dmg"};
-
-  if (hasExtension(ext, IMAGE_EXTENSIONS)) return IndexedFileCategory::Image;
-  if (hasExtension(ext, VIDEO_EXTENSIONS)) return IndexedFileCategory::Video;
-  if (hasExtension(ext, AUDIO_EXTENSIONS)) return IndexedFileCategory::Audio;
-  if (hasExtension(ext, DOCUMENT_EXTENSIONS)) return IndexedFileCategory::Document;
-  if (hasExtension(ext, ARCHIVE_EXTENSIONS)) return IndexedFileCategory::Archive;
-  if (hasExtension(ext, APPLICATION_EXTENSIONS)) return IndexedFileCategory::Application;
-
-  return IndexedFileCategory::Other;
 }
 
 void bindSearchOptions(db::Statement &stmt, const FileIndexerDatabase::SearchOptions &options) {
@@ -572,7 +559,7 @@ void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
       modifyStmt.bind(":skeleton_path", skeletonDocument(event.path));
       modifyStmt.bind(":parent_id", resolveParent(event.path));
       modifyStmt.bind(":type", event.isDirectory ? 1 : 0);
-      modifyStmt.bind(":category", static_cast<int>(fileCategoryFor(event.path, event.isDirectory)));
+      modifyStmt.bind(":category", static_cast<int>(indexedFileCategoryFor(event.path, event.isDirectory)));
       modifyStmt.bind(":size_bytes", event.sizeBytes);
       ok = modifyStmt.exec();
       break;
@@ -642,7 +629,7 @@ void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &p
     stmt.bind(":parent_id", resolveParent(path));
     bool const isDirectory = fs::is_directory(path, ec);
     stmt.bind(":type", isDirectory ? 1 : 0);
-    stmt.bind(":category", static_cast<int>(fileCategoryFor(path, isDirectory)));
+    stmt.bind(":category", static_cast<int>(indexedFileCategoryFor(path, isDirectory)));
     stmt.bind(":size_bytes", file_indexer::fileSizeBytesFor(path, isDirectory));
 
     if (!stmt.exec()) {
