@@ -46,8 +46,8 @@ double computeFileRelevanceMultiplier(const SC &candidate) {
   // is explicitly in the query.
 
   // emacs junk
-  if (std::ranges::starts_with(pcstr, "#") && std::ranges::ends_with(pcstr, "#")) { return 0.1; }
-  if (std::ranges::starts_with(ext, "#")) return 0.1;
+  if (pcstr.starts_with("#") && std::ranges::ends_with(pcstr, "#")) { return 0.1; }
+  if (ext.starts_with("#")) return 0.1;
 
   // we rarely want object files as a first match
   if (ext == "o") { return 0.5; }
