@@ -18,7 +18,7 @@ namespace {
 bool isExplicitPathQuery(QStringView text) {
   if (text.isEmpty()) return false;
 
-  if (text.startsWith(u'/') || text.startsWith(u'~')) return true;
+  if (text.startsWith(u'/') || text == u"~" || text.startsWith(u"~/")) return true;
   if (text == u"." || text == u"..") return true;
   if (text.startsWith(u"./") || text.startsWith(u"../")) return true;
 
@@ -95,6 +95,7 @@ void SearchFilesViewHost::textChanged(const QString &text) {
 
   if (text.isEmpty()) {
     m_debounce.stop();
+    m_resultMode = ResultMode::Recent;
     renderRecentFiles();
     return;
   }
@@ -103,6 +104,8 @@ void SearchFilesViewHost::textChanged(const QString &text) {
   auto const trimmed = QStringView{text}.trimmed();
   auto path = expandPath(trimmed.toString().toStdString());
   if (isExplicitPathQuery(trimmed) && path != "/" && fs::exists(path, ec)) {
+    m_debounce.stop();
+    m_resultMode = ResultMode::DirectPath;
     setLoading(false);
 
     if (auto category = selectedCategory(); category && categoryForPath(path) != *category) {
@@ -138,20 +141,23 @@ void SearchFilesViewHost::handleDebounce() {
   if (m_pendingResults.isRunning()) m_pendingResults.cancel();
 
   if (query.isEmpty()) {
+    m_resultMode = ResultMode::Recent;
     setLoading(false);
     return;
   }
 
   m_lastSearchText = query;
+  m_resultMode = ResultMode::IndexedSearch;
   setLoading(true);
   m_pendingResults.setFuture(fileService->queryAsync(query.toStdString(), {.category = selectedCategory()}));
 }
 
 void SearchFilesViewHost::handleSearchResults() {
-  setLoading(false);
   if (!m_pendingResults.isFinished() || m_pendingResults.isCanceled()) return;
+  if (m_resultMode != ResultMode::IndexedSearch) return;
   if (searchText() != m_lastSearchText) return;
 
+  setLoading(false);
   auto results = m_pendingResults.result();
   auto paths =
       results | std::views::transform([](auto &&f) { return f.path; }) | std::ranges::to<std::vector>();

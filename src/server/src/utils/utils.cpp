@@ -36,8 +36,8 @@ std::filesystem::path expandPath(const std::filesystem::path &path) {
   auto homeStr = homeDir().string();
   auto str = path.string();
 
-  if (str.starts_with("~")) { return homeStr + str.substr(1); }
-  if (str.starts_with("~/")) { return homeStr + str.substr(2); }
+  if (str == "~") return homeStr;
+  if (str.starts_with("~/")) { return homeStr + str.substr(1); }
 
   return path;
 }

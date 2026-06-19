@@ -52,6 +52,8 @@ private:
   void restoreCategoryFilter();
   std::optional<IndexerFileCategory> selectedCategory() const;
 
+  enum class ResultMode { Recent, DirectPath, IndexedSearch };
+
   using Watcher = QFutureWatcher<std::vector<IndexerFileResult>>;
 
   SearchFilesSection m_section;
@@ -59,6 +61,7 @@ private:
   Watcher m_pendingResults;
   QString m_lastSearchText;
   QMimeDatabase m_mimeDb;
+  ResultMode m_resultMode = ResultMode::Recent;
 
   bool m_hasDetail = false;
   QString m_detailName;
