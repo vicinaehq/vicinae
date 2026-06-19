@@ -8,7 +8,8 @@ public:
   void rebuildIndex() override {}
   void preferenceValuesChanged(const QJsonObject &) override {}
 
-  QFuture<std::vector<IndexerFileResult>> queryAsync(std::string_view, const QueryParams & = {}) override {
+  QFuture<std::vector<IndexerFileResult>> queryAsync(std::string_view,
+                                                     const IndexerQueryParams & = {}) override {
     return QtFuture::makeReadyValueFuture(std::vector<IndexerFileResult>{});
   }
 };

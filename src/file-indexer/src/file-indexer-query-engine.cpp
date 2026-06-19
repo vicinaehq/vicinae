@@ -5,6 +5,7 @@
 #include "fuzzy/scored.hpp"
 #include <algorithm>
 #include <bits/ranges_algo.h>
+#include <cctype>
 #include <filesystem>
 #include <functional>
 #include <iomanip>
@@ -32,6 +33,56 @@ constexpr const auto CANDIDATE_LIMIT = 10000;
 constexpr const auto SUGGESTION_FETCH_COUNT = 20;
 constexpr const auto MAX_CORRECTIONS_PER_WORD = 3;
 constexpr const auto MIN_CORRECTABLE_WORD_LENGTH = 3;
+
+enum class SubstringMatch { None, Inner, TokenStart };
+
+bool isSingleTokenQuery(std::string_view query) {
+  return !query.empty() && std::ranges::none_of(query, [](unsigned char c) { return std::isspace(c); });
+}
+
+SubstringMatch substringMatch(std::string_view text, std::string_view query) {
+  if (query.empty()) return SubstringMatch::None;
+  if (query.size() > text.size()) return SubstringMatch::None;
+
+  auto lower = [](unsigned char c) { return static_cast<char>(std::tolower(c)); };
+  auto rest = text;
+  bool hasInnerMatch = false;
+
+  while (!rest.empty()) {
+    auto match = std::ranges::search(rest, query, {}, lower, lower);
+    if (match.empty()) break;
+
+    auto const offset = static_cast<size_t>(std::ranges::distance(rest.begin(), match.begin()));
+    auto const absoluteOffset = text.size() - rest.size() + offset;
+
+    if (absoluteOffset == 0 || !std::isalnum(static_cast<unsigned char>(text[absoluteOffset - 1]))) {
+      return SubstringMatch::TokenStart;
+    }
+
+    hasInnerMatch = true;
+    rest.remove_prefix(offset + 1);
+  }
+
+  return hasInnerMatch ? SubstringMatch::Inner : SubstringMatch::None;
+}
+
+double computeSubstringMatchMultiplier(const SC &candidate, std::string_view query) {
+  if (!isSingleTokenQuery(query)) return 1.0;
+
+  auto match = std::max(substringMatch(file_indexer::vocab::basenameView(candidate.path.c_str()), query),
+                        substringMatch(file_indexer::vocab::dirnameView(candidate.path.c_str()), query));
+
+  switch (match) {
+  case SubstringMatch::TokenStart:
+    return 1.5;
+  case SubstringMatch::Inner:
+    return 1.05;
+  case SubstringMatch::None:
+    return 1.0;
+  }
+
+  return 1.0;
+}
 
 // for now, we don't try to be too smart about how we prioritize files
 // depending on their types, because it is very easy to introduce
@@ -70,7 +121,8 @@ int scoreCandidate(const SC &candidate, std::string_view query) {
   std::initializer_list<fzf::WeightedString> strs = {{filename, 1}, {dirname, 0.7}};
   int score = ranker.fuzzy_match_v2_score_query(strs, query);
 
-  return score * computeFileRelevanceMultiplier(candidate);
+  return score * computeFileRelevanceMultiplier(candidate) *
+         computeSubstringMatchMultiplier(candidate, query);
 }
 
 /**

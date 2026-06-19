@@ -42,6 +42,8 @@ constexpr std::string_view CORPUS[] = {
     "home/pictures/icons/frostwire.svg",
     "home/pictures/icons/firstperson.svg",
     "home/pictures/icons/firstparty.svg",
+    "home/pictures/icons/SymbolEditor.svg",
+    "home/pictures/wallpapers/4k-oled/jellyfish-amoled.png",
     "home/dev/sdk/include/sercom0.h",
     "home/dev/sdk/include/sercom1.h",
     "home/dev/sdk/include/sercom2.h",
@@ -346,4 +348,8 @@ TEST_CASE("skeleton: dropped consonants match through skip-grams") {
 
 TEST_CASE("skeleton: short skeleton tokens are kept in phrase matches") {
   CHECK(inTop("jai wndws", "jai/modules/windows.jai", 3));
+}
+
+TEST_CASE("exact path component substring outranks fuzzy filename subsequence") {
+  CHECK(rankOf("oled", "4k-oled/jellyfish-amoled.png") < rankOf("oled", "icons/SymbolEditor.svg"));
 }

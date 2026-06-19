@@ -15,6 +15,21 @@ constexpr auto FILE_SEARCH_DEBOUNCE = 100ms;
 
 namespace {
 
+bool isExplicitPathQuery(QStringView text) {
+  if (text.isEmpty()) return false;
+
+  if (text.startsWith(u'/') || text.startsWith(u'~')) return true;
+  if (text == u"." || text == u"..") return true;
+  if (text.startsWith(u"./") || text.startsWith(u"../")) return true;
+
+#ifdef Q_OS_WIN
+  if (text.startsWith(u'\\') || text.contains(u'\\')) return true;
+  if (text.size() >= 3 && text.at(1) == u':' && (text.at(2) == u'/' || text.at(2) == u'\\')) { return true; }
+#endif
+
+  return false;
+}
+
 IndexerFileCategory toIndexerFileCategory(vicinae::FileCategory category) {
   switch (category) {
   case vicinae::FileCategory::Other:
@@ -85,8 +100,9 @@ void SearchFilesViewHost::textChanged(const QString &text) {
   }
 
   std::error_code ec;
-  auto path = expandPath(text.trimmed().toStdString());
-  if (path != "/" && fs::exists(path, ec)) {
+  auto const trimmed = QStringView{text}.trimmed();
+  auto path = expandPath(trimmed.toString().toStdString());
+  if (isExplicitPathQuery(trimmed) && path != "/" && fs::exists(path, ec)) {
     setLoading(false);
 
     if (auto category = selectedCategory(); category && categoryForPath(path) != *category) {
@@ -133,7 +149,6 @@ void SearchFilesViewHost::handleDebounce() {
 
 void SearchFilesViewHost::handleSearchResults() {
   setLoading(false);
-
   if (!m_pendingResults.isFinished() || m_pendingResults.isCanceled()) return;
   if (searchText() != m_lastSearchText) return;
 
