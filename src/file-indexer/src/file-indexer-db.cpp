@@ -672,9 +672,9 @@ void FileIndexerDatabase::setUserVersion(int version) {
 
 FileIndexerDatabase::FileIndexerDatabase() {
   std::error_code ec;
-  fs::create_directories(file_indexer::dataDir(), ec);
+  fs::create_directories(file_indexer::cacheDir(), ec);
   if (ec) {
-    flog::error() << "Failed to create file-indexer data directory" << file_indexer::dataDir().c_str()
+    flog::error() << "Failed to create file-indexer cache directory" << file_indexer::cacheDir().c_str()
                   << ec.message().c_str();
     return;
   }

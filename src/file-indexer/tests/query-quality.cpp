@@ -92,6 +92,7 @@ struct QualityEnv {
     root = makeQualityRoot();
 
     setenv("XDG_DATA_HOME", (root / "data").c_str(), 1);
+    setenv("XDG_CACHE_HOME", (root / "cache").c_str(), 1);
 
     std::vector<fs::path> paths;
     paths.reserve(std::size(CORPUS));

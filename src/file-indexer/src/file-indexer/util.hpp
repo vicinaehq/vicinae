@@ -24,9 +24,9 @@ inline std::filesystem::path homeDir() {
   return env;
 }
 
-inline std::filesystem::path dataDir() { return xdgpp::dataHome() / "vicinae" / "file-indexer"; }
+inline std::filesystem::path cacheDir() { return xdgpp::cacheHome() / "vicinae" / "file-indexer"; }
 
-inline std::filesystem::path databasePath() { return dataDir() / "file-indexer.db"; }
+inline std::filesystem::path databasePath() { return cacheDir() / "file-indexer.db"; }
 
 inline std::optional<int64_t> fileSizeBytesFor(const std::filesystem::path &path, bool isDirectory) {
   if (isDirectory) return std::nullopt;
@@ -41,12 +41,18 @@ inline std::optional<int64_t> fileSizeBytesFor(const std::filesystem::path &path
 
 inline void removeLegacyDbFiles() {
   std::error_code ec;
-  auto dir = xdgpp::dataHome() / "vicinae" / "file-indexer.db";
-  auto files = {std::format("{}-wal", dir.c_str()), std::format("{}-shm", dir.c_str()),
-                std::string{dir.c_str()}};
+  auto paths = {
+      xdgpp::dataHome() / "vicinae" / "file-indexer.db",
+      xdgpp::dataHome() / "vicinae" / "file-indexer" / "file-indexer.db",
+  };
 
-  for (const auto &file : files) {
-    if (std::filesystem::remove(file, ec)) { flog::info() << "Removed " << file << "\n"; }
+  for (const auto &path : paths) {
+    auto files = {std::format("{}-wal", path.c_str()), std::format("{}-shm", path.c_str()),
+                  std::string{path.c_str()}};
+
+    for (const auto &file : files) {
+      if (std::filesystem::remove(file, ec)) { flog::info() << "Removed " << file << "\n"; }
+    }
   }
 }
 
