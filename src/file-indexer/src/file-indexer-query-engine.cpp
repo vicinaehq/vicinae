@@ -46,7 +46,7 @@ double computeFileRelevanceMultiplier(const SC &candidate) {
   // is explicitly in the query.
 
   // emacs junk
-  if (pcstr.starts_with("#") && std::ranges::ends_with(pcstr, "#")) { return 0.1; }
+  if (pcstr.starts_with("#") && pcstr.ends_with("#")) { return 0.1; }
   if (ext.starts_with("#")) return 0.1;
 
   // we rarely want object files as a first match
@@ -54,7 +54,7 @@ double computeFileRelevanceMultiplier(const SC &candidate) {
 
   // swap file stuff, not sure if it can conflict with legitimate extensions so
   // keeping the malus medium.
-  if (std::ranges::ends_with(pcstr, "~")) return 0.3;
+  if (pcstr.ends_with("~")) return 0.3;
   if (ext == "swp") return 0.5;
   if (ext == "swo") return 0.5;
   if (ext == "swm") return 0.5;
