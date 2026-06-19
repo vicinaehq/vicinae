@@ -1,8 +1,13 @@
 #pragma once
 #include "omni-database.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
+#include <QDateTime>
+#include <cstdint>
 #include <filesystem>
+#include <memory>
+#include <string>
 #include <string_view>
+#include <vector>
 
 class FileService {
 
@@ -29,6 +34,23 @@ public:
   FileService(OmniDatabase &db);
 
 private:
+  struct SerializedRecentFile {
+    std::string path;
+    int accessCount = 0;
+    std::uint64_t lastAccessedAt = 0;
+  };
+
+  static constexpr size_t MAX_RECENT_FILES = 50;
+
+  void loadRecentFiles();
+  bool saveRecentFiles();
+  void migrateRecentFilesFromDatabase();
+  static RecentFile fromSerialized(const SerializedRecentFile &file);
+  static bool recentFileMoreRecent(const SerializedRecentFile &a, const SerializedRecentFile &b);
+
   OmniDatabase &m_db;
+  std::filesystem::path m_recentFilesPath;
+  std::string m_recentFilesBuffer;
+  std::vector<SerializedRecentFile> m_recentFiles;
   std::unique_ptr<AbstractFileIndexer> m_indexer;
 };

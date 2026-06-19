@@ -1,6 +1,12 @@
 #include "omni-database.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
+#include "vicinae.hpp"
+#include <algorithm>
+#include <glaze/core/reflect.hpp>
+#include <glaze/json/read.hpp>
+#include <glaze/json/write.hpp>
 #include <qlogging.h>
+#include <ranges>
 #include "file-service.hpp"
 #if defined(Q_OS_LINUX)
 #include "file-indexer/file-indexer.hpp"
@@ -12,6 +18,8 @@
 
 namespace fs = std::filesystem;
 
+constexpr auto RECENT_FILES_NAME = "recent-files.json";
+
 AbstractFileIndexer *FileService::indexer() const { return m_indexer.get(); }
 
 QFuture<std::vector<IndexerFileResult>> FileService::queryAsync(std::string_view query,
@@ -22,50 +30,125 @@ QFuture<std::vector<IndexerFileResult>> FileService::queryAsync(std::string_view
 void FileService::rebuildIndex() { m_indexer->rebuildIndex(); }
 
 void FileService::saveAccess(const fs::path &path) {
-  auto stmt = m_db.db().prepare(R"(
-    INSERT INTO recent_files(path, access_count) VALUES(:path, 1)
-    ON CONFLICT(path)
-    DO UPDATE SET
-      last_accessed_at = unixepoch(),
-      access_count = access_count + 1
-  )");
-  stmt.bind(":path", path.c_str());
+  auto pathString = path.string();
+  auto now = static_cast<std::uint64_t>(QDateTime::currentSecsSinceEpoch());
 
-  if (!stmt.exec()) { qWarning() << "Failed to save access for file" << path.c_str(); }
+  auto it = std::ranges::find_if(m_recentFiles, [&](const auto &file) { return file.path == pathString; });
+
+  if (it == m_recentFiles.end()) {
+    m_recentFiles.emplace_back(
+        SerializedRecentFile{.path = std::move(pathString), .accessCount = 1, .lastAccessedAt = now});
+  } else {
+    ++it->accessCount;
+    it->lastAccessedAt = now;
+  }
+
+  std::ranges::sort(m_recentFiles, recentFileMoreRecent);
+  if (m_recentFiles.size() > MAX_RECENT_FILES) { m_recentFiles.resize(MAX_RECENT_FILES); }
+
+  if (!saveRecentFiles()) { qWarning() << "Failed to save recent file access for" << path.c_str(); }
 }
 
 bool FileService::clearRecentlyAccessed() {
-  if (!m_db.db().exec("DELETE FROM recent_files")) {
-    qWarning() << "Failed to clear recently accessed files";
+  m_recentFiles.clear();
+  return saveRecentFiles();
+}
+
+std::vector<FileService::RecentFile> FileService::getRecentlyAccessed() const {
+  return m_recentFiles | std::views::transform(fromSerialized) | std::ranges::to<std::vector>();
+}
+
+void FileService::loadRecentFiles() {
+  if (!fs::is_regular_file(m_recentFilesPath)) {
+    fs::create_directories(m_recentFilesPath.parent_path());
+    if (!saveRecentFiles()) {
+      qWarning() << "Unable to create recent files state at" << m_recentFilesPath.c_str();
+    }
+  }
+
+  if (const auto error = glz::read_file_json(m_recentFiles, m_recentFilesPath.c_str(), m_recentFilesBuffer)) {
+    qWarning() << "Failed to read recent files state at" << m_recentFilesPath.c_str()
+               << glz::format_error(error).c_str();
+    m_recentFiles.clear();
+  }
+
+  std::ranges::sort(m_recentFiles, recentFileMoreRecent);
+  if (m_recentFiles.size() > MAX_RECENT_FILES) {
+    m_recentFiles.resize(MAX_RECENT_FILES);
+    saveRecentFiles();
+  }
+}
+
+bool FileService::saveRecentFiles() {
+  fs::create_directories(m_recentFilesPath.parent_path());
+
+  if (const auto error =
+          glz::write_file_json(m_recentFiles, m_recentFilesPath.c_str(), m_recentFilesBuffer)) {
+    qWarning() << "Failed to save recent files state at" << m_recentFilesPath.c_str()
+               << glz::format_error(error).c_str();
     return false;
   }
 
   return true;
 }
 
-std::vector<FileService::RecentFile> FileService::getRecentlyAccessed() const {
-  auto stmt = m_db.db().prepare("SELECT path, access_count, last_accessed_at FROM recent_files ORDER BY "
-                                "last_accessed_at DESC LIMIT 50");
+void FileService::migrateRecentFilesFromDatabase() {
+  if (!m_recentFiles.empty()) return;
 
-  std::vector<FileService::RecentFile> files;
+  auto checkStmt =
+      m_db.db().prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='recent_files'");
+
+  if (!checkStmt.step()) return;
+
+  auto stmt = m_db.db().prepare(R"(
+    SELECT path, access_count, last_accessed_at
+    FROM recent_files
+    ORDER BY last_accessed_at DESC
+    LIMIT :limit
+  )");
+  stmt.bind(":limit", static_cast<int>(MAX_RECENT_FILES));
+
+  std::vector<SerializedRecentFile> migrated;
+  migrated.reserve(MAX_RECENT_FILES);
 
   while (stmt.step()) {
-    RecentFile file;
-
-    file.path = stmt.columnText(0);
-    file.accessCount = stmt.columnInt(1);
-    file.lastAccessedAt = QDateTime::fromSecsSinceEpoch(stmt.columnInt64(2));
-    files.emplace_back(file);
+    migrated.emplace_back(SerializedRecentFile{.path = stmt.columnText(0),
+                                               .accessCount = stmt.columnInt(1),
+                                               .lastAccessedAt = stmt.columnUInt64(2)});
   }
 
-  return files;
+  if (migrated.empty()) return;
+
+  m_recentFiles = std::move(migrated);
+  if (!saveRecentFiles()) {
+    m_recentFiles.clear();
+    return;
+  }
+
+  qInfo() << "Migrated" << m_recentFiles.size() << "recent files from database to state JSON";
+}
+
+FileService::RecentFile FileService::fromSerialized(const SerializedRecentFile &file) {
+  return RecentFile{.lastAccessedAt = QDateTime::fromSecsSinceEpoch(static_cast<qint64>(file.lastAccessedAt)),
+                    .path = file.path,
+                    .accessCount = file.accessCount};
+}
+
+bool FileService::recentFileMoreRecent(const SerializedRecentFile &a, const SerializedRecentFile &b) {
+  return a.lastAccessedAt > b.lastAccessedAt;
 }
 
 void FileService::preferenceValuesChanged(const QJsonObject &preferences) {
   m_indexer->preferenceValuesChanged(preferences);
 }
 
-FileService::FileService(OmniDatabase &db) : m_db(db) {
+FileService::FileService(OmniDatabase &db)
+    : m_db(db), m_recentFilesPath(Omnicast::stateDir() / RECENT_FILES_NAME) {
+  bool const shouldMigrateRecentFiles = !fs::is_regular_file(m_recentFilesPath);
+
+  loadRecentFiles();
+  if (shouldMigrateRecentFiles) { migrateRecentFilesFromDatabase(); }
+
 #if defined(Q_OS_LINUX)
   m_indexer = std::make_unique<FileIndexer>();
 #elif defined(Q_OS_MACOS)
