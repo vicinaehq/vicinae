@@ -1,12 +1,15 @@
 #include <CoreServices/CoreServices.h>
 #include <QtConcurrent/QtConcurrentRun>
-#include <common/file-category.hpp>
 #include <algorithm>
 #include <climits>
 #include <filesystem>
+#include <initializer_list>
+#include <optional>
 #include <ranges>
 #include <string>
+#include <string_view>
 #include <vector>
+#include <common/file-category.hpp>
 #include "fuzzy/fzf.hpp"
 #include "spotlight-file-indexer.hpp"
 
@@ -21,8 +24,57 @@ int candidateLimitFor(int limit) {
 }
 
 vicinae::FileCategory categoryForPath(const std::filesystem::path &path) {
+  if (vicinae::normalizedExtension(path) == "app") { return vicinae::FileCategory::Application; }
+
   std::error_code ec;
   return vicinae::fileCategoryFor(path, std::filesystem::is_directory(path, ec));
+}
+
+std::string anyOf(std::initializer_list<std::string_view> predicates) {
+  auto predicate = predicates | std::views::join_with(std::string_view{" || "}) | std::ranges::to<std::string>();
+
+  return "(" + predicate + ")";
+}
+
+std::optional<std::string> categoryPredicate(vicinae::FileCategory category) {
+  switch (category) {
+  case vicinae::FileCategory::Directory:
+    return R"(kMDItemContentTypeTree == "public.folder")";
+  case vicinae::FileCategory::Image:
+    return R"(kMDItemContentTypeTree == "public.image")";
+  case vicinae::FileCategory::Video:
+    return R"(kMDItemContentTypeTree == "public.movie")";
+  case vicinae::FileCategory::Audio:
+    return R"(kMDItemContentTypeTree == "public.audio")";
+  case vicinae::FileCategory::Document:
+    return anyOf({R"(kMDItemContentTypeTree == "public.text")", R"(kMDItemContentTypeTree == "public.rtf")",
+                  R"(kMDItemContentTypeTree == "com.adobe.pdf")",
+                  R"(kMDItemContentTypeTree == "public.presentation")",
+                  R"(kMDItemContentTypeTree == "public.spreadsheet")",
+                  R"(kMDItemContentTypeTree == "public.comma-separated-values-text")",
+                  R"(kMDItemContentTypeTree == "com.microsoft.word.doc")",
+                  R"(kMDItemContentTypeTree == "com.microsoft.excel.xls")",
+                  R"(kMDItemContentTypeTree == "com.microsoft.powerpoint.ppt")",
+                  R"(kMDItemContentTypeTree == "org.openxmlformats.wordprocessingml.document")",
+                  R"(kMDItemContentTypeTree == "org.openxmlformats.spreadsheetml.sheet")",
+                  R"(kMDItemContentTypeTree == "org.openxmlformats.presentationml.presentation")",
+                  R"(kMDItemContentTypeTree == "org.oasis-open.opendocument.text")",
+                  R"(kMDItemContentTypeTree == "org.oasis-open.opendocument.spreadsheet")",
+                  R"(kMDItemContentTypeTree == "org.oasis-open.opendocument.presentation")",
+                  R"(kMDItemContentTypeTree == "com.apple.iwork.pages.pages")",
+                  R"(kMDItemContentTypeTree == "com.apple.iwork.numbers.numbers")",
+                  R"(kMDItemContentTypeTree == "com.apple.iwork.keynote.key")",
+                  R"(kMDItemContentTypeTree == "org.idpf.epub-container")"});
+  case vicinae::FileCategory::Archive:
+    return R"(kMDItemContentTypeTree == "public.archive")";
+  case vicinae::FileCategory::Application:
+    return anyOf({R"(kMDItemContentTypeTree == "com.apple.application")",
+                  R"(kMDItemContentTypeTree == "com.apple.application-bundle")"});
+  case vicinae::FileCategory::Other:
+    return std::nullopt;
+  }
+
+  return std::nullopt;
 }
 
 /**
@@ -64,14 +116,24 @@ std::string buildPredicate(std::string_view query) {
   return predicate;
 }
 
-std::vector<IndexerFileResult> runQuery(const std::string &query,
-                                        const IndexerQueryParams &params) {
+std::string buildPredicate(std::string_view query, const IndexerQueryParams &params) {
+  std::string predicate = buildPredicate(query);
+
+  if (predicate.empty() || !params.category) { return predicate; }
+
+  auto categoryFilter = categoryPredicate(*params.category);
+  if (!categoryFilter) { return predicate; }
+
+  return "(" + predicate + ") && (" + *categoryFilter + ")";
+}
+
+std::vector<IndexerFileResult> runQuery(const std::string &query, const IndexerQueryParams &params) {
   std::vector<IndexerFileResult> results;
   int const candidateLimit = candidateLimitFor(params.limit);
 
   if (candidateLimit == 0) { return results; }
 
-  std::string const predicate = buildPredicate(query);
+  std::string const predicate = buildPredicate(query, params);
 
   if (predicate.empty()) { return results; }
 
@@ -127,8 +189,7 @@ std::vector<IndexerFileResult> runQuery(const std::string &query,
       int const fuzzyScore = matcher.fuzzy_match_v2_score_query(path.filename().string(), query);
 
       if (fuzzyScore > 0) {
-        scored.emplace_back(
-            Scored{.path = std::move(path), .score = fuzzyScore, .category = category});
+        scored.emplace_back(Scored{.path = std::move(path), .score = fuzzyScore, .category = category});
       }
     }
 
