@@ -32,7 +32,7 @@ export namespace FileSearch {
 		 * Defaults to 100, limited to 10,000.
 		 */
 		limit?: number;
-		filters: {
+		filters?: {
 			/**
 			 * Category of files the results should belong to.
 			 */
@@ -59,7 +59,7 @@ export namespace FileSearch {
 	 */
 	export async function search(
 		query: string,
-		{ filters = {}, limit = 100 }: FileSearchOptions,
+		{ filters = {}, limit = 100 }: FileSearchOptions = {},
 	): Promise<FileSearch.FileInfo[]> {
 		return getClient().FileSearch.search(query, { limit, filters });
 	}

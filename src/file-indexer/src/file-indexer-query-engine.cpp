@@ -273,17 +273,19 @@ std::vector<ScoredRef<SC>> scoreCandidates(std::span<const SC> candidates, const
 
 std::vector<IndexerFileResult> resultsFromRankedCandidates(const std::vector<ScoredRef<SC>> &ranked,
                                                            int limit) {
+  if (limit <= 0) return {};
+
   std::error_code ec;
   std::vector<IndexerFileResult> results;
 
-  results.reserve(limit);
+  results.reserve(static_cast<size_t>(limit));
 
   for (const auto &scored : ranked) {
     if (fs::exists(scored.data->path, ec)) {
       results.emplace_back(IndexerFileResult{.path = std::move(scored.data->path),
                                              .rank = static_cast<double>(scored.score),
                                              .category = scored.data->category});
-      if (results.size() == limit) break;
+      if (results.size() == static_cast<size_t>(limit)) break;
     }
   }
 
