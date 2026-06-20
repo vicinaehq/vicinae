@@ -111,6 +111,7 @@ void FileIndexer::startFullScan() {
   m_dispatcher.clearPending();
   m_dispatcher.interruptAll();
   m_dispatcher.waitUntilIdle();
+  markFullScanRootsPending(m_entrypoints);
 
   // Prevent starting the full scan and watchers before deletion is done
   std::thread([this]() {
@@ -139,6 +140,7 @@ void FileIndexer::startSingleScan(const fs::path &entrypoint, ScanType type,
   }
 
   if (type == ScanType::Full) {
+    markFullScanRootsPending({entrypoint});
     m_dispatcher.enqueue(
         {.path = entrypoint, .data = FullScan{.excludedPaths = m_excludedPaths}, .notify = true});
     return;
@@ -215,6 +217,51 @@ void FileIndexer::stopHomeWatcher() {
   m_homeWatcher.reset();
 }
 
+void FileIndexer::markFullScanRootsPending(const std::vector<fs::path> &roots) {
+  std::scoped_lock const l(m_pendingFullScanRootsMtx);
+
+  m_pendingFullScanRoots.reserve(m_pendingFullScanRoots.size() + roots.size());
+  for (const auto &root : roots) {
+    m_pendingFullScanRoots.emplace_back(normalizePath(root));
+  }
+
+  m_pendingFullScanRoots = compactSubtrees(std::move(m_pendingFullScanRoots));
+}
+
+void FileIndexer::markFullScanSucceeded(const fs::path &root) {
+  std::scoped_lock const l(m_pendingFullScanRootsMtx);
+  auto const normalizedRoot = normalizePath(root);
+
+  std::erase_if(m_pendingFullScanRoots, [&](const fs::path &pendingRoot) {
+    return isSameOrDescendantOf(pendingRoot, normalizedRoot);
+  });
+}
+
+void FileIndexer::prunePendingFullScans(const std::vector<fs::path> &roots,
+                                        const std::vector<fs::path> &exclusions) {
+  std::scoped_lock const l(m_pendingFullScanRootsMtx);
+
+  std::erase_if(m_pendingFullScanRoots, [&](const fs::path &pendingRoot) {
+    return !isCoveredByAny(pendingRoot, roots) || isCoveredByAny(pendingRoot, exclusions);
+  });
+}
+
+std::vector<fs::path> FileIndexer::pendingFullScanRootsFor(const std::vector<fs::path> &roots,
+                                                           const std::vector<fs::path> &exclusions) {
+  std::scoped_lock const l(m_pendingFullScanRootsMtx);
+
+  std::vector<fs::path> pendingRoots;
+  pendingRoots.reserve(m_pendingFullScanRoots.size());
+
+  for (const auto &pendingRoot : m_pendingFullScanRoots) {
+    if (isCoveredByAny(pendingRoot, roots) && !isCoveredByAny(pendingRoot, exclusions)) {
+      pendingRoots.emplace_back(pendingRoot);
+    }
+  }
+
+  return compactSubtrees(std::move(pendingRoots));
+}
+
 void FileIndexer::setConfig(std::vector<fs::path> paths, std::vector<fs::path> excludedPaths) {
   m_entrypoints = normalizePaths(std::move(paths));
   m_excludedPaths = normalizePaths(std::move(excludedPaths));
@@ -230,6 +277,13 @@ void FileIndexer::applyConfig(std::vector<fs::path> paths, std::vector<fs::path>
   if (newEntryPoints == m_entrypoints && newExcludedPaths == m_excludedPaths) return;
 
   auto plan = buildReconcilePlan(m_entrypoints, m_excludedPaths, newEntryPoints, newExcludedPaths);
+  prunePendingFullScans(newEntryPoints, newExcludedPaths);
+  auto pendingRoots = pendingFullScanRootsFor(newEntryPoints, newExcludedPaths);
+  plan.scanRoots.reserve(plan.scanRoots.size() + pendingRoots.size());
+  for (auto &pendingRoot : pendingRoots) {
+    plan.scanRoots.emplace_back(std::move(pendingRoot));
+  }
+  plan.scanRoots = compactSubtrees(std::move(plan.scanRoots));
 
   m_entrypoints = std::move(newEntryPoints);
   m_excludedPaths = std::move(newExcludedPaths);
@@ -251,6 +305,7 @@ void FileIndexer::applyConfig(std::vector<fs::path> paths, std::vector<fs::path>
   }
 
   for (const auto &root : plan.scanRoots) {
+    markFullScanRootsPending({root});
     m_dispatcher.enqueue({.path = root, .data = FullScan{.excludedPaths = m_excludedPaths}, .notify = true});
   }
 
@@ -277,6 +332,10 @@ FileIndexer::FileIndexer() : m_writer(std::make_shared<DbWriter>()), m_dispatche
   if (m_db.isOpen()) { m_db.init(); }
 
   m_dispatcher.setEventCallback([this](const ScanEvent &event) {
+    if (event.type == ScanType::Full && event.status == ScanStatus::Succeeded) {
+      markFullScanSucceeded(event.entrypoint);
+    }
+
     // keep the typo-correction vocabulary loosely in sync with the index
     if (event.status == ScanStatus::Succeeded && shouldRebuildVocabulary()) {
       m_writer->rebuildSpellfixVocabulary();

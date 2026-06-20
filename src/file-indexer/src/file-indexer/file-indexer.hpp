@@ -34,8 +34,18 @@ public:
   std::mutex m_homeWatcherMtx;
   std::unique_ptr<HomeDirectoryWatcher> m_homeWatcher;
 
+  std::mutex m_pendingFullScanRootsMtx;
+  std::vector<std::filesystem::path> m_pendingFullScanRoots;
+
   void startHomeWatcher();
   void stopHomeWatcher();
+  void markFullScanRootsPending(const std::vector<std::filesystem::path> &roots);
+  void markFullScanSucceeded(const std::filesystem::path &root);
+  void prunePendingFullScans(const std::vector<std::filesystem::path> &roots,
+                             const std::vector<std::filesystem::path> &exclusions);
+  std::vector<std::filesystem::path>
+  pendingFullScanRootsFor(const std::vector<std::filesystem::path> &roots,
+                          const std::vector<std::filesystem::path> &exclusions);
 
   // rebuilds scan the entire index: don't redo it for every watcher-triggered scan
   static constexpr std::chrono::minutes VOCAB_REBUILD_MIN_INTERVAL{10};
