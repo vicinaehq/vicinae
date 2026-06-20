@@ -1,6 +1,7 @@
 #include "file-indexer/file-system-watcher.hpp"
 #include "file-indexer/log.hpp"
 #include "file-indexer/scan.hpp"
+#include "file-indexer/util.hpp"
 #include <chrono>
 
 namespace fs = std::filesystem;
@@ -10,12 +11,17 @@ void FileSystemWatcher::handleEvent(const ImportantDirectoryWatcher::Event &ev) 
 
   switch (ev.kind) {
   case Kind::DirectoryChanged:
-    m_dispatcher.enqueueDebounced({.path = ev.dir, .data = incrementalScan(ScanMode::Pruned)});
+    if (shouldScanPath(ev.dir)) {
+      m_dispatcher.enqueueDebounced(
+          {.path = file_indexer::normalizePath(ev.dir), .data = incrementalScan(ScanMode::Pruned)});
+    }
     break;
   case Kind::Degraded:
-    flog::warn() << "Directory watcher degraded, rescanning all watched roots";
-    for (const auto &dir : m_watcher->rootDirectories()) {
-      m_dispatcher.enqueueDebounced({.path = dir, .data = incrementalScan(ScanMode::Pruned)});
+    flog::warn() << "Directory watcher degraded, rescanning configured roots";
+    for (const auto &dir : m_entrypoints) {
+      if (shouldScanPath(dir)) {
+        m_dispatcher.enqueueDebounced({.path = dir, .data = incrementalScan(ScanMode::Pruned)});
+      }
     }
     break;
   }
@@ -23,6 +29,16 @@ void FileSystemWatcher::handleEvent(const ImportantDirectoryWatcher::Event &ev) 
 
 IncrementalScan FileSystemWatcher::incrementalScan(ScanMode mode) const {
   return {.mode = mode, .excludedFilenames = m_excludedFilenames, .excludedPaths = m_excludedPaths};
+}
+
+bool FileSystemWatcher::shouldScanPath(const fs::path &path) const {
+  auto const normalized = file_indexer::normalizePath(path);
+
+  auto containsPath = [&](const std::vector<fs::path> &roots) {
+    return file_indexer::isCoveredByAny(normalized, roots);
+  };
+
+  return containsPath(m_entrypoints) && !containsPath(m_excludedPaths);
 }
 
 void FileSystemWatcher::timerLoop() {
@@ -60,7 +76,9 @@ void FileSystemWatcher::timerLoop() {
 }
 
 void FileSystemWatcher::refreshDynamicWatches() {
-  m_watcher->setDynamicDirectories(m_readDb->listRecentDirectories(DYNAMIC_WATCH_COUNT));
+  auto dirs = m_readDb->listRecentDirectories(DYNAMIC_WATCH_COUNT);
+  std::erase_if(dirs, [this](const fs::path &dir) { return !shouldScanPath(dir); });
+  m_watcher->setDynamicDirectories(dirs);
 }
 
 FileSystemWatcher::FileSystemWatcher(ScanDispatcher &dispatcher, std::vector<fs::path> entrypoints,

@@ -6,6 +6,7 @@
 #include <limits>
 #include <optional>
 #include <system_error>
+#include <vector>
 #include "file-indexer/log.hpp"
 #include "xdgpp/env/env.hpp"
 
@@ -27,6 +28,39 @@ inline std::filesystem::path homeDir() {
 inline std::filesystem::path cacheDir() { return xdgpp::cacheHome() / "vicinae" / "file-indexer"; }
 
 inline std::filesystem::path databasePath() { return cacheDir() / "file-indexer.db"; }
+
+inline std::filesystem::path normalizePath(const std::filesystem::path &path) {
+  return std::filesystem::absolute(path).lexically_normal();
+}
+
+inline std::vector<std::filesystem::path> normalizePaths(std::vector<std::filesystem::path> paths) {
+  for (auto &path : paths) {
+    path = normalizePath(path);
+  }
+
+  std::ranges::sort(paths);
+  auto [first, last] = std::ranges::unique(paths);
+  paths.erase(first, last);
+
+  return paths;
+}
+
+inline bool isSameOrDescendantOf(const std::filesystem::path &path, const std::filesystem::path &ancestor) {
+  auto pathIt = path.begin();
+  auto ancestorIt = ancestor.begin();
+
+  for (; ancestorIt != ancestor.end(); ++ancestorIt, ++pathIt) {
+    if (pathIt == path.end() || *pathIt != *ancestorIt) return false;
+  }
+
+  return true;
+}
+
+inline bool isCoveredByAny(const std::filesystem::path &path,
+                           const std::vector<std::filesystem::path> &roots) {
+  return std::ranges::any_of(
+      roots, [&](const std::filesystem::path &root) { return isSameOrDescendantOf(path, root); });
+}
 
 inline std::optional<int64_t> fileSizeBytesFor(const std::filesystem::path &path, bool isDirectory) {
   if (isDirectory) return std::nullopt;

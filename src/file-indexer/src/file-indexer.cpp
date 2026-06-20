@@ -1,6 +1,7 @@
 #include "file-indexer/file-indexer.hpp"
-#include "file-indexer/scan.hpp"
 #include "file-indexer/log.hpp"
+#include "file-indexer/scan.hpp"
+#include "file-indexer/util.hpp"
 #include <algorithm>
 #include <filesystem>
 #include <functional>
@@ -16,35 +17,6 @@ struct ReconcilePlan {
   std::vector<fs::path> scanRoots;
 };
 
-fs::path normalizePath(const fs::path &path) { return fs::absolute(path).lexically_normal(); }
-
-std::vector<fs::path> normalizePaths(std::vector<fs::path> paths) {
-  for (auto &path : paths) {
-    path = normalizePath(path);
-  }
-
-  std::ranges::sort(paths);
-  auto [first, last] = std::ranges::unique(paths);
-  paths.erase(first, last);
-
-  return paths;
-}
-
-bool isSameOrDescendantOf(const fs::path &path, const fs::path &ancestor) {
-  auto pathIt = path.begin();
-  auto ancestorIt = ancestor.begin();
-
-  for (; ancestorIt != ancestor.end(); ++ancestorIt, ++pathIt) {
-    if (pathIt == path.end() || *pathIt != *ancestorIt) return false;
-  }
-
-  return true;
-}
-
-bool isCoveredByAny(const fs::path &path, const std::vector<fs::path> &roots) {
-  return std::ranges::any_of(roots, [&](const fs::path &root) { return isSameOrDescendantOf(path, root); });
-}
-
 std::vector<fs::path> compactSubtrees(std::vector<fs::path> paths) {
   std::ranges::sort(paths, [](const fs::path &lhs, const fs::path &rhs) {
     auto const lhsSize = std::ranges::distance(lhs);
@@ -57,20 +29,20 @@ std::vector<fs::path> compactSubtrees(std::vector<fs::path> paths) {
   compacted.reserve(paths.size());
 
   for (const auto &path : paths) {
-    if (!isCoveredByAny(path, compacted)) { compacted.emplace_back(path); }
+    if (!file_indexer::isCoveredByAny(path, compacted)) { compacted.emplace_back(path); }
   }
 
   return compacted;
 }
 
 bool oldRootStillCovers(const fs::path &oldRoot, const std::vector<fs::path> &newRoots) {
-  return isCoveredByAny(oldRoot, newRoots);
+  return file_indexer::isCoveredByAny(oldRoot, newRoots);
 }
 
 bool coveredByRemainingOldRoot(const fs::path &newRoot, const std::vector<fs::path> &oldRoots,
                                const std::vector<fs::path> &newRoots) {
   return std::ranges::any_of(oldRoots, [&](const fs::path &oldRoot) {
-    return isSameOrDescendantOf(newRoot, oldRoot) && oldRootStillCovers(oldRoot, newRoots);
+    return file_indexer::isSameOrDescendantOf(newRoot, oldRoot) && oldRootStillCovers(oldRoot, newRoots);
   });
 }
 
@@ -81,7 +53,7 @@ ReconcilePlan buildReconcilePlan(const std::vector<fs::path> &oldRoots,
   ReconcilePlan plan;
 
   for (const auto &oldRoot : oldRoots) {
-    if (!isCoveredByAny(oldRoot, newRoots)) { plan.deleteSubtrees.emplace_back(oldRoot); }
+    if (!file_indexer::isCoveredByAny(oldRoot, newRoots)) { plan.deleteSubtrees.emplace_back(oldRoot); }
   }
 
   for (const auto &newRoot : newRoots) {
@@ -89,15 +61,18 @@ ReconcilePlan buildReconcilePlan(const std::vector<fs::path> &oldRoots,
   }
 
   for (const auto &newExclusion : newExclusions) {
-    if (!isCoveredByAny(newExclusion, oldExclusions)) { plan.deleteSubtrees.emplace_back(newExclusion); }
+    if (!file_indexer::isCoveredByAny(newExclusion, oldExclusions)) {
+      plan.deleteSubtrees.emplace_back(newExclusion);
+    }
   }
 
   for (const auto &oldExclusion : oldExclusions) {
-    if (isCoveredByAny(oldExclusion, newExclusions)) continue;
-    if (isCoveredByAny(oldExclusion, newRoots)) { plan.scanRoots.emplace_back(oldExclusion); }
+    if (file_indexer::isCoveredByAny(oldExclusion, newExclusions)) continue;
+    if (file_indexer::isCoveredByAny(oldExclusion, newRoots)) { plan.scanRoots.emplace_back(oldExclusion); }
   }
 
-  std::erase_if(plan.scanRoots, [&](const fs::path &path) { return isCoveredByAny(path, newExclusions); });
+  std::erase_if(plan.scanRoots,
+                [&](const fs::path &path) { return file_indexer::isCoveredByAny(path, newExclusions); });
   plan.deleteSubtrees = compactSubtrees(std::move(plan.deleteSubtrees));
   plan.scanRoots = compactSubtrees(std::move(plan.scanRoots));
 
@@ -225,7 +200,7 @@ void FileIndexer::markFullScanRootsPending(const std::vector<fs::path> &roots) {
 
   m_pendingFullScanRoots.reserve(m_pendingFullScanRoots.size() + roots.size());
   for (const auto &root : roots) {
-    m_pendingFullScanRoots.emplace_back(normalizePath(root));
+    m_pendingFullScanRoots.emplace_back(file_indexer::normalizePath(root));
   }
 
   m_pendingFullScanRoots = compactSubtrees(std::move(m_pendingFullScanRoots));
@@ -233,10 +208,10 @@ void FileIndexer::markFullScanRootsPending(const std::vector<fs::path> &roots) {
 
 void FileIndexer::markFullScanSucceeded(const fs::path &root) {
   std::scoped_lock const l(m_pendingFullScanRootsMtx);
-  auto const normalizedRoot = normalizePath(root);
+  auto const normalizedRoot = file_indexer::normalizePath(root);
 
   std::erase_if(m_pendingFullScanRoots, [&](const fs::path &pendingRoot) {
-    return isSameOrDescendantOf(pendingRoot, normalizedRoot);
+    return file_indexer::isSameOrDescendantOf(pendingRoot, normalizedRoot);
   });
 }
 
@@ -250,7 +225,8 @@ void FileIndexer::prunePendingFullScans(const std::vector<fs::path> &roots,
   std::scoped_lock const l(m_pendingFullScanRootsMtx);
 
   std::erase_if(m_pendingFullScanRoots, [&](const fs::path &pendingRoot) {
-    return !isCoveredByAny(pendingRoot, roots) || isCoveredByAny(pendingRoot, exclusions);
+    return !file_indexer::isCoveredByAny(pendingRoot, roots) ||
+           file_indexer::isCoveredByAny(pendingRoot, exclusions);
   });
 }
 
@@ -262,7 +238,8 @@ std::vector<fs::path> FileIndexer::pendingFullScanRootsFor(const std::vector<fs:
   pendingRoots.reserve(m_pendingFullScanRoots.size());
 
   for (const auto &pendingRoot : m_pendingFullScanRoots) {
-    if (isCoveredByAny(pendingRoot, roots) && !isCoveredByAny(pendingRoot, exclusions)) {
+    if (file_indexer::isCoveredByAny(pendingRoot, roots) &&
+        !file_indexer::isCoveredByAny(pendingRoot, exclusions)) {
       pendingRoots.emplace_back(pendingRoot);
     }
   }
@@ -271,16 +248,16 @@ std::vector<fs::path> FileIndexer::pendingFullScanRootsFor(const std::vector<fs:
 }
 
 void FileIndexer::setConfig(std::vector<fs::path> paths, std::vector<fs::path> excludedPaths) {
-  m_entrypoints = normalizePaths(std::move(paths));
-  m_excludedPaths = normalizePaths(std::move(excludedPaths));
+  m_entrypoints = file_indexer::normalizePaths(std::move(paths));
+  m_excludedPaths = file_indexer::normalizePaths(std::move(excludedPaths));
 
   std::string const databaseFilename = FileIndexerDatabase::getDatabasePath().filename().string();
   m_excludedFilenames = {databaseFilename, databaseFilename + "-wal"};
 }
 
 void FileIndexer::applyConfig(std::vector<fs::path> paths, std::vector<fs::path> excludedPaths) {
-  auto newEntryPoints = normalizePaths(std::move(paths));
-  auto newExcludedPaths = normalizePaths(std::move(excludedPaths));
+  auto newEntryPoints = file_indexer::normalizePaths(std::move(paths));
+  auto newExcludedPaths = file_indexer::normalizePaths(std::move(excludedPaths));
 
   if (newEntryPoints == m_entrypoints && newExcludedPaths == m_excludedPaths) return;
 

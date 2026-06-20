@@ -34,6 +34,7 @@ class FileSystemWatcher {
 
   void handleEvent(const ImportantDirectoryWatcher::Event &ev);
   IncrementalScan incrementalScan(ScanMode mode = ScanMode::Exhaustive) const;
+  bool shouldScanPath(const std::filesystem::path &path) const;
   void timerLoop();
   void refreshDynamicWatches();
 
