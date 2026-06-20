@@ -39,14 +39,22 @@ void ScanDispatcher::handleFinishedScan(int id, ScanStatus status) {
 }
 
 int ScanDispatcher::enqueue(const Scan &scan) {
+  std::scoped_lock const l(m_scannerMapMtx);
+
+  if (std::ranges::any_of(m_scannerMap | std::views::values,
+                          [&](const Element &element) { return element.scan.path == scan.path; })) {
+    scanLog(scan) << std::format("Skipping {} scan for {} (already running)", scanTypeLabel(scan.type()),
+                                 scan.path.c_str());
+    return -1;
+  }
+
   scanLog(scan) << std::format("Enqueuing {} scan for {} ({})", scanTypeLabel(scan.type()), scan.path.c_str(),
                                scanModeLabel(scan));
+  return enqueueLocked(scan);
+}
 
-  static int idCounter;
-
-  int const scanId = idCounter;
-  idCounter++;
-
+int ScanDispatcher::enqueueLocked(const Scan &scan) {
+  int const scanId = m_nextScanId++;
   auto handler = [this, scanId, scan](ScanStatus status, size_t processedCount) {
     if (scan.notify && m_eventCallback) {
       m_eventCallback({.scanId = scanId,
@@ -58,19 +66,17 @@ int ScanDispatcher::enqueue(const Scan &scan) {
     if (status != ScanStatus::Started) { handleFinishedScan(scanId, status); }
   };
 
-  {
-    std::scoped_lock const l(m_scannerMapMtx);
-    auto startedAt = std::chrono::steady_clock::now();
+  auto startedAt = std::chrono::steady_clock::now();
 
-    switch (scan.type()) {
-    case ScanType::Full:
-      m_scannerMap[scanId] = {scan, std::make_unique<IndexerScanner>(m_writer, scan, handler), startedAt};
-      break;
-    case ScanType::Incremental:
-      m_scannerMap[scanId] = {scan, std::make_unique<IncrementalScanner>(m_writer, scan, handler), startedAt};
-      break;
-    }
+  switch (scan.type()) {
+  case ScanType::Full:
+    m_scannerMap[scanId] = {scan, std::make_unique<IndexerScanner>(m_writer, scan, handler), startedAt};
+    break;
+  case ScanType::Incremental:
+    m_scannerMap[scanId] = {scan, std::make_unique<IncrementalScanner>(m_writer, scan, handler), startedAt};
+    break;
   }
+
   return scanId;
 }
 

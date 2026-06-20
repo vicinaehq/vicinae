@@ -39,6 +39,7 @@ private:
   std::mutex m_scannerMapMtx;
   std::map<int, Element> m_scannerMap;
   std::condition_variable m_idleCv;
+  int m_nextScanId = 0;
 
   std::mutex m_collectorQueueMtx;
   std::queue<int> m_collectorQueue;
@@ -54,6 +55,7 @@ private:
 
   void handleFinishedScan(int id, ScanStatus status);
   void schedulerLoop();
+  int enqueueLocked(const Scan &scan);
 
 public:
   ScanDispatcher(std::shared_ptr<DbWriter> writer);
