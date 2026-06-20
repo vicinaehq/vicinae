@@ -1,7 +1,7 @@
 #include <cstdint>
+#include <filesystem>
 #include <iostream>
 #include <mutex>
-#include <sqlcipher/sqlite3.h>
 #include <unistd.h>
 #include "file-indexer/file-indexer-db.hpp"
 #include "file-indexer/indexer-service.hpp"
@@ -9,11 +9,27 @@
 #include "file-indexer/migrations.hpp"
 #include "file-indexer/util.hpp"
 
-// Statically-linked fuzzy_trigram FTS5 tokenizer (vendor/fuzzy-trigram).
-extern "C" int vicinaeFuzzyTrigramInit(sqlite3 *, char **, const void *);
+namespace {
 
-// Statically-linked spellfix1 virtual table (vendor/spellfix).
-extern "C" int vicinaeSpellfixInit(sqlite3 *, char **, const void *);
+bool shouldPurgeDatabase() {
+  std::error_code ec;
+  if (!std::filesystem::exists(file_indexer::databasePath(), ec)) return false;
+
+  FileIndexerDatabase startupDb;
+  if (!startupDb.isOpen()) {
+    flog::warn() << "Existing file indexer database could not be opened, starting over";
+    return true;
+  }
+
+  int const userVersion = startupDb.userVersion();
+  if (userVersion == file_indexer::SCHEMA_VERSION) return false;
+
+  flog::info() << "Breaking change detected (current rev=" << file_indexer::SCHEMA_VERSION
+               << ", user version=" << userVersion << "), starting over... \n";
+  return true;
+}
+
+} // namespace
 
 // Locked so concurrent query replies don't interleave mid-frame.
 class StdoutTransport : public file_indexer_gen::AbstractTransport {
@@ -29,38 +45,13 @@ class StdoutTransport : public file_indexer_gen::AbstractTransport {
 };
 
 int main(int, char **) {
-  // Register the fuzzy_trigram tokenizer and spellfix1 on every connection opened from here on.
-  sqlite3_auto_extension(reinterpret_cast<void (*)()>(vicinaeFuzzyTrigramInit));
-  sqlite3_auto_extension(reinterpret_cast<void (*)()>(vicinaeSpellfixInit));
-
   // TODO: remove this at some point
   file_indexer::removeLegacyDbFiles();
 
-  // We made a breaking change that requires fully rebuilding the index
-  // Instead of methodically updating the DB, we just remove it entirely
-  // and start over fresh. Much simpler :D
-  // We use temporary database connections to get the user version through `PRAGMA user_version`
-  int userVersion = 0;
-  {
-    FileIndexerDatabase startupDb;
-    if (!startupDb.isOpen()) {
-      flog::error() << "File indexer database could not be opened, exiting";
-      return 1;
-    }
-    userVersion = startupDb.userVersion();
-  }
-
-  if (userVersion != file_indexer::SCHEMA_VERSION) {
-    flog::info() << "Breaking change detected (current rev=" << file_indexer::SCHEMA_VERSION
-                 << ", user version=" << userVersion << "), starting over... \n";
-    file_indexer::purgeDbFiles();
-    FileIndexerDatabase rebuiltDb;
-    if (!rebuiltDb.isOpen()) {
-      flog::error() << "File indexer database could not be reopened after purge, exiting";
-      return 1;
-    }
-    rebuiltDb.setUserVersion(file_indexer::SCHEMA_VERSION);
-  }
+  // We made breaking changes that require fully rebuilding the index. Instead
+  // of methodically updating the DB, we remove existing outdated DBs and let the
+  // service create a fresh one. On first boot there is no DB to inspect yet.
+  if (shouldPurgeDatabase()) { file_indexer::purgeDbFiles(); }
 
   StdoutTransport transport;
   file_indexer_gen::RpcTransport rpc{transport};

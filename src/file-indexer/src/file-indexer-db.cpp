@@ -179,6 +179,8 @@ void FileIndexerDatabase::init() {
     flog::error() << "Failed to run file-indexer migrations" << m_db.lastError();
     return;
   }
+
+  setUserVersion(file_indexer::SCHEMA_VERSION);
 }
 
 bool FileIndexerDatabase::setScanError(int scanId, const std::string &error) {
@@ -730,6 +732,8 @@ FileIndexerDatabase::FileIndexerDatabase() {
   m_db = std::move(*result);
 
   for (const auto &pragma : SQLITE_PRAGMAS) {
-    if (!m_db.exec(pragma)) { flog::error() << "Failed to run file-indexer pragma" << pragma; }
+    if (!m_db.exec(pragma)) {
+      flog::error() << "Failed to run file-indexer pragma" << pragma << m_db.lastError();
+    }
   }
 }

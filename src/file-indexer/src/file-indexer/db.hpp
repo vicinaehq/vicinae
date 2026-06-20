@@ -4,12 +4,16 @@
 #include <cstdint>
 #include <expected>
 #include <filesystem>
+#include <format>
 #include <optional>
 #include <string>
 #include <string_view>
 #include "file-indexer/log.hpp"
 
 namespace db {
+
+extern "C" int vicinaeFuzzyTrigramInit(sqlite3 *, char **, const void *);
+extern "C" int vicinaeSpellfixInit(sqlite3 *, char **, const void *);
 
 static constexpr int BUSY_TIMEOUT_MS = 5000;
 
@@ -220,6 +224,12 @@ public:
 
     sqlite3_extended_result_codes(handle, 1);
     sqlite3_busy_timeout(handle, BUSY_TIMEOUT_MS);
+
+    if (auto extensionError = registerExtensions(handle)) {
+      sqlite3_close_v2(handle);
+      return std::unexpected(std::move(*extensionError));
+    }
+
     return Database(handle);
   }
 
@@ -264,6 +274,29 @@ public:
 
   sqlite3 *handle() { return m_handle; }
   bool isOpen() const { return m_handle != nullptr; }
+
+  static std::optional<std::string> registerExtensions(sqlite3 *handle) {
+    auto registerExtension = [&](const char *name, auto init) -> std::optional<std::string> {
+      char *error = nullptr;
+      int const rc = init(handle, &error, nullptr);
+
+      if (rc == SQLITE_OK) return std::nullopt;
+
+      std::string message = std::format("sqlite extension registration failed for {}: rc={} ({})", name, rc,
+                                        sqlite3_errstr(rc));
+      if (error) {
+        message += ": ";
+        message += error;
+        sqlite3_free(error);
+      }
+      return message;
+    };
+
+    if (auto error = registerExtension("fuzzy_trigram", vicinaeFuzzyTrigramInit)) return error;
+    if (auto error = registerExtension("spellfix1", vicinaeSpellfixInit)) return error;
+
+    return std::nullopt;
+  }
 
   static std::string errorString(std::string_view operation, int rc, sqlite3 *handle,
                                  const std::filesystem::path &path = {}) {
