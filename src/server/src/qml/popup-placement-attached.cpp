@@ -67,4 +67,11 @@ void PopupPlacementAttached::apply() {
   m_window->setProperty("_q_waylandPopupAnchor", QVariant::fromValue(anchor));
   m_window->setProperty("_q_waylandPopupGravity", QVariant::fromValue(gravity));
   m_window->setProperty("_q_waylandPopupConstraintAdjustment", SLIDE_X | SLIDE_Y | FLIP_Y);
+
+  // Anchor to the trigger's real rect instead of letting QtWayland guess it
+  // from the (possibly shifted/wider) popup window geometry.
+  if (auto *trigger = parent()->property("parent").value<QQuickItem *>(); trigger && trigger->window()) {
+    const QRect rect = trigger->mapRectToScene(trigger->boundingRect()).toRect();
+    m_window->setProperty("_q_waylandPopupAnchorRect", rect);
+  }
 }
